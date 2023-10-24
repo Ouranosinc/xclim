@@ -6,14 +6,14 @@ v0.46.0 (2023-10-24)
 --------------------
 Contributors to this version: David Huard (:user:`huard`), Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), Éric Dupuis (:user:`coxipi`).
 
+Announcements
+^^^^^^^^^^^^^
+* The default mechanism for computing the Mean Radiant Temperature, a part of the Universal Thermal Climate Index (UTCI) was broken in xclim v0.44.0 and v0.45.0. This has now been fixed by changing the default settings.
+
 New indicators
 ^^^^^^^^^^^^^^
 * ``xclim.indices.snw_storm_days`` computes the number of days with snowfall amount accumulation above a given threshold (default: `10 Kg m-2`). (:pull:`1505`).
-* Added ``xclim.indices.wind_power_potential`` to estimate the potential for wind power production given wind speed at the turbine hub height and turbine specifications, along with  ``xclim.indices.wind_profile`` to estimate the wind speed at different heights based on wind speed at a reference height. (:issue:`1458`, :pull:`1471`)
-
-Announcements
-^^^^^^^^^^^^^
-* The default mechanism for computing the Mean Radiant Temperature, a part of the Universal Thermal Climate Index (UTCI) was broken in xclim 0.44 and 0.45. This has been fixed by changing the default.
+* Added ``xclim.indices.wind_power_potential`` to estimate the potential for wind power production given wind speed at the turbine hub height and turbine specifications, along with ``xclim.indices.wind_profile`` to estimate the wind speed at different heights based on wind speed at a reference height. (:issue:`1458`, :pull:`1471`).
 
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -23,10 +23,10 @@ New features and enhancements
 * Refactored the indicators page with the addition of a search bar (:issue:`1433`, :pull:`1454`).
 * Indicator ``xclim.indices.generic.stats`` now accepts any frequency (previously only `daily`). (:pull:`1498`).
 * Added argument `"out_units"` to ``select_resample_op`` to bypass limitations of ``to_agg_units`` in custom indicators. Also, added ``var`` to supported operations in ``to_agg_units``. (:pull:`1498`).
-* `adapt_freq_thresh` argument added ``sdba`` training functions, allowing to perform frequency adaptation appropriately in each map block. (:pull:`1407`).
+* `adapt_freq_thresh` argument was added `to `sdba`` training functions, to facilitate performing frequency adaptation appropriately in each map block. (:pull:`1407`).
 * Standardized indices (``xclim.indices.standardized_precipitation_index`` and ``xclim.indices.standardized_precipitation_evapotranspiration_index``)  (:issue:`1270`, :issue:`1416`, :issue:`1474`, :pull:`1311`) were changed:
     * Optimized and noticeably faster calculation.
-    * Can be computed in two steps: First compute fit parameters with ``xclim.indices.stats.standardized_index_fit_params``, then use the output in the standardized indices functions.
+    * Can be computed in two steps: first compute fit parameters with ``xclim.indices.stats.standardized_index_fit_params``, then use the output in the standardized indices functions.
     * The standardized index values are now clipped to ±8.21. This reflects the ``float64`` precision of the computation when cumulative distributed function values are inverted to a normal distribution and avoids returning infinite values.
     * An offset parameter is now available to account for negative water balance values``xclim.indices.standardized_precipitation_evapotranspiration_index``.
 
