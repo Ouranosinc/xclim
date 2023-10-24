@@ -66,7 +66,7 @@ jobs:
         echo "${{ steps.render_template.outputs.result }}${{ env.contributors }}"
 
     - name: Send toot to Mastodon
-      if: ${{ !github.event.inputs.dry-run }}
+      if: ${{ github.event.inputs.dry-run != 'true' }} || ${{ github.event_name == 'release' }}
       uses: cbrgm/mastodon-github-action@v1.0.3
       with:
         message: "${{ steps.render_template.outputs.result }}${{ env.contributors }}"
