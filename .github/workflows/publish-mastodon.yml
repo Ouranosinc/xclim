@@ -63,7 +63,7 @@ jobs:
 
     - name: Message Preview
       run: |
-        echo "${{ steps.render_template.outputs.result }}\n\n${{ env.contributors }}"
+        echo "${{ steps.render_template.outputs.result }}${{ env.contributors }}"
 
     - name: Send toot to Mastodon
       if: ${{ !github.event.inputs.dry-run }}
