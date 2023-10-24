@@ -11,6 +11,10 @@ New indicators
 * ``xclim.indices.snw_storm_days`` computes the number of days with snowfall amount accumulation above a given threshold (default: `10 Kg m-2`). (:pull:`1505`).
 * Added ``xclim.indices.wind_power_potential`` to estimate the potential for wind power production given wind speed at the turbine hub height and turbine specifications, along with  ``xclim.indices.wind_profile`` to estimate the wind speed at different heights based on wind speed at a reference height. (:issue:`1458`, :pull:`1471`)
 
+Announcements
+^^^^^^^^^^^^^
+* The default mechanism for computing the Mean Radiant Temperature, a part of the Universal Thermal Climate Index (UTCI) was broken in xclim 0.44 and 0.45. This has been fixed by changing the default.
+
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 * `xclim` now has a dedicated console command for prefetching testing data from `xclim-testdata` with branch options (e.g.: `$ xclim prefetch_testing_data --branch some_development_branch`). This command can be used to download the testing data to a local cache, which can then be used to run the testing suite without internet access or in "offline" mode. For more information, see the contributing documentation section for `Updating Testing Data`. (:issue:`1468`, :pull:`1473`).
@@ -20,6 +24,11 @@ New features and enhancements
 * Indicator ``xclim.indices.generic.stats`` now accepts any frequency (previously only `daily`). (:pull:`1498`).
 * Added argument `"out_units"` to ``select_resample_op`` to bypass limitations of ``to_agg_units`` in custom indicators. Also, added ``var`` to supported operations in ``to_agg_units``. (:pull:`1498`).
 * `adapt_freq_thresh` argument added ``sdba`` training functions, allowing to perform frequency adaptation appropriately in each map block. (:pull:`1407`).
+* Standardized indices (``xclim.indices.standardized_precipitation_index`` and ``xclim.indices.standardized_precipitation_evapotranspiration_index``)  (:issue:`1270`, :issue:`1416`, :issue:`1474`, :pull:`1311`) were changed:
+    * Optimized and noticeably faster calculation.
+    * Can be computed in two steps: First compute fit parameters with ``xclim.indices.stats.standardized_index_fit_params``, then use the output in the standardized indices functions.
+    * The standardized index values are now clipped to ±8.21. This reflects the ``float64`` precision of the computation when cumulative distributed function values are inverted to a normal distribution and avoids returning infinite values.
+    * An offset parameter is now available to account for negative water balance values``xclim.indices.standardized_precipitation_evapotranspiration_index``.
 
 Bug fixes
 ^^^^^^^^^
@@ -31,6 +40,7 @@ Bug fixes
 * Indicators ``snd_season_length`` and ``snw_season_length`` will return `0` instead of `NaN` if all inputs have a (non-`NaN`) zero snow depth (or water-equivalent thickness). (:pull:`1492`, :issue:`1491`)
 * Fixed a bug in the `pytest` configuration that could prevent testing data caching from occurring in systems where the platform-dependent cache directory is not found in the user's home. (:issue:`1468`, :pull:`1473`).
 * Fix ``xclim.core.dataflags.data_flags`` variable name generation (:pull:`1507`).
+* Remove nonsensical `stat='average'` option for ``mean_radiant_temperature``. (:issue:`1496`, :pull:`1501`).
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
@@ -41,6 +51,7 @@ Breaking changes
 * Default threshold in ``xclim.indices.snw_season_{start|length|end}`` changed form `20 kg m-2` to `4 kg m-2`. (:pull:`1505`).
 * `xclim` development dependencies now include `ruff`. `pycodestyle` and `pydocstyle` have been replaced by `ruff` and removed from the `dev` installation recipe. (:pull:`1504`).
 * The `mf_file` call signature found in ``xclim.ensembles.create_ensemble`` (and ``xclim.ensembles._ens_align_dataset``) has been removed (deprecated since `xclim` v0.43.0). (:pull:`1506`).
+* ``xclim.indices.standardized_precipitation_index`` and ``xclim.indices.standardized_precipitation_evapotranspiration_index`` will no longer accept two datasets (data and calibration data). Instead, a single dataset covering both the calibration and evaluation periods is expected. (:issue:`1270`, :pull:`1311`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
