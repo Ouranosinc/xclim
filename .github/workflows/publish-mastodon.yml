@@ -18,7 +18,7 @@ on:
 jobs:
   toot:
     runs-on: ubuntu-latest
-#    environment: production
+    environment: production
     steps:
 
     - name: Checkout
@@ -46,7 +46,7 @@ jobs:
         RELEASE_DESCRIPTION=$(echo "$RELEASE_INFO" | jq -r .body)
 
         # Remove Markdown links and the space preceding them
-        CLEANED_DESCRIPTION=$(echo "$RELEASE_DESCRIPTION" | sed -E 's/\[[^]]+\]\([^)]+\)//g')
+        CLEANED_DESCRIPTION=$(echo "$RELEASE_DESCRIPTION" | sed -E 's/\ \(\[[^]]+\]\([^)]+\)\)//g')
 
         # Extract the first line of the release description
         CONTRIBUTORS=$(echo "$CLEANED_DESCRIPTION" | head -n 1)
