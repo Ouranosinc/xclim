@@ -13,17 +13,7 @@ from os import environ
 USE_NANQUANTILE = environ.get('USE_NANQUANTILE', False)
 USE_SORTQUANTILE = environ.get('USE_SORTQUANTILE', False)
 
-@guvectorize(
-    [(float32[:], float32, float32[:]), (float64[:], float64, float64[:])],
-    "(n),()->()",
-    nopython=True,
-    cache=True,
-)
-def _vecquantiles(arr, rnk, res):
-    if np.isnan(rnk):
-        res[0] = np.NaN
-    else:
-        res[0] = np.nanquantile(arr, rnk)
+
 
 
 def vecquantiles(da, rnk, dim):
@@ -99,6 +89,17 @@ def _choosequantile(arr,q):
     else:
         return _sortquantile(arr, q)
 
+@guvectorize(
+    [(float32[:], float32, float32[:]), (float64[:], float64, float64[:])],
+    "(n),()->()",
+    nopython=True,
+    cache=True,
+)
+def _vecquantiles(arr, rnk, res):
+    if np.isnan(rnk):
+        res[0] = np.NaN
+    else:
+        res[0] = _choosequantile(arr, rnk)
         
 def quantile(da, q, dim):
     """Compute the quantiles from a fixed list `q`."""
