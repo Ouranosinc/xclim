@@ -5,10 +5,13 @@ Numba-accelerated Utilities
 from __future__ import annotations
 
 import numpy as np
-from numba import boolean, float32, float64, guvectorize, njit
+from numba import boolean, float32, float64, int64, guvectorize, njit
 from xarray import DataArray
 from xarray.core import utils
+from os import environ
 
+USE_NANQUANTILE = environ.get('USE_NANQUANTILE', False)
+USE_SORTQUANTILE = environ.get('USE_SORTQUANTILE', False)
 
 @guvectorize(
     [(float32[:], float32, float32[:]), (float64[:], float64, float64[:])],
@@ -46,14 +49,57 @@ def vecquantiles(da, rnk, dim):
 def _quantile(arr, q):
     if arr.ndim == 1:
         out = np.empty((q.size,), dtype=arr.dtype)
-        out[:] = np.nanquantile(arr, q)
+        out[:] = _choosequantile(arr, q)
     else:
         out = np.empty((arr.shape[0], q.size), dtype=arr.dtype)
         for index in range(out.shape[0]):
-            out[index] = np.nanquantile(arr[index], q)
+            out[index] = _choosequantile(arr[index], q)
     return out
 
 
+@njit([int64(float64[:]),int64(float32[:])],fastmath=False,nogil=True)
+def numnan_sorted(s):
+    # Given a sorted array s, return the number of NaNs.
+    # This is faster than np.isnan(s).sum(), but only works if s is sorted,
+    # and only for 
+	ind = 0
+	for i in range(s.size -1 , 0, -1):
+		if np.isnan(s[i]):
+			ind += 1
+		else:
+			return ind
+	return ind
+
+
+@njit([float64[:](float64[:], float64[:]),float32[:](float32[:], float32[:])], fastmath=False, nogil=True)
+def _sortquantile(arr,q):
+    # This function sorts arr into ascending order,
+    # then computes the quantiles as a linear interpolation
+    # between the sorted values.
+    sortarr = np.sort(arr)
+    numnan = numnan_sorted(sortarr)
+    # compute the indices where each quantile should go:
+    # nb: nan goes to the end, so we need to subtract numnan to the size.
+    indices = q * (arr.size - 1 - numnan) 
+    # compute the quantiles manually to avoid casting to float64:
+    # (alternative is to use np.interp(indices, np.arange(arr.size), sortarr))
+    frac = indices % 1
+    low  = np.floor(indices).astype(np.int64)
+    high  = np.ceil(indices).astype(np.int64)
+    return (1 - frac) * sortarr[low] + frac * sortarr[high]
+
+
+@njit([float64[:](float64[:], float64[:]),float32[:](float32[:], float32[:])], fastmath=False, nogil=True)
+def _choosequantile(arr,q):
+    # When the number of quantiles requested is large (1% of arr.size for nojit, any (< 0.1%) for jit), 
+    # it becomes more efficient to sort the array,
+    # and simply obtain the quantiles from the sorted array.
+    if (arr.size > 1000 * q.size or USE_NANQUANTILE) and not USE_SORTQUANTILE:
+        return np.nanquantile(arr, q).astype(arr.dtype)
+    else:
+        return _sortquantile(arr, q)
+
+        
 def quantile(da, q, dim):
     """Compute the quantiles from a fixed list `q`."""
     # We have two cases :
