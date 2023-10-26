@@ -27,8 +27,16 @@ def _quantile(arr, q):
     return out
 
 
-@njit([int64(float64[:]), int64(float32[:])], fastmath=False, nogil=True)
+@njit(
+    [
+        int64(float32[:]),
+        int64(float64[:]),
+    ],
+    fastmath=False,
+    nogil=True,
+)
 def numnan_sorted(s):
+    """Given a sorted array s, return the number of NaNs."""
     # Given a sorted array s, return the number of NaNs.
     # This is faster than np.isnan(s).sum(), but only works if s is sorted,
     # and only for
@@ -42,14 +50,18 @@ def numnan_sorted(s):
 
 
 @njit(
-    [float64[:](float64[:], float64[:]), float32[:](float32[:], float32[:])],
+    [
+        float32[:](float32[:], float32[:]),
+        float64[:](float64[:], float64[:]),
+    ],
     fastmath=False,
     nogil=True,
 )
 def _sortquantile(arr, q):
-    # This function sorts arr into ascending order,
-    # then computes the quantiles as a linear interpolation
-    # between the sorted values.
+    """Sorts arr into ascending order,
+    then computes the quantiles as a linear interpolation
+    between the sorted values.
+    """
     sortarr = np.sort(arr)
     numnan = numnan_sorted(sortarr)
     # compute the indices where each quantile should go:
@@ -64,7 +76,10 @@ def _sortquantile(arr, q):
 
 
 @njit(
-    [float64[:](float64[:], float64[:]), float32[:](float32[:], float32[:])],
+    [
+        float32[:](float32[:], float32[:]),
+        float64[:](float64[:], float64[:]),
+    ],
     fastmath=False,
     nogil=True,
 )
@@ -82,7 +97,7 @@ def _choosequantile(arr, q):
     [(float32[:], float32, float32[:]), (float64[:], float64, float64[:])],
     "(n),()->()",
     nopython=True,
-    cache=True,
+    cache=False,
 )
 def _vecquantiles(arr, rnk, res):
     if np.isnan(rnk):
@@ -98,7 +113,7 @@ def _vecquantiles(arr, rnk, res):
     ],
     "(n),(),()->()",
     nopython=True,
-    cache=True,
+    cache=False,
 )
 def _vecquantiles_sorted(arr, rnk, numnan, res):
     if np.isnan(rnk):
@@ -118,8 +133,7 @@ def _vecquantiles_wrapper(arr, rnk):
     else:
         sortarr = np.sort(arr)
         numnan = numnan_sorted(sortarr)
-        res = np.empty_like(rnk)
-        return _vecquantiles_sorted(sortarr, rnk, numnan, res)
+        return _vecquantiles_sorted(sortarr, rnk, numnan)
 
 
 def vecquantiles(da, rnk, dim):
