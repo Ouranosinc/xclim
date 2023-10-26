@@ -15,26 +15,6 @@ USE_SORTQUANTILE = environ.get('USE_SORTQUANTILE', False)
 
 
 
-
-def vecquantiles(da, rnk, dim):
-    """For when the quantile (rnk) is different for each point.
-
-    da and rnk must share all dimensions but dim.
-    """
-    tem = utils.get_temp_dimname(da.dims, "temporal")
-    dims = [dim] if isinstance(dim, str) else dim
-    da = da.stack({tem: dims})
-    da = da.transpose(*rnk.dims, tem)
-
-    res = DataArray(
-        _vecquantiles(da.values, rnk.values),
-        dims=rnk.dims,
-        coords=rnk.coords,
-        attrs=da.attrs,
-    )
-    return res
-
-
 @njit
 def _quantile(arr, q):
     if arr.ndim == 1:
@@ -99,8 +79,52 @@ def _vecquantiles(arr, rnk, res):
     if np.isnan(rnk):
         res[0] = np.NaN
     else:
-        res[0] = _choosequantile(arr, rnk)
+        res[0] = np.nanquantile(arr, rnk)
         
+@guvectorize(
+    [(float32[:], float32, int64, float32[:]), (float64[:], float64, int64, float64[:])],
+    "(n),(),()->()",
+    nopython=True,
+    cache=True,
+)
+def _vecquantiles_sorted(arr, rnk, numnan, res):
+    if np.isnan(rnk):
+        res[0] = np.NaN
+    else:
+        index = rnk * (arr.size - 1 - numnan)
+        frac = index % 1
+        low = np.int64(np.floor(index))
+        high = np.int64(np.ceil(index))
+        res[0] = (1 - frac) * arr[low] + frac * arr[high]
+
+@njit(fastmath=False, nogil=True)
+def _vecquantiles_wrapper(arr, rnk):
+    if (USE_NANQUANTILE) and not USE_SORTQUANTILE:
+        return _vecquantiles(arr, rnk)
+    else:
+        sortarr = np.sort(arr)
+        numnan = numnan_sorted(sortarr)
+        res = np.empty_like(rnk)
+        return _vecquantiles_sorted(sortarr, rnk, numnan, res)
+    
+
+def vecquantiles(da, rnk, dim):
+    """For when the quantile (rnk) is different for each point.
+
+    da and rnk must share all dimensions but dim.
+    """
+    tem = utils.get_temp_dimname(da.dims, "temporal")
+    dims = [dim] if isinstance(dim, str) else dim
+    da = da.stack({tem: dims})
+    da = da.transpose(*rnk.dims, tem)
+
+    res = DataArray(
+        _vecquantiles_wrapper(da.values, rnk.values),
+        dims=rnk.dims,
+        coords=rnk.coords,
+        attrs=da.attrs,
+    )
+    return res  
 def quantile(da, q, dim):
     """Compute the quantiles from a fixed list `q`."""
     # We have two cases :
