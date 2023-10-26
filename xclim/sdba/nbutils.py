@@ -4,15 +4,15 @@ Numba-accelerated Utilities
 """
 from __future__ import annotations
 
-import numpy as np
-from numba import boolean, float32, float64, int64, guvectorize, njit
-from xarray import DataArray
-from xarray.core import utils
 from os import environ
 
-USE_NANQUANTILE = environ.get('USE_NANQUANTILE', False)
-USE_SORTQUANTILE = environ.get('USE_SORTQUANTILE', False)
+import numpy as np
+from numba import boolean, float32, float64, guvectorize, int64, njit
+from xarray import DataArray
+from xarray.core import utils
 
+USE_NANQUANTILE = environ.get("USE_NANQUANTILE", False)
+USE_SORTQUANTILE = environ.get("USE_SORTQUANTILE", False)
 
 
 @njit
@@ -27,22 +27,26 @@ def _quantile(arr, q):
     return out
 
 
-@njit([int64(float64[:]),int64(float32[:])],fastmath=False,nogil=True)
+@njit([int64(float64[:]), int64(float32[:])], fastmath=False, nogil=True)
 def numnan_sorted(s):
     # Given a sorted array s, return the number of NaNs.
     # This is faster than np.isnan(s).sum(), but only works if s is sorted,
-    # and only for 
-	ind = 0
-	for i in range(s.size -1 , 0, -1):
-		if np.isnan(s[i]):
-			ind += 1
-		else:
-			return ind
-	return ind
+    # and only for
+    ind = 0
+    for i in range(s.size - 1, 0, -1):
+        if np.isnan(s[i]):
+            ind += 1
+        else:
+            return ind
+    return ind
 
 
-@njit([float64[:](float64[:], float64[:]),float32[:](float32[:], float32[:])], fastmath=False, nogil=True)
-def _sortquantile(arr,q):
+@njit(
+    [float64[:](float64[:], float64[:]), float32[:](float32[:], float32[:])],
+    fastmath=False,
+    nogil=True,
+)
+def _sortquantile(arr, q):
     # This function sorts arr into ascending order,
     # then computes the quantiles as a linear interpolation
     # between the sorted values.
@@ -50,24 +54,29 @@ def _sortquantile(arr,q):
     numnan = numnan_sorted(sortarr)
     # compute the indices where each quantile should go:
     # nb: nan goes to the end, so we need to subtract numnan to the size.
-    indices = q * (arr.size - 1 - numnan) 
+    indices = q * (arr.size - 1 - numnan)
     # compute the quantiles manually to avoid casting to float64:
     # (alternative is to use np.interp(indices, np.arange(arr.size), sortarr))
     frac = indices % 1
-    low  = np.floor(indices).astype(np.int64)
-    high  = np.ceil(indices).astype(np.int64)
+    low = np.floor(indices).astype(np.int64)
+    high = np.ceil(indices).astype(np.int64)
     return (1 - frac) * sortarr[low] + frac * sortarr[high]
 
 
-@njit([float64[:](float64[:], float64[:]),float32[:](float32[:], float32[:])], fastmath=False, nogil=True)
-def _choosequantile(arr,q):
-    # When the number of quantiles requested is large (1% of arr.size for nojit, any (< 0.1%) for jit), 
+@njit(
+    [float64[:](float64[:], float64[:]), float32[:](float32[:], float32[:])],
+    fastmath=False,
+    nogil=True,
+)
+def _choosequantile(arr, q):
+    # When the number of quantiles requested is large (1% of arr.size for nojit, any (< 0.1%) for jit),
     # it becomes more efficient to sort the array,
     # and simply obtain the quantiles from the sorted array.
     if (arr.size > 1000 * q.size or USE_NANQUANTILE) and not USE_SORTQUANTILE:
         return np.nanquantile(arr, q).astype(arr.dtype)
     else:
         return _sortquantile(arr, q)
+
 
 @guvectorize(
     [(float32[:], float32, float32[:]), (float64[:], float64, float64[:])],
@@ -80,9 +89,13 @@ def _vecquantiles(arr, rnk, res):
         res[0] = np.NaN
     else:
         res[0] = np.nanquantile(arr, rnk)
-        
+
+
 @guvectorize(
-    [(float32[:], float32, int64, float32[:]), (float64[:], float64, int64, float64[:])],
+    [
+        (float32[:], float32, int64, float32[:]),
+        (float64[:], float64, int64, float64[:]),
+    ],
     "(n),(),()->()",
     nopython=True,
     cache=True,
@@ -97,6 +110,7 @@ def _vecquantiles_sorted(arr, rnk, numnan, res):
         high = np.int64(np.ceil(index))
         res[0] = (1 - frac) * arr[low] + frac * arr[high]
 
+
 @njit(fastmath=False, nogil=True)
 def _vecquantiles_wrapper(arr, rnk):
     if (USE_NANQUANTILE) and not USE_SORTQUANTILE:
@@ -106,7 +120,7 @@ def _vecquantiles_wrapper(arr, rnk):
         numnan = numnan_sorted(sortarr)
         res = np.empty_like(rnk)
         return _vecquantiles_sorted(sortarr, rnk, numnan, res)
-    
+
 
 def vecquantiles(da, rnk, dim):
     """For when the quantile (rnk) is different for each point.
@@ -124,7 +138,9 @@ def vecquantiles(da, rnk, dim):
         coords=rnk.coords,
         attrs=da.attrs,
     )
-    return res  
+    return res
+
+
 def quantile(da, q, dim):
     """Compute the quantiles from a fixed list `q`."""
     # We have two cases :
