@@ -40,6 +40,7 @@ __all__ = [
     "count_occurrences",
     "cumulative_difference",
     "default_freq",
+    "detrend",
     "diurnal_temperature_range",
     "domain_count",
     "doymax",
@@ -1004,3 +1005,30 @@ def get_zones(
         )
 
     return zones
+
+
+def detrend(ds, dim="time", deg=1):
+    """Detrend data along a given dimension computing a polynomial trend of a given order.
+
+    Parameters
+    ----------
+    ds : xr.Dataset or xr.DataArray
+      The data to detrend. If a Dataset, detrending is done on all data variables.
+    dim : str
+      Dimension along which to compute the trend.
+    deg : int
+      Degree of the polynomial to fit.
+
+    Returns
+    -------
+    detrended : xr.Dataset or xr.DataArray
+      Same as `ds`, but with its trend removed (subtracted).
+    """
+    if isinstance(ds, xr.Dataset):
+        return ds.map(detrend, keep_attrs=False, dim=dim, deg=deg)
+    # is a DataArray
+    # detrend along a single dimension
+    coeff = ds.polyfit(dim=dim, deg=deg)
+    trend = xr.polyval(ds[dim], coeff.polyfit_coefficients)
+    with xr.set_options(keep_attrs=True):
+        return ds - trend

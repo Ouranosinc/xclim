@@ -17,6 +17,7 @@ import xarray as xr
 from packaging.version import Version
 
 from xclim.core.formatting import update_history
+from xclim.indices.generic import detrend
 
 
 def change_significance(  # noqa: C901
@@ -49,7 +50,7 @@ def change_significance(  # noqa: C901
         a distribution across the future period.
         `fut` and `ref` must be of the same type (Dataset or DataArray). If they are
         Dataset, they must have the same variables (name and coords).
-    test : {'ttest', 'welch-ttest', 'mannwhitney-utest', 'brownforsythe-test', 'threshold', None}
+    test : {'ttest', 'welch-ttest', 'mannwhitney-utest', 'brownforsythe-test', 'ipcc-advanced', 'threshold', None}
         Name of the statistical test used to determine if there was significant change. See notes.
     weights : xr.DataArray
         Weights to apply along the 'realization' dimension. This array cannot contain missing values.
@@ -111,13 +112,19 @@ def change_significance(  # noqa: C901
         Brown-Forsythe test assuming skewed, non-normal distributions. Same significance criterion as 'ttest'.
       'threshold' :
         Change is considered significative if the absolute delta exceeds a given threshold (absolute or relative).
+      'ipcc-advanced' :
+        An approximation of the "advanced approach" used in the IPCC Atlas and described in :cite:t:`ipccatlas_ar6wg1`.
+        Change is considered significant if the delta exceeds :math:`1.645\sqrt{\frac{2}{10}}\sigma_{ref'}$ where $\sigma_{ref'}` is
+        the interannual standard deviation of the linearly detrended reference (`ref`). See notebook :ref:`notebooks/ensembles:Ensembles`
+        for more details.
       None :
-        Significant change is not tested and, thus, members showing no change are
-        included in the `sign_frac` output.
+        Significant change is not tested. Members showing any non-zero positive change are
+        included in the `pos_frac` output.
 
     References
     ----------
     :cite:cts:`tebaldi_mapping_2011`
+    :cite:cts:`ipccatlas_ar6wg1`
 
     Example
     -------
@@ -167,6 +174,7 @@ def change_significance(  # noqa: C901
         "mannwhitney-utest": ["p_change"],
         "brownforsythe-test": ["p_change"],
         "threshold": ["abs_thresh", "rel_thresh"],
+        "ipcc-advanced": [],
     }
 
     # Get delta, either from fut or from fut - ref
@@ -323,7 +331,12 @@ def change_significance(  # noqa: C901
             changed = abs(delta / ref.mean("time")) > kwargs["rel_thresh"]
         else:
             raise ValueError("Invalid argument combination for test='threshold'.")
-
+    elif test == "ipcc-advanced":
+        # Detrend ref
+        refy = ref.resample(time="YS").mean()
+        ref_detrended = detrend(refy, dim="time", deg=1)
+        gamma = np.sqrt(2 / 20) * 1.645 * ref_detrended.std("time")
+        changed = abs(delta) > gamma
     elif test is not None:
         raise ValueError(
             f"Statistical test {test} must be one of {', '.join(test_params.keys())}."
