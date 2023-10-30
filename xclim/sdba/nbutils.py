@@ -147,7 +147,7 @@ def vecquantiles(da, rnk, dim):
     da = da.transpose(*rnk.dims, tem)
 
     res = DataArray(
-        _vecquantiles_wrapper(da.values, rnk.values),
+        _vecquantiles(da.values, rnk.values),
         dims=rnk.dims,
         coords=rnk.coords,
         attrs=da.attrs,
@@ -167,14 +167,14 @@ def quantile(da, q, dim):
     dims = [dim] if isinstance(dim, str) else dim
     tem = utils.get_temp_dimname(da.dims, "temporal")
     da = da.stack({tem: dims})
-
+    print(q)
     # So we cut in half the definitions to declare in numba
     # We still use q as the coords so it corresponds to what was done upstream
-    if not hasattr(q, "dtype") or q.dtype != da.dtype:
-        qc = np.array(q, dtype=da.dtype)
-    else:
-        qc = q
-
+    # if not hasattr(q, "dtype") or q.dtype != da.dtype or q.shape[0] != da.shape[0]:
+    #    qc = np.array(q, dtype=da.dtype)
+    # else:
+    #    qc = q
+    qc = np.array(q, dtype=da.dtype)
     if len(da.dims) > 1:
         # There are some extra dims
         extra = utils.get_temp_dimname(da.dims, "extra")
