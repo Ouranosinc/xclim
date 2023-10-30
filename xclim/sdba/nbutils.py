@@ -12,7 +12,6 @@ from xarray import DataArray
 from xarray.core import utils
 
 USE_NANQUANTILE = environ.get("USE_NANQUANTILE", False)
-USE_SORTQUANTILE = environ.get("USE_SORTQUANTILE", False)
 
 
 @njit
@@ -84,10 +83,12 @@ def _sortquantile(arr, q):
     nogil=True,
 )
 def _choosequantile(arr, q):
-    # When the number of quantiles requested is large (1% of arr.size for nojit, any (< 0.1%) for jit),
+    # When the number of quantiles requested is large,
     # it becomes more efficient to sort the array,
     # and simply obtain the quantiles from the sorted array.
-    if (arr.size > 1000 * q.size or USE_NANQUANTILE) and not USE_SORTQUANTILE:
+    # The first method is O(arr.size*q.size),
+    # the second O(arr.size*log(arr.size) + q.size) amortized.
+    if (q.size <= 10) or (q.size <= np.log(arr.size)) or (USE_NANQUANTILE):
         return np.nanquantile(arr, q).astype(arr.dtype)
     else:
         return _sortquantile(arr, q)
@@ -104,36 +105,6 @@ def _vecquantiles(arr, rnk, res):
         res[0] = np.NaN
     else:
         res[0] = np.nanquantile(arr, rnk)
-
-
-@guvectorize(
-    [
-        (float32[:], float32, int64, float32[:]),
-        (float64[:], float64, int64, float64[:]),
-    ],
-    "(n),(),()->()",
-    nopython=True,
-    cache=False,
-)
-def _vecquantiles_sorted(arr, rnk, numnan, res):
-    if np.isnan(rnk):
-        res[0] = np.NaN
-    else:
-        index = rnk * (arr.size - 1 - numnan)
-        frac = index % 1
-        low = np.int64(np.floor(index))
-        high = np.int64(np.ceil(index))
-        res[0] = (1 - frac) * arr[low] + frac * arr[high]
-
-
-@njit(fastmath=False, nogil=True)
-def _vecquantiles_wrapper(arr, rnk):
-    if (USE_NANQUANTILE) and not USE_SORTQUANTILE:
-        return _vecquantiles(arr, rnk)
-    else:
-        sortarr = np.sort(arr)
-        numnan = numnan_sorted(sortarr)
-        return _vecquantiles_sorted(sortarr, rnk, numnan)
 
 
 def vecquantiles(da, rnk, dim):
