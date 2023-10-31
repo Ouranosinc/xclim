@@ -14,18 +14,6 @@ from xarray.core import utils
 USE_NANQUANTILE = environ.get("USE_NANQUANTILE", False)
 
 
-@njit
-def _quantile(arr, q):
-    if arr.ndim == 1:
-        out = np.empty((q.size,), dtype=arr.dtype)
-        out[:] = _choosequantile(arr, q)
-    else:
-        out = np.empty((arr.shape[0], q.size), dtype=arr.dtype)
-        for index in range(out.shape[0]):
-            out[index] = _choosequantile(arr[index], q)
-    return out
-
-
 @njit(
     [
         int64(float32[:]),
@@ -33,6 +21,7 @@ def _quantile(arr, q):
     ],
     fastmath=False,
     nogil=True,
+    cache=False,
 )
 def numnan_sorted(s):
     """Given a sorted array s, return the number of NaNs."""
@@ -55,6 +44,7 @@ def numnan_sorted(s):
     ],
     fastmath=False,
     nogil=True,
+    cache=False,
 )
 def _sortquantile(arr, q):
     """Sorts arr into ascending order,
@@ -81,6 +71,7 @@ def _sortquantile(arr, q):
     ],
     fastmath=False,
     nogil=True,
+    cache=False,
 )
 def _choosequantile(arr, q):
     # When the number of quantiles requested is large,
@@ -92,6 +83,28 @@ def _choosequantile(arr, q):
         return np.nanquantile(arr, q).astype(arr.dtype)
     else:
         return _sortquantile(arr, q)
+
+
+@njit(
+    [
+        float32[:](float32[:], float32[:]),
+        float64[:](float64[:], float64[:]),
+        float32[:, :](float32[:, :], float32[:]),
+        float64[:, :](float64[:, :], float64[:]),
+    ],
+    fastmath=False,
+    nogil=True,
+    cache=False,
+)
+def _quantile(arr, q):
+    if arr.ndim == 1:
+        out = np.empty((q.size,), dtype=arr.dtype)
+        out[:] = _choosequantile(arr, q)
+    else:
+        out = np.empty((arr.shape[0], q.size), dtype=arr.dtype)
+        for index in range(out.shape[0]):
+            out[index] = _choosequantile(arr[index], q)
+    return out
 
 
 @guvectorize(
@@ -138,7 +151,6 @@ def quantile(da, q, dim):
     dims = [dim] if isinstance(dim, str) else dim
     tem = utils.get_temp_dimname(da.dims, "temporal")
     da = da.stack({tem: dims})
-    print(q)
     # So we cut in half the definitions to declare in numba
     # We still use q as the coords so it corresponds to what was done upstream
     # if not hasattr(q, "dtype") or q.dtype != da.dtype or q.shape[0] != da.shape[0]:
@@ -170,7 +182,15 @@ def quantile(da, q, dim):
     return res
 
 
-@njit
+@njit(
+    [
+        float32[:, :](float32[:, :]),
+        float64[:, :](float64[:, :]),
+    ],
+    fastmath=False,
+    nogil=True,
+    cache=False,
+)
 def remove_NaNs(x):  # noqa
     """Remove NaN values from series."""
     remove = np.zeros_like(x[0, :], dtype=boolean)
@@ -179,7 +199,15 @@ def remove_NaNs(x):  # noqa
     return x[:, ~remove]
 
 
-@njit(fastmath=True)
+@njit(
+    [
+        float32(float32[:, :], float32[:, :]),
+        float64(float64[:, :], float64[:, :]),
+    ],
+    fastmath=True,
+    nogil=True,
+    cache=False,
+)
 def _correlation(X, Y):
     """Compute a correlation as the mean of pairwise distances between points in X and Y.
 
@@ -196,7 +224,15 @@ def _correlation(X, Y):
     return d / (X.shape[1] * Y.shape[1])
 
 
-@njit(fastmath=True)
+@njit(
+    [
+        float32(float32[:, :]),
+        float64(float64[:, :]),
+    ],
+    fastmath=True,
+    nogil=True,
+    cache=False,
+)
 def _autocorrelation(X):
     """Mean of the NxN pairwise distances of points in X of shape KxN.
 
@@ -219,7 +255,7 @@ def _autocorrelation(X):
     ],
     "(k, n),(k, m)->()",
     nopython=True,
-    cache=True,
+    cache=False,
 )
 def _escore(tgt, sim, out):
     """E-score based on the Székely-Rizzo e-distances between clusters.
@@ -242,7 +278,17 @@ def _escore(tgt, sim, out):
     out[0] = w * (sXY + sXY - sXX - sYY) / 2
 
 
-@njit
+@njit(
+    #    [
+    #        float32[:,:](float32[:]),
+    #        float64[:,:](float64[:]),
+    #        float32[:,:](float32[:,:]),
+    #        float64[:,:](float64[:,:]),
+    #    ],
+    fastmath=False,
+    nogil=True,
+    cache=False,
+)
 def _first_and_last_nonnull(arr):
     """For each row of arr, get the first and last non NaN elements."""
     out = np.empty((arr.shape[0], 2))
@@ -255,7 +301,15 @@ def _first_and_last_nonnull(arr):
     return out
 
 
-@njit
+@njit(
+    #    [
+    #        float64[:](float32[:],float32[:],float32[:],float32[:],float32[:],float32[:],optional(typeof("constant"))),
+    #        float64[:](float64[:],float64[:],float64[:],float64[:],float64[:],float64[:],optional(typeof("constant"))),
+    #    ],
+    fastmath=False,
+    nogil=True,
+    cache=False,
+)
 def _extrapolate_on_quantiles(
     interp, oldx, oldg, oldy, newx, newg, method="constant"
 ):  # noqa
@@ -279,7 +333,15 @@ def _extrapolate_on_quantiles(
     return interp
 
 
-@njit
+@njit(
+    #    [
+    #        typeof((float64[:,:],float64,float64))(float32[:],float32[:],optional(boolean)),
+    #        typeof((float64[:,:],float64,float64))(float64[:],float64[:],optional(boolean)),
+    #    ],
+    fastmath=False,
+    nogil=True,
+    cache=False,
+)
 def _pairwise_haversine_and_bins(lond, latd, transpose=False):
     """Inter-site distances with the haversine approximation."""
     N = lond.shape[0]
