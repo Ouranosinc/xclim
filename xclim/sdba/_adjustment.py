@@ -309,7 +309,7 @@ def npdf_transform(ds: xr.Dataset, **kwargs) -> xr.Dataset:
         # All NaN, but with the proper shape.
         escores = (
             ref.isel({dim: 0, "time": 0}) * hist.isel({dim: 0, "time": 0})
-        ).expand_dims(iterations=ds.iteration) * np.NaN
+        ).expand_dims(iterations=ds.iterations) * np.NaN
 
     return xr.Dataset(
         data_vars={

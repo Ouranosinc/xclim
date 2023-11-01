@@ -4,11 +4,15 @@ Changelog
 
 v0.47.0 (unreleased)
 --------------------
-Contributors to this version: Pascal Bourgault (:user:`aulemahal`).
+Contributors to this version: Juliette Lavoie (:user:`juliettelavoie`), Pascal Bourgault (:user:`aulemahal`).
 
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 * New ``ipcc-advanced`` test added to ``xclim.ensembles.change_significance``.
+
+Bug fixes
+^^^^^^^^^
+* Fixed a bug with ``n_escore=-1`` in ``xclim.sdba.adjustment.NpdfTransform`` (:issue:`1515`, :pull:`1515`).
 
 v0.46.0 (2023-10-24)
 --------------------
