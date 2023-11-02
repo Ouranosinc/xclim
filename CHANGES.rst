@@ -8,7 +8,7 @@ Contributors to this version: Juliette Lavoie (:user:`juliettelavoie`), Pascal B
 
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-* New ``ipcc-advanced`` test added to ``xclim.ensembles.change_significance``.
+* New functions ``xclim.ensembles.robustness_fractions`` and ``xclim.ensembles.robustness_categories``. The former will replace ``xclim.ensembles.change_significance`` which is now deprecated and will be removed in xclim 0.49.
 
 Bug fixes
 ^^^^^^^^^
