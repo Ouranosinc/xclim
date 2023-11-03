@@ -4,11 +4,15 @@ Changelog
 
 v0.47.0 (unreleased)
 --------------------
-Contributors to this version: Juliette Lavoie (:user:`juliettelavoie`)
+Contributors to this version: Juliette Lavoie (:user:`juliettelavoie`), Trevor James Smith (:user:`Zeitsperre`).
 
 Bug fixes
 ^^^^^^^^^
 * Fixed a bug with ``n_escore=-1`` in ``xclim.sdba.adjustment.NpdfTransform`` (:issue:`1515`, :pull:`1515`).
+
+Internal changes
+^^^^^^^^^^^^^^^^
+* Pinned `cf-xarray` below v0.8.5 in Python3.8 installation to further extend legacy support. (:pull:`1519`).
 
 v0.46.0 (2023-10-24)
 --------------------
