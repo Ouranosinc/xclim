@@ -14,12 +14,12 @@ jobs:
       - uses: actions/checkout@v4.1.0
         with:
           token: ${{ secrets.WORKFLOW_TOKEN }}
-          persist-credentials: false
+          persist-credentials: true
       - name: Run GitHub Actions Version Updater
         uses: saadmk11/github-actions-version-updater@v0.8.1
         with:
           token: ${{ secrets.WORKFLOW_TOKEN }}
-          committer_email: 'update-github-actions-bot@ouranos.ca'
-          committer_username: 'update-github-actions-bot'
+          committer_email: 'bumpversion[bot]@ouranos.ca'
+          committer_username: 'update-github-actions[bot]'
           pull_request_title: '[bot] Update GitHub Action Versions'
           pull_request_team_reviewers: "xclim-core"
