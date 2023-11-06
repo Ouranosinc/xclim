@@ -145,8 +145,6 @@ def robustness_fractions(  # noqa: C901
     >>> fut = tgmean.sel(time=slice("2020", "2050"))
     >>> ref = tgmean.sel(time=slice("1990", "2020"))
     >>> fractions = ensembles.robustness_fractions(fut, ref, test="ttest")
-    # Binary map, True where at least 80% of members agree on the sign of change.
-    >>> agreement_map = (fractions.pos_frac > 0.8) | ((1 - fractions.pos_frac) > 0.8)
     """
     # Realization dimension name
     realization = "realization"
