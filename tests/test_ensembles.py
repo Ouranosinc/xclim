@@ -542,8 +542,8 @@ class TestEnsembleReduction:
 
 
 # ## Tests for Robustness ##
-@pytest.fixture(params=[True, False])
-def robust_data(request, random):
+@pytest.fixture
+def robust_data(random):
     norm = get_dist("norm")
     ref = np.tile(
         np.array(
@@ -592,9 +592,6 @@ def robust_data(request, random):
     ref["time"] = xr.cftime_range("2000-01-01", periods=40, freq="YS")
     fut = xr.DataArray(fut, dims=("lon", "realization", "time"), name="tas")
     fut["time"] = xr.cftime_range("2040-01-01", periods=40, freq="YS")
-    if request.param:
-        ref = ref.chunk({"lon": 1}).to_dataset()
-        fut = fut.chunk({"lon": 1}).to_dataset()
     return ref, fut
 
 
@@ -604,7 +601,7 @@ def robust_data(request, random):
         (
             "ttest",
             [0.75, 1, 1, 1],
-            [2 / 3, 0.5, 1, 1],
+            [0.5, 0.5, 1, 1],
             [
                 [False, True, True, True],
                 [True, True, True, True],
@@ -616,7 +613,7 @@ def robust_data(request, random):
         (
             "welch-ttest",
             [0.25, 1, 1, 1],
-            [1, 0.5, 1, 1],
+            [0.25, 0.5, 1, 1],
             [
                 [False, False, False, True],
                 [True, True, True, True],
@@ -628,7 +625,7 @@ def robust_data(request, random):
         (
             "mannwhitney-utest",
             [0.5, 1, 1, 1],
-            [0.5, 0.5, 1, 1],
+            [0.25, 0.5, 1, 1],
             [
                 [False, False, True, True],
                 [True, True, True, True],
@@ -640,7 +637,7 @@ def robust_data(request, random):
         (
             "brownforsythe-test",
             [0.25, 0.25, 0.25, 0],
-            [1, 0.0, 1, np.nan],
+            [0.25, 0.0, 0.25, 0],
             [
                 [False, True, False, False],
                 [True, False, False, False],
@@ -650,27 +647,24 @@ def robust_data(request, random):
             {},
         ),
         (
+            "ipcc-ar6-c",
+            [0.25, 1, 1, 1],
+            [0.25, 0.5, 1, 1],
+            None,
+            {},
+        ),
+        (
             "threshold",
             [0.25, 1, 1, 1],
-            [1, 0.5, 1, 1],
-            [
-                [False, False, False, True],
-                [True, True, True, True],
-                [True, True, True, True],
-                [False, False, True, True],
-            ],
+            [0.25, 0.5, 1, 1],
+            None,
             {"rel_thresh": 0.002},
         ),
         (
             "threshold",
             [0, 0, 0.5, 0],
-            [np.nan, np.nan, 1, np.nan],
-            [
-                [False, False, False, False],
-                [False, False, False, False],
-                [False, False, True, True],
-                [False, False, False, False],
-            ],
+            [0, 0, 0.5, 0],
+            None,
             {"abs_thresh": 2},
         ),
         (
@@ -682,87 +676,61 @@ def robust_data(request, random):
         ),
     ],
 )
-def test_change_significance(
+def test_robustness_fractions(
     robust_data, test, exp_chng_frac, exp_pos_frac, exp_changed, kws
 ):
     ref, fut = robust_data
 
     if test == "ttest" and Version(__scipy_version__) < Version("1.9.0"):
         with pytest.warns(FutureWarning):
-            chng_frac, pos_frac = ensembles.change_significance(
-                fut, ref, test=test, **kws
-            )
+            fracs = ensembles.robustness_fractions(fut, ref, test=test, **kws)
     else:
-        chng_frac, pos_frac = ensembles.change_significance(fut, ref, test=test, **kws)
+        fracs = ensembles.robustness_fractions(fut, ref, test=test, **kws)
 
-    assert chng_frac.attrs["test"] == str(test)
-    if isinstance(ref, xr.Dataset):
-        chng_frac = chng_frac.tas
-        pos_frac = pos_frac.tas
+    assert fracs.changed.attrs["test"] == str(test)
 
-    np.testing.assert_array_almost_equal(chng_frac, exp_chng_frac)
-    np.testing.assert_array_almost_equal(pos_frac, exp_pos_frac)
+    np.testing.assert_array_almost_equal(fracs.positive, [0.5, 0.5, 1, 1])
+    np.testing.assert_array_almost_equal(fracs.agree, [0.5, 0.5, 1, 1])
+    np.testing.assert_array_almost_equal(fracs.valid, [1, 1, 1, 0.5])
+    np.testing.assert_array_almost_equal(fracs.changed, exp_chng_frac)
+    np.testing.assert_array_almost_equal(fracs.changed_positive, exp_pos_frac)
 
-    # With p-values
-    chng, sign, pvals = ensembles.change_significance(
-        fut, ref, test=test, p_vals=True, **kws
-    )
-    if pvals is not None:
-        if isinstance(ref, xr.Dataset):
-            pvals = pvals.tas
-        pvals.load()  # Otherwise it acts weirdly for welch-ttest
+    if "pvals" in fracs:
         # 0.05 is the default p_change parameter
-        changed = pvals < 0.05
+        changed = fracs.pvals < 0.05
         np.testing.assert_array_almost_equal(changed, exp_changed)
 
 
-def test_change_significance_weighted(robust_data):
+def test_robustness_fractions_weighted(robust_data):
     ref, fut = robust_data
     weights = xr.DataArray([1, 0.1, 3.5, 5], coords={"realization": ref.realization})
-    chng_frac, pos_frac = ensembles.change_significance(
-        fut, ref, test=None, weights=weights
-    )
-    assert chng_frac.attrs["test"] == "None"
-    if isinstance(ref, xr.Dataset):
-        chng_frac = chng_frac.tas
-        pos_frac = pos_frac.tas
+    fracs = ensembles.robustness_fractions(fut, ref, test=None, weights=weights)
+    assert fracs.changed.attrs["test"] == "None"
 
-    np.testing.assert_array_equal(chng_frac, [1, 1, 1, 1])
-    np.testing.assert_array_almost_equal(pos_frac, [0.53125, 0.88541667, 1.0, 1.0])
-
-
-def test_change_significance_delta(robust_data):
-    ref, fut = robust_data
-    delta = fut.mean("time") - ref.mean("time")
-    chng_frac, pos_frac = ensembles.change_significance(
-        delta, test="threshold", abs_thresh=2
+    np.testing.assert_array_equal(fracs.changed, [1, 1, 1, 1])
+    np.testing.assert_array_almost_equal(
+        fracs.changed_positive, [0.53125, 0.88541667, 1.0, 1.0]
     )
 
-    if isinstance(ref, xr.Dataset):
-        chng_frac = chng_frac.tas
-        pos_frac = pos_frac.tas
 
-    exp_chng_frac = [0, 0, 0.5, 0]
-    exp_pos_frac = [np.nan, np.nan, 1, np.nan]
-    np.testing.assert_array_equal(chng_frac, exp_chng_frac)
-    np.testing.assert_array_equal(pos_frac, exp_pos_frac)
+def test_robustness_fractions_delta(robust_data):
+    delta = xr.DataArray([-2, 1, -2, -1], dims=("realization",))
+    fracs = ensembles.robustness_fractions(delta, test="threshold", abs_thresh=1.5)
+    np.testing.assert_array_equal(fracs.changed, [0.5])
+    np.testing.assert_array_equal(fracs.changed_positive, [0.0])
+    np.testing.assert_array_equal(fracs.positive, [0.25])
+    np.testing.assert_array_equal(fracs.agree, [0.75])
 
-    weights = xr.DataArray([1, 0.1, 3.5, 5], coords={"realization": delta.realization})
-    chng_frac, pos_frac = ensembles.change_significance(
-        delta, test="threshold", abs_thresh=2, weights=weights
+    weights = xr.DataArray([4, 3, 2, 1], dims=("realization",))
+    fracs = ensembles.robustness_fractions(
+        delta, test="threshold", abs_thresh=1.5, weights=weights
     )
-    if isinstance(ref, xr.Dataset):
-        chng_frac = chng_frac.tas
-        pos_frac = pos_frac.tas
-
-    exp_chng_frac = [0, 0, 0.88541667, 0]
-    exp_pos_frac = [np.nan, np.nan, 1, np.nan]
-
-    np.testing.assert_array_almost_equal(chng_frac, exp_chng_frac)
-    np.testing.assert_array_equal(pos_frac, exp_pos_frac)
+    np.testing.assert_array_equal(fracs.changed, [0.6])
+    np.testing.assert_array_equal(fracs.positive, [0.3])
+    np.testing.assert_array_equal(fracs.agree, [0.7])
 
 
-def test_change_significance_empty():
+def test_robustness_fractions_empty():
     """Test that NaN is returned if input arrays are full of NaNs."""
     r = np.full((20, 10), np.nan)
     f = np.full((20, 10), np.nan)
@@ -770,8 +738,21 @@ def test_change_significance_empty():
     ref = xr.DataArray(r, dims=("realization", "time"), name="tas")
     fut = xr.DataArray(f, dims=("realization", "time"), name="tas")
 
-    c, f = ensembles.change_significance(fut, ref, test="ttest")
-    assert np.all(np.isnan(c))
+    f = ensembles.robustness_fractions(fut, ref, test="ttest")
+    assert np.all(np.isnan(f.changed))
+
+
+def test_robustness_categories():
+    changed = xr.DataArray([0.5, 0.8, 1, 1])
+    agree = xr.DataArray([1, 0.5, 0.5, 1])
+
+    categories = ensembles.robustness_categories(changed, agree)
+    np.testing.assert_array_equal(categories, [2, 3, 3, 1])
+    assert categories.flag_values == [1, 2, 3]
+    assert (
+        categories.flag_meanings
+        == "robust_signal no_change_or_no_signal conflicting_signal"
+    )
 
 
 def test_robustness_coefficient():
