@@ -3,13 +3,13 @@ default_language_version:
 
 repos:
 - repo: https://github.com/asottile/pyupgrade
-  rev: v3.14.0
+  rev: v3.15.0
   hooks:
   - id: pyupgrade
     args: ['--py38-plus']
     exclude: 'xclim/core/indicator.py'
 - repo: https://github.com/pre-commit/pre-commit-hooks
-  rev: v4.4.0
+  rev: v4.5.0
   hooks:
   - id: trailing-whitespace
     exclude: setup.cfg
@@ -33,7 +33,7 @@ repos:
   - id: yamllint
     args: ['--config-file=.yamllint.yaml']
 - repo: https://github.com/psf/black
-  rev: 23.9.1
+  rev: 23.10.1
   hooks:
   - id: black
 - repo: https://github.com/PyCQA/isort
@@ -42,7 +42,7 @@ repos:
   - id: isort
     args: ['--settings-file=pyproject.toml']
 - repo: https://github.com/astral-sh/ruff-pre-commit
-  rev: v0.1.0
+  rev: v0.1.4
   hooks:
   - id: ruff
 - repo: https://github.com/pycqa/flake8
@@ -66,13 +66,13 @@ repos:
     files: '.ipynb'
     args: [ "--extra-keys", "metadata.kernelspec" ]
 - repo: https://github.com/keewis/blackdoc
-  rev: v0.3.8
+  rev: v0.3.9
   hooks:
   - id: blackdoc
     exclude: '(xclim/indices/__init__.py|docs/installation.rst)'
     additional_dependencies: ['black==23.9.1']
 - repo: https://github.com/python-jsonschema/check-jsonschema
-  rev: 0.27.0
+  rev: 0.27.1
   hooks:
   - id: check-github-workflows
   - id: check-readthedocs
