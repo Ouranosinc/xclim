@@ -149,6 +149,9 @@ def qdm_adjust(ds, *, group, interp, extrapolation, kind) -> xr.Dataset:
     gr_sim = get_windowed_group(
         ds.sim, group.name if isinstance(group, Grouper) else group
     )
+    gr_sim = (
+        gr_sim.unify_chunks()
+    )  # line above messes of the chunks with time.dayofyear
     gr_rank = gr_sim.map_blocks(
         lambda da: da.rank(dim=da.attrs["complement_dims"][0], pct=True)
     ).assign_attrs(gr_sim.attrs)
@@ -309,7 +312,7 @@ def npdf_transform(ds: xr.Dataset, **kwargs) -> xr.Dataset:
         # All NaN, but with the proper shape.
         escores = (
             ref.isel({dim: 0, "time": 0}) * hist.isel({dim: 0, "time": 0})
-        ).expand_dims(iterations=ds.iteration) * np.NaN
+        ).expand_dims(iterations=ds.iterations) * np.NaN
 
     return xr.Dataset(
         data_vars={
