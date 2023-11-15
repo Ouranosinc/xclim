@@ -184,3 +184,92 @@ def hawkins_sutton_09_weighting(da, obs, baseline=("1971", "2000")):
     xm = da.sel(time=baseline[1]) - mm
     xm = xm.drop("time").squeeze()
     return 1 / (obs + np.abs(xm - obs))
+
+
+def lafferty_sriver(
+    da: xr.DataArray,
+    sm: xr.DataArray = None,
+    weights: xr.DataArray = None,
+):
+    """Return the mean and partitioned variance of an ensemble based on method from Lafferty and Sriver (2023).
+
+    Parameters
+    ----------
+    da: xr.DataArray
+      Time series with dimensions 'time', 'scenario', 'downscaling' and 'model'.
+    sm: xr.DataArray
+      Smoothed time series over time, with the same dimensions as `da`. By default, this is estimated using a 4th order
+      polynomial. Results are sensitive to the choice of smoothing function, use this to set another polynomial
+      order, or a LOESS curve.
+    weights: xr.DataArray
+      Weights to be applied to individual models. Should have `model` dimension.
+
+    Returns
+    -------
+    xr.DataArray, xr.DataArray
+      The mean relative to the baseline, and the components of variance of the ensemble. These components are
+      coordinates along the `uncertainty` dimension: `variability`, `model`, `scenario`, `downscaling` and `total`.
+
+    Notes
+    -----
+    To prepare input data, make sure `da` has dimensions `time`, `scenario`, `downscaling` and `model`,
+    e.g. `da.rename({"experiment": "scenario"})`.
+
+    References
+    ----------
+    :cite:cts:`Lafferty2023`
+    """
+    if xr.infer_freq(da.time)[0] not in ["A", "Y"]:
+        raise ValueError("This algorithm expects annual time series.")
+
+    if not {"time", "scenario", "model", "downscaling"}.issubset(da.dims):
+        raise ValueError(
+            "DataArray dimensions should include 'time', 'scenario', 'downscaling' and 'model'."
+        )
+
+    # TODO: add weigths
+
+    if sm is None:
+        # Fit a 4th order polynomial
+        fit = da.polyfit(dim="time", deg=4, skipna=True)
+        sm = xr.polyval(coord=da.time, coeffs=fit.polyfit_coefficients).where(
+            da.notnull()
+        )
+
+    # "Interannual variability is then estimated as the centered rolling 11-year variance of the difference
+    # between the extracted forced response and the raw outputs, averaged over all outputs"
+    nv_u = (
+        (da - sm)
+        .rolling(time=11, center=True)
+        .var(dim="time")
+        .mean(dim=["scenario", "model", "downscaling"])
+    )
+
+    # Model uncertainty: U_m(t)
+    model_u = sm.var(dim="model").mean(dim=["scenario", "downscaling"])
+
+    # Scenario uncertainty: U_s(t)
+    # TODO: maybe add option for Brekke and Barsugli
+    scenario_u = sm.mean(dim=["model", "downscaling"]).var(dim="scenario")
+
+    # Downscaling uncertainty: U_d(t)
+    downscaling_u = sm.var(dim="downscaling").mean(dim=["scenario", "model"])
+
+    # Total uncertainty: T(t)
+    total = nv_u + scenario_u + model_u + downscaling_u
+
+    # Create output array with the uncertainty components
+    u = pd.Index(
+        ["model", "scenario", "downscaling", "variability", "total"], name="uncertainty"
+    )
+    uncertainty = xr.concat([model_u, scenario_u, downscaling_u, nv_u, total], dim=u)
+
+    # Add the number of instances for each uncertainty component
+    uncertainty = uncertainty.assign_coords(
+        num=("uncertainty", [int(len(da[v])) if v in da.dims else 0 for v in u])
+    )
+
+    # Mean projection: G(t)
+    g = sm.mean(dim="model").mean(dim="scenario").mean(dim="downscaling")
+
+    return g, uncertainty
