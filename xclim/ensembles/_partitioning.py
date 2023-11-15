@@ -154,6 +154,15 @@ def hawkins_sutton(
     u = pd.Index(["variability", "model", "scenario", "total"], name="uncertainty")
     uncertainty = xr.concat([nv_u, model_u, scenario_u, total], dim=u)
 
+    # Add the number of instances for each uncertainty component
+    uncertainty = uncertainty.assign_coords(
+        num=("uncertainty", [int(len(da[v])) if v in da.dims else 0 for v in u])
+    )
+
+    # attrs for plotting
+    uncertainty.attrs["long_name"] = "Fraction of the total variance"
+    uncertainty.attrs["units"] = "%"
+
     # Mean projection: G(t)
     g = sm.weighted(weights).mean(dim="model").mean(dim="scenario")
 
@@ -268,6 +277,10 @@ def lafferty_sriver(
     uncertainty = uncertainty.assign_coords(
         num=("uncertainty", [int(len(da[v])) if v in da.dims else 0 for v in u])
     )
+
+    # attrs for plotting
+    uncertainty.attrs["long_name"] = "Fraction of the total variance"
+    uncertainty.attrs["units"] = "%"
 
     # Mean projection:
     # This is not part of the original algorithm, but we want all partition algos to have similar outputs.
