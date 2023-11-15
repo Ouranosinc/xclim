@@ -3,8 +3,7 @@
 Uncertainty Partitioning
 ========================
 
-This module implements methods and tools meant to partition climate projection uncertainties into different components:
-natural variability, GHG scenario and climate models.
+This module implements methods and tools meant to partition climate projection uncertainties into different components.
 """
 
 
@@ -18,6 +17,7 @@ import xarray as xr
 Implemented partitioning algorithms:
 
  - `hawkins_sutton`
+ - `lafferty_sriver`
 
 # References for other more recent algorithms that could be added here.
 
@@ -269,7 +269,8 @@ def lafferty_sriver(
         num=("uncertainty", [int(len(da[v])) if v in da.dims else 0 for v in u])
     )
 
-    # Mean projection: G(t)
+    # Mean projection:
+    # This is not part of the original algorithm, but we want all partition algos to have similar outputs.
     g = sm.mean(dim="model").mean(dim="scenario").mean(dim="downscaling")
 
     return g, uncertainty
