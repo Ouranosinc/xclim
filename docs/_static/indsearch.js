@@ -72,13 +72,13 @@ function indTemplate(ind) {
   return `
     <div class="indElem" id="${ind.id}">
       <div class="indHeader">
-        <b class="indTitle">${ind.title}</b>
+        <b class="indTitle">${escapeHTML(ind.title)}</b>
         <a class="reference_internal indName" href="api_indicators.html#xclim.indicators.${ind.module}.${ind.name}" title="${ind.name}">
           <code>${ind.module}.${ind.name}</code>
         </a>
       </div>
       <div class="indVars">Uses: ${varlist}</div>
-      <div class="indDesc"><p>${ind.abstract}</p></div>
+      <div class="indDesc"><p>${escapeHTML(ind.abstract)}</p></div>
       ${makeKeywordLabel(ind)}
       <div class="indID">Yaml ID: <code>${ind.id}</code></div>
     </div>
