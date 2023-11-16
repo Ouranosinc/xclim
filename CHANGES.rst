@@ -4,7 +4,7 @@ Changelog
 
 v0.47.0 (unreleased)
 --------------------
-Contributors to this version: Juliette Lavoie (:user:`juliettelavoie`), Pascal Bourgault (:user:`aulemahal`), Trevor James Smith (:user:`Zeitsperre`).
+Contributors to this version: Juliette Lavoie (:user:`juliettelavoie`), Pascal Bourgault (:user:`aulemahal`), Trevor James Smith (:user:`Zeitsperre`), Éric Dupuis (:user:`coxipi`).
 
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -17,6 +17,7 @@ Bug fixes
 Internal changes
 ^^^^^^^^^^^^^^^^
 * Pinned `cf-xarray` below v0.8.5 in Python3.8 installation to further extend legacy support. (:pull:`1519`).
+* Use the intermediate step `_cumsum_reset_on_zero` instead of `rle` which is sufficient in `_boundary_run`. (:issue:`1405`, :pull:`1530`).
 
 v0.46.0 (2023-10-24)
 --------------------
