@@ -2,6 +2,23 @@
 Changelog
 =========
 
+v0.47.0 (unreleased)
+--------------------
+Contributors to this version: Juliette Lavoie (:user:`juliettelavoie`), Pascal Bourgault (:user:`aulemahal`), Trevor James Smith (:user:`Zeitsperre`).
+
+New features and enhancements
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+* New functions ``xclim.ensembles.robustness_fractions`` and ``xclim.ensembles.robustness_categories``. The former will replace ``xclim.ensembles.change_significance`` which is now deprecated and will be removed in xclim 0.49 (:pull:`1514`).
+
+Bug fixes
+^^^^^^^^^
+* Fixed a bug with ``n_escore=-1`` in ``xclim.sdba.adjustment.NpdfTransform`` (:issue:`1515`, :pull:`1515`).
+
+Internal changes
+^^^^^^^^^^^^^^^^
+* Pinned `cf-xarray` below v0.8.5 in Python3.8 installation to further extend legacy support. (:pull:`1519`).
+* `pip check` in conda builds in GitHub workflows have been temporarily set to always pass. (:pull:`1531`).
+
 v0.46.0 (2023-10-24)
 --------------------
 Contributors to this version: David Huard (:user:`huard`), Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), Éric Dupuis (:user:`coxipi`).

@@ -29,10 +29,10 @@ jobs:
     name: Bumpversion Patch
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4.1.0
+      - uses: actions/checkout@v4.1.1
         with:
           persist-credentials: false
-      - uses: actions/setup-python@v4.7.0
+      - uses: actions/setup-python@v4.7.1
         with:
           python-version: "3.x"
       - name: Config Commit Bot
@@ -45,12 +45,12 @@ jobs:
           echo "current_version=${CURRENT_VERSION}"
       - name: Bump Patch Version
         run: |
-          pip install bump2version
+          python -m pip install bump2version
           echo "running `bump2version patch`"
           NEW_VERSION="$(grep -E '__version__'  xclim/__init__.py | cut -d ' ' -f3)"
           echo "new_version=${NEW_VERSION}"
       - name: Push Changes
-        uses: ad-m/github-push-action@v0.6.0
+        uses: ad-m/github-push-action@v0.8.0
         with:
           force: false
           github_token: ${{ secrets.BUMPVERSION_TOKEN }}

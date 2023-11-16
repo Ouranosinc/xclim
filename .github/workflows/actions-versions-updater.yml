@@ -11,10 +11,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4.1.0
+      - uses: actions/checkout@v4.1.1
         with:
           token: ${{ secrets.WORKFLOW_TOKEN }}
-          persist-credentials: false
+          persist-credentials: true
       - name: Run GitHub Actions Version Updater
         uses: saadmk11/github-actions-version-updater@v0.8.1
         with:

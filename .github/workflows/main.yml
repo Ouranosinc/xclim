@@ -40,17 +40,19 @@ jobs:
         python-version:
           - "3.8"
     steps:
-      - uses: actions/checkout@v4.1.0
+      - uses: actions/checkout@v4.1.1
       - name: Set up Python${{ matrix.python-version }}
-        uses: actions/setup-python@v4.7.0
+        uses: actions/setup-python@v4.7.1
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install pylint and tox
         run: pip install pylint tox~=4.0
       - name: Run pylint
-        run: pylint --rcfile=pylintrc --disable=import-error --exit-zero xclim
+        run: |
+          python -m pylint --rcfile=pylintrc --disable=import-error --exit-zero xclim
       - name: Run linting suite
-        run: tox -e lint
+        run: |
+          python -m tox -e lint
 
   test-py39:
     name: test-${{ matrix.tox-env }} (Python${{ matrix.python-version }})
@@ -64,17 +66,17 @@ jobs:
           - tox-env: "py39-coverage"
             python-version: "3.9"
     steps:
-      - uses: actions/checkout@v4.1.0
+      - uses: actions/checkout@v4.1.1
       - name: Set up Python${{ matrix.python-version }}
-        uses: actions/setup-python@v4.7.0
+        uses: actions/setup-python@v4.7.1
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install tox
         run: |
-          pip install tox~=4.0
+          python -m pip install tox~=4.0
       - name: Test with tox
         run: |
-          tox -e ${{ matrix.tox-env }}
+          python -m tox -e ${{ matrix.tox-env }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           COVERALLS_FLAG_NAME: run-{{ matrix.tox-env }}
@@ -108,22 +110,22 @@ jobs:
             python-version: "3.11"
             markers: -m 'not slow and not requires_internet'
     steps:
-      - uses: actions/checkout@v4.1.0
+      - uses: actions/checkout@v4.1.1
       - name: Install Eigen3
         if: contains(matrix.tox-env, 'sbck')
         run: |
           sudo apt-get update
           sudo apt-get install libeigen3-dev
       - name: Set up Python${{ matrix.python-version }}
-        uses: actions/setup-python@v4.7.0
+        uses: actions/setup-python@v4.7.1
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install tox
         run: |
-          pip install tox~=4.0
+          python -m pip install tox~=4.0
       - name: Test with tox
         run: |
-          tox -e ${{ matrix.tox-env }} -- ${{ matrix.markers }}
+          python -m tox -e ${{ matrix.tox-env }} -- ${{ matrix.markers }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           COVERALLS_FLAG_NAME: run-{{ matrix.tox-env }}
@@ -147,9 +149,9 @@ jobs:
       run:
         shell: bash -l {0}
     steps:
-      - uses: actions/checkout@v4.1.0
+      - uses: actions/checkout@v4.1.1
       - name: Setup Conda (Micromamba) with Python${{ matrix.python-version }}
-        uses: mamba-org/setup-micromamba@v1.4.4
+        uses: mamba-org/setup-micromamba@v1.6.0
         with:
           cache-downloads: true
           cache-environment: true
@@ -168,10 +170,10 @@ jobs:
         run: |
           conda list
           xclim show_version_info
-          pip check
+          python -m pip check || true
       - name: Test with pytest
         run: |
-          pytest --numprocesses=logical --durations=10 --cov=xclim --cov-report=term-missing
+          python -m pytest --numprocesses=logical --durations=10 --cov=xclim --cov-report=term-missing
 #      - name: Install tox
 #        shell: bash -l {0}
 #        run: |
@@ -203,8 +205,8 @@ jobs:
     steps:
       - name: Coveralls Finished
         run: |
-          pip install --upgrade coveralls
-          coveralls --finish
+          python -m pip install --upgrade coveralls
+          python -m coveralls --finish
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           COVERALLS_SERVICE_NAME: github

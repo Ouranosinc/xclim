@@ -14,14 +14,16 @@ jobs:
       id-token: write
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4.1.0
+      - uses: actions/checkout@v4.1.1
       - name: Set up Python3
-        uses: actions/setup-python@v4.7.0
+        uses: actions/setup-python@v4.7.1
         with:
           python-version: "3.x"
       - name: Install packaging libraries
-        run: pip install flit
+        run: |
+          python -m pip install flit
       - name: Build a binary wheel and a source tarball
-        run: flit build
+        run: |
+          python -m flit build
       - name: Publish distribution 📦 to PyPI
         uses: pypa/gh-action-pypi-publish@v1.8.10

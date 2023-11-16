@@ -434,7 +434,7 @@ def update_xclim_history(func):
         attr = update_history(
             gen_call_string(func.__name__, **bound_args.arguments),
             *da_list,
-            new_name=out.name,
+            new_name=out.name if isinstance(out, xr.DataArray) else None,
             **da_dict,
         )
         out.attrs["history"] = attr
