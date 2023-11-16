@@ -131,8 +131,8 @@ This package was created with Cookiecutter_ and the `audreyfeldroy/cookiecutter-
         :target: https://gitter.im/Ouranosinc/xclim?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge
         :alt: Gitter Chat
 
-.. |build| image:: https://github.com/Ouranosinc/xclim/workflows/xclim/badge.svg
-        :target: https://github.com/Ouranosinc/xclim/actions
+.. |build| image:: https://github.com/Ouranosinc/xclim/actions/workflows/main.yml/badge.svg
+        :target: https://github.com/Ouranosinc/xclim/actions/workflows/main.yml
         :alt: Build Status
 
 .. |coveralls| image:: https://coveralls.io/repos/github/Ouranosinc/xclim/badge.svg
