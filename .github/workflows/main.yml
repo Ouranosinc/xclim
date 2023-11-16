@@ -48,9 +48,11 @@ jobs:
       - name: Install pylint and tox
         run: pip install pylint tox~=4.0
       - name: Run pylint
-        run: pylint --rcfile=pylintrc --disable=import-error --exit-zero xclim
+        run: |
+          python -m pylint --rcfile=pylintrc --disable=import-error --exit-zero xclim
       - name: Run linting suite
-        run: tox -e lint
+        run: |
+          python -m tox -e lint
 
   test-py39:
     name: test-${{ matrix.tox-env }} (Python${{ matrix.python-version }})
@@ -71,10 +73,10 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: Install tox
         run: |
-          pip install tox~=4.0
+          python -m pip install tox~=4.0
       - name: Test with tox
         run: |
-          tox -e ${{ matrix.tox-env }}
+          python -m tox -e ${{ matrix.tox-env }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           COVERALLS_FLAG_NAME: run-{{ matrix.tox-env }}
@@ -120,10 +122,10 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: Install tox
         run: |
-          pip install tox~=4.0
+          python -m pip install tox~=4.0
       - name: Test with tox
         run: |
-          tox -e ${{ matrix.tox-env }} -- ${{ matrix.markers }}
+          python -m tox -e ${{ matrix.tox-env }} -- ${{ matrix.markers }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           COVERALLS_FLAG_NAME: run-{{ matrix.tox-env }}
@@ -167,11 +169,11 @@ jobs:
       - name: Check versions
         run: |
           conda list
-          xclim show_version_info
-          pip check || true
+          python -m xclim show_version_info
+          python -m pip check || true
       - name: Test with pytest
         run: |
-          pytest --numprocesses=logical --durations=10 --cov=xclim --cov-report=term-missing
+          python -m pytest --numprocesses=logical --durations=10 --cov=xclim --cov-report=term-missing
 #      - name: Install tox
 #        shell: bash -l {0}
 #        run: |
@@ -203,8 +205,8 @@ jobs:
     steps:
       - name: Coveralls Finished
         run: |
-          pip install --upgrade coveralls
-          coveralls --finish
+          python -m pip install --upgrade coveralls
+          python -m coveralls --finish
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           COVERALLS_SERVICE_NAME: github
