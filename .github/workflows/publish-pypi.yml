@@ -20,8 +20,10 @@ jobs:
         with:
           python-version: "3.x"
       - name: Install packaging libraries
-        run: pip install flit
+        run: |
+          python -m pip install flit
       - name: Build a binary wheel and a source tarball
-        run: flit build
+        run: |
+          python -m flit build
       - name: Publish distribution 📦 to PyPI
         uses: pypa/gh-action-pypi-publish@v1.8.10

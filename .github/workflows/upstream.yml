@@ -63,13 +63,13 @@ jobs:
       - name: Check versions
         run: |
           conda list
-          xclim show_version_info
-          pip check
+          python -m xclim show_version_info
+          python -m pip check
       - name: Run Tests
         if: success()
         id: status
         run: |
-          pytest --numprocesses=logical --durations=10 --cov=xclim --cov-report=term-missing --report-log output-${{ matrix.python-version }}-log.jsonl
+          python -m pytest --numprocesses=logical --durations=10 --cov=xclim --cov-report=term-missing --report-log output-${{ matrix.python-version }}-log.jsonl
       - name: Generate and publish the report
         if: |
           failure()
