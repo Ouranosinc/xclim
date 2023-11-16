@@ -45,7 +45,7 @@ jobs:
           echo "current_version=${CURRENT_VERSION}"
       - name: Bump Patch Version
         run: |
-          pip install bump2version
+          python -m pip install bump2version
           echo "running `bump2version patch`"
           NEW_VERSION="$(grep -E '__version__'  xclim/__init__.py | cut -d ' ' -f3)"
           echo "new_version=${NEW_VERSION}"

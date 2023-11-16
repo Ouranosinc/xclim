@@ -18,6 +18,7 @@ Bug fixes
 Internal changes
 ^^^^^^^^^^^^^^^^
 * Pinned `cf-xarray` below v0.8.5 in Python3.8 installation to further extend legacy support. (:pull:`1519`).
+* `pip check` in conda builds in GitHub workflows have been temporarily set to always pass. (:pull:`1531`).
 
 v0.46.0 (2023-10-24)
 --------------------
