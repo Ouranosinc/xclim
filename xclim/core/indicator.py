@@ -1011,7 +1011,7 @@ class Indicator(IndicatorRegistrar):
         das: dict[str, DataArray],
         attrs: dict[str, str],
         var_id: str | None = None,
-        names: Sequence[str] = None,
+        names: Sequence[str] | None = None,
     ):
         """Format attributes with the run-time values of `compute` call parameters.
 
@@ -1020,26 +1020,26 @@ class Indicator(IndicatorRegistrar):
 
         Parameters
         ----------
-        args: dict[str, Any]
-          Keyword arguments of the `compute` call.
-        das: dict[str, DataArray]
-          Input arrays.
+        args : dict[str, Any]
+            Keyword arguments of the `compute` call.
+        das : dict[str, DataArray]
+            Input arrays.
         attrs : dict[str, str]
-          The attributes to format and update.
+            The attributes to format and update.
         var_id : str
-          The identifier to use when requesting the attributes translations.
-          Defaults to the class name (for the translations) or the `identifier` field of
-          the class (for the history attribute).
-          If given, the identifier will be converted to uppercase to get the translation
-          attributes. This is meant for multi-outputs indicators.
-        names : Sequence[str]
-          List of attribute names for which to get a translation.
+            The identifier to use when requesting the attributes translations.
+            Defaults to the class name (for the translations) or the `identifier` field of
+            the class (for the history attribute).
+            If given, the identifier will be converted to uppercase to get the translation
+            attributes. This is meant for multi-outputs indicators.
+        names : sequence of str, optional
+            List of attribute names for which to get a translation.
 
         Returns
         -------
         dict
-          Attributes with {} expressions replaced by call argument values. With updated `cell_methods` and `history`.
-          `cell_methods` is not added if `names` is given and those not contain `cell_methods`.
+            Attributes with {} expressions replaced by call argument values. With updated `cell_methods` and `history`.
+            `cell_methods` is not added if `names` is given and those not contain `cell_methods`.
         """
         out = self._format(attrs, args)
         for locale in OPTIONS[METADATA_LOCALES]:
@@ -1190,7 +1190,7 @@ class Indicator(IndicatorRegistrar):
     def _format(
         cls,
         attrs: dict,
-        args: dict = None,
+        args: dict | None = None,
         formatter: AttrFormatter = default_formatter,
     ) -> dict:
         """Format attributes including {} tags with arguments.

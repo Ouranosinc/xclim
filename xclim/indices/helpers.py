@@ -196,7 +196,7 @@ def cosine_of_solar_zenith_angle(
     declination: xr.DataArray,
     lat: Quantified,
     lon: Quantified = "0 °",
-    time_correction: xr.DataArray = None,
+    time_correction: xr.DataArray | None = None,
     stat: str = "average",
     sunlit: bool = False,
 ) -> xr.DataArray:
