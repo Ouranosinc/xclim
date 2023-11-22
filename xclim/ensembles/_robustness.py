@@ -376,7 +376,7 @@ def robustness_categories(
         99 is used as a fill value for points that do not fall in any category.
     """
     src = changed_or_fractions.copy()  # Ensure no inplace changing of coords...
-    if isinstance(src, xr.Dataset): 
+    if isinstance(src, xr.Dataset):
         # Output of robustness fractions
         changed = src.changed
         agree = src.agree
@@ -384,7 +384,7 @@ def robustness_categories(
         changed = src
 
     # Initial map is all 99, same shape as change_frac
-    robustness = xr.ones_like(changed, 'int', chunks=changed.chunks) * 99
+    robustness = xr.ones_like(changed, "int", chunks=changed.chunks) * 99
     # We go in reverse gear so that the first categories have precedence in the case of multiple matches.
     for i, ((chg_op, agr_op), (chg_thresh, agr_thresh)) in reversed(
         list(enumerate(zip(ops, thresholds), 1))
