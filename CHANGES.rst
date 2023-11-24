@@ -13,7 +13,7 @@ New features and enhancements
 Bug fixes
 ^^^^^^^^^
 * Fixed a bug with ``n_escore=-1`` in ``xclim.sdba.adjustment.NpdfTransform`` (:issue:`1515`, :pull:`1516`).
-* Fix wrong attributes in `xclim.indices.standardized_precipitation_index``, `xclim.indices.standardized_precipitation_evapotranspiration_index`` (:issue:`1537`, :pull:``).
+* Fix wrong attributes in `xclim.indices.standardized_precipitation_index``, `xclim.indices.standardized_precipitation_evapotranspiration_index`` (:issue:`1537`, :pull:`1538`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
