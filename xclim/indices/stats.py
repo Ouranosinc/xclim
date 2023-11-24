@@ -729,10 +729,12 @@ def standardized_index_fit_params(
         "scipy_dist": dist,
         "method": method,
         "group": group,
-        "time_indexer": str(indexer),
         "units": "",
         "offset": offset,
     }
+    if indexer != {}:
+        params.attrs["time_indexer"] = str(indexer)
+
     return params
 
 
