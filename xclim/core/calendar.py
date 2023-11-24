@@ -7,19 +7,24 @@ Helper function to handle dates, times and different calendars with xarray.
 from __future__ import annotations
 
 import datetime as pydt
+import re
+import warnings
 from typing import Any, Sequence
 
 import cftime
 import numpy as np
 import pandas as pd
 import xarray as xr
-from xarray.coding.cftime_offsets import to_cftime_datetime
+from packaging.version import Version
+from xarray.coding.cftime_offsets import _MONTH_ABBREVIATIONS, to_cftime_datetime
 from xarray.coding.cftimeindex import CFTimeIndex
 from xarray.core.resample import DataArrayResample, DatasetResample
 
 from xclim.core.utils import DayOfYearStr, uses_dask
 
 from .formatting import update_xclim_history
+
+FREQ_PATT = re.compile(r"(?P<m>\d*)(?P<b>[A-Za-z]+)(-(?P<a>[A-Z]{3}))?")
 
 __all__ = [
     "DayOfYearStr",
@@ -37,6 +42,7 @@ __all__ = [
     "days_since_to_doy",
     "doy_to_days_since",
     "ensure_cftime_array",
+    "fix_freq",
     "get_calendar",
     "interp_calendar",
     "is_offset_divisor",
@@ -774,10 +780,31 @@ def compare_offsets(freqA: str, op: str, freqB: str) -> bool:  # noqa
     return get_op(op)(t_a, t_b)
 
 
+FREQ_VALID_BASES = [
+    "Y",
+    "A",
+    "Q",
+    "M",
+    "D",
+    "H",
+    "T",
+    "S",
+    "L",
+    "U",
+    "N",
+    "h",
+    "min",
+    "s",
+    "ms",
+    "us",
+    "ns",
+]
+
+
 def parse_offset(freq: str) -> Sequence[str]:
     """Parse an offset string.
 
-    Parse a frequency offset and, if needed, convert to cftime-compatible components.
+    Parse a frequency offset and, if needed, convert to cftime-compatible components. This function covers both old and new frequency syntaxes.
 
     Parameters
     ----------
@@ -789,29 +816,60 @@ def parse_offset(freq: str) -> Sequence[str]:
     multiplier : int
       Multiplier of the base frequency. "[n]W" is always replaced with "[7n]D", as xarray doesn't support "W" for cftime indexes.
     offset_base : str
-      Base frequency. "Y" is always replaced with "A".
+      Base frequency. "A" is always replaced with "Y".
     is_start_anchored : bool
       Whether coordinates of this frequency should correspond to the beginning of the period (`True`) or its end (`False`).
-      Can only be False when base is A, Q or M; in other words, xclim assumes frequencies finer than monthly are all start-anchored.
+      Can only be False when base is Y, A, Q or M; in other words, xclim assumes frequencies finer than monthly are all start-anchored.
     anchor : str or None
-      Anchor date for bases A or Q. As xarray doesn't support "W", neither does xclim (anchor information is lost when given).
+      Anchor date for bases Y or Q. As xarray doesn't support "W", neither does xclim (day-of-week anchor information is lost when given).
 
     """
-    # Useful to raise on invalid freqs, convert Y to A and get default anchor (A, Q)
-    offset = pd.tseries.frequencies.to_offset(freq)
-    base, *anchor = offset.name.split("-")
-    anchor = anchor[0] if len(anchor) > 0 else None
-    start = ("S" in base) or (base[0] not in "AQM")
-    base = base[0]
-    mult = offset.n
-    if base == "W":
+    match = FREQ_PATT.match(freq)
+    if not match:
+        raise ValueError(f"Invalid frequency : {freq}, failed to parse.")
+    d = match.groupdict()
+    mult = int(d["m"] or 1)
+    base = d["b"]
+
+    if len(base) > 1 and (base.endswith("E") or base.endswith("S")):
+        start = base.endswith("S")
+        base = base[:-1]
+        if base not in "YQAM":
+            raise ValueError(
+                f"Invalid frequency: {freq}. Base {base[:-1]} can't have an start (S) or end (E) anchor."
+            )
+    elif len(base) == 1 and base in "YAQM":
+        start = False
+    else:
+        start = True
+
+    anchor = d["a"] or None
+    if base in "AYQ" and anchor is None:
+        anchor = "JAN" if start else "DEC"
+
+    if base == "A":
+        base = "Y"
+    elif base == "W":
         mult = 7 * mult
         base = "D"
         anchor = None
+    elif base not in FREQ_VALID_BASES or (
+        anchor is not None and anchor not in _MONTH_ABBREVIATIONS.values()
+    ):
+        raise ValueError(
+            f"Invalid frequency: {freq}, not fit for usage with xclim, xarray and cftime. "
+            f"Base should be in : {', '.join(FREQ_VALID_BASES)} and anchor should be in {', '.join(_MONTH_ABBREVIATIONS.values())}"
+        )
     return mult, base, start, anchor
 
 
-def construct_offset(mult: int, base: str, start_anchored: bool, anchor: str | None):
+def construct_offset(
+    mult: int,
+    base: str,
+    start_anchored: bool,
+    anchor: str | None,
+    version: str | None = None,
+):
     """Reconstruct an offset string from its parts.
 
     Parameters
@@ -822,8 +880,12 @@ def construct_offset(mult: int, base: str, start_anchored: bool, anchor: str | N
       The base period string (one char).
     start_anchored: bool
       If True and base in [Y, A, Q, M], adds the "S" flag.
+      If False and base in [Y, A, Q, M] and the "new" version is needed, adds the "E" flag.
     anchor: str, optional
-      The month anchor of the offset. Defaults to JAN for bases AS, Y and QS and to DEC for bases A and Q.
+      The month anchor of the offset. Defaults to JAN for bases AS, Y and QS and to DEC for bases A, AE, Q and QE.
+    version : {'new', 'old'}, optional
+      Which version to return.
+      If None (default), the new version is returned if xarray >= 2023.11.0 or pandas >= 2.2.
 
     Returns
     -------
@@ -834,12 +896,74 @@ def construct_offset(mult: int, base: str, start_anchored: bool, anchor: str | N
     -----
     This provides the mirror opposite functionality of :py:func:`parse_offset`.
     """
-    start = "S" if start_anchored and base in "YAQM" else ""
+    if (
+        version is None
+        and (
+            Version("2023.11.0") <= Version(xr.__version__)
+            or Version("2.2") <= Version(pd.__version__)
+        )
+    ) or version == "new":
+        defend = "E"
+    else:
+        defend = ""
+    if base in "YAQM":
+        start = "S" if start_anchored else defend
+    else:
+        start = ""
     if anchor is None and base in "AQY":
         anchor = "JAN" if start_anchored else "DEC"
     return (
         f"{mult if mult > 1 else ''}{base}{start}{'-' if anchor else ''}{anchor or ''}"
     )
+
+
+FREQ_OLD_NEW = {
+    "H": "h",
+    "T": "min",
+    "S": "s",
+    "L": "ms",
+    "U": "us",
+    "N": "ns",
+}
+
+
+# TODO: This can be removed when we pin pandas >= 2.2
+def fix_freq(freq: str, version: str | None = None):
+    """
+    Convert the given freq code to the requested version, defaulting to the one appropriate for the installed packages.
+
+    Warn if the old version was given but the new one is needed.
+    """
+    mult, base, start, anchor = parse_offset(freq)
+    warn = ""
+    if version == "new" or (
+        version is None
+        and (
+            Version("2023.11.0") <= Version(xr.__version__)
+            or Version("2.2") <= Version(pd.__version__)
+        )
+    ):
+        # we want new version
+        if base in FREQ_OLD_NEW:
+            prev_base = base
+            base = FREQ_OLD_NEW[base]
+            warn = f": {prev_base} should now be written {base}"
+        elif base in "YQM" and (not start and "E" not in freq):
+            warn = f": end-anchored {base} periods should now explicitly say it with {base}E"
+        correct = construct_offset(mult, base, start, anchor, version="new")
+        if correct != freq:
+            warnings.warn(
+                f"Pandas changed the default frequenies syntax {warn} ({freq} -> {correct})",
+                FutureWarning,
+            )
+    else:
+        # we want old version
+        if base in FREQ_OLD_NEW.values():
+            prev_base = base
+            base = dict(zip(FREQ_OLD_NEW.values(), FREQ_OLD_NEW.keys()))[prev_base]
+        # The E for end-anchored periods is taken care of here.
+        correct = construct_offset(mult, base, start, anchor, version="old")
+    return correct
 
 
 def is_offset_divisor(divisor: str, offset: str):

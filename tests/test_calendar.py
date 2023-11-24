@@ -24,6 +24,7 @@ from xclim.core.calendar import (
     days_since_to_doy,
     doy_to_days_since,
     ensure_cftime_array,
+    fix_freq,
     get_calendar,
     interp_calendar,
     max_doy,
@@ -703,3 +704,24 @@ def test_convert_doy():
     np.testing.assert_allclose(
         out.isel(lat=0), [31.0, 200.48, 190.0, 59.83607, 299.71885]
     )
+
+
+@pytest.mark.parametrize(
+    "freq,exp,to,warn",
+    [
+        ("Y", "YE-DEC", "new", "end-anchored"),
+        ("YS", "YS-JAN", "new", "Pandas changed"),
+        ("T", "min", "new", "T should now be written min"),
+        ("56S", "56s", "new", "S should now be written s"),
+        ("MS", "MS", "new", None),
+        ("AS-MAR", "YS-MAR", "old", None),
+        ("min", "T", "old", None),
+        ("4Q-DEC", "4Q-DEC", "old", None),
+    ],
+)
+def test_fix_freq(freq, exp, to, warn):
+    if warn:
+        with pytest.warns(FutureWarning, match=warn):
+            assert fix_freq(freq, version=to) == exp
+    else:
+        assert fix_freq(freq, version=to) == exp
