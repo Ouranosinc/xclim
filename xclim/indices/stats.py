@@ -660,7 +660,7 @@ def standardized_index_fit_params(
     window: int,
     dist: str,
     method: str,
-    offset: Quantified | None = None,
+    offset: Quantified = "",
     **indexer,
 ) -> xr.DataArray:
     r"""Standardized Index fitting parameters.
@@ -687,7 +687,7 @@ def standardized_index_fit_params(
         uses a deterministic function that doesn't involve any optimization.
     offset: Quantified
         Distributions bounded by zero (e.g. "gamma", "fisk") can be used for datasets with negative values
-        by using an offset: `da + offset`.
+        by using an offset: `da + offset`. An empty string is interpreted as no offset.
     \*\*indexer
         Indexing parameters to compute the indicator on a temporal subset of the data.
         It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
@@ -712,7 +712,7 @@ def standardized_index_fit_params(
             f"The method `{method}` is not supported for distribution `{dist}`."
         )
 
-    if offset is not None:
+    if offset != "":
         with xr.set_options(keep_attrs=True):
             da = da + convert_units_to(offset, da, context="hydro")
 
@@ -729,7 +729,7 @@ def standardized_index_fit_params(
         "scipy_dist": dist,
         "method": method,
         "group": group,
-        "time_indexer": indexer,
+        "time_indexer": str(indexer),
         "units": "",
         "offset": offset,
     }

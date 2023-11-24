@@ -1230,8 +1230,9 @@ def standardized_precipitation_index(
     if paramsd != template.sizes:
         params = params.broadcast_like(template)
 
-    spi = standardized_index(pr, params, **indexer)
+    spi = standardized_index(pr, params)
     spi.attrs = params.attrs
+    spi.attrs["freq"] = freq or xarray.infer_freq(spi.time)
     spi.attrs["units"] = ""
     return spi
 
@@ -1324,7 +1325,7 @@ def standardized_precipitation_evapotranspiration_index(
                 "Proceeding with the value given in `params`."
             )
         offset = params_offset
-    offset = 0 if offset is None else convert_units_to(offset, wb, context="hydro")
+    offset = 0 if offset == "" else convert_units_to(offset, wb, context="hydro")
     # Allowed distributions are constrained by the SPI function
     if dist in ["gamma", "fisk"] and offset <= 0:
         raise ValueError(
