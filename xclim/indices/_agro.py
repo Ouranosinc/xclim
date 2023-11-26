@@ -1174,6 +1174,7 @@ def standardized_precipitation_index(
     ...     cal_end=cal_end,
     ... )  # Computing SPI-3 months using a gamma distribution for the fit
     >>> # Fitting parameters can also be obtained ...
+    >>> from xclim.indices.stats import standardized_index_fit_params
     >>> params = standardized_index_fit_params(
     ...     pr.sel(time=slice(cal_start, cal_end)),
     ...     freq="MS",
