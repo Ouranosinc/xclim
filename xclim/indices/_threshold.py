@@ -1062,7 +1062,7 @@ def growing_season_length(
 
     For the Northern Hemisphere:
 
-    >>> gsl_nh = growing_season_length(tas, mid_date="07-01", freq="AS")
+    >>> gsl_nh = growing_season_length(tas, mid_date="07-01", freq="YS")
 
     If working in the Southern Hemisphere, one can use:
 

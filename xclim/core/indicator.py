@@ -120,7 +120,7 @@ from yaml import safe_load
 
 from .. import indices
 from . import datachecks
-from .calendar import parse_offset, select_time
+from .calendar import fix_freq, parse_offset, select_time
 from .cfchecks import cfcheck_from_name
 from .formatting import (
     AttrFormatter,
@@ -906,6 +906,8 @@ class Indicator(IndicatorRegistrar):
                     # If a non-optional variable OR None, store the arg
                     if param.kind == InputKind.VARIABLE or data is not None:
                         das[name] = data
+                elif param.kind == InputKind.FREQ_STR and params[name] is not None:
+                    params[name] = fix_freq(params[name])
             else:
                 params[name] = param.value
 
@@ -1478,7 +1480,7 @@ class ResamplingIndicator(CheckMissingIndicator):
       Arguments to pass to the `missing` function. If None, this will be determined by the global configuration.
     allowed_periods : Sequence[str], optional
       A list of allowed periods, i.e. base parts of the `freq` parameter. For example, indicators meant to be
-      computed annually only will have `allowed_periods=["A"]`. `None` means "any period" or that the
+      computed annually only will have `allowed_periods=["Y"]`. `None` means "any period" or that the
       indicator doesn't take a `freq` argument.
     """
 
@@ -1559,7 +1561,7 @@ class Daily(ResamplingIndicator):
 class Hourly(ResamplingIndicator):
     """Class for hourly inputs and resampling computes."""
 
-    src_freq = "H"
+    src_freq = fix_freq("h")
 
 
 base_registry["Indicator"] = Indicator

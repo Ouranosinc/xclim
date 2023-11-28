@@ -113,7 +113,7 @@ class AttrFormatter(string.Formatter):
         The base values may be given using unix shell-like patterns:
 
         >>> fmt = AttrFormatter(
-        ...     {"AS-*": ["annuel", "annuelle"], "MS": ["mensuel", "mensuelle"]},
+        ...     {"YS-*": ["annuel", "annuelle"], "MS": ["mensuel", "mensuelle"]},
         ...     ["m", "f"],
         ... )
         >>> fmt.format(
@@ -163,6 +163,7 @@ default_formatter = AttrFormatter(
         # Arguments to "freq"
         "D": ["daily", "days"],
         "YS": ["annual", "years"],
+        "YS-*": ["annual", "years"],
         "AS-*": ["annual", "years"],
         "MS": ["monthly", "months"],
         "QS-*": ["seasonal", "seasons"],
@@ -571,7 +572,7 @@ def _gen_parameters_section(parameters: dict, allowed_periods: list[str] = None)
         desc_str = param.description
         if param.kind == InputKind.FREQ_STR:
             desc_str += (
-                " See https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#offset"
+                " See https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#dateoffset-objects"
                 "-aliases for available options."
             )
             if allowed_periods is not None:

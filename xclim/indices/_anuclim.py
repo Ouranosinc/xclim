@@ -584,7 +584,7 @@ def _to_quarter(
 
     else:
         raise NotImplementedError(
-            f'Unknown input time frequency "{freq}": must be one of "D", "W" or "M".'
+            f'Unknown input time frequency "{freq}": must be one of "D", "W" or "MS".'
         )
 
     if tas is not None:

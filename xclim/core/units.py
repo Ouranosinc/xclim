@@ -26,7 +26,7 @@ import xarray as xr
 from boltons.funcutils import wraps
 from yaml import safe_load
 
-from .calendar import date_range, get_calendar, parse_offset
+from .calendar import date_range, fix_freq, get_calendar, parse_offset
 from .options import datacheck
 from .utils import InputKind, Quantified, ValidationError, infer_kind_from_parameter
 
@@ -457,6 +457,7 @@ def cf_conversion(standard_name: str, conversion: str, direction: str) -> str | 
 
 FREQ_UNITS = {
     "N": "ns",
+    "U": "us",
     "L": "ms",
     "S": "s",
     "T": "min",
@@ -502,11 +503,11 @@ def infer_sampling_units(
     dimmed = getattr(da, dim)
     freq = xr.infer_freq(dimmed)
     if freq is None:
-        freq = deffreq
+        freq = fix_freq(deffreq)
 
     multi, base, _, _ = parse_offset(freq)
     try:
-        out = multi, FREQ_UNITS[base]
+        out = multi, base if base in FREQ_UNITS.values() else FREQ_UNITS[base]
     except KeyError as err:
         raise ValueError(
             f"Sampling frequency {freq} has no corresponding units."
@@ -636,7 +637,7 @@ def _rate_and_amount_converter(
             ) from err
     if freq is not None:
         multi, base, start_anchor, _ = parse_offset(freq)
-        if base in ["M", "Q", "A"]:
+        if base in "YAQM":
             start = time.indexes[dim][0]
             if not start_anchor:
                 # Anchor is on the end of the period, substract 1 period.
@@ -653,13 +654,14 @@ def _rate_and_amount_converter(
                 attrs=da[dim].attrs,
             )
         else:
-            m, u = multi, FREQ_UNITS[base]
+            m = multi
+            u = base if base in FREQ_UNITS.values() else FREQ_UNITS[base]
 
     # Freq is month, season or year, which are not constant units, or simply freq is not inferrable.
     if u is None:
         # Get sampling period lengths in nanoseconds
         # In the case with no freq, last period as the same length as the one before.
-        # In the case with freq in M, Q, A, this has been dealt with above in `time`
+        # In the case with freq in M, Q, Y, this has been dealt with above in `time`
         # and `label` has been updated accordingly.
         dt = (
             time.diff(dim, label=label)

@@ -1144,7 +1144,7 @@ class TestT90p:
         # create cold spell in june
         tas[175:180] = 1
         # WHEN
-        out = atmos.tx90p(tas, t90, freq="AS", season="JJA")
+        out = atmos.tx90p(tas, t90, freq="YS", season="JJA")
         # THEN
         assert out[0] == 87  # non regression test
 
@@ -1489,7 +1489,7 @@ class TestColdSpellFrequency:
 
         tg = tas_series(a + K2C, start="1/1/2000")
 
-        out = atmos.cold_spell_frequency(tg, freq="AS")
+        out = atmos.cold_spell_frequency(tg, freq="YS")
         np.testing.assert_array_equal(out, 1)
 
 
@@ -1500,7 +1500,7 @@ class TestColdSpellMaxLength:
 
         tg = tas_series(a + K2C, start="1/1/2000")
 
-        out = atmos.cold_spell_max_length(tg, freq="AS")
+        out = atmos.cold_spell_max_length(tg, freq="YS")
         np.testing.assert_array_equal(out, 5)
 
 
@@ -1511,5 +1511,5 @@ class TestColdSpellTotalLength:
 
         tg = tas_series(a + K2C, start="1/1/2000")
 
-        out = atmos.cold_spell_total_length(tg, freq="AS")
+        out = atmos.cold_spell_total_length(tg, freq="YS")
         np.testing.assert_array_equal(out, 8)

@@ -11,7 +11,12 @@ from typing import Any, Sequence
 import numpy as np
 import xarray as xr
 
-from xclim.core.calendar import common_calendar, convert_calendar, get_calendar
+from xclim.core.calendar import (
+    common_calendar,
+    convert_calendar,
+    fix_freq,
+    get_calendar,
+)
 from xclim.core.formatting import update_history
 from xclim.core.utils import calc_perc
 
@@ -105,7 +110,7 @@ def create_ensemble(
     ds = _ens_align_datasets(
         datasets,
         multifile,
-        resample_freq,
+        fix_freq(resample_freq) if resample_freq else None,
         calendar=calendar,
         cal_kwargs=cal_kwargs or {},
         **xr_kwargs,

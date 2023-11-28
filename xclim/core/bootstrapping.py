@@ -13,7 +13,7 @@ from xarray.core.dataarray import DataArray
 
 import xclim.core.utils
 
-from .calendar import convert_calendar, parse_offset, percentile_doy
+from .calendar import construct_offset, convert_calendar, parse_offset, percentile_doy
 
 BOOTSTRAP_DIM = "_bootstrap"
 
@@ -202,12 +202,7 @@ def bootstrap_func(compute_index_func: Callable, **kwargs) -> xarray.DataArray:
 
 def _get_bootstrap_freq(freq):
     _, base, start_anchor, anchor = parse_offset(freq)  # noqa
-    bfreq = "A"
-    if start_anchor:
-        bfreq += "S"
-    if base in ["A", "Q"] and anchor is not None:
-        bfreq = f"{bfreq}-{anchor}"
-    return bfreq
+    return construct_offset(1, "Y", start_anchor, anchor)
 
 
 def _get_year_label(year_dt) -> str:

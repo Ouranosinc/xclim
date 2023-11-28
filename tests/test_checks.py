@@ -149,25 +149,25 @@ class TestDataCheck:
         }
 
         n = 100
-        time = date_range("2000-01-01", freq="H", periods=n)
+        time = date_range("2000-01-01", freq="h", periods=n)
         da = xr.DataArray(random.random(n), [("time", time)], attrs=tas_attrs)
-        datachecks.check_freq(da, "H")
+        datachecks.check_freq(da, "h")
 
-        time = date_range("2000-01-01", freq="3H", periods=n)
+        time = date_range("2000-01-01", freq="3h", periods=n)
         da = xr.DataArray(random.random(n), [("time", time)], attrs=tas_attrs)
         with pytest.raises(ValidationError):
-            datachecks.check_freq(da, "H")
+            datachecks.check_freq(da, "h")
 
         with pytest.raises(ValidationError):
-            datachecks.check_freq(da, ["H", "D"])
+            datachecks.check_freq(da, ["h", "D"])
 
-        datachecks.check_freq(da, "H", strict=False)
-        datachecks.check_freq(da, ["H", "D"], strict=False)
-        datachecks.check_freq(da, "3H")
-        datachecks.check_freq(da, ["H", "3H"])
+        datachecks.check_freq(da, "h", strict=False)
+        datachecks.check_freq(da, ["h", "D"], strict=False)
+        datachecks.check_freq(da, "3h")
+        datachecks.check_freq(da, ["h", "3h"])
 
         with pytest.raises(ValidationError, match="Unable to infer the frequency of"):
-            datachecks.check_freq(da.where(da.time.dt.dayofyear != 5, drop=True), "3H")
+            datachecks.check_freq(da.where(da.time.dt.dayofyear != 5, drop=True), "3h")
 
     def test_common_time(self, tas_series, date_range, random):
         tas_attrs = {
@@ -176,7 +176,7 @@ class TestDataCheck:
         }
 
         n = 100
-        time = date_range("2000-01-01", freq="H", periods=n)
+        time = date_range("2000-01-01", freq="h", periods=n)
         da = xr.DataArray(random.random(n), [("time", time)], attrs=tas_attrs)
 
         # No freq
@@ -187,7 +187,7 @@ class TestDataCheck:
             datachecks.check_common_time([db, da])
 
         # Not same freq
-        time = date_range("2000-01-01", freq="6H", periods=n)
+        time = date_range("2000-01-01", freq="6h", periods=n)
         db = xr.DataArray(random.random(n), [("time", time)], attrs=tas_attrs)
         with pytest.raises(ValidationError, match="Inputs have different frequencies"):
             datachecks.check_common_time([db, da])
@@ -197,6 +197,6 @@ class TestDataCheck:
         db["time"] = db.time + pd.Timedelta(30, "min")
         with pytest.raises(
             ValidationError,
-            match=r"All inputs have the same frequency \(H\), but they are not anchored on the same minutes",
+            match=r"All inputs have the same frequency \(h\), but they are not anchored on the same minutes",
         ):
             datachecks.check_common_time([db, da])

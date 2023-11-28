@@ -8,7 +8,7 @@ import lmoments3.distr
 import numpy as np
 import xarray as xr
 
-from xclim.core.calendar import resample_doy, select_time
+from xclim.core.calendar import fix_freq, resample_doy, select_time
 from xclim.core.formatting import prefix_attrs, unprefix_attrs, update_history
 from xclim.core.units import convert_units_to
 from xclim.core.utils import Quantified, uses_dask
@@ -624,7 +624,7 @@ def preprocess_standardized_index(
     """
     # We could allow a more general frequency in this function and move
     # the constraint {"D", "MS"} in specific indices such as SPI / SPEI.
-    final_freq = freq or xr.infer_freq(da.time)
+    final_freq = fix_freq(freq or xr.infer_freq(da.time))
     try:
         group = {"D": "time.dayofyear", "MS": "time.month"}[final_freq]
     except KeyError():
@@ -634,7 +634,7 @@ def preprocess_standardized_index(
         )
 
     if freq is not None:
-        da = da.resample(time=freq).mean(keep_attrs=True)
+        da = da.resample(time=fix_freq(freq)).mean(keep_attrs=True)
 
     if uses_dask(da) and len(da.chunks[da.get_axis_num("time")]) > 1:
         warnings.warn(
@@ -716,6 +716,7 @@ def standardized_index_fit_params(
         with xr.set_options(keep_attrs=True):
             da = da + convert_units_to(offset, da, context="hydro")
 
+    freq = fix_freq(freq) if freq is not None else None
     da, group = preprocess_standardized_index(da, freq, window, **indexer)
     params = da.groupby(group).map(fit, dist=dist, method=method)
     cal_range = (

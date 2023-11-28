@@ -24,7 +24,7 @@ from xclim.core.utils import DayOfYearStr, uses_dask
 
 from .formatting import update_xclim_history
 
-FREQ_PATT = re.compile(r"(?P<m>\d*)(?P<b>[A-Za-z]+)(-(?P<a>[A-Z]{3}))?")
+FREQ_PATT = re.compile(r"-?(?P<m>\d*)(?P<b>[A-Za-z]+)(-(?P<a>[A-Z]{3}))?")
 
 __all__ = [
     "DayOfYearStr",
@@ -273,7 +273,8 @@ def convert_doy(
       Name of the temporal dimension.
     """
     source_cal = source_cal or source.attrs.get("calendar", get_calendar(source[dim]))
-    is_calyear = xr.infer_freq(source[dim]) in ("AS-JAN", "A-DEC")
+    # FIXME: Fix choices when we pin pandas >= 2.2
+    is_calyear = xr.infer_freq(source[dim]) in ("AS-JAN", "YS-JAN", "A-DEC", "YE-DEC")
 
     if is_calyear:  # Fast path
         year_of_the_doy = source[dim].dt.year
@@ -765,6 +766,10 @@ def compare_offsets(freqA: str, op: str, freqB: str) -> bool:  # noqa
     """
     from ..indices.generic import get_op  # pylint: disable=import-outside-toplevel
 
+    # FIXME: Remove when we pin pandas >= 2.2
+    freqA = fix_freq(freqA)
+    freqB = fix_freq(freqB)
+
     # Get multiplier and base frequency
     t_a, b_a, _, _ = parse_offset(freqA)
     t_b, b_b, _, _ = parse_offset(freqB)
@@ -799,6 +804,21 @@ FREQ_VALID_BASES = [
     "us",
     "ns",
 ]
+
+
+def _get_freq_version(version: str | None = None) -> str:
+    if version is None:
+        if Version("2023.11.0") <= Version(xr.__version__) and Version(
+            "2.2"
+        ) <= Version(pd.__version__):
+            version = "new"
+        elif Version("2023.11.0") <= Version(xr.__version__) or Version(
+            "2.2"
+        ) <= Version(pd.__version__):
+            version = "inter"
+        else:
+            version = "old"
+    return version
 
 
 def parse_offset(freq: str) -> Sequence[str]:
@@ -847,9 +867,7 @@ def parse_offset(freq: str) -> Sequence[str]:
     if base in "AYQ" and anchor is None:
         anchor = "JAN" if start else "DEC"
 
-    if base == "A":
-        base = "Y"
-    elif base == "W":
+    if base == "W":
         mult = 7 * mult
         base = "D"
         anchor = None
@@ -882,7 +900,7 @@ def construct_offset(
       If True and base in [Y, A, Q, M], adds the "S" flag.
       If False and base in [Y, A, Q, M] and the "new" version is needed, adds the "E" flag.
     anchor: str, optional
-      The month anchor of the offset. Defaults to JAN for bases AS, Y and QS and to DEC for bases A, AE, Q and QE.
+      The month anchor of the offset. Defaults to JAN for bases AS, YS and QS and to DEC for bases A, Y, YE, Q and QE.
     version : {'new', 'old'}, optional
       Which version to return.
       If None (default), the new version is returned if xarray >= 2023.11.0 or pandas >= 2.2.
@@ -896,13 +914,8 @@ def construct_offset(
     -----
     This provides the mirror opposite functionality of :py:func:`parse_offset`.
     """
-    if (
-        version is None
-        and (
-            Version("2023.11.0") <= Version(xr.__version__)
-            or Version("2.2") <= Version(pd.__version__)
-        )
-    ) or version == "new":
+    version = _get_freq_version(version)
+    if version == "new":
         defend = "E"
     else:
         defend = ""
@@ -912,6 +925,11 @@ def construct_offset(
         start = ""
     if anchor is None and base in "AQY":
         anchor = "JAN" if start_anchored else "DEC"
+    if version in ["inter", "old"] and base == "Y":
+        if anchor == "JAN":
+            anchor = ""
+        else:
+            base = "A"
     return (
         f"{mult if mult > 1 else ''}{base}{start}{'-' if anchor else ''}{anchor or ''}"
     )
@@ -928,32 +946,55 @@ FREQ_OLD_NEW = {
 
 
 # TODO: This can be removed when we pin pandas >= 2.2
-def fix_freq(freq: str, version: str | None = None):
+def fix_freq(freq: str, version: str | None = None, warn: bool = True):
     """
     Convert the given freq code to the requested version, defaulting to the one appropriate for the installed packages.
 
-    Warn if the old version was given but the new one is needed.
+    Warn if the old version was given but a new one is needed.
+
+    Parameters
+    ----------
+    freq : str
+      A frequency code as defined by pandas but with the same restrictions for cftime as xarray.
+      Any code supported by pandas > 1.5 are supported.
+    version : {'new', 'inter', 'old'}, optional
+      If None (default), the version is guessed from the version of the installed packages.
+      "new" means the default syntax supported by pandas >= 2.2 and xarray >= 2023.11.0.
+      "old" means the syntax of pandas < 2.2 and xarray < 2023.11.0.
+      "inter" is for the special case where pandas < 2.2 but xarray >= 2023.11.0.
+      This is the same as "new" for subdaily frequencies, and the same as "old" for coarser frequencies.
+    warn : bool
+      Whether to emit a warning or not if an old frequency was passed where a new one is needed.
+
+    Returns
+    -------
+    str : Frequency code
     """
+    if freq is None:
+        return freq
     mult, base, start, anchor = parse_offset(freq)
-    warn = ""
-    if version == "new" or (
-        version is None
-        and (
-            Version("2023.11.0") <= Version(xr.__version__)
-            or Version("2.2") <= Version(pd.__version__)
-        )
-    ):
+    msgs = []
+    version = _get_freq_version(version)
+    if version == "new":
+        if base == "A":
+            base = "Y"
+            msgs.append("annual frequency is now only written with 'Y'")
+        if base in "YQM" and (not start and "E" not in freq):
+            msgs.append(
+                f"end-anchored {base} periods should now explicitly say it with {base}E"
+            )
+        version = "new"
+    if version in ["new", "inter"]:
         # we want new version
         if base in FREQ_OLD_NEW:
             prev_base = base
             base = FREQ_OLD_NEW[base]
-            warn = f": {prev_base} should now be written {base}"
-        elif base in "YQM" and (not start and "E" not in freq):
-            warn = f": end-anchored {base} periods should now explicitly say it with {base}E"
-        correct = construct_offset(mult, base, start, anchor, version="new")
-        if correct != freq:
+            msgs.append(f"{prev_base} should now be written {base}")
+
+        correct = construct_offset(mult, base, start, anchor, version=version)
+        if warn and msgs:
             warnings.warn(
-                f"Pandas changed the default frequenies syntax {warn} ({freq} -> {correct})",
+                f"Pandas changed the default frequenies syntax {', '.join(msgs)} ({freq} -> {correct})",
                 FutureWarning,
             )
     else:
@@ -992,6 +1033,9 @@ def is_offset_divisor(divisor: str, offset: str):
     >>> is_offset_divisor("D", "M")
     True
     """
+    divisor = fix_freq(divisor)
+    offset = fix_freq(offset)
+
     if compare_offsets(divisor, ">", offset):
         return False
     # Reconstruct offsets anchored at the start of the period
@@ -1003,7 +1047,7 @@ def is_offset_divisor(divisor: str, offset: str):
     offBs = pd.tseries.frequencies.to_offset(construct_offset(mB, bB, True, aB))
     tB = pd.date_range("1970-01-01T00:00:00", freq=offBs, periods=13)
 
-    if bA in "WDHTLUN" or bB in "WDHTLUN":
+    if bA not in "YAQM" or bB not in "YAQM":
         # Simple length comparison is sufficient for submonthly freqs
         # In case one of bA or bB is > W, we test many to be sure.
         tA = pd.date_range("1970-01-01T00:00:00", freq=offAs, periods=13)
@@ -1152,13 +1196,13 @@ def time_bnds(  # noqa: C901
     time : DataArray, Dataset, CFTimeIndex, DatetimeIndex, DataArrayResample or DatasetResample
         Object which contains a time index as a proxy representation for a period index.
     freq : str, optional
-        String specifying the frequency/offset such as 'MS', '2D', or '3T'
+        String specifying the frequency/offset such as 'MS', '2D', or '3min'
         If not given, it is inferred from the time index, which means that index must
         have at least three elements.
     precision : str, optional
         A timedelta representation that :py:class:`pandas.Timedelta` understands.
         The time bounds will be correct up to that precision. If not given,
-        1 ms ("1U") is used for CFtime indexes and 1 ns ("1N") for numpy datetime64 indexes.
+        1 ms is used for CFtime indexes and 1 ns for numpy datetime64 indexes.
 
     Returns
     -------
@@ -1170,11 +1214,11 @@ def time_bnds(  # noqa: C901
     Notes
     -----
     xclim assumes that indexes for greater-than-day frequencies are "floored" down to a daily resolution.
-    For example, the coordinate "2000-01-31 00:00:00" with a "M" frequency is assumed to mean a period
+    For example, the coordinate "2000-01-31 00:00:00" with a "ME" frequency is assumed to mean a period
     going from "2000-01-01 00:00:00" to "2000-01-31 23:59:59.999999".
 
     Similarly, it assumes that daily and finer frequencies yield indexes pointing to the period's start.
-    So "2000-01-31 00:00:00" with a "3H" frequency, means a period going from "2000-01-31 00:00:00" to
+    So "2000-01-31 00:00:00" with a "3h" frequency, means a period going from "2000-01-31 00:00:00" to
     "2000-01-31 02:59:59.999999".
     """
     if isinstance(time, (xr.DataArray, xr.Dataset)):
@@ -1200,32 +1244,33 @@ def time_bnds(  # noqa: C901
     elif hasattr(freq, "freqstr"):
         # When freq is a Offset
         freq = freq.freqstr
+    elif isinstance(freq, str):
+        freq = fix_freq(freq)
 
     freq_base, freq_is_start = parse_offset(freq)[1:3]
 
     # Normalizing without using `.normalize` because cftime doesn't have it
-    floor = {"hour": 0, "minute": 0, "second": 0, "microsecond": 0, "nanosecond": 0}
-    if freq_base in "HTSLUN":  # This is verbose, is there a better way?
-        floor.pop("hour")
-    if freq_base in "TSLUN":
-        floor.pop("minute")
-    if freq_base in "SLUN":
-        floor.pop("second")
-    if freq_base in "UN":
-        floor.pop("microsecond")
-    if freq_base in "N":
-        floor.pop("nanosecond")
+    norm_targets = [
+        ("hour", "h"),
+        ("minute", "min"),
+        ("second", "s"),
+        ("microsecond", "us"),
+        ("nanosecond", "ns"),
+    ]
+    floor = {
+        name: 0 for name, code in norm_targets if compare_offsets(freq_base, ">", code)
+    }
 
     if isinstance(time, xr.CFTimeIndex):
         period = xr.coding.cftime_offsets.to_offset(freq)
         is_on_offset = period.onOffset
-        eps = pd.Timedelta(precision or "1U").to_pytimedelta()
+        eps = pd.Timedelta(precision or "1us").to_pytimedelta()
         day = pd.Timedelta("1D").to_pytimedelta()
-        floor.pop("nanosecond")  # unsuported by cftime
+        floor.pop("nanosecond", None)  # unsuported by cftime
     else:
         period = pd.tseries.frequencies.to_offset(freq)
         is_on_offset = period.is_on_offset
-        eps = pd.Timedelta(precision or "1N")
+        eps = pd.Timedelta(precision or "1ns")
         day = pd.Timedelta("1D")
 
     def shift_time(t):
@@ -1506,7 +1551,7 @@ def date_range_like(source: xr.DataArray, calendar: str) -> xr.DataArray:
         Exception when the source is in 360_day and the end of the range is the 30th of a 31-days month,
         then the 31st is appended to the range.
     """
-    freq = xr.infer_freq(source)
+    freq = fix_freq(xr.infer_freq(source), warn=False)
     if freq is None:
         raise ValueError(
             "`date_range_like` was unable to generate a range as the source frequency was not inferrable."

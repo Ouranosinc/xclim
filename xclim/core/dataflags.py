@@ -16,7 +16,7 @@ import xarray
 
 from ..indices.generic import binary_ops
 from ..indices.run_length import suspicious_run
-from .calendar import climatological_mean_doy, within_bnds_doy
+from .calendar import climatological_mean_doy, fix_freq, within_bnds_doy
 from .formatting import update_xclim_history
 from .units import convert_units_to, declare_units, infer_context, str2pint
 from .utils import (
@@ -703,7 +703,7 @@ def data_flags(  # noqa: C901
 
                     # Aggregation
                     if freq is not None:
-                        out = out.resample(time=freq).any()
+                        out = out.resample(time=fix_freq(freq)).any()
                     if dims is not None:
                         out = out.any(dims)
 

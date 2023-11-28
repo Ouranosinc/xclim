@@ -17,6 +17,7 @@ from xarray.coding.cftime_offsets import _MONTH_ABBREVIATIONS  # noqa
 from xclim.core.calendar import (
     convert_calendar,
     doy_to_days_since,
+    fix_freq,
     get_calendar,
     select_time,
 )
@@ -132,7 +133,7 @@ def default_freq(**indexer) -> str:
         else:
             raise ValueError(f"Unknown group `{group}`.")
         freq = "AS-" + _MONTH_ABBREVIATIONS[month]
-    return freq
+    return fix_freq(freq, warn=False)
 
 
 def get_op(op: str, constrain: Sequence[str] | None = None) -> Callable:

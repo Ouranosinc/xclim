@@ -575,7 +575,7 @@ def test_days_over_precip_thresh__seasonal_indexer(open_dataset):
     per = pr.quantile(0.8, "time", keep_attrs=True)
     # WHEN
     out = atmos.days_over_precip_thresh(
-        pr, per, freq="AS", date_bounds=("01-10", "12-31")
+        pr, per, freq="YS", date_bounds=("01-10", "12-31")
     )
     # THEN
     np.testing.assert_almost_equal(out[0], np.array([81.0, 66.0, 66.0, 75.0]))

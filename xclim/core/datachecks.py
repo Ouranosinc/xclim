@@ -10,7 +10,7 @@ from typing import Sequence
 
 import xarray as xr
 
-from .calendar import compare_offsets, parse_offset
+from .calendar import compare_offsets, fix_freq, parse_offset
 from .options import datacheck
 from .utils import ValidationError
 
@@ -24,12 +24,12 @@ def check_freq(var: xr.DataArray, freq: str | Sequence[str], strict: bool = True
     var : xr.DataArray
         Input array.
     freq : str or sequence of str
-        The expected temporal frequencies, using Pandas frequency terminology ({'A', 'M', 'D', 'H', 'T', 'S', 'L', 'U'})
+        The expected temporal frequencies, using Pandas frequency terminology ({'Y', 'M', 'D', 'h', 'min', 's', 'ms', 'us'})
         and multiples thereof. To test strictly for 'W', pass '7D' with `strict=True`.
         This ignores the start flag and the anchor (ex: 'AS-JUL' will validate against 'Y').
     strict : bool
-        Whether multiples of the frequencies are considered invalid or not. With `strict` set to False, a '3H' series
-        will not raise an error if freq is set to 'H'.
+        Whether multiples of the frequencies are considered invalid or not. With `strict` set to False, a '3h' series
+        will not raise an error if freq is set to 'h'.
 
     Raises
     ------
@@ -39,8 +39,8 @@ def check_freq(var: xr.DataArray, freq: str | Sequence[str], strict: bool = True
     """
     if isinstance(freq, str):
         freq = [freq]
-    exp_base = [parse_offset(frq)[1] for frq in freq]
-    v_freq = xr.infer_freq(var.time)
+    exp_base = [parse_offset(fix_freq(frq))[1] for frq in freq]
+    v_freq = fix_freq(xr.infer_freq(var.time), warn=False)
     if v_freq is None:
         raise ValidationError(
             "Unable to infer the frequency of the time series. "
@@ -83,7 +83,7 @@ def check_common_time(inputs: Sequence[xr.DataArray]):
         Input arrays.
     """
     # Check all have the same freq
-    freqs = [xr.infer_freq(da.time) for da in inputs]
+    freqs = [fix_freq(xr.infer_freq(da.time), warn=False) for da in inputs]
     if None in freqs:
         raise ValidationError(
             "Unable to infer the frequency of the time series. "
@@ -98,7 +98,8 @@ def check_common_time(inputs: Sequence[xr.DataArray]):
     # Check if anchor is the same
     freq = freqs[0]
     base = parse_offset(freq)[1]
-    fmt = {"H": ":%M", "D": "%H:%M"}
+    # FIXME: Remove H when we pin pandas >= 2.2
+    fmt = {"H": ":%M", "h": ":%M", "D": "%H:%M"}
     if base in fmt:
         outs = {da.indexes["time"][0].strftime(fmt[base]) for da in inputs}
         if len(outs) > 1:

@@ -57,7 +57,7 @@ def da(index):
     )
 
 
-@pytest.mark.parametrize("freq", ["6480H", "302431T", "23144781S"])
+@pytest.mark.parametrize("freq", ["6480h", "302431min", "23144781s"])
 def test_time_bnds(freq, datetime_index, cftime_index):
     da_datetime = da(datetime_index).resample(time=freq)
     da_cftime = da(cftime_index).resample(time=freq)
@@ -146,7 +146,7 @@ def test_percentile_doy_invalid():
     tas = xr.DataArray(
         [0, 1],
         dims=("time",),
-        coords={"time": pd.date_range("2000-01-01", periods=2, freq="H")},
+        coords={"time": pd.date_range("2000-01-01", periods=2, freq="h")},
     )
     with pytest.raises(ValueError):
         percentile_doy(tas)
@@ -155,10 +155,10 @@ def test_percentile_doy_invalid():
 @pytest.mark.parametrize(
     "freqA,op,freqB,exp",
     [
-        ("D", ">", "H", True),
+        ("D", ">", "h", True),
         ("2YS", "<=", "QS-DEC", False),
         ("4W", "==", "3W", False),
-        ("24H", "==", "D", True),
+        ("24h", "==", "D", True),
     ],
 )
 def test_compare_offsets(freqA, op, freqB, exp):
@@ -275,8 +275,8 @@ def test_get_calendar_errors(obj):
         ("standard", "noleap", True, "D"),
         ("noleap", "default", True, "D"),
         ("noleap", "all_leap", False, "D"),
-        ("proleptic_gregorian", "noleap", False, "4H"),
-        ("default", "noleap", True, "4H"),
+        ("proleptic_gregorian", "noleap", False, "4h"),
+        ("default", "noleap", True, "4h"),
     ],
 )
 def test_convert_calendar(source, target, target_as_str, freq):
@@ -311,7 +311,7 @@ def test_convert_calendar(source, target, target_as_str, freq):
     [
         ("standard", "360_day", "D"),
         ("360_day", "default", "D"),
-        ("proleptic_gregorian", "360_day", "4H"),
+        ("proleptic_gregorian", "360_day", "4h"),
     ],
 )
 @pytest.mark.parametrize("align_on", ["date", "year"])
@@ -356,7 +356,7 @@ def test_convert_calendar_360_days_random():
         dims=("time",),
         coords={
             "time": date_range(
-                "2004-01-01", "2004-12-31T23:59:59", freq="12H", calendar="default"
+                "2004-01-01", "2004-12-31T23:59:59", freq="12h", calendar="default"
             )
         },
     )
@@ -365,7 +365,7 @@ def test_convert_calendar_360_days_random():
         dims=("time",),
         coords={
             "time": date_range(
-                "2004-01-01", "2004-12-30T23:59:59", freq="12H", calendar="360_day"
+                "2004-01-01", "2004-12-30T23:59:59", freq="12h", calendar="360_day"
             )
         },
     )
@@ -394,7 +394,7 @@ def test_convert_calendar_360_days_random():
     "source,target,freq",
     [
         ("standard", "noleap", "D"),
-        ("noleap", "default", "4H"),
+        ("noleap", "default", "4h"),
         ("noleap", "all_leap", "M"),
         ("360_day", "noleap", "D"),
         ("noleap", "360_day", "D"),
@@ -415,7 +415,7 @@ def test_convert_calendar_missing(source, target, freq):
         np.linspace(0, 1, src.size), dims=("time",), coords={"time": src}
     )
     out = convert_calendar(da_src, target, missing=np.nan, align_on="date")
-    assert xr.infer_freq(out.time) == freq
+    assert fix_freq(xr.infer_freq(out.time), warn=False) == freq
     if source == "360_day":
         assert out.time[-1].dt.day == 31
 
@@ -624,7 +624,7 @@ def test_doy_to_days_since():
     [
         ("4AS-JUL", 4, "A", True, "JUL"),
         ("M", 1, "M", False, None),
-        ("YS", 1, "A", True, "JAN"),
+        ("YS", 1, "Y", True, "JAN"),
         ("3A", 3, "A", False, "DEC"),
         ("D", 1, "D", True, None),
         ("3W", 21, "D", True, None),
@@ -710,11 +710,14 @@ def test_convert_doy():
     "freq,exp,to,warn",
     [
         ("Y", "YE-DEC", "new", "end-anchored"),
-        ("YS", "YS-JAN", "new", "Pandas changed"),
+        ("AS", "YS-JAN", "new", "Pandas changed"),
         ("T", "min", "new", "T should now be written min"),
         ("56S", "56s", "new", "S should now be written s"),
         ("MS", "MS", "new", None),
-        ("AS-MAR", "YS-MAR", "old", None),
+        ("Y", "A-DEC", "inter", None),
+        ("AS", "AS-JAN", "inter", None),
+        ("T", "min", "inter", "T should now be written min"),
+        ("AS-MAR", "AS-MAR", "old", None),
         ("min", "T", "old", None),
         ("4Q-DEC", "4Q-DEC", "old", None),
     ],

@@ -648,8 +648,8 @@ def dryness_index(
     :cite:cts:`tonietto_multicriteria_2004,riou_determinisme_1994`
 
     """
-    if parse_offset(freq) != (1, "A", True, "JAN"):
-        raise ValueError(f"Freq not allowed: {freq}. Must be `YS` or `AS-JAN`")
+    if parse_offset(freq) != (1, "Y", True, "JAN"):
+        raise ValueError(f"Freq not allowed: {freq}. Must be `AS-JAN`")
 
     # Resample all variables to monthly totals in mm units.
     evspsblpot = (
@@ -922,7 +922,7 @@ def rain_season(
     method_dry_end: str = "per_day",
     date_min_end: DayOfYearStr = "09-01",
     date_max_end: DayOfYearStr = "12-31",
-    freq="AS-JAN",
+    freq="YS",
 ):
     """Find the length of the rain season and the day of year of its start and its end.
 

@@ -88,7 +88,7 @@ def test_day_lengths(method):
 
 
 def test_cosine_of_solar_zenith_angle():
-    time = xr.date_range("1900-01-01T00:30", "1900-01-03", freq="H")
+    time = xr.date_range("1900-01-01T00:30", "1900-01-03", freq="h")
     time = xr.DataArray(time, dims=("time",), coords={"time": time}, name="time")
     lat = xr.DataArray(
         [0, 45, 70], dims=("site",), name="lat", attrs={"units": "degree_north"}

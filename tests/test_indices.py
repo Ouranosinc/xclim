@@ -974,7 +974,7 @@ class TestGrowingSeasonLength:
         tas = tas_series(np.zeros(2 * 365), start="2000/1/1")
         warm_period = tas.sel(time=slice("2000-11-01", "2001-03-01"))
         tas = tas.where(~tas.time.isin(warm_period.time), 280)
-        gsl = xci.growing_season_length(tas, mid_date="01-01", freq="AS-Jul")
+        gsl = xci.growing_season_length(tas, mid_date="01-01", freq="AS-JUL")
         np.testing.assert_array_equal(gsl.sel(time="2000-07-01"), 121)
 
 

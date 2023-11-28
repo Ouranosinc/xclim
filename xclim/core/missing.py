@@ -28,7 +28,9 @@ import numpy as np
 import xarray as xr
 
 from .calendar import (
+    compare_offsets,
     date_range,
+    fix_freq,
     get_calendar,
     is_offset_divisor,
     parse_offset,
@@ -51,7 +53,8 @@ __all__ = [
     "register_missing_method",
 ]
 
-_np_timedelta64 = {"D": "timedelta64[D]", "H": "timedelta64[h]"}
+# FIXME: Remove H when we pin xarray >= 2023.11.0
+_np_timedelta64 = {"D": "timedelta64[D]", "h": "timedelta64[h]", "H": "timedelta64[h]"}
 
 
 class MissingBase:
@@ -65,7 +68,7 @@ class MissingBase:
 
     def __init__(self, da, freq, src_timestep, **indexer):
         if src_timestep is None:
-            src_timestep = xr.infer_freq(da.time)
+            src_timestep = fix_freq(xr.infer_freq(da.time), warn=False)
             if src_timestep is None:
                 raise ValueError(
                     "`src_timestep` must be given as it cannot be inferred."
@@ -129,6 +132,7 @@ class MissingBase:
         flagged.
         """
         # This function can probably be made simpler once CFPeriodIndex is implemented.
+        freq = fix_freq(freq) if freq is not None else None
         null = self.is_null(da, freq, **indexer)
 
         p_freq, _ = self.split_freq(freq)
@@ -215,7 +219,7 @@ class MissingAny(MissingBase):
         Input array.
     freq: str
         Resampling frequency.
-    src_timestep: {"D", "H", "M"}
+    src_timestep: {"D", "h", "M"}
         Expected input frequency.
     indexer: {dim: indexer, }, optional
         Time attribute and values over which to subset the array. For example, use season='DJF' to select winter
@@ -291,11 +295,11 @@ class MissingWMO(MissingAny):
     @classmethod
     def execute(cls, da, freq, src_timestep, options, indexer):
         """Create the instance and call it in one operation."""
-        if freq[0] not in ["Y", "A", "Q", "M"]:
+        if compare_offsets(freq, "<", "MS"):
             raise ValueError(
                 "MissingWMO can only be used with Monthly or longer frequencies."
             )
-        obj = cls(da, "M", src_timestep, **indexer)
+        obj = cls(da, "MS", src_timestep, **indexer)
         miss = obj(**options)
         # Replace missing months by NaNs
         mda = miss.where(miss == 0)
@@ -334,7 +338,7 @@ class MissingPct(MissingBase):
         Resampling frequency.
     tolerance : float
         Fraction of missing values that are tolerated [0,1].
-    src_timestep : {"D", "H"}
+    src_timestep : {"D", "h"}
         Expected input frequency.
     indexer : {dim: indexer, }, optional
         Time attribute and values over which to subset the array. For example, use season='DJF' to select winter values,
@@ -371,7 +375,7 @@ class AtLeastNValid(MissingBase):
         Resampling frequency.
     n : int
         Minimum of valid values required.
-    src_timestep : {"D", "H"}
+    src_timestep : {"D", "h"}
         Expected input frequency.
     indexer : {dim: indexer, }, optional
         Time attribute and values over which to subset the array. For example, use season='DJF' to select winter
@@ -386,7 +390,7 @@ class AtLeastNValid(MissingBase):
 
     def __init__(self, da, freq, src_timestep, **indexer):
         # No need to compute count, so no check required on `src_timestep`.
-        self.null = self.is_null(da, freq, **indexer)
+        self.null = self.is_null(da, fix_freq(freq), **indexer)
         self.count = None  # Not needed
 
     def is_missing(self, null, count, n: int = 20):
@@ -442,29 +446,29 @@ class FromContext(MissingBase):
 
 
 def missing_any(da, freq, src_timestep=None, **indexer):  # noqa: D103
-    src_timestep = src_timestep or xr.infer_freq(da.time)
+    src_timestep = src_timestep or fix_freq(xr.infer_freq(da.time), warn=False)
     return MissingAny(da, freq, src_timestep, **indexer)()
 
 
 def missing_wmo(da, freq, nm=11, nc=5, src_timestep=None, **indexer):  # noqa: D103
-    src_timestep = src_timestep or xr.infer_freq(da.time)
+    src_timestep = src_timestep or fix_freq(xr.infer_freq(da.time), warn=False)
     return MissingWMO.execute(
         da, freq, src_timestep, options=dict(nm=nm, nc=nc), indexer=indexer
     )
 
 
 def missing_pct(da, freq, tolerance, src_timestep=None, **indexer):  # noqa: D103
-    src_timestep = src_timestep or xr.infer_freq(da.time)
+    src_timestep = src_timestep or fix_freq(xr.infer_freq(da.time), warn=False)
     return MissingPct(da, freq, src_timestep, **indexer)(tolerance=tolerance)
 
 
 def at_least_n_valid(da, freq, n=1, src_timestep=None, **indexer):  # noqa: D103
-    src_timestep = src_timestep or xr.infer_freq(da.time)
+    src_timestep = src_timestep or fix_freq(xr.infer_freq(da.time), warn=False)
     return AtLeastNValid(da, freq, src_timestep, **indexer)(n=n)
 
 
 def missing_from_context(da, freq, src_timestep=None, **indexer):  # noqa: D103
-    src_timestep = src_timestep or xr.infer_freq(da.time)
+    src_timestep = src_timestep or fix_freq(xr.infer_freq(da.time), warn=False)
     return FromContext.execute(da, freq, src_timestep, options={}, indexer=indexer)
 
 
