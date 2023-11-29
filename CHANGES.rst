@@ -8,7 +8,8 @@ Contributors to this version: Juliette Lavoie (:user:`juliettelavoie`), Pascal B
 
 Announcements
 ^^^^^^^^^^^^^
-* To circumvent issues stemming from the change in the frequency code convention in pandas 2.2, we pinned xarray < 2023.11.0 and pandas < 2.2 for this release. The next release will invert the pins (>= 2023.11.0 and >= 2.2). Which also means this is the last version of xclim supporting python 3.8.
+* To circumvent issues stemming from changes to the frequency code convention in `pandas` v2.2, we have pinned `xarray` (<2023.11.0) and `pandas` (< 2.2) for this release. This change will be reverted in `xclim` v0.48.0 to support the newer versions (`xarray>= 2023.11.0` and `pandas>= 2.2`). 
+* `xclim` v0.47.0 will be the last release supporting Python3.8.
 
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
