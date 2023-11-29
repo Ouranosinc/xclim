@@ -124,6 +124,6 @@ def test_chunk_like():
     da = xr.concat([da] * 10, xr.DataArray(np.arange(10), dims=("lat",), name="lat"))
 
     assert isinstance(da.lat.variable, xr.core.variable.IndexVariable)
-    t, l = _chunk_like(da.time, da.lat, chunks={"time": 10, "lat": 1})
+    t, la = _chunk_like(da.time, da.lat, chunks={"time": 10, "lat": 1})
     assert t.chunks[0] == tuple([10] * 10)
-    assert l.chunks[0] == tuple([1] * 10)
+    assert la.chunks[0] == tuple([1] * 10)
