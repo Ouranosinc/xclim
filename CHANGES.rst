@@ -6,6 +6,10 @@ v0.47.0 (unreleased)
 --------------------
 Contributors to this version: Juliette Lavoie (:user:`juliettelavoie`), Pascal Bourgault (:user:`aulemahal`), Trevor James Smith (:user:`Zeitsperre`).
 
+Announcements
+^^^^^^^^^^^^^
+* To circumvent issues stemming from the change in the frequency code convention in pandas 2.2, we pinned xarray < 2023.11.0 and pandas < 2.2 for this release. The next release will invert the pins (>= 2023.11.0 and >= 2.2). Which also means this is the last version of xclim supporting python 3.8.
+
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 * New functions ``xclim.ensembles.robustness_fractions`` and ``xclim.ensembles.robustness_categories``. The former will replace ``xclim.ensembles.change_significance`` which is now deprecated and will be removed in xclim 0.49 (:pull:`1514`).
