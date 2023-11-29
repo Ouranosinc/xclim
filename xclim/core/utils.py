@@ -881,7 +881,9 @@ def _chunk_like(*inputs: xr.DataArray | xr.Dataset, chunks: dict[str, int]):
     """
     outputs = []
     for da in inputs:
-        if isinstance(da.variable, xr.core.variable.IndexVariable):
+        if isinstance(da, xr.DataArray) and isinstance(
+            da.variable, xr.core.variable.IndexVariable
+        ):
             da = xr.DataArray(da, dims=da.dims, coords=da.coords, name=da.name)
         outputs.append(da.chunk(**{d: c for d, c in chunks.items() if d in da.dims}))
     return tuple(outputs)
