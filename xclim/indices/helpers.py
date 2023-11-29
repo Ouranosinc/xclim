@@ -230,6 +230,8 @@ def cosine_of_solar_zenith_angle(
     sunlit: bool
         If True, only the sunlit part of the interval is considered in the integral or average.
         Does nothing if stat is "instant".
+    chunks : dict
+        Chunking to apply to
 
     Returns
     -------
