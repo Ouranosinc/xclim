@@ -14,7 +14,7 @@ from xclim.core.units import (
     rate2flux,
     units2pint,
 )
-from xclim.core.utils import Quantified, _chunk_like, uses_dask
+from xclim.core.utils import Quantified
 from xclim.indices.helpers import (
     _gather_lat,
     _gather_lon,
@@ -1378,8 +1378,7 @@ def potential_evapotranspiration(
         tasmin = convert_units_to(tasmin, "degF")
         tasmax = convert_units_to(tasmax, "degF")
 
-        time, lat = _chunk_like(tasmin.time, lat, chunks=tasmin.chunks)
-        re = extraterrestrial_solar_radiation(time, lat)
+        re = extraterrestrial_solar_radiation(tasmin.time, lat, chunks=tasmin.chunks)
         re = convert_units_to(re, "cal cm-2 day-1")
 
         # Baier et Robertson(1965) formula
@@ -1398,8 +1397,7 @@ def potential_evapotranspiration(
 
         lv = 2.5  # MJ/kg
 
-        time, lat = _chunk_like(tasmin.time, lat, chunks=tasmin.chunks)
-        ra = extraterrestrial_solar_radiation(time, lat)
+        ra = extraterrestrial_solar_radiation(tasmin.time, lat, chunks=tasmin.chunks)
         ra = convert_units_to(ra, "MJ m-2 d-1")
 
         # Hargreaves and Samani (1985) formula
@@ -1416,9 +1414,8 @@ def potential_evapotranspiration(
         tas = convert_units_to(tas, "degC")
         tasK = convert_units_to(tas, "K")
 
-        time, lat = _chunk_like(tas.time, lat, chunks=tas.chunks)
         ext_rad = extraterrestrial_solar_radiation(
-            time, lat, solar_constant="1367 W m-2"
+            tas.time, lat, solar_constant="1367 W m-2", chunks=tas.chunks
         )
         latentH = 4185.5 * (751.78 - 0.5655 * tasK)
         radDIVlat = ext_rad / latentH
@@ -1972,17 +1969,21 @@ def mean_radiant_temperature(
     lat = _gather_lat(rsds)
     lon = _gather_lon(rsds)
     dec = solar_declination(dates)
-    if uses_dask(dates, dec, lat, lon):
-        dates, dec, lat, lon = _chunk_like(dates, dec, lat, lon, chunks=rsds.chunks)
 
     if stat == "sunlit":
         csza = cosine_of_solar_zenith_angle(
-            dates, dec, lat, lon=lon, stat="average", sunlit=True
+            dates, dec, lat, lon=lon, stat="average", sunlit=True, chunks=rsds.chunks
         )
     elif stat == "instant":
         tc = time_correction_for_solar_angle(dates)
         csza = cosine_of_solar_zenith_angle(
-            dates, dec, lat, lon=lon, time_correction=tc, stat="instant"
+            dates,
+            dec,
+            lat,
+            lon=lon,
+            time_correction=tc,
+            stat="instant",
+            chunks=rsds.chunks,
         )
     else:
         raise NotImplementedError(
