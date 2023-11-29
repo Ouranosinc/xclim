@@ -262,6 +262,11 @@ def robustness_fractions(  # noqa: C901
         )
         out = out.assign(pvals=pvals)
 
+    # Keep attrs on non-modified coordinates
+    for ncrd, crd in fut.coords.items():
+        if ncrd in out.coords:
+            out[ncrd].attrs.update(crd.attrs)
+
     return out
 
 
@@ -370,16 +375,16 @@ def robustness_categories(
         Categorical (int) array following the flag variables CF conventions.
         99 is used as a fill value for points that do not fall in any category.
     """
-    if isinstance(changed_or_fractions, xr.Dataset):
+    src = changed_or_fractions.copy()  # Ensure no inplace changing of coords...
+    if isinstance(src, xr.Dataset):
         # Output of robustness fractions
-        changed = changed_or_fractions.changed
-        agree = changed_or_fractions.agree
+        changed = src.changed
+        agree = src.agree
     else:
-        changed = changed_or_fractions
+        changed = src
 
     # Initial map is all 99, same shape as change_frac
-    robustness = changed * 0 + 99
-
+    robustness = (changed.copy() * 0).astype(int) + 99
     # We go in reverse gear so that the first categories have precedence in the case of multiple matches.
     for i, ((chg_op, agr_op), (chg_thresh, agr_thresh)) in reversed(
         list(enumerate(zip(ops, thresholds), 1))
@@ -392,9 +397,9 @@ def robustness_categories(
             cond = compare(changed, chg_op, chg_thresh) & compare(
                 agree, agr_op, agr_thresh
             )
-        robustness = xr.where(cond, i, robustness)
+        robustness = xr.where(~cond, robustness, i, keep_attrs=True)
 
-    robustness = robustness.astype(np.uint8).assign_attrs(
+    robustness = robustness.assign_attrs(
         flag_values=list(range(1, len(categories) + 1)),
         _FillValue=99,
         flag_descriptions=categories,
