@@ -4,7 +4,7 @@ Changelog
 
 v0.47.0 (unreleased)
 --------------------
-Contributors to this version: Juliette Lavoie (:user:`juliettelavoie`), Pascal Bourgault (:user:`aulemahal`), Trevor James Smith (:user:`Zeitsperre`).
+Contributors to this version: Juliette Lavoie (:user:`juliettelavoie`), Pascal Bourgault (:user:`aulemahal`), Trevor James Smith (:user:`Zeitsperre`), David Huard (:user:`huard`).
 
 Announcements
 ^^^^^^^^^^^^^
@@ -14,10 +14,12 @@ Announcements
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 * New functions ``xclim.ensembles.robustness_fractions`` and ``xclim.ensembles.robustness_categories``. The former will replace ``xclim.ensembles.change_significance`` which is now deprecated and will be removed in xclim 0.49 (:pull:`1514`).
+* Add indicator ID to searched terms in the indicator search documentation page (:issue:`1525`, :pull:`1528`).
 
 Bug fixes
 ^^^^^^^^^
 * Fixed a bug with ``n_escore=-1`` in ``xclim.sdba.adjustment.NpdfTransform`` (:issue:`1515`, :pull:`1515`).
+* In the documentaion, fix the tooltips in the indicator search results (:issue:`1524`, :pull:`1527`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^

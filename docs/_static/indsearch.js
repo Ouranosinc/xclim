@@ -3,7 +3,7 @@ let indicators = [];
 
 /* MiniSearch object defining search mechanism */
 let miniSearch = new MiniSearch({
-  fields: ['title', 'abstract', 'variables', 'keywords'], // fields to index for full-text search
+  fields: ['title', 'abstract', 'variables', 'keywords', 'id'], // fields to index for full-text search
   storeFields: ['title', 'abstract', 'vars', 'realm', 'module', 'name', 'keywords'], // fields to return with search results
   searchOptions: {
     boost: {'title': 3, 'variables': 2},
@@ -30,15 +30,18 @@ fetch('indicators.json')
   });
 
 
-// Populate list of variables
-//function getVariables() {
-//    fetch('variables.json')
-//        .then((res) => {
-//            return res.json();
-//        })
-//}
-//const variables = getVariables();
-
+function escapeHTML(str){
+    /* Escape HTML characters in a string. */
+    var map =
+    {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+    };
+    return str.replace(/[&<>"']/g, function(m) {return map[m];});
+}
 
 function makeKeywordLabel(ind) {
     /* Print list of keywords only if there is at least one. */
@@ -55,7 +58,10 @@ function makeKeywordLabel(ind) {
 function makeVariableList(ind) {
     /* Print list of variables and include mouse-hover tooltip with variable description. */
     return Object.entries(ind.vars).map((kv) => {
-        const tooltip = `<button class="indVarname" title="${kv[1]}" alt="${kv[1]}">${kv[0]}</button>`;
+        /* kv[0] is the variable name, kv[1] is the variable description. */
+        /* Convert kv[1] to a string literal */
+        const text = escapeHTML(kv[1]);
+        const tooltip = `<button class="indVarname" title="${text}" alt="${text}">${kv[0]}</button>`;
         return tooltip
     }).join('');
 }
@@ -66,13 +72,13 @@ function indTemplate(ind) {
   return `
     <div class="indElem" id="${ind.id}">
       <div class="indHeader">
-        <b class="indTitle">${ind.title}</b>
+        <b class="indTitle">${escapeHTML(ind.title)}</b>
         <a class="reference_internal indName" href="api_indicators.html#xclim.indicators.${ind.module}.${ind.name}" title="${ind.name}">
           <code>${ind.module}.${ind.name}</code>
         </a>
       </div>
       <div class="indVars">Uses: ${varlist}</div>
-      <div class="indDesc"><p>${ind.abstract}</p></div>
+      <div class="indDesc"><p>${escapeHTML(ind.abstract)}</p></div>
       ${makeKeywordLabel(ind)}
       <div class="indID">Yaml ID: <code>${ind.id}</code></div>
     </div>
