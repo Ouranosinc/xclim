@@ -50,6 +50,8 @@ Related bixtex entries:
  - evin_2019
 """
 
+# TODO: Add ref for Brekke and Barsugli (2013)
+
 
 def hawkins_sutton(
     da: xr.DataArray,
@@ -195,6 +197,7 @@ def lafferty_sriver(
     da: xr.DataArray,
     sm: xr.DataArray = None,
     weights: xr.DataArray = None,
+    bb13: bool = False,
 ):
     """Return the mean and partitioned variance of an ensemble based on method from Lafferty and Sriver (2023).
 
@@ -206,8 +209,9 @@ def lafferty_sriver(
       Smoothed time series over time, with the same dimensions as `da`. By default, this is estimated using a 4th order
       polynomial. Results are sensitive to the choice of smoothing function, use this to set another polynomial
       order, or a LOESS curve.
-    weights: xr.DataArray
-      Weights to be applied to individual models. Should have `model` dimension.
+    bb13: bool
+      Whether to apply the Brekke and Barsugli (2013) method to estimate scenario uncertainty, where the variance
+      over scenarios is computed before taking the mean over models and downscaling methods.
 
     Returns
     -------
@@ -232,8 +236,6 @@ def lafferty_sriver(
             "DataArray dimensions should include 'time', 'scenario', 'downscaling' and 'model'."
         )
 
-    # TODO: add weigths
-
     if sm is None:
         # Fit a 4th order polynomial
         fit = da.polyfit(dim="time", deg=4, skipna=True)
@@ -242,7 +244,7 @@ def lafferty_sriver(
         )
 
     # "Interannual variability is then estimated as the centered rolling 11-year variance of the difference
-    # between the extracted forced response and the raw outputs, averaged over all outputs"
+    # between the extracted forced response and the raw outputs, averaged over all outputs."
     nv_u = (
         (da - sm)
         .rolling(time=11, center=True)
@@ -250,15 +252,24 @@ def lafferty_sriver(
         .mean(dim=["scenario", "model", "downscaling"])
     )
 
-    # Model uncertainty: U_m(t)
-    model_u = sm.var(dim="model").mean(dim=["scenario", "downscaling"])
-
     # Scenario uncertainty: U_s(t)
-    # TODO: maybe add option for Brekke and Barsugli
-    scenario_u = sm.mean(dim=["model", "downscaling"]).var(dim="scenario")
+    if bb13:
+        scenario_u = sm.var(dim="scenario").mean(dim=["model", "downscaling"])
+    else:
+        scenario_u = sm.mean(dim=["model", "downscaling"]).var(dim="scenario")
+
+    # Model uncertainty: U_m(t)
+
+    ## Count the number of parent models that have been downscaled using method $d$ for scenario $s$.
+    ## In the paper, weights are constant, here they may vary across time if there are missing values.
+    mw = sm.count("model")
+    model_u = sm.var(dim="model").weighted(mw).mean(dim=["scenario", "downscaling"])
 
     # Downscaling uncertainty: U_d(t)
-    downscaling_u = sm.var(dim="downscaling").mean(dim=["scenario", "model"])
+    dw = sm.count("downscaling")
+    downscaling_u = (
+        sm.var(dim="downscaling").weighted(dw).mean(dim=["scenario", "model"])
+    )
 
     # Total uncertainty: T(t)
     total = nv_u + scenario_u + model_u + downscaling_u
@@ -279,3 +290,17 @@ def lafferty_sriver(
     g = sm.mean(dim="model").mean(dim="scenario").mean(dim="downscaling")
 
     return g, uncertainty
+
+
+# def _lafferty_sriver_weights(da):
+#     """Return the weights used in Lefferty and Sriver (2023).
+#
+#     The weights $w_{s,d}$ are given by the number of parent models that have been downscaled using method $d$ for
+#     scenario $s$.
+#     """
+#     # Count the number of series that have 80% of their data (not in the paper)
+#     # We don't want to count series with only a few years of data
+#     valid = (da.count("time") / len(da.time)) > 0.8
+#     s = valid.where(valid)
+#
+#     # Count the number of parent models that have been downscaled using method $d$ for scenario $s$.

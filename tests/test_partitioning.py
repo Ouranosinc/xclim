@@ -3,7 +3,7 @@ from __future__ import annotations
 import numpy as np
 import xarray as xr
 
-from xclim.ensembles import hawkins_sutton
+from xclim.ensembles import hawkins_sutton, lafferty_sriver
 from xclim.ensembles._filters import _concat_hist, _model_in_all_scens, _single_member
 
 
@@ -67,3 +67,44 @@ def test_hawkins_sutton_synthetic(random):
         su.sel(time=slice("2020", None)).mean()
         > su.sel(time=slice("2000", "2010")).mean()
     )
+
+
+def test_lafferty_sriver_synthetic(random):
+    """Test logic of Lafferty & Sriver's implementation using synthetic data."""
+    # Time, scenario, model, downscaling
+    # Here the scenarios don't change over time, so there should be no model variability (since it's relative to the
+    # reference period.
+    sm = np.arange(10, 41, 10)  # Scenario mean (4)
+    mm = np.arange(-6, 7, 1)  # Model mean (13)
+    dm = np.arange(-2, 3, 1)  # Downscaling mean (5)
+    mean = (
+        dm[np.newaxis, np.newaxis, :]
+        + mm[np.newaxis, :, np.newaxis]
+        + sm[:, np.newaxis, np.newaxis]
+    )
+
+    # Natural variability
+    r = random.standard_normal((4, 13, 5, 60))
+
+    x = r + mean[:, :, :, np.newaxis]
+    time = xr.date_range("1970-01-01", periods=60, freq="Y")
+    da = xr.DataArray(
+        x, dims=("scenario", "model", "downscaling", "time"), coords={"time": time}
+    )
+    m, v = lafferty_sriver(da)
+    # Mean uncertainty over time
+    vm = v.mean(dim="time")
+
+    # Check that the mean relative to the baseline is zero
+    np.testing.assert_array_almost_equal(m.mean(dim="time"), 0, decimal=1)
+
+    # Check that the scenario uncertainty is zero
+    np.testing.assert_array_almost_equal(vm.sel(uncertainty="scenario"), 0, decimal=1)
+
+    # Check that model uncertainty > variability
+    assert vm.sel(uncertainty="model") > vm.sel(uncertainty="variability")
+
+    # Smoke test with polynomial of order 2
+    fit = da.polyfit(dim="time", deg=2, skipna=True)
+    sm = xr.polyval(coord=da.time, coeffs=fit.polyfit_coefficients).where(da.notnull())
+    hawkins_sutton(da, sm=sm)
