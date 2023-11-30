@@ -1135,14 +1135,14 @@ def climatological_mean_doy(
     Parameters
     ----------
     arr : xarray.DataArray
-      Input array.
+        Input array.
     window : int
-      Window size in days.
+        Window size in days.
 
     Returns
     -------
     xarray.DataArray, xarray.DataArray
-      Mean and standard deviation.
+        Mean and standard deviation.
     """
     rr = arr.rolling(min_periods=1, center=True, time=window).construct("window")
 
@@ -1163,11 +1163,11 @@ def within_bnds_doy(
     Parameters
     ----------
     arr : xarray.DataArray
-      Input array.
+        Input array.
     low : xarray.DataArray
-      Low bound with dayofyear coordinate.
+        Low bound with dayofyear coordinate.
     high : xarray.DataArray
-      High bound with dayofyear coordinate.
+        High bound with dayofyear coordinate.
 
     Returns
     -------
@@ -1185,20 +1185,20 @@ def _doy_days_since_doys(
 
     Parameters
     ----------
-    base: xr.DataArray
-      1D time coordinate.
-    start: DayOfYearStr, optional
-      A date to compute the offset relative to. If note given, start_doy is the same as base_doy.
+    base : xr.DataArray
+        1D time coordinate.
+    start : DayOfYearStr, optional
+        A date to compute the offset relative to. If note given, start_doy is the same as base_doy.
 
     Returns
     -------
     base_doy : xr.DataArray
-      Day of year for each element in base.
+        Day of year for each element in base.
     start_doy : xr.DataArray
-      Day of year of the "start" date.
-      The year used is the one the start date would take as a doy for the corresponding base element.
+        Day of year of the "start" date.
+        The year used is the one the start date would take as a doy for the corresponding base element.
     doy_max : xr.DataArray
-      Number of days (maximum doy) for the year of each value in base.
+        Number of days (maximum doy) for the year of each value in base.
     """
     calendar = get_calendar(base)
 
@@ -1234,24 +1234,23 @@ def doy_to_days_since(
 
     Parameters
     ----------
-    da: xr.DataArray
-      Array of "day-of-year", usually int dtype, must have a `time` dimension.
-      Sampling frequency should be finer or similar to yearly and coarser then daily.
-    start: date of year str, optional
-      A date in "MM-DD" format, the base day of the new array.
-      If None (default), the `time` axis is used.
-      Passing `start` only makes sense if `da` has a yearly sampling frequency.
-    calendar: str, optional
-      The calendar to use when computing the new interval.
-      If None (default), the calendar attribute of the data or of its `time` axis is used.
-      All time coordinates of `da` must exist in this calendar.
-      No check is done to ensure doy values exist in this calendar.
+    da : xr.DataArray
+        Array of "day-of-year", usually int dtype, must have a `time` dimension.
+        Sampling frequency should be finer or similar to yearly and coarser than daily.
+    start : date of year str, optional
+        A date in "MM-DD" format, the base day of the new array. If None (default), the `time` axis is used.
+        Passing `start` only makes sense if `da` has a yearly sampling frequency.
+    calendar : str, optional
+        The calendar to use when computing the new interval.
+        If None (default), the calendar attribute of the data or of its `time` axis is used.
+        All time coordinates of `da` must exist in this calendar.
+        No check is done to ensure doy values exist in this calendar.
 
     Returns
     -------
     xr.DataArray
-      Same shape as `da`, int dtype, day-of-year data translated to a number of days since a given date.
-      If start is not None, there might be negative values.
+        Same shape as `da`, int dtype, day-of-year data translated to a number of days since a given date.
+        If start is not None, there might be negative values.
 
     Notes
     -----
@@ -1306,14 +1305,14 @@ def days_since_to_doy(
 
     Parameters
     ----------
-    da: xr.DataArray
-      The result of :py:func:`doy_to_days_since`.
-    start: DateOfYearStr, optional
-      `da` is considered as days since that start date (in the year of the time index).
-      If None (default), it is read from the attributes.
-    calendar: str, optional
-      Calendar the "days since" were computed in.
-      If None (default), it is read from the attributes.
+    da : xr.DataArray
+        The result of :py:func:`doy_to_days_since`.
+    start : DateOfYearStr, optional
+        `da` is considered as days since that start date (in the year of the time index).
+        If None (default), it is read from the attributes.
+    calendar : str, optional
+        Calendar the "days since" were computed in.
+        If None (default), it is read from the attributes.
 
     Returns
     -------
@@ -1364,23 +1363,23 @@ def date_range_like(source: xr.DataArray, calendar: str) -> xr.DataArray:
     Parameters
     ----------
     source : xr.DataArray
-      1D datetime coordinate DataArray
+        1D datetime coordinate DataArray
     calendar : str
-      New calendar name.
+        New calendar name.
 
     Raises
     ------
     ValueError
-      If the source's frequency was not found.
+        If the source's frequency was not found.
 
     Returns
     -------
     xr.DataArray
-      1D datetime coordinate with the same start, end and frequency as the source, but in the new calendar.
-        The start date is assumed to exist in the target calendar.
-        If the end date doesn't exist, the code tries 1 and 2 calendar days before.
-        Exception when the source is in 360_day and the end of the range is the 30th of a 31-days month,
-        then the 31st is appended to the range.
+        1D datetime coordinate with the same start, end and frequency as the source, but in the new calendar.
+            The start date is assumed to exist in the target calendar.
+            If the end date doesn't exist, the code tries 1 and 2 calendar days before.
+            Exception when the source is in 360_day and the end of the range is the 30th of a 31-days month,
+            then the 31st is appended to the range.
     """
     freq = xr.infer_freq(source)
     if freq is None:
@@ -1428,20 +1427,20 @@ def _convert_datetime(
 
     Parameters
     ----------
-    datetime: Union[datetime.datetime, cftime.datetime]
-      A datetime object to convert.
-    new_doy:  Optional[Union[float, int]]
-      Allows for redefining the day of year (thus ignoring month and day information from the source datetime).
-      -1 is understood as a nan.
-    calendar: str
-      The target calendar
+    datetime: datetime.datetime or cftime.datetime
+        A datetime object to convert.
+    new_doy : float or int, optional
+        Allows for redefining the day of year (thus ignoring month and day information from the source datetime).
+        -1 is understood as a nan.
+    calendar : str
+        The target calendar
 
     Returns
     -------
     Union[cftime.datetime, datetime.datetime, np.nan]
-      A datetime object of the target calendar with the same year, month, day and time
-      as the source (month and day according to `new_doy` if given).
-      If the month and day doesn't exist in the target calendar, returns np.nan. (Ex. 02-29 in "noleap")
+        A datetime object of the target calendar with the same year, month, day and time as the source
+        (month and day according to `new_doy` if given).
+        If the month and day doesn't exist in the target calendar, returns np.nan. (Ex. 02-29 in "noleap")
     """
     if new_doy in [np.nan, -1]:
         return np.nan
@@ -1470,10 +1469,10 @@ def _convert_datetime(
 def select_time(
     da: xr.DataArray | xr.Dataset,
     drop: bool = False,
-    season: str | Sequence[str] = None,
-    month: int | Sequence[int] = None,
-    doy_bounds: tuple[int, int] = None,
-    date_bounds: tuple[str, str] = None,
+    season: str | Sequence[str] | None = None,
+    month: int | Sequence[int] | None = None,
+    doy_bounds: tuple[int, int] | None = None,
+    date_bounds: tuple[str, str] | None = None,
     include_bounds: bool | tuple[bool, bool] = True,
 ) -> xr.DataArray | xr.Dataset:
     """Select entries according to a time period.
@@ -1486,25 +1485,22 @@ def select_time(
     Parameters
     ----------
     da : xr.DataArray or xr.Dataset
-      Input data.
-    drop: boolean
-      Whether to drop elements outside the period of interest or
-      to simply mask them (default).
-    season: string or sequence of strings
-      One or more of 'DJF', 'MAM', 'JJA' and 'SON'.
-    month: integer or sequence of integers
-      Sequence of month numbers (January = 1 ... December = 12)
-    doy_bounds: 2-tuple of integers
-      The bounds as (start, end) of the period of interest expressed in day-of-year,
-      integers going from 1 (January 1st) to 365 or 366 (December 31st). If calendar
-      awareness is needed, consider using ``date_bounds`` instead.
-    date_bounds: 2-tuple of strings
-      The bounds as (start, end) of the period of interest expressed as dates in the
-      month-day (%m-%d) format.
-    include_bounds: bool or 2-tuple of booleans
-      Whether the bounds of `doy_bounds` or `date_bounds` should be inclusive or not.
-      Either one value for both or a tuple.
-      Default is True, meaning bounds are inclusive.
+        Input data.
+    drop : bool
+        Whether to drop elements outside the period of interest or to simply mask them (default).
+    season : string or sequence of strings, optional
+        One or more of 'DJF', 'MAM', 'JJA' and 'SON'.
+    month : integer or sequence of integers, optional
+        Sequence of month numbers (January = 1 ... December = 12)
+    doy_bounds : 2-tuple of integers, optional
+        The bounds as (start, end) of the period of interest expressed in day-of-year, integers going from
+        1 (January 1st) to 365 or 366 (December 31st).
+        If calendar awareness is needed, consider using ``date_bounds`` instead.
+    date_bounds : 2-tuple of strings, optional
+        The bounds as (start, end) of the period of interest expressed as dates in the month-day (%m-%d) format.
+    include_bounds : bool or 2-tuple of booleans
+        Whether the bounds of `doy_bounds` or `date_bounds` should be inclusive or not.
+        Either one value for both or a tuple. Default is True, meaning bounds are inclusive.
 
     Returns
     -------

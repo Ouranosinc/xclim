@@ -5,7 +5,7 @@
 # Code adapted from flyingpigeon.dissimilarity, Nov 2020.
 from __future__ import annotations
 
-from typing import Sequence
+from typing import Any, Sequence
 
 import numpy as np
 import pandas as pd
@@ -16,7 +16,7 @@ from scipy import __version__ as __scipy_version__
 from scipy import spatial
 from scipy.spatial import cKDTree as KDTree
 
-metrics = {}
+metrics: dict[str, Any] = {}
 
 
 def spatial_analogs(
@@ -61,7 +61,7 @@ def spatial_analogs(
         raise RuntimeError(f"Spatial analogue method ({method}) requires scipy>=1.6.0.")
 
     # Create the target DataArray:
-    target = target.to_array("_indices", "target")
+    target_array = target.to_array("_indices", "target")
 
     # Create the target DataArray
     # drop any (sub-)index along "dist_dim" that could conflict with target, and rename it.
@@ -86,13 +86,13 @@ def spatial_analogs(
 
     if candidates.chunks is not None:
         candidates = candidates.chunk({"_indices": -1})
-    if target.chunks is not None:
-        target = target.chunk({"_indices": -1})
+    if target_array.chunks is not None:
+        target_array = target_array.chunk({"_indices": -1})
 
     # Compute dissimilarity
     diss = xr.apply_ufunc(
         metric_func,
-        target,
+        target_array,
         candidates,
         input_core_dims=[(dist_dim, "_indices"), ("_dist_dim", "_indices")],
         output_core_dims=[()],
@@ -104,7 +104,7 @@ def spatial_analogs(
     diss.name = "dissimilarity"
     diss.attrs.update(
         long_name=f"Dissimilarity between target and candidates, using metric {method}.",
-        indices=",".join(target._indices.values),  # noqa
+        indices=",".join(target_array._indices.values),  # noqa
         metric=method,
     )
 

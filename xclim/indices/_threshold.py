@@ -2960,7 +2960,7 @@ def degree_days_exceedance_date(
     thresh: Quantified = "0 degC",
     sum_thresh: Quantified = "25 K days",
     op: str = ">",
-    after_date: DayOfYearStr = None,
+    after_date: DayOfYearStr | None = None,
     freq: str = "YS",
 ) -> xarray.DataArray:
     r"""Degree-days exceedance date.

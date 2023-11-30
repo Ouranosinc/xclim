@@ -629,7 +629,7 @@ def specific_humidity(
     ps: xr.DataArray,
     ice_thresh: Quantified | None = None,
     method: str = "sonntag90",
-    invalid_values: str = None,
+    invalid_values: str | None = None,
 ) -> xr.DataArray:
     r"""Specific humidity from temperature, relative humidity and pressure.
 
@@ -920,7 +920,7 @@ def snd_to_snw(
     snd: xr.DataArray,
     snr: Quantified | None = None,
     const: Quantified = "312 kg m-3",
-    out_units: str = None,
+    out_units: str | None = None,
 ) -> xr.DataArray:
     """Snow amount from snow depth and density.
 
@@ -1003,7 +1003,7 @@ def prsn_to_prsnd(
     prsn: xr.DataArray,
     snr: xr.DataArray | None = None,
     const: Quantified = "100 kg m-3",
-    out_units: str = None,
+    out_units: str | None = None,
 ) -> xr.DataArray:
     """Snowfall rate from snowfall flux and density.
 
@@ -1043,7 +1043,7 @@ def prsnd_to_prsn(
     prsnd: xr.DataArray,
     snr: xr.DataArray | None = None,
     const: Quantified = "100 kg m-3",
-    out_units: str = None,
+    out_units: str | None = None,
 ) -> xr.DataArray:
     """Snowfall flux from snowfall rate and density.
 
@@ -1774,11 +1774,11 @@ def universal_thermal_climate_index(
     tas: xr.DataArray,
     hurs: xr.DataArray,
     sfcWind: xr.DataArray,
-    mrt: xr.DataArray = None,
-    rsds: xr.DataArray = None,
-    rsus: xr.DataArray = None,
-    rlds: xr.DataArray = None,
-    rlus: xr.DataArray = None,
+    mrt: xr.DataArray | None = None,
+    rsds: xr.DataArray | None = None,
+    rsus: xr.DataArray | None = None,
+    rlds: xr.DataArray | None = None,
+    rlus: xr.DataArray | None = None,
     stat: str = "sunlit",
     mask_invalid: bool = True,
 ) -> xr.DataArray:
@@ -2083,7 +2083,7 @@ def wind_profile(
 )
 def wind_power_potential(
     wind_speed: xr.DataArray,
-    air_density: xr.DataArray = None,
+    air_density: xr.DataArray | None = None,
     cut_in: Quantified = "3.5 m/s",
     rated: Quantified = "13 m/s",
     cut_out: Quantified = "25 m/s",
@@ -2098,8 +2098,8 @@ def wind_power_potential(
     wind_speed : xarray.DataArray
         Wind speed at the hub height. Use the `wind_profile` function to estimate from the surface wind speed.
     air_density: xarray.DataArray
-        Air density at the hub height. Defaults to 1.225 kg/m³. This is worth changing if applying in cold or
-        mountainous regions with non-standard air density.
+        Air density at the hub height. Defaults to 1.225 kg/m³.
+        This is worth changing if applying in cold or mountainous regions with non-standard air density.
     cut_in : Quantified
         Cut-in wind speed. Default is 3.5 m/s.
     rated : Quantified
