@@ -879,7 +879,7 @@ def _chunk_like(*inputs: xr.DataArray | xr.Dataset, chunks: dict[str, int] | Non
 
     Will also ensure passed inputs are not IndexVariable types, so that they can be chunked.
     """
-    if chunks is None:
+    if not chunks:
         return tuple(inputs)
 
     outputs = []
