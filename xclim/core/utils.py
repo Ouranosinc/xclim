@@ -275,17 +275,22 @@ def ensure_chunk_size(da: xr.DataArray, **minchunks: dict[str, int]) -> xr.DataA
     return da
 
 
-def uses_dask(da: xr.DataArray) -> bool:
+def uses_dask(*das: xr.DataArray | xr.Dataset) -> bool:
     """Evaluate whether dask is installed and array is loaded as a dask array.
 
     Parameters
     ----------
-    da: xr.DataArray
+    das: xr.DataArray or xr.Dataset
+        DataArrays or Datasets to check.
 
     Returns
     -------
     bool
+        True if any of the passed objects is using dask.
     """
+    if len(das) > 1:
+        return any([uses_dask(da) for da in das])
+    da = das[0]
     if isinstance(da, xr.DataArray) and isinstance(da.data, dsk.Array):
         return True
     if isinstance(da, xr.Dataset) and any(
@@ -867,3 +872,26 @@ def is_percentile_dataarray(source: xr.DataArray) -> bool:
         and source.attrs.get("climatology_bounds", None) is not None
         and ("quantile" in source.coords or "percentiles" in source.coords)
     )
+
+
+def _chunk_like(*inputs: xr.DataArray | xr.Dataset, chunks: dict[str, int] | None):
+    """Helper function that (re-)chunks inputs according to a single chunking dictionary.
+
+    Will also ensure passed inputs are not IndexVariable types, so that they can be chunked.
+    """
+    if not chunks:
+        return tuple(inputs)
+
+    outputs = []
+    for da in inputs:
+        if isinstance(da, xr.DataArray) and isinstance(
+            da.variable, xr.core.variable.IndexVariable
+        ):
+            da = xr.DataArray(da, dims=da.dims, coords=da.coords, name=da.name)
+        if not isinstance(da, (xr.DataArray, xr.Dataset)):
+            outputs.append(da)
+        else:
+            outputs.append(
+                da.chunk(**{d: c for d, c in chunks.items() if d in da.dims})
+            )
+    return tuple(outputs)
