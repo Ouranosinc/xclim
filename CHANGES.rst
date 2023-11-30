@@ -19,6 +19,7 @@ New features and enhancements
 Bug fixes
 ^^^^^^^^^
 * Fixed a bug with ``n_escore=-1`` in ``xclim.sdba.adjustment.NpdfTransform`` (:issue:`1515`, :pull:`1515`).
+* In the documentaion, fix the tooltips in the indicator search results (:issue:`1524`, :pull:`1527`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
