@@ -8,11 +8,13 @@ import numpy as np
 import xarray as xr
 
 from xclim.core.utils import (
+    _chunk_like,
     ensure_chunk_size,
     nan_calc_percentiles,
     walk_map,
     wrapped_partial,
 )
+from xclim.testing.helpers import test_timeseries as _test_timeseries
 
 
 def test_walk_map():
@@ -110,3 +112,18 @@ class TestNanCalcPercentiles:
         # The expected is from R `quantile(arr, 0.5, type=8, na.rm = TRUE)`
         # Note that scipy mquantiles would give a different result here
         assert res[()] == 42.0
+
+
+def test_chunk_like():
+    da = _test_timeseries(
+        np.zeros(
+            100,
+        ),
+        "tas",
+    )
+    da = xr.concat([da] * 10, xr.DataArray(np.arange(10), dims=("lat",), name="lat"))
+
+    assert isinstance(da.lat.variable, xr.core.variable.IndexVariable)
+    t, la = _chunk_like(da.time, da.lat, chunks={"time": 10, "lat": 1})
+    assert t.chunks[0] == tuple([10] * 10)
+    assert la.chunks[0] == tuple([1] * 10)
