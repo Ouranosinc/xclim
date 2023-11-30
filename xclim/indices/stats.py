@@ -660,7 +660,7 @@ def standardized_index_fit_params(
     window: int,
     dist: str,
     method: str,
-    offset: Quantified = "",
+    offset: Quantified | None = None,
     **indexer,
 ) -> xr.DataArray:
     r"""Standardized Index fitting parameters.
@@ -712,7 +712,7 @@ def standardized_index_fit_params(
             f"The method `{method}` is not supported for distribution `{dist}`."
         )
 
-    if offset != "":
+    if offset is not None:
         with xr.set_options(keep_attrs=True):
             da = da + convert_units_to(offset, da, context="hydro")
 
@@ -724,16 +724,19 @@ def standardized_index_fit_params(
     )
     params.attrs = {
         "calibration_period": cal_range,
-        "freq": freq,
+        "freq": freq or "",
         "window": window,
         "scipy_dist": dist,
         "method": method,
         "group": group,
         "units": "",
-        "offset": offset,
+        "offset": offset or "",
     }
     if indexer != {}:
-        params.attrs["time_indexer"] = str(indexer)
+        method, args = indexer.popitem()
+    else:
+        method, args = "", []
+    params.attrs["time_indexer"] = (method, *args)
 
     return params
 

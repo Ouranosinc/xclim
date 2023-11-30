@@ -1190,7 +1190,10 @@ def standardized_precipitation_index(
     :cite:cts:`mckee_relationship_1993`
     """
     if params is not None and pr_cal is None:
-        freq, window = (params.attrs[s] for s in ["freq", "window"])
+        freq, window, indexer = (params.attrs[s] for s in ["freq", "window", "indexer"])
+        # Unpack attrs to None and {} if needed
+        freq = None if freq == "" else freq
+        indexer = {} if indexer[0] == "" else {indexer[0]: indexer[1:]}
         if cal_start or cal_end:
             warnings.warn(
                 "Expected either `cal_{start|end}` or `params`, got both. The `params` input overrides other inputs."
