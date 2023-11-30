@@ -20,7 +20,7 @@ from xclim.core.calendar import (
     get_calendar,
 )
 from xclim.core.units import convert_units_to
-from xclim.core.utils import Quantified
+from xclim.core.utils import Quantified, _chunk_like
 
 
 def _wrap_radians(da):
@@ -199,6 +199,7 @@ def cosine_of_solar_zenith_angle(
     time_correction: xr.DataArray = None,
     stat: str = "average",
     sunlit: bool = False,
+    chunks: dict[str, int] | None = None,
 ) -> xr.DataArray:
     """Cosine of the solar zenith angle.
 
@@ -230,6 +231,9 @@ def cosine_of_solar_zenith_angle(
     sunlit: bool
         If True, only the sunlit part of the interval is considered in the integral or average.
         Does nothing if stat is "instant".
+    chunks : dictionary
+        When `time`,  `lat` and `lon` originate from coordinates of a large chunked dataset, this dataset's chunking
+        can be passed here to ensure the computation is also chunked.
 
     Returns
     -------
@@ -249,6 +253,8 @@ def cosine_of_solar_zenith_angle(
     declination = convert_units_to(declination, "rad")
     lat = _wrap_radians(convert_units_to(lat, "rad"))
     lon = convert_units_to(lon, "rad")
+    declination, lat, lon = _chunk_like(declination, lat, lon, chunks=chunks)
+
     S_IN_D = 24 * 3600
 
     if len(time) < 3 or xr.infer_freq(time) == "D":
@@ -357,6 +363,7 @@ def extraterrestrial_solar_radiation(
     lat: xr.DataArray,
     solar_constant: Quantified = "1361 W m-2",
     method="spencer",
+    chunks: dict[str, int] | None = None,
 ) -> xr.DataArray:
     """Extraterrestrial solar radiation.
 
@@ -375,6 +382,9 @@ def extraterrestrial_solar_radiation(
     method : {'spencer', 'simple'}
         Which method to use when computing the solar declination and the eccentricity
         correction factor. See :py:func:`solar_declination` and :py:func:`eccentricity_correction_factor`.
+    chunks : dictionary
+        When `times` and `lat` originate from coordinates of a large chunked dataset, passing the dataset's chunks here
+        will ensure the computation is chunked as well.
 
     Returns
     -------
@@ -391,7 +401,9 @@ def extraterrestrial_solar_radiation(
     return (
         gsc
         * rad_to_day
-        * cosine_of_solar_zenith_angle(times, ds, lat, stat="integral", sunlit=True)
+        * cosine_of_solar_zenith_angle(
+            times, ds, lat, stat="integral", sunlit=True, chunks=chunks
+        )
         * dr
     ).assign_attrs(units="J m-2 d-1")
 
