@@ -743,8 +743,9 @@ def test_robustness_fractions_empty():
 
 
 def test_robustness_categories():
-    changed = xr.DataArray([0.5, 0.8, 1, 1])
-    agree = xr.DataArray([1, 0.5, 0.5, 1])
+    lat = xr.DataArray([1, 2, 3, 4], dims=("lat",), attrs={"axis": "Y"}, name="lat")
+    changed = xr.DataArray([0.5, 0.8, 1, 1], dims=("lat",), coords={"lat": lat})
+    agree = xr.DataArray([1, 0.5, 0.5, 1], dims=("lat",), coords={"lat": lat})
 
     categories = ensembles.robustness_categories(changed, agree)
     np.testing.assert_array_equal(categories, [2, 3, 3, 1])
@@ -753,6 +754,7 @@ def test_robustness_categories():
         categories.flag_meanings
         == "robust_signal no_change_or_no_signal conflicting_signal"
     )
+    assert categories.lat.attrs["axis"] == "Y"
 
 
 def test_robustness_coefficient():
