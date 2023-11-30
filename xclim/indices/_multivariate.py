@@ -915,7 +915,7 @@ def liquid_precip_ratio(
 @declare_units(pr="[precipitation]", tas="[temperature]", thresh="[temperature]")
 def precip_accumulation(
     pr: xarray.DataArray,
-    tas: xarray.DataArray = None,
+    tas: xarray.DataArray | None = None,
     phase: str | None = None,
     thresh: Quantified = "0 degC",
     freq: str = "YS",
@@ -977,7 +977,7 @@ def precip_accumulation(
 @declare_units(pr="[precipitation]", tas="[temperature]", thresh="[temperature]")
 def precip_average(
     pr: xarray.DataArray,
-    tas: xarray.DataArray = None,
+    tas: xarray.DataArray | None = None,
     phase: str | None = None,
     thresh: Quantified = "0 degC",
     freq: str = "YS",
@@ -1777,8 +1777,8 @@ def warm_spell_duration_index(
 def winter_rain_ratio(
     *,
     pr: xarray.DataArray,
-    prsn: xarray.DataArray = None,
-    tas: xarray.DataArray = None,
+    prsn: xarray.DataArray | None = None,
+    tas: xarray.DataArray | None = None,
     freq: str = "QS-DEC",
 ) -> xarray.DataArray:
     """Ratio of rainfall to total precipitation during winter.

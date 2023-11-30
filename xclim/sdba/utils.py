@@ -243,7 +243,7 @@ def broadcast(
     return grouped
 
 
-def equally_spaced_nodes(n: int, eps: float | None = None) -> np.array:
+def equally_spaced_nodes(n: int, eps: float | None = None) -> np.ndarray:
     """Return nodes with `n` equally spaced points within [0, 1], optionally adding two end-points.
 
     Parameters
@@ -660,7 +660,7 @@ def best_pc_orientation_full(
 
 def get_clusters_1d(
     data: np.ndarray, u1: float, u2: float
-) -> tuple[np.array, np.array, np.array, np.array]:
+) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     """Get clusters of a 1D array.
 
     A cluster is defined as a sequence of values larger than u2 with at least one value larger than u1.

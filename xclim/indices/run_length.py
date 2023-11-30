@@ -416,7 +416,7 @@ def _boundary_run(
     ufunc_1dim: str | bool,
     position: str,
 ) -> xr.DataArray:
-    """Return the index of the first item of the first run of at least a given length.
+    """Return the index of the first item of the first or last run of at least a given length.
 
     Parameters
     ----------
@@ -493,9 +493,10 @@ def _boundary_run(
         out = coord_transform(out, da)
 
     else:
-        # for "first" run, return "first" element in the run (and conversely for "last" run)
-        d = rle(da, dim=dim, index=position)
+        # _cusum_reset_on_zero() is an intermediate step in rle, which is sufficient here
+        d = _cumsum_reset_on_zero(da, dim=dim, index=position)
         d = xr.where(d >= window, 1, 0)
+        # for "first" run, return "first" element in the run (and conversely for "last" run)
         if freq is not None:
             out = d.resample({dim: freq}).map(find_boundary_run, position=position)
         else:

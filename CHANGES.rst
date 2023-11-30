@@ -19,8 +19,8 @@ New features and enhancements
 Bug fixes
 ^^^^^^^^^
 * Fixed a bug with ``n_escore=-1`` in ``xclim.sdba.adjustment.NpdfTransform``. (:issue:`1515`, :pull:`1516`).
-* In the documentaion, fix the tooltips in the indicator search results. (:issue:`1524`, :pull:`1527`).
-* If chunked inputs are passed to indicators ``mean_radiant_temperature`` and ``potential_evapotranspiration``, subcalculations of the solar angle will also use the same chunks, instead of a single one of the same size as the data. (:issue:`1536`, :pull:`1542`).
+* In the documentation, fixed the tooltips in the indicator search results. (:issue:`1524`, :pull:`1527`).
+* If chunked inputs are passed to indicators ``mean_radiant_temperature`` and ``potential_evapotranspiration``, sub-calculations of the solar angle will also use the same chunks, instead of a single one of the same size as the data. (:issue:`1536`, :pull:`1542`).
 * Fix wrong attributes in ``xclim.indices.standardized_precipitation_index``, ``xclim.indices.standardized_precipitation_evapotranspiration_index``. (:issue:`1537`, :pull:`1538`).
 
 Internal changes
@@ -28,6 +28,8 @@ Internal changes
 * Pinned `cf-xarray` below v0.8.5 in Python3.8 installation to further extend legacy support. (:pull:`1519`).
 * `pip check` in conda builds in GitHub workflows have been temporarily set to always pass. (:pull:`1531`).
 * Configure RtD search rankings to emphasize notebooks and indicators over indices and raw source code. (:pull:`1526`).
+* Addressed around 100 very basic `mypy` typing errors and call signature errors. (:pull:`1532`).
+* Use the intermediate step ``_cumsum_reset_on_zero`` instead of ``rle`` which is sufficient in ``_boundary_run``. (:issue:`1405`, :pull:`1530`).
 
 v0.46.0 (2023-10-24)
 --------------------

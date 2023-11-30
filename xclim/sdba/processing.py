@@ -613,7 +613,7 @@ def unpack_moving_yearly_window(
 def to_additive_space(
     data: xr.DataArray,
     lower_bound: str,
-    upper_bound: str = None,
+    upper_bound: str | None = None,
     trans: str = "log",
 ):
     r"""Transform a non-additive variable into an additive space by the means of a log or logit transformation.
@@ -702,10 +702,10 @@ def to_additive_space(
 @update_xclim_history
 def from_additive_space(
     data: xr.DataArray,
-    lower_bound: str = None,
-    upper_bound: str = None,
-    trans: str = None,
-    units: str = None,
+    lower_bound: str | None = None,
+    upper_bound: str | None = None,
+    trans: str | None = None,
+    units: str | None = None,
 ):
     r"""Transform back to the physical space a variable that was transformed with `to_additive_space`.
 
@@ -864,14 +864,14 @@ def stack_variables(ds: xr.Dataset, rechunk: bool = True, dim: str = "multivar")
     return da.rename("multivariate")
 
 
-def unstack_variables(da: xr.DataArray, dim: str = None):
+def unstack_variables(da: xr.DataArray, dim: str | None = None):
     """Unstack a DataArray created by `stack_variables` to a dataset.
 
     Parameters
     ----------
     da : xr.DataArray
         Array holding different variables along `dim` dimension.
-    dim : str
+    dim : str, optional
         Name of dimension along which the variables are stacked.
         If not specified (default), `dim` is inferred from attributes of the coordinate.
 

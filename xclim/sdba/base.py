@@ -209,8 +209,8 @@ class Grouper(Parametrizable):
 
     def group(
         self,
-        da: xr.DataArray | xr.Dataset = None,
-        main_only=False,
+        da: xr.DataArray | xr.Dataset | None = None,
+        main_only: bool = False,
         **das: xr.DataArray,
     ):
         """Return a xr.core.groupby.GroupBy object.
@@ -500,7 +500,7 @@ def _decode_cf_coords(ds):
             del ds[crdname].encoding["dtype"]
 
 
-def map_blocks(reduces: Sequence[str] = None, **outvars):  # noqa: C901
+def map_blocks(reduces: Sequence[str] | None = None, **outvars):  # noqa: C901
     r"""Decorator for declaring functions and wrapping them into a map_blocks.
 
     Takes care of constructing the template dataset. Dimension order is not preserved.
@@ -579,7 +579,8 @@ def map_blocks(reduces: Sequence[str] = None, **outvars):  # noqa: C901
             for dim in new_dims:
                 if dim in ds.dims and dim not in reduced_dims:
                     raise ValueError(
-                        f"Dimension {dim} is meant to be added by the computation but it is already on one of the inputs."
+                        f"Dimension {dim} is meant to be added by the "
+                        "computation but it is already on one of the inputs."
                     )
 
             if uses_dask(ds):
@@ -664,11 +665,11 @@ def map_blocks(reduces: Sequence[str] = None, **outvars):  # noqa: C901
                 ds = ds.copy()
                 # Optimization to circumvent the slow pickle.dumps(cftime_array)
                 for name, crd in ds.coords.items():
-                    if xr.core.common._contains_cftime_datetimes(crd.variable):
+                    if xr.core.common._contains_cftime_datetimes(crd.variable):  # noqa
                         ds[name] = xr.conventions.encode_cf_variable(crd.variable)
 
             def _call_and_transpose_on_exit(dsblock, **kwargs):
-                """Call the decorated func and transpose to ensure the same dim order as on the templace."""
+                """Call the decorated func and transpose to ensure the same dim order as on the template."""
                 try:
                     _decode_cf_coords(dsblock)
                     out = func(dsblock, **kwargs).transpose(*all_dims)
@@ -712,7 +713,9 @@ def map_blocks(reduces: Sequence[str] = None, **outvars):  # noqa: C901
     return _decorator
 
 
-def map_groups(reduces: Sequence[str] = None, main_only: bool = False, **out_vars):
+def map_groups(
+    reduces: Sequence[str] | None = None, main_only: bool = False, **out_vars
+):
     r"""Decorator for declaring functions acting only on groups and wrapping them into a map_blocks.
 
     This is the same as `map_blocks` but adds a call to `group.apply()` in the mapped func and the default

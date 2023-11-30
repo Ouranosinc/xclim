@@ -603,7 +603,8 @@ def to_agg_units(
             out.attrs["units"] = pint2cfunits(orig_u * freq_u)
     else:
         raise ValueError(
-            f"Unknown aggregation op {op}. Known ops are [min, max, mean, std, var, doymin, doymax, count, integral, sum]."
+            f"Unknown aggregation op {op}. "
+            "Known ops are [min, max, mean, std, var, doymin, doymax, count, integral, sum]."
         )
 
     return out
@@ -614,7 +615,7 @@ def _rate_and_amount_converter(
     dim: str = "time",
     to: str = "amount",
     sampling_rate_from_coord: bool = False,
-    out_units: str = None,
+    out_units: str | None = None,
 ) -> xr.DataArray:
     """Internal converter for :py:func:`xclim.core.units.rate2amount` and :py:func:`xclim.core.units.amount2rate`."""
     m = 1
@@ -706,7 +707,7 @@ def rate2amount(
     rate: xr.DataArray,
     dim: str = "time",
     sampling_rate_from_coord: bool = False,
-    out_units: str = None,
+    out_units: str | None = None,
 ) -> xr.DataArray:
     """Convert a rate variable to an amount by multiplying by the sampling period length.
 
@@ -727,7 +728,7 @@ def rate2amount(
         meaning each data point will be assumed to apply for the interval ending at the next point. See notes.
         Defaults to False, which raises an error if the time coordinate is irregular.
     out_units : str, optional
-        Output units to convert to.
+        Specific output units, if needed.
 
     Raises
     ------
@@ -787,7 +788,7 @@ def amount2rate(
     amount: xr.DataArray,
     dim: str = "time",
     sampling_rate_from_coord: bool = False,
-    out_units: str = None,
+    out_units: str | None = None,
 ) -> xr.DataArray:
     """Convert an amount variable to a rate by dividing by the sampling period length.
 
@@ -810,7 +811,7 @@ def amount2rate(
         See notes of :py:func:`xclim.core.units.rate2amount`.
         Defaults to False, which raises an error if the time coordinate is irregular.
     out_units : str, optional
-        Output units to convert to.
+        Specific output units, if needed.
 
     Raises
     ------
@@ -836,7 +837,7 @@ def amount2rate(
 
 @_register_conversion("amount2lwethickness", "to")
 def amount2lwethickness(
-    amount: xr.DataArray, out_units: str = None
+    amount: xr.DataArray, out_units: str | None = None
 ) -> xr.DataArray | Quantified:
     """Convert a liquid water amount (mass over area) to its equivalent area-averaged thickness (length).
 
@@ -847,8 +848,8 @@ def amount2lwethickness(
     ----------
     amount : xr.DataArray
         A DataArray storing a liquid water amount quantity.
-    out_units : str
-        Specific output units if needed.
+    out_units : str, optional
+        Specific output units, if needed.
 
     Returns
     -------
@@ -873,7 +874,7 @@ def amount2lwethickness(
 
 @_register_conversion("amount2lwethickness", "from")
 def lwethickness2amount(
-    thickness: xr.DataArray, out_units: str = None
+    thickness: xr.DataArray, out_units: str | None = None
 ) -> xr.DataArray | Quantified:
     """Convert a liquid water thickness (length) to its equivalent amount (mass over area).
 
@@ -884,14 +885,14 @@ def lwethickness2amount(
     ----------
     thickness : xr.DataArray
         A DataArray storing a liquid water thickness quantity.
-    out_units : str
-        Specific output units if needed.
+    out_units : str, optional
+        Specific output units, if needed.
 
     Returns
     -------
     xr.DataArray or Quantified
-        The standard_name of `amount` is modified if a conversion is found (see :py:func:`xclim.core.units.cf_conversion`),
-        it is removed otherwise. Other attributes are left untouched.
+        The standard_name of `amount` is modified if a conversion is found
+        (see :py:func:`xclim.core.units.cf_conversion`), it is removed otherwise. Other attributes are left untouched.
 
     See Also
     --------
@@ -913,7 +914,7 @@ def _flux_and_rate_converter(
     da: xr.DataArray,
     density: Quantified | str,
     to: str = "rate",
-    out_units: str = None,
+    out_units: str | None = None,
 ) -> xr.DataArray:
     """Internal converter for :py:func:`xclim.core.units.flux2rate` and :py:func:`xclim.core.units.rate2flux`."""
     if to == "rate":
@@ -954,7 +955,7 @@ def _flux_and_rate_converter(
 def rate2flux(
     rate: xr.DataArray,
     density: Quantified,
-    out_units: str = None,
+    out_units: str | None = None,
 ) -> xr.DataArray:
     """Convert a rate variable to a flux by multiplying with a density.
 
@@ -968,7 +969,7 @@ def rate2flux(
         Density used to convert from a rate to a flux. Ex: Snowfall density "312 kg m-3".
         Density can also be an array with the same shape as `rate`.
     out_units : str, optional
-        Output units to convert to.
+        Specific output units, if needed.
 
     Returns
     -------
@@ -1004,7 +1005,7 @@ def rate2flux(
 def flux2rate(
     flux: xr.DataArray,
     density: Quantified,
-    out_units: str = None,
+    out_units: str | None = None,
 ) -> xr.DataArray:
     """Convert a flux variable to a rate by dividing with a density.
 
@@ -1018,7 +1019,7 @@ def flux2rate(
         Density used to convert from a flux to a rate. Ex: Snowfall density "312 kg m-3".
         Density can also be an array with the same shape as `flux`.
     out_units : str, optional
-        Output units to convert to.
+        Specific output units, if needed.
 
     Returns
     -------
@@ -1060,9 +1061,9 @@ def check_units(val: str | xr.DataArray | None, dim: str | xr.DataArray | None) 
 
     Parameters
     ----------
-    val: str or xr.DataArray
+    val: str or xr.DataArray, optional
       Value to check.
-    dim: str or xr.DataArray
+    dim: str or xr.DataArray, optional
       Expected dimension, e.g. [temperature]. If a quantity or DataArray is given, the dimensionality is extracted.
     """
     if dim is None or val is None:
@@ -1113,8 +1114,7 @@ def check_units(val: str | xr.DataArray | None, dim: str | xr.DataArray | None) 
 def _check_output_has_units(out: xr.DataArray | tuple[xr.DataArray]):
     """Perform very basic sanity check on the output.
 
-    Indice are responsible for unit management.
-    If this fails, it's a developer's error.
+    Indices are responsible for unit management. If this fails, it's a developer's error.
     """
     if not isinstance(out, tuple):
         out = (out,)
@@ -1135,7 +1135,8 @@ def declare_relative_units(**units_by_name) -> Callable:
     ----------
     \*\*kwargs
         Mapping from the input parameter names to dimensions relative to other parameters.
-        The dimensons can be a single parameter name as `<other_var>` or more complex expressions, like : `<other_var> * [time]`.
+        The dimensons can be a single parameter name as `<other_var>` or more complex expressions,
+        like : `<other_var> * [time]`.
 
     Returns
     -------
@@ -1311,7 +1312,7 @@ def declare_units(**units_by_name) -> Callable:
     return dec
 
 
-def ensure_delta(unit: str = None):
+def ensure_delta(unit: str) -> str:
     """Return delta units for temperature.
 
     For dimensions where delta exist in pint (Temperature), it replaces the temperature unit by delta_degC or
@@ -1334,7 +1335,7 @@ def ensure_delta(unit: str = None):
     return delta_unit
 
 
-def infer_context(standard_name=None, dimension=None):
+def infer_context(standard_name: str | None = None, dimension: str | None = None):
     """Return units context based on either the variable's standard name or the pint dimension.
 
     Valid standard names for the hydro context are those including the terms "rainfall",
@@ -1344,15 +1345,15 @@ def infer_context(standard_name=None, dimension=None):
 
     Parameters
     ----------
-    standard_name: str
-      CF-Convention standard name.
-    dimension: str
-      Pint dimension, e.g. '[time]'.
+    standard_name : str, optional
+        CF-Convention standard name.
+    dimension : str, optional
+        Pint dimension, e.g. '[time]'.
 
     Returns
     -------
     str
-      "hydro" if variable is a liquid water flux, otherwise "none"
+        "hydro" if variable is a liquid water flux, otherwise "none".
     """
     csn = (
         (
@@ -1369,6 +1370,6 @@ def infer_context(standard_name=None, dimension=None):
         if standard_name is not None
         else False
     )
-    cdim = ("[precipitation]" in dimension) if dimension is not None else False
+    c_dim = ("[precipitation]" in dimension) if dimension is not None else False
 
-    return "hydro" if csn or cdim else "none"
+    return "hydro" if csn or c_dim else "none"

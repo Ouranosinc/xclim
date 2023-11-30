@@ -53,27 +53,27 @@ Related bixtex entries:
 
 def hawkins_sutton(
     da: xr.DataArray,
-    sm: xr.DataArray = None,
-    weights: xr.DataArray = None,
-    baseline: tuple = ("1971", "2000"),
+    sm: xr.DataArray | None = None,
+    weights: xr.DataArray | None = None,
+    baseline: tuple[str, str] = ("1971", "2000"),
     kind: str = "+",
 ):
     """Return the mean and partitioned variance of an ensemble based on method from Hawkins & Sutton (2009).
 
     Parameters
     ----------
-    da: xr.DataArray
-      Time series with dimensions 'time', 'scenario' and 'model'.
-    sm: xr.DataArray
-      Smoothed time series over time, with the same dimensions as `da`. By default, this is estimated using a 4th order
-      polynomial. Results are sensitive to the choice of smoothing function, use this to set another polynomial
-      order, or a LOESS curve.
-    weights: xr.DataArray
-      Weights to be applied to individual models. Should have `model` dimension.
-    baseline: [str, str]
-      Start and end year of the reference period.
-    kind: {'+', '*'}
-      Whether the mean over the reference period should be substracted (+) or divided by (*).
+    da : xr.DataArray
+        Time series with dimensions 'time', 'scenario' and 'model'.
+    sm : xr.DataArray, optional
+        Smoothed time series over time, with the same dimensions as `da`. By default, this is estimated using a
+        4th-order polynomial. Results are sensitive to the choice of smoothing function, use this to set another
+        polynomial order, or a LOESS curve.
+    weights : xr.DataArray, optional
+        Weights to be applied to individual models. Should have `model` dimension.
+    baseline : [str, str]
+        Start and end year of the reference period.
+    kind : {'+', '*'}
+        Whether the mean over the reference period should be subtracted (+) or divided by (*).
 
     Returns
     -------

@@ -183,13 +183,16 @@ module = [
   "clisops.core.subset.*",
   "dask.*",
   "lmoments3.*",
+  "matplotlib.*",
   "numba.*",
   "numpy.*",
   "pandas.*",
   "pint.*",
+  "SBCK.*",
   "scipy.*",
   "sklearn.cluster.*",
-  "xarray.*"
+  "xarray.*",
+  "yaml.*"
 ]
 ignore_missing_imports = true
 
