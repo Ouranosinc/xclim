@@ -1190,7 +1190,9 @@ def standardized_precipitation_index(
     :cite:cts:`mckee_relationship_1993`
     """
     if params is not None and pr_cal is None:
-        freq, window, indexer = (params.attrs[s] for s in ["freq", "window", "indexer"])
+        freq, window, indexer = (
+            params.attrs[s] for s in ["freq", "window", "time_indexer"]
+        )
         # Unpack attrs to None and {} if needed
         freq = None if freq == "" else freq
         indexer = {} if indexer[0] == "" else {indexer[0]: indexer[1:]}
