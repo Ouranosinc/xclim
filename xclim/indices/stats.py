@@ -687,7 +687,7 @@ def standardized_index_fit_params(
         uses a deterministic function that doesn't involve any optimization.
     offset: Quantified
         Distributions bounded by zero (e.g. "gamma", "fisk") can be used for datasets with negative values
-        by using an offset: `da + offset`. An empty string is interpreted as no offset.
+        by using an offset: `da + offset`.
     \*\*indexer
         Indexing parameters to compute the indicator on a temporal subset of the data.
         It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
