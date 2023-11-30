@@ -399,7 +399,7 @@ def list_datasets(github_repo="Ouranosinc/xclim-testdata", branch="main"):
 
 
 def list_input_variables(
-    submodules: Sequence[str] = None, realms: Sequence[str] = None
+    submodules: Sequence[str] | None = None, realms: Sequence[str] | None = None
 ) -> dict:
     """List all possible variables names used in xclim's indicators.
 

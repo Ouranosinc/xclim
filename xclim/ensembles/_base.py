@@ -125,7 +125,7 @@ def create_ensemble(
 
 
 def ensemble_mean_std_max_min(
-    ens: xr.Dataset, weights: xr.DataArray = None
+    ens: xr.Dataset, weights: xr.DataArray | None = None
 ) -> xr.Dataset:
     """Calculate ensemble statistics between a results from an ensemble of climate simulations.
 
@@ -136,7 +136,7 @@ def ensemble_mean_std_max_min(
     ----------
     ens : xr.Dataset
         Ensemble dataset (see xclim.ensembles.create_ensemble).
-    weights : xr.DataArray
+    weights : xr.DataArray, optional
         Weights to apply along the 'realization' dimension. This array cannot contain missing values.
 
     Returns
@@ -190,7 +190,7 @@ def ensemble_percentiles(
     ens: xr.Dataset | xr.DataArray,
     values: Sequence[int] | None = None,
     keep_chunk_size: bool | None = None,
-    weights: xr.DataArray = None,
+    weights: xr.DataArray | None = None,
     split: bool = True,
 ) -> xr.DataArray | xr.Dataset:
     """Calculate ensemble statistics between a results from an ensemble of climate simulations.
@@ -200,7 +200,7 @@ def ensemble_percentiles(
     Parameters
     ----------
     ens : xr.Dataset or xr.DataArray
-        Ensemble dataset or dataarray (see xclim.ensembles.create_ensemble).
+        Ensemble Dataset or DataArray (see xclim.ensembles.create_ensemble).
     values : Sequence[int], optional
         Percentile values to calculate. Default: (10, 50, 90).
     keep_chunk_size : bool, optional
@@ -209,7 +209,7 @@ def ensemble_percentiles(
         so that the chunks keep the same size (approximately).
         If False, no shrinking is performed, resulting in much larger chunks.
         If not defined, the function decides which is best.
-    weights : xr.DataArray
+    weights : xr.DataArray, optional
         Weights to apply along the 'realization' dimension. This array cannot contain missing values.
         When given, the function uses xarray's quantile method which is slower than xclim's NaN-optimized algorithm.
     split : bool

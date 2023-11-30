@@ -23,7 +23,7 @@ except ImportError:
 from inspect import Parameter, _empty  # noqa
 from io import StringIO
 from pathlib import Path
-from typing import Callable, NewType, Sequence, TypeVar
+from typing import Callable, Mapping, NewType, Sequence, TypeVar
 
 import numpy as np
 import xarray as xr
@@ -223,7 +223,7 @@ class MissingVariableError(ValueError):
     """Error raised when a dataset is passed to an indicator but one of the needed variable is missing."""
 
 
-def ensure_chunk_size(da: xr.DataArray, **minchunks: dict[str, int]) -> xr.DataArray:
+def ensure_chunk_size(da: xr.DataArray, **minchunks: Mapping[str, int]) -> xr.DataArray:
     r"""Ensure that the input DataArray has chunks of at least the given size.
 
     If only one chunk is too small, it is merged with an adjacent chunk.
@@ -322,11 +322,11 @@ def calc_perc(
 
 def nan_calc_percentiles(
     arr: np.ndarray,
-    percentiles: Sequence[float] = None,
-    axis=-1,
-    alpha=1.0,
-    beta=1.0,
-    copy=True,
+    percentiles: Sequence[float] | None = None,
+    axis: int = -1,
+    alpha: float = 1.0,
+    beta: float = 1.0,
+    copy: bool = True,
 ) -> np.ndarray:
     """Convert the percentiles to quantiles and compute them using _nan_quantile."""
     if percentiles is None:

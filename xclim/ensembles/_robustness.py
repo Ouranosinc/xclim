@@ -58,7 +58,7 @@ def robustness_fractions(  # noqa: C901
     fut: xr.DataArray,
     ref: xr.DataArray | None = None,
     test: str | None = None,
-    weights: xr.DataArray = None,
+    weights: xr.DataArray | None = None,
     **kwargs,
 ) -> xr.Dataset:
     r"""Robustness statistics qualifying how members of an ensemble agree on the existence of change and on its sign.
@@ -272,9 +272,9 @@ def robustness_fractions(  # noqa: C901
 
 def change_significance(  # noqa: C901
     fut: xr.DataArray | xr.Dataset,
-    ref: xr.DataArray | xr.Dataset = None,
+    ref: xr.DataArray | xr.Dataset,
     test: str | None = "ttest",
-    weights: xr.DataArray = None,
+    weights: xr.DataArray | None = None,
     p_vals: bool = False,
     **kwargs,
 ) -> (
@@ -323,7 +323,7 @@ def change_significance(  # noqa: C901
     fracs = robustness_fractions(fut, ref, test=test, weights=weights, **kwargs)
     # different def.
     # Old "pos_frac" is fraction of change_frac that is positive
-    # New change_pos_frac is fraction of all that is both postive and significant
+    # New change_pos_frac is fraction of all that is both positive and significant
     pos_frac = fracs.changed_positive / fracs.changed
 
     if p_vals:
@@ -333,41 +333,37 @@ def change_significance(  # noqa: C901
 
 def robustness_categories(
     changed_or_fractions: xr.Dataset | xr.DataArray,
-    agree: xr.DataArray = None,
+    agree: xr.DataArray | None = None,
     *,
-    categories: list[str] = [
-        "Robust signal",
-        "No change or no signal",
-        "Conflicting signal",
-    ],
-    ops: list[tuple[str, str]] = [(">=", ">="), ("<", None), (">=", "<")],
-    thresholds: list[tuple[float, float]] = [(0.66, 0.8), (0.66, None), (0.66, 0.8)],
+    categories: list[str] | None = None,
+    ops: list[tuple[str, str]] | None = None,
+    thresholds: list[tuple[float, float]] | None = None,
 ) -> xr.DataArray:
     """Create a categorical robustness map for mapping hatching patterns.
 
-    Each robustness category is defined by a double threshold, one on the fraction of members showing significant change (`change_frac`)
-    and one on the fraction of member agreeing on the sign of change (`agree_frac`). When the two thresholds are fullfilled, the point
-    is assigned to the given category.
+    Each robustness category is defined by a double threshold, one on the fraction of members showing significant
+    change (`change_frac`) and one on the fraction of member agreeing on the sign of change (`agree_frac`).
+    When the two thresholds are fulfilled, the point is assigned to the given category.
     The default values for the comparisons are the ones suggested by the IPCC for its "Advanced approach" described
     in the Cross-Chapter Box 1 of the Atlas of the AR6 WGI report (:cite:t:`ipccatlas_ar6wg1`).
 
     Parameters
     ----------
     changed_or_fractions : xr.Dataset or xr.DataArray
-      Either the fraction of members showing significant change as an array or
-      directly the output of :py:func:`robustness_fractions`.
+        Either the fraction of members showing significant change as an array or
+        directly the output of :py:func:`robustness_fractions`.
     agree : xr.DataArray, optional
-      The fraction of members agreeing on the sign of change. Only needed if the first argument is
-      the `changed` array.
-    categories : list or strings
-      The label of each robustness categories. They are stored in the semi-colon separated flag_descriptions
-      attribute as well as in a compressed form in the flag_meanings attribute.
-      If a point is mapped to two categories, priority is given to the first one in this list.
-    ops : list of tuples of 2 strings
-      For each category, the comparison operators for `change_frac` and `agree_frac`.
-      None or an empty string means the variable is not needed for this category.
-    thresholds : list of tuples of 2 floats
-      For each categroy, the threshold to be used with the corresponding operator. All should be between 0 and 1.
+        The fraction of members agreeing on the sign of change. Only needed if the first argument is
+        the `changed` array.
+    categories : list of str, optional
+        The label of each robustness categories. They are stored in the semicolon separated flag_descriptions
+        attribute as well as in a compressed form in the flag_meanings attribute.
+        If a point is mapped to two categories, priority is given to the first one in this list.
+    ops : list of tuples of str, optional
+        For each category, the comparison operators for `change_frac` and `agree_frac`.
+        None or an empty string means the variable is not needed for this category.
+    thresholds : list of tuples of float, optional
+        For each category, the threshold to be used with the corresponding operator. All should be between 0 and 1.
 
     Returns
     -------
@@ -375,6 +371,19 @@ def robustness_categories(
         Categorical (int) array following the flag variables CF conventions.
         99 is used as a fill value for points that do not fall in any category.
     """
+    if categories is None:
+        categories = [
+            "Robust signal",
+            "No change or no signal",
+            "Conflicting signal",
+        ]
+
+    if ops is None:
+        ops = [(">=", ">="), ("<", None), (">=", "<")]
+
+    if thresholds is None:
+        thresholds = [(0.66, 0.8), (0.66, None), (0.66, 0.8)]
+
     src = changed_or_fractions.copy()  # Ensure no inplace changing of coords...
     if isinstance(src, xr.Dataset):
         # Output of robustness fractions
