@@ -4,21 +4,32 @@ Changelog
 
 v0.47.0 (unreleased)
 --------------------
-Contributors to this version: Juliette Lavoie (:user:`juliettelavoie`), Pascal Bourgault (:user:`aulemahal`), Trevor James Smith (:user:`Zeitsperre`), Éric Dupuis (:user:`coxipi`)
+Contributors to this version: Juliette Lavoie (:user:`juliettelavoie`), Pascal Bourgault (:user:`aulemahal`), Trevor James Smith (:user:`Zeitsperre`), David Huard (:user:`huard`), Éric Dupuis (:user:`coxipi`).
+
+Announcements
+^^^^^^^^^^^^^
+* To circumvent issues stemming from changes to the frequency code convention in `pandas` v2.2, we have pinned `xarray` (< 2023.11.0) and `pandas` (< 2.2) for this release. This change will be reverted in `xclim` v0.48.0 to support the newer versions (`xarray>= 2023.11.0` and `pandas>= 2.2`).
+* `xclim` v0.47.0 will be the last release supporting Python3.8.
 
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-* New functions ``xclim.ensembles.robustness_fractions`` and ``xclim.ensembles.robustness_categories``. The former will replace ``xclim.ensembles.change_significance`` which is now deprecated and will be removed in xclim 0.49 (:pull:`1514`).
+* New functions ``xclim.ensembles.robustness_fractions`` and ``xclim.ensembles.robustness_categories``. The former will replace ``xclim.ensembles.change_significance`` which is now deprecated and will be removed in xclim 0.49. (:pull:`1514`).
+* Add indicator ID to searched terms in the indicator search documentation page. (:issue:`1525`, :pull:`1528`).
 
 Bug fixes
 ^^^^^^^^^
-* Fixed a bug with ``n_escore=-1`` in ``xclim.sdba.adjustment.NpdfTransform`` (:issue:`1515`, :pull:`1516`).
-* Fix wrong attributes in `xclim.indices.standardized_precipitation_index``, `xclim.indices.standardized_precipitation_evapotranspiration_index`` (:issue:`1537`, :pull:`1538`).
+* Fixed a bug with ``n_escore=-1`` in ``xclim.sdba.adjustment.NpdfTransform``. (:issue:`1515`, :pull:`1516`).
+* In the documentation, fixed the tooltips in the indicator search results. (:issue:`1524`, :pull:`1527`).
+* If chunked inputs are passed to indicators ``mean_radiant_temperature`` and ``potential_evapotranspiration``, sub-calculations of the solar angle will also use the same chunks, instead of a single one of the same size as the data. (:issue:`1536`, :pull:`1542`).
+* Fix wrong attributes in ``xclim.indices.standardized_precipitation_index``, ``xclim.indices.standardized_precipitation_evapotranspiration_index``. (:issue:`1537`, :pull:`1538`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
 * Pinned `cf-xarray` below v0.8.5 in Python3.8 installation to further extend legacy support. (:pull:`1519`).
 * `pip check` in conda builds in GitHub workflows have been temporarily set to always pass. (:pull:`1531`).
+* Configure RtD search rankings to emphasize notebooks and indicators over indices and raw source code. (:pull:`1526`).
+* Addressed around 100 very basic `mypy` typing errors and call signature errors. (:pull:`1532`).
+* Use the intermediate step ``_cumsum_reset_on_zero`` instead of ``rle`` which is sufficient in ``_boundary_run``. (:issue:`1405`, :pull:`1530`).
 
 v0.46.0 (2023-10-24)
 --------------------

@@ -213,7 +213,7 @@ def precip_seasonality(pr: xarray.DataArray, freq: str = "YS") -> xarray.DataArr
 @declare_units(tas="[temperature]")
 def tg_mean_warmcold_quarter(
     tas: xarray.DataArray,
-    op: str = None,
+    op: str,
     freq: str = "YS",
 ) -> xarray.DataArray:
     r"""Mean temperature of warmest/coldest quarter.
@@ -273,7 +273,7 @@ def tg_mean_warmcold_quarter(
 def tg_mean_wetdry_quarter(
     tas: xarray.DataArray,
     pr: xarray.DataArray,
-    op: str = None,
+    op: str,
     freq: str = "YS",
 ) -> xarray.DataArray:
     r"""Mean temperature of wettest/driest quarter.
@@ -285,13 +285,13 @@ def tg_mean_wetdry_quarter(
     Parameters
     ----------
     tas : xarray.DataArray
-      Mean temperature at daily, weekly, or monthly frequency.
+        Mean temperature at daily, weekly, or monthly frequency.
     pr : xarray.DataArray
-      Total precipitation rate at daily, weekly, or monthly frequency.
+        Total precipitation rate at daily, weekly, or monthly frequency.
     op : {'wettest', 'driest'}
-      Operation to perform: 'wettest' calculate for the wettest quarter; 'driest' calculate for the driest quarter.
+        Operation to perform: 'wettest' calculate for the wettest quarter; 'driest' calculate for the driest quarter.
     freq : str
-      Resampling frequency.
+        Resampling frequency.
 
     Returns
     -------
@@ -326,7 +326,7 @@ def tg_mean_wetdry_quarter(
 
 @declare_units(pr="[precipitation]")
 def prcptot_wetdry_quarter(
-    pr: xarray.DataArray, op: str = None, freq: str = "YS"
+    pr: xarray.DataArray, op: str, freq: str = "YS"
 ) -> xarray.DataArray:
     r"""Total precipitation of wettest/driest quarter.
 
@@ -337,11 +337,11 @@ def prcptot_wetdry_quarter(
     Parameters
     ----------
     pr : xarray.DataArray
-      Total precipitation rate at daily, weekly, or monthly frequency.
+        Total precipitation rate at daily, weekly, or monthly frequency.
     op : {'wettest', 'driest'}
-      Operation to perform :  'wettest' calculate the wettest quarter ; 'driest' calculate the driest quarter.
+        Operation to perform :  'wettest' calculate the wettest quarter ; 'driest' calculate the driest quarter.
     freq : str
-      Resampling frequency.
+        Resampling frequency.
 
     Returns
     -------
@@ -385,7 +385,7 @@ def prcptot_wetdry_quarter(
 def prcptot_warmcold_quarter(
     pr: xarray.DataArray,
     tas: xarray.DataArray,
-    op: str = None,
+    op: str,
     freq: str = "YS",
 ) -> xarray.DataArray:
     r"""Total precipitation of warmest/coldest quarter.
@@ -401,7 +401,7 @@ def prcptot_warmcold_quarter(
     tas : xarray.DataArray
         Mean temperature at daily, weekly, or monthly frequency.
     op : {'warmest', 'coldest'}
-        Operation to perform: 'warmest' calculate for the warmest quarter ; 'coldest' calculate for the coldest quarter.
+        Operation to perform: 'warmest' calculate for the warmest quarter; 'coldest' calculate for the coldest quarter.
     freq : str
         Resampling frequency.
 

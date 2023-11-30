@@ -10,6 +10,8 @@ Statistical Properties is the xclim term for 'indices' in the VALUE project.
 """
 from __future__ import annotations
 
+from typing import Sequence
+
 import numpy as np
 import xarray as xr
 from scipy import stats
@@ -964,13 +966,18 @@ return_value = StatisticalProperty(
 
 
 def _spatial_correlogram(
-    da: xr.DataArray, *, dims=None, bins=100, group="time", method=1
+    da: xr.DataArray,
+    *,
+    dims: Sequence[str] | None = None,
+    bins: int = 100,
+    group: str = "time",
+    method: int = 1,
 ):
     """Spatial correlogram.
 
     Compute the pairwise spatial correlations (Spearman) and averages them based on the pairwise distances.
     This collapses the spatial and temporal dimensions and returns a distance bins dimension.
-    Needs coordinates for longitude and latitude. This property is heavy to compute and it will
+    Needs coordinates for longitude and latitude. This property is heavy to compute, and it will
     need to create a NxN array in memory (outside of dask), where N is the number of spatial points.
     There are shortcuts for all-nan time-slices or spatial points, but scipy's nan-omitting algorithm
     is extremely slow, so the presence of any lone NaN will increase the computation time. Based on an idea
@@ -978,21 +985,21 @@ def _spatial_correlogram(
 
     Parameters
     ----------
-    da: xr.DataArray
-      Data.
-    dims: sequence of strings
-      Name of the spatial dimensions. Once these are stacked, the longitude and latitude coordinates must be 1D.
-    bins:
-      Same as argument `bins` from :py:meth:`xarray.DataArray.groupby_bins`.
-      If given as a scalar, the equal-width bin limits are generated here
-      (instead of letting xarray do it) to improve performance.
-    group: str
-      Useless for now.
+    da : xr.DataArray
+        Data.
+    dims : sequence of strings, optional
+        Name of the spatial dimensions. Once these are stacked, the longitude and latitude coordinates must be 1D.
+    bins : int
+        Same as argument `bins` from :py:meth:`xarray.DataArray.groupby_bins`.
+        If given as a scalar, the equal-width bin limits are generated here
+        (instead of letting xarray do it) to improve performance.
+    group : str
+        Useless for now.
 
     Returns
     -------
     xr.DataArray, [dimensionless]
-      Inter-site correlogram as a function of distance.
+        Inter-site correlogram as a function of distance.
     """
     if dims is None:
         dims = [d for d in da.dims if d != "time"]
@@ -1058,36 +1065,43 @@ spatial_correlogram = StatisticalProperty(
 
 
 def _decorrelation_length(
-    da: xr.DataArray, *, radius=300, thresh=0.50, dims=None, bins=100, group="time"
+    da: xr.DataArray,
+    *,
+    radius: int | float = 300,
+    thresh: float = 0.50,
+    dims: Sequence[str] | None = None,
+    bins: int = 100,
+    group: str = "time",
 ):
     """Decorrelation length.
 
     Distance from a grid cell where the correlation with its neighbours goes below the threshold.
-    A correlogram is calculated for each grid cell following the method from ``xclim.sdba.properties.spatial_correlogram``.
-    Then, we find the first bin closest to the correlation threshold.
+    A correlogram is calculated for each grid cell following the method from
+    ``xclim.sdba.properties.spatial_correlogram``. Then, we find the first bin closest to the correlation threshold.
 
     Parameters
     ----------
-    da: xr.DataArray
-      Data.
-    radius: float
+    da : xr.DataArray
+        Data.
+    radius : float
         Radius (in km) defining the region where correlations will be calculated between a point and its neighbours.
-    thresh: float
-      Threshold correlation defining decorrelation.
-       The decorrelation length is defined as the center of the distance bin that has a correlation closest to this threshold.
+    thresh : float
+        Threshold correlation defining decorrelation.
+        The decorrelation length is defined as the center of the distance bin that has a correlation closest
+        to this threshold.
     dims: sequence of strings
-      Name of the spatial dimensions. Once these are stacked, the longitude and latitude coordinates must be 1D.
-    bins:
-      Same as argument `bins` from :py:meth:`scipy.stats.binned_statistic`.
-      If given as a scalar, the equal-width bin limits from 0 to radius are generated here
-      (instead of letting scipy do it) to improve performance.
-    group: str
-      Useless for now.
+        Name of the spatial dimensions. Once these are stacked, the longitude and latitude coordinates must be 1D.
+    bins : int
+        Same as argument `bins` from :py:meth:`scipy.stats.binned_statistic`.
+        If given as a scalar, the equal-width bin limits from 0 to radius are generated here
+        (instead of letting scipy do it) to improve performance.
+    group : str
+        Useless for now.
 
     Returns
     -------
     xr.DataArray, [km]
-      Decorrelation length.
+        Decorrelation length.
 
     Notes
     -----

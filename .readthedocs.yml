@@ -27,3 +27,11 @@ python:
       path: .
       extra_requirements:
         - dev
+
+search:
+  ranking:
+
+    notebooks/*: 2
+    api_indicators.html: 1
+    indices.html: -1
+    _modules/*: -3

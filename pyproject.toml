@@ -45,13 +45,13 @@ dependencies = [
   "numba",
   "numpy>=1.16",
   "pandas>=0.23,<2.0; python_version == '3.8'",
-  "pandas>=0.23; python_version >= '3.9'",
+  "pandas>=0.23,<2.2; python_version >= '3.9'",
   "pint>=0.10",
   "pyyaml",
   "scikit-learn>=0.21.3",
   "scipy>=1.2",
   "statsmodels",
-  "xarray>=2022.06.0"
+  "xarray>=2022.06.0,<2023.11.0"
 ]
 
 [project.optional-dependencies]
@@ -183,13 +183,16 @@ module = [
   "clisops.core.subset.*",
   "dask.*",
   "lmoments3.*",
+  "matplotlib.*",
   "numba.*",
   "numpy.*",
   "pandas.*",
   "pint.*",
+  "SBCK.*",
   "scipy.*",
   "sklearn.cluster.*",
-  "xarray.*"
+  "xarray.*",
+  "yaml.*"
 ]
 ignore_missing_imports = true
 

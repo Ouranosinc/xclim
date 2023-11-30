@@ -655,7 +655,7 @@ class ExtremeValues(TrainAdjust):
         hist: xr.DataArray,
         *,
         cluster_thresh: str,
-        ref_params: xr.Dataset = None,
+        ref_params: xr.Dataset | None = None,
         q_thresh: float = 0.95,
     ):
         cluster_thresh = convert_units_to(cluster_thresh, ref, context="infer")
