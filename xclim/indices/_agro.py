@@ -1174,6 +1174,7 @@ def standardized_precipitation_index(
     ...     cal_end=cal_end,
     ... )  # Computing SPI-3 months using a gamma distribution for the fit
     >>> # Fitting parameters can also be obtained ...
+    >>> from xclim.indices.stats import standardized_index_fit_params
     >>> params = standardized_index_fit_params(
     ...     pr.sel(time=slice(cal_start, cal_end)),
     ...     freq="MS",
@@ -1189,7 +1190,12 @@ def standardized_precipitation_index(
     :cite:cts:`mckee_relationship_1993`
     """
     if params is not None and pr_cal is None:
-        freq, window = (params.attrs[s] for s in ["freq", "window"])
+        freq, window, indexer = (
+            params.attrs[s] for s in ["freq", "window", "time_indexer"]
+        )
+        # Unpack attrs to None and {} if needed
+        freq = None if freq == "" else freq
+        indexer = {} if indexer[0] == "" else {indexer[0]: indexer[1:]}
         if cal_start or cal_end:
             warnings.warn(
                 "Expected either `cal_{start|end}` or `params`, got both. The `params` input overrides other inputs."
@@ -1230,8 +1236,9 @@ def standardized_precipitation_index(
     if paramsd != template.sizes:
         params = params.broadcast_like(template)
 
-    spi = standardized_index(pr, params, **indexer)
+    spi = standardized_index(pr, params)
     spi.attrs = params.attrs
+    spi.attrs["freq"] = freq or xarray.infer_freq(spi.time)
     spi.attrs["units"] = ""
     return spi
 
@@ -1324,7 +1331,7 @@ def standardized_precipitation_evapotranspiration_index(
                 "Proceeding with the value given in `params`."
             )
         offset = params_offset
-    offset = 0 if offset is None else convert_units_to(offset, wb, context="hydro")
+    offset = 0 if offset == "" else convert_units_to(offset, wb, context="hydro")
     # Allowed distributions are constrained by the SPI function
     if dist in ["gamma", "fisk"] and offset <= 0:
         raise ValueError(
