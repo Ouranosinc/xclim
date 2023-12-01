@@ -724,15 +724,20 @@ def standardized_index_fit_params(
     )
     params.attrs = {
         "calibration_period": cal_range,
-        "freq": freq,
+        "freq": freq or "",
         "window": window,
         "scipy_dist": dist,
         "method": method,
         "group": group,
-        "time_indexer": indexer,
         "units": "",
-        "offset": offset,
+        "offset": offset or "",
     }
+    if indexer != {}:
+        method, args = indexer.popitem()
+    else:
+        method, args = "", []
+    params.attrs["time_indexer"] = (method, *args)
+
     return params
 
 
