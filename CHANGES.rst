@@ -8,7 +8,7 @@ Contributors to this version: Juliette Lavoie (:user:`juliettelavoie`), Pascal B
 
 Announcements
 ^^^^^^^^^^^^^
-* To circumvent issues stemming from changes to the frequency code convention in `pandas` v2.2, we have pinned `xarray` (<2023.11.0) and `pandas` (< 2.2) for this release. This change will be reverted in `xclim` v0.48.0 to support the newer versions (`xarray >= 2023.11.0` and `pandas >= 2.2`).
+* To circumvent issues stemming from changes to the frequency code convention in `pandas` v2.2, we have pinned `xarray` (< 2023.11.0) and `pandas` (< 2.2) for this release. This change will be reverted in `xclim` v0.48.0 to support the newer versions (`xarray>= 2023.11.0` and `pandas>= 2.2`).
 * `xclim` v0.47.0 will be the last release supporting Python3.8.
 
 New features and enhancements
@@ -18,9 +18,10 @@ New features and enhancements
 
 Bug fixes
 ^^^^^^^^^
-* Fixed a bug with ``n_escore=-1`` in ``xclim.sdba.adjustment.NpdfTransform``. (:issue:`1515`, :pull:`1515`).
-* In the documentation, fix the tooltips in the indicator search results. (:issue:`1524`, :pull:`1527`).
+* Fixed a bug with ``n_escore=-1`` in ``xclim.sdba.adjustment.NpdfTransform``. (:issue:`1515`, :pull:`1516`).
+* In the documentation, fixed the tooltips in the indicator search results. (:issue:`1524`, :pull:`1527`).
 * If chunked inputs are passed to indicators ``mean_radiant_temperature`` and ``potential_evapotranspiration``, sub-calculations of the solar angle will also use the same chunks, instead of a single one of the same size as the data. (:issue:`1536`, :pull:`1542`).
+* Fix wrong attributes in ``xclim.indices.standardized_precipitation_index``, ``xclim.indices.standardized_precipitation_evapotranspiration_index``. (:issue:`1537`, :pull:`1538`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
