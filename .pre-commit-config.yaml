@@ -28,12 +28,12 @@ repos:
   hooks:
   - id: toml-sort-fix
 - repo: https://github.com/adrienverge/yamllint.git
-  rev: v1.32.0
+  rev: v1.33.0
   hooks:
   - id: yamllint
     args: ['--config-file=.yamllint.yaml']
 - repo: https://github.com/psf/black
-  rev: 23.10.1
+  rev: 23.11.0
   hooks:
   - id: black
 - repo: https://github.com/PyCQA/isort
@@ -42,7 +42,7 @@ repos:
   - id: isort
     args: ['--settings-file=pyproject.toml']
 - repo: https://github.com/astral-sh/ruff-pre-commit
-  rev: v0.1.4
+  rev: v0.1.6
   hooks:
   - id: ruff
 - repo: https://github.com/pycqa/flake8
@@ -52,7 +52,7 @@ repos:
     additional_dependencies: ['flake8-alphabetize', 'flake8-rst-docstrings']
     args: ['--config=setup.cfg']
 - repo: https://github.com/nbQA-dev/nbQA
-  rev: 1.7.0
+  rev: 1.7.1
   hooks:
   - id: nbqa-black
   - id: nbqa-pyupgrade
@@ -72,7 +72,7 @@ repos:
     exclude: '(xclim/indices/__init__.py|docs/installation.rst)'
     additional_dependencies: ['black==23.10.1']
 - repo: https://github.com/python-jsonschema/check-jsonschema
-  rev: 0.27.1
+  rev: 0.27.2
   hooks:
   - id: check-github-workflows
   - id: check-readthedocs
