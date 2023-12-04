@@ -18,10 +18,10 @@ repos:
   - id: check-json
   - id: check-toml
   - id: check-yaml
-    args: ['--allow-multiple-documents']
+    args: [ '--allow-multiple-documents' ]
   - id: debug-statements
   - id: pretty-format-json
-    args: ['--autofix', '--no-ensure-ascii', '--no-sort-keys']
+    args: [ '--autofix', '--no-ensure-ascii', '--no-sort-keys' ]
     exclude: '.ipynb'
 - repo: https://github.com/pappasam/toml-sort
   rev: v0.23.1
@@ -31,8 +31,8 @@ repos:
   rev: v1.33.0
   hooks:
   - id: yamllint
-    args: ['--config-file=.yamllint.yaml']
-- repo: https://github.com/psf/black
+    args: [ '--config-file=.yamllint.yaml' ]
+- repo: https://github.com/psf/black-precommit-mirror
   rev: 23.11.0
   hooks:
   - id: black
@@ -40,7 +40,6 @@ repos:
   rev: 5.12.0
   hooks:
   - id: isort
-    args: ['--settings-file=pyproject.toml']
 - repo: https://github.com/astral-sh/ruff-pre-commit
   rev: v0.1.6
   hooks:
@@ -49,28 +48,28 @@ repos:
   rev: 6.1.0
   hooks:
   - id: flake8
-    additional_dependencies: ['flake8-alphabetize', 'flake8-rst-docstrings']
-    args: ['--config=setup.cfg']
+    additional_dependencies: [ 'flake8-alphabetize', 'flake8-rst-docstrings ']
+    args: [ '--config=setup.cfg' ]
 - repo: https://github.com/nbQA-dev/nbQA
   rev: 1.7.1
   hooks:
   - id: nbqa-black
+    additional_dependencies: [ 'black==23.11.0' ]
   - id: nbqa-pyupgrade
-    args: ['--py38-plus']
+    args: [ '--py38-plus' ]
   - id: nbqa-isort
-    args: ['--settings-file=pyproject.toml']
 - repo: https://github.com/kynan/nbstripout
   rev: 0.6.1
   hooks:
   - id: nbstripout
     files: '.ipynb'
-    args: [ "--extra-keys", "metadata.kernelspec" ]
+    args: [ '--extra-keys', 'metadata.kernelspec' ]
 - repo: https://github.com/keewis/blackdoc
   rev: v0.3.9
   hooks:
   - id: blackdoc
     exclude: '(xclim/indices/__init__.py|docs/installation.rst)'
-    additional_dependencies: ['black==23.10.1']
+    additional_dependencies: [ 'black==23.11.0' ]
 - repo: https://github.com/python-jsonschema/check-jsonschema
   rev: 0.27.2
   hooks:
