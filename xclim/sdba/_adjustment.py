@@ -6,8 +6,10 @@ This file defines the different steps, to be wrapped into the Adjustment objects
 """
 from __future__ import annotations
 
+import bottleneck as bn
 import numpy as np
 import xarray as xr
+from xarray.core.utils import get_temp_dimname
 
 from xclim.core.units import convert_units_to, infer_context, units
 from xclim.indices.stats import _fitfunc_1d  # noqa
@@ -17,7 +19,7 @@ from . import utils as u
 from ._processing import _adapt_freq
 from .base import Grouper, map_blocks, map_groups
 from .detrending import PolyDetrend
-from .processing import escore
+from .processing import escore, standardize
 
 
 def _adapt_freq_hist(ds, adapt_freq_thresh):
@@ -435,3 +437,214 @@ def extremes_adjust(
 
     out = (transition * scen) + ((1 - transition) * ds.scen)
     return out.rename("scen").squeeze("group", drop=True).to_dataset()
+
+
+# =======================================================================================
+# Numpy-like implementation of npdf
+# =======================================================================================
+def _rank(arr):
+    rnk = bn.nanrankdata(arr)
+    rnk = rnk / np.nanmax(rnk)
+    mx, mn = 1, np.nanmin(rnk)
+    return mx * (rnk - mn) / (mx - mn)
+
+
+def _get_af(ref, hist, hista, sima, q, kind, method, extrap):
+    ref_q, hist_q = (np.nanquantile(arr, q) for arr in [ref, hist])
+    af_q = u.get_correction(hist_q, ref_q, kind)
+    out = [
+        u._interp_on_quantiles_1D(_rank(arr), q, af_q, method, extrap)
+        for arr in [hista, sima]
+    ]
+    return out
+
+
+def _single_qdm(ref, hist, sim, g_idxs, gw_idxs, q, kind, method, extrap):
+    af_r = np.zeros((len([hist, sim]), len(ref)))
+    # loop on blocks (for group="time", just one)
+    for ib in range(gw_idxs.shape[0]):
+        gw_indxs = np.int64(gw_idxs[ib, :][gw_idxs[ib, :] >= 0])
+        g_indxs = np.int64(g_idxs[ib, :][g_idxs[ib, :] >= 0])
+        af_r[:, g_indxs] = _get_af(
+            ref[gw_indxs],
+            hist[gw_indxs],
+            hist[g_indxs],
+            sim[g_indxs],
+            q,
+            kind,
+            method,
+            extrap,
+        )
+    hist, sim = (u.apply_correction(da, af, kind) for da, af in zip([hist, sim], af_r))
+    return hist, sim
+
+
+def single_qdm(ref, hist, sim, g_idxs, gw_idxs, q, kind, method, extrap):
+    scenh, scens = np.zeros_like(hist), np.zeros_like(sim)
+    # loop on multivar
+    for iv in range(ref.shape[0]):
+        scenh[iv, :], scens[iv, :] = _single_qdm(
+            ref[iv, :],
+            hist[iv, :],
+            sim[iv, :],
+            g_idxs,
+            gw_idxs,
+            q,
+            kind,
+            method,
+            extrap,
+        )
+    return scenh, scens
+
+
+def _fast_npdf(
+    refs, hists, sims, rots, g_idxs, gw_idxs, *, nquantiles, interp, extrapolation
+):
+    q, method, extrap = nquantiles, interp, extrapolation
+    for ii in range(len(rots)):
+        rot = rots[0] if ii == 0 else rots[ii] @ rots[ii - 1].T
+        refs, hists, sims = (rot @ da for da in [refs, hists, sims])
+        hists, sims = single_qdm(
+            refs, hists, sims, g_idxs, gw_idxs, q, "+", method, extrap
+        )
+    hists, sims = (rots[-1].T @ da for da in [hists, sims])
+    return hists, sims
+
+
+def _get_group_complement(da, group):
+    # complement of "dayofyear": "year", etc.
+    gr = group.name if isinstance(group, Grouper) else group
+    gr = group
+    if gr == "time.dayofyear":
+        return da.time.dt.year
+    if gr == "time.month":
+        return da.time.dt.strftime("%Y-%d")
+
+
+def time_group_indices(times, group):
+    gr, win = group.name, group.window
+    # get time indices (0,1,2,...) for each block
+    timeind = xr.DataArray(np.arange(times.size), coords={"time": times})
+    win_dim0, win_dim = (
+        get_temp_dimname(timeind.dims, lab) for lab in ["window_dim0", "window_dim"]
+    )
+    if gr != "time":
+        # time indices for each block with window = 1
+        g_idxs = timeind.groupby(gr).apply(
+            lambda da: da.assign_coords(time=_get_group_complement(da, gr)).rename(
+                {"time": "year"}
+            )
+        )
+        # time indices for each block with general window
+        da = timeind.rolling(time=win, center=True).construct(window_dim=win_dim0)
+        gw_idxs = da.groupby(gr).apply(
+            lambda da: da.assign_coords(time=_get_group_complement(da, gr))
+            .stack({win_dim: ["time", win_dim0]})
+            .reset_index(dims_or_levels=[win_dim])
+        )
+        gw_idxs = gw_idxs.transpose(..., "window_dim")
+    else:
+        gw_idxs = timeind.rename({"time": win_dim}).expand_dims({win_dim0: [-1]})
+        g_idxs = gw_idxs.copy()
+    return g_idxs, gw_idxs
+
+
+def fast_npdf(
+    ref,
+    hist,
+    sim,
+    n_iter,
+    rot_matrices=None,
+    pts_dim="multivar",
+    base_kws=None,
+    adj_kws=None,
+    standardize_inplace=False,
+    do_nothing=False,
+):
+    r"""N-dimensional probability density function transform.
+
+    Parameters
+    ----------
+    ref  : xr.DataArray
+        Reference multivariate timeseries
+    hist : xr.DataArray
+        simulated timeseries on the reference period
+    sim  : xr.DataArray
+        Simulated timeseries on the projected period.
+    n_iter : int
+        The number of iterations to perform. Defaults to 20.
+    pts_dim : str
+        The name of the "multivariate" dimension. Defaults to "multivar", which is the
+        normal case when using :py:func:`xclim.sdba.base.stack_variables`.
+    rot_matrices : xr.DataArray, optional
+        The rotation matrices as a 3D array ('iterations', <pts_dim>, <anything>), with shape (n_iter, <N>, <N>).
+        If left empty, random rotation matrices will be automatically generated.
+    base_kws : dict, optional
+        Arguments passed to the training of the univariate adjustment.
+    adj_kws : dict, optional
+        Dictionary of arguments to pass to the adjust method of the univariate adjustment.
+    standarize_inplace : bool
+        If true, perform a standardization of ref,hist,sim. Defaults to false
+    """
+    if do_nothing:
+        return hist, sim
+    # =======================================================================================
+    # Manage train/adj keywords
+    # =======================================================================================
+    base_kws = base_kws or {}
+    adj_kws = adj_kws or {}
+    if "group" in base_kws.keys():
+        group = base_kws["group"]
+        group = group if isinstance(group, Grouper) else Grouper(group, 1)
+        base_kws.pop("group")
+    else:
+        group = Grouper("time")
+
+    bc_kws = {"nquantiles": 20, "interp": "nearest", "extrapolation": "constant"}
+    for k, inp_kws in zip(
+        ["nquantiles", "interp", "extrapolation"], [base_kws, adj_kws, adj_kws]
+    ):
+        bc_kws[k] = bc_kws[k] if k not in inp_kws.keys() else inp_kws[k]
+        if k == "nquantiles" and np.isscalar(bc_kws[k]):
+            bc_kws["nquantiles"] = u.equally_spaced_nodes(bc_kws["nquantiles"])
+    # =======================================================================================
+    # fast_npdf
+    # =======================================================================================
+    g_idxs, gw_idxs = time_group_indices(ref.time, group)
+    if standardize_inplace:
+        refs, hists, sims = (standardize(arr)[0] for arr in [ref, hist, sim])
+    else:
+        refs, hists, sims = ref, hist, sim
+
+    pts_dim_pr = xr.core.utils.get_temp_dimname(
+        set(refs.dims).union(hists.dims).union(sims.dims), pts_dim + "_prime"
+    )
+    rot_matrices = u.rand_rot_matrix(
+        ref[pts_dim], num=n_iter, new_dim=pts_dim_pr
+    ).rename(matrices="iterations")
+    sim_time = sims["time"]
+    sims["time"] = hists["time"]
+    hists, sims = xr.apply_ufunc(
+        _fast_npdf,
+        refs,
+        hists,
+        sims,
+        rot_matrices,
+        g_idxs,
+        gw_idxs,
+        dask="parallelized",
+        kwargs=bc_kws,
+        input_core_dims=[
+            [pts_dim, "time"],
+            [pts_dim, "time"],
+            [pts_dim, "time"],
+            ["iterations", pts_dim_pr, pts_dim],
+            g_idxs.dims,
+            gw_idxs.dims,
+        ],
+        output_core_dims=[[pts_dim, "time"], [pts_dim, "time"]],
+        vectorize=True,
+        output_dtypes=[hist.dtype, sim.dtype],
+    )
+    sims["time"] = sim_time
+    return hists, sims
