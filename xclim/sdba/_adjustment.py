@@ -442,73 +442,6 @@ def extremes_adjust(
 # =======================================================================================
 # Numpy-like implementation of npdf
 # =======================================================================================
-def _rank(arr):
-    rnk = bn.nanrankdata(arr)
-    rnk = rnk / np.nanmax(rnk)
-    mx, mn = 1, np.nanmin(rnk)
-    return mx * (rnk - mn) / (mx - mn)
-
-
-def _get_af(ref, hist, hista, sima, q, kind, method, extrap):
-    ref_q, hist_q = (np.nanquantile(arr, q) for arr in [ref, hist])
-    af_q = u.get_correction(hist_q, ref_q, kind)
-    out = [
-        u._interp_on_quantiles_1D(_rank(arr), q, af_q, method, extrap)
-        for arr in [hista, sima]
-    ]
-    return out
-
-
-def _single_qdm(ref, hist, sim, g_idxs, gw_idxs, q, kind, method, extrap):
-    af_r = np.zeros((len([hist, sim]), len(ref)))
-    # loop on blocks (for group="time", just one)
-    for ib in range(gw_idxs.shape[0]):
-        gw_indxs = np.int64(gw_idxs[ib, :][gw_idxs[ib, :] >= 0])
-        g_indxs = np.int64(g_idxs[ib, :][g_idxs[ib, :] >= 0])
-        af_r[:, g_indxs] = _get_af(
-            ref[gw_indxs],
-            hist[gw_indxs],
-            hist[g_indxs],
-            sim[g_indxs],
-            q,
-            kind,
-            method,
-            extrap,
-        )
-    hist, sim = (u.apply_correction(da, af, kind) for da, af in zip([hist, sim], af_r))
-    return hist, sim
-
-
-def single_qdm(ref, hist, sim, g_idxs, gw_idxs, q, kind, method, extrap):
-    scenh, scens = np.zeros_like(hist), np.zeros_like(sim)
-    # loop on multivar
-    for iv in range(ref.shape[0]):
-        scenh[iv, :], scens[iv, :] = _single_qdm(
-            ref[iv, :],
-            hist[iv, :],
-            sim[iv, :],
-            g_idxs,
-            gw_idxs,
-            q,
-            kind,
-            method,
-            extrap,
-        )
-    return scenh, scens
-
-
-def _fast_npdf(
-    refs, hists, sims, rots, g_idxs, gw_idxs, *, nquantiles, interp, extrapolation
-):
-    q, method, extrap = nquantiles, interp, extrapolation
-    for ii in range(len(rots)):
-        rot = rots[0] if ii == 0 else rots[ii] @ rots[ii - 1].T
-        refs, hists, sims = (rot @ da for da in [refs, hists, sims])
-        hists, sims = single_qdm(
-            refs, hists, sims, g_idxs, gw_idxs, q, "+", method, extrap
-        )
-    hists, sims = (rots[-1].T @ da for da in [hists, sims])
-    return hists, sims
 
 
 def _get_group_complement(da, group):
@@ -549,10 +482,79 @@ def time_group_indices(times, group):
     return g_idxs, gw_idxs
 
 
+def _rank(arr):
+    rnk = bn.nanrankdata(arr)
+    rnk = rnk / np.nanmax(rnk)
+    mx, mn = 1, np.nanmin(rnk)
+    return mx * (rnk - mn) / (mx - mn)
+
+
+def _reordering_1d(data, ordr):
+    return np.sort(data)[np.argsort(np.argsort(ordr))]
+
+
+def _get_af(ref, hist, hista, q, kind, method, extrap):
+    ref_q, hist_q = (np.nanquantile(arr, q) for arr in [ref, hist])
+    af_q = u.get_correction(hist_q, ref_q, kind)
+    # af_r = u._interp_on_quantiles_1D(_rank(np.arange(len(hista))), q, af_q, method, extrap)
+    af = u._interp_on_quantiles_1D(_rank(hista), q, af_q, method, extrap)
+    return af, af_q
+    # return _reordering_1d(af_r, hista), af_r
+
+
+def _single_qdm(ref, hist, g_idxs, gw_idxs, q, kind, method, extrap):
+    af = np.zeros_like(hist)
+    # af_r = np.zeros_like(hist)
+    af_q = np.zeros((g_idxs.shape[0], len(q)))
+    # loop on blocks (for group="time", just one)
+    for ib in range(gw_idxs.shape[0]):
+        gw_indxs = np.int64(gw_idxs[ib, :][gw_idxs[ib, :] >= 0])
+        g_indxs = np.int64(g_idxs[ib, :][g_idxs[ib, :] >= 0])
+        af[g_indxs], af_q[ib, :] = _get_af(
+            ref[gw_indxs],
+            hist[gw_indxs],
+            hist[g_indxs],
+            q,
+            kind,
+            method,
+            extrap,
+        )
+    hist = u.apply_correction(hist, af, kind)
+    return hist, af_q
+
+
+def single_qdm(ref, hist, g_idxs, gw_idxs, q, kind, method, extrap):
+    scenh = np.zeros_like(hist)
+    af_q = np.zeros((ref.shape[0], g_idxs.shape[0], len(q)))
+
+    # af_r = np.zeros_like(hist)
+    # loop on multivar
+    for iv in range(ref.shape[0]):
+        scenh[iv, :], af_q[iv, ...] = _single_qdm(
+            ref[iv, :], hist[iv, :], g_idxs, gw_idxs, q, kind, method, extrap
+        )
+    return scenh, af_q
+
+
+def _fast_npdf(
+    refs, hists, rots, g_idxs, gw_idxs, *, nquantiles, interp, extrapolation
+):
+    q, method, extrap = nquantiles, interp, extrapolation
+    # af_r = np.zeros(list([len(rots)])+list(hists.shape))
+    af_q = np.zeros((len(rots), refs.shape[0], g_idxs.shape[0], len(q)))
+    for ii in range(len(rots)):
+        rot = rots[0] if ii == 0 else rots[ii] @ rots[ii - 1].T
+        refs, hists = (rot @ da for da in [refs, hists])
+        hists, af_q[ii, ...] = single_qdm(
+            refs, hists, g_idxs, gw_idxs, q, "+", method, extrap
+        )
+    hists = rots[-1].T @ hists
+    return hists, af_q
+
+
 def fast_npdf(
     ref,
     hist,
-    sim,
     n_iter,
     rot_matrices=None,
     pts_dim="multivar",
@@ -569,8 +571,6 @@ def fast_npdf(
         Reference multivariate timeseries
     hist : xr.DataArray
         simulated timeseries on the reference period
-    sim  : xr.DataArray
-        Simulated timeseries on the projected period.
     n_iter : int
         The number of iterations to perform. Defaults to 20.
     pts_dim : str
@@ -587,7 +587,7 @@ def fast_npdf(
         If true, perform a standardization of ref,hist,sim. Defaults to false
     """
     if do_nothing:
-        return hist, sim
+        return hist
     # =======================================================================================
     # Manage train/adj keywords
     # =======================================================================================
@@ -610,26 +610,24 @@ def fast_npdf(
     # =======================================================================================
     # fast_npdf
     # =======================================================================================
+    print(group)
     g_idxs, gw_idxs = time_group_indices(ref.time, group)
     if standardize_inplace:
-        refs, hists, sims = (standardize(arr)[0] for arr in [ref, hist, sim])
+        refs, hists = (standardize(arr)[0] for arr in [ref, hist])
     else:
-        refs, hists, sims = ref, hist, sim
+        refs, hists = ref, hist
 
     pts_dim_pr = xr.core.utils.get_temp_dimname(
-        set(refs.dims).union(hists.dims).union(sims.dims), pts_dim + "_prime"
+        set(refs.dims).union(hists.dims), pts_dim + "_prime"
     )
     if rot_matrices is None:
         rot_matrices = u.rand_rot_matrix(
             ref[pts_dim], num=n_iter, new_dim=pts_dim_pr
         ).rename(matrices="iterations")
-    sim_time = sims["time"]
-    sims["time"] = hists["time"]
-    hists, sims = xr.apply_ufunc(
+    hists, af_q = xr.apply_ufunc(
         _fast_npdf,
         refs,
         hists,
-        sims,
         rot_matrices,
         g_idxs,
         gw_idxs,
@@ -638,14 +636,98 @@ def fast_npdf(
         input_core_dims=[
             [pts_dim, "time"],
             [pts_dim, "time"],
-            [pts_dim, "time"],
             ["iterations", pts_dim_pr, pts_dim],
             g_idxs.dims,
             gw_idxs.dims,
         ],
-        output_core_dims=[[pts_dim, "time"], [pts_dim, "time"]],
+        output_core_dims=[
+            [pts_dim, "time"],
+            ["iterations", pts_dim, g_idxs.dims[0], "quantiles"],
+        ],
+        # output_core_dims=[[pts_dim, "time"], ["iterations", pts_dim, "time"]],
         vectorize=True,
-        output_dtypes=[hist.dtype, sim.dtype],
+        output_dtypes=[hist.dtype, hist.dtype],
     )
-    sims["time"] = sim_time
-    return hists, sims
+    af_q = af_q.assign_coords(quantiles=bc_kws["nquantiles"])
+    return hists, af_q, rot_matrices
+
+
+def _fast_npdf_adj(sims, rots, af_q, g_idxs, q):
+    for ii in range(len(rots)):
+        rot = rots[0] if ii == 0 else rots[ii] @ rots[ii - 1].T
+        sims = rot @ sims
+        for iv in range(sims.shape[0]):
+            for ib in range(g_idxs.shape[0]):
+                g_indxs = np.int64(g_idxs[ib, :][g_idxs[ib, :] >= 0])
+                af0 = u._interp_on_quantiles_1D(
+                    _rank(sims[iv, g_indxs]),
+                    q,
+                    af_q[ii, iv, ib, :],
+                    "nearest",
+                    "constant",
+                )
+                # af0 = _reordering_1d(af_r[ii,iv,g_indxs], sims[iv, g_indxs])
+                sims[iv, g_indxs] = u.apply_correction(sims[iv, g_indxs], af0, "+")
+    sims = rots[-1].T @ sims
+    return sims
+
+
+def fast_npdf_adj(
+    sim,
+    group,
+    af_q,
+    rot_matrices,
+    standardize_inplace=False,
+):
+    r"""N-dimensional probability density function transform.
+
+    Parameters
+    ----------
+    sim  : xr.DataArray
+        Reference multivariate timeseries
+    n_iter : int
+        The number of iterations to perform. Defaults to 20.
+    pts_dim : str
+        The name of the "multivariate" dimension. Defaults to "multivar", which is the
+        normal case when using :py:func:`xclim.sdba.base.stack_variables`.
+    rot_matrices : xr.DataArray, optional
+        The rotation matrices as a 3D array ('iterations', <pts_dim>, <anything>), with shape (n_iter, <N>, <N>).
+        If left empty, random rotation matrices will be automatically generated.
+    base_kws : dict, optional
+        Arguments passed to the training of the univariate adjustment.
+    adj_kws : dict, optional
+        Dictionary of arguments to pass to the adjust method of the univariate adjustment.
+    standarize_inplace : bool
+        If true, perform a standardization of ref,hist,sim. Defaults to false
+    """
+    # =======================================================================================
+    # fast_npdf
+    # =======================================================================================
+    if standardize_inplace:
+        sims = standardize(sim)[0]
+    else:
+        sims = sim
+    g_idxs, _ = time_group_indices(sims.time, group)
+    multivar_dims = list(rot_matrices.transpose("iterations", ...).dims[1:])
+    pts_dim = [d for d in multivar_dims if "prime" not in d][0]
+    multivar_dims.remove(pts_dim)
+    pts_dim_pr = multivar_dims[0]
+    sims = xr.apply_ufunc(
+        _fast_npdf_adj,
+        sims,
+        rot_matrices,
+        af_q,
+        g_idxs,
+        dask="parallelized",
+        input_core_dims=[
+            [pts_dim, "time"],
+            ["iterations", pts_dim_pr, pts_dim],
+            ["iterations", pts_dim, g_idxs.dims[0], "quantiles"],
+            g_idxs.dims,
+        ],
+        kwargs={"q": af_q.quantiles.values},
+        output_core_dims=[[pts_dim, "time"]],
+        vectorize=True,
+        output_dtypes=[sims.dtype],
+    )
+    return sims
