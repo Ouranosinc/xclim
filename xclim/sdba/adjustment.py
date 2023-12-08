@@ -1142,9 +1142,10 @@ class NpdfTransform(Adjust):
         )
 
         # Get the rotation matrices
-        rot_matrices = rot_matrices or rand_rot_matrix(
-            ref[pts_dim], num=n_iter, new_dim=rot_dim
-        ).rename(matrices="iterations")
+        if rot_matrices is None:
+            rot_matrices = rand_rot_matrix(
+                ref[pts_dim], num=n_iter, new_dim=rot_dim
+            ).rename(matrices="iterations")
 
         # Call a map_blocks on the iterative function
         # Sadly, this is a bit too complicated for map_blocks, we'll do it by hand.
