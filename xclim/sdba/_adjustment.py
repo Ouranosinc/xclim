@@ -619,9 +619,10 @@ def fast_npdf(
     pts_dim_pr = xr.core.utils.get_temp_dimname(
         set(refs.dims).union(hists.dims).union(sims.dims), pts_dim + "_prime"
     )
-    rot_matrices = u.rand_rot_matrix(
-        ref[pts_dim], num=n_iter, new_dim=pts_dim_pr
-    ).rename(matrices="iterations")
+    if rot_matrices is not None:
+        rot_matrices = u.rand_rot_matrix(
+            ref[pts_dim], num=n_iter, new_dim=pts_dim_pr
+        ).rename(matrices="iterations")
     sim_time = sims["time"]
     sims["time"] = hists["time"]
     hists, sims = xr.apply_ufunc(
