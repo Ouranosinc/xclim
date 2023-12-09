@@ -502,15 +502,15 @@ def single_qdm(ref, hist, g_idxs, gw_idxs, q, kind, method, extrap):
             gw_indxs = np.int64(gw_idxs[ib, :][gw_idxs[ib, :] >= 0])
             g_indxs = np.int64(g_idxs[ib, :][g_idxs[ib, :] >= 0])
             af_r, af_q[iv, ib, :] = _get_af(
-                ref[gw_indxs],
-                hist[gw_indxs],
-                hist[g_indxs],
+                ref[iv, gw_indxs],
+                hist[iv, gw_indxs],
+                hist[iv, g_indxs],
                 q,
                 kind,
                 method,
                 extrap,
             )
-            scenh[iv, g_indxs] = u.apply_correction(hist[g_indxs], af_r, kind)
+            scenh[iv, g_indxs] = u.apply_correction(hist[iv, g_indxs], af_r, kind)
     return scenh, af_q
 
 
