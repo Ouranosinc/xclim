@@ -488,38 +488,29 @@ def _get_af(ref, hist, hista, q, kind, method, extrap):
     ref_q, hist_q = (np.nanquantile(arr, q) for arr in [ref, hist])
     af_q = u.get_correction(hist_q, ref_q, kind)
     # af_r = u._interp_on_quantiles_1D(_rank(np.arange(len(hista))), q, af_q, method, extrap)
-    af = u._interp_on_quantiles_1D(_rank(hista), q, af_q, method, extrap)
-    return af, af_q
-
-
-def _single_qdm(ref, hist, g_idxs, gw_idxs, q, kind, method, extrap):
-    af = np.zeros_like(hist)
-    # af_r = np.zeros_like(hist)
-    af_q = np.zeros((g_idxs.shape[0], len(q)))
-    # loop on blocks (for group="time", just one)
-    for ib in range(gw_idxs.shape[0]):
-        gw_indxs = np.int64(gw_idxs[ib, :][gw_idxs[ib, :] >= 0])
-        g_indxs = np.int64(g_idxs[ib, :][g_idxs[ib, :] >= 0])
-        af[g_indxs], af_q[ib, :] = _get_af(
-            ref[gw_indxs],
-            hist[gw_indxs],
-            hist[g_indxs],
-            q,
-            kind,
-            method,
-            extrap,
-        )
-    hist = u.apply_correction(hist, af, kind)
-    return hist, af_q
+    af_r = u._interp_on_quantiles_1D(_rank(hista), q, af_q, method, extrap)
+    return af_r, af_q
 
 
 def single_qdm(ref, hist, g_idxs, gw_idxs, q, kind, method, extrap):
     scenh = np.zeros_like(hist)
     af_q = np.zeros((ref.shape[0], g_idxs.shape[0], len(q)))
+    # loop on multivar
     for iv in range(ref.shape[0]):
-        scenh[iv, :], af_q[iv, ...] = _single_qdm(
-            ref[iv, :], hist[iv, :], g_idxs, gw_idxs, q, kind, method, extrap
-        )
+        # loop on blocks (for group="time", just one block ; group="time.dayofyear", 365)
+        for ib in range(gw_idxs.shape[0]):
+            gw_indxs = np.int64(gw_idxs[ib, :][gw_idxs[ib, :] >= 0])
+            g_indxs = np.int64(g_idxs[ib, :][g_idxs[ib, :] >= 0])
+            af_r, af_q[iv, ib, :] = _get_af(
+                ref[gw_indxs],
+                hist[gw_indxs],
+                hist[g_indxs],
+                q,
+                kind,
+                method,
+                extrap,
+            )
+            scenh[iv, g_indxs] = u.apply_correction(hist[g_indxs], af_r, kind)
     return scenh, af_q
 
 
