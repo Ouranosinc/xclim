@@ -439,11 +439,6 @@ def extremes_adjust(
     return out.rename("scen").squeeze("group", drop=True).to_dataset()
 
 
-# =======================================================================================
-# Numpy-like implementation of npdf
-# =======================================================================================
-
-
 def _get_group_complement(da, group):
     # complement of "dayofyear": "year", etc.
     gr = group.name if isinstance(group, Grouper) else group
@@ -489,17 +484,12 @@ def _rank(arr):
     return mx * (rnk - mn) / (mx - mn)
 
 
-def _reordering_1d(data, ordr):
-    return np.sort(data)[np.argsort(np.argsort(ordr))]
-
-
 def _get_af(ref, hist, hista, q, kind, method, extrap):
     ref_q, hist_q = (np.nanquantile(arr, q) for arr in [ref, hist])
     af_q = u.get_correction(hist_q, ref_q, kind)
     # af_r = u._interp_on_quantiles_1D(_rank(np.arange(len(hista))), q, af_q, method, extrap)
     af = u._interp_on_quantiles_1D(_rank(hista), q, af_q, method, extrap)
     return af, af_q
-    # return _reordering_1d(af_r, hista), af_r
 
 
 def _single_qdm(ref, hist, g_idxs, gw_idxs, q, kind, method, extrap):
@@ -526,9 +516,6 @@ def _single_qdm(ref, hist, g_idxs, gw_idxs, q, kind, method, extrap):
 def single_qdm(ref, hist, g_idxs, gw_idxs, q, kind, method, extrap):
     scenh = np.zeros_like(hist)
     af_q = np.zeros((ref.shape[0], g_idxs.shape[0], len(q)))
-
-    # af_r = np.zeros_like(hist)
-    # loop on multivar
     for iv in range(ref.shape[0]):
         scenh[iv, :], af_q[iv, ...] = _single_qdm(
             ref[iv, :], hist[iv, :], g_idxs, gw_idxs, q, kind, method, extrap
@@ -540,7 +527,6 @@ def _fast_npdf(
     refs, hists, rots, g_idxs, gw_idxs, *, nquantiles, interp, extrapolation
 ):
     q, method, extrap = nquantiles, interp, extrapolation
-    # af_r = np.zeros(list([len(rots)])+list(hists.shape))
     af_q = np.zeros((len(rots), refs.shape[0], g_idxs.shape[0], len(q)))
     for ii in range(len(rots)):
         rot = rots[0] if ii == 0 else rots[ii] @ rots[ii - 1].T
@@ -561,7 +547,6 @@ def fast_npdf(
     base_kws=None,
     adj_kws=None,
     standardize_inplace=False,
-    do_nothing=False,
 ):
     r"""N-dimensional probability density function transform.
 
@@ -586,11 +571,7 @@ def fast_npdf(
     standarize_inplace : bool
         If true, perform a standardization of ref,hist,sim. Defaults to false
     """
-    if do_nothing:
-        return hist
-    # =======================================================================================
     # Manage train/adj keywords
-    # =======================================================================================
     if base_kws is None:
         base_kws = {}
     if adj_kws is None:
@@ -607,15 +588,13 @@ def fast_npdf(
     bc_kws = base_kws
     bc_kws.update(adj_kws)
 
-    # =======================================================================================
     # fast_npdf
-    # =======================================================================================
-    print(group)
     g_idxs, gw_idxs = time_group_indices(ref.time, group)
-    if standardize_inplace:
-        refs, hists = (standardize(arr)[0] for arr in [ref, hist])
-    else:
-        refs, hists = ref, hist
+    refs, hists = (
+        [ref, hist]
+        if standardize_inplace is False
+        else (standardize(arr)[0] for arr in [ref, hist])
+    )
 
     pts_dim_pr = xr.core.utils.get_temp_dimname(
         set(refs.dims).union(hists.dims), pts_dim + "_prime"
@@ -659,8 +638,8 @@ def _fast_npdf_adj(sims, rots, af_q, g_idxs, q):
         for iv in range(sims.shape[0]):
             for ib in range(g_idxs.shape[0]):
                 g_indxs = np.int64(g_idxs[ib, :][g_idxs[ib, :] >= 0])
-                af0 = u._interp_on_quantiles_1D(
-                    _rank(sims[iv, g_indxs]),
+                af0 = u._interp_on_quantiles_1D_multi(
+                    _rank(sims[iv, :, g_indxs]),
                     q,
                     af_q[ii, iv, ib, :],
                     "nearest",
@@ -703,6 +682,10 @@ def fast_npdf_adj(
     # =======================================================================================
     # fast_npdf
     # =======================================================================================
+    dummydim = False
+    if "movingwin" in sim.dims:
+        sim.expand_dims({"movingwin": [0]})
+        dummydim = True
     if standardize_inplace:
         sims = standardize(sim)[0]
     else:
@@ -730,4 +713,5 @@ def fast_npdf_adj(
         vectorize=True,
         output_dtypes=[sims.dtype],
     )
+    sims = sims if dummydim is False else sims.isel(movingwin=0)
     return sims
