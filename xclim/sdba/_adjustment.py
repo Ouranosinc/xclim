@@ -597,14 +597,16 @@ def fast_npdf(
         adj_kws = {}
     base_kws.setdefault("group", Grouper("time"))
     base_kws.setdefault("nquantiles", 20)
+    if np.isscalar(base_kws["nquantiles"]):
+        base_kws["nquantiles"] = u.equally_spaced_nodes(base_kws["nquantiles"])
     adj_kws.setdefault("interp", "nearest")
     adj_kws.setdefault("extrapolation", "constant")
-
     group = base_kws["group"]
     group = group if isinstance(group, Grouper) else Grouper(group, 1)
     base_kws.pop("group")
     bc_kws = base_kws
     bc_kws.update(adj_kws)
+
     # =======================================================================================
     # fast_npdf
     # =======================================================================================
