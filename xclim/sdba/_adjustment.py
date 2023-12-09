@@ -555,7 +555,7 @@ def _fast_npdf(
 def fast_npdf(
     ref,
     hist,
-    n_iter,
+    n_iter=20,
     rot_matrices=None,
     pts_dim="multivar",
     base_kws=None,
@@ -591,22 +591,16 @@ def fast_npdf(
     # =======================================================================================
     # Manage train/adj keywords
     # =======================================================================================
-    base_kws = base_kws or {}
-    adj_kws = adj_kws or {}
-    if "group" in base_kws.keys():
-        group = base_kws["group"]
-        group = group if isinstance(group, Grouper) else Grouper(group, 1)
-        base_kws.pop("group")
-    else:
-        group = Grouper("time")
+    base_kws.setdefault("group", Grouper("time"))
+    base_kws.setdefault("nquantiles", 20)
+    adj_kws.setdefault("interp", "nearest")
+    adj_kws.setdefault("extrapolation", "constant")
 
-    bc_kws = {"nquantiles": 20, "interp": "nearest", "extrapolation": "constant"}
-    for k, inp_kws in zip(
-        ["nquantiles", "interp", "extrapolation"], [base_kws, adj_kws, adj_kws]
-    ):
-        bc_kws[k] = bc_kws[k] if k not in inp_kws.keys() else inp_kws[k]
-        if k == "nquantiles" and np.isscalar(bc_kws[k]):
-            bc_kws["nquantiles"] = u.equally_spaced_nodes(bc_kws["nquantiles"])
+    group = base_kws["group"]
+    group = group if isinstance(group, Grouper) else Grouper(group, 1)
+    base_kws.pop("group")
+    bc_kws = base_kws
+    bc_kws.update(adj_kws)
     # =======================================================================================
     # fast_npdf
     # =======================================================================================
