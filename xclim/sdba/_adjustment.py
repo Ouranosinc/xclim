@@ -591,6 +591,10 @@ def fast_npdf(
     # =======================================================================================
     # Manage train/adj keywords
     # =======================================================================================
+    if base_kws is None:
+        base_kws = {}
+    if adj_kws is None:
+        adj_kws = {}
     base_kws.setdefault("group", Grouper("time"))
     base_kws.setdefault("nquantiles", 20)
     adj_kws.setdefault("interp", "nearest")
