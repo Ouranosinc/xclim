@@ -514,7 +514,7 @@ def single_qdm(ref, hist, g_idxs, gw_idxs, q, kind, method, extrap):
     return scenh, af_q
 
 
-def _fast_npdf(
+def _fast_npdf_train(
     refs, hists, rots, g_idxs, gw_idxs, *, nquantiles, interp, extrapolation
 ):
     q, method, extrap = nquantiles, interp, extrapolation
@@ -529,7 +529,7 @@ def _fast_npdf(
     return hists, af_q
 
 
-def fast_npdf(
+def fast_npdf_train(
     ref,
     hist,
     n_iter=20,
@@ -568,16 +568,21 @@ def fast_npdf(
     if adj_kws is None:
         adj_kws = {}
     base_kws.setdefault("group", Grouper("time"))
-    base_kws.setdefault("nquantiles", 20)
-    if np.isscalar(base_kws["nquantiles"]):
-        base_kws["nquantiles"] = u.equally_spaced_nodes(base_kws["nquantiles"])
-    adj_kws.setdefault("interp", "nearest")
-    adj_kws.setdefault("extrapolation", "constant")
-    group = base_kws["group"]
-    group = group if isinstance(group, Grouper) else Grouper(group, 1)
+    group = (
+        base_kws["group"]
+        if isinstance(base_kws["group"], Grouper)
+        else Grouper(base_kws["group"], 1)
+    )
     base_kws.pop("group")
-    bc_kws = base_kws
-    bc_kws.update(adj_kws)
+    kwargs = {**base_kws, **adj_kws}
+    for k, default in [
+        ["nquantiles", 20],
+        ["interp", "nearest"],
+        ["extrapolation", "constant"],
+    ]:
+        kwargs.setdefault(k, default)
+    if np.isscalar(kwargs["nquantiles"]):
+        kwargs["nquantiles"] = u.equally_spaced_nodes(kwargs["nquantiles"])
 
     # fast_npdf
     g_idxs, gw_idxs = time_group_indices(ref.time, group)
@@ -595,14 +600,14 @@ def fast_npdf(
             ref[pts_dim], num=n_iter, new_dim=pts_dim_pr
         ).rename(matrices="iterations")
     hists, af_q = xr.apply_ufunc(
-        _fast_npdf,
+        _fast_npdf_train,
         refs,
         hists,
         rot_matrices,
         g_idxs,
         gw_idxs,
         dask="parallelized",
-        kwargs=bc_kws,
+        kwargs=kwargs,
         input_core_dims=[
             [pts_dim, "time"],
             [pts_dim, "time"],
@@ -614,37 +619,40 @@ def fast_npdf(
             [pts_dim, "time"],
             ["iterations", pts_dim, g_idxs.dims[0], "quantiles"],
         ],
-        # output_core_dims=[[pts_dim, "time"], ["iterations", pts_dim, "time"]],
         vectorize=True,
         output_dtypes=[hist.dtype, hist.dtype],
     )
-    af_q = af_q.assign_coords(quantiles=bc_kws["nquantiles"])
+    af_q = af_q.assign_coords(quantiles=kwargs["nquantiles"])
+    af_q.attrs["group"] = group
+    for k in ["interp", "extrapolation"]:
+        af_q.attrs[k] = kwargs[k]
     return hists, af_q, rot_matrices
 
 
-def _fast_npdf_adj(sims, rots, af_q, g_idxs, q):
+def _fast_npdf_adj(sims, rots, af_q, g_idxs, *, nquantiles, interp, extrapolation):
+    q, method, extrap = nquantiles, interp, extrapolation
     for ii in range(len(rots)):
         rot = rots[0] if ii == 0 else rots[ii] @ rots[ii - 1].T
-        sims = rot @ sims
+        sims = np.einsum("ij,jkl->ikl", rot, sims)
         for iv in range(sims.shape[0]):
             for ib in range(g_idxs.shape[0]):
                 g_indxs = np.int64(g_idxs[ib, :][g_idxs[ib, :] >= 0])
                 af0 = u._interp_on_quantiles_1D_multi(
-                    _rank(sims[iv, :, g_indxs]),
+                    np.apply_along_axis(_rank, axis=1, arr=sims[iv, :, g_indxs]),
                     q,
                     af_q[ii, iv, ib, :],
-                    "nearest",
-                    "constant",
+                    method,
+                    extrap,
                 )
-                # af0 = _reordering_1d(af_r[ii,iv,g_indxs], sims[iv, g_indxs])
-                sims[iv, g_indxs] = u.apply_correction(sims[iv, g_indxs], af0, "+")
-    sims = rots[-1].T @ sims
+                sims[iv, :, g_indxs] = u.apply_correction(
+                    sims[iv, :, g_indxs], af0, "+"
+                )
+    sims = np.einsum("ij,jkl->ikl", rots[-1].T, sims)
     return sims
 
 
 def fast_npdf_adj(
     sim,
-    group,
     af_q,
     rot_matrices,
     standardize_inplace=False,
@@ -674,18 +682,20 @@ def fast_npdf_adj(
     # fast_npdf
     # =======================================================================================
     dummydim = False
-    if "movingwin" in sim.dims:
-        sim.expand_dims({"movingwin": [0]})
+    if "movingwin" not in sim.dims:
+        sim = sim.expand_dims({"movingwin": [0]})
         dummydim = True
     if standardize_inplace:
         sims = standardize(sim)[0]
     else:
         sims = sim
-    g_idxs, _ = time_group_indices(sims.time, group)
+    g_idxs, _ = time_group_indices(sims.time, af_q.attrs["group"])
     multivar_dims = list(rot_matrices.transpose("iterations", ...).dims[1:])
     pts_dim = [d for d in multivar_dims if "prime" not in d][0]
     multivar_dims.remove(pts_dim)
     pts_dim_pr = multivar_dims[0]
+    kwargs = {k: af_q.attrs[k] for k in ["interp", "extrapolation"]}
+    kwargs["nquantiles"] = af_q.quantiles
     sims = xr.apply_ufunc(
         _fast_npdf_adj,
         sims,
@@ -694,13 +704,13 @@ def fast_npdf_adj(
         g_idxs,
         dask="parallelized",
         input_core_dims=[
-            [pts_dim, "time"],
+            [pts_dim, "movingwin", "time"],
             ["iterations", pts_dim_pr, pts_dim],
             ["iterations", pts_dim, g_idxs.dims[0], "quantiles"],
             g_idxs.dims,
         ],
-        kwargs={"q": af_q.quantiles.values},
-        output_core_dims=[[pts_dim, "time"]],
+        kwargs=kwargs,
+        output_core_dims=[[pts_dim, "movingwin", "time"]],
         vectorize=True,
         output_dtypes=[sims.dtype],
     )

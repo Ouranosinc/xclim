@@ -357,10 +357,10 @@ def _interp_on_quantiles_1D_multi(newxs, oldx, oldy, method, extrap):
     )
 
     out = np.zeros_like(newxs)
-    for ii, arr in enumerate(newxs):
-        mask_new = np.isnan(arr)
-        y1 = arr.copy() * np.NaN
-        y1[~mask_new] = finterp1d(arr[~mask_new])
+    for ii in range(newxs.shape[0]):
+        mask_new = np.isnan(newxs[ii, ...])
+        y1 = newxs[ii, ...].copy() * np.NaN
+        y1[~mask_new] = finterp1d(newxs[ii, ~mask_new])
         out[ii, :] = y1.flatten()
     return out
 
