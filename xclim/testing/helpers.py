@@ -221,7 +221,7 @@ def add_example_file_paths(cache_dir: Path) -> dict[str]:
 def test_timeseries(
     values,
     variable,
-    start="7/1/2000",
+    start="2000-01-07",
     units=None,
     freq="D",
     as_dataset=False,

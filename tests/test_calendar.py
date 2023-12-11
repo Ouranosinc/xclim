@@ -29,7 +29,9 @@ from xclim.core.calendar import (
     max_doy,
     parse_offset,
     percentile_doy,
+    stack_periods,
     time_bnds,
+    unstack_periods,
 )
 
 
@@ -703,3 +705,36 @@ def test_convert_doy():
     np.testing.assert_allclose(
         out.isel(lat=0), [31.0, 200.48, 190.0, 59.83607, 299.71885]
     )
+
+
+@pytest.mark.parametrize("cftime", [True, False])
+@pytest.mark.parametrize(
+    "w,s,m,f,ss",
+    [(30, 10, None, "YS", 0), (3, 1, None, "QS-DEC", 60), (6, None, None, "MS", 0)],
+)
+def test_stack_periods(tas_series, cftime, w, s, m, f, ss):
+    da = tas_series(np.arange(365 * 50), cftime=cftime, start="2000-01-01")
+
+    da_stck = stack_periods(da, window=w, stride=s, min_length=m, freq=f)
+
+    assert "period_length" in da_stck.coords
+    assert bool(da_stck.period.attrs["unequal_periods"]) is (not f.startswith("Y"))
+
+    da2 = unstack_periods(da_stck)
+
+    xr.testing.assert_identical(da2, da.isel(time=slice(ss, da2.time.size + ss)))
+
+
+def test_stack_periods_special(tas_series):
+    da = tas_series(
+        np.arange(365 * 48 + 12), cftime=True, start="2004-01-01"
+    ).convert_calendar("noleap")
+
+    da_stck = stack_periods(da, dim="horizon")
+    np.testing.assert_array_equal(da_stck.horizon_length, 10950)
+
+    with pytest.raises(ValueError, match="can't find the window"):
+        unstack_periods(da_stck)
+
+    da2 = unstack_periods(da_stck.drop_vars("horizon_length"), dim="horizon")
+    xr.testing.assert_identical(da2, da.isel(time=slice(0, da2.time.size)))
