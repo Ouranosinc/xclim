@@ -477,10 +477,10 @@ def time_group_indices(times, group):
     return g_idxs, gw_idxs
 
 
-def _rank(arr):
-    rnk = bn.nanrankdata(arr)
-    rnk = rnk / np.nanmax(rnk)
-    mx, mn = 1, np.nanmin(rnk)
+def _rank(arr, axis=0):
+    rnk = bn.nanrankdata(arr, axis=axis)
+    rnk = rnk / np.nanmax(rnk, axis=axis)
+    mx, mn = 1, np.nanmin(rnk, axis=axis)
     return mx * (rnk - mn) / (mx - mn)
 
 
@@ -634,18 +634,18 @@ def _fast_npdf_adj(sims, rots, af_q, g_idxs, *, nquantiles, interp, extrapolatio
     for ii in range(len(rots)):
         rot = rots[0] if ii == 0 else rots[ii] @ rots[ii - 1].T
         sims = np.einsum("ij,jkl->ikl", rot, sims)
-        for iv in range(sims.shape[0]):
-            for ib in range(g_idxs.shape[0]):
-                g_indxs = np.int64(g_idxs[ib, :][g_idxs[ib, :] >= 0])
+        for ib in range(g_idxs.shape[0]):
+            g_indxs = np.int64(g_idxs[ib, :][g_idxs[ib, :] >= 0])
+            for iv in range(sims.shape[0]):
                 af0 = u._interp_on_quantiles_1D_multi(
-                    np.apply_along_axis(_rank, axis=1, arr=sims[iv, :, g_indxs]),
+                    _rank(sims[iv][..., g_indxs], axis=-1),
                     q,
                     af_q[ii, iv, ib, :],
                     method,
                     extrap,
                 )
-                sims[iv, :, g_indxs] = u.apply_correction(
-                    sims[iv, :, g_indxs], af0, "+"
+                sims[iv][..., g_indxs] = u.apply_correction(
+                    sims[iv][..., g_indxs], af0, "+"
                 )
     sims = np.einsum("ij,jkl->ikl", rots[-1].T, sims)
     return sims
@@ -695,7 +695,7 @@ def fast_npdf_adj(
     multivar_dims.remove(pts_dim)
     pts_dim_pr = multivar_dims[0]
     kwargs = {k: af_q.attrs[k] for k in ["interp", "extrapolation"]}
-    kwargs["nquantiles"] = af_q.quantiles
+    kwargs["nquantiles"] = af_q.quantiles.values
     sims = xr.apply_ufunc(
         _fast_npdf_adj,
         sims,

@@ -309,6 +309,33 @@ def add_cyclic_bounds(
     return ensure_chunk_size(qmf, **{att: -1})
 
 
+def _interp_on_quantiles_1D_multi(newxs, oldx, oldy, method, extrap):
+    mask_old = np.isnan(oldy) | np.isnan(oldx)
+    if extrap == "constant":
+        fill_value = (
+            oldy[~np.isnan(oldy)][0],
+            oldy[~np.isnan(oldy)][-1],
+        )
+    else:  # extrap == 'nan'
+        fill_value = np.NaN
+
+    finterp1d = interp1d(
+        oldx[~mask_old],
+        oldy[~mask_old],
+        kind=method,
+        bounds_error=False,
+        fill_value=fill_value,
+    )
+
+    out = np.zeros_like(newxs)
+    for ii in range(newxs.shape[0]):
+        mask_new = np.isnan(newxs[ii, :])
+        y1 = newxs[ii, :].copy() * np.NaN
+        y1[~mask_new] = finterp1d(newxs[ii, ~mask_new])
+        out[ii, :] = y1.flatten()
+    return out
+
+
 def _interp_on_quantiles_1D(newx, oldx, oldy, method, extrap):
     mask_new = np.isnan(newx)
     mask_old = np.isnan(oldy) | np.isnan(oldx)
@@ -336,62 +363,6 @@ def _interp_on_quantiles_1D(newx, oldx, oldy, method, extrap):
         fill_value=fill_value,
     )(newx[~mask_new])
     return out
-
-
-def _interp_on_quantiles_1D_multi(newxs, oldx, oldy, method, extrap):
-    mask_old = np.isnan(oldy) | np.isnan(oldx)
-    if extrap == "constant":
-        fill_value = (
-            oldy[~np.isnan(oldy)][0],
-            oldy[~np.isnan(oldy)][-1],
-        )
-    else:  # extrap == 'nan'
-        fill_value = np.NaN
-
-    finterp1d = interp1d(
-        oldx[~mask_old],
-        oldy[~mask_old],
-        kind=method,
-        bounds_error=False,
-        fill_value=fill_value,
-    )
-
-    out = np.zeros_like(newxs)
-    for ii in range(newxs.shape[0]):
-        mask_new = np.isnan(newxs[ii, ...])
-        y1 = newxs[ii, ...].copy() * np.NaN
-        y1[~mask_new] = finterp1d(newxs[ii, ~mask_new])
-        out[ii, :] = y1.flatten()
-    return out
-
-
-# def _interp_on_quantiles_1D(oldx, oldy, method, extrap):
-#     mask_new = np.isnan(newx)
-#     mask_old = np.isnan(oldy) | np.isnan(oldx)
-#     out = np.full_like(newx, np.NaN, dtype=f"float{oldy.dtype.itemsize * 8}")
-#     if np.all(mask_new) or np.all(mask_old):
-#         warn(
-#             "All-NaN slice encountered in interp_on_quantiles",
-#             category=RuntimeWarning,
-#         )
-#         return out
-
-#     if extrap == "constant":
-#         fill_value = (
-#             oldy[~np.isnan(oldy)][0],
-#             oldy[~np.isnan(oldy)][-1],
-#         )
-#     else:  # extrap == 'nan'
-#         fill_value = np.NaN
-
-#     out[~mask_new] = interp1d(
-#         oldx[~mask_old],
-#         oldy[~mask_old],
-#         kind=method,
-#         bounds_error=False,
-#         fill_value=fill_value,
-#     )(newx[~mask_new])
-#     return out
 
 
 def _interp_on_quantiles_2D(newx, newg, oldx, oldy, oldg, method, extrap):  # noqa

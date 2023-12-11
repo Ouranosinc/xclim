@@ -50,6 +50,7 @@ __all__ = [
     "ExtremeValues",
     "LOCI",
     "NpdfTransform",
+    # "NpdfTransform_fast",
     "PrincipalComponents",
     "QuantileDeltaMapping",
     "Scaling",
@@ -1187,6 +1188,163 @@ class NpdfTransform(Adjust):
         out = out.assign(rotation_matrices=rot_matrices)
         out.scenh.attrs["units"] = hist.units
         return out
+
+
+# class NpdfTransform_fast(Adjust):
+#     r"""N-dimensional probability density function transform.
+
+#     This adjustment object combines both training and adjust steps in the `adjust` class method.
+
+#     A multivariate bias-adjustment algorithm described by :cite:t:`sdba-cannon_multivariate_2018`, as part of the MBCn
+#     algorithm, based on a color-correction algorithm described by :cite:t:`sdba-pitie_n-dimensional_2005`.
+
+#     This algorithm in itself, when used with QuantileDeltaMapping, is NOT trend-preserving.
+#     The full MBCn algorithm includes a reordering step provided here by :py:func:`xclim.sdba.processing.reordering`.
+
+#     See notes for an explanation of the algorithm.
+
+#     Parameters
+#     ----------
+#     base : BaseAdjustment
+#         An univariate bias-adjustment class. This is untested for anything else than QuantileDeltaMapping.
+#     base_kws : dict, optional
+#         Arguments passed to the training of the univariate adjustment.
+#     n_escore : int
+#         The number of elements to send to the escore function. The default, 0, means all elements are included.
+#         Pass -1 to skip computing the escore completely.
+#         Small numbers result in less significant scores, but the execution time goes up quickly with large values.
+#     n_iter : int
+#         The number of iterations to perform. Defaults to 20.
+#     pts_dim : str
+#         The name of the "multivariate" dimension. Defaults to "multivar", which is the
+#         normal case when using :py:func:`xclim.sdba.base.stack_variables`.
+#     adj_kws : dict, optional
+#         Dictionary of arguments to pass to the adjust method of the univariate adjustment.
+#     rot_matrices : xr.DataArray, optional
+#         The rotation matrices as a 3D array ('iterations', <pts_dim>, <anything>), with shape (n_iter, <N>, <N>).
+#         If left empty, random rotation matrices will be automatically generated.
+
+#     Notes
+#     -----
+#     The historical reference (:math:`T`, for "target"), simulated historical (:math:`H`) and simulated projected (:math:`S`)
+#     datasets are constructed by stacking the timeseries of N variables together. The algorithm is broken into the
+#     following steps:
+
+#     1. Rotate the datasets in the N-dimensional variable space with :math:`\mathbf{R}`, a random rotation NxN matrix.
+
+#     .. math::
+
+#         \tilde{\mathbf{T}} = \mathbf{T}\mathbf{R} \
+#         \tilde{\mathbf{H}} = \mathbf{H}\mathbf{R} \
+#         \tilde{\mathbf{S}} = \mathbf{S}\mathbf{R}
+
+#     2. An univariate bias-adjustment :math:`\mathcal{F}` is used on the rotated datasets.
+#     The adjustments are made in additive mode, for each variable :math:`i`.
+
+#     .. math::
+
+#         \hat{\mathbf{H}}_i, \hat{\mathbf{S}}_i = \mathcal{F}\left(\tilde{\mathbf{T}}_i, \tilde{\mathbf{H}}_i, \tilde{\mathbf{S}}_i\right)
+
+#     3. The bias-adjusted datasets are rotated back.
+
+#     .. math::
+
+#         \mathbf{H}' = \hat{\mathbf{H}}\mathbf{R} \\
+#         \mathbf{S}' = \hat{\mathbf{S}}\mathbf{R}
+
+
+#     These three steps are repeated a certain number of times, prescribed by argument ``n_iter``. At each
+#     iteration, a new random rotation matrix is generated.
+
+#     The original algorithm :cite:p:`sdba-pitie_n-dimensional_2005`, stops the iteration when some distance score converges.
+#     Following cite:t:`sdba-cannon_multivariate_2018` and the MBCn implementation in :cite:t:`sdba-cannon_mbc_2020`, we
+#     instead fix the number of iterations.
+
+#     As done by cite:t:`sdba-cannon_multivariate_2018`, the distance score chosen is the "Energy distance" from
+#     :cite:t:`sdba-szekely_testing_2004`. (see: :py:func:`xclim.sdba.processing.escore`).
+
+#     The random matrices are generated following a method laid out by :cite:t:`sdba-mezzadri_how_2007`.
+
+#     This is only part of the full MBCn algorithm, see :ref:`notebooks/sdba:Statistical Downscaling and Bias-Adjustment`
+#     for an example on how to replicate the full method with xclim. This includes a standardization of the simulated data
+#     beforehand, an initial univariate adjustment and the reordering of those adjusted series according to the rank
+#     structure of the output of this algorithm.
+
+#     References
+#     ----------
+#     :cite:cts:`sdba-cannon_multivariate_2018,sdba-cannon_mbc_2020,sdba-pitie_n-dimensional_2005,sdba-mezzadri_how_2007,sdba-szekely_testing_2004`
+#     """
+
+#     @classmethod
+#     def _train(
+#         cls,
+#         ref: xr.DataArray,
+#         hist: xr.DataArray,
+#         *,
+#         base_kws: dict[str, Any] | None = None,
+#         n_iter: int = 20,
+#         pts_dim: str = "multivar",
+#         adj_kws: dict[str, Any] | None = None,
+#         rot_matrices: xr.DataArray | None = None,
+#     ):
+#         if base_kws is None:
+#             base_kws = {}
+#         if adj_kws is None:
+#             adj_kws = {}
+#         if "kind" in base_kws:
+#             warn(
+#                 f'The adjustment kind cannot be controlled when using {cls.__name__}, it defaults to "+".'
+#             )
+#             base_kws.pop("kind")
+#         # base_kws.setdefault("kind", "+")
+#         # base_kws.setdefault("group", Grouper("time"))
+#         # base_kws.setdefault("nquantiles", 20)
+#         # adj_kws.setdefault("interp", "nearest")
+#         # adj_kws.setdefault("extrapolation", "constant")
+#         # group = base_kws["group"]
+#         # group = group if isinstance(group, Grouper) else Grouper(group, 1)
+#         # base_kws.pop("group")
+
+#         # Assuming sim has the same coords as hist
+#         # We get the safest new name of the rotated dim.
+#         rot_dim = xr.core.utils.get_temp_dimname(
+#             set(ref.dims).union(hist.dims), pts_dim + "_prime"
+#         )
+
+#         # Get the rotation matrices
+#         if rot_matrices is None:
+#             rot_matrices = rand_rot_matrix(
+#                 ref[pts_dim], num=n_iter, new_dim=rot_dim
+#             ).rename(matrices="iterations")
+
+#         template = xr.Dataset(
+#             data_vars={
+#                 "scenh": xr.full_like(hist, np.NaN).rename(time="time_hist"),
+#             }
+#         )
+
+#         # Input data, rename time dim on sim since it can't be aligned with ref or hist.
+#         ds = xr.Dataset(
+#             data_vars={
+#                 "ref": ref.rename(time="time_hist"),
+#                 "hist": hist.rename(time="time_hist"),
+#                 "rot_matrices": rot_matrices,
+#             }
+#         )
+
+#         kwargs = {
+#             "base_kws": base_kws,
+#             "n_iter":   n_iter,
+#             "pts_dim":  pts_dim,
+#             "adj_kws":  adj_kws,
+#         }
+
+#         with set_options(sdba_extra_output=False):
+#             out = ds.map_blocks(npdf_transform, template=template, kwargs=kwargs)
+
+#         out = out.assign(rotation_matrices=rot_matrices)
+#         out.scenh.attrs["units"] = hist.units
+#         return out
 
 
 try:
