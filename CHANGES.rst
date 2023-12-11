@@ -21,7 +21,7 @@ Bug fixes
 * Fixed a bug with ``n_escore=-1`` in ``xclim.sdba.adjustment.NpdfTransform``. (:issue:`1515`, :pull:`1516`).
 * In the documentation, fixed the tooltips in the indicator search results. (:issue:`1524`, :pull:`1527`).
 * If chunked inputs are passed to indicators ``mean_radiant_temperature`` and ``potential_evapotranspiration``, sub-calculations of the solar angle will also use the same chunks, instead of a single one of the same size as the data. (:issue:`1536`, :pull:`1542`).
-* Fix wrong attributes in ``xclim.indices.standardized_precipitation_index``, ``xclim.indices.standardized_precipitation_evapotranspiration_index``. (:issue:`1537`, :issue:`1552` , :pull:`1538`, :pull:`1538`).
+* Fix wrong attributes in ``xclim.indices.standardized_precipitation_index``, ``xclim.indices.standardized_precipitation_evapotranspiration_index``. (:issue:`1537`, :issue:`1552` , :pull:`1538`, :pull:`1554`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
