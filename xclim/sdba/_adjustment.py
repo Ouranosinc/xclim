@@ -629,7 +629,7 @@ def fast_npdf_train(
     return hists, af_q, rot_matrices
 
 
-def _fast_npdf_adj(sims, rots, af_q, g_idxs, *, nquantiles, interp, extrapolation):
+def _fast_npdf_adjust(sims, rots, af_q, g_idxs, *, nquantiles, interp, extrapolation):
     q, method, extrap = nquantiles, interp, extrapolation
     for ii in range(len(rots)):
         rot = rots[0] if ii == 0 else rots[ii] @ rots[ii - 1].T
@@ -651,7 +651,7 @@ def _fast_npdf_adj(sims, rots, af_q, g_idxs, *, nquantiles, interp, extrapolatio
     return sims
 
 
-def fast_npdf_adj(
+def fast_npdf_adjust(
     sim,
     af_q,
     rot_matrices,
@@ -697,7 +697,7 @@ def fast_npdf_adj(
     kwargs = {k: af_q.attrs[k] for k in ["interp", "extrapolation"]}
     kwargs["nquantiles"] = af_q.quantiles.values
     sims = xr.apply_ufunc(
-        _fast_npdf_adj,
+        _fast_npdf_adjust,
         sims,
         rot_matrices,
         af_q,
