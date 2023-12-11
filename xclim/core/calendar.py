@@ -1703,11 +1703,13 @@ def stack_periods(
 
     periods = []
     longest = 0
+    # Iterate over strides, but recompute the full window for each stride start
     for begin, strd_slc in da.resample(time=strd_frq).groups.items():
         win_resamp = time2.isel(time=slice(strd_slc.start, None)).resample(time=win_frq)
         # Get slice for first group
         win_slc = win_resamp.groupers[0].group_indices[0]
         if min_length < window:
+            # If we ask for a min_length period instead is it complete ?
             min_resamp = time2.isel(time=slice(strd_slc.start, None)).resample(
                 time=minl_frq
             )
@@ -1824,8 +1826,10 @@ def unstack_periods(da: xr.DataArray | xr.Dataset, dim: str = "period"):
         m, u = infer_sampling_units(da.time)
         lengths = lengths // m
     else:
+        # It is acceptable to lose "{dim}_length" if they were all equal
         lengths = xr.DataArray([da.time.size] * da[dim].size, dims=(dim,))
 
+    # Convert from the fake axis to the real one
     time_as_delta = da.time - da.time[0]
     if da.time.dtype == "O":
         # cftime can't add with np.timedelta64 (restriction comes from numpy which refuses to add O with m8)
