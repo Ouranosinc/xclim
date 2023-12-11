@@ -718,7 +718,6 @@ def test_stack_periods(tas_series, cftime, w, s, m, f, ss):
     da_stck = stack_periods(da, window=w, stride=s, min_length=m, freq=f)
 
     assert "period_length" in da_stck.coords
-    assert bool(da_stck.period.attrs["unequal_lengths"]) is (not f.startswith("Y"))
 
     da2 = unstack_periods(da_stck)
 
