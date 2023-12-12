@@ -183,7 +183,7 @@ def kkz_reduce_ensemble(
 def kmeans_reduce_ensemble(
     data: xarray.DataArray,
     *,
-    method: dict = None,
+    method: dict | None = None,
     make_graph: bool = MPL_INSTALLED,
     max_clusters: int | None = None,
     variable_weights: np.ndarray | None = None,

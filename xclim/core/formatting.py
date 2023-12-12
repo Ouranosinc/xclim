@@ -556,14 +556,14 @@ KIND_ANNOTATION = {
 }
 
 
-def _gen_parameters_section(parameters: dict, allowed_periods: list[str] = None):
+def _gen_parameters_section(parameters: dict, allowed_periods: list[str] | None = None):
     """Generate the "parameters" section of the indicator docstring.
 
     Parameters
     ----------
     parameters : dict
         Parameters dictionary (`Ind.parameters`).
-    allowed_periods : List[str], optional
+    allowed_periods : list of str, optional
         Restrict parameters to specific periods. Default: None.
     """
     section = "Parameters\n----------\n"
