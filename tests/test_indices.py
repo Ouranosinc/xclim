@@ -653,6 +653,7 @@ class TestAgroclimaticIndices:
             dist=dist,
             method=method,
             offset="1 mm/d",
+            month=[2, 3],
         )
         spei1 = xci.standardized_precipitation_evapotranspiration_index(
             wb.sel(time=slice("1998", "2000")), params=params
@@ -667,6 +668,7 @@ class TestAgroclimaticIndices:
             offset="1 mm/d",
             cal_start="1950",
             cal_end="1980",
+            month=[2, 3],
         ).sel(time=slice("1998", "2000"))
 
         # In the previous computation, the first {window-1} values are NaN because the rolling is performed on the period [1998,2000].

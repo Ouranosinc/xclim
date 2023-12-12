@@ -55,9 +55,9 @@ Related bixtex entries:
 
 def hawkins_sutton(
     da: xr.DataArray,
-    sm: xr.DataArray = None,
-    weights: xr.DataArray = None,
-    baseline: tuple = ("1971", "2000"),
+    sm: xr.DataArray | None = None,
+    weights: xr.DataArray | None = None,
+    baseline: tuple[str, str] = ("1971", "2000"),
     kind: str = "+",
     fraction: bool = False,
 ):
@@ -67,17 +67,17 @@ def hawkins_sutton(
     ----------
     da: xr.DataArray
       Time series with dimensions 'time', 'scenario' and 'model'.
-    sm: xr.DataArray
+    sm: xr.DataArray, optional
       Smoothed time series over time, with the same dimensions as `da`. By default, this is estimated using a 4th order
       polynomial. Results are sensitive to the choice of smoothing function, use this to set another polynomial
       order, or a LOESS curve.
-    weights: xr.DataArray
+    weights: xr.DataArray, optional
       Weights to be applied to individual models. Should have `model` dimension.
-    baseline: [str, str]
+    baseline: (str, str)
       Start and end year of the reference period.
     kind: {'+', '*'}
       Whether the mean over the reference period should be substracted (+) or divided by (*).
-    fraction:
+    fraction: bool
         If True, return the fraction of the total variance instead of the variance itself.
         Use this option if you want to use `figanos.partition()`.
 
