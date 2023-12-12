@@ -1640,7 +1640,7 @@ def stack_periods(
         Default is `window` (no overlap between periods).
     min_length : int, optional
         Windows shorter than this are not included in the output.
-        Given as a multiple of ``freq``. Defaults is ``window`` (every window must be complete).
+        Given as a multiple of ``freq``. Default is ``window`` (every window must be complete).
         Similar to the ``min_periods`` argument of  ``da.rolling``.
         If ``freq`` is annual or quarterly and ``min_length == ``window``, the first period is considered complete
         if the first timestep is in the first month of the period.
@@ -1812,7 +1812,7 @@ def unstack_periods(da: xr.DataArray | xr.Dataset, dim: str = "period"):
         unequal_lengths = bool(starts.attrs["unequal_lengths"])
     except (AttributeError, KeyError) as err:
         raise ValueError(
-            f"`unstack_periods` can't find the window, stride and freq attributes on the {dim} coordiantes."
+            f"`unstack_periods` can't find the window, stride and freq attributes on the {dim} coordinates."
         ) from err
 
     if unequal_lengths:
