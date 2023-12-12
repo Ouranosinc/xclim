@@ -76,7 +76,7 @@ def hawkins_sutton(
     baseline: (str, str)
       Start and end year of the reference period.
     kind: {'+', '*'}
-      Whether the mean over the reference period should be substracted (+) or divided by (*).
+      Whether the mean over the reference period should be subtracted (+) or divided by (*).
     fraction: bool
         If True, return the fraction of the total variance instead of the variance itself.
         Use this option if you want to use `figanos.partition()`.
@@ -222,9 +222,9 @@ def lafferty_sriver(
     bb13: bool
       Whether to apply the Brekke and Barsugli (2013) method to estimate scenario uncertainty, where the variance
       over scenarios is computed before taking the mean over models and downscaling methods.
-    fraction:
-        If True, return the fraction of the total variance instead of the variance itself.
-        Use this option if ou want to use `figanos.partition()`.
+    fraction: bool
+      If True, return the fraction of the total variance instead of the variance itself.
+      Use this option if ou want to use `figanos.partition()`.
 
     Returns
     -------
@@ -276,6 +276,8 @@ def lafferty_sriver(
     ## Count the number of parent models that have been downscaled using method $d$ for scenario $s$.
     ## In the paper, weights are constant, here they may vary across time if there are missing values.
     mw = sm.count("model")
+    # In https://github.com/david0811/lafferty-sriver_2023_npjCliAtm/blob/main/unit_test/lafferty_sriver.py
+    # weights are set to zero when there is only one model, but the var for a single element is 0 anyway.
     model_u = sm.var(dim="model").weighted(mw).mean(dim=["scenario", "downscaling"])
 
     # Downscaling uncertainty: U_d(t)
@@ -293,11 +295,6 @@ def lafferty_sriver(
     )
     uncertainty = xr.concat([model_u, scenario_u, downscaling_u, nv_u, total], dim=u)
 
-    if fraction:
-        uncertainty = uncertainty / uncertainty.sel(uncertainty="total") * 100
-        uncertainty.attrs["long_name"] = "Fraction of total variance"
-        uncertainty.attrs["units"] = "%"
-
     # Add the elements for each uncertainty component
     uncertainty = uncertainty.assign_coords(
         elements=("uncertainty", [da[v].values if v in da.dims else None for v in u])
@@ -308,6 +305,26 @@ def lafferty_sriver(
     g = sm.mean(dim="model").mean(dim="scenario").mean(dim="downscaling")
 
     return g, uncertainty
+
+
+def fractional_uncertainty(u: xr.DataArray):
+    """
+    Return the fractional uncertainty.
+
+    Parameters
+    ----------
+    u: xr.DataArray
+      Array with uncertainty components along the `uncertainty` dimension.
+
+    Returns
+    -------
+    xr.DataArray
+      Fractional, or relative uncertainty with respect to the total uncertainty.
+    """
+    uncertainty = u / u.sel(uncertainty="total") * 100
+    uncertainty.attrs["long_name"] = "Fraction of total variance"
+    uncertainty.attrs["units"] = "%"
+    return uncertainty
 
 
 # def _lafferty_sriver_weights(da):

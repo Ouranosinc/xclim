@@ -3,8 +3,9 @@ from __future__ import annotations
 import numpy as np
 import xarray as xr
 
-from xclim.ensembles import hawkins_sutton, lafferty_sriver
+from xclim.ensembles import fractional_uncertainty, hawkins_sutton, lafferty_sriver
 from xclim.ensembles._filters import _concat_hist, _model_in_all_scens, _single_member
+from xclim.testing import get_file
 
 
 def test_hawkins_sutton_smoke(open_dataset):
@@ -107,4 +108,70 @@ def test_lafferty_sriver_synthetic(random):
     # Smoke test with polynomial of order 2
     fit = da.polyfit(dim="time", deg=2, skipna=True)
     sm = xr.polyval(coord=da.time, coeffs=fit.polyfit_coefficients).where(da.notnull())
-    hawkins_sutton(da, sm=sm)
+    lafferty_sriver(da, sm=sm)
+
+
+def test_lafferty_sriver():
+    import pandas as pd
+
+    # Get data from Lafferty & Sriver unit test
+    # https://github.com/david0811/lafferty-sriver_2023_npjCliAtm/tree/main/unit_test
+    fn = get_file(
+        "uncertainty_partitioning/seattle_avg_tas.csv", branch="lafferty_sriver"
+    )
+
+    df = pd.read_csv(fn, parse_dates=["time"]).rename(
+        columns={"ssp": "scenario", "ensemble": "downscaling"}
+    )
+
+    # Make xarray dataset
+    ds = xr.Dataset.from_dataframe(
+        df.set_index(["scenario", "model", "downscaling", "time"])
+    )
+    g, u = lafferty_sriver(ds.tas)
+    fu = fractional_uncertainty(u)
+
+    # Assertions based on expected results from
+    # https://github.com/david0811/lafferty-sriver_2023_npjCliAtm/blob/main/unit_test/unit_test_check.ipynb
+    assert fu.sel(time="2020", uncertainty="downscaling") > fu.sel(
+        time="2020", uncertainty="model"
+    )
+    assert fu.sel(time="2020", uncertainty="variability") > fu.sel(
+        time="2020", uncertainty="scenario"
+    )
+    assert (
+        fu.sel(time="2090", uncertainty="scenario").data
+        > fu.sel(time="2020", uncertainty="scenario").data
+    )
+    assert (
+        fu.sel(time="2090", uncertainty="downscaling").data
+        < fu.sel(time="2020", uncertainty="downscaling").data
+    )
+
+    def graph():
+        """Return graphic like in https://github.com/david0811/lafferty-sriver_2023_npjCliAtm/blob/main/unit_test/unit_test_check.ipynb"""
+        from matplotlib import pyplot as plt
+
+        udict = {
+            "Scenario": fu.sel(uncertainty="scenario").to_numpy().flatten(),
+            "Model": fu.sel(uncertainty="model").to_numpy().flatten(),
+            "Downscaling": fu.sel(uncertainty="downscaling").to_numpy().flatten(),
+            "Variability": fu.sel(uncertainty="variability").to_numpy().flatten(),
+        }
+
+        fig, ax = plt.subplots()
+        ax.stackplot(
+            np.arange(2015, 2101),
+            udict.values(),
+            labels=udict.keys(),
+            alpha=1,
+            colors=["#00CC89", "#6869B3", "#CC883C", "#FFFF99"],
+            edgecolor="white",
+            lw=1.5,
+        )
+        ax.set_xlim([2020, 2095])
+        ax.set_ylim([0, 100])
+        ax.legend(loc="upper left")
+        plt.show()
+
+    # graph()
