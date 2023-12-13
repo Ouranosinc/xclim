@@ -59,7 +59,6 @@ def hawkins_sutton(
     weights: xr.DataArray | None = None,
     baseline: tuple[str, str] = ("1971", "2000"),
     kind: str = "+",
-    fraction: bool = False,
 ):
     """Return the mean and partitioned variance of an ensemble based on method from Hawkins & Sutton (2009).
 
@@ -77,9 +76,6 @@ def hawkins_sutton(
       Start and end year of the reference period.
     kind: {'+', '*'}
       Whether the mean over the reference period should be subtracted (+) or divided by (*).
-    fraction: bool
-        If True, return the fraction of the total variance instead of the variance itself.
-        Use this option if you want to use `figanos.partition()`.
 
     Returns
     -------
@@ -95,6 +91,9 @@ def hawkins_sutton(
     To reproduce results from :cite:t:`hawkins_2009`, input data should meet the following requirements:
       - annual time series starting in 1950 and ending in 2100;
       - the same models are available for all scenarios.
+
+    To get the fraction of the total variance instead of the variance itself, call `fractional_uncertainty` on the
+    output.
 
     References
     ----------
@@ -160,11 +159,6 @@ def hawkins_sutton(
     u = pd.Index(["variability", "model", "scenario", "total"], name="uncertainty")
     uncertainty = xr.concat([nv_u, model_u, scenario_u, total], dim=u)
 
-    if fraction:
-        uncertainty = uncertainty / uncertainty.sel(uncertainty="total") * 100
-        uncertainty.attrs["long_name"] = "Fraction of total variance"
-        uncertainty.attrs["units"] = "%"
-
     # Add the elements for each uncertainty component
     uncertainty = uncertainty.assign_coords(
         elements=("uncertainty", [da[v].values if v in da.dims else None for v in u])
@@ -222,9 +216,6 @@ def lafferty_sriver(
     bb13: bool
       Whether to apply the Brekke and Barsugli (2013) method to estimate scenario uncertainty, where the variance
       over scenarios is computed before taking the mean over models and downscaling methods.
-    fraction: bool
-      If True, return the fraction of the total variance instead of the variance itself.
-      Use this option if ou want to use `figanos.partition()`.
 
     Returns
     -------
@@ -236,6 +227,9 @@ def lafferty_sriver(
     -----
     To prepare input data, make sure `da` has dimensions `time`, `scenario`, `downscaling` and `model`,
     e.g. `da.rename({"experiment": "scenario"})`.
+
+    To get the fraction of the total variance instead of the variance itself, call `fractional_uncertainty` on the
+    output.
 
     References
     ----------
