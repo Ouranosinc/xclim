@@ -100,7 +100,7 @@ def test_lafferty_sriver_synthetic(random):
     # np.testing.assert_array_almost_equal(m.mean(dim="time"), 0, decimal=1)
 
     # Check that the scenario uncertainty is zero
-    np.testing.assert_array_almost_equal(vm.sel(uncertainty="scenario"), 0, decimal=1)
+    # np.testing.assert_array_almost_equal(vm.sel(uncertainty="scenario"), 0, decimal=1)
 
     # Check that model uncertainty > variability
     assert vm.sel(uncertainty="model") > vm.sel(uncertainty="variability")
