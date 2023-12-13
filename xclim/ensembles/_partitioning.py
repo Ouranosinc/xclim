@@ -322,7 +322,7 @@ def fractional_uncertainty(u: xr.DataArray):
       Fractional, or relative uncertainty with respect to the total uncertainty.
     """
     uncertainty = u / u.sel(uncertainty="total") * 100
-    uncertainty["elements"] = uncertainty["elements"]  # keep element coords
+    uncertainty["elements"] = u["elements"]  # keep element coords
     uncertainty.attrs["long_name"] = "Fraction of total variance"
     uncertainty.attrs["units"] = "%"
     return uncertainty
