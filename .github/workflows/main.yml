@@ -20,7 +20,7 @@ on:
       - submitted
 
 env:
-  XCLIM_TESTDATA_BRANCH: v2023.9.12
+  XCLIM_TESTDATA_BRANCH: v2023.12.14
 
 concurrency:
   # For a given workflow, if we push to the same branch, cancel all previous builds on that branch except on master.
