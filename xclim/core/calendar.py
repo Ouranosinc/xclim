@@ -46,8 +46,10 @@ __all__ = [
     "percentile_doy",
     "resample_doy",
     "select_time",
+    "stack_periods",
     "time_bnds",
     "uniform_calendars",
+    "unstack_periods",
     "within_bnds_doy",
     "yearly_interpolated_doy",
     "yearly_random_doy",
@@ -1616,6 +1618,7 @@ def stack_periods(
     freq: str = "YS",
     dim: str = "period",
     start: str = "1970-01-01",
+    align_days: bool = True,
     pad_value=dtypes.NA,
 ):
     """Construct a multi-period array
@@ -1654,6 +1657,11 @@ def stack_periods(
     start : str
         The `start` argument passed to :py:func:`xarray.date_range` to generate the new placeholder
         time coordinate.
+    align_days : bool
+        When True (default), an error is raised if the output would have unaligned days across periods.
+        If `freq = 'YS'`, day-of-year alignment is checked and if `freq` is "MS" or "QS", we check day-in-month.
+        Only uniform-calendar will pass the test for `freq='YS'`. For other frequencies, only the `360_day` calendar will work.
+        This check is ignored if the sampling rate of the data is coarser than "D".
     pad_value: Any
         When some periods are shorter than others, this value is used to pad them at the end.
         Passed directly as argument ``fill_value`` to :py:func:`xarray.concat`, the default is the same as on that function.
@@ -1676,10 +1684,32 @@ def stack_periods(
 
     stride = stride or window
     min_length = min_length or window
+    if stride > window:
+        raise ValueError(
+            f"Stride must be less than or equal to window. Got {stride} > {window}."
+        )
 
     srcfreq = xr.infer_freq(da.time)
     cal = da.time.dt.calendar
     use_cftime = da.time.dtype == "O"
+
+    if (
+        compare_offsets(srcfreq, "<=", "D")
+        and align_days
+        and (
+            (freq.startswith(("Y", "A")) and cal not in uniform_calendars)
+            or (freq.startswith(("Q", "M")) and window > 1 and cal != "360_day")
+        )
+    ):
+        if freq.startswith(("Y", "A")):
+            u = "year"
+        else:
+            u = "month"
+        raise ValueError(
+            f"Stacking {window}{freq} periods will result in unaligned day-of-{u}. "
+            f"Consider converting the calendar of your data to one with uniform {u} lengths, "
+            "or pass `align_days=False` to disable this check."
+        )
 
     # Convert integer inputs to freq strings
     mult, *args = parse_offset(freq)
@@ -1801,6 +1831,23 @@ def unstack_periods(da: xr.DataArray | xr.Dataset, dim: str = "period"):
         As constructed by :py:func:`stack_periods`, attributes of the period coordinates must have been perserved.
     dim : str
         The period dimension name.
+
+    Notes
+    -----
+    The following table shows which strides are included (``o``) in the unstacked output.
+    in this example, ``stride`` was a fifth of ``window`` and  ``min_length`` was 4 times ``stride``.
+    The row index ``i``  the period index in the stacked datast, columns are the stride-long section of the original timeseries.
+
+    .. table:: Unstacking example with ``stride < window``.
+
+        === === === === === === === ===
+         i   0   1   2   3   4   5   6
+        === === === === === === === ===
+         3               x   x   o   o
+         2           x   x   o   x   x
+         1       x   x   o   x   x
+         0   o   o   o   x   x
+        === === === === === === === ===
     """
     from xclim.core.units import infer_sampling_units
 

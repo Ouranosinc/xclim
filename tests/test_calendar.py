@@ -713,9 +713,11 @@ def test_convert_doy():
     [(30, 10, None, "YS", 0), (3, 1, None, "QS-DEC", 60), (6, None, None, "MS", 0)],
 )
 def test_stack_periods(tas_series, cftime, w, s, m, f, ss):
-    da = tas_series(np.arange(365 * 50), cftime=cftime, start="2000-01-01")
+    da = tas_series(np.arange(365 * 50), start="2000-01-01", cftime=cftime)
 
-    da_stck = stack_periods(da, window=w, stride=s, min_length=m, freq=f)
+    da_stck = stack_periods(
+        da, window=w, stride=s, min_length=m, freq=f, align_days=False
+    )
 
     assert "period_length" in da_stck.coords
 
@@ -725,9 +727,12 @@ def test_stack_periods(tas_series, cftime, w, s, m, f, ss):
 
 
 def test_stack_periods_special(tas_series):
-    da = tas_series(
-        np.arange(365 * 48 + 12), cftime=True, start="2004-01-01"
-    ).convert_calendar("noleap")
+    da = tas_series(np.arange(365 * 48 + 12), cftime=True, start="2004-01-01")
+
+    with pytest.raises(ValueError, match="unaligned day-of-year"):
+        stack_periods(da)
+
+    da = da.convert_calendar("noleap")
 
     da_stck = stack_periods(da, dim="horizon")
     np.testing.assert_array_equal(da_stck.horizon_length, 10950)
