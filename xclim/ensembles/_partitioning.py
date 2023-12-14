@@ -159,10 +159,9 @@ def hawkins_sutton(
     u = pd.Index(["variability", "model", "scenario", "total"], name="uncertainty")
     uncertainty = xr.concat([nv_u, model_u, scenario_u, total], dim=u)
 
-    # Add the elements for each uncertainty component
-    uncertainty = uncertainty.assign_coords(
-        elements=("uncertainty", [da[v].values if v in da.dims else None for v in u])
-    )
+    # Keep a trace of the elements for each uncertainty component
+    for d in ["model", "scenario"]:
+        uncertainty.attrs[d] = da[d].values
 
     # Mean projection: G(t)
     g = sm.weighted(weights).mean(dim="model").mean(dim="scenario")
@@ -199,9 +198,7 @@ def hawkins_sutton_09_weighting(da, obs, baseline=("1971", "2000")):
 def lafferty_sriver(
     da: xr.DataArray,
     sm: xr.DataArray = None,
-    weights: xr.DataArray = None,
     bb13: bool = False,
-    fraction: bool = False,
 ):
     """Return the mean and partitioned variance of an ensemble based on method from Lafferty and Sriver (2023).
 
@@ -289,10 +286,9 @@ def lafferty_sriver(
     )
     uncertainty = xr.concat([model_u, scenario_u, downscaling_u, nv_u, total], dim=u)
 
-    # Add the elements for each uncertainty component
-    uncertainty = uncertainty.assign_coords(
-        elements=("uncertainty", [da[v].values if v in da.dims else None for v in u])
-    )
+    # Keep a trace of the elements for each uncertainty component
+    for d in ["model", "scenario", "downscaling"]:
+        uncertainty.attrs[d] = da[d].values
 
     # Mean projection:
     # This is not part of the original algorithm, but we want all partition algos to have similar outputs.
@@ -316,21 +312,7 @@ def fractional_uncertainty(u: xr.DataArray):
       Fractional, or relative uncertainty with respect to the total uncertainty.
     """
     uncertainty = u / u.sel(uncertainty="total") * 100
-    uncertainty["elements"] = u["elements"]  # keep element coords
+    uncertainty.attrs.update(u.attrs)
     uncertainty.attrs["long_name"] = "Fraction of total variance"
     uncertainty.attrs["units"] = "%"
     return uncertainty
-
-
-# def _lafferty_sriver_weights(da):
-#     """Return the weights used in Lefferty and Sriver (2023).
-#
-#     The weights $w_{s,d}$ are given by the number of parent models that have been downscaled using method $d$ for
-#     scenario $s$.
-#     """
-#     # Count the number of series that have 80% of their data (not in the paper)
-#     # We don't want to count series with only a few years of data
-#     valid = (da.count("time") / len(da.time)) > 0.8
-#     s = valid.where(valid)
-#
-#     # Count the number of parent models that have been downscaled using method $d$ for scenario $s$.
