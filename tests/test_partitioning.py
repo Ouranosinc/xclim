@@ -5,7 +5,6 @@ import xarray as xr
 
 from xclim.ensembles import fractional_uncertainty, hawkins_sutton, lafferty_sriver
 from xclim.ensembles._filters import _concat_hist, _model_in_all_scens, _single_member
-from xclim.testing import get_file
 
 
 def test_hawkins_sutton_smoke(open_dataset):
