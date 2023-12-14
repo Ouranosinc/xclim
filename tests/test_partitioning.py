@@ -113,9 +113,7 @@ def test_lafferty_sriver():
 
     # Get data from Lafferty & Sriver unit test
     # https://github.com/david0811/lafferty-sriver_2023_npjCliAtm/tree/main/unit_test
-    fn = get_file(
-        "uncertainty_partitioning/seattle_avg_tas.csv", branch="lafferty_sriver"
-    )
+    fn = get_file("uncertainty_partitioning/seattle_avg_tas.csv")
 
     df = pd.read_csv(fn, parse_dates=["time"]).rename(
         columns={"ssp": "scenario", "ensemble": "downscaling"}
