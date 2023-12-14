@@ -2,6 +2,9 @@
 Changelog
 =========
 
+* Validate YAML indicators description before trying to build module. (:issue:`1523`)
+
+
 v0.47.0 (2023-12-01)
 --------------------
 Contributors to this version: Juliette Lavoie (:user:`juliettelavoie`), Pascal Bourgault (:user:`aulemahal`), Trevor James Smith (:user:`Zeitsperre`), David Huard (:user:`huard`), Éric Dupuis (:user:`coxipi`).
