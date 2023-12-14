@@ -432,11 +432,17 @@ def ensemble_dataset_objects() -> dict:
 
 @pytest.fixture(scope="session")
 def lafferty_sriver_ds() -> xr.Dataset:
-    import pandas as pd
+    """Get data from Lafferty & Sriver unit test.
 
-    # Get data from Lafferty & Sriver unit test
-    # https://github.com/david0811/lafferty-sriver_2023_npjCliAtm/tree/main/unit_test
-    fn = get_file("uncertainty_partitioning/seattle_avg_tas.csv")
+    Notes
+    -----
+    https://github.com/david0811/lafferty-sriver_2023_npjCliAtm/tree/main/unit_test
+    """
+    fn = get_file(
+        "uncertainty_partitioning/seattle_avg_tas.csv",
+        cache_dir=_default_cache_dir,
+        branch=helpers.TESTDATA_BRANCH,
+    )
 
     df = pd.read_csv(fn, parse_dates=["time"]).rename(
         columns={"ssp": "scenario", "ensemble": "downscaling"}
