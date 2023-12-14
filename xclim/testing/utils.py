@@ -80,7 +80,7 @@ def file_md5_checksum(f_name):
 def get_file(
     name: str | os.PathLike | Sequence[str | os.PathLike],
     github_url: str = "https://github.com/Ouranosinc/xclim-testdata",
-    branch: str = "master",
+    branch: str = "main",
     cache_dir: Path = _default_cache_dir,
 ) -> Path | list[Path]:
     """Return a file from an online GitHub-like repository.
