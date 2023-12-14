@@ -1721,7 +1721,9 @@ def build_indicator_module_from_yaml(  # noqa: C901
     schema = yamale.make_schema(Path(__file__).parent.parent / "data" / "schema.yml")
 
     # Validate - a YamaleError will be raised if the module does not comply with the schema.
-    yamale.validate(schema, yamale.make_data(ymlpath))
+    yamale.validate(
+        schema, yamale.make_data(content=ymlpath.read_text(encoding=encoding))
+    )
 
     # Load values from top-level in yml.
     # Priority of arguments differ.
