@@ -111,24 +111,8 @@ def test_lafferty_sriver_synthetic(random):
     lafferty_sriver(da, sm=sm)
 
 
-def test_lafferty_sriver():
-    import pandas as pd
-
-    # Get data from Lafferty & Sriver unit test
-    # https://github.com/david0811/lafferty-sriver_2023_npjCliAtm/tree/main/unit_test
-    fn = get_file(
-        "uncertainty_partitioning/seattle_avg_tas.csv", branch="lafferty_sriver"
-    )
-
-    df = pd.read_csv(fn, parse_dates=["time"]).rename(
-        columns={"ssp": "scenario", "ensemble": "downscaling"}
-    )
-
-    # Make xarray dataset
-    ds = xr.Dataset.from_dataframe(
-        df.set_index(["scenario", "model", "downscaling", "time"])
-    )
-    g, u = lafferty_sriver(ds.tas)
+def test_lafferty_sriver(lafferty_sriver_ds):
+    g, u = lafferty_sriver(lafferty_sriver_ds.tas)
     fu = fractional_uncertainty(u)
 
     # Assertions based on expected results from

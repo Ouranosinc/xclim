@@ -24,6 +24,7 @@ from xclim.core.calendar import max_doy
 from xclim.testing import helpers
 from xclim.testing.helpers import test_timeseries
 from xclim.testing.utils import _default_cache_dir  # noqa
+from xclim.testing.utils import get_file
 from xclim.testing.utils import open_dataset as _open_dataset
 
 if not __xclim_version__.endswith("-beta") and helpers.TESTDATA_BRANCH == "main":
@@ -427,6 +428,24 @@ def ensemble_dataset_objects() -> dict:
     ]
     edo["nc_files"] = edo["nc_files_simple"] + edo["nc_files_extra"]
     return edo
+
+
+@pytest.fixture(scope="session")
+def lafferty_sriver_ds() -> xr.Dataset:
+    import pandas as pd
+
+    # Get data from Lafferty & Sriver unit test
+    # https://github.com/david0811/lafferty-sriver_2023_npjCliAtm/tree/main/unit_test
+    fn = get_file("uncertainty_partitioning/seattle_avg_tas.csv")
+
+    df = pd.read_csv(fn, parse_dates=["time"]).rename(
+        columns={"ssp": "scenario", "ensemble": "downscaling"}
+    )
+
+    # Make xarray dataset
+    return xr.Dataset.from_dataframe(
+        df.set_index(["scenario", "model", "downscaling", "time"])
+    )
 
 
 @pytest.fixture(scope="session", autouse=True)
