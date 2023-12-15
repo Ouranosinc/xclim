@@ -2,7 +2,6 @@
 Changelog
 =========
 
-
 v0.48 (unreleased)
 ------------------
 Contributors to this version: Juliette Lavoie (:user:`juliettelavoie`), Pascal Bourgault (:user:`aulemahal`), Trevor James Smith (:user:`Zeitsperre`), David Huard (:user:`huard`), Éric Dupuis (:user:`coxipi`).
@@ -10,7 +9,9 @@ Contributors to this version: Juliette Lavoie (:user:`juliettelavoie`), Pascal B
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 * Added uncertainty partitioning method `lafferty_sriver` from Lafferty and Sriver (2023), which can partition uncertainty related to the downscaling method. (:issue:`1497`, :pull:`1529`).
+* Validate YAML indicators description before trying to build module. (:issue:`1523`, :pull:`1560`).
 * Support ``indexer`` keyword in YAML indicator description. (:issue:`1522`, :pull:`1561`).
+
 
 v0.47.0 (2023-12-01)
 --------------------
