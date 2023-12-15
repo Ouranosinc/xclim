@@ -140,6 +140,7 @@ def populate_testing_data(
         "sdba/ahccd_1950-2013.nc",
         "sdba/nrcan_1950-2013.nc",
         "uncertainty_partitioning/cmip5_pr_global_mon.nc",
+        "uncertainty_partitioning/seattle_avg_tas.csv",
     ]
 
     data = dict()

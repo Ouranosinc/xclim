@@ -3,8 +3,7 @@
 Uncertainty Partitioning
 ========================
 
-This module implements methods and tools meant to partition climate projection uncertainties into different components:
-natural variability, GHG scenario and climate models.
+This module implements methods and tools meant to partition climate projection uncertainties into different components.
 """
 
 
@@ -18,6 +17,7 @@ import xarray as xr
 Implemented partitioning algorithms:
 
  - `hawkins_sutton`
+ - `lafferty_sriver`
 
 # References for other more recent algorithms that could be added here.
 
@@ -50,6 +50,8 @@ Related bixtex entries:
  - evin_2019
 """
 
+# TODO: Add ref for Brekke and Barsugli (2013)
+
 
 def hawkins_sutton(
     da: xr.DataArray,
@@ -62,18 +64,18 @@ def hawkins_sutton(
 
     Parameters
     ----------
-    da : xr.DataArray
-        Time series with dimensions 'time', 'scenario' and 'model'.
-    sm : xr.DataArray, optional
-        Smoothed time series over time, with the same dimensions as `da`. By default, this is estimated using a
-        4th-order polynomial. Results are sensitive to the choice of smoothing function, use this to set another
-        polynomial order, or a LOESS curve.
-    weights : xr.DataArray, optional
-        Weights to be applied to individual models. Should have `model` dimension.
-    baseline : [str, str]
-        Start and end year of the reference period.
-    kind : {'+', '*'}
-        Whether the mean over the reference period should be subtracted (+) or divided by (*).
+    da: xr.DataArray
+      Time series with dimensions 'time', 'scenario' and 'model'.
+    sm: xr.DataArray, optional
+      Smoothed time series over time, with the same dimensions as `da`. By default, this is estimated using a 4th order
+      polynomial. Results are sensitive to the choice of smoothing function, use this to set another polynomial
+      order, or a LOESS curve.
+    weights: xr.DataArray, optional
+      Weights to be applied to individual models. Should have `model` dimension.
+    baseline: (str, str)
+      Start and end year of the reference period.
+    kind: {'+', '*'}
+      Whether the mean over the reference period should be subtracted (+) or divided by (*).
 
     Returns
     -------
@@ -89,6 +91,9 @@ def hawkins_sutton(
     To reproduce results from :cite:t:`hawkins_2009`, input data should meet the following requirements:
       - annual time series starting in 1950 and ending in 2100;
       - the same models are available for all scenarios.
+
+    To get the fraction of the total variance instead of the variance itself, call `fractional_uncertainty` on the
+    output.
 
     References
     ----------
@@ -154,6 +159,10 @@ def hawkins_sutton(
     u = pd.Index(["variability", "model", "scenario", "total"], name="uncertainty")
     uncertainty = xr.concat([nv_u, model_u, scenario_u, total], dim=u)
 
+    # Keep a trace of the elements for each uncertainty component
+    for d in ["model", "scenario"]:
+        uncertainty.attrs[d] = da[d].values
+
     # Mean projection: G(t)
     g = sm.weighted(weights).mean(dim="model").mean(dim="scenario")
 
@@ -184,3 +193,126 @@ def hawkins_sutton_09_weighting(da, obs, baseline=("1971", "2000")):
     xm = da.sel(time=baseline[1]) - mm
     xm = xm.drop("time").squeeze()
     return 1 / (obs + np.abs(xm - obs))
+
+
+def lafferty_sriver(
+    da: xr.DataArray,
+    sm: xr.DataArray = None,
+    bb13: bool = False,
+):
+    """Return the mean and partitioned variance of an ensemble based on method from Lafferty and Sriver (2023).
+
+    Parameters
+    ----------
+    da: xr.DataArray
+      Time series with dimensions 'time', 'scenario', 'downscaling' and 'model'.
+    sm: xr.DataArray
+      Smoothed time series over time, with the same dimensions as `da`. By default, this is estimated using a 4th order
+      polynomial. Results are sensitive to the choice of smoothing function, use this to set another polynomial
+      order, or a LOESS curve.
+    bb13: bool
+      Whether to apply the Brekke and Barsugli (2013) method to estimate scenario uncertainty, where the variance
+      over scenarios is computed before taking the mean over models and downscaling methods.
+
+    Returns
+    -------
+    xr.DataArray, xr.DataArray
+      The mean relative to the baseline, and the components of variance of the ensemble. These components are
+      coordinates along the `uncertainty` dimension: `variability`, `model`, `scenario`, `downscaling` and `total`.
+
+    Notes
+    -----
+    To prepare input data, make sure `da` has dimensions `time`, `scenario`, `downscaling` and `model`,
+    e.g. `da.rename({"experiment": "scenario"})`.
+
+    To get the fraction of the total variance instead of the variance itself, call `fractional_uncertainty` on the
+    output.
+
+    References
+    ----------
+    :cite:cts:`Lafferty2023`
+    """
+    if xr.infer_freq(da.time)[0] not in ["A", "Y"]:
+        raise ValueError("This algorithm expects annual time series.")
+
+    if not {"time", "scenario", "model", "downscaling"}.issubset(da.dims):
+        raise ValueError(
+            "DataArray dimensions should include 'time', 'scenario', 'downscaling' and 'model'."
+        )
+
+    if sm is None:
+        # Fit a 4th order polynomial
+        fit = da.polyfit(dim="time", deg=4, skipna=True)
+        sm = xr.polyval(coord=da.time, coeffs=fit.polyfit_coefficients).where(
+            da.notnull()
+        )
+
+    # "Interannual variability is then estimated as the centered rolling 11-year variance of the difference
+    # between the extracted forced response and the raw outputs, averaged over all outputs."
+    nv_u = (
+        (da - sm)
+        .rolling(time=11, center=True)
+        .var(dim="time")
+        .mean(dim=["scenario", "model", "downscaling"])
+    )
+
+    # Scenario uncertainty: U_s(t)
+    if bb13:
+        scenario_u = sm.var(dim="scenario").mean(dim=["model", "downscaling"])
+    else:
+        scenario_u = sm.mean(dim=["model", "downscaling"]).var(dim="scenario")
+
+    # Model uncertainty: U_m(t)
+
+    ## Count the number of parent models that have been downscaled using method $d$ for scenario $s$.
+    ## In the paper, weights are constant, here they may vary across time if there are missing values.
+    mw = sm.count("model")
+    # In https://github.com/david0811/lafferty-sriver_2023_npjCliAtm/blob/main/unit_test/lafferty_sriver.py
+    # weights are set to zero when there is only one model, but the var for a single element is 0 anyway.
+    model_u = sm.var(dim="model").weighted(mw).mean(dim=["scenario", "downscaling"])
+
+    # Downscaling uncertainty: U_d(t)
+    dw = sm.count("downscaling")
+    downscaling_u = (
+        sm.var(dim="downscaling").weighted(dw).mean(dim=["scenario", "model"])
+    )
+
+    # Total uncertainty: T(t)
+    total = nv_u + scenario_u + model_u + downscaling_u
+
+    # Create output array with the uncertainty components
+    u = pd.Index(
+        ["model", "scenario", "downscaling", "variability", "total"], name="uncertainty"
+    )
+    uncertainty = xr.concat([model_u, scenario_u, downscaling_u, nv_u, total], dim=u)
+
+    # Keep a trace of the elements for each uncertainty component
+    for d in ["model", "scenario", "downscaling"]:
+        uncertainty.attrs[d] = da[d].values
+
+    # Mean projection:
+    # This is not part of the original algorithm, but we want all partition algos to have similar outputs.
+    g = sm.mean(dim="model").mean(dim="scenario").mean(dim="downscaling")
+
+    return g, uncertainty
+
+
+def fractional_uncertainty(u: xr.DataArray):
+    """
+    Return the fractional uncertainty.
+
+    Parameters
+    ----------
+    u: xr.DataArray
+      Array with uncertainty components along the `uncertainty` dimension.
+
+    Returns
+    -------
+    xr.DataArray
+      Fractional, or relative uncertainty with respect to the total uncertainty.
+    """
+    uncertainty = u / u.sel(uncertainty="total") * 100
+    uncertainty.attrs.update(u.attrs)
+    uncertainty.attrs["long_name"] = "Fraction of total variance"
+    uncertainty.attrs["units"] = "%"
+    return uncertainty
