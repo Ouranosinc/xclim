@@ -503,7 +503,9 @@ def convert_calendar(
         target = date_range_like(source[dim], cal_tgt)
 
     if isinstance(target, xr.DataArray):
-        out = out.reindex({dim: target}, fill_value=missing or np.nan)
+        out = out.reindex(
+            {dim: target}, fill_value=missing if missing is not None else np.nan
+        )
 
     # Copy attrs but change remove `calendar` is still present.
     out[dim].attrs.update(source[dim].attrs)
