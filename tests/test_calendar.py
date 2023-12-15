@@ -415,10 +415,11 @@ def test_convert_calendar_missing(source, target, freq):
     da_src = xr.DataArray(
         np.linspace(0, 1, src.size), dims=("time",), coords={"time": src}
     )
-    out = convert_calendar(da_src, target, missing=np.nan, align_on="date")
+    out = convert_calendar(da_src, target, missing=0, align_on="date")
     assert xr.infer_freq(out.time) == freq
     if source == "360_day":
         assert out.time[-1].dt.day == 31
+        assert out[-1] == 0
 
 
 def test_convert_calendar_and_doy():
