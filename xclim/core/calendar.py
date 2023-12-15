@@ -1737,13 +1737,13 @@ def stack_periods(
     for begin, strd_slc in da.resample(time=strd_frq).groups.items():
         win_resamp = time2.isel(time=slice(strd_slc.start, None)).resample(time=win_frq)
         # Get slice for first group
-        win_slc = win_resamp.groupers[0].group_indices[0]
+        win_slc = win_resamp._group_indices[0]
         if min_length < window:
             # If we ask for a min_length period instead is it complete ?
             min_resamp = time2.isel(time=slice(strd_slc.start, None)).resample(
                 time=minl_frq
             )
-            min_slc = min_resamp.groupers[0].group_indices[0]
+            min_slc = min_resamp._group_indices[0]
             open_ended = min_slc.stop is None
         else:
             # The end of the group slice is None if no outside-group value was found after the last element
@@ -1921,7 +1921,7 @@ def unstack_periods(da: xr.DataArray | xr.Dataset, dim: str = "period"):
     periods = []
     for i, (start, length) in enumerate(zip(starts.values, lengths.values)):
         real_time = _reconstruct_time(start)
-        slices = real_time.resample(time=strd_frq).groupers[0].group_indices
+        slices = real_time.resample(time=strd_frq)._group_indices
         if i == 0:
             slc = slice(slices[0].start, min(slices[mid].stop, length))
         elif i == da.period.size - 1:
