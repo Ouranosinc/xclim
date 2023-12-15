@@ -11,6 +11,9 @@ New features and enhancements
 * Added uncertainty partitioning method `lafferty_sriver` from Lafferty and Sriver (2023), which can partition uncertainty related to the downscaling method. (:issue:`1497`, :pull:`1529`).
 * Validate YAML indicators description before trying to build module. (:issue:`1523`, :pull:`1560`).
 
+Bug fixes
+^^^^^^^^^
+* Fix wrong `window` attributes in ``xclim.indices.standardized_precipitation_index``, ``xclim.indices.standardized_precipitation_evapotranspiration_index``. (:issue:`1552`  :pull:`1554`).
 
 
 v0.47.0 (2023-12-01)
