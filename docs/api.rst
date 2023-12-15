@@ -65,6 +65,9 @@ Ensembles Module
 .. autofunction:: xclim.ensembles.hawkins_sutton
     :noindex:
 
+.. autofunction:: xclim.ensembles.lafferty_sriver
+    :noindex:
+
 Units Handling Submodule
 ========================
 
