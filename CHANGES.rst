@@ -12,6 +12,10 @@ New features and enhancements
 * Validate YAML indicators description before trying to build module. (:issue:`1523`, :pull:`1560`).
 * New ``xclim.core.calendar.stack_periods`` and ``unstack_periods`` for performing ``rolling(time=...).construct(..., stride=...)`` but with non-uniform temporal periods like years or months. They replace ``xclim.sdba.processing.construct_moving_yearly_window`` and ``unpack_moving_yearly_window`` which are deprecated and will be removed in a future release.
 
+Bug fixes
+^^^^^^^^^
+* Fixed passing ``missing=0`` to ``xclim.core.calendar.convert_calendar`` (:issue:`1562`, :pull:`1563`).
+
 v0.47.0 (2023-12-01)
 --------------------
 Contributors to this version: Juliette Lavoie (:user:`juliettelavoie`), Pascal Bourgault (:user:`aulemahal`), Trevor James Smith (:user:`Zeitsperre`), David Huard (:user:`huard`), Éric Dupuis (:user:`coxipi`).
