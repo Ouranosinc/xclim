@@ -310,6 +310,8 @@ def add_cyclic_bounds(
 
 
 def _interp_on_quantiles_1D_multi(newxs, oldx, oldy, method, extrap):
+    if len(newxs.shape) == 1:
+        return _interp_on_quantiles_1D(newxs, oldx, oldy, method, extrap)
     mask_old = np.isnan(oldy) | np.isnan(oldx)
     if extrap == "constant":
         fill_value = (
