@@ -19,7 +19,9 @@ from . import utils as u
 from ._processing import _adapt_freq
 from .base import Grouper, map_blocks, map_groups
 from .detrending import PolyDetrend
-from .processing import escore, standardize
+from .processing import standardize
+
+# from .processing import escore, standardize
 
 
 def _adapt_freq_hist(ds, adapt_freq_thresh):
@@ -110,67 +112,66 @@ def _get_group_complement(da, group):
         return da.time.dt.strftime("%Y-%d")
 
 
-def get_windowed_group(da, group, complement_dim=None):
+def get_windowed_group(da, group, stack_dim=None):
     r"""Splits an input array into `group`, its complement, and expands the array along a rolling `window` dimension.
 
     Aims to give a faster alternative to `map_blocks` constructions.
 
     """
-    if complement_dim is None:
-        complement_dim = get_temp_dimname(da.dims, "complement_dim")
+    # define dims (simplify this)
+    if stack_dim is None:
+        stack_dim = get_temp_dimname(da.dims, "stack_dim")
     win_dim = get_temp_dimname(da.dims, "window_dim")
-    print(complement_dim)
-
     group = group if isinstance(group, Grouper) else Grouper(group, 1)
-    # should grouper allow time & win>1? I think only win=1 makes sense... Grouper should raise error
-    if group.name == "time":
-        return da.rename({"time": complement_dim})
     gr, win = group.name, group.window
     gr_dim = gr.split(".")[-1]
-
     gr_complement_dim = get_temp_dimname(da.dims, "group_complement_dim")
     time_dims = [gr_dim, gr_complement_dim]
     complement_dims = [win_dim, gr_complement_dim]
+    # should grouper allow time & win>1? I think only win=1 makes sense... Grouper should raise error
+    if group.name == "time":
+        da = da.rename({"time": stack_dim})
 
-    if win == 1:
-        da = da.expand_dims({win_dim: [0]})
     else:
-        da = da.rolling(time=win, center=True).construct(window_dim=win_dim)
-    da = da.groupby(gr).apply(
-        lambda da: da.assign_coords(time=_get_group_complement(da, gr)).rename(
-            {"time": gr_complement_dim}
+        if win == 1:
+            da = da.expand_dims({win_dim: [0]})
+        else:
+            da = da.rolling(time=win, center=True).construct(window_dim=win_dim)
+        da = da.groupby(gr).apply(
+            lambda da: da.assign_coords(time=_get_group_complement(da, gr)).rename(
+                {"time": gr_complement_dim}
+            )
         )
-    )
-    da = da.chunk({gr_dim: -1, gr_complement_dim: -1})
-    da = da.stack({complement_dim: complement_dims})
-    return da.assign_attrs(
+        da = da.chunk({gr_dim: -1, gr_complement_dim: -1})
+        da = da.stack({stack_dim: complement_dims})
+
+    da = da.assign_attrs(
         {
             "group": (gr, win),
             "group_dim": gr_dim,
             "complement_dims": complement_dims,
-            "complement_dim": complement_dim,
+            "stack_dim": stack_dim,
             "time_dims": time_dims,
             "window_dim": win_dim,
         }
     )
+    return da
 
 
-def ungroup(gr_da, template_time, group="time", dim="complement_dim"):
+def ungroup(gr_da, template_time, group="time"):
     r"""Inverse the operation done with :py:func:`get_windowed_group`. Only works if `window` is 1."""
     group = group if isinstance(group, Grouper) else Grouper(group, 1)
-    # group = gr_da.attrs["group"][0]
+    stack_dim, win_dim = gr_da.attrs["stack_dim"], gr_da.attrs["window_dim"]
     if group.name == "time":
-        return gr_da.rename({dim: "time"})
-    complement_dim, win_dim = gr_da.attrs["complement_dim"], gr_da.attrs["window_dim"]
-
-    gr_da = gr_da.unstack(complement_dim)
+        return gr_da.rename({stack_dim: "time"})
+    gr_da = gr_da.unstack(stack_dim)
     pos_center = gr_da[win_dim].size // 2
     gr_da = gr_da[{win_dim: slice(pos_center, pos_center + 1)}]
     # return gr_da
     grouped_time = get_windowed_group(
         template_time[{d: 0 for d in template_time.dims if d != "time"}], group
     )
-    grouped_time = grouped_time.unstack(complement_dim)
+    grouped_time = grouped_time.unstack(stack_dim)
     da = (
         gr_da.stack(time=gr_da.attrs["time_dims"])
         .drop_vars(gr_da.attrs["time_dims"])
@@ -185,39 +186,68 @@ def ungroup(gr_da, template_time, group="time", dim="complement_dim"):
 
 
 def npdf_train(
-    ds, rots, quantiles, group=None, dim=None, standardize_inplace=False
+    ds,
+    quantiles,
+    method,
+    extrap,
+    group,
+    n_escore,
 ) -> xr.Dataset:
     """EQM: Train step on one group.
 
-    Dataset variables:
-      ref : training target
-      hist : training data
 
     I was thinking we should leave the possibility to standardize outside the function. Given it should
     really be done in each group, once a group is formed, it would not make sense to allow to standardize outside.
     The only use for this is: If we let group=None a possibility, then simply specifying the dim along which to perform the computation
     should be sufficient.
+
+    Parameters
+    ----------
+    Dataset variables:
+        ref : training target
+        hist : training data
+    n_iter : int
+        The number of iterations to perform. Defaults to 20.
+    pts_dim : str
+        The name of the "multivariate" dimension. Defaults to "multivar", which is the
+        normal case when using :py:func:`xclim.sdba.base.stack_variables`.
+    rot_matrices : xr.DataArray, optional
+        The rotation matrices as a 3D array ('iterations', <pts_dim>, <anything>), with shape (n_iter, <N>, <N>).
+        If left empty, random rotation matrices will be automatically generated.
+    base_kws : dict, optional
+        Arguments passed to the training of the univariate adjustment.
+    adj_kws : dict, optional
+        Dictionary of arguments to pass to the adjust method of the univariate adjustment.
+    standarize_inplace : bool
+        If true, perform a standardization of ref,hist,sim. Defaults to false
     """
+    # unload data, prepare datasets with groups
+    # e.g. Grouper("time.dayofyear", 31)
+    # time -> dayofyear, year, window -> dayofyear, stack_dim
     ref = ds.ref
     hist = ds.hist
+    rot_matrices = ds.rot_matrices
     af_q_l = []
-    if group is None:
-        group = Grouper("time")
-    gr_ref, gr_hist = (
-        get_windowed_group(da, group, complement_dim=dim) for da in [ref, hist]
-    )
-    # dim = gr_ref.attrs["complement_dim"]
-    dim = "complement_dim"
-    if standardize_inplace:
-        gr_ref, gr_hist = (standardize(da, dim=dim)[0] for da in [gr_ref, gr_hist])
+    gr_ref, gr_hist = (get_windowed_group(da, group) for da in [ref, hist])
+    dim = gr_ref.attrs["stack_dim"]
+    gr_ref, gr_hist = (standardize(da, dim=dim)[0] for da in [gr_ref, gr_hist])
     grouping_attrs = gr_hist.attrs
-    for i_it, R in enumerate(rots.transpose("iterations", ...)):
+
+    # npdf core
+    for i_it, R in enumerate(rot_matrices.transpose("iterations", ...)):
+        # rotate
         refp = gr_ref @ R
         histp = gr_hist @ R
+
+        # train
         ref_q, hist_q = (
             da.quantile(dim=dim, q=quantiles).rename({"quantile": "quantiles"})
             for da in [refp, histp]
         )
+        af_q = u.get_correction(hist_q, ref_q, "+")
+        af_q_l.append(af_q.expand_dims({"iterations": [i_it]}))
+
+        # adjust
         rnks = xr.apply_ufunc(
             _rank,
             histp,
@@ -226,9 +256,6 @@ def npdf_train(
             dask="parallelized",
             vectorize=True,
         )
-        af_q = u.get_correction(hist_q, ref_q, "+")
-        af_q_l.append(af_q.expand_dims({"iterations": [i_it]}))
-
         af = xr.apply_ufunc(
             u._interp_on_quantiles_1D,
             rnks,
@@ -237,21 +264,28 @@ def npdf_train(
             input_core_dims=[[dim], ["quantiles"], ["quantiles"]],
             output_core_dims=[[dim]],
             dask="parallelized",
-            kwargs=dict(method="nearest", extrap="constant"),
+            kwargs=dict(method=method, extrap=extrap),
             output_dtypes=[gr_ref.dtype],
             vectorize=True,
         )
         histp = u.apply_correction(histp, af, "+")
+
+        # undo rotation
         gr_hist = histp @ R
 
+    # retrieve adjustment factors and undo time grouping
     af_q = xr.concat(af_q_l, dim="iterations")
     af_q.attrs = grouping_attrs
     hist = ungroup(gr_hist.assign_attrs(grouping_attrs), hist.time, group=group)
-    return xr.Dataset(data_vars=dict(af_q=af_q, scenh_std=hist, rotation_matrices=rots))
+    return xr.Dataset(data_vars=dict(af_q=af_q, scenh_std=hist))
 
 
 def npdf_adjust(
-    sim, ds, quantiles, period_dim=None, standardize_inplace=False
+    ds,
+    group,
+    method,
+    extrap,
+    period_dim,
 ) -> xr.Dataset:
     """Npdf adjust
 
@@ -266,41 +300,27 @@ def npdf_adjust(
         Threshold for frequency adaptation. See :py:class:`xclim.sdba.processing.adapt_freq` for details.
         Default is None, meaning that frequency adaptation is not performed.
     """
-    rots = ds.rotation_matrices
+    # unload training parameters
+    sim = ds.sim
+    rots = ds.rot_matrices
     af_q = ds.af_q
-    dim = af_q.attrs["complement_dim"]
-    group = Grouper(*af_q.attrs["group"])
-    dims = [dim] if period_dim is None else [period_dim, dim]
-    gr_sim = get_windowed_group(sim, group, complement_dim=dim)
-    gr_sim = standardize(gr_sim, dim=dim)[0]
-    temp_attrs = gr_sim.attrs
-    for i_it, R in enumerate(rots.transpose("iterations", ...)):
-        simp = gr_sim @ R
-        rnks = xr.apply_ufunc(
-            _rank,
-            simp,
-            input_core_dims=[[dim]],
-            output_core_dims=[[dim]],
-            dask="parallelized",
-            vectorize=True,
-        )
-        af = xr.apply_ufunc(
-            u._interp_on_quantiles_1D,
-            rnks,
-            quantiles,
-            af_q.isel(iterations=i_it),
-            input_core_dims=[[dim], ["quantiles"], ["quantiles"]],
-            output_core_dims=[[dim]],
-            dask="parallelized",
-            kwargs=dict(method="nearest", extrap="constant"),
-            output_dtypes=[gr_sim.dtype],
-            vectorize=True,
-        )
+    quantiles = af_q.quantiles
+    # dim = af_q.attrs["stack_dim"]
+    # group, method, extrap = Grouper(*af_q.attrs["group"]), af_q.attrs["method"], af_q.attrs["extrap"]
+
+    # group and standardize
     gr_sim = get_windowed_group(sim, group)
+    dim = gr_sim.attrs["stack_dim"]
+    dims = [dim] if period_dim is None else [period_dim, dim]
     gr_sim = standardize(gr_sim, dim=dim)[0]
     temp_attrs = gr_sim.attrs
+
+    # npdf core (adjust)
     for i_it, R in enumerate(rots.transpose("iterations", ...)):
+        # rotate
         simp = gr_sim @ R
+
+        # adjust
         rnks = xr.apply_ufunc(
             _rank,
             simp,
@@ -317,15 +337,18 @@ def npdf_adjust(
             input_core_dims=[dims, ["quantiles"], ["quantiles"]],
             output_core_dims=[dims],
             dask="parallelized",
-            kwargs=dict(method="nearest", extrap="constant"),
+            kwargs=dict(method=method, extrap=extrap),
             output_dtypes=[gr_sim.dtype],
             vectorize=True,
         )
         simp = u.apply_correction(simp, af, "+")
+
+        # undo rotation
         gr_sim = simp @ R
 
+    # undo grouping
     sim = ungroup(gr_sim.assign_attrs(temp_attrs), sim.time)
-    return xr.Dataset(data_vars=dict(scens_std=sim))
+    return xr.Dataset(data_vars=dict(scen_std=sim))
 
 
 @map_blocks(reduces=[Grouper.PROP, "quantiles"], scen=[])
@@ -478,86 +501,6 @@ def scaling_adjust(ds, *, group, interp, kind) -> xr.Dataset:
     af = u.broadcast(ds.af, ds.sim, group=group, interp=interp)
     scen = u.apply_correction(ds.sim, af, kind)
     return scen.rename("scen").to_dataset()
-
-
-def npdf_transform(ds: xr.Dataset, **kwargs) -> xr.Dataset:
-    r"""N-pdf transform : Iterative univariate adjustment in random rotated spaces.
-
-    Parameters
-    ----------
-    ds : xr.Dataset
-        Dataset variables:
-            ref : Reference multivariate timeseries
-            hist : simulated timeseries on the reference period
-            sim : Simulated timeseries on the projected period.
-            rot_matrices : Random rotation matrices.
-    \*\*kwargs
-        pts_dim : multivariate dimension name
-        base : Adjustment class
-        base_kws : Kwargs for initialising the adjustment object
-        adj_kws : Kwargs of the `adjust` call
-        n_escore : Number of elements to include in the e_score test (0 for all, < 0 to skip)
-
-    Returns
-    -------
-    xr.Dataset
-        Dataset with `scenh`, `scens` and `escores` DataArrays, where `scenh` and `scens` are `hist` and `sim`
-        respectively after adjustment according to `ref`. If `n_escore` is negative, `escores` will be filled with NaNs.
-    """
-    ref = ds.ref.rename(time_hist="time")
-    hist = ds.hist.rename(time_hist="time")
-    sim = ds.sim
-    dim = kwargs["pts_dim"]
-
-    escores = []
-    for i, R in enumerate(ds.rot_matrices.transpose("iterations", ...)):
-        # @ operator stands for matrix multiplication (along named dimensions): x@R = R@x
-        # @R rotates an array defined over dimension x unto new dimension x'. x@R = x'
-        refp = ref @ R
-        histp = hist @ R
-        simp = sim @ R
-
-        # Perform univariate adjustment in rotated space (x')
-        ADJ = kwargs["base"].train(
-            refp, histp, **kwargs["base_kws"], skip_input_checks=True
-        )
-        scenhp = ADJ.adjust(histp, **kwargs["adj_kws"], skip_input_checks=True)
-        scensp = ADJ.adjust(simp, **kwargs["adj_kws"], skip_input_checks=True)
-
-        # Rotate back to original dimension x'@R = x
-        # Note that x'@R is a back rotation because the matrix multiplication is now done along x' due to xarray
-        # operating along named dimensions.
-        # In normal linear algebra, this is equivalent to taking @R.T, the back rotation.
-        hist = scenhp @ R
-        sim = scensp @ R
-
-        # Compute score
-        if kwargs["n_escore"] >= 0:
-            escores.append(
-                escore(
-                    ref,
-                    hist,
-                    dims=(dim, "time"),
-                    N=kwargs["n_escore"],
-                    scale=True,
-                ).expand_dims(iterations=[i])
-            )
-
-    if kwargs["n_escore"] >= 0:
-        escores = xr.concat(escores, "iterations")
-    else:
-        # All NaN, but with the proper shape.
-        escores = (
-            ref.isel({dim: 0, "time": 0}) * hist.isel({dim: 0, "time": 0})
-        ).expand_dims(iterations=ds.iterations) * np.NaN
-
-    return xr.Dataset(
-        data_vars={
-            "scenh": hist.rename(time="time_hist").transpose(*ds.hist.dims),
-            "scen": sim.transpose(*ds.sim.dims),
-            "escores": escores,
-        }
-    )
 
 
 def _fit_on_cluster(data, thresh, dist, cluster_thresh):
@@ -749,303 +692,3 @@ def _npdf_train_np(refs, hists, rots, *, nquantiles, interp, extrapolation):
         # af_q[ii, ...] = af_q[ii, ...]*0 + _escore(refs0[:,pts], hists0[:,pts])
     hists = rots[-1].T @ hists
     return hists, af_q
-
-
-def npdf_train_np(
-    ref,
-    hist,
-    n_iter=20,
-    rot_matrices=None,
-    pts_dim="multivar",
-    base_kws=None,
-    adj_kws=None,
-    standardize_inplace=False,
-):
-    r"""N-dimensional probability density function transform.
-
-    Parameters
-    ----------
-    ref  : xr.DataArray
-        Reference multivariate timeseries
-    hist : xr.DataArray
-        simulated timeseries on the reference period
-    n_iter : int
-        The number of iterations to perform. Defaults to 20.
-    pts_dim : str
-        The name of the "multivariate" dimension. Defaults to "multivar", which is the
-        normal case when using :py:func:`xclim.sdba.base.stack_variables`.
-    rot_matrices : xr.DataArray, optional
-        The rotation matrices as a 3D array ('iterations', <pts_dim>, <anything>), with shape (n_iter, <N>, <N>).
-        If left empty, random rotation matrices will be automatically generated.
-    base_kws : dict, optional
-        Arguments passed to the training of the univariate adjustment.
-    adj_kws : dict, optional
-        Dictionary of arguments to pass to the adjust method of the univariate adjustment.
-    standarize_inplace : bool
-        If true, perform a standardization of ref,hist,sim. Defaults to false
-    """
-    # Manage train/adj keywords
-    if base_kws is None:
-        base_kws = {}
-    if adj_kws is None:
-        adj_kws = {}
-    base_kws.setdefault("group", Grouper("time"))
-    group = (
-        base_kws["group"]
-        if isinstance(base_kws["group"], Grouper)
-        else Grouper(base_kws["group"], 1)
-    )
-    base_kws.pop("group")
-    kwargs = {**base_kws, **adj_kws}
-    for k, default in [
-        ["nquantiles", 20],
-        ["interp", "nearest"],
-        ["extrapolation", "constant"],
-    ]:
-        kwargs.setdefault(k, default)
-    kwargs.pop("kind")
-    if np.isscalar(kwargs["nquantiles"]):
-        kwargs["nquantiles"] = u.equally_spaced_nodes(kwargs["nquantiles"])
-
-    refs, hists = (
-        [ref, hist]
-        if standardize_inplace is False
-        else (standardize(arr)[0] for arr in [ref, hist])
-    )
-
-    pts_dim_pr = xr.core.utils.get_temp_dimname(
-        set(refs.dims).union(hists.dims), pts_dim + "_prime"
-    )
-    if rot_matrices is None:
-        rot_matrices = u.rand_rot_matrix(
-            ref[pts_dim], num=n_iter, new_dim=pts_dim_pr
-        ).rename(matrices="iterations")
-
-    if group == "time":
-        gr_refs, gr_hists = (
-            da.rename({"time": "complement_dim"}) for da in [refs, hists]
-        )
-    else:
-        gr_refs, gr_hists = (get_windowed_group(da, group) for da in [refs, hists])
-    temp_attrs = gr_hists.attrs
-
-    gr_hists, af_q = xr.apply_ufunc(
-        _npdf_train_np,
-        gr_refs,
-        gr_hists,
-        rot_matrices,
-        dask="parallelized",
-        kwargs=kwargs,
-        input_core_dims=[
-            [pts_dim] + ["complement_dim"],
-            [pts_dim] + ["complement_dim"],
-            ["iterations", pts_dim_pr, pts_dim],
-        ],
-        output_core_dims=[
-            [pts_dim] + ["complement_dim"],
-            ["iterations", pts_dim, "quantiles"],
-        ],
-        vectorize=True,
-        output_dtypes=[gr_hists.dtype, gr_hists.dtype],
-        output_sizes={"quantiles": len(kwargs["nquantiles"])},
-    )
-    if group == "time":
-        hists = gr_hists.rename({"complement_dim": "time"})
-    else:
-        hists = ungroup(gr_hists.assign_attrs(temp_attrs), hists.time)
-
-    af_q = af_q.assign_coords(quantiles=kwargs["nquantiles"])
-    af_q.attrs["group"] = (group.name, group.window)
-    for k in ["interp", "extrapolation"]:
-        af_q.attrs[k] = kwargs[k]
-    return hists, af_q, rot_matrices
-
-
-# def _fast_npdf_adjust(sims, rots, af_q, g_idxs, *, nquantiles, interp, extrapolation):
-#     q, method, extrap = nquantiles, interp, extrapolation
-#     for ii in range(len(rots)):
-#         rot = rots[0] if ii == 0 else rots[ii] @ rots[ii - 1].T
-#         sims = np.einsum("ij,jkl->ikl", rot, sims)
-#         for ib in range(g_idxs.shape[0]):
-#             g_indxs = np.int64(g_idxs[ib, :][g_idxs[ib, :] >= 0])
-#             for iv in range(sims.shape[0]):
-#                 af0 = u._interp_on_quantiles_1D_multi(
-#                     _rank(sims[iv][..., g_indxs], axis=-1),
-#                     q,
-#                     af_q[ii, iv, ib, :],
-#                     method,
-#                     extrap,
-#                 )
-#                 sims[iv][..., g_indxs] = u.apply_correction(
-#                     sims[iv][..., g_indxs], af0, "+"
-#                 )
-#     sims = np.einsum("ij,jkl->ikl", rots[-1].T, sims)
-#     return sims
-
-
-# def fast_npdf_adjust(
-#     sim,
-#     af_q,
-#     rot_matrices,
-#     standardize_inplace=False,
-# ):
-#     r"""N-dimensional probability density function transform.
-
-#     Parameters
-#     ----------
-#     sim  : xr.DataArray
-#         Reference multivariate timeseries
-#     n_iter : int
-#         The number of iterations to perform. Defaults to 20.
-#     pts_dim : str
-#         The name of the "multivariate" dimension. Defaults to "multivar", which is the
-#         normal case when using :py:func:`xclim.sdba.base.stack_variables`.
-#     rot_matrices : xr.DataArray, optional
-#         The rotation matrices as a 3D array ('iterations', <pts_dim>, <anything>), with shape (n_iter, <N>, <N>).
-#         If left empty, random rotation matrices will be automatically generated.
-#     base_kws : dict, optional
-#         Arguments passed to the training of the univariate adjustment.
-#     adj_kws : dict, optional
-#         Dictionary of arguments to pass to the adjust method of the univariate adjustment.
-#     standarize_inplace : bool
-#         If true, perform a standardization of ref,hist,sim. Defaults to false
-#     """
-#     # =======================================================================================
-#     # fast_npdf
-#     # =======================================================================================
-#     dummydim = False
-#     if "movingwin" not in sim.dims:
-#         sim = sim.expand_dims({"movingwin": [0]})
-#         dummydim = True
-#     if standardize_inplace:
-#         sims = standardize(sim)[0]
-#     else:
-#         sims = sim
-#     g_idxs, _ = time_group_indices(sims.time, af_q.attrs["group"])
-#     multivar_dims = list(rot_matrices.transpose("iterations", ...).dims[1:])
-#     pts_dim = [d for d in multivar_dims if "prime" not in d][0]
-#     multivar_dims.remove(pts_dim)
-#     pts_dim_pr = multivar_dims[0]
-#     kwargs = {k: af_q.attrs[k] for k in ["interp", "extrapolation"]}
-#     kwargs["nquantiles"] = af_q.quantiles.values
-#     sims = xr.apply_ufunc(
-#         _fast_npdf_adjust,
-#         sims,
-#         rot_matrices,
-#         af_q,
-#         g_idxs,
-#         dask="parallelized",
-#         input_core_dims=[
-#             [pts_dim, "movingwin", "time"],
-#             ["iterations", pts_dim_pr, pts_dim],
-#             ["iterations", pts_dim, g_idxs.dims[0], "quantiles"],
-#             g_idxs.dims,
-#         ],
-#         kwargs=kwargs,
-#         output_core_dims=[[pts_dim, "movingwin", "time"]],
-#         vectorize=True,
-#         output_dtypes=[sims.dtype],
-#     )
-
-#     sims = sims if dummydim is False else sims.isel(movingwin=0)
-#     return sims
-
-
-def _npdf_adjust_np(sims, af_q, rots, *, nquantiles, interp, extrapolation):
-    q, method, extrap = nquantiles, interp, extrapolation
-    print("q")
-    print(q)
-    for ii in range(len(rots)):
-        rot = rots[0] if ii == 0 else rots[ii] @ rots[ii - 1].T
-        sims = np.einsum("ij,jkl->ikl", rot, sims)
-        rnks = _rank(sims, axis=-1)
-        for iv in range(sims.shape[0]):
-            af0 = u._interp_on_quantiles_1D_multi(
-                rnks[iv],
-                q,
-                af_q[ii, iv, :],
-                method,
-                extrap,
-            )
-            sims[iv] = u.apply_correction(sims[iv], af0, "+")
-    sims = np.einsum("ij,jkl->ikl", rots[-1].T, sims)
-    return sims
-
-
-def npdf_adjust_np(
-    sim,
-    af_q,
-    rot_matrices,
-    standardize_inplace=False,
-):
-    r"""N-dimensional probability density function transform.
-
-    Parameters
-    ----------
-    sim  : xr.DataArray
-        Reference multivariate timeseries
-    n_iter : int
-        The number of iterations to perform. Defaults to 20.
-    pts_dim : str
-        The name of the "multivariate" dimension. Defaults to "multivar", which is the
-        normal case when using :py:func:`xclim.sdba.base.stack_variables`.
-    rot_matrices : xr.DataArray, optional
-        The rotation matrices as a 3D array ('iterations', <pts_dim>, <anything>), with shape (n_iter, <N>, <N>).
-        If left empty, random rotation matrices will be automatically generated.
-    base_kws : dict, optional
-        Arguments passed to the training of the univariate adjustment.
-    adj_kws : dict, optional
-        Dictionary of arguments to pass to the adjust method of the univariate adjustment.
-    standarize_inplace : bool
-        If true, perform a standardization of ref,hist,sim. Defaults to false
-    """
-    # =======================================================================================
-    # fast_npdf
-    # =======================================================================================
-    # Manage train/adj keywords
-    dummydim = False
-    if "movingwin" not in sim.dims:
-        sim = sim.expand_dims({"movingwin": [0]})
-        dummydim = True
-    if standardize_inplace:
-        sims = standardize(sim)[0]
-    else:
-        sims = sim
-    multivar_dims = list(rot_matrices.transpose("iterations", ...).dims[1:])
-    pts_dim = [d for d in multivar_dims if "prime" not in d][0]
-    multivar_dims.remove(pts_dim)
-    pts_dim_pr = multivar_dims[0]
-    kwargs = {k: af_q.attrs[k] for k in ["interp", "extrapolation"]}
-    kwargs["nquantiles"] = af_q.quantiles.values
-    group = Grouper(*af_q.attrs["group"])
-    if group == "time":
-        gr_sims = sims.rename({"time": "complement_dim"})
-    else:
-        gr_sims = get_windowed_group(sims, group)
-    temp_attrs = gr_sims.attrs
-    gr_sims = xr.apply_ufunc(
-        _npdf_adjust_np,
-        gr_sims,
-        af_q,
-        rot_matrices,
-        kwargs=kwargs,
-        input_core_dims=[
-            [pts_dim, "moving_win", "complement_dim"],
-            ["iterations", pts_dim, "quantiles"],
-            ["iterations", pts_dim_pr, pts_dim],
-        ],
-        output_core_dims=[
-            [pts_dim] + ["moving_win", "complement_dim"],
-        ],
-        vectorize=True,
-        dask="parallelized",
-        output_dtypes=[sims.dtype],
-    )
-    print(gr_sims.dims)
-    if group == "time":
-        sims = gr_sims.rename({"complement_dim": "time"})
-    else:
-        sims = ungroup(gr_sims.assign_attrs(temp_attrs), sims.time)
-
-    sims = sims if dummydim is False else sims.isel(movingwin=0)
-    return sims
