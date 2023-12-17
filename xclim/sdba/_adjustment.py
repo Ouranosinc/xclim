@@ -238,8 +238,21 @@ def npdf_train(
         histp = gr_hist @ R
 
         # train
+        # ref_q, hist_q = (
+        #     da.quantile(dim=dim, q=quantiles).rename({"quantile": "quantiles"})
+        #     for da in [refp, histp]
+        # )
         ref_q, hist_q = (
-            da.quantile(dim=dim, q=quantiles).rename({"quantile": "quantiles"})
+            xr.apply_ufunc(
+                nbu._sortquantile,
+                da,
+                quantiles,
+                input_core_dims=[[dim], ["quantiles"]],
+                output_core_dims=[["quantiles"]],
+                dask="parallelized",
+                output_dtypes=[refp.dtype],
+                vectorize=True,
+            )
             for da in [refp, histp]
         )
         af_q = u.get_correction(hist_q, ref_q, "+")
