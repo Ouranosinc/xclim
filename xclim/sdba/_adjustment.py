@@ -131,7 +131,6 @@ def get_windowed_group(da, group, stack_dim=None):
     # should grouper allow time & win>1? I think only win=1 makes sense... Grouper should raise error
     if group.name == "time":
         da = da.rename({"time": stack_dim})
-
     else:
         if win == 1:
             da = da.expand_dims({win_dim: [0]})
@@ -158,7 +157,7 @@ def get_windowed_group(da, group, stack_dim=None):
     return da
 
 
-def ungroup(gr_da, template_time, group="time"):
+def ungroup(gr_da, template_time, group):
     r"""Inverse the operation done with :py:func:`get_windowed_group`. Only works if `window` is 1."""
     group = group if isinstance(group, Grouper) else Grouper(group, 1)
     stack_dim, win_dim = gr_da.attrs["stack_dim"], gr_da.attrs["window_dim"]
@@ -167,9 +166,8 @@ def ungroup(gr_da, template_time, group="time"):
     gr_da = gr_da.unstack(stack_dim)
     pos_center = gr_da[win_dim].size // 2
     gr_da = gr_da[{win_dim: slice(pos_center, pos_center + 1)}]
-    # return gr_da
     grouped_time = get_windowed_group(
-        template_time[{d: 0 for d in template_time.dims if d != "time"}], group
+        template_time[{d: 0 for d in template_time.dims if d != "time"}], group.name
     )
     grouped_time = grouped_time.unstack(stack_dim)
     da = (
@@ -618,77 +616,3 @@ def extremes_adjust(
 
     out = (transition * scen) + ((1 - transition) * ds.scen)
     return out.rename("scen").squeeze("group", drop=True).to_dataset()
-
-
-# =======================================================================================
-# old numpy implementations, keep for now for benckmarks
-# =======================================================================================
-
-
-def time_group_indices(times, group):
-    gr, win = group.name, group.window
-    # get time indices (0,1,2,...) for each block
-    timeind = xr.DataArray(np.arange(times.size), coords={"time": times})
-    win_dim0, win_dim = (
-        get_temp_dimname(timeind.dims, lab) for lab in ["window_dim0", "window_dim"]
-    )
-    if gr != "time":
-        # time indices for each block with window = 1
-        g_idxs = timeind.groupby(gr).apply(
-            lambda da: da.assign_coords(time=_get_group_complement(da, gr)).rename(
-                {"time": "year"}
-            )
-        )
-        # time indices for each block with general window
-        da = timeind.rolling(time=win, center=True).construct(window_dim=win_dim0)
-        gw_idxs = da.groupby(gr).apply(
-            lambda da: da.assign_coords(time=_get_group_complement(da, gr))
-            .stack({win_dim: ["time", win_dim0]})
-            .reset_index(dims_or_levels=[win_dim])
-        )
-        gw_idxs = gw_idxs.transpose(..., "window_dim")
-    else:
-        gw_idxs = timeind.rename({"time": win_dim}).expand_dims({win_dim0: [-1]})
-        g_idxs = gw_idxs.copy()
-    return g_idxs, gw_idxs
-
-
-def _get_af(ref, hist, hista, q, kind, method, extrap):
-    ref_q, hist_q = (np.nanquantile(arr, q) for arr in [ref, hist])
-    af_q = u.get_correction(hist_q, ref_q, kind)
-    # af_r = u._interp_on_quantiles_1D(_rank(np.arange(len(hista))), q, af_q, method, extrap)
-    af_r = u._interp_on_quantiles_1D(_rank(hista, axis=-1), q, af_q, method, extrap)
-    return af_r, af_q
-
-
-def single_qdm_2(ref, hist, q, kind, method, extrap):
-    scenh = np.zeros_like(hist)
-    af_q = np.zeros((ref.shape[0], len(q)))
-    # loop on multivar
-    for iv in range(ref.shape[0]):
-        af_r, af_q[iv, :] = _get_af(
-            ref[iv],
-            hist[iv],
-            hist[iv],
-            q,
-            kind,
-            method,
-            extrap,
-        )
-        scenh[iv] = u.apply_correction(hist[iv], af_r, kind)
-    return scenh, af_q
-
-
-def _npdf_train_np(refs, hists, rots, *, nquantiles, interp, extrapolation):
-    q, method, extrap = nquantiles, interp, extrapolation
-    af_q = np.zeros((len(rots), refs.shape[0], len(q)))
-    for ii in range(len(rots)):
-        rot = rots[0] if ii == 0 else rots[ii] @ rots[ii - 1].T
-        refs, hists = (rot @ da for da in [refs, hists])
-        hists, af_q[ii, ...] = single_qdm_2(refs, hists, q, "+", method, extrap)
-        # refs0, hists0 = (rots[ii].T @ da for da in [refs, hists])
-        # step = int(np.ceil(refs0.shape[1]/ 1000))
-        # pts = np.arange(0,refs0.shape[1], step)
-        # af_q[ii, ...] = af_q[ii, ...]*0 + _escore(refs0[:,pts], hists0[:,pts])
-    hists = rots[-1].T @ hists
-    return hists, af_q
