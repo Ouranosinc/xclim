@@ -12,7 +12,7 @@ maintainers = [
   {name = "Pascal Bourgault", email = "bourgault.pascal@ouranos.ca"}
 ]
 readme = {file = "README.rst", content-type = "text/x-rst"}
-requires-python = ">=3.8.0"
+requires-python = ">=3.9.0"
 keywords = ["xclim", "xarray", "climate", "climatology", "bias correction", "ensemble", "indicators", "analysis"]
 license = {file = "LICENSE"}
 classifiers = [
@@ -26,7 +26,7 @@ classifiers = [
   "Programming Language :: Python :: 3.9",
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
-  "Programming Language :: Python :: 3.12",
+  # "Programming Language :: Python :: 3.12",
   "Topic :: Scientific/Engineering :: Atmospheric Science"
 ]
 dynamic = ["description", "version"]
@@ -65,6 +65,7 @@ dev = [
   "h5netcdf",
   "ipython",
   "mypy",
+  "nbconvert",
   "nbqa",
   "nbval",
   "netCDF4 >=1.4",

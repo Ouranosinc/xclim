@@ -3,7 +3,7 @@ channels:
     - conda-forge
     - defaults
 dependencies:
-    - python >=3.9,<3.13
+    - python >=3.9,<3.12
     - astroid
     - boltons >=20.1
     - bottleneck >=1.3.1
