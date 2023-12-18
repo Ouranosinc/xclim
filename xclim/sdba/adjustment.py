@@ -1193,9 +1193,10 @@ class NpdfTransform(TrainAdjust):
 
     def _adjust(self, sim, period_dim=None):
         return npdf_adjust(
-            xr.Dataset(
-                {"af_q": self.ds.af_q, "rot_matrices": self.ds.rot_matrices, "sim": sim}
-            ),
+            sim,  # keep sim out of ds for now
+            # ds,
+            # avoid stupid array: "ValueError: dimension 'window_dim' already exists as a scalar variable"
+            xr.Dataset({"af_q": self.ds.af_q, "rot_matrices": self.ds.rot_matrices}),
             group=self.group,
             method=self.interp,
             extrap=self.extrapolation,

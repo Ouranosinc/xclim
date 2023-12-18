@@ -157,9 +157,10 @@ def get_windowed_group(da, group, stack_dim=None):
     return da
 
 
-def ungroup(gr_da, template_time, group):
+def ungroup(gr_da, template_time):
     r"""Inverse the operation done with :py:func:`get_windowed_group`. Only works if `window` is 1."""
-    group = group if isinstance(group, Grouper) else Grouper(group, 1)
+    group = Grouper(*gr_da.attrs["group"])
+    # group = group if isinstance(group, Grouper) else Grouper(group, 1)
     stack_dim, win_dim = gr_da.attrs["stack_dim"], gr_da.attrs["window_dim"]
     if group.name == "time":
         return gr_da.rename({stack_dim: "time"})
@@ -219,17 +220,19 @@ def npdf_train(
     standarize_inplace : bool
         If true, perform a standardization of ref,hist,sim. Defaults to false
     """
-    # unload data, prepare datasets with groups
-    # e.g. Grouper("time.dayofyear", 31)
-    # time -> dayofyear, year, window -> dayofyear, stack_dim
+    # unload data
     ref = ds.ref
     hist = ds.hist
     rot_matrices = ds.rot_matrices
     af_q_l = []
+
+    # group and standardize
+    # e.g. Grouper("time.dayofyear", 31)
+    # time -> dayofyear, year, window -> dayofyear, stack_dim
     gr_ref, gr_hist = (get_windowed_group(da, group) for da in [ref, hist])
     dim = gr_ref.attrs["stack_dim"]
-    gr_ref, gr_hist = (standardize(da, dim=dim)[0] for da in [gr_ref, gr_hist])
     grouping_attrs = gr_hist.attrs
+    gr_ref, gr_hist = (standardize(da, dim=dim)[0] for da in [gr_ref, gr_hist])
 
     # npdf core
     for i_it, R in enumerate(rot_matrices.transpose("iterations", ...)):
@@ -286,12 +289,14 @@ def npdf_train(
 
     # retrieve adjustment factors and undo time grouping
     af_q = xr.concat(af_q_l, dim="iterations")
+    af_q = af_q.assign_coords(quantiles=quantiles)
     af_q.attrs = grouping_attrs
-    hist = ungroup(gr_hist.assign_attrs(grouping_attrs), hist.time, group=group)
+    hist = ungroup(gr_hist.assign_attrs(grouping_attrs), hist.time)
     return xr.Dataset(data_vars=dict(af_q=af_q, scenh_std=hist))
 
 
 def npdf_adjust(
+    sim,
     ds,
     group,
     method,
@@ -312,20 +317,16 @@ def npdf_adjust(
         Default is None, meaning that frequency adaptation is not performed.
     """
     # unload training parameters
-    sim = ds.sim
     rots = ds.rot_matrices
     af_q = ds.af_q
     quantiles = af_q.quantiles
-    # dim = af_q.attrs["stack_dim"]
-    # group, method, extrap = Grouper(*af_q.attrs["group"]), af_q.attrs["method"], af_q.attrs["extrap"]
 
     # group and standardize
     gr_sim = get_windowed_group(sim, group)
     dim = gr_sim.attrs["stack_dim"]
     dims = [dim] if period_dim is None else [period_dim, dim]
+    grouping_attrs = gr_sim.attrs
     gr_sim = standardize(gr_sim, dim=dim)[0]
-    temp_attrs = gr_sim.attrs
-
     # npdf core (adjust)
     for i_it, R in enumerate(rots.transpose("iterations", ...)):
         # rotate
@@ -358,7 +359,7 @@ def npdf_adjust(
         gr_sim = simp @ R
 
     # undo grouping
-    sim = ungroup(gr_sim.assign_attrs(temp_attrs), sim.time)
+    sim = ungroup(gr_sim.assign_attrs(grouping_attrs), sim.time)
     return xr.Dataset(data_vars=dict(scen_std=sim))
 
 
