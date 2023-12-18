@@ -10,9 +10,10 @@ import re
 import string
 import warnings
 from ast import literal_eval
+from collections.abc import Sequence
 from fnmatch import fnmatch
 from inspect import _empty, signature  # noqa
-from typing import Any, Sequence
+from typing import Any
 
 import xarray as xr
 from boltons.funcutils import wraps

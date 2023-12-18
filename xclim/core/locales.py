@@ -47,9 +47,9 @@ from __future__ import annotations
 
 import json
 import warnings
+from collections.abc import Mapping, Sequence
 from copy import deepcopy
 from pathlib import Path
-from typing import Mapping, Sequence
 
 from .formatting import AttrFormatter, default_formatter
 

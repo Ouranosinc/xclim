@@ -7,7 +7,8 @@ Helper function to handle dates, times and different calendars with xarray.
 from __future__ import annotations
 
 import datetime as pydt
-from typing import Any, Sequence
+from collections.abc import Sequence
+from typing import Any
 
 import cftime
 import numpy as np

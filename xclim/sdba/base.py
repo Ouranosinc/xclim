@@ -4,8 +4,9 @@ Base Classes and Developer Tools
 """
 from __future__ import annotations
 
+from collections.abc import Sequence
 from inspect import _empty, signature  # noqa
-from typing import Callable, Sequence
+from typing import Callable
 
 import dask.array as dsk
 import jsonpickle

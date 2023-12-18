@@ -487,7 +487,7 @@ def test_signature():
     assert sig.return_annotation == xr.DataArray
 
     sig = signature(xclim.atmos.wind_speed_from_vector)
-    assert sig.return_annotation == Tuple[xr.DataArray, xr.DataArray]
+    assert sig.return_annotation == tuple[xr.DataArray, xr.DataArray]
 
 
 def test_doc():
