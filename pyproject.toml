@@ -221,8 +221,7 @@ exclude = [
   ".git",
   "docs",
   "build",
-  ".eggs",
-  "tests"
+  ".eggs"
 ]
 ignore = [
   "D205",
