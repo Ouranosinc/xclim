@@ -166,7 +166,7 @@ def _reordering(ds, *, dim):
             :, int(data.shape[1] / 2)
         ]  # pick the middle of the window
 
-    if "window" in ds.dims:
+    if "window" in dim:
         return (
             xr.apply_ufunc(
                 _reordering_2d,
@@ -187,8 +187,8 @@ def _reordering(ds, *, dim):
                 _reordering_1d,
                 ds.sim,
                 ds.ref,
-                input_core_dims=[[dim], [dim]],
-                output_core_dims=[[dim]],
+                input_core_dims=[dim, dim],
+                output_core_dims=[dim],
                 vectorize=True,
                 dask="parallelized",
                 output_dtypes=[ds.sim.dtype],
