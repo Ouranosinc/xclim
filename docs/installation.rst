@@ -11,7 +11,7 @@ To install `xclim` via `pip`, run this command in your terminal:
 
 .. code-block:: shell
 
-    $ pip install xclim
+    $ python -m pip install xclim
 
 If you don't have `pip`_ installed, this `Python installation guide`_ can guide you through the process.
 
@@ -55,7 +55,7 @@ Both of these libraries are available on PyPI and conda-forge:
 
 .. code-block:: shell
 
-    $ pip install flox clisops
+    $ python -m pip install flox clisops
     # Or, alternatively:
     $ conda install -c conda-forge flox clisops
 
@@ -70,7 +70,7 @@ For convenience, these libraries can be installed alongside `xclim` using the fo
 
 .. code-block:: shell
 
-    $ pip install -r requirements_upstream.txt
+    $ python -m pip install -r requirements_upstream.txt
 
 Or, alternatively:
 
@@ -105,13 +105,13 @@ Afterwards, `SBCK` can be installed from PyPI using `pip`:
 
 .. code-block:: shell
 
-    $ pip install SBCK
+    $ python -m pip install SBCK
 
 Another experimental function :py:indicator:`xclim.sdba.property.first_eof` makes use of the `eofs`_ library, which is available on both PyPI and conda-forge:
 
 .. code-block:: shell
 
-    $ pip install eofs
+    $ python -m pip install eofs
     # or alternatively,
     $ conda install -c conda-forge eofs
 
@@ -145,7 +145,7 @@ Once you have extracted a copy of the source, you can install it with pip:
 
 .. code-block:: shell
 
-    $ pip install -e ".[dev]"
+    $ python -m pip install -e ".[dev]"
 
 Alternatively, you can also install a local development copy via `flit`_:
 
@@ -166,4 +166,4 @@ To create a conda environment including `xclim`'s dependencies and several optio
 
     $ conda env create -n my_xclim_env python=3.8 --file=environment.yml
     $ conda activate my_xclim_env
-    (my_xclim_env) $ pip install -e .
+    (my_xclim_env) $ python -m pip install -e .
