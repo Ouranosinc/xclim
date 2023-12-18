@@ -197,6 +197,7 @@ class TestDataCheck:
         db["time"] = db.time + pd.Timedelta(30, "min")
         with pytest.raises(
             ValidationError,
-            match=r"All inputs have the same frequency \(H\), but they are not anchored on the same minutes",
+            # FIXME: Do we want to emit warnings when frequency code is changed within the function?
+            match=r"All inputs have the same frequency \(h\), but they are not anchored on the same minutes",
         ):
             datachecks.check_common_time([db, da])

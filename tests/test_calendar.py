@@ -396,7 +396,7 @@ def test_convert_calendar_360_days_random():
     [
         ("standard", "noleap", "D"),
         ("noleap", "default", "4H"),
-        ("noleap", "all_leap", "M"),
+        ("noleap", "all_leap", "M"),  # Do we want "MS" or "ME"?
         ("360_day", "noleap", "D"),
         ("noleap", "360_day", "D"),
     ],
@@ -416,6 +416,7 @@ def test_convert_calendar_missing(source, target, freq):
         np.linspace(0, 1, src.size), dims=("time",), coords={"time": src}
     )
     out = convert_calendar(da_src, target, missing=0, align_on="date")
+    # FIXME: Do we want to raise an error here for "M"? Do we want "ME" or "MS"?
     assert xr.infer_freq(out.time) == freq
     if source == "360_day":
         assert out.time[-1].dt.day == 31
