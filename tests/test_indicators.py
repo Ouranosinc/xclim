@@ -5,7 +5,7 @@ from __future__ import annotations
 import gc
 import json
 from inspect import signature
-from typing import Tuple, Union
+from typing import Union
 
 import dask
 import numpy as np
