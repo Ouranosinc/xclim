@@ -5,6 +5,7 @@ import pandas as pd
 import pytest
 import xarray as xr
 
+from xclim.core.calendar import date_range
 from xclim.core.units import units
 from xclim.sdba.adjustment import EmpiricalQuantileMapping
 from xclim.sdba.base import Grouper
@@ -202,7 +203,7 @@ def test_reordering_with_window():
         coords={"time": time},
     )
 
-    group = sdba.Grouper(group="time.dayofyear", window=3)
+    group = Grouper(group="time.dayofyear", window=3)
     out = sdba.processing.reordering(x, y, group=group)
 
     np.testing.assert_array_equal(out, [3.0, 3.0, 2.0, 2.0, 7.0, 7.0, 6.0, 6.0])
