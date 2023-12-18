@@ -141,7 +141,7 @@ def _normalize(
     )
 
 
-@map_groups(reordered=[Grouper.DIM], main_only=True)
+@map_groups(reordered=[Grouper.DIM], main_only=False)
 def _reordering(ds, *, dim):
     """Group-wise reordering.
 
@@ -158,17 +158,41 @@ def _reordering(ds, *, dim):
     def _reordering_1d(data, ordr):
         return np.sort(data)[np.argsort(np.argsort(ordr))]
 
-    return (
-        xr.apply_ufunc(
-            _reordering_1d,
-            ds.sim,
-            ds.ref,
-            input_core_dims=[[dim], [dim]],
-            output_core_dims=[[dim]],
-            vectorize=True,
-            dask="parallelized",
-            output_dtypes=[ds.sim.dtype],
+    def _reordering_2d(data, ordr):
+        data_r = data.ravel()
+        ordr_r = ordr.ravel()
+        reorder = np.sort(data_r)[np.argsort(np.argsort(ordr_r))]
+        return reorder.reshape(data.shape)[
+            :, int(data.shape[0] / 2)
+        ]  # pick the middle of the window
+
+    if "window" in ds.dims:
+        return (
+            xr.apply_ufunc(
+                _reordering_2d,
+                ds.sim,
+                ds.ref,
+                input_core_dims=[["time", "window"], ["time", "window"]],
+                output_core_dims=[["time"]],
+                vectorize=True,
+                dask="parallelized",
+                output_dtypes=[ds.sim.dtype],
+            )
+            .rename("reordered")
+            .to_dataset()
         )
-        .rename("reordered")
-        .to_dataset()
-    )
+    else:
+        return (
+            xr.apply_ufunc(
+                _reordering_1d,
+                ds.sim,
+                ds.ref,
+                input_core_dims=[[dim], [dim]],
+                output_core_dims=[[dim]],
+                vectorize=True,
+                dask="parallelized",
+                output_dtypes=[ds.sim.dtype],
+            )
+            .rename("reordered")
+            .to_dataset()
+        )

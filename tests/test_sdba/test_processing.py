@@ -185,6 +185,31 @@ def test_reordering():
     assert out.attrs == y.attrs
 
 
+def test_reordering_with_window():
+    time = list(
+        date_range("2000-01-01", "2000-01-04", freq="D", calendar="noleap")
+    ) + list(date_range("2001-01-01", "2001-01-04", freq="D", calendar="noleap"))
+
+    x = xr.DataArray(
+        np.arange(1, 9, 1),
+        dims=("time"),
+        coords={"time": time},
+    )
+
+    y = xr.DataArray(
+        np.arange(8, 0, -1),
+        dims=("time"),
+        coords={"time": time},
+    )
+
+    group = sdba.Grouper(group="time.dayofyear", window=3)
+    out = sdba.processing.reordering(x, y, group=group)
+
+    np.testing.assert_array_equal(out, [3.0, 3.0, 2.0, 2.0, 7.0, 7.0, 6.0, 6.0])
+    out.attrs.pop("history")
+    assert out.attrs == y.attrs
+
+
 def test_to_additive(pr_series, hurs_series):
     # log
     pr = pr_series(np.array([0, 1e-5, 1, np.e**10]))
