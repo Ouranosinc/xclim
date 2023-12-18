@@ -163,7 +163,7 @@ def _reordering(ds, *, dim):
         ordr_r = ordr.ravel()
         reorder = np.sort(data_r)[np.argsort(np.argsort(ordr_r))]
         return reorder.reshape(data.shape)[
-            :, int(data.shape[0] / 2)
+            :, int(data.shape[1] / 2)
         ]  # pick the middle of the window
 
     if "window" in ds.dims:
