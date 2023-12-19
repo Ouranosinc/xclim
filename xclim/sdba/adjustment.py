@@ -14,7 +14,7 @@ from xarray.core.dataarray import DataArray
 
 from xclim.core.calendar import get_calendar
 from xclim.core.formatting import gen_call_string, update_history
-from xclim.core.options import OPTIONS, SDBA_EXTRA_OUTPUT, set_options
+from xclim.core.options import OPTIONS, SDBA_EXTRA_OUTPUT  # , set_options
 from xclim.core.units import convert_units_to
 from xclim.core.utils import uses_dask
 from xclim.indices import stats
@@ -25,6 +25,7 @@ from ._adjustment import (
     eqm_train,
     extremes_adjust,
     extremes_train,
+    get_windowed_group,
     loci_adjust,
     loci_train,
     npdf_adjust,
@@ -1140,16 +1141,12 @@ class NpdfTransform(TrainAdjust):
             kwargs.setdefault(k, default)
         if np.isscalar(kwargs["nquantiles"]):
             kwargs["nquantiles"] = equally_spaced_nodes(kwargs["nquantiles"])
-        else:
-            kwargs["nquantiles"] = kwargs["nquantiles"]
-        group = (
-            kwargs["group"]
-            if isinstance(kwargs["group"], Grouper)
-            else Grouper(kwargs["group"], 1)
-        )
-        kwargs["group"] = (group.name, group.window)
-        quantiles, interp, extrapolation = (
-            kwargs[lab] for lab in ["nquantiles", "interp", "extrapolation"]
+        if isinstance(kwargs["group"], str):
+            kwargs["group"] = Grouper(kwargs["group"], 1)
+        kwargs["n_escore"] = n_escore
+
+        group, interp, extrapolation = (
+            kwargs[lab] for lab in ["group", "interp", "extrapolation"]
         )
 
         # prepare rotations
@@ -1170,39 +1167,66 @@ class NpdfTransform(TrainAdjust):
             }
         )
 
+        # map blocks
+        # escores_tmpl = xr.broadcast(
+        #     ref.isel({pts_dim: 0, "time": 0}),
+        #     hist.isel({pts_dim: 0, "time": 0}),
+        # )[0].expand_dims(iterations=rot_matrices.iterations)
+        af_q_tmpl = get_windowed_group(hist, group)
+        af_q_tmpl = af_q_tmpl[{af_q_tmpl.attrs["stack_dim"]: 0}].expand_dims(
+            {"quantiles": kwargs["nquantiles"]}
+        )
+        af_q_tmpl = xr.full_like(af_q_tmpl, np.NaN)
+        template = xr.Dataset(
+            data_vars={
+                "scenh": xr.full_like(hist, np.NaN),
+                "af_q": af_q_tmpl,
+                # "escores": escores_tmpl,
+            }
+        )
+
+        # prepare new kwargs (notation when calling a training class and using the inner func varies)
+        newk = {
+            "nquantiles": "quantiles",
+            "interp": "method",
+            "extrapolation": "extrap",
+        }
+
+        def get_newk(k):
+            return k if k not in newk.keys() else newk[k]
+
+        kwargs = {
+            get_newk(k): v
+            for k, v in kwargs.items()
+            if k in ["nquantiles", "group", "interp", "extrapolation", "n_escore"]
+        }
+        print(kwargs)
         # compute
-        with set_options(sdba_extra_output=False):
-            ds = npdf_train(
-                ds,
-                quantiles,
-                method=interp,
-                extrap=extrapolation,
-                group=group,
-                n_escore=n_escore,
-            )
+        out = ds.map_blocks(npdf_train, template=template, kwargs=kwargs)
 
         # postprocess
-        ds["rot_matrices"] = rot_matrices
-        ds.scenh_std.attrs["units"] = hist.units
+        out["rot_matrices"] = rot_matrices
+        out.scenh_npdft.attrs["units"] = hist.units
 
-        ds.af_q.attrs.update(
+        out.af_q.attrs.update(
             standard_name="Adjustment factors",
             long_name="Quantile mapping adjustment factors",
         )
-        return ds, {"group": group, "interp": interp, "extrapolation": extrapolation}
+        return out, {"group": group, "interp": interp, "extrapolation": extrapolation}
 
     def _adjust(self, sim, period_dim=None):
-        return npdf_adjust(
-            sim,  # keep sim out of ds for now
-            # ds,
-            # avoid stupid array: "ValueError: dimension 'window_dim' already exists as a scalar variable"
-            xr.Dataset({"af_q": self.ds.af_q, "rot_matrices": self.ds.rot_matrices}),
-            group=self.group,
-            method=self.interp,
-            extrap=self.extrapolation,
-            period_dim=period_dim,
-            # kind=self.kind,
-        ).scen_std
+        kwargs = {
+            "group": self.group,
+            "method": self.interp,
+            "extrap": self.extrapolation,
+            "period_dim": period_dim,
+        }
+        ds = xr.Dataset(
+            {"af_q": self.ds.af_q, "rot_matrices": self.ds.rot_matrices, "sim": sim}
+        )
+        return ds.map_blocks(
+            npdf_adjust, kwargs=kwargs, template=xr.full_like(sim, np.NaN)
+        ).scens_npdft
 
 
 try:

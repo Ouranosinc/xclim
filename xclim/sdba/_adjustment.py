@@ -292,11 +292,10 @@ def npdf_train(
     af_q = af_q.assign_coords(quantiles=quantiles)
     af_q.attrs = grouping_attrs
     hist = ungroup(gr_hist.assign_attrs(grouping_attrs), hist.time)
-    return xr.Dataset(data_vars=dict(af_q=af_q, scenh_std=hist))
+    return xr.Dataset(data_vars=dict(af_q=af_q, scenh_npdft=hist))
 
 
 def npdf_adjust(
-    sim,
     ds,
     group,
     method,
@@ -317,6 +316,7 @@ def npdf_adjust(
         Default is None, meaning that frequency adaptation is not performed.
     """
     # unload training parameters
+    sim = ds.sim
     rots = ds.rot_matrices
     af_q = ds.af_q
     quantiles = af_q.quantiles
@@ -360,7 +360,7 @@ def npdf_adjust(
 
     # undo grouping
     sim = ungroup(gr_sim.assign_attrs(grouping_attrs), sim.time)
-    return xr.Dataset(data_vars=dict(scen_std=sim))
+    return xr.Dataset(data_vars=dict(scens_npdft=sim))
 
 
 @map_blocks(reduces=[Grouper.PROP, "quantiles"], scen=[])
