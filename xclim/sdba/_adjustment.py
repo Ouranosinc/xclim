@@ -321,7 +321,7 @@ def npdf_adjust(
         Default is None, meaning that frequency adaptation is not performed.
     """
     # unload training parameters
-    sim, scen = ds.sim, ds.scen
+    sim, scen = ds.sim_ref, ds.sim
     rots = ds.rot_matrices
     af_q = ds.af_q
     quantiles = af_q.quantiles
@@ -334,7 +334,8 @@ def npdf_adjust(
     dims = [dim] if period_dim is None else [period_dim, dim]
     gr_sim = standardize(gr_sim, dim=dim)[0]
     # npdf core (adjust)
-    for i_it, R in enumerate(rots.transpose("iterations", ...)):
+    for i_it in range(rots.iterations.size):
+        R = rots.isel(iterations=i_it, drop=True)
         # rotate
         simp = gr_sim @ R
 
@@ -351,7 +352,7 @@ def npdf_adjust(
             u._interp_on_quantiles_1D_multi,
             rnks,
             quantiles,
-            af_q.isel(iterations=i_it),
+            af_q.isel(iterations=i_it, drop=True),
             input_core_dims=[dims, ["quantiles"], ["quantiles"]],
             output_core_dims=[dims],
             dask="parallelized",
@@ -370,7 +371,7 @@ def npdf_adjust(
     ).reordered
     # undo grouping
     scen_reordered = ungroup(gr_scen_reordered.assign_attrs(gr_scen_attrs), scen.time)
-    return scen_reordered.to_dataset(name="scen_reordered")
+    return scen_reordered.to_dataset(name="scen")
 
 
 @map_blocks(reduces=[Grouper.PROP, "quantiles"], scen=[])

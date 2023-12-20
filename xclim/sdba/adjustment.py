@@ -25,6 +25,7 @@ from ._adjustment import (
     eqm_train,
     extremes_adjust,
     extremes_train,
+    get_windowed_group,
     loci_adjust,
     loci_train,
     npdf_adjust,
@@ -1171,8 +1172,16 @@ class NpdfTransform(TrainAdjust):
             "extrap": extrapolation,
             "n_escore": n_escore,
         }
+
+        template = xr.full_like(hist, np.NaN).to_dataset(name="scenh_npdft")
+        template["af_q"] = (
+            get_windowed_group(template["scenh_npdft"], group)[{"stack_dim": 0}]
+            .copy()
+            .expand_dims({"quantiles": quantiles})
+        )
+
         # compute
-        out = ds.map_blocks(npdf_train, kwargs=kwargs)
+        out = ds.map_blocks(npdf_train, kwargs=kwargs, template=template)
         # out = npdf_train(
         #     ds,
         #     quantiles,
@@ -1192,7 +1201,7 @@ class NpdfTransform(TrainAdjust):
         )
         return out, {"group": group, "interp": interp, "extrapolation": extrapolation}
 
-    def _adjust(self, sim, scen, period_dim=None):
+    def _adjust(self, sim, ref_sim, period_dim=None):
         kwargs = dict(
             group=self.group,
             method=self.interp,
@@ -1204,10 +1213,13 @@ class NpdfTransform(TrainAdjust):
                 "af_q": self.ds.af_q,
                 "rot_matrices": self.ds.rot_matrices,
                 "sim": sim,
-                "scen": scen,
+                "ref_sim": ref_sim,
             }
         )
-        return ds.map_blocks(npdf_adjust, kwargs=kwargs).scen_reordered
+        return ds.map_blocks(
+            npdf_adjust, kwargs=kwargs, template=xr.full_like(sim, np.NaN)
+        )
+        # return ds.map_blocks(npdf_adjust, kwargs=kwargs, template = xr.full_like(sim, np.NaN))#.scen_reordered
         # return npdf_adjust(
         #     sim,  # keep sim out of ds for now
         #     scen,
