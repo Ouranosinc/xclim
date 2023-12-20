@@ -1164,16 +1164,23 @@ class NpdfTransform(TrainAdjust):
                 "rot_matrices": rot_matrices,
             }
         )
-
+        kwargs = {
+            "quantiles": quantiles,
+            "group": group,
+            "method": interp,
+            "extrap": extrapolation,
+            "n_escore": n_escore,
+        }
         # compute
-        out = npdf_train(
-            ds,
-            quantiles,
-            method=interp,
-            extrap=extrapolation,
-            group=group,
-            n_escore=n_escore,
-        )
+        out = ds.map_blocks(npdf_train, kwargs=kwargs)
+        # out = npdf_train(
+        #     ds,
+        #     quantiles,
+        #     method=interp,
+        #     extrap=extrapolation,
+        #     group=group,
+        #     n_escore=n_escore,
+        # )
 
         # postprocess
         out["rot_matrices"] = rot_matrices
