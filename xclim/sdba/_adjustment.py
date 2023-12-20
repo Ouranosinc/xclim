@@ -112,7 +112,7 @@ def _get_group_complement(da, group):
         return da.time.dt.strftime("%Y-%d")
 
 
-def get_windowed_group(da, group, stack_dim=None):
+def get_windowed_group(da, group, n_group_chunks=1, stack_dim=None):
     r"""Splits an input array into `group`, its complement, and expands the array along a rolling `window` dimension.
 
     Aims to give a faster alternative to `map_blocks` constructions.
@@ -141,7 +141,7 @@ def get_windowed_group(da, group, stack_dim=None):
                 {"time": gr_complement_dim}
             )
         )
-        da = da.chunk({gr_dim: 1, gr_complement_dim: -1})
+        da = da.chunk({gr_dim: n_group_chunks, gr_complement_dim: -1})
         da = da.stack({stack_dim: complement_dims})
 
     da = da.assign_attrs(
@@ -191,6 +191,7 @@ def npdf_train(
     method,
     extrap,
     group,
+    n_group_chunks,
     n_escore,
 ) -> xr.Dataset:
     """EQM: Train step on one group.
@@ -230,7 +231,10 @@ def npdf_train(
     # group and standardize
     # e.g. Grouper("time.dayofyear", 31)
     # time -> dayofyear, year, window -> dayofyear, stack_dim
-    gr_ref, gr_hist = (get_windowed_group(da, group) for da in [ref, hist])
+    gr_ref, gr_hist = (
+        get_windowed_group(da, group, n_group_chunks=n_group_chunks)
+        for da in [ref, hist]
+    )
     grouping_attrs = gr_hist.attrs["grouping"]
     dim = grouping_attrs["stack_dim"]
     gr_ref, gr_hist = (standardize(da, dim=dim)[0] for da in [gr_ref, gr_hist])
@@ -281,6 +285,7 @@ def npdf_adjust(
     sim,
     ds,
     group,
+    n_group_chunks,
     method,
     extrap,
     period_dim,
@@ -304,8 +309,8 @@ def npdf_adjust(
     quantiles = af_q.quantiles
 
     # group and standardize
-    gr_sim = get_windowed_group(sim, group)
-    gr_scen = get_windowed_group(scen, group)
+    gr_sim = get_windowed_group(sim, group, n_group_chunks=n_group_chunks)
+    gr_scen = get_windowed_group(scen, group, n_group_chunks=n_group_chunks)
     gr_scen_attrs = gr_scen.attrs
     dim = gr_scen_attrs["grouping"]["stack_dim"]
     dims = [dim] if period_dim is None else [period_dim, dim]

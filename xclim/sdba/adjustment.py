@@ -1124,6 +1124,7 @@ class NpdfTransform(TrainAdjust):
         adj_kws: dict[str, Any] | None = None,
         n_escore: int = -1,
         n_iter: int = 20,
+        n_group_chunks: int = 1,
         pts_dim: str = "multivar",
         rot_matrices: xr.DataArray | None = None,
     ):
@@ -1187,6 +1188,7 @@ class NpdfTransform(TrainAdjust):
             method=interp,
             extrap=extrapolation,
             group=group,
+            n_group_chunks=n_group_chunks,
             n_escore=n_escore,
         )
 
@@ -1200,7 +1202,7 @@ class NpdfTransform(TrainAdjust):
         )
         return out, {"group": group, "interp": interp, "extrapolation": extrapolation}
 
-    def _adjust(self, sim, ref_sim, period_dim=None):
+    def _adjust(self, sim, ref_sim, n_group_chunks=1, period_dim=None):
         # kwargs = dict(
         #     group=self.group,
         #     method=self.interp,
@@ -1224,6 +1226,7 @@ class NpdfTransform(TrainAdjust):
             ref_sim,
             xr.Dataset({"af_q": self.ds.af_q, "rot_matrices": self.ds.rot_matrices}),
             group=self.group,
+            n_group_chunks=n_group_chunks,
             method=self.interp,
             extrap=self.extrapolation,
             period_dim=period_dim,
