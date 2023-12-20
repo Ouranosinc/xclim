@@ -185,6 +185,24 @@ def ungroup(gr_da, template_time):
 # =======================================================================================
 # train/adjust functions for npdf
 # =======================================================================================
+def _npdft(ref, hist, quantiles, rots, method, extrap):
+    af_q = np.zeros((len(rots), ref.shape[0], len(quantiles)))
+    for ii in range(len(rots)):
+        rot = rots[0] if ii == 0 else rots[ii] @ rots[ii - 1].T
+        ref, hist = (rot @ da for da in [ref, hist])
+        for iv in range(ref.shape[0]):
+            ref_q, hist_q = (
+                nbu._sortquantile(da, quantiles) for da in [ref[iv], hist[iv]]
+            )
+            af_q[ii, iv] = u.get_correction(hist_q, ref_q, "+")
+            af = u._interp_on_quantiles_1D(
+                _rank(hist[iv]), quantiles, af_q[ii, iv], method=method, extrap=extrap
+            )
+            hist[iv] = u.apply_correction(hist[iv], af, "+")
+    hist = rots[-1].T @ hist
+    return hist, af_q
+
+
 def npdf_train(
     ds,
     quantiles,
@@ -226,7 +244,6 @@ def npdf_train(
     ref = ds.ref
     hist = ds.hist
     rot_matrices = ds.rot_matrices
-    af_q_l = []
 
     # group and standardize
     # e.g. Grouper("time.dayofyear", 31)
@@ -239,41 +256,31 @@ def npdf_train(
     dim = grouping_attrs["stack_dim"]
     gr_ref, gr_hist = (standardize(da, dim=dim)[0] for da in [gr_ref, gr_hist])
 
-    def _single_qdm(ref, hist, quantiles, method, extrap):
-        ref_q, hist_q = (nbu._sortquantile(da, quantiles) for da in [ref, hist])
-        af_q = u.get_correction(hist_q, ref_q, "+")
-        af = u._interp_on_quantiles_1D(
-            _rank(hist), quantiles, af_q, method=method, extrap=extrap
-        )
-        scen = u.apply_correction(hist, af, "+")
-        return scen, af_q
-
     # npdf core
-    for i_it, R in enumerate(rot_matrices.transpose("iterations", ...)):
-        # rotate
-        refp = gr_ref @ R
-        histp = gr_hist @ R
-
-        # single_qdm
-        histp, af_q = xr.apply_ufunc(
-            _single_qdm,
-            refp,
-            histp,
-            quantiles,
-            input_core_dims=[[dim], [dim], ["quantiles"]],
-            output_core_dims=[[dim], ["quantiles"]],
-            dask="parallelized",
-            output_dtypes=[refp.dtype, refp.dtype],
-            kwargs={"method": method, "extrap": extrap},
-            vectorize=True,
-        )
-
-        # register ajustment factors, rotate back
-        af_q_l.append(af_q.expand_dims({"iterations": [i_it]}))
-        gr_hist = histp @ R
+    gr_hist, af_q = xr.apply_ufunc(
+        _npdft,
+        gr_ref,
+        gr_hist,
+        quantiles,
+        rot_matrices,
+        input_core_dims=[
+            ["multivar", dim],
+            ["multivar", dim],
+            ["quantiles"],
+            ["iterations", "multivar_prime", "multivar"],
+        ],
+        output_core_dims=[
+            ["multivar", dim],
+            ["iterations", "multivar_prime", "quantiles"],
+        ],
+        dask="parallelized",
+        output_dtypes=[gr_ref.dtype, gr_ref.dtype],
+        kwargs={"method": method, "extrap": extrap},
+        vectorize=True,
+    )
 
     # retrieve adjustment factors and undo time grouping
-    af_q = xr.concat(af_q_l, dim="iterations")
+    # af_q = xr.concat(af_q_l, dim="iterations")
     af_q = af_q.assign_coords(quantiles=quantiles)
     gr_hist.attrs["grouping"] = grouping_attrs
     hist = ungroup(gr_hist.assign_attrs(grouping_attrs), hist.time)
