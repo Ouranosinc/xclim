@@ -141,7 +141,7 @@ def get_windowed_group(da, group, stack_dim=None):
                 {"time": gr_complement_dim}
             )
         )
-        da = da.chunk({gr_dim: -1, gr_complement_dim: -1})
+        da = da.chunk({gr_dim: 1, gr_complement_dim: -1})
         da = da.stack({stack_dim: complement_dims})
 
     da = da.assign_attrs(
@@ -185,8 +185,6 @@ def ungroup(gr_da, template_time):
 # =======================================================================================
 # train/adjust functions for npdf
 # =======================================================================================
-
-
 def npdf_train(
     ds,
     quantiles,
@@ -237,57 +235,37 @@ def npdf_train(
     dim = grouping_attrs["stack_dim"]
     gr_ref, gr_hist = (standardize(da, dim=dim)[0] for da in [gr_ref, gr_hist])
 
+    def _single_qdm(ref, hist, quantiles, method, extrap):
+        ref_q, hist_q = (nbu._sortquantile(da, quantiles) for da in [ref, hist])
+        af_q = u.get_correction(hist_q, ref_q, "+")
+        af = u._interp_on_quantiles_1D(
+            _rank(hist), quantiles, af_q, method=method, extrap=extrap
+        )
+        scen = u.apply_correction(hist, af, "+")
+        return scen, af_q
+
     # npdf core
     for i_it, R in enumerate(rot_matrices.transpose("iterations", ...)):
         # rotate
         refp = gr_ref @ R
         histp = gr_hist @ R
 
-        # train
-        # ref_q, hist_q = (
-        #     da.quantile(dim=dim, q=quantiles).rename({"quantile": "quantiles"})
-        #     for da in [refp, histp]
-        # )
-        ref_q, hist_q = (
-            xr.apply_ufunc(
-                nbu._sortquantile,
-                da,
-                quantiles,
-                input_core_dims=[[dim], ["quantiles"]],
-                output_core_dims=[["quantiles"]],
-                dask="parallelized",
-                output_dtypes=[refp.dtype],
-                vectorize=True,
-            )
-            for da in [refp, histp]
-        )
-        af_q = u.get_correction(hist_q, ref_q, "+")
-        af_q_l.append(af_q.expand_dims({"iterations": [i_it]}))
-
-        # adjust
-        rnks = xr.apply_ufunc(
-            _rank,
+        # single_qdm
+        histp, af_q = xr.apply_ufunc(
+            _single_qdm,
+            refp,
             histp,
-            input_core_dims=[[dim]],
-            output_core_dims=[[dim]],
-            dask="parallelized",
-            vectorize=True,
-        )
-        af = xr.apply_ufunc(
-            u._interp_on_quantiles_1D,
-            rnks,
             quantiles,
-            af_q,
-            input_core_dims=[[dim], ["quantiles"], ["quantiles"]],
-            output_core_dims=[[dim]],
+            input_core_dims=[[dim], [dim], ["quantiles"]],
+            output_core_dims=[[dim], ["quantiles"]],
             dask="parallelized",
-            kwargs=dict(method=method, extrap=extrap),
-            output_dtypes=[gr_ref.dtype],
+            output_dtypes=[refp.dtype, refp.dtype],
+            kwargs={"method": method, "extrap": extrap},
             vectorize=True,
         )
-        histp = u.apply_correction(histp, af, "+")
 
-        # undo rotation
+        # register ajustment factors, rotate back
+        af_q_l.append(af_q.expand_dims({"iterations": [i_it]}))
         gr_hist = histp @ R
 
     # retrieve adjustment factors and undo time grouping
@@ -299,8 +277,8 @@ def npdf_train(
 
 
 def npdf_adjust(
-    # sim,
-    # scen,
+    scen,
+    sim,
     ds,
     group,
     method,
@@ -321,7 +299,6 @@ def npdf_adjust(
         Default is None, meaning that frequency adaptation is not performed.
     """
     # unload training parameters
-    sim, scen = ds.sim_ref, ds.sim
     rots = ds.rot_matrices
     af_q = ds.af_q
     quantiles = af_q.quantiles

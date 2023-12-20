@@ -25,7 +25,6 @@ from ._adjustment import (
     eqm_train,
     extremes_adjust,
     extremes_train,
-    get_windowed_group,
     loci_adjust,
     loci_train,
     npdf_adjust,
@@ -1165,31 +1164,31 @@ class NpdfTransform(TrainAdjust):
                 "rot_matrices": rot_matrices,
             }
         )
-        kwargs = {
-            "quantiles": quantiles,
-            "group": group,
-            "method": interp,
-            "extrap": extrapolation,
-            "n_escore": n_escore,
-        }
+        # kwargs = {
+        #     "quantiles": quantiles,
+        #     "group": group,
+        #     "method": interp,
+        #     "extrap": extrapolation,
+        #     "n_escore": n_escore,
+        # }
 
-        template = xr.full_like(hist, np.NaN).to_dataset(name="scenh_npdft")
-        template["af_q"] = (
-            get_windowed_group(template["scenh_npdft"], group)[{"stack_dim": 0}]
-            .copy()
-            .expand_dims({"quantiles": quantiles})
-        )
+        # template = xr.full_like(hist, np.NaN).to_dataset(name="scenh_npdft")
+        # template["af_q"] = (
+        #     get_windowed_group(template["scenh_npdft"], group)[{"stack_dim": 0}]
+        #     .copy()
+        #     .expand_dims({"quantiles": quantiles})
+        # )
 
         # compute
-        out = ds.map_blocks(npdf_train, kwargs=kwargs, template=template)
-        # out = npdf_train(
-        #     ds,
-        #     quantiles,
-        #     method=interp,
-        #     extrap=extrapolation,
-        #     group=group,
-        #     n_escore=n_escore,
-        # )
+        # out = ds.map_blocks(npdf_train, kwargs=kwargs, template=template)
+        out = npdf_train(
+            ds,
+            quantiles,
+            method=interp,
+            extrap=extrapolation,
+            group=group,
+            n_escore=n_escore,
+        )
 
         # postprocess
         out["rot_matrices"] = rot_matrices
@@ -1202,35 +1201,34 @@ class NpdfTransform(TrainAdjust):
         return out, {"group": group, "interp": interp, "extrapolation": extrapolation}
 
     def _adjust(self, sim, ref_sim, period_dim=None):
-        kwargs = dict(
-            group=self.group,
-            method=self.interp,
-            extrap=self.extrapolation,
-            period_dim=period_dim,
-        )
-        ds = xr.Dataset(
-            {
-                "af_q": self.ds.af_q,
-                "rot_matrices": self.ds.rot_matrices,
-                "sim": sim,
-                "ref_sim": ref_sim,
-            }
-        )
-        return ds.map_blocks(
-            npdf_adjust, kwargs=kwargs, template=xr.full_like(sim, np.NaN)
-        )
-        # return ds.map_blocks(npdf_adjust, kwargs=kwargs, template = xr.full_like(sim, np.NaN))#.scen_reordered
-        # return npdf_adjust(
-        #     sim,  # keep sim out of ds for now
-        #     scen,
-        #     # avoid stupid array: "ValueError: dimension 'window_dim' already exists as a scalar variable"
-        #     xr.Dataset({"af_q": self.ds.af_q, "rot_matrices": self.ds.rot_matrices}),
+        # kwargs = dict(
         #     group=self.group,
         #     method=self.interp,
         #     extrap=self.extrapolation,
         #     period_dim=period_dim,
-        #     # kind=self.kind,
-        # ).scen_reordered
+        # )
+        # ds = xr.Dataset(
+        #     {
+        #         "af_q": self.ds.af_q,
+        #         "rot_matrices": self.ds.rot_matrices,
+        #         "sim": sim,
+        #         "ref_sim": ref_sim,
+        #     }
+        # )
+        # return ds.map_blocks(
+        #     npdf_adjust, kwargs=kwargs, template=xr.full_like(sim, np.NaN)
+        # )
+        # return ds.map_blocks(npdf_adjust, kwargs=kwargs, template = xr.full_like(sim, np.NaN))#.scen_reordered
+        return npdf_adjust(
+            sim,
+            ref_sim,
+            xr.Dataset({"af_q": self.ds.af_q, "rot_matrices": self.ds.rot_matrices}),
+            group=self.group,
+            method=self.interp,
+            extrap=self.extrapolation,
+            period_dim=period_dim,
+            # kind=self.kind,
+        ).scen
         # ).scens_npdft
 
 
