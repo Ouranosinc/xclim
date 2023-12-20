@@ -1193,17 +1193,32 @@ class NpdfTransform(TrainAdjust):
         return out, {"group": group, "interp": interp, "extrapolation": extrapolation}
 
     def _adjust(self, sim, scen, period_dim=None):
-        return npdf_adjust(
-            sim,  # keep sim out of ds for now
-            scen,
-            # avoid stupid array: "ValueError: dimension 'window_dim' already exists as a scalar variable"
-            xr.Dataset({"af_q": self.ds.af_q, "rot_matrices": self.ds.rot_matrices}),
+        kwargs = dict(
             group=self.group,
             method=self.interp,
             extrap=self.extrapolation,
             period_dim=period_dim,
-            # kind=self.kind,
-        ).scen_reordered
+        )
+        ds = xr.Dataset(
+            {
+                "af_q": self.ds.af_q,
+                "rot_matrices": self.ds.rot_matrices,
+                "sim": sim,
+                "scen": scen,
+            }
+        )
+        return ds.map_blocks(npdf_adjust, kwargs=kwargs).scen_reordered
+        # return npdf_adjust(
+        #     sim,  # keep sim out of ds for now
+        #     scen,
+        #     # avoid stupid array: "ValueError: dimension 'window_dim' already exists as a scalar variable"
+        #     xr.Dataset({"af_q": self.ds.af_q, "rot_matrices": self.ds.rot_matrices}),
+        #     group=self.group,
+        #     method=self.interp,
+        #     extrap=self.extrapolation,
+        #     period_dim=period_dim,
+        #     # kind=self.kind,
+        # ).scen_reordered
         # ).scens_npdft
 
 

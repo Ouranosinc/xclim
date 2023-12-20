@@ -299,8 +299,8 @@ def npdf_train(
 
 
 def npdf_adjust(
-    sim,
-    scen,
+    # sim,
+    # scen,
     ds,
     group,
     method,
@@ -321,6 +321,7 @@ def npdf_adjust(
         Default is None, meaning that frequency adaptation is not performed.
     """
     # unload training parameters
+    sim, scen = ds.sim, ds.scen
     rots = ds.rot_matrices
     af_q = ds.af_q
     quantiles = af_q.quantiles
