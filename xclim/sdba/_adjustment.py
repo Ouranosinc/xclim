@@ -16,7 +16,7 @@ from xclim.indices.stats import _fitfunc_1d  # noqa
 
 from . import nbutils as nbu
 from . import utils as u
-from ._processing import _adapt_freq
+from ._processing import _adapt_freq, _reordering
 from .base import Grouper, map_blocks, map_groups
 from .detrending import PolyDetrend
 from .processing import standardize
@@ -146,22 +146,25 @@ def get_windowed_group(da, group, stack_dim=None):
 
     da = da.assign_attrs(
         {
-            "group": (gr, win),
-            "group_dim": gr_dim,
-            "complement_dims": complement_dims,
-            "stack_dim": stack_dim,
-            "time_dims": time_dims,
-            "window_dim": win_dim,
+            "grouping": {
+                "group": (gr, win),
+                "complement_dims": complement_dims,
+                "stack_dim": stack_dim,
+                "time_dims": time_dims,
+                "window_dim": win_dim,
+            }
         }
     )
     return da
 
 
 def ungroup(gr_da, template_time):
-    r"""Inverse the operation done with :py:func:`get_windowed_group`. Only works if `window` is 1."""
-    group = Grouper(*gr_da.attrs["group"])
+    r"""Inverse the operation done with :py:func:`get_windowed_group`."""
+    group = Grouper(*gr_da.attrs["grouping"]["group"])
     # group = group if isinstance(group, Grouper) else Grouper(group, 1)
-    stack_dim, win_dim = gr_da.attrs["stack_dim"], gr_da.attrs["window_dim"]
+    stack_dim, win_dim, time_dims = (
+        gr_da.attrs["grouping"][lab] for lab in ["stack_dim", "window_dim", "time_dims"]
+    )
     if group.name == "time":
         return gr_da.rename({stack_dim: "time"})
     gr_da = gr_da.unstack(stack_dim)
@@ -172,8 +175,8 @@ def ungroup(gr_da, template_time):
     )
     grouped_time = grouped_time.unstack(stack_dim)
     da = (
-        gr_da.stack(time=gr_da.attrs["time_dims"])
-        .drop_vars(gr_da.attrs["time_dims"])
+        gr_da.stack(time=time_dims)
+        .drop_vars(time_dims)
         .assign_coords(time=grouped_time.values.ravel())
     )
     return da.where(da.time.notnull(), drop=True)[{win_dim: 0}]
@@ -230,8 +233,8 @@ def npdf_train(
     # e.g. Grouper("time.dayofyear", 31)
     # time -> dayofyear, year, window -> dayofyear, stack_dim
     gr_ref, gr_hist = (get_windowed_group(da, group) for da in [ref, hist])
-    dim = gr_ref.attrs["stack_dim"]
-    grouping_attrs = gr_hist.attrs
+    grouping_attrs = gr_hist.attrs["grouping"]
+    dim = grouping_attrs["stack_dim"]
     gr_ref, gr_hist = (standardize(da, dim=dim)[0] for da in [gr_ref, gr_hist])
 
     # npdf core
@@ -290,13 +293,14 @@ def npdf_train(
     # retrieve adjustment factors and undo time grouping
     af_q = xr.concat(af_q_l, dim="iterations")
     af_q = af_q.assign_coords(quantiles=quantiles)
-    af_q.attrs = grouping_attrs
+    gr_hist.attrs["grouping"] = grouping_attrs
     hist = ungroup(gr_hist.assign_attrs(grouping_attrs), hist.time)
     return xr.Dataset(dict(af_q=af_q, scenh_npdft=hist))
 
 
 def npdf_adjust(
     sim,
+    scen,
     ds,
     group,
     method,
@@ -323,9 +327,10 @@ def npdf_adjust(
 
     # group and standardize
     gr_sim = get_windowed_group(sim, group)
-    dim = gr_sim.attrs["stack_dim"]
+    gr_scen = get_windowed_group(scen, group)
+    gr_scen_attrs = gr_scen.attrs
+    dim = gr_scen_attrs["grouping"]["stack_dim"]
     dims = [dim] if period_dim is None else [period_dim, dim]
-    grouping_attrs = gr_sim.attrs
     gr_sim = standardize(gr_sim, dim=dim)[0]
     # npdf core (adjust)
     for i_it, R in enumerate(rots.transpose("iterations", ...)):
@@ -358,9 +363,13 @@ def npdf_adjust(
         # undo rotation
         gr_sim = simp @ R
 
+    # reordering
+    gr_scen_reordered = _reordering.func(
+        xr.Dataset({"ref": gr_sim, "sim": gr_scen}), dim=dim
+    ).reordered
     # undo grouping
-    sim = ungroup(gr_sim.assign_attrs(grouping_attrs), sim.time)
-    return sim.to_dataset(name="scens_npdft")
+    scen_reordered = ungroup(gr_scen_reordered.assign_attrs(gr_scen_attrs), scen.time)
+    return scen_reordered.to_dataset(name="scen_reordered")
 
 
 @map_blocks(reduces=[Grouper.PROP, "quantiles"], scen=[])
