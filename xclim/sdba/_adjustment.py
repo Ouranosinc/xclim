@@ -248,32 +248,32 @@ def npdf_train(
     # unload data
     ref = ds.ref
     hist = ds.hist
-    # rot_matrices = ds.rot_matrices
     # npdf core
     ref, hist = (standardize(da, dim="time")[0] for da in [ref, hist])
     gr_dim = gw_idxs.attrs["group_dim"]
     af_q_l = []
     for ib in range(gw_idxs[gr_dim].size):
-        # print(gw_idxs.isel(dayofyear=0).dims)
         indices = gw_idxs[{gr_dim: ib}].astype(int).values
         af_q = xr.apply_ufunc(
             _npdft,
             ref[{"time": indices[indices >= 0]}],
             hist[{"time": indices[indices >= 0]}],
             rot_matrices,
+            quantiles,
             input_core_dims=[
                 ["multivar", "time"],
                 ["multivar", "time"],
-                # ["quantiles"],
                 ["iterations", "multivar_prime", "multivar"],
+                ["quantiles"],
             ],
             output_core_dims=[
                 # ["multivar", dim],
                 ["iterations", "multivar_prime", "quantiles"],
             ],
             dask="parallelized",
-            # output_dtypes=[ref.dtype],
-            kwargs={"method": method, "extrap": extrap, "quantiles": quantiles},
+            output_dtypes=[ref.dtype],
+            # output_sizes={"quantiles": len(quantiles)},
+            kwargs={"method": method, "extrap": extrap},
             vectorize=True,
         )
         af_q_l.append(af_q.expand_dims({gr_dim: [ib]}))
