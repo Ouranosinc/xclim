@@ -185,7 +185,7 @@ def ungroup(gr_da, template_time):
 # =======================================================================================
 # train/adjust functions for npdf
 # =======================================================================================
-def _npdft(ref, hist, quantiles, rots, method, extrap):
+def _npdft(ref, hist, rots, quantiles, method, extrap):
     af_q = np.zeros((len(rots), ref.shape[0], len(quantiles)))
     for ii in range(len(rots)):
         rot = rots[0] if ii == 0 else rots[ii] @ rots[ii - 1].T
@@ -207,16 +207,12 @@ def _npdft(ref, hist, quantiles, rots, method, extrap):
     return af_q
 
 
-@map_groups(
-    af_q=[Grouper.PROP, "quantiles", "iterations"],
-)
 def npdf_train(
     ds,
-    *,
-    dim,
     rot_matrices,
     quantiles,
-    iterations,
+    g_idxs,
+    gw_idxs,
     method,
     extrap,
     n_escore,
@@ -255,34 +251,35 @@ def npdf_train(
     # rot_matrices = ds.rot_matrices
     # npdf core
     ref, hist = (standardize(da, dim="time")[0] for da in [ref, hist])
-    af_q = xr.apply_ufunc(
-        _npdft,
-        ref,
-        hist,
-        quantiles,
-        rot_matrices,
-        input_core_dims=[
-            ["multivar", "time"],
-            ["multivar", "time"],
-            ["quantiles"],
-            ["iterations", "multivar_prime", "multivar"],
-        ],
-        output_core_dims=[
-            # ["multivar", dim],
-            ["iterations", "multivar_prime", "quantiles"],
-        ],
-        dask="parallelized",
-        # output_dtypes=[ref.dtype, hist.dtype],
-        kwargs={"method": method, "extrap": extrap},
-        vectorize=True,
+    gr_dim = gw_idxs.attrs["group_dim"]
+    af_q_l = []
+    for ib in range(gw_idxs[gr_dim].size):
+        # print(gw_idxs.isel(dayofyear=0).dims)
+        indices = gw_idxs[{gr_dim: ib}].astype(int).values
+        af_q = xr.apply_ufunc(
+            _npdft,
+            ref[{"time": indices[indices >= 0]}],
+            hist[{"time": indices[indices >= 0]}],
+            rot_matrices,
+            input_core_dims=[
+                ["multivar", "time"],
+                ["multivar", "time"],
+                # ["quantiles"],
+                ["iterations", "multivar_prime", "multivar"],
+            ],
+            output_core_dims=[
+                # ["multivar", dim],
+                ["iterations", "multivar_prime", "quantiles"],
+            ],
+            dask="parallelized",
+            # output_dtypes=[ref.dtype],
+            kwargs={"method": method, "extrap": extrap, "quantiles": quantiles},
+            vectorize=True,
+        )
+        af_q_l.append(af_q.expand_dims({gr_dim: [ib]}))
+    af_q = xr.concat(af_q_l, dim=gr_dim).assign_coords(
+        {"quantiles": quantiles, gr_dim: gw_idxs[gr_dim].values}
     )
-
-    # retrieve adjustment factors and undo time grouping
-    # af_q = xr.concat(af_q_l, dim="iterations")
-    af_q = af_q.assign_coords(quantiles=quantiles).rename(
-        {"multivar_prime": "multivar"}
-    )
-    af_q = af_q.assign_coords(iterations=iterations)
     return xr.Dataset(dict(af_q=af_q))  # , scenh_npdft=scenh_npdft))
 
 

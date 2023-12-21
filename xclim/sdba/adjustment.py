@@ -11,6 +11,7 @@ from warnings import warn
 import numpy as np
 import xarray as xr
 from xarray.core.dataarray import DataArray
+from xarray.core.utils import get_temp_dimname
 
 from xclim.core.calendar import get_calendar
 from xclim.core.formatting import gen_call_string, update_history
@@ -1029,6 +1030,47 @@ class PrincipalComponents(TrainAdjust):
         return scen
 
 
+def _get_group_complement(da, group):
+    # complement of "dayofyear": "year", etc.
+    gr = group.name if isinstance(group, Grouper) else group
+    gr = group
+    if gr == "time.dayofyear":
+        return da.time.dt.year
+    if gr == "time.month":
+        return da.time.dt.strftime("%Y-%d")
+
+
+def time_group_indices(times, group):
+    gr, win = group.name, group.window
+    # get time indices (0,1,2,...) for each block
+    timeind = xr.DataArray(np.arange(times.size), coords={"time": times})
+    win_dim0, win_dim = (
+        get_temp_dimname(timeind.dims, lab) for lab in ["win_dim0", "win_dim"]
+    )
+    if gr != "time":
+        # time indices for each block with window = 1
+        g_idxs = timeind.groupby(gr).apply(
+            lambda da: da.assign_coords(time=_get_group_complement(da, gr)).rename(
+                {"time": "year"}
+            )
+        )
+        # time indices for each block with general window
+        da = timeind.rolling(time=win, center=True).construct(window_dim=win_dim0)
+        gw_idxs = da.groupby(gr).apply(
+            lambda da: da.assign_coords(time=_get_group_complement(da, gr))
+            .stack({win_dim: ["time", win_dim0]})
+            .reset_index(dims_or_levels=[win_dim])
+        )
+        gw_idxs = gw_idxs.transpose(..., win_dim)
+    else:
+        gw_idxs = timeind.rename({"time": win_dim}).expand_dims({win_dim0: [-1]})
+        g_idxs = gw_idxs.copy()
+    gw_idxs.attrs["group"] = (gr, win)
+    gw_idxs.attrs["time_dim"] = win_dim
+    gw_idxs.attrs["group_dim"] = [d for d in g_idxs.dims if d != win_dim][0]
+    return g_idxs, gw_idxs
+
+
 class NpdfTransform(TrainAdjust):
     r"""N-dimensional probability density function transform.
 
@@ -1156,6 +1198,8 @@ class NpdfTransform(TrainAdjust):
                 ref[pts_dim], num=n_iter, new_dim=rot_dim
             ).rename(matrices="iterations")
 
+        g_idxs, gw_idxs = time_group_indices(ref.time, group)
+
         # prepare input dataset
         ds = xr.Dataset(dict(ref=ref, hist=hist))
         # kwargs = {
@@ -1178,11 +1222,11 @@ class NpdfTransform(TrainAdjust):
         out = npdf_train(
             ds,
             rot_matrices=rot_matrices,
-            iterations=rot_matrices.iterations,
             quantiles=quantiles,
+            g_idxs=g_idxs,
+            gw_idxs=gw_idxs,
             method=interp,
             extrap=extrapolation,
-            group=group,
             n_escore=n_escore,
         )
 
