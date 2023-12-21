@@ -117,22 +117,22 @@ xclim = "xclim.cli:cli"
 current_version = "0.47.4-beta"
 commit = true
 tag = false
-parse = "(?P<major>\\d+)\\.(?P<minor>\\d+).(?P<patch>\\d+)(\\-(?P<release>[a-z]+)(\\-(?P<build>\\d+))?"
+allow_dirty = true
+parse = "(?P<major>\\d+)\\.(?P<minor>\\d+)\\.(?P<patch>\\d+)(\\-(?P<release>[a-z]+)(\\.(?P<build>\\d+)))?"
 serialize = [
-	"{major}.{minor}.{patch}-{release}-{build}",
+	"{major}.{minor}.{patch}-{release}.{build}",
 	"{major}.{minor}.{patch}"
 ]
 
 [tool.bumpversion.parts.release]
-optional_value = "gamma"
+optional_value = "release"
 values = [
-	"alpha",
-    "beta",
-	"gamma"
+	"dev",
+    "release"
 ]
 
 [tool.bumpversion.parts.build]
-independent = true
+independent = false
 
 [[tool.bumpversion.files]]
 filename = "xclim/__init__.py"
