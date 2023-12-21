@@ -256,8 +256,8 @@ def npdf_train(
         indices = gw_idxs[{gr_dim: ib}].astype(int).values
         af_q = xr.apply_ufunc(
             _npdft,
-            ref[{"time": indices[indices >= 0]}],
-            hist[{"time": indices[indices >= 0]}],
+            standardize(ref[{"time": indices[indices >= 0]}], dim="time")[0],
+            standardize(hist[{"time": indices[indices >= 0]}], dim="time")[0],
             rot_matrices,
             quantiles,
             input_core_dims=[
