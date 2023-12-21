@@ -1124,7 +1124,6 @@ class NpdfTransform(TrainAdjust):
         adj_kws: dict[str, Any] | None = None,
         n_escore: int = -1,
         n_iter: int = 20,
-        n_group_chunks: int = 1,
         pts_dim: str = "multivar",
         rot_matrices: xr.DataArray | None = None,
     ):
@@ -1158,13 +1157,7 @@ class NpdfTransform(TrainAdjust):
             ).rename(matrices="iterations")
 
         # prepare input dataset
-        ds = xr.Dataset(
-            data_vars={
-                "ref": ref,
-                "hist": hist,
-                "rot_matrices": rot_matrices,
-            }
-        )
+        ds = xr.Dataset(dict(ref=ref, hist=hist))
         # kwargs = {
         #     "quantiles": quantiles,
         #     "group": group,
@@ -1184,17 +1177,18 @@ class NpdfTransform(TrainAdjust):
         # out = ds.map_blocks(npdf_train, kwargs=kwargs, template=template)
         out = npdf_train(
             ds,
-            quantiles,
+            rot_matrices=rot_matrices,
+            iterations=rot_matrices.iterations,
+            quantiles=quantiles,
             method=interp,
             extrap=extrapolation,
             group=group,
-            n_group_chunks=n_group_chunks,
             n_escore=n_escore,
         )
 
         # postprocess
         out["rot_matrices"] = rot_matrices
-        out.scenh_npdft.attrs["units"] = hist.units
+        # out.scenh_npdft.attrs["units"] = hist.units
 
         out.af_q.attrs.update(
             standard_name="Adjustment factors",

@@ -195,21 +195,30 @@ def _npdft(ref, hist, quantiles, rots, method, extrap):
                 nbu._sortquantile(da, quantiles) for da in [ref[iv], hist[iv]]
             )
             af_q[ii, iv] = u.get_correction(hist_q, ref_q, "+")
-            af = u._interp_on_quantiles_1D(
-                _rank(hist[iv]), quantiles, af_q[ii, iv], method=method, extrap=extrap
-            )
-            hist[iv] = u.apply_correction(hist[iv], af, "+")
-    hist = rots[-1].T @ hist
-    return hist, af_q
+            if iv < ref.shape[0] - 1:
+                af = u._interp_on_quantiles_1D(
+                    _rank(hist[iv]),
+                    quantiles,
+                    af_q[ii, iv],
+                    method=method,
+                    extrap=extrap,
+                )
+                hist[iv] = u.apply_correction(hist[iv], af, "+")
+    return af_q
 
 
+@map_groups(
+    af_q=[Grouper.PROP, "quantiles", "iterations"],
+)
 def npdf_train(
     ds,
+    *,
+    dim,
+    rot_matrices,
     quantiles,
+    iterations,
     method,
     extrap,
-    group,
-    n_group_chunks,
     n_escore,
 ) -> xr.Dataset:
     """EQM: Train step on one group.
@@ -243,48 +252,38 @@ def npdf_train(
     # unload data
     ref = ds.ref
     hist = ds.hist
-    rot_matrices = ds.rot_matrices
-
-    # group and standardize
-    # e.g. Grouper("time.dayofyear", 31)
-    # time -> dayofyear, year, window -> dayofyear, stack_dim
-    gr_ref, gr_hist = (
-        get_windowed_group(da, group, n_group_chunks=n_group_chunks)
-        for da in [ref, hist]
-    )
-    grouping_attrs = gr_hist.attrs["grouping"]
-    dim = grouping_attrs["stack_dim"]
-    gr_ref, gr_hist = (standardize(da, dim=dim)[0] for da in [gr_ref, gr_hist])
-
+    # rot_matrices = ds.rot_matrices
     # npdf core
-    gr_hist, af_q = xr.apply_ufunc(
+    ref, hist = (standardize(da, dim="time")[0] for da in [ref, hist])
+    af_q = xr.apply_ufunc(
         _npdft,
-        gr_ref,
-        gr_hist,
+        ref,
+        hist,
         quantiles,
         rot_matrices,
         input_core_dims=[
-            ["multivar", dim],
-            ["multivar", dim],
+            ["multivar", "time"],
+            ["multivar", "time"],
             ["quantiles"],
             ["iterations", "multivar_prime", "multivar"],
         ],
         output_core_dims=[
-            ["multivar", dim],
+            # ["multivar", dim],
             ["iterations", "multivar_prime", "quantiles"],
         ],
         dask="parallelized",
-        output_dtypes=[gr_ref.dtype, gr_ref.dtype],
+        # output_dtypes=[ref.dtype, hist.dtype],
         kwargs={"method": method, "extrap": extrap},
         vectorize=True,
     )
 
     # retrieve adjustment factors and undo time grouping
     # af_q = xr.concat(af_q_l, dim="iterations")
-    af_q = af_q.assign_coords(quantiles=quantiles)
-    gr_hist.attrs["grouping"] = grouping_attrs
-    hist = ungroup(gr_hist.assign_attrs(grouping_attrs), hist.time)
-    return xr.Dataset(dict(af_q=af_q, scenh_npdft=hist))
+    af_q = af_q.assign_coords(quantiles=quantiles).rename(
+        {"multivar_prime": "multivar"}
+    )
+    af_q = af_q.assign_coords(iterations=iterations)
+    return xr.Dataset(dict(af_q=af_q))  # , scenh_npdft=scenh_npdft))
 
 
 def npdf_adjust(
