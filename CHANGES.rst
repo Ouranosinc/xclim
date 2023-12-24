@@ -8,7 +8,7 @@ Contributors to this version: Juliette Lavoie (:user:`juliettelavoie`), Pascal B
 
 Announcements
 ^^^^^^^^^^^^^
-* `xclim` now adheres to the `Semantic Versioning 2.0.0 <https://semver.org/>`_ specification. (:issue:`1556`).
+* `xclim` now adheres to the `Semantic Versioning 2.0.0 <https://semver.org/>`_ specification. (:issue:`1556`, :pull:`1569`).
 
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -18,7 +18,7 @@ New features and enhancements
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
-* `bump2version` has been replaced with `bump-my-version` to bump the version number using configurations set in the `pyproject.toml` file. (:pull:`1557`).
+* `bump2version` has been replaced with `bump-my-version` to bump the version number using configurations set in the `pyproject.toml` file. (:issue:`1557`, :pull:`1569`).
 
 Bug fixes
 ^^^^^^^^^
@@ -26,8 +26,8 @@ Bug fixes
 
 Internal changes
 ^^^^^^^^^^^^^^^^
-* The `flake8` configuration has been migrated from `setup.cfg` to `.flake8`.
-* The `bump-version.yml` workflow has been adjusted to bump the `patch` version when the last version is determined to have been a `release` version; otherwise, the `build` version is bumped.
+* The `flake8` configuration has been migrated from `setup.cfg` to `.flake8`; `setup.cfg` has been removed. (:pull:`1569`)
+* The `bump-version.yml` workflow has been adjusted to bump the `patch` version when the last version is determined to have been a `release` version; otherwise, the `build` version is bumped. (:issue:`1557`, :pull:`1569`).
 
 v0.47.0 (2023-12-01)
 --------------------
