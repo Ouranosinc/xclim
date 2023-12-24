@@ -169,7 +169,6 @@ include = [
   "docs/make.bat",
   "docs/notebooks/_finder.py",
   "requirements_upstream.txt",
-  "setup.cfg",
   "tests/**/*.py",
   "tests/**/*.txt",
   "tox.ini",

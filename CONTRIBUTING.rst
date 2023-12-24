@@ -147,7 +147,7 @@ Ready to contribute? Here's how to set up `xclim` for local development.
 	$ black --check xclim tests
 	$ isort --check xclim tests
 	$ ruff xclim tests
-	$ flake8 --config=setup.cfg xclim tests
+	$ flake8 --config=.flake8 xclim tests
 	$ nbqa black --check docs
 	$ nbqa isort --check docs
 	$ blackdoc --check --exclude=xclim/indices/__init__.py xclim
