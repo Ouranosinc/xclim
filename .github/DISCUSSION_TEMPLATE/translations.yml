@@ -1,4 +1,4 @@
-name: Translations
+name: "[Translations] Translation request/coordination"
 description: Coordinate translations of the Xclim documentation
 labels: [ "docs" ]
 
@@ -24,10 +24,10 @@ body:
       value: |
         <!-- If translating Indicators, consider the following approach:
 
-        1. Copy the contents of `fr.json` from the `xclim/data` directory.
-        2. Translate the docstrings to the language of your choice.
+        1. Copy the structure of `fr.json` from the `xclim/data` directory for the Indicators you wish to translate.
+        2. Translate the fields to the language of your choice.
         3. Paste the translated docstrings below.
         4. Edit this post as needed, reflecting comments and suggestions from the maintainers and other contributors.
-        5. Submit a Pull Request with your changes.
+        5. When the translation effort feels concluded, submit a Pull Request with your changes.
 
         Please paste your translation below. -->
