@@ -211,9 +211,9 @@ Ready to contribute? Here's how to set up `xclim` for local development.
 
    * If no errors are found, changes will be committed.
    * If errors are found, modifications will be made and warnings will be raised if intervention is needed.
-   * After adding changes, simply `git commit` again::
+   * After addressing errors and effecting changes, simply `git commit` again::
 
-    $ git push origin name-of-your-bugfix-or-feature
+        $ git push origin name-of-your-bugfix-or-feature
 
 #. Submit a pull request through the GitHub website.
 
