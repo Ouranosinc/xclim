@@ -60,6 +60,7 @@ dev = [
   "black >=23.3.0",
   "blackdoc",
   "bump-my-version",
+  "codespell",
   "coverage[toml]",
   "flake8",
   "flake8-alphabetize",
@@ -146,6 +147,10 @@ values = [
   "dev",
   "release"
 ]
+
+[tool.codespell]
+skip = './xclim/data/*.json,./docs/_build,./docs/notebooks/xclim_training,./docs/references.bib,__pycache__,*.nc,*.png,*.gz,*.whl'
+ignore-words-list = "absolue,astroid,bloc,bui,callendar,degreee,environnement,hanel,inferrable,lond,nam,nd,ressources,vas"
 
 [tool.coverage.run]
 relative_files = true
