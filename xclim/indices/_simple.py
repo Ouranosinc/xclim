@@ -739,7 +739,7 @@ def sfcWindmax_mean(sfcWindmax: xarray.DataArray, freq: str = "YS") -> xarray.Da
 
 @declare_units(sfcWindmax="[speed]")
 def sfcWindmax_min(sfcWindmax: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
-    r"""Lowest daily maxium wind speed.
+    r"""Lowest daily maximum wind speed.
 
     The minimum of daily maximum wind speed.
 
