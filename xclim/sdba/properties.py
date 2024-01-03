@@ -322,7 +322,7 @@ def _spell_length_distribution(
       and then over all years (e.g. Jan 1980-2010)
     group : {'time', 'time.season', 'time.month'}
       Grouping of the output.
-      E.g. If 'time.month', the spell lengths are coputed separately for each month.
+      E.g. If 'time.month', the spell lengths are computed separately for each month.
     resample_before_rl : bool
       Determines if the resampling should take place before or after the run
       length encoding (or a similar algorithm) is applied to runs.
@@ -463,7 +463,7 @@ def _annual_cycle(
 ) -> xr.DataArray:
     r"""Annual cycle statistics.
 
-    A daily climatology is calculated and optionnaly smoothed with a (circular) moving average.
+    A daily climatology is calculated and optionally smoothed with a (circular) moving average.
     The requested statistic is returned.
 
     Parameters
@@ -678,10 +678,10 @@ def _corr_btw_var(
     corr_type: {'Pearson','Spearman'}
       Type of correlation to calculate.
     output: {'correlation', 'pvalue'}
-      Wheter to return the correlation coefficient or the p-value.
+      Whether to return the correlation coefficient or the p-value.
     group : {'time', 'time.season', 'time.month'}
       Grouping of the output.
-      Eg. For 'time.month', the correlation would be calculated on each month separately,
+      e.g. For 'time.month', the correlation would be calculated on each month separately,
       but with all the years together.
 
     Returns

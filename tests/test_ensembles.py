@@ -412,7 +412,7 @@ class TestEnsembleReduction:
             make_graph=False,
             variable_weights=var_weights,
         )
-        # Results here may change according to sklearn version, hence the *isin* intead of ==
+        # Results here may change according to sklearn version, hence the *isin* instead of ==
         assert all(np.isin([12, 13, 16], ids))
         assert len(ids) == 6
 
