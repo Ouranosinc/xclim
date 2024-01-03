@@ -64,7 +64,7 @@ repos:
   hooks:
   - id: nbstripout
     files: '.ipynb'
-    args: [ '--extra-keys', 'metadata.kernelspec' ]
+    args: [ '--extra-keys=metadata.kernelspec' ]
 - repo: https://github.com/keewis/blackdoc
   rev: v0.3.9
   hooks:
@@ -76,6 +76,7 @@ repos:
   hooks:
   - id: codespell
     additional_dependencies: [ 'tomli' ]
+    args: [ '--toml=pyproject.toml' ]
 - repo: https://github.com/python-jsonschema/check-jsonschema
   rev: 0.27.3
   hooks:
