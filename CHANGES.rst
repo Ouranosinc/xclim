@@ -23,11 +23,13 @@ Breaking changes
 Bug fixes
 ^^^^^^^^^
 * Fixed passing ``missing=0`` to ``xclim.core.calendar.convert_calendar`` (:issue:`1562`, :pull:`1563`).
+* Several spelling mistakes have been corrected within the documentation and codebase. (:pull:`1576`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
 * The `flake8` configuration has been migrated from `setup.cfg` to `.flake8`; `setup.cfg` has been removed. (:pull:`1569`)
 * The `bump-version.yml` workflow has been adjusted to bump the `patch` version when the last version is determined to have been a `release` version; otherwise, the `build` version is bumped. (:issue:`1557`, :pull:`1569`).
+* The `codespell` library is now a development dependency for the `dev` installation recipe with configurations found within `pyproject.toml`. This is also now a linting step and integrated as a `pre-commit` hook. For more information, see the `codespell documentation <https://github.com/codespell-project/codespell>`_ (:pull:`1576`).
 
 v0.47.0 (2023-12-01)
 --------------------
