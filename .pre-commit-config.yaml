@@ -12,7 +12,6 @@ repos:
   rev: v4.5.0
   hooks:
   - id: trailing-whitespace
-    exclude: setup.cfg
   - id: end-of-file-fixer
     exclude: '.ipynb|.github/publish-mastodon.template.md'
   - id: check-json
@@ -33,7 +32,7 @@ repos:
   - id: yamllint
     args: [ '--config-file=.yamllint.yaml' ]
 - repo: https://github.com/psf/black-pre-commit-mirror
-  rev: 23.12.0
+  rev: 23.12.1
   hooks:
   - id: black
 - repo: https://github.com/PyCQA/isort
@@ -41,7 +40,7 @@ repos:
   hooks:
   - id: isort
 - repo: https://github.com/astral-sh/ruff-pre-commit
-  rev: v0.1.8
+  rev: v0.1.9
   hooks:
   - id: ruff
 - repo: https://github.com/pycqa/flake8
@@ -49,14 +48,14 @@ repos:
   hooks:
   - id: flake8
     additional_dependencies: [ 'flake8-alphabetize', 'flake8-rst-docstrings ']
-    args: [ '--config=setup.cfg' ]
+    args: [ '--config=.flake8' ]
 - repo: https://github.com/nbQA-dev/nbQA
   rev: 1.7.1
   hooks:
-  - id: nbqa-black
-    additional_dependencies: [ 'black==23.12.0' ]
   - id: nbqa-pyupgrade
-    args: [ '--py39-plus' ]
+    args: [ '--py38-plus' ]
+  - id: nbqa-black
+    additional_dependencies: [ 'black==23.12.1' ]
   - id: nbqa-isort
 - repo: https://github.com/kynan/nbstripout
   rev: 0.6.1
@@ -68,8 +67,8 @@ repos:
   rev: v0.3.9
   hooks:
   - id: blackdoc
+    additional_dependencies: [ 'black==23.12.1' ]
     exclude: '(xclim/indices/__init__.py|docs/installation.rst)'
-    additional_dependencies: [ 'black==23.12.0' ]
 - repo: https://github.com/python-jsonschema/check-jsonschema
   rev: 0.27.3
   hooks:
@@ -89,5 +88,5 @@ ci:
   autoupdate_branch: ''
   autoupdate_commit_msg: '[pre-commit.ci] pre-commit autoupdate'
   autoupdate_schedule: monthly
-  skip: [nbstripout]
+  skip: [ nbstripout ]
   submodules: false
