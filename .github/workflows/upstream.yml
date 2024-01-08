@@ -16,10 +16,16 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:  # added using https://github.com/step-security/secure-repo
+  contents: read
+
 jobs:
   upstream-dev:
     name: test-upstream-dev (Python${{ matrix.python-version }})
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
     if: |
       (github.event_name == 'schedule') ||
       (github.event_name == 'workflow_dispatch') ||
