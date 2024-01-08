@@ -33,6 +33,10 @@ jobs:
       run:
         shell: bash -l {0}
     steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@eb238b55efaa70779f274895e782ed17c84f2895 # v2.6.1
+        with:
+          egress-policy: audit
       - uses: actions/checkout@v4.1.1
         with:
           fetch-depth: 0 # Fetch all history for all branches and tags.
