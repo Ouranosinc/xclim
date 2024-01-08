@@ -19,10 +19,8 @@ on:
   schedule:
     - cron: '30 23 * * 5'
 
-permissions:
+permissions:  # added using https://github.com/step-security/secure-repo
   actions: read
-  contents: read
-  security-events: write
 
 jobs:
   analyze:
