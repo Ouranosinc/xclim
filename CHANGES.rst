@@ -22,12 +22,14 @@ Breaking changes
 
 Bug fixes
 ^^^^^^^^^
-* Fixed passing ``missing=0`` to ``xclim.core.calendar.convert_calendar`` (:issue:`1562`, :pull:`1563`).
+* Fixed passing ``missing=0`` to ``xclim.core.calendar.convert_calendar``. (:issue:`1562`, :pull:`1563`).
+* Fix wrong `window` attributes in ``xclim.indices.standardized_precipitation_index``, ``xclim.indices.standardized_precipitation_evapotranspiration_index``. (:issue:`1552`  :pull:`1554`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
 * The `flake8` configuration has been migrated from `setup.cfg` to `.flake8`; `setup.cfg` has been removed. (:pull:`1569`)
 * The `bump-version.yml` workflow has been adjusted to bump the `patch` version when the last version is determined to have been a `release` version; otherwise, the `build` version is bumped. (:issue:`1557`, :pull:`1569`).
+* The GitHub Workflows now use the `step-security/harden-runner` action to monitor source code, actions, and dependency safety. All workflows now employ more constrained permissions rule sets to prevent security issues. (:pull:`1577`).
 
 v0.47.0 (2023-12-01)
 --------------------
