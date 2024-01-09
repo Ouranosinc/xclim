@@ -49,7 +49,7 @@ jobs:
           egress-policy: audit
       - uses: actions/checkout@v4.1.1
       - name: Set up Python${{ matrix.python-version }}
-        uses: actions/setup-python@v4.7.1
+        uses: actions/setup-python@v5.0.0
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install pylint and tox
@@ -79,7 +79,7 @@ jobs:
           egress-policy: audit
       - uses: actions/checkout@v4.1.1
       - name: Set up Python${{ matrix.python-version }}
-        uses: actions/setup-python@v4.7.1
+        uses: actions/setup-python@v5.0.0
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install tox
@@ -132,7 +132,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install libeigen3-dev
       - name: Set up Python${{ matrix.python-version }}
-        uses: actions/setup-python@v4.7.1
+        uses: actions/setup-python@v5.0.0
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install tox
@@ -170,7 +170,7 @@ jobs:
           egress-policy: audit
       - uses: actions/checkout@v4.1.1
       - name: Setup Conda (Micromamba) with Python${{ matrix.python-version }}
-        uses: mamba-org/setup-micromamba@v1.6.0
+        uses: mamba-org/setup-micromamba@v1.7.3
         with:
           cache-downloads: true
           cache-environment: true
