@@ -22,7 +22,8 @@ Breaking changes
 
 Bug fixes
 ^^^^^^^^^
-* Fixed passing ``missing=0`` to ``xclim.core.calendar.convert_calendar`` (:issue:`1562`, :pull:`1563`).
+* Fixed passing ``missing=0`` to ``xclim.core.calendar.convert_calendar``. (:issue:`1562`, :pull:`1563`).
+* Fix wrong `window` attributes in ``xclim.indices.standardized_precipitation_index``, ``xclim.indices.standardized_precipitation_evapotranspiration_index``. (:issue:`1552`  :pull:`1554`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
