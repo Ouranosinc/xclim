@@ -31,6 +31,7 @@ Internal changes
 * The `flake8` configuration has been migrated from `setup.cfg` to `.flake8`; `setup.cfg` has been removed. (:pull:`1569`)
 * The `bump-version.yml` workflow has been adjusted to bump the `patch` version when the last version is determined to have been a `release` version; otherwise, the `build` version is bumped. (:issue:`1557`, :pull:`1569`).
 * The GitHub Workflows now use the `step-security/harden-runner` action to monitor source code, actions, and dependency safety. All workflows now employ more constrained permissions rule sets to prevent security issues. (:pull:`1577`).
+* Updated the CONTRIBUTING.rst directions to showcase the new versioning system. (:issue:`1557`, :pull:`1573`).
 
 
 v0.47.0 (2023-12-01)
