@@ -13,14 +13,9 @@ body:
     attributes:
       label: Setup Information
       description: |
-        What software versions are you running? Example:
-        * Xclim version: 0.55.0-gamma
-        * Python version: 4.2
-        * Operating System: Nutmeg Linux 12.34 | macOS 11.0 "Redmond"
+        What xclim version are you running? 
       value: |
         * Xclim version:
-        * Python version:
-        * Operating System:
   - type: textarea
     id: description
     attributes:
