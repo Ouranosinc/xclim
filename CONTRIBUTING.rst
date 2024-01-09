@@ -15,11 +15,9 @@ Implement Features, Indices or Indicators
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 `xclim`'s structure makes it easy to create and register new user-defined indices and indicators.
-For the general implementation of indices and their wrapping into indicators, refer to
-:ref:`notebooks/extendxclim:Extending xclim`  and  :ref:`notebooks/customize:Customizing and controlling xclim`.
+For the general implementation of indices and their wrapping into indicators, refer to :ref:`notebooks/extendxclim:Extending xclim` and :ref:`notebooks/customize:Customizing and controlling xclim`.
 
-Look through the GitHub issues for features. Anything tagged with "enhancement"
-and "help wanted" is open to whoever wants to implement it.
+Look through the GitHub issues for features; Anything tagged with "enhancement" and "help wanted" is open to whoever wants to implement it.
 
 General to-do list for implementing a new Indicator:
 
@@ -62,8 +60,7 @@ General to-do list for implementing a new Indicator:
 General notes for implementing new bias-adjustment methods:
 
 * Method are implemented as classes in ``xclim/sdba/adjustment.py``.
-* If the algorithm gets complicated and would generate many dask tasks, it should be implemented as functions wrapped
-  by :py:func:`~xclim.sdba.map_blocks` or :py:func:`~xclim.sdba.map_groups` in ``xclim/sdba/_adjustment.py``.
+* If the algorithm gets complicated and would generate many dask tasks, it should be implemented as functions wrapped by :py:func:`~xclim.sdba.map_blocks` or :py:func:`~xclim.sdba.map_groups` in ``xclim/sdba/_adjustment.py``.
 * xclim doesn't implement monolithic multi-parameter methods, but rather smaller modular functions to construct post-processing workflows.
 * If you are working on numba-accelerated function that use ``@guvectorize``, consider disabling caching during the development phase and reactivating it once all changes are ready for review. This is done by commenting ``cache=True`` in the decorator.
 
@@ -86,11 +83,10 @@ Look through the GitHub issues for bugs. Anything tagged with "bug" and "help wa
 Write Documentation
 ~~~~~~~~~~~~~~~~~~~
 
-xclim could always use more documentation, whether as part of the official xclim docs, in docstrings, or even on the
-web in blog posts, articles, and such.
+xclim could always use more documentation, whether as part of the official xclim docs, in docstrings, or even on the web in blog posts, articles, and such.
 
-To reference documents (article, presentation, thesis, etc) in the documentation or in a docstring, xclim uses
-`sphinxcontrib-bibtex`_. Metadata of the documents is stored as BibTeX entries in the ``docs/references.bib`` file.
+To reference documents (article, presentation, thesis, etc) in the documentation or in a docstring, xclim uses `sphinxcontrib-bibtex`_.
+Metadata of the documents is stored as BibTeX entries in the ``docs/references.bib`` file.
 To properly generate internal reference links, we suggest using the following roles:
 
 - For references cited in the `References` section of function docstrings, use ``:cite:cts:`label```.
@@ -185,7 +181,8 @@ Ready to contribute? Here's how to set up `xclim` for local development.
       `offline`: this configuration runs by default with the `-m "not requires_internet"` test marker. Be aware that running `tox` and manually setting a `pytest` marker will override this default.
 
    .. note::
-    `xclim` tests are organized to support the `pytest-xdist`_ plugin for distributed testing across workers or CPUs. In order to benefit from multiple processes, add the flag `--numprocesses=auto` or `-n auto` to your `pytest` calls.
+    `xclim` tests are organized to support the `pytest-xdist`_ plugin for distributed testing across workers or CPUs.
+    In order to benefit from multiple processes, add the flag `--numprocesses=auto` or `-n auto` to your `pytest` calls.
 
     When running tests via `tox`, `numprocesses` is set to the number of logical cores available (`numprocesses=logical`), with a maximum amount of `8`.
 
@@ -198,7 +195,8 @@ Ready to contribute? Here's how to set up `xclim` for local development.
 
    .. note::
 
-    When building the documentation, the default behaviour is to evaluate notebooks ('`nbsphinx_execute = "auto"`'), rather than simply parse the content ('`nbsphinx_execute = "never"`'). Due to their complexity, this is a very computationally demanding task and should only be performed when necessary (i.e.: when the notebooks have been modified).
+    When building the documentation, the default behaviour is to evaluate notebooks ('`nbsphinx_execute = "auto"`'), rather than simply parse the content ('`nbsphinx_execute = "never"`').
+    Due to their complexity, this is a very computationally demanding task and should only be performed when necessary (i.e.: when the notebooks have been modified).
 
     In order to speed up documentation builds, setting a value for the environment variable "`SKIP_NOTEBOOKS`" (e.g. "`$ export SKIP_NOTEBOOKS=1`") will prevent the notebooks from being evaluated on all subsequent "`$ tox -e docs`" or "`$ make docs`" invocations.
 
@@ -227,9 +225,10 @@ Before you submit a pull request, please follow these guidelines:
 #. Perform the changes, commit and push them either to new a branch within `Ouranosinc/xclim` or to your personal fork of xclim.
 
    .. warning::
-    Try to keep your contributions within the scope of the issue that you are addressing. While it might be tempting to fix other aspects of the library as it comes up, it's better to simply to flag the problems in case others are already working on it.
+    Try to keep your contributions within the scope of the issue that you are addressing.
+    While it might be tempting to fix other aspects of the library as it comes up, it's better to simply to flag the problems in case others are already working on it.
 
-    Consider adding a "**# TODO:**" comment if the need arises.
+    Consider adding a "**# TODO:**" or "**# FIXME:**" comment if the need arises.
 
 #. Pull requests should raise test coverage for the xclim library. Code coverage is an indicator of how extensively tested the library is.
 
@@ -254,7 +253,7 @@ Before you submit a pull request, please follow these guidelines:
     Ensure that your changes pass all tests prior to pushing your final commits to your branch.
     Code formatting errors are treated as build errors and will block your pull request from being accepted.
 
-#. The version changes (HISTORY.rst) should briefly describe changes introduced in the Pull request. Changes should be organized by type (ie: `New indicators`, `New features and enhancements`, `Breaking changes`, `Bug fixes`, `Internal changes`) and the GitHub Pull Request, GitHub Issue. Your name and/or GitHub handle should also be listed among the contributors to this version. This can be done as follows::
+#. The version changes (CHANGES.rst) should briefly describe changes introduced in the Pull request. Changes should be organized by type (ie: `New indicators`, `New features and enhancements`, `Breaking changes`, `Bug fixes`, `Internal changes`) and the GitHub Pull Request, GitHub Issue. Your name and/or GitHub handle should also be listed among the contributors to this version. This can be done as follows::
 
      Contributors to this version: John Jacob Jingleheimer Schmidt (:user:`username`).
 
@@ -262,8 +261,7 @@ Before you submit a pull request, please follow these guidelines:
      ^^^^^^^^^^^^^^^^
      * Updated the contribution guidelines. (:issue:`868`, :pull:`869`).
 
-   If this is your first contribution to `Ouranosinc/xclim`, we ask that you also add your name to the `AUTHORS.rst <https://github.com/Ouranosinc/xclim/blob/master/AUTHORS.rst>`_,
-   under *Contributors* as well as to the `.zenodo.json <https://github.com/Ouranosinc/xclim/blob/master/.zenodo.json>`_, at the end of the *creators* block.
+   If this is your first contribution to `Ouranosinc/xclim`, we ask that you also add your name to the `AUTHORS.rst <https://github.com/Ouranosinc/xclim/blob/master/AUTHORS.rst>`_, under *Contributors* as well as to the `.zenodo.json <https://github.com/Ouranosinc/xclim/blob/master/.zenodo.json>`_, at the end of the *creators* block.
 
 Updating Testing Data
 ~~~~~~~~~~~~~~~~~~~~~
@@ -313,7 +311,8 @@ If you wish to test a specific branch using GitHub CI, this can be set in `.gith
 Running Tests in Offline Mode
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-`xclim` testing is designed with the assumption that the machine running the tests has internet access. Many calls to `xclim` functions will attempt to download data or verify checksums from the `Ouranosinc/xclim-testdata` repository. This can be problematic for developers working on features where internet access is not reliably available.
+`xclim` testing is designed with the assumption that the machine running the tests has internet access. Many calls to `xclim` functions will attempt to download data or verify checksums from the `Ouranosinc/xclim-testdata` repository.
+This can be problematic for developers working on features where internet access is not reliably available.
 
 If you wish to ensure that your feature or bugfix can be developed without internet access, `xclim` leverages the `pytest-socket`_ plugin so that testing can be run in "offline" mode by invoking pytest with the following options::
 
@@ -323,7 +322,8 @@ or, alternatively, using `tox` ::
 
     $ tox -e offline
 
-These options will disable all network calls and skip tests marked with the `requires_internet` marker. The `--allow-unix-socket` option is required to allow the `pytest-xdist`_ plugin to function properly.
+These options will disable all network calls and skip tests marked with the `requires_internet` marker.
+The `--allow-unix-socket` option is required to allow the `pytest-xdist`_ plugin to function properly.
 
 Tips
 ----
@@ -396,7 +396,8 @@ The Automated Approach
 
 The simplest way to package `xclim` is to "publish" a version on GitHuh. GitHub CI Actions are presently configured to build the library and publish the packages on PyPI automatically.
 
-When publishing on GitHub, maintainers will need to generate the release notes for the current version, replacing the ``:issue:``, ``:pull:``, and ``:user:`` tags. The `xclim` CLI offers a helper function for performing this action::
+When publishing on GitHub, maintainers will need to generate the release notes for the current version, replacing the ``:issue:``, ``:pull:``, and ``:user:`` tags.
+The `xclim` CLI offers a helper function for performing this action::
 
     # For Markdown format (needed when publishing a new version on GitHub):
     $ xclim release_notes -m
