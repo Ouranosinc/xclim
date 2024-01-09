@@ -122,7 +122,7 @@ target-version = [
 ]
 
 [tool.bumpversion]
-current_version = "0.47.4-dev.0"
+current_version = "0.47.5-dev.0"
 commit = true
 commit_args = "--no-verify"
 tag = false
@@ -147,6 +147,7 @@ values = [
   "dev",
   "release"
 ]
+
 
 [tool.coverage.run]
 relative_files = true
