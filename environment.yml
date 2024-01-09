@@ -30,7 +30,7 @@ dependencies:
   # Testing and development dependencies
     - black >=22.12
     - blackdoc
-    - bump2version
+    - bump-my-version
     - cairosvg
     - coverage
     - distributed >=2.0
