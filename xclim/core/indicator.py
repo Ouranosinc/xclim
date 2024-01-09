@@ -85,8 +85,8 @@ All fields are optional. Other fields found in the yaml file will trigger errors
 In the following, the section under `<identifier>` is referred to as `data`. When creating indicators from
 a dictionary, with :py:meth:`Indicator.from_dict`, the input dict must follow the same structure of `data`.
 
-The resulting yaml file can be validated using the provided schema (in xclim/data/schema.yml)
-and the YAMALE tool :cite:p:`lopker_yamale_2022`. See the "Extending xclim" notebook for more info.
+When a module is built from a yaml file, the yaml is first validated against the schema (see xclim/data/schema.yml)
+using the YAMALE library (:cite:p:`lopker_yamale_2022`). See the "Extending xclim" notebook for more info.
 
 Inputs
 ~~~~~~
@@ -115,6 +115,7 @@ from typing import Any, Callable, Optional, Sequence, Tuple, Union
 
 import numpy as np
 import xarray
+import yamale
 from xarray import DataArray, Dataset
 from yaml import safe_load
 
@@ -1715,6 +1716,14 @@ def build_indicator_module_from_yaml(  # noqa: C901
     # Read YAML file
     with ymlpath.open(encoding=encoding) as f:
         yml = safe_load(f)
+
+    # Read schema
+    schema = yamale.make_schema(Path(__file__).parent.parent / "data" / "schema.yml")
+
+    # Validate - a YamaleError will be raised if the module does not comply with the schema.
+    yamale.validate(
+        schema, yamale.make_data(content=ymlpath.read_text(encoding=encoding))
+    )
 
     # Load values from top-level in yml.
     # Priority of arguments differ.

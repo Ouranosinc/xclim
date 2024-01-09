@@ -59,7 +59,7 @@ dev = [
   # Dev tools and testing
   "black >=23.3.0",
   "blackdoc",
-  "bump2version",
+  "bump-my-version",
   "coverage[toml]",
   "flake8",
   "flake8-alphabetize",
@@ -121,6 +121,32 @@ target-version = [
   "py311"
 ]
 
+[tool.bumpversion]
+current_version = "0.47.4-beta"
+commit = true
+tag = false
+allow_dirty = true
+parse = "(?P<major>\\d+)\\.(?P<minor>\\d+)\\.(?P<patch>\\d+)(\\-(?P<release>[a-z]+)(\\.(?P<build>\\d+)))?"
+serialize = [
+  "{major}.{minor}.{patch}-{release}.{build}",
+  "{major}.{minor}.{patch}"
+]
+
+[[tool.bumpversion.files]]
+filename = "xclim/__init__.py"
+search = "__version__ = \"{current_version}\""
+replace = "__version__ = \"{new_version}\""
+
+[tool.bumpversion.parts.build]
+independent = false
+
+[tool.bumpversion.parts.release]
+optional_value = "release"
+values = [
+  "dev",
+  "release"
+]
+
 [tool.coverage.run]
 relative_files = true
 omit = ["tests/*.py"]
@@ -143,7 +169,6 @@ include = [
   "docs/make.bat",
   "docs/notebooks/_finder.py",
   "requirements_upstream.txt",
-  "setup.cfg",
   "tests/**/*.py",
   "tests/**/*.txt",
   "tox.ini",
