@@ -1202,23 +1202,8 @@ class NpdfTransform(TrainAdjust):
 
         # prepare input dataset
         ds = xr.Dataset(dict(ref=ref, hist=hist))
-        # kwargs = {
-        #     "quantiles": quantiles,
-        #     "group": group,
-        #     "method": interp,
-        #     "extrap": extrapolation,
-        #     "n_escore": n_escore,
-        # }
 
-        # template = xr.full_like(hist, np.NaN).to_dataset(name="scenh_npdft")
-        # template["af_q"] = (
-        #     get_windowed_group(template["scenh_npdft"], group)[{"stack_dim": 0}]
-        #     .copy()
-        #     .expand_dims({"quantiles": quantiles})
-        # )
-
-        # compute
-        # out = ds.map_blocks(npdf_train, kwargs=kwargs, template=template)
+        # train
         out = npdf_train(
             ds,
             rot_matrices=rot_matrices,

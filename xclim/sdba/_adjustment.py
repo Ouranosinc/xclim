@@ -9,14 +9,13 @@ from __future__ import annotations
 import bottleneck as bn
 import numpy as np
 import xarray as xr
-from xarray.core.utils import get_temp_dimname
 
 from xclim.core.units import convert_units_to, infer_context, units
 from xclim.indices.stats import _fitfunc_1d  # noqa
 
 from . import nbutils as nbu
 from . import utils as u
-from ._processing import _adapt_freq, _reordering
+from ._processing import _adapt_freq
 from .base import Grouper, map_blocks, map_groups
 from .detrending import PolyDetrend
 from .processing import standardize
@@ -93,93 +92,13 @@ def eqm_train(ds, *, dim, kind, quantiles, adapt_freq_thresh) -> xr.Dataset:
 
 
 # =======================================================================================
-# general functions, should in utils or something
+# general np-compatible function, could be in utils or something
 # =======================================================================================
 def _rank(arr, axis=None):
     rnk = bn.nanrankdata(arr, axis=axis)
     rnk = rnk / np.nanmax(rnk, axis=axis, keepdims=True)
     mx, mn = 1, np.nanmin(rnk, axis=axis, keepdims=True)
     return mx * (rnk - mn) / (mx - mn)
-
-
-def _get_group_complement(da, group):
-    # complement of "dayofyear": "year", etc.
-    gr = group.name if isinstance(group, Grouper) else group
-    gr = group
-    if gr == "time.dayofyear":
-        return da.time.dt.year
-    if gr == "time.month":
-        return da.time.dt.strftime("%Y-%d")
-
-
-def get_windowed_group(da, group, n_group_chunks=1, stack_dim=None):
-    r"""Splits an input array into `group`, its complement, and expands the array along a rolling `window` dimension.
-
-    Aims to give a faster alternative to `map_blocks` constructions.
-
-    """
-    # define dims (simplify this)
-    if stack_dim is None:
-        stack_dim = get_temp_dimname(da.dims, "stack_dim")
-    win_dim = get_temp_dimname(da.dims, "window_dim")
-    group = group if isinstance(group, Grouper) else Grouper(group, 1)
-    gr, win = group.name, group.window
-    gr_dim = gr.split(".")[-1]
-    gr_complement_dim = get_temp_dimname(da.dims, "group_complement_dim")
-    time_dims = [gr_dim, gr_complement_dim]
-    complement_dims = [win_dim, gr_complement_dim]
-    # should grouper allow time & win>1? I think only win=1 makes sense... Grouper should raise error
-    if group.name == "time":
-        da = da.rename({"time": stack_dim})
-    else:
-        if win == 1:
-            da = da.expand_dims({win_dim: [0]})
-        else:
-            da = da.rolling(time=win, center=True).construct(window_dim=win_dim)
-        da = da.groupby(gr).apply(
-            lambda da: da.assign_coords(time=_get_group_complement(da, gr)).rename(
-                {"time": gr_complement_dim}
-            )
-        )
-        da = da.chunk({gr_dim: n_group_chunks, gr_complement_dim: -1})
-        da = da.stack({stack_dim: complement_dims})
-
-    da = da.assign_attrs(
-        {
-            "grouping": {
-                "group": (gr, win),
-                "complement_dims": complement_dims,
-                "stack_dim": stack_dim,
-                "time_dims": time_dims,
-                "window_dim": win_dim,
-            }
-        }
-    )
-    return da
-
-
-def ungroup(gr_da, template_time):
-    r"""Inverse the operation done with :py:func:`get_windowed_group`."""
-    group = Grouper(*gr_da.attrs["grouping"]["group"])
-    # group = group if isinstance(group, Grouper) else Grouper(group, 1)
-    stack_dim, win_dim, time_dims = (
-        gr_da.attrs["grouping"][lab] for lab in ["stack_dim", "window_dim", "time_dims"]
-    )
-    if group.name == "time":
-        return gr_da.rename({stack_dim: "time"})
-    gr_da = gr_da.unstack(stack_dim)
-    pos_center = gr_da[win_dim].size // 2
-    gr_da = gr_da[{win_dim: slice(pos_center, pos_center + 1)}]
-    grouped_time = get_windowed_group(
-        template_time[{d: 0 for d in template_time.dims if d != "time"}], group.name
-    )
-    grouped_time = grouped_time.unstack(stack_dim)
-    da = (
-        gr_da.stack(time=time_dims)
-        .drop_vars(time_dims)
-        .assign_coords(time=grouped_time.values.ravel())
-    )
-    return da.where(da.time.notnull(), drop=True)[{win_dim: 0}]
 
 
 # =======================================================================================
@@ -307,55 +226,58 @@ def npdf_adjust(
         Default is None, meaning that frequency adaptation is not performed.
     """
     # unload training parameters
-    rots = ds.rot_matrices
-    af_q = ds.af_q
-    quantiles = af_q.quantiles
+    # rots = ds.rot_matrices
+    # af_q = ds.af_q
+    # quantiles = af_q.quantiles
+
+    # temp placeholder
+    scen_reordered = scen
 
     # group and standardize
-    gr_sim = get_windowed_group(sim, group, n_group_chunks=n_group_chunks)
-    gr_scen = get_windowed_group(scen, group, n_group_chunks=n_group_chunks)
-    gr_scen_attrs = gr_scen.attrs
-    dim = gr_scen_attrs["grouping"]["stack_dim"]
-    dims = [dim] if period_dim is None else [period_dim, dim]
-    gr_sim = standardize(gr_sim, dim=dim)[0]
-    # npdf core (adjust)
-    for i_it in range(rots.iterations.size):
-        R = rots.isel(iterations=i_it, drop=True)
-        # rotate
-        simp = gr_sim @ R
+    # gr_sim = get_windowed_group(sim, group, n_group_chunks=n_group_chunks)
+    # gr_scen = get_windowed_group(scen, group, n_group_chunks=n_group_chunks)
+    # gr_scen_attrs = gr_scen.attrs
+    # dim = gr_scen_attrs["grouping"]["stack_dim"]
+    # dims = [dim] if period_dim is None else [period_dim, dim]
+    # gr_sim = standardize(gr_sim, dim=dim)[0]
+    # # npdf core (adjust)
+    # for i_it in range(rots.iterations.size):
+    #     R = rots.isel(iterations=i_it, drop=True)
+    #     # rotate
+    #     simp = gr_sim @ R
 
-        # adjust
-        rnks = xr.apply_ufunc(
-            _rank,
-            simp,
-            input_core_dims=[[dim]],
-            output_core_dims=[[dim]],
-            dask="parallelized",
-            vectorize=True,
-        )
-        af = xr.apply_ufunc(
-            u._interp_on_quantiles_1D_multi,
-            rnks,
-            quantiles,
-            af_q.isel(iterations=i_it, drop=True),
-            input_core_dims=[dims, ["quantiles"], ["quantiles"]],
-            output_core_dims=[dims],
-            dask="parallelized",
-            kwargs=dict(method=method, extrap=extrap),
-            output_dtypes=[gr_sim.dtype],
-            vectorize=True,
-        )
-        simp = u.apply_correction(simp, af, "+")
+    #     # adjust
+    #     rnks = xr.apply_ufunc(
+    #         _rank,
+    #         simp,
+    #         input_core_dims=[[dim]],
+    #         output_core_dims=[[dim]],
+    #         dask="parallelized",
+    #         vectorize=True,
+    #     )
+    #     af = xr.apply_ufunc(
+    #         u._interp_on_quantiles_1D_multi,
+    #         rnks,
+    #         quantiles,
+    #         af_q.isel(iterations=i_it, drop=True),
+    #         input_core_dims=[dims, ["quantiles"], ["quantiles"]],
+    #         output_core_dims=[dims],
+    #         dask="parallelized",
+    #         kwargs=dict(method=method, extrap=extrap),
+    #         output_dtypes=[gr_sim.dtype],
+    #         vectorize=True,
+    #     )
+    #     simp = u.apply_correction(simp, af, "+")
 
-        # undo rotation
-        gr_sim = simp @ R
+    #     # undo rotation
+    #     gr_sim = simp @ R
 
-    # reordering
-    gr_scen_reordered = _reordering.func(
-        xr.Dataset({"ref": gr_sim, "sim": gr_scen}), dim=dim
-    ).reordered
-    # undo grouping
-    scen_reordered = ungroup(gr_scen_reordered.assign_attrs(gr_scen_attrs), scen.time)
+    # # reordering
+    # gr_scen_reordered = _reordering.func(
+    #     xr.Dataset({"ref": gr_sim, "sim": gr_scen}), dim=dim
+    # ).reordered
+    # # undo grouping
+    # scen_reordered = ungroup(gr_scen_reordered.assign_attrs(gr_scen_attrs), scen.time)
     return scen_reordered.to_dataset(name="scen")
 
 
