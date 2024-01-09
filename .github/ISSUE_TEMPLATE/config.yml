@@ -1,1 +1,11 @@
 blank_issues_enabled: true
+contact_links:
+  - name: Questions and/or support
+    about: "For questions or support, please use the Discussions tab"
+    url: https://www.github.com/Ouranosinc/xclim/discussions/categories/questions
+  - name: Translation requests
+    about: "For coordinating translation requests, please use the Discussions tab"
+    url: https://www.github.com/Ouranosinc/xclim/discussions/categories/translations
+  - name: PAVICS-related questions
+    about: "For questions related to PAVICS, the Platform for the Analysis and Visualization of Climate Science, please use the PAVICS email: pavics@ouranos.ca"
+    url: https://pavics.ouranos.ca/index.html

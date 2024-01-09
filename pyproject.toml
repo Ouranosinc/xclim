@@ -148,7 +148,6 @@ values = [
   "release"
 ]
 
-
 [tool.coverage.run]
 relative_files = true
 omit = ["tests/*.py"]
