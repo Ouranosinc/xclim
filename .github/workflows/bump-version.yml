@@ -55,7 +55,7 @@ jobs:
       - name: Conditional Bump
         id: bump
         run: |
-          if [[ $CURRENT_VERSION =~ \d+\.\d+\.\d+-dev(\.\d+)?$ ]]; then
+          if [[ ${{ env.CURRENT_VERSION }} =~ -dev(\.\d+)? ]]; then
             echo "Development version (ends in 'dev(\.\d+)?'), bumping 'build' version"
             bump-my-version bump build
           else
