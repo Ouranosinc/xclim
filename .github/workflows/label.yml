@@ -25,6 +25,6 @@ jobs:
         uses: step-security/harden-runner@eb238b55efaa70779f274895e782ed17c84f2895 # v2.6.1
         with:
           egress-policy: audit
-      - uses: actions/labeler@v4.3.0
+      - uses: actions/labeler@v5.0.0
         with:
           repo-token: "${{ secrets.GITHUB_TOKEN }}"
