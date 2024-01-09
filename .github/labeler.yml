@@ -6,39 +6,56 @@
 #   not configurations related to the deployment process itself.
 
 API:
-  - xclim/cli.py
+  - any:
+    - changed-files:
+      - any-glob-to-any-file:
+        - 'xclim/cli.py'
 
 CI:
-  - .editorconfig
-  - .pre-commit-config.yaml
-  - .readthedocs.yml
-  - .yamllint.yml
-  - .github/workflows/*
-  - docs/Makefile
-  - pylintrc
-  - tox.ini
-  - Makefile
+  - any:
+    - changed-files:
+      - any-glob-to-any-file:
+        - .editorconfig
+        - .pre-commit-config.yaml
+        - .readthedocs.yml
+        - .yamllint.yml
+        - .github/workflows/*
+        - docs/Makefile
+        - pylintrc
+        - tox.ini
+        - Makefile
 
 docs:
-  - .readthedocs.yml
-  - docs/**/*
-  - AUTHORS.rst
-  - CONTRIBUTING.rst
-  - ISSUE_TEMPLATE/**/*
-  - ISSUE_TEMPLATE.md
-  - PULL_REQUEST_TEMPLATE.md
-  - README.rst
+  - any:
+    - changed-files:
+      - any-glob-to-any-file:
+        - .readthedocs.yml
+        - docs/**/*
+        - AUTHORS.rst
+        - CONTRIBUTING.rst
+        - ISSUE_TEMPLATE/**/*
+        - ISSUE_TEMPLATE.md
+        - PULL_REQUEST_TEMPLATE.md
+        - README.rst
 
 indicators:
-  - xclim/indicators/**/*
-  - xclim/indicators/**/*
-  - xclim/indices/**/_*.py
-  - xclim/data/**/*.json
-  - xclim/data/**/*.yml
+  - any:
+    - changed-files:
+      - any-glob-to-any-file:
+        - xclim/indicators/**/*
+        - xclim/indices/**/_*.py
+        - xclim/data/**/*.json
+        - xclim/data/**/*.yml
 
 information:
-  - CONTRIBUTING.rst
+  - any:
+    - changed-files:
+      - any-glob-to-any-file:
+        - CONTRIBUTING.rst
 
 sdba:
-  - xclim/sdba/**/*
-  - tests/test_sdba/*.py
+  - any:
+    - changed-files:
+      - any-glob-to-any-file:
+        - xclim/sdba/**/*
+        - tests/test_sdba/*.py
