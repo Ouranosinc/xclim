@@ -6,8 +6,7 @@
 # https://github.com/actions/labeler/blob/master/README.md
 
 name: Labeler
-# FIXME: using PULL_REQUEST for debugging purposes. Should be pull_request_target only when merging to master.
-on: [pull_request, pull_request_target]
+on: [pull_request_target]
   # Note: potential security risk from this action using pull_request_target.
   # Do not add actions in here which need a checkout of the repo, and do not use any caching in here.
   # See: https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#pull_request_target
@@ -27,7 +26,10 @@ jobs:
       - name: Harden Runner
         uses: step-security/harden-runner@eb238b55efaa70779f274895e782ed17c84f2895 # v2.6.1
         with:
-          egress-policy: audit
+          disable-sudo: true
+          egress-policy: block
+          allowed-endpoints: >
+            api.github.com:443
       - uses: actions/labeler@v5.0.0
         with:
           repo-token: "${{ secrets.GITHUB_TOKEN }}"
