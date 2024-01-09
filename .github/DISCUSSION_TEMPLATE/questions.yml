@@ -13,7 +13,7 @@ body:
     attributes:
       label: Setup Information
       description: |
-        What xclim version are you running? 
+        What xclim version are you running?
       value: |
         * Xclim version:
   - type: textarea
