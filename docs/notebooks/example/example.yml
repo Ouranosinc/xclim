@@ -55,7 +55,7 @@ indicators:
     parameters:
       freq: YS-DEC
       indexer:
-        months: [ 12, 1, 2 ]
+        month: [ 12, 1, 2 ]
   R95p:
     compute: extreme_precip_accumulation_and_days
     cf_attrs:
