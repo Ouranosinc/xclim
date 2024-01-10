@@ -46,7 +46,7 @@ def _adapt_freq(
 
     Returns
     -------
-    xr.Dataset, wth the following variables:
+    xr.Dataset, with the following variables:
 
       - `sim_adj`: Simulated data with the same frequency of values under threshold than ref.
         Adjustment is made group-wise.

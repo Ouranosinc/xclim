@@ -1465,7 +1465,7 @@ class TestJetStreamIndices:
         # Should raise ValueError as longitude is in 0-360 instead of -180.E-180.W
         with pytest.raises(ValueError):
             _ = xci.jetstream_metric_woollings(da_ua)
-        # redefine longitude coordiantes to -180.E-180.W so function runs
+        # redefine longitude coordinates to -180.E-180.W so function runs
         da_ua = da_ua.cf.assign_coords(
             {
                 "X": (
@@ -2888,7 +2888,7 @@ def test_humidex(tas_series):
     # expected values from https://en.wikipedia.org/wiki/Humidex
     expected = np.array([16, 29, 47, 52]) * units.degC
 
-    # Celcius
+    # Celsius
     hc = xci.humidex(tas, dtps)
     np.testing.assert_array_almost_equal(hc, expected, 0)
 
