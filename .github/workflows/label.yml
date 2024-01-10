@@ -12,14 +12,24 @@ on: [pull_request_target]
   # See: https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#pull_request_target
 
 permissions:
-  checks: write
   contents: read
-  pull-requests: write
 
 jobs:
   label:
+    name: Label
     runs-on: ubuntu-latest
+    permissions:
+      checks: write
+      contents: read
+      pull-requests: write
     steps:
-    - uses: actions/labeler@v5.0.0
-      with:
-        repo-token: "${{ secrets.GITHUB_TOKEN }}"
+      - name: Harden Runner
+        uses: step-security/harden-runner@eb238b55efaa70779f274895e782ed17c84f2895 # v2.6.1
+        with:
+          disable-sudo: true
+          egress-policy: block
+          allowed-endpoints: >
+            api.github.com:443
+      - uses: actions/labeler@v5.0.0
+        with:
+          repo-token: "${{ secrets.GITHUB_TOKEN }}"
