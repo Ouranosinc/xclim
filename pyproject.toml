@@ -123,7 +123,7 @@ target-version = [
 ]
 
 [tool.bumpversion]
-current_version = "0.47.5-dev.2"
+current_version = "0.47.5-dev.3"
 commit = true
 commit_args = "--no-verify"
 tag = false
@@ -148,6 +148,7 @@ values = [
   "dev",
   "release"
 ]
+
 
 [tool.codespell]
 skip = 'xclim/data/*.json,docs/_build,docs/notebooks/xclim_training/*.ipynb,docs/references.bib,__pycache__,*.nc,*.png,*.gz,*.whl'
