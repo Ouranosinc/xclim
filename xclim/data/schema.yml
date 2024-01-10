@@ -35,7 +35,7 @@ parameter:
 
 indexer:
   drop: bool(required=False)
-  months: any(int(), list(int()), required=False)
+  month: any(int(), list(int()), required=False)
   season: any(str(), list(str()), required=False)
   doy_bounds: list(int(), required=False, maxItems=2)
   date_bounds: list(str(), required=False, maxItems=2)
