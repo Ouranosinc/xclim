@@ -89,7 +89,7 @@ def test_grouper_apply(tas_series, use_dask, group, n):
         exp = tas.mean(dim=grouper.dim).expand_dims("group").T
     np.testing.assert_array_equal(out_mean, exp)
 
-    # With additionnal dimension included
+    # With additional dimension included
     grouper = Grouper(group, add_dims=["lat"])
     out = grouper.apply("mean", tas)
     assert out.ndim == 1
@@ -98,7 +98,7 @@ def test_grouper_apply(tas_series, use_dask, group, n):
     assert out.attrs["group_compute_dims"] == [grouper.dim, "lat"]
     assert out.attrs["group_window"] == 1
 
-    # Additionnal but main_only
+    # Additional but main_only
     out = grouper.apply("mean", tas, main_only=True)
     np.testing.assert_array_equal(out, out_mean)
 

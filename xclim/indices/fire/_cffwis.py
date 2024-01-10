@@ -35,7 +35,7 @@ thresholds and the snow depth threshold can all be modified.
 
 Overwintering
 -------------
-Additionaly, overwintering of the drought code is also directly implemented in :py:func:`fire_weather_ufunc`.
+Additionally, overwintering of the drought code is also directly implemented in :py:func:`fire_weather_ufunc`.
 The last drought_code of the season is kept in "winter" (where the fire season mask is False) and the precipitation
 is accumulated until the start of the next season. The first drought code is computed as a function of these instead
 of using the default DCStart value. Parameters to :py:func:`_overwintering_drought_code` are listed below.

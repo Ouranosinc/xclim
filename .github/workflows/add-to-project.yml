@@ -5,11 +5,21 @@ on:
     types:
       - opened
 
+permissions:  # added using https://github.com/step-security/secure-repo
+  contents: read
+
 jobs:
   add-to-project:
     name: Add Issue to xclim Project
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      repository-projects: write
     steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@eb238b55efaa70779f274895e782ed17c84f2895 # v2.6.1
+        with:
+          egress-policy: audit
       - uses: actions/add-to-project@v0.5.0
         with:
           project-url: https://github.com/orgs/Ouranosinc/projects/6

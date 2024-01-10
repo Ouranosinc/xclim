@@ -640,7 +640,7 @@ def _rate_and_amount_converter(
         if base in ["M", "Q", "A"]:
             start = time.indexes[dim][0]
             if not start_anchor:
-                # Anchor is on the end of the period, substract 1 period.
+                # Anchor is on the end of the period, subtract 1 period.
                 start = start - xr.coding.cftime_offsets.to_offset(freq)
                 # In the diff below, assign to upper label!
                 label = "upper"
@@ -1135,8 +1135,8 @@ def declare_relative_units(**units_by_name) -> Callable:
     ----------
     \*\*kwargs
         Mapping from the input parameter names to dimensions relative to other parameters.
-        The dimensons can be a single parameter name as `<other_var>` or more complex expressions,
-        like : `<other_var> * [time]`.
+        The dimensions can be a single parameter name as `<other_var>` or more complex expressions,
+        like: `<other_var> * [time]`.
 
     Returns
     -------

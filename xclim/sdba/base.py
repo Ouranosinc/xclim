@@ -685,7 +685,7 @@ def map_blocks(reduces: Sequence[str] | None = None, **outvars):  # noqa: C901
 
             # Remove all auxiliary coords on both tmpl and ds
             extra_coords = {
-                nam: crd for nam, crd in ds.coords.items() if nam not in crd.dims
+                name: crd for name, crd in ds.coords.items() if name not in crd.dims
             }
             ds = ds.drop_vars(extra_coords.keys())
             # Coords not sharing dims with `all_dims` (like scalar aux coord on reduced 1D input) are absent from tmpl
@@ -698,8 +698,8 @@ def map_blocks(reduces: Sequence[str] | None = None, **outvars):  # noqa: C901
             # Add back the extra coords, but only those which have compatible dimensions (like xarray would have done)
             out = out.assign_coords(
                 {
-                    nam: crd
-                    for nam, crd in extra_coords.items()
+                    name: crd
+                    for name, crd in extra_coords.items()
                     if set(crd.dims).issubset(out.dims)
                 }
             )

@@ -5,7 +5,7 @@ xclim: Climate services library |logo|
 +----------------------------+-----------------------------------------------------+
 | Versions                   | |pypi| |conda| |versions|                           |
 +----------------------------+-----------------------------------------------------+
-| Documentation and Support  | |docs| |gitter|                                     |
+| Documentation and Support  | |docs| |discussions|                                |
 +----------------------------+-----------------------------------------------------+
 | Open Source                | |license| |fair| |zenodo| |pyOpenSci| |joss|        |
 +----------------------------+-----------------------------------------------------+
@@ -81,7 +81,8 @@ Contributing to xclim
 ---------------------
 `xclim` is in active development and is being used in production by climate services specialists around the world.
 
-* If you're interested in participating in the development of `xclim` by suggesting new features, new indices or report bugs, please leave us a message on the `issue tracker`_. There is also a chat room on gitter (|gitter|).
+* If you're interested in participating in the development of `xclim` by suggesting new features, new indices or report bugs, please leave us a message on the `issue tracker`_.
+    * If you have a support/usage question or would like to translate `xclim` to a new language, be sure to check out the existing |discussions| first!
 
 * If you would like to contribute code or documentation (which is greatly appreciated!), check out the `Contributing Guidelines`_ before you begin!
 
@@ -126,6 +127,10 @@ This package was created with Cookiecutter_ and the `audreyfeldroy/cookiecutter-
 .. |conda| image:: https://img.shields.io/conda/vn/conda-forge/xclim.svg
         :target: https://anaconda.org/conda-forge/xclim
         :alt: Conda-forge Build Version
+
+.. |discussions| image:: https://img.shields.io/badge/GitHub-Discussions-blue
+        :target: https://github.com/Ouranosinc/xclim/discussions
+        :alt: Static Badge
 
 .. |gitter| image:: https://badges.gitter.im/Ouranosinc/xclim.svg
         :target: https://gitter.im/Ouranosinc/xclim?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge

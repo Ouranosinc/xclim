@@ -194,12 +194,12 @@ def common_calendar(calendars: Sequence[str], join="outer") -> str:
     join : {'inner', 'outer'}
       The criterion for the common calendar.
 
-      - 'outer': the common calendar is the smallest calendar (in number of days by year)
-                 that will include all the dates of the other calendars. When converting
-                 the data to this calendar, no timeseries will lose elements, but some
+      - 'outer': the common calendar is the smallest calendar (in number of days by year) that will include all the
+                 dates of the other calendars.
+                 When converting the data to this calendar, no timeseries will lose elements, but some
                  might be missing (gaps or NaNs in the series).
-      - 'inner': the common calender is the smallest calendar of the list. When converting
-                 the data to this calendar, no timeseries will have missing elements (no gaps or NaNs),
+      - 'inner': the common calendar is the smallest calendar of the list.
+                 When converting the data to this calendar, no timeseries will have missing elements (no gaps or NaNs),
                  but some might be dropped.
 
     Examples
@@ -1099,7 +1099,7 @@ def time_bnds(  # noqa: C901
         is_on_offset = period.onOffset
         eps = pd.Timedelta(precision or "1U").to_pytimedelta()
         day = pd.Timedelta("1D").to_pytimedelta()
-        floor.pop("nanosecond")  # unsuported by cftime
+        floor.pop("nanosecond")  # unsupported by cftime
     else:
         period = pd.tseries.frequencies.to_offset(freq)
         is_on_offset = period.is_on_offset
@@ -1824,7 +1824,7 @@ def unstack_periods(da: xr.DataArray | xr.Dataset, dim: str = "period"):
     """Unstack an array constructed with :py:func:`stack_periods`.
 
     Can only work with periods stacked with a ``stride`` that divides ``window`` in an odd number of sections.
-    When ``stride`` is smaller than ``window``, only the centre-most stride of each window is kept,
+    When ``stride`` is smaller than ``window``, only the center-most stride of each window is kept,
     except for the beginning and end which are taken from the first and last windows.
 
     Parameters
@@ -1837,7 +1837,8 @@ def unstack_periods(da: xr.DataArray | xr.Dataset, dim: str = "period"):
     Notes
     -----
     The following table shows which strides are included (``o``) in the unstacked output.
-    In this example, ``stride`` was a fifth of ``window`` and ``min_length`` was 4 times ``stride``.
+
+    In this example, ``stride`` was a fifth of ``window`` and ``min_length`` was four (4) times ``stride``.
     The row index ``i`` the period index in the stacked dataset,
     columns are the stride-long section of the original timeseries.
 

@@ -31,6 +31,7 @@ dependencies:
     - blackdoc
     - bump-my-version
     - cairosvg
+    - codespell
     - coverage
     - distributed >=2.0
     - filelock
