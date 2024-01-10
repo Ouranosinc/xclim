@@ -76,7 +76,13 @@ jobs:
       - name: Harden Runner
         uses: step-security/harden-runner@eb238b55efaa70779f274895e782ed17c84f2895 # v2.6.1
         with:
-          egress-policy: audit
+          disable-sudo: true
+          egress-policy: block
+          allowed-endpoints: >
+            files.pythonhosted.org:443
+            github.com:443
+            pypi.org:443
+            raw.githubusercontent.com:443
       - uses: actions/checkout@v4.1.1
       - name: Set up Python${{ matrix.python-version }}
         uses: actions/setup-python@v5.0.0
@@ -124,7 +130,18 @@ jobs:
       - name: Harden Runner
         uses: step-security/harden-runner@eb238b55efaa70779f274895e782ed17c84f2895 # v2.6.1
         with:
-          egress-policy: audit
+          egress-policy: block
+          allowed-endpoints: >
+            azure.archive.ubuntu.com:80
+            coveralls.io:443
+            esm.ubuntu.com:443
+            files.pythonhosted.org:443
+            github.com:443
+            motd.ubuntu.com:443
+            packages.microsoft.com:443
+            ppa.launchpadcontent.net:443
+            pypi.org:443
+            raw.githubusercontent.com:443
       - uses: actions/checkout@v4.1.1
       - name: Install Eigen3
         if: contains(matrix.tox-env, 'sbck')
@@ -167,7 +184,16 @@ jobs:
       - name: Harden Runner
         uses: step-security/harden-runner@eb238b55efaa70779f274895e782ed17c84f2895 # v2.6.1
         with:
-          egress-policy: audit
+          disable-sudo: true
+          egress-policy: block
+          allowed-endpoints: >
+            api.github.com:443
+            coveralls.io:443
+            files.pythonhosted.org:443
+            github.com:443
+            objects.githubusercontent.com:443
+            pypi.org:443
+            raw.githubusercontent.com:443
       - uses: actions/checkout@v4.1.1
       - name: Setup Conda (Micromamba) with Python${{ matrix.python-version }}
         uses: mamba-org/setup-micromamba@v1.7.3

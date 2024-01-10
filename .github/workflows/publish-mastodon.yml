@@ -15,6 +15,9 @@ on:
         default: true
         type: boolean
 
+permissions:  # added using https://github.com/step-security/secure-repo
+  contents: read
+
 jobs:
   toot:
     name: Generate Mastodon Toot

@@ -32,7 +32,7 @@ Internal changes
 ^^^^^^^^^^^^^^^^
 * The `flake8` configuration has been migrated from `setup.cfg` to `.flake8`; `setup.cfg` has been removed. (:pull:`1569`)
 * The `bump-version.yml` workflow has been adjusted to bump the `patch` version when the last version is determined to have been a `release` version; otherwise, the `build` version is bumped. (:issue:`1557`, :pull:`1569`).
-* The GitHub Workflows now use the `step-security/harden-runner` action to monitor source code, actions, and dependency safety. All workflows now employ more constrained permissions rule sets to prevent security issues. (:pull:`1577`).
+* The GitHub Workflows now use the `step-security/harden-runner` action to monitor source code, actions, and dependency safety. All workflows now employ more constrained permissions rule sets to prevent security issues. (:pull:`1577`, :pull:`1578`).
 * Updated the CONTRIBUTING.rst directions to showcase the new versioning system. (:issue:`1557`, :pull:`1573`).
 * The `codespell` library is now a development dependency for the `dev` installation recipe with configurations found within `pyproject.toml`. This is also now a linting step and integrated as a `pre-commit` hook. For more information, see the `codespell documentation <https://github.com/codespell-project/codespell>`_ (:pull:`1576`).
 
