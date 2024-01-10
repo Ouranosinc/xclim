@@ -275,7 +275,7 @@ class TestTn:
             ~np.isnan(tnmean).values & ~np.isnan(tnmax).values & ~np.isnan(tnmin).values
         )
 
-        # test maxes always greater than mean and mean alwyas greater than min (non nan values only)
+        # test maxes always greater than mean and mean always greater than min (non nan values only)
         assert np.all(tnmax.values[no_nan] > tnmean.values[no_nan]) & np.all(
             tnmean.values[no_nan] > tnmin.values[no_nan]
         )

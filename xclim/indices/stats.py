@@ -476,7 +476,7 @@ def _fit_start(x, dist: str, **fitkwargs: Any) -> tuple[tuple, dict]:
 
     References
     ----------
-    :cite:cts:`coles_introduction_2001,cohen_parameter_2019`
+    :cite:cts:`coles_introduction_2001,cohen_parameter_2019, thom_1958`
 
     """
     x = np.asarray(x)
