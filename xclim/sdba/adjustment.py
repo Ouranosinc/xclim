@@ -1188,7 +1188,6 @@ class NpdfTransform(TrainAdjust):
         quantiles, group, interp, extrapolation = (
             kwargs[lab] for lab in ["nquantiles", "group", "interp", "extrapolation"]
         )
-
         # prepare rotations
         rot_dim = xr.core.utils.get_temp_dimname(
             set(ref.dims).union(hist.dims), pts_dim + "_prime"
@@ -1201,7 +1200,7 @@ class NpdfTransform(TrainAdjust):
         g_idxs, gw_idxs = time_group_indices(ref.time, group)
 
         # prepare input dataset
-        ds = xr.Dataset(dict(ref=ref, hist=hist))
+        ds = xr.Dataset(dict(ref=ref, hist=hist))  # , hist_npdf=hist_npdf))
 
         # train
         out = npdf_train(
@@ -1217,7 +1216,8 @@ class NpdfTransform(TrainAdjust):
 
         # postprocess
         out["rot_matrices"] = rot_matrices
-        # out.scenh_npdft.attrs["units"] = hist.units
+        out["g_idxs"] = g_idxs
+        out["gw_idxs"] = gw_idxs
 
         out.af_q.attrs.update(
             standard_name="Adjustment factors",
@@ -1225,37 +1225,19 @@ class NpdfTransform(TrainAdjust):
         )
         return out, {"group": group, "interp": interp, "extrapolation": extrapolation}
 
-    def _adjust(self, sim, ref_sim, n_group_chunks=1, period_dim=None):
-        # kwargs = dict(
-        #     group=self.group,
-        #     method=self.interp,
-        #     extrap=self.extrapolation,
-        #     period_dim=period_dim,
-        # )
-        # ds = xr.Dataset(
-        #     {
-        #         "af_q": self.ds.af_q,
-        #         "rot_matrices": self.ds.rot_matrices,
-        #         "sim": sim,
-        #         "ref_sim": ref_sim,
-        #     }
-        # )
-        # return ds.map_blocks(
-        #     npdf_adjust, kwargs=kwargs, template=xr.full_like(sim, np.NaN)
-        # )
-        # return ds.map_blocks(npdf_adjust, kwargs=kwargs, template = xr.full_like(sim, np.NaN))#.scen_reordered
+    def _adjust(
+        self, sim: xr.DataArray, *, scen: xr.DataArray | None = None, period_dim=None
+    ):
+        if scen is None:
+            scen = sim.copy()
         return npdf_adjust(
             sim,
-            ref_sim,
-            xr.Dataset({"af_q": self.ds.af_q, "rot_matrices": self.ds.rot_matrices}),
-            group=self.group,
-            n_group_chunks=n_group_chunks,
-            method=self.interp,
-            extrap=self.extrapolation,
-            period_dim=period_dim,
-            # kind=self.kind,
+            scen,
+            self.ds,
+            self.interp,
+            self.extrapolation,
+            period_dim,
         ).scen
-        # ).scens_npdft
 
 
 try:

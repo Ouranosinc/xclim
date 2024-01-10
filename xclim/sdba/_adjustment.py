@@ -18,9 +18,7 @@ from . import utils as u
 from ._processing import _adapt_freq
 from .base import Grouper, map_blocks, map_groups
 from .detrending import PolyDetrend
-from .processing import standardize
-
-# from .processing import escore, standardize
+from .processing import reordering, standardize
 
 
 def _adapt_freq_hist(ds, adapt_freq_thresh):
@@ -104,25 +102,30 @@ def _rank(arr, axis=None):
 # =======================================================================================
 # train/adjust functions for npdf
 # =======================================================================================
-def _npdft(ref, hist, rots, quantiles, method, extrap):
+def _npdft_train(ref, hist, rots, quantiles, method, extrap):
     af_q = np.zeros((len(rots), ref.shape[0], len(quantiles)))
     for ii in range(len(rots)):
         rot = rots[0] if ii == 0 else rots[ii] @ rots[ii - 1].T
         ref, hist = (rot @ da for da in [ref, hist])
         for iv in range(ref.shape[0]):
             ref_q, hist_q = (
-                nbu._sortquantile(da, quantiles) for da in [ref[iv], hist[iv]]
+                np.nanquantile(da, quantiles)
+                for da in [ref[iv], hist[iv]]
+                # nbu._sortquantile(da, quantiles) for da in [ref[iv], hist[iv]]
             )
-            af_q[ii, iv] = u.get_correction(hist_q, ref_q, "+")
-            if iv < ref.shape[0] - 1:
-                af = u._interp_on_quantiles_1D(
-                    _rank(hist[iv]),
-                    quantiles,
-                    af_q[ii, iv],
-                    method=method,
-                    extrap=extrap,
-                )
-                hist[iv] = u.apply_correction(hist[iv], af, "+")
+            af_q[ii, iv] = ref_q - hist_q
+            # af_q[ii, iv] = u.get_correction(hist_q, ref_q, "+")
+            if iv == ref.shape[0] - 1:
+                continue
+            af = u._interp_on_quantiles_1D(
+                # _rank(hist[iv]),
+                xr.DataArray(hist[iv]).rank(dim="dim_0", pct=True),
+                quantiles,
+                af_q[ii, iv],
+                method=method,
+                extrap=extrap,
+            )
+            hist[iv] = u.apply_correction(hist[iv], af, "+")
     return af_q
 
 
@@ -168,15 +171,16 @@ def npdf_train(
     ref = ds.ref
     hist = ds.hist
     # npdf core
-    ref, hist = (standardize(da, dim="time")[0] for da in [ref, hist])
     gr_dim = gw_idxs.attrs["group_dim"]
     af_q_l = []
+    print(gw_idxs[gr_dim].size)
     for ib in range(gw_idxs[gr_dim].size):
         indices = gw_idxs[{gr_dim: ib}].astype(int).values
+        ind = indices[indices >= 0]
         af_q = xr.apply_ufunc(
-            _npdft,
-            standardize(ref[{"time": indices[indices >= 0]}], dim="time")[0],
-            standardize(hist[{"time": indices[indices >= 0]}], dim="time")[0],
+            _npdft_train,
+            standardize(ref[{"time": ind}].copy(), dim="time")[0],
+            standardize(hist[{"time": ind}].copy(), dim="time")[0],
             rot_matrices,
             quantiles,
             input_core_dims=[
@@ -186,12 +190,10 @@ def npdf_train(
                 ["quantiles"],
             ],
             output_core_dims=[
-                # ["multivar", dim],
                 ["iterations", "multivar_prime", "quantiles"],
             ],
             dask="parallelized",
-            output_dtypes=[ref.dtype],
-            # output_sizes={"quantiles": len(quantiles)},
+            output_dtypes=[hist.dtype],
             kwargs={"method": method, "extrap": extrap},
             vectorize=True,
         )
@@ -199,15 +201,42 @@ def npdf_train(
     af_q = xr.concat(af_q_l, dim=gr_dim).assign_coords(
         {"quantiles": quantiles, gr_dim: gw_idxs[gr_dim].values}
     )
-    return xr.Dataset(dict(af_q=af_q))  # , scenh_npdft=scenh_npdft))
+    return xr.Dataset(dict(af_q=af_q))
+
+
+def _npdft_adjust(sim, af_q, rots, quantiles, method, extrap):
+    # add dummy dim  if period_dim absent to uniformize the function below
+    # This could be done at higher level, not sure where is best
+    if dummy_dim_added := (len(sim.shape) == 2):
+        sim = sim[:, np.newaxis, :]
+
+    # adjust npdft
+    for ii in range(len(rots)):
+        rot = rots[0] if ii == 0 else rots[ii] @ rots[ii - 1].T
+        sim = np.einsum("ij,j...->i...", rot, sim)
+
+        for iv in range(sim.shape[0]):
+            af = u._interp_on_quantiles_1D_multi(
+                _rank(sim[iv], axis=-1),
+                quantiles,
+                af_q[ii, iv],
+                method=method,
+                extrap=extrap,
+            )
+            sim[iv] = u.apply_correction(sim[iv], af, "+")
+
+    rot = rots[-1].T
+    sim = np.einsum("ij,j...->i...", rot, sim)
+    if dummy_dim_added:
+        sim = sim[:, 0, :]
+
+    return sim
 
 
 def npdf_adjust(
-    scen,
     sim,
+    scen,
     ds,
-    group,
-    n_group_chunks,
     method,
     extrap,
     period_dim,
@@ -226,59 +255,47 @@ def npdf_adjust(
         Default is None, meaning that frequency adaptation is not performed.
     """
     # unload training parameters
-    # rots = ds.rot_matrices
-    # af_q = ds.af_q
-    # quantiles = af_q.quantiles
-
-    # temp placeholder
-    scen_reordered = scen
-
-    # group and standardize
-    # gr_sim = get_windowed_group(sim, group, n_group_chunks=n_group_chunks)
-    # gr_scen = get_windowed_group(scen, group, n_group_chunks=n_group_chunks)
-    # gr_scen_attrs = gr_scen.attrs
-    # dim = gr_scen_attrs["grouping"]["stack_dim"]
-    # dims = [dim] if period_dim is None else [period_dim, dim]
-    # gr_sim = standardize(gr_sim, dim=dim)[0]
-    # # npdf core (adjust)
-    # for i_it in range(rots.iterations.size):
-    #     R = rots.isel(iterations=i_it, drop=True)
-    #     # rotate
-    #     simp = gr_sim @ R
-
-    #     # adjust
-    #     rnks = xr.apply_ufunc(
-    #         _rank,
-    #         simp,
-    #         input_core_dims=[[dim]],
-    #         output_core_dims=[[dim]],
-    #         dask="parallelized",
-    #         vectorize=True,
-    #     )
-    #     af = xr.apply_ufunc(
-    #         u._interp_on_quantiles_1D_multi,
-    #         rnks,
-    #         quantiles,
-    #         af_q.isel(iterations=i_it, drop=True),
-    #         input_core_dims=[dims, ["quantiles"], ["quantiles"]],
-    #         output_core_dims=[dims],
-    #         dask="parallelized",
-    #         kwargs=dict(method=method, extrap=extrap),
-    #         output_dtypes=[gr_sim.dtype],
-    #         vectorize=True,
-    #     )
-    #     simp = u.apply_correction(simp, af, "+")
-
-    #     # undo rotation
-    #     gr_sim = simp @ R
-
-    # # reordering
-    # gr_scen_reordered = _reordering.func(
-    #     xr.Dataset({"ref": gr_sim, "sim": gr_scen}), dim=dim
-    # ).reordered
-    # # undo grouping
-    # scen_reordered = ungroup(gr_scen_reordered.assign_attrs(gr_scen_attrs), scen.time)
-    return scen_reordered.to_dataset(name="scen")
+    rot_matrices = ds.rot_matrices
+    af_q = ds.af_q
+    quantiles = af_q.quantiles
+    g_idxs = ds.g_idxs
+    gw_idxs = ds.gw_idxs
+    gr_dim = gw_idxs.attrs["group_dim"]
+    win = gw_idxs.attrs["group"][1]
+    dims = ["time"] if period_dim is None else [period_dim, "time"]
+    scen_mbcn = scen.copy()
+    for ib in range(gw_idxs[gr_dim].size):
+        indices_gw = gw_idxs[{gr_dim: ib}].astype(int).values
+        ind_gw = indices_gw[indices_gw >= 0]
+        indices_g = g_idxs[{gr_dim: ib}].astype(int).values
+        ind_g = indices_g[indices_g >= 0]
+        scen_npdft = xr.apply_ufunc(
+            _npdft_adjust,
+            standardize(sim[{"time": ind_gw}].copy(), dim="time")[0],
+            af_q[{gr_dim: ib}],
+            rot_matrices,
+            quantiles,
+            input_core_dims=[
+                ["multivar"] + dims,
+                ["iterations", "multivar_prime", "quantiles"],
+                ["iterations", "multivar_prime", "multivar"],
+                ["quantiles"],
+            ],
+            output_core_dims=[
+                ["multivar"] + dims,
+            ],
+            dask="parallelized",
+            output_dtypes=[sim.dtype],
+            kwargs={"method": method, "extrap": extrap},
+            vectorize=True,
+        )
+        # reorder
+        reordered = reordering(ref=scen_npdft, sim=scen[{"time": ind_gw}])
+        if win > 1:
+            scen_mbcn[{"time": ind_g}] = reordered[{"time": np.in1d(ind_gw, ind_g)}]
+        else:
+            scen_mbcn[{"time": ind_g}] = reordered
+    return scen_mbcn.to_dataset(name="scen")
 
 
 @map_blocks(reduces=[Grouper.PROP, "quantiles"], scen=[])
