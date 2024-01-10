@@ -2,7 +2,7 @@
 Units Handling Submodule
 ========================
 
-`Pint` is used to define the :py:data:`xclim.core.units.units` `UnitRegistry`.
+Xclim's pint unit registry is copied from cf_xarray.
 This module defines most unit handling methods.
 """
 from __future__ import annotations
