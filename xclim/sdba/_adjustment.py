@@ -113,13 +113,9 @@ def _npdft_train(ref, hist, rots, quantiles, method, extrap):
                 for da in [ref[iv], hist[iv]]
                 # nbu._sortquantile(da, quantiles) for da in [ref[iv], hist[iv]]
             )
-            af_q[ii, iv] = ref_q - hist_q
-            # af_q[ii, iv] = u.get_correction(hist_q, ref_q, "+")
-            if iv == ref.shape[0] - 1:
-                continue
+            af_q[ii, iv] = u.get_correction(hist_q, ref_q, "+")
             af = u._interp_on_quantiles_1D(
-                # _rank(hist[iv]),
-                xr.DataArray(hist[iv]).rank(dim="dim_0", pct=True),
+                _rank(hist[iv]),
                 quantiles,
                 af_q[ii, iv],
                 method=method,
