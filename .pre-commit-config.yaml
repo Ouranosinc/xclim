@@ -40,11 +40,11 @@ repos:
     hooks:
       - id: isort
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.1.9
+    rev: v0.1.11
     hooks:
       - id: ruff
   - repo: https://github.com/pycqa/flake8
-    rev: 6.1.0
+    rev: 7.0.0
     hooks:
       - id: flake8
         additional_dependencies: [ 'flake8-alphabetize', 'flake8-rst-docstrings ']
@@ -70,7 +70,7 @@ repos:
         additional_dependencies: [ 'black==23.12.1' ]
         exclude: '(xclim/indices/__init__.py|docs/installation.rst)'
   - repo: https://github.com/gitleaks/gitleaks
-    rev: v8.16.1
+    rev: v8.18.1
     hooks:
       - id: gitleaks
   - repo: https://github.com/python-jsonschema/check-jsonschema
