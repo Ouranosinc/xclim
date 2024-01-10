@@ -2,7 +2,7 @@
 Units Handling Submodule
 ========================
 
-Xclim's pint unit registry is copied from cf_xarray.
+`xclim`'s `pint`-based unit registry is an extension of the registry defined in `cf-xarray`.
 This module defines most unit handling methods.
 """
 from __future__ import annotations
