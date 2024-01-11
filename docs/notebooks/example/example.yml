@@ -53,7 +53,7 @@ indicators:
   spring_fd:
     compute: frost_days
     parameters:
-      freq: YS-DEC
+      freq: AS-DEC
       indexer:
         month: [ 12, 1, 2 ]
   R95p:
