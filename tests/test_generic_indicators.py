@@ -106,5 +106,5 @@ class TestStats:
     def test_3hourly(self, pr_hr_series, random):
         pr = pr_hr_series(random.random(366 * 24)).resample(time="3H").mean()
         out = generic.stats(pr, freq="MS", op="var")
-        assert out.units == "kg^2 m-4 s-2"
+        assert out.units == "kg2 m-4 s-2"
         assert out.long_name == "Variance of variable"
