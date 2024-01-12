@@ -1162,6 +1162,7 @@ class NpdfTransform(TrainAdjust):
         ref: xr.DataArray,
         hist: xr.DataArray,
         *,
+        scen: xr.DataArray | None = None,
         base_kws: dict[str, Any] | None = None,
         adj_kws: dict[str, Any] | None = None,
         n_escore: int = -1,
@@ -1201,6 +1202,8 @@ class NpdfTransform(TrainAdjust):
 
         # prepare input dataset
         ds = xr.Dataset(dict(ref=ref, hist=hist))  # , hist_npdf=hist_npdf))
+        if scen is not None:
+            ds["scen"] = scen
 
         # train
         out = npdf_train(
