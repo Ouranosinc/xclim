@@ -1162,7 +1162,6 @@ class NpdfTransform(TrainAdjust):
         ref: xr.DataArray,
         hist: xr.DataArray,
         *,
-        scen: xr.DataArray | None = None,
         base_kws: dict[str, Any] | None = None,
         adj_kws: dict[str, Any] | None = None,
         n_escore: int = -1,
@@ -1202,8 +1201,6 @@ class NpdfTransform(TrainAdjust):
 
         # prepare input dataset
         ds = xr.Dataset(dict(ref=ref, hist=hist))  # , hist_npdf=hist_npdf))
-        if scen is not None:
-            ds["scen"] = scen
 
         # train
         out = npdf_train(
@@ -1229,16 +1226,50 @@ class NpdfTransform(TrainAdjust):
         return out, {"group": group, "interp": interp, "extrapolation": extrapolation}
 
     def _adjust(
-        self, sim: xr.DataArray, *, scen: xr.DataArray | None = None, period_dim=None
+        self,
+        sim: xr.DataArray,
+        *,
+        ref: xr.DataArray | None = None,
+        hist: xr.DataArray | None = None,
+        base_kws_scen: dict[str, Any] | None = None,
+        adj_kws_scen: dict[str, Any] | None = None,
+        period_dim=None,
     ):
-        if scen is None:
-            scen = sim.copy()
+        base_kws_scen = base_kws_scen if base_kws_scen is not None else {}
+        adj_kws_scen = adj_kws_scen if adj_kws_scen is not None else {}
+        base_kws_scen.setdefault("nquantiles", self.ds.af_q.quantiles.values)
+        base_kws_scen.setdefault("group", self.group)
+        # change this hardcoding multivar
+        base_kws_scen.setdefault("kinds", {v: "+" for v in sim["multivar"].values})
+        base_kws_scen.setdefault("base", QuantileDeltaMapping)
+
+        if np.isscalar(base_kws_scen["nquantiles"]):
+            base_kws_scen["nquantiles"] = equally_spaced_nodes(
+                base_kws_scen["nquantiles"]
+            )
+        if isinstance(base_kws_scen["group"], str):
+            base_kws_scen["group"] = Grouper(base_kws_scen["group"], 1)
+
+        err_ks = []
+        if (base_kws_scen["nquantiles"] != self.ds.af_q.quantiles.values).all():
+            err_ks.append("nquantiles")
+        if base_kws_scen["group"] != self.group:
+            err_ks.append("group")
+        if err_ks != []:
+            raise ValueError(
+                ",".join(err_ks)
+                + " must be the same for npdf (`base_kws`) and) and scenario (`base_kws_scen`)"
+            )
+        base_kws_scen.pop("group")
         return npdf_adjust(
+            ref,
+            hist,
             sim,
-            scen,
             self.ds,
             self.interp,
             self.extrapolation,
+            base_kws_scen,
+            adj_kws_scen,
             period_dim,
         ).scen
 

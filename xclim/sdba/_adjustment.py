@@ -170,11 +170,6 @@ def npdf_train(
     # npdf core
     gr_dim = gw_idxs.attrs["group_dim"]
     af_q_l = []
-    win = gw_idxs.attrs["group"][1]
-    adjust_scen = "scen" in ds.data_vars
-    if adjust_scen:
-        scen = ds.scen
-        scen_mbcn = scen.copy()
     for ib in range(gw_idxs[gr_dim].size):
         indices = gw_idxs[{gr_dim: ib}].astype(int).values
         ind = indices[indices >= 0]
@@ -200,20 +195,10 @@ def npdf_train(
             vectorize=True,
         )
         af_q_l.append(af_q.expand_dims({gr_dim: [ib]}))
-        if adjust_scen:
-            reordered = reordering(ref=scen_npdft, sim=scen[{"time": ind}].copy())
-            if win > 1:
-                indices_g = g_idxs[{gr_dim: ib}].astype(int).values
-                ind_g = indices_g[indices_g >= 0]
-                scen_mbcn[{"time": ind_g}] = reordered[{"time": np.in1d(ind, ind_g)}]
-            else:
-                scen_mbcn[{"time": ind}] = reordered
     af_q = xr.concat(af_q_l, dim=gr_dim).assign_coords(
         {"quantiles": quantiles, gr_dim: gw_idxs[gr_dim].values}
     )
     out = xr.Dataset(dict(af_q=af_q))
-    if adjust_scen:
-        out["scen"] = scen_mbcn
     return out
 
 
@@ -247,11 +232,14 @@ def _npdft_adjust(sim, af_q, rots, quantiles, method, extrap):
 
 
 def npdf_adjust(
+    ref,
+    hist,
     sim,
-    scen,
     ds,
     method,
     extrap,
+    base_kws_scen,
+    adj_kws_scen,
     period_dim,
 ) -> xr.Dataset:
     """Npdf adjust
@@ -276,13 +264,23 @@ def npdf_adjust(
     gr_dim = gw_idxs.attrs["group_dim"]
     win = gw_idxs.attrs["group"][1]
     dims = ["time"] if period_dim is None else [period_dim, "time"]
-    scen_mbcn = scen.copy()
+    base = base_kws_scen["base"]
+    kinds = base_kws_scen["kinds"]
+    base_kws_scen.pop("base")
+    base_kws_scen.pop("kinds")
+    scen_mbcn = sim.copy()
     for ib in range(gw_idxs[gr_dim].size):
         indices_gw = gw_idxs[{gr_dim: ib}].astype(int).values
         ind_gw = indices_gw[indices_gw >= 0]
         indices_g = g_idxs[{gr_dim: ib}].astype(int).values
         ind_g = indices_g[indices_g >= 0]
-        scen_npdft = xr.apply_ufunc(
+        scen_block = xr.zeros_like(sim[{"time": ind_gw}])
+        for iv, v in enumerate(sim.multivar.values):
+            sl = {"time": ind_gw, "multivar": iv}
+            ADJ = base.train(ref[sl], hist[sl], kind=kinds[v], **base_kws_scen)
+            scen_block[{"multivar": iv}] = ADJ.adjust(sim[sl], **adj_kws_scen).scen
+
+        npdft_block = xr.apply_ufunc(
             _npdft_adjust,
             standardize(sim[{"time": ind_gw}].copy(), dim="time")[0],
             af_q[{gr_dim: ib}],
@@ -303,7 +301,7 @@ def npdf_adjust(
             vectorize=True,
         )
         # reorder
-        reordered = reordering(ref=scen_npdft, sim=scen[{"time": ind_gw}])
+        reordered = reordering(ref=npdft_block, sim=scen_block)
         if win > 1:
             scen_mbcn[{"time": ind_g}] = reordered[{"time": np.in1d(ind_gw, ind_g)}]
         else:
