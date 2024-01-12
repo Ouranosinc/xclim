@@ -1192,6 +1192,7 @@ class NpdfTransform(TrainAdjust):
         rot_dim = xr.core.utils.get_temp_dimname(
             set(ref.dims).union(hist.dims), pts_dim + "_prime"
         )
+        pts_dims = (pts_dim, rot_dim)
         if rot_matrices is None:
             rot_matrices = rand_rot_matrix(
                 ref[pts_dim], num=n_iter, new_dim=rot_dim
@@ -1206,6 +1207,7 @@ class NpdfTransform(TrainAdjust):
         out = npdf_train(
             ds,
             rot_matrices=rot_matrices,
+            pts_dims=pts_dims,
             quantiles=quantiles,
             g_idxs=g_idxs,
             gw_idxs=gw_idxs,
@@ -1223,7 +1225,12 @@ class NpdfTransform(TrainAdjust):
             standard_name="Adjustment factors",
             long_name="Quantile mapping adjustment factors",
         )
-        return out, {"group": group, "interp": interp, "extrapolation": extrapolation}
+        return out, {
+            "group": group,
+            "interp": interp,
+            "extrapolation": extrapolation,
+            "pts_dims": pts_dims,
+        }
 
     def _adjust(
         self,
@@ -1240,7 +1247,9 @@ class NpdfTransform(TrainAdjust):
         base_kws_scen.setdefault("nquantiles", self.ds.af_q.quantiles.values)
         base_kws_scen.setdefault("group", self.group)
         # change this hardcoding multivar
-        base_kws_scen.setdefault("kinds", {v: "+" for v in sim["multivar"].values})
+        base_kws_scen.setdefault(
+            "kinds", {v: "+" for v in sim[self.pts_dims[0]].values}
+        )
         base_kws_scen.setdefault("base", QuantileDeltaMapping)
 
         if np.isscalar(base_kws_scen["nquantiles"]):
@@ -1266,6 +1275,7 @@ class NpdfTransform(TrainAdjust):
             hist,
             sim,
             self.ds,
+            self.pts_dims,
             self.interp,
             self.extrapolation,
             base_kws_scen,
