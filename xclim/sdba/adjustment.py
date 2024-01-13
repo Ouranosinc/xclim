@@ -1084,12 +1084,14 @@ class NpdfTransform(TrainAdjust):
 
     See notes for an explanation of the algorithm.
 
-    Parameters
+    Attributes
     ----------
-    base : BaseAdjustment
-        An univariate bias-adjustment class. This is untested for anything else than QuantileDeltaMapping.
+    Train step
+
     base_kws : dict, optional
-        Arguments passed to the training of the univariate adjustment.
+        Arguments passed to the training in the npdf transform.
+    adj_kws : dict, optional
+        Arguments passed to the adjusting in the npdf transform.
     n_escore : int
         The number of elements to send to the escore function. The default, 0, means all elements are included.
         Pass -1 to skip computing the escore completely.
@@ -1099,11 +1101,21 @@ class NpdfTransform(TrainAdjust):
     pts_dim : str
         The name of the "multivariate" dimension. Defaults to "multivar", which is the
         normal case when using :py:func:`xclim.sdba.base.stack_variables`.
-    adj_kws : dict, optional
-        Dictionary of arguments to pass to the adjust method of the univariate adjustment.
-    rot_matrices : xr.DataArray, optional
+    rot_matrices: xr.DataArray, optional
         The rotation matrices as a 3D array ('iterations', <pts_dim>, <anything>), with shape (n_iter, <N>, <N>).
         If left empty, random rotation matrices will be automatically generated.
+        The rotation matrices as a 3D array ('iterations', <pts_dims[0]>, <pts_dims[1]>), with shape (n_iter, <N>, <N>).
+
+    Adjust step
+
+    ref : xr.DataArray
+        Target reference dataset also needed for univariate bias correction preceeding npdf transform
+    hist: xr.DataArray
+        Source dataset also needed for univariate bias correction preceeding npdf transform
+    base_kws : dict, optional
+        Arguments passed to the training in the univariate bias correction
+    adj_kws : dict, optional
+        Arguments passed to the adjusting in the univariate bias correction
 
     Notes
     -----
@@ -1146,10 +1158,7 @@ class NpdfTransform(TrainAdjust):
 
     The random matrices are generated following a method laid out by :cite:t:`sdba-mezzadri_how_2007`.
 
-    This is only part of the full MBCn algorithm, see :ref:`notebooks/sdba:Statistical Downscaling and Bias-Adjustment`
-    for an example on how to replicate the full method with xclim. This includes a standardization of the simulated data
-    beforehand, an initial univariate adjustment and the reordering of those adjusted series according to the rank
-    structure of the output of this algorithm.
+    NOW, the full MBCn algorithm is performed in this function. Needs a new name (and appropriate doc above)
 
     References
     ----------
@@ -1169,7 +1178,7 @@ class NpdfTransform(TrainAdjust):
         pts_dim: str = "multivar",
         rot_matrices: xr.DataArray | None = None,
     ):
-        # prepare kwargs
+        # prepare kwargs, set default values for non-specified parameters
         base_kws = base_kws if base_kws is not None else {}
         adj_kws = adj_kws if adj_kws is not None else {}
         kwargs = {**base_kws, **adj_kws}
@@ -1232,6 +1241,10 @@ class NpdfTransform(TrainAdjust):
             "pts_dims": pts_dims,
         }
 
+    # I should probably separate base_scen from base_kws_scen below
+    # more like other BC functions here
+    # ref and hist are in fact non-optional, but I think this would not work with the train adjust function excepting only sim as
+    # arg
     def _adjust(
         self,
         sim: xr.DataArray,
@@ -1246,7 +1259,10 @@ class NpdfTransform(TrainAdjust):
         adj_kws_scen = adj_kws_scen if adj_kws_scen is not None else {}
         base_kws_scen.setdefault("nquantiles", self.ds.af_q.quantiles.values)
         base_kws_scen.setdefault("group", self.group)
-        # change this hardcoding multivar
+        if "kind" and "kinds" in base_kws_scen.keys():
+            warn(
+                "Both `kind` and `kinds` are specified in `base_kws_scen`, expected one of them. 'kinds' will be used"
+            )
         base_kws_scen.setdefault(
             "kinds", {v: "+" for v in sim[self.pts_dims[0]].values}
         )

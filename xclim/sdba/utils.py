@@ -8,6 +8,7 @@ import itertools
 from typing import Callable
 from warnings import warn
 
+import bottleneck as bn
 import numpy as np
 import xarray as xr
 from boltons.funcutils import wraps
@@ -550,6 +551,13 @@ def rank(
             .drop_vars([d for d in dims if d not in da_coords])
         )
     return rnk
+
+
+def _rank_np(arr, axis=None):
+    rnk = bn.nanrankdata(arr, axis=axis)
+    rnk = rnk / np.nanmax(rnk, axis=axis, keepdims=True)
+    mx, mn = 1, np.nanmin(rnk, axis=axis, keepdims=True)
+    return mx * (rnk - mn) / (mx - mn)
 
 
 def pc_matrix(arr: np.ndarray | dsk.Array) -> np.ndarray | dsk.Array:

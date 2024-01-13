@@ -6,7 +6,6 @@ This file defines the different steps, to be wrapped into the Adjustment objects
 """
 from __future__ import annotations
 
-import bottleneck as bn
 import numpy as np
 import xarray as xr
 
@@ -89,20 +88,12 @@ def eqm_train(ds, *, dim, kind, quantiles, adapt_freq_thresh) -> xr.Dataset:
     return xr.Dataset(data_vars=dict(af=af, hist_q=hist_q))
 
 
-# =======================================================================================
-# general np-compatible function, could be in utils or something
-# =======================================================================================
-def _rank(arr, axis=None):
-    rnk = bn.nanrankdata(arr, axis=axis)
-    rnk = rnk / np.nanmax(rnk, axis=axis, keepdims=True)
-    mx, mn = 1, np.nanmin(rnk, axis=axis, keepdims=True)
-    return mx * (rnk - mn) / (mx - mn)
-
-
-# =======================================================================================
-# train/adjust functions for npdf
-# =======================================================================================
 def _npdft_train(ref, hist, rots, quantiles, method, extrap):
+    r"""Npdf transform to correct a source `hist` into target `ref`.
+
+    Perform a rotation, bias correct `hist` into `ref` with QuantileDeltaMapping, and rotate back.
+    Do this iteratively over all rotations `rots` and conserve adjustment factors `af_q` in each iteration.
+    """
     af_q = np.zeros((len(rots), ref.shape[0], len(quantiles)))
     for ii in range(len(rots)):
         rot = rots[0] if ii == 0 else rots[ii] @ rots[ii - 1].T
@@ -115,7 +106,7 @@ def _npdft_train(ref, hist, rots, quantiles, method, extrap):
             )
             af_q[ii, iv] = u.get_correction(hist_q, ref_q, "+")
             af = u._interp_on_quantiles_1D(
-                _rank(hist[iv]),
+                u._rank_np(hist[iv]),
                 quantiles,
                 af_q[ii, iv],
                 method=method,
@@ -137,33 +128,25 @@ def npdf_train(
     extrap,
     n_escore,
 ) -> xr.Dataset:
-    """EQM: Train step on one group.
+    """Npdf transform training.
 
-
-    I was thinking we should leave the possibility to standardize outside the function. Given it should
-    really be done in each group, once a group is formed, it would not make sense to allow to standardize outside.
-    The only use for this is: If we let group=None a possibility, then simply specifying the dim along which to perform the computation
-    should be sufficient.
+    Adjusting factors obtained for each rotation in the npdf transform and conserved to be applied in
+    the adjusting step
 
     Parameters
     ----------
     Dataset variables:
         ref : training target
         hist : training data
-    n_iter : int
-        The number of iterations to perform. Defaults to 20.
+    rot_matrices : xr.DataArray
+        The rotation matrices as a 3D array ('iterations', <pts_dims[0]>, <pts_dims[1]>), with shape (n_iter, <N>, <N>).
     pts_dims : str
-        The name of the "multivariate" dimension and its primed counterpart. Defaults to "multivar"
-        and "multivar_prime", which is the normal case when using :py:func:`xclim.sdba.base.stack_variables`.
-    rot_matrices : xr.DataArray, optional
-        The rotation matrices as a 3D array ('iterations', <pts_dim>, <anything>), with shape (n_iter, <N>, <N>).
-        If left empty, random rotation matrices will be automatically generated.
-    base_kws : dict, optional
-        Arguments passed to the training of the univariate adjustment.
-    adj_kws : dict, optional
-        Dictionary of arguments to pass to the adjust method of the univariate adjustment.
-    standarize_inplace : bool
-        If true, perform a standardization of ref,hist,sim. Defaults to false
+        The name of the "multivariate" dimension and its primed counterpart. Defaults to "multivar", which
+        is the normal case when using :py:func:`xclim.sdba.base.stack_variables`, and "multivar_prime",
+    g_idxs : xr.DataArray
+        Indices of the times in each time group
+    gw_idxs : xr.DataArray
+        Indices of the times in each windowed time group
     """
     # unload data
     ref = ds.ref
@@ -207,6 +190,11 @@ def npdf_train(
 
 
 def _npdft_adjust(sim, af_q, rots, quantiles, method, extrap):
+    """Npdf transform adjusting.
+
+    Adjusting factors `af_q` obtained in the training step are applied on the simulated data `sim` at each iterated
+    rotation
+    """
     # add dummy dim  if period_dim absent to uniformize the function below
     # This could be done at higher level, not sure where is best
     if dummy_dim_added := (len(sim.shape) == 2):
@@ -219,7 +207,7 @@ def _npdft_adjust(sim, af_q, rots, quantiles, method, extrap):
 
         for iv in range(sim.shape[0]):
             af = u._interp_on_quantiles_1D_multi(
-                _rank(sim[iv], axis=-1),
+                u._rank_np(sim[iv], axis=-1),
                 quantiles,
                 af_q[ii, iv],
                 method=method,
@@ -247,18 +235,40 @@ def npdf_adjust(
     adj_kws_scen,
     period_dim,
 ) -> xr.Dataset:
-    """Npdf adjust
+    """Perform the MBCn mutlivariate bias correction technique.
 
-    * for now, I had to keep sim separated from ds, had a weird scalar window_dim remaining in sim else
-    * period_dim is used to indicate we want to compute many sim periods at once. If specified, it should be
-
-    the dimension generated with stack_periods. unstacking will be done outside the function.
-
-
-
-    adapt_freq_thresh : str | None
-        Threshold for frequency adaptation. See :py:class:`xclim.sdba.processing.adapt_freq` for details.
-        Default is None, meaning that frequency adaptation is not performed.
+    ref : xr.DataArray
+        training target
+    hist : : xr.DataArray
+        training source
+    sim : xr.DataArray
+        data to adjust
+    ds.rot_matrices : xr.DataArray
+        Rotation matrices used in the training step.
+    ds.af_q : xr.DataArray
+        Adjustment factors obtained in the training step for the npdf transform
+    ds.g_idxs : xr.DataArray
+        Indices of the times in each time group
+    ds.gw_idxs : xr.DataArray
+        Indices of the times in each windowed time group
+    pts_dims : [str, str]
+        The name of the "multivariate" dimension and its primed counterpart. Defaults to "multivar", which
+        is the normal case when using :py:func:`xclim.sdba.base.stack_variables`, and "multivar_prime"
+    method : str
+        Interpolation method for the npdf transform (same as in the training step)
+    extrapolation : str
+        Expolation method for the npdf transform (same as in the training step)
+    base_kws_scen : Dict
+        Options for univariate training for the scenario that is reordered with the output of npdf transform.
+        The arguments are those expected by TrainAdjust classes along with
+        - base : Base class for the training step (e.g. QuantileDeltaMapping)
+        - kinds : Dict of correction kinds for each variable (e.g. {"pr":"*", "tasmax":"+"})
+    adj_kws_scen : Dict
+        Options for univariate adjust for the scenario that is reordered with the output of npdf transform
+    period_dim : str | None (defaults to None)
+        Name of the period dimension used when stacking time periods of `sim`  using :py:func:`xclim.core.calendar.stack_periods`.
+        If specified, the interpolation of the npdf transform is performed only once and applied on all periods simultaneously.
+        This should be more performant, but also more memory intensive.
     """
     # unload training parameters
     rot_matrices = ds.rot_matrices
