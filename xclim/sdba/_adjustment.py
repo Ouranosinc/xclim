@@ -88,13 +88,17 @@ def eqm_train(ds, *, dim, kind, quantiles, adapt_freq_thresh) -> xr.Dataset:
     return xr.Dataset(data_vars=dict(af=af, hist_q=hist_q))
 
 
-def _npdft_train(ref, hist, rots, quantiles, method, extrap):
+def _npdft_train(ref, hist, rots, quantiles, method, extrap, n_escore):
     r"""Npdf transform to correct a source `hist` into target `ref`.
 
     Perform a rotation, bias correct `hist` into `ref` with QuantileDeltaMapping, and rotate back.
     Do this iteratively over all rotations `rots` and conserve adjustment factors `af_q` in each iteration.
     """
     af_q = np.zeros((len(rots), ref.shape[0], len(quantiles)))
+    escores = np.zeros(len(rots)) * np.NaN
+    if n_escore > 0:
+        ref_step = int(np.ceil(ref.shape[1] / n_escore))
+        hist_step = int(np.ceil(hist.shape[1] / n_escore))
     for ii in range(len(rots)):
         rot = rots[0] if ii == 0 else rots[ii] @ rots[ii - 1].T
         ref, hist = (rot @ da for da in [ref, hist])
@@ -113,8 +117,10 @@ def _npdft_train(ref, hist, rots, quantiles, method, extrap):
                 extrap=extrap,
             )
             hist[iv] = u.apply_correction(hist[iv], af, "+")
+        if n_escore > 0:
+            escores[ii] = nbu._escore(ref[:, ::ref_step], hist[:, ::hist_step])
     hist = rots[-1].T @ hist
-    return af_q
+    return af_q, escores
 
 
 def mbcn_train(
@@ -155,6 +161,7 @@ def mbcn_train(
 
     # npdf training core
     af_q_l = []
+    escores_l = []
     for ib in range(gw_idxs[gr_dim].size):
         # indices in a given time block
         indices = gw_idxs[{gr_dim: ib}].astype(int).values
@@ -162,7 +169,7 @@ def mbcn_train(
 
         # npdft training : multiple rotations on standardized datasets
         # keep track of adjustment factors in each rotation for later use
-        af_q = xr.apply_ufunc(
+        af_q, escores = xr.apply_ufunc(
             _npdft_train,
             standardize(ref[{"time": ind}])[0].copy(),
             standardize(hist[{"time": ind}])[0].copy(),
@@ -176,17 +183,21 @@ def mbcn_train(
             ],
             output_core_dims=[
                 ["iterations", pts_dims[1], "quantiles"],
+                ["iterations"],
             ],
             dask="parallelized",
-            output_dtypes=[hist.dtype],
-            kwargs={"method": method, "extrap": extrap},
+            output_dtypes=[hist.dtype, hist.dtype],
+            kwargs={"method": method, "extrap": extrap, "n_escore": n_escore},
             vectorize=True,
         )
         af_q_l.append(af_q.expand_dims({gr_dim: [ib]}))
-    af_q = xr.concat(af_q_l, dim=gr_dim).assign_coords(
+        escores_l.append(escores.expand_dims({gr_dim: [ib]}))
+    af_q = xr.concat(af_q_l, dim=gr_dim)
+    escores = xr.concat(escores_l, dim=gr_dim)
+    out = xr.Dataset(dict(af_q=af_q, escores=escores)).assign_coords(
         {"quantiles": quantiles, gr_dim: gw_idxs[gr_dim].values}
     )
-    return af_q.to_dataset(name="af_q")
+    return out
 
 
 def _npdft_adjust(sim, af_q, rots, quantiles, method, extrap):
