@@ -17,7 +17,7 @@ allows a simple free text search of all indicators. Click on the python names to
 .. raw:: html
 
     <input type="text" id="queryInput" onkeyup="indFilter()" placeholder="Search for titles, variables or keywords...">
-
+    <input type="checkbox" id="incVirtMod" onchange="indFilter()"><label id="incVirtModLbl" for="virtualModules">Include virtual submodules in results.</label>
     <div id="indTable">
     </div>
 
