@@ -23,7 +23,9 @@ jobs:
           allowed-endpoints: >
             api.github.com:443
             github.com:443
+
       - name: 'Checkout Repository'
         uses: actions/checkout@v4.1.1
+
       - name: 'Dependency Review'
         uses: actions/dependency-review-action@v3.1.4

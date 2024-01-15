@@ -6,6 +6,7 @@ on:
       - master
     paths-ignore:
       - .*
+      - .github/*/*.md
       - .github/*/*.yml
       - CHANGES.rst
       - Makefile
@@ -36,7 +37,12 @@ jobs:
       - name: Harden Runner
         uses: step-security/harden-runner@eb238b55efaa70779f274895e782ed17c84f2895 # v2.6.1
         with:
-          egress-policy: audit
+          disable-sudo: true
+          egress-policy: block
+          allowed-endpoints: >
+            files.pythonhosted.org:443
+            github.com:443
+            pypi.org:443
       - uses: actions/checkout@v4.1.1
         with:
           persist-credentials: false
