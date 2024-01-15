@@ -132,6 +132,7 @@ jobs:
         with:
           egress-policy: block
           allowed-endpoints: >
+            api.github.com:443
             azure.archive.ubuntu.com:80
             coveralls.io:443
             esm.ubuntu.com:443
@@ -188,12 +189,15 @@ jobs:
           egress-policy: block
           allowed-endpoints: >
             api.github.com:443
+            conda.anaconda.org:443
             coveralls.io:443
+            dap.service.does.not.exist:443
             files.pythonhosted.org:443
             github.com:443
             objects.githubusercontent.com:443
             pypi.org:443
             raw.githubusercontent.com:443
+            repo.anaconda.com:443
       - uses: actions/checkout@v4.1.1
       - name: Setup Conda (Micromamba) with Python${{ matrix.python-version }}
         uses: mamba-org/setup-micromamba@v1.7.3
