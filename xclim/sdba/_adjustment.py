@@ -104,9 +104,7 @@ def _npdft_train(ref, hist, rots, quantiles, method, extrap, n_escore):
         ref, hist = (rot @ da for da in [ref, hist])
         for iv in range(ref.shape[0]):
             ref_q, hist_q = (
-                np.nanquantile(da, quantiles)
-                for da in [ref[iv], hist[iv]]
-                # nbu._sortquantile(da, quantiles) for da in [ref[iv], hist[iv]]
+                nbu._sortquantile(da, quantiles) for da in [ref[iv], hist[iv]]
             )
             af_q[ii, iv] = u.get_correction(hist_q, ref_q, "+")
             af = u._interp_on_quantiles_1D(
