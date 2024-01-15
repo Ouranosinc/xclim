@@ -17,7 +17,7 @@ from . import utils as u
 from ._processing import _adapt_freq
 from .base import Grouper, map_blocks, map_groups
 from .detrending import PolyDetrend
-from .processing import reordering, standardize
+from .processing import escore, reordering, standardize
 
 
 def _adapt_freq_hist(ds, adapt_freq_thresh):
@@ -117,7 +117,7 @@ def _npdft_train(ref, hist, rots, quantiles, method, extrap):
     return af_q
 
 
-def npdf_train(
+def mbcn_train(
     ds,
     rot_matrices,
     pts_dims,
@@ -131,7 +131,7 @@ def npdf_train(
     """Npdf transform training.
 
     Adjusting factors obtained for each rotation in the npdf transform and conserved to be applied in
-    the adjusting step
+    the adjusting step in ``mcbn_adjust``.
 
     Parameters
     ----------
@@ -223,7 +223,7 @@ def _npdft_adjust(sim, af_q, rots, quantiles, method, extrap):
     return sim
 
 
-def npdf_adjust(
+def mbcn_adjust(
     ref,
     hist,
     sim,
@@ -231,11 +231,16 @@ def npdf_adjust(
     pts_dims,
     method,
     extrap,
+    base_scen,
     base_kws_scen,
     adj_kws_scen,
     period_dim,
 ) -> xr.Dataset:
-    """Perform the MBCn mutlivariate bias correction technique.
+    """Perform the adjustment portion MBCn multivariate bias correction technique.
+
+    The function ``mbcn_train`` pre-computes the adjustment factors for each rotation
+    in the npdf portion of the MBCn algorithm. The rest of adjustment is performed here
+    in ``mbcn_adjust``.
 
     ref : xr.DataArray
         training target
@@ -258,10 +263,11 @@ def npdf_adjust(
         Interpolation method for the npdf transform (same as in the training step)
     extrapolation : str
         Expolation method for the npdf transform (same as in the training step)
+    base_scen : BaseAdjustment
+        Bias-adjustment class used for the univariate bias correction.
     base_kws_scen : Dict
         Options for univariate training for the scenario that is reordered with the output of npdf transform.
         The arguments are those expected by TrainAdjust classes along with
-        - base : Base class for the training step (e.g. QuantileDeltaMapping)
         - kinds : Dict of correction kinds for each variable (e.g. {"pr":"*", "tasmax":"+"})
     adj_kws_scen : Dict
         Options for univariate adjust for the scenario that is reordered with the output of npdf transform
@@ -286,9 +292,7 @@ def npdf_adjust(
     dims = ["time"] if period_dim is None else [period_dim, "time"]
 
     # arguments for univariate adjustment (step 1)
-    base = base_kws_scen["base"]
     kinds = base_kws_scen["kinds"]
-    base_kws_scen.pop("base")
     base_kws_scen.pop("kinds")
 
     # mbcn core
@@ -305,7 +309,7 @@ def npdf_adjust(
         scen_block = xr.zeros_like(sim[{"time": ind_gw}])
         for iv, v in enumerate(sim[pts_dims[0]].values):
             sl = {"time": ind_gw, pts_dims[0]: iv}
-            ADJ = base.train(ref[sl], hist[sl], kind=kinds[v], **base_kws_scen)
+            ADJ = base_scen.train(ref[sl], hist[sl], kind=kinds[v], **base_kws_scen)
             scen_block[{pts_dims[0]: iv}] = ADJ.adjust(sim[sl], **adj_kws_scen).scen
 
         # 2. npdft adjustment of sim
@@ -329,6 +333,7 @@ def npdf_adjust(
             kwargs={"method": method, "extrap": extrap},
             vectorize=True,
         )
+
         # 3. reorder scen according to npdft results
         reordered = reordering(ref=npdft_block, sim=scen_block)
         if win > 1:
@@ -489,6 +494,86 @@ def scaling_adjust(ds, *, group, interp, kind) -> xr.Dataset:
     af = u.broadcast(ds.af, ds.sim, group=group, interp=interp)
     scen = u.apply_correction(ds.sim, af, kind)
     return scen.rename("scen").to_dataset()
+
+
+def npdf_transform(ds: xr.Dataset, **kwargs) -> xr.Dataset:
+    r"""N-pdf transform : Iterative univariate adjustment in random rotated spaces.
+
+    Parameters
+    ----------
+    ds : xr.Dataset
+        Dataset variables:
+            ref : Reference multivariate timeseries
+            hist : simulated timeseries on the reference period
+            sim : Simulated timeseries on the projected period.
+            rot_matrices : Random rotation matrices.
+    \*\*kwargs
+        pts_dim : multivariate dimension name
+        base : Adjustment class
+        base_kws : Kwargs for initialising the adjustment object
+        adj_kws : Kwargs of the `adjust` call
+        n_escore : Number of elements to include in the e_score test (0 for all, < 0 to skip)
+
+    Returns
+    -------
+    xr.Dataset
+        Dataset with `scenh`, `scens` and `escores` DataArrays, where `scenh` and `scens` are `hist` and `sim`
+        respectively after adjustment according to `ref`. If `n_escore` is negative, `escores` will be filled with NaNs.
+    """
+    ref = ds.ref.rename(time_hist="time")
+    hist = ds.hist.rename(time_hist="time")
+    sim = ds.sim
+    dim = kwargs["pts_dim"]
+
+    escores = []
+    for i, R in enumerate(ds.rot_matrices.transpose("iterations", ...)):
+        # @ operator stands for matrix multiplication (along named dimensions): x@R = R@x
+        # @R rotates an array defined over dimension x unto new dimension x'. x@R = x'
+        refp = ref @ R
+        histp = hist @ R
+        simp = sim @ R
+
+        # Perform univariate adjustment in rotated space (x')
+        ADJ = kwargs["base"].train(
+            refp, histp, **kwargs["base_kws"], skip_input_checks=True
+        )
+        scenhp = ADJ.adjust(histp, **kwargs["adj_kws"], skip_input_checks=True)
+        scensp = ADJ.adjust(simp, **kwargs["adj_kws"], skip_input_checks=True)
+
+        # Rotate back to original dimension x'@R = x
+        # Note that x'@R is a back rotation because the matrix multiplication is now done along x' due to xarray
+        # operating along named dimensions.
+        # In normal linear algebra, this is equivalent to taking @R.T, the back rotation.
+        hist = scenhp @ R
+        sim = scensp @ R
+
+        # Compute score
+        if kwargs["n_escore"] >= 0:
+            escores.append(
+                escore(
+                    ref,
+                    hist,
+                    dims=(dim, "time"),
+                    N=kwargs["n_escore"],
+                    scale=True,
+                ).expand_dims(iterations=[i])
+            )
+
+    if kwargs["n_escore"] >= 0:
+        escores = xr.concat(escores, "iterations")
+    else:
+        # All NaN, but with the proper shape.
+        escores = (
+            ref.isel({dim: 0, "time": 0}) * hist.isel({dim: 0, "time": 0})
+        ).expand_dims(iterations=ds.iterations) * np.NaN
+
+    return xr.Dataset(
+        data_vars={
+            "scenh": hist.rename(time="time_hist").transpose(*ds.hist.dims),
+            "scen": sim.transpose(*ds.sim.dims),
+            "escores": escores,
+        }
+    )
 
 
 def _fit_on_cluster(data, thresh, dist, cluster_thresh):

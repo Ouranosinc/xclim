@@ -15,7 +15,7 @@ from xarray.core.utils import get_temp_dimname
 
 from xclim.core.calendar import get_calendar
 from xclim.core.formatting import gen_call_string, update_history
-from xclim.core.options import OPTIONS, SDBA_EXTRA_OUTPUT  # , set_options
+from xclim.core.options import OPTIONS, SDBA_EXTRA_OUTPUT, set_options
 from xclim.core.units import convert_units_to
 from xclim.core.utils import uses_dask
 from xclim.indices import stats
@@ -28,8 +28,9 @@ from ._adjustment import (
     extremes_train,
     loci_adjust,
     loci_train,
-    npdf_adjust,
-    npdf_train,
+    mbcn_adjust,
+    mbcn_train,
+    npdf_transform,
     qdm_adjust,
     qm_adjust,
     scaling_adjust,
@@ -51,8 +52,8 @@ __all__ = [
     "EmpiricalQuantileMapping",
     "ExtremeValues",
     "LOCI",
+    "MBCn",
     "NpdfTransform",
-    # "NpdfTransform_fast",
     "PrincipalComponents",
     "QuantileDeltaMapping",
     "Scaling",
@@ -1030,48 +1031,7 @@ class PrincipalComponents(TrainAdjust):
         return scen
 
 
-def _get_group_complement(da, group):
-    # complement of "dayofyear": "year", etc.
-    gr = group.name if isinstance(group, Grouper) else group
-    gr = group
-    if gr == "time.dayofyear":
-        return da.time.dt.year
-    if gr == "time.month":
-        return da.time.dt.strftime("%Y-%d")
-
-
-def time_group_indices(times, group):
-    gr, win = group.name, group.window
-    # get time indices (0,1,2,...) for each block
-    timeind = xr.DataArray(np.arange(times.size), coords={"time": times})
-    win_dim0, win_dim = (
-        get_temp_dimname(timeind.dims, lab) for lab in ["win_dim0", "win_dim"]
-    )
-    if gr != "time":
-        # time indices for each block with window = 1
-        g_idxs = timeind.groupby(gr).apply(
-            lambda da: da.assign_coords(time=_get_group_complement(da, gr)).rename(
-                {"time": "year"}
-            )
-        )
-        # time indices for each block with general window
-        da = timeind.rolling(time=win, center=True).construct(window_dim=win_dim0)
-        gw_idxs = da.groupby(gr).apply(
-            lambda da: da.assign_coords(time=_get_group_complement(da, gr))
-            .stack({win_dim: ["time", win_dim0]})
-            .reset_index(dims_or_levels=[win_dim])
-        )
-        gw_idxs = gw_idxs.transpose(..., win_dim)
-    else:
-        gw_idxs = timeind.rename({"time": win_dim}).expand_dims({win_dim0: [-1]})
-        g_idxs = gw_idxs.copy()
-    gw_idxs.attrs["group"] = (gr, win)
-    gw_idxs.attrs["time_dim"] = win_dim
-    gw_idxs.attrs["group_dim"] = [d for d in g_idxs.dims if d != win_dim][0]
-    return g_idxs, gw_idxs
-
-
-class NpdfTransform(TrainAdjust):
+class NpdfTransform(Adjust):
     r"""N-dimensional probability density function transform.
 
     This adjustment object combines both training and adjust steps in the `adjust` class method.
@@ -1084,14 +1044,12 @@ class NpdfTransform(TrainAdjust):
 
     See notes for an explanation of the algorithm.
 
-    Attributes
+    Parameters
     ----------
-    Train step
-
+    base : BaseAdjustment
+        An univariate bias-adjustment class. This is untested for anything else than QuantileDeltaMapping.
     base_kws : dict, optional
-        Arguments passed to the training in the npdf transform.
-    adj_kws : dict, optional
-        Arguments passed to the adjusting in the npdf transform.
+        Arguments passed to the training of the univariate adjustment.
     n_escore : int
         The number of elements to send to the escore function. The default, 0, means all elements are included.
         Pass -1 to skip computing the escore completely.
@@ -1101,21 +1059,11 @@ class NpdfTransform(TrainAdjust):
     pts_dim : str
         The name of the "multivariate" dimension. Defaults to "multivar", which is the
         normal case when using :py:func:`xclim.sdba.base.stack_variables`.
-    rot_matrices: xr.DataArray, optional
+    adj_kws : dict, optional
+        Dictionary of arguments to pass to the adjust method of the univariate adjustment.
+    rot_matrices : xr.DataArray, optional
         The rotation matrices as a 3D array ('iterations', <pts_dim>, <anything>), with shape (n_iter, <N>, <N>).
         If left empty, random rotation matrices will be automatically generated.
-        The rotation matrices as a 3D array ('iterations', <pts_dims[0]>, <pts_dims[1]>), with shape (n_iter, <N>, <N>).
-
-    Adjust step
-
-    ref : xr.DataArray
-        Target reference dataset also needed for univariate bias correction preceeding npdf transform
-    hist: xr.DataArray
-        Source dataset also needed for univariate bias correction preceeding npdf transform
-    base_kws : dict, optional
-        Arguments passed to the training in the univariate bias correction
-    adj_kws : dict, optional
-        Arguments passed to the adjusting in the univariate bias correction
 
     Notes
     -----
@@ -1158,7 +1106,246 @@ class NpdfTransform(TrainAdjust):
 
     The random matrices are generated following a method laid out by :cite:t:`sdba-mezzadri_how_2007`.
 
-    NOW, the full MBCn algorithm is performed in this function. Needs a new name (and appropriate doc above)
+    This is only part of the full MBCn algorithm, see :ref:`notebooks/sdba:Statistical Downscaling and Bias-Adjustment`
+    for an example on how to replicate the full method with xclim. This includes a standardization of the simulated data
+    beforehand, an initial univariate adjustment and the reordering of those adjusted series according to the rank
+    structure of the output of this algorithm.
+
+    References
+    ----------
+    :cite:cts:`sdba-cannon_multivariate_2018,sdba-cannon_mbc_2020,sdba-pitie_n-dimensional_2005,sdba-mezzadri_how_2007,sdba-szekely_testing_2004`
+    """
+
+    @classmethod
+    def _adjust(
+        cls,
+        ref: xr.DataArray,
+        hist: xr.DataArray,
+        sim: xr.DataArray,
+        *,
+        base: TrainAdjust = QuantileDeltaMapping,
+        base_kws: dict[str, Any] | None = None,
+        n_escore: int = 0,
+        n_iter: int = 20,
+        pts_dim: str = "multivar",
+        adj_kws: dict[str, Any] | None = None,
+        rot_matrices: xr.DataArray | None = None,
+    ):
+        if base_kws is None:
+            base_kws = {}
+        if "kind" in base_kws:
+            warn(
+                f'The adjustment kind cannot be controlled when using {cls.__name__}, it defaults to "+".'
+            )
+        base_kws.setdefault("kind", "+")
+
+        # Assuming sim has the same coords as hist
+        # We get the safest new name of the rotated dim.
+        rot_dim = xr.core.utils.get_temp_dimname(
+            set(ref.dims).union(hist.dims).union(sim.dims), pts_dim + "_prime"
+        )
+
+        # Get the rotation matrices
+        rot_matrices = rot_matrices or rand_rot_matrix(
+            ref[pts_dim], num=n_iter, new_dim=rot_dim
+        ).rename(matrices="iterations")
+
+        # Call a map_blocks on the iterative function
+        # Sadly, this is a bit too complicated for map_blocks, we'll do it by hand.
+        escores_tmpl = xr.broadcast(
+            ref.isel({pts_dim: 0, "time": 0}),
+            hist.isel({pts_dim: 0, "time": 0}),
+        )[0].expand_dims(iterations=rot_matrices.iterations)
+
+        template = xr.Dataset(
+            data_vars={
+                "scenh": xr.full_like(hist, np.NaN).rename(time="time_hist"),
+                "scen": xr.full_like(sim, np.NaN),
+                "escores": escores_tmpl,
+            }
+        )
+
+        # Input data, rename time dim on sim since it can't be aligned with ref or hist.
+        ds = xr.Dataset(
+            data_vars={
+                "ref": ref.rename(time="time_hist"),
+                "hist": hist.rename(time="time_hist"),
+                "sim": sim,
+                "rot_matrices": rot_matrices,
+            }
+        )
+
+        kwargs = {
+            "base": base,
+            "base_kws": base_kws,
+            "n_escore": n_escore,
+            "n_iter": n_iter,
+            "pts_dim": pts_dim,
+            "adj_kws": adj_kws or {},
+        }
+
+        with set_options(sdba_extra_output=False):
+            out = ds.map_blocks(npdf_transform, template=template, kwargs=kwargs)
+
+        out = out.assign(rotation_matrices=rot_matrices)
+        out.scenh.attrs["units"] = hist.units
+        return out
+
+
+def _get_group_complement(da, group):
+    # complement of "dayofyear": "year", etc.
+    gr = group.name if isinstance(group, Grouper) else group
+    gr = group
+    if gr == "time.dayofyear":
+        return da.time.dt.year
+    if gr == "time.month":
+        return da.time.dt.strftime("%Y-%d")
+
+
+def time_group_indices(times, group):
+    gr, win = group.name, group.window
+    # get time indices (0,1,2,...) for each block
+    timeind = xr.DataArray(np.arange(times.size), coords={"time": times})
+    win_dim0, win_dim = (
+        get_temp_dimname(timeind.dims, lab) for lab in ["win_dim0", "win_dim"]
+    )
+    if gr != "time":
+        # time indices for each block with window = 1
+        g_idxs = timeind.groupby(gr).apply(
+            lambda da: da.assign_coords(time=_get_group_complement(da, gr)).rename(
+                {"time": "year"}
+            )
+        )
+        # time indices for each block with general window
+        da = timeind.rolling(time=win, center=True).construct(window_dim=win_dim0)
+        gw_idxs = da.groupby(gr).apply(
+            lambda da: da.assign_coords(time=_get_group_complement(da, gr))
+            .stack({win_dim: ["time", win_dim0]})
+            .reset_index(dims_or_levels=[win_dim])
+        )
+        gw_idxs = gw_idxs.transpose(..., win_dim)
+    else:
+        gw_idxs = timeind.rename({"time": win_dim}).expand_dims({win_dim0: [-1]})
+        g_idxs = gw_idxs.copy()
+    gw_idxs.attrs["group"] = (gr, win)
+    gw_idxs.attrs["time_dim"] = win_dim
+    gw_idxs.attrs["group_dim"] = [d for d in g_idxs.dims if d != win_dim][0]
+    return g_idxs, gw_idxs
+
+
+# Right now, the training part only outputs af_q
+# if it outputs also the corrected hist, it could be like NpdfTransform
+class MBCn(TrainAdjust):
+    r"""Multivariate bias correction function using the N-dimensional probability density function transform.
+
+        ref: xr.DataArray | None = None,
+        hist: xr.DataArray | None = None,
+        base_scen : TrainAdjust = QuantileDeltaMapping,
+        base_kws_scen: dict[str, Any] | None = None,
+        adj_kws_scen: dict[str, Any] | None = None,
+        period_dim=None,
+
+
+    A multivariate bias-adjustment algorithm described by :cite:t:`sdba-cannon_multivariate_2018`
+    based on a color-correction algorithm described by :cite:t:`sdba-pitie_n-dimensional_2005`.
+
+    This algorithm in itself, when used with QuantileDeltaMapping, is NOT trend-preserving.
+    The full MBCn algorithm includes a reordering step provided here by :py:func:`xclim.sdba.processing.reordering`.
+
+    See notes for an explanation of the algorithm.
+
+    Attributes
+    ----------
+    Train step
+
+    base_kws : dict, optional
+        Arguments passed to the training in the npdf transform.
+    adj_kws : dict, optional
+        Arguments passed to the adjusting in the npdf transform.
+    n_escore : int
+        The number of elements to send to the escore function. The default, 0, means all elements are included.
+        Pass -1 to skip computing the escore completely.
+        Small numbers result in less significant scores, but the execution time goes up quickly with large values.
+    n_iter : int
+        The number of iterations to perform. Defaults to 20.
+    pts_dim : str
+        The name of the "multivariate" dimension. Defaults to "multivar", which is the
+        normal case when using :py:func:`xclim.sdba.base.stack_variables`.
+    rot_matrices: xr.DataArray, optional
+        The rotation matrices as a 3D array ('iterations', <pts_dim>, <anything>), with shape (n_iter, <N>, <N>).
+        If left empty, random rotation matrices will be automatically generated.
+        The rotation matrices as a 3D array ('iterations', <pts_dims[0]>, <pts_dims[1]>), with shape (n_iter, <N>, <N>).
+
+    Adjust step
+
+    ref : xr.DataArray
+        Target reference dataset also needed for univariate bias correction preceeding npdf transform
+    hist: xr.DataArray
+        Source dataset also needed for univariate bias correction preceeding npdf transform
+    base_scen : BaseAdjustment
+        Bias-adjustment class used for the univariate bias correction.
+    base_kws_scen : dict, optional
+        Arguments passed to the training in the univariate bias correction
+    adj_kws_scen : dict, optional
+        Arguments passed to the adjusting in the univariate bias correction
+    period_dim : str, optional
+        Name of the period dimension used when stacking time periods of `sim`  using :py:func:`xclim.core.calendar.stack_periods`.
+        If specified, the interpolation of the npdf transform is performed only once and applied on all periods simultaneously.
+        This should be more performant, but also more memory intensive.
+
+    Notes
+    -----
+    The historical reference (:math:`T`, for "target"), simulated historical (:math:`H`) and simulated projected (:math:`S`)
+    datasets are constructed by stacking the timeseries of N variables together. The algorithm is broken into the
+    following steps:
+
+    Training (only npdf transform training)
+
+    1. Standardize `ref` and `hist` (see ``xclim.sdba.processing.standardize``.)
+
+    2. Rotate the datasets in the N-dimensional variable space with :math:`\mathbf{R}`, a random rotation NxN matrix.
+
+    .. math::
+
+        \tilde{\mathbf{T}} = \mathbf{T}\mathbf{R} \
+        \tilde{\mathbf{H}} = \mathbf{H}\mathbf{R}
+
+    3. QuantileDeltaMapping is used to perform bias adjustment  :math:`\mathcal{F}` on the rotated datasets.
+    The adjustment factor is conserved for later use in the adjusting step. The adjustments are made in additive mode,
+    for each variable :math:`i`.
+
+    .. math::
+
+        \hat{\mathbf{H}}_i, \hat{\mathbf{S}}_i = \mathcal{F}\left(\tilde{\mathbf{T}}_i, \tilde{\mathbf{H}}_i, \tilde{\mathbf{S}}_i\right)
+
+    4. The bias-adjusted datasets are rotated back.
+
+    .. math::
+
+        \mathbf{H}' = \hat{\mathbf{H}}\mathbf{R} \\
+        \mathbf{S}' = \hat{\mathbf{S}}\mathbf{R}
+
+    5. Repeat steps 2,3,4  three steps ``n_iter`` times, i.e. the number of randomly generated rotation matrices.
+
+    Adjusting
+
+    1. Perform the same steps as in training, with `ref, hist` replaced with `sim`. Step 3. of the training is modified, here we
+    simply reuse the adjustment factors previously found in the training step to bias correct the standardized `sim` directly.
+
+    2. Using the original (unstandardized) `ref,hist, sim`, perform a univariate bias adjustment using the ``base_scen`` class
+    on `sim`.
+
+    3. Reorder the dataset found in step 2. according to the ranks of the dataset found in step 1.
+
+
+    The original algorithm :cite:p:`sdba-pitie_n-dimensional_2005`, stops the iteration when some distance score converges.
+    Following cite:t:`sdba-cannon_multivariate_2018` and the MBCn implementation in :cite:t:`sdba-cannon_mbc_2020`, we
+    instead fix the number of iterations.
+
+    As done by cite:t:`sdba-cannon_multivariate_2018`, the distance score chosen is the "Energy distance" from
+    :cite:t:`sdba-szekely_testing_2004`. (see: :py:func:`xclim.sdba.processing.escore`).
+
+    The random matrices are generated following a method laid out by :cite:t:`sdba-mezzadri_how_2007`.
 
     References
     ----------
@@ -1178,7 +1365,7 @@ class NpdfTransform(TrainAdjust):
         pts_dim: str = "multivar",
         rot_matrices: xr.DataArray | None = None,
     ):
-        # prepare kwargs, set default values for non-specified parameters
+        # set default values for non-specified parameters
         base_kws = base_kws if base_kws is not None else {}
         adj_kws = adj_kws if adj_kws is not None else {}
         kwargs = {**base_kws, **adj_kws}
@@ -1207,13 +1394,15 @@ class NpdfTransform(TrainAdjust):
                 ref[pts_dim], num=n_iter, new_dim=rot_dim
             ).rename(matrices="iterations")
 
+        # time indices corresponding to group and windowed group
+        # used to divide datasets as map_blocks or groupby would do
         g_idxs, gw_idxs = time_group_indices(ref.time, group)
 
         # prepare input dataset
         ds = xr.Dataset(dict(ref=ref, hist=hist))  # , hist_npdf=hist_npdf))
 
         # train
-        out = npdf_train(
+        out = mbcn_train(
             ds,
             rot_matrices=rot_matrices,
             pts_dims=pts_dims,
@@ -1251,30 +1440,38 @@ class NpdfTransform(TrainAdjust):
         *,
         ref: xr.DataArray | None = None,
         hist: xr.DataArray | None = None,
+        base_scen: TrainAdjust = QuantileDeltaMapping,
         base_kws_scen: dict[str, Any] | None = None,
         adj_kws_scen: dict[str, Any] | None = None,
         period_dim=None,
     ):
+        # set default values for non-specified parameters
+        # check compatibility between training and adjusting parameters
         base_kws_scen = base_kws_scen if base_kws_scen is not None else {}
         adj_kws_scen = adj_kws_scen if adj_kws_scen is not None else {}
-        base_kws_scen.setdefault("nquantiles", self.ds.af_q.quantiles.values)
-        base_kws_scen.setdefault("group", self.group)
-        if "kind" and "kinds" in base_kws_scen.keys():
-            warn(
-                "Both `kind` and `kinds` are specified in `base_kws_scen`, expected one of them. 'kinds' will be used"
-            )
-        base_kws_scen.setdefault(
-            "kinds", {v: "+" for v in sim[self.pts_dims[0]].values}
-        )
-        base_kws_scen.setdefault("base", QuantileDeltaMapping)
 
+        base_kws_scen.setdefault("nquantiles", self.ds.af_q.quantiles.values)
         if np.isscalar(base_kws_scen["nquantiles"]):
             base_kws_scen["nquantiles"] = equally_spaced_nodes(
                 base_kws_scen["nquantiles"]
             )
+
+        base_kws_scen.setdefault("group", self.group)
         if isinstance(base_kws_scen["group"], str):
             base_kws_scen["group"] = Grouper(base_kws_scen["group"], 1)
 
+        if "kind" in base_kws_scen.keys() and "kinds" in base_kws_scen.keys():
+            warn(
+                "Both `kind` and `kinds` are specified in `base_kws_scen`, expected one of them. 'kinds' will be used"
+            )
+        base_kws_scen.setdefault("kind", "+")
+        base_kws_scen.setdefault(
+            "kinds", {v: base_kws_scen["kind"] for v in sim[self.pts_dims[0]].values}
+        )
+        base_kws_scen.pop("kind")
+
+        # nquantiles and group must be the same in train and adjust
+        # Not sure we want to allow use of different quantiles for npdf and scen parts?
         err_ks = []
         if (base_kws_scen["nquantiles"] != self.ds.af_q.quantiles.values).all():
             err_ks.append("nquantiles")
@@ -1285,8 +1482,12 @@ class NpdfTransform(TrainAdjust):
                 ",".join(err_ks)
                 + " must be the same for npdf (`base_kws`) and) and scenario (`base_kws_scen`)"
             )
+
+        # Info for `group` already in g_idxs, gw_idxs. Just needed to check compability in case
+        # `group` is given in base_kws_scen
         base_kws_scen.pop("group")
-        return npdf_adjust(
+
+        return mbcn_adjust(
             ref,
             hist,
             sim,
@@ -1294,6 +1495,7 @@ class NpdfTransform(TrainAdjust):
             self.pts_dims,
             self.interp,
             self.extrapolation,
+            base_scen,
             base_kws_scen,
             adj_kws_scen,
             period_dim,
