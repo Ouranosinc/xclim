@@ -771,6 +771,7 @@ def stack_variables(ds: xr.Dataset, rechunk: bool = True, dim: str = "multivar")
     da.attrs.update(ds.attrs)
     da.attrs["units"] = ""
     da[dim].attrs.update(attrs)
+    da.attrs["original_units"] = {v: ds[v].attrs["units"] for v in ds.data_vars}
     return da.rename("multivariate")
 
 

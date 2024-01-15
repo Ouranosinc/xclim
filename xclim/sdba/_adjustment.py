@@ -17,7 +17,7 @@ from . import utils as u
 from ._processing import _adapt_freq
 from .base import Grouper, map_blocks, map_groups
 from .detrending import PolyDetrend
-from .processing import escore, reordering, standardize
+from .processing import escore, jitter_under_thresh, reordering, standardize
 
 
 def _adapt_freq_hist(ds, adapt_freq_thresh):
@@ -35,7 +35,9 @@ def _adapt_freq_hist(ds, adapt_freq_thresh):
     hist_q=[Grouper.PROP, "quantiles"],
     scaling=[Grouper.PROP],
 )
-def dqm_train(ds, *, dim, kind, quantiles, adapt_freq_thresh) -> xr.Dataset:
+def dqm_train(
+    ds, *, dim, kind, quantiles, adapt_freq_thresh, jitter_under_thresh_value
+) -> xr.Dataset:
     """Train step on one group.
 
     Notes
@@ -48,17 +50,24 @@ def dqm_train(ds, *, dim, kind, quantiles, adapt_freq_thresh) -> xr.Dataset:
         Threshold for frequency adaptation. See :py:class:`xclim.sdba.processing.adapt_freq` for details.
         Default is None, meaning that frequency adaptation is not performed.
     """
-    hist = _adapt_freq_hist(ds, adapt_freq_thresh) if adapt_freq_thresh else ds.hist
+    ds["hist"] = (
+        jitter_under_thresh(ds.hist, jitter_under_thresh_value)
+        if jitter_under_thresh_value
+        else ds.hist
+    )
+    ds["hist"] = (
+        _adapt_freq_hist(ds, adapt_freq_thresh) if adapt_freq_thresh else ds.hist
+    )
 
     refn = u.apply_correction(ds.ref, u.invert(ds.ref.mean(dim), kind), kind)
-    histn = u.apply_correction(hist, u.invert(hist.mean(dim), kind), kind)
+    histn = u.apply_correction(ds.hist, u.invert(ds.hist.mean(dim), kind), kind)
 
     ref_q = nbu.quantile(refn, quantiles, dim)
     hist_q = nbu.quantile(histn, quantiles, dim)
 
     af = u.get_correction(hist_q, ref_q, kind)
     mu_ref = ds.ref.mean(dim)
-    mu_hist = hist.mean(dim)
+    mu_hist = ds.hist.mean(dim)
     scaling = u.get_correction(mu_hist, mu_ref, kind=kind)
 
     return xr.Dataset(data_vars=dict(af=af, hist_q=hist_q, scaling=scaling))
@@ -68,7 +77,9 @@ def dqm_train(ds, *, dim, kind, quantiles, adapt_freq_thresh) -> xr.Dataset:
     af=[Grouper.PROP, "quantiles"],
     hist_q=[Grouper.PROP, "quantiles"],
 )
-def eqm_train(ds, *, dim, kind, quantiles, adapt_freq_thresh) -> xr.Dataset:
+def eqm_train(
+    ds, *, dim, kind, quantiles, adapt_freq_thresh, jitter_under_thresh_value
+) -> xr.Dataset:
     """EQM: Train step on one group.
 
     Dataset variables:
@@ -79,9 +90,16 @@ def eqm_train(ds, *, dim, kind, quantiles, adapt_freq_thresh) -> xr.Dataset:
         Threshold for frequency adaptation. See :py:class:`xclim.sdba.processing.adapt_freq` for details.
         Default is None, meaning that frequency adaptation is not performed.
     """
-    hist = _adapt_freq_hist(ds, adapt_freq_thresh) if adapt_freq_thresh else ds.hist
+    ds["hist"] = (
+        jitter_under_thresh(ds.hist, jitter_under_thresh_value)
+        if jitter_under_thresh_value
+        else ds.hist
+    )
+    ds["hist"] = (
+        _adapt_freq_hist(ds, adapt_freq_thresh) if adapt_freq_thresh else ds.hist
+    )
     ref_q = nbu.quantile(ds.ref, quantiles, dim)
-    hist_q = nbu.quantile(hist, quantiles, dim)
+    hist_q = nbu.quantile(ds.hist, quantiles, dim)
 
     af = u.get_correction(hist_q, ref_q, kind)
 
@@ -240,9 +258,9 @@ def mbcn_adjust(
     pts_dims,
     method,
     extrap,
-    base_scen,
-    base_kws_scen,
-    adj_kws_scen,
+    base,
+    base_kws_vars,
+    adj_kws,
     period_dim,
 ) -> xr.Dataset:
     """Perform the adjustment portion MBCn multivariate bias correction technique.
@@ -251,12 +269,12 @@ def mbcn_adjust(
     in the npdf portion of the MBCn algorithm. The rest of adjustment is performed here
     in ``mbcn_adjust``.
 
-    ref : xr.DataArray
+    ref : xr.Dataset
         training target
-    hist : : xr.DataArray
+    hist : xr.Dataset
         training source
     sim : xr.DataArray
-        data to adjust
+        data to adjust (stacked with multivariate dimension)
     ds.rot_matrices : xr.DataArray
         Rotation matrices used in the training step.
     ds.af_q : xr.DataArray
@@ -272,13 +290,13 @@ def mbcn_adjust(
         Interpolation method for the npdf transform (same as in the training step)
     extrapolation : str
         Expolation method for the npdf transform (same as in the training step)
-    base_scen : BaseAdjustment
+    base : BaseAdjustment
         Bias-adjustment class used for the univariate bias correction.
-    base_kws_scen : Dict
+    base_kws_vars : Dict
         Options for univariate training for the scenario that is reordered with the output of npdf transform.
         The arguments are those expected by TrainAdjust classes along with
         - kinds : Dict of correction kinds for each variable (e.g. {"pr":"*", "tasmax":"+"})
-    adj_kws_scen : Dict
+    adj_kws : Dict
         Options for univariate adjust for the scenario that is reordered with the output of npdf transform
     period_dim : str | None (defaults to None)
         Name of the period dimension used when stacking time periods of `sim`  using :py:func:`xclim.core.calendar.stack_periods`.
@@ -300,10 +318,7 @@ def mbcn_adjust(
     # to confirm it works,  and on big data to check performance.
     dims = ["time"] if period_dim is None else [period_dim, "time"]
 
-    # arguments for univariate adjustment (step 1)
-    kinds = base_kws_scen["kinds"]
-    base_kws_scen.pop("kinds")
-
+    sim_u = sim.attrs["original_units"]
     # mbcn core
     scen_mbcn = xr.zeros_like(sim)
     for ib in range(gw_idxs[gr_dim].size):
@@ -318,8 +333,12 @@ def mbcn_adjust(
         scen_block = xr.zeros_like(sim[{"time": ind_gw}])
         for iv, v in enumerate(sim[pts_dims[0]].values):
             sl = {"time": ind_gw, pts_dims[0]: iv}
-            ADJ = base_scen.train(ref[sl], hist[sl], kind=kinds[v], **base_kws_scen)
-            scen_block[{pts_dims[0]: iv}] = ADJ.adjust(sim[sl], **adj_kws_scen).scen
+            ADJ = base.train(
+                ref[v][{"time": ind_gw}], hist[v][{"time": ind_gw}], **base_kws_vars[v]
+            )
+            scen_block[{pts_dims[0]: iv}] = ADJ.adjust(
+                sim[sl].assign_attrs({"units": sim_u[v]}), **adj_kws
+            ).scen
 
         # 2. npdft adjustment of sim
         npdft_block = xr.apply_ufunc(
@@ -350,7 +369,8 @@ def mbcn_adjust(
             scen_mbcn[{"time": ind_g}] = reordered[{"time": np.in1d(ind_gw, ind_g)}]
         else:
             scen_mbcn[{"time": ind_g}] = reordered
-    return scen_mbcn.to_dataset(name="scen")
+
+    return scen_mbcn
 
 
 @map_blocks(reduces=[Grouper.PROP, "quantiles"], scen=[])

@@ -37,6 +37,7 @@ from ._adjustment import (
     scaling_train,
 )
 from .base import Grouper, ParametrizableWithDataset, parse_group
+from .processing import stack_variables, unstack_variables
 from .utils import (
     ADDITIVE,
     best_pc_orientation_full,
@@ -362,6 +363,7 @@ class EmpiricalQuantileMapping(TrainAdjust):
         kind: str = ADDITIVE,
         group: str | Grouper = "time",
         adapt_freq_thresh: str | None = None,
+        jitter_under_thresh_value: str | None = None,
     ):
         if np.isscalar(nquantiles):
             quantiles = equally_spaced_nodes(nquantiles).astype(ref.dtype)
@@ -374,6 +376,7 @@ class EmpiricalQuantileMapping(TrainAdjust):
             kind=kind,
             quantiles=quantiles,
             adapt_freq_thresh=adapt_freq_thresh,
+            jitter_under_thresh_value=jitter_under_thresh_value,
         )
 
         ds.af.attrs.update(
@@ -460,6 +463,7 @@ class DetrendedQuantileMapping(TrainAdjust):
         kind: str = ADDITIVE,
         group: str | Grouper = "time",
         adapt_freq_thresh: str | None = None,
+        jitter_under_thresh_value: str | None = None,
     ):
         if group.prop not in ["group", "dayofyear"]:
             warn(
@@ -477,6 +481,7 @@ class DetrendedQuantileMapping(TrainAdjust):
             quantiles=quantiles,
             kind=kind,
             adapt_freq_thresh=adapt_freq_thresh,
+            jitter_under_thresh_value=jitter_under_thresh_value,
         )
 
         ds.af.attrs.update(
@@ -1235,14 +1240,14 @@ def time_group_indices(times, group):
 
 # Right now, the training part only outputs af_q
 # if it outputs also the corrected hist, it could be like NpdfTransform
-class MBCn(TrainAdjust):
+class MBCn(BaseAdjustment):
     r"""Multivariate bias correction function using the N-dimensional probability density function transform.
 
         ref: xr.DataArray | None = None,
         hist: xr.DataArray | None = None,
         base_scen : TrainAdjust = QuantileDeltaMapping,
         base_kws_scen: dict[str, Any] | None = None,
-        adj_kws_scen: dict[str, Any] | None = None,
+        adj_kws: dict[str, Any] | None = None,
         period_dim=None,
 
 
@@ -1282,11 +1287,11 @@ class MBCn(TrainAdjust):
         Target reference dataset also needed for univariate bias correction preceeding npdf transform
     hist: xr.DataArray
         Source dataset also needed for univariate bias correction preceeding npdf transform
-    base_scen : BaseAdjustment
+    base : BaseAdjustment
         Bias-adjustment class used for the univariate bias correction.
-    base_kws_scen : dict, optional
+    base_kws : dict, optional
         Arguments passed to the training in the univariate bias correction
-    adj_kws_scen : dict, optional
+    adj_kws : dict, optional
         Arguments passed to the adjusting in the univariate bias correction
     period_dim : str, optional
         Name of the period dimension used when stacking time periods of `sim`  using :py:func:`xclim.core.calendar.stack_periods`.
@@ -1355,8 +1360,8 @@ class MBCn(TrainAdjust):
     @classmethod
     def _train(
         cls,
-        ref: xr.DataArray,
-        hist: xr.DataArray,
+        ref: xr.Dataset,
+        hist: xr.Dataset,
         *,
         base_kws: dict[str, Any] | None = None,
         adj_kws: dict[str, Any] | None = None,
@@ -1384,10 +1389,18 @@ class MBCn(TrainAdjust):
         quantiles, group, interp, extrapolation = (
             kwargs[lab] for lab in ["nquantiles", "group", "interp", "extrapolation"]
         )
-        # prepare rotations
+        # stack variables and prepare rotations
+        if rot_matrices is not None:
+            pts_dim = rot_matrices.attrs["crd_dim"]
+        else:
+            pts_dim = xr.core.utils.get_temp_dimname(
+                set(ref.dims).union(hist.dims), "multivar"
+            )
         rot_dim = xr.core.utils.get_temp_dimname(
             set(ref.dims).union(hist.dims), pts_dim + "_prime"
         )
+        ref = stack_variables(ref, pts_dim)
+        hist = stack_variables(hist, pts_dim)
         pts_dims = (pts_dim, rot_dim)
         if rot_matrices is None:
             rot_matrices = rand_rot_matrix(
@@ -1423,71 +1436,85 @@ class MBCn(TrainAdjust):
             standard_name="Adjustment factors",
             long_name="Quantile mapping adjustment factors",
         )
-        return out, {
+        params = {
             "group": group,
             "interp": interp,
             "extrapolation": extrapolation,
             "pts_dims": pts_dims,
         }
+        obj = cls(
+            _trained=True,
+            hist_calendar=get_calendar(hist),
+            train_units="",
+            **params,
+        )
+        obj.set_dataset(out)
+        return obj
 
-    # I should probably separate base_scen from base_kws_scen below
-    # more like other BC functions here
-    # ref and hist are in fact non-optional, but I think this would not work with the train adjust function excepting only sim as
-    # arg
     def _adjust(
         self,
-        sim: xr.DataArray,
+        sim: xr.Dataset,
         *,
-        ref: xr.DataArray | None = None,
-        hist: xr.DataArray | None = None,
-        base_scen: TrainAdjust = QuantileDeltaMapping,
-        base_kws_scen: dict[str, Any] | None = None,
-        adj_kws_scen: dict[str, Any] | None = None,
+        ref: xr.Dataset | None = None,
+        hist: xr.Dataset | None = None,
+        base: TrainAdjust = QuantileDeltaMapping,
+        base_kws_vars: dict[str, Any] | None = None,
+        adj_kws: dict[str, Any] | None = None,
         period_dim=None,
     ):
+        sim = stack_variables(sim, self.pts_dims[0])
         # set default values for non-specified parameters
         # check compatibility between training and adjusting parameters
-        base_kws_scen = base_kws_scen if base_kws_scen is not None else {}
-        adj_kws_scen = adj_kws_scen if adj_kws_scen is not None else {}
-
-        base_kws_scen.setdefault("nquantiles", self.ds.af_q.quantiles.values)
-        if np.isscalar(base_kws_scen["nquantiles"]):
-            base_kws_scen["nquantiles"] = equally_spaced_nodes(
-                base_kws_scen["nquantiles"]
-            )
-
-        base_kws_scen.setdefault("group", self.group)
-        if isinstance(base_kws_scen["group"], str):
-            base_kws_scen["group"] = Grouper(base_kws_scen["group"], 1)
-
-        if "kind" in base_kws_scen.keys() and "kinds" in base_kws_scen.keys():
-            warn(
-                "Both `kind` and `kinds` are specified in `base_kws_scen`, expected one of them. 'kinds' will be used"
-            )
-        base_kws_scen.setdefault("kind", "+")
-        base_kws_scen.setdefault(
-            "kinds", {v: base_kws_scen["kind"] for v in sim[self.pts_dims[0]].values}
+        base_kws_vars = (
+            base_kws_vars
+            if base_kws_vars is not None
+            else {v: {} for v in ref[self.pts_dims[0]].values}
         )
-        base_kws_scen.pop("kind")
+        adj_kws = adj_kws if adj_kws is not None else {}
+        # for k in base_kws_vars.keys():
+        #     base_kws_vars[k].setdefault("nquantiles", self.ds.af_q.quantiles.values)
+        #     if np.isscalar(base_kws_vars[k]["nquantiles"]):
+        #         base_kws_vars["nquantiles"] = equally_spaced_nodes(
+        #             base_kws_vars["nquantiles"]
+        #         )
+        #     base_kws_scen[k].setdefault("group", self.group)
+        # if isinstance(base_kws_scen["group"], str):
+        #     base_kws_scen["group"] = Grouper(base_kws_scen["group"], 1)
+
+        # if "kind" in base_kws_scen.keys() and "kinds" in base_kws_scen.keys():
+        #     warn(
+        #         "Both `kind` and `kinds` are specified in `base_kws_scen`, expected one of them. 'kinds' will be used"
+        #     )
+        # base_kws_scen.setdefault("kind", "+")
+        # base_kws_scen.setdefault(
+        #     "kinds", {v: base_kws_scen["kind"] for v in sim[self.pts_dims[0]].values}
+        # )
+        # base_kws_scen.pop("kind")
 
         # nquantiles and group must be the same in train and adjust
         # Not sure we want to allow use of different quantiles for npdf and scen parts?
-        err_ks = []
-        if (base_kws_scen["nquantiles"] != self.ds.af_q.quantiles.values).all():
-            err_ks.append("nquantiles")
-        if base_kws_scen["group"] != self.group:
-            err_ks.append("group")
-        if err_ks != []:
-            raise ValueError(
-                ",".join(err_ks)
-                + " must be the same for npdf (`base_kws`) and) and scenario (`base_kws_scen`)"
-            )
+        # err_ks = []
+        # if (base_kws_scen["nquantiles"] != self.ds.af_q.quantiles.values).all():
+        #     err_ks.append("nquantiles")
+        # if base_kws_scen["group"] != self.group:
+        #     err_ks.append("group")
+        # if err_ks != []:
+        #     raise ValueError(
+        #         ",".join(err_ks)
+        #         + " must be the same for npdf (`base_kws`) and) and scenario (`base_kws_scen`)"
+        #     )
 
         # Info for `group` already in g_idxs, gw_idxs. Just needed to check compability in case
         # `group` is given in base_kws_scen
-        base_kws_scen.pop("group")
+        # base_kws_vars.pop("group")
+        for v in base_kws_vars.keys():
+            base_kws_vars[v].setdefault("group", self.group)
+            base_kws_vars[v].pop("group")
+            base_kws_vars[v].setdefault("nquantiles", self.ds.af_q.quantiles.values)
+        adj_kws.setdefault("interp", self.interp)
+        adj_kws.setdefault("extrapolation", self.extrapolation)
 
-        return mbcn_adjust(
+        out = mbcn_adjust(
             ref,
             hist,
             sim,
@@ -1495,11 +1522,15 @@ class MBCn(TrainAdjust):
             self.pts_dims,
             self.interp,
             self.extrapolation,
-            base_scen,
-            base_kws_scen,
-            adj_kws_scen,
+            base,
+            base_kws_vars,
+            adj_kws,
             period_dim,
-        ).scen
+        )
+        out = unstack_variables(out)
+        for v in out.data_vars:
+            out[v].attrs["units"] = sim.attrs["original_units"][v]
+        return out
 
 
 try:
