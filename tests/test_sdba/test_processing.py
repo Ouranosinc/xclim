@@ -10,7 +10,6 @@ from xclim.sdba.adjustment import EmpiricalQuantileMapping
 from xclim.sdba.base import Grouper
 from xclim.sdba.processing import (
     adapt_freq,
-    construct_moving_yearly_window,
     escore,
     from_additive_space,
     jitter,
@@ -21,7 +20,6 @@ from xclim.sdba.processing import (
     stack_variables,
     standardize,
     to_additive_space,
-    unpack_moving_yearly_window,
     unstack_variables,
     unstandardize,
 )
@@ -282,45 +280,3 @@ def test_stack_variables(open_dataset):
     ds1p = unstack_variables(da1)
 
     xr.testing.assert_equal(ds1, ds1p)
-
-
-@pytest.mark.parametrize(
-    "window,step,lengths",
-    [
-        (1, 1, 151),
-        (5, 5, 30),
-        (10, 10, 15),
-        (25, 25, 6),
-        (50, 50, 3),
-        (None, None, 131),
-    ],
-)
-def test_construct_moving_yearly_window(open_dataset, window, step, lengths):
-    ds = open_dataset("sdba/CanESM2_1950-2100.nc")
-
-    calls = {k: v for k, v in dict(window=window, step=step).items() if v is not None}
-    da_windowed = construct_moving_yearly_window(ds.tasmax, **calls)
-
-    assert len(da_windowed) == lengths
-
-
-def test_construct_moving_yearly_window_standard_calendar(tasmin_series):
-    tasmin = tasmin_series(np.zeros(365 * 30), start="1997-01-01", units="degC")
-
-    with pytest.raises(ValueError):
-        construct_moving_yearly_window(tasmin)
-
-
-@pytest.mark.parametrize("append_ends", [True, False])
-def test_unpack_moving_yearly_window(open_dataset, append_ends):
-    tasmax = open_dataset("sdba/ahccd_1950-2013.nc").tasmax
-
-    tasmax_windowed = construct_moving_yearly_window(tasmax)
-
-    tx_deconstructed = unpack_moving_yearly_window(
-        tasmax_windowed, append_ends=append_ends
-    )
-    if append_ends:
-        np.testing.assert_array_equal(tasmax, tx_deconstructed)
-    else:
-        assert len(tx_deconstructed.time) < len(tasmax.time)

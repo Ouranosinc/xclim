@@ -24,7 +24,7 @@ Anaconda release
 For ease of installation across operating systems, we also offer an Anaconda Python package hosted on conda-forge.
 This version tends to be updated at around the same frequency as the PyPI-hosted library, but can lag by a few days at times.
 
-`xclim` can be installed from conda-forge wth the following:
+`xclim` can be installed from conda-forge with the following:
 
 .. code-block:: shell
 

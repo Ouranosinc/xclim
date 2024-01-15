@@ -15,6 +15,7 @@ import pandas as pd
 import xarray as xr
 from xarray.coding.cftime_offsets import to_cftime_datetime
 from xarray.coding.cftimeindex import CFTimeIndex
+from xarray.core import dtypes
 from xarray.core.resample import DataArrayResample, DatasetResample
 
 from xclim.core.utils import DayOfYearStr, uses_dask
@@ -45,8 +46,10 @@ __all__ = [
     "percentile_doy",
     "resample_doy",
     "select_time",
+    "stack_periods",
     "time_bnds",
     "uniform_calendars",
+    "unstack_periods",
     "within_bnds_doy",
     "yearly_interpolated_doy",
     "yearly_random_doy",
@@ -189,12 +192,12 @@ def common_calendar(calendars: Sequence[str], join="outer") -> str:
     join : {'inner', 'outer'}
       The criterion for the common calendar.
 
-      - 'outer': the common calendar is the smallest calendar (in number of days by year)
-                 that will include all the dates of the other calendars. When converting
-                 the data to this calendar, no timeseries will lose elements, but some
+      - 'outer': the common calendar is the smallest calendar (in number of days by year) that will include all the
+                 dates of the other calendars.
+                 When converting the data to this calendar, no timeseries will lose elements, but some
                  might be missing (gaps or NaNs in the series).
-      - 'inner': the common calender is the smallest calendar of the list. When converting
-                 the data to this calendar, no timeseries will have missing elements (no gaps or NaNs),
+      - 'inner': the common calendar is the smallest calendar of the list.
+                 When converting the data to this calendar, no timeseries will have missing elements (no gaps or NaNs),
                  but some might be dropped.
 
     Examples
@@ -503,7 +506,9 @@ def convert_calendar(
         target = date_range_like(source[dim], cal_tgt)
 
     if isinstance(target, xr.DataArray):
-        out = out.reindex({dim: target}, fill_value=missing or np.nan)
+        out = out.reindex(
+            {dim: target}, fill_value=missing if missing is not None else np.nan
+        )
 
     # Copy attrs but change remove `calendar` is still present.
     out[dim].attrs.update(source[dim].attrs)
@@ -1097,7 +1102,7 @@ def time_bnds(  # noqa: C901
         is_on_offset = period.onOffset
         eps = pd.Timedelta(precision or "1U").to_pytimedelta()
         day = pd.Timedelta("1D").to_pytimedelta()
-        floor.pop("nanosecond")  # unsuported by cftime
+        floor.pop("nanosecond")  # unsupported by cftime
     else:
         period = pd.tseries.frequencies.to_offset(freq)
         is_on_offset = period.is_on_offset
@@ -1588,3 +1593,348 @@ def select_time(
         mask["time"] = da.time
 
     return da.where(mask, drop=drop)
+
+
+def _month_is_first_period_month(time, freq):
+    """Returns True if the given time is from the first month of freq."""
+    if isinstance(time, cftime.datetime):
+        frqM = xr.coding.cftime_offsets.to_offset("MS")
+        frq = xr.coding.cftime_offsets.to_offset(freq)
+        if frqM.onOffset(time):
+            return frq.onOffset(time)
+        return frq.onOffset(frqM.rollback(time))
+    # Pandas
+    time = pd.Timestamp(time)
+    frqM = pd.tseries.frequencies.to_offset("MS")
+    frq = pd.tseries.frequencies.to_offset(freq)
+    if frqM.is_on_offset(time):
+        return frq.is_on_offset(time)
+    return frq.is_on_offset(frqM.rollback(time))
+
+
+def stack_periods(
+    da: xr.Dataset | xr.DataArray,
+    window: int = 30,
+    stride: int | None = None,
+    min_length: int | None = None,
+    freq: str = "YS",
+    dim: str = "period",
+    start: str = "1970-01-01",
+    align_days: bool = True,
+    pad_value=dtypes.NA,
+):
+    """Construct a multi-period array
+
+    Stack different equal-length periods of `da` into a new 'period' dimension.
+
+    This is similar to ``da.rolling(time=window).construct(dim, stride=stride)``, but adapted for arguments
+    in terms of a base temporal frequency that might be non uniform (years, months, etc).
+    It is reversible for some cases (see `stride`). A rolling-construct method will be much more performant for uniform periods (days, weeks).
+
+    Parameters
+    ----------
+    da : xr.Dataset or xr.DataArray
+        An xarray object with a `time` dimension.
+        Must have an uniform timestep length.
+        Output might be strange if this does not use an uniform calendar (noleap, 360_day, all_leap).
+    window : int
+        The length of the moving window as a multiple of ``freq``.
+    stride : int, optional
+        At which interval to take the windows, as a multiple of ``freq``.
+        For the operation to be reversible with :py:func:`unstack_periods`, it must divide `window` into an odd number of parts.
+        Default is `window` (no overlap between periods).
+    min_length : int, optional
+        Windows shorter than this are not included in the output.
+        Given as a multiple of ``freq``. Default is ``window`` (every window must be complete).
+        Similar to the ``min_periods`` argument of  ``da.rolling``.
+        If ``freq`` is annual or quarterly and ``min_length == ``window``, the first period is considered complete
+        if the first timestep is in the first month of the period.
+    freq : str
+        Units of ``window``, ``stride`` and ``min_length``, as a frequency string.
+        Must be larger or equal to the data's sampling frequency.
+        Note that this function offers an easier interface for non uniform period (like years or months)
+        but is much slower than a rolling-construct method.
+    dim : str
+        The new dimension name.
+    start : str
+        The `start` argument passed to :py:func:`xarray.date_range` to generate the new placeholder
+        time coordinate.
+    align_days : bool
+        When True (default), an error is raised if the output would have unaligned days across periods.
+        If `freq = 'YS'`, day-of-year alignment is checked and if `freq` is "MS" or "QS", we check day-in-month.
+        Only uniform-calendar will pass the test for `freq='YS'`. For other frequencies, only the `360_day` calendar will work.
+        This check is ignored if the sampling rate of the data is coarser than "D".
+    pad_value: Any
+        When some periods are shorter than others, this value is used to pad them at the end.
+        Passed directly as argument ``fill_value`` to :py:func:`xarray.concat`, the default is the same as on that function.
+
+    Return
+    ------
+    xr.DataArray
+        A DataArray with a new `period` dimension and a `time` dimension with the length of the longest window.
+        The new time coordinate has the same frequency as the input data but is generated using
+        :py:func:`xarray.date_range` with the given `start` value.
+        That coordinate is the same for all periods, depending on the choice of ``window`` and ``freq``, it might make sense.
+        But for unequal periods or non-uniform calendars, it will certainly not.
+        If ``stride`` is a divisor of ``window``, the correct timeseries can be reconstructed with :py:func:`unstack_periods`.
+        The coordinate of `period` is the first timestep of each windows.
+    """
+    from xclim.core.units import (  # Import in function to avoid cyclical imports
+        ensure_cf_units,
+        infer_sampling_units,
+    )
+
+    stride = stride or window
+    min_length = min_length or window
+    if stride > window:
+        raise ValueError(
+            f"Stride must be less than or equal to window. Got {stride} > {window}."
+        )
+
+    srcfreq = xr.infer_freq(da.time)
+    cal = da.time.dt.calendar
+    use_cftime = da.time.dtype == "O"
+
+    if (
+        compare_offsets(srcfreq, "<=", "D")
+        and align_days
+        and (
+            (freq.startswith(("Y", "A")) and cal not in uniform_calendars)
+            or (freq.startswith(("Q", "M")) and window > 1 and cal != "360_day")
+        )
+    ):
+        if freq.startswith(("Y", "A")):
+            u = "year"
+        else:
+            u = "month"
+        raise ValueError(
+            f"Stacking {window}{freq} periods will result in unaligned day-of-{u}. "
+            f"Consider converting the calendar of your data to one with uniform {u} lengths, "
+            "or pass `align_days=False` to disable this check."
+        )
+
+    # Convert integer inputs to freq strings
+    mult, *args = parse_offset(freq)
+    win_frq = construct_offset(mult * window, *args)
+    strd_frq = construct_offset(mult * stride, *args)
+    minl_frq = construct_offset(mult * min_length, *args)
+
+    # The same time coord as da, but with one extra element.
+    # This way, the last window's last index is not returned as None by xarray's grouper.
+    time2 = xr.DataArray(
+        xr.date_range(
+            da.time[0].item(),
+            freq=srcfreq,
+            calendar=cal,
+            periods=da.time.size + 1,
+            use_cftime=use_cftime,
+        ),
+        dims=("time",),
+        name="time",
+    )
+
+    periods = []
+    longest = 0
+    # Iterate over strides, but recompute the full window for each stride start
+    for begin, strd_slc in da.resample(time=strd_frq).groups.items():
+        win_resamp = time2.isel(time=slice(strd_slc.start, None)).resample(time=win_frq)
+        # Get slice for first group
+        win_slc = win_resamp._group_indices[0]
+        if min_length < window:
+            # If we ask for a min_length period instead is it complete ?
+            min_resamp = time2.isel(time=slice(strd_slc.start, None)).resample(
+                time=minl_frq
+            )
+            min_slc = min_resamp._group_indices[0]
+            open_ended = min_slc.stop is None
+        else:
+            # The end of the group slice is None if no outside-group value was found after the last element
+            # As we added an extra step to time2, we avoid the case where a group ends exactly on the last element of ds.
+            open_ended = win_slc.stop is None
+        if open_ended:
+            # Too short, we got to the end
+            break
+        if (
+            strd_slc.start == 0
+            and parse_offset(freq)[1] in "YAQ"
+            and min_length == window
+            and not _month_is_first_period_month(da.time[0].item(), freq)
+        ):
+            # For annual or quartely frequencies (which can be anchor-based), if the first time is not in the first month of the first period,
+            # then the first period is incomplete but by a fractional amount.
+            continue
+        periods.append(
+            slice(
+                strd_slc.start + win_slc.start,
+                (strd_slc.start + win_slc.stop)
+                if win_slc.stop is not None
+                else da.time.size,
+            )
+        )
+
+    # Make coordinates
+    lengths = xr.DataArray(
+        [slc.stop - slc.start for slc in periods],
+        dims=(dim,),
+        attrs={"long_name": "Length of each period"},
+    )
+    longest = lengths.max().item()
+    # Length as a pint-ready array : with proper units, but values are not usable as indexes anymore
+    m, u = infer_sampling_units(da)
+    lengths = lengths * m
+    lengths.attrs["units"] = ensure_cf_units(u)
+    # Start points for each periods + remember parameters for unstacking
+    starts = xr.DataArray(
+        [da.time[slc.start].item() for slc in periods],
+        dims=(dim,),
+        attrs={
+            "long_name": "Start of the period",
+            # Save parameters so that we can unstack.
+            "window": window,
+            "stride": stride,
+            "freq": freq,
+            "unequal_lengths": int(len(np.unique(lengths)) > 1),
+        },
+    )
+    # The "fake" axis that all periods share
+    fake_time = xr.date_range(
+        start, periods=longest, freq=srcfreq, calendar=cal, use_cftime=use_cftime
+    )
+    # Slice and concat along new dim. We drop the index and add a new one so that xarray can concat them together.
+    out = xr.concat(
+        [
+            da.isel(time=slc)
+            .drop_vars("time")
+            .assign_coords(time=np.arange(slc.stop - slc.start))
+            for slc in periods
+        ],
+        dim,
+        join="outer",
+        fill_value=pad_value,
+    )
+    out = out.assign_coords(
+        time=(("time",), fake_time, da.time.attrs.copy()),
+        **{f"{dim}_length": lengths, dim: starts},
+    )
+    out.time.attrs.update(long_name="Placeholder time axis")
+    return out
+
+
+def unstack_periods(da: xr.DataArray | xr.Dataset, dim: str = "period"):
+    """Unstack an array constructed with :py:func:`stack_periods`.
+
+    Can only work with periods stacked with a ``stride`` that divides ``window`` in an odd number of sections.
+    When ``stride`` is smaller than ``window``, only the center-most stride of each window is kept,
+    except for the beginning and end which are taken from the first and last windows.
+
+    Parameters
+    ----------
+    da : xr.DataArray
+        As constructed by :py:func:`stack_periods`, attributes of the period coordinates must have been preserved.
+    dim : str
+        The period dimension name.
+
+    Notes
+    -----
+    The following table shows which strides are included (``o``) in the unstacked output.
+    in this example, ``stride`` was a fifth of ``window`` and  ``min_length`` was 4 times ``stride``.
+    The row index ``i``  the period index in the stacked dataset, columns are the stride-long section of the original
+    timeseries.
+
+    .. table:: Unstacking example with ``stride < window``.
+
+        === === === === === === === ===
+         i   0   1   2   3   4   5   6
+        === === === === === === === ===
+         3               x   x   o   o
+         2           x   x   o   x   x
+         1       x   x   o   x   x
+         0   o   o   o   x   x
+        === === === === === === === ===
+    """
+    from xclim.core.units import infer_sampling_units
+
+    try:
+        starts = da[dim]
+        window = starts.attrs["window"]
+        stride = starts.attrs["stride"]
+        freq = starts.attrs["freq"]
+        unequal_lengths = bool(starts.attrs["unequal_lengths"])
+    except (AttributeError, KeyError) as err:
+        raise ValueError(
+            f"`unstack_periods` can't find the window, stride and freq attributes on the {dim} coordinates."
+        ) from err
+
+    if unequal_lengths:
+        try:
+            lengths = da[f"{dim}_length"]
+        except KeyError as err:
+            raise ValueError(
+                f"`unstack_periods` can't find the `{dim}_length` coordinate."
+            ) from err
+        # Get length as number of points
+        m, u = infer_sampling_units(da.time)
+        lengths = lengths // m
+    else:
+        # It is acceptable to lose "{dim}_length" if they were all equal
+        lengths = xr.DataArray([da.time.size] * da[dim].size, dims=(dim,))
+
+    # Convert from the fake axis to the real one
+    time_as_delta = da.time - da.time[0]
+    if da.time.dtype == "O":
+        # cftime can't add with np.timedelta64 (restriction comes from numpy which refuses to add O with m8)
+        time_as_delta = pd.TimedeltaIndex(
+            time_as_delta
+        ).to_pytimedelta()  # this array is O, numpy complies
+    else:
+        # Xarray will return int when iterating over datetime values, this returns timestamps
+        starts = pd.DatetimeIndex(starts)
+
+    def _reconstruct_time(start):
+        times = time_as_delta + start
+        return xr.DataArray(times, dims=("time",), coords={"time": times}, name="time")
+
+    # Easy case:
+    if window == stride:
+        # just concat them all
+        periods = []
+        for i, (start, length) in enumerate(zip(starts.values, lengths.values)):
+            real_time = _reconstruct_time(start)
+            periods.append(
+                da.isel(**{dim: i}, drop=True)
+                .isel(time=slice(0, length))
+                .assign_coords(time=real_time.isel(time=slice(0, length)))
+            )
+        return xr.concat(periods, "time")
+
+    # Difficult and ambiguous case
+    if (window / stride) % 2 != 1:
+        raise NotImplementedError(
+            "`unstack_periods` can't work with strides that do not divide the window into an odd number of parts."
+            f"Got {window} / {stride} which is not an odd integer."
+        )
+
+    # Non-ambiguous overlapping case
+    Nwin = window // stride
+    mid = (Nwin - 1) // 2  # index of the center window
+
+    mult, *args = parse_offset(freq)
+    strd_frq = construct_offset(mult * stride, *args)
+
+    periods = []
+    for i, (start, length) in enumerate(zip(starts.values, lengths.values)):
+        real_time = _reconstruct_time(start)
+        slices = real_time.resample(time=strd_frq)._group_indices
+        if i == 0:
+            slc = slice(slices[0].start, min(slices[mid].stop, length))
+        elif i == da.period.size - 1:
+            slc = slice(slices[mid].start, min(slices[Nwin - 1].stop or length, length))
+        else:
+            slc = slice(slices[mid].start, min(slices[mid].stop, length))
+        periods.append(
+            da.isel(**{dim: i}, drop=True)
+            .isel(time=slc)
+            .assign_coords(time=real_time.isel(time=slc))
+        )
+
+    return xr.concat(periods, "time")

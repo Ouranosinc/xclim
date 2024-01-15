@@ -9,7 +9,6 @@ on:
       - Makefile
       - pyproject.toml
       - requirements_upstream.txt
-      - setup.cfg
       - tox.ini
       - xclim/__init__.py
       - docs/**.ipynb
@@ -19,6 +18,9 @@ on:
       - .pre-commit-config.yaml
   schedule:
     - cron: '30 23 * * 5'
+
+permissions:  # added using https://github.com/step-security/secure-repo
+  actions: read
 
 jobs:
   analyze:
@@ -34,6 +36,10 @@ jobs:
         language:
           - 'python'
     steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@eb238b55efaa70779f274895e782ed17c84f2895 # v2.6.1
+        with:
+          egress-policy: audit
       - name: Checkout repository
         uses: actions/checkout@v4.1.1
       # Initializes the CodeQL tools for scanning.

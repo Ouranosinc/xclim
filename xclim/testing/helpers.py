@@ -140,6 +140,7 @@ def populate_testing_data(
         "sdba/ahccd_1950-2013.nc",
         "sdba/nrcan_1950-2013.nc",
         "uncertainty_partitioning/cmip5_pr_global_mon.nc",
+        "uncertainty_partitioning/seattle_avg_tas.csv",
     ]
 
     data = dict()
@@ -221,7 +222,7 @@ def add_example_file_paths(cache_dir: Path) -> dict[str]:
 def test_timeseries(
     values,
     variable,
-    start="7/1/2000",
+    start="2000-07-01",
     units=None,
     freq="D",
     as_dataset=False,
@@ -256,7 +257,7 @@ def test_timeseries(
 
 
 def _raise_on_compute(dsk: dict):
-    """Raise an AssertionError mentionning the number triggered tasks."""
+    """Raise an AssertionError mentioning the number triggered tasks."""
     raise AssertionError(
         f"Not lazy. Computation was triggered with a graph of {len(dsk)} tasks."
     )

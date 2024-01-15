@@ -2,6 +2,44 @@
 Changelog
 =========
 
+v0.48 (unreleased)
+------------------
+Contributors to this version: Juliette Lavoie (:user:`juliettelavoie`), Pascal Bourgault (:user:`aulemahal`), Trevor James Smith (:user:`Zeitsperre`), David Huard (:user:`huard`), Éric Dupuis (:user:`coxipi`).
+
+Announcements
+^^^^^^^^^^^^^
+* `xclim` now adheres to the `Semantic Versioning 2.0.0 <https://semver.org/>`_ specification. (:issue:`1556`, :pull:`1569`).
+* The `xclim` repository now uses `GitHub Discussions <https://github.com/Ouranosinc/xclim/discussions>`_ to offer help for users, coordinate translation efforts, and support general Q&A for the `xclim` community. The `xclim` `Gitter` room has been deprecated in favour of GitHub Discussions. (:issue:`1571`, :pull:`1572`).
+
+New features and enhancements
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+* Added uncertainty partitioning method `lafferty_sriver` from Lafferty and Sriver (2023), which can partition uncertainty related to the downscaling method. (:issue:`1497`, :pull:`1529`).
+* Validate YAML indicators description before trying to build module. (:issue:`1523`, :pull:`1560`).
+* Support ``indexer`` keyword in YAML indicator description. (:issue:`1522`, :pull:`1561`).
+* New ``xclim.core.calendar.stack_periods`` and ``unstack_periods`` for performing ``rolling(time=...).construct(..., stride=...)`` but with non-uniform temporal periods like years or months. They replace ``xclim.sdba.processing.construct_moving_yearly_window`` and ``unpack_moving_yearly_window`` which are deprecated and will be removed in a future release.
+
+Breaking changes
+^^^^^^^^^^^^^^^^
+* `bump2version` has been replaced with `bump-my-version` to bump the version number using configurations set in the `pyproject.toml` file. (:issue:`1557`, :pull:`1569`).
+* `xclim`'s units registry and units formatting are now extended from `cf-xarray`. The exponent sign "^" is now never added in the ``units`` attribute. For example, square meters are given as "m2" instead of "m^2" by xclim, both are still accepted as input. (:issue:`1010`, :pull:`1590`).
+* `yamale` is now listed as a core dependency (was previously listed in the `dev` installation recipe). (:issue:`1595`, :pull:`1596`).
+
+Bug fixes
+^^^^^^^^^
+* Fixed passing ``missing=0`` to ``xclim.core.calendar.convert_calendar``. (:issue:`1562`, :pull:`1563`).
+* Fix wrong `window` attributes in ``xclim.indices.standardized_precipitation_index``, ``xclim.indices.standardized_precipitation_evapotranspiration_index``. (:issue:`1552`  :pull:`1554`).
+* Several spelling mistakes have been corrected within the documentation and codebase. (:pull:`1576`).
+
+Internal changes
+^^^^^^^^^^^^^^^^
+* The `flake8` configuration has been migrated from `setup.cfg` to `.flake8`; `setup.cfg` has been removed. (:pull:`1569`)
+* The `bump-version.yml` workflow has been adjusted to bump the `patch` version when the last version is determined to have been a `release` version; otherwise, the `build` version is bumped. (:issue:`1557`, :pull:`1569`).
+* The GitHub Workflows now use the `step-security/harden-runner` action to monitor source code, actions, and dependency safety. All workflows now employ more constrained permissions rule sets to prevent security issues. (:pull:`1577`, :pull:`1578`).
+* Updated the CONTRIBUTING.rst directions to showcase the new versioning system. (:issue:`1557`, :pull:`1573`).
+* The `codespell` library is now a development dependency for the `dev` installation recipe with configurations found within `pyproject.toml`. This is also now a linting step and integrated as a `pre-commit` hook. For more information, see the `codespell documentation <https://github.com/codespell-project/codespell>`_ (:pull:`1576`).
+* Climate indicators search page now prioritizes the "official" indicators (atmos, land, seaIce and generic), virtual submodules can be added to search through checkbox option. (:issue:`1559`, :pull:`1593`).
+
+
 v0.47.0 (2023-12-01)
 --------------------
 Contributors to this version: Juliette Lavoie (:user:`juliettelavoie`), Pascal Bourgault (:user:`aulemahal`), Trevor James Smith (:user:`Zeitsperre`), David Huard (:user:`huard`), Éric Dupuis (:user:`coxipi`).
@@ -285,7 +323,7 @@ New features and enhancements
     * ``xclim.core.calendar.yearly_interpolated_doy``
     * ``xclim.core.calendar.yearly_random_doy``
 * `scipy` is no longer pinned below v1.9 and `lmoments3>=1.0.5` is now a core dependency and installed by default with `pip`. (:issue:`1142`, :pull:`1171`).
-* Fix bug on number of bins in ``xclim.sdba.propeties.spatial_correlogram``. (:pull:`1336`)
+* Fix bug on number of bins in ``xclim.sdba.properties.spatial_correlogram``. (:pull:`1336`)
 * Add `resample_before_rl` argument to control when resampling happens in `maximum_consecutive_{frost|frost_free|dry|tx}_days` and in heat indices (in `_threshold`)  (:issue:`1329`, :pull:`1331`)
 * Add ``xclim.ensembles.make_criteria`` to help create inputs for the ensemble-reduction methods. (:issue:`1338`, :pull:`1341`).
 
@@ -1039,7 +1077,7 @@ Bug fixes
 * Dimensions in a grouper's ``add_dims`` are now taken into consideration in function wrapped with ``map_blocks/groups``. This feature is still not fully tested throughout ``sdba`` though, so use with caution.
 * Better dtype preservation throughout ``sdba``.
 * "constant" extrapolation in the quantile mappings' adjustment is now padding values just above and under the target's max and min, instead of ``±np.inf``.
-* Fixes in ``sdba.LOCI`` for the case where a grouping with additionnal dimensions is used.
+* Fixes in ``sdba.LOCI`` for the case where a grouping with additional dimensions is used.
 
 Internal Changes
 ^^^^^^^^^^^^^^^^
@@ -1107,7 +1145,7 @@ New indicators
 Internal Changes
 ^^^^^^^^^^^^^^^^
 * ``aggregate_between_dates`` (introduced in v0.27.0) now accepts ``DayOfYear``-like strings for supplying start and end dates (e.g. ``start="02-01", end="10-31"``).
-* The indicator call sequence now considers "variable" the inputs annoted so. Dropped the ``nvar`` attribute.
+* The indicator call sequence now considers "variable" the inputs annotated so. Dropped the ``nvar`` attribute.
 * Default cfcheck is now to check metadata according to the variable name, using CMIP6 names in xclim/data/variable.yml.
 * ``Indicator.missing`` defaults to "skip" if ``freq`` is absent from the list of parameters.
 * Minor modifications to the GitHub Pull Requests template.
@@ -1154,7 +1192,7 @@ New indicators
 Internal Changes
 ^^^^^^^^^^^^^^^^
 * `run_length.rle_statistics` now accepts a `window` argument.
-* Common arguments to the `op` parameter now have better adjective and noun formattings.
+* Common arguments to the `op` parameter now have better adjective and noun formatting.
 * Added and adjusted typing in call signatures and docstrings, with grammar fixes, for many `xclim.indices` operations.
 * Added internal function ``aggregate_between_dates`` for array aggregation operations using xarray datetime arrays with start and end DayOfYear values.
 
@@ -1390,7 +1428,7 @@ Breaking changes
 * The python library `pandoc` is no longer listed as a docs build requirement. Documentation still requires a current
   version of `pandoc` binaries installed at system-level.
 * ANUCLIM indices have seen their `input_freq` parameter renamed to `src_timestep` for clarity.
-* A clean-up and harmonization of the indicators metadata has changed some of the indicator identifiers, long_names, abstracts and titles. `xclim.atmos.drought_code` and `fire_weather_indexes` now have indentifiers "dc" and "fwi" (lowercase version of the previous identifiers).
+* A clean-up and harmonization of the indicators metadata has changed some of the indicator identifiers, long_names, abstracts and titles. `xclim.atmos.drought_code` and `fire_weather_indexes` now have identifiers "dc" and "fwi" (lowercase version of the previous identifiers).
 * `xc.indices.run_length.run_length_with_dates` becomes `xc.indices.run_length.season_length`. Its argument `date` is now optional and the default changes from "07-01" to `None`.
 * `xc.indices.consecutive_frost_days` becomes `xc.indices.maximum_consecutive_frost_days`.
 * Changed the `history` indicator output attribute to `xclim_history` in order to respect CF conventions.
@@ -1537,7 +1575,7 @@ v0.14.x (2020-02-21)
 * Refactoring of the documentation.
 * Added support for pint 0.10
 * Add `atmos.heat_wave_total_length` (fixing a namespace issue)
-* Fixes in `utils.percentile_doy` and `indices.winter_rain_ratio` for multidimensionnal datasets.
+* Fixes in `utils.percentile_doy` and `indices.winter_rain_ratio` for multidimensional datasets.
 * Rewrote the `subset.subset_shape` function to allow for dask.delayed (lazy) computation.
 * Added utility functions to compute `time_bnds` when resampling data encoded with `CFTimeIndex` (non-standard calendars).
 * Fix in `subset.subset_gridpoint` for dask array coordinates.

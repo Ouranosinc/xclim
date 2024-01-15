@@ -53,7 +53,7 @@ def test_update_xclim_history(atmosds):
     out = func(atmosds.tas, 1, arg2=[1, 2], arg3=None)
 
     matches = re.match(
-        r"\[([0-9-:\s]*)\]\s(\w*):\s(\w*)\((.*)\)\s-\sxclim\sversion:\s(\d*\.\d*\.\d*[a-zA-Z-]*)",
+        r"\[([0-9-:\s]*)]\s(\w*):\s(\w*)\((.*)\)\s-\sxclim\sversion:\s(\d*\.\d*\.\d*[a-zA-Z-]*(\.\d*)?)",
         out.attrs["history"],
     ).groups()
 

@@ -31,7 +31,7 @@ __all__ = [
 SIGNIFICANCE_TESTS = {}
 """Registry of change significance tests.
 
-New tests must be decorated with :py:func:`significance_test` and fullfill the following requirements:
+New tests must be decorated with :py:func:`significance_test` and fulfill the following requirements:
 
 - Function name should begin by "_", registered test name is the function name without its first character and with _ replaced by -.
 - Function must accept 2 positional arguments : fut and ref (see :py:func:`change_significance` for definitions)
@@ -51,7 +51,7 @@ def significance_test(func):
     return func
 
 
-# This function's docstring is modified to inlude the registered test names and docs.
+# This function's docstring is modified to include the registered test names and docs.
 # See end of this file.
 @update_xclim_history
 def robustness_fractions(  # noqa: C901
@@ -285,7 +285,7 @@ def change_significance(  # noqa: C901
         xr.DataArray | xr.Dataset | None,
     ]
 ):
-    """Backwards-compatible implementaton of :py:func:`robustness_fractions`."""
+    """Backwards-compatible implementation of :py:func:`robustness_fractions`."""
     warnings.warn(
         (
             "Function change_significance is deprecated as of xclim 0.47 and will be removed in 0.49. "

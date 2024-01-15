@@ -24,14 +24,16 @@ dependencies:
     - scipy >=1.2
     - statsmodels
     - xarray >=2022.06.0,<2023.11.0
+    - yamale
     # Extras
     - eofs
     - flox
   # Testing and development dependencies
     - black >=22.12
     - blackdoc
-    - bump2version
+    - bump-my-version
     - cairosvg
+    - codespell
     - coverage
     - distributed >=2.0
     - filelock
@@ -69,7 +71,6 @@ dependencies:
     - tox
 #    - tox-conda  # Will be added when a tox@v4.0+ compatible plugin is released.
     - xdoctest
-    - yamale
     - yamllint
     - pip
     - pip:

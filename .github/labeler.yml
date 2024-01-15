@@ -5,40 +5,53 @@
 #   we refer here to CI as the 'meta' configuration files for managing the code and integrations with the repository,
 #   not configurations related to the deployment process itself.
 
-API:
-  - xclim/cli.py
+'API':
+  - changed-files:
+    - any-glob-to-any-file:
+      - 'xclim/cli.py'
 
-CI:
-  - .editorconfig
-  - .pre-commit-config.yaml
-  - .readthedocs.yml
-  - .yamllint.yml
-  - .github/workflows/*
-  - docs/Makefile
-  - pylintrc
-  - tox.ini
-  - Makefile
+'CI':
+  - changed-files:
+    - any-glob-to-any-file:
+      - '.editorconfig'
+      - '.pre-commit-config.yaml'
+      - '.readthedocs.yml'
+      - '.yamllint.yml'
+      - '.github/workflows/*'
+      - 'docs/Makefile'
+      - 'pylintrc'
+      - 'tox.ini'
+      - 'Makefile'
 
-docs:
-  - .readthedocs.yml
-  - docs/**/*
-  - AUTHORS.rst
-  - CONTRIBUTING.rst
-  - ISSUE_TEMPLATE/**/*
-  - ISSUE_TEMPLATE.md
-  - PULL_REQUEST_TEMPLATE.md
-  - README.rst
+'docs':
+  - changed-files:
+    - any-glob-to-any-file:
+      - '.readthedocs.yml'
+      - 'docs/**/*'
+      - 'AUTHORS.rst'
+      - 'CONTRIBUTING.rst'
+      - 'CODE_OF_CONDUCT.md'
+      - 'DISCUSSION_TEMPLATE/**/*'
+      - 'ISSUE_TEMPLATE/**/*'
+      - 'ISSUE_TEMPLATE.md'
+      - 'PULL_REQUEST_TEMPLATE.md'
+      - 'README.rst'
 
-indicators:
-  - xclim/indicators/**/*
-  - xclim/indicators/**/*
-  - xclim/indices/**/_*.py
-  - xclim/data/**/*.json
-  - xclim/data/**/*.yml
+'indicators':
+  - changed-files:
+    - any-glob-to-any-file:
+      - 'xclim/indicators/**/*'
+      - 'xclim/indices/**/_*.py'
+      - 'xclim/data/**/*.json'
+      - 'xclim/data/**/*.yml'
 
-information:
-  - CONTRIBUTING.rst
+'information':
+  - changed-files:
+    - any-glob-to-any-file:
+      - 'CONTRIBUTING.rst'
 
-sdba:
-  - xclim/sdba/**/*
-  - tests/test_sdba/*.py
+'sdba':
+  - changed-files:
+    - any-glob-to-any-file:
+      - 'xclim/sdba/**/*'
+      - 'tests/test_sdba/*.py'

@@ -61,12 +61,6 @@ def test_custom_indices(open_dataset):
     # Use the example data used in the Extending Xclim notebook for testing.
     example_path = Path(__file__).parent.parent / "docs" / "notebooks" / "example"
 
-    schema = yamale.make_schema(
-        Path(__file__).parent.parent / "xclim" / "data" / "schema.yml"
-    )
-    data = yamale.make_data(example_path / "example.yml")
-    yamale.validate(schema, data)
-
     pr = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc").pr
 
     # This tests load_module with a python file that is _not_ on the PATH

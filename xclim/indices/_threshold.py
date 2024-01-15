@@ -1601,7 +1601,7 @@ def first_snowfall(
     Notes
     -----
     The 1 mm/day liquid water equivalent snowfall rate threshold in :cite:cts:`frei_snowfall_2018` corresponds
-    to the 1 cm/day snowfall rate threshold  in :cite:cts:`cbcl_climate_2020` using a snow denstiy of 100 kg/m**3.
+    to the 1 cm/day snowfall rate threshold  in :cite:cts:`cbcl_climate_2020` using a snow density of 100 kg/m**3.
 
     If threshold and prsn differ by a density (i.e. [length/time] vs. [mass/area/time]), a liquid water equivalent
     snowfall rate is assumed and the threshold is converted using a 1000 kg m-3 density.
@@ -1656,7 +1656,7 @@ def last_snowfall(
     Notes
     -----
     The 1 mm/day liquid water equivalent snowfall rate threshold in :cite:cts:`frei_snowfall_2018` corresponds
-    to the 1 cm/day snowfall rate threshold  in :cite:cts:`cbcl_climate_2020` using a snow denstiy of 100 kg/m**3.
+    to the 1 cm/day snowfall rate threshold  in :cite:cts:`cbcl_climate_2020` using a snow density of 100 kg/m**3.
 
     If threshold and prsn differ by a density (i.e. [length/time] vs. [mass/area/time]), a liquid water equivalent
     snowfall rate is assumed and the threshold is converted using a 1000 kg m-3 density.
@@ -1759,7 +1759,7 @@ def snowfall_frequency(
     Notes
     -----
     The 1 mm/day liquid water equivalent snowfall rate threshold in :cite:cts:`frei_snowfall_2018` corresponds
-    to the 1 cm/day snowfall rate threshold  in :cite:cts:`cbcl_climate_2020` using a snow denstiy of 100 kg/m**3.
+    to the 1 cm/day snowfall rate threshold  in :cite:cts:`cbcl_climate_2020` using a snow density of 100 kg/m**3.
 
     If threshold and prsn differ by a density (i.e. [length/time] vs. [mass/area/time]), a liquid water equivalent
     snowfall rate is assumed and the threshold is converted using a 1000 kg m-3 density.
@@ -1811,7 +1811,7 @@ def snowfall_intensity(
     Notes
     -----
     The 1 mm/day liquid water equivalent snowfall rate threshold in :cite:cts:`frei_snowfall_2018` corresponds
-    to the 1 cm/day snowfall rate threshold  in :cite:cts:`cbcl_climate_2020` using a snow denstiy of 100 kg/m**3.
+    to the 1 cm/day snowfall rate threshold  in :cite:cts:`cbcl_climate_2020` using a snow density of 100 kg/m**3.
 
     If threshold and prsn differ by a density (i.e. [length/time] vs. [mass/area/time]), a liquid water equivalent
     snowfall rate is assumed and the threshold is converted using a 1000 kg m-3 density.

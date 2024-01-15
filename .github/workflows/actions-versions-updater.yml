@@ -6,20 +6,38 @@ on:
     - cron:  '0 0 1 * *'
   workflow_dispatch:
 
+permissions:  # added using https://github.com/step-security/secure-repo
+  contents: read
+
 jobs:
   build:
     runs-on: ubuntu-latest
-
+    permissions:
+      actions: write
+      contents: write
+      pull-requests: write
     steps:
-      - uses: actions/checkout@v4.1.1
+      - name: Harden Runner
+        uses: step-security/harden-runner@eb238b55efaa70779f274895e782ed17c84f2895 # v2.6.1
         with:
-          token: ${{ secrets.BUMPVERSION_TOKEN }}
+          disable-sudo: true
+          egress-policy: block
+          allowed-endpoints: >
+            api.github.com:443
+            github.com:443
+
+      - name: Checkout
+        uses: actions/checkout@v4.1.1
+        with:
+          token: ${{ secrets.ACTIONS_VERSION_UPDATER_TOKEN }}
           persist-credentials: true
+
       - name: Run GitHub Actions Version Updater
         uses: saadmk11/github-actions-version-updater@v0.8.1
         with:
-          token: ${{ secrets.BUMPVERSION_TOKEN }}
+          token: ${{ secrets.ACTIONS_VERSION_UPDATER_TOKEN }}
           committer_email: 'bumpversion[bot]@ouranos.ca'
           committer_username: 'update-github-actions[bot]'
           pull_request_title: '[bot] Update GitHub Action Versions'
           pull_request_team_reviewers: "xclim-core"
+          update_version_with: "release-commit-sha"
