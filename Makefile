@@ -60,6 +60,7 @@ lint: ## check style with flake8 and black
 	nbqa black --check docs
 	blackdoc --check --exclude=xclim/indices/__init__.py xclim
 	blackdoc --check docs
+	codespell xclim tests docs
 	yamllint --config-file=.yamllint.yaml xclim
 
 test: ## run tests quickly with the default Python

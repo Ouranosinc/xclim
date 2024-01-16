@@ -2,82 +2,86 @@ default_language_version:
   python: python3
 
 repos:
-- repo: https://github.com/asottile/pyupgrade
-  rev: v3.15.0
-  hooks:
-  - id: pyupgrade
-    args: ['--py38-plus']
-    exclude: 'xclim/core/indicator.py'
-- repo: https://github.com/pre-commit/pre-commit-hooks
-  rev: v4.5.0
-  hooks:
-  - id: trailing-whitespace
-  - id: end-of-file-fixer
-    exclude: '.ipynb|.github/publish-mastodon.template.md'
-  - id: check-json
-  - id: check-toml
-  - id: check-yaml
-    args: [ '--allow-multiple-documents' ]
-  - id: debug-statements
-  - id: pretty-format-json
-    args: [ '--autofix', '--no-ensure-ascii', '--no-sort-keys' ]
-    exclude: '.ipynb'
-- repo: https://github.com/pappasam/toml-sort
-  rev: v0.23.1
-  hooks:
-  - id: toml-sort-fix
-- repo: https://github.com/adrienverge/yamllint.git
-  rev: v1.33.0
-  hooks:
-  - id: yamllint
-    args: [ '--config-file=.yamllint.yaml' ]
-- repo: https://github.com/psf/black-pre-commit-mirror
-  rev: 23.12.1
-  hooks:
-  - id: black
-- repo: https://github.com/PyCQA/isort
-  rev: 5.13.2
-  hooks:
-  - id: isort
-- repo: https://github.com/astral-sh/ruff-pre-commit
-  rev: v0.1.9
-  hooks:
-  - id: ruff
-- repo: https://github.com/pycqa/flake8
-  rev: 6.1.0
-  hooks:
-  - id: flake8
-    additional_dependencies: [ 'flake8-alphabetize', 'flake8-rst-docstrings ']
-    args: [ '--config=.flake8' ]
-- repo: https://github.com/nbQA-dev/nbQA
-  rev: 1.7.1
-  hooks:
-  - id: nbqa-pyupgrade
-    args: [ '--py38-plus' ]
-  - id: nbqa-black
-    additional_dependencies: [ 'black==23.12.1' ]
-  - id: nbqa-isort
-- repo: https://github.com/kynan/nbstripout
-  rev: 0.6.1
-  hooks:
-  - id: nbstripout
-    files: '.ipynb'
-    args: [ '--extra-keys', 'metadata.kernelspec' ]
-- repo: https://github.com/keewis/blackdoc
-  rev: v0.3.9
-  hooks:
-  - id: blackdoc
-    additional_dependencies: [ 'black==23.12.1' ]
-    exclude: '(xclim/indices/__init__.py|docs/installation.rst)'
-- repo: https://github.com/python-jsonschema/check-jsonschema
-  rev: 0.27.3
-  hooks:
-  - id: check-github-workflows
-  - id: check-readthedocs
-- repo: meta
-  hooks:
-  - id: check-hooks-apply
-  - id: check-useless-excludes
+  - repo: https://github.com/asottile/pyupgrade
+    rev: v3.15.0
+    hooks:
+      - id: pyupgrade
+        args: ['--py38-plus']
+        exclude: 'xclim/core/indicator.py'
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+        exclude: '.ipynb|.github/publish-mastodon.template.md'
+      - id: check-json
+      - id: check-toml
+      - id: check-yaml
+        args: [ '--allow-multiple-documents' ]
+      - id: debug-statements
+      - id: pretty-format-json
+        args: [ '--autofix', '--no-ensure-ascii', '--no-sort-keys' ]
+        exclude: '.ipynb'
+  - repo: https://github.com/pappasam/toml-sort
+    rev: v0.23.1
+    hooks:
+      - id: toml-sort-fix
+  - repo: https://github.com/adrienverge/yamllint.git
+    rev: v1.33.0
+    hooks:
+      - id: yamllint
+        args: [ '--config-file=.yamllint.yaml' ]
+  - repo: https://github.com/psf/black-pre-commit-mirror
+    rev: 23.12.1
+    hooks:
+      - id: black
+  - repo: https://github.com/PyCQA/isort
+    rev: 5.13.2
+    hooks:
+      - id: isort
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.1.11
+    hooks:
+      - id: ruff
+  - repo: https://github.com/pycqa/flake8
+    rev: 7.0.0
+    hooks:
+      - id: flake8
+        additional_dependencies: [ 'flake8-alphabetize', 'flake8-rst-docstrings ']
+        args: [ '--config=.flake8' ]
+  - repo: https://github.com/nbQA-dev/nbQA
+    rev: 1.7.1
+    hooks:
+      - id: nbqa-pyupgrade
+        args: [ '--py38-plus' ]
+      - id: nbqa-black
+        additional_dependencies: [ 'black==23.12.1' ]
+      - id: nbqa-isort
+  - repo: https://github.com/kynan/nbstripout
+    rev: 0.6.1
+    hooks:
+      - id: nbstripout
+        files: '.ipynb'
+        args: [ '--extra-keys', 'metadata.kernelspec' ]
+  - repo: https://github.com/keewis/blackdoc
+    rev: v0.3.9
+    hooks:
+      - id: blackdoc
+        additional_dependencies: [ 'black==23.12.1' ]
+        exclude: '(xclim/indices/__init__.py|docs/installation.rst)'
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.18.1
+    hooks:
+      - id: gitleaks
+  - repo: https://github.com/python-jsonschema/check-jsonschema
+    rev: 0.27.3
+    hooks:
+      - id: check-github-workflows
+      - id: check-readthedocs
+  - repo: meta
+    hooks:
+      - id: check-hooks-apply
+      - id: check-useless-excludes
 
 ci:
   autofix_commit_msg: |

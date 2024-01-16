@@ -6,19 +6,19 @@ on:
       - master
     paths-ignore:
       - .*
-      - .github/**.yml
+      - .github/*/*.md
+      - .github/*/*.yml
       - CHANGES.rst
       - Makefile
-      - docs/**.ipynb
-      - docs/**.py
-      - docs/**.rst
+      - docs/*/*.ipynb
+      - docs/*/*.py
+      - docs/*/*.rst
       - docs/Makefile
       - docs/make.bat
       - docs/references.bib
       - environment.yml
       - pylintrc
       - pyproject.toml
-      - requirements_dev.txt
       - requirements_upstream.txt
       - tox.ini
       - xclim/__init__.py
@@ -30,11 +30,19 @@ jobs:
   bump_patch_version:
     name: Bumpversion Patch
     runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: write
     steps:
       - name: Harden Runner
         uses: step-security/harden-runner@eb238b55efaa70779f274895e782ed17c84f2895 # v2.6.1
         with:
-          egress-policy: audit
+          disable-sudo: true
+          egress-policy: block
+          allowed-endpoints: >
+            files.pythonhosted.org:443
+            github.com:443
+            pypi.org:443
       - uses: actions/checkout@v4.1.1
         with:
           persist-credentials: false
@@ -53,23 +61,22 @@ jobs:
       - name: Install bump-my-version
         run: |
           python -m pip install bump-my-version
-      - name: Bump Patch Version
-        if: ${{ !env.CURRENT_VERSION =~ \d+\.\d+\.\d+(-dev(\.\d+)?)?$ }}
+      - name: Conditional Bump
+        id: bump
         run: |
-          echo "Version is stable, bumping 'patch' version"
-          bump-my-version bump patch
+          if [[ ${{ env.CURRENT_VERSION }} =~ -dev(\.\d+)? ]]; then
+            echo "Development version (ends in 'dev(\.\d+)?'), bumping 'build' version"
+            bump-my-version bump build
+          else
+            echo "Version is stable, bumping 'patch' version"
+            bump-my-version bump patch
+          fi
           NEW_VERSION="$(grep -E '__version__'  xclim/__init__.py | cut -d ' ' -f3)"
           echo "new_version=${NEW_VERSION}"
-      - name: Bump Build Version
-        if: ${{ env.CURRENT_VERSION =~ \d+\.\d+\.\d+(-dev(\.\d+)?)?$ }}
-        run: |
-          echo "Development version (ends in 'dev(\.\d+)?'), bumping 'build' version"
-          bump-my-version bump build
-          NEW_VERSION="$(grep -E '__version__'  xclim/__init__.py | cut -d ' ' -f3)"
-          echo "new_version=${NEW_VERSION}"
+          echo "NEW_VERSION=${NEW_VERSION}" >> $GITHUB_ENV
       - name: Push Changes
         uses: ad-m/github-push-action@v0.8.0
         with:
           force: false
-          github_token: ${{ secrets.BUMPVERSION_TOKEN }}
+          github_token: ${{ secrets.BUMP_VERSION_TOKEN }}
           branch: ${{ github.ref }}

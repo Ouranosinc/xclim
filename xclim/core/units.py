@@ -2,15 +2,14 @@
 Units Handling Submodule
 ========================
 
-`Pint` is used to define the :py:data:`xclim.core.units.units` `UnitRegistry`.
+`xclim`'s `pint`-based unit registry is an extension of the registry defined in `cf-xarray`.
 This module defines most unit handling methods.
 """
 from __future__ import annotations
 
-import functools
 import logging
-import re
 import warnings
+from copy import deepcopy
 
 try:
     from importlib.resources import files
@@ -20,6 +19,7 @@ except ImportError:
 from inspect import _empty, signature  # noqa
 from typing import Any, Callable
 
+import cf_xarray.units
 import numpy as np
 import pint
 import xarray as xr
@@ -57,37 +57,14 @@ __all__ = [
 
 
 # shamelessly adapted from `cf-xarray` (which adopted it from MetPy and xclim itself)
-units = pint.UnitRegistry(
-    autoconvert_offset_to_baseunit=True,
-    preprocessors=[
-        functools.partial(
-            re.compile(
-                r"(?<=[A-Za-z])(?![A-Za-z])(?<![0-9\-][eE])(?<![0-9\-])(?=[0-9\-])"
-            ).sub,
-            "**",
-        ),
-        lambda string: string.replace("%", "percent"),
-    ],
-)
-
-units.define("percent = 0.01 = % = pct")
-
-# In pint, the default symbol for year is "a" which is not CF-compliant (stands for "are")
-units.define("year = 365.25 * day = yr")
-
-# Define commonly encountered units not defined by pint
-units.define("@alias degC = C = deg_C = Celsius")
-units.define("@alias degK = deg_K")
-units.define("@alias day = d")
-units.define("@alias hour = h")  # Not the Planck constant...
-units.define(
-    "degrees_north = 1 * degree = degrees_north = degrees_N = degreesN = degree_north = degree_N = degreeN"
-)
-units.define(
-    "degrees_east = 1 * degree = degrees_east = degrees_E = degreesE = degree_east = degree_E = degreeE"
-)
-units.define("[speed] = [length] / [time]")
-units.define("[radiation] = [power] / [area]")
+units = deepcopy(cf_xarray.units.units)
+# Changing the default string format for units/quantities. cf is implemented by cf-xarray
+# g is the most versatile float format.
+units.default_format = "gcf"
+# Switch this flag back to False. Not sure what that implies, but it breaks some tests.
+units.force_ndarray_like = False
+# Another alias not included by cf_xarray
+units.define("@alias percent = pct")
 
 # Default context.
 null = pint.Context("none")
@@ -143,18 +120,6 @@ def _register_conversion(conversion, direction):
     return _func_register
 
 
-# These are the changes that could be included in a units definition file.
-
-# degrees_north = degree = degrees_N = degreesN = degree_north = degree_N = degreeN
-# degrees_east = degree = degrees_E = degreesE = degree_east = degree_E = degreeE
-# degC = kelvin; offset: 273.15 = celsius = C
-# day = 24 * hour = d
-# @context hydro
-#     [mass] / [length]**2 -> [length]: value / 1000 / kg / m ** 3
-#     [mass] / [length]**2 / [time] -> [length] / [time] : value / 1000 / kg * m ** 3
-#     [length] / [time] -> [mass] / [length]**2 / [time] : value * 1000 * kg / m ** 3
-# @end
-
 # Radiation units
 units.define("[radiation] = [power] / [length]**2")
 
@@ -180,10 +145,6 @@ def units2pint(value: xr.DataArray | str | units.Quantity) -> pint.Unit:
         return value.units
     else:
         raise NotImplementedError(f"Value of type `{type(value)}` not supported.")
-
-    unit = unit.replace("%", "pct")
-    if unit == "1":
-        unit = ""
 
     # Catch user errors undetected by Pint
     degree_ex = ["deg", "degree", "degrees"]
@@ -223,27 +184,8 @@ def pint2cfunits(value: units.Quantity | units.Unit) -> str:
     if isinstance(value, (pint.Quantity, units.Quantity)):
         value = value.units  # noqa reason: units.Quantity really have .units property
 
-    # Print units using abbreviations (millimeter -> mm)
-    s = f"{value:~}"
-
-    # Search and replace patterns
-    pat = r"(?P<inverse>/ )?(?P<unit>\w+)(?: \*\* (?P<pow>\d))?"
-
-    def repl(m):
-        i, u, p = m.groups()
-        p = p or (1 if i else "")
-        neg = "-" if i else ("^" if p else "")
-
-        return f"{u}{neg}{p}"
-
-    out, _ = re.subn(pat, repl, s)
-
-    # Remove multiplications
-    out = out.replace(" * ", " ")
-    # Delta degrees:
-    out = out.replace("Δ°", "delta_deg")
-    # Percents
-    return out.replace("percent", "%").replace("pct", "%")
+    # The replacement is due to hgrecco/pint#1486
+    return f"{value:cf}".replace("dimensionless", "")
 
 
 def ensure_cf_units(ustr: str) -> str:
@@ -640,7 +582,7 @@ def _rate_and_amount_converter(
         if base in ["M", "Q", "A"]:
             start = time.indexes[dim][0]
             if not start_anchor:
-                # Anchor is on the end of the period, substract 1 period.
+                # Anchor is on the end of the period, subtract 1 period.
                 start = start - xr.coding.cftime_offsets.to_offset(freq)
                 # In the diff below, assign to upper label!
                 label = "upper"
@@ -1135,8 +1077,8 @@ def declare_relative_units(**units_by_name) -> Callable:
     ----------
     \*\*kwargs
         Mapping from the input parameter names to dimensions relative to other parameters.
-        The dimensons can be a single parameter name as `<other_var>` or more complex expressions,
-        like : `<other_var> * [time]`.
+        The dimensions can be a single parameter name as `<other_var>` or more complex expressions,
+        like: `<other_var> * [time]`.
 
     Returns
     -------

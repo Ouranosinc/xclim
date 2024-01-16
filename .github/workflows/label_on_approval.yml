@@ -10,19 +10,29 @@ on:
       - review_requested
 
 permissions:
-  checks: write
   contents: read
-  pull-requests: write
 
 jobs:
   label_approved:
     name: Label on Approval
+    runs-on: ubuntu-latest
     if: |
       (!contains(github.event.pull_request.labels.*.name, 'approved')) &&
       (github.event.review.state == 'approved') &&
       (github.event.pull_request.head.repo.full_name == github.event.pull_request.base.repo.full_name)
-    runs-on: ubuntu-latest
+    permissions:
+      checks: write
+      contents: read
+      pull-requests: write
     steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@eb238b55efaa70779f274895e782ed17c84f2895 # v2.6.1
+        with:
+          disable-sudo: true
+          egress-policy: block
+          allowed-endpoints: >
+            api.github.com:443
+
       - name: Label Approved
         uses: actions/github-script@v7.0.1
         with:
@@ -36,11 +46,19 @@ jobs:
 
   comment_approved:
     name: Comment Concerning Approved Tag
+    runs-on: ubuntu-latest
     if: |
       (github.event_name == 'pull_request_target') &&
       (github.event.pull_request.head.repo.full_name != github.event.pull_request.base.repo.full_name)
-    runs-on: ubuntu-latest
+    permissions:
+      checks: write
+      contents: read
+      pull-requests: write
     steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@eb238b55efaa70779f274895e782ed17c84f2895 # v2.6.1
+        with:
+          egress-policy: audit
       - name: Find comment
         uses: peter-evans/find-comment@v2.4.0
         id: fc

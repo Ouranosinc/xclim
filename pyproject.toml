@@ -51,7 +51,8 @@ dependencies = [
   "scikit-learn>=0.21.3",
   "scipy>=1.2",
   "statsmodels",
-  "xarray>=2022.06.0,<2023.11.0"
+  "xarray>=2022.06.0,<2023.11.0",
+  "yamale"
 ]
 
 [project.optional-dependencies]
@@ -60,6 +61,7 @@ dev = [
   "black >=23.3.0",
   "blackdoc",
   "bump-my-version",
+  "codespell",
   "coverage[toml]",
   "flake8",
   "flake8-alphabetize",
@@ -83,7 +85,6 @@ dev = [
   "tox",
   # "tox-conda",  # Will be added when a tox@v4.0+ compatible plugin is released.
   "xdoctest",
-  "yamale",
   "yamllint",
   # Documentation and examples
   "distributed >=2.0",
@@ -122,10 +123,11 @@ target-version = [
 ]
 
 [tool.bumpversion]
-current_version = "0.47.4-beta"
+current_version = "0.47.5-dev.8"
 commit = true
+commit_args = "--no-verify"
 tag = false
-allow_dirty = true
+allow_dirty = false
 parse = "(?P<major>\\d+)\\.(?P<minor>\\d+)\\.(?P<patch>\\d+)(\\-(?P<release>[a-z]+)(\\.(?P<build>\\d+)))?"
 serialize = [
   "{major}.{minor}.{patch}-{release}.{build}",
@@ -146,6 +148,10 @@ values = [
   "dev",
   "release"
 ]
+
+[tool.codespell]
+skip = 'xclim/data/*.json,docs/_build,docs/notebooks/xclim_training/*.ipynb,docs/references.bib,__pycache__,*.nc,*.png,*.gz,*.whl'
+ignore-words-list = "absolue,astroid,bloc,bui,callendar,degreee,environnement,hanel,inferrable,lond,nam,nd,ressources,vas"
 
 [tool.coverage.run]
 relative_files = true

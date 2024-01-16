@@ -20,6 +20,14 @@ jobs:
       contents: read
       pull-requests: write
     steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@eb238b55efaa70779f274895e782ed17c84f2895 # v2.6.1
+        with:
+          disable-sudo: true
+          egress-policy: block
+          allowed-endpoints: >
+            api.github.com:443
+            github.com:443
       - uses: actions/checkout@v4.1.1
       - name: Find xclim-testdata Tag and CI Testing Branch
         run: |
