@@ -1478,17 +1478,17 @@ class MBCn(BaseAdjustment):
         # adjust (adjust for npft transform, train/adjust for univariate bias correction)
         sim = stack_variables(sim, self.pts_dims[0])
         out = mbcn_adjust(
-            ref,
-            hist,
-            sim,
-            self.ds,
-            self.pts_dims,
-            self.interp,
-            self.extrapolation,
-            base,
-            base_kws_vars,
-            adj_kws,
-            period_dim,
+            ref=ref,
+            hist=hist,
+            sim=sim,
+            ds=self.ds,
+            pts_dims=self.pts_dims,
+            interp=self.interp,
+            extrapolation=self.extrapolation,
+            base=base,
+            base_kws_vars=base_kws_vars,
+            adj_kws=adj_kws,
+            period_dim=period_dim,
         )
 
         # postprocess

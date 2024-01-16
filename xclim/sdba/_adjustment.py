@@ -146,8 +146,8 @@ def mbcn_train(
     quantiles,
     g_idxs,
     gw_idxs,
-    method,
-    extrap,
+    interp,
+    extrapolation,
     n_escore,
 ) -> xr.Dataset:
     """Npdf transform training.
@@ -203,7 +203,7 @@ def mbcn_train(
             ],
             dask="parallelized",
             output_dtypes=[hist.dtype, hist.dtype],
-            kwargs={"method": method, "extrap": extrap, "n_escore": n_escore},
+            kwargs={"method": interp, "extrap": extrapolation, "n_escore": n_escore},
             vectorize=True,
         )
         af_q_l.append(af_q.expand_dims({gr_dim: [ib]}))
