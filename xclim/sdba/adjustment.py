@@ -1358,7 +1358,7 @@ class MBCn(BaseAdjustment):
     """
 
     @classmethod
-    def _train(
+    def train(
         cls,
         ref: xr.Dataset,
         hist: xr.Dataset,
@@ -1370,6 +1370,7 @@ class MBCn(BaseAdjustment):
         pts_dim: str = "multivar",
         rot_matrices: xr.DataArray | None = None,
     ):
+        """Training method of MBCn (temporary docstring)"""
         # set default values for non-specified parameters
         base_kws = base_kws if base_kws is not None else {}
         adj_kws = adj_kws if adj_kws is not None else {}
@@ -1438,7 +1439,7 @@ class MBCn(BaseAdjustment):
         obj.set_dataset(out)
         return obj
 
-    def _adjust(
+    def adjust(
         self,
         sim: xr.Dataset,
         *,
@@ -1449,6 +1450,7 @@ class MBCn(BaseAdjustment):
         adj_kws: dict[str, Any] | None = None,
         period_dim=None,
     ):
+        """Adjusting method of MBCn (temporary docstring)"""
         # set default values for non-specified parameters
         base_kws_vars = base_kws_vars or {}
         for v in sim.data_vars:
