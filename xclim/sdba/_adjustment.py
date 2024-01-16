@@ -256,8 +256,8 @@ def mbcn_adjust(
     sim,
     ds,
     pts_dims,
-    method,
-    extrap,
+    interp,
+    extrapolation,
     base,
     base_kws_vars,
     adj_kws,
@@ -286,10 +286,10 @@ def mbcn_adjust(
     pts_dims : [str, str]
         The name of the "multivariate" dimension and its primed counterpart. Defaults to "multivar", which
         is the normal case when using :py:func:`xclim.sdba.base.stack_variables`, and "multivar_prime"
-    method : str
+    interp : str
         Interpolation method for the npdf transform (same as in the training step)
     extrapolation : str
-        Expolation method for the npdf transform (same as in the training step)
+        Extrapolation method for the npdf transform (same as in the training step)
     base : BaseAdjustment
         Bias-adjustment class used for the univariate bias correction.
     base_kws_vars : Dict
@@ -303,7 +303,7 @@ def mbcn_adjust(
         If specified, the interpolation of the npdf transform is performed only once and applied on all periods simultaneously.
         This should be more performant, but also more memory intensive.
     """
-    # unload training parameters
+    # unpacking training parameters
     rot_matrices = ds.rot_matrices
     af_q = ds.af_q
     quantiles = af_q.quantiles
@@ -358,7 +358,7 @@ def mbcn_adjust(
             ],
             dask="parallelized",
             output_dtypes=[sim.dtype],
-            kwargs={"method": method, "extrap": extrap},
+            kwargs={"method": interp, "extrap": extrapolation},
             vectorize=True,
         )
 

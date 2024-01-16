@@ -881,9 +881,11 @@ def rand_rot_matrix(
     num = np.diag(R)
     denum = np.abs(num)
     lam = np.diag(num / denum)  # "lambda"
-    return xr.DataArray(
-        Q @ lam, dims=(dim, new_dim), coords={dim: crd, new_dim: crd2}
-    ).astype("float32")
+    return (
+        xr.DataArray(Q @ lam, dims=(dim, new_dim), coords={dim: crd, new_dim: crd2})
+        .astype("float32")
+        .assign_attrs({"crd_dim": dim, "new_dim": new_dim})
+    )
 
 
 def copy_all_attrs(ds: xr.Dataset | xr.DataArray, ref: xr.Dataset | xr.DataArray):

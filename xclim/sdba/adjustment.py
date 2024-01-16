@@ -1373,59 +1373,52 @@ class MBCn(BaseAdjustment):
         # set default values for non-specified parameters
         base_kws = base_kws if base_kws is not None else {}
         adj_kws = adj_kws if adj_kws is not None else {}
-        kwargs = {**base_kws, **adj_kws}
-        for k, default in [
-            ["nquantiles", 20],
-            ["interp", "nearest"],
-            ["extrapolation", "constant"],
-            ["group", Grouper("time", 1)],
-        ]:
-            kwargs.setdefault(k, default)
-        if np.isscalar(kwargs["nquantiles"]):
-            kwargs["nquantiles"] = equally_spaced_nodes(kwargs["nquantiles"])
-        if isinstance(kwargs["group"], str):
-            kwargs["group"] = Grouper(kwargs["group"], 1)
+        base_kws.setdefault("nquantiles", 20)
+        base_kws.setdefault("group", Grouper("time", 1))
+        adj_kws.setdefault("interp", "nearest")
+        adj_kws.setdefault("extrapoliation", "constant")
 
-        quantiles, group, interp, extrapolation = (
-            kwargs[lab] for lab in ["nquantiles", "group", "interp", "extrapolation"]
-        )
+        if np.isscalar(base_kws["nquantiles"]):
+            base_kws["nquantiles"] = equally_spaced_nodes(base_kws["nquantiles"])
+        if isinstance(base_kws["group"], str):
+            base_kws["group"] = Grouper(base_kws["group"], 1)
+
         # stack variables and prepare rotations
-        if rot_matrices is not None:
-            pts_dim = rot_matrices.attrs["crd_dim"]
-        else:
+        if rot_matrices is None:
             pts_dim = xr.core.utils.get_temp_dimname(
                 set(ref.dims).union(hist.dims), "multivar"
             )
-        rot_dim = xr.core.utils.get_temp_dimname(
-            set(ref.dims).union(hist.dims), pts_dim + "_prime"
-        )
+        else:
+            pts_dim = rot_matrices.attrs["crd_dim"]
+            rot_dim = rot_matrices.attrs["new_dim"]
         ref = stack_variables(ref, pts_dim)
         hist = stack_variables(hist, pts_dim)
-        pts_dims = (pts_dim, rot_dim)
         if rot_matrices is None:
+            rot_dim = xr.core.utils.get_temp_dimname(
+                set(ref.dims).union(hist.dims), pts_dim + "_prime"
+            )
             rot_matrices = rand_rot_matrix(
                 ref[pts_dim], num=n_iter, new_dim=rot_dim
             ).rename(matrices="iterations")
+        pts_dims = (pts_dim, rot_dim)
 
         # time indices corresponding to group and windowed group
         # used to divide datasets as map_blocks or groupby would do
-        g_idxs, gw_idxs = time_group_indices(ref.time, group)
+        g_idxs, gw_idxs = time_group_indices(ref.time, base_kws["group"])
 
-        # prepare input dataset
-        ds = xr.Dataset(dict(ref=ref, hist=hist))  # , hist_npdf=hist_npdf))
-
-        # train
+        # training, obtain adjustment factors of the npdf transform
+        ds = xr.Dataset(dict(ref=ref, hist=hist))
+        params = {
+            "quantiles": base_kws["nquantiles"],
+            "interp": adj_kws["interp"],
+            "extrapolation": adj_kws["extrapolation"],
+            "pts_dims": pts_dims,
+            "n_escore": n_escore,
+        }
         out = mbcn_train(
-            ds,
-            rot_matrices=rot_matrices,
-            pts_dims=pts_dims,
-            quantiles=quantiles,
-            g_idxs=g_idxs,
-            gw_idxs=gw_idxs,
-            method=interp,
-            extrap=extrapolation,
-            n_escore=n_escore,
+            ds, rot_matrices=rot_matrices, g_idxs=g_idxs, gw_idxs=gw_idxs, **params
         )
+        params["group"] = base_kws["group"]
 
         # postprocess
         out["rot_matrices"] = rot_matrices
@@ -1436,12 +1429,6 @@ class MBCn(BaseAdjustment):
             standard_name="Adjustment factors",
             long_name="Quantile mapping adjustment factors",
         )
-        params = {
-            "group": group,
-            "interp": interp,
-            "extrapolation": extrapolation,
-            "pts_dims": pts_dims,
-        }
         obj = cls(
             _trained=True,
             hist_calendar=get_calendar(hist),
@@ -1462,58 +1449,34 @@ class MBCn(BaseAdjustment):
         adj_kws: dict[str, Any] | None = None,
         period_dim=None,
     ):
-        sim = stack_variables(sim, self.pts_dims[0])
         # set default values for non-specified parameters
-        # check compatibility between training and adjusting parameters
-        base_kws_vars = (
-            base_kws_vars
-            if base_kws_vars is not None
-            else {v: {} for v in ref[self.pts_dims[0]].values}
-        )
-        adj_kws = adj_kws if adj_kws is not None else {}
-        # for k in base_kws_vars.keys():
-        #     base_kws_vars[k].setdefault("nquantiles", self.ds.af_q.quantiles.values)
-        #     if np.isscalar(base_kws_vars[k]["nquantiles"]):
-        #         base_kws_vars["nquantiles"] = equally_spaced_nodes(
-        #             base_kws_vars["nquantiles"]
-        #         )
-        #     base_kws_scen[k].setdefault("group", self.group)
-        # if isinstance(base_kws_scen["group"], str):
-        #     base_kws_scen["group"] = Grouper(base_kws_scen["group"], 1)
+        base_kws_vars = base_kws_vars or {}
+        for v in sim.data_vars:
+            if v not in base_kws_vars.keys():
+                base_kws_vars[v] = {}
 
-        # if "kind" in base_kws_scen.keys() and "kinds" in base_kws_scen.keys():
-        #     warn(
-        #         "Both `kind` and `kinds` are specified in `base_kws_scen`, expected one of them. 'kinds' will be used"
-        #     )
-        # base_kws_scen.setdefault("kind", "+")
-        # base_kws_scen.setdefault(
-        #     "kinds", {v: base_kws_scen["kind"] for v in sim[self.pts_dims[0]].values}
-        # )
-        # base_kws_scen.pop("kind")
-
-        # nquantiles and group must be the same in train and adjust
-        # Not sure we want to allow use of different quantiles for npdf and scen parts?
-        # err_ks = []
-        # if (base_kws_scen["nquantiles"] != self.ds.af_q.quantiles.values).all():
-        #     err_ks.append("nquantiles")
-        # if base_kws_scen["group"] != self.group:
-        #     err_ks.append("group")
-        # if err_ks != []:
-        #     raise ValueError(
-        #         ",".join(err_ks)
-        #         + " must be the same for npdf (`base_kws`) and) and scenario (`base_kws_scen`)"
-        #     )
-
-        # Info for `group` already in g_idxs, gw_idxs. Just needed to check compability in case
-        # `group` is given in base_kws_scen
-        # base_kws_vars.pop("group")
-        for v in base_kws_vars.keys():
             base_kws_vars[v].setdefault("group", self.group)
+            if isinstance(base_kws_vars[v]["group"], str):
+                base_kws_vars[v]["group"] = Grouper(base_kws_vars[v]["group"], 1)
+            if base_kws_vars[v]["group"] != self.group:
+                raise ValueError(
+                    "Expected usage of the same group in adjust and training steps."
+                )
             base_kws_vars[v].pop("group")
+
             base_kws_vars[v].setdefault("nquantiles", self.ds.af_q.quantiles.values)
+            if np.isscalar(base_kws_vars[v]["nquantiles"]):
+                base_kws_vars[v]["nquantiles"] = equally_spaced_nodes(
+                    base_kws_vars["nquantiles"]
+                )
+            # should maybe require that quantiles here match those from training?
+
+        adj_kws = adj_kws if adj_kws is not None else {}
         adj_kws.setdefault("interp", self.interp)
         adj_kws.setdefault("extrapolation", self.extrapolation)
 
+        # adjust (adjust for npft transform, train/adjust for univariate bias correction)
+        sim = stack_variables(sim, self.pts_dims[0])
         out = mbcn_adjust(
             ref,
             hist,
@@ -1527,6 +1490,8 @@ class MBCn(BaseAdjustment):
             adj_kws,
             period_dim,
         )
+
+        # postprocess
         out = unstack_variables(out)
         for v in out.data_vars:
             out[v].attrs["units"] = sim.attrs["original_units"][v]
