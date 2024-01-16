@@ -9,6 +9,7 @@ from __future__ import annotations
 import numpy as np
 import xarray as xr
 
+from xclim import set_options
 from xclim.core.units import convert_units_to, infer_context, units
 from xclim.indices.stats import _fitfunc_1d  # noqa
 
@@ -333,12 +334,15 @@ def mbcn_adjust(
         scen_block = xr.zeros_like(sim[{"time": ind_gw}])
         for iv, v in enumerate(sim[pts_dims[0]].values):
             sl = {"time": ind_gw, pts_dims[0]: iv}
-            ADJ = base.train(
-                ref[v][{"time": ind_gw}], hist[v][{"time": ind_gw}], **base_kws_vars[v]
-            )
-            scen_block[{pts_dims[0]: iv}] = ADJ.adjust(
-                sim[sl].assign_attrs({"units": sim_u[v]}), **adj_kws
-            ).scen
+            with set_options(sdba_extra_output=False):
+                ADJ = base.train(
+                    ref[v][{"time": ind_gw}],
+                    hist[v][{"time": ind_gw}],
+                    **base_kws_vars[v],
+                )
+                scen_block[{pts_dims[0]: iv}] = ADJ.adjust(
+                    sim[sl].assign_attrs({"units": sim_u[v]}), **adj_kws
+                )
 
         # 2. npdft adjustment of sim
         npdft_block = xr.apply_ufunc(
