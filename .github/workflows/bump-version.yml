@@ -75,7 +75,7 @@ jobs:
           echo "new_version=${NEW_VERSION}"
           echo "NEW_VERSION=${NEW_VERSION}" >> $GITHUB_ENV
       - name: Push Changes
-        uses: ad-m/github-push-action@v0.8.0
+        uses: ad-m/github-push-action@d91a481090679876dfc4178fef17f286781251df
         with:
           force: false
           github_token: ${{ secrets.BUMP_VERSION_TOKEN }}
