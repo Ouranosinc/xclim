@@ -159,7 +159,11 @@ def test_attrs(tas_series):
     assert f"xclim version: {__version__}" in txm.attrs["history"]
     assert txm.name == "tmin5 degC"
     assert uniIndTemp.standard_name == "{freq} mean temperature"
-    assert uniIndTemp.cf_attrs[0]["another_attr"] == "With a value."
+    # fmt: off
+    assert (
+        uniIndTemp.cf_attrs[0]["another_attr"] == "With a value."  # pylint: disable=unsubscriptable-object
+    )
+    # fmt: on
 
     thresh = xr.DataArray(
         [1],
@@ -243,8 +247,14 @@ def test_module():
     """Translations are keyed according to the module where the indicators are defined."""
     assert atmos.tg_mean.__module__.split(".")[2] == "atmos"
     # Virtual module also are stored under xclim.indicators
-    assert xclim.indicators.cf.fg.__module__ == "xclim.indicators.cf"
-    assert xclim.indicators.icclim.GD4.__module__ == "xclim.indicators.icclim"
+    # fmt: off
+    assert (
+        xclim.indicators.cf.fg.__module__ == "xclim.indicators.cf"  # pylint: disable=no-member
+    )
+    assert (
+        xclim.indicators.icclim.GD4.__module__ == "xclim.indicators.icclim"  # pylint: disable=no-member
+    )
+    # fmt: on
 
 
 def test_temp_unit_conversion(tas_series):
@@ -257,7 +267,9 @@ def test_temp_unit_conversion(tas_series):
     with pytest.raises(AssertionError):
         np.testing.assert_array_almost_equal(txk, txc + 273.15)
 
-    uniIndTemp.cf_attrs[0]["units"] = "degC"
+    uniIndTemp.cf_attrs[0][  # noqa; # pylint: disable=unsubscriptable-object
+        "units"
+    ] = "degC"
     txc = uniIndTemp(a, freq="YS")
     np.testing.assert_array_almost_equal(txk, txc + 273.15)
 
@@ -685,7 +697,7 @@ def test_indicator_from_dict():
 
     # Wrap a multi-output ind
     d = dict(base="wind_speed_from_vector")
-    ind = Indicator.from_dict(d, identifier="wsfv", module="test")
+    Indicator.from_dict(d, identifier="wsfv", module="test")
 
 
 def test_indicator_errors():
@@ -758,7 +770,7 @@ def test_indicator_errors():
     # with pytest.raises(ValueError, match="variable data is missing expected units"):
     #     Daily(**d)
 
-    d["parameters"]["thresh"] = {"units": "K"}
+    d["parameters"]["thresh"] = {"units": "K"}  # pylint: disable=function-redefined
     d["realm"] = "mercury"
     d["input"] = {"data": "tasmin"}
     with pytest.raises(AttributeError, match="Indicator's realm must be given as one"):

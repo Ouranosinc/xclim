@@ -2385,7 +2385,7 @@ class TestTG:
         np.testing.assert_almost_equal(out[0], exp, decimal=4)
 
     def test_indice_against_icclim(self, cmip3_day_tas):
-        from xclim.indicators import icclim  # noqa
+        from xclim.indicators import icclim  # noqa; # pylint: disable=no-name-in-module
 
         with set_options(cf_compliance="log"):
             ind = xci.tg_mean(cmip3_day_tas)

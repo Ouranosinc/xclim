@@ -211,8 +211,8 @@ class Parameter:
     def is_parameter_dict(cls, other: dict) -> bool:
         """Return whether indicator has a parameter dictionary."""
         return set(other.keys()).issubset(
-            cls.__dataclass_fields__.keys()
-        )  # pylint disable=no-member
+            cls.__dataclass_fields__.keys()  # pylint disable=no-member
+        )
 
     def __getitem__(self, key) -> str:
         """Return an item in retro-compatible fashion."""

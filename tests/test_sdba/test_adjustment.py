@@ -710,7 +710,10 @@ def test_default_grouper_understood(tas_series):
 class TestSBCKutils:
     @pytest.mark.slow
     @pytest.mark.parametrize(
-        "method", [m for m in dir(adjustment) if m.startswith("SBCK_")]
+        "method",
+        [
+            m for m in dir(adjustment) if m.startswith("SBCK_")
+        ],  # pylint: disable=no-member
     )
     @pytest.mark.parametrize("use_dask", [True])  # do we gain testing both?
     def test_sbck(self, method, use_dask, random):
