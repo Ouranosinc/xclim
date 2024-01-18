@@ -61,7 +61,7 @@ jobs:
         run: pip install pylint tox~=4.0
       - name: Run pylint
         run: |
-          python -m pylint --rcfile=pylintrc --disable=import-error --exit-zero xclim
+          python -m pylint --rcfile=.pylintrc.toml --disable=import-error --exit-zero xclim
       - name: Run linting suite
         run: |
           python -m tox -e lint
