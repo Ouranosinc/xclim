@@ -1623,12 +1623,12 @@ def build_indicator_module(
             )
         out = getattr(indicators, name)
         if reload:
-            for name, ind in list(out.iter_indicators()):
-                if name not in objs:
+            for n, ind in list(out.iter_indicators()):
+                if n not in objs:
                     # Remove the indicator from the registries and the module
                     del registry[ind._registry_id]  # noqa
                     del _indicators_registry[ind.__class__]
-                    del out.__dict__[name]
+                    del out.__dict__[n]
     else:
         doc = doc or f"{name.capitalize()} indicators\n" + "=" * (len(name) + 11)
         try:

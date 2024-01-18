@@ -283,7 +283,7 @@ def dataflags(ctx, variables, raise_flags, append, dims, freq):
 @click.option(
     "-i", "--info", is_flag=True, help="Prints more details for each indicator."
 )
-def indices(info):
+def indices(information):
     """List all indicators."""
     formatter = click.HelpFormatter()
     formatter.write_heading("Listing all available indicators for computation.")
@@ -297,7 +297,7 @@ def indices(info):
             right += (
                 " (" + ", ".join([var["var_name"] for var in indcls.cf_attrs]) + ")"
             )
-        if info:
+        if information:
             right += "\n" + indcls.abstract
         rows.append((left, right))
     rows.sort(key=lambda row: row[0])
@@ -466,7 +466,7 @@ def cli(ctx, **kwargs):
 
 @cli.result_callback()  # noqa
 @click.pass_context
-def write_file(ctx, *args, **kwargs):  # noqa
+def write_file(ctx, *args, **kwargs):  # noqa: W0613
     """Write the output dataset to file."""
     if ctx.obj["output"] is not None:
         if ctx.obj["verbose"]:

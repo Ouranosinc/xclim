@@ -27,9 +27,10 @@ repos:
     hooks:
       - id: toml-sort-fix
   - repo: https://github.com/pylint-dev/pylint
-    rev: v2.17.2
+    rev: v3.0.3
     hooks:
       - id: pylint
+        args: [ '--rcfile=.pylintrc.toml' ]
   - repo: https://github.com/adrienverge/yamllint.git
     rev: v1.33.0
     hooks:
@@ -44,7 +45,7 @@ repos:
     hooks:
       - id: isort
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.1.11
+    rev: v0.1.13
     hooks:
       - id: ruff
   - repo: https://github.com/pycqa/flake8

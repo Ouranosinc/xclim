@@ -1139,10 +1139,10 @@ def declare_relative_units(**units_by_name) -> Callable:
                 # Raised when it is not understood, we assume it was a dimensionality
                 try:
                     units.get_dimensionality(dim.replace("dimensionless", ""))
-                except Exception:
+                except Exception as e:
                     raise ValueError(
                         f"Relative units for {name} are invalid. Got {dim}. (See stacktrace for more information)."
-                    )
+                    ) from e
 
         @wraps(func)
         def wrapper(*args, **kwargs):

@@ -202,7 +202,8 @@ def _get(
         local_md5 = file_md5_checksum(local_file)
         try:
             url = "/".join((github_url, "raw", branch, md5_name.as_posix()))
-            logger.info(f"Attempting to fetch remote file md5: {md5_name.as_posix()}")
+            msg = f"Attempting to fetch remote file md5: {md5_name.as_posix()}"
+            logger.info(msg)
             urlretrieve(url, md5_file)  # nosec
             with open(md5_file) as f:
                 remote_md5 = f.read()
@@ -235,7 +236,7 @@ def _get(
         local_file.parent.mkdir(exist_ok=True, parents=True)
 
         url = "/".join((github_url, "raw", branch, fullname.as_posix()))
-        logger.info(f"Fetching remote file: {fullname.as_posix()}")
+        logger.info("Fetching remote file: {}" % fullname.as_posix())
         try:
             urlretrieve(url, local_file)  # nosec
         except HTTPError as e:
@@ -256,7 +257,7 @@ def _get(
             raise FileNotFoundError(msg) from e
         try:
             url = "/".join((github_url, "raw", branch, md5_name.as_posix()))
-            logger.info(f"Fetching remote file md5: {md5_name.as_posix()}")
+            logger.info("Fetching remote file md5: {}" % md5_name.as_posix())
             urlretrieve(url, md5_file)  # nosec
         except (HTTPError, URLError) as e:
             msg = (

@@ -1112,7 +1112,7 @@ def _decorrelation_length(
 
     corr = _pairwise_spearman(da, dims)
 
-    dists, mn, mx = _pairwise_haversine_and_bins(
+    dists, _, _ = _pairwise_haversine_and_bins(
         corr.cf["longitude"].values, corr.cf["latitude"].values, transpose=True
     )
 

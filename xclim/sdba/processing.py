@@ -46,10 +46,10 @@ def adapt_freq(
 
     Parameters
     ----------
-    ds : xr.Dataset
-        With variables : "ref", Target/reference data, usually observed data, and  "sim", Simulated data.
-    dim : str
-        Dimension name.
+    ref : xr.Dataset
+        Target/reference data, usually observed data, with a "time" dimension.
+    sim : xr.Dataset
+        Simulated data, with a "time" dimension.
     group : str or Grouper
         Grouping information, see base.Grouper
     thresh : str
