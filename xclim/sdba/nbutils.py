@@ -4,17 +4,114 @@ Numba-accelerated Utilities
 """
 from __future__ import annotations
 
+from os import environ
+
 import numpy as np
-from numba import boolean, float32, float64, guvectorize, njit
+from numba import boolean, float32, float64, guvectorize, int64, njit
 from xarray import DataArray
 from xarray.core import utils
+
+USE_NANQUANTILE = environ.get("USE_NANQUANTILE", False)
+
+
+@njit(
+    [
+        int64(float32[:]),
+        int64(float64[:]),
+    ],
+    fastmath=False,
+    nogil=True,
+    cache=False,
+)
+def numnan_sorted(s):
+    """Given a sorted array s, return the number of NaNs."""
+    # Given a sorted array s, return the number of NaNs.
+    # This is faster than np.isnan(s).sum(), but only works if s is sorted,
+    # and only for
+    ind = 0
+    for i in range(s.size - 1, 0, -1):
+        if np.isnan(s[i]):
+            ind += 1
+        else:
+            return ind
+    return ind
+
+
+@njit(
+    [
+        float32[:](float32[:], float32[:]),
+        float64[:](float64[:], float64[:]),
+    ],
+    fastmath=False,
+    nogil=True,
+    cache=False,
+)
+def _sortquantile(arr, q):
+    """Sorts arr into ascending order,
+    then computes the quantiles as a linear interpolation
+    between the sorted values.
+    """
+    sortarr = np.sort(arr)
+    numnan = numnan_sorted(sortarr)
+    # compute the indices where each quantile should go:
+    # nb: nan goes to the end, so we need to subtract numnan to the size.
+    indices = q * (arr.size - 1 - numnan)
+    # compute the quantiles manually to avoid casting to float64:
+    # (alternative is to use np.interp(indices, np.arange(arr.size), sortarr))
+    frac = indices % 1
+    low = np.floor(indices).astype(np.int64)
+    high = np.ceil(indices).astype(np.int64)
+    return (1 - frac) * sortarr[low] + frac * sortarr[high]
+
+
+@njit(
+    [
+        float32[:](float32[:], float32[:]),
+        float64[:](float64[:], float64[:]),
+    ],
+    fastmath=False,
+    nogil=True,
+    cache=False,
+)
+def _choosequantile(arr, q):
+    # When the number of quantiles requested is large,
+    # it becomes more efficient to sort the array,
+    # and simply obtain the quantiles from the sorted array.
+    # The first method is O(arr.size*q.size),
+    # the second O(arr.size*log(arr.size) + q.size) amortized.
+    if (q.size <= 10) or (q.size <= np.log(arr.size)) or (USE_NANQUANTILE):
+        return np.nanquantile(arr, q).astype(arr.dtype)
+    else:
+        return _sortquantile(arr, q)
+
+
+@njit(
+    [
+        float32[:](float32[:], float32[:]),
+        float64[:](float64[:], float64[:]),
+        float32[:, :](float32[:, :], float32[:]),
+        float64[:, :](float64[:, :], float64[:]),
+    ],
+    fastmath=False,
+    nogil=True,
+    cache=False,
+)
+def _quantile(arr, q):
+    if arr.ndim == 1:
+        out = np.empty((q.size,), dtype=arr.dtype)
+        out[:] = _choosequantile(arr, q)
+    else:
+        out = np.empty((arr.shape[0], q.size), dtype=arr.dtype)
+        for index in range(out.shape[0]):
+            out[index] = _choosequantile(arr[index], q)
+    return out
 
 
 @guvectorize(
     [(float32[:], float32, float32[:]), (float64[:], float64, float64[:])],
     "(n),()->()",
     nopython=True,
-    cache=True,
+    cache=False,
 )
 def _vecquantiles(arr, rnk, res):
     if np.isnan(rnk):
@@ -42,18 +139,6 @@ def vecquantiles(da, rnk, dim):
     return res
 
 
-@njit
-def _quantile(arr, q):
-    if arr.ndim == 1:
-        out = np.empty((q.size,), dtype=arr.dtype)
-        out[:] = np.nanquantile(arr, q)
-    else:
-        out = np.empty((arr.shape[0], q.size), dtype=arr.dtype)
-        for index in range(out.shape[0]):
-            out[index] = np.nanquantile(arr[index], q)
-    return out
-
-
 def quantile(da, q, dim):
     """Compute the quantiles from a fixed list `q`."""
     # We have two cases :
@@ -66,14 +151,13 @@ def quantile(da, q, dim):
     dims = [dim] if isinstance(dim, str) else dim
     tem = utils.get_temp_dimname(da.dims, "temporal")
     da = da.stack({tem: dims})
-
     # So we cut in half the definitions to declare in numba
     # We still use q as the coords so it corresponds to what was done upstream
-    if not hasattr(q, "dtype") or q.dtype != da.dtype:
-        qc = np.array(q, dtype=da.dtype)
-    else:
-        qc = q
-
+    # if not hasattr(q, "dtype") or q.dtype != da.dtype or q.shape[0] != da.shape[0]:
+    #    qc = np.array(q, dtype=da.dtype)
+    # else:
+    #    qc = q
+    qc = np.array(q, dtype=da.dtype)
     if len(da.dims) > 1:
         # There are some extra dims
         extra = utils.get_temp_dimname(da.dims, "extra")
@@ -98,7 +182,15 @@ def quantile(da, q, dim):
     return res
 
 
-@njit
+@njit(
+    [
+        float32[:, :](float32[:, :]),
+        float64[:, :](float64[:, :]),
+    ],
+    fastmath=False,
+    nogil=True,
+    cache=False,
+)
 def remove_NaNs(x):  # noqa
     """Remove NaN values from series."""
     remove = np.zeros_like(x[0, :], dtype=boolean)
@@ -107,7 +199,15 @@ def remove_NaNs(x):  # noqa
     return x[:, ~remove]
 
 
-@njit(fastmath=True)
+@njit(
+    [
+        float32(float32[:, :], float32[:, :]),
+        float64(float64[:, :], float64[:, :]),
+    ],
+    fastmath=True,
+    nogil=True,
+    cache=False,
+)
 def _correlation(X, Y):
     """Compute a correlation as the mean of pairwise distances between points in X and Y.
 
@@ -124,7 +224,15 @@ def _correlation(X, Y):
     return d / (X.shape[1] * Y.shape[1])
 
 
-@njit(fastmath=True)
+@njit(
+    [
+        float32(float32[:, :]),
+        float64(float64[:, :]),
+    ],
+    fastmath=True,
+    nogil=True,
+    cache=False,
+)
 def _autocorrelation(X):
     """Mean of the NxN pairwise distances of points in X of shape KxN.
 
@@ -147,7 +255,7 @@ def _autocorrelation(X):
     ],
     "(k, n),(k, m)->()",
     nopython=True,
-    cache=True,
+    cache=False,
 )
 def _escore(tgt, sim, out):
     """E-score based on the Székely-Rizzo e-distances between clusters.
@@ -170,7 +278,17 @@ def _escore(tgt, sim, out):
     out[0] = w * (sXY + sXY - sXX - sYY) / 2
 
 
-@njit
+@njit(
+    #    [
+    #        float32[:,:](float32[:]),
+    #        float64[:,:](float64[:]),
+    #        float32[:,:](float32[:,:]),
+    #        float64[:,:](float64[:,:]),
+    #    ],
+    fastmath=False,
+    nogil=True,
+    cache=False,
+)
 def _first_and_last_nonnull(arr):
     """For each row of arr, get the first and last non NaN elements."""
     out = np.empty((arr.shape[0], 2))
@@ -183,7 +301,15 @@ def _first_and_last_nonnull(arr):
     return out
 
 
-@njit
+@njit(
+    #    [
+    #        float64[:](float32[:],float32[:],float32[:],float32[:],float32[:],float32[:],optional(typeof("constant"))),
+    #        float64[:](float64[:],float64[:],float64[:],float64[:],float64[:],float64[:],optional(typeof("constant"))),
+    #    ],
+    fastmath=False,
+    nogil=True,
+    cache=False,
+)
 def _extrapolate_on_quantiles(
     interp, oldx, oldg, oldy, newx, newg, method="constant"
 ):  # noqa
@@ -207,7 +333,15 @@ def _extrapolate_on_quantiles(
     return interp
 
 
-@njit
+@njit(
+    #    [
+    #        typeof((float64[:,:],float64,float64))(float32[:],float32[:],optional(boolean)),
+    #        typeof((float64[:,:],float64,float64))(float64[:],float64[:],optional(boolean)),
+    #    ],
+    fastmath=False,
+    nogil=True,
+    cache=False,
+)
 def _pairwise_haversine_and_bins(lond, latd, transpose=False):
     """Inter-site distances with the haversine approximation."""
     N = lond.shape[0]
