@@ -24,7 +24,7 @@ jobs:
           allowed-endpoints: >
             api.github.com:443
 
-      - uses: actions/add-to-project@v0.5.0
+      - uses: actions/add-to-project@31b3f3ccdc584546fc445612dec3f38ff5edb41c # v0.5.0
         with:
           project-url: https://github.com/orgs/Ouranosinc/projects/6
           github-token: ${{ secrets.ADD_TO_PROJECT_TOKEN }}

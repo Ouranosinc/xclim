@@ -28,7 +28,7 @@ jobs:
           allowed-endpoints: >
             api.github.com:443
             github.com:443
-      - uses: actions/checkout@v4.1.1
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
       - name: Find xclim-testdata Tag and CI Testing Branch
         run: |
           XCLIM_TESTDATA_TAG="$( \
@@ -44,7 +44,7 @@ jobs:
           echo "Latest xclim-testdata tag: ${{ env.XCLIM_TESTDATA_TAG }}"
           echo "Tag for xclim-testdata in CI: ${{ env.XCLIM_TESTDATA_BRANCH }}"
       - name: Find Comment
-        uses: peter-evans/find-comment@v2.4.0
+        uses: peter-evans/find-comment@a54c31d7fa095754bfef525c0c8e5e5674c4b4b1 # v2.4.0
         id: fc
         with:
           issue-number: ${{ github.event.pull_request.number }}
@@ -52,13 +52,13 @@ jobs:
           body-includes: It appears that this Pull Request modifies the `main.yml` workflow.
       - name: Compare Versions
         if: ${{( env.XCLIM_TESTDATA_TAG != env.XCLIM_TESTDATA_BRANCH )}}
-        uses: actions/github-script@v7.0.1
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
         with:
           script: |
             core.setFailed('Configured `xclim-testdata` tag is not `latest`.')
       - name: Update Failure Comment
         if: ${{ failure() }}
-        uses: peter-evans/create-or-update-comment@v3.1.0
+        uses: peter-evans/create-or-update-comment@23ff15729ef2fc348714a3bb66d2f655ca9066f2 # v3.1.0
         with:
           comment-id: ${{ steps.fc.outputs.comment-id }}
           issue-number: ${{ github.event.pull_request.number }}
@@ -74,7 +74,7 @@ jobs:
           edit-mode: replace
       - name: Update Success Comment
         if: ${{ success() }}
-        uses: peter-evans/create-or-update-comment@v3.1.0
+        uses: peter-evans/create-or-update-comment@23ff15729ef2fc348714a3bb66d2f655ca9066f2 # v3.1.0
         with:
           comment-id: ${{ steps.fc.outputs.comment-id }}
           issue-number: ${{ github.event.pull_request.number }}

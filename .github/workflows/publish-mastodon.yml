@@ -30,7 +30,7 @@ jobs:
           egress-policy: audit
 
       - name: Checkout
-        uses: actions/checkout@v4.1.1
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
 
       - name: Current Version
         if: ${{ !github.event.inputs.version-tag }}
@@ -63,7 +63,7 @@ jobs:
 
       - name: Prepare Message
         id: render_template
-        uses: chuhlomin/render-template@v1.9
+        uses: chuhlomin/render-template@a473db625a96c98e519d188812dc22bcaf54ffba # v1.9
         with:
           template: .github/publish-mastodon.template.md
           vars: |
@@ -75,7 +75,7 @@ jobs:
 
       - name: Send toot to Mastodon
         if: ${{ github.event.inputs.dry-run != 'true' }} || ${{ github.event_name == 'release' }}
-        uses: cbrgm/mastodon-github-action@v1.0.3
+        uses: cbrgm/mastodon-github-action@d98ab3376f941df14d37d5737961de431c0838c6 # v1.0.3
         with:
           message: "${{ steps.render_template.outputs.result }}${{ env.contributors }}"
           visibility: "public"
