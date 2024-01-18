@@ -236,7 +236,8 @@ def _get(
         local_file.parent.mkdir(exist_ok=True, parents=True)
 
         url = "/".join((github_url, "raw", branch, fullname.as_posix()))
-        logger.info("Fetching remote file: {}" % fullname.as_posix())
+        msg = f"Fetching remote file: {fullname.as_posix()}"
+        logger.info(msg)
         try:
             urlretrieve(url, local_file)  # nosec
         except HTTPError as e:
@@ -257,7 +258,8 @@ def _get(
             raise FileNotFoundError(msg) from e
         try:
             url = "/".join((github_url, "raw", branch, md5_name.as_posix()))
-            logger.info("Fetching remote file md5: {}" % md5_name.as_posix())
+            msg = f"Fetching remote file md5: {format(md5_name.as_posix())}"
+            logger.info(msg)
             urlretrieve(url, md5_file)  # nosec
         except (HTTPError, URLError) as e:
             msg = (
