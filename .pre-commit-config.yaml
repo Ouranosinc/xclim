@@ -26,6 +26,10 @@ repos:
     rev: v0.23.1
     hooks:
       - id: toml-sort-fix
+  - repo: https://github.com/pylint-dev/pylint
+    rev: v2.17.2
+    hooks:
+      - id: pylint
   - repo: https://github.com/adrienverge/yamllint.git
     rev: v1.33.0
     hooks:
@@ -94,7 +98,3 @@ ci:
   autoupdate_schedule: monthly
   skip: [ nbstripout ]
   submodules: false
-  - repo: https://github.com/pylint-dev/pylint
-    rev: v2.17.2
-    hooks:
-      - id: pylint
