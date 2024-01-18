@@ -26,6 +26,7 @@ repos:
     rev: v0.23.1
     hooks:
       - id: toml-sort-fix
+        exclude: '.pylintrc.toml'
   - repo: https://github.com/pylint-dev/pylint
     rev: v3.0.3
     hooks:
