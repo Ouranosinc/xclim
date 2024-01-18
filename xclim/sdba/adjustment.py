@@ -1469,7 +1469,7 @@ class MBCn(BaseAdjustment):
             base_kws_vars[v].setdefault("nquantiles", self.ds.af_q.quantiles.values)
             if np.isscalar(base_kws_vars[v]["nquantiles"]):
                 base_kws_vars[v]["nquantiles"] = equally_spaced_nodes(
-                    base_kws_vars["nquantiles"]
+                    base_kws_vars[v]["nquantiles"]
                 )
             # should maybe require that quantiles here match those from training?
 
