@@ -283,7 +283,7 @@ def dataflags(ctx, variables, raise_flags, append, dims, freq):
 @click.option(
     "-i", "--info", is_flag=True, help="Prints more details for each indicator."
 )
-def indices(information):
+def indices(info):  # noqa
     """List all indicators."""
     formatter = click.HelpFormatter()
     formatter.write_heading("Listing all available indicators for computation.")
@@ -297,7 +297,7 @@ def indices(information):
             right += (
                 " (" + ", ".join([var["var_name"] for var in indcls.cf_attrs]) + ")"
             )
-        if information:
+        if info:
             right += "\n" + indcls.abstract
         rows.append((left, right))
     rows.sort(key=lambda row: row[0])
