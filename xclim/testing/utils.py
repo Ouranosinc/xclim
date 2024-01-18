@@ -205,7 +205,7 @@ def _get(
             msg = f"Attempting to fetch remote file md5: {md5_name.as_posix()}"
             logger.info(msg)
             urlretrieve(url, md5_file)  # nosec
-            with open(md5_file) as f:
+            with open(md5_file, "r") as f:
                 remote_md5 = f.read()
             if local_md5.strip() != remote_md5.strip():
                 local_file.unlink()
@@ -272,7 +272,7 @@ def _get(
 
         local_md5 = file_md5_checksum(local_file)
         try:
-            with open(md5_file) as f:
+            with open(md5_file, "r") as f:
                 remote_md5 = f.read()
             if local_md5.strip() != remote_md5.strip():
                 local_file.unlink()
@@ -489,7 +489,7 @@ def publish_release_notes(
     if not changes_file.exists():
         raise FileNotFoundError("Changelog file not found in xclim folder tree.")
 
-    with open(changes_file) as hf:
+    with open(changes_file, "r") as hf:
         changes = hf.read()
 
     if style == "rst":
@@ -534,7 +534,9 @@ def publish_release_notes(
     if not file:
         return changes
     if isinstance(file, (Path, os.PathLike)):
-        file = Path(file).open("w")
+        with Path(file).open("w") as f:
+            print(changes, file=f)
+        return
     print(changes, file=file)
 
 
@@ -591,5 +593,7 @@ def show_versions(
     if not file:
         return message
     if isinstance(file, (Path, os.PathLike)):
-        file = Path(file).open("w")
+        with Path(file).open("w") as f:
+            print(message, file=f)
+        return
     print(message, file=file)

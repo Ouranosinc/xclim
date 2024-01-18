@@ -10,7 +10,7 @@
 
 # Always return a 0 (non-error) status code, even if lint errors are found. This
 # is primarily useful in continuous integration scripts.
-exit-zero = false
+# exit-zero = false
 
 # A comma-separated list of package or module names from where C extensions may
 # be loaded. Extensions are loading into the active Python interpreter and may
@@ -298,7 +298,7 @@ indent-string = "    "
 max-line-length = 150
 
 # Maximum number of lines in a module.
-max-module-lines = 1000
+max-module-lines = 1500
 
 # Allow the body of a class to be on the same line as the declaration if body
 # contains single statement.
