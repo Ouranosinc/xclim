@@ -1,7 +1,8 @@
 name: Verify Testing Data
 
 on:
-  pull_request:
+  # Needed for write permissions of peter-evans/create-or-update-comment
+  pull_request_target:  # It is very important to not perform code checkout/build/testing with pull_request_target
     types:
       - opened
       - reopened
