@@ -28,9 +28,9 @@ def virtual_indicator(request):
 
 
 def test_default_modules_exist():
-    from xclim.indicators import anuclim  # noqa; # pylint: disable=no-name-in-module
-    from xclim.indicators import cf  # noqa; # pylint: disable=no-name-in-module
-    from xclim.indicators import icclim  # noqa; # pylint: disable=no-name-in-module
+    from xclim.indicators import anuclim  # noqa
+    from xclim.indicators import cf  # noqa
+    from xclim.indicators import icclim  # noqa
 
     assert hasattr(icclim, "TG")
 
