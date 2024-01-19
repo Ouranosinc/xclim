@@ -239,10 +239,20 @@ def keetch_byram_drought_index(
     """
 
     def _keetch_byram_drought_index_pass(pr, tasmax, pr_annual, kbdi0):
-        """Pass inputs on to guvectorized function `_keetch_byram_drought_index`. DO NOT CALL DIRECTLY, use `keetch_byram_drought_index` instead."""
-        # This function is actually only required as xr.apply_ufunc will not receive
-        # a guvectorized function which has the output(s) in its function signature
-        return _keetch_byram_drought_index(pr, tasmax, pr_annual, kbdi0)
+        """Pass inputs on to guvectorized function `_keetch_byram_drought_index`.
+
+        This function is actually only required as `xr.apply_ufunc` will not receive
+        a guvectorized function which has the output(s) in its function signature.
+
+        Warnings
+        --------
+        DO NOT CALL DIRECTLY, use `keetch_byram_drought_index` instead.
+        """
+        # fmt: off
+        return _keetch_byram_drought_index(  # pylint: disable=no-value-for-parameter
+            pr, tasmax, pr_annual, kbdi0
+        )
+        # fmt: on
 
     pr = convert_units_to(pr, "mm/day", context="hydro")
     tasmax = convert_units_to(tasmax, "C")
@@ -311,10 +321,20 @@ def griffiths_drought_factor(
     """
 
     def _griffiths_drought_factor_pass(pr, smd, lim):
-        """Pass inputs on to guvectorized function `_griffiths_drought_factor`. DO NOT CALL DIRECTLY, use `griffiths_drought_factor` instead."""
-        # This function is actually only required as xr.apply_ufunc will not receive
-        # a guvectorized function which has the output(s) in its function signature
-        return _griffiths_drought_factor(pr, smd, lim)
+        """Pass inputs on to guvectorized function `_griffiths_drought_factor`.
+
+        This function is actually only required as xr.apply_ufunc will not receive
+        a guvectorized function which has the output(s) in its function signature.
+
+        Warnings
+        --------
+        DO NOT CALL DIRECTLY, use `griffiths_drought_factor` instead.
+        """
+        # fmt: off
+        return _griffiths_drought_factor(  # pylint: disable=no-value-for-parameter
+            pr, smd, lim
+        )
+        # fmt: on
 
     pr = convert_units_to(pr, "mm/day", context="hydro")
     smd = convert_units_to(smd, "mm/day")

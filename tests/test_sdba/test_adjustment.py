@@ -711,9 +711,11 @@ class TestSBCKutils:
     @pytest.mark.slow
     @pytest.mark.parametrize(
         "method",
+        # fmt: off
         [
-            m for m in dir(adjustment) if m.startswith("SBCK_")
-        ],  # pylint: disable=no-member
+            m for m in dir(adjustment) if m.startswith("SBCK_")  # pylint: disable=no-member
+        ],
+        # fmt: on
     )
     @pytest.mark.parametrize("use_dask", [True])  # do we gain testing both?
     def test_sbck(self, method, use_dask, random):

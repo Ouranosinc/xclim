@@ -776,8 +776,12 @@ def test_indicator_errors():
     with pytest.raises(AttributeError, match="Indicator's realm must be given as one"):
         Daily(**d)
 
-    def func(data: xr.DataArray, thresh: str = "0 degC"):
+    # fmt: off
+    def func(  # noqa; # pylint: disable=function-redefined
+        data: xr.DataArray, thresh: str = "0 degC"
+    ):
         return data
+    # fmt: on
 
     func.__doc__ = "\n".join(doc[:10] + doc[12:])
     d = dict(

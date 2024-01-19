@@ -193,7 +193,7 @@ class TestMapBlocks:
             d = ds.tas.mean(dim)
             return d.rename("data").to_dataset()
 
-        data = func(
+        data = func(  # pylint: disable=missing-kwoa
             xr.Dataset(dict(tas=tas)),
             group="time.dayofyear",
             window=5,
@@ -212,7 +212,7 @@ class TestMapBlocks:
             return data.rename("data").to_dataset()
 
         # with a scalar aux coord
-        data = func(
+        data = func(  # pylint: disable=missing-kwoa
             xr.Dataset(dict(tas=tas.isel(lat=0, drop=True)), coords=dict(leftover=1)),
             group="time.dayofyear",
         ).load()
