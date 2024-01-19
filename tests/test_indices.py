@@ -21,7 +21,7 @@ import pytest
 import xarray as xr
 
 from xclim import indices as xci
-from xclim.core.calendar import date_range, percentile_doy
+from xclim.core.calendar import convert_calendar, date_range, percentile_doy
 from xclim.core.options import set_options
 from xclim.core.units import ValidationError, convert_units_to, units
 
@@ -462,7 +462,7 @@ class TestAgroclimaticIndices:
     # tolerance possible.
     # Repeated tests with lower tolerance means we want a more precise comparison, so we compare
     # the current version of XClim with the version where the test was implemented
-    # TODO : Add tests for SPI_daily.
+
     @pytest.mark.parametrize(
         "freq, window, dist, method,  values, diff_tol",
         [
@@ -518,12 +518,32 @@ class TestAgroclimaticIndices:
                 [0.683273, 1.51189, 1.61597, 1.03875, 0.72531],
                 2e-2,
             ),
+            (
+                "D",
+                1,
+                "gamma",
+                "APP",
+                [-0.18618353, 1.44582971, 0.95985043, 0.15779587, -0.37801587],
+                2e-2,
+            ),
+            (
+                "D",
+                12,
+                "gamma",
+                "APP",
+                [-0.24417774, -0.11404418, 0.64997039, 1.07670517, 0.6462852],
+                2e-2,
+            ),
         ],
     )
     def test_standardized_precipitation_index(
         self, open_dataset, freq, window, dist, method, values, diff_tol
     ):
         ds = open_dataset("sdba/CanESM2_1950-2100.nc").isel(location=1)
+        if freq == "D":
+            ds = convert_calendar(
+                ds, "366_day", missing=np.NaN
+            )  # to compare with ``climate_indices``
         pr = ds.pr.sel(time=slice("1998", "2000"))
         pr_cal = ds.pr.sel(time=slice("1950", "1980"))
         params = xci.stats.standardized_index_fit_params(
