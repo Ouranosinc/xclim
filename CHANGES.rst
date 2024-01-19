@@ -28,6 +28,7 @@ Bug fixes
 ^^^^^^^^^
 * Fixed passing ``missing=0`` to ``xclim.core.calendar.convert_calendar``. (:issue:`1562`, :pull:`1563`).
 * Fix wrong `window` attributes in ``xclim.indices.standardized_precipitation_index``, ``xclim.indices.standardized_precipitation_evapotranspiration_index``. (:issue:`1552`  :pull:`1554`).
+* Fix the daily case `freq='D'` of ``xclim.stats.preprocess_standardized_index`` (:issue:`1602`  :pull:`1607`).
 * Several spelling mistakes have been corrected within the documentation and codebase. (:pull:`1576`).
 
 Internal changes
