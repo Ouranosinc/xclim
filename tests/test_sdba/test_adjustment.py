@@ -1,3 +1,4 @@
+# pylint: disable=no-member
 from __future__ import annotations
 
 import numpy as np
@@ -711,11 +712,7 @@ class TestSBCKutils:
     @pytest.mark.slow
     @pytest.mark.parametrize(
         "method",
-        # fmt: off
-        [
-            m for m in dir(adjustment) if m.startswith("SBCK_")  # pylint: disable=no-member
-        ],
-        # fmt: on
+        [m for m in dir(adjustment) if m.startswith("SBCK_")],
     )
     @pytest.mark.parametrize("use_dask", [True])  # do we gain testing both?
     def test_sbck(self, method, use_dask, random):

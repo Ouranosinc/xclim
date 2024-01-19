@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+# pylint: disable=unsubscriptable-object,function-redefined
 # Tests for the Indicator objects
 from __future__ import annotations
 
@@ -159,10 +159,7 @@ def test_attrs(tas_series):
     assert f"xclim version: {__version__}" in txm.attrs["history"]
     assert txm.name == "tmin5 degC"
     assert uniIndTemp.standard_name == "{freq} mean temperature"
-    assert (
-        uniIndTemp.cf_attrs[0]["another_attr"]  # pylint: disable=unsubscriptable-object
-        == "With a value."
-    )
+    assert uniIndTemp.cf_attrs[0]["another_attr"] == "With a value."
 
     thresh = xr.DataArray(
         [1],
@@ -260,7 +257,7 @@ def test_temp_unit_conversion(tas_series):
     with pytest.raises(AssertionError):
         np.testing.assert_array_almost_equal(txk, txc + 273.15)
 
-    uniIndTemp.cf_attrs[0]["units"] = "degC"  # pylint: disable=unsubscriptable-object
+    uniIndTemp.cf_attrs[0]["units"] = "degC"
     txc = uniIndTemp(a, freq="YS")
     np.testing.assert_array_almost_equal(txk, txc + 273.15)
 
@@ -761,18 +758,14 @@ def test_indicator_errors():
     # with pytest.raises(ValueError, match="variable data is missing expected units"):
     #     Daily(**d)
 
-    d["parameters"]["thresh"] = {"units": "K"}  # pylint: disable=function-redefined
+    d["parameters"]["thresh"] = {"units": "K"}
     d["realm"] = "mercury"
     d["input"] = {"data": "tasmin"}
     with pytest.raises(AttributeError, match="Indicator's realm must be given as one"):
         Daily(**d)
 
-    # fmt: off
-    def func(  # noqa; # pylint: disable=function-redefined
-        data: xr.DataArray, thresh: str = "0 degC"
-    ):
+    def func(data: xr.DataArray, thresh: str = "0 degC"):
         return data
-    # fmt: on
 
     func.__doc__ = "\n".join(doc[:10] + doc[12:])
     d = dict(
