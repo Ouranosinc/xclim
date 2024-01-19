@@ -1,4 +1,4 @@
-name: Verify Testing Data and Workflows
+name: Verify Testing Data
 
 on:
   pull_request:
@@ -9,7 +9,7 @@ on:
     paths:
       - .github/workflows/main.yml
 
-permissions:  # added using https://github.com/step-security/secure-repo
+permissions:
   contents: read
 
 jobs:

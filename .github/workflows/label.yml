@@ -6,10 +6,15 @@
 # https://github.com/actions/labeler/blob/master/README.md
 
 name: Labeler
-on: [pull_request_target]
+on:
   # Note: potential security risk from this action using pull_request_target.
   # Do not add actions in here which need a checkout of the repo, and do not use any caching in here.
   # See: https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#pull_request_target
+  pull_request_target:
+    types:
+      - opened
+      - reopened
+      - synchronize
 
 permissions:
   contents: read
@@ -30,6 +35,7 @@ jobs:
           egress-policy: block
           allowed-endpoints: >
             api.github.com:443
+
       - uses: actions/labeler@8558fd74291d67161a8a78ce36a881fa63b766a9 # v5.0.0
         with:
           repo-token: "${{ secrets.GITHUB_TOKEN }}"

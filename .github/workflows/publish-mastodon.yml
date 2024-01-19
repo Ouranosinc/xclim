@@ -15,7 +15,7 @@ on:
         default: true
         type: boolean
 
-permissions:  # added using https://github.com/step-security/secure-repo
+permissions:
   contents: read
 
 jobs:

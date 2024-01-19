@@ -68,7 +68,7 @@ jobs:
         with:
           issue-number: ${{ github.event.pull_request.number }}
           comment-author: 'github-actions[bot]'
-          body-includes: This Pull Request is coming from a fork and must be manually tagged `approved` in order to perform additional testing
+          body-includes: This Pull Request is coming from a fork and must be manually tagged `approved` in order to perform additional testing.
       - name: Create comment
         if: |
           (steps.fc.outputs.comment-id == '') &&
