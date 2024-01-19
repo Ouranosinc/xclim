@@ -374,6 +374,7 @@ disable = [
     "invalid-unary-operand-type",
     "locally-disabled",
     "missing-module-docstring",
+    "no-member",
     "protected-access",
     "raw-checker-failed",
     "redefined-outer-name",
@@ -521,7 +522,7 @@ missing-member-max-choices = 1
 mixin-class-rgx = ".*[Mm]ixin"
 
 # List of decorators that change the signature of a decorated function.
-# signature-mutators =
+signature-mutators = ["xclim.sdba.base.map_groups"]
 
 [tool.pylint.variables]
 # List of additional names supposed to be defined in builtins. Remember that you

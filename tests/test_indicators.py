@@ -159,11 +159,10 @@ def test_attrs(tas_series):
     assert f"xclim version: {__version__}" in txm.attrs["history"]
     assert txm.name == "tmin5 degC"
     assert uniIndTemp.standard_name == "{freq} mean temperature"
-    # fmt: off
     assert (
-        uniIndTemp.cf_attrs[0]["another_attr"] == "With a value."  # pylint: disable=unsubscriptable-object
+        uniIndTemp.cf_attrs[0]["another_attr"]  # pylint: disable=unsubscriptable-object
+        == "With a value."
     )
-    # fmt: on
 
     thresh = xr.DataArray(
         [1],
@@ -247,14 +246,8 @@ def test_module():
     """Translations are keyed according to the module where the indicators are defined."""
     assert atmos.tg_mean.__module__.split(".")[2] == "atmos"
     # Virtual module also are stored under xclim.indicators
-    # fmt: off
-    assert (
-        xclim.indicators.cf.fg.__module__ == "xclim.indicators.cf"  # pylint: disable=no-member
-    )
-    assert (
-        xclim.indicators.icclim.GD4.__module__ == "xclim.indicators.icclim"  # pylint: disable=no-member
-    )
-    # fmt: on
+    assert xclim.indicators.cf.fg.__module__ == "xclim.indicators.cf"
+    assert xclim.indicators.icclim.GD4.__module__ == "xclim.indicators.icclim"
 
 
 def test_temp_unit_conversion(tas_series):
@@ -267,9 +260,7 @@ def test_temp_unit_conversion(tas_series):
     with pytest.raises(AssertionError):
         np.testing.assert_array_almost_equal(txk, txc + 273.15)
 
-    uniIndTemp.cf_attrs[0][  # noqa; # pylint: disable=unsubscriptable-object
-        "units"
-    ] = "degC"
+    uniIndTemp.cf_attrs[0]["units"] = "degC"  # pylint: disable=unsubscriptable-object
     txc = uniIndTemp(a, freq="YS")
     np.testing.assert_array_almost_equal(txk, txc + 273.15)
 

@@ -1,3 +1,4 @@
+# pylint: disable=no-value-for-parameter
 """
 Numba-accelerated Utilities
 ===========================
@@ -34,7 +35,7 @@ def vecquantiles(da: DataArray, rnk: DataArray, dim: str | DataArray.dims) -> Da
     da = da.transpose(*rnk.dims, tem)
 
     res = DataArray(
-        _vecquantiles(da.values, rnk.values),  # pylint: disable=no-value-for-parameter
+        _vecquantiles(da.values, rnk.values),
         dims=rnk.dims,
         coords=rnk.coords,
         attrs=da.attrs,
@@ -184,12 +185,7 @@ def _first_and_last_nonnull(arr):
 
 
 @njit
-def _extrapolate_on_quantiles(
-    # fmt: off
-    interp, oldx, oldg, oldy, newx, newg, method="constant"
-    # noqa
-    # fmt: on
-):
+def _extrapolate_on_quantiles(interp, oldx, oldg, oldy, newx, newg, method="constant"):
     """Apply extrapolation to the output of interpolation on quantiles with a given grouping.
 
     Arguments are the same as _interp_on_quantiles_2D.

@@ -137,7 +137,7 @@ def cfcheck(func: Callable) -> Callable:
     return run_check
 
 
-class set_options:  # noqa: C0103
+class set_options:
     """Set options for xclim in a controlled context.
 
     Attributes

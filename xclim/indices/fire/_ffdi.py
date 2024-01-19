@@ -1,3 +1,4 @@
+# pylint: disable=no-value-for-parameter
 r"""
 McArthur Forest Fire Danger (Mark 5) System
 ===========================================
@@ -97,7 +98,7 @@ def _keetch_byram_drought_index(p, t, pa, kbdi0, kbdi: float):  # pragma: no cov
     nopython=True,
     cache=True,
 )
-def _griffiths_drought_factor(p, smd, lim, df):  # pragma: no cover  # noqa: C901
+def _griffiths_drought_factor(p, smd, lim, df):
     """Compute the Griffiths drought factor.
 
     Parameters
@@ -248,11 +249,7 @@ def keetch_byram_drought_index(
         --------
         DO NOT CALL DIRECTLY, use `keetch_byram_drought_index` instead.
         """
-        # fmt: off
-        return _keetch_byram_drought_index(  # pylint: disable=no-value-for-parameter
-            pr, tasmax, pr_annual, kbdi0
-        )
-        # fmt: on
+        return _keetch_byram_drought_index(pr, tasmax, pr_annual, kbdi0)
 
     pr = convert_units_to(pr, "mm/day", context="hydro")
     tasmax = convert_units_to(tasmax, "C")
@@ -330,11 +327,7 @@ def griffiths_drought_factor(
         --------
         DO NOT CALL DIRECTLY, use `griffiths_drought_factor` instead.
         """
-        # fmt: off
-        return _griffiths_drought_factor(  # pylint: disable=no-value-for-parameter
-            pr, smd, lim
-        )
-        # fmt: on
+        return _griffiths_drought_factor(pr, smd, lim)
 
     pr = convert_units_to(pr, "mm/day", context="hydro")
     smd = convert_units_to(smd, "mm/day")

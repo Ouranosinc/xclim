@@ -464,9 +464,9 @@ def cli(ctx, **kwargs):
     ctx.obj = kwargs
 
 
-@cli.result_callback()  # noqa
+@cli.result_callback()
 @click.pass_context
-def write_file(ctx, *args, **kwargs):  # noqa: W0613
+def write_file(ctx, *args, **kwargs):
     """Write the output dataset to file."""
     if ctx.obj["output"] is not None:
         if ctx.obj["verbose"]:
