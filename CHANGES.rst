@@ -38,7 +38,12 @@ Internal changes
 * Updated the CONTRIBUTING.rst directions to showcase the new versioning system. (:issue:`1557`, :pull:`1573`).
 * The `codespell` library is now a development dependency for the `dev` installation recipe with configurations found within `pyproject.toml`. This is also now a linting step and integrated as a `pre-commit` hook. For more information, see the `codespell documentation <https://github.com/codespell-project/codespell>`_ (:pull:`1576`).
 * Climate indicators search page now prioritizes the "official" indicators (atmos, land, seaIce and generic), virtual submodules can be added to search through checkbox option. (:issue:`1559`, :pull:`1593`).
-
+* The OpenSSF StepSecurity bot has contributed some changes to the workflows and pre-commit. (:issue:`1181`, :pull:`1606`):
+    * Dependabot has been configured to monitor the `xclim` repository for dependency updates. The ``actions-version-updater.yml`` workflow has been deprecated.
+    * GitHub Actions are now pinned to their commit hashes to prevent unexpected changes in the future.
+    * A new GitHub Workflow (``workflow-warning.yml``) has been added to warn maintainers when a forked repository has been used to open a Pull Request that modifies GitHub Workflows.
+    * `pylint` has been configured to provide some overhead checks of the `xclim` codebase as well as run as part of `xclim`'s `pre-commit` hooks.
+    * Some small adjustments to code organization to address `pylint` errors.
 
 v0.47.0 (2023-12-01)
 --------------------
