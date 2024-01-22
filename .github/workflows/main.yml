@@ -126,7 +126,7 @@ jobs:
           - tox-env: py311-coverage-sbck
             python-version: "3.11"
             markers: -m 'not slow'
-          - tox-env: py312-coverage
+          - tox-env: py312-coverage-numba
             python-version: "3.12"
             markers: -m 'not slow'
           - tox-env: notebooks_doctests
