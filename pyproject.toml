@@ -41,13 +41,12 @@ dependencies = [
   "jsonpickle",
   "lmoments3>=1.0.5",
   "numba",
-  "numpy>=1.16",
-  # This should be raised to Pandas 2.2 when released
-  "pandas>=2.1",
+  "numpy>=1.20.0",
+  "pandas>=2.2",
   "pint>=0.10",
   "pyyaml",
   "scikit-learn>=0.21.3",
-  "scipy>=1.2",
+  "scipy>=1.9.0",
   "statsmodels",
   "xarray>=2023.11.0",
   "yamale"
