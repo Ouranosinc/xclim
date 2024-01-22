@@ -126,14 +126,14 @@ jobs:
           - tox-env: py311-coverage-sbck
             python-version: "3.11"
             markers: -m 'not slow'
+          - tox-env: py312-coverage
+            python-version: "3.12"
+            markers: -m 'not slow'
           - tox-env: notebooks_doctests
             python-version: "3.10"
           - tox-env: offline-prefetch
             python-version: "3.11"
             markers: -m 'not slow and not requires_internet'
-          - tox-env: py312
-            python-version: "3.12"
-            markers: -m 'not slow'
     steps:
       - name: Harden Runner
         uses: step-security/harden-runner@eb238b55efaa70779f274895e782ed17c84f2895 # v2.6.1
