@@ -395,8 +395,8 @@ def test_convert_calendar_360_days_random():
     "source,target,freq",
     [
         ("standard", "noleap", "D"),
-        ("noleap", "default", "4H"),
-        ("noleap", "all_leap", "M"),  # Do we want "MS" or "ME"?
+        ("noleap", "default", "4h"),
+        ("noleap", "all_leap", "ME"),  # TODO: Do we want "MS" or "ME"?
         ("360_day", "noleap", "D"),
         ("noleap", "360_day", "D"),
     ],
@@ -625,10 +625,10 @@ def test_doy_to_days_since():
 @pytest.mark.parametrize(
     "freq,em,eb,es,ea",
     [
-        ("4AS-JUL", 4, "A", True, "JUL"),
+        ("4AS-JUL", 4, "Y", True, "JUL"),
         ("M", 1, "M", False, None),
-        ("YS", 1, "A", True, "JAN"),
-        ("3A", 3, "A", False, "DEC"),
+        ("YS", 1, "Y", True, "JAN"),
+        ("3A", 3, "Y", False, "DEC"),
         ("D", 1, "D", True, None),
         ("3W", 21, "D", True, None),
     ],
