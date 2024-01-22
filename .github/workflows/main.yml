@@ -131,6 +131,9 @@ jobs:
           - tox-env: offline-prefetch
             python-version: "3.11"
             markers: -m 'not slow and not requires_internet'
+          - tox-env: py312
+            python-version: "3.12"
+            markers: -m 'not slow'
     steps:
       - name: Harden Runner
         uses: step-security/harden-runner@eb238b55efaa70779f274895e782ed17c84f2895 # v2.6.1
@@ -172,7 +175,7 @@ jobs:
 
   test-conda:
     needs: lint
-    name: test-conda-${{ matrix.tox-env }} (Python${{ matrix.python-version }})
+    name: test-conda-Python${{ matrix.python-version }}
     if: |
       contains(github.event.pull_request.labels.*.name, 'approved') ||
       (github.event.review.state == 'approved') ||
@@ -181,12 +184,8 @@ jobs:
     strategy:
       matrix:
         include:
-          - python-version: "3.10"
-            install-python: "3.10"
-          - python-version: "3.11"
-            install-python: "3.11"
+          - python-version: "3.9"
           - python-version: "3.12"
-            install-python: "3.12"
     defaults:
       run:
         shell: bash -l {0}
@@ -216,7 +215,7 @@ jobs:
           environment-file: environment.yml
           create-args: >-
             conda
-            python=${{ matrix.install-python }}
+            python=${{ matrix.python-version }}
       - name: Conda and Mamba versions
         run: |
           conda --version
