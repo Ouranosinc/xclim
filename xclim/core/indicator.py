@@ -211,8 +211,8 @@ class Parameter:
     def is_parameter_dict(cls, other: dict) -> bool:
         """Return whether indicator has a parameter dictionary."""
         return set(other.keys()).issubset(
-            cls.__dataclass_fields__.keys()
-        )  # pylint disable=no-member
+            cls.__dataclass_fields__.keys()  # pylint: disable=no-member
+        )
 
     def __getitem__(self, key) -> str:
         """Return an item in retro-compatible fashion."""
@@ -1502,15 +1502,13 @@ class ResamplingIndicator(CheckMissingIndicator):
         das, params = super()._preprocess_and_checks(das, params)
 
         # Check if the period is allowed:
-        if (
-            self.allowed_periods is not None
-            and parse_offset(params["freq"])[1] not in self.allowed_periods
-        ):
-            raise ValueError(
-                f"Resampling frequency {params['freq']} is not allowed for indicator "
-                f"{self.identifier} (needs something equivalent to one "
-                f"of {self.allowed_periods})."
-            )
+        if self.allowed_periods is not None:
+            if parse_offset(params["freq"])[1] not in self.allowed_periods:
+                raise ValueError(
+                    f"Resampling frequency {params['freq']} is not allowed for indicator "
+                    f"{self.identifier} (needs something equivalent to one "
+                    f"of {self.allowed_periods})."
+                )
 
         return das, params
 
@@ -1623,12 +1621,12 @@ def build_indicator_module(
             )
         out = getattr(indicators, name)
         if reload:
-            for name, ind in list(out.iter_indicators()):
-                if name not in objs:
+            for n, ind in list(out.iter_indicators()):
+                if n not in objs:
                     # Remove the indicator from the registries and the module
                     del registry[ind._registry_id]  # noqa
                     del _indicators_registry[ind.__class__]
-                    del out.__dict__[name]
+                    del out.__dict__[n]
     else:
         doc = doc or f"{name.capitalize()} indicators\n" + "=" * (len(name) + 11)
         try:

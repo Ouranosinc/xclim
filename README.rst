@@ -7,7 +7,7 @@ xclim: Climate services library |logo|
 +----------------------------+-----------------------------------------------------+
 | Documentation and Support  | |docs| |discussions|                                |
 +----------------------------+-----------------------------------------------------+
-| Open Source                | |license| |fair| |zenodo| |pyOpenSci| |joss|        |
+| Open Source                | |license| |fair| |ossf| |zenodo| |pyOpenSci| |joss| |
 +----------------------------+-----------------------------------------------------+
 | Coding Standards           | |black| |ruff| |pre-commit| |security| |fossa|      |
 +----------------------------+-----------------------------------------------------+
@@ -171,6 +171,10 @@ This package was created with Cookiecutter_ and the `audreyfeldroy/cookiecutter-
 .. |fair| image:: https://img.shields.io/badge/fair--software.eu-%E2%97%8F%20%20%E2%97%8F%20%20%E2%97%8F%20%20%E2%97%8F%20%20%E2%97%8B-yellow
         :target: https://fair-software.eu
         :alt: FAIR Software Compliance
+
+.. |ossf| image:: https://api.securityscorecards.dev/projects/github.com/Ouranosinc/xclim/badge
+        :target: https://securityscorecards.dev/viewer/?uri=github.com/Ouranosinc/xclim
+        :alt: OpenSSF Scorecard
 
 .. |fossa| image:: https://app.fossa.com/api/projects/git%2Bgithub.com%2FOuranosinc%2Fxclim.svg?type=shield
         :target: https://app.fossa.com/projects/git%2Bgithub.com%2FOuranosinc%2Fxclim?ref=badge_shield

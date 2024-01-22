@@ -1,0 +1,69 @@
+name: Workflow Changes Warnings
+
+on:
+  # Note: potential security risk from this action using pull_request_target.
+  # Do not add actions in here which need a checkout of the repo, and do not use any caching in here.
+  # See: https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#pull_request_target
+  pull_request_target:
+    types:
+      - opened
+      - reopened
+      - synchronize
+    paths:
+      - .github/workflows/*.yml
+
+permissions:
+  contents: read
+
+jobs:
+  comment-concerning-workflow-changes:
+    name: Comment Concerning Workflow Changes
+    runs-on: ubuntu-latest
+    if: |
+      (github.event.pull_request.head.repo.full_name != github.event.pull_request.base.repo.full_name)
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@eb238b55efaa70779f274895e782ed17c84f2895 # v2.6.1
+        with:
+          disable-sudo: true
+          egress-policy: block
+          allowed-endpoints: >
+            api.github.com:443
+      - name: Find comment
+        uses: peter-evans/find-comment@a54c31d7fa095754bfef525c0c8e5e5674c4b4b1 # v2.4.0
+        id: fc
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          comment-author: 'github-actions[bot]'
+          body-includes: |
+            This Pull Request modifies GitHub workflows and is coming from a fork.
+      - name: Create comment
+        if: |
+          (steps.fc.outputs.comment-id == '') &&
+          (!contains(github.event.pull_request.labels.*.name, 'approved')) &&
+          (github.event.pull_request.head.repo.full_name != github.event.pull_request.base.repo.full_name)
+        uses: peter-evans/create-or-update-comment@23ff15729ef2fc348714a3bb66d2f655ca9066f2 # v3.1.0
+        with:
+          comment-id: ${{ steps.fc.outputs.comment-id }}
+          issue-number: ${{ github.event.pull_request.number }}
+          body: |
+            > **Warning**
+            > This Pull Request modifies GitHub Workflows and is coming from a fork.
+            **It is very important for the reviewer to ensure that the workflow changes are appropriate.**
+          edit-mode: replace
+      - name: Update comment
+        if: |
+          contains(github.event.pull_request.labels.*.name, 'approved')
+        uses: peter-evans/create-or-update-comment@23ff15729ef2fc348714a3bb66d2f655ca9066f2 # v3.1.0
+        with:
+          comment-id: ${{ steps.fc.outputs.comment-id }}
+          issue-number: ${{ github.event.pull_request.number }}
+          body: |
+            > **Note**
+            > Changes have been approved by a maintainer.
+          reactions: |
+            hooray
+          edit-mode: append

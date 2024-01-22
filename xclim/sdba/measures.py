@@ -120,15 +120,13 @@ class StatisticalPropertyMeasure(Indicator):
         if isinstance(params["group"], str):
             params["group"] = Grouper(params["group"])
 
-        if (
-            self.allowed_groups is not None
-            and params["group"].prop not in self.allowed_groups
-        ):
-            raise ValueError(
-                f"Grouping period {params['group'].prop_name} is not allowed for property "
-                f"{self.identifier} (needs something in "
-                f"{list(map(lambda g: '<dim>.' + g.replace('group', ''), self.allowed_groups))})."
-            )
+        if self.allowed_groups is not None:
+            if params["group"].prop not in self.allowed_groups:
+                raise ValueError(
+                    f"Grouping period {params['group'].prop_name} is not allowed for property "
+                    f"{self.identifier} (needs something in "
+                    f"{list(map(lambda g: '<dim>.' + g.replace('group', ''), self.allowed_groups))})."
+                )
 
         # Convert grouping and check if allowed:
         sim = das["sim"]

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+# pylint: disable=unsubscriptable-object,function-redefined
 # Tests for the Indicator objects
 from __future__ import annotations
 
@@ -685,7 +685,7 @@ def test_indicator_from_dict():
 
     # Wrap a multi-output ind
     d = dict(base="wind_speed_from_vector")
-    ind = Indicator.from_dict(d, identifier="wsfv", module="test")
+    Indicator.from_dict(d, identifier="wsfv", module="test")
 
 
 def test_indicator_errors():

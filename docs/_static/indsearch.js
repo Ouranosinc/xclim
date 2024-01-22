@@ -1,6 +1,6 @@
 /* Array of indicator objects */
 let indicators = [];
-
+let defModules = ["atmos", "generic", "land", "seaIce"];
 /* MiniSearch object defining search mechanism */
 let miniSearch = new MiniSearch({
   fields: ['title', 'abstract', 'variables', 'keywords', 'id'], // fields to index for full-text search
@@ -9,6 +9,13 @@ let miniSearch = new MiniSearch({
     boost: {'title': 3, 'variables': 2},
     fuzzy: 0.1,
     prefix: true,
+    boostDocument: (docID, term, storedFields) => {
+      if (defModules.indexOf(storedFields['module']) > -1) {
+        return 2;
+      } else {
+        return 1;
+      }
+    },
   },
   extractField: (doc, field) => {
     if (field === 'variables') {
@@ -87,11 +94,16 @@ function indTemplate(ind) {
 
 function indFilter() {
   const input = document.getElementById("queryInput").value;
+  const incVirt = document.getElementById("incVirtMod").checked;
+  let opts = {};
+  if (!incVirt) {
+    opts["filter"] = (result) => (defModules.indexOf(result.module) > -1);
+  }
   let inds = [];
-  if (input === "") {
-    inds = indicators;
+  if (input === "") { //Search wildcard so that boostDocument rules are applied.
+    inds = miniSearch.search(MiniSearch.wildcard, opts);
   } else {
-    inds = miniSearch.search(input);
+    inds = miniSearch.search(input, opts);
   }
 
   const newTable = inds.map(indTemplate).join('');

@@ -1,5 +1,4 @@
-name: "[Translations] Translation request/coordination"
-description: Coordinate translations of the Xclim documentation
+title: "[Translations] "
 labels: [ "docs" ]
 
 body:

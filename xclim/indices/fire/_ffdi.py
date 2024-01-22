@@ -1,3 +1,4 @@
+# pylint: disable=no-value-for-parameter
 r"""
 McArthur Forest Fire Danger (Mark 5) System
 ===========================================
@@ -97,7 +98,7 @@ def _keetch_byram_drought_index(p, t, pa, kbdi0, kbdi: float):  # pragma: no cov
     nopython=True,
     cache=True,
 )
-def _griffiths_drought_factor(p, smd, lim, df):  # pragma: no cover  # noqa: C901
+def _griffiths_drought_factor(p, smd, lim, df):  # pragma: no cover
     """Compute the Griffiths drought factor.
 
     Parameters
@@ -239,9 +240,15 @@ def keetch_byram_drought_index(
     """
 
     def _keetch_byram_drought_index_pass(pr, tasmax, pr_annual, kbdi0):
-        """Pass inputs on to guvectorized function `_keetch_byram_drought_index`. DO NOT CALL DIRECTLY, use `keetch_byram_drought_index` instead."""
-        # This function is actually only required as xr.apply_ufunc will not receive
-        # a guvectorized function which has the output(s) in its function signature
+        """Pass inputs on to guvectorized function `_keetch_byram_drought_index`.
+
+        This function is actually only required as `xr.apply_ufunc` will not receive
+        a guvectorized function which has the output(s) in its function signature.
+
+        Warnings
+        --------
+        DO NOT CALL DIRECTLY, use `keetch_byram_drought_index` instead.
+        """
         return _keetch_byram_drought_index(pr, tasmax, pr_annual, kbdi0)
 
     pr = convert_units_to(pr, "mm/day", context="hydro")
@@ -311,9 +318,15 @@ def griffiths_drought_factor(
     """
 
     def _griffiths_drought_factor_pass(pr, smd, lim):
-        """Pass inputs on to guvectorized function `_griffiths_drought_factor`. DO NOT CALL DIRECTLY, use `griffiths_drought_factor` instead."""
-        # This function is actually only required as xr.apply_ufunc will not receive
-        # a guvectorized function which has the output(s) in its function signature
+        """Pass inputs on to guvectorized function `_griffiths_drought_factor`.
+
+        This function is actually only required as xr.apply_ufunc will not receive
+        a guvectorized function which has the output(s) in its function signature.
+
+        Warnings
+        --------
+        DO NOT CALL DIRECTLY, use `griffiths_drought_factor` instead.
+        """
         return _griffiths_drought_factor(pr, smd, lim)
 
     pr = convert_units_to(pr, "mm/day", context="hydro")

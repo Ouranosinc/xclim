@@ -6,6 +6,7 @@ on:
       - master
     paths-ignore:
       - .*
+      - .github/*/*.md
       - .github/*/*.yml
       - CHANGES.rst
       - Makefile
@@ -22,7 +23,7 @@ on:
       - tox.ini
       - xclim/__init__.py
 
-permissions:  # added using https://github.com/step-security/secure-repo
+permissions:
   contents: read
 
 jobs:
@@ -36,11 +37,16 @@ jobs:
       - name: Harden Runner
         uses: step-security/harden-runner@eb238b55efaa70779f274895e782ed17c84f2895 # v2.6.1
         with:
-          egress-policy: audit
-      - uses: actions/checkout@v4.1.1
+          disable-sudo: true
+          egress-policy: block
+          allowed-endpoints: >
+            files.pythonhosted.org:443
+            github.com:443
+            pypi.org:443
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
         with:
           persist-credentials: false
-      - uses: actions/setup-python@v5.0.0
+      - uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
         with:
           python-version: "3.x"
       - name: Config Commit Bot
@@ -69,8 +75,8 @@ jobs:
           echo "new_version=${NEW_VERSION}"
           echo "NEW_VERSION=${NEW_VERSION}" >> $GITHUB_ENV
       - name: Push Changes
-        uses: ad-m/github-push-action@v0.8.0
+        uses: ad-m/github-push-action@d91a481090679876dfc4178fef17f286781251df
         with:
           force: false
-          github_token: ${{ secrets.BUMPVERSION_TOKEN }}
+          github_token: ${{ secrets.BUMP_VERSION_TOKEN }}
           branch: ${{ github.ref }}

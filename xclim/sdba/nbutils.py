@@ -1,3 +1,4 @@
+# pylint: disable=no-value-for-parameter
 """
 Numba-accelerated Utilities
 ===========================
@@ -23,7 +24,7 @@ def _vecquantiles(arr, rnk, res):
         res[0] = np.nanquantile(arr, rnk)
 
 
-def vecquantiles(da, rnk, dim):
+def vecquantiles(da: DataArray, rnk: DataArray, dim: str | DataArray.dims) -> DataArray:
     """For when the quantile (rnk) is different for each point.
 
     da and rnk must share all dimensions but dim.
@@ -54,7 +55,7 @@ def _quantile(arr, q):
     return out
 
 
-def quantile(da, q, dim):
+def quantile(da: DataArray, q, dim: str | DataArray.dims) -> DataArray:
     """Compute the quantiles from a fixed list `q`."""
     # We have two cases :
     # - When all dims are processed : we stack them and use _quantile1d
@@ -68,7 +69,7 @@ def quantile(da, q, dim):
     da = da.stack({tem: dims})
 
     # So we cut in half the definitions to declare in numba
-    # We still use q as the coords so it corresponds to what was done upstream
+    # We still use q as the coords, so it corresponds to what was done upstream
     if not hasattr(q, "dtype") or q.dtype != da.dtype:
         qc = np.array(q, dtype=da.dtype)
     else:
@@ -90,7 +91,7 @@ def quantile(da, q, dim):
         # All dims are processed
         res = DataArray(
             _quantile(da.values, qc),
-            dims=("quantiles"),
+            dims="quantiles",
             coords={"quantiles": q},
             attrs=da.attrs,
         )
@@ -184,9 +185,7 @@ def _first_and_last_nonnull(arr):
 
 
 @njit
-def _extrapolate_on_quantiles(
-    interp, oldx, oldg, oldy, newx, newg, method="constant"
-):  # noqa
+def _extrapolate_on_quantiles(interp, oldx, oldg, oldy, newx, newg, method="constant"):
     """Apply extrapolation to the output of interpolation on quantiles with a given grouping.
 
     Arguments are the same as _interp_on_quantiles_2D.

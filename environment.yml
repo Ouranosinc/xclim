@@ -23,6 +23,7 @@ dependencies:
     - scipy >=1.2
     - statsmodels
     - xarray >=2023.11.0
+    - yamale
     # Extras
     - eofs
     - flox
@@ -69,7 +70,6 @@ dependencies:
     - tox
 #    - tox-conda  # Will be added when a tox@v4.0+ compatible plugin is released.
     - xdoctest
-    - yamale
     - yamllint
     - pip
     - pip:

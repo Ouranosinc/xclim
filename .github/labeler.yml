@@ -30,6 +30,8 @@
       - 'docs/**/*'
       - 'AUTHORS.rst'
       - 'CONTRIBUTING.rst'
+      - 'CODE_OF_CONDUCT.md'
+      - 'DISCUSSION_TEMPLATE/**/*'
       - 'ISSUE_TEMPLATE/**/*'
       - 'ISSUE_TEMPLATE.md'
       - 'PULL_REQUEST_TEMPLATE.md'

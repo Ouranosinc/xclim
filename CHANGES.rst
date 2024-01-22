@@ -15,11 +15,14 @@ New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 * Added uncertainty partitioning method `lafferty_sriver` from Lafferty and Sriver (2023), which can partition uncertainty related to the downscaling method. (:issue:`1497`, :pull:`1529`).
 * Validate YAML indicators description before trying to build module. (:issue:`1523`, :pull:`1560`).
+* Support ``indexer`` keyword in YAML indicator description. (:issue:`1522`, :pull:`1561`).
 * New ``xclim.core.calendar.stack_periods`` and ``unstack_periods`` for performing ``rolling(time=...).construct(..., stride=...)`` but with non-uniform temporal periods like years or months. They replace ``xclim.sdba.processing.construct_moving_yearly_window`` and ``unpack_moving_yearly_window`` which are deprecated and will be removed in a future release.
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
 * `bump2version` has been replaced with `bump-my-version` to bump the version number using configurations set in the `pyproject.toml` file. (:issue:`1557`, :pull:`1569`).
+* `xclim`'s units registry and units formatting are now extended from `cf-xarray`. The exponent sign "^" is now never added in the ``units`` attribute. For example, square meters are given as "m2" instead of "m^2" by xclim, both are still accepted as input. (:issue:`1010`, :pull:`1590`).
+* `yamale` is now listed as a core dependency (was previously listed in the `dev` installation recipe). (:issue:`1595`, :pull:`1596`).
 
 Bug fixes
 ^^^^^^^^^
@@ -31,10 +34,16 @@ Internal changes
 ^^^^^^^^^^^^^^^^
 * The `flake8` configuration has been migrated from `setup.cfg` to `.flake8`; `setup.cfg` has been removed. (:pull:`1569`)
 * The `bump-version.yml` workflow has been adjusted to bump the `patch` version when the last version is determined to have been a `release` version; otherwise, the `build` version is bumped. (:issue:`1557`, :pull:`1569`).
-* The GitHub Workflows now use the `step-security/harden-runner` action to monitor source code, actions, and dependency safety. All workflows now employ more constrained permissions rule sets to prevent security issues. (:pull:`1577`, :pull:`1578`).
+* The GitHub Workflows now use the `step-security/harden-runner` action to monitor source code, actions, and dependency safety. All workflows now employ more constrained permissions rule sets to prevent security issues. (:pull:`1577`, :pull:`1578`, :pull:`1597`).
 * Updated the CONTRIBUTING.rst directions to showcase the new versioning system. (:issue:`1557`, :pull:`1573`).
 * The `codespell` library is now a development dependency for the `dev` installation recipe with configurations found within `pyproject.toml`. This is also now a linting step and integrated as a `pre-commit` hook. For more information, see the `codespell documentation <https://github.com/codespell-project/codespell>`_ (:pull:`1576`).
-
+* Climate indicators search page now prioritizes the "official" indicators (atmos, land, seaIce and generic), virtual submodules can be added to search through checkbox option. (:issue:`1559`, :pull:`1593`).
+* The OpenSSF StepSecurity bot has contributed some changes to the workflows and pre-commit. (:issue:`1181`, :pull:`1606`):
+    * Dependabot has been configured to monitor the `xclim` repository for dependency updates. The ``actions-version-updater.yml`` workflow has been deprecated.
+    * GitHub Actions are now pinned to their commit hashes to prevent unexpected changes in the future.
+    * A new GitHub Workflow (``workflow-warning.yml``) has been added to warn maintainers when a forked repository has been used to open a Pull Request that modifies GitHub Workflows.
+    * `pylint` has been configured to provide some overhead checks of the `xclim` codebase as well as run as part of `xclim`'s `pre-commit` hooks.
+    * Some small adjustments to code organization to address `pylint` errors.
 
 v0.47.0 (2023-12-01)
 --------------------
