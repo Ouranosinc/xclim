@@ -21,7 +21,7 @@ import pytest
 import xarray as xr
 
 from xclim import indices as xci
-from xclim.core.calendar import date_range, percentile_doy
+from xclim.core.calendar import convert_calendar, date_range, percentile_doy
 from xclim.core.options import set_options
 from xclim.core.units import ValidationError, convert_units_to, units
 
@@ -456,13 +456,13 @@ class TestAgroclimaticIndices:
 
         np.testing.assert_array_equal(out, np.array([np.NaN, expected]))
 
-    # gamma reference results: Obtained with `monocongo/climate_indices` library
-    # fisk reference results: Obtained with R package `SPEI`
+    # gamma/APP reference results: Obtained with `monocongo/climate_indices` library
+    # MS/fisk/ML reference results: Obtained with R package `SPEI`
     # Using the method `APP` in XClim matches the method from monocongo, hence the very low
     # tolerance possible.
     # Repeated tests with lower tolerance means we want a more precise comparison, so we compare
     # the current version of XClim with the version where the test was implemented
-    # TODO : Add tests for SPI_daily.
+    @pytest.mark.slow
     @pytest.mark.parametrize(
         "freq, window, dist, method,  values, diff_tol",
         [
@@ -518,12 +518,96 @@ class TestAgroclimaticIndices:
                 [0.683273, 1.51189, 1.61597, 1.03875, 0.72531],
                 2e-2,
             ),
+            (
+                "D",
+                1,
+                "gamma",
+                "APP",
+                [-0.18618353, 1.44582971, 0.95985043, 0.15779587, -0.37801587],
+                2e-2,
+            ),
+            (
+                "D",
+                12,
+                "gamma",
+                "APP",
+                [-0.24417774, -0.11404418, 0.64997039, 1.07670517, 0.6462852],
+                2e-2,
+            ),
+            (
+                "D",
+                1,
+                "gamma",
+                "ML",
+                [-0.03577971, 1.30589409, 0.8863447, 0.23906544, -0.05185997],
+                2e-2,
+            ),
+            (
+                "D",
+                12,
+                "gamma",
+                "ML",
+                [-0.15846245, -0.04924534, 0.66299367, 1.09938471, 0.66095752],
+                2e-2,
+            ),
+            (
+                "D",
+                1,
+                "fisk",
+                "APP",
+                [-1.26216389, 1.03096183, 0.62985354, -0.50335153, -1.32788296],
+                2e-2,
+            ),
+            (
+                "D",
+                12,
+                "fisk",
+                "APP",
+                [-0.57109258, -0.40657737, 0.55163493, 0.97381067, 0.55580649],
+                2e-2,
+            ),
+            (
+                "D",
+                1,
+                "fisk",
+                "ML",
+                [-0.05562691, 1.30809152, 0.6954986, 0.33018744, -0.50258979],
+                2e-2,
+            ),
+            (
+                "D",
+                12,
+                "fisk",
+                "ML",
+                [-0.14151269, -0.01914608, 0.7080277, 1.01510279, 0.6954002],
+                2e-2,
+            ),
+            (
+                None,
+                1,
+                "gamma",
+                "APP",
+                [-0.18618353, 1.44582971, 0.95985043, 0.15779587, -0.37801587],
+                2e-2,
+            ),
+            (
+                None,
+                12,
+                "gamma",
+                "APP",
+                [-0.24417774, -0.11404418, 0.64997039, 1.07670517, 0.6462852],
+                2e-2,
+            ),
         ],
     )
     def test_standardized_precipitation_index(
         self, open_dataset, freq, window, dist, method, values, diff_tol
     ):
         ds = open_dataset("sdba/CanESM2_1950-2100.nc").isel(location=1)
+        if freq == "D":
+            ds = convert_calendar(
+                ds, "366_day", missing=np.NaN
+            )  # to compare with ``climate_indices``
         pr = ds.pr.sel(time=slice("1998", "2000"))
         pr_cal = ds.pr.sel(time=slice("1950", "1980"))
         params = xci.stats.standardized_index_fit_params(
@@ -545,6 +629,7 @@ class TestAgroclimaticIndices:
         np.testing.assert_allclose(spi.values, values, rtol=0, atol=diff_tol)
 
     # See SPI version
+    @pytest.mark.slow
     @pytest.mark.parametrize(
         "freq, window, dist, method,  values, diff_tol",
         [
