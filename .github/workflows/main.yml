@@ -181,8 +181,12 @@ jobs:
     strategy:
       matrix:
         include:
-          - tox-env: py310
-            python-version: "3.10"
+          - python-version: "3.10"
+            install-python: "3.10"
+          - python-version: "3.11"
+            install-python: "3.11"
+          - python-version: "3.12"
+            install-python: "3.12"
     defaults:
       run:
         shell: bash -l {0}
@@ -212,7 +216,7 @@ jobs:
           environment-file: environment.yml
           create-args: >-
             conda
-            python=${{ matrix.python-version }}
+            python=${{ matrix.install-python }}
       - name: Conda and Mamba versions
         run: |
           conda --version
