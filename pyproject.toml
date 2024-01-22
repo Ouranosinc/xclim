@@ -51,7 +51,7 @@ dependencies = [
   "scikit-learn>=0.21.3",
   "scipy>=1.2",
   "statsmodels",
-  "xarray>=2022.06.0,<2023.11.0",
+  "xarray>=2022.06.0,<2024.2.0",
   "yamale"
 ]
 
