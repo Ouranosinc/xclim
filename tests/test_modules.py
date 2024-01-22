@@ -28,7 +28,9 @@ def virtual_indicator(request):
 
 
 def test_default_modules_exist():
-    from xclim.indicators import anuclim, cf, icclim  # noqa
+    from xclim.indicators import anuclim  # noqa
+    from xclim.indicators import cf  # noqa
+    from xclim.indicators import icclim  # noqa
 
     assert hasattr(icclim, "TG")
 

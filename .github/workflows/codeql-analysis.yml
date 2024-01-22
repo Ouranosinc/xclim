@@ -49,13 +49,13 @@ jobs:
             pypi.org:443
             uploads.github.com:443
       - name: Checkout repository
-        uses: actions/checkout@v4.1.1
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
       # Initializes the CodeQL tools for scanning.
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@codeql-bundle-20230524
+        uses: github/codeql-action/init@1245696032ecf7d39f87d54daa406e22ddf769a8
         with:
           languages: ${{ matrix.language }}
       - name: Autobuild
-        uses: github/codeql-action/autobuild@codeql-bundle-20230524
+        uses: github/codeql-action/autobuild@1245696032ecf7d39f87d54daa406e22ddf769a8
       - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@codeql-bundle-20230524
+        uses: github/codeql-action/analyze@1245696032ecf7d39f87d54daa406e22ddf769a8

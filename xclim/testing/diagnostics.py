@@ -1,3 +1,4 @@
+# pylint: disable=no-member,missing-kwoa
 """
 SDBA Diagnostic Testing Module
 ==============================
@@ -128,7 +129,7 @@ def adapt_freq_graph():
     x = series(synth_rainfall(2, 2, wet_freq=0.25, size=n), "pr")  # sim
     y = series(synth_rainfall(2, 2, wet_freq=0.5, size=n), "pr")  # ref
 
-    xp = adapt_freq(x, y, thresh=0).sim_ad
+    xp = adapt_freq(x, y, thresh=0).sim_ad  # noqa
 
     fig, (ax1, ax2) = plt.subplots(2, 1)
     sx = x.sortby(x)
