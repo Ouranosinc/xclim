@@ -52,16 +52,16 @@ jobs:
             files.pythonhosted.org:443
             github.com:443
             pypi.org:443
-      - uses: actions/checkout@v4.1.1
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
       - name: Set up Python${{ matrix.python-version }}
-        uses: actions/setup-python@v5.0.0
+        uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install pylint and tox
         run: pip install pylint tox~=4.0
       - name: Run pylint
         run: |
-          python -m pylint --rcfile=pylintrc --disable=import-error --exit-zero xclim
+          python -m pylint --rcfile=.pylintrc.toml --disable=import-error --exit-zero xclim
       - name: Run linting suite
         run: |
           python -m tox -e lint
@@ -88,9 +88,9 @@ jobs:
             github.com:443
             pypi.org:443
             raw.githubusercontent.com:443
-      - uses: actions/checkout@v4.1.1
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
       - name: Set up Python${{ matrix.python-version }}
-        uses: actions/setup-python@v5.0.0
+        uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install tox
@@ -126,6 +126,9 @@ jobs:
           - tox-env: py311-coverage-sbck
             python-version: "3.11"
             markers: -m 'not slow'
+          - tox-env: py312-coverage-numba
+            python-version: "3.12"
+            markers: -m 'not slow'
           - tox-env: notebooks_doctests
             python-version: "3.10"
           - tox-env: offline-prefetch
@@ -148,14 +151,14 @@ jobs:
             ppa.launchpadcontent.net:443
             pypi.org:443
             raw.githubusercontent.com:443
-      - uses: actions/checkout@v4.1.1
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
       - name: Install Eigen3
         if: contains(matrix.tox-env, 'sbck')
         run: |
           sudo apt-get update
           sudo apt-get install libeigen3-dev
       - name: Set up Python${{ matrix.python-version }}
-        uses: actions/setup-python@v5.0.0
+        uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install tox
@@ -172,7 +175,7 @@ jobs:
 
   test-conda:
     needs: lint
-    name: test-conda-${{ matrix.tox-env }} (Python${{ matrix.python-version }})
+    name: test-conda-Python${{ matrix.python-version }}
     if: |
       contains(github.event.pull_request.labels.*.name, 'approved') ||
       (github.event.review.state == 'approved') ||
@@ -181,8 +184,8 @@ jobs:
     strategy:
       matrix:
         include:
-          - tox-env: py310
-            python-version: "3.10"
+          - python-version: "3.9"
+          - python-version: "3.12"
     defaults:
       run:
         shell: bash -l {0}
@@ -203,9 +206,9 @@ jobs:
             pypi.org:443
             raw.githubusercontent.com:443
             repo.anaconda.com:443
-      - uses: actions/checkout@v4.1.1
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
       - name: Setup Conda (Micromamba) with Python${{ matrix.python-version }}
-        uses: mamba-org/setup-micromamba@v1.7.3
+        uses: mamba-org/setup-micromamba@e820223f89c8720d6c740ca154a7adf32fcd278a # v1.7.3
         with:
           cache-downloads: true
           cache-environment: true

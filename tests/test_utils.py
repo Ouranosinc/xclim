@@ -38,9 +38,9 @@ def test_wrapped_partial():
     assert newf(1) == (1, 2, 2)
     assert newf.__doc__ == func.__doc__
 
-    def func(a, b=1, c=1, **kws):
+    def func(a, b=1, c=1, **kws):  # pylint: disable=function-redefined
         """Docstring"""
-        return (a, b, c)
+        return a, b, c
 
     newf = wrapped_partial(func, suggested=dict(c=2), a=2, b=2)
     assert list(signature(newf).parameters.keys()) == ["c", "kws"]
