@@ -123,6 +123,9 @@ jobs:
           - tox-env: py311-coverage-sbck
             python-version: "3.11"
             markers: -m 'not slow'
+          - tox-env: py312-coverage-numba
+            python-version: "3.12"
+            markers: -m 'not slow'
           - tox-env: notebooks_doctests
             python-version: "3.10"
           - tox-env: offline-prefetch
@@ -169,7 +172,7 @@ jobs:
 
   test-conda:
     needs: lint
-    name: test-conda-${{ matrix.tox-env }} (Python${{ matrix.python-version }})
+    name: test-conda-Python${{ matrix.python-version }}
     if: |
       contains(github.event.pull_request.labels.*.name, 'approved') ||
       (github.event.review.state == 'approved') ||
@@ -178,8 +181,8 @@ jobs:
     strategy:
       matrix:
         include:
-          - tox-env: py311
-            python-version: "3.11"
+          - python-version: "3.9"
+          - python-version: "3.12"
     defaults:
       run:
         shell: bash -l {0}

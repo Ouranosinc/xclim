@@ -9,6 +9,7 @@ Contributors to this version: Juliette Lavoie (:user:`juliettelavoie`), Pascal B
 Announcements
 ^^^^^^^^^^^^^
 * `xclim` no longer supports Python3.8. (:issue:`1268`, :pull:`1565`).
+* `xclim` now officially supports Python3.12 (requires `numba>=0.59.0`). (:pull:`1613`).
 * `xclim` now adheres to the `Semantic Versioning 2.0.0 <https://semver.org/>`_ specification. (:issue:`1556`, :pull:`1569`).
 * The `xclim` repository now uses `GitHub Discussions <https://github.com/Ouranosinc/xclim/discussions>`_ to offer help for users, coordinate translation efforts, and support general Q&A for the `xclim` community. The `xclim` `Gitter` room has been deprecated in favour of GitHub Discussions. (:issue:`1571`, :pull:`1572`).
 
