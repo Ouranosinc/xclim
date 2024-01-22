@@ -210,7 +210,7 @@ def test_rate2amount(pr_series):
 
     with xr.set_options(keep_attrs=True):
         pr_ms = pr.resample(time="MS").mean()
-        pr_m = pr.resample(time="M").mean()
+        pr_m = pr.resample(time="ME").mean()
 
         am_ms = rate2amount(pr_ms)
         np.testing.assert_array_equal(am_ms[:4], 86400 * np.array([31, 28, 31, 30]))
@@ -233,7 +233,7 @@ def test_amount2rate(pr_series):
 
     with xr.set_options(keep_attrs=True):
         am_ms = am.resample(time="MS").sum()
-        am_m = am.resample(time="M").sum()
+        am_m = am.resample(time="ME").sum()
 
         pr_ms = amount2rate(am_ms)
         np.testing.assert_allclose(pr_ms, 1)

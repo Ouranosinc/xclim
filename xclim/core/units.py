@@ -398,11 +398,6 @@ def cf_conversion(standard_name: str, conversion: str, direction: str) -> str | 
 
 
 FREQ_UNITS = {
-    "N": "ns",
-    "L": "ms",
-    "S": "s",
-    "T": "min",
-    "H": "h",
     "D": "d",
     "W": "week",
 }
@@ -448,7 +443,7 @@ def infer_sampling_units(
 
     multi, base, _, _ = parse_offset(freq)
     try:
-        out = multi, FREQ_UNITS[base]
+        out = multi, FREQ_UNITS.get(base, base)
     except KeyError as err:
         raise ValueError(
             f"Sampling frequency {freq} has no corresponding units."
@@ -579,7 +574,7 @@ def _rate_and_amount_converter(
             ) from err
     if freq is not None:
         multi, base, start_anchor, _ = parse_offset(freq)
-        if base in ["M", "Q", "A"]:
+        if base in ["M", "Q", "A", "Y"]:
             start = time.indexes[dim][0]
             if not start_anchor:
                 # Anchor is on the end of the period, subtract 1 period.

@@ -129,7 +129,7 @@ class TestEnsembleStats:
         [(xr.cftime_range, {"calendar": "360_day"}), (pd.date_range, {})],
     )
     def test_create_unaligned_times(self, timegen, calkw):
-        t1 = timegen("2000-01-01", periods=24, freq="M", **calkw)
+        t1 = timegen("2000-01-01", periods=24, freq="ME", **calkw)
         t2 = timegen("2000-01-01", periods=24, freq="MS", **calkw)
 
         d1 = xr.DataArray(

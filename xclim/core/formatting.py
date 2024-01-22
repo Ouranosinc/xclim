@@ -114,12 +114,12 @@ class AttrFormatter(string.Formatter):
         The base values may be given using unix shell-like patterns:
 
         >>> fmt = AttrFormatter(
-        ...     {"AS-*": ["annuel", "annuelle"], "MS": ["mensuel", "mensuelle"]},
+        ...     {"YS-*": ["annuel", "annuelle"], "MS": ["mensuel", "mensuelle"]},
         ...     ["m", "f"],
         ... )
         >>> fmt.format(
         ...     "La moyenne {freq:f} est faite sur un échantillon {src_timestep:m}",
-        ...     freq="AS-JUL",
+        ...     freq="YS-JUL",
         ...     src_timestep="MS",
         ... )
         'La moyenne annuelle est faite sur un échantillon mensuel'
@@ -164,7 +164,7 @@ default_formatter = AttrFormatter(
         # Arguments to "freq"
         "D": ["daily", "days"],
         "YS": ["annual", "years"],
-        "AS-*": ["annual", "years"],
+        "YS-*": ["annual", "years"],
         "MS": ["monthly", "months"],
         "QS-*": ["seasonal", "seasons"],
         # Arguments to "indexer"

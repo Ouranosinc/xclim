@@ -272,7 +272,7 @@ def convert_doy(
       Name of the temporal dimension.
     """
     source_cal = source_cal or source.attrs.get("calendar", get_calendar(source[dim]))
-    is_calyear = xr.infer_freq(source[dim]) in ("AS-JAN", "A-DEC")
+    is_calyear = xr.infer_freq(source[dim]) in ("YS-JAN", "Y-DEC", "YE-DEC")
 
     if is_calyear:  # Fast path
         year_of_the_doy = source[dim].dt.year
@@ -794,13 +794,13 @@ def parse_offset(freq: str) -> tuple[int, str, bool, str | None]:
         Multiplier of the base frequency. "[n]W" is always replaced with "[7n]D",
         as xarray doesn't support "W" for cftime indexes.
     offset_base : str
-        Base frequency. "Y" is always replaced with "A".
+        Base frequency.
     is_start_anchored : bool
         Whether coordinates of this frequency should correspond to the beginning of the period (`True`)
-        or its end (`False`). Can only be False when base is A, Q or M; in other words, xclim assumes frequencies finer
+        or its end (`False`). Can only be False when base is Y, Q or M; in other words, xclim assumes frequencies finer
         than monthly are all start-anchored.
     anchor : str, optional
-        Anchor date for bases A or Q. As xarray doesn't support "W",
+        Anchor date for bases Y or Q. As xarray doesn't support "W",
         neither does xclim (anchor information is lost when given).
 
     """
@@ -808,8 +808,9 @@ def parse_offset(freq: str) -> tuple[int, str, bool, str | None]:
     offset = pd.tseries.frequencies.to_offset(freq)
     base, *anchor = offset.name.split("-")
     anchor = anchor[0] if len(anchor) > 0 else None
-    start = ("S" in base) or (base[0] not in "AQM")
-    base = base[0]
+    start = ("S" in base) or (base[0] not in "AYQM")
+    if base.endswith("S") or base.endswith("E"):
+        base = base[:-1]
     mult = offset.n
     if base == "W":
         mult = 7 * mult
@@ -828,9 +829,9 @@ def construct_offset(mult: int, base: str, start_anchored: bool, anchor: str | N
     base : str
         The base period string (one char).
     start_anchored : bool
-        If True and base in [Y, A, Q, M], adds the "S" flag.
+        If True and base in [Y, Q, M], adds the "S" flag, False add "E".
     anchor : str, optional
-        The month anchor of the offset. Defaults to JAN for bases AS, Y and QS and to DEC for bases A and Q.
+        The month anchor of the offset. Defaults to JAN for bases YS and QS and to DEC for bases YE and QE.
 
     Returns
     -------
@@ -841,7 +842,7 @@ def construct_offset(mult: int, base: str, start_anchored: bool, anchor: str | N
     -----
     This provides the mirror opposite functionality of :py:func:`parse_offset`.
     """
-    start = "S" if start_anchored and base in "YAQM" else ""
+    start = ("S" if start_anchored else "E") if base in "YAQM" else ""
     if anchor is None and base in "AQY":
         anchor = "JAN" if start_anchored else "DEC"
     return (
@@ -870,7 +871,7 @@ def is_offset_divisor(divisor: str, offset: str):
     --------
     >>> is_offset_divisor("QS-Jan", "YS")
     True
-    >>> is_offset_divisor("QS-DEC", "AS-JUL")
+    >>> is_offset_divisor("QS-DEC", "YS-JUL")
     False
     >>> is_offset_divisor("D", "M")
     True
@@ -886,7 +887,16 @@ def is_offset_divisor(divisor: str, offset: str):
     offBs = pd.tseries.frequencies.to_offset(construct_offset(mB, bB, True, aB))
     tB = pd.date_range("1970-01-01T00:00:00", freq=offBs, periods=13)
 
-    if bA in "WDHTLUN" or bB in "WDHTLUN":
+    if bA in ["W", "D", "h", "min", "s", "ms", "us", "ms"] or bB in [
+        "W",
+        "D",
+        "h",
+        "min",
+        "s",
+        "ms",
+        "us",
+        "ms",
+    ]:
         # Simple length comparison is sufficient for submonthly freqs
         # In case one of bA or bB is > W, we test many to be sure.
         tA = pd.date_range("1970-01-01T00:00:00", freq=offAs, periods=13)
@@ -1030,7 +1040,7 @@ def time_bnds(  # noqa: C901
     time : DataArray, Dataset, CFTimeIndex, DatetimeIndex, DataArrayResample or DatasetResample
         Object which contains a time index as a proxy representation for a period index.
     freq : str, optional
-        String specifying the frequency/offset such as 'MS', '2D', or '3T'
+        String specifying the frequency/offset such as 'MS', '2D', or '3min'
         If not given, it is inferred from the time index, which means that index must
         have at least three elements.
     precision : str, optional
@@ -1048,28 +1058,24 @@ def time_bnds(  # noqa: C901
     Notes
     -----
     xclim assumes that indexes for greater-than-day frequencies are "floored" down to a daily resolution.
-    For example, the coordinate "2000-01-31 00:00:00" with a "M" frequency is assumed to mean a period
+    For example, the coordinate "2000-01-31 00:00:00" with a "ME" frequency is assumed to mean a period
     going from "2000-01-01 00:00:00" to "2000-01-31 23:59:59.999999".
 
     Similarly, it assumes that daily and finer frequencies yield indexes pointing to the period's start.
-    So "2000-01-31 00:00:00" with a "3H" frequency, means a period going from "2000-01-31 00:00:00" to
+    So "2000-01-31 00:00:00" with a "3h" frequency, means a period going from "2000-01-31 00:00:00" to
     "2000-01-31 02:59:59.999999".
     """
     if isinstance(time, (xr.DataArray, xr.Dataset)):
         time = time.indexes[time.name]
     elif isinstance(time, (DataArrayResample, DatasetResample)):
-        # TODO: Remove conditional when pinning xarray above 2023.5.0
-        if hasattr(time, "_full_index"):  # xr < 2023.5.0
-            time = time._full_index
-        else:  # xr >= 2023.5.0
-            for grouper in time.groupers:
-                if "time" in grouper.dims:
-                    time = grouper.group_as_index
-                    break
-            else:
-                raise ValueError(
-                    'Got object resampled along another dimension than "time".'
-                )
+        for grouper in time.groupers:
+            if "time" in grouper.dims:
+                time = grouper.group_as_index
+                break
+        else:
+            raise ValueError(
+                'Got object resampled along another dimension than "time".'
+            )
 
     if freq is None and hasattr(time, "freq"):
         freq = time.freq
@@ -1083,27 +1089,27 @@ def time_bnds(  # noqa: C901
 
     # Normalizing without using `.normalize` because cftime doesn't have it
     floor = {"hour": 0, "minute": 0, "second": 0, "microsecond": 0, "nanosecond": 0}
-    if freq_base in "HTSLUN":  # This is verbose, is there a better way?
+    if freq_base in ["h", "min", "s", "ms", "us", "ns"]:
         floor.pop("hour")
-    if freq_base in "TSLUN":
+    if freq_base in ["min", "s", "ms", "us", "ns"]:
         floor.pop("minute")
-    if freq_base in "SLUN":
+    if freq_base in ["s", "ms", "us", "ns"]:
         floor.pop("second")
-    if freq_base in "UN":
+    if freq_base in ["us", "ns"]:
         floor.pop("microsecond")
-    if freq_base in "N":
+    if freq_base == "ns":
         floor.pop("nanosecond")
 
     if isinstance(time, xr.CFTimeIndex):
         period = xr.coding.cftime_offsets.to_offset(freq)
         is_on_offset = period.onOffset
-        eps = pd.Timedelta(precision or "1U").to_pytimedelta()
+        eps = pd.Timedelta(precision or "1us").to_pytimedelta()
         day = pd.Timedelta("1D").to_pytimedelta()
         floor.pop("nanosecond")  # unsupported by cftime
     else:
         period = pd.tseries.frequencies.to_offset(freq)
         is_on_offset = period.is_on_offset
-        eps = pd.Timedelta(precision or "1N")
+        eps = pd.Timedelta(precision or "1ns")
         day = pd.Timedelta("1D")
 
     def shift_time(t):

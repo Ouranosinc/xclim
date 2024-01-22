@@ -22,6 +22,7 @@ New features and enhancements
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
+* With pandas 2.2 and xarray 2023.11.0, many frequency strings where changed : Y becomes YE, M -> ME, Q -> QE. A and AS are removed. T, L, U, N become min, ms, us and ns.
 * `bump2version` has been replaced with `bump-my-version` to bump the version number using configurations set in the `pyproject.toml` file. (:issue:`1557`, :pull:`1569`).
 * `xclim`'s units registry and units formatting are now extended from `cf-xarray`. The exponent sign "^" is now never added in the ``units`` attribute. For example, square meters are given as "m2" instead of "m^2" by xclim, both are still accepted as input. (:issue:`1010`, :pull:`1590`).
 * `yamale` is now listed as a core dependency (was previously listed in the `dev` installation recipe). (:issue:`1595`, :pull:`1596`).

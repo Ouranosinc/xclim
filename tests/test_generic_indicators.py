@@ -104,7 +104,7 @@ class TestStats:
         np.testing.assert_array_equal(out.sel(time="1902").isnull(), True)
 
     def test_3hourly(self, pr_hr_series, random):
-        pr = pr_hr_series(random.random(366 * 24)).resample(time="3H").mean()
+        pr = pr_hr_series(random.random(366 * 24)).resample(time="3h").mean()
         out = generic.stats(pr, freq="MS", op="var")
         assert out.units == "kg2 m-4 s-2"
         assert out.long_name == "Variance of variable"

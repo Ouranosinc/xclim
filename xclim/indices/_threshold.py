@@ -143,7 +143,7 @@ def cold_spell_days(
     tas: xarray.DataArray,
     thresh: Quantified = "-10 degC",
     window: int = 5,
-    freq: str = "AS-JUL",
+    freq: str = "YS-JUL",
     op: str = "<",
     resample_before_rl: bool = True,
 ) -> xarray.DataArray:
@@ -202,7 +202,7 @@ def cold_spell_frequency(
     tas: xarray.DataArray,
     thresh: Quantified = "-10 degC",
     window: int = 5,
-    freq: str = "AS-JUL",
+    freq: str = "YS-JUL",
     op: str = "<",
     resample_before_rl: bool = True,
 ) -> xarray.DataArray:
@@ -251,7 +251,7 @@ def cold_spell_max_length(
     tas: xarray.DataArray,
     thresh: Quantified = "-10 degC",
     window: int = 1,
-    freq: str = "AS-JUL",
+    freq: str = "YS-JUL",
     op: str = "<",
     resample_before_rl: bool = True,
 ) -> xarray.DataArray:
@@ -299,7 +299,7 @@ def cold_spell_total_length(
     tas: xarray.DataArray,
     thresh: Quantified = "-10 degC",
     window: int = 3,
-    freq: str = "AS-JUL",
+    freq: str = "YS-JUL",
     op: str = "<",
     resample_before_rl: bool = True,
 ) -> xarray.DataArray:
@@ -348,7 +348,7 @@ def snd_season_end(
     snd: xarray.DataArray,
     thresh: Quantified = "2 cm",
     window: int = 14,
-    freq: str = "AS-JUL",
+    freq: str = "YS-JUL",
 ) -> xarray.DataArray:
     r"""End date of continuous snow depth cover.
 
@@ -400,7 +400,7 @@ def snw_season_end(
     snw: xarray.DataArray,
     thresh: Quantified = "20.00 kg m-2",
     window: int = 14,
-    freq: str = "AS-JUL",
+    freq: str = "YS-JUL",
 ) -> xarray.DataArray:
     r"""End date of continuous snow water cover.
 
@@ -457,7 +457,7 @@ def snd_season_start(
     snd: xarray.DataArray,
     thresh: Quantified = "2 cm",
     window: int = 14,
-    freq: str = "AS-JUL",
+    freq: str = "YS-JUL",
 ) -> xarray.DataArray:
     r"""Start date of continuous snow depth cover.
 
@@ -513,7 +513,7 @@ def snw_season_start(
     snw: xarray.DataArray,
     thresh: Quantified = "20.00 kg m-2",
     window: int = 14,
-    freq: str = "AS-JUL",
+    freq: str = "YS-JUL",
 ) -> xarray.DataArray:
     r"""Start date of continuous snow water cover.
 
@@ -571,7 +571,7 @@ def snw_season_start(
 
 @declare_units(snd="[length]", thresh="[length]")
 def snd_storm_days(
-    snd: xarray.DataArray, thresh: Quantified = "25 cm", freq: str = "AS-JUL"
+    snd: xarray.DataArray, thresh: Quantified = "25 cm", freq: str = "YS-JUL"
 ) -> xarray.DataArray:
     """Days with snowfall over threshold.
 
@@ -613,7 +613,7 @@ def snd_storm_days(
 
 @declare_units(snw="[mass]/[area]", thresh="[mass]/[area]")
 def snw_storm_days(
-    snw: xarray.DataArray, thresh: Quantified = "10 kg m-2", freq: str = "AS-JUL"
+    snw: xarray.DataArray, thresh: Quantified = "10 kg m-2", freq: str = "YS-JUL"
 ) -> xarray.DataArray:
     """Days with snowfall over threshold.
 
@@ -1061,11 +1061,11 @@ def growing_season_length(
 
     For the Northern Hemisphere:
 
-    >>> gsl_nh = growing_season_length(tas, mid_date="07-01", freq="AS")
+    >>> gsl_nh = growing_season_length(tas, mid_date="07-01", freq="YS")
 
     If working in the Southern Hemisphere, one can use:
 
-    >>> gsl_sh = growing_season_length(tas, mid_date="01-01", freq="AS-JUL")
+    >>> gsl_sh = growing_season_length(tas, mid_date="01-01", freq="YS-JUL")
 
     References
     ----------
@@ -1090,7 +1090,7 @@ def frost_season_length(
     window: int = 5,
     mid_date: DayOfYearStr | None = "01-01",
     thresh: Quantified = "0.0 degC",
-    freq: str = "AS-JUL",
+    freq: str = "YS-JUL",
     op: str = "<",
 ) -> xarray.DataArray:
     r"""Frost season length.
@@ -1147,7 +1147,7 @@ def frost_season_length(
 
     For the Northern Hemisphere:
 
-    >>> fsl_nh = frost_season_length(tasmin, freq="AS-JUL")
+    >>> fsl_nh = frost_season_length(tasmin, freq="YS-JUL")
 
     If working in the Southern Hemisphere, one can use:
 
@@ -1334,7 +1334,7 @@ def frost_free_season_length(
 
     If working in the Southern Hemisphere, one can use:
 
-    >>> ffsl_sh = frost_free_season_length(tasmin, freq="AS-JUL")
+    >>> ffsl_sh = frost_free_season_length(tasmin, freq="YS-JUL")
     """
     thresh = convert_units_to(thresh, tasmin)
     cond = compare(tasmin, op, thresh, constrain=(">=", ">"))
@@ -1353,7 +1353,7 @@ def frost_free_spell_max_length(
     tasmin: xarray.DataArray,
     thresh: Quantified = "0.0 degC",
     window: int = 1,
-    freq: str = "AS-JUL",
+    freq: str = "YS-JUL",
     op: str = ">=",
     resample_before_rl: bool = True,
 ) -> xarray.DataArray:
@@ -1568,7 +1568,7 @@ def first_day_temperature_above(
 def first_snowfall(
     prsn: xarray.DataArray,
     thresh: Quantified = "1 mm/day",
-    freq: str = "AS-JUL",
+    freq: str = "YS-JUL",
 ) -> xarray.DataArray:
     r"""First day with snowfall rate above a threshold.
 
@@ -1622,7 +1622,7 @@ def first_snowfall(
 def last_snowfall(
     prsn: xarray.DataArray,
     thresh: Quantified = "1 mm/day",
-    freq: str = "AS-JUL",
+    freq: str = "YS-JUL",
 ) -> xarray.DataArray:
     r"""Last day with snowfall above a threshold.
 
@@ -1682,7 +1682,7 @@ def days_with_snow(
     prsn: xarray.DataArray,
     low: Quantified = "0 kg m-2 s-1",
     high: Quantified = "1E6 kg m-2 s-1",
-    freq: str = "AS-JUL",
+    freq: str = "YS-JUL",
 ) -> xarray.DataArray:
     r"""Days with snow.
 
@@ -1727,7 +1727,7 @@ def days_with_snow(
 def snowfall_frequency(
     prsn: xarray.DataArray,
     thresh: Quantified = "1 mm/day",
-    freq: str = "AS-JUL",
+    freq: str = "YS-JUL",
 ) -> xarray.DataArray:
     r"""Percentage of snow days.
 
@@ -1779,7 +1779,7 @@ def snowfall_frequency(
 def snowfall_intensity(
     prsn: xarray.DataArray,
     thresh: Quantified = "1 mm/day",
-    freq: str = "AS-JUL",
+    freq: str = "YS-JUL",
 ) -> xarray.DataArray:
     r"""Mean daily snowfall rate during snow days.
 
@@ -2098,7 +2098,7 @@ def hot_spell_frequency(
 def snd_season_length(
     snd: xarray.DataArray,
     thresh: Quantified = "2 cm",
-    freq: str = "AS-JUL",
+    freq: str = "YS-JUL",
     op: str = ">=",
 ) -> xarray.DataArray:
     """The number of days with snow depth above a threshold.
@@ -2135,7 +2135,7 @@ def snd_season_length(
 def snw_season_length(
     snw: xarray.DataArray,
     thresh: Quantified = "20.00 kg m-2",
-    freq: str = "AS-JUL",
+    freq: str = "YS-JUL",
     op: str = ">=",
 ) -> xarray.DataArray:
     """The number of days with snow water above a threshold.
@@ -2581,7 +2581,7 @@ def wetdays_prop(
 def maximum_consecutive_frost_days(
     tasmin: xarray.DataArray,
     thresh: Quantified = "0.0 degC",
-    freq: str = "AS-JUL",
+    freq: str = "YS-JUL",
     resample_before_rl: bool = True,
 ) -> xarray.DataArray:
     r"""Maximum number of consecutive frost days (Tn < 0℃).
