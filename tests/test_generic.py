@@ -26,7 +26,7 @@ class TestSelectResampleOp:
 
     def test_season(self, q_series):
         q = q_series(np.arange(1000))
-        o = generic.select_resample_op(q, "count", freq="AS-DEC", season="DJF")
+        o = generic.select_resample_op(q, "count", freq="YS-DEC", season="DJF")
         assert o[0] == 31 + 29
 
 
@@ -97,7 +97,7 @@ class TestAggregateBetweenDates:
         )
 
         out = generic.aggregate_between_dates(
-            data_std, start_std, end_std, op="sum", freq="AS-JUL"
+            data_std, start_std, end_std, op="sum", freq="YS-JUL"
         )
 
         # expected output
@@ -110,7 +110,7 @@ class TestAggregateBetweenDates:
 
         # check calendar conversion
         out_noleap = generic.aggregate_between_dates(
-            data_std, start_std, end_noleap, op="sum", freq="AS-JUL"
+            data_std, start_std, end_noleap, op="sum", freq="YS-JUL"
         )
 
         np.testing.assert_allclose(out, out_noleap)

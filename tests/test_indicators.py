@@ -816,7 +816,7 @@ def test_resampling_indicator_with_indexing(tas_series):
     np.testing.assert_allclose(out, [28, 29])
 
     out = xclim.atmos.tx_days_above(
-        tas, thresh="0 degC", freq="AS-JUL", doy_bounds=(1, 50)
+        tas, thresh="0 degC", freq="YS-JUL", doy_bounds=(1, 50)
     )
     np.testing.assert_allclose(out, [50, 50, np.NaN])
 

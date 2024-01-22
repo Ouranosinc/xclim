@@ -1558,7 +1558,7 @@ class Daily(ResamplingIndicator):
 class Hourly(ResamplingIndicator):
     """Class for hourly inputs and resampling computes."""
 
-    src_freq = "H"
+    src_freq = "h"
 
 
 base_registry["Indicator"] = Indicator

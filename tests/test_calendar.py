@@ -58,7 +58,7 @@ def da(index):
     )
 
 
-@pytest.mark.parametrize("freq", ["6480H", "302431T", "23144781S"])
+@pytest.mark.parametrize("freq", ["6480h", "302431min", "23144781s"])
 def test_time_bnds(freq, datetime_index, cftime_index):
     da_datetime = da(datetime_index).resample(time=freq)
     da_cftime = da(cftime_index).resample(time=freq)
@@ -91,11 +91,11 @@ def test_time_bnds_irregular(typ):
         start = xr.cftime_range("1990-01-01", periods=24, freq="MS")
         # Well. xarray string parsers do not support sub-second resolution, but cftime does.
         end = xr.cftime_range(
-            "1990-01-01T23:59:59", periods=24, freq="M"
+            "1990-01-01T23:59:59", periods=24, freq="ME"
         ) + pd.Timedelta(0.999999, "s")
     elif typ == "pd":
         start = pd.date_range("1990-01-01", periods=24, freq="MS")
-        end = pd.date_range("1990-01-01 23:59:59.999999999", periods=24, freq="M")
+        end = pd.date_range("1990-01-01 23:59:59.999999999", periods=24, freq="ME")
 
     time = start + (end - start) / 2
 
@@ -147,7 +147,7 @@ def test_percentile_doy_invalid():
     tas = xr.DataArray(
         [0, 1],
         dims=("time",),
-        coords={"time": pd.date_range("2000-01-01", periods=2, freq="H")},
+        coords={"time": pd.date_range("2000-01-01", periods=2, freq="h")},
     )
     with pytest.raises(ValueError):
         percentile_doy(tas)
@@ -156,10 +156,10 @@ def test_percentile_doy_invalid():
 @pytest.mark.parametrize(
     "freqA,op,freqB,exp",
     [
-        ("D", ">", "H", True),
+        ("D", ">", "h", True),
         ("2YS", "<=", "QS-DEC", False),
         ("4W", "==", "3W", False),
-        ("24H", "==", "D", True),
+        ("24h", "==", "D", True),
     ],
 )
 def test_compare_offsets(freqA, op, freqB, exp):
@@ -276,8 +276,8 @@ def test_get_calendar_errors(obj):
         ("standard", "noleap", True, "D"),
         ("noleap", "default", True, "D"),
         ("noleap", "all_leap", False, "D"),
-        ("proleptic_gregorian", "noleap", False, "4H"),
-        ("default", "noleap", True, "4H"),
+        ("proleptic_gregorian", "noleap", False, "4h"),
+        ("default", "noleap", True, "4h"),
     ],
 )
 def test_convert_calendar(source, target, target_as_str, freq):
@@ -312,7 +312,7 @@ def test_convert_calendar(source, target, target_as_str, freq):
     [
         ("standard", "360_day", "D"),
         ("360_day", "default", "D"),
-        ("proleptic_gregorian", "360_day", "4H"),
+        ("proleptic_gregorian", "360_day", "4h"),
     ],
 )
 @pytest.mark.parametrize("align_on", ["date", "year"])
@@ -332,17 +332,17 @@ def test_convert_calendar_360_days(source, target, freq, align_on):
 
     if align_on == "date":
         np.testing.assert_array_equal(
-            conv.time.resample(time="M").last().dt.day,
+            conv.time.resample(time="ME").last().dt.day,
             [30, 29, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30],
         )
     elif target == "360_day":
         np.testing.assert_array_equal(
-            conv.time.resample(time="M").last().dt.day,
+            conv.time.resample(time="ME").last().dt.day,
             [30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 29],
         )
     else:
         np.testing.assert_array_equal(
-            conv.time.resample(time="M").last().dt.day,
+            conv.time.resample(time="ME").last().dt.day,
             [30, 29, 30, 30, 31, 30, 30, 31, 30, 31, 29, 31],
         )
     if source == "360_day" and align_on == "year":
@@ -357,7 +357,7 @@ def test_convert_calendar_360_days_random():
         dims=("time",),
         coords={
             "time": date_range(
-                "2004-01-01", "2004-12-31T23:59:59", freq="12H", calendar="default"
+                "2004-01-01", "2004-12-31T23:59:59", freq="12h", calendar="default"
             )
         },
     )
@@ -366,7 +366,7 @@ def test_convert_calendar_360_days_random():
         dims=("time",),
         coords={
             "time": date_range(
-                "2004-01-01", "2004-12-30T23:59:59", freq="12H", calendar="360_day"
+                "2004-01-01", "2004-12-30T23:59:59", freq="12h", calendar="360_day"
             )
         },
     )
@@ -395,8 +395,8 @@ def test_convert_calendar_360_days_random():
     "source,target,freq",
     [
         ("standard", "noleap", "D"),
-        ("noleap", "default", "4H"),
-        ("noleap", "all_leap", "M"),
+        ("noleap", "default", "4h"),
+        ("noleap", "all_leap", "ME"),
         ("360_day", "noleap", "D"),
         ("noleap", "360_day", "D"),
     ],
@@ -556,7 +556,7 @@ def test_clim_mean_doy(tas_series):
 
 def test_doy_to_days_since():
     # simple test
-    time = date_range("2020-07-01", "2022-07-01", freq="AS-JUL")
+    time = date_range("2020-07-01", "2022-07-01", freq="YS-JUL")
     da = xr.DataArray(
         [190, 360, 3],
         dims=("time",),
@@ -587,7 +587,7 @@ def test_doy_to_days_since():
     xr.testing.assert_identical(da, da2)
 
     # with start
-    time = date_range("2020-12-31", "2022-12-31", freq="Y")
+    time = date_range("2020-12-31", "2022-12-31", freq="YE")
     da = xr.DataArray(
         [190, 360, 3],
         dims=("time",),
@@ -624,10 +624,10 @@ def test_doy_to_days_since():
 @pytest.mark.parametrize(
     "freq,em,eb,es,ea",
     [
-        ("4AS-JUL", 4, "A", True, "JUL"),
-        ("M", 1, "M", False, None),
-        ("YS", 1, "A", True, "JAN"),
-        ("3A", 3, "A", False, "DEC"),
+        ("4YS-JUL", 4, "Y", True, "JUL"),
+        ("ME", 1, "M", False, None),
+        ("YS", 1, "Y", True, "JAN"),
+        ("3YE", 3, "Y", False, "DEC"),
         ("D", 1, "D", True, None),
         ("3W", 21, "D", True, None),
     ],
@@ -649,8 +649,8 @@ def test_parse_offset_invalid():
 @pytest.mark.parametrize(
     "m,b,s,a,exp",
     [
-        (1, "A", True, None, "AS-JAN"),
-        (2, "Q", False, "DEC", "2Q-DEC"),
+        (1, "Y", True, None, "YS-JAN"),
+        (2, "Q", False, "DEC", "2QE-DEC"),
         (1, "D", False, None, "D"),
     ],
 )
@@ -694,7 +694,7 @@ def test_convert_doy():
         dims=("time",),
         coords={
             "time": xr.date_range(
-                "2000-01-01", periods=5, freq="AS-JUL", calendar="standard"
+                "2000-01-01", periods=5, freq="YS-JUL", calendar="standard"
             )
         },
         attrs={"is_dayofyear": 1, "calendar": "standard"},

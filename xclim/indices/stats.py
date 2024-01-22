@@ -396,7 +396,7 @@ def frequency_analysis(
         Averaging window length (days).
     freq : str, optional
         Resampling frequency. If None, the frequency is assumed to be 'YS' unless the indexer is season='DJF',
-        in which case `freq` would be set to `AS-DEC`.
+        in which case `freq` would be set to `YS-DEC`.
     method : {"ML" or "MLE", "MOM", "PWM", "APP"}
         Fitting method, either maximum likelihood (ML or MLE), method of moments (MOM),
         probability weighted moments (PWM), also called L-Moments, or approximate method (APP).

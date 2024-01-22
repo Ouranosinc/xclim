@@ -474,11 +474,11 @@ def _get_number_of_elements_by_year(time):
 
     mult, freq, _, _ = parse_offset(xr.infer_freq(time))
     days_in_year = max_doy[cal]
-    elements_in_year = {"Q": 4, "M": 12, "D": days_in_year, "H": days_in_year * 24}
+    elements_in_year = {"Q": 4, "M": 12, "D": days_in_year, "h": days_in_year * 24}
     N_in_year = elements_in_year.get(freq, 1) / mult
     if N_in_year % 1 != 0:
         raise ValueError(
-            f"Sampling frequency of the data must be Q, M, D or H and evenly divide a year (got {mult}{freq})."
+            f"Sampling frequency of the data must be Q, M, D or h and evenly divide a year (got {mult}{freq})."
         )
 
     return int(N_in_year)

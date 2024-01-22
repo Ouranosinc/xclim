@@ -28,7 +28,7 @@ class TestCSDI:
         tn = tasmin_series(tn)
         tn10 = percentile_doy(tn, per=10).sel(percentiles=10)
 
-        out = atmos.cold_spell_duration_index(tn, tn10, freq="AS-JUL")
+        out = atmos.cold_spell_duration_index(tn, tn10, freq="YS-JUL")
         assert out[0] == 10
 
     def test_convert_units(self, tasmin_series, random):
@@ -44,7 +44,7 @@ class TestCSDI:
         tn.attrs["units"] = "C"
         tn10 = percentile_doy(tn, per=10).sel(percentiles=10)
 
-        out = atmos.cold_spell_duration_index(tn, tn10, freq="AS-JUL")
+        out = atmos.cold_spell_duration_index(tn, tn10, freq="YS-JUL")
         assert out[0] == 10
 
     def test_nan_presence(self, tasmin_series, random):
@@ -61,7 +61,7 @@ class TestCSDI:
         tn = tasmin_series(tn)
         tn10 = percentile_doy(tn, per=10).sel(percentiles=10)
 
-        out = atmos.cold_spell_duration_index(tn, tn10, freq="AS-JUL")
+        out = atmos.cold_spell_duration_index(tn, tn10, freq="YS-JUL")
         assert np.isnan(out[0])
 
 
@@ -371,7 +371,7 @@ class TestFrostSeasonLength:
         a[300:400] = K2C - 5
         a[404:407] = K2C - 5
         tasmin = tasmin_series(a, start="2000-01-01")
-        # Default, window = 5, mid_date = 07-01, freq= AS-JUL
+        # Default, window = 5, mid_date = 07-01, freq= YS-JUL
         out = atmos.frost_season_length(tasmin=tasmin)
         np.testing.assert_array_equal(out, [np.nan, 107, np.nan])
 
@@ -1144,7 +1144,7 @@ class TestT90p:
         # create cold spell in june
         tas[175:180] = 1
         # WHEN
-        out = atmos.tx90p(tas, t90, freq="AS", season="JJA")
+        out = atmos.tx90p(tas, t90, freq="YS", season="JJA")
         # THEN
         assert out[0] == 87  # non regression test
 
@@ -1295,7 +1295,7 @@ class TestWarmSpellDurationIndex:
         tx90 = percentile_doy(tasmax, window=5, per=90)
 
         out = atmos.warm_spell_duration_index(
-            tasmax=tasmax, tasmax_per=tx90, window=3, freq="AS-JUL"
+            tasmax=tasmax, tasmax_per=tx90, window=3, freq="YS-JUL"
         )
         np.testing.assert_array_equal(
             out.isel(location=0, percentiles=0), np.array([np.nan, 4, 0, 0, np.nan])
@@ -1489,7 +1489,7 @@ class TestColdSpellFrequency:
 
         tg = tas_series(a + K2C, start="1/1/2000")
 
-        out = atmos.cold_spell_frequency(tg, freq="AS")
+        out = atmos.cold_spell_frequency(tg, freq="YS")
         np.testing.assert_array_equal(out, 1)
 
 
@@ -1500,7 +1500,7 @@ class TestColdSpellMaxLength:
 
         tg = tas_series(a + K2C, start="1/1/2000")
 
-        out = atmos.cold_spell_max_length(tg, freq="AS")
+        out = atmos.cold_spell_max_length(tg, freq="YS")
         np.testing.assert_array_equal(out, 5)
 
 
@@ -1511,5 +1511,5 @@ class TestColdSpellTotalLength:
 
         tg = tas_series(a + K2C, start="1/1/2000")
 
-        out = atmos.cold_spell_total_length(tg, freq="AS")
+        out = atmos.cold_spell_total_length(tg, freq="YS")
         np.testing.assert_array_equal(out, 8)

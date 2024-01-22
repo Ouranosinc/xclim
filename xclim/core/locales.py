@@ -15,7 +15,7 @@ These files are expected to be defined as in this example for french:
         "attrs_mapping": {
             "modifiers": ["", "f", "mpl", "fpl"],
             "YS": ["annuel", "annuelle", "annuels", "annuelles"],
-            "AS-*": ["annuel", "annuelle", "annuels", "annuelles"],
+            "YS-*": ["annuel", "annuelle", "annuels", "annuelles"],
             # ... and so on for other frequent parameters translation...
         },
         "DTRVAR": {

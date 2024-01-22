@@ -105,7 +105,7 @@ def rb_flashiness_index(q: xarray.DataArray, freq: str = "YS") -> xarray.DataArr
 
 
 @declare_units(snd="[length]")
-def snd_max(snd: xarray.DataArray, freq: str = "AS-JUL") -> xarray.DataArray:
+def snd_max(snd: xarray.DataArray, freq: str = "YS-JUL") -> xarray.DataArray:
     """Maximum snow depth.
 
     The maximum daily snow depth.
@@ -126,7 +126,7 @@ def snd_max(snd: xarray.DataArray, freq: str = "AS-JUL") -> xarray.DataArray:
 
 
 @declare_units(snd="[length]")
-def snd_max_doy(snd: xarray.DataArray, freq: str = "AS-JUL") -> xarray.DataArray:
+def snd_max_doy(snd: xarray.DataArray, freq: str = "YS-JUL") -> xarray.DataArray:
     """Maximum snow depth day of year.
 
     Day of year when surface snow reaches its peak value. If snow depth is 0 over entire period, return NaN.
@@ -157,7 +157,7 @@ def snd_max_doy(snd: xarray.DataArray, freq: str = "AS-JUL") -> xarray.DataArray
 
 
 @declare_units(snw="[mass]/[area]")
-def snw_max(snw: xarray.DataArray, freq: str = "AS-JUL") -> xarray.DataArray:
+def snw_max(snw: xarray.DataArray, freq: str = "YS-JUL") -> xarray.DataArray:
     """Maximum snow amount.
 
     The maximum daily snow amount.
@@ -178,7 +178,7 @@ def snw_max(snw: xarray.DataArray, freq: str = "AS-JUL") -> xarray.DataArray:
 
 
 @declare_units(snw="[mass]/[area]")
-def snw_max_doy(snw: xarray.DataArray, freq: str = "AS-JUL") -> xarray.DataArray:
+def snw_max_doy(snw: xarray.DataArray, freq: str = "YS-JUL") -> xarray.DataArray:
     """Maximum snow amount day of year.
 
     Day of year when surface snow amount reaches its peak value. If snow amount is 0 over entire period, return NaN.
@@ -210,7 +210,7 @@ def snw_max_doy(snw: xarray.DataArray, freq: str = "AS-JUL") -> xarray.DataArray
 
 @declare_units(snw="[mass]/[area]")
 def snow_melt_we_max(
-    snw: xarray.DataArray, window: int = 3, freq: str = "AS-JUL"
+    snw: xarray.DataArray, window: int = 3, freq: str = "YS-JUL"
 ) -> xarray.DataArray:
     """Maximum snow melt.
 
@@ -244,7 +244,7 @@ def snow_melt_we_max(
 
 @declare_units(snw="[mass]/[area]", pr="[precipitation]")
 def melt_and_precip_max(
-    snw: xarray.DataArray, pr: xarray.DataArray, window: int = 3, freq: str = "AS-JUL"
+    snw: xarray.DataArray, pr: xarray.DataArray, window: int = 3, freq: str = "YS-JUL"
 ) -> xarray.DataArray:
     """Maximum snow melt and precipitation.
 

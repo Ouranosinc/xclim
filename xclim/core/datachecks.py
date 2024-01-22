@@ -24,12 +24,12 @@ def check_freq(var: xr.DataArray, freq: str | Sequence[str], strict: bool = True
     var : xr.DataArray
         Input array.
     freq : str or sequence of str
-        The expected temporal frequencies, using Pandas frequency terminology ({'A', 'M', 'D', 'H', 'T', 'S', 'L', 'U'})
+        The expected temporal frequencies, using Pandas frequency terminology ({'Y', 'M', 'D', 'h', 'min', 's', 'ms', 'us'})
         and multiples thereof. To test strictly for 'W', pass '7D' with `strict=True`.
-        This ignores the start flag and the anchor (ex: 'AS-JUL' will validate against 'Y').
+        This ignores the start/end flag and the anchor (ex: 'YS-JUL' will validate against 'Y').
     strict : bool
-        Whether multiples of the frequencies are considered invalid or not. With `strict` set to False, a '3H' series
-        will not raise an error if freq is set to 'H'.
+        Whether multiples of the frequencies are considered invalid or not. With `strict` set to False, a '3h' series
+        will not raise an error if freq is set to 'h'.
 
     Raises
     ------
@@ -98,7 +98,7 @@ def check_common_time(inputs: Sequence[xr.DataArray]):
     # Check if anchor is the same
     freq = freqs[0]
     base = parse_offset(freq)[1]
-    fmt = {"H": ":%M", "D": "%H:%M"}
+    fmt = {"h": ":%M", "D": "%H:%M"}
     if base in fmt:
         outs = {da.indexes["time"][0].strftime(fmt[base]) for da in inputs}
         if len(outs) > 1:
