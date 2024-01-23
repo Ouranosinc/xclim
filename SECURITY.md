@@ -1,5 +1,7 @@
 # Security Policy
 
+[//]: # (ATTENTION: This is the Markdown version of docs/security.rst. Any changes should also be made in the ReStructuredText version.)
+
 ## Supported Versions
 
 `xclim` is in rapid development and receives regular updates every four to six (4-6) weeks. In the event of a security-related bug discovery soon after the release of an `xclim` version, the last supported version will receive a patch release.
