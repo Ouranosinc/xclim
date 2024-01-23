@@ -20,6 +20,7 @@ dependencies:
   - pandas >=2.2.0
   - pint >=0.9
   - poppler >=0.67
+  - pyarrow  # Strongly encouraged for Pandas v2.2.0+
   - pyyaml
   - scikit-learn >=0.21.3
   - scipy >=1.10.0
