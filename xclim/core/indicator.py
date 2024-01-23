@@ -78,6 +78,8 @@ details on each.
             units: <param units>  # Only valid if "compute" points to a generic function
             default : <param default>
             description: <param description>
+            kind: <param kind> # Override the parameter kind.
+                             # This is mostly useful for transforming an optional variable into a required one by passing ``kind: 0``.
         ...
       ...  # and so on.
 
