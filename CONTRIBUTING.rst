@@ -165,6 +165,7 @@ Ready to contribute? Here's how to set up `xclim` for local development.
     $ tox -e py39  # run tests on Python 3.9
     $ tox -e py310-upstream-doctest  # run tests on Python 3.10, including doctests, with upstream dependencies
     $ tox -e py311 -- -m "not slow  # run tests on Python 3.11, excluding "slow" marked tests
+    $ tox -e py312-numba -- -m "not slow  # run tests on Python 3.12, installing upstream `numba`, excluding "slow" marked tests
     $ tox -e notebooks_doctests  # run tests using the base Python on doctests and evaluate all notebooks
     $ tox -e offline  # run tests using the base Python, excluding tests requiring internet access
 
@@ -242,7 +243,7 @@ Before you submit a pull request, please follow these guidelines:
     If you aren't accustomed to writing documentation in reStructuredText (`.rst`), we encourage you to spend a few minutes going over the
     incredibly well-summarized `reStructuredText Primer`_ from the sphinx-doc maintainer community.
 
-#. The pull request should work for Python 3.9, 3.10, and 3.11 as well as raise test coverage.
+#. The pull request should work for Python 3.9, 3.10, 3.11, and 3.12 as well as raise test coverage.
    Pull requests are also checked for documentation build status and for `PEP8`_ compliance.
 
    The build statuses and build errors for pull requests can be found at: https://github.com/Ouranosinc/xclim/actions
