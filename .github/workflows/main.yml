@@ -205,7 +205,7 @@ jobs:
             repo.anaconda.com:443
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
       - name: Setup Conda (Micromamba) with Python${{ matrix.python-version }}
-        uses: mamba-org/setup-micromamba@e820223f89c8720d6c740ca154a7adf32fcd278a # v1.7.3
+        uses: mamba-org/setup-micromamba@8767fb704bd78032e9392f0386bf46950bdd1194 # v1.8.0
         with:
           cache-downloads: true
           cache-environment: true
