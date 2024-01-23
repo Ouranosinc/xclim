@@ -1238,7 +1238,7 @@ def standardized_precipitation_index(
 
     spi = standardized_index(pr, params)
     spi.attrs = params.attrs
-    spi.attrs["freq"] = freq or xarray.infer_freq(spi.time)
+    spi.attrs["freq"] = (freq or xarray.infer_freq(spi.time)) or "undefined"
     spi.attrs["window"] = window
     spi.attrs["units"] = ""
     return spi
