@@ -206,7 +206,7 @@ class Grouper(Parametrizable):
         if self.prop == "group":
             return xr.DataArray([1], dims=("group",), name="group")
         # TODO: woups what happens when there is no group? (prop is None)
-        raise NotImplementedError()
+        raise NotImplementedError("No grouping found.")
 
     def group(
         self,
@@ -216,7 +216,7 @@ class Grouper(Parametrizable):
     ) -> xr.core.groupby.GroupBy:  # pylint: disable=no-member
         """Return a xr.core.groupby.GroupBy object.
 
-        More than one array can be combined to a dataset before grouping using the `das`  kwargs.
+        More than one array can be combined to a dataset before grouping using the `das` kwargs.
         A new `window` dimension is added if `self.window` is larger than 1.
         If `Grouper.dim` is 'time', but 'prop' is None, the whole array is grouped together.
 
@@ -282,7 +282,7 @@ class Grouper(Parametrizable):
         xr.DataArray
             The index of each element along `Grouper.dim`.
             If `Grouper.dim` is `time` and `Grouper.prop` is None, a uniform array of True is returned.
-            If `Grouper.prop` is a time accessor (month, dayofyear, etc), an numerical array is returned,
+            If `Grouper.prop` is a time accessor (month, dayofyear, etc.), a numerical array is returned,
             with a special case of `month` and `interp=True`.
             If `Grouper.dim` is not `time`, the dim is simply returned.
         """
@@ -299,7 +299,8 @@ class Grouper(Parametrizable):
 
         if not np.issubdtype(i.dtype, np.integer):
             raise ValueError(
-                f"Index {self.name} is not of type int (rather {i.dtype}), but {self.__class__.__name__} requires integer indexes."
+                f"Index {self.name} is not of type int (rather {i.dtype}), "
+                f"but {self.__class__.__name__} requires integer indexes."
             )
 
         if interp and self.dim == "time" and self.prop == "month":
@@ -336,8 +337,8 @@ class Grouper(Parametrizable):
             The DataArray on which to apply the function. Multiple arrays can be passed through a dictionary.
             A dataset will be created before grouping.
         main_only : bool
-            Whether to call the function with the main dimension only (if True)
-            or with all grouping dims (if False, default) (including the window and dimensions given through `add_dims`).
+            Whether to call the function with the main dimension only (if True) or with all grouping dims
+            (if False, default) (including the window and dimensions given through `add_dims`).
             The dimensions used are also written in the "group_compute_dims" attribute.
             If all the input arrays are missing one of the 'add_dims', it is silently omitted.
         \*\*kwargs
