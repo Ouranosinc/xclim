@@ -27,6 +27,7 @@ classifiers = [
   "Programming Language :: Python :: 3.9",
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
   "Topic :: Scientific/Engineering :: Atmospheric Science"
 ]
 dynamic = ["description", "version"]
@@ -292,7 +293,7 @@ lines-after-imports = 1
 no-lines-before = ["future", "standard-library"]
 
 [tool.ruff.mccabe]
-max-complexity = 15
+max-complexity = 20
 
 [tool.ruff.per-file-ignores]
 "docs/*.py" = ["D100", "D101", "D102", "D103"]

@@ -1598,18 +1598,18 @@ def select_time(
 def _month_is_first_period_month(time, freq):
     """Returns True if the given time is from the first month of freq."""
     if isinstance(time, cftime.datetime):
-        frqM = xr.coding.cftime_offsets.to_offset("MS")
+        frq_monthly = xr.coding.cftime_offsets.to_offset("MS")
         frq = xr.coding.cftime_offsets.to_offset(freq)
-        if frqM.onOffset(time):
+        if frq_monthly.onOffset(time):
             return frq.onOffset(time)
-        return frq.onOffset(frqM.rollback(time))
+        return frq.onOffset(frq_monthly.rollback(time))
     # Pandas
     time = pd.Timestamp(time)
-    frqM = pd.tseries.frequencies.to_offset("MS")
+    frq_monthly = pd.tseries.frequencies.to_offset("MS")
     frq = pd.tseries.frequencies.to_offset(freq)
-    if frqM.is_on_offset(time):
+    if frq_monthly.is_on_offset(time):
         return frq.is_on_offset(time)
-    return frq.is_on_offset(frqM.rollback(time))
+    return frq.is_on_offset(frq_monthly.rollback(time))
 
 
 def stack_periods(
@@ -1635,8 +1635,8 @@ def stack_periods(
     ----------
     da : xr.Dataset or xr.DataArray
         An xarray object with a `time` dimension.
-        Must have an uniform timestep length.
-        Output might be strange if this does not use an uniform calendar (noleap, 360_day, all_leap).
+        Must have a uniform timestep length.
+        Output might be strange if this does not use a uniform calendar (noleap, 360_day, all_leap).
     window : int
         The length of the moving window as a multiple of ``freq``.
     stride : int, optional
@@ -1652,7 +1652,7 @@ def stack_periods(
     freq : str
         Units of ``window``, ``stride`` and ``min_length``, as a frequency string.
         Must be larger or equal to the data's sampling frequency.
-        Note that this function offers an easier interface for non uniform period (like years or months)
+        Note that this function offers an easier interface for non-uniform period (like years or months)
         but is much slower than a rolling-construct method.
     dim : str
         The new dimension name.
@@ -1662,7 +1662,8 @@ def stack_periods(
     align_days : bool
         When True (default), an error is raised if the output would have unaligned days across periods.
         If `freq = 'YS'`, day-of-year alignment is checked and if `freq` is "MS" or "QS", we check day-in-month.
-        Only uniform-calendar will pass the test for `freq='YS'`. For other frequencies, only the `360_day` calendar will work.
+        Only uniform-calendar will pass the test for `freq='YS'`.
+        For other frequencies, only the `360_day` calendar will work.
         This check is ignored if the sampling rate of the data is coarser than "D".
     pad_value: Any
         When some periods are shorter than others, this value is used to pad them at the end.
@@ -1677,7 +1678,7 @@ def stack_periods(
         That coordinate is the same for all periods, depending on the choice of ``window`` and ``freq``, it might make sense.
         But for unequal periods or non-uniform calendars, it will certainly not.
         If ``stride`` is a divisor of ``window``, the correct timeseries can be reconstructed with :py:func:`unstack_periods`.
-        The coordinate of `period` is the first timestep of each windows.
+        The coordinate of `period` is the first timestep of each window.
     """
     from xclim.core.units import (  # Import in function to avoid cyclical imports
         ensure_cf_units,
@@ -1734,9 +1735,9 @@ def stack_periods(
     )
 
     periods = []
-    longest = 0
+    # longest = 0
     # Iterate over strides, but recompute the full window for each stride start
-    for begin, strd_slc in da.resample(time=strd_frq).groups.items():
+    for _, strd_slc in da.resample(time=strd_frq).groups.items():
         win_resamp = time2.isel(time=slice(strd_slc.start, None)).resample(time=win_frq)
         # Get slice for first group
         win_slc = win_resamp._group_indices[0]
@@ -1749,7 +1750,7 @@ def stack_periods(
             open_ended = min_slc.stop is None
         else:
             # The end of the group slice is None if no outside-group value was found after the last element
-            # As we added an extra step to time2, we avoid the case where a group ends exactly on the last element of ds.
+            # As we added an extra step to time2, we avoid the case where a group ends exactly on the last element of ds
             open_ended = win_slc.stop is None
         if open_ended:
             # Too short, we got to the end
@@ -1760,7 +1761,8 @@ def stack_periods(
             and min_length == window
             and not _month_is_first_period_month(da.time[0].item(), freq)
         ):
-            # For annual or quartely frequencies (which can be anchor-based), if the first time is not in the first month of the first period,
+            # For annual or quartely frequencies (which can be anchor-based),
+            # if the first time is not in the first month of the first period,
             # then the first period is incomplete but by a fractional amount.
             continue
         periods.append(
@@ -1783,7 +1785,7 @@ def stack_periods(
     m, u = infer_sampling_units(da)
     lengths = lengths * m
     lengths.attrs["units"] = ensure_cf_units(u)
-    # Start points for each periods + remember parameters for unstacking
+    # Start points for each period and remember parameters for unstacking
     starts = xr.DataArray(
         [da.time[slc.start].item() for slc in periods],
         dims=(dim,),
@@ -1873,7 +1875,7 @@ def unstack_periods(da: xr.DataArray | xr.Dataset, dim: str = "period"):
                 f"`unstack_periods` can't find the `{dim}_length` coordinate."
             ) from err
         # Get length as number of points
-        m, u = infer_sampling_units(da.time)
+        m, _ = infer_sampling_units(da.time)
         lengths = lengths // m
     else:
         # It is acceptable to lose "{dim}_length" if they were all equal

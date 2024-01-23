@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+# pylint: disable=unsubscriptable-object
 # Tests for `xclim.locales`
 from __future__ import annotations
 
@@ -159,7 +159,11 @@ def test_xclim_translations(locale, official_indicators):
 
 
 @pytest.mark.parametrize(
-    "initeng,expected", [(False, ""), (True, atmos.tg_mean.cf_attrs[0]["long_name"])]
+    "initeng,expected",
+    [
+        (False, ""),
+        (True, atmos.tg_mean.cf_attrs[0]["long_name"]),
+    ],
 )
 def test_local_dict_generation(initeng, expected):
     dic = generate_local_dict("tlh", init_english=initeng)

@@ -8,6 +8,7 @@ Contributors to this version: Juliette Lavoie (:user:`juliettelavoie`), Pascal B
 
 Announcements
 ^^^^^^^^^^^^^
+* `xclim` now officially supports Python3.12 (requires `numba>=0.59.0`). (:pull:`1613`).
 * `xclim` now adheres to the `Semantic Versioning 2.0.0 <https://semver.org/>`_ specification. (:issue:`1556`, :pull:`1569`).
 * The `xclim` repository now uses `GitHub Discussions <https://github.com/Ouranosinc/xclim/discussions>`_ to offer help for users, coordinate translation efforts, and support general Q&A for the `xclim` community. The `xclim` `Gitter` room has been deprecated in favour of GitHub Discussions. (:issue:`1571`, :pull:`1572`).
 * For secure correspondence, `xclim` now offers a PGP key for users to encrypt sensitive communications. For more information, see the ``SECURITY.md`. (:issue:`1181`, :pull:`1604`).
@@ -29,6 +30,7 @@ Bug fixes
 ^^^^^^^^^
 * Fixed passing ``missing=0`` to ``xclim.core.calendar.convert_calendar``. (:issue:`1562`, :pull:`1563`).
 * Fix wrong `window` attributes in ``xclim.indices.standardized_precipitation_index``, ``xclim.indices.standardized_precipitation_evapotranspiration_index``. (:issue:`1552`  :pull:`1554`).
+* Fix the daily case `freq='D'` of ``xclim.stats.preprocess_standardized_index`` (:issue:`1602`  :pull:`1607`).
 * Several spelling mistakes have been corrected within the documentation and codebase. (:pull:`1576`).
 
 Internal changes
@@ -39,7 +41,12 @@ Internal changes
 * Updated the CONTRIBUTING.rst directions to showcase the new versioning system. (:issue:`1557`, :pull:`1573`).
 * The `codespell` library is now a development dependency for the `dev` installation recipe with configurations found within `pyproject.toml`. This is also now a linting step and integrated as a `pre-commit` hook. For more information, see the `codespell documentation <https://github.com/codespell-project/codespell>`_ (:pull:`1576`).
 * Climate indicators search page now prioritizes the "official" indicators (atmos, land, seaIce and generic), virtual submodules can be added to search through checkbox option. (:issue:`1559`, :pull:`1593`).
-
+* The OpenSSF StepSecurity bot has contributed some changes to the workflows and pre-commit. (:issue:`1181`, :pull:`1606`):
+    * Dependabot has been configured to monitor the `xclim` repository for dependency updates. The ``actions-version-updater.yml`` workflow has been deprecated.
+    * GitHub Actions are now pinned to their commit hashes to prevent unexpected changes in the future.
+    * A new GitHub Workflow (``workflow-warning.yml``) has been added to warn maintainers when a forked repository has been used to open a Pull Request that modifies GitHub Workflows.
+    * `pylint` has been configured to provide some overhead checks of the `xclim` codebase as well as run as part of `xclim`'s `pre-commit` hooks.
+    * Some small adjustments to code organization to address `pylint` errors.
 
 v0.47.0 (2023-12-01)
 --------------------
