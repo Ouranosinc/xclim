@@ -182,7 +182,7 @@ def pint2cfunits(value: units.Quantity | units.Unit) -> str:
         Units following CF-Convention, using symbols.
     """
     if isinstance(value, (pint.Quantity, units.Quantity)):
-        value = value.units  # noqa reason: units.Quantity really have .units property
+        value = value.units
 
     # The replacement is due to hgrecco/pint/1486
     # A workaround can be developed with the merging of hgrecco/pint/1448
