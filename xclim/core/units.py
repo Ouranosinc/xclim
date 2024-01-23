@@ -184,8 +184,11 @@ def pint2cfunits(value: units.Quantity | units.Unit) -> str:
     if isinstance(value, (pint.Quantity, units.Quantity)):
         value = value.units  # noqa reason: units.Quantity really have .units property
 
-    # The replacement is due to hgrecco/pint#1486
-    return f"{value:cf}".replace("dimensionless", "")
+    # The replacement is due to hgrecco/pint/1486
+    # A workaround can be developed with the merging of hgrecco/pint/1448
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", category=DeprecationWarning)
+        return f"{value:cf}".replace("dimensionless", "")
 
 
 def ensure_cf_units(ustr: str) -> str:
