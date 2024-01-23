@@ -97,9 +97,13 @@ def make_criteria(ds: xarray.Dataset | xarray.DataArray):
             )
             for crd in stacked_coords
         ]
-        # TODO: This coordinate operation emits FutureWarnings with xarray>=2023.08.0.
-        crit["criteria"] = pd.MultiIndex.from_arrays(
-            [arr for name, arr in coords], names=[name for name, arr in coords]
+        crit = crit.assign_coords(
+            xarray.Coordinates.from_pandas_multiindex(
+                pd.MultiIndex.from_arrays(
+                    [arr for name, arr in coords], names=[name for name, arr in coords]
+                ),
+                "criteria",
+            )
         )
         # Previous ops gave the first variable's attributes, replace by the original dataset ones.
         crit.attrs = ds.attrs

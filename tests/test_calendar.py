@@ -99,7 +99,7 @@ def test_time_bnds_irregular(typ):
 
     time = start + (end - start) / 2
 
-    bounds = time_bnds(time, freq="M")
+    bounds = time_bnds(time, freq="ME")
     bs = bounds.isel(bnds=0)
     be = bounds.isel(bnds=1)
 
@@ -416,7 +416,6 @@ def test_convert_calendar_missing(source, target, freq):
         np.linspace(0, 1, src.size), dims=("time",), coords={"time": src}
     )
     out = convert_calendar(da_src, target, missing=0, align_on="date")
-    # FIXME: Do we want to raise an error here for "M"? Do we want "ME" or "MS"?
     assert xr.infer_freq(out.time) == freq
     if source == "360_day":
         assert out.time[-1].dt.day == 31

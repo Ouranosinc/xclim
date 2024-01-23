@@ -1352,7 +1352,7 @@ def lazy_indexing(
         index = index.fillna(0).astype(int)
         # for each chunk of index, take corresponding values from da
 
-        da2 = da  # .rename("__placeholder__")
+        da2 = da.rename("__placeholder__")
         out = index.map_blocks(_index_from_1d_array, args=(da2,)).rename(da.name)
         # mask where index was NaN. Drop any auxiliary coord, they are already on `out`.
         # Chunked aux coord would have the same name on both sides and xarray will want to check if they are equal, which means loading them

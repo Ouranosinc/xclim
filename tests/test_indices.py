@@ -814,15 +814,15 @@ class TestMaxPrIntensity:
         pr = pr_hr_series(np.zeros(24 * 36))
         pr[10:22] += np.arange(12)  # kg / m2 / s
 
-        out = xci.max_pr_intensity(pr, window=1, freq="Y")
+        out = xci.max_pr_intensity(pr, window=1, freq="YE")
         np.testing.assert_array_almost_equal(out[0], 11)
 
-        out = xci.max_pr_intensity(pr, window=12, freq="Y")
+        out = xci.max_pr_intensity(pr, window=12, freq="YE")
         np.testing.assert_array_almost_equal(out[0], 5.5)
 
         pr.attrs["units"] = "mm"
         with pytest.raises(ValidationError):
-            xci.max_pr_intensity(pr, window=1, freq="Y")
+            xci.max_pr_intensity(pr, window=1, freq="YE")
 
 
 class TestLastSpringFrost:
@@ -2954,13 +2954,6 @@ def test_snw_storm_days(snw_series):
     snw = snw_series([0, 50, 0, 70, 0, 80])
     out = xci.snw_storm_days(snw, thresh="60 kg m-2")
     np.testing.assert_array_equal(out, [2])
-
-
-def test_winter_storm_deprecated(snd_series):
-    snd = snd_series([0, 0.5, 0.2, 0.7, 0, 0.4])
-    with pytest.warns(DeprecationWarning):
-        out = xci.winter_storm(snd, thresh="30 cm")
-    np.testing.assert_array_equal(out, [3])
 
 
 def test_humidex(tas_series):

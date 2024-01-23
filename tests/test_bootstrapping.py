@@ -26,9 +26,9 @@ class Test_bootstrap:
         "var,p,index,freq, cftime",
         (
             ["tas", 98, tg90p, "MS", False],
-            ["tasmin", 98, tn90p, "YE-JUL", False],
-            ["tasmax", 98, tx90p, "QE-APR", False],
-            ["tasmax", 98, tx90p, "QE-APR", True],
+            ["tasmin", 98, tn90p, "YS-JUL", False],
+            ["tasmax", 98, tx90p, "QS-APR", False],
+            ["tasmax", 98, tx90p, "QS-APR", True],
             ["tasmin", 2, tn10p, "MS", False],
             ["tasmax", 2, tx10p, "YS", False],
             ["tasmax", 2, tx10p, "YS", True],

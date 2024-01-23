@@ -676,17 +676,14 @@ def percentile_doy(
 
     rr = arr.rolling(min_periods=1, center=True, time=window).construct("window")
 
-    ind = pd.MultiIndex.from_arrays(
-        (rr.time.dt.year.values, rr.time.dt.dayofyear.values),
-        names=("year", "dayofyear"),
+    crd = xr.Coordinates.from_pandas_multiindex(
+        pd.MultiIndex.from_arrays(
+            (rr.time.dt.year.values, rr.time.dt.dayofyear.values),
+            names=("year", "dayofyear"),
+        ),
+        "time",
     )
-    if hasattr(xr, "Coordinates"):
-        # xarray > 2023.7.0 will deprecate passing a Pandas MultiIndex directly.
-        # TODO: Remove this condition when pinning xarray above 2023.7.0
-        ind = xr.Coordinates.from_pandas_multiindex(ind, "time")
-        rr = rr.drop_vars("time").assign_coords(ind)
-    else:
-        rr = rr.drop_vars("time").assign_coords(time=ind)
+    rr = rr.drop_vars("time").assign_coords(crd)
     rrr = rr.unstack("time").stack(stack_dim=("year", "window"))
 
     if rrr.chunks is not None and len(rrr.chunks[rrr.get_axis_num("stack_dim")]) > 1:
@@ -805,6 +802,8 @@ def parse_offset(freq: str) -> tuple[int, str, bool, str | None]:
 
     """
     # Useful to raise on invalid freqs, convert Y to A and get default anchor (A, Q)
+    if freq in ["M", "H"]:
+        raise ValueError("Woups")
     offset = pd.tseries.frequencies.to_offset(freq)
     base, *anchor = offset.name.split("-")
     anchor = anchor[0] if len(anchor) > 0 else None

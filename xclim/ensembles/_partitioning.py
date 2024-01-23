@@ -252,7 +252,7 @@ def lafferty_sriver(
     nv_u = (
         (da - sm)
         .rolling(time=11, center=True)
-        .var(dim="time")
+        .var()
         .mean(dim=["scenario", "model", "downscaling"])
     )
 
