@@ -590,7 +590,7 @@ def to_additive_space(
         if upper_bound is not None:
             upper_bound = convert_units_to(upper_bound, data)
 
-    with xr.set_options(keep_attrs=True):
+    with xr.set_options(keep_attrs=True), np.errstate(divide="ignore"):
         if trans == "log":
             out = np.log(data - lower_bound)
         elif trans == "logit":
