@@ -1005,14 +1005,12 @@ def first_run_after_date(
     if mid_idx.size == 0:  # The date is not within the group. Happens at boundaries.
         return xr.full_like(da.isel({dim: 0}), np.nan, float).drop_vars(dim)
 
-    out = first_run(
+    return first_run(
         da.where(da[dim] >= da[dim][mid_idx][0]),
         window=window,
         dim=dim,
         coord=coord,
     )
-    print(out)
-    return out
 
 
 def last_run_before_date(
