@@ -1005,12 +1005,14 @@ def first_run_after_date(
     if mid_idx.size == 0:  # The date is not within the group. Happens at boundaries.
         return xr.full_like(da.isel({dim: 0}), np.nan, float).drop_vars(dim)
 
-    return first_run(
+    out = first_run(
         da.where(da[dim] >= da[dim][mid_idx][0]),
         window=window,
         dim=dim,
         coord=coord,
     )
+    print(out)
+    return out
 
 
 def last_run_before_date(
@@ -1350,9 +1352,12 @@ def lazy_indexing(
         invalid = index.isnull()
         # NaN-indexing doesn't work, so fill with 0 and cast to int
         index = index.fillna(0).astype(int)
-        # for each chunk of index, take corresponding values from da
 
-        da2 = da.rename("__placeholder__")
+        # No need for coords, we extract by integer index.
+        # Renaming with no name to fix bug in xr 2024.01.0
+        tmpname = get_temp_dimname(da.dims, "temp")
+        da2 = xr.DataArray(da.data, dims=(tmpname,), name=None)
+        # for each chunk of index, take corresponding values from da
         out = index.map_blocks(_index_from_1d_array, args=(da2,)).rename(da.name)
         # mask where index was NaN. Drop any auxiliary coord, they are already on `out`.
         # Chunked aux coord would have the same name on both sides and xarray will want to check if they are equal, which means loading them
