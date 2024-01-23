@@ -10,6 +10,7 @@ Announcements
 ^^^^^^^^^^^^^
 * `xclim` now adheres to the `Semantic Versioning 2.0.0 <https://semver.org/>`_ specification. (:issue:`1556`, :pull:`1569`).
 * The `xclim` repository now uses `GitHub Discussions <https://github.com/Ouranosinc/xclim/discussions>`_ to offer help for users, coordinate translation efforts, and support general Q&A for the `xclim` community. The `xclim` `Gitter` room has been deprecated in favour of GitHub Discussions. (:issue:`1571`, :pull:`1572`).
+* For secure correspondence, `xclim` now offers a PGP key for users to encrypt sensitive communications. For more information, see the ``SECURITY.md`. (:issue:`1181`, :pull:`1604`).
 
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
