@@ -184,8 +184,8 @@ def pint2cfunits(value: units.Quantity | units.Unit) -> str:
     if isinstance(value, (pint.Quantity, units.Quantity)):
         value = value.units
 
-    # The replacement is due to hgrecco/pint/1486
-    # A workaround can be developed with the merging of hgrecco/pint/1448
+    # Issue originally introduced in https://github.com/hgrecco/pint/issues/1486
+    # Should be resolved in pint v0.24. See: https://github.com/hgrecco/pint/issues/1913
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", category=DeprecationWarning)
         return f"{value:cf}".replace("dimensionless", "")
@@ -1046,9 +1046,13 @@ def check_units(val: str | xr.DataArray | None, dim: str | xr.DataArray | None) 
         if pint.util.find_shortest_path(graph, start, end):
             return
 
-    raise ValidationError(
-        f"Data units {val_units} are not compatible with requested {dim}."
-    )
+    # Issue originally introduced in https://github.com/hgrecco/pint/issues/1486
+    # Should be resolved in pint v0.24. See: https://github.com/hgrecco/pint/issues/1913
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", category=DeprecationWarning)
+        raise ValidationError(
+            f"Data units {val_units} are not compatible with requested {dim}."
+        )
 
 
 def _check_output_has_units(out: xr.DataArray | tuple[xr.DataArray]):
