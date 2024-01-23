@@ -22,8 +22,6 @@ import numpy as np
 import pandas as pd
 import pytest
 import xarray as xr
-from packaging.version import Version
-from scipy import __version__ as __scipy_version__
 from scipy.stats.mstats import mquantiles
 
 from xclim import ensembles
@@ -680,12 +678,7 @@ def test_robustness_fractions(
     robust_data, test, exp_chng_frac, exp_pos_frac, exp_changed, kws
 ):
     ref, fut = robust_data
-
-    if test == "ttest" and Version(__scipy_version__) < Version("1.9.0"):
-        with pytest.warns(FutureWarning):
-            fracs = ensembles.robustness_fractions(fut, ref, test=test, **kws)
-    else:
-        fracs = ensembles.robustness_fractions(fut, ref, test=test, **kws)
+    fracs = ensembles.robustness_fractions(fut, ref, test=test, **kws)
 
     assert fracs.changed.attrs["test"] == str(test)
 
