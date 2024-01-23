@@ -718,7 +718,13 @@ def daily_pr_intensity(
     # get number of wetdays over period
     wd = wetdays(pr, thresh=thresh, freq=freq)
     out = s / wd
-    out.attrs["units"] = f"{str2pint(pram.units) / str2pint(wd.units):~}"
+
+    # Issue originally introduced in https://github.com/hgrecco/pint/issues/1486
+    # Should be resolved in pint v0.24. See: https://github.com/hgrecco/pint/issues/1913
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", category=DeprecationWarning)
+        out.attrs["units"] = f"{str2pint(pram.units) / str2pint(wd.units):~}"
+
     return out
 
 
