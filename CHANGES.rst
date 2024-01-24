@@ -24,7 +24,7 @@ Breaking changes
 * `bump2version` has been replaced with `bump-my-version` to bump the version number using configurations set in the `pyproject.toml` file. (:issue:`1557`, :pull:`1569`).
 * `xclim`'s units registry and units formatting are now extended from `cf-xarray`. The exponent sign "^" is now never added in the ``units`` attribute. For example, square meters are given as "m2" instead of "m^2" by xclim, both are still accepted as input. (:issue:`1010`, :pull:`1590`).
 * `yamale` is now listed as a core dependency (was previously listed in the `dev` installation recipe). (:issue:`1595`, :pull:`1596`).
-* Due to a licensing limitation, the bias correction algorithm based on `eofs` (``xclim.sdba.properties.first_eof``)  has been removed from `xclim`. (:issue:`1620`).
+* Due to a licensing limitation, the experimental bias correction algorithm based on `eofs` (``xclim.sdba.properties.first_eof``) has been removed from `xclim`. (:issue:`1620`, :pull:`1621`).
 
 Bug fixes
 ^^^^^^^^^
