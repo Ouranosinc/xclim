@@ -23,7 +23,7 @@ dependencies:
   - pyarrow  # Strongly encouraged for Pandas v2.2.0+
   - pyyaml
   - scikit-learn >=0.21.3
-  - scipy >=1.10.0
+  - scipy >=1.9.0
   - statsmodels
   - xarray >=2023.11.0
   - yamale
