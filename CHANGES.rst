@@ -16,7 +16,7 @@ Announcements
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 * Added uncertainty partitioning method `lafferty_sriver` from Lafferty and Sriver (2023), which can partition uncertainty related to the downscaling method. (:issue:`1497`, :pull:`1529`).
-* Validate YAML indicators description before trying to build module. (:issue:`1523`, :pull:`1560`).
+* Validate YAML indicators description before trying to build module. (:issue:`1523`, :issue:`1595`, :pull:`1560`, :pull:`1596`, :pull:`1600`).
 * Support ``indexer`` keyword in YAML indicator description. (:issue:`1522`, :pull:`1561`).
 * New ``xclim.core.calendar.stack_periods`` and ``unstack_periods`` for performing ``rolling(time=...).construct(..., stride=...)`` but with non-uniform temporal periods like years or months. They replace ``xclim.sdba.processing.construct_moving_yearly_window`` and ``unpack_moving_yearly_window`` which are deprecated and will be removed in a future release.
 
@@ -25,6 +25,7 @@ Breaking changes
 * `bump2version` has been replaced with `bump-my-version` to bump the version number using configurations set in the `pyproject.toml` file. (:issue:`1557`, :pull:`1569`).
 * `xclim`'s units registry and units formatting are now extended from `cf-xarray`. The exponent sign "^" is now never added in the ``units`` attribute. For example, square meters are given as "m2" instead of "m^2" by xclim, both are still accepted as input. (:issue:`1010`, :pull:`1590`).
 * `yamale` is now listed as a core dependency (was previously listed in the `dev` installation recipe). (:issue:`1595`, :pull:`1596`).
+* Due to a licensing limitation, the calculation of empirical orthogonal function  based on `eofs` (``xclim.sdba.properties.first_eof``) has been removed from `xclim`. (:issue:`1620`, :pull:`1621`).
 
 Bug fixes
 ^^^^^^^^^
