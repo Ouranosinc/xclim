@@ -10,7 +10,7 @@ variables: map(include('variable'), key=regex(r'^[\w]+$'), required=False)
 indicator:
   abstract: str(required=False)
   allowed_periods: list(enum('A', 'Y', 'Q', 'M', 'W'), required=False)
-  src_freq: list(str(), required=False)
+  src_freq: any(str(), list(str()), required=False)
   base: str(required=False)
   compute: str(required=False)
   input: map(str(), key=str(), required=False)
@@ -32,6 +32,7 @@ parameter:
   default: any(str(), num(), bool(), null(), include('indexer'), required=False)
   choices: list(str(), required=False)
   units: str(required=False)
+  kind: int(required=False)
 
 indexer:
   drop: bool(required=False)
