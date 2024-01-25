@@ -143,6 +143,7 @@ from .locales import (
     read_locale_file,
 )
 from .options import (
+    AS_DATASET,
     CHECK_MISSING,
     KEEP_ATTRS,
     METADATA_LOCALES,
@@ -809,7 +810,7 @@ class Indicator(IndicatorRegistrar):
         if self._version_deprecated:
             self._show_deprecation_warning()  # noqa
 
-        das, params = self._parse_variables_from_call(args, kwds)
+        das, params, dsattrs = self._parse_variables_from_call(args, kwds)
 
         if OPTIONS[KEEP_ATTRS] is True or (
             OPTIONS[KEEP_ATTRS] == "xarray"
@@ -881,6 +882,20 @@ class Indicator(IndicatorRegistrar):
             out.attrs.update(attrs)
             out.name = var_name
 
+        if OPTIONS[AS_DATASET]:
+            out = Dataset({o.name: o for o in outs})
+            if OPTIONS[KEEP_ATTRS] is True or (
+                OPTIONS[KEEP_ATTRS] == "xarray"
+                and xarray.core.options._get_keep_attrs(False)
+            ):
+                out.attrs.update(dsattrs)
+            out.attrs["history"] = update_history(
+                self._history_string(das, params),
+                out,
+                new_name=self.identifier,
+            )
+            return out
+
         # Return a single DataArray in case of single output, otherwise a tuple
         if self.n_outs == 1:
             return outs[0]
@@ -912,7 +927,9 @@ class Indicator(IndicatorRegistrar):
             else:
                 params[name] = param.value
 
-        return das, params
+        ds = ba.arguments.get("ds")
+        dsattrs = ds.attrs if ds is not None else {}
+        return das, params, dsattrs
 
     def _assign_named_args(self, ba):
         """Assign inputs passed as strings from ds."""
@@ -1065,20 +1082,8 @@ class Indicator(IndicatorRegistrar):
             if "cell_methods" in out:
                 attrs["cell_methods"] += " " + out.pop("cell_methods")
 
-        # Use of OrderedDict to ensure inputs (das) get listed before parameters (args).
-        # In the history attr, call signature will be all keywords and might be in a
-        # different order than the real function (but order doesn't really matter with keywords).
-        kwargs = OrderedDict(**das)
-        for k, v in args.items():
-            if self._all_parameters[k].injected:
-                continue
-            if self._all_parameters[k].kind == InputKind.KWARGS:
-                kwargs.update(**v)
-            elif self._all_parameters[k].kind != InputKind.DATASET:
-                kwargs[k] = v
-
         attrs["history"] = update_history(
-            self._history_string(**kwargs),
+            self._history_string(das, args),
             new_name=out.get("var_name"),
             **das,
         )
@@ -1086,7 +1091,15 @@ class Indicator(IndicatorRegistrar):
         attrs.update(out)
         return attrs
 
-    def _history_string(self, **kwargs):
+    def _history_string(self, das, params):
+        kwargs = dict(**das)
+        for k, v in params.items():
+            if self._all_parameters[k].injected:
+                continue
+            if self._all_parameters[k].kind == InputKind.KWARGS:
+                kwargs.update(**v)
+            elif self._all_parameters[k].kind != InputKind.DATASET:
+                kwargs[k] = v
         return gen_call_string(self._registry_id, **kwargs)
 
     @staticmethod
@@ -1396,7 +1409,7 @@ class CheckMissingIndicator(Indicator):
 
         super().__init__(**kwds)
 
-    def _history_string(self, **kwargs):
+    def _history_string(self, das, params):
         if self.missing == "from_context":
             missing = OPTIONS[CHECK_MISSING]
         else:
@@ -1408,7 +1421,7 @@ class CheckMissingIndicator(Indicator):
             if mopts:
                 opt_str += f", missing_options={mopts}"
 
-        return super()._history_string(**kwargs) + opt_str
+        return super()._history_string(das, params) + opt_str
 
     def _get_missing_freq(self, params):
         """Return the resampling frequency to be used in the missing values check."""
