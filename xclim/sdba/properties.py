@@ -28,7 +28,6 @@ from xclim.indices.stats import fit, parametric_quantile
 
 from .base import Grouper, map_groups
 from .nbutils import _pairwise_haversine_and_bins
-from .processing import jitter_under_thresh
 from .utils import _pairwise_spearman, copy_all_attrs
 
 
@@ -1202,73 +1201,17 @@ decorrelation_length = StatisticalProperty(
 )
 
 
-def _first_eof(da: xr.DataArray, *, dims=None, kind="+", thresh="1 mm/d", group="time"):
-    """First Empirical Orthogonal Function.
+def first_eof():
+    """EOF Statistical Property (function removed).
 
-    Through principal component analysis (PCA), compute the predominant empirical orthogonal function.
-    The temporal dimension is reduced. The Eof is multiplied by the sign of its mean to ensure coherent
-    signs as much as possible. Needs the eofs package to run. Based on an idea from :cite:p:`vrac_multivariate_2018`,
-    using an implementation from :cite:p:`dawson_eofs_2016`.
-
-    Parameters
-    ----------
-    da: xr.DataArray
-      Data.
-    dims: sequence of string, optional
-      Name of the spatial dimensions. If None (default), all dimensions except "time" are used.
-    kind : {'+', '*'}
-      Variable "kind". If multiplicative, the zero values are set to
-      very small values and the PCA is performed over the logarithm of the data.
-    thresh: str
-      If kind is multiplicative, this is the "zero" threshold passed to
-      :py:func:`xclim.sdba.processing.jitter_under_thresh`.
-    group: str
-      Useless for now.
-
-    Returns
-    -------
-    xr.DataArray, [dimensionless]
-      First empirical orthogonal function
+    Warnings
+    --------
+    Due to a licensing issue, eofs-based functionality has been permanently removed.
+    Please excuse the inconvenience.
+    For more information, see: https://github.com/Ouranosinc/xclim/issues/1620
     """
-    try:
-        from eofs.standard import Eof
-    except ImportError as err:
-        raise ValueError(
-            "The `first_eof` property requires the `eofs` package"
-            ", which is an optional dependency of xclim."
-        ) from err
-
-    if dims is None:
-        dims = [d for d in da.dims if d != "time"]
-
-    if kind == "*":
-        da = np.log(jitter_under_thresh(da, thresh=thresh))
-
-    da = da - da.mean("time")
-
-    def _get_eof(d):
-        # Remove slices where everything is nan
-        d = d[~np.isnan(d).all(axis=tuple(range(1, d.ndim)))]
-        solver = Eof(d, center=False)
-        eof = solver.eofs(neofs=1).squeeze()
-        return eof * np.sign(np.nanmean(eof))
-
-    out = xr.apply_ufunc(
-        _get_eof,
-        da,
-        input_core_dims=[["time", *dims]],
-        output_core_dims=[dims],
-        dask="parallelized",
-        vectorize=True,
-        output_dtypes=[float],
-        dask_gufunc_kwargs={"allow_rechunk": True},
+    raise RuntimeError(
+        "Due to a licensing issue, eofs-based functionality has been permanently removed. "
+        "Please excuse the inconvenience. "
+        "For more information, see: https://github.com/Ouranosinc/xclim/issues/1620"
     )
-    return out.assign_attrs(units="")
-
-
-first_eof = StatisticalProperty(
-    identifier="first_eof",
-    aspect="spatial",
-    compute=_first_eof,
-    allowed_groups=["group"],
-)

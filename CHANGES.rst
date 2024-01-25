@@ -26,6 +26,7 @@ Breaking changes
 * `bump2version` has been replaced with `bump-my-version` to bump the version number using configurations set in the `pyproject.toml` file. (:issue:`1557`, :pull:`1569`).
 * `xclim`'s units registry and units formatting are now extended from `cf-xarray`. The exponent sign "^" is now never added in the ``units`` attribute. For example, square meters are given as "m2" instead of "m^2" by xclim, both are still accepted as input. (:issue:`1010`, :pull:`1590`).
 * `yamale` is now listed as a core dependency (was previously listed in the `dev` installation recipe). (:issue:`1595`, :pull:`1596`).
+* Due to a licensing limitation, the calculation of empirical orthogonal function  based on `eofs` (``xclim.sdba.properties.first_eof``) has been removed from `xclim`. (:issue:`1620`, :pull:`1621`).
 * The indice and indicator for ``winter_storm`` has been removed (deprecated since `xclim` v0.46.0 in favour of ``snd_storm_days``). (:pull:`1565`).
 * `xclim` base dependencies have risen to `pandas>=2.2.0` and `xarray>=2023.11.0` to reflect changes to time frequency codes introduced in `pandas==2.2.0`. (:issue:`1534`, :pull:`1565`; see also: `pydata/xarray GH/8394 <https://github.com/pydata/xarray/issues/8394>`_).
 * `xclim` has dropped support for `scipy` version below v1.9.0 and `numpy` versions below v1.20.0. (:pull:`1565`).

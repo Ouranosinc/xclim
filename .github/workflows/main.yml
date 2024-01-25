@@ -115,7 +115,7 @@ jobs:
     strategy:
       matrix:
         include:
-          - tox-env: py39-coverage-sbck-eofs
+          - tox-env: py39-coverage-sbck
             python-version: "3.9"
             markers: -m 'not slow'
           - tox-env: py310-coverage  # No markers -- includes slow tests

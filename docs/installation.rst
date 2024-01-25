@@ -105,17 +105,8 @@ Afterwards, `SBCK` can be installed from PyPI using `pip`:
 
 .. code-block:: shell
 
-    $ python -m pip install SBCK
+    $ python -m pip install pybind11 sbck
 
-Another experimental function :py:indicator:`xclim.sdba.property.first_eof` makes use of the `eofs`_ library, which is available on both PyPI and conda-forge:
-
-.. code-block:: shell
-
-    $ python -m pip install eofs
-    # or alternatively,
-    $ conda install -c conda-forge eofs
-
-.. _eofs: https://ajdawson.github.io/eofs/
 .. _SBCK: https://github.com/yrobink/SBCK
 .. _Eigen3: https://eigen.tuxfamily.org/index.php
 
@@ -160,7 +151,7 @@ Alternatively, you can also install a local development copy via `flit`_:
 Creating a Conda environment
 ----------------------------
 
-To create a conda environment including `xclim`'s dependencies and several optional libraries (notably: `clisops`, `eigen`, `eofs`, and `flox`) and development dependencies, run the following command from within your cloned repo:
+To create a conda environment including `xclim`'s dependencies and several optional libraries (notably: `clisops`, `eigen`, `sbck`, and `flox`) and development dependencies, run the following command from within your cloned repo:
 
 .. code-block:: console
 

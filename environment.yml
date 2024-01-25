@@ -28,7 +28,6 @@ dependencies:
   - xarray >=2023.11.0
   - yamale
   # Extras
-  - eofs
   - flox
   # Testing and development dependencies
   - black >=22.12
