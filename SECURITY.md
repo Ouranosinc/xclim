@@ -1,7 +1,5 @@
 # Security Policy
 
-[//]: # (ATTENTION: This is the Markdown version of docs/security.rst. Any changes should also be made in the ReStructuredText version.)
-
 ## Supported Versions
 
 `xclim` is in rapid development and receives regular updates every four to six (4-6) weeks. In the event of a security-related bug discovery soon after the release of an `xclim` version, the last supported version will receive a patch release.
@@ -24,17 +22,17 @@ Please follow these steps to report a security vulnerability:
 
 You can use the following PGP key to encrypt your communications with us:
 
------BEGIN PGP PUBLIC KEY BLOCK-----
+    -----BEGIN PGP PUBLIC KEY BLOCK-----
 
-mDMEZamQrhYJKwYBBAHaRw8BAQdA+saPvmvr1MYe1nQy3n3QDcRE9T7UzTJ1XH31
-EI4Zb6u0Mk91cmFub3MgR2l0SHViIFN1cHBvcnQgPGdpdGh1Yi1zdXBwb3J0QG91
-cmFub3MuY2E+iJkEExYKAEEWIQSeAu+Cbjupx79jy9VeVFD6o5TVcwUCZamQrgIb
-AwUJCWYBgAULCQgHAgIiAgYVCgkICwIEFgIDAQIeBwIXgAAKCRBeVFD6o5TVc4ho
-AQDXjDkx0b3A7yl6PQ4hBJ2uYzw0UWbml7mUwVdhMmdZkQD/VJZQNWrCQeOtYEM8
-icZJYwR/OsKFOWqlDytusGGtjwa4OARlqZCuEgorBgEEAZdVAQUBAQdAa41Zabjz
-P9O+p6tI69Cnft6U5om3+qCcMo8amTqauH0DAQgHiH4EGBYKACYWIQSeAu+Cbjup
-x79jy9VeVFD6o5TVcwUCZamQrgIbDAUJCWYBgAAKCRBeVFD6o5TVcwmaAQClDxW6
-2gir7lhRXAcO+vmRImpGd29TrkcQVh+ak7VlwQEA706d7Kusiorlf/h8pLSoNMmS
-kuLGmHpUJ8NVGppU+wo=
-=wuxr
------END PGP PUBLIC KEY BLOCK-----
+    mDMEZamQrhYJKwYBBAHaRw8BAQdA+saPvmvr1MYe1nQy3n3QDcRE9T7UzTJ1XH31
+    EI4Zb6u0Mk91cmFub3MgR2l0SHViIFN1cHBvcnQgPGdpdGh1Yi1zdXBwb3J0QG91
+    cmFub3MuY2E+iJkEExYKAEEWIQSeAu+Cbjupx79jy9VeVFD6o5TVcwUCZamQrgIb
+    AwUJCWYBgAULCQgHAgIiAgYVCgkICwIEFgIDAQIeBwIXgAAKCRBeVFD6o5TVc4ho
+    AQDXjDkx0b3A7yl6PQ4hBJ2uYzw0UWbml7mUwVdhMmdZkQD/VJZQNWrCQeOtYEM8
+    icZJYwR/OsKFOWqlDytusGGtjwa4OARlqZCuEgorBgEEAZdVAQUBAQdAa41Zabjz
+    P9O+p6tI69Cnft6U5om3+qCcMo8amTqauH0DAQgHiH4EGBYKACYWIQSeAu+Cbjup
+    x79jy9VeVFD6o5TVcwUCZamQrgIbDAUJCWYBgAAKCRBeVFD6o5TVcwmaAQClDxW6
+    2gir7lhRXAcO+vmRImpGd29TrkcQVh+ak7VlwQEA706d7Kusiorlf/h8pLSoNMmS
+    kuLGmHpUJ8NVGppU+wo=
+    =wuxr
+    -----END PGP PUBLIC KEY BLOCK-----
