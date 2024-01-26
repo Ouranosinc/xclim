@@ -1,4 +1,5 @@
 """Spatial Analogues module."""
+
 # TODO: Hellinger distance
 # TODO: Mahalanobis distance
 # TODO: Comment on "significance" of results.

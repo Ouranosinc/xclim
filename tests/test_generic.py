@@ -1,4 +1,5 @@
 """Tests for generic indices."""
+
 from __future__ import annotations
 
 import numpy as np

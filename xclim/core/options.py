@@ -4,6 +4,7 @@ Options Submodule
 
 Global or contextual options for xclim, similar to xarray.set_options.
 """
+
 from __future__ import annotations
 
 from inspect import signature

@@ -4,6 +4,7 @@ By default, indicator instances are skipped by autodoc because their subclass is
 
 Based on https://github.com/powerline/powerline/blob/83d855d3d73498c47553afeba212415990d95c54/docs/source/powerline_autodoc.py
 """
+
 from __future__ import annotations
 
 from sphinx.domains.python import PyFunction, PyXRefRole

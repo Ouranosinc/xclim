@@ -5,6 +5,7 @@ Units Handling Submodule
 `xclim`'s `pint`-based unit registry is an extension of the registry defined in `cf-xarray`.
 This module defines most unit handling methods.
 """
+
 from __future__ import annotations
 
 import logging
@@ -1091,8 +1092,7 @@ def declare_relative_units(**units_by_name) -> Callable:
     .. code-block:: python
 
         @declare_relative_units(thresh="<da>", thresh2="<da> / [time]")
-        def func(da, thresh, thresh2):
-            ...
+        def func(da, thresh, thresh2): ...
 
     The decorator will check that `thresh` has units compatible with those of da
     and that `thresh2` has units compatible with the time derivative of da.
@@ -1199,8 +1199,7 @@ def declare_units(**units_by_name) -> Callable:
     .. code-block:: python
 
         @declare_units(tas="[temperature]")
-        def func(tas):
-            ...
+        def func(tas): ...
 
     The decorator will check that `tas` has units of temperature (C, K, F).
 

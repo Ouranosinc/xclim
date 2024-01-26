@@ -2,6 +2,7 @@
 Ensembles Creation and Statistics
 =================================
 """
+
 from __future__ import annotations
 
 from glob import glob
@@ -277,9 +278,9 @@ def ensemble_percentiles(
             # Smart rechunk on dimension where chunks are the largest
             chk_dim, chks = max(
                 enumerate(ens.chunks),
-                key=lambda kv: 0
-                if kv[0] == ens.get_axis_num("realization")
-                else max(kv[1]),
+                key=lambda kv: (
+                    0 if kv[0] == ens.get_axis_num("realization") else max(kv[1])
+                ),
             )
             ens = ens.chunk(
                 {"realization": -1, ens.dims[chk_dim]: len(chks) * ens.realization.size}

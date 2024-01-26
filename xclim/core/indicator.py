@@ -97,6 +97,7 @@ the mapping of `data.input` simply links an argument name from the function give
 to one of those official variables.
 
 """
+
 from __future__ import annotations
 
 import re
@@ -1768,9 +1769,11 @@ def build_indicator_module_from_yaml(  # noqa: C901
     elif translations is not None:
         # A mapping was passed, we read paths is any.
         translations = {
-            lng: read_locale_file(trans, module=module_name, encoding=encoding)
-            if isinstance(trans, (str, Path))
-            else trans
+            lng: (
+                read_locale_file(trans, module=module_name, encoding=encoding)
+                if isinstance(trans, (str, Path))
+                else trans
+            )
             for lng, trans in translations.items()
         }
 
