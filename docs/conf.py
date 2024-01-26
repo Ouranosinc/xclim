@@ -103,6 +103,7 @@ extensions = [
     "sphinx_autodoc_typehints",
     "sphinx_codeautolink",
     "sphinx_copybutton",
+    "sphinx_mdinclude",
     "sphinx_rtd_theme",
 ]
 
@@ -248,7 +249,7 @@ author = "xclim Project Development Team"
 # the built documents.
 #
 # The short X.Y version.
-version = xclim.__version__
+version = xclim.__version__.split("-")[0]
 # The full version, including alpha/beta/rc tags.
 release = xclim.__version__
 
@@ -267,6 +268,7 @@ exclude_patterns = [
     "Thumbs.db",
     ".DS_Store",
     "notebooks/xclim_training",
+    "paper/paper.md",
     "**.ipynb_checkpoints",
 ]
 
