@@ -25,7 +25,7 @@ Breaking changes
 * `xclim`'s units registry and units formatting are now extended from `cf-xarray`. The exponent sign "^" is now never added in the ``units`` attribute. For example, square meters are given as "m2" instead of "m^2" by xclim, both are still accepted as input. (:issue:`1010`, :pull:`1590`).
 * `yamale` is now listed as a core dependency (was previously listed in the `dev` installation recipe). (:issue:`1595`, :pull:`1596`).
 * Due to a licensing limitation, the calculation of empirical orthogonal function  based on `eofs` (``xclim.sdba.properties.first_eof``) has been removed from `xclim`. (:issue:`1620`, :pull:`1621`).
-* `black` formatting style has been updated to the 2024 stable conventions. `isort` has been added to the `dev` installation recipe.
+* `black` formatting style has been updated to the 2024 stable conventions. `isort` has been added to the `dev` installation recipe. (:pull:`1626`).
 
 Bug fixes
 ^^^^^^^^^
@@ -48,7 +48,7 @@ Internal changes
     * A new GitHub Workflow (``workflow-warning.yml``) has been added to warn maintainers when a forked repository has been used to open a Pull Request that modifies GitHub Workflows.
     * `pylint` has been configured to provide some overhead checks of the `xclim` codebase as well as run as part of `xclim`'s `pre-commit` hooks.
     * Some small adjustments to code organization to address `pylint` errors.
-* `dev` formatting tools (`black`, `blackdoc`, `isort`) are now pinned to their `pre-commit` hook version equivalents in both `pyproject.toml` and `tox.ini`.
+* `dev` formatting tools (`black`, `blackdoc`, `isort`) are now pinned to their `pre-commit` hook version equivalents in both `pyproject.toml` and `tox.ini`. (:pull:`1626`).
 
 v0.47.0 (2023-12-01)
 --------------------
