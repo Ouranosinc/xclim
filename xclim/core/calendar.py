@@ -4,6 +4,7 @@ Calendar Handling Utilities
 
 Helper function to handle dates, times and different calendars with xarray.
 """
+
 from __future__ import annotations
 
 import datetime as pydt
@@ -1013,12 +1014,14 @@ def resample_doy(doy: xr.DataArray, arr: xr.DataArray | xr.Dataset) -> xr.DataAr
 
 
 def time_bnds(  # noqa: C901
-    time: xr.DataArray
-    | xr.Dataset
-    | CFTimeIndex
-    | pd.DatetimeIndex
-    | DataArrayResample
-    | DatasetResample,
+    time: (
+        xr.DataArray
+        | xr.Dataset
+        | CFTimeIndex
+        | pd.DatetimeIndex
+        | DataArrayResample
+        | DatasetResample
+    ),
     freq: str | None = None,
     precision: str | None = None,
 ):
@@ -1768,9 +1771,11 @@ def stack_periods(
         periods.append(
             slice(
                 strd_slc.start + win_slc.start,
-                (strd_slc.start + win_slc.stop)
-                if win_slc.stop is not None
-                else da.time.size,
+                (
+                    (strd_slc.start + win_slc.stop)
+                    if win_slc.stop is not None
+                    else da.time.size
+                ),
             )
         )
 

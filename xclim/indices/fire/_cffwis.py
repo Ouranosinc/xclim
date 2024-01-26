@@ -123,6 +123,7 @@ as _all_ seasons are used, even the very short shoulder seasons.
 ...     dmc_dry_factor=2,
 ... )
 """
+
 # This file is structured in the following way:
 # Section 1: individual codes, numba-accelerated and vectorized functions.
 # Section 2: Larger computing functions (the FWI iterator and the fire_season iterator)
@@ -1162,8 +1163,9 @@ def overwintering_drought_code(
     last_dc: xr.DataArray,
     winter_pr: xr.DataArray,
     carry_over_fraction: xr.DataArray | float = default_params["carry_over_fraction"],
-    wetting_efficiency_fraction: xr.DataArray
-    | float = default_params["wetting_efficiency_fraction"],
+    wetting_efficiency_fraction: xr.DataArray | float = default_params[
+        "wetting_efficiency_fraction"
+    ],
     min_dc: xr.DataArray | float = default_params["dc_start"],
 ) -> xr.DataArray:
     """Compute season-starting drought code based on previous season's last drought code and total winter precipitation.

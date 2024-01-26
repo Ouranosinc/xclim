@@ -6,6 +6,7 @@ through statistical properties or directly. This framework for the diagnostic te
 `VALUE <http://www.value-cost.eu/>`_ project.
 
 """
+
 from __future__ import annotations
 
 from typing import Sequence

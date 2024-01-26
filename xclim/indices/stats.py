@@ -1,4 +1,5 @@
 """Statistic-related functions. See the `frequency_analysis` notebook for examples."""
+
 from __future__ import annotations
 
 import warnings
