@@ -1,4 +1,5 @@
 """Indices module."""
+
 from __future__ import annotations
 
 from ._agro import *

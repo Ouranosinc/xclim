@@ -1,4 +1,5 @@
 """Climate indices computation package based on Xarray."""
+
 from __future__ import annotations
 
 try:

@@ -1,4 +1,5 @@
 """Streamflow indicator definitions."""
+
 from __future__ import annotations
 
 from xclim.core.cfchecks import check_valid

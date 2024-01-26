@@ -3,6 +3,7 @@
 SDBA submodule
 ==============
 """
+
 from __future__ import annotations
 
 from . import adjustment, detrending, measures, processing, properties, utils
