@@ -6,7 +6,7 @@ repos:
     rev: v3.15.0
     hooks:
       - id: pyupgrade
-        args: ['--py38-plus']
+        args: ['--py39-plus']
         exclude: 'xclim/core/indicator.py'
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.5.0
@@ -59,7 +59,7 @@ repos:
     rev: 1.7.1
     hooks:
       - id: nbqa-pyupgrade
-        args: [ '--py38-plus' ]
+        args: [ '--py39-plus' ]
       - id: nbqa-black
         additional_dependencies: [ 'black==24.1.0' ]
       - id: nbqa-isort
