@@ -48,7 +48,7 @@ Internal changes
     * A new GitHub Workflow (``workflow-warning.yml``) has been added to warn maintainers when a forked repository has been used to open a Pull Request that modifies GitHub Workflows.
     * `pylint` has been configured to provide some overhead checks of the `xclim` codebase as well as run as part of `xclim`'s `pre-commit` hooks.
     * Some small adjustments to code organization to address `pylint` errors.
-* `dev` formatting tools (`black`, `blackdoc`, `isort`) are now pinned to their `pre-commit` hook version equivalents.
+* `dev` formatting tools (`black`, `blackdoc`, `isort`) are now pinned to their `pre-commit` hook version equivalents in both `pyproject.toml` and `tox.ini`.
 
 v0.47.0 (2023-12-01)
 --------------------
