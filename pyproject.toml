@@ -98,6 +98,7 @@ dev = [
   "sphinx-autodoc-typehints",
   "sphinx-codeautolink",
   "sphinx-copybutton",
+  "sphinx-mdinclude",
   "sphinx-rtd-theme >=1.0",
   "sphinxcontrib-bibtex",
   "sphinxcontrib-svg2pdfconverter[Cairosvg]"
