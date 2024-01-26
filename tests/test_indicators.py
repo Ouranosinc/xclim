@@ -198,6 +198,28 @@ def test_keep_attrs(tasmin_series, tasmax_series, xcopt, xropt, exp):
     assert "bing" not in tg.attrs
 
 
+def test_as_dataset(tasmax_series, tasmin_series):
+    tx = tasmax_series(np.arange(360.0))
+    tn = tasmin_series(np.arange(360.0))
+    tx.attrs.update(something="blabla", bing="bang", foo="bar")
+    tn.attrs.update(something="blabla", bing="bong")
+    dsin = xr.Dataset({"tasmax": tx, "tasmin": tn}, attrs={"fou": "barre"})
+    with xclim.set_options(keep_attrs=True, as_dataset=True):
+        dsout = multiOptVar(ds=dsin)
+    assert isinstance(dsout, xr.Dataset)
+    assert dsout.attrs["fou"] == "barre"
+    assert dsout.multiopt.attrs.get("something") == "blabla"
+
+
+def test_as_dataset_multi(tas_series):
+    tg = tas_series(np.arange(360.0))
+    with xclim.set_options(as_dataset=True):
+        dsout = multiTemp(tas=tg, freq="YS")
+    assert isinstance(dsout, xr.Dataset)
+    assert "tmin" in dsout.data_vars
+    assert "tmax" in dsout.data_vars
+
+
 def test_opt_vars(tasmin_series, tasmax_series):
     tn = tasmin_series(np.zeros(365))
     tx = tasmax_series(np.zeros(365))

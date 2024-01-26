@@ -4,6 +4,7 @@ CF-Convention Checking
 
 Utilities designed to verify the compliance of metadata with the CF-Convention.
 """
+
 from __future__ import annotations
 
 import fnmatch

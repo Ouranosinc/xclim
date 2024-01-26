@@ -1,4 +1,5 @@
 """Precipitation indicator definitions."""
+
 from __future__ import annotations
 
 from inspect import _empty  # noqa

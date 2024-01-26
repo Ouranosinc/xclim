@@ -43,6 +43,7 @@ all other entries (translations of frequent parameters and all indicator entries
 For xclim-provided translations (for now only French), all indicators must have en entry and the "attrs_mapping"
 entries must match exactly the default formatter. Those default translations are found in the `xclim/locales` folder.
 """
+
 from __future__ import annotations
 
 import json

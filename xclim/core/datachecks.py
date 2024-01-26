@@ -4,6 +4,7 @@ Data Checks
 
 Utilities designed to check the validity of data inputs.
 """
+
 from __future__ import annotations
 
 from collections.abc import Sequence

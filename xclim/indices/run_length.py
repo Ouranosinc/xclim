@@ -4,6 +4,7 @@ Run-Length Algorithms Submodule
 
 Computation of statistics on runs of True values in boolean arrays.
 """
+
 from __future__ import annotations
 
 from collections.abc import Sequence

@@ -12,6 +12,7 @@ Announcements
 * `xclim` now officially supports Python3.12 (requires `numba>=0.59.0`). (:pull:`1613`).
 * `xclim` now adheres to the `Semantic Versioning 2.0.0 <https://semver.org/>`_ specification. (:issue:`1556`, :pull:`1569`).
 * The `xclim` repository now uses `GitHub Discussions <https://github.com/Ouranosinc/xclim/discussions>`_ to offer help for users, coordinate translation efforts, and support general Q&A for the `xclim` community. The `xclim` `Gitter` room has been deprecated in favour of GitHub Discussions. (:issue:`1571`, :pull:`1572`).
+* For secure correspondence, `xclim` now offers a PGP key for users to encrypt sensitive communications. For more information, see the ``SECURITY.md``. (:issue:`1181`, :pull:`1604`).
 
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -19,6 +20,7 @@ New features and enhancements
 * Validate YAML indicators description before trying to build module. (:issue:`1523`, :issue:`1595`, :pull:`1560`, :pull:`1596`, :pull:`1600`).
 * Support ``indexer`` keyword in YAML indicator description. (:issue:`1522`, :pull:`1561`).
 * New ``xclim.core.calendar.stack_periods`` and ``unstack_periods`` for performing ``rolling(time=...).construct(..., stride=...)`` but with non-uniform temporal periods like years or months. They replace ``xclim.sdba.processing.construct_moving_yearly_window`` and ``unpack_moving_yearly_window`` which are deprecated and will be removed in a future release.
+* New ``as_dataset`` options for ``xclim.set_options``. When True, indicators will output Datasets instead of DataArrays. (:issue:`1257`, :pull:`1625`).
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
@@ -27,6 +29,7 @@ Breaking changes
 * `xclim`'s units registry and units formatting are now extended from `cf-xarray`. The exponent sign "^" is now never added in the ``units`` attribute. For example, square meters are given as "m2" instead of "m^2" by xclim, both are still accepted as input. (:issue:`1010`, :pull:`1590`).
 * `yamale` is now listed as a core dependency (was previously listed in the `dev` installation recipe). (:issue:`1595`, :pull:`1596`).
 * Due to a licensing limitation, the calculation of empirical orthogonal function  based on `eofs` (``xclim.sdba.properties.first_eof``) has been removed from `xclim`. (:issue:`1620`, :pull:`1621`).
+* `black` formatting style has been updated to the 2024 stable conventions. `isort` has been added to the `dev` installation recipe. (:pull:`1626`).
 * The indice and indicator for ``winter_storm`` has been removed (deprecated since `xclim` v0.46.0 in favour of ``snd_storm_days``). (:pull:`1565`).
 * `xclim` base dependencies have risen to `pandas>=2.2.0` and `xarray>=2023.11.0` to reflect changes to time frequency codes introduced in `pandas==2.2.0`. (:issue:`1534`, :pull:`1565`; see also: `pydata/xarray GH/8394 <https://github.com/pydata/xarray/issues/8394>`_).
 * `xclim` has dropped support for `scipy` version below v1.9.0 and `numpy` versions below v1.20.0. (:pull:`1565`).
@@ -52,6 +55,7 @@ Internal changes
     * A new GitHub Workflow (``workflow-warning.yml``) has been added to warn maintainers when a forked repository has been used to open a Pull Request that modifies GitHub Workflows.
     * `pylint` has been configured to provide some overhead checks of the `xclim` codebase as well as run as part of `xclim`'s `pre-commit` hooks.
     * Some small adjustments to code organization to address `pylint` errors.
+* `dev` formatting tools (`black`, `blackdoc`, `isort`) are now pinned to their `pre-commit` hook version equivalents in both `pyproject.toml` and `tox.ini`. (:pull:`1626`).
 
 v0.47.0 (2023-12-01)
 --------------------

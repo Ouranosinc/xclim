@@ -4,6 +4,7 @@ Data Flags
 
 Pseudo-indicators designed to analyse supplied variables for suspicious/erroneous indicator values.
 """
+
 from __future__ import annotations
 
 from collections.abc import Sequence

@@ -4,6 +4,7 @@ Generic Indices Submodule
 
 Helper functions for common generic actions done in the computation of indices.
 """
+
 from __future__ import annotations
 
 import warnings
