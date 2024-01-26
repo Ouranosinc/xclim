@@ -1092,8 +1092,7 @@ def declare_relative_units(**units_by_name) -> Callable:
     .. code-block:: python
 
         @declare_relative_units(thresh="<da>", thresh2="<da> / [time]")
-        def func(da, thresh, thresh2):
-            ...
+        def func(da, thresh, thresh2): ...
 
     The decorator will check that `thresh` has units compatible with those of da
     and that `thresh2` has units compatible with the time derivative of da.
@@ -1200,8 +1199,7 @@ def declare_units(**units_by_name) -> Callable:
     .. code-block:: python
 
         @declare_units(tas="[temperature]")
-        def func(tas):
-            ...
+        def func(tas): ...
 
     The decorator will check that `tas` has units of temperature (C, K, F).
 
