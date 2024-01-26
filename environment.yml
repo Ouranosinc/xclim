@@ -29,9 +29,9 @@ dependencies:
   # Extras
   - flox
   # Testing and development dependencies
-  - black >=22.12
-  - blackdoc
-  - bump-my-version
+  - black ==24.1.0
+  - blackdoc ==0.3.9
+#  - bump-my-version  # The conda package is not as up-to-date as the PyPI package.
   - cairosvg
   - codespell
   - coverage
@@ -43,6 +43,7 @@ dependencies:
   - h5netcdf
   - ipykernel
   - ipython
+  - isort ==5.13.2
   - matplotlib
   - mypy
   - nbqa
@@ -68,11 +69,12 @@ dependencies:
   - sphinx-rtd-theme >=1.0
   - sphinxcontrib-bibtex
   - tokenize-rt
-  - tox
+  - tox >=4.0
 #  - tox-conda  # Will be added when a tox@v4.0+ compatible plugin is released.
   - xdoctest
   - yamllint
   - pip
   - pip:
+    - bump-my-version >=0.17.1  # The conda package is not as up-to-date as the PyPI package.
     - flake8-alphabetize
     - sphinxcontrib-svg2pdfconverter
