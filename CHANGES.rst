@@ -29,7 +29,7 @@ Breaking changes
     * 'Y' (year) -> 'YE' (year end). (see: `pandas PR/55792 <https://github.com/pandas-dev/pandas/pull/55792>`_).
     * 'M' (month) -> 'ME' (month end). (see: `pandas PR/52064 <https://github.com/pandas-dev/pandas/pull/52064>`_).
     * 'Q' (quarter) -> 'QE' (quarter end). (see: `pandas PR/55553 <https://github.com/pandas-dev/pandas/pull/55553>`_)
-    * 'A' and 'AS' have been removed (use 'Y' and 'YS' instead). (see: `pandas PR/55252 <https://github.com/pandas-dev/pandas/pull/55252>`_).
+    * 'A' and 'AS' have been removed (use 'YE' and 'YS' instead). (see: `pandas PR/55252 <https://github.com/pandas-dev/pandas/pull/55252>`_). ('YE' is only supported for cftime data in `xarray >= 2024.1.1`).
     * 'T' (minute), 'L' (millisecond), 'U' (microsecond), and 'N' (nanosecond) -> 'min', 'ms', 'us', and 'ns'. (see: `pandas PR/54061 <https://github.com/pandas-dev/pandas/pull/54061>`_).
 * `bump2version` has been replaced with `bump-my-version` to bump the version number using configurations set in the ``pyproject.toml`` file. (:issue:`1557`, :pull:`1569`).
 * `xclim`'s units registry and units formatting are now extended from `cf-xarray`. The exponent sign "^" is now never added in the ``units`` attribute. For example, square meters are given as "m2" instead of "m^2" by xclim, both are still accepted as input. (:issue:`1010`, :pull:`1590`).
