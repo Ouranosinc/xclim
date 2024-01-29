@@ -649,7 +649,7 @@ def _gen_test_entry(namefunc):
     return f"\t{name}:\n\t\t{doc}"
 
 
-change_significance.__doc__ = change_significance.__doc__.format(
+robustness_fractions.__doc__ = robustness_fractions.__doc__.format(
     tests_list="{" + ", ".join(list(SIGNIFICANCE_TESTS.keys()) + ["threshold"]) + "}",
     tests_doc="\n".join(map(_gen_test_entry, SIGNIFICANCE_TESTS.items())),
 )
