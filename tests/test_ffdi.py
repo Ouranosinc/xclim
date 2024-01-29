@@ -149,7 +149,7 @@ class TestFFDI:
         # outputs look sensible
         test_data = open_dataset(data_url)
 
-        pr_annual = test_data["pr"].resample(time="A").mean().mean("time")
+        pr_annual = test_data["pr"].resample(time="YS").mean().mean("time")
         pr_annual.attrs["units"] = test_data["pr"].attrs["units"]
 
         if init_kbdi:

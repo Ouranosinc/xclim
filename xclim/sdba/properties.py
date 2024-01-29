@@ -11,7 +11,7 @@ Statistical Properties is the xclim term for 'indices' in the VALUE project.
 """
 from __future__ import annotations
 
-from typing import Sequence
+from collections.abc import Sequence
 
 import numpy as np
 import xarray as xr

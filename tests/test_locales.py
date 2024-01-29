@@ -15,7 +15,7 @@ from xclim.core.options import set_options
 esperanto = (
     "eo",
     {
-        "attrs_mapping": {"modifiers": ["adj"], "AS-*": ["jara"], "MS": ["monata"]},
+        "attrs_mapping": {"modifiers": ["adj"], "YS-*": ["jara"], "MS": ["monata"]},
         "TG_MEAN": {
             "long_name": "Meza ciutaga averaga temperaturo",
             "title": "Meza ciutaga averaga temperaturo",
@@ -28,7 +28,7 @@ russian = (
     {
         "attrs_mapping": {
             "modifiers": ["nn", "nf"],
-            "AS-*": ["годовое", "годовая"],
+            "YS-*": ["годовое", "годовая"],
             "MS": ["месячный", "месячная"],
         },
         "TG_MEAN": {
@@ -97,8 +97,8 @@ def test_local_attrs_multi(tmp_path):
 
 def test_local_formatter():
     fmt = xloc.get_local_formatter(russian)
-    assert fmt.format("{freq:nn}", freq="AS-JUL") == "годовое"
-    assert fmt.format("{freq:nf}", freq="AS-DEC") == "годовая"
+    assert fmt.format("{freq:nn}", freq="YS-JUL") == "годовое"
+    assert fmt.format("{freq:nf}", freq="YS-DEC") == "годовая"
 
 
 def test_indicator_output(tas_series):

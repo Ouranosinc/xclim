@@ -210,7 +210,7 @@ def test_rate2amount(pr_series):
 
     with xr.set_options(keep_attrs=True):
         pr_ms = pr.resample(time="MS").mean()
-        pr_m = pr.resample(time="M").mean()
+        pr_m = pr.resample(time="ME").mean()
 
         am_ms = rate2amount(pr_ms)
         np.testing.assert_array_equal(am_ms[:4], 86400 * np.array([31, 28, 31, 30]))
@@ -233,7 +233,7 @@ def test_amount2rate(pr_series):
 
     with xr.set_options(keep_attrs=True):
         am_ms = am.resample(time="MS").sum()
-        am_m = am.resample(time="M").sum()
+        am_m = am.resample(time="ME").sum()
 
         pr_ms = amount2rate(am_ms)
         np.testing.assert_allclose(pr_ms, 1)
@@ -249,10 +249,12 @@ def test_amount2lwethickness(snw_series):
     snw = snw_series(np.ones(365), start="2019-01-01")
 
     swe = amount2lwethickness(snw, out_units="mm")
+    # FIXME: Asserting these statements shows that they are not equal
     swe.attrs["standard_name"] == "lwe_thickness_of_snowfall_amount"
     np.testing.assert_allclose(swe, 1)
 
     snw = lwethickness2amount(swe)
+    # FIXME: Asserting these statements shows that they are not equal
     snw.attrs["standard_name"] == "snowfall_amount"
 
 

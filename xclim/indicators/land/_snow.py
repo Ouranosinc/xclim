@@ -21,7 +21,6 @@ __all__ = [
     "snw_season_start",
     "snw_storm_days",
     "snw_to_snd",
-    "winter_storm",
 ]
 
 
@@ -165,17 +164,6 @@ melt_and_precip_max = Snow(
     compute=xci.melt_and_precip_max,
 )
 
-
-winter_storm = SnowWithIndexing(
-    title="Winter storm days",
-    identifier="winter_storm",
-    var_name="{freq}_winter_storm",
-    long_name="Days with snowfall at or above a given threshold",
-    description="The {freq} number of days with snowfall accumulation above {thresh}.",
-    units="days",
-    compute=xci.snd_storm_days,
-    _version_deprecated="0.46.0",
-)
 
 snd_storm_days = SnowWithIndexing(
     title="Winter storm days",

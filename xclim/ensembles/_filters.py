@@ -54,7 +54,7 @@ def _concat_hist(da, **hist):
     ens = da.drop_sel(**hist)
 
     index = ens[dim]
-    bare = ens.drop(dim).dropna("time", how="all")
+    bare = ens.drop_vars(dim).dropna("time", how="all")
 
     return xr.concat([h, bare], dim="time").assign_coords({dim: index})
 

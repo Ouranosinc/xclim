@@ -13,10 +13,8 @@ import warnings
 from inspect import Parameter, signature
 
 import numpy as np
-import scipy
 import scipy.stats as spstats  # noqa
 import xarray as xr
-from packaging.version import Version
 
 from xclim.core.formatting import gen_call_string, update_xclim_history
 from xclim.indices.generic import compare, detrend
@@ -509,33 +507,17 @@ def robustness_coefficient(
 @significance_test
 def _ttest(fut, ref, *, p_change=0.05):
     """Single sample T-test. Same test as used by :cite:t:`tebaldi_mapping_2011`.
+
     The future values are compared against the reference mean (over 'time').
     Accepts argument p_change (float, default : 0.05) the p-value threshold for rejecting the hypothesis of no significant change.
     """
-    if Version(scipy.__version__) < Version("1.9.0"):
-        warnings.warn(
-            "`xclim` will be dropping support for `scipy<1.9.0` in a future release. "
-            "Please consider updating your environment dependencies accordingly",
-            FutureWarning,
-            stacklevel=4,
-        )
 
-        def _ttest_func(f, r):
-            if np.isnan(f).all() or np.isnan(r).all():
-                return np.NaN
+    def _ttest_func(f, r):
+        # scipy>=1.9: popmean.axis[-1] must equal 1 for both fut and ref
+        if np.isnan(f).all() or np.isnan(r).all():
+            return np.NaN
 
-            return spstats.ttest_1samp(f, r, axis=-1, nan_policy="omit")[1]
-
-    else:
-
-        def _ttest_func(f, r):
-            # scipy>=1.9: popmean.axis[-1] must equal 1 for both fut and ref
-            if np.isnan(f).all() or np.isnan(r).all():
-                return np.NaN
-
-            return spstats.ttest_1samp(
-                f, r[..., np.newaxis], axis=-1, nan_policy="omit"
-            )[1]
+        return spstats.ttest_1samp(f, r[..., np.newaxis], axis=-1, nan_policy="omit")[1]
 
     # Test hypothesis of no significant change
     pvals = xr.apply_ufunc(
@@ -555,7 +537,10 @@ def _ttest(fut, ref, *, p_change=0.05):
 
 @significance_test
 def _welch_ttest(fut, ref, *, p_change=0.05):
-    """Two-sided T-test, without assuming equal population variance. Same significance criterion and argument as 'ttest'."""
+    """Two-sided T-test, without assuming equal population variance.
+
+    Same significance criterion and argument as 'ttest'.
+    """
 
     # Test hypothesis of no significant change
     # equal_var=False -> Welch's T-test
@@ -584,12 +569,6 @@ def _welch_ttest(fut, ref, *, p_change=0.05):
 @significance_test
 def _mannwhitney_utest(ref, fut, *, p_change=0.05):
     """Two-sided Mann-Whiney U-test. Same significance criterion and argument as 'ttest'."""
-    if Version(scipy.__version__) < Version("1.8.0"):
-        raise ImportError(
-            "The Mann-Whitney test requires `scipy>=1.8.0`. "
-            "`xclim` will be dropping support for `scipy<1.9.0` in a future release. "
-            "Please consider updating your environment dependencies accordingly"
-        )
 
     def mwu_wrapper(f, r):  # This specific test can't manage an all-NaN slice
         if np.isnan(f).all() or np.isnan(r).all():
@@ -614,7 +593,10 @@ def _mannwhitney_utest(ref, fut, *, p_change=0.05):
 
 @significance_test
 def _brownforsythe_test(fut, ref, *, p_change=0.05):
-    """Brown-Forsythe test assuming skewed, non-normal distributions. Same significance criterion and argument as 'ttest'."""
+    """Brown-Forsythe test assuming skewed, non-normal distributions.
+
+    Same significance criterion and argument as 'ttest'.
+    """
     pvals = xr.apply_ufunc(
         lambda f, r: spstats.levene(f, r, center="median")[1],
         fut,
@@ -634,13 +616,14 @@ def _brownforsythe_test(fut, ref, *, p_change=0.05):
 @significance_test
 def _ipcc_ar6_c(fut, ref, *, ref_pi=None):
     r"""The advanced approach used in the IPCC Atlas chapter (:cite:t:`ipccatlas_ar6wg1`).
+
     Change is considered significant if the delta exceeds a threshold related to the internal variability.
     If pre-industrial data is given in argument `ref_pi`, the threshold is defined as
     :math:`\sqrt{2}*1.645*\sigma_{20yr}`, where :math:`\sigma_{20yr}` is the standard deviation of 20-year
     means computed from non-overlapping periods after detrending with a quadratic fit.
     Otherwise, when such pre-industrial control data is not available, the threshold is defined in relation to
     the historical data (`ref`) as :math:`\sqrt{\frac{2}{20}}*1.645*\sigma_{1yr}, where :math:`\sigma_{1yr}`
-    is the interannual standard deviation measured after linearly detrending the data.
+    is the inter-annual standard deviation measured after linearly detrending the data.
     See notebook :ref:`notebooks/ensembles:Ensembles` for more details.
     """
     # Ensure annual

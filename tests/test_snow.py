@@ -10,7 +10,7 @@ from xclim.core.utils import ValidationError
 class TestSnowDepth:
     def test_simple(self, snd_series):
         snd = snd_series(np.ones(110), start="2001-01-01")
-        out = land.snow_depth(snd, freq="M")
+        out = land.snow_depth(snd, freq="ME")
         assert out.units == "cm"
         np.testing.assert_array_equal(out, [100, 100, 100, np.nan])
 
@@ -19,7 +19,7 @@ class TestSnowDepthCoverDuration:
     def test_simple(self, snd_series):
         snd = snd_series(np.ones(110), start="2001-01-01")
 
-        out = land.snd_season_length(snd, freq="M")
+        out = land.snd_season_length(snd, freq="ME")
         assert out.units == "days"
         np.testing.assert_array_equal(out, [31, 28, 31, np.nan])
 
@@ -30,7 +30,7 @@ class TestSnowWaterCoverDuration:
     )
     def test_simple(self, snw_series, factor, exp):
         snw = snw_series(np.ones(110) * factor, start="2001-01-01")
-        out = land.snw_season_length(snw, freq="M")
+        out = land.snw_season_length(snw, freq="ME")
         assert out.units == "days"
         np.testing.assert_array_equal(out, exp)
 
@@ -74,7 +74,7 @@ class TestSndMaxDoy:
         a = np.zeros(365)
         a[200] = 1
         snd = snd_series(a, start="2001-07-01")
-        out = land.snd_max_doy(snd, freq="AS-JUL")
+        out = land.snd_max_doy(snd, freq="YS-JUL")
         np.testing.assert_array_equal(out, snd.time.dt.dayofyear[200])
 
     def test_units(self, tas_series, random):

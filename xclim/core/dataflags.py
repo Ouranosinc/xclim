@@ -7,10 +7,10 @@ Pseudo-indicators designed to analyse supplied variables for suspicious/erroneou
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from decimal import Decimal
 from functools import reduce
 from inspect import signature
-from typing import Sequence
 
 import numpy as np
 import xarray

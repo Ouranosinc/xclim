@@ -41,7 +41,7 @@ jobs:
     strategy:
       matrix:
         python-version:
-          - "3.8"
+          - "3.9"
     steps:
       - name: Harden Runner
         uses: step-security/harden-runner@eb238b55efaa70779f274895e782ed17c84f2895 # v2.6.1
@@ -117,9 +117,6 @@ jobs:
     strategy:
       matrix:
         include:
-          - tox-env: py38-coverage
-            python-version: "3.8"
-            markers: -m 'not slow'
           - tox-env: py39-coverage-sbck
             python-version: "3.9"
             markers: -m 'not slow'
