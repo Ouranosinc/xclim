@@ -3,8 +3,8 @@ Ensemble Robustness Metrics
 ===========================
 
 Robustness metrics are used to estimate the confidence of the climate change signal of an ensemble.
-This submodule is inspired by and tries to follow the guidelines of the IPCC, more specifically
-the 12th chapter of the Working Group 1's contribution to the AR5 :cite:p:`collins_long-term_2013` (see box 12.1).
+This submodule is inspired by and tries to follow the guidelines of the IPCC,
+more specifically :cite:p:`collins_long-term_2013` (AR5) and :cite:cts:`ipccatlas_ar6wg1` (AR6).
 """
 
 from __future__ import annotations
@@ -101,6 +101,8 @@ def robustness_fractions(  # noqa: C901
         pvals :
                 The p-values estimated by the significance tests. Only returned if the test uses `pvals`. Has the  `realization` dimension.
 
+    Notes
+    -----
     The table below shows the coefficient needed to retrieve the number of members
     that have the indicated characteristics, by multiplying it by the total
     number of members (`fut.realization.size`) and by `valid_frac`, assuming uniform weights.
@@ -116,8 +118,6 @@ def robustness_fractions(  # noqa: C901
     | Negative change | (cf - cpf)         | 1 - pf - (cf -cpf)     | 1 - pf     |
     +-----------------+--------------------+------------------------+------------+
 
-    Notes
-    -----
     Available statistical tests are :
 
     {tests_doc}
@@ -649,7 +649,7 @@ def _gen_test_entry(namefunc):
     return f"\t{name}:\n\t\t{doc}"
 
 
-change_significance.__doc__ = change_significance.__doc__.format(
+robustness_fractions.__doc__ = robustness_fractions.__doc__.format(
     tests_list="{" + ", ".join(list(SIGNIFICANCE_TESTS.keys()) + ["threshold"]) + "}",
     tests_doc="\n".join(map(_gen_test_entry, SIGNIFICANCE_TESTS.items())),
 )
