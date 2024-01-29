@@ -21,10 +21,11 @@ try:
 except ImportError:
     from importlib_resources import files
 
+from collections.abc import Mapping, Sequence
 from inspect import Parameter, _empty  # noqa
 from io import StringIO
 from pathlib import Path
-from typing import Callable, Mapping, NewType, Sequence, TypeVar
+from typing import Callable, NewType, TypeVar
 
 import numpy as np
 import xarray as xr

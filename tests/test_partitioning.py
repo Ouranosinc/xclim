@@ -34,7 +34,7 @@ def test_hawkins_sutton_synthetic(random):
     r = random.standard_normal((4, 13, 60))
 
     x = r + mean[:, :, np.newaxis]
-    time = xr.date_range("1970-01-01", periods=60, freq="Y")
+    time = xr.date_range("1970-01-01", periods=60, freq="YE")
     da = xr.DataArray(x, dims=("scenario", "model", "time"), coords={"time": time})
     m, v = hawkins_sutton(da)
     # Mean uncertainty over time
@@ -87,7 +87,7 @@ def test_lafferty_sriver_synthetic(random):
     r = random.standard_normal((4, 13, 5, 60))
 
     x = r + mean[:, :, :, np.newaxis]
-    time = xr.date_range("1970-01-01", periods=60, freq="Y")
+    time = xr.date_range("1970-01-01", periods=60, freq="YE")
     da = xr.DataArray(
         x, dims=("scenario", "model", "downscaling", "time"), coords={"time": time}
     )

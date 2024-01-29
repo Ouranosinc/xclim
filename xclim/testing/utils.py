@@ -14,11 +14,12 @@ import platform
 import re
 import sys
 import warnings
+from collections.abc import Sequence
 from importlib import import_module
 from io import StringIO
 from pathlib import Path
 from shutil import copy
-from typing import Sequence, TextIO
+from typing import TextIO
 from urllib.error import HTTPError, URLError
 from urllib.parse import urljoin
 from urllib.request import urlopen, urlretrieve

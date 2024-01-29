@@ -183,10 +183,13 @@ def pint2cfunits(value: units.Quantity | units.Unit) -> str:
         Units following CF-Convention, using symbols.
     """
     if isinstance(value, (pint.Quantity, units.Quantity)):
-        value = value.units  # noqa reason: units.Quantity really have .units property
+        value = value.units
 
-    # The replacement is due to hgrecco/pint#1486
-    return f"{value:cf}".replace("dimensionless", "")
+    # Issue originally introduced in https://github.com/hgrecco/pint/issues/1486
+    # Should be resolved in pint v0.24. See: https://github.com/hgrecco/pint/issues/1913
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", category=DeprecationWarning)
+        return f"{value:cf}".replace("dimensionless", "")
 
 
 def ensure_cf_units(ustr: str) -> str:
@@ -399,11 +402,6 @@ def cf_conversion(standard_name: str, conversion: str, direction: str) -> str | 
 
 
 FREQ_UNITS = {
-    "N": "ns",
-    "L": "ms",
-    "S": "s",
-    "T": "min",
-    "H": "h",
     "D": "d",
     "W": "week",
 }
@@ -449,7 +447,7 @@ def infer_sampling_units(
 
     multi, base, _, _ = parse_offset(freq)
     try:
-        out = multi, FREQ_UNITS[base]
+        out = multi, FREQ_UNITS.get(base, base)
     except KeyError as err:
         raise ValueError(
             f"Sampling frequency {freq} has no corresponding units."
@@ -580,7 +578,7 @@ def _rate_and_amount_converter(
             ) from err
     if freq is not None:
         multi, base, start_anchor, _ = parse_offset(freq)
-        if base in ["M", "Q", "A"]:
+        if base in ["M", "Q", "A", "Y"]:
             start = time.indexes[dim][0]
             if not start_anchor:
                 # Anchor is on the end of the period, subtract 1 period.
@@ -1004,10 +1002,10 @@ def check_units(val: str | xr.DataArray | None, dim: str | xr.DataArray | None) 
 
     Parameters
     ----------
-    val: str or xr.DataArray, optional
-      Value to check.
-    dim: str or xr.DataArray, optional
-      Expected dimension, e.g. [temperature]. If a quantity or DataArray is given, the dimensionality is extracted.
+    val : str or xr.DataArray, optional
+        Value to check.
+    dim : str or xr.DataArray, optional
+        Expected dimension, e.g. [temperature]. If a quantity or DataArray is given, the dimensionality is extracted.
     """
     if dim is None or val is None:
         return
@@ -1017,13 +1015,17 @@ def check_units(val: str | xr.DataArray | None, dim: str | xr.DataArray | None) 
         standard_name=getattr(val, "standard_name", None), dimension=dim
     )
 
-    if str(val).startswith("UNSET "):
-        warnings.warn(
-            "This index calculation will soon require user-specified thresholds.",
-            FutureWarning,
-            stacklevel=4,
-        )
-        val = str(val).replace("UNSET ", "")
+    # Issue originally introduced in https://github.com/hgrecco/pint/issues/1486
+    # Should be resolved in pint v0.24. See: https://github.com/hgrecco/pint/issues/1913
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", category=DeprecationWarning)
+        if str(val).startswith("UNSET "):
+            warnings.warn(
+                "This index calculation will soon require user-specified thresholds.",
+                FutureWarning,
+                stacklevel=4,
+            )
+            val = str(val).replace("UNSET ", "")
 
     if isinstance(val, (int, float)):
         raise TypeError("Please set units explicitly using a string.")
@@ -1049,12 +1051,16 @@ def check_units(val: str | xr.DataArray | None, dim: str | xr.DataArray | None) 
         if pint.util.find_shortest_path(graph, start, end):
             return
 
-    raise ValidationError(
-        f"Data units {val_units} are not compatible with requested {dim}."
-    )
+    # Issue originally introduced in https://github.com/hgrecco/pint/issues/1486
+    # Should be resolved in pint v0.24. See: https://github.com/hgrecco/pint/issues/1913
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", category=DeprecationWarning)
+        raise ValidationError(
+            f"Data units {val_units} are not compatible with requested {dim}."
+        )
 
 
-def _check_output_has_units(out: xr.DataArray | tuple[xr.DataArray]):
+def _check_output_has_units(out: xr.DataArray | tuple[xr.DataArray]) -> None:
     """Perform very basic sanity check on the output.
 
     Indices are responsible for unit management. If this fails, it's a developer's error.
@@ -1152,9 +1158,15 @@ def declare_relative_units(**units_by_name) -> Callable:
                 context = None
                 for ref, refvar in bound_args.arguments.items():
                     if f"<{ref}>" in dim:
-                        dim = dim.replace(f"<{ref}>", f"({units2pint(refvar)})")
-                        # check_units will guess the hydro context if "precipitation" appears in dim, but here we pass a real unit.
-                        # It will also check the standard name of the arg, but we give it another chance by checking the ref arg.
+                        # Issue originally introduced in https://github.com/hgrecco/pint/issues/1486
+                        # Should be resolved in pint v0.24. See: https://github.com/hgrecco/pint/issues/1913
+                        with warnings.catch_warnings():
+                            warnings.simplefilter("ignore", category=DeprecationWarning)
+                            dim = dim.replace(f"<{ref}>", f"({units2pint(refvar)})")
+
+                        # check_units will guess the hydro context if "precipitation" appears in dim,
+                        # but here we pass a real unit. It will also check the standard name of the arg,
+                        # but we give it another chance by checking the ref arg.
                         context = context or infer_context(
                             standard_name=getattr(refvar, "attrs", {}).get(
                                 "standard_name"

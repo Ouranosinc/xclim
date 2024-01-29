@@ -5,7 +5,7 @@ from __future__ import annotations
 import gc
 import json
 from inspect import signature
-from typing import Tuple, Union
+from typing import Union
 
 import dask
 import numpy as np
@@ -509,7 +509,7 @@ def test_signature():
     assert sig.return_annotation == xr.DataArray
 
     sig = signature(xclim.atmos.wind_speed_from_vector)
-    assert sig.return_annotation == Tuple[xr.DataArray, xr.DataArray]
+    assert sig.return_annotation == tuple[xr.DataArray, xr.DataArray]
 
 
 def test_doc():
@@ -838,7 +838,7 @@ def test_resampling_indicator_with_indexing(tas_series):
     np.testing.assert_allclose(out, [28, 29])
 
     out = xclim.atmos.tx_days_above(
-        tas, thresh="0 degC", freq="AS-JUL", doy_bounds=(1, 50)
+        tas, thresh="0 degC", freq="YS-JUL", doy_bounds=(1, 50)
     )
     np.testing.assert_allclose(out, [50, 50, np.NaN])
 

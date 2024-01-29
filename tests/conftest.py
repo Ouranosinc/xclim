@@ -141,7 +141,7 @@ def prsnd_series():
 def pr_hr_series():
     """Return precipitation hourly time series."""
     _pr_hr_series = partial(
-        test_timeseries, start="1/1/2000", variable="pr", units="kg m-2 s-1", freq="1H"
+        test_timeseries, start="1/1/2000", variable="pr", units="kg m-2 s-1", freq="h"
     )
     return _pr_hr_series
 

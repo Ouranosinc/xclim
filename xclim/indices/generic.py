@@ -8,7 +8,8 @@ Helper functions for common generic actions done in the computation of indices.
 from __future__ import annotations
 
 import warnings
-from typing import Callable, Sequence
+from collections.abc import Sequence
+from typing import Callable
 
 import cftime
 import numpy as np
@@ -119,11 +120,11 @@ def doymin(da: xr.DataArray) -> xr.DataArray:
 
 def default_freq(**indexer) -> str:
     """Return the default frequency."""
-    freq = "AS-JAN"
+    freq = "YS-JAN"
     if indexer:
         group, value = indexer.popitem()
         if group == "season":
-            month = 12  # The "season" scheme is based on AS-DEC
+            month = 12  # The "season" scheme is based on YS-DEC
         elif group == "month":
             month = np.take(value, 0)
         elif group == "doy_bounds":
@@ -132,7 +133,7 @@ def default_freq(**indexer) -> str:
             month = int(value[0][:2])
         else:
             raise ValueError(f"Unknown group `{group}`.")
-        freq = "AS-" + _MONTH_ABBREVIATIONS[month]
+        freq = "YS-" + _MONTH_ABBREVIATIONS[month]
     return freq
 
 

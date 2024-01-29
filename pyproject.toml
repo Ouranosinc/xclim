@@ -12,7 +12,7 @@ maintainers = [
   {name = "Pascal Bourgault", email = "bourgault.pascal@ouranos.ca"}
 ]
 readme = {file = "README.rst", content-type = "text/x-rst"}
-requires-python = ">=3.8.0"
+requires-python = ">=3.9.0"
 keywords = ["xclim", "xarray", "climate", "climatology", "bias correction", "ensemble", "indicators", "analysis"]
 license = {file = "LICENSE"}
 classifiers = [
@@ -23,7 +23,6 @@ classifiers = [
   "Natural Language :: English",
   "Operating System :: OS Independent",
   "Programming Language :: Python :: 3",
-  "Programming Language :: Python :: 3.8",
   "Programming Language :: Python :: 3.9",
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
@@ -35,24 +34,22 @@ dependencies = [
   "boltons>=20.1",
   "bottleneck>=1.3.1",
   # cf-xarray is differently named on conda-forge
-  "cf-xarray>=0.6.1,<0.8.5; python_version == '3.8'",
-  "cf-xarray>=0.6.1; python_version >= '3.9'",
+  "cf-xarray>=0.6.1",
   "cftime>=1.4.1",
   "Click>=8.1",
   "dask[array]>=2.6",
-  "importlib-resources; python_version == '3.8'",
   "jsonpickle",
   "lmoments3>=1.0.5",
   "numba",
-  "numpy>=1.16",
-  "pandas>=0.23,<2.0; python_version == '3.8'",
-  "pandas>=0.23,<2.2; python_version >= '3.9'",
+  "numpy>=1.20.0",
+  "pandas>=2.2",
   "pint>=0.10",
+  "pyarrow", # Strongly encouraged for pandas v2.2.0+
   "pyyaml",
   "scikit-learn>=0.21.3",
-  "scipy>=1.2",
+  "scipy>=1.9.0",
   "statsmodels",
-  "xarray>=2022.06.0,<2023.11.0",
+  "xarray>=2023.11.0",
   "yamale"
 ]
 
@@ -71,6 +68,7 @@ dev = [
   "ipython",
   "isort ==5.13.2",
   "mypy",
+  "nbconvert",
   "nbqa",
   "nbval",
   "netCDF4 >=1.4",
@@ -119,10 +117,10 @@ xclim = "xclim.cli:cli"
 
 [tool.black]
 target-version = [
-  "py38",
   "py39",
   "py310",
-  "py311"
+  "py311",
+  "py312"
 ]
 
 [tool.bumpversion]
@@ -199,12 +197,12 @@ exclude = [
 
 [tool.isort]
 profile = "black"
-py_version = 38
+py_version = 39
 append_only = true
 add_imports = "from __future__ import annotations"
 
 [tool.mypy]
-python_version = 3.8
+python_version = 3.9
 show_error_codes = true
 warn_return_any = true
 warn_unused_configs = true
@@ -252,13 +250,12 @@ markers = [
 [tool.ruff]
 src = ["xclim"]
 line-length = 150
-target-version = "py38"
+target-version = "py39"
 exclude = [
   ".git",
   "docs",
   "build",
-  ".eggs",
-  "tests"
+  ".eggs"
 ]
 ignore = [
   "D205",

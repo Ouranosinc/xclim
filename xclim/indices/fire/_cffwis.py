@@ -133,7 +133,7 @@ as _all_ seasons are used, even the very short shoulder seasons.
 from __future__ import annotations
 
 from collections import OrderedDict
-from typing import Sequence
+from collections.abc import Sequence
 
 import numpy as np
 import xarray as xr
@@ -841,9 +841,14 @@ def _fire_weather_calc(  # noqa: C901
                 ind_prevs["DMC"],
             )
         if "FFMC" in outputs:
-            out["FFMC"][..., it] = _fine_fuel_moisture_code(
-                tas[..., it], pr[..., it], ws[..., it], rh[..., it], ind_prevs["FFMC"]
-            )
+            with np.errstate(divide="ignore", invalid="ignore"):
+                out["FFMC"][..., it] = _fine_fuel_moisture_code(
+                    tas[..., it],
+                    pr[..., it],
+                    ws[..., it],
+                    rh[..., it],
+                    ind_prevs["FFMC"],
+                )
         if "ISI" in outputs:
             out["ISI"][..., it] = initial_spread_index(
                 ws[..., it], out["FFMC"][..., it]
