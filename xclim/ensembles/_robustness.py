@@ -3,8 +3,8 @@ Ensemble Robustness Metrics
 ===========================
 
 Robustness metrics are used to estimate the confidence of the climate change signal of an ensemble.
-This submodule is inspired by and tries to follow the guidelines of the IPCC, more specifically
-the 12th chapter of the Working Group 1's contribution to the AR5 :cite:p:`collins_long-term_2013` (see box 12.1).
+This submodule is inspired by and tries to follow the guidelines of the IPCC,
+more specifically :cite:p:`collins_long-term_2013` (AR5) and :cite:cts:`ipccatlas_ar6wg1` (AR6).
 """
 
 from __future__ import annotations
