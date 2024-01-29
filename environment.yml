@@ -57,7 +57,7 @@ dependencies:
   - pre-commit
   - pybtex
   - pylint
-  - pytest <8.0  # pinned due to breakage with xdoctest. See:
+  - pytest <8.0  # Pinned due to breakage with xdoctest. See: https://github.com/Erotemic/xdoctest/issues/151
   - pytest-cov
   - pytest-socket
   - pytest-xdist >=3.2

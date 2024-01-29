@@ -78,7 +78,7 @@ dev = [
   "pre-commit >=2.9",
   "pybtex",
   "pylint",
-  "pytest <8.0",
+  "pytest <8.0", # Pinned due to breakage with xdoctest. See: https://github.com/Erotemic/xdoctest/issues/151
   "pytest-cov",
   "pytest-socket",
   "pytest-xdist[psutil] >=3.2",
