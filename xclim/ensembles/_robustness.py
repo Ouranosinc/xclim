@@ -103,6 +103,8 @@ def robustness_fractions(  # noqa: C901
         pvals :
                 The p-values estimated by the significance tests. Only returned if the test uses `pvals`. Has the  `realization` dimension.
 
+    Notes
+    -----
     The table below shows the coefficient needed to retrieve the number of members
     that have the indicated characteristics, by multiplying it by the total
     number of members (`fut.realization.size`) and by `valid_frac`, assuming uniform weights.
@@ -118,8 +120,6 @@ def robustness_fractions(  # noqa: C901
     | Negative change | (cf - cpf)         | 1 - pf - (cf -cpf)     | 1 - pf     |
     +-----------------+--------------------+------------------------+------------+
 
-    Notes
-    -----
     Available statistical tests are :
 
     {tests_doc}
