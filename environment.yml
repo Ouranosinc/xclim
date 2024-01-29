@@ -29,9 +29,9 @@ dependencies:
   # Extras
   - flox
   # Testing and development dependencies
-  - black ==24.1.0
+  - black ==24.1.1
   - blackdoc ==0.3.9
-#  - bump-my-version  # The conda package is not as up-to-date as the PyPI package.
+  - bump-my-version >=0.17.1
   - cairosvg
   - codespell
   - coverage
@@ -57,7 +57,7 @@ dependencies:
   - pre-commit
   - pybtex
   - pylint
-  - pytest
+  - pytest <8.0  # Pinned due to breakage with xdoctest. See: https://github.com/Erotemic/xdoctest/issues/151
   - pytest-cov
   - pytest-socket
   - pytest-xdist >=3.2
@@ -76,6 +76,5 @@ dependencies:
   - yamllint
   - pip
   - pip:
-    - bump-my-version >=0.17.1  # The conda package is not as up-to-date as the PyPI package.
     - flake8-alphabetize
     - sphinxcontrib-svg2pdfconverter
