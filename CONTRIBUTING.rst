@@ -121,8 +121,8 @@ Ready to contribute? Here's how to set up `xclim` for local development.
 
 #. Create a development environment. We recommend using ``conda``::
 
-    $ conda create -n xclim python=3.8 --file=environment.yml
-    $ pip install -e .[dev]
+    $ conda create -n xclim python=3.10 --file=environment.yml
+    $ python -m pip install -e ".[dev]"
 
 #. Create a branch for local development::
 
@@ -162,10 +162,10 @@ Ready to contribute? Here's how to set up `xclim` for local development.
 
    Alternatively, one can use ``$ tox`` to run very specific testing configurations, as GitHub Workflows would do when a Pull Request is submitted and new commits are pushed::
 
-    $ tox -e py38  # run tests on Python 3.8
-    $ tox -e py39-upstream-doctest  # run tests on Python 3.9, including doctests, with upstream dependencies
-    $ tox -e py310 -- -m "not slow  # run tests on Python 3.10, excluding "slow" marked tests
-    $ tox -e py311  # run tests on Python 3.11
+    $ tox -e py39  # run tests on Python 3.9
+    $ tox -e py310-upstream-doctest  # run tests on Python 3.10, including doctests, with upstream dependencies
+    $ tox -e py311 -- -m "not slow  # run tests on Python 3.11, excluding "slow" marked tests
+    $ tox -e py312-numba -- -m "not slow  # run tests on Python 3.12, installing upstream `numba`, excluding "slow" marked tests
     $ tox -e notebooks_doctests  # run tests using the base Python on doctests and evaluate all notebooks
     $ tox -e offline  # run tests using the base Python, excluding tests requiring internet access
 
@@ -243,7 +243,7 @@ Before you submit a pull request, please follow these guidelines:
     If you aren't accustomed to writing documentation in reStructuredText (`.rst`), we encourage you to spend a few minutes going over the
     incredibly well-summarized `reStructuredText Primer`_ from the sphinx-doc maintainer community.
 
-#. The pull request should work for Python 3.8, 3.9, 3.10, and 3.11 as well as raise test coverage.
+#. The pull request should work for Python 3.9, 3.10, 3.11, and 3.12 as well as raise test coverage.
    Pull requests are also checked for documentation build status and for `PEP8`_ compliance.
 
    The build statuses and build errors for pull requests can be found at: https://github.com/Ouranosinc/xclim/actions

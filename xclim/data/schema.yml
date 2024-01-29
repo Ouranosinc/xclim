@@ -9,7 +9,7 @@ variables: map(include('variable'), key=regex(r'^[\w]+$'), required=False)
 ---
 indicator:
   abstract: str(required=False)
-  allowed_periods: list(enum('A', 'Q', 'M', 'W'), required=False)
+  allowed_periods: list(enum('A', 'Y', 'Q', 'M', 'W'), required=False)
   src_freq: any(str(), list(str()), required=False)
   base: str(required=False)
   compute: str(required=False)

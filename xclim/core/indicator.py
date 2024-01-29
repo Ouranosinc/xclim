@@ -114,7 +114,7 @@ from inspect import signature
 from os import PathLike
 from pathlib import Path
 from types import ModuleType
-from typing import Any, Callable, Optional, Sequence, Tuple, Union
+from typing import Any, Callable, Optional, Sequence, Union
 
 import numpy as np
 import xarray
@@ -799,7 +799,7 @@ class Indicator(IndicatorRegistrar):
                     )
                 )
 
-        ret_ann = DataArray if self.n_outs == 1 else Tuple[(DataArray,) * self.n_outs]
+        ret_ann = DataArray if self.n_outs == 1 else tuple[(DataArray,) * self.n_outs]
         return Signature(variables + parameters, return_annotation=ret_ann)
 
     def __call__(self, *args, **kwds):
@@ -1122,10 +1122,10 @@ class Indicator(IndicatorRegistrar):
         Parameters
         ----------
         locale : str or sequence of str
-          The POSIX name of the locale or a tuple of a locale name and a path to a
-          json file defining the translations. See `xclim.locale` for details.
+            The POSIX name of the locale or a tuple of a locale name and a path to a json file defining translations.
+            See `xclim.locale` for details.
         fill_missing : bool
-           If True (default) fill the missing attributes by their english values.
+            If True (default) fill the missing attributes by their english values.
         """
 
         def _translate(cf_attrs, names, var_id=None):
@@ -1574,7 +1574,7 @@ class Daily(ResamplingIndicator):
 class Hourly(ResamplingIndicator):
     """Class for hourly inputs and resampling computes."""
 
-    src_freq = "H"
+    src_freq = "h"
 
 
 base_registry["Indicator"] = Indicator

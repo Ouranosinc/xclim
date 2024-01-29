@@ -59,29 +59,29 @@ def hawkins_sutton(
     weights: xr.DataArray | None = None,
     baseline: tuple[str, str] = ("1971", "2000"),
     kind: str = "+",
-):
+) -> tuple[xr.DataArray, xr.DataArray]:
     """Return the mean and partitioned variance of an ensemble based on method from Hawkins & Sutton (2009).
 
     Parameters
     ----------
-    da: xr.DataArray
-      Time series with dimensions 'time', 'scenario' and 'model'.
-    sm: xr.DataArray, optional
-      Smoothed time series over time, with the same dimensions as `da`. By default, this is estimated using a 4th order
-      polynomial. Results are sensitive to the choice of smoothing function, use this to set another polynomial
-      order, or a LOESS curve.
-    weights: xr.DataArray, optional
-      Weights to be applied to individual models. Should have `model` dimension.
-    baseline: (str, str)
-      Start and end year of the reference period.
-    kind: {'+', '*'}
-      Whether the mean over the reference period should be subtracted (+) or divided by (*).
+    da : xr.DataArray
+        Time series with dimensions 'time', 'scenario' and 'model'.
+    sm : xr.DataArray, optional
+        Smoothed time series over time, with the same dimensions as `da`. By default, this is estimated using a
+        4th-order polynomial. Results are sensitive to the choice of smoothing function, use this to set another
+        polynomial order, or a LOESS curve.
+    weights : xr.DataArray, optional
+        Weights to be applied to individual models. Should have `model` dimension.
+    baseline : (str, str)
+        Start and end year of the reference period.
+    kind : {'+', '*'}
+        Whether the mean over the reference period should be subtracted (+) or divided by (*).
 
     Returns
     -------
     xr.DataArray, xr.DataArray
-      The mean relative to the baseline, and the components of variance of the ensemble. These components are
-      coordinates along the `uncertainty` dimension: `variability`, `model`, `scenario`, and `total`.
+        The mean relative to the baseline, and the components of variance of the ensemble. These components are
+        coordinates along the `uncertainty` dimension: `variability`, `model`, `scenario`, and `total`.
 
     Notes
     -----
@@ -177,12 +177,12 @@ def hawkins_sutton_09_weighting(da, obs, baseline=("1971", "2000")):
 
     Parameters
     ----------
-    da: xr.DataArray
-      Input data over the historical period. Should have a time and model dimension.
-    obs: float
-      Observed change.
-    baseline: (str, str)
-      Baseline start and end year.
+    da : xr.DataArray
+        Input data over the historical period. Should have a time and model dimension.
+    obs : float
+        Observed change.
+    baseline : (str, str)
+        Baseline start and end year.
 
     Returns
     -------
@@ -191,7 +191,7 @@ def hawkins_sutton_09_weighting(da, obs, baseline=("1971", "2000")):
     """
     mm = da.sel(time=slice(*baseline)).mean("time")
     xm = da.sel(time=baseline[1]) - mm
-    xm = xm.drop("time").squeeze()
+    xm = xm.drop_vars("time").squeeze()
     return 1 / (obs + np.abs(xm - obs))
 
 
@@ -199,26 +199,26 @@ def lafferty_sriver(
     da: xr.DataArray,
     sm: xr.DataArray = None,
     bb13: bool = False,
-):
+) -> tuple[xr.DataArray, xr.DataArray]:
     """Return the mean and partitioned variance of an ensemble based on method from Lafferty and Sriver (2023).
 
     Parameters
     ----------
-    da: xr.DataArray
-      Time series with dimensions 'time', 'scenario', 'downscaling' and 'model'.
-    sm: xr.DataArray
-      Smoothed time series over time, with the same dimensions as `da`. By default, this is estimated using a 4th order
-      polynomial. Results are sensitive to the choice of smoothing function, use this to set another polynomial
-      order, or a LOESS curve.
-    bb13: bool
-      Whether to apply the Brekke and Barsugli (2013) method to estimate scenario uncertainty, where the variance
-      over scenarios is computed before taking the mean over models and downscaling methods.
+    da : xr.DataArray
+        Time series with dimensions 'time', 'scenario', 'downscaling' and 'model'.
+    sm : xr.DataArray
+        Smoothed time series over time, with the same dimensions as `da`. By default, this is estimated using a
+        4th-order polynomial. Results are sensitive to the choice of smoothing function, use this to set another
+        polynomial order, or a LOESS curve.
+    bb13 : bool
+        Whether to apply the Brekke and Barsugli (2013) method to estimate scenario uncertainty, where the variance
+        over scenarios is computed before taking the mean over models and downscaling methods.
 
     Returns
     -------
     xr.DataArray, xr.DataArray
-      The mean relative to the baseline, and the components of variance of the ensemble. These components are
-      coordinates along the `uncertainty` dimension: `variability`, `model`, `scenario`, `downscaling` and `total`.
+        The mean relative to the baseline, and the components of variance of the ensemble. These components are
+        coordinates along the `uncertainty` dimension: `variability`, `model`, `scenario`, `downscaling` and `total`.
 
     Notes
     -----
@@ -252,7 +252,7 @@ def lafferty_sriver(
     nv_u = (
         (da - sm)
         .rolling(time=11, center=True)
-        .var(dim="time")
+        .var()
         .mean(dim=["scenario", "model", "downscaling"])
     )
 
@@ -264,8 +264,8 @@ def lafferty_sriver(
 
     # Model uncertainty: U_m(t)
 
-    ## Count the number of parent models that have been downscaled using method $d$ for scenario $s$.
-    ## In the paper, weights are constant, here they may vary across time if there are missing values.
+    # Count the number of parent models that have been downscaled using method $d$ for scenario $s$.
+    # In the paper, weights are constant, here they may vary across time if there are missing values.
     mw = sm.count("model")
     # In https://github.com/david0811/lafferty-sriver_2023_npjCliAtm/blob/main/unit_test/lafferty_sriver.py
     # weights are set to zero when there is only one model, but the var for a single element is 0 anyway.
@@ -297,19 +297,18 @@ def lafferty_sriver(
     return g, uncertainty
 
 
-def fractional_uncertainty(u: xr.DataArray):
-    """
-    Return the fractional uncertainty.
+def fractional_uncertainty(u: xr.DataArray) -> xr.DataArray:
+    """Return the fractional uncertainty.
 
     Parameters
     ----------
-    u: xr.DataArray
-      Array with uncertainty components along the `uncertainty` dimension.
+    u : xr.DataArray
+        Array with uncertainty components along the `uncertainty` dimension.
 
     Returns
     -------
     xr.DataArray
-      Fractional, or relative uncertainty with respect to the total uncertainty.
+        Fractional, or relative uncertainty with respect to the total uncertainty.
     """
     uncertainty = u / u.sel(uncertainty="total") * 100
     uncertainty.attrs.update(u.attrs)

@@ -8,6 +8,7 @@ Contributors to this version: Juliette Lavoie (:user:`juliettelavoie`), Pascal B
 
 Announcements
 ^^^^^^^^^^^^^
+* `xclim` no longer supports Python3.8. (:issue:`1268`, :pull:`1565`).
 * `xclim` now officially supports Python3.12 (requires `numba>=0.59.0`). (:pull:`1613`).
 * `xclim` now adheres to the `Semantic Versioning 2.0.0 <https://semver.org/>`_ specification. (:issue:`1556`, :pull:`1569`).
 * The `xclim` repository now uses `GitHub Discussions <https://github.com/Ouranosinc/xclim/discussions>`_ to offer help for users, coordinate translation efforts, and support general Q&A for the `xclim` community. The `xclim` `Gitter` room has been deprecated in favour of GitHub Discussions. (:issue:`1571`, :pull:`1572`).
@@ -23,11 +24,20 @@ New features and enhancements
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
-* `bump2version` has been replaced with `bump-my-version` to bump the version number using configurations set in the `pyproject.toml` file. (:issue:`1557`, :pull:`1569`).
+* `xclim` base Python version has been raised to `python>=3.9`. Python3.9+ coding conventions are now supported. (:issue:`1268`, :pull:`1565`).
+* `xclim` base dependencies have been raised to `pandas>=2.2.0` and `xarray>=2023.11.0` to reflect changes to time frequency codes introduced in `pandas==2.2.0`. (:issue:`1534`, :pull:`1565`; see also: `pydata/xarray GH/8394 <https://github.com/pydata/xarray/issues/8394>`_ and ). Many default frequency string outputs have been modified (:
+    * 'Y' (year) -> 'YE' (year end). (see: `pandas PR/55792 <https://github.com/pandas-dev/pandas/pull/55792>`_).
+    * 'M' (month) -> 'ME' (month end). (see: `pandas PR/52064 <https://github.com/pandas-dev/pandas/pull/52064>`_).
+    * 'Q' (quarter) -> 'QE' (quarter end). (see: `pandas PR/55553 <https://github.com/pandas-dev/pandas/pull/55553>`_)
+    * 'A' and 'AS' have been removed (use 'YE' and 'YS' instead). (see: `pandas PR/55252 <https://github.com/pandas-dev/pandas/pull/55252>`_). ('YE' is only supported for cftime data in `xarray >= 2024.1.1`).
+    * 'T' (minute), 'L' (millisecond), 'U' (microsecond), and 'N' (nanosecond) -> 'min', 'ms', 'us', and 'ns'. (see: `pandas PR/54061 <https://github.com/pandas-dev/pandas/pull/54061>`_).
+* `bump2version` has been replaced with `bump-my-version` to bump the version number using configurations set in the ``pyproject.toml`` file. (:issue:`1557`, :pull:`1569`).
 * `xclim`'s units registry and units formatting are now extended from `cf-xarray`. The exponent sign "^" is now never added in the ``units`` attribute. For example, square meters are given as "m2" instead of "m^2" by xclim, both are still accepted as input. (:issue:`1010`, :pull:`1590`).
 * `yamale` is now listed as a core dependency (was previously listed in the `dev` installation recipe). (:issue:`1595`, :pull:`1596`).
 * Due to a licensing limitation, the calculation of empirical orthogonal function  based on `eofs` (``xclim.sdba.properties.first_eof``) has been removed from `xclim`. (:issue:`1620`, :pull:`1621`).
 * `black` formatting style has been updated to the 2024 stable conventions. `isort` has been added to the `dev` installation recipe. (:pull:`1626`).
+* The indice and indicator for ``winter_storm`` has been removed (deprecated since `xclim` v0.46.0 in favour of ``snd_storm_days``). (:pull:`1565`).
+* `xclim` has dropped support for `scipy` version below v1.9.0 and `numpy` versions below v1.20.0. (:pull:`1565`).
 
 Bug fixes
 ^^^^^^^^^
@@ -39,11 +49,11 @@ Bug fixes
 
 Internal changes
 ^^^^^^^^^^^^^^^^
-* The `flake8` configuration has been migrated from `setup.cfg` to `.flake8`; `setup.cfg` has been removed. (:pull:`1569`)
-* The `bump-version.yml` workflow has been adjusted to bump the `patch` version when the last version is determined to have been a `release` version; otherwise, the `build` version is bumped. (:issue:`1557`, :pull:`1569`).
+* The `flake8` configuration has been migrated from ``setup.cfg`` to ``.flake8``; ``setup.cfg`` has been removed. (:pull:`1569`)
+* The ``bump-version.yml`` workflow has been adjusted to bump the `patch` version when the last version is determined to have been a `release` version; otherwise, the `build` version is bumped. (:issue:`1557`, :pull:`1569`).
 * The GitHub Workflows now use the `step-security/harden-runner` action to monitor source code, actions, and dependency safety. All workflows now employ more constrained permissions rule sets to prevent security issues. (:pull:`1577`, :pull:`1578`, :pull:`1597`).
-* Updated the CONTRIBUTING.rst directions to showcase the new versioning system. (:issue:`1557`, :pull:`1573`).
-* The `codespell` library is now a development dependency for the `dev` installation recipe with configurations found within `pyproject.toml`. This is also now a linting step and integrated as a `pre-commit` hook. For more information, see the `codespell documentation <https://github.com/codespell-project/codespell>`_ (:pull:`1576`).
+* Updated the ``CONTRIBUTING.rst`` directions to showcase the new versioning system. (:issue:`1557`, :pull:`1573`).
+* The `codespell` library is now a development dependency for the `dev` installation recipe with configurations found within ``pyproject.toml``. This is also now a linting step and integrated as a `pre-commit` hook. For more information, see the `codespell documentation <https://github.com/codespell-project/codespell>`_ (:pull:`1576`).
 * Climate indicators search page now prioritizes the "official" indicators (atmos, land, seaIce and generic), virtual submodules can be added to search through checkbox option. (:issue:`1559`, :pull:`1593`).
 * The OpenSSF StepSecurity bot has contributed some changes to the workflows and pre-commit. (:issue:`1181`, :pull:`1606`):
     * Dependabot has been configured to monitor the `xclim` repository for dependency updates. The ``actions-version-updater.yml`` workflow has been deprecated.
@@ -51,7 +61,8 @@ Internal changes
     * A new GitHub Workflow (``workflow-warning.yml``) has been added to warn maintainers when a forked repository has been used to open a Pull Request that modifies GitHub Workflows.
     * `pylint` has been configured to provide some overhead checks of the `xclim` codebase as well as run as part of `xclim`'s `pre-commit` hooks.
     * Some small adjustments to code organization to address `pylint` errors.
-* `dev` formatting tools (`black`, `blackdoc`, `isort`) are now pinned to their `pre-commit` hook version equivalents in both `pyproject.toml` and `tox.ini`. (:pull:`1626`).
+* `dev` formatting tools (`black`, `blackdoc`, `isort`) are now pinned to their `pre-commit` hook version equivalents in both ``pyproject.toml`` and ``tox.ini``. (:pull:`1626`).
+* `black`, `isort`, and `pyupgrade` code formatters no longer target Python3.8 coding style conventions. (:pull:`1565`).
 
 v0.47.0 (2023-12-01)
 --------------------

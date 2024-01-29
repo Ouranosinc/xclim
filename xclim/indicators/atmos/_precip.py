@@ -105,7 +105,7 @@ class PrTasxWithIndexing(ResamplingIndicatorWithIndexing):
 class StandardizedIndexes(ResamplingIndicator):
     """Resampling but flexible inputs indicators."""
 
-    src_freq = ["D", "M"]
+    src_freq = ["D", "MS"]
     context = "hydro"
 
 
@@ -202,7 +202,7 @@ dryness_index = Precip(
     "the precipitation and evapotranspiration factors without deduction for surface runoff or drainage. "
     "Metric originally published in Riou et al. (1994).",
     cell_methods="",
-    src_freq=["D", "M"],
+    src_freq=["D", "MS"],
     compute=indices.dryness_index,
 )
 

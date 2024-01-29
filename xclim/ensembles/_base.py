@@ -5,9 +5,10 @@ Ensembles Creation and Statistics
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from glob import glob
 from pathlib import Path
-from typing import Any, Sequence
+from typing import Any
 
 import numpy as np
 import xarray as xr
