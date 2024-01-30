@@ -4,10 +4,11 @@ Run-Length Algorithms Submodule
 
 Computation of statistics on runs of True values in boolean arrays.
 """
+
 from __future__ import annotations
 
+from collections.abc import Sequence
 from datetime import datetime
-from typing import Sequence
 from warnings import warn
 
 import numpy as np
@@ -1350,9 +1351,12 @@ def lazy_indexing(
         invalid = index.isnull()
         # NaN-indexing doesn't work, so fill with 0 and cast to int
         index = index.fillna(0).astype(int)
-        # for each chunk of index, take corresponding values from da
 
-        da2 = da.rename("__placeholder__")
+        # No need for coords, we extract by integer index.
+        # Renaming with no name to fix bug in xr 2024.01.0
+        tmpname = get_temp_dimname(da.dims, "temp")
+        da2 = xr.DataArray(da.data, dims=(tmpname,), name=None)
+        # for each chunk of index, take corresponding values from da
         out = index.map_blocks(_index_from_1d_array, args=(da2,)).rename(da.name)
         # mask where index was NaN. Drop any auxiliary coord, they are already on `out`.
         # Chunked aux coord would have the same name on both sides and xarray will want to check if they are equal, which means loading them
@@ -1364,7 +1368,7 @@ def lazy_indexing(
         )
         if idx_ndim == 0:
             # 0-D case, drop useless coords and dummy dim
-            out = out.drop_vars(da.dims[0]).squeeze()
+            out = out.drop_vars(da.dims[0], errors="ignore").squeeze()
         return out.drop_vars(dim or da.dims[0], errors="ignore")
 
     # Case where index.dims is a subset of da.dims.

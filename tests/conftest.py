@@ -27,7 +27,10 @@ from xclim.testing.utils import _default_cache_dir  # noqa
 from xclim.testing.utils import get_file
 from xclim.testing.utils import open_dataset as _open_dataset
 
-if not __xclim_version__.endswith("-beta") and helpers.TESTDATA_BRANCH == "main":
+if (
+    re.match(r"^\d+\.\d+\.\d+$", __xclim_version__)
+    and helpers.TESTDATA_BRANCH == "main"
+):
     # This does not need to be emitted on GitHub Workflows and ReadTheDocs
     if not os.getenv("CI") and not os.getenv("READTHEDOCS"):
         warnings.warn(
@@ -138,7 +141,7 @@ def prsnd_series():
 def pr_hr_series():
     """Return precipitation hourly time series."""
     _pr_hr_series = partial(
-        test_timeseries, start="1/1/2000", variable="pr", units="kg m-2 s-1", freq="1H"
+        test_timeseries, start="1/1/2000", variable="pr", units="kg m-2 s-1", freq="h"
     )
     return _pr_hr_series
 

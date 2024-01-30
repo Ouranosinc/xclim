@@ -1,14 +1,16 @@
 """Statistic-related functions. See the `frequency_analysis` notebook for examples."""
+
 from __future__ import annotations
 
 import warnings
-from typing import Any, Sequence
+from collections.abc import Sequence
+from typing import Any
 
 import lmoments3.distr
 import numpy as np
 import xarray as xr
 
-from xclim.core.calendar import resample_doy, select_time
+from xclim.core.calendar import compare_offsets, resample_doy, select_time
 from xclim.core.formatting import prefix_attrs, unprefix_attrs, update_history
 from xclim.core.units import convert_units_to
 from xclim.core.utils import Quantified, uses_dask
@@ -396,7 +398,7 @@ def frequency_analysis(
         Averaging window length (days).
     freq : str, optional
         Resampling frequency. If None, the frequency is assumed to be 'YS' unless the indexer is season='DJF',
-        in which case `freq` would be set to `AS-DEC`.
+        in which case `freq` would be set to `YS-DEC`.
     method : {"ML" or "MLE", "MOM", "PWM", "APP"}
         Fitting method, either maximum likelihood (ML or MLE), method of moments (MOM),
         probability weighted moments (PWM), also called L-Moments, or approximate method (APP).
@@ -476,7 +478,7 @@ def _fit_start(x, dist: str, **fitkwargs: Any) -> tuple[tuple, dict]:
 
     References
     ----------
-    :cite:cts:`coles_introduction_2001,cohen_parameter_2019`
+    :cite:cts:`coles_introduction_2001,cohen_parameter_2019, thom_1958`
 
     """
     x = np.asarray(x)
@@ -625,13 +627,21 @@ def preprocess_standardized_index(
     # We could allow a more general frequency in this function and move
     # the constraint {"D", "MS"} in specific indices such as SPI / SPEI.
     final_freq = freq or xr.infer_freq(da.time)
-    try:
-        group = {"D": "time.dayofyear", "MS": "time.month"}[final_freq]
-    except KeyError():
-        raise ValueError(
-            f"The input (following resampling if applicable) has a frequency `{final_freq}`"
-            "which is not supported for standardized indices."
+    if final_freq:
+        if final_freq == "D":
+            group = "time.dayofyear"
+        elif compare_offsets(final_freq, "==", "MS"):
+            group = "time.month"
+        else:
+            raise ValueError(
+                f"The input (following resampling if applicable) has a frequency `{final_freq}` "
+                "which is not supported for standardized indices."
+            )
+    else:
+        warnings.warn(
+            "No resampling frequency was specified and a frequency for the dataset could not be identified with ``xr.infer_freq``"
         )
+        group = "time.dayofyear"
 
     if freq is not None:
         da = da.resample(time=freq).mean(keep_attrs=True)
@@ -732,10 +742,7 @@ def standardized_index_fit_params(
         "units": "",
         "offset": offset or "",
     }
-    if indexer != {}:
-        method, args = indexer.popitem()
-    else:
-        method, args = "", []
+    method, args = ("", []) if indexer == {} else indexer.popitem()
     params.attrs["time_indexer"] = (method, *args)
 
     return params
@@ -762,8 +769,6 @@ def standardized_index(da: xr.DataArray, params: xr.DataArray):
 
     def reindex_time(da, da_ref):
         if group == "time.dayofyear":
-            da = da.rename(day="time").reindex(time=da_ref.time.dt.dayofyear)
-            da["time"] = da_ref.time
             da = resample_doy(da, da_ref)
         elif group == "time.month":
             da = da.rename(month="time").reindex(time=da_ref.time.dt.month)

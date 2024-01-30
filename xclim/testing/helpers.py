@@ -1,4 +1,5 @@
 """Module for loading testing data."""
+
 from __future__ import annotations
 
 import os
@@ -257,7 +258,7 @@ def test_timeseries(
 
 
 def _raise_on_compute(dsk: dict):
-    """Raise an AssertionError mentionning the number triggered tasks."""
+    """Raise an AssertionError mentioning the number triggered tasks."""
     raise AssertionError(
         f"Not lazy. Computation was triggered with a graph of {len(dsk)} tasks."
     )

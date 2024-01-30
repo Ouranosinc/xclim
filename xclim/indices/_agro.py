@@ -176,7 +176,7 @@ def huglin_index(
     end_date : DayOfYearStr
         The hemisphere-based start date to consider (north = October, south = April). This date is non-inclusive.
     freq : str
-        Resampling frequency (default: "YS"; For Southern Hemisphere, should be "AS-JUL").
+        Resampling frequency (default: "YS"; For Southern Hemisphere, should be "YS-JUL").
 
     Returns
     -------
@@ -351,7 +351,7 @@ def biologically_effective_degree_days(
     end_date : DayOfYearStr
         The hemisphere-based start date to consider (north = October, south = April). This date is non-inclusive.
     freq : str
-        Resampling frequency (default: "YS"; For Southern Hemisphere, should be "AS-JUL").
+        Resampling frequency (default: "YS"; For Southern Hemisphere, should be "YS-JUL").
 
     Returns
     -------
@@ -648,8 +648,8 @@ def dryness_index(
     :cite:cts:`tonietto_multicriteria_2004,riou_determinisme_1994`
 
     """
-    if parse_offset(freq) != (1, "A", True, "JAN"):
-        raise ValueError(f"Freq not allowed: {freq}. Must be `YS` or `AS-JAN`")
+    if parse_offset(freq) != (1, "Y", True, "JAN"):
+        raise ValueError(f"Freq not allowed: {freq}. Must be `YS` or `YS-JAN`")
 
     # Resample all variables to monthly totals in mm units.
     evspsblpot = (
@@ -717,9 +717,9 @@ def dryness_index(
 
     # Dryness index
     if has_north:
-        di_north = wo + (pr_masked - t_v - e_s).resample(time="AS-JAN").sum()
+        di_north = wo + (pr_masked - t_v - e_s).resample(time="YS-JAN").sum()
     if has_south:
-        di_south = wo + (pr_masked - t_v - e_s).resample(time="AS-JUL").sum()
+        di_south = wo + (pr_masked - t_v - e_s).resample(time="YS-JUL").sum()
         # Shift time for Southern Hemisphere to allow for concatenation with Northern Hemisphere
         di_south = di_south.shift(time=1).isel(time=slice(1, None))
         di_south["time"] = di_south.indexes["time"].shift(-6, "MS")
@@ -922,7 +922,7 @@ def rain_season(
     method_dry_end: str = "per_day",
     date_min_end: DayOfYearStr = "09-01",
     date_max_end: DayOfYearStr = "12-31",
-    freq="AS-JAN",
+    freq="YS-JAN",
 ):
     """Find the length of the rain season and the day of year of its start and its end.
 
@@ -1138,7 +1138,7 @@ def standardized_precipitation_index(
     params : xarray.DataArray
         Fit parameters.
         The `params` can be computed using ``xclim.indices.stats.standardized_index_fit_params`` in advance.
-        The ouput can be given here as input, and it overrides other options.
+        The output can be given here as input, and it overrides other options.
     \*\*indexer
         Indexing parameters to compute the indicator on a temporal subset of the data.
         It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
@@ -1238,7 +1238,8 @@ def standardized_precipitation_index(
 
     spi = standardized_index(pr, params)
     spi.attrs = params.attrs
-    spi.attrs["freq"] = freq or xarray.infer_freq(spi.time)
+    spi.attrs["freq"] = (freq or xarray.infer_freq(spi.time)) or "undefined"
+    spi.attrs["window"] = window
     spi.attrs["units"] = ""
     return spi
 

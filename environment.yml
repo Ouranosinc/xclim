@@ -1,77 +1,80 @@
 name: xclim
 channels:
-    - conda-forge
-    - defaults
+  - numba  # Added to gain access to Python3.12-compatible numba release candidates.
+  - conda-forge
+  - defaults
 dependencies:
-    - python >=3.8
-    - astroid
-    - boltons >=20.1
-    - bottleneck >=1.3.1
-    - cf_xarray >=0.6.1
-    - cftime >=1.4.1
-    - Click >=8.1
-    - dask >=2.6.0
-    - importlib-resources  # For Python3.8
-    - jsonpickle
-    - lmoments3
-    - numba
-    - numpy >=1.16
-    - pandas >=0.23,<2.2
-    - pint >=0.9
-    - poppler >=0.67
-    - pyyaml
-    - scikit-learn >=0.21.3
-    - scipy >=1.2
-    - statsmodels
-    - xarray >=2022.06.0,<2023.11.0
-    # Extras
-    - eofs
-    - flox
+  - python >=3.9
+  - astroid
+  - boltons >=20.1
+  - bottleneck >=1.3.1
+  - cf_xarray >=0.6.1
+  - cftime >=1.4.1
+  - Click >=8.1
+  - dask >=2.6.0
+  - jsonpickle
+  - lmoments3
+  - numba
+  - numpy >=1.20.0
+  - pandas >=2.2.0
+  - pint >=0.9
+  - poppler >=0.67
+  - pyarrow  # Strongly encouraged for Pandas v2.2.0+
+  - pyyaml
+  - scikit-learn >=0.21.3
+  - scipy >=1.9.0
+  - statsmodels
+  - xarray >=2023.11.0
+  - yamale
+  # Extras
+  - flox
   # Testing and development dependencies
-    - black >=22.12
-    - blackdoc
-    - bump2version
-    - cairosvg
-    - coverage
-    - distributed >=2.0
-    - filelock
-    - flake8
-    - flake8-rst-docstrings
-    - flit
-    - h5netcdf
-    - ipykernel
-    - ipython
-    - matplotlib
-    - mypy
-    - nbqa
-    - nbsphinx
-    - nbval
-    - nc-time-axis
-    - netCDF4 >=1.4
-    - notebook
-    - platformdirs
-    - pooch
-    - pre-commit
-    - pybtex
-    - pylint
-    - pytest
-    - pytest-cov
-    - pytest-socket
-    - pytest-xdist >=3.2
-    - ruff >=0.1.0
-    - sphinx
-    - sphinx-autodoc-typehints
-    - sphinx-codeautolink
-    - sphinx-copybutton
-    - sphinx_rtd_theme >=1.0
-    - sphinxcontrib-bibtex
-    - tokenize-rt
-    - tox
-#    - tox-conda  # Will be added when a tox@v4.0+ compatible plugin is released.
-    - xdoctest
-    - yamale
-    - yamllint
-    - pip
-    - pip:
-        - flake8-alphabetize
-        - sphinxcontrib-svg2pdfconverter
+  - black ==24.1.1
+  - blackdoc ==0.3.9
+  - bump-my-version >=0.17.1
+  - cairosvg
+  - codespell
+  - coverage
+  - distributed >=2.0
+  - filelock
+  - flake8
+  - flake8-rst-docstrings
+  - flit
+  - h5netcdf
+  - ipykernel
+  - ipython
+  - isort ==5.13.2
+  - matplotlib
+  - mypy
+  - nbqa
+  - nbsphinx
+  - nbval
+  - nc-time-axis
+  - netCDF4 >=1.4
+  - notebook
+  - platformdirs
+  - pooch
+  - pre-commit
+  - pybtex
+  - pylint
+  - pytest <8.0  # Pinned due to breakage with xdoctest. See: https://github.com/Erotemic/xdoctest/issues/151
+  - pytest-cov
+  - pytest-socket
+  - pytest-xdist >=3.2
+  - ruff >=0.1.0
+  - sphinx
+  - sphinx-autodoc-typehints
+  - sphinx-codeautolink
+  - sphinx-copybutton
+  - sphinx-mdinclude
+  - sphinx-rtd-theme >=1.0
+  - sphinxcontrib-bibtex
+  - tokenize-rt
+  - tox >=4.0
+#  - tox-conda  # Will be added when a tox@v4.0+ compatible plugin is released.
+  - xdoctest
+  - yamllint
+  - pip
+  - pip:
+    - flake8-alphabetize
+    - sphinxcontrib-svg2pdfconverter

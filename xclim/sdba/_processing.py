@@ -5,9 +5,10 @@ Compute Functions Submodule
 Here are defined the functions wrapped by map_blocks or map_groups.
 The user-facing, metadata-handling functions should be defined in processing.py.
 """
+
 from __future__ import annotations
 
-from typing import Sequence
+from collections.abc import Sequence
 
 import numpy as np
 import xarray as xr
@@ -46,7 +47,7 @@ def _adapt_freq(
 
     Returns
     -------
-    xr.Dataset, wth the following variables:
+    xr.Dataset, with the following variables:
 
       - `sim_adj`: Simulated data with the same frequency of values under threshold than ref.
         Adjustment is made group-wise.

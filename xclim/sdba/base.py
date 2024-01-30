@@ -2,10 +2,12 @@
 Base Classes and Developer Tools
 ================================
 """
+
 from __future__ import annotations
 
+from collections.abc import Sequence
 from inspect import _empty, signature  # noqa
-from typing import Callable, Sequence
+from typing import Callable
 
 import dask.array as dsk
 import jsonpickle
@@ -49,11 +51,11 @@ class Parametrizable(dict):
             raise AttributeError(*err.args) from err
 
     @property
-    def parameters(self):
+    def parameters(self) -> dict:
         """All parameters as a dictionary. Read-only."""
         return dict(**self)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """Return a string representation."""
         # Get default values from the init signature
         defaults = {
@@ -75,7 +77,7 @@ class Parametrizable(dict):
 
 
 class ParametrizableWithDataset(Parametrizable):
-    """Parametrizeable class that also has a `ds` attribute storing a dataset."""
+    """Parametrizable class that also has a `ds` attribute storing a dataset."""
 
     _attribute = "_xclim_parameters"
 
@@ -91,7 +93,7 @@ class ParametrizableWithDataset(Parametrizable):
         obj.set_dataset(ds)
         return obj
 
-    def set_dataset(self, ds: xr.Dataset):
+    def set_dataset(self, ds: xr.Dataset) -> None:
         """Store an xarray dataset in the `ds` attribute.
 
         Useful with custom object initialization or if some external processing was performed.
@@ -150,7 +152,7 @@ class Grouper(Parametrizable):
         )
 
     @classmethod
-    def from_kwargs(cls, **kwargs):
+    def from_kwargs(cls, **kwargs) -> dict[str, Grouper]:
         """Parameterize groups using kwargs."""
         kwargs["group"] = cls(
             group=kwargs.pop("group"),
@@ -178,7 +180,7 @@ class Grouper(Parametrizable):
         """Create a significant name for the grouping."""
         return "year" if self.prop == "group" else self.prop
 
-    def get_coordinate(self, ds=None):
+    def get_coordinate(self, ds: xr.Dataset | None = None) -> xr.DataArray:
         """Return the coordinate as in the output of group.apply.
 
         Currently, only implemented for groupings with prop == `month` or `dayofyear`.
@@ -200,22 +202,22 @@ class Grouper(Parametrizable):
             else:
                 mdoy = 365
             return xr.DataArray(
-                np.arange(1, mdoy + 1), dims=("dayofyear"), name="dayofyear"
+                np.arange(1, mdoy + 1), dims="dayofyear", name="dayofyear"
             )
         if self.prop == "group":
             return xr.DataArray([1], dims=("group",), name="group")
-        # TODO woups what happens when there is no group? (prop is None)
-        raise NotImplementedError()
+        # TODO: woups what happens when there is no group? (prop is None)
+        raise NotImplementedError("No grouping found.")
 
     def group(
         self,
         da: xr.DataArray | xr.Dataset | None = None,
         main_only: bool = False,
         **das: xr.DataArray,
-    ):
+    ) -> xr.core.groupby.GroupBy:  # pylint: disable=no-member
         """Return a xr.core.groupby.GroupBy object.
 
-        More than one array can be combined to a dataset before grouping using the `das`  kwargs.
+        More than one array can be combined to a dataset before grouping using the `das` kwargs.
         A new `window` dimension is added if `self.window` is larger than 1.
         If `Grouper.dim` is 'time', but 'prop' is None, the whole array is grouped together.
 
@@ -263,7 +265,7 @@ class Grouper(Parametrizable):
         self,
         da: xr.DataArray | xr.Dataset,
         interp: bool | None = None,
-    ):
+    ) -> xr.DataArray:
         """Return the group index of each element along the main dimension.
 
         Parameters
@@ -281,7 +283,7 @@ class Grouper(Parametrizable):
         xr.DataArray
             The index of each element along `Grouper.dim`.
             If `Grouper.dim` is `time` and `Grouper.prop` is None, a uniform array of True is returned.
-            If `Grouper.prop` is a time accessor (month, dayofyear, etc), an numerical array is returned,
+            If `Grouper.prop` is a time accessor (month, dayofyear, etc.), a numerical array is returned,
             with a special case of `month` and `interp=True`.
             If `Grouper.dim` is not `time`, the dim is simply returned.
         """
@@ -298,7 +300,8 @@ class Grouper(Parametrizable):
 
         if not np.issubdtype(i.dtype, np.integer):
             raise ValueError(
-                f"Index {self.name} is not of type int (rather {i.dtype}), but {self.__class__.__name__} requires integer indexes."
+                f"Index {self.name} is not of type int (rather {i.dtype}), "
+                f"but {self.__class__.__name__} requires integer indexes."
             )
 
         if interp and self.dim == "time" and self.prop == "month":
@@ -323,7 +326,7 @@ class Grouper(Parametrizable):
         da: xr.DataArray | dict[str, xr.DataArray] | xr.Dataset,
         main_only: bool = False,
         **kwargs,
-    ):
+    ) -> xr.DataArray | xr.Dataset:
         r"""Apply a function group-wise on DataArrays.
 
         Parameters
@@ -335,8 +338,8 @@ class Grouper(Parametrizable):
             The DataArray on which to apply the function. Multiple arrays can be passed through a dictionary.
             A dataset will be created before grouping.
         main_only : bool
-            Whether to call the function with the main dimension only (if True)
-            or with all grouping dims (if False, default) (including the window and dimensions given through `add_dims`).
+            Whether to call the function with the main dimension only (if True) or with all grouping dims
+            (if False, default) (including the window and dimensions given through `add_dims`).
             The dimensions used are also written in the "group_compute_dims" attribute.
             If all the input arrays are missing one of the 'add_dims', it is silently omitted.
         \*\*kwargs
@@ -344,7 +347,7 @@ class Grouper(Parametrizable):
 
         Returns
         -------
-        DataArray or Dataset
+        xr.DataArray or xr.Dataset
             Attributes "group", "group_window" and "group_compute_dims" are added.
 
             If the function did not reduce the array:
@@ -414,7 +417,7 @@ class Grouper(Parametrizable):
         out.attrs["group_compute_dims"] = dims
         out.attrs["group_window"] = self.window
 
-        # On non reducing ops, drop the constructed window
+        # On non-reducing ops, drop the constructed window
         if self.window > 1 and "window" in out.dims:
             out = out.isel(window=self.window // 2, drop=True)
 
@@ -423,10 +426,12 @@ class Grouper(Parametrizable):
             out = out.sortby(self.dim)
             # The expected behavior for downstream methods would be to conserve chunking along dim
             if uses_dask(out):
-                # or -1 in case dim_chunks is [], when no input is chunked (only happens if the operation is chunking the output)
+                # or -1 in case dim_chunks is [], when no input is chunked
+                # (only happens if the operation is chunking the output)
                 out = out.chunk({self.dim: dim_chunks or -1})
         if self.prop == "season" and self.prop in out.coords:
-            # Special case for "DIM.season", it is often returned in alphabetical order, but that doesn't fit the coord given in get_coordinate
+            # Special case for "DIM.season", it is often returned in alphabetical order,
+            # but that doesn't fit the coord given in get_coordinate
             out = out.sel(season=np.array(["DJF", "MAM", "JJA", "SON"]))
         if self.prop in out.dims and uses_dask(out):
             # Same as above : downstream methods expect only one chunk along the group
@@ -471,15 +476,17 @@ def parse_group(func: Callable, kwargs=None, allow_only=None) -> Callable:
 
     # else (then it's a decorator)
     @wraps(func)
-    def _parse_group(*args, **kwargs):
-        kwargs = _update_kwargs(kwargs, allowed=allow_only)
-        return func(*args, **kwargs)
+    def _parse_group(*f_args, **f_kwargs):
+        f_kwargs = _update_kwargs(f_kwargs, allowed=allow_only)
+        return func(*f_args, **f_kwargs)
 
     return _parse_group
 
 
-def duck_empty(dims, sizes, dtype="float64", chunks=None):
-    """Return an empty DataArray based on a numpy or dask backend, depending on the chunks argument."""
+def duck_empty(
+    dims: xr.DataArray.dims, sizes, dtype="float64", chunks=None
+) -> xr.DataArray:
+    """Return an empty DataArray based on a numpy or dask backend, depending on the "chunks" argument."""
     shape = [sizes[dim] for dim in dims]
     if chunks:
         chnks = [chunks.get(dim, (sizes[dim],)) for dim in dims]
@@ -489,7 +496,7 @@ def duck_empty(dims, sizes, dtype="float64", chunks=None):
     return xr.DataArray(content, dims=dims)
 
 
-def _decode_cf_coords(ds):
+def _decode_cf_coords(ds: xr.Dataset):
     """Decode coords in-place."""
     crds = xr.decode_cf(ds.coords.to_dataset())
     for crdname in list(ds.coords.keys()):
@@ -500,7 +507,9 @@ def _decode_cf_coords(ds):
             del ds[crdname].encoding["dtype"]
 
 
-def map_blocks(reduces: Sequence[str] | None = None, **outvars):  # noqa: C901
+def map_blocks(  # noqa: C901
+    reduces: Sequence[str] | None = None, **out_vars
+) -> Callable:
     r"""Decorator for declaring functions and wrapping them into a map_blocks.
 
     Takes care of constructing the template dataset. Dimension order is not preserved.
@@ -511,7 +520,7 @@ def map_blocks(reduces: Sequence[str] | None = None, **outvars):  # noqa: C901
     ----------
     reduces : sequence of strings
         Name of the dimensions that are removed by the function.
-    \*\*outvars
+    \*\*out_vars
         Mapping from variable names in the output to their *new* dimensions.
         The placeholders ``Grouper.PROP``, ``Grouper.DIM`` and ``Grouper.ADD_DIMS`` can be used to signify
         ``group.prop``,``group.dim`` and ``group.add_dims`` respectively.
@@ -537,7 +546,7 @@ def map_blocks(reduces: Sequence[str] | None = None, **outvars):  # noqa: C901
         return out
 
     # Ordered list of all added dimensions
-    out_dims = merge_dimensions(*outvars.values())
+    out_dims = merge_dimensions(*out_vars.values())
     # List of dimensions reduced by the function.
     red_dims = reduces or []
 
@@ -652,7 +661,7 @@ def map_blocks(reduces: Sequence[str] | None = None, **outvars):  # noqa: C901
             else:
                 dtype = ds.dtype
 
-            for var, dims in outvars.items():
+            for var, dims in out_vars.items():
                 var_new_dims = []
                 for dim in dims:
                     var_new_dims.extend(placeholders.get(dim, [dim]))
@@ -668,23 +677,23 @@ def map_blocks(reduces: Sequence[str] | None = None, **outvars):  # noqa: C901
                     if xr.core.common._contains_cftime_datetimes(crd.variable):  # noqa
                         ds[name] = xr.conventions.encode_cf_variable(crd.variable)
 
-            def _call_and_transpose_on_exit(dsblock, **kwargs):
+            def _call_and_transpose_on_exit(dsblock, **f_kwargs):
                 """Call the decorated func and transpose to ensure the same dim order as on the template."""
                 try:
                     _decode_cf_coords(dsblock)
-                    out = func(dsblock, **kwargs).transpose(*all_dims)
+                    func_out = func(dsblock, **f_kwargs).transpose(*all_dims)
                 except Exception as err:
                     raise ValueError(
                         f"{func.__name__} failed on block with coords : {dsblock.coords}."
                     ) from err
-                return out
+                return func_out
 
             # Fancy patching for explicit dask task names
             _call_and_transpose_on_exit.__name__ = f"block_{func.__name__}"
 
             # Remove all auxiliary coords on both tmpl and ds
             extra_coords = {
-                nam: crd for nam, crd in ds.coords.items() if nam not in crd.dims
+                name: crd for name, crd in ds.coords.items() if name not in crd.dims
             }
             ds = ds.drop_vars(extra_coords.keys())
             # Coords not sharing dims with `all_dims` (like scalar aux coord on reduced 1D input) are absent from tmpl
@@ -697,8 +706,8 @@ def map_blocks(reduces: Sequence[str] | None = None, **outvars):  # noqa: C901
             # Add back the extra coords, but only those which have compatible dimensions (like xarray would have done)
             out = out.assign_coords(
                 {
-                    nam: crd
-                    for nam, crd in extra_coords.items()
+                    name: crd
+                    for name, crd in extra_coords.items()
                     if set(crd.dims).issubset(out.dims)
                 }
             )
@@ -715,7 +724,7 @@ def map_blocks(reduces: Sequence[str] | None = None, **outvars):  # noqa: C901
 
 def map_groups(
     reduces: Sequence[str] | None = None, main_only: bool = False, **out_vars
-):
+) -> Callable:
     r"""Decorator for declaring functions acting only on groups and wrapping them into a map_blocks.
 
     This is the same as `map_blocks` but adds a call to `group.apply()` in the mapped func and the default
@@ -727,7 +736,7 @@ def map_groups(
 
     Parameters
     ----------
-    reduces : sequence of str
+    reduces : sequence of str, optional
         Dimensions that are removed from the inputs by the function. Defaults to [Grouper.DIM, Grouper.ADD_DIMS]
         if main_only is False, and [Grouper.DIM] if main_only is True. See :py:func:`map_blocks`.
     main_only : bool

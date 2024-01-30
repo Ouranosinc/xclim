@@ -4,6 +4,7 @@ Miscellaneous Indices Utilities
 
 Helper functions for the indices computations, indicator construction and other things.
 """
+
 from __future__ import annotations
 
 import functools
@@ -20,10 +21,11 @@ try:
 except ImportError:
     from importlib_resources import files
 
+from collections.abc import Mapping, Sequence
 from inspect import Parameter, _empty  # noqa
 from io import StringIO
 from pathlib import Path
-from typing import Callable, Mapping, NewType, Sequence, TypeVar
+from typing import Callable, NewType, TypeVar
 
 import numpy as np
 import xarray as xr
@@ -136,10 +138,11 @@ def deprecated(from_version: str | None, suggested: str | None = None) -> Callab
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
             msg = (
-                f"`{func.__name__}` is deprecated{' from version {}'.format(from_version) if from_version else ''} "
+                f"`{func.__name__}` is deprecated"
+                f"{' from version {}'.format(from_version) if from_version else ''} "
                 "and will be removed in a future version of xclim"
-                f"{'. Use `{}` instead'.format(suggested if suggested else '')}. "
-                f"Please update your scripts accordingly."
+                f"{'. Use `{}` instead'.format(suggested) if suggested else ''}. "
+                "Please update your scripts accordingly."
             )
             warnings.warn(
                 msg,
@@ -805,9 +808,9 @@ def adapt_clix_meta_yaml(  # noqa: C901
                             ),
                             "units": param["units"],
                         }
-                        rename_params[
-                            f"{{{name}}}"
-                        ] = f"{{{list(param['data'].keys())[0]}}}"
+                        rename_params[f"{{{name}}}"] = (
+                            f"{{{list(param['data'].keys())[0]}}}"
+                        )
                     else:
                         # Value
                         data["parameters"][name] = f"{param['data']} {param['units']}"

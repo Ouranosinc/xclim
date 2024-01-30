@@ -1,3 +1,4 @@
+# pylint: disable=missing-kwoa
 from __future__ import annotations
 
 import jsonpickle
@@ -59,6 +60,9 @@ def test_grouper_get_index(tas_series, group, interp, val90):
     assert indx[90] == val90
 
 
+# xarray does not yet access "week" or "weekofyear" with groupby in a pandas-compatible way for cftime objects.
+# See: https://github.com/pydata/xarray/discussions/6375
+@pytest.mark.filterwarnings("ignore:dt.weekofyear and dt.week have been deprecated")
 @pytest.mark.slow
 @pytest.mark.parametrize(
     "group,n",
@@ -89,7 +93,7 @@ def test_grouper_apply(tas_series, use_dask, group, n):
         exp = tas.mean(dim=grouper.dim).expand_dims("group").T
     np.testing.assert_array_equal(out_mean, exp)
 
-    # With additionnal dimension included
+    # With additional dimension included
     grouper = Grouper(group, add_dims=["lat"])
     out = grouper.apply("mean", tas)
     assert out.ndim == 1
@@ -98,7 +102,7 @@ def test_grouper_apply(tas_series, use_dask, group, n):
     assert out.attrs["group_compute_dims"] == [grouper.dim, "lat"]
     assert out.attrs["group_window"] == 1
 
-    # Additionnal but main_only
+    # Additional but main_only
     out = grouper.apply("mean", tas, main_only=True)
     np.testing.assert_array_equal(out, out_mean)
 
@@ -159,60 +163,74 @@ def test_grouper_apply(tas_series, use_dask, group, n):
     np.testing.assert_allclose(out, exp, rtol=1e-10)
 
 
-def test_map_blocks(tas_series):
-    tas = tas_series(np.arange(366), start="2000-01-01")
-    tas = tas.expand_dims(lat=[1, 2, 3, 4]).chunk()
+class TestMapBlocks:
+    def test_lat_lon(self, tas_series):
+        tas = tas_series(np.arange(366), start="2000-01-01")
+        tas = tas.expand_dims(lat=[1, 2, 3, 4]).chunk()
 
-    # Test dim parsing
-    @map_blocks(reduces=["lat"], data=["lon"])
-    def func(ds, *, group, lon=None):
-        assert group.window == 5
-        data = ds.tas.rename(lat="lon")
-        return data.rename("data").to_dataset()
+        # Test dim parsing
+        @map_blocks(reduces=["lat"], data=["lon"])
+        def func(ds, *, group, lon=None):
+            assert group.window == 5
+            d = ds.tas.rename(lat="lon")
+            return d.rename("data").to_dataset()
 
-    # Raises on missing coords
-    with pytest.raises(ValueError, match="This function adds the lon dimension*"):
-        data = func(xr.Dataset(dict(tas=tas)), group="time.dayofyear", window=5)
+        # Raises on missing coords
+        with pytest.raises(ValueError, match="This function adds the lon dimension*"):
+            data = func(xr.Dataset(dict(tas=tas)), group="time.dayofyear", window=5)
 
-    data = func(
-        xr.Dataset(dict(tas=tas)), group="time.dayofyear", window=5, lon=[1, 2, 3, 4]
-    ).load()
-    assert set(data.data.dims) == {"time", "lon"}
+        data = func(
+            xr.Dataset(dict(tas=tas)),
+            group="time.dayofyear",
+            window=5,
+            lon=[1, 2, 3, 4],
+        ).load()
+        assert set(data.data.dims) == {"time", "lon"}
 
-    @map_groups(data=[Grouper.PROP])
-    def func(ds, *, dim):
-        assert isinstance(dim, list)
-        data = ds.tas.mean(dim)
-        return data.rename("data").to_dataset()
+    def test_grouper_prop(self, tas_series):
+        tas = tas_series(np.arange(366), start="2000-01-01")
+        tas = tas.expand_dims(lat=[1, 2, 3, 4]).chunk()
 
-    data = func(
-        xr.Dataset(dict(tas=tas)), group="time.dayofyear", window=5, add_dims=["lat"]
-    ).load()
-    assert set(data.data.dims) == {"dayofyear"}
+        @map_groups(data=[Grouper.PROP])
+        def func(ds, *, dim):
+            assert isinstance(dim, list)
+            d = ds.tas.mean(dim)
+            return d.rename("data").to_dataset()
 
-    @map_groups(data=[Grouper.PROP], main_only=True)
-    def func(ds, *, dim):
-        assert isinstance(dim, str)
-        data = ds.tas.mean(dim)
-        return data.rename("data").to_dataset()
+        data = func(
+            xr.Dataset(dict(tas=tas)),
+            group="time.dayofyear",
+            window=5,
+            add_dims=["lat"],
+        ).load()
+        assert set(data.data.dims) == {"dayofyear"}
 
-    # with a scalar aux coord
-    data = func(
-        xr.Dataset(dict(tas=tas.isel(lat=0, drop=True)), coords=dict(leftover=1)),
-        group="time.dayofyear",
-    ).load()
-    assert set(data.data.dims) == {"dayofyear"}
-    assert "leftover" in data
+    def test_grouper_prop_main_only(self, tas_series):
+        tas = tas_series(np.arange(366), start="2000-01-01")
+        tas = tas.expand_dims(lat=[1, 2, 3, 4]).chunk()
 
+        @map_groups(data=[Grouper.PROP], main_only=True)
+        def func(ds, *, dim):
+            assert isinstance(dim, str)
+            data = ds.tas.mean(dim)
+            return data.rename("data").to_dataset()
 
-def test_map_blocks_error(tas_series):
-    tas = tas_series(np.arange(366), start="2000-01-01")
-    tas = tas.expand_dims(lat=[1, 2, 3, 4]).chunk(lat=1)
+        # with a scalar aux coord
+        data = func(
+            xr.Dataset(dict(tas=tas.isel(lat=0, drop=True)), coords=dict(leftover=1)),
+            group="time.dayofyear",
+        ).load()
+        assert set(data.data.dims) == {"dayofyear"}
+        assert "leftover" in data
 
-    # Test dim parsing
-    @map_blocks(reduces=["lat"], data=[])
-    def func(ds, *, group, lon=None):
-        return ds.tas.rename("data").to_dataset()
+    def test_raises_error(self, tas_series):
+        tas = tas_series(np.arange(366), start="2000-01-01")
+        tas = tas.expand_dims(lat=[1, 2, 3, 4]).chunk(lat=1)
 
-    with pytest.raises(ValueError, match="cannot be chunked"):
-        func(xr.Dataset(dict(tas=tas)), group="time")
+        # Test dim parsing
+        @map_blocks(reduces=["lat"], data=[])
+        def func(ds, *, group, lon=None):
+            return ds.tas.rename("data").to_dataset()
+
+        with pytest.raises(ValueError, match="cannot be chunked"):
+            func(xr.Dataset(dict(tas=tas)), group="time")

@@ -1,18 +1,18 @@
 """Spatial Analogues module."""
+
 # TODO: Hellinger distance
 # TODO: Mahalanobis distance
 # TODO: Comment on "significance" of results.
 # Code adapted from flyingpigeon.dissimilarity, Nov 2020.
 from __future__ import annotations
 
-from typing import Any, Sequence
+from collections.abc import Sequence
+from typing import Any
 
 import numpy as np
 import pandas as pd
 import xarray as xr
 from boltons.funcutils import wraps
-from packaging.version import Version
-from scipy import __version__ as __scipy_version__
 from scipy import spatial
 from scipy.spatial import cKDTree as KDTree
 
@@ -54,12 +54,6 @@ def spatial_analogs(
         The dissimilarity statistic over the union of candidates' and target's dimensions.
         The range depends on the method.
     """
-    if Version(__scipy_version__) < Version("1.6.0") and method in [
-        "kldiv",
-        "nearest_neighbor",
-    ]:
-        raise RuntimeError(f"Spatial analogue method ({method}) requires scipy>=1.6.0.")
-
     # Create the target DataArray:
     target_array = target.to_array("_indices", "target")
 

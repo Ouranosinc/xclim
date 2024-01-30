@@ -1,3 +1,4 @@
+# pylint: disable=missing-kwoa
 """
 Pre- and Post-Processing Submodule
 ==================================
@@ -5,7 +6,7 @@ Pre- and Post-Processing Submodule
 from __future__ import annotations
 
 import warnings
-from typing import Sequence
+from collections.abc import Sequence
 
 import dask.array as dsk
 import numpy as np
@@ -46,10 +47,10 @@ def adapt_freq(
 
     Parameters
     ----------
-    ds : xr.Dataset
-        With variables : "ref", Target/reference data, usually observed data, and  "sim", Simulated data.
-    dim : str
-        Dimension name.
+    ref : xr.Dataset
+        Target/reference data, usually observed data, with a "time" dimension.
+    sim : xr.Dataset
+        Simulated data, with a "time" dimension.
     group : str or Grouper
         Grouping information, see base.Grouper
     thresh : str
@@ -473,11 +474,11 @@ def _get_number_of_elements_by_year(time):
 
     mult, freq, _, _ = parse_offset(xr.infer_freq(time))
     days_in_year = max_doy[cal]
-    elements_in_year = {"Q": 4, "M": 12, "D": days_in_year, "H": days_in_year * 24}
+    elements_in_year = {"Q": 4, "M": 12, "D": days_in_year, "h": days_in_year * 24}
     N_in_year = elements_in_year.get(freq, 1) / mult
     if N_in_year % 1 != 0:
         raise ValueError(
-            f"Sampling frequency of the data must be Q, M, D or H and evenly divide a year (got {mult}{freq})."
+            f"Sampling frequency of the data must be Q, M, D or h and evenly divide a year (got {mult}{freq})."
         )
 
     return int(N_in_year)
@@ -589,7 +590,7 @@ def to_additive_space(
         if upper_bound is not None:
             upper_bound = convert_units_to(upper_bound, data)
 
-    with xr.set_options(keep_attrs=True):
+    with xr.set_options(keep_attrs=True), np.errstate(divide="ignore"):
         if trans == "log":
             out = np.log(data - lower_bound)
         elif trans == "logit":

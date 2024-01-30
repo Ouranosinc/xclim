@@ -1,11 +1,11 @@
-#!/usr/bin/env python
+# pylint: disable=unsubscriptable-object,function-redefined
 # Tests for the Indicator objects
 from __future__ import annotations
 
 import gc
 import json
 from inspect import signature
-from typing import Tuple, Union
+from typing import Union
 
 import dask
 import numpy as np
@@ -196,6 +196,28 @@ def test_keep_attrs(tasmin_series, tasmax_series, xcopt, xropt, exp):
     assert (tg.attrs.get("something") == "blabla") is exp
     assert (tg.attrs.get("foo") == "bar") is exp
     assert "bing" not in tg.attrs
+
+
+def test_as_dataset(tasmax_series, tasmin_series):
+    tx = tasmax_series(np.arange(360.0))
+    tn = tasmin_series(np.arange(360.0))
+    tx.attrs.update(something="blabla", bing="bang", foo="bar")
+    tn.attrs.update(something="blabla", bing="bong")
+    dsin = xr.Dataset({"tasmax": tx, "tasmin": tn}, attrs={"fou": "barre"})
+    with xclim.set_options(keep_attrs=True, as_dataset=True):
+        dsout = multiOptVar(ds=dsin)
+    assert isinstance(dsout, xr.Dataset)
+    assert dsout.attrs["fou"] == "barre"
+    assert dsout.multiopt.attrs.get("something") == "blabla"
+
+
+def test_as_dataset_multi(tas_series):
+    tg = tas_series(np.arange(360.0))
+    with xclim.set_options(as_dataset=True):
+        dsout = multiTemp(tas=tg, freq="YS")
+    assert isinstance(dsout, xr.Dataset)
+    assert "tmin" in dsout.data_vars
+    assert "tmax" in dsout.data_vars
 
 
 def test_opt_vars(tasmin_series, tasmax_series):
@@ -487,7 +509,7 @@ def test_signature():
     assert sig.return_annotation == xr.DataArray
 
     sig = signature(xclim.atmos.wind_speed_from_vector)
-    assert sig.return_annotation == Tuple[xr.DataArray, xr.DataArray]
+    assert sig.return_annotation == tuple[xr.DataArray, xr.DataArray]
 
 
 def test_doc():
@@ -685,7 +707,7 @@ def test_indicator_from_dict():
 
     # Wrap a multi-output ind
     d = dict(base="wind_speed_from_vector")
-    ind = Indicator.from_dict(d, identifier="wsfv", module="test")
+    Indicator.from_dict(d, identifier="wsfv", module="test")
 
 
 def test_indicator_errors():
@@ -816,7 +838,7 @@ def test_resampling_indicator_with_indexing(tas_series):
     np.testing.assert_allclose(out, [28, 29])
 
     out = xclim.atmos.tx_days_above(
-        tas, thresh="0 degC", freq="AS-JUL", doy_bounds=(1, 50)
+        tas, thresh="0 degC", freq="YS-JUL", doy_bounds=(1, 50)
     )
     np.testing.assert_allclose(out, [50, 50, np.NaN])
 

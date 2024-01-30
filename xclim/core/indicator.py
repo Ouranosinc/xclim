@@ -78,6 +78,8 @@ details on each.
             units: <param units>  # Only valid if "compute" points to a generic function
             default : <param default>
             description: <param description>
+            kind: <param kind> # Override the parameter kind.
+                             # This is mostly useful for transforming an optional variable into a required one by passing ``kind: 0``.
         ...
       ...  # and so on.
 
@@ -95,6 +97,7 @@ the mapping of `data.input` simply links an argument name from the function give
 to one of those official variables.
 
 """
+
 from __future__ import annotations
 
 import re
@@ -111,7 +114,7 @@ from inspect import signature
 from os import PathLike
 from pathlib import Path
 from types import ModuleType
-from typing import Any, Callable, Optional, Sequence, Tuple, Union
+from typing import Any, Callable, Optional, Sequence, Union
 
 import numpy as np
 import xarray
@@ -141,6 +144,7 @@ from .locales import (
     read_locale_file,
 )
 from .options import (
+    AS_DATASET,
     CHECK_MISSING,
     KEEP_ATTRS,
     METADATA_LOCALES,
@@ -211,8 +215,8 @@ class Parameter:
     def is_parameter_dict(cls, other: dict) -> bool:
         """Return whether indicator has a parameter dictionary."""
         return set(other.keys()).issubset(
-            cls.__dataclass_fields__.keys()
-        )  # pylint disable=no-member
+            cls.__dataclass_fields__.keys()  # pylint: disable=no-member
+        )
 
     def __getitem__(self, key) -> str:
         """Return an item in retro-compatible fashion."""
@@ -795,7 +799,7 @@ class Indicator(IndicatorRegistrar):
                     )
                 )
 
-        ret_ann = DataArray if self.n_outs == 1 else Tuple[(DataArray,) * self.n_outs]
+        ret_ann = DataArray if self.n_outs == 1 else tuple[(DataArray,) * self.n_outs]
         return Signature(variables + parameters, return_annotation=ret_ann)
 
     def __call__(self, *args, **kwds):
@@ -807,7 +811,7 @@ class Indicator(IndicatorRegistrar):
         if self._version_deprecated:
             self._show_deprecation_warning()  # noqa
 
-        das, params = self._parse_variables_from_call(args, kwds)
+        das, params, dsattrs = self._parse_variables_from_call(args, kwds)
 
         if OPTIONS[KEEP_ATTRS] is True or (
             OPTIONS[KEEP_ATTRS] == "xarray"
@@ -879,6 +883,20 @@ class Indicator(IndicatorRegistrar):
             out.attrs.update(attrs)
             out.name = var_name
 
+        if OPTIONS[AS_DATASET]:
+            out = Dataset({o.name: o for o in outs})
+            if OPTIONS[KEEP_ATTRS] is True or (
+                OPTIONS[KEEP_ATTRS] == "xarray"
+                and xarray.core.options._get_keep_attrs(False)
+            ):
+                out.attrs.update(dsattrs)
+            out.attrs["history"] = update_history(
+                self._history_string(das, params),
+                out,
+                new_name=self.identifier,
+            )
+            return out
+
         # Return a single DataArray in case of single output, otherwise a tuple
         if self.n_outs == 1:
             return outs[0]
@@ -910,7 +928,9 @@ class Indicator(IndicatorRegistrar):
             else:
                 params[name] = param.value
 
-        return das, params
+        ds = ba.arguments.get("ds")
+        dsattrs = ds.attrs if ds is not None else {}
+        return das, params, dsattrs
 
     def _assign_named_args(self, ba):
         """Assign inputs passed as strings from ds."""
@@ -1063,20 +1083,8 @@ class Indicator(IndicatorRegistrar):
             if "cell_methods" in out:
                 attrs["cell_methods"] += " " + out.pop("cell_methods")
 
-        # Use of OrderedDict to ensure inputs (das) get listed before parameters (args).
-        # In the history attr, call signature will be all keywords and might be in a
-        # different order than the real function (but order doesn't really matter with keywords).
-        kwargs = OrderedDict(**das)
-        for k, v in args.items():
-            if self._all_parameters[k].injected:
-                continue
-            if self._all_parameters[k].kind == InputKind.KWARGS:
-                kwargs.update(**v)
-            elif self._all_parameters[k].kind != InputKind.DATASET:
-                kwargs[k] = v
-
         attrs["history"] = update_history(
-            self._history_string(**kwargs),
+            self._history_string(das, args),
             new_name=out.get("var_name"),
             **das,
         )
@@ -1084,7 +1092,15 @@ class Indicator(IndicatorRegistrar):
         attrs.update(out)
         return attrs
 
-    def _history_string(self, **kwargs):
+    def _history_string(self, das, params):
+        kwargs = dict(**das)
+        for k, v in params.items():
+            if self._all_parameters[k].injected:
+                continue
+            if self._all_parameters[k].kind == InputKind.KWARGS:
+                kwargs.update(**v)
+            elif self._all_parameters[k].kind != InputKind.DATASET:
+                kwargs[k] = v
         return gen_call_string(self._registry_id, **kwargs)
 
     @staticmethod
@@ -1106,10 +1122,10 @@ class Indicator(IndicatorRegistrar):
         Parameters
         ----------
         locale : str or sequence of str
-          The POSIX name of the locale or a tuple of a locale name and a path to a
-          json file defining the translations. See `xclim.locale` for details.
+            The POSIX name of the locale or a tuple of a locale name and a path to a json file defining translations.
+            See `xclim.locale` for details.
         fill_missing : bool
-           If True (default) fill the missing attributes by their english values.
+            If True (default) fill the missing attributes by their english values.
         """
 
         def _translate(cf_attrs, names, var_id=None):
@@ -1394,7 +1410,7 @@ class CheckMissingIndicator(Indicator):
 
         super().__init__(**kwds)
 
-    def _history_string(self, **kwargs):
+    def _history_string(self, das, params):
         if self.missing == "from_context":
             missing = OPTIONS[CHECK_MISSING]
         else:
@@ -1406,7 +1422,7 @@ class CheckMissingIndicator(Indicator):
             if mopts:
                 opt_str += f", missing_options={mopts}"
 
-        return super()._history_string(**kwargs) + opt_str
+        return super()._history_string(das, params) + opt_str
 
     def _get_missing_freq(self, params):
         """Return the resampling frequency to be used in the missing values check."""
@@ -1502,15 +1518,13 @@ class ResamplingIndicator(CheckMissingIndicator):
         das, params = super()._preprocess_and_checks(das, params)
 
         # Check if the period is allowed:
-        if (
-            self.allowed_periods is not None
-            and parse_offset(params["freq"])[1] not in self.allowed_periods
-        ):
-            raise ValueError(
-                f"Resampling frequency {params['freq']} is not allowed for indicator "
-                f"{self.identifier} (needs something equivalent to one "
-                f"of {self.allowed_periods})."
-            )
+        if self.allowed_periods is not None:
+            if parse_offset(params["freq"])[1] not in self.allowed_periods:
+                raise ValueError(
+                    f"Resampling frequency {params['freq']} is not allowed for indicator "
+                    f"{self.identifier} (needs something equivalent to one "
+                    f"of {self.allowed_periods})."
+                )
 
         return das, params
 
@@ -1560,7 +1574,7 @@ class Daily(ResamplingIndicator):
 class Hourly(ResamplingIndicator):
     """Class for hourly inputs and resampling computes."""
 
-    src_freq = "H"
+    src_freq = "h"
 
 
 base_registry["Indicator"] = Indicator
@@ -1623,12 +1637,12 @@ def build_indicator_module(
             )
         out = getattr(indicators, name)
         if reload:
-            for name, ind in list(out.iter_indicators()):
-                if name not in objs:
+            for n, ind in list(out.iter_indicators()):
+                if n not in objs:
                     # Remove the indicator from the registries and the module
                     del registry[ind._registry_id]  # noqa
                     del _indicators_registry[ind.__class__]
-                    del out.__dict__[name]
+                    del out.__dict__[n]
     else:
         doc = doc or f"{name.capitalize()} indicators\n" + "=" * (len(name) + 11)
         try:
@@ -1755,9 +1769,11 @@ def build_indicator_module_from_yaml(  # noqa: C901
     elif translations is not None:
         # A mapping was passed, we read paths is any.
         translations = {
-            lng: read_locale_file(trans, module=module_name, encoding=encoding)
-            if isinstance(trans, (str, Path))
-            else trans
+            lng: (
+                read_locale_file(trans, module=module_name, encoding=encoding)
+                if isinstance(trans, (str, Path))
+                else trans
+            )
             for lng, trans in translations.items()
         }
 
