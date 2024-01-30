@@ -72,7 +72,7 @@ dependencies:
   - tokenize-rt
   - tox >=4.0
 #  - tox-conda  # Will be added when a tox@v4.0+ compatible plugin is released.
-  - xdoctest
+  - xdoctest >=1.1.3
   - yamllint
   - pip
   - pip:
