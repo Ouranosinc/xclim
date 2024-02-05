@@ -75,7 +75,7 @@ jobs:
 
       - name: Send toot to Mastodon
         if: ${{ github.event.inputs.dry-run != 'true' }} || ${{ github.event_name == 'release' }}
-        uses: cbrgm/mastodon-github-action@d98ab3376f941df14d37d5737961de431c0838c6 # v1.0.3
+        uses: cbrgm/mastodon-github-action@e25732584d5703e8dc30942722155eabf6dff095 # v2.0.0
         with:
           message: "${{ steps.render_template.outputs.result }}${{ env.contributors }}"
           visibility: "public"
