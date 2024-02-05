@@ -239,7 +239,7 @@ addopts = [
 norecursedirs = ["docs/notebooks/*"]
 filterwarnings = ["ignore::UserWarning"]
 testpaths = "tests tests/test_sdba"
-usefixtures = "xdoctest_namespace"
+usefixtures = "doctest_namespace"
 doctest_optionflags = ["NORMALIZE_WHITESPACE", "IGNORE_EXCEPTION_DETAIL", "NUMBER", "ELLIPSIS"]
 markers = [
   "slow: marks tests as slow (deselect with '-m \"not slow\"')",

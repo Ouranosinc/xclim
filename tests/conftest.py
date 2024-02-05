@@ -366,9 +366,9 @@ def open_dataset(threadsafe_data_dir):
 
 
 @pytest.fixture(autouse=True, scope="session")
-def add_imports(xdoctest_namespace, threadsafe_data_dir) -> None:
+def add_imports(doctest_namespace, threadsafe_data_dir) -> None:
     """Add these imports into the doctests scope."""
-    ns = xdoctest_namespace
+    ns = doctest_namespace
     ns["np"] = np
     ns["xr"] = xclim.testing  # xr.open_dataset(...) -> xclim.testing.open_dataset(...)
     ns["xclim"] = xclim
