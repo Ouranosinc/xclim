@@ -77,6 +77,7 @@ jobs:
         if: ${{ github.event.inputs.dry-run != 'true' }} || ${{ github.event_name == 'release' }}
         uses: cbrgm/mastodon-github-action@e25732584d5703e8dc30942722155eabf6dff095 # v2.0.0
         with:
+          language: "en"
           message: "${{ steps.render_template.outputs.result }}${{ env.contributors }}"
           visibility: "public"
         env:
