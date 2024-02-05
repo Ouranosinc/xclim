@@ -867,11 +867,11 @@ def is_offset_divisor(divisor: str, offset: str):
 
     Examples
     --------
-    >>> is_offset_divisor("QS-Jan", "YS")
+    >>> is_offset_divisor("QS-JAN", "YS")
     True
     >>> is_offset_divisor("QS-DEC", "YS-JUL")
     False
-    >>> is_offset_divisor("D", "M")
+    >>> is_offset_divisor("D", "ME")
     True
     """
     if compare_offsets(divisor, ">", offset):
@@ -1270,7 +1270,7 @@ def doy_to_days_since(
     Examples
     --------
     >>> from xarray import DataArray
-    >>> time = date_range("2020-07-01", "2021-07-01", freq="AS-JUL")
+    >>> time = date_range("2020-07-01", "2021-07-01", freq="YS-JUL")
     >>> # July 8th 2020 and Jan 2nd 2022
     >>> da = DataArray([190, 2], dims=("time",), coords={"time": time})
     >>> # Convert to days since Oct. 2nd, of the data's year.
@@ -1330,7 +1330,7 @@ def days_since_to_doy(
     Examples
     --------
     >>> from xarray import DataArray
-    >>> time = date_range("2020-07-01", "2021-07-01", freq="AS-JUL")
+    >>> time = date_range("2020-07-01", "2021-07-01", freq="YS-JUL")
     >>> da = DataArray(
     ...     [-86, 92],
     ...     dims=("time",),
