@@ -41,7 +41,7 @@ repos:
     hooks:
       - id: isort
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.1.14
+    rev: v0.2.0
     hooks:
       - id: ruff
   - repo: https://github.com/pylint-dev/pylint
@@ -64,7 +64,7 @@ repos:
         additional_dependencies: [ 'black==24.1.1' ]
       - id: nbqa-isort
   - repo: https://github.com/kynan/nbstripout
-    rev: 0.6.1
+    rev: 0.7.1
     hooks:
       - id: nbstripout
         files: '.ipynb'
@@ -76,11 +76,11 @@ repos:
         additional_dependencies: [ 'black==24.1.1' ]
         exclude: '(xclim/indices/__init__.py|docs/installation.rst)'
   - repo: https://github.com/gitleaks/gitleaks
-    rev: v8.18.1
+    rev: v8.18.2
     hooks:
       - id: gitleaks
   - repo: https://github.com/python-jsonschema/check-jsonschema
-    rev: 0.27.3
+    rev: 0.27.4
     hooks:
       - id: check-github-workflows
       - id: check-readthedocs
