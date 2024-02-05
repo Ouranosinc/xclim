@@ -21,7 +21,7 @@ New features and enhancements
 * Support ``indexer`` keyword in YAML indicator description. (:issue:`1522`, :pull:`1561`).
 * New ``xclim.core.calendar.stack_periods`` and ``unstack_periods`` for performing ``rolling(time=...).construct(..., stride=...)`` but with non-uniform temporal periods like years or months. They replace ``xclim.sdba.processing.construct_moving_yearly_window`` and ``unpack_moving_yearly_window`` which are deprecated and will be removed in a future release.
 * New ``as_dataset`` options for ``xclim.set_options``. When True, indicators will output Datasets instead of DataArrays. (:issue:`1257`, :pull:`1625`).
-* Added new option for UTCI calculation to cap low wind velocities to a minimum of 0.5 m/s following Bröde (2012) guidelines.
+* Added new option for UTCI calculation to cap low wind velocities to a minimum of 0.5 m/s following Bröde (2012) guidelines. (:issue:`1634`, :pull:`1635`).
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
