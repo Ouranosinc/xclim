@@ -3482,20 +3482,21 @@ class TestWetDaysProp:
 
 
 @pytest.mark.parametrize(
-    "wind_cap_min,expected",
-    [(False, [17.70, np.nan]), (True, [17.70, 17.76])],
+    "wind_cap_min,wind,expected",
+    [(False, 2, 17.70), (False, 1, np.nan), (True, 1, 17.76)],
 )
 def test_universal_thermal_climate_index(
     tas_series,
     hurs_series,
     sfcWind_series,
     wind_cap_min,
+    wind,
     expected,
 ):
-    tas = tas_series(np.array([16, 16]) + K2C)
-    hurs = hurs_series(np.array([36, 36]))
-    sfcWind = sfcWind_series(np.array([2, 1]))
-    mrt = tas_series(np.array([22, 22]) + K2C)
+    tas = tas_series(np.array([16]) + K2C)
+    hurs = hurs_series(np.array([36]))
+    sfcWind = sfcWind_series(np.array([wind]))
+    mrt = tas_series(np.array([22]) + K2C)
 
     utci = xci.universal_thermal_climate_index(
         tas=tas,
