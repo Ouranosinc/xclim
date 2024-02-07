@@ -1820,8 +1820,9 @@ def universal_thermal_climate_index(
         their validity ranges : -50°C < tas < 50°C,  -30°C < tas - mrt < 30°C
         and  0.5 m/s < sfcWind < 17.0 m/s.
     wind_cap_min: bool
-        If True, low wind velocities are capped to a minimum of 0.5 m/s. This ensures
-        UTCI calculation for low winds. Default value False.
+        If True, wind velocities are capped to a minimum of 0.5 m/s following
+        :cite:t:`brode_utci_2012` usage guidalines. This ensures UTCI calculation
+        for low winds. Default value False.
 
     Returns
     -------
@@ -1841,7 +1842,7 @@ def universal_thermal_climate_index(
 
     References
     ----------
-    :cite:cts:`brode_utci_2009,blazejczyk_introduction_2013`
+    :cite:cts:`brode_utci_2009,brode_utci_2012,blazejczyk_introduction_2013`
     """
     e_sat = saturation_vapor_pressure(tas=tas, method="its90")
     tas = convert_units_to(tas, "degC")
