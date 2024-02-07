@@ -744,7 +744,7 @@ def dry_days(
     pr : xarray.DataArray
         Daily precipitation.
     thresh : Quantified
-        Threshold temperature on which to base evaluation.
+        Threshold precipitation on which to base evaluation.
     freq : str
         Resampling frequency.
     op : {"<", "<=", "lt", "le"}
