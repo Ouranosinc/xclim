@@ -143,17 +143,8 @@ def select_rolling_resample_op(
         The array for which the operation has been applied over each period.
     """
     rolled = getattr(da.rolling(time=window, center=window_center), window_op)()
-    rolled = select_time(rolled, **indexer)
-    r = rolled.resample(time=freq)
-    if isinstance(op, str):
-        out = getattr(r, op.replace("integral", "sum"))(dim="time", keep_attrs=True)
-    else:
-        with xr.set_options(keep_attrs=True):
-            out = r.map(op)
-        op = op.__name__
-    if out_units is not None:
-        return out.assign_attrs(units=out_units)
-    return to_agg_units(out, da, op)
+    rolled = to_agg_units(rolled, da,  window_op)
+    return select_resample_op(rolled, op=op, freq=freq, out_units=out_units, **indexer)
 
 
 def doymax(da: xr.DataArray) -> xr.DataArray:
