@@ -680,6 +680,9 @@ def infer_kind_from_parameter(param) -> InputKind:
     if param.name == "freq":
         return InputKind.FREQ_STR
 
+    if param.kind == param.VAR_KEYWORD:
+        return InputKind.KWARGS
+
     if annot == {"Quantified"}:
         return InputKind.QUANTIFIED
 
@@ -703,9 +706,6 @@ def infer_kind_from_parameter(param) -> InputKind:
 
     if annot == {"Dataset"}:
         return InputKind.DATASET
-
-    if param.kind == param.VAR_KEYWORD:
-        return InputKind.KWARGS
 
     return InputKind.OTHER_PARAMETER
 

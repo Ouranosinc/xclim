@@ -120,7 +120,7 @@ jobs:
           - tox-env: py39-coverage-sbck
             python-version: "3.9"
             markers: -m 'not slow'
-          - tox-env: py310-coverage  # No markers -- includes slow tests
+          - tox-env: py310-coverage-lmoments  # No markers -- includes slow tests
             python-version: "3.10"
           - tox-env: py311-coverage-sbck
             python-version: "3.11"
