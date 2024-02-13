@@ -117,6 +117,11 @@ def fit(
     # Get the distribution
     dist = get_dist(dist)
 
+    if method == "PWM" and not hasattr(dist, "lmom_fit"):
+        raise ValueError(
+            f"The given distribution {dist} does not implement the PWM fitting method. Please pass an instance from the lmoments3 package."
+        )
+
     shape_params = [] if dist.shapes is None else dist.shapes.split(",")
     dist_params = shape_params + ["loc", "scale"]
 
