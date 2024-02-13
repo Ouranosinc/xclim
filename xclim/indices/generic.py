@@ -104,6 +104,58 @@ def select_resample_op(
     return to_agg_units(out, da, op)
 
 
+def select_rolling_resample_op(
+    da: xr.DataArray,
+    op: str,
+    window: int,
+    window_center: bool = True,
+    window_op: str = "mean",
+    freq: str = "YS",
+    out_units=None,
+    **indexer,
+) -> xr.DataArray:
+    """Apply operation over each period that is part of the index selection, using a rolling window before the operation.
+
+    Parameters
+    ----------
+    da : xr.DataArray
+        Input data.
+    op : str {'min', 'max', 'mean', 'std', 'var', 'count', 'sum', 'integral', 'argmax', 'argmin'} or func
+        Reduce operation. Can either be a DataArray method or a function that can be applied to a DataArray.
+    window : int
+        Size of the rolling window (centered).
+    window_center : bool
+        If True, the window is centered on the date. If False, the window is right-aligned.
+    window_op : str {'min', 'max', 'mean', 'std', 'var', 'count', 'sum', 'integral'}
+        Operation to apply to the rolling window. Default: 'mean'.
+    freq : str
+        Resampling frequency defining the periods as defined in :ref:`timeseries.resampling`. Applied after the rolling window.
+    out_units : str, optional
+        Output units to assign. Only necessary if `op` is function not supported by :py:func:`xclim.core.units.to_agg_units`.
+    indexer : {dim: indexer, }, optional
+        Time attribute and values over which to subset the array. For example, use season='DJF' to select winter values,
+        month=1 to select January, or month=[6,7,8] to select summer months. If not indexer is given, all values are
+        considered.
+
+    Returns
+    -------
+    xr.DataArray
+        The array for which the operation has been applied over each period.
+    """
+    rolled = getattr(da.rolling(time=window, center=window_center), window_op)()
+    rolled = select_time(rolled, **indexer)
+    r = rolled.resample(time=freq)
+    if isinstance(op, str):
+        out = getattr(r, op.replace("integral", "sum"))(dim="time", keep_attrs=True)
+    else:
+        with xr.set_options(keep_attrs=True):
+            out = r.map(op)
+        op = op.__name__
+    if out_units is not None:
+        return out.assign_attrs(units=out_units)
+    return to_agg_units(out, da, op)
+
+
 def doymax(da: xr.DataArray) -> xr.DataArray:
     """Return the day of year of the maximum value."""
     i = da.argmax(dim="time")
