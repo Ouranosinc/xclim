@@ -39,7 +39,6 @@ dependencies = [
   "Click>=8.1",
   "dask[array]>=2.6",
   "jsonpickle",
-  "lmoments3>=1.0.5",
   "numba",
   "numpy>=1.20.0",
   "pandas>=2.2",
