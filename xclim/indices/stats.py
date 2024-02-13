@@ -327,7 +327,7 @@ def fa(
         Whether we are looking for a probability of exceedance (max) or a probability of non-exceedance (min).
     method : {"ML", "MLE", "MOM", "PWM", "APP"}
         Fitting method, either maximum likelihood (ML or MLE), method of moments (MOM) or approximate method (APP).
-        Also accpets probability weighted moments (PWM), also called L-Moments, if `dist` is an instance from the lmoments3 library.
+        Also accepts probability weighted moments (PWM), also called L-Moments, if `dist` is an instance from the lmoments3 library.
         The PWM method is usually more robust to outliers.
 
     Returns
@@ -393,7 +393,7 @@ def frequency_analysis(
         in which case `freq` would be set to `YS-DEC`.
     method : {"ML" or "MLE", "MOM", "PWM", "APP"}
         Fitting method, either maximum likelihood (ML or MLE), method of moments (MOM) or approximate method (APP).
-        Also accpets probability weighted moments (PWM), also called L-Moments, if `dist` is an instance from the lmoments3 library.
+        Also accepts probability weighted moments (PWM), also called L-Moments, if `dist` is an instance from the lmoments3 library.
         The PWM method is usually more robust to outliers.
     \*\*indexer
         Time attribute and values over which to subset the array. For example, use season='DJF' to select winter values,
