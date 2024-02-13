@@ -45,6 +45,7 @@ class TestSelectRollingResampleOp:
             ],
             o.values,
         )
+        assert o.attrs["units"] == "m3 s-1"
 
     def test_rollingmaxindexer(self, q_series):
         q = q_series(np.arange(1, 366 + 365 + 365 + 1))  # 1st year is leap
@@ -54,6 +55,7 @@ class TestSelectRollingResampleOp:
         np.testing.assert_array_equal(
             [14, 367, 367 + 365], o.values
         )  # 14th day for 1st year, then Jan 1st for the next two
+        assert o.attrs["units"] == "m3 s-1"
 
     def test_freq(self, q_series):
         q = q_series(np.arange(1, 366 + 365 + 365 + 1))  # 1st year is leap
