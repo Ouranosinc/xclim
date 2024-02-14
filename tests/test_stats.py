@@ -288,15 +288,27 @@ def test_frequency_analysis(ndq_series, use_dask):
         q.transpose(), mode="max", t=2, dist="genextreme", window=6, freq="YS"
     )
 
-    # # Test with PWM fitting method
-    # out1 = stats.frequency_analysis(
-    #     q, mode="max", t=2, dist="genextreme", window=6, freq="YS", method="PWM"
-    # )
-    # np.testing.assert_allclose(
-    #     out1,
-    #     out,
-    #     rtol=0.5,
-    # )
+
+@pytest.mark.parametrize("use_dask", [True, False])
+@pytest.mark.filterwarnings("ignore::RuntimeWarning")
+def test_frequency_analysis_lmoments(ndq_series, use_dask):
+    lmom = pytest.importorskip("lmoments3.distr")
+    q = ndq_series.copy()
+    q[:, 0, 0] = np.nan
+    if use_dask:
+        q = q.chunk()
+
+    out = stats.frequency_analysis(
+        q, mode="max", t=2, dist="genextreme", window=6, freq="YS"
+    )
+    out1 = stats.frequency_analysis(
+        q, mode="max", t=2, dist=lmom.gev, window=6, freq="YS", method="PWM"
+    )
+    np.testing.assert_allclose(
+        out1,
+        out,
+        rtol=0.5,
+    )
 
 
 @pytest.mark.parametrize("use_dask", [True, False])
