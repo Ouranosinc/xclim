@@ -127,7 +127,7 @@ def create_ensemble(
 
 
 def ensemble_mean_std_max_min(
-    ens: xr.Dataset, min_members: int | None = None, weights: xr.DataArray | None = None
+    ens: xr.Dataset, min_members: int | None = 1, weights: xr.DataArray | None = None
 ) -> xr.Dataset:
     """Calculate ensemble statistics between a results from an ensemble of climate simulations.
 
@@ -140,8 +140,8 @@ def ensemble_mean_std_max_min(
         Ensemble dataset (see xclim.ensembles.create_ensemble).
     min_members : int, optional
         The minimum number of valid ensemble members for a statistic to be valid.
-        Passing -1 is equivalent to setting min_members to the size of the realization dimension.
-        The default (None) skips this check.
+        Passing None is equivalent to setting min_members to the size of the realization dimension.
+        The default (1) essentially skips this check.
     weights : xr.DataArray, optional
         Weights to apply along the 'realization' dimension. This array cannot contain missing values.
 
@@ -162,7 +162,7 @@ def ensemble_mean_std_max_min(
         # Calculate ensemble statistics:
         ens_mean_std = ensemble_mean_std_max_min(ens)
     """
-    if min_members == -1:
+    if min_members is None:
         min_members = ens.realization.size
     ds_out = xr.Dataset(attrs=ens.attrs)
     for v in ens.data_vars:
@@ -176,13 +176,13 @@ def ensemble_mean_std_max_min(
         ds_out[f"{v}_max"] = ens[v].max(dim="realization")
         ds_out[f"{v}_min"] = ens[v].min(dim="realization")
 
-        if min_members is not None:
+        if min_members != 1:
             enough = ens[v].notnull().sum("realization") >= min_members
 
         # Re-add attributes
         for stat in ["mean", "stdev", "max", "min"]:
             vv = f"{v}_{stat}"
-            if min_members is not None:
+            if min_members != 1:
                 ds_out[vv] = ds_out[vv].where(enough)
             ds_out[vv].attrs = ens[v].attrs
             if "description" in ds_out[vv].attrs.keys():
@@ -204,7 +204,7 @@ def ensemble_percentiles(
     ens: xr.Dataset | xr.DataArray,
     values: Sequence[int] | None = None,
     keep_chunk_size: bool | None = None,
-    min_members: int | None = None,
+    min_members: int | None = 1,
     weights: xr.DataArray | None = None,
     split: bool = True,
 ) -> xr.DataArray | xr.Dataset:
@@ -226,7 +226,8 @@ def ensemble_percentiles(
         If not defined, the function decides which is best.
     min_members : int, optional
         The minimum number of valid ensemble members for a statistic to be valid.
-        The default (None), is equivalent to setting min_members to the size of the realization dimension.
+        Passing None is equivalent to setting min_members to the size of the realization dimension.
+        The default (1) essentially skips this check.
     weights : xr.DataArray, optional
         Weights to apply along the 'realization' dimension. This array cannot contain missing values.
         When given, the function uses xarray's quantile method which is slower than xclim's NaN-optimized algorithm.
@@ -260,6 +261,8 @@ def ensemble_percentiles(
     """
     if values is None:
         values = [10, 50, 90]
+    if min_members is None:
+        min_members = ens.realization.size
 
     if isinstance(ens, xr.Dataset):
         out = xr.merge(
@@ -330,9 +333,7 @@ def ensemble_percentiles(
                 .rename({"quantile": "percentiles"})
             )
 
-    if min_members is not None:
-        if min_members == -1:
-            min_members = ens.realization.size
+    if min_members != 1:
         out = out.where(ens.notnull().sum("realization") >= min_members)
     out = out.assign_coords(
         percentiles=xr.DataArray(list(values), dims=("percentiles",))
