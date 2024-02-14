@@ -118,7 +118,7 @@ jobs:
       matrix:
         include:
           # Windows builds
-          - tox-env: py39-coverage
+          - tox-env: py39-prefetch-coverage
             python-version: "3.9"
             markers: -m 'not slow'
             os: windows-latest

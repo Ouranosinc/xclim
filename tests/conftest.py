@@ -4,6 +4,7 @@ from __future__ import annotations
 import os
 import re
 import shutil
+import sys
 import time
 import warnings
 from datetime import datetime as dt
@@ -474,7 +475,15 @@ def gather_session_data(threadsafe_data_dir, worker_id, xdoctest_namespace):
     ):
         if helpers.PREFETCH_TESTING_DATA:
             print("`XCLIM_PREFETCH_TESTING_DATA` set. Prefetching testing data...")
-        if worker_id in ["master"]:
+        if (
+            sys.platform == "win32"
+            and not _default_cache_dir.joinpath(helpers.TESTDATA_BRANCH).exists()
+        ):
+            raise OSError(
+                "UNIX-style file-locking is not supported on Windows. "
+                "Consider running `$ xclim prefetch_testing_data` to download testing data."
+            )
+        elif worker_id in ["master"]:
             helpers.populate_testing_data(branch=helpers.TESTDATA_BRANCH)
         else:
             _default_cache_dir.mkdir(exist_ok=True, parents=True)
