@@ -184,7 +184,7 @@ def parametric_quantile(
     q : float or Sequence of float
         Quantile to compute, which must be between `0` and `1`, inclusive.
     dist: str, rv_continuous instance, optional
-        The distribution name or instance is the `scipy_dist` attribute is not available on `p`.
+        The distribution name or instance if the `scipy_dist` attribute is not available on `p`.
 
     Returns
     -------
