@@ -314,7 +314,7 @@ class TestEnsembleStats:
         )
 
         # Special value
-        out = first(aggfunc(ens, min_members=-1))
+        out = first(aggfunc(ens, min_members=None))
         # All null
         assert out.isnull().all()
 
