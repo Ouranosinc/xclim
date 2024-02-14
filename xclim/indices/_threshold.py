@@ -2966,6 +2966,7 @@ def degree_days_exceedance_date(
     sum_thresh: Quantified = "25 K days",
     op: str = ">",
     after_date: DayOfYearStr | None = None,
+    never_reached: int | None = None,
     freq: str = "YS",
 ) -> xarray.DataArray:
     r"""Degree-days exceedance date.
@@ -2987,6 +2988,8 @@ def degree_days_exceedance_date(
     after_date: str, optional
         Date at which to start the cumulative sum.
         In "mm-dd" format, defaults to the start of the sampling period.
+    never_reached: int, optional
+        A value to assign when `sum_thresh` is never exceeded. Default (None) assigns "NaN".
     freq : str
         Resampling frequency. If `after_date` is given, `freq` should be annual.
 
@@ -3016,6 +3019,7 @@ def degree_days_exceedance_date(
     thresh = convert_units_to(thresh, "K")
     tas = convert_units_to(tas, "K")
     sum_thresh = convert_units_to(sum_thresh, "K days")
+    never_reached = never_reached if never_reached is not None else np.NaN
 
     if op in ["<", "<=", "lt", "le"]:
         c = thresh - tas
@@ -3030,12 +3034,16 @@ def degree_days_exceedance_date(
             strt_idx.size == 0
         ):  # The date is not within the group. Happens at boundaries.
             return xarray.full_like(grp.isel(time=0), np.nan, float).drop_vars("time")  # type: ignore
-
-        return rl.first_run_after_date(
-            grp.where(grp.time >= grp.time[strt_idx][0]).cumsum("time") > sum_thresh,
+        cumsum = grp.where(grp.time >= grp.time[strt_idx][0]).cumsum("time")
+        out = rl.first_run_after_date(
+            cumsum > sum_thresh,
             window=1,
             date=None,
         )
+        if never_reached is None:
+            # This is slightly faster in numpy and generates fewer tasks in dask
+            return out
+        return xarray.where((cumsum <= sum_thresh).all("time"), never_reached, out)
 
     out = c.clip(0).resample(time=freq).map(_exceedance_date)
     out.attrs.update(units="", is_dayofyear=np.int32(1), calendar=get_calendar(tas))
