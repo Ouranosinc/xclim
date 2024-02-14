@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import platform
+import sys
 from pathlib import Path
 
 import numpy as np
@@ -100,7 +101,11 @@ class TestFileAssertions:
         test_data = Path(__file__).parent / "data"
         callendar = test_data / "callendar_1938.txt"
         md5_sum = utilities.file_md5_checksum(callendar)
-        assert md5_sum == "9a5d9f94d76d4f9d9b7aaadbe8cbf541"  # noqa
+        if sys.platform == "win32":
+            # Windows has a different line ending (CR-LF) than Unix (LF)
+            assert md5_sum == "38083271c2d4c85dea6bd6baf23d34de"  # noqa
+        else:
+            assert md5_sum == "9a5d9f94d76d4f9d9b7aaadbe8cbf541"  # noqa
 
 
 class TestReleaseSupportFuncs:
