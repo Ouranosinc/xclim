@@ -1289,6 +1289,35 @@ def test_degree_days_exceedance_date(open_dataset):
         np.testing.assert_array_equal(out, np.array([[np.nan, 280, 241, 244]]).T)
 
 
+def test_degree_days_exceedance_date_never_reached(open_dataset):
+    tas = open_dataset("FWI/GFWED_sample_2017.nc").tas
+    tas.attrs.update(
+        cell_methods="time: mean within days", standard_name="air_temperature"
+    )
+    # Default -> NaN
+    out = atmos.degree_days_exceedance_date(
+        tas=tas,
+        thresh="4 degC",
+        op=">",
+        sum_thresh="1000 K days",
+        after_date="07-01",
+        freq="YS",
+    ).squeeze("time")
+    np.testing.assert_array_equal(out, np.array([np.NaN, 242, 222, 223]))
+
+    # A number
+    out = atmos.degree_days_exceedance_date(
+        tas=tas,
+        thresh="4 degC",
+        op=">",
+        sum_thresh="1000 K days",
+        never_reached=300,
+        after_date="07-01",
+        freq="YS",
+    ).squeeze("time")
+    np.testing.assert_array_equal(out, np.array([300, 242, 222, 223]))
+
+
 class TestWarmSpellDurationIndex:
     def test_warm_spell_duration_index(self, open_dataset):
         tasmax = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc").tasmax

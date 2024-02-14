@@ -3019,8 +3019,7 @@ def degree_days_exceedance_date(
     thresh = convert_units_to(thresh, "K")
     tas = convert_units_to(tas, "K")
     sum_thresh = convert_units_to(sum_thresh, "K days")
-    never_reached = never_reached if never_reached is not None else np.NaN
-
+    print(thresh, sum_thresh)
     if op in ["<", "<=", "lt", "le"]:
         c = thresh - tas
     elif op in [">", ">=", "gt", "ge"]:
@@ -3035,6 +3034,7 @@ def degree_days_exceedance_date(
         ):  # The date is not within the group. Happens at boundaries.
             return xarray.full_like(grp.isel(time=0), np.nan, float).drop_vars("time")  # type: ignore
         cumsum = grp.where(grp.time >= grp.time[strt_idx][0]).cumsum("time")
+        print(cumsum.isel(time=-1))
         out = rl.first_run_after_date(
             cumsum > sum_thresh,
             window=1,
