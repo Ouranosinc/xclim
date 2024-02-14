@@ -113,26 +113,43 @@ jobs:
       contains(github.event.pull_request.labels.*.name, 'approved') ||
       (github.event.review.state == 'approved') ||
       (github.event_name == 'push')
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         include:
+          # Windows builds
+          - tox-env: py39-coverage
+            python-version: "3.9"
+            markers: -m 'not slow'
+            os: windows-latest
+          # macOS builds
+          - tox-env: py310-coverage
+            python-version: "3.10"
+            markers: -m 'not slow'
+            os: macos-latest
+          # Linux builds
           - tox-env: py39-coverage-sbck
             python-version: "3.9"
             markers: -m 'not slow'
+            os: ubuntu-latest
           - tox-env: py310-coverage  # No markers -- includes slow tests
             python-version: "3.10"
+            os: ubuntu-latest
           - tox-env: py311-coverage-sbck
             python-version: "3.11"
             markers: -m 'not slow'
+            os: ubuntu-latest
           - tox-env: py312-coverage-numba
             python-version: "3.12"
             markers: -m 'not slow'
+            os: ubuntu-latest
           - tox-env: notebooks_doctests
             python-version: "3.10"
+            os: ubuntu-latest
           - tox-env: offline-prefetch
             python-version: "3.11"
             markers: -m 'not slow and not requires_internet'
+            os: ubuntu-latest
     steps:
       - name: Harden Runner
         uses: step-security/harden-runner@63c24ba6bd7ba022e95695ff85de572c04a18142 # v2.7.0
@@ -168,7 +185,7 @@ jobs:
           python -m tox -e ${{ matrix.tox-env }} -- ${{ matrix.markers }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          COVERALLS_FLAG_NAME: run-{{ matrix.tox-env }}
+          COVERALLS_FLAG_NAME: run-{{ matrix.tox-env }}-{{ matrix.os }}
           COVERALLS_PARALLEL: true
           COVERALLS_SERVICE_NAME: github
 
