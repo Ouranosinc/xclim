@@ -108,7 +108,7 @@ jobs:
 
   test-pypi:
     needs: lint
-    name: test-${{ matrix.tox-env }} (Python${{ matrix.python-version }})
+    name: ${{ matrix.tox-env }} (Python${{ matrix.python-version }}, ${{ matrix.os }})
     if: |
       contains(github.event.pull_request.labels.*.name, 'approved') ||
       (github.event.review.state == 'approved') ||
