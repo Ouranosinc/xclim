@@ -475,10 +475,7 @@ def gather_session_data(threadsafe_data_dir, worker_id, xdoctest_namespace):
     ):
         if helpers.PREFETCH_TESTING_DATA:
             print("`XCLIM_PREFETCH_TESTING_DATA` set. Prefetching testing data...")
-        if (
-            sys.platform == "win32"
-            and not _default_cache_dir.joinpath(helpers.TESTDATA_BRANCH).exists()
-        ):
+        if sys.platform == "win32":
             raise OSError(
                 "UNIX-style file-locking is not supported on Windows. "
                 "Consider running `$ xclim prefetch_testing_data` to download testing data."
