@@ -472,7 +472,7 @@ def to_agg_units(
         used to infer the sampling units and get the variable units.
     op : {'min', 'max', 'mean', 'std', 'var', 'doymin', 'doymax',  'count', 'integral', 'sum'}
         The type of aggregation operation performed. "integral" is mathematically equivalent to "sum",
-        but the units are multipled by the timestep of the data (requires an inferrable frequency).
+        but the units are multiplied by the timestep of the data (requires an inferrable frequency).
     dim : str
         The time dimension along which the aggregation was performed.
 
