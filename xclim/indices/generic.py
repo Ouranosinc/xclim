@@ -142,7 +142,10 @@ def select_rolling_resample_op(
     xr.DataArray
         The array for which the operation has been applied over each period.
     """
-    rolled = getattr(da.rolling(time=window, center=window_center), window_op)()
+    rolled = getattr(
+        da.rolling(time=window, center=window_center),
+        window_op.replace("integral", "sum"),
+    )()
     rolled = to_agg_units(rolled, da, window_op)
     return select_resample_op(rolled, op=op, freq=freq, out_units=out_units, **indexer)
 

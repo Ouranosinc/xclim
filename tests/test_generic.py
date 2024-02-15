@@ -60,12 +60,13 @@ class TestSelectRollingResampleOp:
     def test_freq(self, q_series):
         q = q_series(np.arange(1, 366 + 365 + 365 + 1))  # 1st year is leap
         o = generic.select_rolling_resample_op(
-            q, "max", window=3, window_center=True, window_op="sum", freq="MS"
+            q, "max", window=3, window_center=True, window_op="integral", freq="MS"
         )
         np.testing.assert_array_equal(
             [np.sum([30, 31, 32]), np.sum([30 + 29, 31 + 29, 32 + 29])],
             o.isel(time=slice(0, 2)).values,
         )
+        assert o.attrs["units"] == "m3"
 
 
 class TestThresholdCount:
