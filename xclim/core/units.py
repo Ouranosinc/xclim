@@ -471,8 +471,8 @@ def to_agg_units(
         The original array before the aggregation operation,
         used to infer the sampling units and get the variable units.
     op : {'min', 'max', 'mean', 'std', 'var', 'doymin', 'doymax',  'count', 'integral', 'sum'}
-        The type of aggregation operation performed. The special "delta_*" ops are used
-        with temperature units needing conversion to their "delta" counterparts (e.g. degree days)
+        The type of aggregation operation performed. "integral" is mathematically equivalent to "sum",
+        but the units are multipled by the timestep of the data (requires an inferrable frequency).
     dim : str
         The time dimension along which the aggregation was performed.
 
@@ -521,7 +521,7 @@ def to_agg_units(
     >>> degdays.units
     'K d'
     """
-    if op in ["amin", "min", "amax", "max", "mean", "std"]:
+    if op in ["amin", "min", "amax", "max", "mean", "std", "sum"]:
         out.attrs["units"] = orig.attrs["units"]
 
     elif op in ["var"]:
@@ -532,7 +532,7 @@ def to_agg_units(
             units="", is_dayofyear=np.int32(1), calendar=get_calendar(orig)
         )
 
-    elif op in ["count", "integral", "sum"]:
+    elif op in ["count", "integral"]:
         m, freq_u_raw = infer_sampling_units(orig[dim])
         orig_u = str2pint(orig.units)
         freq_u = str2pint(freq_u_raw)
@@ -540,8 +540,14 @@ def to_agg_units(
 
         if op == "count":
             out.attrs["units"] = freq_u_raw
-        elif op in ["integral", "sum"]:
-            out.attrs["units"] = pint2cfunits(orig_u * freq_u)
+        elif op == "integral":
+            if "[time]" in orig_u.dimensionality:
+                # We need to simplify units after multiplication
+                out_units = (orig_u * freq_u).to_reduced_units()
+                out = out * out_units.magnitude
+                out.attrs["units"] = pint2cfunits(out_units)
+            else:
+                out.attrs["units"] = pint2cfunits(orig_u * freq_u)
     else:
         raise ValueError(
             f"Unknown aggregation op {op}. "
