@@ -83,7 +83,7 @@ def fit(
         Time series to be fitted along the time dimension.
     dist : str or rv_continuous distribution object
         Name of the univariate distribution, such as beta, expon, genextreme, gamma, gumbel_r, lognorm, norm
-        (see :py:mod:scipy.stats for full list). Or the distribution object itself.
+        (see :py:mod:scipy.stats for full list) or the distribution object itself.
     method : {"ML" or "MLE", "MM", "PWM", "APP"}
         Fitting method, either maximum likelihood (ML or MLE), method of moments (MM) or approximate method (APP).
         Can also be the probability weighted moments (PWM), also called L-Moments, if a compatible `dist` object is passed.
