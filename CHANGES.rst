@@ -39,7 +39,7 @@ Breaking changes
 * `black` formatting style has been updated to the 2024 stable conventions. `isort` has been added to the `dev` installation recipe. (:pull:`1626`).
 * The indice and indicator for ``winter_storm`` has been removed (deprecated since `xclim` v0.46.0 in favour of ``snd_storm_days``). (:pull:`1565`).
 * `xclim` has dropped support for `scipy` version below v1.9.0 and `numpy` versions below v1.20.0. (:pull:`1565`).
-* For generic function ``select_resample_op`` and ``core.units.to_agg_units``, operation "sum" will now return the same units as the input, and not implicitely translate to an "integral". (:issue:`1645`).
+* For generic function ``select_resample_op`` and ``core.units.to_agg_units``, operation "sum" will now return the same units as the input, and not implicitely translate to an "integral". (:issue:`1645`, :pull:`1649`).
 
 Bug fixes
 ^^^^^^^^^
