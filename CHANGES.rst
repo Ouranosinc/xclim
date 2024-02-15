@@ -49,6 +49,7 @@ Bug fixes
 * Fix the daily case `freq='D'` of ``xclim.stats.preprocess_standardized_index`` (:issue:`1602`  :pull:`1607`).
 * Several spelling mistakes have been corrected within the documentation and codebase. (:pull:`1576`).
 * Added missing ``xclim.ensembles.robustness_fractions`` and ``xclim.ensembles.robustness_categories`` in api doc section. (:pull:`1630`).
+* Fixed an issue that can occur when fetching the testing data and running tests on Windows systems. Adapted a few existing tests for Windows support. (:pull:`1648`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
@@ -66,6 +67,8 @@ Internal changes
     * Some small adjustments to code organization to address `pylint` errors.
 * `dev` formatting tools (`black`, `blackdoc`, `isort`) are now pinned to their `pre-commit` hook version equivalents in both ``pyproject.toml`` and ``tox.ini``. (:pull:`1626`).
 * `black`, `isort`, and `pyupgrade` code formatters no longer target Python3.8 coding style conventions. (:pull:`1565`).
+* The GitHub Workflows now include builds to run tests against both Windows and MacOS. (:pull:`1648`).
+* `prefetch` is now available as a `tox` environment modifier in order to download the testing data before launching `pytest` (e.g. `py3x-prefetch`). This is . (:pull:`1648`).
 
 v0.47.0 (2023-12-01)
 --------------------
