@@ -508,17 +508,26 @@ def _fit_start(x, dist: str, **fitkwargs: Any) -> tuple[tuple, dict]:
         return (chat,), {"loc": loc, "scale": scale}
 
     if dist in ["gamma"]:
-        x_pos = x[x > 0]
+        # not sure if the approximation holds for xmin < 0
+        xmin = x.min()
+        x_pos = x - (xmin if xmin <= 0 else 0)
+        x_pos = x_pos[x_pos > 0]
         m = x_pos.mean()
         log_of_mean = np.log(m)
         mean_of_logs = np.log(x_pos).mean()
         a = log_of_mean - mean_of_logs
         alpha = (1 + np.sqrt(1 + 4 * a / 3)) / (4 * a)
         beta = m / alpha
-        return (alpha,), {"scale": beta}
+        kwargs = {"scale": beta}
+        if xmin < 0:
+            kwargs["loc"] = xmin
+        return (alpha,), kwargs
 
     if dist in ["fisk"]:
-        x_pos = x[x > 0]
+        # not sure if the approximation holds for xmin < 0
+        xmin = x.min()
+        x_pos = x - (xmin if xmin <= 0 else 0)
+        x_pos = x_pos[x_pos > 0]
         m = x_pos.mean()
         v = x_pos.var()
         # pdf =  (beta/alpha) (x/alpha)^{beta-1}/ (1+(x/alpha)^{beta})^2
@@ -528,7 +537,10 @@ def _fit_start(x, dist: str, **fitkwargs: Any) -> tuple[tuple, dict]:
         # In the large beta limit, f_1 -> 1 and f_1/sqrt(f_2) -> 0.56*beta - 0.25
         # Solve for alpha and beta below:
         alpha, beta = m, (1 / 0.56) * (m / np.sqrt(v) + 1 / 4)
-        return (beta,), {"scale": alpha}
+        kwargs = {"scale": alpha}
+        if xmin < 0:
+            kwargs["loc"] = xmin
+        return (beta,), kwargs
     return (), {}
 
 
@@ -554,6 +566,7 @@ def _dist_method_1D(*args, dist: str, function: str, **kwargs: Any) -> xr.DataAr
     array_like
     """
     dist = get_dist(dist)
+
     return getattr(dist, function)(*args, **kwargs)
 
 
@@ -592,6 +605,27 @@ def dist_method(
     # Typically the data to be transformed
     arg = [arg] if arg is not None else []
     args = arg + [fit_params.sel(dparams=dp) for dp in fit_params.dparams.values]
+    # print(kwargs)
+    # print(fit_params.dparams.values)
+    # print(len(args))
+    # for ii in range(4):
+    #     print(ii)
+    #     print(args[ii])
+    # import scipy
+    # return xr.apply_ufunc(
+    #     scipy.stats.gamma.cdf(),
+    #     *args,
+    # )
+    # import scipy
+    # if len(args)==4:
+    #     for ii, arg in enumerate(args):
+    #         arg.to_netcdf(f"/home/eridup1/tmp/tmp_{ii}.nc")
+    # return xr.apply_ufunc(
+    #     scipy.stats.gamma.cdf,
+    #     *args,
+    #     output_dtypes=[float],
+    #     dask="parallelized",
+    # )
     return xr.apply_ufunc(
         _dist_method_1D,
         *args,
@@ -781,7 +815,6 @@ def standardized_index(da: xr.DataArray, params: xr.DataArray):
     params, probs_of_zero = (reindex_time(dax, da) for dax in [params, probs_of_zero])
     dist_probs = dist_method("cdf", params, da)
     probs = probs_of_zero + ((1 - probs_of_zero) * dist_probs)
-
     params_norm = xr.DataArray(
         [0, 1],
         dims=["dparams"],
