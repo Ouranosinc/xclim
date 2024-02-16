@@ -280,7 +280,7 @@ def test_wind_power_potential_from_3h_series():
     power = out * 100
     power.attrs["units"] = "MW"
     annual_power = convert_units_to(
-        select_resample_op(power, op="sum", freq="D"), "MWh"
+        select_resample_op(power, op="integral", freq="D"), "MWh"
     )
     assert (annual_power == 100 * 24).all()
 

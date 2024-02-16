@@ -22,6 +22,9 @@ New features and enhancements
 * New ``xclim.core.calendar.stack_periods`` and ``unstack_periods`` for performing ``rolling(time=...).construct(..., stride=...)`` but with non-uniform temporal periods like years or months. They replace ``xclim.sdba.processing.construct_moving_yearly_window`` and ``unpack_moving_yearly_window`` which are deprecated and will be removed in a future release.
 * New ``as_dataset`` options for ``xclim.set_options``. When True, indicators will output Datasets instead of DataArrays. (:issue:`1257`, :pull:`1625`).
 * Added new option for UTCI calculation to cap low wind velocities to a minimum of 0.5 m/s following Bröde (2012) guidelines. (:issue:`1634`, :pull:`1635`).
+
+* Added option ``never_reached`` to ``degree_days_exceedance_date`` to assign a custom value when the sum threshold is never reached. (:issue:`1459`, :pull:`1647`).
+* Added option ``min_members`` to ensemble statistics to mask elements when the number of valid members is under a threshold. (:issue:`1459`, :pull:`1647`).
 * Distribution instances can now be passed to the ``dist`` argument of most statistical indices. (:pull:`1644`).
 
 Breaking changes
@@ -40,6 +43,7 @@ Breaking changes
 * `black` formatting style has been updated to the 2024 stable conventions. `isort` has been added to the `dev` installation recipe. (:pull:`1626`).
 * The indice and indicator for ``winter_storm`` has been removed (deprecated since `xclim` v0.46.0 in favour of ``snd_storm_days``). (:pull:`1565`).
 * `xclim` has dropped support for `scipy` version below v1.9.0 and `numpy` versions below v1.20.0. (:pull:`1565`).
+* For generic function ``select_resample_op`` and ``core.units.to_agg_units``, operation "sum" will now return the same units as the input, and not implicitly be translated to an "integral". (:issue:`1645`, :pull:`1649`).
 * `lmoments3` was removed as a dependency of `xclim` due to incompatible licensing (GPLv3 vs `xclim`'s Apache 2.0). Depending on the outcome of efforts to modify the licensing of `lmoments3`, this change may eventually be reverted. See `Ouranosinc/lmoments3#12 <https://github.com/Ouranosinc/lmoments3/issues/12>`_. See also the "frequency analysis" notebook for an example on how to continue using the probability weighted moments method for fitting distributions. (:issue:`1620`, :pull:`1644`).
 
 Bug fixes

@@ -79,7 +79,7 @@ dev = [
   "pytest-cov",
   "pytest-socket",
   "pytest-xdist[psutil] >=3.2",
-  "ruff >=0.1.0",
+  "ruff >=0.2.0",
   "tokenize-rt",
   "tox >=4.0",
   # "tox-conda",  # Will be added when a tox@v4.0+ compatible plugin is released.
@@ -123,7 +123,7 @@ target-version = [
 ]
 
 [tool.bumpversion]
-current_version = "0.47.5-dev.17"
+current_version = "0.47.5-dev.19"
 commit = true
 commit_args = "--no-verify"
 tag = false
@@ -256,6 +256,11 @@ exclude = [
   "build",
   ".eggs"
 ]
+
+[tool.ruff.format]
+line-ending = "auto"
+
+[tool.ruff.lint]
 ignore = [
   "D205",
   "D400",
@@ -269,10 +274,10 @@ select = [
   "W"
 ]
 
-[tool.ruff.flake8-bandit]
+[tool.ruff.lint.flake8-bandit]
 check-typed-exception = true
 
-[tool.ruff.flake8-import-conventions.aliases]
+[tool.ruff.lint.flake8-import-conventions.aliases]
 "matplotlib.pyplot" = "plt"
 "xclim.indices" = "xci"
 numpy = "np"
@@ -280,20 +285,17 @@ pandas = "pd"
 scipy = "sp"
 xarray = "xr"
 
-[tool.ruff.format]
-line-ending = "auto"
-
-[tool.ruff.isort]
+[tool.ruff.lint.isort]
 known-first-party = ["xclim"]
 case-sensitive = true
 detect-same-package = false
 lines-after-imports = 1
 no-lines-before = ["future", "standard-library"]
 
-[tool.ruff.mccabe]
+[tool.ruff.lint.mccabe]
 max-complexity = 20
 
-[tool.ruff.per-file-ignores]
+[tool.ruff.lint.per-file-ignores]
 "docs/*.py" = ["D100", "D101", "D102", "D103"]
 "tests/*.py" = ["D100", "D101", "D102", "D103"]
 "xclim/**/__init__.py" = ["F401", "F403"]
@@ -304,8 +306,8 @@ max-complexity = 20
 "xclim/indices/fire/_cffwis.py" = ["D103"]
 "xclim/sdba/utils.py" = ["D103"]
 
-[tool.ruff.pycodestyle]
+[tool.ruff.lint.pycodestyle]
 max-doc-length = 180
 
-[tool.ruff.pydocstyle]
+[tool.ruff.lint.pydocstyle]
 convention = "numpy"

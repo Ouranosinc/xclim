@@ -290,6 +290,34 @@ class TestEnsembleStats:
             out1.tg_mean_min[0, 5, 5], out2.tg_mean_min[0, 5, 5]
         )
 
+    @pytest.mark.parametrize(
+        "aggfunc", [ensembles.ensemble_percentiles, ensembles.ensemble_mean_std_max_min]
+    )
+    def test_stats_min_members(self, ensemble_dataset_objects, open_dataset, aggfunc):
+        ds_all = [open_dataset(n) for n in ensemble_dataset_objects["nc_files_simple"]]
+        ens = ensembles.create_ensemble(ds_all).isel(lat=0, lon=0)
+        ens = ens.where(ens.realization > 0)
+        ens = xr.where((ens.realization == 1) & (ens.time.dt.year == 1950), np.NaN, ens)
+
+        def first(ds):
+            return ds[list(ds.data_vars.keys())[0]]
+
+        # Default, no masking
+        out = first(aggfunc(ens))
+        assert not out.isnull().any()
+
+        # A number
+        out = first(aggfunc(ens, min_members=3))
+        # Only 1950 is null
+        np.testing.assert_array_equal(
+            out.isnull(), [True] + [False] * (ens.time.size - 1)
+        )
+
+        # Special value
+        out = first(aggfunc(ens, min_members=None))
+        # All null
+        assert out.isnull().all()
+
 
 @pytest.mark.slow
 class TestEnsembleReduction:

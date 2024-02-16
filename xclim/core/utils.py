@@ -686,6 +686,9 @@ def infer_kind_from_parameter(param) -> InputKind:
     if annot == {"Quantified"}:
         return InputKind.QUANTIFIED
 
+    if "DayOfYearStr" in annot:
+        return InputKind.DAY_OF_YEAR
+
     if annot.issubset({"int", "float"}):
         return InputKind.NUMBER
 
@@ -694,9 +697,6 @@ def infer_kind_from_parameter(param) -> InputKind:
 
     if annot.issuperset({"str"}):
         return InputKind.STRING
-
-    if annot == {"DayOfYearStr"}:
-        return InputKind.DAY_OF_YEAR
 
     if annot == {"DateStr"}:
         return InputKind.DATE

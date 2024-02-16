@@ -6,7 +6,7 @@ import warnings
 import numpy as np
 import xarray
 
-from xclim.core.calendar import get_calendar, select_time
+from xclim.core.calendar import doy_from_string, get_calendar, select_time
 from xclim.core.missing import at_least_n_valid
 from xclim.core.units import (
     convert_units_to,
@@ -2966,6 +2966,7 @@ def degree_days_exceedance_date(
     sum_thresh: Quantified = "25 K days",
     op: str = ">",
     after_date: DayOfYearStr | None = None,
+    never_reached: DayOfYearStr | int | None = None,
     freq: str = "YS",
 ) -> xarray.DataArray:
     r"""Degree-days exceedance date.
@@ -2986,7 +2987,12 @@ def degree_days_exceedance_date(
         equivalent to '<', they are computed as `thresh - tas`.
     after_date: str, optional
         Date at which to start the cumulative sum.
-        In "mm-dd" format, defaults to the start of the sampling period.
+        In "MM-DD" format, defaults to the start of the sampling period.
+    never_reached: int, str, optional
+        What to do when `sum_thresh` is never exceeded.
+        If an int, the value to assign as a day-of-year.
+        If a string, must be in "MM-DD" format, the day-of-year of that date is assigned.
+        Default (None) assigns "NaN".
     freq : str
         Resampling frequency. If `after_date` is given, `freq` should be annual.
 
@@ -3030,12 +3036,22 @@ def degree_days_exceedance_date(
             strt_idx.size == 0
         ):  # The date is not within the group. Happens at boundaries.
             return xarray.full_like(grp.isel(time=0), np.nan, float).drop_vars("time")  # type: ignore
+        cumsum = grp.where(grp.time >= grp.time[strt_idx][0]).cumsum("time")
 
-        return rl.first_run_after_date(
-            grp.where(grp.time >= grp.time[strt_idx][0]).cumsum("time") > sum_thresh,
+        out = rl.first_run_after_date(
+            cumsum > sum_thresh,
             window=1,
             date=None,
         )
+        if never_reached is None:
+            # This is slightly faster in numpy and generates fewer tasks in dask
+            return out
+        never_reached_val = (
+            doy_from_string(never_reached, grp.time.dt.year[0], grp.time.dt.calendar)
+            if isinstance(never_reached, str)
+            else never_reached
+        )
+        return xarray.where((cumsum <= sum_thresh).all("time"), never_reached_val, out)
 
     out = c.clip(0).resample(time=freq).map(_exceedance_date)
     out.attrs.update(units="", is_dayofyear=np.int32(1), calendar=get_calendar(tas))

@@ -39,6 +39,7 @@ __all__ = [
     "datetime_to_decimal_year",
     "days_in_year",
     "days_since_to_doy",
+    "doy_from_string",
     "doy_to_days_since",
     "ensure_cftime_array",
     "get_calendar",
@@ -86,6 +87,12 @@ def days_in_year(year: int, calendar: str = "default") -> int:
         .timetuple()
         .tm_yday
     )
+
+
+def doy_from_string(doy: DayOfYearStr, year: int, calendar: str) -> int:
+    """Return the day-of-year corresponding to a "MM-DD" string for a given year and calendar."""
+    MM, DD = doy.split("-")
+    return datetime_classes[calendar](year, int(MM), int(DD)).timetuple().tm_yday
 
 
 def date_range(
