@@ -63,7 +63,10 @@ class TestSelectRollingResampleOp:
             q, "max", window=3, window_center=True, window_op="integral", freq="MS"
         )
         np.testing.assert_array_equal(
-            [np.sum([30, 31, 32]), np.sum([30 + 29, 31 + 29, 32 + 29])],
+            [
+                np.sum([30, 31, 32]) * 86400,
+                np.sum([30 + 29, 31 + 29, 32 + 29]) * 86400,
+            ],  # m3 s-1 being summed by the frequency of the data
             o.isel(time=slice(0, 2)).values,
         )
         assert o.attrs["units"] == "m3"
