@@ -695,6 +695,8 @@ class TestAgroclimaticIndices:
             tas = tasmax - 2.5
             tasmin = tasmax - 5
             wb = xci.water_budget(pr, None, tasmin, tasmax, tas)
+            # offset like in climate indices library
+            wb = wb + convert_units_to("1 mm/d", wb)
 
         params = xci.stats.standardized_index_fit_params(
             wb.sel(time=slice("1950", "1980")),
@@ -702,7 +704,6 @@ class TestAgroclimaticIndices:
             window=window,
             dist=dist,
             method=method,
-            offset="1 mm/d",
         )
         spei = xci.standardized_precipitation_evapotranspiration_index(
             wb.sel(time=slice("1998", "2000")), params=params

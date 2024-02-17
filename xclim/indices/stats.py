@@ -12,8 +12,7 @@ import xarray as xr
 
 from xclim.core.calendar import compare_offsets, resample_doy, select_time
 from xclim.core.formatting import prefix_attrs, unprefix_attrs, update_history
-from xclim.core.units import convert_units_to
-from xclim.core.utils import Quantified, uses_dask
+from xclim.core.utils import DateStr, Quantified, uses_dask
 
 from . import generic
 
@@ -729,9 +728,6 @@ def standardized_index_fit_params(
     method : {'ML', 'APP', 'PWM'}
         Name of the fitting method, such as `ML` (maximum likelihood), `APP` (approximate). The approximate method
         uses a deterministic function that doesn't involve any optimization.
-    offset: Quantified
-        Distributions bounded by zero (e.g. "gamma", "fisk") can be used for datasets with negative values
-        by using an offset: `da + offset`.
     \*\*indexer
         Indexing parameters to compute the indicator on a temporal subset of the data.
         It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
@@ -755,11 +751,6 @@ def standardized_index_fit_params(
         raise NotImplementedError(
             f"The method `{method}` is not supported for distribution `{dist}`."
         )
-
-    if offset is not None:
-        with xr.set_options(keep_attrs=True):
-            da = da + convert_units_to(offset, da, context="hydro")
-
     da, group = preprocess_standardized_index(da, freq, window, **indexer)
     params = da.groupby(group).map(fit, dist=dist, method=method)
     cal_range = (
@@ -774,7 +765,6 @@ def standardized_index_fit_params(
         "method": method,
         "group": group,
         "units": "",
-        "offset": offset or "",
     }
     method, args = ("", []) if indexer == {} else indexer.popitem()
     params.attrs["time_indexer"] = (method, *args)
@@ -782,24 +772,96 @@ def standardized_index_fit_params(
     return params
 
 
-def standardized_index(da: xr.DataArray, params: xr.DataArray):
-    """Compute standardized index for given fit parameters.
-
-    This computes standardized indices which measure the deviation of  variables in the dataset compared
-    to a reference distribution. The reference is a statistical distribution computed with fitting parameters `params`
-    over a given calibration period of the dataset. Those fitting parameters are obtained with
-    ``xclim.standardized_index_fit_params``.
+def standardized_index(
+    da: xr.DataArray,
+    freq: str | None,
+    window: int,
+    dist: str,
+    method: str,
+    cal_start: DateStr | None,
+    cal_end: DateStr | None,
+    params: Quantified | None,
+    **indexer,
+) -> xr.DataArray:
+    r"""Standardized Index (SI).
 
     Parameters
     ----------
     da : xarray.DataArray
-        Input array.
-        Resampling and rolling operations should have already been applied using
-        ``xclim.indices.preprocess_standardized_index``.
+        Daily input data.
+    freq : str, optional
+        Resampling frequency. A monthly or daily frequency is expected. Option `None` assumes that desired resampling
+        has already been applied input dataset and will skip the resampling step.
+    window : int
+        Averaging window length relative to the resampling frequency. For example, if `freq="MS"`,
+        i.e. a monthly resampling, the window is an integer number of months.
+    dist : {"gamma", "fisk"}
+        Name of the univariate distribution. (see :py:mod:`scipy.stats`).
+    method : {'APP', 'ML'}
+        Name of the fitting method, such as `ML` (maximum likelihood), `APP` (approximate). The approximate method
+        uses a deterministic function that doesn't involve any optimization.
+    cal_start : DateStr, optional
+        Start date of the calibration period. A `DateStr` is expected, that is a `str` in format `"YYYY-MM-DD"`.
+        Default option `None` means that the calibration period begins at the start of the input dataset.
+    cal_end : DateStr, optional
+        End date of the calibration period. A `DateStr` is expected, that is a `str` in format `"YYYY-MM-DD"`.
+        Default option `None` means that the calibration period finishes at the end of the input dataset.
     params : xarray.DataArray
-        Fit parameters computed using ``xclim.indices.stats.standardized_index_fit_params``.
+        Fit parameters.
+        The `params` can be computed using ``xclim.indices.stats.standardized_index_fit_params`` in advance.
+        The output can be given here as input, and it overrides other options.
+    \*\*indexer
+        Indexing parameters to compute the indicator on a temporal subset of the data.
+        It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
+
+    Returns
+    -------
+    xarray.DataArray, [unitless]
+        Standardized Precipitation Index.
+
+    Notes
+    -----
+    * The length `N` of the N-month SPI is determined by choosing the `window = N`.
+    * Supported statistical distributions are: ["gamma", "fisk"], where "fisk" is scipy's implementation of
+       a log-logistic distribution
+    * If `params` is given as input, it overrides the `cal_start`, `cal_end`, `freq` and `window`, `dist` and `method` options.
+    * The standardized index is bounded by ±8.21. 8.21 is the largest standardized index as constrained by the float64 precision in
+      the inversion to the normal distribution.
+
+    References
+    ----------
+    :cite:cts:`mckee_relationship_1993`
     """
+    if params is not None:
+        freq, window, indexer = (
+            params.attrs[s] for s in ["freq", "window", "time_indexer"]
+        )
+        # Unpack attrs to None and {} if needed
+        freq = None if freq == "" else freq
+        indexer = {} if indexer[0] == "" else {indexer[0]: indexer[1:]}
+        if cal_start or cal_end:
+            warnings.warn(
+                "Expected either `cal_{start|end}` or `params`, got both. The `params` input overrides other inputs."
+                "If `cal_start`, `cal_end`, `freq`, `window`, and/or `dist` were given as input, they will be ignored."
+            )
+
+    da, _ = preprocess_standardized_index(da, freq=freq, window=window, **indexer)
+    if params is None:
+        params = standardized_index_fit_params(
+            da.sel(time=slice(cal_start, cal_end)),
+            freq=None,
+            window=1,
+            dist=dist,
+            method=method,
+        )
+
+    # If params only contains a subset of main dataset time grouping
+    # (e.g. 8/12 months, etc.), it needs to be broadcasted
     group = params.attrs["group"]
+    template = da.groupby(group).first()
+    paramsd = {k: v for k, v in params.sizes.items() if k != "dparams"}
+    if paramsd != template.sizes:
+        params = params.broadcast_like(template)
 
     def reindex_time(da, da_ref):
         if group == "time.dayofyear":
@@ -809,6 +871,7 @@ def standardized_index(da: xr.DataArray, params: xr.DataArray):
             da["time"] = da_ref.time
         return da if not uses_dask(da) else da.chunk({"time": -1})
 
+    # this should be restricted to some distributions / in some context
     probs_of_zero = da.groupby(group).map(
         lambda x: (x == 0).sum("time") / x.notnull().sum("time")
     )
@@ -821,7 +884,7 @@ def standardized_index(da: xr.DataArray, params: xr.DataArray):
         coords=dict(dparams=(["loc", "scale"])),
         attrs=dict(scipy_dist="norm"),
     )
-    std_index = dist_method("ppf", params_norm, probs)
+    si = dist_method("ppf", params_norm, probs)
     # A cdf value of 0 or 1 gives ±np.inf when inverted to the normal distribution.
     # The neighbouring values 0.00...1 and 0.99...9 with a float64 give a standardized index of ± 8.21
     # We use this index as reference for maximal/minimal standardized values.
@@ -829,5 +892,10 @@ def standardized_index(da: xr.DataArray, params: xr.DataArray):
     # notes that precipitation events (over a month/season) generally occur less than 100 times in the US.
     # Values of standardized index outside the range [-3.09, 3.09] correspond to probabilities smaller than 0.001
     # or greater than 0.999, which could be considered non-statistically relevant for this sample size.
-    std_index = std_index.clip(-8.21, 8.21)
-    return std_index
+    si = si.clip(-8.21, 8.21)
+
+    si.attrs = params.attrs
+    si.attrs["freq"] = (freq or xr.infer_freq(si.time)) or "undefined"
+    si.attrs["window"] = window
+    si.attrs["units"] = ""
+    return si
