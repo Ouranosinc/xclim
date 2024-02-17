@@ -696,7 +696,7 @@ class TestAgroclimaticIndices:
             tasmin = tasmax - 5
             wb = xci.water_budget(pr, None, tasmin, tasmax, tas)
             # offset like in climate indices library
-            wb = wb + convert_units_to("1 mm/d", wb)
+            wb = wb + convert_units_to("1 mm/d", wb, context="hydro")
 
         params = xci.stats.standardized_index_fit_params(
             wb.sel(time=slice("1950", "1980")),
