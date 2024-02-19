@@ -73,6 +73,7 @@ def fit(
     dist: str | scipy.stats.rv_continuous = "norm",
     method: str = "ML",
     dim: str = "time",
+    confidence: float | None = None,
     **fitkwargs: Any,
 ) -> xr.DataArray:
     r"""Fit an array to a univariate distribution along the time dimension.
@@ -90,6 +91,9 @@ def fit(
         The PWM method is usually more robust to outliers.
     dim : str
         The dimension upon which to perform the indexing (default: "time").
+    confidence : float, optional
+        If set, the interval for the corresponding confidence is returned along the parameters.
+        Default (None), returns only the parameters.
     \*\*fitkwargs
         Other arguments passed directly to :py:func:`_fitstart` and to the distribution's `fit`.
 
@@ -97,6 +101,9 @@ def fit(
     -------
     xr.DataArray
         An array of fitted distribution parameters.
+    xr.DataArray
+        Returned if `confidence` is not None. Bounds of the confidence interval.
+        `confidence * 100` % are the distribution's possible values are inside this range.
 
     Notes
     -----
@@ -165,6 +172,9 @@ def fit(
         ),
     )
     out.attrs.update(attrs)
+    out = out.rename("params")
+    if confidence is not None:
+        return out, dist_method("interval", out, confidence, dist).rename("interval")
     return out
 
 
@@ -309,6 +319,7 @@ def fa(
     dist: str | scipy.stats.rv_continuous = "norm",
     mode: str = "max",
     method: str = "ML",
+    confidence: float | None = None,
 ) -> xr.DataArray:
     """Return the value corresponding to the given return period.
 
@@ -329,18 +340,27 @@ def fa(
         Fitting method, either maximum likelihood (ML or MLE), method of moments (MOM) or approximate method (APP).
         Also accepts probability weighted moments (PWM), also called L-Moments, if `dist` is an instance from the lmoments3 library.
         The PWM method is usually more robust to outliers.
+    confidence : float, optional
+        If set, the confidence interval for the fit is returned along with the probability of exceedance.
+        Default (None), returns only the probability of exceedance.
 
     Returns
     -------
     xarray.DataArray
         An array of values with a 1/t probability of exceedance (if mode=='max').
+    xr.DataArray
+        Returned if `confidence` is not None. Bounds of the confidence interval.
+        `confidence * 100` % are the distribution's possible values are inside this range.
 
     See Also
     --------
     scipy.stats : For descriptions of univariate distribution types.
     """
     # Fit the parameters of the distribution
-    p = fit(da, dist, method=method)
+    p = fit(da, dist, method=method, confidence=confidence)
+    if confidence is not None:
+        confint = p[-1]
+        p = [0]
     t = np.atleast_1d(t)
 
     if mode in ["max", "high"]:
@@ -359,6 +379,8 @@ def fa(
         .assign_coords(return_period=t)
     )
     out.attrs["mode"] = mode
+    if confidence is not None:
+        return out, confint
     return out
 
 
@@ -370,6 +392,7 @@ def frequency_analysis(
     window: int = 1,
     freq: str | None = None,
     method: str = "ML",
+    confidence: float | None = None,
     **indexer: int | float | str,
 ) -> xr.DataArray:
     r"""Return the value corresponding to a return period.
@@ -395,6 +418,9 @@ def frequency_analysis(
         Fitting method, either maximum likelihood (ML or MLE), method of moments (MOM) or approximate method (APP).
         Also accepts probability weighted moments (PWM), also called L-Moments, if `dist` is an instance from the lmoments3 library.
         The PWM method is usually more robust to outliers.
+    confidence : float, optional
+        If set, the interval for the corresponding confidence is returned along the probability of exceedance.
+        Default (None), returns only the probability of exceedance.
     \*\*indexer
         Time attribute and values over which to subset the array. For example, use season='DJF' to select winter values,
         month=1 to select January, or month=[6,7,8] to select summer months. If indexer is not provided, all values are
@@ -404,6 +430,9 @@ def frequency_analysis(
     -------
     xarray.DataArray
         An array of values with a 1/t probability of exceedance or non-exceedance when mode is high or low respectively.
+    xr.DataArray
+        Returned if `confidence` is not None. Bounds of the confidence interval.
+        `confidence * 100` % are the distribution's possible values are inside this range.
 
     See Also
     --------
@@ -424,7 +453,7 @@ def frequency_analysis(
     if uses_dask(sel):
         sel = sel.chunk({"time": -1})
     # Frequency analysis
-    return fa(sel, t, dist=dist, mode=mode, method=method)
+    return fa(sel, t, dist=dist, mode=mode, method=method, confidence=confidence)
 
 
 def get_dist(dist: str | scipy.stats.rv_continuous):
@@ -538,7 +567,10 @@ def _dist_method_1D(
     array_like
     """
     dist = get_dist(dist)
-    return getattr(dist, function)(*args, **kwargs)
+    out = getattr(dist, function)(*args, **kwargs)
+    if isinstance(out, tuple) and len(out) > 1:
+        return np.stack(out, axis=-1)
+    return out
 
 
 def dist_method(
@@ -578,6 +610,10 @@ def dist_method(
     # Typically the data to be transformed
     arg = [arg] if arg is not None else []
     args = arg + [fit_params.sel(dparams=dp) for dp in fit_params.dparams.values]
+    if function == "interval":
+        extra = {"output_core_dims": [["bounds"]]}
+    else:
+        extra = {}
     return xr.apply_ufunc(
         _dist_method_1D,
         *args,
@@ -588,6 +624,7 @@ def dist_method(
         },
         output_dtypes=[float],
         dask="parallelized",
+        **extra,
     )
 
 
