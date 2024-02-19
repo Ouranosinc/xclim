@@ -12,6 +12,7 @@ import xarray as xr
 
 from xclim.core.calendar import compare_offsets, resample_doy, select_time
 from xclim.core.formatting import prefix_attrs, unprefix_attrs, update_history
+from xclim.core.units import convert_units_to
 from xclim.core.utils import DateStr, Quantified, uses_dask
 
 from . import generic
@@ -743,6 +744,12 @@ def standardized_index_fit_params(
     * Gamma ("gamma") : "ML", "APP", "PWM"
     * Log-logistic ("fisk") : "ML", "APP"
     """
+    if offset:
+        warnings.warn("Inputting an offset will be deprecated in xclim>=0.49.0. ")
+    if offset is not None:
+        with xr.set_options(keep_attrs=True):
+            da = da + convert_units_to(offset, da, context="hydro")
+
     # "WPM" method doesn't seem to work for gamma or pearson3
     dist_and_methods = {"gamma": ["ML", "APP", "PWM"], "fisk": ["ML", "APP"]}
     if dist not in dist_and_methods:
@@ -768,6 +775,8 @@ def standardized_index_fit_params(
     }
     method, args = ("", []) if indexer == {} else indexer.popitem()
     params.attrs["time_indexer"] = (method, *args)
+
+    params.attrs["offset"] = offset or ""
 
     return params
 

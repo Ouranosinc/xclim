@@ -1,6 +1,8 @@
 # noqa: D100
 from __future__ import annotations
 
+import warnings
+
 import numpy as np
 import xarray
 
@@ -1194,6 +1196,7 @@ def standardized_precipitation_index(
 
 @declare_units(
     wb="[precipitation]",
+    offset="[precipitation]",
     params="[]",
 )
 def standardized_precipitation_evapotranspiration_index(
@@ -1202,6 +1205,7 @@ def standardized_precipitation_evapotranspiration_index(
     window: int = 1,
     dist: str = "gamma",
     method: str = "APP",
+    offset: Quantified = "1.000 mm/d",
     cal_start: DateStr | None = None,
     cal_end: DateStr | None = None,
     params: Quantified | None = None,
@@ -1230,6 +1234,10 @@ def standardized_precipitation_evapotranspiration_index(
         `PWM` (probability weighted moments).
         The approximate method uses a deterministic function that doesn't involve any optimization. Available methods
         vary with the distribution: 'gamma':{'APP', 'ML', 'PWM'}, 'fisk':{'APP', 'ML'}
+    offset : Quantified
+        For distributions bounded by zero (e.g. "gamma", "fisk"), the two-parameters distributions only accept positive
+        values. An offset can be added to make sure this is the case. This option will be removed in xclim >=0.49.0, ``xclim``
+        will rely on three-parameters distributions instead.
     cal_start : DateStr, optional
         Start date of the calibration period. A `DateStr` is expected, that is a `str` in format `"YYYY-MM-DD"`.
         Default option `None` means that the calibration period begins at the start of the input dataset.
@@ -1259,6 +1267,31 @@ def standardized_precipitation_evapotranspiration_index(
 
     See Standardized Precipitation Index (SPI) for more details on usage.
     """
+    uses_default_offset = offset != "1.000 mm/d"
+    if uses_default_offset is False:
+        warnings.warn("Inputting an offset will be deprecated in xclim>=0.49.0. ")
+    if params is not None:
+        params_offset = params.attrs["offset"]
+        if uses_default_offset is False and offset != params_offset:
+            warnings.warn(
+                "The offset in `params` differs from the input `offset`."
+                "Proceeding with the value given in `params`."
+            )
+        offset = params_offset
+    offset = 0 if offset == "" else convert_units_to(offset, wb, context="hydro")
+    # Allowed distributions are constrained by the SPI function
+    if dist in ["gamma", "fisk"] and offset <= 0:
+        raise ValueError(
+            "The water budget must be shifted towards positive values to be used with `gamma` and `fisk` "
+            "distributions which are bounded by zero (only when using two-parameters distributions: in xclim>=0.49.0,"
+            "three-parameters distributions are used to accommodate negative values). Only positive offsets are accepted."
+        )
+    # Note that the default behaviour would imply an offset for any distribution, even those distributions
+    # that can accommodate negative values of the water budget. This needs to be changed in future versions
+    # of the index.
+    if offset != 0:
+        with xarray.set_options(keep_attrs=True):
+            wb = wb + offset
     dist_methods = {"gamma": ["ML", "APP", "PWM"], "fisk": ["ML", "APP"]}
     if dist in dist_methods.keys():
         if method not in dist_methods[dist]:
