@@ -25,7 +25,8 @@ New features and enhancements
 * Added option ``never_reached`` to ``degree_days_exceedance_date`` to assign a custom value when the sum threshold is never reached. (:issue:`1459`, :pull:`1647`).
 * Added option ``min_members`` to ensemble statistics to mask elements when the number of valid members is under a threshold. (:issue:`1459`, :pull:`1647`).
 * Distribution instances can now be passed to the ``dist`` argument of most statistical indices. (:pull:`1644`).
-* Added a new `xclim.indices.generic.select_rolling_resample_op` function to allow for computing rolling statistics. (:issue:`1480`, :pull:`1643`).
+* Added a new ``xclim.indices.generic.select_rolling_resample_op`` function to allow for computing rolling statistics. (:issue:`1480`, :pull:`1643`).
+* Add the possibility to use a group with a window in ``xc.sdba.processing.reordering``. (:pull:`1566`).
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
