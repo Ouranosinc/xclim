@@ -139,9 +139,9 @@ def deprecated(from_version: str | None, suggested: str | None = None) -> Callab
         def wrapper(*args, **kwargs):
             msg = (
                 f"`{func.__name__}` is deprecated"
-                f"{' from version {}'.format(from_version) if from_version else ''} "
+                f"{f' from version {from_version}' if from_version else ''} "
                 "and will be removed in a future version of xclim"
-                f"{'. Use `{}` instead'.format(suggested) if suggested else ''}. "
+                f"{f'. Use `{suggested}` instead' if suggested else ''}. "
                 "Please update your scripts accordingly."
             )
             warnings.warn(
@@ -680,8 +680,14 @@ def infer_kind_from_parameter(param) -> InputKind:
     if param.name == "freq":
         return InputKind.FREQ_STR
 
+    if param.kind == param.VAR_KEYWORD:
+        return InputKind.KWARGS
+
     if annot == {"Quantified"}:
         return InputKind.QUANTIFIED
+
+    if "DayOfYearStr" in annot:
+        return InputKind.DAY_OF_YEAR
 
     if annot.issubset({"int", "float"}):
         return InputKind.NUMBER
@@ -689,11 +695,8 @@ def infer_kind_from_parameter(param) -> InputKind:
     if annot.issubset({"int", "float", "Sequence[int]", "Sequence[float]"}):
         return InputKind.NUMBER_SEQUENCE
 
-    if annot == {"str"}:
+    if annot.issuperset({"str"}):
         return InputKind.STRING
-
-    if annot == {"DayOfYearStr"}:
-        return InputKind.DAY_OF_YEAR
 
     if annot == {"DateStr"}:
         return InputKind.DATE
@@ -703,9 +706,6 @@ def infer_kind_from_parameter(param) -> InputKind:
 
     if annot == {"Dataset"}:
         return InputKind.DATASET
-
-    if param.kind == param.VAR_KEYWORD:
-        return InputKind.KWARGS
 
     return InputKind.OTHER_PARAMETER
 

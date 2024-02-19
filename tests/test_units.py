@@ -22,6 +22,7 @@ from xclim.core.units import (
     pint_multiply,
     rate2amount,
     str2pint,
+    to_agg_units,
     units,
     units2pint,
 )
@@ -317,3 +318,28 @@ def test_declare_relative_units():
 
     with pytest.raises(ValidationError):
         index_full_mm("1 mm", "2 Pa", "3 mm/s")
+
+
+@pytest.mark.parametrize(
+    "in_u,opfunc,op,exp,exp_u",
+    [
+        ("m/h", "sum", "integral", 8760, "m"),
+        ("m/h", "sum", "sum", 365, "m/h"),
+        ("K", "mean", "mean", 1, "K"),
+        ("", "sum", "count", 365, "d"),
+        ("", "sum", "count", 365, "d"),
+        ("kg m-2", "var", "var", 0, "kg2 m-4"),
+        ("°C", "argmax", "doymax", 0, ""),
+    ],
+)
+def test_to_agg_units(in_u, opfunc, op, exp, exp_u):
+    da = xr.DataArray(
+        np.ones((365,)),
+        dims=("time",),
+        coords={"time": xr.cftime_range("1993-01-01", periods=365, freq="D")},
+        attrs={"units": in_u},
+    )
+
+    out = to_agg_units(getattr(da, opfunc)(), da, op)
+    np.testing.assert_allclose(out, exp)
+    assert out.attrs["units"] == exp_u
