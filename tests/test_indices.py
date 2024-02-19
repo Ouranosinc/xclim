@@ -3481,26 +3481,31 @@ class TestWetDaysProp:
         np.testing.assert_allclose(out, [4 / 31, 0, 0, 2 / 31, 0, 0, 0, 0, 0, 0, 0, 0])
 
 
+@pytest.mark.parametrize(
+    "wind_cap_min,wind,expected",
+    [(False, 2, 17.70), (False, 1, np.nan), (True, 1, 17.76)],
+)
 def test_universal_thermal_climate_index(
     tas_series,
     hurs_series,
     sfcWind_series,
+    wind_cap_min,
+    wind,
+    expected,
 ):
     tas = tas_series(np.array([16]) + K2C)
     hurs = hurs_series(np.array([36]))
-    sfcWind = sfcWind_series(np.array([2]))
+    sfcWind = sfcWind_series(np.array([wind]))
     mrt = tas_series(np.array([22]) + K2C)
-
-    # Expected values
-    utci_exp = [17.7]
 
     utci = xci.universal_thermal_climate_index(
         tas=tas,
         hurs=hurs,
         sfcWind=sfcWind,
         mrt=mrt,
+        wind_cap_min=wind_cap_min,
     )
-    np.testing.assert_allclose(utci, utci_exp, rtol=1e-03)
+    np.testing.assert_allclose(utci, expected, rtol=1e-03)
 
 
 @pytest.mark.parametrize("stat,expected", [("sunlit", 295.0), ("instant", 294.9)])

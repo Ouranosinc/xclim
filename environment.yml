@@ -13,7 +13,6 @@ dependencies:
   - Click >=8.1
   - dask >=2.6.0
   - jsonpickle
-  - lmoments3
   - numba
   - numpy >=1.20.0
   - pandas >=2.2.0
@@ -61,7 +60,7 @@ dependencies:
   - pytest-cov
   - pytest-socket
   - pytest-xdist >=3.2
-  - ruff >=0.1.0
+  - ruff >=0.2.0
   - sphinx
   - sphinx-autodoc-typehints
   - sphinx-codeautolink
