@@ -4,11 +4,12 @@ Changelog
 
 v0.48.1 (2024-02-19)
 --------------------
-Contributors to this version: Trevor James Smith (:user:`Zeitsperre`)
+Contributors to this version: Trevor James Smith (:user:`Zeitsperre`).
 
 Bug fixes
 ^^^^^^^^^
-* Fixed an issue with missing `conda` dependencies in the `xclim` documentation.
+* Fixed an issue with missing `conda` dependencies in the `xclim` documentation. (:pull:`1657`).
+* Adjusted the Mastodon publishing workflow. (:pull:`1657`).
 
 v0.48.0 (2024-02-19)
 --------------------
