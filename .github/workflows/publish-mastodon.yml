@@ -27,7 +27,11 @@ jobs:
       - name: Harden Runner
         uses: step-security/harden-runner@63c24ba6bd7ba022e95695ff85de572c04a18142 # v2.7.0
         with:
-          egress-policy: audit
+          disable-sudo: true
+          egress-policy: block
+          allowed-endpoints: >
+            api.github.com:443
+            github.com:443
 
       - name: Checkout
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
@@ -77,9 +81,8 @@ jobs:
         if: ${{ github.event.inputs.dry-run != 'true' }} || ${{ github.event_name == 'release' }}
         uses: cbrgm/mastodon-github-action@eb0fa2c755679b459015a898dada174b5ddbff7c # v2.0.2
         with:
-          language: "en"
+          url: ${{ secrets.MASTODON_URL }}
+          access-token: ${{ secrets.MASTODON_ACCESS_TOKEN }}
           message: "${{ steps.render_template.outputs.result }}${{ env.contributors }}"
+          language: "en"
           visibility: "public"
-        env:
-          MASTODON_URL: ${{ secrets.MASTODON_URL }}
-          MASTODON_ACCESS_TOKEN: ${{ secrets.MASTODON_ACCESS_TOKEN }}
