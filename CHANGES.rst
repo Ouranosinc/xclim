@@ -2,7 +2,7 @@
 Changelog
 =========
 
-v0.48.1 (2024-02-19)
+v0.48.1 (2024-02-20)
 --------------------
 Contributors to this version: Trevor James Smith (:user:`Zeitsperre`).
 
@@ -10,6 +10,7 @@ Bug fixes
 ^^^^^^^^^
 * Fixed an issue with missing `conda` dependencies in the `xclim` documentation. (:pull:`1657`).
 * Adjusted the Mastodon publishing workflow. (:pull:`1657`).
+* Pinned `nbconvert` to address regressions when building the documentation. (:pull:`1657`).
 
 v0.48.0 (2024-02-19)
 --------------------
