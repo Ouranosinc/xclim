@@ -78,7 +78,7 @@ jobs:
         uses: cbrgm/mastodon-github-action@eb0fa2c755679b459015a898dada174b5ddbff7c # v2.0.2
         with:
           url: ${{ secrets.MASTODON_URL }}
-          access_token: ${{ secrets.MASTODON_ACCESS_TOKEN }}
-          language: "en"
+          access-token: ${{ secrets.MASTODON_ACCESS_TOKEN }}
           message: "${{ steps.render_template.outputs.result }}${{ env.contributors }}"
+          language: "en"
           visibility: "public"
