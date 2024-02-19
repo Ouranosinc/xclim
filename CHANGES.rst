@@ -2,6 +2,14 @@
 Changelog
 =========
 
+v0.48.1 (2024-02-19)
+--------------------
+Contributors to this version: Trevor James Smith (:user:`Zeitsperre`)
+
+Bug fixes
+^^^^^^^^^
+* Fixed an issue with missing `conda` dependencies in the `xclim` documentation.
+
 v0.48.0 (2024-02-19)
 --------------------
 Contributors to this version: Juliette Lavoie (:user:`juliettelavoie`), Pascal Bourgault (:user:`aulemahal`), Trevor James Smith (:user:`Zeitsperre`), David Huard (:user:`huard`), Éric Dupuis (:user:`coxipi`), Dante Castro (:user:`profesorpaiche`), Gabriel Rondeau-Genesse (:user:`RondeauG`).
