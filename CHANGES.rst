@@ -40,7 +40,7 @@ Breaking changes
 * `black` formatting style has been updated to the 2024 stable conventions. `isort` has been added to the `dev` installation recipe. (:pull:`1626`).
 * The indice and indicator for ``winter_storm`` has been removed (deprecated since `xclim` v0.46.0 in favour of ``snd_storm_days``). (:pull:`1565`).
 * `xclim` has dropped support for `scipy` version below v1.9.0 and `numpy` versions below v1.20.0. (:pull:`1565`).
-* Argument `offset` is removed  from ``xclim.indices.standardized_precipitation_evapotranspiration_index``. (:issue:`1477`  :pull:`1653`).
+* Argument `offset` is removed  from ``xclim.indices.standardized_precipitation_evapotranspiration_index``. This will slightly change results when using SPEI with default values (:issue:`1477`  :pull:`1653`).
 
 Bug fixes
 ^^^^^^^^^
