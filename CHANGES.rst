@@ -74,6 +74,7 @@ Internal changes
 * `black`, `isort`, and `pyupgrade` code formatters no longer target Python3.8 coding style conventions. (:pull:`1565`).
 * The GitHub Workflows now include builds to run tests against both Windows and MacOS. (:pull:`1648`).
 * `prefetch` is now available as a `tox` environment modifier in order to download the testing data before launching `pytest` (e.g. `py3x-prefetch`). This is required for running tests the first time on Windows if the testing data has not already been installed. (:pull:`1648`).
+* Removed `step-security/harden-runner` from the `finish` job as it does not work on container images lacking `sudo` access. (:pull:`1655`).
 
 v0.47.0 (2023-12-01)
 --------------------
