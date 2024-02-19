@@ -2,8 +2,8 @@
 Changelog
 =========
 
-v0.48 (2024-02-19)
-------------------
+v0.48.0 (2024-02-19)
+--------------------
 Contributors to this version: Juliette Lavoie (:user:`juliettelavoie`), Pascal Bourgault (:user:`aulemahal`), Trevor James Smith (:user:`Zeitsperre`), David Huard (:user:`huard`), Éric Dupuis (:user:`coxipi`), Dante Castro (:user:`profesorpaiche`), Gabriel Rondeau-Genesse (:user:`RondeauG`).
 
 Announcements
@@ -73,7 +73,7 @@ Internal changes
 * `dev` formatting tools (`black`, `blackdoc`, `isort`) are now pinned to their `pre-commit` hook version equivalents in both ``pyproject.toml`` and ``tox.ini``. (:pull:`1626`).
 * `black`, `isort`, and `pyupgrade` code formatters no longer target Python3.8 coding style conventions. (:pull:`1565`).
 * The GitHub Workflows now include builds to run tests against both Windows and MacOS. (:pull:`1648`).
-* `prefetch` is now available as a `tox` environment modifier in order to download the testing data before launching `pytest` (e.g. `py3x-prefetch`). This is . (:pull:`1648`).
+* `prefetch` is now available as a `tox` environment modifier in order to download the testing data before launching `pytest` (e.g. `py3x-prefetch`). This is required for running tests the first time on Windows if the testing data has not already been installed. (:pull:`1648`).
 
 v0.47.0 (2023-12-01)
 --------------------
