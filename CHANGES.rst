@@ -45,6 +45,7 @@ Breaking changes
 * `xclim` has dropped support for `scipy` version below v1.9.0 and `numpy` versions below v1.20.0. (:pull:`1565`).
 * For generic function ``select_resample_op`` and ``core.units.to_agg_units``, operation "sum" will now return the same units as the input, and not implicitly be translated to an "integral". (:issue:`1645`, :pull:`1649`).
 * `lmoments3` was removed as a dependency of `xclim` due to incompatible licensing (GPLv3 vs `xclim`'s Apache 2.0). Depending on the outcome of efforts to modify the licensing of `lmoments3`, this change may eventually be reverted. See `Ouranosinc/lmoments3#12 <https://github.com/Ouranosinc/lmoments3/issues/12>`_. See also the "frequency analysis" notebook for an example on how to continue using the probability weighted moments method for fitting distributions. (:issue:`1620`, :pull:`1644`).
+* `xclim` is now compatible with `pytest` versions `~=7.0.0` and `>=8.0.1`. (:pull:`1632`).
 
 Bug fixes
 ^^^^^^^^^
