@@ -167,7 +167,7 @@ def _reordering(ds, *, dim):
             :, int(data.shape[1] / 2)
         ]  # pick the middle of the window
 
-    if "window" in dim:
+    if {"window", "time"} == set(dim):
         return (
             xr.apply_ufunc(
                 _reordering_2d,
