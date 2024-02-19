@@ -31,6 +31,47 @@ class TestSelectResampleOp:
         assert o[0] == 31 + 29
 
 
+class TestSelectRollingResampleOp:
+    def test_rollingmax(self, q_series):
+        q = q_series(np.arange(1, 366 + 365 + 365 + 1))  # 1st year is leap
+        o = generic.select_rolling_resample_op(
+            q, "max", window=14, window_center=False, window_op="mean"
+        )
+        np.testing.assert_array_equal(
+            [
+                np.mean(np.arange(353, 366 + 1)),
+                np.mean(np.arange(353 + 365, 366 + 365 + 1)),
+                np.mean(np.arange(353 + 365 * 2, 366 + 365 * 2 + 1)),
+            ],
+            o.values,
+        )
+        assert o.attrs["units"] == "m3 s-1"
+
+    def test_rollingmaxindexer(self, q_series):
+        q = q_series(np.arange(1, 366 + 365 + 365 + 1))  # 1st year is leap
+        o = generic.select_rolling_resample_op(
+            q, "min", window=14, window_center=False, window_op="max", season="DJF"
+        )
+        np.testing.assert_array_equal(
+            [14, 367, 367 + 365], o.values
+        )  # 14th day for 1st year, then Jan 1st for the next two
+        assert o.attrs["units"] == "m3 s-1"
+
+    def test_freq(self, q_series):
+        q = q_series(np.arange(1, 366 + 365 + 365 + 1))  # 1st year is leap
+        o = generic.select_rolling_resample_op(
+            q, "max", window=3, window_center=True, window_op="integral", freq="MS"
+        )
+        np.testing.assert_array_equal(
+            [
+                np.sum([30, 31, 32]) * 86400,
+                np.sum([30 + 29, 31 + 29, 32 + 29]) * 86400,
+            ],  # m3 s-1 being summed by the frequency of the data
+            o.isel(time=slice(0, 2)).values,
+        )
+        assert o.attrs["units"] == "m3"
+
+
 class TestThresholdCount:
     def test_simple(self, tas_series):
         ts = tas_series(np.arange(365))
