@@ -200,6 +200,6 @@ def _reordering(ds, *, dim):
     else:
         raise ValueError(
             f"Reordering can only be done along one dimension."
-            f" If there is more than one, one of the dimension should be `window`."
+            f" If there is more than one, they should be `window` and `time`."
             f" The dimensions are {dim}."
         )
