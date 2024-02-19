@@ -1205,7 +1205,7 @@ def standardized_precipitation_evapotranspiration_index(
     window: int = 1,
     dist: str = "gamma",
     method: str = "APP",
-    offset: Quantified = "1.000 mm/d",
+    offset: Quantified = "",
     cal_start: DateStr | None = None,
     cal_end: DateStr | None = None,
     params: Quantified | None = None,
@@ -1267,7 +1267,7 @@ def standardized_precipitation_evapotranspiration_index(
 
     See Standardized Precipitation Index (SPI) for more details on usage.
     """
-    uses_default_offset = offset != "1.000 mm/d"
+    uses_default_offset = offset != ""
     if uses_default_offset is False:
         warnings.warn("Inputting an offset will be deprecated in xclim>=0.49.0. ")
     if params is not None:
@@ -1286,6 +1286,7 @@ def standardized_precipitation_evapotranspiration_index(
             "distributions which are bounded by zero (only when using two-parameters distributions: in xclim>=0.49.0,"
             "three-parameters distributions are used to accommodate negative values). Only positive offsets are accepted."
         )
+
     # Note that the default behaviour would imply an offset for any distribution, even those distributions
     # that can accommodate negative values of the water budget. This needs to be changed in future versions
     # of the index.
