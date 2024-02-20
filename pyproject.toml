@@ -67,7 +67,7 @@ dev = [
   "ipython",
   "isort ==5.13.2",
   "mypy",
-  "nbconvert",
+  "nbconvert <7.14", # Pinned due to directive errors in sphinx. See: https://github.com/jupyter/nbconvert/issues/2092
   "nbqa",
   "nbval",
   "netCDF4 >=1.4",
