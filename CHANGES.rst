@@ -10,7 +10,7 @@ Bug fixes
 ^^^^^^^^^
 * Fixed an issue with missing `conda` dependencies in the `xclim` documentation. (:pull:`1657`).
 * Adjusted the Mastodon publishing workflow. (:pull:`1657`).
-* Pinned `nbconvert` to address regressions when building the documentation. (:pull:`1657`).
+* Pinned `nbconvert` to address regressions when building the documentation. (:pull:`1658`).
 
 v0.48.0 (2024-02-19)
 --------------------
