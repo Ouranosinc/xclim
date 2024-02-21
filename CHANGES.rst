@@ -8,7 +8,7 @@ Contributors to this version: Juliette Lavoie (:user:`juliettelavoie`).
 
 Bug fixes
 ^^^^^^^^^
-* Add `measure` to YAML indicators description. ( :pull:`1659`).
+* Add `measure` to YAML indicators description. ( :pull:`1664`).
 
 v0.48.1 (2024-02-20)
 --------------------
