@@ -2,6 +2,19 @@
 Changelog
 =========
 
+v0.48.2
+--------------------
+Contributors to this version: Éric Dupuis (:user:`coxipi`)
+
+New features and enhancements
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+* Distribution with negative values are directly fitted without need for an offset for distributions such as `gamma, fisk` in ``xclim.indices.standardized_precipitation_evapotranspiration_index``. (:issue:`1477`  :pull:`1653`).
+
+Breaking changes
+^^^^^^^^^^^^^^^^
+* Argument `offset` is removed  from ``xclim.indices.standardized_precipitation_evapotranspiration_index``. This will slightly change results when using SPEI with default values (:issue:`1477`  :pull:`1653`).
+
+
 v0.48.1 (2024-02-20)
 --------------------
 Contributors to this version: Trevor James Smith (:user:`Zeitsperre`).
