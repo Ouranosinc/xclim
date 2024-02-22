@@ -27,6 +27,7 @@ dependencies:
   - yamale
   # Extras
   - flox
+  - lmoments3  # Required for some Jupyter notebooks
   # Testing and development dependencies
   - black ==24.1.1
   - blackdoc ==0.3.9
@@ -45,6 +46,7 @@ dependencies:
   - isort ==5.13.2
   - matplotlib
   - mypy
+  - nbconvert <7.14  # Pinned due to directive errors in sphinx. See: https://github.com/jupyter/nbconvert/issues/2092
   - nbqa
   - nbsphinx
   - nbval

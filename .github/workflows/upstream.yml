@@ -58,7 +58,7 @@ jobs:
         with:
           fetch-depth: 0 # Fetch all history for all branches and tags.
       - name: Setup Conda (Micromamba) with Python${{ matrix.python-version }}
-        uses: mamba-org/setup-micromamba@8767fb704bd78032e9392f0386bf46950bdd1194 # v1.8.0
+        uses: mamba-org/setup-micromamba@422500192359a097648154e8db4e39bdb6c6eed7 # v1.8.1
         with:
           cache-downloads: true
           cache-environment: true

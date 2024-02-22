@@ -591,27 +591,6 @@ def dist_method(
     # Typically the data to be transformed
     arg = [arg] if arg is not None else []
     args = arg + [fit_params.sel(dparams=dp) for dp in fit_params.dparams.values]
-    # print(kwargs)
-    # print(fit_params.dparams.values)
-    # print(len(args))
-    # for ii in range(4):
-    #     print(ii)
-    #     print(args[ii])
-    # import scipy
-    # return xr.apply_ufunc(
-    #     scipy.stats.gamma.cdf(),
-    #     *args,
-    # )
-    # import scipy
-    # if len(args)==4:
-    #     for ii, arg in enumerate(args):
-    #         arg.to_netcdf(f"/home/eridup1/tmp/tmp_{ii}.nc")
-    # return xr.apply_ufunc(
-    #     scipy.stats.gamma.cdf,
-    #     *args,
-    #     output_dtypes=[float],
-    #     dask="parallelized",
-    # )
     return xr.apply_ufunc(
         _dist_method_1D,
         *args,
