@@ -2,13 +2,13 @@
 Changelog
 =========
 
-v0.49.0 (unreleased)
+v0.48.2 (2024-02-26)
 --------------------
 Contributors to this version: Juliette Lavoie (:user:`juliettelavoie`).
 
 Bug fixes
 ^^^^^^^^^
-* Add `measure` to YAML validation schema (for building sdba properties) and allow skipping the YAML validation when building modules. ( :pull:`1664`).
+* Add ``measure`` to YAML validation schema (for building sdba properties) and allow skipping the YAML validation when building modules. (:pull:`1664`).
 
 v0.48.1 (2024-02-20)
 --------------------
