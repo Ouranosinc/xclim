@@ -31,6 +31,7 @@ jobs:
           egress-policy: block
           allowed-endpoints: >
             api.github.com:443
+            fosstodon.org:443
             github.com:443
 
       - name: Checkout
@@ -79,7 +80,7 @@ jobs:
 
       - name: Send toot to Mastodon
         if: ${{ github.event.inputs.dry-run != 'true' }} || ${{ github.event_name == 'release' }}
-        uses: cbrgm/mastodon-github-action@eb0fa2c755679b459015a898dada174b5ddbff7c # v2.0.2
+        uses: cbrgm/mastodon-github-action@c270dd8335f7dee5939e572591fad4dd74e38072 # v2.0.3
         with:
           url: ${{ secrets.MASTODON_URL }}
           access-token: ${{ secrets.MASTODON_ACCESS_TOKEN }}
