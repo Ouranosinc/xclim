@@ -8,7 +8,7 @@ Contributors to this version: Trevor James Smith (:user:`Zeitsperre`).
 
 Announcements
 ^^^^^^^^^^^^^
-* `xclim` has migrated its development branch name from `master` to `main`. (:issue:`1667`).
+* `xclim` has migrated its development branch name from `master` to `main`. (:issue:`1667`, :pull:`1669`).
 
 v0.48.2 (2024-02-26)
 --------------------
