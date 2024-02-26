@@ -2,7 +2,7 @@ name: Test Upstream Dependencies
 on:
   push:
     branches:
-      - master
+      - main
     paths-ignore:
       - CHANGES.rst
       - README.rst

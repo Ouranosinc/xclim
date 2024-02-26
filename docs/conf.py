@@ -221,7 +221,7 @@ nbsphinx_prolog = r"""
 
 .. only:: html
 
-    `Download this notebook from github. <https://github.com/Ouranosinc/xclim/raw/master/docs/{{ docname }}>`_
+    `Download this notebook from github. <https://github.com/Ouranosinc/xclim/raw/main/docs/{{ docname }}>`_
 """
 nbsphinx_timeout = 300
 nbsphinx_allow_errors = False
