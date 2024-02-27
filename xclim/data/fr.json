@@ -112,6 +112,22 @@
     "m12": [
       "decembre"
     ],
+    "integral": [
+      "intégré",
+      "intégrée",
+      "intégrés",
+      "intégrées",
+      "integrale"
+    ],
+    "count": [
+      "décompte"
+    ],
+    "doymin": [
+      "jour du minimum"
+    ],
+    "doymax": [
+      "jour du maximum"
+    ],
     "mean": [
       "moyen",
       "moyenne",
