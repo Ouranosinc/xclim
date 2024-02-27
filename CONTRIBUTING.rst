@@ -261,7 +261,7 @@ Before you submit a pull request, please follow these guidelines:
      ^^^^^^^^^^^^^^^^
      * Updated the contribution guidelines. (:issue:`868`, :pull:`869`).
 
-   If this is your first contribution to `Ouranosinc/xclim`, we ask that you also add your name to the `AUTHORS.rst <https://github.com/Ouranosinc/xclim/blob/master/AUTHORS.rst>`_, under *Contributors* as well as to the `.zenodo.json <https://github.com/Ouranosinc/xclim/blob/master/.zenodo.json>`_, at the end of the *creators* block.
+   If this is your first contribution to `Ouranosinc/xclim`, we ask that you also add your name to the `AUTHORS.rst <https://github.com/Ouranosinc/xclim/blob/main/AUTHORS.rst>`_, under *Contributors* as well as to the `.zenodo.json <https://github.com/Ouranosinc/xclim/blob/main/.zenodo.json>`_, at the end of the *creators* block.
 
 Updating Testing Data
 ~~~~~~~~~~~~~~~~~~~~~

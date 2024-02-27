@@ -3,7 +3,7 @@ name: CodeQL Scan
 on:
   push:
     branches:
-      - master
+      - main
     paths-ignore:
       - CHANGES.rst
       - Makefile

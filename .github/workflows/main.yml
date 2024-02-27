@@ -3,7 +3,7 @@ name: xclim Testing Suite
 on:
   push:
     branches:
-      - master
+      - main
     paths-ignore:
       - CHANGES.rst
       - README.rst
@@ -22,9 +22,9 @@ env:
   XCLIM_TESTDATA_BRANCH: v2023.12.14
 
 concurrency:
-  # For a given workflow, if we push to the same branch, cancel all previous builds on that branch except on master.
+  # For a given workflow, if we push to the same branch, cancel all previous builds on that branch except on main.
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 permissions:
   contents: read
