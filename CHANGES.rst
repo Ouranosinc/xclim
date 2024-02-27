@@ -4,11 +4,15 @@ Changelog
 
 v0.49.0 (unreleased)
 --------------------
-Contributors to this version: Trevor James Smith (:user:`Zeitsperre`).
+Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`).
 
 Announcements
 ^^^^^^^^^^^^^
 * `xclim` has migrated its development branch name from `master` to `main`. (:issue:`1667`, :pull:`1669`).
+
+Internal changes
+^^^^^^^^^^^^^^^^
+* Added "doymin" and "doymax" to the possible operations of ``generic.stats``. Fixed a warning issue when ``op`` was "integral". (:pull:`1672`).
 
 v0.48.2 (2024-02-26)
 --------------------
