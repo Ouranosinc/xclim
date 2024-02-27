@@ -186,7 +186,11 @@ default_formatter = AttrFormatter(
         "m10": ["october"],
         "m11": ["november"],
         "m12": ["december"],
-        # Arguments to "op / reducer / stat"
+        # Arguments to "op / reducer / stat" (for example for generic.stats)
+        "integral": ["integrated", "integral"],
+        "count": ["count"],
+        "doymin": ["day of minimum"],
+        "doymax": ["day of maximum"],
         "mean": ["average"],
         "max": ["maximal", "maximum"],
         "min": ["minimal", "minimum"],

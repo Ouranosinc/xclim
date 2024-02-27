@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import numpy as np
+import pytest
 
 from xclim import generic, set_options
 
@@ -84,10 +85,14 @@ class TestReturnLevel:
 class TestStats:
     """See other tests in test_land::TestStats"""
 
-    def test_simple(self, pr_series, random):
+    @pytest.mark.parametrize(
+        "op,word",
+        [("min", "Minimum"), ("integral", "Integral"), ("doymin", "Day of minimum")],
+    )
+    def test_simple(self, pr_series, random, op, word):
         pr = pr_series(random.random(400))
-        out = generic.stats(pr, freq="YS", op="min", season="MAM")
-        assert out.units == pr.units
+        out = generic.stats(pr, freq="YS", op=op)
+        assert out.long_name == f"{word} of variable"
 
     def test_ndq(self, ndq_series):
         out = generic.stats(ndq_series, freq="YS", op="min", season="MAM")
