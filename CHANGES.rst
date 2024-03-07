@@ -10,9 +10,14 @@ Announcements
 ^^^^^^^^^^^^^
 * `xclim` has migrated its development branch name from `master` to `main`. (:issue:`1667`, :pull:`1669`).
 
+Bug fixes
+^^^^^^^^^
+* Fixed an bug in sdba's ``map_groups`` that prevented passing DataArrays with cftime coordinates if the ``sdba_encode_cf`` option was True. (:issue:`1673`, :pull:`1674`).
+
 Internal changes
 ^^^^^^^^^^^^^^^^
 * Added "doymin" and "doymax" to the possible operations of ``generic.stats``. Fixed a warning issue when ``op`` was "integral". (:pull:`1672`).
+
 
 v0.48.2 (2024-02-26)
 --------------------

@@ -174,6 +174,7 @@ class PolyDetrend(BaseDetrend):
 @map_groups(trend=[Grouper.DIM])
 def _polydetrend_get_trend(da, *, dim, degree, preserve_mean, kind):
     """Polydetrend, atomic func on 1 group."""
+    print("polydetrend")
     if len(dim) > 1:
         da = da.mean(dim[1:])
     dim = dim[0]
