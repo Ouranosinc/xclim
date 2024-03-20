@@ -511,17 +511,17 @@ def _fit_start(x, dist: str, **fitkwargs: Any) -> tuple[tuple, dict]:
         x_pos = x - (xmin if xmin <= 0 else 0)
         x_pos = x_pos[x_pos > 0]
         m = x_pos.mean()
-        v = x_pos.var()
-        # pdf =  (beta/alpha) (x/alpha)^{beta-1}/ (1+(x/alpha)^{beta})^2
-        # Compute f_1 and f_2 which only depend on beta:
-        # f_1 := mean/alpha = <x>/alpha
-        # f_2 := variance/alpha^2 = (<x^2> - <x>^2)/alpha^2
-        # In the large beta limit, f_1 -> 1 and f_1/sqrt(f_2) -> 0.56*beta - 0.25
-        # Solve for alpha and beta below:
-        alpha, beta = m, (1 / 0.56) * (m / np.sqrt(v) + 1 / 4)
+        m2 = (x_pos**2).mean()
+        # method of moments:
+        # LHS is computed analytically with the two-parameters log-logistic distribution
+        # and depends on alpha,beta
+        # RHS is from the sample
+        # <x> = m
+        # <x^2> / <x>^2 = m2/m**2
+        # solving these equations yields
+        alpha = 2 * m**3 / (m2 + m**2)
+        beta = np.pi * m / np.sqrt(3) / np.sqrt(m2 - m**2)
         kwargs = {"scale": alpha}
-        if xmin < 0:
-            kwargs["loc"] = xmin
         return (beta,), kwargs
     return (), {}
 
