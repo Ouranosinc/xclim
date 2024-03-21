@@ -1316,7 +1316,7 @@ except ImportError:
     pass
 else:
 
-    @map_groups(scen=[])
+    @map_groups(scen=[Grouper.DIM])
     def apply_ibicus(ds, *, dim, ibicus):
         if "window" in ds.dims:
             sim = ds.sim.isel(window=ds.window.size // 2).rename(time="time")
