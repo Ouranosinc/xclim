@@ -34,7 +34,7 @@ from ._adjustment import (
     scaling_adjust,
     scaling_train,
 )
-from .base import Grouper, ParametrizableWithDataset, parse_group
+from .base import Grouper, ParametrizableWithDataset, map_groups, parse_group
 from .utils import (
     ADDITIVE,
     best_pc_orientation_full,
@@ -1308,3 +1308,57 @@ else:
                     )
                 )
         return classes
+
+
+try:
+    from ibicus.debias import QuantileMapping
+except ImportError:
+    pass
+else:
+
+    @map_groups(scen=[])
+    def apply_ibicus(ds, *, dim, ibicus):
+        if "window" in ds.dims:
+            sim = ds.sim.isel(window=ds.window.size // 2).rename(time="time")
+            ds = (
+                ds.drop_vars("sim").stack(time2=dim).reset_index("time2").drop_vars(dim)
+            )
+            hdim = "time2"
+        else:
+            sim = ds.sim
+            hdim = dim[0]
+        fdim = dim[0]
+        return (
+            xr.apply_ufunc(
+                ibicus.apply_on_window,
+                ds.ref,
+                ds.hist,
+                sim,
+                input_core_dims=[[hdim], [hdim], [fdim]],
+                output_core_dims=[[fdim]],
+                vectorize=True,
+            )
+            .rename("scen")
+            .to_dataset()
+        )
+
+    class IbicusQM(Adjust):
+
+        @classmethod
+        def _adjust(cls, ref, hist, sim, **kwargs):
+            ibicus = QuantileMapping(**kwargs)
+
+            # Input data,
+            ds = xr.Dataset(
+                data_vars={
+                    "ref": ref,
+                    "hist": hist,
+                    "sim": sim,
+                }
+            )
+
+            if ibicus.running_window_mode:
+                group = Grouper("time.dayofyear", window=ibicus.running_window_length)
+            else:
+                group = Grouper("time")
+            return apply_ibicus(ds, group=group, ibicus=ibicus).scen
