@@ -13,6 +13,7 @@ Announcements
 Bug fixes
 ^^^^^^^^^
 * Fixed an bug in sdba's ``map_groups`` that prevented passing DataArrays with cftime coordinates if the ``sdba_encode_cf`` option was True. (:issue:`1673`, :pull:`1674`).
+* Fixed bug (:issue:`1678`, :pull:`1679`) in sdba where a loaded training dataset could not be used for adjustment
 
 Internal changes
 ^^^^^^^^^^^^^^^^

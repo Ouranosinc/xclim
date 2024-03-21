@@ -611,7 +611,7 @@ def map_blocks(  # noqa: C901
                     {
                         dim: chunks.get(dim)
                         for dim in reduced_dims
-                        if len(chunks.get(dim)) > 1
+                        if len(chunks.get(dim, [])) > 1
                     }
                 )
                 if badchunks:
