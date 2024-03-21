@@ -80,7 +80,7 @@ jobs:
 
       - name: Send toot to Mastodon
         if: ${{ github.event.inputs.dry-run != 'true' }} || ${{ github.event_name == 'release' }}
-        uses: cbrgm/mastodon-github-action@c270dd8335f7dee5939e572591fad4dd74e38072 # v2.0.3
+        uses: cbrgm/mastodon-github-action@7f6bb8c296e5a08b27d82c97157bdc1fcbec2045 # v2.0.4
         with:
           url: ${{ secrets.MASTODON_URL }}
           access-token: ${{ secrets.MASTODON_ACCESS_TOKEN }}
