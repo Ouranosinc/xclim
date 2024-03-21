@@ -159,6 +159,7 @@ jobs:
             api.github.com:443
             azure.archive.ubuntu.com:80
             coveralls.io:443
+            dap.service.does.not.exist:443
             esm.ubuntu.com:443
             files.pythonhosted.org:443
             github.com:443
