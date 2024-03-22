@@ -6,6 +6,7 @@ import numpy as np
 import pytest
 import xarray as xr
 
+from xclim import set_options
 from xclim.sdba.base import Grouper, Parametrizable, map_blocks, map_groups
 
 
@@ -234,3 +235,17 @@ class TestMapBlocks:
 
         with pytest.raises(ValueError, match="cannot be chunked"):
             func(xr.Dataset(dict(tas=tas)), group="time")
+
+    @pytest.mark.parametrize("use_dask", [True, False])
+    def test_dataarray_cfencode(self, use_dask, open_dataset):
+        ds = open_dataset("sdba/CanESM2_1950-2100.nc")
+        if use_dask:
+            ds = ds.chunk()
+
+        @map_blocks(reduces=["location"], data=[])
+        def func(ds, *, group):
+            d = ds.mean("location")
+            return d.rename("data").to_dataset()
+
+        with set_options(sdba_encode_cf=True):
+            func(ds.convert_calendar("noleap").tasmax, group=Grouper("time"))

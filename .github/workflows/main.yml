@@ -3,7 +3,7 @@ name: xclim Testing Suite
 on:
   push:
     branches:
-      - master
+      - main
     paths-ignore:
       - CHANGES.rst
       - README.rst
@@ -22,9 +22,9 @@ env:
   XCLIM_TESTDATA_BRANCH: v2023.12.14
 
 concurrency:
-  # For a given workflow, if we push to the same branch, cancel all previous builds on that branch except on master.
+  # For a given workflow, if we push to the same branch, cancel all previous builds on that branch except on main.
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 permissions:
   contents: read
@@ -52,7 +52,7 @@ jobs:
             files.pythonhosted.org:443
             github.com:443
             pypi.org:443
-      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+      - uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 # v4.1.2
       - name: Set up Python${{ matrix.python-version }}
         uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
         with:
@@ -90,7 +90,7 @@ jobs:
             github.com:443
             pypi.org:443
             raw.githubusercontent.com:443
-      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+      - uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 # v4.1.2
       - name: Set up Python${{ matrix.python-version }}
         uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
         with:
@@ -159,6 +159,7 @@ jobs:
             api.github.com:443
             azure.archive.ubuntu.com:80
             coveralls.io:443
+            dap.service.does.not.exist:443
             esm.ubuntu.com:443
             files.pythonhosted.org:443
             github.com:443
@@ -167,7 +168,7 @@ jobs:
             ppa.launchpadcontent.net:443
             pypi.org:443
             raw.githubusercontent.com:443
-      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+      - uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 # v4.1.2
       - name: Install Eigen3
         if: contains(matrix.tox-env, 'sbck')
         run: |
@@ -222,7 +223,7 @@ jobs:
             pypi.org:443
             raw.githubusercontent.com:443
             repo.anaconda.com:443
-      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+      - uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 # v4.1.2
       - name: Setup Conda (Micromamba) with Python${{ matrix.python-version }}
         uses: mamba-org/setup-micromamba@422500192359a097648154e8db4e39bdb6c6eed7 # v1.8.1
         with:

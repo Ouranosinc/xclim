@@ -1664,6 +1664,7 @@ def build_indicator_module_from_yaml(  # noqa: C901
     mode: str = "raise",
     encoding: str = "UTF8",
     reload: bool = False,
+    validate: bool | PathLike = True,
 ) -> ModuleType:
     """Build or extend an indicator module from a YAML file.
 
@@ -1694,6 +1695,10 @@ def build_indicator_module_from_yaml(  # noqa: C901
     reload : bool
       If reload is True and the module already exists, it is first removed before being rebuilt.
       If False (default), indicators are added or updated, but not removed.
+    validate : bool or path
+      If True (default), the yaml module is validated against xclim's schema.
+      Can also be the path to a yml schema against which to validate.
+      Or False, in which case validation is simply skipped.
 
     Returns
     -------
@@ -1731,13 +1736,19 @@ def build_indicator_module_from_yaml(  # noqa: C901
     with ymlpath.open(encoding=encoding) as f:
         yml = safe_load(f)
 
-    # Read schema
-    schema = yamale.make_schema(Path(__file__).parent.parent / "data" / "schema.yml")
+    if validate is not False:
+        # Read schema
+        if validate is not True:
+            schema = yamale.make_schema(validate)
+        else:
+            schema = yamale.make_schema(
+                Path(__file__).parent.parent / "data" / "schema.yml"
+            )
 
-    # Validate - a YamaleError will be raised if the module does not comply with the schema.
-    yamale.validate(
-        schema, yamale.make_data(content=ymlpath.read_text(encoding=encoding))
-    )
+        # Validate - a YamaleError will be raised if the module does not comply with the schema.
+        yamale.validate(
+            schema, yamale.make_data(content=ymlpath.read_text(encoding=encoding))
+        )
 
     # Load values from top-level in yml.
     # Priority of arguments differ.
