@@ -725,6 +725,8 @@ def standardized_index_fit_params(
     Supported combinations of `dist` and `method` are:
     * Gamma ("gamma") : "ML", "APP", "PWM"
     * Log-logistic ("fisk") : "ML", "APP"
+
+    "APP" method only supports two-parameter distributions. Parameter `loc` will be set to 0 (setting `floc=0` in `fitkwargs`).
     """
     if offset:
         warnings.warn("Inputting an offset will be deprecated in xclim>=0.49.0. ")
@@ -741,6 +743,19 @@ def standardized_index_fit_params(
         raise NotImplementedError(
             f"The method `{method}` is not supported for distribution `{dist.name}`."
         )
+    if method == "APP":
+        if "floc" in fitkwargs.keys():
+            if fitkwargs["floc"] != 0:
+                raise ValueError(
+                    "The APP method is only supported for two-parameter distributions with `gamma` or `fisk`. `loc` parameter must be set 0."
+                    "Pass `floc=0` in `fitkwargs`."
+                )
+        else:
+            fitkwargs["floc"] = 0
+            warnings.warn(
+                "The APP method is only supported for two-parameter distributions with `gamma` or `fisk`."
+                "Location parameter `loc` will be set to 0. To avoid this warning, set `floc=0` manually in `fitkwargs`."
+            )
     da, group = preprocess_standardized_index(da, freq, window, **indexer)
 
     # convert floc units if needed
@@ -775,7 +790,6 @@ def standardized_index_fit_params(
     }
     method, args = ("", []) if indexer == {} else indexer.popitem()
     params.attrs["time_indexer"] = (method, *args)
-
     params.attrs["offset"] = offset or ""
 
     return params
