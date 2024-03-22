@@ -2,9 +2,13 @@
 Changelog
 =========
 
-v0.48.2
+v0.49.0 (unreleased)
 --------------------
-Contributors to this version: Éric Dupuis (:user:`coxipi`)
+Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), Éric Dupuis (:user:`coxipi`).
+
+Announcements
+^^^^^^^^^^^^^
+* `xclim` has migrated its development branch name from `master` to `main`. (:issue:`1667`, :pull:`1669`).
 
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -14,6 +18,22 @@ Breaking changes
 ^^^^^^^^^^^^^^^^
 * Argument `offset` is removed  from ``xclim.indices.standardized_precipitation_evapotranspiration_index``. This will slightly change results when using SPEI with default values (:issue:`1477`  :pull:`1653`).
 
+Bug fixes
+^^^^^^^^^
+* Fixed an bug in sdba's ``map_groups`` that prevented passing DataArrays with cftime coordinates if the ``sdba_encode_cf`` option was True. (:issue:`1673`, :pull:`1674`).
+* Fixed bug (:issue:`1678`, :pull:`1679`) in sdba where a loaded training dataset could not be used for adjustment
+
+Internal changes
+^^^^^^^^^^^^^^^^
+* Added "doymin" and "doymax" to the possible operations of ``generic.stats``. Fixed a warning issue when ``op`` was "integral". (:pull:`1672`).
+
+v0.48.2 (2024-02-26)
+--------------------
+Contributors to this version: Juliette Lavoie (:user:`juliettelavoie`).
+
+Bug fixes
+^^^^^^^^^
+* Add ``measure`` to YAML validation schema (for building sdba properties) and allow skipping the YAML validation when building modules. (:pull:`1664`).
 
 v0.48.1 (2024-02-20)
 --------------------

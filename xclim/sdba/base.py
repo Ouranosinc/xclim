@@ -591,7 +591,6 @@ def map_blocks(  # noqa: C901
                         f"Dimension {dim} is meant to be added by the "
                         "computation but it is already on one of the inputs."
                     )
-
             if uses_dask(ds):
                 # Use dask if any of the input is dask-backed.
                 chunks = (
@@ -612,7 +611,7 @@ def map_blocks(  # noqa: C901
                     {
                         dim: chunks.get(dim)
                         for dim in reduced_dims
-                        if len(chunks.get(dim)) > 1
+                        if len(chunks.get(dim, [])) > 1
                     }
                 )
                 if badchunks:
@@ -673,9 +672,12 @@ def map_blocks(  # noqa: C901
             if OPTIONS[SDBA_ENCODE_CF]:
                 ds = ds.copy()
                 # Optimization to circumvent the slow pickle.dumps(cftime_array)
-                for name, crd in ds.coords.items():
-                    if xr.core.common._contains_cftime_datetimes(crd.variable):  # noqa
-                        ds[name] = xr.conventions.encode_cf_variable(crd.variable)
+                # List of the keys to avoid changing the coords dict while iterating over it.
+                for crd in list(ds.coords.keys()):
+                    if xr.core.common._contains_cftime_datetimes(
+                        ds[crd].variable
+                    ):  # noqa
+                        ds[crd] = xr.conventions.encode_cf_variable(ds[crd].variable)
 
             def _call_and_transpose_on_exit(dsblock, **f_kwargs):
                 """Call the decorated func and transpose to ensure the same dim order as on the template."""
