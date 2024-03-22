@@ -490,26 +490,36 @@ def _fit_start(x, dist: str, **fitkwargs: Any) -> tuple[tuple, dict]:
         return (chat,), {"loc": loc, "scale": scale}
 
     if dist in ["gamma"]:
-        # not sure if the approximation holds for xmin < 0
-        xmin = x.min()
-        x_pos = x - (xmin if xmin <= 0 else 0)
-        x_pos = x_pos[x_pos > 0]
+        if "floc" in fitkwargs:
+            loc0 = fitkwargs["floc"]
+        else:
+            xs = sorted(x)
+            x1, x2, xn = xs[0], xs[1], xs[-1]
+            n = len(x)
+            cv = x.std() / x.mean()
+            p = 100 * (0.48265 + 0.32967 * cv) * n ** (-0.2984 * cv)
+            xp = np.percentile(x, p)
+            loc0 = (x1 * xn - xp**2) / (x1 + xn - 2 * xp)
+            loc0 = loc0 if loc0 < x1 else 0.9999 * x1
+        x_pos = x - loc0
         m = x_pos.mean()
         log_of_mean = np.log(m)
         mean_of_logs = np.log(x_pos).mean()
-        a = log_of_mean - mean_of_logs
-        alpha = (1 + np.sqrt(1 + 4 * a / 3)) / (4 * a)
-        beta = m / alpha
-        kwargs = {"scale": beta}
-        if xmin < 0:
-            kwargs["loc"] = xmin
-        return (alpha,), kwargs
+        A = log_of_mean - mean_of_logs
+        a0 = (1 + np.sqrt(1 + 4 * A / 3)) / (4 * A)
+        scale0 = m / a0
+        kwargs = {"scale": scale0, "loc": loc0}
+        return (a0,), kwargs
 
     if dist in ["fisk"]:
-        # not sure if the approximation holds for xmin < 0
-        xmin = x.min()
-        x_pos = x - (xmin if xmin <= 0 else 0)
-        x_pos = x_pos[x_pos > 0]
+        if "floc" in fitkwargs:
+            loc0 = fitkwargs["floc"]
+        else:
+            xs = sorted(x)
+            x1, x2, xn = xs[0], xs[1], xs[-1]
+            loc0 = (x1 * xn - x2**2) / (x1 + xn - 2 * x2)
+            loc0 = loc0 if loc0 < x1 else 0.9999 * x1
+        x_pos = x - loc0
         m = x_pos.mean()
         m2 = (x_pos**2).mean()
         # method of moments:
@@ -519,10 +529,10 @@ def _fit_start(x, dist: str, **fitkwargs: Any) -> tuple[tuple, dict]:
         # <x> = m
         # <x^2> / <x>^2 = m2/m**2
         # solving these equations yields
-        alpha = 2 * m**3 / (m2 + m**2)
-        beta = np.pi * m / np.sqrt(3) / np.sqrt(m2 - m**2)
-        kwargs = {"scale": alpha}
-        return (beta,), kwargs
+        scale0 = 2 * m**3 / (m2 + m**2)
+        c0 = np.pi * m / np.sqrt(3) / np.sqrt(m2 - m**2)
+        kwargs = {"scale": scale0, "loc": loc0}
+        return (c0,), kwargs
     return (), {}
 
 
@@ -673,6 +683,7 @@ def standardized_index_fit_params(
     window: int,
     dist: str | scipy.stats.rv_continuous,
     method: str,
+    fitkwargs: dict = {},
     offset: Quantified | None = None,
     **indexer,
 ) -> xr.DataArray:
@@ -698,6 +709,8 @@ def standardized_index_fit_params(
     method : {'ML', 'APP', 'PWM'}
         Name of the fitting method, such as `ML` (maximum likelihood), `APP` (approximate). The approximate method
         uses a deterministic function that doesn't involve any optimization.
+    fitkwargs : dict
+        Kwargs passed to ``xclim.indices.stats.fit`` used to impose values of certains parameters (`floc`, `fscale`).
     \*\*indexer
         Indexing parameters to compute the indicator on a temporal subset of the data.
         It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
@@ -729,7 +742,24 @@ def standardized_index_fit_params(
             f"The method `{method}` is not supported for distribution `{dist.name}`."
         )
     da, group = preprocess_standardized_index(da, freq, window, **indexer)
-    params = da.groupby(group).map(fit, dist=dist, method=method)
+
+    # convert floc units if needed
+    # this should be passed to scipy eventually, so it should not support strings
+    # with units. Perhaps using `fitkwargs` in this context is misleading?
+    for fpar in ["floc", "fscale"]:
+        if fpar in fitkwargs.keys():
+            if np.isscalar(fitkwargs[fpar]) is False:
+                fitkwargs[fpar] = convert_units_to(fitkwargs[fpar], da, context="hydro")
+
+    # Use zero inflated distributions
+    # Idea: Perhaps having specific zero-inflated distributions or an option passed
+    # to the standardized index (SPI/SPEI) to state we want to use zero-inflated
+    # would be a better way to organize this
+    if da.min() == 0 and dist.name in ["gamma", "fisk"]:
+        da0 = da.where(da > 0).copy()
+    else:
+        da0 = da
+    params = da0.groupby(group).map(fit, dist=dist, method=method, **fitkwargs)
     cal_range = (
         da.time.min().dt.strftime("%Y-%m-%d").item(),
         da.time.max().dt.strftime("%Y-%m-%d").item(),
@@ -757,6 +787,7 @@ def standardized_index(
     window: int,
     dist: str | scipy.stats.rv_continuous | None,
     method: str,
+    fitkwargs: dict,
     cal_start: DateStr | None,
     cal_end: DateStr | None,
     params: Quantified | None,
@@ -837,6 +868,7 @@ def standardized_index(
             window=1,
             dist=dist,
             method=method,
+            fitkwargs=fitkwargs,
         )
 
     # If params only contains a subset of main dataset time grouping
@@ -860,6 +892,7 @@ def standardized_index(
         lambda x: (x == 0).sum("time") / x.notnull().sum("time")
     )
     params, probs_of_zero = (reindex_time(dax, da) for dax in [params, probs_of_zero])
+    # should `da` below exclude zeros?
     dist_probs = dist_method("cdf", params, da, dist=dist)
     probs = probs_of_zero + ((1 - probs_of_zero) * dist_probs)
     params_norm = xr.DataArray(

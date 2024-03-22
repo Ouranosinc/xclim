@@ -1098,6 +1098,7 @@ def standardized_precipitation_index(
     window: int = 1,
     dist: str = "gamma",
     method: str = "APP",
+    fitkwargs: dict = {},
     cal_start: DateStr | None = None,
     cal_end: DateStr | None = None,
     params: Quantified | None = None,
@@ -1120,6 +1121,8 @@ def standardized_precipitation_index(
     method : {'APP', 'ML'}
         Name of the fitting method, such as `ML` (maximum likelihood), `APP` (approximate). The approximate method
         uses a deterministic function that doesn't involve any optimization.
+    fitkwargs : dict
+        Kwargs passed to ``xclim.indices.stats.fit`` used to impose values of certains parameters (`floc`, `fscale`).
     cal_start : DateStr, optional
         Start date of the calibration period. A `DateStr` is expected, that is a `str` in format `"YYYY-MM-DD"`.
         Default option `None` means that the calibration period begins at the start of the input dataset.
@@ -1189,7 +1192,7 @@ def standardized_precipitation_index(
     else:
         raise NotImplementedError(f"{dist} distribution is not implemented yet")
     spi = standardized_index(
-        pr, freq, window, dist, method, cal_start, cal_end, params, **indexer
+        pr, freq, window, dist, method, fitkwargs, cal_start, cal_end, params, **indexer
     )
     return spi
 
@@ -1205,6 +1208,7 @@ def standardized_precipitation_evapotranspiration_index(
     window: int = 1,
     dist: str = "gamma",
     method: str = "APP",
+    fitkwargs: dict = {},
     offset: Quantified = "",
     cal_start: DateStr | None = None,
     cal_end: DateStr | None = None,
@@ -1234,6 +1238,8 @@ def standardized_precipitation_evapotranspiration_index(
         `PWM` (probability weighted moments).
         The approximate method uses a deterministic function that doesn't involve any optimization. Available methods
         vary with the distribution: 'gamma':{'APP', 'ML', 'PWM'}, 'fisk':{'APP', 'ML'}
+    fitkwargs : dict
+        Kwargs passed to ``xclim.indices.stats.fit`` used to impose values of certains parameters (`floc`, `fscale`).
     offset : Quantified
         For distributions bounded by zero (e.g. "gamma", "fisk"), the two-parameters distributions only accept positive
         values. An offset can be added to make sure this is the case. This option will be removed in xclim >=0.49.0, ``xclim``
@@ -1302,7 +1308,7 @@ def standardized_precipitation_evapotranspiration_index(
     else:
         raise NotImplementedError(f"{dist} distribution is not implemented yet")
     spei = standardized_index(
-        wb, freq, window, dist, method, cal_start, cal_end, params, **indexer
+        wb, freq, window, dist, method, fitkwargs, cal_start, cal_end, params, **indexer
     )
 
     return spei
