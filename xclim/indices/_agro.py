@@ -24,11 +24,7 @@ from xclim.indices._threshold import (
 )
 from xclim.indices.generic import aggregate_between_dates, get_zones
 from xclim.indices.helpers import _gather_lat, day_lengths
-from xclim.indices.stats import (
-    preprocess_standardized_index,
-    standardized_index,
-    standardized_index_fit_params,
-)
+from xclim.indices.stats import standardized_index
 
 # Frequencies : YS: year start, QS-DEC: seasons starting in december, MS: month start
 # See https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html
@@ -1094,16 +1090,15 @@ def rain_season(
 
 @declare_units(
     pr="[precipitation]",
-    pr_cal="[precipitation]",
     params="[]",
 )
 def standardized_precipitation_index(
     pr: xarray.DataArray,
-    pr_cal: Quantified | None = None,
     freq: str | None = "MS",
     window: int = 1,
     dist: str = "gamma",
     method: str = "APP",
+    fitkwargs: dict = {},
     cal_start: DateStr | None = None,
     cal_end: DateStr | None = None,
     params: Quantified | None = None,
@@ -1115,9 +1110,6 @@ def standardized_precipitation_index(
     ----------
     pr : xarray.DataArray
         Daily precipitation.
-    pr_cal : xarray.DataArray, optional
-        Daily precipitation used for calibration. Usually this is a temporal subset of `pr` over some reference period.
-        This option will be removed in xclim >=0.47.0. Two behaviour will be possible (see below)
     freq : str, optional
         Resampling frequency. A monthly or daily frequency is expected. Option `None` assumes that desired resampling
         has already been applied input dataset and will skip the resampling step.
@@ -1129,6 +1121,8 @@ def standardized_precipitation_index(
     method : {'APP', 'ML'}
         Name of the fitting method, such as `ML` (maximum likelihood), `APP` (approximate). The approximate method
         uses a deterministic function that doesn't involve any optimization.
+    fitkwargs : dict
+        Kwargs passed to ``xclim.indices.stats.fit`` used to impose values of certains parameters (`floc`, `fscale`).
     cal_start : DateStr, optional
         Start date of the calibration period. A `DateStr` is expected, that is a `str` in format `"YYYY-MM-DD"`.
         Default option `None` means that the calibration period begins at the start of the input dataset.
@@ -1189,58 +1183,26 @@ def standardized_precipitation_index(
     ----------
     :cite:cts:`mckee_relationship_1993`
     """
-    if params is not None and pr_cal is None:
-        freq, window, indexer = (
-            params.attrs[s] for s in ["freq", "window", "time_indexer"]
-        )
-        # Unpack attrs to None and {} if needed
-        freq = None if freq == "" else freq
-        indexer = {} if indexer[0] == "" else {indexer[0]: indexer[1:]}
-        if cal_start or cal_end:
-            warnings.warn(
-                "Expected either `cal_{start|end}` or `params`, got both. The `params` input overrides other inputs."
-                "If `cal_start`, `cal_end`, `freq`, `window`, and/or `dist` were given as input, they will be ignored."
+    dist_methods = {"gamma": ["ML", "APP", "PWM"], "fisk": ["ML", "APP"]}
+    if dist in dist_methods.keys():
+        if method not in dist_methods[dist]:
+            raise NotImplementedError(
+                f"{method} method is not implemented for {dist} distribution"
             )
-
-    if pr_cal is not None:
-        warnings.warn(
-            "Inputting a calibration array will be deprecated in xclim>=0.47.0. "
-            "For example, if `pr_cal` is a subset of `pr`, then instead of say:\n"
-            "`standardized_precipitation_index(pr=pr,pr_cal=pr.sel(time=slice(t0,t1)),...)`,\n"
-            "one can call:\n"
-            "`standardized_precipitation_index(pr=pr,cal_range=(t0,t1),...).\n"
-            "If for some reason `pr_cal` is not a subset of `pr`, then the following approach will still be possible:\n"
-            "`params = standardized_index_fit_params(da=pr_cal, freq=freq, window=window, dist=dist, method=method)`.\n"
-            "`spi = standardized_precipitation_index(pr=pr, params=params)`.\n"
-            "This approach can be used in both scenarios to break up the computations in two,"
-            "i.e. get params, then compute standardized indices."
-        )
-        params = standardized_index_fit_params(
-            pr_cal, freq=freq, window=window, dist=dist, method=method, **indexer
-        )
-
-    pr, _ = preprocess_standardized_index(pr, freq=freq, window=window, **indexer)
-    if params is None:
-        params = standardized_index_fit_params(
-            pr.sel(time=slice(cal_start, cal_end)),
-            freq=None,
-            window=1,
-            dist=dist,
-            method=method,
-        )
-
-    # If params only contains a subset of main dataset time grouping
-    # (e.g. 8/12 months, etc.), it needs to be broadcasted
-    template = pr.groupby(params.attrs["group"]).first()
-    paramsd = {k: v for k, v in params.sizes.items() if k != "dparams"}
-    if paramsd != template.sizes:
-        params = params.broadcast_like(template)
-
-    spi = standardized_index(pr, params)
-    spi.attrs = params.attrs
-    spi.attrs["freq"] = (freq or xarray.infer_freq(spi.time)) or "undefined"
-    spi.attrs["window"] = window
-    spi.attrs["units"] = ""
+    else:
+        raise NotImplementedError(f"{dist} distribution is not implemented yet")
+    spi = standardized_index(
+        pr,
+        freq,
+        window,
+        dist,
+        method,
+        cal_start,
+        cal_end,
+        params,
+        **indexer,
+        # pr, freq, window, dist, method, fitkwargs, cal_start, cal_end, params, **indexer
+    )
     return spi
 
 
