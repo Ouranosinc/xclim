@@ -872,8 +872,10 @@ def standardized_index(
     probs_of_zero = da.groupby(group).map(
         lambda x: (x == 0).sum("time") / x.notnull().sum("time")
     )
+    print(probs_of_zero)
     params, probs_of_zero = (reindex_time(dax, da) for dax in [params, probs_of_zero])
     dist_probs = dist_method("cdf", params, da, dist=dist)
+    print(dist_probs)
     probs = probs_of_zero + ((1 - probs_of_zero) * dist_probs)
     params_norm = xr.DataArray(
         [0, 1],
