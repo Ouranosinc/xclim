@@ -49,10 +49,8 @@ def _fitfunc_1d(arr, *, dist, nparams, method, **fitkwargs):
         params = list(dist.lmom_fit(x).values())
     elif method == "APP":
         args, kwargs = _fit_start(x, dist.name, **fitkwargs)
-        kwargs_list = list(kwargs.values())
-        if "loc" not in kwargs:
-            kwargs_list = [0] + kwargs_list
-        params = list(args) + kwargs_list
+        kwargs.setdefault("loc", 0)
+        params = list(args) + [kwargs["loc"], kwargs["scale"]]
     else:
         raise NotImplementedError(f"Unknown method `{method}`.")
 
@@ -519,20 +517,13 @@ def _fit_start(x, dist: str, **fitkwargs: Any) -> tuple[tuple, dict]:
             loc0 = loc0 if loc0 < x1 else (0.9999 * x1 if x1 > 0 else 1.0001 * x1)
             loc0 = 0
         x_pos = x - loc0
+        x_pos = x_pos[x_pos > 0]
+
         m = x_pos.mean()
         m2 = (x_pos**2).mean()
-        # method of moments:
-        # LHS is computed analytically with the two-parameters log-logistic distribution
-        # and depends on alpha,beta
-        # RHS is from the sample
-        # <x> = m
-        # <x^2> / <x>^2 = m2/m**2
-        # solving these equations yields
         scale0 = 2 * m**3 / (m2 + m**2)
         c0 = np.pi * m / np.sqrt(3) / np.sqrt(m2 - m**2)
-
         kwargs = {"scale": scale0, "loc": loc0}
-        kwargs = {"scale": scale0}
         return (c0,), kwargs
     return (), {}
 
@@ -683,6 +674,7 @@ def standardized_index_fit_params(
     window: int,
     dist: str | scipy.stats.rv_continuous,
     method: str,
+    fitkwargs: dict = {},
     offset: Quantified | None = None,
     **indexer,
 ) -> xr.DataArray:
@@ -742,7 +734,7 @@ def standardized_index_fit_params(
             f"The method `{method}` is not supported for distribution `{dist.name}`."
         )
     da, group = preprocess_standardized_index(da, freq, window, **indexer)
-    params = da.groupby(group).map(fit, dist=dist, method=method)
+    params = da.groupby(group).map(fit, dist=dist, method=method, **fitkwargs)
     cal_range = (
         da.time.min().dt.strftime("%Y-%m-%d").item(),
         da.time.max().dt.strftime("%Y-%m-%d").item(),
@@ -770,6 +762,7 @@ def standardized_index(
     window: int,
     dist: str | scipy.stats.rv_continuous | None,
     method: str,
+    fitkwargs: dict,
     cal_start: DateStr | None,
     cal_end: DateStr | None,
     params: Quantified | None,
@@ -830,8 +823,8 @@ def standardized_index(
     :cite:cts:`mckee_relationship_1993`
     """
     if params is not None:
-        freq, window, indexer = (
-            params.attrs[s] for s in ["freq", "window", "time_indexer"]
+        freq, window, dist, indexer = (
+            params.attrs[s] for s in ["freq", "window", "scipy_dist", "time_indexer"]
         )
         # Unpack attrs to None and {} if needed
         freq = None if freq == "" else freq
@@ -872,11 +865,10 @@ def standardized_index(
     probs_of_zero = da.groupby(group).map(
         lambda x: (x == 0).sum("time") / x.notnull().sum("time")
     )
-    print(probs_of_zero)
     params, probs_of_zero = (reindex_time(dax, da) for dax in [params, probs_of_zero])
     dist_probs = dist_method("cdf", params, da, dist=dist)
-    print(dist_probs)
     probs = probs_of_zero + ((1 - probs_of_zero) * dist_probs)
+
     params_norm = xr.DataArray(
         [0, 1],
         dims=["dparams"],

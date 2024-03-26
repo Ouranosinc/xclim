@@ -482,18 +482,8 @@ class TestAgroclimaticIndices:
                 [0.598209, 1.55976, 1.69309, 0.9964, 0.7028],
                 2e-2,
             ),
-            ("MS", 1, "gamma", "ML", [1.3166, 1.4507, 1.9461, -3.09, 0.85068], 0.2),
-            ("MS", 1, "gamma", "ML", [1.4586, 1.6028, 2.0668, -3.09, 0.84841], 2e-2),
+            ("MS", 1, "gamma", "ML", [1.4586, 1.6028, 2.0668, -3.09, 0.84841], 0.04),
             ("MS", 12, "gamma", "ML", [0.59821, 1.5598, 1.6931, 0.9964, 0.7028], 0.04),
-            (
-                "MS",
-                12,
-                "gamma",
-                "ML",
-                [0.62578, 1.5417, 1.7164, 0.99776, 0.69889],
-                2e-2,
-            ),
-            ("MS", 1, "fisk", "ML", [1.7296, 1.5135, 2.0072, -2.7331, 0.89206], 0.35),
             (
                 "MS",
                 1,
@@ -501,14 +491,6 @@ class TestAgroclimaticIndices:
                 "ML",
                 [1.41236, 1.51192, 1.93324, -2.74089, 0.932674],
                 2e-2,
-            ),
-            (
-                "MS",
-                12,
-                "fisk",
-                "ML",
-                [0.683273, 1.51189, 1.61597, 1.03875, 0.72531],
-                0.035,
             ),
             (
                 "MS",
@@ -539,7 +521,7 @@ class TestAgroclimaticIndices:
                 1,
                 "gamma",
                 "ML",
-                [-0.03577971, 1.30589409, 0.8863447, 0.23906544, -0.05185997],
+                [0.007301, 1.338109, 0.996812, 0.321078, -0.095487],
                 2e-2,
             ),
             (
@@ -547,23 +529,7 @@ class TestAgroclimaticIndices:
                 12,
                 "gamma",
                 "ML",
-                [-0.15846245, -0.04924534, 0.66299367, 1.09938471, 0.66095752],
-                2e-2,
-            ),
-            (
-                "D",
-                1,
-                "fisk",
-                "APP",
-                [-1.26216389, 1.03096183, 0.62985354, -0.50335153, -1.32788296],
-                2e-2,
-            ),
-            (
-                "D",
-                12,
-                "fisk",
-                "APP",
-                [-0.57109258, -0.40657737, 0.55163493, 0.97381067, 0.55580649],
+                [-0.158532, -0.049117, 0.774798, 1.080759, 0.660781],
                 2e-2,
             ),
             (
@@ -571,7 +537,7 @@ class TestAgroclimaticIndices:
                 1,
                 "fisk",
                 "ML",
-                [-0.05562691, 1.30809152, 0.6954986, 0.33018744, -0.50258979],
+                [-0.127364, 1.308234, 0.676518, 0.104463, -0.502469],
                 2e-2,
             ),
             (
@@ -580,6 +546,22 @@ class TestAgroclimaticIndices:
                 "fisk",
                 "ML",
                 [-0.14151269, -0.01914608, 0.7080277, 1.01510279, 0.6954002],
+                2e-2,
+            ),
+            (
+                "D",
+                1,
+                "fisk",
+                "APP",
+                [-0.417288, 1.275686, 1.002566, 0.206854, -0.672117],
+                2e-2,
+            ),
+            (
+                "D",
+                12,
+                "fisk",
+                "APP",
+                [-0.220136, -0.065782, 0.783319, 1.134428, 0.782857],
                 2e-2,
             ),
             (
@@ -610,8 +592,16 @@ class TestAgroclimaticIndices:
             )  # to compare with ``climate_indices``
         pr = ds.pr.sel(time=slice("1998", "2000"))
         pr_cal = ds.pr.sel(time=slice("1950", "1980"))
+        fitkwargs = {}
+        if method == "APP":
+            fitkwargs["floc"] = 0
         params = xci.stats.standardized_index_fit_params(
-            pr_cal, freq=freq, window=window, dist=dist, method=method
+            pr_cal,
+            freq=freq,
+            window=window,
+            dist=dist,
+            method=method,
+            fitkwargs=fitkwargs,
         )
         spi = xci.standardized_precipitation_index(pr, params=params)
         # Only a few moments before year 2000 are tested

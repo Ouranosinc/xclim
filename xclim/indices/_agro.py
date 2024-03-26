@@ -1197,6 +1197,7 @@ def standardized_precipitation_index(
         window,
         dist,
         method,
+        fitkwargs,
         cal_start,
         cal_end,
         params,
