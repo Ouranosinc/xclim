@@ -703,6 +703,8 @@ def standardized_index_fit_params(
     method : {'ML', 'APP', 'PWM'}
         Name of the fitting method, such as `ML` (maximum likelihood), `APP` (approximate). The approximate method
         uses a deterministic function that doesn't involve any optimization.
+    fitkwargs : dict
+        Kwargs passed to ``xclim.indices.stats.fit`` used to impose values of certains parameters (`floc`, `fscale`).
     offset: Quantified
         Distributions bounded by zero (e.g. "gamma", "fisk") can be used for datasets with negative values
         by using an offset: `da + offset`.
@@ -720,7 +722,21 @@ def standardized_index_fit_params(
     Supported combinations of `dist` and `method` are:
     * Gamma ("gamma") : "ML", "APP", "PWM"
     * Log-logistic ("fisk") : "ML", "APP"
+    * "APP" method only supports two-parameter distributions. Parameter `loc` will be set to 0 (setting `floc=0` in `fitkwargs`).
     """
+    if method == "APP":
+        if "floc" in fitkwargs.keys():
+            if fitkwargs["floc"] != 0:
+                raise ValueError(
+                    "The APP method is only supported for two-parameter distributions with `gamma` or `fisk`. `loc` parameter must be set 0."
+                    "Pass `floc=0` in `fitkwargs`."
+                )
+        else:
+            fitkwargs["floc"] = 0
+            warnings.warn(
+                "The APP method is only supported for two-parameter distributions with `gamma` or `fisk`."
+                "Location parameter `loc` will be set to 0. To avoid this warning, set `floc=0` manually in `fitkwargs`."
+            )
     if offset:
         warnings.warn("Inputting an offset will be deprecated in xclim>=0.49.0. ")
     if offset is not None:
@@ -793,6 +809,8 @@ def standardized_index(
     method : str
         Name of the fitting method, such as `ML` (maximum likelihood), `APP` (approximate). The approximate method
         uses a deterministic function that doesn't involve any optimization.
+    fitkwargs : dict
+        Kwargs passed to ``xclim.indices.stats.fit`` used to impose values of certains parameters (`floc`, `fscale`).
     cal_start : DateStr, optional
         Start date of the calibration period. A `DateStr` is expected, that is a `str` in format `"YYYY-MM-DD"`.
         Default option `None` means that the calibration period begins at the start of the input dataset.
@@ -814,10 +832,6 @@ def standardized_index(
 
     Notes
     -----
-    * The length `N` of the N-month SPI is determined by choosing the `window = N`.
-    * Supported statistical distributions are: ["gamma", "fisk"], where "fisk" is scipy's implementation of
-       a log-logistic distribution
-    * If `params` is given as input, it overrides the `cal_start`, `cal_end`, `freq` and `window`, `dist` and `method` options.
     * The standardized index is bounded by ±8.21. 8.21 is the largest standardized index as constrained by the float64 precision in
       the inversion to the normal distribution.
 

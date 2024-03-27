@@ -1148,6 +1148,7 @@ def standardized_precipitation_index(
     * Supported statistical distributions are: ["gamma", "fisk"], where "fisk" is scipy's implementation of
        a log-logistic distribution
     * If `params` is given as input, it overrides the `cal_start`, `cal_end`, `freq` and `window`, `dist` and `method` options.
+    * "APP" method only supports two-parameter distributions. Parameter `loc` will be set to 0 (setting `floc=0` in `fitkwargs`).
     * The standardized index is bounded by ±8.21. 8.21 is the largest standardized index as constrained by the float64 precision in
       the inversion to the normal distribution.
 
@@ -1182,6 +1183,13 @@ def standardized_precipitation_index(
     References
     ----------
     :cite:cts:`mckee_relationship_1993`
+
+    Notes
+    -----
+    * The length `N` of the N-month SPI is determined by choosing the `window = N`.
+    * Supported statistical distributions are: ["gamma", "fisk"], where "fisk" is scipy's implementation of
+       a log-logistic distribution
+    * If `params` is given as input, it overrides the `cal_start`, `cal_end`, `freq` and `window`, `dist` and `method` options.
     """
     dist_methods = {"gamma": ["ML", "APP", "PWM"], "fisk": ["ML", "APP"]}
     if dist in dist_methods.keys():
@@ -1266,12 +1274,6 @@ def standardized_precipitation_evapotranspiration_index(
     See Also
     --------
     standardized_precipitation_index
-
-    Notes
-    -----
-    If results include NaNs, check that the `offset` parameter is larger than the minimum water budget values.
-
-    See Standardized Precipitation Index (SPI) for more details on usage.
     """
     uses_default_offset = offset != "0.000 mm/d"
     if uses_default_offset is False:
