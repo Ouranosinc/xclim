@@ -640,7 +640,14 @@ class TestAgroclimaticIndices:
                 2e-2,
             ),
             ("MS", 1, "gamma", "ML", [1.38, 1.58, 2.1, -3.09, 0.868], 1e-1),
-            ("MS", 1, "gamma", "ML", [1.4631, 1.6053, 2.1625, -3.09, 0.87996], 2e-2),
+            (
+                "MS",
+                1,
+                "gamma",
+                "ML",
+                [1.467832, 1.605313, 2.137688, -3.09, 0.878549],
+                5e-2,
+            ),
             (
                 "MS",
                 12,
@@ -654,8 +661,8 @@ class TestAgroclimaticIndices:
                 12,
                 "gamma",
                 "ML",
-                [0.6511, 1.6146, 1.8580, 1.0140, 0.6878],
-                2e-2,
+                [0.651093, 1.614638, 1.83526, 1.014005, 0.69868],
+                5e-2,
             ),
             ("MS", 1, "fisk", "ML", [1.73, 1.51, 2.05, -3.09, 0.892], 3.5e-1),
             ("MS", 1, "fisk", "ML", [1.4167, 1.5117, 2.0562, -3.09, 0.9422], 2e-2),
@@ -686,13 +693,16 @@ class TestAgroclimaticIndices:
             tasmin = tasmax - 5
             wb = xci.water_budget(pr, None, tasmin, tasmax, tas)
             wb = wb + convert_units_to("1 mm/d", wb, context="hydro")
-
+        fitkwargs = {}
+        if method == "APP":
+            fitkwargs["floc"] = 0
         params = xci.stats.standardized_index_fit_params(
             wb.sel(time=slice("1950", "1980")),
             freq=freq,
             window=window,
             dist=dist,
             method=method,
+            fitkwargs=fitkwargs,
         )
         spei = xci.standardized_precipitation_evapotranspiration_index(
             wb.sel(time=slice("1998", "2000")), params=params

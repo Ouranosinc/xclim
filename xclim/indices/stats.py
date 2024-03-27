@@ -490,12 +490,10 @@ def _fit_start(x, dist: str, **fitkwargs: Any) -> tuple[tuple, dict]:
         else:
             xs = sorted(x)
             x1, x2, xn = xs[0], xs[1], xs[-1]
-            n = len(x)
-            cv = x.std() / x.mean()
-            p = (0.48265 + 0.32967 * cv) * n ** (-0.2984 * cv)
-            xp = xs[int(p / 100 * n)]
+            xp = x2
             loc0 = (x1 * xn - xp**2) / (x1 + xn - 2 * xp)
             loc0 = loc0 if loc0 < x1 else (0.9999 * x1 if x1 > 0 else 1.0001 * x1)
+            # loc0 = 0
         x_pos = x - loc0
         x_pos = x_pos[x_pos > 0]
         m = x_pos.mean()
@@ -515,10 +513,15 @@ def _fit_start(x, dist: str, **fitkwargs: Any) -> tuple[tuple, dict]:
             x1, x2, xn = xs[0], xs[1], xs[-1]
             loc0 = (x1 * xn - x2**2) / (x1 + xn - 2 * x2)
             loc0 = loc0 if loc0 < x1 else (0.9999 * x1 if x1 > 0 else 1.0001 * x1)
-            loc0 = 0
         x_pos = x - loc0
         x_pos = x_pos[x_pos > 0]
-
+        # method of moments:
+        # LHS is computed analytically with the two-parameters log-logistic distribution
+        # and depends on alpha,beta
+        # RHS is from the sample
+        # <x> = m
+        # <x^2> / <x>^2 = m2/m**2
+        # solving these equations yields
         m = x_pos.mean()
         m2 = (x_pos**2).mean()
         scale0 = 2 * m**3 / (m2 + m**2)
