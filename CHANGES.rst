@@ -4,11 +4,21 @@ Changelog
 
 v0.49.0 (unreleased)
 --------------------
-Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`).
+Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), Éric Dupuis (:user:`coxipi`).
 
 Announcements
 ^^^^^^^^^^^^^
 * `xclim` has migrated its development branch name from `master` to `main`. (:issue:`1667`, :pull:`1669`).
+
+New features and enhancements
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+* Distribution with negative values are directly fitted without need for an offset for distributions such as `gamma, fisk` in ``xclim.indices.standardized_precipitation_evapotranspiration_index``. (:issue:`1477`  :pull:`1653`).
+* ``xclim.indices.stats_fit_start``  gives an estimate of the `loc` parameter for `gamma` and `fisk` distributions. (:issue:`1477`  :pull:`1653`).
+
+Breaking changes
+^^^^^^^^^^^^^^^^
+* Estimation of parameters using `_fit_start` for `gamma` and `fisk` has been changed and can affect the results obtained with full-fledged methods. (:issue:`1477`  :pull:`1653`).
+
 
 Bug fixes
 ^^^^^^^^^

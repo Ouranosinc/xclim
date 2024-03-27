@@ -1192,35 +1192,24 @@ def standardized_precipitation_index(
     else:
         raise NotImplementedError(f"{dist} distribution is not implemented yet")
     spi = standardized_index(
-        pr,
-        freq,
-        window,
-        dist,
-        method,
-        fitkwargs,
-        cal_start,
-        cal_end,
-        params,
-        **indexer,
-        # pr, freq, window, dist, method, fitkwargs, cal_start, cal_end, params, **indexer
+        pr, freq, window, dist, method, fitkwargs, cal_start, cal_end, params, **indexer
     )
     return spi
 
 
 @declare_units(
     wb="[precipitation]",
-    wb_cal="[precipitation]",
     offset="[precipitation]",
     params="[]",
 )
 def standardized_precipitation_evapotranspiration_index(
     wb: xarray.DataArray,
-    wb_cal: Quantified | None = None,
     freq: str | None = "MS",
     window: int = 1,
     dist: str = "gamma",
     method: str = "APP",
-    offset: Quantified = "1.000 mm/d",
+    fitkwargs: dict = {},
+    offset: Quantified = "",
     cal_start: DateStr | None = None,
     cal_end: DateStr | None = None,
     params: Quantified | None = None,
@@ -1236,9 +1225,6 @@ def standardized_precipitation_evapotranspiration_index(
     ----------
     wb : xarray.DataArray
         Daily water budget (pr - pet).
-    wb_cal : xarray.DataArray, optional
-        Daily water budget used for calibration. Usually this is a temporal subset of `wb` over some reference period.
-        This option will be removed in xclim >=0.47.0. Two behaviours will be possible (see below).
     freq : str, optional
         Resampling frequency. A monthly or daily frequency is expected. Option `None` assumes that desired resampling
         has already been applied input dataset and will skip the resampling step.
@@ -1252,6 +1238,12 @@ def standardized_precipitation_evapotranspiration_index(
         `PWM` (probability weighted moments).
         The approximate method uses a deterministic function that doesn't involve any optimization. Available methods
         vary with the distribution: 'gamma':{'APP', 'ML', 'PWM'}, 'fisk':{'APP', 'ML'}
+    fitkwargs : dict
+        Kwargs passed to ``xclim.indices.stats.fit`` used to impose values of certains parameters (`floc`, `fscale`).
+    offset : Quantified
+        For distributions bounded by zero (e.g. "gamma", "fisk"), the two-parameters distributions only accept positive
+        values. An offset can be added to make sure this is the case. This option will be removed in xclim >=0.49.0, ``xclim``
+        will rely on three-parameters distributions instead.
     cal_start : DateStr, optional
         Start date of the calibration period. A `DateStr` is expected, that is a `str` in format `"YYYY-MM-DD"`.
         Default option `None` means that the calibration period begins at the start of the input dataset.
@@ -1262,11 +1254,6 @@ def standardized_precipitation_evapotranspiration_index(
         Fit parameters.
         The `params` can be computed using ``xclim.indices.stats.standardized_index_fit_params`` in advance.
         The output can be given here as input, and it overrides other options.
-    offset : Quantified
-        For distributions bounded by zero (e.g. "gamma", "fisk"), an offset must be added to the water budget
-        to make sure there are no negative values.
-        Keep the offset as small as possible to minimize its influence on the results.
-        This can be given as a precipitation flux or a rate.
     \*\*indexer
         Indexing parameters to compute the indicator on a temporal subset of the data.
         It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
@@ -1286,7 +1273,9 @@ def standardized_precipitation_evapotranspiration_index(
 
     See Standardized Precipitation Index (SPI) for more details on usage.
     """
-    uses_default_offset = offset == "1.000 mm/d"
+    uses_default_offset = offset != ""
+    if uses_default_offset is False:
+        warnings.warn("Inputting an offset will be deprecated in xclim>=0.49.0. ")
     if params is not None:
         params_offset = params.attrs["offset"]
         if uses_default_offset is False and offset != params_offset:
@@ -1300,20 +1289,26 @@ def standardized_precipitation_evapotranspiration_index(
     if dist in ["gamma", "fisk"] and offset <= 0:
         raise ValueError(
             "The water budget must be shifted towards positive values to be used with `gamma` and `fisk` "
-            "distributions which are bounded by zero. A positive offset is required. Current value: "
-            f"{offset}{wb.attrs['units']}."
+            "distributions which are bounded by zero (only when using two-parameters distributions: in xclim>=0.49.0,"
+            "three-parameters distributions are used to accommodate negative values). Only positive offsets are accepted."
         )
+
     # Note that the default behaviour would imply an offset for any distribution, even those distributions
     # that can accommodate negative values of the water budget. This needs to be changed in future versions
     # of the index.
     if offset != 0:
         with xarray.set_options(keep_attrs=True):
             wb = wb + offset
-            if wb_cal is not None:
-                wb_cal = wb_cal + offset
-
-    spei = standardized_precipitation_index(
-        wb, wb_cal, freq, window, dist, method, cal_start, cal_end, params, **indexer
+    dist_methods = {"gamma": ["ML", "APP", "PWM"], "fisk": ["ML", "APP"]}
+    if dist in dist_methods.keys():
+        if method not in dist_methods[dist]:
+            raise NotImplementedError(
+                f"{method} method is not implemented for {dist} distribution"
+            )
+    else:
+        raise NotImplementedError(f"{dist} distribution is not implemented yet")
+    spei = standardized_index(
+        wb, freq, window, dist, method, fitkwargs, cal_start, cal_end, params, **indexer
     )
 
     return spei
