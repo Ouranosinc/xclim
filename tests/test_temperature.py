@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import warnings
 
 import numpy as np
 import pytest
@@ -826,7 +827,8 @@ class TestDailyFreezeThaw:
         # put a nan somewhere
         tasmin.values[180, 1, 0] = np.nan
 
-        with pytest.warns(None) as record:
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")
             frzthw = atmos.daily_freezethaw_cycles(
                 tasmin,
                 tasmax,
@@ -840,15 +842,8 @@ class TestDailyFreezeThaw:
 
         frzthw1 = (((min1 < 0) & (max1 > 0)) * 1.0).sum()
 
-        assert (
-            "This index calculation will soon require user-specified thresholds."
-            not in [str(q.message) for q in record]
-        )
-
         np.testing.assert_allclose(frzthw1, frzthw.values[0, 0, 0])
-
         assert np.isnan(frzthw.values[0, 1, 0])
-
         assert np.isnan(frzthw.values[0, -1, -1])
 
 
