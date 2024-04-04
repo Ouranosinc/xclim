@@ -1077,8 +1077,14 @@ def time_bnds(  # noqa: C901
     elif isinstance(time, (DataArrayResample, DatasetResample)):
         for grouper in time.groupers:
             if "time" in grouper.dims:
-                time = grouper.group_as_index
+                datetime = grouper.unique_coord.data
+                freq = freq or grouper.grouper.freq
+                if datetime.dtype == "O":
+                    time = xr.CFTimeIndex(datetime)
+                else:
+                    time = pd.DatetimeIndex(datetime)
                 break
+
         else:
             raise ValueError(
                 'Got object resampled along another dimension than "time".'
