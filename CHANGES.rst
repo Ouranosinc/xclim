@@ -15,6 +15,7 @@ Bug fixes
 * Fixed an bug in sdba's ``map_groups`` that prevented passing DataArrays with cftime coordinates if the ``sdba_encode_cf`` option was True. (:issue:`1673`, :pull:`1674`).
 * Fixed bug (:issue:`1678`, :pull:`1679`) in sdba where a loaded training dataset could not be used for adjustment
 * Fixed bug with loess smoothing for an array full of NaNs. (:pull:`1699`).
+* Fixed and adapted ``time_bnds`` to the newest xarray. (:pull:`1700`)
 
 Internal changes
 ^^^^^^^^^^^^^^^^
