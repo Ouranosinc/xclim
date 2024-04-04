@@ -1077,6 +1077,9 @@ def time_bnds(  # noqa: C901
     elif isinstance(time, (DataArrayResample, DatasetResample)):
         for grouper in time.groupers:
             if "time" in grouper.dims:
+                if hasattr(grouper, "grouper"):
+                    # xarray >= 2024.03
+                    grouper = grouper.grouper
                 time = grouper.group_as_index
                 break
         else:
