@@ -12,7 +12,7 @@ Announcements
 
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-* Distribution with negative values are directly fitted without need for an offset for distributions such as `gamma, fisk` in ``xclim.indices.standardized_precipitation_evapotranspiration_index``. (:issue:`1477`  :pull:`1653`).
+* Distributions with negative values are directly fitted without need for an offset for distributions such as `gamma, fisk` in ``xclim.indices.standardized_precipitation_evapotranspiration_index``. (:issue:`1477`  :pull:`1653`).
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
