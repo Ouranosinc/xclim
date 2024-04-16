@@ -10,6 +10,10 @@ Announcements
 ^^^^^^^^^^^^^
 * `xclim` has migrated its development branch name from `master` to `main`. (:issue:`1667`, :pull:`1669`).
 
+New indicators
+^^^^^^^^^^^^^^
+* New ``snw_season_length`` and ``snd_season_length`` computing the duration between the start and the end of the snow season, both defined as the first day of a continuous period with snow above/under a threshold. Previous versions of these indicators were renamed ``snw_days_above`` and ``snd_days_above`` to better reflect what they computed : the number of days with snow above a given threshold (with no notion of continuity). (:issue:`1703`, :pull:`1708`).
+
 Bug fixes
 ^^^^^^^^^
 * Fixed an bug in sdba's ``map_groups`` that prevented passing DataArrays with cftime coordinates if the ``sdba_encode_cf`` option was True. (:issue:`1673`, :pull:`1674`).
