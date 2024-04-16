@@ -118,17 +118,17 @@ jobs:
       matrix:
         include:
           # Windows builds
-          - tox-env: py39-prefetch-coverage
+          - tox-env: py39-coverage-prefetch
             python-version: "3.9"
             markers: -m 'not slow'
             os: windows-latest
           # macOS builds
-          - tox-env: py310-coverage
+          - tox-env: py310-coverage-doctest
             python-version: "3.10"
             markers: -m 'not slow'
             os: macos-latest
           # Linux builds
-          - tox-env: py39-coverage-sbck
+          - tox-env: py39-coverage-sbck-doctest
             python-version: "3.9"
             markers: -m 'not slow'
             os: ubuntu-latest
@@ -139,11 +139,11 @@ jobs:
             python-version: "3.11"
             markers: -m 'not slow'
             os: ubuntu-latest
-          - tox-env: py312-coverage-numba
+          - tox-env: py312-coverage-numba-doctest
             python-version: "3.12"
             markers: -m 'not slow'
             os: ubuntu-latest
-          - tox-env: notebooks_doctests
+          - tox-env: notebooks
             python-version: "3.10"
             os: ubuntu-latest
           - tox-env: offline-prefetch
