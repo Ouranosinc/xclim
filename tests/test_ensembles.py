@@ -566,6 +566,14 @@ class TestEnsembleReduction:
         uncrit = crit.unstack("criteria")
         assert set(uncrit.dims) == {"realization", "lat", "time"}
 
+        crit = ensembles.make_criteria(ds.where(ds.var_a > 0))
+        assert crit.dims == ("realization", "criteria")
+        assert crit.criteria.size == 12
+        np.testing.assert_array_equal(crit.isnull().sum(), 0)
+        np.testing.assert_array_equal(crit.min(), 1)
+        uncrit = crit.unstack("criteria")
+        assert set(uncrit.dims) == {"realization", "lat", "time"}
+
 
 # ## Tests for Robustness ##
 @pytest.fixture

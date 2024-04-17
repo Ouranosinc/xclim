@@ -113,6 +113,9 @@ def make_criteria(ds: xarray.Dataset | xarray.DataArray):
     else:
         # Easy peasy, skip all the convoluted stuff
         crit = _make_crit(ds)
+
+    # drop criteria that are all NaN
+    crit = crit.dropna(dim="criteria", how="all")
     return crit.rename("criteria")
 
 
