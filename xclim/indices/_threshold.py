@@ -352,7 +352,7 @@ def snd_season_end(
     window: int = 14,
     freq: str = "YS-JUL",
 ) -> xarray.DataArray:
-    r"""End date of continuous snow depth cover.
+    r"""Snow cover end date (depth).
 
     First day after the start of the continuous snow depth cover when snow depth is below a threshold
     for at least `N` consecutive days.
@@ -398,7 +398,7 @@ def snw_season_end(
     window: int = 14,
     freq: str = "YS-JUL",
 ) -> xarray.DataArray:
-    r"""End date of continuous snow cover.
+    r"""Snow cover end date (amount).
 
     First day after the start of the continuous snow water cover
     when snow water is below a threshold for at least `N` consecutive days.
@@ -444,7 +444,7 @@ def snd_season_start(
     window: int = 14,
     freq: str = "YS-JUL",
 ) -> xarray.DataArray:
-    r"""Start date of continuous snow depth cover.
+    r"""Snow cover start date (depth).
 
     Day of year when snow depth is above or equal to a threshold
     for at least `N` consecutive days.
@@ -495,7 +495,7 @@ def snw_season_start(
     window: int = 14,
     freq: str = "YS-JUL",
 ) -> xarray.DataArray:
-    r"""Start date of continuous snow water cover.
+    r"""Snow cover start date (amount).
 
     Day of year when snow water is above or equal to a threshold
     for at least `N` consecutive days.
@@ -547,7 +547,7 @@ def snd_season_length(
     window: int = 14,
     freq: str = "YS-JUL",
 ) -> xarray.DataArray:
-    r"""Snow season length.
+    r"""Snow cover duration (depth).
 
     The season starts when snow depth is above a threshold for at least `N` consecutive days
     and stops when it drops below the same threshold for the same number of days.
@@ -592,7 +592,7 @@ def snw_season_length(
     window: int = 14,
     freq: str = "YS-JUL",
 ) -> xarray.DataArray:
-    r"""Snow season length.
+    r"""Snow cover duration (amount).
 
     The season starts when the snow amount is above a threshold for at least `N` consecutive days
     and stops when it drops below the same threshold for the same number of days.

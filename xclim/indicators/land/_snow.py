@@ -41,7 +41,6 @@ class SnowWithIndexing(ResamplingIndicatorWithIndexing):
 
 
 snd_season_length = SnowWithIndexing(
-    title="Snow cover duration (depth)",
     identifier="snd_season_length",
     units="days",
     long_name="Snow cover duration",
@@ -53,7 +52,6 @@ snd_season_length = SnowWithIndexing(
 )
 
 snw_season_length = SnowWithIndexing(
-    title="Snow cover duration (amount)",
     identifier="snw_season_length",
     units="days",
     long_name="Snow cover duration",
@@ -65,7 +63,6 @@ snw_season_length = SnowWithIndexing(
 )
 
 snd_season_start = Snow(
-    title="Start date of continuous snow depth cover",
     identifier="snd_season_start",
     standard_name="day_of_year",
     long_name="Start date of continuous snow depth cover",
@@ -77,7 +74,6 @@ snd_season_start = Snow(
 )
 
 snw_season_start = Snow(
-    title="Start date of continuous snow amount cover",
     identifier="snw_season_start",
     standard_name="day_of_year",
     long_name="Start date of continuous snow amount cover",
@@ -89,7 +85,6 @@ snw_season_start = Snow(
 )
 
 snd_season_end = Snow(
-    title="End date of continuous snow depth cover",
     identifier="snd_season_end",
     standard_name="day_of_year",
     long_name="End date of continuous snow depth cover",
@@ -100,7 +95,6 @@ snd_season_end = Snow(
 )
 
 snw_season_end = Snow(
-    title="End date of continuous snow amount cover",
     identifier="snw_season_end",
     standard_name="day_of_year",
     long_name="End date of continuous snow amount cover",

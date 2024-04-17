@@ -1012,13 +1012,13 @@
   "SND_SEASON_START": {
     "long_name": "Date du début du couvert de neige continu",
     "description": "Première date à laquelle l'épaisseur de neige est au-dessus ou égale à {thresh} pendant au moins {window} jours consécutifs.",
-    "title": "Date du début du couvert de neige (épaisseur)",
+    "title": "Date de début du couvert de neige (épaisseur)",
     "abstract": "Première date à partir de laquelle l'épaisseur de neige est au-dessus ou égale à un seuil donné pendant un nombre de jours consécutifs."
   },
   "SND_SEASON_END": {
     "long_name": "Date de fin du couvert de neige continu",
     "description": "Première date à laquelle l'épaisseur de neige passe sous {thresh} pendant au moins {window} jours consécutifs suite à l'établissement du couvert de neige.",
-    "title": "Date du fin du couvert de neige (épaisseur)",
+    "title": "Date de fin du couvert de neige (épaisseur)",
     "abstract": "Première date à partir de laquelle l'épaisseur de neige est sous à un seuil donné pendant un nombre de jours consécutifs suite au début du couvert de neige."
   },
   "SND_DAYS_ABOVE": {
@@ -1036,13 +1036,13 @@
   "SNW_SEASON_START": {
     "long_name": "Date du début du couvert de neige continu",
     "description": "Première date à laquelle la quantité de neige est au-dessus ou égale à {thresh} pendant au moins {window} jours consécutifs.",
-    "title": "Date du début du couvert de neige (quantité)",
+    "title": "Date de début du couvert de neige (quantité)",
     "abstract": "Première date à partir de laquelle la quantité de neige est au-dessus ou égale à un seuil donné pendant un nombre de jours consécutifs."
   },
   "SNW_SEASON_END": {
     "long_name": "Date de fin du couvert de neige continu",
     "description": "Première date à laquelle la quantité de neige passe sous {thresh} pendant au moins {window} jours consécutifs suite à l'établissement du couvert de neige.",
-    "title": "Date du fin du couvert de neige (quantité)",
+    "title": "Date de fin du couvert de neige (quantité)",
     "abstract": "Première date à partir de laquelle la quantité de neige est sous à un seuil donné pendant un nombre de jours consécutifs suite au début du couvert de neige."
   },
   "SNW_DAYS_ABOVE": {
