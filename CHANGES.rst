@@ -4,7 +4,7 @@ Changelog
 
 v0.49.0 (unreleased)
 --------------------
-Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), Juliette Lavoie (:user:`juliettelavoie`).
+Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), Juliette Lavoie (:user:`juliettelavoie`), Gabriel Rondeau-Genesse (:user:`RondeauG`).
 
 Announcements
 ^^^^^^^^^^^^^
@@ -17,6 +17,7 @@ Bug fixes
 * Fixed bug with loess smoothing for an array full of NaNs. (:pull:`1699`).
 * Fixed and adapted ``time_bnds`` to the newest xarray. (:pull:`1700`).
 * Fixed "agreement fraction" in ``robustness_fractions`` to distinguish between negative change and no change. Added "negative" and "changed negative" fractions (:issue:`1690`, :pull:`1711`).
+* ``make_criteria`` now skips columns with NaNs across all realizations. (:pull:`1713`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
