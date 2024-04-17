@@ -10,6 +10,10 @@ Announcements
 ^^^^^^^^^^^^^
 * `xclim` has migrated its development branch name from `master` to `main`. (:issue:`1667`, :pull:`1669`).
 
+New indicators
+^^^^^^^^^^^^^^
+* Added ``atmos.duff_moisture_code``, part of the Canadian Forest Fire Weather Index System. It was already an output of the `atmos.cffwis_indices`, but now has its own standalone indicator. (:issue:`1698`, :pull:`1712`).
+
 Bug fixes
 ^^^^^^^^^
 * Fixed an bug in sdba's ``map_groups`` that prevented passing DataArrays with cftime coordinates if the ``sdba_encode_cf`` option was True. (:issue:`1673`, :pull:`1674`).
