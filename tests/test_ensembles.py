@@ -735,13 +735,14 @@ def test_robustness_fractions_weighted(robust_data):
 
 
 def test_robustness_fractions_delta(robust_data):
-    delta = xr.DataArray([-2, 1, -2, -1], dims=("realization",))
+    delta = xr.DataArray([-2, 1, -2, -1, 0, 0], dims=("realization",))
     fracs = ensembles.robustness_fractions(delta, test="threshold", abs_thresh=1.5)
-    np.testing.assert_array_equal(fracs.changed, [0.5])
+    np.testing.assert_array_equal(fracs.changed, [2 / 6])
     np.testing.assert_array_equal(fracs.changed_positive, [0.0])
-    np.testing.assert_array_equal(fracs.positive, [0.25])
-    np.testing.assert_array_equal(fracs.agree, [0.75])
+    np.testing.assert_array_equal(fracs.positive, [1 / 6])
+    np.testing.assert_array_equal(fracs.agree, [3 / 6])
 
+    delta = xr.DataArray([-2, 1, -2, -1], dims=("realization",))
     weights = xr.DataArray([4, 3, 2, 1], dims=("realization",))
     fracs = ensembles.robustness_fractions(
         delta, test="threshold", abs_thresh=1.5, weights=weights

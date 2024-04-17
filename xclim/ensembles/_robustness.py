@@ -91,11 +91,15 @@ def robustness_fractions(  # noqa: C901
                 The weighted fraction of valid members showing significant change.
                 Passing `test=None` yields change_frac = 1 everywhere. Same type as `fut`.
         positive :
-                The weighted fraction of valid members showing positive change, no matter if it is significant or not.
+                The weighted fraction of valid members showing strictly positive change, no matter if it is significant or not.
         changed_positive :
-                The weighted fraction of valid members showing significant and positive change (]0, 1]).
+                The weighted fraction of valid members showing significant and positive change.
+        negative :
+                The weighted fraction of valid members showing strictly negative change, no matter if it is significant or not.
+        changed_negative :
+                The weighted fraction of valid members showing significant and negative change.
         agree :
-                The weighted fraction of valid members agreeing on the sign of change. It is the maximum between positive and 1 - positive.
+                The weighted fraction of valid members agreeing on the sign of change. It is the maximum between positive, negative and the rest.
         valid :
                 The weighted fraction of valid members. A member is valid is there are no NaNs along the time axes of `fut` and  `ref`.
         pvals :
@@ -106,7 +110,7 @@ def robustness_fractions(  # noqa: C901
     The table below shows the coefficient needed to retrieve the number of members
     that have the indicated characteristics, by multiplying it by the total
     number of members (`fut.realization.size`) and by `valid_frac`, assuming uniform weights.
-    For compactness, we rename the outputs cf, cpf and pf.
+    For compactness, we rename the outputs cf, pf, cpf, nf and cnf.
 
     +-----------------+--------------------+------------------------+------------+
     |                 | Significant change | Non-significant change | Any change |
@@ -115,8 +119,10 @@ def robustness_fractions(  # noqa: C901
     +-----------------+--------------------+------------------------+------------+
     | Positive change | cpf                | pf - cpf               | pf         |
     +-----------------+--------------------+------------------------+------------+
-    | Negative change | (cf - cpf)         | 1 - pf - (cf -cpf)     | 1 - pf     |
+    | Negative change | cnf                | nf - cnf               | nf         |
     +-----------------+--------------------+------------------------+------------+
+
+    And members showing absolutely no change are ``1 - nf - pf``.
 
     Available statistical tests are :
 
@@ -213,10 +219,16 @@ def robustness_fractions(  # noqa: C901
     n_valid = valid.weighted(w).sum(realization)
     change_frac = changed.where(valid).weighted(w).sum(realization) / n_valid
     pos_frac = (delta > 0).where(valid).weighted(w).sum(realization) / n_valid
+    neg_frac = (delta < 0).where(valid).weighted(w).sum(realization) / n_valid
     change_pos_frac = ((delta > 0) & changed).where(valid).weighted(w).sum(
         realization
     ) / n_valid
-    agree_frac = xr.concat((pos_frac, 1 - pos_frac), "sign").max("sign")
+    change_neg_frac = ((delta < 0) & changed).where(valid).weighted(w).sum(
+        realization
+    ) / n_valid
+    agree_frac = xr.concat((pos_frac, neg_frac, 1 - pos_frac - neg_frac), "sign").max(
+        "sign"
+    )
 
     # Metadata
     kwargs_str = gen_call_string("", **test_params)[1:-1]
@@ -233,11 +245,21 @@ def robustness_fractions(  # noqa: C901
                 test=str(test),
             ),
             "positive": pos_frac.assign_attrs(
-                description="Fraction of valid members showing positive change.",
+                description="Fraction of valid members showing strictly positive change.",
                 units="",
             ),
             "changed_positive": change_pos_frac.assign_attrs(
                 description="Fraction of valid members showing significant and positive change. "
+                + test_str,
+                units="",
+                test=str(test),
+            ),
+            "negative": neg_frac.assign_attrs(
+                description="Fraction of valid members showing strictly negative change.",
+                units="",
+            ),
+            "changed_negative": change_neg_frac.assign_attrs(
+                description="Fraction of valid members showing significant and negative change. "
                 + test_str,
                 units="",
                 test=str(test),
@@ -247,7 +269,10 @@ def robustness_fractions(  # noqa: C901
                 units="",
             ),
             "agree": agree_frac.assign_attrs(
-                description="Fraction of valid members agreeing on the sign of change. Maximum between pos_frac and 1 - pos_frac.",
+                description=(
+                    "Fraction of valid members agreeing on the sign of change. "
+                    "Maximum between the positive, negative and no change fractions."
+                ),
                 units="",
             ),
         },
