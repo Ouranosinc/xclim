@@ -19,12 +19,15 @@ Bug fixes
 * Fixed an bug in sdba's ``map_groups`` that prevented passing DataArrays with cftime coordinates if the ``sdba_encode_cf`` option was True. (:issue:`1673`, :pull:`1674`).
 * Fixed bug (:issue:`1678`, :pull:`1679`) in sdba where a loaded training dataset could not be used for adjustment
 * Fixed bug with loess smoothing for an array full of NaNs. (:pull:`1699`).
-* Fixed and adapted ``time_bnds`` to the newest xarray. (:pull:`1700`)
+* Fixed and adapted ``time_bnds`` to the newest xarray. (:pull:`1700`).
+* Fixed "agreement fraction" in ``robustness_fractions`` to distinguish between negative change and no change. Added "negative" and "changed negative" fractions (:issue:`1690`, :pull:`1711`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
 * Added "doymin" and "doymax" to the possible operations of ``generic.stats``. Fixed a warning issue when ``op`` was "integral". (:pull:`1672`).
-
+* Reorganized GitHub CI build matrices to run the doctests more consistently. (:pull:`1709`).
+* Removed the experimental `numba` and `llvm` dependency installation steps in the `tox.ini` file. Added `numba@main` to the upstream dependencies. (:pull:`1709`).
+* Added the `tox-gh` dependency to the development installation recipe. This will soon be required for running the `tox` test ensemble on GitHub Workflows. (:pull:`1709`).
 
 v0.48.2 (2024-02-26)
 --------------------
