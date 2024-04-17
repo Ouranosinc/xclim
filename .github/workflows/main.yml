@@ -124,7 +124,7 @@ jobs:
             markers: -m 'not slow'
             os: windows-latest
           # macOS builds
-          - tox-env: py310-coverage-doctest
+          - tox-env: py310-coverage-lmoments-doctest
             python-version: "3.10"
             markers: -m 'not slow'
             os: macos-latest
@@ -140,7 +140,7 @@ jobs:
             python-version: "3.11"
             markers: -m 'not slow'
             os: ubuntu-latest
-          - tox-env: py312-coverage-numba-doctest
+          - tox-env: py312-coverage-lmoments-doctest
             python-version: "3.12"
             markers: -m 'not slow'
             os: ubuntu-latest
