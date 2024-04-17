@@ -193,14 +193,15 @@ jobs:
 
   test-conda:
     needs: lint
-    name: test-conda-Python${{ matrix.python-version }}
+    name: Python${{ matrix.python-version }} (Conda, ${{ matrix.os }})
     if: |
       contains(github.event.pull_request.labels.*.name, 'approved') ||
       (github.event.review.state == 'approved') ||
       (github.event_name == 'push')
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     strategy:
       matrix:
+        os: [ubuntu-latest]
         python-version: ["3.9", "3.12"]
     defaults:
       run:
