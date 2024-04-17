@@ -21,7 +21,9 @@ Bug fixes
 Internal changes
 ^^^^^^^^^^^^^^^^
 * Added "doymin" and "doymax" to the possible operations of ``generic.stats``. Fixed a warning issue when ``op`` was "integral". (:pull:`1672`).
-
+* Reorganized GitHub CI build matrices to run the doctests more consistently. (:pull:`1709`).
+* Removed the experimental `numba` and `llvm` dependency installation steps in the `tox.ini` file. Added `numba@main` to the upstream dependencies. (:pull:`1709`).
+* Added the `tox-gh` dependency to the development installation recipe. This will soon be required for running the `tox` test ensemble on GitHub Workflows. (:pull:`1709`).
 
 v0.48.2 (2024-02-26)
 --------------------
