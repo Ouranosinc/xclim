@@ -482,7 +482,14 @@ class TestAgroclimaticIndices:
                 [0.598209, 1.55976, 1.69309, 0.9964, 0.7028],
                 2e-2,
             ),
-            ("MS", 1, "gamma", "ML", [1.4586, 1.6028, 2.0668, -3.09, 0.84841], 0.04),
+            (
+                "MS",
+                1,
+                "gamma",
+                "ML",
+                [1.460105, 1.602951, 2.072521, -3.09, 0.891468],
+                0.04,
+            ),
             ("MS", 12, "gamma", "ML", [0.59821, 1.5598, 1.6931, 0.9964, 0.7028], 0.04),
             (
                 "MS",
@@ -521,7 +528,7 @@ class TestAgroclimaticIndices:
                 1,
                 "gamma",
                 "ML",
-                [0.007301, 1.338109, 0.996812, 0.321078, -0.095487],
+                [-0.011698, 1.597031, 0.969714, 0.265561, -0.132654],
                 2e-2,
             ),
             (
@@ -529,7 +536,7 @@ class TestAgroclimaticIndices:
                 12,
                 "gamma",
                 "ML",
-                [-0.158532, -0.049117, 0.774798, 1.080759, 0.660781],
+                [-0.158116, -0.049222, 0.672544, 1.08332, 0.660903],
                 2e-2,
             ),
             (
@@ -537,7 +544,7 @@ class TestAgroclimaticIndices:
                 1,
                 "fisk",
                 "ML",
-                [-0.127364, 1.308234, 0.676518, 0.104463, -0.502469],
+                [-0.158949, 1.308225, 0.449846, 0.146699, -0.502737],
                 2e-2,
             ),
             (
@@ -602,6 +609,7 @@ class TestAgroclimaticIndices:
             dist=dist,
             method=method,
             fitkwargs=fitkwargs,
+            zero_inflated=True,
         )
         spi = xci.standardized_precipitation_index(pr, params=params)
         # Only a few moments before year 2000 are tested
@@ -703,6 +711,7 @@ class TestAgroclimaticIndices:
             dist=dist,
             method=method,
             fitkwargs=fitkwargs,
+            zero_inflated=True,
         )
         spei = xci.standardized_precipitation_evapotranspiration_index(
             wb.sel(time=slice("1998", "2000")), params=params

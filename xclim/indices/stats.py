@@ -490,10 +490,13 @@ def _fit_start(x, dist: str, **fitkwargs: Any) -> tuple[tuple, dict]:
         else:
             xs = sorted(x)
             x1, x2, xn = xs[0], xs[1], xs[-1]
+            # n = len(x)
+            # cv = x.std() / x.mean()
+            # p = (0.48265 + 0.32967 * cv) * n ** (-0.2984 * cv)
+            # xp = xs[int(p/100*n)]
             xp = x2
             loc0 = (x1 * xn - xp**2) / (x1 + xn - 2 * xp)
             loc0 = loc0 if loc0 < x1 else (0.9999 * x1 if x1 > 0 else 1.0001 * x1)
-            # loc0 = 0
         x_pos = x - loc0
         x_pos = x_pos[x_pos > 0]
         m = x_pos.mean()
@@ -677,6 +680,7 @@ def standardized_index_fit_params(
     window: int,
     dist: str | scipy.stats.rv_continuous,
     method: str,
+    zero_inflated: bool = False,
     fitkwargs: dict = {},
     offset: Quantified | None = None,
     **indexer,
@@ -753,6 +757,9 @@ def standardized_index_fit_params(
             f"The method `{method}` is not supported for distribution `{dist.name}`."
         )
     da, group = preprocess_standardized_index(da, freq, window, **indexer)
+
+    if zero_inflated:
+        da = da.where(da > 0)
     params = da.groupby(group).map(fit, dist=dist, method=method, **fitkwargs)
     cal_range = (
         da.time.min().dt.strftime("%Y-%m-%d").item(),
@@ -769,7 +776,6 @@ def standardized_index_fit_params(
     }
     method, args = ("", []) if indexer == {} else indexer.popitem()
     params.attrs["time_indexer"] = (method, *args)
-
     params.attrs["offset"] = offset or ""
 
     return params
@@ -781,6 +787,7 @@ def standardized_index(
     window: int,
     dist: str | scipy.stats.rv_continuous | None,
     method: str,
+    zero_inflated: bool,
     fitkwargs: dict,
     cal_start: DateStr | None,
     cal_end: DateStr | None,
@@ -860,6 +867,7 @@ def standardized_index(
             window=1,
             dist=dist,
             method=method,
+            zero_inflated=zero_inflated,
         )
 
     # If params only contains a subset of main dataset time grouping
@@ -883,6 +891,8 @@ def standardized_index(
         lambda x: (x == 0).sum("time") / x.notnull().sum("time")
     )
     params, probs_of_zero = (reindex_time(dax, da) for dax in [params, probs_of_zero])
+    if zero_inflated:
+        da = da.where(da > 0)
     dist_probs = dist_method("cdf", params, da, dist=dist)
     probs = probs_of_zero + ((1 - probs_of_zero) * dist_probs)
 

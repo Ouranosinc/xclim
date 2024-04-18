@@ -1199,8 +1199,20 @@ def standardized_precipitation_index(
             )
     else:
         raise NotImplementedError(f"{dist} distribution is not implemented yet")
+    # Precipitation is expected to be zero-inflated
+    zero_inflated = True
     spi = standardized_index(
-        pr, freq, window, dist, method, fitkwargs, cal_start, cal_end, params, **indexer
+        pr,
+        freq,
+        window,
+        dist,
+        method,
+        zero_inflated,
+        fitkwargs,
+        cal_start,
+        cal_end,
+        params,
+        **indexer,
     )
     return spi
 
@@ -1301,8 +1313,20 @@ def standardized_precipitation_evapotranspiration_index(
             )
     else:
         raise NotImplementedError(f"{dist} distribution is not implemented yet")
+    # Water budget is not expected to be zero-inflated
+    zero_inflated = False
     spei = standardized_index(
-        wb, freq, window, dist, method, fitkwargs, cal_start, cal_end, params, **indexer
+        wb,
+        freq,
+        window,
+        dist,
+        method,
+        fitkwargs,
+        zero_inflated,
+        cal_start,
+        cal_end,
+        params,
+        **indexer,
     )
 
     return spei
