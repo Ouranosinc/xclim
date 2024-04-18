@@ -224,7 +224,8 @@ class set_options:
         """Context management."""
         return
 
-    def _update(self, kwargs):
+    @staticmethod
+    def _update(kwargs):
         """Update values."""
         for k, v in kwargs.items():
             if k in _SETTERS:
@@ -232,6 +233,6 @@ class set_options:
             else:
                 OPTIONS[k] = v
 
-    def __exit__(self, option_type, value, traceback):
+    def __exit__(self, option_type, value, traceback):  # noqa: F841
         """Context management."""
         self._update(self.old)

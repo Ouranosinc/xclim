@@ -16,6 +16,7 @@ New indicators
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
+* The previously deprecated functions ``xclim.sdba.processing.construct_moving_yearly_window`` and ``xclim.sdba.processing.unpack_moving_yearly_window`` have been removed. These functions have been replaced by ``xclim.core.calendar.stack_periods`` and ``xclim.core.calendar.unstack_periods``. (:pull:`1717`).
 * Indicators ``snw_season_length`` and ``snd_season_length`` have been modified, see above.
 
 Bug fixes
@@ -32,6 +33,7 @@ Internal changes
 * Reorganized GitHub CI build matrices to run the doctests more consistently. (:pull:`1709`).
 * Removed the experimental `numba` and `llvm` dependency installation steps in the `tox.ini` file. Added `numba@main` to the upstream dependencies. (:pull:`1709`).
 * Added the `tox-gh` dependency to the development installation recipe. This will soon be required for running the `tox` test ensemble on GitHub Workflows. (:pull:`1709`).
+* Added the `vulture` static code analysis tool for finding dead code to the development dependency list and linters (makefile, tox and pre-commit hooks). (:pull:`1717`).
 
 v0.48.2 (2024-02-26)
 --------------------
