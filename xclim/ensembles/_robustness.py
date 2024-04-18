@@ -3,19 +3,18 @@ Ensemble Robustness Metrics
 ===========================
 
 Robustness metrics are used to estimate the confidence of the climate change signal of an ensemble.
-This submodule is inspired by and tries to follow the guidelines of the IPCC, more specifically
-the 12th chapter of the Working Group 1's contribution to the AR5 :cite:p:`collins_long-term_2013` (see box 12.1).
+This submodule is inspired by and tries to follow the guidelines of the IPCC,
+more specifically :cite:p:`collins_long-term_2013` (AR5) and :cite:cts:`ipccatlas_ar6wg1` (AR6).
 """
+
 from __future__ import annotations
 
 import warnings
 from inspect import Parameter, signature
 
 import numpy as np
-import scipy
 import scipy.stats as spstats  # noqa
 import xarray as xr
-from packaging.version import Version
 
 from xclim.core.formatting import gen_call_string, update_xclim_history
 from xclim.indices.generic import compare, detrend
@@ -31,7 +30,7 @@ __all__ = [
 SIGNIFICANCE_TESTS = {}
 """Registry of change significance tests.
 
-New tests must be decorated with :py:func:`significance_test` and fullfill the following requirements:
+New tests must be decorated with :py:func:`significance_test` and fulfill the following requirements:
 
 - Function name should begin by "_", registered test name is the function name without its first character and with _ replaced by -.
 - Function must accept 2 positional arguments : fut and ref (see :py:func:`change_significance` for definitions)
@@ -51,7 +50,7 @@ def significance_test(func):
     return func
 
 
-# This function's docstring is modified to inlude the registered test names and docs.
+# This function's docstring is modified to include the registered test names and docs.
 # See end of this file.
 @update_xclim_history
 def robustness_fractions(  # noqa: C901
@@ -92,20 +91,26 @@ def robustness_fractions(  # noqa: C901
                 The weighted fraction of valid members showing significant change.
                 Passing `test=None` yields change_frac = 1 everywhere. Same type as `fut`.
         positive :
-                The weighted fraction of valid members showing positive change, no matter if it is significant or not.
+                The weighted fraction of valid members showing strictly positive change, no matter if it is significant or not.
         changed_positive :
-                The weighted fraction of valid members showing significant and positive change (]0, 1]).
+                The weighted fraction of valid members showing significant and positive change.
+        negative :
+                The weighted fraction of valid members showing strictly negative change, no matter if it is significant or not.
+        changed_negative :
+                The weighted fraction of valid members showing significant and negative change.
         agree :
-                The weighted fraction of valid members agreeing on the sign of change. It is the maximum between positive and 1 - positive.
+                The weighted fraction of valid members agreeing on the sign of change. It is the maximum between positive, negative and the rest.
         valid :
                 The weighted fraction of valid members. A member is valid is there are no NaNs along the time axes of `fut` and  `ref`.
         pvals :
                 The p-values estimated by the significance tests. Only returned if the test uses `pvals`. Has the  `realization` dimension.
 
+    Notes
+    -----
     The table below shows the coefficient needed to retrieve the number of members
     that have the indicated characteristics, by multiplying it by the total
     number of members (`fut.realization.size`) and by `valid_frac`, assuming uniform weights.
-    For compactness, we rename the outputs cf, cpf and pf.
+    For compactness, we rename the outputs cf, pf, cpf, nf and cnf.
 
     +-----------------+--------------------+------------------------+------------+
     |                 | Significant change | Non-significant change | Any change |
@@ -114,11 +119,11 @@ def robustness_fractions(  # noqa: C901
     +-----------------+--------------------+------------------------+------------+
     | Positive change | cpf                | pf - cpf               | pf         |
     +-----------------+--------------------+------------------------+------------+
-    | Negative change | (cf - cpf)         | 1 - pf - (cf -cpf)     | 1 - pf     |
+    | Negative change | cnf                | nf - cnf               | nf         |
     +-----------------+--------------------+------------------------+------------+
 
-    Notes
-    -----
+    And members showing absolutely no change are ``1 - nf - pf``.
+
     Available statistical tests are :
 
     {tests_doc}
@@ -214,10 +219,16 @@ def robustness_fractions(  # noqa: C901
     n_valid = valid.weighted(w).sum(realization)
     change_frac = changed.where(valid).weighted(w).sum(realization) / n_valid
     pos_frac = (delta > 0).where(valid).weighted(w).sum(realization) / n_valid
+    neg_frac = (delta < 0).where(valid).weighted(w).sum(realization) / n_valid
     change_pos_frac = ((delta > 0) & changed).where(valid).weighted(w).sum(
         realization
     ) / n_valid
-    agree_frac = xr.concat((pos_frac, 1 - pos_frac), "sign").max("sign")
+    change_neg_frac = ((delta < 0) & changed).where(valid).weighted(w).sum(
+        realization
+    ) / n_valid
+    agree_frac = xr.concat((pos_frac, neg_frac, 1 - pos_frac - neg_frac), "sign").max(
+        "sign"
+    )
 
     # Metadata
     kwargs_str = gen_call_string("", **test_params)[1:-1]
@@ -234,11 +245,21 @@ def robustness_fractions(  # noqa: C901
                 test=str(test),
             ),
             "positive": pos_frac.assign_attrs(
-                description="Fraction of valid members showing positive change.",
+                description="Fraction of valid members showing strictly positive change.",
                 units="",
             ),
             "changed_positive": change_pos_frac.assign_attrs(
                 description="Fraction of valid members showing significant and positive change. "
+                + test_str,
+                units="",
+                test=str(test),
+            ),
+            "negative": neg_frac.assign_attrs(
+                description="Fraction of valid members showing strictly negative change.",
+                units="",
+            ),
+            "changed_negative": change_neg_frac.assign_attrs(
+                description="Fraction of valid members showing significant and negative change. "
                 + test_str,
                 units="",
                 test=str(test),
@@ -248,7 +269,10 @@ def robustness_fractions(  # noqa: C901
                 units="",
             ),
             "agree": agree_frac.assign_attrs(
-                description="Fraction of valid members agreeing on the sign of change. Maximum between pos_frac and 1 - pos_frac.",
+                description=(
+                    "Fraction of valid members agreeing on the sign of change. "
+                    "Maximum between the positive, negative and no change fractions."
+                ),
                 units="",
             ),
         },
@@ -285,7 +309,7 @@ def change_significance(  # noqa: C901
         xr.DataArray | xr.Dataset | None,
     ]
 ):
-    """Backwards-compatible implementaton of :py:func:`robustness_fractions`."""
+    """Backwards-compatible implementation of :py:func:`robustness_fractions`."""
     warnings.warn(
         (
             "Function change_significance is deprecated as of xclim 0.47 and will be removed in 0.49. "
@@ -508,33 +532,17 @@ def robustness_coefficient(
 @significance_test
 def _ttest(fut, ref, *, p_change=0.05):
     """Single sample T-test. Same test as used by :cite:t:`tebaldi_mapping_2011`.
+
     The future values are compared against the reference mean (over 'time').
     Accepts argument p_change (float, default : 0.05) the p-value threshold for rejecting the hypothesis of no significant change.
     """
-    if Version(scipy.__version__) < Version("1.9.0"):
-        warnings.warn(
-            "`xclim` will be dropping support for `scipy<1.9.0` in a future release. "
-            "Please consider updating your environment dependencies accordingly",
-            FutureWarning,
-            stacklevel=4,
-        )
 
-        def _ttest_func(f, r):
-            if np.isnan(f).all() or np.isnan(r).all():
-                return np.NaN
+    def _ttest_func(f, r):
+        # scipy>=1.9: popmean.axis[-1] must equal 1 for both fut and ref
+        if np.isnan(f).all() or np.isnan(r).all():
+            return np.NaN
 
-            return spstats.ttest_1samp(f, r, axis=-1, nan_policy="omit")[1]
-
-    else:
-
-        def _ttest_func(f, r):
-            # scipy>=1.9: popmean.axis[-1] must equal 1 for both fut and ref
-            if np.isnan(f).all() or np.isnan(r).all():
-                return np.NaN
-
-            return spstats.ttest_1samp(
-                f, r[..., np.newaxis], axis=-1, nan_policy="omit"
-            )[1]
+        return spstats.ttest_1samp(f, r[..., np.newaxis], axis=-1, nan_policy="omit")[1]
 
     # Test hypothesis of no significant change
     pvals = xr.apply_ufunc(
@@ -554,7 +562,10 @@ def _ttest(fut, ref, *, p_change=0.05):
 
 @significance_test
 def _welch_ttest(fut, ref, *, p_change=0.05):
-    """Two-sided T-test, without assuming equal population variance. Same significance criterion and argument as 'ttest'."""
+    """Two-sided T-test, without assuming equal population variance.
+
+    Same significance criterion and argument as 'ttest'.
+    """
 
     # Test hypothesis of no significant change
     # equal_var=False -> Welch's T-test
@@ -583,12 +594,6 @@ def _welch_ttest(fut, ref, *, p_change=0.05):
 @significance_test
 def _mannwhitney_utest(ref, fut, *, p_change=0.05):
     """Two-sided Mann-Whiney U-test. Same significance criterion and argument as 'ttest'."""
-    if Version(scipy.__version__) < Version("1.8.0"):
-        raise ImportError(
-            "The Mann-Whitney test requires `scipy>=1.8.0`. "
-            "`xclim` will be dropping support for `scipy<1.9.0` in a future release. "
-            "Please consider updating your environment dependencies accordingly"
-        )
 
     def mwu_wrapper(f, r):  # This specific test can't manage an all-NaN slice
         if np.isnan(f).all() or np.isnan(r).all():
@@ -613,7 +618,10 @@ def _mannwhitney_utest(ref, fut, *, p_change=0.05):
 
 @significance_test
 def _brownforsythe_test(fut, ref, *, p_change=0.05):
-    """Brown-Forsythe test assuming skewed, non-normal distributions. Same significance criterion and argument as 'ttest'."""
+    """Brown-Forsythe test assuming skewed, non-normal distributions.
+
+    Same significance criterion and argument as 'ttest'.
+    """
     pvals = xr.apply_ufunc(
         lambda f, r: spstats.levene(f, r, center="median")[1],
         fut,
@@ -633,13 +641,14 @@ def _brownforsythe_test(fut, ref, *, p_change=0.05):
 @significance_test
 def _ipcc_ar6_c(fut, ref, *, ref_pi=None):
     r"""The advanced approach used in the IPCC Atlas chapter (:cite:t:`ipccatlas_ar6wg1`).
+
     Change is considered significant if the delta exceeds a threshold related to the internal variability.
     If pre-industrial data is given in argument `ref_pi`, the threshold is defined as
     :math:`\sqrt{2}*1.645*\sigma_{20yr}`, where :math:`\sigma_{20yr}` is the standard deviation of 20-year
     means computed from non-overlapping periods after detrending with a quadratic fit.
     Otherwise, when such pre-industrial control data is not available, the threshold is defined in relation to
     the historical data (`ref`) as :math:`\sqrt{\frac{2}{20}}*1.645*\sigma_{1yr}, where :math:`\sigma_{1yr}`
-    is the interannual standard deviation measured after linearly detrending the data.
+    is the inter-annual standard deviation measured after linearly detrending the data.
     See notebook :ref:`notebooks/ensembles:Ensembles` for more details.
     """
     # Ensure annual
@@ -665,7 +674,7 @@ def _gen_test_entry(namefunc):
     return f"\t{name}:\n\t\t{doc}"
 
 
-change_significance.__doc__ = change_significance.__doc__.format(
+robustness_fractions.__doc__ = robustness_fractions.__doc__.format(
     tests_list="{" + ", ".join(list(SIGNIFICANCE_TESTS.keys()) + ["threshold"]) + "}",
     tests_doc="\n".join(map(_gen_test_entry, SIGNIFICANCE_TESTS.items())),
 )

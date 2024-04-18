@@ -1,3 +1,4 @@
+# pylint: disable=missing-kwoa
 """
 Adjustment Methods
 ==================
@@ -337,7 +338,7 @@ class EmpiricalQuantileMapping(TrainAdjust):
     Adjust step:
 
     interp : {'nearest', 'linear', 'cubic'}
-        The interpolation method to use when interpolating the adjustment factors. Defaults to "nearset".
+        The interpolation method to use when interpolating the adjustment factors. Defaults to "nearest".
     extrapolation : {'constant', 'nan'}
         The type of extrapolation to use. See :py:func:`xclim.sdba.utils.extrapolate_qm` for details. Defaults to "constant".
 
@@ -1277,7 +1278,7 @@ else:
                 (
                     "The adjust method accepts ref, hist, sim and all arguments listed "
                     'below in "Parameters". It also accepts a `multi_dim` argument '
-                    "specifying the dimension accross which to take the 'features' and "
+                    "specifying the dimension across which to take the 'features' and "
                     "is valid for multivariate methods only. See :py:func:`xclim.sdba.stack_variables`."
                     "In the description below, `n_features` is the size of the `multi_dim` "
                     "dimension. There is no way of specifying parameters across other "

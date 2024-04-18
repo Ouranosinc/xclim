@@ -1,3 +1,4 @@
+# pylint: disable=missing-kwoa
 """
 Properties Submodule
 ====================
@@ -10,7 +11,7 @@ Statistical Properties is the xclim term for 'indices' in the VALUE project.
 """
 from __future__ import annotations
 
-from typing import Sequence
+from collections.abc import Sequence
 
 import numpy as np
 import xarray as xr
@@ -27,7 +28,6 @@ from xclim.indices.stats import fit, parametric_quantile
 
 from .base import Grouper, map_groups
 from .nbutils import _pairwise_haversine_and_bins
-from .processing import jitter_under_thresh
 from .utils import _pairwise_spearman, copy_all_attrs
 
 
@@ -77,15 +77,13 @@ class StatisticalProperty(Indicator):
         if isinstance(params["group"], str):
             params["group"] = Grouper(params["group"])
 
-        if (
-            self.allowed_groups is not None
-            and params["group"].prop not in self.allowed_groups
-        ):
-            raise ValueError(
-                f"Grouping period {params['group'].prop_name} is not allowed for property "
-                f"{self.identifier} (needs something in "
-                f"{map(lambda g: '<dim>.' + g.replace('group', ''), self.allowed_groups)})."
-            )
+        if self.allowed_groups is not None:
+            if params["group"].prop not in self.allowed_groups:
+                raise ValueError(
+                    f"Grouping period {params['group'].prop_name} is not allowed for property "
+                    f"{self.identifier} (needs something in "
+                    f"{map(lambda g: '<dim>.' + g.replace('group', ''), self.allowed_groups)})."
+                )
 
         return das, params
 
@@ -322,7 +320,7 @@ def _spell_length_distribution(
       and then over all years (e.g. Jan 1980-2010)
     group : {'time', 'time.season', 'time.month'}
       Grouping of the output.
-      E.g. If 'time.month', the spell lengths are coputed separately for each month.
+      E.g. If 'time.month', the spell lengths are computed separately for each month.
     resample_before_rl : bool
       Determines if the resampling should take place before or after the run
       length encoding (or a similar algorithm) is applied to runs.
@@ -463,7 +461,7 @@ def _annual_cycle(
 ) -> xr.DataArray:
     r"""Annual cycle statistics.
 
-    A daily climatology is calculated and optionnaly smoothed with a (circular) moving average.
+    A daily climatology is calculated and optionally smoothed with a (circular) moving average.
     The requested statistic is returned.
 
     Parameters
@@ -678,10 +676,10 @@ def _corr_btw_var(
     corr_type: {'Pearson','Spearman'}
       Type of correlation to calculate.
     output: {'correlation', 'pvalue'}
-      Wheter to return the correlation coefficient or the p-value.
+      Whether to return the correlation coefficient or the p-value.
     group : {'time', 'time.season', 'time.month'}
       Grouping of the output.
-      Eg. For 'time.month', the correlation would be calculated on each month separately,
+      e.g. For 'time.month', the correlation would be calculated on each month separately,
       but with all the years together.
 
     Returns
@@ -1112,7 +1110,7 @@ def _decorrelation_length(
 
     corr = _pairwise_spearman(da, dims)
 
-    dists, mn, mx = _pairwise_haversine_and_bins(
+    dists, _, _ = _pairwise_haversine_and_bins(
         corr.cf["longitude"].values, corr.cf["latitude"].values, transpose=True
     )
 
@@ -1203,73 +1201,17 @@ decorrelation_length = StatisticalProperty(
 )
 
 
-def _first_eof(da: xr.DataArray, *, dims=None, kind="+", thresh="1 mm/d", group="time"):
-    """First Empirical Orthogonal Function.
+def first_eof():
+    """EOF Statistical Property (function removed).
 
-    Through principal component analysis (PCA), compute the predominant empirical orthogonal function.
-    The temporal dimension is reduced. The Eof is multiplied by the sign of its mean to ensure coherent
-    signs as much as possible. Needs the eofs package to run. Based on an idea from :cite:p:`vrac_multivariate_2018`,
-    using an implementation from :cite:p:`dawson_eofs_2016`.
-
-    Parameters
-    ----------
-    da: xr.DataArray
-      Data.
-    dims: sequence of string, optional
-      Name of the spatial dimensions. If None (default), all dimensions except "time" are used.
-    kind : {'+', '*'}
-      Variable "kind". If multiplicative, the zero values are set to
-      very small values and the PCA is performed over the logarithm of the data.
-    thresh: str
-      If kind is multiplicative, this is the "zero" threshold passed to
-      :py:func:`xclim.sdba.processing.jitter_under_thresh`.
-    group: str
-      Useless for now.
-
-    Returns
-    -------
-    xr.DataArray, [dimensionless]
-      First empirical orthogonal function
+    Warnings
+    --------
+    Due to a licensing issue, eofs-based functionality has been permanently removed.
+    Please excuse the inconvenience.
+    For more information, see: https://github.com/Ouranosinc/xclim/issues/1620
     """
-    try:
-        from eofs.standard import Eof
-    except ImportError as err:
-        raise ValueError(
-            "The `first_eof` property requires the `eofs` package"
-            ", which is an optional dependency of xclim."
-        ) from err
-
-    if dims is None:
-        dims = [d for d in da.dims if d != "time"]
-
-    if kind == "*":
-        da = np.log(jitter_under_thresh(da, thresh=thresh))
-
-    da = da - da.mean("time")
-
-    def _get_eof(d):
-        # Remove slices where everything is nan
-        d = d[~np.isnan(d).all(axis=tuple(range(1, d.ndim)))]
-        solver = Eof(d, center=False)
-        eof = solver.eofs(neofs=1).squeeze()
-        return eof * np.sign(np.nanmean(eof))
-
-    out = xr.apply_ufunc(
-        _get_eof,
-        da,
-        input_core_dims=[["time", *dims]],
-        output_core_dims=[dims],
-        dask="parallelized",
-        vectorize=True,
-        output_dtypes=[float],
-        dask_gufunc_kwargs={"allow_rechunk": True},
+    raise RuntimeError(
+        "Due to a licensing issue, eofs-based functionality has been permanently removed. "
+        "Please excuse the inconvenience. "
+        "For more information, see: https://github.com/Ouranosinc/xclim/issues/1620"
     )
-    return out.assign_attrs(units="")
-
-
-first_eof = StatisticalProperty(
-    identifier="first_eof",
-    aspect="spatial",
-    compute=_first_eof,
-    allowed_groups=["group"],
-)

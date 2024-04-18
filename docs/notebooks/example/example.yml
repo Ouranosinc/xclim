@@ -50,6 +50,12 @@ indicators:
       freq:
         default: YS
     references: ETCCDI
+  spring_fd:
+    compute: frost_days
+    parameters:
+      freq: AS-DEC
+      indexer:
+        month: [ 12, 1, 2 ]
   R95p:
     compute: extreme_precip_accumulation_and_days
     cf_attrs:

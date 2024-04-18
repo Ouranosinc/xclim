@@ -1,4 +1,5 @@
 """Streamflow indicator definitions."""
+
 from __future__ import annotations
 
 from xclim.core.cfchecks import check_valid
@@ -30,7 +31,7 @@ base_flow_index = Streamflow(
     units="",
     long_name="Base flow index",
     description="Minimum of the 7-day moving average flow divided by the mean flow.",
-    asbtract="Minimum of the 7-day moving average flow divided by the mean flow.",
+    abstract="Minimum of the 7-day moving average flow divided by the mean flow.",
     compute=base_flow_index,
 )
 

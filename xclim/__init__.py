@@ -1,4 +1,5 @@
 """Climate indices computation package based on Xarray."""
+
 from __future__ import annotations
 
 try:
@@ -15,7 +16,7 @@ from xclim.indicators import atmos, generic, land, seaIce  # noqa
 
 __author__ = """Travis Logan"""
 __email__ = "logan.travis@ouranos.ca"
-__version__ = "0.47.1-beta"
+__version__ = "0.48.3-dev.6"
 
 
 _module_data = _files("xclim.data")

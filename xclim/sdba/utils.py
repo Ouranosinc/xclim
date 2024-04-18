@@ -2,6 +2,7 @@
 Statistical Downscaling and Bias Adjustment Utilities
 =====================================================
 """
+
 from __future__ import annotations
 
 import itertools
@@ -24,7 +25,6 @@ from .nbutils import _extrapolate_on_quantiles
 
 MULTIPLICATIVE = "*"
 ADDITIVE = "+"
-loffsets = {"MS": "14d", "M": "15d", "YS": "181d", "Y": "182d", "QS": "45d", "Q": "46d"}
 
 
 def _ecdf_1d(x, value):
@@ -594,11 +594,11 @@ def best_pc_orientation_simple(
     """
     m = R.shape[0]
     P = np.diag(val * np.ones(m))
-    signes = dict(itertools.zip_longest(itertools.product(*[[1, -1]] * m), [None]))
-    for orient in list(signes.keys()):
+    signs = dict(itertools.zip_longest(itertools.product(*[[1, -1]] * m), [None]))
+    for orient in list(signs.keys()):
         # Compute new error
-        signes[orient] = np.linalg.norm(P - ((orient * R) @ Hinv) @ P)
-    return np.array(min(signes, key=lambda o: signes[o]))
+        signs[orient] = np.linalg.norm(P - ((orient * R) @ Hinv) @ P)
+    return np.array(min(signs, key=lambda o: signs[o]))
 
 
 def best_pc_orientation_full(
@@ -611,9 +611,9 @@ def best_pc_orientation_full(
     """Return best orientation vector for `A` according to the method of :cite:t:`sdba-alavoine_distinct_2022`.
 
     Eigenvectors returned by `pc_matrix` do not have a defined orientation.
-    Given an inverse transform Hinv, a transform R, the actual and target origins `Hmean` and `Rmean` and the matrix of
-    training observations hist, this computes a scenario for all possible orientations and return the orientation that
-    maximizes the Spearman correlation coefficient of all variables. The correlation is computed for each variable
+    Given an inverse transform `Hinv`, a transform `R`, the actual and target origins `Hmean` and `Rmean` and the matrix
+    of training observations `hist`, this computes a scenario for all possible orientations and return the orientation
+    that maximizes the Spearman correlation coefficient of all variables. The correlation is computed for each variable
     individually, then averaged.
 
     This trick is explained in :cite:t:`sdba-alavoine_distinct_2022`.
@@ -641,11 +641,14 @@ def best_pc_orientation_full(
     ----------
     :cite:cts:`sdba-alavoine_distinct_2022`
 
+    See Also
+    --------
+    sdba.adjustment.PrincipalComponentAdjustment
     """
     # All possible orientation vectors
     m = R.shape[0]
-    signes = dict(itertools.zip_longest(itertools.product(*[[1, -1]] * m), [None]))
-    for orient in list(signes.keys()):
+    signs = dict(itertools.zip_longest(itertools.product(*[[1, -1]] * m), [None]))
+    for orient in list(signs.keys()):
         # Calculate scen for hist
         scen = np.atleast_2d(Rmean).T + ((orient * R) @ Hinv) @ (
             hist - np.atleast_2d(Hmean).T
@@ -653,9 +656,9 @@ def best_pc_orientation_full(
         # Correlation for each variable
         corr = [spearmanr(hist[i, :], scen[i, :])[0] for i in range(hist.shape[0])]
         # Store mean correlation
-        signes[orient] = np.mean(corr)
+        signs[orient] = np.mean(corr)
     # Return orientation that maximizes the correlation
-    return np.array(max(signes, key=lambda o: signes[o]))
+    return np.array(max(signs, key=lambda o: signs[o]))
 
 
 def get_clusters_1d(
@@ -667,7 +670,7 @@ def get_clusters_1d(
 
     Parameters
     ----------
-    data: 1D ndarray
+    data : 1D ndarray
       Values to get clusters from.
     u1 : float
       Extreme value threshold, at least one value in the cluster must exceed this.

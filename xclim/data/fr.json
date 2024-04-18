@@ -21,7 +21,7 @@
       "annuelles",
       "années"
     ],
-    "AS-*": [
+    "YS-*": [
       "annuel",
       "annuelle",
       "annuels",
@@ -111,6 +111,22 @@
     ],
     "m12": [
       "decembre"
+    ],
+    "integral": [
+      "intégré",
+      "intégrée",
+      "intégrés",
+      "intégrées",
+      "intégrale"
+    ],
+    "count": [
+      "décompte"
+    ],
+    "doymin": [
+      "jour du minimum"
+    ],
+    "doymax": [
+      "jour du maximum"
     ],
     "mean": [
       "moyen",
@@ -1064,13 +1080,6 @@
     "description": "Nombre {freq:m} de jours avec accumulation de neige au-dessus ou égale à {snd_thresh} au cours des {window} jours précédents et vents supérieurs à {sfcWind_thresh}.",
     "title": "Nombre de jours de poudrerie",
     "abstract": "Nombre de jours avec des chutes de neige, une épaisseur de neige et une vitesse du vent au-dessus ou égales à des seuils donnés pendant une période de jours."
-  },
-  "WINTER_STORM": {
-    "long_name": "Jours avec forte accumulation de neige",
-    "description": "Nombre de jours où l'accumulation de neige est au-dessus ou égale à {thresh}.",
-    "title": "Jours avec accumulation de neige supérieure à un seuil",
-    "abstract": "Nombre de jours où l'accumulation de neige est au-dessus ou égale à un seuil donné.",
-    "_deprecated_version": "0.46.0"
   },
   "SND_STORM_DAYS": {
     "long_name": "Jours avec forte accumulation de l'épaisseur de neige",

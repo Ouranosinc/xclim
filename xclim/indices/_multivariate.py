@@ -1816,7 +1816,7 @@ def blowing_snow(
     snd_thresh: Quantified = "5 cm",
     sfcWind_thresh: Quantified = "15 km/h",  # noqa
     window: int = 3,
-    freq: str = "AS-JUL",
+    freq: str = "YS-JUL",
 ) -> xarray.DataArray:
     """Blowing snow days.
 

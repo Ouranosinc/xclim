@@ -11,7 +11,7 @@ To install `xclim` via `pip`, run this command in your terminal:
 
 .. code-block:: shell
 
-    $ pip install xclim
+    $ python -m pip install xclim
 
 If you don't have `pip`_ installed, this `Python installation guide`_ can guide you through the process.
 
@@ -24,7 +24,7 @@ Anaconda release
 For ease of installation across operating systems, we also offer an Anaconda Python package hosted on conda-forge.
 This version tends to be updated at around the same frequency as the PyPI-hosted library, but can lag by a few days at times.
 
-`xclim` can be installed from conda-forge wth the following:
+`xclim` can be installed from conda-forge with the following:
 
 .. code-block:: shell
 
@@ -55,7 +55,7 @@ Both of these libraries are available on PyPI and conda-forge:
 
 .. code-block:: shell
 
-    $ pip install flox clisops
+    $ python -m pip install flox clisops
     # Or, alternatively:
     $ conda install -c conda-forge flox clisops
 
@@ -70,7 +70,7 @@ For convenience, these libraries can be installed alongside `xclim` using the fo
 
 .. code-block:: shell
 
-    $ pip install -r requirements_upstream.txt
+    $ python -m pip install -r requirements_upstream.txt
 
 Or, alternatively:
 
@@ -105,17 +105,8 @@ Afterwards, `SBCK` can be installed from PyPI using `pip`:
 
 .. code-block:: shell
 
-    $ pip install SBCK
+    $ python -m pip install pybind11 sbck
 
-Another experimental function :py:indicator:`xclim.sdba.property.first_eof` makes use of the `eofs`_ library, which is available on both PyPI and conda-forge:
-
-.. code-block:: shell
-
-    $ pip install eofs
-    # or alternatively,
-    $ conda install -c conda-forge eofs
-
-.. _eofs: https://ajdawson.github.io/eofs/
 .. _SBCK: https://github.com/yrobink/SBCK
 .. _Eigen3: https://eigen.tuxfamily.org/index.php
 
@@ -139,13 +130,13 @@ Or download the `tarball`_:
 
 .. code-block:: shell
 
-    $ curl -OL https://github.com/Ouranosinc/xclim/tarball/master
+    $ curl -OL https://github.com/Ouranosinc/xclim/tarball/main
 
 Once you have extracted a copy of the source, you can install it with pip:
 
 .. code-block:: shell
 
-    $ pip install -e ".[dev]"
+    $ python -m pip install -e ".[dev]"
 
 Alternatively, you can also install a local development copy via `flit`_:
 
@@ -154,16 +145,16 @@ Alternatively, you can also install a local development copy via `flit`_:
     $ flit install [--symlink] xclim
 
 .. _Github repo: https://github.com/Ouranosinc/xclim
-.. _tarball: https://github.com/Ouranosinc/xclim/tarball/master
+.. _tarball: https://github.com/Ouranosinc/xclim/tarball/main
 .. _flit: https://flit.pypa.io/en/stable
 
 Creating a Conda environment
 ----------------------------
 
-To create a conda environment including `xclim`'s dependencies and several optional libraries (notably: `clisops`, `eigen`, `eofs`, and `flox`) and development dependencies, run the following command from within your cloned repo:
+To create a conda environment including `xclim`'s dependencies and several optional libraries (notably: `clisops`, `eigen`, `sbck`, and `flox`) and development dependencies, run the following command from within your cloned repo:
 
 .. code-block:: console
 
     $ conda env create -n my_xclim_env python=3.8 --file=environment.yml
     $ conda activate my_xclim_env
-    (my_xclim_env) $ pip install -e .
+    (my_xclim_env) $ python -m pip install -e .

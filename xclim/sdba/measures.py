@@ -6,9 +6,10 @@ through statistical properties or directly. This framework for the diagnostic te
 `VALUE <http://www.value-cost.eu/>`_ project.
 
 """
+
 from __future__ import annotations
 
-from typing import Sequence
+from collections.abc import Sequence
 
 import numpy as np
 import xarray as xr
@@ -120,15 +121,13 @@ class StatisticalPropertyMeasure(Indicator):
         if isinstance(params["group"], str):
             params["group"] = Grouper(params["group"])
 
-        if (
-            self.allowed_groups is not None
-            and params["group"].prop not in self.allowed_groups
-        ):
-            raise ValueError(
-                f"Grouping period {params['group'].prop_name} is not allowed for property "
-                f"{self.identifier} (needs something in "
-                f"{list(map(lambda g: '<dim>.' + g.replace('group', ''), self.allowed_groups))})."
-            )
+        if self.allowed_groups is not None:
+            if params["group"].prop not in self.allowed_groups:
+                raise ValueError(
+                    f"Grouping period {params['group'].prop_name} is not allowed for property "
+                    f"{self.identifier} (needs something in "
+                    f"{list(map(lambda g: '<dim>.' + g.replace('group', ''), self.allowed_groups))})."
+                )
 
         # Convert grouping and check if allowed:
         sim = das["sim"]

@@ -15,7 +15,7 @@ These files are expected to be defined as in this example for french:
         "attrs_mapping": {
             "modifiers": ["", "f", "mpl", "fpl"],
             "YS": ["annuel", "annuelle", "annuels", "annuelles"],
-            "AS-*": ["annuel", "annuelle", "annuels", "annuelles"],
+            "YS-*": ["annuel", "annuelle", "annuels", "annuelles"],
             # ... and so on for other frequent parameters translation...
         },
         "DTRVAR": {
@@ -43,13 +43,14 @@ all other entries (translations of frequent parameters and all indicator entries
 For xclim-provided translations (for now only French), all indicators must have en entry and the "attrs_mapping"
 entries must match exactly the default formatter. Those default translations are found in the `xclim/locales` folder.
 """
+
 from __future__ import annotations
 
 import json
 import warnings
+from collections.abc import Mapping, Sequence
 from copy import deepcopy
 from pathlib import Path
-from typing import Mapping, Sequence
 
 from .formatting import AttrFormatter, default_formatter
 

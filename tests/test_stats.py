@@ -1,4 +1,5 @@
 """Tests for statistical indices."""
+
 from __future__ import annotations
 
 import numpy as np
@@ -165,10 +166,11 @@ def test_fa(fitda):
     np.testing.assert_array_equal(q[0, 0, 0], q0)
 
 
-def test_fa_gamma(fitda):
+def test_fa_gamma_lmom(fitda):
+    lmom = pytest.importorskip("lmoments3.distr")
     T = 10
     q = stats.fa(fitda, T, "lognorm", method="MM")
-    q1 = stats.fa(fitda, T, "gamma", method="PWM")
+    q1 = stats.fa(fitda, T, lmom.gam, method="PWM")
     np.testing.assert_allclose(q1, q, rtol=0.2)
 
 
@@ -189,6 +191,21 @@ def test_dims_order(fitda):
     da = fitda.transpose()
     p = stats.fit(da)
     assert p.dims[-1] == "dparams"
+
+
+lm3_dist_map = {
+    "expon": "exp",
+    "gamma": "gam",
+    "genextreme": "gev",
+    # "genlogistic": "glo",
+    # "gennorm": "gno",
+    "genpareto": "gpa",
+    "gumbel_r": "gum",
+    # "kappa4": "kap",
+    "norm": "nor",
+    "pearson3": "pe3",
+    "weibull_min": "wei",
+}
 
 
 class TestPWMFit:
@@ -212,20 +229,23 @@ class TestPWMFit:
     }
     inputs_pdf = [4, 5, 6, 7]
 
-    @pytest.mark.parametrize("dist", stats._lm3_dist_map.keys())
+    @pytest.mark.parametrize("dist", lm3_dist_map.keys())
     def test_get_lm3_dist(self, dist):
         """Check that parameterization for lmoments3 and scipy is identical."""
+        lmom = pytest.importorskip("lmoments3.distr")
+        lm3dc = getattr(lmom, lm3_dist_map[dist])
         dc = stats.get_dist(dist)
-        lm3dc = stats.get_lm3_dist(dist)
         par = self.params[dist]
         expected = dc(**par).pdf(self.inputs_pdf)
         values = lm3dc(**par).pdf(self.inputs_pdf)
         np.testing.assert_array_almost_equal(values, expected)
 
-    @pytest.mark.parametrize("dist", stats._lm3_dist_map.keys())
+    @pytest.mark.parametrize("dist", lm3_dist_map.keys())
     @pytest.mark.parametrize("use_dask", [True, False])
     def test_pwm_fit(self, dist, use_dask, random):
         """Test that the fitted parameters match parameters used to generate a random sample."""
+        lmom = pytest.importorskip("lmoments3.distr")
+        lm3dc = getattr(lmom, lm3_dist_map[dist])
         n = 500
         dc = stats.get_dist(dist)
         par = self.params[dist]
@@ -236,11 +256,10 @@ class TestPWMFit:
         )
         if use_dask:
             da = da.chunk()
-        out = stats.fit(da, dist=dist, method="PWM").compute()
+        out = stats.fit(da, dist=lm3dc, method="PWM").compute()
 
         # Check that values are identical to lmoments3's output dict
-        l3dc = stats.get_lm3_dist(dist)
-        expected = l3dc.lmom_fit(da.values)
+        expected = lm3dc.lmom_fit(da.values)
         for key, val in expected.items():
             np.testing.assert_array_equal(out.sel(dparams=key), val, 1)
 
@@ -269,9 +288,21 @@ def test_frequency_analysis(ndq_series, use_dask):
         q.transpose(), mode="max", t=2, dist="genextreme", window=6, freq="YS"
     )
 
-    # Test with PWM fitting method
+
+@pytest.mark.parametrize("use_dask", [True, False])
+@pytest.mark.filterwarnings("ignore::RuntimeWarning")
+def test_frequency_analysis_lmoments(ndq_series, use_dask):
+    lmom = pytest.importorskip("lmoments3.distr")
+    q = ndq_series.copy()
+    q[:, 0, 0] = np.nan
+    if use_dask:
+        q = q.chunk()
+
+    out = stats.frequency_analysis(
+        q, mode="max", t=2, dist="genextreme", window=6, freq="YS"
+    )
     out1 = stats.frequency_analysis(
-        q, mode="max", t=2, dist="genextreme", window=6, freq="YS", method="PWM"
+        q, mode="max", t=2, dist=lmom.gev, window=6, freq="YS", method="PWM"
     )
     np.testing.assert_allclose(
         out1,

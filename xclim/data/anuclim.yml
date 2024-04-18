@@ -15,8 +15,8 @@ references: ANUCLIM https://fennerschool.anu.edu.au/files/anuclim61.pdf (ch. 6)
 base: ResamplingIndicator
 indicators:
   P10_MeanTempWarmestQuarter:
-    allowed_periods: [A]
-    src_freq: ['D', '7D', 'M']
+    allowed_periods: ["Y"]
+    src_freq: ['D', '7D', 'MS']
     compute: tg_mean_warmcold_quarter
     cf_attrs:
       standard_name: air_temperature
@@ -25,8 +25,8 @@ indicators:
     parameters:
       op: warmest
   P11_MeanTempColdestQuarter:
-    allowed_periods: [A]
-    src_freq: ['D', '7D', 'M']
+    allowed_periods: ["Y"]
+    src_freq: ['D', '7D', 'MS']
     compute: tg_mean_warmcold_quarter
     cf_attrs:
       standard_name: air_temperature
@@ -35,8 +35,8 @@ indicators:
     parameters:
       op: coldest
   P12_AnnualPrecip:
-    allowed_periods: [A]
-    src_freq: ['D', '7D', 'M']
+    allowed_periods: ["Y"]
+    src_freq: ['D', '7D', 'MS']
     compute: prcptot
     cf_attrs:
       long_name: Annual Precipitation
@@ -45,8 +45,8 @@ indicators:
       units: mm
     context: hydro
   P13_PrecipWettestPeriod:
-    allowed_periods: [A]
-    src_freq: ['D', '7D', 'M']
+    allowed_periods: ["Y"]
+    src_freq: ['D', '7D', 'MS']
     compute: prcptot_wetdry_period
     cf_attrs:
       standard_name: lwe_thickness_of_precipitation_amount
@@ -56,8 +56,8 @@ indicators:
       op: wettest
     context: hydro
   P14_PrecipDriestPeriod:
-    allowed_periods: [A]
-    src_freq: ['D', '7D', 'M']
+    allowed_periods: ["Y"]
+    src_freq: ['D', '7D', 'MS']
     compute: prcptot_wetdry_period
     cf_attrs:
       standard_name: lwe_thickness_of_precipitation_amount
@@ -67,8 +67,8 @@ indicators:
       op: driest
     context: hydro
   P15_PrecipSeasonality:
-    allowed_periods: [A]
-    src_freq: ['D', '7D', 'M']
+    allowed_periods: ["Y"]
+    src_freq: ['D', '7D', 'MS']
     compute: precip_seasonality
     cf_attrs:
       cell_methods: "time: standard_deviation"
@@ -76,8 +76,8 @@ indicators:
         "The standard deviation of the precipitation estimates expressed
         as a percentage of the mean of those estimates."
   P16_PrecipWettestQuarter:
-    allowed_periods: [A]
-    src_freq: ['D', '7D', 'M']
+    allowed_periods: ["Y"]
+    src_freq: ['D', '7D', 'MS']
     compute: prcptot_wetdry_quarter
     cf_attrs:
       standard_name: lwe_thickness_of_precipitation_amount
@@ -86,8 +86,8 @@ indicators:
     parameters:
       op: wettest
   P17_PrecipDriestQuarter:
-    allowed_periods: [A]
-    src_freq: ['D', '7D', 'M']
+    allowed_periods: ["Y"]
+    src_freq: ['D', '7D', 'MS']
     compute: prcptot_wetdry_quarter
     cf_attrs:
       standard_name: lwe_thickness_of_precipitation_amount
@@ -96,8 +96,8 @@ indicators:
     parameters:
       op: driest
   P18_PrecipWarmestQuarter:
-    src_freq: ['D', '7D', 'M']
-    allowed_periods: [A]
+    src_freq: ['D', '7D', 'MS']
+    allowed_periods: ["Y"]
     compute: prcptot_warmcold_quarter
     cf_attrs:
       standard_name: lwe_thickness_of_precipitation_amount
@@ -106,8 +106,8 @@ indicators:
     parameters:
       op: warmest
   P19_PrecipColdestQuarter:
-    src_freq: ['D', '7D', 'M']
-    allowed_periods: [A]
+    src_freq: ['D', '7D', 'MS']
+    allowed_periods: ["Y"]
     compute: prcptot_warmcold_quarter
     cf_attrs:
       standard_name: lwe_thickness_of_precipitation_amount
@@ -116,8 +116,8 @@ indicators:
     parameters:
       op: coldest
   P1_AnnMeanTemp:
-    allowed_periods: [A]
-    src_freq: ['D', '7D', 'M']
+    allowed_periods: ["Y"]
+    src_freq: ['D', '7D', 'MS']
     compute: tg_mean
     cf_attrs:
       units: K
@@ -125,23 +125,23 @@ indicators:
       long_name: Annual Mean Temperature
       standard_name: air_temperature
   P2_MeanDiurnalRange:
-    allowed_periods: [A]
-    src_freq: ['D', '7D', 'M']
+    allowed_periods: ["Y"]
+    src_freq: ['D', '7D', 'MS']
     compute: daily_temperature_range
     cf_attrs:
       units: K
       long_name: Mean Diurnal Range
       cell_methods: "time: range"
   P3_Isothermality:
-    allowed_periods: [A]
-    src_freq: ['D', '7D', 'M']
+    allowed_periods: ["Y"]
+    src_freq: ['D', '7D', 'MS']
     compute: isothermality
     cf_attrs:
       cell_methods: "time: range"
       description: "The mean diurnal range (P2) divided by the Annual Temperature Range (P7)."
   P4_TempSeasonality:
-    allowed_periods: [A]
-    src_freq: ['D', '7D', 'M']
+    allowed_periods: ["Y"]
+    src_freq: ['D', '7D', 'MS']
     compute: temperature_seasonality
     cf_attrs:
       cell_methods: "time: standard_deviation"
@@ -150,8 +150,8 @@ indicators:
         For this calculation, the mean in degrees Kelvin is used. This avoids the possibility of having to divide by
         zero, but it does mean that the values are usually quite small."
   P5_MaxTempWarmestPeriod:
-    allowed_periods: [A]
-    src_freq: ['D', '7D', 'M']
+    allowed_periods: ["Y"]
+    src_freq: ['D', '7D', 'MS']
     compute: tx_max
     cf_attrs:
       long_name: Max Temperature of Warmest Period
@@ -160,8 +160,8 @@ indicators:
       units: K
       cell_methods: "time: maximum"
   P6_MinTempColdestPeriod:
-    allowed_periods: [A]
-    src_freq: ['D', '7D', 'M']
+    allowed_periods: ["Y"]
+    src_freq: ['D', '7D', 'MS']
     compute: tn_min
     cf_attrs:
       long_name: Min Temperature of Coldest Period
@@ -170,8 +170,8 @@ indicators:
       units: K
       cell_methods: "time: minimum"
   P7_TempAnnualRange:
-    allowed_periods: [A]
-    src_freq: ['D', '7D', 'M']
+    allowed_periods: ["Y"]
+    src_freq: ['D', '7D', 'MS']
     compute: extreme_temperature_range
     input:
       low_data: tasmin
@@ -184,8 +184,8 @@ indicators:
       freq:
         default: YS
   P8_MeanTempWettestQuarter:
-    allowed_periods: [A]
-    src_freq: ['D', '7D', 'M']
+    allowed_periods: ["Y"]
+    src_freq: ['D', '7D', 'MS']
     compute: tg_mean_wetdry_quarter
     cf_attrs:
       standard_name: air_temperature
@@ -194,8 +194,8 @@ indicators:
     parameters:
       op: wettest
   P9_MeanTempDriestQuarter:
-    allowed_periods: [A]
-    src_freq: ['D', '7D', 'M']
+    allowed_periods: ["Y"]
+    src_freq: ['D', '7D', 'MS']
     compute: tg_mean_wetdry_quarter
     cf_attrs:
       standard_name: air_temperature

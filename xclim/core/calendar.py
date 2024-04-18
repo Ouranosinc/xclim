@@ -4,10 +4,12 @@ Calendar Handling Utilities
 
 Helper function to handle dates, times and different calendars with xarray.
 """
+
 from __future__ import annotations
 
 import datetime as pydt
-from typing import Any, Sequence
+from collections.abc import Sequence
+from typing import Any
 
 import cftime
 import numpy as np
@@ -15,6 +17,7 @@ import pandas as pd
 import xarray as xr
 from xarray.coding.cftime_offsets import to_cftime_datetime
 from xarray.coding.cftimeindex import CFTimeIndex
+from xarray.core import dtypes
 from xarray.core.resample import DataArrayResample, DatasetResample
 
 from xclim.core.utils import DayOfYearStr, uses_dask
@@ -28,6 +31,7 @@ __all__ = [
     "climatological_mean_doy",
     "common_calendar",
     "compare_offsets",
+    "construct_offset",
     "convert_calendar",
     "convert_doy",
     "date_range",
@@ -35,6 +39,7 @@ __all__ = [
     "datetime_to_decimal_year",
     "days_in_year",
     "days_since_to_doy",
+    "doy_from_string",
     "doy_to_days_since",
     "ensure_cftime_array",
     "get_calendar",
@@ -45,8 +50,10 @@ __all__ = [
     "percentile_doy",
     "resample_doy",
     "select_time",
+    "stack_periods",
     "time_bnds",
     "uniform_calendars",
+    "unstack_periods",
     "within_bnds_doy",
     "yearly_interpolated_doy",
     "yearly_random_doy",
@@ -80,6 +87,12 @@ def days_in_year(year: int, calendar: str = "default") -> int:
         .timetuple()
         .tm_yday
     )
+
+
+def doy_from_string(doy: DayOfYearStr, year: int, calendar: str) -> int:
+    """Return the day-of-year corresponding to a "MM-DD" string for a given year and calendar."""
+    MM, DD = doy.split("-")
+    return datetime_classes[calendar](year, int(MM), int(DD)).timetuple().tm_yday
 
 
 def date_range(
@@ -189,12 +202,12 @@ def common_calendar(calendars: Sequence[str], join="outer") -> str:
     join : {'inner', 'outer'}
       The criterion for the common calendar.
 
-      - 'outer': the common calendar is the smallest calendar (in number of days by year)
-                 that will include all the dates of the other calendars. When converting
-                 the data to this calendar, no timeseries will lose elements, but some
+      - 'outer': the common calendar is the smallest calendar (in number of days by year) that will include all the
+                 dates of the other calendars.
+                 When converting the data to this calendar, no timeseries will lose elements, but some
                  might be missing (gaps or NaNs in the series).
-      - 'inner': the common calender is the smallest calendar of the list. When converting
-                 the data to this calendar, no timeseries will have missing elements (no gaps or NaNs),
+      - 'inner': the common calendar is the smallest calendar of the list.
+                 When converting the data to this calendar, no timeseries will have missing elements (no gaps or NaNs),
                  but some might be dropped.
 
     Examples
@@ -267,7 +280,7 @@ def convert_doy(
       Name of the temporal dimension.
     """
     source_cal = source_cal or source.attrs.get("calendar", get_calendar(source[dim]))
-    is_calyear = xr.infer_freq(source[dim]) in ("AS-JAN", "A-DEC")
+    is_calyear = xr.infer_freq(source[dim]) in ("YS-JAN", "Y-DEC", "YE-DEC")
 
     if is_calyear:  # Fast path
         year_of_the_doy = source[dim].dt.year
@@ -385,22 +398,21 @@ def convert_calendar(
       This option is best used on daily and subdaily data.
 
     "date"
-      The month/day information is conserved and invalid dates are dropped from the output. This means that when converting from
-      a `360_day` to a standard calendar, all 31st (Jan, March, May, July, August, October and December) will be missing as there is no equivalent
-      dates in the `360_day` and the 29th (on non-leap years) and 30th of February will be dropped as there are no equivalent dates in
-      a standard calendar.
+      The month/day information is conserved and invalid dates are dropped from the output. This means that when
+      converting from a `360_day` to a standard calendar, all 31st (Jan, March, May, July, August, October and December)
+      will be missing as there is no equivalent dates in the `360_day` and the 29th (on non-leap years) and 30th of
+      February will be dropped as there are no equivalent dates in a standard calendar.
 
       This option is best used with data on a frequency coarser than daily.
 
     "random"
-      Similar to "year", each day of year of the source is mapped to another day of year
-      of the target. However, instead of having always the same missing days according
-      the source and target years, here 5 days are chosen randomly, one for each fifth
-      of the year. However, February 29th is always missing when converting to a leap year,
-      or its value is dropped when converting from a leap year. This is similar to method
-      used in the :cite:t:`pierce_statistical_2014` dataset.
+      Similar to "year", each day of year of the source is mapped to another day of year of the target. However, instead
+      of having always the same missing days according the source and target years, here 5 days are chosen randomly, one
+      for each fifth of the year. However, February 29th is always missing when converting to a leap year, or its value
+      is dropped when converting from a leap year. This is similar to method used in the
+      :cite:t:`pierce_statistical_2014` dataset.
 
-      This option best used on daily data.
+      This option is best used on daily data.
 
     References
     ----------
@@ -408,9 +420,8 @@ def convert_calendar(
 
     Examples
     --------
-    This method does not try to fill the missing dates other than with a constant value,
-    passed with `missing`. In order to fill the missing dates with interpolation, one
-    can simply use xarray's method:
+    This method does not try to fill the missing dates other than with a constant value, passed with `missing`.
+    In order to fill the missing dates with interpolation, one can simply use xarray's method:
 
     >>> tas_nl = convert_calendar(tas, "noleap")  # For the example
     >>> with_missing = convert_calendar(tas_nl, "standard", missing=np.NaN)
@@ -467,8 +478,7 @@ def convert_calendar(
                 source_calendar=cal_src,
                 target_calendar=cal_tgt,
             )
-
-        elif align_on == "random":
+        else:  # align_on == "random"
             new_doy = source.time.groupby(f"{dim}.year").map(
                 yearly_random_doy,
                 rng=np.random.default_rng(),
@@ -503,7 +513,9 @@ def convert_calendar(
         target = date_range_like(source[dim], cal_tgt)
 
     if isinstance(target, xr.DataArray):
-        out = out.reindex({dim: target}, fill_value=missing or np.nan)
+        out = out.reindex(
+            {dim: target}, fill_value=missing if missing is not None else np.nan
+        )
 
     # Copy attrs but change remove `calendar` is still present.
     out[dim].attrs.update(source[dim].attrs)
@@ -528,17 +540,17 @@ def interp_calendar(
 
     Parameters
     ----------
-    source: xr.DataArray or xr.Dataset
-      The source data to interpolate, must have a time coordinate of a valid dtype (np.datetime64 or cftime objects)
-    target: xr.DataArray
-      The target time coordinate of a valid dtype (np.datetime64 or cftime objects)
+    source : xr.DataArray or xr.Dataset
+        The source data to interpolate, must have a time coordinate of a valid dtype (np.datetime64 or cftime objects)
+    target : xr.DataArray
+        The target time coordinate of a valid dtype (np.datetime64 or cftime objects)
     dim : str
-      The time coordinate name.
+        The time coordinate name.
 
     Return
     ------
     xr.DataArray or xr.Dataset
-      The source interpolated on the decimal years of target,
+        The source interpolated on the decimal years of target,
     """
     cal_src = get_calendar(source, dim=dim)
     cal_tgt = get_calendar(target, dim=dim)
@@ -558,8 +570,8 @@ def ensure_cftime_array(time: Sequence) -> np.ndarray:
 
     Parameters
     ----------
-    time: sequence
-      A 1D array of datetime-like objects.
+    time : sequence
+        A 1D array of datetime-like objects.
 
     Returns
     -------
@@ -592,8 +604,8 @@ def datetime_to_decimal_year(times: xr.DataArray, calendar: str = "") -> xr.Data
 
     Parameters
     ----------
-    times: xr.DataArray
-    calendar: str
+    times : xr.DataArray
+    calendar : str
 
     Returns
     -------
@@ -629,10 +641,10 @@ def percentile_doy(
 ) -> xr.DataArray:
     """Percentile value for each day of the year.
 
-    Return the climatological percentile over a moving window around each day of the year.
-    Different quantile estimators can be used by specifying `alpha` and `beta` according to specifications given by :cite:t:`hyndman_sample_1996`.
-    The default definition corresponds to method 8, which meets multiple desirable statistical properties for sample quantiles.
-    Note that `numpy.percentile` corresponds to method 7, with alpha and beta set to 1.
+    Return the climatological percentile over a moving window around each day of the year. Different quantile estimators
+    can be used by specifying `alpha` and `beta` according to specifications given by :cite:t:`hyndman_sample_1996`.
+    The default definition corresponds to method 8, which meets multiple desirable statistical properties for sample
+    quantiles. Note that `numpy.percentile` corresponds to method 7, with alpha and beta set to 1.
 
     Parameters
     ----------
@@ -642,11 +654,11 @@ def percentile_doy(
       Number of time-steps around each day of the year to include in the calculation.
     per : float or sequence of floats
       Percentile(s) between [0, 100]
-    alpha: float
+    alpha : float
         Plotting position parameter.
-    beta: float
+    beta : float
         Plotting position parameter.
-    copy: bool
+    copy : bool
         If True (default) the input array will be deep-copied. It's a necessary step
         to keep the data integrity, but it can be costly.
         If False, no copy is made of the input array. It will be mutated and rendered
@@ -656,8 +668,8 @@ def percentile_doy(
     Returns
     -------
     xr.DataArray
-      The percentiles indexed by the day of the year.
-      For calendars with 366 days, percentiles of doys 1-365 are interpolated to the 1-366 range.
+        The percentiles indexed by the day of the year.
+        For calendars with 366 days, percentiles of doys 1-365 are interpolated to the 1-366 range.
 
     References
     ----------
@@ -672,17 +684,14 @@ def percentile_doy(
 
     rr = arr.rolling(min_periods=1, center=True, time=window).construct("window")
 
-    ind = pd.MultiIndex.from_arrays(
-        (rr.time.dt.year.values, rr.time.dt.dayofyear.values),
-        names=("year", "dayofyear"),
+    crd = xr.Coordinates.from_pandas_multiindex(
+        pd.MultiIndex.from_arrays(
+            (rr.time.dt.year.values, rr.time.dt.dayofyear.values),
+            names=("year", "dayofyear"),
+        ),
+        "time",
     )
-    if hasattr(xr, "Coordinates"):
-        # xarray > 2023.7.0 will deprecate passing a Pandas MultiIndex directly.
-        # TODO: Remove this condition when pinning xarray above 2023.7.0
-        ind = xr.Coordinates.from_pandas_multiindex(ind, "time")
-        rr = rr.drop_vars("time").assign_coords(ind)
-    else:
-        rr = rr.drop_vars("time").assign_coords(time=ind)
+    rr = rr.drop_vars("time").assign_coords(crd)
     rrr = rr.unstack("time").stack(stack_dim=("year", "window"))
 
     if rrr.chunks is not None and len(rrr.chunks[rrr.get_axis_num("stack_dim")]) > 1:
@@ -727,9 +736,9 @@ def build_climatology_bounds(da: xr.DataArray) -> list[str]:
 
     Parameters
     ----------
-    da: xr.DataArray
-      The input data.
-      Must have a time dimension.
+    da : xr.DataArray
+        The input data.
+        Must have a time dimension.
     """
     n = len(da.time)
     return da.time[0 :: n - 1].dt.strftime("%Y-%m-%d").values.tolist()
@@ -745,17 +754,17 @@ def compare_offsets(freqA: str, op: str, freqB: str) -> bool:  # noqa
 
     Parameters
     ----------
-    freqA: str
-      RHS Date offset string ('YS', '1D', 'QS-DEC', ...)
+    freqA : str
+        RHS Date offset string ('YS', '1D', 'QS-DEC', ...)
     op : {'<', '<=', '==', '>', '>=', '!='}
-      Operator to use.
-    freqB: str
-      LHS Date offset string ('YS', '1D', 'QS-DEC', ...)
+        Operator to use.
+    freqB : str
+        LHS Date offset string ('YS', '1D', 'QS-DEC', ...)
 
     Returns
     -------
     bool
-      freqA op freqB
+        freqA op freqB
     """
     from ..indices.generic import get_op  # pylint: disable=import-outside-toplevel
 
@@ -774,7 +783,7 @@ def compare_offsets(freqA: str, op: str, freqB: str) -> bool:  # noqa
     return get_op(op)(t_a, t_b)
 
 
-def parse_offset(freq: str) -> Sequence[str]:
+def parse_offset(freq: str) -> tuple[int, str, bool, str | None]:
     """Parse an offset string.
 
     Parse a frequency offset and, if needed, convert to cftime-compatible components.
@@ -787,22 +796,26 @@ def parse_offset(freq: str) -> Sequence[str]:
     Returns
     -------
     multiplier : int
-      Multiplier of the base frequency. "[n]W" is always replaced with "[7n]D", as xarray doesn't support "W" for cftime indexes.
+        Multiplier of the base frequency. "[n]W" is always replaced with "[7n]D",
+        as xarray doesn't support "W" for cftime indexes.
     offset_base : str
-      Base frequency. "Y" is always replaced with "A".
+        Base frequency.
     is_start_anchored : bool
-      Whether coordinates of this frequency should correspond to the beginning of the period (`True`) or its end (`False`).
-      Can only be False when base is A, Q or M; in other words, xclim assumes frequencies finer than monthly are all start-anchored.
-    anchor : str or None
-      Anchor date for bases A or Q. As xarray doesn't support "W", neither does xclim (anchor information is lost when given).
+        Whether coordinates of this frequency should correspond to the beginning of the period (`True`)
+        or its end (`False`). Can only be False when base is Y, Q or M; in other words, xclim assumes frequencies finer
+        than monthly are all start-anchored.
+    anchor : str, optional
+        Anchor date for bases Y or Q. As xarray doesn't support "W",
+        neither does xclim (anchor information is lost when given).
 
     """
     # Useful to raise on invalid freqs, convert Y to A and get default anchor (A, Q)
     offset = pd.tseries.frequencies.to_offset(freq)
     base, *anchor = offset.name.split("-")
     anchor = anchor[0] if len(anchor) > 0 else None
-    start = ("S" in base) or (base[0] not in "AQM")
-    base = base[0]
+    start = ("S" in base) or (base[0] not in "AYQM")
+    if base.endswith("S") or base.endswith("E"):
+        base = base[:-1]
     mult = offset.n
     if base == "W":
         mult = 7 * mult
@@ -816,14 +829,14 @@ def construct_offset(mult: int, base: str, start_anchored: bool, anchor: str | N
 
     Parameters
     ----------
-    mult: int
-      The period multiplier (>= 1).
+    mult : int
+        The period multiplier (>= 1).
     base : str
-      The base period string (one char).
-    start_anchored: bool
-      If True and base in [Y, A, Q, M], adds the "S" flag.
-    anchor: str, optional
-      The month anchor of the offset. Defaults to JAN for bases AS, Y and QS and to DEC for bases A and Q.
+        The base period string (one char).
+    start_anchored : bool
+        If True and base in [Y, Q, M], adds the "S" flag, False add "E".
+    anchor : str, optional
+        The month anchor of the offset. Defaults to JAN for bases YS and QS and to DEC for bases YE and QE.
 
     Returns
     -------
@@ -834,7 +847,7 @@ def construct_offset(mult: int, base: str, start_anchored: bool, anchor: str | N
     -----
     This provides the mirror opposite functionality of :py:func:`parse_offset`.
     """
-    start = "S" if start_anchored and base in "YAQM" else ""
+    start = ("S" if start_anchored else "E") if base in "YAQM" else ""
     if anchor is None and base in "AQY":
         anchor = "JAN" if start_anchored else "DEC"
     return (
@@ -850,10 +863,10 @@ def is_offset_divisor(divisor: str, offset: str):
 
     Parameters
     ----------
-    divisor: str
-      The divisor frequency.
+    divisor : str
+        The divisor frequency.
     offset: str
-      The large frequency.
+        The large frequency.
 
     Returns
     -------
@@ -863,7 +876,7 @@ def is_offset_divisor(divisor: str, offset: str):
     --------
     >>> is_offset_divisor("QS-Jan", "YS")
     True
-    >>> is_offset_divisor("QS-DEC", "AS-JUL")
+    >>> is_offset_divisor("QS-DEC", "YS-JUL")
     False
     >>> is_offset_divisor("D", "M")
     True
@@ -879,7 +892,16 @@ def is_offset_divisor(divisor: str, offset: str):
     offBs = pd.tseries.frequencies.to_offset(construct_offset(mB, bB, True, aB))
     tB = pd.date_range("1970-01-01T00:00:00", freq=offBs, periods=13)
 
-    if bA in "WDHTLUN" or bB in "WDHTLUN":
+    if bA in ["W", "D", "h", "min", "s", "ms", "us", "ms"] or bB in [
+        "W",
+        "D",
+        "h",
+        "min",
+        "s",
+        "ms",
+        "us",
+        "ms",
+    ]:
         # Simple length comparison is sufficient for submonthly freqs
         # In case one of bA or bB is > W, we test many to be sure.
         tA = pd.date_range("1970-01-01T00:00:00", freq=offAs, periods=13)
@@ -905,20 +927,18 @@ def _interpolate_doy_calendar(
     Parameters
     ----------
     source : xr.DataArray
-      Array with `dayofyear` coordinates.
+        Array with `dayofyear` coordinates.
     doy_max : int
-      The largest day of the year allowed by calendar.
+        The largest day of the year allowed by calendar.
     doy_min : int
-      The smallest day of the year in the output.
-      This parameter is necessary when the target time series does not span over a full
-      year (e.g. JJA season).
-      Default is 1.
+        The smallest day of the year in the output.
+        This parameter is necessary when the target time series does not span over a full year (e.g. JJA season).
+        Default is 1.
 
     Returns
     -------
     xr.DataArray
-      Interpolated source array over coordinates spanning the target `dayofyear` range.
-
+        Interpolated source array over coordinates spanning the target `dayofyear` range.
     """
     if "dayofyear" not in source.coords.keys():
         raise AttributeError("Source should have `dayofyear` coordinates.")
@@ -943,21 +963,19 @@ def adjust_doy_calendar(
 ) -> xr.DataArray:
     """Interpolate from one set of dayofyear range to another calendar.
 
-    Interpolate an array defined over a `dayofyear` range (say 1 to 360) to another `dayofyear` range (say 1
-    to 365).
+    Interpolate an array defined over a `dayofyear` range (say 1 to 360) to another `dayofyear` range (say 1 to 365).
 
     Parameters
     ----------
     source : xr.DataArray
-      Array with `dayofyear` coordinate.
+        Array with `dayofyear` coordinate.
     target : xr.DataArray or xr.Dataset
-      Array with `time` coordinate.
+        Array with `time` coordinate.
 
     Returns
     -------
     xr.DataArray
-      Interpolated source array over coordinates spanning the target `dayofyear` range.
-
+        Interpolated source array over coordinates spanning the target `dayofyear` range.
     """
     max_target_doy = int(target.time.dt.dayofyear.max())
     min_target_doy = int(target.time.dt.dayofyear.min())
@@ -984,16 +1002,16 @@ def resample_doy(doy: xr.DataArray, arr: xr.DataArray | xr.Dataset) -> xr.DataAr
     Parameters
     ----------
     doy : xr.DataArray
-      Array with `dayofyear` coordinate.
+        Array with `dayofyear` coordinate.
     arr : xr.DataArray or xr.Dataset
-      Array with `time` coordinate.
+        Array with `time` coordinate.
 
     Returns
     -------
     xr.DataArray
-      An array with the same dimensions as `doy`, except for `dayofyear`, which is
-      replaced by the `time` dimension of `arr`. Values are filled according to the
-      day of year value in `doy`.
+        An array with the same dimensions as `doy`, except for `dayofyear`, which is
+        replaced by the `time` dimension of `arr`. Values are filled according to the
+        day of year value in `doy`.
     """
     if "dayofyear" not in doy.coords:
         raise AttributeError("Source should have `dayofyear` coordinates.")
@@ -1008,17 +1026,18 @@ def resample_doy(doy: xr.DataArray, arr: xr.DataArray | xr.Dataset) -> xr.DataAr
 
 
 def time_bnds(  # noqa: C901
-    time: xr.DataArray
-    | xr.Dataset
-    | CFTimeIndex
-    | pd.DatetimeIndex
-    | DataArrayResample
-    | DatasetResample,
+    time: (
+        xr.DataArray
+        | xr.Dataset
+        | CFTimeIndex
+        | pd.DatetimeIndex
+        | DataArrayResample
+        | DatasetResample
+    ),
     freq: str | None = None,
     precision: str | None = None,
 ):
-    """
-    Find the time bounds for a datetime index.
+    """Find the time bounds for a datetime index.
 
     As we are using datetime indices to stand in for period indices, assumptions regarding the period
     are made based on the given freq.
@@ -1028,7 +1047,7 @@ def time_bnds(  # noqa: C901
     time : DataArray, Dataset, CFTimeIndex, DatetimeIndex, DataArrayResample or DatasetResample
         Object which contains a time index as a proxy representation for a period index.
     freq : str, optional
-        String specifying the frequency/offset such as 'MS', '2D', or '3T'
+        String specifying the frequency/offset such as 'MS', '2D', or '3min'
         If not given, it is inferred from the time index, which means that index must
         have at least three elements.
     precision : str, optional
@@ -1046,28 +1065,30 @@ def time_bnds(  # noqa: C901
     Notes
     -----
     xclim assumes that indexes for greater-than-day frequencies are "floored" down to a daily resolution.
-    For example, the coordinate "2000-01-31 00:00:00" with a "M" frequency is assumed to mean a period
+    For example, the coordinate "2000-01-31 00:00:00" with a "ME" frequency is assumed to mean a period
     going from "2000-01-01 00:00:00" to "2000-01-31 23:59:59.999999".
 
     Similarly, it assumes that daily and finer frequencies yield indexes pointing to the period's start.
-    So "2000-01-31 00:00:00" with a "3H" frequency, means a period going from "2000-01-31 00:00:00" to
+    So "2000-01-31 00:00:00" with a "3h" frequency, means a period going from "2000-01-31 00:00:00" to
     "2000-01-31 02:59:59.999999".
     """
     if isinstance(time, (xr.DataArray, xr.Dataset)):
         time = time.indexes[time.name]
     elif isinstance(time, (DataArrayResample, DatasetResample)):
-        # TODO: Remove conditional when pinning xarray above 2023.5.0
-        if hasattr(time, "_full_index"):  # xr < 2023.5.0
-            time = time._full_index
-        else:  # xr >= 2023.5.0
-            for grouper in time.groupers:
-                if "time" in grouper.dims:
-                    time = grouper.group_as_index
-                    break
-            else:
-                raise ValueError(
-                    'Got object resampled along another dimension than "time".'
-                )
+        for grouper in time.groupers:
+            if "time" in grouper.dims:
+                datetime = grouper.unique_coord.data
+                freq = freq or grouper.grouper.freq
+                if datetime.dtype == "O":
+                    time = xr.CFTimeIndex(datetime)
+                else:
+                    time = pd.DatetimeIndex(datetime)
+                break
+
+        else:
+            raise ValueError(
+                'Got object resampled along another dimension than "time".'
+            )
 
     if freq is None and hasattr(time, "freq"):
         freq = time.freq
@@ -1081,27 +1102,27 @@ def time_bnds(  # noqa: C901
 
     # Normalizing without using `.normalize` because cftime doesn't have it
     floor = {"hour": 0, "minute": 0, "second": 0, "microsecond": 0, "nanosecond": 0}
-    if freq_base in "HTSLUN":  # This is verbose, is there a better way?
+    if freq_base in ["h", "min", "s", "ms", "us", "ns"]:
         floor.pop("hour")
-    if freq_base in "TSLUN":
+    if freq_base in ["min", "s", "ms", "us", "ns"]:
         floor.pop("minute")
-    if freq_base in "SLUN":
+    if freq_base in ["s", "ms", "us", "ns"]:
         floor.pop("second")
-    if freq_base in "UN":
+    if freq_base in ["us", "ns"]:
         floor.pop("microsecond")
-    if freq_base in "N":
+    if freq_base == "ns":
         floor.pop("nanosecond")
 
     if isinstance(time, xr.CFTimeIndex):
         period = xr.coding.cftime_offsets.to_offset(freq)
         is_on_offset = period.onOffset
-        eps = pd.Timedelta(precision or "1U").to_pytimedelta()
+        eps = pd.Timedelta(precision or "1us").to_pytimedelta()
         day = pd.Timedelta("1D").to_pytimedelta()
-        floor.pop("nanosecond")  # unsuported by cftime
+        floor.pop("nanosecond")  # unsupported by cftime
     else:
         period = pd.tseries.frequencies.to_offset(freq)
         is_on_offset = period.is_on_offset
-        eps = pd.Timedelta(precision or "1N")
+        eps = pd.Timedelta(precision or "1ns")
         day = pd.Timedelta("1D")
 
     def shift_time(t):
@@ -1427,7 +1448,7 @@ def _convert_datetime(
 
     Parameters
     ----------
-    datetime: datetime.datetime or cftime.datetime
+    datetime : datetime.datetime or cftime.datetime
         A datetime object to convert.
     new_doy : float or int, optional
         Allows for redefining the day of year (thus ignoring month and day information from the source datetime).
@@ -1505,9 +1526,8 @@ def select_time(
     Returns
     -------
     xr.DataArray or xr.Dataset
-      Selected input values. If ``drop=False``, this has the same length as ``da``
-      (along dimension 'time'), but with masked (NaN) values outside the period of
-      interest.
+        Selected input values. If ``drop=False``, this has the same length as ``da`` (along dimension 'time'),
+        but with masked (NaN) values outside the period of interest.
 
     Examples
     --------
@@ -1588,3 +1608,355 @@ def select_time(
         mask["time"] = da.time
 
     return da.where(mask, drop=drop)
+
+
+def _month_is_first_period_month(time, freq):
+    """Returns True if the given time is from the first month of freq."""
+    if isinstance(time, cftime.datetime):
+        frq_monthly = xr.coding.cftime_offsets.to_offset("MS")
+        frq = xr.coding.cftime_offsets.to_offset(freq)
+        if frq_monthly.onOffset(time):
+            return frq.onOffset(time)
+        return frq.onOffset(frq_monthly.rollback(time))
+    # Pandas
+    time = pd.Timestamp(time)
+    frq_monthly = pd.tseries.frequencies.to_offset("MS")
+    frq = pd.tseries.frequencies.to_offset(freq)
+    if frq_monthly.is_on_offset(time):
+        return frq.is_on_offset(time)
+    return frq.is_on_offset(frq_monthly.rollback(time))
+
+
+def stack_periods(
+    da: xr.Dataset | xr.DataArray,
+    window: int = 30,
+    stride: int | None = None,
+    min_length: int | None = None,
+    freq: str = "YS",
+    dim: str = "period",
+    start: str = "1970-01-01",
+    align_days: bool = True,
+    pad_value=dtypes.NA,
+):
+    """Construct a multi-period array.
+
+    Stack different equal-length periods of `da` into a new 'period' dimension.
+
+    This is similar to ``da.rolling(time=window).construct(dim, stride=stride)``, but adapted for arguments
+    in terms of a base temporal frequency that might be non-uniform (years, months, etc.).
+    It is reversible for some cases (see `stride`).
+    A rolling-construct method will be much more performant for uniform periods (days, weeks).
+
+    Parameters
+    ----------
+    da : xr.Dataset or xr.DataArray
+        An xarray object with a `time` dimension.
+        Must have a uniform timestep length.
+        Output might be strange if this does not use a uniform calendar (noleap, 360_day, all_leap).
+    window : int
+        The length of the moving window as a multiple of ``freq``.
+    stride : int, optional
+        At which interval to take the windows, as a multiple of ``freq``.
+        For the operation to be reversible with :py:func:`unstack_periods`, it must divide `window` into an odd number of parts.
+        Default is `window` (no overlap between periods).
+    min_length : int, optional
+        Windows shorter than this are not included in the output.
+        Given as a multiple of ``freq``. Default is ``window`` (every window must be complete).
+        Similar to the ``min_periods`` argument of  ``da.rolling``.
+        If ``freq`` is annual or quarterly and ``min_length == ``window``, the first period is considered complete
+        if the first timestep is in the first month of the period.
+    freq : str
+        Units of ``window``, ``stride`` and ``min_length``, as a frequency string.
+        Must be larger or equal to the data's sampling frequency.
+        Note that this function offers an easier interface for non-uniform period (like years or months)
+        but is much slower than a rolling-construct method.
+    dim : str
+        The new dimension name.
+    start : str
+        The `start` argument passed to :py:func:`xarray.date_range` to generate the new placeholder
+        time coordinate.
+    align_days : bool
+        When True (default), an error is raised if the output would have unaligned days across periods.
+        If `freq = 'YS'`, day-of-year alignment is checked and if `freq` is "MS" or "QS", we check day-in-month.
+        Only uniform-calendar will pass the test for `freq='YS'`.
+        For other frequencies, only the `360_day` calendar will work.
+        This check is ignored if the sampling rate of the data is coarser than "D".
+    pad_value : Any
+        When some periods are shorter than others, this value is used to pad them at the end.
+        Passed directly as argument ``fill_value`` to :py:func:`xarray.concat`,
+        the default is the same as on that function.
+
+    Return
+    ------
+    xr.DataArray
+        A DataArray with a new `period` dimension and a `time` dimension with the length of the longest window.
+        The new time coordinate has the same frequency as the input data but is generated using
+        :py:func:`xarray.date_range` with the given `start` value.
+        That coordinate is the same for all periods, depending on the choice of ``window`` and ``freq``, it might make sense.
+        But for unequal periods or non-uniform calendars, it will certainly not.
+        If ``stride`` is a divisor of ``window``, the correct timeseries can be reconstructed with :py:func:`unstack_periods`.
+        The coordinate of `period` is the first timestep of each window.
+    """
+    from xclim.core.units import (  # Import in function to avoid cyclical imports
+        ensure_cf_units,
+        infer_sampling_units,
+    )
+
+    stride = stride or window
+    min_length = min_length or window
+    if stride > window:
+        raise ValueError(
+            f"Stride must be less than or equal to window. Got {stride} > {window}."
+        )
+
+    srcfreq = xr.infer_freq(da.time)
+    cal = da.time.dt.calendar
+    use_cftime = da.time.dtype == "O"
+
+    if (
+        compare_offsets(srcfreq, "<=", "D")
+        and align_days
+        and (
+            (freq.startswith(("Y", "A")) and cal not in uniform_calendars)
+            or (freq.startswith(("Q", "M")) and window > 1 and cal != "360_day")
+        )
+    ):
+        if freq.startswith(("Y", "A")):
+            u = "year"
+        else:
+            u = "month"
+        raise ValueError(
+            f"Stacking {window}{freq} periods will result in unaligned day-of-{u}. "
+            f"Consider converting the calendar of your data to one with uniform {u} lengths, "
+            "or pass `align_days=False` to disable this check."
+        )
+
+    # Convert integer inputs to freq strings
+    mult, *args = parse_offset(freq)
+    win_frq = construct_offset(mult * window, *args)
+    strd_frq = construct_offset(mult * stride, *args)
+    minl_frq = construct_offset(mult * min_length, *args)
+
+    # The same time coord as da, but with one extra element.
+    # This way, the last window's last index is not returned as None by xarray's grouper.
+    time2 = xr.DataArray(
+        xr.date_range(
+            da.time[0].item(),
+            freq=srcfreq,
+            calendar=cal,
+            periods=da.time.size + 1,
+            use_cftime=use_cftime,
+        ),
+        dims=("time",),
+        name="time",
+    )
+
+    periods = []
+    # longest = 0
+    # Iterate over strides, but recompute the full window for each stride start
+    for _, strd_slc in da.resample(time=strd_frq).groups.items():
+        win_resamp = time2.isel(time=slice(strd_slc.start, None)).resample(time=win_frq)
+        # Get slice for first group
+        win_slc = win_resamp._group_indices[0]
+        if min_length < window:
+            # If we ask for a min_length period instead is it complete ?
+            min_resamp = time2.isel(time=slice(strd_slc.start, None)).resample(
+                time=minl_frq
+            )
+            min_slc = min_resamp._group_indices[0]
+            open_ended = min_slc.stop is None
+        else:
+            # The end of the group slice is None if no outside-group value was found after the last element
+            # As we added an extra step to time2, we avoid the case where a group ends exactly on the last element of ds
+            open_ended = win_slc.stop is None
+        if open_ended:
+            # Too short, we got to the end
+            break
+        if (
+            strd_slc.start == 0
+            and parse_offset(freq)[1] in "YAQ"
+            and min_length == window
+            and not _month_is_first_period_month(da.time[0].item(), freq)
+        ):
+            # For annual or quarterly frequencies (which can be anchor-based),
+            # if the first time is not in the first month of the first period,
+            # then the first period is incomplete but by a fractional amount.
+            continue
+        periods.append(
+            slice(
+                strd_slc.start + win_slc.start,
+                (
+                    (strd_slc.start + win_slc.stop)
+                    if win_slc.stop is not None
+                    else da.time.size
+                ),
+            )
+        )
+
+    # Make coordinates
+    lengths = xr.DataArray(
+        [slc.stop - slc.start for slc in periods],
+        dims=(dim,),
+        attrs={"long_name": "Length of each period"},
+    )
+    longest = lengths.max().item()
+    # Length as a pint-ready array : with proper units, but values are not usable as indexes anymore
+    m, u = infer_sampling_units(da)
+    lengths = lengths * m
+    lengths.attrs["units"] = ensure_cf_units(u)
+    # Start points for each period and remember parameters for unstacking
+    starts = xr.DataArray(
+        [da.time[slc.start].item() for slc in periods],
+        dims=(dim,),
+        attrs={
+            "long_name": "Start of the period",
+            # Save parameters so that we can unstack.
+            "window": window,
+            "stride": stride,
+            "freq": freq,
+            "unequal_lengths": int(len(np.unique(lengths)) > 1),
+        },
+    )
+    # The "fake" axis that all periods share
+    fake_time = xr.date_range(
+        start, periods=longest, freq=srcfreq, calendar=cal, use_cftime=use_cftime
+    )
+    # Slice and concat along new dim. We drop the index and add a new one so that xarray can concat them together.
+    out = xr.concat(
+        [
+            da.isel(time=slc)
+            .drop_vars("time")
+            .assign_coords(time=np.arange(slc.stop - slc.start))
+            for slc in periods
+        ],
+        dim,
+        join="outer",
+        fill_value=pad_value,
+    )
+    out = out.assign_coords(
+        time=(("time",), fake_time, da.time.attrs.copy()),
+        **{f"{dim}_length": lengths, dim: starts},
+    )
+    out.time.attrs.update(long_name="Placeholder time axis")
+    return out
+
+
+def unstack_periods(da: xr.DataArray | xr.Dataset, dim: str = "period"):
+    """Unstack an array constructed with :py:func:`stack_periods`.
+
+    Can only work with periods stacked with a ``stride`` that divides ``window`` in an odd number of sections.
+    When ``stride`` is smaller than ``window``, only the center-most stride of each window is kept,
+    except for the beginning and end which are taken from the first and last windows.
+
+    Parameters
+    ----------
+    da : xr.DataArray
+        As constructed by :py:func:`stack_periods`, attributes of the period coordinates must have been preserved.
+    dim : str
+        The period dimension name.
+
+    Notes
+    -----
+    The following table shows which strides are included (``o``) in the unstacked output.
+
+    In this example, ``stride`` was a fifth of ``window`` and ``min_length`` was four (4) times ``stride``.
+    The row index ``i`` the period index in the stacked dataset,
+    columns are the stride-long section of the original timeseries.
+
+    .. table:: Unstacking example with ``stride < window``.
+
+        === === === === === === === ===
+         i   0   1   2   3   4   5   6
+        === === === === === === === ===
+         3               x   x   o   o
+         2           x   x   o   x   x
+         1       x   x   o   x   x
+         0   o   o   o   x   x
+        === === === === === === === ===
+    """
+    from xclim.core.units import infer_sampling_units
+
+    try:
+        starts = da[dim]
+        window = starts.attrs["window"]
+        stride = starts.attrs["stride"]
+        freq = starts.attrs["freq"]
+        unequal_lengths = bool(starts.attrs["unequal_lengths"])
+    except (AttributeError, KeyError) as err:
+        raise ValueError(
+            f"`unstack_periods` can't find the window, stride and freq attributes on the {dim} coordinates."
+        ) from err
+
+    if unequal_lengths:
+        try:
+            lengths = da[f"{dim}_length"]
+        except KeyError as err:
+            raise ValueError(
+                f"`unstack_periods` can't find the `{dim}_length` coordinate."
+            ) from err
+        # Get length as number of points
+        m, _ = infer_sampling_units(da.time)
+        lengths = lengths // m
+    else:
+        # It is acceptable to lose "{dim}_length" if they were all equal
+        lengths = xr.DataArray([da.time.size] * da[dim].size, dims=(dim,))
+
+    # Convert from the fake axis to the real one
+    time_as_delta = da.time - da.time[0]
+    if da.time.dtype == "O":
+        # cftime can't add with np.timedelta64 (restriction comes from numpy which refuses to add O with m8)
+        time_as_delta = pd.TimedeltaIndex(
+            time_as_delta
+        ).to_pytimedelta()  # this array is O, numpy complies
+    else:
+        # Xarray will return int when iterating over datetime values, this returns timestamps
+        starts = pd.DatetimeIndex(starts)
+
+    def _reconstruct_time(_time_as_delta, _start):
+        times = _time_as_delta + _start
+        return xr.DataArray(times, dims=("time",), coords={"time": times}, name="time")
+
+    # Easy case:
+    if window == stride:
+        # just concat them all
+        periods = []
+        for i, (start, length) in enumerate(zip(starts.values, lengths.values)):
+            real_time = _reconstruct_time(time_as_delta, start)
+            periods.append(
+                da.isel(**{dim: i}, drop=True)
+                .isel(time=slice(0, length))
+                .assign_coords(time=real_time.isel(time=slice(0, length)))
+            )
+        return xr.concat(periods, "time")
+
+    # Difficult and ambiguous case
+    if (window / stride) % 2 != 1:
+        raise NotImplementedError(
+            "`unstack_periods` can't work with strides that do not divide the window into an odd number of parts."
+            f"Got {window} / {stride} which is not an odd integer."
+        )
+
+    # Non-ambiguous overlapping case
+    Nwin = window // stride
+    mid = (Nwin - 1) // 2  # index of the center window
+
+    mult, *args = parse_offset(freq)
+    strd_frq = construct_offset(mult * stride, *args)
+
+    periods = []
+    for i, (start, length) in enumerate(zip(starts.values, lengths.values)):
+        real_time = _reconstruct_time(time_as_delta, start)
+        slices = real_time.resample(time=strd_frq)._group_indices
+        if i == 0:
+            slc = slice(slices[0].start, min(slices[mid].stop, length))
+        elif i == da.period.size - 1:
+            slc = slice(slices[mid].start, min(slices[Nwin - 1].stop or length, length))
+        else:
+            slc = slice(slices[mid].start, min(slices[mid].stop, length))
+        periods.append(
+            da.isel(**{dim: i}, drop=True)
+            .isel(time=slc)
+            .assign_coords(time=real_time.isel(time=slc))
+        )
+
+    return xr.concat(periods, "time")

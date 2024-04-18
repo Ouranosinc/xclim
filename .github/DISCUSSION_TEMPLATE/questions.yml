@@ -1,0 +1,31 @@
+title: "[Questions] "
+labels: [ "support" ]
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for opening this discussion!
+        Before you submit, please make sure you have read our [Code of Conduct](https://github.com/Ouranosinc/xclim/blob/main/CODE_OF_CONDUCT.md).
+  - type: textarea
+    id: setup-information
+    attributes:
+      label: Setup Information
+      description: |
+        What xclim version are you running?
+      value: |
+        * Xclim version:
+  - type: textarea
+    id: description
+    attributes:
+      label: Context
+      description: Describe what you were trying to get done. Tell us what happened, what went wrong, and what you expected to happen.
+  - type: textarea
+    id: steps-to-reproduce
+    attributes:
+      label: Steps To Reproduce
+      description: Paste the command(s) you ran and the output. If there was a crash, please include the traceback below.
+      value: |
+        ```
+        $ pip install foo --bar
+        ```

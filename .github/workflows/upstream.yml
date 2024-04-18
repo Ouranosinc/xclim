@@ -2,12 +2,11 @@ name: Test Upstream Dependencies
 on:
   push:
     branches:
-      - master
+      - main
     paths-ignore:
       - CHANGES.rst
       - README.rst
       - pyproject.toml
-      - setup.cfg
       - xclim/__init__.py
   schedule:
     - cron: "0 0 * * *" # Daily “At 00:00” UTC
@@ -17,10 +16,16 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+
 jobs:
   upstream-dev:
     name: test-upstream-dev (Python${{ matrix.python-version }})
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
     if: |
       (github.event_name == 'schedule') ||
       (github.event_name == 'workflow_dispatch') ||
@@ -34,11 +39,26 @@ jobs:
       run:
         shell: bash -l {0}
     steps:
-      - uses: actions/checkout@v4.1.1
+      - name: Harden Runner
+        uses: step-security/harden-runner@63c24ba6bd7ba022e95695ff85de572c04a18142 # v2.7.0
+        with:
+          disable-sudo: true
+          egress-policy: block
+          allowed-endpoints: >
+            api.github.com:443
+            conda.anaconda.org:443
+            dap.service.does.not.exist:443
+            files.pythonhosted.org:443
+            github.com:443
+            objects.githubusercontent.com:443
+            pypi.org:443
+            raw.githubusercontent.com:443
+            repo.anaconda.com:443
+      - uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 # v4.1.2
         with:
           fetch-depth: 0 # Fetch all history for all branches and tags.
       - name: Setup Conda (Micromamba) with Python${{ matrix.python-version }}
-        uses: mamba-org/setup-micromamba@v1.6.0
+        uses: mamba-org/setup-micromamba@422500192359a097648154e8db4e39bdb6c6eed7 # v1.8.1
         with:
           cache-downloads: true
           cache-environment: true
@@ -76,6 +96,6 @@ jobs:
           && steps.status.outcome == 'failure'
           && github.event_name == 'schedule'
           && github.repository_owner == 'Ouranosinc'
-        uses: xarray-contrib/issue-from-pytest-log@v1.2.6
+        uses: xarray-contrib/issue-from-pytest-log@138db94bfe4b12ac11fc1aff307ee0835feab403 # v1.2.8
         with:
           log-path: output-${{ matrix.python-version }}-log.jsonl

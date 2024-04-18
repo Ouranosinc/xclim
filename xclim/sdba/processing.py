@@ -1,3 +1,4 @@
+# pylint: disable=missing-kwoa
 """
 Pre- and Post-Processing Submodule
 ==================================
@@ -5,14 +6,20 @@ Pre- and Post-Processing Submodule
 from __future__ import annotations
 
 import warnings
-from typing import Sequence
+from collections.abc import Sequence
 
 import dask.array as dsk
 import numpy as np
 import xarray as xr
 from xarray.core.utils import get_temp_dimname
 
-from xclim.core.calendar import get_calendar, max_doy, parse_offset
+from xclim.core.calendar import (
+    get_calendar,
+    max_doy,
+    parse_offset,
+    stack_periods,
+    unstack_periods,
+)
 from xclim.core.formatting import update_xclim_history
 from xclim.core.units import convert_units_to, infer_context, units
 from xclim.core.utils import uses_dask
@@ -40,10 +47,10 @@ def adapt_freq(
 
     Parameters
     ----------
-    ds : xr.Dataset
-        With variables : "ref", Target/reference data, usually observed data, and  "sim", Simulated data.
-    dim : str
-        Dimension name.
+    ref : xr.Dataset
+        Target/reference data, usually observed data, with a "time" dimension.
+    sim : xr.Dataset
+        Simulated data, with a "time" dimension.
     group : str or Grouper
         Grouping information, see base.Grouper
     thresh : str
@@ -467,11 +474,11 @@ def _get_number_of_elements_by_year(time):
 
     mult, freq, _, _ = parse_offset(xr.infer_freq(time))
     days_in_year = max_doy[cal]
-    elements_in_year = {"Q": 4, "M": 12, "D": days_in_year, "H": days_in_year * 24}
+    elements_in_year = {"Q": 4, "M": 12, "D": days_in_year, "h": days_in_year * 24}
     N_in_year = elements_in_year.get(freq, 1) / mult
     if N_in_year % 1 != 0:
         raise ValueError(
-            f"Sampling frequency of the data must be Q, M, D or H and evenly divide a year (got {mult}{freq})."
+            f"Sampling frequency of the data must be Q, M, D or h and evenly divide a year (got {mult}{freq})."
         )
 
     return int(N_in_year)
@@ -480,133 +487,37 @@ def _get_number_of_elements_by_year(time):
 def construct_moving_yearly_window(
     da: xr.Dataset, window: int = 21, step: int = 1, dim: str = "movingwin"
 ):
-    """Construct a moving window DataArray.
+    """Deprecated function.
 
-    Stack windows of `da` in a new 'movingwin' dimension.
-    Windows are always made of full years, so calendar with non-uniform year lengths are not supported.
-
-    Windows are constructed starting at the beginning of `da`, if number of given years is not
-    a multiple of `step`, then the last year(s) will be missing as a supplementary window would be incomplete.
-
-    Parameters
-    ----------
-    da : xr.Dataset
-        A DataArray with a `time` dimension.
-    window : int
-        The length of the moving window as a number of years.
-    step : int
-        The step between each window as a number of years.
-    dim : str
-        The new dimension name. If given, must also be given to `unpack_moving_yearly_window`.
-
-    Return
-    ------
-    xr.DataArray
-        A DataArray with a new `movingwin` dimension and a `time` dimension with a length of 1 window.
-        This assumes downstream algorithms do not make use of the _absolute_ year of the data.
-        The correct timeseries can be reconstructed with :py:func:`unpack_moving_yearly_window`.
-        The coordinates of `movingwin` are the first date of the windows.
-
+    Use :py:func:`xclim.core.calendar.stack_periods` instead, renaming ``step`` to ``stride``.
+    Beware of the different default value for `dim` ("period").
     """
-    # Get number of samples per year (and perform checks)
-    N_in_year = _get_number_of_elements_by_year(da.time)
-
-    # Number of samples in a window
-    N = window * N_in_year
-
-    first_slice = da.isel(time=slice(0, N))
-    first_slice = first_slice.expand_dims({dim: np.atleast_1d(first_slice.time[0])})
-    daw = [first_slice]
-
-    i_start = N_in_year * step
-    # This is the first time I use `while` in real python code. What an event.
-    while i_start + N <= da.time.size:
-        # Cut and add _full_ slices only, partial window are thrown out
-        # Use isel so that we don't need to deal with a starting date.
-        slc = da.isel(time=slice(i_start, i_start + N))
-        slc = slc.expand_dims({dim: np.atleast_1d(slc.time[0])})
-        slc["time"] = first_slice.time
-        daw.append(slc)
-        i_start += N_in_year * step
-
-    daw = xr.concat(daw, dim)
-    return daw
+    warnings.warn(
+        FutureWarning,
+        (
+            "`construct_moving_yearly_window` is deprecated and will be removed in a future version. "
+            f"Please use xclim.core.calendar.stack_periods(da, window={window}, stride={step}, dim='{dim}', freq='YS') instead."
+        ),
+    )
+    return stack_periods(da, window=window, stride=step, dim=dim, freq="YS")
 
 
 def unpack_moving_yearly_window(
     da: xr.DataArray, dim: str = "movingwin", append_ends: bool = True
 ):
-    """Unpack a constructed moving window dataset to a normal timeseries, only keeping the central data.
+    """Deprecated function.
 
-    Unpack DataArrays created with :py:func:`construct_moving_yearly_window` and recreate a timeseries data.
-    If `append_ends` is False, only keeps the central non-overlapping years. The final timeseries will be
-    (window - step) years shorter than the initial one. If `append_ends` is True, the time points from first and last
-    windows will be included in the final timeseries.
-
-    The time points that are not in a window will never be included in the final timeseries.
-    The window length and window step are inferred from the coordinates.
-
-    Parameters
-    ----------
-    da : xr.DataArray
-        As constructed by :py:func:`construct_moving_yearly_window`.
-    dim : str
-        The window dimension name as given to the construction function.
-    append_ends : bool
-        Whether to append the ends of the timeseries
-        If False, the final timeseries will be (window - step) years shorter than the initial one,
-        but all windows will contribute equally.
-        If True, the year before the middle years of the first window and the years after the middle years of the last
-        window are appended to the middle years. The final timeseries will be the same length as the initial timeseries
-        if the windows span the whole timeseries.
-        The time steps that are not in a window will be left out of the final timeseries.
-
+    Use :py:func:`xclim.core.calendar.unstack_periods` instead.
+    Beware of the different default value for `dim` ("period"). The new function always behaves like ``appends_ends=True``.
     """
-    # Get number of samples by year (and perform checks)
-    N_in_year = _get_number_of_elements_by_year(da.time)
-
-    # Might be smaller than the original moving window, doesn't matter
-    window = da.time.size / N_in_year
-
-    if window % 1 != 0:
-        warnings.warn(
-            f"Incomplete data received as number of years covered is not an integer ({window})"
-        )
-
-    # Get step in number of years
-    days_in_year = max_doy[get_calendar(da)]
-    step = np.unique(da[dim].diff(dim).dt.days / days_in_year)
-    if len(step) > 1:
-        raise ValueError("The spacing between the windows is not equal.")
-    step = int(step[0])
-
-    # Which years to keep: length step, in the middle of window
-    left = int((window - step) // 2)  # first year to keep
-
-    # Keep only the middle years
-    da_mid = da.isel(time=slice(left * N_in_year, (left + step) * N_in_year))
-
-    out = []
-    for win_start in da_mid[dim]:
-        slc = da_mid.sel({dim: win_start}).drop_vars(dim)
-        dt = win_start.values - da_mid[dim][0].values
-        slc["time"] = slc.time + dt
-        out.append(slc)
-
-    if append_ends:
-        # add front end at the front
-        out.insert(
-            0, da.isel({dim: 0, "time": slice(None, left * N_in_year)}).drop_vars(dim)
-        )
-        # add back end at the back
-        back_end = da.isel(
-            {dim: -1, "time": slice((left + step) * N_in_year, None)}
-        ).drop_vars(dim)
-        dt = da.isel({dim: -1})[dim].values - da.isel({dim: 0})[dim].values
-        back_end["time"] = back_end.time + dt
-        out.append(back_end)
-
-    return xr.concat(out, "time")
+    warnings.warn(
+        FutureWarning,
+        (
+            "`unpack_moving_yearly_window` is deprecated and will be removed in a future version. "
+            f"Please use xclim.core.calendar.unstack_periods(da, dim='{dim}') instead."
+        ),
+    )
+    return unstack_periods(da, dim=dim)
 
 
 @update_xclim_history
@@ -679,7 +590,7 @@ def to_additive_space(
         if upper_bound is not None:
             upper_bound = convert_units_to(upper_bound, data)
 
-    with xr.set_options(keep_attrs=True):
+    with xr.set_options(keep_attrs=True), np.errstate(divide="ignore"):
         if trans == "log":
             out = np.log(data - lower_bound)
         elif trans == "logit":

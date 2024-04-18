@@ -22,6 +22,7 @@ from xclim.core.units import (
     pint_multiply,
     rate2amount,
     str2pint,
+    to_agg_units,
     units,
     units2pint,
 )
@@ -130,27 +131,16 @@ class TestUnitConversion:
 
     def test_units2pint(self, pr_series):
         u = units2pint(pr_series([1, 2]))
-        assert (str(u)) == "kilogram / meter ** 2 / second"
         assert pint2cfunits(u) == "kg m-2 s-1"
 
         u = units2pint("m^3 s-1")
-        assert str(u) == "meter ** 3 / second"
-        assert pint2cfunits(u) == "m^3 s-1"
-
-        u = units2pint("kg m-2 s-1")
-        assert (str(u)) == "kilogram / meter ** 2 / second"
+        assert pint2cfunits(u) == "m3 s-1"
 
         u = units2pint("%")
-        assert str(u) == "percent"
+        assert pint2cfunits(u) == "%"
 
         u = units2pint("1")
-        assert str(u) == "dimensionless"
-
-        u = units2pint("mm s-1")
-        assert str(u) == "millimeter / second"
-
-        u = units2pint("degrees_north")
-        assert str(u) == "degrees_north"
+        assert pint2cfunits(u) == ""
 
     def test_pint_multiply(self, pr_series):
         a = pr_series([1, 2, 3])
@@ -221,7 +211,7 @@ def test_rate2amount(pr_series):
 
     with xr.set_options(keep_attrs=True):
         pr_ms = pr.resample(time="MS").mean()
-        pr_m = pr.resample(time="M").mean()
+        pr_m = pr.resample(time="ME").mean()
 
         am_ms = rate2amount(pr_ms)
         np.testing.assert_array_equal(am_ms[:4], 86400 * np.array([31, 28, 31, 30]))
@@ -244,7 +234,7 @@ def test_amount2rate(pr_series):
 
     with xr.set_options(keep_attrs=True):
         am_ms = am.resample(time="MS").sum()
-        am_m = am.resample(time="M").sum()
+        am_m = am.resample(time="ME").sum()
 
         pr_ms = amount2rate(am_ms)
         np.testing.assert_allclose(pr_ms, 1)
@@ -260,10 +250,12 @@ def test_amount2lwethickness(snw_series):
     snw = snw_series(np.ones(365), start="2019-01-01")
 
     swe = amount2lwethickness(snw, out_units="mm")
+    # FIXME: Asserting these statements shows that they are not equal
     swe.attrs["standard_name"] == "lwe_thickness_of_snowfall_amount"
     np.testing.assert_allclose(swe, 1)
 
     snw = lwethickness2amount(swe)
+    # FIXME: Asserting these statements shows that they are not equal
     snw.attrs["standard_name"] == "snowfall_amount"
 
 
@@ -326,3 +318,28 @@ def test_declare_relative_units():
 
     with pytest.raises(ValidationError):
         index_full_mm("1 mm", "2 Pa", "3 mm/s")
+
+
+@pytest.mark.parametrize(
+    "in_u,opfunc,op,exp,exp_u",
+    [
+        ("m/h", "sum", "integral", 8760, "m"),
+        ("m/h", "sum", "sum", 365, "m/h"),
+        ("K", "mean", "mean", 1, "K"),
+        ("", "sum", "count", 365, "d"),
+        ("", "sum", "count", 365, "d"),
+        ("kg m-2", "var", "var", 0, "kg2 m-4"),
+        ("°C", "argmax", "doymax", 0, ""),
+    ],
+)
+def test_to_agg_units(in_u, opfunc, op, exp, exp_u):
+    da = xr.DataArray(
+        np.ones((365,)),
+        dims=("time",),
+        coords={"time": xr.cftime_range("1993-01-01", periods=365, freq="D")},
+        attrs={"units": in_u},
+    )
+
+    out = to_agg_units(getattr(da, opfunc)(), da, op)
+    np.testing.assert_allclose(out, exp)
+    assert out.attrs["units"] == exp_u

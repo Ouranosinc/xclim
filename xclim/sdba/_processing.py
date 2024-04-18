@@ -5,9 +5,10 @@ Compute Functions Submodule
 Here are defined the functions wrapped by map_blocks or map_groups.
 The user-facing, metadata-handling functions should be defined in processing.py.
 """
+
 from __future__ import annotations
 
-from typing import Sequence
+from collections.abc import Sequence
 
 import numpy as np
 import xarray as xr
@@ -46,7 +47,7 @@ def _adapt_freq(
 
     Returns
     -------
-    xr.Dataset, wth the following variables:
+    xr.Dataset, with the following variables:
 
       - `sim_adj`: Simulated data with the same frequency of values under threshold than ref.
         Adjustment is made group-wise.
@@ -141,7 +142,7 @@ def _normalize(
     )
 
 
-@map_groups(reordered=[Grouper.DIM], main_only=True)
+@map_groups(reordered=[Grouper.DIM], main_only=False)
 def _reordering(ds, *, dim):
     """Group-wise reordering.
 
@@ -158,17 +159,47 @@ def _reordering(ds, *, dim):
     def _reordering_1d(data, ordr):
         return np.sort(data)[np.argsort(np.argsort(ordr))]
 
-    return (
-        xr.apply_ufunc(
-            _reordering_1d,
-            ds.sim,
-            ds.ref,
-            input_core_dims=[[dim], [dim]],
-            output_core_dims=[[dim]],
-            vectorize=True,
-            dask="parallelized",
-            output_dtypes=[ds.sim.dtype],
+    def _reordering_2d(data, ordr):
+        data_r = data.ravel()
+        ordr_r = ordr.ravel()
+        reorder = np.sort(data_r)[np.argsort(np.argsort(ordr_r))]
+        return reorder.reshape(data.shape)[
+            :, int(data.shape[1] / 2)
+        ]  # pick the middle of the window
+
+    if {"window", "time"} == set(dim):
+        return (
+            xr.apply_ufunc(
+                _reordering_2d,
+                ds.sim,
+                ds.ref,
+                input_core_dims=[["time", "window"], ["time", "window"]],
+                output_core_dims=[["time"]],
+                vectorize=True,
+                dask="parallelized",
+                output_dtypes=[ds.sim.dtype],
+            )
+            .rename("reordered")
+            .to_dataset()
         )
-        .rename("reordered")
-        .to_dataset()
-    )
+    elif len(dim) == 1:
+        return (
+            xr.apply_ufunc(
+                _reordering_1d,
+                ds.sim,
+                ds.ref,
+                input_core_dims=[dim, dim],
+                output_core_dims=[dim],
+                vectorize=True,
+                dask="parallelized",
+                output_dtypes=[ds.sim.dtype],
+            )
+            .rename("reordered")
+            .to_dataset()
+        )
+    else:
+        raise ValueError(
+            f"Reordering can only be done along one dimension."
+            f" If there is more than one, they should be `window` and `time`."
+            f" The dimensions are {dim}."
+        )

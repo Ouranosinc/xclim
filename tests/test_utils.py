@@ -38,9 +38,9 @@ def test_wrapped_partial():
     assert newf(1) == (1, 2, 2)
     assert newf.__doc__ == func.__doc__
 
-    def func(a, b=1, c=1, **kws):
+    def func(a, b=1, c=1, **kws):  # pylint: disable=function-redefined
         """Docstring"""
-        return (a, b, c)
+        return a, b, c
 
     newf = wrapped_partial(func, suggested=dict(c=2), a=2, b=2)
     assert list(signature(newf).parameters.keys()) == ["c", "kws"]
@@ -65,7 +65,7 @@ def test_ensure_chunk_size():
 
 class TestNanCalcPercentiles:
     def test_calc_perc_type7(self):
-        # Exemple array from: https://en.wikipedia.org/wiki/Percentile#The_nearest-rank_method
+        # Example array from: https://en.wikipedia.org/wiki/Percentile#The_nearest-rank_method
         arr = np.asarray([15.0, 20.0, 35.0, 40.0, 50.0])
         res = nan_calc_percentiles(arr, percentiles=[40.0], alpha=1, beta=1)
         # The expected is from R `quantile(arr, probs=c(0.4), type=7)`
@@ -87,7 +87,7 @@ class TestNanCalcPercentiles:
         assert np.all(res[0][1] == 27)
 
     def test_calc_perc_2d(self):
-        # Exemple array from: https://en.wikipedia.org/wiki/Percentile#The_nearest-rank_method
+        # Example array from: https://en.wikipedia.org/wiki/Percentile#The_nearest-rank_method
         arr = np.asarray(
             [[15.0, 20.0, 35.0, 40.0, 50.0], [15.0, 20.0, 35.0, 40.0, 50.0]]
         )

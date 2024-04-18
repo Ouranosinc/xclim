@@ -1,0 +1,32 @@
+title: "[Translations] "
+labels: [ "docs" ]
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to help translate Xclim's documentation!
+        Before you submit, please make sure you have read our [Code of Conduct](https://github.com/Ouranosinc/xclim/blob/main/CODE_OF_CONDUCT.md).
+  - type: textarea
+    id: language
+    attributes:
+      label: Language
+      description: What language are you translating to?
+  - type: textarea
+    id: translation
+    attributes:
+      label: Translation
+      description: |
+        Please paste your translation here.
+        If you are translating a file, please paste the file contents here.
+        Remember that you can use Markdown formatting in this text box.
+      value: |
+        <!-- If translating Indicators, consider the following approach:
+
+        1. Copy the structure of `fr.json` from the `xclim/data` directory for the Indicators you wish to translate.
+        2. Translate the fields to the language of your choice.
+        3. Paste the translated docstrings below.
+        4. Edit this post as needed, reflecting comments and suggestions from the maintainers and other contributors.
+        5. When the translation effort feels concluded, submit a Pull Request with your changes.
+
+        Please paste your translation below. -->

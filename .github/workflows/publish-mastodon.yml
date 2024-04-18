@@ -15,62 +15,75 @@ on:
         default: true
         type: boolean
 
+permissions:
+  contents: read
+
 jobs:
   toot:
+    name: Generate Mastodon Toot
     runs-on: ubuntu-latest
     environment: production
     steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@63c24ba6bd7ba022e95695ff85de572c04a18142 # v2.7.0
+        with:
+          disable-sudo: true
+          egress-policy: block
+          allowed-endpoints: >
+            api.github.com:443
+            fosstodon.org:443
+            github.com:443
 
-    - name: Checkout
-      uses: actions/checkout@v4.1.1
+      - name: Checkout
+        uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 # v4.1.2
 
-    - name: Current Version
-      if: ${{ !github.event.inputs.version-tag }}
-      run: |
-        CURRENT_VERSION="$(grep -E '__version__'  xclim/__init__.py | cut -d ' ' -f3)"
-        echo "version=v${CURRENT_VERSION}" >> $GITHUB_ENV
-    - name: Set Version from Input
-      if: ${{ github.event.inputs.version-tag }}
-      run: |
-        echo "version=${{ github.event.inputs.version-tag }}" >> $GITHUB_ENV
+      - name: Current Version
+        if: ${{ !github.event.inputs.version-tag }}
+        run: |
+          CURRENT_VERSION="$(grep -E '__version__'  xclim/__init__.py | cut -d ' ' -f3)"
+          echo "version=v${CURRENT_VERSION}" >> $GITHUB_ENV
+      - name: Set Version from Input
+        if: ${{ github.event.inputs.version-tag }}
+        run: |
+          echo "version=${{ github.event.inputs.version-tag }}" >> $GITHUB_ENV
 
-    - name: Get Release Description
-      if: ${{ !endsWith(env.current_version, '-dev') }}
-      id: get_release_description
-      run: |
-        # Fetch the release information using the GitHub API
-        RELEASE_INFO=$(curl -sH "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
-          "https://api.github.com/repos/${{ github.repository }}/releases/tags/${{ env.version }}")
+      - name: Get Release Description
+        if: ${{ !endsWith(env.current_version, '-dev') }}
+        id: get_release_description
+        run: |
+          # Fetch the release information using the GitHub API
+          RELEASE_INFO=$(curl -sH "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+            "https://api.github.com/repos/${{ github.repository }}/releases/tags/${{ env.version }}")
 
-        # Extract the release description from the response
-        RELEASE_DESCRIPTION=$(echo "$RELEASE_INFO" | jq -r .body)
+          # Extract the release description from the response
+          RELEASE_DESCRIPTION=$(echo "$RELEASE_INFO" | jq -r .body)
 
-        # Remove Markdown links and the space preceding them
-        CLEANED_DESCRIPTION=$(echo "$RELEASE_DESCRIPTION" | sed -E 's/\ \(\[[^]]+\]\([^)]+\)\)//g')
+          # Remove Markdown links and the space preceding them
+          CLEANED_DESCRIPTION=$(echo "$RELEASE_DESCRIPTION" | sed -E 's/\ \(\[[^]]+\]\([^)]+\)\)//g')
 
-        # Extract the first line of the release description
-        CONTRIBUTORS=$(echo "$CLEANED_DESCRIPTION" | head -n 1)
+          # Extract the first line of the release description
+          CONTRIBUTORS=$(echo "$CLEANED_DESCRIPTION" | head -n 1)
 
-        echo "contributors=${CONTRIBUTORS}" >> $GITHUB_ENV
+          echo "contributors=${CONTRIBUTORS}" >> $GITHUB_ENV
 
-    - name: Prepare Message
-      id: render_template
-      uses: chuhlomin/render-template@v1.8
-      with:
-        template: .github/publish-mastodon.template.md
-        vars: |
-          version: ${{ env.version }}
+      - name: Prepare Message
+        id: render_template
+        uses: chuhlomin/render-template@a473db625a96c98e519d188812dc22bcaf54ffba # v1.9
+        with:
+          template: .github/publish-mastodon.template.md
+          vars: |
+            version: ${{ env.version }}
 
-    - name: Message Preview
-      run: |
-        echo "${{ steps.render_template.outputs.result }}${{ env.contributors }}"
+      - name: Message Preview
+        run: |
+          echo "${{ steps.render_template.outputs.result }}${{ env.contributors }}"
 
-    - name: Send toot to Mastodon
-      if: ${{ github.event.inputs.dry-run != 'true' }} || ${{ github.event_name == 'release' }}
-      uses: cbrgm/mastodon-github-action@v1.0.3
-      with:
-        message: "${{ steps.render_template.outputs.result }}${{ env.contributors }}"
-        visibility: "public"
-      env:
-        MASTODON_URL: ${{ secrets.MASTODON_URL }}
-        MASTODON_ACCESS_TOKEN: ${{ secrets.MASTODON_ACCESS_TOKEN }}
+      - name: Send toot to Mastodon
+        if: ${{ github.event.inputs.dry-run != 'true' }} || ${{ github.event_name == 'release' }}
+        uses: cbrgm/mastodon-github-action@1c5321597ce853344afff70aa5685887243f43fa # v2.0.6
+        with:
+          url: ${{ secrets.MASTODON_URL }}
+          access-token: ${{ secrets.MASTODON_ACCESS_TOKEN }}
+          message: "${{ steps.render_template.outputs.result }}${{ env.contributors }}"
+          language: "en"
+          visibility: "public"

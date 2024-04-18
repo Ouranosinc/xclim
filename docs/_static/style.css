@@ -98,3 +98,7 @@ code > .indName {
     margin: 5px;
     background-color: #ddd;
 }
+
+#incVirtModLbl {
+    display: inline;
+}

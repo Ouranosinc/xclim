@@ -35,7 +35,7 @@ thresholds and the snow depth threshold can all be modified.
 
 Overwintering
 -------------
-Additionaly, overwintering of the drought code is also directly implemented in :py:func:`fire_weather_ufunc`.
+Additionally, overwintering of the drought code is also directly implemented in :py:func:`fire_weather_ufunc`.
 The last drought_code of the season is kept in "winter" (where the fire season mask is False) and the precipitation
 is accumulated until the start of the next season. The first drought code is computed as a function of these instead
 of using the default DCStart value. Parameters to :py:func:`_overwintering_drought_code` are listed below.
@@ -123,6 +123,7 @@ as _all_ seasons are used, even the very short shoulder seasons.
 ...     dmc_dry_factor=2,
 ... )
 """
+
 # This file is structured in the following way:
 # Section 1: individual codes, numba-accelerated and vectorized functions.
 # Section 2: Larger computing functions (the FWI iterator and the fire_season iterator)
@@ -132,7 +133,7 @@ as _all_ seasons are used, even the very short shoulder seasons.
 from __future__ import annotations
 
 from collections import OrderedDict
-from typing import Sequence
+from collections.abc import Sequence
 
 import numpy as np
 import xarray as xr
@@ -840,9 +841,14 @@ def _fire_weather_calc(  # noqa: C901
                 ind_prevs["DMC"],
             )
         if "FFMC" in outputs:
-            out["FFMC"][..., it] = _fine_fuel_moisture_code(
-                tas[..., it], pr[..., it], ws[..., it], rh[..., it], ind_prevs["FFMC"]
-            )
+            with np.errstate(divide="ignore", invalid="ignore"):
+                out["FFMC"][..., it] = _fine_fuel_moisture_code(
+                    tas[..., it],
+                    pr[..., it],
+                    ws[..., it],
+                    rh[..., it],
+                    ind_prevs["FFMC"],
+                )
         if "ISI" in outputs:
             out["ISI"][..., it] = initial_spread_index(
                 ws[..., it], out["FFMC"][..., it]
@@ -1162,8 +1168,9 @@ def overwintering_drought_code(
     last_dc: xr.DataArray,
     winter_pr: xr.DataArray,
     carry_over_fraction: xr.DataArray | float = default_params["carry_over_fraction"],
-    wetting_efficiency_fraction: xr.DataArray
-    | float = default_params["wetting_efficiency_fraction"],
+    wetting_efficiency_fraction: xr.DataArray | float = default_params[
+        "wetting_efficiency_fraction"
+    ],
     min_dc: xr.DataArray | float = default_params["dc_start"],
 ) -> xr.DataArray:
     """Compute season-starting drought code based on previous season's last drought code and total winter precipitation.

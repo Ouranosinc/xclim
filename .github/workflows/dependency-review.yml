@@ -15,7 +15,18 @@ jobs:
   dependency-review:
     runs-on: ubuntu-latest
     steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@63c24ba6bd7ba022e95695ff85de572c04a18142 # v2.7.0
+        with:
+          disable-sudo: true
+          egress-policy: block
+          allowed-endpoints: >
+            api.deps.dev:443
+            api.github.com:443
+            github.com:443
+
       - name: 'Checkout Repository'
-        uses: actions/checkout@v4.1.1
+        uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 # v4.1.2
+
       - name: 'Dependency Review'
-        uses: actions/dependency-review-action@v3.1.4
+        uses: actions/dependency-review-action@5bbc3ba658137598168acb2ab73b21c432dd411b

@@ -10,21 +10,31 @@ on:
       - review_requested
 
 permissions:
-  checks: write
   contents: read
-  pull-requests: write
 
 jobs:
   label_approved:
     name: Label on Approval
+    runs-on: ubuntu-latest
     if: |
       (!contains(github.event.pull_request.labels.*.name, 'approved')) &&
       (github.event.review.state == 'approved') &&
       (github.event.pull_request.head.repo.full_name == github.event.pull_request.base.repo.full_name)
-    runs-on: ubuntu-latest
+    permissions:
+      checks: write
+      contents: read
+      pull-requests: write
     steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@63c24ba6bd7ba022e95695ff85de572c04a18142 # v2.7.0
+        with:
+          disable-sudo: true
+          egress-policy: block
+          allowed-endpoints: >
+            api.github.com:443
+
       - name: Label Approved
-        uses: actions/github-script@v7.0.1
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
         with:
           script: |
             github.rest.issues.addLabels({
@@ -36,24 +46,35 @@ jobs:
 
   comment_approved:
     name: Comment Concerning Approved Tag
+    runs-on: ubuntu-latest
     if: |
       (github.event_name == 'pull_request_target') &&
       (github.event.pull_request.head.repo.full_name != github.event.pull_request.base.repo.full_name)
-    runs-on: ubuntu-latest
+    permissions:
+      checks: write
+      contents: read
+      pull-requests: write
     steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@63c24ba6bd7ba022e95695ff85de572c04a18142 # v2.7.0
+        with:
+          disable-sudo: true
+          egress-policy: block
+          allowed-endpoints: >
+            api.github.com:443
       - name: Find comment
-        uses: peter-evans/find-comment@v2.4.0
+        uses: peter-evans/find-comment@3eae4d37986fb5a8592848f6a574fdf654e61f9e # v3.1.0
         id: fc
         with:
           issue-number: ${{ github.event.pull_request.number }}
           comment-author: 'github-actions[bot]'
-          body-includes: This Pull Request is coming from a fork and must be manually tagged `approved` in order to perform additional testing
+          body-includes: This Pull Request is coming from a fork and must be manually tagged `approved` in order to perform additional testing.
       - name: Create comment
         if: |
           (steps.fc.outputs.comment-id == '') &&
           (!contains(github.event.pull_request.labels.*.name, 'approved')) &&
           (github.event.pull_request.head.repo.full_name != github.event.pull_request.base.repo.full_name)
-        uses: peter-evans/create-or-update-comment@v3.1.0
+        uses: peter-evans/create-or-update-comment@71345be0265236311c031f5c7866368bd1eff043 # v4.0.0
         with:
           comment-id: ${{ steps.fc.outputs.comment-id }}
           issue-number: ${{ github.event.pull_request.number }}
@@ -64,7 +85,7 @@ jobs:
       - name: Update comment
         if: |
           contains(github.event.pull_request.labels.*.name, 'approved')
-        uses: peter-evans/create-or-update-comment@v3.1.0
+        uses: peter-evans/create-or-update-comment@71345be0265236311c031f5c7866368bd1eff043 # v4.0.0
         with:
           comment-id: ${{ steps.fc.outputs.comment-id }}
           issue-number: ${{ github.event.pull_request.number }}
