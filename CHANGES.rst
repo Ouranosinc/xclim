@@ -4,7 +4,7 @@ Changelog
 
 v0.49.0 (unreleased)
 --------------------
-Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), Juliette Lavoie (:user:`juliettelavoie`), Gabriel Rondeau-Genesse (:user:`RondeauG`).
+Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), Juliette Lavoie (:user:`juliettelavoie`), David Huard (:user:`huard`), Gabriel Rondeau-Genesse (:user:`RondeauG`).
 
 Announcements
 ^^^^^^^^^^^^^
@@ -13,6 +13,7 @@ Announcements
 New indicators
 ^^^^^^^^^^^^^^
 * New ``snw_season_length`` and ``snd_season_length`` computing the duration between the start and the end of the snow season, both defined as the first day of a continuous period with snow above/under a threshold. Previous versions of these indicators were renamed ``snw_days_above`` and ``snd_days_above`` to better reflect what they computed : the number of days with snow above a given threshold (with no notion of continuity). (:issue:`1703`, :pull:`1708`).
+* Added ``atmos.duff_moisture_code``, part of the Canadian Forest Fire Weather Index System. It was already an output of the `atmos.cffwis_indices`, but now has its own standalone indicator. (:issue:`1698`, :pull:`1712`).
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
@@ -35,6 +36,7 @@ Internal changes
 * Removed the experimental `numba` and `llvm` dependency installation steps in the `tox.ini` file. Added `numba@main` to the upstream dependencies. (:pull:`1709`).
 * Added the `tox-gh` dependency to the development installation recipe. This will soon be required for running the `tox` test ensemble on GitHub Workflows. (:pull:`1709`).
 * Added the `vulture` static code analysis tool for finding dead code to the development dependency list and linters (makefile, tox and pre-commit hooks). (:pull:`1717`).
+* Added error message when using `xclim.indices.stats.dist_method` with `nnlf` and included note in docstring. (:issue:`1683`, :pull:`1714`).
 
 v0.48.2 (2024-02-26)
 --------------------
