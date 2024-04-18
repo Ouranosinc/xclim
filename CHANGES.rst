@@ -12,8 +12,8 @@ Announcements
 
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-* Distribution with negative values are directly fitted without need for an offset for distributions such as `gamma, fisk` in ``xclim.indices.standardized_precipitation_evapotranspiration_index``. (:issue:`1477`  :pull:`1653`).
-* ``xclim.indices.stats_fit_start``  gives an estimate of the `loc` parameter for `gamma` and `fisk` distributions. (:issue:`1477`  :pull:`1653`).
+* Distribution with negative values are directly fitted without need for an offset for distributions such as `gamma, fisk` in ``xclim.indices.standardized_precipitation_evapotranspiration_index``. (:issue:`1477`  :pull:`1720`).
+* ``xclim.indices.stats_fit_start``  gives an estimate of the `loc` parameter for `gamma` and `fisk` distributions. (:issue:`1477`  :pull:`1720`).
 
 New indicators
 ^^^^^^^^^^^^^^
@@ -24,7 +24,7 @@ Breaking changes
 ^^^^^^^^^^^^^^^^
 * The previously deprecated functions ``xclim.sdba.processing.construct_moving_yearly_window`` and ``xclim.sdba.processing.unpack_moving_yearly_window`` have been removed. These functions have been replaced by ``xclim.core.calendar.stack_periods`` and ``xclim.core.calendar.unstack_periods``. (:pull:`1717`).
 * Indicators ``snw_season_length`` and ``snd_season_length`` have been modified, see above.
-* Estimation of parameters using `_fit_start` for `gamma` and `fisk` has been changed and can affect the results obtained with full-fledged methods. (:issue:`1477`  :pull:`1653`).
+* Estimation of parameters using `_fit_start` for `gamma` and `fisk` has been changed and can affect the results obtained with full-fledged (e.g. "ML") methods. (:issue:`1477`  :pull:`1720`).
 
 Bug fixes
 ^^^^^^^^^
