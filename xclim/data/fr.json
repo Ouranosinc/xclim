@@ -1007,7 +1007,7 @@
     "long_name": "Durée de couvert de neige",
     "description": "La saison débute lorsque l'épaisseur de neige est au-dessus de {thresh} durant {window} jours et se termine lorsqu'elle redescend sous {thresh} durant {window} jours.",
     "title": "Durée du couvert de neige (épaisseur)",
-    "abstract": "Durée de la saison de neige, qui débute lorsque la quantité de neige est au-dessus d'un seuil donné durant un nombre de jours donnés et qui se termine lorsqu'elle redescend sous le seuil pour la même durée."
+    "abstract": "Durée de la saison de neige, qui débute lorsque la quantité de neige est au-dessus d'un seuil donné durant un nombre de jours donné et qui se termine lorsqu'elle redescend sous le seuil pour la même durée."
   },
   "SND_SEASON_START": {
     "long_name": "Date du début du couvert de neige continu",

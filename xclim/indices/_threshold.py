@@ -355,7 +355,7 @@ def snd_season_end(
     r"""Snow cover end date (depth).
 
     First day after the start of the continuous snow depth cover when snow depth is below a threshold
-    for at least `N` consecutive days.
+    for at least `window` consecutive days.
 
     Parameters
     ----------
