@@ -10,6 +10,15 @@ Announcements
 ^^^^^^^^^^^^^
 * `xclim` has migrated its development branch name from `master` to `main`. (:issue:`1667`, :pull:`1669`).
 
+New indicators
+^^^^^^^^^^^^^^
+* New ``snw_season_length`` and ``snd_season_length`` computing the duration between the start and the end of the snow season, both defined as the first day of a continuous period with snow above/under a threshold. Previous versions of these indicators were renamed ``snw_days_above`` and ``snd_days_above`` to better reflect what they computed : the number of days with snow above a given threshold (with no notion of continuity). (:issue:`1703`, :pull:`1708`).
+
+Breaking changes
+^^^^^^^^^^^^^^^^
+* The previously deprecated functions ``xclim.sdba.processing.construct_moving_yearly_window`` and ``xclim.sdba.processing.unpack_moving_yearly_window`` have been removed. These functions have been replaced by ``xclim.core.calendar.stack_periods`` and ``xclim.core.calendar.unstack_periods``. (:pull:`1717`).
+* Indicators ``snw_season_length`` and ``snd_season_length`` have been modified, see above.
+
 Bug fixes
 ^^^^^^^^^
 * Fixed an bug in sdba's ``map_groups`` that prevented passing DataArrays with cftime coordinates if the ``sdba_encode_cf`` option was True. (:issue:`1673`, :pull:`1674`).
@@ -25,6 +34,7 @@ Internal changes
 * Reorganized GitHub CI build matrices to run the doctests more consistently. (:pull:`1709`).
 * Removed the experimental `numba` and `llvm` dependency installation steps in the `tox.ini` file. Added `numba@main` to the upstream dependencies. (:pull:`1709`).
 * Added the `tox-gh` dependency to the development installation recipe. This will soon be required for running the `tox` test ensemble on GitHub Workflows. (:pull:`1709`).
+* Added the `vulture` static code analysis tool for finding dead code to the development dependency list and linters (makefile, tox and pre-commit hooks). (:pull:`1717`).
 
 v0.48.2 (2024-02-26)
 --------------------

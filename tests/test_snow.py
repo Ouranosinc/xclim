@@ -19,7 +19,7 @@ class TestSnowDepthCoverDuration:
     def test_simple(self, snd_series):
         snd = snd_series(np.ones(110), start="2001-01-01")
 
-        out = land.snd_season_length(snd, freq="ME")
+        out = land.snd_days_above(snd, freq="ME")
         assert out.units == "days"
         np.testing.assert_array_equal(out, [31, 28, 31, np.nan])
 
@@ -30,16 +30,17 @@ class TestSnowWaterCoverDuration:
     )
     def test_simple(self, snw_series, factor, exp):
         snw = snw_series(np.ones(110) * factor, start="2001-01-01")
-        out = land.snw_season_length(snw, freq="ME")
+        out = land.snw_days_above(snw, freq="ME")
         assert out.units == "days"
         np.testing.assert_array_equal(out, exp)
 
 
-class TestContinuousSnowDepthCoverStartEnd:
+class TestContinuousSnowDepthSeason:
     def test_simple(self, snd_series):
         a = np.zeros(365)
         # snow depth
         a[100:200] = 0.03
+        a[150:160] = 0
         snd = snd_series(a, start="2001-07-01")
         snd = snd.expand_dims(lat=[0, 1, 2])
 
@@ -51,12 +52,17 @@ class TestContinuousSnowDepthCoverStartEnd:
         assert out.units == ""
         np.testing.assert_array_equal(out.isel(lat=0), snd.time.dt.dayofyear[200])
 
+        out = land.snd_season_length(snd)
+        assert out.units == "days"
+        np.testing.assert_array_equal(out.isel(lat=0), 100)
 
-class TestContinuousSnowWaterCoverStartEnd:
+
+class TestContinuousSnowWaterSeason:
     def test_simple(self, snw_series):
         a = np.zeros(365)
         # snow amount
         a[100:200] = 0.03 * 1000
+        a[150:160] = 0
         snw = snw_series(a, start="2001-07-01")
         snw = snw.expand_dims(lat=[0, 1, 2])
 
@@ -67,6 +73,10 @@ class TestContinuousSnowWaterCoverStartEnd:
         out = land.snw_season_end(snw)
         assert out.units == ""
         np.testing.assert_array_equal(out.isel(lat=0), snw.time.dt.dayofyear[200])
+
+        out = land.snw_season_length(snw)
+        assert out.units == "days"
+        np.testing.assert_array_equal(out.isel(lat=0), 100)
 
 
 class TestSndMaxDoy:
