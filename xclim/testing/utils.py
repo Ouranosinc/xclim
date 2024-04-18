@@ -80,7 +80,7 @@ def file_md5_checksum(f_name):
 
 
 def get_file(
-    name: str | os.PathLike | Sequence[str | os.PathLike],
+    name: str | os.PathLike[str] | Sequence[str | os.PathLike[str]],
     github_url: str = "https://github.com/Ouranosinc/xclim-testdata",
     branch: str = "main",
     cache_dir: Path = _default_cache_dir,
@@ -91,7 +91,7 @@ def get_file(
 
     Parameters
     ----------
-    name : str | os.PathLike | Sequence[str | os.PathLike]
+    name : str | os.PathLike[str] | Sequence[str | os.PathLike[str]]
         Name of the file or list/tuple of names of files containing the dataset(s) including suffixes.
     github_url : str
         URL to GitHub repository where the data is stored.
@@ -540,6 +540,7 @@ def publish_release_notes(
             print(changes, file=f)
         return
     print(changes, file=file)
+    return
 
 
 def show_versions(

@@ -285,17 +285,19 @@ def _rmse(
       Root mean square error
     """
 
-    def _rmse(sim, ref):
-        return np.sqrt(np.mean((sim - ref) ** 2, axis=-1))
+    def _rmse_internal(_sim: xr.DataArray, _ref: xr.DataArray) -> xr.DataArray:
+        _f: xr.DataArray = np.sqrt(np.mean((_sim - _ref) ** 2, axis=-1))
+        return _f
 
     out = xr.apply_ufunc(
-        _rmse,
+        _rmse_internal,
         sim,
         ref,
         input_core_dims=[["time"], ["time"]],
         dask="parallelized",
     )
-    return out.assign_attrs(units=ensure_delta(ref.units))
+    out = out.assign_attrs(units=ensure_delta(ref.units))
+    return out
 
 
 rmse = StatisticalPropertyMeasure(
@@ -330,17 +332,19 @@ def _mae(
       Mean absolute error
     """
 
-    def _mae(sim, ref):
-        return np.mean(np.abs(sim - ref), axis=-1)
+    def _mae_internal(_sim: xr.DataArray, _ref: xr.DataArray) -> xr.DataArray:
+        _f: xr.DataArray = np.mean(np.abs(_sim - _ref), axis=-1)
+        return _f
 
     out = xr.apply_ufunc(
-        _mae,
+        _mae_internal,
         sim,
         ref,
         input_core_dims=[["time"], ["time"]],
         dask="parallelized",
     )
-    return out.assign_attrs(units=ensure_delta(ref.units))
+    out = out.assign_attrs(units=ensure_delta(ref.units))
+    return out
 
 
 mae = StatisticalPropertyMeasure(

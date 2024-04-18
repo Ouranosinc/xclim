@@ -13,6 +13,7 @@ from typing import Callable
 
 import cftime
 import numpy as np
+import xarray
 import xarray as xr
 from xarray.coding.cftime_offsets import _MONTH_ABBREVIATIONS  # noqa
 
@@ -943,7 +944,7 @@ def first_day_threshold_reached(
 
     cond = compare(data, op, threshold, constrain=constrain)
 
-    out = cond.resample(time=freq).map(
+    out: xarray.DataArray = cond.resample(time=freq).map(
         rl.first_run_after_date,
         window=window,
         date=after_date,
@@ -1045,8 +1046,8 @@ def get_zones(
     else:
         bins = convert_units_to(bins, da)
 
-    def _get_zone(da):
-        return np.digitize(da, bins) - 1
+    def _get_zone(_da):
+        return np.digitize(_da, bins) - 1
 
     zones = xr.apply_ufunc(_get_zone, da, dask="parallelized")
 
@@ -1060,7 +1061,7 @@ def get_zones(
     return zones
 
 
-def detrend(ds, dim="time", deg=1):
+def detrend(ds, dim="time", deg=1) -> xr.Dataset | xr.DataArray:
     """Detrend data along a given dimension computing a polynomial trend of a given order.
 
     Parameters

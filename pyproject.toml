@@ -223,7 +223,7 @@ module = [
   "pint.*",
   "SBCK.*",
   "scipy.*",
-  "sklearn.cluster.*",
+  "sklearn.*",
   "xarray.*",
   "yaml.*"
 ]

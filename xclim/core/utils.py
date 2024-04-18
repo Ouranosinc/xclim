@@ -305,18 +305,25 @@ def uses_dask(*das: xr.DataArray | xr.Dataset) -> bool:
 
 def calc_perc(
     arr: np.ndarray,
-    percentiles: Sequence[float] = None,
+    percentiles: Sequence[float] | None = None,
     alpha: float = 1.0,
     beta: float = 1.0,
     copy: bool = True,
 ) -> np.ndarray:
     """Compute percentiles using nan_calc_percentiles and move the percentiles' axis to the end."""
     if percentiles is None:
-        percentiles = [50.0]
+        _percentiles = [50.0]
+    else:
+        _percentiles = percentiles
 
     return np.moveaxis(
         nan_calc_percentiles(
-            arr=arr, percentiles=percentiles, axis=-1, alpha=alpha, beta=beta, copy=copy
+            arr=arr,
+            percentiles=_percentiles,
+            axis=-1,
+            alpha=alpha,
+            beta=beta,
+            copy=copy,
         ),
         source=0,
         destination=-1,
@@ -553,15 +560,15 @@ def raise_warn_or_log(
     stacklevel : int
         Stacklevel when warning. Relative to the call of this function (1 is added).
     """
-    msg = msg or getattr(err, "msg", f"Failed with {err!r}.")
+    message = msg or getattr(err, "msg", f"Failed with {err!r}.")
     if mode == "ignore":
         pass
     elif mode == "log":
-        logger.info(msg)
+        logger.info(message)
     elif mode == "warn":
-        warnings.warn(msg, stacklevel=stacklevel + 1)
+        warnings.warn(message, stacklevel=stacklevel + 1)
     else:  # mode == "raise"
-        raise err from err_type(msg)
+        raise err from err_type(message)
 
 
 class InputKind(IntEnum):

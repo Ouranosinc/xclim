@@ -1121,15 +1121,19 @@ def _decorrelation_length(
     )
 
     if np.isscalar(bins):
-        bins = np.linspace(0, radius, bins + 1)
+        bin_range = np.linspace(0, radius, bins + 1)
+    elif isinstance(bins, np.ndarray):
+        bin_range = bins
+    else:
+        raise ValueError("bins must be a scalar or a numpy array.")
 
     if uses_dask(corr):
         dists = dists.chunk()
         trans_dists = trans_dists.chunk()
 
-    w = np.diff(bins)
+    w = np.diff(bin_range)
     centers = xr.DataArray(
-        bins[:-1] + w / 2,
+        bin_range[:-1] + w / 2,
         dims=("distance_bins",),
         attrs={
             "units": "km",

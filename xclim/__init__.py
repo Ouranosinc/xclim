@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import pathlib
+
 try:
     from importlib.resources import files as _files
 except ImportError:
@@ -19,7 +21,7 @@ __email__ = "logan.travis@ouranos.ca"
 __version__ = "0.48.3-dev.9"
 
 
-_module_data = _files("xclim.data")
+_module_data = pathlib.Path(str(_files("xclim.data")))
 
 # Load official locales
 for filename in _module_data.glob("??.json"):
