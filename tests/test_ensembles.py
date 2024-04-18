@@ -571,8 +571,9 @@ class TestEnsembleReduction:
         assert crit.criteria.size == 12
         np.testing.assert_array_equal(crit.isnull().sum(), 0)
         np.testing.assert_array_equal(crit.min(), 1)
-        uncrit = crit.unstack("criteria")
+        uncrit = crit.unstack("criteria").to_dataset("variables")
         assert set(uncrit.dims) == {"realization", "lat", "time"}
+        assert uncrit.time.size == 3
 
 
 # ## Tests for Robustness ##
