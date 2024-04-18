@@ -799,6 +799,12 @@
     "long_name": "Indice forêt météo",
     "description": "Évaluation numérique de l'intensité du feu."
   },
+  "DMC": {
+    "long_name": "Indice de l'humus",
+    "description": "Évaluation numérique de la teneur moyenne en eau des couches organiques peu tassées de moyenne épaisseur.",
+    "title": "Indice de l'humus (IH)",
+    "abstract": "Évaluation numérique de la teneur moyenne en eau des couches organiques peu tassées de moyenne épaisseur."
+  },
   "WIND_POWER_POTENTIAL": {
     "long_name": "Potentiel de production éolienne",
     "description": "Potentiel de production éolienne estimé par une courbe de puissance semi-idéalisée d'une turbine, paramétrée par une vitesse minimale de démarrage {cut_in}, la vitesse nominale {rated}, et la vitesse d'arrêt {cut_out}.",

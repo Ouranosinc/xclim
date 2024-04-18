@@ -29,6 +29,7 @@ __all__ = [
     "dry_spell_max_length",
     "dry_spell_total_length",
     "dryness_index",
+    "duff_moisture_code",
     "first_snowfall",
     "fraction_over_precip_doy_thresh",
     "fraction_over_precip_thresh",
@@ -394,7 +395,6 @@ drought_code = FireWeather(
     title="Daily drought code",
     identifier="dc",
     units="",
-    standard_name="drought_code",
     long_name="Drought Code",
     description="Numerical code estimating the average moisture content of organic layers.",
     abstract="The Drought Index is part of the Canadian Forest-Weather Index system. "
@@ -403,6 +403,14 @@ drought_code = FireWeather(
     missing="skip",
 )
 
+duff_moisture_code = FireWeather(
+    identifier="dmc",
+    units="",
+    long_name="Duff Moisture Code",
+    description="Numeric rating of the average moisture content of loosely compacted organic layers of moderate depth.",
+    compute=indices.duff_moisture_code,
+    missing="skip",
+)
 
 cffwis_indices = FireWeather(
     identifier="cffwis",

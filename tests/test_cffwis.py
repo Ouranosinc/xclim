@@ -458,3 +458,47 @@ class TestCFFWIS:
             [ds2.DC, ds2.DMC, ds2.FFMC, ds2.ISI, ds2.BUI, ds2.FWI], outs
         ):
             np.testing.assert_allclose(out, exp, rtol=0.03)
+
+    def test_gfwed_drought_code(self, open_dataset):
+        # Also tests passing parameters as quantity strings
+        ds = open_dataset("FWI/GFWED_sample_2017.nc")
+
+        out = atmos.drought_code(
+            tas=ds.tas,
+            pr=ds.prbc,
+            snd=ds.snow_depth,
+            lat=ds.lat,
+            season_method="GFWED",
+            overwintering=False,
+            dry_start="GFWED",
+            temp_condition_days=3,
+            snow_condition_days=3,
+            temp_start_thresh="6 degC",
+            temp_end_thresh="6 degC",
+        )
+
+        np.testing.assert_allclose(
+            out.isel(loc=[0, 1]), ds.DC.isel(loc=[0, 1]), rtol=0.03
+        )
+
+    def test_gfwed_duff_moisture_code(self, open_dataset):
+        # Also tests passing parameters as quantity strings
+        ds = open_dataset("FWI/GFWED_sample_2017.nc")
+
+        out = atmos.duff_moisture_code(
+            tas=ds.tas,
+            pr=ds.prbc,
+            hurs=ds.rh,
+            snd=ds.snow_depth,
+            lat=ds.lat,
+            season_method="GFWED",
+            dry_start="GFWED",
+            temp_condition_days=3,
+            snow_condition_days=3,
+            temp_start_thresh="6 degC",
+            temp_end_thresh="6 degC",
+        )
+
+        np.testing.assert_allclose(
+            out.isel(loc=[0, 1]), ds.DMC.isel(loc=[0, 1]), rtol=0.03
+        )
