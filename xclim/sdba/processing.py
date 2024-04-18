@@ -5,7 +5,6 @@ Pre- and Post-Processing Submodule
 """
 from __future__ import annotations
 
-import warnings
 from collections.abc import Sequence
 
 import dask.array as dsk
@@ -13,13 +12,7 @@ import numpy as np
 import xarray as xr
 from xarray.core.utils import get_temp_dimname
 
-from xclim.core.calendar import (
-    get_calendar,
-    max_doy,
-    parse_offset,
-    stack_periods,
-    unstack_periods,
-)
+from xclim.core.calendar import get_calendar, max_doy, parse_offset
 from xclim.core.formatting import update_xclim_history
 from xclim.core.units import convert_units_to, infer_context, units
 from xclim.core.utils import uses_dask
@@ -28,6 +21,22 @@ from ._processing import _adapt_freq, _normalize, _reordering
 from .base import Grouper
 from .nbutils import _escore
 from .utils import ADDITIVE, copy_all_attrs
+
+__all__ = [
+    "adapt_freq",
+    "escore",
+    "from_additive_space",
+    "jitter",
+    "jitter_over_thresh",
+    "jitter_under_thresh",
+    "normalize",
+    "reordering",
+    "stack_variables",
+    "standardize",
+    "to_additive_space",
+    "unstack_variables",
+    "unstandardize",
+]
 
 
 @update_xclim_history
@@ -206,24 +215,24 @@ def jitter(
             minimum = convert_units_to(minimum, x) if minimum is not None else 0
             minimum = minimum + np.finfo(x.dtype).eps
             if uses_dask(x):
-                jitter = dsk.random.uniform(
+                jitter_dist = dsk.random.uniform(
                     low=minimum, high=lower, size=x.shape, chunks=x.chunks
                 )
             else:
-                jitter = np.random.uniform(low=minimum, high=lower, size=x.shape)
-            out = out.where(~((x < lower) & notnull), jitter.astype(x.dtype))
+                jitter_dist = np.random.uniform(low=minimum, high=lower, size=x.shape)
+            out = out.where(~((x < lower) & notnull), jitter_dist.astype(x.dtype))
         if upper is not None:
             if maximum is None:
                 raise ValueError("If 'upper' is given, so must 'maximum'.")
             upper = convert_units_to(upper, x)
             maximum = convert_units_to(maximum, x)
             if uses_dask(x):
-                jitter = dsk.random.uniform(
+                jitter_dist = dsk.random.uniform(
                     low=upper, high=maximum, size=x.shape, chunks=x.chunks
                 )
             else:
-                jitter = np.random.uniform(low=upper, high=maximum, size=x.shape)
-            out = out.where(~((x >= upper) & notnull), jitter.astype(x.dtype))
+                jitter_dist = np.random.uniform(low=upper, high=maximum, size=x.shape)
+            out = out.where(~((x >= upper) & notnull), jitter_dist.astype(x.dtype))
 
         copy_all_attrs(out, x)  # copy attrs and same units
         return out
@@ -484,42 +493,6 @@ def _get_number_of_elements_by_year(time):
     return int(N_in_year)
 
 
-def construct_moving_yearly_window(
-    da: xr.Dataset, window: int = 21, step: int = 1, dim: str = "movingwin"
-):
-    """Deprecated function.
-
-    Use :py:func:`xclim.core.calendar.stack_periods` instead, renaming ``step`` to ``stride``.
-    Beware of the different default value for `dim` ("period").
-    """
-    warnings.warn(
-        FutureWarning,
-        (
-            "`construct_moving_yearly_window` is deprecated and will be removed in a future version. "
-            f"Please use xclim.core.calendar.stack_periods(da, window={window}, stride={step}, dim='{dim}', freq='YS') instead."
-        ),
-    )
-    return stack_periods(da, window=window, stride=step, dim=dim, freq="YS")
-
-
-def unpack_moving_yearly_window(
-    da: xr.DataArray, dim: str = "movingwin", append_ends: bool = True
-):
-    """Deprecated function.
-
-    Use :py:func:`xclim.core.calendar.unstack_periods` instead.
-    Beware of the different default value for `dim` ("period"). The new function always behaves like ``appends_ends=True``.
-    """
-    warnings.warn(
-        FutureWarning,
-        (
-            "`unpack_moving_yearly_window` is deprecated and will be removed in a future version. "
-            f"Please use xclim.core.calendar.unstack_periods(da, dim='{dim}') instead."
-        ),
-    )
-    return unstack_periods(da, dim=dim)
-
-
 @update_xclim_history
 def to_additive_space(
     data: xr.DataArray,
@@ -754,17 +727,17 @@ def stack_variables(ds: xr.Dataset, rechunk: bool = True, dim: str = "multivar")
     # Store original arrays' attributes
     attrs = {}
     # sort to have coherent order with different datasets
-    datavars = sorted(ds.data_vars.items(), key=lambda e: e[0])
-    nvar = len(datavars)
-    for i, (nm, var) in enumerate(datavars):
+    data_vars = sorted(ds.data_vars.items(), key=lambda e: e[0])
+    nvar = len(data_vars)
+    for i, (nm, var) in enumerate(data_vars):
         for name, attr in var.attrs.items():
-            attrs.setdefault("_" + name, [None] * nvar)[i] = attr
+            attrs.setdefault(f"_{name}", [None] * nvar)[i] = attr
 
     # Special key used for later `unstacking`
     attrs["is_variables"] = True
-    var_crd = xr.DataArray([nm for nm, vr in datavars], dims=(dim,), name=dim)
+    var_crd = xr.DataArray([nm for nm, vr in data_vars], dims=(dim,), name=dim)
 
-    da = xr.concat([vr for nm, vr in datavars], var_crd, combine_attrs="drop")
+    da = xr.concat([vr for nm, vr in data_vars], var_crd, combine_attrs="drop")
 
     if uses_dask(da) and rechunk:
         da = da.chunk({dim: -1})
