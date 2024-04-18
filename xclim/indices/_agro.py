@@ -1097,8 +1097,8 @@ def standardized_precipitation_index(
     freq: str | None = "MS",
     window: int = 1,
     dist: str = "gamma",
-    method: str = "APP",
-    fitkwargs: dict = {},
+    method: str = "ML",
+    fitkwargs: dict | None = None,
     cal_start: DateStr | None = None,
     cal_end: DateStr | None = None,
     params: Quantified | None = None,
@@ -1121,7 +1121,7 @@ def standardized_precipitation_index(
     method : {'APP', 'ML'}
         Name of the fitting method, such as `ML` (maximum likelihood), `APP` (approximate). The approximate method
         uses a deterministic function that doesn't involve any optimization.
-    fitkwargs : dict
+    fitkwargs : dict, optional
         Kwargs passed to ``xclim.indices.stats.fit`` used to impose values of certains parameters (`floc`, `fscale`).
     cal_start : DateStr, optional
         Start date of the calibration period. A `DateStr` is expected, that is a `str` in format `"YYYY-MM-DD"`.
@@ -1144,7 +1144,7 @@ def standardized_precipitation_index(
 
     Notes
     -----
-    * The length `N` of the N-month SPI is determined by choosing the `window = N`.
+    * N-month SPI / N-day SPI is determined by choosing the `window = N` and the appropriate frequency `freq`.
     * Supported statistical distributions are: ["gamma", "fisk"], where "fisk" is scipy's implementation of
        a log-logistic distribution
     * If `params` is given as input, it overrides the `cal_start`, `cal_end`, `freq` and `window`, `dist` and `method` options.
@@ -1191,6 +1191,7 @@ def standardized_precipitation_index(
        a log-logistic distribution
     * If `params` is given as input, it overrides the `cal_start`, `cal_end`, `freq` and `window`, `dist` and `method` options.
     """
+    fitkwargs = fitkwargs if fitkwargs is not None else {}
     dist_methods = {"gamma": ["ML", "APP", "PWM"], "fisk": ["ML", "APP"]}
     if dist in dist_methods.keys():
         if method not in dist_methods[dist]:
@@ -1227,8 +1228,8 @@ def standardized_precipitation_evapotranspiration_index(
     freq: str | None = "MS",
     window: int = 1,
     dist: str = "gamma",
-    method: str = "APP",
-    fitkwargs: dict = {},
+    method: str = "ML",
+    fitkwargs: dict | None = None,
     offset: Quantified = "0.000 mm/d",
     cal_start: DateStr | None = None,
     cal_end: DateStr | None = None,
@@ -1258,7 +1259,7 @@ def standardized_precipitation_evapotranspiration_index(
         `PWM` (probability weighted moments).
         The approximate method uses a deterministic function that doesn't involve any optimization. Available methods
         vary with the distribution: 'gamma':{'APP', 'ML', 'PWM'}, 'fisk':{'APP', 'ML'}
-    fitkwargs : dict
+    fitkwargs : dict, optional
         Kwargs passed to ``xclim.indices.stats.fit`` used to impose values of certains parameters (`floc`, `fscale`).
     offset : Quantified
         For distributions bounded by zero (e.g. "gamma", "fisk"), the two-parameters distributions only accept positive
@@ -1287,9 +1288,10 @@ def standardized_precipitation_evapotranspiration_index(
     --------
     standardized_precipitation_index
     """
+    fitkwargs = fitkwargs if fitkwargs is not None else {}
     uses_default_offset = offset != "0.000 mm/d"
     if uses_default_offset is False:
-        warnings.warn("Inputting an offset will be deprecated in xclim>=0.49.0. ")
+        warnings.warn("Inputting an offset will be deprecated in xclim>=0.50.0. ")
     if params is not None:
         params_offset = params.attrs["offset"]
         if uses_default_offset is False and offset != params_offset:

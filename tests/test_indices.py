@@ -711,7 +711,7 @@ class TestAgroclimaticIndices:
             dist=dist,
             method=method,
             fitkwargs=fitkwargs,
-            zero_inflated=True,
+            zero_inflated=False,
         )
         spei = xci.standardized_precipitation_evapotranspiration_index(
             wb.sel(time=slice("1998", "2000")), params=params

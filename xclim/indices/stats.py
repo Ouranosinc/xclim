@@ -455,7 +455,7 @@ def _fit_start(x, dist: str, **fitkwargs: Any) -> tuple[tuple, dict]:
 
     References
     ----------
-    :cite:cts:`coles_introduction_2001,cohen_parameter_2019, thom_1958`
+    :cite:cts:`coles_introduction_2001,cohen_parameter_2019, thom_1958, cooke_1979, muralidhar_1992`
 
     """
     x = np.asarray(x)
@@ -490,6 +490,8 @@ def _fit_start(x, dist: str, **fitkwargs: Any) -> tuple[tuple, dict]:
         else:
             xs = sorted(x)
             x1, x2, xn = xs[0], xs[1], xs[-1]
+            # muralidhar_1992 would suggest the following, but it seems more unstable
+            # using cooke_1979 for now
             # n = len(x)
             # cv = x.std() / x.mean()
             # p = (0.48265 + 0.32967 * cv) * n ** (-0.2984 * cv)
@@ -689,7 +691,7 @@ def standardized_index_fit_params(
     dist: str | scipy.stats.rv_continuous,
     method: str,
     zero_inflated: bool = False,
-    fitkwargs: dict = {},
+    fitkwargs: dict | None = None,
     offset: Quantified | None = None,
     **indexer,
 ) -> xr.DataArray:
@@ -715,7 +717,7 @@ def standardized_index_fit_params(
     method : {'ML', 'APP', 'PWM'}
         Name of the fitting method, such as `ML` (maximum likelihood), `APP` (approximate). The approximate method
         uses a deterministic function that doesn't involve any optimization.
-    fitkwargs : dict
+    fitkwargs : dict, optional
         Kwargs passed to ``xclim.indices.stats.fit`` used to impose values of certains parameters (`floc`, `fscale`).
     offset: Quantified
         Distributions bounded by zero (e.g. "gamma", "fisk") can be used for datasets with negative values
@@ -736,6 +738,7 @@ def standardized_index_fit_params(
     * Log-logistic ("fisk") : "ML", "APP"
     * "APP" method only supports two-parameter distributions. Parameter `loc` will be set to 0 (setting `floc=0` in `fitkwargs`).
     """
+    fitkwargs = fitkwargs if fitkwargs is not None else {}
     if method == "APP":
         if "floc" in fitkwargs.keys():
             if fitkwargs["floc"] != 0:
