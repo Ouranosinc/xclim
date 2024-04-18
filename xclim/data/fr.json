@@ -800,10 +800,10 @@
     "description": "Évaluation numérique de l'intensité du feu."
   },
   "DMC": {
-    "long_name": "Indice d'humidité de l'humus (DMC)",
-    "description": "Évaluation numérique de la teneur en eau moyenne des couches organiques peu compactes d'une profondeur modérée.",
-    "title": "Indice d'humidité de l'humus",
-    "abstract": "Évaluation numérique de la teneur en eau moyenne des couches organiques peu compactes d'une profondeur modérée."
+    "long_name": "Indice de l'humus",
+    "description": "Évaluation numérique de la teneur moyenne en eau des couches organiques peu tassées de moyenne épaisseur.",
+    "title": "Indice de l'humus (IH)",
+    "abstract": "Évaluation numérique de la teneur moyenne en eau des couches organiques peu tassées de moyenne épaisseur."
   },
   "WIND_POWER_POTENTIAL": {
     "long_name": "Potentiel de production éolienne",
