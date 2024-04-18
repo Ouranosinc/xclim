@@ -893,7 +893,7 @@ def fire_weather_ufunc(  # noqa: C901
     ffmc0: xr.DataArray | None = None,
     winter_pr: xr.DataArray | None = None,
     season_mask: xr.DataArray | None = None,
-    start_dates: str | xr.DataArray | None = None,
+    start_dates: str | xr.DataArray | None = None,  # noqa: F841
     indexes: Sequence[str] | None = None,
     season_method: str | None = None,
     overwintering: bool = False,

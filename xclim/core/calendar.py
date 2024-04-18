@@ -885,10 +885,10 @@ def is_offset_divisor(divisor: str, offset: str):
         return False
     # Reconstruct offsets anchored at the start of the period
     # to have comparable quantities, also get "offset" objects
-    mA, bA, sA, aA = parse_offset(divisor)
+    mA, bA, _sA, aA = parse_offset(divisor)
     offAs = pd.tseries.frequencies.to_offset(construct_offset(mA, bA, True, aA))
 
-    mB, bB, sB, aB = parse_offset(offset)
+    mB, bB, _sB, aB = parse_offset(offset)
     offBs = pd.tseries.frequencies.to_offset(construct_offset(mB, bB, True, aB))
     tB = pd.date_range("1970-01-01T00:00:00", freq=offBs, periods=13)
 

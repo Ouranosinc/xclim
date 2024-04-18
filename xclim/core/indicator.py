@@ -510,7 +510,7 @@ class Indicator(IndicatorRegistrar):
         return super().__new__(new)
 
     @staticmethod
-    def _parse_indice(compute, passed_parameters):
+    def _parse_indice(compute, passed_parameters):  # noqa: F841
         """Parse the compute function.
 
         - Metadata is extracted from the docstring

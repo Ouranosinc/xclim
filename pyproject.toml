@@ -84,6 +84,7 @@ dev = [
   "tox >=4.0",
   # "tox-conda",  # Will be added when a tox@v4.0+ compatible plugin is released.
   "tox-gh >=1.3.1",
+  "vulture",
   "xdoctest",
   "yamllint",
   # Documentation and examples
@@ -124,7 +125,7 @@ target-version = [
 ]
 
 [tool.bumpversion]
-current_version = "0.48.3-dev.6"
+current_version = "0.48.3-dev.8"
 commit = true
 commit_args = "--no-verify"
 tag = false
@@ -312,3 +313,11 @@ max-doc-length = 180
 
 [tool.ruff.lint.pydocstyle]
 convention = "numpy"
+
+[tool.vulture]
+exclude = []
+ignore_decorators = ["@pytest.fixture"]
+ignore_names = []
+min_confidence = 90
+paths = ["xclim", "tests"]
+sort_by_size = true

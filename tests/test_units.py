@@ -291,7 +291,9 @@ def test_declare_units():
 
 
 def test_declare_relative_units():
-    def index(data: xr.DataArray, thresh: Quantified, dthreshdt: Quantified):
+    def index(
+        data: xr.DataArray, thresh: Quantified, dthreshdt: Quantified  # noqa: F841
+    ):
         return xr.DataArray(1, attrs={"units": "rad"})
 
     index_relative = declare_relative_units(thresh="<data>", dthreshdt="<data>/[time]")(
