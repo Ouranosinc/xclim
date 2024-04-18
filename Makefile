@@ -57,6 +57,7 @@ lint: ## check style with flake8 and black
 	isort --check xclim tests
 	ruff xclim tests
 	flake8 --config=.flake8 xclim tests
+	vulture xclim tests
 	nbqa black --check docs
 	blackdoc --check --exclude=xclim/indices/__init__.py xclim
 	blackdoc --check docs

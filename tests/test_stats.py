@@ -334,7 +334,7 @@ def test_parametric_quantile(use_dask, random):
 
 
 @pytest.mark.parametrize("use_dask", [True, False])
-def test_paramtric_cdf(use_dask, random):
+def test_parametric_cdf(use_dask, random):
     mu = 23
     sigma = 2
     n = 10000
@@ -356,3 +356,16 @@ def test_paramtric_cdf(use_dask, random):
     np.testing.assert_array_almost_equal(out, expected, 1)
     assert "cdf" in out.coords
     assert out.attrs["cell_methods"] == "dparams: cdf"
+
+
+def test_dist_method(fitda):
+    params = stats.fit(fitda, "lognorm")
+    cdf = stats.dist_method(
+        "cdf", fit_params=params, arg=xr.DataArray([0.2, 0.8], dims="val")
+    )
+    assert tuple(cdf.dims) == ("val", "x", "y")
+
+    with pytest.raises(ValueError):
+        stats.dist_method(
+            "nnlf", fit_params=params, dims="val", x=xr.DataArray([0.2, 0.8])
+        )

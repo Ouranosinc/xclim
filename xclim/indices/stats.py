@@ -570,8 +570,9 @@ def dist_method(
 ) -> xr.DataArray:
     r"""Vectorized statistical function for given argument on given distribution initialized with params.
 
-    Methods where `"*args"` are the distribution parameters can be wrapped, except those that return new dimensions
-    (Ex: 'rvs' with size != 1, 'stats' with more than one moment, 'interval', 'support')
+    Methods where `"*args"` are the distribution parameters can be wrapped, except those that reduce dimensions (
+    e.g. `nnlf`) or create new dimensions (eg: 'rvs' with size != 1, 'stats' with more than one moment, 'interval',
+    'support').
 
     Parameters
     ----------
@@ -597,7 +598,14 @@ def dist_method(
     """
     # Typically the data to be transformed
     arg = [arg] if arg is not None else []
+    if function == "nnlf":
+        raise ValueError(
+            "This method is not supported because it reduces the dimensionality of the data."
+        )
+
+    # We don't need to set `input_core_dims` because we're explicitly splitting the parameters here.
     args = arg + [fit_params.sel(dparams=dp) for dp in fit_params.dparams.values]
+
     return xr.apply_ufunc(
         _dist_method_1D,
         *args,

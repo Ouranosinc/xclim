@@ -2829,21 +2829,27 @@ class TestSnowMaxDoy:
 
 
 class TestSnowCover:
-    @pytest.mark.parametrize("length", [0, 10])
+    @pytest.mark.parametrize("length", [0, 15])
     def test_snow_season_length(self, snd_series, snw_series, length):
         a = np.zeros(366)
-        a[10 : 10 + length] = 0.3
+        a[20 : 20 + length] = 0.3
         snd = snd_series(a)
         # kg m-2 = 1000 kg m-3 * 1 m
         snw = snw_series(1000 * a)
 
         out = xci.snd_season_length(snd)
         assert len(out) == 2
-        assert out[0] == length
+        if length == 0:
+            assert out.isnull().all()
+        else:
+            assert out[0] == length
 
         out = xci.snw_season_length(snw)
         assert len(out) == 2
-        assert out[0] == length
+        if length == 0:
+            assert out.isnull().all()
+        else:
+            assert out[0] == length
 
     def test_continous_snow_season_start(self, snd_series, snw_series):
         a = np.arange(366) / 100.0
@@ -2860,7 +2866,7 @@ class TestSnowCover:
 
         out = xci.snw_season_start(snw)
         assert len(out) == 2
-        np.testing.assert_array_equal(out, [snw.time.dt.dayofyear[0].data + 2, np.nan])
+        np.testing.assert_array_equal(out, [snw.time.dt.dayofyear[0].data + 1, np.nan])
         for attr in ["units", "is_dayofyear", "calendar"]:
             assert attr in out.attrs.keys()
         assert out.attrs["units"] == ""
