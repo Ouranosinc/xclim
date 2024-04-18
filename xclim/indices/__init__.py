@@ -13,6 +13,7 @@ from ._threshold import *
 from .fire import (
     cffwis_indices,
     drought_code,
+    duff_moisture_code,
     fire_season,
     griffiths_drought_factor,
     keetch_byram_drought_index,

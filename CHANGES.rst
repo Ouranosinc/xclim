@@ -4,15 +4,21 @@ Changelog
 
 v0.49.0 (unreleased)
 --------------------
-Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), Juliette Lavoie (:user:`juliettelavoie`).
+Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), Juliette Lavoie (:user:`juliettelavoie`), David Huard (:user:`huard`), Gabriel Rondeau-Genesse (:user:`RondeauG`).
 
 Announcements
 ^^^^^^^^^^^^^
 * `xclim` has migrated its development branch name from `master` to `main`. (:issue:`1667`, :pull:`1669`).
 
+New indicators
+^^^^^^^^^^^^^^
+* New ``snw_season_length`` and ``snd_season_length`` computing the duration between the start and the end of the snow season, both defined as the first day of a continuous period with snow above/under a threshold. Previous versions of these indicators were renamed ``snw_days_above`` and ``snd_days_above`` to better reflect what they computed : the number of days with snow above a given threshold (with no notion of continuity). (:issue:`1703`, :pull:`1708`).
+* Added ``atmos.duff_moisture_code``, part of the Canadian Forest Fire Weather Index System. It was already an output of the `atmos.cffwis_indices`, but now has its own standalone indicator. (:issue:`1698`, :pull:`1712`).
+
 Breaking changes
 ^^^^^^^^^^^^^^^^
 * The previously deprecated functions ``xclim.sdba.processing.construct_moving_yearly_window`` and ``xclim.sdba.processing.unpack_moving_yearly_window`` have been removed. These functions have been replaced by ``xclim.core.calendar.stack_periods`` and ``xclim.core.calendar.unstack_periods``. (:pull:`1717`).
+* Indicators ``snw_season_length`` and ``snd_season_length`` have been modified, see above.
 
 Bug fixes
 ^^^^^^^^^
@@ -21,6 +27,7 @@ Bug fixes
 * Fixed bug with loess smoothing for an array full of NaNs. (:pull:`1699`).
 * Fixed and adapted ``time_bnds`` to the newest xarray. (:pull:`1700`).
 * Fixed "agreement fraction" in ``robustness_fractions`` to distinguish between negative change and no change. Added "negative" and "changed negative" fractions (:issue:`1690`, :pull:`1711`).
+* ``make_criteria`` now skips columns with NaNs across all realizations. (:pull:`1713`).
 * Fixed bug QuantileDeltaMapping adjustment not working for seasonal grouping (:issue:`1704`, :pull:`1716`).
 
 Internal changes
@@ -30,6 +37,7 @@ Internal changes
 * Removed the experimental `numba` and `llvm` dependency installation steps in the `tox.ini` file. Added `numba@main` to the upstream dependencies. (:pull:`1709`).
 * Added the `tox-gh` dependency to the development installation recipe. This will soon be required for running the `tox` test ensemble on GitHub Workflows. (:pull:`1709`).
 * Added the `vulture` static code analysis tool for finding dead code to the development dependency list and linters (makefile, tox and pre-commit hooks). (:pull:`1717`).
+* Added error message when using `xclim.indices.stats.dist_method` with `nnlf` and included note in docstring. (:issue:`1683`, :pull:`1714`).
 
 v0.48.2 (2024-02-26)
 --------------------
