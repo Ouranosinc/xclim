@@ -5,6 +5,8 @@ Numba-accelerated Utilities
 """
 from __future__ import annotations
 
+from typing import Callable
+
 import numpy as np
 from numba import boolean, float32, float64, guvectorize, njit
 from xarray import DataArray
@@ -55,7 +57,7 @@ def _quantile(arr, q):
     return out
 
 
-def quantile(da: DataArray, q, dim: str | DataArray.dims) -> DataArray:
+def quantile(da: DataArray, q, dim: str | Callable) -> DataArray:
     """Compute the quantiles from a fixed list `q`."""
     # We have two cases :
     # - When all dims are processed : we stack them and use _quantile1d
@@ -85,7 +87,7 @@ def quantile(da: DataArray, q, dim: str | DataArray.dims) -> DataArray:
             dims=(extra, "quantiles"),
             coords={extra: da[extra], "quantiles": q},
             attrs=da.attrs,
-        ).unstack(extra)
+        ).unstack({extra})
 
     else:
         # All dims are processed

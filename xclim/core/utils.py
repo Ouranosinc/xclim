@@ -340,13 +340,15 @@ def nan_calc_percentiles(
 ) -> np.ndarray:
     """Convert the percentiles to quantiles and compute them using _nan_quantile."""
     if percentiles is None:
-        percentiles = [50.0]
+        _percentiles = [50.0]
+    else:
+        _percentiles = percentiles
 
     if copy:
         # bootstrapping already works on a data's copy
         # doing it again is extremely costly, especially with dask.
         arr = arr.copy()
-    quantiles = np.array([per / 100.0 for per in percentiles])
+    quantiles = np.array([per / 100.0 for per in _percentiles])
     return _nan_quantile(arr, quantiles, axis, alpha, beta)
 
 
