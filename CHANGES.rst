@@ -17,6 +17,7 @@ Bug fixes
 * Fixed bug with loess smoothing for an array full of NaNs. (:pull:`1699`).
 * Fixed and adapted ``time_bnds`` to the newest xarray. (:pull:`1700`).
 * Fixed "agreement fraction" in ``robustness_fractions`` to distinguish between negative change and no change. Added "negative" and "changed negative" fractions (:issue:`1690`, :pull:`1711`).
+* Fixed bug QuantileDeltaMapping adjustment not working for seasonal grouping (:issue:`1704`, :pull:`1716`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
