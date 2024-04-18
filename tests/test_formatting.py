@@ -47,7 +47,7 @@ def test_indicator_docstring():
 
 def test_update_xclim_history(atmosds):
     @fmt.update_xclim_history
-    def func(da, arg1, arg2=None, arg3=None):  # noqa:
+    def func(da, arg1, arg2=None, arg3=None):  # noqa: F841
         return da
 
     out = func(atmosds.tas, 1, arg2=[1, 2], arg3=None)
