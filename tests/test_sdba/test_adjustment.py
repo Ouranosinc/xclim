@@ -380,8 +380,8 @@ class TestQDM:
 
     def test_seasonal(self, series, random):
         u = random.random(10000)
-        kind = '+'
-        name = 'tas'
+        kind = "+"
+        name = "tas"
         # Define distributions
         xd = uniform(loc=1, scale=1)
         yd = uniform(loc=2, scale=4)
@@ -407,7 +407,6 @@ class TestQDM:
         # Accept discrepancies near extremes
         middle = (u > 1e-2) * (u < 0.99)
         np.testing.assert_array_almost_equal(p[middle], ref[middle], 1)
-
 
     def test_cannon_and_diagnostics(self, cannon_2015_dist, cannon_2015_rvs):
         ref, hist, sim = cannon_2015_rvs(15000, random=False)
