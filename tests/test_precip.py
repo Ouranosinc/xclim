@@ -192,7 +192,6 @@ class TestStandardizedPrecip:
 
         out1 = atmos.standardized_precipitation_index(
             pr,
-            pr_cal=pr,
             freq="MS",
             window=1,
             dist="gamma",
@@ -200,7 +199,6 @@ class TestStandardizedPrecip:
         )
         out2 = atmos.standardized_precipitation_index(
             prMM,
-            pr_cal=prMM,
             freq="MS",
             window=1,
             dist="gamma",

@@ -597,6 +597,9 @@ def test_parsed_doc():
     assert params["season_method"]["kind"] is InputKind.STRING
     assert params["season_method"]["choices"] == {"GFWED", None, "WF93", "LA08"}
 
+    params = xclim.atmos.standardized_precipitation_evapotranspiration_index.parameters
+    assert params["fitkwargs"]["kind"] is InputKind.DICT
+
 
 def test_default_formatter():
     assert default_formatter.format("{freq}", freq="YS") == "annual"

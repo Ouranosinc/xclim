@@ -634,6 +634,11 @@ class InputKind(IntEnum):
 
        Annotation : ``bool``, may be optional.
     """
+    DICT = 10
+    """A dictionary.
+
+       Annotation : ``dict`` or ``dict | None``, may be optional.
+    """
     KWARGS = 50
     """A mapping from argument name to value.
 
@@ -703,6 +708,9 @@ def infer_kind_from_parameter(param) -> InputKind:
 
     if annot == {"bool"}:
         return InputKind.BOOL
+
+    if annot == {"dict"}:
+        return InputKind.DICT
 
     if annot == {"Dataset"}:
         return InputKind.DATASET

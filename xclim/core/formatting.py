@@ -556,6 +556,7 @@ KIND_ANNOTATION = {
     InputKind.DAY_OF_YEAR: "date (string, MM-DD)",
     InputKind.DATE: "date (string, YYYY-MM-DD)",
     InputKind.BOOL: "boolean",
+    InputKind.DICT: "dict",
     InputKind.DATASET: "Dataset, optional",
     InputKind.KWARGS: "",
     InputKind.OTHER_PARAMETER: "Any",
