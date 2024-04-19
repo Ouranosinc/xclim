@@ -295,6 +295,8 @@ class Grouper(Parametrizable):
         ind = da.indexes[self.dim]
         if self.prop == "week":
             i = da[self.dim].copy(data=ind.isocalendar().week).astype(int)
+        elif self.prop == "season":
+            i = da[self.dim].copy(data=ind.month % 12 // 3)
         else:
             i = getattr(ind, self.prop)
 
