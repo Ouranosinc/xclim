@@ -1,7 +1,7 @@
 # noqa: D100
 from __future__ import annotations
 
-from typing import Callable
+from typing import Callable, cast
 
 import numpy as np
 import xarray
@@ -95,8 +95,8 @@ def isothermality(
     """
     dtr = daily_temperature_range(tasmin=tasmin, tasmax=tasmax, freq=freq)
     etr = extreme_temperature_range(tasmin=tasmin, tasmax=tasmax, freq=freq)
-    iso = dtr / etr * 100
-    iso.attrs["units"] = "%"
+    iso: xarray.DataArray = dtr / etr * 100
+    iso = iso.assign_attrs(units="%")
     return iso
 
 
@@ -461,8 +461,9 @@ def prcptot(
        Total {freq} precipitation.
     """
     thresh = convert_units_to(thresh, pr, context="hydro")
-    pram = rate2amount(pr.where(pr >= thresh, 0))
-    return pram.resample(time=freq).sum().assign_attrs(units=pram.units)
+    pram: xarray.DataArray = rate2amount(pr.where(pr >= thresh, 0))
+    pram = pram.resample(time=freq).sum().assign_attrs(units=pram.units)
+    return pram
 
 
 @declare_units(pr="[precipitation]")
@@ -506,9 +507,9 @@ def prcptot_wetdry_period(
         )
     op = _np_ops[op]
 
-    return getattr(pram.resample(time=freq), op)(dim="time").assign_attrs(
-        units=pram.units
-    )
+    pwp: xarray.DataArray = getattr(pram.resample(time=freq), op)(dim="time")
+    pwp = pwp.assign_attrs(units=pram.units)
+    return pwp
 
 
 def _anuclim_coeff_var(arr: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
@@ -542,12 +543,16 @@ def _from_other_arg(
     ds = xarray.Dataset(data_vars={"criteria": criteria, "output": output})
     dim = "time"
 
-    def get_other_op(dataset):
+    def _get_other_op(dataset: xarray.Dataset) -> xarray.DataArray:
         all_nans = dataset.criteria.isnull().all(dim=dim)
         index = op(dataset.criteria.where(~all_nans, 0), dim=dim)
-        return lazy_indexing(dataset.output, index=index, dim=dim).where(~all_nans)
+        other_op = lazy_indexing(dataset.output, index=index, dim=dim).where(~all_nans)
+        return other_op
 
-    return ds.resample(time=freq).map(get_other_op)
+    resampled = ds.resample(time=freq)
+    # Manually casting here since the mapping returns a DataArray and not a Dataset
+    out = cast(xarray.DataArray, resampled.map(_get_other_op))
+    return out
 
 
 def _to_quarter(
