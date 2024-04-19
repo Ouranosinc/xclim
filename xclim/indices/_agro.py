@@ -1191,7 +1191,7 @@ def standardized_precipitation_index(
        a log-logistic distribution
     * If `params` is given as input, it overrides the `cal_start`, `cal_end`, `freq` and `window`, `dist` and `method` options.
     """
-    fitkwargs = fitkwargs if fitkwargs is not None else {}
+    fitkwargs = fitkwargs or {}
     dist_methods = {"gamma": ["ML", "APP", "PWM"], "fisk": ["ML", "APP"]}
     if dist in dist_methods.keys():
         if method not in dist_methods[dist]:
@@ -1204,15 +1204,15 @@ def standardized_precipitation_index(
     zero_inflated = True
     spi = standardized_index(
         pr,
-        freq,
-        window,
-        dist,
-        method,
-        zero_inflated,
-        fitkwargs,
-        cal_start,
-        cal_end,
-        params,
+        freq=freq,
+        window=window,
+        dist=dist,
+        method=method,
+        zero_inflated=zero_inflated,
+        fitkwargs=fitkwargs,
+        cal_start=cal_start,
+        cal_end=cal_end,
+        params=params,
         **indexer,
     )
     return spi
@@ -1264,7 +1264,7 @@ def standardized_precipitation_evapotranspiration_index(
     offset : Quantified
         For distributions bounded by zero (e.g. "gamma", "fisk"), the two-parameters distributions only accept positive
         values. An offset can be added to make sure this is the case. This option will be removed in xclim >=0.49.0, ``xclim``
-        will rely on three-parameters distributions instead.
+        will rely on a proper use three-parameters distributions instead.
     cal_start : DateStr, optional
         Start date of the calibration period. A `DateStr` is expected, that is a `str` in format `"YYYY-MM-DD"`.
         Default option `None` means that the calibration period begins at the start of the input dataset.
@@ -1288,7 +1288,7 @@ def standardized_precipitation_evapotranspiration_index(
     --------
     standardized_precipitation_index
     """
-    fitkwargs = fitkwargs if fitkwargs is not None else {}
+    fitkwargs = fitkwargs or {}
     uses_default_offset = offset != "0.000 mm/d"
     if uses_default_offset is False:
         warnings.warn("Inputting an offset will be deprecated in xclim>=0.50.0. ")
@@ -1319,15 +1319,15 @@ def standardized_precipitation_evapotranspiration_index(
     zero_inflated = False
     spei = standardized_index(
         wb,
-        freq,
-        window,
-        dist,
-        method,
-        fitkwargs,
-        zero_inflated,
-        cal_start,
-        cal_end,
-        params,
+        freq=freq,
+        window=window,
+        dist=dist,
+        method=method,
+        zero_inflated=zero_inflated,
+        fitkwargs=fitkwargs,
+        cal_start=cal_start,
+        cal_end=cal_end,
+        params=params,
         **indexer,
     )
 

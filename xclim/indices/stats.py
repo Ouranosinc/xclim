@@ -721,7 +721,8 @@ def standardized_index_fit_params(
         Kwargs passed to ``xclim.indices.stats.fit`` used to impose values of certains parameters (`floc`, `fscale`).
     offset: Quantified
         Distributions bounded by zero (e.g. "gamma", "fisk") can be used for datasets with negative values
-        by using an offset: `da + offset`.
+        by using an offset: `da + offset`. This option will be removed in xclim >=0.49.0, ``xclim``
+        will rely on a proper use three-parameters distributions instead.
     \*\*indexer
         Indexing parameters to compute the indicator on a temporal subset of the data.
         It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
@@ -738,7 +739,7 @@ def standardized_index_fit_params(
     * Log-logistic ("fisk") : "ML", "APP"
     * "APP" method only supports two-parameter distributions. Parameter `loc` will be set to 0 (setting `floc=0` in `fitkwargs`).
     """
-    fitkwargs = fitkwargs if fitkwargs is not None else {}
+    fitkwargs = fitkwargs or {}
     if method == "APP":
         if "floc" in fitkwargs.keys():
             if fitkwargs["floc"] != 0:
@@ -795,14 +796,14 @@ def standardized_index_fit_params(
 def standardized_index(
     da: xr.DataArray,
     freq: str | None,
-    window: int,
+    window: int | None,
     dist: str | scipy.stats.rv_continuous | None,
-    method: str,
-    zero_inflated: bool,
-    fitkwargs: dict,
+    method: str | None,
+    zero_inflated: bool | None,
+    fitkwargs: dict | None,
     cal_start: DateStr | None,
     cal_end: DateStr | None,
-    params: Quantified | None,
+    params: Quantified | None = None,
     **indexer,
 ) -> xr.DataArray:
     r"""Standardized Index (SI).
@@ -852,11 +853,13 @@ def standardized_index(
     -----
     * The standardized index is bounded by ±8.21. 8.21 is the largest standardized index as constrained by the float64 precision in
       the inversion to the normal distribution.
+    * ``window``, ``dist``, ``method``, ``zero_inflated`` are only optional if ``params`` is given.
 
     References
     ----------
     :cite:cts:`mckee_relationship_1993`
     """
+    # use input arguments from ``params`` is given
     if params is not None:
         freq, window, dist, indexer = (
             params.attrs[s] for s in ["freq", "window", "scipy_dist", "time_indexer"]
@@ -869,6 +872,12 @@ def standardized_index(
                 "Expected either `cal_{start|end}` or `params`, got both. The `params` input overrides other inputs."
                 "If `cal_start`, `cal_end`, `freq`, `window`, and/or `dist` were given as input, they will be ignored."
             )
+    else:
+        for p in [window, dist, method, zero_inflated]:
+            if p is None:
+                raise ValueError(
+                    "If ``params`` is `None`, ``window``, ``dist``, ``method`` and ``zero_inflated`` must be given."
+                )
 
     da, _ = preprocess_standardized_index(da, freq=freq, window=window, **indexer)
     if params is None:

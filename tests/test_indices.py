@@ -456,6 +456,8 @@ class TestAgroclimaticIndices:
 
         np.testing.assert_array_equal(out, np.array([np.NaN, expected]))
 
+
+class TestStandardizedIndices:
     # gamma/APP reference results: Obtained with `monocongo/climate_indices` library
     # MS/fisk/ML reference results: Obtained with R package `SPEI`
     # Using the method `APP` in XClim matches the method from monocongo, hence the very low
