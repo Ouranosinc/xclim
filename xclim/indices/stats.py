@@ -717,6 +717,8 @@ def standardized_index_fit_params(
     method : {'ML', 'APP', 'PWM'}
         Name of the fitting method, such as `ML` (maximum likelihood), `APP` (approximate). The approximate method
         uses a deterministic function that doesn't involve any optimization.
+    zero_inflated : bool
+        If True, the zeroes of `da` are treated separately.
     fitkwargs : dict, optional
         Kwargs passed to ``xclim.indices.stats.fit`` used to impose values of certains parameters (`floc`, `fscale`).
     offset: Quantified
@@ -828,6 +830,8 @@ def standardized_index(
     method : str
         Name of the fitting method, such as `ML` (maximum likelihood), `APP` (approximate). The approximate method
         uses a deterministic function that doesn't involve any optimization.
+    zero_inflated : bool
+        If True, the zeroes of `da` are treated separately.
     fitkwargs : dict
         Kwargs passed to ``xclim.indices.stats.fit`` used to impose values of certains parameters (`floc`, `fscale`).
     cal_start : DateStr, optional
@@ -876,7 +880,7 @@ def standardized_index(
         for p in [window, dist, method, zero_inflated]:
             if p is None:
                 raise ValueError(
-                    "If ``params`` is `None`, ``window``, ``dist``, ``method`` and ``zero_inflated`` must be given."
+                    "If `params` is `None`, `window`, `dist`, `method` and `zero_inflated` must be given."
                 )
 
     da, _ = preprocess_standardized_index(da, freq=freq, window=window, **indexer)
