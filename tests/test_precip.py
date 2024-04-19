@@ -191,18 +191,10 @@ class TestStandardizedPrecip:
         pr.values[10] = np.nan
 
         out1 = atmos.standardized_precipitation_index(
-            pr,
-            freq="MS",
-            window=1,
-            dist="gamma",
-            method="APP",
+            pr, freq="MS", window=1, dist="gamma", method="APP", fitkwargs={"floc": 0}
         )
         out2 = atmos.standardized_precipitation_index(
-            prMM,
-            freq="MS",
-            window=1,
-            dist="gamma",
-            method="APP",
+            prMM, freq="MS", window=1, dist="gamma", method="APP", fitkwargs={"floc": 0}
         )
         np.testing.assert_array_almost_equal(out1, out2, 3)
 
@@ -216,21 +208,19 @@ class TestStandardizedPrecip:
 
         out3 = atmos.standardized_precipitation_evapotranspiration_index(
             wb,
-            wb_cal=wb,
             freq="MS",
             window=1,
             dist="gamma",
             method="APP",
-            # method="ML",
+            fitkwargs={"floc": 0},
         )
         out4 = atmos.standardized_precipitation_evapotranspiration_index(
             wbMM,
-            wb_cal=wbMM,
             freq="MS",
             window=1,
             dist="gamma",
             method="APP",
-            # method="ML",
+            fitkwargs={"floc": 0},
         )
 
         np.testing.assert_array_almost_equal(out3, out4, 3)
