@@ -1853,7 +1853,7 @@ def snowfall_frequency(
     total_days = prsn.resample(time=freq).count(dim="time")
     snow_freq = snow_days / total_days * 100
     out: xarray.DataArray = snow_freq.assign_attrs(**snow_days.attrs)
-    out.attrs["units"] = "%"
+    out = out.assign_attrs(units="%")
     return out
 
 
@@ -1902,8 +1902,8 @@ def snowfall_intensity(
 
     cond = lwe_prsn >= thresh
     mean = lwe_prsn.where(cond).resample(time=freq).mean(dim="time")
-    out = mean.fillna(0)
-    out.assign_attrs(units=lwe_prsn.units)
+    out: xarray.DataArray = mean.fillna(0)
+    out = out.assign_attrs(units=lwe_prsn.units)
     return out
 
 
