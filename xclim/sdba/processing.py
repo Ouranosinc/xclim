@@ -801,6 +801,7 @@ def unstack_variables(da: xr.DataArray, dim: str | None = None) -> xr.Dataset:
     if dim is None:
         for _dim, _crd in da.coords.items():
             if _crd.attrs.get("is_variables"):
+                dim = str(_dim)
                 break
         else:
             raise ValueError("No variable coordinate found, were attributes removed?")
