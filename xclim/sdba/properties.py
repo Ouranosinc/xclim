@@ -1074,7 +1074,7 @@ def _decorrelation_length(
     thresh: float = 0.50,
     dims: Sequence[str] | None = None,
     bins: int = 100,
-    group: xr.Coordinate | None = None,
+    group: xr.Coordinate | str | None = "time",  # FIXME: this needs to be clarified
 ):
     """Decorrelation length.
 
@@ -1151,12 +1151,14 @@ def _decorrelation_length(
     ds = ds.where(ds.distance < radius)
     ds = ds.where(ds.distance2 < radius)
 
-    def _bin_corr(corr, distance):
+    def _bin_corr(_corr, _distance):
         """Bin and mean."""
-        mask_nan = ~np.isnan(corr)
-        return stats.binned_statistic(
-            distance[mask_nan], corr[mask_nan], statistic="mean", bins=bins
-        ).statistic
+        mask_nan = ~np.isnan(_corr)
+        binned_corr = stats.binned_statistic(
+            _distance[mask_nan], _corr[mask_nan], statistic="mean", bins=bin_array
+        )
+        stat = binned_corr.statistic
+        return stat
 
     # (_spatial, _spatial2) -> (_spatial, distance_bins)
     binned = (
