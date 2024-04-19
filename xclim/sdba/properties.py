@@ -1121,9 +1121,9 @@ def _decorrelation_length(
     )
 
     if np.isscalar(bins):
-        bin_range = np.linspace(0, radius, bins + 1)
+        bin_array = np.linspace(0, radius, bins + 1)
     elif isinstance(bins, np.ndarray):
-        bin_range = bins
+        bin_array = bins
     else:
         raise ValueError("bins must be a scalar or a numpy array.")
 
@@ -1131,9 +1131,9 @@ def _decorrelation_length(
         dists = dists.chunk()
         trans_dists = trans_dists.chunk()
 
-    w = np.diff(bin_range)
+    w = np.diff(bin_array)
     centers = xr.DataArray(
-        bin_range[:-1] + w / 2,
+        bin_array[:-1] + w / 2,
         dims=("distance_bins",),
         attrs={
             "units": "km",
@@ -1144,7 +1144,6 @@ def _decorrelation_length(
 
     # only keep points inside the radius
     ds = ds.where(ds.distance < radius)
-
     ds = ds.where(ds.distance2 < radius)
 
     def _bin_corr(corr, distance):
@@ -1167,7 +1166,7 @@ def _decorrelation_length(
             output_dtypes=[float],
             dask_gufunc_kwargs={
                 "allow_rechunk": True,
-                "output_sizes": {"distance_bins": len(bins)},
+                "output_sizes": {"distance_bins": len(bin_array)},
             },
         )
         .rename("corr")
