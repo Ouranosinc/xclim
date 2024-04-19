@@ -19,7 +19,7 @@ from importlib import import_module
 from io import StringIO
 from pathlib import Path
 from shutil import copy
-from typing import TextIO, Optional, Iterable
+from typing import TextIO
 from urllib.error import HTTPError, URLError
 from urllib.parse import urljoin
 from urllib.request import urlopen, urlretrieve
@@ -462,7 +462,7 @@ def publish_release_notes(
     style: str = "md",
     file: os.PathLike | StringIO | TextIO | None = None,
     changes: str | os.PathLike | None = None,
-) -> Optional[str]:
+) -> str | None:
     """Format release notes in Markdown or ReStructuredText.
 
     Parameters

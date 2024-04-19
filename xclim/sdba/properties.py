@@ -12,7 +12,6 @@ Statistical Properties is the xclim term for 'indices' in the VALUE project.
 from __future__ import annotations
 
 from collections.abc import Sequence
-from typing import Callable
 
 import numpy as np
 import xarray as xr
@@ -765,7 +764,12 @@ def _relative_frequency(
     """
     # mask of the ocean with NaNs
     mask = ~(da.isel({group.dim: 0}).isnull()).drop_vars(group.dim)
-    ops: dict[str, np.ufunc] = {">": np.greater, "<": np.less, ">=": np.greater_equal, "<=": np.less_equal}
+    ops: dict[str, np.ufunc] = {
+        ">": np.greater,
+        "<": np.less,
+        ">=": np.greater_equal,
+        "<=": np.less_equal,
+    }
     t = convert_units_to(thresh, da, context="infer")
     length = da.sizes[group.dim]
     cond = ops[op](da, t)

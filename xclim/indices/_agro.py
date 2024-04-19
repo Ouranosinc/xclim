@@ -446,9 +446,9 @@ def biologically_effective_degree_days(
     else:
         raise NotImplementedError()
 
-    bedd: xarray.DataArray = ((((tasmin + tasmax) / 2) - thresh_tasmin).clip(min=0) * k + tr_adj).clip(
-        max=max_daily_degree_days
-    )
+    bedd: xarray.DataArray = (
+        (((tasmin + tasmax) / 2) - thresh_tasmin).clip(min=0) * k + tr_adj
+    ).clip(max=max_daily_degree_days)
 
     bedd = (
         select_time(
@@ -1400,7 +1400,9 @@ def qian_weighted_mean_average(
     units = tas.attrs["units"]
 
     weights = xarray.DataArray([0.0625, 0.25, 0.375, 0.25, 0.0625], dims=["window"])
-    weighted_mean: xarray.DataArray = tas.rolling({dim: 5}, center=True).construct("window").dot(weights)
+    weighted_mean: xarray.DataArray = (
+        tas.rolling({dim: 5}, center=True).construct("window").dot(weights)
+    )
     weighted_mean = weighted_mean.assign_attrs(units=units)
     return weighted_mean
 
@@ -1503,7 +1505,9 @@ def effective_growing_degree_days(
     )
 
     deg_days = (tas - thresh).clip(min=0)
-    egdd: xarray.DataArray = aggregate_between_dates(deg_days, start=start, end=end, freq=freq)
+    egdd: xarray.DataArray = aggregate_between_dates(
+        deg_days, start=start, end=end, freq=freq
+    )
     egdd = to_agg_units(egdd, tas, op="integral")
     return egdd
 
