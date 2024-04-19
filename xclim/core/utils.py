@@ -25,7 +25,7 @@ from collections.abc import Mapping, Sequence
 from inspect import Parameter, _empty  # noqa
 from io import StringIO
 from pathlib import Path
-from typing import Callable, NewType, TypeVar
+from typing import Any, Callable, NewType, TypeVar
 
 import numpy as np
 import xarray as xr
@@ -71,8 +71,27 @@ ICM = {
     "pr": "time: sum within days",
 }
 
+T = TypeVar("T", bound=Callable)
 
-def wrapped_partial(func: Callable, suggested: dict | None = None, **fixed) -> Callable:
+
+class WrappedCallable:
+    """A wrapper around a callable that allows for attribute access."""
+
+    def __init__(self, func: T) -> None:  # noqa: D102
+        self._func = func
+
+    def __call__(self, *args, **kwargs):  # noqa: D102
+        return self._func(*args, **kwargs)
+
+    def __getattr__(self, attr):  # noqa: D105
+        return getattr(self._func, attr)
+
+    _injected: dict[str, Any]
+
+
+def wrapped_partial(
+    func: Callable, suggested: dict[str, Any] | None = None, **fixed
+) -> WrappedCallable:
     r"""Wrap a function, updating its signature but keeping its docstring.
 
     Parameters
@@ -86,7 +105,7 @@ def wrapped_partial(func: Callable, suggested: dict | None = None, **fixed) -> C
 
     Returns
     -------
-    Callable
+    WrappedCallable
 
     Examples
     --------
@@ -108,7 +127,7 @@ def wrapped_partial(func: Callable, suggested: dict | None = None, **fixed) -> C
     suggested = suggested or {}
     partial_func = partial(func, **suggested, **fixed)
 
-    fully_wrapped = update_wrapper(
+    fully_wrapped: WrappedCallable = update_wrapper(
         partial_func, func, injected=list(fixed.keys()), hide_wrapped=True  # noqa
     )
 

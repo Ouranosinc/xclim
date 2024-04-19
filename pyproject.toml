@@ -71,6 +71,7 @@ dev = [
   "nbqa",
   "nbval",
   "netCDF4 >=1.4",
+  "pandas-stubs>=2.2",
   "platformdirs >=3.2",
   "pre-commit >=2.9",
   "pybtex",
@@ -207,6 +208,7 @@ python_version = 3.9
 show_error_codes = true
 warn_return_any = true
 warn_unused_configs = true
+plugins = ["numpy.typing.mypy_plugin"]
 
 [[tool.mypy.overrides]]
 module = [
@@ -214,18 +216,14 @@ module = [
   "bottleneck.*",
   "cftime.*",
   "clisops.core.subset.*",
-  "dask.*",
   "lmoments3.*",
   "matplotlib.*",
   "numba.*",
-  "numpy.*",
-  "pandas.*",
   "pint.*",
   "pytest_socket.*",
   "SBCK.*",
   "scipy.*",
   "sklearn.*",
-  "xarray.*",
   "yaml.*"
 ]
 ignore_missing_imports = true

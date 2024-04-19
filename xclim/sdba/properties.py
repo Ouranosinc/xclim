@@ -1092,13 +1092,13 @@ def _decorrelation_length(
         Threshold correlation defining decorrelation.
         The decorrelation length is defined as the center of the distance bin that has a correlation closest
         to this threshold.
-    dims: sequence of strings
+    dims : sequence of strings
         Name of the spatial dimensions. Once these are stacked, the longitude and latitude coordinates must be 1D.
     bins : int
         Same as argument `bins` from :py:meth:`scipy.stats.binned_statistic`.
         If given as a scalar, the equal-width bin limits from 0 to radius are generated here
         (instead of letting scipy do it) to improve performance.
-    group : xarray.Coordinate
+    group : xarray.Coordinate or str, optional
         Useless for now.
 
     Returns
