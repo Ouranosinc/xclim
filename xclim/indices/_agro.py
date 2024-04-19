@@ -123,7 +123,7 @@ def corn_heat_units(
     mask_tasmin = tasmin > thresh_tasmin
     mask_tasmax = tasmax > thresh_tasmax
 
-    chu = (
+    chu: xarray.DataArray = (
         xarray.where(mask_tasmin, 1.8 * (tasmin - thresh_tasmin), 0)
         + xarray.where(
             mask_tasmax,
@@ -132,7 +132,7 @@ def corn_heat_units(
         )
     ) / 2
 
-    chu.attrs["units"] = ""
+    chu = chu.assign_attrs(units="")
     return chu
 
 
@@ -281,7 +281,7 @@ def huglin_index(
     else:
         raise NotImplementedError(f"'{method}' method is not implemented.")
 
-    hi = (((tas + tasmax) / 2) - thresh).clip(min=0) * k
+    hi: xarray.DataArray = (((tas + tasmax) / 2) - thresh).clip(min=0) * k
     hi = (
         select_time(
             hi, date_bounds=(start_date, end_date), include_bounds=(True, False)
@@ -290,7 +290,7 @@ def huglin_index(
         .sum()
         * k_aggregated
     )
-    hi.attrs["units"] = ""
+    hi = hi.assign_attrs(units="")
     return hi
 
 
@@ -446,7 +446,7 @@ def biologically_effective_degree_days(
     else:
         raise NotImplementedError()
 
-    bedd = ((((tasmin + tasmax) / 2) - thresh_tasmin).clip(min=0) * k + tr_adj).clip(
+    bedd: xarray.DataArray = ((((tasmin + tasmax) / 2) - thresh_tasmin).clip(min=0) * k + tr_adj).clip(
         max=max_daily_degree_days
     )
 
@@ -459,7 +459,7 @@ def biologically_effective_degree_days(
         * k_aggregated
     )
 
-    bedd.attrs["units"] = "K days"
+    bedd = bedd.assign_attrs(units="K days")
     return bedd
 
 
@@ -537,8 +537,8 @@ def cool_night_index(
 
     tasmin = tasmin.where(months == month, drop=True)
 
-    cni = tasmin.resample(time=freq).mean(keep_attrs=True)
-    cni.attrs["units"] = "degC"
+    cni: xarray.DataArray = tasmin.resample(time=freq).mean(keep_attrs=True)
+    cni = cni.assign_attrs(units="degC")
     return cni
 
 
@@ -715,6 +715,8 @@ def dryness_index(
         * (pr_masked / 5).clip(max=evspsblpot.time.dt.daysinmonth)
     )
 
+    di_north: xarray.DataArray | None = None
+    di_south: xarray.DataArray | None = None
     # Dryness index
     if has_north:
         di_north = wo + (pr_masked - t_v - e_s).resample(time="YS-JAN").sum()
@@ -724,14 +726,17 @@ def dryness_index(
         di_south = di_south.shift(time=1).isel(time=slice(1, None))
         di_south["time"] = di_south.indexes["time"].shift(-6, "MS")
 
+    di: xarray.DataArray
     if has_north and has_south:
-        di = di_north.where(lat >= 0, di_south)  # noqa
+        di = di_north.where(lat >= 0, di_south)
     elif has_north:
         di = di_north  # noqa
     elif has_south:
         di = di_south  # noqa
+    else:
+        raise ValueError("No hemisphere data found.")
 
-    di.attrs["units"] = "mm"  # noqa
+    di = di.assign_attrs(units="mm")
     return di
 
 
@@ -792,8 +797,8 @@ def latitude_temperature_index(
     lat_mask = (abs(lat) >= 0) & (abs(lat) <= lat_factor)
     lat_coeff = xarray.where(lat_mask, lat_factor - abs(lat), 0)
 
-    lti = mtwm * lat_coeff
-    lti.attrs["units"] = ""
+    lti: xarray.DataArray = mtwm * lat_coeff
+    lti = lti.assign_attrs(units="")
     return lti
 
 
@@ -1236,11 +1241,11 @@ def standardized_precipitation_index(
     if paramsd != template.sizes:
         params = params.broadcast_like(template)
 
-    spi = standardized_index(pr, params)
-    spi.attrs = params.attrs
-    spi.attrs["freq"] = (freq or xarray.infer_freq(spi.time)) or "undefined"
-    spi.attrs["window"] = window
-    spi.attrs["units"] = ""
+    spi: xarray.DataArray = standardized_index(pr, params)
+    spi = spi.assign_attrs(params.attrs)
+    spi = spi.assign_attrs(freq=(freq or xarray.infer_freq(spi.time)) or "undefined")
+    spi = spi.assign_attrs(window=window)
+    spi = spi.assign_attrs(units="")
     return spi
 
 
@@ -1349,7 +1354,7 @@ def standardized_precipitation_evapotranspiration_index(
             if wb_cal is not None:
                 wb_cal = wb_cal + offset
 
-    spei = standardized_precipitation_index(
+    spei: xarray.DataArray = standardized_precipitation_index(
         wb, wb_cal, freq, window, dist, method, cal_start, cal_end, params, **indexer
     )
 
@@ -1395,9 +1400,8 @@ def qian_weighted_mean_average(
     units = tas.attrs["units"]
 
     weights = xarray.DataArray([0.0625, 0.25, 0.375, 0.25, 0.0625], dims=["window"])
-    weighted_mean = tas.rolling({dim: 5}, center=True).construct("window").dot(weights)
-
-    weighted_mean.attrs["units"] = units
+    weighted_mean: xarray.DataArray = tas.rolling({dim: 5}, center=True).construct("window").dot(weights)
+    weighted_mean = weighted_mean.assign_attrs(units=units)
     return weighted_mean
 
 
@@ -1499,9 +1503,9 @@ def effective_growing_degree_days(
     )
 
     deg_days = (tas - thresh).clip(min=0)
-    egdd = aggregate_between_dates(deg_days, start=start, end=end, freq=freq)
-
-    return to_agg_units(egdd, tas, op="integral")
+    egdd: xarray.DataArray = aggregate_between_dates(deg_days, start=start, end=end, freq=freq)
+    egdd = to_agg_units(egdd, tas, op="integral")
+    return egdd
 
 
 @declare_units(tasmin="[temperature]")
@@ -1548,9 +1552,9 @@ def hardiness_zones(
         )
 
     tn_min_rolling = tn_min(tasmin, freq=freq).rolling(time=window).mean()
-    zones = get_zones(
+    zones: xarray.DataArray = get_zones(
         tn_min_rolling, zone_min=zone_min, zone_max=zone_max, zone_step=zone_step
     )
 
-    zones.attrs["units"] = ""
+    zones = zones.assign_attrs(units="")
     return zones

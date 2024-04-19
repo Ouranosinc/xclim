@@ -12,6 +12,7 @@ Statistical Properties is the xclim term for 'indices' in the VALUE project.
 from __future__ import annotations
 
 from collections.abc import Sequence
+from typing import Callable
 
 import numpy as np
 import xarray as xr
@@ -764,7 +765,7 @@ def _relative_frequency(
     """
     # mask of the ocean with NaNs
     mask = ~(da.isel({group.dim: 0}).isnull()).drop_vars(group.dim)
-    ops = {">": np.greater, "<": np.less, ">=": np.greater_equal, "<=": np.less_equal}
+    ops: dict[str, np.ufunc] = {">": np.greater, "<": np.less, ">=": np.greater_equal, "<=": np.less_equal}
     t = convert_units_to(thresh, da, context="infer")
     length = da.sizes[group.dim]
     cond = ops[op](da, t)
@@ -1069,7 +1070,7 @@ def _decorrelation_length(
     thresh: float = 0.50,
     dims: Sequence[str] | None = None,
     bins: int = 100,
-    group: str = "time",
+    group: xr.Coordinate | None = None,
 ):
     """Decorrelation length.
 
@@ -1093,7 +1094,7 @@ def _decorrelation_length(
         Same as argument `bins` from :py:meth:`scipy.stats.binned_statistic`.
         If given as a scalar, the equal-width bin limits from 0 to radius are generated here
         (instead of letting scipy do it) to improve performance.
-    group : str
+    group : xarray.Coordinate
         Useless for now.
 
     Returns
@@ -1105,7 +1106,7 @@ def _decorrelation_length(
     -----
     Calculating this property requires a lot of memory. It will not work with large datasets.
     """
-    if dims is None:
+    if dims is None and group is not None:
         dims = [d for d in da.dims if d != group.dim]
 
     corr = _pairwise_spearman(da, dims)

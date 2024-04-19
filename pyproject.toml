@@ -221,6 +221,7 @@ module = [
   "numpy.*",
   "pandas.*",
   "pint.*",
+  "pytest_socket.*",
   "SBCK.*",
   "scipy.*",
   "sklearn.*",
