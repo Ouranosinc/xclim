@@ -161,8 +161,10 @@ class TrainAdjust(BaseAdjustment):
     _repr_hide_params = ["hist_calendar", "train_units"]
 
     @classmethod
-    def train(cls, ref: DataArray, hist: DataArray, **kwargs):
-        """Train the adjustment object. Refer to the class documentation for the algorithm details.
+    def train(cls, ref: DataArray, hist: DataArray, **kwargs) -> TrainAdjust:
+        r"""Train the adjustment object.
+
+        Refer to the class documentation for the algorithm details.
 
         Parameters
         ----------
@@ -170,6 +172,8 @@ class TrainAdjust(BaseAdjustment):
             Training target, usually a reference time series drawn from observations.
         hist : DataArray
             Training data, usually a model output whose biases are to be adjusted.
+        \*\*kwargs
+            Algorithm-specific keyword arguments, see class doc.
         """
         kwargs = parse_group(cls._train, kwargs)
         skip_checks = kwargs.pop("skip_input_checks", False)
@@ -195,7 +199,9 @@ class TrainAdjust(BaseAdjustment):
         return obj
 
     def adjust(self, sim: DataArray, *args, **kwargs):
-        """Return bias-adjusted data. Refer to the class documentation for the algorithm details.
+        r"""Return bias-adjusted data.
+
+        Refer to the class documentation for the algorithm details.
 
         Parameters
         ----------
@@ -203,7 +209,7 @@ class TrainAdjust(BaseAdjustment):
             Time series to be bias-adjusted, usually a model output.
         args : xr.DataArray
             Other DataArrays needed for the adjustment (usually none).
-        kwargs
+        \*\*kwargs
             Algorithm-specific keyword arguments, see class doc.
         """
         skip_checks = kwargs.pop("skip_input_checks", False)
@@ -246,10 +252,10 @@ class TrainAdjust(BaseAdjustment):
 
     @classmethod
     def _train(cls, ref: DataArray, hist: DataArray, *kwargs):
-        raise NotImplementedError
+        raise NotImplementedError()
 
     def _adjust(self, sim, **kwargs):
-        raise NotImplementedError
+        raise NotImplementedError()
 
 
 class Adjust(BaseAdjustment):
@@ -266,7 +272,7 @@ class Adjust(BaseAdjustment):
         hist: xr.DataArray,
         sim: xr.DataArray,
         **kwargs,
-    ):
+    ) -> xr.Dataset:
         r"""Return bias-adjusted data. Refer to the class documentation for the algorithm details.
 
         Parameters
@@ -279,6 +285,11 @@ class Adjust(BaseAdjustment):
             Time series to be bias-adjusted, usually a model output.
         \*\*kwargs
             Algorithm-specific keyword arguments, see class doc.
+
+        Returns
+        -------
+        xr.Dataset
+            The bias-adjusted Dataset.
         """
         kwargs = parse_group(cls._adjust, kwargs)
         skip_checks = kwargs.pop("skip_input_checks", False)
@@ -289,7 +300,7 @@ class Adjust(BaseAdjustment):
 
             (ref, hist, sim), _ = cls._harmonize_units(ref, hist, sim)
 
-        out = cls._adjust(ref, hist, sim, **kwargs)
+        out: xr.Dataset | xr.DataArray = cls._adjust(ref, hist, sim, **kwargs)
 
         if isinstance(out, xr.DataArray):
             out = out.rename("scen").to_dataset()
@@ -359,7 +370,7 @@ class EmpiricalQuantileMapping(TrainAdjust):
         kind: str = ADDITIVE,
         group: str | Grouper = "time",
         adapt_freq_thresh: str | None = None,
-    ):
+    ) -> tuple[xr.Dataset, dict[str, Any]]:
         if np.isscalar(nquantiles):
             quantiles = equally_spaced_nodes(nquantiles).astype(ref.dtype)
         else:
@@ -1127,7 +1138,7 @@ class NpdfTransform(Adjust):
         pts_dim: str = "multivar",
         adj_kws: dict[str, Any] | None = None,
         rot_matrices: xr.DataArray | None = None,
-    ):
+    ) -> xr.Dataset:
         if base_kws is None:
             base_kws = {}
         if "kind" in base_kws:

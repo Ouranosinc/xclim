@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import datetime as pydt
 from collections.abc import Sequence
-from typing import Any
+from typing import Any, TypeVar
 
 import cftime
 import numpy as np
@@ -78,6 +78,9 @@ datetime_classes = {"default": pydt.datetime, **cftime._cftime.DATE_TYPES}  # no
 
 # Names of calendars that have the same number of days for all years
 uniform_calendars = ("noleap", "all_leap", "365_day", "366_day", "360_day")
+
+
+DataType = TypeVar("DataType", xr.DataArray, xr.Dataset)
 
 
 def days_in_year(year: int, calendar: str = "default") -> int:
@@ -333,7 +336,7 @@ def convert_calendar(
     missing: Any | None = None,
     doy: bool | str = False,
     dim: str = "time",
-) -> xr.DataArray | xr.Dataset:
+) -> DataType:
     """Convert a DataArray/Dataset to another calendar using the specified method.
 
     By default, only converts the individual timestamps, does not modify any data except in dropping invalid/surplus dates or inserting missing dates.
@@ -350,30 +353,32 @@ def convert_calendar(
     Parameters
     ----------
     source : xr.DataArray or xr.Dataset
-      Input array/dataset with a time coordinate of a valid dtype (datetime64 or a cftime.datetime).
+        Input array/dataset with a time coordinate of a valid dtype (datetime64 or a cftime.datetime).
     target : xr.DataArray or str
-      Either a calendar name or the 1D time coordinate to convert to.
-      If an array is provided, the output will be reindexed using it and in that case, days in `target`
-      that are missing in the converted `source` are filled by `missing` (which defaults to NaN).
+        Either a calendar name or the 1D time coordinate to convert to.
+        If an array is provided, the output will be reindexed using it and in that case, days in `target`
+        that are missing in the converted `source` are filled by `missing` (which defaults to NaN).
     align_on : {None, 'date', 'year', 'random'}
-      Must be specified when either source or target is a `360_day` calendar, ignored otherwise. See Notes.
+        Must be specified when either source or target is a `360_day` calendar, ignored otherwise. See Notes.
     missing : Any, optional
-      A value to use for filling in dates in the target that were missing in the source.
-      If `target` is a string, default (None) is not to fill values. If it is an array, default is to fill with NaN.
+        A value to use for filling in dates in the target that were missing in the source.
+        If `target` is a string, default (None) is not to fill values. If it is an array, default is to fill with NaN.
     doy: bool or {'year', 'date'}
-      If not False, variables flagged as "dayofyear" (with a `is_dayofyear==1` attribute) are converted to the new calendar too.
-      Can be a string, which will be passed as the `align_on` argument of :py:func:`convert_doy`. If True, `year` is passed.
+        If not False, variables flagged as "dayofyear" (with a `is_dayofyear==1` attribute) are converted to the new calendar too.
+        Can be a string, which will be passed as the `align_on` argument of :py:func:`convert_doy`.
+        If True, `year` is passed.
     dim : str
-      Name of the time coordinate.
+        Name of the time coordinate.
 
     Returns
     -------
     xr.DataArray or xr.Dataset
-      Copy of source with the time coordinate converted to the target calendar.
-      If `target` is given as an array, the output is reindexed to it, with fill value `missing`.
-      If `target` was a string and `missing` was None (default), invalid dates in the new calendar are dropped, but missing dates are not inserted.
-      If `target` was a string and `missing` was given, then start, end and frequency of the new time axis are inferred and
-      the output is reindexed to that a new array.
+        Copy of source with the time coordinate converted to the target calendar.
+        If `target` is given as an array, the output is reindexed to it, with fill value `missing`.
+        If `target` was a string and `missing` was None (default), invalid dates in the new calendar are dropped,
+        but missing dates are not inserted.
+        If `target` was a string and `missing` was given, then start, end and frequency of the new time axis are
+        inferred and the output is reindexed to that a new array.
 
     Notes
     -----
@@ -563,7 +568,7 @@ def interp_calendar(
     return out
 
 
-def ensure_cftime_array(time: Sequence) -> np.ndarray:
+def ensure_cftime_array(time: Sequence) -> np.ndarray | Sequence[cftime.datetime]:
     """Convert an input 1D array to a numpy array of cftime objects.
 
     Python's datetime are converted to cftime.DatetimeGregorian ("standard" calendar).
@@ -1495,7 +1500,7 @@ def select_time(
     doy_bounds: tuple[int, int] | None = None,
     date_bounds: tuple[str, str] | None = None,
     include_bounds: bool | tuple[bool, bool] = True,
-) -> xr.DataArray | xr.Dataset:
+) -> DataType:
     """Select entries according to a time period.
 
     This conveniently improves xarray's :py:meth:`xarray.DataArray.where` and
@@ -1557,16 +1562,16 @@ def select_time(
     if N == 0:
         return da
 
-    def get_doys(start, end, inclusive):
-        if start <= end:
-            doys = np.arange(start, end + 1)
+    def _get_doys(_start, _end, _inclusive):
+        if _start <= _end:
+            _doys = np.arange(_start, _end + 1)
         else:
-            doys = np.concatenate((np.arange(start, 367), np.arange(0, end + 1)))
-        if not inclusive[0]:
-            doys = doys[1:]
-        if not inclusive[1]:
-            doys = doys[:-1]
-        return doys
+            _doys = np.concatenate((np.arange(_start, 367), np.arange(0, _end + 1)))
+        if not _inclusive[0]:
+            _doys = _doys[1:]
+        if not _inclusive[1]:
+            _doys = _doys[:-1]
+        return _doys
 
     if isinstance(include_bounds, bool):
         include_bounds = (include_bounds, include_bounds)
@@ -1582,7 +1587,7 @@ def select_time(
         mask = da.time.dt.month.isin(month)
 
     elif doy_bounds is not None:
-        mask = da.time.dt.dayofyear.isin(get_doys(*doy_bounds, include_bounds))
+        mask = da.time.dt.dayofyear.isin(_get_doys(*doy_bounds, include_bounds))
 
     elif date_bounds is not None:
         # This one is a bit trickier.
@@ -1598,14 +1603,19 @@ def select_time(
             calendar = "all_leap"
 
         # Get doy of date, this is now safe because the calendar is uniform.
-        doys = get_doys(
-            to_cftime_datetime("2000-" + start, calendar).dayofyr,
-            to_cftime_datetime("2000-" + end, calendar).dayofyr,
+        doys = _get_doys(
+            to_cftime_datetime(f"2000-{start}", calendar).dayofyr,
+            to_cftime_datetime(f"2000-{end}", calendar).dayofyr,
             include_bounds,
         )
         mask = time.time.dt.dayofyear.isin(doys)
         # Needed if we converted calendar, this puts back the correct coord
         mask["time"] = da.time
+
+    else:
+        raise ValueError(
+            "Must provide either `season`, `month`, `doy_bounds` or `date_bounds`."
+        )
 
     return da.where(mask, drop=drop)
 

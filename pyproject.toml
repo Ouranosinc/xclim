@@ -224,6 +224,7 @@ module = [
   "SBCK.*",
   "scipy.*",
   "sklearn.*",
+  "yamale.*",
   "yaml.*"
 ]
 ignore_missing_imports = true

@@ -639,9 +639,9 @@ def data_flags(  # noqa: C901
     def _missing_vars(function, dataset: xarray.Dataset, var_provided: str):
         """Handle missing variables in passed datasets."""
         sig = signature(function)
-        sig = sig.parameters
+        sig_params = sig.parameters
         extra_vars = {}
-        for arg, val in sig.items():
+        for arg, val in sig_params.items():
             if arg in ["da", var_provided]:
                 continue
             kind = infer_kind_from_parameter(val)
@@ -746,7 +746,7 @@ def ecad_compliant(
     xarray.DataArray or xarray.Dataset or None
     """
     flags = xarray.Dataset()
-    history = []
+    history: list[str] = []
     for var in ds.data_vars:
         df = data_flags(ds[var], ds, dims=dims)
         for flag_name, flag_data in df.data_vars.items():
@@ -773,7 +773,7 @@ def ecad_compliant(
     if raise_flags:
         if np.any([flags[dv] for dv in flags.data_vars]):
             raise DataQualityException(flags)
-        return
+        return None
 
     ecad_flag = xarray.DataArray(
         # TODO: Test for this change concerning data of type None in dataflag variables

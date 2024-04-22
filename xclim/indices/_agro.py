@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import warnings
+from typing import cast
 
 import numpy as np
 import xarray
@@ -1083,21 +1084,25 @@ def rain_season(
         start = rl.lazy_indexing(crd, start)
         end = rl.lazy_indexing(crd, end)
 
-        out = xarray.Dataset(
+        _out = xarray.Dataset(
             {
                 "rain_season_start": start,
                 "rain_season_end": end,
                 "rain_season_length": length,
             }
         )
-        return out
+        return _out
 
     # Compute rain season, attribute units
-    out: xarray.DataArray = pram.resample(time=freq).map(_get_rain_season)
-    out = out.rain_season_start.assign_attrs(units="", is_dayofyear=np.int32(1))
-    out = out.rain_season_end.assign_attrs(units="", is_dayofyear=np.int32(1))
-    out = out.rain_season_length.assign_attrs(units="days")
-    return out.rain_season_start, out.rain_season_end, out.rain_season_length
+    out = cast(xarray.Dataset, pram.resample(time=freq).map(_get_rain_season))
+    rain_season_start = out.rain_season_start.assign_attrs(
+        units="", is_dayofyear=np.int32(1)
+    )
+    rain_season_end = out.rain_season_end.assign_attrs(
+        units="", is_dayofyear=np.int32(1)
+    )
+    rain_season_length = out.rain_season_length.assign_attrs(units="days")
+    return rain_season_start, rain_season_end, rain_season_length
 
 
 @declare_units(

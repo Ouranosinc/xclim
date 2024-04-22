@@ -221,7 +221,7 @@ class Parameter:
     def __getitem__(self, key) -> str:
         """Return an item in retro-compatible fashion."""
         try:
-            return getattr(self, key)
+            return str(getattr(self, key))
         except AttributeError as err:
             raise KeyError(key) from err
 
@@ -1613,23 +1613,24 @@ def build_indicator_module(
     Parameters
     ----------
     name : str
-      New module name. If it already exists, the module is extended with the passed objects,
-      overwriting those with same names.
+        New module name. If it already exists, the module is extended with the passed objects,
+        overwriting those with same names.
     objs : dict[str, Indicator]
-      Mapping of the indicators to put in the new module. Keyed by the name they will take in that module.
+        Mapping of the indicators to put in the new module. Keyed by the name they will take in that module.
     doc : str
-      Docstring of the new module. Defaults to a simple header. Invalid if the module already exists.
+        Docstring of the new module. Defaults to a simple header. Invalid if the module already exists.
     reload : bool
-      If reload is True and the module already exists, it is first removed before being rebuilt.
-      If False (default), indicators are added or updated, but not removed.
+        If reload is True and the module already exists, it is first removed before being rebuilt.
+        If False (default), indicators are added or updated, but not removed.
 
     Returns
     -------
     ModuleType
-      A indicator module built from a mapping of Indicators.
+        A indicator module built from a mapping of Indicators.
     """
     from xclim import indicators
 
+    out: ModuleType
     if hasattr(indicators, name):
         if doc is not None:
             warnings.warn(
@@ -1675,35 +1676,35 @@ def build_indicator_module_from_yaml(  # noqa: C901
     Parameters
     ----------
     filename : PathLike
-      Path to a YAML file or to the stem of all module files. See Notes for behaviour when passing a basename only.
+        Path to a YAML file or to the stem of all module files. See Notes for behaviour when passing a basename only.
     name : str, optional
-      The name of the new or existing module, defaults to the basename of the file.
-      (e.g: `atmos.yml` -> `atmos`)
+        The name of the new or existing module, defaults to the basename of the file.
+        (e.g: `atmos.yml` -> `atmos`)
     indices : Mapping of callables or module or path, optional
-      A mapping or module of indice functions or a python file declaring such a file.
-      When creating the indicator, the name in the `index_function` field is first sought
-      here, then the indicator class will search in xclim.indices.generic and finally in xclim.indices.
-    translations  : Mapping of dicts or path, optional
-      Translated metadata for the new indicators. Keys of the mapping must be 2-char language tags.
-      Values can be translations dictionaries as defined in :ref:`internationalization:Internationalization`.
-      They can also be a path to a json file defining the translations.
+        A mapping or module of indice functions or a python file declaring such a file.
+        When creating the indicator, the name in the `index_function` field is first sought
+        here, then the indicator class will search in xclim.indices.generic and finally in xclim.indices.
+    translations : Mapping of dicts or path, optional
+        Translated metadata for the new indicators. Keys of the mapping must be 2-char language tags.
+        Values can be translations dictionaries as defined in :ref:`internationalization:Internationalization`.
+        They can also be a path to a json file defining the translations.
     mode : {'raise', 'warn', 'ignore'}
-      How to deal with broken indice definitions.
+        How to deal with broken indice definitions.
     encoding : str
-      The encoding used to open the `.yaml` and `.json` files.
-      It defaults to UTF-8, overriding python's mechanism which is machine dependent.
+        The encoding used to open the `.yaml` and `.json` files.
+        It defaults to UTF-8, overriding python's mechanism which is machine dependent.
     reload : bool
-      If reload is True and the module already exists, it is first removed before being rebuilt.
-      If False (default), indicators are added or updated, but not removed.
+        If reload is True and the module already exists, it is first removed before being rebuilt.
+        If False (default), indicators are added or updated, but not removed.
     validate : bool or path
-      If True (default), the yaml module is validated against xclim's schema.
-      Can also be the path to a yml schema against which to validate.
-      Or False, in which case validation is simply skipped.
+        If True (default), the yaml module is validated against xclim's schema.
+        Can also be the path to a yml schema against which to validate.
+        Or False, in which case validation is simply skipped.
 
     Returns
     -------
     ModuleType
-      A submodule of `pym:mod:`xclim.indicators`.
+        A submodule of `pym:mod:`xclim.indicators`.
 
     Notes
     -----
@@ -1769,17 +1770,17 @@ def build_indicator_module_from_yaml(  # noqa: C901
     if isinstance(indices, (str, Path)):
         indices = load_module(indices, name=module_name)
 
+    _translations: dict[str, dict] = {}
     if not filepath.suffix and translations is None:
         # No suffix mean we try to automatically detect the json files.
-        translations = {}
         for locfile in filepath.parent.glob(f"{filepath.stem}.*.json"):
             locale = locfile.suffixes[0][1:]
-            translations[locale] = read_locale_file(
+            _translations[locale] = read_locale_file(
                 locfile, module=module_name, encoding=encoding
             )
     elif translations is not None:
         # A mapping was passed, we read paths is any.
-        translations = {
+        _translations = {
             lng: (
                 read_locale_file(trans, module=module_name, encoding=encoding)
                 if isinstance(trans, (str, Path))
@@ -1861,8 +1862,8 @@ def build_indicator_module_from_yaml(  # noqa: C901
     mod = build_indicator_module(module_name, objs=mapping, doc=doc, reload=reload)
 
     # If there are translations, load them
-    if translations:
-        for locale, loc_dict in translations.items():
+    if _translations:
+        for locale, loc_dict in _translations.items():
             load_locale(loc_dict, locale)
 
     return mod

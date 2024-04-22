@@ -48,7 +48,7 @@ from __future__ import annotations
 
 import json
 import warnings
-from collections.abc import Mapping, Sequence
+from collections.abc import Sequence
 from copy import deepcopy
 from pathlib import Path
 
@@ -229,7 +229,7 @@ class UnavailableLocaleError(ValueError):
 
 def read_locale_file(
     filename, module: str | None = None, encoding: str = "UTF8"
-) -> dict:
+) -> dict[str, dict]:
     """Read a locale file (.json) and return its dictionary.
 
     Parameters
@@ -243,6 +243,7 @@ def read_locale_file(
         The encoding to use when reading the file.
         Defaults to UTF-8, overriding python's default mechanism which is machine dependent.
     """
+    locdict: dict[str, dict]
     with open(filename, encoding=encoding) as f:
         locdict = json.load(f)
 
@@ -254,12 +255,12 @@ def read_locale_file(
     return locdict
 
 
-def load_locale(locdata: str | Path | Mapping[str, dict], locale: str):
+def load_locale(locdata: str | Path | dict[str, dict], locale: str):
     """Load translations from a json file into xclim.
 
     Parameters
     ----------
-    locdata : str or dictionary
+    locdata : str or Path or dictionary
         Either a loaded locale dictionary or a path to a json file.
     locale : str
         The locale name (IETF tag).
