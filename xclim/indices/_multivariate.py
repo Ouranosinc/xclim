@@ -1,7 +1,7 @@
 # noqa: D100
 from __future__ import annotations
 
-from typing import Callable
+from typing import Callable, cast
 
 import numpy as np
 import xarray
@@ -210,8 +210,10 @@ def cold_and_dry_days(
     thresh = resample_doy(pr_per, pr)
     pr25 = pr < thresh
 
-    cold_and_dry = np.logical_and(tg25, pr25).resample(time=freq).sum(dim="time")
-    return to_agg_units(cold_and_dry, tas, "count")
+    cold_and_dry = cast(xarray.DataArray, np.logical_and(tg25, pr25))
+    resampled = cold_and_dry.resample(time=freq).sum(dim="time")
+    out = to_agg_units(resampled, tas, "count")
+    return out
 
 
 @declare_units(
@@ -274,8 +276,10 @@ def warm_and_dry_days(
     thresh = resample_doy(pr_per, pr)
     pr25 = pr < thresh
 
-    warm_and_dry = np.logical_and(tg75, pr25).resample(time=freq).sum(dim="time")
-    return to_agg_units(warm_and_dry, tas, "count")
+    warm_and_dry = cast(xarray.DataArray, np.logical_and(tg75, pr25))
+    resampled = warm_and_dry.resample(time=freq).sum(dim="time")
+    out = to_agg_units(resampled, tas, "count")
+    return out
 
 
 @declare_units(
@@ -337,8 +341,10 @@ def warm_and_wet_days(
     thresh = resample_doy(pr_per, pr)
     pr75 = pr > thresh
 
-    warm_and_wet = np.logical_and(tg75, pr75).resample(time=freq).sum(dim="time")
-    return to_agg_units(warm_and_wet, tas, "count")
+    warm_and_wet = cast(xarray.DataArray, np.logical_and(tg75, pr75))
+    resampled = warm_and_wet.resample(time=freq).sum(dim="time")
+    out = to_agg_units(resampled, tas, "count")
+    return out
 
 
 @declare_units(
@@ -400,8 +406,10 @@ def cold_and_wet_days(
     thresh = resample_doy(pr_per, pr)
     pr75 = pr > thresh
 
-    cold_and_wet = np.logical_and(tg25, pr75).resample(time=freq).sum(dim="time")
-    return to_agg_units(cold_and_wet, tas, "count")
+    cold_and_wet = cast(xarray.DataArray, np.logical_and(tg25, pr75))
+    resampled = cold_and_wet.resample(time=freq).sum(dim="time")
+    out = to_agg_units(resampled, tas, "count")
+    return out
 
 
 @declare_units(
@@ -970,7 +978,7 @@ def precip_accumulation(
         pr = rain_approximation(pr, tas=tas, thresh=thresh, method="binary")
     elif phase == "solid":
         pr = snowfall_approximation(pr, tas=tas, thresh=thresh, method="binary")
-    pram = rate2amount(pr)
+    pram: xarray.DataArray = rate2amount(pr)
     return pram.resample(time=freq).sum(dim="time").assign_attrs(units=pram.units)
 
 
@@ -1032,7 +1040,7 @@ def precip_average(
         pr = rain_approximation(pr, tas=tas, thresh=thresh, method="binary")
     elif phase == "solid":
         pr = snowfall_approximation(pr, tas=tas, thresh=thresh, method="binary")
-    pram = rate2amount(pr)
+    pram: xarray.DataArray = rate2amount(pr)
     return pram.resample(time=freq).mean(dim="time").assign_attrs(units=pram.units)
 
 
