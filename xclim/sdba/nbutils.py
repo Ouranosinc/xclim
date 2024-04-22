@@ -5,7 +5,7 @@ Numba-accelerated Utilities
 """
 from __future__ import annotations
 
-from typing import Callable
+from collections.abc import Hashable, Sequence
 
 import numpy as np
 from numba import boolean, float32, float64, guvectorize, njit
@@ -26,10 +26,26 @@ def _vecquantiles(arr, rnk, res):
         res[0] = np.nanquantile(arr, rnk)
 
 
-def vecquantiles(da: DataArray, rnk: DataArray, dim: str | DataArray.dims) -> DataArray:
+def vecquantiles(
+    da: DataArray, rnk: DataArray, dim: str | Sequence[Hashable]
+) -> DataArray:
     """For when the quantile (rnk) is different for each point.
 
     da and rnk must share all dimensions but dim.
+
+    Parameters
+    ----------
+    da : xarray.DataArray
+        The data to compute the quantiles on.
+    rnk : xarray.DataArray
+        The quantiles to compute.
+    dim : str or sequence of str
+        The dimension along which to compute the quantiles.
+
+    Returns
+    -------
+    xarray.DataArray
+        The quantiles computed along the `dim` dimension.
     """
     tem = utils.get_temp_dimname(da.dims, "temporal")
     dims = [dim] if isinstance(dim, str) else dim
@@ -57,8 +73,23 @@ def _quantile(arr, q):
     return out
 
 
-def quantile(da: DataArray, q, dim: str | Callable) -> DataArray:
-    """Compute the quantiles from a fixed list `q`."""
+def quantile(da: DataArray, q: np.ndarray, dim: str | Sequence[Hashable]) -> DataArray:
+    """Compute the quantiles from a fixed list `q`.
+
+    Parameters
+    ----------
+    da : xarray.DataArray
+        The data to compute the quantiles on.
+    q : array-like
+        The quantiles to compute.
+    dim : str or sequence of str
+        The dimension along which to compute the quantiles.
+
+    Returns
+    -------
+    xarray.DataArray
+        The quantiles computed along the `dim` dimension.
+    """
     # We have two cases :
     # - When all dims are processed : we stack them and use _quantile1d
     # - When the quantiles are vectorized over some dims, these are also stacked and then _quantile2D is used.
@@ -80,14 +111,14 @@ def quantile(da: DataArray, q, dim: str | Callable) -> DataArray:
     if len(da.dims) > 1:
         # There are some extra dims
         extra = utils.get_temp_dimname(da.dims, "extra")
-        da = da.stack({extra: set(da.dims) - {tem}})
+        da = da.stack({extra: list(set(da.dims) - {tem})})
         da = da.transpose(..., tem)
         res = DataArray(
             _quantile(da.values, qc),
             dims=(extra, "quantiles"),
             coords={extra: da[extra], "quantiles": q},
             attrs=da.attrs,
-        ).unstack(extra)
+        ).unstack([extra])
 
     else:
         # All dims are processed
