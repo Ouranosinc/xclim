@@ -34,6 +34,7 @@ Bug fixes
 * Fixed and adapted ``time_bnds`` to the newest xarray. (:pull:`1700`).
 * Fixed "agreement fraction" in ``robustness_fractions`` to distinguish between negative change and no change. Added "negative" and "changed negative" fractions (:issue:`1690`, :pull:`1711`).
 * ``make_criteria`` now skips columns with NaNs across all realizations. (:pull:`1713`).
+* Fixed bug QuantileDeltaMapping adjustment not working for seasonal grouping (:issue:`1704`, :pull:`1716`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
