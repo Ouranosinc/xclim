@@ -1393,7 +1393,7 @@ def potential_evapotranspiration(
         _tasmax = convert_units_to(tasmax, "degF")
 
         re = extraterrestrial_solar_radiation(
-            _tasmin.time, lat, chunks=tasmin.chunksizes
+            _tasmin.time, _lat, chunks=_tasmin.chunksizes
         )
         re = convert_units_to(re, "cal cm-2 day-1")
 
@@ -1414,7 +1414,7 @@ def potential_evapotranspiration(
         lv = 2.5  # MJ/kg
 
         ra = extraterrestrial_solar_radiation(
-            tasmin.time, lat, chunks=tasmin.chunksizes
+            _tasmin.time, _lat, chunks=_tasmin.chunksizes
         )
         ra = convert_units_to(ra, "MJ m-2 d-1")
 
@@ -1428,12 +1428,13 @@ def potential_evapotranspiration(
             _tasmax = convert_units_to(tasmax, "degC")
             _tas: xr.DataArray = (_tasmin + _tasmax) / 2
             _tas = _tas.assign_attrs(units="degC")
+        else:
+            _tas = convert_units_to(tas, "degC")
 
-        _tas = convert_units_to(tas, "degC")
-        tasK = convert_units_to(tas, "K")
+        tasK = convert_units_to(_tas, "K")
 
         ext_rad = extraterrestrial_solar_radiation(
-            _tas.time, lat, solar_constant="1367 W m-2", chunks=_tas.chunksizes
+            _tas.time, _lat, solar_constant="1367 W m-2", chunks=_tas.chunksizes
         )
         latentH = 4185.5 * (751.78 - 0.5655 * tasK)
         radDIVlat = ext_rad / latentH
@@ -1506,10 +1507,9 @@ def potential_evapotranspiration(
         if sfcWind is None:
             raise ValueError("Wind speed is required for Allen98 method.")
         else:
-            _sfcWind = convert_units_to(sfcWind, "m s-1")
-
-        # wind speed at two meters
-        wa2 = wind_speed_height_conversion(_sfcWind, h_source="10 m", h_target="2 m")
+            # wind speed at two meters
+            wa2 = wind_speed_height_conversion(sfcWind, h_source="10 m", h_target="2 m")
+            wa2 = convert_units_to(wa2, "m s-1")
 
         with xr.set_options(keep_attrs=True):
             # mean temperature [degC]
