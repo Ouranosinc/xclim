@@ -155,12 +155,13 @@ def apply_correction(
     """
     kind = kind or factor.get("kind", None)
     with xr.set_options(keep_attrs=True):
+        out: xr.DataArray
         if kind == ADDITIVE:
             out = x + factor
         elif kind == MULTIPLICATIVE:
             out = x * factor
         else:
-            raise ValueError
+            raise ValueError("kind must be `+` or `*`.")
     return out
 
 
