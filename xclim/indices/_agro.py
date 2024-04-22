@@ -900,9 +900,8 @@ def water_budget(
     if xarray.infer_freq(pet.time) == "MS":
         pr = pr.resample(time="MS").mean(dim="time", keep_attrs=True)
 
-    out = pr - pet
-
-    out.attrs["units"] = pr.attrs["units"]
+    out: xarray.DataArray = pr - pet
+    out = out.assign_attrs(units=pr.attrs["units"])
     return out
 
 
@@ -928,7 +927,7 @@ def rain_season(
     date_min_end: DayOfYearStr = "09-01",
     date_max_end: DayOfYearStr = "12-31",
     freq="YS-JAN",
-):
+) -> tuple[xarray.DataArray, xarray.DataArray, xarray.DataArray]:
     """Find the length of the rain season and the day of year of its start and its end.
 
     The rain season begins when two conditions are met: 1) There must be a number of wet days with precipitations above
@@ -1018,22 +1017,26 @@ def rain_season(
         )
 
     # Find the start of the rain season
-    def _get_first_run_start(pram):
-        last_doy = pram.indexes["time"][-1].strftime("%m-%d")
-        pram = select_time(pram, date_bounds=(date_min_start, last_doy))
+    def _get_first_run_start(_pram):
+        last_doy = _pram.indexes["time"][-1].strftime("%m-%d")
+        _pram = select_time(_pram, date_bounds=(date_min_start, last_doy))
 
         # First condition: Start with enough precipitation
-        da_start = pram.rolling({"time": window_wet_start}).sum() >= thresh_wet_start
+        da_start = _pram.rolling({"time": window_wet_start}).sum() >= thresh_wet_start
 
         # Second condition: No dry period after
         if method_dry_start == "per_day":
-            da_stop = pram <= thresh_dry_start
+            da_stop = _pram <= thresh_dry_start
             window_dry = window_dry_start
         elif method_dry_start == "total":
-            da_stop = pram.rolling({"time": window_dry_start}).sum() <= thresh_dry_start
+            da_stop = (
+                _pram.rolling({"time": window_dry_start}).sum() <= thresh_dry_start
+            )
             # equivalent to rolling forward in time instead, i.e. end date will be at beginning of dry run
             da_stop = da_stop.shift({"time": -(window_dry_start - 1)}, fill_value=False)
             window_dry = 1
+        else:
+            raise ValueError(f"Unknown method_dry_start: {method_dry_start}.")
 
         # First and second condition combined in a run length
         events = rl.extract_events(da_start, 1, da_stop, window_dry)
@@ -1043,38 +1046,40 @@ def rain_season(
 
     # Find the end of the rain season
     # FIXME: This function mixes local and parent-level variables. It should be refactored.
-    def _get_first_run_end(pram):
+    def _get_first_run_end(_pram):
         if method_dry_end == "per_day":
-            da_stop = pram <= thresh_dry_end
+            da_stop = _pram <= thresh_dry_end
             run_positions = rl.rle(da_stop) >= window_dry_end
         elif method_dry_end == "total":
             run_positions = (
-                pram.rolling({"time": window_dry_end}).sum() <= thresh_dry_end
+                _pram.rolling({"time": window_dry_end}).sum() <= thresh_dry_end
             )
+        else:
+            raise ValueError(f"Unknown method_dry_end: {method_dry_end}.")
         return _get_first_run(run_positions, date_min_end, date_max_end)
 
     # Get start, end and length of rain season. Written as a function so it can be resampled
     # FIXME: This function mixes local and parent-level variables. It should be refactored.
-    def _get_rain_season(pram):
-        start = _get_first_run_start(pram)
+    def _get_rain_season(_pram):
+        start = _get_first_run_start(_pram)
 
         # masking value before  start of the season (end of season should be after)
         # Get valid integer indexer of the day after the first run starts.
         # `start != NaN` only possible if a condition on next few time steps is respected.
         # Thus, `start+1` exists if `start != NaN`
         start_ind = (start + 1).fillna(-1).astype(int)
-        mask = pram * np.NaN
+        mask = _pram * np.NaN
         # Put "True" on the day of run start
         mask[{"time": start_ind}] = 1
         # Mask back points without runs, propagate the True
         mask = mask.where(start.notnull()).ffill("time")
         mask = mask.notnull()
-        end = _get_first_run_end(pram.where(mask))
+        end = _get_first_run_end(_pram.where(mask))
 
-        length = xarray.where(end.notnull(), end - start, pram["time"].size - start)
+        length = xarray.where(end.notnull(), end - start, _pram["time"].size - start)
 
         # converting to doy
-        crd = pram.time.dt.dayofyear
+        crd = _pram.time.dt.dayofyear
         start = rl.lazy_indexing(crd, start)
         end = rl.lazy_indexing(crd, end)
 
@@ -1088,13 +1093,11 @@ def rain_season(
         return out
 
     # Compute rain season, attribute units
-    out = pram.resample(time=freq).map(_get_rain_season)
-    out["rain_season_start"].attrs["units"] = ""
-    out["rain_season_end"].attrs["units"] = ""
-    out["rain_season_length"].attrs["units"] = "days"
-    out["rain_season_start"].attrs["is_dayofyear"] = np.int32(1)
-    out["rain_season_end"].attrs["is_dayofyear"] = np.int32(1)
-    return out["rain_season_start"], out["rain_season_end"], out["rain_season_length"]
+    out: xarray.DataArray = pram.resample(time=freq).map(_get_rain_season)
+    out = out.rain_season_start.assign_attrs(units="", is_dayofyear=np.int32(1))
+    out = out.rain_season_end.assign_attrs(units="", is_dayofyear=np.int32(1))
+    out = out.rain_season_length.assign_attrs(units="days")
+    return out.rain_season_start, out.rain_season_end, out.rain_season_length
 
 
 @declare_units(

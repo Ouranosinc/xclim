@@ -21,7 +21,7 @@ try:
 except ImportError:
     from importlib_resources import files
 
-from collections.abc import Mapping, Sequence
+from collections.abc import Sequence
 from inspect import Parameter, _empty  # noqa
 from io import StringIO
 from pathlib import Path
@@ -245,7 +245,7 @@ class MissingVariableError(ValueError):
     """Error raised when a dataset is passed to an indicator but one of the needed variable is missing."""
 
 
-def ensure_chunk_size(da: xr.DataArray, **minchunks: Mapping[str, int]) -> xr.DataArray:
+def ensure_chunk_size(da: xr.DataArray, **minchunks: int) -> xr.DataArray:
     r"""Ensure that the input DataArray has chunks of at least the given size.
 
     If only one chunk is too small, it is merged with an adjacent chunk.
