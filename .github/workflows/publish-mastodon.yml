@@ -68,7 +68,7 @@ jobs:
 
       - name: Prepare Message
         id: render_template
-        uses: chuhlomin/render-template@a473db625a96c98e519d188812dc22bcaf54ffba # v1.9
+        uses: chuhlomin/render-template@807354a04d9300c9c2ac177c0aa41556c92b3f75 # v1.10
         with:
           template: .github/publish-mastodon.template.md
           vars: |
