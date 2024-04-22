@@ -4,11 +4,15 @@ Changelog
 
 v0.49.0 (unreleased)
 --------------------
-Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), Juliette Lavoie (:user:`juliettelavoie`), David Huard (:user:`huard`), Gabriel Rondeau-Genesse (:user:`RondeauG`).
+Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), Juliette Lavoie (:user:`juliettelavoie`), David Huard (:user:`huard`), Gabriel Rondeau-Genesse (:user:`RondeauG`), Javier Diez-Sierra (:user:`JavierDiezSierra`).
 
 Announcements
 ^^^^^^^^^^^^^
 * `xclim` has migrated its development branch name from `master` to `main`. (:issue:`1667`, :pull:`1669`).
+
+New features and enhancements
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+* Indicator ``xclim.indices.potential_evapotranspiration`` now accepts a new value (`DA02`) for argument `method` implementing potential evapotranspiration based on Droogers and Allen (2002). (:issue:`1710`, :pull:`1723`).
 
 New indicators
 ^^^^^^^^^^^^^^
