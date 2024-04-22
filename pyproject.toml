@@ -213,17 +213,14 @@ plugins = ["numpy.typing.mypy_plugin"]
 [[tool.mypy.overrides]]
 module = [
   "boltons.*",
-  "bottleneck.*",
   "cftime.*",
-  "clisops.core.subset.*",
-  "lmoments3.*",
-  "matplotlib.*",
+  "jsonpickle.*",
   "numba.*",
-  "pint.*",
   "pytest_socket.*",
   "SBCK.*",
   "scipy.*",
   "sklearn.*",
+  "statsmodels.*",
   "yamale.*",
   "yaml.*"
 ]
