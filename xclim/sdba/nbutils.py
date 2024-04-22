@@ -87,7 +87,7 @@ def quantile(da: DataArray, q, dim: str | Callable) -> DataArray:
             dims=(extra, "quantiles"),
             coords={extra: da[extra], "quantiles": q},
             attrs=da.attrs,
-        ).unstack({extra})
+        ).unstack(extra)
 
     else:
         # All dims are processed
