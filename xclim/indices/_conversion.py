@@ -1281,6 +1281,7 @@ def clausius_clapeyron_scaled_precipitation(
     rlds="[radiation]",
     rlus="[radiation]",
     sfcWind="[speed]",
+    pr="[precipitation]",
 )
 def potential_evapotranspiration(
     tasmin: xr.DataArray | None = None,
@@ -1293,6 +1294,7 @@ def potential_evapotranspiration(
     rlds: xr.DataArray | None = None,
     rlus: xr.DataArray | None = None,
     sfcWind: xr.DataArray | None = None,
+    pr: xr.DataArray | None = None,
     method: str = "BR65",
     peta: float = 0.00516409319477,
     petb: float = 0.0874972822289,
@@ -1324,7 +1326,9 @@ def potential_evapotranspiration(
         Surface Upwelling Longwave Radiation
     sfcWind : xarray.DataArray, optional
         Surface wind velocity (at 10 m)
-    method : {"baierrobertson65", "BR65", "hargreaves85", "HG85", "thornthwaite48", "TW48", "mcguinnessbordne05", "MB05", "allen98", "FAO_PM98"}
+    pr : xarray.DataArray
+        Mean daily precipitation flux.
+    method : {"baierrobertson65", "BR65", "hargreaves85", "HG85", "thornthwaite48", "TW48", "mcguinnessbordne05", "MB05", "allen98", "FAO_PM98", "droogersallen02", "DA02"}
         Which method to use, see notes.
     peta : float
         Used only with method MB05 as :math:`a` for calculation of PET, see Notes section.
@@ -1352,6 +1356,8 @@ def potential_evapotranspiration(
       (optional: tas can be given instead of tasmin and tasmax).
     - "allen98" or "FAO_PM98", based on :cite:t:`allen_crop_1998`. Modification of Penman-Monteith method.
       Requires tasmin and tasmax, relative humidity, radiation flux and wind speed (10 m wind will be converted to 2 m).
+    - "droogersallen02" or "DA02", based on :cite:t:`droogers2002`.
+      Requires tasmin, tasmax and precipitation, monthly [MS] or daily [D] freq. (optional: tas can be given in addition of tasmin and tasmax).
 
     The McGuinness-Bordne :cite:p:`mcguinness_comparison_1972` equation is:
 
@@ -1364,12 +1370,12 @@ def potential_evapotranspiration(
     with :math:`a=0.0147` and :math:`b=0.07353`. The default parameters used here are calibrated for the UK,
     using the method described in :cite:t:`tanguy_historical_2018`.
 
-    Methods "BR65", "HG85" and "MB05" use an approximation of the extraterrestrial radiation.
+    Methods "BR65", "HG85", "MB05" and "DA02" use an approximation of the extraterrestrial radiation.
     See :py:func:`~xclim.indices._helpers.extraterrestrial_solar_radiation`.
 
     References
     ----------
-    :cite:cts:`baier_estimation_1965,george_h_hargreaves_reference_1985,tanguy_historical_2018,thornthwaite_approach_1948,mcguinness_comparison_1972,allen_crop_1998`
+    :cite:cts:`baier_estimation_1965,george_h_hargreaves_reference_1985,tanguy_historical_2018,thornthwaite_approach_1948,mcguinness_comparison_1972,allen_crop_1998,droogers2002`
     """
     if lat is None:
         lat = _gather_lat(tasmin if tas is None else tas)
@@ -1407,6 +1413,46 @@ def potential_evapotranspiration(
         # Hargreaves and Samani (1985) formula
         out = (0.0023 * ra * (tas + 17.8) * (tasmax - tasmin) ** 0.5) / lv
         out = out.clip(0)
+
+    elif method in ["droogersallen02", "DA02"]:
+        tasmin = convert_units_to(tasmin, "degC")
+        tasmax = convert_units_to(tasmax, "degC")
+        pr = convert_units_to(pr, "mm/month")
+        if tas is None:
+            tas = (tasmin + tasmax) / 2
+        else:
+            tas = convert_units_to(tas, "degC")
+        
+        # Monthly accumulated radiation
+        if xr.infer_freq(tasmin['time']) == 'D':
+            ra = extraterrestrial_solar_radiation(
+                tasmin.time, lat, chunks=tasmin.chunksizes
+            )
+            tasmin = tasmin.resample(time="MS").mean(dim="time")
+            tasmax = tasmax.resample(time="MS").mean(dim="time")
+            tas = tas.resample(time="MS").mean(dim="time")
+            pr = pr.resample(time="MS").mean(dim="time")
+
+        elif xr.infer_freq(tasmin['time']) == 'MS':
+            tasmin_day = tasmin.resample(time='D').ffill()
+            ra = extraterrestrial_solar_radiation(
+                tasmin_day.time, lat, chunks=tasmin_day.chunksizes
+            )
+
+        ra = convert_units_to(ra, "MJ m-2 d-1")
+        ra = ra.resample(time="MS").sum(dim="time")
+        ra = ra * 0.408 # Is used to convert the radiation to evaporation equivalents in mm (kg/MJ)
+
+        tr = tasmax - tasmin
+        tr = tr.where(tr>0, 0)
+
+        # Droogers and Allen (2002) formula
+        ab = tr - 0.0123 * pr
+        out = (
+            0.0013 * ra * (tas + 17.0) * ab ** 0.76
+        )
+        out = xr.where(np.isnan(ab**0.76), 0, out)
+        out = out.clip(0) # mm/month
 
     elif method in ["mcguinnessbordne05", "MB05"]:
         if tas is None:
