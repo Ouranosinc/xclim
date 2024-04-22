@@ -1422,9 +1422,9 @@ def potential_evapotranspiration(
             tas = (tasmin + tasmax) / 2
         else:
             tas = convert_units_to(tas, "degC")
-        
+
         # Monthly accumulated radiation
-        if xr.infer_freq(tasmin['time']) == 'D':
+        if xr.infer_freq(tasmin["time"]) == "D":
             ra = extraterrestrial_solar_radiation(
                 tasmin.time, lat, chunks=tasmin.chunksizes
             )
@@ -1433,26 +1433,26 @@ def potential_evapotranspiration(
             tas = tas.resample(time="MS").mean(dim="time")
             pr = pr.resample(time="MS").mean(dim="time")
 
-        elif xr.infer_freq(tasmin['time']) == 'MS':
-            tasmin_day = tasmin.resample(time='D').ffill()
+        elif xr.infer_freq(tasmin["time"]) == "MS":
+            tasmin_day = tasmin.resample(time="D").ffill()
             ra = extraterrestrial_solar_radiation(
                 tasmin_day.time, lat, chunks=tasmin_day.chunksizes
             )
 
         ra = convert_units_to(ra, "MJ m-2 d-1")
         ra = ra.resample(time="MS").sum(dim="time")
-        ra = ra * 0.408 # Is used to convert the radiation to evaporation equivalents in mm (kg/MJ)
+        ra = (
+            ra * 0.408
+        )  # Is used to convert the radiation to evaporation equivalents in mm (kg/MJ)
 
         tr = tasmax - tasmin
-        tr = tr.where(tr>0, 0)
+        tr = tr.where(tr > 0, 0)
 
         # Droogers and Allen (2002) formula
         ab = tr - 0.0123 * pr
-        out = (
-            0.0013 * ra * (tas + 17.0) * ab ** 0.76
-        )
+        out = 0.0013 * ra * (tas + 17.0) * ab**0.76
         out = xr.where(np.isnan(ab**0.76), 0, out)
-        out = out.clip(0) # mm/month
+        out = out.clip(0)  # mm/month
 
     elif method in ["mcguinnessbordne05", "MB05"]:
         if tas is None:
