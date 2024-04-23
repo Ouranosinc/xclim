@@ -1168,7 +1168,10 @@ def standardized_precipitation_index(
     ...     cal_start=cal_start,
     ...     cal_end=cal_end,
     ... )  # Computing SPI-3 months using a gamma distribution for the fit
-    >>> # Fitting parameters can also be obtained ...
+    >>> # Fitting parameters can also be obtained first, then re-used as input.
+    >>> # To properly reproduce the example, we also need to specify that we use a
+    >>> # (potentially) zero-inflated distribution. For a monthly SPI, this should rarely
+    >>> # make a difference.
     >>> from xclim.indices.stats import standardized_index_fit_params
     >>> params = standardized_index_fit_params(
     ...     pr.sel(time=slice(cal_start, cal_end)),
@@ -1176,20 +1179,13 @@ def standardized_precipitation_index(
     ...     window=3,
     ...     dist="gamma",
     ...     method="ML",
+    ...     zero_inflated=True,
     ... )  # First getting params
-    >>> # ... and used as input
     >>> spi_3 = standardized_precipitation_index(pr, params=params)
 
     References
     ----------
     :cite:cts:`mckee_relationship_1993`
-
-    Notes
-    -----
-    * The length `N` of the N-month SPI is determined by choosing the `window = N`.
-    * Supported statistical distributions are: ["gamma", "fisk"], where "fisk" is scipy's implementation of
-       a log-logistic distribution
-    * If `params` is given as input, it overrides the `cal_start`, `cal_end`, `freq` and `window`, `dist` and `method` options.
     """
     fitkwargs = fitkwargs or {}
     dist_methods = {"gamma": ["ML", "APP", "PWM"], "fisk": ["ML", "APP"]}
