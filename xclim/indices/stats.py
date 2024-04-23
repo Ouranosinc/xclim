@@ -771,10 +771,18 @@ def standardized_index_fit_params(
             f"The method `{method}` is not supported for distribution `{dist.name}`."
         )
     da, group = preprocess_standardized_index(da, freq, window, **indexer)
-
     if zero_inflated:
-        da = da.where(da > 0)
-    params = da.groupby(group).map(fit, dist=dist, method=method, **fitkwargs)
+        prob_of_zero = da.groupby(group).map(
+            lambda x: (x == 0).sum("time") / x.notnull().sum("time")
+        )
+        params = (
+            da.where(da != 0)
+            .groupby(group)
+            .map(fit, dist=dist, method=method, **fitkwargs)
+        )
+        params["prob_of_zero"] = prob_of_zero
+    else:
+        params = da.groupby(group).map(fit, dist=dist, method=method, **fitkwargs)
     cal_range = (
         da.time.min().dt.strftime("%Y-%m-%d").item(),
         da.time.max().dt.strftime("%Y-%m-%d").item(),
@@ -791,7 +799,6 @@ def standardized_index_fit_params(
     method, args = ("", []) if indexer == {} else indexer.popitem()
     params.attrs["time_indexer"] = (method, *args)
     params.attrs["offset"] = offset or ""
-
     return params
 
 
@@ -902,23 +909,33 @@ def standardized_index(
     if paramsd != template.sizes:
         params = params.broadcast_like(template)
 
-    def reindex_time(da, da_ref):
+    def reindex_time(da, da_ref, group):
         if group == "time.dayofyear":
             da = resample_doy(da, da_ref)
         elif group == "time.month":
             da = da.rename(month="time").reindex(time=da_ref.time.dt.month)
             da["time"] = da_ref.time
+        # I don't think rechunking is necessary here, need to check
         return da if not uses_dask(da) else da.chunk({"time": -1})
 
     # this should be restricted to some distributions / in some context
-    probs_of_zero = da.groupby(group).map(
-        lambda x: (x == 0).sum("time") / x.notnull().sum("time")
-    )
-    params, probs_of_zero = (reindex_time(dax, da) for dax in [params, probs_of_zero])
+    zero_inflated = "prob_of_zero" in params.coords
     if zero_inflated:
-        da = da.where(da > 0)
+        prob_of_zero = reindex_time(params["prob_of_zero"], da, group)
+        mask = da != 0
+        da = da.where(mask)
+    else:
+        prob_of_zero = 0
+    params = reindex_time(params, da, group)
     dist_probs = dist_method("cdf", params, da, dist=dist)
-    probs = probs_of_zero + ((1 - probs_of_zero) * dist_probs)
+    if zero_inflated:
+        dist_probs = dist_probs.where(mask, 0)
+    # This assumes that values are greater or equal to 0.
+    # It might be useful to define inflated distribution where
+    # the inflated value is not the lower bound, which would warrant
+    # a generalized implementation. For now, this option shall be used with
+    # standardized_precipitation_index where values are not negative.
+    probs = prob_of_zero + ((1 - prob_of_zero) * dist_probs)
 
     params_norm = xr.DataArray(
         [0, 1],

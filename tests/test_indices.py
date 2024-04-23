@@ -774,6 +774,38 @@ class TestStandardizedIndices:
 
         np.testing.assert_allclose(spei1.values, spei2.values, rtol=0, atol=1e-4)
 
+    def test_zero_inflated(self, open_dataset):
+        # This tests that the zero_inflated option makes a difference with zero inflated data
+        pr = (
+            open_dataset("sdba/CanESM2_1950-2100.nc")
+            .isel(location=1)
+            .sel(time=slice("1950", "1980"))
+        ).pr
+        # july 1st (doy=180) with 10 years with zero precipitation
+        pr[{"time": slice(179, 365 * 11, 365)}] = 0
+        spid = {}
+        input_params = dict(
+            freq=None,
+            window=1,
+            dist="gamma",
+            method="ML",
+            fitkwargs={},
+            doy_bounds=(180, 180),
+        )
+        for zero_inflated in [False, True]:
+            input_params["zero_inflated"] = zero_inflated
+            params = xci.stats.standardized_index_fit_params(pr, **input_params)
+            spid[zero_inflated] = xci.stats.standardized_index(
+                pr, params=params, cal_start=None, cal_end=None, **input_params
+            )
+            # drop doys other than 180 that will be NaNs
+            spid[zero_inflated] = spid[zero_inflated].where(
+                spid[zero_inflated].notnull(), drop=True
+            )
+        np.testing.assert_equal(
+            np.all(np.not_equal(spid[False].values, spid[True].values)), True
+        )
+
 
 class TestDailyFreezeThawCycles:
     @pytest.mark.parametrize(
