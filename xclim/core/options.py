@@ -4,6 +4,7 @@ Options Submodule
 
 Global or contextual options for xclim, similar to xarray.set_options.
 """
+
 from __future__ import annotations
 
 from inspect import signature
@@ -23,6 +24,7 @@ RUN_LENGTH_UFUNC = "run_length_ufunc"
 SDBA_EXTRA_OUTPUT = "sdba_extra_output"
 SDBA_ENCODE_CF = "sdba_encode_cf"
 KEEP_ATTRS = "keep_attrs"
+AS_DATASET = "as_dataset"
 
 MISSING_METHODS: dict[str, Callable] = {}
 
@@ -36,6 +38,7 @@ OPTIONS = {
     SDBA_EXTRA_OUTPUT: False,
     SDBA_ENCODE_CF: False,
     KEEP_ATTRS: "xarray",
+    AS_DATASET: False,
 }
 
 _LOUDNESS_OPTIONS = frozenset(["log", "warn", "raise"])
@@ -67,6 +70,7 @@ _VALIDATORS = {
     SDBA_EXTRA_OUTPUT: lambda opt: isinstance(opt, bool),
     SDBA_ENCODE_CF: lambda opt: isinstance(opt, bool),
     KEEP_ATTRS: _KEEP_ATTRS_OPTIONS.__contains__,
+    AS_DATASET: lambda opt: isinstance(opt, bool),
 }
 
 
@@ -175,8 +179,12 @@ class set_options:
     keep_attrs : bool or str
         Controls attributes handling in indicators. If True, attributes from all inputs are merged
         using the `drop_conflicts` strategy and then updated with xclim-provided attributes.
+        If ``as_dataset`` is also True and a dataset was passed to the ``ds`` argument of the Indicator,
+        the dataset's attributes are copied to the indicator's output.
         If False, attributes from the inputs are ignored. If "xarray", xclim will use xarray's `keep_attrs` option.
         Note that xarray's "default" is equivalent to False. Default: ``"xarray"``.
+    as_dataset : bool
+        If True, indicators output datasets. If False, they output DataArrays. Default :``False``.
 
     Examples
     --------
@@ -216,7 +224,8 @@ class set_options:
         """Context management."""
         return
 
-    def _update(self, kwargs):
+    @staticmethod
+    def _update(kwargs):
         """Update values."""
         for k, v in kwargs.items():
             if k in _SETTERS:
@@ -224,6 +233,6 @@ class set_options:
             else:
                 OPTIONS[k] = v
 
-    def __exit__(self, option_type, value, traceback):
+    def __exit__(self, option_type, value, traceback):  # noqa: F841
         """Context management."""
         self._update(self.old)

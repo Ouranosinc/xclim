@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import numpy as np
+import pandas as pd
 import pytest
+import xarray as xr
 
 from xclim.sdba.loess import _constant_regression  # noqa
 from xclim.sdba.loess import _gaussian_weighting  # noqa
@@ -62,3 +64,22 @@ def test_loess_smoothing(use_dask, open_dataset):
     # Same but we force not to use the optimization
     tasmooth3 = loess_smoothing(tas, f=0.1, equal_spacing=False)
     np.testing.assert_allclose(tasmooth, tasmooth3, rtol=1e-3, atol=1e-3)
+
+
+@pytest.mark.slow
+@pytest.mark.parametrize("use_dask", [True, False])
+def test_loess_smoothing_nan(use_dask):
+    # create data with one axis full of nan
+    data = np.random.randn(2, 2, 10)
+    data[0, 0] = [np.nan] * 10
+    da = xr.DataArray(
+        data,
+        dims=["scenario", "model", "time"],
+        coords={"time": pd.date_range("2000-01-01", periods=10, freq="YS")},
+    ).chunk({"time": -1})
+
+    out = loess_smoothing(da)
+
+    assert out.dims == da.dims
+    # check that the output is all nan on the axis with nan in the input
+    assert np.isnan(out.values[0, 0]).all()

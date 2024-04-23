@@ -5,6 +5,7 @@ Ensemble Reduction
 Ensemble reduction is the process of selecting a subset of members from an ensemble in order to reduce the volume of
 computation needed while still covering a good portion of the simulated climate variability.
 """
+
 from __future__ import annotations
 
 from warnings import warn
@@ -56,6 +57,8 @@ def make_criteria(ds: xarray.Dataset | xarray.DataArray):
 
     `ds2` will have all variables with the same dimensions, so if the original dataset had variables with different
     dimensions, the added dimensions are filled with NaNs.
+    Also, note that criteria that are all NaN (such as lat/lon coordinates with no data) are dropped from `crit` to avoid issues with
+    the clustering algorithms, so the original dataset might not be able to be fully reconstructed.
     The `to_dataset` part can be skipped if the original input was a DataArray.
     """
 
@@ -88,24 +91,33 @@ def make_criteria(ds: xarray.Dataset | xarray.DataArray):
                 crd,
                 np.concatenate(
                     [
-                        da[crd].values
-                        if crd in da.coords
-                        else [np.NaN] * da.criteria.size
+                        (
+                            da[crd].values
+                            if crd in da.coords
+                            else [np.NaN] * da.criteria.size
+                        )
                         for da in stacked.values()
                     ],
                 ),
             )
             for crd in stacked_coords
         ]
-        # TODO: This coordinate operation emits FutureWarnings with xarray>=2023.08.0.
-        crit["criteria"] = pd.MultiIndex.from_arrays(
-            [arr for name, arr in coords], names=[name for name, arr in coords]
+        crit = crit.assign_coords(
+            xarray.Coordinates.from_pandas_multiindex(
+                pd.MultiIndex.from_arrays(
+                    [arr for name, arr in coords], names=[name for name, arr in coords]
+                ),
+                "criteria",
+            )
         )
         # Previous ops gave the first variable's attributes, replace by the original dataset ones.
         crit.attrs = ds.attrs
     else:
         # Easy peasy, skip all the convoluted stuff
         crit = _make_crit(ds)
+
+    # drop criteria that are all NaN
+    crit = crit.dropna(dim="criteria", how="all")
     return crit.rename("criteria")
 
 
@@ -421,9 +433,7 @@ def _calc_rsq(z, method, make_graph, n_sim, random_state, sample_weights):
                 random_state=random_state,
             )
             kmeans = kmeans.fit(z, sample_weight=sample_weights)
-            sumd[
-                nclust
-            ] = (
+            sumd[nclust] = (
                 kmeans.inertia_
             )  # sum of the squared distance between each simulation and the nearest cluster centroid
 

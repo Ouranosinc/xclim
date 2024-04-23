@@ -1781,6 +1781,7 @@ def universal_thermal_climate_index(
     rlus: xr.DataArray | None = None,
     stat: str = "sunlit",
     mask_invalid: bool = True,
+    wind_cap_min: bool = False,
 ) -> xr.DataArray:
     r"""Universal thermal climate index (UTCI).
 
@@ -1818,6 +1819,10 @@ def universal_thermal_climate_index(
         If True (default), UTCI values are NaN where any of the inputs are outside
         their validity ranges : -50°C < tas < 50°C,  -30°C < tas - mrt < 30°C
         and  0.5 m/s < sfcWind < 17.0 m/s.
+    wind_cap_min: bool
+        If True, wind velocities are capped to a minimum of 0.5 m/s following
+        :cite:t:`brode_utci_2012` usage guidalines. This ensures UTCI calculation
+        for low winds. Default value False.
 
     Returns
     -------
@@ -1837,11 +1842,13 @@ def universal_thermal_climate_index(
 
     References
     ----------
-    :cite:cts:`brode_utci_2009,blazejczyk_introduction_2013`
+    :cite:cts:`brode_utci_2009,brode_utci_2012,blazejczyk_introduction_2013`
     """
     e_sat = saturation_vapor_pressure(tas=tas, method="its90")
     tas = convert_units_to(tas, "degC")
     sfcWind = convert_units_to(sfcWind, "m/s")
+    if wind_cap_min:
+        sfcWind = sfcWind.clip(0.5, None)
     if mrt is None:
         mrt = mean_radiant_temperature(
             rsds=rsds, rsus=rsus, rlds=rlds, rlus=rlus, stat=stat
@@ -1868,7 +1875,7 @@ def universal_thermal_climate_index(
             & (tas < 50.0)
             & (-30 < delta)
             & (delta < 30)
-            & (0.5 < sfcWind)
+            & (0.5 <= sfcWind)
             & (sfcWind < 17.0)
         )
     return utci

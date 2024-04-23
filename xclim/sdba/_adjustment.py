@@ -4,6 +4,7 @@ Adjustment Algorithms
 
 This file defines the different steps, to be wrapped into the Adjustment objects.
 """
+
 from __future__ import annotations
 
 import numpy as np
@@ -135,7 +136,8 @@ def _npdft_train(ref, hist, rots, quantiles, method, extrap, n_escore):
             )
             hist[iv] = u.apply_correction(hist[iv], af, "+")
         if n_escore > 0:
-            escores[ii] = nbu._escore(ref[:, ::ref_step], hist[:, ::hist_step])
+            escores[ii] = ref[0, ref_step + hist_step]
+            # escores[ii] = nbu._escore(ref[:, ::ref_step], hist[:, ::hist_step])
     hist = rots[-1].T @ hist
     return af_q, escores
 

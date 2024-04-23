@@ -4,11 +4,12 @@ CF-Convention Checking
 
 Utilities designed to verify the compliance of metadata with the CF-Convention.
 """
+
 from __future__ import annotations
 
 import fnmatch
 import re
-from typing import Sequence
+from collections.abc import Sequence
 
 from .options import cfcheck
 from .utils import VARIABLES, ValidationError

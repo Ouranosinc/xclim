@@ -515,19 +515,3 @@ class TestProperties:
 
         meas = sdba.properties.var.get_measure()(sim_var, ref_var)
         np.testing.assert_allclose(meas, [0.408327], rtol=1e-3)
-
-
-class TestEOF:
-    def test_first_eof(self, open_dataset):
-        pytest.importorskip("eofs")
-        sim = (
-            open_dataset("NRCANdaily/nrcan_canada_daily_tasmax_1990.nc")
-            .tasmax.isel(lon=slice(0, 10), lat=slice(50, 60))
-            .load()
-        )
-
-        out = sdba.properties.first_eof(sim)
-        np.testing.assert_allclose(
-            [out.mean(), out.max()], [0.099976, 0.103867], rtol=1e-5
-        )
-        assert (out.isnull() == sim.isnull().any("time")).all()

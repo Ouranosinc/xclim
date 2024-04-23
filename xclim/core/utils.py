@@ -4,6 +4,7 @@ Miscellaneous Indices Utilities
 
 Helper functions for the indices computations, indicator construction and other things.
 """
+
 from __future__ import annotations
 
 import functools
@@ -20,10 +21,11 @@ try:
 except ImportError:
     from importlib_resources import files
 
+from collections.abc import Mapping, Sequence
 from inspect import Parameter, _empty  # noqa
 from io import StringIO
 from pathlib import Path
-from typing import Callable, Mapping, NewType, Sequence, TypeVar
+from typing import Callable, NewType, TypeVar
 
 import numpy as np
 import xarray as xr
@@ -136,10 +138,11 @@ def deprecated(from_version: str | None, suggested: str | None = None) -> Callab
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
             msg = (
-                f"`{func.__name__}` is deprecated{' from version {}'.format(from_version) if from_version else ''} "
+                f"`{func.__name__}` is deprecated"
+                f"{f' from version {from_version}' if from_version else ''} "
                 "and will be removed in a future version of xclim"
-                f"{'. Use `{}` instead'.format(suggested if suggested else '')}. "
-                f"Please update your scripts accordingly."
+                f"{f'. Use `{suggested}` instead' if suggested else ''}. "
+                "Please update your scripts accordingly."
             )
             warnings.warn(
                 msg,
@@ -677,8 +680,14 @@ def infer_kind_from_parameter(param) -> InputKind:
     if param.name == "freq":
         return InputKind.FREQ_STR
 
+    if param.kind == param.VAR_KEYWORD:
+        return InputKind.KWARGS
+
     if annot == {"Quantified"}:
         return InputKind.QUANTIFIED
+
+    if "DayOfYearStr" in annot:
+        return InputKind.DAY_OF_YEAR
 
     if annot.issubset({"int", "float"}):
         return InputKind.NUMBER
@@ -686,11 +695,8 @@ def infer_kind_from_parameter(param) -> InputKind:
     if annot.issubset({"int", "float", "Sequence[int]", "Sequence[float]"}):
         return InputKind.NUMBER_SEQUENCE
 
-    if annot == {"str"}:
+    if annot.issuperset({"str"}):
         return InputKind.STRING
-
-    if annot == {"DayOfYearStr"}:
-        return InputKind.DAY_OF_YEAR
 
     if annot == {"DateStr"}:
         return InputKind.DATE
@@ -700,9 +706,6 @@ def infer_kind_from_parameter(param) -> InputKind:
 
     if annot == {"Dataset"}:
         return InputKind.DATASET
-
-    if param.kind == param.VAR_KEYWORD:
-        return InputKind.KWARGS
 
     return InputKind.OTHER_PARAMETER
 
@@ -805,9 +808,9 @@ def adapt_clix_meta_yaml(  # noqa: C901
                             ),
                             "units": param["units"],
                         }
-                        rename_params[
-                            f"{{{name}}}"
-                        ] = f"{{{list(param['data'].keys())[0]}}}"
+                        rename_params[f"{{{name}}}"] = (
+                            f"{{{list(param['data'].keys())[0]}}}"
+                        )
                     else:
                         # Value
                         data["parameters"][name] = f"{param['data']} {param['units']}"

@@ -1,4 +1,5 @@
 """Precipitation indicator definitions."""
+
 from __future__ import annotations
 
 from inspect import _empty  # noqa
@@ -28,6 +29,7 @@ __all__ = [
     "dry_spell_max_length",
     "dry_spell_total_length",
     "dryness_index",
+    "duff_moisture_code",
     "first_snowfall",
     "fraction_over_precip_doy_thresh",
     "fraction_over_precip_thresh",
@@ -104,7 +106,7 @@ class PrTasxWithIndexing(ResamplingIndicatorWithIndexing):
 class StandardizedIndexes(ResamplingIndicator):
     """Resampling but flexible inputs indicators."""
 
-    src_freq = ["D", "M"]
+    src_freq = ["D", "MS"]
     context = "hydro"
 
 
@@ -201,7 +203,7 @@ dryness_index = Precip(
     "the precipitation and evapotranspiration factors without deduction for surface runoff or drainage. "
     "Metric originally published in Riou et al. (1994).",
     cell_methods="",
-    src_freq=["D", "M"],
+    src_freq=["D", "MS"],
     compute=indices.dryness_index,
 )
 
@@ -393,7 +395,6 @@ drought_code = FireWeather(
     title="Daily drought code",
     identifier="dc",
     units="",
-    standard_name="drought_code",
     long_name="Drought Code",
     description="Numerical code estimating the average moisture content of organic layers.",
     abstract="The Drought Index is part of the Canadian Forest-Weather Index system. "
@@ -402,6 +403,14 @@ drought_code = FireWeather(
     missing="skip",
 )
 
+duff_moisture_code = FireWeather(
+    identifier="dmc",
+    units="",
+    long_name="Duff Moisture Code",
+    description="Numeric rating of the average moisture content of loosely compacted organic layers of moderate depth.",
+    compute=indices.duff_moisture_code,
+    missing="skip",
+)
 
 cffwis_indices = FireWeather(
     identifier="cffwis",

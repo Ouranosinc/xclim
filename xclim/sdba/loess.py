@@ -2,6 +2,7 @@
 LOESS Smoothing Submodule
 =========================
 """
+
 from __future__ import annotations
 
 from typing import Callable
@@ -94,6 +95,8 @@ def _loess_nb(
         out = np.full(x.size, np.NaN)
         y = y[~nan]
         x = x[~nan]
+        if x.size == 0:
+            return out
 
     n = x.size
     yest = np.zeros(n)

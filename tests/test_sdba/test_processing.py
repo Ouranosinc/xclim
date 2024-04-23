@@ -5,6 +5,7 @@ import pandas as pd
 import pytest
 import xarray as xr
 
+from xclim.core.calendar import date_range
 from xclim.core.units import units
 from xclim.sdba.adjustment import EmpiricalQuantileMapping
 from xclim.sdba.base import Grouper
@@ -181,6 +182,31 @@ def test_reordering():
     out = reordering(x, y, group="time")
 
     np.testing.assert_array_equal(out, np.arange(1, 11)[::-1])
+    out.attrs.pop("history")
+    assert out.attrs == y.attrs
+
+
+def test_reordering_with_window():
+    time = list(
+        date_range("2000-01-01", "2000-01-04", freq="D", calendar="noleap")
+    ) + list(date_range("2001-01-01", "2001-01-04", freq="D", calendar="noleap"))
+
+    x = xr.DataArray(
+        np.arange(1, 9, 1),
+        dims=("time"),
+        coords={"time": time},
+    )
+
+    y = xr.DataArray(
+        np.arange(8, 0, -1),
+        dims=("time"),
+        coords={"time": time},
+    )
+
+    group = Grouper(group="time.dayofyear", window=3)
+    out = reordering(x, y, group=group)
+
+    np.testing.assert_array_equal(out, [3.0, 3.0, 2.0, 2.0, 7.0, 7.0, 6.0, 6.0])
     out.attrs.pop("history")
     assert out.attrs == y.attrs
 

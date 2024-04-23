@@ -3,7 +3,7 @@ name: Bump Patch Version
 on:
   push:
     branches:
-      - master
+      - main
     paths-ignore:
       - .*
       - .github/*/*.md
@@ -23,7 +23,7 @@ on:
       - tox.ini
       - xclim/__init__.py
 
-permissions:  # added using https://github.com/step-security/secure-repo
+permissions:
   contents: read
 
 jobs:
@@ -35,7 +35,7 @@ jobs:
       contents: write
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@eb238b55efaa70779f274895e782ed17c84f2895 # v2.6.1
+        uses: step-security/harden-runner@63c24ba6bd7ba022e95695ff85de572c04a18142 # v2.7.0
         with:
           disable-sudo: true
           egress-policy: block
@@ -43,10 +43,10 @@ jobs:
             files.pythonhosted.org:443
             github.com:443
             pypi.org:443
-      - uses: actions/checkout@v4.1.1
+      - uses: actions/checkout@1d96c772d19495a3b5c517cd2bc0cb401ea0529f # v4.1.3
         with:
           persist-credentials: false
-      - uses: actions/setup-python@v5.0.0
+      - uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d # v5.1.0
         with:
           python-version: "3.x"
       - name: Config Commit Bot
@@ -75,7 +75,7 @@ jobs:
           echo "new_version=${NEW_VERSION}"
           echo "NEW_VERSION=${NEW_VERSION}" >> $GITHUB_ENV
       - name: Push Changes
-        uses: ad-m/github-push-action@v0.8.0
+        uses: ad-m/github-push-action@d91a481090679876dfc4178fef17f286781251df
         with:
           force: false
           github_token: ${{ secrets.BUMP_VERSION_TOKEN }}

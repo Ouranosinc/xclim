@@ -1,3 +1,4 @@
+# pylint: disable=missing-kwoa
 """
 Adjustment Methods
 ==================
@@ -1284,9 +1285,9 @@ class MBCn(BaseAdjustment):
     Adjust step
 
     ref : xr.DataArray
-        Target reference dataset also needed for univariate bias correction preceeding npdf transform
+        Target reference dataset also needed for univariate bias correction preceding npdf transform
     hist: xr.DataArray
-        Source dataset also needed for univariate bias correction preceeding npdf transform
+        Source dataset also needed for univariate bias correction preceding npdf transform
     base : BaseAdjustment
         Bias-adjustment class used for the univariate bias correction.
     base_kws : dict, optional
@@ -1377,7 +1378,7 @@ class MBCn(BaseAdjustment):
         base_kws.setdefault("nquantiles", 20)
         base_kws.setdefault("group", Grouper("time", 1))
         adj_kws.setdefault("interp", "nearest")
-        adj_kws.setdefault("extrapoliation", "constant")
+        adj_kws.setdefault("extrapolation", "constant")
 
         if np.isscalar(base_kws["nquantiles"]):
             base_kws["nquantiles"] = equally_spaced_nodes(base_kws["nquantiles"])
