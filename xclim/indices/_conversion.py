@@ -5,7 +5,6 @@ import numpy as np
 import xarray as xr
 from numba import float32, float64, vectorize  # noqa
 
-from xclim.core.calendar import date_range
 from xclim.core.units import (
     amount2rate,
     convert_units_to,
@@ -1270,6 +1269,23 @@ def clausius_clapeyron_scaled_precipitation(
     return pr_out
 
 
+def _get_D_from_M(time):
+    start = time[0].dt.strftime("%Y-%m-01").item()
+    yrmn = time[-1].dt.strftime("%Y-%m").item()
+    end = f"{yrmn}-{time[-1].dt.daysinmonth.item()}"
+    return xr.DataArray(
+        xr.date_range(
+            start,
+            end,
+            freq="D",
+            calendar=time.dt.calendar,
+            use_cftime=(time.dtype == "O"),
+        ),
+        dims="time",
+        name="time",
+    )
+
+
 @declare_units(
     tasmin="[temperature]",
     tasmax="[temperature]",
@@ -1376,7 +1392,8 @@ def potential_evapotranspiration(
     References
     ----------
     :cite:cts:`baier_estimation_1965,george_h_hargreaves_reference_1985,tanguy_historical_2018,thornthwaite_approach_1948,mcguinness_comparison_1972,allen_crop_1998,droogers2002`
-    """
+    """  # noqa: E501
+    # ^ Ignoring "line too long" as it comes from un-splittable constructs
     if lat is None:
         lat = _gather_lat(tasmin if tas is None else tas)
 
@@ -1417,33 +1434,24 @@ def potential_evapotranspiration(
     elif method in ["droogersallen02", "DA02"]:
         tasmin = convert_units_to(tasmin, "degC")
         tasmax = convert_units_to(tasmax, "degC")
-        pr = convert_units_to(pr, "mm/month")
+        pr = convert_units_to(pr, "mm/month", context="hydro")
         if tas is None:
             tas = (tasmin + tasmax) / 2
         else:
             tas = convert_units_to(tas, "degC")
 
+        tasmin = tasmin.resample(time="MS").mean()
+        tasmax = tasmax.resample(time="MS").mean()
+        tas = tas.resample(time="MS").mean()
+        pr = pr.resample(time="MS").mean()
+
         # Monthly accumulated radiation
-        if xr.infer_freq(tasmin["time"]) == "D":
-            ra = extraterrestrial_solar_radiation(
-                tasmin.time, lat, chunks=tasmin.chunksizes
-            )
-            tasmin = tasmin.resample(time="MS").mean(dim="time")
-            tasmax = tasmax.resample(time="MS").mean(dim="time")
-            tas = tas.resample(time="MS").mean(dim="time")
-            pr = pr.resample(time="MS").mean(dim="time")
-
-        elif xr.infer_freq(tasmin["time"]) == "MS":
-            tasmin_day = tasmin.resample(time="D").ffill()
-            ra = extraterrestrial_solar_radiation(
-                tasmin_day.time, lat, chunks=tasmin_day.chunksizes
-            )
-
+        time_d = _get_D_from_M(tasmin.time)
+        ra = extraterrestrial_solar_radiation(time_d, lat, chunks=tasmin.chunksize)
         ra = convert_units_to(ra, "MJ m-2 d-1")
-        ra = ra.resample(time="MS").sum(dim="time")
-        ra = (
-            ra * 0.408
-        )  # Is used to convert the radiation to evaporation equivalents in mm (kg/MJ)
+        ra = ra.resample(time="MS").sum()
+        # Is used to convert the radiation to evaporation equivalents in mm (kg/MJ)
+        ra = ra * 0.408
 
         tr = tasmax - tasmin
         tr = tr.where(tr > 0, 0)
@@ -1487,30 +1495,9 @@ def potential_evapotranspiration(
         tas = tas.clip(0)
         tas = tas.resample(time="MS").mean(dim="time")
 
-        start = "-".join(
-            [
-                str(tas.time[0].dt.year.values),
-                f"{tas.time[0].dt.month.values:02d}",
-                "01",
-            ]
-        )
-
-        end = "-".join(
-            [
-                str(tas.time[-1].dt.year.values),
-                f"{tas.time[-1].dt.month.values:02d}",
-                str(tas.time[-1].dt.daysinmonth.values),
-            ]
-        )
-
-        time_v = xr.DataArray(
-            date_range(start, end, freq="D", calendar="standard"),
-            dims="time",
-            name="time",
-        )
-
         # Thornthwaite measures half-days
-        dl = day_lengths(time_v, lat) / 12
+        time_d = _get_D_from_M(tas.time)
+        dl = day_lengths(time_d, lat) / 12
         dl_m = dl.resample(time="MS").mean(dim="time")
 
         # annual heat index
