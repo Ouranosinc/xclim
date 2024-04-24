@@ -225,7 +225,7 @@ def test_opt_vars(tasmin_series, tasmax_series):
     tx = tasmax_series(np.zeros(365))
 
     multiOptVar(tasmin=tn, tasmax=tx)
-    assert multiOptVar.parameters["tasmin"]["kind"] == InputKind.OPTIONAL_VARIABLE
+    assert multiOptVar.parameters["tasmin"].kind == InputKind.OPTIONAL_VARIABLE
 
 
 def test_registering():
@@ -480,7 +480,7 @@ def test_all_parameters_understood(official_indicators):
     for identifier, ind in official_indicators.items():
         indinst = ind.get_instance()
         for name, param in indinst.parameters.items():
-            if param["kind"] == InputKind.OTHER_PARAMETER:
+            if param.kind == InputKind.OTHER_PARAMETER:
                 problems.add((identifier, name))
     # this one we are ok with.
     if problems - {
@@ -587,15 +587,15 @@ def test_parsed_doc():
     assert "tas" in xclim.atmos.liquid_precip_accumulation.parameters
 
     params = xclim.atmos.drought_code.parameters
-    assert params["tas"]["description"] == "Noon temperature."
-    assert params["tas"]["units"] == "[temperature]"
-    assert params["tas"]["kind"] is InputKind.VARIABLE
-    assert params["tas"]["default"] == "tas"
-    assert params["snd"]["default"] is None
-    assert params["snd"]["kind"] is InputKind.OPTIONAL_VARIABLE
-    assert params["snd"]["units"] == "[length]"
-    assert params["season_method"]["kind"] is InputKind.STRING
-    assert params["season_method"]["choices"] == {"GFWED", None, "WF93", "LA08"}
+    assert params["tas"].description == "Noon temperature."
+    assert params["tas"].units == "[temperature]"
+    assert params["tas"].kind is InputKind.VARIABLE
+    assert params["tas"].default == "tas"
+    assert params["snd"].default is None
+    assert params["snd"].kind is InputKind.OPTIONAL_VARIABLE
+    assert params["snd"].units == "[length]"
+    assert params["season_method"].kind is InputKind.STRING
+    assert params["season_method"].choices == {"GFWED", None, "WF93", "LA08"}
 
 
 def test_default_formatter():
