@@ -12,7 +12,7 @@ Announcements
 
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-* Indicator ``xclim.indices.potential_evapotranspiration`` now accepts a new value (`DA02`) for argument `method` implementing potential evapotranspiration based on Droogers and Allen (2002). (:issue:`1710`, :pull:`1723`).
+* Indicator ``xclim.atmos.potential_evapotranspiration`` and indice ``xclim.indices.potential_evapotranspiration`` now accept a new value (`DA02`) for argument `method` implementing potential evapotranspiration based on Droogers and Allen (2002). (:issue:`1710`, :pull:`1723`).
 
 New indicators
 ^^^^^^^^^^^^^^
