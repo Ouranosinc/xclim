@@ -196,7 +196,7 @@ class TestFR:
 
 
 class TestKS:
-    def test_1D_ks_2samp(self, random):
+    def test_1D_ks_2samp(self, random):  # noqa: N802
         # Compare with scipy.stats.ks_2samp
         x = random.standard_normal(50) + 1
         y = random.standard_normal(50)
@@ -210,7 +210,7 @@ class TestKS:
         assert_almost_equal(dm, 0.96667, 4)
 
 
-def analytical_KLDiv(p, q):
+def analytical_KLDiv(p, q):  # noqa: N802
     """Return the Kullback-Leibler divergence between two distributions.
 
     Parameters

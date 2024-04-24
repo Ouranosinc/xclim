@@ -265,8 +265,10 @@ def test_module():
     """Translations are keyed according to the module where the indicators are defined."""
     assert atmos.tg_mean.__module__.split(".")[2] == "atmos"
     # Virtual module also are stored under xclim.indicators
-    assert xclim.indicators.cf.fg.__module__ == "xclim.indicators.cf"
-    assert xclim.indicators.icclim.GD4.__module__ == "xclim.indicators.icclim"
+    assert xclim.indicators.cf.fg.__module__ == "xclim.indicators.cf"  # noqa: F821
+    assert (
+        xclim.indicators.icclim.GD4.__module__ == "xclim.indicators.icclim"
+    )  # noqa: F821
 
 
 def test_temp_unit_conversion(tas_series):
@@ -377,7 +379,7 @@ def test_multiindicator(tas_series):
         compute=uniindtemp_compute,
     )
     with pytest.raises(ValueError, match="Indicator minmaxtemp4 was wrongly defined"):
-        tmin, tmax = ind(tas, freq="YS")
+        _tmin, _tmax = ind(tas, freq="YS")
 
 
 def test_missing(tas_series):
@@ -604,7 +606,7 @@ def test_default_formatter():
     assert default_formatter.format("{month}", month="m3") == "march"
 
 
-def test_AttrFormatter():
+def test_AttrFormatter():  # noqa: N802
     fmt = AttrFormatter(
         mapping={"evil": ["méchant", "méchante"], "nice": ["beau", "belle"]},
         modifiers=["m", "f"],
@@ -655,14 +657,14 @@ def test_input_dataset(open_dataset):
     ds = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc")
 
     # Use defaults
-    out = xclim.atmos.daily_temperature_range(freq="YS", ds=ds)
+    _ = xclim.atmos.daily_temperature_range(freq="YS", ds=ds)
 
     # Use non-defaults (inverted on purpose)
     with xclim.set_options(cf_compliance="log"):
-        out = xclim.atmos.daily_temperature_range("tasmax", "tasmin", freq="YS", ds=ds)
+        _ = xclim.atmos.daily_temperature_range("tasmax", "tasmin", freq="YS", ds=ds)
 
     # Use a mix
-    out = xclim.atmos.daily_temperature_range(tasmax=ds.tasmax, freq="YS", ds=ds)
+    _ = xclim.atmos.daily_temperature_range(tasmax=ds.tasmax, freq="YS", ds=ds)
 
     # Inexistent variable:
     dsx = ds.drop_vars("tasmin")
@@ -817,7 +819,7 @@ def test_indicator_call_errors(tas_series):
         uniIndTemp(tas, oups=3)
 
 
-def test_resamplingIndicator_new_error():
+def test_resamplingIndicator_new_error():  # noqa: N802
     with pytest.raises(ValueError, match="ResamplingIndicator require a 'freq'"):
         Daily(
             realm="atmos",

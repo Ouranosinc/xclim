@@ -310,7 +310,7 @@ def add_cyclic_bounds(
     return ensure_chunk_size(qmf, **{att: -1})
 
 
-def _interp_on_quantiles_1D(newx, oldx, oldy, method, extrap):
+def _interp_on_quantiles_1D(newx, oldx, oldy, method, extrap):  # noqa: N802
     mask_new = np.isnan(newx)
     mask_old = np.isnan(oldy) | np.isnan(oldx)
     out = np.full_like(newx, np.NaN, dtype=f"float{oldy.dtype.itemsize * 8}")

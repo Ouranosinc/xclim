@@ -1302,7 +1302,7 @@ else:
             ]
         )
 
-    def _generate_SBCK_classes():
+    def _generate_SBCK_classes():  # noqa: N802
         classes = []
         for clsname in dir(SBCK):
             cls = getattr(SBCK, clsname)

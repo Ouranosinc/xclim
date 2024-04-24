@@ -101,7 +101,9 @@ class TestScaling:
         np.testing.assert_array_almost_equal(p, ref)
 
     @pytest.mark.parametrize("kind,name", [(ADDITIVE, "tas"), (MULTIPLICATIVE, "pr")])
-    def test_mon_U(self, mon_series, series, mon_triangular, kind, name, random):
+    def test_mon_U(  # noqa: N802
+        self, mon_series, series, mon_triangular, kind, name, random
+    ):
         n = 10000
         u = random.random(n)
 
@@ -209,7 +211,9 @@ class TestDQM:
 
     @pytest.mark.parametrize("kind,name", [(ADDITIVE, "tas"), (MULTIPLICATIVE, "pr")])
     @pytest.mark.parametrize("add_dims", [True, False])
-    def test_mon_U(self, mon_series, series, kind, name, add_dims, random):
+    def test_mon_U(  # noqa: N802
+        self, mon_series, series, kind, name, add_dims, random
+    ):
         """
         Train on
         hist: U
@@ -324,7 +328,7 @@ class TestQDM:
     @pytest.mark.parametrize("use_dask", [True, False])
     @pytest.mark.parametrize("kind,name", [(ADDITIVE, "tas"), (MULTIPLICATIVE, "pr")])
     @pytest.mark.parametrize("add_dims", [True, False])
-    def test_mon_U(
+    def test_mon_U(  # noqa: N802
         self, mon_series, series, mon_triangular, add_dims, kind, name, use_dask, random
     ):
         """
@@ -480,7 +484,9 @@ class TestQM:
         np.testing.assert_array_almost_equal(p[middle], ref[middle], 1)
 
     @pytest.mark.parametrize("kind,name", [(ADDITIVE, "tas"), (MULTIPLICATIVE, "pr")])
-    def test_mon_U(self, mon_series, series, mon_triangular, kind, name, random):
+    def test_mon_U(  # noqa: N802
+        self, mon_series, series, mon_triangular, kind, name, random
+    ):
         """
         Train on
         hist: U
