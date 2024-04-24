@@ -1429,7 +1429,7 @@ def potential_evapotranspiration(
         ra = ra * 0.408
 
         # Hargreaves and Samani (1985) formula
-        out = (0.0023 * ra * (tas + 17.8) * (tasmax - tasmin) ** 0.5)
+        out = 0.0023 * ra * (tas + 17.8) * (tasmax - tasmin) ** 0.5
         out = out.clip(0)
 
     elif method in ["droogersallen02", "DA02"]:
