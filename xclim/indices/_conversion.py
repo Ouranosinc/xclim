@@ -1420,15 +1420,16 @@ def potential_evapotranspiration(
         else:
             tas = convert_units_to(tas, "degC")
 
-        lv = 2.5  # MJ/kg
-
         ra = extraterrestrial_solar_radiation(
             tasmin.time, lat, chunks=tasmin.chunksizes
         )
         ra = convert_units_to(ra, "MJ m-2 d-1")
 
+        # Is used to convert the radiation to evaporation equivalents in mm (kg/MJ)
+        ra = ra * 0.408
+
         # Hargreaves and Samani (1985) formula
-        out = (0.0023 * ra * (tas + 17.8) * (tasmax - tasmin) ** 0.5) / lv
+        out = (0.0023 * ra * (tas + 17.8) * (tasmax - tasmin) ** 0.5)
         out = out.clip(0)
 
     elif method in ["droogersallen02", "DA02"]:
@@ -1447,7 +1448,7 @@ def potential_evapotranspiration(
 
         # Monthly accumulated radiation
         time_d = _get_D_from_M(tasmin.time)
-        ra = extraterrestrial_solar_radiation(time_d, lat, chunks=tasmin.chunksize)
+        ra = extraterrestrial_solar_radiation(time_d, lat)
         ra = convert_units_to(ra, "MJ m-2 d-1")
         ra = ra.resample(time="MS").sum()
         # Is used to convert the radiation to evaporation equivalents in mm (kg/MJ)

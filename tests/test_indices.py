@@ -3178,6 +3178,41 @@ class TestPotentialEvapotranspiration:
             out.isel(lat=0, time=2), [3.962589 / 86400], rtol=1e-2
         )
 
+    def test_droogersallen02(self, tasmin_series, tasmax_series, tas_series, pr_series, lat_series):
+        lat = lat_series([45])
+        time_std = date_range(
+            "1990-01-01", "1990-03-01", freq="MS", calendar="standard"
+        )
+        tn = xr.DataArray(
+            np.array([0, 5, 10]),
+            dims=("time", "lat"),
+            coords={"time": time_std, "lat": lat},
+            attrs={"units": "degC"},
+        )
+        tx = xr.DataArray(
+            np.array([10, 15, 20]),
+            dims=("time", "lat"),
+            coords={"time": time_std, "lat": lat},
+            attrs={"units": "degC"},
+        )
+        tm = xr.DataArray(
+            np.array([5, 10, 15]),
+            dims=("time", "lat"),
+            coords={"time": time_std, "lat": lat},
+            attrs={"units": "degC"},
+        )
+        pr = xr.DataArray(
+            np.array([30, 0, 60]),
+            dims=("time", "lat"),
+            coords={"time": time_std, "lat": lat},
+            attrs={"units": "mm/month"},
+        )
+
+        out = xci.potential_evapotranspiration(tn, tx, tm, pr=pr, lat=lat, method="DA02")
+        np.testing.assert_allclose(
+            out.isel(lat=0, time=2), [2.32659206 / 86400], rtol=1e-2
+        )
+
     def test_thornthwaite(self, tas_series, lat_series):
         lat = lat_series([45])
         time_std = date_range(
