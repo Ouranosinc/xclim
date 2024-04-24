@@ -218,12 +218,12 @@ class Parameter:
             cls.__dataclass_fields__.keys()  # pylint: disable=no-member
         )
 
-    def __getitem__(self, key) -> str:
-        """Return an item in retro-compatible fashion."""
-        try:
-            return str(getattr(self, key))
-        except AttributeError as err:
-            raise KeyError(key) from err
+    # def __getitem__(self, key) -> str:
+    #     """Return an item in retro-compatible fashion."""
+    #     try:
+    #         return str(getattr(self, key))
+    #     except AttributeError as err:
+    #         raise KeyError(key) from err
 
     def __contains__(self, key) -> bool:
         """Imitate previous behaviour where "units" and "choices" were missing, instead of being "_empty"."""
@@ -455,7 +455,7 @@ class Indicator(IndicatorRegistrar):
                 # parameters has already been update above.
                 kwds["compute"] = declare_units(
                     **{
-                        inv_var_map[k]: m["units"]
+                        inv_var_map[k]: m.units
                         for k, m in parameters.items()
                         if "units" in m and k in inv_var_map
                     }
