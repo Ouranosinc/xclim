@@ -41,7 +41,7 @@ __all__ = [
     nopython=True,
     cache=True,
 )
-def _keetch_byram_drought_index(p, t, pa, kbdi0, kbdi):  # pragma: no cover
+def _keetch_byram_drought_index(p, t, pa, kbdi0, kbdi: float):  # pragma: no cover
     """Compute the Keetch-Byram drought (KBDI) index.
 
     Parameters
@@ -343,7 +343,7 @@ def griffiths_drought_factor(
         _griffiths_drought_factor_pass,
         pr,
         smd,
-        kwargs=dict(lim=lim),
+        kwargs=dict(_lim=lim),
         input_core_dims=[["time"], ["time"]],
         output_core_dims=[["time"]],
         dask="parallelized",
