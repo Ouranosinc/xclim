@@ -65,6 +65,7 @@ indicators = dict(sorted(indicators.items(), key=lambda kv: kv[1]["title"]))
 
 # Dump indicators to json. The json is added to the html output (html_extra_path)
 # It is read by _static/indsearch.js to populate the table in indicators.rst
+os.makedirs("_dynamic", exist_ok=True)
 with open("_dynamic/indicators.json", "w") as f:
     json.dump(indicators, f)
 
