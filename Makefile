@@ -55,7 +55,7 @@ clean-test: ## remove test and coverage artifacts
 lint: ## check style with flake8 and black
 	black --check xclim tests
 	isort --check xclim tests
-	ruff xclim tests
+	ruff check xclim tests
 	flake8 --config=.flake8 xclim tests
 	vulture xclim tests
 	nbqa black --check docs
