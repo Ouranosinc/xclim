@@ -65,7 +65,7 @@ indicators = dict(sorted(indicators.items(), key=lambda kv: kv[1]["title"]))
 
 # Dump indicators to json. The json is added to the html output (html_extra_path)
 # It is read by _static/indsearch.js to populate the table in indicators.rst
-with open("indicators.json", "w") as f:
+with open("_dynamic/indicators.json", "w") as f:
     json.dump(indicators, f)
 
 
@@ -104,7 +104,6 @@ extensions = [
     "sphinx_codeautolink",
     "sphinx_copybutton",
     "sphinx_mdinclude",
-    "sphinx_rtd_theme",
 ]
 
 autodoc_typehints = "description"
@@ -272,8 +271,9 @@ exclude_patterns = [
     "**.ipynb_checkpoints",
 ]
 
-# The name of the Pygments (syntax highlighting) style to use.
+# The name of the Pygments (syntax highlighting) style to use for light and dark themes.
 pygments_style = "sphinx"
+pygments_dark_style = "monokai"
 
 # If true, `todo` and `todoList` produce output, else they produce nothing.
 todo_include_todos = True
@@ -283,31 +283,50 @@ todo_include_todos = True
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_title = "XClim Official Documentation"
-html_short_title = "XClim"
+html_title = "xclim Official Documentation"
+html_short_title = "xclim"
 
-html_theme = "sphinx_rtd_theme"
-
+html_theme = "furo"
 html_extra_path = ["indicators.json", "variables.json"]
 
-# Theme options are theme-specific and customize the look and feel of a
-# theme further.  For a list of options available for each theme, see the
-# documentation.
-#
-html_theme_options = {"logo_only": True, "style_external_links": True}
+# Theme options are theme-specific and customize the look and feel of a theme further.
+# For a list of options available for each theme, see the documentation.
+html_theme_options = {
+    "light_logo": "xclim-logo-light.png",
+    "dark_logo": "xclim-logo-dark.png",
+    "footer_icons": [
+        {
+            "name": "GitHub",
+            "url": "https://github.com/Ouranosinc/xclim",
+            "html": """
+                <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 16 16">
+                    <path fill-rule="evenodd" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"></path>
+                </svg>
+            """,
+            "class": "",
+        },
+    ],
+}
 
 html_sidebars = {
-    "**": ["logo-text.html", "globaltoc.html", "localtoc.html", "searchbox.html"]
+    "**": [
+        "sidebar/scroll-start.html",
+        "sidebar/brand.html",
+        "sidebar/search.html",
+        "sidebar/navigation.html",
+        "sidebar/ethical-ads.html",
+        "sidebar/scroll-end.html",
+    ]
 }
 
 # The name of an image file (relative to this directory) to place at the top
 # of the sidebar.
-html_logo = "logos/xclim-logo.png"
+# html_logo = "logos/xclim-logo.png"
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = ["_static"]
+html_static_path = ["_dynamic", "logos", "_static"]
 
 # -- Options for HTMLHelp output ---------------------------------------
 
@@ -317,7 +336,7 @@ htmlhelp_basename = "xclimdoc"
 # -- Options for LaTeX output ------------------------------------------
 
 latex_engine = "pdflatex"
-latex_logo = "logos/xclim-logo.png"
+latex_logo = "logos/xclim-logo-light.png"
 
 latex_elements = {
     # The paper size ('letterpaper' or 'a4paper').
@@ -379,4 +398,4 @@ texinfo_documents = [
 
 
 def setup(app):
-    app.add_css_file("_static/style.css")
+    app.add_css_file("style.css")

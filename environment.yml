@@ -40,6 +40,7 @@ dependencies:
   - flake8
   - flake8-rst-docstrings
   - flit
+  - furo >=2023.9.10
   - h5netcdf
   - ipykernel
   - ipython
@@ -68,7 +69,6 @@ dependencies:
   - sphinx-codeautolink
   - sphinx-copybutton
   - sphinx-mdinclude
-  - sphinx-rtd-theme >=1.0
   - sphinxcontrib-bibtex
   - tokenize-rt
   - tox >=4.0
