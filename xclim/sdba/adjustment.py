@@ -107,9 +107,9 @@ class BaseAdjustment(ParametrizableWithDataset):
             not all(mvcrds[0].equals(mv) for mv in mvcrds[1:])
             or len(mvcrds) != len(inputs)
         ):
+            coords = {mv.name for mv in mvcrds}
             raise ValueError(
-                "Inputs have different multivariate coordinates "
-                f"({set(mv.name for mv in mvcrds)})."
+                f"Inputs have different multivariate coordinates: {', '.join(coords)}."
             )
 
         if group.prop == "dayofyear" and (
