@@ -6,8 +6,8 @@ This module defines methods and object to help the internationalization of metad
 climate indicators computed by xclim. Go to :ref:`notebooks/customize:Adding translated metadata` to see
 how to use this feature.
 
-All the methods and objects in this module use localization data given in json files.
-These files are expected to be defined as in this example for french:
+All the methods and objects in this module use localization data given in JSON files.
+These files are expected to be defined as in this example for French:
 
 .. code-block::
 
@@ -34,14 +34,15 @@ but which can differ from the callable name. In this case, the indicator is call
 Use the `ind.__class__.__name__` accessor to get its registry name.
 
 Here, the usual parameter passed to the formatting of "description" is "freq" and is usually translated from "YS"
-to "annual". However, in french and in this sentence, the feminine form should be used, so the "f" modifier is added
+to "annual". However, in French and in this sentence, the feminine form should be used, so the "f" modifier is added
 by the translator so that the formatting function knows which translation to use. Acceptable entries for the mappings
 are limited to what is already defined in `xclim.core.indicators.utils.default_formatter`.
 
 For user-provided internationalization dictionaries, only the "attrs_mapping" and its "modifiers" key are mandatory,
 all other entries (translations of frequent parameters and all indicator entries) are optional.
 For xclim-provided translations (for now only French), all indicators must have en entry and the "attrs_mapping"
-entries must match exactly the default formatter. Those default translations are found in the `xclim/locales` folder.
+entries must match exactly the default formatter.
+Those default translations are found in the `xclim/locales` folder.
 """
 
 from __future__ import annotations
@@ -186,7 +187,8 @@ def get_local_attrs(
             local_attrs.update(loc_dict.get(other_ind, {}))
         if not local_attrs:
             warnings.warn(
-                f"Attributes of indicator {', '.join(indicator)} in language {locale} were requested, but none were found."
+                f"Attributes of indicator {', '.join(indicator)} in language {locale} "
+                "were requested, but none were found."
             )
         else:
             for name in TRANSLATABLE_ATTRS:
