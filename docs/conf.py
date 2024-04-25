@@ -288,7 +288,7 @@ html_title = "xclim Official Documentation"
 html_short_title = "xclim"
 
 html_theme = "furo"
-html_extra_path = ["indicators.json", "variables.json"]
+html_extra_path = ["variables.json"]
 
 # Theme options are theme-specific and customize the look and feel of a theme further.
 # For a list of options available for each theme, see the documentation.
