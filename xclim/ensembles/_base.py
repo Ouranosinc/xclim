@@ -17,6 +17,16 @@ from xclim.core.calendar import common_calendar, convert_calendar, get_calendar
 from xclim.core.formatting import update_history
 from xclim.core.utils import calc_perc
 
+# The alpha and beta parameters for the quantile function
+_quantile_params = {
+    "interpolated_inverted_cdf": (0, 1),
+    "hazen": (0.5, 0.5),
+    "weibull": (0, 0),
+    "linear": (1, 1),
+    "median_unbiased": (1 / 3, 1 / 3),
+    "normal_unbiased": (3 / 8, 3 / 8),
+}
+
 
 def create_ensemble(
     datasets: Any,
@@ -207,6 +217,7 @@ def ensemble_percentiles(
     min_members: int | None = 1,
     weights: xr.DataArray | None = None,
     split: bool = True,
+    method: str = "linear",
 ) -> xr.DataArray | xr.Dataset:
     """Calculate ensemble statistics between a results from an ensemble of climate simulations.
 
@@ -230,10 +241,21 @@ def ensemble_percentiles(
         The default (1) essentially skips this check.
     weights : xr.DataArray, optional
         Weights to apply along the 'realization' dimension. This array cannot contain missing values.
-        When given, the function uses xarray's quantile method which is slower than xclim's NaN-optimized algorithm.
+        When given, the function uses xarray's quantile method which is slower than xclim's NaN-optimized algorithm,
+        and does not support `method` values other than `linear`.
     split : bool
         Whether to split each percentile into a new variable
         or concatenate the output along a new "percentiles" dimension.
+    method : str, optional
+        This parameter specifies the method to use for estimating the percentile, see the `numpy.percentile`
+        documentation for more information. The following methods are supported
+
+          - 'interpolated_inverted_cdf'
+          - 'hazen'
+          - 'weibull'
+          - 'linear'  (default)
+          - 'median_unbiased'
+          - 'normal_unbiased'
 
     Returns
     -------
@@ -274,6 +296,7 @@ def ensemble_percentiles(
                     split=split,
                     min_members=min_members,
                     weights=weights,
+                    method=method,
                 )
                 for da in ens.data_vars.values()
                 if "realization" in da.dims
@@ -310,20 +333,25 @@ def ensemble_percentiles(
             ens = ens.chunk({"realization": -1})
 
     if weights is None:
+        alpha, beta = _quantile_params[method]
+
         out = xr.apply_ufunc(
             calc_perc,
             ens,
             input_core_dims=[["realization"]],
             output_core_dims=[["percentiles"]],
             keep_attrs=True,
-            kwargs=dict(
-                percentiles=values,
-            ),
+            kwargs=dict(percentiles=values, alpha=alpha, beta=beta),
             dask="parallelized",
             output_dtypes=[ens.dtype],
             dask_gufunc_kwargs=dict(output_sizes={"percentiles": len(values)}),
         )
     else:
+        if method != "linear":
+            raise ValueError(
+                "Only the 'linear' method is supported when using weights."
+            )
+
         with xr.set_options(keep_attrs=True):
             # xclim's calc_perc does not support weighted arrays, so xarray's native function is used instead.
             qt = np.array(values) / 100  # xarray requires values between 0 and 1
@@ -350,7 +378,7 @@ def ensemble_percentiles(
             out = out.rename(name_dict={p: f"{ens.name}_p{int(p):02d}"})
 
     out.attrs["history"] = update_history(
-        f"Computation of the percentiles on {ens.realization.size} ensemble members.",
+        f"Computation of the percentiles on {ens.realization.size} ensemble members using method {method}.",
         ens,
     )
 

@@ -15,6 +15,12 @@ New indicators
 * New ``snw_season_length`` and ``snd_season_length`` computing the duration between the start and the end of the snow season, both defined as the first day of a continuous period with snow above/under a threshold. Previous versions of these indicators were renamed ``snw_days_above`` and ``snd_days_above`` to better reflect what they computed : the number of days with snow above a given threshold (with no notion of continuity). (:issue:`1703`, :pull:`1708`).
 * Added ``atmos.duff_moisture_code``, part of the Canadian Forest Fire Weather Index System. It was already an output of the `atmos.cffwis_indices`, but now has its own standalone indicator. (:issue:`1698`, :pull:`1712`).
 
+New features and enhancements
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+* `ensemble_percentiles` now takes a `method` argument, accepting
+  'interpolated_inverted_cdf', 'hazen', 'weibull', 'linear'  (default),
+  'median_unbiased' and 'normal_unbiased'. (:issue:`1694`, :pull:`1732`).
+
 Breaking changes
 ^^^^^^^^^^^^^^^^
 * The previously deprecated functions ``xclim.sdba.processing.construct_moving_yearly_window`` and ``xclim.sdba.processing.unpack_moving_yearly_window`` have been removed. These functions have been replaced by ``xclim.core.calendar.stack_periods`` and ``xclim.core.calendar.unstack_periods``. (:pull:`1717`).
