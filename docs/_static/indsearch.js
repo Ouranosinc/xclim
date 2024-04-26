@@ -26,7 +26,7 @@ let miniSearch = new MiniSearch({
 });
 
 // Populate search object with complete list of indicators
-fetch('indicators.json')
+fetch('_static/indicators.json')
   .then(data => data.json())
   .then(data => {
     indicators = Object.entries(data).map(([k, v]) => {
