@@ -273,8 +273,8 @@ exclude_patterns = [
 ]
 
 # The name of the Pygments (syntax highlighting) style to use for light and dark themes.
-pygments_style = "sphinx"
-pygments_dark_style = "monokai"
+pygments_style = "sas"
+pygments_dark_style = "lightbulb"
 
 # If true, `todo` and `todoList` produce output, else they produce nothing.
 todo_include_todos = True
