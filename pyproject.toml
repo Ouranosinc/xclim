@@ -96,6 +96,7 @@ dev = [
   "nc-time-axis",
   "pooch",
   "sphinx",
+  "sphinx-autobuild >=2024.4.16",
   "sphinx-autodoc-typehints",
   "sphinx-codeautolink",
   "sphinx-copybutton",

@@ -65,6 +65,7 @@ dependencies:
   - pytest-xdist >=3.2
   - ruff >=0.3.0
   - sphinx
+  - sphinx-autobuild >=2024.4.16
   - sphinx-autodoc-typehints
   - sphinx-codeautolink
   - sphinx-copybutton

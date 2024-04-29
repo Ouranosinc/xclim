@@ -101,8 +101,8 @@ ifndef READTHEDOCS
 	python -m http.server 54345 --directory docs/_build/html/
 endif
 
-servedocs: docs ## compile the docs watching for changes
-	watchmedo shell-command -p '*.rst' -c '$(MAKE) -C docs html' -R -D .
+servedocs: autodoc-custom-index ## generate Sphinx HTML documentation, including API docs, but without indexes for for indices and indicators, and watch for changes
+	$(MAKE) -C docs livehtml
 
 release: dist ## package and upload a release
 	flit publish dist/*
