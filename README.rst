@@ -193,7 +193,7 @@ This package was created with Cookiecutter_ and the `audreyfeldroy/cookiecutter-
         :target: https://github.com/Ouranosinc/xclim
         :alt:
         :class: xclim-logo-small only-light-inline
-        
+
 .. |logo-dark| image:: logos/empty.png
         :target: https://github.com/Ouranosinc/xclim
         :alt:
