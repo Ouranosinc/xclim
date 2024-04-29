@@ -22,7 +22,7 @@ New indicators
 Breaking changes
 ^^^^^^^^^^^^^^^^
 * The previously deprecated functions ``xclim.sdba.processing.construct_moving_yearly_window`` and ``xclim.sdba.processing.unpack_moving_yearly_window`` have been removed. These functions have been replaced by ``xclim.core.calendar.stack_periods`` and ``xclim.core.calendar.unstack_periods``. (:pull:`1717`).
-* The previously deprecated function ``xclim.ensembles.change_significance``  has been removed.  (:pull:`1737`).
+* The previously deprecated function ``xclim.ensembles.change_significance`` has been removed. (:pull:`1737`).
 * Indicators ``snw_season_length`` and ``snd_season_length`` have been modified, see above.
 * The `hargeaves85`/`hg85` method for the ``potential_evapotranspiration`` indicator and indice has been modified for precision and consistency with recent academic literature. (:issue:`1710`, :pull:`1723`).
 
