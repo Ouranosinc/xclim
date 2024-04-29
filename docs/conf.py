@@ -310,10 +310,18 @@ html_theme_options = {
     "light_css_variables": {
         "color-table-rows-even": "#eeebee",
         "color-copybutton": "#000",
+        "color-indicator-text": "#5a5c63",
+        "color-indicator-background": "#eeebee",
+        "color-indicator-widget-text": "#2f2f2f",
+        "color-indicator-widget-background": "#bdbdbd",
     },
     "dark_css_variables": {
         "color-table-rows-even": "#303335",
         "color-copybutton": "#fff",
+        "color-indicator-text": "#cfd0d0",
+        "color-indicator-background": "#3e3e3e",
+        "color-indicator-widget-text": "#a8a8a8",
+        "color-indicator-widget-background": "#303335",
     },
 }
 

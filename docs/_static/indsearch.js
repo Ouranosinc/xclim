@@ -68,7 +68,7 @@ function makeVariableList(ind) {
         /* kv[0] is the variable name, kv[1] is the variable description. */
         /* Convert kv[1] to a string literal */
         const text = escapeHTML(kv[1]);
-        const tooltip = `<button class="indVarname" title="${text}" alt="${text}">${kv[0]}</button>`;
+        const tooltip = `<button class="indVarname" title="${text}" alt="${text}"><code>${kv[0]}</code></button>`;
         return tooltip
     }).join('');
 }

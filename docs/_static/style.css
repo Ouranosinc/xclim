@@ -75,7 +75,8 @@ ul.simple li {
 .indElem {
  margin: 10px;
  padding: 10px;
- background-color: #ddd;
+ background-color: var(--color-indicator-background);
+ color: var(--color-indicator-text);
  border-radius: 10px;
 }
 
@@ -84,11 +85,19 @@ ul.simple li {
 }
 
 code > .indName {
-  background-color: #ccc;
+  background-color: var(--color-indicator-background);
+  color: var(--color-indicator-text);
 }
 
 .indVarname {
   border-radius: 10px;
+  background-color: var(--color-indicator-widget-background);
+  color: var(--color-indicator-widget-text);
+  border: solid 1px var(--color-indicator-widget-text);
+  margin-right: 3px;
+  margin-bottom: 3px;
+  line-height: 24px;
+  cursor: help;
 }
 
 /* Rounded corners for keyword labels: */
@@ -96,7 +105,11 @@ code > .indName {
     border-radius: 10px;
     padding: 5px;
     margin: 5px;
-    background-color: #ddd;
+    background-color: var(--color-indicator-widget-background);
+    color: var(--color-indicator-widget-text);
+    border: solid 1px var(--color-indicator-widget-text);
+    line-height: 24px;
+
 }
 
 #incVirtModLbl {
