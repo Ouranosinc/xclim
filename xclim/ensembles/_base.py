@@ -8,7 +8,7 @@ from __future__ import annotations
 from collections.abc import Sequence
 from glob import glob
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 import numpy as np
 import xarray as xr
@@ -217,7 +217,14 @@ def ensemble_percentiles(
     min_members: int | None = 1,
     weights: xr.DataArray | None = None,
     split: bool = True,
-    method: str = "linear",
+    method: Literal[
+        "linear",
+        "interpolated_inverted_cdf",
+        "hazen",
+        "weibull",
+        "median_unbiased",
+        "normal_unbiased",
+    ] = "linear",
 ) -> xr.DataArray | xr.Dataset:
     """Calculate ensemble statistics between a results from an ensemble of climate simulations.
 
@@ -246,16 +253,8 @@ def ensemble_percentiles(
     split : bool
         Whether to split each percentile into a new variable
         or concatenate the output along a new "percentiles" dimension.
-    method : str, optional
-        This parameter specifies the method to use for estimating the percentile, see the `numpy.percentile`
-        documentation for more information. The following methods are supported
-
-          - 'interpolated_inverted_cdf'
-          - 'hazen'
-          - 'weibull'
-          - 'linear'  (default)
-          - 'median_unbiased'
-          - 'normal_unbiased'
+    method : {"linear", "interpolated_inverted_cdf", "hazen", "weibull", "median_unbiased", "normal_unbiased"}
+        Method to use for estimating the percentile, see the `numpy.percentile` documentation for more information.
 
     Returns
     -------
