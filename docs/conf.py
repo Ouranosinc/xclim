@@ -309,11 +309,11 @@ html_theme_options = {
     ],
     "light_css_variables": {
         "color-table-rows-even": "#eeebee",
-        "color-copybutton": "#000"
+        "color-copybutton": "#000",
     },
     "dark_css_variables": {
         "color-table-rows-even": "#303335",
-        "color-copybutton": "#fff"
+        "color-copybutton": "#fff",
     },
 }
 
