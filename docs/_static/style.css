@@ -38,7 +38,7 @@ td.name {
 }
 
 tr:nth-child(even) {
-  background-color: #dddddd;
+  background-color: var(--color-foreground-border);
 }
 
 dd {
@@ -99,6 +99,63 @@ code > .indName {
     background-color: #ddd;
 }
 
-#incVirtModLbl {
+#incVirtModLbl { 
     display: inline;
+}
+
+/* extend furo for inline ".only-dark" elements */
+body .only-dark-inline,
+body .only-light-inline {
+  display: none !important;
+}
+
+body[data-theme="dark"] .only-dark-inline,
+body[data-theme="light"] .only-light-inline {
+    display: inline !important;
+}
+@media not print {
+  body[data-theme="dark"] .only-dark-inline,
+  body[data-theme="light"] .only-light-inline {
+    display: inline !important;
+  }
+  @media (prefers-color-scheme: dark) {
+    body:not([data-theme="light"]) .only-dark-inline{
+      display: inline !important;
+    }
+  }
+  @media (prefers-color-scheme: light) {
+    body:not([data-theme="dark"]) .only-light-inline{
+      display: inline !important;
+    }
+  }
+}
+
+img.xclim-logo-small.only-dark-inline {
+    width: 91px;
+    height: 103px;
+    margin: 0;
+    padding: 0;
+    background-color: transparent;
+    background-repeat: no-repeat;
+    border-image-width: 0px;
+    border: none;
+    border-image-width: 0px;
+    background-image: url("xclim-logo-small-dark.png");
+}
+
+img.xclim-logo-small.only-light-inline {
+    width: 91px;
+    height: 103px;
+    margin: 0;
+    padding: 0;
+    background-color: transparent;
+    background-repeat: no-repeat;
+    border: none;
+    border-image-width: 0px;
+    background-image: url("xclim-logo-small-light.png");
+}
+
+img.xclim-logo-small.no-theme {
+  display: none;
+  width: 0px;
 }
