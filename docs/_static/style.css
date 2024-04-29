@@ -159,3 +159,7 @@ img.xclim-logo-small.no-theme {
   display: none;
   width: 0px;
 }
+
+button.copybtn svg {
+  stroke: var(--color-content-foreground);
+}
