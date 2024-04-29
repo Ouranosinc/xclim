@@ -718,7 +718,7 @@ def standardized_index_fit_params(
         Name of the fitting method, such as `ML` (maximum likelihood), `APP` (approximate). The approximate method
         uses a deterministic function that doesn't involve any optimization.
     zero_inflated : bool
-        If True, the zeroes of `da` are treated separately.
+        If True, the zeroes of `da` are treated separately when fitting a probability density function.
     fitkwargs : dict, optional
         Kwargs passed to ``xclim.indices.stats.fit`` used to impose values of certains parameters (`floc`, `fscale`).
     offset: Quantified
@@ -740,6 +740,13 @@ def standardized_index_fit_params(
     * Gamma ("gamma") : "ML", "APP", "PWM"
     * Log-logistic ("fisk") : "ML", "APP"
     * "APP" method only supports two-parameter distributions. Parameter `loc` will be set to 0 (setting `floc=0` in `fitkwargs`).
+
+    When using the zero inflated option, : A probability density function :math:`\texttt{pdf}_0(X)` is fitted for :math:`X \neq 0`
+    and a supplementary parameter :math:`\pi` takes into account the probability of :math:`X = 0`. The full probability density
+    function is a piecewise function
+
+    .. math::
+      \texttt{pdf}(X) = \pi  \texttt{ if }  X=0  \texttt{ else } (1-\pi) \texttt{pdf}_0(X)
     """
     fitkwargs = fitkwargs or {}
     if method == "APP":
