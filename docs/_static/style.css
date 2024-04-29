@@ -38,7 +38,7 @@ td.name {
 }
 
 tr:nth-child(even) {
-  background-color: var(--color-table-border);
+  background-color: var(--color-table-rows-even);
 }
 
 dd {
@@ -109,10 +109,6 @@ body .only-light-inline {
   display: none !important;
 }
 
-body[data-theme="dark"] .only-dark-inline,
-body[data-theme="light"] .only-light-inline {
-    display: inline !important;
-}
 @media not print {
   body[data-theme="dark"] .only-dark-inline,
   body[data-theme="light"] .only-light-inline {
@@ -127,6 +123,15 @@ body[data-theme="light"] .only-light-inline {
     body:not([data-theme="dark"]) .only-light-inline{
       display: inline !important;
     }
+  }
+}
+
+@media print {
+  .only-light-inline{
+    display: inline !important;
+  }
+  .only-dark-inline{
+    display: none !important;
   }
 }
 
@@ -161,5 +166,5 @@ img.xclim-logo-small.no-theme {
 }
 
 button.copybtn.copybtn svg {
-  stroke: var(--color-content-foreground);
+  stroke: var(--color-copybutton);
 }

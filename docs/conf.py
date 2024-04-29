@@ -307,6 +307,14 @@ html_theme_options = {
             "class": "",
         },
     ],
+    "light_css_variables": {
+        "color-table-rows-even": "#eeebee",
+        "color-copybutton": "#000"
+    },
+    "dark_css_variables": {
+        "color-table-rows-even": "#303335",
+        "color-copybutton": "#fff"
+    },
 }
 
 html_sidebars = {
