@@ -1259,8 +1259,8 @@ def standardized_precipitation_evapotranspiration_index(
         Kwargs passed to ``xclim.indices.stats.fit`` used to impose values of certains parameters (`floc`, `fscale`).
     offset : Quantified
         For distributions bounded by zero (e.g. "gamma", "fisk"), the two-parameters distributions only accept positive
-        values. An offset can be added to make sure this is the case. This option will be removed in xclim >=0.49.0, ``xclim``
-        will rely on a proper use three-parameters distributions instead.
+        values. An offset can be added to make sure this is the case. This option will be removed in xclim >=0.50.0, ``xclim``
+        will rely on proper use of three-parameters distributions instead.
     cal_start : DateStr, optional
         Start date of the calibration period. A `DateStr` is expected, that is a `str` in format `"YYYY-MM-DD"`.
         Default option `None` means that the calibration period begins at the start of the input dataset.

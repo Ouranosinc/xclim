@@ -756,7 +756,7 @@ def standardized_index_fit_params(
                 "Location parameter `loc` will be set to 0. To avoid this warning, set `floc=0` manually in `fitkwargs`."
             )
     if offset:
-        warnings.warn("Inputting an offset will be deprecated in xclim>=0.49.0. ")
+        warnings.warn("Inputting an offset will be deprecated in xclim>=0.50.0. ")
     if offset is not None:
         with xr.set_options(keep_attrs=True):
             da = da + convert_units_to(offset, da, context="hydro")
