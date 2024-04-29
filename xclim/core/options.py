@@ -22,6 +22,7 @@ MISSING_OPTIONS = "missing_options"
 RUN_LENGTH_UFUNC = "run_length_ufunc"
 SDBA_EXTRA_OUTPUT = "sdba_extra_output"
 SDBA_ENCODE_CF = "sdba_encode_cf"
+ALLOW_SORTQUANTILE = "allow_sortquantile"
 KEEP_ATTRS = "keep_attrs"
 
 MISSING_METHODS: dict[str, Callable] = {}
@@ -35,11 +36,13 @@ OPTIONS = {
     RUN_LENGTH_UFUNC: "auto",
     SDBA_EXTRA_OUTPUT: False,
     SDBA_ENCODE_CF: False,
+    ALLOW_SORTQUANTILE: False,
     KEEP_ATTRS: "xarray",
 }
 
 _LOUDNESS_OPTIONS = frozenset(["log", "warn", "raise"])
 _RUN_LENGTH_UFUNC_OPTIONS = frozenset(["auto", True, False])
+_ALLOW_SORTQUANTILE_OPTIONS = frozenset([True, False])
 _KEEP_ATTRS_OPTIONS = frozenset(["xarray", True, False])
 
 
@@ -66,6 +69,7 @@ _VALIDATORS = {
     RUN_LENGTH_UFUNC: _RUN_LENGTH_UFUNC_OPTIONS.__contains__,
     SDBA_EXTRA_OUTPUT: lambda opt: isinstance(opt, bool),
     SDBA_ENCODE_CF: lambda opt: isinstance(opt, bool),
+    ALLOW_SORTQUANTILE: _ALLOW_SORTQUANTILE_OPTIONS.__contains__,
     KEEP_ATTRS: _KEEP_ATTRS_OPTIONS.__contains__,
 }
 
@@ -163,6 +167,10 @@ class set_options:
     run_length_ufunc : str
       Whether to use the 1D ufunc version of run length algorithms or the dask-ready broadcasting version.
       Default is ``"auto"``, which means the latter is used for dask-backed and large arrays.
+    allow_sortquantile : bool
+      If `True`,  the optimal function between ``np.nanquantile`` or ``sdba.nbutils._sortquantile` is chosen.
+      `_sortquantile` is optimal when the number of quantiles is large (in absolute and relatively to array size).
+      Default is `False` in which case ``np.nanquantile`` is selected.
     sdba_extra_output : bool
         Whether to add diagnostic variables to outputs of sdba's `train`, `adjust`
         and `processing` operations. Details about these additional variables are given in the object's

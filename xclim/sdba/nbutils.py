@@ -4,14 +4,12 @@ Numba-accelerated Utilities
 """
 from __future__ import annotations
 
-from os import environ
-
 import numpy as np
 from numba import boolean, float32, float64, guvectorize, int64, njit
 from xarray import DataArray
 from xarray.core import utils
 
-USE_NANQUANTILE = environ.get("USE_NANQUANTILE", False)
+from xclim.core.options import ALLOW_SORTQUANTILE, OPTIONS
 
 
 @njit(
@@ -38,10 +36,10 @@ def numnan_sorted(s):
 
 
 @njit(
-    [
-        float32[:](float32[:], float32[:]),
-        float64[:](float64[:], float64[:]),
-    ],
+    # [
+    #     float32[:](float32[:], float32[:]),
+    #     float64[:](float64[:], float64[:]),
+    # ],
     fastmath=False,
     nogil=True,
     cache=False,
@@ -65,45 +63,45 @@ def _sortquantile(arr, q):
 
 
 @njit(
-    [
-        float32[:](float32[:], float32[:]),
-        float64[:](float64[:], float64[:]),
-    ],
+    # [
+    #     float32[:](float32[:], float32[:]),
+    #     float64[:](float64[:], float64[:]),
+    # ],
     fastmath=False,
     nogil=True,
     cache=False,
 )
-def _choosequantile(arr, q):
+def _choosequantile(arr, q, allow_sortquantile=OPTIONS[ALLOW_SORTQUANTILE]):
     # When the number of quantiles requested is large,
     # it becomes more efficient to sort the array,
     # and simply obtain the quantiles from the sorted array.
     # The first method is O(arr.size*q.size),
     # the second O(arr.size*log(arr.size) + q.size) amortized.
-    if (q.size <= 10) or (q.size <= np.log(arr.size)) or (USE_NANQUANTILE):
-        return np.nanquantile(arr, q).astype(arr.dtype)
-    else:
+    if allow_sortquantile and len(q) > 10 and len(q) > np.log(len(arr)):
         return _sortquantile(arr, q)
+    else:
+        return np.nanquantile(arr, q).astype(arr.dtype)
 
 
 @njit(
-    [
-        float32[:](float32[:], float32[:]),
-        float64[:](float64[:], float64[:]),
-        float32[:, :](float32[:, :], float32[:]),
-        float64[:, :](float64[:, :], float64[:]),
-    ],
+    # [
+    #     float32[:](float32[:], float32[:]),
+    #     float64[:](float64[:], float64[:]),
+    #     float32[:, :](float32[:, :], float32[:]),
+    #     float64[:, :](float64[:, :], float64[:]),
+    # ],
     fastmath=False,
     nogil=True,
     cache=False,
 )
-def _quantile(arr, q):
+def _quantile(arr, q, allow_sortquantile=OPTIONS[ALLOW_SORTQUANTILE]):
     if arr.ndim == 1:
         out = np.empty((q.size,), dtype=arr.dtype)
-        out[:] = _choosequantile(arr, q)
+        out[:] = _choosequantile(arr, q, allow_sortquantile)
     else:
         out = np.empty((arr.shape[0], q.size), dtype=arr.dtype)
         for index in range(out.shape[0]):
-            out[index] = _choosequantile(arr[index], q)
+            out[index] = _choosequantile(arr[index], q, allow_sortquantile)
     return out
 
 
@@ -141,6 +139,7 @@ def vecquantiles(da, rnk, dim):
 
 def quantile(da, q, dim):
     """Compute the quantiles from a fixed list `q`."""
+    allow_sortquantile = OPTIONS[ALLOW_SORTQUANTILE]
     # We have two cases :
     # - When all dims are processed : we stack them and use _quantile1d
     # - When the quantiles are vectorized over some dims, these are also stacked and then _quantile2D is used.
@@ -164,7 +163,7 @@ def quantile(da, q, dim):
         da = da.stack({extra: set(da.dims) - {tem}})
         da = da.transpose(..., tem)
         res = DataArray(
-            _quantile(da.values, qc),
+            _quantile(da.values, qc, allow_sortquantile),
             dims=(extra, "quantiles"),
             coords={extra: da[extra], "quantiles": q},
             attrs=da.attrs,
@@ -173,7 +172,7 @@ def quantile(da, q, dim):
     else:
         # All dims are processed
         res = DataArray(
-            _quantile(da.values, qc),
+            _quantile(da.values, qc, allow_sortquantile),
             dims=("quantiles"),
             coords={"quantiles": q},
             attrs=da.attrs,
