@@ -38,7 +38,7 @@ td.name {
 }
 
 tr:nth-child(even) {
-  background-color: var(--color-foreground-border);
+  background-color: var(--color-table-border);
 }
 
 dd {
@@ -160,6 +160,6 @@ img.xclim-logo-small.no-theme {
   width: 0px;
 }
 
-button.copybtn svg {
+button.copybtn.copybtn svg {
   stroke: var(--color-content-foreground);
 }
