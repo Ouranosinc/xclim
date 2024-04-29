@@ -9,7 +9,6 @@ more specifically :cite:p:`collins_long-term_2013` (AR5) and :cite:cts:`ipccatla
 
 from __future__ import annotations
 
-import warnings
 from inspect import Parameter, signature
 
 import numpy as np
@@ -20,7 +19,6 @@ from xclim.core.formatting import gen_call_string, update_xclim_history
 from xclim.indices.generic import compare, detrend
 
 __all__ = [
-    "change_significance",
     "robustness_categories",
     "robustness_coefficient",
     "robustness_fractions",
@@ -33,7 +31,7 @@ SIGNIFICANCE_TESTS = {}
 New tests must be decorated with :py:func:`significance_test` and fulfill the following requirements:
 
 - Function name should begin by "_", registered test name is the function name without its first character and with _ replaced by -.
-- Function must accept 2 positional arguments : fut and ref (see :py:func:`change_significance` for definitions)
+- Function must accept 2 positional arguments : fut and ref (see :py:func:`robustness_fractions` for definitions)
 - Function may accept other keyword-only arguments.
 - Function must return 2 values :
     + `changed` : 1D boolean array along `realization`. True for realization with significant change.
@@ -42,7 +40,7 @@ New tests must be decorated with :py:func:`significance_test` and fulfill the fo
 
 
 def significance_test(func):
-    """Register a significance test for use in :py:func:`change_significance`.
+    """Register a significance test for use in :py:func:`robustness_fractions`.
 
     See :py:data:`SIGNIFICANCE_TESTS`.
     """
@@ -292,67 +290,6 @@ def robustness_fractions(  # noqa: C901
             out[ncrd].attrs.update(crd.attrs)
 
     return out
-
-
-def change_significance(  # noqa: C901
-    fut: xr.DataArray | xr.Dataset,
-    ref: xr.DataArray | xr.Dataset,
-    test: str | None = "ttest",
-    weights: xr.DataArray | None = None,
-    p_vals: bool = False,
-    **kwargs,
-) -> (
-    tuple[xr.DataArray | xr.Dataset, xr.DataArray | xr.Dataset]
-    | tuple[
-        xr.DataArray | xr.Dataset,
-        xr.DataArray | xr.Dataset,
-        xr.DataArray | xr.Dataset | None,
-    ]
-):
-    """Backwards-compatible implementation of :py:func:`robustness_fractions`."""
-    warnings.warn(
-        (
-            "Function change_significance is deprecated as of xclim 0.47 and will be removed in 0.49. "
-            "Please use robustness_fractions instead."
-        ),
-        FutureWarning,
-    )
-
-    if isinstance(fut, xr.Dataset):
-        outs = {
-            v: robustness_fractions(
-                fut[v],
-                ref[v] if isinstance(ref, xr.Dataset) else ref,
-                test=test,
-                weights=weights[v] if isinstance(weights, xr.Dataset) else weights,
-                **kwargs,
-            )
-            for v in fut.data_vars.keys()
-        }
-        change_frac = xr.merge([fracs.changed.rename(v) for v, fracs in outs.items()])
-        pos_frac = xr.merge(
-            [
-                (fracs.changed_positive / fracs.changed).rename(v)
-                for v, fracs in outs.items()
-            ]
-        )
-        if p_vals:
-            if "pvals" in list(outs.values())[0]:
-                pvals = xr.merge([fracs.pvals.rename(v) for v, fracs in outs.items()])
-            else:
-                pvals = None
-            return change_frac, pos_frac, pvals
-        return change_frac, pos_frac
-
-    fracs = robustness_fractions(fut, ref, test=test, weights=weights, **kwargs)
-    # different def.
-    # Old "pos_frac" is fraction of change_frac that is positive
-    # New change_pos_frac is fraction of all that is both positive and significant
-    pos_frac = fracs.changed_positive / fracs.changed
-
-    if p_vals:
-        return fracs.changed, pos_frac, fracs.pvals if "pvals" in fracs else None
-    return fracs.changed, pos_frac
 
 
 def robustness_categories(
@@ -667,7 +604,7 @@ def _ipcc_ar6_c(fut, ref, *, ref_pi=None):
     return changed, None
 
 
-# Add doc of each significance test to the `change_significance` output.
+# Add doc of each significance test to `robustness_fractions` output's doc.
 def _gen_test_entry(namefunc):
     name, func = namefunc
     doc = func.__doc__.replace("\n    ", "\n\t\t").rstrip()
