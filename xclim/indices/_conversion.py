@@ -1280,7 +1280,7 @@ def clausius_clapeyron_scaled_precipitation(
     return pr_out
 
 
-def _get_D_from_M(time):
+def _get_D_from_M(time):  # noqa: N802
     start = time[0].dt.strftime("%Y-%m-01").item()
     yrmn = time[-1].dt.strftime("%Y-%m").item()
     end = f"{yrmn}-{time[-1].dt.daysinmonth.item()}"
@@ -1475,7 +1475,7 @@ def potential_evapotranspiration(
         ab = tr - 0.0123 * pr
         pet = 0.0013 * ra * (tas + 17.0) * ab**0.76
         pet = xr.where(np.isnan(ab**0.76), 0, pet)
-        pett = pet.clip(0)  # mm/month
+        pet = pet.clip(0)  # mm/month
 
     elif method in ["mcguinnessbordne05", "MB05"]:
         if tas is None:
