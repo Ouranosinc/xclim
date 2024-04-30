@@ -2,8 +2,70 @@
 Changelog
 =========
 
-v0.48 (unreleased)
-------------------
+v0.49.0 (unreleased)
+--------------------
+Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), Juliette Lavoie (:user:`juliettelavoie`), David Huard (:user:`huard`), Gabriel Rondeau-Genesse (:user:`RondeauG`), Javier Diez-Sierra (:user:`JavierDiezSierra`).
+
+Announcements
+^^^^^^^^^^^^^
+* `xclim` has migrated its development branch name from `master` to `main`. (:issue:`1667`, :pull:`1669`).
+
+New features and enhancements
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+* Indicator ``xclim.atmos.potential_evapotranspiration`` and indice ``xclim.indices.potential_evapotranspiration`` now accept a new value (`DA02`) for argument `method` implementing potential evapotranspiration based on Droogers and Allen (2002). (:issue:`1710`, :pull:`1723`).
+
+New indicators
+^^^^^^^^^^^^^^
+* New ``snw_season_length`` and ``snd_season_length`` computing the duration between the start and the end of the snow season, both defined as the first day of a continuous period with snow above/under a threshold. Previous versions of these indicators were renamed ``snw_days_above`` and ``snd_days_above`` to better reflect what they computed : the number of days with snow above a given threshold (with no notion of continuity). (:issue:`1703`, :pull:`1708`).
+* Added ``atmos.duff_moisture_code``, part of the Canadian Forest Fire Weather Index System. It was already an output of the `atmos.cffwis_indices`, but now has its own standalone indicator. (:issue:`1698`, :pull:`1712`).
+
+Breaking changes
+^^^^^^^^^^^^^^^^
+* The previously deprecated functions ``xclim.sdba.processing.construct_moving_yearly_window`` and ``xclim.sdba.processing.unpack_moving_yearly_window`` have been removed. These functions have been replaced by ``xclim.core.calendar.stack_periods`` and ``xclim.core.calendar.unstack_periods``. (:pull:`1717`).
+* The previously deprecated function ``xclim.ensembles.change_significance`` has been removed. (:pull:`1737`).
+* Indicators ``snw_season_length`` and ``snd_season_length`` have been modified, see above.
+* The `hargeaves85`/`hg85` method for the ``potential_evapotranspiration`` indicator and indice has been modified for precision and consistency with recent academic literature. (:issue:`1710`, :pull:`1723`).
+
+
+Bug fixes
+^^^^^^^^^
+* Fixed an bug in sdba's ``map_groups`` that prevented passing DataArrays with cftime coordinates if the ``sdba_encode_cf`` option was True. (:issue:`1673`, :pull:`1674`).
+* Fixed bug (:issue:`1678`, :pull:`1679`) in sdba where a loaded training dataset could not be used for adjustment
+* Fixed bug with loess smoothing for an array full of NaNs. (:pull:`1699`).
+* Fixed and adapted ``time_bnds`` to the newest xarray. (:pull:`1700`).
+* Fixed "agreement fraction" in ``robustness_fractions`` to distinguish between negative change and no change. Added "negative" and "changed negative" fractions (:issue:`1690`, :pull:`1711`).
+* ``make_criteria`` now skips columns with NaNs across all realizations. (:pull:`1713`).
+* Fixed bug QuantileDeltaMapping adjustment not working for seasonal grouping (:issue:`1704`, :pull:`1716`).
+
+Internal changes
+^^^^^^^^^^^^^^^^
+* Added "doymin" and "doymax" to the possible operations of ``generic.stats``. Fixed a warning issue when ``op`` was "integral". (:pull:`1672`).
+* Reorganized GitHub CI build matrices to run the doctests more consistently. (:pull:`1709`).
+* Removed the experimental `numba` and `llvm` dependency installation steps in the `tox.ini` file. Added `numba@main` to the upstream dependencies. (:pull:`1709`).
+* Added the `tox-gh` dependency to the development installation recipe. This will soon be required for running the `tox` test ensemble on GitHub Workflows. (:pull:`1709`).
+* Added the `vulture` static code analysis tool for finding dead code to the development dependency list and linters (makefile, tox and pre-commit hooks). (:pull:`1717`).
+* Added error message when using `xclim.indices.stats.dist_method` with `nnlf` and included note in docstring. (:issue:`1683`, :pull:`1714`).
+
+v0.48.2 (2024-02-26)
+--------------------
+Contributors to this version: Juliette Lavoie (:user:`juliettelavoie`).
+
+Bug fixes
+^^^^^^^^^
+* Add ``measure`` to YAML validation schema (for building sdba properties) and allow skipping the YAML validation when building modules. (:pull:`1664`).
+
+v0.48.1 (2024-02-20)
+--------------------
+Contributors to this version: Trevor James Smith (:user:`Zeitsperre`).
+
+Bug fixes
+^^^^^^^^^
+* Fixed an issue with missing `conda` dependencies in the `xclim` documentation. (:pull:`1657`).
+* Adjusted the Mastodon publishing workflow. (:pull:`1657`).
+* Pinned `nbconvert` to address regressions when building the documentation. (:pull:`1658`).
+
+v0.48.0 (2024-02-19)
+--------------------
 Contributors to this version: Juliette Lavoie (:user:`juliettelavoie`), Pascal Bourgault (:user:`aulemahal`), Trevor James Smith (:user:`Zeitsperre`), David Huard (:user:`huard`), Éric Dupuis (:user:`coxipi`), Dante Castro (:user:`profesorpaiche`), Gabriel Rondeau-Genesse (:user:`RondeauG`).
 
 Announcements
@@ -21,15 +83,16 @@ New features and enhancements
 * Support ``indexer`` keyword in YAML indicator description. (:issue:`1522`, :pull:`1561`).
 * New ``xclim.core.calendar.stack_periods`` and ``unstack_periods`` for performing ``rolling(time=...).construct(..., stride=...)`` but with non-uniform temporal periods like years or months. They replace ``xclim.sdba.processing.construct_moving_yearly_window`` and ``unpack_moving_yearly_window`` which are deprecated and will be removed in a future release.
 * New ``as_dataset`` options for ``xclim.set_options``. When True, indicators will output Datasets instead of DataArrays. (:issue:`1257`, :pull:`1625`).
-* Added new option for UTCI calculation to cap low wind velocities to a minimum of 0.5 m/s following Bröde (2012) guidelines. (:issue:`1634`, :pull:`1635`).
+* Added new option for ``universal_thermal_climate_index`` calculation (``wind_cap_min: bool``) to cap low wind velocities to a minimum of 0.5 m/s following Bröde (2012) guidelines. (:issue:`1634`, :pull:`1635`).
 * Added option ``never_reached`` to ``degree_days_exceedance_date`` to assign a custom value when the sum threshold is never reached. (:issue:`1459`, :pull:`1647`).
 * Added option ``min_members`` to ensemble statistics to mask elements when the number of valid members is under a threshold. (:issue:`1459`, :pull:`1647`).
 * Distribution instances can now be passed to the ``dist`` argument of most statistical indices. (:pull:`1644`).
-* Added a new `xclim.indices.generic.select_rolling_resample_op` function to allow for computing rolling statistics. (:issue:`1480`, :pull:`1643`).
+* Added a new ``xclim.indices.generic.select_rolling_resample_op`` function to allow for computing rolling statistics. (:issue:`1480`, :pull:`1643`).
+* Add the possibility to use a group with a window in ``xc.sdba.processing.reordering``. (:pull:`1566`).
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
-* `xclim` base Python version has been raised to `python>=3.9`. Python3.9+ coding conventions are now supported. (:issue:`1268`, :pull:`1565`).
+* `xclim` base Python version has been raised to Python3.9. Python3.9+ coding conventions are now supported. (:issue:`1268`, :pull:`1565`).
 * `xclim` base dependencies have been raised to `pandas>=2.2.0` and `xarray>=2023.11.0` to reflect changes to time frequency codes introduced in `pandas==2.2.0`. (:issue:`1534`, :pull:`1565`; see also: `pydata/xarray GH/8394 <https://github.com/pydata/xarray/issues/8394>`_ and ). Many default frequency string outputs have been modified (:
     * 'Y' (year) -> 'YE' (year end). (see: `pandas PR/55792 <https://github.com/pandas-dev/pandas/pull/55792>`_).
     * 'M' (month) -> 'ME' (month end). (see: `pandas PR/52064 <https://github.com/pandas-dev/pandas/pull/52064>`_).
@@ -37,12 +100,12 @@ Breaking changes
     * 'A' and 'AS' have been removed (use 'YE' and 'YS' instead). (see: `pandas PR/55252 <https://github.com/pandas-dev/pandas/pull/55252>`_). ('YE' is only supported for cftime data in `xarray >= 2024.1.1`).
     * 'T' (minute), 'L' (millisecond), 'U' (microsecond), and 'N' (nanosecond) -> 'min', 'ms', 'us', and 'ns'. (see: `pandas PR/54061 <https://github.com/pandas-dev/pandas/pull/54061>`_).
 * `bump2version` has been replaced with `bump-my-version` to bump the version number using configurations set in the ``pyproject.toml`` file. (:issue:`1557`, :pull:`1569`).
-* `xclim`'s units registry and units formatting are now extended from `cf-xarray`. The exponent sign "^" is now never added in the ``units`` attribute. For example, square meters are given as "m2" instead of "m^2" by xclim, both are still accepted as input. (:issue:`1010`, :pull:`1590`).
+* `xclim`'s units registry and units formatting are now extended from `cf-xarray`. The exponent sign "^" is now never added in the ``units`` attribute. For example, square meters are given as "m2" instead of "m^2" by `xclim`. Both signs are still accepted as inputs. (:issue:`1010`, :pull:`1590`).
 * `yamale` is now listed as a core dependency (was previously listed in the `dev` installation recipe). (:issue:`1595`, :pull:`1596`).
 * Due to a licensing limitation, the calculation of empirical orthogonal function  based on `eofs` (``xclim.sdba.properties.first_eof``) has been removed from `xclim`. (:issue:`1620`, :pull:`1621`).
 * `black` formatting style has been updated to the 2024 stable conventions. `isort` has been added to the `dev` installation recipe. (:pull:`1626`).
-* The indice and indicator for ``winter_storm`` has been removed (deprecated since `xclim` v0.46.0 in favour of ``snd_storm_days``). (:pull:`1565`).
-* `xclim` has dropped support for `scipy` version below v1.9.0 and `numpy` versions below v1.20.0. (:pull:`1565`).
+* The indice and indicator for ``winter_storm`` has been removed (deprecated since `xclim>=0.46.0` in favour of ``snd_storm_days``). (:pull:`1565`).
+* `xclim` has dropped support for `scipy` versions below v1.9.0 and `numpy` versions below v1.20.0. (:pull:`1565`).
 * For generic function ``select_resample_op`` and ``core.units.to_agg_units``, operation "sum" will now return the same units as the input, and not implicitly be translated to an "integral". (:issue:`1645`, :pull:`1649`).
 * `lmoments3` was removed as a dependency of `xclim` due to incompatible licensing (GPLv3 vs `xclim`'s Apache 2.0). Depending on the outcome of efforts to modify the licensing of `lmoments3`, this change may eventually be reverted. See `Ouranosinc/lmoments3#12 <https://github.com/Ouranosinc/lmoments3/issues/12>`_. See also the "frequency analysis" notebook for an example on how to continue using the probability weighted moments method for fitting distributions. (:issue:`1620`, :pull:`1644`).
 * `xclim` is now compatible with `pytest` versions `~=7.0.0` and `>=8.0.1`. (:pull:`1632`).
@@ -50,10 +113,10 @@ Breaking changes
 Bug fixes
 ^^^^^^^^^
 * Fixed passing ``missing=0`` to ``xclim.core.calendar.convert_calendar``. (:issue:`1562`, :pull:`1563`).
-* Fix wrong `window` attributes in ``xclim.indices.standardized_precipitation_index``, ``xclim.indices.standardized_precipitation_evapotranspiration_index``. (:issue:`1552`  :pull:`1554`).
-* Fix the daily case `freq='D'` of ``xclim.stats.preprocess_standardized_index`` (:issue:`1602`  :pull:`1607`).
+* Fixed wrong `window` attributes in ``xclim.indices.standardized_precipitation_index``, ``xclim.indices.standardized_precipitation_evapotranspiration_index``. (:issue:`1552`  :pull:`1554`).
+* Fixed the daily case ``freq='D'`` for ``xclim.stats.preprocess_standardized_index`` (:issue:`1602`  :pull:`1607`).
 * Several spelling mistakes have been corrected within the documentation and codebase. (:pull:`1576`).
-* Added missing ``xclim.ensembles.robustness_fractions`` and ``xclim.ensembles.robustness_categories`` in api doc section. (:pull:`1630`).
+* Added missing ``xclim.ensembles.robustness_fractions`` and ``xclim.ensembles.robustness_categories`` in API doc section. (:pull:`1630`).
 * Fixed an issue that can occur when fetching the testing data and running tests on Windows systems. Adapted a few existing tests for Windows support. (:pull:`1648`).
 
 Internal changes
@@ -73,7 +136,8 @@ Internal changes
 * `dev` formatting tools (`black`, `blackdoc`, `isort`) are now pinned to their `pre-commit` hook version equivalents in both ``pyproject.toml`` and ``tox.ini``. (:pull:`1626`).
 * `black`, `isort`, and `pyupgrade` code formatters no longer target Python3.8 coding style conventions. (:pull:`1565`).
 * The GitHub Workflows now include builds to run tests against both Windows and MacOS. (:pull:`1648`).
-* `prefetch` is now available as a `tox` environment modifier in order to download the testing data before launching `pytest` (e.g. `py3x-prefetch`). This is . (:pull:`1648`).
+* `prefetch` is now available as a `tox` environment modifier in order to download the testing data before launching `pytest` (e.g. `py3x-prefetch`). This is required for running tests the first time on Windows if the testing data has not already been installed. (:pull:`1648`).
+* Removed `step-security/harden-runner` from the `finish` job as it does not work on container images lacking `sudo` access. (:pull:`1655`).
 
 v0.47.0 (2023-12-01)
 --------------------

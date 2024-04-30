@@ -3,7 +3,7 @@ name: xclim Testing Suite
 on:
   push:
     branches:
-      - master
+      - main
     paths-ignore:
       - CHANGES.rst
       - README.rst
@@ -22,9 +22,9 @@ env:
   XCLIM_TESTDATA_BRANCH: v2023.12.14
 
 concurrency:
-  # For a given workflow, if we push to the same branch, cancel all previous builds on that branch except on master.
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
+  # For a given workflow, if we push to the same branch, cancel all previous builds on that branch except on main.
+  group: "${{ github.workflow }}-${{ github.ref }}"
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 permissions:
   contents: read
@@ -44,7 +44,7 @@ jobs:
           - "3.9"
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@63c24ba6bd7ba022e95695ff85de572c04a18142 # v2.7.0
+        uses: step-security/harden-runner@a4aa98b93cab29d9b1101a6143fb8bce00e2eac4 # v2.7.1
         with:
           disable-sudo: true
           egress-policy: block
@@ -52,13 +52,14 @@ jobs:
             files.pythonhosted.org:443
             github.com:443
             pypi.org:443
-      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+      - uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # v4.1.4
       - name: Set up Python${{ matrix.python-version }}
-        uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
+        uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d # v5.1.0
         with:
           python-version: ${{ matrix.python-version }}
-      - name: Install pylint and tox
-        run: pip install pylint tox~=4.0
+      - name: Install pip, pylint, and tox
+        run: |
+          python -m pip install flit pip~=24.0 pylint tox~=4.0
       - name: Run pylint
         run: |
           python -m pylint --rcfile=.pylintrc.toml --disable=import-error --exit-zero xclim
@@ -79,7 +80,7 @@ jobs:
             python-version: "3.9"
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@63c24ba6bd7ba022e95695ff85de572c04a18142 # v2.7.0
+        uses: step-security/harden-runner@a4aa98b93cab29d9b1101a6143fb8bce00e2eac4 # v2.7.1
         with:
           disable-sudo: true
           egress-policy: block
@@ -90,14 +91,14 @@ jobs:
             github.com:443
             pypi.org:443
             raw.githubusercontent.com:443
-      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+      - uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # v4.1.4
       - name: Set up Python${{ matrix.python-version }}
-        uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
+        uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d # v5.1.0
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install tox
         run: |
-          python -m pip install tox~=4.0
+          python -m pip install flit pip~=24.0 tox~=4.0
       - name: Test with tox
         run: |
           python -m tox -e ${{ matrix.tox-env }}
@@ -118,17 +119,17 @@ jobs:
       matrix:
         include:
           # Windows builds
-          - tox-env: py39-prefetch-coverage
+          - tox-env: py39-coverage-prefetch
             python-version: "3.9"
             markers: -m 'not slow'
             os: windows-latest
           # macOS builds
-          - tox-env: py310-coverage
+          - tox-env: py310-coverage-lmoments-doctest
             python-version: "3.10"
             markers: -m 'not slow'
             os: macos-latest
           # Linux builds
-          - tox-env: py39-coverage-sbck
+          - tox-env: py39-coverage-sbck-doctest
             python-version: "3.9"
             markers: -m 'not slow'
             os: ubuntu-latest
@@ -139,11 +140,11 @@ jobs:
             python-version: "3.11"
             markers: -m 'not slow'
             os: ubuntu-latest
-          - tox-env: py312-coverage-numba
+          - tox-env: py312-coverage-lmoments-doctest
             python-version: "3.12"
             markers: -m 'not slow'
             os: ubuntu-latest
-          - tox-env: notebooks_doctests
+          - tox-env: notebooks
             python-version: "3.10"
             os: ubuntu-latest
           - tox-env: offline-prefetch
@@ -152,13 +153,14 @@ jobs:
             os: ubuntu-latest
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@63c24ba6bd7ba022e95695ff85de572c04a18142 # v2.7.0
+        uses: step-security/harden-runner@a4aa98b93cab29d9b1101a6143fb8bce00e2eac4 # v2.7.1
         with:
           egress-policy: block
           allowed-endpoints: >
             api.github.com:443
             azure.archive.ubuntu.com:80
             coveralls.io:443
+            dap.service.does.not.exist:443
             esm.ubuntu.com:443
             files.pythonhosted.org:443
             github.com:443
@@ -167,19 +169,19 @@ jobs:
             ppa.launchpadcontent.net:443
             pypi.org:443
             raw.githubusercontent.com:443
-      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+      - uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # v4.1.4
       - name: Install Eigen3
         if: contains(matrix.tox-env, 'sbck')
         run: |
           sudo apt-get update
           sudo apt-get install libeigen3-dev
       - name: Set up Python${{ matrix.python-version }}
-        uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
+        uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d # v5.1.0
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install tox
         run: |
-          python -m pip install tox~=4.0
+          python -m pip install flit pip~=24.0 tox~=4.0 tox-gh
       - name: Test with tox
         run: |
           python -m tox -e ${{ matrix.tox-env }} -- ${{ matrix.markers }}
@@ -191,23 +193,22 @@ jobs:
 
   test-conda:
     needs: lint
-    name: test-conda-Python${{ matrix.python-version }}
+    name: Python${{ matrix.python-version }} (Conda, ${{ matrix.os }})
     if: |
       contains(github.event.pull_request.labels.*.name, 'approved') ||
       (github.event.review.state == 'approved') ||
       (github.event_name == 'push')
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        include:
-          - python-version: "3.9"
-          - python-version: "3.12"
+        os: [ubuntu-latest]
+        python-version: ["3.9", "3.12"]
     defaults:
       run:
         shell: bash -l {0}
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@63c24ba6bd7ba022e95695ff85de572c04a18142 # v2.7.0
+        uses: step-security/harden-runner@a4aa98b93cab29d9b1101a6143fb8bce00e2eac4 # v2.7.1
         with:
           disable-sudo: true
           egress-policy: block
@@ -222,9 +223,9 @@ jobs:
             pypi.org:443
             raw.githubusercontent.com:443
             repo.anaconda.com:443
-      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+      - uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # v4.1.4
       - name: Setup Conda (Micromamba) with Python${{ matrix.python-version }}
-        uses: mamba-org/setup-micromamba@8767fb704bd78032e9392f0386bf46950bdd1194 # v1.8.0
+        uses: mamba-org/setup-micromamba@422500192359a097648154e8db4e39bdb6c6eed7 # v1.8.1
         with:
           cache-downloads: true
           cache-environment: true
@@ -276,10 +277,6 @@ jobs:
     runs-on: ubuntu-latest
     container: python:3-slim
     steps:
-      - name: Harden Runner
-        uses: step-security/harden-runner@63c24ba6bd7ba022e95695ff85de572c04a18142 # v2.7.0
-        with:
-          egress-policy: audit
       - name: Coveralls Finished
         run: |
           python -m pip install --upgrade coveralls

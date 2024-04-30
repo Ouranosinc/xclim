@@ -87,7 +87,7 @@ Contributing to xclim
 * If you would like to contribute code or documentation (which is greatly appreciated!), check out the `Contributing Guidelines`_ before you begin!
 
 .. _issue tracker: https://github.com/Ouranosinc/xclim/issues
-.. _Contributing Guidelines: https://github.com/Ouranosinc/xclim/blob/master/CONTRIBUTING.rst
+.. _Contributing Guidelines: https://github.com/Ouranosinc/xclim/blob/main/CONTRIBUTING.rst
 
 How to cite this library
 ------------------------
@@ -103,7 +103,7 @@ License
 This is free software: you can redistribute it and/or modify it under the terms of the `Apache License 2.0`_. A copy of this license is provided in the code repository (`LICENSE`_).
 
 .. _Apache License 2.0: https://opensource.org/license/apache-2-0/
-.. _LICENSE: https://github.com/Ouranosinc/xclim/blob/master/LICENSE
+.. _LICENSE: https://github.com/Ouranosinc/xclim/blob/main/LICENSE
 
 Credits
 -------
@@ -161,7 +161,7 @@ This package was created with Cookiecutter_ and the `audreyfeldroy/cookiecutter-
         :alt: JOSS
 
 .. |license| image:: https://img.shields.io/github/license/Ouranosinc/xclim.svg
-        :target: https://github.com/Ouranosinc/xclim/blob/master/LICENSE
+        :target: https://github.com/Ouranosinc/xclim/blob/main/LICENSE
         :alt: License
 
 .. |security| image:: https://bestpractices.coreinfrastructure.org/projects/6041/badge
@@ -184,12 +184,12 @@ This package was created with Cookiecutter_ and the `audreyfeldroy/cookiecutter-
         :target: https://github.com/psf/black
         :alt: Python Black
 
-.. |logo| image:: https://raw.githubusercontent.com/Ouranosinc/xclim/master/docs/logos/xclim-logo-small.png
+.. |logo| image:: https://raw.githubusercontent.com/Ouranosinc/xclim/main/docs/logos/xclim-logo-small.png
         :target: https://github.com/Ouranosinc/xclim
         :alt: Xclim
 
-.. |pre-commit| image:: https://results.pre-commit.ci/badge/github/Ouranosinc/xclim/master.svg
-        :target: https://results.pre-commit.ci/latest/github/Ouranosinc/xclim/master
+.. |pre-commit| image:: https://results.pre-commit.ci/badge/github/Ouranosinc/xclim/main.svg
+        :target: https://results.pre-commit.ci/latest/github/Ouranosinc/xclim/main
         :alt: pre-commit.ci status
 
 .. |ruff| image:: https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json

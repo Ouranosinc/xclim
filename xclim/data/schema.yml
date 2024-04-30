@@ -15,6 +15,7 @@ indicator:
   compute: str(required=False)
   input: map(str(), key=str(), required=False)
   keywords: str(required=False)
+  measure: str(required=False)
   missing: str(required=False)
   missing_options: map(key=str(), required=False)
   notes: str(required=False)

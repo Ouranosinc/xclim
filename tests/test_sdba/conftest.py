@@ -105,7 +105,7 @@ def qds_month():
 
 
 @pytest.fixture
-def ref_hist_sim_tuto(socket_enabled):
+def ref_hist_sim_tuto(socket_enabled):  # noqa: F841
     """Return ref, hist, sim time series of air temperature.
 
     socket_enabled is a fixture that enables the use of the internet to download the tutorial dataset while the

@@ -130,7 +130,7 @@ Or download the `tarball`_:
 
 .. code-block:: shell
 
-    $ curl -OL https://github.com/Ouranosinc/xclim/tarball/master
+    $ curl -OL https://github.com/Ouranosinc/xclim/tarball/main
 
 Once you have extracted a copy of the source, you can install it with pip:
 
@@ -145,7 +145,7 @@ Alternatively, you can also install a local development copy via `flit`_:
     $ flit install [--symlink] xclim
 
 .. _Github repo: https://github.com/Ouranosinc/xclim
-.. _tarball: https://github.com/Ouranosinc/xclim/tarball/master
+.. _tarball: https://github.com/Ouranosinc/xclim/tarball/main
 .. _flit: https://flit.pypa.io/en/stable
 
 Creating a Conda environment

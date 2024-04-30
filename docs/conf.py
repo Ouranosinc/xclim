@@ -47,7 +47,7 @@ indicators = {}
 for module in ("atmos", "generic", "land", "seaIce", "icclim", "anuclim"):
     for key, ind in getattr(xclim.indicators, module).__dict__.items():
         if hasattr(ind, "_registry_id") and ind._registry_id in registry:  # noqa
-            indicators[ind._registry_id] = {
+            indicators[ind._registry_id] = {  # noqa
                 "realm": ind.realm,
                 "title": ind.title,
                 "name": key,
@@ -55,7 +55,7 @@ for module in ("atmos", "generic", "land", "seaIce", "icclim", "anuclim"):
                 "abstract": ind.abstract,
                 "vars": {
                     param_name: f"{param.description}"
-                    for param_name, param in ind._all_parameters.items()
+                    for param_name, param in ind._all_parameters.items()  # noqa
                     if param.kind < 2 and not param.injected
                 },
                 "keywords": ind.keywords.split(","),
@@ -221,7 +221,7 @@ nbsphinx_prolog = r"""
 
 .. only:: html
 
-    `Download this notebook from github. <https://github.com/Ouranosinc/xclim/raw/master/docs/{{ docname }}>`_
+    `Download this notebook from github. <https://github.com/Ouranosinc/xclim/raw/main/docs/{{ docname }}>`_
 """
 nbsphinx_timeout = 300
 nbsphinx_allow_errors = False
@@ -234,8 +234,8 @@ templates_path = ["_templates"]
 # If a list of string, all suffixes will be understood as restructured text variants.
 source_suffix = [".rst"]
 
-# The master toctree document.
-master_doc = "index"
+# The root toctree document.
+root_doc = "index"
 
 # General information about the project.
 project = "xclim"
@@ -338,7 +338,7 @@ latex_elements = {
 # [howto, manual, or own class]).
 latex_documents = [
     (
-        master_doc,
+        root_doc,
         "xclim.tex",
         "xclim Documentation",
         "xclim Project Development Team",
@@ -350,7 +350,15 @@ latex_documents = [
 
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
-man_pages = [(master_doc, "xclim", "xclim Documentation", [author], 1)]
+man_pages = [
+    (
+        root_doc,
+        "xclim",
+        "xclim Documentation",
+        [author],
+        1,
+    )
+]
 
 # -- Options for Texinfo output ----------------------------------------
 
@@ -359,7 +367,7 @@ man_pages = [(master_doc, "xclim", "xclim Documentation", [author], 1)]
 #  dir menu entry, description, category)
 texinfo_documents = [
     (
-        master_doc,
+        root_doc,
         "xclim",
         "xclim Documentation",
         author,

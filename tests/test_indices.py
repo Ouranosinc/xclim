@@ -2820,21 +2820,27 @@ class TestSnowMaxDoy:
 
 
 class TestSnowCover:
-    @pytest.mark.parametrize("length", [0, 10])
+    @pytest.mark.parametrize("length", [0, 15])
     def test_snow_season_length(self, snd_series, snw_series, length):
         a = np.zeros(366)
-        a[10 : 10 + length] = 0.3
+        a[20 : 20 + length] = 0.3
         snd = snd_series(a)
         # kg m-2 = 1000 kg m-3 * 1 m
         snw = snw_series(1000 * a)
 
         out = xci.snd_season_length(snd)
         assert len(out) == 2
-        assert out[0] == length
+        if length == 0:
+            assert out.isnull().all()
+        else:
+            assert out[0] == length
 
         out = xci.snw_season_length(snw)
         assert len(out) == 2
-        assert out[0] == length
+        if length == 0:
+            assert out.isnull().all()
+        else:
+            assert out[0] == length
 
     def test_continous_snow_season_start(self, snd_series, snw_series):
         a = np.arange(366) / 100.0
@@ -2851,7 +2857,7 @@ class TestSnowCover:
 
         out = xci.snw_season_start(snw)
         assert len(out) == 2
-        np.testing.assert_array_equal(out, [snw.time.dt.dayofyear[0].data + 2, np.nan])
+        np.testing.assert_array_equal(out, [snw.time.dt.dayofyear[0].data + 1, np.nan])
         for attr in ["units", "is_dayofyear", "calendar"]:
             assert attr in out.attrs.keys()
         assert out.attrs["units"] == ""
@@ -3169,19 +3175,39 @@ class TestPotentialEvapotranspiration:
 
         out = xci.potential_evapotranspiration(tn, tx, tm, lat=lat, method="HG85")
         np.testing.assert_allclose(
-            out.isel(lat=0, time=2), [3.962589 / 86400], rtol=1e-2
+            out.isel(lat=0, time=2), [4.030339 / 86400], rtol=1e-2
+        )
+
+    def test_droogersallen02(
+        self, tasmin_series, tasmax_series, tas_series, pr_series, lat_series
+    ):
+        lat = lat_series([45])
+        tn = tasmin_series(
+            np.array([0, 5, 10]), start="1990-01-01", freq="MS", units="degC"
+        ).expand_dims(lat=lat)
+        tx = tasmax_series(
+            np.array([10, 15, 20]), start="1990-01-01", freq="MS", units="degC"
+        ).expand_dims(lat=lat)
+        tg = tas_series(
+            np.array([5, 10, 15]), start="1990-01-01", freq="MS", units="degC"
+        ).expand_dims(lat=lat)
+        pr = pr_series(
+            np.array([30, 0, 60]), start="1990-01-01", freq="MS", units="mm/month"
+        ).expand_dims(lat=lat)
+
+        out = xci.potential_evapotranspiration(
+            tasmin=tn, tasmax=tx, tas=tg, pr=pr, lat=lat, method="DA02"
+        )
+        np.testing.assert_allclose(
+            out.isel(lat=0, time=2), [2.32659206 / 86400], rtol=1e-2
         )
 
     def test_thornthwaite(self, tas_series, lat_series):
         lat = lat_series([45])
-        time_std = date_range(
-            "1990-01-01", "1990-12-01", freq="MS", calendar="standard"
-        )
-        tm = xr.DataArray(
-            np.ones((time_std.size, 1)),
-            dims=("time", "lat"),
-            coords={"time": time_std, "lat": lat},
-            attrs={"units": "degC"},
+        tm = (
+            tas_series(np.ones(12), start="1990-01-01", freq="MS", units="degC")
+            .expand_dims(lat=lat)
+            .assign_coords(lat=lat)
         )
 
         # find lat implicitly
@@ -3241,31 +3267,38 @@ class TestPotentialEvapotranspiration:
         )
 
 
-def test_water_budget_from_tas(pr_series, tasmin_series, tasmax_series, lat_series):
+def test_water_budget_from_tas(
+    pr_series, tasmin_series, tasmax_series, tas_series, lat_series
+):
     lat = lat_series([45])
     pr = pr_series(np.array([10, 10, 10])).expand_dims(lat=lat)
     pr.attrs["units"] = "mm/day"
-    tn = tasmin_series(np.array([0, 5, 10]) + K2C).expand_dims(lat=lat)
-    tx = tasmax_series(np.array([10, 15, 20]) + K2C).expand_dims(lat=lat)
+    tn = (
+        tasmin_series(np.array([0, 5, 10]) + K2C)
+        .expand_dims(lat=lat)
+        .assign_coords(lat=lat)
+    )
+    tx = (
+        tasmax_series(np.array([10, 15, 20]) + K2C)
+        .expand_dims(lat=lat)
+        .assign_coords(lat=lat)
+    )
 
     out = xci.water_budget(pr, tasmin=tn, tasmax=tx, lat=lat, method="BR65")
     np.testing.assert_allclose(out[0, 2], 6.138921 / 86400, rtol=2e-3)
 
     out = xci.water_budget(pr, tasmin=tn, tasmax=tx, lat=lat, method="HG85")
-    np.testing.assert_allclose(out[0, 2], 6.037411 / 86400, rtol=2e-3)
+    np.testing.assert_allclose(out[0, 2], 5.969661 / 86400, rtol=2e-3)
 
-    time_std = date_range("1990-01-01", "1990-12-01", freq="MS", calendar="standard")
-    tm = xr.DataArray(
-        np.ones((time_std.size, 1)),
-        dims=("time", "lat"),
-        coords={"time": time_std, "lat": lat},
-        attrs={"units": "degC"},
+    tm = (
+        tas_series(np.ones(12), start="1990-01-01", freq="MS", units="degC")
+        .expand_dims(lat=lat)
+        .assign_coords(lat=lat)
     )
-    prm = xr.DataArray(
-        np.ones((time_std.size, 1)) * 10,
-        dims=("time", "lat"),
-        coords={"time": time_std, "lat": lat},
-        attrs={"units": "mm/day"},
+    prm = (
+        pr_series(np.ones(12) * 10, start="1990-01-01", freq="MS", units="mm/day")
+        .expand_dims(lat=lat)
+        .assign_coords(lat=lat)
     )
 
     # find lat implicitly

@@ -57,6 +57,8 @@ def make_criteria(ds: xarray.Dataset | xarray.DataArray):
 
     `ds2` will have all variables with the same dimensions, so if the original dataset had variables with different
     dimensions, the added dimensions are filled with NaNs.
+    Also, note that criteria that are all NaN (such as lat/lon coordinates with no data) are dropped from `crit` to avoid issues with
+    the clustering algorithms, so the original dataset might not be able to be fully reconstructed.
     The `to_dataset` part can be skipped if the original input was a DataArray.
     """
 
@@ -113,6 +115,9 @@ def make_criteria(ds: xarray.Dataset | xarray.DataArray):
     else:
         # Easy peasy, skip all the convoluted stuff
         crit = _make_crit(ds)
+
+    # drop criteria that are all NaN
+    crit = crit.dropna(dim="criteria", how="all")
     return crit.rename("criteria")
 
 

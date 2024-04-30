@@ -112,6 +112,22 @@
     "m12": [
       "decembre"
     ],
+    "integral": [
+      "intégré",
+      "intégrée",
+      "intégrés",
+      "intégrées",
+      "intégrale"
+    ],
+    "count": [
+      "décompte"
+    ],
+    "doymin": [
+      "jour du minimum"
+    ],
+    "doymax": [
+      "jour du maximum"
+    ],
     "mean": [
       "moyen",
       "moyenne",
@@ -783,6 +799,12 @@
     "long_name": "Indice forêt météo",
     "description": "Évaluation numérique de l'intensité du feu."
   },
+  "DMC": {
+    "long_name": "Indice de l'humus",
+    "description": "Évaluation numérique de la teneur moyenne en eau des couches organiques peu tassées de moyenne épaisseur.",
+    "title": "Indice de l'humus (IH)",
+    "abstract": "Évaluation numérique de la teneur moyenne en eau des couches organiques peu tassées de moyenne épaisseur."
+  },
   "WIND_POWER_POTENTIAL": {
     "long_name": "Potentiel de production éolienne",
     "description": "Potentiel de production éolienne estimé par une courbe de puissance semi-idéalisée d'une turbine, paramétrée par une vitesse minimale de démarrage {cut_in}, la vitesse nominale {rated}, et la vitesse d'arrêt {cut_out}.",
@@ -989,39 +1011,51 @@
   },
   "SND_SEASON_LENGTH": {
     "long_name": "Durée de couvert de neige",
-    "description": "Nombre {freq:m} de jours où l'épaisseur de neige est au-dessus ou égale à {thresh}.",
+    "description": "La saison débute lorsque l'épaisseur de neige est au-dessus de {thresh} durant {window} jours et se termine lorsqu'elle redescend sous {thresh} durant {window} jours.",
     "title": "Durée du couvert de neige (épaisseur)",
-    "abstract": "Nombre de jours pendant lesquels l'épaisseur de neige est au-dessus ou égale à un seuil donné."
+    "abstract": "Durée de la saison de neige, qui débute lorsque la quantité de neige est au-dessus d'un seuil donné durant un nombre de jours donné et qui se termine lorsqu'elle redescend sous le seuil pour la même durée."
   },
   "SND_SEASON_START": {
     "long_name": "Date du début du couvert de neige continu",
     "description": "Première date à laquelle l'épaisseur de neige est au-dessus ou égale à {thresh} pendant au moins {window} jours consécutifs.",
-    "title": "Date du début du couvert de neige (épaisseur)",
+    "title": "Date de début du couvert de neige (épaisseur)",
     "abstract": "Première date à partir de laquelle l'épaisseur de neige est au-dessus ou égale à un seuil donné pendant un nombre de jours consécutifs."
   },
   "SND_SEASON_END": {
     "long_name": "Date de fin du couvert de neige continu",
     "description": "Première date à laquelle l'épaisseur de neige passe sous {thresh} pendant au moins {window} jours consécutifs suite à l'établissement du couvert de neige.",
-    "title": "Date du fin du couvert de neige (épaisseur)",
+    "title": "Date de fin du couvert de neige (épaisseur)",
     "abstract": "Première date à partir de laquelle l'épaisseur de neige est sous à un seuil donné pendant un nombre de jours consécutifs suite au début du couvert de neige."
+  },
+  "SND_DAYS_ABOVE": {
+    "long_name": "Nombre de jours avec de la neige au sol.",
+    "description": "Nombre {freq:m} de jours avec au moins {thresh} de neige au sol.",
+    "title": "Nombre de jours avec de la neige au sol (épaisseur)",
+    "abstract": "Nombre de jours avec une épaisseur de neige au sol au-dessus d'un seuil donné."
   },
   "SNW_SEASON_LENGTH": {
     "long_name": "Durée de couvert de neige",
-    "description": "Nombre {freq:m} de jours où la quantité de neige est au-dessus ou égale à {thresh}.",
+    "description": "La saison débute lorsque la quantité de neige est au-dessus de {thresh} durant {window} jours et se termine lorsqu'elle redescend sous {thresh} durant {window} jours.",
     "title": "Durée du couvert de neige (quantité)",
-    "abstract": "Nombre de jours pendant lesquels la quantité de neige est au-dessus ou égale à un seuil donné."
+    "abstract": "Durée de la saison de neige, qui débute lorsque l'épaisseur de neige est au-dessus d'un seuil donné durant un nombre de jours donnés et qui se termine lorsqu'elle redescend sous le seuil pour la même durée."
   },
   "SNW_SEASON_START": {
     "long_name": "Date du début du couvert de neige continu",
     "description": "Première date à laquelle la quantité de neige est au-dessus ou égale à {thresh} pendant au moins {window} jours consécutifs.",
-    "title": "Date du début du couvert de neige (quantité)",
+    "title": "Date de début du couvert de neige (quantité)",
     "abstract": "Première date à partir de laquelle la quantité de neige est au-dessus ou égale à un seuil donné pendant un nombre de jours consécutifs."
   },
   "SNW_SEASON_END": {
     "long_name": "Date de fin du couvert de neige continu",
     "description": "Première date à laquelle la quantité de neige passe sous {thresh} pendant au moins {window} jours consécutifs suite à l'établissement du couvert de neige.",
-    "title": "Date du fin du couvert de neige (quantité)",
+    "title": "Date de fin du couvert de neige (quantité)",
     "abstract": "Première date à partir de laquelle la quantité de neige est sous à un seuil donné pendant un nombre de jours consécutifs suite au début du couvert de neige."
+  },
+  "SNW_DAYS_ABOVE": {
+    "long_name": "Nombre de jours avec de la neige au sol.",
+    "description": "Nombre {freq:m} de jours avec au moins {thresh} de neige au sol.",
+    "title": "Nombre de jours avec de la neige au sol (quantité)",
+    "abstract": "Nombre de jours avec une quantité de neige au sol au-dessus d'un seuil donné."
   },
   "SND_MAX": {
     "long_name": "Épaisseur de neige maximale",
