@@ -87,10 +87,10 @@ def cold_spell_duration_index(
     window : int
         Minimum number of days with temperature below threshold to qualify as a cold spell.
     freq : str
-      Resampling frequency.
+        Resampling frequency.
     resample_before_rl : bool
-      Determines if the resampling should take place before or after the run
-      length encoding (or a similar algorithm) is applied to runs.
+        Determines if the resampling should take place before or after the run
+        length encoding (or a similar algorithm) is applied to runs.
     bootstrap : bool
         Flag to run bootstrapping of percentiles. Used by percentile_bootstrap decorator.
         Bootstrapping is only useful when the percentiles are computed on a part of the studied sample.
@@ -170,15 +170,15 @@ def cold_and_dry_days(
     Parameters
     ----------
     tas : xarray.DataArray
-      Mean daily temperature values
+        Mean daily temperature values
     pr : xarray.DataArray
-      Daily precipitation.
+        Daily precipitation.
     tas_per : xarray.DataArray
-      First quartile of daily mean temperature computed by month.
+        First quartile of daily mean temperature computed by month.
     pr_per : xarray.DataArray
-      First quartile of daily total precipitation computed by month.
+        First quartile of daily total precipitation computed by month.
     freq : str
-      Resampling frequency.
+        Resampling frequency.
 
     Warnings
     --------
@@ -188,7 +188,7 @@ def cold_and_dry_days(
     Returns
     -------
     xarray.DataArray
-      The total number of days when cold and dry conditions coincide.
+        The total number of days when cold and dry conditions coincide.
 
     Notes
     -----
@@ -236,15 +236,15 @@ def warm_and_dry_days(
     Parameters
     ----------
     tas : xarray.DataArray
-      Mean daily temperature values
+        Mean daily temperature values
     pr : xarray.DataArray
-      Daily precipitation.
+        Daily precipitation.
     tas_per : xarray.DataArray
-      Third quartile of daily mean temperature computed by month.
+        Third quartile of daily mean temperature computed by month.
     pr_per : xarray.DataArray
-      First quartile of daily total precipitation computed by month.
+        First quartile of daily total precipitation computed by month.
     freq : str
-      Resampling frequency.
+        Resampling frequency.
 
     Warnings
     --------
@@ -254,7 +254,7 @@ def warm_and_dry_days(
     Returns
     -------
     xarray.DataArray,
-      The total number of days when warm and dry conditions coincide.
+        The total number of days when warm and dry conditions coincide.
 
     Notes
     -----
@@ -302,15 +302,15 @@ def warm_and_wet_days(
     Parameters
     ----------
     tas : xarray.DataArray
-      Mean daily temperature values
+        Mean daily temperature values
     pr : xarray.DataArray
-      Daily precipitation.
+        Daily precipitation.
     tas_per : xarray.DataArray
-      Third quartile of daily mean temperature computed by month.
+        Third quartile of daily mean temperature computed by month.
     pr_per : xarray.DataArray
-      Third quartile of daily total precipitation computed by month.
+        Third quartile of daily total precipitation computed by month.
     freq : str
-      Resampling frequency.
+        Resampling frequency.
 
     Warnings
     --------
@@ -320,7 +320,7 @@ def warm_and_wet_days(
     Returns
     -------
     xarray.DataArray
-      The total number of days when warm and wet conditions coincide.
+        The total number of days when warm and wet conditions coincide.
 
     Notes
     -----
@@ -372,20 +372,20 @@ def cold_and_wet_days(
     Parameters
     ----------
     tas : xarray.DataArray
-      Mean daily temperature values
+        Mean daily temperature values
     pr : xarray.DataArray
-      Daily precipitation.
+        Daily precipitation.
     tas_per : xarray.DataArray
-      First quartile of daily mean temperature computed by month.
+        First quartile of daily mean temperature computed by month.
     pr_per : xarray.DataArray
-      Third quartile of daily total precipitation computed by month.
+        Third quartile of daily total precipitation computed by month.
     freq : str
-      Resampling frequency.
+        Resampling frequency.
 
     Returns
     -------
     xarray.DataArray
-      The total number of days when cold and wet conditions coincide.
+        The total number of days when cold and wet conditions coincide.
 
     Notes
     -----
@@ -438,31 +438,31 @@ def multiday_temperature_swing(
     Parameters
     ----------
     tasmin : xarray.DataArray
-      Minimum daily temperature.
+        Minimum daily temperature.
     tasmax : xarray.DataArray
-      Maximum daily temperature.
+        Maximum daily temperature.
     thresh_tasmin : Quantified
-      The temperature threshold needed to trigger a freeze event.
+        The temperature threshold needed to trigger a freeze event.
     thresh_tasmax : Quantified
-      The temperature threshold needed to trigger a thaw event.
+        The temperature threshold needed to trigger a thaw event.
     window : int
-      The minimal length of spells to be included in the statistics.
+        The minimal length of spells to be included in the statistics.
     op : {'mean', 'sum', 'max', 'min', 'std', 'count'}
-      The statistical operation to use when reducing the list of spell lengths.
+        The statistical operation to use when reducing the list of spell lengths.
     op_tasmin : {"<", "<=", "lt", "le"}
-      Comparison operation for tasmin. Default: "<=".
+        Comparison operation for tasmin. Default: "<=".
     op_tasmax : {">", ">=", "gt", "ge"}
-      Comparison operation for tasmax. Default: ">".
+        Comparison operation for tasmax. Default: ">".
     freq : str
-      Resampling frequency.
+        Resampling frequency.
     resample_before_rl : bool
-      Determines if the resampling should take place before or after the run
-      length encoding (or a similar algorithm) is applied to runs.
+        Determines if the resampling should take place before or after the run
+        length encoding (or a similar algorithm) is applied to runs.
 
     Returns
     -------
     xarray.DataArray, [time]
-      {freq} {op} length of diurnal temperature cycles exceeding thresholds.
+        {freq} {op} length of diurnal temperature cycles exceeding thresholds.
 
     Notes
     -----
@@ -518,22 +518,22 @@ def daily_temperature_range(
     Parameters
     ----------
     tasmin : xarray.DataArray
-      Minimum daily temperature.
+        Minimum daily temperature.
     tasmax : xarray.DataArray
-      Maximum daily temperature.
+        Maximum daily temperature.
     freq : str
-      Resampling frequency.
+        Resampling frequency.
     op : {'min', 'max', 'mean', 'std'} or func
-      Reduce operation. Can either be a DataArray method or a function that can be applied to a DataArray.
+        Reduce operation. Can either be a DataArray method or a function that can be applied to a DataArray.
 
     Returns
     -------
     xarray.DataArray, [same units as tasmin]
-      The average variation in daily temperature range for the given time period.
+        The average variation in daily temperature range for the given time period.
 
     Notes
     -----
-    For a default calculation using `op='mean'` :
+    For a default calculation using `op='mean'`:
 
     Let :math:`TX_{ij}` and :math:`TN_{ij}` be the daily maximum and minimum temperature at day :math:`i` of period
     :math:`j`. Then the mean diurnal temperature range in period :math:`j` is:
@@ -561,16 +561,16 @@ def daily_temperature_range_variability(
     Parameters
     ----------
     tasmin : xarray.DataArray
-      Minimum daily temperature.
+        Minimum daily temperature.
     tasmax : xarray.DataArray
-      Maximum daily temperature.
+        Maximum daily temperature.
     freq : str
-      Resampling frequency.
+        Resampling frequency.
 
     Returns
     -------
     xarray.DataArray, [same units as tasmin]
-      The average day-to-day variation in daily temperature range for the given time period.
+        The average day-to-day variation in daily temperature range for the given time period.
 
     Notes
     -----
@@ -600,16 +600,16 @@ def extreme_temperature_range(
     Parameters
     ----------
     tasmin : xarray.DataArray
-      Minimum daily temperature.
+        Minimum daily temperature.
     tasmax : xarray.DataArray
-      Maximum daily temperature.
+        Maximum daily temperature.
     freq : str
-      Resampling frequency.
+        Resampling frequency.
 
     Returns
     -------
     xarray.DataArray, [same units as tasmin]
-      Extreme intra-period temperature range for the given time period.
+        Extreme intra-period temperature range for the given time period.
 
     Notes
     -----
@@ -626,7 +626,7 @@ def extreme_temperature_range(
 
     out = tx_max - tn_min
     u = str2pint(tasmax.units)
-    out.attrs["units"] = pint2cfunits(u - u)
+    out = out.assign_attrs(units=pint2cfunits(u - u))
     return out
 
 
@@ -654,27 +654,27 @@ def heat_wave_frequency(
     Parameters
     ----------
     tasmin : xarray.DataArray
-      Minimum daily temperature.
+        Minimum daily temperature.
     tasmax : xarray.DataArray
-      Maximum daily temperature.
+        Maximum daily temperature.
     thresh_tasmin : Quantified
-      The minimum temperature threshold needed to trigger a heatwave event.
+        The minimum temperature threshold needed to trigger a heatwave event.
     thresh_tasmax : Quantified
-      The maximum temperature threshold needed to trigger a heatwave event.
-    window:  int
-      Minimum number of days with temperatures above thresholds to qualify as a heatwave.
+        The maximum temperature threshold needed to trigger a heatwave event.
+    window : int
+        Minimum number of days with temperatures above thresholds to qualify as a heatwave.
     freq : str
-      Resampling frequency.
-    op: {">", ">=", "gt", "ge"}
-      Comparison operation. Default: ">".
+        Resampling frequency.
+    op : {">", ">=", "gt", "ge"}
+        Comparison operation. Default: ">".
     resample_before_rl : bool
-      Determines if the resampling should take place before or after the run
-      length encoding (or a similar algorithm) is applied to runs.
+        Determines if the resampling should take place before or after the run
+        length encoding (or a similar algorithm) is applied to runs.
 
     Returns
     -------
     xarray.DataArray, [dimensionless]
-      Number of heatwave at the requested frequency.
+        Number of heatwave at the requested frequency.
 
     Notes
     -----
@@ -704,7 +704,7 @@ def heat_wave_frequency(
         window=window,
         freq=freq,
     )
-    out.attrs["units"] = ""
+    out = out.assign_attrs(unit="")
     return out
 
 
@@ -734,27 +734,27 @@ def heat_wave_max_length(
     Parameters
     ----------
     tasmin : xarray.DataArray
-      Minimum daily temperature.
+        Minimum daily temperature.
     tasmax : xarray.DataArray
-      Maximum daily temperature.
+        Maximum daily temperature.
     thresh_tasmin : Quantified
-      The minimum temperature threshold needed to trigger a heatwave event.
+        The minimum temperature threshold needed to trigger a heatwave event.
     thresh_tasmax : Quantified
-      The maximum temperature threshold needed to trigger a heatwave event.
+        The maximum temperature threshold needed to trigger a heatwave event.
     window : int
-      Minimum number of days with temperatures above thresholds to qualify as a heatwave.
+        Minimum number of days with temperatures above thresholds to qualify as a heatwave.
     freq : str
-      Resampling frequency.
+        Resampling frequency.
     op : {">", ">=", "gt", "ge"}
-      Comparison operation. Default: ">".
+        Comparison operation. Default: ">".
     resample_before_rl : bool
-      Determines if the resampling should take place before or after the run
-      length encoding (or a similar algorithm) is applied to runs.
+        Determines if the resampling should take place before or after the run
+        length encoding (or a similar algorithm) is applied to runs.
 
     Returns
     -------
     xarray.DataArray, [time]
-      Maximum length of heatwave at the requested frequency.
+        Maximum length of heatwave at the requested frequency.
 
     Notes
     -----
@@ -813,27 +813,27 @@ def heat_wave_total_length(
     Parameters
     ----------
     tasmin : xarray.DataArray
-      Minimum daily temperature.
+        Minimum daily temperature.
     tasmax : xarray.DataArray
-      Maximum daily temperature.
+        Maximum daily temperature.
     thresh_tasmin : str
-      The minimum temperature threshold needed to trigger a heatwave event.
+        The minimum temperature threshold needed to trigger a heatwave event.
     thresh_tasmax : str
-      The maximum temperature threshold needed to trigger a heatwave event.
+        The maximum temperature threshold needed to trigger a heatwave event.
     window : int
-      Minimum number of days with temperatures above thresholds to qualify as a heatwave.
+        Minimum number of days with temperatures above thresholds to qualify as a heatwave.
     freq : str
-      Resampling frequency.
+        Resampling frequency.
     op: {">", ">=", "gt", "ge"}
-      Comparison operation. Default: ">".
+        Comparison operation. Default: ">".
     resample_before_rl : bool
-      Determines if the resampling should take place before or after the run
-      length encoding (or a similar algorithm) is applied to runs.
+        Determines if the resampling should take place before or after the run
+        length encoding (or a similar algorithm) is applied to runs.
 
     Returns
     -------
     xarray.DataArray, [time]
-      Total length of heatwave at the requested frequency.
+        Total length of heatwave at the requested frequency.
 
     Notes
     -----
@@ -878,20 +878,20 @@ def liquid_precip_ratio(
     Parameters
     ----------
     pr : xarray.DataArray
-      Mean daily precipitation flux.
+        Mean daily precipitation flux.
     prsn : xarray.DataArray, optional
-      Mean daily solid precipitation flux.
+        Mean daily solid precipitation flux.
     tas : xarray.DataArray, optional
-      Mean daily temperature.
+        Mean daily temperature.
     thresh : Quantified
-      Threshold temperature under which precipitation is assumed to be solid.
+        Threshold temperature under which precipitation is assumed to be solid.
     freq : str
-      Resampling frequency.
+        Resampling frequency.
 
     Returns
     -------
     xarray.DataArray, [dimensionless]
-      Ratio of rainfall to total precipitation.
+        Ratio of rainfall to total precipitation.
 
     Notes
     -----
@@ -916,7 +916,7 @@ def liquid_precip_ratio(
     tot = pr.resample(time=freq).sum(dim="time")
     rain = tot - prsn.resample(time=freq).sum(dim="time")
     ratio = rain / tot
-    ratio.attrs["units"] = ""
+    ratio = ratio.assign_attrs(units="")
     return ratio
 
 
@@ -978,8 +978,10 @@ def precip_accumulation(
         pr = rain_approximation(pr, tas=tas, thresh=thresh, method="binary")
     elif phase == "solid":
         pr = snowfall_approximation(pr, tas=tas, thresh=thresh, method="binary")
+    # FIXME: rate2amount is decorated with `_register_conversion` and the type checker doesn't like it.
     pram: xarray.DataArray = rate2amount(pr)
-    return pram.resample(time=freq).sum(dim="time").assign_attrs(units=pram.units)
+    pram = pram.resample(time=freq).sum(dim="time").assign_attrs(units=pram.units)
+    return pram
 
 
 @declare_units(pr="[precipitation]", tas="[temperature]", thresh="[temperature]")
@@ -1000,20 +1002,20 @@ def precip_average(
     Parameters
     ----------
     pr : xarray.DataArray
-      Mean daily precipitation flux.
+        Mean daily precipitation flux.
     tas : xarray.DataArray, optional
-      Mean, maximum or minimum daily temperature.
+        Mean, maximum or minimum daily temperature.
     phase : {None, 'liquid', 'solid'}
-      Which phase to consider, "liquid" or "solid", if None (default), both are considered.
+        Which phase to consider, "liquid" or "solid", if None (default), both are considered.
     thresh : Quantified
-      Threshold of `tas` over which the precipication is assumed to be liquid rain.
+        Threshold of `tas` over which the precipication is assumed to be liquid rain.
     freq : str
-      Resampling frequency.
+        Resampling frequency.
 
     Returns
     -------
     xarray.DataArray, [length]
-      The averaged daily precipitation at the given time frequency for the given phase.
+        The averaged daily precipitation at the given time frequency for the given phase.
 
     Notes
     -----
@@ -1040,8 +1042,9 @@ def precip_average(
         pr = rain_approximation(pr, tas=tas, thresh=thresh, method="binary")
     elif phase == "solid":
         pr = snowfall_approximation(pr, tas=tas, thresh=thresh, method="binary")
-    pram: xarray.DataArray = rate2amount(pr)
-    return pram.resample(time=freq).mean(dim="time").assign_attrs(units=pram.units)
+    pram = rate2amount(pr)
+    pram = pram.resample(time=freq).mean(dim="time").assign_attrs(units=pram.units)
+    return pram
 
 
 # FIXME: Resample after run length?
@@ -1060,18 +1063,18 @@ def rain_on_frozen_ground_days(
     Parameters
     ----------
     pr : xarray.DataArray
-      Mean daily precipitation flux.
+        Mean daily precipitation flux.
     tas : xarray.DataArray
-      Mean daily temperature.
+        Mean daily temperature.
     thresh : Quantified
-      Precipitation threshold to consider a day as a rain event.
+        Precipitation threshold to consider a day as a rain event.
     freq : str
-      Resampling frequency.
+        Resampling frequency.
 
     Returns
     -------
     xarray.DataArray, [time]
-      The number of rain on frozen ground events per period.
+        The number of rain on frozen ground events per period.
 
     Notes
     -----
@@ -1126,20 +1129,20 @@ def high_precip_low_temp(
     Parameters
     ----------
     pr : xarray.DataArray
-      Mean daily precipitation flux.
+        Mean daily precipitation flux.
     tas : xarray.DataArray
-      Daily mean, minimum or maximum temperature.
+        Daily mean, minimum or maximum temperature.
     pr_thresh : Quantified
-      Precipitation threshold to exceed.
+        Precipitation threshold to exceed.
     tas_thresh : Quantified
-      Temperature threshold not to exceed.
+        Temperature threshold not to exceed.
     freq : str
-      Resampling frequency.
+        Resampling frequency.
 
     Returns
     -------
     xarray.DataArray, [time]
-      Count of days with high precipitation and low temperatures.
+        Count of days with high precipitation and low temperatures.
 
     Example
     -------
@@ -1176,23 +1179,23 @@ def days_over_precip_thresh(
     Parameters
     ----------
     pr : xarray.DataArray
-      Mean daily precipitation flux.
+        Mean daily precipitation flux.
     pr_per : xarray.DataArray
-      Percentile of wet day precipitation flux. Either computed daily (one value per day
-      of year) or computed over a period (one value per spatial point).
+        Percentile of wet day precipitation flux. Either computed daily (one value per day
+        of year) or computed over a period (one value per spatial point).
     thresh : Quantified
-       Precipitation value over which a day is considered wet.
+        Precipitation value over which a day is considered wet.
     freq : str
-      Resampling frequency.
+        Resampling frequency.
     bootstrap : bool
-      Flag to run bootstrapping of percentiles. Used by percentile_bootstrap decorator.
-      Bootstrapping is only useful when the percentiles are computed on a part of the studied sample.
-      This period, common to percentiles and the sample must be bootstrapped to avoid inhomogeneities with
-      the rest of the time series.
-      Keep bootstrap to False when there is no common period, it would give wrong results
-      plus, bootstrapping is computationally expensive.
-    op: {">", ">=", "gt", "ge"}
-      Comparison operation. Default: ">".
+        Flag to run bootstrapping of percentiles. Used by percentile_bootstrap decorator.
+        Bootstrapping is only useful when the percentiles are computed on a part of the studied sample.
+        This period, common to percentiles and the sample must be bootstrapped to avoid inhomogeneities with
+        the rest of the time series.
+        Keep bootstrap to False when there is no common period, it would give wrong results
+        plus, bootstrapping is computationally expensive.
+    op : {">", ">=", "gt", "ge"}
+        Comparison operation. Default: ">".
 
     Returns
     -------
@@ -1237,28 +1240,28 @@ def fraction_over_precip_thresh(
     Parameters
     ----------
     pr : xarray.DataArray
-      Mean daily precipitation flux.
+        Mean daily precipitation flux.
     pr_per : xarray.DataArray
-      Percentile of wet day precipitation flux. Either computed daily (one value per day
-      of year) or computed over a period (one value per spatial point).
+        Percentile of wet day precipitation flux. Either computed daily (one value per day
+        of year) or computed over a period (one value per spatial point).
     thresh : Quantified
-       Precipitation value over which a day is considered wet.
+        Precipitation value over which a day is considered wet.
     freq : str
-      Resampling frequency.
+        Resampling frequency.
     bootstrap : bool
-      Flag to run bootstrapping of percentiles. Used by percentile_bootstrap decorator.
-      Bootstrapping is only useful when the percentiles are computed on a part of the studied sample.
-      This period, common to percentiles and the sample must be bootstrapped to avoid inhomogeneities with
-      the rest of the time series.
-      Keep bootstrap to False when there is no common period, it would give wrong results
-      plus, bootstrapping is computationally expensive.
-    op: {">", ">=", "gt", "ge"}
-      Comparison operation. Default: ">".
+        Flag to run bootstrapping of percentiles. Used by percentile_bootstrap decorator.
+        Bootstrapping is only useful when the percentiles are computed on a part of the studied sample.
+        This period, common to percentiles and the sample must be bootstrapped to avoid inhomogeneities with
+        the rest of the time series.
+        Keep bootstrap to False when there is no common period, it would give wrong results
+        plus, bootstrapping is computationally expensive.
+    op : {">", ">=", "gt", "ge"}
+        Comparison operation. Default: ">".
 
     Returns
     -------
     xarray.DataArray, [dimensionless]
-      Fraction of precipitation over threshold during wet days.
+        Fraction of precipitation over threshold during wet days.
 
     """
     pr_per = convert_units_to(pr_per, pr, context="hydro")
@@ -1303,25 +1306,25 @@ def tg90p(
     Parameters
     ----------
     tas : xarray.DataArray
-      Mean daily temperature.
+        Mean daily temperature.
     tas_per : xarray.DataArray
-      90th percentile of daily mean temperature.
+        90th percentile of daily mean temperature.
     freq : str
-      Resampling frequency.
+        Resampling frequency.
     bootstrap : bool
-      Flag to run bootstrapping of percentiles. Used by percentile_bootstrap decorator.
-      Bootstrapping is only useful when the percentiles are computed on a part of the studied sample.
-      This period, common to percentiles and the sample must be bootstrapped to avoid inhomogeneities with
-      the rest of the time series.
-      Keep bootstrap to False when there is no common period, it would give wrong results
-      plus, bootstrapping is computationally expensive.
-    op: {">", ">=", "gt", "ge"}
-      Comparison operation. Default: ">".
+        Flag to run bootstrapping of percentiles. Used by percentile_bootstrap decorator.
+        Bootstrapping is only useful when the percentiles are computed on a part of the studied sample.
+        This period, common to percentiles and the sample must be bootstrapped to avoid inhomogeneities with
+        the rest of the time series.
+        Keep bootstrap to False when there is no common period, it would give wrong results
+        plus, bootstrapping is computationally expensive.
+    op : {">", ">=", "gt", "ge"}
+        Comparison operation. Default: ">".
 
     Returns
     -------
     xarray.DataArray, [time]
-      Count of days with daily mean temperature below the 10th percentile [days].
+        Count of days with daily mean temperature below the 10th percentile [days].
 
     Notes
     -----
@@ -1361,25 +1364,25 @@ def tg10p(
     Parameters
     ----------
     tas : xarray.DataArray
-      Mean daily temperature.
+        Mean daily temperature.
     tas_per : xarray.DataArray
-      10th percentile of daily mean temperature.
+        10th percentile of daily mean temperature.
     freq : str
-      Resampling frequency.
+        Resampling frequency.
     bootstrap : bool
-      Flag to run bootstrapping of percentiles. Used by percentile_bootstrap decorator.
-      Bootstrapping is only useful when the percentiles are computed on a part of the studied sample.
-      This period, common to percentiles and the sample must be bootstrapped to avoid inhomogeneities with
-      the rest of the time series.
-      Keep bootstrap to False when there is no common period, it would give wrong results
-      plus, bootstrapping is computationally expensive.
-    op: {"<", "<=", "lt", "le"}
-      Comparison operation. Default: "<".
+        Flag to run bootstrapping of percentiles. Used by percentile_bootstrap decorator.
+        Bootstrapping is only useful when the percentiles are computed on a part of the studied sample.
+        This period, common to percentiles and the sample must be bootstrapped to avoid inhomogeneities with
+        the rest of the time series.
+        Keep bootstrap to False when there is no common period, it would give wrong results
+        plus, bootstrapping is computationally expensive.
+    op : {"<", "<=", "lt", "le"}
+        Comparison operation. Default: "<".
 
     Returns
     -------
     xarray.DataArray, [time]
-      Count of days with daily mean temperature below the 10th percentile [days].
+        Count of days with daily mean temperature below the 10th percentile [days].
 
     Notes
     -----
@@ -1419,25 +1422,25 @@ def tn90p(
     Parameters
     ----------
     tasmin : xarray.DataArray
-      Minimum daily temperature.
+        Minimum daily temperature.
     tasmin_per : xarray.DataArray
-      90th percentile of daily minimum temperature.
+        90th percentile of daily minimum temperature.
     freq : str
-      Resampling frequency.
+        Resampling frequency.
     bootstrap : bool
-      Flag to run bootstrapping of percentiles. Used by percentile_bootstrap decorator.
-      Bootstrapping is only useful when the percentiles are computed on a part of the studied sample.
-      This period, common to percentiles and the sample must be bootstrapped to avoid inhomogeneities with
-      the rest of the time series.
-      Keep bootstrap to False when there is no common period, it would give wrong results
-      plus, bootstrapping is computationally expensive.
-    op: {">", ">=", "gt", "ge"}
-      Comparison operation. Default: ">".
+        Flag to run bootstrapping of percentiles. Used by percentile_bootstrap decorator.
+        Bootstrapping is only useful when the percentiles are computed on a part of the studied sample.
+        This period, common to percentiles and the sample must be bootstrapped to avoid inhomogeneities with
+        the rest of the time series.
+        Keep bootstrap to False when there is no common period, it would give wrong results
+        plus, bootstrapping is computationally expensive.
+    op : {">", ">=", "gt", "ge"}
+        Comparison operation. Default: ">".
 
     Returns
     -------
     xarray.DataArray, [time]
-      Count of days with daily minimum temperature below the 10th percentile [days].
+        Count of days with daily minimum temperature below the 10th percentile [days].
 
     Notes
     -----
@@ -1477,20 +1480,20 @@ def tn10p(
     Parameters
     ----------
     tasmin : xarray.DataArray
-      Mean daily temperature.
+        Mean daily temperature.
     tasmin_per : xarray.DataArray
-      10th percentile of daily minimum temperature.
+        10th percentile of daily minimum temperature.
     freq : str
-      Resampling frequency.
+        Resampling frequency.
     bootstrap : bool
-      Flag to run bootstrapping of percentiles. Used by percentile_bootstrap decorator.
-      Bootstrapping is only useful when the percentiles are computed on a part of the studied sample.
-      This period, common to percentiles and the sample must be bootstrapped to avoid inhomogeneities with
-      the rest of the time series.
-      Keep bootstrap to False when there is no common period, it would give wrong results
-      plus, bootstrapping is computationally expensive.
-    op: {"<", "<=", "lt", "le"}
-      Comparison operation. Default: "<".
+        Flag to run bootstrapping of percentiles. Used by percentile_bootstrap decorator.
+        Bootstrapping is only useful when the percentiles are computed on a part of the studied sample.
+        This period, common to percentiles and the sample must be bootstrapped to avoid inhomogeneities with
+        the rest of the time series.
+        Keep bootstrap to False when there is no common period, it would give wrong results
+        plus, bootstrapping is computationally expensive.
+    op : {"<", "<=", "lt", "le"}
+        Comparison operation. Default: "<".
 
     Returns
     -------
@@ -1535,25 +1538,25 @@ def tx90p(
     Parameters
     ----------
     tasmax : xarray.DataArray
-      Maximum daily temperature.
+        Maximum daily temperature.
     tasmax_per : xarray.DataArray
-      90th percentile of daily maximum temperature.
+        90th percentile of daily maximum temperature.
     freq : str
-      Resampling frequency.
+        Resampling frequency.
     bootstrap : bool
-      Flag to run bootstrapping of percentiles. Used by percentile_bootstrap decorator.
-      Bootstrapping is only useful when the percentiles are computed on a part of the studied sample.
-      This period, common to percentiles and the sample must be bootstrapped to avoid inhomogeneities with
-      the rest of the time series.
-      Keep bootstrap to False when there is no common period, it would give wrong results
-      plus, bootstrapping is computationally expensive.
-    op: {">", ">=", "gt", "ge"}
-      Comparison operation. Default: ">".
+        Flag to run bootstrapping of percentiles. Used by percentile_bootstrap decorator.
+        Bootstrapping is only useful when the percentiles are computed on a part of the studied sample.
+        This period, common to percentiles and the sample must be bootstrapped to avoid inhomogeneities with
+        the rest of the time series.
+        Keep bootstrap to False when there is no common period, it would give wrong results
+        plus, bootstrapping is computationally expensive.
+    op : {">", ">=", "gt", "ge"}
+        Comparison operation. Default: ">".
 
     Returns
     -------
     xarray.DataArray, [time]
-      Count of days with daily maximum temperature below the 10th percentile [days].
+        Count of days with daily maximum temperature below the 10th percentile [days].
 
     Notes
     -----
@@ -1593,25 +1596,25 @@ def tx10p(
     Parameters
     ----------
     tasmax : xarray.DataArray
-      Maximum daily temperature.
+        Maximum daily temperature.
     tasmax_per : xarray.DataArray
-      10th percentile of daily maximum temperature.
+        10th percentile of daily maximum temperature.
     freq : str
-      Resampling frequency.
+        Resampling frequency.
     bootstrap : bool
-      Flag to run bootstrapping of percentiles. Used by percentile_bootstrap decorator.
-      Bootstrapping is only useful when the percentiles are computed on a part of the studied sample.
-      This period, common to percentiles and the sample must be bootstrapped to avoid inhomogeneities with
-      the rest of the time series.
-      Keep bootstrap to False when there is no common period, it would give wrong results
-      plus, bootstrapping is computationally expensive.
-    op: {"<", "<=", "lt", "le"}
-      Comparison operation. Default: "<".
+        Flag to run bootstrapping of percentiles. Used by percentile_bootstrap decorator.
+        Bootstrapping is only useful when the percentiles are computed on a part of the studied sample.
+        This period, common to percentiles and the sample must be bootstrapped to avoid inhomogeneities with
+        the rest of the time series.
+        Keep bootstrap to False when there is no common period, it would give wrong results
+        plus, bootstrapping is computationally expensive.
+    op : {"<", "<=", "lt", "le"}
+        Comparison operation. Default: "<".
 
     Returns
     -------
     xarray.DataArray, [time]
-      Count of days with daily maximum temperature below the 10th percentile [days].
+        Count of days with daily maximum temperature below the 10th percentile [days].
 
     Notes
     -----
@@ -1656,17 +1659,17 @@ def tx_tn_days_above(
     Parameters
     ----------
     tasmin : xarray.DataArray
-      Minimum daily temperature.
+        Minimum daily temperature.
     tasmax : xarray.DataArray
-      Maximum daily temperature.
+        Maximum daily temperature.
     thresh_tasmin : Quantified
-      Threshold temperature for tasmin on which to base evaluation.
+        Threshold temperature for tasmin on which to base evaluation.
     thresh_tasmax : Quantified
-      Threshold temperature for tasmax on which to base evaluation.
+        Threshold temperature for tasmax on which to base evaluation.
     freq : str
-      Resampling frequency.
-    op: {">", ">=", "gt", "ge"}
-      Comparison operation. Default: ">".
+        Resampling frequency.
+    op : {">", ">=", "gt", "ge"}
+        Comparison operation. Default: ">".
 
     Returns
     -------
@@ -1723,30 +1726,30 @@ def warm_spell_duration_index(
     Parameters
     ----------
     tasmax : xarray.DataArray
-      Maximum daily temperature.
+        Maximum daily temperature.
     tasmax_per : xarray.DataArray
-      percentile(s) of daily maximum temperature.
+        percentile(s) of daily maximum temperature.
     window : int
-      Minimum number of days with temperature above threshold to qualify as a warm spell.
+        Minimum number of days with temperature above threshold to qualify as a warm spell.
     freq : str
-      Resampling frequency.
+        Resampling frequency.
     resample_before_rl : bool
-      Determines if the resampling should take place before or after the run
-      length encoding (or a similar algorithm) is applied to runs.
+        Determines if the resampling should take place before or after the run
+        length encoding (or a similar algorithm) is applied to runs.
     bootstrap : bool
-      Flag to run bootstrapping of percentiles. Used by percentile_bootstrap decorator.
-      Bootstrapping is only useful when the percentiles are computed on a part of the studied sample.
-      This period, common to percentiles and the sample must be bootstrapped to avoid inhomogeneities with
-      the rest of the time series.
-      Keep bootstrap to False when there is no common period, it would give wrong results
-      plus, bootstrapping is computationally expensive.
-    op: {">", ">=", "gt", "ge"}
-      Comparison operation. Default: ">".
+        Flag to run bootstrapping of percentiles. Used by percentile_bootstrap decorator.
+        Bootstrapping is only useful when the percentiles are computed on a part of the studied sample.
+        This period, common to percentiles and the sample must be bootstrapped to avoid inhomogeneities with
+        the rest of the time series.
+        Keep bootstrap to False when there is no common period, it would give wrong results
+        plus, bootstrapping is computationally expensive.
+    op : {">", ">=", "gt", "ge"}
+        Comparison operation. Default: ">".
 
     Returns
     -------
     xarray.DataArray, [time]
-      Warm spell duration index.
+        Warm spell duration index.
 
     References
     ----------
@@ -1797,23 +1800,23 @@ def winter_rain_ratio(
     Parameters
     ----------
     pr : xarray.DataArray
-      Mean daily precipitation flux.
+        Mean daily precipitation flux.
     prsn : xarray.DataArray, optional
-      Mean daily solid precipitation flux.
+        Mean daily solid precipitation flux.
     tas : xarray.DataArray, optional
-      Mean daily temperature.
+        Mean daily temperature.
     freq : str
-      Resampling frequency.
+        Resampling frequency.
 
     Returns
     -------
     xarray.DataArray
-      Ratio of rainfall to total precipitation during winter months (DJF).
+        Ratio of rainfall to total precipitation during winter months (DJF).
     """
-    ratio = liquid_precip_ratio(pr, prsn, tas, freq=freq)
+    ratio: xarray.DataArray = liquid_precip_ratio(pr, prsn, tas, freq=freq)
     winter = ratio.indexes["time"].month == 12
-    out: xarray.DataArray = ratio.sel(time=winter)
-    return out
+    ratio = ratio.sel(time=winter)
+    return ratio
 
 
 @declare_units(
@@ -1834,22 +1837,22 @@ def blowing_snow(
     Parameters
     ----------
     snd : xarray.DataArray
-      Surface snow depth.
+        Surface snow depth.
     sfcWind : xr.DataArray
-      Wind velocity
+        Wind velocity
     snd_thresh : Quantified
-      Threshold on net snowfall accumulation over the last `window` days.
+        Threshold on net snowfall accumulation over the last `window` days.
     sfcWind_thresh : Quantified
-      Wind speed threshold.
+        Wind speed threshold.
     window : int
-      Period over which snow is accumulated before comparing against threshold.
+        Period over which snow is accumulated before comparing against threshold.
     freq : str
-      Resampling frequency.
+        Resampling frequency.
 
     Returns
     -------
     xarray.DataArray
-      Number of days when snowfall and wind speeds are above respective thresholds.
+        Number of days when snowfall and wind speeds are above respective thresholds.
     """
     snd_thresh = convert_units_to(snd_thresh, snd)
     sfcWind_thresh = convert_units_to(sfcWind_thresh, sfcWind)  # noqa
@@ -1861,5 +1864,5 @@ def blowing_snow(
     cond = (snow >= snd_thresh) * (sfcWind >= sfcWind_thresh) * 1
 
     out = cond.resample(time=freq).sum(dim="time")
-    out.attrs["units"] = to_agg_units(out, snd, "count")
+    out = out.assign_attrs(units=to_agg_units(out, snd, "count"))
     return out
