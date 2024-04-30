@@ -102,7 +102,7 @@ def _quantile(arr, q, allow_sortquantile=OPTIONS[ALLOW_SORTQUANTILE]):
     else:
         out = np.empty((arr.shape[0], q.size), dtype=arr.dtype)
         for index in range(out.shape[0]):
-            out[index] = _choosequantile(arr[index], q, allow_sortquantile)
+            out[index] = _choosequantile(arr[index].flatten(), q, allow_sortquantile)
     return out
 
 
