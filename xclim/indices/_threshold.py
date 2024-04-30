@@ -15,6 +15,7 @@ from xclim.core.units import (
     rate2amount,
     str2pint,
     to_agg_units,
+    units2pint,
 )
 from xclim.core.utils import DayOfYearStr, Quantified
 
@@ -1808,7 +1809,7 @@ def days_with_snow(
 @declare_units(prsn="[precipitation]", thresh="[precipitation]")
 def snowfall_frequency(
     prsn: xarray.DataArray,
-    thresh: str = "1 mm/day",
+    thresh: Quantified = "1 mm/day",
     freq: str = "YS-JUL",
 ) -> xarray.DataArray:
     r"""Percentage of snow days.
@@ -1847,8 +1848,10 @@ def snowfall_frequency(
     """
     # High threshold here just needs to be a big value. It is converted to same units as
     # so that a warning message won't be triggered just because of this value
-    thresh_units = pint2cfunits(str2pint(thresh))
-    high = f"{convert_units_to('1E6 kg m-2 s-1', thresh_units, context='hydro')} {thresh_units}"
+    thresh_units = pint2cfunits(units2pint(thresh))
+    high_thresh = convert_units_to("1E6 kg m-2 s-1", thresh_units, context="hydro")
+    high = f"{high_thresh} {thresh_units}"
+
     snow_days = days_with_snow(prsn, low=thresh, high=high, freq=freq)
     total_days = prsn.resample(time=freq).count(dim="time")
     snow_freq = snow_days / total_days * 100
