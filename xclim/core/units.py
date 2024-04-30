@@ -11,12 +11,7 @@ from __future__ import annotations
 import logging
 import warnings
 from copy import deepcopy
-
-try:
-    from importlib.resources import files
-except ImportError:
-    from importlib_resources import files
-
+from importlib.resources import files
 from inspect import _empty, signature  # noqa
 from typing import Any, Callable, Literal, cast
 
@@ -1034,11 +1029,11 @@ def check_units(
         _dim = dim
 
     # In case val is a DataArray, we try to get a standard_name
-    if isinstance(val, xr.DataArray):
+    if hasattr(val, "attrs"):
         standard_name = val.attrs.get("standard_name", None)
-        context = infer_context(standard_name=standard_name, dimension=_dim)
     else:
-        context = "infer"
+        standard_name = None
+    context = infer_context(standard_name=standard_name, dimension=_dim)
 
     # Issue originally introduced in https://github.com/hgrecco/pint/issues/1486
     # Should be resolved in pint v0.24. See: https://github.com/hgrecco/pint/issues/1913

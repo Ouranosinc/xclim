@@ -704,7 +704,7 @@ def heat_wave_frequency(
         window=window,
         freq=freq,
     )
-    out = out.assign_attrs(unit="")
+    out = out.assign_attrs(units="")
     return out
 
 
