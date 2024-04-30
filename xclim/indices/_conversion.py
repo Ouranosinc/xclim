@@ -1447,33 +1447,33 @@ def potential_evapotranspiration(
         pet = pet.clip(0)
 
     elif method in ["droogersallen02", "DA02"]:
-        tasmin = convert_units_to(tasmin, "degC")
-        tasmax = convert_units_to(tasmax, "degC")
-        pr = convert_units_to(pr, "mm/month", context="hydro")
+        _tasmin = convert_units_to(tasmin, "degC")
+        _tasmax = convert_units_to(tasmax, "degC")
+        _pr = convert_units_to(pr, "mm/month", context="hydro")
         if tas is None:
-            tas = (tasmin + tasmax) / 2
+            _tas = (_tasmin + _tasmax) / 2
         else:
-            tas = convert_units_to(tas, "degC")
+            _tas = convert_units_to(tas, "degC")
 
-        tasmin = tasmin.resample(time="MS").mean()
-        tasmax = tasmax.resample(time="MS").mean()
-        tas = tas.resample(time="MS").mean()
-        pr = pr.resample(time="MS").mean()
+        _tasmin = _tasmin.resample(time="MS").mean()
+        _tasmax = _tasmax.resample(time="MS").mean()
+        _tas = _tas.resample(time="MS").mean()
+        _pr = _pr.resample(time="MS").mean()
 
         # Monthly accumulated radiation
-        time_d = _get_D_from_M(tasmin.time)
-        ra = extraterrestrial_solar_radiation(time_d, lat)
+        time_d = _get_D_from_M(_tasmin.time)
+        ra = extraterrestrial_solar_radiation(time_d, _lat)
         ra = convert_units_to(ra, "MJ m-2 d-1")
         ra = ra.resample(time="MS").sum()
         # Is used to convert the radiation to evaporation equivalents in mm (kg/MJ)
         ra = ra * 0.408
 
-        tr = tasmax - tasmin
+        tr = _tasmax - _tasmin
         tr = tr.where(tr > 0, 0)
 
         # Droogers and Allen (2002) formula
-        ab = tr - 0.0123 * pr
-        pet = 0.0013 * ra * (tas + 17.0) * ab**0.76
+        ab = tr - 0.0123 * _pr
+        pet = 0.0013 * ra * (_tas + 17.0) * ab**0.76
         pet = xr.where(np.isnan(ab**0.76), 0, pet)
         pet = pet.clip(0)  # mm/month
 
