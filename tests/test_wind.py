@@ -19,7 +19,7 @@ class TestWindSpeedIndicators:
 
 
 class TestSfcWindMax:
-    def test_sfcWind_max(self, open_dataset):  # noqa: N802
+    def test_sfcWind_max(self, open_dataset):
         ds = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc")
         sfcWind, _ = atmos.wind_speed_from_vector(ds.uas, ds.vas)
 
@@ -29,7 +29,7 @@ class TestSfcWindMax:
 
 
 class TestSfcWindMean:
-    def test_sfcWind_mean(self, open_dataset):  # noqa: N802
+    def test_sfcWind_mean(self, open_dataset):
         ds = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc")
         sfcWind, _ = atmos.wind_speed_from_vector(ds.uas, ds.vas)
 
@@ -39,7 +39,7 @@ class TestSfcWindMean:
 
 
 class TestSfcWindMin:
-    def test_sfcWind_min(self, open_dataset):  # noqa: N802
+    def test_sfcWind_min(self, open_dataset):
         ds = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc")
         sfcWind, _ = atmos.wind_speed_from_vector(ds.uas, ds.vas)
 
@@ -49,7 +49,7 @@ class TestSfcWindMin:
 
 
 class TestSfcWindmaxMax:
-    def test_sfcWindmax_max(self, open_dataset):  # noqa: N802
+    def test_sfcWindmax_max(self, open_dataset):
         ds = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc")
         sfcWindmax, _ = atmos.wind_speed_from_vector(ds.uas, ds.vas)
 
@@ -59,7 +59,7 @@ class TestSfcWindmaxMax:
 
 
 class TestSfcWindmaxMean:
-    def test_sfcWindmax_mean(self, open_dataset):  # noqa: N802
+    def test_sfcWindmax_mean(self, open_dataset):
         ds = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc")
         sfcWindmax, _ = atmos.wind_speed_from_vector(ds.uas, ds.vas)
 
@@ -69,7 +69,7 @@ class TestSfcWindmaxMean:
 
 
 class TestSfcWindmaxMin:
-    def test_sfcWindmax_mean(self, open_dataset):  # noqa: N802
+    def test_sfcWindmax_mean(self, open_dataset):
         ds = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc")
         sfcWindmax, _ = atmos.wind_speed_from_vector(ds.uas, ds.vas)
 

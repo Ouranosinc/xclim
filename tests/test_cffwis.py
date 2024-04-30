@@ -389,7 +389,7 @@ class TestCFFWIS:
             ),
         ],
     )
-    def test_fire_season_R(self, open_dataset, key, kwargs):  # noqa: N802
+    def test_fire_season_R(self, open_dataset, key, kwargs):
         expected = self._get_cffdrs_fire_season(key)
         in_ds = open_dataset("FWI/cffdrs_test_wDC.nc")
         nid = int(key[2])

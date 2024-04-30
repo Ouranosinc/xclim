@@ -69,7 +69,7 @@ class TestDTR:
     nc_tasmax = os.path.join("NRCANdaily", "nrcan_canada_daily_tasmax_1990.nc")
     nc_tasmin = os.path.join("NRCANdaily", "nrcan_canada_daily_tasmin_1990.nc")
 
-    def test_DTR_3d_data_with_nans(self, open_dataset):  # noqa: N802
+    def test_DTR_3d_data_with_nans(self, open_dataset):
         tasmax = open_dataset(self.nc_tasmax).tasmax
         tasmax_C = open_dataset(self.nc_tasmax).tasmax
         tasmax_C -= K2C
@@ -176,7 +176,7 @@ class TestTmean:
         os.path.join("NRCANdaily", "nrcan_canada_daily_tasmin_1990.nc"),
     )
 
-    def test_Tmean_3d_data(self, open_dataset):  # noqa: N802
+    def test_Tmean_3d_data(self, open_dataset):
         ds_tmax = open_dataset(self.nc_files[0])
         ds_tmin = open_dataset(self.nc_files[1])
         tas = atmos.tg(ds_tmin.tasmin, ds_tmax.tasmax)
@@ -205,7 +205,7 @@ class TestTmean:
 class TestTx:
     nc_file = os.path.join("NRCANdaily", "nrcan_canada_daily_tasmax_1990.nc")
 
-    def test_TX_3d_data(self, open_dataset):  # noqa: N802
+    def test_TX_3d_data(self, open_dataset):
         tasmax = open_dataset(self.nc_file).tasmax
         tasmax_C = open_dataset(self.nc_file).tasmax
         tasmax_C.values -= K2C
@@ -255,7 +255,7 @@ class TestTx:
 class TestTn:
     nc_file = os.path.join("NRCANdaily", "nrcan_canada_daily_tasmin_1990.nc")
 
-    def test_TN_3d_data(self, open_dataset):  # noqa: N802
+    def test_TN_3d_data(self, open_dataset):
         tasmin = open_dataset(self.nc_file).tasmin
         tasmin_C = open_dataset(self.nc_file).tasmin
         tasmin_C.values -= K2C

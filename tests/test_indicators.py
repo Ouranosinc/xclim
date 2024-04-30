@@ -606,7 +606,7 @@ def test_default_formatter():
     assert default_formatter.format("{month}", month="m3") == "march"
 
 
-def test_AttrFormatter():  # noqa: N802
+def test_AttrFormatter():
     fmt = AttrFormatter(
         mapping={"evil": ["méchant", "méchante"], "nice": ["beau", "belle"]},
         modifiers=["m", "f"],
@@ -819,7 +819,7 @@ def test_indicator_call_errors(tas_series):
         uniIndTemp(tas, oups=3)
 
 
-def test_resamplingIndicator_new_error():  # noqa: N802
+def test_resamplingIndicator_new_error():
     with pytest.raises(ValueError, match="ResamplingIndicator require a 'freq'"):
         Daily(
             realm="atmos",
