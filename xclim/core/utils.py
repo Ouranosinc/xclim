@@ -13,15 +13,10 @@ import logging
 import os
 import warnings
 from collections import defaultdict
+from collections.abc import Sequence
 from enum import IntEnum
 from functools import partial
-
-try:
-    from importlib.resources import files
-except ImportError:
-    from importlib_resources import files
-
-from collections.abc import Sequence
+from importlib.resources import as_file, files
 from inspect import Parameter, _empty  # noqa
 from io import StringIO
 from pathlib import Path
@@ -45,9 +40,10 @@ DayOfYearStr = NewType("DayOfYearStr", str)
 #: Type annotation for thresholds and other not-exactly-a-variable quantities
 Quantified = TypeVar("Quantified", xr.DataArray, str, Quantity)
 
-with (files("xclim.data") / "variables.yml").open() as f:
-    VARIABLES = safe_load(f)["variables"]
-    """Official variables definitions.
+with as_file(files("xclim.data")) as data_dir:
+    with (data_dir / "variables.yml").open() as f:
+        VARIABLES = safe_load(f)["variables"]
+        """Official variables definitions.
 
 A mapping from variable name to a dict with the following keys:
 
