@@ -3,13 +3,13 @@ default_language_version:
 
 repos:
   - repo: https://github.com/asottile/pyupgrade
-    rev: v3.15.0
+    rev: v3.15.2
     hooks:
       - id: pyupgrade
-        args: ['--py38-plus']
+        args: ['--py39-plus']
         exclude: 'xclim/core/indicator.py'
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.5.0
+    rev: v4.6.0
     hooks:
       - id: trailing-whitespace
       - id: end-of-file-fixer
@@ -26,13 +26,14 @@ repos:
     rev: v0.23.1
     hooks:
       - id: toml-sort-fix
+        exclude: '.pylintrc.toml'
   - repo: https://github.com/adrienverge/yamllint.git
-    rev: v1.33.0
+    rev: v1.35.1
     hooks:
       - id: yamllint
         args: [ '--config-file=.yamllint.yaml' ]
   - repo: https://github.com/psf/black-pre-commit-mirror
-    rev: 23.12.1
+    rev: 24.4.0
     hooks:
       - id: black
   - repo: https://github.com/PyCQA/isort
@@ -40,25 +41,36 @@ repos:
     hooks:
       - id: isort
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.1.11
+    rev: v0.3.7
     hooks:
       - id: ruff
+  - repo: https://github.com/pylint-dev/pylint
+    rev: v3.1.0
+    hooks:
+      - id: pylint
+        args: [ '--rcfile=.pylintrc.toml', '--errors-only', '--jobs=0', '--disable=import-error' ]
   - repo: https://github.com/pycqa/flake8
     rev: 7.0.0
     hooks:
       - id: flake8
         additional_dependencies: [ 'flake8-alphabetize', 'flake8-rst-docstrings ']
         args: [ '--config=.flake8' ]
+  - repo: https://github.com/jendrikseipp/vulture
+    rev: 'v2.11'
+    hooks:
+      - id: vulture
   - repo: https://github.com/nbQA-dev/nbQA
-    rev: 1.7.1
+    rev: 1.8.5
     hooks:
       - id: nbqa-pyupgrade
-        args: [ '--py38-plus' ]
+        args: [ '--py39-plus' ]
+        additional_dependencies: [ 'pyupgrade==3.15.2' ]
       - id: nbqa-black
-        additional_dependencies: [ 'black==23.12.1' ]
+        additional_dependencies: [ 'black==24.4.0' ]
       - id: nbqa-isort
+        additional_dependencies: [ 'isort==5.13.2' ]
   - repo: https://github.com/kynan/nbstripout
-    rev: 0.6.1
+    rev: 0.7.1
     hooks:
       - id: nbstripout
         files: '.ipynb'
@@ -67,14 +79,19 @@ repos:
     rev: v0.3.9
     hooks:
       - id: blackdoc
-        additional_dependencies: [ 'black==23.12.1' ]
+        additional_dependencies: [ 'black==24.4.0' ]
         exclude: '(xclim/indices/__init__.py|docs/installation.rst)'
+  - repo: https://github.com/codespell-project/codespell
+    rev: v2.2.6
+    hooks:
+      - id: codespell
+        additional_dependencies: [ 'tomli' ]
   - repo: https://github.com/gitleaks/gitleaks
-    rev: v8.18.1
+    rev: v8.18.2
     hooks:
       - id: gitleaks
   - repo: https://github.com/python-jsonschema/check-jsonschema
-    rev: 0.27.3
+    rev: 0.28.2
     hooks:
       - id: check-github-workflows
       - id: check-readthedocs

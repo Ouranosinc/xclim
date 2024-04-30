@@ -5,11 +5,6 @@ Why use xclim?
 Purpose
 =======
 
-.. important::
-
-    The content of this section is actively being developed in the forthcoming paper submission to JOSS.
-    This section will be updated and finalized when the wording has been agreed upon in :pull:`250`
-
 `xclim` aims to position itself as a climate services tool for any researchers interested in using Climate and Forecast Conventions (`CF-Conventions <https://cfconventions.org/>`_) compliant datasets to perform climate analyses. This tool is optimized for working with Big Data in the climate science domain and can function as an independent library for one-off analyses in *Jupyter Notebooks* or as a backend engine for performing climate data analyses via **Web Processing Services** (`WPS <https://www.ogc.org/standard/wps/>`_; e.g. `Finch <https://github.com/bird-house/finch>`_). It was primarily developed targeting Earth and Environmental Science audiences and researchers, originally for calculating climate indicators for the Canadian government web service `ClimateData.ca <https://climatedata.ca/>`_.
 
 The primary domains that `xclim` is built for are in calculating climate indicators, performing statistical correction / bias adjustment of climate model output variables or simulations, and in performing climate model simulation ensemble statistics.

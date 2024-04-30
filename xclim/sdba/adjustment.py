@@ -1,3 +1,4 @@
+# pylint: disable=missing-kwoa
 """
 Adjustment Methods
 ==================
@@ -73,7 +74,7 @@ class BaseAdjustment(ParametrizableWithDataset):
             super().__init__(*args, **kwargs)
         else:
             raise ValueError(
-                "As of xclim 0.29, Adjustment object should be initialized through their `train` or  `adjust` methods."
+                "As of xclim 0.29, Adjustment object should be initialized through their `train` or `adjust` methods."
             )
 
     @classmethod
@@ -106,17 +107,17 @@ class BaseAdjustment(ParametrizableWithDataset):
             not all(mvcrds[0].equals(mv) for mv in mvcrds[1:])
             or len(mvcrds) != len(inputs)
         ):
+            coords = {mv.name for mv in mvcrds}
             raise ValueError(
-                "Inputs have different multivariate coordinates "
-                f"({set(mv.name for mv in mvcrds)})."
+                f"Inputs have different multivariate coordinates: {', '.join(coords)}."
             )
 
         if group.prop == "dayofyear" and (
             "default" in calendars or "standard" in calendars
         ):
             warn(
-                "Strange results could be returned when using dayofyear grouping "
-                "on data defined in the proleptic_gregorian calendar "
+                "Strange results could be returned when using `dayofyear` grouping "
+                "on data defined in the 'proleptic_gregorian' calendar."
             )
 
     @classmethod

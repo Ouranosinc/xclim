@@ -1,3 +1,4 @@
+# pylint: disable=no-value-for-parameter
 """
 Numba-accelerated Utilities
 ===========================
@@ -118,7 +119,7 @@ def _vecquantiles(arr, rnk, res):
         res[0] = np.nanquantile(arr, rnk)
 
 
-def vecquantiles(da, rnk, dim):
+def vecquantiles(da: DataArray, rnk: DataArray, dim: str | DataArray.dims) -> DataArray:
     """For when the quantile (rnk) is different for each point.
 
     da and rnk must share all dimensions but dim.
@@ -137,8 +138,9 @@ def vecquantiles(da, rnk, dim):
     return res
 
 
-def quantile(da, q, dim):
+def quantile(da: DataArray, q, dim: str | DataArray.dims) -> DataArray:
     """Compute the quantiles from a fixed list `q`."""
+    # A switch that determines the backend function computing quantiles
     allow_sortquantile = OPTIONS[ALLOW_SORTQUANTILE]
     # We have two cases :
     # - When all dims are processed : we stack them and use _quantile1d
@@ -157,6 +159,12 @@ def quantile(da, q, dim):
     # else:
     #    qc = q
     qc = np.array(q, dtype=da.dtype)
+    # We still use q as the coords, so it corresponds to what was done upstream
+    if not hasattr(q, "dtype") or q.dtype != da.dtype:
+        qc = np.array(q, dtype=da.dtype)
+    else:
+        qc = q
+
     if len(da.dims) > 1:
         # There are some extra dims
         extra = utils.get_temp_dimname(da.dims, "extra")

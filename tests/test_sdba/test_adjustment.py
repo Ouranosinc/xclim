@@ -1,3 +1,4 @@
+# pylint: disable=no-member
 from __future__ import annotations
 
 import numpy as np
@@ -377,6 +378,36 @@ class TestQDM:
         # Test predict
         np.testing.assert_allclose(p, ref.transpose(*p.dims), rtol=0.1, atol=0.2)
 
+    def test_seasonal(self, series, random):
+        u = random.random(10000)
+        kind = "+"
+        name = "tas"
+        # Define distributions
+        xd = uniform(loc=1, scale=1)
+        yd = uniform(loc=2, scale=4)
+
+        # Generate random numbers with u so we get exact results for comparison
+        x = xd.ppf(u)
+        y = yd.ppf(u)
+
+        # Test train
+        hist = sim = series(x, name)
+        ref = series(y, name)
+
+        QDM = QuantileDeltaMapping.train(
+            ref.astype("float32"),
+            hist.astype("float32"),
+            kind=kind,
+            group="time.season",
+            nquantiles=10,
+        )
+        p = QDM.adjust(sim.astype("float32"), interp="linear")
+
+        # Test predict
+        # Accept discrepancies near extremes
+        middle = (u > 1e-2) * (u < 0.99)
+        np.testing.assert_array_almost_equal(p[middle], ref[middle], 1)
+
     def test_cannon_and_diagnostics(self, cannon_2015_dist, cannon_2015_rvs):
         ref, hist, sim = cannon_2015_rvs(15000, random=False)
 
@@ -710,7 +741,8 @@ def test_default_grouper_understood(tas_series):
 class TestSBCKutils:
     @pytest.mark.slow
     @pytest.mark.parametrize(
-        "method", [m for m in dir(adjustment) if m.startswith("SBCK_")]
+        "method",
+        [m for m in dir(adjustment) if m.startswith("SBCK_")],
     )
     @pytest.mark.parametrize("use_dask", [True])  # do we gain testing both?
     def test_sbck(self, method, use_dask, random):

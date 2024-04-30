@@ -3,6 +3,7 @@
 Command Line Interface module
 =============================
 """
+
 from __future__ import annotations
 
 import sys
@@ -283,7 +284,7 @@ def dataflags(ctx, variables, raise_flags, append, dims, freq):
 @click.option(
     "-i", "--info", is_flag=True, help="Prints more details for each indicator."
 )
-def indices(info):
+def indices(info):  # noqa
     """List all indicators."""
     formatter = click.HelpFormatter()
     formatter.write_heading("Listing all available indicators for computation.")
@@ -464,9 +465,9 @@ def cli(ctx, **kwargs):
     ctx.obj = kwargs
 
 
-@cli.result_callback()  # noqa
+@cli.result_callback()
 @click.pass_context
-def write_file(ctx, *args, **kwargs):  # noqa
+def write_file(ctx, *args, **kwargs):
     """Write the output dataset to file."""
     if ctx.obj["output"] is not None:
         if ctx.obj["verbose"]:

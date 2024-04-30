@@ -22,8 +22,6 @@ import numpy as np
 import pandas as pd
 import pytest
 import xarray as xr
-from packaging.version import Version
-from scipy import __version__ as __scipy_version__
 from scipy.stats.mstats import mquantiles
 
 from xclim import ensembles
@@ -129,7 +127,7 @@ class TestEnsembleStats:
         [(xr.cftime_range, {"calendar": "360_day"}), (pd.date_range, {})],
     )
     def test_create_unaligned_times(self, timegen, calkw):
-        t1 = timegen("2000-01-01", periods=24, freq="M", **calkw)
+        t1 = timegen("2000-01-01", periods=24, freq="ME", **calkw)
         t2 = timegen("2000-01-01", periods=24, freq="MS", **calkw)
 
         d1 = xr.DataArray(
@@ -291,6 +289,34 @@ class TestEnsembleStats:
         np.testing.assert_array_equal(
             out1.tg_mean_min[0, 5, 5], out2.tg_mean_min[0, 5, 5]
         )
+
+    @pytest.mark.parametrize(
+        "aggfunc", [ensembles.ensemble_percentiles, ensembles.ensemble_mean_std_max_min]
+    )
+    def test_stats_min_members(self, ensemble_dataset_objects, open_dataset, aggfunc):
+        ds_all = [open_dataset(n) for n in ensemble_dataset_objects["nc_files_simple"]]
+        ens = ensembles.create_ensemble(ds_all).isel(lat=0, lon=0)
+        ens = ens.where(ens.realization > 0)
+        ens = xr.where((ens.realization == 1) & (ens.time.dt.year == 1950), np.NaN, ens)
+
+        def first(ds):
+            return ds[list(ds.data_vars.keys())[0]]
+
+        # Default, no masking
+        out = first(aggfunc(ens))
+        assert not out.isnull().any()
+
+        # A number
+        out = first(aggfunc(ens, min_members=3))
+        # Only 1950 is null
+        np.testing.assert_array_equal(
+            out.isnull(), [True] + [False] * (ens.time.size - 1)
+        )
+
+        # Special value
+        out = first(aggfunc(ens, min_members=None))
+        # All null
+        assert out.isnull().all()
 
 
 @pytest.mark.slow
@@ -540,6 +566,15 @@ class TestEnsembleReduction:
         uncrit = crit.unstack("criteria")
         assert set(uncrit.dims) == {"realization", "lat", "time"}
 
+        crit = ensembles.make_criteria(ds.where(ds.var_a > 0))
+        assert crit.dims == ("realization", "criteria")
+        assert crit.criteria.size == 12
+        np.testing.assert_array_equal(crit.isnull().sum(), 0)
+        np.testing.assert_array_equal(crit.min(), 1)
+        uncrit = crit.unstack("criteria").to_dataset("variables")
+        assert set(uncrit.dims) == {"realization", "lat", "time"}
+        assert uncrit.time.size == 3
+
 
 # ## Tests for Robustness ##
 @pytest.fixture
@@ -680,12 +715,7 @@ def test_robustness_fractions(
     robust_data, test, exp_chng_frac, exp_pos_frac, exp_changed, kws
 ):
     ref, fut = robust_data
-
-    if test == "ttest" and Version(__scipy_version__) < Version("1.9.0"):
-        with pytest.warns(FutureWarning):
-            fracs = ensembles.robustness_fractions(fut, ref, test=test, **kws)
-    else:
-        fracs = ensembles.robustness_fractions(fut, ref, test=test, **kws)
+    fracs = ensembles.robustness_fractions(fut, ref, test=test, **kws)
 
     assert fracs.changed.attrs["test"] == str(test)
 
@@ -714,13 +744,14 @@ def test_robustness_fractions_weighted(robust_data):
 
 
 def test_robustness_fractions_delta(robust_data):
-    delta = xr.DataArray([-2, 1, -2, -1], dims=("realization",))
+    delta = xr.DataArray([-2, 1, -2, -1, 0, 0], dims=("realization",))
     fracs = ensembles.robustness_fractions(delta, test="threshold", abs_thresh=1.5)
-    np.testing.assert_array_equal(fracs.changed, [0.5])
+    np.testing.assert_array_equal(fracs.changed, [2 / 6])
     np.testing.assert_array_equal(fracs.changed_positive, [0.0])
-    np.testing.assert_array_equal(fracs.positive, [0.25])
-    np.testing.assert_array_equal(fracs.agree, [0.75])
+    np.testing.assert_array_equal(fracs.positive, [1 / 6])
+    np.testing.assert_array_equal(fracs.agree, [3 / 6])
 
+    delta = xr.DataArray([-2, 1, -2, -1], dims=("realization",))
     weights = xr.DataArray([4, 3, 2, 1], dims=("realization",))
     fracs = ensembles.robustness_fractions(
         delta, test="threshold", abs_thresh=1.5, weights=weights

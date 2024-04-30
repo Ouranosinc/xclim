@@ -28,7 +28,9 @@ def virtual_indicator(request):
 
 
 def test_default_modules_exist():
-    from xclim.indicators import anuclim, cf, icclim  # noqa
+    from xclim.indicators import anuclim  # noqa
+    from xclim.indicators import cf  # noqa
+    from xclim.indicators import icclim  # noqa
 
     assert hasattr(icclim, "TG")
 
@@ -220,6 +222,39 @@ def test_realm(tmp_path):
     fh.write_text(yml)
     mod = build_indicator_module_from_yaml(fh, name="test")
     assert mod.ice_extent.realm == "ocean"
+
+
+def test_validate(tmp_path):
+    # Regression test for #1425
+    yml = """
+    realm: land
+
+    indicators:
+      ice_extent:
+        base: sea_ice_extent
+        realm: ocean
+        this_is_not_accepted: True
+    """
+    fh = tmp_path / "test.yml"
+    fh.write_text(yml)
+
+    with pytest.raises(yamale.YamaleError):
+        build_indicator_module_from_yaml(fh, name="test")
+
+    build_indicator_module_from_yaml(fh, name="test2", validate=False)
+
+    sch = r"""
+realm: str(required=False)
+indicators: map(include('indicator'), key=regex(r'^[-\w]+$'))
+---
+indicator:
+  base: str(required=False)
+  realm: str(required=False)
+  this_is_not_accepted: bool()
+"""
+    fsch = tmp_path / "schema.yml"
+    fsch.write_text(sch)
+    build_indicator_module_from_yaml(fh, name="test3", validate=fsch)
 
 
 class TestOfficialYaml(yamale.YamaleTestCase):

@@ -1,4 +1,5 @@
 """Module comprising the bootstrapping algorithm for indicators."""
+
 from __future__ import annotations
 
 import warnings
@@ -202,10 +203,12 @@ def bootstrap_func(compute_index_func: Callable, **kwargs) -> xarray.DataArray:
 
 def _get_bootstrap_freq(freq):
     _, base, start_anchor, anchor = parse_offset(freq)  # noqa
-    bfreq = "A"
+    bfreq = "Y"
     if start_anchor:
         bfreq += "S"
-    if base in ["A", "Q"] and anchor is not None:
+    else:
+        bfreq += "E"
+    if base in ["A", "Y", "Q"] and anchor is not None:
         bfreq = f"{bfreq}-{anchor}"
     return bfreq
 

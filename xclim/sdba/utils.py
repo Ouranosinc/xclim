@@ -2,6 +2,7 @@
 Statistical Downscaling and Bias Adjustment Utilities
 =====================================================
 """
+
 from __future__ import annotations
 
 import itertools
@@ -24,7 +25,6 @@ from .nbutils import _extrapolate_on_quantiles
 
 MULTIPLICATIVE = "*"
 ADDITIVE = "+"
-loffsets = {"MS": "14d", "M": "15d", "YS": "181d", "Y": "182d", "QS": "45d", "Q": "46d"}
 
 
 def _ecdf_1d(x, value):
@@ -360,6 +360,11 @@ def _interp_on_quantiles_2D(newx, newg, oldx, oldy, oldg, method, extrap):  # no
     return out
 
 
+SEASON_MAP = {"DJF": 0, "MAM": 1, "JJA": 2, "SON": 3}
+
+map_season_to_int = np.vectorize(SEASON_MAP.get)
+
+
 @parse_group
 def interp_on_quantiles(
     newx: xr.DataArray,
@@ -429,11 +434,16 @@ def interp_on_quantiles(
         )
         return out
 
-    # else:
     if prop not in xq.dims:
         xq = xq.expand_dims({prop: group.get_coordinate()})
     if prop not in yq.dims:
         yq = yq.expand_dims({prop: group.get_coordinate()})
+
+    # Adding the cyclic bounds fails for string coordinates like seasons
+    # That's why we map the seasons to integers
+    if prop == "season":
+        xq = xq.assign_coords(season=map_season_to_int(xq.season))
+        yq = yq.assign_coords(season=map_season_to_int(yq.season))
 
     xq = add_cyclic_bounds(xq, prop, cyclic_coords=False)
     yq = add_cyclic_bounds(yq, prop, cyclic_coords=False)
