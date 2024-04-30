@@ -149,27 +149,12 @@ def quantile(da: DataArray, q, dim: str | DataArray.dims) -> DataArray:
 
     # Stack the dims and send to the last position
     # This is in case there are more than one
-    dims = [dim] if isinstance(dim, str) else dim
-    tem = utils.get_temp_dimname(da.dims, "temporal")
-    da = da.stack({tem: dims})
-    # So we cut in half the definitions to declare in numba
-    # We still use q as the coords so it corresponds to what was done upstream
-    # if not hasattr(q, "dtype") or q.dtype != da.dtype or q.shape[0] != da.shape[0]:
-    #    qc = np.array(q, dtype=da.dtype)
-    # else:
-    #    qc = q
     qc = np.array(q, dtype=da.dtype)
-    # We still use q as the coords, so it corresponds to what was done upstream
-    if not hasattr(q, "dtype") or q.dtype != da.dtype:
-        qc = np.array(q, dtype=da.dtype)
-    else:
-        qc = q
-
-    if len(da.dims) > 1:
-        # There are some extra dims
+    dims = [dim] if isinstance(dim, str) else dim
+    if len(da.dims) > len(dims):
         extra = utils.get_temp_dimname(da.dims, "extra")
-        da = da.stack({extra: set(da.dims) - {tem}})
-        da = da.transpose(..., tem)
+        da = da.stack({extra: set(da.dims) - set(dims)})
+        da = da.transpose(extra, ...)
         res = DataArray(
             _quantile(da.values, qc, allow_sortquantile),
             dims=(extra, "quantiles"),
@@ -180,7 +165,7 @@ def quantile(da: DataArray, q, dim: str | DataArray.dims) -> DataArray:
     else:
         # All dims are processed
         res = DataArray(
-            _quantile(da.values, qc, allow_sortquantile),
+            _quantile(da.values.flatten(), qc, allow_sortquantile),
             dims=("quantiles"),
             coords={"quantiles": q},
             attrs=da.attrs,
