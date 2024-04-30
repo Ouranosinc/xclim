@@ -392,8 +392,8 @@ def snd_season_end(
     resampled = resampled.assign_attrs(
         units="", is_dayofyear=np.int32(1), calendar=get_calendar(snd)
     )
-    out: xarray.DataArray = resampled.where(~valid)
-    return out
+    snd_se = resampled.where(~valid)
+    return snd_se
 
 
 @declare_units(snw="[mass]/[area]", thresh="[mass]/[area]")
@@ -441,8 +441,8 @@ def snw_season_end(
     resampled.attrs.update(
         units="", is_dayofyear=np.int32(1), calendar=get_calendar(snw)
     )
-    out: xarray.DataArray = resampled.where(~valid)
-    return out
+    snw_se = resampled.where(~valid)
+    return snw_se
 
 
 @declare_units(snd="[length]", thresh="[length]")
@@ -495,8 +495,8 @@ def snd_season_start(
     resampled.attrs.update(
         units="", is_dayofyear=np.int32(1), calendar=get_calendar(snd)
     )
-    out: xarray.DataArray = resampled.where(~valid)
-    return out
+    snd_ss = resampled.where(~valid)
+    return snd_ss
 
 
 @declare_units(snw="[mass]/[area]", thresh="[mass]/[area]")
@@ -550,8 +550,8 @@ def snw_season_start(
     resampled.attrs.update(
         units="", is_dayofyear=np.int32(1), calendar=get_calendar(snw)
     )
-    out: xarray.DataArray = resampled.where(~valid)
-    return out
+    snw_ss = resampled.where(~valid)
+    return snw_ss
 
 
 @declare_units(snd="[length]", thresh="[length]")
@@ -591,12 +591,13 @@ def snd_season_length(
     thresh = convert_units_to(thresh, snd)
     cond = snd >= thresh
 
-    out = (
+    snd_sl = (
         cond.resample(time=freq)
         .map(rl.season, window=window, dim="time", coord="dayofyear")
         .length
     )
-    return to_agg_units(out.where(~valid), snd, "count")
+    snd_sl = to_agg_units(snd_sl.where(~valid), snd, "count")
+    return snd_sl
 
 
 @declare_units(snw="[mass]/[area]", thresh="[mass]/[area]")
@@ -636,12 +637,13 @@ def snw_season_length(
     thresh = convert_units_to(thresh, snw)
     cond = snw >= thresh
 
-    out = (
+    snw_sl = (
         cond.resample(time=freq)
         .map(rl.season, window=window, dim="time", coord="dayofyear")
         .length
     )
-    return to_agg_units(out.where(~valid), snw, "count")
+    snw_sl = to_agg_units(snw_sl.where(~valid), snw, "count")
+    return snw_sl
 
 
 @declare_units(snd="[length]", thresh="[length]")
@@ -680,10 +682,9 @@ def snd_storm_days(
     acc = snd.diff(dim="time")
 
     # Winter storm condition
-    out = threshold_count(acc, ">=", thresh, freq)
-
-    out.attrs["units"] = to_agg_units(out, snd, "count")
-    return out
+    snd_sd = threshold_count(acc, ">=", thresh, freq)
+    snd_sd = snd_sd.assign_attrs(units=to_agg_units(snd_sd, snd, "count"))
+    return snd_sd
 
 
 @declare_units(snw="[mass]/[area]", thresh="[mass]/[area]")
@@ -722,10 +723,9 @@ def snw_storm_days(
     acc = snw.diff(dim="time")
 
     # Winter storm condition
-    out = threshold_count(acc, ">=", thresh, freq)
-
-    out.attrs["units"] = to_agg_units(out, snw, "count")
-    return out
+    snw_sd = threshold_count(acc, ">=", thresh, freq)
+    snw_sd = snw_sd.assign_attrs(units=to_agg_units(snw_sd, snw, "count"))
+    return snw_sd
 
 
 @declare_units(pr="[precipitation]", thresh="[precipitation]")
@@ -792,15 +792,17 @@ def daily_pr_intensity(
 
     # get number of wetdays over period
     wd = wetdays(pr, thresh=thresh, freq=freq)
-    out = s / wd
+    dpr_int = s / wd
 
     # Issue originally introduced in https://github.com/hgrecco/pint/issues/1486
     # Should be resolved in pint v0.24. See: https://github.com/hgrecco/pint/issues/1913
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", category=DeprecationWarning)
-        out.attrs["units"] = f"{str2pint(pram.units) / str2pint(wd.units):~}"
+        dpr_int = dpr_int.assign_attrs(
+            units=f"{str2pint(pram.units) / str2pint(wd.units):~}"
+        )
 
-    return out
+    return dpr_int
 
 
 @declare_units(pr="[precipitation]", thresh="[precipitation]")
@@ -840,9 +842,9 @@ def dry_days(
         \sum PR_{ij} < Threshold [mm/day]
     """
     thresh = convert_units_to(thresh, pr, context="hydro")
-    out = threshold_count(pr, op, thresh, freq, constrain=("<", "<="))
-    out = to_agg_units(out, pr, "count")
-    return out
+    count = threshold_count(pr, op, thresh, freq, constrain=("<", "<="))
+    dd = to_agg_units(count, pr, "count")
+    return dd
 
 
 @declare_units(pr="[precipitation]", thresh="[precipitation]")
@@ -863,10 +865,10 @@ def maximum_consecutive_wet_days(
     thresh : Quantified
         Threshold precipitation on which to base evaluation.
     freq : str
-      Resampling frequency.
+        Resampling frequency.
     resample_before_rl : bool
-      Determines if the resampling should take place before or after the run
-      length encoding (or a similar algorithm) is applied to runs.
+        Determines if the resampling should take place before or after the run
+        length encoding (or a similar algorithm) is applied to runs.
 
     Returns
     -------
@@ -889,14 +891,14 @@ def maximum_consecutive_wet_days(
     thresh = convert_units_to(thresh, pr, "hydro")
 
     cond = pr > thresh
-    out = rl.resample_and_rl(
+    mcwd = rl.resample_and_rl(
         cond,
         resample_before_rl,
         rl.longest_run,
         freq=freq,
     )
-    out = to_agg_units(out, pr, "count")
-    return out
+    mcwd = to_agg_units(mcwd, pr, "count")
+    return mcwd
 
 
 @declare_units(tas="[temperature]", thresh="[temperature]")
@@ -932,9 +934,7 @@ def cooling_degree_days(
 
     where :math:`[P]` is 1 if :math:`P` is true, and 0 if false.
     """
-    cd: xarray.DataArray = cumulative_difference(
-        tas, threshold=thresh, op=">", freq=freq
-    )
+    cd = cumulative_difference(tas, threshold=thresh, op=">", freq=freq)
     return cd
 
 
@@ -969,9 +969,7 @@ def growing_degree_days(
 
         GD4_j = \sum_{i=1}^I (TG_{ij}-{4} | TG_{ij} > {4}℃)
     """
-    cd: xarray.DataArray = cumulative_difference(
-        tas, threshold=thresh, op=">", freq=freq
-    )
+    cd = cumulative_difference(tas, threshold=thresh, op=">", freq=freq)
     return cd
 
 
@@ -1578,7 +1576,7 @@ def first_day_temperature_below(
     """
     # noqa
 
-    out: xarray.DataArray = first_day_threshold_reached(
+    fdtb = first_day_threshold_reached(
         tas,
         threshold=thresh,
         op=op,
@@ -1587,7 +1585,7 @@ def first_day_temperature_below(
         freq=freq,
         constrain=("<", "<="),
     )
-    return out
+    return fdtb
 
 
 @declare_units(tas="[temperature]", thresh="[temperature]")
@@ -1641,7 +1639,7 @@ def first_day_temperature_above(
     where :math:`w` is the number of days the temperature threshold should be exceeded, and :math:`[P]` is
     1 if :math:`P` is true, and 0 if false.
     """
-    out: xarray.DataArray = first_day_threshold_reached(
+    fdtr = first_day_threshold_reached(
         tas,
         threshold=thresh,
         op=op,
@@ -1650,7 +1648,7 @@ def first_day_temperature_above(
         freq=freq,
         constrain=(">", ">="),
     )
-    return out
+    return fdtr
 
 
 @declare_units(prsn="[precipitation]", thresh="[precipitation]")
@@ -1861,9 +1859,10 @@ def snowfall_frequency(
     snow_days = days_with_snow(prsn, low=thresh, high=high, freq=freq)
     total_days = prsn.resample(time=freq).count(dim="time")
     snow_freq = snow_days / total_days * 100
-    out: xarray.DataArray = snow_freq.assign_attrs(**snow_days.attrs)
-    out = out.assign_attrs(units="%")
-    return out
+    snow_freq = snow_freq.assign_attrs(**snow_days.attrs)
+    # overwrite snow_days units
+    snow_freq = snow_freq.assign_attrs(units="%")
+    return snow_freq
 
 
 @declare_units(prsn="[precipitation]", thresh="[precipitation]")
@@ -1907,13 +1906,13 @@ def snowfall_intensity(
     snowfall rate is assumed and the threshold is converted using a 1000 kg m-3 density.
     """
     thresh = convert_units_to(thresh, "mm/day", context="hydro")
-    lwe_prsn: xarray.DataArray = convert_units_to(prsn, "mm/day", context="hydro")
+    lwe_prsn = convert_units_to(prsn, "mm/day", context="hydro")
 
     cond = lwe_prsn >= thresh
     mean = lwe_prsn.where(cond).resample(time=freq).mean(dim="time")
-    out: xarray.DataArray = mean.fillna(0)
-    out = out.assign_attrs(units=lwe_prsn.units)
-    return out
+    snow_int = mean.fillna(0)
+    snow_int = snow_int.assign_attrs(units=lwe_prsn.units)
+    return snow_int
 
 
 @declare_units(tasmax="[temperature]", thresh="[temperature]")
@@ -1999,10 +1998,8 @@ def heating_degree_days(
 
         HD17_j = \sum_{i=1}^{I} (17℃ - TG_{ij}) | TG_{ij} < 17℃)
     """
-    out: xarray.DataArray = cumulative_difference(
-        tas, threshold=thresh, op="<", freq=freq
-    )
-    return out
+    hdd = cumulative_difference(tas, threshold=thresh, op="<", freq=freq)
+    return hdd
 
 
 @declare_units(tasmax="[temperature]", thresh="[temperature]")
@@ -2768,7 +2765,7 @@ def maximum_consecutive_dry_days(
         rl.longest_run,
         freq=freq,
     )
-    mcdd: xarray.DataArray = to_agg_units(resampled, pr, "count")
+    mcdd = to_agg_units(resampled, pr, "count")
     return mcdd
 
 
@@ -2819,7 +2816,7 @@ def maximum_consecutive_frost_free_days(
     where :math:`[P]` is 1 if :math:`P` is true, and 0 if false. Note that this formula does not handle sequences at
     the start and end of the series, but the numerical algorithm does.
     """
-    mcffd: xarray.DataArray = frost_free_spell_max_length(
+    mcffd = frost_free_spell_max_length(
         tasmin,
         thresh=thresh,
         window=1,
@@ -2873,7 +2870,7 @@ def maximum_consecutive_tx_days(
     where :math:`[P]` is 1 if :math:`P` is true, and 0 if false. Note that this formula does not handle sequences at
     the start and end of the series, but the numerical algorithm does.
     """
-    mctxd: xarray.DataArray = hot_spell_max_length(
+    mctxd = hot_spell_max_length(
         tasmax,
         thresh=thresh,
         window=1,
@@ -2917,9 +2914,9 @@ def sea_ice_area(
     """
     t = convert_units_to(thresh, siconc)
     factor = convert_units_to("100 pct", siconc)
-    out: xarray.DataArray = xarray.dot(siconc.where(siconc >= t, 0), areacello) / factor
-    out.attrs["units"] = areacello.units
-    return out
+    sia = xarray.dot(siconc.where(siconc >= t, 0), areacello) / factor
+    sia = sia.assign_attrs(units=areacello.units)
+    return sia
 
 
 @declare_units(siconc="[]", areacello="[area]", thresh="[]")
@@ -2954,9 +2951,9 @@ def sea_ice_extent(
     "What is the difference between sea ice area and extent?" - :cite:cts:`nsidc_frequently_2008`
     """
     t = convert_units_to(thresh, siconc)
-    out: xarray.DataArray = xarray.dot(siconc >= t, areacello)
-    out.attrs["units"] = areacello.units
-    return out
+    sie = xarray.dot(siconc >= t, areacello)
+    sie = sie.assign_attrs(units=areacello.units)
+    return sie
 
 
 @declare_units(sfcWind="[speed]", thresh="[speed]")
@@ -3033,7 +3030,7 @@ def rprctot(
     pr_tot = rate2amount(pr).where(wd).resample(time=freq).sum(dim="time")
     prc_tot = rate2amount(prc).where(wd).resample(time=freq).sum(dim="time")
 
-    ratio: xarray.DataArray = prc_tot / pr_tot
+    ratio = prc_tot / pr_tot
     ratio = ratio.assign_attrs(units="")
 
     return ratio
@@ -3133,9 +3130,11 @@ def degree_days_exceedance_date(
         )
         return xarray.where((cumsum <= sum_thresh).all("time"), never_reached_val, out)
 
-    out: xarray.DataArray = c.clip(0).resample(time=freq).map(_exceedance_date)
-    out.attrs.update(units="", is_dayofyear=np.int32(1), calendar=get_calendar(tas))
-    return out
+    dded = c.clip(0).resample(time=freq).map(_exceedance_date)
+    dded = dded.assign_attrs(
+        units="", is_dayofyear=np.int32(1), calendar=get_calendar(tas)
+    )
+    return dded
 
 
 @declare_units(pr="[precipitation]", thresh="[length]")

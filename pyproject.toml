@@ -154,7 +154,7 @@ values = [
 
 [tool.codespell]
 skip = 'xclim/data/*.json,docs/_build,docs/notebooks/xclim_training/*.ipynb,docs/references.bib,__pycache__,*.nc,*.png,*.gz,*.whl'
-ignore-words-list = "absolue,astroid,bloc,bui,callendar,degreee,environnement,hanel,inferrable,lond,nam,nd,ressources,vas"
+ignore-words-list = "absolue,astroid,bloc,bui,callendar,degreee,environnement,hanel,inferrable,lond,nam,nd,ressources,sie,vas"
 
 [tool.coverage.run]
 relative_files = true

@@ -978,8 +978,7 @@ def precip_accumulation(
         pr = rain_approximation(pr, tas=tas, thresh=thresh, method="binary")
     elif phase == "solid":
         pr = snowfall_approximation(pr, tas=tas, thresh=thresh, method="binary")
-    # FIXME: rate2amount is decorated with `_register_conversion` and the type checker doesn't like it.
-    pram: xarray.DataArray = rate2amount(pr)
+    pram = rate2amount(pr)
     pram = pram.resample(time=freq).sum(dim="time").assign_attrs(units=pram.units)
     return pram
 
@@ -1813,7 +1812,7 @@ def winter_rain_ratio(
     xarray.DataArray
         Ratio of rainfall to total precipitation during winter months (DJF).
     """
-    ratio: xarray.DataArray = liquid_precip_ratio(pr, prsn, tas, freq=freq)
+    ratio = liquid_precip_ratio(pr, prsn, tas, freq=freq)
     winter = ratio.indexes["time"].month == 12
     ratio = ratio.sel(time=winter)
     return ratio
