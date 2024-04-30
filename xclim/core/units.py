@@ -98,6 +98,8 @@ with (files("xclim.data") / "variables.yml").open() as f:
 _CONVERSIONS = {}
 
 
+# FIXME: This needs to be properly annotated for mypy compliance.
+# See: https://mypy.readthedocs.io/en/stable/generics.html#declaring-decorators
 def _register_conversion(conversion, direction):
     """Register a conversion function to be automatically picked up in `convert_units_to`.
 
@@ -248,6 +250,7 @@ def str2pint(val: str) -> pint.Quantity:
         return units.Quantity(1, units2pint(val))
 
 
+# FIXME: The typing here is difficult to determine, as Generics cannot be used to track the type of the output.
 def convert_units_to(  # noqa: C901
     source: Quantified,
     target: Quantified | units.Unit,
@@ -1102,6 +1105,8 @@ def _check_output_has_units(out: xr.DataArray | tuple[xr.DataArray]) -> None:
         outd.attrs["units"] = ensure_cf_units(outd.attrs["units"])
 
 
+# FIXME: This needs to be properly annotated for mypy compliance.
+# See: https://mypy.readthedocs.io/en/stable/generics.html#declaring-decorators
 def declare_relative_units(**units_by_name) -> Callable:
     r"""Function decorator checking the units of arguments.
 
@@ -1215,6 +1220,8 @@ def declare_relative_units(**units_by_name) -> Callable:
     return dec
 
 
+# FIXME: This needs to be properly annotated for mypy compliance.
+# See: https://mypy.readthedocs.io/en/stable/generics.html#declaring-decorators
 def declare_units(**units_by_name) -> Callable:
     r"""Create a decorator to check units of function arguments.
 

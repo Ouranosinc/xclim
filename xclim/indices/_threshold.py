@@ -294,7 +294,7 @@ def cold_spell_max_length(
         freq=freq,
     )
     max_window = max_l.where(max_l >= window, 0)
-    out: xarray.DataArray = to_agg_units(max_window, tas, "count")
+    out = to_agg_units(max_window, tas, "count")
     return out
 
 
@@ -389,7 +389,7 @@ def snd_season_end(
         .map(rl.season, window=window, dim="time", coord="dayofyear")
         .end
     )
-    resampled.attrs.update(
+    resampled = resampled.assign_attrs(
         units="", is_dayofyear=np.int32(1), calendar=get_calendar(snd)
     )
     out: xarray.DataArray = resampled.where(~valid)
@@ -932,7 +932,10 @@ def cooling_degree_days(
 
     where :math:`[P]` is 1 if :math:`P` is true, and 0 if false.
     """
-    return cumulative_difference(tas, threshold=thresh, op=">", freq=freq)
+    cd: xarray.DataArray = cumulative_difference(
+        tas, threshold=thresh, op=">", freq=freq
+    )
+    return cd
 
 
 @declare_units(tas="[temperature]", thresh="[temperature]")
@@ -966,7 +969,10 @@ def growing_degree_days(
 
         GD4_j = \sum_{i=1}^I (TG_{ij}-{4} | TG_{ij} > {4}℃)
     """
-    return cumulative_difference(tas, threshold=thresh, op=">", freq=freq)
+    cd: xarray.DataArray = cumulative_difference(
+        tas, threshold=thresh, op=">", freq=freq
+    )
+    return cd
 
 
 @declare_units(tas="[temperature]", thresh="[temperature]")
@@ -1901,7 +1907,7 @@ def snowfall_intensity(
     snowfall rate is assumed and the threshold is converted using a 1000 kg m-3 density.
     """
     thresh = convert_units_to(thresh, "mm/day", context="hydro")
-    lwe_prsn = convert_units_to(prsn, "mm/day", context="hydro")
+    lwe_prsn: xarray.DataArray = convert_units_to(prsn, "mm/day", context="hydro")
 
     cond = lwe_prsn >= thresh
     mean = lwe_prsn.where(cond).resample(time=freq).mean(dim="time")
