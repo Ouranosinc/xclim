@@ -55,7 +55,7 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
   # Dev tools and testing
-  "black ==24.4.0",
+  "black ==24.4.2",
   "blackdoc ==0.3.9",
   "bump-my-version >=0.17.1",
   "codespell",
@@ -126,7 +126,7 @@ target-version = [
 ]
 
 [tool.bumpversion]
-current_version = "0.48.3-dev.12"
+current_version = "0.48.3-dev.14"
 commit = true
 commit_args = "--no-verify"
 tag = false
