@@ -18,7 +18,7 @@ except ImportError:
     from importlib_resources import files
 
 from inspect import _empty, signature  # noqa
-from typing import Any, Callable
+from typing import Any, Callable, Literal, cast
 
 import cf_xarray.units
 import numpy as np
@@ -143,7 +143,8 @@ def units2pint(value: xr.DataArray | str | units.Quantity) -> pint.Unit:
     elif isinstance(value, xr.DataArray):
         unit = value.attrs["units"]
     elif isinstance(value, units.Quantity):
-        return value.units
+        # This is a pint.PlainUnit, which is not the same as a pint.Unit
+        return cast(pint.Unit, value.units)
     else:
         raise NotImplementedError(f"Value of type `{type(value)}` not supported.")
 
@@ -224,8 +225,8 @@ def pint_multiply(
         f = f.to(out_units)
     else:
         f = f.to_reduced_units()
-    out = da * f.magnitude
-    out.attrs["units"] = pint2cfunits(f.units)
+    out: xr.DataArray = da * f.magnitude
+    out = out.assign_attrs(units=pint2cfunits(f.units))
     return out
 
 
@@ -252,12 +253,11 @@ def str2pint(val: str) -> pint.Quantity:
         return units.Quantity(1, units2pint(val))
 
 
-# FIXME: The typing for this needs to be addressed. Maybe we need to use generics here to help specify what goes in/out?
 def convert_units_to(  # noqa: C901
     source: Quantified,
     target: Quantified | units.Unit,
     context: str | None = None,
-) -> Quantified:
+) -> xr.DataArray | float:
     """Convert a mathematical expression into a value with the same units as a DataArray.
 
     If the dimensionalities of source and target units differ, automatic CF conversions
@@ -315,13 +315,15 @@ def convert_units_to(  # noqa: C901
         else:
             context = "none"
 
+    m: float
     if isinstance(source, str):
         q = str2pint(source)
         # Return magnitude of converted quantity. This is going to fail if units are not compatible.
-        return q.to(target_unit, context).m
-
+        m = q.to(target_unit, context).m
+        return m
     if isinstance(source, units.Quantity):
-        return source.to(target_unit, context).m
+        m = source.to(target_unit, context).m
+        return m
 
     if isinstance(source, xr.DataArray):
         source_unit = units2pint(source)
@@ -359,7 +361,7 @@ def convert_units_to(  # noqa: C901
 
         if source_unit == target_unit:
             # The units are the same, but the symbol may not be.
-            source.attrs["units"] = target_cf_unit
+            source = source.assign_attrs(units=target_cf_unit)
             return source
 
         with units.context(context or "none"):
@@ -398,7 +400,8 @@ def cf_conversion(standard_name: str, conversion: str, direction: str) -> str | 
     i = ["to", "from"].index(direction)
     for names in CF_CONVERSIONS[conversion]["valid_names"]:
         if names[i] == standard_name:
-            return names[int(not i)]
+            cf_name: str = names[int(not i)]
+            return cf_name
     return None
 
 
@@ -568,7 +571,7 @@ def _rate_and_amount_converter(
     """Internal converter for :py:func:`xclim.core.units.rate2amount` and :py:func:`xclim.core.units.amount2rate`."""
     m = 1
     u = None  # Default to assume a non-uniform axis
-    label = "lower"
+    label: Literal["lower", "upper"] = "lower"  # Default to "lower" label for diff
     time = da[dim]
 
     try:
@@ -604,6 +607,7 @@ def _rate_and_amount_converter(
         else:
             m, u = multi, FREQ_UNITS[base]
 
+    out: xr.DataArray
     # Freq is month, season or year, which are not constant units, or simply freq is not inferrable.
     if u is None:
         # Get sampling period lengths in nanoseconds
@@ -642,7 +646,7 @@ def _rate_and_amount_converter(
             old_name, "amount2rate", "to" if to == "rate" else "from"
         )
     ):
-        out.attrs["standard_name"] = new_name
+        out = out.assign_attrs(standard_name=new_name)
 
     if out_units:
         out = convert_units_to(out, out_units)
@@ -860,7 +864,7 @@ def lwethickness2amount(
 
 def _flux_and_rate_converter(
     da: xr.DataArray,
-    density: Quantified | str,
+    density: Quantified,
     to: str = "rate",
     out_units: str | None = None,
 ) -> xr.DataArray:
@@ -893,8 +897,8 @@ def _flux_and_rate_converter(
         out_u = in_u * density_u**density_exp
 
     density = convert_units_to(density, (out_u / in_u) ** density_exp)
-    out = (da * density**density_exp).assign_attrs(da.attrs)
-    out.attrs["units"] = pint2cfunits(out_u)
+    out: xr.DataArray = (da * density**density_exp).assign_attrs(da.attrs)
+    out = out.assign_attrs(units=pint2cfunits(out_u))
     if "standard_name" in out.attrs.keys():
         out.attrs.pop("standard_name")
     return out

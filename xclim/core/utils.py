@@ -13,23 +13,16 @@ import logging
 import os
 import warnings
 from collections import defaultdict
-from enum import IntEnum
-from functools import partial
-
-try:
-    from importlib.resources import files
-except ImportError:
-    from importlib_resources import files
-
 from collections.abc import Sequence
+from enum import IntEnum
+from importlib.resources import files
 from inspect import Parameter, _empty  # noqa
 from io import StringIO
 from pathlib import Path
-from typing import Any, Callable, NewType, TypeVar
+from typing import Callable, NewType, TypeVar
 
 import numpy as np
 import xarray as xr
-from boltons.funcutils import update_wrapper
 from dask import array as dsk
 from pint import Quantity
 from yaml import safe_dump, safe_load
@@ -70,72 +63,6 @@ ICM = {
     "tas": "time: mean within days",
     "pr": "time: sum within days",
 }
-
-T = TypeVar("T", bound=Callable)
-
-
-class WrappedCallable:
-    """A wrapper around a callable that allows for attribute access."""
-
-    def __init__(self, func: T) -> None:  # noqa: D102
-        self._func = func
-
-    def __call__(self, *args, **kwargs):  # noqa: D102
-        return self._func(*args, **kwargs)
-
-    def __getattr__(self, attr):  # noqa: D105
-        return getattr(self._func, attr)
-
-    _injected: dict[str, Any]
-
-
-def wrapped_partial(
-    func: Callable, suggested: dict[str, Any] | None = None, **fixed
-) -> WrappedCallable:
-    r"""Wrap a function, updating its signature but keeping its docstring.
-
-    Parameters
-    ----------
-    func : Callable
-        The function to be wrapped
-    suggested : dict, optional
-        Keyword arguments that should have new default values but still appear in the signature.
-    \*\*fixed
-        Keyword arguments that should be fixed by the wrapped and removed from the signature.
-
-    Returns
-    -------
-    WrappedCallable
-
-    Examples
-    --------
-    >>> from inspect import signature
-    >>> def func(a, b=1, c=1):
-    ...     print(a, b, c)
-    ...
-    >>> newf = wrapped_partial(func, b=2)
-    >>> signature(newf)
-    <Signature (a, *, c=1)>
-    >>> newf(1)
-    1 2 1
-    >>> newf = wrapped_partial(func, suggested=dict(c=2), b=2)
-    >>> signature(newf)
-    <Signature (a, *, c=2)>
-    >>> newf(1)
-    1 2 2
-    """
-    suggested = suggested or {}
-    partial_func = partial(func, **suggested, **fixed)
-
-    fully_wrapped: WrappedCallable = update_wrapper(
-        partial_func, func, injected=list(fixed.keys()), hide_wrapped=True  # noqa
-    )
-
-    # Store all injected params,
-    injected = getattr(func, "_injected", {}).copy()
-    injected.update(fixed)
-    fully_wrapped._injected = injected
-    return fully_wrapped
 
 
 def deprecated(from_version: str | None, suggested: str | None = None) -> Callable:
