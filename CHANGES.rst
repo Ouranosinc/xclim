@@ -13,6 +13,9 @@ Announcements
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 * Indicator ``xclim.atmos.potential_evapotranspiration`` and indice ``xclim.indices.potential_evapotranspiration`` now accept a new value (`DA02`) for argument `method` implementing potential evapotranspiration based on Droogers and Allen (2002). (:issue:`1710`, :pull:`1723`).
+* `ensemble_percentiles` now takes a `method` argument, accepting
+  'interpolated_inverted_cdf', 'hazen', 'weibull', 'linear'  (default),
+  'median_unbiased' and 'normal_unbiased'. (:issue:`1694`, :pull:`1732`).
 
 New indicators
 ^^^^^^^^^^^^^^
