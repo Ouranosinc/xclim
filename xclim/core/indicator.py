@@ -190,8 +190,6 @@ class Parameter:
     False
     >>> p.description
     'A simple number'
-    >>> p["description"]  # Same as above, for convenience.
-    'A simple number'
     """
 
     _empty = _empty
