@@ -1169,8 +1169,8 @@ class Indicator(IndicatorRegistrar):
         Parameters
         ----------
         args : mapping, optional
-          Arguments as passed to the call method of the indicator.
-          If not given, the default arguments will be used when formatting the attributes.
+            Arguments as passed to the call method of the indicator.
+            If not given, the default arguments will be used when formatting the attributes.
 
         Notes
         -----
@@ -1215,11 +1215,11 @@ class Indicator(IndicatorRegistrar):
         Parameters
         ----------
         attrs : dict
-          Attributes containing tags to replace with arguments' values.
+            Attributes containing tags to replace with arguments' values.
         args : dict, optional
-          Function call arguments. If not given, the default arguments will be used when formatting the attributes.
+            Function call arguments. If not given, the default arguments will be used when formatting the attributes.
         formatter : AttrFormatter
-          Plaintext mappings for indicator attributes.
+            Plaintext mappings for indicator attributes.
 
         Returns
         -------
@@ -1387,10 +1387,12 @@ class CheckMissingIndicator(Indicator):
     Parameters
     ----------
     missing : {any, wmo, pct, at_least_n, skip, from_context}
-      The name of the missing value method. See `xclim.core.missing.MissingBase` to create new custom methods. If
-      None, this will be determined by the global configuration (see `xclim.set_options`). Defaults to "from_context".
+        The name of the missing value method. See `xclim.core.missing.MissingBase` to create new custom methods.
+        If None, this will be determined by the global configuration (see `xclim.set_options`).
+        Defaults to "from_context".
     missing_options : dict, optional
-      Arguments to pass to the `missing` function. If None, this will be determined by the global configuration.
+        Arguments to pass to the `missing` function.
+        If None, this will be determined by the global configuration.
     """
 
     missing = "from_context"
@@ -1469,10 +1471,12 @@ class ReducingIndicator(CheckMissingIndicator):
     Parameters
     ----------
     missing : {any, wmo, pct, at_least_n, skip, from_context}
-      The name of the missing value method. See `xclim.core.missing.MissingBase` to create new custom methods. If
-      None, this will be determined by the global configuration (see `xclim.set_options`). Defaults to "from_context".
+        The name of the missing value method. See `xclim.core.missing.MissingBase` to create new custom methods.
+        If None, this will be determined by the global configuration (see `xclim.set_options`).
+        Defaults to "from_context".
     missing_options : dict, optional
-      Arguments to pass to the `missing` function. If None, this will be determined by the global configuration.
+        Arguments to pass to the `missing` function.
+        If None, this will be determined by the global configuration.
     """
 
     def _get_missing_freq(self, params):
@@ -1489,14 +1493,16 @@ class ResamplingIndicator(CheckMissingIndicator):
     Parameters
     ----------
     missing : {any, wmo, pct, at_least_n, skip, from_context}
-      The name of the missing value method. See `xclim.core.missing.MissingBase` to create new custom methods. If
-      None, this will be determined by the global configuration (see `xclim.set_options`). Defaults to "from_context".
+        The name of the missing value method. See `xclim.core.missing.MissingBase` to create new custom methods.
+        If None, this will be determined by the global configuration (see `xclim.set_options`).
+        Defaults to "from_context".
     missing_options : dict, optional
-      Arguments to pass to the `missing` function. If None, this will be determined by the global configuration.
+        Arguments to pass to the `missing` function.
+        If None, this will be determined by the global configuration.
     allowed_periods : Sequence[str], optional
-      A list of allowed periods, i.e. base parts of the `freq` parameter. For example, indicators meant to be
-      computed annually only will have `allowed_periods=["A"]`. `None` means "any period" or that the
-      indicator doesn't take a `freq` argument.
+        A list of allowed periods, i.e. base parts of the `freq` parameter.
+        For example, indicators meant to be computed annually only will have `allowed_periods=["A"]`.
+        `None` means "any period" or that the indicator doesn't take a `freq` argument.
     """
 
     allowed_periods: list[str] | None = None
@@ -1613,20 +1619,22 @@ def build_indicator_module(
     Parameters
     ----------
     name : str
-      New module name. If it already exists, the module is extended with the passed objects,
-      overwriting those with same names.
+        New module name.
+        If it already exists, the module is extended with the passed objects, overwriting those with same names.
     objs : dict[str, Indicator]
-      Mapping of the indicators to put in the new module. Keyed by the name they will take in that module.
+        Mapping of the indicators to put in the new module.
+        Keyed by the name they will take in that module.
     doc : str
-      Docstring of the new module. Defaults to a simple header. Invalid if the module already exists.
+        Docstring of the new module. Defaults to a simple header.
+        Invalid if the module already exists.
     reload : bool
-      If reload is True and the module already exists, it is first removed before being rebuilt.
-      If False (default), indicators are added or updated, but not removed.
+        If reload is True and the module already exists, it is first removed before being rebuilt.
+        If False (default), indicators are added or updated, but not removed.
 
     Returns
     -------
     ModuleType
-      A indicator module built from a mapping of Indicators.
+        A indicator module built from a mapping of Indicators.
     """
     from xclim import indicators
 
@@ -1675,35 +1683,35 @@ def build_indicator_module_from_yaml(  # noqa: C901
     Parameters
     ----------
     filename : PathLike
-      Path to a YAML file or to the stem of all module files. See Notes for behaviour when passing a basename only.
+        Path to a YAML file or to the stem of all module files. See Notes for behaviour when passing a basename only.
     name : str, optional
-      The name of the new or existing module, defaults to the basename of the file.
-      (e.g: `atmos.yml` -> `atmos`)
+        The name of the new or existing module, defaults to the basename of the file.
+        (e.g: `atmos.yml` -> `atmos`)
     indices : Mapping of callables or module or path, optional
-      A mapping or module of indice functions or a python file declaring such a file.
-      When creating the indicator, the name in the `index_function` field is first sought
-      here, then the indicator class will search in xclim.indices.generic and finally in xclim.indices.
-    translations  : Mapping of dicts or path, optional
-      Translated metadata for the new indicators. Keys of the mapping must be 2-char language tags.
-      Values can be translations dictionaries as defined in :ref:`internationalization:Internationalization`.
-      They can also be a path to a json file defining the translations.
+        A mapping or module of indice functions or a python file declaring such a file.
+        When creating the indicator, the name in the `index_function` field is first sought
+        here, then the indicator class will search in xclim.indices.generic and finally in xclim.indices.
+    translations : Mapping of dicts or path, optional
+        Translated metadata for the new indicators. Keys of the mapping must be 2-char language tags.
+        Values can be translations dictionaries as defined in :ref:`internationalization:Internationalization`.
+        They can also be a path to a json file defining the translations.
     mode : {'raise', 'warn', 'ignore'}
-      How to deal with broken indice definitions.
+        How to deal with broken indice definitions.
     encoding : str
-      The encoding used to open the `.yaml` and `.json` files.
-      It defaults to UTF-8, overriding python's mechanism which is machine dependent.
+        The encoding used to open the `.yaml` and `.json` files.
+        It defaults to UTF-8, overriding python's mechanism which is machine dependent.
     reload : bool
-      If reload is True and the module already exists, it is first removed before being rebuilt.
-      If False (default), indicators are added or updated, but not removed.
+        If reload is True and the module already exists, it is first removed before being rebuilt.
+        If False (default), indicators are added or updated, but not removed.
     validate : bool or path
-      If True (default), the yaml module is validated against xclim's schema.
-      Can also be the path to a yml schema against which to validate.
-      Or False, in which case validation is simply skipped.
+        If True (default), the yaml module is validated against xclim's schema.
+        Can also be the path to a yml schema against which to validate.
+        Or False, in which case validation is simply skipped.
 
     Returns
     -------
     ModuleType
-      A submodule of `pym:mod:`xclim.indicators`.
+        A submodule of `pym:mod:`xclim.indicators`.
 
     Notes
     -----
@@ -1813,7 +1821,8 @@ def build_indicator_module_from_yaml(  # noqa: C901
     for varname, vardata in yml.get("variables", {}).items():
         if varname in VARIABLES and VARIABLES[varname] != vardata:
             warnings.warn(
-                f"Variable {varname} from module {module_name} will overwrite the one already defined in `xclim.core.utils.VARIABLES`"
+                f"Variable {varname} from module {module_name} "
+                "will overwrite the one already defined in `xclim.core.utils.VARIABLES`"
             )
         VARIABLES[varname] = vardata.copy()
 
