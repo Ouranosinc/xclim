@@ -54,9 +54,6 @@ Ensembles Module
 .. autofunction:: xclim.ensembles.robustness_categories
    :noindex:
 
-.. autofunction:: xclim.ensembles.change_significance
-   :noindex:
-
 .. autofunction:: xclim.ensembles.robustness_coefficient
    :noindex:
 

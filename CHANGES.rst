@@ -4,11 +4,18 @@ Changelog
 
 v0.49.0 (unreleased)
 --------------------
-Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), Juliette Lavoie (:user:`juliettelavoie`), David Huard (:user:`huard`), Gabriel Rondeau-Genesse (:user:`RondeauG`).
+Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), Juliette Lavoie (:user:`juliettelavoie`), David Huard (:user:`huard`), Gabriel Rondeau-Genesse (:user:`RondeauG`), Javier Diez-Sierra (:user:`JavierDiezSierra`).
 
 Announcements
 ^^^^^^^^^^^^^
 * `xclim` has migrated its development branch name from `master` to `main`. (:issue:`1667`, :pull:`1669`).
+
+New features and enhancements
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+* Indicator ``xclim.atmos.potential_evapotranspiration`` and indice ``xclim.indices.potential_evapotranspiration`` now accept a new value (`DA02`) for argument `method` implementing potential evapotranspiration based on Droogers and Allen (2002). (:issue:`1710`, :pull:`1723`).
+* `ensemble_percentiles` now takes a `method` argument, accepting
+  'interpolated_inverted_cdf', 'hazen', 'weibull', 'linear'  (default),
+  'median_unbiased' and 'normal_unbiased'. (:issue:`1694`, :pull:`1732`).
 
 New indicators
 ^^^^^^^^^^^^^^
@@ -18,7 +25,10 @@ New indicators
 Breaking changes
 ^^^^^^^^^^^^^^^^
 * The previously deprecated functions ``xclim.sdba.processing.construct_moving_yearly_window`` and ``xclim.sdba.processing.unpack_moving_yearly_window`` have been removed. These functions have been replaced by ``xclim.core.calendar.stack_periods`` and ``xclim.core.calendar.unstack_periods``. (:pull:`1717`).
+* The previously deprecated function ``xclim.ensembles.change_significance`` has been removed. (:pull:`1737`).
 * Indicators ``snw_season_length`` and ``snd_season_length`` have been modified, see above.
+* The `hargeaves85`/`hg85` method for the ``potential_evapotranspiration`` indicator and indice has been modified for precision and consistency with recent academic literature. (:issue:`1710`, :pull:`1723`).
+
 
 Bug fixes
 ^^^^^^^^^
