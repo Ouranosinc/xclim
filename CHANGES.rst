@@ -40,7 +40,7 @@ Bug fixes
 * Fixed "agreement fraction" in ``robustness_fractions`` to distinguish between negative change and no change. Added "negative" and "changed negative" fractions (:issue:`1690`, :pull:`1711`).
 * ``make_criteria`` now skips columns with NaNs across all realizations. (:pull:`1713`).
 * Fixed bug QuantileDeltaMapping adjustment not working for seasonal grouping (:issue:`1704`, :pull:`1716`).
-* The codebase has been adjusted to address several (~300) `mypy`-related typing errors. (:issue:`1719`, :pull:`1721`).
+* The codebase has been adjusted to address several (~400) `mypy`-related errors attributable to inaccurate function call signatures and variable name shadowing. (:issue:`1719`, :pull:`1721`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
