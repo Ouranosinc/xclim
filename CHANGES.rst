@@ -26,6 +26,7 @@ Breaking changes
 * Indicators ``snw_season_length`` and ``snd_season_length`` have been modified, see above.
 * The `hargeaves85`/`hg85` method for the ``potential_evapotranspiration`` indicator and indice has been modified for precision and consistency with recent academic literature. (:issue:`1710`, :pull:`1723`).
 * The `__getitem__` method of ``xclim.core.indicator.Parameter`` instances has been removed. Accessing members of ``Parameters`` now uniquely uses dot notation. (:pull:`1721`).
+* The obsolete function wrapper for generating Indicators ``xclim.core.utils.wrapped_partial`` has been removed. (:pull:`1721`).
 
 Bug fixes
 ^^^^^^^^^
@@ -37,7 +38,6 @@ Bug fixes
 * ``make_criteria`` now skips columns with NaNs across all realizations. (:pull:`1713`).
 * Fixed bug QuantileDeltaMapping adjustment not working for seasonal grouping (:issue:`1704`, :pull:`1716`).
 * The codebase has been adjusted to address several (~300) `mypy`-related typing errors. (:issue:`1719`, :pull:`1721`).
-* PEP8 rule `N802` is now enabled in the `ruff` formatter. (:pull:`1721`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
@@ -47,6 +47,7 @@ Internal changes
 * Added the `tox-gh` dependency to the development installation recipe. This will soon be required for running the `tox` test ensemble on GitHub Workflows. (:pull:`1709`).
 * Added the `vulture` static code analysis tool for finding dead code to the development dependency list and linters (makefile, tox and pre-commit hooks). (:pull:`1717`).
 * Added error message when using `xclim.indices.stats.dist_method` with `nnlf` and included note in docstring. (:issue:`1683`, :pull:`1714`).
+* PEP8 rule `N802` is now enabled in the `ruff` formatter. Function names should follow `Snake case <https://en.wikipedia.org/wiki/Snake_case>`_, with rare exceptions. (:pull:`1721`).
 
 v0.48.2 (2024-02-26)
 --------------------
