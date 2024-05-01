@@ -1327,7 +1327,7 @@ def standardized_precipitation_evapotranspiration_index(
             )
     else:
         raise NotImplementedError(f"{dist} distribution is not yet implemented.")
-        
+
     # Water budget is not expected to be zero-inflated
     zero_inflated = False
     spei = standardized_index(
