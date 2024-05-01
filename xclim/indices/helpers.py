@@ -7,7 +7,9 @@ Functions that encapsulate some geophysical logic but could be shared by many in
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from inspect import stack
+from typing import Any
 
 import cf_xarray  # noqa: F401, pylint: disable=unused-import
 import cftime
@@ -363,8 +365,8 @@ def extraterrestrial_solar_radiation(
     times: xr.DataArray,
     lat: xr.DataArray,
     solar_constant: Quantified = "1361 W m-2",
-    method="spencer",
-    chunks: dict[str, int] | None = None,
+    method: str = "spencer",
+    chunks: Mapping[Any, tuple] | None = None,
 ) -> xr.DataArray:
     """Extraterrestrial solar radiation.
 
@@ -383,7 +385,7 @@ def extraterrestrial_solar_radiation(
     method : {'spencer', 'simple'}
         Which method to use when computing the solar declination and the eccentricity
         correction factor. See :py:func:`solar_declination` and :py:func:`eccentricity_correction_factor`.
-    chunks : dictionary
+    chunks : dict
         When `times` and `lat` originate from coordinates of a large chunked dataset, passing the dataset's chunks here
         will ensure the computation is chunked as well.
 

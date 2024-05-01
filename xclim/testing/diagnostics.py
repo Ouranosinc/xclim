@@ -8,6 +8,8 @@ behavior of sdba methods and utilities.
 """
 from __future__ import annotations
 
+import warnings
+
 import numpy as np
 from scipy.stats import gaussian_kde, scoreatpercentile
 
@@ -22,7 +24,7 @@ from xclim.testing.sdba_utils import cannon_2015_rvs, series
 try:
     from matplotlib import pyplot as plt
 except ModuleNotFoundError:
-    plt = False
+    warnings.warn("Matplotlib not found, plot-generating functions will not work.")
 
 
 __all__ = ["adapt_freq_graph", "cannon_2015_figure_2", "synth_rainfall"]

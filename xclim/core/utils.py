@@ -13,15 +13,9 @@ import logging
 import os
 import warnings
 from collections import defaultdict
+from collections.abc import Sequence
 from enum import IntEnum
-from functools import partial
-
-try:
-    from importlib.resources import files
-except ImportError:
-    from importlib_resources import files
-
-from collections.abc import Mapping, Sequence
+from importlib.resources import as_file, files
 from inspect import Parameter, _empty  # noqa
 from io import StringIO
 from pathlib import Path
@@ -29,7 +23,6 @@ from typing import Callable, NewType, TypeVar
 
 import numpy as np
 import xarray as xr
-from boltons.funcutils import update_wrapper
 from dask import array as dsk
 from pint import Quantity
 from yaml import safe_dump, safe_load
@@ -45,9 +38,10 @@ DayOfYearStr = NewType("DayOfYearStr", str)
 #: Type annotation for thresholds and other not-exactly-a-variable quantities
 Quantified = TypeVar("Quantified", xr.DataArray, str, Quantity)
 
-with (files("xclim.data") / "variables.yml").open() as f:
-    VARIABLES = safe_load(f)["variables"]
-    """Official variables definitions.
+with as_file(files("xclim.data")) as data_dir:
+    with (data_dir / "variables.yml").open() as f:
+        VARIABLES = safe_load(f)["variables"]
+        """Official variables definitions.
 
 A mapping from variable name to a dict with the following keys:
 
@@ -70,53 +64,6 @@ ICM = {
     "tas": "time: mean within days",
     "pr": "time: sum within days",
 }
-
-
-def wrapped_partial(func: Callable, suggested: dict | None = None, **fixed) -> Callable:
-    r"""Wrap a function, updating its signature but keeping its docstring.
-
-    Parameters
-    ----------
-    func : Callable
-        The function to be wrapped
-    suggested : dict, optional
-        Keyword arguments that should have new default values but still appear in the signature.
-    \*\*fixed
-        Keyword arguments that should be fixed by the wrapped and removed from the signature.
-
-    Returns
-    -------
-    Callable
-
-    Examples
-    --------
-    >>> from inspect import signature
-    >>> def func(a, b=1, c=1):
-    ...     print(a, b, c)
-    ...
-    >>> newf = wrapped_partial(func, b=2)
-    >>> signature(newf)
-    <Signature (a, *, c=1)>
-    >>> newf(1)
-    1 2 1
-    >>> newf = wrapped_partial(func, suggested=dict(c=2), b=2)
-    >>> signature(newf)
-    <Signature (a, *, c=2)>
-    >>> newf(1)
-    1 2 2
-    """
-    suggested = suggested or {}
-    partial_func = partial(func, **suggested, **fixed)
-
-    fully_wrapped = update_wrapper(
-        partial_func, func, injected=list(fixed.keys()), hide_wrapped=True  # noqa
-    )
-
-    # Store all injected params,
-    injected = getattr(func, "_injected", {}).copy()
-    injected.update(fixed)
-    fully_wrapped._injected = injected
-    return fully_wrapped
 
 
 def deprecated(from_version: str | None, suggested: str | None = None) -> Callable:
@@ -226,7 +173,7 @@ class MissingVariableError(ValueError):
     """Error raised when a dataset is passed to an indicator but one of the needed variable is missing."""
 
 
-def ensure_chunk_size(da: xr.DataArray, **minchunks: Mapping[str, int]) -> xr.DataArray:
+def ensure_chunk_size(da: xr.DataArray, **minchunks: int) -> xr.DataArray:
     r"""Ensure that the input DataArray has chunks of at least the given size.
 
     If only one chunk is too small, it is merged with an adjacent chunk.
@@ -305,18 +252,25 @@ def uses_dask(*das: xr.DataArray | xr.Dataset) -> bool:
 
 def calc_perc(
     arr: np.ndarray,
-    percentiles: Sequence[float] = None,
+    percentiles: Sequence[float] | None = None,
     alpha: float = 1.0,
     beta: float = 1.0,
     copy: bool = True,
 ) -> np.ndarray:
     """Compute percentiles using nan_calc_percentiles and move the percentiles' axis to the end."""
     if percentiles is None:
-        percentiles = [50.0]
+        _percentiles = [50.0]
+    else:
+        _percentiles = percentiles
 
     return np.moveaxis(
         nan_calc_percentiles(
-            arr=arr, percentiles=percentiles, axis=-1, alpha=alpha, beta=beta, copy=copy
+            arr=arr,
+            percentiles=_percentiles,
+            axis=-1,
+            alpha=alpha,
+            beta=beta,
+            copy=copy,
         ),
         source=0,
         destination=-1,
@@ -333,13 +287,15 @@ def nan_calc_percentiles(
 ) -> np.ndarray:
     """Convert the percentiles to quantiles and compute them using _nan_quantile."""
     if percentiles is None:
-        percentiles = [50.0]
+        _percentiles = [50.0]
+    else:
+        _percentiles = percentiles
 
     if copy:
         # bootstrapping already works on a data's copy
         # doing it again is extremely costly, especially with dask.
         arr = arr.copy()
-    quantiles = np.array([per / 100.0 for per in percentiles])
+    quantiles = np.array([per / 100.0 for per in _percentiles])
     return _nan_quantile(arr, quantiles, axis, alpha, beta)
 
 
@@ -553,15 +509,15 @@ def raise_warn_or_log(
     stacklevel : int
         Stacklevel when warning. Relative to the call of this function (1 is added).
     """
-    msg = msg or getattr(err, "msg", f"Failed with {err!r}.")
+    message = msg or getattr(err, "msg", f"Failed with {err!r}.")
     if mode == "ignore":
         pass
     elif mode == "log":
-        logger.info(msg)
+        logger.info(message)
     elif mode == "warn":
-        warnings.warn(msg, stacklevel=stacklevel + 1)
+        warnings.warn(message, stacklevel=stacklevel + 1)
     else:  # mode == "raise"
-        raise err from err_type(msg)
+        raise err from err_type(message)
 
 
 class InputKind(IntEnum):
