@@ -764,7 +764,12 @@ def _relative_frequency(
     """
     # mask of the ocean with NaNs
     mask = ~(da.isel({group.dim: 0}).isnull()).drop_vars(group.dim)
-    ops = {">": np.greater, "<": np.less, ">=": np.greater_equal, "<=": np.less_equal}
+    ops: dict[str, np.ufunc] = {
+        ">": np.greater,
+        "<": np.less,
+        ">=": np.greater_equal,
+        "<=": np.less_equal,
+    }
     t = convert_units_to(thresh, da, context="infer")
     length = da.sizes[group.dim]
     cond = ops[op](da, t)
@@ -1069,7 +1074,7 @@ def _decorrelation_length(
     thresh: float = 0.50,
     dims: Sequence[str] | None = None,
     bins: int = 100,
-    group: str = "time",
+    group: xr.Coordinate | str | None = "time",  # FIXME: this needs to be clarified
 ):
     """Decorrelation length.
 
@@ -1087,13 +1092,13 @@ def _decorrelation_length(
         Threshold correlation defining decorrelation.
         The decorrelation length is defined as the center of the distance bin that has a correlation closest
         to this threshold.
-    dims: sequence of strings
+    dims : sequence of strings
         Name of the spatial dimensions. Once these are stacked, the longitude and latitude coordinates must be 1D.
     bins : int
         Same as argument `bins` from :py:meth:`scipy.stats.binned_statistic`.
         If given as a scalar, the equal-width bin limits from 0 to radius are generated here
         (instead of letting scipy do it) to improve performance.
-    group : str
+    group : xarray.Coordinate or str, optional
         Useless for now.
 
     Returns
@@ -1105,7 +1110,7 @@ def _decorrelation_length(
     -----
     Calculating this property requires a lot of memory. It will not work with large datasets.
     """
-    if dims is None:
+    if dims is None and group is not None:
         dims = [d for d in da.dims if d != group.dim]
 
     corr = _pairwise_spearman(da, dims)
@@ -1121,15 +1126,19 @@ def _decorrelation_length(
     )
 
     if np.isscalar(bins):
-        bins = np.linspace(0, radius, bins + 1)
+        bin_array = np.linspace(0, radius, bins + 1)
+    elif isinstance(bins, np.ndarray):
+        bin_array = bins
+    else:
+        raise ValueError("bins must be a scalar or a numpy array.")
 
     if uses_dask(corr):
         dists = dists.chunk()
         trans_dists = trans_dists.chunk()
 
-    w = np.diff(bins)
+    w = np.diff(bin_array)
     centers = xr.DataArray(
-        bins[:-1] + w / 2,
+        bin_array[:-1] + w / 2,
         dims=("distance_bins",),
         attrs={
             "units": "km",
@@ -1140,15 +1149,16 @@ def _decorrelation_length(
 
     # only keep points inside the radius
     ds = ds.where(ds.distance < radius)
-
     ds = ds.where(ds.distance2 < radius)
 
-    def _bin_corr(corr, distance):
+    def _bin_corr(_corr, _distance):
         """Bin and mean."""
-        mask_nan = ~np.isnan(corr)
-        return stats.binned_statistic(
-            distance[mask_nan], corr[mask_nan], statistic="mean", bins=bins
-        ).statistic
+        mask_nan = ~np.isnan(_corr)
+        binned_corr = stats.binned_statistic(
+            _distance[mask_nan], _corr[mask_nan], statistic="mean", bins=bin_array
+        )
+        stat = binned_corr.statistic
+        return stat
 
     # (_spatial, _spatial2) -> (_spatial, distance_bins)
     binned = (
@@ -1163,7 +1173,7 @@ def _decorrelation_length(
             output_dtypes=[float],
             dask_gufunc_kwargs={
                 "allow_rechunk": True,
-                "output_sizes": {"distance_bins": len(bins)},
+                "output_sizes": {"distance_bins": len(bin_array)},
             },
         )
         .rename("corr")

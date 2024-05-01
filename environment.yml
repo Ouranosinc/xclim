@@ -54,6 +54,7 @@ dependencies:
   - nc-time-axis
   - netCDF4 >=1.4
   - notebook
+  - pandas-stubs
   - platformdirs
   - pooch
   - pre-commit

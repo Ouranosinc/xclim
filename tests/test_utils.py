@@ -2,8 +2,6 @@
 # Test for utils
 from __future__ import annotations
 
-from inspect import signature
-
 import numpy as np
 import xarray as xr
 
@@ -12,7 +10,6 @@ from xclim.core.utils import (
     ensure_chunk_size,
     nan_calc_percentiles,
     walk_map,
-    wrapped_partial,
 )
 from xclim.testing.helpers import test_timeseries as _test_timeseries
 
@@ -22,29 +19,6 @@ def test_walk_map():
     o = walk_map(d, lambda x: 0)
     assert o["a"] == 0
     assert o["b"]["c"] == 0
-
-
-def test_wrapped_partial():
-    def func(a, b=1, c=1):
-        """Docstring"""
-        return (a, b, c)
-
-    newf = wrapped_partial(func, b=2)
-    assert list(signature(newf).parameters.keys()) == ["a", "c"]
-    assert newf(1) == (1, 2, 1)
-
-    newf = wrapped_partial(func, suggested=dict(c=2), b=2)
-    assert list(signature(newf).parameters.keys()) == ["a", "c"]
-    assert newf(1) == (1, 2, 2)
-    assert newf.__doc__ == func.__doc__
-
-    def func(a, b=1, c=1, **kws):  # pylint: disable=function-redefined
-        """Docstring"""
-        return a, b, c
-
-    newf = wrapped_partial(func, suggested=dict(c=2), a=2, b=2)
-    assert list(signature(newf).parameters.keys()) == ["c", "kws"]
-    assert newf() == (2, 2, 2)
 
 
 def test_ensure_chunk_size():

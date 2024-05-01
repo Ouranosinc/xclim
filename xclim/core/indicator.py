@@ -190,8 +190,6 @@ class Parameter:
     False
     >>> p.description
     'A simple number'
-    >>> p["description"]  # Same as above, for convenience.
-    'A simple number'
     """
 
     _empty = _empty
@@ -218,12 +216,12 @@ class Parameter:
             cls.__dataclass_fields__.keys()  # pylint: disable=no-member
         )
 
-    def __getitem__(self, key) -> str:
-        """Return an item in retro-compatible fashion."""
-        try:
-            return getattr(self, key)
-        except AttributeError as err:
-            raise KeyError(key) from err
+    # def __getitem__(self, key) -> str:
+    #     """Return an item in retro-compatible fashion."""
+    #     try:
+    #         return str(getattr(self, key))
+    #     except AttributeError as err:
+    #         raise KeyError(key) from err
 
     def __contains__(self, key) -> bool:
         """Imitate previous behaviour where "units" and "choices" were missing, instead of being "_empty"."""
@@ -455,7 +453,7 @@ class Indicator(IndicatorRegistrar):
                 # parameters has already been update above.
                 kwds["compute"] = declare_units(
                     **{
-                        inv_var_map[k]: m["units"]
+                        inv_var_map[k]: m.units
                         for k, m in parameters.items()
                         if "units" in m and k in inv_var_map
                     }
@@ -1638,6 +1636,7 @@ def build_indicator_module(
     """
     from xclim import indicators
 
+    out: ModuleType
     if hasattr(indicators, name):
         if doc is not None:
             warnings.warn(
@@ -1777,17 +1776,17 @@ def build_indicator_module_from_yaml(  # noqa: C901
     if isinstance(indices, (str, Path)):
         indices = load_module(indices, name=module_name)
 
+    _translations: dict[str, dict] = {}
     if not filepath.suffix and translations is None:
         # No suffix mean we try to automatically detect the json files.
-        translations = {}
         for locfile in filepath.parent.glob(f"{filepath.stem}.*.json"):
             locale = locfile.suffixes[0][1:]
-            translations[locale] = read_locale_file(
+            _translations[locale] = read_locale_file(
                 locfile, module=module_name, encoding=encoding
             )
     elif translations is not None:
         # A mapping was passed, we read paths is any.
-        translations = {
+        _translations = {
             lng: (
                 read_locale_file(trans, module=module_name, encoding=encoding)
                 if isinstance(trans, (str, Path))
@@ -1870,8 +1869,8 @@ def build_indicator_module_from_yaml(  # noqa: C901
     mod = build_indicator_module(module_name, objs=mapping, doc=doc, reload=reload)
 
     # If there are translations, load them
-    if translations:
-        for locale, loc_dict in translations.items():
+    if _translations:
+        for locale, loc_dict in _translations.items():
             load_locale(loc_dict, locale)
 
     return mod

@@ -514,7 +514,7 @@ def _fit_start(x, dist: str, **fitkwargs: Any) -> tuple[tuple, dict]:
     return (), {}
 
 
-def _dist_method_1D(
+def _dist_method_1D(  # noqa: N802
     *args, dist: str | scipy.stats.rv_continuous, function: str, **kwargs: Any
 ) -> xr.DataArray:
     r"""Statistical function for given argument on given distribution initialized with params.
