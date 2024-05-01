@@ -535,7 +535,9 @@ def snow_depth(
 
 
 @declare_units(sfcWind="[speed]")
-def sfcWind_max(sfcWind: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
+def sfcWind_max(  # noqa: N802
+    sfcWind: xarray.DataArray, freq: str = "YS"
+) -> xarray.DataArray:
     r"""Highest daily mean wind speed.
 
     The maximum of daily mean wind speed.
@@ -574,7 +576,9 @@ def sfcWind_max(sfcWind: xarray.DataArray, freq: str = "YS") -> xarray.DataArray
 
 
 @declare_units(sfcWind="[speed]")
-def sfcWind_mean(sfcWind: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
+def sfcWind_mean(  # noqa: N802
+    sfcWind: xarray.DataArray, freq: str = "YS"
+) -> xarray.DataArray:
     r"""Mean of daily mean wind speed.
 
     Resample the original daily mean wind speed series by taking the mean over each period.
@@ -615,7 +619,9 @@ def sfcWind_mean(sfcWind: xarray.DataArray, freq: str = "YS") -> xarray.DataArra
 
 
 @declare_units(sfcWind="[speed]")
-def sfcWind_min(sfcWind: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
+def sfcWind_min(  # noqa: N802
+    sfcWind: xarray.DataArray, freq: str = "YS"
+) -> xarray.DataArray:
     r"""Lowest daily mean wind speed.
 
     The minimum of daily mean wind speed.
@@ -654,7 +660,9 @@ def sfcWind_min(sfcWind: xarray.DataArray, freq: str = "YS") -> xarray.DataArray
 
 
 @declare_units(sfcWindmax="[speed]")
-def sfcWindmax_max(sfcWindmax: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
+def sfcWindmax_max(  # noqa: N802
+    sfcWindmax: xarray.DataArray, freq: str = "YS"
+) -> xarray.DataArray:
     r"""Highest maximum wind speed.
 
     The maximum of daily maximum wind speed.
@@ -696,7 +704,9 @@ def sfcWindmax_max(sfcWindmax: xarray.DataArray, freq: str = "YS") -> xarray.Dat
 
 
 @declare_units(sfcWindmax="[speed]")
-def sfcWindmax_mean(sfcWindmax: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
+def sfcWindmax_mean(  # noqa: N802
+    sfcWindmax: xarray.DataArray, freq: str = "YS"
+) -> xarray.DataArray:
     r"""Mean of daily maximum wind speed.
 
     Resample the original daily maximum wind speed series by taking the mean over each period.
@@ -738,7 +748,9 @@ def sfcWindmax_mean(sfcWindmax: xarray.DataArray, freq: str = "YS") -> xarray.Da
 
 
 @declare_units(sfcWindmax="[speed]")
-def sfcWindmax_min(sfcWindmax: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
+def sfcWindmax_min(  # noqa: N802
+    sfcWindmax: xarray.DataArray, freq: str = "YS"
+) -> xarray.DataArray:
     r"""Lowest daily maximum wind speed.
 
     The minimum of daily maximum wind speed.

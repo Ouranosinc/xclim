@@ -60,12 +60,12 @@ def spatial_analogs(
     # Create the target DataArray
     # drop any (sub-)index along "dist_dim" that could conflict with target, and rename it.
     # The drop is the simplest solution that is compatible with both xarray <=2022.3.0 and >2022.3.1
-    candidates = candidates.to_array("_indices", "candidates").rename(
+    candidate_array = candidates.to_array("_indices", "candidates").rename(
         {dist_dim: "_dist_dim"}
     )
-    if isinstance(candidates.indexes["_dist_dim"], pd.MultiIndex):
-        candidates = candidates.drop_vars(
-            ["_dist_dim"] + candidates.indexes["_dist_dim"].names,
+    if isinstance(candidate_array.indexes["_dist_dim"], pd.MultiIndex):
+        candidate_array = candidate_array.drop_vars(
+            ["_dist_dim"] + candidate_array.indexes["_dist_dim"].names,
             # in xarray <= 2022.3.0 the sub-indexes are not listed as separate coords,
             # instead, they are dropped when the multiindex is dropped.
             errors="ignore",
@@ -78,8 +78,8 @@ def spatial_analogs(
             f"Method `{method}` is not implemented. Available methods are: {','.join(metrics.keys())}."
         ) from e
 
-    if candidates.chunks is not None:
-        candidates = candidates.chunk({"_indices": -1})
+    if candidate_array.chunks is not None:
+        candidate_array = candidate_array.chunk({"_indices": -1})
     if target_array.chunks is not None:
         target_array = target_array.chunk({"_indices": -1})
 
@@ -87,7 +87,7 @@ def spatial_analogs(
     diss = xr.apply_ufunc(
         metric_func,
         target_array,
-        candidates,
+        candidate_array,
         input_core_dims=[(dist_dim, "_indices"), ("_dist_dim", "_indices")],
         output_core_dims=[()],
         vectorize=True,

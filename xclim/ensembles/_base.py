@@ -425,9 +425,10 @@ def _ens_align_datasets(
     if isinstance(datasets, str):
         datasets = glob(datasets)
 
-    ds_all = []
+    ds_all: list[xr.Dataset] = []
     calendars = []
     for i, n in enumerate(datasets):
+        ds: xr.Dataset
         if multifile:
             ds = xr.open_mfdataset(n, combine="by_coords", **xr_kwargs)
         else:
