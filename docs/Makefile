@@ -20,4 +20,4 @@ help:
 	@$(SPHINXBUILD) -M $@ "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
 
 livehtml:
-	sphinx-autobuild --port 54345 --open-browser --delay 2 --re-ignore "$(BUILDDIR)|apidoc|_dynamic/indicators.json|variables.json|__pycache__" "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
+	sphinx-autobuild --port 54345 --open-browser --delay 3 --re-ignore "$(BUILDDIR)|apidoc|Makefile|_dynamic/indicators.json|variables.json|__pycache__" "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
