@@ -1,4 +1,4 @@
-@import url("theme.css");
+@import url("styles/furo.css");
 
 .wy-side-nav-search>a img.logo,
 .wy-side-nav-search .wy-dropdown>a img.logo {
@@ -37,8 +37,16 @@ td.name {
     font-weight: 500;
 }
 
-tr:nth-child(even) {
-  background-color: #dddddd;
+body div tr:nth-child(even),
+body div.rendered_html tbody tr:nth-child(even) {
+  background-color: var(--color-background-table-rows-even);
+  color: var(--color-text-table-rows-even);
+}
+
+body div tr:nth-child(odd),
+body div.rendered_html tbody tr:nth-child(odd) {
+  background-color: var(--color-background-table-rows-odd);
+  color: var(--color-text-table-rows-odd);
 }
 
 dd {
@@ -75,7 +83,8 @@ ul.simple li {
 .indElem {
  margin: 10px;
  padding: 10px;
- background-color: #ddd;
+ background-color: var(--color-indicator-background);
+ color: var(--color-indicator-text);
  border-radius: 10px;
 }
 
@@ -84,11 +93,19 @@ ul.simple li {
 }
 
 code > .indName {
-  background-color: #ccc;
+  background-color: var(--color-indicator-background);
+  color: var(--color-indicator-text);
 }
 
 .indVarname {
   border-radius: 10px;
+  background-color: var(--color-indicator-widget-background);
+  color: var(--color-indicator-widget-text);
+  border: solid 1px var(--color-indicator-widget-text);
+  margin-right: 3px;
+  margin-bottom: 3px;
+  line-height: 24px;
+  cursor: help;
 }
 
 /* Rounded corners for keyword labels: */
@@ -96,9 +113,79 @@ code > .indName {
     border-radius: 10px;
     padding: 5px;
     margin: 5px;
-    background-color: #ddd;
+    background-color: var(--color-indicator-widget-background);
+    color: var(--color-indicator-widget-text);
+    border: solid 1px var(--color-indicator-widget-text);
+    line-height: 24px;
+
 }
 
 #incVirtModLbl {
     display: inline;
+}
+
+/* extend furo for inline ".only-dark" elements */
+body .only-dark-inline,
+body .only-light-inline {
+  display: none !important;
+}
+
+@media not print {
+  body[data-theme="dark"] .only-dark-inline,
+  body[data-theme="light"] .only-light-inline {
+    display: inline !important;
+  }
+  @media (prefers-color-scheme: dark) {
+    body:not([data-theme="light"]) .only-dark-inline{
+      display: inline !important;
+    }
+  }
+  @media (prefers-color-scheme: light) {
+    body:not([data-theme="dark"]) .only-light-inline{
+      display: inline !important;
+    }
+  }
+}
+
+@media print {
+  .only-light-inline{
+    display: inline !important;
+  }
+  .only-dark-inline{
+    display: none !important;
+  }
+}
+
+img.xclim-logo-small.only-dark-inline {
+    width: 91px;
+    height: 103px;
+    margin: 0;
+    padding: 0;
+    background-color: transparent;
+    background-repeat: no-repeat;
+    border-image-width: 0px;
+    border: none;
+    border-image-width: 0px;
+    background-image: url("xclim-logo-small-dark.png");
+}
+
+img.xclim-logo-small.only-light-inline {
+    width: 91px;
+    height: 103px;
+    margin: 0;
+    padding: 0;
+    background-color: transparent;
+    background-repeat: no-repeat;
+    border: none;
+    border-image-width: 0px;
+    background-image: url("xclim-logo-small-light.png");
+}
+
+img.xclim-logo-small.no-theme {
+  display: none;
+  width: 0px;
+}
+
+button.copybtn.copybtn svg {
+  stroke: var(--color-copybutton);
 }
