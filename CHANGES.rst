@@ -4,7 +4,7 @@ Changelog
 
 v0.49.0 (unreleased)
 --------------------
-Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), Juliette Lavoie (:user:`juliettelavoie`), David Huard (:user:`huard`), Gabriel Rondeau-Genesse (:user:`RondeauG`), Javier Diez-Sierra (:user:`JavierDiezSierra`).
+Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), Juliette Lavoie (:user:`juliettelavoie`), David Huard (:user:`huard`), Gabriel Rondeau-Genesse (:user:`RondeauG`), Javier Diez-Sierra (:user:`JavierDiezSierra`), Sarah Gammon (:user:`SarahG-579462`), Éric Dupuis (:user:`coxipi`).
 
 Announcements
 ^^^^^^^^^^^^^
@@ -13,8 +13,10 @@ Announcements
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 * Indicator ``xclim.atmos.potential_evapotranspiration`` and indice ``xclim.indices.potential_evapotranspiration`` now accept a new value (`DA02`) for argument `method` implementing potential evapotranspiration based on Droogers and Allen (2002). (:issue:`1710`, :pull:`1723`).
-* ``xclim.ensembles.ensemble_percentiles`` now takes a `method` argument, accepting one of: `'interpolated_inverted_cdf'`, `'hazen'`, `'weibull'`, `'linear'` (default), `'median_unbiased'`, or `'normal_unbiased'`. (:issue:`1694`, :pull:`1732`).
 * The documentation now uses the `furo <https://github.com/pradyunsg/furo>`_ theme for Sphinx. This theme supports native "light" and "dark" modes, adaptive screen resolution, as well as provides a better navigation layout for pages housing long lists of entries (e.g. `indices`). (:issue:`1693`, :pull:`1731`).
+* ``xclim.ensembles.ensemble_percentiles`` now takes a `method` argument, accepting one of: `'interpolated_inverted_cdf'`, `'hazen'`, `'weibull'`, `'linear'` (default), `'median_unbiased'`, or `'normal_unbiased'`. (:issue:`1694`, :pull:`1732`).
+* Distributions with negative values are directly fitted without need for an offset for distributions such as `'gamma'` and `'fisk'` in ``xclim.indices.standardized_precipitation_evapotranspiration_index``. (:issue:`1477`  :pull:`1720`).
+* ``xclim.indices.stats_fit_start`` gives an estimate of the `loc` parameter for `'gamma'` and `'fisk'` distributions. (:issue:`1477`  :pull:`1720`).
 
 New indicators
 ^^^^^^^^^^^^^^
@@ -30,6 +32,9 @@ Breaking changes
 * The `__getitem__` method of ``xclim.core.indicator.Parameter`` instances has been removed. Accessing members of ``Parameters`` now uniquely uses dot notation. (:pull:`1721`).
 * The obsolete function wrapper for generating Indicators ``xclim.core.utils.wrapped_partial`` has been removed. (:pull:`1721`).
 * The default documentation theme has changed from `sphinx-rtd-theme` to `furo`; Several modifications to the documentation configuration and CSS overrides have been made to accommodate the changes. `furo` is now a `docs` dependency. (:issue:`1693`, :pull:`1731`).
+* Estimation of parameters using `_fit_start` for `gamma` and `fisk` has been changed and can affect the results obtained with full-fledged (e.g. "ML") methods. (:issue:`1477`  :pull:`1720`).
+* Method `APP` in ``xclim.indices.standardized_precipitation_index`` and ``xclim.indices.standardized_precipitation_evapotranspiration_index`` now requires the user to impose a `loc` parameter through `fitkwargs['floc']` (:issue:`1477`  :pull:`1720`).
+* Zero inflated distributions used in ``xclim.stats.standardized_index`` now appropriately use the probability of zeroes in the calibration data and not the entire dataset. (:issue:`1477`  :pull:`1720`).
 
 Bug fixes
 ^^^^^^^^^

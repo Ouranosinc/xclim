@@ -25,11 +25,7 @@ from xclim.indices._threshold import (
 )
 from xclim.indices.generic import aggregate_between_dates, get_zones
 from xclim.indices.helpers import _gather_lat, day_lengths
-from xclim.indices.stats import (
-    preprocess_standardized_index,
-    standardized_index,
-    standardized_index_fit_params,
-)
+from xclim.indices.stats import standardized_index
 
 # Frequencies : YS: year start, QS-DEC: seasons starting in december, MS: month start
 # See https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html
@@ -1107,16 +1103,15 @@ def rain_season(
 
 @declare_units(
     pr="[precipitation]",
-    pr_cal="[precipitation]",
     params="[]",
 )
 def standardized_precipitation_index(
     pr: xarray.DataArray,
-    pr_cal: Quantified | None = None,
     freq: str | None = "MS",
     window: int = 1,
     dist: str = "gamma",
-    method: str = "APP",
+    method: str = "ML",
+    fitkwargs: dict | None = None,
     cal_start: DateStr | None = None,
     cal_end: DateStr | None = None,
     params: Quantified | None = None,
@@ -1128,9 +1123,6 @@ def standardized_precipitation_index(
     ----------
     pr : xarray.DataArray
         Daily precipitation.
-    pr_cal : xarray.DataArray, optional
-        Daily precipitation used for calibration. Usually this is a temporal subset of `pr` over some reference period.
-        This option will be removed in xclim >=0.47.0. Two behaviour will be possible (see below)
     freq : str, optional
         Resampling frequency. A monthly or daily frequency is expected. Option `None` assumes that desired resampling
         has already been applied input dataset and will skip the resampling step.
@@ -1142,6 +1134,8 @@ def standardized_precipitation_index(
     method : {'APP', 'ML'}
         Name of the fitting method, such as `ML` (maximum likelihood), `APP` (approximate). The approximate method
         uses a deterministic function that doesn't involve any optimization.
+    fitkwargs : dict, optional
+        Kwargs passed to ``xclim.indices.stats.fit`` used to impose values of certains parameters (`floc`, `fscale`).
     cal_start : DateStr, optional
         Start date of the calibration period. A `DateStr` is expected, that is a `str` in format `"YYYY-MM-DD"`.
         Default option `None` means that the calibration period begins at the start of the input dataset.
@@ -1163,12 +1157,14 @@ def standardized_precipitation_index(
 
     Notes
     -----
-    * The length `N` of the N-month SPI is determined by choosing the `window = N`.
+    * N-month SPI / N-day SPI is determined by choosing the `window = N` and the appropriate frequency `freq`.
     * Supported statistical distributions are: ["gamma", "fisk"], where "fisk" is scipy's implementation of
        a log-logistic distribution
     * If `params` is given as input, it overrides the `cal_start`, `cal_end`, `freq` and `window`, `dist` and `method` options.
+    * "APP" method only supports two-parameter distributions. Parameter `loc` needs to be fixed to use method `APP`.
     * The standardized index is bounded by ±8.21. 8.21 is the largest standardized index as constrained by the float64 precision in
       the inversion to the normal distribution.
+    * The results from `climate_indices` library can be reproduced with `method = "APP"` and `fitwkargs = {"floc": 0}`
 
     Example
     -------
@@ -1186,7 +1182,10 @@ def standardized_precipitation_index(
     ...     cal_start=cal_start,
     ...     cal_end=cal_end,
     ... )  # Computing SPI-3 months using a gamma distribution for the fit
-    >>> # Fitting parameters can also be obtained ...
+    >>> # Fitting parameters can also be obtained first, then re-used as input.
+    >>> # To properly reproduce the example, we also need to specify that we use a
+    >>> # (potentially) zero-inflated distribution. For a monthly SPI, this should rarely
+    >>> # make a difference.
     >>> from xclim.indices.stats import standardized_index_fit_params
     >>> params = standardized_index_fit_params(
     ...     pr.sel(time=slice(cal_start, cal_end)),
@@ -1194,83 +1193,56 @@ def standardized_precipitation_index(
     ...     window=3,
     ...     dist="gamma",
     ...     method="ML",
+    ...     zero_inflated=True,
     ... )  # First getting params
-    >>> # ... and used as input
     >>> spi_3 = standardized_precipitation_index(pr, params=params)
 
     References
     ----------
     :cite:cts:`mckee_relationship_1993`
     """
-    if params is not None and pr_cal is None:
-        freq, window, indexer = (
-            params.attrs[s] for s in ["freq", "window", "time_indexer"]
-        )
-        # Unpack attrs to None and {} if needed
-        freq = None if freq == "" else freq
-        indexer = {} if indexer[0] == "" else {indexer[0]: indexer[1:]}
-        if cal_start or cal_end:
-            warnings.warn(
-                "Expected either `cal_{start|end}` or `params`, got both. The `params` input overrides other inputs."
-                "If `cal_start`, `cal_end`, `freq`, `window`, and/or `dist` were given as input, they will be ignored."
+    fitkwargs = fitkwargs or {}
+    dist_methods = {"gamma": ["ML", "APP", "PWM"], "fisk": ["ML", "APP"]}
+    if dist in dist_methods.keys():
+        if method not in dist_methods[dist]:
+            raise NotImplementedError(
+                f"{method} method is not implemented for {dist} distribution"
             )
+    else:
+        raise NotImplementedError(f"{dist} distribution is not yet implemented.")
 
-    if pr_cal is not None:
-        warnings.warn(
-            "Inputting a calibration array will be deprecated in xclim>=0.47.0. "
-            "For example, if `pr_cal` is a subset of `pr`, then instead of say:\n"
-            "`standardized_precipitation_index(pr=pr,pr_cal=pr.sel(time=slice(t0,t1)),...)`,\n"
-            "one can call:\n"
-            "`standardized_precipitation_index(pr=pr,cal_range=(t0,t1),...).\n"
-            "If for some reason `pr_cal` is not a subset of `pr`, then the following approach will still be possible:\n"
-            "`params = standardized_index_fit_params(da=pr_cal, freq=freq, window=window, dist=dist, method=method)`.\n"
-            "`spi = standardized_precipitation_index(pr=pr, params=params)`.\n"
-            "This approach can be used in both scenarios to break up the computations in two,"
-            "i.e. get params, then compute standardized indices."
-        )
-        params = standardized_index_fit_params(
-            pr_cal, freq=freq, window=window, dist=dist, method=method, **indexer
-        )
+    # Precipitation is expected to be zero-inflated
+    zero_inflated = True
+    spi = standardized_index(
+        pr,
+        freq=freq,
+        window=window,
+        dist=dist,
+        method=method,
+        zero_inflated=zero_inflated,
+        fitkwargs=fitkwargs,
+        cal_start=cal_start,
+        cal_end=cal_end,
+        params=params,
+        **indexer,
+    )
 
-    pr, _ = preprocess_standardized_index(pr, freq=freq, window=window, **indexer)
-    if params is None:
-        params = standardized_index_fit_params(
-            pr.sel(time=slice(cal_start, cal_end)),
-            freq=None,
-            window=1,
-            dist=dist,
-            method=method,
-        )
-
-    # If params only contains a subset of main dataset time grouping
-    # (e.g. 8/12 months, etc.), it needs to be broadcasted
-    template = pr.groupby(params.attrs["group"]).first()
-    paramsd = {k: v for k, v in params.sizes.items() if k != "dparams"}
-    if paramsd != template.sizes:
-        params = params.broadcast_like(template)
-
-    spi: xarray.DataArray = standardized_index(pr, params)
-    spi = spi.assign_attrs(params.attrs)
-    spi = spi.assign_attrs(freq=(freq or xarray.infer_freq(spi.time)) or "undefined")
-    spi = spi.assign_attrs(window=window)
-    spi = spi.assign_attrs(units="")
     return spi
 
 
 @declare_units(
     wb="[precipitation]",
-    wb_cal="[precipitation]",
     offset="[precipitation]",
     params="[]",
 )
 def standardized_precipitation_evapotranspiration_index(
     wb: xarray.DataArray,
-    wb_cal: Quantified | None = None,
     freq: str | None = "MS",
     window: int = 1,
     dist: str = "gamma",
-    method: str = "APP",
-    offset: Quantified = "1.000 mm/d",
+    method: str = "ML",
+    fitkwargs: dict | None = None,
+    offset: Quantified = "0.000 mm/d",
     cal_start: DateStr | None = None,
     cal_end: DateStr | None = None,
     params: Quantified | None = None,
@@ -1286,9 +1258,6 @@ def standardized_precipitation_evapotranspiration_index(
     ----------
     wb : xarray.DataArray
         Daily water budget (pr - pet).
-    wb_cal : xarray.DataArray, optional
-        Daily water budget used for calibration. Usually this is a temporal subset of `wb` over some reference period.
-        This option will be removed in xclim >=0.47.0. Two behaviours will be possible (see below).
     freq : str, optional
         Resampling frequency. A monthly or daily frequency is expected. Option `None` assumes that desired resampling
         has already been applied input dataset and will skip the resampling step.
@@ -1302,6 +1271,12 @@ def standardized_precipitation_evapotranspiration_index(
         `PWM` (probability weighted moments).
         The approximate method uses a deterministic function that doesn't involve any optimization. Available methods
         vary with the distribution: 'gamma':{'APP', 'ML', 'PWM'}, 'fisk':{'APP', 'ML'}
+    fitkwargs : dict, optional
+        Kwargs passed to ``xclim.indices.stats.fit`` used to impose values of certains parameters (`floc`, `fscale`).
+    offset : Quantified
+        For distributions bounded by zero (e.g. "gamma", "fisk"), the two-parameters distributions only accept positive
+        values. An offset can be added to make sure this is the case. This option will be removed in xclim >=0.50.0, ``xclim``
+        will rely on proper use of three-parameters distributions instead.
     cal_start : DateStr, optional
         Start date of the calibration period. A `DateStr` is expected, that is a `str` in format `"YYYY-MM-DD"`.
         Default option `None` means that the calibration period begins at the start of the input dataset.
@@ -1312,11 +1287,6 @@ def standardized_precipitation_evapotranspiration_index(
         Fit parameters.
         The `params` can be computed using ``xclim.indices.stats.standardized_index_fit_params`` in advance.
         The output can be given here as input, and it overrides other options.
-    offset : Quantified
-        For distributions bounded by zero (e.g. "gamma", "fisk"), an offset must be added to the water budget
-        to make sure there are no negative values.
-        Keep the offset as small as possible to minimize its influence on the results.
-        This can be given as a precipitation flux or a rate.
     \*\*indexer
         Indexing parameters to compute the indicator on a temporal subset of the data.
         It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
@@ -1329,16 +1299,19 @@ def standardized_precipitation_evapotranspiration_index(
     See Also
     --------
     standardized_precipitation_index
-
-    Notes
-    -----
-    If results include NaNs, check that the `offset` parameter is larger than the minimum water budget values.
-
-    See Standardized Precipitation Index (SPI) for more details on usage.
     """
-    uses_default_offset = offset == "1.000 mm/d"
+    fitkwargs = fitkwargs or {}
+    uses_default_offset = offset != "0.000 mm/d"
+    if uses_default_offset is False:
+        warnings.warn("Inputting an offset will be deprecated in xclim>=0.50.0. ")
     if params is not None:
-        params_offset = params.attrs["offset"]
+        if "offset" in params.attrs:
+            params_offset = params.attrs["offset"]
+            # no more offset in params needed after the next step.
+            # This step will be removed in xclim >=0.50.0 once offset is no longer needed
+            params.attrs.pop("offset")
+        else:
+            params_offset = ""
         if uses_default_offset is False and offset != params_offset:
             warnings.warn(
                 "The offset in `params` differs from the input `offset`."
@@ -1346,24 +1319,33 @@ def standardized_precipitation_evapotranspiration_index(
             )
         offset = params_offset
     offset = 0 if offset == "" else convert_units_to(offset, wb, context="hydro")
-    # Allowed distributions are constrained by the SPI function
-    if dist in ["gamma", "fisk"] and offset <= 0:
-        raise ValueError(
-            "The water budget must be shifted towards positive values to be used with `gamma` and `fisk` "
-            "distributions which are bounded by zero. A positive offset is required. Current value: "
-            f"{offset}{wb.attrs['units']}."
-        )
-    # Note that the default behaviour would imply an offset for any distribution, even those distributions
-    # that can accommodate negative values of the water budget. This needs to be changed in future versions
-    # of the index.
     if offset != 0:
         with xarray.set_options(keep_attrs=True):
             wb = wb + offset
-            if wb_cal is not None:
-                wb_cal = wb_cal + offset
 
-    spei: xarray.DataArray = standardized_precipitation_index(
-        wb, wb_cal, freq, window, dist, method, cal_start, cal_end, params, **indexer
+    dist_methods = {"gamma": ["ML", "APP", "PWM"], "fisk": ["ML", "APP"]}
+    if dist in dist_methods.keys():
+        if method not in dist_methods[dist]:
+            raise NotImplementedError(
+                f"{method} method is not implemented for {dist} distribution"
+            )
+    else:
+        raise NotImplementedError(f"{dist} distribution is not yet implemented.")
+
+    # Water budget is not expected to be zero-inflated
+    zero_inflated = False
+    spei = standardized_index(
+        wb,
+        freq=freq,
+        window=window,
+        dist=dist,
+        method=method,
+        zero_inflated=zero_inflated,
+        fitkwargs=fitkwargs,
+        cal_start=cal_start,
+        cal_end=cal_end,
+        params=params,
+        **indexer,
     )
 
     return spei
