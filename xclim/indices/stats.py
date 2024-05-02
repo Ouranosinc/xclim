@@ -762,8 +762,6 @@ def standardized_index_fit_params(
                 "The APP method is only supported for two-parameter distributions with `gamma` or `fisk`."
                 "Location parameter `loc` will be set to 0. To avoid this warning, set `floc=0` manually in `fitkwargs`."
             )
-    if offset:
-        warnings.warn("Inputting an offset will be deprecated in xclim>=0.50.0. ")
     if offset is not None:
         with xr.set_options(keep_attrs=True):
             da = da + convert_units_to(offset, da, context="hydro")

@@ -1310,6 +1310,13 @@ def standardized_precipitation_evapotranspiration_index(
                 "The offset in `params` differs from the input `offset`."
                 "Proceeding with the value given in `params`."
             )
+        offset = params_offset
+        # no more offsets needed after the next step. This weird step will be removed in xclim >=0.50.0
+        params.attrs.pop("offset")
+    offset = 0 if offset == "" else convert_units_to(offset, wb, context="hydro")
+    if offset != 0:
+        with xarray.set_options(keep_attrs=True):
+            wb = wb + offset
 
     dist_methods = {"gamma": ["ML", "APP", "PWM"], "fisk": ["ML", "APP"]}
     if dist in dist_methods.keys():
