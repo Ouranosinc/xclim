@@ -906,6 +906,7 @@ def standardized_index(
             dist=dist,
             method=method,
             zero_inflated=zero_inflated,
+            fitkwargs=fitkwargs,
         )
 
     # If params only contains a subset of main dataset time grouping

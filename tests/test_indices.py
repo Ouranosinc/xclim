@@ -702,11 +702,10 @@ class TestStandardizedIndices:
             tas = tasmax - 2.5
             tasmin = tasmax - 5
             wb = xci.water_budget(pr, None, tasmin, tasmax, tas)
-        offset = convert_units_to("1 mm/d", wb, context="hydro")
-        fitkwargs = {}
         if method == "APP":
             # same offset as in climate indices
-            fitkwargs["floc"] = -offset
+            offset = convert_units_to("1 mm/d", wb, context="hydro")
+            fitkwargs = {"floc": -offset}
         params = xci.stats.standardized_index_fit_params(
             wb.sel(time=slice("1950", "1980")),
             freq=freq,
@@ -729,7 +728,7 @@ class TestStandardizedIndices:
         np.testing.assert_allclose(spei.values, values, rtol=0, atol=diff_tol)
 
     def test_standardized_index_modularity(self, open_dataset):
-        freq, window, dist, method, fitkwargs = "MS", 6, "gamma", "APP", {"floc": 0}
+        freq, window, dist, method = "MS", 6, "gamma", "APP"
         ds = (
             open_dataset("sdba/CanESM2_1950-2100.nc")
             .isel(location=1)
@@ -743,6 +742,9 @@ class TestStandardizedIndices:
             tasmin = tasmax - 5
             wb = xci.water_budget(pr, None, tasmin, tasmax, tas)
 
+        offset = convert_units_to("1 mm/d", wb, context="hydro")
+        fitkwargs = {"floc": -offset}
+
         params = xci.stats.standardized_index_fit_params(
             wb.sel(time=slice("1950", "1980")),
             freq=freq,
@@ -755,6 +757,7 @@ class TestStandardizedIndices:
         spei1 = xci.standardized_precipitation_evapotranspiration_index(
             wb.sel(time=slice("1998", "2000")), params=params
         )
+        fitkwargs = {"floc": -offset}
 
         spei2 = xci.standardized_precipitation_evapotranspiration_index(
             wb,
@@ -762,7 +765,6 @@ class TestStandardizedIndices:
             window=window,
             dist=dist,
             method=method,
-            offset="1 mm/d",
             fitkwargs=fitkwargs,
             cal_start="1950",
             cal_end="1980",
