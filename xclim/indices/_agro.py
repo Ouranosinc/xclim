@@ -1296,13 +1296,6 @@ def standardized_precipitation_evapotranspiration_index(
     xarray.DataArray
         Standardized Precipitation Evapotranspiration Index.
 
-    Notes
-    -----
-    The results from `climate_indices` library can be reproduced with `method = "APP"` and `fitwkargs = {"floc": - offset}`
-    where the offset is a scalar that corresponds to "1 mm/d" in units of `wb`. This can be obtained with
-    `offset = xclim.core.units.convert_units_to("1 mm/d", wb, context="hydro")`
-
-
     See Also
     --------
     standardized_precipitation_index

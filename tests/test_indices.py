@@ -638,7 +638,7 @@ class TestStandardizedIndices:
                 1,
                 "gamma",
                 "APP",
-                [1.3750, 1.5776, 1.6806, -3.09, 0.8681],
+                [-3.09, -0.368346, -1.39504976, 1.67578491, 0.17151278],
                 2e-2,
             ),
             (
@@ -687,6 +687,10 @@ class TestStandardizedIndices:
             ),
         ],
     )
+    # Eventually, this should also be compared to monocongo
+    # there are some issues where the data below can still have negative values
+    # after the ``climate_indices`` 1000.0 offset, so it's a problem with ``climate_indices``
+    # library. Address this in the future.
     def test_standardized_precipitation_evapotranspiration_index(
         self, open_dataset, freq, window, dist, method, values, diff_tol
     ):
@@ -703,7 +707,6 @@ class TestStandardizedIndices:
             tasmin = tasmax - 5
             wb = xci.water_budget(pr, None, tasmin, tasmax, tas)
         if method == "APP":
-            # same offset as in climate indices
             offset = convert_units_to("1 mm/d", wb, context="hydro")
             fitkwargs = {"floc": -offset}
         else:
