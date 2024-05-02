@@ -13,7 +13,7 @@ import xarray as xr
 from xclim.core.calendar import compare_offsets, resample_doy, select_time
 from xclim.core.formatting import prefix_attrs, unprefix_attrs, update_history
 from xclim.core.units import convert_units_to
-from xclim.core.utils import Quantified, uses_dask
+from xclim.core.utils import DateStr, Quantified, uses_dask
 
 from . import generic
 
@@ -26,9 +26,6 @@ __all__ = [
     "get_dist",
     "parametric_cdf",
     "parametric_quantile",
-    "preprocess_standardized_index",
-    "standardized_index",
-    "standardized_index_fit_params",
 ]
 
 
@@ -52,10 +49,8 @@ def _fitfunc_1d(arr, *, dist, nparams, method, **fitkwargs):
         params = list(dist.lmom_fit(x).values())
     elif method == "APP":
         args, kwargs = _fit_start(x, dist.name, **fitkwargs)
-        kwargs_list = list(kwargs.values())
-        if "loc" not in kwargs:
-            kwargs_list = [0] + kwargs_list
-        params = list(args) + kwargs_list
+        kwargs.setdefault("loc", 0)
+        params = list(args) + [kwargs["loc"], kwargs["scale"]]
     else:
         raise NotImplementedError(f"Unknown method `{method}`.")
 
@@ -460,7 +455,7 @@ def _fit_start(x, dist: str, **fitkwargs: Any) -> tuple[tuple, dict]:
 
     References
     ----------
-    :cite:cts:`coles_introduction_2001,cohen_parameter_2019, thom_1958`
+    :cite:cts:`coles_introduction_2001,cohen_parameter_2019, thom_1958, cooke_1979, muralidhar_1992`
 
     """
     x = np.asarray(x)
@@ -490,27 +485,54 @@ def _fit_start(x, dist: str, **fitkwargs: Any) -> tuple[tuple, dict]:
         return (chat,), {"loc": loc, "scale": scale}
 
     if dist in ["gamma"]:
-        x_pos = x[x > 0]
+        if "floc" in fitkwargs:
+            loc0 = fitkwargs["floc"]
+        else:
+            xs = sorted(x)
+            x1, x2, xn = xs[0], xs[1], xs[-1]
+            # muralidhar_1992 would suggest the following, but it seems more unstable
+            # using cooke_1979 for now
+            # n = len(x)
+            # cv = x.std() / x.mean()
+            # p = (0.48265 + 0.32967 * cv) * n ** (-0.2984 * cv)
+            # xp = xs[int(p/100*n)]
+            xp = x2
+            loc0 = (x1 * xn - xp**2) / (x1 + xn - 2 * xp)
+            loc0 = loc0 if loc0 < x1 else (0.9999 * x1 if x1 > 0 else 1.0001 * x1)
+        x_pos = x - loc0
+        x_pos = x_pos[x_pos > 0]
         m = x_pos.mean()
         log_of_mean = np.log(m)
         mean_of_logs = np.log(x_pos).mean()
-        a = log_of_mean - mean_of_logs
-        alpha = (1 + np.sqrt(1 + 4 * a / 3)) / (4 * a)
-        beta = m / alpha
-        return (alpha,), {"scale": beta}
+        A = log_of_mean - mean_of_logs
+        a0 = (1 + np.sqrt(1 + 4 * A / 3)) / (4 * A)
+        scale0 = m / a0
+        kwargs = {"scale": scale0, "loc": loc0}
+        return (a0,), kwargs
 
     if dist in ["fisk"]:
-        x_pos = x[x > 0]
+        if "floc" in fitkwargs:
+            loc0 = fitkwargs["floc"]
+        else:
+            xs = sorted(x)
+            x1, x2, xn = xs[0], xs[1], xs[-1]
+            loc0 = (x1 * xn - x2**2) / (x1 + xn - 2 * x2)
+            loc0 = loc0 if loc0 < x1 else (0.9999 * x1 if x1 > 0 else 1.0001 * x1)
+        x_pos = x - loc0
+        x_pos = x_pos[x_pos > 0]
+        # method of moments:
+        # LHS is computed analytically with the two-parameters log-logistic distribution
+        # and depends on alpha,beta
+        # RHS is from the sample
+        # <x> = m
+        # <x^2> / <x>^2 = m2/m**2
+        # solving these equations yields
         m = x_pos.mean()
-        v = x_pos.var()
-        # pdf =  (beta/alpha) (x/alpha)^{beta-1}/ (1+(x/alpha)^{beta})^2
-        # Compute f_1 and f_2 which only depend on beta:
-        # f_1 := mean/alpha = <x>/alpha
-        # f_2 := variance/alpha^2 = (<x^2> - <x>^2)/alpha^2
-        # In the large beta limit, f_1 -> 1 and f_1/sqrt(f_2) -> 0.56*beta - 0.25
-        # Solve for alpha and beta below:
-        alpha, beta = m, (1 / 0.56) * (m / np.sqrt(v) + 1 / 4)
-        return (beta,), {"scale": alpha}
+        m2 = (x_pos**2).mean()
+        scale0 = 2 * m**3 / (m2 + m**2)
+        c0 = np.pi * m / np.sqrt(3) / np.sqrt(m2 - m**2)
+        kwargs = {"scale": scale0, "loc": loc0}
+        return (c0,), kwargs
     return (), {}
 
 
@@ -668,6 +690,8 @@ def standardized_index_fit_params(
     window: int,
     dist: str | scipy.stats.rv_continuous,
     method: str,
+    zero_inflated: bool = False,
+    fitkwargs: dict | None = None,
     offset: Quantified | None = None,
     **indexer,
 ) -> xr.DataArray:
@@ -693,9 +717,14 @@ def standardized_index_fit_params(
     method : {'ML', 'APP', 'PWM'}
         Name of the fitting method, such as `ML` (maximum likelihood), `APP` (approximate). The approximate method
         uses a deterministic function that doesn't involve any optimization.
+    zero_inflated : bool
+        If True, the zeroes of `da` are treated separately when fitting a probability density function.
+    fitkwargs : dict, optional
+        Kwargs passed to ``xclim.indices.stats.fit`` used to impose values of certains parameters (`floc`, `fscale`).
     offset: Quantified
         Distributions bounded by zero (e.g. "gamma", "fisk") can be used for datasets with negative values
-        by using an offset: `da + offset`.
+        by using an offset: `da + offset`. This option will be removed in xclim >=0.49.0, ``xclim``
+        will rely on a proper use three-parameters distributions instead.
     \*\*indexer
         Indexing parameters to compute the indicator on a temporal subset of the data.
         It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
@@ -710,7 +739,29 @@ def standardized_index_fit_params(
     Supported combinations of `dist` and `method` are:
     * Gamma ("gamma") : "ML", "APP", "PWM"
     * Log-logistic ("fisk") : "ML", "APP"
+    * "APP" method only supports two-parameter distributions. Parameter `loc` will be set to 0 (setting `floc=0` in `fitkwargs`).
+
+    When using the zero inflated option, : A probability density function :math:`\texttt{pdf}_0(X)` is fitted for :math:`X \neq 0`
+    and a supplementary parameter :math:`\pi` takes into account the probability of :math:`X = 0`. The full probability density
+    function is a piecewise function
+
+    .. math::
+      \texttt{pdf}(X) = \pi  \texttt{ if }  X=0  \texttt{ else } (1-\pi) \texttt{pdf}_0(X)
     """
+    fitkwargs = fitkwargs or {}
+    if method == "APP":
+        if "floc" not in fitkwargs.keys():
+            raise ValueError(
+                "The APP method is only supported for two-parameter distributions with `gamma` or `fisk` with `loc` being fixed."
+                "Pass a value for `floc` in `fitkwargs`."
+            )
+    if offset is not None:
+        warnings.warn(
+            "Inputing an offset will be deprecated in xclim>=0.50.0. To achieve the same effect, pass `- offset` as `fitkwargs['floc']` instead."
+        )
+        with xr.set_options(keep_attrs=True):
+            da = da + convert_units_to(offset, da, context="hydro")
+
     # "WPM" method doesn't seem to work for gamma or pearson3
     dist_and_methods = {"gamma": ["ML", "APP", "PWM"], "fisk": ["ML", "APP"]}
     dist = get_dist(dist)
@@ -720,13 +771,19 @@ def standardized_index_fit_params(
         raise NotImplementedError(
             f"The method `{method}` is not supported for distribution `{dist.name}`."
         )
-
-    if offset is not None:
-        with xr.set_options(keep_attrs=True):
-            da = da + convert_units_to(offset, da, context="hydro")
-
     da, group = preprocess_standardized_index(da, freq, window, **indexer)
-    params = da.groupby(group).map(fit, dist=dist, method=method)
+    if zero_inflated:
+        prob_of_zero = da.groupby(group).map(
+            lambda x: (x == 0).sum("time") / x.notnull().sum("time")
+        )
+        params = (
+            da.where(da != 0)
+            .groupby(group)
+            .map(fit, dist=dist, method=method, **fitkwargs)
+        )
+        params["prob_of_zero"] = prob_of_zero
+    else:
+        params = da.groupby(group).map(fit, dist=dist, method=method, **fitkwargs)
     cal_range = (
         da.time.min().dt.strftime("%Y-%m-%d").item(),
         da.time.max().dt.strftime("%Y-%m-%d").item(),
@@ -739,20 +796,28 @@ def standardized_index_fit_params(
         "method": method,
         "group": group,
         "units": "",
-        "offset": offset or "",
     }
     method, args = ("", []) if indexer == {} else indexer.popitem()
     params.attrs["time_indexer"] = (method, *args)
-
+    if offset:
+        params.attrs["offset"] = offset
     return params
 
 
 def standardized_index(
     da: xr.DataArray,
-    params: xr.DataArray,
-    dist: str | scipy.stats.rv_continuous | None = None,
-):
-    """Compute standardized index for given fit parameters.
+    freq: str | None,
+    window: int | None,
+    dist: str | scipy.stats.rv_continuous | None,
+    method: str | None,
+    zero_inflated: bool | None,
+    fitkwargs: dict | None,
+    cal_start: DateStr | None,
+    cal_end: DateStr | None,
+    params: Quantified | None = None,
+    **indexer,
+) -> xr.DataArray:
+    r"""Standardized Index (SI).
 
     This computes standardized indices which measure the deviation of  variables in the dataset compared
     to a reference distribution. The reference is a statistical distribution computed with fitting parameters `params`
@@ -762,30 +827,123 @@ def standardized_index(
     Parameters
     ----------
     da : xarray.DataArray
-        Input array.
-        Resampling and rolling operations should have already been applied using
-        ``xclim.indices.preprocess_standardized_index``.
+        Daily input data.
+    freq : str, optional
+        Resampling frequency. A monthly or daily frequency is expected. Option `None` assumes that desired resampling
+        has already been applied input dataset and will skip the resampling step.
+    window : int
+        Averaging window length relative to the resampling frequency. For example, if `freq="MS"`,
+        i.e. a monthly resampling, the window is an integer number of months.
+    dist : str or rv_continuous
+        Name of the univariate distribution. (see :py:mod:`scipy.stats`).
+    method : str
+        Name of the fitting method, such as `ML` (maximum likelihood), `APP` (approximate). The approximate method
+        uses a deterministic function that doesn't involve any optimization.
+    zero_inflated : bool
+        If True, the zeroes of `da` are treated separately.
+    fitkwargs : dict
+        Kwargs passed to ``xclim.indices.stats.fit`` used to impose values of certains parameters (`floc`, `fscale`).
+    cal_start : DateStr, optional
+        Start date of the calibration period. A `DateStr` is expected, that is a `str` in format `"YYYY-MM-DD"`.
+        Default option `None` means that the calibration period begins at the start of the input dataset.
+    cal_end : DateStr, optional
+        End date of the calibration period. A `DateStr` is expected, that is a `str` in format `"YYYY-MM-DD"`.
+        Default option `None` means that the calibration period finishes at the end of the input dataset.
     params : xarray.DataArray
-        Fit parameters computed using ``xclim.indices.stats.standardized_index_fit_params``.
-    dist : str or rv_continuous, optional
-        Name of distribution or instance. Defaults to the "scipy_dist" attribute of `params`.
-    """
-    group = params.attrs["group"]
+        Fit parameters.
+        The `params` can be computed using ``xclim.indices.stats.standardized_index_fit_params`` in advance.
+        The output can be given here as input, and it overrides other options.
+    \*\*indexer
+        Indexing parameters to compute the indicator on a temporal subset of the data.
+        It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
 
-    def reindex_time(da, da_ref):
+    Returns
+    -------
+    xarray.DataArray, [unitless]
+        Standardized Precipitation Index.
+
+    Notes
+    -----
+    * The standardized index is bounded by ±8.21. 8.21 is the largest standardized index as constrained by the float64 precision in
+      the inversion to the normal distribution.
+    * ``window``, ``dist``, ``method``, ``zero_inflated`` are only optional if ``params`` is given.
+
+    References
+    ----------
+    :cite:cts:`mckee_relationship_1993`
+    """
+    # use input arguments from ``params`` if it is given
+    if params is not None:
+        freq, window, dist, indexer = (
+            params.attrs[s] for s in ["freq", "window", "scipy_dist", "time_indexer"]
+        )
+        # Unpack attrs to None and {} if needed
+        freq = None if freq == "" else freq
+        indexer = {} if indexer[0] == "" else {indexer[0]: indexer[1:]}
+        if cal_start or cal_end:
+            warnings.warn(
+                "Expected either `cal_{start|end}` or `params`, got both. The `params` input overrides other inputs."
+                "If `cal_start`, `cal_end`, `freq`, `window`, and/or `dist` were given as input, they will be ignored."
+            )
+
+        if "offset" in params.attrs:
+            offset = convert_units_to(params.attrs["offset"], da, context="hydro")
+            with xr.set_options(keep_attrs=True):
+                da = da + offset
+    else:
+        for p in [window, dist, method, zero_inflated]:
+            if p is None:
+                raise ValueError(
+                    "If `params` is `None`, `window`, `dist`, `method` and `zero_inflated` must be given."
+                )
+    # apply resampling and rolling operations
+    da, _ = preprocess_standardized_index(da, freq=freq, window=window, **indexer)
+    if params is None:
+        params = standardized_index_fit_params(
+            da.sel(time=slice(cal_start, cal_end)),
+            freq=None,
+            window=1,
+            dist=dist,
+            method=method,
+            zero_inflated=zero_inflated,
+            fitkwargs=fitkwargs,
+        )
+
+    # If params only contains a subset of main dataset time grouping
+    # (e.g. 8/12 months, etc.), it needs to be broadcasted
+    group = params.attrs["group"]
+    template = da.groupby(group).first()
+    paramsd = {k: v for k, v in params.sizes.items() if k != "dparams"}
+    if paramsd != template.sizes:
+        params = params.broadcast_like(template)
+
+    def reindex_time(da, da_ref, group):
         if group == "time.dayofyear":
             da = resample_doy(da, da_ref)
         elif group == "time.month":
             da = da.rename(month="time").reindex(time=da_ref.time.dt.month)
             da["time"] = da_ref.time
+        # I don't think rechunking is necessary here, need to check
         return da if not uses_dask(da) else da.chunk({"time": -1})
 
-    probs_of_zero = da.groupby(group).map(
-        lambda x: (x == 0).sum("time") / x.notnull().sum("time")
-    )
-    params, probs_of_zero = (reindex_time(dax, da) for dax in [params, probs_of_zero])
+    # this should be restricted to some distributions / in some context
+    zero_inflated = "prob_of_zero" in params.coords
+    if zero_inflated:
+        prob_of_zero = reindex_time(params["prob_of_zero"], da, group)
+        mask = da != 0
+        da = da.where(mask)
+    else:
+        prob_of_zero = 0
+    params = reindex_time(params, da, group)
     dist_probs = dist_method("cdf", params, da, dist=dist)
-    probs = probs_of_zero + ((1 - probs_of_zero) * dist_probs)
+    if zero_inflated:
+        dist_probs = dist_probs.where(mask, 0)
+    # This assumes that values are greater or equal to 0.
+    # It might be useful to define inflated distribution where
+    # the inflated value is not the lower bound, which would warrant
+    # a generalized implementation. For now, this option shall be used with
+    # standardized_precipitation_index where values are not negative.
+    probs = prob_of_zero + ((1 - prob_of_zero) * dist_probs)
 
     params_norm = xr.DataArray(
         [0, 1],
@@ -793,7 +951,7 @@ def standardized_index(
         coords=dict(dparams=(["loc", "scale"])),
         attrs=dict(scipy_dist="norm"),
     )
-    std_index = dist_method("ppf", params_norm, probs)
+    si = dist_method("ppf", params_norm, probs)
     # A cdf value of 0 or 1 gives ±np.inf when inverted to the normal distribution.
     # The neighbouring values 0.00...1 and 0.99...9 with a float64 give a standardized index of ± 8.21
     # We use this index as reference for maximal/minimal standardized values.
@@ -801,5 +959,10 @@ def standardized_index(
     # notes that precipitation events (over a month/season) generally occur less than 100 times in the US.
     # Values of standardized index outside the range [-3.09, 3.09] correspond to probabilities smaller than 0.001
     # or greater than 0.999, which could be considered non-statistically relevant for this sample size.
-    std_index = std_index.clip(-8.21, 8.21)
-    return std_index
+    si = si.clip(-8.21, 8.21)
+
+    si.attrs = params.attrs
+    si.attrs["freq"] = (freq or xr.infer_freq(si.time)) or "undefined"
+    si.attrs["window"] = window
+    si.attrs["units"] = ""
+    return si
