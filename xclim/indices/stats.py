@@ -757,7 +757,7 @@ def standardized_index_fit_params(
             )
     if offset is not None:
         warnings.warn(
-            "Inputing an offset will be deprecated in xclim>=0.50.0. To achieve the same effect, use `fitkwargs['floc']` instead."
+            "Inputing an offset will be deprecated in xclim>=0.50.0. To achieve the same effect, pass `- offset` as `fitkwargs['floc']` instead."
         )
         with xr.set_options(keep_attrs=True):
             da = da + convert_units_to(offset, da, context="hydro")

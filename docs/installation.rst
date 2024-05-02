@@ -114,9 +114,9 @@ From sources
 ------------
 
 .. warning::
-    For Python3.11+ users: Many of the required scientific libraries do not currently have wheels that support the latest
-    python. In order to ensure that installation of xclim doesn't fail, we suggest installing the `Cython` module
-    before installing xclim in order to compile necessary libraries from source packages.
+    While `xclim` strives to be compatible with latest releases and development versions of upstream libraries, many of the required base libraries (`numpy`, `scipy`, `numba`, etc.) may lag by several months before supporting the latest minor releases of Python.
+
+    In order to ensure that installation of `xclim` doesn't fail, we suggest installing the `Cython` module before installing `xclim` in order to compile necessary libraries from their source packages, if required.
 
 The sources for xclim can be downloaded from the `Github repo`_.
 

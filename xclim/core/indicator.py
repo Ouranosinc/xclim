@@ -1167,8 +1167,8 @@ class Indicator(IndicatorRegistrar):
         Parameters
         ----------
         args : mapping, optional
-          Arguments as passed to the call method of the indicator.
-          If not given, the default arguments will be used when formatting the attributes.
+            Arguments as passed to the call method of the indicator.
+            If not given, the default arguments will be used when formatting the attributes.
 
         Notes
         -----
@@ -1213,11 +1213,11 @@ class Indicator(IndicatorRegistrar):
         Parameters
         ----------
         attrs : dict
-          Attributes containing tags to replace with arguments' values.
+            Attributes containing tags to replace with arguments' values.
         args : dict, optional
-          Function call arguments. If not given, the default arguments will be used when formatting the attributes.
+            Function call arguments. If not given, the default arguments will be used when formatting the attributes.
         formatter : AttrFormatter
-          Plaintext mappings for indicator attributes.
+            Plaintext mappings for indicator attributes.
 
         Returns
         -------
@@ -1385,10 +1385,12 @@ class CheckMissingIndicator(Indicator):
     Parameters
     ----------
     missing : {any, wmo, pct, at_least_n, skip, from_context}
-      The name of the missing value method. See `xclim.core.missing.MissingBase` to create new custom methods. If
-      None, this will be determined by the global configuration (see `xclim.set_options`). Defaults to "from_context".
+        The name of the missing value method. See `xclim.core.missing.MissingBase` to create new custom methods.
+        If None, this will be determined by the global configuration (see `xclim.set_options`).
+        Defaults to "from_context".
     missing_options : dict, optional
-      Arguments to pass to the `missing` function. If None, this will be determined by the global configuration.
+        Arguments to pass to the `missing` function.
+        If None, this will be determined by the global configuration.
     """
 
     missing = "from_context"
@@ -1467,10 +1469,12 @@ class ReducingIndicator(CheckMissingIndicator):
     Parameters
     ----------
     missing : {any, wmo, pct, at_least_n, skip, from_context}
-      The name of the missing value method. See `xclim.core.missing.MissingBase` to create new custom methods. If
-      None, this will be determined by the global configuration (see `xclim.set_options`). Defaults to "from_context".
+        The name of the missing value method. See `xclim.core.missing.MissingBase` to create new custom methods.
+        If None, this will be determined by the global configuration (see `xclim.set_options`).
+        Defaults to "from_context".
     missing_options : dict, optional
-      Arguments to pass to the `missing` function. If None, this will be determined by the global configuration.
+        Arguments to pass to the `missing` function.
+        If None, this will be determined by the global configuration.
     """
 
     def _get_missing_freq(self, params):
@@ -1487,14 +1491,16 @@ class ResamplingIndicator(CheckMissingIndicator):
     Parameters
     ----------
     missing : {any, wmo, pct, at_least_n, skip, from_context}
-      The name of the missing value method. See `xclim.core.missing.MissingBase` to create new custom methods. If
-      None, this will be determined by the global configuration (see `xclim.set_options`). Defaults to "from_context".
+        The name of the missing value method. See `xclim.core.missing.MissingBase` to create new custom methods.
+        If None, this will be determined by the global configuration (see `xclim.set_options`).
+        Defaults to "from_context".
     missing_options : dict, optional
-      Arguments to pass to the `missing` function. If None, this will be determined by the global configuration.
+        Arguments to pass to the `missing` function.
+        If None, this will be determined by the global configuration.
     allowed_periods : Sequence[str], optional
-      A list of allowed periods, i.e. base parts of the `freq` parameter. For example, indicators meant to be
-      computed annually only will have `allowed_periods=["A"]`. `None` means "any period" or that the
-      indicator doesn't take a `freq` argument.
+        A list of allowed periods, i.e. base parts of the `freq` parameter.
+        For example, indicators meant to be computed annually only will have `allowed_periods=["A"]`.
+        `None` means "any period" or that the indicator doesn't take a `freq` argument.
     """
 
     allowed_periods: list[str] | None = None
@@ -1611,12 +1617,14 @@ def build_indicator_module(
     Parameters
     ----------
     name : str
-        New module name. If it already exists, the module is extended with the passed objects,
-        overwriting those with same names.
+        New module name.
+        If it already exists, the module is extended with the passed objects, overwriting those with same names.
     objs : dict[str, Indicator]
-        Mapping of the indicators to put in the new module. Keyed by the name they will take in that module.
+        Mapping of the indicators to put in the new module.
+        Keyed by the name they will take in that module.
     doc : str
-        Docstring of the new module. Defaults to a simple header. Invalid if the module already exists.
+        Docstring of the new module. Defaults to a simple header.
+        Invalid if the module already exists.
     reload : bool
         If reload is True and the module already exists, it is first removed before being rebuilt.
         If False (default), indicators are added or updated, but not removed.
@@ -1812,7 +1820,8 @@ def build_indicator_module_from_yaml(  # noqa: C901
     for varname, vardata in yml.get("variables", {}).items():
         if varname in VARIABLES and VARIABLES[varname] != vardata:
             warnings.warn(
-                f"Variable {varname} from module {module_name} will overwrite the one already defined in `xclim.core.utils.VARIABLES`"
+                f"Variable {varname} from module {module_name} "
+                "will overwrite the one already defined in `xclim.core.utils.VARIABLES`"
             )
         VARIABLES[varname] = vardata.copy()
 
