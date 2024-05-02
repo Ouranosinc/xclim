@@ -14,7 +14,7 @@ from ast import literal_eval
 from collections.abc import Sequence
 from fnmatch import fnmatch
 from inspect import _empty, signature  # noqa
-from typing import Any
+from typing import Any, Callable
 
 import xarray as xr
 from boltons.funcutils import wraps
@@ -307,7 +307,7 @@ def merge_attributes(
     new_line: str = "\n",
     missing_str: str | None = None,
     **inputs_kws: xr.DataArray | xr.Dataset,
-):
+) -> str:
     r"""Merge attributes from several DataArrays or Datasets.
 
     If more than one input is given, its name (if available) is prepended as: "<input name> : <input attribute>".
@@ -359,7 +359,7 @@ def update_history(
     *inputs_list: xr.DataArray | xr.Dataset,
     new_name: str | None = None,
     **inputs_kws: xr.DataArray | xr.Dataset,
-):
+) -> str:
     r"""Return a history string with the timestamped message and the combination of the history of all inputs.
 
     The new history entry is formatted as "[<timestamp>] <new_name>: <hist_str> - xclim version: <xclim.__version__>."
@@ -406,7 +406,7 @@ def update_history(
     return merged_history
 
 
-def update_xclim_history(func):
+def update_xclim_history(func: Callable):
     """Decorator that auto-generates and fills the history attribute.
 
     The history is generated from the signature of the function and added to the first output.
@@ -449,8 +449,8 @@ def update_xclim_history(func):
     return _call_and_add_history
 
 
-def gen_call_string(funcname: str, *args, **kwargs):
-    """Generate a signature string for use in the history attribute.
+def gen_call_string(funcname: str, *args, **kwargs) -> str:
+    r"""Generate a signature string for use in the history attribute.
 
     DataArrays and Dataset are replaced with their name, while Nones, floats, ints and strings are printed directly.
     All other objects have their type printed between < >.
@@ -462,7 +462,7 @@ def gen_call_string(funcname: str, *args, **kwargs):
     ----------
     funcname : str
         Name of the function
-    args, kwargs
+    \*args, \*\*kwargs
         Arguments given to the function.
 
     Example
@@ -491,7 +491,7 @@ def gen_call_string(funcname: str, *args, **kwargs):
     return f"{funcname}({', '.join(elements)})"
 
 
-def prefix_attrs(source: dict, keys: Sequence, prefix: str):
+def prefix_attrs(source: dict, keys: Sequence, prefix: str) -> dict:
     """Rename some keys of a dictionary by adding a prefix.
 
     Parameters
@@ -517,7 +517,7 @@ def prefix_attrs(source: dict, keys: Sequence, prefix: str):
     return out
 
 
-def unprefix_attrs(source: dict, keys: Sequence, prefix: str):
+def unprefix_attrs(source: dict, keys: Sequence, prefix: str) -> dict:
     """Remove prefix from keys in a dictionary.
 
     Parameters
@@ -562,7 +562,9 @@ KIND_ANNOTATION = {
 }
 
 
-def _gen_parameters_section(parameters: dict, allowed_periods: list[str] | None = None):
+def _gen_parameters_section(
+    parameters: dict[str, dict[str, Any]], allowed_periods: list[str] | None = None
+) -> str:
     """Generate the "parameters" section of the indicator docstring.
 
     Parameters
@@ -571,6 +573,10 @@ def _gen_parameters_section(parameters: dict, allowed_periods: list[str] | None 
         Parameters dictionary (`Ind.parameters`).
     allowed_periods : list of str, optional
         Restrict parameters to specific periods. Default: None.
+
+    Returns
+    -------
+    str
     """
     section = "Parameters\n----------\n"
     for name, param in parameters.items():
@@ -600,22 +606,28 @@ def _gen_parameters_section(parameters: dict, allowed_periods: list[str] | None 
             unitstr = f"[Required units : {param.units}]"
         else:
             unitstr = ""
-        section += f"{name} : {annotstr}\n  {desc_str}\n  {defstr}{unitstr}\n"
+        section += f"{name} {': ' if annotstr else ''}{annotstr}\n    {desc_str}\n    {defstr}{unitstr}\n"
     return section
 
 
-def _gen_returns_section(cf_attrs: Sequence[dict[str, Any]]):
+def _gen_returns_section(cf_attrs: Sequence[dict[str, Any]]) -> str:
     """Generate the "Returns" section of an indicator's docstring.
 
     Parameters
     ----------
     cf_attrs : Sequence[Dict[str, Any]]
-      The list of attributes, usually Indicator.cf_attrs.
+        The list of attributes, usually Indicator.cf_attrs.
+
+    Returns
+    -------
+    str
     """
     section = "Returns\n-------\n"
     for attrs in cf_attrs:
+        if not section.endswith("\n"):
+            section += "\n"
         section += f"{attrs['var_name']} : DataArray\n"
-        section += f"  {attrs.get('long_name', '')}"
+        section += f"    {attrs.get('long_name', '')}"
         if "standard_name" in attrs:
             section += f" ({attrs['standard_name']})"
         if "units" in attrs:
@@ -627,7 +639,8 @@ def _gen_returns_section(cf_attrs: Sequence[dict[str, Any]]):
                     attr = "<Dynamically generated string>"
                 added_section += f" **{key}**: {attr};"
         if added_section:
-            section = f"{section}, with additional attributes:{added_section[:-1]}\n"
+            section = f"{section}, with additional attributes:{added_section[:-1]}"
+    section += "\n"
     return section
 
 

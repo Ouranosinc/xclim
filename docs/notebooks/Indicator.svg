@@ -160,7 +160,9 @@
  </defs>
  <g>
   <g id="id2" class="Master_Slide">
-   <g id="bg-id2" class="Background"/>
+   <g id="bg-id2" class="Background">
+    <rect stroke="none" fill="#fff" x="0" y="0" width="100%" height="100%" />
+   </g>
    <g id="bo-id2" class="BackgroundObjects"/>
   </g>
  </g>
