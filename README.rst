@@ -189,12 +189,12 @@ This package was created with Cookiecutter_ and the `audreyfeldroy/cookiecutter-
         :alt: Xclim
         :class: xclim-logo-small no-theme
 
-.. |logo-light| image:: logos/empty.png
+.. |logo-light| image:: https://raw.githubusercontent.com/Ouranosinc/xclim/main/docs/logos/empty.png
         :target: https://github.com/Ouranosinc/xclim
         :alt:
         :class: xclim-logo-small only-light-inline
 
-.. |logo-dark| image:: logos/empty.png
+.. |logo-dark| image:: https://raw.githubusercontent.com/Ouranosinc/xclim/main/docs/logos/empty.png
         :target: https://github.com/Ouranosinc/xclim
         :alt:
         :class: xclim-logo-small only-dark-inline
