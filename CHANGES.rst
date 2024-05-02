@@ -33,6 +33,7 @@ Breaking changes
 * The `__getitem__` method of ``xclim.core.indicator.Parameter`` instances has been removed. Accessing members of ``Parameters`` now uniquely uses dot notation. (:pull:`1721`).
 * The obsolete function wrapper for generating Indicators ``xclim.core.utils.wrapped_partial`` has been removed. (:pull:`1721`).
 * Estimation of parameters using `_fit_start` for `gamma` and `fisk` has been changed and can affect the results obtained with full-fledged (e.g. "ML") methods. (:issue:`1477`  :pull:`1720`).
+* Method `APP` in ``xclim.indices.standardized_precipitation_index`` and ``xclim.indices.standardized_precipitation_evapotranspiration_index`` now requires the user to impose a `loc` parameter through `fitkwargs['floc']` (:issue:`1477`  :pull:`1720`).
 * Zero inflated distributions used in ``xclim.stats.standardized_index`` now appropriately use the probability of zeroes in the calibration data and not the entire dataset. (:issue:`1477`  :pull:`1720`).
 
 Bug fixes
