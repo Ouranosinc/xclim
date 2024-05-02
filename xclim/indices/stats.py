@@ -722,9 +722,9 @@ def standardized_index_fit_params(
     fitkwargs : dict, optional
         Kwargs passed to ``xclim.indices.stats.fit`` used to impose values of certains parameters (`floc`, `fscale`).
     offset: Quantified
-        Distributions bounded by zero (e.g. "gamma", "fisk") can be used for datasets with negative values
-        by using an offset: `da + offset`. This option will be removed in xclim >=0.49.0, ``xclim``
-        will rely on a proper use three-parameters distributions instead.
+        Shift the input array by an offset `da + offset`. This can be useful to fit two-parameter distributions bounded by zero
+        (e.g. "gamma", "fisk" when using `floc=0`).
+
     \*\*indexer
         Indexing parameters to compute the indicator on a temporal subset of the data.
         It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
@@ -805,7 +805,8 @@ def standardized_index_fit_params(
     }
     method, args = ("", []) if indexer == {} else indexer.popitem()
     params.attrs["time_indexer"] = (method, *args)
-    params.attrs["offset"] = offset or ""
+    if offset:
+        params.attrs["offset"] = offset
     return params
 
 
@@ -877,7 +878,7 @@ def standardized_index(
     ----------
     :cite:cts:`mckee_relationship_1993`
     """
-    # use input arguments from ``params`` is given
+    # use input arguments from ``params`` if it is given
     if params is not None:
         freq, window, dist, indexer = (
             params.attrs[s] for s in ["freq", "window", "scipy_dist", "time_indexer"]
@@ -890,13 +891,18 @@ def standardized_index(
                 "Expected either `cal_{start|end}` or `params`, got both. The `params` input overrides other inputs."
                 "If `cal_start`, `cal_end`, `freq`, `window`, and/or `dist` were given as input, they will be ignored."
             )
+
+        if "offset" in params.attrs:
+            offset = convert_units_to(params.attrs["offset"], da, context="hydro")
+            with xr.set_options(keep_attrs=True):
+                da = da + offset
     else:
         for p in [window, dist, method, zero_inflated]:
             if p is None:
                 raise ValueError(
                     "If `params` is `None`, `window`, `dist`, `method` and `zero_inflated` must be given."
                 )
-
+    # apply resampling and rolling operations
     da, _ = preprocess_standardized_index(da, freq=freq, window=window, **indexer)
     if params is None:
         params = standardized_index_fit_params(

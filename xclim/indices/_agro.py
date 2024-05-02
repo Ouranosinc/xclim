@@ -1289,20 +1289,12 @@ def standardized_precipitation_evapotranspiration_index(
     if uses_default_offset is False:
         warnings.warn("Inputting an offset will be deprecated in xclim>=0.50.0. ")
     if params is not None:
-        params_offset = params.attrs["offset"]
+        params_offset = "" if "offset" not in params.attrs else params.attrs["offset"]
         if uses_default_offset is False and offset != params_offset:
             warnings.warn(
                 "The offset in `params` differs from the input `offset`."
                 "Proceeding with the value given in `params`."
             )
-        offset = params_offset if params_offset != "" else offset
-    offset = convert_units_to(offset, wb, context="hydro")
-    # Note that the default behaviour would imply an offset for any distribution, even those distributions
-    # that can accommodate negative values of the water budget. This needs to be changed in future versions
-    # of the index.
-    if offset != 0:
-        with xarray.set_options(keep_attrs=True):
-            wb = wb + offset
     dist_methods = {"gamma": ["ML", "APP", "PWM"], "fisk": ["ML", "APP"]}
     if dist in dist_methods.keys():
         if method not in dist_methods[dist]:
