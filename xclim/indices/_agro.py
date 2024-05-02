@@ -1161,9 +1161,10 @@ def standardized_precipitation_index(
     * Supported statistical distributions are: ["gamma", "fisk"], where "fisk" is scipy's implementation of
        a log-logistic distribution
     * If `params` is given as input, it overrides the `cal_start`, `cal_end`, `freq` and `window`, `dist` and `method` options.
-    * "APP" method only supports two-parameter distributions. Parameter `loc` will be set to 0 (setting `floc=0` in `fitkwargs`).
+    * "APP" method only supports two-parameter distributions. Parameter `loc` needs to be fixed to use method `APP`.
     * The standardized index is bounded by ±8.21. 8.21 is the largest standardized index as constrained by the float64 precision in
       the inversion to the normal distribution.
+    * The results from `climate_indices` library can be reproduced with `method = "APP"` and `fitwkargs = {"floc": 0}`
 
     Example
     -------
@@ -1295,6 +1296,13 @@ def standardized_precipitation_evapotranspiration_index(
     xarray.DataArray
         Standardized Precipitation Evapotranspiration Index.
 
+    Notes
+    -----
+    The results from `climate_indices` library can be reproduced with `method = "APP"` and `fitwkargs = {"floc": - offset}`
+    where the offset is a scalar that corresponds to "1 mm/d" in units of `wb`. This can be obtained with
+    `offset = xclim.core.units.convert_units_to("1 mm/d", wb, context="hydro")`
+
+
     See Also
     --------
     standardized_precipitation_index
@@ -1304,15 +1312,19 @@ def standardized_precipitation_evapotranspiration_index(
     if uses_default_offset is False:
         warnings.warn("Inputting an offset will be deprecated in xclim>=0.50.0. ")
     if params is not None:
-        params_offset = "" if "offset" not in params.attrs else params.attrs["offset"]
+        if "offset" in params.attrs:
+            params_offset = params.attrs["offset"]
+            # no more offset in params needed after the next step.
+            # This step will be removed in xclim >=0.50.0 once offset is no longer needed
+            params.attrs.pop("offset")
+        else:
+            params_offset = ""
         if uses_default_offset is False and offset != params_offset:
             warnings.warn(
                 "The offset in `params` differs from the input `offset`."
                 "Proceeding with the value given in `params`."
             )
         offset = params_offset
-        # no more offsets needed after the next step. This weird step will be removed in xclim >=0.50.0
-        params.attrs.pop("offset")
     offset = 0 if offset == "" else convert_units_to(offset, wb, context="hydro")
     if offset != 0:
         with xarray.set_options(keep_attrs=True):
