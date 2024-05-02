@@ -225,7 +225,7 @@ def test_opt_vars(tasmin_series, tasmax_series):
     tx = tasmax_series(np.zeros(365))
 
     multiOptVar(tasmin=tn, tasmax=tx)
-    assert multiOptVar.parameters["tasmin"]["kind"] == InputKind.OPTIONAL_VARIABLE
+    assert multiOptVar.parameters["tasmin"].kind == InputKind.OPTIONAL_VARIABLE
 
 
 def test_registering():
@@ -265,8 +265,10 @@ def test_module():
     """Translations are keyed according to the module where the indicators are defined."""
     assert atmos.tg_mean.__module__.split(".")[2] == "atmos"
     # Virtual module also are stored under xclim.indicators
-    assert xclim.indicators.cf.fg.__module__ == "xclim.indicators.cf"
-    assert xclim.indicators.icclim.GD4.__module__ == "xclim.indicators.icclim"
+    assert xclim.indicators.cf.fg.__module__ == "xclim.indicators.cf"  # noqa: F821
+    assert (
+        xclim.indicators.icclim.GD4.__module__ == "xclim.indicators.icclim"
+    )  # noqa: F821
 
 
 def test_temp_unit_conversion(tas_series):
@@ -377,7 +379,7 @@ def test_multiindicator(tas_series):
         compute=uniindtemp_compute,
     )
     with pytest.raises(ValueError, match="Indicator minmaxtemp4 was wrongly defined"):
-        tmin, tmax = ind(tas, freq="YS")
+        _tmin, _tmax = ind(tas, freq="YS")
 
 
 def test_missing(tas_series):
@@ -480,7 +482,7 @@ def test_all_parameters_understood(official_indicators):
     for identifier, ind in official_indicators.items():
         indinst = ind.get_instance()
         for name, param in indinst.parameters.items():
-            if param["kind"] == InputKind.OTHER_PARAMETER:
+            if param.kind == InputKind.OTHER_PARAMETER:
                 problems.add((identifier, name))
     # this one we are ok with.
     if problems - {
@@ -587,18 +589,18 @@ def test_parsed_doc():
     assert "tas" in xclim.atmos.liquid_precip_accumulation.parameters
 
     params = xclim.atmos.drought_code.parameters
-    assert params["tas"]["description"] == "Noon temperature."
-    assert params["tas"]["units"] == "[temperature]"
-    assert params["tas"]["kind"] is InputKind.VARIABLE
-    assert params["tas"]["default"] == "tas"
-    assert params["snd"]["default"] is None
-    assert params["snd"]["kind"] is InputKind.OPTIONAL_VARIABLE
-    assert params["snd"]["units"] == "[length]"
-    assert params["season_method"]["kind"] is InputKind.STRING
-    assert params["season_method"]["choices"] == {"GFWED", None, "WF93", "LA08"}
+    assert params["tas"].description == "Noon temperature."
+    assert params["tas"].units == "[temperature]"
+    assert params["tas"].kind is InputKind.VARIABLE
+    assert params["tas"].default == "tas"
+    assert params["snd"].default is None
+    assert params["snd"].kind is InputKind.OPTIONAL_VARIABLE
+    assert params["snd"].units == "[length]"
+    assert params["season_method"].kind is InputKind.STRING
+    assert params["season_method"].choices == {"GFWED", None, "WF93", "LA08"}
 
     params = xclim.atmos.standardized_precipitation_evapotranspiration_index.parameters
-    assert params["fitkwargs"]["kind"] is InputKind.DICT
+    assert params["fitkwargs"].kind is InputKind.DICT
 
 
 def test_default_formatter():
@@ -658,14 +660,14 @@ def test_input_dataset(open_dataset):
     ds = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc")
 
     # Use defaults
-    out = xclim.atmos.daily_temperature_range(freq="YS", ds=ds)
+    _ = xclim.atmos.daily_temperature_range(freq="YS", ds=ds)
 
     # Use non-defaults (inverted on purpose)
     with xclim.set_options(cf_compliance="log"):
-        out = xclim.atmos.daily_temperature_range("tasmax", "tasmin", freq="YS", ds=ds)
+        _ = xclim.atmos.daily_temperature_range("tasmax", "tasmin", freq="YS", ds=ds)
 
     # Use a mix
-    out = xclim.atmos.daily_temperature_range(tasmax=ds.tasmax, freq="YS", ds=ds)
+    _ = xclim.atmos.daily_temperature_range(tasmax=ds.tasmax, freq="YS", ds=ds)
 
     # Inexistent variable:
     dsx = ds.drop_vars("tasmin")

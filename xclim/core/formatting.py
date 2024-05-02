@@ -356,7 +356,7 @@ def merge_attributes(
 
 def update_history(
     hist_str: str,
-    *inputs_list: Sequence[xr.DataArray | xr.Dataset],
+    *inputs_list: xr.DataArray | xr.Dataset,
     new_name: str | None = None,
     **inputs_kws: xr.DataArray | xr.Dataset,
 ):
@@ -368,12 +368,12 @@ def update_history(
     ----------
     hist_str : str
         The string describing what has been done on the data.
-    new_name : Optional[str]
-        The name of the newly created variable or dataset to prefix hist_msg.
-    \*inputs_list : Sequence[Union[xr.DataArray, xr.Dataset]]
+    \*inputs_list : xr.DataArray or xr.Dataset
         The datasets or variables that were used to produce the new object.
         Inputs given that way will be prefixed by their "name" attribute if available.
-    \*\*inputs_kws : Union[xr.DataArray, xr.Dataset]
+    new_name : str, optional
+        The name of the newly created variable or dataset to prefix hist_msg.
+    \*\*inputs_kws : xr.DataArray or xr.Dataset
         Mapping from names to the datasets or variables that were used to produce the new object.
         Inputs given that way will be prefixes by the passed name.
 

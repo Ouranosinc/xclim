@@ -4,7 +4,7 @@ Changelog
 
 v0.49.0 (unreleased)
 --------------------
-Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), Juliette Lavoie (:user:`juliettelavoie`), David Huard (:user:`huard`), Gabriel Rondeau-Genesse (:user:`RondeauG`), Éric Dupuis (:user:`coxipi`).
+Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), Juliette Lavoie (:user:`juliettelavoie`), David Huard (:user:`huard`), Gabriel Rondeau-Genesse (:user:`RondeauG`), Javier Diez-Sierra (:user:`JavierDiezSierra`), Éric Dupuis (:user:`coxipi`).
 
 Announcements
 ^^^^^^^^^^^^^
@@ -12,8 +12,12 @@ Announcements
 
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-* Distributions with negative values are directly fitted without need for an offset for distributions such as `gamma, fisk` in ``xclim.indices.standardized_precipitation_evapotranspiration_index``. (:issue:`1477`  :pull:`1720`).
-* ``xclim.indices.stats_fit_start``  gives an estimate of the `loc` parameter for `gamma` and `fisk` distributions. (:issue:`1477`  :pull:`1720`).
+* Indicator ``xclim.atmos.potential_evapotranspiration`` and indice ``xclim.indices.potential_evapotranspiration`` now accept a new value (`DA02`) for argument `method` implementing potential evapotranspiration based on Droogers and Allen (2002). (:issue:`1710`, :pull:`1723`).
+* `ensemble_percentiles` now takes a `method` argument, accepting
+  'interpolated_inverted_cdf', 'hazen', 'weibull', 'linear'  (default),
+  'median_unbiased' and 'normal_unbiased'. (:issue:`1694`, :pull:`1732`).
+* Distributions with negative values are directly fitted without need for an offset for distributions such as `'gamma'` and `'fisk'` in ``xclim.indices.standardized_precipitation_evapotranspiration_index``. (:issue:`1477`  :pull:`1720`).
+* ``xclim.indices.stats_fit_start`` gives an estimate of the `loc` parameter for `'gamma'` and `'fisk'` distributions. (:issue:`1477`  :pull:`1720`).
 
 New indicators
 ^^^^^^^^^^^^^^
@@ -23,7 +27,11 @@ New indicators
 Breaking changes
 ^^^^^^^^^^^^^^^^
 * The previously deprecated functions ``xclim.sdba.processing.construct_moving_yearly_window`` and ``xclim.sdba.processing.unpack_moving_yearly_window`` have been removed. These functions have been replaced by ``xclim.core.calendar.stack_periods`` and ``xclim.core.calendar.unstack_periods``. (:pull:`1717`).
+* The previously deprecated function ``xclim.ensembles.change_significance`` has been removed. (:pull:`1737`).
 * Indicators ``snw_season_length`` and ``snd_season_length`` have been modified, see above.
+* The `'hargeaves85'`/`'hg85'` method for the ``potential_evapotranspiration`` indicator and indice has been modified for precision and consistency with recent academic literature. (:issue:`1710`, :pull:`1723`).
+* The `__getitem__` method of ``xclim.core.indicator.Parameter`` instances has been removed. Accessing members of ``Parameters`` now uniquely uses dot notation. (:pull:`1721`).
+* The obsolete function wrapper for generating Indicators ``xclim.core.utils.wrapped_partial`` has been removed. (:pull:`1721`).
 * Estimation of parameters using `_fit_start` for `gamma` and `fisk` has been changed and can affect the results obtained with full-fledged (e.g. "ML") methods. (:issue:`1477`  :pull:`1720`).
 * Zero inflated distributions used in ``xclim.stats.standardized_index`` now appropriately use the probability of zeroes in the calibration data and not the entire dataset. (:issue:`1477`  :pull:`1720`).
 
@@ -36,6 +44,7 @@ Bug fixes
 * Fixed "agreement fraction" in ``robustness_fractions`` to distinguish between negative change and no change. Added "negative" and "changed negative" fractions (:issue:`1690`, :pull:`1711`).
 * ``make_criteria`` now skips columns with NaNs across all realizations. (:pull:`1713`).
 * Fixed bug QuantileDeltaMapping adjustment not working for seasonal grouping (:issue:`1704`, :pull:`1716`).
+* The codebase has been adjusted to address several (~400) `mypy`-related errors attributable to inaccurate function call signatures and variable name shadowing. (:issue:`1719`, :pull:`1721`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
@@ -45,6 +54,7 @@ Internal changes
 * Added the `tox-gh` dependency to the development installation recipe. This will soon be required for running the `tox` test ensemble on GitHub Workflows. (:pull:`1709`).
 * Added the `vulture` static code analysis tool for finding dead code to the development dependency list and linters (makefile, tox and pre-commit hooks). (:pull:`1717`).
 * Added error message when using `xclim.indices.stats.dist_method` with `nnlf` and included note in docstring. (:issue:`1683`, :pull:`1714`).
+* PEP8 rule `N802` is now enabled in the `ruff` formatter. Function names should follow `Snake case <https://en.wikipedia.org/wiki/Snake_case>`_, with rare exceptions. (:pull:`1721`).
 
 v0.48.2 (2024-02-26)
 --------------------

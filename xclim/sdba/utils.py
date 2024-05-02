@@ -155,12 +155,13 @@ def apply_correction(
     """
     kind = kind or factor.get("kind", None)
     with xr.set_options(keep_attrs=True):
+        out: xr.DataArray
         if kind == ADDITIVE:
             out = x + factor
         elif kind == MULTIPLICATIVE:
             out = x * factor
         else:
-            raise ValueError
+            raise ValueError("kind must be `+` or `*`.")
     return out
 
 
@@ -309,7 +310,7 @@ def add_cyclic_bounds(
     return ensure_chunk_size(qmf, **{att: -1})
 
 
-def _interp_on_quantiles_1D(newx, oldx, oldy, method, extrap):
+def _interp_on_quantiles_1D(newx, oldx, oldy, method, extrap):  # noqa: N802
     mask_new = np.isnan(newx)
     mask_old = np.isnan(oldy) | np.isnan(oldx)
     out = np.full_like(newx, np.NaN, dtype=f"float{oldy.dtype.itemsize * 8}")

@@ -19,7 +19,6 @@ from ._reduce import (
     plot_rsqprofile,
 )
 from ._robustness import (
-    change_significance,
     robustness_categories,
     robustness_coefficient,
     robustness_fractions,

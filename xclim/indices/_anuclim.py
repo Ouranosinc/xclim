@@ -1,7 +1,7 @@
 # noqa: D100
 from __future__ import annotations
 
-from typing import Callable
+from typing import Callable, cast
 
 import numpy as np
 import xarray
@@ -95,8 +95,8 @@ def isothermality(
     """
     dtr = daily_temperature_range(tasmin=tasmin, tasmax=tasmax, freq=freq)
     etr = extreme_temperature_range(tasmin=tasmin, tasmax=tasmax, freq=freq)
-    iso = dtr / etr * 100
-    iso.attrs["units"] = "%"
+    iso: xarray.DataArray = dtr / etr * 100
+    iso = iso.assign_attrs(units="%")
     return iso
 
 
@@ -461,8 +461,9 @@ def prcptot(
        Total {freq} precipitation.
     """
     thresh = convert_units_to(thresh, pr, context="hydro")
-    pram = rate2amount(pr.where(pr >= thresh, 0))
-    return pram.resample(time=freq).sum().assign_attrs(units=pram.units)
+    pram: xarray.DataArray = rate2amount(pr.where(pr >= thresh, 0))
+    pram = pram.resample(time=freq).sum().assign_attrs(units=pram.units)
+    return pram
 
 
 @declare_units(pr="[precipitation]")
@@ -506,9 +507,9 @@ def prcptot_wetdry_period(
         )
     op = _np_ops[op]
 
-    return getattr(pram.resample(time=freq), op)(dim="time").assign_attrs(
-        units=pram.units
-    )
+    pwp: xarray.DataArray = getattr(pram.resample(time=freq), op)(dim="time")
+    pwp = pwp.assign_attrs(units=pram.units)
+    return pwp
 
 
 def _anuclim_coeff_var(arr: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
@@ -542,63 +543,82 @@ def _from_other_arg(
     ds = xarray.Dataset(data_vars={"criteria": criteria, "output": output})
     dim = "time"
 
-    def get_other_op(dataset):
+    def _get_other_op(dataset: xarray.Dataset) -> xarray.DataArray:
         all_nans = dataset.criteria.isnull().all(dim=dim)
         index = op(dataset.criteria.where(~all_nans, 0), dim=dim)
-        return lazy_indexing(dataset.output, index=index, dim=dim).where(~all_nans)
+        other_op = lazy_indexing(dataset.output, index=index, dim=dim).where(~all_nans)
+        return other_op
 
-    return ds.resample(time=freq).map(get_other_op)
+    resampled = ds.resample(time=freq)
+    # Manually casting here since the mapping returns a DataArray and not a Dataset
+    out = cast(xarray.DataArray, resampled.map(_get_other_op))
+    return out
 
 
 def _to_quarter(
     pr: xarray.DataArray | None = None,
     tas: xarray.DataArray | None = None,
 ) -> xarray.DataArray:
-    """Convert daily, weekly or monthly time series to quarterly time series according to ANUCLIM specifications."""
-    if tas is not None and pr is not None:
-        raise ValueError("Supply only one variable, 'tas' (exclusive) or 'pr'.")
+    """Convert daily, weekly or monthly time series to quarterly time series according to ANUCLIM specifications.
 
-    freq = xarray.infer_freq((tas if tas is not None else pr).time)
+    Parameters
+    ----------
+    pr : xarray.DataArray, optional
+        Total precipitation flux [mm d-1], [mm week-1], [mm month-1] or similar.
+    tas : xarray.DataArray, optional
+        Mean temperature at daily, weekly, or monthly frequency.
+
+    Returns
+    -------
+    xarray.DataArray
+        Quarterly time series.
+    """
+    if pr is not None and tas is not None:
+        raise ValueError("Supply only one variable, 'tas' (exclusive) or 'pr'.")
+    elif tas is not None:
+        ts_var = tas
+    elif pr is not None:
+        ts_var = pr
+    else:
+        raise ValueError("Supply one variable, `tas` or `pr`.")
+
+    freq = xarray.infer_freq(ts_var.time)
     if freq is None:
         raise ValueError("Can't infer sampling frequency of the input data.")
+    freq_upper = freq.upper()
 
-    if freq.upper().startswith("D"):
+    if freq_upper.startswith("D"):
         if tas is not None:
-            tas = tg_mean(tas, freq="7D")
-
-        if pr is not None:
+            ts_var = tg_mean(ts_var, freq="7D")
+        else:
             # Accumulate on a week
             # Ensure units are back to a "rate" for rate2amount below
-            pr = convert_units_to(
-                precip_accumulation(pr, freq="7D"), "mm", context="hydro"
+            ts_var = precip_accumulation(ts_var, freq="7D")
+            ts_var = convert_units_to(ts_var, "mm", context="hydro").assign_attrs(
+                units="mm/week"
             )
-            pr.attrs["units"] = "mm/week"
-
-        freq = "W"
-
-    if freq.upper().startswith("W"):
+        freq_upper = "W"
+    if freq_upper.startswith("W"):
         window = 13
-
-    elif freq.upper().startswith("M"):
+    elif freq_upper.startswith("M"):
         window = 3
-
     else:
         raise NotImplementedError(
             f'Unknown input time frequency "{freq}": must be one of "D", "W" or "M".'
         )
 
+    ts_var = ensure_chunk_size(ts_var, time=np.ceil(window / 2))
     if tas is not None:
-        tas = ensure_chunk_size(tas, time=np.ceil(window / 2))
-        out = tas.rolling(time=window, center=False).mean(skipna=False)
-        out.attrs = tas.attrs
+        out = ts_var.rolling(time=window, center=False).mean(skipna=False)
+        out_units = ts_var.units
     elif pr is not None:
-        pr = ensure_chunk_size(pr, time=np.ceil(window / 2))
-        pram = rate2amount(pr)
+        pram = rate2amount(ts_var)
         out = pram.rolling(time=window, center=False).sum()
-        out.attrs = pr.attrs
-        out.attrs["units"] = pram.units
+        out_units = pram.units
     else:
         raise ValueError("No variables supplied.")
 
+    out = out.assign_attrs(ts_var.attrs)
+    out = out.assign_attrs(units=out_units)
     out = ensure_chunk_size(out, time=-1)
     return out

@@ -143,7 +143,7 @@ def _normalize(
 
 
 @map_groups(reordered=[Grouper.DIM], main_only=False)
-def _reordering(ds, *, dim):
+def _reordering(ds: xr.Dataset, *, dim: str) -> xr.Dataset:
     """Group-wise reordering.
 
     Parameters
@@ -154,6 +154,11 @@ def _reordering(ds, *, dim):
             - ref : The timeseries whose rank to use.
     dim : str
         The dimension along which to reorder.
+
+    Returns
+    -------
+    xr.Dataset
+        The reordered timeseries.
     """
 
     def _reordering_1d(data, ordr):

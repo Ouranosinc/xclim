@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import warnings
+from typing import cast
 
 import numpy as np
 import xarray
@@ -119,7 +120,7 @@ def corn_heat_units(
     mask_tasmin = tasmin > thresh_tasmin
     mask_tasmax = tasmax > thresh_tasmax
 
-    chu = (
+    chu: xarray.DataArray = (
         xarray.where(mask_tasmin, 1.8 * (tasmin - thresh_tasmin), 0)
         + xarray.where(
             mask_tasmax,
@@ -128,7 +129,7 @@ def corn_heat_units(
         )
     ) / 2
 
-    chu.attrs["units"] = ""
+    chu = chu.assign_attrs(units="")
     return chu
 
 
@@ -277,7 +278,7 @@ def huglin_index(
     else:
         raise NotImplementedError(f"'{method}' method is not implemented.")
 
-    hi = (((tas + tasmax) / 2) - thresh).clip(min=0) * k
+    hi: xarray.DataArray = (((tas + tasmax) / 2) - thresh).clip(min=0) * k
     hi = (
         select_time(
             hi, date_bounds=(start_date, end_date), include_bounds=(True, False)
@@ -286,7 +287,7 @@ def huglin_index(
         .sum()
         * k_aggregated
     )
-    hi.attrs["units"] = ""
+    hi = hi.assign_attrs(units="")
     return hi
 
 
@@ -442,9 +443,9 @@ def biologically_effective_degree_days(
     else:
         raise NotImplementedError()
 
-    bedd = ((((tasmin + tasmax) / 2) - thresh_tasmin).clip(min=0) * k + tr_adj).clip(
-        max=max_daily_degree_days
-    )
+    bedd: xarray.DataArray = (
+        (((tasmin + tasmax) / 2) - thresh_tasmin).clip(min=0) * k + tr_adj
+    ).clip(max=max_daily_degree_days)
 
     bedd = (
         select_time(
@@ -455,7 +456,7 @@ def biologically_effective_degree_days(
         * k_aggregated
     )
 
-    bedd.attrs["units"] = "K days"
+    bedd = bedd.assign_attrs(units="K days")
     return bedd
 
 
@@ -533,8 +534,8 @@ def cool_night_index(
 
     tasmin = tasmin.where(months == month, drop=True)
 
-    cni = tasmin.resample(time=freq).mean(keep_attrs=True)
-    cni.attrs["units"] = "degC"
+    cni: xarray.DataArray = tasmin.resample(time=freq).mean(keep_attrs=True)
+    cni = cni.assign_attrs(units="degC")
     return cni
 
 
@@ -711,6 +712,8 @@ def dryness_index(
         * (pr_masked / 5).clip(max=evspsblpot.time.dt.daysinmonth)
     )
 
+    di_north: xarray.DataArray | None = None
+    di_south: xarray.DataArray | None = None
     # Dryness index
     if has_north:
         di_north = wo + (pr_masked - t_v - e_s).resample(time="YS-JAN").sum()
@@ -720,14 +723,17 @@ def dryness_index(
         di_south = di_south.shift(time=1).isel(time=slice(1, None))
         di_south["time"] = di_south.indexes["time"].shift(-6, "MS")
 
+    di: xarray.DataArray
     if has_north and has_south:
-        di = di_north.where(lat >= 0, di_south)  # noqa
+        di = di_north.where(lat >= 0, di_south)
     elif has_north:
         di = di_north  # noqa
     elif has_south:
         di = di_south  # noqa
+    else:
+        raise ValueError("No hemisphere data found.")
 
-    di.attrs["units"] = "mm"  # noqa
+    di = di.assign_attrs(units="mm")
     return di
 
 
@@ -788,8 +794,8 @@ def latitude_temperature_index(
     lat_mask = (abs(lat) >= 0) & (abs(lat) <= lat_factor)
     lat_coeff = xarray.where(lat_mask, lat_factor - abs(lat), 0)
 
-    lti = mtwm * lat_coeff
-    lti.attrs["units"] = ""
+    lti: xarray.DataArray = mtwm * lat_coeff
+    lti = lti.assign_attrs(units="")
     return lti
 
 
@@ -891,9 +897,8 @@ def water_budget(
     if xarray.infer_freq(pet.time) == "MS":
         pr = pr.resample(time="MS").mean(dim="time", keep_attrs=True)
 
-    out = pr - pet
-
-    out.attrs["units"] = pr.attrs["units"]
+    out: xarray.DataArray = pr - pet
+    out = out.assign_attrs(units=pr.attrs["units"])
     return out
 
 
@@ -919,7 +924,7 @@ def rain_season(
     date_min_end: DayOfYearStr = "09-01",
     date_max_end: DayOfYearStr = "12-31",
     freq="YS-JAN",
-):
+) -> tuple[xarray.DataArray, xarray.DataArray, xarray.DataArray]:
     """Find the length of the rain season and the day of year of its start and its end.
 
     The rain season begins when two conditions are met: 1) There must be a number of wet days with precipitations above
@@ -1009,22 +1014,26 @@ def rain_season(
         )
 
     # Find the start of the rain season
-    def _get_first_run_start(pram):
-        last_doy = pram.indexes["time"][-1].strftime("%m-%d")
-        pram = select_time(pram, date_bounds=(date_min_start, last_doy))
+    def _get_first_run_start(_pram):
+        last_doy = _pram.indexes["time"][-1].strftime("%m-%d")
+        _pram = select_time(_pram, date_bounds=(date_min_start, last_doy))
 
         # First condition: Start with enough precipitation
-        da_start = pram.rolling({"time": window_wet_start}).sum() >= thresh_wet_start
+        da_start = _pram.rolling({"time": window_wet_start}).sum() >= thresh_wet_start
 
         # Second condition: No dry period after
         if method_dry_start == "per_day":
-            da_stop = pram <= thresh_dry_start
+            da_stop = _pram <= thresh_dry_start
             window_dry = window_dry_start
         elif method_dry_start == "total":
-            da_stop = pram.rolling({"time": window_dry_start}).sum() <= thresh_dry_start
+            da_stop = (
+                _pram.rolling({"time": window_dry_start}).sum() <= thresh_dry_start
+            )
             # equivalent to rolling forward in time instead, i.e. end date will be at beginning of dry run
             da_stop = da_stop.shift({"time": -(window_dry_start - 1)}, fill_value=False)
             window_dry = 1
+        else:
+            raise ValueError(f"Unknown method_dry_start: {method_dry_start}.")
 
         # First and second condition combined in a run length
         events = rl.extract_events(da_start, 1, da_stop, window_dry)
@@ -1034,58 +1043,62 @@ def rain_season(
 
     # Find the end of the rain season
     # FIXME: This function mixes local and parent-level variables. It should be refactored.
-    def _get_first_run_end(pram):
+    def _get_first_run_end(_pram):
         if method_dry_end == "per_day":
-            da_stop = pram <= thresh_dry_end
+            da_stop = _pram <= thresh_dry_end
             run_positions = rl.rle(da_stop) >= window_dry_end
         elif method_dry_end == "total":
             run_positions = (
-                pram.rolling({"time": window_dry_end}).sum() <= thresh_dry_end
+                _pram.rolling({"time": window_dry_end}).sum() <= thresh_dry_end
             )
+        else:
+            raise ValueError(f"Unknown method_dry_end: {method_dry_end}.")
         return _get_first_run(run_positions, date_min_end, date_max_end)
 
     # Get start, end and length of rain season. Written as a function so it can be resampled
     # FIXME: This function mixes local and parent-level variables. It should be refactored.
-    def _get_rain_season(pram):
-        start = _get_first_run_start(pram)
+    def _get_rain_season(_pram):
+        start = _get_first_run_start(_pram)
 
         # masking value before  start of the season (end of season should be after)
         # Get valid integer indexer of the day after the first run starts.
         # `start != NaN` only possible if a condition on next few time steps is respected.
         # Thus, `start+1` exists if `start != NaN`
         start_ind = (start + 1).fillna(-1).astype(int)
-        mask = pram * np.NaN
+        mask = _pram * np.NaN
         # Put "True" on the day of run start
         mask[{"time": start_ind}] = 1
         # Mask back points without runs, propagate the True
         mask = mask.where(start.notnull()).ffill("time")
         mask = mask.notnull()
-        end = _get_first_run_end(pram.where(mask))
+        end = _get_first_run_end(_pram.where(mask))
 
-        length = xarray.where(end.notnull(), end - start, pram["time"].size - start)
+        length = xarray.where(end.notnull(), end - start, _pram["time"].size - start)
 
         # converting to doy
-        crd = pram.time.dt.dayofyear
+        crd = _pram.time.dt.dayofyear
         start = rl.lazy_indexing(crd, start)
         end = rl.lazy_indexing(crd, end)
 
-        out = xarray.Dataset(
+        _out = xarray.Dataset(
             {
                 "rain_season_start": start,
                 "rain_season_end": end,
                 "rain_season_length": length,
             }
         )
-        return out
+        return _out
 
     # Compute rain season, attribute units
-    out = pram.resample(time=freq).map(_get_rain_season)
-    out["rain_season_start"].attrs["units"] = ""
-    out["rain_season_end"].attrs["units"] = ""
-    out["rain_season_length"].attrs["units"] = "days"
-    out["rain_season_start"].attrs["is_dayofyear"] = np.int32(1)
-    out["rain_season_end"].attrs["is_dayofyear"] = np.int32(1)
-    return out["rain_season_start"], out["rain_season_end"], out["rain_season_length"]
+    out = cast(xarray.Dataset, pram.resample(time=freq).map(_get_rain_season))
+    rain_season_start = out.rain_season_start.assign_attrs(
+        units="", is_dayofyear=np.int32(1)
+    )
+    rain_season_end = out.rain_season_end.assign_attrs(
+        units="", is_dayofyear=np.int32(1)
+    )
+    rain_season_length = out.rain_season_length.assign_attrs(units="days")
+    return rain_season_start, rain_season_end, rain_season_length
 
 
 @declare_units(
@@ -1195,7 +1208,8 @@ def standardized_precipitation_index(
                 f"{method} method is not implemented for {dist} distribution"
             )
     else:
-        raise NotImplementedError(f"{dist} distribution is not implemented yet")
+        raise NotImplementedError(f"{dist} distribution is not yet implemented.")
+
     # Precipitation is expected to be zero-inflated
     zero_inflated = True
     spi = standardized_index(
@@ -1211,6 +1225,7 @@ def standardized_precipitation_index(
         params=params,
         **indexer,
     )
+
     return spi
 
 
@@ -1295,6 +1310,7 @@ def standardized_precipitation_evapotranspiration_index(
                 "The offset in `params` differs from the input `offset`."
                 "Proceeding with the value given in `params`."
             )
+
     dist_methods = {"gamma": ["ML", "APP", "PWM"], "fisk": ["ML", "APP"]}
     if dist in dist_methods.keys():
         if method not in dist_methods[dist]:
@@ -1302,7 +1318,8 @@ def standardized_precipitation_evapotranspiration_index(
                 f"{method} method is not implemented for {dist} distribution"
             )
     else:
-        raise NotImplementedError(f"{dist} distribution is not implemented yet")
+        raise NotImplementedError(f"{dist} distribution is not yet implemented.")
+
     # Water budget is not expected to be zero-inflated
     zero_inflated = False
     spei = standardized_index(
@@ -1361,9 +1378,10 @@ def qian_weighted_mean_average(
     units = tas.attrs["units"]
 
     weights = xarray.DataArray([0.0625, 0.25, 0.375, 0.25, 0.0625], dims=["window"])
-    weighted_mean = tas.rolling({dim: 5}, center=True).construct("window").dot(weights)
-
-    weighted_mean.attrs["units"] = units
+    weighted_mean: xarray.DataArray = (
+        tas.rolling({dim: 5}, center=True).construct("window").dot(weights)
+    )
+    weighted_mean = weighted_mean.assign_attrs(units=units)
     return weighted_mean
 
 
@@ -1465,9 +1483,11 @@ def effective_growing_degree_days(
     )
 
     deg_days = (tas - thresh).clip(min=0)
-    egdd = aggregate_between_dates(deg_days, start=start, end=end, freq=freq)
-
-    return to_agg_units(egdd, tas, op="integral")
+    egdd: xarray.DataArray = aggregate_between_dates(
+        deg_days, start=start, end=end, freq=freq
+    )
+    egdd = to_agg_units(egdd, tas, op="integral")
+    return egdd
 
 
 @declare_units(tasmin="[temperature]")
@@ -1514,9 +1534,9 @@ def hardiness_zones(
         )
 
     tn_min_rolling = tn_min(tasmin, freq=freq).rolling(time=window).mean()
-    zones = get_zones(
+    zones: xarray.DataArray = get_zones(
         tn_min_rolling, zone_min=zone_min, zone_max=zone_max, zone_step=zone_step
     )
 
-    zones.attrs["units"] = ""
+    zones = zones.assign_attrs(units="")
     return zones

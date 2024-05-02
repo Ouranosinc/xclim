@@ -158,9 +158,9 @@ __all__ = [
     "overwintering_drought_code",
 ]
 
-default_params = dict(
-    temp_start_thresh=(12, "degC"),
-    temp_end_thresh=(5, "degC"),
+default_params: dict[str, int | float | tuple[float, str]] = dict(
+    temp_start_thresh=(12.0, "degC"),
+    temp_end_thresh=(5.0, "degC"),
     snow_thresh=(0.01, "m"),
     temp_condition_days=3,
     snow_condition_days=3,
@@ -388,9 +388,13 @@ def _duff_moisture_code(
 
 
 @vectorize(nopython=True)
-def _drought_code(
-    t: np.ndarray, p: np.ndarray, mth: np.ndarray, lat: float, dc0: float
-) -> np.ndarray:  # pragma: no cover
+def _drought_code(  # pragma: no cover
+    t: np.ndarray,
+    p: np.ndarray,
+    mth: np.ndarray,
+    lat: float,
+    dc0: float,
+) -> np.ndarray:
     """Compute the drought code over one time step.
 
     Parameters
@@ -411,10 +415,10 @@ def _drought_code(
     array_like
         Drought code at the current timestep
     """
-    fl = _day_length_factor(lat, mth)
+    fl = _day_length_factor(lat, mth)  # type: ignore
 
     if t < -2.8:
-        t = -2.8
+        t = -2.8  # type: ignore
     pe = (0.36 * (t + 2.8) + fl) / 2  # *Eq.22*#
     pe = max(pe, 0.0)
 
@@ -431,7 +435,7 @@ def _drought_code(
             dc = pe
     else:  # f p <= 2.8:
         dc = dc0 + pe
-    return dc
+    return dc  # type: ignore
 
 
 def initial_spread_index(ws: np.ndarray, ffmc: np.ndarray) -> np.ndarray:
@@ -451,7 +455,7 @@ def initial_spread_index(ws: np.ndarray, ffmc: np.ndarray) -> np.ndarray:
     """
     mo = 147.2 * (101.0 - ffmc) / (59.5 + ffmc)  # *Eq.1*#
     ff = 19.1152 * np.exp(mo * -0.1386) * (1.0 + (mo**5.31) / 49300000.0)  # *Eq.25*#
-    isi = ff * np.exp(0.05039 * ws)  # *Eq.26*#
+    isi: np.ndarray = ff * np.exp(0.05039 * ws)  # *Eq.26*#
     return isi
 
 
@@ -503,7 +507,7 @@ def fire_weather_index(isi, bui):
     return fwi
 
 
-def daily_severity_rating(fwi: np.ndarray) -> np.ndarry:
+def daily_severity_rating(fwi: np.ndarray) -> np.ndarray:
     """Daily severity rating.
 
     Parameters
@@ -548,6 +552,7 @@ def _overwintering_drought_code(DCf, wpr, a, b, minDC):  # pragma: no cover
 # SECTION 2 : Iterators
 
 
+# FIXME: default_params should be supplied within the logic of the function.
 def _fire_season(
     tas: np.ndarray,
     snd: np.ndarray | None = None,
@@ -1056,15 +1061,16 @@ def fire_weather_ufunc(  # noqa: C901
     )
     # Arg order : tas, pr, hurs, sfcWind, snd, mth, lat, season_mask, dc0, dmc0, ffmc0, winter_pr
     #              0   1    2      3        4   5    6    7             8    9     10    11
-    args = [None] * 12
-    input_core_dims = [[]] * 12
+    args: list[xr.DataArray | None] = [None] * 12
+    input_core_dims: list[list[str | None]] = [[]] * 12
 
     # Verification of all arguments
     for i, (arg, name, usedby, has_time_dim) in enumerate(needed_args):
         if any([ind in indexes + [season_method] for ind in usedby]):
             if arg is None:
                 raise TypeError(
-                    f"Missing input argument {name} for index combination {indexes} with fire season method '{season_method}'"
+                    f"Missing input argument {name} for index combination {indexes} "
+                    f"with fire season method '{season_method}'."
                 )
             args[i] = arg
             input_core_dims[i] = ["time"] if has_time_dim else []
@@ -1078,17 +1084,14 @@ def fire_weather_ufunc(  # noqa: C901
         raise ValueError("'dry_start' must be one of None, 'CFS' or 'GFWED'.")
 
     # Always pass the previous codes.
-    if dc0 is None:
-        dc0 = xr.full_like(tas.isel(time=0), np.nan)
-    if dmc0 is None:
-        dmc0 = xr.full_like(tas.isel(time=0), np.nan)
-    if ffmc0 is None:
-        ffmc0 = xr.full_like(tas.isel(time=0), np.nan)
-    args[8:11] = [dc0, dmc0, ffmc0]
+    _dc0 = xr.full_like(tas.isel(time=0), np.nan) if dc0 is None else dc0
+    _dmc0 = xr.full_like(tas.isel(time=0), np.nan) if dmc0 is None else dmc0
+    _ffmc0 = xr.full_like(tas.isel(time=0), np.nan) if ffmc0 is None else ffmc0
+    args[8:11] = [_dc0, _dmc0, _ffmc0]
 
     # Output config from the current indexes list
     outputs = indexes
-    output_dtypes = [tas.dtype] * len(indexes)
+    output_dtypes: list[np.dtype] = [tas.dtype] * len(indexes)
     output_core_dims = len(indexes) * [("time",)]
 
     if season_mask is not None:
