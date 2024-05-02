@@ -307,14 +307,7 @@ html_theme_options = {
             "class": "",
         },
     ],
-    "light_css_variables": {
-        "color-table-rows-even": "#eeebee",
-        "color-copybutton": "#000",
-        "color-indicator-text": "#5a5c63",
-        "color-indicator-background": "#eeebee",
-        "color-indicator-widget-text": "#2f2f2f",
-        "color-indicator-widget-background": "#bdbdbd",
-    },
+    
     "dark_css_variables": {
         "color-table-rows-even": "#303335",
         "color-copybutton": "#fff",
@@ -322,6 +315,44 @@ html_theme_options = {
         "color-indicator-background": "#3e3e3e",
         "color-indicator-widget-text": "#a8a8a8",
         "color-indicator-widget-background": "#303335",
+        # Fix for xarray injected theme error in auto*dark mode
+        # Note: because these are set with the selector
+        #   body:not([data-theme="light"]), any variable that uses them needs to
+        #   have a scope smaller than body. 
+        #   However, the xarray variables that use these are defined in the :root selector,
+        #   which is higher than body. We therefore need to redefine them in body.
+        #   This is done in xarray.css, included at the bottom of this file.
+        # furo issue to track when this is no longer needed:
+        #   https://github.com/pradyunsg/furo/discussions/790
+        "jp-content-font-color0": "rgba(255, 255, 255, 1)",
+        "jp-content-font-color2": "rgba(255, 255, 255, 0.54)",
+        "jp-content-font-color3": "rgba(255, 255, 255, 0.38)",
+        "jp-border-color0": "#1F1F1F",
+        "jp-border-color1": "#1F1F1F",
+        "jp-border-color2": "#1F1F1F",
+        "jp-layout-color0": "#111111",
+        "jp-layout-color1": "#111111",
+        "jp-layout-color2": "#313131",
+        "jp-layout-color3": "#515151",
+    },
+    "light_css_variables": {
+        "color-table-rows-even": "#eeebee",
+        "color-copybutton": "#000",
+        "color-indicator-text": "#5a5c63",
+        "color-indicator-background": "#eeebee",
+        "color-indicator-widget-text": "#2f2f2f",
+        "color-indicator-widget-background": "#bdbdbd",
+        # (consistency for light and dark themes, so variables are unset when switching to light)
+        "jp-content-font-color0": "rgba(0, 0, 0, 1)",
+        "jp-content-font-color2": "rgba(0, 0, 0, 0.54)",
+        "jp-content-font-color3": "rgba(0, 0, 0, 0.38)",
+        "jp-border-color0": "#e0e0e0",
+        "jp-border-color1": "#e0e0e0",
+        "jp-border-color2": "#e0e0e0",
+        "jp-layout-color0": "#ffffff",
+        "jp-layout-color1": "#ffffff",
+        "jp-layout-color2": "#eeeeee",
+        "jp-layout-color3": "#bdbdbd",
     },
 }
 
@@ -416,3 +447,4 @@ texinfo_documents = [
 
 def setup(app):
     app.add_css_file("style.css")
+    app.add_css_file("xarray.css")
