@@ -1,5 +1,5 @@
 
-/* default xarray theme, this is taken from the injected css that xarray uses. 
+/* default xarray theme, this is taken from the injected css that xarray uses.
 However, we change it so that it updates in the body, instead of :root, so that it updates with the theme.*/
 html, body {
   --xr-font-color0: var(--jp-content-font-color0, rgba(0, 0, 0, 1));

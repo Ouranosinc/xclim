@@ -307,7 +307,6 @@ html_theme_options = {
             "class": "",
         },
     ],
-    
     "dark_css_variables": {
         "color-table-rows-even": "#303335",
         "color-copybutton": "#fff",
@@ -318,7 +317,7 @@ html_theme_options = {
         # Fix for xarray injected theme error in auto*dark mode
         # Note: because these are set with the selector
         #   body:not([data-theme="light"]), any variable that uses them needs to
-        #   have a scope smaller than body. 
+        #   have a scope smaller than body.
         #   However, the xarray variables that use these are defined in the :root selector,
         #   which is higher than body. We therefore need to redefine them in body.
         #   This is done in xarray.css, included at the bottom of this file.
