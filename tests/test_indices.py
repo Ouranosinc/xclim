@@ -706,6 +706,8 @@ class TestStandardizedIndices:
             # same offset as in climate indices
             offset = convert_units_to("1 mm/d", wb, context="hydro")
             fitkwargs = {"floc": -offset}
+        else:
+            fitkwargs = {}
         params = xci.stats.standardized_index_fit_params(
             wb.sel(time=slice("1950", "1980")),
             freq=freq,
@@ -757,7 +759,6 @@ class TestStandardizedIndices:
         spei1 = xci.standardized_precipitation_evapotranspiration_index(
             wb.sel(time=slice("1998", "2000")), params=params
         )
-        fitkwargs = {"floc": -offset}
 
         spei2 = xci.standardized_precipitation_evapotranspiration_index(
             wb,
