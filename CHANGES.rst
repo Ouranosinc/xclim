@@ -47,6 +47,7 @@ Bug fixes
 * Fixed bug QuantileDeltaMapping adjustment not working for seasonal grouping (:issue:`1704`, :pull:`1716`).
 * The codebase has been adjusted to address several (~400) `mypy`-related errors attributable to inaccurate function call signatures and variable name shadowing. (:issue:`1719`, :pull:`1721`).
 * ``xclim.core.formatting.generate_indicator_docstring`` has been modified to ensure that the `numpy`-docstrings of all Indicators are consistent in their formatting. (:pull:`1731`).
+* Fixed documentation example for frequency adaptation with `sdba`. (:issue:`1740`, :pull:`1742`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
