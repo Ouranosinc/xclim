@@ -37,8 +37,16 @@ td.name {
     font-weight: 500;
 }
 
-tr:nth-child(even) {
-  background-color: var(--color-table-rows-even);
+body div tr:nth-child(even),
+body div.rendered_html tbody tr:nth-child(even) {
+  background-color: var(--color-background-table-rows-even);
+  color: var(--color-text-table-rows-even);
+}
+
+body div tr:nth-child(odd),
+body div.rendered_html tbody tr:nth-child(odd) {
+  background-color: var(--color-background-table-rows-odd);
+  color: var(--color-text-table-rows-odd);
 }
 
 dd {

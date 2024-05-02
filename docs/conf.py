@@ -308,7 +308,10 @@ html_theme_options = {
         },
     ],
     "dark_css_variables": {
-        "color-table-rows-even": "#303335",
+        "color-background-table-rows-even": "#303335",
+        "color-background-table-rows-odd": "#3e3e3e",
+        "color-text-table-rows-even": "#fff",
+        "color-text-table-rows-odd": "#fff",
         "color-copybutton": "#fff",
         "color-indicator-text": "#cfd0d0",
         "color-indicator-background": "#3e3e3e",
@@ -335,7 +338,10 @@ html_theme_options = {
         "jp-layout-color3": "#515151",
     },
     "light_css_variables": {
-        "color-table-rows-even": "#eeebee",
+        "color-background-table-rows-even": "#eeebee",
+        "color-background-table-rows-odd": "#f5f5f5",
+        "color-text-table-rows-even": "#000",
+        "color-text-table-rows-odd": "#000",
         "color-copybutton": "#000",
         "color-indicator-text": "#5a5c63",
         "color-indicator-background": "#eeebee",
