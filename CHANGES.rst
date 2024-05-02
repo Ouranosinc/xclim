@@ -2,7 +2,7 @@
 Changelog
 =========
 
-v0.49.0 (unreleased)
+v0.49.0 (2024-05-02)
 --------------------
 Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), Juliette Lavoie (:user:`juliettelavoie`), David Huard (:user:`huard`), Gabriel Rondeau-Genesse (:user:`RondeauG`), Javier Diez-Sierra (:user:`JavierDiezSierra`), Sarah Gammon (:user:`SarahG-579462`), Éric Dupuis (:user:`coxipi`).
 
@@ -21,30 +21,30 @@ New features and enhancements
 New indicators
 ^^^^^^^^^^^^^^
 * New ``snw_season_length`` and ``snd_season_length`` computing the duration between the start and the end of the snow season, both defined as the first day of a continuous period with snow above/under a threshold. Previous versions of these indicators were renamed ``snw_days_above`` and ``snd_days_above`` to better reflect what they computed : the number of days with snow above a given threshold (with no notion of continuity). (:issue:`1703`, :pull:`1708`).
-* Added ``atmos.duff_moisture_code``, part of the Canadian Forest Fire Weather Index System. It was already an output of the `atmos.cffwis_indices`, but now has its own standalone indicator. (:issue:`1698`, :pull:`1712`).
+* Added ``xclim.atmos.duff_moisture_code``, part of the Canadian Forest Fire Weather Index System. It was already an output of the ``xclim.atmos.cffwis_indices``, but now has its own standalone indicator. (:issue:`1698`, :pull:`1712`).
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
 * The previously deprecated functions ``xclim.sdba.processing.construct_moving_yearly_window`` and ``xclim.sdba.processing.unpack_moving_yearly_window`` have been removed. These functions have been replaced by ``xclim.core.calendar.stack_periods`` and ``xclim.core.calendar.unstack_periods``. (:pull:`1717`).
 * The previously deprecated function ``xclim.ensembles.change_significance`` has been removed. (:pull:`1737`).
-* Indicators ``snw_season_length`` and ``snd_season_length`` have been modified, see above.
+* Indicators ``snw_season_length`` and ``snd_season_length`` have been modified. (:issue:`1703`, :pull:`1708`).
 * The `'hargeaves85'`/`'hg85'` method for the ``potential_evapotranspiration`` indicator and indice has been modified for precision and consistency with recent academic literature. (:issue:`1710`, :pull:`1723`).
 * The `__getitem__` method of ``xclim.core.indicator.Parameter`` instances has been removed. Accessing members of ``Parameters`` now uniquely uses dot notation. (:pull:`1721`).
 * The obsolete function wrapper for generating Indicators ``xclim.core.utils.wrapped_partial`` has been removed. (:pull:`1721`).
 * The default documentation theme has changed from `sphinx-rtd-theme` to `furo`; Several modifications to the documentation configuration and CSS overrides have been made to accommodate the changes. `furo` is now a `docs` dependency. (:issue:`1693`, :pull:`1731`).
 * Estimation of parameters using `_fit_start` for `gamma` and `fisk` has been changed and can affect the results obtained with full-fledged (e.g. "ML") methods. (:issue:`1477`  :pull:`1720`).
-* Method `APP` in ``xclim.indices.standardized_precipitation_index`` and ``xclim.indices.standardized_precipitation_evapotranspiration_index`` now requires the user to impose a `loc` parameter through `fitkwargs['floc']` (:issue:`1477`  :pull:`1720`).
+* Method `APP` in ``xclim.indices.standardized_precipitation_index`` and ``xclim.indices.standardized_precipitation_evapotranspiration_index`` now requires the user to impose a `loc` parameter through `fitkwargs['floc']`. (:issue:`1477`, :pull:`1720`).
 * Zero inflated distributions used in ``xclim.stats.standardized_index`` now appropriately use the probability of zeroes in the calibration data and not the entire dataset. (:issue:`1477`  :pull:`1720`).
 
 Bug fixes
 ^^^^^^^^^
-* Fixed an bug in sdba's ``map_groups`` that prevented passing DataArrays with cftime coordinates if the ``sdba_encode_cf`` option was True. (:issue:`1673`, :pull:`1674`).
-* Fixed bug (:issue:`1678`, :pull:`1679`) in sdba where a loaded training dataset could not be used for adjustment
+* Fixed a bug in `sdba`'s ``map_groups`` that prevented passing DataArrays with cftime coordinates if the ``sdba_encode_cf`` option was `'True'`. (:issue:`1673`, :pull:`1674`).
+* Fixed bug in `sdba` where a loaded training dataset could not be used for adjustment. (:issue:`1678`, :pull:`1679`).
 * Fixed bug with loess smoothing for an array full of NaNs. (:pull:`1699`).
 * Fixed and adapted ``time_bnds`` to the newest xarray. (:pull:`1700`).
 * Fixed "agreement fraction" in ``robustness_fractions`` to distinguish between negative change and no change. Added "negative" and "changed negative" fractions (:issue:`1690`, :pull:`1711`).
 * ``make_criteria`` now skips columns with NaNs across all realizations. (:pull:`1713`).
-* Fixed bug QuantileDeltaMapping adjustment not working for seasonal grouping (:issue:`1704`, :pull:`1716`).
+* Fixed bug where `QuantileDeltaMapping` adjustment was failing for seasonal grouping. (:issue:`1704`, :pull:`1716`).
 * The codebase has been adjusted to address several (~400) `mypy`-related errors attributable to inaccurate function call signatures and variable name shadowing. (:issue:`1719`, :pull:`1721`).
 * ``xclim.core.formatting.generate_indicator_docstring`` has been modified to ensure that the `numpy`-docstrings of all Indicators are consistent in their formatting. (:pull:`1731`).
 * Fixed documentation example for frequency adaptation with `sdba`. (:issue:`1740`, :pull:`1742`).
