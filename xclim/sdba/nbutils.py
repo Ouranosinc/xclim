@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import numpy as np
 from numba import boolean, float32, float64, guvectorize, int64, njit
-from xarray import DataArray
+from xarray import DataArray, apply_ufunc
 from xarray.core import utils
 
 from xclim.core.options import ALLOW_SORTQUANTILE, OPTIONS
@@ -84,28 +84,6 @@ def _choosequantile(arr, q, allow_sortquantile=OPTIONS[ALLOW_SORTQUANTILE]):
         return np.nanquantile(arr, q).astype(arr.dtype)
 
 
-@njit(
-    # [
-    #     float32[:](float32[:], float32[:]),
-    #     float64[:](float64[:], float64[:]),
-    #     float32[:, :](float32[:, :], float32[:]),
-    #     float64[:, :](float64[:, :], float64[:]),
-    # ],
-    fastmath=False,
-    nogil=True,
-    cache=False,
-)
-def _quantile(arr, q, allow_sortquantile=OPTIONS[ALLOW_SORTQUANTILE]):
-    if arr.ndim == 1:
-        out = np.empty((q.size,), dtype=arr.dtype)
-        out[:] = _choosequantile(arr, q, allow_sortquantile)
-    else:
-        out = np.empty((arr.shape[0], q.size), dtype=arr.dtype)
-        for index in range(out.shape[0]):
-            out[index] = _choosequantile(arr[index].flatten(), q, allow_sortquantile)
-    return out
-
-
 @guvectorize(
     [(float32[:], float32, float32[:]), (float64[:], float64, float64[:])],
     "(n),()->()",
@@ -138,39 +116,52 @@ def vecquantiles(da: DataArray, rnk: DataArray, dim: str | DataArray.dims) -> Da
     return res
 
 
-def quantile(da: DataArray, q, dim: str | DataArray.dims) -> DataArray:
-    """Compute the quantiles from a fixed list `q`."""
-    # A switch that determines the backend function computing quantiles
-    allow_sortquantile = OPTIONS[ALLOW_SORTQUANTILE]
-    # We have two cases :
-    # - When all dims are processed : we stack them and use _quantile1d
-    # - When the quantiles are vectorized over some dims, these are also stacked and then _quantile2D is used.
-    # All this stacking is so that we can cover all ND+1D cases with one numba function.
+@njit
+def _wrapper_quantile1d(arr, q, allow_sortquantile=OPTIONS[ALLOW_SORTQUANTILE]):
+    out = np.empty((arr.shape[0], q.size), dtype=arr.dtype)
+    for index in range(out.shape[0]):
+        out[index] = _choosequantile(arr[index], q, allow_sortquantile)
+    return out
 
-    # Stack the dims and send to the last position
-    # This is in case there are more than one
+
+def _quantile(arr, q, nreduce, allow_sortquantile=OPTIONS[ALLOW_SORTQUANTILE]):
+    if arr.ndim == nreduce:
+        out = _choosequantile(arr.flatten(), q, allow_sortquantile)
+    else:
+        # dimensions that are reduced by quantile
+        red_axis = np.arange(len(arr.shape) - nreduce, len(arr.shape))
+        reduction_dim_size = np.prod([arr.shape[idx] for idx in red_axis])
+        # kept dimensions
+        keep_axis = np.arange(len(arr.shape) - nreduce)
+        final_shape = [arr.shape[idx] for idx in keep_axis] + [len(q)]
+        # reshape as (keep_dims, red_dims), compute, reshape back
+        arr = arr.reshape(-1, reduction_dim_size)
+        out = _wrapper_quantile1d(arr, q, allow_sortquantile)
+        out = out.reshape(final_shape)
+    return out
+
+
+def quantile(da, q, dim):
+    """Compute the quantiles from a fixed list `q`."""
+    allow_sortquantile = OPTIONS[ALLOW_SORTQUANTILE]
     qc = np.array(q, dtype=da.dtype)
     dims = [dim] if isinstance(dim, str) else dim
-    if len(da.dims) > len(dims):
-        extra = utils.get_temp_dimname(da.dims, "extra")
-        da = da.stack({extra: set(da.dims) - set(dims)})
-        da = da.transpose(extra, ...)
-        res = DataArray(
-            _quantile(da.values, qc, allow_sortquantile),
-            dims=(extra, "quantiles"),
-            coords={extra: da[extra], "quantiles": q},
-            attrs=da.attrs,
-        ).unstack(extra)
-
-    else:
-        # All dims are processed
-        res = DataArray(
-            _quantile(da.values.flatten(), qc, allow_sortquantile),
-            dims=("quantiles"),
-            coords={"quantiles": q},
-            attrs=da.attrs,
+    kwargs = dict(nreduce=len(dims), q=qc, allow_sortquantile=allow_sortquantile)
+    res = (
+        apply_ufunc(
+            _quantile,
+            da,
+            input_core_dims=[dims],
+            exclude_dims=set(dims),
+            output_core_dims=[["quantiles"]],
+            output_dtypes=[da.dtype],
+            dask_gufunc_kwargs=dict(output_sizes={"quantiles": len(q)}),
+            dask="parallelized",
+            kwargs=kwargs,
         )
-
+        .assign_coords(quantiles=q)
+        .assign_attrs(da.attrs)
+    )
     return res
 
 
