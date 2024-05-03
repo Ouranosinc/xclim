@@ -2,6 +2,15 @@
 Changelog
 =========
 
+v0.50.0
+--------------------
+Contributors to this version: Éric Dupuis (:user:`coxipi`).
+
+New features and enhancements
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+* Great speed improvement in `sdba` quantile mappings training functions (e.g. ``sdba.DetrendedQuantileMapping.train``) due to using ``fastnanquantile`` as a backend.
+
+
 v0.49.0 (2024-05-02)
 --------------------
 Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), Juliette Lavoie (:user:`juliettelavoie`), David Huard (:user:`huard`), Gabriel Rondeau-Genesse (:user:`RondeauG`), Javier Diez-Sierra (:user:`JavierDiezSierra`), Sarah Gammon (:user:`SarahG-579462`), Éric Dupuis (:user:`coxipi`).

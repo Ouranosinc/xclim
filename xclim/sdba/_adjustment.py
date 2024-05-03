@@ -9,11 +9,11 @@ from __future__ import annotations
 
 import numpy as np
 import xarray as xr
+from fastnanquantile.xrcompat import xr_apply_nanquantile
 
 from xclim.core.units import convert_units_to, infer_context, units
 from xclim.indices.stats import _fitfunc_1d  # noqa
 
-from . import nbutils as nbu
 from . import utils as u
 from ._processing import _adapt_freq
 from .base import Grouper, map_blocks, map_groups
@@ -76,8 +76,12 @@ def dqm_train(
     refn = u.apply_correction(ds.ref, u.invert(ds.ref.mean(dim), kind), kind)
     histn = u.apply_correction(hist, u.invert(hist.mean(dim), kind), kind)
 
-    ref_q = nbu.quantile(refn, quantiles, dim)
-    hist_q = nbu.quantile(histn, quantiles, dim)
+    ref_q = xr_apply_nanquantile(refn, dim=dim, q=quantiles).rename(
+        {"quantile": "quantiles"}
+    )
+    hist_q = xr_apply_nanquantile(histn, dim=dim, q=quantiles).rename(
+        {"quantile": "quantiles"}
+    )
 
     af = u.get_correction(hist_q, ref_q, kind)
     mu_ref = ds.ref.mean(dim)
@@ -127,8 +131,13 @@ def eqm_train(
         The dataset containing the adjustment factors and the quantiles over the training data.
     """
     hist = _adapt_freq_hist(ds, adapt_freq_thresh) if adapt_freq_thresh else ds.hist
-    ref_q = nbu.quantile(ds.ref, quantiles, dim)
-    hist_q = nbu.quantile(hist, quantiles, dim)
+
+    ref_q = xr_apply_nanquantile(ds.ref, dim=dim, q=quantiles).rename(
+        {"quantile": "quantiles"}
+    )
+    hist_q = xr_apply_nanquantile(hist, dim=dim, q=quantiles).rename(
+        {"quantile": "quantiles"}
+    )
 
     af = u.get_correction(hist_q, ref_q, kind)
 
