@@ -12,7 +12,6 @@ dependencies:
   - cftime >=1.4.1
   - Click >=8.1
   - dask >=2.6.0
-  - fastnanquantile
   - jsonpickle
   - numba
   - numpy >=1.20.0
@@ -81,5 +80,6 @@ dependencies:
   - yamllint
   - pip
   - pip:
+    - fastnanquantile
     - flake8-alphabetize
     - sphinxcontrib-svg2pdfconverter
