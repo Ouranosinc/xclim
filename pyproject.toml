@@ -1,5 +1,5 @@
 [build-system]
-requires = ["flit_core >=3.8,<4"]
+requires = ["flit_core >=3.9,<4"]
 build-backend = "flit_core.buildapi"
 
 [project]
@@ -60,7 +60,7 @@ dev = [
   "bump-my-version >=0.17.1",
   "codespell",
   "coverage[toml]",
-  "flake8",
+  "flake8 >=7.0.0",
   "flake8-alphabetize",
   "flake8-rst-docstrings",
   "h5netcdf",
@@ -71,11 +71,11 @@ dev = [
   "nbqa",
   "nbval",
   "netCDF4 >=1.4",
-  "pandas-stubs>=2.2",
+  "pandas-stubs >=2.2",
   "platformdirs >=3.2",
-  "pre-commit >=2.9",
+  "pre-commit >=3.7",
   "pybtex",
-  "pylint",
+  "pylint >=3.1",
   "pytest <8.0", # Pinned due to breakage with xdoctest. See: https://github.com/Erotemic/xdoctest/issues/151
   "pytest-cov",
   "pytest-socket",
