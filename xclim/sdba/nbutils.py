@@ -15,7 +15,7 @@ from xarray.core import utils
 from xclim.core.options import ALLOW_SORTQUANTILE, OPTIONS
 
 try:
-    from fastnanquantie.xrcompat import xr_apply_nanquantile
+    from fastnanquantile.xrcompat import xr_apply_nanquantile
 
     USE_FASTNANQUANTILE = True
 except ImportError:
