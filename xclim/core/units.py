@@ -11,14 +11,9 @@ from __future__ import annotations
 import logging
 import warnings
 from copy import deepcopy
-
-try:
-    from importlib.resources import files
-except ImportError:
-    from importlib_resources import files
-
+from importlib.resources import files
 from inspect import _empty, signature  # noqa
-from typing import Any, Callable
+from typing import Any, Callable, Literal, cast
 
 import cf_xarray.units
 import numpy as np
@@ -103,6 +98,8 @@ with (files("xclim.data") / "variables.yml").open() as f:
 _CONVERSIONS = {}
 
 
+# FIXME: This needs to be properly annotated for mypy compliance.
+# See: https://mypy.readthedocs.io/en/stable/generics.html#declaring-decorators
 def _register_conversion(conversion, direction):
     """Register a conversion function to be automatically picked up in `convert_units_to`.
 
@@ -114,7 +111,7 @@ def _register_conversion(conversion, direction):
             "Automatic conversion functions must have a corresponding section in xclim/data/variables.yml"
         )
 
-    def _func_register(func):
+    def _func_register(func: Callable) -> Callable:
         _CONVERSIONS[(conversion, direction)] = func
         return func
 
@@ -143,7 +140,8 @@ def units2pint(value: xr.DataArray | str | units.Quantity) -> pint.Unit:
     elif isinstance(value, xr.DataArray):
         unit = value.attrs["units"]
     elif isinstance(value, units.Quantity):
-        return value.units
+        # This is a pint.PlainUnit, which is not the same as a pint.Unit
+        return cast(pint.Unit, value.units)
     else:
         raise NotImplementedError(f"Value of type `{type(value)}` not supported.")
 
@@ -224,8 +222,8 @@ def pint_multiply(
         f = f.to(out_units)
     else:
         f = f.to_reduced_units()
-    out = da * f.magnitude
-    out.attrs["units"] = pint2cfunits(f.units)
+    out: xr.DataArray = da * f.magnitude
+    out = out.assign_attrs(units=pint2cfunits(f.units))
     return out
 
 
@@ -252,11 +250,12 @@ def str2pint(val: str) -> pint.Quantity:
         return units.Quantity(1, units2pint(val))
 
 
+# FIXME: The typing here is difficult to determine, as Generics cannot be used to track the type of the output.
 def convert_units_to(  # noqa: C901
     source: Quantified,
     target: Quantified | units.Unit,
-    context: str | None = None,
-) -> Quantified:
+    context: Literal["infer", "hydro", "none"] | None = None,
+) -> xr.DataArray | float:
     """Convert a mathematical expression into a value with the same units as a DataArray.
 
     If the dimensionalities of source and target units differ, automatic CF conversions
@@ -268,15 +267,15 @@ def convert_units_to(  # noqa: C901
         The value to be converted, e.g. '4C' or '1 mm/d'.
     target : str or xr.DataArray or units.Quantity or units.Unit
         Target array of values to which units must conform.
-    context : str, optional
+    context : {"infer", "hydro", "none"}, optional
         The unit definition context. Default: None.
         If "infer", it will be inferred with :py:func:`xclim.core.units.infer_context` using
         the standard name from the `source` or, if none is found, from the `target`.
-        This means that the 'hydro' context could be activated if any one of the standard names allows it.
+        This means that the "hydro" context could be activated if any one of the standard names allows it.
 
     Returns
     -------
-    str or xr.DataArray or units.Quantity
+    xr.DataArray or float
         The source value converted to target's units.
         The outputted type is always similar to `source` initial type.
         Attributes are preserved unless an automatic CF conversion is performed,
@@ -314,13 +313,15 @@ def convert_units_to(  # noqa: C901
         else:
             context = "none"
 
+    m: float
     if isinstance(source, str):
         q = str2pint(source)
         # Return magnitude of converted quantity. This is going to fail if units are not compatible.
-        return q.to(target_unit, context).m
-
+        m = q.to(target_unit, context).m
+        return m
     if isinstance(source, units.Quantity):
-        return source.to(target_unit, context).m
+        m = source.to(target_unit, context).m
+        return m
 
     if isinstance(source, xr.DataArray):
         source_unit = units2pint(source)
@@ -356,14 +357,15 @@ def convert_units_to(  # noqa: C901
                         else:
                             source_unit = units2pint(source)
 
+        out: xr.DataArray
         if source_unit == target_unit:
             # The units are the same, but the symbol may not be.
-            source.attrs["units"] = target_cf_unit
-            return source
+            out = source.assign_attrs(units=target_cf_unit)
+            return out
 
         with units.context(context or "none"):
             out = source.copy(data=units.convert(source.data, source_unit, target_unit))
-            out.attrs["units"] = target_cf_unit
+            out = out.assign_attrs(units=target_cf_unit)
             return out
 
     # TODO remove backwards compatibility of int/float thresholds after v1.0 release
@@ -373,7 +375,9 @@ def convert_units_to(  # noqa: C901
     raise NotImplementedError(f"Source of type `{type(source)}` is not supported.")
 
 
-def cf_conversion(standard_name: str, conversion: str, direction: str) -> str | None:
+def cf_conversion(
+    standard_name: str, conversion: str, direction: Literal["to", "from"]
+) -> str | None:
     """Get the standard name of the specific conversion for the given standard name.
 
     Parameters
@@ -397,7 +401,8 @@ def cf_conversion(standard_name: str, conversion: str, direction: str) -> str | 
     i = ["to", "from"].index(direction)
     for names in CF_CONVERSIONS[conversion]["valid_names"]:
         if names[i] == standard_name:
-            return names[int(not i)]
+            cf_name: str = names[int(not i)]
+            return cf_name
     return None
 
 
@@ -567,7 +572,7 @@ def _rate_and_amount_converter(
     """Internal converter for :py:func:`xclim.core.units.rate2amount` and :py:func:`xclim.core.units.amount2rate`."""
     m = 1
     u = None  # Default to assume a non-uniform axis
-    label = "lower"
+    label: Literal["lower", "upper"] = "lower"  # Default to "lower" label for diff
     time = da[dim]
 
     try:
@@ -603,6 +608,7 @@ def _rate_and_amount_converter(
         else:
             m, u = multi, FREQ_UNITS[base]
 
+    out: xr.DataArray
     # Freq is month, season or year, which are not constant units, or simply freq is not inferrable.
     if u is None:
         # Get sampling period lengths in nanoseconds
@@ -641,10 +647,10 @@ def _rate_and_amount_converter(
             old_name, "amount2rate", "to" if to == "rate" else "from"
         )
     ):
-        out.attrs["standard_name"] = new_name
+        out = out.assign_attrs(standard_name=new_name)
 
     if out_units:
-        out = convert_units_to(out, out_units)
+        out = cast(xr.DataArray, convert_units_to(out, out_units))
 
     return out
 
@@ -815,7 +821,7 @@ def amount2lwethickness(
     if old_name and (new_name := cf_conversion(old_name, "amount2lwethickness", "to")):
         out.attrs["standard_name"] = new_name
     if out_units:
-        out = convert_units_to(out, out_units)
+        out = cast(xr.DataArray, convert_units_to(out, out_units))
     return out
 
 
@@ -853,13 +859,13 @@ def lwethickness2amount(
     ):
         out.attrs["standard_name"] = new_name
     if out_units:
-        out = convert_units_to(out, out_units)
+        out = cast(xr.DataArray, convert_units_to(out, out_units))
     return out
 
 
 def _flux_and_rate_converter(
     da: xr.DataArray,
-    density: Quantified | str,
+    density: Quantified,
     to: str = "rate",
     out_units: str | None = None,
 ) -> xr.DataArray:
@@ -874,9 +880,11 @@ def _flux_and_rate_converter(
         raise ValueError("Argument `to` must be one of 'rate' or 'flux'.")
 
     in_u = units2pint(da)
-    density_u = (
-        str2pint(density).units if isinstance(density, str) else units2pint(density)
-    )
+    if isinstance(density, str):
+        density_u = str2pint(density).units
+    else:
+        density_u = units2pint(density)
+
     if out_units:
         out_u = str2pint(out_units).units
 
@@ -891,9 +899,9 @@ def _flux_and_rate_converter(
     else:
         out_u = in_u * density_u**density_exp
 
-    density = convert_units_to(density, (out_u / in_u) ** density_exp)
-    out = (da * density**density_exp).assign_attrs(da.attrs)
-    out.attrs["units"] = pint2cfunits(out_u)
+    density_conv = convert_units_to(density, (out_u / in_u) ** density_exp)
+    out: xr.DataArray = (da * density_conv**density_exp).assign_attrs(da.attrs)
+    out = out.assign_attrs(units=pint2cfunits(out_u))
     if "standard_name" in out.attrs.keys():
         out.attrs.pop("standard_name")
     return out
@@ -1003,7 +1011,9 @@ def flux2rate(
 
 
 @datacheck
-def check_units(val: str | xr.DataArray | None, dim: str | xr.DataArray | None) -> None:
+def check_units(
+    val: str | xr.DataArray | None, dim: str | xr.DataArray | None = None
+) -> None:
     """Check that units are compatible with dimensions, otherwise raise a `ValidationError`.
 
     Parameters
@@ -1016,10 +1026,17 @@ def check_units(val: str | xr.DataArray | None, dim: str | xr.DataArray | None) 
     if dim is None or val is None:
         return
 
+    if isinstance(dim, xr.DataArray):
+        _dim = str(dim.dims[0])
+    else:
+        _dim = dim
+
     # In case val is a DataArray, we try to get a standard_name
-    context = infer_context(
-        standard_name=getattr(val, "standard_name", None), dimension=dim
-    )
+    if hasattr(val, "attrs"):
+        standard_name = val.attrs.get("standard_name", None)
+    else:
+        standard_name = None
+    context = infer_context(standard_name=standard_name, dimension=_dim)
 
     # Issue originally introduced in https://github.com/hgrecco/pint/issues/1486
     # Should be resolved in pint v0.24. See: https://github.com/hgrecco/pint/issues/1913
@@ -1037,13 +1054,21 @@ def check_units(val: str | xr.DataArray | None, dim: str | xr.DataArray | None) 
         raise TypeError("Please set units explicitly using a string.")
 
     try:
-        dim_units = str2pint(dim) if isinstance(dim, str) else units2pint(dim)
+        dim_units: pint.Unit | pint.Quantity
+        if isinstance(dim, str):
+            dim_units = str2pint(dim)
+        else:
+            dim_units = units2pint(dim)
         expected = dim_units.dimensionality
     except pint.UndefinedUnitError:
         # Raised when it is not understood, we assume it was a dimensionality
         expected = units.get_dimensionality(dim.replace("dimensionless", ""))
 
-    val_units = str2pint(val) if isinstance(val, str) else units2pint(val)
+    val_units: pint.Unit | pint.Quantity
+    if isinstance(val, str):
+        val_units = str2pint(val)
+    else:
+        val_units = units2pint(val)
     val_dim = val_units.dimensionality
 
     if val_dim == expected:
@@ -1080,6 +1105,8 @@ def _check_output_has_units(out: xr.DataArray | tuple[xr.DataArray]) -> None:
         outd.attrs["units"] = ensure_cf_units(outd.attrs["units"])
 
 
+# FIXME: This needs to be properly annotated for mypy compliance.
+# See: https://mypy.readthedocs.io/en/stable/generics.html#declaring-decorators
 def declare_relative_units(**units_by_name) -> Callable:
     r"""Function decorator checking the units of arguments.
 
@@ -1193,6 +1220,8 @@ def declare_relative_units(**units_by_name) -> Callable:
     return dec
 
 
+# FIXME: This needs to be properly annotated for mypy compliance.
+# See: https://mypy.readthedocs.io/en/stable/generics.html#declaring-decorators
 def declare_units(**units_by_name) -> Callable:
     r"""Create a decorator to check units of function arguments.
 
@@ -1294,7 +1323,9 @@ def ensure_delta(unit: str) -> str:
     return delta_unit
 
 
-def infer_context(standard_name: str | None = None, dimension: str | None = None):
+def infer_context(
+    standard_name: str | None = None, dimension: str | None = None
+) -> str:
     """Return units context based on either the variable's standard name or the pint dimension.
 
     Valid standard names for the hydro context are those including the terms "rainfall",

@@ -80,7 +80,7 @@ def file_md5_checksum(f_name):
 
 
 def get_file(
-    name: str | os.PathLike | Sequence[str | os.PathLike],
+    name: str | os.PathLike[str] | Sequence[str | os.PathLike[str]],
     github_url: str = "https://github.com/Ouranosinc/xclim-testdata",
     branch: str = "main",
     cache_dir: Path = _default_cache_dir,
@@ -91,7 +91,7 @@ def get_file(
 
     Parameters
     ----------
-    name : str | os.PathLike | Sequence[str | os.PathLike]
+    name : str | os.PathLike[str] | Sequence[str | os.PathLike[str]]
         Name of the file or list/tuple of names of files containing the dataset(s) including suffixes.
     github_url : str
         URL to GitHub repository where the data is stored.
@@ -104,10 +104,10 @@ def get_file(
     -------
     Path | list[Path]
     """
-    if isinstance(name, (str, Path)):
+    if isinstance(name, (str, os.PathLike)):
         name = [name]
 
-    files = list()
+    files = []
     for n in name:
         fullname = Path(n)
         suffix = fullname.suffix
@@ -291,7 +291,7 @@ def _get(
 
 # idea copied from raven that it borrowed from xclim that borrowed it from xarray that was borrowed from Seaborn
 def open_dataset(
-    name: str | os.PathLike,
+    name: str | os.PathLike[str],
     suffix: str | None = None,
     dap_url: str | None = None,
     github_url: str = "https://github.com/Ouranosinc/xclim-testdata",
@@ -331,7 +331,7 @@ def open_dataset(
     --------
     xarray.open_dataset
     """
-    if isinstance(name, str):
+    if isinstance(name, (str, os.PathLike)):
         name = Path(name)
     if suffix is None:
         suffix = ".nc"
@@ -538,13 +538,14 @@ def publish_release_notes(
     if isinstance(file, (Path, os.PathLike)):
         with Path(file).open("w") as f:
             print(changes, file=f)
-        return
-    print(changes, file=file)
+    else:
+        print(changes, file=file)
+    return None
 
 
 def show_versions(
     file: os.PathLike | StringIO | TextIO | None = None,
-    deps: list | None = None,
+    deps: list[str] | None = None,
 ) -> str | None:
     """Print the versions of xclim and its dependencies.
 
@@ -552,19 +553,22 @@ def show_versions(
     ----------
     file : {os.PathLike, StringIO, TextIO}, optional
         If provided, prints to the given file-like object. Otherwise, returns a string.
-    deps : list, optional
+    deps : list of str, optional
         A list of dependencies to gather and print version information from. Otherwise, prints `xclim` dependencies.
 
     Returns
     -------
     str or None
     """
+    dependencies: list[str]
     if deps is None:
-        deps = _xclim_deps
+        dependencies = _xclim_deps
+    else:
+        dependencies = deps
 
-    dependency_versions = [(d, lambda mod: mod.__version__) for d in deps]
+    dependency_versions = [(d, lambda mod: mod.__version__) for d in dependencies]
 
-    deps_blob = []
+    deps_blob: list[tuple[str, str | None]] = []
     for modname, ver_f in dependency_versions:
         try:
             if modname in sys.modules:
@@ -597,5 +601,6 @@ def show_versions(
     if isinstance(file, (Path, os.PathLike)):
         with Path(file).open("w") as f:
             print(message, file=f)
-        return
-    print(message, file=file)
+    else:
+        print(message, file=file)
+    return None

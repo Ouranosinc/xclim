@@ -5,6 +5,8 @@ Numba-accelerated Utilities
 """
 from __future__ import annotations
 
+from collections.abc import Hashable, Sequence
+
 import numpy as np
 from numba import boolean, float32, float64, guvectorize, int64, njit
 from xarray import DataArray, apply_ufunc
@@ -104,7 +106,9 @@ def _vecquantiles(arr, rnk, res):
         res[0] = np.nanquantile(arr, rnk)
 
 
-def vecquantiles(da: DataArray, rnk: DataArray, dim: str | DataArray.dims) -> DataArray:
+def vecquantiles(
+    da: DataArray, rnk: DataArray, dim: str | Sequence[Hashable]
+) -> DataArray:
     """For when the quantile (rnk) is different for each point.
 
     da and rnk must share all dimensions but dim.
