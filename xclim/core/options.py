@@ -38,7 +38,7 @@ OPTIONS = {
     RUN_LENGTH_UFUNC: "auto",
     SDBA_EXTRA_OUTPUT: False,
     SDBA_ENCODE_CF: False,
-    ALLOW_SORTQUANTILE: False,
+    ALLOW_SORTQUANTILE: True,
     KEEP_ATTRS: "xarray",
     AS_DATASET: False,
 }

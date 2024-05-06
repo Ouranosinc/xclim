@@ -12,6 +12,13 @@ from xarray.core import utils
 
 from xclim.core.options import ALLOW_SORTQUANTILE, OPTIONS
 
+try:
+    from fastnanquantie.xrcompat import xr_apply_nanquantile
+
+    USE_FASTNANQUANTILE = True
+except ImportError:
+    USE_FASTNANQUANTILE = False
+
 
 @njit(
     [
@@ -101,6 +108,20 @@ def vecquantiles(da: DataArray, rnk: DataArray, dim: str | DataArray.dims) -> Da
     """For when the quantile (rnk) is different for each point.
 
     da and rnk must share all dimensions but dim.
+
+    Parameters
+    ----------
+    da : xarray.DataArray
+        The data to compute the quantiles on.
+    rnk : xarray.DataArray
+        The quantiles to compute.
+    dim : str or sequence of str
+        The dimension along which to compute the quantiles.
+
+    Returns
+    -------
+    xarray.DataArray
+        The quantiles computed along the `dim` dimension.
     """
     tem = utils.get_temp_dimname(da.dims, "temporal")
     dims = [dim] if isinstance(dim, str) else dim
@@ -143,26 +164,29 @@ def _quantile(arr, q, nreduce, allow_sortquantile=OPTIONS[ALLOW_SORTQUANTILE]):
 
 def quantile(da, q, dim):
     """Compute the quantiles from a fixed list `q`."""
-    allow_sortquantile = OPTIONS[ALLOW_SORTQUANTILE]
-    qc = np.array(q, dtype=da.dtype)
-    dims = [dim] if isinstance(dim, str) else dim
-    kwargs = dict(nreduce=len(dims), q=qc, allow_sortquantile=allow_sortquantile)
-    res = (
-        apply_ufunc(
-            _quantile,
-            da,
-            input_core_dims=[dims],
-            exclude_dims=set(dims),
-            output_core_dims=[["quantiles"]],
-            output_dtypes=[da.dtype],
-            dask_gufunc_kwargs=dict(output_sizes={"quantiles": len(q)}),
-            dask="parallelized",
-            kwargs=kwargs,
+    if USE_FASTNANQUANTILE is True:
+        return xr_apply_nanquantile(da, dim=dim, q=q).rename({"quantile": "quantiles"})
+    else:
+        allow_sortquantile = OPTIONS[ALLOW_SORTQUANTILE]
+        qc = np.array(q, dtype=da.dtype)
+        dims = [dim] if isinstance(dim, str) else dim
+        kwargs = dict(nreduce=len(dims), q=qc, allow_sortquantile=allow_sortquantile)
+        res = (
+            apply_ufunc(
+                _quantile,
+                da,
+                input_core_dims=[dims],
+                exclude_dims=set(dims),
+                output_core_dims=[["quantiles"]],
+                output_dtypes=[da.dtype],
+                dask_gufunc_kwargs=dict(output_sizes={"quantiles": len(q)}),
+                dask="parallelized",
+                kwargs=kwargs,
+            )
+            .assign_coords(quantiles=q)
+            .assign_attrs(da.attrs)
         )
-        .assign_coords(quantiles=q)
-        .assign_attrs(da.attrs)
-    )
-    return res
+        return res
 
 
 @njit(
