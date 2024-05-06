@@ -60,6 +60,7 @@ dev = [
   "bump-my-version >=0.17.1",
   "codespell",
   "coverage[toml]",
+  "coveralls >=4.0.0",
   "flake8 >=7.0.0",
   "flake8-alphabetize",
   "flake8-rst-docstrings",

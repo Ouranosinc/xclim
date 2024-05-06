@@ -35,6 +35,7 @@ dependencies:
   - cairosvg
   - codespell
   - coverage
+  - coveralls >=4.0.0
   - distributed >=2.0
   - filelock
   - flake8
