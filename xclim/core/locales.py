@@ -6,8 +6,8 @@ This module defines methods and object to help the internationalization of metad
 climate indicators computed by xclim. Go to :ref:`notebooks/customize:Adding translated metadata` to see
 how to use this feature.
 
-All the methods and objects in this module use localization data given in json files.
-These files are expected to be defined as in this example for french:
+All the methods and objects in this module use localization data given in JSON files.
+These files are expected to be defined as in this example for French:
 
 .. code-block::
 
@@ -34,21 +34,22 @@ but which can differ from the callable name. In this case, the indicator is call
 Use the `ind.__class__.__name__` accessor to get its registry name.
 
 Here, the usual parameter passed to the formatting of "description" is "freq" and is usually translated from "YS"
-to "annual". However, in french and in this sentence, the feminine form should be used, so the "f" modifier is added
+to "annual". However, in French and in this sentence, the feminine form should be used, so the "f" modifier is added
 by the translator so that the formatting function knows which translation to use. Acceptable entries for the mappings
 are limited to what is already defined in `xclim.core.indicators.utils.default_formatter`.
 
 For user-provided internationalization dictionaries, only the "attrs_mapping" and its "modifiers" key are mandatory,
 all other entries (translations of frequent parameters and all indicator entries) are optional.
 For xclim-provided translations (for now only French), all indicators must have en entry and the "attrs_mapping"
-entries must match exactly the default formatter. Those default translations are found in the `xclim/locales` folder.
+entries must match exactly the default formatter.
+Those default translations are found in the `xclim/locales` folder.
 """
 
 from __future__ import annotations
 
 import json
 import warnings
-from collections.abc import Mapping, Sequence
+from collections.abc import Sequence
 from copy import deepcopy
 from pathlib import Path
 
@@ -186,7 +187,8 @@ def get_local_attrs(
             local_attrs.update(loc_dict.get(other_ind, {}))
         if not local_attrs:
             warnings.warn(
-                f"Attributes of indicator {', '.join(indicator)} in language {locale} were requested, but none were found."
+                f"Attributes of indicator {', '.join(indicator)} in language {locale} "
+                "were requested, but none were found."
             )
         else:
             for name in TRANSLATABLE_ATTRS:
@@ -229,7 +231,7 @@ class UnavailableLocaleError(ValueError):
 
 def read_locale_file(
     filename, module: str | None = None, encoding: str = "UTF8"
-) -> dict:
+) -> dict[str, dict]:
     """Read a locale file (.json) and return its dictionary.
 
     Parameters
@@ -243,6 +245,7 @@ def read_locale_file(
         The encoding to use when reading the file.
         Defaults to UTF-8, overriding python's default mechanism which is machine dependent.
     """
+    locdict: dict[str, dict]
     with open(filename, encoding=encoding) as f:
         locdict = json.load(f)
 
@@ -254,12 +257,12 @@ def read_locale_file(
     return locdict
 
 
-def load_locale(locdata: str | Path | Mapping[str, dict], locale: str):
+def load_locale(locdata: str | Path | dict[str, dict], locale: str):
     """Load translations from a json file into xclim.
 
     Parameters
     ----------
-    locdata : str or dictionary
+    locdata : str or Path or dictionary
         Either a loaded locale dictionary or a path to a json file.
     locale : str
         The locale name (IETF tag).

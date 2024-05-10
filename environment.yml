@@ -29,17 +29,19 @@ dependencies:
   - flox
   - lmoments3  # Required for some Jupyter notebooks
   # Testing and development dependencies
-  - black ==24.1.1
+  - black ==24.4.1
   - blackdoc ==0.3.9
   - bump-my-version >=0.17.1
   - cairosvg
   - codespell
   - coverage
+  - coveralls >=4.0.0
   - distributed >=2.0
   - filelock
   - flake8
   - flake8-rst-docstrings
-  - flit
+  - flit >=3.9.0
+  - furo >=2023.9.10
   - h5netcdf
   - ipykernel
   - ipython
@@ -53,26 +55,28 @@ dependencies:
   - nc-time-axis
   - netCDF4 >=1.4
   - notebook
+  - pandas-stubs
   - platformdirs
   - pooch
-  - pre-commit
+  - pre-commit >=3.7
   - pybtex
-  - pylint
-  - pytest >=7.0,!=8.0.0
+  - pylint >=3.1
+  - pytest >=7.0,!=8.0.0  # Pinned due to breakage with xdoctest. See: https://github.com/Erotemic/xdoctest/issues/151
   - pytest-cov
   - pytest-socket
   - pytest-xdist >=3.2
-  - ruff >=0.2.0
+  - ruff >=0.3.0
   - sphinx
+  - sphinx-autobuild >=2024.4.16
   - sphinx-autodoc-typehints
   - sphinx-codeautolink
   - sphinx-copybutton
   - sphinx-mdinclude
-  - sphinx-rtd-theme >=1.0
   - sphinxcontrib-bibtex
   - tokenize-rt
-  - tox >=4.0
+  - tox >=4.15.0
 #  - tox-conda  # Will be added when a tox@v4.0+ compatible plugin is released.
+  - vulture # ==2.11  # The conda-forge version is out of date.
   - xdoctest >=1.1.3
   - yamllint
   - pip

@@ -456,6 +456,8 @@ class TestAgroclimaticIndices:
 
         np.testing.assert_array_equal(out, np.array([np.NaN, expected]))
 
+
+class TestStandardizedIndices:
     # gamma/APP reference results: Obtained with `monocongo/climate_indices` library
     # MS/fisk/ML reference results: Obtained with R package `SPEI`
     # Using the method `APP` in XClim matches the method from monocongo, hence the very low
@@ -482,18 +484,15 @@ class TestAgroclimaticIndices:
                 [0.598209, 1.55976, 1.69309, 0.9964, 0.7028],
                 2e-2,
             ),
-            ("MS", 1, "gamma", "ML", [1.3166, 1.4507, 1.9461, -3.09, 0.85068], 0.2),
-            ("MS", 1, "gamma", "ML", [1.4586, 1.6028, 2.0668, -3.09, 0.84841], 2e-2),
-            ("MS", 12, "gamma", "ML", [0.59821, 1.5598, 1.6931, 0.9964, 0.7028], 0.04),
             (
                 "MS",
-                12,
+                1,
                 "gamma",
                 "ML",
-                [0.62578, 1.5417, 1.7164, 0.99776, 0.69889],
-                2e-2,
+                [1.460105, 1.602951, 2.072521, -3.09, 0.891468],
+                0.04,
             ),
-            ("MS", 1, "fisk", "ML", [1.7296, 1.5135, 2.0072, -2.7331, 0.89206], 0.35),
+            ("MS", 12, "gamma", "ML", [0.59821, 1.5598, 1.6931, 0.9964, 0.7028], 0.04),
             (
                 "MS",
                 1,
@@ -501,14 +500,6 @@ class TestAgroclimaticIndices:
                 "ML",
                 [1.41236, 1.51192, 1.93324, -2.74089, 0.932674],
                 2e-2,
-            ),
-            (
-                "MS",
-                12,
-                "fisk",
-                "ML",
-                [0.683273, 1.51189, 1.61597, 1.03875, 0.72531],
-                0.035,
             ),
             (
                 "MS",
@@ -539,7 +530,7 @@ class TestAgroclimaticIndices:
                 1,
                 "gamma",
                 "ML",
-                [-0.03577971, 1.30589409, 0.8863447, 0.23906544, -0.05185997],
+                [-0.011698, 1.597031, 0.969714, 0.265561, -0.132654],
                 2e-2,
             ),
             (
@@ -547,23 +538,7 @@ class TestAgroclimaticIndices:
                 12,
                 "gamma",
                 "ML",
-                [-0.15846245, -0.04924534, 0.66299367, 1.09938471, 0.66095752],
-                2e-2,
-            ),
-            (
-                "D",
-                1,
-                "fisk",
-                "APP",
-                [-1.26216389, 1.03096183, 0.62985354, -0.50335153, -1.32788296],
-                2e-2,
-            ),
-            (
-                "D",
-                12,
-                "fisk",
-                "APP",
-                [-0.57109258, -0.40657737, 0.55163493, 0.97381067, 0.55580649],
+                [-0.158116, -0.049222, 0.672544, 1.08332, 0.660903],
                 2e-2,
             ),
             (
@@ -571,7 +546,7 @@ class TestAgroclimaticIndices:
                 1,
                 "fisk",
                 "ML",
-                [-0.05562691, 1.30809152, 0.6954986, 0.33018744, -0.50258979],
+                [-0.158949, 1.308225, 0.449846, 0.146699, -0.502737],
                 2e-2,
             ),
             (
@@ -580,6 +555,22 @@ class TestAgroclimaticIndices:
                 "fisk",
                 "ML",
                 [-0.14151269, -0.01914608, 0.7080277, 1.01510279, 0.6954002],
+                2e-2,
+            ),
+            (
+                "D",
+                1,
+                "fisk",
+                "APP",
+                [-0.417288, 1.275686, 1.002566, 0.206854, -0.672117],
+                2e-2,
+            ),
+            (
+                "D",
+                12,
+                "fisk",
+                "APP",
+                [-0.220136, -0.065782, 0.783319, 1.134428, 0.782857],
                 2e-2,
             ),
             (
@@ -610,8 +601,17 @@ class TestAgroclimaticIndices:
             )  # to compare with ``climate_indices``
         pr = ds.pr.sel(time=slice("1998", "2000"))
         pr_cal = ds.pr.sel(time=slice("1950", "1980"))
+        fitkwargs = {}
+        if method == "APP":
+            fitkwargs["floc"] = 0
         params = xci.stats.standardized_index_fit_params(
-            pr_cal, freq=freq, window=window, dist=dist, method=method
+            pr_cal,
+            freq=freq,
+            window=window,
+            dist=dist,
+            method=method,
+            fitkwargs=fitkwargs,
+            zero_inflated=True,
         )
         spi = xci.standardized_precipitation_index(pr, params=params)
         # Only a few moments before year 2000 are tested
@@ -650,7 +650,14 @@ class TestAgroclimaticIndices:
                 2e-2,
             ),
             ("MS", 1, "gamma", "ML", [1.38, 1.58, 2.1, -3.09, 0.868], 1e-1),
-            ("MS", 1, "gamma", "ML", [1.4631, 1.6053, 2.1625, -3.09, 0.87996], 2e-2),
+            (
+                "MS",
+                1,
+                "gamma",
+                "ML",
+                [1.467832, 1.605313, 2.137688, -3.09, 0.878549],
+                5e-2,
+            ),
             (
                 "MS",
                 12,
@@ -664,8 +671,8 @@ class TestAgroclimaticIndices:
                 12,
                 "gamma",
                 "ML",
-                [0.6511, 1.6146, 1.8580, 1.0140, 0.6878],
-                2e-2,
+                [0.651093, 1.614638, 1.83526, 1.014005, 0.69868],
+                5e-2,
             ),
             ("MS", 1, "fisk", "ML", [1.73, 1.51, 2.05, -3.09, 0.892], 3.5e-1),
             ("MS", 1, "fisk", "ML", [1.4167, 1.5117, 2.0562, -3.09, 0.9422], 2e-2),
@@ -680,6 +687,10 @@ class TestAgroclimaticIndices:
             ),
         ],
     )
+    # Eventually, this should also be compared to monocongo
+    # there are some issues where the data below can still have negative values
+    # after the ``climate_indices`` 1000.0 offset, so it's a problem with ``climate_indices``
+    # library. Address this in the future.
     def test_standardized_precipitation_evapotranspiration_index(
         self, open_dataset, freq, window, dist, method, values, diff_tol
     ):
@@ -695,14 +706,19 @@ class TestAgroclimaticIndices:
             tas = tasmax - 2.5
             tasmin = tasmax - 5
             wb = xci.water_budget(pr, None, tasmin, tasmax, tas)
-
+        if method == "APP":
+            offset = convert_units_to("1 mm/d", wb, context="hydro")
+            fitkwargs = {"floc": -offset}
+        else:
+            fitkwargs = {}
         params = xci.stats.standardized_index_fit_params(
             wb.sel(time=slice("1950", "1980")),
             freq=freq,
             window=window,
             dist=dist,
             method=method,
-            offset="1 mm/d",
+            fitkwargs=fitkwargs,
+            zero_inflated=False,
         )
         spei = xci.standardized_precipitation_evapotranspiration_index(
             wb.sel(time=slice("1998", "2000")), params=params
@@ -731,13 +747,16 @@ class TestAgroclimaticIndices:
             tasmin = tasmax - 5
             wb = xci.water_budget(pr, None, tasmin, tasmax, tas)
 
+        offset = convert_units_to("1 mm/d", wb, context="hydro")
+        fitkwargs = {"floc": -offset}
+
         params = xci.stats.standardized_index_fit_params(
             wb.sel(time=slice("1950", "1980")),
             freq=freq,
             window=window,
             dist=dist,
             method=method,
-            offset="1 mm/d",
+            fitkwargs=fitkwargs,
             month=[2, 3],
         )
         spei1 = xci.standardized_precipitation_evapotranspiration_index(
@@ -750,7 +769,7 @@ class TestAgroclimaticIndices:
             window=window,
             dist=dist,
             method=method,
-            offset="1 mm/d",
+            fitkwargs=fitkwargs,
             cal_start="1950",
             cal_end="1980",
             month=[2, 3],
@@ -762,6 +781,38 @@ class TestAgroclimaticIndices:
         spei2[{"time": slice(0, window - 1)}] = np.nan
 
         np.testing.assert_allclose(spei1.values, spei2.values, rtol=0, atol=1e-4)
+
+    def test_zero_inflated(self, open_dataset):
+        # This tests that the zero_inflated option makes a difference with zero inflated data
+        pr = (
+            open_dataset("sdba/CanESM2_1950-2100.nc")
+            .isel(location=1)
+            .sel(time=slice("1950", "1980"))
+        ).pr
+        # july 1st (doy=180) with 10 years with zero precipitation
+        pr[{"time": slice(179, 365 * 11, 365)}] = 0
+        spid = {}
+        input_params = dict(
+            freq=None,
+            window=1,
+            dist="gamma",
+            method="ML",
+            fitkwargs={},
+            doy_bounds=(180, 180),
+        )
+        for zero_inflated in [False, True]:
+            input_params["zero_inflated"] = zero_inflated
+            params = xci.stats.standardized_index_fit_params(pr, **input_params)
+            spid[zero_inflated] = xci.stats.standardized_index(
+                pr, params=params, cal_start=None, cal_end=None, **input_params
+            )
+            # drop doys other than 180 that will be NaNs
+            spid[zero_inflated] = spid[zero_inflated].where(
+                spid[zero_inflated].notnull(), drop=True
+            )
+        np.testing.assert_equal(
+            np.all(np.not_equal(spid[False].values, spid[True].values)), True
+        )
 
 
 class TestDailyFreezeThawCycles:

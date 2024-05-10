@@ -176,6 +176,20 @@ class TestEnsembleStats:
             ),
             out1["tg_mean_p90"].isel(time=0, lon=5, lat=5),
         )
+
+        # Specify method
+        np.testing.assert_array_almost_equal(
+            mquantiles(
+                ens["tg_mean"].isel(time=0, lon=5, lat=5),
+                alphap=0.5,
+                betap=0.5,
+                prob=0.90,
+            ),
+            ensembles.ensemble_percentiles(
+                ens.isel(time=0, lon=5, lat=5), values=[90], method="hazen"
+            ).tg_mean_p90,
+        )
+
         assert np.all(out1["tg_mean_p90"] > out1["tg_mean_p50"])
         assert np.all(out1["tg_mean_p50"] > out1["tg_mean_p10"])
 

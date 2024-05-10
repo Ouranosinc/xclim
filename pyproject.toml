@@ -1,5 +1,5 @@
 [build-system]
-requires = ["flit_core >=3.8,<4"]
+requires = ["flit_core >=3.9,<4"]
 build-backend = "flit_core.buildapi"
 
 [project]
@@ -55,12 +55,13 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
   # Dev tools and testing
-  "black ==24.4.2",
+  "black[jupyter] ==24.4.2",
   "blackdoc ==0.3.9",
   "bump-my-version >=0.17.1",
   "codespell",
   "coverage[toml]",
-  "flake8",
+  "coveralls >=4.0.0",
+  "flake8 >=7.0.0",
   "flake8-alphabetize",
   "flake8-rst-docstrings",
   "h5netcdf",
@@ -71,35 +72,37 @@ dev = [
   "nbqa",
   "nbval",
   "netCDF4 >=1.4",
+  "pandas-stubs >=2.2",
   "platformdirs >=3.2",
-  "pre-commit >=2.9",
+  "pre-commit >=3.7",
   "pybtex",
-  "pylint",
-  "pytest >=7.0.0,!=8.0.0",
+  "pylint >=3.1",
+  "pytest >=7.0.0,!=8.0.0",  # Pinned due to breakage with xdoctest. See: https://github.com/Erotemic/xdoctest/issues/151
   "pytest-cov",
   "pytest-socket",
   "pytest-xdist[psutil] >=3.2",
-  "ruff >=0.2.0",
+  "ruff >=0.3.0",
   "tokenize-rt",
-  "tox >=4.0",
+  "tox >=4.5",
   # "tox-conda",  # Will be added when a tox@v4.0+ compatible plugin is released.
   "tox-gh >=1.3.1",
-  "vulture",
+  "vulture ==2.11",
   "xdoctest >=1.1.3",
-  "yamllint",
+  "yamllint ==1.35.1",
   # Documentation and examples
   "distributed >=2.0",
+  "furo >=2023.9.10",
   "ipykernel",
   "matplotlib",
   "nbsphinx",
   "nc-time-axis",
   "pooch",
   "sphinx",
+  "sphinx-autobuild >=2024.4.16",
   "sphinx-autodoc-typehints",
   "sphinx-codeautolink",
   "sphinx-copybutton",
   "sphinx-mdinclude",
-  "sphinx-rtd-theme >=1.0",
   "sphinxcontrib-bibtex",
   "sphinxcontrib-svg2pdfconverter[Cairosvg]"
 ]
@@ -125,7 +128,7 @@ target-version = [
 ]
 
 [tool.bumpversion]
-current_version = "0.48.3-dev.14"
+current_version = "0.49.0"
 commit = true
 commit_args = "--no-verify"
 tag = false
@@ -153,7 +156,7 @@ values = [
 
 [tool.codespell]
 skip = 'xclim/data/*.json,docs/_build,docs/notebooks/xclim_training/*.ipynb,docs/references.bib,__pycache__,*.nc,*.png,*.gz,*.whl'
-ignore-words-list = "absolue,astroid,bloc,bui,callendar,degreee,environnement,hanel,inferrable,lond,nam,nd,ressources,vas"
+ignore-words-list = "absolue,astroid,bloc,bui,callendar,degreee,environnement,hanel,inferrable,lond,nam,nd,ressources,sie,vas"
 
 [tool.coverage.run]
 relative_files = true
@@ -207,24 +210,20 @@ python_version = 3.9
 show_error_codes = true
 warn_return_any = true
 warn_unused_configs = true
+plugins = ["numpy.typing.mypy_plugin"]
 
 [[tool.mypy.overrides]]
 module = [
   "boltons.*",
-  "bottleneck.*",
   "cftime.*",
-  "clisops.core.subset.*",
-  "dask.*",
-  "lmoments3.*",
-  "matplotlib.*",
+  "jsonpickle.*",
   "numba.*",
-  "numpy.*",
-  "pandas.*",
-  "pint.*",
+  "pytest_socket.*",
   "SBCK.*",
   "scipy.*",
-  "sklearn.cluster.*",
-  "xarray.*",
+  "sklearn.*",
+  "statsmodels.*",
+  "yamale.*",
   "yaml.*"
 ]
 ignore_missing_imports = true
@@ -273,6 +272,7 @@ select = [
   "D",
   "E",
   "F",
+  "N802",
   "W"
 ]
 
@@ -299,7 +299,7 @@ max-complexity = 20
 
 [tool.ruff.lint.per-file-ignores]
 "docs/*.py" = ["D100", "D101", "D102", "D103"]
-"tests/*.py" = ["D100", "D101", "D102", "D103"]
+"tests/*.py" = ["D100", "D101", "D102", "D103", "N802"]
 "xclim/**/__init__.py" = ["F401", "F403"]
 "xclim/core/indicator.py" = ["D214", "D405", "D406", "D407", "D411"]
 "xclim/core/locales.py" = ["E501", "W505"]

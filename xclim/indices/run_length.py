@@ -83,7 +83,7 @@ def resample_and_rl(
     freq: str,
     dim: str = "time",
     **kwargs,
-) -> xr.DataArray | xr.Dataset:
+) -> xr.DataArray:
     """Wrap run length algorithms to control if resampling occurs before or after the algorithms.
 
     Parameters
