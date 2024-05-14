@@ -5,6 +5,26 @@ Numba-accelerated Utilities
 """
 from __future__ import annotations
 
+import functools
+import importlib.util
+import logging
+import os
+import warnings
+from collections import defaultdict
+from collections.abc import Sequence
+from enum import IntEnum
+from importlib.resources import as_file, files
+from inspect import Parameter, _empty  # noqa
+from io import StringIO
+from pathlib import Path
+from typing import Callable, NewType, TypeVar
+
+import numpy as np
+import xarray as xr
+from dask import array as dsk
+from pint import Quantity
+from yaml import safe_dump, safe_load
+
 from collections.abc import Hashable, Sequence
 
 import numpy as np
@@ -12,7 +32,13 @@ from numba import boolean, float32, float64, guvectorize, int64, njit
 from xarray import DataArray, apply_ufunc
 from xarray.core import utils
 
+import logging
+
 from xclim.core.options import ALLOW_SORTQUANTILE, OPTIONS
+
+logger = logging.getLogger("xclim")
+
+
 
 try:
     from fastnanquantile.xrcompat import xr_apply_nanquantile
@@ -381,3 +407,278 @@ def _pairwise_haversine_and_bins(lond, latd, transpose=False):
     if transpose:
         np.fill_diagonal(dists, 0)
     return dists, mn, mx
+
+
+
+@njit(
+    #    [
+    #        float64[:](float32[:],float32[:],float32[:],float32[:],float32[:],float32[:],optional(typeof("constant"))),
+    #        float64[:](float64[:],float64[:],float64[:],float64[:],float64[:],float64[:],optional(typeof("constant"))),
+    #    ],
+    fastmath=False,
+    nogil=True,
+    cache=False,
+)
+def calc_perc(
+    arr: np.ndarray,
+    percentiles: Sequence[float] | None = None,
+    alpha: float = 1.0,
+    beta: float = 1.0,
+    copy: bool = True,
+) -> np.ndarray:
+    """Compute percentiles using nan_calc_percentiles and move the percentiles' axis to the end."""
+    if percentiles is None:
+        _percentiles = [50.0]
+    else:
+        _percentiles = percentiles
+
+    return np.moveaxis(
+        nan_calc_percentiles(
+            arr=arr,
+            percentiles=_percentiles,
+            axis=-1,
+            alpha=alpha,
+            beta=beta,
+            copy=copy,
+        ),
+        source=0,
+        destination=-1,
+    )
+
+@njit(
+    #    [
+    #        float64[:](float32[:],float32[:],float32[:],float32[:],float32[:],float32[:],optional(typeof("constant"))),
+    #        float64[:](float64[:],float64[:],float64[:],float64[:],float64[:],float64[:],optional(typeof("constant"))),
+    #    ],
+    fastmath=False,
+    nogil=True,
+    cache=False,
+)
+def nan_calc_percentiles(
+    arr: np.ndarray,
+    percentiles: Sequence[float] | None = None,
+    axis: int = -1,
+    alpha: float = 1.0,
+    beta: float = 1.0,
+    copy: bool = True,
+) -> np.ndarray:
+    """Convert the percentiles to quantiles and compute them using _nan_quantile."""
+    if percentiles is None:
+        _percentiles = [50.0]
+    else:
+        _percentiles = percentiles
+
+    if copy:
+        # bootstrapping already works on a data's copy
+        # doing it again is extremely costly, especially with dask.
+        arr = arr.copy()
+    quantiles = np.array([per / 100.0 for per in _percentiles])
+    return _nan_quantile(arr, quantiles, axis, alpha, beta)
+
+@njit(
+    #    [
+    #        float64[:](float32[:],float32[:],float32[:],float32[:],float32[:],float32[:],optional(typeof("constant"))),
+    #        float64[:](float64[:],float64[:],float64[:],float64[:],float64[:],float64[:],optional(typeof("constant"))),
+    #    ],
+    fastmath=False,
+    nogil=True,
+    cache=False,
+)
+def _compute_virtual_index(
+    n: float, quantiles: np.ndarray, alpha: float, beta: float
+):
+    """Compute the floating point indexes of an array for the linear interpolation of quantiles.
+
+    Based on the approach used by :cite:t:`hyndman_sample_1996`.
+
+    Parameters
+    ----------
+    n : array_like
+        The sample sizes.
+    quantiles : array_like
+        The quantiles values.
+    alpha : float
+        A constant used to correct the index computed.
+    beta : float
+        A constant used to correct the index computed.
+
+    Notes
+    -----
+    `alpha` and `beta` values depend on the chosen method (see quantile documentation).
+
+    References
+    ----------
+    :cite:cts:`hyndman_sample_1996`
+    """
+    return n * quantiles + (alpha + quantiles * (1 - alpha - beta)) - 1
+
+@njit(
+    #    [
+    #        float64[:](float32[:],float32[:],float32[:],float32[:],float32[:],float32[:],optional(typeof("constant"))),
+    #        float64[:](float64[:],float64[:],float64[:],float64[:],float64[:],float64[:],optional(typeof("constant"))),
+    #    ],
+    fastmath=False,
+    nogil=True,
+    cache=False,
+)
+def _get_gamma(virtual_indexes: np.ndarray, previous_indexes: np.ndarray):
+    """Compute gamma (AKA 'm' or 'weight') for the linear interpolation of quantiles.
+
+    Parameters
+    ----------
+    virtual_indexes: array_like
+      The indexes where the percentile is supposed to be found in the sorted sample.
+    previous_indexes: array_like
+      The floor values of virtual_indexes.
+
+    Notes
+    -----
+    `gamma` is usually the fractional part of virtual_indexes but can be modified by the interpolation method.
+    """
+    gamma = np.asarray(virtual_indexes - previous_indexes)
+    return np.asarray(gamma)
+
+@njit(
+    #    [
+    #        float64[:](float32[:],float32[:],float32[:],float32[:],float32[:],float32[:],optional(typeof("constant"))),
+    #        float64[:](float64[:],float64[:],float64[:],float64[:],float64[:],float64[:],optional(typeof("constant"))),
+    #    ],
+    fastmath=False,
+    nogil=True,
+    cache=False,
+)
+def _get_indexes(
+    arr: np.ndarray, virtual_indexes: np.ndarray, valid_values_count: np.ndarray
+) -> tuple[np.ndarray, np.ndarray]:
+    """Get the valid indexes of arr neighbouring virtual_indexes.
+
+    Notes
+    -----
+    This is a companion function to linear interpolation of quantiles.
+
+    Parameters
+    ----------
+    arr : array-like
+    virtual_indexes : array-like
+    valid_values_count : array-like
+
+    Returns
+    -------
+    array-like, array-like
+        A tuple of virtual_indexes neighbouring indexes (previous and next)
+    """
+    previous_indexes = np.asarray(np.floor(virtual_indexes))
+    next_indexes = np.asarray(previous_indexes + 1)
+    indexes_above_bounds = virtual_indexes >= valid_values_count - 1
+    # When indexes is above max index, take the max value of the array
+    if indexes_above_bounds.any():
+        previous_indexes[indexes_above_bounds] = -1
+        next_indexes[indexes_above_bounds] = -1
+    # When indexes is below min index, take the min value of the array
+    indexes_below_bounds = virtual_indexes < 0
+    if indexes_below_bounds.any():
+        previous_indexes[indexes_below_bounds] = 0
+        next_indexes[indexes_below_bounds] = 0
+    if (arr.dtype is np.dtype(np.float64)) or (arr.dtype is np.dtype(np.float32)):
+        # After the sort, slices having NaNs will have for last element a NaN
+        virtual_indexes_nans = np.isnan(virtual_indexes)
+        if virtual_indexes_nans.any():
+            previous_indexes[virtual_indexes_nans] = -1
+            next_indexes[virtual_indexes_nans] = -1
+    previous_indexes = previous_indexes.astype(np.intp)
+    next_indexes = next_indexes.astype(np.intp)
+    return previous_indexes, next_indexes
+
+@njit(
+    #    [
+    #        float64[:](float32[:],float32[:],float32[:],float32[:],float32[:],float32[:],optional(typeof("constant"))),
+    #        float64[:](float64[:],float64[:],float64[:],float64[:],float64[:],float64[:],optional(typeof("constant"))),
+    #    ],
+    fastmath=False,
+    nogil=True,
+    cache=False,
+)
+def _linear_interpolation(
+    left: np.ndarray,
+    right: np.ndarray,
+    gamma: np.ndarray,
+) -> np.ndarray:
+    """Compute the linear interpolation weighted by gamma on each point of two same shape arrays.
+
+    Parameters
+    ----------
+    left : array_like
+        Left bound.
+    right : array_like
+        Right bound.
+    gamma : array_like
+        The interpolation weight.
+
+    Returns
+    -------
+    array_like
+    """
+    diff_b_a = np.subtract(right, left)
+    lerp_interpolation = np.asarray(np.add(left, diff_b_a * gamma))
+    ind = gamma >= 0.5
+    lerp_interpolation[ind] = right[ind] - diff_b_a[ind] * (1 - gamma[ind])
+    #np.subtract(
+    #    right, diff_b_a * (1 - gamma), out=lerp_interpolation, where=gamma >= 0.5
+    #)
+    #if lerp_interpolation.ndim == 0:
+    #    lerp_interpolation = lerp_interpolation[()]  # unpack 0d arrays
+    return lerp_interpolation
+
+@njit(
+    fastmath=False,
+    nogil=True,
+    cache=False,
+)
+def _nan_quantile(
+    arr: np.ndarray,
+    quantiles: np.ndarray,
+    alpha: float = 1.0,
+    beta: float = 1.0,
+) -> float | np.ndarray:
+    """Get the quantiles of the 1-dimensional array.
+
+    A linear interpolation is performed using alpha and beta.
+
+    Notes
+    -----
+    By default, alpha == beta == 1 which performs the 7th method of :cite:t:`hyndman_sample_1996`.
+    with alpha == beta == 1/3 we get the 8th method.
+    """
+    # --- Setup
+    data_axis_length = arr.shape[0]
+    # nan_count is not a scalar. Convert to same type as arr.
+    nan_count = arr.dtype.type(np.isnan(arr).sum())
+    valid_values_count = data_axis_length - nan_count
+    # We need at least two values to do an interpolation
+    #too_few_values = valid_values_count < 2
+    #if too_few_values:
+    #    return np.nan
+    # --- Computation of indexes
+    # Add axis for quantiles
+    #valid_values_count = valid_values_count[..., np.newaxis]
+    virtual_indexes = _compute_virtual_index(valid_values_count, quantiles, alpha, beta)
+    virtual_indexes = np.asarray(virtual_indexes)
+    previous_indexes, next_indexes = _get_indexes(
+        arr, virtual_indexes, valid_values_count
+    )
+    # --- Sorting
+    arr.sort()
+    # --- Get values from indexes
+    #arr = arr#[..., np.newaxis]
+
+    previous = arr[previous_indexes]  # np.take_along_axis(arr, previous_indexes[np.newaxis, ...], 0)
+    next_elements = arr[next_indexes]  # np.take_along_axis(arr, next_indexes[np.newaxis, ...], 0)
+
+    # --- Linear interpolation
+    gamma = _get_gamma(virtual_indexes, previous_indexes)
+    interpolation = _linear_interpolation(previous, next_elements, gamma)
+    # When an interpolation is in Nan range, (near the end of the sorted array) it means
+    # we can clip to the array max value.
+    result = np.where(np.isnan(interpolation), arr[np.intp(valid_values_count) - 1], interpolation)
+    # Move quantile axis in front
+    return result
