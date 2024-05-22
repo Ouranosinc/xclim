@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import numpy as np
 import pytest
+from xarray import set_options
 
 from xclim import sdba
 from xclim.core.units import convert_units_to
@@ -107,71 +108,41 @@ class TestProperties:
         )
         assert out_season.long_name.startswith("Quantile 0.2")
 
+    # TODO: test theshold_count? it's the same a test_spell_length_distribution
     def test_spell_length_distribution(self, open_dataset):
-        sim = (
+        ds = (
             open_dataset("sdba/CanESM2_1950-2100.nc")
             .sel(time=slice("1950", "1952"), location="Vancouver")
-            .pr
-        ).load()
+            .load()
+        )
 
-        tmean = (
-            sdba.properties.spell_length_distribution(sim, op="<", group="time.month")
+        # test pr, with amount method
+        sim = ds.pr
+        kws = {"op": "<", "group": "time.month"}
+        outd = {
+            stat: sdba.properties.spell_length_distribution(da=sim, **kws, stat=stat)
             .sel(month=1)
             .values
-        )
-        tmax = (
-            sdba.properties.spell_length_distribution(
-                sim, op="<", group="time.month", stat="max"
-            )
-            .sel(month=1)
-            .values
-        )
-        tmin = (
-            sdba.properties.spell_length_distribution(
-                sim, op="<", group="time.month", stat="min"
-            )
-            .sel(month=1)
-            .values
+            for stat in ["mean", "max", "min"]
+        }
+        np.testing.assert_array_almost_equal(
+            [outd[k] for k in ["mean", "max", "min"]], [2.44127, 10, 1]
         )
 
-        np.testing.assert_array_almost_equal([tmean, tmax, tmin], [2.44127, 10, 1])
-
-        simt = (
-            open_dataset("sdba/CanESM2_1950-2100.nc")
-            .sel(time=slice("1950", "1952"), location="Vancouver")
-            .tasmax
-        ).load()
-
-        tmean = sdba.properties.spell_length_distribution(
-            simt, op=">=", group="time.month", method="quantile", thresh=0.9
-        ).sel(month=6)
-        tmax = (
-            sdba.properties.spell_length_distribution(
-                simt,
-                op=">=",
-                group="time.month",
-                stat="max",
-                method="quantile",
-                thresh=0.9,
-            )
-            .sel(month=6)
-            .values
-        )
-        tmin = (
-            sdba.properties.spell_length_distribution(
-                simt,
-                op=">=",
-                group="time.month",
-                stat="min",
-                method="quantile",
-                thresh=0.9,
-            )
-            .sel(month=6)
-            .values
+        # test tasmax, with quantile method
+        simt = ds.tasmax
+        kws = {"thresh": 0.9, "op": ">=", "method": "quantile", "group": "time.month"}
+        outd = {
+            stat: sdba.properties.spell_length_distribution(
+                da=simt, **kws, stat=stat
+            ).sel(month=6)
+            for stat in ["mean", "max", "min"]
+        }
+        np.testing.assert_array_almost_equal(
+            [outd[k].values for k in ["mean", "max", "min"]], [3.0, 6, 1]
         )
 
-        np.testing.assert_array_almost_equal([tmean.values, tmax, tmin], [3.0, 6, 1])
-
+        # test varia
         with pytest.raises(
             ValueError,
             match="percentile is not a valid method. Choose 'amount' or 'quantile'.",
@@ -179,8 +150,71 @@ class TestProperties:
             sdba.properties.spell_length_distribution(simt, method="percentile")
 
         assert (
-            tmean.long_name
-            == "Average of spell length distribution when the variable is >= the quantile 0.9."
+            outd["mean"].long_name
+            == "Average of spell length distribution when the variable is >= the quantile 0.9 for 1 consecutive day(s)."
+        )
+
+    @pytest.mark.parametrize(
+        "window,expected_amount,expected_quantile",
+        [
+            (1, [2.333333, 4, 1], [3, 6, 1]),
+            (3, [1.333333, 4, 0], [2, 6, 0]),
+        ],
+    )
+    def test_double_spell_length_distribution(
+        self, open_dataset, window, expected_amount, expected_quantile
+    ):
+        ds = (
+            open_dataset("sdba/CanESM2_1950-2100.nc").sel(
+                time=slice("1950", "1952"), location="Vancouver"
+            )
+        ).load()
+        tx = ds.tasmax
+        with set_options(keep_attrs=True):
+            tn = tx - 5
+
+        # test with amount method
+        kws = {
+            "thresh1": "0 degC",
+            "thresh2": "0 degC",
+            "op1": ">",
+            "op2": "<=",
+            "group": "time.month",
+            "window": window,
+        }
+        outd = {
+            stat: sdba.properties.double_spell_length_distribution(
+                da1=tx, da2=tn, **kws, stat=stat
+            )
+            .sel(month=1)
+            .values
+            for stat in ["mean", "max", "min"]
+        }
+        np.testing.assert_array_almost_equal(
+            [outd[k] for k in ["mean", "max", "min"]], expected_amount
+        )
+
+        # test with quantile method
+        kws = {
+            "thresh1": 0.9,
+            "thresh2": 0.9,
+            "op1": ">",
+            "op2": ">",
+            "method1": "quantile",
+            "method2": "quantile",
+            "group": "time.month",
+            "window": window,
+        }
+        outd = {
+            stat: sdba.properties.double_spell_length_distribution(
+                da1=tx, da2=tn, **kws, stat=stat
+            )
+            .sel(month=6)
+            .values
+            for stat in ["mean", "max", "min"]
+        }
+        np.testing.assert_array_almost_equal(
+            [outd[k] for k in ["mean", "max", "min"]], expected_quantile
         )
 
     def test_acf(self, open_dataset):

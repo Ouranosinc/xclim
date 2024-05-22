@@ -291,6 +291,7 @@ def _spell_length_distribution(
     method: str = "amount",
     op: str = ">=",
     thresh: str = "1 mm d-1",
+    window: int = 1,
     stat: str = "mean",
     group: str | Grouper = "time",
     resample_before_rl: bool = True,
@@ -315,6 +316,8 @@ def _spell_length_distribution(
       Threshold on which to evaluate the condition to have a spell.
       Str with units if the method is "amount".
       Float of the quantile if the method is "quantile".
+    window : int
+      Number of consecutive days respecting the constraint in order to begin a spell. Default is 1, which is equivalent to `_threshold_count`
     stat: {'mean','max','min'}
       Statistics to apply to the resampled input at the {group} (e.g. 1-31 Jan 1980)
       and then over all years (e.g. Jan 1980-2010)
@@ -328,12 +331,14 @@ def _spell_length_distribution(
     Returns
     -------
     xr.DataArray, [units of the sampling frequency]
-      {stat} of spell length distribution when the variable is {op} the {method} {thresh}.
+      {stat} of spell length distribution when the variable is {op} the {method} {thresh} for {window} consecutive day(s).
     """
     ops = {">": np.greater, "<": np.less, ">=": np.greater_equal, "<=": np.less_equal}
 
     @map_groups(out=[Grouper.PROP], main_only=True)
-    def _spell_stats(ds, *, dim, method, thresh, op, freq, resample_before_rl, stat):
+    def _spell_stats(
+        ds, *, dim, method, thresh, window, op, freq, resample_before_rl, stat
+    ):
         # PB: This prevents an import error in the distributed dask scheduler, but I don't know why.
         import xarray.core.resample_cftime  # noqa: F401, pylint: disable=unused-import
 
@@ -350,7 +355,7 @@ def _spell_length_distribution(
             resample_before_rl,
             rl.rle_statistics,
             reducer=stat,
-            window=1,
+            window=window,
             dim=dim,
             freq=freq,
         )
@@ -371,6 +376,7 @@ def _spell_length_distribution(
         group=group,
         method=method,
         thresh=thresh,
+        window=window,
         op=ops[op],
         freq=group.freq,
         resample_before_rl=resample_before_rl,
@@ -383,6 +389,58 @@ spell_length_distribution = StatisticalProperty(
     identifier="spell_length_distribution",
     aspect="temporal",
     compute=_spell_length_distribution,
+)
+
+
+# TODO: Formulate this with a spell and window=1 ?
+def _threshold_count(
+    da: xr.DataArray,
+    *,
+    method: str = "amount",
+    op: str = ">=",
+    thresh: str = "1 mm d-1",
+    stat: str = "mean",
+    group: str | Grouper = "time",
+) -> xr.DataArray:
+    r"""Correlation between two variables.
+
+    Spearman or Pearson correlation coefficient between two variables at the time resolution.
+
+    Parameters
+    ----------
+    da : xr.DataArray
+      Variable on which to calculate the diagnostic.
+    method: {'amount', 'quantile'}
+      Method to choose the threshold.
+      'amount': The threshold is directly the quantity in {thresh}. It needs to have the same units as {da}.
+      'quantile': The threshold is calculated as the quantile {thresh} of the distribution.
+    op: {">", "<", ">=", "<="}
+      Operation to verify the condition for a spell.
+      The condition for a spell is variable {op} threshold.
+    thresh: str or float
+      Threshold on which to evaluate the condition to have a spell.
+      Str with units if the method is "amount".
+      Float of the quantile if the method is "quantile".
+    stat: {'mean','max','min'}
+      Statistics to apply to the resampled input at the {group} (e.g. 1-31 Jan 1980)
+      and then over all years (e.g. Jan 1980-2010)
+    group : {'time', 'time.season', 'time.month'}
+      Grouping of the output.
+      e.g. For 'time.month', the correlation would be calculated on each month separately,
+      but with all the years together.
+
+    Returns
+    -------
+    xr.DataArray, [dimensionless]
+      {stat} number of days when the variable is {op} the {method} {thresh}.
+    """
+    return _spell_length_distribution(
+        da, method=method, op=op, thresh=thresh, stat=stat, group=group, window=1
+    )
+
+
+threshold_count = StatisticalProperty(
+    identifier="threshold_count", aspect="temporal", compute=_threshold_count
 )
 
 
@@ -730,72 +788,134 @@ corr_btw_var = StatisticalProperty(
 )
 
 
-# TODO: Formulate this with a spell and window=1 ?
-def _threshold_count(
-    da: xr.DataArray,
+def _double_spell_length_distribution(
+    da1: xr.DataArray,
+    da2: xr.DataArray,
     *,
-    method: str = "amount",
-    op: str = ">=",
-    thresh: str = "1 mm d-1",
+    method1: str = "amount",
+    method2: str = "amount",
+    op1: str = ">=",
+    op2: str = ">=",
+    thresh1: str = "1 mm d-1",
+    thresh2: str = "1 mm d-1",
+    window: int = 1,
+    stat: str = "mean",
     group: str | Grouper = "time",
+    resample_before_rl: bool = True,
 ) -> xr.DataArray:
-    r"""Correlation between two variables.
+    """Spell length distribution with double condition.
 
-    Spearman or Pearson correlation coefficient between two variables at the time resolution.
+    Statistic of spell length distribution when two variables respect individual conditions (defined by an operation, a method,
+    and a threshold).
 
     Parameters
     ----------
-    da : xr.DataArray
-      Variable on which to calculate the diagnostic.
-    method: {'amount', 'quantile'}
+    da1 : xr.DataArray
+      First variable on which to calculate the diagnostic.
+    da2 : xr.DataArray
+      Second variable on which to calculate the diagnostic.
+    method1: {'amount', 'quantile'}
       Method to choose the threshold.
       'amount': The threshold is directly the quantity in {thresh}. It needs to have the same units as {da}.
       'quantile': The threshold is calculated as the quantile {thresh} of the distribution.
-    op: {">", "<", ">=", "<="}
+    method2: {'amount', 'quantile'}
+      Method to choose the threshold.
+      'amount': The threshold is directly the quantity in {thresh}. It needs to have the same units as {da}.
+      'quantile': The threshold is calculated as the quantile {thresh} of the distribution.
+    op1: {">", "<", ">=", "<="}
       Operation to verify the condition for a spell.
-      The condition for a spell is variable {op} threshold.
-    thresh: str or float
+      The condition for a spell is variable {op1} threshold.
+    op2: {">", "<", ">=", "<="}
+      Operation to verify the condition for a spell.
+      The condition for a spell is variable {op2} threshold.
+    thresh1: str or float
       Threshold on which to evaluate the condition to have a spell.
       Str with units if the method is "amount".
       Float of the quantile if the method is "quantile".
+    thresh2: str or float
+      Threshold on which to evaluate the condition to have a spell.
+      Str with units if the method is "amount".
+      Float of the quantile if the method is "quantile".
+    window : int
+      Number of consecutive days respecting the constraint in order to begin a spell. Default is 1, which is equivalent to `_double_threshold_count`
+    stat: {'mean','max','min'}
+      Statistics to apply to the resampled input at the {group} (e.g. 1-31 Jan 1980)
+      and then over all years (e.g. Jan 1980-2010)
     group : {'time', 'time.season', 'time.month'}
       Grouping of the output.
-      e.g. For 'time.month', the correlation would be calculated on each month separately,
-      but with all the years together.
+      E.g. If 'time.month', the spell lengths are computed separately for each month.
+    resample_before_rl : bool
+      Determines if the resampling should take place before or after the run
+      length encoding (or a similar algorithm) is applied to runs.
 
     Returns
     -------
-    xr.DataArray, [dimensionless]
+    xr.DataArray, [units of the sampling frequency]
+      {stat} of spell length distribution when the first variable is {op1} the {method1} {thresh1}
+      and the second variable is {op2} the {method2} {thresh2} for {window} consecutive day(s).
     """
     ops = {">": np.greater, "<": np.less, ">=": np.greater_equal, "<=": np.less_equal}
 
     @map_groups(out=[Grouper.PROP], main_only=True)
-    def __threshold_count(ds, *, dim, thresh, method, op):
-        da = ds.da1
-        if method == "quantile":
-            thresh = da.quantile(thresh, dim=dim).drop_vars("quantile")
-        out = op(da, thresh).sum(dim=dim)
+    def _double_spell_stats(
+        ds, *, dim, method, thresh, window, op, freq, resample_before_rl, stat
+    ):
+        # PB: This prevents an import error in the distributed dask scheduler, but I don't know why.
+        import xarray.core.resample_cftime  # noqa: F401, pylint: disable=unused-import
+
+        conds = []
+        masks = []
+        for da, thresh0, op0, method0 in zip([ds.da1, ds.da2], thresh, op, method):
+            masks.append(
+                ~(da.isel({dim: 0}).isnull()).drop_vars(dim)
+            )  # mask of the ocean with NaNs
+            if method0 == "quantile":
+                thresh0 = da.quantile(thresh0, dim=dim).drop_vars("quantile")
+            conds.append(op0(da, thresh0))
+        mask = masks[0] & masks[1]
+        cond = conds[0] & conds[1]
+        out = rl.resample_and_rl(
+            cond,
+            resample_before_rl,
+            rl.rle_statistics,
+            reducer=stat,
+            window=window,
+            dim=dim,
+            freq=freq,
+        )
+        out = getattr(out, stat)(dim=dim)
+        out = out.where(mask)
         return out.rename("out").to_dataset()
 
-    if method == "amount":
-        thresh = convert_units_to(thresh, da, context="infer")
-    elif method != "quantile":
-        raise ValueError(
-            f"{method} is not a valid method. Choose 'amount' or 'quantile'."
-        )
-    out = __threshold_count(
-        xr.Dataset({"da1": da}),
+    # threshold is an amount that will be converted to the right units
+    method = [method1, method2]
+    thresh = [thresh1, thresh2]
+    for i, da in enumerate([da1, da2]):
+        if method[i] == "amount":
+            thresh[i] = convert_units_to(thresh[i], da, context="infer")
+        elif method[i] != "quantile":
+            raise ValueError(
+                f"{method[i]} is not a valid method. Choose 'amount' or 'quantile'."
+            )
+
+    out = _double_spell_stats(
+        xr.Dataset({"da1": da1, "da2": da2}),
         group=group,
         thresh=thresh,
+        window=window,
         method=method,
-        op=ops[op],
+        op=[ops[op1], ops[op2]],
+        freq=group.freq,
+        resample_before_rl=resample_before_rl,
+        stat=stat,
     ).out
-    out.attrs["units"] = ""
-    return out
+    return to_agg_units(out, da1, op="count")
 
 
-threshold_count = StatisticalProperty(
-    identifier="threshold_count", aspect="marginal", compute=_threshold_count
+double_spell_length_distribution = StatisticalProperty(
+    identifier="double_spell_length_distribution",
+    aspect="temporal",
+    compute=_double_spell_length_distribution,
 )
 
 
@@ -809,11 +929,13 @@ def _double_threshold_count(
     op2: str = ">=",
     thresh1: str = "1 mm d-1",
     thresh2: str = "1 mm d-1",
+    stat: str = "mean",
     group: str | Grouper = "time",
 ) -> xr.DataArray:
-    r"""Correlation between two variables.
+    """Count the number of time steps where two variables respect given conditions.
 
-    Spearman or Pearson correlation coefficient between two variables at the time resolution.
+    Statistic of number of time steps when two variables respect individual conditions (defined by an operation, a method,
+    and a threshold).
 
     Parameters
     ----------
@@ -851,37 +973,22 @@ def _double_threshold_count(
     Returns
     -------
     xr.DataArray, [dimensionless]
+      {stat} number of days when the first variable is {op1} the {method1} {thresh1}
+      and the second variable is {op2} the {method2} {thresh2} for {window} consecutive day(s).
     """
-    ops = {">": np.greater, "<": np.less, ">=": np.greater_equal, "<=": np.less_equal}
-
-    @map_groups(out=[Grouper.PROP], main_only=True)
-    def __double_threshold_count(ds, *, dim, thresh, method, op):
-        cond = xr.DataArray.broadcast_like(xr.DataArray(True), ds.da1)
-        for da, thresh0, op0, method0 in zip([ds.da1, ds.da2], thresh, op, method):
-            if method0 == "quantile":
-                thresh0 = da.quantile(thresh0, dim=dim).drop_vars("quantile")
-            cond = cond & op0(da, thresh0)
-        out = cond.sum(dim=dim)
-        return out.rename("out").to_dataset()
-
-    method = [method1, method2]
-    thresh = [thresh1, thresh2]
-    for i, da in enumerate([da1, da2]):
-        if method[i] == "amount":
-            thresh[i] = convert_units_to(thresh[i], da, context="infer")
-        elif method[i] != "quantile":
-            raise ValueError(
-                f"{method[i]} is not a valid method. Choose 'amount' or 'quantile'."
-            )
-    out = __double_threshold_count(
-        xr.Dataset({"da1": da1, "da2": da2}),
+    return _double_spell_length_distribution(
+        da1,
+        da2,
+        method1=method1,
+        method2=method2,
+        op1=op1,
+        op2=op2,
+        thresh1=thresh1,
+        thresh2=thresh2,
+        window=1,
+        stat=stat,
         group=group,
-        thresh=thresh,
-        method=method,
-        op=[ops[op1], ops[op2]],
-    ).out
-    out.attrs["units"] = ""
-    return out
+    )
 
 
 double_threshold_count = StatisticalProperty(
