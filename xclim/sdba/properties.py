@@ -433,6 +433,10 @@ def _threshold_count(
     -------
     xr.DataArray, [dimensionless]
       {stat} number of days when the variable is {op} the {method} {thresh}.
+
+    Notes
+    -----
+    This corresponds to ``xclim.sdba.properties._spell_length_distribution`` with `window=1`.
     """
     return _spell_length_distribution(
         da, method=method, op=op, thresh=thresh, stat=stat, group=group, window=1
@@ -975,6 +979,10 @@ def _double_threshold_count(
     xr.DataArray, [dimensionless]
       {stat} number of days when the first variable is {op1} the {method1} {thresh1}
       and the second variable is {op2} the {method2} {thresh2} for {window} consecutive day(s).
+
+    Notes
+    -----
+    This corresponds to ``xclim.sdba.properties._double_spell_length_distribution`` with `window=1`.
     """
     return _double_spell_length_distribution(
         da1,
