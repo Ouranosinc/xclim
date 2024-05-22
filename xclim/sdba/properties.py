@@ -730,6 +730,167 @@ corr_btw_var = StatisticalProperty(
 )
 
 
+# TODO: Formulate this with a spell and window=1 ?
+def _threshold_count(
+    da: xr.DataArray,
+    *,
+    method: str = "amount",
+    op: str = ">=",
+    thresh: str = "1 mm d-1",
+    group: str | Grouper = "time",
+) -> xr.DataArray:
+    r"""Correlation between two variables.
+
+    Spearman or Pearson correlation coefficient between two variables at the time resolution.
+
+    Parameters
+    ----------
+    da : xr.DataArray
+      Variable on which to calculate the diagnostic.
+    method: {'amount', 'quantile'}
+      Method to choose the threshold.
+      'amount': The threshold is directly the quantity in {thresh}. It needs to have the same units as {da}.
+      'quantile': The threshold is calculated as the quantile {thresh} of the distribution.
+    op: {">", "<", ">=", "<="}
+      Operation to verify the condition for a spell.
+      The condition for a spell is variable {op} threshold.
+    thresh: str or float
+      Threshold on which to evaluate the condition to have a spell.
+      Str with units if the method is "amount".
+      Float of the quantile if the method is "quantile".
+    group : {'time', 'time.season', 'time.month'}
+      Grouping of the output.
+      e.g. For 'time.month', the correlation would be calculated on each month separately,
+      but with all the years together.
+
+    Returns
+    -------
+    xr.DataArray, [dimensionless]
+    """
+    ops = {">": np.greater, "<": np.less, ">=": np.greater_equal, "<=": np.less_equal}
+
+    @map_groups(out=[Grouper.PROP], main_only=True)
+    def __threshold_count(ds, *, dim, thresh, method, op):
+        da = ds.da1
+        if method == "quantile":
+            thresh = da.quantile(thresh, dim=dim).drop_vars("quantile")
+        out = op(da, thresh).sum(dim=dim)
+        return out.rename("out").to_dataset()
+
+    if method == "amount":
+        thresh = convert_units_to(thresh, da, context="infer")
+    elif method != "quantile":
+        raise ValueError(
+            f"{method} is not a valid method. Choose 'amount' or 'quantile'."
+        )
+    out = __threshold_count(
+        xr.Dataset({"da1": da}),
+        group=group,
+        thresh=thresh,
+        method=method,
+        op=ops[op],
+    ).out
+    out.attrs["units"] = ""
+    return out
+
+
+threshold_count = StatisticalProperty(
+    identifier="threshold_count", aspect="marginal", compute=_threshold_count
+)
+
+
+def _double_threshold_count(
+    da1: xr.DataArray,
+    da2: xr.DataArray,
+    *,
+    method1: str = "amount",
+    method2: str = "amount",
+    op1: str = ">=",
+    op2: str = ">=",
+    thresh1: str = "1 mm d-1",
+    thresh2: str = "1 mm d-1",
+    group: str | Grouper = "time",
+) -> xr.DataArray:
+    r"""Correlation between two variables.
+
+    Spearman or Pearson correlation coefficient between two variables at the time resolution.
+
+    Parameters
+    ----------
+    da1 : xr.DataArray
+      First variable on which to calculate the diagnostic.
+    da2 : xr.DataArray
+      Second variable on which to calculate the diagnostic.
+    method1: {'amount', 'quantile'}
+      Method to choose the threshold.
+      'amount': The threshold is directly the quantity in {thresh}. It needs to have the same units as {da}.
+      'quantile': The threshold is calculated as the quantile {thresh} of the distribution.
+    method2: {'amount', 'quantile'}
+      Method to choose the threshold.
+      'amount': The threshold is directly the quantity in {thresh}. It needs to have the same units as {da}.
+      'quantile': The threshold is calculated as the quantile {thresh} of the distribution.
+    op1: {">", "<", ">=", "<="}
+      Operation to verify the condition for a spell.
+      The condition for a spell is variable {op} threshold.
+    op2: {">", "<", ">=", "<="}
+      Operation to verify the condition for a spell.
+      The condition for a spell is variable {op} threshold.
+    thresh1: str or float
+      Threshold on which to evaluate the condition to have a spell.
+      Str with units if the method is "amount".
+      Float of the quantile if the method is "quantile".
+    thresh2: str or float
+      Threshold on which to evaluate the condition to have a spell.
+      Str with units if the method is "amount".
+      Float of the quantile if the method is "quantile".
+    group : {'time', 'time.season', 'time.month'}
+      Grouping of the output.
+      e.g. For 'time.month', the correlation would be calculated on each month separately,
+      but with all the years together.
+
+    Returns
+    -------
+    xr.DataArray, [dimensionless]
+    """
+    ops = {">": np.greater, "<": np.less, ">=": np.greater_equal, "<=": np.less_equal}
+
+    @map_groups(out=[Grouper.PROP], main_only=True)
+    def __double_threshold_count(ds, *, dim, thresh, method, op):
+        cond = xr.DataArray.broadcast_like(xr.DataArray(True), ds.da1)
+        for da, thresh0, op0, method0 in zip([ds.da1, ds.da2], thresh, op, method):
+            if method0 == "quantile":
+                thresh0 = da.quantile(thresh0, dim=dim).drop_vars("quantile")
+            cond = cond & op0(da, thresh0)
+        out = cond.sum(dim=dim)
+        return out.rename("out").to_dataset()
+
+    method = [method1, method2]
+    thresh = [thresh1, thresh2]
+    for i, da in enumerate([da1, da2]):
+        if method[i] == "amount":
+            thresh[i] = convert_units_to(thresh[i], da, context="infer")
+        elif method[i] != "quantile":
+            raise ValueError(
+                f"{method[i]} is not a valid method. Choose 'amount' or 'quantile'."
+            )
+    out = __double_threshold_count(
+        xr.Dataset({"da1": da1, "da2": da2}),
+        group=group,
+        thresh=thresh,
+        method=method,
+        op=[ops[op1], ops[op2]],
+    ).out
+    out.attrs["units"] = ""
+    return out
+
+
+double_threshold_count = StatisticalProperty(
+    identifier="double_threshold_count",
+    aspect="multivariate",
+    compute=_double_threshold_count,
+)
+
+
 def _relative_frequency(
     da: xr.DataArray,
     *,

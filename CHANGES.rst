@@ -4,7 +4,11 @@ Changelog
 
 v0.50.0 (unreleased)
 --------------------
-Contributors to this version: Trevor James Smith (:user:`Zeitsperre`).
+Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Éric Dupuis (:user:`coxipi`).
+
+New features and enhancements
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+* New properties to count number of days respecting threshold constraints (``xclim.sdba.propertiies.threshold_count``, ``xclim.sdba.propertiies.double_threshold_count``).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
