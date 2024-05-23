@@ -161,7 +161,7 @@ class TestProperties:
             (3, [1.333333, 4, 0], [2, 6, 0]),
         ],
     )
-    def test_double_spell_length_distribution(
+    def test_bivariate_spell_length_distribution(
         self, open_dataset, window, expected_amount, expected_quantile
     ):
         ds = (
@@ -183,7 +183,7 @@ class TestProperties:
             "window": window,
         }
         outd = {
-            stat: sdba.properties.double_spell_length_distribution(
+            stat: sdba.properties.bivariate_spell_length_distribution(
                 da1=tx, da2=tn, **kws, stat=stat
             )
             .sel(month=1)
@@ -206,7 +206,7 @@ class TestProperties:
             "window": window,
         }
         outd = {
-            stat: sdba.properties.double_spell_length_distribution(
+            stat: sdba.properties.bivariate_spell_length_distribution(
                 da1=tx, da2=tn, **kws, stat=stat
             )
             .sel(month=6)

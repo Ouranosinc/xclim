@@ -792,7 +792,7 @@ corr_btw_var = StatisticalProperty(
 )
 
 
-def _double_spell_length_distribution(
+def _bivariate_spell_length_distribution(
     da1: xr.DataArray,
     da2: xr.DataArray,
     *,
@@ -807,7 +807,7 @@ def _double_spell_length_distribution(
     group: str | Grouper = "time",
     resample_before_rl: bool = True,
 ) -> xr.DataArray:
-    """Spell length distribution with double condition.
+    """Spell length distribution with bivariate condition.
 
     Statistic of spell length distribution when two variables respect individual conditions (defined by an operation, a method,
     and a threshold).
@@ -841,7 +841,8 @@ def _double_spell_length_distribution(
       Str with units if the method is "amount".
       Float of the quantile if the method is "quantile".
     window : int
-      Number of consecutive days respecting the constraint in order to begin a spell. Default is 1, which is equivalent to `_double_threshold_count`
+      Number of consecutive days respecting the constraint in order to begin a spell.
+      Default is 1, which is equivalent to `_bivariate_threshold_count`
     stat: {'mean','max','min'}
       Statistics to apply to the resampled input at the {group} (e.g. 1-31 Jan 1980)
       and then over all years (e.g. Jan 1980-2010)
@@ -861,7 +862,7 @@ def _double_spell_length_distribution(
     ops = {">": np.greater, "<": np.less, ">=": np.greater_equal, "<=": np.less_equal}
 
     @map_groups(out=[Grouper.PROP], main_only=True)
-    def _double_spell_stats(
+    def _bivariate_spell_stats(
         ds, *, dim, method, thresh, window, op, freq, resample_before_rl, stat
     ):
         # PB: This prevents an import error in the distributed dask scheduler, but I don't know why.
@@ -902,7 +903,7 @@ def _double_spell_length_distribution(
                 f"{method[i]} is not a valid method. Choose 'amount' or 'quantile'."
             )
 
-    out = _double_spell_stats(
+    out = _bivariate_spell_stats(
         xr.Dataset({"da1": da1, "da2": da2}),
         group=group,
         thresh=thresh,
@@ -916,14 +917,14 @@ def _double_spell_length_distribution(
     return to_agg_units(out, da1, op="count")
 
 
-double_spell_length_distribution = StatisticalProperty(
-    identifier="double_spell_length_distribution",
+bivariate_spell_length_distribution = StatisticalProperty(
+    identifier="bivariate_spell_length_distribution",
     aspect="temporal",
-    compute=_double_spell_length_distribution,
+    compute=_bivariate_spell_length_distribution,
 )
 
 
-def _double_threshold_count(
+def _bivariate_threshold_count(
     da1: xr.DataArray,
     da2: xr.DataArray,
     *,
@@ -982,9 +983,9 @@ def _double_threshold_count(
 
     Notes
     -----
-    This corresponds to ``xclim.sdba.properties._double_spell_length_distribution`` with `window=1`.
+    This corresponds to ``xclim.sdba.properties._bivariate_spell_length_distribution`` with `window=1`.
     """
-    return _double_spell_length_distribution(
+    return _bivariate_spell_length_distribution(
         da1,
         da2,
         method1=method1,
@@ -999,10 +1000,10 @@ def _double_threshold_count(
     )
 
 
-double_threshold_count = StatisticalProperty(
-    identifier="double_threshold_count",
+bivariate_threshold_count = StatisticalProperty(
+    identifier="bivariate_threshold_count",
     aspect="multivariate",
-    compute=_double_threshold_count,
+    compute=_bivariate_threshold_count,
 )
 
 
