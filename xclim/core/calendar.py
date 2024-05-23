@@ -10,6 +10,7 @@ from __future__ import annotations
 import datetime as pydt
 from collections.abc import Sequence
 from typing import Any, TypeVar
+from warnings import warn
 
 import cftime
 import numpy as np
@@ -55,8 +56,6 @@ __all__ = [
     "uniform_calendars",
     "unstack_periods",
     "within_bnds_doy",
-    "yearly_interpolated_doy",
-    "yearly_random_doy",
 ]
 
 # Maximum day of year in each calendar.
@@ -83,13 +82,27 @@ uniform_calendars = ("noleap", "all_leap", "365_day", "366_day", "360_day")
 DataType = TypeVar("DataType", xr.DataArray, xr.Dataset)
 
 
+def _get_usecf_and_warn(calendar: str, xcfunc: str, xrfunc: str):
+    if calendar == "default":
+        calendar = "standard"
+        use_cftime = False
+        msg = " and use use_cftime=False instead of calendar='default' to get numpy objects."
+    else:
+        use_cftime = None
+        msg = ""
+    warn(
+        f"xclim function {xcfunc} is deprecated in favor of {xrfunc} and will be removed in 0.51. Please adjust your script{msg}.",
+        FutureWarning,
+    )
+    return calendar, use_cftime
+
+
 def days_in_year(year: int, calendar: str = "default") -> int:
     """Return the number of days in the input year according to the input calendar."""
-    return (
-        (datetime_classes[calendar](year + 1, 1, 1) - pydt.timedelta(days=1))
-        .timetuple()
-        .tm_yday
+    calendar, usecf = _get_usecf_and_warn(
+        calendar, "days_in_year", "xarray.coding.calendar_ops._days_in_year"
     )
+    return xr.coding.calendar_ops._days_in_year(year, calendar, use_cftime=usecf)
 
 
 def doy_from_string(doy: DayOfYearStr, year: int, calendar: str) -> int:
@@ -98,53 +111,15 @@ def doy_from_string(doy: DayOfYearStr, year: int, calendar: str) -> int:
     return datetime_classes[calendar](year, int(MM), int(DD)).timetuple().tm_yday
 
 
-def date_range(
-    *args, calendar: str = "default", **kwargs
-) -> pd.DatetimeIndex | CFTimeIndex:
+def date_range(*args, **kwargs) -> pd.DatetimeIndex | CFTimeIndex:
     """Wrap a Pandas date_range object.
 
     Uses pd.date_range (if calendar == 'default') or xr.cftime_range (otherwise).
     """
-    if calendar == "default":
-        return pd.date_range(*args, **kwargs)
-    return xr.cftime_range(*args, calendar=calendar, **kwargs)
-
-
-def yearly_interpolated_doy(
-    time: pd.DatetimeIndex | CFTimeIndex, source_calendar: str, target_calendar: str
-):
-    """Return the nearest day in the target calendar of the corresponding "decimal year" in the source calendar."""
-    yr = int(time.dt.year[0])
-    return np.round(
-        days_in_year(yr, target_calendar)
-        * time.dt.dayofyear
-        / days_in_year(yr, source_calendar)
-    ).astype(int)
-
-
-def yearly_random_doy(
-    time: pd.DatetimeIndex | CFTimeIndex,
-    rng: np.random.Generator,
-    source_calendar: str,
-    target_calendar: str,
-):
-    """Return a day of year in the new calendar.
-
-    Removes Feb 29th and five other days chosen randomly within five sections of 72 days.
-    """
-    yr = int(time.dt.year[0])
-    new_doy = np.arange(360) + 1
-    rm_idx = rng.integers(0, 72, 5) + (np.arange(5) * 72)
-    if source_calendar == "360_day":
-        for idx in rm_idx:
-            new_doy[idx + 1 :] = new_doy[idx + 1 :] + 1
-        if days_in_year(yr, target_calendar) == 366:
-            new_doy[new_doy >= 60] = new_doy[new_doy >= 60] + 1
-    elif target_calendar == "360_day":
-        new_doy = np.insert(new_doy, rm_idx - np.arange(5), -1)
-        if days_in_year(yr, source_calendar) == 366:
-            new_doy = np.insert(new_doy, 60, -1)
-    return new_doy[time.dt.dayofyear - 1]
+    calendar, usecf = _get_usecf_and_warn(
+        kwargs.pop("calendar", "default"), "date_range", "xarray.date_range"
+    )
+    return xr.date_range(*args, calendar=calendar, use_cftime=usecf, **kwargs)
 
 
 def get_calendar(obj: Any, dim: str = "time") -> str:
@@ -169,21 +144,18 @@ def get_calendar(obj: Any, dim: str = "time") -> str:
     Returns
     -------
     str
-      The cftime calendar name or "default" when the data is using numpy's or python's datetime types.
+      The cf calendar name.
       Will always return "standard" instead of "gregorian", following CF conventions 1.9.
     """
     if isinstance(obj, (xr.DataArray, xr.Dataset)):
-        if obj[dim].dtype == "O":
-            obj = obj[dim].where(obj[dim].notnull(), drop=True)[0].item()
-        elif "datetime64" in obj[dim].dtype.name:
-            return "default"
+        return obj[dim].dt.calendar
     elif isinstance(obj, xr.CFTimeIndex):
         obj = obj.values[0]
     else:
         obj = np.take(obj, 0)
         # Take zeroth element, overcome cases when arrays or lists are passed.
     if isinstance(obj, pydt.datetime):  # Also covers pandas Timestamp
-        return "default"
+        return "standard"
     if isinstance(obj, cftime.datetime):
         if obj.calendar == "gregorian":
             return "standard"
@@ -438,95 +410,24 @@ def convert_calendar(
     >>> mask = convert_calendar(tas_nl, "standard").notnull()
     >>> out2 = out.where(mask)
     """
-    cal_src = get_calendar(source, dim=dim)
-
-    if isinstance(target, str):
-        cal_tgt = target
-    else:
-        cal_tgt = get_calendar(target, dim=dim)
-
-    if cal_src == cal_tgt:
-        return source
-
-    if (cal_src == "360_day" or cal_tgt == "360_day") and align_on not in [
-        "year",
-        "date",
-        "random",
-    ]:
-        raise ValueError(
-            "Argument `align_on` must be specified with either 'date', 'year' or "
-            "'random' when converting to or from a '360_day' calendar."
-        )
-    if cal_src != "360_day" and cal_tgt != "360_day":
-        align_on = None
-
-    if doy:
-        doy_align_on = "year" if doy is True else doy
-        if isinstance(source, xr.DataArray) and source.attrs.get("is_dayofyear") == 1:
-            out = convert_doy(source, cal_tgt, align_on=doy_align_on)
-        else:
-            out = source.map(
-                lambda da: (
-                    da
-                    if da.attrs.get("is_dayofyear") != 1
-                    else convert_doy(da, cal_tgt, align_on=doy_align_on)
-                )
-            )
-    else:
-        out = source.copy()
-
-    # TODO Maybe the 5-6 days to remove could be given by the user?
-    if align_on in ["year", "random"]:
-        if align_on == "year":
-            new_doy = source.time.groupby(f"{dim}.year").map(
-                yearly_interpolated_doy,
-                source_calendar=cal_src,
-                target_calendar=cal_tgt,
-            )
-        else:  # align_on == "random"
-            new_doy = source.time.groupby(f"{dim}.year").map(
-                yearly_random_doy,
-                rng=np.random.default_rng(),
-                source_calendar=cal_src,
-                target_calendar=cal_tgt,
-            )
-
-        # Convert the source datetimes, but override the doy with our new doys
-        out[dim] = xr.DataArray(
-            [
-                _convert_datetime(datetime, new_doy=doy, calendar=cal_tgt)
-                for datetime, doy in zip(source[dim].indexes[dim], new_doy)
-            ],
-            dims=(dim,),
-            name=dim,
-        )
-        # Remove NaN that where put on invalid dates in target calendar
-        out = out.where(out[dim].notnull(), drop=True)
-        # Remove duplicate timestamps, happens when reducing the number of days
-        out = out.isel({dim: np.unique(out[dim], return_index=True)[1]})
-    else:
-        time_idx = source[dim].indexes[dim]
-        out[dim] = xr.DataArray(
-            [_convert_datetime(time, calendar=cal_tgt) for time in time_idx],
-            dims=(dim,),
-            name=dim,
-        )
-        # Remove NaN that where put on invalid dates in target calendar
-        out = out.where(out[dim].notnull(), drop=True)
-
-    if isinstance(target, str) and missing is not None:
-        target = date_range_like(source[dim], cal_tgt)
-
     if isinstance(target, xr.DataArray):
-        out = out.reindex(
-            {dim: target}, fill_value=missing if missing is not None else np.nan
+        raise NotImplementedError(
+            "In xclim 0.50, convert_calendar is only a copy of xarray.coding.calendar_ops.convert_calendar. "
+            "To retrieve the previous behaviour with target as a DataArray, convert the source first then reindex to the target."
         )
-
-    # Copy attrs but change remove `calendar` is still present.
-    out[dim].attrs.update(source[dim].attrs)
-    out[dim].attrs.pop("calendar", None)
-
-    return out
+    if doy is not False:
+        raise NotImplementedError(
+            "In xclim 0.50, convert_calendar is only a copy of xarray.coding.calendar_ops.convert_calendar. "
+            "To retrieve the previous behaviour of doy=True, do convert_doy(obj, target_cal).convert_cal(target_cal)."
+        )
+    target, usecf = _get_usecf_and_warn(
+        target,
+        "convert_calendar",
+        "xarray.coding.calendar_ops.convert_calendar or obj.convert_calendar",
+    )
+    return xr.coding.calendar_ops.convert_calendar(
+        source, target, dim=dim, align_on=align_on, missing=missing
+    )
 
 
 def interp_calendar(
@@ -557,15 +458,10 @@ def interp_calendar(
     xr.DataArray or xr.Dataset
         The source interpolated on the decimal years of target,
     """
-    cal_src = get_calendar(source, dim=dim)
-    cal_tgt = get_calendar(target, dim=dim)
-
-    out = source.copy()
-    out[dim] = datetime_to_decimal_year(source[dim], calendar=cal_src).drop_vars(dim)
-    target_idx = datetime_to_decimal_year(target, calendar=cal_tgt)
-    out = out.interp(time=target_idx)
-    out[dim] = target
-    return out
+    _, _ = _get_usecf_and_warn(
+        "standard", "interp_calendar", "xarray.coding.calendar_ops.interp_calendar"
+    )
+    return xr.coding.calendar_ops.interp_calendar(source, target, dim=dim)
 
 
 def ensure_cftime_array(time: Sequence) -> np.ndarray | Sequence[cftime.datetime]:
@@ -616,23 +512,14 @@ def datetime_to_decimal_year(times: xr.DataArray, calendar: str = "") -> xr.Data
     -------
     xr.DataArray
     """
-    calendar = calendar or get_calendar(times)
-    if calendar == "default":
-        calendar = "standard"
-
-    def _make_index(time) -> xr.DataArray:
-        year = int(time.dt.year[0])
-        doys = cftime.date2num(
-            ensure_cftime_array(time), f"days since {year:04d}-01-01", calendar=calendar
-        )
-        return xr.DataArray(
-            year + doys / days_in_year(year, calendar),
-            dims=time.dims,
-            coords=time.coords,
-            name="time",
-        )
-
-    return times.groupby("time.year").map(_make_index)
+    _, _ = _get_usecf_and_warn(
+        "standard",
+        "datetime_to_decimal_year",
+        "xarray.coding.calendar_ops._datetime_to_decimal_year",
+    )
+    return xr.coding.calendar_ops._datetime_to_decimal_year(
+        times, dim="time", calendar=calendar
+    )
 
 
 @update_xclim_history
@@ -1407,89 +1294,12 @@ def date_range_like(source: xr.DataArray, calendar: str) -> xr.DataArray:
             Exception when the source is in 360_day and the end of the range is the 30th of a 31-days month,
             then the 31st is appended to the range.
     """
-    freq = xr.infer_freq(source)
-    if freq is None:
-        raise ValueError(
-            "`date_range_like` was unable to generate a range as the source frequency was not inferrable."
-        )
-
-    src_cal = get_calendar(source)
-    if src_cal == calendar:
-        return source
-
-    index = source.indexes[source.dims[0]]
-    end_src = index[-1]
-    end = _convert_datetime(end_src, calendar=calendar)
-    if end is np.nan:  # Day is invalid, happens at the end of months.
-        end = _convert_datetime(end_src.replace(day=end_src.day - 1), calendar=calendar)
-        if end is np.nan:  # Still invalid : 360_day to non-leap february.
-            end = _convert_datetime(
-                end_src.replace(day=end_src.day - 2), calendar=calendar
-            )
-    if src_cal == "360_day" and end_src.day == 30 and end.daysinmonth == 31:
-        # For the specific case of daily data from 360_day source, the last day is expected to be "missing"
-        end = end.replace(day=31)
-
-    return xr.DataArray(
-        date_range(
-            _convert_datetime(index[0], calendar=calendar),
-            end,
-            freq=freq,
-            calendar=calendar,
-        ),
-        dims=source.dims,
-        name=source.dims[0],
+    calendar, usecf = _get_usecf_and_warn(
+        calendar, "date_range_like", "xarray.date_range_like"
     )
-
-
-def _convert_datetime(
-    datetime: pydt.datetime | cftime.datetime,
-    new_doy: float | int | None = None,
-    calendar: str = "default",
-) -> cftime.datetime | pydt.datetime | float:
-    """Convert a datetime object to another calendar.
-
-    Nanosecond information are lost as cftime.datetime doesn't support them.
-
-    Parameters
-    ----------
-    datetime : datetime.datetime or cftime.datetime
-        A datetime object to convert.
-    new_doy : float or int, optional
-        Allows for redefining the day of year (thus ignoring month and day information from the source datetime).
-        -1 is understood as a nan.
-    calendar : str
-        The target calendar
-
-    Returns
-    -------
-    Union[cftime.datetime, datetime.datetime, np.nan]
-        A datetime object of the target calendar with the same year, month, day and time as the source
-        (month and day according to `new_doy` if given).
-        If the month and day doesn't exist in the target calendar, returns np.nan. (Ex. 02-29 in "noleap")
-    """
-    if new_doy in [np.nan, -1]:
-        return np.nan
-    if new_doy is not None:
-        new_date = cftime.num2date(
-            new_doy - 1,
-            f"days since {datetime.year}-01-01",
-            calendar=calendar if calendar != "default" else "standard",
-        )
-    else:
-        new_date = datetime
-    try:
-        return datetime_classes[calendar](
-            datetime.year,
-            new_date.month,
-            new_date.day,
-            datetime.hour,
-            datetime.minute,
-            datetime.second,
-            datetime.microsecond,
-        )
-    except ValueError:
-        return np.nan
+    return xr.coding.calendar_ops.date_range_like(
+        source=source, calendar=calendar, use_cftime=usecf
+    )
 
 
 def select_time(
