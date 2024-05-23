@@ -13,6 +13,8 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 
+from .sdba import loess
+
 """
 Implemented partitioning algorithms:
 
@@ -293,6 +295,109 @@ def lafferty_sriver(
     # Mean projection:
     # This is not part of the original algorithm, but we want all partition algos to have similar outputs.
     g = sm.mean(dim="model").mean(dim="scenario").mean(dim="downscaling")
+
+    return g, uncertainty
+
+
+def general_partition(
+    da: xr.DataArray,
+    sm: xr.DataArray | str = "loess",
+    var_first: list = ["model", "reference", "method"],
+    mean_first: list = ["scenario"],
+    weights: list = ["model", "reference", "method"],
+) -> tuple[xr.DataArray, xr.DataArray]:
+    """Return the mean and partitioned variance of an ensemble.
+
+    This is a general function that can be used to implemented methods from different papers.
+    The defaults are set to match the Lavoie et al. (2025, in preparation) method.
+
+    Parameters
+    ----------
+    da : xr.DataArray
+        Time series with dimensions 'time', mean_first and var_first.
+    sm : xr.DataArray or str
+        Smoothed time series over time, with the same dimensions as `da`.
+        If 'poly', this is estimated using a 4th-order polynomial.
+        If 'loess', this is estimated using a LOESS curve.
+        It is also possible to pass a precomputed smoothed time series.
+    var_first: list of strings
+        List of dimensions where the variance is computed first of the dimension, followed by the mean over the other dimensions.
+    mean_first : list of strings
+        List of dimensions where the mean over the other dimensions is computed first, followed by the variance over the dimension.
+    weights: list of strings
+        List of dimensions where the first operation is weighted.
+
+    Returns
+    -------
+    xr.DataArray, xr.DataArray
+        The mean relative to the baseline, and the components of variance of the ensemble. These components are
+        coordinates along the `uncertainty` dimension: `variability`, `model`, `scenario`, `downscaling` and `total`.
+
+    Notes
+    -----
+    To prepare input data, make sure `da` has dimensions list in both var_first and mean_first, as well as time.
+    e.g. `da.rename({"experiment": "scenario"})`.
+
+    To get the fraction of the total variance instead of the variance itself, call `fractional_uncertainty` on the
+    output.
+    """
+    all_types = mean_first + var_first
+
+    if xr.infer_freq(da.time)[0] not in ["A", "Y"]:
+        raise ValueError("This algorithm expects annual time series.")
+
+    if not ({"time"} | set(all_types)).issubset(da.dims):
+        raise ValueError(f"DataArray dimensions should include {all_types} and time.")
+
+    if sm == "poly":
+        # Fit a 4th order polynomial
+        fit = da.polyfit(dim="time", deg=4, skipna=True)
+        sm = xr.polyval(coord=da.time, coeffs=fit.polyfit_coefficients).where(
+            da.notnull()
+        )
+    elif sm == "loess":
+        sm = loess.loess_smoothing(da)
+
+    # "Interannual variability is then estimated as the centered rolling 11-year variance of the difference
+    # between the extracted forced response and the raw outputs, averaged over all outputs."
+    # same as lafferty_sriver()
+    nv_u = (da - sm).rolling(time=11, center=True).var().mean(dim=all_types)
+
+    all_u = []
+    total = nv_u.copy()
+    for t in mean_first:
+        all_but_t = [x for x in all_types if x != t]
+        if t in weights:
+            tw = sm.count(t)
+            t_u = sm.mean(dim=all_but_t).weighted(tw).var(dim=t)
+
+        else:
+            t_u = sm.mean(dim=all_but_t).var(dim=t)
+        all_u.append(t_u)
+        total += t_u
+
+    for t in var_first:
+        all_but_t = [x for x in all_types if x != t]
+        if t in weights:
+            tw = sm.count(t)
+            t_u = sm.var(dim=t).weighted(tw).mean(dim=all_but_t)
+
+        else:
+            t_u = sm.var(dim=t).mean(dim=all_but_t)
+        all_u.append(t_u)
+        total += t_u
+
+    # Create output array with the uncertainty components
+    u = pd.Index(all_types + ["variability", "total"], name="uncertainty")
+    uncertainty = xr.concat(all_u + [nv_u, total], dim=u)
+
+    # Keep a trace of the elements for each uncertainty component
+    for t in all_types:
+        uncertainty.attrs[t] = da[t].values
+
+    # Mean projection:
+    # This is not part of the original algorithm, but we want all partition algos to have similar outputs.
+    g = sm.mean(dim=all_types)
 
     return g, uncertainty
 
