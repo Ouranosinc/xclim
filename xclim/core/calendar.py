@@ -60,7 +60,6 @@ __all__ = [
 
 # Maximum day of year in each calendar.
 max_doy = {
-    "default": 366,
     "standard": 366,
     "gregorian": 366,
     "proleptic_gregorian": 366,
@@ -73,7 +72,7 @@ max_doy = {
 }
 
 # Some xclim.core.utils functions made accessible here for backwards compatibility reasons.
-datetime_classes = {"default": pydt.datetime, **cftime._cftime.DATE_TYPES}  # noqa
+datetime_classes = cftime._cftime.DATE_TYPES
 
 # Names of calendars that have the same number of days for all years
 uniform_calendars = ("noleap", "all_leap", "365_day", "366_day", "360_day")
@@ -97,8 +96,11 @@ def _get_usecf_and_warn(calendar: str, xcfunc: str, xrfunc: str):
     return calendar, use_cftime
 
 
-def days_in_year(year: int, calendar: str = "default") -> int:
-    """Return the number of days in the input year according to the input calendar."""
+def days_in_year(year: int, calendar: str = "proleptic_gregorian") -> int:
+    """Deprecated : use :py:func:`xarray.coding.calendar_ops._days_in_year` instead. Passing use_cftime=False instead of calendar='default'.
+
+    Return the number of days in the input year according to the input calendar.
+    """
     calendar, usecf = _get_usecf_and_warn(
         calendar, "days_in_year", "xarray.coding.calendar_ops._days_in_year"
     )
@@ -112,7 +114,9 @@ def doy_from_string(doy: DayOfYearStr, year: int, calendar: str) -> int:
 
 
 def date_range(*args, **kwargs) -> pd.DatetimeIndex | CFTimeIndex:
-    """Wrap a Pandas date_range object.
+    """Deprecated : use :py:func:`xarray.date_range` instead. Passing use_cftime=False instead of calendar='default'.
+
+    Wrap a Pandas date_range object.
 
     Uses pd.date_range (if calendar == 'default') or xr.cftime_range (otherwise).
     """
@@ -326,106 +330,10 @@ def convert_calendar(
     doy: bool | str = False,
     dim: str = "time",
 ) -> DataType:
-    """Convert a DataArray/Dataset to another calendar using the specified method.
+    """Deprecated : use :py:meth:`xarray.Dataset.convert_calendar` or :py:meth:`xarray.DataArray.convert_calendar`
+    or :py:func:`xarray.coding.calendar_ops.convert_calendar` instead. Passing use_cftime=False instead of calendar='default'.
 
-    By default, only converts the individual timestamps, does not modify any data except in dropping invalid/surplus dates or inserting missing dates.
-
-    If the source and target calendars are either no_leap, all_leap or a standard type, only the type of the time array is modified.
-    When converting to a leap year from a non-leap year, the 29th of February is removed from the array.
-    In the other direction and if `target` is a string, the 29th of February will be missing in the output,
-    unless `missing` is specified, in which case that value is inserted.
-
-    For conversions involving `360_day` calendars, see Notes.
-
-    This method is safe to use with sub-daily data as it doesn't touch the time part of the timestamps.
-
-    Parameters
-    ----------
-    source : xr.DataArray or xr.Dataset
-        Input array/dataset with a time coordinate of a valid dtype (datetime64 or a cftime.datetime).
-    target : xr.DataArray or str
-        Either a calendar name or the 1D time coordinate to convert to.
-        If an array is provided, the output will be reindexed using it and in that case, days in `target`
-        that are missing in the converted `source` are filled by `missing` (which defaults to NaN).
-    align_on : {None, 'date', 'year', 'random'}
-        Must be specified when either source or target is a `360_day` calendar, ignored otherwise. See Notes.
-    missing : Any, optional
-        A value to use for filling in dates in the target that were missing in the source.
-        If `target` is a string, default (None) is not to fill values. If it is an array, default is to fill with NaN.
-    doy: bool or {'year', 'date'}
-        If not False, variables flagged as "dayofyear" (with a `is_dayofyear==1` attribute) are converted to the new calendar too.
-        Can be a string, which will be passed as the `align_on` argument of :py:func:`convert_doy`.
-        If True, `year` is passed.
-    dim : str
-        Name of the time coordinate.
-
-    Returns
-    -------
-    xr.DataArray or xr.Dataset
-        Copy of source with the time coordinate converted to the target calendar.
-        If `target` is given as an array, the output is reindexed to it, with fill value `missing`.
-        If `target` was a string and `missing` was None (default), invalid dates in the new calendar are dropped,
-        but missing dates are not inserted.
-        If `target` was a string and `missing` was given, then start, end and frequency of the new time axis are
-        inferred and the output is reindexed to that a new array.
-
-    Notes
-    -----
-    If one of the source or target calendars is `360_day`, `align_on` must be specified and two options are offered.
-
-    "year"
-      The dates are translated according to their rank in the year (dayofyear), ignoring their original month and day information,
-      meaning that the missing/surplus days are added/removed at regular intervals.
-
-      From a `360_day` to a standard calendar, the output will be missing the following dates (day of year in parentheses):
-        To a leap year:
-          January 31st (31), March 31st (91), June 1st (153), July 31st (213), September 31st (275) and November 30th (335).
-        To a non-leap year:
-          February 6th (36), April 19th (109), July 2nd (183), September 12th (255), November 25th (329).
-
-      From standard calendar to a '360_day', the following dates in the source array will be dropped:
-        From a leap year:
-          January 31st (31), April 1st (92), June 1st (153), August 1st (214), September 31st (275), December 1st (336)
-        From a non-leap year:
-          February 6th (37), April 20th (110), July 2nd (183), September 13th (256), November 25th (329)
-
-      This option is best used on daily and subdaily data.
-
-    "date"
-      The month/day information is conserved and invalid dates are dropped from the output. This means that when
-      converting from a `360_day` to a standard calendar, all 31st (Jan, March, May, July, August, October and December)
-      will be missing as there is no equivalent dates in the `360_day` and the 29th (on non-leap years) and 30th of
-      February will be dropped as there are no equivalent dates in a standard calendar.
-
-      This option is best used with data on a frequency coarser than daily.
-
-    "random"
-      Similar to "year", each day of year of the source is mapped to another day of year of the target. However, instead
-      of having always the same missing days according the source and target years, here 5 days are chosen randomly, one
-      for each fifth of the year. However, February 29th is always missing when converting to a leap year, or its value
-      is dropped when converting from a leap year. This is similar to method used in the
-      :cite:t:`pierce_statistical_2014` dataset.
-
-      This option is best used on daily data.
-
-    References
-    ----------
-    :cite:cts:`pierce_statistical_2014`
-
-    Examples
-    --------
-    This method does not try to fill the missing dates other than with a constant value, passed with `missing`.
-    In order to fill the missing dates with interpolation, one can simply use xarray's method:
-
-    >>> tas_nl = convert_calendar(tas, "noleap")  # For the example
-    >>> with_missing = convert_calendar(tas_nl, "standard", missing=np.NaN)
-    >>> out = with_missing.interpolate_na("time", method="linear")
-
-    Here, if Nans existed in the source data, they will be interpolated too. If that is,
-    for some reason, not wanted, the workaround is to do:
-
-    >>> mask = convert_calendar(tas_nl, "standard").notnull()
-    >>> out2 = out.where(mask)
+    Convert a DataArray/Dataset to another calendar using the specified method.
     """
     if isinstance(target, xr.DataArray):
         raise NotImplementedError(
@@ -452,28 +360,9 @@ def interp_calendar(
     target: xr.DataArray,
     dim: str = "time",
 ) -> xr.DataArray | xr.Dataset:
-    """Interpolates a DataArray/Dataset to another calendar based on decimal year measure.
+    """Deprecated : use :py:func:`xarray.coding.calendar_ops.interp_calendar` instead.
 
-    Each timestamp in source and target are first converted to their decimal year equivalent
-    then source is interpolated on the target coordinate. The decimal year is the number of
-    years since 0001-01-01 AD.
-    Ex: '2000-03-01 12:00' is 2000.1653 in a standard calendar or 2000.16301 in a 'noleap' calendar.
-
-    This method should be used with daily data or coarser. Sub-daily result will have a modified day cycle.
-
-    Parameters
-    ----------
-    source : xr.DataArray or xr.Dataset
-        The source data to interpolate, must have a time coordinate of a valid dtype (np.datetime64 or cftime objects)
-    target : xr.DataArray
-        The target time coordinate of a valid dtype (np.datetime64 or cftime objects)
-    dim : str
-        The time coordinate name.
-
-    Return
-    ------
-    xr.DataArray or xr.Dataset
-        The source interpolated on the decimal years of target,
+    Interpolates a DataArray/Dataset to another calendar based on decimal year measure.
     """
     _, _ = _get_usecf_and_warn(
         "standard", "interp_calendar", "xarray.coding.calendar_ops.interp_calendar"
@@ -515,19 +404,9 @@ def ensure_cftime_array(time: Sequence) -> np.ndarray | Sequence[cftime.datetime
 
 
 def datetime_to_decimal_year(times: xr.DataArray, calendar: str = "") -> xr.DataArray:
-    """Convert a datetime xr.DataArray to decimal years according to its calendar or the given one.
+    """Deprecated : use :py:func:`xarray.coding.calendar_ops_datetime_to_decimal_year` instead.
 
-    Decimal years are the number of years since 0001-01-01 00:00:00 AD.
-    Ex: '2000-03-01 12:00' is 2000.1653 in a standard calendar, 2000.16301 in a "noleap" or 2000.16806 in a "360_day".
-
-    Parameters
-    ----------
-    times : xr.DataArray
-    calendar : str
-
-    Returns
-    -------
-    xr.DataArray
+    Convert a datetime xr.DataArray to decimal years according to its calendar or the given one.
     """
     _, _ = _get_usecf_and_warn(
         "standard",
@@ -1291,28 +1170,9 @@ def days_since_to_doy(
 
 
 def date_range_like(source: xr.DataArray, calendar: str) -> xr.DataArray:
-    """Generate a datetime array with the same frequency, start and end as another one, but in a different calendar.
+    """Deprecated : use :py:func:`xarray.date_range_like` instead. Passing use_cftime=False instead of calendar='default'.
 
-    Parameters
-    ----------
-    source : xr.DataArray
-        1D datetime coordinate DataArray
-    calendar : str
-        New calendar name.
-
-    Raises
-    ------
-    ValueError
-        If the source's frequency was not found.
-
-    Returns
-    -------
-    xr.DataArray
-        1D datetime coordinate with the same start, end and frequency as the source, but in the new calendar.
-            The start date is assumed to exist in the target calendar.
-            If the end date doesn't exist, the code tries 1 and 2 calendar days before.
-            Exception when the source is in 360_day and the end of the range is the 30th of a 31-days month,
-            then the 31st is appended to the range.
+    Generate a datetime array with the same frequency, start and end as another one, but in a different calendar.
     """
     calendar, usecf = _get_usecf_and_warn(
         calendar, "date_range_like", "xarray.date_range_like"
