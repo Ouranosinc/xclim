@@ -8,7 +8,7 @@ Contributors to this version: Trevor James Smith (:user:`Zeitsperre`).
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
-* Calendar utilities that have an equivalent in xarray have been deprecated and will be removed in 0.51. (:issue:`1010`). This concerns the following members of ``xclim.core.calendar``:
+* Calendar utilities that have an equivalent in xarray have been deprecated and will be removed in 0.51. (:issue:`1010`, :pull:`1761`). This concerns the following members of ``xclim.core.calendar``:
     - ``convert_calendar`` : Use ``Dataset.convert_calendar``, ``DataArray.convert_calendar`` or ``xr.coding.calendar_ops.convert_calendar``  instead.
         + If your code passes ``target`` as an array, first convert the source to the target's calendar and then reindex the result to ``target``.
         + If you were using the ``doy=True`` option, replace it with ``xc.core.calendar.convert_doy(source, target_cal).convert_calendar(target_cal)``.
