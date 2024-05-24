@@ -6,6 +6,19 @@ v0.50.0 (unreleased)
 --------------------
 Contributors to this version: Trevor James Smith (:user:`Zeitsperre`).
 
+Breaking changes
+^^^^^^^^^^^^^^^^
+* Calendar utilities that have an equivalent in xarray have been deprecated and will be removed in 0.51. (:issue:`1010`). This concerns the following members of ``xclim.core.calendar``:
+    - ``convert_calendar`` : Use ``Dataset.convert_calendar``, ``DataArray.convert_calendar`` or ``xr.coding.calendar_ops.convert_calendar``  instead.
+        + If your code passes ``target`` as an array, first convert the source to the target's calendar and then reindex the result to ``target``.
+        + If you were using the ``doy=True`` option, replace it with ``xc.core.calendar.convert_doy(source, target_cal).convert_calendar(target_cal)``.
+        + ``"default"`` is no longer a valid calendar name for any xclim functions and will not be returned by ``get_calendar``. Xarray has a ``use_cftime`` argument, xclim exposes it when the distinction is needed.
+    - ``date_range`` : Use ``xarray.date_range`` instead.
+    - ``date_range_like``: Use ``xarray.date_range_like`` instead.
+    - ``interp_calendar`` : Use ``xarray.coding.calendar_ops.interp_calendar`` instead.
+    - ``days_in_year`` : Use ``xarray.coding.calendar_ops._days_in_year`` instead.
+    - ``datetime_to_decimal_year`` : Use ``xarray.coding.calendar_ops._datetime_to_decimal_year`` instead.
+
 Internal changes
 ^^^^^^^^^^^^^^^^
 * Synchronized tooling versions across ``pyproject.toml`` and ``tox.ini`` and pinned them to the latest stable releases in GitHub Workflows. (:pull:`1744`).

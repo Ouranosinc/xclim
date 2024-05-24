@@ -227,7 +227,7 @@ def _convert_doy_date(doy: int, year: int, src, tgt):
 
 
 def convert_doy(
-    source: xr.DataArray,
+    source: xr.DataArray | xr.Dataset,
     target_cal: str,
     source_cal: str | None = None,
     align_on: str = "year",
@@ -238,8 +238,9 @@ def convert_doy(
 
     Parameters
     ----------
-    source : xr.DataArray
+    source : xr.DataArray or xr.Dataset
       Day of year data (range [1, 366], max depending on the calendar).
+      If a Dataset, the function is mapped to each variables with attribute `is_day_of_year == 1`.
     target_cal : str
       Name of the calendar to convert to.
     source_cal : str, optional
@@ -254,6 +255,22 @@ def convert_doy(
     dim : str
       Name of the temporal dimension.
     """
+    if isinstance(source, xr.Dataset):
+        return source.map(
+            lambda da: (
+                da
+                if da.attrs.get("is_dayofyear") != 1
+                else convert_doy(
+                    da,
+                    target_cal,
+                    source_cal=source_cal,
+                    align_on=align_on,
+                    missing=missing,
+                    dim=dim,
+                )
+            )
+        )
+
     source_cal = source_cal or source.attrs.get("calendar", get_calendar(source[dim]))
     is_calyear = xr.infer_freq(source[dim]) in ("YS-JAN", "Y-DEC", "YE-DEC")
 
@@ -267,7 +284,7 @@ def convert_doy(
             max_doy_src = max_doy[source_cal]
         else:
             max_doy_src = xr.apply_ufunc(
-                days_in_year,
+                xr.coding.calendar_ops._days_in_year,
                 year_of_the_doy,
                 vectorize=True,
                 dask="parallelized",
@@ -277,7 +294,7 @@ def convert_doy(
             max_doy_tgt = max_doy[target_cal]
         else:
             max_doy_tgt = xr.apply_ufunc(
-                days_in_year,
+                xr.coding.calendar_ops._days_in_year,
                 year_of_the_doy,
                 vectorize=True,
                 dask="parallelized",
@@ -1118,7 +1135,10 @@ def _doy_days_since_doys(
     base_doy = base.dt.dayofyear
 
     doy_max = xr.apply_ufunc(
-        days_in_year, base.dt.year, vectorize=True, kwargs={"calendar": calendar}
+        xr.coding.calendar_ops._days_in_year,
+        base.dt.year,
+        vectorize=True,
+        kwargs={"calendar": calendar},
     )
 
     if start is not None:
@@ -1184,7 +1204,7 @@ def doy_to_days_since(
     """
     base_calendar = get_calendar(da)
     calendar = calendar or da.attrs.get("calendar", base_calendar)
-    dac = convert_calendar(da, calendar)
+    dac = da.convert_calendar(calendar)
 
     base_doy, start_doy, doy_max = _doy_days_since_doys(dac.time, start)
 
@@ -1204,7 +1224,7 @@ def doy_to_days_since(
 
     out.attrs.pop("is_dayofyear", None)
     out.attrs.update(calendar=calendar)
-    return convert_calendar(out, base_calendar).rename(da.name)
+    return out.convert_calendar(base_calendar).rename(da.name)
 
 
 def days_since_to_doy(
@@ -1253,7 +1273,7 @@ def days_since_to_doy(
     base_calendar = get_calendar(da)
     calendar = calendar or da.attrs.get("calendar", base_calendar)
 
-    dac = convert_calendar(da, calendar)
+    dac = da.convert_calendar(calendar)
 
     _, start_doy, doy_max = _doy_days_since_doys(dac.time, start)
 
@@ -1267,7 +1287,7 @@ def days_since_to_doy(
         {k: v for k, v in da.attrs.items() if k not in ["units", "calendar"]}
     )
     out.attrs.update(calendar=calendar, is_dayofyear=1)
-    return convert_calendar(out, base_calendar).rename(da.name)
+    return out.convert_calendar(base_calendar).rename(da.name)
 
 
 def date_range_like(source: xr.DataArray, calendar: str) -> xr.DataArray:
@@ -1407,7 +1427,7 @@ def select_time(
         if calendar not in uniform_calendars:
             # For non-uniform calendars, we can't simply convert dates to doys
             # conversion to all_leap is safe for all non-uniform calendar as it doesn't remove any date.
-            time = convert_calendar(time, "all_leap")
+            time = time.convert_calendar("all_leap")
             # values of time are the _old_ calendar
             # and the new calendar is in the coordinate
             calendar = "all_leap"

@@ -13,7 +13,7 @@ from typing import Any, Literal
 import numpy as np
 import xarray as xr
 
-from xclim.core.calendar import common_calendar, convert_calendar, get_calendar
+from xclim.core.calendar import common_calendar, get_calendar
 from xclim.core.formatting import update_history
 from xclim.core.utils import calc_perc
 
@@ -464,4 +464,4 @@ def _ens_align_datasets(
     if calendar is None:
         calendar = common_calendar(calendars, join="outer")
     cal_kwargs.setdefault("align_on", "date")
-    return [convert_calendar(ds, calendar, **cal_kwargs) for ds in ds_all]
+    return [ds.convert_calendar(calendar, **cal_kwargs) for ds in ds_all]
