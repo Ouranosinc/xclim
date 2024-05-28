@@ -293,6 +293,7 @@ def _spell_length_distribution(
     thresh: str = "1 mm d-1",
     window: int = 1,
     stat: str = "mean",
+    stat_resample: str | None = None,
     group: str | Grouper = "time",
     resample_before_rl: bool = True,
 ) -> xr.DataArray:
@@ -318,9 +319,10 @@ def _spell_length_distribution(
       Float of the quantile if the method is "quantile".
     window : int
       Number of consecutive days respecting the constraint in order to begin a spell. Default is 1, which is equivalent to `_threshold_count`
-    stat: {'mean','max','min'}
-      Statistics to apply to the resampled input at the {group} (e.g. 1-31 Jan 1980)
-      and then over all years (e.g. Jan 1980-2010)
+    stat: {'mean', 'sum', 'max','min'}
+      Statistics to apply to the remaining time dimension after resampling (e.g. Jan 1980-2010)
+    stat_resample: {'mean', 'sum', 'max','min'}, optional
+      Statistics to apply to the resampled input at the {group} (e.g. 1-31 Jan 1980). If `None`, the same method as `stat` will be used.
     group : {'time', 'time.season', 'time.month'}
       Grouping of the output.
       E.g. If 'time.month', the spell lengths are computed separately for each month.
@@ -337,7 +339,17 @@ def _spell_length_distribution(
 
     @map_groups(out=[Grouper.PROP], main_only=True)
     def _spell_stats(
-        ds, *, dim, method, thresh, window, op, freq, resample_before_rl, stat
+        ds,
+        *,
+        dim,
+        method,
+        thresh,
+        window,
+        op,
+        freq,
+        resample_before_rl,
+        stat,
+        stat_resample,
     ):
         # PB: This prevents an import error in the distributed dask scheduler, but I don't know why.
         import xarray.core.resample_cftime  # noqa: F401, pylint: disable=unused-import
@@ -354,7 +366,7 @@ def _spell_length_distribution(
             cond,
             resample_before_rl,
             rl.rle_statistics,
-            reducer=stat,
+            reducer=stat_resample,
             window=window,
             dim=dim,
             freq=freq,
@@ -381,6 +393,7 @@ def _spell_length_distribution(
         freq=group.freq,
         resample_before_rl=resample_before_rl,
         stat=stat,
+        stat_resample=stat_resample or stat,
     ).out
     return to_agg_units(out, da, op="count")
 
@@ -400,6 +413,7 @@ def _threshold_count(
     op: str = ">=",
     thresh: str = "1 mm d-1",
     stat: str = "mean",
+    stat_resample: str | None = None,
     group: str | Grouper = "time",
 ) -> xr.DataArray:
     r"""Correlation between two variables.
@@ -421,9 +435,10 @@ def _threshold_count(
       Threshold on which to evaluate the condition to have a spell.
       Str with units if the method is "amount".
       Float of the quantile if the method is "quantile".
-    stat: {'mean','max','min'}
-      Statistics to apply to the resampled input at the {group} (e.g. 1-31 Jan 1980)
-      and then over all years (e.g. Jan 1980-2010)
+    stat: {'mean', 'sum', 'max','min'}
+      Statistics to apply to the remaining time dimension after resampling (e.g. Jan 1980-2010)
+    stat_resample: {'mean', 'sum', 'max','min'}, optional
+      Statistics to apply to the resampled input at the {group} (e.g. 1-31 Jan 1980). If `None`, the same method as `stat` will be used.
     group : {'time', 'time.season', 'time.month'}
       Grouping of the output.
       e.g. For 'time.month', the correlation would be calculated on each month separately,
@@ -439,7 +454,14 @@ def _threshold_count(
     This corresponds to ``xclim.sdba.properties._spell_length_distribution`` with `window=1`.
     """
     return _spell_length_distribution(
-        da, method=method, op=op, thresh=thresh, stat=stat, group=group, window=1
+        da,
+        method=method,
+        op=op,
+        thresh=thresh,
+        stat=stat,
+        stat_resample=stat_resample,
+        group=group,
+        window=1,
     )
 
 
@@ -804,6 +826,7 @@ def _bivariate_spell_length_distribution(
     thresh2: str = "1 mm d-1",
     window: int = 1,
     stat: str = "mean",
+    stat_resample: str | None = None,
     group: str | Grouper = "time",
     resample_before_rl: bool = True,
 ) -> xr.DataArray:
@@ -843,9 +866,10 @@ def _bivariate_spell_length_distribution(
     window : int
       Number of consecutive days respecting the constraint in order to begin a spell.
       Default is 1, which is equivalent to `_bivariate_threshold_count`
-    stat: {'mean','max','min'}
-      Statistics to apply to the resampled input at the {group} (e.g. 1-31 Jan 1980)
-      and then over all years (e.g. Jan 1980-2010)
+    stat: {'mean', 'sum', 'max','min'}
+      Statistics to apply to the remaining time dimension after resampling (e.g. Jan 1980-2010)
+    stat_resample: {'mean', 'sum', 'max','min'}, optional
+      Statistics to apply to the resampled input at the {group} (e.g. 1-31 Jan 1980). If `None`, the same method as `stat` will be used.
     group : {'time', 'time.season', 'time.month'}
       Grouping of the output.
       E.g. If 'time.month', the spell lengths are computed separately for each month.
@@ -863,27 +887,37 @@ def _bivariate_spell_length_distribution(
 
     @map_groups(out=[Grouper.PROP], main_only=True)
     def _bivariate_spell_stats(
-        ds, *, dim, method, thresh, window, op, freq, resample_before_rl, stat
+        ds,
+        *,
+        dim,
+        methods,
+        threshs,
+        ops,
+        freq,
+        window,
+        resample_before_rl,
+        stat,
+        stat_resample,
     ):
         # PB: This prevents an import error in the distributed dask scheduler, but I don't know why.
         import xarray.core.resample_cftime  # noqa: F401, pylint: disable=unused-import
 
         conds = []
         masks = []
-        for da, thresh0, op0, method0 in zip([ds.da1, ds.da2], thresh, op, method):
+        for da, thresh, op, method in zip([ds.da1, ds.da2], threshs, ops, methods):
             masks.append(
                 ~(da.isel({dim: 0}).isnull()).drop_vars(dim)
             )  # mask of the ocean with NaNs
-            if method0 == "quantile":
-                thresh0 = da.quantile(thresh0, dim=dim).drop_vars("quantile")
-            conds.append(op0(da, thresh0))
+            if method == "quantile":
+                thresh = da.quantile(thresh, dim=dim).drop_vars("quantile")
+            conds.append(op(da, thresh))
         mask = masks[0] & masks[1]
         cond = conds[0] & conds[1]
         out = rl.resample_and_rl(
             cond,
             resample_before_rl,
             rl.rle_statistics,
-            reducer=stat,
+            reducer=stat_resample,
             window=window,
             dim=dim,
             freq=freq,
@@ -907,12 +941,13 @@ def _bivariate_spell_length_distribution(
         xr.Dataset({"da1": da1, "da2": da2}),
         group=group,
         thresh=thresh,
-        window=window,
         method=method,
         op=[ops[op1], ops[op2]],
+        window=window,
         freq=group.freq,
         resample_before_rl=resample_before_rl,
         stat=stat,
+        stat_resample=stat_resample or stat,
     ).out
     return to_agg_units(out, da1, op="count")
 
@@ -935,6 +970,7 @@ def _bivariate_threshold_count(
     thresh1: str = "1 mm d-1",
     thresh2: str = "1 mm d-1",
     stat: str = "mean",
+    stat_resample: str | None = None,
     group: str | Grouper = "time",
 ) -> xr.DataArray:
     """Count the number of time steps where two variables respect given conditions.
@@ -970,6 +1006,10 @@ def _bivariate_threshold_count(
       Threshold on which to evaluate the condition to have a spell.
       Str with units if the method is "amount".
       Float of the quantile if the method is "quantile".
+    stat: {'mean', 'sum', 'max','min'}
+      Statistics to apply to the remaining time dimension after resampling (e.g. Jan 1980-2010)
+    stat_resample: {'mean', 'sum', 'max','min'}, optional
+      Statistics to apply to the resampled input at the {group} (e.g. 1-31 Jan 1980). If `None`, the same method as `stat` will be used.
     group : {'time', 'time.season', 'time.month'}
       Grouping of the output.
       e.g. For 'time.month', the correlation would be calculated on each month separately,
@@ -996,6 +1036,7 @@ def _bivariate_threshold_count(
         thresh2=thresh2,
         window=1,
         stat=stat,
+        stat_resample=stat_resample,
         group=group,
     )
 
