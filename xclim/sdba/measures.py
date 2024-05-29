@@ -470,7 +470,7 @@ def _taylordiagram(
         Compute the property and measure for each temporal groups individually.
         Currently not implemented.
     normalize : bool
-        If `True`, Normalize the data by dividing by the standard deviation of the reference.
+        If `True`, normalize the data by dividing by the standard deviation of the reference.
         Default is `False`.
 
 
