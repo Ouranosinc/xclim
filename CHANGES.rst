@@ -8,7 +8,7 @@ Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Éric Dup
 
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-* New option `normalize` in `sdba.measures.taylordiagram` to obtain normalized Taylor diagrams (divide standard deviations by standard deviation of the reference).
+* New option `normalize` in `sdba.measures.taylordiagram` to obtain normalized Taylor diagrams (divide standard deviations by standard deviation of the reference). (:pull:`1764`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
