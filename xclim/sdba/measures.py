@@ -451,6 +451,7 @@ def _taylordiagram(
     ref: xr.DataArray,
     dim: str = "time",
     group: str | Grouper = "time",
+    normalize: bool = False,
 ) -> xr.DataArray:
     """Taylor diagram.
 
@@ -468,6 +469,9 @@ def _taylordiagram(
     group : str
         Compute the property and measure for each temporal groups individually.
         Currently not implemented.
+    normalize : bool
+        If `True`, Normalize the data by dividing by the standard deviation of the reference.
+        Default is `False`.
 
 
     Returns
@@ -495,6 +499,13 @@ def _taylordiagram(
             "units": ref.units,
         }
     )
+
+    # Normalize the standard deviations byt the standard deviation of the reference.
+    if normalize:
+        out[{"taylor_param": [0, 1]}] = (
+            out[{"taylor_param": [0, 1]}] / out[{"taylor_param": 0}]
+        )
+        out.attrs["normalized"] = True
 
     return out
 

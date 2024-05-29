@@ -4,7 +4,11 @@ Changelog
 
 v0.50.0 (unreleased)
 --------------------
-Contributors to this version: Trevor James Smith (:user:`Zeitsperre`).
+Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Éric Dupuis (:user:`coxipi`)
+
+New features and enhancements
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+* New option `normalize` in `sdba.measures.taylordiagram` to obtain normalized Taylor diagrams (divide standard deviations by standard deviation of the reference).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
