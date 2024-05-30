@@ -502,6 +502,10 @@ def _taylordiagram(
 
     # Normalize the standard deviations byt the standard deviation of the reference.
     if normalize:
+        if (out[{"taylor_param": 0}] == 0).any():
+            raise ValueError(
+                "`ref_std =0` (homogeneous field) obtained, normalization is not possible."
+            )
         out[{"taylor_param": [0, 1]}] = (
             out[{"taylor_param": [0, 1]}] / out[{"taylor_param": 0}]
         )
