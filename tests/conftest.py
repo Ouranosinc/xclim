@@ -4,6 +4,7 @@ from __future__ import annotations
 import os
 import re
 import shutil
+import sys
 import time
 import warnings
 from datetime import datetime as dt
@@ -141,7 +142,7 @@ def prsnd_series():
 def pr_hr_series():
     """Return precipitation hourly time series."""
     _pr_hr_series = partial(
-        test_timeseries, start="1/1/2000", variable="pr", units="kg m-2 s-1", freq="1H"
+        test_timeseries, start="1/1/2000", variable="pr", units="kg m-2 s-1", freq="h"
     )
     return _pr_hr_series
 
@@ -474,16 +475,24 @@ def gather_session_data(threadsafe_data_dir, worker_id, xdoctest_namespace):
     ):
         if helpers.PREFETCH_TESTING_DATA:
             print("`XCLIM_PREFETCH_TESTING_DATA` set. Prefetching testing data...")
-        if worker_id in "master":
+        if sys.platform == "win32":
+            raise OSError(
+                "UNIX-style file-locking is not supported on Windows. "
+                "Consider running `$ xclim prefetch_testing_data` to download testing data."
+            )
+        elif worker_id in ["master"]:
             helpers.populate_testing_data(branch=helpers.TESTDATA_BRANCH)
         else:
             _default_cache_dir.mkdir(exist_ok=True, parents=True)
-            test_data_being_written = FileLock(_default_cache_dir.joinpath(".lock"))
-            with test_data_being_written as fl:
+            lockfile = _default_cache_dir.joinpath(".lock")
+            test_data_being_written = FileLock(lockfile)
+            with test_data_being_written:
                 # This flag prevents multiple calls from re-attempting to download testing data in the same pytest run
                 helpers.populate_testing_data(branch=helpers.TESTDATA_BRANCH)
                 _default_cache_dir.joinpath(".data_written").touch()
-            fl.acquire()
+            with test_data_being_written.acquire():
+                if lockfile.exists():
+                    lockfile.unlink()
     shutil.copytree(_default_cache_dir, threadsafe_data_dir)
     helpers.generate_atmos(threadsafe_data_dir)
     xdoctest_namespace.update(helpers.add_example_file_paths(threadsafe_data_dir))

@@ -272,7 +272,7 @@ def test_wind_power_potential_from_3h_series():
     from xclim.testing.helpers import test_timeseries
 
     w = test_timeseries(
-        np.ones(96) * 15, variable="sfcWind", start="7/1/2000", units="m s-1", freq="3H"
+        np.ones(96) * 15, variable="sfcWind", start="7/1/2000", units="m s-1", freq="3h"
     )
     out = atmos.wind_power_potential(wind_speed=w)
 
@@ -280,7 +280,7 @@ def test_wind_power_potential_from_3h_series():
     power = out * 100
     power.attrs["units"] = "MW"
     annual_power = convert_units_to(
-        select_resample_op(power, op="sum", freq="D"), "MWh"
+        select_resample_op(power, op="integral", freq="D"), "MWh"
     )
     assert (annual_power == 100 * 24).all()
 

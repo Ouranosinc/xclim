@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import numpy as np
+import pytest
 
 from xclim import generic, set_options
 
@@ -84,10 +85,14 @@ class TestReturnLevel:
 class TestStats:
     """See other tests in test_land::TestStats"""
 
-    def test_simple(self, pr_series, random):
+    @pytest.mark.parametrize(
+        "op,word",
+        [("min", "Minimum"), ("integral", "Integral"), ("doymin", "Day of minimum")],
+    )
+    def test_simple(self, pr_series, random, op, word):
         pr = pr_series(random.random(400))
-        out = generic.stats(pr, freq="YS", op="min", season="MAM")
-        assert out.units == pr.units
+        out = generic.stats(pr, freq="YS", op=op)
+        assert out.long_name == f"{word} of variable"
 
     def test_ndq(self, ndq_series):
         out = generic.stats(ndq_series, freq="YS", op="min", season="MAM")
@@ -104,7 +109,7 @@ class TestStats:
         np.testing.assert_array_equal(out.sel(time="1902").isnull(), True)
 
     def test_3hourly(self, pr_hr_series, random):
-        pr = pr_hr_series(random.random(366 * 24)).resample(time="3H").mean()
+        pr = pr_hr_series(random.random(366 * 24)).resample(time="3h").mean()
         out = generic.stats(pr, freq="MS", op="var")
         assert out.units == "kg2 m-4 s-2"
         assert out.long_name == "Variance of variable"

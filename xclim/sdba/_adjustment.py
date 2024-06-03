@@ -1,9 +1,11 @@
+# pylint: disable=no-value-for-parameter
 """
 Adjustment Algorithms
 =====================
 
 This file defines the different steps, to be wrapped into the Adjustment objects.
 """
+
 from __future__ import annotations
 
 import numpy as np

@@ -123,6 +123,7 @@ as _all_ seasons are used, even the very short shoulder seasons.
 ...     dmc_dry_factor=2,
 ... )
 """
+
 # This file is structured in the following way:
 # Section 1: individual codes, numba-accelerated and vectorized functions.
 # Section 2: Larger computing functions (the FWI iterator and the fire_season iterator)
@@ -132,7 +133,7 @@ as _all_ seasons are used, even the very short shoulder seasons.
 from __future__ import annotations
 
 from collections import OrderedDict
-from typing import Sequence
+from collections.abc import Sequence
 
 import numpy as np
 import xarray as xr
@@ -149,6 +150,7 @@ __all__ = [
     "cffwis_indices",
     "daily_severity_rating",
     "drought_code",
+    "duff_moisture_code",
     "fire_season",
     "fire_weather_index",
     "fire_weather_ufunc",
@@ -840,9 +842,14 @@ def _fire_weather_calc(  # noqa: C901
                 ind_prevs["DMC"],
             )
         if "FFMC" in outputs:
-            out["FFMC"][..., it] = _fine_fuel_moisture_code(
-                tas[..., it], pr[..., it], ws[..., it], rh[..., it], ind_prevs["FFMC"]
-            )
+            with np.errstate(divide="ignore", invalid="ignore"):
+                out["FFMC"][..., it] = _fine_fuel_moisture_code(
+                    tas[..., it],
+                    pr[..., it],
+                    ws[..., it],
+                    rh[..., it],
+                    ind_prevs["FFMC"],
+                )
         if "ISI" in outputs:
             out["ISI"][..., it] = initial_spread_index(
                 ws[..., it], out["FFMC"][..., it]
@@ -886,7 +893,7 @@ def fire_weather_ufunc(  # noqa: C901
     ffmc0: xr.DataArray | None = None,
     winter_pr: xr.DataArray | None = None,
     season_mask: xr.DataArray | None = None,
-    start_dates: str | xr.DataArray | None = None,
+    start_dates: str | xr.DataArray | None = None,  # noqa: F841
     indexes: Sequence[str] | None = None,
     season_method: str | None = None,
     overwintering: bool = False,
@@ -1162,8 +1169,9 @@ def overwintering_drought_code(
     last_dc: xr.DataArray,
     winter_pr: xr.DataArray,
     carry_over_fraction: xr.DataArray | float = default_params["carry_over_fraction"],
-    wetting_efficiency_fraction: xr.DataArray
-    | float = default_params["wetting_efficiency_fraction"],
+    wetting_efficiency_fraction: xr.DataArray | float = default_params[
+        "wetting_efficiency_fraction"
+    ],
     min_dc: xr.DataArray | float = default_params["dc_start"],
 ) -> xr.DataArray:
     """Compute season-starting drought code based on previous season's last drought code and total winter precipitation.
@@ -1240,12 +1248,13 @@ def overwintering_drought_code(
     return wDC
 
 
-# TODO: The `noqa` can be removed when this function is no longer public
-def _convert_parameters(params: dict[str, int | float]) -> dict[str, int | float]:
+def _convert_parameters(
+    params: dict[str, int | float], funcname: str = "fire weather indices"
+) -> dict[str, int | float]:
     for param, value in params.copy().items():
         if param not in default_params:
             raise ValueError(
-                f"{param} is not a valid parameter for fire weather indices. See list in xc.indices.fire.default_params."
+                f"{param} is not a valid parameter for {funcname}. See the docstring of the function and the list in xc.indices.fire.default_params."
             )
         if isinstance(default_params[param], tuple):
             params[param] = convert_units_to(value, default_params[param][1])
@@ -1462,10 +1471,105 @@ def drought_code(
         overwintering=overwintering,
         dry_start=dry_start,
         initial_start_up=initial_start_up,
-        **_convert_parameters(params),
+        **_convert_parameters(params, "drought_code"),
     )
     out["DC"].attrs["units"] = ""
     return out["DC"]
+
+
+@declare_units(
+    tas="[temperature]",
+    pr="[precipitation]",
+    hurs="[]",
+    lat="[]",
+    snd="[length]",
+    dmc0="[]",
+    season_mask="[]",
+)
+def duff_moisture_code(
+    tas: xr.DataArray,
+    pr: xr.DataArray,
+    hurs: xr.DataArray,
+    lat: xr.DataArray,
+    snd: xr.DataArray | None = None,
+    dmc0: xr.DataArray | None = None,
+    season_mask: xr.DataArray | None = None,
+    season_method: str | None = None,
+    dry_start: str | None = None,
+    initial_start_up: bool = True,
+    **params,
+) -> xr.DataArray:
+    r"""Duff moisture code (FWI component).
+
+    The duff moisture code is part of the Canadian Forest Fire Weather Index System.
+    It is a numeric rating of the average moisture content of loosely compacted organic layers of moderate depth.
+
+    Parameters
+    ----------
+    tas : xr.DataArray
+        Noon temperature.
+    pr : xr.DataArray
+        Rain fall in open over previous 24 hours, at noon.
+    hurs : xr.DataArray
+        Noon relative humidity.
+    lat : xr.DataArray
+        Latitude coordinate
+    snd : xr.DataArray
+        Noon snow depth.
+    dmc0 : xr.DataArray
+        Initial values of the duff moisture code.
+    season_mask : xr.DataArray, optional
+        Boolean mask, True where/when the fire season is active.
+    season_method : {None, "WF93", "LA08", "GFWED"}
+        How to compute the start-up and shutdown of the fire season.
+        If "None", no start-ups or shutdowns are computed, similar to the R fire function.
+        Ignored if `season_mask` is given.
+    dry_start : {None, "CFS", 'GFWED'}
+        Whether to activate the DC and DMC "dry start" mechanism and which method to use.
+        See :py:func:`fire_weather_ufunc`.
+    initial_start_up : bool
+        If True (default), grid points where the fire season is active on the first timestep go through a start_up phase
+        for that time step. Otherwise, previous codes must be given as a continuing fire season is assumed for those
+        points.
+    params
+        Any other keyword parameters as defined in `xclim.indices.fire.fire_weather_ufunc` and in :py:data:`default_params`.
+
+    Returns
+    -------
+    xr.DataArray, [dimensionless]
+        Duff moisture code
+
+    Notes
+    -----
+    See :cite:cts:`code-natural_resources_canada_data_nodate`, the :py:mod:`xclim.indices.fire` module documentation,
+    and the docstring of :py:func:`fire_weather_ufunc` for more information. This algorithm follows the official R code
+    released by the CFS, which contains revisions from the original 1982 Fortran code.
+
+    References
+    ----------
+    :cite:cts:`fire-wang_updated_2015`
+    """
+    tas = convert_units_to(tas, "C")
+    pr = convert_units_to(pr, "mm/day")
+    if snd is not None:
+        snd = convert_units_to(snd, "m")
+
+    out = fire_weather_ufunc(
+        tas=tas,
+        pr=pr,
+        hurs=hurs,
+        lat=lat,
+        dmc0=dmc0,
+        snd=snd,
+        indexes=["DMC"],
+        season_mask=season_mask,
+        season_method=season_method,
+        dry_start=dry_start,
+        initial_start_up=initial_start_up,
+        **_convert_parameters(params, "duff_moisture_code"),
+    )
+    out["DMC"].attrs["units"] = ""
+    return out["DMC"]
 
 
 @declare_units(

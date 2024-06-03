@@ -22,6 +22,7 @@ of indicators. Once registered, algorithms can be used within indicators by sett
 To define another missing value algorithm, subclass :py:class:`MissingBase` and decorate it with
 :py:func:`xclim.core.options.register_missing_method`.
 """
+
 from __future__ import annotations
 
 import numpy as np
@@ -51,7 +52,7 @@ __all__ = [
     "register_missing_method",
 ]
 
-_np_timedelta64 = {"D": "timedelta64[D]", "H": "timedelta64[h]"}
+_np_timedelta64 = {"D": "timedelta64[D]", "h": "timedelta64[h]"}
 
 
 class MissingBase:
@@ -215,7 +216,7 @@ class MissingAny(MissingBase):
         Input array.
     freq: str
         Resampling frequency.
-    src_timestep: {"D", "H", "M"}
+    src_timestep: {"D", "h", "M"}
         Expected input frequency.
     indexer: {dim: indexer, }, optional
         Time attribute and values over which to subset the array. For example, use season='DJF' to select winter
@@ -295,11 +296,11 @@ class MissingWMO(MissingAny):
             raise ValueError(
                 "MissingWMO can only be used with Monthly or longer frequencies."
             )
-        obj = cls(da, "M", src_timestep, **indexer)
+        obj = cls(da, "ME", src_timestep, **indexer)
         miss = obj(**options)
         # Replace missing months by NaNs
         mda = miss.where(miss == 0)
-        return MissingAny(mda, freq, "M", **indexer)()
+        return MissingAny(mda, freq, "ME", **indexer)()
 
     def is_missing(self, null, count, nm=11, nc=5):
         from ..indices import (
@@ -334,7 +335,7 @@ class MissingPct(MissingBase):
         Resampling frequency.
     tolerance : float
         Fraction of missing values that are tolerated [0,1].
-    src_timestep : {"D", "H"}
+    src_timestep : {"D", "h"}
         Expected input frequency.
     indexer : {dim: indexer, }, optional
         Time attribute and values over which to subset the array. For example, use season='DJF' to select winter values,
@@ -371,7 +372,7 @@ class AtLeastNValid(MissingBase):
         Resampling frequency.
     n : int
         Minimum of valid values required.
-    src_timestep : {"D", "H"}
+    src_timestep : {"D", "h"}
         Expected input frequency.
     indexer : {dim: indexer, }, optional
         Time attribute and values over which to subset the array. For example, use season='DJF' to select winter

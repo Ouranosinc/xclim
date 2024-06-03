@@ -17,25 +17,25 @@ class TestMissingBase:
     def test_3hourly_input(self, random):
         """Creating array with 21 days of 3h"""
         n = 21 * 8
-        time = xr.cftime_range(start="2002-01-01", periods=n, freq="3H")
+        time = xr.cftime_range(start="2002-01-01", periods=n, freq="3h")
         ts = xr.DataArray(random.random(n), dims="time", coords={"time": time})
-        mb = missing.MissingBase(ts, freq="MS", src_timestep="3H")
+        mb = missing.MissingBase(ts, freq="MS", src_timestep="3h")
         # Make sure count is 31  * 8, because we're requesting a MS freq.
         assert mb.count == 31 * 8
 
     def test_monthly_input(self, random):
         """Creating array with 11 months."""
         n = 11
-        time = xr.cftime_range(start="2002-01-01", periods=n, freq="M")
+        time = xr.cftime_range(start="2002-01-01", periods=n, freq="ME")
         ts = xr.DataArray(random.random(n), dims="time", coords={"time": time})
-        mb = missing.MissingBase(ts, freq="YS", src_timestep="M")
+        mb = missing.MissingBase(ts, freq="YS", src_timestep="ME")
         # Make sure count is 12, because we're requesting a YS freq.
         assert mb.count == 12
 
         n = 5
         time = xr.cftime_range(start="2002-06-01", periods=n, freq="MS")
         ts = xr.DataArray(random.random(n), dims="time", coords={"time": time})
-        mb = missing.MissingBase(ts, freq="AS", src_timestep="M", season="JJA")
+        mb = missing.MissingBase(ts, freq="YS", src_timestep="MS", season="JJA")
         assert mb.count == 3
 
     def test_seasonal_input(self, random):
@@ -81,21 +81,21 @@ class TestMissingAnyFills:
         n = 378
         times = pd.date_range("2001-12-31", freq="1D", periods=n)
         da = xr.DataArray(np.arange(n), [("time", times)])
-        miss = missing.missing_any(da, "Q-NOV")
+        miss = missing.missing_any(da, "QE-NOV")
         np.testing.assert_array_equal(miss, [True, False, False, False, True])
 
     def test_to_period_start(self, tasmin_series):
         a = np.zeros(365) + K2C + 5.0
         a[2] -= 20
         ts = tasmin_series(a)
-        miss = missing.missing_any(ts, freq="AS-JUL")
+        miss = missing.missing_any(ts, freq="YS-JUL")
         np.testing.assert_equal(miss, [False])
 
     def test_to_period_end(self, tasmin_series):
         a = np.zeros(365) + K2C + 5.0
         a[2] -= 20
         ts = tasmin_series(a)
-        miss = missing.missing_any(ts, freq="A-JUN")
+        miss = missing.missing_any(ts, freq="YE-JUN")
         np.testing.assert_equal(miss, [False])
 
     def test_month(self, tasmin_series):
@@ -139,14 +139,14 @@ class TestMissingAnyFills:
         t = list(range(31))
         t.pop(5)
         ts2 = ts.isel(time=t)
-        miss = missing.missing_any(ts2, freq=None, src_timestep="H")
+        miss = missing.missing_any(ts2, freq=None, src_timestep="h")
         np.testing.assert_array_equal(miss, True)
 
         # With indexer
         miss = missing.missing_any(ts, freq=None, month=[7])
         np.testing.assert_array_equal(miss, False)
 
-        miss = missing.missing_any(ts2, freq=None, month=[7], src_timestep="H")
+        miss = missing.missing_any(ts2, freq=None, month=[7], src_timestep="h")
         np.testing.assert_array_equal(miss, True)
 
     def test_hydro(self, open_dataset):
@@ -264,7 +264,7 @@ class TestHourly:
 
     def test_any(self, pr_hr_series):
         pr = self.pr(pr_hr_series)
-        out = missing.missing_any(pr, "D", src_timestep="H")
+        out = missing.missing_any(pr, "D", src_timestep="h")
         np.testing.assert_array_equal(
             out,
             [True] + 8 * [False] + [True],
@@ -272,7 +272,7 @@ class TestHourly:
 
     def test_pct(self, pr_hr_series):
         pr = self.pr(pr_hr_series)
-        out = missing.missing_pct(pr, "D", src_timestep="H", tolerance=0.1)
+        out = missing.missing_pct(pr, "D", src_timestep="h", tolerance=0.1)
         np.testing.assert_array_equal(
             out,
             9 * [False] + [True],
@@ -280,7 +280,7 @@ class TestHourly:
 
     def test_at_least_n_valid(self, pr_hr_series):
         pr = self.pr(pr_hr_series)
-        out = missing.at_least_n_valid(pr, "D", src_timestep="H", n=20)
+        out = missing.at_least_n_valid(pr, "D", src_timestep="h", n=20)
         np.testing.assert_array_equal(
             out,
             9 * [False] + [True],

@@ -5,6 +5,7 @@ Units Handling Submodule
 `xclim`'s `pint`-based unit registry is an extension of the registry defined in `cf-xarray`.
 This module defines most unit handling methods.
 """
+
 from __future__ import annotations
 
 import logging
@@ -62,7 +63,7 @@ units = deepcopy(cf_xarray.units.units)
 # g is the most versatile float format.
 units.default_format = "gcf"
 # Switch this flag back to False. Not sure what that implies, but it breaks some tests.
-units.force_ndarray_like = False
+units.force_ndarray_like = False  # noqa: F841
 # Another alias not included by cf_xarray
 units.define("@alias percent = pct")
 
@@ -182,10 +183,13 @@ def pint2cfunits(value: units.Quantity | units.Unit) -> str:
         Units following CF-Convention, using symbols.
     """
     if isinstance(value, (pint.Quantity, units.Quantity)):
-        value = value.units  # noqa reason: units.Quantity really have .units property
+        value = value.units
 
-    # The replacement is due to hgrecco/pint#1486
-    return f"{value:cf}".replace("dimensionless", "")
+    # Issue originally introduced in https://github.com/hgrecco/pint/issues/1486
+    # Should be resolved in pint v0.24. See: https://github.com/hgrecco/pint/issues/1913
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", category=DeprecationWarning)
+        return f"{value:cf}".replace("dimensionless", "")
 
 
 def ensure_cf_units(ustr: str) -> str:
@@ -398,11 +402,6 @@ def cf_conversion(standard_name: str, conversion: str, direction: str) -> str | 
 
 
 FREQ_UNITS = {
-    "N": "ns",
-    "L": "ms",
-    "S": "s",
-    "T": "min",
-    "H": "h",
     "D": "d",
     "W": "week",
 }
@@ -448,7 +447,7 @@ def infer_sampling_units(
 
     multi, base, _, _ = parse_offset(freq)
     try:
-        out = multi, FREQ_UNITS[base]
+        out = multi, FREQ_UNITS.get(base, base)
     except KeyError as err:
         raise ValueError(
             f"Sampling frequency {freq} has no corresponding units."
@@ -472,8 +471,8 @@ def to_agg_units(
         The original array before the aggregation operation,
         used to infer the sampling units and get the variable units.
     op : {'min', 'max', 'mean', 'std', 'var', 'doymin', 'doymax',  'count', 'integral', 'sum'}
-        The type of aggregation operation performed. The special "delta_*" ops are used
-        with temperature units needing conversion to their "delta" counterparts (e.g. degree days)
+        The type of aggregation operation performed. "integral" is mathematically equivalent to "sum",
+        but the units are multiplied by the timestep of the data (requires an inferrable frequency).
     dim : str
         The time dimension along which the aggregation was performed.
 
@@ -522,7 +521,7 @@ def to_agg_units(
     >>> degdays.units
     'K d'
     """
-    if op in ["amin", "min", "amax", "max", "mean", "std"]:
+    if op in ["amin", "min", "amax", "max", "mean", "std", "sum"]:
         out.attrs["units"] = orig.attrs["units"]
 
     elif op in ["var"]:
@@ -533,7 +532,7 @@ def to_agg_units(
             units="", is_dayofyear=np.int32(1), calendar=get_calendar(orig)
         )
 
-    elif op in ["count", "integral", "sum"]:
+    elif op in ["count", "integral"]:
         m, freq_u_raw = infer_sampling_units(orig[dim])
         orig_u = str2pint(orig.units)
         freq_u = str2pint(freq_u_raw)
@@ -541,8 +540,14 @@ def to_agg_units(
 
         if op == "count":
             out.attrs["units"] = freq_u_raw
-        elif op in ["integral", "sum"]:
-            out.attrs["units"] = pint2cfunits(orig_u * freq_u)
+        elif op == "integral":
+            if "[time]" in orig_u.dimensionality:
+                # We need to simplify units after multiplication
+                out_units = (orig_u * freq_u).to_reduced_units()
+                out = out * out_units.magnitude
+                out.attrs["units"] = pint2cfunits(out_units)
+            else:
+                out.attrs["units"] = pint2cfunits(orig_u * freq_u)
     else:
         raise ValueError(
             f"Unknown aggregation op {op}. "
@@ -579,7 +584,7 @@ def _rate_and_amount_converter(
             ) from err
     if freq is not None:
         multi, base, start_anchor, _ = parse_offset(freq)
-        if base in ["M", "Q", "A"]:
+        if base in ["M", "Q", "A", "Y"]:
             start = time.indexes[dim][0]
             if not start_anchor:
                 # Anchor is on the end of the period, subtract 1 period.
@@ -1003,10 +1008,10 @@ def check_units(val: str | xr.DataArray | None, dim: str | xr.DataArray | None) 
 
     Parameters
     ----------
-    val: str or xr.DataArray, optional
-      Value to check.
-    dim: str or xr.DataArray, optional
-      Expected dimension, e.g. [temperature]. If a quantity or DataArray is given, the dimensionality is extracted.
+    val : str or xr.DataArray, optional
+        Value to check.
+    dim : str or xr.DataArray, optional
+        Expected dimension, e.g. [temperature]. If a quantity or DataArray is given, the dimensionality is extracted.
     """
     if dim is None or val is None:
         return
@@ -1016,13 +1021,17 @@ def check_units(val: str | xr.DataArray | None, dim: str | xr.DataArray | None) 
         standard_name=getattr(val, "standard_name", None), dimension=dim
     )
 
-    if str(val).startswith("UNSET "):
-        warnings.warn(
-            "This index calculation will soon require user-specified thresholds.",
-            FutureWarning,
-            stacklevel=4,
-        )
-        val = str(val).replace("UNSET ", "")
+    # Issue originally introduced in https://github.com/hgrecco/pint/issues/1486
+    # Should be resolved in pint v0.24. See: https://github.com/hgrecco/pint/issues/1913
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", category=DeprecationWarning)
+        if str(val).startswith("UNSET "):
+            warnings.warn(
+                "This index calculation will soon require user-specified thresholds.",
+                FutureWarning,
+                stacklevel=4,
+            )
+            val = str(val).replace("UNSET ", "")
 
     if isinstance(val, (int, float)):
         raise TypeError("Please set units explicitly using a string.")
@@ -1048,12 +1057,16 @@ def check_units(val: str | xr.DataArray | None, dim: str | xr.DataArray | None) 
         if pint.util.find_shortest_path(graph, start, end):
             return
 
-    raise ValidationError(
-        f"Data units {val_units} are not compatible with requested {dim}."
-    )
+    # Issue originally introduced in https://github.com/hgrecco/pint/issues/1486
+    # Should be resolved in pint v0.24. See: https://github.com/hgrecco/pint/issues/1913
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", category=DeprecationWarning)
+        raise ValidationError(
+            f"Data units {val_units} are not compatible with requested {dim}."
+        )
 
 
-def _check_output_has_units(out: xr.DataArray | tuple[xr.DataArray]):
+def _check_output_has_units(out: xr.DataArray | tuple[xr.DataArray]) -> None:
     """Perform very basic sanity check on the output.
 
     Indices are responsible for unit management. If this fails, it's a developer's error.
@@ -1091,8 +1104,7 @@ def declare_relative_units(**units_by_name) -> Callable:
     .. code-block:: python
 
         @declare_relative_units(thresh="<da>", thresh2="<da> / [time]")
-        def func(da, thresh, thresh2):
-            ...
+        def func(da, thresh, thresh2): ...
 
     The decorator will check that `thresh` has units compatible with those of da
     and that `thresh2` has units compatible with the time derivative of da.
@@ -1139,10 +1151,10 @@ def declare_relative_units(**units_by_name) -> Callable:
                 # Raised when it is not understood, we assume it was a dimensionality
                 try:
                     units.get_dimensionality(dim.replace("dimensionless", ""))
-                except Exception:
+                except Exception as e:
                     raise ValueError(
                         f"Relative units for {name} are invalid. Got {dim}. (See stacktrace for more information)."
-                    )
+                    ) from e
 
         @wraps(func)
         def wrapper(*args, **kwargs):
@@ -1152,9 +1164,15 @@ def declare_relative_units(**units_by_name) -> Callable:
                 context = None
                 for ref, refvar in bound_args.arguments.items():
                     if f"<{ref}>" in dim:
-                        dim = dim.replace(f"<{ref}>", f"({units2pint(refvar)})")
-                        # check_units will guess the hydro context if "precipitation" appears in dim, but here we pass a real unit.
-                        # It will also check the standard name of the arg, but we give it another chance by checking the ref arg.
+                        # Issue originally introduced in https://github.com/hgrecco/pint/issues/1486
+                        # Should be resolved in pint v0.24. See: https://github.com/hgrecco/pint/issues/1913
+                        with warnings.catch_warnings():
+                            warnings.simplefilter("ignore", category=DeprecationWarning)
+                            dim = dim.replace(f"<{ref}>", f"({units2pint(refvar)})")
+
+                        # check_units will guess the hydro context if "precipitation" appears in dim,
+                        # but here we pass a real unit. It will also check the standard name of the arg,
+                        # but we give it another chance by checking the ref arg.
                         context = context or infer_context(
                             standard_name=getattr(refvar, "attrs", {}).get(
                                 "standard_name"
@@ -1199,8 +1217,7 @@ def declare_units(**units_by_name) -> Callable:
     .. code-block:: python
 
         @declare_units(tas="[temperature]")
-        def func(tas):
-            ...
+        def func(tas): ...
 
     The decorator will check that `tas` has units of temperature (C, K, F).
 

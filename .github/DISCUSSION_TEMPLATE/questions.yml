@@ -6,7 +6,7 @@ body:
     attributes:
       value: |
         Thanks for opening this discussion!
-        Before you submit, please make sure you have read our [Code of Conduct](https://github.com/Ouranosinc/xclim/blob/master/CODE_OF_CONDUCT.md).
+        Before you submit, please make sure you have read our [Code of Conduct](https://github.com/Ouranosinc/xclim/blob/main/CODE_OF_CONDUCT.md).
   - type: textarea
     id: setup-information
     attributes:

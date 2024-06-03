@@ -6,7 +6,7 @@ import warnings
 import numpy as np
 import xarray
 
-from xclim.core.calendar import get_calendar, select_time
+from xclim.core.calendar import doy_from_string, get_calendar, select_time
 from xclim.core.missing import at_least_n_valid
 from xclim.core.units import (
     convert_units_to,
@@ -16,7 +16,7 @@ from xclim.core.units import (
     str2pint,
     to_agg_units,
 )
-from xclim.core.utils import DayOfYearStr, Quantified, deprecated
+from xclim.core.utils import DayOfYearStr, Quantified
 
 from . import run_length as rl
 from .generic import (
@@ -75,12 +75,14 @@ __all__ = [
     "rprctot",
     "sea_ice_area",
     "sea_ice_extent",
+    "snd_days_above",
     "snd_season_end",
     "snd_season_length",
     "snd_season_start",
     "snd_storm_days",
     "snowfall_frequency",
     "snowfall_intensity",
+    "snw_days_above",
     "snw_season_end",
     "snw_season_length",
     "snw_season_start",
@@ -99,7 +101,6 @@ __all__ = [
     "wetdays",
     "wetdays_prop",
     "windy_days",
-    "winter_storm",
 ]
 
 
@@ -144,7 +145,7 @@ def cold_spell_days(
     tas: xarray.DataArray,
     thresh: Quantified = "-10 degC",
     window: int = 5,
-    freq: str = "AS-JUL",
+    freq: str = "YS-JUL",
     op: str = "<",
     resample_before_rl: bool = True,
 ) -> xarray.DataArray:
@@ -203,7 +204,7 @@ def cold_spell_frequency(
     tas: xarray.DataArray,
     thresh: Quantified = "-10 degC",
     window: int = 5,
-    freq: str = "AS-JUL",
+    freq: str = "YS-JUL",
     op: str = "<",
     resample_before_rl: bool = True,
 ) -> xarray.DataArray:
@@ -252,7 +253,7 @@ def cold_spell_max_length(
     tas: xarray.DataArray,
     thresh: Quantified = "-10 degC",
     window: int = 1,
-    freq: str = "AS-JUL",
+    freq: str = "YS-JUL",
     op: str = "<",
     resample_before_rl: bool = True,
 ) -> xarray.DataArray:
@@ -300,7 +301,7 @@ def cold_spell_total_length(
     tas: xarray.DataArray,
     thresh: Quantified = "-10 degC",
     window: int = 3,
-    freq: str = "AS-JUL",
+    freq: str = "YS-JUL",
     op: str = "<",
     resample_before_rl: bool = True,
 ) -> xarray.DataArray:
@@ -349,16 +350,12 @@ def snd_season_end(
     snd: xarray.DataArray,
     thresh: Quantified = "2 cm",
     window: int = 14,
-    freq: str = "AS-JUL",
+    freq: str = "YS-JUL",
 ) -> xarray.DataArray:
-    r"""End date of continuous snow depth cover.
+    r"""Snow cover end date (depth).
 
-    First day after the start of the continuous snow depth cover when snow depth is below a threshold (default: 2 cm)
-    for at least `N` (default: 14) consecutive days.
-
-    Warnings
-    --------
-    The default `freq` is valid for the northern hemisphere.
+    First day after the start of the continuous snow depth cover when snow depth is below a threshold
+    for at least `window` consecutive days.
 
     Parameters
     ----------
@@ -369,14 +366,12 @@ def snd_season_end(
     window : int
         Minimum number of days with snow depth below threshold.
     freq : str
-        Resampling frequency.
+        Resampling frequency. The default value is chosen for the northern hemisphere.
 
     Returns
     -------
     xarray.DataArray, [dimensionless]
-        First day after the start of the continuous snow depth cover when the snow depth
-        goes below a threshold for a minimum duration.
-        If there is no such day, returns np.nan.
+        First day after the start of the continuous snow depth cover.
 
     References
     ----------
@@ -399,19 +394,14 @@ def snd_season_end(
 @declare_units(snw="[mass]/[area]", thresh="[mass]/[area]")
 def snw_season_end(
     snw: xarray.DataArray,
-    thresh: Quantified = "20.00 kg m-2",
+    thresh: Quantified = "4 kg m-2",
     window: int = 14,
-    freq: str = "AS-JUL",
+    freq: str = "YS-JUL",
 ) -> xarray.DataArray:
-    r"""End date of continuous snow water cover.
+    r"""Snow cover end date (amount).
 
     First day after the start of the continuous snow water cover
-    when snow water is below a threshold (Current default:  20 kg m-2. xclim >=0.47.0 default: 4 kg m-2)
-    for at least `N` (default: 14) consecutive days.
-
-    Warnings
-    --------
-    The default `freq` is valid for the northern hemisphere.
+    when snow water is below a threshold for at least `N` consecutive days.
 
     Parameters
     ----------
@@ -422,23 +412,17 @@ def snw_season_end(
     window : int
         Minimum number of days with snow water below threshold.
     freq : str
-        Resampling frequency.
+        Resampling frequency. The default value is chosen for the northern hemisphere.
 
     Returns
     -------
     xarray.DataArray, [dimensionless]
-        First day after the start of the continuous snow water cover when the snow water
-        goes below a threshold for a minimum duration.
-        If there is no such day, returns np.nan.
+        First day after the start of the continuous snow amount cover.
 
     References
     ----------
     :cite:cts:`chaumont_elaboration_2017`
     """
-    if thresh == "20.00 kg m-2":
-        warnings.warn(
-            "The default value for this threshold will change in xclim>=0.47.0, from `20 kg m-2` to `4 kg m-2`."
-        )
     valid = at_least_n_valid(snw.where(snw > 0), n=1, freq=freq)
 
     thresh = convert_units_to(thresh, snw)
@@ -458,16 +442,12 @@ def snd_season_start(
     snd: xarray.DataArray,
     thresh: Quantified = "2 cm",
     window: int = 14,
-    freq: str = "AS-JUL",
+    freq: str = "YS-JUL",
 ) -> xarray.DataArray:
-    r"""Start date of continuous snow depth cover.
+    r"""Snow cover start date (depth).
 
-    Day of year when snow depth is above or equal to a threshold (default: 2 cm)
-    for at least `N` (default: 14) consecutive days.
-
-    Warnings
-    --------
-    The default `freq` is valid for the northern hemisphere.
+    Day of year when snow depth is above or equal to a threshold
+    for at least `N` consecutive days.
 
     Parameters
     ----------
@@ -478,13 +458,12 @@ def snd_season_start(
     window : int
         Minimum number of days with snow depth above or equal to threshold.
     freq : str
-        Resampling frequency.
+        Resampling frequency. The default value is chosen for the northern hemisphere.
 
     Returns
     -------
     xarray.DataArray, [dimensionless]
         First day of the year when the snow depth is superior to a threshold for a minimum duration.
-        If there is no such day, returns np.nan.
 
     References
     ----------
@@ -512,18 +491,14 @@ def snd_season_start(
 @declare_units(snw="[mass]/[area]", thresh="[mass]/[area]")
 def snw_season_start(
     snw: xarray.DataArray,
-    thresh: Quantified = "20.00 kg m-2",
+    thresh: Quantified = "4 kg m-2",
     window: int = 14,
-    freq: str = "AS-JUL",
+    freq: str = "YS-JUL",
 ) -> xarray.DataArray:
-    r"""Start date of continuous snow water cover.
+    r"""Snow cover start date (amount).
 
-    Day of year when snow water is above or equal to a threshold  (Current default:  20 kg m-2. xclim >=0.47.0 default: 4 kg m-2)
-    for at least `N` (default: 14) consecutive days.
-
-    Warnings
-    --------
-    The default `freq` is valid for the northern hemisphere.
+    Day of year when snow water is above or equal to a threshold
+    for at least `N` consecutive days.
 
     Parameters
     ----------
@@ -532,25 +507,20 @@ def snw_season_start(
     thresh : str
         Threshold snow amount.
     window : int
-        Minimum number of days with snow water above or equal to threshold.
+        Minimum number of days with snow amount above or equal to threshold.
     freq : str
         Resampling frequency.
 
     Returns
     -------
     xarray.DataArray, [dimensionless]
-        First day of the year when the snow water is superior to a threshold for a minimum duration.
-        If there is no such day, returns np.nan.
+        First day of the year when the snow amount is superior to a threshold for a minimum duration.
 
     References
     ----------
     :cite:cts:`chaumont_elaboration_2017`
 
     """
-    if thresh == "20.00 kg m-2":
-        warnings.warn(
-            "The default value for this threshold will change in xclim>=0.47.0, from `20 kg m-2` to `4 kg m-2`."
-        )
     valid = at_least_n_valid(snw.where(snw > 0), n=1, freq=freq)
 
     thresh = convert_units_to(thresh, snw)
@@ -571,8 +541,98 @@ def snw_season_start(
 
 
 @declare_units(snd="[length]", thresh="[length]")
+def snd_season_length(
+    snd: xarray.DataArray,
+    thresh: Quantified = "2 cm",
+    window: int = 14,
+    freq: str = "YS-JUL",
+) -> xarray.DataArray:
+    r"""Snow cover duration (depth).
+
+    The season starts when snow depth is above a threshold for at least `N` consecutive days
+    and stops when it drops below the same threshold for the same number of days.
+
+    Parameters
+    ----------
+    snd : xarray.DataArray
+        Surface snow thickness.
+    thresh : Quantified
+        Threshold snow thickness.
+    window : int
+        Minimum number of days with snow depth above and below threshold.
+    freq : str
+        Resampling frequency. The default value is chosen for the northern hemisphere.
+
+    Returns
+    -------
+    xarray.DataArray, [days]
+        Length of the snow season.
+
+    References
+    ----------
+    :cite:cts:`chaumont_elaboration_2017`
+    """
+    valid = at_least_n_valid(snd.where(snd > 0), n=1, freq=freq)
+
+    thresh = convert_units_to(thresh, snd)
+    cond = snd >= thresh
+
+    out = (
+        cond.resample(time=freq)
+        .map(rl.season, window=window, dim="time", coord="dayofyear")
+        .length
+    )
+    return to_agg_units(out.where(~valid), snd, "count")
+
+
+@declare_units(snw="[mass]/[area]", thresh="[mass]/[area]")
+def snw_season_length(
+    snw: xarray.DataArray,
+    thresh: Quantified = "4 kg m-2",
+    window: int = 14,
+    freq: str = "YS-JUL",
+) -> xarray.DataArray:
+    r"""Snow cover duration (amount).
+
+    The season starts when the snow amount is above a threshold for at least `N` consecutive days
+    and stops when it drops below the same threshold for the same number of days.
+
+    Parameters
+    ----------
+    snw : xarray.DataArray
+        Surface snow amount.
+    thresh : Quantified
+        Threshold snow amount.
+    window : int
+        Minimum number of days with snow amount above and below threshold.
+    freq : str
+        Resampling frequency. The default value is chosen for the northern hemisphere.
+
+    Returns
+    -------
+    xarray.DataArray, [days]
+        Length of the snow season.
+
+    References
+    ----------
+    :cite:cts:`chaumont_elaboration_2017`
+    """
+    valid = at_least_n_valid(snw.where(snw > 0), n=1, freq=freq)
+
+    thresh = convert_units_to(thresh, snw)
+    cond = snw >= thresh
+
+    out = (
+        cond.resample(time=freq)
+        .map(rl.season, window=window, dim="time", coord="dayofyear")
+        .length
+    )
+    return to_agg_units(out.where(~valid), snw, "count")
+
+
+@declare_units(snd="[length]", thresh="[length]")
 def snd_storm_days(
-    snd: xarray.DataArray, thresh: Quantified = "25 cm", freq: str = "AS-JUL"
+    snd: xarray.DataArray, thresh: Quantified = "25 cm", freq: str = "YS-JUL"
 ) -> xarray.DataArray:
     """Days with snowfall over threshold.
 
@@ -614,7 +674,7 @@ def snd_storm_days(
 
 @declare_units(snw="[mass]/[area]", thresh="[mass]/[area]")
 def snw_storm_days(
-    snw: xarray.DataArray, thresh: Quantified = "10 kg m-2", freq: str = "AS-JUL"
+    snw: xarray.DataArray, thresh: Quantified = "10 kg m-2", freq: str = "YS-JUL"
 ) -> xarray.DataArray:
     """Days with snowfall over threshold.
 
@@ -719,7 +779,13 @@ def daily_pr_intensity(
     # get number of wetdays over period
     wd = wetdays(pr, thresh=thresh, freq=freq)
     out = s / wd
-    out.attrs["units"] = f"{str2pint(pram.units) / str2pint(wd.units):~}"
+
+    # Issue originally introduced in https://github.com/hgrecco/pint/issues/1486
+    # Should be resolved in pint v0.24. See: https://github.com/hgrecco/pint/issues/1913
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", category=DeprecationWarning)
+        out.attrs["units"] = f"{str2pint(pram.units) / str2pint(wd.units):~}"
+
     return out
 
 
@@ -739,7 +805,7 @@ def dry_days(
     pr : xarray.DataArray
         Daily precipitation.
     thresh : Quantified
-        Threshold temperature on which to base evaluation.
+        Threshold precipitation on which to base evaluation.
     freq : str
         Resampling frequency.
     op : {"<", "<=", "lt", "le"}
@@ -1062,11 +1128,11 @@ def growing_season_length(
 
     For the Northern Hemisphere:
 
-    >>> gsl_nh = growing_season_length(tas, mid_date="07-01", freq="AS")
+    >>> gsl_nh = growing_season_length(tas, mid_date="07-01", freq="YS")
 
     If working in the Southern Hemisphere, one can use:
 
-    >>> gsl_sh = growing_season_length(tas, mid_date="01-01", freq="AS-JUL")
+    >>> gsl_sh = growing_season_length(tas, mid_date="01-01", freq="YS-JUL")
 
     References
     ----------
@@ -1091,7 +1157,7 @@ def frost_season_length(
     window: int = 5,
     mid_date: DayOfYearStr | None = "01-01",
     thresh: Quantified = "0.0 degC",
-    freq: str = "AS-JUL",
+    freq: str = "YS-JUL",
     op: str = "<",
 ) -> xarray.DataArray:
     r"""Frost season length.
@@ -1148,7 +1214,7 @@ def frost_season_length(
 
     For the Northern Hemisphere:
 
-    >>> fsl_nh = frost_season_length(tasmin, freq="AS-JUL")
+    >>> fsl_nh = frost_season_length(tasmin, freq="YS-JUL")
 
     If working in the Southern Hemisphere, one can use:
 
@@ -1335,7 +1401,7 @@ def frost_free_season_length(
 
     If working in the Southern Hemisphere, one can use:
 
-    >>> ffsl_sh = frost_free_season_length(tasmin, freq="AS-JUL")
+    >>> ffsl_sh = frost_free_season_length(tasmin, freq="YS-JUL")
     """
     thresh = convert_units_to(thresh, tasmin)
     cond = compare(tasmin, op, thresh, constrain=(">=", ">"))
@@ -1354,7 +1420,7 @@ def frost_free_spell_max_length(
     tasmin: xarray.DataArray,
     thresh: Quantified = "0.0 degC",
     window: int = 1,
-    freq: str = "AS-JUL",
+    freq: str = "YS-JUL",
     op: str = ">=",
     resample_before_rl: bool = True,
 ) -> xarray.DataArray:
@@ -1569,7 +1635,7 @@ def first_day_temperature_above(
 def first_snowfall(
     prsn: xarray.DataArray,
     thresh: Quantified = "1 mm/day",
-    freq: str = "AS-JUL",
+    freq: str = "YS-JUL",
 ) -> xarray.DataArray:
     r"""First day with snowfall rate above a threshold.
 
@@ -1623,7 +1689,7 @@ def first_snowfall(
 def last_snowfall(
     prsn: xarray.DataArray,
     thresh: Quantified = "1 mm/day",
-    freq: str = "AS-JUL",
+    freq: str = "YS-JUL",
 ) -> xarray.DataArray:
     r"""Last day with snowfall above a threshold.
 
@@ -1683,7 +1749,7 @@ def days_with_snow(
     prsn: xarray.DataArray,
     low: Quantified = "0 kg m-2 s-1",
     high: Quantified = "1E6 kg m-2 s-1",
-    freq: str = "AS-JUL",
+    freq: str = "YS-JUL",
 ) -> xarray.DataArray:
     r"""Days with snow.
 
@@ -1728,7 +1794,7 @@ def days_with_snow(
 def snowfall_frequency(
     prsn: xarray.DataArray,
     thresh: Quantified = "1 mm/day",
-    freq: str = "AS-JUL",
+    freq: str = "YS-JUL",
 ) -> xarray.DataArray:
     r"""Percentage of snow days.
 
@@ -1780,7 +1846,7 @@ def snowfall_frequency(
 def snowfall_intensity(
     prsn: xarray.DataArray,
     thresh: Quantified = "1 mm/day",
-    freq: str = "AS-JUL",
+    freq: str = "YS-JUL",
 ) -> xarray.DataArray:
     r"""Mean daily snowfall rate during snow days.
 
@@ -2096,19 +2162,15 @@ def hot_spell_frequency(
 
 
 @declare_units(snd="[length]", thresh="[length]")
-def snd_season_length(
+def snd_days_above(
     snd: xarray.DataArray,
     thresh: Quantified = "2 cm",
-    freq: str = "AS-JUL",
+    freq: str = "YS-JUL",
     op: str = ">=",
 ) -> xarray.DataArray:
     """The number of days with snow depth above a threshold.
 
     Number of days where surface snow depth is greater or equal to given threshold (default: 2 cm).
-
-    Warnings
-    --------
-    The default `freq` is valid for the northern hemisphere.
 
     Parameters
     ----------
@@ -2117,14 +2179,14 @@ def snd_season_length(
     thresh : Quantified
         Threshold snow thickness.
     freq : str
-        Resampling frequency.
+        Resampling frequency. The default value is chosen for the northern hemisphere.
     op : {">", ">=", "gt", "ge"}
         Comparison operation. Default: ">=".
 
     Returns
     -------
     xarray.DataArray, [time]
-        Number of days where snow depth is greater than or equal to threshold.
+        Number of days where snow depth is greater than or equal to {thresh}.
     """
     valid = at_least_n_valid(snd, n=1, freq=freq)
     thresh = convert_units_to(thresh, snd)
@@ -2133,19 +2195,15 @@ def snd_season_length(
 
 
 @declare_units(snw="[mass]/[area]", thresh="[mass]/[area]")
-def snw_season_length(
+def snw_days_above(
     snw: xarray.DataArray,
-    thresh: Quantified = "20.00 kg m-2",
-    freq: str = "AS-JUL",
+    thresh: Quantified = "4 kg m-2",
+    freq: str = "YS-JUL",
     op: str = ">=",
 ) -> xarray.DataArray:
-    """The number of days with snow water above a threshold.
+    """The number of days with snow amount above a threshold.
 
-    Number of days where surface snow water is greater or equal to given threshold (Current default:  20 kg m-2. xclim >=0.47.0 default: 4 kg m-2).
-
-    Warnings
-    --------
-    The default `freq` is valid for the northern hemisphere.
+    Number of days where surface snow amount is greater or equal to given threshold.
 
     Parameters
     ----------
@@ -2154,20 +2212,16 @@ def snw_season_length(
     thresh : str
         Threshold snow amount.
     freq : str
-        Resampling frequency.
+        Resampling frequency. The default value is chosen for the northern hemisphere.
     op : {">", ">=", "gt", "ge"}
         Comparison operation. Default: ">=".
 
     Returns
     -------
     xarray.DataArray, [time]
-        Number of days where snow water is greater than or equal to threshold.
+        Number of days where snow amount is greater than or equal to {thresh}.
 
     """
-    if thresh == "20.00 kg m-2":
-        warnings.warn(
-            "The default value for this threshold will change in xclim>=0.47.0, from `20 kg m-2` to `4 kg m-2`."
-        )
     valid = at_least_n_valid(snw, n=1, freq=freq)
     thresh = convert_units_to(thresh, snw)
     out = threshold_count(snw, op, thresh, freq)
@@ -2582,7 +2636,7 @@ def wetdays_prop(
 def maximum_consecutive_frost_days(
     tasmin: xarray.DataArray,
     thresh: Quantified = "0.0 degC",
-    freq: str = "AS-JUL",
+    freq: str = "YS-JUL",
     resample_before_rl: bool = True,
 ) -> xarray.DataArray:
     r"""Maximum number of consecutive frost days (Tn < 0℃).
@@ -2961,6 +3015,7 @@ def degree_days_exceedance_date(
     sum_thresh: Quantified = "25 K days",
     op: str = ">",
     after_date: DayOfYearStr | None = None,
+    never_reached: DayOfYearStr | int | None = None,
     freq: str = "YS",
 ) -> xarray.DataArray:
     r"""Degree-days exceedance date.
@@ -2981,7 +3036,12 @@ def degree_days_exceedance_date(
         equivalent to '<', they are computed as `thresh - tas`.
     after_date: str, optional
         Date at which to start the cumulative sum.
-        In "mm-dd" format, defaults to the start of the sampling period.
+        In "MM-DD" format, defaults to the start of the sampling period.
+    never_reached: int, str, optional
+        What to do when `sum_thresh` is never exceeded.
+        If an int, the value to assign as a day-of-year.
+        If a string, must be in "MM-DD" format, the day-of-year of that date is assigned.
+        Default (None) assigns "NaN".
     freq : str
         Resampling frequency. If `after_date` is given, `freq` should be annual.
 
@@ -3025,60 +3085,25 @@ def degree_days_exceedance_date(
             strt_idx.size == 0
         ):  # The date is not within the group. Happens at boundaries.
             return xarray.full_like(grp.isel(time=0), np.nan, float).drop_vars("time")  # type: ignore
+        cumsum = grp.where(grp.time >= grp.time[strt_idx][0]).cumsum("time")
 
-        return rl.first_run_after_date(
-            grp.where(grp.time >= grp.time[strt_idx][0]).cumsum("time") > sum_thresh,
+        out = rl.first_run_after_date(
+            cumsum > sum_thresh,
             window=1,
             date=None,
         )
+        if never_reached is None:
+            # This is slightly faster in numpy and generates fewer tasks in dask
+            return out
+        never_reached_val = (
+            doy_from_string(never_reached, grp.time.dt.year[0], grp.time.dt.calendar)
+            if isinstance(never_reached, str)
+            else never_reached
+        )
+        return xarray.where((cumsum <= sum_thresh).all("time"), never_reached_val, out)
 
     out = c.clip(0).resample(time=freq).map(_exceedance_date)
     out.attrs.update(units="", is_dayofyear=np.int32(1), calendar=get_calendar(tas))
-    return out
-
-
-@deprecated(from_version="0.46.0", suggested="snd_storm_days")
-@declare_units(snd="[length]", thresh="[length]")
-def winter_storm(
-    snd: xarray.DataArray, thresh: Quantified = "25 cm", freq: str = "AS-JUL"
-) -> xarray.DataArray:
-    """Days with snowfall over threshold.
-
-    Number of days with snowfall accumulation greater or equal to threshold (default: 25 cm).
-
-    Warnings
-    --------
-    The default `freq` is valid for the northern hemisphere.
-    The `winter_storm` indice is being deprecated in favour of `snd_storm_days`. This indice will
-    be removed in `xclim>=0.47.0`.
-
-    Parameters
-    ----------
-    snd : xarray.DataArray
-        Surface snow depth.
-    thresh : Quantified
-        Threshold on snowfall accumulation require to label an event a `winter storm`.
-    freq : str
-        Resampling frequency.
-
-    Returns
-    -------
-    xarray.DataArray
-        Number of days per period identified as winter storms.
-
-    Notes
-    -----
-    Snowfall accumulation is estimated by the change in snow depth.
-    """
-    thresh = convert_units_to(thresh, snd)
-
-    # Compute daily accumulation
-    acc = snd.diff(dim="time")
-
-    # Winter storm condition
-    out = threshold_count(acc, ">=", thresh, freq)
-
-    out.attrs["units"] = to_agg_units(out, snd, "count")
     return out
 
 

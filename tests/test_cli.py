@@ -374,7 +374,7 @@ def test_release_notes_failure(method, error):
     assert error in results.output
 
 
-def test_show_version_info(capsys):
+def test_show_version_info():
     runner = CliRunner()
     results = runner.invoke(cli, ["show_version_info"])
     assert "INSTALLED VERSIONS" in results.output
