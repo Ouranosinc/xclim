@@ -116,11 +116,13 @@ def _npdft_train(ref, hist, rots, quantiles, method, extrap, n_escore):
     af_q = np.zeros((len(rots), ref.shape[0], len(quantiles)))
     escores = np.zeros(len(rots)) * np.NaN
     if n_escore > 0:
-        ref_step = int(np.ceil(ref.shape[1] / n_escore))
-        hist_step = int(np.ceil(hist.shape[1] / n_escore))
+        ref_step, hist_step = (
+            int(np.ceil(arr.shape[1] / n_escore)) for arr in [ref, hist]
+        )
     for ii in range(len(rots)):
         rot = rots[0] if ii == 0 else rots[ii] @ rots[ii - 1].T
         ref, hist = (rot @ da for da in [ref, hist])
+        # loop over variables
         for iv in range(ref.shape[0]):
             ref_q, hist_q = (
                 nbu._sortquantile(da, quantiles) for da in [ref[iv], hist[iv]]
@@ -159,8 +161,8 @@ def mbcn_train(
     Parameters
     ----------
     Dataset variables:
-        ref : training target
-        hist : training data
+        ref : training target, DataArray (stacked variables)
+        hist : training source, DataArray (stacked variables)
     rot_matrices : xr.DataArray
         The rotation matrices as a 3D array ('iterations', <pts_dims[0]>, <pts_dims[1]>), with shape (n_iter, <N>, <N>).
     pts_dims : str
@@ -232,7 +234,7 @@ def _npdft_adjust(sim, af_q, rots, quantiles, method, extrap):
     for ii in range(len(rots)):
         rot = rots[0] if ii == 0 else rots[ii] @ rots[ii - 1].T
         sim = np.einsum("ij,j...->i...", rot, sim)
-
+        # loop over variables
         for iv in range(sim.shape[0]):
             af = u._interp_on_quantiles_1D_multi(
                 u._rank_np(sim[iv], axis=-1),
@@ -319,7 +321,7 @@ def mbcn_adjust(
     # to confirm it works,  and on big data to check performance.
     dims = ["time"] if period_dim is None else [period_dim, "time"]
 
-    sim_u = sim.attrs["original_units"]
+    sim_u = sim[pts_dims[0]].attrs["_units"]
     # mbcn core
     scen_mbcn = xr.zeros_like(sim)
     for ib in range(gw_idxs[gr_dim].size):
@@ -341,7 +343,7 @@ def mbcn_adjust(
                     **base_kws_vars[v],
                 )
                 scen_block[{pts_dims[0]: iv}] = ADJ.adjust(
-                    sim[sl].assign_attrs({"units": sim_u[v]}), **adj_kws
+                    sim[sl].assign_attrs({"units": sim_u[iv]}), **adj_kws
                 )
 
         # 2. npdft adjustment of sim

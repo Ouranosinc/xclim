@@ -1199,8 +1199,7 @@ class NpdfTransform(Adjust):
 
 def _get_group_complement(da, group):
     # complement of "dayofyear": "year", etc.
-    gr = group.name if isinstance(group, Grouper) else group
-    gr = group
+    gr = group if isinstance(group, str) else group.name
     if gr == "time.dayofyear":
         return da.time.dt.year
     if gr == "time.month":
@@ -1208,6 +1207,9 @@ def _get_group_complement(da, group):
 
 
 def time_group_indices(times, group):
+    """For a given grouping, return the time indices for each block."""
+    # does not work with group == "time.month"
+    group = group if isinstance(group, Grouper) else Grouper(group)
     gr, win = group.name, group.window
     # get time indices (0,1,2,...) for each block
     timeind = xr.DataArray(np.arange(times.size), coords={"time": times})
@@ -1286,7 +1288,7 @@ class MBCn(BaseAdjustment):
     ref : xr.DataArray
         Target reference dataset also needed for univariate bias correction preceeding npdf transform
     hist: xr.DataArray
-        Source dataset also needed for univariate bias correction preceeding npdf transform
+        Source dataset also needed for univariate bias correction preceding npdf transform
     base : BaseAdjustment
         Bias-adjustment class used for the univariate bias correction.
     base_kws : dict, optional
@@ -1371,19 +1373,27 @@ class MBCn(BaseAdjustment):
         rot_matrices: xr.DataArray | None = None,
     ):
         """Training method of MBCn (temporary docstring)"""
+        # check units
+        train_units = {}
+        for v in ref.data_vars:
+            hist[v] = convert_units_to(hist[v], ref[v], context="hydro")
+            train_units[v] = ref[v].units
         # set default values for non-specified parameters
         base_kws = base_kws if base_kws is not None else {}
         adj_kws = adj_kws if adj_kws is not None else {}
         base_kws.setdefault("nquantiles", 20)
         base_kws.setdefault("group", Grouper("time", 1))
         adj_kws.setdefault("interp", "nearest")
-        adj_kws.setdefault("extrapoliation", "constant")
+        adj_kws.setdefault("extrapolation", "constant")
 
         if np.isscalar(base_kws["nquantiles"]):
             base_kws["nquantiles"] = equally_spaced_nodes(base_kws["nquantiles"])
         if isinstance(base_kws["group"], str):
             base_kws["group"] = Grouper(base_kws["group"], 1)
-
+        if base_kws["group"].name == "time.month":
+            NotImplementedError(
+                "Received `group==time.month` in `base_kws`. Monthly grouping is not currently supported in the MBCn class."
+            )
         # stack variables and prepare rotations
         if rot_matrices is None:
             pts_dim = xr.core.utils.get_temp_dimname(
@@ -1433,7 +1443,7 @@ class MBCn(BaseAdjustment):
         obj = cls(
             _trained=True,
             hist_calendar=get_calendar(hist),
-            train_units="",
+            train_units=train_units,
             **params,
         )
         obj.set_dataset(out)
@@ -1451,6 +1461,9 @@ class MBCn(BaseAdjustment):
         period_dim=None,
     ):
         """Adjusting method of MBCn (temporary docstring)"""
+        # units
+        for v in sim.data_vars:
+            sim[v] = convert_units_to(sim[v], self.train_units[v], context="hydro")
         # set default values for non-specified parameters
         base_kws_vars = base_kws_vars or {}
         for v in sim.data_vars:
@@ -1495,8 +1508,6 @@ class MBCn(BaseAdjustment):
 
         # postprocess
         out = unstack_variables(out)
-        for v in out.data_vars:
-            out[v].attrs["units"] = sim.attrs["original_units"][v]
         return out
 
 
