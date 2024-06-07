@@ -9,6 +9,8 @@ Contributors to this version: Trevor James Smith (:user:`Zeitsperre`).
 Internal changes
 ^^^^^^^^^^^^^^^^
 * Synchronized tooling versions across ``pyproject.toml`` and ``tox.ini`` and pinned them to the latest stable releases in GitHub Workflows. (:pull:`1744`).
+* Fixed a few small spelling and grammar issues that were causing errors with `codespell`. Now ignoring `SVG` files. (:pull:`1769`).
+* Temporarily skipping the ``test_hawkins_sutton_smoke`` test due to strange behaviour with `xarray`. (:pull:`1769`).
 
 v0.49.0 (2024-05-02)
 --------------------
