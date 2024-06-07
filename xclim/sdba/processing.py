@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import types
 from collections.abc import Sequence
+from typing import cast
 
 import dask.array as dsk
 import numpy as np
@@ -584,14 +585,12 @@ def to_additive_space(
                 float
             )
 
-    from typing import cast
-
     with xr.set_options(keep_attrs=True), np.errstate(divide="ignore"):
         if trans == "log":
             out = cast(xr.DataArray, np.log(data - lower_bound_array))
-        elif trans == "logit":
+        elif trans == "logit" and upper_bound is not None:
             data_prime = (data - lower_bound_array) / (
-                upper_bound_array - lower_bound_array
+                upper_bound_array - lower_bound_array  # pylint: disable=E0606
             )
             out = cast(xr.DataArray, np.log(data_prime / (1 - data_prime)))
         else:
@@ -684,7 +683,7 @@ def from_additive_space(
             lower_bound_array = np.array(data.attrs["sdba_transform_lower"]).astype(
                 float
             )
-            if trans == "logit":
+            if trans == "logit" and upper_bound is not None:
                 upper_bound_array = np.array(data.attrs["sdba_transform_upper"]).astype(
                     float
                 )
@@ -714,10 +713,12 @@ def from_additive_space(
     with xr.set_options(keep_attrs=True):
         if trans == "log":
             out = np.exp(data) + lower_bound_array
-        elif trans == "logit":
+        elif trans == "logit" and upper_bound is not None:
             out_prime = 1 / (1 + np.exp(-data))
             out = (
-                out_prime * (upper_bound_array - lower_bound_array) + lower_bound_array
+                out_prime
+                * (upper_bound_array - lower_bound_array)  # pylint: disable=E0606
+                + lower_bound_array
             )
         else:
             raise NotImplementedError("`trans` must be one of 'log' or 'logit'.")
