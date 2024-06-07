@@ -6,6 +6,10 @@ v0.50.0 (unreleased)
 --------------------
 Contributors to this version: Trevor James Smith (:user:`Zeitsperre`).
 
+Breaking changes
+^^^^^^^^^^^^^^^^
+* `pint` has been pinned below v0.24 until `xclim` can be updated to support the latest version. (:issue:`1771`, :pull:`1772`).
+
 Internal changes
 ^^^^^^^^^^^^^^^^
 * Synchronized tooling versions across ``pyproject.toml`` and ``tox.ini`` and pinned them to the latest stable releases in GitHub Workflows. (:pull:`1744`).
