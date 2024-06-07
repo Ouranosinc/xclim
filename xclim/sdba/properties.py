@@ -405,7 +405,6 @@ spell_length_distribution = StatisticalProperty(
 )
 
 
-# TODO: Formulate this with a spell and window=1 ?
 def _threshold_count(
     da: xr.DataArray,
     *,
@@ -883,7 +882,12 @@ def _bivariate_spell_length_distribution(
       {stat} of spell length distribution when the first variable is {op1} the {method1} {thresh1}
       and the second variable is {op2} the {method2} {thresh2} for {window} consecutive day(s).
     """
-    ops = {">": np.greater, "<": np.less, ">=": np.greater_equal, "<=": np.less_equal}
+    ops = {
+        ">": np.greater,
+        "<": np.less,
+        ">=": np.greater_equal,
+        "<=": np.less_equal,
+    }
 
     @map_groups(out=[Grouper.PROP], main_only=True)
     def _bivariate_spell_stats(
@@ -892,7 +896,7 @@ def _bivariate_spell_length_distribution(
         dim,
         methods,
         threshs,
-        ops,
+        opss,
         freq,
         window,
         resample_before_rl,
@@ -904,7 +908,7 @@ def _bivariate_spell_length_distribution(
 
         conds = []
         masks = []
-        for da, thresh, op, method in zip([ds.da1, ds.da2], threshs, ops, methods):
+        for da, thresh, op, method in zip([ds.da1, ds.da2], threshs, opss, methods):
             masks.append(
                 ~(da.isel({dim: 0}).isnull()).drop_vars(dim)
             )  # mask of the ocean with NaNs
@@ -927,22 +931,22 @@ def _bivariate_spell_length_distribution(
         return out.rename("out").to_dataset()
 
     # threshold is an amount that will be converted to the right units
-    method = [method1, method2]
-    thresh = [thresh1, thresh2]
+    methods = [method1, method2]
+    threshs = [thresh1, thresh2]
     for i, da in enumerate([da1, da2]):
-        if method[i] == "amount":
-            thresh[i] = convert_units_to(thresh[i], da, context="infer")
-        elif method[i] != "quantile":
+        if methods[i] == "amount":
+            threshs[i] = convert_units_to(threshs[i], da, context="infer")
+        elif methods[i] != "quantile":
             raise ValueError(
-                f"{method[i]} is not a valid method. Choose 'amount' or 'quantile'."
+                f"{methods[i]} is not a valid method. Choose 'amount' or 'quantile'."
             )
 
     out = _bivariate_spell_stats(
         xr.Dataset({"da1": da1, "da2": da2}),
         group=group,
-        thresh=thresh,
-        method=method,
-        op=[ops[op1], ops[op2]],
+        threshs=threshs,
+        methods=methods,
+        opss=[ops[op1], ops[op2]],
         window=window,
         freq=group.freq,
         resample_before_rl=resample_before_rl,
