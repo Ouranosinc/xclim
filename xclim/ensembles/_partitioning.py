@@ -321,21 +321,25 @@ def general_partition(
         If 'loess', this is estimated using a LOESS curve.
         It is also possible to pass a precomputed smoothed time series.
     var_first: list of strings
-        List of dimensions where the variance is computed first of the dimension, followed by the mean over the other dimensions.
+        List of dimensions where the variance is computed first of the dimension,
+        followed by the mean over the other dimensions.
     mean_first : list of strings
-        List of dimensions where the mean over the other dimensions is computed first, followed by the variance over the dimension.
+        List of dimensions where the mean over the other dimensions is computed first,
+        followed by the variance over the dimension.
     weights: list of strings
         List of dimensions where the first operation is weighted.
 
     Returns
     -------
     xr.DataArray, xr.DataArray
-        The mean relative to the baseline, and the components of variance of the ensemble. These components are
-        coordinates along the `uncertainty` dimension: `variability`, `model`, `scenario`, `downscaling` and `total`.
+        The mean relative to the baseline, and the components of variance of the
+        ensemble. These components are coordinates along the `uncertainty` dimension:
+        element of var_first, elements of mean_first and `total`.
 
     Notes
     -----
-    To prepare input data, make sure `da` has dimensions list in both var_first and mean_first, as well as time.
+    To prepare input data, make sure `da` has dimensions list in both var_first and
+    mean_first, as well as time.
     e.g. `da.rename({"experiment": "scenario"})`.
 
     To get the fraction of the total variance instead of the variance itself, call `fractional_uncertainty` on the
@@ -391,12 +395,15 @@ def general_partition(
     u = pd.Index(all_types + ["variability", "total"], name="uncertainty")
     uncertainty = xr.concat(all_u + [nv_u, total], dim=u)
 
+    uncertainty.attrs["indicator_long_name"] = da.attrs.get("long_name", "unknown")
+    uncertainty.attrs["indicator_description"] = da.attrs.get("description", "unknown")
     # Keep a trace of the elements for each uncertainty component
     for t in all_types:
         uncertainty.attrs[t] = da[t].values
 
     # Mean projection:
-    # This is not part of the original algorithm, but we want all partition algos to have similar outputs.
+    # This is not part of the original algorithm,
+    # but we want all partition algos to have similar outputs.
     g = sm.mean(dim=all_types)
 
     return g, uncertainty
