@@ -683,7 +683,7 @@ def from_additive_space(
             lower_bound_array = np.array(data.attrs["sdba_transform_lower"]).astype(
                 float
             )
-            if trans == "logit" and upper_bound is not None:
+            if trans == "logit":
                 upper_bound_array = np.array(data.attrs["sdba_transform_upper"]).astype(
                     float
                 )
@@ -713,7 +713,7 @@ def from_additive_space(
     with xr.set_options(keep_attrs=True):
         if trans == "log":
             out = np.exp(data) + lower_bound_array
-        elif trans == "logit" and upper_bound is not None:
+        elif trans == "logit":
             out_prime = 1 / (1 + np.exp(-data))
             out = (
                 out_prime
