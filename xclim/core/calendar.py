@@ -90,7 +90,7 @@ def _get_usecf_and_warn(calendar: str, xcfunc: str, xrfunc: str):
         use_cftime = None
         msg = ""
     warn(
-        f"xclim function {xcfunc} is deprecated in favor of {xrfunc} and will be removed in 0.51. Please adjust your script{msg}.",
+        f"`xclim` function {xcfunc} is deprecated in favour of {xrfunc} and will be removed in v0.51.0. Please adjust your script{msg}.",
         FutureWarning,
     )
     return calendar, use_cftime
@@ -148,7 +148,7 @@ def get_calendar(obj: Any, dim: str = "time") -> str:
     Returns
     -------
     str
-      The cf calendar name.
+      The Climate and Forecasting (CF) calendar name.
       Will always return "standard" instead of "gregorian", following CF conventions 1.9.
     """
     if isinstance(obj, (xr.DataArray, xr.Dataset)):
@@ -337,12 +337,12 @@ def convert_calendar(
     """
     if isinstance(target, xr.DataArray):
         raise NotImplementedError(
-            "In xclim 0.50, convert_calendar is only a copy of xarray.coding.calendar_ops.convert_calendar. "
+            "In `xclim` v0.50.0, `convert_calendar` is a direct copy of `xarray.coding.calendar_ops.convert_calendar`. "
             "To retrieve the previous behaviour with target as a DataArray, convert the source first then reindex to the target."
         )
     if doy is not False:
         raise NotImplementedError(
-            "In xclim 0.50, convert_calendar is only a copy of xarray.coding.calendar_ops.convert_calendar. "
+            "In `xclim` v0.50.0, `convert_calendar` is a direct copy of `xarray.coding.calendar_ops.convert_calendar`. "
             "To retrieve the previous behaviour of doy=True, do convert_doy(obj, target_cal).convert_cal(target_cal)."
         )
     target, usecf = _get_usecf_and_warn(
