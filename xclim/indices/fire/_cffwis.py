@@ -597,6 +597,8 @@ def _fire_season(
     elif method in ["LA08", "GFWED"]:
         # In LA08, the check INCLUDES the current day,
         start_index = max(temp_condition_days, snow_condition_days)
+    else:
+        raise ValueError("`method` must be one of 'WF93', 'LA08' or 'GFWED'.")
 
     for it in range(start_index, tas.shape[-1]):
         if method == "WF93":
@@ -627,6 +629,8 @@ def _fire_season(
 
             # Shut down when mean snow OR mean temp are over/under threshold
             shut_down = (msnow >= snow_thresh) | (mtemp < temp_end_thresh)
+        else:
+            raise ValueError("`method` must be one of 'WF93', 'LA08' or 'GFWED'.")
 
         # Mask is on if the previous days was on OR is there is a start-up,  AND if it's not a shut-down,
         # Aka is off if either the previous day was or it is a shut-down.
@@ -687,6 +691,10 @@ def _fire_weather_calc(  # noqa: C901
 
     overwintering = params["overwintering"]
     dry_start = params["dry_start"]
+
+    ow_DC = dc0.copy() if dc0 is not None else None
+    ow_DMC = dmc0.copy() if dmc0 is not None else None
+
     if overwintering and "DC" in ind_prevs:
         # In overwintering, dc0 is understood as the previous season's last DC code.
         ow_DC = dc0.copy()

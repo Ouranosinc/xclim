@@ -8,6 +8,7 @@ Contributors to this version: Trevor James Smith (:user:`Zeitsperre`).
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
+* `pint` has been pinned below v0.24 until `xclim` can be updated to support the latest version. (:issue:`1771`, :pull:`1772`).
 * Calendar utilities that have an equivalent in xarray have been deprecated and will be removed in 0.51. (:issue:`1010`, :pull:`1761`). This concerns the following members of ``xclim.core.calendar``:
     - ``convert_calendar`` : Use ``Dataset.convert_calendar``, ``DataArray.convert_calendar`` or ``xr.coding.calendar_ops.convert_calendar``  instead.
         + If your code passes ``target`` as an array, first convert the source to the target's calendar and then reindex the result to ``target``.
@@ -22,6 +23,10 @@ Breaking changes
 Internal changes
 ^^^^^^^^^^^^^^^^
 * Synchronized tooling versions across ``pyproject.toml`` and ``tox.ini`` and pinned them to the latest stable releases in GitHub Workflows. (:pull:`1744`).
+* Fixed a few small spelling and grammar issues that were causing errors with `codespell`. Now ignoring `SVG` files. (:pull:`1769`).
+* Temporarily skipping the ``test_hawkins_sutton_smoke`` test due to strange behaviour with `xarray`. (:pull:`1769`).
+* Fixed some previously uncaught errors raised from recent versions of `pylint` and `codespell`. (:pull:`1772`).
+* Set the `doctest` examples to all use `h5netcdf` with worker-separated caches to load datasets. (:pull:`1772`).
 
 v0.49.0 (2024-05-02)
 --------------------

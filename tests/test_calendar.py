@@ -85,6 +85,8 @@ def test_time_bnds_irregular(typ):
     elif typ == "pd":
         start = pd.date_range("1990-01-01", periods=24, freq="MS")
         end = pd.date_range("1990-01-01 23:59:59.999999999", periods=24, freq="ME")
+    else:
+        raise ValueError("`typ` must be 'pd' or 'xr'")
 
     time = start + (end - start) / 2
 
