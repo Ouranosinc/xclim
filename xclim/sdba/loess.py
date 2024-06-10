@@ -68,21 +68,21 @@ def _loess_nb(
     Parameters
     ----------
     x : np.ndarray
-      X-coordinates of the points.
+        X-coordinates of the points.
     y : np.ndarray
-      Y-coordinates of the points.
+        Y-coordinates of the points.
     f : float
-      Parameter controlling the shape of the weight curve. Behavior depends on the weighting function.
+        Parameter controlling the shape of the weight curve. Behavior depends on the weighting function.
     niter : int
-      Number of robustness iterations to execute.
+        Number of robustness iterations to execute.
     weight_func : numba func
-      Numba function giving the weights when passed abs(x - xi) / hi
+        Numba function giving the weights when passed abs(x - xi) / hi
     dx : float
-      The spacing of the x coordinates. If above 0, this enables the optimization for equally spaced x coordinates.
-      Must be 0 if spacing is unequal (default).
+        The spacing of the x coordinates. If above 0, this enables the optimization for equally spaced x coordinates.
+        Must be 0 if spacing is unequal (default).
     skipna : bool
-      If True (default), remove NaN values before computing the loess. The output has the
-      same missing values as the input.
+        If True (default), remove NaN values before computing the loess. The output has the
+        same missing values as the input.
 
     References
     ----------
@@ -150,7 +150,8 @@ def _loess_nb(
                     else:
                         h = (hw + 1) * dx
                     wi = weight_func(diffs / h)
-                w = di * wi
+                # Is it expected that `wi` always be assigned before first being called?
+                w = di * wi  # pylint: disable=E0606
             else:
                 # The weights computation is repeated niter times
                 # The distance of points from the current centre point.

@@ -103,7 +103,7 @@ def tg_mean(tas: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
     at the seasonal frequency, i.e. DJF, MAM, JJA, SON, DJF, etc.:
 
     >>> from xclim.indices import tg_mean
-    >>> t = xr.open_dataset(path_to_tas_file).tas
+    >>> t = open_dataset(path_to_tas_file).tas
     >>> tg = tg_mean(t, freq="QS-DEC")
     """
     return select_resample_op(tas, op="mean", freq=freq)
@@ -428,7 +428,7 @@ def max_1day_precipitation_amount(
     The following would compute for each grid cell the highest 1-day total at an annual frequency:
 
     >>> from xclim.indices import max_1day_precipitation_amount
-    >>> pr = xr.open_dataset(path_to_pr_file).pr
+    >>> pr = open_dataset(path_to_pr_file).pr
     >>> rx1day = max_1day_precipitation_amount(pr, freq="YS")
     """
     return select_resample_op(pr, op="max", freq=freq)
@@ -462,7 +462,7 @@ def max_n_day_precipitation_amount(
     The following would compute for each grid cell the highest 5-day total precipitation at an annual frequency:
 
     >>> from xclim.indices import max_n_day_precipitation_amount
-    >>> pr = xr.open_dataset(path_to_pr_file).pr
+    >>> pr = open_dataset(path_to_pr_file).pr
     >>> out = max_n_day_precipitation_amount(pr, window=5, freq="YS")
     """
     # Rolling sum of the values
@@ -499,7 +499,7 @@ def max_pr_intensity(
     The following would compute the maximum 6-hour precipitation intensity at an annual frequency:
 
     >>> from xclim.indices import max_pr_intensity
-    >>> pr = xr.open_dataset(path_to_pr_file).pr
+    >>> pr = open_dataset(path_to_pr_file).pr
     >>> out = max_pr_intensity(pr, window=5, freq="YS")
     """
     # Rolling sum of the values
@@ -569,7 +569,7 @@ def sfcWind_max(  # noqa: N802
     at the seasonal frequency, i.e. DJF, MAM, JJA, SON, DJF, etc.:
 
     >>> from xclim.indices import sfcWind_max
-    >>> fg = xr.open_dataset(path_to_sfcWind_file).sfcWind
+    >>> fg = open_dataset(path_to_sfcWind_file).sfcWind
     >>> fg_max = sfcWind_max(fg, freq="QS-DEC")
     """
     return sfcWind.resample(time=freq).max(dim="time").assign_attrs(units=sfcWind.units)
@@ -610,7 +610,7 @@ def sfcWind_mean(  # noqa: N802
     at the seasonal frequency, i.e. DJF, MAM, JJA, SON, DJF, etc.:
 
     >>> from xclim.indices import sfcWind_mean
-    >>> fg = xr.open_dataset(path_to_sfcWind_file).sfcWind
+    >>> fg = open_dataset(path_to_sfcWind_file).sfcWind
     >>> fg_mean = sfcWind_mean(fg, freq="QS-DEC")
     """
     return (
@@ -653,7 +653,7 @@ def sfcWind_min(  # noqa: N802
     at the seasonal frequency, i.e. DJF, MAM, JJA, SON, DJF, etc.:
 
     >>> from xclim.indices import sfcWind_min
-    >>> fg = xr.open_dataset(path_to_sfcWind_file).sfcWind
+    >>> fg = open_dataset(path_to_sfcWind_file).sfcWind
     >>> fg_min = sfcWind_min(fg, freq="QS-DEC")
     """
     return sfcWind.resample(time=freq).min(dim="time").assign_attrs(units=sfcWind.units)
