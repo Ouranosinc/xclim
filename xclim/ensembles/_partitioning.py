@@ -302,9 +302,9 @@ def lafferty_sriver(
 def general_partition(
     da: xr.DataArray,
     sm: xr.DataArray | str = "loess",
-    var_first: list = ["model", "reference", "method"],
+    var_first: list = ["model", "reference", "adjustment"],
     mean_first: list = ["scenario"],
-    weights: list = ["model", "reference", "method"],
+    weights: list = ["model", "reference", "adjustment"],
 ) -> tuple[xr.DataArray, xr.DataArray]:
     """Return the mean and partitioned variance of an ensemble.
 
