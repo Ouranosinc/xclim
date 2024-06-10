@@ -144,7 +144,7 @@ def _griffiths_drought_factor(p, smd, lim, df):  # pragma: no cover
                 # N = 0 defines a rainfall event since 9am today,
                 # so doesn't apply here, where p is the rainfall
                 # over previous 24 hours.
-                x_ = N**1.3 / (N**1.3 + P - 2.0)
+                x_ = N**1.3 / (N**1.3 + P - 2.0)  # pylint: disable=E0601
                 x = min(x_, x)
 
                 conseq = 0
