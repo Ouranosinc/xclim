@@ -2971,6 +2971,8 @@ def test_rain_season(pr_series, result_type, method_dry_start):
     elif result_type == "end_cond_fails":
         pr[{"time": 99 + 20 - 1}] = 5
         out_exp = [3, np.NaN, 363]
+    else:
+        raise ValueError(f"Unknown result_type: {result_type}")
 
     out = {}
     out["start"], out["end"], out["length"] = xci.rain_season(
