@@ -422,31 +422,31 @@ def _threshold_count(
     Parameters
     ----------
     da : xr.DataArray
-      Variable on which to calculate the diagnostic.
+        Variable on which to calculate the diagnostic.
     method : {'amount', 'quantile'}
-      Method to choose the threshold.
-      'amount': The threshold is directly the quantity in {thresh}. It needs to have the same units as {da}.
-      'quantile': The threshold is calculated as the quantile {thresh} of the distribution.
+        Method to choose the threshold.
+        'amount': The threshold is directly the quantity in {thresh}. It needs to have the same units as {da}.
+        'quantile': The threshold is calculated as the quantile {thresh} of the distribution.
     op : {">", "<", ">=", "<="}
-      Operation to verify the condition for a spell.
-      The condition for a spell is variable {op} threshold.
+        Operation to verify the condition for a spell.
+        The condition for a spell is variable {op} threshold.
     thresh : str or float
-      Threshold on which to evaluate the condition to have a spell.
-      Str with units if the method is "amount".
-      Float of the quantile if the method is "quantile".
+        Threshold on which to evaluate the condition to have a spell.
+        String with units if the method is "amount".
+        Float of the quantile if the method is "quantile".
     stat : {'mean', 'sum', 'max','min'}
-      Statistics to apply to the remaining time dimension after resampling (e.g. Jan 1980-2010)
+        Statistics to apply to the remaining time dimension after resampling (e.g. Jan 1980-2010)
     stat_resample : {'mean', 'sum', 'max','min'}, optional
-      Statistics to apply to the resampled input at the {group} (e.g. 1-31 Jan 1980). If `None`, the same method as `stat` will be used.
+        Statistics to apply to the resampled input at the {group} (e.g. 1-31 Jan 1980). If `None`, the same method as `stat` will be used.
     group : {'time', 'time.season', 'time.month'}
-      Grouping of the output.
-      e.g. For 'time.month', the correlation would be calculated on each month separately,
-      but with all the years together.
+        Grouping of the output.
+        e.g. For 'time.month', the correlation would be calculated on each month separately,
+        but with all the years together.
 
     Returns
     -------
     xr.DataArray, [dimensionless]
-      {stat} number of days when the variable is {op} the {method} {thresh}.
+        {stat} number of days when the variable is {op} the {method} {thresh}.
 
     Notes
     -----
