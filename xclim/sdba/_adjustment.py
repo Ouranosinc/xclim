@@ -45,7 +45,7 @@ def dqm_train(
     kind: str,
     quantiles: np.ndarray,
     adapt_freq_thresh: str | None = None,
-    jitter_under_thresh_value
+    jitter_under_thresh_value,
 ) -> xr.Dataset:
     """Train step on one group.
 
@@ -104,13 +104,13 @@ def dqm_train(
     hist_q=[Grouper.PROP, "quantiles"],
 )
 def eqm_train(
-    ds : xr.Dataset
+    ds: xr.Dataset,
     *,
     dim: str,
     kind: str,
     quantiles: np.ndarray,
     adapt_freq_thresh: str | None = None,
-    jitter_under_thresh_value
+    jitter_under_thresh_value,
 ) -> xr.Dataset:
     """EQM: Train step on one group.
 
@@ -318,7 +318,7 @@ def mbcn_adjust(
     base_kws_vars,
     adj_kws,
     period_dim,
-) -> xr.Dataset:
+) -> xr.DataArray:
     """Perform the adjustment portion MBCn multivariate bias correction technique.
 
     The function ``mbcn_train`` pre-computes the adjustment factors for each rotation
@@ -385,7 +385,7 @@ def mbcn_adjust(
         ind_g = indices_g[indices_g >= 0]
 
         # 1. univariate adjustment of sim -> scen
-        # the kind may be differ depending on the variables
+        # the kind may differ depending on the variables
         scen_block = xr.zeros_like(sim[{"time": ind_gw}])
         for iv, v in enumerate(sim[pts_dims[0]].values):
             sl = {"time": ind_gw, pts_dims[0]: iv}
