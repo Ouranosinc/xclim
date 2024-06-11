@@ -1421,7 +1421,7 @@ class TestHotSpellTotalLength:
             ("29 C", 3, ">", 8),  # Two HS
             ("29 C", 3, ">=", 9),  # One long HS, minus a day
             ("40 C", 3, ">", 0),  # No HS
-            ("30 C", 5, ">", 8),  # Windowed
+            ("30 C", 5, ">", 5),  # Windowed
         ],
     )
     def test_1d(self, tasmax_series, thresh, window, op, expected):

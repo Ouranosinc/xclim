@@ -4,11 +4,15 @@ Changelog
 
 v0.50.0 (unreleased)
 --------------------
-Contributors to this version: Trevor James Smith (:user:`Zeitsperre`).
+Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Éric Dupuis (:user:`coxipi`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
 * Synchronized tooling versions across ``pyproject.toml`` and ``tox.ini`` and pinned them to the latest stable releases in GitHub Workflows. (:pull:`1744`).
+
+Bug fixes
+^^^^^^^^^
+* ``xclim.indices.{cold|hot}_spell_total_length`` now properly use the argument `window` to only count spells with at least `window` time steps . (:issue:`1765`).
 
 v0.49.0 (2024-05-02)
 --------------------
