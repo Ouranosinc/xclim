@@ -17,12 +17,7 @@ import xarray
 import xarray as xr
 from xarray.coding.cftime_offsets import _MONTH_ABBREVIATIONS  # noqa
 
-from xclim.core.calendar import (
-    convert_calendar,
-    doy_to_days_since,
-    get_calendar,
-    select_time,
-)
+from xclim.core.calendar import doy_to_days_since, get_calendar, select_time
 from xclim.core.units import (
     convert_units_to,
     declare_relative_units,
@@ -825,11 +820,11 @@ def aggregate_between_dates(
     cal = get_calendar(data, dim="time")
 
     if not isinstance(start, str):
-        start = convert_calendar(start, cal)
+        start = start.convert_calendar(cal)
         start.attrs["calendar"] = cal
         start = doy_to_days_since(start)
     if not isinstance(end, str):
-        end = convert_calendar(end, cal)
+        end = end.convert_calendar(cal)
         end.attrs["calendar"] = cal
         end = doy_to_days_since(end)
 

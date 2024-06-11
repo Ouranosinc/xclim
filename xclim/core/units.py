@@ -22,7 +22,7 @@ import xarray as xr
 from boltons.funcutils import wraps
 from yaml import safe_load
 
-from .calendar import date_range, get_calendar, parse_offset
+from .calendar import get_calendar, parse_offset
 from .options import datacheck
 from .utils import InputKind, Quantified, ValidationError, infer_kind_from_parameter
 
@@ -598,8 +598,12 @@ def _rate_and_amount_converter(
                 label = "upper"
             # We generate "time" with an extra element, so we do not need to repeat the last element below.
             time = xr.DataArray(
-                date_range(
-                    start, periods=len(time) + 1, freq=freq, calendar=get_calendar(time)
+                xr.date_range(
+                    start,
+                    periods=len(time) + 1,
+                    freq=freq,
+                    calendar=get_calendar(time),
+                    use_cftime=(time.dtype == "O"),
                 ),
                 dims=(dim,),
                 name=dim,
