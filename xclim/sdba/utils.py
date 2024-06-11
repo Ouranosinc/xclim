@@ -564,6 +564,7 @@ def rank(
 
 
 def _rank_np(arr, axis=None):
+    """Ranking alone a specified axis"""
     rnk = bn.nanrankdata(arr, axis=axis)
     rnk = rnk / np.nanmax(rnk, axis=axis, keepdims=True)
     mx, mn = 1, np.nanmin(rnk, axis=axis, keepdims=True)

@@ -43,12 +43,12 @@ def dqm_train(
 ) -> xr.Dataset:
     """Train step on one group.
 
-    Notes
-    -----
-    Dataset must contain the following variables:
-      ref : training target
-      hist : training data
-
+    Parameters
+    ----------
+    ds : xr.Dataset
+        Dataset variables:
+            ref : training target
+            hist : training source
     adapt_freq_thresh : str | None
         Threshold for frequency adaptation. See :py:class:`xclim.sdba.processing.adapt_freq` for details.
         Default is None, meaning that frequency adaptation is not performed.
@@ -85,10 +85,12 @@ def eqm_train(
 ) -> xr.Dataset:
     """EQM: Train step on one group.
 
-    Dataset variables:
-      ref : training target
-      hist : training data
-
+    Parameters
+    ----------
+    ds : xr.Dataset
+        Dataset variables:
+            ref : training target
+            hist : training source
     adapt_freq_thresh : str | None
         Threshold for frequency adaptation. See :py:class:`xclim.sdba.processing.adapt_freq` for details.
         Default is None, meaning that frequency adaptation is not performed.
@@ -162,9 +164,10 @@ def mbcn_train(
 
     Parameters
     ----------
-    Dataset variables:
-        ref : training target, DataArray (stacked variables)
-        hist : training source, DataArray (stacked variables)
+    ds : xr.Dataset
+        Dataset variables:
+            ref : training target  (stacked variables)
+            hist : training source (stacked variables)
     rot_matrices : xr.DataArray
         The rotation matrices as a 3D array ('iterations', <pts_dims[0]>, <pts_dims[1]>), with shape (n_iter, <N>, <N>).
     pts_dims : str
@@ -175,7 +178,7 @@ def mbcn_train(
     gw_idxs : xr.DataArray
         Indices of the times in each windowed time group
     """
-    # unload data
+    # unpack data
     ref = ds.ref
     hist = ds.hist
     gr_dim = gw_idxs.attrs["group_dim"]
@@ -183,6 +186,8 @@ def mbcn_train(
     # npdf training core
     af_q_l = []
     escores_l = []
+
+    # loop over time blocks
     for ib in range(gw_idxs[gr_dim].size):
         # indices in a given time block
         indices = gw_idxs[{gr_dim: ib}].astype(int).values
@@ -385,10 +390,13 @@ def mbcn_adjust(
 def qm_adjust(ds, *, group, interp, extrapolation, kind) -> xr.Dataset:
     """QM (DQM and EQM): Adjust step on one block.
 
-    Dataset variables:
-      af : Adjustment factors
-      hist_q : Quantiles over the training data
-      sim : Data to adjust.
+    Parameters
+    ----------
+    ds : xr.Dataset
+        Dataset variables:
+            af : Adjustment factors
+            hist_q : Quantiles over the training data
+            sim : Data to adjust.
     """
     af = u.interp_on_quantiles(
         ds.sim,
@@ -407,11 +415,14 @@ def qm_adjust(ds, *, group, interp, extrapolation, kind) -> xr.Dataset:
 def dqm_adjust(ds, *, group, interp, kind, extrapolation, detrend):
     """DQM adjustment on one block.
 
-    Dataset variables:
-      scaling : Scaling factor between ref and hist
-      af : Adjustment factors
-      hist_q : Quantiles over the training data
-      sim : Data to adjust
+    Parameters
+    ----------
+    ds : xr.Dataset
+        Dataset variables:
+            scaling : Scaling factor between ref and hist
+            af : Adjustment factors
+            hist_q : Quantiles over the training data
+            sim : Data to adjust
     """
     scaled_sim = u.apply_correction(
         ds.sim,
@@ -446,10 +457,13 @@ def dqm_adjust(ds, *, group, interp, kind, extrapolation, detrend):
 def qdm_adjust(ds, *, group, interp, extrapolation, kind) -> xr.Dataset:
     """QDM: Adjust process on one block.
 
-    Dataset variables:
-      af : Adjustment factors
-      hist_q : Quantiles over the training data
-      sim : Data to adjust.
+    Parameters
+    ----------
+    ds : xr.Dataset
+        Dataset variables:
+            af : Adjustment factors
+            hist_q : Quantiles over the training data
+            sim : Data to adjust.
     """
     sim_q = group.apply(u.rank, ds.sim, main_only=True, pct=True)
     af = u.interp_on_quantiles(
@@ -472,9 +486,12 @@ def qdm_adjust(ds, *, group, interp, extrapolation, kind) -> xr.Dataset:
 def loci_train(ds, *, group, thresh) -> xr.Dataset:
     """LOCI: Train on one block.
 
-    Dataset variables:
-      ref : training target
-      hist : training data
+    Parameters
+    ----------
+    ds : xr.Dataset
+        Dataset variables:
+            ref : training target
+            hist : training data
     """
     s_thresh = group.apply(
         u.map_cdf, ds.rename(hist="x", ref="y"), y_value=thresh
@@ -495,9 +512,12 @@ def loci_train(ds, *, group, thresh) -> xr.Dataset:
 def loci_adjust(ds, *, group, thresh, interp) -> xr.Dataset:
     """LOCI: Adjust on one block.
 
-    Dataset variables:
-      hist_thresh : Hist's equivalent thresh from ref
-      sim : Data to adjust
+    Parameters
+    ----------
+    ds : xr.Dataset
+        Dataset variables:
+            hist_thresh : Hist's equivalent thresh from ref
+            sim : Data to adjust
     """
     sth = u.broadcast(ds.hist_thresh, ds.sim, group=group, interp=interp)
     factor = u.broadcast(ds.af, ds.sim, group=group, interp=interp)
@@ -510,9 +530,12 @@ def loci_adjust(ds, *, group, thresh, interp) -> xr.Dataset:
 def scaling_train(ds, *, dim, kind) -> xr.Dataset:
     """Scaling: Train on one group.
 
-    Dataset variables:
-      ref : training target
-      hist : training data
+    Parameters
+    ----------
+    ds : xr.Dataset
+        Dataset variables:
+            ref : training target
+            hist : training data
     """
     mhist = ds.hist.mean(dim)
     mref = ds.ref.mean(dim)
@@ -524,9 +547,12 @@ def scaling_train(ds, *, dim, kind) -> xr.Dataset:
 def scaling_adjust(ds, *, group, interp, kind) -> xr.Dataset:
     """Scaling: Adjust on one block.
 
-    Dataset variables:
-      af: Adjustment factors.
-      sim : Data to adjust.
+    Parameters
+    ----------
+    ds : xr.Dataset
+        Dataset variables:
+            af: Adjustment factors.
+            sim : Data to adjust.
     """
     af = u.broadcast(ds.af, ds.sim, group=group, interp=interp)
     scen = u.apply_correction(ds.sim, af, kind)
