@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import numpy as np
+import pandas as pd
 import pytest
+import xarray as xr
 from xarray import set_options
 
 from xclim import sdba
@@ -153,6 +155,28 @@ class TestProperties:
             outd["mean"].long_name
             == "Average of spell length distribution when the variable is >= the quantile 0.9 for 1 consecutive day(s)."
         )
+
+    def test_spell_length_distribution_mixed_stat(self, open_dataset):
+
+        time = pd.date_range("2000-01-01", periods=2 * 365, freq="D")
+        tas = xr.DataArray(
+            np.array([0] * 365 + [40] * 365),
+            dims=("time"),
+            coords={"time": time},
+            attrs={"units": "degC"},
+        )
+
+        kws_sum = dict(
+            thresh="30 degC", op=">=", stat="sum", stat_resample="sum", group="time"
+        )
+        out_sum = sdba.properties.spell_length_distribution(tas, **kws_sum).values
+        kws_mixed = dict(
+            thresh="30 degC", op=">=", stat="mean", stat_resample="sum", group="time"
+        )
+        out_mixed = sdba.properties.spell_length_distribution(tas, **kws_mixed).values
+
+        assert out_sum == 365
+        assert out_mixed == 182.5
 
     @pytest.mark.parametrize(
         "window,expected_amount,expected_quantile",
