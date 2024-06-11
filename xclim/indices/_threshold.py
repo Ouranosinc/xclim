@@ -336,14 +336,13 @@ def cold_spell_total_length(
     thresh = convert_units_to(thresh, tas)
 
     cond = compare(tas, op, thresh, constrain=("<", "<="))
-    max_l = rl.resample_and_rl(
+    out = rl.resample_and_rl(
         cond,
         resample_before_rl,
         rl.windowed_run_count,
-        window=1,
+        window=window,
         freq=freq,
     )
-    out = max_l.where(max_l >= window, 0)
     return to_agg_units(out, tas, "count")
 
 
@@ -2112,14 +2111,13 @@ def hot_spell_total_length(
     thresh = convert_units_to(thresh, tasmax)
 
     cond = compare(tasmax, op, thresh, constrain=(">", ">="))
-    max_l = rl.resample_and_rl(
+    out = rl.resample_and_rl(
         cond,
         resample_before_rl,
         rl.windowed_run_count,
-        window=1,
+        window=window,
         freq=freq,
     )
-    out = max_l.where(max_l >= window, 0)
     return to_agg_units(out, tasmax, "count")
 
 
