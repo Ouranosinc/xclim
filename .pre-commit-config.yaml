@@ -33,7 +33,7 @@ repos:
       - id: yamllint
         args: [ '--config-file=.yamllint.yaml' ]
   - repo: https://github.com/psf/black-pre-commit-mirror
-    rev: 24.4.1
+    rev: 24.4.2
     hooks:
       - id: black
   - repo: https://github.com/PyCQA/isort
@@ -41,11 +41,11 @@ repos:
     hooks:
       - id: isort
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.3.7
+    rev: v0.4.7
     hooks:
       - id: ruff
   - repo: https://github.com/pylint-dev/pylint
-    rev: v3.1.0
+    rev: v3.2.2
     hooks:
       - id: pylint
         args: [ '--rcfile=.pylintrc.toml', '--errors-only', '--jobs=0', '--disable=import-error' ]
@@ -66,7 +66,7 @@ repos:
         args: [ '--py39-plus' ]
         additional_dependencies: [ 'pyupgrade==3.15.2' ]
       - id: nbqa-black
-        additional_dependencies: [ 'black==24.4.1' ]
+        additional_dependencies: [ 'black==24.4.2' ]
       - id: nbqa-isort
         additional_dependencies: [ 'isort==5.13.2' ]
   - repo: https://github.com/kynan/nbstripout
@@ -79,19 +79,19 @@ repos:
     rev: v0.3.9
     hooks:
       - id: blackdoc
-        additional_dependencies: [ 'black==24.4.1' ]
+        additional_dependencies: [ 'black==24.4.2' ]
         exclude: '(xclim/indices/__init__.py|docs/installation.rst)'
   - repo: https://github.com/codespell-project/codespell
-    rev: v2.2.6
+    rev: v2.3.0
     hooks:
       - id: codespell
         additional_dependencies: [ 'tomli' ]
   - repo: https://github.com/gitleaks/gitleaks
-    rev: v8.18.2
+    rev: v8.18.3
     hooks:
       - id: gitleaks
   - repo: https://github.com/python-jsonschema/check-jsonschema
-    rev: 0.28.2
+    rev: 0.28.4
     hooks:
       - id: check-github-workflows
       - id: check-readthedocs

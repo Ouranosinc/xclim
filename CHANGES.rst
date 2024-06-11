@@ -6,9 +6,17 @@ v0.50.0 (unreleased)
 --------------------
 Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Éric Dupuis (:user:`coxipi`).
 
+Breaking changes
+^^^^^^^^^^^^^^^^
+* `pint` has been pinned below v0.24 until `xclim` can be updated to support the latest version. (:issue:`1771`, :pull:`1772`).
+
 Internal changes
 ^^^^^^^^^^^^^^^^
 * Synchronized tooling versions across ``pyproject.toml`` and ``tox.ini`` and pinned them to the latest stable releases in GitHub Workflows. (:pull:`1744`).
+* Fixed a few small spelling and grammar issues that were causing errors with `codespell`. Now ignoring `SVG` files. (:pull:`1769`).
+* Temporarily skipping the ``test_hawkins_sutton_smoke`` test due to strange behaviour with `xarray`. (:pull:`1769`).
+* Fixed some previously uncaught errors raised from recent versions of `pylint` and `codespell`. (:pull:`1772`).
+* Set the `doctest` examples to all use `h5netcdf` with worker-separated caches to load datasets. (:pull:`1772`).
 
 Bug fixes
 ^^^^^^^^^
