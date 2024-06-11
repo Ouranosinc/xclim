@@ -115,10 +115,10 @@ def _mean(da: xr.DataArray, *, group: str | Grouper = "time") -> xr.DataArray:
     Parameters
     ----------
     da : xr.DataArray
-      Variable on which to calculate the diagnostic.
+        Variable on which to calculate the diagnostic.
     group : {'time', 'time.season', 'time.month'}
-      Grouping of the output.
-      E.g. If 'time.month', the temporal average is performed separately for each month.
+        Grouping of the output.
+        e.g. If 'time.month', the temporal average is performed separately for each month.
 
     Returns
     -------
@@ -148,15 +148,15 @@ def _var(da: xr.DataArray, *, group: str | Grouper = "time") -> xr.DataArray:
     Parameters
     ----------
     da : xr.DataArray
-      Variable on which to calculate the diagnostic.
+        Variable on which to calculate the diagnostic.
     group : {'time', 'time.season', 'time.month'}
-      Grouping of the output.
-      E.g. If 'time.month', the variance is performed separately for each month.
+        Grouping of the output.
+        e.g. If 'time.month', the variance is performed separately for each month.
 
     Returns
     -------
     xr.DataArray, [square of the input units]
-      Variance of the variable.
+        Variance of the variable.
     """
     units = da.units
     if group.prop != "group":
@@ -184,15 +184,15 @@ def _std(da: xr.DataArray, *, group: str | Grouper = "time") -> xr.DataArray:
     Parameters
     ----------
     da : xr.DataArray
-      Variable on which to calculate the diagnostic.
+        Variable on which to calculate the diagnostic.
     group : {'time', 'time.season', 'time.month'}
-      Grouping of the output.
-      E.g. If 'time.month', the standard deviation is performed separately for each month.
+        Grouping of the output.
+        e.g. If 'time.month', the standard deviation is performed separately for each month.
 
     Returns
     -------
     xr.DataArray,
-      Standard deviation of the variable.
+        Standard deviation of the variable.
     """
     units = da.units
     if group.prop != "group":
@@ -219,15 +219,15 @@ def _skewness(da: xr.DataArray, *, group: str | Grouper = "time") -> xr.DataArra
     Parameters
     ----------
     da : xr.DataArray
-      Variable on which to calculate the diagnostic.
+        Variable on which to calculate the diagnostic.
     group : {'time', 'time.season', 'time.month'}
-      Grouping of the output.
-      E.g. If 'time.month', the skewness is performed separately for each month.
+        Grouping of the output.
+        e.g. If 'time.month', the skewness is performed separately for each month.
 
     Returns
     -------
     xr.DataArray, [dimensionless]
-      Skewness of the variable.
+        Skewness of the variable.
 
     See Also
     --------
@@ -261,17 +261,17 @@ def _quantile(
     Parameters
     ----------
     da : xr.DataArray
-      Variable on which to calculate the diagnostic.
-    q: float
-      Quantile to be calculated. Should be between 0 and 1.
+        Variable on which to calculate the diagnostic.
+    q : float
+        Quantile to be calculated. Should be between 0 and 1.
     group : {'time', 'time.season', 'time.month'}
-      Grouping of the output.
-      E.g. If 'time.month', the quantile is computed separately for each month.
+        Grouping of the output.
+        e.g. If 'time.month', the quantile is computed separately for each month.
 
     Returns
     -------
     xr.DataArray, [same as input]
-      Quantile {q} of the variable.
+        Quantile {q} of the variable.
     """
     units = da.units
     if group.prop != "group":
@@ -291,7 +291,9 @@ def _spell_length_distribution(
     method: str = "amount",
     op: str = ">=",
     thresh: str = "1 mm d-1",
+    window: int = 1,
     stat: str = "mean",
+    stat_resample: str | None = None,
     group: str | Grouper = "time",
     resample_before_rl: bool = True,
 ) -> xr.DataArray:
@@ -303,37 +305,54 @@ def _spell_length_distribution(
     Parameters
     ----------
     da : xr.DataArray
-      Variable on which to calculate the diagnostic.
+        Variable on which to calculate the diagnostic.
     method: {'amount', 'quantile'}
-      Method to choose the threshold.
-      'amount': The threshold is directly the quantity in {thresh}. It needs to have the same units as {da}.
-      'quantile': The threshold is calculated as the quantile {thresh} of the distribution.
-    op: {">", "<", ">=", "<="}
-      Operation to verify the condition for a spell.
-      The condition for a spell is variable {op} threshold.
-    thresh: str or float
-      Threshold on which to evaluate the condition to have a spell.
-      Str with units if the method is "amount".
-      Float of the quantile if the method is "quantile".
-    stat: {'mean','max','min'}
-      Statistics to apply to the resampled input at the {group} (e.g. 1-31 Jan 1980)
-      and then over all years (e.g. Jan 1980-2010)
+        Method to choose the threshold.
+        'amount': The threshold is directly the quantity in {thresh}. It needs to have the same units as {da}.
+        'quantile': The threshold is calculated as the quantile {thresh} of the distribution.
+    op : {">", "<", ">=", "<="}
+        Operation to verify the condition for a spell.
+        The condition for a spell is variable {op} threshold.
+    thresh : str or float
+        Threshold on which to evaluate the condition to have a spell.
+        String with units if the method is "amount".
+        Float of the quantile if the method is "quantile".
+    window : int
+        Number of consecutive days respecting the constraint in order to begin a spell.
+        Default is 1, which is equivalent to `_threshold_count`
+    stat : {'mean', 'sum', 'max','min'}
+        Statistics to apply to the remaining time dimension after resampling (e.g. Jan 1980-2010)
+    stat_resample : {'mean', 'sum', 'max','min'}, optional
+        Statistics to apply to the resampled input at the {group} (e.g. 1-31 Jan 1980).
+        If `None`, the same method as `stat` will be used.
     group : {'time', 'time.season', 'time.month'}
-      Grouping of the output.
-      E.g. If 'time.month', the spell lengths are computed separately for each month.
+        Grouping of the output.
+        e.g. If 'time.month', the spell lengths are computed separately for each month.
     resample_before_rl : bool
-      Determines if the resampling should take place before or after the run
-      length encoding (or a similar algorithm) is applied to runs.
+        Determines if the resampling should take place before or after the run
+        length encoding (or a similar algorithm) is applied to runs.
 
     Returns
     -------
     xr.DataArray, [units of the sampling frequency]
-      {stat} of spell length distribution when the variable is {op} the {method} {thresh}.
+        {stat} of spell length distribution when the variable is {op} the {method} {thresh} for {window} consecutive day(s).
     """
     ops = {">": np.greater, "<": np.less, ">=": np.greater_equal, "<=": np.less_equal}
 
     @map_groups(out=[Grouper.PROP], main_only=True)
-    def _spell_stats(ds, *, dim, method, thresh, op, freq, resample_before_rl, stat):
+    def _spell_stats(
+        ds,
+        *,
+        dim,
+        method,
+        thresh,
+        window,
+        op,
+        freq,
+        resample_before_rl,
+        stat,
+        stat_resample,
+    ):
         # PB: This prevents an import error in the distributed dask scheduler, but I don't know why.
         import xarray.core.resample_cftime  # noqa: F401, pylint: disable=unused-import
 
@@ -349,8 +368,8 @@ def _spell_length_distribution(
             cond,
             resample_before_rl,
             rl.rle_statistics,
-            reducer=stat,
-            window=1,
+            reducer=stat_resample,
+            window=window,
             dim=dim,
             freq=freq,
         )
@@ -371,10 +390,12 @@ def _spell_length_distribution(
         group=group,
         method=method,
         thresh=thresh,
+        window=window,
         op=ops[op],
         freq=group.freq,
         resample_before_rl=resample_before_rl,
         stat=stat,
+        stat_resample=stat_resample or stat,
     ).out
     return to_agg_units(out, da, op="count")
 
@@ -383,6 +404,70 @@ spell_length_distribution = StatisticalProperty(
     identifier="spell_length_distribution",
     aspect="temporal",
     compute=_spell_length_distribution,
+)
+
+
+def _threshold_count(
+    da: xr.DataArray,
+    *,
+    method: str = "amount",
+    op: str = ">=",
+    thresh: str = "1 mm d-1",
+    stat: str = "mean",
+    stat_resample: str | None = None,
+    group: str | Grouper = "time",
+) -> xr.DataArray:
+    r"""Correlation between two variables.
+
+    Spearman or Pearson correlation coefficient between two variables at the time resolution.
+
+    Parameters
+    ----------
+    da : xr.DataArray
+        Variable on which to calculate the diagnostic.
+    method : {'amount', 'quantile'}
+        Method to choose the threshold.
+        'amount': The threshold is directly the quantity in {thresh}. It needs to have the same units as {da}.
+        'quantile': The threshold is calculated as the quantile {thresh} of the distribution.
+    op : {">", "<", ">=", "<="}
+        Operation to verify the condition for a spell.
+        The condition for a spell is variable {op} threshold.
+    thresh : str or float
+        Threshold on which to evaluate the condition to have a spell.
+        String with units if the method is "amount".
+        Float of the quantile if the method is "quantile".
+    stat : {'mean', 'sum', 'max','min'}
+        Statistics to apply to the remaining time dimension after resampling (e.g. Jan 1980-2010)
+    stat_resample : {'mean', 'sum', 'max','min'}, optional
+        Statistics to apply to the resampled input at the {group} (e.g. 1-31 Jan 1980). If `None`, the same method as `stat` will be used.
+    group : {'time', 'time.season', 'time.month'}
+        Grouping of the output.
+        e.g. For 'time.month', the correlation would be calculated on each month separately,
+        but with all the years together.
+
+    Returns
+    -------
+    xr.DataArray, [dimensionless]
+        {stat} number of days when the variable is {op} the {method} {thresh}.
+
+    Notes
+    -----
+    This corresponds to ``xclim.sdba.properties._spell_length_distribution`` with `window=1`.
+    """
+    return _spell_length_distribution(
+        da,
+        method=method,
+        op=op,
+        thresh=thresh,
+        stat=stat,
+        stat_resample=stat_resample,
+        group=group,
+        window=1,
+    )
+
+
+threshold_count = StatisticalProperty(
+    identifier="threshold_count", aspect="temporal", compute=_threshold_count
 )
 
 
@@ -396,18 +481,18 @@ def _acf(
     Parameters
     ----------
     da : xr.DataArray
-      Variable on which to calculate the diagnostic.
-    lag: int
-      Lag.
+        Variable on which to calculate the diagnostic.
+    lag : int
+        Lag.
     group : {'time.season', 'time.month'}
-      Grouping of the output.
-      E.g. If 'time.month', the autocorrelation is calculated over each month separately for all years.
-      Then, the autocorrelation for all Jan/Feb/... is averaged over all years, giving 12 outputs for each grid point.
+        Grouping of the output.
+        e.g. If 'time.month', the autocorrelation is calculated over each month separately for all years.
+        Then, the autocorrelation for all Jan/Feb/... is averaged over all years, giving 12 outputs for each grid point.
 
     Returns
     -------
     xr.DataArray, [dimensionless]
-      Lag-{lag} autocorrelation of the variable over a {group.prop} and averaged over all years.
+        Lag-{lag} autocorrelation of the variable over a {group.prop} and averaged over all years.
 
     See Also
     --------
@@ -467,21 +552,21 @@ def _annual_cycle(
     Parameters
     ----------
     da : xr.DataArray
-      Variable on which to calculate the diagnostic.
+        Variable on which to calculate the diagnostic.
     stat : {'absamp','relamp', 'phase', 'min', 'max', 'asymmetry'}
-      - 'absamp' is the peak-to-peak amplitude. (max - min). In the same units as the input.
-      - 'relamp' is a relative percentage. 100 * (max - min) / mean (Recommended for precipitation). Dimensionless.
-      - 'phase' is the day of year of the maximum.
-      - 'max' is the maximum. Same units as the input.
-      - 'min' is the minimum. Same units as the input.
-      - 'asymmetry' is the length of the period going from the minimum to the maximum. In years between 0 and 1.
+        - 'absamp' is the peak-to-peak amplitude. (max - min). In the same units as the input.
+        - 'relamp' is a relative percentage. 100 * (max - min) / mean (Recommended for precipitation). Dimensionless.
+        - 'phase' is the day of year of the maximum.
+        - 'max' is the maximum. Same units as the input.
+        - 'min' is the minimum. Same units as the input.
+        - 'asymmetry' is the length of the period going from the minimum to the maximum. In years between 0 and 1.
     window : int
-      Size of the window for the moving average filtering. Deactivate this feature by passing window = 1.
+        Size of the window for the moving average filtering. Deactivate this feature by passing window = 1.
 
     Returns
     -------
     xr.DataArray, [same units as input or dimensionless or time]
-      {stat} of the annual cycle.
+        {stat} of the annual cycle.
     """
     units = da.units
 
@@ -594,16 +679,16 @@ def _annual_statistic(
     Parameters
     ----------
     da: xr.DataArray
-      Data.
+        Data.
     stat : {'absamp', 'relamp', 'phase'}
-      The statistic to return.
+        The statistic to return.
     window : int
-      Size of the window for the moving average filtering. Deactivate this feature by passing window = 1.
+        Size of the window for the moving average filtering. Deactivate this feature by passing window = 1.
 
     Returns
     -------
     xr.DataArray, [same units as input or dimensionless]
-      Average annual {stat}.
+        Average annual {stat}.
     """
     units = da.units
 
@@ -670,22 +755,22 @@ def _corr_btw_var(
     Parameters
     ----------
     da1 : xr.DataArray
-      First variable on which to calculate the diagnostic.
+        First variable on which to calculate the diagnostic.
     da2 : xr.DataArray
-      Second variable on which to calculate the diagnostic.
+        Second variable on which to calculate the diagnostic.
     corr_type: {'Pearson','Spearman'}
-      Type of correlation to calculate.
+        Type of correlation to calculate.
     output: {'correlation', 'pvalue'}
-      Whether to return the correlation coefficient or the p-value.
+        Whether to return the correlation coefficient or the p-value.
     group : {'time', 'time.season', 'time.month'}
-      Grouping of the output.
-      e.g. For 'time.month', the correlation would be calculated on each month separately,
-      but with all the years together.
+        Grouping of the output.
+        e.g. For 'time.month', the correlation would be calculated on each month separately,
+        but with all the years together.
 
     Returns
     -------
     xr.DataArray, [dimensionless]
-      {corr_type} correlation coefficient
+        {corr_type} correlation coefficient
     """
     if corr_type.lower() not in {"pearson", "spearman"}:
         raise ValueError(
@@ -730,6 +815,246 @@ corr_btw_var = StatisticalProperty(
 )
 
 
+def _bivariate_spell_length_distribution(
+    da1: xr.DataArray,
+    da2: xr.DataArray,
+    *,
+    method1: str = "amount",
+    method2: str = "amount",
+    op1: str = ">=",
+    op2: str = ">=",
+    thresh1: str = "1 mm d-1",
+    thresh2: str = "1 mm d-1",
+    window: int = 1,
+    stat: str = "mean",
+    stat_resample: str | None = None,
+    group: str | Grouper = "time",
+    resample_before_rl: bool = True,
+) -> xr.DataArray:
+    """Spell length distribution with bivariate condition.
+
+    Statistic of spell length distribution when two variables respect individual conditions (defined by an operation, a method,
+    and a threshold).
+
+    Parameters
+    ----------
+    da1 : xr.DataArray
+        First variable on which to calculate the diagnostic.
+    da2 : xr.DataArray
+        Second variable on which to calculate the diagnostic.
+    method1 : {'amount', 'quantile'}
+        Method to choose the threshold.
+        'amount': The threshold is directly the quantity in {thresh}. It needs to have the same units as {da}.
+        'quantile': The threshold is calculated as the quantile {thresh} of the distribution.
+    method2 : {'amount', 'quantile'}
+        Method to choose the threshold.
+        'amount': The threshold is directly the quantity in {thresh}. It needs to have the same units as {da}.
+        'quantile': The threshold is calculated as the quantile {thresh} of the distribution.
+    op1 : {">", "<", ">=", "<="}
+        Operation to verify the condition for a spell.
+        The condition for a spell is variable {op1} threshold.
+    op2 : {">", "<", ">=", "<="}
+        Operation to verify the condition for a spell.
+        The condition for a spell is variable {op2} threshold.
+    thresh1 : str or float
+        Threshold on which to evaluate the condition to have a spell.
+        String with units if the method is "amount".
+        Float of the quantile if the method is "quantile".
+    thresh2 : str or float
+        Threshold on which to evaluate the condition to have a spell.
+        String with units if the method is "amount".
+        Float of the quantile if the method is "quantile".
+    window : int
+        Number of consecutive days respecting the constraint in order to begin a spell.
+        Default is 1, which is equivalent to `_bivariate_threshold_count`
+    stat : {'mean', 'sum', 'max','min'}
+        Statistics to apply to the remaining time dimension after resampling (e.g. Jan 1980-2010)
+    stat_resample : {'mean', 'sum', 'max','min'}, optional
+        Statistics to apply to the resampled input at the {group} (e.g. 1-31 Jan 1980). If `None`, the same method as `stat` will be used.
+    group : {'time', 'time.season', 'time.month'}
+        Grouping of the output.
+        e.g. If 'time.month', the spell lengths are computed separately for each month.
+    resample_before_rl : bool
+        Determines if the resampling should take place before or after the run
+        length encoding (or a similar algorithm) is applied to runs.
+
+    Returns
+    -------
+    xr.DataArray, [units of the sampling frequency]
+        {stat} of spell length distribution when the first variable is {op1} the {method1} {thresh1}
+        and the second variable is {op2} the {method2} {thresh2} for {window} consecutive day(s).
+    """
+    ops = {
+        ">": np.greater,
+        "<": np.less,
+        ">=": np.greater_equal,
+        "<=": np.less_equal,
+    }
+
+    @map_groups(out=[Grouper.PROP], main_only=True)
+    def _bivariate_spell_stats(
+        ds,
+        *,
+        dim,
+        methods,
+        threshs,
+        opss,
+        freq,
+        window,
+        resample_before_rl,
+        stat,
+        stat_resample,
+    ):
+        # PB: This prevents an import error in the distributed dask scheduler, but I don't know why.
+        import xarray.core.resample_cftime  # noqa: F401, pylint: disable=unused-import
+
+        conds = []
+        masks = []
+        for da, thresh, op, method in zip([ds.da1, ds.da2], threshs, opss, methods):
+            masks.append(
+                ~(da.isel({dim: 0}).isnull()).drop_vars(dim)
+            )  # mask of the ocean with NaNs
+            if method == "quantile":
+                thresh = da.quantile(thresh, dim=dim).drop_vars("quantile")
+            conds.append(op(da, thresh))
+        mask = masks[0] & masks[1]
+        cond = conds[0] & conds[1]
+        out = rl.resample_and_rl(
+            cond,
+            resample_before_rl,
+            rl.rle_statistics,
+            reducer=stat_resample,
+            window=window,
+            dim=dim,
+            freq=freq,
+        )
+        out = getattr(out, stat)(dim=dim)
+        out = out.where(mask)
+        return out.rename("out").to_dataset()
+
+    # threshold is an amount that will be converted to the right units
+    methods = [method1, method2]
+    threshs = [thresh1, thresh2]
+    for i, da in enumerate([da1, da2]):
+        if methods[i] == "amount":
+            threshs[i] = convert_units_to(threshs[i], da, context="infer")
+        elif methods[i] != "quantile":
+            raise ValueError(
+                f"{methods[i]} is not a valid method. Choose 'amount' or 'quantile'."
+            )
+
+    out = _bivariate_spell_stats(
+        xr.Dataset({"da1": da1, "da2": da2}),
+        group=group,
+        threshs=threshs,
+        methods=methods,
+        opss=[ops[op1], ops[op2]],
+        window=window,
+        freq=group.freq,
+        resample_before_rl=resample_before_rl,
+        stat=stat,
+        stat_resample=stat_resample or stat,
+    ).out
+    return to_agg_units(out, da1, op="count")
+
+
+bivariate_spell_length_distribution = StatisticalProperty(
+    identifier="bivariate_spell_length_distribution",
+    aspect="temporal",
+    compute=_bivariate_spell_length_distribution,
+)
+
+
+def _bivariate_threshold_count(
+    da1: xr.DataArray,
+    da2: xr.DataArray,
+    *,
+    method1: str = "amount",
+    method2: str = "amount",
+    op1: str = ">=",
+    op2: str = ">=",
+    thresh1: str = "1 mm d-1",
+    thresh2: str = "1 mm d-1",
+    stat: str = "mean",
+    stat_resample: str | None = None,
+    group: str | Grouper = "time",
+) -> xr.DataArray:
+    """Count the number of time steps where two variables respect given conditions.
+
+    Statistic of number of time steps when two variables respect individual conditions (defined by an operation, a method,
+    and a threshold).
+
+    Parameters
+    ----------
+    da1 : xr.DataArray
+        First variable on which to calculate the diagnostic.
+    da2 : xr.DataArray
+        Second variable on which to calculate the diagnostic.
+    method1 : {'amount', 'quantile'}
+        Method to choose the threshold.
+        'amount': The threshold is directly the quantity in {thresh}. It needs to have the same units as {da}.
+        'quantile': The threshold is calculated as the quantile {thresh} of the distribution.
+    method2 : {'amount', 'quantile'}
+        Method to choose the threshold.
+        'amount': The threshold is directly the quantity in {thresh}. It needs to have the same units as {da}.
+        'quantile': The threshold is calculated as the quantile {thresh} of the distribution.
+    op1 : {">", "<", ">=", "<="}
+        Operation to verify the condition for a spell.
+        The condition for a spell is variable {op} threshold.
+    op2 : {">", "<", ">=", "<="}
+        Operation to verify the condition for a spell.
+        The condition for a spell is variable {op} threshold.
+    thresh1 : str or float
+        Threshold on which to evaluate the condition to have a spell.
+        String with units if the method is "amount".
+        Float of the quantile if the method is "quantile".
+    thresh2 : str or float
+        Threshold on which to evaluate the condition to have a spell.
+        String with units if the method is "amount".
+        Float of the quantile if the method is "quantile".
+    stat : {'mean', 'sum', 'max','min'}
+        Statistics to apply to the remaining time dimension after resampling (e.g. Jan 1980-2010)
+    stat_resample : {'mean', 'sum', 'max','min'}, optional
+        Statistics to apply to the resampled input at the {group} (e.g. 1-31 Jan 1980).
+        If `None`, the same method as `stat` will be used.
+    group : {'time', 'time.season', 'time.month'}
+        Grouping of the output.
+        e.g. For 'time.month', the correlation would be calculated on each month separately,
+        but with all the years together.
+
+    Returns
+    -------
+    xr.DataArray, [dimensionless]
+        {stat} number of days when the first variable is {op1} the {method1} {thresh1}
+        and the second variable is {op2} the {method2} {thresh2} for {window} consecutive day(s).
+
+    Notes
+    -----
+    This corresponds to ``xclim.sdba.properties._bivariate_spell_length_distribution`` with `window=1`.
+    """
+    return _bivariate_spell_length_distribution(
+        da1,
+        da2,
+        method1=method1,
+        method2=method2,
+        op1=op1,
+        op2=op2,
+        thresh1=thresh1,
+        thresh2=thresh2,
+        window=1,
+        stat=stat,
+        stat_resample=stat_resample,
+        group=group,
+    )
+
+
+bivariate_threshold_count = StatisticalProperty(
+    identifier="bivariate_threshold_count",
+    aspect="multivariate",
+    compute=_bivariate_threshold_count,
+)
+
+
 def _relative_frequency(
     da: xr.DataArray,
     *,
@@ -746,21 +1071,20 @@ def _relative_frequency(
     Parameters
     ----------
     da : xr.DataArray
-      Variable on which to calculate the diagnostic.
-    op: {">", "<", ">=", "<="}
-      Operation to verify the condition.
-      The condition is variable {op} threshold.
-    thresh: str
-      Threshold on which to evaluate the condition.
+        Variable on which to calculate the diagnostic.
+    op : {">", "<", ">=", "<="}
+        Operation to verify the condition.
+        The condition is variable {op} threshold.
+    thresh : str
+        Threshold on which to evaluate the condition.
     group : {'time', 'time.season', 'time.month'}
-      Grouping on the output.
-      Eg. For 'time.month', the relative frequency would be calculated on each month,
-      with all years included.
+        Grouping on the output.
+        e.g. For 'time.month', the relative frequency would be calculated on each month, with all years included.
 
     Returns
     -------
     xr.DataArray, [dimensionless]
-      Relative frequency of values {op} {thresh}.
+        Relative frequency of values {op} {thresh}.
     """
     # mask of the ocean with NaNs
     mask = ~(da.isel({group.dim: 0}).isnull()).drop_vars(group.dim)
@@ -813,7 +1137,7 @@ def _transition_probability(
     initial_op : {">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"}
         Operation to verify the condition for the initial state.
         The condition is variable {op} threshold.
-    final_op: {">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"}
+    final_op : {">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"}
         Operation to verify the condition for the final state.
         The condition is variable {op} threshold.
     thresh : str
@@ -879,7 +1203,7 @@ def _trend(
     Returns
     -------
     xr.DataArray, [units of input per year or dimensionless]
-      {output} of the interannual linear trend.
+        {output} of the interannual linear trend.
 
     See Also
     --------
@@ -932,22 +1256,22 @@ def _return_value(
     Parameters
     ----------
     da : xr.DataArray
-      Variable on which to calculate the diagnostic.
-    period: int
-      Return period. Number of years over which to check if the value is exceeded (or not for op='min').
-    op: {'max','min'}
-      Whether we are looking for a probability of exceedance ('max', right side of the distribution)
-      or a probability of non-exceedance (min, left side of the distribution).
+        Variable on which to calculate the diagnostic.
+    period : int
+        Return period. Number of years over which to check if the value is exceeded (or not for op='min').
+    op : {'max','min'}
+        Whether we are looking for a probability of exceedance ('max', right side of the distribution)
+        or a probability of non-exceedance (min, left side of the distribution).
     method : {"ML", "PWM"}
-      Fitting method, either maximum likelihood (ML) or probability weighted moments (PWM), also called L-Moments.
-      The PWM method is usually more robust to outliers.
+        Fitting method, either maximum likelihood (ML) or probability weighted moments (PWM), also called L-Moments.
+        The PWM method is usually more robust to outliers.
     group : {'time', 'time.season', 'time.month'}
-      Grouping of the output. A distribution of the extremes is done for each group.
+        Grouping of the output. A distribution of the extremes is done for each group.
 
     Returns
     -------
     xr.DataArray, [same as input]
-      {period}-{group.prop_name} {op} return level of the variable.
+        {period}-{group.prop_name} {op} return level of the variable.
     """
 
     @map_groups(out=[Grouper.PROP], main_only=True)
