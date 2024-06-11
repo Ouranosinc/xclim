@@ -5,7 +5,9 @@ Pre- and Post-Processing Submodule
 """
 from __future__ import annotations
 
+import types
 from collections.abc import Sequence
+from typing import cast
 
 import dask.array as dsk
 import numpy as np
@@ -138,7 +140,8 @@ def jitter_under_thresh(x: xr.DataArray, thresh: str) -> xr.DataArray:
     -----
     If thresh is high, this will change the mean value of x.
     """
-    return jitter(x, lower=thresh, upper=None, minimum=None, maximum=None)
+    j: xr.DataArray = jitter(x, lower=thresh, upper=None, minimum=None, maximum=None)
+    return j
 
 
 def jitter_over_thresh(x: xr.DataArray, thresh: str, upper_bnd: str) -> xr.DataArray:
@@ -166,7 +169,10 @@ def jitter_over_thresh(x: xr.DataArray, thresh: str, upper_bnd: str) -> xr.DataA
     If thresh is low, this will change the mean value of x.
 
     """
-    return jitter(x, lower=None, upper=thresh, minimum=None, maximum=upper_bnd)
+    j: xr.DataArray = jitter(
+        x, lower=None, upper=thresh, minimum=None, maximum=upper_bnd
+    )
+    return j
 
 
 @update_xclim_history
@@ -208,31 +214,41 @@ def jitter(
         The two noise distributions are independent.
     """
     with units.context(infer_context(x.attrs.get("standard_name"))):
-        out = x
+        out: xr.DataArray = x
         notnull = x.notnull()
         if lower is not None:
-            lower = convert_units_to(lower, x)
-            minimum = convert_units_to(minimum, x) if minimum is not None else 0
-            minimum = minimum + np.finfo(x.dtype).eps
+            jitter_lower = np.array(convert_units_to(lower, x)).astype(float)
+            jitter_min = np.array(
+                convert_units_to(minimum, x) if minimum is not None else 0
+            ).astype(float)
+            jitter_min = jitter_min + np.finfo(x.dtype).eps
             if uses_dask(x):
                 jitter_dist = dsk.random.uniform(
-                    low=minimum, high=lower, size=x.shape, chunks=x.chunks
+                    low=jitter_min, high=jitter_lower, size=x.shape, chunks=x.chunks
                 )
             else:
-                jitter_dist = np.random.uniform(low=minimum, high=lower, size=x.shape)
-            out = out.where(~((x < lower) & notnull), jitter_dist.astype(x.dtype))
+                jitter_dist = np.random.uniform(
+                    low=jitter_min, high=jitter_lower, size=x.shape
+                )
+            out = out.where(
+                ~((x < jitter_lower) & notnull), jitter_dist.astype(x.dtype)
+            )
         if upper is not None:
             if maximum is None:
                 raise ValueError("If 'upper' is given, so must 'maximum'.")
-            upper = convert_units_to(upper, x)
-            maximum = convert_units_to(maximum, x)
+            jitter_upper = np.array(convert_units_to(upper, x)).astype(float)
+            jitter_max = np.array(convert_units_to(maximum, x)).astype(float)
             if uses_dask(x):
                 jitter_dist = dsk.random.uniform(
-                    low=upper, high=maximum, size=x.shape, chunks=x.chunks
+                    low=jitter_upper, high=jitter_max, size=x.shape, chunks=x.chunks
                 )
             else:
-                jitter_dist = np.random.uniform(low=upper, high=maximum, size=x.shape)
-            out = out.where(~((x >= upper) & notnull), jitter_dist.astype(x.dtype))
+                jitter_dist = np.random.uniform(
+                    low=jitter_upper, high=jitter_max, size=x.shape
+                )
+            out = out.where(
+                ~((x >= jitter_upper) & notnull), jitter_dist.astype(x.dtype)
+            )
 
         copy_all_attrs(out, x)  # copy attrs and same units
         return out
@@ -291,6 +307,8 @@ def uniform_noise_like(
     Noise is uniformly distributed between low and high.
     Alternative method to `jitter_under_thresh` for avoiding zeroes.
     """
+    mod: types.ModuleType
+    kw: dict
     if uses_dask(da):
         mod = dsk
         kw = {"chunks": da.chunks}
@@ -367,7 +385,7 @@ def reordering(ref: xr.DataArray, sim: xr.DataArray, group: str = "time") -> xr.
 
     """
     ds = xr.Dataset({"sim": sim, "ref": ref})
-    out = _reordering(ds, group=group).reordered
+    out: xr.Dataset = _reordering(ds, group=group).reordered
     copy_all_attrs(out, sim)
     return out
 
@@ -450,7 +468,7 @@ def escore(
     # Otherwise, apply_ufunc tries to align both obs_dim together.
     new_dim = get_temp_dimname(tgt.dims, obs_dim)
     sim = sim.rename({obs_dim: new_dim})
-    out = xr.apply_ufunc(
+    out: xr.DataArray = xr.apply_ufunc(
         _escore,
         tgt,
         sim,
@@ -460,10 +478,12 @@ def escore(
     )
 
     out.name = "escores"
-    out.attrs.update(
-        long_name="Energy dissimilarity metric",
-        description=f"Escores computed from {N or 'all'} points.",
-        references="Székely, G. J. and Rizzo, M. L. (2004) Testing for Equal Distributions in High Dimension, InterStat, November (5)",
+    out = out.assign_attrs(
+        dict(
+            long_name="Energy dissimilarity metric",
+            description=f"Escores computed from {N or 'all'} points.",
+            references="Székely, G. J. and Rizzo, M. L. (2004) Testing for Equal Distributions in High Dimension, InterStat, November (5)",
+        )
     )
     return out
 
@@ -559,27 +579,31 @@ def to_additive_space(
 
     """
     with units.context(infer_context(data.attrs.get("standard_name"))):
-        lower_bound = convert_units_to(lower_bound, data)
+        lower_bound_array = np.array(convert_units_to(lower_bound, data)).astype(float)
         if upper_bound is not None:
-            upper_bound = convert_units_to(upper_bound, data)
+            upper_bound_array = np.array(convert_units_to(upper_bound, data)).astype(
+                float
+            )
 
     with xr.set_options(keep_attrs=True), np.errstate(divide="ignore"):
         if trans == "log":
-            out = np.log(data - lower_bound)
-        elif trans == "logit":
-            data_prime = (data - lower_bound) / (upper_bound - lower_bound)
-            out = np.log(data_prime / (1 - data_prime))
+            out = cast(xr.DataArray, np.log(data - lower_bound_array))
+        elif trans == "logit" and upper_bound is not None:
+            data_prime = (data - lower_bound_array) / (
+                upper_bound_array - lower_bound_array  # pylint: disable=E0606
+            )
+            out = cast(xr.DataArray, np.log(data_prime / (1 - data_prime)))
         else:
             raise NotImplementedError("`trans` must be one of 'log' or 'logit'.")
 
     # Attributes to remember all this.
-    out.attrs["sdba_transform"] = trans
-    out.attrs["sdba_transform_lower"] = lower_bound
+    out = out.assign_attrs(sdba_transform=trans)
+    out = out.assign_attrs(sdba_transform_lower=lower_bound_array)
     if upper_bound is not None:
-        out.attrs["sdba_transform_upper"] = upper_bound
+        out = out.assign_attrs(sdba_transform_upper=upper_bound_array)
     if "units" in out.attrs:
-        out.attrs["sdba_transform_units"] = out.attrs.pop("units")
-        out.attrs["units"] = ""
+        out = out.assign_attrs(sdba_transform_units=out.attrs.pop("units"))
+        out = out.assign_attrs(units="")
     return out
 
 
@@ -656,9 +680,13 @@ def from_additive_space(
         try:
             trans = data.attrs["sdba_transform"]
             units = data.attrs["sdba_transform_units"]
-            lower_bound = data.attrs["sdba_transform_lower"]
+            lower_bound_array = np.array(data.attrs["sdba_transform_lower"]).astype(
+                float
+            )
             if trans == "logit":
-                upper_bound = data.attrs["sdba_transform_upper"]
+                upper_bound_array = np.array(data.attrs["sdba_transform_upper"]).astype(
+                    float
+                )
         except KeyError as err:
             raise ValueError(
                 f"Attribute {err!s} must be present on the input data "
@@ -670,9 +698,12 @@ def from_additive_space(
         and units is not None
         and (upper_bound is not None or trans == "log")
     ):
-        lower_bound = convert_units_to(lower_bound, units)
+        # FIXME: convert_units_to is causing issues since it can't handle all variations of Quantified here
+        lower_bound_array = np.array(convert_units_to(lower_bound, units)).astype(float)
         if trans == "logit":
-            upper_bound = convert_units_to(upper_bound, units)
+            upper_bound_array = np.array(convert_units_to(upper_bound, units)).astype(
+                float
+            )
     else:
         raise ValueError(
             "Parameters missing. Either all parameters are given as attributes of data, "
@@ -681,10 +712,14 @@ def from_additive_space(
 
     with xr.set_options(keep_attrs=True):
         if trans == "log":
-            out = np.exp(data) + lower_bound
+            out = np.exp(data) + lower_bound_array
         elif trans == "logit":
             out_prime = 1 / (1 + np.exp(-data))
-            out = out_prime * (upper_bound - lower_bound) + lower_bound
+            out = (
+                out_prime
+                * (upper_bound_array - lower_bound_array)  # pylint: disable=E0606
+                + lower_bound_array
+            )
         else:
             raise NotImplementedError("`trans` must be one of 'log' or 'logit'.")
 
@@ -693,7 +728,7 @@ def from_additive_space(
     out.attrs.pop("sdba_transform_lower", None)
     out.attrs.pop("sdba_transform_upper", None)
     out.attrs.pop("sdba_transform_units", None)
-    out.attrs["units"] = units
+    out = out.assign_attrs(units=units)
     return out
 
 
@@ -725,7 +760,7 @@ def stack_variables(ds: xr.Dataset, rechunk: bool = True, dim: str = "multivar")
 
     """
     # Store original arrays' attributes
-    attrs = {}
+    attrs: dict = {}
     # sort to have coherent order with different datasets
     data_vars = sorted(ds.data_vars.items(), key=lambda e: e[0])
     nvar = len(data_vars)
@@ -748,7 +783,7 @@ def stack_variables(ds: xr.Dataset, rechunk: bool = True, dim: str = "multivar")
     return da.rename("multivariate")
 
 
-def unstack_variables(da: xr.DataArray, dim: str | None = None):
+def unstack_variables(da: xr.DataArray, dim: str | None = None) -> xr.Dataset:
     """Unstack a DataArray created by `stack_variables` to a dataset.
 
     Parameters
@@ -765,8 +800,9 @@ def unstack_variables(da: xr.DataArray, dim: str | None = None):
         Dataset holding each variable in an individual DataArray.
     """
     if dim is None:
-        for dim, crd in da.coords.items():
-            if crd.attrs.get("is_variables"):
+        for _dim, _crd in da.coords.items():
+            if _crd.attrs.get("is_variables"):
+                dim = str(_dim)
                 break
         else:
             raise ValueError("No variable coordinate found, were attributes removed?")

@@ -144,7 +144,7 @@ def _griffiths_drought_factor(p, smd, lim, df):  # pragma: no cover
                 # N = 0 defines a rainfall event since 9am today,
                 # so doesn't apply here, where p is the rainfall
                 # over previous 24 hours.
-                x_ = N**1.3 / (N**1.3 + P - 2.0)
+                x_ = N**1.3 / (N**1.3 + P - 2.0)  # pylint: disable=E0601
                 x = min(x_, x)
 
                 conseq = 0
@@ -239,7 +239,7 @@ def keetch_byram_drought_index(
     :cite:cts:`ffdi-keetch_1968,ffdi-finkele_2006,ffdi-holgate_2017,ffdi-dolling_2005`
     """
 
-    def _keetch_byram_drought_index_pass(pr, tasmax, pr_annual, kbdi0):
+    def _keetch_byram_drought_index_pass(_pr, _tasmax, _pr_annual, _kbdi0):
         """Pass inputs on to guvectorized function `_keetch_byram_drought_index`.
 
         This function is actually only required as `xr.apply_ufunc` will not receive
@@ -249,7 +249,7 @@ def keetch_byram_drought_index(
         --------
         DO NOT CALL DIRECTLY, use `keetch_byram_drought_index` instead.
         """
-        return _keetch_byram_drought_index(pr, tasmax, pr_annual, kbdi0)
+        return _keetch_byram_drought_index(_pr, _tasmax, _pr_annual, _kbdi0)
 
     pr = convert_units_to(pr, "mm/day", context="hydro")
     tasmax = convert_units_to(tasmax, "C")
@@ -259,7 +259,7 @@ def keetch_byram_drought_index(
     else:
         kbdi0 = xr.full_like(pr.isel(time=0), 0)
 
-    kbdi = xr.apply_ufunc(
+    kbdi: xr.DataArray = xr.apply_ufunc(
         _keetch_byram_drought_index_pass,
         pr,
         tasmax,
@@ -270,7 +270,7 @@ def keetch_byram_drought_index(
         dask="parallelized",
         output_dtypes=[pr.dtype],
     )
-    kbdi.attrs["units"] = "mm/day"
+    kbdi = kbdi.assign_attrs(units="mm/day")
     return kbdi
 
 
@@ -317,7 +317,7 @@ def griffiths_drought_factor(
     :cite:cts:`ffdi-griffiths_1999,ffdi-finkele_2006,ffdi-holgate_2017`
     """
 
-    def _griffiths_drought_factor_pass(pr, smd, lim):
+    def _griffiths_drought_factor_pass(_pr, _smd, _lim):
         """Pass inputs on to guvectorized function `_griffiths_drought_factor`.
 
         This function is actually only required as xr.apply_ufunc will not receive
@@ -327,7 +327,7 @@ def griffiths_drought_factor(
         --------
         DO NOT CALL DIRECTLY, use `griffiths_drought_factor` instead.
         """
-        return _griffiths_drought_factor(pr, smd, lim)
+        return _griffiths_drought_factor(_pr, _smd, _lim)
 
     pr = convert_units_to(pr, "mm/day", context="hydro")
     smd = convert_units_to(smd, "mm/day")
@@ -339,17 +339,17 @@ def griffiths_drought_factor(
     else:
         raise ValueError(f"{limiting_func} is not a valid input for `limiting_func`")
 
-    df = xr.apply_ufunc(
+    df: xr.DataArray = xr.apply_ufunc(
         _griffiths_drought_factor_pass,
         pr,
         smd,
-        kwargs=dict(lim=lim),
+        kwargs=dict(_lim=lim),
         input_core_dims=[["time"], ["time"]],
         output_core_dims=[["time"]],
         dask="parallelized",
         output_dtypes=[pr.dtype],
     )
-    df.attrs["units"] = ""
+    df = df.assign_attrs(units="")
 
     # First non-zero entry is at the 19th time point since df is calculated
     # from a 20-day rolling window. Make prior points NaNs.

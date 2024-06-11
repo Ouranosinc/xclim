@@ -79,7 +79,7 @@ class BaseAdjustment(ParametrizableWithDataset):
             super().__init__(*args, **kwargs)
         else:
             raise ValueError(
-                "As of xclim 0.29, Adjustment object should be initialized through their `train` or  `adjust` methods."
+                "As of xclim 0.29, Adjustment object should be initialized through their `train` or `adjust` methods."
             )
 
     @classmethod
@@ -121,8 +121,8 @@ class BaseAdjustment(ParametrizableWithDataset):
             "default" in calendars or "standard" in calendars
         ):
             warn(
-                "Strange results could be returned when using dayofyear grouping "
-                "on data defined in the proleptic_gregorian calendar "
+                "Strange results could be returned when using `dayofyear` grouping "
+                "on data defined in the 'proleptic_gregorian' calendar."
             )
 
     @classmethod
@@ -166,8 +166,10 @@ class TrainAdjust(BaseAdjustment):
     _repr_hide_params = ["hist_calendar", "train_units"]
 
     @classmethod
-    def train(cls, ref: DataArray, hist: DataArray, **kwargs):
-        """Train the adjustment object. Refer to the class documentation for the algorithm details.
+    def train(cls, ref: DataArray, hist: DataArray, **kwargs) -> TrainAdjust:
+        r"""Train the adjustment object.
+
+        Refer to the class documentation for the algorithm details.
 
         Parameters
         ----------
@@ -175,6 +177,8 @@ class TrainAdjust(BaseAdjustment):
             Training target, usually a reference time series drawn from observations.
         hist : DataArray
             Training data, usually a model output whose biases are to be adjusted.
+        \*\*kwargs
+            Algorithm-specific keyword arguments, see class doc.
         """
         kwargs = parse_group(cls._train, kwargs)
         skip_checks = kwargs.pop("skip_input_checks", False)
@@ -200,7 +204,9 @@ class TrainAdjust(BaseAdjustment):
         return obj
 
     def adjust(self, sim: DataArray, *args, **kwargs):
-        """Return bias-adjusted data. Refer to the class documentation for the algorithm details.
+        r"""Return bias-adjusted data.
+
+        Refer to the class documentation for the algorithm details.
 
         Parameters
         ----------
@@ -208,7 +214,7 @@ class TrainAdjust(BaseAdjustment):
             Time series to be bias-adjusted, usually a model output.
         args : xr.DataArray
             Other DataArrays needed for the adjustment (usually none).
-        kwargs
+        \*\*kwargs
             Algorithm-specific keyword arguments, see class doc.
         """
         skip_checks = kwargs.pop("skip_input_checks", False)
@@ -251,10 +257,10 @@ class TrainAdjust(BaseAdjustment):
 
     @classmethod
     def _train(cls, ref: DataArray, hist: DataArray, *kwargs):
-        raise NotImplementedError
+        raise NotImplementedError()
 
     def _adjust(self, sim, **kwargs):
-        raise NotImplementedError
+        raise NotImplementedError()
 
 
 class Adjust(BaseAdjustment):
@@ -271,7 +277,7 @@ class Adjust(BaseAdjustment):
         hist: xr.DataArray,
         sim: xr.DataArray,
         **kwargs,
-    ):
+    ) -> xr.Dataset:
         r"""Return bias-adjusted data. Refer to the class documentation for the algorithm details.
 
         Parameters
@@ -284,6 +290,11 @@ class Adjust(BaseAdjustment):
             Time series to be bias-adjusted, usually a model output.
         \*\*kwargs
             Algorithm-specific keyword arguments, see class doc.
+
+        Returns
+        -------
+        xr.Dataset
+            The bias-adjusted Dataset.
         """
         kwargs = parse_group(cls._adjust, kwargs)
         skip_checks = kwargs.pop("skip_input_checks", False)
@@ -294,7 +305,7 @@ class Adjust(BaseAdjustment):
 
             (ref, hist, sim), _ = cls._harmonize_units(ref, hist, sim)
 
-        out = cls._adjust(ref, hist, sim, **kwargs)
+        out: xr.Dataset | xr.DataArray = cls._adjust(ref, hist, sim, **kwargs)
 
         if isinstance(out, xr.DataArray):
             out = out.rename("scen").to_dataset()
@@ -365,7 +376,7 @@ class EmpiricalQuantileMapping(TrainAdjust):
         group: str | Grouper = "time",
         adapt_freq_thresh: str | None = None,
         jitter_under_thresh_value: str | None = None,
-    ):
+    ) -> tuple[xr.Dataset, dict[str, Any]]:
         if np.isscalar(nquantiles):
             quantiles = equally_spaced_nodes(nquantiles).astype(ref.dtype)
         else:
@@ -957,13 +968,17 @@ class PrincipalComponents(TrainAdjust):
             # This step needs vectorize with dask, but vectorize doesn't work with dask, argh.
             # Invert to get transformation matrix from hist to PC coords.
             Hinv = np.linalg.inv(H)
-            # Fancy tricks to choose best orientation on each axes
+            # Fancy tricks to choose the best orientation on each axis.
             # (using eigenvectors, the output axes orientation is undefined)
             if best_orientation == "simple":
                 orient = best_pc_orientation_simple(R, Hinv)
             elif best_orientation == "full":
                 orient = best_pc_orientation_full(
                     R, Hinv, reference.mean(axis=1), historical.mean(axis=1), historical
+                )
+            else:
+                raise ValueError(
+                    f"Unknown `best_orientation` method: {best_orientation}."
                 )
             # Get transformation matrix
             return (R * orient) @ Hinv
@@ -1136,7 +1151,7 @@ class NpdfTransform(Adjust):
         pts_dim: str = "multivar",
         adj_kws: dict[str, Any] | None = None,
         rot_matrices: xr.DataArray | None = None,
-    ):
+    ) -> xr.Dataset:
         if base_kws is None:
             base_kws = {}
         if "kind" in base_kws:
@@ -1614,7 +1629,7 @@ else:
             ]
         )
 
-    def _generate_SBCK_classes():
+    def _generate_SBCK_classes():  # noqa: N802
         classes = []
         for clsname in dir(SBCK):
             cls = getattr(SBCK, clsname)

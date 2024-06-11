@@ -15,7 +15,7 @@ import numpy as np
 import xarray as xr
 from boltons.funcutils import wraps
 
-from xclim.core.calendar import days_in_year, get_calendar
+from xclim.core.calendar import get_calendar
 from xclim.core.options import OPTIONS, SDBA_ENCODE_CF
 from xclim.core.utils import uses_dask
 
@@ -197,7 +197,8 @@ class Grouper(Parametrizable):
             if ds is not None:
                 cal = get_calendar(ds, dim=self.dim)
                 mdoy = max(
-                    days_in_year(yr, cal) for yr in np.unique(ds[self.dim].dt.year)
+                    xr.coding.calendar_ops._days_in_year(yr, cal)
+                    for yr in np.unique(ds[self.dim].dt.year)
                 )
             else:
                 mdoy = 365
@@ -457,21 +458,21 @@ def parse_group(func: Callable, kwargs=None, allow_only=None) -> Callable:
     else:
         default_group = None
 
-    def _update_kwargs(kwargs, allowed=None):
-        if default_group or "group" in kwargs:
-            kwargs.setdefault("group", default_group)
-            if not isinstance(kwargs["group"], Grouper):
-                kwargs = Grouper.from_kwargs(**kwargs)
+    def _update_kwargs(_kwargs, allowed=None):
+        if default_group or "group" in _kwargs:
+            _kwargs.setdefault("group", default_group)
+            if not isinstance(_kwargs["group"], Grouper):
+                _kwargs = Grouper.from_kwargs(**_kwargs)
         if (
             allowed is not None
-            and "group" in kwargs
-            and kwargs["group"].prop not in allowed
+            and "group" in _kwargs
+            and _kwargs["group"].prop not in allowed
         ):
             raise ValueError(
-                f"Grouping on {kwargs['group'].prop_name} is not allowed for this "
+                f"Grouping on {_kwargs['group'].prop_name} is not allowed for this "
                 f"function. Should be one of {allowed}."
             )
-        return kwargs
+        return _kwargs
 
     if kwargs is not None:  # Not used as a decorator
         return _update_kwargs(kwargs, allowed=allow_only)

@@ -11,7 +11,7 @@ import pandas as pd
 import xarray as xr
 from dask.diagnostics import Callback
 
-from xclim.core import calendar
+from xclim.core.calendar import percentile_doy
 from xclim.core.utils import VARIABLES
 from xclim.indices import (
     longwave_upwelling_radiation_from_net_downwelling,
@@ -74,7 +74,7 @@ __all__ = [
 ]
 
 
-def generate_atmos(cache_dir: str | Path):
+def generate_atmos(cache_dir: Path):
     """Create the `atmosds` synthetic testing dataset."""
     with _open_dataset(
         "ERA5/daily_surface_cancities_1990-1993.nc",
@@ -82,10 +82,10 @@ def generate_atmos(cache_dir: str | Path):
         branch=TESTDATA_BRANCH,
         engine="h5netcdf",
     ) as ds:
-        tn10 = calendar.percentile_doy(ds.tasmin, per=10)
-        t10 = calendar.percentile_doy(ds.tas, per=10)
-        t90 = calendar.percentile_doy(ds.tas, per=90)
-        tx90 = calendar.percentile_doy(ds.tasmax, per=90)
+        tn10 = percentile_doy(ds.tasmin, per=10)
+        t10 = percentile_doy(ds.tas, per=10)
+        t90 = percentile_doy(ds.tas, per=90)
+        tx90 = percentile_doy(ds.tasmax, per=90)
 
         rsus = shortwave_upwelling_radiation_from_net_downwelling(ds.rss, ds.rsds)
         rlus = longwave_upwelling_radiation_from_net_downwelling(ds.rls, ds.rlds)
@@ -166,9 +166,11 @@ def populate_testing_data(
     return
 
 
-def add_example_file_paths(cache_dir: Path) -> dict[str]:
+def add_example_file_paths(
+    cache_dir: Path,
+) -> dict[str, str | list[xr.DataArray]]:
     """Create a dictionary of relevant datasets to be patched into the xdoctest namespace."""
-    ns = dict()
+    ns: dict = dict()
     ns["path_to_ensemble_file"] = "EnsembleReduce/TestEnsReduceCriteria.nc"
     ns["path_to_pr_file"] = "NRCANdaily/nrcan_canada_daily_pr_1990.nc"
     ns["path_to_sfcWind_file"] = "ERA5/daily_surface_cancities_1990-1993.nc"
@@ -223,12 +225,12 @@ def add_example_file_paths(cache_dir: Path) -> dict[str]:
 def test_timeseries(
     values,
     variable,
-    start="2000-07-01",
-    units=None,
-    freq="D",
-    as_dataset=False,
-    cftime=False,
-):
+    start: str = "2000-07-01",
+    units: str | None = None,
+    freq: str = "D",
+    as_dataset: bool = False,
+    cftime: bool = False,
+) -> xr.DataArray | xr.Dataset:
     """Create a generic timeseries object based on pre-defined dictionaries of existing variables."""
     if cftime:
         coords = xr.cftime_range(start, periods=len(values), freq=freq)

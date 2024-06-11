@@ -19,12 +19,14 @@ from xclim.core.utils import InputKind
 from xclim.testing.helpers import TESTDATA_BRANCH, populate_testing_data
 from xclim.testing.utils import _default_cache_dir, publish_release_notes, show_versions
 
+distributed = False
 try:
-    from dask.distributed import Client, progress  # pylint: disable=ungrouped-imports
+    from dask.distributed import Client, progress
+
+    distributed = True
 except ImportError:
     # Distributed is not a dependency of xclim
-    Client = None
-    progress = None
+    pass
 
 
 def _get_indicator(indicator_name):
@@ -432,7 +434,7 @@ def cli(ctx, **kwargs):
         kwargs["input"] = kwargs["input"][0]
 
     if kwargs["dask_nthreads"] is not None:
-        if Client is None:
+        if not distributed:
             raise click.BadOptionUsage(
                 "dask_nthreads",
                 "Dask's distributed scheduler is not installed, only the "

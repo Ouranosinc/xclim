@@ -2,38 +2,88 @@
 Changelog
 =========
 
-v0.49.0 (unreleased)
+v0.50.0 (unreleased)
 --------------------
-Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), Juliette Lavoie (:user:`juliettelavoie`), David Huard (:user:`huard`), Gabriel Rondeau-Genesse (:user:`RondeauG`).
+Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Éric Dupuis (:user:`coxipi`).
+
+New features and enhancements
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+* New properties: Bivariate Spell Length (``xclim.sdba.properties.bivariate_spell_length``), generalized spell lengths with an argument for `window`, and specific spell lengths with `window` fixed to 1  (``xclim.sdba.propertiies.threshold_count``, ``xclim.sdba.propertiies.bivariate_threshold_count``). (:pull:`1758`).
+* New option `normalize` in ``sdba.measures.taylordiagram`` to obtain normalized Taylor diagrams (divide standard deviations by standard deviation of the reference). (:pull:`1764`).
+* New `TrainAdjust` and class `MBCn` giving a faster and more accurate implementation of the 'MBCn' algorithm (:issue:`1551`, :pull:`1580`).
+
+Breaking changes
+^^^^^^^^^^^^^^^^
+* `pint` has been pinned below v0.24 until `xclim` can be updated to support the latest version. (:issue:`1771`, :pull:`1772`).
+* Calendar utilities that have an equivalent in `xarray` have been deprecated and will be removed in `xclim` v0.51.0. (:issue:`1010`, :pull:`1761`). This concerns the following members of ``xclim.core.calendar``:
+    - ``convert_calendar`` : Use ``Dataset.convert_calendar``, ``DataArray.convert_calendar`` or ``xr.coding.calendar_ops.convert_calendar``  instead.
+        + If your code passes ``target`` as an array, first convert the source to the target's calendar and then reindex the result to ``target``.
+        + If you were using the ``doy=True`` option, replace it with ``xc.core.calendar.convert_doy(source, target_cal).convert_calendar(target_cal)``.
+        + ``"default"`` is no longer a valid calendar name for any xclim functions and will not be returned by ``get_calendar``. Xarray has a ``use_cftime`` argument, xclim exposes it when the distinction is needed.
+    - ``date_range`` : Use ``xarray.date_range`` instead.
+    - ``date_range_like``: Use ``xarray.date_range_like`` instead.
+    - ``interp_calendar`` : Use ``Dataset.interp_calendar`` or ``xarray.coding.calendar_ops.interp_calendar`` instead.
+    - ``days_in_year`` : Use ``xarray.coding.calendar_ops._days_in_year`` instead.
+    - ``datetime_to_decimal_year`` : Use ``xarray.coding.calendar_ops._datetime_to_decimal_year`` instead.
+
+Internal changes
+^^^^^^^^^^^^^^^^
+* Synchronized tooling versions across ``pyproject.toml`` and ``tox.ini`` and pinned them to the latest stable releases in GitHub Workflows. (:pull:`1744`).
+* Fixed a few small spelling and grammar issues that were causing errors with `codespell`. Now ignoring `SVG` files. (:pull:`1769`).
+* Temporarily skipping the ``test_hawkins_sutton_smoke`` test due to strange behaviour with `xarray`. (:pull:`1769`).
+* Fixed some previously uncaught errors raised from recent versions of `pylint` and `codespell`. (:pull:`1772`).
+* Set the `doctest` examples to all use `h5netcdf` with worker-separated caches to load datasets. (:pull:`1772`).
+
+Bug fixes
+^^^^^^^^^
+* ``xclim.indices.{cold|hot}_spell_total_length`` now properly uses the argument `window` to only count spells with at least `window` time steps. (:issue:`1765`, :pull:`1777`).
+
+v0.49.0 (2024-05-02)
+--------------------
+Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), Juliette Lavoie (:user:`juliettelavoie`), David Huard (:user:`huard`), Gabriel Rondeau-Genesse (:user:`RondeauG`), Javier Diez-Sierra (:user:`JavierDiezSierra`), Sarah Gammon (:user:`SarahG-579462`), Éric Dupuis (:user:`coxipi`).
 
 Announcements
 ^^^^^^^^^^^^^
 * `xclim` has migrated its development branch name from `master` to `main`. (:issue:`1667`, :pull:`1669`).
 
-
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-* New `TrainAdjust` and class `MBCn` giving a faster and more accurate implementation of the 'MBCn' algorithm (:issue:`1551`, :pull:`1580`).
+* Indicator ``xclim.atmos.potential_evapotranspiration`` and indice ``xclim.indices.potential_evapotranspiration`` now accept a new value (`DA02`) for argument `method` implementing potential evapotranspiration based on Droogers and Allen (2002). (:issue:`1710`, :pull:`1723`).
+* The documentation now uses the `furo <https://github.com/pradyunsg/furo>`_ theme for Sphinx. This theme supports native "light" and "dark" modes, adaptive screen resolution, as well as provides a better navigation layout for pages housing long lists of entries (e.g. `indices`). (:issue:`1693`, :pull:`1731`).
+* ``xclim.ensembles.ensemble_percentiles`` now takes a `method` argument, accepting one of: `'interpolated_inverted_cdf'`, `'hazen'`, `'weibull'`, `'linear'` (default), `'median_unbiased'`, or `'normal_unbiased'`. (:issue:`1694`, :pull:`1732`).
+* Distributions with negative values are directly fitted without need for an offset for distributions such as `'gamma'` and `'fisk'` in ``xclim.indices.standardized_precipitation_evapotranspiration_index``. (:issue:`1477`  :pull:`1720`).
+* ``xclim.indices.stats_fit_start`` gives an estimate of the `loc` parameter for `'gamma'` and `'fisk'` distributions. (:issue:`1477`  :pull:`1720`).
 
 New indicators
 ^^^^^^^^^^^^^^
 * New ``snw_season_length`` and ``snd_season_length`` computing the duration between the start and the end of the snow season, both defined as the first day of a continuous period with snow above/under a threshold. Previous versions of these indicators were renamed ``snw_days_above`` and ``snd_days_above`` to better reflect what they computed : the number of days with snow above a given threshold (with no notion of continuity). (:issue:`1703`, :pull:`1708`).
-* Added ``atmos.duff_moisture_code``, part of the Canadian Forest Fire Weather Index System. It was already an output of the `atmos.cffwis_indices`, but now has its own standalone indicator. (:issue:`1698`, :pull:`1712`).
+* Added ``xclim.atmos.duff_moisture_code``, part of the Canadian Forest Fire Weather Index System. It was already an output of the ``xclim.atmos.cffwis_indices``, but now has its own standalone indicator. (:issue:`1698`, :pull:`1712`).
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
 * The previously deprecated functions ``xclim.sdba.processing.construct_moving_yearly_window`` and ``xclim.sdba.processing.unpack_moving_yearly_window`` have been removed. These functions have been replaced by ``xclim.core.calendar.stack_periods`` and ``xclim.core.calendar.unstack_periods``. (:pull:`1717`).
-* Indicators ``snw_season_length`` and ``snd_season_length`` have been modified, see above.
+* The previously deprecated function ``xclim.ensembles.change_significance`` has been removed. (:pull:`1737`).
+* Indicators ``snw_season_length`` and ``snd_season_length`` have been modified. (:issue:`1703`, :pull:`1708`).
+* The `'hargeaves85'`/`'hg85'` method for the ``potential_evapotranspiration`` indicator and indice has been modified for precision and consistency with recent academic literature. (:issue:`1710`, :pull:`1723`).
+* The `__getitem__` method of ``xclim.core.indicator.Parameter`` instances has been removed. Accessing members of ``Parameters`` now uniquely uses dot notation. (:pull:`1721`).
+* The obsolete function wrapper for generating Indicators ``xclim.core.utils.wrapped_partial`` has been removed. (:pull:`1721`).
+* The default documentation theme has changed from `sphinx-rtd-theme` to `furo`; Several modifications to the documentation configuration and CSS overrides have been made to accommodate the changes. `furo` is now a `docs` dependency. (:issue:`1693`, :pull:`1731`).
+* Estimation of parameters using `_fit_start` for `gamma` and `fisk` has been changed and can affect the results obtained with full-fledged (e.g. "ML") methods. (:issue:`1477`  :pull:`1720`).
+* Method `APP` in ``xclim.indices.standardized_precipitation_index`` and ``xclim.indices.standardized_precipitation_evapotranspiration_index`` now requires the user to impose a `loc` parameter through `fitkwargs['floc']`. (:issue:`1477`, :pull:`1720`).
+* Zero inflated distributions used in ``xclim.stats.standardized_index`` now appropriately use the probability of zeroes in the calibration data and not the entire dataset. (:issue:`1477`  :pull:`1720`).
 
 Bug fixes
 ^^^^^^^^^
-* Fixed an bug in sdba's ``map_groups`` that prevented passing DataArrays with cftime coordinates if the ``sdba_encode_cf`` option was True. (:issue:`1673`, :pull:`1674`).
-* Fixed bug (:issue:`1678`, :pull:`1679`) in sdba where a loaded training dataset could not be used for adjustment
+* Fixed a bug in `sdba`'s ``map_groups`` that prevented passing DataArrays with cftime coordinates if the ``sdba_encode_cf`` option was `'True'`. (:issue:`1673`, :pull:`1674`).
+* Fixed bug in `sdba` where a loaded training dataset could not be used for adjustment. (:issue:`1678`, :pull:`1679`).
 * Fixed bug with loess smoothing for an array full of NaNs. (:pull:`1699`).
 * Fixed and adapted ``time_bnds`` to the newest xarray. (:pull:`1700`).
 * Fixed "agreement fraction" in ``robustness_fractions`` to distinguish between negative change and no change. Added "negative" and "changed negative" fractions (:issue:`1690`, :pull:`1711`).
 * ``make_criteria`` now skips columns with NaNs across all realizations. (:pull:`1713`).
-* Fixed bug QuantileDeltaMapping adjustment not working for seasonal grouping (:issue:`1704`, :pull:`1716`).
+* Fixed bug where `QuantileDeltaMapping` adjustment was failing for seasonal grouping. (:issue:`1704`, :pull:`1716`).
+* The codebase has been adjusted to address several (~400) `mypy`-related errors attributable to inaccurate function call signatures and variable name shadowing. (:issue:`1719`, :pull:`1721`).
+* ``xclim.core.formatting.generate_indicator_docstring`` has been modified to ensure that the `numpy`-docstrings of all Indicators are consistent in their formatting. (:pull:`1731`).
+* Fixed documentation example for frequency adaptation with `sdba`. (:issue:`1740`, :pull:`1742`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
@@ -43,6 +93,10 @@ Internal changes
 * Added the `tox-gh` dependency to the development installation recipe. This will soon be required for running the `tox` test ensemble on GitHub Workflows. (:pull:`1709`).
 * Added the `vulture` static code analysis tool for finding dead code to the development dependency list and linters (makefile, tox and pre-commit hooks). (:pull:`1717`).
 * Added error message when using `xclim.indices.stats.dist_method` with `nnlf` and included note in docstring. (:issue:`1683`, :pull:`1714`).
+* PEP8 rule `N802` is now enabled in the `ruff` formatter. Function names should follow `Snake case <https://en.wikipedia.org/wiki/Snake_case>`_, with rare exceptions. (:pull:`1721`).
+* Linting dependencies have been updated to the latest versions and made consistent across `environment.yml`, `pyproject.toml` and `tox.ini` files. (:pull:`1717`).
+* Code styling for the documentation now uses `sas` ("light" theme) and `lightbulb` ("dark" theme) in order to ensure adequate contrast for code blocks. (:pull:`1731`).
+* Added several CSS overrides related to the HTML elements generated by `xarray` in the notebook-sourced documentation. (:pull:`1731`).
 
 v0.48.2 (2024-02-26)
 --------------------

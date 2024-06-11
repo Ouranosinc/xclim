@@ -31,10 +31,10 @@ def test_indicator_docstring():
         == "Based on indice :py:func:`~xclim.indices._multivariate.heat_wave_frequency`."
     )
     assert doc[6] == "Keywords : temperature health,."
-    assert doc[12] == "  Default : `ds.tasmin`. [Required units : [temperature]]"
+    assert doc[12] == "    Default : `ds.tasmin`. [Required units : [temperature]]"
     assert (
         doc[41]
-        == "  Total number of series of at least {window} consecutive days with daily minimum temperature above "
+        == "    Total number of series of at least {window} consecutive days with daily minimum temperature above "
         "{thresh_tasmin} and daily maximum temperature above {thresh_tasmax} (heat_wave_events), "
         "with additional attributes: **description**: {freq} number of heat wave events within a given period. "
         "A heat wave occurs when daily minimum and maximum temperatures exceed {thresh_tasmin} and {thresh_tasmax}, "
@@ -42,7 +42,7 @@ def test_indicator_docstring():
     )
 
     doc = degree_days_exceedance_date.__doc__.split("\n")
-    assert doc[21] == "  Default : >. "
+    assert doc[21] == "    Default : >. "
 
 
 def test_update_xclim_history(atmosds):

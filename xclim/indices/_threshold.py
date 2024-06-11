@@ -15,6 +15,7 @@ from xclim.core.units import (
     rate2amount,
     str2pint,
     to_agg_units,
+    units2pint,
 )
 from xclim.core.utils import DayOfYearStr, Quantified
 
@@ -292,8 +293,9 @@ def cold_spell_max_length(
         rl.longest_run,
         freq=freq,
     )
-    out = max_l.where(max_l >= window, 0)
-    return to_agg_units(out, tas, "count")
+    max_window = max_l.where(max_l >= window, 0)
+    out = to_agg_units(max_window, tas, "count")
+    return out
 
 
 @declare_units(tas="[temperature]", thresh="[temperature]")
@@ -334,14 +336,13 @@ def cold_spell_total_length(
     thresh = convert_units_to(thresh, tas)
 
     cond = compare(tas, op, thresh, constrain=("<", "<="))
-    max_l = rl.resample_and_rl(
+    out = rl.resample_and_rl(
         cond,
         resample_before_rl,
         rl.windowed_run_count,
-        window=1,
+        window=window,
         freq=freq,
     )
-    out = max_l.where(max_l >= window, 0)
     return to_agg_units(out, tas, "count")
 
 
@@ -382,13 +383,16 @@ def snd_season_end(
     thresh = convert_units_to(thresh, snd)
     cond = snd >= thresh
 
-    out = (
+    resampled = (
         cond.resample(time=freq)
         .map(rl.season, window=window, dim="time", coord="dayofyear")
         .end
     )
-    out.attrs.update(units="", is_dayofyear=np.int32(1), calendar=get_calendar(snd))
-    return out.where(~valid)
+    resampled = resampled.assign_attrs(
+        units="", is_dayofyear=np.int32(1), calendar=get_calendar(snd)
+    )
+    snd_se = resampled.where(~valid)
+    return snd_se
 
 
 @declare_units(snw="[mass]/[area]", thresh="[mass]/[area]")
@@ -428,13 +432,16 @@ def snw_season_end(
     thresh = convert_units_to(thresh, snw)
     cond = snw >= thresh
 
-    out = (
+    resampled = (
         cond.resample(time=freq)
         .map(rl.season, window=window, dim="time", coord="dayofyear")
         .end
     )
-    out.attrs.update(units="", is_dayofyear=np.int32(1), calendar=get_calendar(snw))
-    return out.where(~valid)
+    resampled.attrs.update(
+        units="", is_dayofyear=np.int32(1), calendar=get_calendar(snw)
+    )
+    snw_se = resampled.where(~valid)
+    return snw_se
 
 
 @declare_units(snd="[length]", thresh="[length]")
@@ -474,7 +481,7 @@ def snd_season_start(
     thresh = convert_units_to(thresh, snd)
     cond = snd >= thresh
 
-    out = (
+    resampled = (
         cond.resample(time=freq)
         .map(
             rl.season,
@@ -484,8 +491,11 @@ def snd_season_start(
         )
         .start
     )
-    out.attrs.update(units="", is_dayofyear=np.int32(1), calendar=get_calendar(snd))
-    return out.where(~valid)
+    resampled.attrs.update(
+        units="", is_dayofyear=np.int32(1), calendar=get_calendar(snd)
+    )
+    snd_ss = resampled.where(~valid)
+    return snd_ss
 
 
 @declare_units(snw="[mass]/[area]", thresh="[mass]/[area]")
@@ -526,7 +536,7 @@ def snw_season_start(
     thresh = convert_units_to(thresh, snw)
     cond = snw >= thresh
 
-    out = (
+    resampled = (
         cond.resample(time=freq)
         .map(
             rl.season,
@@ -536,8 +546,11 @@ def snw_season_start(
         )
         .start
     )
-    out.attrs.update(units="", is_dayofyear=np.int32(1), calendar=get_calendar(snw))
-    return out.where(~valid)
+    resampled.attrs.update(
+        units="", is_dayofyear=np.int32(1), calendar=get_calendar(snw)
+    )
+    snw_ss = resampled.where(~valid)
+    return snw_ss
 
 
 @declare_units(snd="[length]", thresh="[length]")
@@ -577,12 +590,13 @@ def snd_season_length(
     thresh = convert_units_to(thresh, snd)
     cond = snd >= thresh
 
-    out = (
+    snd_sl = (
         cond.resample(time=freq)
         .map(rl.season, window=window, dim="time", coord="dayofyear")
         .length
     )
-    return to_agg_units(out.where(~valid), snd, "count")
+    snd_sl = to_agg_units(snd_sl.where(~valid), snd, "count")
+    return snd_sl
 
 
 @declare_units(snw="[mass]/[area]", thresh="[mass]/[area]")
@@ -622,12 +636,13 @@ def snw_season_length(
     thresh = convert_units_to(thresh, snw)
     cond = snw >= thresh
 
-    out = (
+    snw_sl = (
         cond.resample(time=freq)
         .map(rl.season, window=window, dim="time", coord="dayofyear")
         .length
     )
-    return to_agg_units(out.where(~valid), snw, "count")
+    snw_sl = to_agg_units(snw_sl.where(~valid), snw, "count")
+    return snw_sl
 
 
 @declare_units(snd="[length]", thresh="[length]")
@@ -666,10 +681,9 @@ def snd_storm_days(
     acc = snd.diff(dim="time")
 
     # Winter storm condition
-    out = threshold_count(acc, ">=", thresh, freq)
-
-    out.attrs["units"] = to_agg_units(out, snd, "count")
-    return out
+    snd_sd = threshold_count(acc, ">=", thresh, freq)
+    snd_sd = snd_sd.assign_attrs(units=to_agg_units(snd_sd, snd, "count"))
+    return snd_sd
 
 
 @declare_units(snw="[mass]/[area]", thresh="[mass]/[area]")
@@ -708,10 +722,9 @@ def snw_storm_days(
     acc = snw.diff(dim="time")
 
     # Winter storm condition
-    out = threshold_count(acc, ">=", thresh, freq)
-
-    out.attrs["units"] = to_agg_units(out, snw, "count")
-    return out
+    snw_sd = threshold_count(acc, ">=", thresh, freq)
+    snw_sd = snw_sd.assign_attrs(units=to_agg_units(snw_sd, snw, "count"))
+    return snw_sd
 
 
 @declare_units(pr="[precipitation]", thresh="[precipitation]")
@@ -759,7 +772,7 @@ def daily_pr_intensity(
     precipitation >= 5 mm at seasonal frequency, i.e. DJF, MAM, JJA, SON, DJF, etc.:
 
     >>> from xclim.indices import daily_pr_intensity
-    >>> pr = xr.open_dataset(path_to_pr_file).pr
+    >>> pr = open_dataset(path_to_pr_file).pr
     >>> daily_int = daily_pr_intensity(pr, thresh="5 mm/day", freq="QS-DEC")
     """
     t = convert_units_to(thresh, pr, "hydro")
@@ -778,15 +791,17 @@ def daily_pr_intensity(
 
     # get number of wetdays over period
     wd = wetdays(pr, thresh=thresh, freq=freq)
-    out = s / wd
+    dpr_int = s / wd
 
     # Issue originally introduced in https://github.com/hgrecco/pint/issues/1486
     # Should be resolved in pint v0.24. See: https://github.com/hgrecco/pint/issues/1913
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", category=DeprecationWarning)
-        out.attrs["units"] = f"{str2pint(pram.units) / str2pint(wd.units):~}"
+        dpr_int = dpr_int.assign_attrs(
+            units=f"{str2pint(pram.units) / str2pint(wd.units):~}"
+        )
 
-    return out
+    return dpr_int
 
 
 @declare_units(pr="[precipitation]", thresh="[precipitation]")
@@ -826,9 +841,9 @@ def dry_days(
         \sum PR_{ij} < Threshold [mm/day]
     """
     thresh = convert_units_to(thresh, pr, context="hydro")
-    out = threshold_count(pr, op, thresh, freq, constrain=("<", "<="))
-    out = to_agg_units(out, pr, "count")
-    return out
+    count = threshold_count(pr, op, thresh, freq, constrain=("<", "<="))
+    dd = to_agg_units(count, pr, "count")
+    return dd
 
 
 @declare_units(pr="[precipitation]", thresh="[precipitation]")
@@ -849,10 +864,10 @@ def maximum_consecutive_wet_days(
     thresh : Quantified
         Threshold precipitation on which to base evaluation.
     freq : str
-      Resampling frequency.
+        Resampling frequency.
     resample_before_rl : bool
-      Determines if the resampling should take place before or after the run
-      length encoding (or a similar algorithm) is applied to runs.
+        Determines if the resampling should take place before or after the run
+        length encoding (or a similar algorithm) is applied to runs.
 
     Returns
     -------
@@ -875,14 +890,14 @@ def maximum_consecutive_wet_days(
     thresh = convert_units_to(thresh, pr, "hydro")
 
     cond = pr > thresh
-    out = rl.resample_and_rl(
+    mcwd = rl.resample_and_rl(
         cond,
         resample_before_rl,
         rl.longest_run,
         freq=freq,
     )
-    out = to_agg_units(out, pr, "count")
-    return out
+    mcwd = to_agg_units(mcwd, pr, "count")
+    return mcwd
 
 
 @declare_units(tas="[temperature]", thresh="[temperature]")
@@ -918,7 +933,8 @@ def cooling_degree_days(
 
     where :math:`[P]` is 1 if :math:`P` is true, and 0 if false.
     """
-    return cumulative_difference(tas, threshold=thresh, op=">", freq=freq)
+    cd = cumulative_difference(tas, threshold=thresh, op=">", freq=freq)
+    return cd
 
 
 @declare_units(tas="[temperature]", thresh="[temperature]")
@@ -952,7 +968,8 @@ def growing_degree_days(
 
         GD4_j = \sum_{i=1}^I (TG_{ij}-{4} | TG_{ij} > {4}℃)
     """
-    return cumulative_difference(tas, threshold=thresh, op=">", freq=freq)
+    cd = cumulative_difference(tas, threshold=thresh, op=">", freq=freq)
+    return cd
 
 
 @declare_units(tas="[temperature]", thresh="[temperature]")
@@ -1124,7 +1141,7 @@ def growing_season_length(
     Examples
     --------
     >>> from xclim.indices import growing_season_length
-    >>> tas = xr.open_dataset(path_to_tas_file).tas
+    >>> tas = open_dataset(path_to_tas_file).tas
 
     For the Northern Hemisphere:
 
@@ -1210,7 +1227,7 @@ def frost_season_length(
     Examples
     --------
     >>> from xclim.indices import frost_season_length
-    >>> tasmin = xr.open_dataset(path_to_tasmin_file).tasmin
+    >>> tasmin = open_dataset(path_to_tasmin_file).tasmin
 
     For the Northern Hemisphere:
 
@@ -1393,7 +1410,7 @@ def frost_free_season_length(
     Examples
     --------
     >>> from xclim.indices import frost_season_length
-    >>> tasmin = xr.open_dataset(path_to_tasmin_file).tasmin
+    >>> tasmin = open_dataset(path_to_tasmin_file).tasmin
 
     For the Northern Hemisphere:
 
@@ -1558,7 +1575,7 @@ def first_day_temperature_below(
     """
     # noqa
 
-    return first_day_threshold_reached(
+    fdtb = first_day_threshold_reached(
         tas,
         threshold=thresh,
         op=op,
@@ -1567,6 +1584,7 @@ def first_day_temperature_below(
         freq=freq,
         constrain=("<", "<="),
     )
+    return fdtb
 
 
 @declare_units(tas="[temperature]", thresh="[temperature]")
@@ -1620,7 +1638,7 @@ def first_day_temperature_above(
     where :math:`w` is the number of days the temperature threshold should be exceeded, and :math:`[P]` is
     1 if :math:`P` is true, and 0 if false.
     """
-    return first_day_threshold_reached(
+    fdtr = first_day_threshold_reached(
         tas,
         threshold=thresh,
         op=op,
@@ -1629,6 +1647,7 @@ def first_day_temperature_above(
         freq=freq,
         constrain=(">", ">="),
     )
+    return fdtr
 
 
 @declare_units(prsn="[precipitation]", thresh="[precipitation]")
@@ -1832,13 +1851,16 @@ def snowfall_frequency(
     """
     # High threshold here just needs to be a big value. It is converted to same units as
     # so that a warning message won't be triggered just because of this value
-    thresh_units = pint2cfunits(str2pint(thresh))
-    high = f"{convert_units_to('1E6 kg m-2 s-1', thresh_units, context='hydro')} {thresh_units}"
+    thresh_units = pint2cfunits(units2pint(thresh))
+    high_thresh = convert_units_to("1E6 kg m-2 s-1", thresh_units, context="hydro")
+    high = f"{high_thresh} {thresh_units}"
+
     snow_days = days_with_snow(prsn, low=thresh, high=high, freq=freq)
     total_days = prsn.resample(time=freq).count(dim="time")
     snow_freq = snow_days / total_days * 100
     snow_freq = snow_freq.assign_attrs(**snow_days.attrs)
-    snow_freq.attrs["units"] = "%"
+    # overwrite snow_days units
+    snow_freq = snow_freq.assign_attrs(units="%")
     return snow_freq
 
 
@@ -1887,9 +1909,9 @@ def snowfall_intensity(
 
     cond = lwe_prsn >= thresh
     mean = lwe_prsn.where(cond).resample(time=freq).mean(dim="time")
-    out = mean.fillna(0)
-
-    return out.assign_attrs(units=lwe_prsn.units)
+    snow_int = mean.fillna(0)
+    snow_int = snow_int.assign_attrs(units=lwe_prsn.units)
+    return snow_int
 
 
 @declare_units(tasmax="[temperature]", thresh="[temperature]")
@@ -1975,7 +1997,8 @@ def heating_degree_days(
 
         HD17_j = \sum_{i=1}^{I} (17℃ - TG_{ij}) | TG_{ij} < 17℃)
     """
-    return cumulative_difference(tas, threshold=thresh, op="<", freq=freq)
+    hdd = cumulative_difference(tas, threshold=thresh, op="<", freq=freq)
+    return hdd
 
 
 @declare_units(tasmax="[temperature]", thresh="[temperature]")
@@ -2088,14 +2111,13 @@ def hot_spell_total_length(
     thresh = convert_units_to(thresh, tasmax)
 
     cond = compare(tasmax, op, thresh, constrain=(">", ">="))
-    max_l = rl.resample_and_rl(
+    out = rl.resample_and_rl(
         cond,
         resample_before_rl,
         rl.windowed_run_count,
-        window=1,
+        window=window,
         freq=freq,
     )
-    out = max_l.where(max_l >= window, 0)
     return to_agg_units(out, tasmax, "count")
 
 
@@ -2580,7 +2602,7 @@ def wetdays(
     at the seasonal frequency, i.e. DJF, MAM, JJA, SON, DJF, etc.:
 
     >>> from xclim.indices import wetdays
-    >>> pr = xr.open_dataset(path_to_pr_file).pr
+    >>> pr = open_dataset(path_to_pr_file).pr
     >>> wd = wetdays(pr, thresh="5 mm/day", freq="QS-DEC")
     """
     thresh = convert_units_to(thresh, pr, "hydro")
@@ -2622,7 +2644,7 @@ def wetdays_prop(
     5 mm at the seasonal frequency, i.e. DJF, MAM, JJA, SON, DJF, etc.:
 
     >>> from xclim.indices import wetdays_prop
-    >>> pr = xr.open_dataset(path_to_pr_file).pr
+    >>> pr = open_dataset(path_to_pr_file).pr
     >>> wd = wetdays_prop(pr, thresh="5 mm/day", freq="QS-DEC")
     """
     thresh = convert_units_to(thresh, pr, "hydro")
@@ -2679,7 +2701,7 @@ def maximum_consecutive_frost_days(
     where :math:`[P]` is 1 if :math:`P` is true, and 0 if false. Note that this formula does not handle sequences at
     the start and end of the series, but the numerical algorithm does.
     """
-    return cold_spell_max_length(
+    csml: xarray.DataArray = cold_spell_max_length(
         tasmin,
         thresh=thresh,
         window=1,
@@ -2687,6 +2709,7 @@ def maximum_consecutive_frost_days(
         op="<",
         resample_before_rl=resample_before_rl,
     )
+    return csml
 
 
 @declare_units(pr="[precipitation]", thresh="[precipitation]")
@@ -2734,13 +2757,14 @@ def maximum_consecutive_dry_days(
     """
     t = convert_units_to(thresh, pr, context="hydro")
     group = pr < t
-    out = rl.resample_and_rl(
+    resampled = rl.resample_and_rl(
         group,
         resample_before_rl,
         rl.longest_run,
         freq=freq,
     )
-    return to_agg_units(out, pr, "count")
+    mcdd = to_agg_units(resampled, pr, "count")
+    return mcdd
 
 
 @declare_units(tasmin="[temperature]", thresh="[temperature]")
@@ -2790,7 +2814,7 @@ def maximum_consecutive_frost_free_days(
     where :math:`[P]` is 1 if :math:`P` is true, and 0 if false. Note that this formula does not handle sequences at
     the start and end of the series, but the numerical algorithm does.
     """
-    return frost_free_spell_max_length(
+    mcffd = frost_free_spell_max_length(
         tasmin,
         thresh=thresh,
         window=1,
@@ -2798,6 +2822,7 @@ def maximum_consecutive_frost_free_days(
         op=">=",
         resample_before_rl=resample_before_rl,
     )
+    return mcffd
 
 
 @declare_units(tasmax="[temperature]", thresh="[temperature]")
@@ -2843,7 +2868,7 @@ def maximum_consecutive_tx_days(
     where :math:`[P]` is 1 if :math:`P` is true, and 0 if false. Note that this formula does not handle sequences at
     the start and end of the series, but the numerical algorithm does.
     """
-    return hot_spell_max_length(
+    mctxd = hot_spell_max_length(
         tasmax,
         thresh=thresh,
         window=1,
@@ -2851,6 +2876,7 @@ def maximum_consecutive_tx_days(
         op=">",
         resample_before_rl=resample_before_rl,
     )
+    return mctxd
 
 
 @declare_units(siconc="[]", areacello="[area]", thresh="[]")
@@ -2886,9 +2912,9 @@ def sea_ice_area(
     """
     t = convert_units_to(thresh, siconc)
     factor = convert_units_to("100 pct", siconc)
-    out = xarray.dot(siconc.where(siconc >= t, 0), areacello) / factor
-    out.attrs["units"] = areacello.units
-    return out
+    sia = xarray.dot(siconc.where(siconc >= t, 0), areacello) / factor
+    sia = sia.assign_attrs(units=areacello.units)
+    return sia
 
 
 @declare_units(siconc="[]", areacello="[area]", thresh="[]")
@@ -2923,9 +2949,9 @@ def sea_ice_extent(
     "What is the difference between sea ice area and extent?" - :cite:cts:`nsidc_frequently_2008`
     """
     t = convert_units_to(thresh, siconc)
-    out = xarray.dot(siconc >= t, areacello)
-    out.attrs["units"] = areacello.units
-    return out
+    sie = xarray.dot(siconc >= t, areacello)
+    sie = sie.assign_attrs(units=areacello.units)
+    return sie
 
 
 @declare_units(sfcWind="[speed]", thresh="[speed]")
@@ -3102,9 +3128,11 @@ def degree_days_exceedance_date(
         )
         return xarray.where((cumsum <= sum_thresh).all("time"), never_reached_val, out)
 
-    out = c.clip(0).resample(time=freq).map(_exceedance_date)
-    out.attrs.update(units="", is_dayofyear=np.int32(1), calendar=get_calendar(tas))
-    return out
+    dded = c.clip(0).resample(time=freq).map(_exceedance_date)
+    dded = dded.assign_attrs(
+        units="", is_dayofyear=np.int32(1), calendar=get_calendar(tas)
+    )
+    return dded
 
 
 @declare_units(pr="[precipitation]", thresh="[length]")
@@ -3149,7 +3177,7 @@ def dry_spell_frequency(
     Examples
     --------
     >>> from xclim.indices import dry_spell_frequency
-    >>> pr = xr.open_dataset(path_to_pr_file).pr
+    >>> pr = open_dataset(path_to_pr_file).pr
     >>> dsf = dry_spell_frequency(pr=pr, op="sum")
     >>> dsf = dry_spell_frequency(pr=pr, op="max")
     """
@@ -3342,7 +3370,7 @@ def wet_spell_frequency(
     Examples
     --------
     >>> from xclim.indices import wet_spell_frequency
-    >>> pr = xr.open_dataset(path_to_pr_file).pr
+    >>> pr = open_dataset(path_to_pr_file).pr
     >>> dsf = wet_spell_frequency(pr=pr, op="sum")
     >>> dsf = wet_spell_frequency(pr=pr, op="max")
     """
