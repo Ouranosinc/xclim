@@ -14,7 +14,7 @@ from xarray.core.dataarray import DataArray
 
 import xclim.core.utils
 
-from .calendar import convert_calendar, parse_offset, percentile_doy
+from .calendar import parse_offset, percentile_doy
 
 BOOTSTRAP_DIM = "_bootstrap"
 
@@ -261,10 +261,10 @@ def build_bootstrap_year_da(
         elif len(source[dim]) == len(bloc):
             out_view.loc[{dim: bloc}] = source.data
         elif len(bloc) == 365:
-            out_view.loc[{dim: bloc}] = convert_calendar(source, "365_day").data
+            out_view.loc[{dim: bloc}] = source.convert_calendar("noleap").data
         elif len(bloc) == 366:
-            out_view.loc[{dim: bloc}] = convert_calendar(
-                source, "366_day", missing=np.NAN
+            out_view.loc[{dim: bloc}] = source.convert_calendar(
+                "366_day", missing=np.NAN
             ).data
         elif len(bloc) < 365:
             # 360 days calendar case or anchored years for both source[dim] and bloc case

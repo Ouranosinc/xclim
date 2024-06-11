@@ -14,6 +14,16 @@ New features and enhancements
 Breaking changes
 ^^^^^^^^^^^^^^^^
 * `pint` has been pinned below v0.24 until `xclim` can be updated to support the latest version. (:issue:`1771`, :pull:`1772`).
+* Calendar utilities that have an equivalent in `xarray` have been deprecated and will be removed in `xclim` v0.51.0. (:issue:`1010`, :pull:`1761`). This concerns the following members of ``xclim.core.calendar``:
+    - ``convert_calendar`` : Use ``Dataset.convert_calendar``, ``DataArray.convert_calendar`` or ``xr.coding.calendar_ops.convert_calendar``  instead.
+        + If your code passes ``target`` as an array, first convert the source to the target's calendar and then reindex the result to ``target``.
+        + If you were using the ``doy=True`` option, replace it with ``xc.core.calendar.convert_doy(source, target_cal).convert_calendar(target_cal)``.
+        + ``"default"`` is no longer a valid calendar name for any xclim functions and will not be returned by ``get_calendar``. Xarray has a ``use_cftime`` argument, xclim exposes it when the distinction is needed.
+    - ``date_range`` : Use ``xarray.date_range`` instead.
+    - ``date_range_like``: Use ``xarray.date_range_like`` instead.
+    - ``interp_calendar`` : Use ``Dataset.interp_calendar`` or ``xarray.coding.calendar_ops.interp_calendar`` instead.
+    - ``days_in_year`` : Use ``xarray.coding.calendar_ops._days_in_year`` instead.
+    - ``datetime_to_decimal_year`` : Use ``xarray.coding.calendar_ops._datetime_to_decimal_year`` instead.
 
 Internal changes
 ^^^^^^^^^^^^^^^^
