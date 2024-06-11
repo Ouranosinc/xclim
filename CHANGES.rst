@@ -12,7 +12,7 @@ Internal changes
 
 Bug fixes
 ^^^^^^^^^
-* ``xclim.indices.{cold|hot}_spell_total_length`` now properly use the argument `window` to only count spells with at least `window` time steps . (:issue:`1765`).
+* ``xclim.indices.{cold|hot}_spell_total_length`` now properly use the argument `window` to only count spells with at least `window` time steps . (:issue:`1765`, :pull:`1777`).
 
 v0.49.0 (2024-05-02)
 --------------------
