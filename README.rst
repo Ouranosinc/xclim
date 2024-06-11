@@ -1,6 +1,6 @@
-======================================
-xclim: Climate services library |logo|
-======================================
+===============================================================
+xclim: Climate services library |logo| |logo-dark| |logo-light|
+===============================================================
 
 +----------------------------+-----------------------------------------------------+
 | Versions                   | |pypi| |conda| |versions|                           |
@@ -184,9 +184,20 @@ This package was created with Cookiecutter_ and the `audreyfeldroy/cookiecutter-
         :target: https://github.com/psf/black
         :alt: Python Black
 
-.. |logo| image:: https://raw.githubusercontent.com/Ouranosinc/xclim/main/docs/logos/xclim-logo-small.png
+.. |logo| image:: https://raw.githubusercontent.com/Ouranosinc/xclim/main/docs/logos/xclim-logo-small-light.png
         :target: https://github.com/Ouranosinc/xclim
         :alt: Xclim
+        :class: xclim-logo-small no-theme
+
+.. |logo-light| image:: https://raw.githubusercontent.com/Ouranosinc/xclim/main/docs/logos/empty.png
+        :target: https://github.com/Ouranosinc/xclim
+        :alt:
+        :class: xclim-logo-small only-light-inline
+
+.. |logo-dark| image:: https://raw.githubusercontent.com/Ouranosinc/xclim/main/docs/logos/empty.png
+        :target: https://github.com/Ouranosinc/xclim
+        :alt:
+        :class: xclim-logo-small only-dark-inline
 
 .. |pre-commit| image:: https://results.pre-commit.ci/badge/github/Ouranosinc/xclim/main.svg
         :target: https://results.pre-commit.ci/latest/github/Ouranosinc/xclim/main

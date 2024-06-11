@@ -23,7 +23,7 @@ from .detrending import PolyDetrend
 from .processing import escore, jitter_under_thresh, reordering, standardize
 
 
-def _adapt_freq_hist(ds, adapt_freq_thresh):
+def _adapt_freq_hist(ds: xr.Dataset, adapt_freq_thresh: str):
     """Adapt frequency of null values of `hist`    in order to match `ref`."""
     with units.context(infer_context(ds.ref.attrs.get("standard_name"))):
         thresh = convert_units_to(adapt_freq_thresh, ds.ref)
@@ -39,9 +39,21 @@ def _adapt_freq_hist(ds, adapt_freq_thresh):
     scaling=[Grouper.PROP],
 )
 def dqm_train(
-    ds, *, dim, kind, quantiles, adapt_freq_thresh, jitter_under_thresh_value
+    ds: xr.Dataset,
+    *,
+    dim: str,
+    kind: str,
+    quantiles: np.ndarray,
+    adapt_freq_thresh: str | None = None,
+    jitter_under_thresh_value,
 ) -> xr.Dataset:
     """Train step on one group.
+
+    Notes
+    -----
+    Dataset must contain the following variables:
+      ref : training target
+      hist : training data
 
     Parameters
     ----------
@@ -49,9 +61,20 @@ def dqm_train(
         Dataset variables:
             ref : training target
             hist : training source
-    adapt_freq_thresh : str | None
+    dim : str
+        The dimension along which to compute the quantiles.
+    kind : str
+        The kind of correction to compute. See :py:func:`xclim.sdba.utils.get_correction`.
+    quantiles : array-like
+        The quantiles to compute.
+    adapt_freq_thresh : str, optional
         Threshold for frequency adaptation. See :py:class:`xclim.sdba.processing.adapt_freq` for details.
         Default is None, meaning that frequency adaptation is not performed.
+
+    Returns
+    -------
+    xr.Dataset
+        The dataset containing the adjustment factors, the quantiles over the training data, and the scaling factor.
     """
     ds["hist"] = (
         jitter_under_thresh(ds.hist, jitter_under_thresh_value)
@@ -81,9 +104,21 @@ def dqm_train(
     hist_q=[Grouper.PROP, "quantiles"],
 )
 def eqm_train(
-    ds, *, dim, kind, quantiles, adapt_freq_thresh, jitter_under_thresh_value
+    ds: xr.Dataset,
+    *,
+    dim: str,
+    kind: str,
+    quantiles: np.ndarray,
+    adapt_freq_thresh: str | None = None,
+    jitter_under_thresh_value,
 ) -> xr.Dataset:
     """EQM: Train step on one group.
+
+    Notes
+    -----
+    Dataset variables:
+      ref : training target
+      hist : training data
 
     Parameters
     ----------
@@ -91,9 +126,20 @@ def eqm_train(
         Dataset variables:
             ref : training target
             hist : training source
-    adapt_freq_thresh : str | None
+    dim : str
+        The dimension along which to compute the quantiles.
+    kind : str
+        The kind of correction to compute. See :py:func:`xclim.sdba.utils.get_correction`.
+    quantiles : array-like
+        The quantiles to compute.
+    adapt_freq_thresh : str, optional
         Threshold for frequency adaptation. See :py:class:`xclim.sdba.processing.adapt_freq` for details.
         Default is None, meaning that frequency adaptation is not performed.
+
+    Returns
+    -------
+    xr.Dataset
+        The dataset containing the adjustment factors and the quantiles over the training data.
     """
     ds["hist"] = (
         jitter_under_thresh(ds.hist, jitter_under_thresh_value)
@@ -272,7 +318,7 @@ def mbcn_adjust(
     base_kws_vars,
     adj_kws,
     period_dim,
-) -> xr.Dataset:
+) -> xr.DataArray:
     """Perform the adjustment portion MBCn multivariate bias correction technique.
 
     The function ``mbcn_train`` pre-computes the adjustment factors for each rotation
@@ -339,7 +385,7 @@ def mbcn_adjust(
         ind_g = indices_g[indices_g >= 0]
 
         # 1. univariate adjustment of sim -> scen
-        # the kind may be differ depending on the variables
+        # the kind may differ depending on the variables
         scen_block = xr.zeros_like(sim[{"time": ind_gw}])
         for iv, v in enumerate(sim[pts_dims[0]].values):
             sl = {"time": ind_gw, pts_dims[0]: iv}
@@ -387,7 +433,9 @@ def mbcn_adjust(
 
 
 @map_blocks(reduces=[Grouper.PROP, "quantiles"], scen=[])
-def qm_adjust(ds, *, group, interp, extrapolation, kind) -> xr.Dataset:
+def qm_adjust(
+    ds: xr.Dataset, *, group: Grouper, interp: str, extrapolation: str, kind: str
+) -> xr.Dataset:
     """QM (DQM and EQM): Adjust step on one block.
 
     Parameters
@@ -397,6 +445,19 @@ def qm_adjust(ds, *, group, interp, extrapolation, kind) -> xr.Dataset:
             af : Adjustment factors
             hist_q : Quantiles over the training data
             sim : Data to adjust.
+    group : Grouper
+        The grouper object.
+    interp : str
+        The interpolation method to use.
+    extrapolation : str
+        The extrapolation method to use.
+    kind : str
+        The kind of correction to compute. See :py:func:`xclim.sdba.utils.get_correction`.
+
+    Returns
+    -------
+    xr.Dataset
+        The adjusted data.
     """
     af = u.interp_on_quantiles(
         ds.sim,
@@ -407,12 +468,21 @@ def qm_adjust(ds, *, group, interp, extrapolation, kind) -> xr.Dataset:
         extrapolation=extrapolation,
     )
 
-    scen = u.apply_correction(ds.sim, af, kind).rename("scen")
-    return scen.to_dataset()
+    scen: xr.DataArray = u.apply_correction(ds.sim, af, kind).rename("scen")
+    out = scen.to_dataset()
+    return out
 
 
 @map_blocks(reduces=[Grouper.PROP, "quantiles"], scen=[], trend=[])
-def dqm_adjust(ds, *, group, interp, kind, extrapolation, detrend):
+def dqm_adjust(
+    ds: xr.Dataset,
+    *,
+    group: Grouper,
+    interp: str,
+    kind: str,
+    extrapolation: str,
+    detrend: int | PolyDetrend,
+) -> xr.Dataset:
     """DQM adjustment on one block.
 
     Parameters
@@ -423,6 +493,21 @@ def dqm_adjust(ds, *, group, interp, kind, extrapolation, detrend):
             af : Adjustment factors
             hist_q : Quantiles over the training data
             sim : Data to adjust
+    group : Grouper
+        The grouper object.
+    interp : str
+        The interpolation method to use.
+    kind : str
+        The kind of correction to compute. See :py:func:`xclim.sdba.utils.get_correction`.
+    extrapolation : str
+        The extrapolation method to use.
+    detrend : int or PolyDetrend
+        The degree of the polynomial detrending to apply. If 0, no detrending is applied.
+
+    Returns
+    -------
+    xr.Dataset
+        The adjusted data and the trend.
     """
     scaled_sim = u.apply_correction(
         ds.sim,
@@ -436,10 +521,12 @@ def dqm_adjust(ds, *, group, interp, kind, extrapolation, detrend):
     )
 
     if isinstance(detrend, int):
-        detrend = PolyDetrend(degree=detrend, kind=kind, group=group)
+        detrending = PolyDetrend(degree=detrend, kind=kind, group=group)
+    else:
+        detrending = detrend
 
-    detrend = detrend.fit(scaled_sim)
-    ds["sim"] = detrend.detrend(scaled_sim)
+    detrending = detrending.fit(scaled_sim)
+    ds["sim"] = detrending.detrend(scaled_sim)
     scen = qm_adjust.func(
         ds,
         group=group,
@@ -447,14 +534,14 @@ def dqm_adjust(ds, *, group, interp, kind, extrapolation, detrend):
         extrapolation=extrapolation,
         kind=kind,
     ).scen
-    scen = detrend.retrend(scen)
+    scen = detrending.retrend(scen)
 
-    out = xr.Dataset({"scen": scen, "trend": detrend.ds.trend})
+    out = xr.Dataset({"scen": scen, "trend": detrending.ds.trend})
     return out
 
 
 @map_blocks(reduces=[Grouper.PROP, "quantiles"], scen=[], sim_q=[])
-def qdm_adjust(ds, *, group, interp, extrapolation, kind) -> xr.Dataset:
+def qdm_adjust(ds: xr.Dataset, *, group, interp, extrapolation, kind) -> xr.Dataset:
     """QDM: Adjust process on one block.
 
     Parameters
@@ -483,7 +570,7 @@ def qdm_adjust(ds, *, group, interp, extrapolation, kind) -> xr.Dataset:
     af=[Grouper.PROP],
     hist_thresh=[Grouper.PROP],
 )
-def loci_train(ds, *, group, thresh) -> xr.Dataset:
+def loci_train(ds: xr.Dataset, *, group, thresh) -> xr.Dataset:
     """LOCI: Train on one block.
 
     Parameters
@@ -509,7 +596,7 @@ def loci_train(ds, *, group, thresh) -> xr.Dataset:
 
 
 @map_blocks(reduces=[Grouper.PROP], scen=[])
-def loci_adjust(ds, *, group, thresh, interp) -> xr.Dataset:
+def loci_adjust(ds: xr.Dataset, *, group, thresh, interp) -> xr.Dataset:
     """LOCI: Adjust on one block.
 
     Parameters
@@ -522,12 +609,15 @@ def loci_adjust(ds, *, group, thresh, interp) -> xr.Dataset:
     sth = u.broadcast(ds.hist_thresh, ds.sim, group=group, interp=interp)
     factor = u.broadcast(ds.af, ds.sim, group=group, interp=interp)
     with xr.set_options(keep_attrs=True):
-        scen = (factor * (ds.sim - sth) + thresh).clip(min=0)
-    return scen.rename("scen").to_dataset()
+        scen: xr.DataArray = (
+            (factor * (ds.sim - sth) + thresh).clip(min=0).rename("scen")
+        )
+    out = scen.to_dataset()
+    return out
 
 
 @map_groups(af=[Grouper.PROP])
-def scaling_train(ds, *, dim, kind) -> xr.Dataset:
+def scaling_train(ds: xr.Dataset, *, dim, kind) -> xr.Dataset:
     """Scaling: Train on one group.
 
     Parameters
@@ -539,12 +629,13 @@ def scaling_train(ds, *, dim, kind) -> xr.Dataset:
     """
     mhist = ds.hist.mean(dim)
     mref = ds.ref.mean(dim)
-    af = u.get_correction(mhist, mref, kind)
-    return af.rename("af").to_dataset()
+    af: xr.DataArray = u.get_correction(mhist, mref, kind).rename("af")
+    out = af.to_dataset()
+    return out
 
 
 @map_blocks(reduces=[Grouper.PROP], scen=[])
-def scaling_adjust(ds, *, group, interp, kind) -> xr.Dataset:
+def scaling_adjust(ds: xr.Dataset, *, group, interp, kind) -> xr.Dataset:
     """Scaling: Adjust on one block.
 
     Parameters
@@ -555,8 +646,9 @@ def scaling_adjust(ds, *, group, interp, kind) -> xr.Dataset:
             sim : Data to adjust.
     """
     af = u.broadcast(ds.af, ds.sim, group=group, interp=interp)
-    scen = u.apply_correction(ds.sim, af, kind)
-    return scen.rename("scen").to_dataset()
+    scen: xr.DataArray = u.apply_correction(ds.sim, af, kind).rename("scen")
+    out = scen.to_dataset()
+    return out
 
 
 def npdf_transform(ds: xr.Dataset, **kwargs) -> xr.Dataset:
@@ -691,8 +783,37 @@ def _extremes_train_1d(ref, hist, ref_params, *, q_thresh, cluster_thresh, dist,
 @map_blocks(
     reduces=["time"], px_hist=["quantiles"], af=["quantiles"], thresh=[Grouper.PROP]
 )
-def extremes_train(ds, *, group, q_thresh, cluster_thresh, dist, quantiles):
-    """Train extremes for a given variable series."""
+def extremes_train(
+    ds: xr.Dataset,
+    *,
+    group: Grouper,
+    q_thresh: float,
+    cluster_thresh: float,
+    dist,
+    quantiles: np.ndarray,
+) -> xr.Dataset:
+    """Train extremes for a given variable series.
+
+    Parameters
+    ----------
+    ds : xr.Dataset
+        Dataset containing the reference and historical data.
+    group : Grouper
+        The grouper object.
+    q_thresh : float
+        The quantile threshold to use.
+    cluster_thresh : float
+        The threshold for clustering.
+    dist : Any
+        The distribution to fit.
+    quantiles : array-like
+        The quantiles to compute.
+
+    Returns
+    -------
+    xr.Dataset
+        The dataset containing the quantiles, the adjustment factors, and the threshold.
+    """
     px_hist, af, thresh = xr.apply_ufunc(
         _extremes_train_1d,
         ds.ref,
@@ -726,9 +847,42 @@ def _fit_cluster_and_cdf(data, thresh, dist, cluster_thresh):
 
 @map_blocks(reduces=["quantiles", Grouper.PROP], scen=[])
 def extremes_adjust(
-    ds, *, group, frac, power, dist, interp, extrapolation, cluster_thresh
-):
-    """Adjust extremes to reflect many distribution factors."""
+    ds: xr.Dataset,
+    *,
+    group: Grouper,
+    frac: float,
+    power: float,
+    dist,
+    interp: str,
+    extrapolation: str,
+    cluster_thresh: float,
+) -> xr.Dataset:
+    """Adjust extremes to reflect many distribution factors.
+
+    Parameters
+    ----------
+    ds : xr.Dataset
+        Dataset containing the reference and historical data.
+    group : Grouper
+        The grouper object.
+    frac : float
+        The fraction of the transition function.
+    power : float
+        The power of the transition function.
+    dist : Any
+        The distribution to fit.
+    interp : str
+        The interpolation method to use.
+    extrapolation : str
+        The extrapolation method to use.
+    cluster_thresh : float
+        The threshold for clustering.
+
+    Returns
+    -------
+    xr.Dataset
+        The dataset containing the adjusted data.
+    """
     # Find probabilities of extremes of fut according to its own cluster-fitted dist.
     px_fut = xr.apply_ufunc(
         _fit_cluster_and_cdf,
@@ -752,5 +906,6 @@ def extremes_adjust(
     ) ** power
     transition = transition.clip(0, 1)
 
-    out = (transition * scen) + ((1 - transition) * ds.scen)
-    return out.rename("scen").squeeze("group", drop=True).to_dataset()
+    adjusted: xr.DataArray = (transition * scen) + ((1 - transition) * ds.scen)
+    out = adjusted.rename("scen").squeeze("group", drop=True).to_dataset()
+    return out

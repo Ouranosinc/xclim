@@ -2,11 +2,6 @@
 API
 ===
 
-.. contents:: Table of Contents
-   :depth: 1
-   :local:
-   :backlinks: none
-
 Indicators
 ==========
 
@@ -57,9 +52,6 @@ Ensembles Module
    :noindex:
 
 .. autofunction:: xclim.ensembles.robustness_categories
-   :noindex:
-
-.. autofunction:: xclim.ensembles.change_significance
    :noindex:
 
 .. autofunction:: xclim.ensembles.robustness_coefficient

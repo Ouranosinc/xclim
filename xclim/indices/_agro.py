@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import warnings
+from typing import cast
 
 import numpy as np
 import xarray
@@ -24,11 +25,7 @@ from xclim.indices._threshold import (
 )
 from xclim.indices.generic import aggregate_between_dates, get_zones
 from xclim.indices.helpers import _gather_lat, day_lengths
-from xclim.indices.stats import (
-    preprocess_standardized_index,
-    standardized_index,
-    standardized_index_fit_params,
-)
+from xclim.indices.stats import standardized_index
 
 # Frequencies : YS: year start, QS-DEC: seasons starting in december, MS: month start
 # See https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html
@@ -123,7 +120,7 @@ def corn_heat_units(
     mask_tasmin = tasmin > thresh_tasmin
     mask_tasmax = tasmax > thresh_tasmax
 
-    chu = (
+    chu: xarray.DataArray = (
         xarray.where(mask_tasmin, 1.8 * (tasmin - thresh_tasmin), 0)
         + xarray.where(
             mask_tasmax,
@@ -132,7 +129,7 @@ def corn_heat_units(
         )
     ) / 2
 
-    chu.attrs["units"] = ""
+    chu = chu.assign_attrs(units="")
     return chu
 
 
@@ -281,7 +278,7 @@ def huglin_index(
     else:
         raise NotImplementedError(f"'{method}' method is not implemented.")
 
-    hi = (((tas + tasmax) / 2) - thresh).clip(min=0) * k
+    hi: xarray.DataArray = (((tas + tasmax) / 2) - thresh).clip(min=0) * k
     hi = (
         select_time(
             hi, date_bounds=(start_date, end_date), include_bounds=(True, False)
@@ -290,7 +287,7 @@ def huglin_index(
         .sum()
         * k_aggregated
     )
-    hi.attrs["units"] = ""
+    hi = hi.assign_attrs(units="")
     return hi
 
 
@@ -446,9 +443,9 @@ def biologically_effective_degree_days(
     else:
         raise NotImplementedError()
 
-    bedd = ((((tasmin + tasmax) / 2) - thresh_tasmin).clip(min=0) * k + tr_adj).clip(
-        max=max_daily_degree_days
-    )
+    bedd: xarray.DataArray = (
+        (((tasmin + tasmax) / 2) - thresh_tasmin).clip(min=0) * k + tr_adj
+    ).clip(max=max_daily_degree_days)
 
     bedd = (
         select_time(
@@ -459,7 +456,7 @@ def biologically_effective_degree_days(
         * k_aggregated
     )
 
-    bedd.attrs["units"] = "K days"
+    bedd = bedd.assign_attrs(units="K days")
     return bedd
 
 
@@ -509,7 +506,7 @@ def cool_night_index(
     Examples
     --------
     >>> from xclim.indices import cool_night_index
-    >>> tasmin = xr.open_dataset(path_to_tasmin_file).tasmin
+    >>> tasmin = open_dataset(path_to_tasmin_file).tasmin
     >>> cni = cool_night_index(tasmin)
 
     References
@@ -537,8 +534,8 @@ def cool_night_index(
 
     tasmin = tasmin.where(months == month, drop=True)
 
-    cni = tasmin.resample(time=freq).mean(keep_attrs=True)
-    cni.attrs["units"] = "degC"
+    cni: xarray.DataArray = tasmin.resample(time=freq).mean(keep_attrs=True)
+    cni = cni.assign_attrs(units="degC")
     return cni
 
 
@@ -715,6 +712,8 @@ def dryness_index(
         * (pr_masked / 5).clip(max=evspsblpot.time.dt.daysinmonth)
     )
 
+    di_north: xarray.DataArray | None = None
+    di_south: xarray.DataArray | None = None
     # Dryness index
     if has_north:
         di_north = wo + (pr_masked - t_v - e_s).resample(time="YS-JAN").sum()
@@ -724,14 +723,17 @@ def dryness_index(
         di_south = di_south.shift(time=1).isel(time=slice(1, None))
         di_south["time"] = di_south.indexes["time"].shift(-6, "MS")
 
+    di: xarray.DataArray
     if has_north and has_south:
-        di = di_north.where(lat >= 0, di_south)  # noqa
+        di = di_north.where(lat >= 0, di_south)
     elif has_north:
         di = di_north  # noqa
     elif has_south:
         di = di_south  # noqa
+    else:
+        raise ValueError("No hemisphere data found.")
 
-    di.attrs["units"] = "mm"  # noqa
+    di = di.assign_attrs(units="mm")
     return di
 
 
@@ -792,8 +794,8 @@ def latitude_temperature_index(
     lat_mask = (abs(lat) >= 0) & (abs(lat) <= lat_factor)
     lat_coeff = xarray.where(lat_mask, lat_factor - abs(lat), 0)
 
-    lti = mtwm * lat_coeff
-    lti.attrs["units"] = ""
+    lti: xarray.DataArray = mtwm * lat_coeff
+    lti = lti.assign_attrs(units="")
     return lti
 
 
@@ -895,9 +897,8 @@ def water_budget(
     if xarray.infer_freq(pet.time) == "MS":
         pr = pr.resample(time="MS").mean(dim="time", keep_attrs=True)
 
-    out = pr - pet
-
-    out.attrs["units"] = pr.attrs["units"]
+    out: xarray.DataArray = pr - pet
+    out = out.assign_attrs(units=pr.attrs["units"])
     return out
 
 
@@ -923,7 +924,7 @@ def rain_season(
     date_min_end: DayOfYearStr = "09-01",
     date_max_end: DayOfYearStr = "12-31",
     freq="YS-JAN",
-):
+) -> tuple[xarray.DataArray, xarray.DataArray, xarray.DataArray]:
     """Find the length of the rain season and the day of year of its start and its end.
 
     The rain season begins when two conditions are met: 1) There must be a number of wet days with precipitations above
@@ -1013,22 +1014,26 @@ def rain_season(
         )
 
     # Find the start of the rain season
-    def _get_first_run_start(pram):
-        last_doy = pram.indexes["time"][-1].strftime("%m-%d")
-        pram = select_time(pram, date_bounds=(date_min_start, last_doy))
+    def _get_first_run_start(_pram):
+        last_doy = _pram.indexes["time"][-1].strftime("%m-%d")
+        _pram = select_time(_pram, date_bounds=(date_min_start, last_doy))
 
         # First condition: Start with enough precipitation
-        da_start = pram.rolling({"time": window_wet_start}).sum() >= thresh_wet_start
+        da_start = _pram.rolling({"time": window_wet_start}).sum() >= thresh_wet_start
 
         # Second condition: No dry period after
         if method_dry_start == "per_day":
-            da_stop = pram <= thresh_dry_start
+            da_stop = _pram <= thresh_dry_start
             window_dry = window_dry_start
         elif method_dry_start == "total":
-            da_stop = pram.rolling({"time": window_dry_start}).sum() <= thresh_dry_start
+            da_stop = (
+                _pram.rolling({"time": window_dry_start}).sum() <= thresh_dry_start
+            )
             # equivalent to rolling forward in time instead, i.e. end date will be at beginning of dry run
             da_stop = da_stop.shift({"time": -(window_dry_start - 1)}, fill_value=False)
             window_dry = 1
+        else:
+            raise ValueError(f"Unknown method_dry_start: {method_dry_start}.")
 
         # First and second condition combined in a run length
         events = rl.extract_events(da_start, 1, da_stop, window_dry)
@@ -1038,72 +1043,75 @@ def rain_season(
 
     # Find the end of the rain season
     # FIXME: This function mixes local and parent-level variables. It should be refactored.
-    def _get_first_run_end(pram):
+    def _get_first_run_end(_pram):
         if method_dry_end == "per_day":
-            da_stop = pram <= thresh_dry_end
+            da_stop = _pram <= thresh_dry_end
             run_positions = rl.rle(da_stop) >= window_dry_end
         elif method_dry_end == "total":
             run_positions = (
-                pram.rolling({"time": window_dry_end}).sum() <= thresh_dry_end
+                _pram.rolling({"time": window_dry_end}).sum() <= thresh_dry_end
             )
+        else:
+            raise ValueError(f"Unknown method_dry_end: {method_dry_end}.")
         return _get_first_run(run_positions, date_min_end, date_max_end)
 
     # Get start, end and length of rain season. Written as a function so it can be resampled
     # FIXME: This function mixes local and parent-level variables. It should be refactored.
-    def _get_rain_season(pram):
-        start = _get_first_run_start(pram)
+    def _get_rain_season(_pram):
+        start = _get_first_run_start(_pram)
 
         # masking value before  start of the season (end of season should be after)
         # Get valid integer indexer of the day after the first run starts.
         # `start != NaN` only possible if a condition on next few time steps is respected.
         # Thus, `start+1` exists if `start != NaN`
         start_ind = (start + 1).fillna(-1).astype(int)
-        mask = pram * np.NaN
+        mask = _pram * np.NaN
         # Put "True" on the day of run start
         mask[{"time": start_ind}] = 1
         # Mask back points without runs, propagate the True
         mask = mask.where(start.notnull()).ffill("time")
         mask = mask.notnull()
-        end = _get_first_run_end(pram.where(mask))
+        end = _get_first_run_end(_pram.where(mask))
 
-        length = xarray.where(end.notnull(), end - start, pram["time"].size - start)
+        length = xarray.where(end.notnull(), end - start, _pram["time"].size - start)
 
         # converting to doy
-        crd = pram.time.dt.dayofyear
+        crd = _pram.time.dt.dayofyear
         start = rl.lazy_indexing(crd, start)
         end = rl.lazy_indexing(crd, end)
 
-        out = xarray.Dataset(
+        _out = xarray.Dataset(
             {
                 "rain_season_start": start,
                 "rain_season_end": end,
                 "rain_season_length": length,
             }
         )
-        return out
+        return _out
 
     # Compute rain season, attribute units
-    out = pram.resample(time=freq).map(_get_rain_season)
-    out["rain_season_start"].attrs["units"] = ""
-    out["rain_season_end"].attrs["units"] = ""
-    out["rain_season_length"].attrs["units"] = "days"
-    out["rain_season_start"].attrs["is_dayofyear"] = np.int32(1)
-    out["rain_season_end"].attrs["is_dayofyear"] = np.int32(1)
-    return out["rain_season_start"], out["rain_season_end"], out["rain_season_length"]
+    out = cast(xarray.Dataset, pram.resample(time=freq).map(_get_rain_season))
+    rain_season_start = out.rain_season_start.assign_attrs(
+        units="", is_dayofyear=np.int32(1)
+    )
+    rain_season_end = out.rain_season_end.assign_attrs(
+        units="", is_dayofyear=np.int32(1)
+    )
+    rain_season_length = out.rain_season_length.assign_attrs(units="days")
+    return rain_season_start, rain_season_end, rain_season_length
 
 
 @declare_units(
     pr="[precipitation]",
-    pr_cal="[precipitation]",
     params="[]",
 )
 def standardized_precipitation_index(
     pr: xarray.DataArray,
-    pr_cal: Quantified | None = None,
     freq: str | None = "MS",
     window: int = 1,
     dist: str = "gamma",
-    method: str = "APP",
+    method: str = "ML",
+    fitkwargs: dict | None = None,
     cal_start: DateStr | None = None,
     cal_end: DateStr | None = None,
     params: Quantified | None = None,
@@ -1115,9 +1123,6 @@ def standardized_precipitation_index(
     ----------
     pr : xarray.DataArray
         Daily precipitation.
-    pr_cal : xarray.DataArray, optional
-        Daily precipitation used for calibration. Usually this is a temporal subset of `pr` over some reference period.
-        This option will be removed in xclim >=0.47.0. Two behaviour will be possible (see below)
     freq : str, optional
         Resampling frequency. A monthly or daily frequency is expected. Option `None` assumes that desired resampling
         has already been applied input dataset and will skip the resampling step.
@@ -1129,6 +1134,8 @@ def standardized_precipitation_index(
     method : {'APP', 'ML'}
         Name of the fitting method, such as `ML` (maximum likelihood), `APP` (approximate). The approximate method
         uses a deterministic function that doesn't involve any optimization.
+    fitkwargs : dict, optional
+        Kwargs passed to ``xclim.indices.stats.fit`` used to impose values of certains parameters (`floc`, `fscale`).
     cal_start : DateStr, optional
         Start date of the calibration period. A `DateStr` is expected, that is a `str` in format `"YYYY-MM-DD"`.
         Default option `None` means that the calibration period begins at the start of the input dataset.
@@ -1150,18 +1157,20 @@ def standardized_precipitation_index(
 
     Notes
     -----
-    * The length `N` of the N-month SPI is determined by choosing the `window = N`.
+    * N-month SPI / N-day SPI is determined by choosing the `window = N` and the appropriate frequency `freq`.
     * Supported statistical distributions are: ["gamma", "fisk"], where "fisk" is scipy's implementation of
        a log-logistic distribution
     * If `params` is given as input, it overrides the `cal_start`, `cal_end`, `freq` and `window`, `dist` and `method` options.
+    * "APP" method only supports two-parameter distributions. Parameter `loc` needs to be fixed to use method `APP`.
     * The standardized index is bounded by ±8.21. 8.21 is the largest standardized index as constrained by the float64 precision in
       the inversion to the normal distribution.
+    * The results from `climate_indices` library can be reproduced with `method = "APP"` and `fitwkargs = {"floc": 0}`
 
     Example
     -------
     >>> from datetime import datetime
     >>> from xclim.indices import standardized_precipitation_index
-    >>> ds = xr.open_dataset(path_to_pr_file)
+    >>> ds = open_dataset(path_to_pr_file)
     >>> pr = ds.pr
     >>> cal_start, cal_end = "1990-05-01", "1990-08-31"
     >>> spi_3 = standardized_precipitation_index(
@@ -1173,7 +1182,10 @@ def standardized_precipitation_index(
     ...     cal_start=cal_start,
     ...     cal_end=cal_end,
     ... )  # Computing SPI-3 months using a gamma distribution for the fit
-    >>> # Fitting parameters can also be obtained ...
+    >>> # Fitting parameters can also be obtained first, then re-used as input.
+    >>> # To properly reproduce the example, we also need to specify that we use a
+    >>> # (potentially) zero-inflated distribution. For a monthly SPI, this should rarely
+    >>> # make a difference.
     >>> from xclim.indices.stats import standardized_index_fit_params
     >>> params = standardized_index_fit_params(
     ...     pr.sel(time=slice(cal_start, cal_end)),
@@ -1181,83 +1193,56 @@ def standardized_precipitation_index(
     ...     window=3,
     ...     dist="gamma",
     ...     method="ML",
+    ...     zero_inflated=True,
     ... )  # First getting params
-    >>> # ... and used as input
     >>> spi_3 = standardized_precipitation_index(pr, params=params)
 
     References
     ----------
     :cite:cts:`mckee_relationship_1993`
     """
-    if params is not None and pr_cal is None:
-        freq, window, indexer = (
-            params.attrs[s] for s in ["freq", "window", "time_indexer"]
-        )
-        # Unpack attrs to None and {} if needed
-        freq = None if freq == "" else freq
-        indexer = {} if indexer[0] == "" else {indexer[0]: indexer[1:]}
-        if cal_start or cal_end:
-            warnings.warn(
-                "Expected either `cal_{start|end}` or `params`, got both. The `params` input overrides other inputs."
-                "If `cal_start`, `cal_end`, `freq`, `window`, and/or `dist` were given as input, they will be ignored."
+    fitkwargs = fitkwargs or {}
+    dist_methods = {"gamma": ["ML", "APP", "PWM"], "fisk": ["ML", "APP"]}
+    if dist in dist_methods.keys():
+        if method not in dist_methods[dist]:
+            raise NotImplementedError(
+                f"{method} method is not implemented for {dist} distribution"
             )
+    else:
+        raise NotImplementedError(f"{dist} distribution is not yet implemented.")
 
-    if pr_cal is not None:
-        warnings.warn(
-            "Inputting a calibration array will be deprecated in xclim>=0.47.0. "
-            "For example, if `pr_cal` is a subset of `pr`, then instead of say:\n"
-            "`standardized_precipitation_index(pr=pr,pr_cal=pr.sel(time=slice(t0,t1)),...)`,\n"
-            "one can call:\n"
-            "`standardized_precipitation_index(pr=pr,cal_range=(t0,t1),...).\n"
-            "If for some reason `pr_cal` is not a subset of `pr`, then the following approach will still be possible:\n"
-            "`params = standardized_index_fit_params(da=pr_cal, freq=freq, window=window, dist=dist, method=method)`.\n"
-            "`spi = standardized_precipitation_index(pr=pr, params=params)`.\n"
-            "This approach can be used in both scenarios to break up the computations in two,"
-            "i.e. get params, then compute standardized indices."
-        )
-        params = standardized_index_fit_params(
-            pr_cal, freq=freq, window=window, dist=dist, method=method, **indexer
-        )
+    # Precipitation is expected to be zero-inflated
+    zero_inflated = True
+    spi = standardized_index(
+        pr,
+        freq=freq,
+        window=window,
+        dist=dist,
+        method=method,
+        zero_inflated=zero_inflated,
+        fitkwargs=fitkwargs,
+        cal_start=cal_start,
+        cal_end=cal_end,
+        params=params,
+        **indexer,
+    )
 
-    pr, _ = preprocess_standardized_index(pr, freq=freq, window=window, **indexer)
-    if params is None:
-        params = standardized_index_fit_params(
-            pr.sel(time=slice(cal_start, cal_end)),
-            freq=None,
-            window=1,
-            dist=dist,
-            method=method,
-        )
-
-    # If params only contains a subset of main dataset time grouping
-    # (e.g. 8/12 months, etc.), it needs to be broadcasted
-    template = pr.groupby(params.attrs["group"]).first()
-    paramsd = {k: v for k, v in params.sizes.items() if k != "dparams"}
-    if paramsd != template.sizes:
-        params = params.broadcast_like(template)
-
-    spi = standardized_index(pr, params)
-    spi.attrs = params.attrs
-    spi.attrs["freq"] = (freq or xarray.infer_freq(spi.time)) or "undefined"
-    spi.attrs["window"] = window
-    spi.attrs["units"] = ""
     return spi
 
 
 @declare_units(
     wb="[precipitation]",
-    wb_cal="[precipitation]",
     offset="[precipitation]",
     params="[]",
 )
 def standardized_precipitation_evapotranspiration_index(
     wb: xarray.DataArray,
-    wb_cal: Quantified | None = None,
     freq: str | None = "MS",
     window: int = 1,
     dist: str = "gamma",
-    method: str = "APP",
-    offset: Quantified = "1.000 mm/d",
+    method: str = "ML",
+    fitkwargs: dict | None = None,
+    offset: Quantified = "0.000 mm/d",
     cal_start: DateStr | None = None,
     cal_end: DateStr | None = None,
     params: Quantified | None = None,
@@ -1273,9 +1258,6 @@ def standardized_precipitation_evapotranspiration_index(
     ----------
     wb : xarray.DataArray
         Daily water budget (pr - pet).
-    wb_cal : xarray.DataArray, optional
-        Daily water budget used for calibration. Usually this is a temporal subset of `wb` over some reference period.
-        This option will be removed in xclim >=0.47.0. Two behaviours will be possible (see below).
     freq : str, optional
         Resampling frequency. A monthly or daily frequency is expected. Option `None` assumes that desired resampling
         has already been applied input dataset and will skip the resampling step.
@@ -1289,6 +1271,12 @@ def standardized_precipitation_evapotranspiration_index(
         `PWM` (probability weighted moments).
         The approximate method uses a deterministic function that doesn't involve any optimization. Available methods
         vary with the distribution: 'gamma':{'APP', 'ML', 'PWM'}, 'fisk':{'APP', 'ML'}
+    fitkwargs : dict, optional
+        Kwargs passed to ``xclim.indices.stats.fit`` used to impose values of certains parameters (`floc`, `fscale`).
+    offset : Quantified
+        For distributions bounded by zero (e.g. "gamma", "fisk"), the two-parameters distributions only accept positive
+        values. An offset can be added to make sure this is the case. This option will be removed in xclim >=0.50.0, ``xclim``
+        will rely on proper use of three-parameters distributions instead.
     cal_start : DateStr, optional
         Start date of the calibration period. A `DateStr` is expected, that is a `str` in format `"YYYY-MM-DD"`.
         Default option `None` means that the calibration period begins at the start of the input dataset.
@@ -1299,11 +1287,6 @@ def standardized_precipitation_evapotranspiration_index(
         Fit parameters.
         The `params` can be computed using ``xclim.indices.stats.standardized_index_fit_params`` in advance.
         The output can be given here as input, and it overrides other options.
-    offset : Quantified
-        For distributions bounded by zero (e.g. "gamma", "fisk"), an offset must be added to the water budget
-        to make sure there are no negative values.
-        Keep the offset as small as possible to minimize its influence on the results.
-        This can be given as a precipitation flux or a rate.
     \*\*indexer
         Indexing parameters to compute the indicator on a temporal subset of the data.
         It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
@@ -1316,16 +1299,19 @@ def standardized_precipitation_evapotranspiration_index(
     See Also
     --------
     standardized_precipitation_index
-
-    Notes
-    -----
-    If results include NaNs, check that the `offset` parameter is larger than the minimum water budget values.
-
-    See Standardized Precipitation Index (SPI) for more details on usage.
     """
-    uses_default_offset = offset == "1.000 mm/d"
+    fitkwargs = fitkwargs or {}
+    uses_default_offset = offset != "0.000 mm/d"
+    if uses_default_offset is False:
+        warnings.warn("Inputting an offset will be deprecated in xclim>=0.50.0. ")
     if params is not None:
-        params_offset = params.attrs["offset"]
+        if "offset" in params.attrs:
+            params_offset = params.attrs["offset"]
+            # no more offset in params needed after the next step.
+            # This step will be removed in xclim >=0.50.0 once offset is no longer needed
+            params.attrs.pop("offset")
+        else:
+            params_offset = ""
         if uses_default_offset is False and offset != params_offset:
             warnings.warn(
                 "The offset in `params` differs from the input `offset`."
@@ -1333,24 +1319,33 @@ def standardized_precipitation_evapotranspiration_index(
             )
         offset = params_offset
     offset = 0 if offset == "" else convert_units_to(offset, wb, context="hydro")
-    # Allowed distributions are constrained by the SPI function
-    if dist in ["gamma", "fisk"] and offset <= 0:
-        raise ValueError(
-            "The water budget must be shifted towards positive values to be used with `gamma` and `fisk` "
-            "distributions which are bounded by zero. A positive offset is required. Current value: "
-            f"{offset}{wb.attrs['units']}."
-        )
-    # Note that the default behaviour would imply an offset for any distribution, even those distributions
-    # that can accommodate negative values of the water budget. This needs to be changed in future versions
-    # of the index.
     if offset != 0:
         with xarray.set_options(keep_attrs=True):
             wb = wb + offset
-            if wb_cal is not None:
-                wb_cal = wb_cal + offset
 
-    spei = standardized_precipitation_index(
-        wb, wb_cal, freq, window, dist, method, cal_start, cal_end, params, **indexer
+    dist_methods = {"gamma": ["ML", "APP", "PWM"], "fisk": ["ML", "APP"]}
+    if dist in dist_methods.keys():
+        if method not in dist_methods[dist]:
+            raise NotImplementedError(
+                f"{method} method is not implemented for {dist} distribution"
+            )
+    else:
+        raise NotImplementedError(f"{dist} distribution is not yet implemented.")
+
+    # Water budget is not expected to be zero-inflated
+    zero_inflated = False
+    spei = standardized_index(
+        wb,
+        freq=freq,
+        window=window,
+        dist=dist,
+        method=method,
+        zero_inflated=zero_inflated,
+        fitkwargs=fitkwargs,
+        cal_start=cal_start,
+        cal_end=cal_end,
+        params=params,
+        **indexer,
     )
 
     return spei
@@ -1395,9 +1390,10 @@ def qian_weighted_mean_average(
     units = tas.attrs["units"]
 
     weights = xarray.DataArray([0.0625, 0.25, 0.375, 0.25, 0.0625], dims=["window"])
-    weighted_mean = tas.rolling({dim: 5}, center=True).construct("window").dot(weights)
-
-    weighted_mean.attrs["units"] = units
+    weighted_mean: xarray.DataArray = (
+        tas.rolling({dim: 5}, center=True).construct("window").dot(weights)
+    )
+    weighted_mean = weighted_mean.assign_attrs(units=units)
     return weighted_mean
 
 
@@ -1499,9 +1495,11 @@ def effective_growing_degree_days(
     )
 
     deg_days = (tas - thresh).clip(min=0)
-    egdd = aggregate_between_dates(deg_days, start=start, end=end, freq=freq)
-
-    return to_agg_units(egdd, tas, op="integral")
+    egdd: xarray.DataArray = aggregate_between_dates(
+        deg_days, start=start, end=end, freq=freq
+    )
+    egdd = to_agg_units(egdd, tas, op="integral")
+    return egdd
 
 
 @declare_units(tasmin="[temperature]")
@@ -1548,9 +1546,9 @@ def hardiness_zones(
         )
 
     tn_min_rolling = tn_min(tasmin, freq=freq).rolling(time=window).mean()
-    zones = get_zones(
+    zones: xarray.DataArray = get_zones(
         tn_min_rolling, zone_min=zone_min, zone_max=zone_max, zone_step=zone_step
     )
 
-    zones.attrs["units"] = ""
+    zones = zones.assign_attrs(units="")
     return zones

@@ -285,17 +285,19 @@ def _rmse(
       Root mean square error
     """
 
-    def _rmse(sim, ref):
-        return np.sqrt(np.mean((sim - ref) ** 2, axis=-1))
+    def _rmse_internal(_sim: xr.DataArray, _ref: xr.DataArray) -> xr.DataArray:
+        _f: xr.DataArray = np.sqrt(np.mean((_sim - _ref) ** 2, axis=-1))
+        return _f
 
     out = xr.apply_ufunc(
-        _rmse,
+        _rmse_internal,
         sim,
         ref,
         input_core_dims=[["time"], ["time"]],
         dask="parallelized",
     )
-    return out.assign_attrs(units=ensure_delta(ref.units))
+    out = out.assign_attrs(units=ensure_delta(ref.units))
+    return out
 
 
 rmse = StatisticalPropertyMeasure(
@@ -330,17 +332,19 @@ def _mae(
       Mean absolute error
     """
 
-    def _mae(sim, ref):
-        return np.mean(np.abs(sim - ref), axis=-1)
+    def _mae_internal(_sim: xr.DataArray, _ref: xr.DataArray) -> xr.DataArray:
+        _f: xr.DataArray = np.mean(np.abs(_sim - _ref), axis=-1)
+        return _f
 
     out = xr.apply_ufunc(
-        _mae,
+        _mae_internal,
         sim,
         ref,
         input_core_dims=[["time"], ["time"]],
         dask="parallelized",
     )
-    return out.assign_attrs(units=ensure_delta(ref.units))
+    out = out.assign_attrs(units=ensure_delta(ref.units))
+    return out
 
 
 mae = StatisticalPropertyMeasure(
@@ -447,6 +451,7 @@ def _taylordiagram(
     ref: xr.DataArray,
     dim: str = "time",
     group: str | Grouper = "time",
+    normalize: bool = False,
 ) -> xr.DataArray:
     """Taylor diagram.
 
@@ -464,6 +469,9 @@ def _taylordiagram(
     group : str
         Compute the property and measure for each temporal groups individually.
         Currently not implemented.
+    normalize : bool
+        If `True`, divide the standard deviations by the standard deviation of the reference.
+        Default is `False`.
 
 
     Returns
@@ -491,6 +499,19 @@ def _taylordiagram(
             "units": ref.units,
         }
     )
+
+    # Normalize the standard deviations byt the standard deviation of the reference.
+    if normalize:
+        if (out[{"taylor_param": 0}] == 0).any():
+            raise ValueError(
+                "`ref_std =0` (homogeneous field) obtained, normalization is not possible."
+            )
+        with xr.set_options(keep_attrs=True):
+            out[{"taylor_param": [0, 1]}] = (
+                out[{"taylor_param": [0, 1]}] / out[{"taylor_param": 0}]
+            )
+        out.attrs["normalized"] = True
+        out.attrs["units"] = ""
 
     return out
 
