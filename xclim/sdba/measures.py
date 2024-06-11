@@ -506,10 +506,12 @@ def _taylordiagram(
             raise ValueError(
                 "`ref_std =0` (homogeneous field) obtained, normalization is not possible."
             )
-        out[{"taylor_param": [0, 1]}] = (
-            out[{"taylor_param": [0, 1]}] / out[{"taylor_param": 0}]
-        )
+        with xr.set_options(keep_attrs=True):
+            out[{"taylor_param": [0, 1]}] = (
+                out[{"taylor_param": [0, 1]}] / out[{"taylor_param": 0}]
+            )
         out.attrs["normalized"] = True
+        out.attrs["units"] = ""
 
     return out
 
