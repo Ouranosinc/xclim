@@ -6,6 +6,10 @@ v0.50.0 (unreleased)
 --------------------
 Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Éric Dupuis (:user:`coxipi`).
 
+New features and enhancements
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+* New properties: Bivariate Spell Length (``xclim.sdba.properties.bivariate_spell_length``), generalized spell lengths with an argument for `window`, and specific spell lengths with `window` fixed to 1  (``xclim.sdba.propertiies.threshold_count``, ``xclim.sdba.propertiies.bivariate_threshold_count``). (:pull:`1758`).
+
 Breaking changes
 ^^^^^^^^^^^^^^^^
 * `pint` has been pinned below v0.24 until `xclim` can be updated to support the latest version. (:issue:`1771`, :pull:`1772`).
