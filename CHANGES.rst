@@ -8,7 +8,7 @@ Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Éric Dup
 
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-* New properties: bivariate spell length (``xclim.sdba.properties.bivariate_spell_length``), generalized spell lengths with an argument for `window`, and specific spell lengths with `window` fixed to 1  (``xclim.sdba.propertiies.threshold_count``, ``xclim.sdba.propertiies.bivariate_threshold_count``). (:pull:`1758`).
+* New properties: Bivariate Spell Length (``xclim.sdba.properties.bivariate_spell_length``), generalized spell lengths with an argument for `window`, and specific spell lengths with `window` fixed to 1  (``xclim.sdba.propertiies.threshold_count``, ``xclim.sdba.propertiies.bivariate_threshold_count``). (:pull:`1758`).
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
@@ -21,6 +21,10 @@ Internal changes
 * Temporarily skipping the ``test_hawkins_sutton_smoke`` test due to strange behaviour with `xarray`. (:pull:`1769`).
 * Fixed some previously uncaught errors raised from recent versions of `pylint` and `codespell`. (:pull:`1772`).
 * Set the `doctest` examples to all use `h5netcdf` with worker-separated caches to load datasets. (:pull:`1772`).
+
+Bug fixes
+^^^^^^^^^
+* ``xclim.indices.{cold|hot}_spell_total_length`` now properly uses the argument `window` to only count spells with at least `window` time steps. (:issue:`1765`, :pull:`1777`).
 
 v0.49.0 (2024-05-02)
 --------------------
