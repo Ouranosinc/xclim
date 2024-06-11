@@ -959,13 +959,17 @@ class PrincipalComponents(TrainAdjust):
             # This step needs vectorize with dask, but vectorize doesn't work with dask, argh.
             # Invert to get transformation matrix from hist to PC coords.
             Hinv = np.linalg.inv(H)
-            # Fancy tricks to choose best orientation on each axes
+            # Fancy tricks to choose the best orientation on each axis.
             # (using eigenvectors, the output axes orientation is undefined)
             if best_orientation == "simple":
                 orient = best_pc_orientation_simple(R, Hinv)
             elif best_orientation == "full":
                 orient = best_pc_orientation_full(
                     R, Hinv, reference.mean(axis=1), historical.mean(axis=1), historical
+                )
+            else:
+                raise ValueError(
+                    f"Unknown `best_orientation` method: {best_orientation}."
                 )
             # Get transformation matrix
             return (R * orient) @ Hinv

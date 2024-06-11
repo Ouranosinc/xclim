@@ -506,7 +506,7 @@ def cool_night_index(
     Examples
     --------
     >>> from xclim.indices import cool_night_index
-    >>> tasmin = xr.open_dataset(path_to_tasmin_file).tasmin
+    >>> tasmin = open_dataset(path_to_tasmin_file).tasmin
     >>> cni = cool_night_index(tasmin)
 
     References
@@ -1170,7 +1170,7 @@ def standardized_precipitation_index(
     -------
     >>> from datetime import datetime
     >>> from xclim.indices import standardized_precipitation_index
-    >>> ds = xr.open_dataset(path_to_pr_file)
+    >>> ds = open_dataset(path_to_pr_file)
     >>> pr = ds.pr
     >>> cal_start, cal_end = "1990-05-01", "1990-08-31"
     >>> spi_3 = standardized_precipitation_index(

@@ -374,7 +374,10 @@ def add_imports(xdoctest_namespace, threadsafe_data_dir) -> None:
     ns["xr"] = xclim.testing  # xr.open_dataset(...) -> xclim.testing.open_dataset(...)
     ns["xclim"] = xclim
     ns["open_dataset"] = partial(
-        _open_dataset, cache_dir=threadsafe_data_dir, branch=helpers.TESTDATA_BRANCH
+        _open_dataset,
+        cache_dir=threadsafe_data_dir,
+        branch=helpers.TESTDATA_BRANCH,
+        engine="h5netcdf",
     )  # Needed for modules where xarray is imported as `xr`
 
 

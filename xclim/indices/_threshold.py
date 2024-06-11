@@ -773,7 +773,7 @@ def daily_pr_intensity(
     precipitation >= 5 mm at seasonal frequency, i.e. DJF, MAM, JJA, SON, DJF, etc.:
 
     >>> from xclim.indices import daily_pr_intensity
-    >>> pr = xr.open_dataset(path_to_pr_file).pr
+    >>> pr = open_dataset(path_to_pr_file).pr
     >>> daily_int = daily_pr_intensity(pr, thresh="5 mm/day", freq="QS-DEC")
     """
     t = convert_units_to(thresh, pr, "hydro")
@@ -1142,7 +1142,7 @@ def growing_season_length(
     Examples
     --------
     >>> from xclim.indices import growing_season_length
-    >>> tas = xr.open_dataset(path_to_tas_file).tas
+    >>> tas = open_dataset(path_to_tas_file).tas
 
     For the Northern Hemisphere:
 
@@ -1228,7 +1228,7 @@ def frost_season_length(
     Examples
     --------
     >>> from xclim.indices import frost_season_length
-    >>> tasmin = xr.open_dataset(path_to_tasmin_file).tasmin
+    >>> tasmin = open_dataset(path_to_tasmin_file).tasmin
 
     For the Northern Hemisphere:
 
@@ -1411,7 +1411,7 @@ def frost_free_season_length(
     Examples
     --------
     >>> from xclim.indices import frost_season_length
-    >>> tasmin = xr.open_dataset(path_to_tasmin_file).tasmin
+    >>> tasmin = open_dataset(path_to_tasmin_file).tasmin
 
     For the Northern Hemisphere:
 
@@ -2604,7 +2604,7 @@ def wetdays(
     at the seasonal frequency, i.e. DJF, MAM, JJA, SON, DJF, etc.:
 
     >>> from xclim.indices import wetdays
-    >>> pr = xr.open_dataset(path_to_pr_file).pr
+    >>> pr = open_dataset(path_to_pr_file).pr
     >>> wd = wetdays(pr, thresh="5 mm/day", freq="QS-DEC")
     """
     thresh = convert_units_to(thresh, pr, "hydro")
@@ -2646,7 +2646,7 @@ def wetdays_prop(
     5 mm at the seasonal frequency, i.e. DJF, MAM, JJA, SON, DJF, etc.:
 
     >>> from xclim.indices import wetdays_prop
-    >>> pr = xr.open_dataset(path_to_pr_file).pr
+    >>> pr = open_dataset(path_to_pr_file).pr
     >>> wd = wetdays_prop(pr, thresh="5 mm/day", freq="QS-DEC")
     """
     thresh = convert_units_to(thresh, pr, "hydro")
@@ -3179,7 +3179,7 @@ def dry_spell_frequency(
     Examples
     --------
     >>> from xclim.indices import dry_spell_frequency
-    >>> pr = xr.open_dataset(path_to_pr_file).pr
+    >>> pr = open_dataset(path_to_pr_file).pr
     >>> dsf = dry_spell_frequency(pr=pr, op="sum")
     >>> dsf = dry_spell_frequency(pr=pr, op="max")
     """
@@ -3372,7 +3372,7 @@ def wet_spell_frequency(
     Examples
     --------
     >>> from xclim.indices import wet_spell_frequency
-    >>> pr = xr.open_dataset(path_to_pr_file).pr
+    >>> pr = open_dataset(path_to_pr_file).pr
     >>> dsf = wet_spell_frequency(pr=pr, op="sum")
     >>> dsf = wet_spell_frequency(pr=pr, op="max")
     """
