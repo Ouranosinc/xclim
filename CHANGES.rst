@@ -4,7 +4,7 @@ Changelog
 
 v0.50.0 (unreleased)
 --------------------
-Contributors to this version: Trevor James Smith (:user:`Zeitsperre`).
+Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Éric Dupuis (:user:`coxipi`).
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
@@ -17,6 +17,10 @@ Internal changes
 * Temporarily skipping the ``test_hawkins_sutton_smoke`` test due to strange behaviour with `xarray`. (:pull:`1769`).
 * Fixed some previously uncaught errors raised from recent versions of `pylint` and `codespell`. (:pull:`1772`).
 * Set the `doctest` examples to all use `h5netcdf` with worker-separated caches to load datasets. (:pull:`1772`).
+
+Bug fixes
+^^^^^^^^^
+* ``xclim.indices.{cold|hot}_spell_total_length`` now properly uses the argument `window` to only count spells with at least `window` time steps. (:issue:`1765`, :pull:`1777`).
 
 v0.49.0 (2024-05-02)
 --------------------
