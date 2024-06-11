@@ -12,7 +12,6 @@ from warnings import warn
 import numpy as np
 import xarray as xr
 from xarray.core.dataarray import DataArray
-from xarray.core.utils import get_temp_dimname
 
 from xclim.core.calendar import get_calendar
 from xclim.core.formatting import gen_call_string, update_history
@@ -38,7 +37,7 @@ from ._adjustment import (
     scaling_train,
 )
 from .base import Grouper, ParametrizableWithDataset, parse_group
-from .processing import stack_variables, unstack_variables
+from .processing import stack_variables, time_block_indices, unstack_variables
 from .utils import (
     ADDITIVE,
     best_pc_orientation_full,
@@ -1198,61 +1197,10 @@ class NpdfTransform(Adjust):
         return out
 
 
-def _get_group_complement(da, group):
-    # complement of "dayofyear": "year", etc.
-    gr = group if isinstance(group, str) else group.name
-    if gr == "time.dayofyear":
-        return da.time.dt.year
-    if gr == "time.month":
-        return da.time.dt.strftime("%Y-%d")
-
-
-def time_group_indices(times, group):
-    """For a given grouping, return the time indices for each block."""
-    # does not work with group == "time.month"
-    group = group if isinstance(group, Grouper) else Grouper(group)
-    gr, win = group.name, group.window
-    # get time indices (0,1,2,...) for each block
-    timeind = xr.DataArray(np.arange(times.size), coords={"time": times})
-    win_dim0, win_dim = (
-        get_temp_dimname(timeind.dims, lab) for lab in ["win_dim0", "win_dim"]
-    )
-    if gr != "time":
-        # time indices for each block with window = 1
-        g_idxs = timeind.groupby(gr).apply(
-            lambda da: da.assign_coords(time=_get_group_complement(da, gr)).rename(
-                {"time": "year"}
-            )
-        )
-        # time indices for each block with general window
-        da = timeind.rolling(time=win, center=True).construct(window_dim=win_dim0)
-        gw_idxs = da.groupby(gr).apply(
-            lambda da: da.assign_coords(time=_get_group_complement(da, gr))
-            .stack({win_dim: ["time", win_dim0]})
-            .reset_index(dims_or_levels=[win_dim])
-        )
-        gw_idxs = gw_idxs.transpose(..., win_dim)
-    else:
-        gw_idxs = timeind.rename({"time": win_dim}).expand_dims({win_dim0: [-1]})
-        g_idxs = gw_idxs.copy()
-    gw_idxs.attrs["group"] = (gr, win)
-    gw_idxs.attrs["time_dim"] = win_dim
-    gw_idxs.attrs["group_dim"] = [d for d in g_idxs.dims if d != win_dim][0]
-    return g_idxs, gw_idxs
-
-
 # Right now, the training part only outputs af_q
 # if it outputs also the corrected hist, it could be like NpdfTransform
 class MBCn(BaseAdjustment):
     r"""Multivariate bias correction function using the N-dimensional probability density function transform.
-
-        ref: xr.DataArray | None = None,
-        hist: xr.DataArray | None = None,
-        base_scen : TrainAdjust = QuantileDeltaMapping,
-        base_kws_scen: dict[str, Any] | None = None,
-        adj_kws: dict[str, Any] | None = None,
-        period_dim=None,
-
 
     A multivariate bias-adjustment algorithm described by :cite:t:`sdba-cannon_multivariate_2018`
     based on a color-correction algorithm described by :cite:t:`sdba-pitie_n-dimensional_2005`.
@@ -1266,6 +1214,10 @@ class MBCn(BaseAdjustment):
     ----------
     Train step
 
+    ref : xr.DataArray
+        Reference dataset.
+    hist : xr.DataArray
+        Historical dataset.
     base_kws : dict, optional
         Arguments passed to the training in the npdf transform.
     adj_kws : dict, optional
@@ -1290,6 +1242,8 @@ class MBCn(BaseAdjustment):
         Target reference dataset also needed for univariate bias correction preceding npdf transform
     hist: xr.DataArray
         Source dataset also needed for univariate bias correction preceding npdf transform
+    sim : xr.DataArray
+        Source dataset to adjust.
     base : BaseAdjustment
         Bias-adjustment class used for the univariate bias correction.
     base_kws : dict, optional
@@ -1358,6 +1312,10 @@ class MBCn(BaseAdjustment):
     References
     ----------
     :cite:cts:`sdba-cannon_multivariate_2018,sdba-cannon_mbc_2020,sdba-pitie_n-dimensional_2005,sdba-mezzadri_how_2007,sdba-szekely_testing_2004`
+
+    Notes
+    -----
+    Only  "time" and "time.dayofyear" (with a suitable window) are implemented as possible values for `group`.
     """
 
     @classmethod
@@ -1416,7 +1374,7 @@ class MBCn(BaseAdjustment):
 
         # time indices corresponding to group and windowed group
         # used to divide datasets as map_blocks or groupby would do
-        g_idxs, gw_idxs = time_group_indices(ref.time, base_kws["group"])
+        g_idxs, gw_idxs = time_block_indices(ref.time, base_kws["group"])
 
         # training, obtain adjustment factors of the npdf transform
         ds = xr.Dataset(dict(ref=ref, hist=hist))
