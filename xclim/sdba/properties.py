@@ -423,20 +423,20 @@ def _threshold_count(
     ----------
     da : xr.DataArray
       Variable on which to calculate the diagnostic.
-    method: {'amount', 'quantile'}
+    method : {'amount', 'quantile'}
       Method to choose the threshold.
       'amount': The threshold is directly the quantity in {thresh}. It needs to have the same units as {da}.
       'quantile': The threshold is calculated as the quantile {thresh} of the distribution.
-    op: {">", "<", ">=", "<="}
+    op : {">", "<", ">=", "<="}
       Operation to verify the condition for a spell.
       The condition for a spell is variable {op} threshold.
-    thresh: str or float
+    thresh : str or float
       Threshold on which to evaluate the condition to have a spell.
       Str with units if the method is "amount".
       Float of the quantile if the method is "quantile".
-    stat: {'mean', 'sum', 'max','min'}
+    stat : {'mean', 'sum', 'max','min'}
       Statistics to apply to the remaining time dimension after resampling (e.g. Jan 1980-2010)
-    stat_resample: {'mean', 'sum', 'max','min'}, optional
+    stat_resample : {'mean', 'sum', 'max','min'}, optional
       Statistics to apply to the resampled input at the {group} (e.g. 1-31 Jan 1980). If `None`, the same method as `stat` will be used.
     group : {'time', 'time.season', 'time.month'}
       Grouping of the output.
@@ -837,50 +837,50 @@ def _bivariate_spell_length_distribution(
     Parameters
     ----------
     da1 : xr.DataArray
-      First variable on which to calculate the diagnostic.
+        First variable on which to calculate the diagnostic.
     da2 : xr.DataArray
-      Second variable on which to calculate the diagnostic.
-    method1: {'amount', 'quantile'}
-      Method to choose the threshold.
-      'amount': The threshold is directly the quantity in {thresh}. It needs to have the same units as {da}.
-      'quantile': The threshold is calculated as the quantile {thresh} of the distribution.
-    method2: {'amount', 'quantile'}
-      Method to choose the threshold.
-      'amount': The threshold is directly the quantity in {thresh}. It needs to have the same units as {da}.
-      'quantile': The threshold is calculated as the quantile {thresh} of the distribution.
-    op1: {">", "<", ">=", "<="}
-      Operation to verify the condition for a spell.
-      The condition for a spell is variable {op1} threshold.
-    op2: {">", "<", ">=", "<="}
-      Operation to verify the condition for a spell.
-      The condition for a spell is variable {op2} threshold.
-    thresh1: str or float
-      Threshold on which to evaluate the condition to have a spell.
-      Str with units if the method is "amount".
-      Float of the quantile if the method is "quantile".
-    thresh2: str or float
-      Threshold on which to evaluate the condition to have a spell.
-      Str with units if the method is "amount".
-      Float of the quantile if the method is "quantile".
+        Second variable on which to calculate the diagnostic.
+    method1 : {'amount', 'quantile'}
+        Method to choose the threshold.
+        'amount': The threshold is directly the quantity in {thresh}. It needs to have the same units as {da}.
+        'quantile': The threshold is calculated as the quantile {thresh} of the distribution.
+    method2 : {'amount', 'quantile'}
+        Method to choose the threshold.
+        'amount': The threshold is directly the quantity in {thresh}. It needs to have the same units as {da}.
+       'quantile': The threshold is calculated as the quantile {thresh} of the distribution.
+    op1 : {">", "<", ">=", "<="}
+        Operation to verify the condition for a spell.
+        The condition for a spell is variable {op1} threshold.
+    op2 : {">", "<", ">=", "<="}
+        Operation to verify the condition for a spell.
+        The condition for a spell is variable {op2} threshold.
+    thresh1 : str or float
+        Threshold on which to evaluate the condition to have a spell.
+        String with units if the method is "amount".
+        Float of the quantile if the method is "quantile".
+    thresh2 : str or float
+        Threshold on which to evaluate the condition to have a spell.
+        String with units if the method is "amount".
+        Float of the quantile if the method is "quantile".
     window : int
-      Number of consecutive days respecting the constraint in order to begin a spell.
-      Default is 1, which is equivalent to `_bivariate_threshold_count`
-    stat: {'mean', 'sum', 'max','min'}
-      Statistics to apply to the remaining time dimension after resampling (e.g. Jan 1980-2010)
-    stat_resample: {'mean', 'sum', 'max','min'}, optional
-      Statistics to apply to the resampled input at the {group} (e.g. 1-31 Jan 1980). If `None`, the same method as `stat` will be used.
+        Number of consecutive days respecting the constraint in order to begin a spell.
+        Default is 1, which is equivalent to `_bivariate_threshold_count`
+    stat : {'mean', 'sum', 'max','min'}
+        Statistics to apply to the remaining time dimension after resampling (e.g. Jan 1980-2010)
+    stat_resample : {'mean', 'sum', 'max','min'}, optional
+        Statistics to apply to the resampled input at the {group} (e.g. 1-31 Jan 1980). If `None`, the same method as `stat` will be used.
     group : {'time', 'time.season', 'time.month'}
-      Grouping of the output.
-      E.g. If 'time.month', the spell lengths are computed separately for each month.
+        Grouping of the output.
+        e.g. If 'time.month', the spell lengths are computed separately for each month.
     resample_before_rl : bool
-      Determines if the resampling should take place before or after the run
-      length encoding (or a similar algorithm) is applied to runs.
+        Determines if the resampling should take place before or after the run
+        length encoding (or a similar algorithm) is applied to runs.
 
     Returns
     -------
     xr.DataArray, [units of the sampling frequency]
-      {stat} of spell length distribution when the first variable is {op1} the {method1} {thresh1}
-      and the second variable is {op2} the {method2} {thresh2} for {window} consecutive day(s).
+        {stat} of spell length distribution when the first variable is {op1} the {method1} {thresh1}
+        and the second variable is {op2} the {method2} {thresh2} for {window} consecutive day(s).
     """
     ops = {
         ">": np.greater,
@@ -985,45 +985,46 @@ def _bivariate_threshold_count(
     Parameters
     ----------
     da1 : xr.DataArray
-      First variable on which to calculate the diagnostic.
+        First variable on which to calculate the diagnostic.
     da2 : xr.DataArray
-      Second variable on which to calculate the diagnostic.
-    method1: {'amount', 'quantile'}
-      Method to choose the threshold.
-      'amount': The threshold is directly the quantity in {thresh}. It needs to have the same units as {da}.
-      'quantile': The threshold is calculated as the quantile {thresh} of the distribution.
-    method2: {'amount', 'quantile'}
-      Method to choose the threshold.
-      'amount': The threshold is directly the quantity in {thresh}. It needs to have the same units as {da}.
-      'quantile': The threshold is calculated as the quantile {thresh} of the distribution.
-    op1: {">", "<", ">=", "<="}
-      Operation to verify the condition for a spell.
-      The condition for a spell is variable {op} threshold.
-    op2: {">", "<", ">=", "<="}
-      Operation to verify the condition for a spell.
-      The condition for a spell is variable {op} threshold.
-    thresh1: str or float
-      Threshold on which to evaluate the condition to have a spell.
-      Str with units if the method is "amount".
-      Float of the quantile if the method is "quantile".
-    thresh2: str or float
-      Threshold on which to evaluate the condition to have a spell.
-      Str with units if the method is "amount".
-      Float of the quantile if the method is "quantile".
-    stat: {'mean', 'sum', 'max','min'}
-      Statistics to apply to the remaining time dimension after resampling (e.g. Jan 1980-2010)
-    stat_resample: {'mean', 'sum', 'max','min'}, optional
-      Statistics to apply to the resampled input at the {group} (e.g. 1-31 Jan 1980). If `None`, the same method as `stat` will be used.
+        Second variable on which to calculate the diagnostic.
+    method1 : {'amount', 'quantile'}
+        Method to choose the threshold.
+        'amount': The threshold is directly the quantity in {thresh}. It needs to have the same units as {da}.
+        'quantile': The threshold is calculated as the quantile {thresh} of the distribution.
+    method2 : {'amount', 'quantile'}
+        Method to choose the threshold.
+        'amount': The threshold is directly the quantity in {thresh}. It needs to have the same units as {da}.
+        'quantile': The threshold is calculated as the quantile {thresh} of the distribution.
+    op1 : {">", "<", ">=", "<="}
+        Operation to verify the condition for a spell.
+        The condition for a spell is variable {op} threshold.
+    op2 : {">", "<", ">=", "<="}
+        Operation to verify the condition for a spell.
+        The condition for a spell is variable {op} threshold.
+    thresh1 : str or float
+        Threshold on which to evaluate the condition to have a spell.
+        String with units if the method is "amount".
+        Float of the quantile if the method is "quantile".
+    thresh2 : str or float
+        Threshold on which to evaluate the condition to have a spell.
+        String with units if the method is "amount".
+        Float of the quantile if the method is "quantile".
+    stat : {'mean', 'sum', 'max','min'}
+        Statistics to apply to the remaining time dimension after resampling (e.g. Jan 1980-2010)
+    stat_resample : {'mean', 'sum', 'max','min'}, optional
+        Statistics to apply to the resampled input at the {group} (e.g. 1-31 Jan 1980).
+        If `None`, the same method as `stat` will be used.
     group : {'time', 'time.season', 'time.month'}
-      Grouping of the output.
-      e.g. For 'time.month', the correlation would be calculated on each month separately,
-      but with all the years together.
+        Grouping of the output.
+        e.g. For 'time.month', the correlation would be calculated on each month separately,
+        but with all the years together.
 
     Returns
     -------
     xr.DataArray, [dimensionless]
-      {stat} number of days when the first variable is {op1} the {method1} {thresh1}
-      and the second variable is {op2} the {method2} {thresh2} for {window} consecutive day(s).
+        {stat} number of days when the first variable is {op1} the {method1} {thresh1}
+        and the second variable is {op2} the {method2} {thresh2} for {window} consecutive day(s).
 
     Notes
     -----
