@@ -312,6 +312,10 @@ def add_cyclic_bounds(
 
 
 def _interp_on_quantiles_1D_multi(newxs, oldx, oldy, method, extrap):  # noqa: N802
+    # Perform multiple interpolations with a single call of interp1d.
+    # This should be used when `oldx` is common for many data arrays (`newxs`)
+    # that we want to interpolate on. For instance, with QuantileDeltaMapping, we simply
+    # interpolate on quantiles that always remain the same.
     if len(newxs.shape) == 1:
         return _interp_on_quantiles_1D(newxs, oldx, oldy, method, extrap)
     mask_old = np.isnan(oldy) | np.isnan(oldx)
@@ -561,8 +565,8 @@ def rank(
     return rnk
 
 
-def _rank_np(arr, axis=None):
-    """Ranking alone a specified axis"""
+def _rank_bn(arr, axis=None):
+    """Ranking on a specific axis"""
     rnk = bn.nanrankdata(arr, axis=axis)
     rnk = rnk / np.nanmax(rnk, axis=axis, keepdims=True)
     mx, mn = 1, np.nanmin(rnk, axis=axis, keepdims=True)

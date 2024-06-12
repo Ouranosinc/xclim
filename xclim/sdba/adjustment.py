@@ -37,7 +37,7 @@ from ._adjustment import (
     scaling_train,
 )
 from .base import Grouper, ParametrizableWithDataset, parse_group
-from .processing import stack_variables, time_block_indices, unstack_variables
+from .processing import grouped_time_indexes, stack_variables, unstack_variables
 from .utils import (
     ADDITIVE,
     best_pc_orientation_full,
@@ -1389,7 +1389,7 @@ class MBCn(BaseAdjustment):
 
         # time indices corresponding to group and windowed group
         # used to divide datasets as map_blocks or groupby would do
-        g_idxs, gw_idxs = time_block_indices(ref.time, base_kws["group"])
+        g_idxs, gw_idxs = grouped_time_indexes(ref.time, base_kws["group"])
 
         # training, obtain adjustment factors of the npdf transform
         ds = xr.Dataset(dict(ref=ref, hist=hist))

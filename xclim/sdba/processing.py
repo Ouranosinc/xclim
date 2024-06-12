@@ -28,6 +28,7 @@ __all__ = [
     "adapt_freq",
     "escore",
     "from_additive_space",
+    "grouped_time_indexes",
     "jitter",
     "jitter_over_thresh",
     "jitter_under_thresh",
@@ -35,7 +36,6 @@ __all__ = [
     "reordering",
     "stack_variables",
     "standardize",
-    "time_block_indices",
     "to_additive_space",
     "unstack_variables",
     "unstandardize",
@@ -825,7 +825,7 @@ def unstack_variables(da: xr.DataArray, dim: str | None = None) -> xr.Dataset:
     return ds
 
 
-def time_block_indices(times, group):
+def grouped_time_indexes(times, group):
     """Time indices for every group blocks
 
     Time indices can be used to implement a pseudo-"numpy.groupies" approach to grouping.

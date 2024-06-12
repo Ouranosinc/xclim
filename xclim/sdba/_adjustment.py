@@ -179,7 +179,7 @@ def _npdft_train(ref, hist, rots, quantiles, method, extrap, n_escore):
             )
             af_q[ii, iv] = u.get_correction(hist_q, ref_q, "+")
             af = u._interp_on_quantiles_1D(
-                u._rank_np(hist[iv]),
+                u._rank_bn(hist[iv]),
                 quantiles,
                 af_q[ii, iv],
                 method=method,
@@ -290,7 +290,7 @@ def _npdft_adjust(sim, af_q, rots, quantiles, method, extrap):
         # loop over variables
         for iv in range(sim.shape[0]):
             af = u._interp_on_quantiles_1D_multi(
-                u._rank_np(sim[iv], axis=-1),
+                u._rank_bn(sim[iv], axis=-1),
                 quantiles,
                 af_q[ii, iv],
                 method=method,
