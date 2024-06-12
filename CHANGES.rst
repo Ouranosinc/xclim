@@ -10,7 +10,7 @@ New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 * New properties: Bivariate Spell Length (``xclim.sdba.properties.bivariate_spell_length``), generalized spell lengths with an argument for `window`, and specific spell lengths with `window` fixed to 1  (``xclim.sdba.propertiies.threshold_count``, ``xclim.sdba.propertiies.bivariate_threshold_count``). (:pull:`1758`).
 * New option `normalize` in ``sdba.measures.taylordiagram`` to obtain normalized Taylor diagrams (divide standard deviations by standard deviation of the reference). (:pull:`1764`).
-* New `TrainAdjust` and class `MBCn` giving a faster and more accurate implementation of the 'MBCn' algorithm (:issue:`1551`, :pull:`1580`).
+* New `BaseAdjust` and class `MBCn` giving a faster and more accurate implementation of the 'MBCn' algorithm (:issue:`1551`, :pull:`1580`).
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
@@ -141,7 +141,6 @@ New features and enhancements
 * Distribution instances can now be passed to the ``dist`` argument of most statistical indices. (:pull:`1644`).
 * Added a new ``xclim.indices.generic.select_rolling_resample_op`` function to allow for computing rolling statistics. (:issue:`1480`, :pull:`1643`).
 * Add the possibility to use a group with a window in ``xc.sdba.processing.reordering``. (:pull:`1566`).
-
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
