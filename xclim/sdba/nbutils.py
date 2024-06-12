@@ -62,40 +62,6 @@ def vecquantiles(
 
 
 @njit
-def numnan_sorted(s):
-    """Given a sorted array s, return the number of NaNs."""
-    # Given a sorted array s, return the number of NaNs.
-    # This is faster than np.isnan(s).sum(), but only works if s is sorted,
-    # and only for
-    ind = 0
-    for i in range(s.size - 1, 0, -1):
-        if np.isnan(s[i]):
-            ind += 1
-        else:
-            return ind
-    return ind
-
-
-@njit
-def _sortquantile(arr, q):
-    """Sorts arr into ascending order,
-    then computes the quantiles as a linear interpolation
-    between the sorted values.
-    """
-    sortarr = np.sort(arr)
-    numnan = numnan_sorted(sortarr)
-    # compute the indices where each quantile should go:
-    # nb: nan goes to the end, so we need to subtract numnan to the size.
-    indices = q * (arr.size - 1 - numnan)
-    # compute the quantiles manually to avoid casting to float64:
-    # (alternative is to use np.interp(indices, np.arange(arr.size), sortarr))
-    frac = indices % 1
-    low = np.floor(indices).astype(np.int64)
-    high = np.ceil(indices).astype(np.int64)
-    return (1 - frac) * sortarr[low] + frac * sortarr[high]
-
-
-@njit
 def _quantile(arr, q):
     if arr.ndim == 1:
         out = np.empty((q.size,), dtype=arr.dtype)
