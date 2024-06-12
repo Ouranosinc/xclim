@@ -243,8 +243,8 @@ def mbcn_train(
         # keep track of adjustment factors in each rotation for later use
         af_q, escores = xr.apply_ufunc(
             _npdft_train,
-            standardize(ref[{"time": ind}])[0].copy(),
-            standardize(hist[{"time": ind}])[0].copy(),
+            standardize(ref[{"time": ind}])[0],
+            standardize(hist[{"time": ind}])[0],
             rot_matrices,
             quantiles,
             input_core_dims=[

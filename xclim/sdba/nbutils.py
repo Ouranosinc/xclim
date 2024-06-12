@@ -13,11 +13,6 @@ from xarray import DataArray
 from xarray.core import utils
 
 
-@njit
-def _fast_interp(xt, yt, x):
-    return np.interp(x, xt, yt)
-
-
 @guvectorize(
     [(float32[:], float32, float32[:]), (float64[:], float64, float64[:])],
     "(n),()->()",

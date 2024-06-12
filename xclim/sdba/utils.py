@@ -22,7 +22,7 @@ from xclim.core.calendar import _interpolate_doy_calendar  # noqa
 from xclim.core.utils import ensure_chunk_size
 
 from .base import Grouper, parse_group
-from .nbutils import _extrapolate_on_quantiles, _fast_interp
+from .nbutils import _extrapolate_on_quantiles
 
 MULTIPLICATIVE = "*"
 ADDITIVE = "+"
@@ -358,16 +358,13 @@ def _interp_on_quantiles_1D(newx, oldx, oldy, method, extrap):  # noqa: N802
         )
     else:  # extrap == 'nan'
         fill_value = np.NaN
-    if method == "linear":
-        out[~mask_new] = _fast_interp(oldx[~mask_old], oldy[~mask_old], newx[~mask_new])
-    else:
-        out[~mask_new] = interp1d(
-            oldx[~mask_old],
-            oldy[~mask_old],
-            kind=method,
-            bounds_error=False,
-            fill_value=fill_value,
-        )(newx[~mask_new])
+    out[~mask_new] = interp1d(
+        oldx[~mask_old],
+        oldy[~mask_old],
+        kind=method,
+        bounds_error=False,
+        fill_value=fill_value,
+    )(newx[~mask_new])
     return out
 
 
