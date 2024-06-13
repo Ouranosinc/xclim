@@ -338,7 +338,7 @@ class TestAgroclimaticIndices:
             if method == "icclim":
                 np.testing.assert_array_equal(bedd, bedd_high_lat)
 
-    def test_black_ice_events(self, open_dataset):
+    def test_freezing_rain_events(self, open_dataset):
         times = pd.date_range("1950-01-01", "1950-01-31", freq="D")
         da = xr.DataArray(
             np.zeros(len(times)),
@@ -350,14 +350,14 @@ class TestAgroclimaticIndices:
         # Two sequences separated by 3 days, which will be split with window_stop = 3
         da[0:10] = 1
         da[13:20] = 1
-        out = xci.black_ice_events(
+        out = xci.freezing_rain_events(
             da, thresh="0.5 kg m-2 s-1", window_start=3, window_stop=3
         )
         assert (out.run_lengths == [10, 7]).all()
 
         # Two sequences separated by 2 days, which will form a single large event
         da[10] = 1
-        out = xci.black_ice_events(
+        out = xci.freezing_rain_events(
             da, thresh="0.5 kg m-2 s-1", window_start=3, window_stop=3
         )
         pram = rate2amount(da)

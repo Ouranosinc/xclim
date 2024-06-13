@@ -37,7 +37,6 @@ from .generic import (
 # -------------------------------------------------- #
 
 __all__ = [
-    "black_ice_events",
     "calm_days",
     "cold_spell_days",
     "cold_spell_frequency",
@@ -54,6 +53,7 @@ __all__ = [
     "first_day_temperature_above",
     "first_day_temperature_below",
     "first_snowfall",
+    "freezing_rain_events",
     "frost_free_season_end",
     "frost_free_season_length",
     "frost_free_season_start",
@@ -105,91 +105,6 @@ __all__ = [
     "wetdays_prop",
     "windy_days",
 ]
-
-
-@declare_units(pr="[precipitation]", thresh="[precipitation]")
-def black_ice_events(
-    pr: xarray.DataArray,
-    thresh: Quantified = "1 kg m-2 d-1",
-    window_start: int = 3,
-    window_stop: int = 3,
-    freq: str | None = None,
-) -> xarray.Dataset:
-    r"""Black ice events.
-
-    Parameters
-    ----------
-    pr : xarray.DataArray
-        Black ice precipitation (`prfr`)
-    thresh : Quantified
-        Threshold that must be exceeded to be considered an event
-    window_start: int
-        Number of time steps above the threshold required to start an event
-    window_stop : int
-        Number of time steps below the threshold required to stop an event
-    freq : str
-        Resampling frequency.
-
-    Returns
-    -------
-    xarray.DataArray, [time]
-        Number of days with average near-surface wind speed below threshold.
-    """
-    freq = xarray.infer_freq(pr.time)
-    mag, units, _, _ = parse_offset(freq)
-    # condition to respect for `window_start` time steps to start a run
-    thresh = convert_units_to(thresh, pr)
-    da_start = pr >= thresh
-    da_stop = not da_start
-
-    # Get basic blocks to work with, our runs with holes and the lengths of those runs
-    # Series of ones indicating where we have continuous runs of black ice with pauses
-    # not exceeding `window_stop`
-    runs = rl.runs_with_holes(da_start, window_start, da_stop, window_stop)
-
-    # Compute the length of black ice events
-    # I think int16 is safe enough
-    ds = rl.rle(runs).to_dataset(name="run_lengths")
-    ds["run_lengths"] = ds.run_lengths.astype(np.int16)
-    ds.run_lengths.attrs["units"] = ""
-
-    # Time duration where the precipitation threshold is exceeded during an event
-    # (duration of complete run - duration of holes in the run )
-    ds["precipitation_duration"] = (
-        rl._cumsum_reset(
-            da_start.where(runs == 1), index="first", reset_on_zero=False
-        ).astype(np.int16)
-        * mag
-    )
-    ds["precipitation_duration"].attrs["units"] = units
-
-    # Cumulated precipitation in a given black ice event
-    pram = rate2amount(pr)
-    ds["cumulative_precipitation"] = rl._cumsum_reset(
-        pram.where(runs == 1), index="first", reset_on_zero=False
-    )
-    ds["cumulative_precipitation"].attrs["units"] = pram.units
-
-    # Reduce time dim to event dimension
-    mask = (ds.run_lengths > 0).any(dim=[d for d in ds.dims if d != "time"])
-    ds = ds.where(mask).dropna(dim="time").rename({"time": "event"})
-
-    # start time : with current implementation of time reduction above,
-    # this is not necessary, but it could be if we choose another way.
-    # ds["start"] = ds["time"].broadcast_like(ds)
-
-    # Other indices that could be completely done outside of the function, no input needed anymore
-    ds["number_of_events"] = (ds["run_lengths"] > 0).sum(dim="event").astype(np.int16)
-    ds.number_of_events.attrs["units"] = ""
-
-    ds["rate"] = ds["cumulative_precipitation"] / ds["precipitation_duration"]
-    units = (
-        f"{ds['cumulative_precipitation'].units}/{ds['precipitation_duration'].units}"
-    )
-    ds["rate"].attrs["units"] = ensure_cf_units(units)
-
-    ds.attrs["units"] = ""
-    return ds
 
 
 @declare_units(sfcWind="[speed]", thresh="[speed]")
@@ -2741,6 +2656,91 @@ def wetdays_prop(
     wd = compare(pr, op, thresh, constrain=(">", ">="))
     fwd = wd.resample(time=freq).mean(dim="time").assign_attrs(units="1")
     return fwd
+
+
+@declare_units(pr="[precipitation]", thresh="[precipitation]")
+def freezing_rain_events(
+    pr: xarray.DataArray,
+    thresh: Quantified = "1 kg m-2 d-1",
+    window_start: int = 3,
+    window_stop: int = 3,
+    freq: str | None = None,
+) -> xarray.Dataset:
+    r"""Black ice events.
+
+    Parameters
+    ----------
+    pr : xarray.DataArray
+        Black ice precipitation (`prfr`)
+    thresh : Quantified
+        Threshold that must be exceeded to be considered an event
+    window_start: int
+        Number of time steps above the threshold required to start an event
+    window_stop : int
+        Number of time steps below the threshold required to stop an event
+    freq : str
+        Resampling frequency.
+
+    Returns
+    -------
+    xarray.DataArray, [time]
+        Number of days with average near-surface wind speed below threshold.
+    """
+    freq = xarray.infer_freq(pr.time)
+    mag, units, _, _ = parse_offset(freq)
+    # condition to respect for `window_start` time steps to start a run
+    thresh = convert_units_to(thresh, pr)
+    da_start = pr >= thresh
+    da_stop = (1 - da_start).astype(bool)
+
+    # Get basic blocks to work with, our runs with holes and the lengths of those runs
+    # Series of ones indicating where we have continuous runs of freezing rain with pauses
+    # not exceeding `window_stop`
+    runs = rl.runs_with_holes(da_start, window_start, da_stop, window_stop)
+
+    # Compute the length of freezing rain events
+    # I think int16 is safe enough
+    ds = rl.rle(runs).to_dataset(name="run_lengths")
+    ds["run_lengths"] = ds.run_lengths.astype(np.int16)
+    ds.run_lengths.attrs["units"] = ""
+
+    # Time duration where the precipitation threshold is exceeded during an event
+    # (duration of complete run - duration of holes in the run )
+    ds["precipitation_duration"] = (
+        rl._cumsum_reset(
+            da_start.where(runs == 1), index="first", reset_on_zero=False
+        ).astype(np.int16)
+        * mag
+    )
+    ds["precipitation_duration"].attrs["units"] = units
+
+    # Cumulated precipitation in a given freezing rain event
+    pram = rate2amount(pr)
+    ds["cumulative_precipitation"] = rl._cumsum_reset(
+        pram.where(runs == 1), index="first", reset_on_zero=False
+    )
+    ds["cumulative_precipitation"].attrs["units"] = pram.units
+
+    # Reduce time dim to event dimension
+    mask = (ds.run_lengths > 0).any(dim=[d for d in ds.dims if d != "time"])
+    ds = ds.where(mask).dropna(dim="time").rename({"time": "event"})
+
+    # start time : with current implementation of time reduction above,
+    # this is not necessary, but it could be if we choose another way.
+    # ds["start"] = ds["time"].broadcast_like(ds)
+
+    # Other indices that could be completely done outside of the function, no input needed anymore
+    ds["number_of_events"] = (ds["run_lengths"] > 0).sum(dim="event").astype(np.int16)
+    ds.number_of_events.attrs["units"] = ""
+
+    ds["rate"] = ds["cumulative_precipitation"] / ds["precipitation_duration"]
+    units = (
+        f"{ds['cumulative_precipitation'].units}/{ds['precipitation_duration'].units}"
+    )
+    ds["rate"].attrs["units"] = ensure_cf_units(units)
+
+    ds.attrs["units"] = ""
+    return ds
 
 
 @declare_units(tasmin="[temperature]", thresh="[temperature]")

@@ -8,7 +8,7 @@ Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Éric Dup
 
 New indicators
 ^^^^^^^^^^^^^^
-* New indicator ``black_ice_events`` gives statistics about black ice sequences.
+* New indicator ``freezing_rain_events`` gives statistics about freezing rain sequences.
 
 
 New features and enhancements
