@@ -9,6 +9,8 @@ This module implements methods and tools meant to partition climate projection u
 
 from __future__ import annotations
 
+import warnings
+
 import numpy as np
 import pandas as pd
 import xarray as xr
@@ -363,6 +365,7 @@ def general_partition(
         try:
             sm = loess.loess_smoothing(da)
         except np.linalg.LinAlgError:
+            warnings.warn("LOESS smoothing failed, falling back to polynomial.")
             fit = da.polyfit(dim="time", deg=4, skipna=True)
             sm = xr.polyval(coord=da.time, coeffs=fit.polyfit_coefficients).where(
                 da.notnull()
