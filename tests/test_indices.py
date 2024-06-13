@@ -23,7 +23,7 @@ import xarray as xr
 from xclim import indices as xci
 from xclim.core.calendar import convert_calendar, date_range, percentile_doy
 from xclim.core.options import set_options
-from xclim.core.units import ValidationError, convert_units_to, units
+from xclim.core.units import ValidationError, convert_units_to, rate2amount, units
 
 K2C = 273.15
 
@@ -337,6 +337,32 @@ class TestAgroclimaticIndices:
                 np.testing.assert_array_less(bedd, bedd_high_lat)
             if method == "icclim":
                 np.testing.assert_array_equal(bedd, bedd_high_lat)
+
+    def test_black_ice_events(self, open_dataset):
+        times = pd.date_range("1950-01-01", "1950-01-31", freq="D")
+        da = xr.DataArray(
+            np.zeros(len(times)),
+            dims={"time"},
+            coords={"time": times},
+            attrs={"units": "kg m-2 s-1"},
+        )
+
+        # Two sequences separated by 3 days, which will be split with window_stop = 3
+        da[0:10] = 1
+        da[13:20] = 1
+        out = xci.black_ice_events(
+            da, thresh="0.5 kg m-2 s-1", window_start=3, window_stop=3
+        )
+        assert (out.run_lengths == [10, 7]).all()
+
+        # Two sequences separated by 2 days, which will form a single large event
+        da[10] = 1
+        out = xci.black_ice_events(
+            da, thresh="0.5 kg m-2 s-1", window_start=3, window_stop=3
+        )
+        pram = rate2amount(da)
+        assert out.run_lengths == 20
+        assert out.cumulative_precipitation == pram.sum()
 
     def test_cool_night_index(self, open_dataset):
         ds = open_dataset("cmip5/tas_Amon_CanESM2_rcp85_r1i1p1_200701-200712.nc")

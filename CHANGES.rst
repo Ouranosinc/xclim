@@ -4,7 +4,16 @@ Changelog
 
 v0.50.0 (unreleased)
 --------------------
-Contributors to this version: Trevor James Smith (:user:`Zeitsperre`).
+Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Éric Dupuis (:user:`coxipi`).
+
+New indicators
+^^^^^^^^^^^^^^
+* New indicator ``black_ice_events`` gives statistics about black ice sequences.
+
+
+New features and enhancements
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+* ``xclim.indices.run_length.runs_with_holes`` allows to input a condition that must be met for a run to start and a second condition that must be met for the run to stop.
 
 Internal changes
 ^^^^^^^^^^^^^^^^

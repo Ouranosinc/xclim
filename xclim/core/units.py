@@ -409,6 +409,7 @@ def cf_conversion(
 FREQ_UNITS = {
     "D": "d",
     "W": "week",
+    "h": "h",
 }
 """
 Resampling frequency units for :py:func:`xclim.core.units.infer_sampling_units`.
