@@ -122,7 +122,7 @@ Ready to contribute? Here's how to set up `xclim` for local development.
 #. Create a development environment. We recommend using ``conda``::
 
     $ conda create -n xclim python=3.10 --file=environment.yml
-    $ python -m pip install -e ".[dev]"
+    $ python -m pip install -e --no-deps .
 
 #. Create a branch for local development::
 
@@ -174,7 +174,7 @@ Ready to contribute? Here's how to set up `xclim` for local development.
    .. warning::
     Starting from `xclim` v0.46.0, when running tests with `tox`, any `pytest` markers passed to `pyXX` builds (e.g. `-m "not slow"`) must be passed to `tox` directly. This can be done as follows::
 
-        $ tox -e py38 -- -m "not slow"
+        $ tox -e py310 -- -m "not slow"
 
     The exceptions to this rule are:
       `notebooks_doctests`: this configuration does not pass test  markers to its `pytest` call.

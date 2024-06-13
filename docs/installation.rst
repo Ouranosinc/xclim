@@ -110,7 +110,7 @@ Afterwards, `SBCK` can be installed from PyPI using `pip`:
 .. _SBCK: https://github.com/yrobink/SBCK
 .. _Eigen3: https://eigen.tuxfamily.org/index.php
 
-From sources
+From Sources
 ------------
 
 .. warning::
@@ -132,11 +132,11 @@ Or download the `tarball`_:
 
     $ curl -OL https://github.com/Ouranosinc/xclim/tarball/main
 
-Once you have extracted a copy of the source, you can install it with pip:
+Once you have extracted a copy of the source, you can install it with `pip`_:
 
 .. code-block:: shell
 
-    $ python -m pip install -e ".[dev]"
+    $ python -m pip install -e ".[dev,docs]"
 
 Alternatively, you can also install a local development copy via `flit`_:
 
@@ -148,13 +148,13 @@ Alternatively, you can also install a local development copy via `flit`_:
 .. _tarball: https://github.com/Ouranosinc/xclim/tarball/main
 .. _flit: https://flit.pypa.io/en/stable
 
-Creating a Conda environment
+Creating a Conda Environment
 ----------------------------
 
 To create a conda environment including `xclim`'s dependencies and several optional libraries (notably: `clisops`, `eigen`, `sbck`, and `flox`) and development dependencies, run the following command from within your cloned repo:
 
 .. code-block:: console
 
-    $ conda env create -n my_xclim_env python=3.8 --file=environment.yml
+    $ conda env create -n my_xclim_env python=3.10 --file=environment.yml
     $ conda activate my_xclim_env
-    (my_xclim_env) $ python -m pip install -e .
+    (my_xclim_env) $ python -m pip install -e --no-deps .

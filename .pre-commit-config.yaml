@@ -86,6 +86,10 @@ repos:
     hooks:
       - id: codespell
         additional_dependencies: [ 'tomli' ]
+  - repo: https://github.com/fpgmaas/deptry.git
+    rev: "0.16.1"
+    hooks:
+      - id: deptry
   - repo: https://github.com/gitleaks/gitleaks
     rev: v8.18.3
     hooks:
