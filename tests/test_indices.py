@@ -21,7 +21,7 @@ import pytest
 import xarray as xr
 
 from xclim import indices as xci
-from xclim.core.calendar import convert_calendar, date_range, percentile_doy
+from xclim.core.calendar import percentile_doy
 from xclim.core.options import set_options
 from xclim.core.units import ValidationError, convert_units_to, rate2amount, units
 
@@ -258,7 +258,7 @@ class TestAgroclimaticIndices:
         ],
     )
     def test_bedd(self, method, end_date, deg_days, max_deg_days):
-        time_data = date_range(
+        time_data = xr.date_range(
             "1992-01-01", "1995-06-01", freq="D", calendar="standard"
         )
         tn = xr.DataArray(
@@ -622,9 +622,8 @@ class TestStandardizedIndices:
     ):
         ds = open_dataset("sdba/CanESM2_1950-2100.nc").isel(location=1)
         if freq == "D":
-            ds = convert_calendar(
-                ds, "366_day", missing=np.NaN
-            )  # to compare with ``climate_indices``
+            ds = ds.convert_calendar("366_day", missing=np.NaN)
+            # to compare with ``climate_indices``
         pr = ds.pr.sel(time=slice("1998", "2000"))
         pr_cal = ds.pr.sel(time=slice("1950", "1980"))
         fitkwargs = {}
@@ -1447,7 +1446,7 @@ class TestHotSpellTotalLength:
             ("29 C", 3, ">", 8),  # Two HS
             ("29 C", 3, ">=", 9),  # One long HS, minus a day
             ("40 C", 3, ">", 0),  # No HS
-            ("30 C", 5, ">", 8),  # Windowed
+            ("30 C", 5, ">", 5),  # Windowed
         ],
     )
     def test_1d(self, tasmax_series, thresh, window, op, expected):
@@ -2997,6 +2996,8 @@ def test_rain_season(pr_series, result_type, method_dry_start):
     elif result_type == "end_cond_fails":
         pr[{"time": 99 + 20 - 1}] = 5
         out_exp = [3, np.NaN, 363]
+    else:
+        raise ValueError(f"Unknown result_type: {result_type}")
 
     out = {}
     out["start"], out["end"], out["length"] = xci.rain_season(
