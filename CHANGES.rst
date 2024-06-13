@@ -8,14 +8,14 @@ Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Éric Dup
 
 New indicators
 ^^^^^^^^^^^^^^
-* New indicator ``freezing_rain_events`` gives statistics about freezing rain sequences.
+* New indicator ``freezing_rain_events`` gives statistics about freezing rain sequences. (:pull:`1778`).
 
 
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 * New properties: Bivariate Spell Length (``xclim.sdba.properties.bivariate_spell_length``), generalized spell lengths with an argument for `window`, and specific spell lengths with `window` fixed to 1  (``xclim.sdba.propertiies.threshold_count``, ``xclim.sdba.propertiies.bivariate_threshold_count``). (:pull:`1758`).
 * New option `normalize` in ``sdba.measures.taylordiagram`` to obtain normalized Taylor diagrams (divide standard deviations by standard deviation of the reference). (:pull:`1764`).
-* ``xclim.indices.run_length.runs_with_holes`` allows to input a condition that must be met for a run to start and a second condition that must be met for the run to stop.
+* ``xclim.indices.run_length.runs_with_holes`` allows to input a condition that must be met for a run to start and a second condition that must be met for the run to stop. (:pull:`1778`).
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
