@@ -360,7 +360,13 @@ def general_partition(
             da.notnull()
         )
     elif sm == "loess":
-        sm = loess.loess_smoothing(da)
+        try:
+            sm = loess.loess_smoothing(da)
+        except np.linalg.LinAlgError:
+            fit = da.polyfit(dim="time", deg=4, skipna=True)
+            sm = xr.polyval(coord=da.time, coeffs=fit.polyfit_coefficients).where(
+                da.notnull()
+            )
 
     # "Interannual variability is then estimated as the centered rolling 11-year variance of the difference
     # between the extracted forced response and the raw outputs, averaged over all outputs."
