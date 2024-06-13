@@ -30,7 +30,7 @@ jobs:
           allowed-endpoints: >
             api.github.com:443
             github.com:443
-      - uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4.1.6
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
       - name: Find xclim-testdata Tag and CI Testing Branch
         run: |
           XCLIM_TESTDATA_TAG="$( \

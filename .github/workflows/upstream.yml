@@ -54,7 +54,7 @@ jobs:
             pypi.org:443
             raw.githubusercontent.com:443
             repo.anaconda.com:443
-      - uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4.1.6
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
         with:
           fetch-depth: 0 # Fetch all history for all branches and tags.
       - name: Setup Conda (Micromamba) with Python${{ matrix.python-version }}
