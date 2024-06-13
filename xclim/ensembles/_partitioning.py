@@ -363,6 +363,7 @@ def general_partition(
         )
     elif sm == "loess":
         try:
+            print("doing loess")
             sm = loess.loess_smoothing(da)
         except np.linalg.LinAlgError:
             warnings.warn("LOESS smoothing failed, falling back to polynomial.")
