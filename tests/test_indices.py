@@ -353,16 +353,16 @@ class TestAgroclimaticIndices:
         out = xci.freezing_rain_events(
             da, thresh="0.5 kg m-2 s-1", window_start=3, window_stop=3
         )
-        assert (out.run_lengths == [10, 7]).all()
+        assert (out.run_lengths.values[0:2] == [10, 7]).all()
 
         # Two sequences separated by 2 days, which will form a single large event
-        da[10] = 1
+        da[12] = 1
         out = xci.freezing_rain_events(
             da, thresh="0.5 kg m-2 s-1", window_start=3, window_stop=3
         )
         pram = rate2amount(da)
-        assert out.run_lengths == 20
-        assert out.cumulative_precipitation == pram.sum()
+        assert out.run_lengths.values[0] == 20
+        assert (out.cumulative_precipitation - pram.sum()).sum() == 0
 
     def test_cool_night_index(self, open_dataset):
         ds = open_dataset("cmip5/tas_Amon_CanESM2_rcp85_r1i1p1_200701-200712.nc")

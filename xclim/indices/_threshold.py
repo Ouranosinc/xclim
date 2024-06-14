@@ -2664,12 +2664,12 @@ def freezing_rain_events(
     window_stop: int = 3,
     freq: str | None = None,
 ) -> xarray.Dataset:
-    r"""Black ice events.
+    r"""Freezing rain events.
 
     Parameters
     ----------
     pr : xarray.DataArray
-        Black ice precipitation (`prfr`)
+        Freezing precipitation (`prfr`)
     thresh : Quantified
         Threshold that must be exceeded to be considered an event
     window_start: int
@@ -2681,8 +2681,7 @@ def freezing_rain_events(
 
     Returns
     -------
-    xarray.DataArray, [time]
-        Number of days with average near-surface wind speed below threshold.
+    xarray.Dataset
     """
     freq = xarray.infer_freq(pr.time)
     mag, units, _, _ = parse_offset(freq)
@@ -2712,25 +2711,58 @@ def freezing_rain_events(
     )
     ds["precipitation_duration"].attrs["units"] = units
 
-    # Cumulated precipitation in a given freezing rain event
+    # # Cumulated precipitation in a given freezing rain event
     pram = rate2amount(pr)
     ds["cumulative_precipitation"] = rl._cumsum_reset(
         pram.where(runs == 1), index="first", reset_on_zero=False
     )
     ds["cumulative_precipitation"].attrs["units"] = pram.units
 
-    # Reduce time dim to event dimension
-    mask = (ds.run_lengths > 0).any(dim=[d for d in ds.dims if d != "time"])
-    ds = ds.where(mask).dropna(dim="time").rename({"time": "event"})
+    # Keep time as a variable, it will be used to keep start of events
+    ds["start"] = ds["time"].broadcast_like(ds)  # .astype(int)
+    # I have to convert it to an integer for the filtering, time object won't do
+    # Since there are conversion needing a time object earlier, I think it's ok
+    # to assume this here?
+    time_min = ds.start.min()
+    ds["start"] = (ds.start - time_min).astype("timedelta64[s]").astype(int)
 
-    # start time : with current implementation of time reduction above,
-    # this is not necessary, but it could be if we choose another way.
-    # ds["start"] = ds["time"].broadcast_like(ds)
+    # Filter events: Reduce time dimension
+    def _filter_events(da, rl, max_event_number):
+        out = np.full(max_event_number, np.NaN)
+        events_start = da[rl > 0]
+        out[: len(events_start)] = events_start
+        return out
+
+    max_event_number = int(np.ceil(pr.time.size / (window_start + window_stop)))
+    v_attrs = {v: ds[v].attrs for v in ds.data_vars}
+    ds = xarray.apply_ufunc(
+        _filter_events,
+        ds,
+        ds.run_lengths,
+        input_core_dims=[["time"], ["time"]],
+        output_core_dims=[["event"]],
+        kwargs=dict(max_event_number=max_event_number),
+        output_sizes={"event": max_event_number},
+        dask="parallelized",
+        vectorize=True,
+    ).assign_attrs(ds.attrs)
+
+    ds["event"] = np.arange(1, ds.event.size + 1)
+    for v in ds.data_vars:
+        ds[v].attrs = v_attrs[v]
+
+    # convert back start to a time
+    ds["start"] = time_min.astype("datetime64[ns]") + ds["start"].astype(
+        "timedelta64[ns]"
+    )
 
     # Other indices that could be completely done outside of the function, no input needed anymore
+
+    # number of events
     ds["number_of_events"] = (ds["run_lengths"] > 0).sum(dim="event").astype(np.int16)
     ds.number_of_events.attrs["units"] = ""
 
+    # mean rate of precipitation during event
     ds["rate"] = ds["cumulative_precipitation"] / ds["precipitation_duration"]
     units = (
         f"{ds['cumulative_precipitation'].units}/{ds['precipitation_duration'].units}"
