@@ -43,10 +43,10 @@ def _linear_regression(xi, x, y, w):  # pragma: no cover
     b = np.array([np.sum(w * y), np.sum(w * y * x)])
     A = np.array([[np.sum(w), np.sum(w * x)], [np.sum(w * x), np.sum(w * x * x)]])
     # if both matrix are only 0s
-    if not np.any(A) and not np.any(b):
-        beta = np.array([0, 0])
-    else:
-        beta = np.linalg.solve(A, b)
+    # if not np.any(A) and not np.any(b):
+    #     beta = np.array([0, 0])
+    # else:
+    beta = np.linalg.solve(A, b)
     return beta[0] + beta[1] * xi
 
 
@@ -168,9 +168,16 @@ def _loess_nb(
         if iteration < niter - 1:
             residuals = y - yest
             s = np.median(np.abs(residuals))
-            xres = residuals / (6.0 * s)
-            delta = (1 - xres**2) ** 2
-            delta[(np.abs(xres) >= 1) | np.isnan(xres)] = 0
+            # xres = residuals / (6.0 * s)
+            # delta = (1 - xres**2) ** 2
+            # delta[(np.abs(xres) >= 1) | np.isnan(xres)] = 0
+
+            if s == 0:  # don't reject any points for the next iteration
+                delta = np.ones_like(residuals)
+            else:
+                xres = residuals / (6.0 * s)
+                delta = (1 - xres**2) ** 2
+                delta[(np.abs(xres) >= 1)] = 0
 
     if skipna:
         out[~nan] = yest
