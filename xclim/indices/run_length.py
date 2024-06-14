@@ -118,10 +118,11 @@ def resample_and_rl(
     return out
 
 
-def _cumsum_reset_on_zero(
+def _cumsum_reset(
     da: xr.DataArray,
     dim: str = "time",
     index: str = "last",
+    reset_on_zero: bool = True,
 ) -> xr.DataArray:
     """Compute the cumulative sum for each series of numbers separated by zero.
 
@@ -134,6 +135,9 @@ def _cumsum_reset_on_zero(
     index : {'first', 'last'}
         If 'first', the largest value of the cumulative sum is indexed with the first element in the run.
         If 'last'(default), with the last element in the run.
+    reset_on_zero : bool
+        If True, the cumulative sum is reset on each zero value of `da`. Otherwise, the cumulative sum resets
+        on NaNs. Default is True.
 
     Returns
     -------
@@ -145,7 +149,10 @@ def _cumsum_reset_on_zero(
 
     # Example: da == 100110111 -> cs_s == 100120123
     cs = da.cumsum(dim=dim)  # cumulative sum  e.g. 111233456
-    cs2 = cs.where(da == 0)  # keep only numbers at positions of zeroes e.g. N11NN3NNN
+    cond = da == 0 if reset_on_zero else da.isnull()  # reset condition
+    cs2 = cs.where(
+        cond
+    )  # keep only numbers at positions of zeroes e.g. N11NN3NNN (default)
     cs2[{dim: 0}] = 0  # put a zero in front e.g. 011NN3NNN
     cs2 = cs2.ffill(dim=dim)  # e.g. 011113333
     out = cs - cs2
@@ -186,7 +193,7 @@ def rle(
         da = da[{dim: slice(None, None, -1)}]
 
     # Get cumulative sum for each series of 1, e.g. da == 100110111 -> cs_s == 100120123
-    cs_s = _cumsum_reset_on_zero(da, dim)
+    cs_s = _cumsum_reset(da, dim)
 
     # Keep total length of each series (and also keep 0's), e.g. 100120123 -> 100N20NN3
     # Keep numbers with a 0 to the right and also the last number
@@ -495,7 +502,7 @@ def _boundary_run(
 
     else:
         # _cusum_reset_on_zero() is an intermediate step in rle, which is sufficient here
-        d = _cumsum_reset_on_zero(da, dim=dim, index=position)
+        d = _cumsum_reset(da, dim=dim, index=position)
         d = xr.where(d >= window, 1, 0)
         # for "first" run, return "first" element in the run (and conversely for "last" run)
         if freq is not None:
@@ -744,14 +751,29 @@ def extract_events(
     da_start = da_start.astype(int).fillna(0)
     da_stop = da_stop.astype(int).fillna(0)
 
-    start_runs = _cumsum_reset_on_zero(da_start, dim=dim, index="first")
-    stop_runs = _cumsum_reset_on_zero(da_stop, dim=dim, index="first")
+    start_runs = _cumsum_reset(da_start, dim=dim, index="first")
+    stop_runs = _cumsum_reset(da_stop, dim=dim, index="first")
     start_positions = xr.where(start_runs >= window_start, 1, np.NaN)
     stop_positions = xr.where(stop_runs >= window_stop, 0, np.NaN)
 
     # start positions (1) are f-filled until a stop position (0) is met
     runs = stop_positions.combine_first(start_positions).ffill(dim=dim).fillna(0)
 
+    return runs
+
+
+def runs_with_holes(da_start, window_start, da_stop, window_stop, dim="time"):
+    """Runs with holes"""
+    da_start = da_start.astype(int).fillna(0)
+    da_stop = da_stop.astype(int).fillna(0)
+
+    start_runs = _cumsum_reset(da_start, dim=dim, index="first")
+    stop_runs = _cumsum_reset(da_stop, dim=dim, index="first")
+    start_positions = xr.where(start_runs >= window_start, 1, np.NaN)
+    stop_positions = xr.where(stop_runs >= window_stop, 0, np.NaN)
+
+    # start positions (1) are f-filled until a stop position (0) is met
+    runs = stop_positions.combine_first(start_positions).ffill(dim=dim).fillna(0)
     return runs
 
 
