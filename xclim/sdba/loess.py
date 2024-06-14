@@ -42,7 +42,11 @@ def _constant_regression(xi, x, y, w):  # pragma: no cover
 def _linear_regression(xi, x, y, w):  # pragma: no cover
     b = np.array([np.sum(w * y), np.sum(w * y * x)])
     A = np.array([[np.sum(w), np.sum(w * x)], [np.sum(w * x), np.sum(w * x * x)]])
-    beta = np.linalg.solve(A, b)
+    # if both matrix are only 0s
+    if not np.any(A) and not np.any(b):
+        beta = np.array([0, 0])
+    else:
+        beta = np.linalg.solve(A, b)
     return beta[0] + beta[1] * xi
 
 
@@ -165,9 +169,8 @@ def _loess_nb(
             residuals = y - yest
             s = np.median(np.abs(residuals))
             xres = residuals / (6.0 * s)
-            xres[np.isnan(xres)] = 0  # TEST
             delta = (1 - xres**2) ** 2
-            delta[np.abs(xres) >= 1] = 0
+            delta[(np.abs(xres) >= 1) | np.isnan(xres)] = 0
 
     if skipna:
         out[~nan] = yest
