@@ -615,3 +615,43 @@ def extremes_adjust(
     adjusted: xr.DataArray = (transition * scen) + ((1 - transition) * ds.scen)
     out = adjusted.rename("scen").squeeze("group", drop=True).to_dataset()
     return out
+
+
+def otc_adjust(
+    Y0,
+    X0,
+    src=None,
+    bin_width=None,
+    bin_origin=None,
+    numItermax=100_000_000
+):
+    Y0 = Y0[~np.isnan(Y0).any(axis=1), :]
+    X0 = X0[~np.isnan(X0).any(axis=1), :]
+
+    bin_width = u.bin_width_estimator([Y0, X0]) if bin_width is None else bin_width
+    bin_origin = np.zeros(bin_width.size) if bin_origin is None else bin_origin
+    numItermax = 100_000_000 if numItermax is None else numItermax
+
+    gridX, muX, idx_binX = u.histogram(X0, bin_width, bin_origin)
+    gridY, muY, _ = u.histogram(Y0, bin_width, bin_origin)
+
+    plan = u.optimal_transport(gridX, gridY, muX, muY, numItermax)
+
+    idx_gridX = ((gridX - bin_origin) / bin_width).astype(int)
+
+    if src is not None:
+        src = src[~np.isnan(src).any(axis=1), :]
+        idx_binX = (src - bin_origin) / bin_width
+        Y1 = np.empty(src.shape)
+    else:
+        Y1 = np.empty(X0.shape)
+
+    idx_binX = idx_binX.astype(int)
+    rng = np.random.default_rng()
+
+    for i,b in enumerate(idx_binX):
+        pi = np.where((b == idx_gridX).all(1))[0][0]
+        choice = rng.choice(range(muY.size), p = plan[pi,:])
+        Y1[i] = gridY[choice]
+
+    return Y1

@@ -13,8 +13,10 @@ import numpy as np
 import xarray as xr
 from boltons.funcutils import wraps
 from dask import array as dsk
+from ot import emd
 from scipy.interpolate import griddata, interp1d
 from scipy.stats import spearmanr
+from scipy.spatial import distance
 from xarray.core.utils import get_temp_dimname
 
 from xclim.core.calendar import _interpolate_doy_calendar  # noqa
@@ -922,3 +924,42 @@ def _pairwise_spearman(da, dims):
             "allow_rechunk": True,
         },
     ).rename("correlation")
+
+
+def bin_width_estimator(X, method = "auto"):
+    if isinstance(X, list):
+        return np.min([bin_width_estimator(x, method) for x in X], axis=0)
+
+    if X.ndim == 1 : X = X.reshape(-1, 1)
+
+    if method == "auto":
+        method = "Sturges" if X.shape[0] < 1000 else "FD"
+
+    if method == "Sturges":
+        nh = np.log2(X.shape[0]) + 1.
+        bin_width = np.zeros(X.shape[1]) + 1./nh
+    else:
+        bin_width = 2. * (np.percentile(X, q = 75, axis = 0) - np.percentile(X, q = 25, axis = 0)) / np.power(X.shape[0], 1./3.)
+
+    return bin_width
+
+
+def histogram(data, bin_width, bin_origin):
+    idx_bin_center = np.floor((data - bin_origin) / bin_width) + 1/2
+    idx_grid, mu = np.unique(idx_bin_center, return_counts=True, axis=0)
+
+    # Normalise mu
+    mu = np.divide(mu, sum(mu))
+
+    # Actual grid points are necessary to compute the distances
+    grid = idx_grid * bin_width + bin_origin
+
+    return grid, mu, idx_bin_center
+
+
+def optimal_transport(gridX, gridY, muX, muY, numItermax):
+    C = distance.cdist(gridX, gridY)
+    C = C**2
+    gamma = emd(muX, muY, C, numItermax=numItermax)
+    plan = (gamma.T / gamma.sum(axis=1)).T
+    return plan
