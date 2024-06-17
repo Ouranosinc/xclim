@@ -40,7 +40,7 @@ dependencies = [
   "dask[array]>=2.6",
   "jsonpickle",
   "numba",
-  "numpy>=1.20.0",
+  "numpy>=1.20.0,<2.0.0",
   "pandas>=2.2",
   "pint>=0.10,<0.24",
   "pyarrow", # Strongly encouraged for pandas v2.2.0+
