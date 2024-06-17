@@ -24,6 +24,7 @@ Breaking changes
     - ``interp_calendar`` : Use ``Dataset.interp_calendar`` or ``xarray.coding.calendar_ops.interp_calendar`` instead.
     - ``days_in_year`` : Use ``xarray.coding.calendar_ops._days_in_year`` instead.
     - ``datetime_to_decimal_year`` : Use ``xarray.coding.calendar_ops._datetime_to_decimal_year`` instead.
+* `numpy` has been pinned below v2.0.0 until `xclim` can be updated to support the latest version. (:pull:`1783`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
