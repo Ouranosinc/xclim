@@ -8,7 +8,7 @@ Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Éric Dup
 
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-* New properties: Bivariate Spell Length (``xclim.sdba.properties.bivariate_spell_length``), Generalized Spell Lengths with an argument for `window`, and Specific Spell Lengths with `window` fixed to '1' (``xclim.sdba.propertiies.threshold_count``, ``xclim.sdba.propertiies.bivariate_threshold_count``). (:pull:`1758`).
+* New properties: Bivariate Spell Length (``xclim.sdba.properties.bivariate_spell_length``), Generalized Spell Lengths with an argument for `window`, and Specific Spell Lengths with `window` fixed to '1' (``xclim.sdba.properties.threshold_count``, ``xclim.sdba.properties.bivariate_threshold_count``). (:pull:`1758`).
 * New option `normalize` in ``sdba.measures.taylordiagram`` to obtain normalized Taylor Diagrams (divide standard deviations by standard deviation of the reference). (:pull:`1764`).
 
 Breaking changes
