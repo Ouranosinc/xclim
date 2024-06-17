@@ -1215,7 +1215,9 @@ class OTC():
         bin_origin=None,
         numItermax=100_000_000
     ):
+        # `apply_ufunc` necessitates that core dims be identical
         if ref.sizes['time'] > hist.sizes['time']:
+            # Remember source time
             hist_time = hist.time.copy(deep=True)
             hist = hist.assign_coords({'time' : ref.time[:hist.sizes['time']]})
         elif hist.sizes['time'] > ref.sizes['time']:
@@ -1238,6 +1240,7 @@ class OTC():
         )
 
         out = out.T
+        # Apply hist metadata and time to output
         out = out.assign_attrs(hist.attrs)
         for dim, crd in hist.coords.items():
             out.coords[dim] = crd
@@ -1254,12 +1257,14 @@ class OTC():
         bin_origin=None,
         numItermax=None
     ):
+        # `apply_ufunc` necessitates that core dims be identical; only keep the longuest core dim
         max_shape = max(ref.sizes['time'], hist.sizes['time'], src.sizes['time'])
 
         if src.sizes['time'] == max_shape:
             ref = ref.assign_coords({'time' : src.time[:ref.sizes['time']]})
             hist = hist.assign_coords({'time' : src.time[:hist.sizes['time']]})
         else:
+            # Remember source time
             src_time = src.time.copy(deep=True)
             if ref.sizes['time'] == max_shape:
                 hist = hist.assign_coords({'time' : ref.time[:hist.sizes['time']]})
@@ -1285,6 +1290,7 @@ class OTC():
         )
 
         out = out.T
+        # Apply source metadata and time to output
         out = out.assign_attrs(src.attrs)
         for dim, crd in src.coords.items():
             out.coords[dim] = crd

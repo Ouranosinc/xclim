@@ -926,40 +926,47 @@ def _pairwise_spearman(da, dims):
     ).rename("correlation")
 
 
-def bin_width_estimator(X, method = "auto"):
+def bin_width_estimator(X):
+    """Estimate the width of an histogram rectangular bins."""
     if isinstance(X, list):
-        return np.min([bin_width_estimator(x, method) for x in X], axis=0)
+        return np.min([bin_width_estimator(x) for x in X], axis=0)
 
     if X.ndim == 1 : X = X.reshape(-1, 1)
 
-    if method == "auto":
-        method = "Sturges" if X.shape[0] < 1000 else "FD"
-
-    if method == "Sturges":
+    if X.shape[0] < 1000:
+        # Sturges
         nh = np.log2(X.shape[0]) + 1.
         bin_width = np.zeros(X.shape[1]) + 1./nh
     else:
+        # Freedman-Diaconis
         bin_width = 2. * (np.percentile(X, q = 75, axis = 0) - np.percentile(X, q = 25, axis = 0)) / np.power(X.shape[0], 1./3.)
 
     return bin_width
 
 
 def histogram(data, bin_width, bin_origin):
-    idx_bin_center = np.floor((data - bin_origin) / bin_width) + 1/2
-    idx_grid, mu = np.unique(idx_bin_center, return_counts=True, axis=0)
+    # Find bin indices of data points
+    idx_bin = np.floor((data - bin_origin) / bin_width)
 
-    # Normalise mu
+    # Associate unique values with frequencies
+    idx_grid, mu = np.unique(idx_bin, return_counts=True, axis=0)
+
+    # Normalise frequencies
     mu = np.divide(mu, sum(mu))
 
-    # Actual grid points are necessary to compute the distances
-    grid = idx_grid * bin_width + bin_origin
+    # Get the unindexed position of the center of bins
+    grid = (idx_grid + 1/2) * bin_width + bin_origin
 
-    return grid, mu, idx_bin_center
+    return grid, mu, idx_bin
 
 
 def optimal_transport(gridX, gridY, muX, muY, numItermax):
+    # Compute the distance from every X bin to every Y bin
     C = distance.cdist(gridX, gridY)
     C = C**2
+
+    # Compute the optimal transportation plan
     gamma = emd(muX, muY, C, numItermax=numItermax)
     plan = (gamma.T / gamma.sum(axis=1)).T
+
     return plan
