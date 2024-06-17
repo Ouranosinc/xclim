@@ -37,6 +37,7 @@ Internal changes
 Bug fixes
 ^^^^^^^^^
 * ``xclim.indices.{cold|hot}_spell_total_length`` now properly uses the argument `window` to only count spells with at least `window` time steps. (:issue:`1765`, :pull:`1777`).
+* Addressed an error in ``xclim.ensembles._filters._concat_hist`` where remnants of a scenario selection were not being dropped properly. (:pull:`1780`).
 
 v0.49.0 (2024-05-02)
 --------------------
