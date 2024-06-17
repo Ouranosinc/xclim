@@ -945,6 +945,10 @@ def bin_width_estimator(X):
 
 
 def histogram(data, bin_width, bin_origin):
+    """Construct an histogram of the data.
+
+    Returns the position of the center of bins, their corresponding frequency and the bin of every data point.
+    """
     # Find bin indices of data points
     idx_bin = np.floor((data - bin_origin) / bin_width)
 
@@ -961,7 +965,8 @@ def histogram(data, bin_width, bin_origin):
 
 
 def optimal_transport(gridX, gridY, muX, muY, numItermax):
-    # Compute the distance from every X bin to every Y bin
+    """Computes the optimal transportation plan between X and Y."""
+    # Compute the distances from every X bin to every Y bin
     C = distance.cdist(gridX, gridY)
     C = C**2
 
