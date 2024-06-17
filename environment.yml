@@ -13,7 +13,7 @@ dependencies:
   - dask >=2.6.0
   - jsonpickle
   - numba
-  - numpy >=1.20.0
+  - numpy >=1.20.0,<2.0.0
   - pandas >=2.2.0
   - pint >=0.10,<0.24
   - poppler >=0.67
