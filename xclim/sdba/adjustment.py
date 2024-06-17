@@ -1211,93 +1211,48 @@ class OTC():
     def _adjust(
         ref,
         hist,
+        src=None,
         bin_width=None,
         bin_origin=None,
-        numItermax=100_000_000
+        numItermax=100_000_000,
     ):
-        # `apply_ufunc` necessitates that core dims be identical
-        if ref.sizes['time'] > hist.sizes['time']:
-            # Remember source time
-            hist_time = hist.time.copy(deep=True)
-            hist = hist.assign_coords({'time' : ref.time[:hist.sizes['time']]})
-        elif hist.sizes['time'] > ref.sizes['time']:
-            ref = ref.assign_coords({'time' : hist.time[:ref.sizes['time']]})
 
-        out = xr.apply_ufunc(
-            otc_adjust,
-            ref,
-            hist,
-            kwargs = dict(
-                bin_width=bin_width,
-                bin_origin=bin_origin,
-                numItermax=numItermax
-            ),
-            join='outer',
-            input_core_dims=[["time", "multivar"], ["time", "multivar"]],
-            output_core_dims=[["time", "multivar"]],
-            exclude_dims={'time'},
-            vectorize=True
-        )
-
-        out = out.T
-        # Apply hist metadata and time to output
-        out = out.assign_attrs(hist.attrs)
-        for dim, crd in hist.coords.items():
-            out.coords[dim] = crd
-        if ref.sizes['time'] > hist.sizes['time']:
-            out = out.assign_coords({'time': hist_time})
-
-        return out
-
-    def _adjust_src(
-        ref,
-        hist,
-        src,
-        bin_width=None,
-        bin_origin=None,
-        numItermax=None
-    ):
-        # `apply_ufunc` necessitates that core dims be identical; only keep the longuest core dim
-        max_shape = max(ref.sizes['time'], hist.sizes['time'], src.sizes['time'])
-
-        if src.sizes['time'] == max_shape:
-            ref = ref.assign_coords({'time' : src.time[:ref.sizes['time']]})
-            hist = hist.assign_coords({'time' : src.time[:hist.sizes['time']]})
+        if src is None:
+            out = xr.apply_ufunc(
+                otc_adjust,
+                ref,
+                hist,
+                kwargs = dict(
+                    bin_width=bin_width,
+                    bin_origin=bin_origin,
+                    numItermax=numItermax,
+                ),
+                join='outer',
+                input_core_dims=[["time", "multivar"], ["time", "multivar"]],
+                output_core_dims=[["time", "multivar"]],
+                keep_attrs=True,
+                vectorize=True,
+            )
         else:
-            # Remember source time
-            src_time = src.time.copy(deep=True)
-            if ref.sizes['time'] == max_shape:
-                hist = hist.assign_coords({'time' : ref.time[:hist.sizes['time']]})
-                src = src.assign_coords({'time' : ref.time[:src.sizes['time']]})
-            elif hist.sizes['time'] == max_shape:
-                ref = ref.assign_coords({'time' : hist.time[:ref.sizes['time']]})
-                src = src.assign_coords({'time' : hist.time[:src.sizes['time']]})
+            out = xr.apply_ufunc(
+                otc_adjust,
+                ref,
+                hist,
+                src,
+                kwargs = dict(
+                    bin_width=bin_width,
+                    bin_origin=bin_origin,
+                    numItermax=numItermax,
+                ),
+                join='outer',
+                input_core_dims=[["time", "multivar"], ["time", "multivar"], ["time", "multivar"]],
+                output_core_dims=[["time", "multivar"]],
+                exclude_dims={'time'},
+                keep_attrs=True,
+                vectorize=True,
+            )
 
-        out = xr.apply_ufunc(otc_adjust,
-            ref,
-            hist,
-            src,
-            kwargs = dict(
-                bin_width=bin_width,
-                bin_origin=bin_origin,
-                numItermax=numItermax
-            ),
-            join='outer',
-            input_core_dims=[["time", "multivar"], ["time", "multivar"], ["time", "multivar"]],
-            output_core_dims=[["time", "multivar"]],
-            exclude_dims={'time'},
-            vectorize=True
-        )
-
-        out = out.T
-        # Apply source metadata and time to output
-        out = out.assign_attrs(src.attrs)
-        for dim, crd in src.coords.items():
-            out.coords[dim] = crd
-        if src.sizes['time'] != max_shape:
-            out = out.assign_coords({'time': src_time})
-
-        return out
+        return out.T
 
 
 try:
