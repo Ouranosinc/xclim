@@ -623,9 +623,9 @@ def otc_adjust(
     src : np.ndarray | None = None,
     bin_width : np.ndarray | None = None,
     bin_origin : np.ndarray | None = None,
-    numItermax : int | None = 100_000_000
+    numItermax : int | None = 100_000_000,
 ):
-    """ Optimal Transport static bias correction of X with respect to Y.
+    """Optimal Transport Correction of the bias of X with respect to Y.
 
     Parameters
     ----------
@@ -687,3 +687,74 @@ def otc_adjust(
         out[i] = gridY[choice]
 
     return out
+
+
+def dotc_adjust(
+    Y0 : np.ndarray,
+    X0 : np.ndarray,
+    X1 : np.ndarray,
+    bin_width : np.ndarray | None = None,
+    bin_origin : np.ndarray | None = None,
+    numItermax : int | None = 100_000_000,
+    cov_factor = "std",
+):
+    """Dynamical Optimal Transport Correction of the bias of X with respect to Y.
+
+    Parameters
+    ----------
+    Y0 : np.ndarray
+        Bias correction reference.
+    X0 : np.ndarray
+        Historical simulation data.
+    X1 : np.ndarray
+        Simulation data to adjust.
+    bin_width : np.ndarray | None
+        Bin widths for all dimensions.
+    bin_origin : np.ndarray | None
+        Bin origins for all dimensions.
+    numItermax : int | None
+        Number of iterations of the earth mover distance algorithm.
+    cov_factor : str | None = "std"
+        Rescaling factor.
+
+    Returns
+    -------
+    np.ndarray
+        Adjusted data
+    """
+    # Remove NaNs
+    Y0 = Y0[~np.isnan(Y0).any(axis=1), :]
+    X0 = X0[~np.isnan(X0).any(axis=1), :]
+    X1 = X1[~np.isnan(X1).any(axis=1), :]
+
+    # Initialize parameters
+    bin_width = u.bin_width_estimator([Y0, X0, X1]) if bin_width is None else bin_width
+    if cov_factor == "cholesky":
+        fact0 = u.eps_cholesky(np.cov(Y0, rowvar=False))
+        fact1 = u.eps_cholesky(np.cov(X0, rowvar=False))
+        cov_factor = np.dot(fact0, np.linalg.inv(fact1))
+    elif cov_factor == "std":
+        fact0 = np.std(ref, axis=0)
+        fact1 = np.std(hist, axis=0)
+        cov_factor = np.diag(fact0 / fact1)
+    else:
+        cov_factor = np.identity(ref.shape[1])
+
+    # Map ref to hist
+    yX0 = otc_adjust(X0, Y0, bin_width=bin_width, bin_origin=bin_origin, numItermax=numItermax)
+
+    # Map hist to sim
+    yX1 = otc_adjust(X1, X0, src=yX0, bin_width=bin_width, bin_origin=bin_origin, numItermax=numItermax)
+
+    # Temporal evolution
+    motion = yX1 - yX0
+    # Apply a variance dependant rescaling factor
+    motion = np.apply_along_axis(lambda x: np.dot(cov_factor, x), 1, motion)
+
+    # Apply the evolution to ref
+    Y1 = Y0 + motion
+
+    # Map sim to the evolution of ref
+    Z1 = otc_adjust(Y1, X1, bin_width=bin_width, bin_origin=bin_origin, numItermax=numItermax)
+
+    return Z1

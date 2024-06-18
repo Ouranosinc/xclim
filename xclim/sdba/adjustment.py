@@ -34,6 +34,7 @@ from ._adjustment import (
     scaling_adjust,
     scaling_train,
     otc_adjust,
+    dotc_adjust,
 )
 from .base import Grouper, ParametrizableWithDataset, parse_group
 from .utils import (
@@ -56,6 +57,7 @@ __all__ = [
     "QuantileDeltaMapping",
     "Scaling",
     "OTC",
+    "dOTC",
 ]
 
 
@@ -1211,48 +1213,63 @@ class OTC():
     def _adjust(
         ref,
         hist,
-        src=None,
         bin_width=None,
         bin_origin=None,
         numItermax=100_000_000,
     ):
 
-        if src is None:
-            out = xr.apply_ufunc(
-                otc_adjust,
-                ref,
-                hist,
-                kwargs = dict(
-                    bin_width=bin_width,
-                    bin_origin=bin_origin,
-                    numItermax=numItermax,
-                ),
-                join='outer',
-                input_core_dims=[["time", "multivar"], ["time", "multivar"]],
-                output_core_dims=[["time", "multivar"]],
-                keep_attrs=True,
-                vectorize=True,
-            )
-        else:
-            out = xr.apply_ufunc(
-                otc_adjust,
-                ref,
-                hist,
-                src,
-                kwargs = dict(
-                    bin_width=bin_width,
-                    bin_origin=bin_origin,
-                    numItermax=numItermax,
-                ),
-                join='outer',
-                input_core_dims=[["time", "multivar"], ["time", "multivar"], ["time", "multivar"]],
-                output_core_dims=[["time", "multivar"]],
-                exclude_dims={'time'},
-                keep_attrs=True,
-                vectorize=True,
-            )
+        out = xr.apply_ufunc(
+            otc_adjust,
+            ref,
+            hist,
+            kwargs = dict(
+                bin_width=bin_width,
+                bin_origin=bin_origin,
+                numItermax=numItermax,
+            ),
+            join='outer',
+            input_core_dims=[["time", "multivar"], ["time", "multivar"]],
+            output_core_dims=[["time", "multivar"]],
+            keep_attrs=True,
+            vectorize=True,
+        )
 
         return out.T
+
+
+class dOTC():
+
+    def _adjust(
+        ref,
+        hist,
+        sim,
+        bin_width=None,
+        bin_origin=None,
+        cov_factor = "std",
+    ):
+
+        ref = ref.rename(time="time_cal")
+        hist = hist.rename(time="time_cal")
+        sim = sim.rename(time="time_tgt")
+
+        out = xr.apply_ufunc(
+            dotc_adjust,
+            ref,
+            hist,
+            sim,
+            kwargs = dict(
+                bin_width=bin_width,
+                bin_origin=bin_origin,
+                cov_factor=cov_factor,
+            ),
+            join='outer',
+            input_core_dims=[["time_cal", "multivar"], ["time_cal", "multivar"], ["time_tgt", "multivar"]],
+            output_core_dims=[["time_tgt", "multivar"]],
+            keep_attrs=True,
+            vectorize=True,
+        ).rename(time_tgt="time")
+
+        return out
 
 
 try:

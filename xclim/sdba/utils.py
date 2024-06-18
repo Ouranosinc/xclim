@@ -927,7 +927,7 @@ def _pairwise_spearman(da, dims):
 
 
 def bin_width_estimator(X):
-    """Estimate the width of an histogram rectangular bins."""
+    """Estimate the bin width of an histogram."""
     if isinstance(X, list):
         return np.min([bin_width_estimator(x) for x in X], axis=0)
 
@@ -975,3 +975,28 @@ def optimal_transport(gridX, gridY, muX, muY, numItermax):
     plan = (gamma.T / gamma.sum(axis=1)).T
 
     return plan
+
+
+def eps_cholesky(M, nit = 200):
+    """Cholesky decomposition."""
+    MC = None
+    try:
+        MC = np.linalg.cholesky(M)
+    except:
+        MC = None
+
+    if MC is None:
+        # Introduce small perturbations until M is positive-definite
+        eps = min(1e-9, np.abs(np.diagonal(M)).min())
+        if eps == 0:
+            eps = 1e-9
+        it = 0
+        while MC is None and it < nit:
+            perturb = np.identity(M.shape[0]) * eps
+            try:
+                MC = np.linalg.cholesky(M + perturb)
+            except:
+                MC = None
+            eps = 2 * eps
+            nit += 1
+    return MC
