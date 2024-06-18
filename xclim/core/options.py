@@ -167,10 +167,6 @@ class set_options:
     run_length_ufunc : str
       Whether to use the 1D ufunc version of run length algorithms or the dask-ready broadcasting version.
       Default is ``"auto"``, which means the latter is used for dask-backed and large arrays.
-    allow_sortquantile : bool
-      If `True`,  the optimal function between ``np.nanquantile`` or ``sdba.nbutils._sortquantile` is chosen. If `False`,
-      ``np.nanquantile`` is selected. `_sortquantile` is optimal when the number of quantiles is large (in absolute and relatively to array size).
-      Default: `True`.
     sdba_extra_output : bool
         Whether to add diagnostic variables to outputs of sdba's `train`, `adjust`
         and `processing` operations. Details about these additional variables are given in the object's
