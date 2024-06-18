@@ -617,7 +617,7 @@ def extremes_adjust(
     return out
 
 
-def otc_adjust(
+def _otc_adjust(
     X: np.ndarray,
     Y: np.ndarray,
     src: np.ndarray | None = None,
@@ -689,14 +689,60 @@ def otc_adjust(
     return out
 
 
-def dotc_adjust(
+def otc_adjust(
+    ref: xr.DataArray,
+    hist: xr.DataArray,
+    bin_width: np.ndarray | None,
+    bin_origin: np.ndarray | None,
+    numItermax: int | None,
+):
+    """Optimal Transport Correction of the bias of `hist` with respect to `ref`.
+
+    Parameters
+    ----------
+    ref : xr.DataArray
+        Bias correction reference, target of optimal transport.
+    hist : xr.DataArray
+        Historical data to be corrected.
+    bin_width : np.ndarray | None
+        Bin widths for all dimensions.
+    bin_origin : np.ndarray | None
+        Bin origins for all dimensions.
+    numItermax : int | None
+        Number of iterations of the earth mover distance algorithm.
+
+    Returns
+    -------
+    xr.DataArray
+        Adjusted data
+    """
+    out = xr.apply_ufunc(
+        _otc_adjust,
+        hist,
+        ref,
+        kwargs=dict(
+            bin_width=bin_width,
+            bin_origin=bin_origin,
+            numItermax=numItermax,
+        ),
+        join="outer",
+        input_core_dims=[["time", "multivar"], ["time", "multivar"]],
+        output_core_dims=[["time", "multivar"]],
+        keep_attrs=True,
+        vectorize=True,
+    )
+
+    return out.T
+
+
+def _dotc_adjust(
     X1: np.ndarray,
     Y0: np.ndarray,
     X0: np.ndarray,
     bin_width: np.ndarray | None = None,
     bin_origin: np.ndarray | None = None,
     numItermax: int | None = 100_000_000,
-    cov_factor="std",
+    cov_factor: str | None = "std",
 ):
     """Dynamical Optimal Transport Correction of the bias of X with respect to Y.
 
@@ -741,12 +787,12 @@ def dotc_adjust(
         cov_factor = np.identity(Y0.shape[1])
 
     # Map ref to hist
-    yX0 = otc_adjust(
+    yX0 = _otc_adjust(
         Y0, X0, bin_width=bin_width, bin_origin=bin_origin, numItermax=numItermax
     )
 
     # Map hist to sim
-    yX1 = otc_adjust(
+    yX1 = _otc_adjust(
         X0,
         X1,
         src=yX0,
@@ -764,8 +810,68 @@ def dotc_adjust(
     Y1 = Y0 + motion
 
     # Map sim to the evolution of ref
-    Z1 = otc_adjust(
+    Z1 = _otc_adjust(
         X1, Y1, bin_width=bin_width, bin_origin=bin_origin, numItermax=numItermax
     )
 
     return Z1
+
+
+def dotc_adjust(
+    ref: xr.DataArray,
+    hist: xr.DataArray,
+    sim: xr.DataArray,
+    bin_width: np.ndarray | None,
+    bin_origin: np.ndarray | None,
+    numItermax: int | None = 100_000_000,
+    cov_factor: str | None = "std",
+):
+    """Dynamical Optimal Transport Correction of the bias of X with respect to Y.
+
+    Parameters
+    ----------
+    ref : xr.DataArray
+        Bias correction reference, target of optimal transport.
+    hist : xr.DataArray
+        Historical data to be corrected.
+    sim : xr.DataArray
+        Simulation data to adjust.
+    bin_width : np.ndarray | None
+        Bin widths for all dimensions.
+    bin_origin : np.ndarray | None
+        Bin origins for all dimensions.
+    numItermax : int | None
+        Number of iterations of the earth mover distance algorithm.
+    cov_factor : str | None = "std"
+        Rescaling factor.
+
+    Returns
+    -------
+    xr.DataArray
+        Adjusted data
+    """
+    ref = ref.rename(time="time_cal")
+    hist = hist.rename(time="time_cal")
+    sim = sim.rename(time="time_tgt")
+
+    return xr.apply_ufunc(
+        _dotc_adjust,
+        sim,
+        ref,
+        hist,
+        kwargs=dict(
+            bin_width=bin_width,
+            bin_origin=bin_origin,
+            numItermax=numItermax,
+            cov_factor=cov_factor,
+        ),
+        join="outer",
+        input_core_dims=[
+            ["time_tgt", "multivar"],
+            ["time_cal", "multivar"],
+            ["time_cal", "multivar"],
+        ],
+        output_core_dims=[["time_tgt", "multivar"]],
+        keep_attrs=True,
+        vectorize=True,
+    ).rename(time_tgt="time")

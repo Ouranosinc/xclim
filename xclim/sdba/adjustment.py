@@ -1220,24 +1220,13 @@ class OTC:
         bin_origin=None,
         numItermax=100_000_000,
     ):
-
-        out = xr.apply_ufunc(
-            otc_adjust,
-            hist,
+        return otc_adjust(
             ref,
-            kwargs=dict(
-                bin_width=bin_width,
-                bin_origin=bin_origin,
-                numItermax=numItermax,
-            ),
-            join="outer",
-            input_core_dims=[["time", "multivar"], ["time", "multivar"]],
-            output_core_dims=[["time", "multivar"]],
-            keep_attrs=True,
-            vectorize=True,
+            hist,
+            bin_width,
+            bin_origin,
+            numItermax,
         )
-
-        return out.T
 
 
 class dOTC:
@@ -1251,35 +1240,18 @@ class dOTC:
         sim,
         bin_width=None,
         bin_origin=None,
+        numItermax=100_000_000,
         cov_factor="std",
     ):
-
-        ref = ref.rename(time="time_cal")
-        hist = hist.rename(time="time_cal")
-        sim = sim.rename(time="time_tgt")
-
-        out = xr.apply_ufunc(
-            dotc_adjust,
-            sim,
+        return dotc_adjust(
             ref,
             hist,
-            kwargs=dict(
-                bin_width=bin_width,
-                bin_origin=bin_origin,
-                cov_factor=cov_factor,
-            ),
-            join="outer",
-            input_core_dims=[
-                ["time_tgt", "multivar"],
-                ["time_cal", "multivar"],
-                ["time_cal", "multivar"],
-            ],
-            output_core_dims=[["time_tgt", "multivar"]],
-            keep_attrs=True,
-            vectorize=True,
-        ).rename(time_tgt="time")
-
-        return out
+            sim,
+            bin_width,
+            bin_origin,
+            numItermax,
+            cov_factor,
+        )
 
 
 try:
