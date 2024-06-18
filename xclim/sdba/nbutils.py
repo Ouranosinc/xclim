@@ -8,11 +8,11 @@ from __future__ import annotations
 from collections.abc import Hashable, Sequence
 
 import numpy as np
-from numba import boolean, float32, float64, guvectorize, int64, njit
+from numba import boolean, float32, float64, guvectorize, njit
 from xarray import DataArray, apply_ufunc
 from xarray.core import utils
 
-from xclim.core.options import ALLOW_SORTQUANTILE, OPTIONS
+from xclim.core.utils import _nan_quantile
 
 try:
     from fastnanquantile.xrcompat import xr_apply_nanquantile
@@ -20,77 +20,6 @@ try:
     USE_FASTNANQUANTILE = True
 except ImportError:
     USE_FASTNANQUANTILE = False
-
-
-@njit(
-    [
-        int64(float32[:]),
-        int64(float64[:]),
-    ],
-    fastmath=False,
-    nogil=True,
-    cache=False,
-)
-def numnan_sorted(s):
-    """Given a sorted array s, return the number of NaNs."""
-    # Given a sorted array s, return the number of NaNs.
-    # This is faster than np.isnan(s).sum(), but only works if s is sorted,
-    # and only for
-    ind = 0
-    for i in range(s.size - 1, 0, -1):
-        if np.isnan(s[i]):
-            ind += 1
-        else:
-            return ind
-    return ind
-
-
-@njit(
-    # [
-    #     float32[:](float32[:], float32[:]),
-    #     float64[:](float64[:], float64[:]),
-    # ],
-    fastmath=False,
-    nogil=True,
-    cache=False,
-)
-def _sortquantile(arr, q):
-    """Sorts arr into ascending order,
-    then computes the quantiles as a linear interpolation
-    between the sorted values.
-    """
-    sortarr = np.sort(arr)
-    numnan = numnan_sorted(sortarr)
-    # compute the indices where each quantile should go:
-    # nb: nan goes to the end, so we need to subtract numnan to the size.
-    indices = q * (arr.size - 1 - numnan)
-    # compute the quantiles manually to avoid casting to float64:
-    # (alternative is to use np.interp(indices, np.arange(arr.size), sortarr))
-    frac = indices % 1
-    low = np.floor(indices).astype(np.int64)
-    high = np.ceil(indices).astype(np.int64)
-    return (1 - frac) * sortarr[low] + frac * sortarr[high]
-
-
-@njit(
-    # [
-    #     float32[:](float32[:], float32[:]),
-    #     float64[:](float64[:], float64[:]),
-    # ],
-    fastmath=False,
-    nogil=True,
-    cache=False,
-)
-def _choosequantile(arr, q, allow_sortquantile=OPTIONS[ALLOW_SORTQUANTILE]):
-    # When the number of quantiles requested is large,
-    # it becomes more efficient to sort the array,
-    # and simply obtain the quantiles from the sorted array.
-    # The first method is O(arr.size*q.size),
-    # the second O(arr.size*log(arr.size) + q.size) amortized.
-    if allow_sortquantile and len(q) > 10 and len(q) > np.log(len(arr)):
-        return _sortquantile(arr, q)
-    else:
-        return np.nanquantile(arr, q).astype(arr.dtype)
 
 
 @guvectorize(
@@ -142,16 +71,16 @@ def vecquantiles(
 
 
 @njit
-def _wrapper_quantile1d(arr, q, allow_sortquantile=OPTIONS[ALLOW_SORTQUANTILE]):
+def _wrapper_quantile1d(arr, q):
     out = np.empty((arr.shape[0], q.size), dtype=arr.dtype)
     for index in range(out.shape[0]):
-        out[index] = _choosequantile(arr[index], q, allow_sortquantile)
+        out[index] = _nan_quantile(arr[index], q)
     return out
 
 
-def _quantile(arr, q, nreduce, allow_sortquantile=OPTIONS[ALLOW_SORTQUANTILE]):
+def _quantile(arr, q, nreduce):
     if arr.ndim == nreduce:
-        out = _choosequantile(arr.flatten(), q, allow_sortquantile)
+        out = _nan_quantile(arr.flatten(), q)
     else:
         # dimensions that are reduced by quantile
         red_axis = np.arange(len(arr.shape) - nreduce, len(arr.shape))
@@ -161,7 +90,7 @@ def _quantile(arr, q, nreduce, allow_sortquantile=OPTIONS[ALLOW_SORTQUANTILE]):
         final_shape = [arr.shape[idx] for idx in keep_axis] + [len(q)]
         # reshape as (keep_dims, red_dims), compute, reshape back
         arr = arr.reshape(-1, reduction_dim_size)
-        out = _wrapper_quantile1d(arr, q, allow_sortquantile)
+        out = _wrapper_quantile1d(arr, q)
         out = out.reshape(final_shape)
     return out
 
@@ -171,10 +100,9 @@ def quantile(da, q, dim):
     if USE_FASTNANQUANTILE is True:
         return xr_apply_nanquantile(da, dim=dim, q=q).rename({"quantile": "quantiles"})
     else:
-        allow_sortquantile = OPTIONS[ALLOW_SORTQUANTILE]
         qc = np.array(q, dtype=da.dtype)
         dims = [dim] if isinstance(dim, str) else dim
-        kwargs = dict(nreduce=len(dims), q=qc, allow_sortquantile=allow_sortquantile)
+        kwargs = dict(nreduce=len(dims), q=qc)
         res = (
             apply_ufunc(
                 _quantile,

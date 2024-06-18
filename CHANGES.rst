@@ -2,6 +2,15 @@
 Changelog
 =========
 
+v0.51.0 (unreleased)
+--------------------
+Contributors to this version: Éric Dupuis (:user:`coxipi`), Sarah Gammon (:user:`SarahG-579462`)
+
+
+New features and enhancements
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+* ``sdba.nbutils.quantile`` and its child functions are now faster. If the module `fastnanquantile` is installed, it is used as the backen for the computation of quantiles and yields even faster results. (:issue:`1513`).
+
 v0.50.0 (2024-06-17)
 --------------------
 Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Éric Dupuis (:user:`coxipi`).

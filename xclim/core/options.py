@@ -23,7 +23,6 @@ MISSING_OPTIONS = "missing_options"
 RUN_LENGTH_UFUNC = "run_length_ufunc"
 SDBA_EXTRA_OUTPUT = "sdba_extra_output"
 SDBA_ENCODE_CF = "sdba_encode_cf"
-ALLOW_SORTQUANTILE = "allow_sortquantile"
 KEEP_ATTRS = "keep_attrs"
 AS_DATASET = "as_dataset"
 
@@ -38,14 +37,12 @@ OPTIONS = {
     RUN_LENGTH_UFUNC: "auto",
     SDBA_EXTRA_OUTPUT: False,
     SDBA_ENCODE_CF: False,
-    ALLOW_SORTQUANTILE: True,
     KEEP_ATTRS: "xarray",
     AS_DATASET: False,
 }
 
 _LOUDNESS_OPTIONS = frozenset(["log", "warn", "raise"])
 _RUN_LENGTH_UFUNC_OPTIONS = frozenset(["auto", True, False])
-_ALLOW_SORTQUANTILE_OPTIONS = frozenset([True, False])
 _KEEP_ATTRS_OPTIONS = frozenset(["xarray", True, False])
 
 
@@ -72,7 +69,6 @@ _VALIDATORS = {
     RUN_LENGTH_UFUNC: _RUN_LENGTH_UFUNC_OPTIONS.__contains__,
     SDBA_EXTRA_OUTPUT: lambda opt: isinstance(opt, bool),
     SDBA_ENCODE_CF: lambda opt: isinstance(opt, bool),
-    ALLOW_SORTQUANTILE: _ALLOW_SORTQUANTILE_OPTIONS.__contains__,
     KEEP_ATTRS: _KEEP_ATTRS_OPTIONS.__contains__,
     AS_DATASET: lambda opt: isinstance(opt, bool),
 }
