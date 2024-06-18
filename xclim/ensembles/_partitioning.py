@@ -361,6 +361,10 @@ def general_partition(
         )
     elif sm == "loess":
         sm = loess.loess_smoothing(da)
+    elif isinstance(sm, xr.DataArray):
+        sm = sm
+    else:
+        raise ValueError("sm should be 'poly', 'loess' or a DataArray.")
 
     # "Interannual variability is then estimated as the centered rolling 11-year variance of the difference
     # between the extracted forced response and the raw outputs, averaged over all outputs."
@@ -397,6 +401,7 @@ def general_partition(
 
     uncertainty.attrs["indicator_long_name"] = da.attrs.get("long_name", "unknown")
     uncertainty.attrs["indicator_description"] = da.attrs.get("description", "unknown")
+    uncertainty.attrs["partition_fit"] = sm if isinstance(sm, str) else "unknown"
     # Keep a trace of the elements for each uncertainty component
     for t in all_types:
         uncertainty.attrs[t] = da[t].values
@@ -422,8 +427,9 @@ def fractional_uncertainty(u: xr.DataArray) -> xr.DataArray:
     xr.DataArray
         Fractional, or relative uncertainty with respect to the total uncertainty.
     """
-    uncertainty = u / u.sel(uncertainty="total") * 100
-    uncertainty.attrs.update(u.attrs)
-    uncertainty.attrs["long_name"] = "Fraction of total variance"
-    uncertainty.attrs["units"] = "%"
-    return uncertainty
+    with xr.set_options(keep_attrs=True):
+        uncertainty = u / u.sel(uncertainty="total") * 100
+        uncertainty.attrs.update(u.attrs)
+        uncertainty.attrs["long_name"] = "Fraction of total variance"
+        uncertainty.attrs["units"] = "%"
+        return uncertainty
