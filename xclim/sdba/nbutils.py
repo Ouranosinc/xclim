@@ -32,7 +32,7 @@ def _vecquantiles(arr, rnk, res):
     if np.isnan(rnk):
         res[0] = np.NaN
     else:
-        res[0] = _nan_quantile(arr, rnk)
+        res[0] = np.quantile(arr, rnk)
 
 
 def vecquantiles(
