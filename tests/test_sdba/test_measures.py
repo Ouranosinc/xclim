@@ -92,3 +92,11 @@ def test_taylordiagram(open_dataset):
     )
     test = sdba.measures.taylordiagram(sim, ref).values
     np.testing.assert_array_almost_equal(test, [13.12244701, 6.76166582, 0.73230199], 4)
+
+    # test normalization option
+    test_normalize = sdba.measures.taylordiagram(sim, ref, normalize=True).values
+    np.testing.assert_array_almost_equal(
+        test_normalize,
+        [13.12244701 / 13.12244701, 6.76166582 / 13.12244701, 0.73230199],
+        4,
+    )

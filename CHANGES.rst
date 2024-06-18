@@ -2,6 +2,43 @@
 Changelog
 =========
 
+v0.50.0 (2024-06-17)
+--------------------
+Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Éric Dupuis (:user:`coxipi`).
+
+New features and enhancements
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+* New properties: Bivariate Spell Length (``xclim.sdba.properties.bivariate_spell_length``), Generalized Spell Lengths with an argument for `window`, and Specific Spell Lengths with `window` fixed to '1' (``xclim.sdba.properties.threshold_count``, ``xclim.sdba.properties.bivariate_threshold_count``). (:pull:`1758`).
+* New option `normalize` in ``sdba.measures.taylordiagram`` to obtain normalized Taylor Diagrams (divide standard deviations by standard deviation of the reference). (:pull:`1764`).
+
+Breaking changes
+^^^^^^^^^^^^^^^^
+* `pint` has been pinned below v0.24 until `xclim` can be updated to support the latest version. (:issue:`1771`, :pull:`1772`).
+* `numpy` has been pinned below v2.0.0 until `xclim` can be updated to support the latest version. (:pull:`1783`).
+* Calendar utilities that have an equivalent in `xarray` have been deprecated and will be removed in `xclim` v0.51.0. (:issue:`1010`, :pull:`1761`). This concerns the following members of ``xclim.core.calendar``:
+    - ``convert_calendar`` : Use ``Dataset.convert_calendar``, ``DataArray.convert_calendar`` or ``xr.coding.calendar_ops.convert_calendar``  instead.
+        + If your code passes ``target`` as an array, first convert the source to the target's calendar and then reindex the result to ``target``.
+        + If you were using the ``doy=True`` option, replace it with ``xc.core.calendar.convert_doy(source, target_cal).convert_calendar(target_cal)``.
+        + ``"default"`` is no longer a valid calendar name for any xclim functions and will not be returned by ``get_calendar``. Xarray has a ``use_cftime`` argument, xclim exposes it when the distinction is needed.
+    - ``date_range`` : Use ``xarray.date_range`` instead.
+    - ``date_range_like``: Use ``xarray.date_range_like`` instead.
+    - ``interp_calendar`` : Use ``Dataset.interp_calendar`` or ``xarray.coding.calendar_ops.interp_calendar`` instead.
+    - ``days_in_year`` : Use ``xarray.coding.calendar_ops._days_in_year`` instead.
+    - ``datetime_to_decimal_year`` : Use ``xarray.coding.calendar_ops._datetime_to_decimal_year`` instead.
+
+Internal changes
+^^^^^^^^^^^^^^^^
+* Synchronized tooling versions across ``pyproject.toml`` and ``tox.ini`` and pinned them to the latest stable releases in GitHub Workflows. (:pull:`1744`).
+* Fixed a few small spelling and grammar issues that were causing errors with `codespell`. Now ignoring `SVG` files. (:pull:`1769`).
+* Temporarily skipping the ``test_hawkins_sutton_smoke`` test due to strange behaviour with `xarray`. (:pull:`1769`).
+* Fixed some previously uncaught errors raised from recent versions of `pylint` and `codespell`. (:pull:`1772`).
+* Set the `doctest` examples to all use `h5netcdf` with worker-separated caches to load datasets. (:pull:`1772`).
+
+Bug fixes
+^^^^^^^^^
+* ``xclim.indices.{cold|hot}_spell_total_length`` now properly uses the argument `window` to only count spells with at least `window` time steps. (:issue:`1765`, :pull:`1777`).
+* Addressed an error in ``xclim.ensembles._filters._concat_hist`` where remnants of a scenario selection were not being dropped properly. (:pull:`1780`).
+
 v0.49.0 (2024-05-02)
 --------------------
 Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), Juliette Lavoie (:user:`juliettelavoie`), David Huard (:user:`huard`), Gabriel Rondeau-Genesse (:user:`RondeauG`), Javier Diez-Sierra (:user:`JavierDiezSierra`), Sarah Gammon (:user:`SarahG-579462`), Éric Dupuis (:user:`coxipi`).
