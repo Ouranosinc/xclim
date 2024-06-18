@@ -9,7 +9,7 @@ Contributors to this version: Éric Dupuis (:user:`coxipi`), Sarah Gammon (:user
 
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-* ``sdba.nbutils.quantile`` and its child functions are now faster. If the module `fastnanquantile` is installed, it is used as the backen for the computation of quantiles and yields even faster results. (:issue:`1513`).
+* ``sdba.nbutils.quantile`` and its child functions are now faster. If the module `fastnanquantile` is installed, it is used as the backen for the computation of quantiles and yields even faster results. (:issue:`1255`, :pull:`1513`).
 
 v0.50.0 (2024-06-17)
 --------------------
