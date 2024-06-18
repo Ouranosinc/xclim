@@ -1223,8 +1223,8 @@ class OTC:
 
         out = xr.apply_ufunc(
             otc_adjust,
-            ref,
             hist,
+            ref,
             kwargs=dict(
                 bin_width=bin_width,
                 bin_origin=bin_origin,
@@ -1260,9 +1260,9 @@ class dOTC:
 
         out = xr.apply_ufunc(
             dotc_adjust,
+            sim,
             ref,
             hist,
-            sim,
             kwargs=dict(
                 bin_width=bin_width,
                 bin_origin=bin_origin,
@@ -1270,9 +1270,9 @@ class dOTC:
             ),
             join="outer",
             input_core_dims=[
-                ["time_cal", "multivar"],
-                ["time_cal", "multivar"],
                 ["time_tgt", "multivar"],
+                ["time_cal", "multivar"],
+                ["time_cal", "multivar"],
             ],
             output_core_dims=[["time_tgt", "multivar"]],
             keep_attrs=True,

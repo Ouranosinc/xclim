@@ -618,8 +618,8 @@ def extremes_adjust(
 
 
 def otc_adjust(
-    Y: np.ndarray,
     X: np.ndarray,
+    Y: np.ndarray,
     src: np.ndarray | None = None,
     bin_width: np.ndarray | None = None,
     bin_origin: np.ndarray | None = None,
@@ -629,10 +629,10 @@ def otc_adjust(
 
     Parameters
     ----------
-    Y : np.ndarray
-        Bias correction reference, target of optimal transport.
     X : np.ndarray
         Historical data to be corrected.
+    Y : np.ndarray
+        Bias correction reference, target of optimal transport.
     src : np.ndarray | None
         If not None, X is still used to compute the optimal transport, but it is used to correct src.
     bin_width : np.ndarray | None
@@ -690,9 +690,9 @@ def otc_adjust(
 
 
 def dotc_adjust(
+    X1: np.ndarray,
     Y0: np.ndarray,
     X0: np.ndarray,
-    X1: np.ndarray,
     bin_width: np.ndarray | None = None,
     bin_origin: np.ndarray | None = None,
     numItermax: int | None = 100_000_000,
@@ -702,12 +702,12 @@ def dotc_adjust(
 
     Parameters
     ----------
+    X1 : np.ndarray
+        Simulation data to adjust.
     Y0 : np.ndarray
         Bias correction reference.
     X0 : np.ndarray
         Historical simulation data.
-    X1 : np.ndarray
-        Simulation data to adjust.
     bin_width : np.ndarray | None
         Bin widths for all dimensions.
     bin_origin : np.ndarray | None
@@ -742,13 +742,13 @@ def dotc_adjust(
 
     # Map ref to hist
     yX0 = otc_adjust(
-        X0, Y0, bin_width=bin_width, bin_origin=bin_origin, numItermax=numItermax
+        Y0, X0, bin_width=bin_width, bin_origin=bin_origin, numItermax=numItermax
     )
 
     # Map hist to sim
     yX1 = otc_adjust(
-        X1,
         X0,
+        X1,
         src=yX0,
         bin_width=bin_width,
         bin_origin=bin_origin,
@@ -765,7 +765,7 @@ def dotc_adjust(
 
     # Map sim to the evolution of ref
     Z1 = otc_adjust(
-        Y1, X1, bin_width=bin_width, bin_origin=bin_origin, numItermax=numItermax
+        X1, Y1, bin_width=bin_width, bin_origin=bin_origin, numItermax=numItermax
     )
 
     return Z1
