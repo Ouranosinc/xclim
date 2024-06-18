@@ -618,12 +618,12 @@ def extremes_adjust(
 
 
 def otc_adjust(
-    Y : np.ndarray,
-    X : np.ndarray,
-    src : np.ndarray | None = None,
-    bin_width : np.ndarray | None = None,
-    bin_origin : np.ndarray | None = None,
-    numItermax : int | None = 100_000_000,
+    Y: np.ndarray,
+    X: np.ndarray,
+    src: np.ndarray | None = None,
+    bin_width: np.ndarray | None = None,
+    bin_origin: np.ndarray | None = None,
+    numItermax: int | None = 100_000_000,
 ):
     """Optimal Transport Correction of the bias of X with respect to Y.
 
@@ -679,24 +679,24 @@ def otc_adjust(
     rng = np.random.default_rng()
 
     # The plan row corresponding to a source bin indicates its probabilities to be transported to every target bin
-    for i,b in enumerate(idx_binX):
+    for i, b in enumerate(idx_binX):
         # Get the plan row of this source bin
         pi = np.where((b == idx_gridX).all(1))[0][0]
         # Pick one index of this plan row
-        choice = rng.choice(range(muY.size), p = plan[pi,:])
+        choice = rng.choice(range(muY.size), p=plan[pi, :])
         out[i] = gridY[choice]
 
     return out
 
 
 def dotc_adjust(
-    Y0 : np.ndarray,
-    X0 : np.ndarray,
-    X1 : np.ndarray,
-    bin_width : np.ndarray | None = None,
-    bin_origin : np.ndarray | None = None,
-    numItermax : int | None = 100_000_000,
-    cov_factor = "std",
+    Y0: np.ndarray,
+    X0: np.ndarray,
+    X1: np.ndarray,
+    bin_width: np.ndarray | None = None,
+    bin_origin: np.ndarray | None = None,
+    numItermax: int | None = 100_000_000,
+    cov_factor="std",
 ):
     """Dynamical Optimal Transport Correction of the bias of X with respect to Y.
 
@@ -741,10 +741,19 @@ def dotc_adjust(
         cov_factor = np.identity(ref.shape[1])
 
     # Map ref to hist
-    yX0 = otc_adjust(X0, Y0, bin_width=bin_width, bin_origin=bin_origin, numItermax=numItermax)
+    yX0 = otc_adjust(
+        X0, Y0, bin_width=bin_width, bin_origin=bin_origin, numItermax=numItermax
+    )
 
     # Map hist to sim
-    yX1 = otc_adjust(X1, X0, src=yX0, bin_width=bin_width, bin_origin=bin_origin, numItermax=numItermax)
+    yX1 = otc_adjust(
+        X1,
+        X0,
+        src=yX0,
+        bin_width=bin_width,
+        bin_origin=bin_origin,
+        numItermax=numItermax,
+    )
 
     # Temporal evolution
     motion = yX1 - yX0
@@ -755,6 +764,8 @@ def dotc_adjust(
     Y1 = Y0 + motion
 
     # Map sim to the evolution of ref
-    Z1 = otc_adjust(Y1, X1, bin_width=bin_width, bin_origin=bin_origin, numItermax=numItermax)
+    Z1 = otc_adjust(
+        Y1, X1, bin_width=bin_width, bin_origin=bin_origin, numItermax=numItermax
+    )
 
     return Z1

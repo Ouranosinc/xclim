@@ -21,6 +21,7 @@ from xclim.core.utils import uses_dask
 from xclim.indices import stats
 
 from ._adjustment import (
+    dotc_adjust,
     dqm_adjust,
     dqm_train,
     eqm_train,
@@ -29,12 +30,11 @@ from ._adjustment import (
     loci_adjust,
     loci_train,
     npdf_transform,
+    otc_adjust,
     qdm_adjust,
     qm_adjust,
     scaling_adjust,
     scaling_train,
-    otc_adjust,
-    dotc_adjust,
 )
 from .base import Grouper, ParametrizableWithDataset, parse_group
 from .utils import (
@@ -1208,7 +1208,7 @@ class NpdfTransform(Adjust):
         return out
 
 
-class OTC():
+class OTC:
 
     def _adjust(
         ref,
@@ -1222,12 +1222,12 @@ class OTC():
             otc_adjust,
             ref,
             hist,
-            kwargs = dict(
+            kwargs=dict(
                 bin_width=bin_width,
                 bin_origin=bin_origin,
                 numItermax=numItermax,
             ),
-            join='outer',
+            join="outer",
             input_core_dims=[["time", "multivar"], ["time", "multivar"]],
             output_core_dims=[["time", "multivar"]],
             keep_attrs=True,
@@ -1237,7 +1237,7 @@ class OTC():
         return out.T
 
 
-class dOTC():
+class dOTC:
 
     def _adjust(
         ref,
@@ -1245,7 +1245,7 @@ class dOTC():
         sim,
         bin_width=None,
         bin_origin=None,
-        cov_factor = "std",
+        cov_factor="std",
     ):
 
         ref = ref.rename(time="time_cal")
@@ -1257,13 +1257,17 @@ class dOTC():
             ref,
             hist,
             sim,
-            kwargs = dict(
+            kwargs=dict(
                 bin_width=bin_width,
                 bin_origin=bin_origin,
                 cov_factor=cov_factor,
             ),
-            join='outer',
-            input_core_dims=[["time_cal", "multivar"], ["time_cal", "multivar"], ["time_tgt", "multivar"]],
+            join="outer",
+            input_core_dims=[
+                ["time_cal", "multivar"],
+                ["time_cal", "multivar"],
+                ["time_tgt", "multivar"],
+            ],
             output_core_dims=[["time_tgt", "multivar"]],
             keep_attrs=True,
             vectorize=True,

@@ -15,8 +15,8 @@ from boltons.funcutils import wraps
 from dask import array as dsk
 from ot import emd
 from scipy.interpolate import griddata, interp1d
-from scipy.stats import spearmanr
 from scipy.spatial import distance
+from scipy.stats import spearmanr
 from xarray.core.utils import get_temp_dimname
 
 from xclim.core.calendar import _interpolate_doy_calendar  # noqa
@@ -931,15 +931,20 @@ def bin_width_estimator(X):
     if isinstance(X, list):
         return np.min([bin_width_estimator(x) for x in X], axis=0)
 
-    if X.ndim == 1 : X = X.reshape(-1, 1)
+    if X.ndim == 1:
+        X = X.reshape(-1, 1)
 
     if X.shape[0] < 1000:
         # Sturges
-        nh = np.log2(X.shape[0]) + 1.
-        bin_width = np.zeros(X.shape[1]) + 1./nh
+        nh = np.log2(X.shape[0]) + 1.0
+        bin_width = np.zeros(X.shape[1]) + 1.0 / nh
     else:
         # Freedman-Diaconis
-        bin_width = 2. * (np.percentile(X, q = 75, axis = 0) - np.percentile(X, q = 25, axis = 0)) / np.power(X.shape[0], 1./3.)
+        bin_width = (
+            2.0
+            * (np.percentile(X, q=75, axis=0) - np.percentile(X, q=25, axis=0))
+            / np.power(X.shape[0], 1.0 / 3.0)
+        )
 
     return bin_width
 
@@ -959,7 +964,7 @@ def histogram(data, bin_width, bin_origin):
     mu = np.divide(mu, sum(mu))
 
     # Get the unindexed position of the center of bins
-    grid = (idx_grid + 1/2) * bin_width + bin_origin
+    grid = (idx_grid + 1 / 2) * bin_width + bin_origin
 
     return grid, mu, idx_bin
 
@@ -977,7 +982,7 @@ def optimal_transport(gridX, gridY, muX, muY, numItermax):
     return plan
 
 
-def eps_cholesky(M, nit = 200):
+def eps_cholesky(M, nit=200):
     """Cholesky decomposition."""
     MC = None
     try:
