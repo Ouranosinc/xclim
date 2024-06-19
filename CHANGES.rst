@@ -2,7 +2,7 @@
 Changelog
 =========
 
-v0.50.0 (unreleased)
+v0.50.0 (2024-06-17)
 --------------------
 Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Éric Dupuis (:user:`coxipi`).
 
@@ -15,6 +15,7 @@ New features and enhancements
 Breaking changes
 ^^^^^^^^^^^^^^^^
 * `pint` has been pinned below v0.24 until `xclim` can be updated to support the latest version. (:issue:`1771`, :pull:`1772`).
+* `numpy` has been pinned below v2.0.0 until `xclim` can be updated to support the latest version. (:pull:`1783`).
 * Calendar utilities that have an equivalent in `xarray` have been deprecated and will be removed in `xclim` v0.51.0. (:issue:`1010`, :pull:`1761`). This concerns the following members of ``xclim.core.calendar``:
     - ``convert_calendar`` : Use ``Dataset.convert_calendar``, ``DataArray.convert_calendar`` or ``xr.coding.calendar_ops.convert_calendar``  instead.
         + If your code passes ``target`` as an array, first convert the source to the target's calendar and then reindex the result to ``target``.
@@ -37,6 +38,7 @@ Internal changes
 Bug fixes
 ^^^^^^^^^
 * ``xclim.indices.{cold|hot}_spell_total_length`` now properly uses the argument `window` to only count spells with at least `window` time steps. (:issue:`1765`, :pull:`1777`).
+* Addressed an error in ``xclim.ensembles._filters._concat_hist`` where remnants of a scenario selection were not being dropped properly. (:pull:`1780`).
 
 v0.49.0 (2024-05-02)
 --------------------
