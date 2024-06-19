@@ -12,7 +12,6 @@ from warnings import warn
 import numpy as np
 import xarray as xr
 from xarray.core.dataarray import DataArray
-from xarray.core.dataset import Dataset
 
 from xclim.core.calendar import get_calendar
 from xclim.core.formatting import gen_call_string, update_history
@@ -353,16 +352,16 @@ class MultivariateTrainAdjust(BaseAdjustment):
     _repr_hide_params = ["hist_calendar", "train_units"]
 
     @classmethod
-    def train(cls, ref: Dataset, hist: Dataset, **kwargs) -> TrainAdjust:
+    def train(cls, ref: xr.Dataset, hist: xr.Dataset, **kwargs) -> TrainAdjust:
         r"""Train the adjustment object.
 
         Refer to the class documentation for the algorithm details.
 
         Parameters
         ----------
-        ref : Dataset
+        ref : xr.Dataset
             Training target, usually a reference time series drawn from observations.
-        hist : Dataset
+        hist : xr.Dataset
             Training data, usually a model output whose biases are to be adjusted.
         \*\*kwargs
             Algorithm-specific keyword arguments, see class doc.
@@ -463,11 +462,11 @@ class MultivariateAdjust(BaseAdjustment):
 
         Parameters
         ----------
-        ref : Dataset
+        ref : xr.Dataset
             Training target, usually a reference time series drawn from observations.
-        hist : Dataset
+        hist : xr.Dataset
             Training data, usually a model output whose biases are to be adjusted.
-        sim : Dataset
+        sim : xr.Dataset
             Time series to be bias-adjusted, usually a model output.
         \*\*kwargs
             Algorithm-specific keyword arguments, see class doc.
