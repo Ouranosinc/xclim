@@ -37,6 +37,7 @@ from ._adjustment import (
     scaling_train,
 )
 from .base import Grouper, ParametrizableWithDataset, parse_group
+from .processing import stack_variables, unstack_variables
 from .utils import (
     ADDITIVE,
     best_pc_orientation_full,
@@ -1221,13 +1222,18 @@ class OTC:
         numItermax=100_000_000,
         group: str | Grouper = "time",
     ):
-        return otc_adjust(
+        ref = stack_variables(ref)
+        hist = stack_variables(hist)
+
+        scen = otc_adjust(
             xr.Dataset({"ref": ref, "hist": hist}),
             bin_width=bin_width,
             bin_origin=bin_origin,
             numItermax=numItermax,
             group=group,
         ).scen
+
+        return unstack_variables(scen)
 
 
 class dOTC:
@@ -1245,7 +1251,11 @@ class dOTC:
         cov_factor="std",
         group: str | Grouper = "time",
     ):
-        return dotc_adjust(
+        ref = stack_variables(ref)
+        hist = stack_variables(hist)
+        sim = stack_variables(sim)
+
+        scen = dotc_adjust(
             xr.Dataset({"ref": ref, "hist": hist, "sim": sim}),
             bin_width=bin_width,
             bin_origin=bin_origin,
@@ -1253,6 +1263,8 @@ class dOTC:
             cov_factor=cov_factor,
             group=group,
         ).scen
+
+        return unstack_variables(scen)
 
 
 try:
