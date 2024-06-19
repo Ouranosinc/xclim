@@ -689,21 +689,28 @@ def _otc_adjust(
     return out
 
 
+@map_groups(scen=[Grouper.DIM])
 def otc_adjust(
-    ref: xr.DataArray,
-    hist: xr.DataArray,
-    bin_width: np.ndarray | None,
-    bin_origin: np.ndarray | None,
-    numItermax: int | None,
+    ds: xr.Dataset,
+    dim: str,
+    bin_width: np.ndarray | None = None,
+    bin_origin: np.ndarray | None = None,
+    numItermax: int | None = 100_000_000,
 ):
     """Optimal Transport Correction of the bias of `hist` with respect to `ref`.
 
+    Notes
+    -----
+    Dataset variables:
+      ref : training target
+      hist : training data
+
     Parameters
     ----------
-    ref : xr.DataArray
-        Bias correction reference, target of optimal transport.
-    hist : xr.DataArray
-        Historical data to be corrected.
+    ds : xr.Dataset
+        The dataset containing the data.
+    dim : str
+        The dimension along which to compute the quantiles.
     bin_width : np.ndarray | None
         Bin widths for all dimensions.
     bin_origin : np.ndarray | None
@@ -713,13 +720,13 @@ def otc_adjust(
 
     Returns
     -------
-    xr.DataArray
+    xr.Dataset
         Adjusted data
     """
-    out = xr.apply_ufunc(
+    scen = xr.apply_ufunc(
         _otc_adjust,
-        hist,
-        ref,
+        ds.hist,
+        ds.ref,
         kwargs=dict(
             bin_width=bin_width,
             bin_origin=bin_origin,
@@ -730,9 +737,9 @@ def otc_adjust(
         output_core_dims=[["time", "multivar"]],
         keep_attrs=True,
         vectorize=True,
-    )
+    ).rename("scen")
 
-    return out.T
+    return scen.T.to_dataset()
 
 
 def _dotc_adjust(
@@ -817,25 +824,30 @@ def _dotc_adjust(
     return Z1
 
 
+@map_groups(scen=[Grouper.DIM])
 def dotc_adjust(
-    ref: xr.DataArray,
-    hist: xr.DataArray,
-    sim: xr.DataArray,
-    bin_width: np.ndarray | None,
-    bin_origin: np.ndarray | None,
+    ds: xr.Dataset,
+    dim: str,
+    bin_width: np.ndarray | None = None,
+    bin_origin: np.ndarray | None = None,
     numItermax: int | None = 100_000_000,
     cov_factor: str | None = "std",
 ):
     """Dynamical Optimal Transport Correction of the bias of X with respect to Y.
 
+    Notes
+    -----
+    Dataset variables:
+      ref : training target
+      hist : training data
+      sim : simulated data
+
     Parameters
     ----------
-    ref : xr.DataArray
-        Bias correction reference, target of optimal transport.
-    hist : xr.DataArray
-        Historical data to be corrected.
-    sim : xr.DataArray
-        Simulation data to adjust.
+    ds : xr.Dataset
+        The dataset containing the data.
+    dim : str
+        The dimension along which to compute the quantiles.
     bin_width : np.ndarray | None
         Bin widths for all dimensions.
     bin_origin : np.ndarray | None
@@ -850,11 +862,11 @@ def dotc_adjust(
     xr.DataArray
         Adjusted data
     """
-    ref = ref.rename(time="time_cal")
-    hist = hist.rename(time="time_cal")
-    sim = sim.rename(time="time_tgt")
+    ref = ds.ref.dropna(dim="time").rename(time="time_cal")
+    hist = ds.hist.dropna(dim="time").rename(time="time_cal")
+    sim = ds.sim.dropna(dim="time").rename(time="time_tgt")
 
-    return xr.apply_ufunc(
+    scen = xr.apply_ufunc(
         _dotc_adjust,
         sim,
         ref,
@@ -874,4 +886,6 @@ def dotc_adjust(
         output_core_dims=[["time_tgt", "multivar"]],
         keep_attrs=True,
         vectorize=True,
-    ).rename(time_tgt="time")
+    ).rename("scen", time_tgt="time")
+
+    return scen.to_dataset()

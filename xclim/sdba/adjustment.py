@@ -1219,14 +1219,15 @@ class OTC:
         bin_width=None,
         bin_origin=None,
         numItermax=100_000_000,
+        group: str | Grouper = "time",
     ):
         return otc_adjust(
-            ref,
-            hist,
-            bin_width,
-            bin_origin,
-            numItermax,
-        )
+            xr.Dataset({"ref": ref, "hist": hist}),
+            bin_width=bin_width,
+            bin_origin=bin_origin,
+            numItermax=numItermax,
+            group=group,
+        ).scen
 
 
 class dOTC:
@@ -1242,16 +1243,16 @@ class dOTC:
         bin_origin=None,
         numItermax=100_000_000,
         cov_factor="std",
+        group: str | Grouper = "time",
     ):
         return dotc_adjust(
-            ref,
-            hist,
-            sim,
-            bin_width,
-            bin_origin,
-            numItermax,
-            cov_factor,
-        )
+            xr.Dataset({"ref": ref, "hist": hist, "sim": sim}),
+            bin_width=bin_width,
+            bin_origin=bin_origin,
+            numItermax=numItermax,
+            cov_factor=cov_factor,
+            group=group,
+        ).scen
 
 
 try:
