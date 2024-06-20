@@ -303,7 +303,7 @@ max-complexity = 20
 
 [tool.ruff.lint.per-file-ignores]
 "docs/*.py" = ["D100", "D101", "D102", "D103"]
-"tests/**/test_*.py" = ["D100", "D101", "D102", "D103", "N802"]
+"tests/**/*test*.py" = ["D100", "D101", "D102", "D103", "N802"]
 "xclim/**/__init__.py" = ["F401", "F403"]
 "xclim/core/indicator.py" = ["D214", "D405", "D406", "D407", "D411"]
 "xclim/core/locales.py" = ["E501", "W505"]
