@@ -8,6 +8,10 @@ Contributors to this version: Trevor James Smith (:user:`Zeitsperre`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
+* `netcdf4` has been pinned below v1.7 for test stability reasons. (:pull:`1791`).
+
+Internal changes
+^^^^^^^^^^^^^^^^
 * GitHub repository now uses Rulesets for branch protection. (:pull:`1790`).
 * Version bumping and project triage is now handled by the Ouranos Helper GitHub App. (:pull:`1790`).
 
