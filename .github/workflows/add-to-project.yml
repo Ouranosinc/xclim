@@ -31,7 +31,8 @@ jobs:
           app-id: ${{ secrets.OURANOS_HELPER_BOT_ID }}
           private-key: ${{ secrets.OURANOS_HELPER_BOT_KEY }}
 
-      - uses: actions/add-to-project@9bfe908f2eaa7ba10340b31e314148fcfe6a2458 # v1.0.1
+      - name: Add Issue to xclim Project
+        uses: actions/add-to-project@9bfe908f2eaa7ba10340b31e314148fcfe6a2458 # v1.0.1
         with:
           project-url: https://github.com/orgs/Ouranosinc/projects/6
           github-token: ${{ steps.token_generator.outputs.token }}

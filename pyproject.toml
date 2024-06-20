@@ -57,19 +57,18 @@ dev = [
   # Dev tools and testing
   "black[jupyter] ==24.4.2",
   "blackdoc ==0.3.9",
-  "bump-my-version >=0.17.1",
-  "codespell",
-  "coverage[toml]",
+  "bump-my-version >=0.23.0",
+  "codespell ==2.3.0",
+  "coverage[toml] >=7.5.0",
   "coveralls >=4.0.0",
   "flake8 >=7.0.0",
-  "flake8-alphabetize",
   "flake8-rst-docstrings",
   "h5netcdf",
   "ipython",
   "isort ==5.13.2",
   "mypy",
   "nbconvert <7.14", # Pinned due to directive errors in sphinx. See: https://github.com/jupyter/nbconvert/issues/2092
-  "nbqa",
+  "nbqa >=1.8.2",
   "nbval",
   "netCDF4 >=1.4",
   "pandas-stubs >=2.2",
@@ -81,9 +80,9 @@ dev = [
   "pytest-cov",
   "pytest-socket",
   "pytest-xdist[psutil] >=3.2",
-  "ruff >=0.3.0",
+  "ruff >=0.4.0",
   "tokenize-rt",
-  "tox >=4.5",
+  "tox >=4.15.1",
   # "tox-conda",  # Will be added when a tox@v4.0+ compatible plugin is released.
   "tox-gh >=1.3.1",
   "vulture ==2.11",
@@ -97,7 +96,7 @@ dev = [
   "nbsphinx",
   "nc-time-axis",
   "pooch",
-  "sphinx",
+  "sphinx >=7.0.0",
   "sphinx-autobuild >=2024.4.16",
   "sphinx-autodoc-typehints",
   "sphinx-codeautolink",
@@ -166,6 +165,7 @@ omit = ["tests/*.py"]
 include = [
   "AUTHORS.rst",
   "CHANGES.rst",
+  "CI/requirements_upstream.txt",
   "CITATION.cff",
   "CONTRIBUTING.rst",
   "LICENSE",
@@ -179,7 +179,6 @@ include = [
   "docs/conf.py",
   "docs/make.bat",
   "docs/notebooks/_finder.py",
-  "requirements_upstream.txt",
   "tests/**/*.py",
   "tests/**/*.txt",
   "tox.ini",
@@ -192,6 +191,7 @@ exclude = [
   "**/*.py[co]",
   "**/__pycache__",
   ".*",
+  "CI/requirements_ci.txt",
   "docs/_*",
   "docs/modules.rst",
   "docs/paper/*",
@@ -262,18 +262,22 @@ exclude = [
 line-ending = "auto"
 
 [tool.ruff.lint]
-ignore = [
-  "D205",
-  "D400",
-  "D401"
+extend-select = [
+  "RUF022" # unsorted-dunder-all
 ]
+ignore = [
+  "D205", # blank-line-after-summary
+  "D400", # ends-in-period
+  "D401" # non-imperative-mood
+]
+preview = true
 select = [
-  "C9",
-  "D",
-  "E",
-  "F",
-  "N802",
-  "W"
+  "C90", # mccabe-complexity
+  "D", # docstrings
+  "E", # pycodestyle errors
+  "F", # pyflakes
+  "N802", # invalid-function-name
+  "W" # pycodestyle warnings
 ]
 
 [tool.ruff.lint.flake8-bandit]

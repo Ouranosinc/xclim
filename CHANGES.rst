@@ -2,6 +2,15 @@
 Changelog
 =========
 
+v0.51.0 (unreleased)
+--------------------
+Contributors to this version: Trevor James Smith (:user:`Zeitsperre`).
+
+Internal changes
+^^^^^^^^^^^^^^^^
+* GitHub repository now uses Rulesets for branch protection. (:pull:`1790`).
+* Version bumping and project triage is now handled by the Ouranos Helper GitHub App. (:pull:`1790`).
+
 v0.50.0 (2024-06-17)
 --------------------
 Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Éric Dupuis (:user:`coxipi`).
