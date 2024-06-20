@@ -345,7 +345,7 @@ def convert_calendar(
             "In `xclim` v0.50.0, `convert_calendar` is a direct copy of `xarray.coding.calendar_ops.convert_calendar`. "
             "To retrieve the previous behaviour of doy=True, do convert_doy(obj, target_cal).convert_cal(target_cal)."
         )
-    target, usecf = _get_usecf_and_warn(
+    target, _usecf = _get_usecf_and_warn(
         target,
         "convert_calendar",
         "xarray.coding.calendar_ops.convert_calendar or obj.convert_calendar",

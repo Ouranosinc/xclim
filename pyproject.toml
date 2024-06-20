@@ -295,7 +295,7 @@ xarray = "xr"
 known-first-party = ["xclim"]
 case-sensitive = true
 detect-same-package = false
-lines-after-imports = 1
+lines-after-imports = 2
 no-lines-before = ["future", "standard-library"]
 
 [tool.ruff.lint.mccabe]
@@ -303,7 +303,7 @@ max-complexity = 20
 
 [tool.ruff.lint.per-file-ignores]
 "docs/*.py" = ["D100", "D101", "D102", "D103"]
-"tests/*.py" = ["D100", "D101", "D102", "D103", "N802"]
+"tests/**/test_*.py" = ["D100", "D101", "D102", "D103", "N802"]
 "xclim/**/__init__.py" = ["F401", "F403"]
 "xclim/core/indicator.py" = ["D214", "D405", "D406", "D407", "D411"]
 "xclim/core/locales.py" = ["E501", "W505"]
