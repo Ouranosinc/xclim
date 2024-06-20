@@ -285,7 +285,7 @@ def nan_calc_percentiles(
     beta: float = 1.0,
     copy: bool = True,
 ) -> np.ndarray:
-    """Convert the percentiles to quantiles and compute them using _nan_quantile."""
+    """Convert the percentiles to quantiles and compute them using nan_quantile."""
     if percentiles is None:
         _percentiles = [50.0]
     else:
@@ -296,7 +296,7 @@ def nan_calc_percentiles(
         # doing it again is extremely costly, especially with dask.
         arr = arr.copy()
     quantiles = np.array([per / 100.0 for per in _percentiles])
-    return _nan_quantile(arr, quantiles, axis, alpha, beta)
+    return nan_quantile(arr, quantiles, axis, alpha, beta)
 
 
 def _compute_virtual_index(
@@ -419,7 +419,7 @@ def _linear_interpolation(
     return lerp_interpolation
 
 
-def _nan_quantile(
+def nan_quantile(
     arr: np.ndarray,
     quantiles: np.ndarray,
     axis: int = 0,

@@ -12,7 +12,7 @@ from numba import boolean, float32, float64, guvectorize, njit
 from xarray import DataArray, apply_ufunc
 from xarray.core import utils
 
-from xclim.core.utils import _nan_quantile
+from xclim.core.utils import nan_quantile
 
 try:
     from fastnanquantile.xrcompat import xr_apply_nanquantile
@@ -74,13 +74,13 @@ def vecquantiles(
 def _wrapper_quantile1d(arr, q):
     out = np.empty((arr.shape[0], q.size), dtype=arr.dtype)
     for index in range(out.shape[0]):
-        out[index] = _nan_quantile(arr[index], q)
+        out[index] = nan_quantile(arr[index], q)
     return out
 
 
 def _quantile(arr, q, nreduce):
     if arr.ndim == nreduce:
-        out = _nan_quantile(arr.flatten(), q)
+        out = nan_quantile(arr.flatten(), q)
     else:
         # dimensions that are reduced by quantile
         red_axis = np.arange(len(arr.shape) - nreduce, len(arr.shape))
@@ -96,7 +96,22 @@ def _quantile(arr, q, nreduce):
 
 
 def quantile(da, q, dim):
-    """Compute the quantiles from a fixed list `q`."""
+    """Compute the quantiles from a fixed list `q`.
+
+    Parameters
+    ----------
+    da : xarray.DataArray
+        The data to compute the quantiles on.
+    q : array-like
+        The quantiles to compute.
+    dim : str or sequence of str
+        The dimension along which to compute the quantiles.
+
+    Returns
+    -------
+    xarray.DataArray
+        The quantiles computed along the `dim` dimension.
+    """
     if USE_FASTNANQUANTILE is True:
         return xr_apply_nanquantile(da, dim=dim, q=q).rename({"quantile": "quantiles"})
     else:
