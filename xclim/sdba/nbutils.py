@@ -95,7 +95,7 @@ def _quantile(arr, q, nreduce):
     return out
 
 
-def quantile(da, q, dim):
+def quantile(da: DataArray, q: np.ndarray, dim: str | Sequence[Hashable]) -> DataArray:
     """Compute the quantiles from a fixed list `q`.
 
     Parameters
@@ -233,12 +233,6 @@ def _escore(tgt, sim, out):
 
 
 @njit(
-    #    [
-    #        float32[:,:](float32[:]),
-    #        float64[:,:](float64[:]),
-    #        float32[:,:](float32[:,:]),
-    #        float64[:,:](float64[:,:]),
-    #    ],
     fastmath=False,
     nogil=True,
     cache=False,
@@ -256,10 +250,6 @@ def _first_and_last_nonnull(arr):
 
 
 @njit(
-    #    [
-    #        float64[:](float32[:],float32[:],float32[:],float32[:],float32[:],float32[:],optional(typeof("constant"))),
-    #        float64[:](float64[:],float64[:],float64[:],float64[:],float64[:],float64[:],optional(typeof("constant"))),
-    #    ],
     fastmath=False,
     nogil=True,
     cache=False,
@@ -288,10 +278,6 @@ def _extrapolate_on_quantiles(
 
 
 @njit(
-    #    [
-    #        typeof((float64[:,:],float64,float64))(float32[:],float32[:],optional(boolean)),
-    #        typeof((float64[:,:],float64,float64))(float64[:],float64[:],optional(boolean)),
-    #    ],
     fastmath=False,
     nogil=True,
     cache=False,
