@@ -1510,7 +1510,7 @@ class MBCn(MultivariateTrainAdjust):
     """
 
     @classmethod
-    def train(
+    def _train(
         cls,
         ref: xr.Dataset,
         hist: xr.Dataset,
@@ -1585,15 +1585,9 @@ class MBCn(MultivariateTrainAdjust):
             standard_name="Adjustment factors",
             long_name="Quantile mapping adjustment factors",
         )
-        obj = cls(
-            _trained=True,
-            hist_calendar=get_calendar(hist),
-            **params,
-        )
-        obj.set_dataset(out)
-        return obj
+        return out, params
 
-    def adjust(
+    def _adjust(
         self,
         sim: xr.Dataset,
         *,
