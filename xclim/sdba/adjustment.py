@@ -423,8 +423,6 @@ class MultivariateTrainAdjust(BaseAdjustment):
         infostr = f"{str(self)}.adjust(sim, {params})"
         scen.attrs["history"] = update_history(f"Bias-adjusted with {infostr}", sim)
         scen.attrs["bias_adjustment"] = infostr
-        # This should not be done IMO, if scen ends up with wrong units, we want to know, no hide it
-        # scen.attrs["units"] = self.train_units
         return scen
 
     def set_dataset(self, ds: xr.Dataset):
@@ -455,7 +453,7 @@ class MultivariateAdjust(BaseAdjustment):
         cls,
         ref: xr.Dataset,
         hist: xr.Dataset,
-        sim: xr.Dataset,
+        sim: xr.Dataset | None = None,
         **kwargs,
     ) -> xr.Dataset:
         r"""Return bias-adjusted data. Refer to the class documentation for the algorithm details.
@@ -466,8 +464,8 @@ class MultivariateAdjust(BaseAdjustment):
             Training target, usually a reference time series drawn from observations.
         hist : xr.Dataset
             Training data, usually a model output whose biases are to be adjusted.
-        sim : xr.Dataset
-            Time series to be bias-adjusted, usually a model output.
+        sim : xr.Dataset, optional.
+            Time series to be bias-adjusted, usually a model output. If `None`, `hist` will be used for adjustments.
         \*\*kwargs
             Algorithm-specific keyword arguments, see class doc.
 
@@ -478,6 +476,10 @@ class MultivariateAdjust(BaseAdjustment):
         """
         kwargs = parse_group(cls._adjust, kwargs)
         skip_checks = kwargs.pop("skip_input_checks", False)
+
+        kwargs["adjust_hist"] = sim is None
+        if sim is None:
+            sim = hist.copy()
 
         if not skip_checks:
             if "group" in kwargs:
@@ -491,7 +493,6 @@ class MultivariateAdjust(BaseAdjustment):
         infostr = f"{cls.__name__}.adjust(ref, hist, sim, {params})"
         scen.attrs["history"] = update_history(f"Bias-adjusted with {infostr}", sim)
         scen.attrs["bias_adjustment"] = infostr
-        #  scen.attrs["units"] = ref.units
         return scen
 
 
