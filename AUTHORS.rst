@@ -29,7 +29,7 @@ Contributors
 * David Caron `@davidcaron <https://github.com/davidcaron>`_
 * Carsten Ehbrecht <ehbrecht@dkrz.de> `@cehbrecht <https://github.com/cehbrecht>`_
 * Jeremy Fyke `@jeremyfyke <https://github.com/jeremyfyke>`_
-* Sarah Gammon `@SarahG-579462 <https://github.com/SarahG-579462>`
+* Sarah Gammon `@SarahG-579462 <https://github.com/SarahG-579462>`_
 * Tom Keel <thomas.keel.18@ucl.ac.uk> `@Thomasjkeel <https://github.com/Thomasjkeel>`_
 * Marie-Pier Labonté <labonte.marie-pier@ouranos.ca> `@marielabonte <https://github.com/marielabonte>`_
 * Ludwig Lierhammer <ludwig.lierhammer@hereon.de> `@ludwiglierhammer <https://github.com/ludwiglierhammer>`_
