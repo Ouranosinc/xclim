@@ -1,3 +1,4 @@
+# pylint: disable=no-value-for-parameter
 """
 Adjustment Algorithms
 =====================
@@ -10,6 +11,7 @@ from __future__ import annotations
 import numpy as np
 import xarray as xr
 
+from xclim import set_options
 from xclim.core.units import convert_units_to, infer_context, units
 from xclim.indices.stats import _fitfunc_1d  # noqa
 
@@ -18,7 +20,7 @@ from . import utils as u
 from ._processing import _adapt_freq
 from .base import Grouper, map_blocks, map_groups
 from .detrending import PolyDetrend
-from .processing import escore
+from .processing import escore, jitter_under_thresh, reordering, standardize
 
 
 def _adapt_freq_hist(ds: xr.Dataset, adapt_freq_thresh: str):
@@ -43,6 +45,7 @@ def dqm_train(
     kind: str,
     quantiles: np.ndarray,
     adapt_freq_thresh: str | None = None,
+    jitter_under_thresh_value,
 ) -> xr.Dataset:
     """Train step on one group.
 
@@ -55,14 +58,16 @@ def dqm_train(
     Parameters
     ----------
     ds : xr.Dataset
-        The dataset containing the training data.
+        Dataset variables:
+            ref : training target
+            hist : training source
     dim : str
         The dimension along which to compute the quantiles.
     kind : str
         The kind of correction to compute. See :py:func:`xclim.sdba.utils.get_correction`.
     quantiles : array-like
         The quantiles to compute.
-    adapt_freq_thresh : str | None
+    adapt_freq_thresh : str, optional
         Threshold for frequency adaptation. See :py:class:`xclim.sdba.processing.adapt_freq` for details.
         Default is None, meaning that frequency adaptation is not performed.
 
@@ -71,17 +76,24 @@ def dqm_train(
     xr.Dataset
         The dataset containing the adjustment factors, the quantiles over the training data, and the scaling factor.
     """
-    hist = _adapt_freq_hist(ds, adapt_freq_thresh) if adapt_freq_thresh else ds.hist
+    ds["hist"] = (
+        jitter_under_thresh(ds.hist, jitter_under_thresh_value)
+        if jitter_under_thresh_value
+        else ds.hist
+    )
+    ds["hist"] = (
+        _adapt_freq_hist(ds, adapt_freq_thresh) if adapt_freq_thresh else ds.hist
+    )
 
     refn = u.apply_correction(ds.ref, u.invert(ds.ref.mean(dim), kind), kind)
-    histn = u.apply_correction(hist, u.invert(hist.mean(dim), kind), kind)
+    histn = u.apply_correction(ds.hist, u.invert(ds.hist.mean(dim), kind), kind)
 
     ref_q = nbu.quantile(refn, quantiles, dim)
     hist_q = nbu.quantile(histn, quantiles, dim)
 
     af = u.get_correction(hist_q, ref_q, kind)
     mu_ref = ds.ref.mean(dim)
-    mu_hist = hist.mean(dim)
+    mu_hist = ds.hist.mean(dim)
     scaling = u.get_correction(mu_hist, mu_ref, kind=kind)
 
     return xr.Dataset(data_vars=dict(af=af, hist_q=hist_q, scaling=scaling))
@@ -98,6 +110,7 @@ def eqm_train(
     kind: str,
     quantiles: np.ndarray,
     adapt_freq_thresh: str | None = None,
+    jitter_under_thresh_value,
 ) -> xr.Dataset:
     """EQM: Train step on one group.
 
@@ -110,14 +123,16 @@ def eqm_train(
     Parameters
     ----------
     ds : xr.Dataset
-        The dataset containing the training data.
+        Dataset variables:
+            ref : training target
+            hist : training source
     dim : str
         The dimension along which to compute the quantiles.
     kind : str
         The kind of correction to compute. See :py:func:`xclim.sdba.utils.get_correction`.
     quantiles : array-like
         The quantiles to compute.
-    adapt_freq_thresh : str | None
+    adapt_freq_thresh : str, optional
         Threshold for frequency adaptation. See :py:class:`xclim.sdba.processing.adapt_freq` for details.
         Default is None, meaning that frequency adaptation is not performed.
 
@@ -126,13 +141,293 @@ def eqm_train(
     xr.Dataset
         The dataset containing the adjustment factors and the quantiles over the training data.
     """
-    hist = _adapt_freq_hist(ds, adapt_freq_thresh) if adapt_freq_thresh else ds.hist
+    ds["hist"] = (
+        jitter_under_thresh(ds.hist, jitter_under_thresh_value)
+        if jitter_under_thresh_value
+        else ds.hist
+    )
+    ds["hist"] = (
+        _adapt_freq_hist(ds, adapt_freq_thresh) if adapt_freq_thresh else ds.hist
+    )
     ref_q = nbu.quantile(ds.ref, quantiles, dim)
-    hist_q = nbu.quantile(hist, quantiles, dim)
+    hist_q = nbu.quantile(ds.hist, quantiles, dim)
 
     af = u.get_correction(hist_q, ref_q, kind)
 
     return xr.Dataset(data_vars=dict(af=af, hist_q=hist_q))
+
+
+def _npdft_train(ref, hist, rots, quantiles, method, extrap, n_escore):
+    r"""Npdf transform to correct a source `hist` into target `ref`.
+
+    Perform a rotation, bias correct `hist` into `ref` with QuantileDeltaMapping, and rotate back.
+    Do this iteratively over all rotations `rots` and conserve adjustment factors `af_q` in each iteration.
+    """
+    af_q = np.zeros((len(rots), ref.shape[0], len(quantiles)))
+    escores = np.zeros(len(rots)) * np.NaN
+    if n_escore > 0:
+        ref_step, hist_step = (
+            int(np.ceil(arr.shape[1] / n_escore)) for arr in [ref, hist]
+        )
+    for ii in range(len(rots)):
+        rot = rots[0] if ii == 0 else rots[ii] @ rots[ii - 1].T
+        ref, hist = (rot @ da for da in [ref, hist])
+        # loop over variables
+        for iv in range(ref.shape[0]):
+            ref_q, hist_q = (nbu._quantile(da, quantiles) for da in [ref[iv], hist[iv]])
+            af_q[ii, iv] = u.get_correction(hist_q, ref_q, "+")
+            af = u._interp_on_quantiles_1D(
+                u._rank_bn(hist[iv]),
+                quantiles,
+                af_q[ii, iv],
+                method=method,
+                extrap=extrap,
+            )
+            hist[iv] = u.apply_correction(hist[iv], af, "+")
+        if n_escore > 0:
+            escores[ii] = nbu._escore(ref[:, ::ref_step], hist[:, ::hist_step])
+    hist = rots[-1].T @ hist
+    return af_q, escores
+
+
+def mbcn_train(
+    ds,
+    rot_matrices,
+    pts_dims,
+    quantiles,
+    g_idxs,
+    gw_idxs,
+    interp,
+    extrapolation,
+    n_escore,
+) -> xr.Dataset:
+    """Npdf transform training.
+
+    Adjusting factors obtained for each rotation in the npdf transform and conserved to be applied in
+    the adjusting step in ``mcbn_adjust``.
+
+    Parameters
+    ----------
+    ds : xr.Dataset
+        Dataset variables:
+            ref : training target  (stacked variables)
+            hist : training source (stacked variables)
+    rot_matrices : xr.DataArray
+        The rotation matrices as a 3D array ('iterations', <pts_dims[0]>, <pts_dims[1]>), with shape (n_iter, <N>, <N>).
+    pts_dims : str
+        The name of the "multivariate" dimension and its primed counterpart. Defaults to "multivar", which
+        is the normal case when using :py:func:`xclim.sdba.base.stack_variables`, and "multivar_prime",
+    g_idxs : xr.DataArray
+        Indices of the times in each time group
+    gw_idxs : xr.DataArray
+        Indices of the times in each windowed time group
+    """
+    # unpack data
+    ref = ds.ref
+    hist = ds.hist
+    gr_dim = gw_idxs.attrs["group_dim"]
+
+    # npdf training core
+    af_q_l = []
+    escores_l = []
+
+    # loop over time blocks
+    for ib in range(gw_idxs[gr_dim].size):
+        # indices in a given time block
+        indices = gw_idxs[{gr_dim: ib}].astype(int).values
+        ind = indices[indices >= 0]
+
+        # npdft training : multiple rotations on standardized datasets
+        # keep track of adjustment factors in each rotation for later use
+        af_q, escores = xr.apply_ufunc(
+            _npdft_train,
+            standardize(ref[{"time": ind}])[0],
+            standardize(hist[{"time": ind}])[0],
+            rot_matrices,
+            quantiles,
+            input_core_dims=[
+                [pts_dims[0], "time"],
+                [pts_dims[0], "time"],
+                ["iterations", pts_dims[1], pts_dims[0]],
+                ["quantiles"],
+            ],
+            output_core_dims=[
+                ["iterations", pts_dims[1], "quantiles"],
+                ["iterations"],
+            ],
+            dask="parallelized",
+            output_dtypes=[hist.dtype, hist.dtype],
+            kwargs={"method": interp, "extrap": extrapolation, "n_escore": n_escore},
+            vectorize=True,
+        )
+        af_q_l.append(af_q.expand_dims({gr_dim: [ib]}))
+        escores_l.append(escores.expand_dims({gr_dim: [ib]}))
+    af_q = xr.concat(af_q_l, dim=gr_dim)
+    escores = xr.concat(escores_l, dim=gr_dim)
+    out = xr.Dataset(dict(af_q=af_q, escores=escores)).assign_coords(
+        {"quantiles": quantiles, gr_dim: gw_idxs[gr_dim].values}
+    )
+    return out
+
+
+def _npdft_adjust(sim, af_q, rots, quantiles, method, extrap):
+    """Npdf transform adjusting.
+
+    Adjusting factors `af_q` obtained in the training step are applied on the simulated data `sim` at each iterated
+    rotation
+    """
+    # add dummy dim  if period_dim absent to uniformize the function below
+    # This could be done at higher level, not sure where is best
+    if dummy_dim_added := (len(sim.shape) == 2):
+        sim = sim[:, np.newaxis, :]
+
+    # adjust npdft
+    for ii in range(len(rots)):
+        rot = rots[0] if ii == 0 else rots[ii] @ rots[ii - 1].T
+        sim = np.einsum("ij,j...->i...", rot, sim)
+        # loop over variables
+        for iv in range(sim.shape[0]):
+            af = u._interp_on_quantiles_1D_multi(
+                u._rank_bn(sim[iv], axis=-1),
+                quantiles,
+                af_q[ii, iv],
+                method=method,
+                extrap=extrap,
+            )
+            sim[iv] = u.apply_correction(sim[iv], af, "+")
+
+    rot = rots[-1].T
+    sim = np.einsum("ij,j...->i...", rot, sim)
+    if dummy_dim_added:
+        sim = sim[:, 0, :]
+
+    return sim
+
+
+def mbcn_adjust(
+    ref,
+    hist,
+    sim,
+    ds,
+    pts_dims,
+    interp,
+    extrapolation,
+    base,
+    base_kws_vars,
+    adj_kws,
+    period_dim,
+) -> xr.DataArray:
+    """Perform the adjustment portion MBCn multivariate bias correction technique.
+
+    The function ``mbcn_train`` pre-computes the adjustment factors for each rotation
+    in the npdf portion of the MBCn algorithm. The rest of adjustment is performed here
+    in ``mbcn_adjust``.
+
+    ref : xr.Dataset
+        training target
+    hist : xr.Dataset
+        training source
+    sim : xr.DataArray
+        data to adjust (stacked with multivariate dimension)
+    ds.rot_matrices : xr.DataArray
+        Rotation matrices used in the training step.
+    ds.af_q : xr.DataArray
+        Adjustment factors obtained in the training step for the npdf transform
+    ds.g_idxs : xr.DataArray
+        Indices of the times in each time group
+    ds.gw_idxs : xr.DataArray
+        Indices of the times in each windowed time group
+    pts_dims : [str, str]
+        The name of the "multivariate" dimension and its primed counterpart. Defaults to "multivar", which
+        is the normal case when using :py:func:`xclim.sdba.base.stack_variables`, and "multivar_prime"
+    interp : str
+        Interpolation method for the npdf transform (same as in the training step)
+    extrapolation : str
+        Extrapolation method for the npdf transform (same as in the training step)
+    base : BaseAdjustment
+        Bias-adjustment class used for the univariate bias correction.
+    base_kws_vars : Dict
+        Options for univariate training for the scenario that is reordered with the output of npdf transform.
+        The arguments are those expected by TrainAdjust classes along with
+        - kinds : Dict of correction kinds for each variable (e.g. {"pr":"*", "tasmax":"+"})
+    adj_kws : Dict
+        Options for univariate adjust for the scenario that is reordered with the output of npdf transform
+    period_dim : str | None (defaults to None)
+        Name of the period dimension used when stacking time periods of `sim`  using :py:func:`xclim.core.calendar.stack_periods`.
+        If specified, the interpolation of the npdf transform is performed only once and applied on all periods simultaneously.
+        This should be more performant, but also more memory intensive.
+    """
+    # unpacking training parameters
+    rot_matrices = ds.rot_matrices
+    af_q = ds.af_q
+    quantiles = af_q.quantiles
+    g_idxs = ds.g_idxs
+    gw_idxs = ds.gw_idxs
+    gr_dim = gw_idxs.attrs["group_dim"]
+    win = gw_idxs.attrs["group"][1]
+
+    # this way of handling was letting open the possibility to perform
+    # interpolation for multiple periods in the simulation all at once
+    # in principle, avoiding redundancy. Need to test this on small data
+    # to confirm it works,  and on big data to check performance.
+    dims = ["time"] if period_dim is None else [period_dim, "time"]
+
+    sim_u = sim[pts_dims[0]].attrs["_units"]
+    # mbcn core
+    scen_mbcn = xr.zeros_like(sim)
+    for ib in range(gw_idxs[gr_dim].size):
+        # indices in a given time block (with and without the window)
+        indices_gw = gw_idxs[{gr_dim: ib}].astype(int).values
+        ind_gw = indices_gw[indices_gw >= 0]
+        indices_g = g_idxs[{gr_dim: ib}].astype(int).values
+        ind_g = indices_g[indices_g >= 0]
+
+        # 1. univariate adjustment of sim -> scen
+        # the kind may differ depending on the variables
+        scen_block = xr.zeros_like(sim[{"time": ind_gw}])
+        for iv, v in enumerate(sim[pts_dims[0]].values):
+            sl = {"time": ind_gw, pts_dims[0]: iv}
+            with set_options(sdba_extra_output=False):
+                ADJ = base.train(
+                    ref[v][{"time": ind_gw}],
+                    hist[v][{"time": ind_gw}],
+                    **base_kws_vars[v],
+                )
+                scen_block[{pts_dims[0]: iv}] = ADJ.adjust(
+                    sim[sl].assign_attrs({"units": sim_u[iv]}), **adj_kws
+                )
+
+        # 2. npdft adjustment of sim
+        npdft_block = xr.apply_ufunc(
+            _npdft_adjust,
+            standardize(sim[{"time": ind_gw}].copy(), dim="time")[0],
+            af_q[{gr_dim: ib}],
+            rot_matrices,
+            quantiles,
+            input_core_dims=[
+                [pts_dims[0]] + dims,
+                ["iterations", pts_dims[1], "quantiles"],
+                ["iterations", pts_dims[1], pts_dims[0]],
+                ["quantiles"],
+            ],
+            output_core_dims=[
+                [pts_dims[0]] + dims,
+            ],
+            dask="parallelized",
+            output_dtypes=[sim.dtype],
+            kwargs={"method": interp, "extrap": extrapolation},
+            vectorize=True,
+        )
+
+        # 3. reorder scen according to npdft results
+        reordered = reordering(ref=npdft_block, sim=scen_block)
+        if win > 1:
+            # keep  central value of window (intersecting indices in gw_idxs and g_idxs)
+            scen_mbcn[{"time": ind_g}] = reordered[{"time": np.in1d(ind_gw, ind_g)}]
+        else:
+            scen_mbcn[{"time": ind_g}] = reordered
+
+    return scen_mbcn
 
 
 @map_blocks(reduces=[Grouper.PROP, "quantiles"], scen=[])
@@ -141,17 +436,13 @@ def qm_adjust(
 ) -> xr.Dataset:
     """QM (DQM and EQM): Adjust step on one block.
 
-    Notes
-    -----
-    Dataset variables:
-      af : Adjustment factors
-      hist_q : Quantiles over the training data
-      sim : Data to adjust.
-
     Parameters
     ----------
     ds : xr.Dataset
-        The dataset containing the data to adjust.
+        Dataset variables:
+            af : Adjustment factors
+            hist_q : Quantiles over the training data
+            sim : Data to adjust.
     group : Grouper
         The grouper object.
     interp : str
@@ -192,18 +483,14 @@ def dqm_adjust(
 ) -> xr.Dataset:
     """DQM adjustment on one block.
 
-    Notes
-    -----
-    Dataset variables:
-      scaling : Scaling factor between ref and hist
-      af : Adjustment factors
-      hist_q : Quantiles over the training data
-      sim : Data to adjust
-
     Parameters
     ----------
     ds : xr.Dataset
-        The dataset containing the data to adjust.
+        Dataset variables:
+            scaling : Scaling factor between ref and hist
+            af : Adjustment factors
+            hist_q : Quantiles over the training data
+            sim : Data to adjust
     group : Grouper
         The grouper object.
     interp : str
@@ -212,7 +499,7 @@ def dqm_adjust(
         The kind of correction to compute. See :py:func:`xclim.sdba.utils.get_correction`.
     extrapolation : str
         The extrapolation method to use.
-    detrend : int | PolyDetrend
+    detrend : int or PolyDetrend
         The degree of the polynomial detrending to apply. If 0, no detrending is applied.
 
     Returns
@@ -255,12 +542,13 @@ def dqm_adjust(
 def qdm_adjust(ds: xr.Dataset, *, group, interp, extrapolation, kind) -> xr.Dataset:
     """QDM: Adjust process on one block.
 
-    Notes
-    -----
-    Dataset variables:
-      af : Adjustment factors
-      hist_q : Quantiles over the training data
-      sim : Data to adjust.
+    Parameters
+    ----------
+    ds : xr.Dataset
+        Dataset variables:
+            af : Adjustment factors
+            hist_q : Quantiles over the training data
+            sim : Data to adjust.
     """
     sim_q = group.apply(u.rank, ds.sim, main_only=True, pct=True)
     af = u.interp_on_quantiles(
@@ -283,11 +571,12 @@ def qdm_adjust(ds: xr.Dataset, *, group, interp, extrapolation, kind) -> xr.Data
 def loci_train(ds: xr.Dataset, *, group, thresh) -> xr.Dataset:
     """LOCI: Train on one block.
 
-    Notes
-    -----
-    Dataset variables:
-      ref : training target
-      hist : training data
+    Parameters
+    ----------
+    ds : xr.Dataset
+        Dataset variables:
+            ref : training target
+            hist : training data
     """
     s_thresh = group.apply(
         u.map_cdf, ds.rename(hist="x", ref="y"), y_value=thresh
@@ -308,11 +597,12 @@ def loci_train(ds: xr.Dataset, *, group, thresh) -> xr.Dataset:
 def loci_adjust(ds: xr.Dataset, *, group, thresh, interp) -> xr.Dataset:
     """LOCI: Adjust on one block.
 
-    Notes
-    -----
-    Dataset variables:
-      hist_thresh : Hist's equivalent thresh from ref
-      sim : Data to adjust
+    Parameters
+    ----------
+    ds : xr.Dataset
+        Dataset variables:
+            hist_thresh : Hist's equivalent thresh from ref
+            sim : Data to adjust
     """
     sth = u.broadcast(ds.hist_thresh, ds.sim, group=group, interp=interp)
     factor = u.broadcast(ds.af, ds.sim, group=group, interp=interp)
@@ -328,11 +618,12 @@ def loci_adjust(ds: xr.Dataset, *, group, thresh, interp) -> xr.Dataset:
 def scaling_train(ds: xr.Dataset, *, dim, kind) -> xr.Dataset:
     """Scaling: Train on one group.
 
-    Notes
-    -----
-    Dataset variables:
-      ref : training target
-      hist : training data
+    Parameters
+    ----------
+    ds : xr.Dataset
+        Dataset variables:
+            ref : training target
+            hist : training data
     """
     mhist = ds.hist.mean(dim)
     mref = ds.ref.mean(dim)
@@ -345,11 +636,12 @@ def scaling_train(ds: xr.Dataset, *, dim, kind) -> xr.Dataset:
 def scaling_adjust(ds: xr.Dataset, *, group, interp, kind) -> xr.Dataset:
     """Scaling: Adjust on one block.
 
-    Notes
-    -----
-    Dataset variables:
-      af : Adjustment factors.
-      sim : Data to adjust.
+    Parameters
+    ----------
+    ds : xr.Dataset
+        Dataset variables:
+            af: Adjustment factors.
+            sim : Data to adjust.
     """
     af = u.broadcast(ds.af, ds.sim, group=group, interp=interp)
     scen: xr.DataArray = u.apply_correction(ds.sim, af, kind).rename("scen")
