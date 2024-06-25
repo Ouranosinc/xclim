@@ -569,7 +569,7 @@ class TestUTCI:
 
         tas = dataset.tas
         hurs = dataset.hurs
-        sfcWind, sfcWindfromdir = atmos.wind_speed_from_vector(
+        sfcWind, _sfcWindfromdir = atmos.wind_speed_from_vector(
             uas=dataset.uas, vas=dataset.vas
         )
         rsds = dataset.rsds

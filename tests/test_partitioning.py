@@ -108,7 +108,7 @@ def test_lafferty_sriver_synthetic(random):
 
 
 def test_lafferty_sriver(lafferty_sriver_ds):
-    g, u = lafferty_sriver(lafferty_sriver_ds.tas)
+    _g, u = lafferty_sriver(lafferty_sriver_ds.tas)
 
     fu = fractional_uncertainty(u)
 
@@ -140,7 +140,7 @@ def test_lafferty_sriver(lafferty_sriver_ds):
             "Variability": fu.sel(uncertainty="variability").to_numpy().flatten(),
         }
 
-        fig, ax = plt.subplots()
+        _fig, ax = plt.subplots()
         ax.stackplot(
             np.arange(2015, 2101),
             udict.values(),
