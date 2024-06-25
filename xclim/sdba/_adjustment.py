@@ -157,12 +157,19 @@ def eqm_train(
     return xr.Dataset(data_vars=dict(af=af, hist_q=hist_q))
 
 
-def _npdft_train(ref, hist, rots, quantiles, method, extrap, n_escore):
+def _npdft_train(ref, hist, rots, quantiles, method, extrap, n_escore, standardize):
     r"""Npdf transform to correct a source `hist` into target `ref`.
 
     Perform a rotation, bias correct `hist` into `ref` with QuantileDeltaMapping, and rotate back.
     Do this iteratively over all rotations `rots` and conserve adjustment factors `af_q` in each iteration.
     """
+    if standardize:
+        ref = (ref - np.nanmean(ref, axis=-1, keepdims=True)) / (
+            np.nanstd(ref, axis=-1, keepdims=True)
+        )
+        hist = (hist - np.nanmean(hist, axis=-1, keepdims=True)) / (
+            np.nanstd(hist, axis=-1, keepdims=True)
+        )
     af_q = np.zeros((len(rots), ref.shape[0], len(quantiles)))
     escores = np.zeros(len(rots)) * np.NaN
     if n_escore > 0:
@@ -241,8 +248,8 @@ def mbcn_train(
         # keep track of adjustment factors in each rotation for later use
         af_q, escores = xr.apply_ufunc(
             _npdft_train,
-            standardize(ref[{"time": ind}])[0],
-            standardize(hist[{"time": ind}])[0],
+            ref[{"time": ind}],
+            hist[{"time": ind}],
             rot_matrices,
             quantiles,
             input_core_dims=[
@@ -257,7 +264,12 @@ def mbcn_train(
             ],
             dask="parallelized",
             output_dtypes=[hist.dtype, hist.dtype],
-            kwargs={"method": interp, "extrap": extrapolation, "n_escore": n_escore},
+            kwargs={
+                "method": interp,
+                "extrap": extrapolation,
+                "n_escore": n_escore,
+                "standardize": True,
+            },
             vectorize=True,
         )
         af_q_l.append(af_q.expand_dims({gr_dim: [ib]}))
