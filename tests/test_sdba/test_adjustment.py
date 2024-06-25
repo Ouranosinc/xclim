@@ -74,7 +74,7 @@ class TestLoci:
 
     @pytest.mark.requires_internet
     def test_reduce_dims(self, ref_hist_sim_tuto):
-        ref, hist, sim = ref_hist_sim_tuto()
+        ref, hist, _sim = ref_hist_sim_tuto()
         hist = hist.expand_dims(member=[0, 1])
         ref = ref.expand_dims(member=hist.member)
         LOCI.train(ref, hist, group="time", thresh="283 K", add_dims=["member"])

@@ -342,7 +342,7 @@ class TestEnsembleReduction:
         ds = open_dataset(self.nc_file)
 
         # use random state variable to ensure consistent clustering in tests:
-        [ids, cluster, fig_data] = ensembles.kmeans_reduce_ensemble(
+        [ids, _cluster, _fig_data] = ensembles.kmeans_reduce_ensemble(
             data=ds.data,
             method={"rsq_cutoff": 0.5},
             random_state=random_state,
@@ -353,7 +353,7 @@ class TestEnsembleReduction:
         assert len(ids) == 4
 
         # Test max cluster option
-        [ids, cluster, fig_data] = ensembles.kmeans_reduce_ensemble(
+        [ids, _cluster, _fig_data] = ensembles.kmeans_reduce_ensemble(
             data=ds.data,
             method={"rsq_cutoff": 0.5},
             random_state=random_state,
@@ -366,7 +366,7 @@ class TestEnsembleReduction:
     def test_kmeans_rsqopt(self, open_dataset, random_state):
         pytest.importorskip("sklearn", minversion="0.24.1")
         ds = open_dataset(self.nc_file)
-        [ids, cluster, fig_data] = ensembles.kmeans_reduce_ensemble(
+        [ids, _cluster, _fig_data] = ensembles.kmeans_reduce_ensemble(
             data=ds.data,
             method={"rsq_optimize": None},
             random_state=random_state,
@@ -377,7 +377,7 @@ class TestEnsembleReduction:
     def test_kmeans_nclust(self, open_dataset, random_state):
         ds = open_dataset(self.nc_file)
 
-        [ids, cluster, fig_data] = ensembles.kmeans_reduce_ensemble(
+        [ids, _cluster, _fig_data] = ensembles.kmeans_reduce_ensemble(
             data=ds.data,
             method={"n_clusters": 4},
             random_state=random_state,
@@ -385,7 +385,7 @@ class TestEnsembleReduction:
         )
         assert ids == [4, 7, 10, 23]
 
-        [ids, cluster, fig_data] = ensembles.kmeans_reduce_ensemble(
+        [ids, _cluster, _fig_data] = ensembles.kmeans_reduce_ensemble(
             ds.data,
             method={"n_clusters": 9},
             random_state=random_state,
@@ -400,7 +400,7 @@ class TestEnsembleReduction:
         # boost weights for some sims
         sample_weights[[0, 20]] = 15
 
-        [ids, cluster, fig_data] = ensembles.kmeans_reduce_ensemble(
+        [ids, _cluster, _fig_data] = ensembles.kmeans_reduce_ensemble(
             data=ds.data,
             method={"rsq_cutoff": 0.5},
             random_state=random_state,
@@ -414,7 +414,7 @@ class TestEnsembleReduction:
         # try zero weights
         sample_weights[[6, 18, 22]] = 0
 
-        [ids, cluster, fig_data] = ensembles.kmeans_reduce_ensemble(
+        [ids, _cluster, _fig_data] = ensembles.kmeans_reduce_ensemble(
             data=ds.data,
             method={"rsq_optimize": None},
             random_state=random_state,
@@ -432,7 +432,7 @@ class TestEnsembleReduction:
         # reduce weights for some variables
         var_weights[3:] = 0.25
 
-        [ids, cluster, fig_data] = ensembles.kmeans_reduce_ensemble(
+        [ids, _cluster, _fig_data] = ensembles.kmeans_reduce_ensemble(
             data=ds.data,
             method={"rsq_cutoff": 0.9},
             random_state=random_state,
@@ -445,7 +445,7 @@ class TestEnsembleReduction:
         var_weights = np.ones(ds.data.shape[1])
         var_weights[[1, 4]] = 0
 
-        [ids, cluster, fig_data] = ensembles.kmeans_reduce_ensemble(
+        [ids, _cluster, _fig_data] = ensembles.kmeans_reduce_ensemble(
             data=ds.data,
             method={"rsq_optimize": None},
             random_state=random_state,
@@ -463,7 +463,7 @@ class TestEnsembleReduction:
         model_weights[[4, 7, 10, 23]] = 0
 
         # set to zero for some models that are selected in n_cluster test - these models should not be selected now
-        [ids, cluster, fig_data] = ensembles.kmeans_reduce_ensemble(
+        [ids, cluster, _fig_data] = ensembles.kmeans_reduce_ensemble(
             data=ds.data,
             method={"n_clusters": 4},
             random_state=random_state,
@@ -484,7 +484,7 @@ class TestEnsembleReduction:
         ds = open_dataset(self.nc_file)
 
         # use random state variable to ensure consistent clustering in tests:
-        [ids, cluster, fig_data] = ensembles.kmeans_reduce_ensemble(
+        [ids, _cluster, _fig_data] = ensembles.kmeans_reduce_ensemble(
             data=ds.data,
             method={"rsq_cutoff": 0.5},
             random_state=random_state,
@@ -494,7 +494,7 @@ class TestEnsembleReduction:
         assert ids == [4, 7, 10, 23]
 
         # Test max cluster option
-        [ids, cluster, fig_data] = ensembles.kmeans_reduce_ensemble(
+        [ids, _cluster, _fig_data] = ensembles.kmeans_reduce_ensemble(
             data=ds.data,
             method={"rsq_cutoff": 0.5},
             random_state=random_state,
