@@ -726,7 +726,7 @@ class TestExtremeValues:
 
 
 class TestOTC:
-    def test_compare_sbck(self, random, series_Dataset):
+    def test_compare_sbck(self, random, series_dataset):
         ns = 1000
         u = random.random(ns)
 
@@ -756,8 +756,8 @@ class TestOTC:
             {"data": hist_x, "like": "tas"},
             {"data": hist_y, "like": "pr"},
         ]
-        ref = series_Dataset(ref_variables)
-        hist = series_Dataset(hist_variables)
+        ref = series_dataset(ref_variables)
+        hist = series_dataset(hist_variables)
 
         scen = OTC.adjust(ref, hist, bin_width=bin_width)
 

@@ -25,8 +25,8 @@ def series():
 
 
 @pytest.fixture
-def series_Dataset():
-    return tu.series_Dataset
+def series_dataset():
+    return tu.series_dataset
 
 
 @pytest.fixture
