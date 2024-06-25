@@ -141,7 +141,7 @@ class TestFit:
 
         # Test with MM
         pm = stats.fit(fitda, "lognorm", method="MM")
-        mm, mv = lognorm(*pm.values).stats()
+        mm, _mv = lognorm(*pm.values).stats()
         np.testing.assert_allclose(np.exp(2 + 1 / 2), mm, rtol=0.65)
 
 
