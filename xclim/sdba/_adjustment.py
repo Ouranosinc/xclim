@@ -723,23 +723,26 @@ def otc_adjust(
     xr.Dataset
         Adjusted data
     """
+    hist = ds.hist.dropna(dim="time").rename(time="time_hist")
+    ref = ds.ref.dropna(dim="time").rename(time="time_ref")
+
     scen = xr.apply_ufunc(
         _otc_adjust,
-        ds.hist,
-        ds.ref,
+        hist,
+        ref,
         kwargs=dict(
             bin_width=bin_width,
             bin_origin=bin_origin,
             numItermax=numItermax,
         ),
-        join="outer",
-        input_core_dims=[["time", "multivar"], ["time", "multivar"]],
-        output_core_dims=[["time", "multivar"]],
+        input_core_dims=[["time_hist", "multivar"], ["time_ref", "multivar"]],
+        output_core_dims=[["time_hist", "multivar"]],
         keep_attrs=True,
         vectorize=True,
-    ).rename("scen")
+    ).rename("scen", time_hist="time")
 
-    return scen.T.to_dataset()
+    scen = scen.reindex_like(ds.hist)
+    return scen.to_dataset()
 
 
 def _dotc_adjust(
