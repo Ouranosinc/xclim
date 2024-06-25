@@ -52,7 +52,7 @@ dependencies:
   - nbsphinx
   - nbval
   - nc-time-axis
-  - netCDF4 >=1.4
+  - netCDF4 >=1.4,<1.7
   - notebook
   - pandas-stubs
   - platformdirs
