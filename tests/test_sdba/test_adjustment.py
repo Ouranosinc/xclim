@@ -11,6 +11,7 @@ from xclim.core.units import convert_units_to
 from xclim.sdba import adjustment
 from xclim.sdba.adjustment import (
     LOCI,
+    OTC,
     DetrendedQuantileMapping,
     EmpiricalQuantileMapping,
     ExtremeValues,
@@ -722,6 +723,54 @@ class TestExtremeValues:
         EX = ExtremeValues.train(ref, hist, cluster_thresh="1 mm/day", q_thresh=0.97)
         new_scen = EX.adjust(scen, hist, frac=0.000000001)
         new_scen.load()
+
+
+class TestOTC:
+    def test_compare_sbck(self, random, series_Dataset):
+        ns = 1000
+        u = random.random(ns)
+
+        ref_xd = uniform(loc=1000, scale=100)
+        ref_yd = norm(loc=0, scale=100)
+        hist_xd = norm(loc=-500, scale=100)
+        hist_yd = uniform(loc=-1000, scale=100)
+
+        ref_x = ref_xd.ppf(u)
+        ref_y = ref_yd.ppf(u)
+        hist_x = hist_xd.ppf(u)
+        hist_y = hist_yd.ppf(u)
+
+        # Constructing an histogram such that every bin contains at most 1 point should ensure determinism
+        dx_ref = np.diff(np.sort(ref_x)).min()
+        dx_hist = np.diff(np.sort(hist_x)).min()
+        dx = min(dx_ref, dx_hist) * 9 / 10
+
+        dy_ref = np.diff(np.sort(ref_y)).min()
+        dy_hist = np.diff(np.sort(hist_y)).min()
+        dy = min(dy_ref, dy_hist) * 9 / 10
+
+        bin_width = [dx, dy]
+
+        ref_variables = [{"data": ref_x, "like": "tas"}, {"data": ref_y, "like": "pr"}]
+        hist_variables = [
+            {"data": hist_x, "like": "tas"},
+            {"data": hist_y, "like": "pr"},
+        ]
+        ref = series_Dataset(ref_variables)
+        hist = series_Dataset(hist_variables)
+
+        scen = OTC.adjust(ref, hist, bin_width=bin_width)
+
+        ref = stack_variables(ref)
+        hist = stack_variables(hist)
+        otc_sbck = adjustment.SBCK_OTC
+        scen_sbck = otc_sbck.adjust(
+            ref, hist, hist, multi_dim="multivar", bin_width=bin_width
+        )
+
+        scen = stack_variables(scen).to_numpy().T
+        scen_sbck = scen_sbck.to_numpy()
+        assert np.allclose(scen, scen_sbck)
 
 
 def test_raise_on_multiple_chunks(tas_series):

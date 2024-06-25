@@ -52,6 +52,52 @@ def series(values, name, start="2000-01-01"):
     )
 
 
+def series_dataset(variables, start="2000-01-01"):
+    """Create a Dataset with time, lon and lat dimensions."""
+    data_vars = {}
+    tas_counter = 0
+    pr_counter = 0
+
+    for var in variables:
+
+        coords = collections.OrderedDict()
+        for dim, n in zip(("time", "lon", "lat"), var["data"].shape):
+            if dim == "time":
+                coords[dim] = pd.date_range(start, periods=n, freq="D")
+            else:
+                coords[dim] = xr.IndexVariable(dim, np.arange(n))
+
+        dims = list(coords.keys())
+
+        if var["like"] == "tas":
+            attrs = {
+                "standard_name": f"air_temperature_{tas_counter}",
+                "cell_methods": "time: mean within days",
+                "units": "K",
+                "kind": "+",
+            }
+            name = f"tas_{tas_counter}"
+            tas_counter += 1
+        elif var["like"] == "pr":
+            attrs = {
+                "standard_name": f"precipitation_flux_{pr_counter}",
+                "cell_methods": "time: sum over day",
+                "units": "kg m-2 s-1",
+                "kind": "*",
+            }
+            name = f"pr_{pr_counter}"
+            pr_counter += 1
+        else:
+            raise ValueError(f"Variable like `{var["like"]}` not supported.")
+
+        data_vars[name] = (dims, var["data"], attrs)
+
+    return xr.Dataset(
+        data_vars=data_vars,
+        coords=coords,
+    )
+
+
 def cannon_2015_dist():  # noqa: D103
     # ref ~ gamma(k=4, theta=7.5)  mu: 30, sigma: 15
     ref = gamma(4, scale=7.5)

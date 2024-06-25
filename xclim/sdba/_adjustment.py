@@ -653,7 +653,7 @@ def _otc_adjust(
 
     # Initialize parameters
     bin_width = u.bin_width_estimator([Y, X]) if bin_width is None else bin_width
-    bin_origin = np.zeros(bin_width.size) if bin_origin is None else bin_origin
+    bin_origin = np.zeros(len(bin_width)) if bin_origin is None else bin_origin
     numItermax = 100_000_000 if numItermax is None else numItermax
 
     # Get the bin positions and frequencies of X and Y
@@ -664,7 +664,7 @@ def _otc_adjust(
     plan = u.optimal_transport(gridX, gridY, muX, muY, numItermax)
 
     # Get the source positions expressed in terms of bin indices
-    idx_gridX = ((gridX - bin_origin) / bin_width).astype(int)
+    idx_gridX = np.floor((gridX - bin_origin) / bin_width)
 
     if src is not None:
         # Source data is different from the data used to compute the transportation plan
