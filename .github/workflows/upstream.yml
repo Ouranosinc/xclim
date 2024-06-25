@@ -54,7 +54,8 @@ jobs:
             pypi.org:443
             raw.githubusercontent.com:443
             repo.anaconda.com:443
-      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+      - name: Checkout Repository
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
         with:
           fetch-depth: 0 # Fetch all history for all branches and tags.
       - name: Setup Conda (Micromamba) with Python${{ matrix.python-version }}
@@ -75,7 +76,7 @@ jobs:
           echo "micromamba: $(micromamba --version)"
       - name: Install upstream versions and SBCK
         run: |
-          python -m pip install -r requirements_upstream.txt
+          python -m pip install -r CI/requirements_upstream.txt
           python -m pip install "sbck @ git+https://github.com/yrobink/SBCK-python.git@master"
       - name: Install xclim
         run: |

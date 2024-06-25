@@ -927,7 +927,7 @@ def _pairwise_spearman(da, dims):
     )
 
     def _skipna_correlation(data):
-        nv, nt = data.shape
+        nv, _nt = data.shape
         # Mask of which variable are all NaN
         mask_omit = np.isnan(data).all(axis=1)
         # Remove useless variables

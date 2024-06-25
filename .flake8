@@ -6,9 +6,6 @@ exclude =
 	.eggs,
 	tests
 ignore =
-	AZ100,
-	AZ200,
-	AZ300,
 	C,
 	D,
 	E,
