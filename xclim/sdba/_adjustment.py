@@ -157,12 +157,20 @@ def eqm_train(
     return xr.Dataset(data_vars=dict(af=af, hist_q=hist_q))
 
 
-def _npdft_train(ref, hist, rots, quantiles, method, extrap, n_escore):
+def _npdft_train(
+    ref, hist, rots, quantiles, method, extrap, n_escore, standardize=True
+):
     r"""Npdf transform to correct a source `hist` into target `ref`.
 
     Perform a rotation, bias correct `hist` into `ref` with QuantileDeltaMapping, and rotate back.
     Do this iteratively over all rotations `rots` and conserve adjustment factors `af_q` in each iteration.
     """
+    if standardize:
+        ref, hist = (
+            (arr - np.nanmean(arr, axis=-1, keepdims=True))
+            / (np.nanstd(arr, axis=-1, keepdims=True))
+            for arr in [ref, hist]
+        )
     af_q = np.zeros((len(rots), ref.shape[0], len(quantiles)))
     escores = np.zeros(len(rots)) * np.NaN
     if n_escore > 0:
@@ -172,9 +180,14 @@ def _npdft_train(ref, hist, rots, quantiles, method, extrap, n_escore):
     for ii in range(len(rots)):
         rot = rots[0] if ii == 0 else rots[ii] @ rots[ii - 1].T
         ref, hist = (rot @ da for da in [ref, hist])
+
         # loop over variables
         for iv in range(ref.shape[0]):
-            ref_q, hist_q = (nbu._quantile(da, quantiles) for da in [ref[iv], hist[iv]])
+            # ref_q, hist_q = (np.nanquantile(da, quantiles) for da in [ref[iv], hist[iv]])
+            ref_q, hist_q = (
+                nbu._quantile(da, quantiles, nreduce=1) for da in [ref[iv], hist[iv]]
+            )
+            # ref_q, hist_q = (nbu._quantile(da, quantiles, nreduce=1) for da in [ref[iv], hist[iv]])
             af_q[ii, iv] = u.get_correction(hist_q, ref_q, "+")
             af = u._interp_on_quantiles_1D(
                 u._rank_bn(hist[iv]),
@@ -186,17 +199,23 @@ def _npdft_train(ref, hist, rots, quantiles, method, extrap, n_escore):
             hist[iv] = u.apply_correction(hist[iv], af, "+")
         if n_escore > 0:
             escores[ii] = nbu._escore(ref[:, ::ref_step], hist[:, ::hist_step])
-    hist = rots[-1].T @ hist
+    # hist = rots[-1].T @ hist
     return af_q, escores
 
 
+@map_groups(
+    af=[Grouper.PROP, "iterations", "quantiles"],
+    # af=[Grouper.PROP, "quantiles"],
+    # hist_q=[Grouper.PROP, "quantiles"],
+)
 def mbcn_train(
     ds,
+    *,
+    dim,
     rot_matrices,
+    iterations,
     pts_dims,
     quantiles,
-    g_idxs,
-    gw_idxs,
     interp,
     extrapolation,
     n_escore,
@@ -223,49 +242,34 @@ def mbcn_train(
         Indices of the times in each windowed time group
     """
     # unpack data
-    ref = ds.ref
-    hist = ds.hist
-    gr_dim = gw_idxs.attrs["group_dim"]
-
-    # npdf training core
-    af_q_l = []
-    escores_l = []
-
-    # loop over time blocks
-    for ib in range(gw_idxs[gr_dim].size):
-        # indices in a given time block
-        indices = gw_idxs[{gr_dim: ib}].astype(int).values
-        ind = indices[indices >= 0]
-
-        # npdft training : multiple rotations on standardized datasets
-        # keep track of adjustment factors in each rotation for later use
-        af_q, escores = xr.apply_ufunc(
-            _npdft_train,
-            standardize(ref[{"time": ind}])[0],
-            standardize(hist[{"time": ind}])[0],
-            rot_matrices,
-            quantiles,
-            input_core_dims=[
-                [pts_dims[0], "time"],
-                [pts_dims[0], "time"],
-                ["iterations", pts_dims[1], pts_dims[0]],
-                ["quantiles"],
-            ],
-            output_core_dims=[
-                ["iterations", pts_dims[1], "quantiles"],
-                ["iterations"],
-            ],
-            dask="parallelized",
-            output_dtypes=[hist.dtype, hist.dtype],
-            kwargs={"method": interp, "extrap": extrapolation, "n_escore": n_escore},
-            vectorize=True,
-        )
-        af_q_l.append(af_q.expand_dims({gr_dim: [ib]}))
-        escores_l.append(escores.expand_dims({gr_dim: [ib]}))
-    af_q = xr.concat(af_q_l, dim=gr_dim)
-    escores = xr.concat(escores_l, dim=gr_dim)
-    out = xr.Dataset(dict(af_q=af_q, escores=escores)).assign_coords(
-        {"quantiles": quantiles, gr_dim: gw_idxs[gr_dim].values}
+    ref = ds.ref.stack(dim1=dim)
+    hist = ds.hist.stack(dim1=dim)
+    af_q, escores = xr.apply_ufunc(
+        _npdft_train,
+        # standardize(ref , dim="dim1")[0],
+        # standardize(hist, dim="dim1")[0],
+        ref,
+        hist,
+        rot_matrices,
+        quantiles,
+        input_core_dims=[
+            [pts_dims[0], "dim1"],
+            [pts_dims[0], "dim1"],
+            ["iterations", pts_dims[1], pts_dims[0]],
+            ["quantiles"],
+        ],
+        output_core_dims=[
+            ["iterations", pts_dims[1], "quantiles"],
+            ["iterations"],
+        ],
+        dask="parallelized",
+        output_dtypes=[hist.dtype, hist.dtype],
+        kwargs={"method": interp, "extrap": extrapolation, "n_escore": n_escore},
+        vectorize=True,
+    )
+    out = xr.Dataset(dict(af_q=af_q.rename({pts_dims[1]: pts_dims[0]}))).assign_coords(
+        # out = xr.Dataset(dict(af_q=af_q, escores=escores)).assign_coords(
+        {"quantiles": quantiles}
     )
     return out
 

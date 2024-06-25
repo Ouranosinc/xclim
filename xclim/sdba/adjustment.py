@@ -37,7 +37,7 @@ from ._adjustment import (
     scaling_train,
 )
 from .base import Grouper, ParametrizableWithDataset, parse_group
-from .processing import grouped_time_indexes, stack_variables, unstack_variables
+from .processing import stack_variables, unstack_variables
 from .utils import (
     ADDITIVE,
     best_pc_orientation_full,
@@ -1532,7 +1532,9 @@ class MBCn(MultivariateTrainAdjust):
         adj_kws.setdefault("extrapolation", "constant")
 
         if np.isscalar(base_kws["nquantiles"]):
-            base_kws["nquantiles"] = equally_spaced_nodes(base_kws["nquantiles"])
+            base_kws["nquantiles"] = equally_spaced_nodes(
+                base_kws["nquantiles"]
+            ).astype(np.float32)
         if isinstance(base_kws["group"], str):
             base_kws["group"] = Grouper(base_kws["group"], 1)
         if base_kws["group"].name == "time.month":
@@ -1558,10 +1560,6 @@ class MBCn(MultivariateTrainAdjust):
             ).rename(matrices="iterations")
         pts_dims = (pts_dim, rot_dim)
 
-        # time indices corresponding to group and windowed group
-        # used to divide datasets as map_blocks or groupby would do
-        g_idxs, gw_idxs = grouped_time_indexes(ref.time, base_kws["group"])
-
         # training, obtain adjustment factors of the npdf transform
         ds = xr.Dataset(dict(ref=ref, hist=hist))
         params = {
@@ -1570,16 +1568,14 @@ class MBCn(MultivariateTrainAdjust):
             "extrapolation": adj_kws["extrapolation"],
             "pts_dims": pts_dims,
             "n_escore": n_escore,
+            "group": base_kws["group"],
+            "iterations": rot_matrices.iterations.values,
         }
-        out = mbcn_train(
-            ds, rot_matrices=rot_matrices, g_idxs=g_idxs, gw_idxs=gw_idxs, **params
-        )
+        out = mbcn_train(ds, rot_matrices=rot_matrices, **params)
         params["group"] = base_kws["group"]
 
         # postprocess
         out["rot_matrices"] = rot_matrices
-        out["g_idxs"] = g_idxs
-        out["gw_idxs"] = gw_idxs
 
         out.af_q.attrs.update(
             standard_name="Adjustment factors",
