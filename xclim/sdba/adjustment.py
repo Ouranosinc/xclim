@@ -88,6 +88,8 @@ class BaseAdjustment(ParametrizableWithDataset):
         Also raises if :py:attr:`BaseAdjustment._allow_diff_calendars` is False and calendars differ.
         """
         for inda in inputs:
+            if isinstance(inda, xr.Dataset):
+                inda = stack_variables(inda)
             if uses_dask(inda) and len(inda.chunks[inda.get_axis_num(group.dim)]) > 1:
                 raise ValueError(
                     f"Multiple chunks along the main adjustment dimension {group.dim} is not supported."
