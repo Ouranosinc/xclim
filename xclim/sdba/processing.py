@@ -871,9 +871,9 @@ def grouped_time_indexes(times, group):
         # time indices for each block with general window
         da = timeind.rolling(time=win, center=True).construct(window_dim=win_dim0)
         gw_idxs = da.groupby(gr).apply(
-            lambda da: da.assign_coords(time=_get_group_complement(da, gr))
-            .stack({win_dim: ["time", win_dim0]})
-            .reset_index(dims_or_levels=[win_dim])
+            lambda da: da.assign_coords(time=_get_group_complement(da, gr)).stack(
+                {win_dim: ["time", win_dim0]}
+            )
         )
         gw_idxs = gw_idxs.transpose(..., win_dim)
     elif gr == "time":
