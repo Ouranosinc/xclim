@@ -6,12 +6,23 @@ v0.51.0 (unreleased)
 --------------------
 Contributors to this version: Trevor James Smith (:user:`Zeitsperre`).
 
+New features and enhancements
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+* `xclim` now separates the optional dependencies into `dev` and `docs` recipes. Both can be installed with the `all` option (`$ python -m pip install xclim[all]`). (:pull:`1806`).
+
+Breaking changes
+^^^^^^^^^^^^^^^^
+* Added the `deptry <https://github.com/fpgmaas/deptry>`_ package to the `dev` linter tools and linting workflows for performing dependency analyses. (:pull:`1806`).
+
 Internal changes
 ^^^^^^^^^^^^^^^^
 * GitHub repository now uses Rulesets for branch protection. (:pull:`1790`).
 * Version bumping and project triage is now handled by the Ouranos Helper GitHub App. (:pull:`1790`).
 * `netcdf4` has been pinned below v1.7 for test stability reasons. (:pull:`1791`).
 * `bump-my-version` has been updated to v0.23.0. (:pull:`1790`).
+* Several linting tools have been updated to the latest versions and pinned. (:pull:`1806`).
+* `flake8-bandit`-like checks have been enabled via `ruff`, with fixes for a few security-related issues. (:pull:`1806`).
+* ``xclim.testing.utils`` now employs more secure URL auditing checks. (:pull:`1806`).
 
 v0.50.0 (2024-06-17)
 --------------------
