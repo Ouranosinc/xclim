@@ -740,7 +740,6 @@ def otc_adjust(
         vectorize=True,
     ).rename("scen", time_hist="time")
 
-    scen = scen.reindex_like(ds.hist)
     return scen.to_dataset()
 
 
@@ -890,5 +889,4 @@ def dotc_adjust(
         vectorize=True,
     ).rename("scen", time_sim="time")
 
-    scen = scen.reindex_like(ds.sim)
     return scen.to_dataset()

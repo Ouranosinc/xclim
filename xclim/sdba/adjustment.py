@@ -1407,6 +1407,7 @@ class OTC(MultivariateAdjust):
             group=group,
         ).scen
 
+        scen = scen.reindex_like(hist.time)
         return unstack_variables(scen)
 
 
@@ -1439,6 +1440,7 @@ class dOTC(MultivariateAdjust):
             group=group,
         ).scen
 
+        scen = scen.reindex({"time": sim.time})
         return unstack_variables(scen)
 
 
