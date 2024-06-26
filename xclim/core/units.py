@@ -463,6 +463,25 @@ def infer_sampling_units(
     return out
 
 
+DELTA_ABSOLUTE_TEMP = {
+    units.delta_degC: units.kelvin,
+    units.delta_degF: units.rankine,
+}
+
+
+def ensure_absolute_temperature(units: str):
+    """Convert temperature units to their absolute counterpart, assuming they represented a difference (delta).
+
+    Celsius becomes Kelvin, Fahrenheit becomes Rankine. Does nothing for other units.
+    """
+    a = str2pint(units)
+    # ensure a delta pint unit
+    a = a - 0 * a
+    if a.units in DELTA_ABSOLUTE_TEMP:
+        return pint2cfunits(DELTA_ABSOLUTE_TEMP[a.units])
+    return units
+
+
 def to_agg_units(
     out: xr.DataArray, orig: xr.DataArray, op: str, dim: str = "time"
 ) -> xr.DataArray:
@@ -526,11 +545,16 @@ def to_agg_units(
     >>> degdays.units
     'K d'
     """
-    if op in ["amin", "min", "amax", "max", "mean", "std", "sum"]:
+    if op in ["amin", "min", "amax", "max", "mean", "sum"]:
         out.attrs["units"] = orig.attrs["units"]
 
+    elif op in ["std"]:
+        out.attrs["units"] = ensure_absolute_temperature(orig.attrs["units"])
+
     elif op in ["var"]:
-        out.attrs["units"] = pint2cfunits(str2pint(orig.units) ** 2)
+        out.attrs["units"] = pint2cfunits(
+            str2pint(ensure_absolute_temperature(orig.units)) ** 2
+        )
 
     elif op in ["doymin", "doymax"]:
         out.attrs.update(
@@ -539,7 +563,7 @@ def to_agg_units(
 
     elif op in ["count", "integral"]:
         m, freq_u_raw = infer_sampling_units(orig[dim])
-        orig_u = str2pint(orig.units)
+        orig_u = str2pint(ensure_absolute_temperature(orig.units))
         freq_u = str2pint(freq_u_raw)
         out = out * m
 
