@@ -1424,6 +1424,7 @@ class dOTC(MultivariateAdjust):
         numItermax=100_000_000,
         cov_factor="std",
         group: str | Grouper = "time",
+        **kwargs,
     ):
         ref = stack_variables(ref)
         hist = stack_variables(hist)

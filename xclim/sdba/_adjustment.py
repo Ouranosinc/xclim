@@ -674,10 +674,9 @@ def _otc_adjust(
         out = np.empty(src.shape)
     else:
         out = np.empty(X.shape)
+    idx_binX = np.floor(idx_binX)
 
-    idx_binX = idx_binX.astype(int)
     rng = np.random.default_rng()
-
     # The plan row corresponding to a source bin indicates its probabilities to be transported to every target bin
     for i, b in enumerate(idx_binX):
         # Get the plan row of this source bin
