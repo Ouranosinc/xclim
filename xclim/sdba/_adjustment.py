@@ -864,9 +864,9 @@ def dotc_adjust(
     xr.DataArray
         Adjusted data
     """
-    ref = ds.ref.dropna(dim="time").rename(time="time_cal")
-    hist = ds.hist.dropna(dim="time").rename(time="time_cal")
-    sim = ds.sim.dropna(dim="time").rename(time="time_tgt")
+    ref = ds.ref.dropna(dim="time").rename(time="time_ref")
+    hist = ds.hist.dropna(dim="time").rename(time="time_hist")
+    sim = ds.sim.dropna(dim="time").rename(time="time_sim")
 
     scen = xr.apply_ufunc(
         _dotc_adjust,
@@ -881,13 +881,14 @@ def dotc_adjust(
         ),
         join="outer",
         input_core_dims=[
-            ["time_tgt", "multivar"],
-            ["time_cal", "multivar"],
-            ["time_cal", "multivar"],
+            ["time_sim", "multivar"],
+            ["time_ref", "multivar"],
+            ["time_hist", "multivar"],
         ],
-        output_core_dims=[["time_tgt", "multivar"]],
+        output_core_dims=[["time_sim", "multivar"]],
         keep_attrs=True,
         vectorize=True,
-    ).rename("scen", time_tgt="time")
+    ).rename("scen", time_sim="time")
 
+    scen = scen.reindex_like(ds.sim)
     return scen.to_dataset()

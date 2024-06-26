@@ -776,7 +776,6 @@ class TestOTC:
 
 
 class TestdOTC:
-    @pytest.mark.dotc
     def test_compare_sbck(self, random, series_dataset):
         ns = 1000
         u = random.random(ns)
