@@ -29,7 +29,7 @@ def test_param_class():
     )
 
     s = jsonpickle.encode(obj)
-    obj2 = jsonpickle.decode(s)
+    obj2 = jsonpickle.decode(s)  # noqa: S301
     assert obj.parameters == obj2.parameters
 
 
