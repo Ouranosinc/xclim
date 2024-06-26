@@ -1,5 +1,5 @@
 bump-my-version==0.24.0
-coveralls==4.0.0
+coveralls==4.0.1
 flit==3.9.0
 pip==24.0
 pylint==3.2.2
