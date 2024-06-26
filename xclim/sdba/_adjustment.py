@@ -384,7 +384,6 @@ def mbcn_adjust(
     # to confirm it works,  and on big data to check performance.
     dims = ["time"] if period_dim is None else [period_dim, "time"]
 
-    sim_u = sim[pts_dims[0]].attrs["_units"]
     # mbcn core
     scen_mbcn = xr.zeros_like(sim)
     for ib in range(gw_idxs[gr_dim].size):
@@ -400,13 +399,12 @@ def mbcn_adjust(
         for iv, v in enumerate(sim[pts_dims[0]].values):
             sl = {"time": ind_gw, pts_dims[0]: iv}
             with set_options(sdba_extra_output=False):
+
                 ADJ = base.train(
-                    ref[v][{"time": ind_gw}],
-                    hist[v][{"time": ind_gw}],
-                    **base_kws_vars[v],
+                    ref[sl], hist[sl], **base_kws_vars[v], skip_input_checks=True
                 )
                 scen_block[{pts_dims[0]: iv}] = ADJ.adjust(
-                    sim[sl].assign_attrs({"units": sim_u[iv]}), **adj_kws
+                    sim[sl], **adj_kws, skip_input_checks=True
                 )
 
         # 2. npdft adjustment of sim
@@ -439,7 +437,7 @@ def mbcn_adjust(
         else:
             scen_mbcn[{"time": ind_g}] = reordered
 
-    return scen_mbcn
+    return scen_mbcn.to_dataset(name="scen")
 
 
 @map_blocks(reduces=[Grouper.PROP, "quantiles"], scen=[])
