@@ -136,7 +136,7 @@ Once you have extracted a copy of the source, you can install it with `pip`_:
 
 .. code-block:: shell
 
-    $ python -m pip install -e ".[dev,docs]"
+    $ python -m pip install -e ".[all]"
 
 Alternatively, you can also install a local development copy via `flit`_:
 

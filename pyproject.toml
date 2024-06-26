@@ -108,6 +108,7 @@ docs = [
   "sphinxcontrib-bibtex",
   "sphinxcontrib-svg2pdfconverter[Cairosvg]"
 ]
+all = ["xclim[dev]", "xclim[docs]"]
 
 [project.scripts]
 xclim = "xclim.cli:cli"
@@ -167,7 +168,7 @@ omit = ["tests/*.py"]
 [tool.deptry]
 extend_exclude = ["docs"]
 ignore_notebooks = true
-pep621_dev_dependency_groups = ["dev", "docs"]
+pep621_dev_dependency_groups = ["all", "dev", "docs"]
 
 [tool.deptry.per_rule_ignores]
 DEP001 = ["SBCK"]
