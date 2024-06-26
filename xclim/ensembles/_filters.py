@@ -50,7 +50,7 @@ def _concat_hist(da: xr.DataArray, **hist) -> xr.DataArray:
     ((dim, _),) = hist.items()
 
     # Select historical scenario and drop it from the data
-    h = da.sel(**hist).dropna("time", how="all")
+    h = da.sel(drop=True, **hist).dropna("time", how="all")
     ens = da.drop_sel(**hist)
 
     index = ens[dim]

@@ -523,7 +523,7 @@ def publish_release_notes(
                     str(grouping[0]).replace("(", r"\(").replace(")", r"\)")
                 )
                 search = rf"({fixed_grouping})\n([\{level}]{'{' + str(len(grouping[1])) + '}'})"
-                replacement = f"{'##' if level=='-' else '###'} {grouping[0]}"
+                replacement = f"{'##' if level == '-' else '###'} {grouping[0]}"
                 changes = re.sub(search, replacement, changes)
 
         link_expressions = r"[\`]{1}([\w\s]+)\s<(.+)>`\_"

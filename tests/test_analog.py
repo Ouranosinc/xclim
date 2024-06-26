@@ -200,7 +200,7 @@ class TestKS:
         # Compare with scipy.stats.ks_2samp
         x = random.standard_normal(50) + 1
         y = random.standard_normal(50)
-        s, p = stats.ks_2samp(x, y)
+        s, _p = stats.ks_2samp(x, y)
         dm = xca.kolmogorov_smirnov(x, y)
         assert_almost_equal(dm, s, 3)
 

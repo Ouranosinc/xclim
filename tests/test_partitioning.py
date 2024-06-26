@@ -1,24 +1,14 @@
 from __future__ import annotations
 
-import warnings
-
 import numpy as np
-import pytest
 import xarray as xr
-from packaging.version import Version
 
 from xclim.ensembles import fractional_uncertainty, hawkins_sutton, lafferty_sriver
 from xclim.ensembles._filters import _concat_hist, _model_in_all_scens, _single_member
 
 
-# FIXME: Investigate why _concat_hist() fails on xarray 2024.5.0
 def test_hawkins_sutton_smoke(open_dataset):
     """Just a smoke test."""
-    if Version(xr.__version__) == Version("2024.5.0"):
-        pytest.skip("xarray 2024.5.0 does not support `_concat_hist()` here.")
-    if Version(xr.__version__) > Version("2024.5.0"):
-        warnings.warn("FIXME: Remove this warning if this test is passing.")
-
     dims = {"run": "member", "scen": "scenario"}
     da = (
         open_dataset("uncertainty_partitioning/cmip5_pr_global_mon.nc")
@@ -118,7 +108,7 @@ def test_lafferty_sriver_synthetic(random):
 
 
 def test_lafferty_sriver(lafferty_sriver_ds):
-    g, u = lafferty_sriver(lafferty_sriver_ds.tas)
+    _g, u = lafferty_sriver(lafferty_sriver_ds.tas)
 
     fu = fractional_uncertainty(u)
 
@@ -150,7 +140,7 @@ def test_lafferty_sriver(lafferty_sriver_ds):
             "Variability": fu.sel(uncertainty="variability").to_numpy().flatten(),
         }
 
-        fig, ax = plt.subplots()
+        _fig, ax = plt.subplots()
         ax.stackplot(
             np.arange(2015, 2101),
             udict.values(),
