@@ -48,11 +48,11 @@ from .utils import (
 )
 
 __all__ = [
+    "LOCI",
     "BaseAdjustment",
     "DetrendedQuantileMapping",
     "EmpiricalQuantileMapping",
     "ExtremeValues",
-    "LOCI",
     "NpdfTransform",
     "OTC",
     "PrincipalComponents",
