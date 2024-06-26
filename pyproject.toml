@@ -70,7 +70,7 @@ dev = [
   "nbconvert <7.14", # Pinned due to directive errors in sphinx. See: https://github.com/jupyter/nbconvert/issues/2092
   "nbqa >=1.8.2",
   "nbval",
-  "netCDF4 >=1.4,<1.7",
+  "netCDF4 >=1.4,<1.8",
   "pandas-stubs >=2.2",
   "platformdirs >=3.2",
   "pre-commit >=3.7",
