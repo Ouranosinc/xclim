@@ -454,7 +454,7 @@ class TestAgroclimaticIndices:
             tasmax=mx, tasmin=mn, method=method, freq="YS"
         )
 
-        np.testing.assert_array_equal(out, np.array([np.NaN, expected]))
+        np.testing.assert_array_equal(out, np.array([np.nan, expected]))
 
 
 class TestStandardizedIndices:
@@ -596,7 +596,7 @@ class TestStandardizedIndices:
     ):
         ds = open_dataset("sdba/CanESM2_1950-2100.nc").isel(location=1)
         if freq == "D":
-            ds = ds.convert_calendar("366_day", missing=np.NaN)
+            ds = ds.convert_calendar("366_day", missing=np.nan)
             # to compare with ``climate_indices``
         pr = ds.pr.sel(time=slice("1998", "2000"))
         pr_cal = ds.pr.sel(time=slice("1950", "1980"))
@@ -2833,7 +2833,7 @@ class TestSnowMax:
         np.testing.assert_array_equal(out, [0.3, 0.01])
 
     def test_nan_slices(self, snd_series, snw_series):
-        a = np.ones(366) * np.NaN
+        a = np.ones(366) * np.nan
         snd = snd_series(a)
         snw = snw_series(a)
 
@@ -2858,7 +2858,7 @@ class TestSnowMaxDoy:
         np.testing.assert_array_equal(out, [193, 182])
 
     def test_nan_slices(self, snd_series, snw_series):
-        a = np.ones(366) * np.NaN
+        a = np.ones(366) * np.nan
         snd = snd_series(a)
         snw = snw_series(a)
 
@@ -2954,7 +2954,7 @@ class TestSnowCover:
     ["per_day", "total"],
 )
 def test_rain_season(pr_series, result_type, method_dry_start):
-    pr = pr_series(np.arange(365) * np.NaN, start="2000-01-01", units="mm/d")
+    pr = pr_series(np.arange(365) * np.nan, start="2000-01-01", units="mm/d")
     # input values in mm (amount): a correcting factor is used below
     pr[{"time": slice(0, 0 + 3)}] = 10  # to satisfy cond1_start
     pr[{"time": slice(3, 3 + 30)}] = 5  # to satisfy cond2_start
@@ -2963,13 +2963,13 @@ def test_rain_season(pr_series, result_type, method_dry_start):
         out_exp = [3, 100, 97]
     elif result_type == "start_cond1_fails":
         pr[{"time": 2}] = 0
-        out_exp = [np.NaN, np.NaN, np.NaN]
+        out_exp = [np.nan, np.nan, np.nan]
     elif result_type == "start_cond2_fails":
         pr[{"time": slice(10, 10 + 7)}] = 0
-        out_exp = [np.NaN, np.NaN, np.NaN]
+        out_exp = [np.nan, np.nan, np.nan]
     elif result_type == "end_cond_fails":
         pr[{"time": 99 + 20 - 1}] = 5
-        out_exp = [3, np.NaN, 363]
+        out_exp = [3, np.nan, 363]
     else:
         raise ValueError(f"Unknown result_type: {result_type}")
 
@@ -3099,7 +3099,7 @@ def test_wind_chill(tas_series, sfcWind_series):
     # The calculator was altered to remove the rounding of the output.
     np.testing.assert_allclose(
         out,
-        [-4.509267062481955, -22.619869069856854, -30.478945408950928, np.NaN, -16.443],
+        [-4.509267062481955, -22.619869069856854, -30.478945408950928, np.nan, -16.443],
     )
 
     out = xci.wind_chill_index(tas=tas, sfcWind=sfcWind, method="US")
@@ -3520,16 +3520,16 @@ class TestRPRCTot:
             [
                 2,
                 0,
-                np.NaN,
+                np.nan,
                 2,
-                np.NaN,
-                np.NaN,
-                np.NaN,
-                np.NaN,
-                np.NaN,
-                np.NaN,
-                np.NaN,
-                np.NaN,
+                np.nan,
+                np.nan,
+                np.nan,
+                np.nan,
+                np.nan,
+                np.nan,
+                np.nan,
+                np.nan,
             ],
         )
 
@@ -3652,7 +3652,7 @@ class TestDrynessIndex:
         (-47, "usda", 1),
         (-6, "anbg", 1),
         (19, "anbg", 6),
-        (-47, "anbg", np.NaN),
+        (-47, "anbg", np.nan),
     ],
     # There are 26 USDA zones: 1a -> 1, 1b -> 2, ... 13b -> 26
     # There are 7 angb zones: 1,2, ..., 7

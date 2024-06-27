@@ -1290,7 +1290,7 @@ def test_degree_days_exceedance_date(open_dataset):
 
 
 @pytest.mark.parametrize(
-    "never_reached,exp", [(None, np.NaN), (300, 300), ("12-01", 335)]
+    "never_reached,exp", [(None, np.nan), (300, 300), ("12-01", 335)]
 )
 def test_degree_days_exceedance_date_never_reached(open_dataset, never_reached, exp):
     tas = open_dataset("FWI/GFWED_sample_2017.nc").tas

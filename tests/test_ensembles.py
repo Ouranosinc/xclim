@@ -311,7 +311,7 @@ class TestEnsembleStats:
         ds_all = [open_dataset(n) for n in ensemble_dataset_objects["nc_files_simple"]]
         ens = ensembles.create_ensemble(ds_all).isel(lat=0, lon=0)
         ens = ens.where(ens.realization > 0)
-        ens = xr.where((ens.realization == 1) & (ens.time.dt.year == 1950), np.NaN, ens)
+        ens = xr.where((ens.realization == 1) & (ens.time.dt.year == 1950), np.nan, ens)
 
         def first(ds):
             return ds[list(ds.data_vars.keys())[0]]

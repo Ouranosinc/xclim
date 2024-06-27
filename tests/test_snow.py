@@ -26,7 +26,7 @@ class TestSnowDepthCoverDuration:
 
 class TestSnowWaterCoverDuration:
     @pytest.mark.parametrize(
-        "factor,exp", ([1000, [31, 28, 31, np.NaN]], [0, [0, 0, 0, np.NaN]])
+        "factor,exp", ([1000, [31, 28, 31, np.nan]], [0, [0, 0, 0, np.nan]])
     )
     def test_simple(self, snw_series, factor, exp):
         snw = snw_series(np.ones(110) * factor, start="2001-01-01")
@@ -97,7 +97,7 @@ class TestSndMaxDoy:
         # Put 0 on one row.
         snd = atmosds.snd.where(atmosds.location != "Victoria", 0)
         out = land.snd_max_doy(snd)
-        np.testing.assert_array_equal(out.isel(time=1), [16, 13, 91, 29, np.NaN])
+        np.testing.assert_array_equal(out.isel(time=1), [16, 13, 91, 29, np.nan])
 
 
 class TestSnwMax:

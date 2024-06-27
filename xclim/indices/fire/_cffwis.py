@@ -430,7 +430,7 @@ def _drought_code(  # pragma: no cover
         if dr > 0.0:
             dc = dr + pe
         elif np.isnan(dc0):
-            dc = np.NaN
+            dc = np.nan
         else:
             dc = pe
     else:  # f p <= 2.8:
