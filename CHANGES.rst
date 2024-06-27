@@ -8,7 +8,7 @@ Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bo
 
 Bug fixes
 ^^^^^^^^^
-* Units of degree-days computations with Fahrenheit input fixed to yield "°R d". Added a new ``core.units.ensure_absolute_temperature``  method to convert from delta to absolute temperatures (:issue:`1789`, :pull:`1804`).
+* Units of degree-days computations with Fahrenheit input fixed to yield "°R d". Added a new ``xclim.core.units.ensure_absolute_temperature`` method to convert from delta to absolute temperatures. (:issue:`1789`, :pull:`1804`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
