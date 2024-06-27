@@ -6,6 +6,7 @@ import pytest
 import xarray as xr
 from scipy.stats import genpareto, norm, uniform
 
+from xclim.core.calendar import stack_periods
 from xclim.core.options import set_options
 from xclim.core.units import convert_units_to
 from xclim.sdba import adjustment
@@ -14,6 +15,7 @@ from xclim.sdba.adjustment import (
     DetrendedQuantileMapping,
     EmpiricalQuantileMapping,
     ExtremeValues,
+    MBCn,
     PrincipalComponents,
     QuantileDeltaMapping,
     Scaling,
@@ -552,6 +554,44 @@ class TestQM:
             EQM2 = EmpiricalQuantileMapping.train(ref, hist, group=group)
             scen2 = EQM2.adjust(sim).load()
             assert scen2.sel(location=["Kugluktuk", "Vancouver"]).isnull().all()
+
+
+@pytest.mark.slow
+class TestMBCn:
+    @pytest.mark.parametrize("use_dask", [True, False])
+    @pytest.mark.parametrize("group, window", [["time", 1], ["time.dayofyear", 31]])
+    @pytest.mark.parametrize("period_dim", [None, "period"])
+    def test_simple(self, open_dataset, use_dask, group, window, period_dim):
+        group, window, period_dim, use_dask = "time", 1, None, False
+        with set_options(sdba_encode_cf=use_dask):
+            if use_dask:
+                chunks = {"location": -1}
+            else:
+                chunks = None
+            ref, dsim = (
+                open_dataset(
+                    f"sdba/{file}",
+                    chunks=chunks,
+                    drop_variables=["lat", "lon"],
+                )
+                .isel(location=1, drop=True)
+                .expand_dims(location=["Amos"])
+                for file in ["ahccd_1950-2013.nc", "CanESM2_1950-2100.nc"]
+            )
+            ref, hist = (ds.sel(time=slice("1981", "2010")) for ds in [ref, dsim])
+            sim = stack_periods(dsim).isel(period=slice(1, 2))
+
+            ref, hist, sim = (stack_variables(ds) for ds in [ref, hist, sim])
+
+        MBCN = MBCn.train(
+            ref,
+            hist,
+            base_kws=dict(nquantiles=50, group=Grouper(group, window)),
+            adj_kws=dict(interp="linear"),
+        )
+        p = MBCN.adjust(sim=sim, ref=ref, hist=hist, period_dim=period_dim)
+        # 'does it run' test
+        p.load()
 
 
 class TestPrincipalComponents:
