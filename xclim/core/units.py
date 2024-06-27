@@ -351,7 +351,7 @@ def convert_units_to(  # noqa: C901
                             source = _CONVERSIONS[(convname, direction)](source)
                         except Exception as err:
                             raise ValueError(
-                                f"No conversion available for this standard name: {standard_name}"
+                                f"There is a dimensionality incompatibility between the source and the target and no CF-based conversions have been found for this standard name: {standard_name}"
                             ) from err
                         else:
                             source_unit = units2pint(source)
