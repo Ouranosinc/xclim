@@ -32,7 +32,7 @@ jobs:
           egress-policy: block
           allowed-endpoints: >
             api.github.com:443
-      - name: Find comment
+      - name: Find Comment
         uses: peter-evans/find-comment@3eae4d37986fb5a8592848f6a574fdf654e61f9e # v3.1.0
         id: fc
         with:
@@ -40,7 +40,7 @@ jobs:
           comment-author: 'github-actions[bot]'
           body-includes: |
             This Pull Request modifies GitHub workflows and is coming from a fork.
-      - name: Create comment
+      - name: Create Comment
         if: |
           (steps.fc.outputs.comment-id == '') &&
           (!contains(github.event.pull_request.labels.*.name, 'approved')) &&
@@ -54,7 +54,7 @@ jobs:
             > This Pull Request modifies GitHub Workflows and is coming from a fork.
             **It is very important for the reviewer to ensure that the workflow changes are appropriate.**
           edit-mode: replace
-      - name: Update comment
+      - name: Update Comment
         if: |
           contains(github.event.pull_request.labels.*.name, 'approved')
         uses: peter-evans/create-or-update-comment@71345be0265236311c031f5c7866368bd1eff043 # v4.0.0

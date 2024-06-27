@@ -971,13 +971,13 @@ growing_season_start = Temp(
     identifier="growing_season_start",
     units="",
     standard_name="day_of_year",
-    long_name="First day of the first series of {window} days with mean daily temperature above or equal to {thresh}",
+    long_name="First day of the first series of {window} days with mean daily temperature {op} {thresh}",
     description="Day of the year marking the beginning of the growing season, defined as the first day of the first "
-    "series of {window} days with mean daily temperature above or equal to {thresh}.",
+    "series of {window} days with mean daily temperature {op} {thresh}.",
     abstract="The first day when the temperature exceeds a certain threshold for a given number of consecutive days.",
     cell_methods="",
     compute=indices.growing_season_start,
-    parameters={"thresh": {"default": "5.0 degC"}},
+    parameters={"thresh": {"default": "5.0 degC"}, "op": {"default": ">="}},
 )
 
 growing_season_length = Temp(
@@ -996,7 +996,11 @@ growing_season_length = Temp(
     "threshold, occurring after a given calendar date.",
     cell_methods="",
     compute=indices.growing_season_length,
-    parameters={"thresh": {"default": "5.0 degC"}, "mid_date": {"default": "07-01"}},
+    parameters={
+        "thresh": {"default": "5.0 degC"},
+        "op": {"default": ">="},
+        "mid_date": {"default": "07-01"},
+    },
 )
 
 growing_season_end = Temp(
@@ -1004,7 +1008,7 @@ growing_season_end = Temp(
     identifier="growing_season_end",
     units="",
     standard_name="day_of_year",
-    long_name="First day of the first series of {window} days with mean daily temperature below {thresh}, "
+    long_name="First day of the first series of {window} days with mean daily temperature {op} {thresh}, "
     "occurring after {mid_date}",
     description="Day of year of end of growing season, defined as the first day of consistent inferior threshold "
     "temperature of {thresh} after a run of {window} days superior to threshold temperature, occurring after "
@@ -1013,7 +1017,11 @@ growing_season_end = Temp(
     "after a given calendar date.",
     cell_methods="",
     compute=indices.growing_season_end,
-    parameters={"thresh": {"default": "5.0 degC"}, "mid_date": {"default": "07-01"}},
+    parameters={
+        "thresh": {"default": "5.0 degC"},
+        "op": {"default": "<"},
+        "mid_date": {"default": "07-01"},
+    },
 )
 
 tropical_nights = TempWithIndexing(

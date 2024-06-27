@@ -4,12 +4,23 @@ Changelog
 
 v0.51.0 (unreleased)
 --------------------
-Contributors to this version: Éric Dupuis (:user:`coxipi`), Sarah Gammon (:user:`SarahG-579462`)
-
+Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Éric Dupuis (:user:`coxipi`), Sarah Gammon (:user:`SarahG-579462`)
 
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+* Added the `op` keyword to the `growing_season_{start|end}` indices and indicators, allowing for customizable threshold operators using `indices.generic.compare()`. (:issue:`1794`, :pull:`1796`).
 * ``sdba.nbutils.quantile`` and its child functions are now faster. If the module `fastnanquantile` is installed, it is used as the backend for the computation of quantiles and yields even faster results. (:issue:`1255`, :pull:`1513`).
+
+Bug fixes
+^^^^^^^^^
+* Clarified a typo in the docstring formula for `xclim.indices.growing_season_length`. (:pull:`1796`).
+
+Internal changes
+^^^^^^^^^^^^^^^^
+* GitHub repository now uses Rulesets for branch protection. (:pull:`1790`).
+* Version bumping and project triage is now handled by the Ouranos Helper GitHub App. (:pull:`1790`).
+* `netcdf4` has been pinned below v1.7 for test stability reasons. (:pull:`1791`).
+* `bump-my-version` has been updated to v0.23.0. (:pull:`1790`).
 
 v0.50.0 (2024-06-17)
 --------------------

@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import warnings
+from typing import Literal
 
 import numpy as np
 import xarray
@@ -978,6 +979,7 @@ def growing_season_start(
     thresh: Quantified = "5.0 degC",
     window: int = 5,
     freq: str = "YS",
+    op: Literal[">", ">=", "gt", "ge"] = ">=",
 ) -> xarray.DataArray:
     r"""Start of the growing season.
 
@@ -994,6 +996,8 @@ def growing_season_start(
         Minimum number of days with temperature above threshold needed for evaluation.
     freq : str
         Resampling frequency.
+    op : {">", ">=", "gt", "ge"}
+        Comparison operation. Default: ">=".
 
     Returns
     -------
@@ -1014,8 +1018,9 @@ def growing_season_start(
     and :math:`[P]` is 1 if :math:`P` is true, and 0 if false.
     """
     thresh = convert_units_to(thresh, tas)
-    over = tas >= thresh
-    out = over.resample(time=freq).map(rl.first_run, window=window, coord="dayofyear")
+    cond = compare(tas, op, thresh, constrain=(">=", ">"))
+
+    out = cond.resample(time=freq).map(rl.first_run, window=window, coord="dayofyear")
     out.attrs.update(units="", is_dayofyear=np.int32(1), calendar=get_calendar(tas))
     return out
 
@@ -1027,6 +1032,7 @@ def growing_season_end(
     mid_date: DayOfYearStr = "07-01",
     window: int = 5,
     freq: str = "YS",
+    op: Literal["<", "<=", "lt", "le"] = "<",
 ) -> xarray.DataArray:
     r"""End of the growing season.
 
@@ -1049,6 +1055,8 @@ def growing_season_end(
         Minimum number of days with temperature below threshold needed for evaluation.
     freq : str
         Resampling frequency.
+    op : {"<", "<=", "lt", "le"}
+        Comparison operation. Default: "<".
 
     Returns
     -------
@@ -1070,7 +1078,9 @@ def growing_season_end(
     and :math:`[P]` is 1 if :math:`P` is true, and 0 if false.
     """
     thresh = convert_units_to(thresh, tas)
-    cond = tas >= thresh
+
+    # Note: The following operation is inverted here so that there is less confusion for users.
+    cond = ~compare(tas, op, thresh, constrain=("<=", "<"))
 
     out = cond.resample(time=freq).map(
         rl.run_end_after_date,
@@ -1130,9 +1140,9 @@ def growing_season_length(
 
     .. math::
 
-        TG_{ij} > 5 ℃
+        TG_{ij} >= 5 ℃
 
-    and the first occurrence after 1 July of at least 6 consecutive days with:
+    and the first occurrence after 1 July of at least six (6) consecutive days with:
 
     .. math::
 

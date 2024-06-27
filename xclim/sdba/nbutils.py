@@ -80,6 +80,7 @@ def _wrapper_quantile1d(arr, q):
 
 def _quantile(arr, q, nreduce):
     if arr.ndim == nreduce:
+        print("hehe")
         out = nan_quantile(arr.flatten(), q)
     else:
         # dimensions that are reduced by quantile
