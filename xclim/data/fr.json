@@ -651,8 +651,8 @@
     "abstract": "Nombre de jours entre la première occurrence d'une série de jours ayant une température moyenne quotidienne au-dessus d'un seuil et la première occurrence d'une série de jours avec une température moyenne quotidienne sous ce même seuil, survenant après une date de calendrier donnée."
   },
   "GROWING_SEASON_START": {
-    "long_name": "Premier jour de la première série de {window} jours ayant une température moyenne quotidienne égale ou au-dessus de {thresh}",
-    "description": "Jour de l’année marquant le début de la saison de croissance, défini comme le premier jour de la première série de {window} jours ayant une température moyenne quotidienne au-dessus ou égale à {thresh}",
+    "long_name": "Premier jour de la première série de {window} jours ayant une température moyenne quotidienne {op} {thresh}",
+    "description": "Jour de l’année marquant le début de la saison de croissance, défini comme le premier jour de la première série de {window} jours ayant une température moyenne quotidienne {op} {thresh}",
     "title": "Jour de l'année du début de la saison de croissance",
     "abstract": "Premier jour où la température moyenne quotidienne est au-dessus d'un seuil donné depuis un certain nombre de jours consécutifs."
   },
@@ -759,7 +759,7 @@
     "abstract": "Nombre maximal de jours consécutifs sans gel où la température minimale quotidienne est au-dessus ou égale à 0°C."
   },
   "GROWING_SEASON_END": {
-    "long_name": "Premier jour de la première série de {window} jours ayant une température journalière moyenne sous {thresh}, survenant après {mid_date}",
+    "long_name": "Premier jour de la première série de {window} jours ayant une température journalière moyenne {op} {thresh}, survenant après {mid_date}",
     "description": "Jour de l'année de la fin de la saison de croissance, défini comme le premier jour après {mid_date} ayant une température moyenne quotidienne au-dessus ou égale à {thresh} après une série de {window} jours ayant une température moyenne quotidienne sous {thresh}.",
     "title": "Fin de la saison de croissance",
     "abstract": "Le premier jour où la température moyenne quotidienne est sous un seuil donné pendant un certain nombre de jours consécutifs après une date de calendrier donnée."
