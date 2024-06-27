@@ -20,6 +20,7 @@ Internal changes
 * Version bumping and project triage is now handled by the Ouranos Helper GitHub App. (:pull:`1790`).
 * `netcdf4` has been pinned below v1.7 for test stability reasons. (:pull:`1791`).
 * `bump-my-version` has been updated to v0.23.0. (:pull:`1790`).
+* The Ouranos Helper GitHub App now provides verified commits. (:issue:`1811`, :pull:`1812`).
 
 v0.50.0 (2024-06-17)
 --------------------
