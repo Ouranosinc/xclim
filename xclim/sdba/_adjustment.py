@@ -341,14 +341,12 @@ def mbcn_adjust(
         training source
     sim : xr.DataArray
         data to adjust (stacked with multivariate dimension)
-    ds.rot_matrices : xr.DataArray
-        Rotation matrices used in the training step.
-    ds.af_q : xr.DataArray
-        Adjustment factors obtained in the training step for the npdf transform
-    ds.g_idxs : xr.DataArray
-        Indices of the times in each time group
-    ds.gw_idxs : xr.DataArray
-        Indices of the times in each windowed time group
+    ds : xr.Dataset
+        Dataset variables:
+            rot_matrices : Rotation matrices used in the training step.
+            af_q : Adjustment factors obtained in the training step for the npdf transform
+            g_idxs : Indices of the times in each time group
+            gw_idxs: Indices of the times in each windowed time group
     pts_dims : [str, str]
         The name of the "multivariate" dimension and its primed counterpart. Defaults to "multivar", which
         is the normal case when using :py:func:`xclim.sdba.base.stack_variables`, and "multivar_prime"
@@ -399,7 +397,6 @@ def mbcn_adjust(
         for iv, v in enumerate(sim[pts_dims[0]].values):
             sl = {"time": ind_gw, pts_dims[0]: iv}
             with set_options(sdba_extra_output=False):
-
                 ADJ = base.train(
                     ref[sl], hist[sl], **base_kws_vars[v], skip_input_checks=True
                 )

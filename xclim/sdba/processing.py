@@ -826,9 +826,9 @@ def unstack_variables(da: xr.DataArray, dim: str | None = None) -> xr.Dataset:
 
 
 def grouped_time_indexes(times, group):
-    """Time indices for every group blocks
+    """Time indexes for every group blocks
 
-    Time indices can be used to implement a pseudo-"numpy.groupies" approach to grouping.
+    Time indexes can be used to implement a pseudo-"numpy.groupies" approach to grouping.
 
     Parameters
     ----------
@@ -840,9 +840,9 @@ def grouped_time_indexes(times, group):
     Returns
     -------
     g_idxs : xr.DataArray
-        Time indices of the blocks (only using `group.name` and not `group.window`).
+        Time indexes of the blocks (only using `group.name` and not `group.window`).
     gw_idxs : xr.DataArray
-        Time indices of the blocks (built with a rolling window of `group.window` if any).
+        Time indexes of the blocks (built with a rolling window of `group.window` if any).
     """
 
     def _get_group_complement(da, group):

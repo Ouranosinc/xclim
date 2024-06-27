@@ -144,6 +144,7 @@ class BaseAdjustment(ParametrizableWithDataset):
                     inda[{dim: iv}] = convert_units_to(
                         inda[{dim: iv}], target[v], context="infer"
                     )
+                    inda[dim].attrs["_units"][iv] = target[v]
                 inda.attrs["units"], inda.attrs["standard_name"] = "", ""
                 return inda
 
@@ -1450,16 +1451,16 @@ class MBCn(TrainAdjust):
     ):
         # set default values for non-specified parameters
         base_kws_vars = base_kws_vars or {}
-        for v in sim[self.pts_dims[0]].values:
-            if v not in base_kws_vars.keys():
-                base_kws_vars[v] = {}
-
+        pts_dim = self.pts_dims[0]
+        for v in sim[pts_dim].values:
+            base_kws_vars.setdefault(v, {})
             base_kws_vars[v].setdefault("group", self.group)
             if isinstance(base_kws_vars[v]["group"], str):
                 base_kws_vars[v]["group"] = Grouper(base_kws_vars[v]["group"], 1)
             if base_kws_vars[v]["group"] != self.group:
                 raise ValueError(
-                    "Expected usage of the same group in adjust and training steps."
+                    f"`group` input in _train and _adjust must be the same."
+                    f"Got {self.group} and {base_kws_vars[v]['group']}"
                 )
             base_kws_vars[v].pop("group")
 
@@ -1468,9 +1469,26 @@ class MBCn(TrainAdjust):
                 base_kws_vars[v]["nquantiles"] = equally_spaced_nodes(
                     base_kws_vars[v]["nquantiles"]
                 )
+            if "is_variables" in sim[pts_dim].attrs:
+                if "jitter_under_thresh_value" in base_kws_vars[v]:
+                    base_kws_vars[v]["jitter_under_thresh_value"] = str(
+                        convert_units_to(
+                            base_kws_vars[v]["jitter_under_thresh_value"],
+                            self.train_units[v],
+                            context="hydro",
+                        )
+                    )
+                if "adapt_freq_thresh" in base_kws_vars[v]:
+                    base_kws_vars[v]["adapt_freq_thresh"] = str(
+                        convert_units_to(
+                            base_kws_vars[v]["adapt_freq_thresh"],
+                            self.train_units[v],
+                            context="hydro",
+                        )
+                    )
             # should maybe require that quantiles here match those from training?
 
-        adj_kws = adj_kws if adj_kws is not None else {}
+        adj_kws = adj_kws or {}
         adj_kws.setdefault("interp", self.interp)
         adj_kws.setdefault("extrapolation", self.extrapolation)
 
