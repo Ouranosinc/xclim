@@ -26,6 +26,7 @@ CI changes
 * GitHub repository now uses Rulesets for branch protection. (:pull:`1790`).
 * Version bumping and project triage is now handled by the Ouranos Helper GitHub App. (:pull:`1790`).
 * `bump-my-version` has been updated to v0.23.0. (:pull:`1790`).
+* The Ouranos Helper GitHub App now provides verified commits. (:issue:`1811`, :pull:`1812`).
 * Added the `deptry <https://github.com/fpgmaas/deptry>`_ package to the `dev` linter tools and linting workflows for performing dependency analyses. (:pull:`1806`).
 * Several linting tools have been updated to the latest versions and pinned. (:pull:`1806`).
 
