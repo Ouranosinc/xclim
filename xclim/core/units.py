@@ -349,9 +349,10 @@ def convert_units_to(  # noqa: C901
                         # The new cf standard name is inserted by the converter
                         try:
                             source = _CONVERSIONS[(convname, direction)](source)
-                        except KeyError:  # noqa: S110
-                            # There is no conversion available for this standard name
-                            pass
+                        except Exception as err:
+                            raise ValueError(
+                                f"No conversion available for this standard name: {standard_name}"
+                            ) from err
                         else:
                             source_unit = units2pint(source)
 
