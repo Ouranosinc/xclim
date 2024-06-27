@@ -8,7 +8,12 @@ Contributors to this version: Trevor James Smith (:user:`Zeitsperre`).
 
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+* Added the `op` keyword to the `growing_season_{start|end}` indices and indicators, allowing for customizable threshold operators using `indices.generic.compare()`. (:issue:`1794`, :pull:`1796`).
 * `xclim` now separates the optional dependencies into `dev` and `docs` recipes. Both can be installed with the `all` option (`$ python -m pip install xclim[all]`). (:pull:`1806`).
+
+Bug fixes
+^^^^^^^^^
+* Clarified a typo in the docstring formula for `xclim.indices.growing_season_length`. (:pull:`1796`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
