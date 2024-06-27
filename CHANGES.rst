@@ -10,6 +10,14 @@ New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 * New multivariate bias adjustment class `MBCn`, giving a faster and more accurate implementation of the 'MBCn' algorithm (:issue:`1551`, :pull:`1580`).
 
+New features and enhancements
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+* Added the `op` keyword to the `growing_season_{start|end}` indices and indicators, allowing for customizable threshold operators using `indices.generic.compare()`. (:issue:`1794`, :pull:`1796`).
+
+Bug fixes
+^^^^^^^^^
+* Clarified a typo in the docstring formula for `xclim.indices.growing_season_length`. (:pull:`1796`).
+
 Internal changes
 ^^^^^^^^^^^^^^^^
 * GitHub repository now uses Rulesets for branch protection. (:pull:`1790`).
