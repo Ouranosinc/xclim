@@ -1429,8 +1429,6 @@ class MBCn(TrainAdjust):
 
         # postprocess
         out["rot_matrices"] = rot_matrices
-        out["g_idxs"] = g_idxs
-        out["gw_idxs"] = gw_idxs
 
         out.af_q.attrs.update(
             standard_name="Adjustment factors",
@@ -1486,11 +1484,14 @@ class MBCn(TrainAdjust):
                             context="hydro",
                         )
                     )
-            # should maybe require that quantiles here match those from training?
 
         adj_kws = adj_kws or {}
         adj_kws.setdefault("interp", self.interp)
         adj_kws.setdefault("extrapolation", self.extrapolation)
+
+        g_idxs, gw_idxs = grouped_time_indexes(ref.time, self.group)
+        self.ds["g_idxs"] = g_idxs
+        self.ds["gw_idxs"] = gw_idxs
 
         # adjust (adjust for npft transform, train/adjust for univariate bias correction)
         out = mbcn_adjust(

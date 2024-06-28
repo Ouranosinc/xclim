@@ -578,8 +578,14 @@ class TestMBCn:
                 .expand_dims(location=["Amos"])
                 for file in ["ahccd_1950-2013.nc", "CanESM2_1950-2100.nc"]
             )
-            ref, hist = (ds.sel(time=slice("1981", "2010")) for ds in [ref, dsim])
-            sim = stack_periods(dsim).isel(period=slice(1, 2))
+            ref, hist = (
+                ds.sel(time=slice("1981", "2010")).isel(time=slice(365 * 4))
+                for ds in [ref, dsim]
+            )
+            dsim = dsim.sel(time=slice("1981", None))
+            sim = (stack_periods(dsim).isel(period=slice(1, 2))).isel(
+                time=slice(365 * 4)
+            )
 
             ref, hist, sim = (stack_variables(ds) for ds in [ref, hist, sim])
 
