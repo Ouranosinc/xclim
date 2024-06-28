@@ -231,7 +231,7 @@ class TestCoolingDegreeDays:
         a = tas_series(np.array([10, 15, -5, 18]) + K2C)
         cdd = xci.cooling_degree_days(a)
         assert cdd == 0
-        assert cdd.units == "K d"
+        assert cdd.units == "d K"
 
     def test_cdd(self, tas_series):
         a = tas_series(np.array([20, 25, -15, 19]) + K2C)

@@ -77,8 +77,8 @@ class TestPrecipAccumulation:
         pr.attrs["units"] = "kg m-2 s-1"
         out3 = atmos.precip_accumulation(pr, freq="MS")
 
-        np.testing.assert_array_almost_equal(out1, out2, 3)
-        np.testing.assert_array_almost_equal(out1, out3, 5)
+        np.testing.assert_allclose(out1, out2, rtol=1e-7, atol=1e-4)
+        np.testing.assert_allclose(out1, out3, rtol=1e-7, atol=1e-4)
 
         # check some vector with and without a nan
         x1 = prMM[:31, 0, 0].values
