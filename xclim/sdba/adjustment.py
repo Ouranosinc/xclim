@@ -1206,7 +1206,8 @@ class NpdfTransform(Adjust):
 
 try:
     import SBCK
-except ImportError:
+except ImportError:  # noqa: S110
+    # SBCK is not installed, we will not generate the SBCK classes.
     pass
 else:
 

@@ -3,6 +3,7 @@ from __future__ import annotations
 import platform
 import sys
 from pathlib import Path
+from urllib.error import URLError
 
 import numpy as np
 import pytest
@@ -139,24 +140,26 @@ class TestReleaseSupportFuncs:
 class TestTestingFileAccessors:
     def test_unsafe_urls(self):
         with pytest.raises(
-            ValueError, match="GitHub URL not safe: 'ftp://domain.does.not.exist/'."
+            ValueError, match="GitHub URL not secure: 'ftp://domain.does.not.exist/'."
         ):
             utilities.open_dataset(
                 "doesnt_exist.nc", github_url="ftp://domain.does.not.exist/"
             )
 
         with pytest.raises(
-            ValueError, match="OPeNDAP URL not safe: 'ftp://domain.does.not.exist/'."
+            OSError,
+            match="OPeNDAP file not read. Verify that the service is available: "
+            "'https://seemingly.trustworthy.com/doesnt_exist.nc'",
         ):
             utilities.open_dataset(
-                "doesnt_exist.nc", dap_url="ftp://domain.does.not.exist/"
+                "doesnt_exist.nc", dap_url="https://seemingly.trustworthy.com/"
             )
 
-    def test_bad_opendap_url(self):
+    def test_malicious_urls(self):
         with pytest.raises(
-            OSError,
-            match="OPeNDAP file not read. Verify that the service is available.",
+            URLError,
+            match="urlopen error OPeNDAP URL is not well-formed: 'doesnt_exist.nc'",
         ):
             utilities.open_dataset(
-                "doesnt_exist.nc", dap_url="https://dap.service.does.not.exist/"
+                "doesnt_exist.nc", dap_url="Robert'); DROP TABLE STUDENTS; --"
             )
