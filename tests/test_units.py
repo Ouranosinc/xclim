@@ -332,6 +332,8 @@ def test_declare_relative_units():
         ("", "sum", "count", 365, "d"),
         ("kg m-2", "var", "var", 0, "kg2 m-4"),
         ("°C", "argmax", "doymax", 0, ""),
+        ("°C", "sum", "integral", 365, "K d"),
+        ("°F", "sum", "integral", 365, "d °R"),  # not sure why the order is different
     ],
 )
 def test_to_agg_units(in_u, opfunc, op, exp, exp_u):
