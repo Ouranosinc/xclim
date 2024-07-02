@@ -49,12 +49,12 @@ from .utils import (
 
 __all__ = [
     "LOCI",
+    "OTC",
     "BaseAdjustment",
     "DetrendedQuantileMapping",
     "EmpiricalQuantileMapping",
     "ExtremeValues",
     "NpdfTransform",
-    "OTC",
     "PrincipalComponents",
     "QuantileDeltaMapping",
     "Scaling",
