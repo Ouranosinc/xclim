@@ -615,3 +615,278 @@ def extremes_adjust(
     adjusted: xr.DataArray = (transition * scen) + ((1 - transition) * ds.scen)
     out = adjusted.rename("scen").squeeze("group", drop=True).to_dataset()
     return out
+
+
+def _otc_adjust(
+    X: np.ndarray,
+    Y: np.ndarray,
+    src: np.ndarray | None = None,
+    bin_width: np.ndarray | None = None,
+    bin_origin: np.ndarray | None = None,
+    numItermax: int | None = 100_000_000,
+):
+    """Optimal Transport Correction of the bias of X with respect to Y.
+
+    Parameters
+    ----------
+    X : np.ndarray
+        Historical data to be corrected.
+    Y : np.ndarray
+        Bias correction reference, target of optimal transport.
+    src : np.ndarray | None
+        If not None, X is still used to compute the optimal transport, but it is used to correct src.
+    bin_width : np.ndarray | None
+        Bin widths for all dimensions.
+    bin_origin : np.ndarray | None
+        Bin origins for all dimensions.
+    numItermax : int | None
+        Maximum number of iterations used in the earth mover distance algorithm.
+
+    Returns
+    -------
+    np.ndarray
+        Adjusted data
+    """
+    # Remove NaNs
+    Y = Y[~np.isnan(Y).any(axis=1), :]
+    X = X[~np.isnan(X).any(axis=1), :]
+
+    # Initialize parameters
+    bin_width = u.bin_width_estimator([Y, X]) if bin_width is None else bin_width
+    bin_origin = np.zeros(len(bin_width)) if bin_origin is None else bin_origin
+    numItermax = 100_000_000 if numItermax is None else numItermax
+
+    # Get the bin positions and frequencies of X and Y
+    gridX, muX, idx_binX = u.histogram(X, bin_width, bin_origin)
+    gridY, muY, _ = u.histogram(Y, bin_width, bin_origin)
+
+    # Compute the optimal transportation plan
+    plan = u.optimal_transport(gridX, gridY, muX, muY, numItermax)
+
+    # Get the source positions expressed in terms of bin indices
+    idx_gridX = np.floor((gridX - bin_origin) / bin_width)
+
+    if src is not None:
+        # Source data is different from the data used to compute the transportation plan
+        src = src[~np.isnan(src).any(axis=1), :]
+        # Find the bin indices of source points
+        idx_binX = (src - bin_origin) / bin_width
+        out = np.empty(src.shape)
+    else:
+        out = np.empty(X.shape)
+    idx_binX = np.floor(idx_binX)
+
+    rng = np.random.default_rng()
+    # The plan row corresponding to a source bin indicates its probabilities to be transported to every target bin
+    for i, b in enumerate(idx_binX):
+        # Get the plan row of this source bin
+        pi = np.where((b == idx_gridX).all(1))[0][0]
+        # Pick one index of this plan row
+        choice = rng.choice(range(muY.size), p=plan[pi, :])
+        out[i] = gridY[choice]
+
+    return out
+
+
+@map_groups(scen=[Grouper.DIM])
+def otc_adjust(
+    ds: xr.Dataset,
+    dim: str,
+    bin_width: np.ndarray | None = None,
+    bin_origin: np.ndarray | None = None,
+    numItermax: int | None = 100_000_000,
+):
+    """Optimal Transport Correction of the bias of `hist` with respect to `ref`.
+
+    Notes
+    -----
+    Dataset variables:
+      ref : training target
+      hist : training data
+
+    Parameters
+    ----------
+    ds : xr.Dataset
+        The dataset containing the data.
+    dim : str
+        The dimension along which to compute the quantiles.
+    bin_width : np.ndarray | None
+        Bin widths for all dimensions.
+    bin_origin : np.ndarray | None
+        Bin origins for all dimensions.
+    numItermax : int | None
+        Number of iterations of the earth mover distance algorithm.
+
+    Returns
+    -------
+    xr.Dataset
+        Adjusted data
+    """
+    hist = ds.hist.dropna(dim="time").rename(time="time_hist")
+    ref = ds.ref.dropna(dim="time").rename(time="time_ref")
+
+    scen = xr.apply_ufunc(
+        _otc_adjust,
+        hist,
+        ref,
+        kwargs=dict(
+            bin_width=bin_width,
+            bin_origin=bin_origin,
+            numItermax=numItermax,
+        ),
+        input_core_dims=[["time_hist", "multivar"], ["time_ref", "multivar"]],
+        output_core_dims=[["time_hist", "multivar"]],
+        keep_attrs=True,
+        vectorize=True,
+    ).rename("scen", time_hist="time")
+
+    return scen.to_dataset()
+
+
+def _dotc_adjust(
+    X1: np.ndarray,
+    Y0: np.ndarray,
+    X0: np.ndarray,
+    bin_width: np.ndarray | None = None,
+    bin_origin: np.ndarray | None = None,
+    numItermax: int | None = 100_000_000,
+    cov_factor: str | None = "std",
+):
+    """Dynamical Optimal Transport Correction of the bias of X with respect to Y.
+
+    Parameters
+    ----------
+    X1 : np.ndarray
+        Simulation data to adjust.
+    Y0 : np.ndarray
+        Bias correction reference.
+    X0 : np.ndarray
+        Historical simulation data.
+    bin_width : np.ndarray | None
+        Bin widths for all dimensions.
+    bin_origin : np.ndarray | None
+        Bin origins for all dimensions.
+    numItermax : int | None
+        Number of iterations of the earth mover distance algorithm.
+    cov_factor : str | None = "std"
+        Rescaling factor.
+
+    Returns
+    -------
+    np.ndarray
+        Adjusted data
+    """
+    # Remove NaNs
+    Y0 = Y0[~np.isnan(Y0).any(axis=1), :]
+    X0 = X0[~np.isnan(X0).any(axis=1), :]
+    X1 = X1[~np.isnan(X1).any(axis=1), :]
+
+    # Initialize parameters
+    bin_width = u.bin_width_estimator([Y0, X0, X1]) if bin_width is None else bin_width
+    if cov_factor == "cholesky":
+        fact0 = u.eps_cholesky(np.cov(Y0, rowvar=False))
+        fact1 = u.eps_cholesky(np.cov(X0, rowvar=False))
+        cov_factor = np.dot(fact0, np.linalg.inv(fact1))
+    elif cov_factor == "std":
+        fact0 = np.std(Y0, axis=0)
+        fact1 = np.std(X0, axis=0)
+        cov_factor = np.diag(fact0 / fact1)
+    else:
+        cov_factor = np.identity(Y0.shape[1])
+
+    # Map ref to hist
+    yX0 = _otc_adjust(
+        Y0, X0, bin_width=bin_width, bin_origin=bin_origin, numItermax=numItermax
+    )
+
+    # Map hist to sim
+    yX1 = _otc_adjust(
+        X0,
+        X1,
+        src=yX0,
+        bin_width=bin_width,
+        bin_origin=bin_origin,
+        numItermax=numItermax,
+    )
+
+    # Temporal evolution
+    motion = yX1 - yX0
+    # Apply a variance dependent rescaling factor
+    motion = np.apply_along_axis(lambda x: np.dot(cov_factor, x), 1, motion)
+
+    # Apply the evolution to ref
+    Y1 = Y0 + motion
+
+    # Map sim to the evolution of ref
+    Z1 = _otc_adjust(
+        X1, Y1, bin_width=bin_width, bin_origin=bin_origin, numItermax=numItermax
+    )
+
+    return Z1
+
+
+@map_groups(scen=[Grouper.DIM])
+def dotc_adjust(
+    ds: xr.Dataset,
+    dim: str,
+    bin_width: np.ndarray | None = None,
+    bin_origin: np.ndarray | None = None,
+    numItermax: int | None = 100_000_000,
+    cov_factor: str | None = "std",
+):
+    """Dynamical Optimal Transport Correction of the bias of X with respect to Y.
+
+    Notes
+    -----
+    Dataset variables:
+      ref : training target
+      hist : training data
+      sim : simulated data
+
+    Parameters
+    ----------
+    ds : xr.Dataset
+        The dataset containing the data.
+    dim : str
+        The dimension along which to compute the quantiles.
+    bin_width : np.ndarray | None
+        Bin widths for all dimensions.
+    bin_origin : np.ndarray | None
+        Bin origins for all dimensions.
+    numItermax : int | None
+        Number of iterations of the earth mover distance algorithm.
+    cov_factor : str | None = "std"
+        Rescaling factor.
+
+    Returns
+    -------
+    xr.DataArray
+        Adjusted data
+    """
+    ref = ds.ref.dropna(dim="time").rename(time="time_ref")
+    hist = ds.hist.dropna(dim="time").rename(time="time_hist")
+    sim = ds.sim.dropna(dim="time").rename(time="time_sim")
+
+    scen = xr.apply_ufunc(
+        _dotc_adjust,
+        sim,
+        ref,
+        hist,
+        kwargs=dict(
+            bin_width=bin_width,
+            bin_origin=bin_origin,
+            numItermax=numItermax,
+            cov_factor=cov_factor,
+        ),
+        join="outer",
+        input_core_dims=[
+            ["time_sim", "multivar"],
+            ["time_ref", "multivar"],
+            ["time_hist", "multivar"],
+        ],
+        output_core_dims=[["time_sim", "multivar"]],
+        keep_attrs=True,
+        vectorize=True,
+    ).rename("scen", time_sim="time")
+
+    return scen.to_dataset()

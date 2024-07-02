@@ -13,7 +13,9 @@ import numpy as np
 import xarray as xr
 from boltons.funcutils import wraps
 from dask import array as dsk
+from ot import emd
 from scipy.interpolate import griddata, interp1d
+from scipy.spatial import distance
 from scipy.stats import spearmanr
 from xarray.core.utils import get_temp_dimname
 
@@ -922,3 +924,83 @@ def _pairwise_spearman(da, dims):
             "allow_rechunk": True,
         },
     ).rename("correlation")
+
+
+def bin_width_estimator(X):
+    """Estimate the bin width of an histogram."""
+    if isinstance(X, list):
+        return np.min([bin_width_estimator(x) for x in X], axis=0)
+
+    if X.ndim == 1:
+        X = X.reshape(-1, 1)
+
+    if X.shape[0] < 1000:
+        # Sturges
+        nh = np.log2(X.shape[0]) + 1.0
+        bin_width = np.zeros(X.shape[1]) + 1.0 / nh
+    else:
+        # Freedman-Diaconis
+        bin_width = (
+            2.0
+            * (np.percentile(X, q=75, axis=0) - np.percentile(X, q=25, axis=0))
+            / np.power(X.shape[0], 1.0 / 3.0)
+        )
+
+    return bin_width
+
+
+def histogram(data, bin_width, bin_origin):
+    """Construct an histogram of the data.
+
+    Returns the position of the center of bins, their corresponding frequency and the bin of every data point.
+    """
+    # Find bin indices of data points
+    idx_bin = np.floor((data - bin_origin) / bin_width)
+
+    # Associate unique values with frequencies
+    idx_grid, mu = np.unique(idx_bin, return_counts=True, axis=0)
+
+    # Normalise frequencies
+    mu = np.divide(mu, sum(mu))
+
+    # Get the unindexed position of the center of bins
+    grid = (idx_grid + 1 / 2) * bin_width + bin_origin
+
+    return grid, mu, idx_bin
+
+
+def optimal_transport(gridX, gridY, muX, muY, numItermax):
+    """Computes the optimal transportation plan between X and Y."""
+    # Compute the distances from every X bin to every Y bin
+    C = distance.cdist(gridX, gridY, "sqeuclidean")
+
+    # Compute the optimal transportation plan
+    gamma = emd(muX, muY, C, numItermax=numItermax)
+    plan = (gamma.T / gamma.sum(axis=1)).T
+
+    return plan
+
+
+def eps_cholesky(M, nit=200):
+    """Cholesky decomposition."""
+    MC = None
+    try:
+        MC = np.linalg.cholesky(M)
+    except np.linalg.LinAlgError:
+        MC = None
+
+    if MC is None:
+        # Introduce small perturbations until M is positive-definite
+        eps = min(1e-9, np.abs(np.diagonal(M)).min())
+        if eps == 0:
+            eps = 1e-9
+        it = 0
+        while MC is None and it < nit:
+            perturb = np.identity(M.shape[0]) * eps
+            try:
+                MC = np.linalg.cholesky(M + perturb)
+            except np.linalg.LinAlgError:
+                MC = None
+            eps = 2 * eps
+            nit += 1
+    return MC
