@@ -722,8 +722,10 @@ def otc_adjust(
     xr.Dataset
         Adjusted data
     """
-    hist = ds.hist.dropna(dim="time").rename(time="time_hist")
-    ref = ds.ref.dropna(dim="time").rename(time="time_ref")
+    dim = dim[0]
+    hist = ds.hist.dropna(dim=dim).rename(time=f"{dim}_hist")
+    ref = ds.ref.dropna(dim=dim).rename(time=f"{dim}_ref")
+    rename_kwargs = {f"{dim}_hist": dim}
 
     scen = xr.apply_ufunc(
         _otc_adjust,
@@ -734,11 +736,11 @@ def otc_adjust(
             bin_origin=bin_origin,
             numItermax=numItermax,
         ),
-        input_core_dims=[["time_hist", "multivar"], ["time_ref", "multivar"]],
-        output_core_dims=[["time_hist", "multivar"]],
+        input_core_dims=[[f"{dim}_hist", "multivar"], [f"{dim}_ref", "multivar"]],
+        output_core_dims=[[f"{dim}_hist", "multivar"]],
         keep_attrs=True,
         vectorize=True,
-    ).rename("scen", time_hist="time")
+    ).rename("scen", **rename_kwargs)
 
     return scen.to_dataset()
 
@@ -828,7 +830,7 @@ def _dotc_adjust(
 @map_groups(scen=[Grouper.DIM])
 def dotc_adjust(
     ds: xr.Dataset,
-    dim: str,  # TODO : unused
+    dim: str,
     bin_width: np.ndarray | None = None,
     bin_origin: np.ndarray | None = None,
     numItermax: int | None = 100_000_000,
@@ -863,9 +865,11 @@ def dotc_adjust(
     xr.Dataset
         Adjusted data
     """
-    ref = ds.ref.dropna(dim="time").rename(time="time_ref")
-    hist = ds.hist.dropna(dim="time").rename(time="time_hist")
-    sim = ds.sim.dropna(dim="time").rename(time="time_sim")
+    dim = dim[0]
+    ref = ds.ref.dropna(dim=dim).rename(time=f"{dim}_ref")
+    hist = ds.hist.dropna(dim=dim).rename(time=f"{dim}_hist")
+    sim = ds.sim.dropna(dim=dim).rename(time=f"{dim}_sim")
+    rename_kwargs = {f"{dim}_sim": dim}
 
     scen = xr.apply_ufunc(
         _dotc_adjust,
@@ -878,15 +882,14 @@ def dotc_adjust(
             numItermax=numItermax,
             cov_factor=cov_factor,
         ),
-        join="outer",
         input_core_dims=[
-            ["time_sim", "multivar"],
-            ["time_ref", "multivar"],
-            ["time_hist", "multivar"],
+            [f"{dim}_sim", "multivar"],
+            [f"{dim}_ref", "multivar"],
+            [f"{dim}_hist", "multivar"],
         ],
-        output_core_dims=[["time_sim", "multivar"]],
+        output_core_dims=[[f"{dim}_sim", "multivar"]],
         keep_attrs=True,
         vectorize=True,
-    ).rename("scen", time_sim="time")
+    ).rename("scen", **rename_kwargs)
 
     return scen.to_dataset()
