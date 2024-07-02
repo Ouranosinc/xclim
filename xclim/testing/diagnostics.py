@@ -25,6 +25,7 @@ try:
     from matplotlib import pyplot as plt
 except ModuleNotFoundError:
     warnings.warn("Matplotlib not found, plot-generating functions will not work.")
+    plt = None
 
 
 __all__ = ["adapt_freq_graph", "cannon_2015_figure_2", "synth_rainfall"]
@@ -51,6 +52,9 @@ def synth_rainfall(shape, scale=1, wet_freq=0.25, size=1):
 def cannon_2015_figure_2():
     """Create a graphic similar to figure 2 of Cannon et al. 2015."""
     # noqa: D103
+    if plt is None:
+        raise ModuleNotFoundError("Matplotlib not found.")
+
     n = 10000
     ref, hist, sim = cannon_2015_rvs(n, random=False)
     QM = EmpiricalQuantileMapping(kind="*", group="time", interp="linear")
@@ -127,6 +131,9 @@ def cannon_2015_figure_2():
 
 def adapt_freq_graph():
     """Create a graphic with the additive adjustment factors estimated after applying the adapt_freq method."""
+    if plt is None:
+        raise ModuleNotFoundError("Matplotlib not found.")
+
     n = 10000
     x = series(synth_rainfall(2, 2, wet_freq=0.25, size=n), "pr")  # sim
     y = series(synth_rainfall(2, 2, wet_freq=0.5, size=n), "pr")  # ref

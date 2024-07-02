@@ -35,13 +35,14 @@ dependencies:
   - codespell ==2.3.0
   - coverage >=7.5.0
   - coveralls >=4.0.0
+  - deptry ==0.16.1
   - distributed >=2.0
   - filelock
   - flake8 >=7.0.0
   - flake8-rst-docstrings
   - flit >=3.9.0
   - furo >=2023.9.10
-  - h5netcdf
+  - h5netcdf >=1.3.0
   - ipykernel
   - ipython
   - isort ==5.13.2
@@ -50,7 +51,7 @@ dependencies:
   - nbconvert <7.14  # Pinned due to directive errors in sphinx. See: https://github.com/jupyter/nbconvert/issues/2092
   - nbqa
   - nbsphinx
-  - nbval
+  - nbval >=0.11.0
   - nc-time-axis
   - netCDF4 >=1.4,<1.7
   - notebook
@@ -58,13 +59,13 @@ dependencies:
   - platformdirs
   - pooch
   - pre-commit >=3.7
-  - pybtex
+  - pybtex >=0.24.0
   - pylint >=3.1
   - pytest <8.0  # Pinned due to breakage with xdoctest. See: https://github.com/Erotemic/xdoctest/issues/151
   - pytest-cov
   - pytest-socket
   - pytest-xdist >=3.2
-  - ruff >=0.4.0
+  - ruff >=0.4.10
   - sphinx >=7.0.0
   - sphinx-autobuild >=2024.4.16
   - sphinx-autodoc-typehints
