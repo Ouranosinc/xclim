@@ -88,7 +88,7 @@ def series_dataset(variables, start="2000-01-01"):
             name = f"pr_{pr_counter}"
             pr_counter += 1
         else:
-            raise ValueError(f"Variable like `{var["like"]}` not supported.")
+            raise ValueError(f"Variable like `{var['like']}` not supported.")
 
         data_vars[name] = (dims, var["data"], attrs)
 
