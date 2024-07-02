@@ -972,8 +972,7 @@ def histogram(data, bin_width, bin_origin):
 def optimal_transport(gridX, gridY, muX, muY, numItermax):
     """Computes the optimal transportation plan between X and Y."""
     # Compute the distances from every X bin to every Y bin
-    C = distance.cdist(gridX, gridY)
-    C = C**2
+    C = distance.cdist(gridX, gridY, 'sqeuclidean')
 
     # Compute the optimal transportation plan
     gamma = emd(muX, muY, C, numItermax=numItermax)
