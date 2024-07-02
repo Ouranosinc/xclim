@@ -281,7 +281,7 @@ def test_convert_calendar_and_doy():
     out = convert_doy(doy, target_cal="360_day", align_on="date").convert_calendar(
         "360_day", align_on="date"
     )
-    np.testing.assert_array_equal(out, [np.NaN, 31, 332, 360.23, np.NaN])
+    np.testing.assert_array_equal(out, [np.nan, 31, 332, 360.23, np.nan])
     assert out.time.dt.calendar == "360_day"
 
 
@@ -456,7 +456,7 @@ def test_convert_doy():
     )
 
     out = convert_doy(doy, "360_day", align_on="date")
-    np.testing.assert_array_equal(out, [np.NaN, 31, 332, 360.23, np.NaN])
+    np.testing.assert_array_equal(out, [np.nan, 31, 332, 360.23, np.nan])
     assert out.time.dt.calendar == "noleap"
     out = convert_doy(doy, "360_day", align_on="year")
     np.testing.assert_allclose(
@@ -475,7 +475,7 @@ def test_convert_doy():
     ).expand_dims(lat=[10, 20, 30])
 
     out = convert_doy(doy, "noleap", align_on="date")
-    np.testing.assert_array_equal(out.isel(lat=0), [31, 200.48, 190, np.NaN, 299.54])
+    np.testing.assert_array_equal(out.isel(lat=0), [31, 200.48, 190, np.nan, 299.54])
     out = convert_doy(doy, "noleap", align_on="year")
     np.testing.assert_allclose(
         out.isel(lat=0), [31.0, 200.48, 190.0, 59.83607, 299.71885]

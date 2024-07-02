@@ -234,7 +234,7 @@ def huglin_index(
     if method.lower() == "smoothed":
         lat_mask = abs(lat) <= 50
         lat_coefficient = ((abs(lat) - 40) / 10).clip(min=0) * 0.06
-        k = 1 + xarray.where(lat_mask, lat_coefficient, np.NaN)
+        k = 1 + xarray.where(lat_mask, lat_coefficient, np.nan)
         k_aggregated = 1
     elif method.lower() == "icclim":
         k_f = [0, 0.02, 0.03, 0.04, 0.05, 0.06]
@@ -255,7 +255,7 @@ def huglin_index(
                             (46 < abs(lat)) & (abs(lat) <= 48),
                             k_f[4],
                             xarray.where(
-                                (48 < abs(lat)) & (abs(lat) <= 50), k_f[5], np.NaN
+                                (48 < abs(lat)) & (abs(lat) <= 50), k_f[5], np.nan
                             ),
                         ),
                     ),
@@ -1010,7 +1010,7 @@ def rain_season(
         run_positions = select_time(run_positions, date_bounds=(start_date, end_date))
         first_start = run_positions.argmax("time")
         return xarray.where(
-            first_start != run_positions.argmin("time"), first_start, np.NaN
+            first_start != run_positions.argmin("time"), first_start, np.nan
         )
 
     # Find the start of the rain season
@@ -1065,7 +1065,7 @@ def rain_season(
         # `start != NaN` only possible if a condition on next few time steps is respected.
         # Thus, `start+1` exists if `start != NaN`
         start_ind = (start + 1).fillna(-1).astype(int)
-        mask = _pram * np.NaN
+        mask = _pram * np.nan
         # Put "True" on the day of run start
         mask[{"time": start_ind}] = 1
         # Mask back points without runs, propagate the True

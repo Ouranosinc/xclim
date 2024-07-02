@@ -746,8 +746,8 @@ def extract_events(
 
     start_runs = _cumsum_reset_on_zero(da_start, dim=dim, index="first")
     stop_runs = _cumsum_reset_on_zero(da_stop, dim=dim, index="first")
-    start_positions = xr.where(start_runs >= window_start, 1, np.NaN)
-    stop_positions = xr.where(stop_runs >= window_stop, 0, np.NaN)
+    start_positions = xr.where(start_runs >= window_start, 1, np.nan)
+    stop_positions = xr.where(stop_runs >= window_stop, 0, np.nan)
 
     # start positions (1) are f-filled until a stop position (0) is met
     runs = stop_positions.combine_first(start_positions).ffill(dim=dim).fillna(0)
@@ -1143,7 +1143,7 @@ def statistics_run_1d(arr: Sequence[bool], reducer: str, window: int) -> int:
     if not np.any(v) or np.all(v * rl < window):
         return 0
     func = getattr(np, f"nan{reducer}")
-    return func(np.where(v * rl >= window, rl, np.NaN))
+    return func(np.where(v * rl >= window, rl, np.nan))
 
 
 def windowed_run_count_1d(arr: Sequence[bool], window: int) -> int:

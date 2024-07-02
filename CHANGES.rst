@@ -14,6 +14,7 @@ New features and enhancements
 Bug fixes
 ^^^^^^^^^
 * Clarified a typo in the docstring formula for `xclim.indices.growing_season_length`. (:pull:`1796`).
+* ``nan`` and ``inf`` syntax adapted for numpy 2.0. (:pull:`1814`, :issue:`1785`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^

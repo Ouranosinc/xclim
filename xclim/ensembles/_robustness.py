@@ -477,7 +477,7 @@ def _ttest(fut, ref, *, p_change=0.05):
     def _ttest_func(f, r):
         # scipy>=1.9: popmean.axis[-1] must equal 1 for both fut and ref
         if np.isnan(f).all() or np.isnan(r).all():
-            return np.NaN
+            return np.nan
 
         return spstats.ttest_1samp(f, r[..., np.newaxis], axis=-1, nan_policy="omit")[1]
 
@@ -508,7 +508,7 @@ def _welch_ttest(fut, ref, *, p_change=0.05):
     # equal_var=False -> Welch's T-test
     def wtt_wrapper(f, r):  # This specific test can't manage an all-NaN slice
         if np.isnan(f).all() or np.isnan(r).all():
-            return np.NaN
+            return np.nan
         return spstats.ttest_ind(f, r, axis=-1, equal_var=False, nan_policy="omit")[1]
 
     pvals = xr.apply_ufunc(
@@ -534,7 +534,7 @@ def _mannwhitney_utest(ref, fut, *, p_change=0.05):
 
     def mwu_wrapper(f, r):  # This specific test can't manage an all-NaN slice
         if np.isnan(f).all() or np.isnan(r).all():
-            return np.NaN
+            return np.nan
         return spstats.mannwhitneyu(f, r, axis=-1, nan_policy="omit")[1]
 
     pvals = xr.apply_ufunc(

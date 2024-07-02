@@ -682,7 +682,7 @@ class ExtremeValues(TrainAdjust):
                 {
                     "ref": ref,
                     "hist": hist,
-                    "ref_params": ref_params or np.float32(np.NaN),
+                    "ref_params": ref_params or np.float32(np.nan),
                 }
             ),
             q_thresh=q_thresh,
@@ -1171,8 +1171,8 @@ class NpdfTransform(Adjust):
 
         template = xr.Dataset(
             data_vars={
-                "scenh": xr.full_like(hist, np.NaN).rename(time="time_hist"),
-                "scen": xr.full_like(sim, np.NaN),
+                "scenh": xr.full_like(hist, np.nan).rename(time="time_hist"),
+                "scen": xr.full_like(sim, np.nan),
                 "escores": escores_tmpl,
             }
         )

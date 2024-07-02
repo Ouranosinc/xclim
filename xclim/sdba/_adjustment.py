@@ -426,7 +426,7 @@ def npdf_transform(ds: xr.Dataset, **kwargs) -> xr.Dataset:
         # All NaN, but with the proper shape.
         escores = (
             ref.isel({dim: 0, "time": 0}) * hist.isel({dim: 0, "time": 0})
-        ).expand_dims(iterations=ds.iterations) * np.NaN
+        ).expand_dims(iterations=ds.iterations) * np.nan
 
     return xr.Dataset(
         data_vars={
@@ -480,8 +480,8 @@ def _extremes_train_1d(ref, hist, ref_params, *, q_thresh, cluster_thresh, dist,
     af = hist_in_ref / hist[Pcommon]
     # sort them in Px order, and pad to have N values.
     order = np.argsort(Px_hist)
-    px_hist = np.pad(Px_hist[order], ((0, N - af.size),), constant_values=np.NaN)
-    af = np.pad(af[order], ((0, N - af.size),), constant_values=np.NaN)
+    px_hist = np.pad(Px_hist[order], ((0, N - af.size),), constant_values=np.nan)
+    af = np.pad(af[order], ((0, N - af.size),), constant_values=np.nan)
 
     return px_hist, af, thresh
 
@@ -524,7 +524,7 @@ def extremes_train(
         _extremes_train_1d,
         ds.ref,
         ds.hist,
-        ds.ref_params or np.NaN,
+        ds.ref_params or np.nan,
         input_core_dims=[("time",), ("time",), ()],
         output_core_dims=[("quantiles",), ("quantiles",), ()],
         vectorize=True,

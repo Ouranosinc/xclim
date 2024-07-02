@@ -157,7 +157,7 @@ def test_escore():
 
 def test_standardize(random):
     x = random.standard_normal((2, 10000))
-    x[0, 50] = np.NaN
+    x[0, 50] = np.nan
     x = xr.DataArray(x, dims=("x", "y"), attrs={"units": "m"})
 
     xp, avg, std = standardize(x, dim="y")
@@ -216,7 +216,7 @@ def test_to_additive(pr_series, hurs_series):
 
     with units.context("hydro"):
         prlog = to_additive_space(pr, lower_bound="0 mm/d", trans="log")
-    np.testing.assert_allclose(prlog, [-np.Inf, -11.512925, 0, 10])
+    np.testing.assert_allclose(prlog, [-np.inf, -11.512925, 0, 10])
     assert prlog.attrs["sdba_transform"] == "log"
     assert prlog.attrs["sdba_transform_units"] == "kg m-2 s-1"
 
@@ -224,7 +224,7 @@ def test_to_additive(pr_series, hurs_series):
         pr1 = pr + 1
     with units.context("hydro"):
         prlog2 = to_additive_space(pr1, trans="log", lower_bound="1.0 kg m-2 s-1")
-    np.testing.assert_allclose(prlog2, [-np.Inf, -11.512925, 0, 10])
+    np.testing.assert_allclose(prlog2, [-np.inf, -11.512925, 0, 10])
     assert prlog2.attrs["sdba_transform_lower"] == 1.0
 
     # logit
@@ -234,7 +234,7 @@ def test_to_additive(pr_series, hurs_series):
         hurs, lower_bound="0 %", trans="logit", upper_bound="100 %"
     )
     np.testing.assert_allclose(
-        hurslogit, [-np.Inf, -11.5129154649, 2.197224577, np.Inf]
+        hurslogit, [-np.inf, -11.5129154649, 2.197224577, np.inf]
     )
     assert hurslogit.attrs["sdba_transform"] == "logit"
     assert hurslogit.attrs["sdba_transform_units"] == "%"
@@ -245,7 +245,7 @@ def test_to_additive(pr_series, hurs_series):
         hursscl, trans="logit", lower_bound="2", upper_bound="6"
     )
     np.testing.assert_allclose(
-        hurslogit2, [-np.Inf, -11.5129154649, 2.197224577, np.Inf]
+        hurslogit2, [-np.inf, -11.5129154649, 2.197224577, np.inf]
     )
     assert hurslogit2.attrs["sdba_transform_lower"] == 200.0
     assert hurslogit2.attrs["sdba_transform_upper"] == 600.0

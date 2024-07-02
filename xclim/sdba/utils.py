@@ -313,7 +313,7 @@ def add_cyclic_bounds(
 def _interp_on_quantiles_1D(newx, oldx, oldy, method, extrap):  # noqa: N802
     mask_new = np.isnan(newx)
     mask_old = np.isnan(oldy) | np.isnan(oldx)
-    out = np.full_like(newx, np.NaN, dtype=f"float{oldy.dtype.itemsize * 8}")
+    out = np.full_like(newx, np.nan, dtype=f"float{oldy.dtype.itemsize * 8}")
     if np.all(mask_new) or np.all(mask_old):
         warn(
             "All-NaN slice encountered in interp_on_quantiles",
@@ -327,7 +327,7 @@ def _interp_on_quantiles_1D(newx, oldx, oldy, method, extrap):  # noqa: N802
             oldy[~np.isnan(oldy)][-1],
         )
     else:  # extrap == 'nan'
-        fill_value = np.NaN
+        fill_value = np.nan
 
     out[~mask_new] = interp1d(
         oldx[~mask_old],
@@ -342,7 +342,7 @@ def _interp_on_quantiles_1D(newx, oldx, oldy, method, extrap):  # noqa: N802
 def _interp_on_quantiles_2D(newx, newg, oldx, oldy, oldg, method, extrap):  # noqa
     mask_new = np.isnan(newx) | np.isnan(newg)
     mask_old = np.isnan(oldy) | np.isnan(oldx) | np.isnan(oldg)
-    out = np.full_like(newx, np.NaN, dtype=f"float{oldy.dtype.itemsize * 8}")
+    out = np.full_like(newx, np.nan, dtype=f"float{oldy.dtype.itemsize * 8}")
     if np.all(mask_new) or np.all(mask_old):
         warn(
             "All-NaN slice encountered in interp_on_quantiles",
@@ -766,7 +766,7 @@ def get_clusters(data: xr.DataArray, u1, u2, dim: str = "time") -> xr.Dataset:
             np.append(st, pad),
             np.append(ed, pad),
             np.append(mp, pad),
-            np.append(mv, [np.NaN] * (N - count)),
+            np.append(mv, [np.nan] * (N - count)),
             count,
         )
 

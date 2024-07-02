@@ -438,7 +438,7 @@ def _nan_quantile(
     # --- Setup
     data_axis_length = arr.shape[axis]
     if data_axis_length == 0:
-        return np.NAN
+        return np.nan
     if data_axis_length == 1:
         result = np.take(arr, 0, axis=axis)
         return np.broadcast_to(result, (quantiles.size,) + result.shape)
@@ -454,7 +454,7 @@ def _nan_quantile(
     too_few_values = valid_values_count < 2
     if too_few_values.any():
         # This will result in getting the only available value if it exists
-        valid_values_count[too_few_values] = np.NaN
+        valid_values_count[too_few_values] = np.nan
     # --- Computation of indexes
     # Add axis for quantiles
     valid_values_count = valid_values_count[..., np.newaxis]

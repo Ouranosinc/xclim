@@ -94,7 +94,7 @@ def make_criteria(ds: xarray.Dataset | xarray.DataArray):
                         (
                             da[crd].values
                             if crd in da.coords
-                            else [np.NaN] * da.criteria.size
+                            else [np.nan] * da.criteria.size
                         )
                         for da in stacked.values()
                     ],
