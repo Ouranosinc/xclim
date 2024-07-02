@@ -640,7 +640,7 @@ def _otc_adjust(
     bin_origin : np.ndarray | None
         Bin origins for all dimensions.
     numItermax : int | None
-        Number of iterations of the earth mover distance algorithm.
+        Maximum number of iterations used in the earth mover distance algorithm.
 
     Returns
     -------
