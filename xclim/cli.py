@@ -24,7 +24,7 @@ try:
     from dask.distributed import Client, progress
 
     distributed = True
-except ImportError:
+except ImportError:  # noqa: S110
     # Distributed is not a dependency of xclim
     pass
 
