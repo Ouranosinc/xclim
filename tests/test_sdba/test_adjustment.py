@@ -727,7 +727,7 @@ class TestExtremeValues:
 
 
 class TestOTC:
-    def test_compare_sbck(self, random, series_dataset):
+    def test_compare_sbck(self, random, series):
         ns = 1000
         u = random.random(ns)
 
@@ -753,30 +753,30 @@ class TestOTC:
 
         bin_width = [dx, dy]
 
-        ref_variables = [{"data": ref_x, "like": "tas"}, {"data": ref_y, "like": "pr"}]
-        hist_variables = [
-            {"data": hist_x, "like": "tas"},
-            {"data": hist_y, "like": "pr"},
-        ]
-        ref = series_dataset(ref_variables)
-        hist = series_dataset(hist_variables)
+        ref_tas = series(ref_x, "tas")
+        ref_pr = series(ref_y, "pr")
+        ref = xr.merge([ref_tas, ref_pr])
+        ref = stack_variables(ref)
+
+        hist_tas = series(hist_x, "tas")
+        hist_pr = series(hist_y, "pr")
+        hist = xr.merge([hist_tas, hist_pr])
+        hist = stack_variables(hist)
 
         scen = OTC.adjust(ref, hist, bin_width=bin_width)
 
-        ref = stack_variables(ref)
-        hist = stack_variables(hist)
         otc_sbck = adjustment.SBCK_OTC
         scen_sbck = otc_sbck.adjust(
             ref, hist, hist, multi_dim="multivar", bin_width=bin_width
         )
 
-        scen = stack_variables(scen).to_numpy().T
+        scen = scen.to_numpy().T
         scen_sbck = scen_sbck.to_numpy()
         assert np.allclose(scen, scen_sbck)
 
 
 class TestdOTC:
-    def test_compare_sbck(self, random, series_dataset):
+    def test_compare_sbck(self, random, series):
         ns = 1000
         u = random.random(ns)
 
@@ -808,30 +808,29 @@ class TestdOTC:
 
         bin_width = [dx, dy]
 
-        ref_variables = [{"data": ref_x, "like": "tas"}, {"data": ref_y, "like": "pr"}]
-        hist_variables = [
-            {"data": hist_x, "like": "tas"},
-            {"data": hist_y, "like": "pr"},
-        ]
-        sim_variables = [
-            {"data": sim_x, "like": "tas"},
-            {"data": sim_y, "like": "pr"},
-        ]
-        ref = series_dataset(ref_variables)
-        hist = series_dataset(hist_variables)
-        sim = series_dataset(sim_variables)
+        ref_tas = series(ref_x, "tas")
+        ref_pr = series(ref_y, "pr")
+        ref = xr.merge([ref_tas, ref_pr])
+        ref = stack_variables(ref)
+
+        hist_tas = series(hist_x, "tas")
+        hist_pr = series(hist_y, "pr")
+        hist = xr.merge([hist_tas, hist_pr])
+        hist = stack_variables(hist)
+
+        sim_tas = series(sim_x, "tas")
+        sim_pr = series(sim_y, "pr")
+        sim = xr.merge([sim_tas, sim_pr])
+        sim = stack_variables(sim)
 
         scen = dOTC.adjust(ref, hist, sim, bin_width=bin_width)
 
-        ref = stack_variables(ref)
-        hist = stack_variables(hist)
-        sim = stack_variables(sim)
         dotc_sbck = adjustment.SBCK_dOTC
         scen_sbck = dotc_sbck.adjust(
             ref, hist, sim, multi_dim="multivar", bin_width=bin_width
         )
 
-        scen = stack_variables(scen).to_numpy().T
+        scen = scen.to_numpy().T
         scen_sbck = scen_sbck.to_numpy()
         assert np.allclose(scen, scen_sbck)
 

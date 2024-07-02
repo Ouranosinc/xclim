@@ -25,11 +25,6 @@ def series():
 
 
 @pytest.fixture
-def series_dataset():
-    return tu.series_dataset
-
-
-@pytest.fixture
 def mon_triangular():
     return np.array(list(range(1, 7)) + list(range(7, 1, -1))) / 7
 
