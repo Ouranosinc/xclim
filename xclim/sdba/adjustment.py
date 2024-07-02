@@ -295,6 +295,10 @@ class Adjust(BaseAdjustment):
         xr.Dataset
             The bias-adjusted Dataset.
         """
+        if sim is None:
+            kwargs["sim_is_hist"] = sim is None
+            sim = hist.copy()
+
         kwargs = parse_group(cls._adjust, kwargs)
         skip_checks = kwargs.pop("skip_input_checks", False)
 
@@ -1208,11 +1212,11 @@ class NpdfTransform(Adjust):
         return out
 
 
-class OTC:
+class OTC(Adjust):
     """OTC"""
 
     @classmethod
-    def _adjust(
+    def adjust(
         cls,
         ref,
         hist,
@@ -1220,7 +1224,12 @@ class OTC:
         bin_origin=None,
         numItermax=100_000_000,
         group: str | Grouper = "time",
+        **kwargs,
     ):
+        """Adjust"""
+        if not kwargs.pop("sim_is_hist", True):
+            raise ValueError("OTC does not take a `sim` argument")
+
         return otc_adjust(
             xr.Dataset({"ref": ref, "hist": hist}),
             bin_width=bin_width,
@@ -1230,11 +1239,11 @@ class OTC:
         ).scen
 
 
-class dOTC:
+class dOTC(Adjust):
     """dOTC"""
 
     @classmethod
-    def _adjust(
+    def adjust(
         cls,
         ref,
         hist,
@@ -1246,6 +1255,7 @@ class dOTC:
         group: str | Grouper = "time",
         **kwargs,
     ):
+        """Adjust"""
         return dotc_adjust(
             xr.Dataset({"ref": ref, "hist": hist, "sim": sim}),
             bin_width=bin_width,
