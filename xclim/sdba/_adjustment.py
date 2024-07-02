@@ -828,7 +828,7 @@ def _dotc_adjust(
 @map_groups(scen=[Grouper.DIM])
 def dotc_adjust(
     ds: xr.Dataset,
-    dim: str,
+    dim: str,  # TODO : unused
     bin_width: np.ndarray | None = None,
     bin_origin: np.ndarray | None = None,
     numItermax: int | None = 100_000_000,
@@ -860,7 +860,7 @@ def dotc_adjust(
 
     Returns
     -------
-    xr.DataArray
+    xr.Dataset
         Adjusted data
     """
     ref = ds.ref.dropna(dim="time").rename(time="time_ref")

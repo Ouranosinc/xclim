@@ -37,7 +37,6 @@ from ._adjustment import (
     scaling_train,
 )
 from .base import Grouper, ParametrizableWithDataset, parse_group
-from .processing import stack_variables, unstack_variables
 from .utils import (
     ADDITIVE,
     best_pc_orientation_full,
@@ -49,12 +48,12 @@ from .utils import (
 
 __all__ = [
     "LOCI",
+    "OTC",
     "BaseAdjustment",
     "DetrendedQuantileMapping",
     "EmpiricalQuantileMapping",
     "ExtremeValues",
     "NpdfTransform",
-    "OTC",
     "PrincipalComponents",
     "QuantileDeltaMapping",
     "Scaling",
@@ -126,30 +125,18 @@ class BaseAdjustment(ParametrizableWithDataset):
             )
 
     @classmethod
-    def _harmonize_units(cls, *inputs, target: dict[str] | str | None = None):
+    def _harmonize_units(cls, *inputs, target: str | None = None):
         """Convert all inputs to the same units.
 
         If the target unit is not given, the units of the first input are used.
 
         Returns the converted inputs and the target units.
         """
-
-        def _convert_units_to(ds, target, context):
-            if isinstance(ds, DataArray):
-                return convert_units_to(ds, target, context)
-            else:
-                return xr.merge(
-                    [convert_units_to(ds[v], target[v], context) for v in ds.data_vars]
-                )
-
         if target is None:
-            if isinstance(inputs[0], DataArray):
-                target = inputs[0].units
-            else:
-                target = {v: inputs[0][v].units for v in inputs[0].data_vars}
+            target = inputs[0].units
 
         return (
-            _convert_units_to(inp, target, context="infer") for inp in inputs
+            convert_units_to(inda, target, context="infer") for inda in inputs
         ), target
 
     @classmethod
@@ -332,163 +319,6 @@ class Adjust(BaseAdjustment):
 
         if OPTIONS[SDBA_EXTRA_OUTPUT]:
             return out
-        return scen
-
-
-class MultivariateTrainAdjust(BaseAdjustment):
-    """Base class for adjustment objects obeying the train-adjust scheme.
-    Children classes should implement these methods:
-    - ``_train(ref, hist, **kwargs)``, classmethod receiving the training target and data,
-    returning a training dataset and parameters to store in the object.
-    - ``_adjust(sim, **kwargs)``, receiving the projected data and some arguments,
-    returning the `scen` Dataset.
-    """
-
-    _allow_diff_calendars = True
-    _attribute = "_xclim_adjustment"
-    _repr_hide_params = ["hist_calendar", "train_units"]
-
-    @classmethod
-    def train(cls, ref: xr.Dataset, hist: xr.Dataset, **kwargs) -> TrainAdjust:
-        r"""Train the adjustment object.
-        Refer to the class documentation for the algorithm details.
-
-        Parameters
-        ----------
-        ref : xr.Dataset
-            Training target, usually a reference time series drawn from observations.
-        hist : xr.Dataset
-            Training data, usually a model output whose biases are to be adjusted.
-        \*\*kwargs
-            Algorithm-specific keyword arguments, see class doc.
-        """
-        kwargs = parse_group(cls._train, kwargs)
-        skip_checks = kwargs.pop("skip_input_checks", False)
-
-        if not skip_checks:
-            (ref, hist), train_units = cls._harmonize_units(ref, hist)
-
-            if "group" in kwargs:
-                cls._check_inputs(ref, hist, group=kwargs["group"])
-
-            # I don't understand the point of this line, this is done above already
-            # hist = convert_units_to(hist, ref)
-        else:
-            train_units = ""
-
-        ds, params = cls._train(ref, hist, **kwargs)
-        obj = cls(
-            _trained=True,
-            hist_calendar=get_calendar(hist),
-            train_units=train_units,
-            **params,
-        )
-        obj.set_dataset(ds)
-        return obj
-
-    def adjust(self, sim: DataArray, *args, **kwargs):
-        r"""Return bias-adjusted data.
-        Refer to the class documentation for the algorithm details.
-
-        Parameters
-        ----------
-        sim : xr.Dataset
-            Time series to be bias-adjusted, usually a model output.
-        args : xr.Dataset | xr.DataArray
-            Other Datasets/DataArrays needed for the adjustment (usually none).
-        \*\*kwargs
-            Algorithm-specific keyword arguments, see class doc.
-        """
-        skip_checks = kwargs.pop("skip_input_checks", False)
-        if not skip_checks:
-            (sim, *args), _ = self._harmonize_units(sim, *args, target=self.train_units)
-
-            if "group" in self:
-                self._check_inputs(sim, *args, group=self.group)
-
-            # sim = convert_units_to(sim, self.train_units)
-        scen = self._adjust(sim, *args, **kwargs)
-
-        # Keep attrs
-        scen.attrs.update(sim.attrs)
-        for name, crd in sim.coords.items():
-            if name in scen.coords:
-                scen[name].attrs.update(crd.attrs)
-        params = gen_call_string("", **kwargs)[1:-1]  # indexing to remove added ( )
-        infostr = f"{str(self)}.adjust(sim, {params})"
-        scen.attrs["history"] = update_history(f"Bias-adjusted with {infostr}", sim)
-        scen.attrs["bias_adjustment"] = infostr
-        # This should not be done IMO, if scen ends up with wrong units, we want to know, no hide it
-        # scen.attrs["units"] = self.train_units
-        return scen
-
-    def set_dataset(self, ds: xr.Dataset):
-        """Store an xarray dataset in the `ds` attribute.
-        Useful with custom object initialization or if some external processing was performed.
-        """
-        super().set_dataset(ds)
-        self.ds.attrs["adj_params"] = str(self)
-
-    @classmethod
-    def _train(cls, ref: DataArray, hist: DataArray, *kwargs):
-        raise NotImplementedError()
-
-    def _adjust(self, sim, **kwargs):
-        raise NotImplementedError()
-
-
-class MultivariateAdjust(BaseAdjustment):
-    """Adjustment with no intermediate trained object.
-    Children classes should implement a `_adjust` classmethod taking as input the three Datasets
-    and returning the scen dataset/array.
-    """
-
-    @classmethod
-    def adjust(
-        cls,
-        ref: xr.Dataset,
-        hist: xr.Dataset,
-        sim: xr.Dataset | None = None,
-        **kwargs,
-    ) -> xr.Dataset:
-        r"""Return bias-adjusted data. Refer to the class documentation for the algorithm details.
-
-        Parameters
-        ----------
-        ref : xr.Dataset
-            Training target, usually a reference time series drawn from observations.
-        hist : xr.Dataset
-            Training data, usually a model output whose biases are to be adjusted.
-        sim : xr.Dataset
-            Time series to be bias-adjusted, usually a model output.
-        \*\*kwargs
-            Algorithm-specific keyword arguments, see class doc.
-
-        Returns
-        -------
-        xr.Dataset
-            The bias-adjusted Dataset.
-        """
-        kwargs["sim_is_hist"] = sim is None
-        if sim is None:
-            sim = hist.copy()
-
-        kwargs = parse_group(cls._adjust, kwargs)
-        skip_checks = kwargs.pop("skip_input_checks", False)
-
-        if not skip_checks:
-            if "group" in kwargs:
-                cls._check_inputs(ref, hist, sim, group=kwargs["group"])
-
-            (ref, hist, sim), _ = cls._harmonize_units(ref, hist, sim)
-
-        scen = cls._adjust(ref, hist, sim, **kwargs)
-
-        params = ", ".join([f"{k}={repr(v)}" for k, v in kwargs.items()])
-        infostr = f"{cls.__name__}.adjust(ref, hist, sim, {params})"
-        scen.attrs["history"] = update_history(f"Bias-adjusted with {infostr}", sim)
-        scen.attrs["bias_adjustment"] = infostr
-        #  scen.attrs["units"] = ref.units
         return scen
 
 
@@ -1378,28 +1208,20 @@ class NpdfTransform(Adjust):
         return out
 
 
-class OTC(MultivariateAdjust):
+class OTC:
     """OTC"""
 
     @classmethod
     def _adjust(
         cls,
-        ref: xr.DataSet,
-        hist: xr.DataSet,
-        sim: None = None,  # TODO : ignored
-        bin_width: list | None = None,
-        bin_origin: list | None = None,
-        numItermax: int = 100_000_000,
+        ref,
+        hist,
+        bin_width=None,
+        bin_origin=None,
+        numItermax=100_000_000,
         group: str | Grouper = "time",
-        **kwargs,
     ):
-        if not kwargs.pop("sim_is_hist", True):
-            raise ValueError("OTC does not take a `sim` argument")
-
-        ref = stack_variables(ref)
-        hist = stack_variables(hist)
-
-        scen = otc_adjust(
+        return otc_adjust(
             xr.Dataset({"ref": ref, "hist": hist}),
             bin_width=bin_width,
             bin_origin=bin_origin,
@@ -1407,11 +1229,8 @@ class OTC(MultivariateAdjust):
             group=group,
         ).scen
 
-        scen = scen.reindex_like(hist.time)
-        return unstack_variables(scen)
 
-
-class dOTC(MultivariateAdjust):
+class dOTC:
     """dOTC"""
 
     @classmethod
@@ -1427,11 +1246,7 @@ class dOTC(MultivariateAdjust):
         group: str | Grouper = "time",
         **kwargs,
     ):
-        ref = stack_variables(ref)
-        hist = stack_variables(hist)
-        sim = stack_variables(sim)
-
-        scen = dotc_adjust(
+        return dotc_adjust(
             xr.Dataset({"ref": ref, "hist": hist, "sim": sim}),
             bin_width=bin_width,
             bin_origin=bin_origin,
@@ -1439,9 +1254,6 @@ class dOTC(MultivariateAdjust):
             cov_factor=cov_factor,
             group=group,
         ).scen
-
-        scen = scen.reindex({"time": sim.time})
-        return unstack_variables(scen)
 
 
 try:
