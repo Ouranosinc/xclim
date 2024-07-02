@@ -267,6 +267,7 @@ exclude_patterns = [
     "_build",
     "Thumbs.db",
     ".DS_Store",
+    "notebooks/benchmarks",
     "notebooks/xclim_training",
     "paper/paper.md",
     "**.ipynb_checkpoints",

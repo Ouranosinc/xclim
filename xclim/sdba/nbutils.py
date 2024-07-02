@@ -9,15 +9,24 @@ from collections.abc import Hashable, Sequence
 
 import numpy as np
 from numba import boolean, float32, float64, guvectorize, njit
-from xarray import DataArray
+from xarray import DataArray, apply_ufunc
 from xarray.core import utils
+
+from xclim.core.utils import nan_quantile
+
+try:
+    from fastnanquantile.xrcompat import xr_apply_nanquantile
+
+    USE_FASTNANQUANTILE = True
+except ImportError:
+    USE_FASTNANQUANTILE = False
 
 
 @guvectorize(
     [(float32[:], float32, float32[:]), (float64[:], float64, float64[:])],
     "(n),()->()",
     nopython=True,
-    cache=True,
+    cache=False,
 )
 def _vecquantiles(arr, rnk, res):
     if np.isnan(rnk):
@@ -62,14 +71,28 @@ def vecquantiles(
 
 
 @njit
-def _quantile(arr, q):
-    if arr.ndim == 1:
-        out = np.empty((q.size,), dtype=arr.dtype)
-        out[:] = np.nanquantile(arr, q)
+def _wrapper_quantile1d(arr, q):
+    out = np.empty((arr.shape[0], q.size), dtype=arr.dtype)
+    for index in range(out.shape[0]):
+        out[index] = nan_quantile(arr[index], q)
+    return out
+
+
+def _quantile(arr, q, nreduce):
+    if arr.ndim == nreduce:
+        print("hehe")
+        out = nan_quantile(arr.flatten(), q)
     else:
-        out = np.empty((arr.shape[0], q.size), dtype=arr.dtype)
-        for index in range(out.shape[0]):
-            out[index] = np.nanquantile(arr[index], q)
+        # dimensions that are reduced by quantile
+        red_axis = np.arange(len(arr.shape) - nreduce, len(arr.shape))
+        reduction_dim_size = np.prod([arr.shape[idx] for idx in red_axis])
+        # kept dimensions
+        keep_axis = np.arange(len(arr.shape) - nreduce)
+        final_shape = [arr.shape[idx] for idx in keep_axis] + [len(q)]
+        # reshape as (keep_dims, red_dims), compute, reshape back
+        arr = arr.reshape(-1, reduction_dim_size)
+        out = _wrapper_quantile1d(arr, q)
+        out = out.reshape(final_shape)
     return out
 
 
@@ -90,49 +113,39 @@ def quantile(da: DataArray, q: np.ndarray, dim: str | Sequence[Hashable]) -> Dat
     xarray.DataArray
         The quantiles computed along the `dim` dimension.
     """
-    # We have two cases :
-    # - When all dims are processed : we stack them and use _quantile1d
-    # - When the quantiles are vectorized over some dims, these are also stacked and then _quantile2D is used.
-    # All this stacking is so that we can cover all ND+1D cases with one numba function.
-
-    # Stack the dims and send to the last position
-    # This is in case there are more than one
-    dims = [dim] if isinstance(dim, str) else dim
-    tem = utils.get_temp_dimname(da.dims, "temporal")
-    da = da.stack({tem: dims})
-
-    # So we cut in half the definitions to declare in numba
-    # We still use q as the coords, so it corresponds to what was done upstream
-    if not hasattr(q, "dtype") or q.dtype != da.dtype:
+    if USE_FASTNANQUANTILE is True:
+        return xr_apply_nanquantile(da, dim=dim, q=q).rename({"quantile": "quantiles"})
+    else:
         qc = np.array(q, dtype=da.dtype)
-    else:
-        qc = q
-
-    if len(da.dims) > 1:
-        # There are some extra dims
-        extra = utils.get_temp_dimname(da.dims, "extra")
-        da = da.stack({extra: list(set(da.dims) - {tem})})
-        da = da.transpose(..., tem)
-        res = DataArray(
-            _quantile(da.values, qc),
-            dims=(extra, "quantiles"),
-            coords={extra: da[extra], "quantiles": q},
-            attrs=da.attrs,
-        ).unstack([extra])
-
-    else:
-        # All dims are processed
-        res = DataArray(
-            _quantile(da.values, qc),
-            dims="quantiles",
-            coords={"quantiles": q},
-            attrs=da.attrs,
+        dims = [dim] if isinstance(dim, str) else dim
+        kwargs = dict(nreduce=len(dims), q=qc)
+        res = (
+            apply_ufunc(
+                _quantile,
+                da,
+                input_core_dims=[dims],
+                exclude_dims=set(dims),
+                output_core_dims=[["quantiles"]],
+                output_dtypes=[da.dtype],
+                dask_gufunc_kwargs=dict(output_sizes={"quantiles": len(q)}),
+                dask="parallelized",
+                kwargs=kwargs,
+            )
+            .assign_coords(quantiles=q)
+            .assign_attrs(da.attrs)
         )
+        return res
 
-    return res
 
-
-@njit
+@njit(
+    [
+        float32[:, :](float32[:, :]),
+        float64[:, :](float64[:, :]),
+    ],
+    fastmath=False,
+    nogil=True,
+    cache=False,
+)
 def remove_NaNs(x):  # noqa
     """Remove NaN values from series."""
     remove = np.zeros_like(x[0, :], dtype=boolean)
@@ -141,7 +154,15 @@ def remove_NaNs(x):  # noqa
     return x[:, ~remove]
 
 
-@njit(fastmath=True)
+@njit(
+    [
+        float32(float32[:, :], float32[:, :]),
+        float64(float64[:, :], float64[:, :]),
+    ],
+    fastmath=True,
+    nogil=True,
+    cache=False,
+)
 def _correlation(X, Y):
     """Compute a correlation as the mean of pairwise distances between points in X and Y.
 
@@ -158,7 +179,15 @@ def _correlation(X, Y):
     return d / (X.shape[1] * Y.shape[1])
 
 
-@njit(fastmath=True)
+@njit(
+    [
+        float32(float32[:, :]),
+        float64(float64[:, :]),
+    ],
+    fastmath=True,
+    nogil=True,
+    cache=False,
+)
 def _autocorrelation(X):
     """Mean of the NxN pairwise distances of points in X of shape KxN.
 
@@ -181,7 +210,7 @@ def _autocorrelation(X):
     ],
     "(k, n),(k, m)->()",
     nopython=True,
-    cache=True,
+    cache=False,
 )
 def _escore(tgt, sim, out):
     """E-score based on the Székely-Rizzo e-distances between clusters.
@@ -204,7 +233,11 @@ def _escore(tgt, sim, out):
     out[0] = w * (sXY + sXY - sXX - sYY) / 2
 
 
-@njit
+@njit(
+    fastmath=False,
+    nogil=True,
+    cache=False,
+)
 def _first_and_last_nonnull(arr):
     """For each row of arr, get the first and last non NaN elements."""
     out = np.empty((arr.shape[0], 2))
@@ -217,8 +250,14 @@ def _first_and_last_nonnull(arr):
     return out
 
 
-@njit
-def _extrapolate_on_quantiles(interp, oldx, oldg, oldy, newx, newg, method="constant"):
+@njit(
+    fastmath=False,
+    nogil=True,
+    cache=False,
+)
+def _extrapolate_on_quantiles(
+    interp, oldx, oldg, oldy, newx, newg, method="constant"
+):  # noqa
     """Apply extrapolation to the output of interpolation on quantiles with a given grouping.
 
     Arguments are the same as _interp_on_quantiles_2D.
@@ -239,7 +278,11 @@ def _extrapolate_on_quantiles(interp, oldx, oldg, oldy, newx, newg, method="cons
     return interp
 
 
-@njit
+@njit(
+    fastmath=False,
+    nogil=True,
+    cache=False,
+)
 def _pairwise_haversine_and_bins(lond, latd, transpose=False):
     """Inter-site distances with the haversine approximation."""
     N = lond.shape[0]
