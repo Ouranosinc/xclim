@@ -651,10 +651,6 @@ def _otc_adjust(
     ----------
     :cite:cts:`sdba-robin_2021`
     """
-    # Remove NaNs
-    Y = Y[~np.isnan(Y).any(axis=1), :]
-    X = X[~np.isnan(X).any(axis=1), :]
-
     # Initialize parameters
     bin_width = u.bin_width_estimator([Y, X]) if bin_width is None else bin_width
     bin_origin = np.zeros(len(bin_width)) if bin_origin is None else bin_origin
@@ -786,11 +782,6 @@ def _dotc_adjust(
     ----------
     :cite:cts:`sdba-robin_2021`
     """
-    # Remove NaNs
-    Y0 = Y0[~np.isnan(Y0).any(axis=1), :]
-    X0 = X0[~np.isnan(X0).any(axis=1), :]
-    X1 = X1[~np.isnan(X1).any(axis=1), :]
-
     # Initialize parameters
     bin_width = u.bin_width_estimator([Y0, X0, X1]) if bin_width is None else bin_width
     if cov_factor == "cholesky":
