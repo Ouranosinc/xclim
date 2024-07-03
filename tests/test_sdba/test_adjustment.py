@@ -763,7 +763,7 @@ class TestOTC:
         hist = xr.merge([hist_tas, hist_pr])
         hist = stack_variables(hist)
 
-        scen = OTC.adjust(ref, hist, bin_width=bin_width)
+        scen = OTC.adjust(ref, hist, bin_width=bin_width, spray_bins=False)
 
         otc_sbck = adjustment.SBCK_OTC
         scen_sbck = otc_sbck.adjust(
@@ -865,7 +865,7 @@ class TestdOTC:
         sim = xr.merge([sim_tas, sim_pr])
         sim = stack_variables(sim)
 
-        scen = dOTC.adjust(ref, hist, sim, bin_width=bin_width)
+        scen = dOTC.adjust(ref, hist, sim, bin_width=bin_width, spray_bins=False)
 
         dotc_sbck = adjustment.SBCK_dOTC
         scen_sbck = dotc_sbck.adjust(

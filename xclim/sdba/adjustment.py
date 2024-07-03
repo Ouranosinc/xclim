@@ -1236,6 +1236,9 @@ class OTC(Adjust):
     num_iter_max : int | None
         Maximum number of iterations used in the earth mover distance algorithm.
         Default is 100_000_000.
+    spray_bins : bool
+        If `False`, output points are located at the center of their respective bins.
+        If `True`, a random location is picked uniformly inside their bin. Default is `True`.
     group : Union[str, Grouper]
         The grouping information. See :py:class:`xclim.sdba.base.Grouper` for details.
         Default is "time", meaning a single adjustment group along dimension "time".
@@ -1270,6 +1273,7 @@ class OTC(Adjust):
         bin_width: list | None = None,
         bin_origin: list | None = None,
         num_iter_max: int | None = 100_000_000,
+        spray_bins: bool = True,
         group: str | Grouper = "time",
         **kwargs,
     ) -> xr.DataArray:
@@ -1282,6 +1286,7 @@ class OTC(Adjust):
             bin_width=bin_width,
             bin_origin=bin_origin,
             num_iter_max=num_iter_max,
+            spray_bins=spray_bins,
             group=group,
         ).scen
 
@@ -1310,6 +1315,9 @@ class dOTC(Adjust):
         Maximum number of iterations used in the earth mover distance algorithm.
     cov_factor : {None, 'std', 'cholesky'}
         A transformation of the temporal evolution before it is applied to the reference. See notes for details.
+    spray_bins : bool
+        If `False`, output points are located at the center of their respective bins.
+        If `True`, a random location is picked uniformly inside their bin. Default is `True`.
     kind : dict | None
         Keys are variable names and values are adjustment kinds, either additive or multiplicative.
         Unspecified dimensions are treated as "+".
@@ -1358,6 +1366,7 @@ class dOTC(Adjust):
         bin_origin: list | None = None,
         num_iter_max: int | None = 100_000_000,
         cov_factor: str | None = "std",
+        spray_bins: bool = True,
         kind: dict | None = None,
         group: str | Grouper = "time",
     ) -> xr.DataArray:
@@ -1372,6 +1381,7 @@ class dOTC(Adjust):
             bin_origin=bin_origin,
             num_iter_max=num_iter_max,
             cov_factor=cov_factor,
+            spray_bins=spray_bins,
             kind=kind,
             group=group,
         ).scen

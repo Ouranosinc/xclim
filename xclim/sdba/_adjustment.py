@@ -624,6 +624,7 @@ def _otc_adjust(
     bin_width: list | None = None,
     bin_origin: list | None = None,
     num_iter_max: int | None = 100_000_000,
+    spray_bins: bool = True,
 ):
     """Optimal Transport Correction of the bias of X with respect to Y.
 
@@ -685,6 +686,11 @@ def _otc_adjust(
         choice = rng.choice(range(muY.size), p=plan[pi, :])
         out[i] = gridY[choice]
 
+    if spray_bins:
+        if isinstance(bin_width, list):
+            bin_width = np.array(bin_width)
+        out += np.random.uniform(low=-bin_width / 2, high=bin_width / 2, size=out.shape)
+
     return out
 
 
@@ -695,6 +701,7 @@ def otc_adjust(
     bin_width: list | None = None,
     bin_origin: list | None = None,
     num_iter_max: int | None = 100_000_000,
+    spray_bins: bool = True,
 ):
     """Optimal Transport Correction of the bias of `hist` with respect to `ref`.
 
@@ -735,6 +742,7 @@ def otc_adjust(
             bin_width=bin_width,
             bin_origin=bin_origin,
             num_iter_max=num_iter_max,
+            spray_bins=spray_bins,
         ),
         input_core_dims=[[f"{dim}_hist", "multivar"], [f"{dim}_ref", "multivar"]],
         output_core_dims=[[f"{dim}_hist", "multivar"]],
@@ -753,6 +761,7 @@ def _dotc_adjust(
     bin_origin: list | None = None,
     num_iter_max: int | None = 100_000_000,
     cov_factor: str | None = "std",
+    spray_bins: bool = True,
     kind: dict | None = None,
 ):
     """Dynamical Optimal Transport Correction of the bias of X with respect to Y.
@@ -798,7 +807,12 @@ def _dotc_adjust(
 
     # Map ref to hist
     yX0 = _otc_adjust(
-        Y0, X0, bin_width=bin_width, bin_origin=bin_origin, num_iter_max=num_iter_max
+        Y0,
+        X0,
+        bin_width=bin_width,
+        bin_origin=bin_origin,
+        num_iter_max=num_iter_max,
+        spray_bins=False,
     )
 
     # Map hist to sim
@@ -809,12 +823,8 @@ def _dotc_adjust(
         bin_width=bin_width,
         bin_origin=bin_origin,
         num_iter_max=num_iter_max,
+        spray_bins=False,
     )
-
-    # # Temporal evolution
-    # motion = yX1 - yX0
-    # # Apply a variance dependent rescaling factor
-    # motion = np.apply_along_axis(lambda x: np.dot(cov_factor, x), 1, motion)
 
     # Temporal evolution
     motion = np.empty(yX0.shape)
@@ -835,12 +845,14 @@ def _dotc_adjust(
         else:
             Y1[:, j] = Y0[:, j] + motion[:, j]
 
-    # # Apply the evolution to ref
-    # Y1 = Y0 + motion
-
     # Map sim to the evolution of ref
     Z1 = _otc_adjust(
-        X1, Y1, bin_width=bin_width, bin_origin=bin_origin, num_iter_max=num_iter_max
+        X1,
+        Y1,
+        bin_width=bin_width,
+        bin_origin=bin_origin,
+        num_iter_max=num_iter_max,
+        spray_bins=spray_bins,
     )
 
     return Z1
@@ -854,6 +866,7 @@ def dotc_adjust(
     bin_origin: list | None = None,
     num_iter_max: int | None = 100_000_000,
     cov_factor: str | None = "std",
+    spray_bins: bool = True,
     kind: dict | None = None,
 ):
     """Dynamical Optimal Transport Correction of the bias of X with respect to Y.
@@ -907,6 +920,7 @@ def dotc_adjust(
             bin_origin=bin_origin,
             num_iter_max=num_iter_max,
             cov_factor=cov_factor,
+            spray_bins=spray_bins,
             kind=kind,
         ),
         input_core_dims=[
