@@ -982,8 +982,7 @@ def optimal_transport(gridX, gridY, muX, muY, numItermax):
     :cite:cts:`sdba-robin_2021`
     """
     # Compute the distances from every X bin to every Y bin
-    C = distance.cdist(gridX, gridY)
-    C = C**2
+    C = distance.cdist(gridX, gridY, "sqeuclidean")
 
     # Compute the optimal transportation plan
     gamma = emd(muX, muY, C, numItermax=numItermax)

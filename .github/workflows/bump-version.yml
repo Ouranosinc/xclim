@@ -46,7 +46,7 @@ jobs:
             pypi.org:443
       - name: Generate App Token
         id: token_generator
-        uses: actions/create-github-app-token@ad38cffc07bac6e3857755914c4c88bfd2db4da4 # v1.10.2
+        uses: actions/create-github-app-token@31c86eb3b33c9b601a1f60f98dcbfd1d70f379b4 # v1.10.3
         with:
           app-id: ${{ secrets.OURANOS_HELPER_BOT_ID }}
           private-key: ${{ secrets.OURANOS_HELPER_BOT_KEY }}
@@ -58,10 +58,14 @@ jobs:
         uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d # v5.1.0
         with:
           python-version: "3.x"
-      - name: Config Commit Bot
-        run: |
-          git config --local user.email "ouranos-helper-bot@ouranos.ca"
-          git config --local user.name "ouranos-helper-bot"
+      - name: Import GPG Key
+        uses: crazy-max/ghaction-import-gpg@01dd5d3ca463c7f10f7f4f7b4f177225ac661ee4 # v6.1.0
+        with:
+          gpg_private_key: ${{ secrets.OURANOS_HELPER_BOT_GPG_PRIVATE_KEY }}
+          passphrase: ${{ secrets.OURANOS_HELPER_BOT_GPG_PRIVATE_KEY_PASSWORD }}
+          git_user_signingkey: true
+          git_commit_gpgsign: true
+          trust_level: 5
       - name: Current Version
         run: |
           CURRENT_VERSION="$(grep -E '__version__'  xclim/__init__.py | cut -d ' ' -f3)"
