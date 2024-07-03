@@ -621,8 +621,8 @@ def _otc_adjust(
     X: np.ndarray,
     Y: np.ndarray,
     src: np.ndarray | None = None,
-    bin_width: np.ndarray | None = None,
-    bin_origin: np.ndarray | None = None,
+    bin_width: list | None = None,
+    bin_origin: list | None = None,
     numItermax: int | None = 100_000_000,
 ):
     """Optimal Transport Correction of the bias of X with respect to Y.
@@ -635,9 +635,9 @@ def _otc_adjust(
         Bias correction reference, target of optimal transport.
     src : np.ndarray | None
         If not None, X is still used to compute the optimal transport, but it is used to correct src.
-    bin_width : np.ndarray | None
+    bin_width : list | None
         Bin widths for all dimensions.
-    bin_origin : np.ndarray | None
+    bin_origin : list | None
         Bin origins for all dimensions.
     numItermax : int | None
         Number of iterations of the earth mover distance algorithm.
@@ -692,8 +692,8 @@ def _otc_adjust(
 def otc_adjust(
     ds: xr.Dataset,
     dim: str,
-    bin_width: np.ndarray | None = None,
-    bin_origin: np.ndarray | None = None,
+    bin_width: list | None = None,
+    bin_origin: list | None = None,
     numItermax: int | None = 100_000_000,
 ):
     """Optimal Transport Correction of the bias of `hist` with respect to `ref`.
@@ -710,9 +710,9 @@ def otc_adjust(
         The dataset containing the data.
     dim : str
         The dimension along which to compute the quantiles.
-    bin_width : np.ndarray | None
+    bin_width : list | None
         Bin widths for all dimensions.
-    bin_origin : np.ndarray | None
+    bin_origin : list | None
         Bin origins for all dimensions.
     numItermax : int | None
         Number of iterations of the earth mover distance algorithm.
@@ -749,8 +749,8 @@ def _dotc_adjust(
     X1: np.ndarray,
     Y0: np.ndarray,
     X0: np.ndarray,
-    bin_width: np.ndarray | None = None,
-    bin_origin: np.ndarray | None = None,
+    bin_width: list | None = None,
+    bin_origin: list | None = None,
     numItermax: int | None = 100_000_000,
     cov_factor: str | None = "std",
 ):
@@ -764,9 +764,9 @@ def _dotc_adjust(
         Bias correction reference.
     X0 : np.ndarray
         Historical simulation data.
-    bin_width : np.ndarray | None
+    bin_width : list | None
         Bin widths for all dimensions.
-    bin_origin : np.ndarray | None
+    bin_origin : list | None
         Bin origins for all dimensions.
     numItermax : int | None
         Number of iterations of the earth mover distance algorithm.
@@ -831,8 +831,8 @@ def _dotc_adjust(
 def dotc_adjust(
     ds: xr.Dataset,
     dim: str,
-    bin_width: np.ndarray | None = None,
-    bin_origin: np.ndarray | None = None,
+    bin_width: list | None = None,
+    bin_origin: list | None = None,
     numItermax: int | None = 100_000_000,
     cov_factor: str | None = "std",
 ):
@@ -851,9 +851,9 @@ def dotc_adjust(
         The dataset containing the data.
     dim : str
         The dimension along which to compute the quantiles.
-    bin_width : np.ndarray | None
+    bin_width : list | None
         Bin widths for all dimensions.
-    bin_origin : np.ndarray | None
+    bin_origin : list | None
         Bin origins for all dimensions.
     numItermax : int | None
         Number of iterations of the earth mover distance algorithm.

@@ -274,7 +274,7 @@ class Adjust(BaseAdjustment):
         cls,
         ref: xr.DataArray,
         hist: xr.DataArray,
-        sim: xr.DataArray,
+        sim: xr.DataArray | None = None,
         **kwargs,
     ) -> xr.Dataset:
         r"""Return bias-adjusted data. Refer to the class documentation for the algorithm details.
@@ -296,7 +296,7 @@ class Adjust(BaseAdjustment):
             The bias-adjusted Dataset.
         """
         if sim is None:
-            kwargs["sim_is_hist"] = sim is None
+            kwargs["sim_is_None"] = True
             sim = hist.copy()
 
         kwargs = parse_group(cls._adjust, kwargs)
@@ -308,7 +308,7 @@ class Adjust(BaseAdjustment):
 
             (ref, hist, sim), _ = cls._harmonize_units(ref, hist, sim)
 
-        out: xr.Dataset | xr.DataArray = cls._adjust(ref, hist, sim, **kwargs)
+        out: xr.Dataset | xr.DataArray = cls._adjust(ref, hist, sim=sim, **kwargs)
 
         if isinstance(out, xr.DataArray):
             out = out.rename("scen").to_dataset()
@@ -1216,18 +1216,19 @@ class OTC(Adjust):
     """OTC"""
 
     @classmethod
-    def adjust(
+    def _adjust(
         cls,
-        ref,
-        hist,
-        bin_width=None,
-        bin_origin=None,
-        numItermax=100_000_000,
+        ref: xr.DataArray,
+        hist: xr.DataArray,
+        *,
+        bin_width: list | None = None,
+        bin_origin: list | None = None,
+        numItermax: int | None = 100_000_000,
         group: str | Grouper = "time",
+        sim_is_None: bool | None = "time",
         **kwargs,
-    ):
-        """Adjust"""
-        if not kwargs.pop("sim_is_hist", True):
+    ) -> xr.DataArray:
+        if sim_is_None is not True:
             raise ValueError("OTC does not take a `sim` argument")
 
         return otc_adjust(
@@ -1243,19 +1244,18 @@ class dOTC(Adjust):
     """dOTC"""
 
     @classmethod
-    def adjust(
+    def _adjust(
         cls,
-        ref,
-        hist,
-        sim,
-        bin_width=None,
-        bin_origin=None,
-        numItermax=100_000_000,
-        cov_factor="std",
+        ref: xr.DataArray,
+        hist: xr.DataArray,
+        sim: xr.DataArray,
+        *,
+        bin_width: list | None = None,
+        bin_origin: list | None = None,
+        numItermax: int | None = 100_000_000,
+        cov_factor: str | None = "std",
         group: str | Grouper = "time",
-        **kwargs,
-    ):
-        """Adjust"""
+    ) -> xr.DataArray:
         return dotc_adjust(
             xr.Dataset({"ref": ref, "hist": hist, "sim": sim}),
             bin_width=bin_width,
