@@ -646,6 +646,10 @@ def _otc_adjust(
     -------
     np.ndarray
         Adjusted data
+
+    References
+    ----------
+    :cite:cts:`sdba-robin_2021`
     """
     # Remove NaNs
     Y = Y[~np.isnan(Y).any(axis=1), :]
@@ -777,6 +781,10 @@ def _dotc_adjust(
     -------
     np.ndarray
         Adjusted data
+
+    References
+    ----------
+    :cite:cts:`sdba-robin_2021`
     """
     # Remove NaNs
     Y0 = Y0[~np.isnan(Y0).any(axis=1), :]

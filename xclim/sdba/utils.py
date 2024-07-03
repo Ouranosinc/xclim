@@ -927,7 +927,12 @@ def _pairwise_spearman(da, dims):
 
 
 def bin_width_estimator(X):
-    """Estimate the bin width of an histogram."""
+    """Estimate the bin width of an histogram.
+
+    References
+    ----------
+    :cite:cts:`sdba-robin_2021`
+    """
     if isinstance(X, list):
         return np.min([bin_width_estimator(x) for x in X], axis=0)
 
@@ -970,7 +975,12 @@ def histogram(data, bin_width, bin_origin):
 
 
 def optimal_transport(gridX, gridY, muX, muY, numItermax):
-    """Computes the optimal transportation plan between X and Y."""
+    """Computes the optimal transportation plan between X and Y.
+
+    References
+    ----------
+    :cite:cts:`sdba-robin_2021`
+    """
     # Compute the distances from every X bin to every Y bin
     C = distance.cdist(gridX, gridY)
     C = C**2
@@ -983,7 +993,12 @@ def optimal_transport(gridX, gridY, muX, muY, numItermax):
 
 
 def eps_cholesky(M, nit=200):
-    """Cholesky decomposition."""
+    """Cholesky decomposition.
+
+    References
+    ----------
+    :cite:cts:`sdba-robin_2021`
+    """
     MC = None
     try:
         MC = np.linalg.cholesky(M)

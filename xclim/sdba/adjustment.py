@@ -1213,7 +1213,53 @@ class NpdfTransform(Adjust):
 
 
 class OTC(Adjust):
-    """OTC"""
+    r"""Optimal Transport Correction.
+
+    Following :cite:t:`sdba-robin_2019`, this multivariate bias correction method finds the optimal transport
+    mapping between simulated and observed data. The correction of every simulated data point corresponds to
+    the observed data point it is mapped to.
+
+    This method operates with only two contemporaneous datasets and does not accept a `sim` argument.
+
+    See notes for an explanation of the algorithm.
+
+    This implementation is strongly inspired by :cite:t:`sdba-robin_2021`.
+
+    Parameters
+    ----------
+    bin_width : list | None
+        Bin widths for all dimensions.
+        Will be estimated by default.
+    bin_origin : list | None
+        Bin origins for all dimensions.
+        Will be estimated by default.
+    numItermax : int | None
+        Maximum number of iterations used in the earth mover distance algorithm.
+        Default is 100_000_000.
+    group : Union[str, Grouper]
+        The grouping information. See :py:class:`xclim.sdba.base.Grouper` for details.
+        Default is "time", meaning a single adjustment group along dimension "time".
+
+    Notes
+    -----
+    The simulated and observed data sets :math:`X` and :math:`Y` are discretized and standardized using histograms.
+    The length of the bins of the histograms along dimension `k` is given by `bin_width[k]`. An optimal transport
+    plan is found by solving the linear program
+
+    .. math::
+
+        \mathop{\arg\!\min}_{P} \langle P,C\rangle \\
+        s.t. P\mathbf{1} = X \\
+            P^T\mathbf{1} = Y \\
+            P \geq 0
+
+    where :math:`C_{ij}` is the squared euclidean distance between bins :math:`i` and :math:`j`. All data points
+    belonging to input bin :math:`i` are then separately assigned to output bin :math:`j` with probability :math:`P_{ij}`.
+
+    References
+    ----------
+    :cite:cts:`sdba-robin_2019,sdba-robin_2021`
+    """
 
     @classmethod
     def _adjust(
@@ -1241,7 +1287,59 @@ class OTC(Adjust):
 
 
 class dOTC(Adjust):
-    """dOTC"""
+    r"""dynamical Optimal Transport Correction.
+
+    This method is the dynamical version of :py:class:`~xclim.sdba.adjustment.OTC`, as presented by :cite:t:`sdba-robin_2019`.
+    The temporal evolution of the model is found for every point by mapping the historical to the future dataset with
+    optimal transport. A mapping between historical and reference data is found in the same way, and the temporal evolution
+    of simulated data is applied to their assigned reference.
+
+    See notes for an explanation of the algorithm.
+
+    This implementation is strongly inspired by :cite:t:`sdba-robin_2021`.
+
+    Parameters
+    ----------
+    bin_width : list | None
+        Bin widths for all dimensions.
+        Will be estimated by default.
+    bin_origin : list | None
+        Bin origins for all dimensions.
+        Will be estimated by default.
+    numItermax : int | None
+        Maximum number of iterations used in the earth mover distance algorithm.
+    cov_factor : {None, 'std', 'cholesky'}
+        A transformation of the temporal evolution before it is applied to the reference. See notes for details.
+    group : Union[str, Grouper]
+        The grouping information. See :py:class:`xclim.sdba.base.Grouper` for details.
+        Default is "time", meaning a single adjustment group along dimension "time".
+
+    Notes
+    -----
+    The simulated historical, simulated future and observed data sets :math:`X0`, :math:`X1` and :math:`Y0` are
+    discretized and standardized using histograms. The length of the bins of the histograms along dimension `k`
+    is given by `bin_width[k]`. Mappings between :math:`Y0` and :math:`X0` on the one hand and between :math:`X0`
+    and :math:`X1` on the other are found by optimal transport (see :py:class:`~xclim.sdba.adjustment.OTC`). The
+    latter mapping is used to compute the individual temporal evolution of all data points. This evolution is
+    applied to observed data with
+
+    .. math::
+
+        Y1_i := Y0_i + D \cdot v_i
+
+    where
+        - :math:`v_i` is the temporal evolution of historical simulated point :math:`i \in X0` to :math:`j \in X1`
+        - :math:`Y0_i` is the observed data mapped to :math:`i`
+        - :math:`D` is a correction factor given by
+            - :math:`I` if `cov_factor is None`
+            - :math:`diag(\frac{\sigma_{Y0}}{\sigma_{X0}})` if `cov_factor = "std"`
+            - :math:`\frac{Chol(Y0)}{Chol(X0)}` where :math:`Chol` is the Cholesky decomposition if `cov_factor = "cholesky"`
+        - :math:`Y1_i` is the correction of the future simulated data mapped to :math:`i`.
+
+    References
+    ----------
+    :cite:cts:`sdba-robin_2019,sdba-robin_2021`
+    """
 
     @classmethod
     def _adjust(
