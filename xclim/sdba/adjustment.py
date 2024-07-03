@@ -1233,7 +1233,7 @@ class OTC(Adjust):
     bin_origin : list | None
         Bin origins for all dimensions.
         Will be estimated by default.
-    numItermax : int | None
+    num_iter_max : int | None
         Maximum number of iterations used in the earth mover distance algorithm.
         Default is 100_000_000.
     group : Union[str, Grouper]
@@ -1269,7 +1269,7 @@ class OTC(Adjust):
         *,
         bin_width: list | None = None,
         bin_origin: list | None = None,
-        numItermax: int | None = 100_000_000,
+        num_iter_max: int | None = 100_000_000,
         group: str | Grouper = "time",
         sim_is_None: bool | None = "time",
         **kwargs,
@@ -1281,7 +1281,7 @@ class OTC(Adjust):
             xr.Dataset({"ref": ref, "hist": hist}),
             bin_width=bin_width,
             bin_origin=bin_origin,
-            numItermax=numItermax,
+            num_iter_max=num_iter_max,
             group=group,
         ).scen
 
@@ -1306,7 +1306,7 @@ class dOTC(Adjust):
     bin_origin : list | None
         Bin origins for all dimensions.
         Will be estimated by default.
-    numItermax : int | None
+    num_iter_max : int | None
         Maximum number of iterations used in the earth mover distance algorithm.
     cov_factor : {None, 'std', 'cholesky'}
         A transformation of the temporal evolution before it is applied to the reference. See notes for details.
@@ -1350,7 +1350,7 @@ class dOTC(Adjust):
         *,
         bin_width: list | None = None,
         bin_origin: list | None = None,
-        numItermax: int | None = 100_000_000,
+        num_iter_max: int | None = 100_000_000,
         cov_factor: str | None = "std",
         group: str | Grouper = "time",
     ) -> xr.DataArray:
@@ -1358,7 +1358,7 @@ class dOTC(Adjust):
             xr.Dataset({"ref": ref, "hist": hist, "sim": sim}),
             bin_width=bin_width,
             bin_origin=bin_origin,
-            numItermax=numItermax,
+            num_iter_max=num_iter_max,
             cov_factor=cov_factor,
             group=group,
         ).scen

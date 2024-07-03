@@ -623,7 +623,7 @@ def _otc_adjust(
     src: np.ndarray | None = None,
     bin_width: list | None = None,
     bin_origin: list | None = None,
-    numItermax: int | None = 100_000_000,
+    num_iter_max: int | None = 100_000_000,
 ):
     """Optimal Transport Correction of the bias of X with respect to Y.
 
@@ -639,7 +639,7 @@ def _otc_adjust(
         Bin widths for all dimensions.
     bin_origin : list | None
         Bin origins for all dimensions.
-    numItermax : int | None
+    num_iter_max : int | None
         Maximum number of iterations used in the earth mover distance algorithm.
 
     Returns
@@ -658,14 +658,14 @@ def _otc_adjust(
     # Initialize parameters
     bin_width = u.bin_width_estimator([Y, X]) if bin_width is None else bin_width
     bin_origin = np.zeros(len(bin_width)) if bin_origin is None else bin_origin
-    numItermax = 100_000_000 if numItermax is None else numItermax
+    num_iter_max = 100_000_000 if num_iter_max is None else num_iter_max
 
     # Get the bin positions and frequencies of X and Y
     gridX, muX, idx_binX = u.histogram(X, bin_width, bin_origin)
     gridY, muY, _ = u.histogram(Y, bin_width, bin_origin)
 
     # Compute the optimal transportation plan
-    plan = u.optimal_transport(gridX, gridY, muX, muY, numItermax)
+    plan = u.optimal_transport(gridX, gridY, muX, muY, num_iter_max)
 
     # Get the source positions expressed in terms of bin indices
     idx_gridX = np.floor((gridX - bin_origin) / bin_width)
@@ -698,7 +698,7 @@ def otc_adjust(
     dim: str,
     bin_width: list | None = None,
     bin_origin: list | None = None,
-    numItermax: int | None = 100_000_000,
+    num_iter_max: int | None = 100_000_000,
 ):
     """Optimal Transport Correction of the bias of `hist` with respect to `ref`.
 
@@ -718,8 +718,8 @@ def otc_adjust(
         Bin widths for all dimensions.
     bin_origin : list | None
         Bin origins for all dimensions.
-    numItermax : int | None
-        Number of iterations of the earth mover distance algorithm.
+    num_iter_max : int | None
+        Maximum number of iterations used in the earth mover distance algorithm.
 
     Returns
     -------
@@ -738,7 +738,7 @@ def otc_adjust(
         kwargs=dict(
             bin_width=bin_width,
             bin_origin=bin_origin,
-            numItermax=numItermax,
+            num_iter_max=num_iter_max,
         ),
         input_core_dims=[[f"{dim}_hist", "multivar"], [f"{dim}_ref", "multivar"]],
         output_core_dims=[[f"{dim}_hist", "multivar"]],
@@ -755,7 +755,7 @@ def _dotc_adjust(
     X0: np.ndarray,
     bin_width: list | None = None,
     bin_origin: list | None = None,
-    numItermax: int | None = 100_000_000,
+    num_iter_max: int | None = 100_000_000,
     cov_factor: str | None = "std",
 ):
     """Dynamical Optimal Transport Correction of the bias of X with respect to Y.
@@ -772,8 +772,8 @@ def _dotc_adjust(
         Bin widths for all dimensions.
     bin_origin : list | None
         Bin origins for all dimensions.
-    numItermax : int | None
-        Number of iterations of the earth mover distance algorithm.
+    num_iter_max : int | None
+        Maximum number of iterations used in the earth mover distance algorithm.
     cov_factor : str | None = "std"
         Rescaling factor.
 
@@ -806,7 +806,7 @@ def _dotc_adjust(
 
     # Map ref to hist
     yX0 = _otc_adjust(
-        Y0, X0, bin_width=bin_width, bin_origin=bin_origin, numItermax=numItermax
+        Y0, X0, bin_width=bin_width, bin_origin=bin_origin, num_iter_max=num_iter_max
     )
 
     # Map hist to sim
@@ -816,7 +816,7 @@ def _dotc_adjust(
         src=yX0,
         bin_width=bin_width,
         bin_origin=bin_origin,
-        numItermax=numItermax,
+        num_iter_max=num_iter_max,
     )
 
     # Temporal evolution
@@ -829,7 +829,7 @@ def _dotc_adjust(
 
     # Map sim to the evolution of ref
     Z1 = _otc_adjust(
-        X1, Y1, bin_width=bin_width, bin_origin=bin_origin, numItermax=numItermax
+        X1, Y1, bin_width=bin_width, bin_origin=bin_origin, num_iter_max=num_iter_max
     )
 
     return Z1
@@ -841,7 +841,7 @@ def dotc_adjust(
     dim: str,
     bin_width: list | None = None,
     bin_origin: list | None = None,
-    numItermax: int | None = 100_000_000,
+    num_iter_max: int | None = 100_000_000,
     cov_factor: str | None = "std",
 ):
     """Dynamical Optimal Transport Correction of the bias of X with respect to Y.
@@ -863,8 +863,8 @@ def dotc_adjust(
         Bin widths for all dimensions.
     bin_origin : list | None
         Bin origins for all dimensions.
-    numItermax : int | None
-        Number of iterations of the earth mover distance algorithm.
+    num_iter_max : int | None
+        Maximum number of iterations used in the earth mover distance algorithm.
     cov_factor : str | None = "std"
         Rescaling factor.
 
@@ -887,7 +887,7 @@ def dotc_adjust(
         kwargs=dict(
             bin_width=bin_width,
             bin_origin=bin_origin,
-            numItermax=numItermax,
+            num_iter_max=num_iter_max,
             cov_factor=cov_factor,
         ),
         input_core_dims=[
