@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import numpy as np
 import xarray as xr
+from xarray.core.utils import get_temp_dimname
 
 from xclim import set_options
 from xclim.core.units import convert_units_to, infer_context, units
@@ -17,10 +18,10 @@ from xclim.indices.stats import _fitfunc_1d  # noqa
 
 from . import nbutils as nbu
 from . import utils as u
-from ._processing import _adapt_freq
+from ._processing import _adapt_freq, _reordering
 from .base import Grouper, map_blocks, map_groups
 from .detrending import PolyDetrend
-from .processing import escore, jitter_under_thresh, reordering, standardize
+from .processing import escore, jitter_under_thresh
 
 
 def _adapt_freq_hist(ds: xr.Dataset, adapt_freq_thresh: str):
@@ -45,7 +46,7 @@ def dqm_train(
     kind: str,
     quantiles: np.ndarray,
     adapt_freq_thresh: str | None = None,
-    jitter_under_thresh_value,
+    jitter_under_thresh_value: str | None = None,
 ) -> xr.Dataset:
     """Train step on one group.
 
@@ -110,7 +111,7 @@ def eqm_train(
     kind: str,
     quantiles: np.ndarray,
     adapt_freq_thresh: str | None = None,
-    jitter_under_thresh_value,
+    jitter_under_thresh_value: str | None = None,
 ) -> xr.Dataset:
     """EQM: Train step on one group.
 
@@ -204,9 +205,7 @@ def _npdft_train(
 
 
 @map_groups(
-    af=[Grouper.PROP, "iterations", "quantiles"],
-    # af=[Grouper.PROP, "quantiles"],
-    # hist_q=[Grouper.PROP, "quantiles"],
+    af_q=[Grouper.PROP, "iterations", "quantiles"],
 )
 def mbcn_train(
     ds,
@@ -236,25 +235,19 @@ def mbcn_train(
     pts_dims : str
         The name of the "multivariate" dimension and its primed counterpart. Defaults to "multivar", which
         is the normal case when using :py:func:`xclim.sdba.base.stack_variables`, and "multivar_prime",
-    g_idxs : xr.DataArray
-        Indices of the times in each time group
-    gw_idxs : xr.DataArray
-        Indices of the times in each windowed time group
     """
-    # unpack data
-    ref = ds.ref.stack(dim1=dim)
-    hist = ds.hist.stack(dim1=dim)
+    group_time_dim = get_temp_dimname(set(ds.ref.dims).union(ds.hist.dims), "temp")
+    ref = ds.ref.stack({group_time_dim: dim})
+    hist = ds.hist.stack({group_time_dim: dim})
     af_q, escores = xr.apply_ufunc(
         _npdft_train,
-        # standardize(ref , dim="dim1")[0],
-        # standardize(hist, dim="dim1")[0],
         ref,
         hist,
         rot_matrices,
         quantiles,
         input_core_dims=[
-            [pts_dims[0], "dim1"],
-            [pts_dims[0], "dim1"],
+            [pts_dims[0], group_time_dim],
+            [pts_dims[0], group_time_dim],
             ["iterations", pts_dims[1], pts_dims[0]],
             ["quantiles"],
         ],
@@ -308,11 +301,13 @@ def _npdft_adjust(sim, af_q, rots, quantiles, method, extrap):
     return sim
 
 
+@map_groups(reduces=[Grouper.PROP, "quantiles", "iterations"], scen=[])
 def mbcn_adjust(
-    ref,
-    hist,
-    sim,
     ds,
+    *,
+    dim,
+    # group,
+    rot_matrices,
     pts_dims,
     interp,
     extrapolation,
@@ -362,76 +357,74 @@ def mbcn_adjust(
         This should be more performant, but also more memory intensive.
     """
     # unpacking training parameters
-    rot_matrices = ds.rot_matrices
     af_q = ds.af_q
     quantiles = af_q.quantiles
-    g_idxs = ds.g_idxs
-    gw_idxs = ds.gw_idxs
-    gr_dim = gw_idxs.attrs["group_dim"]
-    win = gw_idxs.attrs["group"][1]
+    ref = ds.ref
+    hist = ds.hist
+    sim = ds.sim
+
+    # PROP will be used in bias adjustment too
+    add_dims = list(set(dim) - {"time"})
 
     # this way of handling was letting open the possibility to perform
     # interpolation for multiple periods in the simulation all at once
     # in principle, avoiding redundancy. Need to test this on small data
     # to confirm it works,  and on big data to check performance.
-    dims = ["time"] if period_dim is None else [period_dim, "time"]
+    # 1. univariate adjustment of sim -> scen
+    # the kind may differ depending on the variables
+    scen_block = sim.copy()
+    for iv, v in enumerate(sim[pts_dims[0]].values):
+        sl = {pts_dims[0]: iv}
+        with set_options(sdba_extra_output=False):
+            # ADJ = base.train(ref=ref[sl], hist=hist[sl], **base_kws_vars[v], group="time", skip_input_checks=True)
+            ADJ = base.train(
+                ref=ref[sl],
+                hist=hist[sl],
+                **base_kws_vars[v],
+                add_dims=add_dims,
+                group="time",
+                skip_input_checks=True,
+            )
+            scen_block[sl] = ADJ.adjust(sim=sim[sl], **adj_kws, skip_input_checks=True)
 
-    sim_u = sim[pts_dims[0]].attrs["_units"]
-    # mbcn core
-    scen_mbcn = xr.zeros_like(sim)
-    for ib in range(gw_idxs[gr_dim].size):
-        # indices in a given time block (with and without the window)
-        indices_gw = gw_idxs[{gr_dim: ib}].astype(int).values
-        ind_gw = indices_gw[indices_gw >= 0]
-        indices_g = g_idxs[{gr_dim: ib}].astype(int).values
-        ind_g = indices_g[indices_g >= 0]
+    # stack DIM, PROP
+    group_time_dim = get_temp_dimname(
+        set(ds.ref.dims).union(ds.hist.dims).union(ds.sim.dims), "temp"
+    )
 
-        # 1. univariate adjustment of sim -> scen
-        # the kind may differ depending on the variables
-        scen_block = xr.zeros_like(sim[{"time": ind_gw}])
-        for iv, v in enumerate(sim[pts_dims[0]].values):
-            sl = {"time": ind_gw, pts_dims[0]: iv}
-            with set_options(sdba_extra_output=False):
-                ADJ = base.train(
-                    ref[v][{"time": ind_gw}],
-                    hist[v][{"time": ind_gw}],
-                    **base_kws_vars[v],
-                )
-                scen_block[{pts_dims[0]: iv}] = ADJ.adjust(
-                    sim[sl].assign_attrs({"units": sim_u[iv]}), **adj_kws
-                )
+    ref, hist, sim, scen_block = (
+        da.stack({group_time_dim: dim}) for da in [ref, hist, sim, scen_block]
+    )
 
-        # 2. npdft adjustment of sim
-        npdft_block = xr.apply_ufunc(
-            _npdft_adjust,
-            standardize(sim[{"time": ind_gw}].copy(), dim="time")[0],
-            af_q[{gr_dim: ib}],
-            rot_matrices,
-            quantiles,
-            input_core_dims=[
-                [pts_dims[0]] + dims,
-                ["iterations", pts_dims[1], "quantiles"],
-                ["iterations", pts_dims[1], pts_dims[0]],
-                ["quantiles"],
-            ],
-            output_core_dims=[
-                [pts_dims[0]] + dims,
-            ],
-            dask="parallelized",
-            output_dtypes=[sim.dtype],
-            kwargs={"method": interp, "extrap": extrapolation},
-            vectorize=True,
-        )
+    # 2. npdft adjustment of sim
+    input_time_dims = [period_dim, group_time_dim] if period_dim else [group_time_dim]
+    npdft_block = xr.apply_ufunc(
+        _npdft_adjust,
+        sim,
+        af_q,
+        rot_matrices,
+        quantiles,
+        input_core_dims=[
+            [pts_dims[0]] + input_time_dims,
+            ["iterations", pts_dims[0], "quantiles"],
+            ["iterations", pts_dims[1], pts_dims[0]],
+            ["quantiles"],
+        ],
+        output_core_dims=[
+            [pts_dims[0]] + input_time_dims,
+        ],
+        dask="parallelized",
+        output_dtypes=[sim.dtype],
+        kwargs={"method": interp, "extrap": extrapolation},
+        vectorize=True,
+    )
 
-        # 3. reorder scen according to npdft results
-        reordered = reordering(ref=npdft_block, sim=scen_block)
-        if win > 1:
-            # keep  central value of window (intersecting indices in gw_idxs and g_idxs)
-            scen_mbcn[{"time": ind_g}] = reordered[{"time": np.in1d(ind_gw, ind_g)}]
-        else:
-            scen_mbcn[{"time": ind_g}] = reordered
-
-    return scen_mbcn
+    # # 3. reorder scen according to npdft results
+    scen = _reordering.func(
+        xr.Dataset(dict(ref=npdft_block, sim=scen_block)), dim=[group_time_dim]
+    )
+    scen = scen.rename({"reordered": "scen"}).unstack(group_time_dim)
+    return scen
 
 
 @map_blocks(reduces=[Grouper.PROP, "quantiles"], scen=[])

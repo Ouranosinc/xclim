@@ -12,8 +12,6 @@ from numba import boolean, float32, float64, guvectorize, njit
 from xarray import DataArray, apply_ufunc
 from xarray.core import utils
 
-from xclim.core.utils import nan_quantile
-
 try:
     from fastnanquantile.xrcompat import xr_apply_nanquantile
 
@@ -74,13 +72,13 @@ def vecquantiles(
 def _wrapper_quantile1d(arr, q):
     out = np.empty((arr.shape[0], q.size), dtype=arr.dtype)
     for index in range(out.shape[0]):
-        out[index] = nan_quantile(arr[index], q)
+        out[index] = np.nanquantile(arr[index], q)
     return out
 
 
 def _quantile(arr, q, nreduce):
     if arr.ndim == nreduce:
-        out = nan_quantile(arr.flatten(), q)
+        out = np.nanquantile(arr.flatten(), q)
     else:
         # dimensions that are reduced by quantile
         red_axis = np.arange(len(arr.shape) - nreduce, len(arr.shape))
