@@ -1310,6 +1310,9 @@ class dOTC(Adjust):
         Maximum number of iterations used in the earth mover distance algorithm.
     cov_factor : {None, 'std', 'cholesky'}
         A transformation of the temporal evolution before it is applied to the reference. See notes for details.
+    kind : dict | None
+        Keys are variable names and values are adjustment kinds, either additive or multiplicative.
+        Unspecified dimensions are treated as "+".
     group : Union[str, Grouper]
         The grouping information. See :py:class:`xclim.sdba.base.Grouper` for details.
         Default is "time", meaning a single adjustment group along dimension "time".
@@ -1320,12 +1323,13 @@ class dOTC(Adjust):
     discretized and standardized using histograms. The length of the bins of the histograms along dimension `k`
     is given by `bin_width[k]`. Mappings between :math:`Y0` and :math:`X0` on the one hand and between :math:`X0`
     and :math:`X1` on the other are found by optimal transport (see :py:class:`~xclim.sdba.adjustment.OTC`). The
-    latter mapping is used to compute the individual temporal evolution of all data points. This evolution is
-    applied to observed data with
+    latter mapping is used to compute the temporal evolution of model data. This evolution is computed additively
+    or multiplicatively for each variable depending on its `kind`, and is applied to observed data with
 
     .. math::
 
-        Y1_i := Y0_i + D \cdot v_i
+        Y1_i & := Y0_i + D \cdot v_i \;\; or \\
+        Y1_i & := Y0_i * D \cdot v_i
 
     where
         - :math:`v_i` is the temporal evolution of historical simulated point :math:`i \in X0` to :math:`j \in X1`
@@ -1335,6 +1339,8 @@ class dOTC(Adjust):
             - :math:`diag(\frac{\sigma_{Y0}}{\sigma_{X0}})` if `cov_factor = "std"`
             - :math:`\frac{Chol(Y0)}{Chol(X0)}` where :math:`Chol` is the Cholesky decomposition if `cov_factor = "cholesky"`
         - :math:`Y1_i` is the correction of the future simulated data mapped to :math:`i`.
+
+    Note that the "cholesky" `cov_factor` cannot be used if some variables are multiplicative.
 
     References
     ----------
@@ -1352,14 +1358,21 @@ class dOTC(Adjust):
         bin_origin: list | None = None,
         num_iter_max: int | None = 100_000_000,
         cov_factor: str | None = "std",
+        kind: dict | None = None,
         group: str | Grouper = "time",
     ) -> xr.DataArray:
+        if kind is not None and "*" in kind.values() and cov_factor == "cholesky":
+            raise ValueError(
+                "Multiplicative correction is not supported with `cov_factor` = 'cholesky'."
+            )
+
         return dotc_adjust(
             xr.Dataset({"ref": ref, "hist": hist, "sim": sim}),
             bin_width=bin_width,
             bin_origin=bin_origin,
             num_iter_max=num_iter_max,
             cov_factor=cov_factor,
+            kind=kind,
             group=group,
         ).scen
 

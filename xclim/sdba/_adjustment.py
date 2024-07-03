@@ -753,6 +753,7 @@ def _dotc_adjust(
     bin_origin: list | None = None,
     num_iter_max: int | None = 100_000_000,
     cov_factor: str | None = "std",
+    kind: dict | None = None,
 ):
     """Dynamical Optimal Transport Correction of the bias of X with respect to Y.
 
@@ -810,13 +811,32 @@ def _dotc_adjust(
         num_iter_max=num_iter_max,
     )
 
+    # # Temporal evolution
+    # motion = yX1 - yX0
+    # # Apply a variance dependent rescaling factor
+    # motion = np.apply_along_axis(lambda x: np.dot(cov_factor, x), 1, motion)
+
     # Temporal evolution
-    motion = yX1 - yX0
+    motion = np.empty(yX0.shape)
+    for j in range(yX0.shape[1]):
+        if kind is not None and kind[j] == "*":
+            motion[:, j] = yX1[:, j] / yX0[:, j]
+        else:
+            motion[:, j] = yX1[:, j] - yX0[:, j]
+
     # Apply a variance dependent rescaling factor
     motion = np.apply_along_axis(lambda x: np.dot(cov_factor, x), 1, motion)
 
     # Apply the evolution to ref
-    Y1 = Y0 + motion
+    Y1 = np.empty(yX0.shape)
+    for j in range(yX0.shape[1]):
+        if kind is not None and kind[j] == "*":
+            Y1[:, j] = Y0[:, j] * motion[:, j]
+        else:
+            Y1[:, j] = Y0[:, j] + motion[:, j]
+
+    # # Apply the evolution to ref
+    # Y1 = Y0 + motion
 
     # Map sim to the evolution of ref
     Z1 = _otc_adjust(
@@ -834,6 +854,7 @@ def dotc_adjust(
     bin_origin: list | None = None,
     num_iter_max: int | None = 100_000_000,
     cov_factor: str | None = "std",
+    kind: dict | None = None,
 ):
     """Dynamical Optimal Transport Correction of the bias of X with respect to Y.
 
@@ -870,6 +891,12 @@ def dotc_adjust(
     sim = ds.sim.dropna(dim=dim).rename(time=f"{dim}_sim")
     rename_kwargs = {f"{dim}_sim": dim}
 
+    if kind is not None:
+        kind = {
+            np.where(ref["multivar"].values == var)[0][0]: op
+            for var, op in kind.items()
+        }
+
     scen = xr.apply_ufunc(
         _dotc_adjust,
         sim,
@@ -880,6 +907,7 @@ def dotc_adjust(
             bin_origin=bin_origin,
             num_iter_max=num_iter_max,
             cov_factor=cov_factor,
+            kind=kind,
         ),
         input_core_dims=[
             [f"{dim}_sim", "multivar"],
