@@ -996,7 +996,7 @@ def eps_cholesky(M, nit=200):
 
     References
     ----------
-    :cite:cts:`sdba-robin_2021`
+    :cite:cts:`sdba-robin_2021,sdba-higham_1988,sdba-knol_1989`
     """
     MC = None
     try:
