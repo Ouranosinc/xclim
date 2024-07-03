@@ -296,8 +296,8 @@ class Adjust(BaseAdjustment):
             The bias-adjusted Dataset.
         """
         if sim is None:
-            kwargs["sim_is_None"] = True
             sim = hist.copy()
+            sim.attrs["_is_hist"] = True
 
         kwargs = parse_group(cls._adjust, kwargs)
         skip_checks = kwargs.pop("skip_input_checks", False)
@@ -1271,11 +1271,11 @@ class OTC(Adjust):
         bin_origin: list | None = None,
         num_iter_max: int | None = 100_000_000,
         group: str | Grouper = "time",
-        sim_is_None: bool | None = "time",
         **kwargs,
     ) -> xr.DataArray:
-        if sim_is_None is not True:
-            raise ValueError("OTC does not take a `sim` argument")
+        sim = kwargs.pop("sim")
+        if "_is_hist" not in sim.attrs:
+            raise ValueError("OTC does not take a `sim` argument.")
 
         return otc_adjust(
             xr.Dataset({"ref": ref, "hist": hist}),
