@@ -21,7 +21,7 @@ Internal changes
 * `netcdf4` has been pinned below v1.7 for test stability reasons. (:pull:`1791`).
 * `flake8-bandit`-like checks have been enabled via `ruff`, with fixes for a few security-related issues. (:pull:`1806`).
 * ``xclim.testing.utils`` now employs more secure URL auditing checks. (:pull:`1806`).
-* `CHANGES.rst` has been renamed to `CHANGELOG.rst`, adhering to suggestions from the `keepachangelog v.1.1.0 <https://keepachangelog.com/en/1.1.0/>`_ specifications. (:pull:`1806`).
+* `CHANGES.rst` has been renamed to `CHANGELOG.rst`, adhering to suggestions from the `keepachangelog v.1.1.0 <https://keepachangelog.com/en/1.1.0/>`_ specifications. (:pull:`1823`).
 
 CI changes
 ^^^^^^^^^^
