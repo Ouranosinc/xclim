@@ -1237,7 +1237,7 @@ class OTC(Adjust):
         Maximum number of iterations used in the earth mover distance algorithm.
         Default is 100_000_000.
     spray_bins : bool
-        If `False`, output points are located at the center of their respective bins.
+        If `False`, output points are located at the center of their bin.
         If `True`, a random location is picked uniformly inside their bin. Default is `True`.
     group : Union[str, Grouper]
         The grouping information. See :py:class:`xclim.sdba.base.Grouper` for details.
@@ -1316,7 +1316,7 @@ class dOTC(Adjust):
     cov_factor : {None, 'std', 'cholesky'}
         A transformation of the temporal evolution before it is applied to the reference. See notes for details.
     spray_bins : bool
-        If `False`, output points are located at the center of their respective bins.
+        If `False`, output points are located at the center of their bin.
         If `True`, a random location is picked uniformly inside their bin. Default is `True`.
     kind : dict | None
         Keys are variable names and values are adjustment kinds, either additive or multiplicative.
