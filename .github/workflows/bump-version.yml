@@ -8,7 +8,7 @@ on:
       - .*
       - .github/*/*.md
       - .github/*/*.yml
-      - CHANGES.rst
+      - CHANGELOG.rst
       - CI/*.txt
       - Makefile
       - docs/*/*.ipynb

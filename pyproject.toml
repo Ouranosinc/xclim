@@ -184,7 +184,7 @@ DEP004 = ["matplotlib", "pytest_socket"]
 [tool.flit.sdist]
 include = [
   "AUTHORS.rst",
-  "CHANGES.rst",
+  "CHANGELOG.rst",
   "CI/requirements_upstream.txt",
   "CITATION.cff",
   "CONTRIBUTING.rst",

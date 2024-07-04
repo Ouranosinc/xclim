@@ -5,7 +5,7 @@ on:
     branches:
       - main
     paths-ignore:
-      - CHANGES.rst
+      - CHANGELOG.rst
       - CI/*.txt
       - Makefile
       - pyproject.toml
