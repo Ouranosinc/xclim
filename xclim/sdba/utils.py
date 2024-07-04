@@ -1010,12 +1010,16 @@ def eps_cholesky(M, nit=200):
         if eps == 0:
             eps = 1e-9
         it = 0
-        while MC is None and it < nit:
+        while MC is None:
+            if it == nit:
+                raise ValueError(
+                    "The vcov matrix is far from positive-definite. Please use `cov_factor = 'std'`"
+                )
             perturb = np.identity(M.shape[0]) * eps
             try:
                 MC = np.linalg.cholesky(M + perturb)
             except np.linalg.LinAlgError:
                 MC = None
             eps = 2 * eps
-            nit += 1
+            it += 1
     return MC
