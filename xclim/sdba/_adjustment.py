@@ -669,7 +669,6 @@ def _otc_adjust(
 
     if src is not None:
         # Source data is different from the data used to compute the transportation plan
-        src = src[~np.isnan(src).any(axis=1), :]
         # Find the bin indices of source points
         idx_binX = (src - bin_origin) / bin_width
         out = np.empty(src.shape)
@@ -677,14 +676,23 @@ def _otc_adjust(
         out = np.empty(X.shape)
     idx_binX = np.floor(idx_binX)
 
+    # regroup the indices of all the points belonging to a same bin
+    idx_sort = np.lexsort(idx_binX[:, ::-1].T)
+    sorted_bins = idx_binX[idx_sort]
+    _, idx_start, idx_count = np.unique(
+        sorted_bins, return_index=True, return_counts=True, axis=0
+    )
+    idx_start = np.sort(idx_start)
+    bin_groups = np.split(idx_sort, idx_start[1:])
+
     rng = np.random.default_rng()
     # The plan row corresponding to a source bin indicates its probabilities to be transported to every target bin
-    for i, b in enumerate(idx_binX):
-        # Get the plan row of this source bin
-        pi = np.where((b == idx_gridX).all(1))[0][0]
-        # Pick one index of this plan row
-        choice = rng.choice(range(muY.size), p=plan[pi, :])
-        out[i] = gridY[choice]
+    for i, bin_group in enumerate(bin_groups):
+        # Get the plan row of this bin
+        pi = np.where((idx_binX[bin_group[0]] == idx_gridX).all(1))[0][0]
+        # Pick as much target bins for this source bin as there are points in the source bin
+        choice = rng.choice(range(muY.size), p=plan[pi, :], size=idx_count[i])
+        out[bin_group] = gridY[choice]
 
     if spray_bins:
         if isinstance(bin_width, list):
