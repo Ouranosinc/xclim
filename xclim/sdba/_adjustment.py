@@ -705,7 +705,7 @@ def _otc_adjust(
 @map_groups(scen=[Grouper.DIM])
 def otc_adjust(
     ds: xr.Dataset,
-    dim: str,
+    dim: list,
     bin_width: list | None = None,
     bin_origin: list | None = None,
     num_iter_max: int | None = 100_000_000,
@@ -723,8 +723,8 @@ def otc_adjust(
     ----------
     ds : xr.Dataset
         The dataset containing the data.
-    dim : str
-        The dimension along which to compute the quantiles.
+    dim : list
+        The dimensions that are not variables.
     bin_width : list | None
         Bin widths for all dimensions.
     bin_origin : list | None
@@ -737,10 +737,10 @@ def otc_adjust(
     xr.Dataset
         Adjusted data
     """
-    dim = dim[0]
-    hist = ds.hist.dropna(dim=dim).rename(time=f"{dim}_hist")
-    ref = ds.ref.dropna(dim=dim).rename(time=f"{dim}_ref")
-    rename_kwargs = {f"{dim}_hist": dim}
+    hist = ds.hist.stack(dim_hist=dim)
+    ref = ds.ref.stack(dim_ref=dim, create_index=False)
+    hist = hist.dropna(dim="dim_hist")
+    ref = ref.dropna(dim="dim_ref")
 
     scen = xr.apply_ufunc(
         _otc_adjust,
@@ -752,11 +752,13 @@ def otc_adjust(
             num_iter_max=num_iter_max,
             spray_bins=spray_bins,
         ),
-        input_core_dims=[[f"{dim}_hist", "multivar"], [f"{dim}_ref", "multivar"]],
-        output_core_dims=[[f"{dim}_hist", "multivar"]],
+        input_core_dims=[["dim_hist", "multivar"], ["dim_ref", "multivar"]],
+        output_core_dims=[["dim_hist", "multivar"]],
         keep_attrs=True,
         vectorize=True,
-    ).rename("scen", **rename_kwargs)
+    )
+
+    scen = scen.unstack().rename("scen")
 
     return scen.to_dataset()
 
@@ -869,7 +871,7 @@ def _dotc_adjust(
 @map_groups(scen=[Grouper.DIM])
 def dotc_adjust(
     ds: xr.Dataset,
-    dim: str,
+    dim: list,
     bin_width: list | None = None,
     bin_origin: list | None = None,
     num_iter_max: int | None = 100_000_000,
@@ -890,8 +892,8 @@ def dotc_adjust(
     ----------
     ds : xr.Dataset
         The dataset containing the data.
-    dim : str
-        The dimension along which to compute the quantiles.
+    dim : list
+        The dimensions that are not variables.
     bin_width : list | None
         Bin widths for all dimensions.
     bin_origin : list | None
@@ -906,11 +908,12 @@ def dotc_adjust(
     xr.Dataset
         Adjusted data
     """
-    dim = dim[0]
-    ref = ds.ref.dropna(dim=dim).rename(time=f"{dim}_ref")
-    hist = ds.hist.dropna(dim=dim).rename(time=f"{dim}_hist")
-    sim = ds.sim.dropna(dim=dim).rename(time=f"{dim}_sim")
-    rename_kwargs = {f"{dim}_sim": dim}
+    hist = ds.hist.stack(dim_hist=dim, create_index=False)
+    ref = ds.ref.stack(dim_ref=dim, create_index=False)
+    sim = ds.sim.stack(dim_sim=dim)
+    hist = hist.dropna(dim="dim_hist")
+    ref = ref.dropna(dim="dim_ref")
+    sim = sim.dropna(dim="dim_sim")
 
     if kind is not None:
         kind = {
@@ -932,13 +935,15 @@ def dotc_adjust(
             kind=kind,
         ),
         input_core_dims=[
-            [f"{dim}_sim", "multivar"],
-            [f"{dim}_ref", "multivar"],
-            [f"{dim}_hist", "multivar"],
+            ["dim_sim", "multivar"],
+            ["dim_ref", "multivar"],
+            ["dim_hist", "multivar"],
         ],
-        output_core_dims=[[f"{dim}_sim", "multivar"]],
+        output_core_dims=[["dim_sim", "multivar"]],
         keep_attrs=True,
         vectorize=True,
-    ).rename("scen", **rename_kwargs)
+    )
+
+    scen = scen.unstack().rename("scen")
 
     return scen.to_dataset()
