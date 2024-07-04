@@ -945,6 +945,12 @@ def bin_width_estimator(X):
         * (np.percentile(X, q=75, axis=0) - np.percentile(X, q=25, axis=0))
         / np.power(X.shape[0], 1.0 / 3.0)
     )
+    bin_width = np.where(
+        bin_width == 0,
+        # Scott
+        3.49 * np.std(X, axis=0) / np.power(X.shape[0], 1.0 / 3.0),
+        bin_width,
+    )
 
     return bin_width
 
