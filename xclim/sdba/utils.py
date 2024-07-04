@@ -939,17 +939,12 @@ def bin_width_estimator(X):
     if X.ndim == 1:
         X = X.reshape(-1, 1)
 
-    if X.shape[0] < 1000:
-        # Sturges
-        nh = np.log2(X.shape[0]) + 1.0
-        bin_width = np.zeros(X.shape[1]) + 1.0 / nh
-    else:
-        # Freedman-Diaconis
-        bin_width = (
-            2.0
-            * (np.percentile(X, q=75, axis=0) - np.percentile(X, q=25, axis=0))
-            / np.power(X.shape[0], 1.0 / 3.0)
-        )
+    # Freedman-Diaconis
+    bin_width = (
+        2.0
+        * (np.percentile(X, q=75, axis=0) - np.percentile(X, q=25, axis=0))
+        / np.power(X.shape[0], 1.0 / 3.0)
+    )
 
     return bin_width
 
