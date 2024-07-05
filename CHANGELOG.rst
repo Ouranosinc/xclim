@@ -4,7 +4,7 @@ Changelog
 
 v0.52.0 (unreleased)
 --------------------
-Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), David Huard (:user:`huard`).
+Contributors to this version: David Huard (:user:`huard`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
