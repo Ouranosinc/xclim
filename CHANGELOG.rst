@@ -2,6 +2,15 @@
 Changelog
 =========
 
+v0.52.0 (unreleased)
+--------------------
+Contributors to this version: David Huard (:user:`huard`).
+
+Internal changes
+^^^^^^^^^^^^^^^^
+* Changed french translation of "wet days" from "jours mouillés" to "jours pluvieux". (:issue:`1825`, :pull:`1826`).
+
+
 v0.51.0 (2024-07-04)
 --------------------
 Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`).
