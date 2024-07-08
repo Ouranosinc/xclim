@@ -54,6 +54,9 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+dotc = [
+  "POT ==0.9.4"
+]
 dev = [
   # Dev tools and testing
   "black[jupyter] ==24.4.2",
@@ -110,7 +113,7 @@ docs = [
   "sphinxcontrib-bibtex",
   "sphinxcontrib-svg2pdfconverter[Cairosvg]"
 ]
-all = ["xclim[dev]", "xclim[docs]"]
+all = ["xclim[dev]", "xclim[docs]", "xclim[dotc]"]
 
 [project.scripts]
 xclim = "xclim.cli:cli"

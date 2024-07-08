@@ -5,6 +5,7 @@ Adjustment Methods
 """
 from __future__ import annotations
 
+from importlib.util import find_spec
 from inspect import signature
 from typing import Any
 from warnings import warn
@@ -1277,6 +1278,11 @@ class OTC(Adjust):
         group: str | Grouper = "time",
         **kwargs,
     ) -> xr.DataArray:
+        if find_spec("ot.emd") is None:
+            raise ImportError(
+                "POT is required for OTC and dOTC. Please install with `pip install POT`."
+            )
+
         sim = kwargs.pop("sim")
         if "_is_hist" not in sim.attrs:
             raise ValueError("OTC does not take a `sim` argument.")
@@ -1370,6 +1376,11 @@ class dOTC(Adjust):
         kind: dict | None = None,
         group: str | Grouper = "time",
     ) -> xr.DataArray:
+        if find_spec("ot.emd") is None:
+            raise ImportError(
+                "POT is required for OTC and dOTC. Please install with `pip install POT`."
+            )
+
         if kind is not None and "*" in kind.values() and cov_factor == "cholesky":
             raise ValueError(
                 "Multiplicative correction is not supported with `cov_factor` = 'cholesky'."
