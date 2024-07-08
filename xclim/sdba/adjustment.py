@@ -1278,7 +1278,7 @@ class OTC(Adjust):
         group: str | Grouper = "time",
         **kwargs,
     ) -> xr.DataArray:
-        if find_spec("ot.emd") is None:
+        if find_spec("ot") is None:
             raise ImportError(
                 "POT is required for OTC and dOTC. Please install with `pip install POT`."
             )
@@ -1376,7 +1376,7 @@ class dOTC(Adjust):
         kind: dict | None = None,
         group: str | Grouper = "time",
     ) -> xr.DataArray:
-        if find_spec("ot.emd") is None:
+        if find_spec("ot") is None:
             raise ImportError(
                 "POT is required for OTC and dOTC. Please install with `pip install POT`."
             )
