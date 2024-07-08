@@ -620,7 +620,6 @@ def extremes_adjust(
 def _otc_adjust(
     X: np.ndarray,
     Y: np.ndarray,
-    src: np.ndarray | None = None,
     bin_width: list | None = None,
     bin_origin: list | None = None,
     num_iter_max: int | None = 100_000_000,
@@ -634,8 +633,6 @@ def _otc_adjust(
         Historical data to be corrected.
     Y : np.ndarray
         Bias correction reference, target of optimal transport.
-    src : np.ndarray | None
-        If not None, X is still used to compute the optimal transport, but it is used to correct src.
     bin_width : list | None
         Bin widths for all dimensions.
     bin_origin : list | None
@@ -657,7 +654,7 @@ def _otc_adjust(
     bin_origin = np.zeros(len(bin_width)) if bin_origin is None else bin_origin
     num_iter_max = 100_000_000 if num_iter_max is None else num_iter_max
 
-    # Get the bin positions and frequencies of X and Y
+    # Get the bin positions and frequencies of X and Y, and for all Xs the bin to which they belong
     gridX, muX, idx_binX = u.histogram(X, bin_width, bin_origin)
     gridY, muY, _ = u.histogram(Y, bin_width, bin_origin)
 
@@ -666,15 +663,6 @@ def _otc_adjust(
 
     # Get the source positions expressed in terms of bin indices
     idx_gridX = np.floor((gridX - bin_origin) / bin_width)
-
-    if src is not None:
-        # Source data is different from the data used to compute the transportation plan
-        # Find the bin indices of source points
-        idx_binX = (src - bin_origin) / bin_width
-        out = np.empty(src.shape)
-    else:
-        out = np.empty(X.shape)
-    idx_binX = np.floor(idx_binX)
 
     # regroup the indices of all the points belonging to a same bin
     idx_sort = np.lexsort(idx_binX[:, ::-1].T)
@@ -685,6 +673,7 @@ def _otc_adjust(
     idx_start = np.sort(idx_start)
     bin_groups = np.split(idx_sort, idx_start[1:])
 
+    out = np.empty(X.shape)
     rng = np.random.default_rng()
     # The plan row corresponding to a source bin indicates its probabilities to be transported to every target bin
     for i, bin_group in enumerate(bin_groups):
@@ -827,9 +816,8 @@ def _dotc_adjust(
 
     # Map hist to sim
     yX1 = _otc_adjust(
-        X0,
+        yX0,
         X1,
-        src=yX0,
         bin_width=bin_width,
         bin_origin=bin_origin,
         num_iter_max=num_iter_max,
