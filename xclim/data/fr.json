@@ -204,16 +204,16 @@
     "abstract": "Proportion de la précipitation totale due aux processus de convections. Seuls les jours avec un flux minimum de précipitation sont considérés."
   },
   "WETDAYS": {
-    "long_name": "Nombre de jours où la précipitation est au-dessus ou égale à {thresh}",
-    "description": "Nombre {freq:m} de jours où la précipitation est au-dessus ou égale à {thresh}.",
-    "title": "Jours mouillés",
-    "abstract": "Nombre de jours où la précipitation est au-dessus ou égale à un seuil donné."
+    "long_name": "Nombre de jours où la précipitation est supérieure ou égale à {thresh}",
+    "description": "Nombre {freq:m} de jours où la précipitation est supérieure ou égale à {thresh}.",
+    "title": "Jours pluvieux",
+    "abstract": "Nombre de jours où la précipitation est supérieure ou égale à un seuil donné."
   },
   "WETDAYS_PROP": {
-    "long_name": "Proportion de jours où les précipitations sont au-dessus ou égale à {thresh}",
-    "description": "Proportion {freq:m} de jours où les précipitations sont au-dessus ou égale à {thresh}.",
+    "long_name": "Proportion de jours où la précipitation est supérieure ou égale à {thresh}",
+    "description": "Proportion {freq:m} de jours où la précipitation est supérieure ou égale à {thresh}.",
     "title": "Proportion de jours avec précipitation",
-    "abstract": "Proportion de jours où la précipitation est au-dessus ou égale à un seuil donné."
+    "abstract": "Proportion de jours où la précipitation est supérieure ou égale à un seuil donné."
   },
   "CDD": {
     "long_name": "Durée maximale d'une période où la précipitation est sous {thresh}",
