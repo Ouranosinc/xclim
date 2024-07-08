@@ -35,6 +35,7 @@ __all__ = [
     "convert_units_to",
     "declare_relative_units",
     "declare_units",
+    "ensure_absolute_temperature",
     "ensure_cf_units",
     "ensure_delta",
     "flux2rate",
@@ -465,10 +466,14 @@ DELTA_ABSOLUTE_TEMP = {
 }
 
 
-def ensure_absolute_temperature(units: str):
+def ensure_absolute_temperature(units: str) -> str:
     """Convert temperature units to their absolute counterpart, assuming they represented a difference (delta).
 
     Celsius becomes Kelvin, Fahrenheit becomes Rankine. Does nothing for other units.
+
+    See Also
+    --------
+    :py:func:`ensure_delta`
     """
     a = str2pint(units)
     # ensure a delta pint unit
@@ -476,6 +481,33 @@ def ensure_absolute_temperature(units: str):
     if a.units in DELTA_ABSOLUTE_TEMP:
         return pint2cfunits(DELTA_ABSOLUTE_TEMP[a.units])
     return units
+
+
+def ensure_delta(unit: str) -> str:
+    """Return delta units for temperature.
+
+    For dimensions where delta exist in pint (Temperature), it replaces the temperature unit by delta_degC or
+    delta_degF based on the input unit. For other dimensionality, it just gives back the input units.
+
+    Parameters
+    ----------
+    unit : str
+        unit to transform in delta (or not)
+
+    See Also
+    --------
+    :py:func:`ensure_absolute_temperature`
+    """
+    u = units2pint(unit)
+    d = 1 * u
+    #
+    delta_unit = pint2cfunits(d - d)
+    # replace kelvin/rankine by delta_degC/F
+    if "kelvin" in u._units:
+        delta_unit = pint2cfunits(u / units2pint("K") * units2pint("delta_degC"))
+    if "degree_Rankine" in u._units:
+        delta_unit = pint2cfunits(u / units2pint("°R") * units2pint("delta_degF"))
+    return delta_unit
 
 
 def to_agg_units(
@@ -1318,29 +1350,6 @@ def declare_units(**units_by_name) -> Callable:
         return wrapper
 
     return dec
-
-
-def ensure_delta(unit: str) -> str:
-    """Return delta units for temperature.
-
-    For dimensions where delta exist in pint (Temperature), it replaces the temperature unit by delta_degC or
-    delta_degF based on the input unit. For other dimensionality, it just gives back the input units.
-
-    Parameters
-    ----------
-    unit : str
-        unit to transform in delta (or not)
-    """
-    u = units2pint(unit)
-    d = 1 * u
-    #
-    delta_unit = pint2cfunits(d - d)
-    # replace kelvin/rankine by delta_degC/F
-    if "kelvin" in u._units:
-        delta_unit = pint2cfunits(u / units2pint("K") * units2pint("delta_degC"))
-    if "degree_Rankine" in u._units:
-        delta_unit = pint2cfunits(u / units2pint("°R") * units2pint("delta_degF"))
-    return delta_unit
 
 
 def infer_context(
