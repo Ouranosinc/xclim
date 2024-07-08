@@ -10,19 +10,19 @@ from xclim import land
 
 def test_base_flow_index(ndq_series):
     out = land.base_flow_index(ndq_series, freq="YS")
-    assert out.attrs["units"] == ""
+    assert out.attrs["units"] == "1"
     assert isinstance(out, xr.DataArray)
 
 
 def test_rb_flashiness_index(ndq_series):
     out = land.base_flow_index(ndq_series, freq="YS")
-    assert out.attrs["units"] == ""
+    assert out.attrs["units"] == "1"
     assert isinstance(out, xr.DataArray)
 
 
 def test_qdoy_max(ndq_series, q_series):
     out = land.doy_qmax(ndq_series, freq="YS", season="JJA")
-    assert out.attrs["units"] == ""
+    assert out.attrs["units"] == "1"
 
     a = np.ones(450)
     a[100] = 2

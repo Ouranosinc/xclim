@@ -183,11 +183,7 @@ def pint2cfunits(value: units.Quantity | units.Unit) -> str:
     if isinstance(value, (pint.Quantity, units.Quantity)):
         value = value.units
 
-    # Issue originally introduced in https://github.com/hgrecco/pint/issues/1486
-    # Should be resolved in pint v0.24. See: https://github.com/hgrecco/pint/issues/1913
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore", category=DeprecationWarning)
-        return f"{value:cf}".replace("dimensionless", "")
+    return f"{value:cf}"
 
 
 def ensure_cf_units(ustr: str) -> str:
@@ -558,7 +554,7 @@ def to_agg_units(
 
     elif op in ["doymin", "doymax"]:
         out.attrs.update(
-            units="", is_dayofyear=np.int32(1), calendar=get_calendar(orig)
+            units="1", is_dayofyear=np.int32(1), calendar=get_calendar(orig)
         )
 
     elif op in ["count", "integral"]:
@@ -1219,11 +1215,7 @@ def declare_relative_units(**units_by_name) -> Callable:
                 context = None
                 for ref, refvar in bound_args.arguments.items():
                     if f"<{ref}>" in dim:
-                        # Issue originally introduced in https://github.com/hgrecco/pint/issues/1486
-                        # Should be resolved in pint v0.24. See: https://github.com/hgrecco/pint/issues/1913
-                        with warnings.catch_warnings():
-                            warnings.simplefilter("ignore", category=DeprecationWarning)
-                            dim = dim.replace(f"<{ref}>", f"({units2pint(refvar)})")
+                        dim = dim.replace(f"<{ref}>", f"({units2pint(refvar)})")
 
                         # check_units will guess the hydro context if "precipitation" appears in dim,
                         # but here we pass a real unit. It will also check the standard name of the arg,

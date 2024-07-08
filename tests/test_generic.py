@@ -101,7 +101,7 @@ class TestFlowGeneric:
         for da in [dmx, dmn]:
             for attr in ["units", "is_dayofyear", "calendar"]:
                 assert attr in da.attrs.keys()
-            assert da.attrs["units"] == ""
+            assert da.attrs["units"] == "1"
             assert da.attrs["is_dayofyear"] == 1
 
 

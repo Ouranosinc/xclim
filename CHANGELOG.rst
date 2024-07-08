@@ -4,7 +4,12 @@ Changelog
 
 v0.52.0 (unreleased)
 --------------------
-Contributors to this version: David Huard (:user:`huard`).
+Contributors to this version: David Huard (:user:`huard`), Pascal Bourgault (:user:`aulemahal`).
+
+Breaking changes
+^^^^^^^^^^^^^^^^
+* Dimensionless quantities now use the "1" units attribute as specified by the CF conventions, previously an empty string was returned. (:pull:`1814`).
+* Updated minimum versions for some dependencies: ``numpy>=2``, ``cf-xarray>=0.9.3`` and ``pint>=0.24.1``. (:pull:`1814`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^

@@ -140,7 +140,7 @@ class TestUnitConversion:
         assert pint2cfunits(u) == "%"
 
         u = units2pint("1")
-        assert pint2cfunits(u) == ""
+        assert pint2cfunits(u) == "1"
 
     def test_pint_multiply(self, pr_series):
         a = pr_series([1, 2, 3])
@@ -331,8 +331,8 @@ def test_declare_relative_units():
         ("", "sum", "count", 365, "d"),
         ("", "sum", "count", 365, "d"),
         ("kg m-2", "var", "var", 0, "kg2 m-4"),
-        ("°C", "argmax", "doymax", 0, ""),
-        ("°C", "sum", "integral", 365, "K d"),
+        ("°C", "argmax", "doymax", 0, "1"),
+        ("°C", "sum", "integral", 365, "d K"),
         ("°F", "sum", "integral", 365, "d °R"),  # not sure why the order is different
     ],
 )

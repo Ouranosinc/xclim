@@ -45,11 +45,11 @@ class TestContinuousSnowDepthSeason:
         snd = snd.expand_dims(lat=[0, 1, 2])
 
         out = land.snd_season_start(snd)
-        assert out.units == ""
+        assert out.units == "1"
         np.testing.assert_array_equal(out.isel(lat=0), snd.time.dt.dayofyear[100])
 
         out = land.snd_season_end(snd)
-        assert out.units == ""
+        assert out.units == "1"
         np.testing.assert_array_equal(out.isel(lat=0), snd.time.dt.dayofyear[200])
 
         out = land.snd_season_length(snd)
@@ -67,11 +67,11 @@ class TestContinuousSnowWaterSeason:
         snw = snw.expand_dims(lat=[0, 1, 2])
 
         out = land.snw_season_start(snw)
-        assert out.units == ""
+        assert out.units == "1"
         np.testing.assert_array_equal(out.isel(lat=0), snw.time.dt.dayofyear[100])
 
         out = land.snw_season_end(snw)
-        assert out.units == ""
+        assert out.units == "1"
         np.testing.assert_array_equal(out.isel(lat=0), snw.time.dt.dayofyear[200])
 
         out = land.snw_season_length(snw)
