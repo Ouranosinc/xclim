@@ -44,3 +44,4 @@ Contributors
 * Dante Castro <dante.castro@hereon.de> `@profesorpaiche <https://github.com/profesorpaiche>`_
 * Sascha Hofmann <sascha.hofmann@lobelia.earth> `@saschahofmann <https://github.com/saschahofmann>`_
 * Javier Diez-Sierra <javier.diez@unican.es> `@JavierDiezSierra <https://github.com/JavierDiezSierra>`_
+* Faisal Mahmood <mahmood.faisal@ouranos.ca> <faisal.shovon.007@gmail.com> `@faimahsho <https://github.com/faimahsho>`_
