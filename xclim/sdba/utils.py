@@ -13,7 +13,6 @@ import numpy as np
 import xarray as xr
 from boltons.funcutils import wraps
 from dask import array as dsk
-from ot import emd
 from scipy.interpolate import griddata, interp1d
 from scipy.spatial import distance
 from scipy.stats import spearmanr
@@ -982,6 +981,13 @@ def optimal_transport(gridX, gridY, muX, muY, numItermax):
     ----------
     :cite:cts:`sdba-robin_2021`
     """
+    try:
+        from ot import emd
+    except ImportError:
+        raise ImportError(
+            "POT is required for this. Please install with `pip install POT`."
+        )
+
     # Compute the distances from every X bin to every Y bin
     C = distance.cdist(gridX, gridY, "sqeuclidean")
 
