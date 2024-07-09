@@ -814,7 +814,10 @@ class TestOTC:
         hist = stack_variables(hist)
 
         scen = OTC.adjust(ref, hist)
+
         assert scen.shape == (3, hist_ns - hist_na)
+        hist = unstack_variables(hist)
+        assert not np.isin(hist.x[hist.x.isnull()].time.values, scen.time.values).any()
 
 
 class TestdOTC:
@@ -933,7 +936,10 @@ class TestdOTC:
         sim = stack_variables(sim)
 
         scen = dOTC.adjust(ref, hist, sim)
+
         assert scen.shape == (3, sim_ns - sim_na)
+        sim = unstack_variables(sim)
+        assert not np.isin(sim.x[sim.x.isnull()].time.values, scen.time.values).any()
 
 
 def test_raise_on_multiple_chunks(tas_series):
