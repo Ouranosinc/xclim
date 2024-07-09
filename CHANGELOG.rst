@@ -2,18 +2,31 @@
 Changelog
 =========
 
-v0.51.0 (unreleased)
+v0.52.0 (unreleased)
 --------------------
-Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Éric Dupuis (:user:`coxipi`), Sarah Gammon (:user:`SarahG-579462`)
+Contributors to this version: David Huard (:user:`huard`), Éric Dupuis (:user:`coxipi`), Sarah Gammon (:user:`SarahG-579462`)
+
+Internal changes
+^^^^^^^^^^^^^^^^
+* Changed french translation of "wet days" from "jours mouillés" to "jours pluvieux". (:issue:`1825`, :pull:`1826`).
+
+New features and enhancements
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+* ``xclim.sdba.nbutils.quantile`` and its child functions are now faster. If the module `fastnanquantile` is installed, it is used as the backend for the computation of quantiles and yields even faster results. (:issue:`1255`, :pull:`1513`).
+
+
+v0.51.0 (2024-07-04)
+--------------------
+Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`).
 
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 * Added the `op` keyword to the `growing_season_{start|end}` indices and indicators, allowing for customizable threshold operators using `indices.generic.compare()`. (:issue:`1794`, :pull:`1796`).
 * `xclim` now separates the optional dependencies into `dev` and `docs` recipes. Both can be installed with the `all` option (`$ python -m pip install xclim[all]`). (:pull:`1806`).
-* ``xclim.sdba.nbutils.quantile`` and its child functions are now faster. If the module `fastnanquantile` is installed, it is used as the backend for the computation of quantiles and yields even faster results. (:issue:`1255`, :pull:`1513`).
 
 Bug fixes
 ^^^^^^^^^
+* Units of degree-days computations with Fahrenheit input fixed to yield "°R d". Added a new ``xclim.core.units.ensure_absolute_temperature`` method to convert from delta to absolute temperatures. (:issue:`1789`, :pull:`1804`).
 * Clarified a typo in the docstring formula for `xclim.indices.growing_season_length`. (:pull:`1796`).
 
 Internal changes
@@ -21,6 +34,7 @@ Internal changes
 * `netcdf4` has been pinned below v1.7 for test stability reasons. (:pull:`1791`).
 * `flake8-bandit`-like checks have been enabled via `ruff`, with fixes for a few security-related issues. (:pull:`1806`).
 * ``xclim.testing.utils`` now employs more secure URL auditing checks. (:pull:`1806`).
+* `CHANGES.rst` has been renamed to `CHANGELOG.rst`, adhering to suggestions from the `keepachangelog v.1.1.0 <https://keepachangelog.com/en/1.1.0/>`_ specifications. (:pull:`1823`).
 
 CI changes
 ^^^^^^^^^^
