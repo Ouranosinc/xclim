@@ -26,11 +26,11 @@ class TestQuantiles:
         q = np.linspace(0.1, 0.99, 50)
 
         # only 1 non-null value
-        da = xr.DataArray([1] + [np.NAN] * 100, dims="dim_0")
+        da = xr.DataArray([1] + [np.nan] * 100, dims="dim_0")
         out_nbu = nbu.quantile(da, q, dim="dim_0")
         np.testing.assert_array_equal(out_nbu.values, np.full_like(q, 1))
 
         # only NANs
-        da = xr.DataArray([np.NAN] * 100, dims="dim_0")
+        da = xr.DataArray([np.nan] * 100, dims="dim_0")
         out_nbu = nbu.quantile(da, q, dim="dim_0")
-        np.testing.assert_array_equal(out_nbu.values, np.full_like(q, np.NAN))
+        np.testing.assert_array_equal(out_nbu.values, np.full_like(q, np.nan))
