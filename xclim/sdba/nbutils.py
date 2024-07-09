@@ -12,14 +12,144 @@ from numba import boolean, float32, float64, guvectorize, njit
 from xarray import DataArray, apply_ufunc
 from xarray.core import utils
 
-from xclim.core.utils import nan_quantile
-
 try:
     from fastnanquantile.xrcompat import xr_apply_nanquantile
 
     USE_FASTNANQUANTILE = True
 except ImportError:
     USE_FASTNANQUANTILE = False
+
+
+@njit(
+    fastmath={"arcp", "contract", "reassoc", "nsz", "afn"},
+    nogil=True,
+    cache=False,
+)
+def _get_indexes(
+    arr: np.array, virtual_indexes: np.array, valid_values_count: np.array
+) -> tuple[np.array, np.array]:
+    """Get the valid indexes of arr neighbouring virtual_indexes.
+
+    Parameters
+    ----------
+    arr : array-like
+    virtual_indexes : array-like
+    valid_values_count : array-like
+
+    Returns
+    -------
+    array-like, array-like
+        A tuple of virtual_indexes neighbouring indexes (previous and next)
+
+    Notes
+    -----
+    This is a companion function to linear interpolation of quantiles.
+    """
+    previous_indexes = np.asarray(np.floor(virtual_indexes))
+    next_indexes = np.asarray(previous_indexes + 1)
+    indexes_above_bounds = virtual_indexes >= valid_values_count - 1
+    # When indexes is above max index, take the max value of the array
+    if indexes_above_bounds.any():
+        previous_indexes[indexes_above_bounds] = -1
+        next_indexes[indexes_above_bounds] = -1
+    # When indexes is below min index, take the min value of the array
+    indexes_below_bounds = virtual_indexes < 0
+    if indexes_below_bounds.any():
+        previous_indexes[indexes_below_bounds] = 0
+        next_indexes[indexes_below_bounds] = 0
+    if (arr.dtype is np.dtype(np.float64)) or (arr.dtype is np.dtype(np.float32)):
+        # After the sort, slices having NaNs will have for last element a NaN
+        virtual_indexes_nans = np.isnan(virtual_indexes)
+        if virtual_indexes_nans.any():
+            previous_indexes[virtual_indexes_nans] = -1
+            next_indexes[virtual_indexes_nans] = -1
+    previous_indexes = previous_indexes.astype(np.intp)
+    next_indexes = next_indexes.astype(np.intp)
+    return previous_indexes, next_indexes
+
+
+@njit(
+    fastmath={"arcp", "contract", "reassoc", "nsz", "afn"},
+    nogil=True,
+    cache=False,
+)
+def _linear_interpolation(
+    left: np.array,
+    right: np.array,
+    gamma: np.array,
+) -> np.array:
+    """Compute the linear interpolation weighted by gamma on each point of two same shape arrays.
+
+    Parameters
+    ----------
+    left : array_like
+        Left bound.
+    right : array_like
+        Right bound.
+    gamma : array_like
+        The interpolation weight.
+
+    Returns
+    -------
+    array_like
+
+    Notes
+    -----
+    This is a companion function for `_nan_quantile_1d`
+    """
+    diff_b_a = np.subtract(right, left)
+    lerp_interpolation = np.asarray(np.add(left, diff_b_a * gamma))
+    ind = gamma >= 0.5
+    lerp_interpolation[ind] = right[ind] - diff_b_a[ind] * (1 - gamma[ind])
+    return lerp_interpolation
+
+
+@njit(
+    fastmath={"arcp", "contract", "reassoc", "nsz", "afn"},
+    nogil=True,
+    cache=False,
+)
+def _nan_quantile_1d(
+    arr: np.array,
+    quantiles: np.array,
+    alpha: float = 1.0,
+    beta: float = 1.0,
+) -> float | np.array:
+    """Get the quantiles of the 1-dimensional array.
+
+    A  linear interpolation is performed using alpha and beta.
+
+    Notes
+    -----
+    By default, `alpha == beta == 1` which performs the 7th method of :cite:t:`hyndman_sample_1996`.
+    with `alpha == beta == 1/3` we get the 8th method. alpha == beta == 1 reproduces the behaviour of `np.nanquantile`.
+    """
+    # We need at least two values to do an interpolation
+    valid_values_count = (~np.isnan(arr)).sum()
+
+    # Computation of indexes
+    virtual_indexes = (
+        valid_values_count * quantiles + (alpha + quantiles * (1 - alpha - beta)) - 1
+    )
+    virtual_indexes = np.asarray(virtual_indexes)
+    previous_indexes, next_indexes = _get_indexes(
+        arr, virtual_indexes, valid_values_count
+    )
+    # Sorting
+    arr.sort()
+
+    previous = arr[previous_indexes]
+    next_elements = arr[next_indexes]
+
+    # Linear interpolation
+    gamma = np.asarray(virtual_indexes - previous_indexes)
+    interpolation = _linear_interpolation(previous, next_elements, gamma)
+    # When an interpolation is in Nan range, (near the end of the sorted array) it means
+    # we can clip to the array max value.
+    result = np.where(
+        np.isnan(interpolation), arr[np.intp(valid_values_count) - 1], interpolation
+    )
+    return result
 
 
 @guvectorize(
@@ -74,14 +204,13 @@ def vecquantiles(
 def _wrapper_quantile1d(arr, q):
     out = np.empty((arr.shape[0], q.size), dtype=arr.dtype)
     for index in range(out.shape[0]):
-        out[index] = nan_quantile(arr[index], q)
+        out[index] = _nan_quantile_1d(arr[index], q)
     return out
 
 
 def _quantile(arr, q, nreduce):
     if arr.ndim == nreduce:
-        print("hehe")
-        out = nan_quantile(arr.flatten(), q)
+        out = _nan_quantile_1d(arr.flatten(), q)
     else:
         # dimensions that are reduced by quantile
         red_axis = np.arange(len(arr.shape) - nreduce, len(arr.shape))
