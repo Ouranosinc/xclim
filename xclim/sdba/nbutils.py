@@ -142,7 +142,7 @@ def _nan_quantile_1d(
     next_elements = arr[next_indexes]
 
     # Linear interpolation
-    gamma = np.asarray(virtual_indexes - previous_indexes)
+    gamma = np.asarray(virtual_indexes - previous_indexes, dtype=arr.dtype)
     interpolation = _linear_interpolation(previous, next_elements, gamma)
     # When an interpolation is in Nan range, (near the end of the sorted array) it means
     # we can clip to the array max value.
