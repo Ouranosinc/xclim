@@ -89,7 +89,7 @@ class ParametrizableWithDataset(Parametrizable):
         and that attribute must be the result of `jsonpickle.encode(object)` where object is
         of the same type as this object.
         """
-        obj = jsonpickle.decode(ds.attrs[cls._attribute])
+        obj = jsonpickle.decode(ds.attrs[cls._attribute])  # noqa: S301
         obj.set_dataset(ds)
         return obj
 

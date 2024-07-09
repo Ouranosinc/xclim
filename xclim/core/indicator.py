@@ -1291,7 +1291,7 @@ class Indicator(IndicatorRegistrar):
         for varname, vardata in das.items():
             try:
                 cfcheck_from_name(varname, vardata)
-            except KeyError:
+            except KeyError:  # noqa: S110
                 # Silently ignore unknown variables.
                 pass
 
@@ -1845,7 +1845,8 @@ def build_indicator_module_from_yaml(  # noqa: C901
                 if indice_func is None and hasattr(indices, "__getitem__"):
                     try:
                         indice_func = indices[indice_name]
-                    except KeyError:
+                    except KeyError:  # noqa: S110
+                        # The indice is not found in the mapping.
                         pass
 
                 if indice_func is not None:

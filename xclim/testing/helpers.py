@@ -151,7 +151,7 @@ def populate_testing_data(
                 data[filepattern] = _get_file(
                     filepattern, branch=branch, cache_dir=_local_cache
                 )
-            except FileNotFoundError:
+            except FileNotFoundError:  # noqa: S112
                 continue
         elif temp_folder:
             try:
@@ -161,7 +161,7 @@ def populate_testing_data(
                     branch=branch,
                     _local_cache=_local_cache,
                 )
-            except FileNotFoundError:
+            except FileNotFoundError:  # noqa: S112
                 continue
     return
 
