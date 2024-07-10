@@ -18,8 +18,8 @@ import calendar
 import numpy as np
 import pandas as pd
 import pytest
-
 import xarray as xr
+
 from xclim import indices as xci
 from xclim.core.calendar import percentile_doy
 from xclim.core.options import set_options
