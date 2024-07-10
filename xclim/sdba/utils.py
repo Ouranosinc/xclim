@@ -993,7 +993,7 @@ def optimal_transport(gridX, gridY, muX, muY, numItermax):
     return plan
 
 
-def eps_cholesky(M, nit=200):
+def eps_cholesky(M, nit=26):
     """Cholesky decomposition.
 
     References
