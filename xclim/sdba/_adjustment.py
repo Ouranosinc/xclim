@@ -702,18 +702,14 @@ def otc_adjust(
 ):
     """Optimal Transport Correction of the bias of `hist` with respect to `ref`.
 
-    Notes
-    -----
-    Dataset variables:
-      ref : training target
-      hist : training data
-
     Parameters
     ----------
     ds : xr.Dataset
-        The dataset containing the data.
+        Dataset variables:
+            ref : training target
+            hist : training data
     dim : list
-        The dimensions that are not variables.
+        The dimensions defining the distribution on which optimal transport is performed.
     bin_width : list | None
         Bin widths for all dimensions.
     bin_origin : list | None
@@ -869,19 +865,15 @@ def dotc_adjust(
 ):
     """Dynamical Optimal Transport Correction of the bias of X with respect to Y.
 
-    Notes
-    -----
-    Dataset variables:
-      ref : training target
-      hist : training data
-      sim : simulated data
-
     Parameters
     ----------
     ds : xr.Dataset
-        The dataset containing the data.
+        Dataset variables:
+            ref : training target
+            hist : training data
+            sim : simulated data
     dim : list
-        The dimensions that are not variables.
+        The dimensions defining the distribution on which optimal transport is performed.
     bin_width : list | None
         Bin widths for all dimensions.
     bin_origin : list | None
