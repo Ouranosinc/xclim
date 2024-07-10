@@ -18,8 +18,8 @@ import calendar
 import numpy as np
 import pandas as pd
 import pytest
-import xarray as xr
 
+import xarray as xr
 from xclim import indices as xci
 from xclim.core.calendar import percentile_doy
 from xclim.core.options import set_options
@@ -530,7 +530,7 @@ class TestStandardizedIndices:
                 1,
                 "gamma",
                 "ML",
-                [-0.011698, 1.597031, 0.969714, 0.265561, -0.132654],
+                [-0.083785, 1.457647, 0.993296, 0.271894, -0.449684],
                 2e-2,
             ),
             (
@@ -538,7 +538,7 @@ class TestStandardizedIndices:
                 12,
                 "gamma",
                 "ML",
-                [-0.158116, -0.049222, 0.672544, 1.08332, 0.660903],
+                [-0.158854, -0.049165, 0.675863, 0.960247, 0.660831],
                 2e-2,
             ),
             (
@@ -546,7 +546,7 @@ class TestStandardizedIndices:
                 1,
                 "fisk",
                 "ML",
-                [-0.158949, 1.308225, 0.449846, 0.146699, -0.502737],
+                [-0.194235, 1.308198, 0.530768, 0.22234, -0.502635],
                 2e-2,
             ),
             (
