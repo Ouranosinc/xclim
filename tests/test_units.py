@@ -362,6 +362,12 @@ def test_pint2cfattrs():
     attrs = pint2cfattrs(units.degK, is_difference=True)
     assert attrs == {"units": "K", "units_metadata": "temperature: difference"}
 
+    attrs = pint2cfattrs(units.meter, is_difference=True)
+    assert "units_metadata" not in attrs
+
+    attrs = pint2cfattrs(units.delta_degC)
+    assert attrs == {"units": "degC", "units_metadata": "temperature: difference"}
+
 
 def test_temp_difference_rountrip():
     """Test roundtrip of temperature difference units."""
