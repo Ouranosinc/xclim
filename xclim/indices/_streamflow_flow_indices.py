@@ -4,9 +4,7 @@ from __future__ import annotations
 from xclim.core.units import declare_units
 
 
-declare_units(q="[discharge]")
-
-
+@declare_units(q="[discharge]")
 def flow_index(q: xr.DataArray, p: float = 0.95) -> xr.DataArray:
     """
     Calculate the Qp  (pth percentile of daily streamflow) normalized by the mean flow.
