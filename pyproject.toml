@@ -54,9 +54,6 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dotc = [
-  "POT ==0.9.4"
-]
 dev = [
   # Dev tools and testing
   "black[jupyter] ==24.4.2",
@@ -113,7 +110,8 @@ docs = [
   "sphinxcontrib-bibtex",
   "sphinxcontrib-svg2pdfconverter[Cairosvg]"
 ]
-all = ["xclim[dev]", "xclim[docs]", "xclim[dotc]"]
+extras = ["POT"]
+all = ["xclim[dev]", "xclim[docs]", "xclim[extras]"]
 
 [project.scripts]
 xclim = "xclim.cli:cli"
@@ -178,6 +176,7 @@ pep621_dev_dependency_groups = ["all", "dev", "docs"]
 [tool.deptry.package_module_name_map]
 "scikit-learn" = "sklearn"
 "pyyaml" = "yaml"
+"POT" = "ot"
 
 [tool.deptry.per_rule_ignores]
 DEP001 = ["SBCK"]
