@@ -728,6 +728,7 @@ class TestExtremeValues:
 
 class TestOTC:
     def test_compare_sbck(self, random, series):
+        pytest.importorskip("ot")
         ns = 1000
         u = random.random(ns)
 
@@ -775,6 +776,7 @@ class TestOTC:
         assert np.allclose(scen, scen_sbck)
 
     def test_shape(self, random, series):
+        pytest.importorskip("ot")
         ref_ns = 300
         hist_ns = 200
         ref_u = random.random(ref_ns)
@@ -822,6 +824,7 @@ class TestOTC:
 
 class TestdOTC:
     def test_compare_sbck(self, random, series):
+        pytest.importorskip("ot")
         ns = 1000
         u = random.random(ns)
 
@@ -880,6 +883,7 @@ class TestdOTC:
         assert np.allclose(scen, scen_sbck)
 
     def test_shape(self, random, series):
+        pytest.importorskip("ot")
         ref_ns = 300
         hist_ns = 200
         sim_ns = 400
