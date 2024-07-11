@@ -4,7 +4,11 @@ Changelog
 
 v0.52.0 (unreleased)
 --------------------
-Contributors to this version: David Huard (:user:`huard`).
+Contributors to this version: David Huard (:user:`huard`), Pascal Bourgault (:user:`aulemahal`).
+
+Bug fixes
+^^^^^^^^^
+* Wet spell indicators fixed. New generic spell length statistic function ``xclim.indices.generic.spell_length_statistics`` used in wet and dry spells indicators. (:issue:`1834`, :pull:`1838`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
