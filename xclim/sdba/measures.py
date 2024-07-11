@@ -15,7 +15,7 @@ import numpy as np
 import xarray as xr
 
 from xclim.core.indicator import Indicator, base_registry
-from xclim.core.units import convert_units_to, ensure_delta, units2pint
+from xclim.core.units import convert_units_to, units2pint
 from xclim.core.utils import InputKind
 
 from .base import Grouper
@@ -173,7 +173,8 @@ def _bias(sim: xr.DataArray, ref: xr.DataArray) -> xr.DataArray:
       Absolute bias
     """
     out = sim - ref
-    out.attrs["units"] = ensure_delta(ref.attrs["units"])
+    out.attrs["units"] = ref.attrs["units"]
+    out.attrs["units_metadata"] = "temperature: difference"
     return out
 
 
@@ -296,7 +297,7 @@ def _rmse(
         input_core_dims=[["time"], ["time"]],
         dask="parallelized",
     )
-    out = out.assign_attrs(units=ensure_delta(ref.units))
+    out = out.assign_attrs(units=ref.units, units_metadata={"temperature: difference"})
     return out
 
 
@@ -343,7 +344,7 @@ def _mae(
         input_core_dims=[["time"], ["time"]],
         dask="parallelized",
     )
-    out = out.assign_attrs(units=ensure_delta(ref.units))
+    out = out.assign_attrs(units=ref.units, units_metadata="temperature: difference")
     return out
 
 

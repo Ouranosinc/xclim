@@ -18,6 +18,7 @@ from xclim.core.units import (
     declare_units,
     infer_context,
     lwethickness2amount,
+    pint2cfattrs,
     pint2cfunits,
     pint_multiply,
     rate2amount,
@@ -116,6 +117,14 @@ class TestConvertUnitsTo:
         np.testing.assert_array_almost_equal(out, thickness_data)
         assert out.attrs["units"] == "kg d-1 m-2"  # CF equivalent unit
         assert out.attrs["standard_name"] == "rainfall_flux"
+
+    def test_temperature_difference(self):
+        delta = xr.DataArray(
+            [2], attrs={"units": "K", "units_metadata": "temperature: difference"}
+        )
+        out = convert_units_to(source=delta, target="delta_degC")
+        assert out == 2
+        assert out.attrs["units"] == "degC"
 
 
 class TestUnitConversion:
@@ -347,3 +356,21 @@ def test_to_agg_units(in_u, opfunc, op, exp, exp_u):
     out = to_agg_units(getattr(da, opfunc)(), da, op)
     np.testing.assert_allclose(out, exp)
     assert out.attrs["units"] == exp_u
+
+
+def test_pint2cfattrs():
+    attrs = pint2cfattrs(units.degK, is_difference=True)
+    assert attrs == {"units": "K", "units_metadata": "temperature: difference"}
+
+
+def test_temp_difference_rountrip():
+    """Test roundtrip of temperature difference units."""
+    attrs = {"units": "degC", "units_metadata": "temperature: difference"}
+    da = xr.DataArray([1], attrs=attrs)
+    pu = units2pint(da)
+    # Confirm that we get delta pint units
+    assert pu == units.delta_degC
+
+    # and that converting those back to cf attrs gives the same result
+    attrs = pint2cfattrs(pu)
+    assert attrs == {"units": "degC", "units_metadata": "temperature: difference"}

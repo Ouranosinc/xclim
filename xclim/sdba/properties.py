@@ -583,7 +583,8 @@ def _annual_cycle(
     # TODO: In April 2024, use a match-case.
     if stat == "absamp":
         out = ac.max("dayofyear") - ac.min("dayofyear")
-        out.attrs["units"] = xc.core.units.ensure_delta(units)
+        out.attrs["units"] = units
+        out.attrs["units_metadata"] = "temperature: difference"
     elif stat == "relamp":
         out = (ac.max("dayofyear") - ac.min("dayofyear")) * 100 / ac.mean("dayofyear")
         out.attrs["units"] = "%"
@@ -699,7 +700,8 @@ def _annual_statistic(
 
     if stat == "absamp":
         out = yrs.max() - yrs.min()
-        out.attrs["units"] = xc.core.units.ensure_delta(units)
+        out.attrs["units"] = units
+        out.attrs["units_metadata"] = "temperature: difference"
     elif stat == "relamp":
         out = (yrs.max() - yrs.min()) * 100 / yrs.mean()
         out.attrs["units"] = "%"

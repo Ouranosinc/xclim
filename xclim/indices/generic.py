@@ -701,6 +701,7 @@ def temperature_sum(
 
     out = (data - threshold).where(cond).resample(time=freq).sum()
     out = direction * out
+    out.attrs["units_metadata"] = "temperature: difference"
     return to_agg_units(out, data, "integral")
 
 
@@ -718,7 +719,6 @@ def interday_diurnal_temperature_range(
     freq : str
         Resampling frequency defining the periods as defined in :ref:`timeseries.resampling`.
 
-
     Returns
     -------
     xr.DataArray
@@ -728,8 +728,8 @@ def interday_diurnal_temperature_range(
     vdtr = abs((high_data - low_data).diff(dim="time"))
     out = vdtr.resample(time=freq).mean(dim="time")
 
-    u = str2pint(low_data.units)
-    out.attrs["units"] = pint2cfunits(u - u)
+    out.attrs["units"] = low_data.attrs["units"]
+    out.attrs["units_metadata"] = "temperature: difference"
     return out
 
 
@@ -755,8 +755,8 @@ def extreme_temperature_range(
 
     out = high_data.resample(time=freq).max() - low_data.resample(time=freq).min()
 
-    u = str2pint(low_data.units)
-    out.attrs["units"] = pint2cfunits(u - u)
+    out.attrs["units"] = low_data.attrs["units"]
+    out.attrs["units_metadata"] = "temperature: difference"
     return out
 
 
@@ -891,6 +891,8 @@ def cumulative_difference(
 
     if freq is not None:
         diff = diff.resample(time=freq).sum(dim="time")
+
+    diff.attrs["units_metadata"] = "temperature: difference"
 
     return to_agg_units(diff, data, op="integral")
 
