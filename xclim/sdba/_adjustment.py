@@ -823,7 +823,7 @@ def _dotc_adjust(
     # Temporal evolution
     motion = np.empty(yX0.shape)
     for j in range(yX0.shape[1]):
-        if kind is not None and kind[j] == "*":
+        if kind is not None and j in kind.keys() and kind[j] == "*":
             motion[:, j] = yX1[:, j] / yX0[:, j]
         else:
             motion[:, j] = yX1[:, j] - yX0[:, j]
@@ -834,7 +834,7 @@ def _dotc_adjust(
     # Apply the evolution to ref
     Y1 = np.empty(yX0.shape)
     for j in range(yX0.shape[1]):
-        if kind is not None and kind[j] == "*":
+        if kind is not None and j in kind.keys() and kind[j] == "*":
             Y1[:, j] = Y0[:, j] * motion[:, j]
         else:
             Y1[:, j] = Y0[:, j] + motion[:, j]
