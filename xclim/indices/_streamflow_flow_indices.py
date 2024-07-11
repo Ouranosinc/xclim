@@ -35,7 +35,7 @@ def flow_index(q: xr.DataArray, p: float = 0.95) -> xr.DataArray:
 @declare_units(q="[discharge]")
 def high_flow_frequency(
     q: xr.DataArray,
-    threshold_factor: int = 9.0,
+    threshold_factor: int = 9
     freq: str = "A-SEP",
     statistic: str = "mean",
 ) -> xr.DataArray:
