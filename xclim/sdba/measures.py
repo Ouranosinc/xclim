@@ -296,7 +296,7 @@ def _rmse(
         input_core_dims=[["time"], ["time"]],
         dask="parallelized",
     )
-    out = out.assign_attrs(units=ref.units, units_metadata={"temperature: difference"})
+    out = out.assign_attrs(pint2cfattrs(units2pint(ref.units), is_difference=True))
     return out
 
 
@@ -343,7 +343,7 @@ def _mae(
         input_core_dims=[["time"], ["time"]],
         dask="parallelized",
     )
-    out = out.assign_attrs(units=ref.units, units_metadata="temperature: difference")
+    out = out.assign_attrs(pint2cfattrs(units2pint(ref.units), is_difference=True))
     return out
 
 
