@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-
 from xclim.core.units import declare_units
 
 
