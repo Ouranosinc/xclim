@@ -1243,6 +1243,9 @@ class OTC(Adjust):
     group : Union[str, Grouper]
         The grouping information. See :py:class:`xclim.sdba.base.Grouper` for details.
         Default is "time", meaning a single adjustment group along dimension "time".
+    pts_dim : str
+        The name of the "multivariate" dimension. Defaults to "multivar", which is the
+        normal case when using :py:func:`xclim.sdba.base.stack_variables`.
 
     Notes
     -----
@@ -1276,6 +1279,7 @@ class OTC(Adjust):
         num_iter_max: int | None = 100_000_000,
         spray_bins: bool = True,
         group: str | Grouper = "time",
+        pts_dim: str = "multivar",
         **kwargs,
     ) -> xr.DataArray:
         if find_spec("ot") is None:
@@ -1294,10 +1298,11 @@ class OTC(Adjust):
             num_iter_max=num_iter_max,
             spray_bins=spray_bins,
             group=group,
+            pts_dim=pts_dim,
         ).scen
 
         for d in scen.dims:
-            if d != "multivar":
+            if d != pts_dim:
                 scen = scen.dropna(dim=d)
 
         return scen
@@ -1336,6 +1341,9 @@ class dOTC(Adjust):
     group : Union[str, Grouper]
         The grouping information. See :py:class:`xclim.sdba.base.Grouper` for details.
         Default is "time", meaning a single adjustment group along dimension "time".
+    pts_dim : str
+        The name of the "multivariate" dimension. Defaults to "multivar", which is the
+        normal case when using :py:func:`xclim.sdba.base.stack_variables`.
 
     Notes
     -----
@@ -1381,6 +1389,7 @@ class dOTC(Adjust):
         spray_bins: bool = True,
         kind: dict | None = None,
         group: str | Grouper = "time",
+        pts_dim: str = "multivar",
     ) -> xr.DataArray:
         if find_spec("ot") is None:
             raise ImportError(
@@ -1401,10 +1410,11 @@ class dOTC(Adjust):
             spray_bins=spray_bins,
             kind=kind,
             group=group,
+            pts_dim=pts_dim,
         ).scen
 
         for d in scen.dims:
-            if d != "multivar":
+            if d != pts_dim:
                 scen = scen.dropna(dim=d)
 
         return scen

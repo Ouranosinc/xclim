@@ -695,6 +695,7 @@ def _otc_adjust(
 def otc_adjust(
     ds: xr.Dataset,
     dim: list,
+    pts_dim: str,
     bin_width: list | None = None,
     bin_origin: list | None = None,
     num_iter_max: int | None = 100_000_000,
@@ -710,6 +711,8 @@ def otc_adjust(
             hist : training data
     dim : list
         The dimensions defining the distribution on which optimal transport is performed.
+    pts_dim : str
+        The dimension defining the multivariate components of the distribution.
     bin_width : list | None
         Bin widths for all dimensions.
     bin_origin : list | None
@@ -737,8 +740,8 @@ def otc_adjust(
             num_iter_max=num_iter_max,
             spray_bins=spray_bins,
         ),
-        input_core_dims=[["dim_hist", "multivar"], ["dim_ref", "multivar"]],
-        output_core_dims=[["dim_hist", "multivar"]],
+        input_core_dims=[["dim_hist", pts_dim], ["dim_ref", pts_dim]],
+        output_core_dims=[["dim_hist", pts_dim]],
         keep_attrs=True,
         vectorize=True,
     )
@@ -861,6 +864,7 @@ def _dotc_adjust(
 def dotc_adjust(
     ds: xr.Dataset,
     dim: list,
+    pts_dim: str,
     bin_width: list | None = None,
     bin_origin: list | None = None,
     num_iter_max: int | None = 100_000_000,
@@ -879,6 +883,8 @@ def dotc_adjust(
             sim : simulated data
     dim : list
         The dimensions defining the distribution on which optimal transport is performed.
+    pts_dim : str
+        The dimension defining the multivariate components of the distribution.
     bin_width : list | None
         Bin widths for all dimensions.
     bin_origin : list | None
@@ -907,8 +913,7 @@ def dotc_adjust(
 
     if kind is not None:
         kind = {
-            np.where(ref["multivar"].values == var)[0][0]: op
-            for var, op in kind.items()
+            np.where(ref[pts_dim].values == var)[0][0]: op for var, op in kind.items()
         }
 
     scen = xr.apply_ufunc(
@@ -925,11 +930,11 @@ def dotc_adjust(
             kind=kind,
         ),
         input_core_dims=[
-            ["dim_sim", "multivar"],
-            ["dim_ref", "multivar"],
-            ["dim_hist", "multivar"],
+            ["dim_sim", pts_dim],
+            ["dim_ref", pts_dim],
+            ["dim_hist", pts_dim],
         ],
-        output_core_dims=[["dim_sim", "multivar"]],
+        output_core_dims=[["dim_sim", pts_dim]],
         keep_attrs=True,
         vectorize=True,
     )
