@@ -609,7 +609,6 @@ def to_agg_units(
         out.attrs.update(
             units="", is_dayofyear=np.int32(1), calendar=get_calendar(orig)
         )
-        out.attrs.pop("units_metadata", None)
 
     elif op in ["count", "integral"]:
         m, freq_u_raw = infer_sampling_units(orig[dim])
@@ -634,6 +633,10 @@ def to_agg_units(
             f"Unknown aggregation op {op}. "
             "Known ops are [min, max, mean, std, var, doymin, doymax, count, integral, sum]."
         )
+
+    # Remove units_metadata where it doesn't make sense
+    if op in ["doymin", "doymax", "count"]:
+        out.attrs.pop("units_metadata", None)
 
     return out
 
