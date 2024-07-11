@@ -22,9 +22,11 @@ from xclim.core.units import (
     convert_units_to,
     declare_relative_units,
     infer_context,
+    pint2cfattrs,
     pint2cfunits,
     str2pint,
     to_agg_units,
+    units2pint,
 )
 from xclim.core.utils import DayOfYearStr, Quantified, Quantity
 
@@ -892,7 +894,7 @@ def cumulative_difference(
     if freq is not None:
         diff = diff.resample(time=freq).sum(dim="time")
 
-    diff.attrs["units_metadata"] = "temperature: difference"
+    diff.attrs.update(pint2cfattrs(units2pint(data.attrs["units"]), is_difference=True))
 
     return to_agg_units(diff, data, op="integral")
 

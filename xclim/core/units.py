@@ -122,12 +122,14 @@ def _register_conversion(conversion, direction):
 units.define("[radiation] = [power] / [length]**2")
 
 
-def units2pint(value: xr.DataArray | str | units.Quantity) -> pint.Unit:
+def units2pint(
+    value: xr.DataArray | units.Unit | units.Quantity | dict | str,
+) -> pint.Unit:
     """Return the pint Unit for the DataArray units.
 
     Parameters
     ----------
-    value : xr.DataArray or str or pint.Quantity
+    value : xr.DataArray or pint.Unit or pint.Quantity or dict or str
         Input data array or string representing a unit (with no magnitude).
 
     Returns
@@ -140,15 +142,24 @@ def units2pint(value: xr.DataArray | str | units.Quantity) -> pint.Unit:
     To avoid ambiguity related to differences in temperature vs absolute temperatures, set the `units_metadata`
     attribute to `"temperature: difference"` or `"temperature: on_scale"` on the DataArray.
     """
-    metadata = None
-    if isinstance(value, str):
-        unit = value
-    elif isinstance(value, xr.DataArray):
-        unit = value.attrs["units"]
-        metadata = value.attrs.get("units_metadata", None)
-    elif isinstance(value, units.Quantity):
+    # Value is already a pint unit or a pint quantity
+    if isinstance(value, units.Unit):
+        return value
+
+    if isinstance(value, units.Quantity):
         # This is a pint.PlainUnit, which is not the same as a pint.Unit
         return cast(pint.Unit, value.units)
+
+    # We only need the attributes
+    if isinstance(value, xr.DataArray):
+        value = value.attrs
+
+    if isinstance(value, str):
+        unit = value
+        metadata = None
+    elif isinstance(value, dict):
+        unit = value["units"]
+        metadata = value.get("units_metadata", None)
     else:
         raise NotImplementedError(f"Value of type `{type(value)}` not supported.")
 
@@ -298,7 +309,7 @@ def str2pint(val: str) -> pint.Quantity:
 # FIXME: The typing here is difficult to determine, as Generics cannot be used to track the type of the output.
 def convert_units_to(  # noqa: C901
     source: Quantified,
-    target: Quantified | units.Unit,
+    target: Quantified | units.Unit | dict,
     context: Literal["infer", "hydro", "none"] | None = None,
 ) -> xr.DataArray | float:
     """Convert a mathematical expression into a value with the same units as a DataArray.
@@ -310,7 +321,7 @@ def convert_units_to(  # noqa: C901
     ----------
     source : str or xr.DataArray or units.Quantity
         The value to be converted, e.g. '4C' or '1 mm/d'.
-    target : str or xr.DataArray or units.Quantity or units.Unit
+    target : str or xr.DataArray or units.Quantity or units.Unit or dict
         Target array of values to which units must conform.
     context : {"infer", "hydro", "none"}, optional
         The unit definition context. Default: None.
@@ -337,14 +348,7 @@ def convert_units_to(  # noqa: C901
     context = context or "none"
 
     # Target units
-    if isinstance(target, units.Unit):
-        target_unit = target
-    elif isinstance(target, (str, xr.DataArray)):
-        target_unit = units2pint(target)
-    else:
-        raise NotImplementedError(
-            "target must be either a pint Unit or a xarray DataArray."
-        )
+    target_unit = units2pint(target)
 
     if context == "infer":
         ctxs = []
