@@ -16,7 +16,8 @@ def flow_index(q: xr.DataArray, p: float = 0.95) -> xr.DataArray:
     ----------
     q : xarray.DataArray
         Daily streamflow data.
-    p is the percentile for calculating the flow index, specified as a float between 0 and 1, default is 0.95.
+    p : float
+        Percentile for calculating the flow index, between 0 and 1. Default of 0.95 is for high flows.
 
     Returns
     -------
