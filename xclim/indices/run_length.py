@@ -1129,7 +1129,7 @@ def statistics_run_1d(arr: Sequence[bool], reducer: str, window: int) -> int:
     ----------
     arr : Sequence[bool]
         Input array (bool)
-    reducer : {'mean', 'sum', 'min', 'max', 'std'}
+    reducer : {'mean', 'sum', 'min', 'max', 'std', 'count'}
         Reducing function name.
     window : int
         Minimal length of runs to be included in the statistics
@@ -1142,6 +1142,8 @@ def statistics_run_1d(arr: Sequence[bool], reducer: str, window: int) -> int:
     v, rl = rle_1d(arr)[:2]
     if not np.any(v) or np.all(v * rl < window):
         return 0
+    if reducer == "count":
+        return (v * rl >= window).sum()
     func = getattr(np, f"nan{reducer}")
     return func(np.where(v * rl >= window, rl, np.NaN))
 

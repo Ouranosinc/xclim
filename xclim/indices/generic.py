@@ -352,6 +352,115 @@ def get_daily_events(
     return events
 
 
+@declare_relative_units(threshold="<data>")
+def spell_length_statistics(
+    data: xarray.DataArray,
+    threshold: Quantified,
+    window: int,
+    win_reducer: str,
+    op: str,
+    spell_reducer: str,
+    freq: str,
+    resample_before_rl: bool = True,
+    **indexer,
+):
+    """Statistics on spells lengths.
+
+    A spell is when a statistic (`win_reducer`) over a minimum number (`window`) of consecutive timesteps respects a condition (`op` `thresh`).
+    This returns a statistic over the spell's count or length.
+
+    Parameters
+    ----------
+    data: xr.DataArray
+        Input data.
+    threshold: Quantified
+        Threshold to test against.
+    window: int
+        Minimum length of a spell.
+    win_reducer: {'min', 'max', 'sum', 'mean'}
+        Reduction along the spell length to compute the spell value.
+        Note that this does not matter when `window` is 1.
+    op : {">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"}
+        Logical operator. Ex: spell_value > thresh.
+    spell_reducer: {'max', 'sum', 'count'}
+        Statistic on the spell lengths.
+    freq: str
+        Resampling frequency.
+    resample_before_rl: bool
+        Determines if the resampling should take place before or after the run
+        length encoding (or a similar algorithm) is applied to runs.
+    indexer:
+        Indexing parameters to compute the indicator on a temporal subset of the data.
+        It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
+        Indexing is done after finding the days part of a spell, but before taking the spell statistics.
+
+    Examples
+    --------
+    >>> spell_statistics(
+    ...     tas,
+    ...     thresh="35 °C",
+    ...     window=7,
+    ...     op=">",
+    ...     win_reducer="min",
+    ...     spell_reducer="sum",
+    ...     freq="YS",
+    ... )
+
+    Here, a day is part of a spell if it is in any 7 day period where the minimum temperature is over 35°C. We then
+    return the annual sum of the spell lengths, so the total number of days in such spells.
+
+    >>> pram = rate2amount(pr)
+    >>> spell_statistics(
+    ...     pram,
+    ...     thresh="20 mm",
+    ...     window=5,
+    ...     op=">=",
+    ...     win_reducer="sum",
+    ...     spell_reducer="max",
+    ...     freq="YS",
+    ... )
+
+    Here, a day is part of a spell if it is in any 5 day period where the total accumulated precipitation reaches or exceeds
+    20 mm. We then return the length of the longest of such spells.
+    """
+    thresh = convert_units_to(
+        threshold,
+        data,
+        context=infer_context(standard_name=data.attrs.get("standard_name")),
+    )
+
+    if window == 1:  # Fast path
+        is_in_spell = compare(data, op, thresh)
+    else:
+        data_pad = data.pad(time=(0, window))
+        # The spell-wise value to test
+        # For example "win_reducer='sum'", we want the sum over the minimum spell length (window) to be above the thresh
+        spell_value = getattr(data_pad.rolling(time=window), win_reducer)()
+        # True at the end of a spell respecting the condition
+        mask = compare(spell_value, op, thresh)
+        # True for all days part of a spell that respected the condition (shift because of the two rollings)
+        is_in_spell = (mask.rolling(time=window).sum() >= 1).shift(time=-(window - 1))
+        # Cut back to the original size
+        is_in_spell = is_in_spell.isel(time=slice(0, data.time.size)).astype(float)
+
+    is_in_spell = select_time(is_in_spell, **indexer)
+
+    out = rl.resample_and_rl(
+        is_in_spell,
+        resample_before_rl,
+        rl.rle_statistics,
+        reducer=spell_reducer,
+        # The code above already ensured only spell of the minimum length are selected
+        window=1,
+        freq=freq,
+    )
+
+    if spell_reducer == "count":
+        return out.assign_attrs(units="1")
+    # All other cases are statistics of the number of timesteps
+    return to_agg_units(out, data, "count")
+
+
 # CF-INDEX-META Indices
 
 
