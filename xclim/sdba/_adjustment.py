@@ -722,10 +722,10 @@ def otc_adjust(
     xr.Dataset
         Adjusted data
     """
-    hist = ds.hist.stack(dim_hist=dim)
-    ref = ds.ref.stack(dim_ref=dim, create_index=False)
-    hist = hist.dropna(dim="dim_hist")
-    ref = ref.dropna(dim="dim_ref")
+    ref_map = {d: f"ref_{d}" for d in dim}
+    ref = ds.ref.rename(ref_map).stack(dim_ref=ref_map.values()).dropna(dim="dim_ref")
+
+    hist = ds.hist.stack(dim_hist=dim).dropna(dim="dim_hist")
 
     scen = xr.apply_ufunc(
         _otc_adjust,
@@ -743,7 +743,12 @@ def otc_adjust(
         vectorize=True,
     )
 
+    # Pad dim differences with NA to please map_blocks
+    ref = ref.unstack().rename({v: k for k, v in ref_map.items()})
     scen = scen.unstack().rename("scen")
+    for d in dim:
+        full_d = xr.concat([ref[d], scen[d]], dim=d).drop_duplicates(d)
+        scen = scen.reindex({d: full_d})
 
     return scen.to_dataset()
 
@@ -888,12 +893,17 @@ def dotc_adjust(
     xr.Dataset
         Adjusted data
     """
-    hist = ds.hist.stack(dim_hist=dim, create_index=False)
-    ref = ds.ref.stack(dim_ref=dim, create_index=False)
-    sim = ds.sim.stack(dim_sim=dim)
-    hist = hist.dropna(dim="dim_hist")
-    ref = ref.dropna(dim="dim_ref")
-    sim = sim.dropna(dim="dim_sim")
+    hist_map = {d: f"hist_{d}" for d in dim}
+    hist = (
+        ds.hist.rename(hist_map)
+        .stack(dim_hist=hist_map.values())
+        .dropna(dim="dim_hist")
+    )
+
+    ref_map = {d: f"ref_{d}" for d in dim}
+    ref = ds.ref.rename(ref_map).stack(dim_ref=ref_map.values()).dropna(dim="dim_ref")
+
+    sim = ds.sim.stack(dim_sim=dim).dropna(dim="dim_sim")
 
     if kind is not None:
         kind = {
@@ -924,6 +934,12 @@ def dotc_adjust(
         vectorize=True,
     )
 
+    # Pad dim differences with NA to please map_blocks
+    hist = hist.unstack().rename({v: k for k, v in hist_map.items()})
+    ref = ref.unstack().rename({v: k for k, v in ref_map.items()})
     scen = scen.unstack().rename("scen")
+    for d in dim:
+        full_d = xr.concat([hist[d], ref[d], scen[d]], dim=d).drop_duplicates(d)
+        scen = scen.reindex({d: full_d})
 
     return scen.to_dataset()

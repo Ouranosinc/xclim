@@ -1287,7 +1287,7 @@ class OTC(Adjust):
         if "_is_hist" not in sim.attrs:
             raise ValueError("OTC does not take a `sim` argument.")
 
-        return otc_adjust(
+        scen = otc_adjust(
             xr.Dataset({"ref": ref, "hist": hist}),
             bin_width=bin_width,
             bin_origin=bin_origin,
@@ -1295,6 +1295,12 @@ class OTC(Adjust):
             spray_bins=spray_bins,
             group=group,
         ).scen
+
+        for d in scen.dims:
+            if d != "multivar":
+                scen = scen.dropna(dim=d)
+
+        return scen
 
 
 class dOTC(Adjust):
@@ -1386,7 +1392,7 @@ class dOTC(Adjust):
                 "Multiplicative correction is not supported with `cov_factor` = 'cholesky'."
             )
 
-        return dotc_adjust(
+        scen = dotc_adjust(
             xr.Dataset({"ref": ref, "hist": hist, "sim": sim}),
             bin_width=bin_width,
             bin_origin=bin_origin,
@@ -1396,6 +1402,12 @@ class dOTC(Adjust):
             kind=kind,
             group=group,
         ).scen
+
+        for d in scen.dims:
+            if d != "multivar":
+                scen = scen.dropna(dim=d)
+
+        return scen
 
 
 try:
