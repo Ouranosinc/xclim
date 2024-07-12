@@ -612,6 +612,7 @@ def to_agg_units(
 
     elif op in ["count", "integral"]:
         m, freq_u_raw = infer_sampling_units(orig[dim])
+        # TODO: Use delta here
         orig_u = str2pint(ensure_absolute_temperature(orig.units))
         freq_u = str2pint(freq_u_raw)
         with xr.set_options(keep_attrs=True):
@@ -622,6 +623,7 @@ def to_agg_units(
         elif op == "integral":
             if "[time]" in orig_u.dimensionality:
                 # We need to simplify units after multiplication
+
                 out_units = (orig_u * freq_u).to_reduced_units()
                 with xr.set_options(keep_attrs=True):
                     out = out * out_units.magnitude

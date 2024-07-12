@@ -101,6 +101,12 @@ def select_resample_op(
         op = op.__name__
     if out_units is not None:
         return out.assign_attrs(units=out_units)
+
+    if op in ["std", "var"]:
+        out.attrs.update(
+            pint2cfattrs(units2pint(out.attrs["units"]), is_difference=True)
+        )
+
     return to_agg_units(out, da, op)
 
 

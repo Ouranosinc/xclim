@@ -699,8 +699,7 @@ def _annual_statistic(
 
     if stat == "absamp":
         out = yrs.max() - yrs.min()
-        out.attrs["units"] = units
-        out.attrs["units_metadata"] = "temperature: difference"
+        out.attrs.update(pint2cfattrs(units2pint(units), is_difference=True))
     elif stat == "relamp":
         out = (yrs.max() - yrs.min()) * 100 / yrs.mean()
         out.attrs["units"] = "%"
