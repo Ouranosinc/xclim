@@ -138,7 +138,7 @@ jobs:
           - tox-env: py310-coverage-lmoments  # No markers -- includes slow tests
             python-version: "3.10"
             os: ubuntu-latest
-          - tox-env: py311-coverage-sbck
+          - tox-env: py311-coverage-sbck-extras
             python-version: "3.11"
             markers: -m 'not slow'
             os: ubuntu-latest
