@@ -10,7 +10,7 @@ from __future__ import annotations
 import numpy as np
 import xarray as xr
 
-from xclim.core.units import convert_units_to, infer_context, units
+from xclim.core.units import convert_units_to, infer_context, str2pint, units
 from xclim.indices.stats import _fitfunc_1d  # noqa
 
 from . import nbutils as nbu
@@ -703,6 +703,7 @@ def otc_adjust(
     bin_origin: list | None = None,
     num_iter_max: int | None = 100_000_000,
     spray_bins: bool = True,
+    adapt_freq_thresh: dict | None = None,
 ):
     """Optimal Transport Correction of the bias of `hist` with respect to `ref`.
 
@@ -722,16 +723,37 @@ def otc_adjust(
         Bin origins for all dimensions.
     num_iter_max : int | None
         Maximum number of iterations used in the earth mover distance algorithm.
+    spray_bins : bool = True
+        If `False`, output points are located at the center of their bin.
+        If `True`, a random location is picked uniformly inside their bin. Default is `True`.
+    adapt_freq_thresh : dict | None = None
+        Threshold for frequency adaptation per variable.
 
     Returns
     -------
     xr.Dataset
         Adjusted data
     """
-    ref_map = {d: f"ref_{d}" for d in dim}
-    ref = ds.ref.rename(ref_map).stack(dim_ref=ref_map.values()).dropna(dim="dim_ref")
+    ref = ds.ref
+    hist = ds.hist
 
-    hist = ds.hist.stack(dim_hist=dim).dropna(dim="dim_hist")
+    if adapt_freq_thresh is not None:
+        for var, thresh in adapt_freq_thresh.items():
+            if "units" not in ref.attrs["units"] or ref.attrs["units"] == "":
+                # Try to force units
+                units = str2pint(thresh).units
+                ref.attrs.update(units=str(units))
+            hist.loc[var] = _adapt_freq_hist(
+                xr.Dataset(
+                    {"ref": ref.sel({pts_dim: var}), "hist": hist.sel({pts_dim: var})}
+                ),
+                thresh,
+            )
+
+    ref_map = {d: f"ref_{d}" for d in dim}
+    ref = ref.rename(ref_map).stack(dim_ref=ref_map.values()).dropna(dim="dim_ref")
+
+    hist = hist.stack(dim_hist=dim).dropna(dim="dim_hist")
 
     scen = xr.apply_ufunc(
         _otc_adjust,
@@ -878,6 +900,7 @@ def dotc_adjust(
     cov_factor: str | None = "std",
     spray_bins: bool = True,
     kind: dict | None = None,
+    adapt_freq_thresh: dict | None = None,
 ):
     """Dynamical Optimal Transport Correction of the bias of X with respect to Y.
 
@@ -900,23 +923,53 @@ def dotc_adjust(
         Maximum number of iterations used in the earth mover distance algorithm.
     cov_factor : str | None = "std"
         Rescaling factor.
+    spray_bins : bool = True
+        If `False`, output points are located at the center of their bin.
+        If `True`, a random location is picked uniformly inside their bin. Default is `True`.
+    kind : dict | None = None
+        Keys are variable names and values are adjustment kinds, either additive or multiplicative.
+        Unspecified dimensions are treated as "+".
+    adapt_freq_thresh : dict | None = None
+        Threshold for frequency adaptation per variable.
 
     Returns
     -------
     xr.Dataset
         Adjusted data
     """
+    hist = ds.hist
+    sim = ds.sim
+    ref = ds.ref
+
+    if adapt_freq_thresh is not None:
+        for var, thresh in adapt_freq_thresh.items():
+            if "units" not in ref.attrs["units"] or ref.attrs["units"] == "":
+                # Try to force units
+                units = str2pint(thresh).units
+                ref.attrs.update(units=str(units))
+            hist.loc[var] = _adapt_freq_hist(
+                xr.Dataset(
+                    {"ref": ref.sel({pts_dim: var}), "hist": hist.sel({pts_dim: var})}
+                ),
+                thresh,
+            )
+            sim.loc[var] = _adapt_freq_hist(
+                xr.Dataset(
+                    {"ref": ref.sel({pts_dim: var}), "hist": sim.sel({pts_dim: var})}
+                ),
+                thresh,
+            )
+
+    # Drop data added by map_blocks and prepare for apply_ufunc
     hist_map = {d: f"hist_{d}" for d in dim}
     hist = (
-        ds.hist.rename(hist_map)
-        .stack(dim_hist=hist_map.values())
-        .dropna(dim="dim_hist")
+        hist.rename(hist_map).stack(dim_hist=hist_map.values()).dropna(dim="dim_hist")
     )
 
     ref_map = {d: f"ref_{d}" for d in dim}
-    ref = ds.ref.rename(ref_map).stack(dim_ref=ref_map.values()).dropna(dim="dim_ref")
+    ref = ref.rename(ref_map).stack(dim_ref=ref_map.values()).dropna(dim="dim_ref")
 
-    sim = ds.sim.stack(dim_sim=dim).dropna(dim="dim_sim")
+    sim = sim.stack(dim_sim=dim).dropna(dim="dim_sim")
 
     if kind is not None:
         kind = {

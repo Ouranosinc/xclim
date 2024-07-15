@@ -1240,6 +1240,10 @@ class OTC(Adjust):
     spray_bins : bool
         If `False`, output points are located at the center of their bin.
         If `True`, a random location is picked uniformly inside their bin. Default is `True`.
+    adapt_freq_thresh : dict | None = None
+        Threshold for frequency adaptation per variable.
+        See :py:class:`xclim.sdba.processing.adapt_freq` for details.
+        Frequency adaptation is not applied to missing variables.
     group : Union[str, Grouper]
         The grouping information. See :py:class:`xclim.sdba.base.Grouper` for details.
         Default is "time", meaning a single adjustment group along dimension "time".
@@ -1280,6 +1284,7 @@ class OTC(Adjust):
         bin_origin: list | None = None,
         num_iter_max: int | None = 100_000_000,
         spray_bins: bool = True,
+        adapt_freq_thresh: dict | None = None,
         group: str | Grouper = "time",
         pts_dim: str = "multivar",
         **kwargs,
@@ -1340,6 +1345,10 @@ class dOTC(Adjust):
     kind : dict | None
         Keys are variable names and values are adjustment kinds, either additive or multiplicative.
         Unspecified dimensions are treated as "+".
+    adapt_freq_thresh : dict | None = None
+        Threshold for frequency adaptation per variable.
+        See :py:class:`xclim.sdba.processing.adapt_freq` for details.
+        Frequency adaptation is not applied to missing variables.
     group : Union[str, Grouper]
         The grouping information. See :py:class:`xclim.sdba.base.Grouper` for details.
         Default is "time", meaning a single adjustment group along dimension "time".
@@ -1392,6 +1401,7 @@ class dOTC(Adjust):
         cov_factor: str | None = "std",
         spray_bins: bool = True,
         kind: dict | None = None,
+        adapt_freq_thresh: dict | None = None,
         group: str | Grouper = "time",
         pts_dim: str = "multivar",
     ) -> xr.DataArray:
@@ -1413,6 +1423,7 @@ class dOTC(Adjust):
             cov_factor=cov_factor,
             spray_bins=spray_bins,
             kind=kind,
+            adapt_freq_thresh=adapt_freq_thresh,
             group=group,
             pts_dim=pts_dim,
         ).scen
