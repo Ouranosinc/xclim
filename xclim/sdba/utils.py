@@ -963,13 +963,10 @@ def histogram(data, bin_width, bin_origin):
     idx_bin = np.floor((data - bin_origin) / bin_width)
 
     # Associate unique values with frequencies
-    idx_grid, mu = np.unique(idx_bin, return_counts=True, axis=0)
+    grid, mu = np.unique(idx_bin, return_counts=True, axis=0)
 
     # Normalise frequencies
     mu = np.divide(mu, sum(mu))
-
-    # Get the unindexed position of the center of bins
-    grid = (idx_grid + 1 / 2) * bin_width + bin_origin
 
     return grid, mu, idx_bin
 

@@ -650,42 +650,45 @@ def _otc_adjust(
     :cite:cts:`sdba-robin_2021`
     """
     # Initialize parameters
-    bin_width = u.bin_width_estimator([Y, X]) if bin_width is None else bin_width
-    bin_origin = np.zeros(len(bin_width)) if bin_origin is None else bin_origin
+    if bin_width is None:
+        bin_width = u.bin_width_estimator([Y, X])
+    elif isinstance(bin_width, list):
+        bin_width = np.array(bin_width)
+
+    if bin_origin is None:
+        bin_origin = np.zeros(len(bin_width))
+    elif isinstance(bin_origin, list):
+        bin_origin = np.array(bin_origin)
+
     num_iter_max = 100_000_000 if num_iter_max is None else num_iter_max
 
     # Get the bin positions and frequencies of X and Y, and for all Xs the bin to which they belong
-    gridX, muX, idx_binX = u.histogram(X, bin_width, bin_origin)
+    gridX, muX, binX = u.histogram(X, bin_width, bin_origin)
     gridY, muY, _ = u.histogram(Y, bin_width, bin_origin)
 
     # Compute the optimal transportation plan
     plan = u.optimal_transport(gridX, gridY, muX, muY, num_iter_max)
 
-    # Get the source positions expressed in terms of bin indices
-    idx_gridX = np.floor((gridX - bin_origin) / bin_width)
-
     # regroup the indices of all the points belonging to a same bin
-    idx_sort = np.lexsort(idx_binX[:, ::-1].T)
-    sorted_bins = idx_binX[idx_sort]
-    _, idx_start, idx_count = np.unique(
+    binX_sort = np.lexsort(binX[:, ::-1].T)
+    sorted_bins = binX[binX_sort]
+    _, binX_start, binX_count = np.unique(
         sorted_bins, return_index=True, return_counts=True, axis=0
     )
-    idx_start = np.sort(idx_start)
-    bin_groups = np.split(idx_sort, idx_start[1:])
+    binX_start_sort = np.sort(binX_start)
+    binX_groups = np.split(binX_sort, binX_start_sort[1:])
 
     out = np.empty(X.shape)
     rng = np.random.default_rng()
     # The plan row corresponding to a source bin indicates its probabilities to be transported to every target bin
-    for i, bin_group in enumerate(bin_groups):
+    for i, binX_group in enumerate(binX_groups):
         # Get the plan row of this bin
-        pi = np.where((idx_binX[bin_group[0]] == idx_gridX).all(1))[0][0]
+        pi = np.where((binX[binX_group[0]] == gridX).all(1))[0][0]
         # Pick as much target bins for this source bin as there are points in the source bin
-        choice = rng.choice(range(muY.size), p=plan[pi, :], size=idx_count[i])
-        out[bin_group] = gridY[choice]
+        choice = rng.choice(range(muY.size), p=plan[pi, :], size=binX_count[i])
+        out[binX_group] = (gridY[choice] + 1 / 2) * bin_width + bin_origin
 
     if spray_bins:
-        if isinstance(bin_width, list):
-            bin_width = np.array(bin_width)
         out += np.random.uniform(low=-bin_width / 2, high=bin_width / 2, size=out.shape)
 
     return out
@@ -796,7 +799,11 @@ def _dotc_adjust(
     :cite:cts:`sdba-robin_2021`
     """
     # Initialize parameters
-    bin_width = u.bin_width_estimator([Y0, X0, X1]) if bin_width is None else bin_width
+    if bin_width is None:
+        bin_width = u.bin_width_estimator([Y0, X0, X1])
+    elif isinstance(bin_width, list):
+        bin_width = np.array(bin_width)
+
     if cov_factor == "cholesky":
         fact0 = u.eps_cholesky(np.cov(Y0, rowvar=False))
         fact1 = u.eps_cholesky(np.cov(X0, rowvar=False))
