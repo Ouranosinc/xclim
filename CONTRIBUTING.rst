@@ -253,7 +253,7 @@ Before you submit a pull request, please follow these guidelines:
     Ensure that your changes pass all tests prior to pushing your final commits to your branch.
     Code formatting errors are treated as build errors and will block your pull request from being accepted.
 
-#. The version changes (CHANGES.rst) should briefly describe changes introduced in the Pull request. Changes should be organized by type (ie: `New indicators`, `New features and enhancements`, `Breaking changes`, `Bug fixes`, `Internal changes`) and the GitHub Pull Request, GitHub Issue. Your name and/or GitHub handle should also be listed among the contributors to this version. This can be done as follows::
+#. The version changes (CHANGELOG.rst) should briefly describe changes introduced in the Pull request. Changes should be organized by type (ie: `New indicators`, `New features and enhancements`, `Breaking changes`, `Bug fixes`, `Internal changes`) and the GitHub Pull Request, GitHub Issue. Your name and/or GitHub handle should also be listed among the contributors to this version. This can be done as follows::
 
      Contributors to this version: John Jacob Jingleheimer Schmidt (:user:`username`).
 
@@ -367,7 +367,7 @@ This section serves as a reminder for the maintainers on how to prepare the libr
 
 When a new version has been minted (features have been successfully integrated test coverage and stability is adequate), maintainers should update the pip-installable package (wheel and source release) on PyPI as well as the binary on conda-forge.
 
-From a new branch (e.g. `prepare-v123`), open a Pull Request and make sure all your changes to support a new version are committed (**update the entry for newest version in CHANGES.rst**), Then run::
+From a new branch (e.g. `prepare-v123`), open a Pull Request and make sure all your changes to support a new version are committed (**update the entry for newest version in CHANGELOG.rst**), Then run::
 
     $ bump-my-version bump <option>  # possible options: major / minor / patch / release / build
 
