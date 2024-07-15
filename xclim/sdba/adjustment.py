@@ -1233,7 +1233,7 @@ class OTC(Adjust):
         Will be estimated by default.
     bin_origin : list | None
         Bin origins for all dimensions.
-        Will be estimated by default.
+        Default is 0.
     num_iter_max : int | None
         Maximum number of iterations used in the earth mover distance algorithm.
         Default is 100_000_000.
@@ -1327,7 +1327,7 @@ class dOTC(Adjust):
         Will be estimated by default.
     bin_origin : list | None
         Bin origins for all dimensions.
-        Will be estimated by default.
+        Default is 0.
     num_iter_max : int | None
         Maximum number of iterations used in the earth mover distance algorithm.
     cov_factor : {None, 'std', 'cholesky'}
