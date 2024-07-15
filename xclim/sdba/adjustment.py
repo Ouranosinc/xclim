@@ -1263,6 +1263,8 @@ class OTC(Adjust):
     where :math:`C_{ij}` is the squared euclidean distance between bins :math:`i` and :math:`j`. All data points
     belonging to input bin :math:`i` are then separately assigned to output bin :math:`j` with probability :math:`P_{ij}`.
 
+    Note that `POT` must be installed to use this method.
+
     References
     ----------
     :cite:cts:`sdba-robin_2019,sdba-robin_2021`
@@ -1368,7 +1370,9 @@ class dOTC(Adjust):
             - :math:`\frac{Chol(Y0)}{Chol(X0)}` where :math:`Chol` is the Cholesky decomposition if `cov_factor = "cholesky"`
         - :math:`Y1_i` is the correction of the future simulated data mapped to :math:`i`.
 
-    Note that the "cholesky" `cov_factor` cannot be used if some variables are multiplicative.
+    The "cholesky" `cov_factor` cannot be used if some variables are multiplicative.
+
+    Note that `POT` must be installed to use this method.
 
     References
     ----------
