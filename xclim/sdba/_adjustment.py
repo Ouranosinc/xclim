@@ -953,12 +953,6 @@ def dotc_adjust(
                 ),
                 thresh,
             )
-            sim.loc[var] = _adapt_freq_hist(
-                xr.Dataset(
-                    {"ref": ref.sel({pts_dim: var}), "hist": sim.sel({pts_dim: var})}
-                ),
-                thresh,
-            )
 
     # Drop data added by map_blocks and prepare for apply_ufunc
     hist_map = {d: f"hist_{d}" for d in dim}
