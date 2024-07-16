@@ -3414,7 +3414,7 @@ def wet_spell_total_length(
     resample_before_rl: bool = True,
     **indexer,
 ) -> xarray.DataArray:
-    """Total length of dry spells.
+    r"""Total length of dry spells.
 
     Total number of days in wet periods of a minimum length, during which the maximum or
     accumulated precipitation within a window of the same length is over a threshold.
@@ -3485,7 +3485,7 @@ def wet_spell_max_length(
     resample_before_rl: bool = True,
     **indexer,
 ) -> xarray.DataArray:
-    """Longest wet spell.
+    r"""Longest wet spell.
 
     Maximum number of consecutive days in a wet period of minimum length, during which the maximum or
     accumulated precipitation within a window of the same length is over a threshold.
