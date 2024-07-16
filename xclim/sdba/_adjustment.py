@@ -944,7 +944,7 @@ def dotc_adjust(
     if adapt_freq_thresh is not None:
         for var, thresh in adapt_freq_thresh.items():
             if "units" not in ref.attrs["units"] or ref.attrs["units"] == "":
-                # Try to force units
+                # Hack : try to force units when ref has been `stack_variables`ed
                 units = str2pint(thresh).units
                 ref.attrs.update(units=str(units))
             hist.loc[var] = _adapt_freq_hist(
