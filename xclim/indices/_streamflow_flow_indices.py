@@ -1,14 +1,16 @@
 from __future__ import annotations
+
 import xarray as xr
-import numpy as np
+
 from xclim.core.units import declare_units
-from xclim.indices.generic import compare, threshold_count
+from xclim.indices.generic import compare
 
 __all__ = [
     "flow_index",
     "high_flow_frequency",
     "low_flow_frequency",
 ]
+
 
 @declare_units(q="[discharge]")
 def flow_index(q: xr.DataArray, p: float = 0.95) -> xr.DataArray:
@@ -69,11 +71,12 @@ def high_flow_frequency(
     1. Addor, Nans & Nearing, Grey & Prieto, Cristina & Newman, A. & Le Vine, Nataliya & Clark, Martyn. (2018). A Ranking of Hydrological Signatures Based on Their Predictability in Space. Water Resources Research. 10.1029/2018WR022606.
     2. Clausen, B., & Biggs, B. J. F. (2000). Flow variables for ecological studies in temperate streams: Groupings based on covariance. Journal of Hydrology, 237(3–4), 184–197. https://doi.org/10.1016/S0022-1694(00)00306-1
     """
-
     median_flow = q.median(dim="time")
     with xr.set_options(keep_attrs=True):
         threshold = threshold_factor * median_flow
-    high_flow_days = compare(q, op=">", right=threshold).resample(time=freq).sum(dim="time")
+    high_flow_days = (
+        compare(q, op=">", right=threshold).resample(time=freq).sum(dim="time")
+    )
     out = high_flow_days.mean(dim="time")
     out.attrs["units"] = "days/year"
     return out
@@ -109,12 +112,12 @@ def low_flow_frequency(
     Olden, J. D., & Poff, N. L. (2003). Redundancy and the choice of hydrologic indices for characterizing streamflow regimes. River Research and
     Applications, 19(2), 101–121. https://doi.org/10.1002/rra.700
     """
-
     mean_flow = q.mean(dim="time")
     with xr.set_options(keep_attrs=True):
         threshold = threshold_factor * mean_flow
-    low_flow_days = compare(q, op="<", right=threshold).resample(time=freq).sum(dim="time")
+    low_flow_days = (
+        compare(q, op="<", right=threshold).resample(time=freq).sum(dim="time")
+    )
     out = low_flow_days.mean(dim="time")
     out.attrs["units"] = "days"
     return out
-
