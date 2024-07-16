@@ -431,6 +431,20 @@ def spell_length_statistics(
 
     if window == 1:  # Fast path
         is_in_spell = compare(data, op, thresh)
+    elif (win_reducer == "min" and op in [">", ">=", "ge", "gt"]) or (
+        win_reducer == "max" and op in ["`<", "<=", "le", "lt"]
+    ):
+        # Fast path for specific cases, this yields a smaller dask graph (rolling twice is expensive!)
+        # For these two cases, a day can't be part of a spell if it doesn't respect the condition itself
+        mask = compare(data, op, thresh)
+        # We need to filter out the spells shorter than "window"
+        # find sequences of consecutive respected constraints
+        cs_s = rl._cumsum_reset_on_zero(mask)
+        # end of these sequences
+        cs_s = cs_s.where(mask.shift({"time": -1}, fill_value=0) == 0)
+        # propagate these end of sequences
+        # the `.where(mask>0, 0)` acts a stopper
+        is_in_spell = cs_s.where(cs_s >= window).where(mask > 0, 0).bfill("time") > 0
     else:
         data_pad = data.pad(time=(0, window))
         # The spell-wise value to test
@@ -456,7 +470,7 @@ def spell_length_statistics(
     )
 
     if spell_reducer == "count":
-        return out.assign_attrs(units="1")
+        return out.assign_attrs(units="")
     # All other cases are statistics of the number of timesteps
     return to_agg_units(out, data, "count")
 
