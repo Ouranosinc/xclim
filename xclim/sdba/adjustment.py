@@ -1430,7 +1430,7 @@ class dOTC(Adjust):
 
         for d in scen.dims:
             if d != pts_dim:
-                scen = scen.dropna(dim=d)
+                scen = scen.dropna(dim=d, how="all")
 
         return scen
 
