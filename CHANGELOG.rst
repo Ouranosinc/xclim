@@ -8,7 +8,7 @@ Contributors to this version: David Huard (:user:`huard`), Pascal Bourgault (:us
 
 Bug fixes
 ^^^^^^^^^
-* Wet spell indicators fixed. New generic spell length statistic function ``xclim.indices.generic.spell_length_statistics`` used in wet and dry spells indicators. (:issue:`1834`, :pull:`1838`).
+* Addressed a bug found in ``wet_spell_*`` indicators that was contributing to erroneous results. A new generic spell length statistic function ``xclim.indices.generic.spell_length_statistics`` is now used in wet and dry spells indicators. (:issue:`1834`, :pull:`1838`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^

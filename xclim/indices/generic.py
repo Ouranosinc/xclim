@@ -364,32 +364,32 @@ def spell_length_statistics(
     resample_before_rl: bool = True,
     **indexer,
 ):
-    """Statistics on spells lengths.
+    r"""Statistics on spells lengths.
 
     A spell is when a statistic (`win_reducer`) over a minimum number (`window`) of consecutive timesteps respects a condition (`op` `thresh`).
     This returns a statistic over the spell's count or length.
 
     Parameters
     ----------
-    data: xr.DataArray
+    data : xr.DataArray
         Input data.
-    threshold: Quantified
+    threshold : Quantified
         Threshold to test against.
-    window: int
+    window : int
         Minimum length of a spell.
-    win_reducer: {'min', 'max', 'sum', 'mean'}
+    win_reducer : {'min', 'max', 'sum', 'mean'}
         Reduction along the spell length to compute the spell value.
         Note that this does not matter when `window` is 1.
     op : {">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"}
         Logical operator. Ex: spell_value > thresh.
-    spell_reducer: {'max', 'sum', 'count'}
+    spell_reducer : {'max', 'sum', 'count'}
         Statistic on the spell lengths.
-    freq: str
+    freq : str
         Resampling frequency.
-    resample_before_rl: bool
+    resample_before_rl : bool
         Determines if the resampling should take place before or after the run
         length encoding (or a similar algorithm) is applied to runs.
-    indexer:
+    \*\*indexer
         Indexing parameters to compute the indicator on a temporal subset of the data.
         It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
         Indexing is done after finding the days part of a spell, but before taking the spell statistics.

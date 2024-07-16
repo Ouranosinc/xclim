@@ -3351,7 +3351,7 @@ def wet_spell_frequency(
 ) -> xarray.DataArray:
     """Return the number of wet periods of n days and more.
 
-    Periods during which the accumulated, minimal orr maximal daily precipitation amount on a window of n days is over threshold.
+    Periods during which the accumulated, minimal, or maximal daily precipitation amount on a window of n days is over threshold.
 
     Parameters
     ----------
@@ -3438,7 +3438,7 @@ def wet_spell_total_length(
     resample_before_rl: bool
         Determines if the resampling should take place before or after the run
         length encoding (or a similar algorithm) is applied to runs.
-    indexer
+    \*\*indexer
         Indexing parameters to compute the indicator on a temporal subset of the data.
         It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
         Indexing is done after finding the dry days, but before finding the spells.
@@ -3509,7 +3509,7 @@ def wet_spell_max_length(
     resample_before_rl: bool
         Determines if the resampling should take place before or after the run
         length encoding (or a similar algorithm) is applied to runs.
-    indexer
+    \*\*indexer
         Indexing parameters to compute the indicator on a temporal subset of the data.
         It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
         Indexing is done after finding the dry days, but before finding the spells.

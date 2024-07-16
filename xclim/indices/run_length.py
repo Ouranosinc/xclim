@@ -1129,7 +1129,7 @@ def statistics_run_1d(arr: Sequence[bool], reducer: str, window: int) -> int:
     ----------
     arr : Sequence[bool]
         Input array (bool)
-    reducer : {'mean', 'sum', 'min', 'max', 'std', 'count'}
+    reducer : {"mean", "sum", "min", "max", "std", "count"}
         Reducing function name.
     window : int
         Minimal length of runs to be included in the statistics
