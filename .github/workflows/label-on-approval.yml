@@ -86,7 +86,7 @@ jobs:
         with:
           issue-number: ${{ github.event.pull_request.number }}
           comment-author: 'github-actions[bot]'
-          body-includes: Workflow changes in this Pull Request have been approved!
+          body-includes: This Pull Request has been manually approved for additional testing!
       - name: Update Comment
         if: |
           (steps.fc_note.outputs.comment-id == '') &&
@@ -97,7 +97,7 @@ jobs:
           issue-number: ${{ github.event.pull_request.number }}
           body: |
             > [!NOTE]
-            > This Pull Request has been manually approved for additional testing.
+            > This Pull Request has been manually approved for additional testing!
           reactions: |
             hooray
           edit-mode: append
