@@ -1217,14 +1217,10 @@ class OTC(Adjust):
     r"""Optimal Transport Correction.
 
     Following :cite:t:`sdba-robin_2019`, this multivariate bias correction method finds the optimal transport
-    mapping between simulated and observed data. The correction of every simulated data point corresponds to
-    the observed data point it is mapped to.
-
-    This method operates with only two contemporaneous datasets and does not accept a `sim` argument.
+    mapping between simulated and observed data. The correction of every simulated data point is the observed
+    point it is mapped to.
 
     See notes for an explanation of the algorithm.
-
-    This implementation is strongly inspired by :cite:t:`sdba-robin_2021`.
 
     Parameters
     ----------
@@ -1253,9 +1249,9 @@ class OTC(Adjust):
 
     Notes
     -----
-    The simulated and observed data sets :math:`X` and :math:`Y` are discretized and standardized using histograms.
-    The length of the bins of the histograms along dimension `k` is given by `bin_width[k]`. An optimal transport
-    plan is found by solving the linear program
+    The simulated and observed data sets :math:`X` and :math:`Y` are discretized and standardized using histograms
+    whose bin length along dimension `k` is given by `bin_width[k]`. An optimal transport plan :math:`P^*` is found by solving
+    the linear program
 
     .. math::
 
@@ -1264,10 +1260,13 @@ class OTC(Adjust):
             P^T\mathbf{1} = Y \\
             P \geq 0
 
-    where :math:`C_{ij}` is the squared euclidean distance between bins :math:`i` and :math:`j`. All data points
-    belonging to input bin :math:`i` are then separately assigned to output bin :math:`j` with probability :math:`P_{ij}`.
+    where :math:`C_{ij}` is the squared euclidean distance between bins :math:`i` and :math:`j` measured in bin counts.
+    All data points belonging to input bin :math:`i` are then separately assigned to output bin :math:`j` with probability
+    :math:`P_{ij}`.
 
-    Note that `POT` must be installed to use this method.
+    Note that `POT <https://pythonot.github.io/>`__ must be installed to use this method.
+
+    This implementation is strongly inspired by :cite:t:`sdba-robin_2021`.
 
     References
     ----------
@@ -1321,7 +1320,7 @@ class dOTC(Adjust):
     This method is the dynamical version of :py:class:`~xclim.sdba.adjustment.OTC`, as presented by :cite:t:`sdba-robin_2019`.
     The temporal evolution of the model is found for every point by mapping the historical to the future dataset with
     optimal transport. A mapping between historical and reference data is found in the same way, and the temporal evolution
-    of simulated data is applied to their assigned reference.
+    of model data is applied to their assigned reference.
 
     See notes for an explanation of the algorithm.
 
@@ -1336,9 +1335,11 @@ class dOTC(Adjust):
         Bin origins for all dimensions.
         Default is 0.
     num_iter_max : int | None
-        Maximum number of iterations used in the earth mover distance algorithm.
+        Maximum number of iterations used in the network simplex algorithm.
     cov_factor : {None, 'std', 'cholesky'}
-        A transformation of the temporal evolution before it is applied to the reference. See notes for details.
+        A rescaling of the temporal evolution before it is applied to the reference.
+        Note that "cholesky" cannot be used if some variables are multiplicative.
+        See notes for details.
     spray_bins : bool
         If `False`, output points are located at the center of their bin.
         If `True`, a random location is picked uniformly inside their bin. Default is `True`.
@@ -1359,11 +1360,11 @@ class dOTC(Adjust):
     Notes
     -----
     The simulated historical, simulated future and observed data sets :math:`X0`, :math:`X1` and :math:`Y0` are
-    discretized and standardized using histograms. The length of the bins of the histograms along dimension `k`
-    is given by `bin_width[k]`. Mappings between :math:`Y0` and :math:`X0` on the one hand and between :math:`X0`
-    and :math:`X1` on the other are found by optimal transport (see :py:class:`~xclim.sdba.adjustment.OTC`). The
-    latter mapping is used to compute the temporal evolution of model data. This evolution is computed additively
-    or multiplicatively for each variable depending on its `kind`, and is applied to observed data with
+    discretized and standardized using histograms whose bin length along dimension `k` is given by `bin_width[k]`.
+    Mappings between :math:`Y0` and :math:`X0` on the one hand and between :math:`X0` and :math:`X1` on the other
+    are found by optimal transport (see :py:class:`~xclim.sdba.adjustment.OTC`). The latter mapping is used to
+    compute the temporal evolution of model data. This evolution is computed additively or multiplicatively for
+    each variable depending on its `kind`, and is applied to observed data with
 
     .. math::
 
@@ -1379,9 +1380,9 @@ class dOTC(Adjust):
             - :math:`\frac{Chol(Y0)}{Chol(X0)}` where :math:`Chol` is the Cholesky decomposition if `cov_factor = "cholesky"`
         - :math:`Y1_i` is the correction of the future simulated data mapped to :math:`i`.
 
-    The "cholesky" `cov_factor` cannot be used if some variables are multiplicative.
+    Note that `POT <https://pythonot.github.io/>`__ must be installed to use this method.
 
-    Note that `POT` must be installed to use this method.
+    This implementation is strongly inspired by :cite:t:`sdba-robin_2021`.
 
     References
     ----------
