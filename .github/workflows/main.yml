@@ -32,7 +32,7 @@ permissions:
 
 jobs:
   lint:
-    name: Black (Python${{ matrix.python-version }})
+    name: Lint (Python${{ matrix.python-version }})
     runs-on: ubuntu-latest
     if: |
       (github.event.action != 'labeled') ||
