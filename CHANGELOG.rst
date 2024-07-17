@@ -4,7 +4,11 @@ Changelog
 
 v0.52.0 (unreleased)
 --------------------
-Contributors to this version: David Huard (:user:`huard`).
+Contributors to this version: David Huard (:user:`huard`), Adrien Lamarche (:user:`LamAdr`).
+
+New features and enhancements
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+* New multivariate bias adjustment classes `OTC` and `dOTC` (:pull:`1787`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
