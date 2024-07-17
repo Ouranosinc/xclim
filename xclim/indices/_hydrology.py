@@ -286,7 +286,7 @@ def melt_and_precip_max(
 
 
 @declare_units(q="[discharge]")
-def flow_index(q: xr.DataArray, p: float = 0.95) -> xr.DataArray:
+def flow_index(q: xr.DataArray, p: float = 0.95, **indexer) -> xr.DataArray:
     """
     Flow index
 
@@ -298,6 +298,9 @@ def flow_index(q: xr.DataArray, p: float = 0.95) -> xr.DataArray:
         Daily streamflow data.
     p : float
         Percentile for calculating the flow index, between 0 and 1. Default of 0.95 is for high flows.
+    indexer
+        Indexing parameters to perform a temporal subset of the data.
+        It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
 
     Returns
     -------
@@ -308,8 +311,9 @@ def flow_index(q: xr.DataArray, p: float = 0.95) -> xr.DataArray:
     ----------
     :cite:cts:`addor2018,Clausen2000`
     """
-    qp = q.quantile(p, dim="time")
-    q_median = q.median(dim="time")
+    qt = select_time(q, **indexer)
+    qp = qt.quantile(p, dim="time")
+    q_median = qt.median(dim="time")
     out = qp / q_median
     out.attrs["units"] = "1"
     return out
@@ -322,8 +326,9 @@ def high_flow_frequency(
     """
     High flow frequency.
 
-    Calculate the number of days in a given period with flows greater than a specified threshold. By default, the
-    period is the water year starting on 1st October and ending on 30th September, as commonly defined in North America.
+    Calculate the number of days in a given period with flows greater than a specified threshold, given as a
+    multiple of the median flow. By default, the period is the water year starting on 1st October and ending on
+    30th September, as commonly defined in North America.
 
     Parameters
     ----------
@@ -358,9 +363,11 @@ def low_flow_frequency(
     q: xr.DataArray, threshold_factor: float = 0.2, freq: str = "YS-OCT", **indexer
 ) -> xr.DataArray:
     """
-    Calculate the number of days in a given period with flows lower than a specified threshold.
+    Low flow frequency.
 
-    By default, the period is the water year starting on 1st October and ending on 30th September, as commonly defined in North America.
+    Calculate the number of days in a given period with flows lower than a specified threshold, given by a fraction
+    of the mean flow. By default, the period is the water year starting on 1st October and ending on 30th September,
+    as commonly defined in North America.
 
     Parameters
     ----------
