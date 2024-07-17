@@ -6,8 +6,8 @@ import xarray as xr
 
 from xclim.core.calendar import get_calendar
 from xclim.core.missing import at_least_n_valid
-from xclim.core.units import declare_units, rate2amount
-from xclim.indices.generic import compare
+from xclim.core.units import declare_units, rate2amount, to_agg_units
+from xclim.indices.generic import select_time, threshold_count
 
 from . import generic
 
@@ -27,7 +27,7 @@ __all__ = [
 
 
 @declare_units(q="[discharge]")
-def base_flow_index(q: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
+def base_flow_index(q: xr.DataArray, freq: str = "YS") -> xr.DataArray:
     r"""Base flow index.
 
     Return the base flow index, defined as the minimum 7-day average flow divided by the mean flow.
@@ -71,7 +71,7 @@ def base_flow_index(q: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
 
 
 @declare_units(q="[discharge]")
-def rb_flashiness_index(q: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
+def rb_flashiness_index(q: xr.DataArray, freq: str = "YS") -> xr.DataArray:
     r"""Richards-Baker flashiness index.
 
     Measures oscillations in flow relative to total flow, quantifying the frequency and rapidity of short term changes
@@ -109,7 +109,7 @@ def rb_flashiness_index(q: xarray.DataArray, freq: str = "YS") -> xarray.DataArr
 
 
 @declare_units(snd="[length]")
-def snd_max(snd: xarray.DataArray, freq: str = "YS-JUL") -> xarray.DataArray:
+def snd_max(snd: xr.DataArray, freq: str = "YS-JUL") -> xr.DataArray:
     """Maximum snow depth.
 
     The maximum daily snow depth.
@@ -130,7 +130,7 @@ def snd_max(snd: xarray.DataArray, freq: str = "YS-JUL") -> xarray.DataArray:
 
 
 @declare_units(snd="[length]")
-def snd_max_doy(snd: xarray.DataArray, freq: str = "YS-JUL") -> xarray.DataArray:
+def snd_max_doy(snd: xr.DataArray, freq: str = "YS-JUL") -> xr.DataArray:
     """Maximum snow depth day of year.
 
     Day of year when surface snow reaches its peak value. If snow depth is 0 over entire period, return NaN.
@@ -161,7 +161,7 @@ def snd_max_doy(snd: xarray.DataArray, freq: str = "YS-JUL") -> xarray.DataArray
 
 
 @declare_units(snw="[mass]/[area]")
-def snw_max(snw: xarray.DataArray, freq: str = "YS-JUL") -> xarray.DataArray:
+def snw_max(snw: xr.DataArray, freq: str = "YS-JUL") -> xr.DataArray:
     """Maximum snow amount.
 
     The maximum daily snow amount.
@@ -182,7 +182,7 @@ def snw_max(snw: xarray.DataArray, freq: str = "YS-JUL") -> xarray.DataArray:
 
 
 @declare_units(snw="[mass]/[area]")
-def snw_max_doy(snw: xarray.DataArray, freq: str = "YS-JUL") -> xarray.DataArray:
+def snw_max_doy(snw: xr.DataArray, freq: str = "YS-JUL") -> xr.DataArray:
     """Maximum snow amount day of year.
 
     Day of year when surface snow amount reaches its peak value. If snow amount is 0 over entire period, return NaN.
@@ -214,8 +214,8 @@ def snw_max_doy(snw: xarray.DataArray, freq: str = "YS-JUL") -> xarray.DataArray
 
 @declare_units(snw="[mass]/[area]")
 def snow_melt_we_max(
-    snw: xarray.DataArray, window: int = 3, freq: str = "YS-JUL"
-) -> xarray.DataArray:
+    snw: xr.DataArray, window: int = 3, freq: str = "YS-JUL"
+) -> xr.DataArray:
     """Maximum snow melt.
 
     The maximum snow melt over a given number of days expressed in snow water equivalent.
@@ -248,8 +248,8 @@ def snow_melt_we_max(
 
 @declare_units(snw="[mass]/[area]", pr="[precipitation]")
 def melt_and_precip_max(
-    snw: xarray.DataArray, pr: xarray.DataArray, window: int = 3, freq: str = "YS-JUL"
-) -> xarray.DataArray:
+    snw: xr.DataArray, pr: xr.DataArray, window: int = 3, freq: str = "YS-JUL"
+) -> xr.DataArray:
     """Maximum snow melt and precipitation.
 
     The maximum snow melt plus precipitation over a given number of days expressed in snow water equivalent.
@@ -288,109 +288,100 @@ def melt_and_precip_max(
 @declare_units(q="[discharge]")
 def flow_index(q: xr.DataArray, p: float = 0.95) -> xr.DataArray:
     """
-    Calculate the Qp  (pth percentile of daily streamflow) normalized by the mean flow.
+    Flow index
+
+    Calculate the pth percentile of daily streamflow normalized by the median flow.
 
     Parameters
     ----------
-    q : xarray.DataArray
+    q : xr.DataArray
         Daily streamflow data.
     p : float
         Percentile for calculating the flow index, between 0 and 1. Default of 0.95 is for high flows.
 
     Returns
     -------
-    xarray.DataArray
-    Normalized Qp, which is the p th percentile of daily streamflow normalized by the median flow.
+    xr.DataArray
+        Normalized Qp, which is the p th percentile of daily streamflow normalized by the median flow.
 
-    Reference:
-    1. Addor, Nans & Nearing, Grey & Prieto, Cristina & Newman, A. & Le Vine, Nataliya & Clark, Martyn. (2018). A Ranking of Hydrological Signatures Based on Their Predictability in Space. Water Resources Research. 10.1029/2018WR022606.
-    2. Clausen, B., & Biggs, B. J. F. (2000). Flow variables for ecological studies in temperate streams: Groupings based on covariance. Journal of Hydrology, 237(3–4), 184–197. https://doi.org/10.1016/S0022-1694(00)00306-1
-
+    References
+    ----------
+    :cite:cts:`addor2018,Clausen2000`
     """
     qp = q.quantile(p, dim="time")
     q_median = q.median(dim="time")
     out = qp / q_median
-    out.attrs["units"] = " "
+    out.attrs["units"] = "1"
     return out
 
 
 @declare_units(q="[discharge]")
 def high_flow_frequency(
-    q: xr.DataArray,
-    threshold_factor: int = 9,
-    freq: str = "A-SEP",
+    q: xr.DataArray, threshold_factor: int = 9, freq: str = "YS-OCT", **indexer
 ) -> xr.DataArray:
     """
-    Calculate the mean number of days in a given period with flows greater than a specified threshold. By default, the period is the water year starting on 1st October and ending on 30th September, as commonly defined in North America.
+    High flow frequency.
+
+    Calculate the number of days in a given period with flows greater than a specified threshold. By default, the
+    period is the water year starting on 1st October and ending on 30th September, as commonly defined in North America.
 
     Parameters
     ----------
-    q : xarray.DataArray
+    q : xr.DataArray
         Daily streamflow data.
     threshold_factor : int
         Factor by which the median flow is multiplied to set the high flow threshold, default is 9.
     freq : str, optional
-        Resampling frequency, default is 'A-SEP' for water year ending in September.
-    op : {">", "<", "gt", "lt"}, optional
-        Comparison operation. Default: "<".
+        Resampling frequency, default is 'YS-OCT' for water year starting in October and ending in September.
+    indexer
+        Indexing parameters to perform a temporal subset of the data.
+        It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
 
     Returns
     -------
-    xarray.DataArray
-    Calculated mean of high flow days per water year
+    xr.DataArray
+        Calculated mean of high flow days per water year
 
     References
     ----------
-    1. Addor, Nans & Nearing, Grey & Prieto, Cristina & Newman, A. & Le Vine, Nataliya & Clark, Martyn. (2018). A Ranking of Hydrological Signatures Based on Their Predictability in Space. Water Resources Research. 10.1029/2018WR022606.
-    2. Clausen, B., & Biggs, B. J. F. (2000). Flow variables for ecological studies in temperate streams: Groupings based on covariance. Journal of Hydrology, 237(3–4), 184–197. https://doi.org/10.1016/S0022-1694(00)00306-1
+    :cite:cts:`addor2018,Clausen2000`
     """
     median_flow = q.median(dim="time")
-    with xr.set_options(keep_attrs=True):
-        threshold = threshold_factor * median_flow
-    high_flow_days = (
-        compare(q, op=">", right=threshold).resample(time=freq).sum(dim="time")
-    )
-    out = high_flow_days.mean(dim="time")
-    out.attrs["units"] = "days"
-    return out
+    threshold = threshold_factor * median_flow
+    sel = select_time(q, **indexer)
+    out = threshold_count(sel, ">", threshold, freq=freq)
+    return to_agg_units(out, q, "count")
 
 
 @declare_units(q="[discharge]")
 def low_flow_frequency(
-    q: xr.DataArray,
-    threshold_factor: float = 0.2,
-    freq: str = "A-SEP",
+    q: xr.DataArray, threshold_factor: float = 0.2, freq: str = "YS-OCT", **indexer
 ) -> xr.DataArray:
     """
-    Calculate the mean number of days in a given period with flows lower than a specified threshold. By default, the period is the water year starting on 1st October and ending on 30th September, as commonly defined in North America.
+    Calculate the number of days in a given period with flows lower than a specified threshold. By default, the period is the water year starting on 1st October and ending on 30th September, as commonly defined in North America.
 
     Parameters
     ----------
-    q : xarray.DataArray
+    q : xr.DataArray
         Daily streamflow data.
     threshold_factor : float
         Factor by which the mean flow is multiplied to set the low flow threshold, default is 0.2.
     freq : str, optional
-        Resampling frequency, default is 'A-SEP' for water year ending in September.
-    op : {">", "<", "gt", "lt"}, optional
-        Comparison operation. Default: "<".
+        Resampling frequency, default is 'YS-OCT' for water year starting in October and ending in September.
+    indexer
+        Indexing parameters to perform a temporal subset of the data.
+        It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
 
     Returns
     -------
-    xarray.DataArray
-    Calculated mean of low flow days per water year
+    xr.DataArray
+        Calculated mean of low flow days per water year.
 
     References
-    ----------
-    Olden, J. D., & Poff, N. L. (2003). Redundancy and the choice of hydrologic indices for characterizing streamflow regimes. River Research and
-    Applications, 19(2), 101–121. https://doi.org/10.1002/rra.700
+    :cite:cts:`Olden2003`
     """
     mean_flow = q.mean(dim="time")
-    with xr.set_options(keep_attrs=True):
-        threshold = threshold_factor * mean_flow
-    low_flow_days = (
-        compare(q, op="<", right=threshold).resample(time=freq).sum(dim="time")
-    )
-    out = low_flow_days.mean(dim="time")
-    out.attrs["units"] = "days"
-    return out
+    threshold = threshold_factor * mean_flow
+    sel = select_time(q, **indexer)
+    out = threshold_count(q, "<", threshold, freq=freq)
+    return to_agg_units(out, q, "count")
