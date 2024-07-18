@@ -9,6 +9,7 @@ Contributors to this version: David Huard (:user:`huard`), Pascal Bourgault (:us
 Breaking changes
 ^^^^^^^^^^^^^^^^
 * Definition of the ``frost_free_season_start`` and ``frost_free_season_end`` have been slightly changed to be coherent with the ``frost_free_season_length`` and xclim's notion of `season` in general. Indicator and indices signature have changed.
+* Season length indicators have been modified to return ``0`` for all cases where a proper season was not found, but the data is valid. Previously, a ``nan`` was given if neither a start or an end were found, even if the data was valid, and a ``0`` was given if an end was found but no start.
 
 Bug fixes
 ^^^^^^^^^

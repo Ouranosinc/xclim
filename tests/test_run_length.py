@@ -470,7 +470,7 @@ class TestRunsWithDates:
         [
             ("07-01", 210, 70),
             ("07-01", 190, 50),
-            ("04-01", 150, np.NaN),  # date falls early
+            ("04-01", 150, 0),  # date falls early
             ("11-01", 150, 165),  # date ends late
             (None, 150, 10),  # no date, real length
         ],

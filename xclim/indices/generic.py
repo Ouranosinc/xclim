@@ -540,9 +540,11 @@ def season(
     """
     thresh = convert_units_to(thresh, data)
     cond = compare(data, op, thresh, constrain=constrain)
-    out = cond.resample(time=freq).map(
-        rl.season, window=window, date=mid_date, stat=stat, coord="dayofyear"
-    )
+    FUNC = {"start": rl.season_start, "end": rl.season_end, "length": rl.season_length}
+    map_kwargs = dict(window=window, date=mid_date)
+    if stat in ["start", "end"]:
+        map_kwargs["coord"] = "dayofyear"
+    out = cond.resample(time=freq).map(FUNC[stat], **map_kwargs)
     if stat == "length":
         return to_agg_units(out, data, "count")
     # else, a date
