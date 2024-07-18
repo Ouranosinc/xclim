@@ -21,7 +21,6 @@ jobs:
       (github.event.review.state == 'approved') &&
       (github.event.pull_request.head.repo.full_name == github.event.pull_request.base.repo.full_name)
     permissions:
-      contents: read
       pull-requests: write
     steps:
       - name: Harden Runner
@@ -49,8 +48,6 @@ jobs:
       (github.event_name == 'pull_request_target') &&
       (github.event.pull_request.head.repo.full_name != github.event.pull_request.base.repo.full_name)
     permissions:
-      checks: write
-      contents: read
       pull-requests: write
     steps:
       - name: Harden Runner
@@ -67,7 +64,7 @@ jobs:
           issue-number: ${{ github.event.pull_request.number }}
           comment-author: 'github-actions[bot]'
           body-includes: This Pull Request is coming from a fork and must be manually tagged `approved` in order to perform additional testing.
-      - name: Create Comment
+      - name: Update Warning Comment
         if: |
           (steps.fc_warning.outputs.comment-id == '') &&
           (!contains(github.event.pull_request.labels.*.name, 'approved')) &&
@@ -87,7 +84,7 @@ jobs:
           issue-number: ${{ github.event.pull_request.number }}
           comment-author: 'github-actions[bot]'
           body-includes: This Pull Request has been manually approved for additional testing!
-      - name: Update Comment
+      - name: Update Note Comment
         if: |
           (steps.fc_note.outputs.comment-id == '') &&
           contains(github.event.pull_request.labels.*.name, 'approved')

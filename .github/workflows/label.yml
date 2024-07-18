@@ -24,7 +24,6 @@ jobs:
     name: Label
     runs-on: ubuntu-latest
     permissions:
-      contents: read
       pull-requests: write
     steps:
       - name: Harden Runner
