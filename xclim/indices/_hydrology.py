@@ -378,6 +378,7 @@ def low_flow_frequency(
         Calculated mean of low flow days per water year.
 
     References
+    ----------
     :cite:cts:`Olden2003`
     """
     mean_flow = q.mean(dim="time")
