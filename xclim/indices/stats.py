@@ -6,6 +6,7 @@ import warnings
 from collections.abc import Sequence
 from typing import Any
 
+import jsonpickle
 import numpy as np
 import scipy.stats
 import xarray as xr
@@ -797,8 +798,7 @@ def standardized_index_fit_params(
         "group": group,
         "units": "",
     }
-    method, args = ("", []) if indexer == {} else indexer.popitem()
-    params.attrs["time_indexer"] = (method, *args)
+    params.attrs["time_indexer"] = jsonpickle.encode(indexer)  # noqa: S301
     if offset:
         params.attrs["offset"] = offset
     return params
@@ -879,7 +879,7 @@ def standardized_index(
         )
         # Unpack attrs to None and {} if needed
         freq = None if freq == "" else freq
-        indexer = {} if indexer[0] == "" else {indexer[0]: indexer[1:]}
+        indexer = jsonpickle.decode(indexer)  # noqa: S301
         if cal_start or cal_end:
             warnings.warn(
                 "Expected either `cal_{start|end}` or `params`, got both. The `params` input overrides other inputs."

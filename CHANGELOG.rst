@@ -4,7 +4,11 @@ Changelog
 
 v0.52.0 (unreleased)
 --------------------
-Contributors to this version: David Huard (:user:`huard`).
+Contributors to this version: David Huard (:user:`huard`), Hui-Min Wang (:user:`Hem-W`).
+
+Bug fixes
+^^^^^^^^^
+* Fixed the indexer bug in the `xclim.indices.standardized_index_fit_params` when multiple or non-array indexers are specified and fitted parameters are reloaded from netCDF. (:issue:`1842`, :pull:`1843`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
