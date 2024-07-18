@@ -869,7 +869,7 @@ def season(
     A "season" is a run of True values that may include breaks under a given length (`window`).
     The start is computed as the first run of `window` True values, and the end as the first subsequent run
     of  `window` False values. The end element is the first element after the season.
-    If a date is given, it must be included in the season.
+    If a date is given, it must be included in the season, i.e. the start can't happen laterand the end can't happen earlier.
 
     Parameters
     ----------

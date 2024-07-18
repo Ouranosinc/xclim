@@ -979,67 +979,17 @@ def growing_degree_days(
 def growing_season_start(
     tas: xarray.DataArray,
     thresh: Quantified = "5.0 degC",
+    mid_date: DayOfYearStr | None = "07-01",
     window: int = 5,
     freq: str = "YS",
     op: Literal[">", ">=", "gt", "ge"] = ">=",
 ) -> xarray.DataArray:
     r"""Start of the growing season.
 
-    Day of the year of the start of a sequence of days with mean daily temperatures consistently above or equal to a
-    given threshold (default: 5℃).
-
-    Parameters
-    ----------
-    tas : xarray.DataArray
-        Mean daily temperature.
-    thresh : Quantified
-        Threshold temperature on which to base evaluation.
-    window : int
-        Minimum number of days with temperature above threshold needed for evaluation.
-    freq : str
-        Resampling frequency.
-    op : {">", ">=", "gt", "ge"}
-        Comparison operation. Default: ">=".
-
-    Returns
-    -------
-    xarray.DataArray, [dimensionless]
-        Day of the year when temperature is superior to a threshold over a given number of days for the first time.
-        If there is no such day or if a growing season is not detected, returns np.nan.
-
-    Notes
-    -----
-    Let :math:`x_i` be the daily mean temperature at day of the year :math:`i` for values of :math:`i` going from 1
-    to 365 or 366. The start date of the start of growing season is given by the smallest index :math:`i`:
-
-    .. math::
-
-       \prod_{j=i}^{i+w} [x_j >= thresh]
-
-    where :math:`w` is the number of days the temperature threshold should be met or exceeded,
-    and :math:`[P]` is 1 if :math:`P` is true, and 0 if false.
-    """
-    thresh = convert_units_to(thresh, tas)
-    cond = compare(tas, op, thresh, constrain=(">=", ">"))
-
-    out = cond.resample(time=freq).map(rl.first_run, window=window, coord="dayofyear")
-    out.attrs.update(units="", is_dayofyear=np.int32(1), calendar=get_calendar(tas))
-    return out
-
-
-@declare_units(tas="[temperature]", thresh="[temperature]")
-def growing_season_end(
-    tas: xarray.DataArray,
-    thresh: Quantified = "5.0 degC",
-    mid_date: DayOfYearStr = "07-01",
-    window: int = 5,
-    freq: str = "YS",
-    op: Literal["<", "<=", "lt", "le"] = "<",
-) -> xarray.DataArray:
-    r"""End of the growing season.
-
-    Day of the year of the start of a sequence of `N` (default: 5) days with mean temperatures consistently below a
-    given threshold (default: 5℃), occurring after a given calendar date (default: July 1).
+    The growing season starts with the first sequence of a minimum length of consecutive days above the threshold
+    and ends with the first sequence of the same minimum length of consecutive days under the threshold. Sequences
+    of consecutive days under the threshold shorter then `window` are allowed within the season.
+    A middle date can be given, a start can't happen later and an end can't happen earlier.
 
     Warnings
     --------
@@ -1051,21 +1001,72 @@ def growing_season_end(
         Mean daily temperature.
     thresh : Quantified
         Threshold temperature on which to base evaluation.
-    mid_date : str
+    mid_date : str, optional
+        Date of the year after before which the season must start. Should have the format '%m-%d'.
+    window : int
+        Minimum number of days with temperature above threshold needed for evaluation.
+    freq : str
+        Resampling frequency.
+    op : {">", ">=", "gt", "ge"}
+        Comparison operation. Default: ">=".
+
+    Returns
+    -------
+    xarray.DataArray, [dimensionless]
+        Start of the growing season.
+    """
+    return season(
+        tas,
+        thresh=thresh,
+        mid_date=mid_date,
+        window=window,
+        freq=freq,
+        op=op,
+        constrain=(">", ">="),
+        stat="start",
+    )
+
+
+@declare_units(tas="[temperature]", thresh="[temperature]")
+def growing_season_end(
+    tas: xarray.DataArray,
+    thresh: Quantified = "5.0 degC",
+    mid_date: DayOfYearStr | None = "07-01",
+    window: int = 5,
+    freq: str = "YS",
+    op: Literal[">", ">=", "lt", "le"] = ">",
+) -> xarray.DataArray:
+    r"""End of the growing season.
+
+    The growing season starts with the first sequence of a minimum length of consecutive days above the threshold
+    and ends with the first sequence of the same minimum length of consecutive days under the threshold. Sequences
+    of consecutive days under the threshold shorter then `window` are allowed within the season.
+    A middle date can be given, a start can't happen later and an end can't happen earlier.
+
+    Warnings
+    --------
+    The default `freq` and `mid_date` parameters are valid for the northern hemisphere.
+
+    Parameters
+    ----------
+    tas : xarray.DataArray
+        Mean daily temperature.
+    thresh : Quantified
+        Threshold temperature on which to base evaluation.
+    mid_date : str, optional
         Date of the year after which to look for the end of the season. Should have the format '%m-%d'.
     window : int
         Minimum number of days with temperature below threshold needed for evaluation.
     freq : str
         Resampling frequency.
-    op : {"<", "<=", "lt", "le"}
-        Comparison operation. Default: "<".
+    op : {">", ">=", "gt", "ge"}
+        Comparison operation. Default: ">". Note that this comparison is what defines the season.
+        The end of the season happens when the condition is NOT met for `window` consecutive days.
 
     Returns
     -------
     xarray.DataArray, [dimensionless]
-        Day of the year when temperature is inferior to a threshold over a given number of days for the first time.
-        If there is no such day or if a growing season is not detected, returns np.nan.
-        If the growing season does not end within the time period, returns the last day of the period.
+        End of the growing season.
 
     Notes
     -----
@@ -1079,20 +1080,16 @@ def growing_season_end(
     where :math:`w` is the number of days where temperature should be inferior to a given threshold after a given date,
     and :math:`[P]` is 1 if :math:`P` is true, and 0 if false.
     """
-    thresh = convert_units_to(thresh, tas)
-
-    # Note: The following operation is inverted here so that there is less confusion for users.
-    cond = ~compare(tas, op, thresh, constrain=("<=", "<"))
-
-    out = cond.resample(time=freq).map(
-        rl.run_end_after_date,
+    return season(
+        tas,
+        thresh=thresh,
+        mid_date=mid_date,
         window=window,
-        date=mid_date,
-        dim="time",
-        coord="dayofyear",
+        freq=freq,
+        op=op,
+        constrain=(">", ">="),
+        stat="end",
     )
-    out.attrs.update(units="", is_dayofyear=np.int32(1), calendar=get_calendar(tas))
-    return out
 
 
 @declare_units(tas="[temperature]", thresh="[temperature]")
@@ -1100,16 +1097,18 @@ def growing_season_length(
     tas: xarray.DataArray,
     thresh: Quantified = "5.0 degC",
     window: int = 6,
-    mid_date: DayOfYearStr = "07-01",
+    mid_date: DayOfYearStr | None = "07-01",
     freq: str = "YS",
     op: str = ">=",
 ) -> xarray.DataArray:
     r"""Growing season length.
 
-    The number of days between the first occurrence of at least `N` (default: 6) consecutive days with mean daily
-    temperature over a threshold (default: 5℃) and the first occurrence of at least `N` consecutive days with mean
-    daily temperature below the same threshold after a certain date, usually July 1st (06-01) in the northern emispher
-    and January 1st (01-01) in the southern hemisphere.
+    The growing season starts with the first sequence of a minimum length of consecutive days above the threshold
+    and ends with the first sequence of the same minimum length of consecutive days under the threshold. Sequences
+    of consecutive days under the threshold shorter then `window` are allowed within the season.
+    A middle date can be given, a start can't happen later and an end can't happen earlier.
+    If the season starts but never ends, the length is computed up to the end of the resampling period.
+    If no season start is found, but the data is valid, a length of 0 is returned.
 
     Warnings
     --------
@@ -1123,7 +1122,7 @@ def growing_season_length(
         Threshold temperature on which to base evaluation.
     window : int
         Minimum number of days with temperature above threshold to mark the beginning and end of growing season.
-    mid_date : str
+    mid_date : str, optional
         Date of the year after which to look for the end of the season. Should have the format '%m-%d'.
     freq : str
         Resampling frequency.
@@ -1168,16 +1167,16 @@ def growing_season_length(
     :cite:cts:`project_team_eca&d_algorithm_2013`
 
     """
-    thresh = convert_units_to(thresh, tas)
-    cond = compare(tas, op, thresh, constrain=(">=", ">"))
-
-    out = cond.resample(time=freq).map(
-        rl.season_length,
+    return season(
+        tas,
+        thresh=thresh,
+        mid_date=mid_date,
         window=window,
-        date=mid_date,
-        dim="time",
+        freq=freq,
+        op=op,
+        constrain=(">", ">="),
+        stat="length",
     )
-    return to_agg_units(out, tas, "count")
 
 
 @declare_units(tasmin="[temperature]", thresh="[temperature]")
