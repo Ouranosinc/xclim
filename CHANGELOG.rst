@@ -6,6 +6,10 @@ v0.52.0 (unreleased)
 --------------------
 Contributors to this version: David Huard (:user:`huard`), Pascal Bourgault (:user:`aulemahal`).
 
+Breaking changes
+^^^^^^^^^^^^^^^^
+* Definition of the ``frost_free_season_start`` and ``frost_free_season_end`` have been slightly changed to be coherent with the ``frost_free_season_length`` and xclim's notion of `season` in general. Indicator and indices signature have changed.
+
 Bug fixes
 ^^^^^^^^^
 * Addressed a bug found in ``wet_spell_*`` indicators that was contributing to erroneous results. A new generic spell length statistic function ``xclim.indices.generic.spell_length_statistics`` is now used in wet and dry spells indicators. (:issue:`1834`, :pull:`1838`).
@@ -13,6 +17,8 @@ Bug fixes
 Internal changes
 ^^^^^^^^^^^^^^^^
 * Changed french translation of "wet days" from "jours mouillés" to "jours pluvieux". (:issue:`1825`, :pull:`1826`).
+* Added ``xclim.indices.generic.season`` to make season start, end and length indices. Added a `stat` argument to ``xclim.indices.run_length.season`` to avoid returning a dataset.
+
 
 
 v0.51.0 (2024-07-04)

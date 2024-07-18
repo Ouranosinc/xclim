@@ -760,8 +760,9 @@ def season(
     window: int,
     date: DayOfYearStr | None = None,
     dim: str = "time",
+    stat: str | None = None,
     coord: str | bool | None = False,
-) -> xr.Dataset:
+) -> xr.Dataset | xr.DataArray:
     """Calculate the bounds of a season along a dimension.
 
     A "season" is a run of True values that may include breaks under a given length (`window`).
@@ -778,6 +779,9 @@ def season(
         The date (in MM-DD format) that a run must include to be considered valid.
     dim : str
         Dimension along which to calculate consecutive run (default: 'time').
+    stat : {'start', 'end', 'length'}, optional
+        Which facet to return. If absent (default), a Dataset with all three is returned.
+        If present, only the specified variable is returned.
     coord : Optional[str]
         If not False, the function returns values along `dim` instead of indexes.
         If `dim` has a datetime dtype, `coord` can also be a str of the name of the
@@ -785,8 +789,9 @@ def season(
 
     Returns
     -------
-    xr.Dataset
-        "dim" is reduced to "season_bnds" with 2 elements : season start and season end, both indices of da[dim].
+    xr.Dataset or xr.DataArray
+        If `stat` is absent, a Dataset with three variables : start, end and length of the season.
+        If `stat` is given, only the specified variable is returned, as a DataArray.
 
     Notes
     -----
@@ -797,6 +802,10 @@ def season(
     Example : Length of the "warm season", where T > 25°C, with date = 1st August. Let's say the temperature is over
     25 for all June, but July and august have very cold temperatures. Instead of returning 30 days (June), the function
     will return 61 days (July + June).
+
+    The season's length is always the difference between the end and the start, except if no
+    end was found before the end of the data, in which case the end is the last day and the length
+    goes up to the boundary (i.e. :math:`end - start = length - 1`).
     """
     beg = first_run(da, window=window, dim=dim)
     # Invert the condition and mask all values after beginning
@@ -871,6 +880,8 @@ def season(
         long_name="Length of the season.",
         description="Number of steps of the original series in the season, between 'start' and 'end'.",
     )
+    if stat is not None:
+        return out[stat]
     return out
 
 

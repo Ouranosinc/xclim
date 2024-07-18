@@ -475,6 +475,81 @@ def spell_length_statistics(
     return to_agg_units(out, data, "count")
 
 
+@declare_relative_units(thresh="<data>")
+def season(
+    data: xarray.DataArray,
+    thresh: Quantified,
+    window: int,
+    op: str,
+    stat: str,
+    freq: str,
+    mid_date: DayOfYearStr | None = None,
+    constrain: Sequence[str] | None = None,
+) -> xarray.DataArray:
+    r"""Season
+
+    A season starts when a variable respects some condition for a consecutive run of `N` days. It stops
+    when the condition is inverted for `N` days. Runs where the condition is not met for fewer than `N` days
+    are thus allowed. Additionally a middle date can serve as a maximal start date and minimum end date.
+
+    Parameters
+    ----------
+    data : xarray.DataArray
+        Variable.
+    thresh : Quantified
+        Threshold on which to base evaluation.
+    window : int
+        Minimum number of days that the condition must be met / not met for the start / end of the season.
+    op : str
+        Comparison operation.
+    stat : {'start', 'end', 'length'}
+        Which season facet to return.
+    freq : str
+        Resampling frequency.
+    mid_date : DayOfYearStr, optional
+        An optional middle date to restrict the possible start and end of the season.
+    constrain : Sequence of strings, optional
+        A list of acceptable comparison operators. Optional, but indicators wrapping this function should inject it.
+
+    Returns
+    -------
+    xarray.DataArray, [dimensionless] or [time]
+        Depends on 'stat'. If 'start' or 'end', this is the day of year of the season's start or end.
+        If 'length', this is the length of the season.
+
+    Examples
+    --------
+    >>> season(tas, thresh="0 °C", window=5, op=">", stat="start", freq="YS")
+
+    Returns the start of the "frost-free" season. The season starts with 5 consecutive days with mean temperature
+    above 0°C and ends with as many days under or equal to 0°C. And end does not need to be found for a start to be valid.
+
+    >>> season(
+    ...     pr,
+    ...     thresh="2 mm/d",
+    ...     window=7,
+    ...     op="<=",
+    ...     mid_date="08-01",
+    ...     stat="length",
+    ...     freq="YS",
+    ... )
+
+    Returns the length of the "dry" season. The season starts with 7 consecutive days with precipitation under or equal to
+    2 mm/d and ends with as many days above 2 mm/d. If no start is found before the first of august, the season is invalid.
+    If a start is found but no end, the end is set to the last day of the period (December 31st if the dataset is complete).
+    """
+    thresh = convert_units_to(thresh, data)
+    cond = compare(data, op, thresh, constrain=constrain)
+    out = cond.resample(time=freq).map(
+        rl.season, window=window, date=mid_date, stat=stat, coord="dayofyear"
+    )
+    if stat == "length":
+        return to_agg_units(out, data, "count")
+    # else, a date
+    out.attrs.update(units="", is_dayofyear=np.int32(1), calendar=get_calendar(data))
+    return out
+
+
 # CF-INDEX-META Indices
 
 
