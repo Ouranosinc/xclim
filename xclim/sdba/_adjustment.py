@@ -185,7 +185,9 @@ def _npdft_train(ref, hist, rots, quantiles, method, extrap, n_escore, standardi
         ref, hist = rot @ ref, rot @ hist
         # loop over variables
         for iv in range(ref.shape[0]):
-            ref_q, hist_q = nbu._quantile(ref[iv], quantiles), nbu._quantile(hist[iv], quantiles)
+            ref_q, hist_q = nbu._quantile(ref[iv], quantiles), nbu._quantile(
+                hist[iv], quantiles
+            )
             af_q[ii, iv] = ref_q - hist_q
             af = u._interp_on_quantiles_1D(
                 u._rank_bn(hist[iv]),
@@ -256,7 +258,7 @@ def mbcn_train(
     # loop over time blocks
     for ib in range(gw_idxs[gr_dim].size):
         # indices in a given time block
-        indices = gw_idxs[{gr_dim: ib}].astype(int).values
+        indices = gw_idxs[{gr_dim: ib}].fillna(-1).astype(int).values
         ind = indices[indices >= 0]
 
         # npdft training : multiple rotations on standardized datasets
@@ -414,9 +416,9 @@ def mbcn_adjust(
     scen_mbcn = xr.zeros_like(sim)
     for ib in range(gw_idxs[gr_dim].size):
         # indices in a given time block (with and without the window)
-        indices_gw = gw_idxs[{gr_dim: ib}].astype(int).values
+        indices_gw = gw_idxs[{gr_dim: ib}].fillna(-1).astype(int).values
         ind_gw = indices_gw[indices_gw >= 0]
-        indices_g = g_idxs[{gr_dim: ib}].astype(int).values
+        indices_g = g_idxs[{gr_dim: ib}].fillna(-1).astype(int).values
         ind_g = indices_g[indices_g >= 0]
 
         # 1. univariate adjustment of sim -> scen
