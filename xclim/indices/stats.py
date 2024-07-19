@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import warnings
 from collections.abc import Sequence
 from typing import Any
@@ -797,8 +798,7 @@ def standardized_index_fit_params(
         "group": group,
         "units": "",
     }
-    method, args = ("", []) if indexer == {} else indexer.popitem()
-    params.attrs["time_indexer"] = (method, *args)
+    params.attrs["time_indexer"] = json.dumps(indexer)
     if offset:
         params.attrs["offset"] = offset
     return params
@@ -879,7 +879,7 @@ def standardized_index(
         )
         # Unpack attrs to None and {} if needed
         freq = None if freq == "" else freq
-        indexer = {} if indexer[0] == "" else {indexer[0]: indexer[1:]}
+        indexer = json.loads(indexer)
         if cal_start or cal_end:
             warnings.warn(
                 "Expected either `cal_{start|end}` or `params`, got both. The `params` input overrides other inputs."
