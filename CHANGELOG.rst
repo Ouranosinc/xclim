@@ -2,13 +2,27 @@
 Changelog
 =========
 
-v0.51.0 (unreleased)
+v0.52.0 (unreleased)
 --------------------
-Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Éric Dupuis (:user:`coxipi`).
+Contributors to this version: David Huard (:user:`huard`), Trevor James Smith (:user:`Zeitsperre`), Éric Dupuis (:user:`coxipi`).
 
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 * New multivariate bias adjustment class `MBCn`, giving a faster and more accurate implementation of the 'MBCn' algorithm (:issue:`1551`, :pull:`1580`).
+
+Internal changes
+^^^^^^^^^^^^^^^^
+* Changed french translation of "wet days" from "jours mouillés" to "jours pluvieux". (:issue:`1825`, :pull:`1826`).
+
+CI changes
+^^^^^^^^^^
+* `pip-tools` (`pip-compile`) has been used to generate a lock file with hashes for the CI dependencies. (:pull:`1841`).
+* The ``main.yml`` workflow has been updated to use simpler trigger logic. (:pull:`1841`).
+* A workflow bug has been fixed that was causing multiple duplicate comments to be made on Pull Requests originating from forks. (:pull:`1841`).
+
+v0.51.0 (2024-07-04)
+--------------------
+Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`).
 
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -17,6 +31,7 @@ New features and enhancements
 
 Bug fixes
 ^^^^^^^^^
+* Units of degree-days computations with Fahrenheit input fixed to yield "°R d". Added a new ``xclim.core.units.ensure_absolute_temperature`` method to convert from delta to absolute temperatures. (:issue:`1789`, :pull:`1804`).
 * Clarified a typo in the docstring formula for `xclim.indices.growing_season_length`. (:pull:`1796`).
 
 Internal changes
@@ -24,6 +39,7 @@ Internal changes
 * `netcdf4` has been pinned below v1.7 for test stability reasons. (:pull:`1791`).
 * `flake8-bandit`-like checks have been enabled via `ruff`, with fixes for a few security-related issues. (:pull:`1806`).
 * ``xclim.testing.utils`` now employs more secure URL auditing checks. (:pull:`1806`).
+* `CHANGES.rst` has been renamed to `CHANGELOG.rst`, adhering to suggestions from the `keepachangelog v.1.1.0 <https://keepachangelog.com/en/1.1.0/>`_ specifications. (:pull:`1823`).
 
 CI changes
 ^^^^^^^^^^
