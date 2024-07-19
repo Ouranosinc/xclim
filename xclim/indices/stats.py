@@ -798,7 +798,7 @@ def standardized_index_fit_params(
         "group": group,
         "units": "",
     }
-    params.attrs["time_indexer"] = json.dumps(indexer)  # noqa: S301
+    params.attrs["time_indexer"] = json.dumps(indexer)
     if offset:
         params.attrs["offset"] = offset
     return params
@@ -879,7 +879,7 @@ def standardized_index(
         )
         # Unpack attrs to None and {} if needed
         freq = None if freq == "" else freq
-        indexer = json.loads(indexer)  # noqa: S301
+        indexer = json.loads(indexer)
         if cal_start or cal_end:
             warnings.warn(
                 "Expected either `cal_{start|end}` or `params`, got both. The `params` input overrides other inputs."
