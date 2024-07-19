@@ -12,6 +12,7 @@ from xclim.core.units import convert_units_to
 from xclim.sdba import adjustment
 from xclim.sdba.adjustment import (
     LOCI,
+    BaseAdjustment,
     DetrendedQuantileMapping,
     EmpiricalQuantileMapping,
     ExtremeValues,
@@ -35,6 +36,33 @@ from xclim.sdba.utils import (
     invert,
 )
 from xclim.testing.sdba_utils import nancov  # noqa
+
+
+class TestBaseAdjustment:
+    def test_harmonize_units(self, series, random):
+        n = 10
+        u = random.random(n)
+        da = series(u, "tas")
+        da2 = da.copy()
+        da2 = convert_units_to(da2, "degC")
+        (da, da2), _ = BaseAdjustment._harmonize_units(da, da2)
+        assert da.units == da2.units
+
+    @pytest.mark.parametrize("use_dask", [True, False])
+    def test_harmonize_units_multivariate(self, series, random, use_dask):
+        n = 10
+        u = random.random(n)
+        ds = xr.merge([series(u, "tas"), series(u * 100, "pr")])
+        ds2 = ds.copy()
+        ds2["tas"] = convert_units_to(ds2["tas"], "degC")
+        ds2["pr"] = convert_units_to(ds2["pr"], "nm/day")
+        da, da2 = stack_variables(ds), stack_variables(ds2)
+        if use_dask:
+            da, da2 = da.chunk({"multivar": 1}), da2.chunk({"multivar": 1})
+
+        (da, da2), _ = BaseAdjustment._harmonize_units(da, da2)
+        ds, ds2 = unstack_variables(da), unstack_variables(da2)
+        assert (ds.tas.units == ds2.tas.units) & (ds.pr.units == ds2.pr.units)
 
 
 class TestLoci:
