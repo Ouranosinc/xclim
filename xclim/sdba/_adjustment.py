@@ -172,10 +172,10 @@ def _npdft_train(ref, hist, rots, quantiles, method, extrap, n_escore, standardi
         )
     for ii in range(len(rots)):
         rot = rots[0] if ii == 0 else rots[ii] @ rots[ii - 1].T
-        ref, hist = (rot @ da for da in [ref, hist])
+        ref, hist = rot @ ref, rot @ hist
         # loop over variables
         for iv in range(ref.shape[0]):
-            ref_q, hist_q = (nbu._quantile(da, quantiles) for da in [ref[iv], hist[iv]])
+            ref_q, hist_q = nbu._quantile(ref[iv], quantiles), nbu._quantile(hist[iv], quantiles)
             af_q[ii, iv] = u.get_correction(hist_q, ref_q, "+")
             af = u._interp_on_quantiles_1D(
                 u._rank_bn(hist[iv]),
