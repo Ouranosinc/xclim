@@ -204,7 +204,7 @@ def mbcn_train(
     """Npdf transform training.
 
     Adjusting factors obtained for each rotation in the npdf transform and conserved to be applied in
-    the adjusting step in ``mcbn_adjust``.
+    the adjusting step in :py:func:`mcbn_adjust`.
 
     Parameters
     ----------
@@ -214,7 +214,7 @@ def mbcn_train(
             hist : training data
     rot_matrices : xr.DataArray
         The rotation matrices as a 3D array ('iterations', <pts_dims[0]>, <pts_dims[1]>), with shape (n_iter, <N>, <N>).
-    pts_dims : str
+    pts_dims : sequence of str
         The name of the "multivariate" dimension and its primed counterpart. Defaults to "multivar", which
         is the normal case when using :py:func:`xclim.sdba.base.stack_variables`, and "multivar_prime",
     gw_idxs : xr.DataArray
