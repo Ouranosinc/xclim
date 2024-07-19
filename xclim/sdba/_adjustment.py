@@ -536,7 +536,7 @@ def dqm_adjust(
         The kind of correction to compute. See :py:func:`xclim.sdba.utils.get_correction`.
     extrapolation : str
         The extrapolation method to use.
-    detrend : int or PolyDetrend
+    detrend : int | PolyDetrend
         The degree of the polynomial detrending to apply. If 0, no detrending is applied.
 
     Returns
