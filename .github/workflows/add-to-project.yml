@@ -13,7 +13,6 @@ jobs:
     name: Add Issue to xclim Project
     runs-on: ubuntu-latest
     permissions:
-      contents: read
       repository-projects: write
     steps:
       - name: Harden Runner
