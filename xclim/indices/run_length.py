@@ -18,6 +18,7 @@ from xarray.core.utils import get_temp_dimname
 
 from xclim.core.options import OPTIONS, RUN_LENGTH_UFUNC
 from xclim.core.utils import DateStr, DayOfYearStr, uses_dask
+from xclim.indices.helpers import resample_map
 
 npts_opt = 9000
 """
@@ -110,8 +111,12 @@ def resample_and_rl(
       Output of compute resampled according to frequency {freq}.
     """
     if resample_before_rl:
-        out = da.resample({dim: freq}).map(
-            compute, args=args, freq=None, dim=dim, **kwargs
+        out = resample_map(
+            da,
+            dim,
+            freq,
+            compute,
+            map_kwargs=dict(args=args, freq=None, dim=dim, **kwargs),
         )
     else:
         out = compute(da, *args, dim=dim, freq=freq, **kwargs)
@@ -253,8 +258,7 @@ def rle_statistics(
         if freq is None:
             rl_stat = get_rl_stat(d)
         else:
-            rl_stat = d.resample({dim: freq}).map(get_rl_stat)
-
+            rl_stat = resample_map(d, dim, freq, get_rl_stat)
     return rl_stat
 
 
@@ -480,7 +484,9 @@ def _boundary_run(
     da = da.fillna(0)  # We expect a boolean array, but there could be NaNs nonetheless
     if window == 1:
         if freq is not None:
-            out = da.resample({dim: freq}).map(find_boundary_run, position=position)
+            out = resample_map(
+                da, dim, freq, find_boundary_run, map_kwargs=dict(position=position)
+            )
         else:
             out = find_boundary_run(da, position)
 
@@ -499,7 +505,9 @@ def _boundary_run(
         d = xr.where(d >= window, 1, 0)
         # for "first" run, return "first" element in the run (and conversely for "last" run)
         if freq is not None:
-            out = d.resample({dim: freq}).map(find_boundary_run, position=position)
+            out = resample_map(
+                d, dim, freq, find_boundary_run, map_kwargs=dict(position=position)
+            )
         else:
             out = find_boundary_run(d, position)
 
@@ -702,7 +710,7 @@ def keep_longest_run(
         return out
 
     if freq is not None:
-        out = rls.resample({dim: freq}).map(get_out)
+        out = resample_map(rls, dim, freq, get_out)
     else:
         out = get_out(rls)
 
@@ -862,8 +870,9 @@ def season(
     window: int,
     date: DayOfYearStr | None = None,
     dim: str = "time",
+    stat: str | None = None,
     coord: str | bool | None = False,
-) -> xr.Dataset:
+) -> xr.Dataset | xr.DataArray:
     """Calculate the bounds of a season along a dimension.
 
     A "season" is a run of True values that may include breaks under a given length (`window`).
@@ -993,8 +1002,7 @@ def season_length(
     season_start
     season_end
     """
-    seas = season(da, window, date, dim, coord=False)
-    return seas.length
+    return season(da, window, date, dim, coord=False).length
 
 
 def run_end_after_date(
