@@ -8,6 +8,9 @@ This file defines the different steps, to be wrapped into the Adjustment objects
 
 from __future__ import annotations
 
+from collections.abc import Sequence
+from typing import Callable
+
 import numpy as np
 import xarray as xr
 
@@ -156,6 +159,13 @@ def _npdft_train(ref, hist, rots, quantiles, method, extrap, n_escore, standardi
 
     Perform a rotation, bias correct `hist` into `ref` with QuantileDeltaMapping, and rotate back.
     Do this iteratively over all rotations `rots` and conserve adjustment factors `af_q` in each iteration.
+
+    Notes
+    -----
+    This function expects numpy inputs. The input arrays `ref,hist` are expected to be 2-dimensional arrays with shape:
+    `(len(nfeature), len(time))`, where `nfeature` is the dimension which is mixed by the multivariate bias adjustment
+    (e.g. a `multivar` dimension), i.e. `pts_dims[0]` in :py:func:`mbcn_train`. `rots` are rotation matrices with shape
+    `(len(iterations), len(nfeature), len(nfeature))`.
     """
     if standardize:
         ref = (ref - np.nanmean(ref, axis=-1, keepdims=True)) / (
@@ -192,19 +202,19 @@ def _npdft_train(ref, hist, rots, quantiles, method, extrap, n_escore, standardi
 
 
 def mbcn_train(
-    ds,
-    rot_matrices,
-    pts_dims,
-    quantiles,
-    gw_idxs,
-    interp,
-    extrapolation,
-    n_escore,
+    ds: xr.Dataset,
+    rot_matrices: xr.DataArray,
+    pts_dims: Sequence[str],
+    quantiles: np.ndarray,
+    gw_idxs: xr.DataArray,
+    interp: str,
+    extrapolation: str,
+    n_escore: int,
 ) -> xr.Dataset:
     """Npdf transform training.
 
     Adjusting factors obtained for each rotation in the npdf transform and conserved to be applied in
-    the adjusting step in ``mcbn_adjust``.
+    the adjusting step in :py:func:`mcbn_adjust`.
 
     Parameters
     ----------
@@ -217,8 +227,22 @@ def mbcn_train(
     pts_dims : str
         The name of the "multivariate" dimension and its primed counterpart. Defaults to "multivar", which
         is the normal case when using :py:func:`xclim.sdba.base.stack_variables`, and "multivar_prime",
+    quantiles : array-like
+        The quantiles to compute.
     gw_idxs : xr.DataArray
         Indices of the times in each windowed time group
+    interp : str
+        The interpolation method to use.
+    extrapolation : str
+        The extrapolation method to use.
+    n_escore : int
+        Number of elements to include in the e_score test (0 for all, < 0 to skip)
+
+    Returns
+    -------
+    xr.Dataset
+        The dataset containing the adjustment factors and the quantiles over the training data
+        (only the npdf transform of mbcn).
     """
     # unpack data
     ref = ds.ref
@@ -277,7 +301,13 @@ def _npdft_adjust(sim, af_q, rots, quantiles, method, extrap):
     """Npdf transform adjusting.
 
     Adjusting factors `af_q` obtained in the training step are applied on the simulated data `sim` at each iterated
-    rotation
+    rotation, see :py:func:`_npdft_train`.
+
+    This function expects numpy inputs. `sim` can be a 2-d array with shape: `(len(nfeature), len(time))`, or
+    a 3-d array with shape: `(len(period), len(nfeature), len(time))`, allowing to adjust multiple climatological periods
+    all at once. `nfeature` is the dimension which is mixed by the multivariate bias adjustment
+    (e.g. a `multivar` dimension), i.e. `pts_dims[0]` in :py:func:`mbcn_train`. `rots` are rotation matrices with shape
+    `(len(iterations), len(nfeature), len(nfeature))`.
     """
     # add dummy dim  if period_dim absent to uniformize the function below
     # This could be done at higher level, not sure where is best
@@ -308,24 +338,26 @@ def _npdft_adjust(sim, af_q, rots, quantiles, method, extrap):
 
 
 def mbcn_adjust(
-    ref,
-    hist,
-    sim,
-    ds,
-    pts_dims,
-    interp,
-    extrapolation,
-    base,
-    base_kws_vars,
-    adj_kws,
-    period_dim,
+    ref: xr.Dataset,
+    hist: xr.Dataset,
+    sim: xr.Dataset,
+    ds: xr.Dataset,
+    pts_dims: Sequence[str],
+    interp: str,
+    extrapolation: str,
+    base: Callable,
+    base_kws_vars: dict,
+    adj_kws: dict,
+    period_dim: str | None,
 ) -> xr.DataArray:
     """Perform the adjustment portion MBCn multivariate bias correction technique.
 
-    The function ``mbcn_train`` pre-computes the adjustment factors for each rotation
+    The function :py:func:`mbcn_train` pre-computes the adjustment factors for each rotation
     in the npdf portion of the MBCn algorithm. The rest of adjustment is performed here
-    in ``mbcn_adjust``.
+    in `mbcn_adjust``.
 
+    Parameters
+    ----------
     ref : xr.DataArray
         training target
     hist : xr.DataArray
@@ -353,10 +385,15 @@ def mbcn_adjust(
         - kinds : Dict of correction kinds for each variable (e.g. {"pr":"*", "tasmax":"+"})
     adj_kws : Dict
         Options for univariate adjust for the scenario that is reordered with the output of npdf transform
-    period_dim : str | None (defaults to None)
+    period_dim : str, optional
         Name of the period dimension used when stacking time periods of `sim`  using :py:func:`xclim.core.calendar.stack_periods`.
         If specified, the interpolation of the npdf transform is performed only once and applied on all periods simultaneously.
-        This should be more performant, but also more memory intensive.
+        This should be more performant, but also more memory intensive. Defaults to `None`: No optimization will be attempted.
+
+    Returns
+    -------
+    xr.Dataset
+        The adjusted data.
     """
     # unpacking training parameters
     rot_matrices = ds.rot_matrices
