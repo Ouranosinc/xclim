@@ -4,11 +4,15 @@ Changelog
 
 v0.52.0 (unreleased)
 --------------------
-Contributors to this version: David Huard (:user:`huard`), Éric Dupuis (:user:`coxipi`), Sarah Gammon (:user:`SarahG-579462`).
+Contributors to this version: David Huard (:user:`huard`), Trevor James Smith (:user:`Zeitsperre`), Hui-Min Wang (:user:`Hem-W`), Éric Dupuis (:user:`coxipi`), Sarah Gammon (:user:`SarahG-579462`).
 
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 * ``xclim.sdba.nbutils.quantile`` and its child functions are now faster. If the module `fastnanquantile` is installed, it is used as the backend for the computation of quantiles and yields even faster results. (:issue:`1255`, :pull:`1513`).
+
+Bug fixes
+^^^^^^^^^
+* Fixed the indexer bug in the `xclim.indices.standardized_index_fit_params` when multiple or non-array indexers are specified and fitted parameters are reloaded from netCDF. (:issue:`1842`, :pull:`1843`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
