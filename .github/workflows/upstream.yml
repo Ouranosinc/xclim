@@ -76,7 +76,7 @@ jobs:
           echo "micromamba: $(micromamba --version)"
       - name: Install upstream versions and SBCK
         run: |
-          python -m pip install -r CI/requirements_upstream.txt
+          python -m pip install --require-hashes -r CI/requirements_upstream.txt
           python -m pip install "sbck @ git+https://github.com/yrobink/SBCK-python.git@master"
       - name: Install xclim
         run: |

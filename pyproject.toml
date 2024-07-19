@@ -58,7 +58,7 @@ dev = [
   # Dev tools and testing
   "black[jupyter] ==24.4.2",
   "blackdoc ==0.3.9",
-  "bump-my-version ==0.24.2",
+  "bump-my-version ==0.24.3",
   "codespell ==2.3.0",
   "coverage[toml] >=7.5.0",
   "coveralls >=4.0.0",
@@ -162,7 +162,7 @@ values = [
 
 [tool.codespell]
 skip = 'xclim/data/*.json,docs/_build,docs/notebooks/xclim_training/*.ipynb,docs/references.bib,__pycache__,*.gz,*.nc,*.png,*.svg,*.whl'
-ignore-words-list = "absolue,bloc,bui,callendar,degreee,environnement,hanel,inferrable,lond,nam,nd,ressources,socio-economic,sie,vas"
+ignore-words-list = "absolue,astroid,bloc,bui,callendar,degreee,environnement,hanel,inferrable,lond,nam,nd,ressources,socio-economic,sie,vas"
 
 [tool.coverage.run]
 relative_files = true

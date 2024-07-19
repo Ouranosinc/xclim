@@ -14,6 +14,11 @@ Internal changes
 ^^^^^^^^^^^^^^^^
 * Changed french translation of "wet days" from "jours mouillés" to "jours pluvieux". (:issue:`1825`, :pull:`1826`).
 
+CI changes
+^^^^^^^^^^
+* `pip-tools` (`pip-compile`) has been used to generate a lock file with hashes for the CI dependencies. (:pull:`1841`).
+* The ``main.yml`` workflow has been updated to use simpler trigger logic. (:pull:`1841`).
+* A workflow bug has been fixed that was causing multiple duplicate comments to be made on Pull Requests originating from forks. (:pull:`1841`).
 
 v0.51.0 (2024-07-04)
 --------------------

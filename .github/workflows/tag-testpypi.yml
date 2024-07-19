@@ -35,7 +35,7 @@ jobs:
           python-version: "3.x"
       - name: Install CI libraries
         run: |
-          python -m pip install -r CI/requirements_ci.txt
+          python -m pip install --require-hashes -r CI/requirements_ci.txt
       - name: Build a binary wheel and a source tarball
         run: |
           python -m flit build
