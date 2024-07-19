@@ -1411,7 +1411,7 @@ class MBCn(TrainAdjust):
 
         # time indices corresponding to group and windowed group
         # used to divide datasets as map_blocks or groupby would do
-        g_idxs, gw_idxs = grouped_time_indexes(ref.time, base_kws["group"])
+        _, gw_idxs = grouped_time_indexes(ref.time, base_kws["group"])
 
         # training, obtain adjustment factors of the npdf transform
         ds = xr.Dataset(dict(ref=ref, hist=hist))
@@ -1422,9 +1422,7 @@ class MBCn(TrainAdjust):
             "pts_dims": pts_dims,
             "n_escore": n_escore,
         }
-        out = mbcn_train(
-            ds, rot_matrices=rot_matrices, g_idxs=g_idxs, gw_idxs=gw_idxs, **params
-        )
+        out = mbcn_train(ds, rot_matrices=rot_matrices, gw_idxs=gw_idxs, **params)
         params["group"] = base_kws["group"]
 
         # postprocess

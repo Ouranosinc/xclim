@@ -49,18 +49,12 @@ def dqm_train(
 ) -> xr.Dataset:
     """Train step on one group.
 
-    Notes
-    -----
-    Dataset must contain the following variables:
-      ref : training target
-      hist : training data
-
     Parameters
     ----------
     ds : xr.Dataset
         Dataset variables:
             ref : training target
-            hist : training source
+            hist : training data
     dim : str
         The dimension along which to compute the quantiles.
     kind : str
@@ -114,18 +108,12 @@ def eqm_train(
 ) -> xr.Dataset:
     """EQM: Train step on one group.
 
-    Notes
-    -----
-    Dataset variables:
-      ref : training target
-      hist : training data
-
     Parameters
     ----------
     ds : xr.Dataset
         Dataset variables:
             ref : training target
-            hist : training source
+            hist : training data
     dim : str
         The dimension along which to compute the quantiles.
     kind : str
@@ -202,7 +190,6 @@ def mbcn_train(
     rot_matrices,
     pts_dims,
     quantiles,
-    g_idxs,
     gw_idxs,
     interp,
     extrapolation,
@@ -217,8 +204,8 @@ def mbcn_train(
     ----------
     ds : xr.Dataset
         Dataset variables:
-            ref : training target  (stacked variables)
-            hist : training source (stacked variables)
+            ref : training target
+            hist : training data
     rot_matrices : xr.DataArray
         The rotation matrices as a 3D array ('iterations', <pts_dims[0]>, <pts_dims[1]>), with shape (n_iter, <N>, <N>).
     pts_dims : str
@@ -335,10 +322,10 @@ def mbcn_adjust(
     in the npdf portion of the MBCn algorithm. The rest of adjustment is performed here
     in ``mbcn_adjust``.
 
-    ref : xr.Dataset
+    ref : xr.DataArray
         training target
-    hist : xr.Dataset
-        training source
+    hist : xr.DataArray
+        training data
     sim : xr.DataArray
         data to adjust (stacked with multivariate dimension)
     ds : xr.Dataset
@@ -647,7 +634,7 @@ def scaling_adjust(ds: xr.Dataset, *, group, interp, kind) -> xr.Dataset:
     ----------
     ds : xr.Dataset
         Dataset variables:
-            af: Adjustment factors.
+            af : Adjustment factors.
             sim : Data to adjust.
     """
     af = u.broadcast(ds.af, ds.sim, group=group, interp=interp)
