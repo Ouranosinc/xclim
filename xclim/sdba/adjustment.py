@@ -157,15 +157,9 @@ class BaseAdjustment(ParametrizableWithDataset):
                 _convert_units_to(inda, dim=dim, target=target) for inda in inputs
             ), target
 
-        dim_multivariate = None
         for _dim, _crd in inputs[0].coords.items():
             if _crd.attrs.get("is_variables"):
-                dim_multivariate = str(_dim)
-                break
-        if dim_multivariate is not None:
-            return _harmonize_units_multivariate(
-                *inputs, dim=dim_multivariate, target=target
-            )
+                return _harmonize_units_multivariate(*inputs, dim=_dim, target=target)
 
         if target is None:
             target = inputs[0].units
@@ -1281,7 +1275,6 @@ class MBCn(TrainAdjust):
     rot_matrices: xr.DataArray, optional
         The rotation matrices as a 3D array ('iterations', <pts_dim>, <anything>), with shape (n_iter, <N>, <N>).
         If left empty, random rotation matrices will be automatically generated.
-        The rotation matrices as a 3D array ('iterations', <pts_dims[0]>, <pts_dims[1]>), with shape (n_iter, <N>, <N>).
 
     Adjust step
 
@@ -1488,15 +1481,16 @@ class MBCn(TrainAdjust):
         adj_kws.setdefault("extrapolation", self.extrapolation)
 
         g_idxs, gw_idxs = grouped_time_indexes(ref.time, self.group)
-        self.ds["g_idxs"] = g_idxs
-        self.ds["gw_idxs"] = gw_idxs
+        ds = self.ds.copy()
+        ds["g_idxs"] = g_idxs
+        ds["gw_idxs"] = gw_idxs
 
         # adjust (adjust for npft transform, train/adjust for univariate bias correction)
         out = mbcn_adjust(
             ref=ref,
             hist=hist,
             sim=sim,
-            ds=self.ds,
+            ds=ds,
             pts_dims=self.pts_dims,
             interp=self.interp,
             extrapolation=self.extrapolation,

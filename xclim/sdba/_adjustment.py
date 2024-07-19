@@ -217,8 +217,6 @@ def mbcn_train(
     pts_dims : str
         The name of the "multivariate" dimension and its primed counterpart. Defaults to "multivar", which
         is the normal case when using :py:func:`xclim.sdba.base.stack_variables`, and "multivar_prime",
-    g_idxs : xr.DataArray
-        Indices of the times in each time group
     gw_idxs : xr.DataArray
         Indices of the times in each windowed time group
     """
