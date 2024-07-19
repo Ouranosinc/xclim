@@ -45,7 +45,7 @@ def dqm_train(
     kind: str,
     quantiles: np.ndarray,
     adapt_freq_thresh: str | None = None,
-    jitter_under_thresh_value,
+    jitter_under_thresh_value: str | None = None,
 ) -> xr.Dataset:
     """Train step on one group.
 
@@ -64,6 +64,9 @@ def dqm_train(
     adapt_freq_thresh : str, optional
         Threshold for frequency adaptation. See :py:class:`xclim.sdba.processing.adapt_freq` for details.
         Default is None, meaning that frequency adaptation is not performed.
+    jitter_under_thresh_value : str, optional
+        Threshold under which to add uniform random noise to values, a quantity with units.
+        Default is None, meaning that jitter under thresh is not performed.
 
     Returns
     -------
@@ -104,7 +107,7 @@ def eqm_train(
     kind: str,
     quantiles: np.ndarray,
     adapt_freq_thresh: str | None = None,
-    jitter_under_thresh_value,
+    jitter_under_thresh_value: str | None = None,
 ) -> xr.Dataset:
     """EQM: Train step on one group.
 
@@ -123,6 +126,9 @@ def eqm_train(
     adapt_freq_thresh : str, optional
         Threshold for frequency adaptation. See :py:class:`xclim.sdba.processing.adapt_freq` for details.
         Default is None, meaning that frequency adaptation is not performed.
+    jitter_under_thresh_value : str, optional
+        Threshold under which to add uniform random noise to values, a quantity with units.
+        Default is None, meaning that jitter under thresh is not performed.
 
     Returns
     -------
