@@ -176,7 +176,7 @@ def _npdft_train(ref, hist, rots, quantiles, method, extrap, n_escore, standardi
         # loop over variables
         for iv in range(ref.shape[0]):
             ref_q, hist_q = nbu._quantile(ref[iv], quantiles), nbu._quantile(hist[iv], quantiles)
-            af_q[ii, iv] = u.get_correction(hist_q, ref_q, "+")
+            af_q[ii, iv] = ref_q - hist_q
             af = u._interp_on_quantiles_1D(
                 u._rank_bn(hist[iv]),
                 quantiles,
@@ -184,7 +184,7 @@ def _npdft_train(ref, hist, rots, quantiles, method, extrap, n_escore, standardi
                 method=method,
                 extrap=extrap,
             )
-            hist[iv] = u.apply_correction(hist[iv], af, "+")
+            hist[iv] = hist[iv] + af
         if n_escore > 0:
             escores[ii] = nbu._escore(ref[:, ::ref_step], hist[:, ::hist_step])
     hist = rots[-1].T @ hist
@@ -297,7 +297,7 @@ def _npdft_adjust(sim, af_q, rots, quantiles, method, extrap):
                 method=method,
                 extrap=extrap,
             )
-            sim[iv] = u.apply_correction(sim[iv], af, "+")
+            sim[iv] = sim[iv] + af
 
     rot = rots[-1].T
     sim = np.einsum("ij,j...->i...", rot, sim)
