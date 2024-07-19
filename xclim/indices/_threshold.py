@@ -383,21 +383,8 @@ def snd_season_end(
     :cite:cts:`chaumont_elaboration_2017`
     """
     valid = at_least_n_valid(snd.where(snd > 0), n=1, freq=freq)
-
-    thresh = convert_units_to(thresh, snd)
-    cond = snd >= thresh
-
-    resampled = resample_map(
-        cond,
-        "time",
-        freq,
-        rl.season,
-        map_kwargs=dict(window=window, dim="time", stat="end", coord="dayofyear"),
-    )
-    resampled = resampled.assign_attrs(
-        units="", is_dayofyear=np.int32(1), calendar=get_calendar(snd)
-    )
-    snd_se = resampled.where(~valid)
+    out = season(snd, thresh, window=window, op=">=", stat="end", freq=freq)
+    snd_se = out.where(~valid)
     return snd_se
 
 
@@ -434,21 +421,8 @@ def snw_season_end(
     :cite:cts:`chaumont_elaboration_2017`
     """
     valid = at_least_n_valid(snw.where(snw > 0), n=1, freq=freq)
-
-    thresh = convert_units_to(thresh, snw)
-    cond = snw >= thresh
-
-    resampled = resample_map(
-        cond,
-        "time",
-        freq,
-        rl.season,
-        map_kwargs=dict(window=window, dim="time", stat="end", coord="dayofyear"),
-    )
-    resampled.attrs.update(
-        units="", is_dayofyear=np.int32(1), calendar=get_calendar(snw)
-    )
-    snw_se = resampled.where(~valid)
+    out = season(snw, thresh, window=window, op=">=", stat="end", freq=freq)
+    snw_se = out.where(~valid)
     return snw_se
 
 
@@ -485,21 +459,8 @@ def snd_season_start(
     :cite:cts:`chaumont_elaboration_2017`
     """
     valid = at_least_n_valid(snd.where(snd > 0), n=1, freq=freq)
-
-    thresh = convert_units_to(thresh, snd)
-    cond = snd >= thresh
-
-    resampled = resample_map(
-        cond,
-        "time",
-        freq,
-        rl.season,
-        map_kwargs=dict(window=window, dim="time", stat="start", coord="dayofyear"),
-    )
-    resampled.attrs.update(
-        units="", is_dayofyear=np.int32(1), calendar=get_calendar(snd)
-    )
-    snd_ss = resampled.where(~valid)
+    out = season(snd, thresh, window=window, op=">=", stat="start", freq=freq)
+    snd_ss = out.where(~valid)
     return snd_ss
 
 
@@ -537,21 +498,8 @@ def snw_season_start(
 
     """
     valid = at_least_n_valid(snw.where(snw > 0), n=1, freq=freq)
-
-    thresh = convert_units_to(thresh, snw)
-    cond = snw >= thresh
-
-    resampled = resample_map(
-        cond,
-        "time",
-        freq,
-        rl.season,
-        map_kwargs=dict(window=window, dim="time", stat="start", coord="dayofyear"),
-    )
-    resampled.attrs.update(
-        units="", is_dayofyear=np.int32(1), calendar=get_calendar(snw)
-    )
-    snw_ss = resampled.where(~valid)
+    out = season(snw, thresh, window=window, op=">=", stat="start", freq=freq)
+    snw_ss = out.where(~valid)
     return snw_ss
 
 
@@ -588,17 +536,8 @@ def snd_season_length(
     :cite:cts:`chaumont_elaboration_2017`
     """
     valid = at_least_n_valid(snd.where(snd > 0), n=1, freq=freq)
-
-    thresh = convert_units_to(thresh, snd)
-    cond = snd >= thresh
-    snd_sl = resample_map(
-        cond,
-        "time",
-        freq,
-        rl.season,
-        map_kwargs=dict(window=window, dim="time", stat="length", coord="dayofyear"),
-    )
-    snd_sl = to_agg_units(snd_sl.where(~valid), snd, "count")
+    out = season(snd, thresh, window=window, op=">=", stat="length", freq=freq)
+    snd_sl = out.where(~valid)
     return snd_sl
 
 
@@ -635,18 +574,8 @@ def snw_season_length(
     :cite:cts:`chaumont_elaboration_2017`
     """
     valid = at_least_n_valid(snw.where(snw > 0), n=1, freq=freq)
-
-    thresh = convert_units_to(thresh, snw)
-    cond = snw >= thresh
-
-    snw_sl = resample_map(
-        cond,
-        "time",
-        freq,
-        rl.season,
-        map_kwargs=dict(window=window, dim="time", stat="length", coord="dayofyear"),
-    )
-    snw_sl = to_agg_units(snw_sl.where(~valid), snw, "count")
+    out = season(snw, thresh, window=window, op=">=", stat="length", freq=freq)
+    snw_sl = out.where(~valid)
     return snw_sl
 
 
