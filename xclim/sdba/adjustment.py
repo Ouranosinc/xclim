@@ -137,10 +137,19 @@ class BaseAdjustment(ParametrizableWithDataset):
             *inputs, dim, target: dict[str] | None = None
         ):
             def _convert_units_to(inda, dim, target):
-                for iv, v in enumerate(inda[dim].values):
-                    inda.attrs["units"], inda.attrs["standard_name"] = (
-                        inda[dim].attrs[a][iv] for a in ["_units", "_standard_name"]
-                    )
+                varss = inda[dim].values
+                input_units = {
+                    v: inda[dim].attrs["_units"][iv] for iv, v in enumerate(varss)
+                }
+                if input_units == target:
+                    return inda
+                input_standard_names = {
+                    v: inda[dim].attrs["_standard_name"][iv]
+                    for iv, v in enumerate(varss)
+                }
+                for iv, v in enumerate(varss):
+                    inda.attrs["units"] = input_units[v]
+                    inda.attrs["standard_name"] = input_standard_names[v]
                     inda[{dim: iv}] = convert_units_to(
                         inda[{dim: iv}], target[v], context="infer"
                     )
