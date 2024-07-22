@@ -4,11 +4,15 @@ Changelog
 
 v0.52.0 (unreleased)
 --------------------
-Contributors to this version: David Huard (:user:`huard`), Trevor James Smith (:user:`Zeitsperre`), Éric Dupuis (:user:`coxipi`).
+Contributors to this version: David Huard (:user:`huard`), Trevor James Smith (:user:`Zeitsperre`), Hui-Min Wang (:user:`Hem-W`), Éric Dupuis (:user:`coxipi`).
 
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 * New multivariate bias adjustment class `MBCn`, giving a faster and more accurate implementation of the 'MBCn' algorithm (:issue:`1551`, :pull:`1580`).
+
+Bug fixes
+^^^^^^^^^
+* Fixed the indexer bug in the `xclim.indices.standardized_index_fit_params` when multiple or non-array indexers are specified and fitted parameters are reloaded from netCDF. (:issue:`1842`, :pull:`1843`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
