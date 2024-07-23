@@ -623,7 +623,7 @@ def _otc_adjust(
     bin_width: list | None = None,
     bin_origin: list | None = None,
     num_iter_max: int | None = 100_000_000,
-    spray_bins: bool = True,
+    jitter_inside_bins: bool = True,
 ):
     """Optimal Transport Correction of the bias of X with respect to Y.
 
@@ -688,7 +688,7 @@ def _otc_adjust(
         choice = rng.choice(range(muY.size), p=plan[pi, :], size=binX_count[i])
         out[binX_group] = (gridY[choice] + 1 / 2) * bin_width + bin_origin
 
-    if spray_bins:
+    if jitter_inside_bins:
         out += np.random.uniform(low=-bin_width / 2, high=bin_width / 2, size=out.shape)
 
     return out
@@ -702,7 +702,7 @@ def otc_adjust(
     bin_width: list | None = None,
     bin_origin: list | None = None,
     num_iter_max: int | None = 100_000_000,
-    spray_bins: bool = True,
+    jitter_inside_bins: bool = True,
     adapt_freq_thresh: dict | None = None,
 ):
     """Optimal Transport Correction of the bias of `hist` with respect to `ref`.
@@ -723,7 +723,7 @@ def otc_adjust(
         Bin origins for all dimensions.
     num_iter_max : int | None
         Maximum number of iterations used in the earth mover distance algorithm.
-    spray_bins : bool = True
+    jitter_inside_bins : bool = True
         If `False`, output points are located at the center of their bin.
         If `True`, a random location is picked uniformly inside their bin. Default is `True`.
     adapt_freq_thresh : dict | None = None
@@ -763,7 +763,7 @@ def otc_adjust(
             bin_width=bin_width,
             bin_origin=bin_origin,
             num_iter_max=num_iter_max,
-            spray_bins=spray_bins,
+            jitter_inside_bins=jitter_inside_bins,
         ),
         input_core_dims=[["dim_hist", pts_dim], ["dim_ref", pts_dim]],
         output_core_dims=[["dim_hist", pts_dim]],
@@ -789,7 +789,7 @@ def _dotc_adjust(
     bin_origin: list | None = None,
     num_iter_max: int | None = 100_000_000,
     cov_factor: str | None = "std",
-    spray_bins: bool = True,
+    jitter_inside_bins: bool = True,
     kind: dict | None = None,
 ):
     """Dynamical Optimal Transport Correction of the bias of X with respect to Y.
@@ -844,7 +844,7 @@ def _dotc_adjust(
         bin_width=bin_width,
         bin_origin=bin_origin,
         num_iter_max=num_iter_max,
-        spray_bins=False,
+        jitter_inside_bins=False,
     )
 
     # Map hist to sim
@@ -854,7 +854,7 @@ def _dotc_adjust(
         bin_width=bin_width,
         bin_origin=bin_origin,
         num_iter_max=num_iter_max,
-        spray_bins=False,
+        jitter_inside_bins=False,
     )
 
     # Temporal evolution
@@ -883,7 +883,7 @@ def _dotc_adjust(
         bin_width=bin_width,
         bin_origin=bin_origin,
         num_iter_max=num_iter_max,
-        spray_bins=spray_bins,
+        jitter_inside_bins=jitter_inside_bins,
     )
 
     return Z1
@@ -898,7 +898,7 @@ def dotc_adjust(
     bin_origin: list | None = None,
     num_iter_max: int | None = 100_000_000,
     cov_factor: str | None = "std",
-    spray_bins: bool = True,
+    jitter_inside_bins: bool = True,
     kind: dict | None = None,
     adapt_freq_thresh: dict | None = None,
 ):
@@ -923,7 +923,7 @@ def dotc_adjust(
         Maximum number of iterations used in the earth mover distance algorithm.
     cov_factor : str | None = "std"
         Rescaling factor.
-    spray_bins : bool = True
+    jitter_inside_bins : bool = True
         If `False`, output points are located at the center of their bin.
         If `True`, a random location is picked uniformly inside their bin. Default is `True`.
     kind : dict | None = None
@@ -980,7 +980,7 @@ def dotc_adjust(
             bin_origin=bin_origin,
             num_iter_max=num_iter_max,
             cov_factor=cov_factor,
-            spray_bins=spray_bins,
+            jitter_inside_bins=jitter_inside_bins,
             kind=kind,
         ),
         input_core_dims=[

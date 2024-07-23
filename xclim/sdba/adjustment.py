@@ -1233,7 +1233,7 @@ class OTC(Adjust):
     num_iter_max : int | None
         Maximum number of iterations used in the earth mover distance algorithm.
         Default is 100_000_000.
-    spray_bins : bool
+    jitter_inside_bins : bool
         If `False`, output points are located at the center of their bin.
         If `True`, a random location is picked uniformly inside their bin. Default is `True`.
     adapt_freq_thresh : dict | None = None
@@ -1282,7 +1282,7 @@ class OTC(Adjust):
         bin_width: list | None = None,
         bin_origin: list | None = None,
         num_iter_max: int | None = 100_000_000,
-        spray_bins: bool = True,
+        jitter_inside_bins: bool = True,
         adapt_freq_thresh: dict | None = None,
         group: str | Grouper = "time",
         pts_dim: str = "multivar",
@@ -1302,7 +1302,7 @@ class OTC(Adjust):
             bin_width=bin_width,
             bin_origin=bin_origin,
             num_iter_max=num_iter_max,
-            spray_bins=spray_bins,
+            jitter_inside_bins=jitter_inside_bins,
             group=group,
             pts_dim=pts_dim,
         ).scen
@@ -1340,7 +1340,7 @@ class dOTC(Adjust):
         A rescaling of the temporal evolution before it is applied to the reference.
         Note that "cholesky" cannot be used if some variables are multiplicative.
         See notes for details.
-    spray_bins : bool
+    jitter_inside_bins : bool
         If `False`, output points are located at the center of their bin.
         If `True`, a random location is picked uniformly inside their bin. Default is `True`.
     kind : dict | None
@@ -1400,7 +1400,7 @@ class dOTC(Adjust):
         bin_origin: list | None = None,
         num_iter_max: int | None = 100_000_000,
         cov_factor: str | None = "std",
-        spray_bins: bool = True,
+        jitter_inside_bins: bool = True,
         kind: dict | None = None,
         adapt_freq_thresh: dict | None = None,
         group: str | Grouper = "time",
@@ -1422,7 +1422,7 @@ class dOTC(Adjust):
             bin_origin=bin_origin,
             num_iter_max=num_iter_max,
             cov_factor=cov_factor,
-            spray_bins=spray_bins,
+            jitter_inside_bins=jitter_inside_bins,
             kind=kind,
             adapt_freq_thresh=adapt_freq_thresh,
             group=group,
