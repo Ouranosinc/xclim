@@ -4,12 +4,22 @@ Changelog
 
 v0.52.0 (unreleased)
 --------------------
-Contributors to this version: David Huard (:user:`huard`).
+Contributors to this version: David Huard (:user:`huard`), Trevor James Smith (:user:`Zeitsperre`), Hui-Min Wang (:user:`Hem-W`).
+
+Bug fixes
+^^^^^^^^^
+* Fixed the indexer bug in the `xclim.indices.standardized_index_fit_params` when multiple or non-array indexers are specified and fitted parameters are reloaded from netCDF. (:issue:`1842`, :pull:`1843`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
 * Add attribute ``units_metadata`` to outputs representing a difference between temperatures. This is needed to disambiguate temperature differences from absolute temperature, and affects indicators using functions ``cumulative_difference``, ``temperature_sum``, ``interday_diurnal_temperature_range`` and `` extreme_temperature_range``.  Added ``pint2cfattrs`` function to convert pint units to a dictionary of CF attributes. ``units2pint`` is also modified to support ``units_metadata`` attributes in DataArrays. Some SDBA properties and measures previously returning units of ``delta_degC`` will now return the original input DataArray units accompanied with the ``units_metadata`` attribute. (:issue:`1822`, :pull:`1830`).
-* Changed french translation of "wet days" from "jours mouillés" to "jours pluvieux". (:issue:`1825`, :pull:`1836`).
+* Changed French translation of "wet days" from "jours mouillés" to "jours pluvieux". (:issue:`1825`, :pull:`1836`).
+
+CI changes
+^^^^^^^^^^
+* `pip-tools` (`pip-compile`) has been used to generate a lock file with hashes for the CI dependencies. (:pull:`1841`).
+* The ``main.yml`` workflow has been updated to use simpler trigger logic. (:pull:`1841`).
+* A workflow bug has been fixed that was causing multiple duplicate comments to be made on Pull Requests originating from forks. (:pull:`1841`).
 
 v0.51.0 (2024-07-04)
 --------------------
