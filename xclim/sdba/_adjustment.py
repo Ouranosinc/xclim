@@ -826,17 +826,6 @@ def _dotc_adjust(
     elif isinstance(bin_width, list):
         bin_width = np.array(bin_width)
 
-    if cov_factor == "cholesky":
-        fact0 = u.eps_cholesky(np.cov(Y0, rowvar=False))
-        fact1 = u.eps_cholesky(np.cov(X0, rowvar=False))
-        cov_factor = np.dot(fact0, np.linalg.inv(fact1))
-    elif cov_factor == "std":
-        fact0 = np.std(Y0, axis=0)
-        fact1 = np.std(X0, axis=0)
-        cov_factor = np.diag(fact0 / fact1)
-    else:
-        cov_factor = np.identity(Y0.shape[1])
-
     # Map ref to hist
     yX0 = _otc_adjust(
         Y0,
@@ -866,7 +855,15 @@ def _dotc_adjust(
             motion[:, j] = yX1[:, j] - yX0[:, j]
 
     # Apply a variance dependent rescaling factor
-    motion = np.apply_along_axis(lambda x: np.dot(cov_factor, x), 1, motion)
+    if cov_factor == "cholesky":
+        fact0 = u.eps_cholesky(np.cov(Y0, rowvar=False))
+        fact1 = u.eps_cholesky(np.cov(X0, rowvar=False))
+        motion = motion @ fact0 @ np.linalg.inv(fact1)
+    elif cov_factor == "std":
+        fact0 = np.std(Y0, axis=0)
+        fact1 = np.std(X0, axis=0)
+        cov_factor = np.diag(fact0 / fact1)
+        motion = motion @ cov_factor
 
     # Apply the evolution to ref
     Y1 = np.empty(yX0.shape)
