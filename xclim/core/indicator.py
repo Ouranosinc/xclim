@@ -162,6 +162,7 @@ from .utils import (
     is_percentile_dataarray,
     load_module,
     raise_warn_or_log,
+    split_auxiliary_coordinates,
 )
 
 # Indicators registry
@@ -1456,6 +1457,8 @@ class CheckMissingIndicator(Indicator):
                 and mask.time.size < outs[0].time.size
             ):
                 mask = mask.reindex(time=outs[0].time, fill_value=True)
+            # Remove any aux coord to avoid any unwanted dask computation in the alignment within "where"
+            mask, _ = split_auxiliary_coordinates(mask)
             outs = [out.where(~mask) for out in outs]
 
         return outs

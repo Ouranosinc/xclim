@@ -17,7 +17,12 @@ from numba import njit
 from xarray.core.utils import get_temp_dimname
 
 from xclim.core.options import OPTIONS, RUN_LENGTH_UFUNC
-from xclim.core.utils import DateStr, DayOfYearStr, uses_dask
+from xclim.core.utils import (
+    DateStr,
+    DayOfYearStr,
+    split_auxiliary_coordinates,
+    uses_dask,
+)
 from xclim.indices.helpers import resample_map
 
 npts_opt = 9000
@@ -1496,11 +1501,8 @@ def lazy_indexing(
         da2 = xr.DataArray(da.data, dims=(tmpname,), name=None)
         # for each chunk of index, take corresponding values from da
         out = index.map_blocks(_index_from_1d_array, args=(da2,)).rename(da.name)
-        # Map blocks chunks aux coords. Replace them by non-chunked from the original array.
-        # This avoids unwanted loading of the aux coord in a resample.map, for example
-        for name, crd in out.coords.items():
-            if uses_dask(crd) and name in index.coords and index[name].size == crd.size:
-                out = out.assign_coords(**{name: index[name]})
+        # Map blocks chunks aux coords. Remove them to avoid the alignment check load in `where`
+        out, _ = split_auxiliary_coordinates(out)
         # mask where index was NaN. Drop any auxiliary coord, they are already on `out`.
         # Chunked aux coord would have the same name on both sides and xarray will want to check if they are equal, which means loading them
         # making lazy_indexing not lazy. same issue as above
