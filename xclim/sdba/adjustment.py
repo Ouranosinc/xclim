@@ -158,6 +158,15 @@ class BaseAdjustment(ParametrizableWithDataset):
                 return inda
 
             if target is None:
+                if "_units" not in inputs[0][dim].attrs or any(
+                    [u is None for u in inputs[0][dim].attrs["_units"]]
+                ):
+                    error_msg = (
+                        "Units are missing in some or all of the stacked variables."
+                        "The dataset stacked with `stack_variables` given as input should include units for every variable."
+                    )
+                    raise ValueError(error_msg)
+
                 target = {
                     v: inputs[0][dim].attrs["_units"][iv]
                     for iv, v in enumerate(inputs[0][dim].values)
