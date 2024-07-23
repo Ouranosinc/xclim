@@ -731,7 +731,15 @@ class TestStandardizedIndices:
 
         np.testing.assert_allclose(spei.values, values, rtol=0, atol=diff_tol)
 
-    def test_standardized_index_modularity(self, open_dataset):
+    @pytest.mark.parametrize(
+        "indexer",
+        [
+            ({}),
+            ({"month": [2, 3]}),
+            ({"month": [2, 3], "drop": True}),
+        ],
+    )
+    def test_standardized_index_modularity(self, open_dataset, tmp_path, indexer):
         freq, window, dist, method = "MS", 6, "gamma", "APP"
         ds = (
             open_dataset("sdba/CanESM2_1950-2100.nc")
@@ -756,8 +764,15 @@ class TestStandardizedIndices:
             dist=dist,
             method=method,
             fitkwargs=fitkwargs,
-            month=[2, 3],
+            **indexer,
         )
+
+        # Save the parameters to a file to test against that saving process may modify the netCDF file
+        paramsfile = tmp_path / "params0.nc"
+        params.to_netcdf(paramsfile)
+        params.close()
+        params = xr.open_dataset(paramsfile).__xarray_dataarray_variable__
+
         spei1 = xci.standardized_precipitation_evapotranspiration_index(
             wb.sel(time=slice("1998", "2000")), params=params
         )
@@ -771,13 +786,18 @@ class TestStandardizedIndices:
             fitkwargs=fitkwargs,
             cal_start="1950",
             cal_end="1980",
-            month=[2, 3],
+            **indexer,
         ).sel(time=slice("1998", "2000"))
 
         # In the previous computation, the first {window-1} values are NaN because the rolling is performed on the period [1998,2000].
         # Here, the computation is performed on the period [1950,2000], *then* subsetted to [1998,2000], so it doesn't have NaNs
         # for the first values
-        spei2[{"time": slice(0, window - 1)}] = np.nan
+        nan_window = xr.cftime_range(
+            spei1.time.values[0], periods=window - 1, freq=freq
+        )
+        spei2.loc[{"time": spei2.time.isin(nan_window)}] = (
+            np.nan
+        )  # select time based on the window is necessary when `drop=True`
 
         np.testing.assert_allclose(spei1.values, spei2.values, rtol=0, atol=1e-4)
 

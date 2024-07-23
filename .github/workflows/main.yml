@@ -32,10 +32,10 @@ permissions:
 
 jobs:
   lint:
-    name: Black (Python${{ matrix.python-version }})
+    name: Lint (Python${{ matrix.python-version }})
     runs-on: ubuntu-latest
     if: |
-      ((github.event_name == 'pull_request') && (github.event.action != 'labeled')) ||
+      (github.event.action != 'labeled') ||
       (github.event.review.state == 'approved') ||
       (github.event_name == 'push')
     strategy:
@@ -44,7 +44,7 @@ jobs:
           - "3.9"
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@17d0e2bd7d51742c71671bd19fa12bdc9d40a3d6 # v2.8.1
+        uses: step-security/harden-runner@0d381219ddf674d61a7572ddd19d7941e271515c # v2.9.0
         with:
           disable-sudo: true
           egress-policy: block
@@ -60,7 +60,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: Install CI libraries
         run: |
-          python -m pip install -r CI/requirements_ci.txt
+          python -m pip install --require-hashes -r CI/requirements_ci.txt
       - name: Run pylint
         run: |
           python -m pylint --rcfile=.pylintrc.toml --disable=import-error --exit-zero xclim
@@ -69,19 +69,18 @@ jobs:
           python -m tox -e lint
 
   test-py39:
-    name: test-${{ matrix.tox-env }} (Python${{ matrix.python-version }})
+    name: Python${{ matrix.python-version }} (${{ matrix.tox-env }}, ${{ matrix.os }})
     needs: lint
-    if: |
-      (github.event_name == 'pull_request') && !contains(github.event.pull_request.labels.*.name, 'approved')
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         include:
-          - tox-env: "py39"  # "py39-coverage"
+          - tox-env: "py39"
             python-version: "3.9"
+            os: ubuntu-latest
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@17d0e2bd7d51742c71671bd19fa12bdc9d40a3d6 # v2.8.1
+        uses: step-security/harden-runner@0d381219ddf674d61a7572ddd19d7941e271515c # v2.9.0
         with:
           disable-sudo: true
           egress-policy: block
@@ -100,18 +99,16 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: Install CI libraries
         run: |
-          python -m pip install -r CI/requirements_ci.txt
+          python -m pip install --require-hashes -r CI/requirements_ci.txt
       - name: Test with tox
         run: |
           python -m tox -e ${{ matrix.tox-env }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-#          COVERALLS_FLAG_NAME: run-{{ matrix.tox-env }}
-#          COVERALLS_SERVICE_NAME: github
 
   test-pypi:
     needs: lint
-    name: ${{ matrix.tox-env }} (Python${{ matrix.python-version }}, ${{ matrix.os }})
+    name: Python${{ matrix.python-version }} (${{ matrix.tox-env }}, ${{ matrix.os }})
     if: |
       contains(github.event.pull_request.labels.*.name, 'approved') ||
       (github.event.review.state == 'approved') ||
@@ -155,7 +152,7 @@ jobs:
             os: ubuntu-latest
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@17d0e2bd7d51742c71671bd19fa12bdc9d40a3d6 # v2.8.1
+        uses: step-security/harden-runner@0d381219ddf674d61a7572ddd19d7941e271515c # v2.9.0
         with:
           egress-policy: block
           allowed-endpoints: >
@@ -183,7 +180,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: Install CI libraries
         run: |
-          python -m pip install -r CI/requirements_ci.txt
+          python -m pip install --require-hashes -r CI/requirements_ci.txt
       - name: Test with tox
         run: |
           python -m tox -e ${{ matrix.tox-env }} -- ${{ matrix.markers }}
@@ -210,7 +207,7 @@ jobs:
         shell: bash -l {0}
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@17d0e2bd7d51742c71671bd19fa12bdc9d40a3d6 # v2.8.1
+        uses: step-security/harden-runner@0d381219ddf674d61a7572ddd19d7941e271515c # v2.9.0
         with:
           disable-sudo: true
           egress-policy: block
@@ -234,11 +231,9 @@ jobs:
           cache-environment: true
           environment-file: environment.yml
           create-args: >-
-            conda
             python=${{ matrix.python-version }}
       - name: Conda and Mamba versions
         run: |
-          conda --version
           echo "micromamba: $(micromamba --version)"
       - name: Install xclim
         run: |
@@ -265,7 +260,6 @@ jobs:
 #          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Report coverage
         run: |
-          pip install --upgrade coveralls
           coveralls
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -287,7 +281,7 @@ jobs:
             CI/requirements_ci.txt
       - name: Install CI libraries
         run: |
-          python -m pip install -r CI/requirements_ci.txt
+          python -m pip install --require-hashes -r CI/requirements_ci.txt
       - name: Coveralls finished
         run: |
           python -m coveralls --finish
