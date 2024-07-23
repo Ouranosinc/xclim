@@ -122,26 +122,44 @@ def _register_conversion(conversion, direction):
 units.define("[radiation] = [power] / [length]**2")
 
 
-def units2pint(value: xr.DataArray | str | units.Quantity) -> pint.Unit:
+def units2pint(
+    value: xr.DataArray | units.Unit | units.Quantity | dict | str,
+) -> pint.Unit:
     """Return the pint Unit for the DataArray units.
 
     Parameters
     ----------
-    value : xr.DataArray or str or pint.Quantity
+    value : xr.DataArray or pint.Unit or pint.Quantity or dict or str
         Input data array or string representing a unit (with no magnitude).
 
     Returns
     -------
     pint.Unit
         Units of the data array.
+
+    Notes
+    -----
+    To avoid ambiguity related to differences in temperature vs absolute temperatures, set the `units_metadata`
+    attribute to `"temperature: difference"` or `"temperature: on_scale"` on the DataArray.
     """
-    if isinstance(value, str):
-        unit = value
-    elif isinstance(value, xr.DataArray):
-        unit = value.attrs["units"]
-    elif isinstance(value, units.Quantity):
+    # Value is already a pint unit or a pint quantity
+    if isinstance(value, units.Unit):
+        return value
+
+    if isinstance(value, units.Quantity):
         # This is a pint.PlainUnit, which is not the same as a pint.Unit
         return cast(pint.Unit, value.units)
+
+    # We only need the attributes
+    if isinstance(value, xr.DataArray):
+        value = value.attrs
+
+    if isinstance(value, str):
+        unit = value
+        metadata = None
+    elif isinstance(value, dict):
+        unit = value["units"]
+        metadata = value.get("units_metadata", None)
     else:
         raise NotImplementedError(f"Value of type `{type(value)}` not supported.")
 
@@ -164,7 +182,10 @@ def units2pint(value: xr.DataArray | str | units.Quantity) -> pint.Unit:
             "Remove white space from temperature units, e.g. use `degC`."
         )
 
-    return units.parse_units(unit)
+    pu = units.parse_units(unit)
+    if metadata == "temperature: difference":
+        return (1 * pu - 1 * pu).units
+    return pu
 
 
 def pint2cfunits(value: units.Quantity | units.Unit) -> str:
@@ -185,9 +206,44 @@ def pint2cfunits(value: units.Quantity | units.Unit) -> str:
 
     # Issue originally introduced in https://github.com/hgrecco/pint/issues/1486
     # Should be resolved in pint v0.24. See: https://github.com/hgrecco/pint/issues/1913
+    # Relies on cf_xarray's unit string formatting logic.
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", category=DeprecationWarning)
         return f"{value:cf}".replace("dimensionless", "")
+
+
+def pint2cfattrs(value: units.Quantity | units.Unit, is_difference=None) -> dict:
+    """Return CF-compliant units attributes from a `pint` unit.
+
+    Parameters
+    ----------
+    value : pint.Unit
+        Input unit.
+    is_difference : bool
+        Whether the value represent a difference in temperature, which is ambiguous in the case of absolute
+        temperature scales like Kelvin or Rankine. It will automatically be set to True if units are "delta_*"
+        units.
+
+    Returns
+    -------
+    dict
+        Units following CF-Convention, using symbols.
+    """
+    s = pint2cfunits(value)
+    if "delta_" in s:
+        is_difference = True
+        s = s.replace("delta_", "")
+
+    attrs = {"units": s}
+    if "[temperature]" in value.dimensionality:
+        if is_difference:
+            attrs["units_metadata"] = "temperature: difference"
+        elif is_difference is False:
+            attrs["units_metadata"] = "temperature: on_scale"
+        else:
+            attrs["units_metadata"] = "temperature: unknown"
+
+    return attrs
 
 
 def ensure_cf_units(ustr: str) -> str:
@@ -253,7 +309,7 @@ def str2pint(val: str) -> pint.Quantity:
 # FIXME: The typing here is difficult to determine, as Generics cannot be used to track the type of the output.
 def convert_units_to(  # noqa: C901
     source: Quantified,
-    target: Quantified | units.Unit,
+    target: Quantified | units.Unit | dict,
     context: Literal["infer", "hydro", "none"] | None = None,
 ) -> xr.DataArray | float:
     """Convert a mathematical expression into a value with the same units as a DataArray.
@@ -265,7 +321,7 @@ def convert_units_to(  # noqa: C901
     ----------
     source : str or xr.DataArray or units.Quantity
         The value to be converted, e.g. '4C' or '1 mm/d'.
-    target : str or xr.DataArray or units.Quantity or units.Unit
+    target : str or xr.DataArray or units.Quantity or units.Unit or dict
         Target array of values to which units must conform.
     context : {"infer", "hydro", "none"}, optional
         The unit definition context. Default: None.
@@ -292,14 +348,7 @@ def convert_units_to(  # noqa: C901
     context = context or "none"
 
     # Target units
-    if isinstance(target, units.Unit):
-        target_unit = target
-    elif isinstance(target, (str, xr.DataArray)):
-        target_unit = units2pint(target)
-    else:
-        raise NotImplementedError(
-            "target must be either a pint Unit or a xarray DataArray."
-        )
+    target_unit = units2pint(target)
 
     if context == "infer":
         ctxs = []
@@ -325,7 +374,7 @@ def convert_units_to(  # noqa: C901
 
     if isinstance(source, xr.DataArray):
         source_unit = units2pint(source)
-        target_cf_unit = pint2cfunits(target_unit)
+        target_cf_attrs = pint2cfattrs(target_unit)
 
         # Automatic pre-conversions based on the dimensionalities and CF standard names
         standard_name = source.attrs.get("standard_name")
@@ -360,12 +409,12 @@ def convert_units_to(  # noqa: C901
         out: xr.DataArray
         if source_unit == target_unit:
             # The units are the same, but the symbol may not be.
-            out = source.assign_attrs(units=target_cf_unit)
+            out = source.assign_attrs(**target_cf_attrs)
             return out
 
         with units.context(context or "none"):
             out = source.copy(data=units.convert(source.data, source_unit, target_unit))
-            out = out.assign_attrs(units=target_cf_unit)
+            out = out.assign_attrs(**target_cf_attrs)
             return out
 
     # TODO remove backwards compatibility of int/float thresholds after v1.0 release
@@ -563,17 +612,21 @@ def to_agg_units(
 
     elif op in ["count", "integral"]:
         m, freq_u_raw = infer_sampling_units(orig[dim])
+        # TODO: Use delta here
         orig_u = str2pint(ensure_absolute_temperature(orig.units))
         freq_u = str2pint(freq_u_raw)
-        out = out * m
+        with xr.set_options(keep_attrs=True):
+            out = out * m
 
         if op == "count":
             out.attrs["units"] = freq_u_raw
         elif op == "integral":
             if "[time]" in orig_u.dimensionality:
                 # We need to simplify units after multiplication
+
                 out_units = (orig_u * freq_u).to_reduced_units()
-                out = out * out_units.magnitude
+                with xr.set_options(keep_attrs=True):
+                    out = out * out_units.magnitude
                 out.attrs["units"] = pint2cfunits(out_units)
             else:
                 out.attrs["units"] = pint2cfunits(orig_u * freq_u)
@@ -582,6 +635,10 @@ def to_agg_units(
             f"Unknown aggregation op {op}. "
             "Known ops are [min, max, mean, std, var, doymin, doymax, count, integral, sum]."
         )
+
+    # Remove units_metadata where it doesn't make sense
+    if op in ["doymin", "doymax", "count"]:
+        out.attrs.pop("units_metadata", None)
 
     return out
 
@@ -1328,7 +1385,7 @@ def declare_units(**units_by_name) -> Callable:
     return dec
 
 
-def ensure_delta(unit: str) -> str:
+def ensure_delta(unit: xr.DataArray | str | units.Quantity) -> str:
     """Return delta units for temperature.
 
     For dimensions where delta exist in pint (Temperature), it replaces the temperature unit by delta_degC or
@@ -1344,6 +1401,8 @@ def ensure_delta(unit: str) -> str:
     #
     delta_unit = pint2cfunits(d - d)
     # replace kelvin/rankine by delta_degC/F
+    # Note (DH): This will fail if dimension is [temperature]^-1 or [temperature]^2 (e.g. variance)
+    # Recent versions of pint have a `to_preferred` method that could be used here (untested).
     if "kelvin" in u._units:
         delta_unit = pint2cfunits(u / units2pint("K") * units2pint("delta_degC"))
     if "degree_Rankine" in u._units:

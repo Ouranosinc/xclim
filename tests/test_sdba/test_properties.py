@@ -287,7 +287,8 @@ class TestProperties:
 
         assert amp.long_name.startswith("Absolute amplitude of the annual cycle")
         assert phase.long_name.startswith("Phase of the annual cycle")
-        assert amp.units == "delta_degC"
+        assert amp.units == "K"
+        assert amp.units_metadata == "temperature: difference"
         assert relamp.units == "%"
         assert phase.units == ""
 
@@ -330,7 +331,8 @@ class TestProperties:
 
         assert amp.long_name.startswith("Average annual absolute amplitude")
         assert phase.long_name.startswith("Average annual phase")
-        assert amp.units == "delta_degC"
+        assert amp.units == "K"
+        assert amp.units_metadata == "temperature: difference"
         assert relamp.units == "%"
         assert phase.units == ""
 

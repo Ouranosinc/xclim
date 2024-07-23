@@ -332,6 +332,12 @@ class TestCumulativeDifference:
         with pytest.raises(NotImplementedError):
             generic.cumulative_difference(tas, threshold="10 degC", op="!=")
 
+    def test_delta_units(self, tas_series):
+        tas = tas_series(np.array([-10, 15, 20, 3, 10]) + K2C)
+
+        out = generic.cumulative_difference(tas, threshold="10 degC", op=">=")
+        assert "units_metadata" in out.attrs
+
 
 class TestFirstDayThreshold:
     @pytest.mark.parametrize(

@@ -12,7 +12,8 @@ Bug fixes
 
 Internal changes
 ^^^^^^^^^^^^^^^^
-* Changed french translation of "wet days" from "jours mouillés" to "jours pluvieux". (:issue:`1825`, :pull:`1826`).
+* Add attribute ``units_metadata`` to outputs representing a difference between temperatures. This is needed to disambiguate temperature differences from absolute temperature, and affects indicators using functions ``cumulative_difference``, ``temperature_sum``, ``interday_diurnal_temperature_range`` and `` extreme_temperature_range``.  Added ``pint2cfattrs`` function to convert pint units to a dictionary of CF attributes. ``units2pint`` is also modified to support ``units_metadata`` attributes in DataArrays. Some SDBA properties and measures previously returning units of ``delta_degC`` will now return the original input DataArray units accompanied with the ``units_metadata`` attribute. (:issue:`1822`, :pull:`1830`).
+* Changed French translation of "wet days" from "jours mouillés" to "jours pluvieux". (:issue:`1825`, :pull:`1836`).
 
 CI changes
 ^^^^^^^^^^

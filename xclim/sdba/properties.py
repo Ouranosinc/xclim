@@ -20,7 +20,7 @@ from statsmodels.tsa import stattools
 
 import xclim as xc
 from xclim.core.indicator import Indicator, base_registry
-from xclim.core.units import convert_units_to, to_agg_units
+from xclim.core.units import convert_units_to, pint2cfattrs, to_agg_units, units2pint
 from xclim.core.utils import uses_dask
 from xclim.indices import run_length as rl
 from xclim.indices.generic import compare, select_resample_op
@@ -583,7 +583,7 @@ def _annual_cycle(
     # TODO: In April 2024, use a match-case.
     if stat == "absamp":
         out = ac.max("dayofyear") - ac.min("dayofyear")
-        out.attrs["units"] = xc.core.units.ensure_delta(units)
+        out.attrs.update(pint2cfattrs(units2pint(units), is_difference=True))
     elif stat == "relamp":
         out = (ac.max("dayofyear") - ac.min("dayofyear")) * 100 / ac.mean("dayofyear")
         out.attrs["units"] = "%"
@@ -699,7 +699,7 @@ def _annual_statistic(
 
     if stat == "absamp":
         out = yrs.max() - yrs.min()
-        out.attrs["units"] = xc.core.units.ensure_delta(units)
+        out.attrs.update(pint2cfattrs(units2pint(units), is_difference=True))
     elif stat == "relamp":
         out = (yrs.max() - yrs.min()) * 100 / yrs.mean()
         out.attrs["units"] = "%"

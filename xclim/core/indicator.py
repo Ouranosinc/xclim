@@ -344,6 +344,7 @@ class Indicator(IndicatorRegistrar):
         "standard_name",
         "long_name",
         "units",
+        "units_metadata",
         "cell_methods",
         "description",
         "comment",
@@ -856,7 +857,10 @@ class Indicator(IndicatorRegistrar):
         for out, attrs, base_attrs in zip(outs, out_attrs, self.cf_attrs):
             if self.n_outs > 1:
                 var_id = base_attrs["var_name"]
+            # Set default units
             attrs.update(units=out.units)
+            if "units_metadata" in out.attrs:
+                attrs["units_metadata"] = out.attrs["units_metadata"]
             attrs.update(
                 self._update_attrs(
                     params.copy(),
@@ -869,7 +873,7 @@ class Indicator(IndicatorRegistrar):
 
         # Convert to output units
         outs = [
-            convert_units_to(out, attrs["units"], self.context)
+            convert_units_to(out, attrs, self.context)
             for out, attrs in zip(outs, out_attrs)
         ]
 

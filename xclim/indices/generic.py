@@ -22,9 +22,11 @@ from xclim.core.units import (
     convert_units_to,
     declare_relative_units,
     infer_context,
+    pint2cfattrs,
     pint2cfunits,
     str2pint,
     to_agg_units,
+    units2pint,
 )
 from xclim.core.utils import DayOfYearStr, Quantified, Quantity
 
@@ -99,6 +101,12 @@ def select_resample_op(
         op = op.__name__
     if out_units is not None:
         return out.assign_attrs(units=out_units)
+
+    if op in ["std", "var"]:
+        out.attrs.update(
+            pint2cfattrs(units2pint(out.attrs["units"]), is_difference=True)
+        )
+
     return to_agg_units(out, da, op)
 
 
@@ -701,6 +709,7 @@ def temperature_sum(
 
     out = (data - threshold).where(cond).resample(time=freq).sum()
     out = direction * out
+    out.attrs["units_metadata"] = "temperature: difference"
     return to_agg_units(out, data, "integral")
 
 
@@ -718,7 +727,6 @@ def interday_diurnal_temperature_range(
     freq : str
         Resampling frequency defining the periods as defined in :ref:`timeseries.resampling`.
 
-
     Returns
     -------
     xr.DataArray
@@ -728,8 +736,8 @@ def interday_diurnal_temperature_range(
     vdtr = abs((high_data - low_data).diff(dim="time"))
     out = vdtr.resample(time=freq).mean(dim="time")
 
-    u = str2pint(low_data.units)
-    out.attrs["units"] = pint2cfunits(u - u)
+    out.attrs["units"] = low_data.attrs["units"]
+    out.attrs["units_metadata"] = "temperature: difference"
     return out
 
 
@@ -755,8 +763,8 @@ def extreme_temperature_range(
 
     out = high_data.resample(time=freq).max() - low_data.resample(time=freq).min()
 
-    u = str2pint(low_data.units)
-    out.attrs["units"] = pint2cfunits(u - u)
+    out.attrs["units"] = low_data.attrs["units"]
+    out.attrs["units_metadata"] = "temperature: difference"
     return out
 
 
@@ -891,6 +899,8 @@ def cumulative_difference(
 
     if freq is not None:
         diff = diff.resample(time=freq).sum(dim="time")
+
+    diff.attrs.update(pint2cfattrs(units2pint(data.attrs["units"]), is_difference=True))
 
     return to_agg_units(diff, data, op="integral")
 
