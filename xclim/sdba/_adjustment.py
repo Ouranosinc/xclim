@@ -862,8 +862,7 @@ def _dotc_adjust(
     elif cov_factor == "std":
         fact0 = np.std(Y0, axis=0)
         fact1 = np.std(X0, axis=0)
-        cov_factor = np.diag(fact0 / fact1)
-        motion = motion @ cov_factor
+        motion = motion @ np.diag(fact0 / fact1)
 
     # Apply the evolution to ref
     Y1 = np.empty(yX0.shape)
