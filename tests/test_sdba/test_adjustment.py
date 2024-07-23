@@ -823,7 +823,8 @@ class TestOTC:
 
 
 class TestdOTC:
-    def test_compare_sbck(self, random, series):
+    @pytest.mark.parametrize("use_dask", [True, False])
+    def test_compare_sbck(self, random, series, use_dask):
         pytest.importorskip("ot")
         ns = 1000
         u = random.random(ns)
@@ -858,17 +859,25 @@ class TestdOTC:
 
         ref_tas = series(ref_x, "tas")
         ref_pr = series(ref_y, "pr")
-        ref = xr.merge([ref_tas, ref_pr])
-        ref = stack_variables(ref)
-
         hist_tas = series(hist_x, "tas")
         hist_pr = series(hist_y, "pr")
-        hist = xr.merge([hist_tas, hist_pr])
-        hist = stack_variables(hist)
-
         sim_tas = series(sim_x, "tas")
         sim_pr = series(sim_y, "pr")
+
+        if use_dask:
+            ref_tas = ref_tas.chunk({"time": -1})
+            ref_pr = ref_pr.chunk({"time": -1})
+            hist_tas = hist_tas.chunk({"time": -1})
+            hist_pr = hist_pr.chunk({"time": -1})
+            sim_tas = sim_tas.chunk({"time": -1})
+            sim_pr = sim_pr.chunk({"time": -1})
+
+        ref = xr.merge([ref_tas, ref_pr])
+        hist = xr.merge([hist_tas, hist_pr])
         sim = xr.merge([sim_tas, sim_pr])
+
+        ref = stack_variables(ref)
+        hist = stack_variables(hist)
         sim = stack_variables(sim)
 
         scen = dOTC.adjust(
