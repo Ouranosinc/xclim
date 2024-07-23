@@ -221,12 +221,10 @@ class TrainAdjust(BaseAdjustment):
         skip_checks = kwargs.pop("skip_input_checks", False)
 
         if not skip_checks:
-            (ref, hist), train_units = cls._harmonize_units(ref, hist)
-
             if "group" in kwargs:
                 cls._check_inputs(ref, hist, group=kwargs["group"])
 
-            hist = convert_units_to(hist, ref)
+            (ref, hist), train_units = cls._harmonize_units(ref, hist)
         else:
             train_units = ""
 
@@ -256,10 +254,10 @@ class TrainAdjust(BaseAdjustment):
         """
         skip_checks = kwargs.pop("skip_input_checks", False)
         if not skip_checks:
-            (sim, *args), _ = self._harmonize_units(sim, *args, target=self.train_units)
-
             if "group" in self:
                 self._check_inputs(sim, *args, group=self.group)
+
+            (sim, *args), _ = self._harmonize_units(sim, *args, target=self.train_units)
 
         out = self._adjust(sim, *args, **kwargs)
 
@@ -1468,11 +1466,16 @@ class MBCn(TrainAdjust):
                     base_kws_vars[v]["nquantiles"]
                 )
             if "is_variables" in sim[pts_dim].attrs:
+                if self.train_units == "":
+                    _, units = self._harmonize_units(sim)
+                else:
+                    units = self.train_units
+
                 if "jitter_under_thresh_value" in base_kws_vars[v]:
                     base_kws_vars[v]["jitter_under_thresh_value"] = str(
                         convert_units_to(
                             base_kws_vars[v]["jitter_under_thresh_value"],
-                            self.train_units[v],
+                            units[v],
                             context="hydro",
                         )
                     )
@@ -1480,7 +1483,7 @@ class MBCn(TrainAdjust):
                     base_kws_vars[v]["adapt_freq_thresh"] = str(
                         convert_units_to(
                             base_kws_vars[v]["adapt_freq_thresh"],
-                            self.train_units[v],
+                            units[v],
                             context="hydro",
                         )
                     )

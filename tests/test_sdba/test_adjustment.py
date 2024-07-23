@@ -675,20 +675,17 @@ class TestPrincipalComponents:
     @pytest.mark.parametrize("use_dask", [True, False])
     @pytest.mark.parametrize("pcorient", ["full", "simple"])
     def test_real_data(self, atmosds, use_dask, pcorient):
-        ref = stack_variables(
-            xr.Dataset(
-                {"tasmax": atmosds.tasmax, "tasmin": atmosds.tasmin, "tas": atmosds.tas}
-            )
-        ).isel(location=3)
-        hist = stack_variables(
-            xr.Dataset(
-                {
-                    "tasmax": 1.001 * atmosds.tasmax,
-                    "tasmin": atmosds.tasmin - 0.25,
-                    "tas": atmosds.tas + 1,
-                }
-            )
-        ).isel(location=3)
+        ds0 = xr.Dataset(
+            {"tasmax": atmosds.tasmax, "tasmin": atmosds.tasmin, "tas": atmosds.tas}
+        )
+        ref = stack_variables(ds0).isel(location=3)
+        hist0 = ds0
+        with xr.set_options(keep_attrs=True):
+            hist0["tasmax"] = 1.001 * hist0.tasmax
+            hist0["tasmin"] = hist0.tasmin - 0.25
+            hist0["tas"] = hist0.tas + 1
+
+        hist = stack_variables(hist0).isel(location=3)
         with xr.set_options(keep_attrs=True):
             sim = hist + 5
             sim["time"] = sim.time + np.timedelta64(10, "Y").astype("<m8[ns]")
