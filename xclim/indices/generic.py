@@ -398,7 +398,7 @@ def spell_length_statistics(
     --------
     >>> spell_length_statistics(
     ...     tas,
-    ...     thresh="35 °C",
+    ...     threshold="35 °C",
     ...     window=7,
     ...     op=">",
     ...     win_reducer="min",
@@ -412,7 +412,7 @@ def spell_length_statistics(
     >>> pram = rate2amount(pr)
     >>> spell_length_statistics(
     ...     pram,
-    ...     thresh="20 mm",
+    ...     threshold="20 mm",
     ...     window=5,
     ...     op=">=",
     ...     win_reducer="sum",
