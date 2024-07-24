@@ -1360,6 +1360,13 @@ class OTC(Adjust):
         if "_is_hist" not in sim.attrs:
             raise ValueError("OTC does not take a `sim` argument.")
 
+        if adapt_freq_thresh is not None:
+            _, units = cls._harmonize_units(sim)
+            for var, thresh in adapt_freq_thresh.items():
+                adapt_freq_thresh[var] = str(
+                    convert_units_to(thresh, units[var], context="hydro")
+                )
+
         scen = otc_adjust(
             xr.Dataset({"ref": ref, "hist": hist}),
             bin_width=bin_width,
@@ -1478,6 +1485,13 @@ class dOTC(Adjust):
             raise ValueError(
                 "Multiplicative correction is not supported with `cov_factor` = 'cholesky'."
             )
+
+        if adapt_freq_thresh is not None:
+            _, units = cls._harmonize_units(sim)
+            for var, thresh in adapt_freq_thresh.items():
+                adapt_freq_thresh[var] = str(
+                    convert_units_to(thresh, units[var], context="hydro")
+                )
 
         scen = dotc_adjust(
             xr.Dataset({"ref": ref, "hist": hist, "sim": sim}),

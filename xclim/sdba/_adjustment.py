@@ -15,7 +15,7 @@ import numpy as np
 import xarray as xr
 
 from xclim import set_options
-from xclim.core.units import convert_units_to, infer_context, str2pint, units
+from xclim.core.units import convert_units_to, infer_context, units
 from xclim.indices.stats import _fitfunc_1d  # noqa
 
 from . import nbutils as nbu
@@ -1068,10 +1068,6 @@ def otc_adjust(
 
     if adapt_freq_thresh is not None:
         for var, thresh in adapt_freq_thresh.items():
-            if "units" not in ref.attrs["units"] or ref.attrs["units"] == "":
-                # Try to force units
-                units = str2pint(thresh).units
-                ref.attrs.update(units=str(units))
             hist.loc[var] = _adapt_freq_hist(
                 xr.Dataset(
                     {"ref": ref.sel({pts_dim: var}), "hist": hist.sel({pts_dim: var})}
@@ -1268,10 +1264,6 @@ def dotc_adjust(
 
     if adapt_freq_thresh is not None:
         for var, thresh in adapt_freq_thresh.items():
-            if "units" not in ref.attrs["units"] or ref.attrs["units"] == "":
-                # Hack : try to force units when ref has been `stack_variables`ed
-                units = str2pint(thresh).units
-                ref.attrs.update(units=str(units))
             hist.loc[var] = _adapt_freq_hist(
                 xr.Dataset(
                     {"ref": ref.sel({pts_dim: var}), "hist": hist.sel({pts_dim: var})}
