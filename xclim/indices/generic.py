@@ -396,7 +396,7 @@ def spell_length_statistics(
 
     Examples
     --------
-    >>> spell_statistics(
+    >>> spell_length_statistics(
     ...     tas,
     ...     thresh="35 °C",
     ...     window=7,
@@ -410,7 +410,7 @@ def spell_length_statistics(
     return the annual sum of the spell lengths, so the total number of days in such spells.
 
     >>> pram = rate2amount(pr)
-    >>> spell_statistics(
+    >>> spell_length_statistics(
     ...     pram,
     ...     thresh="20 mm",
     ...     window=5,
