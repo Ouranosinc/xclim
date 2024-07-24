@@ -1407,7 +1407,7 @@ class dOTC(Adjust):
         Default is 0.
     num_iter_max : int | None
         Maximum number of iterations used in the network simplex algorithm.
-    cov_factor : {None, 'std', 'cholesky'}
+    cov_factor : {'identity', 'std', 'cholesky'}
         A rescaling of the temporal evolution before it is applied to the reference.
         Note that "cholesky" cannot be used if some variables are multiplicative.
         See notes for details.
@@ -1446,7 +1446,7 @@ class dOTC(Adjust):
         - :math:`v_i` is the temporal evolution of historical simulated point :math:`i \in X0` to :math:`j \in X1`
         - :math:`Y0_i` is the observed data mapped to :math:`i`
         - :math:`D` is a correction factor given by
-            - :math:`I` if `cov_factor is None`
+            - :math:`I` if `cov_factor = "identity"`
             - :math:`diag(\frac{\sigma_{Y0}}{\sigma_{X0}})` if `cov_factor = "std"`
             - :math:`\frac{Chol(Y0)}{Chol(X0)}` where :math:`Chol` is the Cholesky decomposition if `cov_factor = "cholesky"`
         - :math:`Y1_i` is the correction of the future simulated data mapped to :math:`i`.
@@ -1470,7 +1470,7 @@ class dOTC(Adjust):
         bin_width: list | None = None,
         bin_origin: list | None = None,
         num_iter_max: int | None = 100_000_000,
-        cov_factor: str | None = "std",
+        cov_factor: str = "std",
         jitter_inside_bins: bool = True,
         kind: dict | None = None,
         adapt_freq_thresh: dict | None = None,
@@ -1485,6 +1485,11 @@ class dOTC(Adjust):
         if kind is not None and "*" in kind.values() and cov_factor == "cholesky":
             raise ValueError(
                 "Multiplicative correction is not supported with `cov_factor` = 'cholesky'."
+            )
+
+        if cov_factor not in ["identity", "std", "cholesky"]:
+            raise ValueError(
+                "`cov_factor` should be in ['identity', 'std', 'cholesky']."
             )
 
         if adapt_freq_thresh is not None:

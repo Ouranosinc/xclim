@@ -1113,7 +1113,7 @@ def _dotc_adjust(
     bin_width: list | None = None,
     bin_origin: list | None = None,
     num_iter_max: int | None = 100_000_000,
-    cov_factor: str | None = "std",
+    cov_factor: str = "std",
     jitter_inside_bins: bool = True,
     kind: dict | None = None,
 ):
@@ -1133,7 +1133,7 @@ def _dotc_adjust(
         Bin origins for all dimensions.
     num_iter_max : int | None
         Maximum number of iterations used in the earth mover distance algorithm.
-    cov_factor : str | None = "std"
+    cov_factor : str = "std"
         Rescaling factor.
 
     Returns
@@ -1218,7 +1218,7 @@ def dotc_adjust(
     bin_width: list | None = None,
     bin_origin: list | None = None,
     num_iter_max: int | None = 100_000_000,
-    cov_factor: str | None = "std",
+    cov_factor: str = "std",
     jitter_inside_bins: bool = True,
     kind: dict | None = None,
     adapt_freq_thresh: dict | None = None,
@@ -1242,7 +1242,7 @@ def dotc_adjust(
         Bin origins for all dimensions.
     num_iter_max : int | None
         Maximum number of iterations used in the earth mover distance algorithm.
-    cov_factor : str | None = "std"
+    cov_factor : str = "std"
         Rescaling factor.
     jitter_inside_bins : bool = True
         If `False`, output points are located at the center of their bin.
