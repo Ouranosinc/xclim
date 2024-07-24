@@ -208,7 +208,8 @@ def _wrapper_quantile1d(arr, q):
     return out
 
 
-def _quantile(arr, q, nreduce):
+def _quantile(arr, q, nreduce=None):
+    nreduce = nreduce or arr.ndim
     if arr.ndim == nreduce:
         out = _nan_quantile_1d(arr.flatten(), q)
     else:
