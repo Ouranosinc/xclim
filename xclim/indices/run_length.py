@@ -464,7 +464,6 @@ def _boundary_run(
             crd = da[dim]
             if isinstance(coord, str):
                 crd = getattr(crd.dt, coord)
-
             out = lazy_indexing(crd, out)
 
         if dim in out.coords:
@@ -1502,7 +1501,7 @@ def lazy_indexing(
         # for each chunk of index, take corresponding values from da
         out = index.map_blocks(_index_from_1d_array, args=(da2,)).rename(da.name)
         # Map blocks chunks aux coords. Remove them to avoid the alignment check load in `where`
-        out, _ = split_auxiliary_coordinates(out)
+        out, auxcrd = split_auxiliary_coordinates(out)
         # mask where index was NaN. Drop any auxiliary coord, they are already on `out`.
         # Chunked aux coord would have the same name on both sides and xarray will want to check if they are equal, which means loading them
         # making lazy_indexing not lazy. same issue as above
@@ -1511,6 +1510,7 @@ def lazy_indexing(
                 [crd for crd in invalid.coords if crd not in invalid.dims]
             )
         )
+        out = out.assign_coords(auxcrd.coords)
         if idx_ndim == 0:
             # 0-D case, drop useless coords and dummy dim
             out = out.drop_vars(da.dims[0], errors="ignore").squeeze()

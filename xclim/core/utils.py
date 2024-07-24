@@ -889,10 +889,11 @@ def split_auxiliary_coordinates(
     This is useful to circumvent xarray's alignment checks that will sometimes look the auxiliary coordinate's data, which can trigger
     unwanted dask computations.
 
-    The auxiliary coordinates can be merged back with the dataset with :py:func:`xarray.merge`.
+    The auxiliary coordinates can be merged back with the dataset with
+    :py:meth:`xarray.Dataset.assign_coords` or :py:meth:`xarray.DataArray.assign_coords`.
 
     >>> clean, aux = split_auxiliary_coordinates(ds)
-    >>> merged = xr.merge([clean, aux])
+    >>> merged = clean.assign_coords(da.coords)
     >>> merged.identical(ds)  # True
     """
     aux_crd_names = [
