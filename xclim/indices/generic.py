@@ -406,7 +406,7 @@ def spell_length_statistics(
     ...     freq="YS",
     ... )
 
-    Here, a day is part of a spell if it is in any 7 day period where the minimum temperature is over 35°C. We then
+    Here, a day is part of a spell if it is in any seven (7) day period where the minimum temperature is over 35°C. We then
     return the annual sum of the spell lengths, so the total number of days in such spells.
 
     >>> pram = rate2amount(pr)
@@ -420,7 +420,7 @@ def spell_length_statistics(
     ...     freq="YS",
     ... )
 
-    Here, a day is part of a spell if it is in any 5 day period where the total accumulated precipitation reaches or exceeds
+    Here, a day is part of a spell if it is in any five (5) day period where the total accumulated precipitation reaches or exceeds
     20 mm. We then return the length of the longest of such spells.
     """
     thresh = convert_units_to(

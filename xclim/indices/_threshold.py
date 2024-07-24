@@ -3238,7 +3238,7 @@ def dry_spell_total_length(
         Accumulated precipitation value under which a period is considered dry.
     window : int
         Number of days when the maximum or accumulated precipitation is under threshold.
-    op: {"sum", "max", "min", "mean"}
+    op : {"sum", "max", "min", "mean"}
         Operation to perform on the window.
         Default is "sum", which checks that the sum of accumulated precipitation over the whole window is less than the
         threshold.
@@ -3381,7 +3381,7 @@ def wet_spell_frequency(
     resample_before_rl : bool
         Determines if the resampling should take place before or after the run
         length encoding (or a similar algorithm) is applied to runs.
-    op: {"sum","min", "max", "mean"}
+    op : {"sum","min", "max", "mean"}
         Operation to perform on the window.
         Default is "sum", which checks that the sum of accumulated precipitation over the whole window is more than the
         threshold.
@@ -3452,7 +3452,7 @@ def wet_spell_total_length(
         In all cases, the whole window is marked a part of a wet spell.
     freq : str
         Resampling frequency.
-    resample_before_rl: bool
+    resample_before_rl : bool
         Determines if the resampling should take place before or after the run
         length encoding (or a similar algorithm) is applied to runs.
     \*\*indexer
