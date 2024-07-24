@@ -1373,6 +1373,7 @@ class OTC(Adjust):
             bin_origin=bin_origin,
             num_iter_max=num_iter_max,
             jitter_inside_bins=jitter_inside_bins,
+            adapt_freq_thresh=adapt_freq_thresh,
             group=group,
             pts_dim=pts_dim,
         ).scen
