@@ -154,7 +154,8 @@ class BaseAdjustment(ParametrizableWithDataset):
                         inda[{dim: iv}], target[v], context="infer"
                     )
                     inda[dim].attrs["_units"][iv] = target[v]
-                inda.attrs["units"], inda.attrs["standard_name"] = "", ""
+                inda.attrs["units"] = ""
+                inda.attrs.pop("standard_name")
                 return inda
 
             if target is None:
@@ -284,7 +285,12 @@ class TrainAdjust(BaseAdjustment):
         infostr = f"{str(self)}.adjust(sim, {params})"
         scen.attrs["history"] = update_history(f"Bias-adjusted with {infostr}", sim)
         scen.attrs["bias_adjustment"] = infostr
-        scen.attrs["units"] = self.train_units
+
+        _is_multivariate = any(
+            [_crd.attrs.get("is_variables") for _crd in sim.coords.values()]
+        )
+        if _is_multivariate is False:
+            scen.attrs["units"] = self.train_units
 
         if OPTIONS[SDBA_EXTRA_OUTPUT]:
             return out
@@ -359,7 +365,12 @@ class Adjust(BaseAdjustment):
         infostr = f"{cls.__name__}.adjust(ref, hist, sim, {params})"
         scen.attrs["history"] = update_history(f"Bias-adjusted with {infostr}", sim)
         scen.attrs["bias_adjustment"] = infostr
-        scen.attrs["units"] = ref.units
+
+        _is_multivariate = any(
+            [_crd.attrs.get("is_variables") for _crd in sim.coords.values()]
+        )
+        if _is_multivariate is False:
+            scen.attrs["units"] = ref.units
 
         if OPTIONS[SDBA_EXTRA_OUTPUT]:
             return out
