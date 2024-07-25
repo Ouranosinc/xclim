@@ -2,13 +2,95 @@
 Changelog
 =========
 
-v0.50.0 (unreleased)
+v0.52.0 (unreleased)
 --------------------
-Contributors to this version: Trevor James Smith (:user:`Zeitsperre`).
+Contributors to this version: David Huard (:user:`huard`), Trevor James Smith (:user:`Zeitsperre`), Hui-Min Wang (:user:`Hem-W`), Éric Dupuis (:user:`coxipi`), Sarah Gammon (:user:`SarahG-579462`).
+
+New features and enhancements
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+* ``xclim.sdba.nbutils.quantile`` and its child functions are now faster. If the module `fastnanquantile` is installed, it is used as the backend for the computation of quantiles and yields even faster results. (:issue:`1255`, :pull:`1513`).
+* New multivariate bias adjustment class `MBCn`, giving a faster and more accurate implementation of the 'MBCn' algorithm (:issue:`1551`, :pull:`1580`).
+
+Bug fixes
+^^^^^^^^^
+* Fixed the indexer bug in the `xclim.indices.standardized_index_fit_params` when multiple or non-array indexers are specified and fitted parameters are reloaded from netCDF. (:issue:`1842`, :pull:`1843`).
+
+Internal changes
+^^^^^^^^^^^^^^^^
+* Changed french translation of "wet days" from "jours mouillés" to "jours pluvieux". (:issue:`1825`, :pull:`1826`).
+
+CI changes
+^^^^^^^^^^
+* `pip-tools` (`pip-compile`) has been used to generate a lock file with hashes for the CI dependencies. (:pull:`1841`).
+* The ``main.yml`` workflow has been updated to use simpler trigger logic. (:pull:`1841`).
+* A workflow bug has been fixed that was causing multiple duplicate comments to be made on Pull Requests originating from forks. (:pull:`1841`).
+
+v0.51.0 (2024-07-04)
+--------------------
+Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`).
+
+New features and enhancements
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+* Added the `op` keyword to the `growing_season_{start|end}` indices and indicators, allowing for customizable threshold operators using `indices.generic.compare()`. (:issue:`1794`, :pull:`1796`).
+* `xclim` now separates the optional dependencies into `dev` and `docs` recipes. Both can be installed with the `all` option (`$ python -m pip install xclim[all]`). (:pull:`1806`).
+
+Bug fixes
+^^^^^^^^^
+* Units of degree-days computations with Fahrenheit input fixed to yield "°R d". Added a new ``xclim.core.units.ensure_absolute_temperature`` method to convert from delta to absolute temperatures. (:issue:`1789`, :pull:`1804`).
+* Clarified a typo in the docstring formula for `xclim.indices.growing_season_length`. (:pull:`1796`).
+
+Internal changes
+^^^^^^^^^^^^^^^^
+* `netcdf4` has been pinned below v1.7 for test stability reasons. (:pull:`1791`).
+* `flake8-bandit`-like checks have been enabled via `ruff`, with fixes for a few security-related issues. (:pull:`1806`).
+* ``xclim.testing.utils`` now employs more secure URL auditing checks. (:pull:`1806`).
+* `CHANGES.rst` has been renamed to `CHANGELOG.rst`, adhering to suggestions from the `keepachangelog v.1.1.0 <https://keepachangelog.com/en/1.1.0/>`_ specifications. (:pull:`1823`).
+
+CI changes
+^^^^^^^^^^
+* GitHub repository now uses Rulesets for branch protection. (:pull:`1790`).
+* Version bumping and project triage is now handled by the Ouranos Helper GitHub App. (:pull:`1790`).
+* `bump-my-version` has been updated to v0.23.0. (:pull:`1790`).
+* The Ouranos Helper GitHub App now provides verified commits. (:issue:`1811`, :pull:`1812`).
+* Added the `deptry <https://github.com/fpgmaas/deptry>`_ package to the `dev` linter tools and linting workflows for performing dependency analyses. (:pull:`1806`).
+* Several linting tools have been updated to the latest versions and pinned. (:pull:`1806`).
+
+v0.50.0 (2024-06-17)
+--------------------
+Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Éric Dupuis (:user:`coxipi`).
+
+New features and enhancements
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+* New properties: Bivariate Spell Length (``xclim.sdba.properties.bivariate_spell_length``), Generalized Spell Lengths with an argument for `window`, and Specific Spell Lengths with `window` fixed to '1' (``xclim.sdba.properties.threshold_count``, ``xclim.sdba.properties.bivariate_threshold_count``). (:pull:`1758`).
+* New option `normalize` in ``sdba.measures.taylordiagram`` to obtain normalized Taylor Diagrams (divide standard deviations by standard deviation of the reference). (:pull:`1764`).
+
+Breaking changes
+^^^^^^^^^^^^^^^^
+* `pint` has been pinned below v0.24 until `xclim` can be updated to support the latest version. (:issue:`1771`, :pull:`1772`).
+* `numpy` has been pinned below v2.0.0 until `xclim` can be updated to support the latest version. (:pull:`1783`).
+* Calendar utilities that have an equivalent in `xarray` have been deprecated and will be removed in `xclim` v0.51.0. (:issue:`1010`, :pull:`1761`). This concerns the following members of ``xclim.core.calendar``:
+    - ``convert_calendar`` : Use ``Dataset.convert_calendar``, ``DataArray.convert_calendar`` or ``xr.coding.calendar_ops.convert_calendar``  instead.
+        + If your code passes ``target`` as an array, first convert the source to the target's calendar and then reindex the result to ``target``.
+        + If you were using the ``doy=True`` option, replace it with ``xc.core.calendar.convert_doy(source, target_cal).convert_calendar(target_cal)``.
+        + ``"default"`` is no longer a valid calendar name for any xclim functions and will not be returned by ``get_calendar``. Xarray has a ``use_cftime`` argument, xclim exposes it when the distinction is needed.
+    - ``date_range`` : Use ``xarray.date_range`` instead.
+    - ``date_range_like``: Use ``xarray.date_range_like`` instead.
+    - ``interp_calendar`` : Use ``Dataset.interp_calendar`` or ``xarray.coding.calendar_ops.interp_calendar`` instead.
+    - ``days_in_year`` : Use ``xarray.coding.calendar_ops._days_in_year`` instead.
+    - ``datetime_to_decimal_year`` : Use ``xarray.coding.calendar_ops._datetime_to_decimal_year`` instead.
 
 Internal changes
 ^^^^^^^^^^^^^^^^
 * Synchronized tooling versions across ``pyproject.toml`` and ``tox.ini`` and pinned them to the latest stable releases in GitHub Workflows. (:pull:`1744`).
+* Fixed a few small spelling and grammar issues that were causing errors with `codespell`. Now ignoring `SVG` files. (:pull:`1769`).
+* Temporarily skipping the ``test_hawkins_sutton_smoke`` test due to strange behaviour with `xarray`. (:pull:`1769`).
+* Fixed some previously uncaught errors raised from recent versions of `pylint` and `codespell`. (:pull:`1772`).
+* Set the `doctest` examples to all use `h5netcdf` with worker-separated caches to load datasets. (:pull:`1772`).
+
+Bug fixes
+^^^^^^^^^
+* ``xclim.indices.{cold|hot}_spell_total_length`` now properly uses the argument `window` to only count spells with at least `window` time steps. (:issue:`1765`, :pull:`1777`).
+* Addressed an error in ``xclim.ensembles._filters._concat_hist`` where remnants of a scenario selection were not being dropped properly. (:pull:`1780`).
 
 v0.49.0 (2024-05-02)
 --------------------

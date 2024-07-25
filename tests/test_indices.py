@@ -21,7 +21,7 @@ import pytest
 import xarray as xr
 
 from xclim import indices as xci
-from xclim.core.calendar import convert_calendar, date_range, percentile_doy
+from xclim.core.calendar import percentile_doy
 from xclim.core.options import set_options
 from xclim.core.units import ValidationError, convert_units_to, units
 
@@ -258,7 +258,7 @@ class TestAgroclimaticIndices:
         ],
     )
     def test_bedd(self, method, end_date, deg_days, max_deg_days):
-        time_data = date_range(
+        time_data = xr.date_range(
             "1992-01-01", "1995-06-01", freq="D", calendar="standard"
         )
         tn = xr.DataArray(
@@ -596,9 +596,8 @@ class TestStandardizedIndices:
     ):
         ds = open_dataset("sdba/CanESM2_1950-2100.nc").isel(location=1)
         if freq == "D":
-            ds = convert_calendar(
-                ds, "366_day", missing=np.NaN
-            )  # to compare with ``climate_indices``
+            ds = ds.convert_calendar("366_day", missing=np.NaN)
+            # to compare with ``climate_indices``
         pr = ds.pr.sel(time=slice("1998", "2000"))
         pr_cal = ds.pr.sel(time=slice("1950", "1980"))
         fitkwargs = {}
@@ -732,7 +731,15 @@ class TestStandardizedIndices:
 
         np.testing.assert_allclose(spei.values, values, rtol=0, atol=diff_tol)
 
-    def test_standardized_index_modularity(self, open_dataset):
+    @pytest.mark.parametrize(
+        "indexer",
+        [
+            ({}),
+            ({"month": [2, 3]}),
+            ({"month": [2, 3], "drop": True}),
+        ],
+    )
+    def test_standardized_index_modularity(self, open_dataset, tmp_path, indexer):
         freq, window, dist, method = "MS", 6, "gamma", "APP"
         ds = (
             open_dataset("sdba/CanESM2_1950-2100.nc")
@@ -757,8 +764,15 @@ class TestStandardizedIndices:
             dist=dist,
             method=method,
             fitkwargs=fitkwargs,
-            month=[2, 3],
+            **indexer,
         )
+
+        # Save the parameters to a file to test against that saving process may modify the netCDF file
+        paramsfile = tmp_path / "params0.nc"
+        params.to_netcdf(paramsfile)
+        params.close()
+        params = xr.open_dataset(paramsfile).__xarray_dataarray_variable__
+
         spei1 = xci.standardized_precipitation_evapotranspiration_index(
             wb.sel(time=slice("1998", "2000")), params=params
         )
@@ -772,13 +786,18 @@ class TestStandardizedIndices:
             fitkwargs=fitkwargs,
             cal_start="1950",
             cal_end="1980",
-            month=[2, 3],
+            **indexer,
         ).sel(time=slice("1998", "2000"))
 
         # In the previous computation, the first {window-1} values are NaN because the rolling is performed on the period [1998,2000].
         # Here, the computation is performed on the period [1950,2000], *then* subsetted to [1998,2000], so it doesn't have NaNs
         # for the first values
-        spei2[{"time": slice(0, window - 1)}] = np.nan
+        nan_window = xr.cftime_range(
+            spei1.time.values[0], periods=window - 1, freq=freq
+        )
+        spei2.loc[{"time": spei2.time.isin(nan_window)}] = (
+            np.nan
+        )  # select time based on the window is necessary when `drop=True`
 
         np.testing.assert_allclose(spei1.values, spei2.values, rtol=0, atol=1e-4)
 
@@ -1421,7 +1440,7 @@ class TestHotSpellTotalLength:
             ("29 C", 3, ">", 8),  # Two HS
             ("29 C", 3, ">=", 9),  # One long HS, minus a day
             ("40 C", 3, ">", 0),  # No HS
-            ("30 C", 5, ">", 8),  # Windowed
+            ("30 C", 5, ">", 5),  # Windowed
         ],
     )
     def test_1d(self, tasmax_series, thresh, window, op, expected):
@@ -2971,6 +2990,8 @@ def test_rain_season(pr_series, result_type, method_dry_start):
     elif result_type == "end_cond_fails":
         pr[{"time": 99 + 20 - 1}] = 5
         out_exp = [3, np.NaN, 363]
+    else:
+        raise ValueError(f"Unknown result_type: {result_type}")
 
     out = {}
     out["start"], out["end"], out["length"] = xci.rain_season(

@@ -5,7 +5,6 @@ import pandas as pd
 import pytest
 import xarray as xr
 
-from xclim.core.calendar import date_range
 from xclim.core.units import convert_units_to
 from xclim.indices import helpers
 
@@ -54,7 +53,7 @@ def test_extraterrestrial_radiation(method):
 
 @pytest.mark.parametrize("method", ["spencer", "simple"])
 def test_day_lengths(method):
-    time_data = date_range("1992-12-01", "1994-01-01", freq="D", calendar="standard")
+    time_data = xr.date_range("1992-12-01", "1994-01-01", freq="D", calendar="standard")
     data = xr.DataArray(
         np.ones((time_data.size, 7)),
         dims=("time", "lat"),
@@ -66,12 +65,12 @@ def test_day_lengths(method):
 
     events = dict(
         solstice=[
-            ["1992-12-21", [[18.49, 15.43, 13.93, 12.0, 10.07, 8.57, 5.51]]],
-            ["1993-06-21", [[5.51, 8.57, 10.07, 12.0, 13.93, 15.43, 18.49]]],
-            ["1993-12-21", [[18.49, 15.43, 13.93, 12.0, 10.07, 8.57, 5.51]]],
+            ["1992-12-21", [18.49, 15.43, 13.93, 12.0, 10.07, 8.57, 5.51]],
+            ["1993-06-21", [5.51, 8.57, 10.07, 12.0, 13.93, 15.43, 18.49]],
+            ["1993-12-21", [18.49, 15.43, 13.93, 12.0, 10.07, 8.57, 5.51]],
         ],
         equinox=[
-            ["1993-03-20", [[12] * 7]]
+            ["1993-03-20", [12] * 7]
         ],  # True equinox on 1993-03-20 at 14:41 GMT. Some relative tolerance is needed.
     )
 

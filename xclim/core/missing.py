@@ -28,13 +28,7 @@ from __future__ import annotations
 import numpy as np
 import xarray as xr
 
-from .calendar import (
-    date_range,
-    get_calendar,
-    is_offset_divisor,
-    parse_offset,
-    select_time,
-)
+from .calendar import get_calendar, is_offset_divisor, parse_offset, select_time
 from .options import (
     CHECK_MISSING,
     MISSING_METHODS,
@@ -157,11 +151,12 @@ class MissingBase:
         offset = parse_offset(src_timestep)
         if indexer or offset[1] in "YAQM":
             # Create a full synthetic time series and compare the number of days with the original series.
-            t = date_range(
+            t = xr.date_range(
                 start_time[0],
                 end_time[-1],
                 freq=src_timestep,
                 calendar=get_calendar(da),
+                use_cftime=(start_time.dtype == "O"),
             )
 
             sda = xr.DataArray(data=np.ones(len(t)), coords={"time": t}, dims=("time",))

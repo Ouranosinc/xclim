@@ -16,16 +16,11 @@ from xclim.core.calendar import (
     common_calendar,
     compare_offsets,
     construct_offset,
-    convert_calendar,
     convert_doy,
-    date_range,
-    datetime_to_decimal_year,
-    days_in_year,
     days_since_to_doy,
     doy_to_days_since,
     ensure_cftime_array,
     get_calendar,
-    interp_calendar,
     max_doy,
     parse_offset,
     percentile_doy,
@@ -90,6 +85,8 @@ def test_time_bnds_irregular(typ):
     elif typ == "pd":
         start = pd.date_range("1990-01-01", periods=24, freq="MS")
         end = pd.date_range("1990-01-01 23:59:59.999999999", periods=24, freq="ME")
+    else:
+        raise ValueError("`typ` must be 'pd' or 'xr'")
 
     time = start + (end - start) / 2
 
@@ -234,7 +231,7 @@ def test_adjust_doy_366_to_360():
             "360_day",
             360,
         ),
-        (("NRCANdaily", "nrcan_canada_daily_pr_1990.nc"), "default", 366),
+        (("NRCANdaily", "nrcan_canada_daily_pr_1990.nc"), "proleptic_gregorian", 366),
     ],
 )
 def test_get_calendar(file, cal, maxdoy, open_dataset):
@@ -247,8 +244,8 @@ def test_get_calendar(file, cal, maxdoy, open_dataset):
 @pytest.mark.parametrize(
     "obj,cal",
     [
-        ([pd.Timestamp.now()], "default"),
-        (pd.Timestamp.now(), "default"),
+        ([pd.Timestamp.now()], "standard"),
+        (pd.Timestamp.now(), "standard"),
         (cftime.DatetimeAllLeap(2000, 1, 1), "all_leap"),
         (np.array([cftime.DatetimeNoLeap(2000, 1, 1)]), "noleap"),
         (xr.cftime_range("2000-01-01", periods=4, freq="D"), "standard"),
@@ -264,158 +261,6 @@ def test_get_calendar_errors(obj):
         get_calendar(obj)
 
 
-@pytest.mark.parametrize(
-    "source,target,target_as_str,freq",
-    [
-        ("standard", "noleap", True, "D"),
-        ("noleap", "default", True, "D"),
-        ("noleap", "all_leap", False, "D"),
-        ("proleptic_gregorian", "noleap", False, "4h"),
-        ("default", "noleap", True, "4h"),
-    ],
-)
-def test_convert_calendar(source, target, target_as_str, freq):
-    src = xr.DataArray(
-        date_range("2004-01-01", "2004-12-31", freq=freq, calendar=source),
-        dims=("time",),
-        name="time",
-    )
-    da_src = xr.DataArray(
-        np.linspace(0, 1, src.size), dims=("time",), coords={"time": src}
-    )
-    tgt = xr.DataArray(
-        date_range("2004-01-01", "2004-12-31", freq=freq, calendar=target),
-        dims=("time",),
-        name="time",
-    )
-
-    conv = convert_calendar(da_src, target if target_as_str else tgt)
-
-    assert get_calendar(conv) == target
-
-    if target_as_str and max_doy[source] < max_doy[target]:
-        assert conv.size == src.size
-    elif not target_as_str:
-        assert conv.size == tgt.size
-
-        assert conv.isnull().sum() == max(max_doy[target] - max_doy[source], 0)
-
-
-@pytest.mark.parametrize(
-    "source,target,freq",
-    [
-        ("standard", "360_day", "D"),
-        ("360_day", "default", "D"),
-        ("proleptic_gregorian", "360_day", "4h"),
-    ],
-)
-@pytest.mark.parametrize("align_on", ["date", "year"])
-def test_convert_calendar_360_days(source, target, freq, align_on):
-    src = xr.DataArray(
-        date_range("2004-01-01", "2004-12-30", freq=freq, calendar=source),
-        dims=("time",),
-        name="time",
-    )
-    da_src = xr.DataArray(
-        np.linspace(0, 1, src.size), dims=("time",), coords={"time": src}
-    )
-
-    conv = convert_calendar(da_src, target, align_on=align_on)
-
-    assert get_calendar(conv) == target
-
-    if align_on == "date":
-        np.testing.assert_array_equal(
-            conv.time.resample(time="ME").last().dt.day,
-            [30, 29, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30],
-        )
-    elif target == "360_day":
-        np.testing.assert_array_equal(
-            conv.time.resample(time="ME").last().dt.day,
-            [30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 29],
-        )
-    else:
-        np.testing.assert_array_equal(
-            conv.time.resample(time="ME").last().dt.day,
-            [30, 29, 30, 30, 31, 30, 30, 31, 30, 31, 29, 31],
-        )
-    if source == "360_day" and align_on == "year":
-        assert conv.size == 360 if freq == "D" else 360 * 4
-    else:
-        assert conv.size == 359 if freq == "D" else 359 * 4
-
-
-def test_convert_calendar_360_days_random():
-    da_std = xr.DataArray(
-        np.linspace(0, 1, 366 * 2),
-        dims=("time",),
-        coords={
-            "time": date_range(
-                "2004-01-01", "2004-12-31T23:59:59", freq="12h", calendar="default"
-            )
-        },
-    )
-    da_360 = xr.DataArray(
-        np.linspace(0, 1, 360 * 2),
-        dims=("time",),
-        coords={
-            "time": date_range(
-                "2004-01-01", "2004-12-30T23:59:59", freq="12h", calendar="360_day"
-            )
-        },
-    )
-
-    conv = convert_calendar(da_std, "360_day", align_on="random")
-    assert get_calendar(conv) == "360_day"
-    assert conv.size == 720
-    conv2 = convert_calendar(da_std, "360_day", align_on="random")
-    assert (conv != conv2).any()
-
-    conv = convert_calendar(da_360, "default", align_on="random")
-    assert get_calendar(conv) == "default"
-    assert conv.size == 720
-    assert np.datetime64("2004-02-29") not in conv.time
-    conv2 = convert_calendar(da_360, "default", align_on="random")
-    assert (conv2 != conv).any()
-
-    conv = convert_calendar(da_360, "noleap", align_on="random", missing=np.NaN)
-    conv = conv.where(conv.isnull(), drop=True)
-    nandoys = conv.time.dt.dayofyear[::2]
-    assert all(nandoys < np.array([74, 147, 220, 293, 366]))
-    assert all(nandoys > np.array([0, 73, 146, 219, 292]))
-
-
-@pytest.mark.parametrize(
-    "source,target,freq",
-    [
-        ("standard", "noleap", "D"),
-        ("noleap", "default", "4h"),
-        ("noleap", "all_leap", "ME"),
-        ("360_day", "noleap", "D"),
-        ("noleap", "360_day", "D"),
-    ],
-)
-def test_convert_calendar_missing(source, target, freq):
-    src = xr.DataArray(
-        date_range(
-            "2004-01-01",
-            "2004-12-31" if source != "360_day" else "2004-12-30",
-            freq=freq,
-            calendar=source,
-        ),
-        dims=("time",),
-        name="time",
-    )
-    da_src = xr.DataArray(
-        np.linspace(0, 1, src.size), dims=("time",), coords={"time": src}
-    )
-    out = convert_calendar(da_src, target, missing=0, align_on="date")
-    assert xr.infer_freq(out.time) == freq
-    if source == "360_day":
-        assert out.time[-1].dt.day == 31
-        assert out[-1] == 0
-
-
 def test_convert_calendar_and_doy():
     doy = xr.DataArray(
         [31, 32, 336, 364.23, 365],
@@ -425,48 +270,19 @@ def test_convert_calendar_and_doy():
         },
         attrs={"is_dayofyear": 1, "calendar": "noleap"},
     )
-    out = convert_calendar(doy, "360_day", align_on="date", doy=True)
+    out = convert_doy(doy, target_cal="360_day").convert_calendar(
+        "360_day", align_on="date"
+    )
+    # out = convert_calendar(doy, "360_day", align_on="date", doy=True)
     np.testing.assert_allclose(
         out, [30.575342, 31.561644, 331.39726, 359.240548, 360.0]
     )
     assert out.time.dt.calendar == "360_day"
-    out = convert_calendar(doy, "360_day", align_on="date", doy="date")
+    out = convert_doy(doy, target_cal="360_day", align_on="date").convert_calendar(
+        "360_day", align_on="date"
+    )
     np.testing.assert_array_equal(out, [np.NaN, 31, 332, 360.23, np.NaN])
     assert out.time.dt.calendar == "360_day"
-
-
-@pytest.mark.parametrize(
-    "source,target",
-    [
-        ("standard", "noleap"),
-        ("noleap", "default"),
-        ("standard", "360_day"),
-        ("360_day", "standard"),
-        ("noleap", "all_leap"),
-        ("360_day", "noleap"),
-    ],
-)
-def test_interp_calendar(source, target):
-    src = xr.DataArray(
-        date_range("2004-01-01", "2004-07-30", freq="D", calendar=source),
-        dims=("time",),
-        name="time",
-    )
-    tgt = xr.DataArray(
-        date_range("2004-01-01", "2004-07-30", freq="D", calendar=target),
-        dims=("time",),
-        name="time",
-    )
-    da_src = xr.DataArray(
-        np.linspace(0, 1, src.size), dims=("time",), coords={"time": src}
-    )
-    conv = interp_calendar(da_src, tgt)
-
-    assert conv.size == tgt.size
-    assert get_calendar(conv) == target
-
-    np.testing.assert_almost_equal(conv.max(), 1, 2)
-    assert conv.min() == 0
 
 
 @pytest.mark.parametrize(
@@ -474,63 +290,27 @@ def test_interp_calendar(source, target):
     [
         (
             xr.DataArray(
-                date_range("2004-01-01", "2004-01-10", freq="D"),
+                xr.date_range("2004-01-01", "2004-01-10", freq="D"),
                 dims=("time",),
                 name="time",
             ),
             "standard",
         ),
-        (date_range("2004-01-01", "2004-01-10", freq="D"), "standard"),
+        (xr.date_range("2004-01-01", "2004-01-10", freq="D"), "standard"),
         (
-            xr.DataArray(date_range("2004-01-01", "2004-01-10", freq="D")).values,
+            xr.DataArray(xr.date_range("2004-01-01", "2004-01-10", freq="D")).values,
             "standard",
         ),
-        (date_range("2004-01-01", "2004-01-10", freq="D").values, "standard"),
-        (date_range("2004-01-01", "2004-01-10", freq="D", calendar="julian"), "julian"),
+        (xr.date_range("2004-01-01", "2004-01-10", freq="D").values, "standard"),
+        (
+            xr.date_range("2004-01-01", "2004-01-10", freq="D", calendar="julian"),
+            "julian",
+        ),
     ],
 )
 def test_ensure_cftime_array(inp, calout):
     out = ensure_cftime_array(inp)
     assert get_calendar(out) == calout
-
-
-@pytest.mark.parametrize(
-    "year,calendar,exp",
-    [
-        (2004, "standard", 366),
-        (2004, "noleap", 365),
-        (2004, "all_leap", 366),
-        (1500, "default", 365),
-        (1500, "standard", 366),
-        (1500, "proleptic_gregorian", 365),
-        (2030, "360_day", 360),
-    ],
-)
-def test_days_in_year(year, calendar, exp):
-    assert days_in_year(year, calendar) == exp
-
-
-@pytest.mark.parametrize(
-    "source_cal, exp180",
-    [
-        ("standard", 0.49180328),
-        ("default", 0.49180328),
-        ("noleap", 0.49315068),
-        ("all_leap", 0.49180328),
-        ("360_day", 0.5),
-        (None, 0.49180328),
-    ],
-)
-def test_datetime_to_decimal_year(source_cal, exp180):
-    times = xr.DataArray(
-        date_range(
-            "2004-01-01", "2004-12-30", freq="D", calendar=source_cal or "default"
-        ),
-        dims=("time",),
-        name="time",
-    )
-    decy = datetime_to_decimal_year(times, calendar=source_cal)
-    np.testing.assert_almost_equal(decy[180] - 2004, exp180)
 
 
 def test_clim_mean_doy(tas_series):
@@ -550,12 +330,12 @@ def test_clim_mean_doy(tas_series):
 
 def test_doy_to_days_since():
     # simple test
-    time = date_range("2020-07-01", "2022-07-01", freq="YS-JUL")
+    time = xr.date_range("2020-07-01", "2022-07-01", freq="YS-JUL")
     da = xr.DataArray(
         [190, 360, 3],
         dims=("time",),
         coords={"time": time},
-        attrs={"is_dayofyear": 1, "calendar": "default"},
+        attrs={"is_dayofyear": 1, "calendar": "standard"},
     )
 
     out = doy_to_days_since(da)
@@ -581,13 +361,13 @@ def test_doy_to_days_since():
     xr.testing.assert_identical(da, da2)
 
     # with start
-    time = date_range("2020-12-31", "2022-12-31", freq="YE")
+    time = xr.date_range("2020-12-31", "2022-12-31", freq="YE")
     da = xr.DataArray(
         [190, 360, 3],
         dims=("time",),
         coords={"time": time},
         name="da",
-        attrs={"is_dayofyear": 1, "calendar": "default"},
+        attrs={"is_dayofyear": 1, "calendar": "proleptic_gregorian"},
     )
 
     out = doy_to_days_since(da, start="01-02")
@@ -598,13 +378,13 @@ def test_doy_to_days_since():
     xr.testing.assert_identical(da, da2)
 
     # finer freq
-    time = date_range("2020-01-01", "2020-03-01", freq="MS")
+    time = xr.date_range("2020-01-01", "2020-03-01", freq="MS")
     da = xr.DataArray(
         [15, 33, 66],
         dims=("time",),
         coords={"time": time},
         name="da",
-        attrs={"is_dayofyear": 1, "calendar": "default"},
+        attrs={"is_dayofyear": 1, "calendar": "proleptic_gregorian"},
     )
 
     out = doy_to_days_since(da)

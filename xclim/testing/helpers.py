@@ -11,7 +11,7 @@ import pandas as pd
 import xarray as xr
 from dask.diagnostics import Callback
 
-from xclim.core import calendar
+from xclim.core.calendar import percentile_doy
 from xclim.core.utils import VARIABLES
 from xclim.indices import (
     longwave_upwelling_radiation_from_net_downwelling,
@@ -82,10 +82,10 @@ def generate_atmos(cache_dir: Path):
         branch=TESTDATA_BRANCH,
         engine="h5netcdf",
     ) as ds:
-        tn10 = calendar.percentile_doy(ds.tasmin, per=10)
-        t10 = calendar.percentile_doy(ds.tas, per=10)
-        t90 = calendar.percentile_doy(ds.tas, per=90)
-        tx90 = calendar.percentile_doy(ds.tasmax, per=90)
+        tn10 = percentile_doy(ds.tasmin, per=10)
+        t10 = percentile_doy(ds.tas, per=10)
+        t90 = percentile_doy(ds.tas, per=90)
+        tx90 = percentile_doy(ds.tasmax, per=90)
 
         rsus = shortwave_upwelling_radiation_from_net_downwelling(ds.rss, ds.rsds)
         rlus = longwave_upwelling_radiation_from_net_downwelling(ds.rls, ds.rlds)
@@ -151,7 +151,7 @@ def populate_testing_data(
                 data[filepattern] = _get_file(
                     filepattern, branch=branch, cache_dir=_local_cache
                 )
-            except FileNotFoundError:
+            except FileNotFoundError:  # noqa: S112
                 continue
         elif temp_folder:
             try:
@@ -161,7 +161,7 @@ def populate_testing_data(
                     branch=branch,
                     _local_cache=_local_cache,
                 )
-            except FileNotFoundError:
+            except FileNotFoundError:  # noqa: S112
                 continue
     return
 

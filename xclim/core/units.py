@@ -22,7 +22,7 @@ import xarray as xr
 from boltons.funcutils import wraps
 from yaml import safe_load
 
-from .calendar import date_range, get_calendar, parse_offset
+from .calendar import get_calendar, parse_offset
 from .options import datacheck
 from .utils import InputKind, Quantified, ValidationError, infer_kind_from_parameter
 
@@ -349,11 +349,11 @@ def convert_units_to(  # noqa: C901
                         # The new cf standard name is inserted by the converter
                         try:
                             source = _CONVERSIONS[(convname, direction)](source)
-                        except Exception:
-                            # FIXME: This is a broad exception. Bad practice.
-                            # Failing automatic conversion
-                            # It will anyway fail further down with a correct error message.
-                            pass
+                        except Exception as err:
+                            raise ValueError(
+                                f"There is a dimensionality incompatibility between the source and the target "
+                                f"and no CF-based conversions have been found for this standard name: {standard_name}"
+                            ) from err
                         else:
                             source_unit = units2pint(source)
 
@@ -463,6 +463,25 @@ def infer_sampling_units(
     return out
 
 
+DELTA_ABSOLUTE_TEMP = {
+    units.delta_degC: units.kelvin,
+    units.delta_degF: units.rankine,
+}
+
+
+def ensure_absolute_temperature(units: str):
+    """Convert temperature units to their absolute counterpart, assuming they represented a difference (delta).
+
+    Celsius becomes Kelvin, Fahrenheit becomes Rankine. Does nothing for other units.
+    """
+    a = str2pint(units)
+    # ensure a delta pint unit
+    a = a - 0 * a
+    if a.units in DELTA_ABSOLUTE_TEMP:
+        return pint2cfunits(DELTA_ABSOLUTE_TEMP[a.units])
+    return units
+
+
 def to_agg_units(
     out: xr.DataArray, orig: xr.DataArray, op: str, dim: str = "time"
 ) -> xr.DataArray:
@@ -518,7 +537,7 @@ def to_agg_units(
     >>> degdays = dt.clip(0).sum("time")  # Integral of temperature above a threshold
     >>> degdays = to_agg_units(degdays, dt, op="integral")
     >>> degdays.units
-    'week delta_degC'
+    'K week'
 
     Which we can always convert to the more common "K days":
 
@@ -526,11 +545,16 @@ def to_agg_units(
     >>> degdays.units
     'K d'
     """
-    if op in ["amin", "min", "amax", "max", "mean", "std", "sum"]:
+    if op in ["amin", "min", "amax", "max", "mean", "sum"]:
         out.attrs["units"] = orig.attrs["units"]
 
+    elif op in ["std"]:
+        out.attrs["units"] = ensure_absolute_temperature(orig.attrs["units"])
+
     elif op in ["var"]:
-        out.attrs["units"] = pint2cfunits(str2pint(orig.units) ** 2)
+        out.attrs["units"] = pint2cfunits(
+            str2pint(ensure_absolute_temperature(orig.units)) ** 2
+        )
 
     elif op in ["doymin", "doymax"]:
         out.attrs.update(
@@ -539,7 +563,7 @@ def to_agg_units(
 
     elif op in ["count", "integral"]:
         m, freq_u_raw = infer_sampling_units(orig[dim])
-        orig_u = str2pint(orig.units)
+        orig_u = str2pint(ensure_absolute_temperature(orig.units))
         freq_u = str2pint(freq_u_raw)
         out = out * m
 
@@ -598,8 +622,12 @@ def _rate_and_amount_converter(
                 label = "upper"
             # We generate "time" with an extra element, so we do not need to repeat the last element below.
             time = xr.DataArray(
-                date_range(
-                    start, periods=len(time) + 1, freq=freq, calendar=get_calendar(time)
+                xr.date_range(
+                    start,
+                    periods=len(time) + 1,
+                    freq=freq,
+                    calendar=get_calendar(time),
+                    use_cftime=(time.dtype == "O"),
                 ),
                 dims=(dim,),
                 name=dim,

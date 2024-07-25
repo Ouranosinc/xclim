@@ -36,13 +36,14 @@ dependencies = [
   # cf-xarray is differently named on conda-forge
   "cf-xarray>=0.6.1",
   "cftime>=1.4.1",
-  "Click>=8.1",
+  "click>=8.1",
   "dask[array]>=2.6",
   "jsonpickle",
   "numba",
-  "numpy>=1.20.0",
+  "numpy>=1.20.0,<2.0.0",
   "pandas>=2.2",
-  "pint>=0.10",
+  "pint>=0.10,<0.24",
+  "platformdirs >=3.2",
   "pyarrow", # Strongly encouraged for pandas v2.2.0+
   "pyyaml",
   "scikit-learn>=0.21.3",
@@ -57,38 +58,40 @@ dev = [
   # Dev tools and testing
   "black[jupyter] ==24.4.2",
   "blackdoc ==0.3.9",
-  "bump-my-version >=0.17.1",
-  "codespell",
-  "coverage[toml]",
+  "bump-my-version ==0.24.3",
+  "codespell ==2.3.0",
+  "coverage[toml] >=7.5.0",
   "coveralls >=4.0.0",
-  "flake8 >=7.0.0",
-  "flake8-alphabetize",
+  "deptry ==0.17.0",
+  "flake8 >=7.1.0",
   "flake8-rst-docstrings",
-  "h5netcdf",
+  "h5netcdf>=1.3.0",
   "ipython",
   "isort ==5.13.2",
   "mypy",
   "nbconvert <7.14", # Pinned due to directive errors in sphinx. See: https://github.com/jupyter/nbconvert/issues/2092
-  "nbqa",
-  "nbval",
-  "netCDF4 >=1.4",
+  "nbqa >=1.8.2",
+  "nbval >=0.11.0",
+  "netCDF4 >=1.4,<1.7",
   "pandas-stubs >=2.2",
   "platformdirs >=3.2",
+  "pooch",
   "pre-commit >=3.7",
-  "pybtex",
-  "pylint >=3.1",
-  "pytest >=7.0.0,!=8.0.0", # Pinned due to breakage with xdoctest. See: https://github.com/Erotemic/xdoctest/issues/151
+  "pylint >=3.2.4",
+  "pytest <8.0", # Pinned due to breakage with xdoctest. See: https://github.com/Erotemic/xdoctest/issues/151
   "pytest-cov",
   "pytest-socket",
   "pytest-xdist[psutil] >=3.2",
-  "ruff >=0.3.0",
+  "ruff >=0.4.10",
   "tokenize-rt",
-  "tox >=4.5",
+  "tox >=4.15.1",
   # "tox-conda",  # Will be added when a tox@v4.0+ compatible plugin is released.
   "tox-gh >=1.3.1",
   "vulture ==2.11",
   "xdoctest >=1.1.3",
-  "yamllint ==1.35.1",
+  "yamllint ==1.35.1"
+]
+docs = [
   # Documentation and examples
   "distributed >=2.0",
   "furo >=2023.9.10",
@@ -97,7 +100,8 @@ dev = [
   "nbsphinx",
   "nc-time-axis",
   "pooch",
-  "sphinx",
+  "pybtex >=0.24.0",
+  "sphinx >=7.0.0",
   "sphinx-autobuild >=2024.4.16",
   "sphinx-autodoc-typehints",
   "sphinx-codeautolink",
@@ -106,6 +110,8 @@ dev = [
   "sphinxcontrib-bibtex",
   "sphinxcontrib-svg2pdfconverter[Cairosvg]"
 ]
+extras = ["fastnanquantile"]
+all = ["xclim[dev]", "xclim[docs]", "xclim[extras]"]
 
 [project.scripts]
 xclim = "xclim.cli:cli"
@@ -128,7 +134,7 @@ target-version = [
 ]
 
 [tool.bumpversion]
-current_version = "0.49.0"
+current_version = "0.51.1-dev.3"
 commit = true
 commit_args = "--no-verify"
 tag = false
@@ -155,17 +161,32 @@ values = [
 ]
 
 [tool.codespell]
-skip = 'xclim/data/*.json,docs/_build,docs/notebooks/xclim_training/*.ipynb,docs/references.bib,__pycache__,*.nc,*.png,*.gz,*.whl'
-ignore-words-list = "absolue,astroid,bloc,bui,callendar,degreee,environnement,hanel,inferrable,lond,nam,nd,ressources,sie,vas"
+skip = 'xclim/data/*.json,docs/_build,docs/notebooks/xclim_training/*.ipynb,docs/references.bib,__pycache__,*.gz,*.nc,*.png,*.svg,*.whl'
+ignore-words-list = "absolue,astroid,bloc,bui,callendar,degreee,environnement,hanel,inferrable,lond,nam,nd,ressources,socio-economic,sie,vas"
 
 [tool.coverage.run]
 relative_files = true
 omit = ["tests/*.py"]
 
+[tool.deptry]
+extend_exclude = ["docs"]
+ignore_notebooks = true
+pep621_dev_dependency_groups = ["all", "dev", "docs"]
+
+[tool.deptry.package_module_name_map]
+"scikit-learn" = "sklearn"
+"pyyaml" = "yaml"
+
+[tool.deptry.per_rule_ignores]
+DEP001 = ["SBCK"]
+DEP002 = ["bottleneck", "pyarrow"]
+DEP004 = ["matplotlib", "pytest_socket"]
+
 [tool.flit.sdist]
 include = [
   "AUTHORS.rst",
-  "CHANGES.rst",
+  "CHANGELOG.rst",
+  "CI/requirements_upstream.txt",
   "CITATION.cff",
   "CONTRIBUTING.rst",
   "LICENSE",
@@ -179,7 +200,6 @@ include = [
   "docs/conf.py",
   "docs/make.bat",
   "docs/notebooks/_finder.py",
-  "requirements_upstream.txt",
   "tests/**/*.py",
   "tests/**/*.txt",
   "tox.ini",
@@ -192,6 +212,7 @@ exclude = [
   "**/*.py[co]",
   "**/__pycache__",
   ".*",
+  "CI/requirements_ci.txt",
   "docs/_*",
   "docs/modules.rst",
   "docs/paper/*",
@@ -253,27 +274,34 @@ line-length = 150
 target-version = "py39"
 exclude = [
   ".git",
-  "docs",
   "build",
   ".eggs"
+]
+extend-include = [
+  "*.ipynb" # Include notebooks
 ]
 
 [tool.ruff.format]
 line-ending = "auto"
 
 [tool.ruff.lint]
-ignore = [
-  "D205",
-  "D400",
-  "D401"
+extend-select = [
+  "RUF022" # unsorted-dunder-all
 ]
+ignore = [
+  "D205", # blank-line-after-summary
+  "D400", # ends-in-period
+  "D401" # non-imperative-mood
+]
+preview = true
 select = [
-  "C9",
-  "D",
-  "E",
-  "F",
-  "N802",
-  "W"
+  "C90", # mccabe-complexity
+  "D", # docstrings
+  "E", # pycodestyle errors
+  "F", # pyflakes
+  "N802", # invalid-function-name
+  "S", # bandit
+  "W" # pycodestyle warnings
 ]
 
 [tool.ruff.lint.flake8-bandit]
@@ -291,7 +319,7 @@ xarray = "xr"
 known-first-party = ["xclim"]
 case-sensitive = true
 detect-same-package = false
-lines-after-imports = 1
+lines-after-imports = 2
 no-lines-before = ["future", "standard-library"]
 
 [tool.ruff.lint.mccabe]
@@ -299,7 +327,7 @@ max-complexity = 20
 
 [tool.ruff.lint.per-file-ignores]
 "docs/*.py" = ["D100", "D101", "D102", "D103"]
-"tests/*.py" = ["D100", "D101", "D102", "D103", "N802"]
+"tests/**/*test*.py" = ["D100", "D101", "D102", "D103", "N802", "S101"]
 "xclim/**/__init__.py" = ["F401", "F403"]
 "xclim/core/indicator.py" = ["D214", "D405", "D406", "D407", "D411"]
 "xclim/core/locales.py" = ["E501", "W505"]

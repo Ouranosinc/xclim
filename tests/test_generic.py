@@ -6,7 +6,7 @@ import numpy as np
 import pytest
 import xarray as xr
 
-from xclim.core.calendar import date_range, doy_to_days_since, select_time
+from xclim.core.calendar import doy_to_days_since, select_time
 from xclim.indices import generic
 
 K2C = 273.15
@@ -108,8 +108,12 @@ class TestFlowGeneric:
 class TestAggregateBetweenDates:
     def test_calendars(self):
         # generate test DataArray
-        time_std = date_range("1991-07-01", "1993-06-30", freq="D", calendar="standard")
-        time_365 = date_range("1991-07-01", "1993-06-30", freq="D", calendar="noleap")
+        time_std = xr.date_range(
+            "1991-07-01", "1993-06-30", freq="D", calendar="standard"
+        )
+        time_365 = xr.date_range(
+            "1991-07-01", "1993-06-30", freq="D", calendar="noleap"
+        )
         data_std = xr.DataArray(
             np.ones((time_std.size, 4)),
             dims=("time", "lon"),
@@ -159,13 +163,15 @@ class TestAggregateBetweenDates:
 
     def test_time_length(self):
         # generate test DataArray
-        time_data = date_range(
+        time_data = xr.date_range(
             "1991-01-01", "1993-12-31", freq="D", calendar="standard"
         )
-        time_start = date_range(
+        time_start = xr.date_range(
             "1990-01-01", "1992-12-31", freq="D", calendar="standard"
         )
-        time_end = date_range("1991-01-01", "1993-12-31", freq="D", calendar="standard")
+        time_end = xr.date_range(
+            "1991-01-01", "1993-12-31", freq="D", calendar="standard"
+        )
         data = xr.DataArray(
             np.ones((time_data.size, 4)),
             dims=("time", "lon"),
@@ -206,7 +212,7 @@ class TestAggregateBetweenDates:
 
     def test_frequency(self):
         # generate test DataArray
-        time_data = date_range(
+        time_data = xr.date_range(
             "1991-01-01", "1992-05-31", freq="D", calendar="standard"
         )
         data = xr.DataArray(
@@ -280,7 +286,7 @@ class TestAggregateBetweenDates:
 
     def test_day_of_year_strings(self):
         # generate test DataArray
-        time_data = date_range(
+        time_data = xr.date_range(
             "1990-08-01", "1995-06-01", freq="D", calendar="standard"
         )
         data = xr.DataArray(
@@ -519,7 +525,12 @@ class TestGenericCountingIndices:
 class TestTimeSelection:
     @staticmethod
     def series(start, end, calendar):
-        time = date_range(start, end, calendar=calendar)
+        time = xr.date_range(
+            start,
+            end,
+            calendar=calendar.replace("default", "proleptic_gregorian"),
+            use_cftime=(calendar != "default"),
+        )
         return xr.DataArray([1] * time.size, dims=("time",), coords={"time": time})
 
     def test_select_time_month(self):

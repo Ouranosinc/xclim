@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import types
 from collections.abc import Sequence
+from typing import cast
 
 import dask.array as dsk
 import numpy as np
@@ -27,6 +28,7 @@ __all__ = [
     "adapt_freq",
     "escore",
     "from_additive_space",
+    "grouped_time_indexes",
     "jitter",
     "jitter_over_thresh",
     "jitter_under_thresh",
@@ -584,14 +586,12 @@ def to_additive_space(
                 float
             )
 
-    from typing import cast
-
     with xr.set_options(keep_attrs=True), np.errstate(divide="ignore"):
         if trans == "log":
             out = cast(xr.DataArray, np.log(data - lower_bound_array))
-        elif trans == "logit":
+        elif trans == "logit" and upper_bound is not None:
             data_prime = (data - lower_bound_array) / (
-                upper_bound_array - lower_bound_array
+                upper_bound_array - lower_bound_array  # pylint: disable=E0606
             )
             out = cast(xr.DataArray, np.log(data_prime / (1 - data_prime)))
         else:
@@ -717,7 +717,9 @@ def from_additive_space(
         elif trans == "logit":
             out_prime = 1 / (1 + np.exp(-data))
             out = (
-                out_prime * (upper_bound_array - lower_bound_array) + lower_bound_array
+                out_prime
+                * (upper_bound_array - lower_bound_array)  # pylint: disable=E0606
+                + lower_bound_array
             )
         else:
             raise NotImplementedError("`trans` must be one of 'log' or 'logit'.")
@@ -821,3 +823,65 @@ def unstack_variables(da: xr.DataArray, dim: str | None = None) -> xr.Dataset:
                 ds[var.item()].attrs[name[1:]] = attr
 
     return ds
+
+
+def grouped_time_indexes(times, group):
+    """Time indexes for every group blocks
+
+    Time indexes can be used to implement a pseudo-"numpy.groupies" approach to grouping.
+
+    Parameters
+    ----------
+    times : xr.DataArray
+        Time dimension in the dataset of interest.
+    group : str or Grouper
+        Grouping information, see base.Grouper
+
+    Returns
+    -------
+    g_idxs : xr.DataArray
+        Time indexes of the blocks (only using `group.name` and not `group.window`).
+    gw_idxs : xr.DataArray
+        Time indexes of the blocks (built with a rolling window of `group.window` if any).
+    """
+
+    def _get_group_complement(da, group):
+        # complement of "dayofyear": "year", etc.
+        gr = group if isinstance(group, str) else group.name
+        if gr == "time.dayofyear":
+            return da.time.dt.year
+        if gr == "time.month":
+            return da.time.dt.strftime("%Y-%d")
+
+    # does not work with group == "time.month"
+    group = group if isinstance(group, Grouper) else Grouper(group)
+    gr, win = group.name, group.window
+    # get time indices (0,1,2,...) for each block
+    timeind = xr.DataArray(np.arange(times.size), coords={"time": times})
+    win_dim0, win_dim = (
+        get_temp_dimname(timeind.dims, lab) for lab in ["win_dim0", "win_dim"]
+    )
+    if gr == "time.dayofyear":
+        # time indices for each block with window = 1
+        g_idxs = timeind.groupby(gr).apply(
+            lambda da: da.assign_coords(time=_get_group_complement(da, gr)).rename(
+                {"time": "year"}
+            )
+        )
+        # time indices for each block with general window
+        da = timeind.rolling(time=win, center=True).construct(window_dim=win_dim0)
+        gw_idxs = da.groupby(gr).apply(
+            lambda da: da.assign_coords(time=_get_group_complement(da, gr)).stack(
+                {win_dim: ["time", win_dim0]}
+            )
+        )
+        gw_idxs = gw_idxs.transpose(..., win_dim)
+    elif gr == "time":
+        gw_idxs = timeind.rename({"time": win_dim}).expand_dims({win_dim0: [-1]})
+        g_idxs = gw_idxs.copy()
+    else:
+        raise NotImplementedError(f"Grouping {gr} not implemented.")
+    gw_idxs.attrs["group"] = (gr, win)
+    gw_idxs.attrs["time_dim"] = win_dim
+    gw_idxs.attrs["group_dim"] = [d for d in g_idxs.dims if d != win_dim][0]
+    return g_idxs, gw_idxs

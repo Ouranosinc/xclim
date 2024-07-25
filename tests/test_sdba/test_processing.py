@@ -5,7 +5,6 @@ import pandas as pd
 import pytest
 import xarray as xr
 
-from xclim.core.calendar import date_range
 from xclim.core.units import units
 from xclim.sdba.adjustment import EmpiricalQuantileMapping
 from xclim.sdba.base import Grouper
@@ -130,7 +129,7 @@ def test_adapt_freq_add_dims(use_dask, random):
     with xr.set_options(keep_attrs=True):
         prsim = xr.where(pr < 20, pr / 20, pr)
         prref = xr.where(pr < 10, pr / 20, pr)
-    sim_ad, pth, dP0 = adapt_freq(prref, prsim, thresh="1 mm d-1", group=group)
+    sim_ad, pth, _dP0 = adapt_freq(prref, prsim, thresh="1 mm d-1", group=group)
     assert set(sim_ad.dims) == set(prsim.dims)
     assert "lat" not in pth.dims
 
@@ -138,7 +137,7 @@ def test_adapt_freq_add_dims(use_dask, random):
     with xr.set_options(keep_attrs=True):
         prsim = xr.where(pr < 20, pr / 20, pr)
         prref = xr.where(pr < 10, pr / 20, pr)
-    sim_ad, pth, dP0 = adapt_freq(prref, prsim, thresh="1 mm d-1", group=group)
+    sim_ad, pth, _dP0 = adapt_freq(prref, prsim, thresh="1 mm d-1", group=group)
     assert set(sim_ad.dims) == set(prsim.dims)
 
 
@@ -188,8 +187,8 @@ def test_reordering():
 
 def test_reordering_with_window():
     time = list(
-        date_range("2000-01-01", "2000-01-04", freq="D", calendar="noleap")
-    ) + list(date_range("2001-01-01", "2001-01-04", freq="D", calendar="noleap"))
+        xr.date_range("2000-01-01", "2000-01-04", freq="D", calendar="noleap")
+    ) + list(xr.date_range("2001-01-01", "2001-01-04", freq="D", calendar="noleap"))
 
     x = xr.DataArray(
         np.arange(1, 9, 1),

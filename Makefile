@@ -62,6 +62,7 @@ lint: ## check style with flake8 and black
 	blackdoc --check --exclude=xclim/indices/__init__.py xclim
 	blackdoc --check docs
 	codespell xclim tests docs
+	deptry .
 	yamllint --config-file=.yamllint.yaml xclim
 
 test: ## run tests quickly with the default Python
@@ -115,7 +116,7 @@ install: clean ## install the package to the active Python's site-packages
 	python -m pip install --no-user .
 
 develop: clean ## install the package and development dependencies in editable mode to the active Python's site-packages
-	python -m pip install --no-user --editable ".[dev]"
+	python -m pip install --no-user --editable ".[dev,docs]"
 
 upstream: clean develop ## install the GitHub-based development branches of dependencies in editable mode to the active Python's site-packages
 	python -m pip install --no-user --requirement requirements_upstream.txt
