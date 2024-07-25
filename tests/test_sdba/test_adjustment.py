@@ -895,7 +895,8 @@ class TestOTC:
 
 class TestdOTC:
     @pytest.mark.parametrize("use_dask", [True, False])
-    def test_compare_sbck(self, random, series, use_dask):
+    @pytest.mark.parametrize("cov_factor", ["std", "cholesky"])
+    def test_compare_sbck(self, random, series, use_dask, cov_factor):
         pytest.importorskip("ot")
         ns = 1000
         u = random.random(ns)
@@ -952,12 +953,22 @@ class TestdOTC:
         sim = stack_variables(sim)
 
         scen = dOTC.adjust(
-            ref, hist, sim, bin_width=bin_width, jitter_inside_bins=False
+            ref,
+            hist,
+            sim,
+            bin_width=bin_width,
+            jitter_inside_bins=False,
+            cov_factor=cov_factor,
         )
 
         dotc_sbck = adjustment.SBCK_dOTC
         scen_sbck = dotc_sbck.adjust(
-            ref, hist, sim, multi_dim="multivar", bin_width=bin_width
+            ref,
+            hist,
+            sim,
+            multi_dim="multivar",
+            bin_width=bin_width,
+            cov_factor=cov_factor,
         )
 
         scen = scen.to_numpy().T

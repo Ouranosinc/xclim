@@ -1183,7 +1183,7 @@ def _dotc_adjust(
     if cov_factor == "cholesky":
         fact0 = u.eps_cholesky(np.cov(Y0, rowvar=False))
         fact1 = u.eps_cholesky(np.cov(X0, rowvar=False))
-        motion = motion @ fact0 @ np.linalg.inv(fact1)
+        motion = (fact0 @ np.linalg.inv(fact1) @ motion.T).T
     elif cov_factor == "std":
         fact0 = np.std(Y0, axis=0)
         fact1 = np.std(X0, axis=0)
