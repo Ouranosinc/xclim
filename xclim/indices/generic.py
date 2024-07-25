@@ -408,7 +408,7 @@ def spell_length_statistics(
 
     Here, a day is part of a spell if it is in any seven (7) day period where the minimum temperature is over 35°C. We then
     return the annual sum of the spell lengths, so the total number of days in such spells.
-
+    >>> from xclim.core.units import rate2amount
     >>> pram = rate2amount(pr)
     >>> spell_length_statistics(
     ...     pram,
