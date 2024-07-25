@@ -366,14 +366,16 @@ def open_dataset(threadsafe_data_dir):
     return _open_session_scoped_file
 
 
-@pytest.fixture(autouse=True, scope="session")
-def add_imports(xdoctest_namespace, threadsafe_data_dir) -> None:
+@pytest.fixture(autouse=True)
+def add_imports(doctest_namespace, threadsafe_data_dir) -> None:
     """Add these imports into the doctests scope."""
-    ns = xdoctest_namespace
-    ns["np"] = np
-    ns["xr"] = xclim.testing  # xr.open_dataset(...) -> xclim.testing.open_dataset(...)
-    ns["xclim"] = xclim
-    ns["open_dataset"] = partial(
+    doctest_namespace.update(helpers.add_example_file_paths(threadsafe_data_dir))
+    doctest_namespace["np"] = np
+    doctest_namespace["xr"] = (
+        xclim.testing
+    )  # xr.open_dataset(...) -> xclim.testing.open_dataset(...)
+    doctest_namespace["xclim"] = xclim
+    doctest_namespace["open_dataset"] = partial(
         _open_dataset,
         cache_dir=threadsafe_data_dir,
         branch=helpers.TESTDATA_BRANCH,
@@ -462,7 +464,7 @@ def lafferty_sriver_ds() -> xr.Dataset:
 
 
 @pytest.fixture(scope="session", autouse=True)
-def gather_session_data(threadsafe_data_dir, worker_id, xdoctest_namespace):
+def gather_session_data(threadsafe_data_dir, worker_id, doctest_namespace):
     """Gather testing data on pytest run.
 
     When running pytest with multiple workers, one worker will copy data remotely to _default_cache_dir while
@@ -498,7 +500,6 @@ def gather_session_data(threadsafe_data_dir, worker_id, xdoctest_namespace):
                     lockfile.unlink()
     shutil.copytree(_default_cache_dir, threadsafe_data_dir)
     helpers.generate_atmos(threadsafe_data_dir)
-    xdoctest_namespace.update(helpers.add_example_file_paths(threadsafe_data_dir))
 
 
 @pytest.fixture(scope="session", autouse=True)
