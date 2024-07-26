@@ -362,7 +362,7 @@ def _interp_on_quantiles_1D(newx, oldx, oldy, method, extrap):  # noqa: N802
         )
     else:  # extrap == 'nan'
         fill_value = np.nan
-        
+
     out[~mask_new] = interp1d(
         oldx[~mask_old],
         oldy[~mask_old],
@@ -370,7 +370,7 @@ def _interp_on_quantiles_1D(newx, oldx, oldy, method, extrap):  # noqa: N802
         bounds_error=False,
         fill_value=fill_value,
     )(newx[~mask_new])
-    
+
     return out
 
 
