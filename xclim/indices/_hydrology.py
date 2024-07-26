@@ -358,7 +358,9 @@ def low_flow_frequency(
     q: xr.DataArray, threshold_factor: float = 0.2, freq: str = "YS-OCT", **indexer
 ) -> xr.DataArray:
     """
-    Calculate the number of days in a given period with flows lower than a specified threshold. By default, the period is the water year starting on 1st October and ending on 30th September, as commonly defined in North America.
+    Calculate the number of days in a given period with flows lower than a specified threshold.
+    
+    By default, the period is the water year starting on 1st October and ending on 30th September, as commonly defined in North America.
 
     Parameters
     ----------
