@@ -101,7 +101,7 @@ def generate_atmos(cache_dir: Path):
 
         # Create a file in session scoped temporary directory
         atmos_file = cache_dir.joinpath("atmosds.nc")
-        ds.to_netcdf(atmos_file)
+        ds.to_netcdf(atmos_file, engine="h5netcdf")
 
 
 def populate_testing_data(
