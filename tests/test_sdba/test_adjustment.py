@@ -283,7 +283,7 @@ class TestDQM:
         np.testing.assert_array_almost_equal(mqm, int(kind == MULTIPLICATIVE), 1)
         np.testing.assert_allclose(p.transpose(..., "time"), ref_t, rtol=0.1, atol=0.5)
 
-    def test_cannon_and_from_ds(self, cannon_2015_rvs, tmp_path, random):
+    def test_cannon_and_from_ds(self, cannon_2015_rvs, tmp_path, open_dataset, random):
         ref, hist, sim = cannon_2015_rvs(15000, random=random)
 
         DQM = DetrendedQuantileMapping.train(ref, hist, kind="*", group="time")
@@ -295,7 +295,7 @@ class TestDQM:
         file = tmp_path / "test_dqm.nc"
         DQM.ds.to_netcdf(file, engine="h5netcdf")
 
-        ds = xr.open_dataset(file)
+        ds = open_dataset(file)
         DQM2 = DetrendedQuantileMapping.from_dataset(ds)
 
         xr.testing.assert_equal(DQM.ds, DQM2.ds)
