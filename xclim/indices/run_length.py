@@ -1498,10 +1498,10 @@ def lazy_indexing(
         # Renaming with no name to fix bug in xr 2024.01.0
         tmpname = get_temp_dimname(da.dims, "temp")
         da2 = xr.DataArray(da.data, dims=(tmpname,), name=None)
+        # Map blocks chunks aux coords. Remove them to avoid the alignment check load in `where`
+        index, auxcrd = split_auxiliary_coordinates(index)
         # for each chunk of index, take corresponding values from da
         out = index.map_blocks(_index_from_1d_array, args=(da2,)).rename(da.name)
-        # Map blocks chunks aux coords. Remove them to avoid the alignment check load in `where`
-        out, auxcrd = split_auxiliary_coordinates(out)
         # mask where index was NaN. Drop any auxiliary coord, they are already on `out`.
         # Chunked aux coord would have the same name on both sides and xarray will want to check if they are equal, which means loading them
         # making lazy_indexing not lazy. same issue as above
