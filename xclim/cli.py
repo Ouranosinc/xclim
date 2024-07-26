@@ -413,6 +413,11 @@ class XclimCli(click.MultiCommand):
     help="Chunks to use when opening the input dataset(s). "
     "Given as <dim1>:num,<dim2:num>. Ex: time:365,lat:168,lon:150.",
 )
+@click.option(
+    "--engine",
+    help="Engine to use when opening the input dataset(s). "
+    "If not specified, 'h5netcdf' is used. Other options are 'scipy' and 'netcdf4' (requires python-netcdf4).",
+)
 @click.pass_context
 def cli(ctx, **kwargs):
     """Entry point for the command line interface.
