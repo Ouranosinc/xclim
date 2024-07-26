@@ -186,7 +186,7 @@ def test_indicator_chain(tas_series, tmp_path):
     input_file = tmp_path / "tas.nc"
     output_file = tmp_path / "out.nc"
 
-    tas.to_netcdf(input_file)
+    tas.to_netcdf(input_file, engine="h5netcdf")
 
     runner = CliRunner()
     results = runner.invoke(
