@@ -384,5 +384,5 @@ def low_flow_frequency(
     mean_flow = q.mean(dim="time")
     threshold = threshold_factor * mean_flow
     sel = select_time(q, **indexer)
-    out = threshold_count(q, "<", threshold, freq=freq)
+    out = threshold_count(sel, "<", threshold, freq=freq)
     return to_agg_units(out, q, "count")
