@@ -20,7 +20,7 @@ import pandas as pd
 import pytest
 import xarray as xr
 from numpy import __version__ as __numpy_version__
-from packaging.version import Parse
+from packaging.version import Version
 from pint import __versio__ as __pint_version__
 
 from xclim import indices as xci
@@ -141,7 +141,7 @@ class TestColdSpellFreq:
         out = xci.cold_spell_frequency(da, thresh="-10. C", freq="ME")
         np.testing.assert_array_equal(out, [1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0])
         # FIXME: Confirm these expected outputs
-        if Parse(__numpy_version__) < Parse("2.0.0"):
+        if Version(__numpy_version__) < Version("2.0.0"):
             assert out.units == ""
         else:
             assert out.units == "1"
@@ -149,7 +149,7 @@ class TestColdSpellFreq:
         out = xci.cold_spell_frequency(da, thresh="-10. C", freq="YS")
         np.testing.assert_array_equal(out, 3)
         # FIXME: Confirm these expected outputs
-        if Parse(__numpy_version__) < Parse("2.0.0"):
+        if Version(__numpy_version__) < Version("2.0.0"):
             assert out.units == ""
         else:
             assert out.units == "1"
@@ -243,7 +243,7 @@ class TestCoolingDegreeDays:
         cdd = xci.cooling_degree_days(a)
         assert cdd == 0
         # FIXME: Confirm these expected outputs
-        if Parse(__pint_version__) < Parse("0.24.1"):
+        if Version(__pint_version__) < Version("0.24.1"):
             assert cdd.units == "K d"
         else:
             assert cdd.units == "d K"
@@ -922,7 +922,7 @@ class TestLastSpringFrost:
             assert attr in lsf.attrs.keys()
 
         # FIXME: Confirm these expected outputs
-        if Parse(__numpy_version__) < Parse("2.0.0"):
+        if Version(__numpy_version__) < Version("2.0.0"):
             assert lsf.attrs["units"] == ""
         else:
             assert lsf.attrs["units"] == "1"
@@ -949,7 +949,7 @@ class TestFirstDayBelow:
             assert attr in fdb.attrs.keys()
 
         # FIXME: Confirm these expected outputs
-        if Parse(__numpy_version__) < Parse("2.0.0"):
+        if Version(__numpy_version__) < Version("2.0.0"):
             assert fdb.attrs["units"] == ""
         else:
             assert fdb.attrs["units"] == "1"
@@ -986,7 +986,7 @@ class TestFirstDayAbove:
             assert attr in fda.attrs.keys()
 
         # FIXME: Confirm these expected outputs
-        if Parse(__numpy_version__) < Parse("2.0.0"):
+        if Version(__numpy_version__) < Version("2.0.0"):
             assert fda.attrs["units"] == ""
         else:
             assert fda.attrs["units"] == "1"
@@ -1017,7 +1017,7 @@ class TestFirstDayAbove:
             assert attr in out.attrs.keys()
 
         # FIXME: Confirm these expected outputs
-        if Parse(__numpy_version__) < Parse("2.0.0"):
+        if Version(__numpy_version__) < Version("2.0.0"):
             assert out.attrs["units"] == ""
         else:
             assert out.attrs["units"] == "1"
@@ -1110,7 +1110,7 @@ class TestGrowingSeasonStart:
             assert attr in out.attrs.keys()
 
         # FIXME: Confirm these expected outputs
-        if Parse(__numpy_version__) < Parse("2.0.0"):
+        if Version(__numpy_version__) < Version("2.0.0"):
             assert out.attrs["units"] == ""
         else:
             assert out.attrs["units"] == "1"
@@ -1229,7 +1229,7 @@ class TestFrostFreeSeasonStart:
             assert attr in out.attrs.keys()
 
         # FIXME: Confirm these expected outputs
-        if Parse(__numpy_version__) < Parse("2.0.0"):
+        if Version(__numpy_version__) < Version("2.0.0"):
             assert out.attrs["units"] == ""
         else:
             assert out.attrs["units"] == "1"
@@ -1268,7 +1268,7 @@ class TestFrostFreeSeasonEnd:
             assert attr in gs_end.attrs.keys()
 
         # FIXME: Confirm these expected outputs
-        if Parse(__numpy_version__) < Parse("2.0.0"):
+        if Version(__numpy_version__) < Version("2.0.0"):
             assert gs_end.attrs["units"] == ""
         else:
             assert gs_end.attrs["units"] == "1"
@@ -2783,7 +2783,7 @@ def test_degree_days_exceedance_date(tas_series):
         assert attr in out.attrs.keys()
 
     # FIXME: Confirm these expected outputs
-    if Parse(__numpy_version__) < Parse("2.0.0"):
+    if Version(__numpy_version__) < Version("2.0.0"):
         assert out.attrs["units"] == ""
     else:
         assert out.attrs["units"] == "1"
@@ -2828,7 +2828,7 @@ def test_first_snowfall(prsn_series, prsnd_series):
     for attr in ["units", "is_dayofyear", "calendar"]:
         assert attr in out.attrs.keys()
     # FIXME: Confirm these expected outputs
-    if Parse(__numpy_version__) < Parse("2.0.0"):
+    if Version(__numpy_version__) < Version("2.0.0"):
         assert out.attrs["units"] == ""
     else:
         assert out.attrs["units"] == "1"
@@ -2853,7 +2853,7 @@ def test_first_snowfall(prsn_series, prsnd_series):
     for attr in ["units", "is_dayofyear", "calendar"]:
         assert attr in out.attrs.keys()
     # FIXME: Confirm these expected outputs
-    if Parse(__numpy_version__) < Parse("2.0.0"):
+    if Version(__numpy_version__) < Version("2.0.0"):
         assert out.attrs["units"] == ""
     else:
         assert out.attrs["units"] == "1"
@@ -2995,7 +2995,7 @@ class TestSnowCover:
             assert attr in out.attrs.keys()
 
         # FIXME: Confirm these expected outputs
-        if Parse(__numpy_version__) < Parse("2.0.0"):
+        if Version(__numpy_version__) < Version("2.0.0"):
             assert out.attrs["units"] == ""
         else:
             assert out.attrs["units"] == "1"
@@ -3009,7 +3009,7 @@ class TestSnowCover:
             assert attr in out.attrs.keys()
 
         # FIXME: Confirm these expected outputs
-        if Parse(__numpy_version__) < Parse("2.0.0"):
+        if Version(__numpy_version__) < Version("2.0.0"):
             assert out.attrs["units"] == ""
         else:
             assert out.attrs["units"] == "1"
@@ -3037,7 +3037,7 @@ class TestSnowCover:
             assert attr in out.attrs.keys()
 
         # FIXME: Confirm these expected outputs
-        if Parse(__numpy_version__) < Parse("2.0.0"):
+        if Version(__numpy_version__) < Version("2.0.0"):
             assert out.attrs["units"] == ""
         else:
             assert out.attrs["units"] == "1"

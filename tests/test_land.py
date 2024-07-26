@@ -5,7 +5,7 @@ from __future__ import annotations
 import numpy as np
 import xarray as xr
 from numpy import __version__ as __numpy_version__
-from packaging.version import Parse
+from packaging.version import Version
 
 from xclim import land
 
@@ -14,7 +14,7 @@ def test_base_flow_index(ndq_series):
     out = land.base_flow_index(ndq_series, freq="YS")
 
     # FIXME: Confirm these expected outputs
-    if Parse(__numpy_version__) < Parse("2.0.0"):
+    if Version(__numpy_version__) < Version("2.0.0"):
         assert out.attrs["units"] == ""
     else:
         assert out.attrs["units"] == "1"
@@ -26,7 +26,7 @@ def test_rb_flashiness_index(ndq_series):
     out = land.base_flow_index(ndq_series, freq="YS")
 
     # FIXME: Confirm these expected outputs
-    if Parse(__numpy_version__) < Parse("2.0.0"):
+    if Version(__numpy_version__) < Version("2.0.0"):
         assert out.attrs["units"] == ""
     else:
         assert out.attrs["units"] == "1"
@@ -38,7 +38,7 @@ def test_qdoy_max(ndq_series, q_series):
     out = land.doy_qmax(ndq_series, freq="YS", season="JJA")
 
     # FIXME: Confirm these expected outputs
-    if Parse(__numpy_version__) < Parse("2.0.0"):
+    if Version(__numpy_version__) < Version("2.0.0"):
         assert out.attrs["units"] == ""
     else:
         assert out.attrs["units"] == "1"

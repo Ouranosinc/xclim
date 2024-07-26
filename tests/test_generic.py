@@ -6,7 +6,7 @@ import numpy as np
 import pytest
 import xarray as xr
 from numpy import __version__ as __numpy_version__
-from packaging.version import Parse
+from packaging.version import Version
 
 from xclim.core.calendar import doy_to_days_since, select_time
 from xclim.indices import generic
@@ -104,7 +104,7 @@ class TestFlowGeneric:
             for attr in ["units", "is_dayofyear", "calendar"]:
                 assert attr in da.attrs.keys()
             # FIXME: Confirm these expected outputs
-            if Parse(__numpy_version__) < Parse("2.0.0"):
+            if Version(__numpy_version__) < Version("2.0.0"):
                 assert da.attrs["units"] == ""
             else:
                 assert da.attrs["units"] == "1"

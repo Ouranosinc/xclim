@@ -3,7 +3,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 from numpy import __version__ as __numpy_version__
-from packaging.version import Parse
+from packaging.version import Version
 
 from xclim import land
 from xclim.core.utils import ValidationError
@@ -49,7 +49,7 @@ class TestContinuousSnowDepthSeason:
         out = land.snd_season_start(snd)
 
         # FIXME: Confirm these expected outputs
-        if Parse(__numpy_version__) < Parse("2.0.0"):
+        if Version(__numpy_version__) < Version("2.0.0"):
             assert out.units == ""
         else:
             assert out.units == "1"
@@ -59,7 +59,7 @@ class TestContinuousSnowDepthSeason:
         out = land.snd_season_end(snd)
 
         # FIXME: Confirm these expected outputs
-        if Parse(__numpy_version__) < Parse("2.0.0"):
+        if Version(__numpy_version__) < Version("2.0.0"):
             assert out.units == ""
         else:
             assert out.units == "1"
@@ -83,7 +83,7 @@ class TestContinuousSnowWaterSeason:
         out = land.snw_season_start(snw)
 
         # FIXME: Confirm these expected outputs
-        if Parse(__numpy_version__) < Parse("2.0.0"):
+        if Version(__numpy_version__) < Version("2.0.0"):
             assert out.units == ""
         else:
             assert out.units == "1"
@@ -93,7 +93,7 @@ class TestContinuousSnowWaterSeason:
         out = land.snw_season_end(snw)
 
         # FIXME: Confirm these expected outputs
-        if Parse(__numpy_version__) < Parse("2.0.0"):
+        if Version(__numpy_version__) < Version("2.0.0"):
             assert out.units == ""
         else:
             assert out.units == "1"

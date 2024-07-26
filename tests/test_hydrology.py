@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import numpy as np
 from numpy import __version__ as __numpy_version__
-from packaging.version import Parse
+from packaging.version import Version
 
 from xclim import indices as xci
 
@@ -43,7 +43,7 @@ class TestSnwMaxDoy:
         out = xci.snw_max_doy(snw, freq="YS")
         np.testing.assert_array_equal(out, [11, np.nan])
         # FIXME: Confirm these expected outputs
-        if Parse(__numpy_version__) < Parse("2.0.0"):
+        if Version(__numpy_version__) < Version("2.0.0"):
             assert out.attrs["units"] == ""
         else:
             assert out.attrs["units"] == "1"
