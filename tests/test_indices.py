@@ -3402,7 +3402,7 @@ def test_water_budget(pr_series, evspsblpot_series):
             3,
             3,
             7,
-            (2, 12, 20, 12, 20),
+            (1, 12, 20, 12, 20),
         ),
         (
             [0.01] * 6
@@ -3693,7 +3693,7 @@ def test_hardiness_zones(tasmin_series, tmin, meth, zone):
 
 
 @pytest.mark.parametrize(
-    "pr,thresh1,thresh2,window,outs",
+    "pr,threshmin,threshsum,window,outs",
     [
         (
             [1.01] * 6
@@ -3706,72 +3706,84 @@ def test_hardiness_zones(tasmin_series, tmin, meth, zone):
             3,
             3,
             7,
-            (3, 0, 20, 0, 20),
+            (1, 20, 0, 20, 0),
         ),
         (
-            [0.01] * 6
-            + [1.01] * 3
-            + [0.51] * 2
-            + [0.75] * 2
-            + [0.51]
-            + [0.01] * 3
-            + [0.01] * 3,
+            [0.01] * 40 + [1.01] * 10 + [0.01] * 40 + [1.01] * 20 + [0.01] * 40,
+            1,
+            2,
             3,
-            3,
-            7,
-            (1, 6, 20, 4, 20),
+            (2, 34, 30, 22, 20),
         ),
-        ([3.01] * 358 + [0.99] * 14 + [3.01] * 358, 1, 14, 14, (1, 0, 0, 0, 0)),
+        (
+            [0.01] * 40 + [1.01] * 10 + [0.01] * 40 + [2.01] * 20 + [0.01] * 40,
+            2,
+            14,
+            14,
+            (1, 34, 20, 34, 20),
+        ),
     ],
 )
-def test_wet_spell(pr_series, pr, thresh1, thresh2, window, outs):
+def test_wet_spell(pr_series, pr, threshmin, threshsum, window, outs):
     pr = pr_series(np.array(pr), start="1981-01-01", units="mm/day")
 
-    out_events, out_total_d_sum, out_total_d_max, out_max_d_sum, out_max_d_max = outs
+    out_events, out_total_d_sum, out_total_d_min, out_max_d_sum, out_max_d_min = outs
 
     events = xci.wet_spell_frequency(
-        pr, thresh=f"{thresh1} mm", window=window, freq="YS"
+        pr, thresh=f"{threshsum} mm", window=window, freq="YS", op="sum"
     )
     total_d_sum = xci.wet_spell_total_length(
         pr,
-        thresh=f"{thresh2} mm",
+        thresh=f"{threshsum} mm",
         window=window,
         op="sum",
         freq="YS",
     )
-    total_d_max = xci.wet_spell_total_length(
-        pr, thresh=f"{thresh1} mm", window=window, op="max", freq="YS"
+    total_d_min = xci.wet_spell_total_length(
+        pr, thresh=f"{threshmin} mm", window=window, op="min", freq="YS"
     )
     max_d_sum = xci.wet_spell_max_length(
         pr,
-        thresh=f"{thresh2} mm",
+        thresh=f"{threshsum} mm",
         window=window,
         op="sum",
         freq="YS",
     )
-    max_d_max = xci.wet_spell_max_length(
-        pr, thresh=f"{thresh1} mm", window=window, op="max", freq="YS"
+    max_d_min = xci.wet_spell_max_length(
+        pr, thresh=f"{threshmin} mm", window=window, op="min", freq="YS"
     )
     np.testing.assert_allclose(events[0], [out_events], rtol=1e-1)
     np.testing.assert_allclose(total_d_sum[0], [out_total_d_sum], rtol=1e-1)
-    np.testing.assert_allclose(total_d_max[0], [out_total_d_max], rtol=1e-1)
+    np.testing.assert_allclose(total_d_min[0], [out_total_d_min], rtol=1e-1)
     np.testing.assert_allclose(max_d_sum[0], [out_max_d_sum], rtol=1e-1)
-    np.testing.assert_allclose(max_d_max[0], [out_max_d_max], rtol=1e-1)
+    np.testing.assert_allclose(max_d_min[0], [out_max_d_min], rtol=1e-1)
 
 
 def test_wet_spell_total_length_indexer(pr_series):
-    pr = pr_series([1] * 5 + [0] * 10 + [1] * 350, start="1900-01-01", units="mm/d")
+    pr = pr_series([1.01] * 5 + [0] * 360, start="1901-01-01", units="mm/d")
     out = xci.wet_spell_total_length(
-        pr, window=7, op="sum", thresh="3 mm", freq="MS", date_bounds=("01-10", "12-31")
+        pr,
+        window=10,
+        op="sum",
+        thresh="5 mm",
+        freq="MS",
+        date_bounds=("01-08", "12-31"),
     )
+    # if indexing was done before spell finding, everything would be 0
     np.testing.assert_allclose(out, [3] + [0] * 11)
 
 
 def test_wet_spell_max_length_indexer(pr_series):
-    pr = pr_series([1] * 5 + [0] * 10 + [1] * 350, start="1900-01-01", units="mm/d")
+    pr = pr_series([1.01] * 5 + [0] * 360, start="1901-01-01", units="mm/d")
     out = xci.wet_spell_max_length(
-        pr, window=7, op="sum", thresh="3 mm", freq="MS", date_bounds=("01-10", "12-31")
+        pr,
+        window=10,
+        op="sum",
+        thresh="5 mm",
+        freq="MS",
+        date_bounds=("01-08", "12-31"),
     )
+    # if indexing was done before spell finding, everything would be 0
     np.testing.assert_allclose(out, [3] + [0] * 11)
 
 
@@ -3785,7 +3797,7 @@ def test_wet_spell_frequency_op(pr_series):
     test_max = xci.wet_spell_frequency(pr, thresh="1 mm", window=3, freq="MS", op="max")
 
     np.testing.assert_allclose(test_sum[0], [3], rtol=1e-1)
-    np.testing.assert_allclose(test_max[0], [4], rtol=1e-1)
+    np.testing.assert_allclose(test_max[0], [3], rtol=1e-1)
 
 
 class TestSfcWindMax:
