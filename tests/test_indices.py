@@ -21,7 +21,7 @@ import pytest
 import xarray as xr
 from numpy import __version__ as __numpy_version__
 from packaging.version import Version
-from pint import __versio__ as __pint_version__
+from pint import __version__ as __pint_version__
 
 from xclim import indices as xci
 from xclim.core.calendar import percentile_doy
