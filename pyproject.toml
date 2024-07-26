@@ -38,7 +38,6 @@ dependencies = [
   "cftime>=1.4.1",
   "click>=8.1",
   "dask[array]>=2.6",
-  "h5netcdf>=1.3.0",
   "jsonpickle",
   "numba",
   "numpy>=1.20.0",
@@ -66,13 +65,13 @@ dev = [
   "deptry ==0.17.0",
   "flake8 >=7.1.0",
   "flake8-rst-docstrings",
+  "h5netcdf>=1.3.0",
   "ipython",
   "isort ==5.13.2",
   "mypy",
   "nbconvert <7.14", # Pinned due to directive errors in sphinx. See: https://github.com/jupyter/nbconvert/issues/2092
   "nbqa >=1.8.2",
   "nbval >=0.11.0",
-  "netCDF4 >=1.4", # Needs to be unpinned for numpy v2.0 (requires v1.7.0+)
   "pandas-stubs >=2.2",
   "platformdirs >=3.2",
   "pooch",

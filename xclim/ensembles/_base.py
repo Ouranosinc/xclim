@@ -421,7 +421,6 @@ def _ens_align_datasets(
     """
     xr_kwargs.setdefault("chunks", "auto")
     xr_kwargs.setdefault("decode_times", False)
-    xr_kwargs.setdefault("engine", "h5netcdf")
 
     if isinstance(datasets, str):
         datasets = glob(datasets)

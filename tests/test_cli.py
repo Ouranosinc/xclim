@@ -111,8 +111,8 @@ def test_multi_input(tas_series, pr_series, tmp_path):
     pr_file = tmp_path / "multi_pr_in.nc"
     output_file = tmp_path / "out.nc"
 
-    tas.to_dataset().to_netcdf(tas_file, engine="h5netcdf")
-    pr.to_dataset().to_netcdf(pr_file, engine="h5netcdf")
+    tas.to_dataset().to_netcdf(tas_file)
+    pr.to_dataset().to_netcdf(pr_file)
 
     runner = CliRunner()
     results = runner.invoke(
@@ -128,7 +128,7 @@ def test_multi_input(tas_series, pr_series, tmp_path):
     )
     assert "Processing : solidprcptot" in results.output
 
-    out = xr.open_dataset(output_file, engine="h5netcdf")
+    out = xr.open_dataset(output_file)
     assert out.solidprcptot.sum() == 0
 
 
@@ -158,7 +158,7 @@ def test_renaming_variable(tas_series, tmp_path):
     input_file = tmp_path / "tas.nc"
     output_file = tmp_path / "out.nc"
     tas.name = "tas"
-    tas.to_netcdf(input_file, engine="h5netcdf")
+    tas.to_netcdf(input_file)
     with xclim.set_options(cf_compliance="warn"):
         runner = CliRunner()
         results = runner.invoke(
@@ -177,7 +177,7 @@ def test_renaming_variable(tas_series, tmp_path):
         assert "Processing : tn_mean" in results.output
         assert "100% Completed" in results.output
 
-    out = xr.open_dataset(output_file, engine="h5netcdf")
+    out = xr.open_dataset(output_file)
     assert out.tn_mean[0] == 1.0
 
 
@@ -186,7 +186,7 @@ def test_indicator_chain(tas_series, tmp_path):
     input_file = tmp_path / "tas.nc"
     output_file = tmp_path / "out.nc"
 
-    tas.to_netcdf(input_file, engine="h5netcdf")
+    tas.to_netcdf(input_file)
 
     runner = CliRunner()
     results = runner.invoke(
@@ -206,7 +206,7 @@ def test_indicator_chain(tas_series, tmp_path):
     assert "Processing : growing_degree_days" in results.output
     assert "100% Completed" in results.output
 
-    out = xr.open_dataset(output_file, engine="h5netcdf")
+    out = xr.open_dataset(output_file)
     assert out.tg_mean[0] == 1.0
     assert out.growing_degree_days[0] == 0
 
@@ -264,13 +264,13 @@ def test_suspicious_precipitation_flags(pr_series, tmp_path):
     input_file = tmp_path / "bad_pr.nc"
     output_file = tmp_path / "out.nc"
 
-    bad_pr.to_netcdf(input_file, engine="h5netcdf")
+    bad_pr.to_netcdf(input_file)
 
     runner = CliRunner()
     runner.invoke(
         cli, ["-i", str(input_file), "-o", str(output_file), "dataflags", "pr"]
     )
-    with xr.open_dataset(output_file, engine="h5netcdf") as ds:
+    with xr.open_dataset(output_file) as ds:
         for var in ds.data_vars:
             assert var
 

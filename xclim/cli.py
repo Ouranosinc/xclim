@@ -416,7 +416,7 @@ class XclimCli(click.MultiCommand):
 @click.option(
     "--engine",
     help="Engine to use when opening the input dataset(s). "
-    "If not specified, 'h5netcdf' is used. Other options are 'scipy' and 'netcdf4' (requires python-netcdf4).",
+    "If not specified, xarrat decides.",
 )
 @click.pass_context
 def cli(ctx, **kwargs):
@@ -468,12 +468,8 @@ def cli(ctx, **kwargs):
             for dim, num in map(lambda x: x.split(":"), kwargs["chunks"].split(","))
         }
 
-    if kwargs["engine"] is None:
-        kwargs["engine"] = "h5netcdf"
-
     kwargs["xr_kwargs"] = {
         "chunks": kwargs["chunks"] or {},
-        "engine": kwargs["engine"],
     }
     ctx.obj = kwargs
 
@@ -486,7 +482,9 @@ def write_file(ctx, *args, **kwargs):
         if ctx.obj["verbose"]:
             click.echo(f"Writing to file {ctx.obj['output']}")
         with ProgressBar():
-            r = ctx.obj["ds_out"].to_netcdf(ctx.obj["output"], compute=False)
+            r = ctx.obj["ds_out"].to_netcdf(
+                ctx.obj["output"], engine=kwargs["engine"], compute=False
+            )
             if ctx.obj["dask_nthreads"] is not None:
                 progress(r.data)
             r.compute()
