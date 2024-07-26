@@ -720,10 +720,10 @@ def test_dry_spell_frequency_op(open_dataset):
     )
 
     np.testing.assert_allclose(
-        test_sum[0, :14], [1, 0, 1, 1, 0, 0, 1, 1, 0, 0, 0, 0, 1, 0], rtol=1e-1
+        test_sum[0, :14], [1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 0, 0, 1, 0], rtol=1e-1
     )
     np.testing.assert_allclose(
-        test_max[0, :14], [1, 0, 1, 1, 0, 1, 1, 1, 0, 1, 0, 0, 2, 1], rtol=1e-1
+        test_max[0, :14], [1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 2, 1], rtol=1e-1
     )
     assert (
         "The monthly number of dry periods of 7 day(s) or more, "

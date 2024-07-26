@@ -9,6 +9,7 @@ import itertools
 from typing import Callable
 from warnings import warn
 
+import bottleneck as bn
 import numpy as np
 import xarray as xr
 from boltons.funcutils import wraps
@@ -310,6 +311,39 @@ def add_cyclic_bounds(
     return ensure_chunk_size(qmf, **{att: -1})
 
 
+def _interp_on_quantiles_1D_multi(newxs, oldx, oldy, method, extrap):  # noqa: N802
+    # Perform multiple interpolations with a single call of interp1d.
+    # This should be used when `oldx` is common for many data arrays (`newxs`)
+    # that we want to interpolate on. For instance, with QuantileDeltaMapping, we simply
+    # interpolate on quantiles that always remain the same.
+    if len(newxs.shape) == 1:
+        return _interp_on_quantiles_1D(newxs, oldx, oldy, method, extrap)
+    mask_old = np.isnan(oldy) | np.isnan(oldx)
+    if extrap == "constant":
+        fill_value = (
+            oldy[~np.isnan(oldy)][0],
+            oldy[~np.isnan(oldy)][-1],
+        )
+    else:  # extrap == 'nan'
+        fill_value = np.NaN
+
+    finterp1d = interp1d(
+        oldx[~mask_old],
+        oldy[~mask_old],
+        kind=method,
+        bounds_error=False,
+        fill_value=fill_value,
+    )
+
+    out = np.zeros_like(newxs)
+    for ii in range(newxs.shape[0]):
+        mask_new = np.isnan(newxs[ii, :])
+        y1 = newxs[ii, :].copy() * np.NaN
+        y1[~mask_new] = finterp1d(newxs[ii, ~mask_new])
+        out[ii, :] = y1.flatten()
+    return out
+
+
 def _interp_on_quantiles_1D(newx, oldx, oldy, method, extrap):  # noqa: N802
     mask_new = np.isnan(newx)
     mask_old = np.isnan(oldy) | np.isnan(oldx)
@@ -328,7 +362,7 @@ def _interp_on_quantiles_1D(newx, oldx, oldy, method, extrap):  # noqa: N802
         )
     else:  # extrap == 'nan'
         fill_value = np.nan
-
+        
     out[~mask_new] = interp1d(
         oldx[~mask_old],
         oldy[~mask_old],
@@ -336,6 +370,7 @@ def _interp_on_quantiles_1D(newx, oldx, oldy, method, extrap):  # noqa: N802
         bounds_error=False,
         fill_value=fill_value,
     )(newx[~mask_new])
+    
     return out
 
 
@@ -530,6 +565,14 @@ def rank(
             .drop_vars([d for d in dims if d not in da_coords])
         )
     return rnk
+
+
+def _rank_bn(arr, axis=None):
+    """Ranking on a specific axis"""
+    rnk = bn.nanrankdata(arr, axis=axis)
+    rnk = rnk / np.nanmax(rnk, axis=axis, keepdims=True)
+    mx, mn = 1, np.nanmin(rnk, axis=axis, keepdims=True)
+    return mx * (rnk - mn) / (mx - mn)
 
 
 def pc_matrix(arr: np.ndarray | dsk.Array) -> np.ndarray | dsk.Array:
@@ -856,9 +899,11 @@ def rand_rot_matrix(
     num = np.diag(R)
     denum = np.abs(num)
     lam = np.diag(num / denum)  # "lambda"
-    return xr.DataArray(
-        Q @ lam, dims=(dim, new_dim), coords={dim: crd, new_dim: crd2}
-    ).astype("float32")
+    return (
+        xr.DataArray(Q @ lam, dims=(dim, new_dim), coords={dim: crd, new_dim: crd2})
+        .astype("float32")
+        .assign_attrs({"crd_dim": dim, "new_dim": new_dim})
+    )
 
 
 def copy_all_attrs(ds: xr.Dataset | xr.DataArray, ref: xr.Dataset | xr.DataArray):

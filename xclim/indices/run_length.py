@@ -1129,7 +1129,7 @@ def statistics_run_1d(arr: Sequence[bool], reducer: str, window: int) -> int:
     ----------
     arr : Sequence[bool]
         Input array (bool)
-    reducer : {'mean', 'sum', 'min', 'max', 'std'}
+    reducer : {"mean", "sum", "min", "max", "std", "count"}
         Reducing function name.
     window : int
         Minimal length of runs to be included in the statistics
@@ -1142,6 +1142,8 @@ def statistics_run_1d(arr: Sequence[bool], reducer: str, window: int) -> int:
     v, rl = rle_1d(arr)[:2]
     if not np.any(v) or np.all(v * rl < window):
         return 0
+    if reducer == "count":
+        return (v * rl >= window).sum()
     func = getattr(np, f"nan{reducer}")
     return func(np.where(v * rl >= window, rl, np.nan))
 
@@ -1358,9 +1360,14 @@ def lazy_indexing(
         da2 = xr.DataArray(da.data, dims=(tmpname,), name=None)
         # for each chunk of index, take corresponding values from da
         out = index.map_blocks(_index_from_1d_array, args=(da2,)).rename(da.name)
+        # Map blocks chunks aux coords. Replace them by non-chunked from the original array.
+        # This avoids unwanted loading of the aux coord in a resample.map, for example
+        for name, crd in out.coords.items():
+            if uses_dask(crd) and name in index.coords and index[name].size == crd.size:
+                out = out.assign_coords(**{name: index[name]})
         # mask where index was NaN. Drop any auxiliary coord, they are already on `out`.
         # Chunked aux coord would have the same name on both sides and xarray will want to check if they are equal, which means loading them
-        # making lazy_indexing not lazy.
+        # making lazy_indexing not lazy. same issue as above
         out = out.where(
             ~invalid.drop_vars(
                 [crd for crd in invalid.coords if crd not in invalid.dims]
