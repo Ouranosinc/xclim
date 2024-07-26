@@ -784,9 +784,9 @@ class TestStandardizedIndices:
 
         # Save the parameters to a file to test against that saving process may modify the netCDF file
         paramsfile = tmp_path / "params0.nc"
-        params.to_netcdf(paramsfile)
+        params.to_netcdf(paramsfile, engine="h5netcdf")
         params.close()
-        params = xr.open_dataset(paramsfile).__xarray_dataarray_variable__
+        params = open_dataset(paramsfile).__xarray_dataarray_variable__
 
         spei1 = xci.standardized_precipitation_evapotranspiration_index(
             wb.sel(time=slice("1998", "2000")), params=params

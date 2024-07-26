@@ -79,7 +79,7 @@ class TestEnsembleStats:
             ds["time"] = xr.decode_cf(ds).time
             ds_all.append(ds.groupby(ds.time.dt.month).mean("time", keep_attrs=True))
             ds.groupby(ds.time.dt.month).mean("time", keep_attrs=True).to_netcdf(
-                f1.joinpath(Path(n).name)
+                f1.joinpath(Path(n).name), engine="h5netcdf"
             )
         ens = ensembles.create_ensemble(ds_all)
 

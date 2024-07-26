@@ -111,8 +111,8 @@ def test_multi_input(tas_series, pr_series, tmp_path):
     pr_file = tmp_path / "multi_pr_in.nc"
     output_file = tmp_path / "out.nc"
 
-    tas.to_dataset().to_netcdf(tas_file)
-    pr.to_dataset().to_netcdf(pr_file)
+    tas.to_dataset().to_netcdf(tas_file, engine="h5netcdf")
+    pr.to_dataset().to_netcdf(pr_file, engine="h5netcdf")
 
     runner = CliRunner()
     results = runner.invoke(

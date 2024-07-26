@@ -293,7 +293,7 @@ class TestDQM:
         np.testing.assert_almost_equal(p.std(), 15.0, 0)
 
         file = tmp_path / "test_dqm.nc"
-        DQM.ds.to_netcdf(file)
+        DQM.ds.to_netcdf(file, engine="h5netcdf")
 
         ds = xr.open_dataset(file)
         DQM2 = DetrendedQuantileMapping.from_dataset(ds)
