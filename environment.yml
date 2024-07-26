@@ -52,7 +52,7 @@ dependencies:
   - nbsphinx
   - nbval >=0.11.0
   - nc-time-axis
-  - netCDF4 >=1.4,<1.7
+  - netCDF4 >=1.4  # Needs to be unpinned for numpy v2.0 (requires v1.7.0+)
   - notebook
   - pandas-stubs
   - platformdirs
