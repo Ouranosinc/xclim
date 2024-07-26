@@ -179,7 +179,7 @@ pep621_dev_dependency_groups = ["all", "dev", "docs"]
 
 [tool.deptry.per_rule_ignores]
 DEP001 = ["SBCK"]
-DEP002 = ["bottleneck", "pyarrow"]
+DEP002 = ["bottleneck", "h5netcdf", "pyarrow"]
 DEP004 = ["matplotlib", "pytest_socket"]
 
 [tool.flit.sdist]
