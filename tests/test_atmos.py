@@ -266,7 +266,7 @@ def test_wind_power_potential(atmosds):
     if Version(__numpy_version__) < Version("2.0.0"):
         assert out.attrs["units"] == ""
     else:
-        assert out.attrs["units"] == "dimensionless"
+        assert out.attrs["units"] == "1"
     assert (out >= 0).all()
     assert (out <= 1).all()
 

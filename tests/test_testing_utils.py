@@ -78,7 +78,7 @@ class TestFileRequests:
     @pytest.mark.requires_internet
     def test_open_testdata(self):
         ds = utilities.open_dataset(
-            Path("cmip5/tas_Amon_CanESM2_rcp85_r1i1p1_200701-200712")
+            Path("cmip5/tas_Amon_CanESM2_rcp85_r1i1p1_200701-200712"), engine="h5netcdf"
         )
         assert ds.lon.size == 128
 

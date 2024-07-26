@@ -175,7 +175,7 @@ def _npdft_train(ref, hist, rots, quantiles, method, extrap, n_escore, standardi
             np.nanstd(hist, axis=-1, keepdims=True)
         )
     af_q = np.zeros((len(rots), ref.shape[0], len(quantiles)))
-    escores = np.zeros(len(rots)) * np.NaN
+    escores = np.zeros(len(rots)) * np.nan
     if n_escore > 0:
         ref_step, hist_step = (
             int(np.ceil(arr.shape[1] / n_escore)) for arr in [ref, hist]
@@ -708,7 +708,7 @@ def npdf_transform(ds: xr.Dataset, **kwargs) -> xr.Dataset:
     -------
     xr.Dataset
         Dataset with `scenh`, `scens` and `escores` DataArrays, where `scenh` and `scens` are `hist` and `sim`
-        respectively after adjustment according to `ref`. If `n_escore` is negative, `escores` will be filled with NaNs.
+        respectively after adjustment according to `ref`. If `n_escore` is negative, `escores` will be filled with nans.
     """
     ref = ds.ref.rename(time_hist="time")
     hist = ds.hist.rename(time_hist="time")
@@ -752,7 +752,7 @@ def npdf_transform(ds: xr.Dataset, **kwargs) -> xr.Dataset:
     if kwargs["n_escore"] >= 0:
         escores = xr.concat(escores, "iterations")
     else:
-        # All NaN, but with the proper shape.
+        # All nan, but with the proper shape.
         escores = (
             ref.isel({dim: 0, "time": 0}) * hist.isel({dim: 0, "time": 0})
         ).expand_dims(iterations=ds.iterations) * np.nan

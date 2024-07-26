@@ -463,7 +463,13 @@ def cli(ctx, **kwargs):
             for dim, num in map(lambda x: x.split(":"), kwargs["chunks"].split(","))
         }
 
-    kwargs["xr_kwargs"] = {"chunks": kwargs["chunks"] or {}}
+    if kwargs["engine"] is None:
+        kwargs["engine"] = "h5netcdf"
+
+    kwargs["xr_kwargs"] = {
+        "chunks": kwargs["chunks"] or {},
+        "engine": kwargs["engine"],
+    }
     ctx.obj = kwargs
 
 

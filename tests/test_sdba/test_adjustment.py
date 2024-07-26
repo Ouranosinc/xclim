@@ -91,9 +91,9 @@ class TestLoci:
         assert "Bias-adjusted with LOCI(" in p.attrs["history"]
 
         file = tmp_path / "test_loci.nc"
-        loci.ds.to_netcdf(file)
+        loci.ds.to_netcdf(file, engine="h5netcdf")
 
-        ds = xr.open_dataset(file)
+        ds = xr.open_dataset(file, engine="h5netcdf")
         loci2 = LOCI.from_dataset(ds)
 
         xr.testing.assert_equal(loci.ds, loci2.ds)
