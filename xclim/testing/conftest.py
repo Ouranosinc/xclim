@@ -1,7 +1,7 @@
 # noqa: D100
 # This file is the setup for the doctest suite.
 # This must be run using the following commands:
-# python -c "from xclim.testing import helpers; helpers.run_doctests()"
+# python -c "from xclim.testing.utils import run_doctests; run_doctests()"
 
 from __future__ import annotations
 
