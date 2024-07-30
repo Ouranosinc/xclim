@@ -135,7 +135,7 @@ def tasmax_below_tasmin(
 
     >>> from xclim.core.dataflags import tasmax_below_tasmin
     >>> ds = xr.open_dataset(path_to_tas_file)
-    >>> flagged = tasmax_below_tasmin(ds.tasmax, ds.tasmin)  # doctest: +SKIP
+    >>> flagged = tasmax_below_tasmin(ds.tasmax, ds.tasmin)
     """
     tasmax_lt_tasmin = _sanitize_attrs(tasmax < tasmin)
     description = "Maximum temperature values found below minimum temperatures."
@@ -168,7 +168,7 @@ def tas_exceeds_tasmax(
 
     >>> from xclim.core.dataflags import tas_exceeds_tasmax
     >>> ds = xr.open_dataset(path_to_tas_file)
-    >>> flagged = tas_exceeds_tasmax(ds.tas, ds.tasmax)  # doctest: +SKIP
+    >>> flagged = tas_exceeds_tasmax(ds.tas, ds.tasmax)
     """
     tas_gt_tasmax = _sanitize_attrs(tas > tasmax)
     description = "Mean temperature values found above maximum temperatures."
