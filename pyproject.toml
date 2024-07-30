@@ -38,6 +38,7 @@ dependencies = [
   "cftime>=1.4.1",
   "click>=8.1",
   "dask[array]>=2.6",
+  "filelock",
   "jsonpickle",
   "numba",
   "numpy>=1.20.0,<2.0.0",
