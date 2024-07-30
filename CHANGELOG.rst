@@ -14,7 +14,8 @@ New features and enhancements
 
 Bug fixes
 ^^^^^^^^^
-* Fixed the indexer bug in the `xclim.indices.standardized_index_fit_params` when multiple or non-array indexers are specified and fitted parameters are reloaded from netCDF. (:issue:`1842`, :pull:`1843`).
+* Fixed the indexer bug in the ``xclim.indices.standardized_index_fit_params`` when multiple or non-array indexers are specified and fitted parameters are reloaded from netCDF. (:issue:`1842`, :pull:`1843`).
+* Addressed a bug found in ``wet_spell_*`` indicators that was contributing to erroneous results. A new generic spell length statistic function ``xclim.indices.generic.spell_length_statistics`` is now used in wet and dry spells indicators. (:issue:`1834`, :pull:`1838`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
