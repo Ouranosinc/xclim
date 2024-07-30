@@ -41,6 +41,7 @@ dependencies = [
   "jsonpickle",
   "numba",
   "numpy>=1.20.0,<2.0.0",
+  "packaging",
   "pandas>=2.2",
   "pint>=0.10,<0.24",
   "platformdirs >=3.2",
@@ -180,7 +181,7 @@ pep621_dev_dependency_groups = ["all", "dev", "docs"]
 [tool.deptry.per_rule_ignores]
 DEP001 = ["SBCK"]
 DEP002 = ["bottleneck", "pyarrow"]
-DEP004 = ["matplotlib", "pytest_socket"]
+DEP004 = ["matplotlib", "pytest", "pytest_socket"]
 
 [tool.flit.sdist]
 include = [
