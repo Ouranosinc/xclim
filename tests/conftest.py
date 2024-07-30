@@ -2,8 +2,6 @@
 from __future__ import annotations
 
 import os
-import shutil
-import sys
 from functools import partial
 from pathlib import Path
 
@@ -11,12 +9,11 @@ import numpy as np
 import pandas as pd
 import pytest
 import xarray as xr
-from filelock import FileLock
 
 from xclim.core import indicator
 from xclim.core.calendar import max_doy
 from xclim.testing import helpers
-from xclim.testing.helpers import test_timeseries, testing_setup_warnings
+from xclim.testing.helpers import test_timeseries
 from xclim.testing.utils import _default_cache_dir  # noqa
 from xclim.testing.utils import get_file
 from xclim.testing.utils import open_dataset as _open_dataset
@@ -398,33 +395,8 @@ def gather_session_data(threadsafe_data_dir, worker_id):
 
     Additionally, this fixture is also used to generate the `atmosds` synthetic testing dataset.
     """
-    testing_setup_warnings()
-
-    if (
-        not _default_cache_dir.joinpath(helpers.TESTDATA_BRANCH).exists()
-        or helpers.PREFETCH_TESTING_DATA
-    ):
-        if helpers.PREFETCH_TESTING_DATA:
-            print("`XCLIM_PREFETCH_TESTING_DATA` set. Prefetching testing data...")
-        if sys.platform == "win32":
-            raise OSError(
-                "UNIX-style file-locking is not supported on Windows. "
-                "Consider running `$ xclim prefetch_testing_data` to download testing data."
-            )
-        elif worker_id in ["master"]:
-            helpers.populate_testing_data(branch=helpers.TESTDATA_BRANCH)
-        else:
-            _default_cache_dir.mkdir(exist_ok=True, parents=True)
-            lockfile = _default_cache_dir.joinpath(".lock")
-            test_data_being_written = FileLock(lockfile)
-            with test_data_being_written:
-                # This flag prevents multiple calls from re-attempting to download testing data in the same pytest run
-                helpers.populate_testing_data(branch=helpers.TESTDATA_BRANCH)
-                _default_cache_dir.joinpath(".data_written").touch()
-            with test_data_being_written.acquire():
-                if lockfile.exists():
-                    lockfile.unlink()
-    shutil.copytree(_default_cache_dir, threadsafe_data_dir)
+    helpers.testing_setup_warnings()
+    helpers.gather_testing_data(threadsafe_data_dir, worker_id)
     helpers.generate_atmos(threadsafe_data_dir)
 
 

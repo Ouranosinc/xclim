@@ -8,11 +8,14 @@ import time
 import warnings
 from datetime import datetime as dt
 from pathlib import Path
+from shutil import copytree
+from sys import platform
 
 import numpy as np
 import pandas as pd
 import xarray as xr
 from dask.diagnostics import Callback
+from filelock import FileLock
 from packaging.version import Version
 
 import xclim
@@ -111,7 +114,7 @@ def testing_setup_warnings():
             )
 
 
-def generate_atmos(cache_dir: Path):
+def generate_atmos(cache_dir: Path) -> dict[str, xr.DataArray]:
     """Create the `atmosds` synthetic testing dataset."""
     with _open_dataset(
         "ERA5/daily_surface_cancities_1990-1993.nc",
@@ -139,6 +142,15 @@ def generate_atmos(cache_dir: Path):
         # Create a file in session scoped temporary directory
         atmos_file = cache_dir.joinpath("atmosds.nc")
         ds.to_netcdf(atmos_file)
+
+    # Give access to dataset variables by name in namespace
+    namespace = dict()
+    with _open_dataset(
+        atmos_file, branch=TESTDATA_BRANCH, cache_dir=cache_dir, engine="h5netcdf"
+    ) as ds:
+        for variable in ds.data_vars:
+            namespace[f"{variable}_dataset"] = ds.get(variable)
+    return namespace
 
 
 def populate_testing_data(
@@ -207,9 +219,36 @@ def populate_testing_data(
     return
 
 
-def add_example_file_paths(
-    cache_dir: Path,
-) -> dict[str, str | list[xr.DataArray]]:
+def gather_testing_data(threadsafe_data_dir: Path, worker_id: str):
+    """Gather testing data across workers."""
+    if (
+        not _default_cache_dir.joinpath(TESTDATA_BRANCH).exists()
+        or PREFETCH_TESTING_DATA
+    ):
+        if PREFETCH_TESTING_DATA:
+            print("`XCLIM_PREFETCH_TESTING_DATA` set. Prefetching testing data...")
+        if platform == "win32":
+            raise OSError(
+                "UNIX-style file-locking is not supported on Windows. "
+                "Consider running `$ xclim prefetch_testing_data` to download testing data."
+            )
+        elif worker_id in ["master"]:
+            populate_testing_data(branch=TESTDATA_BRANCH)
+        else:
+            _default_cache_dir.mkdir(exist_ok=True, parents=True)
+            lockfile = _default_cache_dir.joinpath(".lock")
+            test_data_being_written = FileLock(lockfile)
+            with test_data_being_written:
+                # This flag prevents multiple calls from re-attempting to download testing data in the same pytest run
+                populate_testing_data(branch=TESTDATA_BRANCH)
+                _default_cache_dir.joinpath(".data_written").touch()
+            with test_data_being_written.acquire():
+                if lockfile.exists():
+                    lockfile.unlink()
+    copytree(_default_cache_dir, threadsafe_data_dir)
+
+
+def add_example_file_paths() -> dict[str, str | list[xr.DataArray]]:
     """Create a dictionary of relevant datasets to be patched into the xdoctest namespace."""
     namespace: dict = dict()
     namespace["path_to_ensemble_file"] = "EnsembleReduce/TestEnsReduceCriteria.nc"
@@ -249,16 +288,6 @@ def add_example_file_paths(
             },
         ),
     ]
-
-    # Give access to this file within xdoctest namespace
-    atmos_file = cache_dir.joinpath("atmosds.nc")
-
-    # Give access to dataset variables by name in xdoctest namespace
-    with _open_dataset(
-        atmos_file, branch=TESTDATA_BRANCH, cache_dir=cache_dir, engine="h5netcdf"
-    ) as ds:
-        for variable in ds.data_vars:
-            namespace[f"{variable}_dataset"] = ds.get(variable)
 
     return namespace
 

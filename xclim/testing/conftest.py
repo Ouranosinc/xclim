@@ -6,8 +6,6 @@
 from __future__ import annotations
 
 import os
-import shutil
-from functools import partial
 from pathlib import Path
 
 import pytest
@@ -54,26 +52,21 @@ def is_matplotlib_installed(xdoctest_namespace) -> None:
 
 
 @pytest.fixture(autouse=True, scope="session")
-def add_doctest_imports(xdoctest_namespace, threadsafe_data_dir) -> None:
+def doctest_setup(
+    xdoctest_namespace, threadsafe_data_dir, worker_id, open_dataset
+) -> None:
     """Gather testing data on doctest run."""
     helpers.testing_setup_warnings()
-
-    shutil.copytree(_default_cache_dir, threadsafe_data_dir, dirs_exist_ok=True)
-    helpers.generate_atmos(threadsafe_data_dir)
+    helpers.gather_testing_data(threadsafe_data_dir, worker_id)
+    xdoctest_namespace.update(helpers.generate_atmos(threadsafe_data_dir))
 
     class AttrDict(dict):
         def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
             self.__dict__ = self
 
-    __opener = partial(
-        _open_dataset, cache_dir=threadsafe_data_dir, branch=helpers.TESTDATA_BRANCH
-    )
-
-    xdoctest_namespace["open_dataset"] = __opener
+    xdoctest_namespace["open_dataset"] = open_dataset
     xdoctest_namespace["xr"] = AttrDict()
-    xdoctest_namespace["xr"].update({"open_dataset": __opener})
+    xdoctest_namespace["xr"].update({"open_dataset": open_dataset})
     xdoctest_namespace.update(helpers.add_doctest_filepaths())
-
-    helpers.generate_atmos(threadsafe_data_dir)
-    xdoctest_namespace.update(helpers.add_example_file_paths(threadsafe_data_dir))
+    xdoctest_namespace.update(helpers.add_example_file_paths())
