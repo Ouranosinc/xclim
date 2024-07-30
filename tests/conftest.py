@@ -16,7 +16,7 @@ from filelock import FileLock
 from xclim.core import indicator
 from xclim.core.calendar import max_doy
 from xclim.testing import helpers
-from xclim.testing.helpers import setup_warnings, test_timeseries
+from xclim.testing.helpers import test_timeseries, testing_setup_warnings
 from xclim.testing.utils import _default_cache_dir  # noqa
 from xclim.testing.utils import get_file
 from xclim.testing.utils import open_dataset as _open_dataset
@@ -396,10 +396,9 @@ def gather_session_data(threadsafe_data_dir, worker_id):
     other workers wait using lockfile. Once the lock is released, all workers will then copy data to their local
     threadsafe_data_dir.As this fixture is scoped to the session, it will only run once per pytest run.
 
-    Additionally, this fixture is also used to generate the `atmosds` synthetic testing dataset as well as add the
-    example file paths to the xdoctest_namespace, used when running doctests.
+    Additionally, this fixture is also used to generate the `atmosds` synthetic testing dataset.
     """
-    setup_warnings()
+    testing_setup_warnings()
 
     if (
         not _default_cache_dir.joinpath(helpers.TESTDATA_BRANCH).exists()

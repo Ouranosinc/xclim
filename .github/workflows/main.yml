@@ -128,6 +128,10 @@ jobs:
             markers: -m 'not slow'
             os: macos-latest
           # Linux builds
+          - tox-env: py39-coverage-offline-prefetch
+            python-version: "3.9"
+            markers: -m 'not slow and not requires_internet'
+            os: ubuntu-latest
           - tox-env: py310-coverage-lmoments  # No markers -- includes slow tests
             python-version: "3.10"
             os: ubuntu-latest
@@ -135,7 +139,7 @@ jobs:
             python-version: "3.11"
             markers: -m 'not slow'
             os: ubuntu-latest
-          - tox-env: py312-coverage-extras-lmoments-sbck
+          - tox-env: py312-coverage-extras-lmoments
             python-version: "3.12"
             markers: -m 'not slow'
             os: ubuntu-latest
@@ -143,11 +147,7 @@ jobs:
           - tox-env: notebooks
             python-version: "3.10"
             os: ubuntu-latest
-          - tox-env: offline-prefetch
-            python-version: "3.11"
-            markers: -m 'not slow and not requires_internet'
-            os: ubuntu-latest
-          - tox-env: doctest
+          - tox-env: doctests
             python-version: "3.12"
             os: ubuntu-latest
     steps:

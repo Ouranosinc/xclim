@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import os
 import re
-import sys
 import time
 import warnings
 from datetime import datetime as dt
@@ -77,26 +76,11 @@ __all__ = [
     "assert_lazy",
     "generate_atmos",
     "populate_testing_data",
-    "run_doctests",
     "test_timeseries",
 ]
 
 
-def run_doctests():
-    """Run the doctests for the module."""
-    import pytest
-
-    cmd = [
-        f"--rootdir={Path(__file__).absolute().parent}",
-        "--numprocesses=0",
-        "--xdoctest",
-        f"{Path(__file__).absolute().parents[1]}",
-    ]
-
-    sys.exit(pytest.main(cmd))
-
-
-def setup_warnings():
+def testing_setup_warnings():
     """Warn users about potential incompatibilities between xclim and xclim-testdata versions."""
     if re.match(r"^\d+\.\d+\.\d+$", __xclim_version__) and TESTDATA_BRANCH == "main":
         # This does not need to be emitted on GitHub Workflows and ReadTheDocs

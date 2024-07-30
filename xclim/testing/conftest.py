@@ -55,8 +55,8 @@ def is_matplotlib_installed(xdoctest_namespace) -> None:
 
 @pytest.fixture(autouse=True, scope="session")
 def add_doctest_imports(xdoctest_namespace, threadsafe_data_dir) -> None:
-    """Add these imports into the doctests scope."""
-    helpers.setup_warnings()
+    """Gather testing data on doctest run."""
+    helpers.testing_setup_warnings()
 
     shutil.copytree(_default_cache_dir, threadsafe_data_dir, dirs_exist_ok=True)
     helpers.generate_atmos(threadsafe_data_dir)
