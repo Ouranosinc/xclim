@@ -160,7 +160,7 @@ def _nan_quantile_1d(
 )
 def _vecquantiles(arr, rnk, res):
     if np.isnan(rnk):
-        res[0] = np.NaN
+        res[0] = np.nan
     else:
         res[0] = np.nanquantile(arr, rnk)
 
@@ -376,7 +376,7 @@ def _first_and_last_nonnull(arr):
         if idxs.size > 0:
             out[i] = arr[i][idxs[np.array([0, -1])]]
         else:
-            out[i] = np.array([np.NaN, np.NaN])
+            out[i] = np.array([np.nan, np.nan])
     return out
 
 
@@ -403,8 +403,8 @@ def _extrapolate_on_quantiles(
         interp[toolow] = cnstlow[toolow]
         interp[toohigh] = cnsthigh[toohigh]
     else:  # 'nan'
-        interp[toolow] = np.NaN
-        interp[toohigh] = np.NaN
+        interp[toolow] = np.nan
+        interp[toohigh] = np.nan
     return interp
 
 

@@ -89,7 +89,7 @@ def test_normal_computation(
     input_file = tmp_path / "in.nc"
     output_file = tmp_path / "out.nc"
 
-    ds.to_netcdf(input_file)
+    ds.to_netcdf(input_file, engine="h5netcdf")
 
     args = ["-i", str(input_file), "-o", str(output_file), "-v", indicator]
     runner = CliRunner()
@@ -136,7 +136,7 @@ def test_multi_output(tmp_path, open_dataset):
     ds = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc")
     input_file = tmp_path / "ws_in.nc"
     output_file = tmp_path / "out.nc"
-    ds.to_netcdf(input_file)
+    ds.to_netcdf(input_file, engine="h5netcdf")
 
     runner = CliRunner()
     results = runner.invoke(
@@ -216,7 +216,7 @@ def test_missing_variable(tas_series, tmp_path):
     input_file = tmp_path / "tas.nc"
     output_file = tmp_path / "out.nc"
 
-    tas.to_netcdf(input_file)
+    tas.to_netcdf(input_file, engine="h5netcdf")
 
     runner = CliRunner()
     results = runner.invoke(
@@ -243,7 +243,7 @@ def test_global_options(tas_series, tmp_path, options, output):
     input_file = tmp_path / "tas.nc"
     output_file = tmp_path / "out.nc"
 
-    tas.to_netcdf(input_file)
+    tas.to_netcdf(input_file, engine="h5netcdf")
 
     runner = CliRunner()
     results = runner.invoke(
@@ -283,7 +283,7 @@ def test_dataflags_output(tmp_path, tas_series, tasmax_series, tasmin_series):
         arr = series(vals, start="1971-01-01")
         ds = xr.merge([ds, arr])
     input_file = tmp_path / "ws_in.nc"
-    ds.to_netcdf(input_file)
+    ds.to_netcdf(input_file, engine="h5netcdf")
 
     runner = CliRunner()
     results = runner.invoke(
@@ -303,7 +303,7 @@ def test_bad_usage(tas_series, tmp_path):
     input_file = tmp_path / "tas.nc"
     output_file = tmp_path / "out.nc"
 
-    tas.to_netcdf(input_file)
+    tas.to_netcdf(input_file, engine="h5netcdf")
 
     runner = CliRunner()
 

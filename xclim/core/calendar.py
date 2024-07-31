@@ -693,8 +693,8 @@ def is_offset_divisor(divisor: str, offset: str):
         # Simple length comparison is sufficient for submonthly freqs
         # In case one of bA or bB is > W, we test many to be sure.
         tA = pd.date_range("1970-01-01T00:00:00", freq=offAs, periods=13)
-        return np.all(
-            (np.diff(tB)[:, np.newaxis] / np.diff(tA)[np.newaxis, :]) % 1 == 0
+        return bool(
+            np.all((np.diff(tB)[:, np.newaxis] / np.diff(tA)[np.newaxis, :]) % 1 == 0)
         )
 
     # else, we test alignment with some real dates

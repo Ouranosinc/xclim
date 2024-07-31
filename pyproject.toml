@@ -41,10 +41,10 @@ dependencies = [
   "filelock",
   "jsonpickle",
   "numba",
-  "numpy>=1.20.0,<2.0.0",
+  "numpy>=1.20.0",
   "packaging",
   "pandas>=2.2",
-  "pint>=0.10,<0.24",
+  "pint>=0.18",
   "platformdirs >=3.2",
   "pyarrow", # Strongly encouraged for pandas v2.2.0+
   "pyyaml",
@@ -74,7 +74,6 @@ dev = [
   "nbconvert <7.14", # Pinned due to directive errors in sphinx. See: https://github.com/jupyter/nbconvert/issues/2092
   "nbqa >=1.8.2",
   "nbval >=0.11.0",
-  "netCDF4 >=1.4,<1.7",
   "pandas-stubs >=2.2",
   "platformdirs >=3.2",
   "pooch",
@@ -181,7 +180,7 @@ pep621_dev_dependency_groups = ["all", "dev", "docs"]
 
 [tool.deptry.per_rule_ignores]
 DEP001 = ["SBCK"]
-DEP002 = ["bottleneck", "pyarrow"]
+DEP002 = ["bottleneck", "h5netcdf", "pyarrow"]
 DEP004 = ["matplotlib", "pytest", "pytest_socket"]
 
 [tool.flit.sdist]
