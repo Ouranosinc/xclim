@@ -125,7 +125,6 @@ jobs:
           # macOS builds
           - python-version: "3.10"
             os: macos-latest
-
           # Specialized tests
           - tox-env: py39-coverage-offline-prefetch
             python-version: "3.9"
@@ -154,7 +153,7 @@ jobs:
             raw.githubusercontent.com:443
       - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
       - name: Install Eigen3 (SBCK)
-        if: matrix.python-version == '3.11'
+        if: ${{ matrix.python-version == '3.11' }}
         run: |
           sudo apt-get update
           sudo apt-get install libeigen3-dev
@@ -167,14 +166,14 @@ jobs:
           python -m pip install --require-hashes -r CI/requirements_ci.txt
       - name: Test with tox
         run: |
-          if [[ "{{ contains(matrix, 'tox-env') }}" == "true" ]]; then
+          if [[ "${{ contains(matrix, 'tox-env') }}" == "true" ]]; then
               python -m tox -e ${{ matrix.tox-env }} -- ${{ matrix.markers }};
           else
               python -m tox -- ${{ matrix.markers }};
           fi
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          COVERALLS_FLAG_NAME: run-{{ matrix.tox-env }}-{{ matrix.os }}
+          COVERALLS_FLAG_NAME: run-${{ matrix.python-version }}-${{ matrix.os }}-${{ matrix.tox-env }}
           COVERALLS_PARALLEL: true
           COVERALLS_SERVICE_NAME: github
 
