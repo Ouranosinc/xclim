@@ -1,6 +1,6 @@
 bump-my-version==0.24.3
 coveralls==4.0.1
-deptry==0.17.0
+deptry==0.18.0
 flit==3.9.0
 pip==24.2
 pylint==3.2.6
