@@ -8,8 +8,9 @@ Contributors to this version: David Huard (:user:`huard`), Trevor James Smith (:
 
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-* ``xclim.sdba.nbutils.quantile`` and its child functions are now faster. If the module `fastnanquantile` is installed, it is used as the backend for the computation of quantiles and yields even faster results. (:issue:`1255`, :pull:`1513`).
+* ``xclim.sdba.nbutils.quantile`` and its child functions are now faster. If the module `fastnanquantile` is installed, it is used as the backend for the computation of quantiles and yields even faster results. This dependency is now listed in the `xclim[extras]` recipe. (:issue:`1255`, :pull:`1513`).
 * New multivariate bias adjustment class `MBCn`, giving a faster and more accurate implementation of the 'MBCn' algorithm (:issue:`1551`, :pull:`1580`).
+* `xclim` is now compatible with `pytest` versions `>=8.0.0`. (:pull:`1632`).
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
@@ -24,7 +25,8 @@ Bug fixes
 
 Internal changes
 ^^^^^^^^^^^^^^^^
-* Changed french translation of "wet days" from "jours mouillés" to "jours pluvieux". (:issue:`1825`, :pull:`1826`).
+* Changed the French translation of "wet days" from "jours mouillés" to "jours pluvieux". (:issue:`1825`, :pull:`1826`).
+* In order to adapt to changes in `pytest`, the doctest fixtures have been split from the main testing suite and doctests are now run using ``$ python -c 'from xclim.testing.utils import run_doctests; run_doctests()'``. (:pull:`1632`).
 
 CI changes
 ^^^^^^^^^^

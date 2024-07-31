@@ -59,7 +59,7 @@ dependencies:
   - pre-commit >=3.7
   - pybtex >=0.24.0
   - pylint >=3.1
-  - pytest <8.0  # Pinned due to breakage with xdoctest. See: https://github.com/Erotemic/xdoctest/issues/151
+  - pytest >=8.0.0
   - pytest-cov
   - pytest-socket
   - pytest-xdist >=3.2
@@ -75,7 +75,7 @@ dependencies:
   - tox >=4.15.1
 #  - tox-conda  # Will be added when a tox@v4.0+ compatible plugin is released.
   - vulture # ==2.11  # The conda-forge version is out of date.
-  - xdoctest
+  - xdoctest >=1.1.5
   - yamllint
   - pip
   - pip:
