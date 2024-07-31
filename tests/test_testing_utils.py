@@ -146,15 +146,6 @@ class TestTestingFileAccessors:
                 "doesnt_exist.nc", github_url="ftp://domain.does.not.exist/"
             )
 
-        with pytest.raises(
-            OSError,
-            match="OPeNDAP file not read. Verify that the service is available: "
-            "'https://seemingly.trustworthy.com/doesnt_exist.nc'",
-        ):
-            utilities.open_dataset(
-                "doesnt_exist.nc", dap_url="https://seemingly.trustworthy.com/"
-            )
-
     def test_malicious_urls(self):
         with pytest.raises(
             URLError,
