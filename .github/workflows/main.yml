@@ -167,7 +167,7 @@ jobs:
           python -m pip install --require-hashes -r CI/requirements_ci.txt
       - name: Test with tox
         run: |
-          if [[ "${{ matrix.tox-env == 'standard' }} ]]; then
+          if [[ ${{ matrix.tox-env == 'standard' }} ]]; then
               python -m tox -- ${{ matrix.markers }};
           else
               python -m tox -e ${{ matrix.tox-env }} -- ${{ matrix.markers }};
