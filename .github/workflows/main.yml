@@ -116,7 +116,7 @@ jobs:
         os: [ ubuntu-latest ]
         markers: [ "-m 'not slow'" ]
         python-version: [ "3.10", "3.11", "3.12" ]
-        # Python3.11 build includes SBCK tests
+        tox-env: [ standard ]
         include:
           # Windows builds
           - tox-env: py39-coverage-prefetch  # Test data prefetch is needed for Windows
@@ -127,8 +127,8 @@ jobs:
             os: macos-latest
           # Specialized tests
           - tox-env: py39-coverage-offline-prefetch
-            python-version: "3.9"
             markers: -m 'not requires_internet'
+            python-version: "3.9"
           - tox-env: notebooks
             python-version: "3.10"
           - tox-env: doctests
@@ -151,7 +151,8 @@ jobs:
             ppa.launchpadcontent.net:443
             pypi.org:443
             raw.githubusercontent.com:443
-      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+      - name: Checkout Repository
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
       - name: Install Eigen3 (SBCK)
         if: ${{ matrix.python-version == '3.11' }}
         run: |
@@ -166,10 +167,10 @@ jobs:
           python -m pip install --require-hashes -r CI/requirements_ci.txt
       - name: Test with tox
         run: |
-          if [[ "${{ contains(matrix, 'tox-env') }}" == "true" ]]; then
-              python -m tox -e ${{ matrix.tox-env }} -- ${{ matrix.markers }};
-          else
+          if [[ "${{ matrix.tox-env == 'standard' }} ]]; then
               python -m tox -- ${{ matrix.markers }};
+          else
+              python -m tox -e ${{ matrix.tox-env }} -- ${{ matrix.markers }};
           fi
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
