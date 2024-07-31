@@ -141,7 +141,7 @@ class TestColdSpellFreq:
         out = xci.cold_spell_frequency(da, thresh="-10. C", freq="ME")
         np.testing.assert_array_equal(out, [1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0])
 
-        if Version(__cfxr_version__) < Version("0.9.4"):
+        if Version(__cfxr_version__) < Version("0.9.3"):
             assert out.units == ""
         else:
             assert out.units == "1"
@@ -149,7 +149,7 @@ class TestColdSpellFreq:
         out = xci.cold_spell_frequency(da, thresh="-10. C", freq="YS")
         np.testing.assert_array_equal(out, 3)
 
-        if Version(__cfxr_version__) < Version("0.9.4"):
+        if Version(__cfxr_version__) < Version("0.9.3"):
             assert out.units == ""
         else:
             assert out.units == "1"
@@ -921,7 +921,7 @@ class TestLastSpringFrost:
         for attr in ["units", "is_dayofyear", "calendar"]:
             assert attr in lsf.attrs.keys()
 
-        if Version(__cfxr_version__) < Version("0.9.4"):
+        if Version(__cfxr_version__) < Version("0.9.3"):
             assert lsf.attrs["units"] == ""
         else:
             assert lsf.attrs["units"] == "1"
@@ -947,7 +947,7 @@ class TestFirstDayBelow:
         for attr in ["units", "is_dayofyear", "calendar"]:
             assert attr in fdb.attrs.keys()
 
-        if Version(__cfxr_version__) < Version("0.9.4"):
+        if Version(__cfxr_version__) < Version("0.9.3"):
             assert fdb.attrs["units"] == ""
         else:
             assert fdb.attrs["units"] == "1"
@@ -983,7 +983,7 @@ class TestFirstDayAbove:
         for attr in ["units", "is_dayofyear", "calendar"]:
             assert attr in fda.attrs.keys()
 
-        if Version(__cfxr_version__) < Version("0.9.4"):
+        if Version(__cfxr_version__) < Version("0.9.3"):
             assert fda.attrs["units"] == ""
         else:
             assert fda.attrs["units"] == "1"
@@ -1013,7 +1013,7 @@ class TestFirstDayAbove:
         for attr in ["units", "is_dayofyear", "calendar"]:
             assert attr in out.attrs.keys()
 
-        if Version(__cfxr_version__) < Version("0.9.4"):
+        if Version(__cfxr_version__) < Version("0.9.3"):
             assert out.attrs["units"] == ""
         else:
             assert out.attrs["units"] == "1"
@@ -1105,7 +1105,7 @@ class TestGrowingSeasonStart:
         for attr in ["units", "is_dayofyear", "calendar"]:
             assert attr in out.attrs.keys()
 
-        if Version(__cfxr_version__) < Version("0.9.4"):
+        if Version(__cfxr_version__) < Version("0.9.3"):
             assert out.attrs["units"] == ""
         else:
             assert out.attrs["units"] == "1"
@@ -1223,7 +1223,7 @@ class TestFrostFreeSeasonStart:
         for attr in ["units", "is_dayofyear", "calendar"]:
             assert attr in out.attrs.keys()
 
-        if Version(__cfxr_version__) < Version("0.9.4"):
+        if Version(__cfxr_version__) < Version("0.9.3"):
             assert out.attrs["units"] == ""
         else:
             assert out.attrs["units"] == "1"
@@ -1261,7 +1261,7 @@ class TestFrostFreeSeasonEnd:
         for attr in ["units", "is_dayofyear", "calendar"]:
             assert attr in gs_end.attrs.keys()
 
-        if Version(__cfxr_version__) < Version("0.9.4"):
+        if Version(__cfxr_version__) < Version("0.9.3"):
             assert gs_end.attrs["units"] == ""
         else:
             assert gs_end.attrs["units"] == "1"
@@ -2775,7 +2775,7 @@ def test_degree_days_exceedance_date(tas_series):
     for attr in ["units", "is_dayofyear", "calendar"]:
         assert attr in out.attrs.keys()
 
-    if Version(__cfxr_version__) < Version("0.9.4"):
+    if Version(__cfxr_version__) < Version("0.9.3"):
         assert out.attrs["units"] == ""
     else:
         assert out.attrs["units"] == "1"
@@ -2820,7 +2820,7 @@ def test_first_snowfall(prsn_series, prsnd_series):
     for attr in ["units", "is_dayofyear", "calendar"]:
         assert attr in out.attrs.keys()
 
-    if Version(__cfxr_version__) < Version("0.9.4"):
+    if Version(__cfxr_version__) < Version("0.9.3"):
         assert out.attrs["units"] == ""
     else:
         assert out.attrs["units"] == "1"
@@ -2845,7 +2845,7 @@ def test_first_snowfall(prsn_series, prsnd_series):
     for attr in ["units", "is_dayofyear", "calendar"]:
         assert attr in out.attrs.keys()
 
-    if Version(__cfxr_version__) < Version("0.9.4"):
+    if Version(__cfxr_version__) < Version("0.9.3"):
         assert out.attrs["units"] == ""
     else:
         assert out.attrs["units"] == "1"
@@ -2986,7 +2986,7 @@ class TestSnowCover:
         for attr in ["units", "is_dayofyear", "calendar"]:
             assert attr in out.attrs.keys()
 
-        if Version(__cfxr_version__) < Version("0.9.4"):
+        if Version(__cfxr_version__) < Version("0.9.3"):
             assert out.attrs["units"] == ""
         else:
             assert out.attrs["units"] == "1"
@@ -2999,7 +2999,7 @@ class TestSnowCover:
         for attr in ["units", "is_dayofyear", "calendar"]:
             assert attr in out.attrs.keys()
 
-        if Version(__cfxr_version__) < Version("0.9.4"):
+        if Version(__cfxr_version__) < Version("0.9.3"):
             assert out.attrs["units"] == ""
         else:
             assert out.attrs["units"] == "1"
@@ -3026,7 +3026,7 @@ class TestSnowCover:
         for attr in ["units", "is_dayofyear", "calendar"]:
             assert attr in out.attrs.keys()
 
-        if Version(__cfxr_version__) < Version("0.9.4"):
+        if Version(__cfxr_version__) < Version("0.9.3"):
             assert out.attrs["units"] == ""
         else:
             assert out.attrs["units"] == "1"

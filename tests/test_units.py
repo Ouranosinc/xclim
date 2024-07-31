@@ -144,7 +144,7 @@ class TestUnitConversion:
         u = units2pint("1")
         assert pint2cfunits(u) == "1"
 
-        if Version(__cfxr_version__) < Version("0.9.4"):
+        if Version(__cfxr_version__) < Version("0.9.3"):
             assert pint2cfunits(u) == ""
         else:
             assert pint2cfunits(u) == "1"
@@ -361,7 +361,7 @@ def test_to_agg_units(in_u, opfunc, op, exp, exp_u):
     np.testing.assert_allclose(out, exp)
 
     if isinstance(exp_u, tuple):
-        if Version(__cfxr_version__) < Version("0.9.4"):
+        if Version(__cfxr_version__) < Version("0.9.3"):
             assert out.attrs["units"] == exp_u[0]
         else:
             assert out.attrs["units"] == exp_u[1]

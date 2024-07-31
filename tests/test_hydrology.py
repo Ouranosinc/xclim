@@ -43,7 +43,7 @@ class TestSnwMaxDoy:
         out = xci.snw_max_doy(snw, freq="YS")
         np.testing.assert_array_equal(out, [11, np.nan])
 
-        if Version(__cfxr_version__) < Version("0.9.4"):
+        if Version(__cfxr_version__) < Version("0.9.3"):
             assert out.attrs["units"] == ""
         else:
             assert out.attrs["units"] == "1"

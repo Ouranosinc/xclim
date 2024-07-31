@@ -48,7 +48,7 @@ class TestContinuousSnowDepthSeason:
 
         out = land.snd_season_start(snd)
 
-        if Version(__cfxr_version__) < Version("0.9.4"):
+        if Version(__cfxr_version__) < Version("0.9.3"):
             assert out.units == ""
         else:
             assert out.units == "1"
@@ -57,7 +57,7 @@ class TestContinuousSnowDepthSeason:
 
         out = land.snd_season_end(snd)
 
-        if Version(__cfxr_version__) < Version("0.9.4"):
+        if Version(__cfxr_version__) < Version("0.9.3"):
             assert out.units == ""
         else:
             assert out.units == "1"
@@ -80,7 +80,7 @@ class TestContinuousSnowWaterSeason:
 
         out = land.snw_season_start(snw)
 
-        if Version(__cfxr_version__) < Version("0.9.4"):
+        if Version(__cfxr_version__) < Version("0.9.3"):
             assert out.units == ""
         else:
             assert out.units == "1"
@@ -89,7 +89,7 @@ class TestContinuousSnowWaterSeason:
 
         out = land.snw_season_end(snw)
 
-        if Version(__cfxr_version__) < Version("0.9.4"):
+        if Version(__cfxr_version__) < Version("0.9.3"):
             assert out.units == ""
         else:
             assert out.units == "1"

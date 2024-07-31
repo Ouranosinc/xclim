@@ -13,7 +13,7 @@ from xclim import land
 def test_base_flow_index(ndq_series):
     out = land.base_flow_index(ndq_series, freq="YS")
 
-    if Version(__cfxr_version__) < Version("0.9.4"):
+    if Version(__cfxr_version__) < Version("0.9.3"):
         assert out.attrs["units"] == ""
     else:
         assert out.attrs["units"] == "1"
@@ -24,7 +24,7 @@ def test_base_flow_index(ndq_series):
 def test_rb_flashiness_index(ndq_series):
     out = land.base_flow_index(ndq_series, freq="YS")
 
-    if Version(__cfxr_version__) < Version("0.9.4"):
+    if Version(__cfxr_version__) < Version("0.9.3"):
         assert out.attrs["units"] == ""
     else:
         assert out.attrs["units"] == "1"
@@ -35,7 +35,7 @@ def test_rb_flashiness_index(ndq_series):
 def test_qdoy_max(ndq_series, q_series):
     out = land.doy_qmax(ndq_series, freq="YS", season="JJA")
 
-    if Version(__cfxr_version__) < Version("0.9.4"):
+    if Version(__cfxr_version__) < Version("0.9.3"):
         assert out.attrs["units"] == ""
     else:
         assert out.attrs["units"] == "1"

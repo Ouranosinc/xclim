@@ -104,7 +104,7 @@ class TestFlowGeneric:
             for attr in ["units", "is_dayofyear", "calendar"]:
                 assert attr in da.attrs.keys()
 
-            if Version(__cfxr_version__) < Version("0.9.4"):
+            if Version(__cfxr_version__) < Version("0.9.3"):
                 assert da.attrs["units"] == ""
             else:
                 assert da.attrs["units"] == "1"

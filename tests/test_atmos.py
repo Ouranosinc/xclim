@@ -263,7 +263,7 @@ def test_wind_profile(atmosds):
 def test_wind_power_potential(atmosds):
     out = atmos.wind_power_potential(wind_speed=atmosds.sfcWind)
 
-    if Version(__cfxr_version__) < Version("0.9.4"):
+    if Version(__cfxr_version__) < Version("0.9.3"):
         assert out.attrs["units"] == ""
     else:
         assert out.attrs["units"] == "1"
