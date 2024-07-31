@@ -69,15 +69,12 @@ jobs:
           python -m tox -e lint
 
   test-preliminary:
-    name: Python${{ matrix.python-version }} (${{ matrix.tox-env }}, ${{ matrix.os }})
+    name: Python${{ matrix.python-version }} (ubuntu-latest)
     needs: lint
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
     strategy:
       matrix:
-        include:
-          - tox-env: "py39-coverage"
-            python-version: "3.9"
-            os: ubuntu-latest
+        python-version: [ "3.9" ]
     steps:
       - name: Harden Runner
         uses: step-security/harden-runner@0d381219ddf674d61a7572ddd19d7941e271515c # v2.9.0
@@ -102,7 +99,7 @@ jobs:
           python -m pip install --require-hashes -r CI/requirements_ci.txt
       - name: Test with tox
         run: |
-          python -m tox -e ${{ matrix.tox-env }}
+          python -m tox -- -m 'not slow'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -116,40 +113,30 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
+        os: [ ubuntu-latest ]
+        markers: [ "-m 'not slow'" ]
         include:
+          # Linux builds - managed by tox-gh
+          - python-version: "3.10"
+          - python-version: "3.11"  # Includes SBCK tests
+          - python-version: "3.12"
+
           # Windows builds
-          - tox-env: py39-coverage-prefetch
+          - tox-env: py39-coverage-prefetch  # Test data prefetch is needed for Windows
             python-version: "3.9"
-            markers: -m 'not slow'
             os: windows-latest
           # macOS builds
-          - tox-env: py310-coverage-extras-lmoments
-            python-version: "3.10"
-            markers: -m 'not slow'
+          - python-version: "3.10"
             os: macos-latest
-          # Linux builds
+
+          # Specialized tests
           - tox-env: py39-coverage-offline-prefetch
             python-version: "3.9"
-            markers: -m 'not slow and not requires_internet'
-            os: ubuntu-latest
-          - tox-env: py310-coverage-lmoments  # No markers -- includes slow tests
-            python-version: "3.10"
-            os: ubuntu-latest
-          - tox-env: py311-coverage-extras-sbck
-            python-version: "3.11"
-            markers: -m 'not slow'
-            os: ubuntu-latest
-          - tox-env: py312-coverage-extras-lmoments
-            python-version: "3.12"
-            markers: -m 'not slow'
-            os: ubuntu-latest
-          # Specialized tests
+            markers: -m 'not requires_internet'
           - tox-env: notebooks
             python-version: "3.10"
-            os: ubuntu-latest
           - tox-env: doctests
             python-version: "3.12"
-            os: ubuntu-latest
     steps:
       - name: Harden Runner
         uses: step-security/harden-runner@0d381219ddf674d61a7572ddd19d7941e271515c # v2.9.0
@@ -169,8 +156,8 @@ jobs:
             pypi.org:443
             raw.githubusercontent.com:443
       - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
-      - name: Install Eigen3
-        if: contains(matrix.tox-env, 'sbck')
+      - name: Install Eigen3 (SBCK)
+        if: matrix.python-version == "3.11"
         run: |
           sudo apt-get update
           sudo apt-get install libeigen3-dev
@@ -183,7 +170,11 @@ jobs:
           python -m pip install --require-hashes -r CI/requirements_ci.txt
       - name: Test with tox
         run: |
-          python -m tox -e ${{ matrix.tox-env }} -- ${{ matrix.markers }}
+          if [[ "{{ contains(matrix, 'tox-env') }}" == "true" ]]; then
+              python -m tox -e ${{ matrix.tox-env }} -- ${{ matrix.markers }};
+          else
+              python -m tox -- ${{ matrix.markers }};
+          fi
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           COVERALLS_FLAG_NAME: run-{{ matrix.tox-env }}-{{ matrix.os }}
@@ -200,8 +191,8 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest]
-        python-version: ["3.9", "3.12"]
+        os: [ ubuntu-latest ]
+        python-version: [ "3.9", "3.12" ]
     defaults:
       run:
         shell: bash -l {0}
@@ -232,7 +223,7 @@ jobs:
           environment-file: environment.yml
           create-args: >-
             python=${{ matrix.python-version }}
-      - name: Conda and Mamba versions
+      - name: Micromamba version
         run: |
           echo "micromamba: $(micromamba --version)"
       - name: Install xclim
@@ -240,7 +231,7 @@ jobs:
           python -m pip install --no-user --editable .
       - name: Check versions
         run: |
-          conda list
+          micromamba list
           xclim show_version_info
           python -m pip check || true
       - name: Test with pytest
@@ -263,7 +254,7 @@ jobs:
           coveralls
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          COVERALLS_FLAG_NAME: run-{{ matrix.tox-env }}-opt-slow
+          COVERALLS_FLAG_NAME: run-{{ matrix.python-version }}-conda
           COVERALLS_PARALLEL: true
           COVERALLS_SERVICE_NAME: github
 
