@@ -171,7 +171,7 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
       - name: Install Eigen3 (SBCK)
-        if: ${{ matrix.python-version }} == '3.11'
+        if: contains(matrix.python-env, '3.10')
         run: |
           sudo apt-get update
           sudo apt-get install libeigen3-dev
@@ -184,7 +184,7 @@ jobs:
           python -m pip install --require-hashes -r CI/requirements_ci.txt
       - name: Test with tox
         run: |
-          if [[ ${{ matrix.tox-env }} == 'standard' ]]; then
+          if [[ ${{ contains(matrix.tox-env, 'standard') }} ]]; then
               python -m tox -- ${{ matrix.markers }};
           else
               python -m tox -e ${{ matrix.tox-env }} -- ${{ matrix.markers }};
