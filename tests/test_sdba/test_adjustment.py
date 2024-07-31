@@ -67,7 +67,7 @@ class TestBaseAdjustment:
 
 class TestLoci:
     @pytest.mark.parametrize("group,dec", (["time", 2], ["time.month", 1]))
-    def test_time_and_from_ds(self, series, group, dec, tmp_path, random):
+    def test_time_and_from_ds(self, series, group, dec, tmp_path, random, open_dataset):
         n = 10000
         u = random.random(n)
 
@@ -93,7 +93,7 @@ class TestLoci:
         file = tmp_path / "test_loci.nc"
         loci.ds.to_netcdf(file, engine="h5netcdf")
 
-        ds = xr.open_dataset(file, engine="h5netcdf")
+        ds = open_dataset(file)
         loci2 = LOCI.from_dataset(ds)
 
         xr.testing.assert_equal(loci.ds, loci2.ds)
