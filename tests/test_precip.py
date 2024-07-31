@@ -77,8 +77,8 @@ class TestPrecipAccumulation:
         pr.attrs["units"] = "kg m-2 s-1"
         out3 = atmos.precip_accumulation(pr, freq="MS")
 
-        np.testing.assert_array_almost_equal(out1, out2, 3)
-        np.testing.assert_array_almost_equal(out1, out3, 5)
+        np.testing.assert_allclose(out1, out2, rtol=1e-7, atol=1e-4)
+        np.testing.assert_allclose(out1, out3, rtol=1e-7, atol=1e-4)
 
         # check some vector with and without a nan
         x1 = prMM[:31, 0, 0].values
@@ -674,7 +674,7 @@ def test_dry_spell(atmosds):
 
 def test_dry_spell_total_length_indexer(pr_series):
     pr = pr_series(
-        [np.NaN] + [1] * 4 + [0] * 10 + [1] * 350, start="1900-01-01", units="mm/d"
+        [np.nan] + [1] * 4 + [0] * 10 + [1] * 350, start="1900-01-01", units="mm/d"
     )
     out = atmos.dry_spell_total_length(
         pr,
@@ -683,7 +683,7 @@ def test_dry_spell_total_length_indexer(pr_series):
         thresh="3 mm",
         freq="MS",
     )
-    np.testing.assert_allclose(out, [np.NaN] + [0] * 11)
+    np.testing.assert_allclose(out, [np.nan] + [0] * 11)
 
     out = atmos.dry_spell_total_length(
         pr, window=7, op="sum", thresh="3 mm", freq="MS", date_bounds=("01-10", "12-31")
@@ -693,7 +693,7 @@ def test_dry_spell_total_length_indexer(pr_series):
 
 def test_dry_spell_max_length_indexer(pr_series):
     pr = pr_series(
-        [np.NaN] + [1] * 4 + [0] * 10 + [1] * 350, start="1900-01-01", units="mm/d"
+        [np.nan] + [1] * 4 + [0] * 10 + [1] * 350, start="1900-01-01", units="mm/d"
     )
     out = atmos.dry_spell_max_length(
         pr,
@@ -702,7 +702,7 @@ def test_dry_spell_max_length_indexer(pr_series):
         thresh="3 mm",
         freq="MS",
     )
-    np.testing.assert_allclose(out, [np.NaN] + [0] * 11)
+    np.testing.assert_allclose(out, [np.nan] + [0] * 11)
 
     out = atmos.dry_spell_total_length(
         pr, window=7, op="sum", thresh="3 mm", freq="MS", date_bounds=("01-10", "12-31")

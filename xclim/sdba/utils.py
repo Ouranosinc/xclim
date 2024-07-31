@@ -325,7 +325,7 @@ def _interp_on_quantiles_1D_multi(newxs, oldx, oldy, method, extrap):  # noqa: N
             oldy[~np.isnan(oldy)][-1],
         )
     else:  # extrap == 'nan'
-        fill_value = np.NaN
+        fill_value = np.nan
 
     finterp1d = interp1d(
         oldx[~mask_old],
@@ -338,7 +338,7 @@ def _interp_on_quantiles_1D_multi(newxs, oldx, oldy, method, extrap):  # noqa: N
     out = np.zeros_like(newxs)
     for ii in range(newxs.shape[0]):
         mask_new = np.isnan(newxs[ii, :])
-        y1 = newxs[ii, :].copy() * np.NaN
+        y1 = newxs[ii, :].copy() * np.nan
         y1[~mask_new] = finterp1d(newxs[ii, ~mask_new])
         out[ii, :] = y1.flatten()
     return out
@@ -347,10 +347,10 @@ def _interp_on_quantiles_1D_multi(newxs, oldx, oldy, method, extrap):  # noqa: N
 def _interp_on_quantiles_1D(newx, oldx, oldy, method, extrap):  # noqa: N802
     mask_new = np.isnan(newx)
     mask_old = np.isnan(oldy) | np.isnan(oldx)
-    out = np.full_like(newx, np.NaN, dtype=f"float{oldy.dtype.itemsize * 8}")
+    out = np.full_like(newx, np.nan, dtype=f"float{oldy.dtype.itemsize * 8}")
     if np.all(mask_new) or np.all(mask_old):
         warn(
-            "All-NaN slice encountered in interp_on_quantiles",
+            "All-nan slice encountered in interp_on_quantiles",
             category=RuntimeWarning,
         )
         return out
@@ -361,7 +361,8 @@ def _interp_on_quantiles_1D(newx, oldx, oldy, method, extrap):  # noqa: N802
             oldy[~np.isnan(oldy)][-1],
         )
     else:  # extrap == 'nan'
-        fill_value = np.NaN
+        fill_value = np.nan
+
     out[~mask_new] = interp1d(
         oldx[~mask_old],
         oldy[~mask_old],
@@ -369,16 +370,17 @@ def _interp_on_quantiles_1D(newx, oldx, oldy, method, extrap):  # noqa: N802
         bounds_error=False,
         fill_value=fill_value,
     )(newx[~mask_new])
+
     return out
 
 
 def _interp_on_quantiles_2D(newx, newg, oldx, oldy, oldg, method, extrap):  # noqa
     mask_new = np.isnan(newx) | np.isnan(newg)
     mask_old = np.isnan(oldy) | np.isnan(oldx) | np.isnan(oldg)
-    out = np.full_like(newx, np.NaN, dtype=f"float{oldy.dtype.itemsize * 8}")
+    out = np.full_like(newx, np.nan, dtype=f"float{oldy.dtype.itemsize * 8}")
     if np.all(mask_new) or np.all(mask_old):
         warn(
-            "All-NaN slice encountered in interp_on_quantiles",
+            "All-nan slice encountered in interp_on_quantiles",
             category=RuntimeWarning,
         )
         return out
@@ -413,8 +415,8 @@ def interp_on_quantiles(
 
     Interpolate in 2D with :py:func:`scipy.interpolate.griddata` if grouping is used, in 1D otherwise, with
     :py:class:`scipy.interpolate.interp1d`.
-    Any NaNs in `xq` or `yq` are removed from the input map.
-    Similarly, NaNs in newx are left NaNs.
+    Any nans in `xq` or `yq` are removed from the input map.
+    Similarly, nans in newx are left nans.
 
     Parameters
     ----------
@@ -439,7 +441,7 @@ def interp_on_quantiles(
     -----
     Extrapolation methods:
 
-    - 'nan' : Any value of `newx` outside the range of `xq` is set to NaN.
+    - 'nan' : Any value of `newx` outside the range of `xq` is set to 'nan'.
     - 'constant' : Values of `newx` smaller than the minimum of `xq` are set to the first
       value of `yq` and those larger than the maximum, set to the last one (first and
       last non-nan values along the "quantiles" dimension). When the grouping is "time.month",
@@ -536,7 +538,7 @@ def rank(
 
     Notes
     -----
-    The `bottleneck` library is required. NaNs in the input array are returned as NaNs.
+    The `bottleneck` library is required. nans in the input array are returned as nans.
 
     See Also
     --------
@@ -577,8 +579,8 @@ def pc_matrix(arr: np.ndarray | dsk.Array) -> np.ndarray | dsk.Array:
     """Construct a Principal Component matrix.
 
     This matrix can be used to transform points in arr to principal components
-    coordinates. Note that this function does not manage NaNs; if a single observation is null, all elements
-    of the transformation matrix involving that variable will be NaN.
+    coordinates. Note that this function does not manage nans; if a single observation is null, all elements
+    of the transformation matrix involving that variable will be nan.
 
     Parameters
     ----------
@@ -795,7 +797,7 @@ def get_clusters(data: xr.DataArray, u1, u2, dim: str = "time") -> xr.Dataset:
         - `maxpos` : Index of the maximal value within the cluster (`dim` reduced, new `cluster`), int
         - `maximum` : Maximal value within the cluster (`dim` reduced, new `cluster`), same dtype as data.
 
-      For `start`, `end` and `maxpos`, -1 means NaN and should always correspond to a `NaN` in `maximum`.
+      For `start`, `end` and `maxpos`, -1 means nan and should always correspond to a `nan` in `maximum`.
       The length along `cluster` is half the size of "dim", the maximal theoretical number of clusters.
     """
 
@@ -807,7 +809,7 @@ def get_clusters(data: xr.DataArray, u1, u2, dim: str = "time") -> xr.Dataset:
             np.append(st, pad),
             np.append(ed, pad),
             np.append(mp, pad),
-            np.append(mv, [np.NaN] * (N - count)),
+            np.append(mv, [np.nan] * (N - count)),
             count,
         )
 
@@ -917,7 +919,7 @@ def copy_all_attrs(ds: xr.Dataset | xr.DataArray, ref: xr.Dataset | xr.DataArray
 def _pairwise_spearman(da, dims):
     """Area-averaged pairwise temporal correlation.
 
-    With skipna-shortcuts for cases where all times or all points are NaN.
+    With skipna-shortcuts for cases where all times or all points are nan.
     """
     da = da - da.mean(dims)
     da = (
@@ -928,7 +930,7 @@ def _pairwise_spearman(da, dims):
 
     def _skipna_correlation(data):
         nv, _nt = data.shape
-        # Mask of which variable are all NaN
+        # Mask of which variable are all nan
         mask_omit = np.isnan(data).all(axis=1)
         # Remove useless variables
         data_noallnan = data[~mask_omit, :]
@@ -937,7 +939,7 @@ def _pairwise_spearman(da, dims):
         # Remove those times (they'll be omitted anyway)
         data_nonan = data_noallnan[:, ~mask_skip]
 
-        # We still have a possibility that a NaN was unique to a variable and time.
+        # We still have a possibility that a nan was unique to a variable and time.
         # If this is the case, it will be a lot longer, but what can we do.
         coef = spearmanr(data_nonan, axis=1, nan_policy="omit").correlation
 

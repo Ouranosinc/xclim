@@ -71,7 +71,7 @@ class TestNanCalcPercentiles:
         assert np.all(res[0][1] == 29)
 
     def test_calc_perc_nan(self):
-        arr = np.asarray([np.NAN])
+        arr = np.asarray([np.nan])
         res = nan_calc_percentiles(arr, percentiles=[50.0])
         assert np.isnan(res)
 
@@ -81,7 +81,7 @@ class TestNanCalcPercentiles:
         assert np.isnan(res)
 
     def test_calc_perc_partial_nan(self):
-        arr = np.asarray([np.NaN, 41.0, 41.0, 43.0, 43.0])
+        arr = np.asarray([np.nan, 41.0, 41.0, 43.0, 43.0])
         res = nan_calc_percentiles(arr, percentiles=[50.0], alpha=1 / 3.0, beta=1 / 3.0)
         # The expected is from R `quantile(arr, 0.5, type=8, na.rm = TRUE)`
         # Note that scipy mquantiles would give a different result here

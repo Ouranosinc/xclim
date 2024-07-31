@@ -264,7 +264,7 @@ def build_bootstrap_year_da(
             out_view.loc[{dim: bloc}] = source.convert_calendar("noleap").data
         elif len(bloc) == 366:
             out_view.loc[{dim: bloc}] = source.convert_calendar(
-                "366_day", missing=np.NAN
+                "366_day", missing=np.nan
             ).data
         elif len(bloc) < 365:
             # 360 days calendar case or anchored years for both source[dim] and bloc case

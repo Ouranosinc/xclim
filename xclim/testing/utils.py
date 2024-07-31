@@ -42,6 +42,7 @@ _xclim_deps = [
     "scipy",
     "pint",
     "pandas",
+    "numpy",
     "numba",
     "lmoments3",
     "jsonpickle",

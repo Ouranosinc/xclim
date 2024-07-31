@@ -1,6 +1,5 @@
 name: xclim
 channels:
-  - numba  # Added to gain access to Python3.12-compatible numba release candidates.
   - conda-forge
   - defaults
 dependencies:
@@ -13,9 +12,9 @@ dependencies:
   - dask >=2.6.0
   - jsonpickle
   - numba
-  - numpy >=1.20.0,<2.0.0
+  - numpy >=1.20.0
   - pandas >=2.2.0
-  - pint >=0.10,<0.24
+  - pint >=0.18.0
   - poppler >=0.67
   - pyarrow  # Strongly encouraged for Pandas v2.2.0+
   - pyyaml
@@ -53,7 +52,6 @@ dependencies:
   - nbsphinx
   - nbval >=0.11.0
   - nc-time-axis
-  - netCDF4 >=1.4,<1.7
   - notebook
   - pandas-stubs
   - platformdirs

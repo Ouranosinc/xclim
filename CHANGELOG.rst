@@ -4,7 +4,7 @@ Changelog
 
 v0.52.0 (unreleased)
 --------------------
-Contributors to this version: David Huard (:user:`huard`), Trevor James Smith (:user:`Zeitsperre`), Hui-Min Wang (:user:`Hem-W`), Éric Dupuis (:user:`coxipi`), Sarah Gammon (:user:`SarahG-579462`).
+Contributors to this version: David Huard (:user:`huard`), Trevor James Smith (:user:`Zeitsperre`), Hui-Min Wang (:user:`Hem-W`), Éric Dupuis (:user:`coxipi`), Sarah Gammon (:user:`SarahG-579462`), Pascal Bourgault (:user:`aulemahal`).
 
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -12,10 +12,15 @@ New features and enhancements
 * New multivariate bias adjustment class `MBCn`, giving a faster and more accurate implementation of the 'MBCn' algorithm (:issue:`1551`, :pull:`1580`).
 * `xclim` is now compatible with `pytest` versions `>=8.0.0`. (:pull:`1632`).
 
+Breaking changes
+^^^^^^^^^^^^^^^^
+* As updated in ``cf_xarray>=0.9.3``, dimensionless quantities now use the "1" units attribute as specified by the CF conventions, previously an empty string was returned. (:pull:`1814`).
+
 Bug fixes
 ^^^^^^^^^
 * Fixed the indexer bug in the ``xclim.indices.standardized_index_fit_params`` when multiple or non-array indexers are specified and fitted parameters are reloaded from netCDF. (:issue:`1842`, :pull:`1843`).
 * Addressed a bug found in ``wet_spell_*`` indicators that was contributing to erroneous results. A new generic spell length statistic function ``xclim.indices.generic.spell_length_statistics`` is now used in wet and dry spells indicators. (:issue:`1834`, :pull:`1838`).
+* Syntax for ``nan`` and ``inf`` was adapted to support ``numpy>=2.0.0``. (:pull:`1814`, :issue:`1785`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^

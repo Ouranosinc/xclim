@@ -141,7 +141,7 @@ def generate_atmos(cache_dir: Path) -> dict[str, xr.DataArray]:
 
         # Create a file in session scoped temporary directory
         atmos_file = cache_dir.joinpath("atmosds.nc")
-        ds.to_netcdf(atmos_file)
+        ds.to_netcdf(atmos_file, engine="h5netcdf")
 
     # Give access to dataset variables by name in namespace
     namespace = dict()
