@@ -571,7 +571,7 @@ def to_agg_units(
 
     >>> degdays = convert_units_to(degdays, "K days")
     >>> degdays.units
-    'K d'
+    'd K'
     """
     if op in ["amin", "min", "amax", "max", "mean", "sum"]:
         out.attrs["units"] = orig.attrs["units"]
