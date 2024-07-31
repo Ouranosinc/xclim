@@ -113,11 +113,20 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ ubuntu-latest ]
-        markers: [ "-m 'not slow'" ]
-        python-version: [ "3.10", "3.11", "3.12" ]
-        tox-env: [ standard ]
         include:
+          # Linux builds
+          - os: ubuntu-latest
+            markers: -m 'not slow'
+            python-version: "3.10"
+            tox-env: standard
+          - os: ubuntu-latest
+            markers: -m 'not slow'
+            python-version: "3.11"
+            tox-env: standard
+          - os: ubuntu-latest
+            markers: -m 'not slow'
+            python-version: "3.12"
+            tox-env: standard
           # Windows builds
           - tox-env: py39-coverage-prefetch  # Test data prefetch is needed for Windows
             python-version: "3.9"
