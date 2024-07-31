@@ -127,7 +127,7 @@ def cold_spell_duration_index(
     --------
     >>> from xclim.core.calendar import percentile_doy
     >>> from xclim.indices import cold_spell_duration_index
-    >>> tasmin = open_dataset(path_to_tasmin_file).tasmin.isel(lat=0, lon=0)
+    >>> tasmin = xr.open_dataset(path_to_tasmin_file).tasmin.isel(lat=0, lon=0)
     >>> tn10 = percentile_doy(tasmin, per=10).sel(percentiles=10)
     >>> cold_spell_duration_index(tasmin, tn10)
 
@@ -971,7 +971,7 @@ def precip_accumulation(
     precipitation at the seasonal frequency, ie DJF, MAM, JJA, SON, DJF, etc.:
 
     >>> from xclim.indices import precip_accumulation
-    >>> pr_day = open_dataset(path_to_pr_file).pr
+    >>> pr_day = xr.open_dataset(path_to_pr_file).pr
     >>> prcp_tot_seasonal = precip_accumulation(pr_day, freq="QS-DEC")
     """
     if phase == "liquid":
@@ -1034,7 +1034,7 @@ def precip_average(
     precipitation at the seasonal frequency, ie DJF, MAM, JJA, SON, DJF, etc.:
 
     >>> from xclim.indices import precip_average
-    >>> pr_day = open_dataset(path_to_pr_file).pr
+    >>> pr_day = xr.open_dataset(path_to_pr_file).pr
     >>> prcp_tot_seasonal = precip_average(pr_day, freq="QS-DEC")
     """
     if phase == "liquid":
@@ -1146,8 +1146,8 @@ def high_precip_low_temp(
     Example
     -------
     To compute the number of days with intense rainfall while minimum temperatures dip below -0.2C:
-    >>> pr = open_dataset(path_to_pr_file).pr
-    >>> tasmin = open_dataset(path_to_tasmin_file).tasmin
+    >>> pr = xr.open_dataset(path_to_pr_file).pr
+    >>> tasmin = xr.open_dataset(path_to_tasmin_file).tasmin
     >>> high_precip_low_temp(
     ...     pr, tas=tasmin, pr_thresh="10 mm/d", tas_thresh="-0.2 degC"
     ... )
@@ -1204,7 +1204,7 @@ def days_over_precip_thresh(
     Examples
     --------
     >>> from xclim.indices import days_over_precip_thresh
-    >>> pr = open_dataset(path_to_pr_file).pr
+    >>> pr = xr.open_dataset(path_to_pr_file).pr
     >>> p75 = pr.quantile(0.75, dim="time", keep_attrs=True)
     >>> r75p = days_over_precip_thresh(pr, p75)
     """
@@ -1333,7 +1333,7 @@ def tg90p(
     --------
     >>> from xclim.core.calendar import percentile_doy
     >>> from xclim.indices import tg90p
-    >>> tas = open_dataset(path_to_tas_file).tas
+    >>> tas = xr.open_dataset(path_to_tas_file).tas
     >>> tas_per = percentile_doy(tas, per=90).sel(percentiles=90)
     >>> hot_days = tg90p(tas, tas_per)
     """
@@ -1391,7 +1391,7 @@ def tg10p(
     --------
     >>> from xclim.core.calendar import percentile_doy
     >>> from xclim.indices import tg10p
-    >>> tas = open_dataset(path_to_tas_file).tas
+    >>> tas = xr.open_dataset(path_to_tas_file).tas
     >>> tas_per = percentile_doy(tas, per=10).sel(percentiles=10)
     >>> cold_days = tg10p(tas, tas_per)
     """
@@ -1449,7 +1449,7 @@ def tn90p(
     --------
     >>> from xclim.core.calendar import percentile_doy
     >>> from xclim.indices import tn90p
-    >>> tas = open_dataset(path_to_tas_file).tas
+    >>> tas = xr.open_dataset(path_to_tas_file).tas
     >>> tas_per = percentile_doy(tas, per=90).sel(percentiles=90)
     >>> hot_days = tn90p(tas, tas_per)
     """
@@ -1507,7 +1507,7 @@ def tn10p(
     --------
     >>> from xclim.core.calendar import percentile_doy
     >>> from xclim.indices import tn10p
-    >>> tas = open_dataset(path_to_tas_file).tas
+    >>> tas = xr.open_dataset(path_to_tas_file).tas
     >>> tas_per = percentile_doy(tas, per=10).sel(percentiles=10)
     >>> cold_days = tn10p(tas, tas_per)
     """
@@ -1565,7 +1565,7 @@ def tx90p(
     --------
     >>> from xclim.core.calendar import percentile_doy
     >>> from xclim.indices import tx90p
-    >>> tas = open_dataset(path_to_tas_file).tas
+    >>> tas = xr.open_dataset(path_to_tas_file).tas
     >>> tasmax_per = percentile_doy(tas, per=90).sel(percentiles=90)
     >>> hot_days = tx90p(tas, tasmax_per)
     """
@@ -1623,7 +1623,7 @@ def tx10p(
     --------
     >>> from xclim.core.calendar import percentile_doy
     >>> from xclim.indices import tx10p
-    >>> tas = open_dataset(path_to_tas_file).tas
+    >>> tas = xr.open_dataset(path_to_tas_file).tas
     >>> tasmax_per = percentile_doy(tas, per=10).sel(percentiles=10)
     >>> cold_days = tx10p(tas, tasmax_per)
     """
@@ -1762,7 +1762,7 @@ def warm_spell_duration_index(
     >>> from xclim.core.calendar import percentile_doy
     >>> from xclim.indices import warm_spell_duration_index
 
-    >>> tasmax = open_dataset(path_to_tasmax_file).tasmax.isel(lat=0, lon=0)
+    >>> tasmax = xr.open_dataset(path_to_tasmax_file).tasmax.isel(lat=0, lon=0)
     >>> tasmax_per = percentile_doy(tasmax, per=90).sel(percentiles=90)
     >>> warm_spell_duration_index(tasmax, tasmax_per)
     """
