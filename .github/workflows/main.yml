@@ -1,4 +1,4 @@
-name: xclim Testing Suite
+name: Testing
 
 on:
   push:
@@ -74,7 +74,8 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [ "3.9" ]
+        python-version:
+          - "3.9"
     steps:
       - name: Harden Runner
         uses: step-security/harden-runner@0d381219ddf674d61a7572ddd19d7941e271515c # v2.9.0
@@ -120,7 +121,7 @@ jobs:
             python-version: "3.10"
             tox-env: standard
           - os: ubuntu-latest
-            markers: ''  # Slow tests
+            markers: -m 'not slow'
             python-version: "3.11"
             tox-env: standard
           - os: ubuntu-latest
@@ -135,11 +136,11 @@ jobs:
           # macOS builds
           - os: macos-latest
             python-version: "3.10"
-            markers: -m 'not slow'
+            markers: ''  # Slow tests
             tox-env: standard
           # Specialized tests
           - os: ubuntu-latest
-            markers: -m 'not requires_internet'
+            markers: -m 'not requires_internet and not slow'
             python-version: "3.9"
             tox-env: py39-coverage-offline-prefetch
           - os: ubuntu-latest

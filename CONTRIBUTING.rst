@@ -61,8 +61,8 @@ General notes for implementing new bias-adjustment methods:
 
 * Method are implemented as classes in ``xclim/sdba/adjustment.py``.
 * If the algorithm gets complicated and would generate many dask tasks, it should be implemented as functions wrapped by :py:func:`~xclim.sdba.map_blocks` or :py:func:`~xclim.sdba.map_groups` in ``xclim/sdba/_adjustment.py``.
-* xclim doesn't implement monolithic multi-parameter methods, but rather smaller modular functions to construct post-processing workflows.
-* If you are working on numba-accelerated function that use ``@guvectorize``, consider disabling caching during the development phase and reactivating it once all changes are ready for review. This is done by commenting ``cache=True`` in the decorator.
+* `xclim` doesn't implement monolithic multi-parameter methods, but rather smaller modular functions to construct post-processing workflows.
+* If you are working on numba-accelerated function that uses ``@guvectorize``, consider disabling caching during the development phase and reactivating it once all changes are ready for review. This is done by commenting ``cache=True`` in the decorator.
 
 Report Bugs
 ~~~~~~~~~~~
@@ -83,7 +83,7 @@ Look through the GitHub issues for bugs. Anything tagged with "bug" and "help wa
 Write Documentation
 ~~~~~~~~~~~~~~~~~~~
 
-xclim could always use more documentation, whether as part of the official xclim docs, in docstrings, or even on the web in blog posts, articles, and such.
+xclim could always use more documentation, whether as part of the official `xclim` docs, in docstrings, or even on the web in blog posts, articles, and such.
 
 To reference documents (article, presentation, thesis, etc) in the documentation or in a docstring, xclim uses `sphinxcontrib-bibtex`_.
 Metadata of the documents is stored as BibTeX entries in the ``docs/references.bib`` file.
@@ -162,25 +162,26 @@ Ready to contribute? Here's how to set up `xclim` for local development.
 
    Alternatively, one can use ``$ tox`` to run very specific testing configurations, as GitHub Workflows would do when a Pull Request is submitted and new commits are pushed::
 
-    $ tox -e py39  # run tests on Python 3.9
-    $ tox -e py310-upstream-doctest  # run tests on Python 3.10, including doctests, with upstream dependencies
-    $ tox -e py311 -- -m "not slow  # run tests on Python 3.11, excluding "slow" marked tests
-    $ tox -e py312-numba -- -m "not slow  # run tests on Python 3.12, installing upstream `numba`, excluding "slow" marked tests
-    $ tox -e notebooks_doctests  # run tests using the base Python on doctests and evaluate all notebooks
-    $ tox -e offline  # run tests using the base Python, excluding tests requiring internet access
+    $ tox -e py39-coverage  # run tests on Python 3.9, reporting code coverage
+    $ tox -e py310-upstream  # run tests on Python 3.10, with upstream dependencies
+    $ tox -e py311-prefetch-offline -- -m "not slow"  # run tests on Python 3.11, force download of testing, ensure tests are all offline, exclude "slow" marked tests
+    $ tox -e py312-lmoments -- -m "not slow"  # run tests on Python 3.12, installing lmoments3, excluding "slow" marked tests
+    $ tox -e notebooks,doctests  # run the notebook-based tests, then run the doctests
 
-    $ tox -m test  # run all builds listed above
+    $ tox -m test  # run the standard tests used in GitHub Workflows
 
    .. warning::
+
     Starting from `xclim` v0.46.0, when running tests with `tox`, any `pytest` markers passed to `pyXX` builds (e.g. `-m "not slow"`) must be passed to `tox` directly. This can be done as follows::
 
         $ tox -e py310 -- -m "not slow"
 
     The exceptions to this rule are:
-      `notebooks_doctests`: this configuration does not pass test  markers to its `pytest` call.
+      `notebooks` and `doctests`: these configurations do not pass test markers to its `pytest` call.
       `offline`: this configuration runs by default with the `-m "not requires_internet"` test marker. Be aware that running `tox` and manually setting a `pytest` marker will override this default.
 
    .. note::
+
     `xclim` tests are organized to support the `pytest-xdist`_ plugin for distributed testing across workers or CPUs.
     In order to benefit from multiple processes, add the flag `--numprocesses=auto` or `-n auto` to your `pytest` calls.
 
