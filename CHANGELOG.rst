@@ -14,7 +14,7 @@ New features and enhancements
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
-* As updated in ``cf_xarray>=0.9.4``, dimensionless quantities now use the "1" units attribute as specified by the CF conventions, previously an empty string was returned. (:pull:`1814`).
+* As updated in ``cf_xarray>=0.9.3``, dimensionless quantities now use the "1" units attribute as specified by the CF conventions, previously an empty string was returned. (:pull:`1814`).
 
 Bug fixes
 ^^^^^^^^^
