@@ -112,6 +112,7 @@ jobs:
       (github.event.review.state == 'approved') ||
       (github.event_name == 'push')
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
     strategy:
       matrix:
         include:
