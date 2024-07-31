@@ -120,7 +120,7 @@ jobs:
             python-version: "3.10"
             tox-env: standard
           - os: ubuntu-latest
-            markers: -m 'not slow'
+            markers: ''  # Slow tests
             python-version: "3.11"
             tox-env: standard
           - os: ubuntu-latest
@@ -128,20 +128,28 @@ jobs:
             python-version: "3.12"
             tox-env: standard
           # Windows builds
-          - tox-env: py39-coverage-prefetch  # Test data prefetch is needed for Windows
+          - os: windows-latest
+            markers: -m 'not slow'
             python-version: "3.9"
-            os: windows-latest
+            tox-env: py39-coverage-prefetch  # Test data prefetch is needed for Windows
           # macOS builds
-          - python-version: "3.10"
-            os: macos-latest
+          - os: macos-latest
+            python-version: "3.10"
+            markers: -m 'not slow'
+            tox-env: standard
           # Specialized tests
-          - tox-env: py39-coverage-offline-prefetch
+          - os: ubuntu-latest
             markers: -m 'not requires_internet'
             python-version: "3.9"
-          - tox-env: notebooks
+            tox-env: py39-coverage-offline-prefetch
+          - os: ubuntu-latest
+            markers: ''
             python-version: "3.10"
-          - tox-env: doctests
+            tox-env: notebooks
+          - os: ubuntu-latest
+            markers: ''
             python-version: "3.12"
+            tox-env: doctests
     steps:
       - name: Harden Runner
         uses: step-security/harden-runner@0d381219ddf674d61a7572ddd19d7941e271515c # v2.9.0
@@ -163,7 +171,7 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
       - name: Install Eigen3 (SBCK)
-        if: ${{ matrix.python-version == '3.11' }}
+        if: ${{ matrix.python-version }} == '3.11'
         run: |
           sudo apt-get update
           sudo apt-get install libeigen3-dev
@@ -176,7 +184,7 @@ jobs:
           python -m pip install --require-hashes -r CI/requirements_ci.txt
       - name: Test with tox
         run: |
-          if [[ ${{ matrix.tox-env == 'standard' }} ]]; then
+          if [[ ${{ matrix.tox-env }} == 'standard' ]]; then
               python -m tox -- ${{ matrix.markers }};
           else
               python -m tox -e ${{ matrix.tox-env }} -- ${{ matrix.markers }};
