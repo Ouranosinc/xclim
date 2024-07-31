@@ -168,7 +168,7 @@ ignore-words-list = "absolue,astroid,bloc,bui,callendar,degreee,environnement,ha
 
 [tool.coverage.run]
 relative_files = true
-omit = ["tests/*.py"]
+omit = ["tests/*.py", "xclim/testing/conftest.py"]
 
 [tool.deptry]
 extend_exclude = ["docs"]
