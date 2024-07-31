@@ -62,7 +62,7 @@ dev = [
   "codespell ==2.3.0",
   "coverage[toml] >=7.5.0",
   "coveralls >=4.0.0",
-  "deptry ==0.17.0",
+  "deptry ==0.18.0",
   "flake8 >=7.1.0",
   "flake8-rst-docstrings",
   "h5netcdf>=1.3.0",
@@ -133,7 +133,7 @@ target-version = [
 ]
 
 [tool.bumpversion]
-current_version = "0.51.1-dev.4"
+current_version = "0.51.1-dev.5"
 commit = true
 commit_args = "--no-verify"
 tag = false
