@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import numpy as np
 import xarray as xr
-from numpy import __version__ as __numpy_version__
+from cf_xarray import __version__ as __cfxr_version__
 from packaging.version import Version
 
 from xclim import atmos, set_options
@@ -262,8 +262,8 @@ def test_wind_profile(atmosds):
 
 def test_wind_power_potential(atmosds):
     out = atmos.wind_power_potential(wind_speed=atmosds.sfcWind)
-    # FIXME: Confirm these expected outputs
-    if Version(__numpy_version__) < Version("2.0.0"):
+
+    if Version(__cfxr_version__) < Version("0.9.4"):
         assert out.attrs["units"] == ""
     else:
         assert out.attrs["units"] == "1"

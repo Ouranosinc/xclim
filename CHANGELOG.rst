@@ -14,8 +14,7 @@ New features and enhancements
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
-* Dimensionless quantities now use the "1" units attribute as specified by the CF conventions, previously an empty string was returned. (:pull:`1814`).
-* Updated minimum versions for some dependencies: ``numpy>=2.0.0``, ``cf-xarray>=0.9.3`` and ``pint>=0.24.1``. (:pull:`1814`).
+* As updated in ``cf_xarray>=0.9.4``, dimensionless quantities now use the "1" units attribute as specified by the CF conventions, previously an empty string was returned. (:pull:`1814`).
 
 Bug fixes
 ^^^^^^^^^

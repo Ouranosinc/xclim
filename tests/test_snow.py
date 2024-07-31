@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import numpy as np
 import pytest
-from numpy import __version__ as __numpy_version__
+from cf_xarray import __version__ as __cfxr_version__
 from packaging.version import Version
 
 from xclim import land
@@ -48,8 +48,7 @@ class TestContinuousSnowDepthSeason:
 
         out = land.snd_season_start(snd)
 
-        # FIXME: Confirm these expected outputs
-        if Version(__numpy_version__) < Version("2.0.0"):
+        if Version(__cfxr_version__) < Version("0.9.4"):
             assert out.units == ""
         else:
             assert out.units == "1"
@@ -58,8 +57,7 @@ class TestContinuousSnowDepthSeason:
 
         out = land.snd_season_end(snd)
 
-        # FIXME: Confirm these expected outputs
-        if Version(__numpy_version__) < Version("2.0.0"):
+        if Version(__cfxr_version__) < Version("0.9.4"):
             assert out.units == ""
         else:
             assert out.units == "1"
@@ -82,8 +80,7 @@ class TestContinuousSnowWaterSeason:
 
         out = land.snw_season_start(snw)
 
-        # FIXME: Confirm these expected outputs
-        if Version(__numpy_version__) < Version("2.0.0"):
+        if Version(__cfxr_version__) < Version("0.9.4"):
             assert out.units == ""
         else:
             assert out.units == "1"
@@ -92,8 +89,7 @@ class TestContinuousSnowWaterSeason:
 
         out = land.snw_season_end(snw)
 
-        # FIXME: Confirm these expected outputs
-        if Version(__numpy_version__) < Version("2.0.0"):
+        if Version(__cfxr_version__) < Version("0.9.4"):
             assert out.units == ""
         else:
             assert out.units == "1"

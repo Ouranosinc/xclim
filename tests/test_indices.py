@@ -19,7 +19,7 @@ import numpy as np
 import pandas as pd
 import pytest
 import xarray as xr
-from numpy import __version__ as __numpy_version__
+from cf_xarray import __version__ as __cfxr_version__
 from packaging.version import Version
 from pint import __version__ as __pint_version__
 
@@ -140,16 +140,16 @@ class TestColdSpellFreq:
 
         out = xci.cold_spell_frequency(da, thresh="-10. C", freq="ME")
         np.testing.assert_array_equal(out, [1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0])
-        # FIXME: Confirm these expected outputs
-        if Version(__numpy_version__) < Version("2.0.0"):
+
+        if Version(__cfxr_version__) < Version("0.9.4"):
             assert out.units == ""
         else:
             assert out.units == "1"
 
         out = xci.cold_spell_frequency(da, thresh="-10. C", freq="YS")
         np.testing.assert_array_equal(out, 3)
-        # FIXME: Confirm these expected outputs
-        if Version(__numpy_version__) < Version("2.0.0"):
+
+        if Version(__cfxr_version__) < Version("0.9.4"):
             assert out.units == ""
         else:
             assert out.units == "1"
@@ -242,7 +242,7 @@ class TestCoolingDegreeDays:
         a = tas_series(np.array([10, 15, -5, 18]) + K2C)
         cdd = xci.cooling_degree_days(a)
         assert cdd == 0
-        # FIXME: Confirm these expected outputs
+
         if Version(__pint_version__) < Version("0.24.1"):
             assert cdd.units == "K d"
         else:
@@ -921,8 +921,7 @@ class TestLastSpringFrost:
         for attr in ["units", "is_dayofyear", "calendar"]:
             assert attr in lsf.attrs.keys()
 
-        # FIXME: Confirm these expected outputs
-        if Version(__numpy_version__) < Version("2.0.0"):
+        if Version(__cfxr_version__) < Version("0.9.4"):
             assert lsf.attrs["units"] == ""
         else:
             assert lsf.attrs["units"] == "1"
@@ -948,8 +947,7 @@ class TestFirstDayBelow:
         for attr in ["units", "is_dayofyear", "calendar"]:
             assert attr in fdb.attrs.keys()
 
-        # FIXME: Confirm these expected outputs
-        if Version(__numpy_version__) < Version("2.0.0"):
+        if Version(__cfxr_version__) < Version("0.9.4"):
             assert fdb.attrs["units"] == ""
         else:
             assert fdb.attrs["units"] == "1"
@@ -985,8 +983,7 @@ class TestFirstDayAbove:
         for attr in ["units", "is_dayofyear", "calendar"]:
             assert attr in fda.attrs.keys()
 
-        # FIXME: Confirm these expected outputs
-        if Version(__numpy_version__) < Version("2.0.0"):
+        if Version(__cfxr_version__) < Version("0.9.4"):
             assert fda.attrs["units"] == ""
         else:
             assert fda.attrs["units"] == "1"
@@ -1016,8 +1013,7 @@ class TestFirstDayAbove:
         for attr in ["units", "is_dayofyear", "calendar"]:
             assert attr in out.attrs.keys()
 
-        # FIXME: Confirm these expected outputs
-        if Version(__numpy_version__) < Version("2.0.0"):
+        if Version(__cfxr_version__) < Version("0.9.4"):
             assert out.attrs["units"] == ""
         else:
             assert out.attrs["units"] == "1"
@@ -1109,8 +1105,7 @@ class TestGrowingSeasonStart:
         for attr in ["units", "is_dayofyear", "calendar"]:
             assert attr in out.attrs.keys()
 
-        # FIXME: Confirm these expected outputs
-        if Version(__numpy_version__) < Version("2.0.0"):
+        if Version(__cfxr_version__) < Version("0.9.4"):
             assert out.attrs["units"] == ""
         else:
             assert out.attrs["units"] == "1"
@@ -1228,8 +1223,7 @@ class TestFrostFreeSeasonStart:
         for attr in ["units", "is_dayofyear", "calendar"]:
             assert attr in out.attrs.keys()
 
-        # FIXME: Confirm these expected outputs
-        if Version(__numpy_version__) < Version("2.0.0"):
+        if Version(__cfxr_version__) < Version("0.9.4"):
             assert out.attrs["units"] == ""
         else:
             assert out.attrs["units"] == "1"
@@ -1267,8 +1261,7 @@ class TestFrostFreeSeasonEnd:
         for attr in ["units", "is_dayofyear", "calendar"]:
             assert attr in gs_end.attrs.keys()
 
-        # FIXME: Confirm these expected outputs
-        if Version(__numpy_version__) < Version("2.0.0"):
+        if Version(__cfxr_version__) < Version("0.9.4"):
             assert gs_end.attrs["units"] == ""
         else:
             assert gs_end.attrs["units"] == "1"
@@ -2782,8 +2775,7 @@ def test_degree_days_exceedance_date(tas_series):
     for attr in ["units", "is_dayofyear", "calendar"]:
         assert attr in out.attrs.keys()
 
-    # FIXME: Confirm these expected outputs
-    if Version(__numpy_version__) < Version("2.0.0"):
+    if Version(__cfxr_version__) < Version("0.9.4"):
         assert out.attrs["units"] == ""
     else:
         assert out.attrs["units"] == "1"
@@ -2827,8 +2819,8 @@ def test_first_snowfall(prsn_series, prsnd_series):
     assert out[0] == 166
     for attr in ["units", "is_dayofyear", "calendar"]:
         assert attr in out.attrs.keys()
-    # FIXME: Confirm these expected outputs
-    if Version(__numpy_version__) < Version("2.0.0"):
+
+    if Version(__cfxr_version__) < Version("0.9.4"):
         assert out.attrs["units"] == ""
     else:
         assert out.attrs["units"] == "1"
@@ -2852,8 +2844,8 @@ def test_first_snowfall(prsn_series, prsnd_series):
     assert out[0] == 166
     for attr in ["units", "is_dayofyear", "calendar"]:
         assert attr in out.attrs.keys()
-    # FIXME: Confirm these expected outputs
-    if Version(__numpy_version__) < Version("2.0.0"):
+
+    if Version(__cfxr_version__) < Version("0.9.4"):
         assert out.attrs["units"] == ""
     else:
         assert out.attrs["units"] == "1"
@@ -2994,8 +2986,7 @@ class TestSnowCover:
         for attr in ["units", "is_dayofyear", "calendar"]:
             assert attr in out.attrs.keys()
 
-        # FIXME: Confirm these expected outputs
-        if Version(__numpy_version__) < Version("2.0.0"):
+        if Version(__cfxr_version__) < Version("0.9.4"):
             assert out.attrs["units"] == ""
         else:
             assert out.attrs["units"] == "1"
@@ -3008,8 +2999,7 @@ class TestSnowCover:
         for attr in ["units", "is_dayofyear", "calendar"]:
             assert attr in out.attrs.keys()
 
-        # FIXME: Confirm these expected outputs
-        if Version(__numpy_version__) < Version("2.0.0"):
+        if Version(__cfxr_version__) < Version("0.9.4"):
             assert out.attrs["units"] == ""
         else:
             assert out.attrs["units"] == "1"
@@ -3036,8 +3026,7 @@ class TestSnowCover:
         for attr in ["units", "is_dayofyear", "calendar"]:
             assert attr in out.attrs.keys()
 
-        # FIXME: Confirm these expected outputs
-        if Version(__numpy_version__) < Version("2.0.0"):
+        if Version(__cfxr_version__) < Version("0.9.4"):
             assert out.attrs["units"] == ""
         else:
             assert out.attrs["units"] == "1"
