@@ -32,6 +32,8 @@ CI changes
 * `pip-tools` (`pip-compile`) has been used to generate a lock file with hashes for the CI dependencies. (:pull:`1841`).
 * The ``main.yml`` workflow has been updated to use simpler trigger logic. (:pull:`1841`).
 * A workflow bug has been fixed that was causing multiple duplicate comments to be made on Pull Requests originating from forks. (:pull:`1841`).
+* The ``upstream.yml`` workflow was adapted to not install upstream Python dependencies using hashes (impossible to install directly from GitHub sources using --require-hashes). (:pull:`1859`).
+* The `tox-gh` configuration has been set to handle the environment configurations on GitHub Workflows. The tox.ini file is also a bit more organized/consistent. (:pull:`1859`).
 
 v0.51.0 (2024-07-04)
 --------------------
