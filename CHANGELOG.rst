@@ -16,6 +16,11 @@ Breaking changes
 ^^^^^^^^^^^^^^^^
 * As updated in ``cf_xarray>=0.9.3``, dimensionless quantities now use the "1" units attribute as specified by the CF conventions, previously an empty string was returned. (:pull:`1814`).
 
+Breaking changes
+^^^^^^^^^^^^^^^^
+* The definitions of the ``frost_free_season_start`` and ``frost_free_season_end`` have been slightly changed to be coherent with the ``frost_free_season_length`` and `xclim`'s notion of `season` in general. Indicator and indices signature have changed. (:pull:`1845`).
+* Season length indicators have been modified to return ``0`` for all cases where a proper season was not found, but the data is valid. Previously, a ``nan`` was given if neither a start or an end were found, even if the data was valid, and a ``0`` was given if an end was found but no start. (:pull:`1845`).
+
 Bug fixes
 ^^^^^^^^^
 * Fixed the indexer bug in the ``xclim.indices.standardized_index_fit_params`` when multiple or non-array indexers are specified and fitted parameters are reloaded from netCDF. (:issue:`1842`, :pull:`1843`).
@@ -26,6 +31,7 @@ Internal changes
 ^^^^^^^^^^^^^^^^
 * Changed the French translation of "wet days" from "jours mouillés" to "jours pluvieux". (:issue:`1825`, :pull:`1826`).
 * In order to adapt to changes in `pytest`, the doctest fixtures have been split from the main testing suite and doctests are now run using ``$ python -c 'from xclim.testing.utils import run_doctests; run_doctests()'``. (:pull:`1632`).
+* Added ``xclim.indices.generic.season`` to make season start, end, and length indices. Added a ``stat`` argument to ``xclim.indices.run_length.season`` to avoid returning a dataset. (:pull:`1845`).
 
 CI changes
 ^^^^^^^^^^
