@@ -488,7 +488,7 @@ def season(
     mid_date: DayOfYearStr | None = None,
     constrain: Sequence[str] | None = None,
 ) -> xarray.DataArray:
-    r"""Season
+    r"""Season.
 
     A season starts when a variable respects some condition for a consecutive run of `N` days. It stops
     when the condition is inverted for `N` days. Runs where the condition is not met for fewer than `N` days

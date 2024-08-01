@@ -820,7 +820,7 @@ def season_end(
         The date (in MM-DD format) that a run must include to be considered valid.
     dim : str
         Dimension along which to calculate consecutive run (default: 'time').
-    coord : Optional[str]
+    coord : str, optional
         If not False, the function returns values along `dim` instead of indexes.
         If `dim` has a datetime dtype, `coord` can also be a str of the name of the
         DateTimeAccessor object to use (ex: 'dayofyear').
@@ -873,7 +873,7 @@ def season(
     A "season" is a run of True values that may include breaks under a given length (`window`).
     The start is computed as the first run of `window` True values, and the end as the first subsequent run
     of  `window` False values. The end element is the first element after the season.
-    If a date is given, it must be included in the season, i.e. the start can't happen laterand the end can't happen earlier.
+    If a date is given, it must be included in the season, i.e. the start cannot occur later and the end cannot occur earlier.
 
     Parameters
     ----------
@@ -893,7 +893,7 @@ def season(
     Returns
     -------
     xr.Dataset
-        A Dataset with three variables : start, end and length of the season.
+        A Dataset with three variables : start, end, and length of the season.
 
     Notes
     -----
@@ -1158,10 +1158,10 @@ def first_run_before_date(
         The date before which to look for the run.
     dim : str
         Dimension along which to calculate consecutive run (default: 'time').
-    coord : Optional[Union[bool, str]]
+    coord : bool or str, optional
         If not False, the function returns values along `dim` instead of indexes.
         If `dim` has a datetime dtype, `coord` can also be a str of the name of the
-        DateTimeAccessor object to use (ex: 'dayofyear').
+        DateTimeAccessor object to use (e.g. 'dayofyear').
 
     Returns
     -------

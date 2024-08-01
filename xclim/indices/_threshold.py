@@ -1406,7 +1406,7 @@ def frost_free_spell_max_length(
     op: str = ">=",
     resample_before_rl: bool = True,
 ) -> xarray.DataArray:
-    r"""Longest cold spell.
+    r"""Longest frost free spell.
 
     Longest spell of warm temperatures over a given period.
     Longest series of at least {window} consecutive days with temperature at or above the threshold.
