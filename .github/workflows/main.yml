@@ -62,7 +62,8 @@ jobs:
         uses: green-coding-solutions/eco-ci-energy-estimation@7333e9a8e8036e5bf69d59dc8bb63d984b0f55c8 # v3.1
         with:
           task: start-measurement
-          label: 'Linting (Python${{ matrix.python-version }})'
+          branch: ${{ github.head_ref || github.ref_name }}
+        continue-on-error: true
       - name: Checkout Repository
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
       - name: Set up Python${{ matrix.python-version }}
@@ -76,7 +77,8 @@ jobs:
         uses: green-coding-solutions/eco-ci-energy-estimation@7333e9a8e8036e5bf69d59dc8bb63d984b0f55c8 # v3.1
         with:
           task: get-measurement
-          label: 'environment setup'
+          label: 'Environment setup (Python${{ matrix.python-version }}, lint)'
+        continue-on-error: true
       - name: Run pylint
         run: |
           python -m pylint --rcfile=.pylintrc.toml --disable=import-error --exit-zero xclim
@@ -87,11 +89,13 @@ jobs:
         uses: green-coding-solutions/eco-ci-energy-estimation@7333e9a8e8036e5bf69d59dc8bb63d984b0f55c8 # v3.1
         with:
           task: get-measurement
-          label: 'linting'
+          label: 'Lint (Python${{ matrix.python-version }})'
+        continue-on-error: true
       - name: Show Energy Results
         uses: green-coding-solutions/eco-ci-energy-estimation@7333e9a8e8036e5bf69d59dc8bb63d984b0f55c8 # v3.1
         with:
           task: display-results
+        continue-on-error: true
 
   test-preliminary:
     name: Python${{ matrix.python-version }} (ubuntu-latest)
@@ -123,8 +127,8 @@ jobs:
         uses: green-coding-solutions/eco-ci-energy-estimation@7333e9a8e8036e5bf69d59dc8bb63d984b0f55c8 # v3.1
         with:
           task: start-measurement
-          label: 'preliminary tests'
-          branch: ${{ github.event.pull_request.head.ref }}
+          branch: ${{ github.head_ref || github.ref_name }}
+        continue-on-error: true
       - name: Checkout Repository
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
       - name: Set up Python${{ matrix.python-version }}
@@ -138,7 +142,8 @@ jobs:
         uses: green-coding-solutions/eco-ci-energy-estimation@7333e9a8e8036e5bf69d59dc8bb63d984b0f55c8 # v3.1
         with:
           task: get-measurement
-          label: 'environment setup'
+          label: 'Environment setup (Python${{ matrix.python-version }}, standard)'
+        continue-on-error: true
       - name: Test with tox
         run: |
           python -m tox -- -m 'not slow'
@@ -150,11 +155,13 @@ jobs:
         uses: green-coding-solutions/eco-ci-energy-estimation@7333e9a8e8036e5bf69d59dc8bb63d984b0f55c8 # v3.1
         with:
           task: get-measurement
-          label: 'test with tox'
+          label: 'Testing with tox (Python${{ matrix.python-version }})'
+        continue-on-error: true
       - name: Show Energy Results
         uses: green-coding-solutions/eco-ci-energy-estimation@7333e9a8e8036e5bf69d59dc8bb63d984b0f55c8 # v3.1
         with:
           task: display-results
+        continue-on-error: true
 
   test-pypi:
     needs: lint
@@ -206,16 +213,32 @@ jobs:
             tox-env: doctests
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@0d381219ddf674d61a7572ddd19d7941e271515c # v2.9.0
+        if : ${{ matrix.os == 'ubuntu-latest' }}
+        uses: step-security/harden-runner@17d0e2bd7d51742c71671bd19fa12bdc9d40a3d6 # v2.8.1
         with:
-          egress-policy: audit
-
+          disable-sudo: true
+          egress-policy: block
+          allowed-endpoints: >
+            api.electricitymap.org:443
+            api.github.com:443
+            api.green-coding.io:443
+            azure.archive.ubuntu.com:80
+            coveralls.io:443
+            files.pythonhosted.org:443
+            github.com:443
+            ip-api.com:80
+            motd.ubuntu.com:443
+            proxy.golang.org:443
+            pypi.org:443
+            raw.githubusercontent.com:443
+            sum.golang.org:443
       - name: Start Energy Measurement
         if : ${{ matrix.os == 'ubuntu-latest' }}
         uses: green-coding-solutions/eco-ci-energy-estimation@7333e9a8e8036e5bf69d59dc8bb63d984b0f55c8 # v3.1
         with:
           task: start-measurement
-          branch: ${{ github.event.pull_request.head.ref }}
+          branch: ${{ github.head_ref || github.ref_name }}
+        continue-on-error: true
       - name: Checkout Repository
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
       - name: Install Eigen3 (SBCK)
@@ -235,7 +258,8 @@ jobs:
         uses: green-coding-solutions/eco-ci-energy-estimation@7333e9a8e8036e5bf69d59dc8bb63d984b0f55c8 # v3.1
         with:
           task: get-measurement
-          label: 'environment setup'
+          label: 'Environment setup (Python${{ matrix.python-version }}, ${{ matrix.tox-env }})'
+        continue-on-error: true
       - name: Test with tox
         if: ${{ matrix.tox-env == 'standard' }}
         run: |
@@ -257,24 +281,25 @@ jobs:
         uses: green-coding-solutions/eco-ci-energy-estimation@7333e9a8e8036e5bf69d59dc8bb63d984b0f55c8 # v3.1
         with:
           task: get-measurement
-          label: 'testing with tox'
+          label: 'Testing with tox (Python${{ matrix.python-version }}, ${{ matrix.tox-env }})'
+        continue-on-error: true
       - name: Show Energy Results
         if : ${{ matrix.os == 'ubuntu-latest' }}
         uses: green-coding-solutions/eco-ci-energy-estimation@7333e9a8e8036e5bf69d59dc8bb63d984b0f55c8 # v3.1
         with:
           task: display-results
+        continue-on-error: true
 
   test-conda:
     needs: lint
-    name: Python${{ matrix.python-version }} (${{ matrix.os }}, conda)
+    name: Python${{ matrix.python-version }} (ubuntu-latest, conda)
     if: |
       contains(github.event.pull_request.labels.*.name, 'approved') ||
       (github.event.review.state == 'approved') ||
       (github.event_name == 'push')
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
     strategy:
       matrix:
-        os: [ ubuntu-latest ]
         python-version: [ "3.9", "3.12" ]
     defaults:
       run:
@@ -284,14 +309,26 @@ jobs:
         uses: step-security/harden-runner@0d381219ddf674d61a7572ddd19d7941e271515c # v2.9.0
         with:
           disable-sudo: true
-          egress-policy: audit
-
+          egress-policy: block
+          allowed-endpoints: >
+            api.electricitymap.org:443
+            api.github.com:443
+            api.green-coding.io:443
+            coveralls.io:443
+            files.pythonhosted.org:443
+            github.com:443
+            ip-api.com:80
+            objects.githubusercontent.com:443
+            proxy.golang.org:443
+            pypi.org:443
+            raw.githubusercontent.com:443
+            sum.golang.org:443
       - name: Start Energy Measurement
-        if : ${{ matrix.os == 'ubuntu-latest' }}
         uses: green-coding-solutions/eco-ci-energy-estimation@7333e9a8e8036e5bf69d59dc8bb63d984b0f55c8 # v3.1
         with:
           task: start-measurement
-          branch: ${{ github.event.pull_request.head.ref }}
+          branch: ${{ github.head_ref || github.ref_name }}
+        continue-on-error: true
       - name: Checkout Repository
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
       - name: Setup Conda (Micromamba) with Python${{ matrix.python-version }}
@@ -311,11 +348,11 @@ jobs:
           xclim show_version_info
           python -m pip check || true
       - name: Environment Setup Energy Measurement
-        if : ${{ matrix.os == 'ubuntu-latest' }}
         uses: green-coding-solutions/eco-ci-energy-estimation@7333e9a8e8036e5bf69d59dc8bb63d984b0f55c8 # v3.1
         with:
           task: get-measurement
-          label: 'environment setup'
+          label: 'Environment setup (conda, Python${{ matrix.python-version }})'
+        continue-on-error: true
       - name: Test with pytest
         run: |
           python -m pytest --numprocesses=logical --durations=10 --cov=xclim --cov-report=term-missing
@@ -327,30 +364,38 @@ jobs:
           COVERALLS_FLAG_NAME: run-{{ matrix.python-version }}-conda
           COVERALLS_PARALLEL: true
       - name: Tests measurement
-        if : ${{ matrix.os == 'ubuntu-latest' }}
         uses: green-coding-solutions/eco-ci-energy-estimation@7333e9a8e8036e5bf69d59dc8bb63d984b0f55c8 # v3.1
         with:
           task: get-measurement
-          label: 'testing with pytest (conda)'
+          label: 'Testing with pytest (conda, Python${{ matrix.python-version }})'
+        continue-on-error: true
       - name: Show Energy Results
-        if : ${{ matrix.os == 'ubuntu-latest' }}
         uses: green-coding-solutions/eco-ci-energy-estimation@7333e9a8e8036e5bf69d59dc8bb63d984b0f55c8 # v3.1
         with:
           task: display-results
+        continue-on-error: true
 
   finish:
+    name: Finish Run
     needs:
       - test-preliminary
       - test-pypi
       - test-conda
     runs-on: ubuntu-latest
-    container: python:3-slim
+    permissions:
+      pull-requests: write
     steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@0d381219ddf674d61a7572ddd19d7941e271515c # v2.9.0
+        with:
+          disable-sudo: true
+          egress-policy: audit
       - name: Start Energy Measurement
         uses: green-coding-solutions/eco-ci-energy-estimation@7333e9a8e8036e5bf69d59dc8bb63d984b0f55c8 # v3.1
         with:
           task: start-measurement
-          branch: ${{ github.event.pull_request.head.ref }}
+          branch: ${{ github.head_ref || github.ref_name }}
+        continue-on-error: true
       - name: Checkout Repository
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
         with:
@@ -368,8 +413,11 @@ jobs:
         uses: green-coding-solutions/eco-ci-energy-estimation@7333e9a8e8036e5bf69d59dc8bb63d984b0f55c8 # v3.1
         with:
           task: get-measurement
-          label: 'finish'
+          label: 'Finish Run'
+        continue-on-error: true
       - name: Show Energy Results
         uses: green-coding-solutions/eco-ci-energy-estimation@7333e9a8e8036e5bf69d59dc8bb63d984b0f55c8 # v3.1
         with:
           task: display-results
+          pr-comment: true
+        continue-on-error: true
