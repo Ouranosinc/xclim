@@ -20,6 +20,7 @@ import pandas as pd
 import pytest
 import xarray as xr
 from cf_xarray import __version__ as __cfxr_version__
+from numpy import __version__ as __numpy_version__
 from packaging.version import Version
 from pint import __version__ as __pint_version__
 
@@ -708,6 +709,13 @@ class TestStandardizedIndices:
     def test_standardized_precipitation_evapotranspiration_index(
         self, open_dataset, freq, window, dist, method, values, diff_tol
     ):
+        if (
+            method == "ML"
+            and freq == "D"
+            and Version(__numpy_version__) < Version("2.0.0")
+        ):
+            pytest.skip("Skipping SPI/ML/D on older numpy")
+
         ds = (
             open_dataset("sdba/CanESM2_1950-2100.nc")
             .isel(location=1)
