@@ -52,6 +52,12 @@ jobs:
             files.pythonhosted.org:443
             github.com:443
             pypi.org:443
+      - name: Start Measurement
+        uses: green-coding-solutions/eco-ci-energy-estimation@7333e9a8e8036e5bf69d59dc8bb63d984b0f55c8 # v3.1
+        with:
+          task: start-measurement
+          label: 'Linting (Python${{ matrix.python-version }})'
+          continue-on-error: true
       - name: Checkout Repository
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
       - name: Set up Python${{ matrix.python-version }}
@@ -61,12 +67,29 @@ jobs:
       - name: Install CI libraries
         run: |
           python -m pip install --require-hashes -r CI/requirements_ci.txt
+      - name: Setup Python Measurement
+        uses: green-coding-solutions/eco-ci-energy-estimation@7333e9a8e8036e5bf69d59dc8bb63d984b0f55c8 # v3.1
+        with:
+          task: get-measurement
+          label: 'environment setup'
+          continue-on-error: true
       - name: Run pylint
         run: |
           python -m pylint --rcfile=.pylintrc.toml --disable=import-error --exit-zero xclim
       - name: Run linting suite
         run: |
           python -m tox -e lint
+      - name: Tests measurement
+        uses: green-coding-solutions/eco-ci-energy-estimation@7333e9a8e8036e5bf69d59dc8bb63d984b0f55c8 # v3.1
+        with:
+          task: get-measurement
+          label: 'linting'
+          continue-on-error: true
+      - name: Show Energy Results
+        uses: green-coding-solutions/eco-ci-energy-estimation@7333e9a8e8036e5bf69d59dc8bb63d984b0f55c8 # v3.1
+        with:
+          task: display-results
+          continue-on-error: true
 
   test-preliminary:
     name: Python${{ matrix.python-version }} (ubuntu-latest)
@@ -89,6 +112,13 @@ jobs:
             github.com:443
             pypi.org:443
             raw.githubusercontent.com:443
+      - name: Start Energy Measurement
+        uses: green-coding-solutions/eco-ci-energy-estimation@7333e9a8e8036e5bf69d59dc8bb63d984b0f55c8 # v3.1
+        with:
+          task: start-measurement
+          label: 'preliminary tests'
+          branch: ${{ github.event.pull_request.head.ref }}
+          continue-on-error: true
       - name: Checkout Repository
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
       - name: Set up Python${{ matrix.python-version }}
@@ -98,11 +128,28 @@ jobs:
       - name: Install CI libraries
         run: |
           python -m pip install --require-hashes -r CI/requirements_ci.txt
+      - name: Environment Setup Energy Measurement
+        uses: green-coding-solutions/eco-ci-energy-estimation@7333e9a8e8036e5bf69d59dc8bb63d984b0f55c8 # v3.1
+        with:
+          task: get-measurement
+          label: 'environment setup'
+          continue-on-error: true
       - name: Test with tox
         run: |
           python -m tox -- -m 'not slow'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Tests measurement
+        uses: green-coding-solutions/eco-ci-energy-estimation@7333e9a8e8036e5bf69d59dc8bb63d984b0f55c8 # v3.1
+        with:
+          task: get-measurement
+          label: 'test with tox'
+          continue-on-error: true
+      - name: Show Energy Results
+        uses: green-coding-solutions/eco-ci-energy-estimation@7333e9a8e8036e5bf69d59dc8bb63d984b0f55c8 # v3.1
+        with:
+          task: display-results
+          continue-on-error: true
 
   test-pypi:
     needs: lint
@@ -170,6 +217,12 @@ jobs:
             ppa.launchpadcontent.net:443
             pypi.org:443
             raw.githubusercontent.com:443
+      - name: Start Energy Measurement
+        uses: green-coding-solutions/eco-ci-energy-estimation@7333e9a8e8036e5bf69d59dc8bb63d984b0f55c8 # v3.1
+        with:
+          task: start-measurement
+          branch: ${{ github.event.pull_request.head.ref }}
+          continue-on-error: true
       - name: Checkout Repository
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
       - name: Install Eigen3 (SBCK)
@@ -184,6 +237,12 @@ jobs:
       - name: Install CI libraries
         run: |
           python -m pip install --require-hashes -r CI/requirements_ci.txt
+      - name: Environment Setup Energy Measurement
+        uses: green-coding-solutions/eco-ci-energy-estimation@7333e9a8e8036e5bf69d59dc8bb63d984b0f55c8 # v3.1
+        with:
+          task: get-measurement
+          label: 'environment setup'
+          continue-on-error: true
       - name: Test with tox
         if: ${{ matrix.tox-env == 'standard' }}
         run: |
@@ -202,6 +261,17 @@ jobs:
           COVERALLS_FLAG_NAME: run-${{ matrix.python-version }}-${{ matrix.os }}-${{ matrix.tox-env }}
           COVERALLS_PARALLEL: true
           COVERALLS_SERVICE_NAME: github
+      - name: Tests measurement
+        uses: green-coding-solutions/eco-ci-energy-estimation@7333e9a8e8036e5bf69d59dc8bb63d984b0f55c8 # v3.1
+        with:
+          task: get-measurement
+          label: 'testing with tox'
+          continue-on-error: true
+      - name: Show Energy Results
+        uses: green-coding-solutions/eco-ci-energy-estimation@7333e9a8e8036e5bf69d59dc8bb63d984b0f55c8 # v3.1
+        with:
+          task: display-results
+          continue-on-error: true
 
   test-conda:
     needs: lint
@@ -235,6 +305,12 @@ jobs:
             pypi.org:443
             raw.githubusercontent.com:443
             repo.anaconda.com:443
+      - name: Start Energy Measurement
+        uses: green-coding-solutions/eco-ci-energy-estimation@7333e9a8e8036e5bf69d59dc8bb63d984b0f55c8 # v3.1
+        with:
+          task: start-measurement
+          branch: ${{ github.event.pull_request.head.ref }}
+          continue-on-error: true
       - name: Checkout Repository
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
       - name: Setup Conda (Micromamba) with Python${{ matrix.python-version }}
@@ -245,9 +321,6 @@ jobs:
           environment-file: environment.yml
           create-args: >-
             python=${{ matrix.python-version }}
-      - name: Micromamba version
-        run: |
-          echo "micromamba: $(micromamba --version)"
       - name: Install xclim
         run: |
           python -m pip install --no-user --editable .
@@ -256,21 +329,15 @@ jobs:
           micromamba list
           xclim show_version_info
           python -m pip check || true
+      - name: Environment Setup Energy Measurement
+        uses: green-coding-solutions/eco-ci-energy-estimation@7333e9a8e8036e5bf69d59dc8bb63d984b0f55c8 # v3.1
+        with:
+          task: get-measurement
+          label: 'environment setup'
+          continue-on-error: true
       - name: Test with pytest
         run: |
           python -m pytest --numprocesses=logical --durations=10 --cov=xclim --cov-report=term-missing
-#      - name: Install tox
-#        shell: bash -l {0}
-#        run: |
-#          mamba install -n xclim39 tox tox-conda
-#      - name: Test
-#        shell: bash -l {0}
-#        run: |
-#          conda activate xclim39
-#          tox -e opt-slow
-#        env:
-#          CONDA_EXE: mamba
-#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Report coverage
         run: |
           coveralls
@@ -279,6 +346,17 @@ jobs:
           COVERALLS_FLAG_NAME: run-{{ matrix.python-version }}-conda
           COVERALLS_PARALLEL: true
           COVERALLS_SERVICE_NAME: github
+      - name: Tests measurement
+        uses: green-coding-solutions/eco-ci-energy-estimation@7333e9a8e8036e5bf69d59dc8bb63d984b0f55c8 # v3.1
+        with:
+          task: get-measurement
+          label: 'testing with pytest (conda)'
+          continue-on-error: true
+      - name: Show Energy Results
+        uses: green-coding-solutions/eco-ci-energy-estimation@7333e9a8e8036e5bf69d59dc8bb63d984b0f55c8 # v3.1
+        with:
+          task: display-results
+          continue-on-error: true
 
   finish:
     needs:
@@ -288,6 +366,12 @@ jobs:
     runs-on: ubuntu-latest
     container: python:3-slim
     steps:
+      - name: Start Energy Measurement
+        uses: green-coding-solutions/eco-ci-energy-estimation@7333e9a8e8036e5bf69d59dc8bb63d984b0f55c8 # v3.1
+        with:
+          task: start-measurement
+          branch: ${{ github.event.pull_request.head.ref }}
+          continue-on-error: true
       - name: Checkout Repository
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
         with:
@@ -296,9 +380,14 @@ jobs:
       - name: Install CI libraries
         run: |
           python -m pip install --require-hashes -r CI/requirements_ci.txt
-      - name: Coveralls finished
-        run: |
-          python -m coveralls --finish
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          COVERALLS_SERVICE_NAME: github
+      - name: Finish measurement
+        uses: green-coding-solutions/eco-ci-energy-estimation@7333e9a8e8036e5bf69d59dc8bb63d984b0f55c8 # v3.1
+        with:
+          task: get-measurement
+          label: 'finish'
+          continue-on-error: true
+      - name: Show Energy Results
+        uses: green-coding-solutions/eco-ci-energy-estimation@7333e9a8e8036e5bf69d59dc8bb63d984b0f55c8 # v3.1
+        with:
+          task: display-results
+          continue-on-error: true
