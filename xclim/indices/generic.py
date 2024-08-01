@@ -509,7 +509,7 @@ def season(
     freq : str
         Resampling frequency.
     mid_date : DayOfYearStr, optional
-        An optional middle date to restrict the possible start and end of the season.
+        An optional middle date. The start must happen before and the end after for the season to be valid.
     constrain : Sequence of strings, optional
         A list of acceptable comparison operators. Optional, but indicators wrapping this function should inject it.
 
@@ -539,6 +539,12 @@ def season(
     Returns the length of the "dry" season. The season starts with 7 consecutive days with precipitation under or equal to
     2 mm/d and ends with as many days above 2 mm/d. If no start is found before the first of august, the season is invalid.
     If a start is found but no end, the end is set to the last day of the period (December 31st if the dataset is complete).
+
+    See Also
+    --------
+    xclim.indices.run_length.season_start
+    xclim.indices.run_length.season_length
+    xclim.indices.run_length.season_end
     """
     thresh = convert_units_to(thresh, data)
     cond = compare(data, op, thresh, constrain=constrain)
