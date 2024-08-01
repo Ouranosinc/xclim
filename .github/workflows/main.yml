@@ -47,17 +47,14 @@ jobs:
         uses: step-security/harden-runner@0d381219ddf674d61a7572ddd19d7941e271515c # v2.9.0
         with:
           disable-sudo: true
-          egress-policy: block
-          allowed-endpoints: >
-            files.pythonhosted.org:443
-            github.com:443
-            pypi.org:443
+          egress-policy: audit
+
       - name: Start Measurement
         uses: green-coding-solutions/eco-ci-energy-estimation@7333e9a8e8036e5bf69d59dc8bb63d984b0f55c8 # v3.1
         with:
           task: start-measurement
           label: 'Linting (Python${{ matrix.python-version }})'
-          continue-on-error: true
+
       - name: Checkout Repository
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
       - name: Set up Python${{ matrix.python-version }}
@@ -104,21 +101,15 @@ jobs:
         uses: step-security/harden-runner@0d381219ddf674d61a7572ddd19d7941e271515c # v2.9.0
         with:
           disable-sudo: true
-          egress-policy: block
-          allowed-endpoints: >
-            api.github.com:443
-            dap.service.does.not.exist:443
-            files.pythonhosted.org:443
-            github.com:443
-            pypi.org:443
-            raw.githubusercontent.com:443
+          egress-policy: audit
+
       - name: Start Energy Measurement
         uses: green-coding-solutions/eco-ci-energy-estimation@7333e9a8e8036e5bf69d59dc8bb63d984b0f55c8 # v3.1
         with:
           task: start-measurement
           label: 'preliminary tests'
           branch: ${{ github.event.pull_request.head.ref }}
-          continue-on-error: true
+
       - name: Checkout Repository
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
       - name: Set up Python${{ matrix.python-version }}
@@ -203,26 +194,14 @@ jobs:
       - name: Harden Runner
         uses: step-security/harden-runner@0d381219ddf674d61a7572ddd19d7941e271515c # v2.9.0
         with:
-          egress-policy: block
-          allowed-endpoints: >
-            api.github.com:443
-            azure.archive.ubuntu.com:80
-            coveralls.io:443
-            dap.service.does.not.exist:443
-            esm.ubuntu.com:443
-            files.pythonhosted.org:443
-            github.com:443
-            motd.ubuntu.com:443
-            packages.microsoft.com:443
-            ppa.launchpadcontent.net:443
-            pypi.org:443
-            raw.githubusercontent.com:443
+          egress-policy: audit
+
       - name: Start Energy Measurement
         uses: green-coding-solutions/eco-ci-energy-estimation@7333e9a8e8036e5bf69d59dc8bb63d984b0f55c8 # v3.1
         with:
           task: start-measurement
           branch: ${{ github.event.pull_request.head.ref }}
-          continue-on-error: true
+
       - name: Checkout Repository
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
       - name: Install Eigen3 (SBCK)
@@ -293,24 +272,14 @@ jobs:
         uses: step-security/harden-runner@0d381219ddf674d61a7572ddd19d7941e271515c # v2.9.0
         with:
           disable-sudo: true
-          egress-policy: block
-          allowed-endpoints: >
-            api.github.com:443
-            conda.anaconda.org:443
-            coveralls.io:443
-            dap.service.does.not.exist:443
-            files.pythonhosted.org:443
-            github.com:443
-            objects.githubusercontent.com:443
-            pypi.org:443
-            raw.githubusercontent.com:443
-            repo.anaconda.com:443
+          egress-policy: audit
+
       - name: Start Energy Measurement
         uses: green-coding-solutions/eco-ci-energy-estimation@7333e9a8e8036e5bf69d59dc8bb63d984b0f55c8 # v3.1
         with:
           task: start-measurement
           branch: ${{ github.event.pull_request.head.ref }}
-          continue-on-error: true
+
       - name: Checkout Repository
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
       - name: Setup Conda (Micromamba) with Python${{ matrix.python-version }}
@@ -371,7 +340,7 @@ jobs:
         with:
           task: start-measurement
           branch: ${{ github.event.pull_request.head.ref }}
-          continue-on-error: true
+
       - name: Checkout Repository
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
         with:
