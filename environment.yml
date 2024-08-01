@@ -72,8 +72,8 @@ dependencies:
   - sphinx-mdinclude
   - sphinxcontrib-bibtex
   - tokenize-rt
-  - tox >=4.15.1
-#  - tox-conda  # Will be added when a tox@v4.0+ compatible plugin is released.
+  - tox >=4.16.0
+  # - tox-conda  # Will be added when a tox@v4.0+ compatible plugin is released.
   - vulture # ==2.11  # The conda-forge version is out of date.
   - xdoctest >=1.1.5
   - yamllint
