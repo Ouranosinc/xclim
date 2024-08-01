@@ -893,7 +893,10 @@ def season(
     Returns
     -------
     xr.Dataset
-        A Dataset with three variables : start, end, and length of the season.
+        Dataset variables:
+            start : start of the season (index or units depending on ``coord``)
+            end : end of the season (index or units depending on ``coord``)
+            length : length of the season (in number of elements along ``dim``)
 
     Notes
     -----
@@ -974,8 +977,6 @@ def season_length(
     dim: str = "time",
 ) -> xr.DataArray:
     """Length of a season.
-
-    See :py:func:`season`.
 
     Parameters
     ----------

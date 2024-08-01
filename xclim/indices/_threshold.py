@@ -932,7 +932,8 @@ def growing_season_start(
     thresh : Quantified
         Threshold temperature on which to base evaluation.
     mid_date : str, optional
-        Date of the year after before which the season must start. Should have the format '%m-%d'.
+        Date of the year before which the season must start. Should have the format '%m-%d'.
+        ``None`` removes that constraint.
     window : int
         Minimum number of days with temperature above threshold needed for evaluation.
     freq : str
@@ -985,6 +986,7 @@ def growing_season_end(
         Threshold temperature on which to base evaluation.
     mid_date : str, optional
         Date of the year after which to look for the end of the season. Should have the format '%m-%d'.
+        ``None`` removes that constraint.
     window : int
         Minimum number of days with temperature below threshold needed for evaluation.
     freq : str
@@ -1053,7 +1055,8 @@ def growing_season_length(
     window : int
         Minimum number of days with temperature above threshold to mark the beginning and end of growing season.
     mid_date : str, optional
-        Date of the year after which to look for the end of the season. Should have the format '%m-%d'.
+        Date of the year before which the season must start and after which it can end. Should have the format '%m-%d'.
+        ``None`` removes that constraint.
     freq : str
         Resampling frequency.
     op : {">", ">=", "gt", "ge"}
@@ -1137,7 +1140,7 @@ def frost_season_length(
         Minimum number of days with temperature below threshold to mark the beginning and end of frost season.
     mid_date : str, optional
         Date the must be included in the season. It is the earliest the end of the season can be.
-        If None, there is no limit.
+        ``None`` removes that constraint.
     thresh : Quantified
         Threshold temperature on which to base evaluation.
     freq : str
@@ -1195,7 +1198,7 @@ def frost_free_season_start(
     tasmin: xarray.DataArray,
     thresh: Quantified = "0.0 degC",
     window: int = 5,
-    mid_date: DayOfYearStr = "07-01",
+    mid_date: DayOfYearStr | None = "07-01",
     op: str = ">=",
     freq: str = "YS",
 ) -> xarray.DataArray:
@@ -1215,7 +1218,8 @@ def frost_free_season_start(
     window : int
         Minimum number of days with temperature above/under threshold to start/end the season.
     mid_date : DayOfYearStr, optional
-        A date what must be included in the season.
+        A date that must be included in the season.
+        ``None`` removes that constraint.
     op : {'>', '>=', 'ge', 'gt'}
         How to compare tasmin and the threshold.
     freq : str
@@ -1255,7 +1259,7 @@ def frost_free_season_end(
     tasmin: xarray.DataArray,
     thresh: Quantified = "0.0 degC",
     window: int = 5,
-    mid_date: DayOfYearStr = "07-01",
+    mid_date: DayOfYearStr | None = "07-01",
     op: str = ">=",
     freq: str = "YS",
 ) -> xarray.DataArray:
@@ -1275,7 +1279,7 @@ def frost_free_season_end(
     window : int
         Minimum number of days with temperature above/under threshold to start/end the season.
     mid_date : DayOfYearStr, optional
-        A date what must be included in the season.
+        A date what must be included in the season. ``None`` removes that constraint.
     op : {'>', '>=', 'ge', 'gt'}
         How to compare tasmin and the threshold.
     freq : str
@@ -1342,7 +1346,7 @@ def frost_free_season_length(
     window : int
         Minimum number of days with temperature above/under threshold to start/end the season.
     mid_date : DayOfYearStr, optional
-        A date what must be included in the season.
+        A date what must be included in the season. ``None`` removes that constraint.
     op : {'>', '>=', 'ge', 'gt'}
         How to compare tasmin and the threshold.
     freq : str
