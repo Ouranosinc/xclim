@@ -758,7 +758,7 @@ def extract_events(
 def season_start(
     da: xr.DataArray,
     window: int,
-    date: DayOfYearStr | None = None,
+    mid_date: DayOfYearStr | None = None,
     dim: str = "time",
     coord: str | bool | None = False,
 ) -> xr.DataArray:
@@ -772,7 +772,7 @@ def season_start(
         Input N-dimensional DataArray (boolean).
     window : int
         Minimum duration of consecutive values to start and end the season.
-    date : DayOfYearStr, optional
+    mid_date : DayOfYearStr, optional
         The date (in MM-DD format) that a season must include to be considered valid.
     dim : str
         Dimension along which to calculate the season (default: 'time').
@@ -792,20 +792,22 @@ def season_start(
     season_end
     season_length
     """
-    return first_run_before_date(da, window=window, date=date, dim=dim, coord=coord)
+    return first_run_before_date(da, window=window, date=mid_date, dim=dim, coord=coord)
 
 
 def season_end(
     da: xr.DataArray,
     window: int,
-    date: DayOfYearStr | None = None,
+    mid_date: DayOfYearStr | None = None,
     dim: str = "time",
     coord: str | bool | None = False,
     _beg: xr.DataArray | None = None,
 ) -> xr.DataArray:
     """End of a season.
 
-    See :py:func:`season`. There are two differences between this and :py:func:`first_run_after_date`:
+    See :py:func:`season`. Similar to :py:func:`first_run_after_date` but here a season
+    must have a start for an end to be valid. Also, if no end is found but a start was found
+    the end is set to the last element of the series.
 
 
     Parameters
@@ -814,7 +816,7 @@ def season_end(
         Input N-dimensional DataArray (boolean).
     window : int
         Minimum duration of consecutive values to start and end the season.
-    date : DayOfYearStr, optional
+    mid_date : DayOfYearStr, optional
         The date (in MM-DD format) that a run must include to be considered valid.
     dim : str
         Dimension along which to calculate consecutive run (default: 'time').
@@ -839,11 +841,13 @@ def season_end(
     if _beg is not None:
         beg = _beg
     else:
-        beg = season_start(da, window=window, dim=dim, date=date, coord=False)
+        beg = season_start(da, window=window, dim=dim, mid_date=mid_date, coord=False)
     # Invert the condition and mask all values after beginning
     # we fillna(0) as so to differentiate series with no runs and all-nan series
     not_da = (~da).where(da[dim].copy(data=np.arange(da[dim].size)) >= beg.fillna(0))
-    end = first_run_after_date(not_da, window=window, dim=dim, date=date, coord=False)
+    end = first_run_after_date(
+        not_da, window=window, dim=dim, date=mid_date, coord=False
+    )
     if _beg is None:
         # Where end is null and beg is not null (valid data, no end detected), put the last index
         # Don't do this in the fast path, so that the length can use this information
@@ -860,7 +864,7 @@ def season_end(
 def season(
     da: xr.DataArray,
     window: int,
-    date: DayOfYearStr | None = None,
+    mid_date: DayOfYearStr | None = None,
     dim: str = "time",
     coord: str | bool | None = False,
 ) -> xr.Dataset:
@@ -877,7 +881,7 @@ def season(
         Input N-dimensional DataArray (boolean).
     window : int
         Minimum duration of consecutive values to start and end the season.
-    date : DayOfYearStr, optional
+    mid_date : DayOfYearStr, optional
         The date (in MM-DD format) that a run must include to be considered valid.
     dim : str
         Dimension along which to calculate consecutive run (default: 'time').
@@ -912,9 +916,11 @@ def season(
     season_end
     season_length
     """
-    beg = season_start(da, window=window, dim=dim, date=date, coord=False)
+    beg = season_start(da, window=window, dim=dim, mid_date=mid_date, coord=False)
     # Use fast path in season_end : no recomputing of start, no masking of end where beg.isnull() and don't set end if none found
-    end = season_end(da, window=window, dim=dim, date=date, _beg=beg, coord=False)
+    end = season_end(
+        da, window=window, dim=dim, mid_date=mid_date, _beg=beg, coord=False
+    )
     # Three cases :
     #           start     no start
     # end       e - s        0
@@ -964,7 +970,7 @@ def season(
 def season_length(
     da: xr.DataArray,
     window: int,
-    date: DayOfYearStr | None = None,
+    mid_date: DayOfYearStr | None = None,
     dim: str = "time",
 ) -> xr.DataArray:
     """Length of a season.
@@ -977,7 +983,7 @@ def season_length(
         Input N-dimensional DataArray (boolean).
     window : int
         Minimum duration of consecutive values to start and end the season.
-    date : DayOfYearStr, optional
+    mid_date : DayOfYearStr, optional
         The date (in MM-DD format) that a run must include to be considered valid.
     dim : str
         Dimension along which to calculate consecutive run (default: 'time').
@@ -993,7 +999,7 @@ def season_length(
     season_start
     season_end
     """
-    seas = season(da, window, date, dim, coord=False)
+    seas = season(da, window, mid_date, dim, coord=False)
     return seas.length
 
 
