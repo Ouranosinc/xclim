@@ -28,6 +28,8 @@ from ._adjustment import (
     extremes_train,
     loci_adjust,
     loci_train,
+    mbcn_adjust,
+    mbcn_train,
     npdf_transform,
     qdm_adjust,
     qm_adjust,
@@ -35,6 +37,7 @@ from ._adjustment import (
     scaling_train,
 )
 from .base import Grouper, ParametrizableWithDataset, parse_group
+from .processing import grouped_time_indexes
 from .utils import (
     ADDITIVE,
     best_pc_orientation_full,
@@ -50,6 +53,7 @@ __all__ = [
     "DetrendedQuantileMapping",
     "EmpiricalQuantileMapping",
     "ExtremeValues",
+    "MBCn",
     "NpdfTransform",
     "PrincipalComponents",
     "QuantileDeltaMapping",
@@ -121,13 +125,61 @@ class BaseAdjustment(ParametrizableWithDataset):
             )
 
     @classmethod
-    def _harmonize_units(cls, *inputs, target: str | None = None):
+    def _harmonize_units(cls, *inputs, target: dict[str] | str | None = None):
         """Convert all inputs to the same units.
 
         If the target unit is not given, the units of the first input are used.
 
         Returns the converted inputs and the target units.
         """
+
+        def _harmonize_units_multivariate(
+            *inputs, dim, target: dict[str] | None = None
+        ):
+            def _convert_units_to(inda, dim, target):
+                varss = inda[dim].values
+                input_units = {
+                    v: inda[dim].attrs["_units"][iv] for iv, v in enumerate(varss)
+                }
+                if input_units == target:
+                    return inda
+                input_standard_names = {
+                    v: inda[dim].attrs["_standard_name"][iv]
+                    for iv, v in enumerate(varss)
+                }
+                for iv, v in enumerate(varss):
+                    inda.attrs["units"] = input_units[v]
+                    inda.attrs["standard_name"] = input_standard_names[v]
+                    inda[{dim: iv}] = convert_units_to(
+                        inda[{dim: iv}], target[v], context="infer"
+                    )
+                    inda[dim].attrs["_units"][iv] = target[v]
+                inda.attrs["units"] = ""
+                inda.attrs.pop("standard_name")
+                return inda
+
+            if target is None:
+                if "_units" not in inputs[0][dim].attrs or any(
+                    [u is None for u in inputs[0][dim].attrs["_units"]]
+                ):
+                    error_msg = (
+                        "Units are missing in some or all of the stacked variables."
+                        "The dataset stacked with `stack_variables` given as input should include units for every variable."
+                    )
+                    raise ValueError(error_msg)
+
+                target = {
+                    v: inputs[0][dim].attrs["_units"][iv]
+                    for iv, v in enumerate(inputs[0][dim].values)
+                }
+            return (
+                _convert_units_to(inda, dim=dim, target=target) for inda in inputs
+            ), target
+
+        for _dim, _crd in inputs[0].coords.items():
+            if _crd.attrs.get("is_variables"):
+                return _harmonize_units_multivariate(*inputs, dim=_dim, target=target)
+
         if target is None:
             target = inputs[0].units
 
@@ -179,12 +231,10 @@ class TrainAdjust(BaseAdjustment):
         skip_checks = kwargs.pop("skip_input_checks", False)
 
         if not skip_checks:
-            (ref, hist), train_units = cls._harmonize_units(ref, hist)
-
             if "group" in kwargs:
                 cls._check_inputs(ref, hist, group=kwargs["group"])
 
-            hist = convert_units_to(hist, ref)
+            (ref, hist), train_units = cls._harmonize_units(ref, hist)
         else:
             train_units = ""
 
@@ -214,12 +264,11 @@ class TrainAdjust(BaseAdjustment):
         """
         skip_checks = kwargs.pop("skip_input_checks", False)
         if not skip_checks:
-            (sim, *args), _ = self._harmonize_units(sim, *args, target=self.train_units)
-
             if "group" in self:
                 self._check_inputs(sim, *args, group=self.group)
 
-            sim = convert_units_to(sim, self.train_units)
+            (sim, *args), _ = self._harmonize_units(sim, *args, target=self.train_units)
+
         out = self._adjust(sim, *args, **kwargs)
 
         if isinstance(out, xr.DataArray):
@@ -236,7 +285,12 @@ class TrainAdjust(BaseAdjustment):
         infostr = f"{str(self)}.adjust(sim, {params})"
         scen.attrs["history"] = update_history(f"Bias-adjusted with {infostr}", sim)
         scen.attrs["bias_adjustment"] = infostr
-        scen.attrs["units"] = self.train_units
+
+        _is_multivariate = any(
+            [_crd.attrs.get("is_variables") for _crd in sim.coords.values()]
+        )
+        if _is_multivariate is False:
+            scen.attrs["units"] = self.train_units
 
         if OPTIONS[SDBA_EXTRA_OUTPUT]:
             return out
@@ -311,7 +365,12 @@ class Adjust(BaseAdjustment):
         infostr = f"{cls.__name__}.adjust(ref, hist, sim, {params})"
         scen.attrs["history"] = update_history(f"Bias-adjusted with {infostr}", sim)
         scen.attrs["bias_adjustment"] = infostr
-        scen.attrs["units"] = ref.units
+
+        _is_multivariate = any(
+            [_crd.attrs.get("is_variables") for _crd in sim.coords.values()]
+        )
+        if _is_multivariate is False:
+            scen.attrs["units"] = ref.units
 
         if OPTIONS[SDBA_EXTRA_OUTPUT]:
             return out
@@ -370,6 +429,7 @@ class EmpiricalQuantileMapping(TrainAdjust):
         kind: str = ADDITIVE,
         group: str | Grouper = "time",
         adapt_freq_thresh: str | None = None,
+        jitter_under_thresh_value: str | None = None,
     ) -> tuple[xr.Dataset, dict[str, Any]]:
         if np.isscalar(nquantiles):
             quantiles = equally_spaced_nodes(nquantiles).astype(ref.dtype)
@@ -382,6 +442,7 @@ class EmpiricalQuantileMapping(TrainAdjust):
             kind=kind,
             quantiles=quantiles,
             adapt_freq_thresh=adapt_freq_thresh,
+            jitter_under_thresh_value=jitter_under_thresh_value,
         )
 
         ds.af.attrs.update(
@@ -468,6 +529,7 @@ class DetrendedQuantileMapping(TrainAdjust):
         kind: str = ADDITIVE,
         group: str | Grouper = "time",
         adapt_freq_thresh: str | None = None,
+        jitter_under_thresh_value: str | None = None,
     ):
         if group.prop not in ["group", "dayofyear"]:
             warn(
@@ -485,6 +547,7 @@ class DetrendedQuantileMapping(TrainAdjust):
             quantiles=quantiles,
             kind=kind,
             adapt_freq_thresh=adapt_freq_thresh,
+            jitter_under_thresh_value=jitter_under_thresh_value,
         )
 
         ds.af.attrs.update(
@@ -682,7 +745,7 @@ class ExtremeValues(TrainAdjust):
                 {
                     "ref": ref,
                     "hist": hist,
-                    "ref_params": ref_params or np.float32(np.NaN),
+                    "ref_params": ref_params or np.float32(np.nan),
                 }
             ),
             q_thresh=q_thresh,
@@ -1171,8 +1234,8 @@ class NpdfTransform(Adjust):
 
         template = xr.Dataset(
             data_vars={
-                "scenh": xr.full_like(hist, np.NaN).rename(time="time_hist"),
-                "scen": xr.full_like(sim, np.NaN),
+                "scenh": xr.full_like(hist, np.nan).rename(time="time_hist"),
+                "scen": xr.full_like(sim, np.nan),
                 "escores": escores_tmpl,
             }
         )
@@ -1201,6 +1264,274 @@ class NpdfTransform(Adjust):
 
         out = out.assign(rotation_matrices=rot_matrices)
         out.scenh.attrs["units"] = hist.units
+        return out
+
+
+class MBCn(TrainAdjust):
+    r"""Multivariate bias correction function using the N-dimensional probability density function transform.
+
+    A multivariate bias-adjustment algorithm described by :cite:t:`sdba-cannon_multivariate_2018`
+    based on a color-correction algorithm described by :cite:t:`sdba-pitie_n-dimensional_2005`.
+
+    This algorithm in itself, when used with QuantileDeltaMapping, is NOT trend-preserving.
+    The full MBCn algorithm includes a reordering step provided here by :py:func:`xclim.sdba.processing.reordering`.
+
+    See notes for an explanation of the algorithm.
+
+    Attributes
+    ----------
+    Train step
+
+    ref : xr.DataArray
+        Reference dataset.
+    hist : xr.DataArray
+        Historical dataset.
+    base_kws : dict, optional
+        Arguments passed to the training in the npdf transform.
+    adj_kws : dict, optional
+        Arguments passed to the adjusting in the npdf transform.
+    n_escore : int
+        The number of elements to send to the escore function. The default, 0, means all elements are included.
+        Pass -1 to skip computing the escore completely.
+        Small numbers result in less significant scores, but the execution time goes up quickly with large values.
+    n_iter : int
+        The number of iterations to perform. Defaults to 20.
+    pts_dim : str
+        The name of the "multivariate" dimension. Defaults to "multivar", which is the
+        normal case when using :py:func:`xclim.sdba.base.stack_variables`.
+    rot_matrices: xr.DataArray, optional
+        The rotation matrices as a 3D array ('iterations', <pts_dim>, <anything>), with shape (n_iter, <N>, <N>).
+        If left empty, random rotation matrices will be automatically generated.
+
+    Adjust step
+
+    ref : xr.DataArray
+        Target reference dataset also needed for univariate bias correction preceding npdf transform
+    hist: xr.DataArray
+        Source dataset also needed for univariate bias correction preceding npdf transform
+    sim : xr.DataArray
+        Source dataset to adjust.
+    base : BaseAdjustment
+        Bias-adjustment class used for the univariate bias correction.
+    base_kws : dict, optional
+        Arguments passed to the training in the univariate bias correction
+    adj_kws : dict, optional
+        Arguments passed to the adjusting in the univariate bias correction
+    period_dim : str, optional
+        Name of the period dimension used when stacking time periods of `sim`  using :py:func:`xclim.core.calendar.stack_periods`.
+        If specified, the interpolation of the npdf transform is performed only once and applied on all periods simultaneously.
+        This should be more performant, but also more memory intensive.
+
+    Notes
+    -----
+    The historical reference (:math:`T`, for "target"), simulated historical (:math:`H`) and simulated projected (:math:`S`)
+    datasets are constructed by stacking the timeseries of N variables together. The algorithm is broken into the
+    following steps:
+
+    Training (only npdf transform training)
+
+    1. Standardize `ref` and `hist` (see ``xclim.sdba.processing.standardize``.)
+
+    2. Rotate the datasets in the N-dimensional variable space with :math:`\mathbf{R}`, a random rotation NxN matrix.
+
+    .. math::
+
+        \tilde{\mathbf{T}} = \mathbf{T}\mathbf{R} \
+        \tilde{\mathbf{H}} = \mathbf{H}\mathbf{R}
+
+    3. QuantileDeltaMapping is used to perform bias adjustment  :math:`\mathcal{F}` on the rotated datasets.
+    The adjustment factor is conserved for later use in the adjusting step. The adjustments are made in additive mode,
+    for each variable :math:`i`.
+
+    .. math::
+
+        \hat{\mathbf{H}}_i, \hat{\mathbf{S}}_i = \mathcal{F}\left(\tilde{\mathbf{T}}_i, \tilde{\mathbf{H}}_i, \tilde{\mathbf{S}}_i\right)
+
+    4. The bias-adjusted datasets are rotated back.
+
+    .. math::
+
+        \mathbf{H}' = \hat{\mathbf{H}}\mathbf{R} \\
+        \mathbf{S}' = \hat{\mathbf{S}}\mathbf{R}
+
+    5. Repeat steps 2,3,4  three steps ``n_iter`` times, i.e. the number of randomly generated rotation matrices.
+
+    Adjusting
+
+    1. Perform the same steps as in training, with `ref, hist` replaced with `sim`. Step 3. of the training is modified, here we
+    simply reuse the adjustment factors previously found in the training step to bias correct the standardized `sim` directly.
+
+    2. Using the original (unstandardized) `ref,hist, sim`, perform a univariate bias adjustment using the ``base_scen`` class
+    on `sim`.
+
+    3. Reorder the dataset found in step 2. according to the ranks of the dataset found in step 1.
+
+
+    The original algorithm :cite:p:`sdba-pitie_n-dimensional_2005`, stops the iteration when some distance score converges.
+    Following cite:t:`sdba-cannon_multivariate_2018` and the MBCn implementation in :cite:t:`sdba-cannon_mbc_2020`, we
+    instead fix the number of iterations.
+
+    As done by cite:t:`sdba-cannon_multivariate_2018`, the distance score chosen is the "Energy distance" from
+    :cite:t:`sdba-szekely_testing_2004`. (see: :py:func:`xclim.sdba.processing.escore`).
+
+    The random matrices are generated following a method laid out by :cite:t:`sdba-mezzadri_how_2007`.
+
+    References
+    ----------
+    :cite:cts:`sdba-cannon_multivariate_2018,sdba-cannon_mbc_2020,sdba-pitie_n-dimensional_2005,sdba-mezzadri_how_2007,sdba-szekely_testing_2004`
+
+    Notes
+    -----
+    Only  "time" and "time.dayofyear" (with a suitable window) are implemented as possible values for `group`.
+    """
+
+    @classmethod
+    def _train(
+        cls,
+        ref: xr.DataArray,
+        hist: xr.DataArray,
+        *,
+        base_kws: dict[str, Any] | None = None,
+        adj_kws: dict[str, Any] | None = None,
+        n_escore: int = -1,
+        n_iter: int = 20,
+        pts_dim: str = "multivar",
+        rot_matrices: xr.DataArray | None = None,
+    ):
+        # set default values for non-specified parameters
+        base_kws = base_kws if base_kws is not None else {}
+        adj_kws = adj_kws if adj_kws is not None else {}
+        base_kws.setdefault("nquantiles", 20)
+        base_kws.setdefault("group", Grouper("time", 1))
+        adj_kws.setdefault("interp", "nearest")
+        adj_kws.setdefault("extrapolation", "constant")
+
+        if np.isscalar(base_kws["nquantiles"]):
+            base_kws["nquantiles"] = equally_spaced_nodes(base_kws["nquantiles"])
+        if isinstance(base_kws["group"], str):
+            base_kws["group"] = Grouper(base_kws["group"], 1)
+        if base_kws["group"].name == "time.month":
+            NotImplementedError(
+                "Received `group==time.month` in `base_kws`. Monthly grouping is not currently supported in the MBCn class."
+            )
+        # stack variables and prepare rotations
+        if rot_matrices is not None:
+            if pts_dim != rot_matrices.attrs["crd_dim"]:
+                raise ValueError(
+                    f"`crd_dim` attribute of `rot_matrices` ({rot_matrices.attrs['crd_dim']}) does not correspond to `pts_dim` ({pts_dim})."
+                )
+        else:
+            rot_dim = xr.core.utils.get_temp_dimname(
+                set(ref.dims).union(hist.dims), pts_dim + "_prime"
+            )
+            rot_matrices = rand_rot_matrix(
+                ref[pts_dim], num=n_iter, new_dim=rot_dim
+            ).rename(matrices="iterations")
+        pts_dims = [rot_matrices.attrs[d] for d in ["crd_dim", "new_dim"]]
+
+        # time indices corresponding to group and windowed group
+        # used to divide datasets as map_blocks or groupby would do
+        _, gw_idxs = grouped_time_indexes(ref.time, base_kws["group"])
+
+        # training, obtain adjustment factors of the npdf transform
+        ds = xr.Dataset(dict(ref=ref, hist=hist))
+        params = {
+            "quantiles": base_kws["nquantiles"],
+            "interp": adj_kws["interp"],
+            "extrapolation": adj_kws["extrapolation"],
+            "pts_dims": pts_dims,
+            "n_escore": n_escore,
+        }
+        out = mbcn_train(ds, rot_matrices=rot_matrices, gw_idxs=gw_idxs, **params)
+        params["group"] = base_kws["group"]
+
+        # postprocess
+        out["rot_matrices"] = rot_matrices
+
+        out.af_q.attrs.update(
+            standard_name="Adjustment factors",
+            long_name="Quantile mapping adjustment factors",
+        )
+        return out, params
+
+    def _adjust(
+        self,
+        sim: xr.DataArray,
+        ref: xr.DataArray,
+        hist: xr.DataArray,
+        *,
+        base: TrainAdjust = QuantileDeltaMapping,
+        base_kws_vars: dict[str, Any] | None = None,
+        adj_kws: dict[str, Any] | None = None,
+        period_dim=None,
+    ):
+        # set default values for non-specified parameters
+        base_kws_vars = base_kws_vars or {}
+        pts_dim = self.pts_dims[0]
+        for v in sim[pts_dim].values:
+            base_kws_vars.setdefault(v, {})
+            base_kws_vars[v].setdefault("group", self.group)
+            if isinstance(base_kws_vars[v]["group"], str):
+                base_kws_vars[v]["group"] = Grouper(base_kws_vars[v]["group"], 1)
+            if base_kws_vars[v]["group"] != self.group:
+                raise ValueError(
+                    f"`group` input in _train and _adjust must be the same."
+                    f"Got {self.group} and {base_kws_vars[v]['group']}"
+                )
+            base_kws_vars[v].pop("group")
+
+            base_kws_vars[v].setdefault("nquantiles", self.ds.af_q.quantiles.values)
+            if np.isscalar(base_kws_vars[v]["nquantiles"]):
+                base_kws_vars[v]["nquantiles"] = equally_spaced_nodes(
+                    base_kws_vars[v]["nquantiles"]
+                )
+            if "is_variables" in sim[pts_dim].attrs:
+                if self.train_units == "":
+                    _, units = self._harmonize_units(sim)
+                else:
+                    units = self.train_units
+
+                if "jitter_under_thresh_value" in base_kws_vars[v]:
+                    base_kws_vars[v]["jitter_under_thresh_value"] = str(
+                        convert_units_to(
+                            base_kws_vars[v]["jitter_under_thresh_value"],
+                            units[v],
+                            context="hydro",
+                        )
+                    )
+                if "adapt_freq_thresh" in base_kws_vars[v]:
+                    base_kws_vars[v]["adapt_freq_thresh"] = str(
+                        convert_units_to(
+                            base_kws_vars[v]["adapt_freq_thresh"],
+                            units[v],
+                            context="hydro",
+                        )
+                    )
+
+        adj_kws = adj_kws or {}
+        adj_kws.setdefault("interp", self.interp)
+        adj_kws.setdefault("extrapolation", self.extrapolation)
+
+        g_idxs, gw_idxs = grouped_time_indexes(ref.time, self.group)
+        ds = self.ds.copy()
+        ds["g_idxs"] = g_idxs
+        ds["gw_idxs"] = gw_idxs
+
+        # adjust (adjust for npft transform, train/adjust for univariate bias correction)
+        out = mbcn_adjust(
+            ref=ref,
+            hist=hist,
+            sim=sim,
+            ds=ds,
+            pts_dims=self.pts_dims,
+            interp=self.interp,
+            extrapolation=self.extrapolation,
+            base=base,
+            base_kws_vars=base_kws_vars,
+            adj_kws=adj_kws,
+            period_dim=period_dim,
+        )
+
         return out
 
 

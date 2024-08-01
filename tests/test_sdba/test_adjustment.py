@@ -6,14 +6,17 @@ import pytest
 import xarray as xr
 from scipy.stats import genpareto, norm, uniform
 
+from xclim.core.calendar import stack_periods
 from xclim.core.options import set_options
 from xclim.core.units import convert_units_to
 from xclim.sdba import adjustment
 from xclim.sdba.adjustment import (
     LOCI,
+    BaseAdjustment,
     DetrendedQuantileMapping,
     EmpiricalQuantileMapping,
     ExtremeValues,
+    MBCn,
     PrincipalComponents,
     QuantileDeltaMapping,
     Scaling,
@@ -35,9 +38,36 @@ from xclim.sdba.utils import (
 from xclim.testing.sdba_utils import nancov  # noqa
 
 
+class TestBaseAdjustment:
+    def test_harmonize_units(self, series, random):
+        n = 10
+        u = random.random(n)
+        da = series(u, "tas")
+        da2 = da.copy()
+        da2 = convert_units_to(da2, "degC")
+        (da, da2), _ = BaseAdjustment._harmonize_units(da, da2)
+        assert da.units == da2.units
+
+    @pytest.mark.parametrize("use_dask", [True, False])
+    def test_harmonize_units_multivariate(self, series, random, use_dask):
+        n = 10
+        u = random.random(n)
+        ds = xr.merge([series(u, "tas"), series(u * 100, "pr")])
+        ds2 = ds.copy()
+        ds2["tas"] = convert_units_to(ds2["tas"], "degC")
+        ds2["pr"] = convert_units_to(ds2["pr"], "nm/day")
+        da, da2 = stack_variables(ds), stack_variables(ds2)
+        if use_dask:
+            da, da2 = da.chunk({"multivar": 1}), da2.chunk({"multivar": 1})
+
+        (da, da2), _ = BaseAdjustment._harmonize_units(da, da2)
+        ds, ds2 = unstack_variables(da), unstack_variables(da2)
+        assert (ds.tas.units == ds2.tas.units) & (ds.pr.units == ds2.pr.units)
+
+
 class TestLoci:
     @pytest.mark.parametrize("group,dec", (["time", 2], ["time.month", 1]))
-    def test_time_and_from_ds(self, series, group, dec, tmp_path, random):
+    def test_time_and_from_ds(self, series, group, dec, tmp_path, random, open_dataset):
         n = 10000
         u = random.random(n)
 
@@ -61,9 +91,9 @@ class TestLoci:
         assert "Bias-adjusted with LOCI(" in p.attrs["history"]
 
         file = tmp_path / "test_loci.nc"
-        loci.ds.to_netcdf(file)
+        loci.ds.to_netcdf(file, engine="h5netcdf")
 
-        ds = xr.open_dataset(file)
+        ds = open_dataset(file)
         loci2 = LOCI.from_dataset(ds)
 
         xr.testing.assert_equal(loci.ds, loci2.ds)
@@ -253,7 +283,7 @@ class TestDQM:
         np.testing.assert_array_almost_equal(mqm, int(kind == MULTIPLICATIVE), 1)
         np.testing.assert_allclose(p.transpose(..., "time"), ref_t, rtol=0.1, atol=0.5)
 
-    def test_cannon_and_from_ds(self, cannon_2015_rvs, tmp_path, random):
+    def test_cannon_and_from_ds(self, cannon_2015_rvs, tmp_path, open_dataset, random):
         ref, hist, sim = cannon_2015_rvs(15000, random=random)
 
         DQM = DetrendedQuantileMapping.train(ref, hist, kind="*", group="time")
@@ -263,9 +293,9 @@ class TestDQM:
         np.testing.assert_almost_equal(p.std(), 15.0, 0)
 
         file = tmp_path / "test_dqm.nc"
-        DQM.ds.to_netcdf(file)
+        DQM.ds.to_netcdf(file, engine="h5netcdf")
 
-        ds = xr.open_dataset(file)
+        ds = open_dataset(file)
         DQM2 = DetrendedQuantileMapping.from_dataset(ds)
 
         xr.testing.assert_equal(DQM.ds, DQM2.ds)
@@ -554,6 +584,50 @@ class TestQM:
             assert scen2.sel(location=["Kugluktuk", "Vancouver"]).isnull().all()
 
 
+@pytest.mark.slow
+class TestMBCn:
+    @pytest.mark.parametrize("use_dask", [True, False])
+    @pytest.mark.parametrize("group, window", [["time", 1], ["time.dayofyear", 31]])
+    @pytest.mark.parametrize("period_dim", [None, "period"])
+    def test_simple(self, open_dataset, use_dask, group, window, period_dim):
+        group, window, period_dim, use_dask = "time", 1, None, False
+        with set_options(sdba_encode_cf=use_dask):
+            if use_dask:
+                chunks = {"location": -1}
+            else:
+                chunks = None
+            ref, dsim = (
+                open_dataset(
+                    f"sdba/{file}",
+                    chunks=chunks,
+                    drop_variables=["lat", "lon"],
+                )
+                .isel(location=1, drop=True)
+                .expand_dims(location=["Amos"])
+                for file in ["ahccd_1950-2013.nc", "CanESM2_1950-2100.nc"]
+            )
+            ref, hist = (
+                ds.sel(time=slice("1981", "2010")).isel(time=slice(365 * 4))
+                for ds in [ref, dsim]
+            )
+            dsim = dsim.sel(time=slice("1981", None))
+            sim = (stack_periods(dsim).isel(period=slice(1, 2))).isel(
+                time=slice(365 * 4)
+            )
+
+            ref, hist, sim = (stack_variables(ds) for ds in [ref, hist, sim])
+
+        MBCN = MBCn.train(
+            ref,
+            hist,
+            base_kws=dict(nquantiles=50, group=Grouper(group, window)),
+            adj_kws=dict(interp="linear"),
+        )
+        p = MBCN.adjust(sim=sim, ref=ref, hist=hist, period_dim=period_dim)
+        # 'does it run' test
+        p.load()
+
+
 class TestPrincipalComponents:
     @pytest.mark.parametrize(
         "group", (Grouper("time.month"), Grouper("time", add_dims=["lon"]))
@@ -601,20 +675,17 @@ class TestPrincipalComponents:
     @pytest.mark.parametrize("use_dask", [True, False])
     @pytest.mark.parametrize("pcorient", ["full", "simple"])
     def test_real_data(self, atmosds, use_dask, pcorient):
-        ref = stack_variables(
-            xr.Dataset(
-                {"tasmax": atmosds.tasmax, "tasmin": atmosds.tasmin, "tas": atmosds.tas}
-            )
-        ).isel(location=3)
-        hist = stack_variables(
-            xr.Dataset(
-                {
-                    "tasmax": 1.001 * atmosds.tasmax,
-                    "tasmin": atmosds.tasmin - 0.25,
-                    "tas": atmosds.tas + 1,
-                }
-            )
-        ).isel(location=3)
+        ds0 = xr.Dataset(
+            {"tasmax": atmosds.tasmax, "tasmin": atmosds.tasmin, "tas": atmosds.tas}
+        )
+        ref = stack_variables(ds0).isel(location=3)
+        hist0 = ds0
+        with xr.set_options(keep_attrs=True):
+            hist0["tasmax"] = 1.001 * hist0.tasmax
+            hist0["tasmin"] = hist0.tasmin - 0.25
+            hist0["tas"] = hist0.tas + 1
+
+        hist = stack_variables(hist0).isel(location=3)
         with xr.set_options(keep_attrs=True):
             sim = hist + 5
             sim["time"] = sim.time + np.timedelta64(10, "Y").astype("<m8[ns]")

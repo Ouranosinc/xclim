@@ -501,7 +501,7 @@ class TestRunsWithDates:
         [
             ("dayofyear", "07-01", 210, 211),
             (False, "07-01", 190, 190),
-            ("dayofyear", "04-01", 150, np.NaN),  # date falls early
+            ("dayofyear", "04-01", 150, np.nan),  # date falls early
             ("dayofyear", "11-01", 150, 306),  # date ends late
         ],
     )
@@ -529,7 +529,7 @@ class TestRunsWithDates:
         [
             ("dayofyear", "07-01", 210, 211),
             (False, "07-01", 190, 190),
-            ("dayofyear", "04-01", False, np.NaN),  # no run
+            ("dayofyear", "04-01", False, np.nan),  # no run
             ("dayofyear", "11-01", 150, 306),  # run already started
         ],
     )
@@ -559,7 +559,7 @@ class TestRunsWithDates:
         [
             ("dayofyear", "07-01", 210, 183),
             (False, "07-01", 190, 182),
-            ("dayofyear", "04-01", 150, np.NaN),  # date falls early
+            ("dayofyear", "04-01", 150, np.nan),  # date falls early
             ("dayofyear", "11-01", 150, 150),  # date ends late
         ],
     )

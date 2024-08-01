@@ -38,11 +38,13 @@ dependencies = [
   "cftime>=1.4.1",
   "click>=8.1",
   "dask[array]>=2.6",
+  "filelock",
   "jsonpickle",
   "numba",
-  "numpy>=1.20.0,<2.0.0",
+  "numpy>=1.20.0",
+  "packaging",
   "pandas>=2.2",
-  "pint>=0.10,<0.24",
+  "pint>=0.18",
   "platformdirs >=3.2",
   "pyarrow", # Strongly encouraged for pandas v2.2.0+
   "pyyaml",
@@ -58,11 +60,11 @@ dev = [
   # Dev tools and testing
   "black[jupyter] ==24.4.2",
   "blackdoc ==0.3.9",
-  "bump-my-version ==0.24.2",
+  "bump-my-version ==0.24.3",
   "codespell ==2.3.0",
   "coverage[toml] >=7.5.0",
   "coveralls >=4.0.0",
-  "deptry ==0.16.2",
+  "deptry ==0.18.0",
   "flake8 >=7.1.0",
   "flake8-rst-docstrings",
   "h5netcdf>=1.3.0",
@@ -72,23 +74,21 @@ dev = [
   "nbconvert <7.14", # Pinned due to directive errors in sphinx. See: https://github.com/jupyter/nbconvert/issues/2092
   "nbqa >=1.8.2",
   "nbval >=0.11.0",
-  "netCDF4 >=1.4,<1.7",
   "pandas-stubs >=2.2",
   "platformdirs >=3.2",
   "pooch",
   "pre-commit >=3.7",
   "pylint >=3.2.4",
-  "pytest <8.0", # Pinned due to breakage with xdoctest. See: https://github.com/Erotemic/xdoctest/issues/151
+  "pytest >=8.0.0",
   "pytest-cov",
   "pytest-socket",
   "pytest-xdist[psutil] >=3.2",
   "ruff >=0.4.10",
   "tokenize-rt",
-  "tox >=4.15.1",
+  "tox >=4.16.0",
   # "tox-conda",  # Will be added when a tox@v4.0+ compatible plugin is released.
-  "tox-gh >=1.3.1",
   "vulture ==2.11",
-  "xdoctest",
+  "xdoctest >=1.1.5",
   "yamllint ==1.35.1"
 ]
 docs = [
@@ -110,7 +110,8 @@ docs = [
   "sphinxcontrib-bibtex",
   "sphinxcontrib-svg2pdfconverter[Cairosvg]"
 ]
-all = ["xclim[dev]", "xclim[docs]"]
+extras = ["fastnanquantile"]
+all = ["xclim[dev]", "xclim[docs]", "xclim[extras]"]
 
 [project.scripts]
 xclim = "xclim.cli:cli"
@@ -133,7 +134,7 @@ target-version = [
 ]
 
 [tool.bumpversion]
-current_version = "0.51.1-dev.0"
+current_version = "0.51.1-dev.8"
 commit = true
 commit_args = "--no-verify"
 tag = false
@@ -161,11 +162,11 @@ values = [
 
 [tool.codespell]
 skip = 'xclim/data/*.json,docs/_build,docs/notebooks/xclim_training/*.ipynb,docs/references.bib,__pycache__,*.gz,*.nc,*.png,*.svg,*.whl'
-ignore-words-list = "absolue,bloc,bui,callendar,degreee,environnement,hanel,inferrable,lond,nam,nd,ressources,socio-economic,sie,vas"
+ignore-words-list = "absolue,astroid,bloc,bui,callendar,degreee,environnement,hanel,inferrable,lond,nam,nd,ressources,socio-economic,sie,vas"
 
 [tool.coverage.run]
 relative_files = true
-omit = ["tests/*.py"]
+omit = ["tests/*.py", "src/xclim/testing/conftest.py"]
 
 [tool.deptry]
 extend_exclude = ["docs"]
@@ -178,8 +179,8 @@ pep621_dev_dependency_groups = ["all", "dev", "docs"]
 
 [tool.deptry.per_rule_ignores]
 DEP001 = ["SBCK"]
-DEP002 = ["bottleneck", "pyarrow"]
-DEP004 = ["matplotlib", "pytest_socket"]
+DEP002 = ["bottleneck", "h5netcdf", "pyarrow"]
+DEP004 = ["matplotlib", "pytest", "pytest_socket"]
 
 [tool.flit.sdist]
 include = [
@@ -258,8 +259,9 @@ addopts = [
 ]
 norecursedirs = ["docs/notebooks/*"]
 filterwarnings = ["ignore::UserWarning"]
-testpaths = "tests tests/test_sdba"
-usefixtures = "xdoctest_namespace"
+testpaths = [
+  "tests"
+]
 doctest_optionflags = ["NORMALIZE_WHITESPACE", "IGNORE_EXCEPTION_DETAIL", "NUMBER", "ELLIPSIS"]
 markers = [
   "slow: marks tests as slow (deselect with '-m \"not slow\"')",

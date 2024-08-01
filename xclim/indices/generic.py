@@ -396,9 +396,9 @@ def spell_length_statistics(
 
     Examples
     --------
-    >>> spell_statistics(
+    >>> spell_length_statistics(
     ...     tas,
-    ...     thresh="35 °C",
+    ...     threshold="35 °C",
     ...     window=7,
     ...     op=">",
     ...     win_reducer="min",
@@ -406,13 +406,13 @@ def spell_length_statistics(
     ...     freq="YS",
     ... )
 
-    Here, a day is part of a spell if it is in any 7 day period where the minimum temperature is over 35°C. We then
-    return the annual sum of the spell lengths, so the total number of days in such spells.
-
-    >>> pram = rate2amount(pr)
-    >>> spell_statistics(
+    Here, a day is part of a spell if it is in any seven (7) day period where the minimum temperature is over 35°C.
+    We then return the annual sum of the spell lengths, so the total number of days in such spells.
+    >>> from xclim.core.units import rate2amount
+    >>> pram = rate2amount(pr, out_units="mm")
+    >>> spell_length_statistics(
     ...     pram,
-    ...     thresh="20 mm",
+    ...     threshold="20 mm",
     ...     window=5,
     ...     op=">=",
     ...     win_reducer="sum",
@@ -420,8 +420,8 @@ def spell_length_statistics(
     ...     freq="YS",
     ... )
 
-    Here, a day is part of a spell if it is in any 5 day period where the total accumulated precipitation reaches or exceeds
-    20 mm. We then return the length of the longest of such spells.
+    Here, a day is part of a spell if it is in any five (5) day period where the total accumulated precipitation reaches
+    or exceeds 20 mm. We then return the length of the longest of such spells.
     """
     thresh = convert_units_to(
         threshold,

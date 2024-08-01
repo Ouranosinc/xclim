@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import numpy as np
 import pytest
+from cf_xarray import __version__ as __cfxr_version__
+from packaging.version import Version
 
 from xclim import land
 from xclim.core.utils import ValidationError
@@ -26,7 +28,7 @@ class TestSnowDepthCoverDuration:
 
 class TestSnowWaterCoverDuration:
     @pytest.mark.parametrize(
-        "factor,exp", ([1000, [31, 28, 31, np.NaN]], [0, [0, 0, 0, np.NaN]])
+        "factor,exp", ([1000, [31, 28, 31, np.nan]], [0, [0, 0, 0, np.nan]])
     )
     def test_simple(self, snw_series, factor, exp):
         snw = snw_series(np.ones(110) * factor, start="2001-01-01")
@@ -45,11 +47,21 @@ class TestContinuousSnowDepthSeason:
         snd = snd.expand_dims(lat=[0, 1, 2])
 
         out = land.snd_season_start(snd)
-        assert out.units == ""
+
+        if Version(__cfxr_version__) < Version("0.9.3"):
+            assert out.units == ""
+        else:
+            assert out.units == "1"
+
         np.testing.assert_array_equal(out.isel(lat=0), snd.time.dt.dayofyear[100])
 
         out = land.snd_season_end(snd)
-        assert out.units == ""
+
+        if Version(__cfxr_version__) < Version("0.9.3"):
+            assert out.units == ""
+        else:
+            assert out.units == "1"
+
         np.testing.assert_array_equal(out.isel(lat=0), snd.time.dt.dayofyear[200])
 
         out = land.snd_season_length(snd)
@@ -67,11 +79,21 @@ class TestContinuousSnowWaterSeason:
         snw = snw.expand_dims(lat=[0, 1, 2])
 
         out = land.snw_season_start(snw)
-        assert out.units == ""
+
+        if Version(__cfxr_version__) < Version("0.9.3"):
+            assert out.units == ""
+        else:
+            assert out.units == "1"
+
         np.testing.assert_array_equal(out.isel(lat=0), snw.time.dt.dayofyear[100])
 
         out = land.snw_season_end(snw)
-        assert out.units == ""
+
+        if Version(__cfxr_version__) < Version("0.9.3"):
+            assert out.units == ""
+        else:
+            assert out.units == "1"
+
         np.testing.assert_array_equal(out.isel(lat=0), snw.time.dt.dayofyear[200])
 
         out = land.snw_season_length(snw)
@@ -97,7 +119,7 @@ class TestSndMaxDoy:
         # Put 0 on one row.
         snd = atmosds.snd.where(atmosds.location != "Victoria", 0)
         out = land.snd_max_doy(snd)
-        np.testing.assert_array_equal(out.isel(time=1), [16, 13, 91, 29, np.NaN])
+        np.testing.assert_array_equal(out.isel(time=1), [16, 13, 91, 29, np.nan])
 
 
 class TestSnwMax:

@@ -5,6 +5,8 @@ from __future__ import annotations
 import numpy as np
 import pytest
 import xarray as xr
+from cf_xarray import __version__ as __cfxr_version__
+from packaging.version import Version
 
 from xclim.core.calendar import doy_to_days_since, select_time
 from xclim.indices import generic
@@ -101,7 +103,11 @@ class TestFlowGeneric:
         for da in [dmx, dmn]:
             for attr in ["units", "is_dayofyear", "calendar"]:
                 assert attr in da.attrs.keys()
-            assert da.attrs["units"] == ""
+
+            if Version(__cfxr_version__) < Version("0.9.3"):
+                assert da.attrs["units"] == ""
+            else:
+                assert da.attrs["units"] == "1"
             assert da.attrs["is_dayofyear"] == 1
 
 
@@ -393,13 +399,13 @@ class TestFirstDayThreshold:
 
 class TestGetDailyEvents:
     def test_simple(self, tas_series):
-        arr = xr.DataArray(np.array([-10, 15, 20, np.NaN, 10]), name="Stuff")
+        arr = xr.DataArray(np.array([-10, 15, 20, np.nan, 10]), name="Stuff")
 
         out = generic.get_daily_events(arr, threshold=10, op=">=")
 
         assert out.name == "events"
         assert out.sum() == 3
-        np.testing.assert_array_equal(out, [0, 1, 1, np.NaN, 1])
+        np.testing.assert_array_equal(out, [0, 1, 1, np.nan, 1])
 
 
 class TestGenericCountingIndices:
@@ -470,7 +476,7 @@ class TestGenericCountingIndices:
     @pytest.mark.parametrize(
         "op, constrain, expected, should_fail",
         [
-            ("<", None, np.NaN, False),
+            ("<", None, np.nan, False),
             ("<=", None, 3, False),
             ("!=", ("!=",), 1, False),
             ("==", ("==", "!="), 3, False),
@@ -497,7 +503,7 @@ class TestGenericCountingIndices:
     @pytest.mark.parametrize(
         "op, constrain, expected, should_fail",
         [
-            ("<", None, np.NaN, False),
+            ("<", None, np.nan, False),
             ("<=", None, 8, False),
             ("!=", ("!=",), 9, False),
             ("==", ("==", "!="), 8, False),

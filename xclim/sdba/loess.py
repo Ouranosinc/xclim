@@ -92,7 +92,7 @@ def _loess_nb(
     """
     if skipna:
         nan = np.isnan(y)
-        out = np.full(x.size, np.NaN)
+        out = np.full(x.size, np.nan)
         y = y[~nan]
         x = x[~nan]
         if x.size == 0:

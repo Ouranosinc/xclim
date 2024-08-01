@@ -705,7 +705,7 @@ def daily_pr_intensity(
     precipitation >= 5 mm at seasonal frequency, i.e. DJF, MAM, JJA, SON, DJF, etc.:
 
     >>> from xclim.indices import daily_pr_intensity
-    >>> pr = open_dataset(path_to_pr_file).pr
+    >>> pr = xr.open_dataset(path_to_pr_file).pr
     >>> daily_int = daily_pr_intensity(pr, thresh="5 mm/day", freq="QS-DEC")
     """
     t = convert_units_to(thresh, pr, "hydro")
@@ -1082,7 +1082,7 @@ def growing_season_length(
     Examples
     --------
     >>> from xclim.indices import growing_season_length
-    >>> tas = open_dataset(path_to_tas_file).tas
+    >>> tas = xr.open_dataset(path_to_tas_file).tas
 
     For the Northern Hemisphere:
 
@@ -1168,7 +1168,7 @@ def frost_season_length(
     Examples
     --------
     >>> from xclim.indices import frost_season_length
-    >>> tasmin = open_dataset(path_to_tasmin_file).tasmin
+    >>> tasmin = xr.open_dataset(path_to_tasmin_file).tasmin
 
     For the Northern Hemisphere:
 
@@ -1375,7 +1375,7 @@ def frost_free_season_length(
     Examples
     --------
     >>> from xclim.indices import frost_season_length
-    >>> tasmin = open_dataset(path_to_tasmin_file).tasmin
+    >>> tasmin = xr.open_dataset(path_to_tasmin_file).tasmin
 
     For the Northern Hemisphere:
 
@@ -2567,7 +2567,7 @@ def wetdays(
     at the seasonal frequency, i.e. DJF, MAM, JJA, SON, DJF, etc.:
 
     >>> from xclim.indices import wetdays
-    >>> pr = open_dataset(path_to_pr_file).pr
+    >>> pr = xr.open_dataset(path_to_pr_file).pr
     >>> wd = wetdays(pr, thresh="5 mm/day", freq="QS-DEC")
     """
     thresh = convert_units_to(thresh, pr, "hydro")
@@ -2609,7 +2609,7 @@ def wetdays_prop(
     5 mm at the seasonal frequency, i.e. DJF, MAM, JJA, SON, DJF, etc.:
 
     >>> from xclim.indices import wetdays_prop
-    >>> pr = open_dataset(path_to_pr_file).pr
+    >>> pr = xr.open_dataset(path_to_pr_file).pr
     >>> wd = wetdays_prop(pr, thresh="5 mm/day", freq="QS-DEC")
     """
     thresh = convert_units_to(thresh, pr, "hydro")
@@ -3151,7 +3151,7 @@ def dry_spell_frequency(
     Examples
     --------
     >>> from xclim.indices import dry_spell_frequency
-    >>> pr = open_dataset(path_to_pr_file).pr
+    >>> pr = xr.open_dataset(path_to_pr_file).pr
     >>> dsf = dry_spell_frequency(pr=pr, op="sum")
     >>> dsf = dry_spell_frequency(pr=pr, op="max")
     """
@@ -3192,7 +3192,7 @@ def dry_spell_total_length(
         Accumulated precipitation value under which a period is considered dry.
     window : int
         Number of days when the maximum or accumulated precipitation is under threshold.
-    op: {"sum", "max", "min", "mean"}
+    op : {"sum", "max", "min", "mean"}
         Operation to perform on the window.
         Default is "sum", which checks that the sum of accumulated precipitation over the whole window is less than the
         threshold.
@@ -3335,7 +3335,7 @@ def wet_spell_frequency(
     resample_before_rl : bool
         Determines if the resampling should take place before or after the run
         length encoding (or a similar algorithm) is applied to runs.
-    op: {"sum","min", "max", "mean"}
+    op : {"sum","min", "max", "mean"}
         Operation to perform on the window.
         Default is "sum", which checks that the sum of accumulated precipitation over the whole window is more than the
         threshold.
@@ -3358,7 +3358,7 @@ def wet_spell_frequency(
     Examples
     --------
     >>> from xclim.indices import wet_spell_frequency
-    >>> pr = open_dataset(path_to_pr_file).pr
+    >>> pr = xr.open_dataset(path_to_pr_file).pr
     >>> dsf = wet_spell_frequency(pr=pr, op="sum")
     >>> dsf = wet_spell_frequency(pr=pr, op="min")
     """
@@ -3406,7 +3406,7 @@ def wet_spell_total_length(
         In all cases, the whole window is marked a part of a wet spell.
     freq : str
         Resampling frequency.
-    resample_before_rl: bool
+    resample_before_rl : bool
         Determines if the resampling should take place before or after the run
         length encoding (or a similar algorithm) is applied to runs.
     \*\*indexer

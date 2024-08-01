@@ -42,6 +42,7 @@ _xclim_deps = [
     "scipy",
     "pint",
     "pandas",
+    "numpy",
     "numba",
     "lmoments3",
     "jsonpickle",
@@ -69,6 +70,7 @@ __all__ = [
     "list_input_variables",
     "open_dataset",
     "publish_release_notes",
+    "run_doctests",
     "show_versions",
 ]
 
@@ -474,6 +476,20 @@ def list_input_variables(
                 variables[var].append(ind)
 
     return variables
+
+
+def run_doctests():
+    """Run the doctests for the module."""
+    import pytest
+
+    cmd = [
+        f"--rootdir={Path(__file__).absolute().parent}",
+        "--numprocesses=0",
+        "--xdoctest",
+        f"{Path(__file__).absolute().parents[1]}",
+    ]
+
+    sys.exit(pytest.main(cmd))
 
 
 def publish_release_notes(
