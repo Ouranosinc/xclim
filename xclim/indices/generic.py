@@ -546,7 +546,7 @@ def season(
     xclim.indices.run_length.season_length
     xclim.indices.run_length.season_end
     """
-    thresh = convert_units_to(thresh, data)
+    thresh = convert_units_to(thresh, data, context="infer")
     cond = compare(data, op, thresh, constrain=constrain)
     FUNC = {"start": rl.season_start, "end": rl.season_end, "length": rl.season_length}
     map_kwargs = dict(window=window, mid_date=mid_date)
