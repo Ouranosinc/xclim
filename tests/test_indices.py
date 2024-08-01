@@ -1160,7 +1160,7 @@ class TestGrowingSeasonLength:
         [
             ("1950-01-01", "1951-01-01", 0),  # No growing season
             ("2000-01-01", "2000-12-31", 365),  # All year growing season
-            ("2000-07-10", "2001-01-01", np.nan),  # End happens before start
+            ("2000-07-10", "2001-01-01", 0),  # End happens before start
             ("2000-06-15", "2001-01-01", 199),  # No end
             ("2000-06-15", "2000-07-15", 31),  # Normal case
         ],

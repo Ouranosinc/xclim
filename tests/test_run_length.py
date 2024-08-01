@@ -470,7 +470,7 @@ class TestRunsWithDates:
         [
             ("07-01", 210, 70),
             ("07-01", 190, 50),
-            ("04-01", 150, np.nan),  # date falls early
+            ("04-01", 150, 0),  # date falls early
             ("11-01", 150, 165),  # date ends late
             (None, 150, 10),  # no date, real length
         ],
@@ -492,7 +492,7 @@ class TestRunsWithDates:
             runs,
             window=1,
             dim="time",
-            date=date,
+            mid_date=date,
         )
         np.testing.assert_array_equal(np.mean(out.load()), expected)
 
@@ -625,7 +625,7 @@ class TestRunsWithDates:
         out = (
             (tas > 0)
             .resample(time="YS-MAR")
-            .map(rl.season_length, date="03-02", window=2)
+            .map(rl.season_length, mid_date="03-02", window=2)
         )
         np.testing.assert_array_equal(out.values[1:], [250, 250])
 
@@ -643,9 +643,7 @@ class TestRunsWithDates:
         )
         np.testing.assert_array_equal(out.values[1:], np.array(expected) + 1)
 
-    @pytest.mark.parametrize(
-        "func", [rl.first_run_after_date, rl.season_length, rl.run_end_after_date]
-    )
+    @pytest.mark.parametrize("func", [rl.first_run_after_date, rl.run_end_after_date])
     def test_too_many_dates(self, func, tas_series):
         tas = tas_series(np.zeros(730), start="2000-01-01")
         with pytest.raises(ValueError, match="More than 1 instance of date"):
