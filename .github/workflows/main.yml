@@ -211,6 +211,7 @@ jobs:
           egress-policy: audit
 
       - name: Start Energy Measurement
+        if : ${{ matrix.os == 'ubuntu-latest' }}
         uses: green-coding-solutions/eco-ci-energy-estimation@7333e9a8e8036e5bf69d59dc8bb63d984b0f55c8 # v3.1
         with:
           task: start-measurement
@@ -218,7 +219,7 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
       - name: Install Eigen3 (SBCK)
-        if: ${{ matrix.python-version == '3.11' }}
+        if: (matrix.python-version == '3.11') && (matrix.os == 'ubuntu-latest')
         run: |
           sudo apt-get update
           sudo apt-get install libeigen3-dev
@@ -230,6 +231,7 @@ jobs:
         run: |
           python -m pip install --require-hashes -r CI/requirements_ci.txt
       - name: Environment Setup Energy Measurement
+        if : ${{ matrix.os == 'ubuntu-latest' }}
         uses: green-coding-solutions/eco-ci-energy-estimation@7333e9a8e8036e5bf69d59dc8bb63d984b0f55c8 # v3.1
         with:
           task: get-measurement
@@ -251,11 +253,13 @@ jobs:
           COVERALLS_FLAG_NAME: run-${{ matrix.python-version }}-${{ matrix.os }}-${{ matrix.tox-env }}
           COVERALLS_PARALLEL: true
       - name: Tests measurement
+        if : ${{ matrix.os == 'ubuntu-latest' }}
         uses: green-coding-solutions/eco-ci-energy-estimation@7333e9a8e8036e5bf69d59dc8bb63d984b0f55c8 # v3.1
         with:
           task: get-measurement
           label: 'testing with tox'
       - name: Show Energy Results
+        if : ${{ matrix.os == 'ubuntu-latest' }}
         uses: green-coding-solutions/eco-ci-energy-estimation@7333e9a8e8036e5bf69d59dc8bb63d984b0f55c8 # v3.1
         with:
           task: display-results
@@ -283,6 +287,7 @@ jobs:
           egress-policy: audit
 
       - name: Start Energy Measurement
+        if : ${{ matrix.os == 'ubuntu-latest' }}
         uses: green-coding-solutions/eco-ci-energy-estimation@7333e9a8e8036e5bf69d59dc8bb63d984b0f55c8 # v3.1
         with:
           task: start-measurement
@@ -306,6 +311,7 @@ jobs:
           xclim show_version_info
           python -m pip check || true
       - name: Environment Setup Energy Measurement
+        if : ${{ matrix.os == 'ubuntu-latest' }}
         uses: green-coding-solutions/eco-ci-energy-estimation@7333e9a8e8036e5bf69d59dc8bb63d984b0f55c8 # v3.1
         with:
           task: get-measurement
@@ -321,11 +327,13 @@ jobs:
           COVERALLS_FLAG_NAME: run-{{ matrix.python-version }}-conda
           COVERALLS_PARALLEL: true
       - name: Tests measurement
+        if : ${{ matrix.os == 'ubuntu-latest' }}
         uses: green-coding-solutions/eco-ci-energy-estimation@7333e9a8e8036e5bf69d59dc8bb63d984b0f55c8 # v3.1
         with:
           task: get-measurement
           label: 'testing with pytest (conda)'
       - name: Show Energy Results
+        if : ${{ matrix.os == 'ubuntu-latest' }}
         uses: green-coding-solutions/eco-ci-energy-estimation@7333e9a8e8036e5bf69d59dc8bb63d984b0f55c8 # v3.1
         with:
           task: display-results
