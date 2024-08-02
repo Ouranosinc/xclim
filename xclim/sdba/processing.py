@@ -225,7 +225,10 @@ def jitter(
             jitter_min = jitter_min + np.finfo(x.dtype).eps
             if uses_dask(x):
                 jitter_dist = dsk.random.uniform(
-                    low=jitter_min, high=float(jitter_lower), size=x.shape, chunks=x.chunks
+                    low=jitter_min,
+                    high=float(jitter_lower),
+                    size=x.shape,
+                    chunks=x.chunks,
                 )
             else:
                 jitter_dist = np.random.uniform(
