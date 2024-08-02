@@ -218,15 +218,15 @@ def jitter(
         out: xr.DataArray = x
         notnull = x.notnull()
         if lower is not None:
-            jitter_lower = np.array(convert_units_to(lower, x)).astype(float)
-            jitter_min = np.array(
+            jitter_lower = float(convert_units_to(lower, x))
+            jitter_min = float(
                 convert_units_to(minimum, x) if minimum is not None else 0
-            ).astype(float)
+            )
             jitter_min = jitter_min + np.finfo(x.dtype).eps
             if uses_dask(x):
                 jitter_dist = dsk.random.uniform(
                     low=jitter_min,
-                    high=float(jitter_lower),
+                    high=jitter_lower,
                     size=x.shape,
                     chunks=x.chunks,
                 )
@@ -240,12 +240,12 @@ def jitter(
         if upper is not None:
             if maximum is None:
                 raise ValueError("If 'upper' is given, so must 'maximum'.")
-            jitter_upper = np.array(convert_units_to(upper, x)).astype(float)
-            jitter_max = np.array(convert_units_to(maximum, x)).astype(float)
+            jitter_upper = float(convert_units_to(upper, x))
+            jitter_max = float(convert_units_to(maximum, x))
             if uses_dask(x):
                 jitter_dist = dsk.random.uniform(
                     low=jitter_upper,
-                    high=float(jitter_max),
+                    high=jitter_max,
                     size=x.shape,
                     chunks=x.chunks,
                 )
