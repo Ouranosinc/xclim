@@ -244,7 +244,7 @@ def jitter(
             jitter_max = np.array(convert_units_to(maximum, x)).astype(float)
             if uses_dask(x):
                 jitter_dist = dsk.random.uniform(
-                    low=jitter_upper, high=jitter_max, size=x.shape, chunks=x.chunks
+                    low=jitter_upper, high=float(jitter_max), size=x.shape, chunks=x.chunks
                 )
             else:
                 jitter_dist = np.random.uniform(
