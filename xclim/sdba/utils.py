@@ -1011,10 +1011,12 @@ def histogram(data, bin_width, bin_origin):
     # Normalise frequencies
     mu = np.divide(mu, sum(mu))
 
+    grid = (grid + 0.5) * bin_width + bin_origin
+
     return grid, mu, idx_bin
 
 
-def optimal_transport(gridX, gridY, muX, muY, numItermax):
+def optimal_transport(gridX, gridY, muX, muY, numItermax, transform):
     """Computes the optimal transportation plan between X and Y.
 
     References
@@ -1022,6 +1024,22 @@ def optimal_transport(gridX, gridY, muX, muY, numItermax):
     :cite:cts:`sdba-robin_2021`
     """
     from ot import emd
+
+    if transform == "standardize":
+        gridX = (gridX - gridX.mean()) / gridX.std()
+        gridY = (gridY - gridY.mean()) / gridY.std()
+
+    elif transform == "max_distance":
+        max1 = np.abs(gridX.max(axis=0) - gridY.min(axis=0))
+        max2 = np.abs(gridY.max(axis=0) - gridX.min(axis=0))
+        max_dist = np.maximum(max1, max2)
+        gridX = gridX / max_dist
+        gridY = gridY / max_dist
+
+    elif transform == "max_value":
+        max_value = np.maximum(gridX.max(axis=0), gridY.max(axis=0))
+        gridX = gridX / max_value
+        gridY = gridY / max_value
 
     # Compute the distances from every X bin to every Y bin
     C = distance.cdist(gridX, gridY, "sqeuclidean")

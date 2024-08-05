@@ -953,6 +953,7 @@ def _otc_adjust(
     bin_origin: list | None = None,
     num_iter_max: int | None = 100_000_000,
     jitter_inside_bins: bool = True,
+    transform: str | None = "max_distance",
 ):
     """Optimal Transport Correction of the bias of X with respect to Y.
 
@@ -996,7 +997,10 @@ def _otc_adjust(
     gridY, muY, _ = u.histogram(Y, bin_width, bin_origin)
 
     # Compute the optimal transportation plan
-    plan = u.optimal_transport(gridX, gridY, muX, muY, num_iter_max)
+    plan = u.optimal_transport(gridX, gridY, muX, muY, num_iter_max, transform)
+
+    gridX = np.floor((gridX - bin_origin) / bin_width)
+    gridY = np.floor((gridY - bin_origin) / bin_width)
 
     # regroup the indices of all the points belonging to a same bin
     binX_sort = np.lexsort(binX[:, ::-1].T)
@@ -1033,6 +1037,7 @@ def otc_adjust(
     num_iter_max: int | None = 100_000_000,
     jitter_inside_bins: bool = True,
     adapt_freq_thresh: dict | None = None,
+    transform: str | None = "max_distance",
 ):
     """Optimal Transport Correction of the bias of `hist` with respect to `ref`.
 
@@ -1089,6 +1094,7 @@ def otc_adjust(
             bin_origin=bin_origin,
             num_iter_max=num_iter_max,
             jitter_inside_bins=jitter_inside_bins,
+            transform=transform,
         ),
         input_core_dims=[["dim_hist", pts_dim], ["dim_ref", pts_dim]],
         output_core_dims=[["dim_hist", pts_dim]],
@@ -1116,6 +1122,7 @@ def _dotc_adjust(
     cov_factor: str | None = "std",
     jitter_inside_bins: bool = True,
     kind: dict | None = None,
+    transform: str | None = "max_distance",
 ):
     """Dynamical Optimal Transport Correction of the bias of X with respect to Y.
 
@@ -1159,6 +1166,7 @@ def _dotc_adjust(
         bin_origin=bin_origin,
         num_iter_max=num_iter_max,
         jitter_inside_bins=False,
+        transform=transform,
     )
 
     # Map hist to sim
@@ -1169,6 +1177,7 @@ def _dotc_adjust(
         bin_origin=bin_origin,
         num_iter_max=num_iter_max,
         jitter_inside_bins=False,
+        transform=transform,
     )
 
     # Temporal evolution
@@ -1205,6 +1214,7 @@ def _dotc_adjust(
         bin_origin=bin_origin,
         num_iter_max=num_iter_max,
         jitter_inside_bins=jitter_inside_bins,
+        transform=transform,
     )
 
     return Z1
@@ -1222,6 +1232,7 @@ def dotc_adjust(
     jitter_inside_bins: bool = True,
     kind: dict | None = None,
     adapt_freq_thresh: dict | None = None,
+    transform: str | None = "max_distance",
 ):
     """Dynamical Optimal Transport Correction of the bias of X with respect to Y.
 
@@ -1299,6 +1310,7 @@ def dotc_adjust(
             cov_factor=cov_factor,
             jitter_inside_bins=jitter_inside_bins,
             kind=kind,
+            transform=transform,
         ),
         input_core_dims=[
             ["dim_sim", pts_dim],

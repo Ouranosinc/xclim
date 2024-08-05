@@ -1347,6 +1347,7 @@ class OTC(Adjust):
         num_iter_max: int | None = 100_000_000,
         jitter_inside_bins: bool = True,
         adapt_freq_thresh: dict | None = None,
+        transform: str | None = "max_distance",
         group: str | Grouper = "time",
         pts_dim: str = "multivar",
         **kwargs,
@@ -1354,6 +1355,11 @@ class OTC(Adjust):
         if find_spec("ot") is None:
             raise ImportError(
                 "POT is required for OTC and dOTC. Please install with `pip install POT`."
+            )
+
+        if transform not in [None, "standardize", "max_distance", "max_value"]:
+            raise ValueError(
+                "`transform` should be in [None, 'standardize', 'max_distance', 'max_value']."
             )
 
         sim = kwargs.pop("sim")
@@ -1374,6 +1380,7 @@ class OTC(Adjust):
             num_iter_max=num_iter_max,
             jitter_inside_bins=jitter_inside_bins,
             adapt_freq_thresh=adapt_freq_thresh,
+            transform=transform,
             group=group,
             pts_dim=pts_dim,
         ).scen
@@ -1474,6 +1481,7 @@ class dOTC(Adjust):
         jitter_inside_bins: bool = True,
         kind: dict | None = None,
         adapt_freq_thresh: dict | None = None,
+        transform: str | None = "max_distance",
         group: str | Grouper = "time",
         pts_dim: str = "multivar",
     ) -> xr.DataArray:
@@ -1489,6 +1497,11 @@ class dOTC(Adjust):
 
         if cov_factor not in [None, "std", "cholesky"]:
             raise ValueError("`cov_factor` should be in [None, 'std', 'cholesky'].")
+
+        if transform not in [None, "standardize", "max_distance", "max_value"]:
+            raise ValueError(
+                "`transform` should be in [None, 'standardize', 'max_distance', 'max_value']."
+            )
 
         if adapt_freq_thresh is not None:
             _, units = cls._harmonize_units(sim)
@@ -1506,6 +1519,7 @@ class dOTC(Adjust):
             jitter_inside_bins=jitter_inside_bins,
             kind=kind,
             adapt_freq_thresh=adapt_freq_thresh,
+            transform=transform,
             group=group,
             pts_dim=pts_dim,
         ).scen
