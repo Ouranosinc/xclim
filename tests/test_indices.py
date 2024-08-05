@@ -610,6 +610,12 @@ class TestStandardizedIndices:
     def test_standardized_precipitation_index(
         self, open_dataset, freq, window, dist, method, values, diff_tol
     ):
+        if (
+            method == "ML"
+            and freq == "D"
+            and Version(__numpy_version__) < Version("2.0.0")
+        ):
+            pytest.skip("Skipping SPI/ML/D on older numpy")
         ds = open_dataset("sdba/CanESM2_1950-2100.nc").isel(location=1)
         if freq == "D":
             ds = ds.convert_calendar("366_day", missing=np.nan)
