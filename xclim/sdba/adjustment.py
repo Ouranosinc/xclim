@@ -5,6 +5,7 @@ Adjustment Methods
 """
 from __future__ import annotations
 
+from copy import copy
 from importlib.util import find_spec
 from inspect import signature
 from typing import Any
@@ -1396,9 +1397,10 @@ class OTC(Adjust):
             raise ValueError("OTC does not take a `sim` argument.")
 
         if adapt_freq_thresh is not None:
+            adapt_freq_thesh_units = copy(adapt_freq_thresh)
             _, units = cls._harmonize_units(sim)
-            for var, thresh in adapt_freq_thresh.items():
-                adapt_freq_thresh[var] = str(
+            for var, thresh in adapt_freq_thesh_units.items():
+                adapt_freq_thesh_units[var] = str(
                     convert_units_to(thresh, units[var], context="hydro")
                 )
 
@@ -1408,7 +1410,7 @@ class OTC(Adjust):
             bin_origin=bin_origin,
             num_iter_max=num_iter_max,
             jitter_inside_bins=jitter_inside_bins,
-            adapt_freq_thresh=adapt_freq_thresh,
+            adapt_freq_thresh=adapt_freq_thesh_units,
             transform=transform,
             group=group,
             pts_dim=pts_dim,
@@ -1537,9 +1539,10 @@ class dOTC(Adjust):
             )
 
         if adapt_freq_thresh is not None:
+            adapt_freq_thesh_units = copy(adapt_freq_thresh)
             _, units = cls._harmonize_units(sim)
-            for var, thresh in adapt_freq_thresh.items():
-                adapt_freq_thresh[var] = str(
+            for var, thresh in adapt_freq_thesh_units.items():
+                adapt_freq_thesh_units[var] = str(
                     convert_units_to(thresh, units[var], context="hydro")
                 )
 
@@ -1551,7 +1554,7 @@ class dOTC(Adjust):
             cov_factor=cov_factor,
             jitter_inside_bins=jitter_inside_bins,
             kind=kind,
-            adapt_freq_thresh=adapt_freq_thresh,
+            adapt_freq_thresh=adapt_freq_thesh_units,
             transform=transform,
             group=group,
             pts_dim=pts_dim,
