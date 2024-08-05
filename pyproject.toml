@@ -58,7 +58,7 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
   # Dev tools and testing
-  "black[jupyter] ==24.4.2",
+  "black[jupyter] ==24.8.0",
   "blackdoc ==0.3.9",
   "bump-my-version ==0.24.3",
   "codespell ==2.3.0",
