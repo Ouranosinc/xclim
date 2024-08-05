@@ -969,6 +969,11 @@ def _otc_adjust(
         Bin origins for all dimensions.
     num_iter_max : int | None
         Maximum number of iterations used in the earth mover distance algorithm.
+    jitter_inside_bins : bool = True
+        If `False`, output points are located at the center of their bin.
+        If `True`, a random location is picked uniformly inside their bin. Default is `True`.
+    transform : str | None = "max_distance"
+        Per-variable transformation applied before the distances are calculated.
 
     Returns
     -------
@@ -1062,6 +1067,8 @@ def otc_adjust(
         If `True`, a random location is picked uniformly inside their bin. Default is `True`.
     adapt_freq_thresh : dict | None = None
         Threshold for frequency adaptation per variable.
+    transform : str | None = "max_distance"
+        Per-variable transformation applied before the distances are calculated.
 
     Returns
     -------
@@ -1142,6 +1149,14 @@ def _dotc_adjust(
         Maximum number of iterations used in the earth mover distance algorithm.
     cov_factor : str | None = "std"
         Rescaling factor.
+    jitter_inside_bins : bool = True
+        If `False`, output points are located at the center of their bin.
+        If `True`, a random location is picked uniformly inside their bin. Default is `True`.
+    kind : dict | None = None
+        Keys are variable names and values are adjustment kinds, either additive or multiplicative.
+        Unspecified dimensions are treated as "+".
+    transform : str | None = "max_distance"
+        Per-variable transformation applied before the distances are calculated.
 
     Returns
     -------
@@ -1263,6 +1278,8 @@ def dotc_adjust(
         Unspecified dimensions are treated as "+".
     adapt_freq_thresh : dict | None = None
         Threshold for frequency adaptation per variable.
+    transform : str | None = "max_distance"
+        Per-variable transformation applied before the distances are calculated.
 
     Returns
     -------

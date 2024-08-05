@@ -1303,6 +1303,10 @@ class OTC(Adjust):
         Threshold for frequency adaptation per variable.
         See :py:class:`xclim.sdba.processing.adapt_freq` for details.
         Frequency adaptation is not applied to missing variables.
+    transform : {None, 'standardize', 'max_distance', 'max_value'}
+        Per-variable transformation applied before the distances are calculated.
+        Default is "max_distance".
+        See notes for details.
     group : Union[str, Grouper]
         The grouping information. See :py:class:`xclim.sdba.base.Grouper` for details.
         Default is "time", meaning a single adjustment group along dimension "time".
@@ -1313,7 +1317,7 @@ class OTC(Adjust):
     Notes
     -----
     The simulated and observed data sets :math:`X` and :math:`Y` are discretized and standardized using histograms
-    whose bin length along dimension `k` is given by `bin_width[k]`. An optimal transport plan :math:`P^*` is found by solving
+    whose bin length along dimension `v` is given by `bin_width[v]`. An optimal transport plan :math:`P^*` is found by solving
     the linear program
 
     .. math::
@@ -1323,9 +1327,34 @@ class OTC(Adjust):
             P^T\mathbf{1} = Y \\
             P \geq 0
 
-    where :math:`C_{ij}` is the squared euclidean distance between bins :math:`i` and :math:`j` measured in bin counts.
-    All data points belonging to input bin :math:`i` are then separately assigned to output bin :math:`j` with probability
-    :math:`P_{ij}`.
+    where :math:`C_{ij}` is the squared euclidean distance between the bin at position :math:`i` of :math:`X`'s histogram and
+    the bin at position :math:`j` of :math:`Y`'s.
+
+    All data points belonging to input bin at position :math:`i` are then separately assigned to output bin at position :math:`j`
+    with probability :math:`P_{ij}`. A transformation of bin positions can be applied before computing the distances :math:`C_{ij}`
+    to make variables on different scales more evenly taken into consideration by the optimization step. Available transformations are
+
+    - `transform = 'standardize'` :
+        .. math::
+
+            i_v' = \frac{i_v - mean(i_v)}{std(i_v)} \quad\quad\quad j_v' = \frac{j_v - mean(j_v)}{std(j_v)}
+
+    - `transform = 'max_distance'` :
+        .. math::
+
+            i_v' = \frac{i_v}{max \{|i_v - j_v|\}} \quad\quad\quad j_v' = \frac{j_v}{max \{|i_v - j_v|\}}
+
+        such that
+            .. math::
+
+                max \{|i_v' - j_v'|\} = max \{|i_w' - j_w'|\} = 1
+
+    - `transform = 'max_value'` :
+        .. math::
+
+            i_v' = \frac{i_v}{max\{i_v\}} \quad\quad\quad j_v' = \frac{j_v}{max\{j_v\}}
+
+    for variables :math:`v, w`. Default is `'max_distance'`.
 
     Note that `POT <https://pythonot.github.io/>`__ must be installed to use this method.
 
@@ -1428,6 +1457,10 @@ class dOTC(Adjust):
         Threshold for frequency adaptation per variable.
         See :py:class:`xclim.sdba.processing.adapt_freq` for details.
         Frequency adaptation is not applied to missing variables.
+    transform : {None, 'standardize', 'max_distance', 'max_value'}
+        Per-variable transformation applied before the distances are calculated.
+        Default is "max_distance".
+        See :py:class:`~xclim.sdba.adjustment.OTC` for details.
     group : Union[str, Grouper]
         The grouping information. See :py:class:`xclim.sdba.base.Grouper` for details.
         Default is "time", meaning a single adjustment group along dimension "time".

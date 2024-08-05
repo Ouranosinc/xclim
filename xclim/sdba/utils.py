@@ -1017,7 +1017,7 @@ def histogram(data, bin_width, bin_origin):
 
 
 def optimal_transport(gridX, gridY, muX, muY, numItermax, transform):
-    """Computes the optimal transportation plan between X and Y.
+    """Computes the optimal transportation plan on (transformations of) X and Y.
 
     References
     ----------
