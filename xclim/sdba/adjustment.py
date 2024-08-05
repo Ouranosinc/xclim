@@ -1359,6 +1359,15 @@ class OTC(Adjust):
     Note that `POT <https://pythonot.github.io/>`__ must be installed to use this method.
 
     This implementation is strongly inspired by :cite:t:`sdba-robin_2021`.
+    The differences from this implementation are :
+
+    - `bin_width` and `bin_origin` are dictionaries.
+    - Freedman-Diaconis rule is used to find the bin width when unspecified, and fallbacks to Scott's rule when 0 is obtained.
+    - `jitter_inside_bins` argument
+    - `adapt_freq_thresh` argument
+    - `transform` argument
+    - `group` argument
+    - `pts_dim` argument
 
     References
     ----------
@@ -1498,6 +1507,16 @@ class dOTC(Adjust):
     Note that `POT <https://pythonot.github.io/>`__ must be installed to use this method.
 
     This implementation is strongly inspired by :cite:t:`sdba-robin_2021`.
+    The differences from this reference are :
+
+    - `bin_width` and `bin_origin` are dictionaries.
+    - Freedman-Diaconis rule is used to find the bin width when unspecified, and fallbacks to Scott's rule when 0 is obtained.
+    - `jitter_inside_bins` argument
+    - `adapt_freq_thresh` argument
+    - `transform` argument
+    - `group` argument
+    - `pts_dim` argument
+    - `kind` argument
 
     References
     ----------
