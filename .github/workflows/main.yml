@@ -216,7 +216,6 @@ jobs:
         if : ${{ matrix.os == 'ubuntu-latest' }}
         uses: step-security/harden-runner@17d0e2bd7d51742c71671bd19fa12bdc9d40a3d6 # v2.8.1
         with:
-          disable-sudo: true
           egress-policy: block
           allowed-endpoints: >
             api.electricitymap.org:443
