@@ -1287,11 +1287,11 @@ class OTC(Adjust):
 
     Parameters
     ----------
-    bin_width : list | None
-        Bin widths for all dimensions.
+    bin_width : dict | None
+        Bin widths for specified dimensions.
         Will be estimated by default.
-    bin_origin : list | None
-        Bin origins for all dimensions.
+    bin_origin : dict | None
+        Bin origins for specified dimensions.
         Default is 0.
     num_iter_max : int | None
         Maximum number of iterations used in the earth mover distance algorithm.
@@ -1371,8 +1371,8 @@ class OTC(Adjust):
         ref: xr.DataArray,
         hist: xr.DataArray,
         *,
-        bin_width: list | None = None,
-        bin_origin: list | None = None,
+        bin_width: dict | None = None,
+        bin_origin: dict | None = None,
         num_iter_max: int | None = 100_000_000,
         jitter_inside_bins: bool = True,
         adapt_freq_thresh: dict | None = None,
@@ -1439,11 +1439,11 @@ class dOTC(Adjust):
 
     Parameters
     ----------
-    bin_width : list | None
-        Bin widths for all dimensions.
+    bin_width : dict | None
+        Bin widths for specified dimensions.
         Will be estimated by default.
-    bin_origin : list | None
-        Bin origins for all dimensions.
+    bin_origin : dict | None
+        Bin origins for specified dimensions.
         Default is 0.
     num_iter_max : int | None
         Maximum number of iterations used in the network simplex algorithm.
@@ -1511,8 +1511,8 @@ class dOTC(Adjust):
         hist: xr.DataArray,
         sim: xr.DataArray,
         *,
-        bin_width: list | None = None,
-        bin_origin: list | None = None,
+        bin_width: dict | None = None,
+        bin_origin: dict | None = None,
         num_iter_max: int | None = 100_000_000,
         cov_factor: str | None = "std",
         jitter_inside_bins: bool = True,
