@@ -8,20 +8,18 @@ Contributors to this version: David Huard (:user:`huard`), Trevor James Smith (:
 
 Announcements
 ^^^^^^^^^^^^^
-* `xclim` now supports `numpy` v2.0. (:pull:`1914`).
+* `xclim` now supports both `numpy` versions `>=1.20` and `>=2.0`. (:issue:`1785`, :pull:`1814`, :pull:`1870`).
+* `xclim` continues to support older versions of `pint` (`<0.24`) and `cf-xarray` (`<0.9.3`) for compatibility reasons, but will be raising these pins on these dependencies in `xclim>=0.53.0`. Mixing older and newer versions will raise ``UserWarnings`` and likely cause errors. (:pull:`1870`).
 
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 * ``xclim.sdba.nbutils.quantile`` and its child functions are now faster. If the module `fastnanquantile` is installed, it is used as the backend for the computation of quantiles and yields even faster results. This dependency is now listed in the `xclim[extras]` recipe. (:issue:`1255`, :pull:`1513`).
-* New multivariate bias adjustment class `MBCn`, giving a faster and more accurate implementation of the 'MBCn' algorithm (:issue:`1551`, :pull:`1580`).
+* New multivariate bias adjustment class ``MBCn``, giving a faster and more accurate implementation of the ``MBCn`` algorithm. (:issue:`1551`, :pull:`1580`).
 * `xclim` is now compatible with `pytest` versions `>=8.0.0`. (:pull:`1632`).
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
 * As updated in ``cf_xarray>=0.9.3``, dimensionless quantities now use the "1" units attribute as specified by the CF conventions, previously an empty string was returned. (:pull:`1814`).
-
-Breaking changes
-^^^^^^^^^^^^^^^^
 * The definitions of the ``frost_free_season_start`` and ``frost_free_season_end`` have been slightly changed to be coherent with the ``frost_free_season_length`` and `xclim`'s notion of `season` in general. Indicator and indices signature have changed. (:pull:`1845`).
 * Season length indicators have been modified to return ``0`` for all cases where a proper season was not found, but the data is valid. Previously, a ``nan`` was given if neither a start or an end were found, even if the data was valid, and a ``0`` was given if an end was found but no start. (:pull:`1845`).
 
@@ -29,8 +27,8 @@ Bug fixes
 ^^^^^^^^^
 * Fixed the indexer bug in the ``xclim.indices.standardized_index_fit_params`` when multiple or non-array indexers are specified and fitted parameters are reloaded from netCDF. (:issue:`1842`, :pull:`1843`).
 * Addressed a bug found in ``wet_spell_*`` indicators that was contributing to erroneous results. A new generic spell length statistic function ``xclim.indices.generic.spell_length_statistics`` is now used in wet and dry spells indicators. (:issue:`1834`, :pull:`1838`).
-* Syntax for ``nan`` and ``inf`` was adapted to support ``numpy>=2.0.0``. (:pull:`1814`, :issue:`1785`).
-* Force type in `jitter` to work with new version of dask. (:pull:`1864`)
+* Syntax for ``nan`` and ``inf`` was adapted to support `numpy>=2.0`. (:pull:`1814`, :issue:`1785`).
+* Force type in ``jitter`` to work with new version of `dask`. (:pull:`1864`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
@@ -43,7 +41,7 @@ CI changes
 * `pip-tools` (`pip-compile`) has been used to generate a lock file with hashes for the CI dependencies. (:pull:`1841`).
 * The ``main.yml`` workflow has been updated to use simpler trigger logic. (:pull:`1841`).
 * A workflow bug has been fixed that was causing multiple duplicate comments to be made on Pull Requests originating from forks. (:pull:`1841`).
-* The ``upstream.yml`` workflow was adapted to not install upstream Python dependencies using hashes (impossible to install directly from GitHub sources using --require-hashes). (:pull:`1859`).
+* The ``upstream.yml`` workflow was adapted to not install upstream Python dependencies using hashes (as it is impossible to install directly from GitHub sources using ``--require-hashes``). (:pull:`1859`).
 * The `tox-gh` configuration has been set to handle the environment configurations on GitHub Workflows. The tox.ini file is also a bit more organized/consistent. (:pull:`1859`).
 
 v0.51.0 (2024-07-04)
