@@ -43,7 +43,7 @@ dependencies = [
   "dask[array] >=2.6",
   "filelock >=3.14.0",
   "jsonpickle >=3.1.0",
-  "numba", # numpy v2.0 compatibility is in numba v0.60.0, but not pinning it to avoid breaking older numpy versions
+  "numba >=0.54.1",
   "numpy >=1.20.0",
   "packaging >=24.0",
   "pandas >=2.2",
