@@ -1288,11 +1288,11 @@ class OTC(Adjust):
     Parameters
     ----------
     bin_width : dict | float | None
-        Bin widths for specified dimensions if dict.
+        Bin widths for specified dimensions if is dict.
         For all dimensions if float.
         Will be estimated with Freedman-Diaconis rule by default.
     bin_origin : dict | float | None
-        Bin origins for specified dimensions if dict.
+        Bin origins for specified dimensions if is dict.
         For all dimensions if float.
         Default is 0.
     num_iter_max : int | None
@@ -1301,10 +1301,11 @@ class OTC(Adjust):
     jitter_inside_bins : bool
         If `False`, output points are located at the center of their bin.
         If `True`, a random location is picked uniformly inside their bin. Default is `True`.
-    adapt_freq_thresh : dict | None = None
+    adapt_freq_thresh : dict | str | None = None
         Threshold for frequency adaptation per variable.
         See :py:class:`xclim.sdba.processing.adapt_freq` for details.
-        Frequency adaptation is not applied to missing variables.
+        Frequency adaptation is not applied to missing variables if is dict.
+        Applied to all variables if is string.
     transform : {None, 'standardize', 'max_distance', 'max_value'}
         Per-variable transformation applied before the distances are calculated.
         Default is "max_distance".
@@ -1386,7 +1387,7 @@ class OTC(Adjust):
         bin_origin: dict | float | None = None,
         num_iter_max: int | None = 100_000_000,
         jitter_inside_bins: bool = True,
-        adapt_freq_thresh: dict | None = None,
+        adapt_freq_thresh: dict | str | None = None,
         transform: str | None = "max_distance",
         group: str | Grouper = "time",
         pts_dim: str = "multivar",
@@ -1406,6 +1407,8 @@ class OTC(Adjust):
         if "_is_hist" not in sim.attrs:
             raise ValueError("OTC does not take a `sim` argument.")
 
+        if isinstance(adapt_freq_thresh, str):
+            adapt_freq_thresh = {v: adapt_freq_thresh for v in hist[pts_dim].values}
         if adapt_freq_thresh is not None:
             _, units = cls._harmonize_units(sim)
             for var, thresh in adapt_freq_thresh.items():
@@ -1451,11 +1454,11 @@ class dOTC(Adjust):
     Parameters
     ----------
     bin_width : dict | float | None
-        Bin widths for specified dimensions if dict.
+        Bin widths for specified dimensions if is dict.
         For all dimensions if float.
         Will be estimated with Freedman-Diaconis rule by default.
     bin_origin : dict | float | None
-        Bin origins for specified dimensions if dict.
+        Bin origins for specified dimensions if is dict.
         For all dimensions if float.
         Default is 0.
     num_iter_max : int | None
@@ -1467,13 +1470,15 @@ class dOTC(Adjust):
     jitter_inside_bins : bool
         If `False`, output points are located at the center of their bin.
         If `True`, a random location is picked uniformly inside their bin. Default is `True`.
-    kind : dict | None
+    kind : dict | str | None
         Keys are variable names and values are adjustment kinds, either additive or multiplicative.
         Unspecified dimensions are treated as "+".
-    adapt_freq_thresh : dict | None = None
+        Applied to all variables if is string.
+    adapt_freq_thresh : dict | str | None = None
         Threshold for frequency adaptation per variable.
         See :py:class:`xclim.sdba.processing.adapt_freq` for details.
-        Frequency adaptation is not applied to missing variables.
+        Frequency adaptation is not applied to missing variables if is dict.
+        Applied to all variables if is string.
     transform : {None, 'standardize', 'max_distance', 'max_value'}
         Per-variable transformation applied before the distances are calculated.
         Default is "max_distance".
@@ -1539,8 +1544,8 @@ class dOTC(Adjust):
         num_iter_max: int | None = 100_000_000,
         cov_factor: str | None = "std",
         jitter_inside_bins: bool = True,
-        kind: dict | None = None,
-        adapt_freq_thresh: dict | None = None,
+        kind: dict | str | None = None,
+        adapt_freq_thresh: dict | str | None = None,
         transform: str | None = "max_distance",
         group: str | Grouper = "time",
         pts_dim: str = "multivar",
@@ -1550,6 +1555,8 @@ class dOTC(Adjust):
                 "POT is required for OTC and dOTC. Please install with `pip install POT`."
             )
 
+        if isinstance(kind, str):
+            kind = {v: kind for v in hist[pts_dim].values}
         if kind is not None and "*" in kind.values() and cov_factor == "cholesky":
             raise ValueError(
                 "Multiplicative correction is not supported with `cov_factor` = 'cholesky'."
@@ -1563,6 +1570,8 @@ class dOTC(Adjust):
                 "`transform` should be in [None, 'standardize', 'max_distance', 'max_value']."
             )
 
+        if isinstance(adapt_freq_thresh, str):
+            adapt_freq_thresh = {v: adapt_freq_thresh for v in hist[pts_dim].values}
         if adapt_freq_thresh is not None:
             _, units = cls._harmonize_units(sim)
             for var, thresh in adapt_freq_thresh.items():
