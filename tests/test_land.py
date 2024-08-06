@@ -14,7 +14,7 @@ def test_base_flow_index(ndq_series):
     out = land.base_flow_index(ndq_series, freq="YS")
 
     if Version(__cfxr_version__) < Version("0.9.3"):
-        assert out.attrs["units"] == ""
+        assert out.attrs["units"] == "dimensionless"
     else:
         assert out.attrs["units"] == "1"
 
@@ -25,7 +25,7 @@ def test_rb_flashiness_index(ndq_series):
     out = land.base_flow_index(ndq_series, freq="YS")
 
     if Version(__cfxr_version__) < Version("0.9.3"):
-        assert out.attrs["units"] == ""
+        assert out.attrs["units"] == "dimensionless"
     else:
         assert out.attrs["units"] == "1"
 
@@ -36,7 +36,7 @@ def test_qdoy_max(ndq_series, q_series):
     out = land.doy_qmax(ndq_series, freq="YS", season="JJA")
 
     if Version(__cfxr_version__) < Version("0.9.3"):
-        assert out.attrs["units"] == ""
+        assert out.attrs["units"] == "dimensionless"
     else:
         assert out.attrs["units"] == "1"
 

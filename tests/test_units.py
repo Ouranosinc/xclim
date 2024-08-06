@@ -142,10 +142,8 @@ class TestUnitConversion:
         assert pint2cfunits(u) == "%"
 
         u = units2pint("1")
-        assert pint2cfunits(u) == "1"
-
         if Version(__cfxr_version__) < Version("0.9.3"):
-            assert pint2cfunits(u) == ""
+            assert pint2cfunits(u) == "dimensionless"
         else:
             assert pint2cfunits(u) == "1"
 
@@ -338,7 +336,13 @@ def test_declare_relative_units():
         ("", "sum", "count", 365, "d"),
         ("", "sum", "count", 365, "d"),
         ("kg m-2", "var", "var", 0, "kg2 m-4"),
-        ("°C", "argmax", "doymax", 0, ("", "1")),  # dependent on numpy/pint version
+        (
+            "°C",
+            "argmax",
+            "doymax",
+            0,
+            ("dimensionless", "1"),
+        ),  # dependent on numpy/pint version
         (
             "°C",
             "sum",

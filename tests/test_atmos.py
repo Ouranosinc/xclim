@@ -264,7 +264,7 @@ def test_wind_power_potential(atmosds):
     out = atmos.wind_power_potential(wind_speed=atmosds.sfcWind)
 
     if Version(__cfxr_version__) < Version("0.9.3"):
-        assert out.attrs["units"] == ""
+        assert out.attrs["units"] == "dimensionless"
     else:
         assert out.attrs["units"] == "1"
     assert (out >= 0).all()

@@ -5,8 +5,6 @@ from __future__ import annotations
 import numpy as np
 import pytest
 import xarray as xr
-from cf_xarray import __version__ as __cfxr_version__
-from packaging.version import Version
 
 from xclim.core.calendar import doy_to_days_since, select_time
 from xclim.indices import generic
@@ -104,10 +102,7 @@ class TestFlowGeneric:
             for attr in ["units", "is_dayofyear", "calendar"]:
                 assert attr in da.attrs.keys()
 
-            if Version(__cfxr_version__) < Version("0.9.3"):
-                assert da.attrs["units"] == ""
-            else:
-                assert da.attrs["units"] == "1"
+            assert da.attrs["units"] == "1"
             assert da.attrs["is_dayofyear"] == 1
 
 

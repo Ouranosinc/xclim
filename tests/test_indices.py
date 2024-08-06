@@ -143,7 +143,7 @@ class TestColdSpellFreq:
         np.testing.assert_array_equal(out, [1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0])
 
         if Version(__cfxr_version__) < Version("0.9.3"):
-            assert out.units == ""
+            assert out.units == "dimensionless"
         else:
             assert out.units == "1"
 
@@ -151,7 +151,7 @@ class TestColdSpellFreq:
         np.testing.assert_array_equal(out, 3)
 
         if Version(__cfxr_version__) < Version("0.9.3"):
-            assert out.units == ""
+            assert out.units == "dimensionless"
         else:
             assert out.units == "1"
 
@@ -930,7 +930,7 @@ class TestLastSpringFrost:
             assert attr in lsf.attrs.keys()
 
         if Version(__cfxr_version__) < Version("0.9.3"):
-            assert lsf.attrs["units"] == ""
+            assert lsf.attrs["units"] == "dimensionless"
         else:
             assert lsf.attrs["units"] == "1"
 
@@ -956,7 +956,7 @@ class TestFirstDayBelow:
             assert attr in fdb.attrs.keys()
 
         if Version(__cfxr_version__) < Version("0.9.3"):
-            assert fdb.attrs["units"] == ""
+            assert fdb.attrs["units"] == "dimensionless"
         else:
             assert fdb.attrs["units"] == "1"
 
@@ -992,7 +992,7 @@ class TestFirstDayAbove:
             assert attr in fda.attrs.keys()
 
         if Version(__cfxr_version__) < Version("0.9.3"):
-            assert fda.attrs["units"] == ""
+            assert fda.attrs["units"] == "dimensionless"
         else:
             assert fda.attrs["units"] == "1"
 
@@ -1022,7 +1022,7 @@ class TestFirstDayAbove:
             assert attr in out.attrs.keys()
 
         if Version(__cfxr_version__) < Version("0.9.3"):
-            assert out.attrs["units"] == ""
+            assert out.attrs["units"] == "dimensionless"
         else:
             assert out.attrs["units"] == "1"
 
@@ -1114,7 +1114,7 @@ class TestGrowingSeasonStart:
             assert attr in out.attrs.keys()
 
         if Version(__cfxr_version__) < Version("0.9.3"):
-            assert out.attrs["units"] == ""
+            assert out.attrs["units"] == "dimensionless"
         else:
             assert out.attrs["units"] == "1"
 
@@ -1150,7 +1150,10 @@ class TestGrowingSeasonEnd:
         np.testing.assert_array_equal(gs_end, expected)
         for attr in ["units", "is_dayofyear", "calendar"]:
             assert attr in gs_end.attrs.keys()
-        assert gs_end.attrs["units"] == "1"
+        if Version(__cfxr_version__) < Version("0.9.3"):
+            assert gs_end.attrs["units"] == "dimensionless"
+        else:
+            assert gs_end.attrs["units"] == "1"
         assert gs_end.attrs["is_dayofyear"] == 1
 
 
@@ -1232,7 +1235,7 @@ class TestFrostFreeSeasonStart:
             assert attr in out.attrs.keys()
 
         if Version(__cfxr_version__) < Version("0.9.3"):
-            assert out.attrs["units"] == ""
+            assert out.attrs["units"] == "dimensionless"
         else:
             assert out.attrs["units"] == "1"
 
@@ -1270,7 +1273,7 @@ class TestFrostFreeSeasonEnd:
             assert attr in gs_end.attrs.keys()
 
         if Version(__cfxr_version__) < Version("0.9.3"):
-            assert gs_end.attrs["units"] == ""
+            assert gs_end.attrs["units"] == "dimensionless"
         else:
             assert gs_end.attrs["units"] == "1"
 
@@ -2784,7 +2787,7 @@ def test_degree_days_exceedance_date(tas_series):
         assert attr in out.attrs.keys()
 
     if Version(__cfxr_version__) < Version("0.9.3"):
-        assert out.attrs["units"] == ""
+        assert out.attrs["units"] == "dimensionless"
     else:
         assert out.attrs["units"] == "1"
 
@@ -2829,7 +2832,7 @@ def test_first_snowfall(prsn_series, prsnd_series):
         assert attr in out.attrs.keys()
 
     if Version(__cfxr_version__) < Version("0.9.3"):
-        assert out.attrs["units"] == ""
+        assert out.attrs["units"] == "dimensionless"
     else:
         assert out.attrs["units"] == "1"
     assert out.attrs["is_dayofyear"] == 1
@@ -2840,7 +2843,10 @@ def test_first_snowfall(prsn_series, prsnd_series):
     assert out[0] == 166
     for attr in ["units", "is_dayofyear", "calendar"]:
         assert attr in out.attrs.keys()
-    assert out.attrs["units"] == "1"
+    if Version(__cfxr_version__) < Version("0.9.3"):
+        assert out.attrs["units"] == "dimensionless"
+    else:
+        assert out.attrs["units"] == "1"
     assert out.attrs["is_dayofyear"] == 1
 
     # test with prsn [kg m-2 s-1]
@@ -2854,7 +2860,7 @@ def test_first_snowfall(prsn_series, prsnd_series):
         assert attr in out.attrs.keys()
 
     if Version(__cfxr_version__) < Version("0.9.3"):
-        assert out.attrs["units"] == ""
+        assert out.attrs["units"] == "dimensionless"
     else:
         assert out.attrs["units"] == "1"
     assert out.attrs["is_dayofyear"] == 1
@@ -2995,7 +3001,7 @@ class TestSnowCover:
             assert attr in out.attrs.keys()
 
         if Version(__cfxr_version__) < Version("0.9.3"):
-            assert out.attrs["units"] == ""
+            assert out.attrs["units"] == "dimensionless"
         else:
             assert out.attrs["units"] == "1"
 
@@ -3008,7 +3014,7 @@ class TestSnowCover:
             assert attr in out.attrs.keys()
 
         if Version(__cfxr_version__) < Version("0.9.3"):
-            assert out.attrs["units"] == ""
+            assert out.attrs["units"] == "dimensionless"
         else:
             assert out.attrs["units"] == "1"
 
@@ -3035,7 +3041,7 @@ class TestSnowCover:
             assert attr in out.attrs.keys()
 
         if Version(__cfxr_version__) < Version("0.9.3"):
-            assert out.attrs["units"] == ""
+            assert out.attrs["units"] == "dimensionless"
         else:
             assert out.attrs["units"] == "1"
 
@@ -3047,7 +3053,10 @@ class TestSnowCover:
         np.testing.assert_array_equal(out, [(doy + 219) % 366, np.nan])
         for attr in ["units", "is_dayofyear", "calendar"]:
             assert attr in out.attrs.keys()
-        assert out.attrs["units"] == "1"
+        if Version(__cfxr_version__) < Version("0.9.3"):
+            assert out.attrs["units"] == "dimensionless"
+        else:
+            assert out.attrs["units"] == "1"
         assert out.attrs["is_dayofyear"] == 1
 
 
