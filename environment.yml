@@ -10,35 +10,36 @@ dependencies:
   - cftime >=1.4.1
   - click >=8.1
   - dask >=2.6.0
-  - jsonpickle
-  - numba
+  - filelock >=3.14.0
+  - jsonpickle >=3.1.0
+  - numba # numpy v2.0 compatibility is in numba v0.60.0, but not pinning it to avoid breaking older numpy versions
   - numpy >=1.20.0
+  - packaging >=24.0
   - pandas >=2.2.0
   - pint >=0.18.0
   - poppler >=0.67
-  - pyarrow  # Strongly encouraged for Pandas v2.2.0+
-  - pyyaml
+  - pyarrow >=15.0.0  # Strongly encouraged for Pandas v2.2.0+
+  - pyyaml >=6.0.1
   - scikit-learn >=0.21.3
   - scipy >=1.9.0
-  - statsmodels
+  - statsmodels >=0.14.2
   - xarray >=2023.11.0
-  - yamale
+  - yamale >=5.0.0
   # Extras
   - flox
   - lmoments3  # Required for some Jupyter notebooks
   # Testing and development dependencies
   - black ==24.4.2
   - blackdoc ==0.3.9
-  - bump-my-version >=0.23.0
+  - bump-my-version >=0.24.3
   - cairosvg
   - codespell ==2.3.0
   - coverage >=7.5.0
   - coveralls >=4.0.0
-  - deptry ==0.16.1
+  - deptry ==0.18.0
   - distributed >=2.0
-  - filelock
-  - flake8 >=7.0.0
-  - flake8-rst-docstrings
+  - flake8 >=7.1.1
+  - flake8-rst-docstrings >=0.3.0
   - flit >=3.9.0
   - furo >=2023.9.10
   - h5netcdf >=1.3.0
@@ -46,24 +47,24 @@ dependencies:
   - ipython
   - isort ==5.13.2
   - matplotlib
-  - mypy
+  - mypy >=1.10.0
   - nbconvert <7.14  # Pinned due to directive errors in sphinx. See: https://github.com/jupyter/nbconvert/issues/2092
-  - nbqa
+  - nbqa >=1.8.2
   - nbsphinx
   - nbval >=0.11.0
-  - nc-time-axis
+  - nc-time-axis >=1.4.1
   - notebook
-  - pandas-stubs
-  - platformdirs
-  - pooch
+  - pandas-stubs >=2.2
+  - platformdirs >=3.2
+  - pooch >=1.8.0
   - pre-commit >=3.7
   - pybtex >=0.24.0
   - pylint >=3.1
   - pytest >=8.0.0
-  - pytest-cov
-  - pytest-socket
+  - pytest-cov >=5.0.0
+  - pytest-socket >=0.6.0
   - pytest-xdist >=3.2
-  - ruff >=0.4.10
+  - ruff >=0.5.6
   - sphinx >=7.0.0
   - sphinx-autobuild >=2024.4.16
   - sphinx-autodoc-typehints
@@ -71,12 +72,12 @@ dependencies:
   - sphinx-copybutton
   - sphinx-mdinclude
   - sphinxcontrib-bibtex
-  - tokenize-rt
+  - tokenize-rt >=5.2.0
   - tox >=4.16.0
   # - tox-conda  # Will be added when a tox@v4.0+ compatible plugin is released.
   - vulture # ==2.11  # The conda-forge version is out of date.
   - xdoctest >=1.1.5
-  - yamllint
-  - pip
+  - yamllint >=1.35.1
+  - pip >=24.0
   - pip:
     - sphinxcontrib-svg2pdfconverter
