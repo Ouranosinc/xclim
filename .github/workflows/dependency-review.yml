@@ -18,7 +18,20 @@ jobs:
       - name: Harden Runner
         uses: step-security/harden-runner@0d381219ddf674d61a7572ddd19d7941e271515c # v2.9.0
         with:
-          egress-policy: audit
+          disable-sudo: true
+          egress-policy: block
+          allowed-endpoints: >
+            api.deps.dev:443
+            api.electricitymap.org:443
+            api.github.com:443
+            api.green-coding.io:443
+            api.securityscorecards.dev:443
+            github.com:443
+            ip-api.com:80
+            ipapi.co:443
+            proxy.golang.org:443
+            pypi.org:443
+            sum.golang.org:443
 
       - name: Start Energy Measurement
         uses: green-coding-solutions/eco-ci-energy-estimation@escape-test

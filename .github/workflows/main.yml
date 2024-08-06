@@ -55,6 +55,7 @@ jobs:
             files.pythonhosted.org:443
             github.com:443
             ip-api.com:80
+            ipapi.co:443
             proxy.golang.org:443
             pypi.org:443
             sum.golang.org:443
@@ -119,6 +120,7 @@ jobs:
             files.pythonhosted.org:443
             github.com:443
             ip-api.com:80
+            ipapi.co:443
             proxy.golang.org:443
             pypi.org:443
             raw.githubusercontent.com:443
@@ -226,6 +228,7 @@ jobs:
             files.pythonhosted.org:443
             github.com:443
             ip-api.com:80
+            ipapi.co:443
             motd.ubuntu.com:443
             proxy.golang.org:443
             pypi.org:443
@@ -317,6 +320,7 @@ jobs:
             files.pythonhosted.org:443
             github.com:443
             ip-api.com:80
+            ipapi.co:443
             objects.githubusercontent.com:443
             proxy.golang.org:443
             pypi.org:443
