@@ -21,7 +21,7 @@ jobs:
           egress-policy: audit
 
       - name: Start Energy Measurement
-        uses: green-coding-solutions/eco-ci-energy-estimation@7333e9a8e8036e5bf69d59dc8bb63d984b0f55c8 # v3.1
+        uses: green-coding-solutions/eco-ci-energy-estimation@escape-test
         with:
           task: start-measurement
           branch: ${{ github.head_ref || github.ref_name }}
@@ -33,14 +33,14 @@ jobs:
         uses: actions/dependency-review-action@5a2ce3f5b92ee19cbb1541a4984c76d921601d7c # v4.3.4
 
       - name: Energy Measurement
-        uses: green-coding-solutions/eco-ci-energy-estimation@7333e9a8e8036e5bf69d59dc8bb63d984b0f55c8 # v3.1
+        uses: green-coding-solutions/eco-ci-energy-estimation@escape-test
         with:
           task: get-measurement
           label: 'Dependency Review'
         continue-on-error: true
 
       - name: Show Energy Results
-        uses: green-coding-solutions/eco-ci-energy-estimation@7333e9a8e8036e5bf69d59dc8bb63d984b0f55c8 # v3.1
+        uses: green-coding-solutions/eco-ci-energy-estimation@escape-test
         with:
           task: display-results
         continue-on-error: true
