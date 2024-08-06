@@ -341,8 +341,8 @@ def test_declare_relative_units():
             "argmax",
             "doymax",
             0,
-            ("dimensionless", "1"),
-        ),  # dependent on numpy/pint version
+            "1",
+        ),
         (
             "°C",
             "sum",
