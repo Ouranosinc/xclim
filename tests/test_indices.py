@@ -19,7 +19,6 @@ import numpy as np
 import pandas as pd
 import pytest
 import xarray as xr
-from cf_xarray import __version__ as __cfxr_version__
 from numpy import __version__ as __numpy_version__
 from packaging.version import Version
 from pint import __version__ as __pint_version__
@@ -141,19 +140,11 @@ class TestColdSpellFreq:
 
         out = xci.cold_spell_frequency(da, thresh="-10. C", freq="ME")
         np.testing.assert_array_equal(out, [1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0])
-
-        if Version(__cfxr_version__) < Version("0.9.3"):
-            assert out.units == "dimensionless"
-        else:
-            assert out.units == "1"
+        assert out.units == "1"
 
         out = xci.cold_spell_frequency(da, thresh="-10. C", freq="YS")
         np.testing.assert_array_equal(out, 3)
-
-        if Version(__cfxr_version__) < Version("0.9.3"):
-            assert out.units == "dimensionless"
-        else:
-            assert out.units == "1"
+        assert out.units == "1"
 
 
 class TestColdSpellMaxLength:
@@ -934,12 +925,7 @@ class TestLastSpringFrost:
         assert lsf == 180
         for attr in ["units", "is_dayofyear", "calendar"]:
             assert attr in lsf.attrs.keys()
-
-        if Version(__cfxr_version__) < Version("0.9.3"):
-            assert lsf.attrs["units"] == "dimensionless"
-        else:
-            assert lsf.attrs["units"] == "1"
-
+        assert lsf.attrs["units"] == "1"
         assert lsf.attrs["is_dayofyear"] == 1
         assert lsf.attrs["is_dayofyear"].dtype == np.int32
 
@@ -960,12 +946,7 @@ class TestFirstDayBelow:
         assert np.isnan(fdb)
         for attr in ["units", "is_dayofyear", "calendar"]:
             assert attr in fdb.attrs.keys()
-
-        if Version(__cfxr_version__) < Version("0.9.3"):
-            assert fdb.attrs["units"] == "dimensionless"
-        else:
-            assert fdb.attrs["units"] == "1"
-
+        assert fdb.attrs["units"] == "1"
         assert fdb.attrs["is_dayofyear"] == 1
 
     def test_below_forbidden(self, tasmax_series):
@@ -996,12 +977,7 @@ class TestFirstDayAbove:
         assert np.isnan(fda)
         for attr in ["units", "is_dayofyear", "calendar"]:
             assert attr in fda.attrs.keys()
-
-        if Version(__cfxr_version__) < Version("0.9.3"):
-            assert fda.attrs["units"] == "dimensionless"
-        else:
-            assert fda.attrs["units"] == "1"
-
+        assert fda.attrs["units"] == "1"
         assert fda.attrs["is_dayofyear"] == 1
 
     def test_thresholds(self, tas_series):
@@ -1026,12 +1002,7 @@ class TestFirstDayAbove:
         assert out[0] == tg.indexes["time"][30].dayofyear
         for attr in ["units", "is_dayofyear", "calendar"]:
             assert attr in out.attrs.keys()
-
-        if Version(__cfxr_version__) < Version("0.9.3"):
-            assert out.attrs["units"] == "dimensionless"
-        else:
-            assert out.attrs["units"] == "1"
-
+        assert out.attrs["units"] == "1"
         assert out.attrs["is_dayofyear"] == 1
 
     def test_above_forbidden(self, tasmax_series):
@@ -1118,12 +1089,7 @@ class TestGrowingSeasonStart:
         assert out[0] == tg.indexes["time"][20].dayofyear
         for attr in ["units", "is_dayofyear", "calendar"]:
             assert attr in out.attrs.keys()
-
-        if Version(__cfxr_version__) < Version("0.9.3"):
-            assert out.attrs["units"] == "dimensionless"
-        else:
-            assert out.attrs["units"] == "1"
-
+        assert out.attrs["units"] == "1"
         assert out.attrs["is_dayofyear"] == 1
 
     def test_no_start(self, tas_series):
@@ -1156,10 +1122,7 @@ class TestGrowingSeasonEnd:
         np.testing.assert_array_equal(gs_end, expected)
         for attr in ["units", "is_dayofyear", "calendar"]:
             assert attr in gs_end.attrs.keys()
-        if Version(__cfxr_version__) < Version("0.9.3"):
-            assert gs_end.attrs["units"] == "dimensionless"
-        else:
-            assert gs_end.attrs["units"] == "1"
+        assert gs_end.attrs["units"] == "1"
         assert gs_end.attrs["is_dayofyear"] == 1
 
 
@@ -1239,11 +1202,7 @@ class TestFrostFreeSeasonStart:
         assert out[0] == tn.indexes["time"][20].dayofyear
         for attr in ["units", "is_dayofyear", "calendar"]:
             assert attr in out.attrs.keys()
-
-        if Version(__cfxr_version__) < Version("0.9.3"):
-            assert out.attrs["units"] == "dimensionless"
-        else:
-            assert out.attrs["units"] == "1"
+        assert out.attrs["units"] == "1"
 
         assert out.attrs["is_dayofyear"] == 1
 
@@ -1278,10 +1237,7 @@ class TestFrostFreeSeasonEnd:
         for attr in ["units", "is_dayofyear", "calendar"]:
             assert attr in gs_end.attrs.keys()
 
-        if Version(__cfxr_version__) < Version("0.9.3"):
-            assert gs_end.attrs["units"] == "dimensionless"
-        else:
-            assert gs_end.attrs["units"] == "1"
+        assert gs_end.attrs["units"] == "1"
 
         assert gs_end.attrs["is_dayofyear"] == 1
 
@@ -2791,11 +2747,7 @@ def test_degree_days_exceedance_date(tas_series):
 
     for attr in ["units", "is_dayofyear", "calendar"]:
         assert attr in out.attrs.keys()
-
-    if Version(__cfxr_version__) < Version("0.9.3"):
-        assert out.attrs["units"] == "dimensionless"
-    else:
-        assert out.attrs["units"] == "1"
+    assert out.attrs["units"] == "1"
 
     assert out.attrs["is_dayofyear"] == 1
 
@@ -2836,11 +2788,7 @@ def test_first_snowfall(prsn_series, prsnd_series):
     assert out[0] == 166
     for attr in ["units", "is_dayofyear", "calendar"]:
         assert attr in out.attrs.keys()
-
-    if Version(__cfxr_version__) < Version("0.9.3"):
-        assert out.attrs["units"] == "dimensionless"
-    else:
-        assert out.attrs["units"] == "1"
+    assert out.attrs["units"] == "1"
     assert out.attrs["is_dayofyear"] == 1
 
     # test with prsnd [m s-1]
@@ -2849,10 +2797,7 @@ def test_first_snowfall(prsn_series, prsnd_series):
     assert out[0] == 166
     for attr in ["units", "is_dayofyear", "calendar"]:
         assert attr in out.attrs.keys()
-    if Version(__cfxr_version__) < Version("0.9.3"):
-        assert out.attrs["units"] == "dimensionless"
-    else:
-        assert out.attrs["units"] == "1"
+    assert out.attrs["units"] == "1"
     assert out.attrs["is_dayofyear"] == 1
 
     # test with prsn [kg m-2 s-1]
@@ -2865,10 +2810,7 @@ def test_first_snowfall(prsn_series, prsnd_series):
     for attr in ["units", "is_dayofyear", "calendar"]:
         assert attr in out.attrs.keys()
 
-    if Version(__cfxr_version__) < Version("0.9.3"):
-        assert out.attrs["units"] == "dimensionless"
-    else:
-        assert out.attrs["units"] == "1"
+    assert out.attrs["units"] == "1"
     assert out.attrs["is_dayofyear"] == 1
 
 
@@ -3005,12 +2947,7 @@ class TestSnowCover:
         np.testing.assert_array_equal(out, [snd.time.dt.dayofyear[0].data + 2, np.nan])
         for attr in ["units", "is_dayofyear", "calendar"]:
             assert attr in out.attrs.keys()
-
-        if Version(__cfxr_version__) < Version("0.9.3"):
-            assert out.attrs["units"] == "dimensionless"
-        else:
-            assert out.attrs["units"] == "1"
-
+        assert out.attrs["units"] == "1"
         assert out.attrs["is_dayofyear"] == 1
 
         out = xci.snw_season_start(snw)
@@ -3018,12 +2955,7 @@ class TestSnowCover:
         np.testing.assert_array_equal(out, [snw.time.dt.dayofyear[0].data + 1, np.nan])
         for attr in ["units", "is_dayofyear", "calendar"]:
             assert attr in out.attrs.keys()
-
-        if Version(__cfxr_version__) < Version("0.9.3"):
-            assert out.attrs["units"] == "dimensionless"
-        else:
-            assert out.attrs["units"] == "1"
-
+        assert out.attrs["units"] == "1"
         assert out.attrs["is_dayofyear"] == 1
 
     def test_snow_season_end(self, snd_series, snw_series):
@@ -3045,12 +2977,7 @@ class TestSnowCover:
         np.testing.assert_array_equal(out, [(doy + 219) % 366, np.nan])
         for attr in ["units", "is_dayofyear", "calendar"]:
             assert attr in out.attrs.keys()
-
-        if Version(__cfxr_version__) < Version("0.9.3"):
-            assert out.attrs["units"] == "dimensionless"
-        else:
-            assert out.attrs["units"] == "1"
-
+        assert out.attrs["units"] == "1"
         assert out.attrs["is_dayofyear"] == 1
 
         out = xci.snw_season_end(snw)
@@ -3059,10 +2986,7 @@ class TestSnowCover:
         np.testing.assert_array_equal(out, [(doy + 219) % 366, np.nan])
         for attr in ["units", "is_dayofyear", "calendar"]:
             assert attr in out.attrs.keys()
-        if Version(__cfxr_version__) < Version("0.9.3"):
-            assert out.attrs["units"] == "dimensionless"
-        else:
-            assert out.attrs["units"] == "1"
+        assert out.attrs["units"] == "1"
         assert out.attrs["is_dayofyear"] == 1
 
 

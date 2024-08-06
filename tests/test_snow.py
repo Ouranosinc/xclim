@@ -2,8 +2,6 @@ from __future__ import annotations
 
 import numpy as np
 import pytest
-from cf_xarray import __version__ as __cfxr_version__
-from packaging.version import Version
 
 from xclim import land
 from xclim.core.utils import ValidationError
@@ -47,20 +45,12 @@ class TestContinuousSnowDepthSeason:
         snd = snd.expand_dims(lat=[0, 1, 2])
 
         out = land.snd_season_start(snd)
-
-        if Version(__cfxr_version__) < Version("0.9.3"):
-            assert out.units == "dimensionless"
-        else:
-            assert out.units == "1"
+        assert out.units == "1"
 
         np.testing.assert_array_equal(out.isel(lat=0), snd.time.dt.dayofyear[100])
 
         out = land.snd_season_end(snd)
-
-        if Version(__cfxr_version__) < Version("0.9.3"):
-            assert out.units == "dimensionless"
-        else:
-            assert out.units == "1"
+        assert out.units == "1"
 
         np.testing.assert_array_equal(out.isel(lat=0), snd.time.dt.dayofyear[200])
 
@@ -79,20 +69,12 @@ class TestContinuousSnowWaterSeason:
         snw = snw.expand_dims(lat=[0, 1, 2])
 
         out = land.snw_season_start(snw)
-
-        if Version(__cfxr_version__) < Version("0.9.3"):
-            assert out.units == "dimensionless"
-        else:
-            assert out.units == "1"
+        assert out.units == "1"
 
         np.testing.assert_array_equal(out.isel(lat=0), snw.time.dt.dayofyear[100])
 
         out = land.snw_season_end(snw)
-
-        if Version(__cfxr_version__) < Version("0.9.3"):
-            assert out.units == "dimensionless"
-        else:
-            assert out.units == "1"
+        assert out.units == "1"
 
         np.testing.assert_array_equal(out.isel(lat=0), snw.time.dt.dayofyear[200])
 

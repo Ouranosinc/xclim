@@ -6,9 +6,9 @@ import pint
 import pint.errors
 import pytest
 import xarray as xr
-from cf_xarray import __version__ as __cfxr_version__
 from dask import array as dsk
 from packaging.version import Version
+from pint import __version__ as __pint_version__
 
 from xclim import indices, set_options
 from xclim.core.units import (
@@ -142,10 +142,7 @@ class TestUnitConversion:
         assert pint2cfunits(u) == "%"
 
         u = units2pint("1")
-        if Version(__cfxr_version__) < Version("0.9.3"):
-            assert pint2cfunits(u) == "dimensionless"
-        else:
-            assert pint2cfunits(u) == "1"
+        assert pint2cfunits(u) == "1"
 
     def test_pint_multiply(self, pr_series):
         a = pr_series([1, 2, 3])
@@ -365,7 +362,7 @@ def test_to_agg_units(in_u, opfunc, op, exp, exp_u):
     np.testing.assert_allclose(out, exp)
 
     if isinstance(exp_u, tuple):
-        if Version(__cfxr_version__) < Version("0.9.3"):
+        if Version(__pint_version__) < Version("0.24.1"):
             assert out.attrs["units"] == exp_u[0]
         else:
             assert out.attrs["units"] == exp_u[1]

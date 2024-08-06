@@ -6,7 +6,7 @@ dependencies:
   - python >=3.9
   - boltons >=20.1
   - bottleneck >=1.3.1
-  - cf_xarray >=0.6.1
+  - cf_xarray >=0.9.3
   - cftime >=1.4.1
   - click >=8.1
   - dask >=2.6.0
