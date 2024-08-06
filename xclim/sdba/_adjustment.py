@@ -949,8 +949,8 @@ def extremes_adjust(
 def _otc_adjust(
     X: np.ndarray,
     Y: np.ndarray,
-    bin_width: dict | np.ndarray | None = None,
-    bin_origin: dict | np.ndarray | None = None,
+    bin_width: dict | float | np.ndarray | None = None,
+    bin_origin: dict | float | np.ndarray | None = None,
     num_iter_max: int | None = 100_000_000,
     jitter_inside_bins: bool = True,
     transform: str | None = "max_distance",
@@ -963,9 +963,9 @@ def _otc_adjust(
         Historical data to be corrected.
     Y : np.ndarray
         Bias correction reference, target of optimal transport.
-    bin_width : dict | np.ndarray | None
+    bin_width : dict | float | np.ndarray | None
         Bin widths for specified dimensions.
-    bin_origin : dict | np.ndarray | None
+    bin_origin : dict | float | np.ndarray | None
         Bin origins for specified dimensions.
     num_iter_max : int | None
         Maximum number of iterations used in the earth mover distance algorithm.
@@ -992,6 +992,8 @@ def _otc_adjust(
         for k, v in bin_width.items():
             _bin_width[k] = v
         bin_width = _bin_width
+    elif isinstance(bin_width, (float, int)):
+        bin_width = np.ones(X.shape[1]) * bin_width
 
     if bin_origin is None:
         bin_origin = np.zeros(X.shape[1])
@@ -1001,6 +1003,8 @@ def _otc_adjust(
             for v, k in bin_origin.items():
                 _bin_origin[v] = k
         bin_origin = _bin_origin
+    elif isinstance(bin_origin, (float, int)):
+        bin_origin = np.ones(X.shape[1]) * bin_origin
 
     num_iter_max = 100_000_000 if num_iter_max is None else num_iter_max
 
@@ -1044,8 +1048,8 @@ def otc_adjust(
     ds: xr.Dataset,
     dim: list,
     pts_dim: str,
-    bin_width: dict | None = None,
-    bin_origin: dict | None = None,
+    bin_width: dict | float | None = None,
+    bin_origin: dict | float | None = None,
     num_iter_max: int | None = 100_000_000,
     jitter_inside_bins: bool = True,
     adapt_freq_thresh: dict | None = None,
@@ -1063,9 +1067,9 @@ def otc_adjust(
         The dimensions defining the distribution on which optimal transport is performed.
     pts_dim : str
         The dimension defining the multivariate components of the distribution.
-    bin_width : dict | None
+    bin_width : dict | float | None
         Bin widths for specified dimensions.
-    bin_origin : dict | None
+    bin_origin : dict | float | None
         Bin origins for specified dimensions.
     num_iter_max : int | None
         Maximum number of iterations used in the earth mover distance algorithm.
@@ -1141,8 +1145,8 @@ def _dotc_adjust(
     X1: np.ndarray,
     Y0: np.ndarray,
     X0: np.ndarray,
-    bin_width: dict | None = None,
-    bin_origin: dict | None = None,
+    bin_width: dict | float | None = None,
+    bin_origin: dict | float | None = None,
     num_iter_max: int | None = 100_000_000,
     cov_factor: str | None = "std",
     jitter_inside_bins: bool = True,
@@ -1159,9 +1163,9 @@ def _dotc_adjust(
         Bias correction reference.
     X0 : np.ndarray
         Historical simulation data.
-    bin_width : dict | None
+    bin_width : dict | float | None
         Bin widths for specified dimensions.
-    bin_origin : dict | None
+    bin_origin : dict | float | None
         Bin origins for specified dimensions.
     num_iter_max : int | None
         Maximum number of iterations used in the earth mover distance algorithm.
@@ -1186,17 +1190,21 @@ def _dotc_adjust(
     :cite:cts:`sdba-robin_2021`
     """
     # Initialize parameters
-    _bin_width = u.bin_width_estimator([Y0, X0, X1])
-    if bin_width is not None:
+    if isinstance(bin_width, dict):
+        _bin_width = u.bin_width_estimator([Y0, X0, X1])
         for v, k in bin_width.items():
             _bin_width[v] = k
-    bin_width = _bin_width
+        bin_width = _bin_width
+    elif isinstance(bin_width, (float, int)):
+        bin_width = np.ones(X0.shape[1]) * bin_width
 
-    _bin_origin = np.zeros(X0.shape[1])
-    if bin_origin is not None:
+    if isinstance(bin_origin, dict):
+        _bin_origin = np.zeros(X0.shape[1])
         for v, k in bin_origin.items():
             _bin_origin[v] = k
-    bin_origin = _bin_origin
+        bin_origin = _bin_origin
+    elif isinstance(bin_origin, (float, int)):
+        bin_origin = np.ones(X0.shape[1]) * bin_origin
 
     # Map ref to hist
     yX0 = _otc_adjust(
@@ -1265,8 +1273,8 @@ def dotc_adjust(
     ds: xr.Dataset,
     dim: list,
     pts_dim: str,
-    bin_width: dict | None = None,
-    bin_origin: dict | None = None,
+    bin_width: dict | float | None = None,
+    bin_origin: dict | float | None = None,
     num_iter_max: int | None = 100_000_000,
     cov_factor: str | None = "std",
     jitter_inside_bins: bool = True,
@@ -1287,9 +1295,9 @@ def dotc_adjust(
         The dimensions defining the distribution on which optimal transport is performed.
     pts_dim : str
         The dimension defining the multivariate components of the distribution.
-    bin_width : dict | None
+    bin_width : dict | float | None
         Bin widths for specified dimensions.
-    bin_origin : dict | None
+    bin_origin : dict | float | None
         Bin origins for specified dimensions.
     num_iter_max : int | None
         Maximum number of iterations used in the earth mover distance algorithm.

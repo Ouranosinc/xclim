@@ -1287,11 +1287,13 @@ class OTC(Adjust):
 
     Parameters
     ----------
-    bin_width : dict | None
-        Bin widths for specified dimensions.
-        Will be estimated by default.
-    bin_origin : dict | None
-        Bin origins for specified dimensions.
+    bin_width : dict | float | None
+        Bin widths for specified dimensions if dict.
+        For all dimensions if float.
+        Will be estimated with Freedman-Diaconis rule by default.
+    bin_origin : dict | float | None
+        Bin origins for specified dimensions if dict.
+        For all dimensions if float.
         Default is 0.
     num_iter_max : int | None
         Maximum number of iterations used in the earth mover distance algorithm.
@@ -1361,8 +1363,8 @@ class OTC(Adjust):
     This implementation is strongly inspired by :cite:t:`sdba-robin_2021`.
     The differences from this implementation are :
 
-    - `bin_width` and `bin_origin` are dictionaries.
-    - Freedman-Diaconis rule is used to find the bin width when unspecified, and fallbacks to Scott's rule when 0 is obtained.
+    - `bin_width` and `bin_origin` are dictionaries or float
+    - Freedman-Diaconis rule is used to find the bin width when unspecified, and fallbacks to Scott's rule when 0 is obtained
     - `jitter_inside_bins` argument
     - `adapt_freq_thresh` argument
     - `transform` argument
@@ -1380,8 +1382,8 @@ class OTC(Adjust):
         ref: xr.DataArray,
         hist: xr.DataArray,
         *,
-        bin_width: dict | None = None,
-        bin_origin: dict | None = None,
+        bin_width: dict | float | None = None,
+        bin_origin: dict | float | None = None,
         num_iter_max: int | None = 100_000_000,
         jitter_inside_bins: bool = True,
         adapt_freq_thresh: dict | None = None,
@@ -1448,11 +1450,13 @@ class dOTC(Adjust):
 
     Parameters
     ----------
-    bin_width : dict | None
-        Bin widths for specified dimensions.
-        Will be estimated by default.
-    bin_origin : dict | None
-        Bin origins for specified dimensions.
+    bin_width : dict | float | None
+        Bin widths for specified dimensions if dict.
+        For all dimensions if float.
+        Will be estimated with Freedman-Diaconis rule by default.
+    bin_origin : dict | float | None
+        Bin origins for specified dimensions if dict.
+        For all dimensions if float.
         Default is 0.
     num_iter_max : int | None
         Maximum number of iterations used in the network simplex algorithm.
@@ -1509,7 +1513,7 @@ class dOTC(Adjust):
     This implementation is strongly inspired by :cite:t:`sdba-robin_2021`.
     The differences from this reference are :
 
-    - `bin_width` and `bin_origin` are dictionaries.
+    - `bin_width` and `bin_origin` are dictionaries or float.
     - Freedman-Diaconis rule is used to find the bin width when unspecified, and fallbacks to Scott's rule when 0 is obtained.
     - `jitter_inside_bins` argument
     - `adapt_freq_thresh` argument
@@ -1530,8 +1534,8 @@ class dOTC(Adjust):
         hist: xr.DataArray,
         sim: xr.DataArray,
         *,
-        bin_width: dict | None = None,
-        bin_origin: dict | None = None,
+        bin_width: dict | float | None = None,
+        bin_origin: dict | float | None = None,
         num_iter_max: int | None = 100_000_000,
         cov_factor: str | None = "std",
         jitter_inside_bins: bool = True,
