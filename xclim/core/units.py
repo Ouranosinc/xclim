@@ -20,6 +20,9 @@ import numpy as np
 import pint
 import xarray as xr
 from boltons.funcutils import wraps
+from cf_xarray import __version__ as __cf_xarray_version__
+from packaging.version import Version
+from pint import __version__ as __pint_version__
 from yaml import safe_load
 
 from .calendar import get_calendar, parse_offset
@@ -51,6 +54,20 @@ __all__ = [
     "units",
     "units2pint",
 ]
+
+# TODO: Remove in xclim v0.53.0+
+older_cf_xarray = False
+older_pint = False
+if Version(__cf_xarray_version__) < Version("0.9.3"):
+    older_cf_xarray = True
+if Version(__pint_version__) < Version("0.24.0"):
+    older_pint = True
+if older_cf_xarray != older_pint:
+    warnings.warn(
+        f"The versions of pint ({__pint_version__}) and cf-xarray ({__cf_xarray_version__}) are not compatible. "
+        "Units handling may not work as expected. Please ensure that both are up-to-date.",
+        UserWarning,
+    )
 
 
 # shamelessly adapted from `cf-xarray` (which adopted it from MetPy and xclim itself)
