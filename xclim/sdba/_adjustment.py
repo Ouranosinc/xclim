@@ -972,7 +972,7 @@ def _otc_adjust(
     jitter_inside_bins : bool = True
         If `False`, output points are located at the center of their bin.
         If `True`, a random location is picked uniformly inside their bin. Default is `True`.
-    transform : str | None = "max_distance"
+    transform : {None, 'standardize', 'max_distance', 'max_value'}
         Per-variable transformation applied before the distances are calculated.
 
     Returns
@@ -1078,7 +1078,7 @@ def otc_adjust(
         If `True`, a random location is picked uniformly inside their bin. Default is `True`.
     adapt_freq_thresh : dict | None = None
         Threshold for frequency adaptation per variable.
-    transform : str | None = "max_distance"
+    transform : {None, 'standardize', 'max_distance', 'max_value'}
         Per-variable transformation applied before the distances are calculated.
 
     Returns
@@ -1177,7 +1177,7 @@ def _dotc_adjust(
     kind : dict | None = None
         Keys are variable names and values are adjustment kinds, either additive or multiplicative.
         Unspecified dimensions are treated as "+".
-    transform : str | None = "max_distance"
+    transform : {None, 'standardize', 'max_distance', 'max_value'}
         Per-variable transformation applied before the distances are calculated.
 
     Returns
@@ -1311,7 +1311,7 @@ def dotc_adjust(
         Unspecified dimensions are treated as "+".
     adapt_freq_thresh : dict | None = None
         Threshold for frequency adaptation per variable.
-    transform : str | None = "max_distance"
+    transform : {None, 'standardize', 'max_distance', 'max_value'}
         Per-variable transformation applied before the distances are calculated.
 
     Returns
