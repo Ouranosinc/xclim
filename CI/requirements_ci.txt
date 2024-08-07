@@ -193,18 +193,18 @@ coveralls==4.0.1 \
     --hash=sha256:7a6b1fa9848332c7b2221afb20f3df90272ac0167060f41b5fe90429b30b1809 \
     --hash=sha256:7b2a0a2bcef94f295e3cf28dcc55ca40b71c77d1c2446b538e85f0f7bc21aa69
     # via -r CI/requirements_ci.in
-deptry==0.16.2 \
-    --hash=sha256:24bfbae07bd6533c852c795e8d88d05a8ad0801bec0d3662e1a37db763c52540 \
-    --hash=sha256:7e4408fa5a8d146b55bc40f0829fb875efef33174a2679bd9954ce988b9bc0d7 \
-    --hash=sha256:93ec508a932d8f06c3bd1aa7a4548d5dbec92c3060d42eedcda3be9729bd7c3b \
-    --hash=sha256:96ab62dd5f4658735aac72d0e49f6d896eabf50a0e4e2cdecb436a1362aa696b \
-    --hash=sha256:af976afc2a0583f48dc25f616d2566fecd7af5080675c8eccb161def88d93503 \
-    --hash=sha256:dd86c9d34aa75b91fb72b34110f0660b2277bf9a95fe9cae3ead36d465bc44ac \
-    --hash=sha256:dfdceca2fbc87f4bce04df4207914a5eb37e67fb2107579ad2e88107c22d2456 \
-    --hash=sha256:eb92e9aacde66cfe001d6318eb0851ae0ca26fea441defed4765a47644daf8bb \
-    --hash=sha256:f0f752cf6f5e9f7445a79fcf195b772cd2d4b889cd260e23867dd8013caa74c1 \
-    --hash=sha256:fc881688a2eaeafe51c0617d32a6535057bccdb74559cc667109f48f81cd976e \
-    --hash=sha256:fed4b692f556e4c80acb42cec93e3b5fdc7fc2323049c2a0cfd9dfc4a9c7033e
+deptry==0.18.0 \
+    --hash=sha256:57e09ca29e98c4782197dc959849498941b5c4fc53178e9fe1fa30025e608bfd \
+    --hash=sha256:7343bb4948ad625ac1b3109279665004e6790ce01c8dc6a8a2ef1e4424c29773 \
+    --hash=sha256:7d1b561a4477ab130e1cb277b3d3aa25743b3005e1bb60076031ec3926b47541 \
+    --hash=sha256:9cf8e398ea394f90ccfa8e11d7dcfba8ed485f6a33270ee2b024475b72a00d11 \
+    --hash=sha256:aac16b9825c67887f84795d3fe3c5a676376cd6cc8555f6f7b57bfd45603e421 \
+    --hash=sha256:b1440d2fab960e224b542726e6fcb0d3065635cfa8233c14f6c578faa2766e02 \
+    --hash=sha256:c7590966832f5222d2277612e07e67285d92123ad96cf7713cda579d420d63d1 \
+    --hash=sha256:cdf6da66e31ef8bdace3bb34a86c4f066b5c5296776dd61b76802c72b0b3f5f4 \
+    --hash=sha256:d5764d6b484d488ce0f7085dc1767d99069b476383857aafd3bbc912128892dd \
+    --hash=sha256:e73d5c2676a1f49a954baa59c248b56bc940ab87d6070cb164f1394c24e07cf3 \
+    --hash=sha256:ee0a916d78ba8db092a9454d5bc20fccbadb6ed0e8fb81fc020ba7e0df3578ed
     # via -r CI/requirements_ci.in
 dill==0.3.8 \
     --hash=sha256:3ebe3c479ad625c4553aca177444d89b486b1d84982eeacded644afc0cf797ca \
@@ -432,9 +432,9 @@ tomlkit==0.13.0 \
     # via
     #   bump-my-version
     #   pylint
-tox==4.16.0 \
-    --hash=sha256:43499656f9949edb681c0f907f86fbfee98677af9919d8b11ae5ad77cb800748 \
-    --hash=sha256:61e101061b977b46cf00093d4319438055290ad0009f84497a07bf2d2d7a06d0
+tox==4.17.0 \
+    --hash=sha256:82ef41e7e54182e2143daf0b2920d9030c2e1c4291e12091ebad66860c7be7a4 \
+    --hash=sha256:b1e2e1dfbfdc174d9be95ae78ec2c4d2cf4800d4c15571deddb197a2c90d2de6
     # via
     #   -r CI/requirements_ci.in
     #   tox-gh

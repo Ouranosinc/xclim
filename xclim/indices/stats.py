@@ -47,6 +47,9 @@ def _fitfunc_1d(arr, *, dist, nparams, method, **fitkwargs):
     elif method == "MM":
         params = dist.fit(x, method="mm", **fitkwargs)
     elif method == "PWM":
+        # lmoments3 will raise an error if only dist.numargs + 2 values are provided
+        if len(x) <= dist.numargs + 2:
+            return np.asarray([np.nan] * nparams)
         params = list(dist.lmom_fit(x).values())
     elif method == "APP":
         args, kwargs = _fit_start(x, dist.name, **fitkwargs)

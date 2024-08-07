@@ -662,11 +662,11 @@ def is_offset_divisor(divisor: str, offset: str):
 
     Examples
     --------
-    >>> is_offset_divisor("QS-Jan", "YS")
+    >>> is_offset_divisor("QS-JAN", "YS")
     True
     >>> is_offset_divisor("QS-DEC", "YS-JUL")
     False
-    >>> is_offset_divisor("D", "M")
+    >>> is_offset_divisor("D", "ME")
     True
     """
     if compare_offsets(divisor, ">", offset):
@@ -693,8 +693,8 @@ def is_offset_divisor(divisor: str, offset: str):
         # Simple length comparison is sufficient for submonthly freqs
         # In case one of bA or bB is > W, we test many to be sure.
         tA = pd.date_range("1970-01-01T00:00:00", freq=offAs, periods=13)
-        return np.all(
-            (np.diff(tB)[:, np.newaxis] / np.diff(tA)[np.newaxis, :]) % 1 == 0
+        return bool(
+            np.all((np.diff(tB)[:, np.newaxis] / np.diff(tA)[np.newaxis, :]) % 1 == 0)
         )
 
     # else, we test alignment with some real dates
@@ -1074,7 +1074,7 @@ def doy_to_days_since(
     Examples
     --------
     >>> from xarray import DataArray
-    >>> time = date_range("2020-07-01", "2021-07-01", freq="AS-JUL")
+    >>> time = date_range("2020-07-01", "2021-07-01", freq="YS-JUL")
     >>> # July 8th 2020 and Jan 2nd 2022
     >>> da = DataArray([190, 2], dims=("time",), coords={"time": time})
     >>> # Convert to days since Oct. 2nd, of the data's year.
@@ -1134,7 +1134,7 @@ def days_since_to_doy(
     Examples
     --------
     >>> from xarray import DataArray
-    >>> time = date_range("2020-07-01", "2021-07-01", freq="AS-JUL")
+    >>> time = date_range("2020-07-01", "2021-07-01", freq="YS-JUL")
     >>> da = DataArray(
     ...     [-86, 92],
     ...     dims=("time",),

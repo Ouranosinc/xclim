@@ -69,7 +69,7 @@ class TestBaseAdjustment:
 
 class TestLoci:
     @pytest.mark.parametrize("group,dec", (["time", 2], ["time.month", 1]))
-    def test_time_and_from_ds(self, series, group, dec, tmp_path, random):
+    def test_time_and_from_ds(self, series, group, dec, tmp_path, random, open_dataset):
         n = 10000
         u = random.random(n)
 
@@ -93,9 +93,9 @@ class TestLoci:
         assert "Bias-adjusted with LOCI(" in p.attrs["history"]
 
         file = tmp_path / "test_loci.nc"
-        loci.ds.to_netcdf(file)
+        loci.ds.to_netcdf(file, engine="h5netcdf")
 
-        ds = xr.open_dataset(file)
+        ds = open_dataset(file)
         loci2 = LOCI.from_dataset(ds)
 
         xr.testing.assert_equal(loci.ds, loci2.ds)
@@ -285,7 +285,7 @@ class TestDQM:
         np.testing.assert_array_almost_equal(mqm, int(kind == MULTIPLICATIVE), 1)
         np.testing.assert_allclose(p.transpose(..., "time"), ref_t, rtol=0.1, atol=0.5)
 
-    def test_cannon_and_from_ds(self, cannon_2015_rvs, tmp_path, random):
+    def test_cannon_and_from_ds(self, cannon_2015_rvs, tmp_path, open_dataset, random):
         ref, hist, sim = cannon_2015_rvs(15000, random=random)
 
         DQM = DetrendedQuantileMapping.train(ref, hist, kind="*", group="time")
@@ -295,9 +295,9 @@ class TestDQM:
         np.testing.assert_almost_equal(p.std(), 15.0, 0)
 
         file = tmp_path / "test_dqm.nc"
-        DQM.ds.to_netcdf(file)
+        DQM.ds.to_netcdf(file, engine="h5netcdf")
 
-        ds = xr.open_dataset(file)
+        ds = open_dataset(file)
         DQM2 = DetrendedQuantileMapping.from_dataset(ds)
 
         xr.testing.assert_equal(DQM.ds, DQM2.ds)
