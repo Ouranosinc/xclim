@@ -103,6 +103,7 @@ jobs:
           python -m tox -- -m 'not slow'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          COVERALLS_PARALLEL: true
 
   test-pypi:
     needs: lint
@@ -192,7 +193,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           COVERALLS_FLAG_NAME: run-${{ matrix.python-version }}-${{ matrix.os }}-${{ matrix.tox-env }}
           COVERALLS_PARALLEL: true
-          COVERALLS_SERVICE_NAME: github
       - name: Test with tox (specialized tests)
         if: ${{ matrix.tox-env != 'standard' }}
         run: |
@@ -201,7 +201,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           COVERALLS_FLAG_NAME: run-${{ matrix.python-version }}-${{ matrix.os }}-${{ matrix.tox-env }}
           COVERALLS_PARALLEL: true
-          COVERALLS_SERVICE_NAME: github
 
   test-conda:
     needs: lint
@@ -278,7 +277,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           COVERALLS_FLAG_NAME: run-{{ matrix.python-version }}-conda
           COVERALLS_PARALLEL: true
-          COVERALLS_SERVICE_NAME: github
 
   finish:
     needs:
@@ -301,4 +299,3 @@ jobs:
           python -m coveralls --finish
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          COVERALLS_SERVICE_NAME: github

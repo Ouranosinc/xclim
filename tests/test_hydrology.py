@@ -1,8 +1,6 @@
 from __future__ import annotations
 
 import numpy as np
-from cf_xarray import __version__ as __cfxr_version__
-from packaging.version import Version
 
 from xclim import indices as xci
 
@@ -42,11 +40,7 @@ class TestSnwMaxDoy:
         snw = snw_series(a, start="1999-01-01")
         out = xci.snw_max_doy(snw, freq="YS")
         np.testing.assert_array_equal(out, [11, np.nan])
-
-        if Version(__cfxr_version__) < Version("0.9.3"):
-            assert out.attrs["units"] == ""
-        else:
-            assert out.attrs["units"] == "1"
+        assert out.attrs["units"] == "1"
 
 
 class TestSnowMeltWEMax:
