@@ -6,7 +6,7 @@ import sys
 import numpy as np
 import pytest
 import xarray as xr
-from dask import version as __dask_version__
+from dask import __version__ as __dask_version__
 from packaging.version import Version
 from scipy.stats import genpareto, norm, uniform
 
