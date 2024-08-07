@@ -184,7 +184,8 @@ def pint2cfunits(value: units.Quantity | units.Unit) -> str:
     if isinstance(value, (pint.Quantity, units.Quantity)):
         value = value.units
 
-    return f"{value:cf}"
+    # Force "1" if the formatted string is "" (pint < 0.24)
+    return f"{value:~cf}" or "1"
 
 
 def ensure_cf_units(ustr: str) -> str:
