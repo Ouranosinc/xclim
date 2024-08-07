@@ -1,13 +1,9 @@
 # pylint: disable=no-member
 from __future__ import annotations
 
-import sys
-
 import numpy as np
 import pytest
 import xarray as xr
-from dask import __version__ as __dask_version__
-from packaging.version import Version
 from scipy.stats import genpareto, norm, uniform
 
 from xclim.core.calendar import stack_periods
@@ -551,21 +547,20 @@ class TestQM:
     @pytest.mark.parametrize("use_dask", [True, False])
     @pytest.mark.filterwarnings("ignore::RuntimeWarning")
     def test_add_dims(self, use_dask, open_dataset):
-        # FIXME: Investigate issues with latest dask versions on macOS.
-        if (
-            sys.platform.startswith("darwin")
-            and use_dask
-            and Version(__dask_version__) >= Version("2024.8.0")
-        ):
-            pytest.xfail(
-                "Newer versions of dask (>=2024.8.0) on macOS are failing for this test."
-            )
-
         with set_options(sdba_encode_cf=use_dask):
             if use_dask:
-                chunks = {"location": -1}
+                chunks = {"location": 1}
             else:
                 chunks = None
+
+            dsim = open_dataset(
+                "sdba/CanESM2_1950-2100.nc",
+                chunks=chunks,
+                drop_variables=["lat", "lon"],
+            ).tasmax
+            hist = dsim.sel(time=slice("1981", "2010"))
+            sim = dsim.sel(time=slice("2041", "2070"))
+
             ref = (
                 open_dataset(
                     "sdba/ahccd_1950-2013.nc",
@@ -577,14 +572,8 @@ class TestQM:
             )
             ref = convert_units_to(ref, "K")
             ref = ref.isel(location=1, drop=True).expand_dims(location=["Amos"])
-
-            dsim = open_dataset(
-                "sdba/CanESM2_1950-2100.nc",
-                chunks=chunks,
-                drop_variables=["lat", "lon"],
-            ).tasmax
-            hist = dsim.sel(time=slice("1981", "2010"))
-            sim = dsim.sel(time=slice("2041", "2070"))
+            # The idea is to have the same ref on all locations
+            ref, hist = xr.align(ref, hist, join="outer")
 
             # With add_dims, "does it run" test
             group = Grouper("time.dayofyear", window=5, add_dims=["location"])
