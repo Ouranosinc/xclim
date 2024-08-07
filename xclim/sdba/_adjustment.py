@@ -175,7 +175,7 @@ def _npdft_train(ref, hist, rots, quantiles, method, extrap, n_escore, standardi
             np.nanstd(hist, axis=-1, keepdims=True)
         )
     af_q = np.zeros((len(rots), ref.shape[0], len(quantiles)))
-    escores = np.zeros(len(rots)) * np.NaN
+    escores = np.zeros(len(rots)) * np.nan
     if n_escore > 0:
         ref_step, hist_step = (
             int(np.ceil(arr.shape[1] / n_escore)) for arr in [ref, hist]
@@ -708,7 +708,7 @@ def npdf_transform(ds: xr.Dataset, **kwargs) -> xr.Dataset:
     -------
     xr.Dataset
         Dataset with `scenh`, `scens` and `escores` DataArrays, where `scenh` and `scens` are `hist` and `sim`
-        respectively after adjustment according to `ref`. If `n_escore` is negative, `escores` will be filled with NaNs.
+        respectively after adjustment according to `ref`. If `n_escore` is negative, `escores` will be filled with nans.
     """
     ref = ds.ref.rename(time_hist="time")
     hist = ds.hist.rename(time_hist="time")
@@ -752,10 +752,10 @@ def npdf_transform(ds: xr.Dataset, **kwargs) -> xr.Dataset:
     if kwargs["n_escore"] >= 0:
         escores = xr.concat(escores, "iterations")
     else:
-        # All NaN, but with the proper shape.
+        # All nan, but with the proper shape.
         escores = (
             ref.isel({dim: 0, "time": 0}) * hist.isel({dim: 0, "time": 0})
-        ).expand_dims(iterations=ds.iterations) * np.NaN
+        ).expand_dims(iterations=ds.iterations) * np.nan
 
     return xr.Dataset(
         data_vars={
@@ -809,8 +809,8 @@ def _extremes_train_1d(ref, hist, ref_params, *, q_thresh, cluster_thresh, dist,
     af = hist_in_ref / hist[Pcommon]
     # sort them in Px order, and pad to have N values.
     order = np.argsort(Px_hist)
-    px_hist = np.pad(Px_hist[order], ((0, N - af.size),), constant_values=np.NaN)
-    af = np.pad(af[order], ((0, N - af.size),), constant_values=np.NaN)
+    px_hist = np.pad(Px_hist[order], ((0, N - af.size),), constant_values=np.nan)
+    af = np.pad(af[order], ((0, N - af.size),), constant_values=np.nan)
 
     return px_hist, af, thresh
 
@@ -853,7 +853,7 @@ def extremes_train(
         _extremes_train_1d,
         ds.ref,
         ds.hist,
-        ds.ref_params or np.NaN,
+        ds.ref_params or np.nan,
         input_core_dims=[("time",), ("time",), ()],
         output_core_dims=[("quantiles",), ("quantiles",), ()],
         vectorize=True,
