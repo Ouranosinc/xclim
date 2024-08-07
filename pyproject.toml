@@ -114,7 +114,7 @@ docs = [
   "sphinxcontrib-bibtex",
   "sphinxcontrib-svg2pdfconverter[Cairosvg]"
 ]
-extras = ["fastnanquantile >=0.0.2"]
+extras = ["fastnanquantile >=0.0.2", "POT"]
 all = ["xclim[dev]", "xclim[docs]", "xclim[extras]"]
 
 [project.scripts]
@@ -166,7 +166,7 @@ values = [
 
 [tool.codespell]
 skip = 'xclim/data/*.json,docs/_build,docs/notebooks/xclim_training/*.ipynb,docs/references.bib,__pycache__,*.gz,*.nc,*.png,*.svg,*.whl'
-ignore-words-list = "absolue,astroid,bloc,bui,callendar,degreee,environnement,hanel,inferrable,lond,nam,nd,ressources,socio-economic,sie,vas"
+ignore-words-list = "absolue,astroid,bloc,bui,callendar,degreee,environnement,hanel,inferrable,lond,nam,nd,ot,ressources,socio-economic,sie,vas"
 
 [tool.coverage.run]
 relative_files = true
@@ -180,6 +180,7 @@ pep621_dev_dependency_groups = ["all", "dev", "docs"]
 [tool.deptry.package_module_name_map]
 "scikit-learn" = "sklearn"
 "pyyaml" = "yaml"
+"POT" = "ot"
 
 [tool.deptry.per_rule_ignores]
 DEP001 = ["SBCK"]
