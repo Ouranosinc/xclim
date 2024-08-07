@@ -45,3 +45,4 @@ Contributors
 * Sascha Hofmann <sascha.hofmann@lobelia.earth> `@saschahofmann <https://github.com/saschahofmann>`_
 * Javier Diez-Sierra <javier.diez@unican.es> `@JavierDiezSierra <https://github.com/JavierDiezSierra>`_
 * Hui-Min Wang `@Hem-W <https://github.com/Hem-W>`
+* Faisal Mahmood <mahmood.faisal@ouranos.ca> <faisal.shovon.007@gmail.com> `@faimahsho <https://github.com/faimahsho>`_
