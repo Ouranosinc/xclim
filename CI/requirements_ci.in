@@ -1,4 +1,4 @@
-bump-my-version==0.24.3
+bump-my-version==0.25.0
 coveralls==4.0.1
 deptry==0.18.0
 flit==3.9.0
