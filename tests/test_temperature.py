@@ -6,6 +6,8 @@ import warnings
 import numpy as np
 import pytest
 import xarray as xr
+from packaging.version import Version
+from pint import __version__ as __pint_version__
 
 from xclim import atmos
 from xclim.core.calendar import percentile_doy
@@ -828,7 +830,10 @@ class TestDailyFreezeThaw:
         tasmin.values[180, 1, 0] = np.nan
 
         with warnings.catch_warnings():
-            warnings.simplefilter("error")
+            if Version(__pint_version__) < Version("0.24.0"):
+                warnings.simplefilter("always", DeprecationWarning)
+            else:
+                warnings.simplefilter("error")
             frzthw = atmos.daily_freezethaw_cycles(
                 tasmin,
                 tasmax,
