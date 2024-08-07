@@ -800,6 +800,7 @@ class TestExtremeValues:
 class TestOTC:
     def test_compare_sbck(self, random, series):
         pytest.importorskip("ot")
+        pytest.importorskip("SBCK", minversion="0.4.0")
         ns = 1000
         u = random.random(ns)
 
@@ -848,6 +849,7 @@ class TestOTC:
 
     def test_shape(self, random, series):
         pytest.importorskip("ot")
+        pytest.importorskip("SBCK", minversion="0.4.0")
         ref_ns = 300
         hist_ns = 200
         ref_u = random.random(ref_ns)
@@ -898,6 +900,7 @@ class TestdOTC:
     @pytest.mark.parametrize("cov_factor", ["std", "cholesky"])
     def test_compare_sbck(self, random, series, use_dask, cov_factor):
         pytest.importorskip("ot")
+        pytest.importorskip("SBCK", minversion="0.4.0")
         ns = 1000
         u = random.random(ns)
 
@@ -977,6 +980,7 @@ class TestdOTC:
 
     def test_shape(self, random, series):
         pytest.importorskip("ot")
+        pytest.importorskip("SBCK", minversion="0.4.0")
         ref_ns = 300
         hist_ns = 200
         sim_ns = 400
