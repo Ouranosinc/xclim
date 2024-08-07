@@ -963,13 +963,13 @@ def _otc_adjust(
         Historical data to be corrected.
     Y : np.ndarray
         Bias correction reference, target of optimal transport.
-    bin_width : dict | float | np.ndarray | None
+    bin_width : dict or float or np.ndarray, optional
         Bin widths for specified dimensions.
-    bin_origin : dict | float | np.ndarray | None
+    bin_origin : dict or float or np.ndarray, optional
         Bin origins for specified dimensions.
-    num_iter_max : int | None
+    num_iter_max : int, optional
         Maximum number of iterations used in the earth mover distance algorithm.
-    jitter_inside_bins : bool = True
+    jitter_inside_bins : bool
         If `False`, output points are located at the center of their bin.
         If `True`, a random location is picked uniformly inside their bin. Default is `True`.
     transform : {None, 'standardize', 'max_distance', 'max_value'}
@@ -1067,16 +1067,16 @@ def otc_adjust(
         The dimensions defining the distribution on which optimal transport is performed.
     pts_dim : str
         The dimension defining the multivariate components of the distribution.
-    bin_width : dict | float | None
+    bin_width : dict or float, optional
         Bin widths for specified dimensions.
-    bin_origin : dict | float | None
+    bin_origin : dict or float, optional
         Bin origins for specified dimensions.
-    num_iter_max : int | None
+    num_iter_max : int, optional
         Maximum number of iterations used in the earth mover distance algorithm.
-    jitter_inside_bins : bool = True
+    jitter_inside_bins : bool
         If `False`, output points are located at the center of their bin.
         If `True`, a random location is picked uniformly inside their bin. Default is `True`.
-    adapt_freq_thresh : dict | None = None
+    adapt_freq_thresh : dict, optional
         Threshold for frequency adaptation per variable.
     transform : {None, 'standardize', 'max_distance', 'max_value'}
         Per-variable transformation applied before the distances are calculated.
@@ -1163,18 +1163,18 @@ def _dotc_adjust(
         Bias correction reference.
     X0 : np.ndarray
         Historical simulation data.
-    bin_width : dict | float | None
+    bin_width : dict or float, optional
         Bin widths for specified dimensions.
-    bin_origin : dict | float | None
+    bin_origin : dict or float, optional
         Bin origins for specified dimensions.
-    num_iter_max : int | None
+    num_iter_max : int, optional
         Maximum number of iterations used in the earth mover distance algorithm.
-    cov_factor : str | None = "std"
+    cov_factor : str, optional
         Rescaling factor.
-    jitter_inside_bins : bool = True
+    jitter_inside_bins : bool
         If `False`, output points are located at the center of their bin.
         If `True`, a random location is picked uniformly inside their bin. Default is `True`.
-    kind : dict | None = None
+    kind : dict, optional
         Keys are variable names and values are adjustment kinds, either additive or multiplicative.
         Unspecified dimensions are treated as "+".
     transform : {None, 'standardize', 'max_distance', 'max_value'}
@@ -1295,21 +1295,21 @@ def dotc_adjust(
         The dimensions defining the distribution on which optimal transport is performed.
     pts_dim : str
         The dimension defining the multivariate components of the distribution.
-    bin_width : dict | float | None
+    bin_width : dict or float, optional
         Bin widths for specified dimensions.
-    bin_origin : dict | float | None
+    bin_origin : dict or float, optional
         Bin origins for specified dimensions.
-    num_iter_max : int | None
+    num_iter_max : int, optional
         Maximum number of iterations used in the earth mover distance algorithm.
-    cov_factor : str | None = "std"
+    cov_factor : str, optional
         Rescaling factor.
-    jitter_inside_bins : bool = True
+    jitter_inside_bins : bool
         If `False`, output points are located at the center of their bin.
         If `True`, a random location is picked uniformly inside their bin. Default is `True`.
-    kind : dict | None = None
+    kind : dict, optional
         Keys are variable names and values are adjustment kinds, either additive or multiplicative.
         Unspecified dimensions are treated as "+".
-    adapt_freq_thresh : dict | None = None
+    adapt_freq_thresh : dict, optional
         Threshold for frequency adaptation per variable.
     transform : {None, 'standardize', 'max_distance', 'max_value'}
         Per-variable transformation applied before the distances are calculated.

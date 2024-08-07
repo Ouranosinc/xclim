@@ -1287,21 +1287,21 @@ class OTC(Adjust):
 
     Parameters
     ----------
-    bin_width : dict | float | None
+    bin_width : dict or float, optional
         Bin widths for specified dimensions if is dict.
         For all dimensions if float.
         Will be estimated with Freedman-Diaconis rule by default.
-    bin_origin : dict | float | None
+    bin_origin : dict or float, optional
         Bin origins for specified dimensions if is dict.
         For all dimensions if float.
         Default is 0.
-    num_iter_max : int | None
+    num_iter_max : int, optional
         Maximum number of iterations used in the earth mover distance algorithm.
         Default is 100_000_000.
     jitter_inside_bins : bool
         If `False`, output points are located at the center of their bin.
         If `True`, a random location is picked uniformly inside their bin. Default is `True`.
-    adapt_freq_thresh : dict | str | None = None
+    adapt_freq_thresh : dict or str, optional
         Threshold for frequency adaptation per variable.
         See :py:class:`xclim.sdba.processing.adapt_freq` for details.
         Frequency adaptation is not applied to missing variables if is dict.
@@ -1453,15 +1453,15 @@ class dOTC(Adjust):
 
     Parameters
     ----------
-    bin_width : dict | float | None
+    bin_width : dict or float, optional
         Bin widths for specified dimensions if is dict.
         For all dimensions if float.
         Will be estimated with Freedman-Diaconis rule by default.
-    bin_origin : dict | float | None
+    bin_origin : dict or float, optional
         Bin origins for specified dimensions if is dict.
         For all dimensions if float.
         Default is 0.
-    num_iter_max : int | None
+    num_iter_max : int, optional
         Maximum number of iterations used in the network simplex algorithm.
     cov_factor : {None, 'std', 'cholesky'}
         A rescaling of the temporal evolution before it is applied to the reference.
@@ -1470,11 +1470,11 @@ class dOTC(Adjust):
     jitter_inside_bins : bool
         If `False`, output points are located at the center of their bin.
         If `True`, a random location is picked uniformly inside their bin. Default is `True`.
-    kind : dict | str | None
+    kind : dict or str, optional
         Keys are variable names and values are adjustment kinds, either additive or multiplicative.
         Unspecified dimensions are treated as "+".
         Applied to all variables if is string.
-    adapt_freq_thresh : dict | str | None = None
+    adapt_freq_thresh : dict or str, optional
         Threshold for frequency adaptation per variable.
         See :py:class:`xclim.sdba.processing.adapt_freq` for details.
         Frequency adaptation is not applied to missing variables if is dict.
