@@ -1,9 +1,13 @@
 # pylint: disable=no-member
 from __future__ import annotations
 
+import sys
+
 import numpy as np
 import pytest
 import xarray as xr
+from dask import version as __dask_version__
+from packaging.version import Version
 from scipy.stats import genpareto, norm, uniform
 
 from xclim.core.calendar import stack_periods
@@ -547,6 +551,16 @@ class TestQM:
     @pytest.mark.parametrize("use_dask", [True, False])
     @pytest.mark.filterwarnings("ignore::RuntimeWarning")
     def test_add_dims(self, use_dask, open_dataset):
+        # FIXME: Investigate issues with latest dask versions on macOS.
+        if (
+            sys.platform.startswith("darwin")
+            and use_dask
+            and Version(__dask_version__) >= Version("2024.8.0")
+        ):
+            pytest.xfail(
+                "Newer versions of dask (>=2024.8.0) on macOS are failing for this test."
+            )
+
         with set_options(sdba_encode_cf=use_dask):
             if use_dask:
                 chunks = {"location": -1}
