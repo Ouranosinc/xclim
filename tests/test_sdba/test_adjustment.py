@@ -549,7 +549,7 @@ class TestQM:
     def test_add_dims(self, use_dask, open_dataset):
         with set_options(sdba_encode_cf=use_dask):
             if use_dask:
-                chunks = {"location": 1}
+                chunks = {"location": -1}
             else:
                 chunks = None
 
@@ -571,9 +571,9 @@ class TestQM:
                 .tasmax
             )
             ref = convert_units_to(ref, "K")
-            ref = ref.isel(location=1, drop=True).expand_dims(location=["Amos"])
-            # The idea is to have the same ref on all locations
-            ref, hist = xr.align(ref, hist, join="outer")
+            # The idea is to have ref defined only over 1 location
+            # But sdba needs the same dimensions on ref and hist for Grouping with add_dims
+            ref = ref.where(ref.location == "Amos")
 
             # With add_dims, "does it run" test
             group = Grouper("time.dayofyear", window=5, add_dims=["location"])
