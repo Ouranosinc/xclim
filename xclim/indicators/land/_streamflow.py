@@ -5,13 +5,19 @@ from __future__ import annotations
 from xclim.core.cfchecks import check_valid
 from xclim.core.indicator import ResamplingIndicator
 from xclim.core.units import declare_units
-from xclim.indices import base_flow_index, generic, rb_flashiness_index
+from xclim.indices import (
+    base_flow_index,
+    generic,
+    rb_flashiness_index,
+    standardized_streamflow_index,
+)
 
 __all__ = [
     "base_flow_index",
     "doy_qmax",
     "doy_qmin",
     "rb_flashiness_index",
+    "standardized_streamflow_index",
 ]
 
 
@@ -23,6 +29,13 @@ class Streamflow(ResamplingIndicator):
     @staticmethod
     def cfcheck(q):
         check_valid(q, "standard_name", "water_volume_transport_in_river_channel")
+
+
+class StandardizedIndexes(ResamplingIndicator):
+    """Resampling but flexible inputs indicators."""
+
+    src_freq = ["D", "MS"]
+    context = "hydro"
 
 
 base_flow_index = Streamflow(
@@ -70,4 +83,17 @@ doy_qmin = Streamflow(
     units="",
     compute=declare_units(da="[discharge]")(generic.select_resample_op),
     parameters=dict(op=generic.doymin, out_units=None),
+)
+
+
+standardized_streamflow_index = StandardizedIndexes(
+    title="Standardized Streamflow Index (SSI)",
+    identifier="ssi",
+    units="",
+    standard_name="ssi",
+    long_name="Standardized Streamflow Index (SSI)",
+    description="FILLME",
+    abstract="FILLME",
+    cell_methods="",
+    compute=standardized_streamflow_index,
 )
