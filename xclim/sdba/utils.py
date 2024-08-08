@@ -15,6 +15,7 @@ import xarray as xr
 from boltons.funcutils import wraps
 from dask import array as dsk
 from scipy.interpolate import griddata, interp1d
+from scipy.spatial import distance
 from scipy.stats import spearmanr
 from xarray.core.utils import get_temp_dimname
 
@@ -967,3 +968,120 @@ def _pairwise_spearman(da, dims):
             "allow_rechunk": True,
         },
     ).rename("correlation")
+
+
+def bin_width_estimator(X):
+    """Estimate the bin width of an histogram.
+
+    References
+    ----------
+    :cite:cts:`sdba-robin_2021`
+    """
+    if isinstance(X, list):
+        return np.min([bin_width_estimator(x) for x in X], axis=0)
+
+    if X.ndim == 1:
+        X = X.reshape(-1, 1)
+
+    # Freedman-Diaconis
+    bin_width = (
+        2.0
+        * (np.percentile(X, q=75, axis=0) - np.percentile(X, q=25, axis=0))
+        / np.power(X.shape[0], 1.0 / 3.0)
+    )
+    bin_width = np.where(
+        bin_width == 0,
+        # Scott
+        3.49 * np.std(X, axis=0) / np.power(X.shape[0], 1.0 / 3.0),
+        bin_width,
+    )
+
+    return bin_width
+
+
+def histogram(data, bin_width, bin_origin):
+    """Construct an histogram of the data.
+
+    Returns the position of the center of bins, their corresponding frequency and the bin of every data point.
+    """
+    # Find bin indices of data points
+    idx_bin = np.floor((data - bin_origin) / bin_width)
+
+    # Associate unique values with frequencies
+    grid, mu = np.unique(idx_bin, return_counts=True, axis=0)
+
+    # Normalise frequencies
+    mu = np.divide(mu, sum(mu))
+
+    grid = (grid + 0.5) * bin_width + bin_origin
+
+    return grid, mu, idx_bin
+
+
+def optimal_transport(gridX, gridY, muX, muY, numItermax, transform):
+    """Computes the optimal transportation plan on (transformations of) X and Y.
+
+    References
+    ----------
+    :cite:cts:`sdba-robin_2021`
+    """
+    from ot import emd
+
+    if transform == "standardize":
+        gridX = (gridX - gridX.mean()) / gridX.std()
+        gridY = (gridY - gridY.mean()) / gridY.std()
+
+    elif transform == "max_distance":
+        max1 = np.abs(gridX.max(axis=0) - gridY.min(axis=0))
+        max2 = np.abs(gridY.max(axis=0) - gridX.min(axis=0))
+        max_dist = np.maximum(max1, max2)
+        gridX = gridX / max_dist
+        gridY = gridY / max_dist
+
+    elif transform == "max_value":
+        max_value = np.maximum(gridX.max(axis=0), gridY.max(axis=0))
+        gridX = gridX / max_value
+        gridY = gridY / max_value
+
+    # Compute the distances from every X bin to every Y bin
+    C = distance.cdist(gridX, gridY, "sqeuclidean")
+
+    # Compute the optimal transportation plan
+    gamma = emd(muX, muY, C, numItermax=numItermax)
+    plan = (gamma.T / gamma.sum(axis=1)).T
+
+    return plan
+
+
+def eps_cholesky(M, nit=26):
+    """Cholesky decomposition.
+
+    References
+    ----------
+    :cite:cts:`sdba-robin_2021,sdba-higham_1988,sdba-knol_1989`
+    """
+    MC = None
+    try:
+        MC = np.linalg.cholesky(M)
+    except np.linalg.LinAlgError:
+        MC = None
+
+    if MC is None:
+        # Introduce small perturbations until M is positive-definite
+        eps = min(1e-9, np.abs(np.diagonal(M)).min())
+        if eps == 0:
+            eps = 1e-9
+        it = 0
+        while MC is None:
+            if it == nit:
+                raise ValueError(
+                    "The vcov matrix is far from positive-definite. Please use `cov_factor = 'std'`"
+                )
+            perturb = np.identity(M.shape[0]) * eps
+            try:
+                MC = np.linalg.cholesky(M + perturb)
+            except np.linalg.LinAlgError:
+                MC = None
+            eps = 2 * eps
+            it += 1
+    return MC

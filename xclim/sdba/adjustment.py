@@ -5,6 +5,7 @@ Adjustment Methods
 """
 from __future__ import annotations
 
+from importlib.util import find_spec
 from inspect import signature
 from typing import Any
 from warnings import warn
@@ -21,6 +22,7 @@ from xclim.core.utils import uses_dask
 from xclim.indices import stats
 
 from ._adjustment import (
+    dotc_adjust,
     dqm_adjust,
     dqm_train,
     eqm_train,
@@ -31,6 +33,7 @@ from ._adjustment import (
     mbcn_adjust,
     mbcn_train,
     npdf_transform,
+    otc_adjust,
     qdm_adjust,
     qm_adjust,
     scaling_adjust,
@@ -49,6 +52,7 @@ from .utils import (
 
 __all__ = [
     "LOCI",
+    "OTC",
     "BaseAdjustment",
     "DetrendedQuantileMapping",
     "EmpiricalQuantileMapping",
@@ -58,6 +62,7 @@ __all__ = [
     "PrincipalComponents",
     "QuantileDeltaMapping",
     "Scaling",
+    "dOTC",
 ]
 
 
@@ -324,7 +329,7 @@ class Adjust(BaseAdjustment):
         cls,
         ref: xr.DataArray,
         hist: xr.DataArray,
-        sim: xr.DataArray,
+        sim: xr.DataArray | None = None,
         **kwargs,
     ) -> xr.Dataset:
         r"""Return bias-adjusted data. Refer to the class documentation for the algorithm details.
@@ -345,6 +350,10 @@ class Adjust(BaseAdjustment):
         xr.Dataset
             The bias-adjusted Dataset.
         """
+        if sim is None:
+            sim = hist.copy()
+            sim.attrs["_is_hist"] = True
+
         kwargs = parse_group(cls._adjust, kwargs)
         skip_checks = kwargs.pop("skip_input_checks", False)
 
@@ -354,7 +363,7 @@ class Adjust(BaseAdjustment):
 
             (ref, hist, sim), _ = cls._harmonize_units(ref, hist, sim)
 
-        out: xr.Dataset | xr.DataArray = cls._adjust(ref, hist, sim, **kwargs)
+        out: xr.Dataset | xr.DataArray = cls._adjust(ref, hist, sim=sim, **kwargs)
 
         if isinstance(out, xr.DataArray):
             out = out.rename("scen").to_dataset()
@@ -1265,6 +1274,334 @@ class NpdfTransform(Adjust):
         out = out.assign(rotation_matrices=rot_matrices)
         out.scenh.attrs["units"] = hist.units
         return out
+
+
+class OTC(Adjust):
+    r"""Optimal Transport Correction.
+
+    Following :cite:t:`sdba-robin_2019`, this multivariate bias correction method finds the optimal transport
+    mapping between simulated and observed data. The correction of every simulated data point is the observed
+    point it is mapped to.
+
+    See notes for an explanation of the algorithm.
+
+    Parameters
+    ----------
+    bin_width : dict or float, optional
+        Bin widths for specified dimensions if is dict.
+        For all dimensions if float.
+        Will be estimated with Freedman-Diaconis rule by default.
+    bin_origin : dict or float, optional
+        Bin origins for specified dimensions if is dict.
+        For all dimensions if float.
+        Default is 0.
+    num_iter_max : int, optional
+        Maximum number of iterations used in the earth mover distance algorithm.
+        Default is 100_000_000.
+    jitter_inside_bins : bool
+        If `False`, output points are located at the center of their bin.
+        If `True`, a random location is picked uniformly inside their bin. Default is `True`.
+    adapt_freq_thresh : dict or str, optional
+        Threshold for frequency adaptation per variable.
+        See :py:class:`xclim.sdba.processing.adapt_freq` for details.
+        Frequency adaptation is not applied to missing variables if is dict.
+        Applied to all variables if is string.
+    transform : {None, 'standardize', 'max_distance', 'max_value'}
+        Per-variable transformation applied before the distances are calculated.
+        Default is "max_distance".
+        See notes for details.
+    group : Union[str, Grouper]
+        The grouping information. See :py:class:`xclim.sdba.base.Grouper` for details.
+        Default is "time", meaning a single adjustment group along dimension "time".
+    pts_dim : str
+        The name of the "multivariate" dimension. Defaults to "multivar", which is the
+        normal case when using :py:func:`xclim.sdba.base.stack_variables`.
+
+    Notes
+    -----
+    The simulated and observed data sets :math:`X` and :math:`Y` are discretized and standardized using histograms
+    whose bin length along dimension `v` is given by `bin_width[v]`. An optimal transport plan :math:`P^*` is found by solving
+    the linear program
+
+    .. math::
+
+        \mathop{\arg\!\min}_{P} \langle P,C\rangle \\
+        s.t. P\mathbf{1} = X \\
+            P^T\mathbf{1} = Y \\
+            P \geq 0
+
+    where :math:`C_{ij}` is the squared euclidean distance between the bin at position :math:`i` of :math:`X`'s histogram and
+    the bin at position :math:`j` of :math:`Y`'s.
+
+    All data points belonging to input bin at position :math:`i` are then separately assigned to output bin at position :math:`j`
+    with probability :math:`P_{ij}`. A transformation of bin positions can be applied before computing the distances :math:`C_{ij}`
+    to make variables on different scales more evenly taken into consideration by the optimization step. Available transformations are
+
+    - `transform = 'standardize'` :
+        .. math::
+
+            i_v' = \frac{i_v - mean(i_v)}{std(i_v)} \quad\quad\quad j_v' = \frac{j_v - mean(j_v)}{std(j_v)}
+
+    - `transform = 'max_distance'` :
+        .. math::
+
+            i_v' = \frac{i_v}{max \{|i_v - j_v|\}} \quad\quad\quad j_v' = \frac{j_v}{max \{|i_v - j_v|\}}
+
+        such that
+            .. math::
+
+                max \{|i_v' - j_v'|\} = max \{|i_w' - j_w'|\} = 1
+
+    - `transform = 'max_value'` :
+        .. math::
+
+            i_v' = \frac{i_v}{max\{i_v\}} \quad\quad\quad j_v' = \frac{j_v}{max\{j_v\}}
+
+    for variables :math:`v, w`. Default is `'max_distance'`.
+
+    Note that `POT <https://pythonot.github.io/>`__ must be installed to use this method.
+
+    This implementation is strongly inspired by :cite:t:`sdba-robin_2021`.
+    The differences from this implementation are :
+
+    - `bin_width` and `bin_origin` are dictionaries or float
+    - Freedman-Diaconis rule is used to find the bin width when unspecified, and fallbacks to Scott's rule when 0 is obtained
+    - `jitter_inside_bins` argument
+    - `adapt_freq_thresh` argument
+    - `transform` argument
+    - `group` argument
+    - `pts_dim` argument
+
+    References
+    ----------
+    :cite:cts:`sdba-robin_2019,sdba-robin_2021`
+    """
+
+    @classmethod
+    def _adjust(
+        cls,
+        ref: xr.DataArray,
+        hist: xr.DataArray,
+        *,
+        bin_width: dict | float | None = None,
+        bin_origin: dict | float | None = None,
+        num_iter_max: int | None = 100_000_000,
+        jitter_inside_bins: bool = True,
+        adapt_freq_thresh: dict | str | None = None,
+        transform: str | None = "max_distance",
+        group: str | Grouper = "time",
+        pts_dim: str = "multivar",
+        **kwargs,
+    ) -> xr.DataArray:
+        if find_spec("ot") is None:
+            raise ImportError(
+                "POT is required for OTC and dOTC. Please install with `pip install POT`."
+            )
+
+        if transform not in [None, "standardize", "max_distance", "max_value"]:
+            raise ValueError(
+                "`transform` should be in [None, 'standardize', 'max_distance', 'max_value']."
+            )
+
+        sim = kwargs.pop("sim")
+        if "_is_hist" not in sim.attrs:
+            raise ValueError("OTC does not take a `sim` argument.")
+
+        if isinstance(adapt_freq_thresh, str):
+            adapt_freq_thresh = {v: adapt_freq_thresh for v in hist[pts_dim].values}
+        if adapt_freq_thresh is not None:
+            _, units = cls._harmonize_units(sim)
+            for var, thresh in adapt_freq_thresh.items():
+                adapt_freq_thresh[var] = str(
+                    convert_units_to(thresh, units[var], context="hydro")
+                )
+
+        scen = otc_adjust(
+            xr.Dataset({"ref": ref, "hist": hist}),
+            bin_width=bin_width,
+            bin_origin=bin_origin,
+            num_iter_max=num_iter_max,
+            jitter_inside_bins=jitter_inside_bins,
+            adapt_freq_thresh=adapt_freq_thresh,
+            transform=transform,
+            group=group,
+            pts_dim=pts_dim,
+        ).scen
+
+        if adapt_freq_thresh is not None:
+            for var in adapt_freq_thresh.keys():
+                adapt_freq_thresh[var] = adapt_freq_thresh[var] + " " + units[var]
+
+        for d in scen.dims:
+            if d != pts_dim:
+                scen = scen.dropna(dim=d)
+
+        return scen
+
+
+class dOTC(Adjust):
+    r"""dynamical Optimal Transport Correction.
+
+    This method is the dynamical version of :py:class:`~xclim.sdba.adjustment.OTC`, as presented by :cite:t:`sdba-robin_2019`.
+    The temporal evolution of the model is found for every point by mapping the historical to the future dataset with
+    optimal transport. A mapping between historical and reference data is found in the same way, and the temporal evolution
+    of model data is applied to their assigned reference.
+
+    See notes for an explanation of the algorithm.
+
+    This implementation is strongly inspired by :cite:t:`sdba-robin_2021`.
+
+    Parameters
+    ----------
+    bin_width : dict or float, optional
+        Bin widths for specified dimensions if is dict.
+        For all dimensions if float.
+        Will be estimated with Freedman-Diaconis rule by default.
+    bin_origin : dict or float, optional
+        Bin origins for specified dimensions if is dict.
+        For all dimensions if float.
+        Default is 0.
+    num_iter_max : int, optional
+        Maximum number of iterations used in the network simplex algorithm.
+    cov_factor : {None, 'std', 'cholesky'}
+        A rescaling of the temporal evolution before it is applied to the reference.
+        Note that "cholesky" cannot be used if some variables are multiplicative.
+        See notes for details.
+    jitter_inside_bins : bool
+        If `False`, output points are located at the center of their bin.
+        If `True`, a random location is picked uniformly inside their bin. Default is `True`.
+    kind : dict or str, optional
+        Keys are variable names and values are adjustment kinds, either additive or multiplicative.
+        Unspecified dimensions are treated as "+".
+        Applied to all variables if is string.
+    adapt_freq_thresh : dict or str, optional
+        Threshold for frequency adaptation per variable.
+        See :py:class:`xclim.sdba.processing.adapt_freq` for details.
+        Frequency adaptation is not applied to missing variables if is dict.
+        Applied to all variables if is string.
+    transform : {None, 'standardize', 'max_distance', 'max_value'}
+        Per-variable transformation applied before the distances are calculated.
+        Default is "max_distance".
+        See :py:class:`~xclim.sdba.adjustment.OTC` for details.
+    group : Union[str, Grouper]
+        The grouping information. See :py:class:`xclim.sdba.base.Grouper` for details.
+        Default is "time", meaning a single adjustment group along dimension "time".
+    pts_dim : str
+        The name of the "multivariate" dimension. Defaults to "multivar", which is the
+        normal case when using :py:func:`xclim.sdba.base.stack_variables`.
+
+    Notes
+    -----
+    The simulated historical, simulated future and observed data sets :math:`X0`, :math:`X1` and :math:`Y0` are
+    discretized and standardized using histograms whose bin length along dimension `k` is given by `bin_width[k]`.
+    Mappings between :math:`Y0` and :math:`X0` on the one hand and between :math:`X0` and :math:`X1` on the other
+    are found by optimal transport (see :py:class:`~xclim.sdba.adjustment.OTC`). The latter mapping is used to
+    compute the temporal evolution of model data. This evolution is computed additively or multiplicatively for
+    each variable depending on its `kind`, and is applied to observed data with
+
+    .. math::
+
+        Y1_i & := Y0_i + D \cdot v_i \;\; or \\
+        Y1_i & := Y0_i * D \cdot v_i
+
+    where
+        - :math:`v_i` is the temporal evolution of historical simulated point :math:`i \in X0` to :math:`j \in X1`
+        - :math:`Y0_i` is the observed data mapped to :math:`i`
+        - :math:`D` is a correction factor given by
+            - :math:`I` if `cov_factor is None`
+            - :math:`diag(\frac{\sigma_{Y0}}{\sigma_{X0}})` if `cov_factor = "std"`
+            - :math:`\frac{Chol(Y0)}{Chol(X0)}` where :math:`Chol` is the Cholesky decomposition if `cov_factor = "cholesky"`
+        - :math:`Y1_i` is the correction of the future simulated data mapped to :math:`i`.
+
+    Note that `POT <https://pythonot.github.io/>`__ must be installed to use this method.
+
+    This implementation is strongly inspired by :cite:t:`sdba-robin_2021`.
+    The differences from this reference are :
+
+    - `bin_width` and `bin_origin` are dictionaries or float.
+    - Freedman-Diaconis rule is used to find the bin width when unspecified, and fallbacks to Scott's rule when 0 is obtained.
+    - `jitter_inside_bins` argument
+    - `adapt_freq_thresh` argument
+    - `transform` argument
+    - `group` argument
+    - `pts_dim` argument
+    - `kind` argument
+
+    References
+    ----------
+    :cite:cts:`sdba-robin_2019,sdba-robin_2021`
+    """
+
+    @classmethod
+    def _adjust(
+        cls,
+        ref: xr.DataArray,
+        hist: xr.DataArray,
+        sim: xr.DataArray,
+        *,
+        bin_width: dict | float | None = None,
+        bin_origin: dict | float | None = None,
+        num_iter_max: int | None = 100_000_000,
+        cov_factor: str | None = "std",
+        jitter_inside_bins: bool = True,
+        kind: dict | str | None = None,
+        adapt_freq_thresh: dict | str | None = None,
+        transform: str | None = "max_distance",
+        group: str | Grouper = "time",
+        pts_dim: str = "multivar",
+    ) -> xr.DataArray:
+        if find_spec("ot") is None:
+            raise ImportError(
+                "POT is required for OTC and dOTC. Please install with `pip install POT`."
+            )
+
+        if isinstance(kind, str):
+            kind = {v: kind for v in hist[pts_dim].values}
+        if kind is not None and "*" in kind.values() and cov_factor == "cholesky":
+            raise ValueError(
+                "Multiplicative correction is not supported with `cov_factor` = 'cholesky'."
+            )
+
+        if cov_factor not in [None, "std", "cholesky"]:
+            raise ValueError("`cov_factor` should be in [None, 'std', 'cholesky'].")
+
+        if transform not in [None, "standardize", "max_distance", "max_value"]:
+            raise ValueError(
+                "`transform` should be in [None, 'standardize', 'max_distance', 'max_value']."
+            )
+
+        if isinstance(adapt_freq_thresh, str):
+            adapt_freq_thresh = {v: adapt_freq_thresh for v in hist[pts_dim].values}
+        if adapt_freq_thresh is not None:
+            _, units = cls._harmonize_units(sim)
+            for var, thresh in adapt_freq_thresh.items():
+                adapt_freq_thresh[var] = str(
+                    convert_units_to(thresh, units[var], context="hydro")
+                )
+
+        scen = dotc_adjust(
+            xr.Dataset({"ref": ref, "hist": hist, "sim": sim}),
+            bin_width=bin_width,
+            bin_origin=bin_origin,
+            num_iter_max=num_iter_max,
+            cov_factor=cov_factor,
+            jitter_inside_bins=jitter_inside_bins,
+            kind=kind,
+            adapt_freq_thresh=adapt_freq_thresh,
+            transform=transform,
+            group=group,
+            pts_dim=pts_dim,
+        ).scen
+
+        if adapt_freq_thresh is not None:
+            for var in adapt_freq_thresh.keys():
+                adapt_freq_thresh[var] = adapt_freq_thresh[var] + " " + units[var]
+
+        for d in scen.dims:
+            if d != pts_dim:
+                scen = scen.dropna(dim=d, how="all")
+
+        return scen
 
 
 class MBCn(TrainAdjust):

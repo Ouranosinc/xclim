@@ -944,3 +944,450 @@ def extremes_adjust(
     adjusted: xr.DataArray = (transition * scen) + ((1 - transition) * ds.scen)
     out = adjusted.rename("scen").squeeze("group", drop=True).to_dataset()
     return out
+
+
+def _otc_adjust(
+    X: np.ndarray,
+    Y: np.ndarray,
+    bin_width: dict | float | np.ndarray | None = None,
+    bin_origin: dict | float | np.ndarray | None = None,
+    num_iter_max: int | None = 100_000_000,
+    jitter_inside_bins: bool = True,
+    transform: str | None = "max_distance",
+):
+    """Optimal Transport Correction of the bias of X with respect to Y.
+
+    Parameters
+    ----------
+    X : np.ndarray
+        Historical data to be corrected.
+    Y : np.ndarray
+        Bias correction reference, target of optimal transport.
+    bin_width : dict or float or np.ndarray, optional
+        Bin widths for specified dimensions.
+    bin_origin : dict or float or np.ndarray, optional
+        Bin origins for specified dimensions.
+    num_iter_max : int, optional
+        Maximum number of iterations used in the earth mover distance algorithm.
+    jitter_inside_bins : bool
+        If `False`, output points are located at the center of their bin.
+        If `True`, a random location is picked uniformly inside their bin. Default is `True`.
+    transform : {None, 'standardize', 'max_distance', 'max_value'}
+        Per-variable transformation applied before the distances are calculated.
+
+    Returns
+    -------
+    np.ndarray
+        Adjusted data
+
+    References
+    ----------
+    :cite:cts:`sdba-robin_2021`
+    """
+    # Initialize parameters
+    if bin_width is None:
+        bin_width = u.bin_width_estimator([Y, X])
+    elif isinstance(bin_width, dict):
+        _bin_width = u.bin_width_estimator([Y, X])
+        for k, v in bin_width.items():
+            _bin_width[k] = v
+        bin_width = _bin_width
+    elif isinstance(bin_width, (float, int)):
+        bin_width = np.ones(X.shape[1]) * bin_width
+
+    if bin_origin is None:
+        bin_origin = np.zeros(X.shape[1])
+    elif isinstance(bin_origin, dict):
+        _bin_origin = np.zeros(X.shape[1])
+        if bin_origin is not None:
+            for v, k in bin_origin.items():
+                _bin_origin[v] = k
+        bin_origin = _bin_origin
+    elif isinstance(bin_origin, (float, int)):
+        bin_origin = np.ones(X.shape[1]) * bin_origin
+
+    num_iter_max = 100_000_000 if num_iter_max is None else num_iter_max
+
+    # Get the bin positions and frequencies of X and Y, and for all Xs the bin to which they belong
+    gridX, muX, binX = u.histogram(X, bin_width, bin_origin)
+    gridY, muY, _ = u.histogram(Y, bin_width, bin_origin)
+
+    # Compute the optimal transportation plan
+    plan = u.optimal_transport(gridX, gridY, muX, muY, num_iter_max, transform)
+
+    gridX = np.floor((gridX - bin_origin) / bin_width)
+    gridY = np.floor((gridY - bin_origin) / bin_width)
+
+    # regroup the indices of all the points belonging to a same bin
+    binX_sort = np.lexsort(binX[:, ::-1].T)
+    sorted_bins = binX[binX_sort]
+    _, binX_start, binX_count = np.unique(
+        sorted_bins, return_index=True, return_counts=True, axis=0
+    )
+    binX_start_sort = np.sort(binX_start)
+    binX_groups = np.split(binX_sort, binX_start_sort[1:])
+
+    out = np.empty(X.shape)
+    rng = np.random.default_rng()
+    # The plan row corresponding to a source bin indicates its probabilities to be transported to every target bin
+    for i, binX_group in enumerate(binX_groups):
+        # Get the plan row of this bin
+        pi = np.where((binX[binX_group[0]] == gridX).all(1))[0][0]
+        # Pick as much target bins for this source bin as there are points in the source bin
+        choice = rng.choice(range(muY.size), p=plan[pi, :], size=binX_count[i])
+        out[binX_group] = (gridY[choice] + 1 / 2) * bin_width + bin_origin
+
+    if jitter_inside_bins:
+        out += np.random.uniform(low=-bin_width / 2, high=bin_width / 2, size=out.shape)
+
+    return out
+
+
+@map_groups(scen=[Grouper.DIM])
+def otc_adjust(
+    ds: xr.Dataset,
+    dim: list,
+    pts_dim: str,
+    bin_width: dict | float | None = None,
+    bin_origin: dict | float | None = None,
+    num_iter_max: int | None = 100_000_000,
+    jitter_inside_bins: bool = True,
+    adapt_freq_thresh: dict | None = None,
+    transform: str | None = "max_distance",
+):
+    """Optimal Transport Correction of the bias of `hist` with respect to `ref`.
+
+    Parameters
+    ----------
+    ds : xr.Dataset
+        Dataset variables:
+            ref : training target
+            hist : training data
+    dim : list
+        The dimensions defining the distribution on which optimal transport is performed.
+    pts_dim : str
+        The dimension defining the multivariate components of the distribution.
+    bin_width : dict or float, optional
+        Bin widths for specified dimensions.
+    bin_origin : dict or float, optional
+        Bin origins for specified dimensions.
+    num_iter_max : int, optional
+        Maximum number of iterations used in the earth mover distance algorithm.
+    jitter_inside_bins : bool
+        If `False`, output points are located at the center of their bin.
+        If `True`, a random location is picked uniformly inside their bin. Default is `True`.
+    adapt_freq_thresh : dict, optional
+        Threshold for frequency adaptation per variable.
+    transform : {None, 'standardize', 'max_distance', 'max_value'}
+        Per-variable transformation applied before the distances are calculated.
+
+    Returns
+    -------
+    xr.Dataset
+        Adjusted data
+    """
+    ref = ds.ref
+    hist = ds.hist
+
+    if adapt_freq_thresh is not None:
+        for var, thresh in adapt_freq_thresh.items():
+            hist.loc[var] = _adapt_freq_hist(
+                xr.Dataset(
+                    {"ref": ref.sel({pts_dim: var}), "hist": hist.sel({pts_dim: var})}
+                ),
+                thresh,
+            )
+
+    ref_map = {d: f"ref_{d}" for d in dim}
+    ref = ref.rename(ref_map).stack(dim_ref=ref_map.values()).dropna(dim="dim_ref")
+
+    hist = hist.stack(dim_hist=dim).dropna(dim="dim_hist")
+
+    if isinstance(bin_width, dict):
+        bin_width = {
+            np.where(ref[pts_dim].values == var)[0][0]: op
+            for var, op in bin_width.items()
+        }
+    if isinstance(bin_origin, dict):
+        bin_origin = {
+            np.where(ref[pts_dim].values == var)[0][0]: op
+            for var, op in bin_origin.items()
+        }
+
+    scen = xr.apply_ufunc(
+        _otc_adjust,
+        hist,
+        ref,
+        kwargs=dict(
+            bin_width=bin_width,
+            bin_origin=bin_origin,
+            num_iter_max=num_iter_max,
+            jitter_inside_bins=jitter_inside_bins,
+            transform=transform,
+        ),
+        input_core_dims=[["dim_hist", pts_dim], ["dim_ref", pts_dim]],
+        output_core_dims=[["dim_hist", pts_dim]],
+        keep_attrs=True,
+        vectorize=True,
+    )
+
+    # Pad dim differences with NA to please map_blocks
+    ref = ref.unstack().rename({v: k for k, v in ref_map.items()})
+    scen = scen.unstack().rename("scen")
+    for d in dim:
+        full_d = xr.concat([ref[d], scen[d]], dim=d).drop_duplicates(d)
+        scen = scen.reindex({d: full_d})
+
+    return scen.to_dataset()
+
+
+def _dotc_adjust(
+    X1: np.ndarray,
+    Y0: np.ndarray,
+    X0: np.ndarray,
+    bin_width: dict | float | None = None,
+    bin_origin: dict | float | None = None,
+    num_iter_max: int | None = 100_000_000,
+    cov_factor: str | None = "std",
+    jitter_inside_bins: bool = True,
+    kind: dict | None = None,
+    transform: str | None = "max_distance",
+):
+    """Dynamical Optimal Transport Correction of the bias of X with respect to Y.
+
+    Parameters
+    ----------
+    X1 : np.ndarray
+        Simulation data to adjust.
+    Y0 : np.ndarray
+        Bias correction reference.
+    X0 : np.ndarray
+        Historical simulation data.
+    bin_width : dict or float, optional
+        Bin widths for specified dimensions.
+    bin_origin : dict or float, optional
+        Bin origins for specified dimensions.
+    num_iter_max : int, optional
+        Maximum number of iterations used in the earth mover distance algorithm.
+    cov_factor : str, optional
+        Rescaling factor.
+    jitter_inside_bins : bool
+        If `False`, output points are located at the center of their bin.
+        If `True`, a random location is picked uniformly inside their bin. Default is `True`.
+    kind : dict, optional
+        Keys are variable names and values are adjustment kinds, either additive or multiplicative.
+        Unspecified dimensions are treated as "+".
+    transform : {None, 'standardize', 'max_distance', 'max_value'}
+        Per-variable transformation applied before the distances are calculated.
+
+    Returns
+    -------
+    np.ndarray
+        Adjusted data
+
+    References
+    ----------
+    :cite:cts:`sdba-robin_2021`
+    """
+    # Initialize parameters
+    if isinstance(bin_width, dict):
+        _bin_width = u.bin_width_estimator([Y0, X0, X1])
+        for v, k in bin_width.items():
+            _bin_width[v] = k
+        bin_width = _bin_width
+    elif isinstance(bin_width, (float, int)):
+        bin_width = np.ones(X0.shape[1]) * bin_width
+
+    if isinstance(bin_origin, dict):
+        _bin_origin = np.zeros(X0.shape[1])
+        for v, k in bin_origin.items():
+            _bin_origin[v] = k
+        bin_origin = _bin_origin
+    elif isinstance(bin_origin, (float, int)):
+        bin_origin = np.ones(X0.shape[1]) * bin_origin
+
+    # Map ref to hist
+    yX0 = _otc_adjust(
+        Y0,
+        X0,
+        bin_width=bin_width,
+        bin_origin=bin_origin,
+        num_iter_max=num_iter_max,
+        jitter_inside_bins=False,
+        transform=transform,
+    )
+
+    # Map hist to sim
+    yX1 = _otc_adjust(
+        yX0,
+        X1,
+        bin_width=bin_width,
+        bin_origin=bin_origin,
+        num_iter_max=num_iter_max,
+        jitter_inside_bins=False,
+        transform=transform,
+    )
+
+    # Temporal evolution
+    motion = np.empty(yX0.shape)
+    for j in range(yX0.shape[1]):
+        if kind is not None and j in kind.keys() and kind[j] == "*":
+            motion[:, j] = yX1[:, j] / yX0[:, j]
+        else:
+            motion[:, j] = yX1[:, j] - yX0[:, j]
+
+    # Apply a variance dependent rescaling factor
+    if cov_factor == "cholesky":
+        fact0 = u.eps_cholesky(np.cov(Y0, rowvar=False))
+        fact1 = u.eps_cholesky(np.cov(X0, rowvar=False))
+        motion = (fact0 @ np.linalg.inv(fact1) @ motion.T).T
+    elif cov_factor == "std":
+        fact0 = np.std(Y0, axis=0)
+        fact1 = np.std(X0, axis=0)
+        motion = motion @ np.diag(fact0 / fact1)
+
+    # Apply the evolution to ref
+    Y1 = np.empty(yX0.shape)
+    for j in range(yX0.shape[1]):
+        if kind is not None and j in kind.keys() and kind[j] == "*":
+            Y1[:, j] = Y0[:, j] * motion[:, j]
+        else:
+            Y1[:, j] = Y0[:, j] + motion[:, j]
+
+    # Map sim to the evolution of ref
+    Z1 = _otc_adjust(
+        X1,
+        Y1,
+        bin_width=bin_width,
+        bin_origin=bin_origin,
+        num_iter_max=num_iter_max,
+        jitter_inside_bins=jitter_inside_bins,
+        transform=transform,
+    )
+
+    return Z1
+
+
+@map_groups(scen=[Grouper.DIM])
+def dotc_adjust(
+    ds: xr.Dataset,
+    dim: list,
+    pts_dim: str,
+    bin_width: dict | float | None = None,
+    bin_origin: dict | float | None = None,
+    num_iter_max: int | None = 100_000_000,
+    cov_factor: str | None = "std",
+    jitter_inside_bins: bool = True,
+    kind: dict | None = None,
+    adapt_freq_thresh: dict | None = None,
+    transform: str | None = "max_distance",
+):
+    """Dynamical Optimal Transport Correction of the bias of X with respect to Y.
+
+    Parameters
+    ----------
+    ds : xr.Dataset
+        Dataset variables:
+            ref : training target
+            hist : training data
+            sim : simulated data
+    dim : list
+        The dimensions defining the distribution on which optimal transport is performed.
+    pts_dim : str
+        The dimension defining the multivariate components of the distribution.
+    bin_width : dict or float, optional
+        Bin widths for specified dimensions.
+    bin_origin : dict or float, optional
+        Bin origins for specified dimensions.
+    num_iter_max : int, optional
+        Maximum number of iterations used in the earth mover distance algorithm.
+    cov_factor : str, optional
+        Rescaling factor.
+    jitter_inside_bins : bool
+        If `False`, output points are located at the center of their bin.
+        If `True`, a random location is picked uniformly inside their bin. Default is `True`.
+    kind : dict, optional
+        Keys are variable names and values are adjustment kinds, either additive or multiplicative.
+        Unspecified dimensions are treated as "+".
+    adapt_freq_thresh : dict, optional
+        Threshold for frequency adaptation per variable.
+    transform : {None, 'standardize', 'max_distance', 'max_value'}
+        Per-variable transformation applied before the distances are calculated.
+
+    Returns
+    -------
+    xr.Dataset
+        Adjusted data
+    """
+    hist = ds.hist
+    sim = ds.sim
+    ref = ds.ref
+
+    if adapt_freq_thresh is not None:
+        for var, thresh in adapt_freq_thresh.items():
+            hist.loc[var] = _adapt_freq_hist(
+                xr.Dataset(
+                    {"ref": ref.sel({pts_dim: var}), "hist": hist.sel({pts_dim: var})}
+                ),
+                thresh,
+            )
+
+    # Drop data added by map_blocks and prepare for apply_ufunc
+    hist_map = {d: f"hist_{d}" for d in dim}
+    hist = (
+        hist.rename(hist_map).stack(dim_hist=hist_map.values()).dropna(dim="dim_hist")
+    )
+
+    ref_map = {d: f"ref_{d}" for d in dim}
+    ref = ref.rename(ref_map).stack(dim_ref=ref_map.values()).dropna(dim="dim_ref")
+
+    sim = sim.stack(dim_sim=dim).dropna(dim="dim_sim")
+
+    if kind is not None:
+        kind = {
+            np.where(ref[pts_dim].values == var)[0][0]: op for var, op in kind.items()
+        }
+    if isinstance(bin_width, dict):
+        bin_width = {
+            np.where(ref[pts_dim].values == var)[0][0]: op
+            for var, op in bin_width.items()
+        }
+    if isinstance(bin_origin, dict):
+        bin_origin = {
+            np.where(ref[pts_dim].values == var)[0][0]: op
+            for var, op in bin_origin.items()
+        }
+
+    scen = xr.apply_ufunc(
+        _dotc_adjust,
+        sim,
+        ref,
+        hist,
+        kwargs=dict(
+            bin_width=bin_width,
+            bin_origin=bin_origin,
+            num_iter_max=num_iter_max,
+            cov_factor=cov_factor,
+            jitter_inside_bins=jitter_inside_bins,
+            kind=kind,
+            transform=transform,
+        ),
+        input_core_dims=[
+            ["dim_sim", pts_dim],
+            ["dim_ref", pts_dim],
+            ["dim_hist", pts_dim],
+        ],
+        output_core_dims=[["dim_sim", pts_dim]],
+        keep_attrs=True,
+        vectorize=True,
+    )
+
+    # Pad dim differences with NA to please map_blocks
+    hist = hist.unstack().rename({v: k for k, v in hist_map.items()})
+    ref = ref.unstack().rename({v: k for k, v in ref_map.items()})
+    scen = scen.unstack().rename("scen")
+    for d in dim:
+        full_d = xr.concat([hist[d], ref[d], scen[d]], dim=d).drop_duplicates(d)
+        scen = scen.reindex({d: full_d})
+
+    return scen.to_dataset()

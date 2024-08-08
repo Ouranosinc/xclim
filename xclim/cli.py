@@ -416,7 +416,7 @@ class XclimCli(click.MultiCommand):
 @click.option(
     "--engine",
     help="Engine to use when opening the input dataset(s). "
-    "If not specified, xarrat decides.",
+    "If not specified, xarray decides.",
 )
 @click.pass_context
 def cli(ctx, **kwargs):

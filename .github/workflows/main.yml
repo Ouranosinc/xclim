@@ -151,7 +151,7 @@ jobs:
           python -m tox -- -m 'not slow'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          COVERALLS_FLAG_NAME: run-${{ matrix.python-version }}-${{ matrix.os }}-${{ matrix.tox-env }}
+          COVERALLS_FLAG_NAME: run-${{ matrix.python-version }}-ubuntu-latest-preliminary
           COVERALLS_PARALLEL: true
       - name: Tests measurement
         uses: green-coding-solutions/eco-ci-energy-estimation@escape-test
