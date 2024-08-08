@@ -49,9 +49,22 @@ jobs:
           disable-sudo: true
           egress-policy: block
           allowed-endpoints: >
+            api.electricitymap.org:443
+            api.github.com:443
+            api.green-coding.io:443
             files.pythonhosted.org:443
             github.com:443
+            ip-api.com:80
+            ipapi.co:443
+            proxy.golang.org:443
             pypi.org:443
+            sum.golang.org:443
+      - name: Start Measurement
+        uses: green-coding-solutions/eco-ci-energy-estimation@escape-test
+        with:
+          task: start-measurement
+          branch: ${{ github.head_ref || github.ref_name }}
+        continue-on-error: true
       - name: Checkout Repository
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
       - name: Set up Python${{ matrix.python-version }}
@@ -61,12 +74,29 @@ jobs:
       - name: Install CI libraries
         run: |
           python -m pip install --require-hashes -r CI/requirements_ci.txt
+      - name: Setup Python Measurement
+        uses: green-coding-solutions/eco-ci-energy-estimation@escape-test
+        with:
+          task: get-measurement
+          label: 'Environment setup (Python${{ matrix.python-version }}, lint)'
+        continue-on-error: true
       - name: Run pylint
         run: |
           python -m pylint --rcfile=.pylintrc.toml --disable=import-error --exit-zero xclim
       - name: Run linting suite
         run: |
           python -m tox -e lint
+      - name: Tests measurement
+        uses: green-coding-solutions/eco-ci-energy-estimation@escape-test
+        with:
+          task: get-measurement
+          label: 'Lint (Python${{ matrix.python-version }})'
+        continue-on-error: true
+      - name: Show Energy Results
+        uses: green-coding-solutions/eco-ci-energy-estimation@escape-test
+        with:
+          task: display-results
+        continue-on-error: true
 
   test-preliminary:
     name: Python${{ matrix.python-version }} (ubuntu-latest)
@@ -83,12 +113,24 @@ jobs:
           disable-sudo: true
           egress-policy: block
           allowed-endpoints: >
+            api.electricitymap.org:443
             api.github.com:443
-            dap.service.does.not.exist:443
+            api.green-coding.io:443
+            coveralls.io:443
             files.pythonhosted.org:443
             github.com:443
+            ip-api.com:80
+            ipapi.co:443
+            proxy.golang.org:443
             pypi.org:443
             raw.githubusercontent.com:443
+            sum.golang.org:443
+      - name: Start Energy Measurement
+        uses: green-coding-solutions/eco-ci-energy-estimation@escape-test
+        with:
+          task: start-measurement
+          branch: ${{ github.head_ref || github.ref_name }}
+        continue-on-error: true
       - name: Checkout Repository
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
       - name: Set up Python${{ matrix.python-version }}
@@ -98,12 +140,30 @@ jobs:
       - name: Install CI libraries
         run: |
           python -m pip install --require-hashes -r CI/requirements_ci.txt
+      - name: Environment Setup Energy Measurement
+        uses: green-coding-solutions/eco-ci-energy-estimation@escape-test
+        with:
+          task: get-measurement
+          label: 'Environment setup (Python${{ matrix.python-version }}, standard)'
+        continue-on-error: true
       - name: Test with tox
         run: |
           python -m tox -- -m 'not slow'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          COVERALLS_FLAG_NAME: run-${{ matrix.python-version }}-ubuntu-latest-preliminary
           COVERALLS_PARALLEL: true
+      - name: Tests measurement
+        uses: green-coding-solutions/eco-ci-energy-estimation@escape-test
+        with:
+          task: get-measurement
+          label: 'Testing with tox (Python${{ matrix.python-version }})'
+        continue-on-error: true
+      - name: Show Energy Results
+        uses: green-coding-solutions/eco-ci-energy-estimation@escape-test
+        with:
+          task: display-results
+        continue-on-error: true
 
   test-pypi:
     needs: lint
@@ -155,26 +215,36 @@ jobs:
             tox-env: doctests
     steps:
       - name: Harden Runner
+        if : ${{ matrix.os == 'ubuntu-latest' }}
         uses: step-security/harden-runner@5c7944e73c4c2a096b17a9cb74d65b6c2bbafbde # v2.9.1
         with:
           egress-policy: block
           allowed-endpoints: >
+            api.electricitymap.org:443
             api.github.com:443
+            api.green-coding.io:443
             azure.archive.ubuntu.com:80
             coveralls.io:443
-            dap.service.does.not.exist:443
-            esm.ubuntu.com:443
             files.pythonhosted.org:443
             github.com:443
+            ip-api.com:80
+            ipapi.co:443
             motd.ubuntu.com:443
-            packages.microsoft.com:443
-            ppa.launchpadcontent.net:443
+            proxy.golang.org:443
             pypi.org:443
             raw.githubusercontent.com:443
+            sum.golang.org:443
+      - name: Start Energy Measurement
+        if : ${{ matrix.os == 'ubuntu-latest' }}
+        uses: green-coding-solutions/eco-ci-energy-estimation@escape-test
+        with:
+          task: start-measurement
+          branch: ${{ github.head_ref || github.ref_name }}
+        continue-on-error: true
       - name: Checkout Repository
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
       - name: Install Eigen3 (SBCK)
-        if: ${{ matrix.python-version == '3.11' }}
+        if: (matrix.python-version == '3.11') && (matrix.os == 'ubuntu-latest')
         run: |
           sudo apt-get update
           sudo apt-get install libeigen3-dev
@@ -185,6 +255,13 @@ jobs:
       - name: Install CI libraries
         run: |
           python -m pip install --require-hashes -r CI/requirements_ci.txt
+      - name: Environment Setup Energy Measurement
+        if : ${{ matrix.os == 'ubuntu-latest' }}
+        uses: green-coding-solutions/eco-ci-energy-estimation@escape-test
+        with:
+          task: get-measurement
+          label: 'Environment setup (Python${{ matrix.python-version }}, ${{ matrix.tox-env }})'
+        continue-on-error: true
       - name: Test with tox
         if: ${{ matrix.tox-env == 'standard' }}
         run: |
@@ -201,18 +278,30 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           COVERALLS_FLAG_NAME: run-${{ matrix.python-version }}-${{ matrix.os }}-${{ matrix.tox-env }}
           COVERALLS_PARALLEL: true
+      - name: Tests measurement
+        if : ${{ matrix.os == 'ubuntu-latest' }}
+        uses: green-coding-solutions/eco-ci-energy-estimation@escape-test
+        with:
+          task: get-measurement
+          label: 'Testing with tox (Python${{ matrix.python-version }}, ${{ matrix.tox-env }})'
+        continue-on-error: true
+      - name: Show Energy Results
+        if : ${{ matrix.os == 'ubuntu-latest' }}
+        uses: green-coding-solutions/eco-ci-energy-estimation@escape-test
+        with:
+          task: display-results
+        continue-on-error: true
 
   test-conda:
     needs: lint
-    name: Python${{ matrix.python-version }} (${{ matrix.os }}, conda)
+    name: Python${{ matrix.python-version }} (ubuntu-latest, conda)
     if: |
       contains(github.event.pull_request.labels.*.name, 'approved') ||
       (github.event.review.state == 'approved') ||
       (github.event_name == 'push')
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
     strategy:
       matrix:
-        os: [ ubuntu-latest ]
         python-version: [ "3.9", "3.12" ]
     defaults:
       run:
@@ -224,16 +313,25 @@ jobs:
           disable-sudo: true
           egress-policy: block
           allowed-endpoints: >
+            api.electricitymap.org:443
             api.github.com:443
-            conda.anaconda.org:443
+            api.green-coding.io:443
             coveralls.io:443
-            dap.service.does.not.exist:443
             files.pythonhosted.org:443
             github.com:443
+            ip-api.com:80
+            ipapi.co:443
             objects.githubusercontent.com:443
+            proxy.golang.org:443
             pypi.org:443
             raw.githubusercontent.com:443
-            repo.anaconda.com:443
+            sum.golang.org:443
+      - name: Start Energy Measurement
+        uses: green-coding-solutions/eco-ci-energy-estimation@escape-test
+        with:
+          task: start-measurement
+          branch: ${{ github.head_ref || github.ref_name }}
+        continue-on-error: true
       - name: Checkout Repository
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
       - name: Setup Conda (Micromamba) with Python${{ matrix.python-version }}
@@ -244,9 +342,6 @@ jobs:
           environment-file: environment.yml
           create-args: >-
             python=${{ matrix.python-version }}
-      - name: Micromamba version
-        run: |
-          echo "micromamba: $(micromamba --version)"
       - name: Install xclim
         run: |
           python -m pip install --no-user --editable .
@@ -255,21 +350,15 @@ jobs:
           micromamba list
           xclim show_version_info
           python -m pip check || true
+      - name: Environment Setup Energy Measurement
+        uses: green-coding-solutions/eco-ci-energy-estimation@escape-test
+        with:
+          task: get-measurement
+          label: 'Environment setup (conda, Python${{ matrix.python-version }})'
+        continue-on-error: true
       - name: Test with pytest
         run: |
           python -m pytest --numprocesses=logical --durations=10 --cov=xclim --cov-report=term-missing
-#      - name: Install tox
-#        shell: bash -l {0}
-#        run: |
-#          mamba install -n xclim39 tox tox-conda
-#      - name: Test
-#        shell: bash -l {0}
-#        run: |
-#          conda activate xclim39
-#          tox -e opt-slow
-#        env:
-#          CONDA_EXE: mamba
-#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Report coverage
         run: |
           coveralls
@@ -277,15 +366,39 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           COVERALLS_FLAG_NAME: run-{{ matrix.python-version }}-conda
           COVERALLS_PARALLEL: true
+      - name: Tests measurement
+        uses: green-coding-solutions/eco-ci-energy-estimation@escape-test
+        with:
+          task: get-measurement
+          label: 'Testing with pytest (conda, Python${{ matrix.python-version }})'
+        continue-on-error: true
+      - name: Show Energy Results
+        uses: green-coding-solutions/eco-ci-energy-estimation@escape-test
+        with:
+          task: display-results
+        continue-on-error: true
 
   finish:
+    name: Finish
     needs:
       - test-preliminary
       - test-pypi
       - test-conda
     runs-on: ubuntu-latest
-    container: python:3-slim
+    permissions:
+      pull-requests: write
     steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@0d381219ddf674d61a7572ddd19d7941e271515c # v2.9.0
+        with:
+          disable-sudo: true
+          egress-policy: audit
+      - name: Start Energy Measurement
+        uses: green-coding-solutions/eco-ci-energy-estimation@escape-test
+        with:
+          task: start-measurement
+          branch: ${{ github.head_ref || github.ref_name }}
+        continue-on-error: true
       - name: Checkout Repository
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
         with:
@@ -299,3 +412,14 @@ jobs:
           python -m coveralls --finish
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Finish measurement
+        uses: green-coding-solutions/eco-ci-energy-estimation@escape-test
+        with:
+          task: get-measurement
+          label: 'Finish Run'
+        continue-on-error: true
+      - name: Show Energy Results
+        uses: green-coding-solutions/eco-ci-energy-estimation@escape-test
+        with:
+          task: display-results
+        continue-on-error: true
