@@ -767,7 +767,11 @@ def standardized_index_fit_params(
             da = da + convert_units_to(offset, da, context="hydro")
 
     # "WPM" method doesn't seem to work for gamma or pearson3
-    dist_and_methods = {"gamma": ["ML", "APP", "PWM"], "fisk": ["ML", "APP"]}
+    dist_and_methods = {
+        "gamma": ["ML", "APP", "PWM"],
+        "fisk": ["ML", "APP"],
+        "genextreme": ["ML", "APP", "PWM"],
+    }
     dist = get_dist(dist)
     if dist.name not in dist_and_methods:
         raise NotImplementedError(f"The distribution `{dist.name}` is not supported.")
