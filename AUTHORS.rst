@@ -44,4 +44,5 @@ Contributors
 * Dante Castro <dante.castro@hereon.de> `@profesorpaiche <https://github.com/profesorpaiche>`_
 * Sascha Hofmann <sascha.hofmann@lobelia.earth> `@saschahofmann <https://github.com/saschahofmann>`_
 * Javier Diez-Sierra <javier.diez@unican.es> `@JavierDiezSierra <https://github.com/JavierDiezSierra>`_
-* Hui-Min Wang `@Hem-W <https://github.com/Hem-W>`
+* Hui-Min Wang `@Hem-W <https://github.com/Hem-W>`_
+* Adrien Lamarche `@LamAdr <https://github.com/LamAdr>`_
