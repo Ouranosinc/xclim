@@ -751,6 +751,54 @@ class TestStandardizedIndices:
 
         np.testing.assert_allclose(spei.values, values, rtol=0, atol=diff_tol)
 
+    # reference results: Obtained with R package `standaRdized`
+    @pytest.mark.slow
+    @pytest.mark.parametrize(
+        "freq, window, dist, method,  values, diff_tol",
+        [
+            (
+                "D",
+                1,
+                "genextreme",
+                "ML",
+                [0.5331, 0.5338, 0.5098, 0.4656, 0.4937],
+                9e-2,
+            ),
+            (
+                "D",
+                12,
+                "genextreme",
+                "ML",
+                [0.4414, 0.4695, 0.4861, 0.4838, 0.4877],
+                9e-2,
+            ),
+        ],
+    )
+    def test_standardized_streamflow_index(
+        self, open_dataset, freq, window, dist, method, values, diff_tol
+    ):
+        ds = open_dataset("Raven/q_sim.nc")
+        q = ds.q_obs.rename("q")
+        q_cal = ds.q_sim.rename("q").fillna(ds.q_sim.mean())
+        if freq == "D":
+            q = q.sel(time=slice("2008-01-01", "2008-01-30")).fillna(ds.q_obs.mean())
+        else:
+            q = q.sel(time=slice("2008-01-01", "2008-12-31")).fillna(ds.q_obs.mean())
+        fitkwargs = {}
+        params = xci.stats.standardized_index_fit_params(
+            q_cal,
+            freq=freq,
+            window=window,
+            dist=dist,
+            method=method,
+            fitkwargs=fitkwargs,
+            zero_inflated=True,
+        )
+        ssi = xci.standardized_streamflow_index(q, params=params)
+        ssi = ssi.isel(time=slice(-11, -1, 2)).values.flatten()
+
+        np.testing.assert_allclose(ssi, values, rtol=0, atol=diff_tol)
+
     @pytest.mark.parametrize(
         "indexer",
         [
