@@ -31,7 +31,7 @@ class Streamflow(ResamplingIndicator):
         check_valid(q, "standard_name", "water_volume_transport_in_river_channel")
 
 
-class StandardizedIndexes(ResamplingIndicator):
+class StandardizedStreamflowIndexes(ResamplingIndicator):
     """Resampling but flexible inputs indicators."""
 
     src_freq = ["D", "MS"]
@@ -86,14 +86,17 @@ doy_qmin = Streamflow(
 )
 
 
-standardized_streamflow_index = StandardizedIndexes(
+standardized_streamflow_index = StandardizedStreamflowIndexes(
     title="Standardized Streamflow Index (SSI)",
     identifier="ssi",
     units="",
     standard_name="ssi",
     long_name="Standardized Streamflow Index (SSI)",
-    description="FILLME",
-    abstract="FILLME",
+    description="Streamflow over a moving {window}-X window, normalized such that SSI averages to 0 for "
+    "calibration data. The window unit `X` is the minimal time period defined by resampling frequency {freq}.",
+    abstract="Streamflow over a moving window, normalized such that SSI averages to 0 for the calibration data. "
+    "The window unit `X` is the minimal time period defined by the resampling frequency.",
     cell_methods="",
+    keywords="streamflow",
     compute=standardized_streamflow_index,
 )

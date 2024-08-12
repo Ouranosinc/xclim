@@ -287,6 +287,12 @@
     "title": "Indice de précipitation évapotranspiration standardisé (SPEI)",
     "abstract": "Budget d'eau (précipitation - évapotranspiration) sur une fenêtre mobile, normalisé tel que la moyenne du SPEI est 0 pour les données de calibration. L'unité de la fenêtre est l'unité de temps déterminée par la fréquence de rééchantillonnage."
   },
+  "SSI": {
+    "long_name": "Indice d'écoulement standardisé (SSI)",
+    "description": "Écoulement sur une fenêtre mobile de {window} {freq:nom}, normalisée telle que la moyenne du SSI est 0 pour les données de calibration. L'unité de la fenêtre 'X' est l'unité de temps déterminée par la fréquence de rééchantillonage,",
+    "title": "Indice d'écoulement standardisé (SSI)",
+    "abstract": "Écoulement sur une fenêtre mobile, normalisée telle que la moyenne du SSI est 0 pour les données de calibration. L'unité de la fenêtre est l'unité de temps déterminée par la fréquence de rééchantillonnage."
+  },
   "DC": {
     "long_name": "Indice de sécheresse",
     "description": "Code numérique estimant la teneur en humidité moyenne des couches organiques.",
