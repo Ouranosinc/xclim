@@ -575,7 +575,7 @@ def _to_quarter(
     """
     if pr is not None and tas is not None:
         raise ValueError("Supply only one variable, 'tas' (exclusive) or 'pr'.")
-    elif tas is not None:
+    if tas is not None:
         ts_var = tas
     elif pr is not None:
         ts_var = pr

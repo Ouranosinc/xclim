@@ -16,7 +16,7 @@ from collections import defaultdict
 from collections.abc import Sequence
 from enum import IntEnum
 from importlib.resources import as_file, files
-from inspect import Parameter, _empty  # noqa
+from inspect import _empty  # noqa
 from io import StringIO
 from pathlib import Path
 from typing import Callable, NewType, TypeVar
@@ -684,7 +684,7 @@ def adapt_clix_meta_yaml(  # noqa: C901
     freq_defs = {"annual": "YS", "seasonal": "QS-DEC", "monthly": "MS", "weekly": "W"}
 
     if isinstance(raw, os.PathLike):
-        with open(raw) as f:
+        with open(raw, encoding="utf-8") as f:
             yml = safe_load(f)
     else:
         yml = safe_load(raw)
@@ -824,7 +824,7 @@ def adapt_clix_meta_yaml(  # noqa: C901
 
     yml["indicators"] = yml.pop("indices")
 
-    with open(adapted, "w") as f:
+    with open(adapted, "w", encoding="utf-8") as f:
         safe_dump(yml, f)
 
 

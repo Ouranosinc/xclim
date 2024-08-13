@@ -782,10 +782,10 @@ def ecad_compliant(
             filter(lambda x: x.dtype == bool, flags.data_vars.values()),  # noqa
         ),
         name="ecad_qc_flag",
-        attrs=dict(
-            comment="Adheres to ECAD quality control checks.",
-            history="\n".join(history),
-        ),
+        attrs={
+            "comment": "Adheres to ECAD quality control checks.",
+            "history": "\n".join(history),
+        },
     )
 
     if append:

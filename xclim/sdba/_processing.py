@@ -138,7 +138,7 @@ def _normalize(
     norm.attrs["_group_apply_reshape"] = True
 
     return xr.Dataset(
-        dict(data=apply_correction(ds.data, invert(norm, kind), kind), norm=norm)
+        {"data": apply_correction(ds.data, invert(norm, kind), kind), "norm": norm}
     )
 
 
@@ -187,7 +187,7 @@ def _reordering(ds: xr.Dataset, *, dim: str) -> xr.Dataset:
             .rename("reordered")
             .to_dataset()
         )
-    elif len(dim) == 1:
+    if len(dim) == 1:
         return (
             xr.apply_ufunc(
                 _reordering_1d,

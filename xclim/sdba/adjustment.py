@@ -1081,7 +1081,7 @@ class PrincipalComponents(TrainAdjust):
         hist_mean = group.apply("mean", hist)  # Centroids of hist
         hist_mean.attrs.update(long_name="Centroid point of training.")
 
-        ds = xr.Dataset(dict(trans=trans, ref_mean=ref_mean, hist_mean=hist_mean))
+        ds = xr.Dataset({"trans": trans, "ref_mean": ref_mean, "hist_mean": hist_mean})
 
         ds.attrs["_reference_coord"] = lblR
         ds.attrs["_model_coord"] = lblM
@@ -1748,7 +1748,7 @@ class MBCn(TrainAdjust):
         if isinstance(base_kws["group"], str):
             base_kws["group"] = Grouper(base_kws["group"], 1)
         if base_kws["group"].name == "time.month":
-            NotImplementedError(
+            raise NotImplementedError(
                 "Received `group==time.month` in `base_kws`. Monthly grouping is not currently supported in the MBCn class."
             )
         # stack variables and prepare rotations
@@ -1771,7 +1771,7 @@ class MBCn(TrainAdjust):
         _, gw_idxs = grouped_time_indexes(ref.time, base_kws["group"])
 
         # training, obtain adjustment factors of the npdf transform
-        ds = xr.Dataset(dict(ref=ref, hist=hist))
+        ds = xr.Dataset({"ref": ref, "hist": hist})
         params = {
             "quantiles": base_kws["nquantiles"],
             "interp": adj_kws["interp"],

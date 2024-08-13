@@ -14,7 +14,7 @@ from sys import platform
 import numpy as np
 import pandas as pd
 import xarray as xr
-from dask.diagnostics import Callback
+from dask.callbacks import Callback
 from filelock import FileLock
 from packaging.version import Version
 
@@ -50,7 +50,7 @@ or setting the variable at runtime:
 
 """
 
-PREFETCH_TESTING_DATA = os.getenv("XCLIM_PREFETCH_TESTING_DATA", False)
+PREFETCH_TESTING_DATA = os.getenv("XCLIM_PREFETCH_TESTING_DATA")
 """Indicates whether the testing data should be downloaded when running tests.
 
 Notes
@@ -144,7 +144,7 @@ def generate_atmos(cache_dir: Path) -> dict[str, xr.DataArray]:
         ds.to_netcdf(atmos_file, engine="h5netcdf")
 
     # Give access to dataset variables by name in namespace
-    namespace = dict()
+    namespace = {}
     with _open_dataset(
         atmos_file, branch=TESTDATA_BRANCH, cache_dir=cache_dir, engine="h5netcdf"
     ) as ds:
@@ -193,7 +193,7 @@ def populate_testing_data(
         "uncertainty_partitioning/seattle_avg_tas.csv",
     ]
 
-    data = dict()
+    data = {}
     for filepattern in data_entries:
         if temp_folder is None:
             try:
@@ -223,7 +223,7 @@ def gather_testing_data(threadsafe_data_dir: Path, worker_id: str):
     """Gather testing data across workers."""
     if (
         not _default_cache_dir.joinpath(TESTDATA_BRANCH).exists()
-        or PREFETCH_TESTING_DATA
+        or PREFETCH_TESTING_DATA is not None
     ):
         if PREFETCH_TESTING_DATA:
             print("`XCLIM_PREFETCH_TESTING_DATA` set. Prefetching testing data...")
@@ -232,7 +232,7 @@ def gather_testing_data(threadsafe_data_dir: Path, worker_id: str):
                 "UNIX-style file-locking is not supported on Windows. "
                 "Consider running `$ xclim prefetch_testing_data` to download testing data."
             )
-        elif worker_id in ["master"]:
+        if worker_id in ["master"]:
             populate_testing_data(branch=TESTDATA_BRANCH)
         else:
             _default_cache_dir.mkdir(exist_ok=True, parents=True)
@@ -250,7 +250,7 @@ def gather_testing_data(threadsafe_data_dir: Path, worker_id: str):
 
 def add_example_file_paths() -> dict[str, str | list[xr.DataArray]]:
     """Create a dictionary of relevant datasets to be patched into the xdoctest namespace."""
-    namespace: dict = dict()
+    namespace: dict = {}
     namespace["path_to_ensemble_file"] = "EnsembleReduce/TestEnsReduceCriteria.nc"
     namespace["path_to_pr_file"] = "NRCANdaily/nrcan_canada_daily_pr_1990.nc"
     namespace["path_to_sfcWind_file"] = "ERA5/daily_surface_cancities_1990-1993.nc"
@@ -294,7 +294,7 @@ def add_example_file_paths() -> dict[str, str | list[xr.DataArray]]:
 
 def add_doctest_filepaths():
     """Add filepaths to the xdoctest namespace."""
-    namespace: dict = dict()
+    namespace: dict = {}
     namespace["np"] = np
     namespace["xclim"] = xclim
     namespace["tas"] = test_timeseries(
@@ -338,8 +338,7 @@ def test_timeseries(
 
     if as_dataset:
         return da.to_dataset()
-    else:
-        return da
+    return da
 
 
 def _raise_on_compute(dsk: dict):

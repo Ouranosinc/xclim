@@ -12,7 +12,7 @@ import logging
 import warnings
 from copy import deepcopy
 from importlib.resources import files
-from inspect import _empty, signature  # noqa
+from inspect import signature
 from typing import Any, Callable, Literal, cast
 
 import cf_xarray.units
@@ -352,8 +352,7 @@ def convert_units_to(  # noqa: C901
                                 f"There is a dimensionality incompatibility between the source and the target "
                                 f"and no CF-based conversions have been found for this standard name: {standard_name}"
                             ) from err
-                        else:
-                            source_unit = units2pint(source)
+                        source_unit = units2pint(source)
 
         out: xr.DataArray
         if source_unit == target_unit:

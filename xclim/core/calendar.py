@@ -220,14 +220,15 @@ def common_calendar(calendars: Sequence[str], join="outer") -> str:
 def _convert_doy_date(doy: int, year: int, src, tgt):
     fracpart = doy - int(doy)
     date = src(year, 1, 1) + pydt.timedelta(days=int(doy - 1))
+
     try:
         same_date = tgt(date.year, date.month, date.day)
     except ValueError:
         return np.nan
-    else:
-        if tgt is pydt.datetime:
-            return float(same_date.timetuple().tm_yday) + fracpart
-        return float(same_date.dayofyr) + fracpart
+
+    if tgt is pydt.datetime:
+        return float(same_date.timetuple().tm_yday) + fracpart
+    return float(same_date.dayofyr) + fracpart
 
 
 def convert_doy(

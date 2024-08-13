@@ -445,7 +445,7 @@ def missing_any(da, freq, src_timestep=None, **indexer):  # noqa: D103
 def missing_wmo(da, freq, nm=11, nc=5, src_timestep=None, **indexer):  # noqa: D103
     src_timestep = src_timestep or xr.infer_freq(da.time)
     return MissingWMO.execute(
-        da, freq, src_timestep, options=dict(nm=nm, nc=nc), indexer=indexer
+        da, freq, src_timestep, options={"nm": nm, "nc": nc}, indexer=indexer
     )
 
 

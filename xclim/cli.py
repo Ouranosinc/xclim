@@ -21,7 +21,7 @@ from xclim.testing.utils import _default_cache_dir, publish_release_notes, show_
 
 distributed = False
 try:
-    from dask.distributed import Client, progress
+    from dask.distributed import Client, progress  # noqa: C0412
 
     distributed = True
 except ImportError:  # noqa: S110
@@ -361,7 +361,7 @@ class XclimCli(click.MultiCommand):
             "show_version_info",
         )
 
-    def get_command(self, ctx, name):
+    def get_command(self, ctx, cmd_name):
         """Return the requested command."""
         command = {
             "dataflags": dataflags,
@@ -370,9 +370,9 @@ class XclimCli(click.MultiCommand):
             "prefetch_testing_data": prefetch_testing_data,
             "release_notes": release_notes,
             "show_version_info": show_version_info,
-        }.get(name)
+        }.get(cmd_name)
         if command is None:
-            command = _create_command(name)
+            command = _create_command(cmd_name)
         return command
 
 

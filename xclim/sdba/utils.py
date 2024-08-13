@@ -45,7 +45,7 @@ def map_cdf(
     ds: xr.Dataset,
     *,
     y_value: xr.DataArray,
-    dim,
+    dim: str,
 ):
     """Return the value in `x` with the same CDF as `y_value` in `y`.
 
@@ -54,17 +54,18 @@ def map_cdf(
     Parameters
     ----------
     ds : xr.Dataset
-      Variables: x, Values from which to pick,
-      y, Reference values giving the ranking
+        Variables:
+            x, Values from which to pick,
+            y, Reference values giving the ranking
     y_value : float, array
-      Value within the support of `y`.
+        Value within the support of `y`.
     dim : str
-      Dimension along which to compute quantile.
+        Dimension along which to compute quantile.
 
     Returns
     -------
     array
-      Quantile of `x` with the same CDF as `y_value` in `y`.
+        Quantile of `x` with the same CDF as `y_value` in `y`.
     """
     return xr.apply_ufunc(
         map_cdf_1d,
@@ -85,16 +86,16 @@ def ecdf(x: xr.DataArray, value: float, dim: str = "time") -> xr.DataArray:
     Parameters
     ----------
     x : array
-      Sample.
+        Sample.
     value : float
-      The value within the support of `x` for which to compute the CDF value.
+        The value within the support of `x` for which to compute the CDF value.
     dim : str
-      Dimension name.
+        Dimension name.
 
     Returns
     -------
     xr.DataArray
-      Empirical CDF.
+        Empirical CDF.
     """
     return (x <= value).sum(dim) / x.notnull().sum(dim)
 
@@ -195,15 +196,15 @@ def broadcast(
     Parameters
     ----------
     grouped : xr.DataArray
-      The grouped array to broadcast like `x`.
+        The grouped array to broadcast like `x`.
     x : xr.DataArray
-      The array to broadcast grouped to.
+        The array to broadcast grouped to.
     group : str or Grouper
-      Grouping information. See :py:class:`xclim.sdba.base.Grouper` for details.
+        Grouping information. See :py:class:`xclim.sdba.base.Grouper` for details.
     interp : {'nearest', 'linear', 'cubic'}
-      The interpolation method to use,
+        The interpolation method to use,
     sel : dict[str, xr.DataArray]
-      Mapping of grouped coordinates to x coordinates (other than the grouping one).
+        Mapping of grouped coordinates to x coordinates (other than the grouping one).
 
     Returns
     -------
@@ -252,14 +253,14 @@ def equally_spaced_nodes(n: int, eps: float | None = None) -> np.ndarray:
     Parameters
     ----------
     n : int
-      Number of equally spaced nodes.
+        Number of equally spaced nodes.
     eps : float, optional
-      Distance from 0 and 1 of added end nodes. If None (default), do not add endpoints.
+        Distance from 0 and 1 of added end nodes. If None (default), do not add endpoints.
 
     Returns
     -------
     np.array
-      Nodes between 0 and 1. Nodes can be seen as the middle points of `n` equal bins.
+        Nodes between 0 and 1. Nodes can be seen as the middle points of `n` equal bins.
 
     Warnings
     --------

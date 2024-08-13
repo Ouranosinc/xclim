@@ -99,7 +99,7 @@ def adapt_freq(
         sim = convert_units_to(sim, ref)
         thresh = convert_units_to(thresh, ref)
 
-    out = _adapt_freq(xr.Dataset(dict(sim=sim, ref=ref)), group=group, thresh=thresh)
+    out = _adapt_freq(xr.Dataset({"sim": sim, "ref": ref}), group=group, thresh=thresh)
 
     # Set some metadata
     copy_all_attrs(out, sim)

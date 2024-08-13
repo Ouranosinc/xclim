@@ -1161,7 +1161,7 @@ class Indicator(IndicatorRegistrar):
         return attrs
 
     @classmethod
-    def json(self, args=None):
+    def json(cls, args=None):
         """Return a serializable dictionary representation of the class.
 
         Parameters
@@ -1176,21 +1176,21 @@ class Indicator(IndicatorRegistrar):
 
         """
         names = ["identifier", "title", "abstract", "keywords"]
-        out = {key: getattr(self, key) for key in names}
-        out = self._format(out, args)
+        out = {key: getattr(cls, key) for key in names}
+        out = cls._format(out, args)
 
         # Format attributes
-        out["outputs"] = [self._format(attrs, args) for attrs in self.cf_attrs]
-        out["notes"] = self.notes
+        out["outputs"] = [cls._format(attrs, args) for attrs in cls.cf_attrs]
+        out["notes"] = cls.notes
 
         # We need to deepcopy, otherwise empty defaults get overwritten!
         # All those tweaks are to ensure proper serialization of the returned dictionary.
         out["parameters"] = {
             k: p.asdict() if not p.injected else deepcopy(p.value)
-            for k, p in self._all_parameters.items()
+            for k, p in cls._all_parameters.items()
         }
         for name, param in list(out["parameters"].items()):
-            if not self._all_parameters[name].injected:
+            if not cls._all_parameters[name].injected:
                 param["kind"] = param["kind"].value  # Get the int.
                 if "choices" in param:  # A set is stored, convert to list
                     param["choices"] = list(param["choices"])
@@ -1309,7 +1309,7 @@ class Indicator(IndicatorRegistrar):
         If there are multiple inputs, it also checks if they all have the same frequency and the same anchor.
         """
         if self.src_freq is not None:
-            for key, da in das.items():
+            for da in das.values():
                 if "time" in da.coords and da.time.ndim == 1 and len(da.time) > 3:
                     datachecks.check_freq(da, self.src_freq, strict=True)
 
@@ -1565,8 +1565,6 @@ class IndexingIndicator(Indicator):
 
 class ResamplingIndicatorWithIndexing(ResamplingIndicator, IndexingIndicator):
     """Resampling indicator that also injects "indexer" kwargs to subset the inputs before computation."""
-
-    pass
 
 
 class Daily(ResamplingIndicator):

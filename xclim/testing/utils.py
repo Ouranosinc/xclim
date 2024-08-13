@@ -30,8 +30,10 @@ from xarray import Dataset
 from xarray import open_dataset as _open_dataset
 
 try:
+    import pytest
     from pytest_socket import SocketBlockedError
 except ImportError:
+    pytest = None
     SocketBlockedError = None
 
 _xclim_deps = [
@@ -75,14 +77,15 @@ __all__ = [
 ]
 
 
-def file_md5_checksum(f_name):
+def file_md5_checksum(f_name: str | os.PathLike[str]):
+    """Compute the md5 checksum of a file."""
     hash_md5 = hashlib.md5()  # noqa: S324
     with open(f_name, "rb") as f:
         hash_md5.update(f.read())
     return hash_md5.hexdigest()
 
 
-def audit_url(url: str, context: str = None) -> str:
+def audit_url(url: str, context: str | None = None) -> str:
     """Check if the URL is well-formed.
 
     Raises
@@ -180,9 +183,7 @@ def get_local_testdata(
         patterns = [patterns]
 
     for pattern in patterns:
-        potential_paths = [
-            path for path in Path(temp_folder).joinpath(branch).glob(pattern)
-        ]
+        potential_paths = list(Path(temp_folder).joinpath(branch).glob(pattern))
         if potential_paths:
             temp_paths.extend(potential_paths)
             continue
@@ -190,7 +191,7 @@ def get_local_testdata(
         testdata_path = Path(_local_cache)
         if not testdata_path.exists():
             raise RuntimeError(f"{testdata_path} does not exists")
-        paths = [path for path in testdata_path.joinpath(branch).glob(pattern)]
+        paths = list(testdata_path.joinpath(branch).glob(pattern))
         if not paths:
             raise FileNotFoundError(
                 f"No data found for {pattern} at {testdata_path}/{branch}."
@@ -231,7 +232,7 @@ def _get(
             msg = f"Attempting to fetch remote file md5: {md5_name.as_posix()}"
             logger.info(msg)
             urlretrieve(audit_url(url), md5_file)  # noqa: S310
-            with open(md5_file) as f:
+            with open(md5_file, encoding="utf-8") as f:
                 remote_md5 = f.read()
             if local_md5.strip() != remote_md5.strip():
                 local_file.unlink()
@@ -298,7 +299,7 @@ def _get(
 
         local_md5 = file_md5_checksum(local_file)
         try:
-            with open(md5_file) as f:
+            with open(md5_file, encoding="utf-8") as f:
                 remote_md5 = f.read()
             if local_md5.strip() != remote_md5.strip():
                 local_file.unlink()
@@ -368,10 +369,10 @@ def open_dataset(
             return ds
         except URLError:
             raise
-        except OSError:
+        except OSError as e:
             msg = f"OPeNDAP file not read. Verify that the service is available: '{dap_file_address}'"
             logger.error(msg)
-            raise OSError(msg)
+            raise OSError(msg) from e
 
     local_file = _get(
         fullname=fullname,
@@ -480,7 +481,8 @@ def list_input_variables(
 
 def run_doctests():
     """Run the doctests for the module."""
-    import pytest
+    if pytest is None:
+        raise ImportError("pytest is required to run doctests.")
 
     cmd = [
         f"--rootdir={Path(__file__).absolute().parent}",
@@ -494,8 +496,8 @@ def run_doctests():
 
 def publish_release_notes(
     style: str = "md",
-    file: os.PathLike | StringIO | TextIO | None = None,
-    changes: str | os.PathLike | None = None,
+    file: os.PathLike[str] | StringIO | TextIO | None = None,
+    changes: str | os.PathLike[str] | None = None,
 ) -> str | None:
     """Format release notes in Markdown or ReStructuredText.
 
@@ -505,7 +507,7 @@ def publish_release_notes(
         Use ReStructuredText formatting or Markdown. Default: Markdown.
     file : {os.PathLike, StringIO, TextIO}, optional
         If provided, prints to the given file-like object. Otherwise, returns a string.
-    changes : {str, os.PathLike}, optional
+    changes : str or os.PathLike[str], optional
         If provided, manually points to the file where the changelog can be found.
         Assumes a relative path otherwise.
 
@@ -525,7 +527,7 @@ def publish_release_notes(
     if not changes_file.exists():
         raise FileNotFoundError("Changelog file not found in xclim folder tree.")
 
-    with open(changes_file) as hf:
+    with open(changes_file, encoding="utf-8") as hf:
         changes = hf.read()
 
     if style == "rst":
@@ -570,7 +572,7 @@ def publish_release_notes(
     if not file:
         return changes
     if isinstance(file, (Path, os.PathLike)):
-        with Path(file).open("w") as f:
+        with open(file, "w") as f:
             print(changes, file=f)
     else:
         print(changes, file=file)
@@ -633,7 +635,7 @@ def show_versions(
     if not file:
         return message
     if isinstance(file, (Path, os.PathLike)):
-        with Path(file).open("w") as f:
+        with open(file, "w") as f:
             print(message, file=f)
     else:
         print(message, file=file)
