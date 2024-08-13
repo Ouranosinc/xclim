@@ -148,7 +148,7 @@ def standardized_streamflow_index(
     cal_end : DateStr, optional
         End date of the calibration period. A `DateStr` is expected, that is a `str` in format `"YYYY-MM-DD"`.
         Default option `None` means that the calibration period finishes at the end of the input dataset.
-    params : xarray.DataArray
+    params : xarray.DataArray, optional
         Fit parameters.
         The `params` can be computed using ``xclim.indices.stats.standardized_index_fit_params`` in advance.
         The output can be given here as input, and it overrides other options.
