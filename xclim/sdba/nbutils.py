@@ -245,26 +245,26 @@ def quantile(da: DataArray, q: np.ndarray, dim: str | Sequence[Hashable]) -> Dat
     """
     if USE_FASTNANQUANTILE is True:
         return xr_apply_nanquantile(da, dim=dim, q=q).rename({"quantile": "quantiles"})
-    else:
-        qc = np.array(q, dtype=da.dtype)
-        dims = [dim] if isinstance(dim, str) else dim
-        kwargs = dict(nreduce=len(dims), q=qc)
-        res = (
-            apply_ufunc(
-                _quantile,
-                da,
-                input_core_dims=[dims],
-                exclude_dims=set(dims),
-                output_core_dims=[["quantiles"]],
-                output_dtypes=[da.dtype],
-                dask_gufunc_kwargs=dict(output_sizes={"quantiles": len(q)}),
-                dask="parallelized",
-                kwargs=kwargs,
-            )
-            .assign_coords(quantiles=q)
-            .assign_attrs(da.attrs)
+
+    qc = np.array(q, dtype=da.dtype)
+    dims = [dim] if isinstance(dim, str) else dim
+    kwargs = {"nreduce": len(dims), "q": qc}
+    res = (
+        apply_ufunc(
+            _quantile,
+            da,
+            input_core_dims=[dims],
+            exclude_dims=set(dims),
+            output_core_dims=[["quantiles"]],
+            output_dtypes=[da.dtype],
+            dask_gufunc_kwargs={"output_sizes": {"quantiles": len(q)}},
+            dask="parallelized",
+            kwargs=kwargs,
         )
-        return res
+        .assign_coords(quantiles=q)
+        .assign_attrs(da.attrs)
+    )
+    return res
 
 
 @njit(

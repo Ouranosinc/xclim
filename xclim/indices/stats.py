@@ -150,19 +150,19 @@ def fit(
     out.attrs = prefix_attrs(
         da.attrs, ["standard_name", "long_name", "units", "description"], "original_"
     )
-    attrs = dict(
-        long_name=f"{dist.name} parameters",
-        description=f"Parameters of the {dist.name} distribution",
-        method=method,
-        estimator=method_name[method].capitalize(),
-        scipy_dist=dist.name,
-        units="",
-        history=update_history(
+    attrs = {
+        "long_name": f"{dist.name} parameters",
+        "description": f"Parameters of the {dist.name} distribution",
+        "method": method,
+        "estimator": method_name[method].capitalize(),
+        "scipy_dist": dist.name,
+        "units": "",
+        "history": update_history(
             f"Estimate distribution parameters by {method_name[method]} method along dimension {dim}.",
             new_name="fit",
             data=da,
         ),
-    )
+    }
     out.attrs.update(attrs)
     return out
 
@@ -226,16 +226,16 @@ def parametric_quantile(
     out = data.assign_coords(quantile=q).transpose(*dims)
     out.attrs = unprefix_attrs(p.attrs, ["units", "standard_name"], "original_")
 
-    attrs = dict(
-        long_name=f"{dist.name} quantiles",
-        description=f"Quantiles estimated by the {dist.name} distribution",
-        cell_methods="dparams: ppf",
-        history=update_history(
+    attrs = {
+        "long_name": f"{dist.name} quantiles",
+        "description": f"Quantiles estimated by the {dist.name} distribution",
+        "cell_methods": "dparams: ppf",
+        "history": update_history(
             "Compute parametric quantiles from distribution parameters",
             new_name="parametric_quantile",
             parameters=p,
         ),
-    )
+    }
     out.attrs.update(attrs)
     return out
 
@@ -288,16 +288,16 @@ def parametric_cdf(
     out = data.assign_coords(cdf=v).transpose(*dims)
     out.attrs = unprefix_attrs(p.attrs, ["units", "standard_name"], "original_")
 
-    attrs = dict(
-        long_name=f"{dist.name} cdf",
-        description=f"CDF estimated by the {dist.name} distribution",
-        cell_methods="dparams: cdf",
-        history=update_history(
+    attrs = {
+        "long_name": f"{dist.name} cdf",
+        "description": f"CDF estimated by the {dist.name} distribution",
+        "cell_methods": "dparams: cdf",
+        "history": update_history(
             "Compute parametric cdf from distribution parameters",
             new_name="parametric_cdf",
             parameters=p,
         ),
-    )
+    }
     out.attrs.update(attrs)
     return out
 
@@ -951,8 +951,8 @@ def standardized_index(
     params_norm = xr.DataArray(
         [0, 1],
         dims=["dparams"],
-        coords=dict(dparams=(["loc", "scale"])),
-        attrs=dict(scipy_dist="norm"),
+        coords={"dparams": (["loc", "scale"])},
+        attrs={"scipy_dist": "norm"},
     )
     si = dist_method("ppf", params_norm, probs)
     # A cdf value of 0 or 1 gives ±np.inf when inverted to the normal distribution.

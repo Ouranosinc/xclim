@@ -158,24 +158,24 @@ __all__ = [
     "overwintering_drought_code",
 ]
 
-default_params: dict[str, int | float | tuple[float, str]] = dict(
-    temp_start_thresh=(12.0, "degC"),
-    temp_end_thresh=(5.0, "degC"),
-    snow_thresh=(0.01, "m"),
-    temp_condition_days=3,
-    snow_condition_days=3,
-    carry_over_fraction=0.75,
-    wetting_efficiency_fraction=0.75,
-    dc_start=15,
-    dmc_start=6,
-    ffmc_start=85,
-    prec_thresh=(1.0, "mm/d"),
-    dc_dry_factor=5,
-    dmc_dry_factor=2,
-    snow_cover_days=60,
-    snow_min_cover_frac=0.75,
-    snow_min_mean_depth=(0.1, "m"),
-)
+default_params: dict[str, int | float | tuple[float, str]] = {
+    "temp_start_thresh": (12.0, "degC"),
+    "temp_end_thresh": (5.0, "degC"),
+    "snow_thresh": (0.01, "m"),
+    "temp_condition_days": 3,
+    "snow_condition_days": 3,
+    "carry_over_fraction": 0.75,
+    "wetting_efficiency_fraction": 0.75,
+    "dc_start": 15,
+    "dmc_start": 6,
+    "ffmc_start": 85,
+    "prec_thresh": (1.0, "mm/d"),
+    "dc_dry_factor": 5,
+    "dmc_dry_factor": 2,
+    "snow_cover_days": 60,
+    "snow_min_cover_frac": 0.75,
+    "snow_min_mean_depth": (0.1, "m"),
+}
 """
 Default values for numerical parameters of fire_weather_ufunc.
 
@@ -1148,9 +1148,9 @@ def fire_weather_ufunc(  # noqa: C901
         dummy_dim = xr.core.utils.get_temp_dimname(tas.dims, "dummy")  # noqa
         # When arrays only have the 'time' dimension, non-temporal inputs of the wrapped ufunc
         # become scalars. We add a dummy dimension so that we don't have to deal with that.
-        for i in range(len(args)):
-            if isinstance(args[i], xr.DataArray):
-                args[i] = args[i].expand_dims({dummy_dim: [1]})
+        for i, arg in enumerate(args):
+            if isinstance(arg, xr.DataArray):
+                args[i] = arg.expand_dims({dummy_dim: [1]})
 
     das = xr.apply_ufunc(
         _fire_weather_calc,

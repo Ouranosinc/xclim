@@ -238,16 +238,15 @@ def uses_dask(*das: xr.DataArray | xr.Dataset) -> bool:
     bool
         True if any of the passed objects is using dask.
     """
-    if len(das) > 1:
-        return any([uses_dask(da) for da in das])
-    da = das[0]
-    if isinstance(da, xr.DataArray) and isinstance(da.data, dsk.Array):
-        return True
-    if isinstance(da, xr.Dataset) and any(
-        isinstance(var.data, dsk.Array) for var in da.variables.values()
-    ):
-        return True
-    return False
+
+    def _is_dask_array(da):
+        if isinstance(da, xr.DataArray):
+            return isinstance(da.data, dsk.Array)
+        if isinstance(da, xr.Dataset):
+            return any(isinstance(var.data, dsk.Array) for var in da.variables.values())
+        return False
+
+    return any(_is_dask_array(da) for da in das)
 
 
 def calc_perc(

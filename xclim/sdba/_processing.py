@@ -187,6 +187,7 @@ def _reordering(ds: xr.Dataset, *, dim: str) -> xr.Dataset:
             .rename("reordered")
             .to_dataset()
         )
+
     if len(dim) == 1:
         return (
             xr.apply_ufunc(
@@ -202,9 +203,9 @@ def _reordering(ds: xr.Dataset, *, dim: str) -> xr.Dataset:
             .rename("reordered")
             .to_dataset()
         )
-    else:
-        raise ValueError(
-            f"Reordering can only be done along one dimension."
-            f" If there is more than one, they should be `window` and `time`."
-            f" The dimensions are {dim}."
-        )
+
+    raise ValueError(
+        f"Reordering can only be done along one dimension. "
+        f"If there is more than one, they should be `window` and `time`. "
+        f"The dimensions are {dim}."
+    )

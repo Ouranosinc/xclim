@@ -1203,10 +1203,10 @@ def standardized_precipitation_index(
     """
     fitkwargs = fitkwargs or {}
     dist_methods = {"gamma": ["ML", "APP", "PWM"], "fisk": ["ML", "APP"]}
-    if dist in dist_methods.keys():
+    if dist in dist_methods:
         if method not in dist_methods[dist]:
             raise NotImplementedError(
-                f"{method} method is not implemented for {dist} distribution"
+                f"{method} method is not implemented for {dist} distribution."
             )
     else:
         raise NotImplementedError(f"{dist} distribution is not yet implemented.")
@@ -1324,7 +1324,7 @@ def standardized_precipitation_evapotranspiration_index(
             wb = wb + offset
 
     dist_methods = {"gamma": ["ML", "APP", "PWM"], "fisk": ["ML", "APP"]}
-    if dist in dist_methods.keys():
+    if dist in dist_methods:
         if method not in dist_methods[dist]:
             raise NotImplementedError(
                 f"{method} method is not implemented for {dist} distribution"

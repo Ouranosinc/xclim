@@ -47,17 +47,17 @@ _KEEP_ATTRS_OPTIONS = frozenset(["xarray", True, False])
 
 
 def _valid_missing_options(mopts):
-    for meth, opts in mopts.items():
-        cls = MISSING_METHODS.get(meth, None)
-        if (
-            cls is None  # Method must be registered
-            # All options must exist
-            or any([opt not in OPTIONS[MISSING_OPTIONS][meth] for opt in opts.keys()])
-            # Method option validator must pass, default validator is always True.
-            or not cls.validate(**opts)  # noqa
-        ):
-            return False
-    return True
+    """Check if all methods and their options in mopts are valid."""
+    return all(
+        meth in MISSING_METHODS  # Ensure the method is registered in MISSING_METHODS
+        and all(
+            opt in OPTIONS[MISSING_OPTIONS][meth] for opt in opts.keys()
+        )  # Check if all options provided for the method are valid
+        and MISSING_METHODS[meth].validate(
+            **opts
+        )  # Validate the options using the method's validator; defaults to True if no validation is needed
+        for meth, opts in mopts.items()  # Iterate over each method and its options in mopts
+    )
 
 
 _VALIDATORS = {

@@ -572,7 +572,7 @@ def publish_release_notes(
     if not file:
         return changes
     if isinstance(file, (Path, os.PathLike)):
-        with open(file, "w") as f:
+        with open(file, "w", encoding="utf-8") as f:
             print(changes, file=f)
     else:
         print(changes, file=file)
@@ -635,7 +635,7 @@ def show_versions(
     if not file:
         return message
     if isinstance(file, (Path, os.PathLike)):
-        with open(file, "w") as f:
+        with open(file, "w", encoding="utf-8") as f:
             print(message, file=f)
     else:
         print(message, file=file)

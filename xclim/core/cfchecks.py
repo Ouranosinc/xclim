@@ -52,11 +52,10 @@ def _check_cell_methods(data_cell_methods: str, expected_method: str) -> None:
         raise ValidationError("Variable does not have a `cell_methods` attribute.")
     EXTRACT_CELL_METHOD_REGEX = r"(\s*\S+\s*:(\s+[\w()-]+)+)(?!\S*:)"
     for m in re.compile(EXTRACT_CELL_METHOD_REGEX).findall(data_cell_methods):
-        # FIXME: Can this be replaced by "in"?
-        if m[0].__contains__(expected_method):
+        if expected_method in m[0]:
             return None
     raise ValidationError(
         f"Variable has a non-conforming cell_methods: "
         f"Got `{data_cell_methods}`, which do not include the expected "
-        f"`{expected_method}`"
+        f"`{expected_method}`."
     )

@@ -21,7 +21,7 @@ from xclim.testing.utils import _default_cache_dir, publish_release_notes, show_
 
 distributed = False
 try:
-    from dask.distributed import Client, progress  # noqa: C0412
+    from dask.distributed import Client, progress  # pylint: disable=ungrouped-imports
 
     distributed = True
 except ImportError:  # noqa: S110

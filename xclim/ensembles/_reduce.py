@@ -359,7 +359,9 @@ def kmeans_reduce_ensemble(
     z = z * variable_weights
     rsq = _calc_rsq(z, method, make_graph, n_sim, random_state, sample_weights)
 
-    n_clusters = _get_nclust(method, n_sim, rsq, max_clusters)
+    n_clusters = _get_nclust(
+        method=method, n_sim=n_sim, rsq=rsq, max_clusters=max_clusters
+    )
 
     if make_graph:
         fig_data["method"] = method
@@ -443,7 +445,7 @@ def _calc_rsq(z, method, make_graph, n_sim, random_state, sample_weights):
     return rsq
 
 
-def _get_nclust(method=None, n_sim=None, rsq=None, max_clusters=None):
+def _get_nclust(method: dict, n_sim, rsq, max_clusters):
     """Sub-function to kmeans_reduce_ensemble. Determine number of clusters to create depending on various methods."""
     # if we actually need to find the optimal number of clusters, this is where it is done
     if list(method.keys())[0] == "rsq_cutoff":
@@ -462,7 +464,7 @@ def _get_nclust(method=None, n_sim=None, rsq=None, max_clusters=None):
     elif list(method.keys())[0] == "n_clusters":
         n_clusters = method["n_clusters"]
     else:
-        raise Exception(f"Unknown selection method : {list(method.keys())}")
+        raise KeyError(f"Unknown selection method : {list(method.keys())}")
     if n_clusters > max_clusters:
         warn(
             f"{n_clusters} clusters has been found to be the optimal number of clusters, but limiting "

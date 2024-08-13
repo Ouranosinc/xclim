@@ -1026,7 +1026,13 @@ def optimal_transport(gridX, gridY, muX, muY, numItermax, transform):
     ----------
     :cite:cts:`sdba-robin_2021`
     """
-    from ot import emd
+    try:
+        from ot import emd  # noqa
+    except ImportError:
+        raise ImportError(
+            "The optional dependency `ot` is required for optimal_transport. "
+            "You can install it with `pip install pot` or `pip install 'xclim[extras]'`."
+        )
 
     if transform == "standardize":
         gridX = (gridX - gridX.mean()) / gridX.std()

@@ -11,7 +11,6 @@ from pathlib import Path
 import pytest
 
 from xclim.testing import helpers
-from xclim.testing.utils import _default_cache_dir  # noqa
 from xclim.testing.utils import open_dataset as _open_dataset
 
 
@@ -42,11 +41,10 @@ def is_matplotlib_installed(xdoctest_namespace) -> None:
 
     def _is_matplotlib_installed():
         try:
-            import matplotlib  # noqa
+            import matplotlib  # noqa: F401
 
-            return
         except ImportError:
-            return pytest.skip("This doctest requires matplotlib to be installed.")
+            pytest.skip("This doctest requires matplotlib to be installed.")
 
     xdoctest_namespace["is_matplotlib_installed"] = _is_matplotlib_installed
 
@@ -61,6 +59,8 @@ def doctest_setup(
     xdoctest_namespace.update(helpers.generate_atmos(threadsafe_data_dir))
 
     class AttrDict(dict):
+        """A dictionary that allows access to its keys as attributes."""
+
         def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
             self.__dict__ = self

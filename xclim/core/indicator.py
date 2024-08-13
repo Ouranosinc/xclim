@@ -171,7 +171,7 @@ _indicators_registry = defaultdict(list)  # Private instance registry
 
 
 # Sentinel class for unset properties of Indicator's parameters."""
-class _empty:
+class _empty:  # pylint: disable=too-few-public-methods
     pass
 
 
@@ -993,9 +993,8 @@ class Indicator(IndicatorRegistrar):
         except TypeError:
             # If this fails, simply call the function using positional arguments
             return func(*das.values())
-        else:
-            # Call the func using bound arguments
-            return func(*ba.args, **ba.kwargs)
+        # Call the func using bound arguments
+        return func(*ba.args, **ba.kwargs)
 
     @classmethod
     def _get_translated_metadata(
@@ -1091,7 +1090,7 @@ class Indicator(IndicatorRegistrar):
         return attrs
 
     def _history_string(self, das, params):
-        kwargs = dict(**das)
+        kwargs = {**das}
         for k, v in params.items():
             if self._all_parameters[k].injected:
                 continue
@@ -1106,8 +1105,8 @@ class Indicator(IndicatorRegistrar):
         """Verify that the identifier is a proper slug."""
         if not re.match(r"^[-\w]+$", identifier):
             warnings.warn(
-                "The identifier contains non-alphanumeric characters. It could make "
-                "life difficult for downstream software reusing this class.",
+                "The identifier contains non-alphanumeric characters. "
+                "It could make life difficult for downstream software reusing this class.",
                 UserWarning,
             )
 

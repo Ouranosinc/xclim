@@ -13,6 +13,7 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 
+# pylint: disable=pointless-string-statement
 """
 Implemented partitioning algorithms:
 
@@ -49,6 +50,7 @@ Related bixtex entries:
  - lehner_2020
  - evin_2019
 """
+# pylint: enable=pointless-string-statement
 
 # TODO: Add ref for Brekke and Barsugli (2013)
 

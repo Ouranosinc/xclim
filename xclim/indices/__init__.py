@@ -20,6 +20,7 @@ from .fire import (
     mcarthur_forest_fire_danger_index,
 )
 
+# pylint: disable=pointless-string-statement
 """
 Notes for docstrings
 --------------------
@@ -93,6 +94,7 @@ Indice Descriptions
 ===================
 .. _`NumPy`: https://numpydoc.readthedocs.io/en/latest/format.html#docstring-standard
 """
+# pylint: enable=pointless-string-statement
 
 # TODO: Should we reference the standard vocabulary we're using ?
 # E.g. http://vocab.nerc.ac.uk/collection/P07/current/BHMHISG2/

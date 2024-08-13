@@ -16,6 +16,8 @@ __all__ = [
 
 
 class Streamflow(ResamplingIndicator):
+    """Streamflow class."""
+
     context = "hydro"
     src_freq = "D"
     keywords = "streamflow hydrology"
@@ -69,5 +71,5 @@ doy_qmin = Streamflow(
     description="Day of the year of the minimum streamflow over {indexer}.",
     units="",
     compute=declare_units(da="[discharge]")(generic.select_resample_op),
-    parameters=dict(op=generic.doymin, out_units=None),
+    parameters={"op": generic.doymin, "out_units": None},
 )

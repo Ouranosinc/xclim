@@ -269,7 +269,7 @@ precip_accumulation = PrecipWithIndexing(
     "considered solid if the average daily temperature is below 0°C (and vice versa).",
     cell_methods="time: sum over days",
     compute=indices.precip_accumulation,
-    parameters=dict(tas=None, phase=None),
+    parameters={"tas": None, "phase": None},
 )
 
 precip_average = PrecipWithIndexing(
@@ -284,7 +284,7 @@ precip_average = PrecipWithIndexing(
     "considered solid if the average daily temperature is below 0°C threshold (and vice versa).",
     cell_methods="time: mean over days",
     compute=indices.precip_average,
-    parameters=dict(tas=None, phase=None),
+    parameters={"tas": None, "phase": None},
 )
 
 wet_precip_accumulation = PrecipWithIndexing(

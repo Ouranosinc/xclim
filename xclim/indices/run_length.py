@@ -1674,5 +1674,5 @@ def suspicious_run(
         dask="parallelized",
         output_dtypes=[bool],
         keep_attrs=True,
-        kwargs=dict(window=window, op=op, thresh=thresh),
+        kwargs={"window": window, "op": op, "thresh": thresh},
     )

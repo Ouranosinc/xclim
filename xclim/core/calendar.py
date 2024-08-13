@@ -153,7 +153,7 @@ def get_calendar(obj: Any, dim: str = "time") -> str:
     """
     if isinstance(obj, (xr.DataArray, xr.Dataset)):
         return obj[dim].dt.calendar
-    elif isinstance(obj, xr.CFTimeIndex):
+    if isinstance(obj, xr.CFTimeIndex):
         obj = obj.values[0]
     else:
         obj = np.take(obj, 0)
@@ -487,7 +487,7 @@ def percentile_doy(
         # Preserve chunk size
         time_chunks_count = len(arr.chunks[arr.get_axis_num("time")])
         doy_chunk_size = np.ceil(len(rrr.dayofyear) / (window * time_chunks_count))
-        rrr = rrr.chunk(dict(stack_dim=-1, dayofyear=doy_chunk_size))
+        rrr = rrr.chunk({"stack_dim": -1, "dayofyear": doy_chunk_size})
 
     if np.isscalar(per):
         per = [per]
@@ -498,10 +498,10 @@ def percentile_doy(
         input_core_dims=[["stack_dim"]],
         output_core_dims=[["percentiles"]],
         keep_attrs=True,
-        kwargs=dict(percentiles=per, alpha=alpha, beta=beta, copy=copy),
+        kwargs={"percentiles": per, "alpha": alpha, "beta": beta, "copy": copy},
         dask="parallelized",
         output_dtypes=[rrr.dtype],
-        dask_gufunc_kwargs=dict(output_sizes={"percentiles": len(per)}),
+        dask_gufunc_kwargs={"output_sizes": {"percentiles": len(per)}},
     )
     p = p.assign_coords(percentiles=xr.DataArray(per, dims=("percentiles",)))
 
@@ -736,7 +736,7 @@ def _interpolate_doy_calendar(
     da = source
     if uses_dask(source):
         # interpolate_na cannot run on chunked dayofyear.
-        da = source.chunk(dict(dayofyear=-1))
+        da = source.chunk({"dayofyear": -1})
     filled_na = da.interpolate_na(dim="dayofyear")
 
     # Interpolate to target dayofyear range
