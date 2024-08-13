@@ -177,7 +177,7 @@ def standardized_streamflow_index(
     >>> from xclim.indices import standardized_streamflow_index
     >>> ds = xr.open_dataset(path_to_q_file)
     >>> q = ds.q
-    >>> cal_start, cal_end = "1990-05-01", "1990-08-31"
+    >>> cal_start, cal_end = "2006-05-01", "2008-06-01"
     >>> ssi_3 = standardized_streamflow_index(
     ...     q,
     ...     freq="MS",
@@ -198,9 +198,13 @@ def standardized_streamflow_index(
     ... )  # First getting params
     >>> ssi_3 = standardized_streamflow_index(q, params=params)
 
+    See Also
+    --------
+    standardized_precipitation_index
+
     References
     ----------
-    CHANGEME :cite:cts:`mckee_relationship_1993`
+    :cite:cts:`vicente-serrano_2012`
     """
     fitkwargs = fitkwargs or {}
     dist_methods = {"genextreme": ["ML", "APP", "PWM"], "fisk": ["ML", "APP"]}
