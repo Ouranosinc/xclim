@@ -211,7 +211,7 @@ def standardized_streamflow_index(
     if dist in dist_methods.keys():
         if method not in dist_methods[dist]:
             raise NotImplementedError(
-                f"{method} method is not implemented for {dist} distribution"
+                f"{method} method is not implemented for {dist} distribution."
             )
     else:
         raise NotImplementedError(f"{dist} distribution is not yet implemented.")
