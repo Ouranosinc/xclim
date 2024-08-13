@@ -751,11 +751,11 @@ class TestStandardizedIndices:
 
         np.testing.assert_allclose(spei.values, values, rtol=0, atol=diff_tol)
 
-    # reference results: Obtained with R package `standaRdized`
     @pytest.mark.slow
     @pytest.mark.parametrize(
         "freq, window, dist, method,  values, diff_tol",
         [
+            # reference results: Obtained with R package `standaRdized`
             (
                 "D",
                 1,
@@ -772,6 +772,93 @@ class TestStandardizedIndices:
                 [0.4414, 0.4695, 0.4861, 0.4838, 0.4877],
                 9e-2,
             ),
+            # reference results : xclim version where the test was implemented
+            (
+                "D",
+                1,
+                "genextreme",
+                "ML",
+                [0.6105, 0.6167, 0.5957, 0.5520, 0.5794],
+                2e-2,
+            ),
+            (
+                "D",
+                1,
+                "genextreme",
+                "APP",
+                [-0.0259, -0.0141, -0.0080, -0.0098, 0.0089],
+                2e-2,
+            ),
+            ("D", 1, "fisk", "ML", [0.3514, 0.3741, 0.1349, 0.4332, 0.1724], 2e-2),
+            ("D", 1, "fisk", "APP", [0.3321, 0.3477, 0.3536, 0.3468, 0.3723], 2e-2),
+            (
+                "D",
+                12,
+                "genextreme",
+                "ML",
+                [0.5131, 0.5442, 0.5645, 0.5660, 0.5720],
+                2e-2,
+            ),
+            (
+                "D",
+                12,
+                "genextreme",
+                "APP",
+                [-0.0697, -0.0550, -0.0416, -0.0308, -0.0194],
+                2e-2,
+            ),
+            ("D", 12, "fisk", "ML", [0.2096, 0.2728, 0.3259, 0.3466, 0.2836], 2e-2),
+            ("D", 12, "fisk", "APP", [0.2667, 0.2893, 0.3088, 0.3233, 0.3385], 2e-2),
+            (
+                "MS",
+                1,
+                "genextreme",
+                "ML",
+                [0.7315, -1.4919, -0.5405, 0.9965, -0.7449],
+                2e-2,
+            ),
+            (
+                "MS",
+                1,
+                "genextreme",
+                "APP",
+                [0.0979, -1.6806, -0.5345, 0.7355, -0.7583],
+                2e-2,
+            ),
+            ("MS", 1, "fisk", "ML", [0.5331, -1.5777, -0.4363, 0.2525, -0.8149], 2e-2),
+            ("MS", 1, "fisk", "APP", [0.4663, -1.9076, -0.5362, 0.8070, -0.8035], 2e-2),
+            (
+                "MS",
+                12,
+                "genextreme",
+                "ML",
+                [-0.9795, -1.0398, -1.9019, -1.6970, -1.4761],
+                2e-2,
+            ),
+            (
+                "MS",
+                12,
+                "genextreme",
+                "APP",
+                [-0.9095, -1.0996, -1.9207, -2.2665, -2.1746],
+                2e-2,
+            ),
+            (
+                "MS",
+                12,
+                "fisk",
+                "ML",
+                [-1.0776, -1.0827, -1.9333, -1.7764, -1.8391],
+                2e-2,
+            ),
+            (
+                "MS",
+                12,
+                "fisk",
+                "APP",
+                [-0.9607, -1.1265, -1.7004, -1.8747, -1.8132],
+                2e-2,
+            ),
         ],
     )
     def test_standardized_streamflow_index(
@@ -783,8 +870,8 @@ class TestStandardizedIndices:
         if freq == "D":
             q = q.sel(time=slice("2008-01-01", "2008-01-30")).fillna(ds.q_obs.mean())
         else:
-            q = q.sel(time=slice("2008-01-01", "2008-12-31")).fillna(ds.q_obs.mean())
-        fitkwargs = {}
+            q = q.sel(time=slice("2008-01-01", "2009-12-31")).fillna(ds.q_obs.mean())
+        fitkwargs = {"floc": 0} if method == "APP" else {}
         params = xci.stats.standardized_index_fit_params(
             q_cal,
             freq=freq,

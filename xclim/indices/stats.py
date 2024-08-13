@@ -756,7 +756,7 @@ def standardized_index_fit_params(
     if method == "APP":
         if "floc" not in fitkwargs.keys():
             raise ValueError(
-                "The APP method is only supported for two-parameter distributions with `gamma` or `fisk` with `loc` being fixed."
+                "The APP method is only supported for two-parameter distributions with `gamma`, `fisk` or `genextreme` with `loc` being fixed."
                 "Pass a value for `floc` in `fitkwargs`."
             )
     if offset is not None:
