@@ -270,7 +270,7 @@ heat_spell_frequency = Temp(
     units="",
     long_name="Number of heat spells",
     description="{freq} number of heat spells events. A heat spell occurs when the {window}-day "
-    "averages of daily minimum and maximum temperatures each exceed {threshold1} and {threshold2}. "
+    "averages of daily minimum and maximum temperatures each exceed {thresh_tasmin} and {thresh_tasmax}. "
     "All days of the {window}-day period are considered part of the spell.",
     abstract="Number of heat spells. A heat spell occurs when rolling averages of daily minimum and maximum temperatures exceed given "
     "thresholds for a number of days.",
@@ -282,10 +282,7 @@ heat_spell_frequency = Temp(
         spell_reducer="count",
         op=">=",
         window={"default": 3},
-        win_reducer={
-            "default": "mean",
-            "name": "op",
-        },  # To mirror other spell indicators
+        win_reducer={"default": "mean"},
         freq={"default": "YS"},
         threshold1={
             "description": "Threshold for tasmin",
@@ -307,7 +304,7 @@ heat_spell_max_length = Temp(
     standard_name="spell_length_of_days_with_air_temperature_above_threshold",
     long_name="Longest heat spell",
     description="{freq} maximum length of heat spells. A heat spell occurs when the {window}-day "
-    "averages of daily minimum and maximum temperatures each exceed {threshold1} and {threshold2}. "
+    "averages of daily minimum and maximum temperatures each exceed {thresh_tasmin} and {thresh_tasmax}. "
     "All days of the {window}-day period are considered part of the spell.",
     abstract="The longest heat spell of a period. A heat spell occurs when rolling averages of daily minimum and maximum temperatures exceed given "
     "thresholds for a number of days.",
@@ -317,10 +314,7 @@ heat_spell_max_length = Temp(
         spell_reducer="max",
         op=">=",
         window={"default": 3},
-        win_reducer={
-            "default": "mean",
-            "name": "op",
-        },  # To mirror other spell indicators
+        win_reducer={"default": "mean"},
         freq={"default": "YS"},
         threshold1={
             "description": "Threshold for tasmin",
@@ -343,7 +337,7 @@ heat_spell_total_length = Temp(
     long_name="Total length of heat spells.",
     description="{freq} total length of heat spell events. "
     "A heat spell occurs when the {window}-day  averages of daily minimum and maximum temperatures "
-    "each exceed {threshold1} and {threshold2}.  All days of the {window}-day period are considered part of the spell.",
+    "each exceed {thresh_tasmin} and {thresh_tasmax}.  All days of the {window}-day period are considered part of the spell.",
     abstract="Total length of heat spells. A heat spell occurs when rolling averages of daily minimum and maximum temperatures exceed given "
     "thresholds for a number of days.",
     compute=indices.generic.bivariate_spell_length_statistics,
@@ -352,10 +346,7 @@ heat_spell_total_length = Temp(
         spell_reducer="sum",
         op=">=",
         window={"default": 3},
-        win_reducer={
-            "default": "mean",
-            "name": "op",
-        },  # To mirror other spell indicators
+        win_reducer={"default": "mean"},
         freq={"default": "YS"},
         threshold1={
             "description": "Threshold for tasmin",

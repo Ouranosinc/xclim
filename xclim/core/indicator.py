@@ -78,7 +78,7 @@ details on each.
             units: <param units>  # Only valid if "compute" points to a generic function
             default : <param default>
             description: <param description>
-            name : <param name>  # A name to use when generating the docstring and signature.
+            name : <param name>  # Change the name of the parameter (similar to what `input` does for variables)
             kind: <param kind> # Override the parameter kind.
                                # This is mostly useful for transforming an optional variable into a required one by passing ``kind: 0``.
         ...
@@ -197,9 +197,11 @@ class Parameter:
     _empty = _empty
 
     kind: InputKind
+    compute_name: str = (
+        _empty  # Name of the compute function's argument corresponding to this parameter.
+    )
     default: Any = _empty_default
     description: str = ""
-    name: str = _empty
     units: str = _empty
     choices: set = _empty
     value: Any = _empty
@@ -214,17 +216,12 @@ class Parameter:
 
     @classmethod
     def is_parameter_dict(cls, other: dict) -> bool:
-        """Return whether indicator has a parameter dictionary."""
+        """Return whether other can update a parameter dictionary."""
+        # Passing compute_name is forbidden.
+        # name is valid, but is handled by the indicator
         return set(other.keys()).issubset(
-            cls.__dataclass_fields__.keys()  # pylint: disable=no-member
+            {"kind", "default", "description", "units", "choices", "value", "name"}
         )
-
-    # def __getitem__(self, key) -> str:
-    #     """Return an item in retro-compatible fashion."""
-    #     try:
-    #         return str(getattr(self, key))
-    #     except AttributeError as err:
-    #         raise KeyError(key) from err
 
     def __contains__(self, key) -> bool:
         """Imitate previous behaviour where "units" and "choices" were missing, instead of being "_empty"."""
@@ -354,10 +351,8 @@ class Indicator(IndicatorRegistrar):
 
     # metadata fields that are formatted as free text (first letter capitalized)
     _text_fields = ["long_name", "description", "comment"]
-    # Class attributes that are function (so we know which to convert to static methods)
+    # Class attributes that are functions (so we know which to convert to static methods)
     _funcs = ["compute"]
-    # Mapping from name in the compute function to official (CMIP6) variable name
-    _variable_mapping = {}
 
     # Will become the class's name
     identifier = None
@@ -439,33 +434,19 @@ class Indicator(IndicatorRegistrar):
         else:  # inherit parameters from base class
             parameters = deepcopy(cls._all_parameters)
 
-        # Update parameters with passed parameters
+        # Update parameters with passed parameters, might change some parameters name (but not variables)
         cls._update_parameters(parameters, kwds.pop("parameters", {}))
 
         # Input variable mapping (to change variable names in signature and expected units/cf attrs).
-        cls._parse_var_mapping(kwds.pop("input", {}), parameters, kwds)
+        # new_units is a mapping from compute function name to units inferred from the var mapping
+        new_units = cls._parse_var_mapping(kwds.pop("input", {}), parameters)
 
         # Raise on incorrect params, sort params, modify var defaults in-place if needed
         parameters = cls._ensure_correct_parameters(parameters)
 
-        # If needed, wrap compute with declare units
-        if "compute" in kwds:
-            if not hasattr(kwds["compute"], "in_units") and "_variable_mapping" in kwds:
-                # We actually need the inverse mapping (to get cmip6 name -> arg name)
-                inv_var_map = dict(map(reversed, kwds["_variable_mapping"].items()))
-                # parameters has already been update above.
-                kwds["compute"] = declare_units(
-                    **{
-                        inv_var_map[k]: m.units
-                        for k, m in parameters.items()
-                        if "units" in m and k in inv_var_map
-                    }
-                )(kwds["compute"])
-
-            if hasattr(kwds["compute"], "in_units"):
-                varmap = kwds.get("_variable_mapping", {})
-                for name, unit in kwds["compute"].in_units.items():
-                    parameters[varmap.get(name, name)].units = unit
+        if "compute" in kwds and not hasattr(kwds["compute"], "in_units") and new_units:
+            # If needed, wrap compute with declare units
+            kwds["compute"] = declare_units(**new_units)(kwds["compute"])
 
         # All updates done.
         kwds["_all_parameters"] = parameters
@@ -536,8 +517,11 @@ class Indicator(IndicatorRegistrar):
             )
         for name, param in compute_sig.parameters.items():
             meta = params_dict.setdefault(name, {})
+            meta["compute_name"] = name
             meta["default"] = param.default
             meta["kind"] = infer_kind_from_parameter(param)
+            if hasattr(compute, "in_units") and name in compute.in_units:
+                meta["units"] = compute.in_units[name]
 
         parameters = {name: Parameter(**param) for name, param in params_dict.items()}
         return parameters, docmeta
@@ -562,7 +546,14 @@ class Indicator(IndicatorRegistrar):
         try:
             for key, val in passed.items():
                 if isinstance(val, dict) and Parameter.is_parameter_dict(val):
-                    # modified meta
+                    if "name" in val:
+                        new_key = val.pop("name")
+                        if new_key in parameters:
+                            raise ValueError(
+                                f"Cannot rename a parameter or variable with the same name as another parameter. '{new_key}' is already a parameter."
+                            )
+                        parameters[new_key] = parameters.pop(key)
+                        key = new_key
                     parameters[key].update(val)
                 elif key in parameters:
                     parameters[key].value = val
@@ -575,9 +566,10 @@ class Indicator(IndicatorRegistrar):
             ) from err
 
     @classmethod
-    def _parse_var_mapping(cls, variable_mapping, parameters, kwds):
+    def _parse_var_mapping(cls, variable_mapping, parameters):
         """Parse the variable mapping passed in `input` and update `parameters` in-place."""
         # Update parameters
+        new_units = {}
         for old_name, new_name in variable_mapping.items():
             meta = parameters[new_name] = parameters.pop(old_name)
             try:
@@ -598,13 +590,9 @@ class Indicator(IndicatorRegistrar):
                         f"{meta.units}, new = {varmeta['canonical_units']}"
                     ) from err
             meta.units = varmeta.get("dimensions", varmeta["canonical_units"])
+            new_units[meta.compute_name] = meta.units
             meta.description = varmeta["description"]
-
-        if variable_mapping:
-            # Update mapping attribute
-            new_variable_mapping = deepcopy(cls._variable_mapping)
-            new_variable_mapping.update(variable_mapping)
-            kwds["_variable_mapping"] = new_variable_mapping
+        return new_units
 
     @classmethod
     def _ensure_correct_parameters(cls, parameters):
@@ -791,13 +779,12 @@ class Indicator(IndicatorRegistrar):
                     )
                 )
             else:
-                show_name = name if meta.name is meta._empty else meta.name
                 parameters.append(
                     _Parameter(
-                        show_name,
+                        name,
                         kind=_Parameter.KEYWORD_ONLY,
                         default=meta.default,
-                        annotation=compute_sig.parameters[name].annotation,
+                        annotation=compute_sig.parameters[meta.compute_name].annotation,
                     )
                 )
 
@@ -829,22 +816,10 @@ class Indicator(IndicatorRegistrar):
 
         das, params = self._preprocess_and_checks(das, params)
 
-        # Get correct variable names for the compute function.
-        inv_var_map = dict(map(reversed, self._variable_mapping.items()))
-        compute_das = {inv_var_map.get(nm, nm): das[nm] for nm in das}
-
-        # Compute the indicator values, ignoring NaNs and missing values.
-        # Filter the passed parameters to only keep the ones needed by compute.
-        kwargs = {}
-        var_kwargs = {}
-        for nm, pa in signature(self.compute).parameters.items():
-            if pa.kind == _Parameter.VAR_KEYWORD:
-                var_kwargs = params[nm]
-            elif nm not in compute_das and nm in params:
-                kwargs[nm] = params[nm]
-
+        # get mappings where keys are the actual compute function's argument names
+        compute_das, compute_params, var_kwargs = self._get_compute_args(das, params)
         with xarray.set_options(keep_attrs=False):
-            outs = self.compute(**compute_das, **kwargs, **var_kwargs)
+            outs = self.compute(**compute_das, **compute_params, **var_kwargs)
 
         if isinstance(outs, DataArray):
             outs = [outs]
@@ -910,11 +885,6 @@ class Indicator(IndicatorRegistrar):
         ba = self.__signature__.bind(*args, **kwds)
         ba.apply_defaults()
 
-        # Assign parameters with different signature-names correctly
-        for name, param in self._all_parameters.items():
-            if param.name is not param._empty:
-                ba.arguments[name] = ba.arguments.pop(param.name)
-
         # Assign inputs passed as strings from ds.
         self._assign_named_args(ba)
 
@@ -935,7 +905,7 @@ class Indicator(IndicatorRegistrar):
             else:
                 params[name] = param.value
 
-        ds = ba.arguments.get("ds")
+        ds = params.pop("ds", None)
         dsattrs = ds.attrs if ds is not None else {}
         return das, params, dsattrs
 
@@ -970,6 +940,23 @@ class Indicator(IndicatorRegistrar):
         self._bind_call(self.datacheck, **das)
         self._bind_call(self.cfcheck, **das)
         return das, params
+
+    def _get_compute_args(self, das, params):
+        """Rename variables and parameters to match the compute function's names and split VAR_KEYWORD arguments."""
+        # Get correct variable names for the compute function.
+        inv_var_map = {
+            key: p.compute_name
+            for key, p in self._all_parameters.items()
+            if p.compute_name is not _empty
+        }
+        compute_das = {inv_var_map[nm]: das[nm] for nm in das}
+        compute_params = {inv_var_map[nm]: params[nm] for nm in params}
+
+        var_kwargs = {}
+        for key, p in self._all_parameters.items():
+            if p.kind == InputKind.KWARGS and p.compute_name in compute_params:
+                var_kwargs.update(compute_params.pop(p.compute_name))
+        return compute_das, compute_params, var_kwargs
 
     def _postprocess(self, outs, das, params):
         """Actions to done after computing."""
