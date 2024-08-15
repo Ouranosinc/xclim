@@ -286,12 +286,12 @@ heat_spell_frequency = Temp(
         freq={"default": "YS"},
         threshold1={
             "description": "Threshold for tasmin",
-            "default": "22 °C",
+            "default": "20 °C",
             "name": "thresh_tasmin",
         },
         threshold2={
             "description": "Threshold for tasmax",
-            "default": "30 °C",
+            "default": "33 °C",
             "name": "thresh_tasmax",
         },
     ),
@@ -318,12 +318,12 @@ heat_spell_max_length = Temp(
         freq={"default": "YS"},
         threshold1={
             "description": "Threshold for tasmin",
-            "default": "22 °C",
+            "default": "20 °C",
             "name": "thresh_tasmin",
         },
         threshold2={
             "description": "Threshold for tasmax",
-            "default": "30 °C",
+            "default": "33 °C",
             "name": "thresh_tasmax",
         },
     ),
@@ -350,12 +350,12 @@ heat_spell_total_length = Temp(
         freq={"default": "YS"},
         threshold1={
             "description": "Threshold for tasmin",
-            "default": "22 °C",
+            "default": "20 °C",
             "name": "thresh_tasmin",
         },
         threshold2={
             "description": "Threshold for tasmax",
-            "default": "30 °C",
+            "default": "33 °C",
             "name": "thresh_tasmax",
         },
     ),

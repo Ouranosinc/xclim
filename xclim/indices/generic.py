@@ -381,6 +381,7 @@ def spell_mask(
     thresh: float or sequence of floats
         The threshold to compare the rolling statistics against, as ``window_stats op threshold``.
         If data is a list, this must be a list of the same length with a threshold for each variable.
+        This function does not handle units and can't accept Quantified objects.
     weights: sequence of floats
         A list of weights of the same length as the window.
         Only supported if `win_reducer` is "mean".
@@ -392,7 +393,7 @@ def spell_mask(
     -------
     xarray.DataArray
         Same shape as ``data``, but boolean.
-        If ``data`` was a Dataset, this is a DataArray of the same shape as the alignment of all variables.
+        If ``data`` was a list, this is a DataArray of the same shape as the alignment of all variables.
     """
     # Checks
     if not isinstance(data, xarray.DataArray):
