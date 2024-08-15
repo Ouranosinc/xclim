@@ -33,6 +33,7 @@ from . import run_length as rl
 __all__ = [
     "aggregate_between_dates",
     "binary_ops",
+    "bivariate_spell_length_statistics",
     "compare",
     "count_level_crossings",
     "count_occurrences",
@@ -55,6 +56,7 @@ __all__ = [
     "select_resample_op",
     "spell_length",
     "spell_length_statistics",
+    "spell_mask",
     "statistics",
     "temperature_sum",
     "threshold_count",
@@ -407,7 +409,7 @@ def spell_mask(
     if weights is not None:
         if win_reducer != "mean":
             raise ValueError(
-                f"Argument 'weights' is only supported if 'window_reducer' is 'mean'. Got :  {win_reducer}"
+                f"Argument 'weights' is only supported if 'win_reducer' is 'mean'. Got :  {win_reducer}"
             )
         elif len(weights) != window:
             raise ValueError(
