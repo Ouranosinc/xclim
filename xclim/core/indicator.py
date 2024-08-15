@@ -904,7 +904,7 @@ class Indicator(IndicatorRegistrar):
             else:
                 params[name] = param.value
 
-        ds = params.pop("ds", None)
+        ds = params.get("ds")
         dsattrs = ds.attrs if ds is not None else {}
         return das, params, dsattrs
 
@@ -943,18 +943,18 @@ class Indicator(IndicatorRegistrar):
     def _get_compute_args(self, das, params):
         """Rename variables and parameters to match the compute function's names and split VAR_KEYWORD arguments."""
         # Get correct variable names for the compute function.
-        inv_var_map = {
-            key: p.compute_name
-            for key, p in self._all_parameters.items()
-            if p.compute_name is not _empty
-        }
-        compute_das = {inv_var_map[nm]: das[nm] for nm in das}
-        compute_params = {inv_var_map[nm]: params[nm] for nm in params}
-
-        var_kwargs = {}
+        # Exclude param without a mapping inside the compute functions (those injected by the indicator class)
+        compute_das, compute_params, var_kwargs = {}, {}, {}
         for key, p in self._all_parameters.items():
-            if p.kind == InputKind.KWARGS and p.compute_name in compute_params:
-                var_kwargs.update(compute_params.pop(p.compute_name))
+            if p.compute_name is not _empty:
+                if key in das:
+                    compute_das[p.compute_name] = das[key]
+                if key in params:
+                    if p.kind == InputKind.KWARGS:
+                        var_kwargs.update(params[key])
+                    else:
+                        compute_params[p.compute_name] = params[key]
+
         return compute_das, compute_params, var_kwargs
 
     def _postprocess(self, outs, das, params):
@@ -1531,21 +1531,16 @@ class ResamplingIndicator(CheckMissingIndicator):
 class IndexingIndicator(Indicator):
     """Indicator that also injects "indexer" kwargs to subset the inputs before computation."""
 
-    @classmethod
-    def _injected_parameters(cls):
-        return super()._injected_parameters() + [
-            (
-                "indexer",
-                Parameter(
-                    kind=InputKind.KWARGS,
-                    description=(
-                        "Indexing parameters to compute the indicator on a temporal "
-                        "subset of the data. It accepts the same arguments as "
-                        ":py:func:`xclim.indices.generic.select_time`."
-                    ),
-                ),
-            )
-        ]
+    def __init__(self, *args, **kwargs):
+        self._all_parameters["indexer"] = Parameter(
+            kind=InputKind.KWARGS,
+            description=(
+                "Indexing parameters to compute the indicator on a temporal "
+                "subset of the data. It accepts the same arguments as "
+                ":py:func:`xclim.indices.generic.select_time`."
+            ),
+        )
+        super().__init__(*args, **kwargs)
 
     def _preprocess_and_checks(self, das: dict[str, DataArray], params: dict[str, Any]):
         """Perform parent's checks and also check if freq is allowed."""
