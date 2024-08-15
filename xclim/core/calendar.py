@@ -1576,7 +1576,9 @@ def unstack_periods(da: xr.DataArray | xr.Dataset, dim: str = "period"):
          0   o   o   o   x   x
         === === === === === === === ===
     """
-    from xclim.core.units import infer_sampling_units  # pylint: disable=import-outside-toplevel
+    from xclim.core.units import (  # pylint: disable=import-outside-toplevel
+        infer_sampling_units,
+    )
 
     try:
         starts = da[dim]
