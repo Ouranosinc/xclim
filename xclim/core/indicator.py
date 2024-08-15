@@ -196,9 +196,9 @@ class Parameter:
     _empty = _empty
 
     kind: InputKind
-    name: str = _empty
     default: Any = _empty_default
     description: str = ""
+    name: str = _empty
     units: str = _empty
     choices: set = _empty
     value: Any = _empty

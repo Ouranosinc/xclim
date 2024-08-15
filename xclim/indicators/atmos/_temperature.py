@@ -269,7 +269,7 @@ heat_spell_frequency = Temp(
     identifier="heat_spell_frequency",
     units="",
     long_name="Number of heat spells",
-    description="{freq} number of heat spells events within a given period. A heat spell occurs when the {window}-day "
+    description="{freq} number of heat spells events. A heat spell occurs when the {window}-day "
     "averages of daily minimum and maximum temperatures each exceed {threshold1} and {threshold2}. "
     "All days of the {window}-day period are considered part of the spell.",
     abstract="Number of heat spells. A heat spell occurs when rolling averages of daily minimum and maximum temperatures exceed given "
@@ -306,7 +306,7 @@ heat_spell_max_length = Temp(
     units="days",
     standard_name="spell_length_of_days_with_air_temperature_above_threshold",
     long_name="Longest heat spell",
-    description="{freq} maximum length of heat spells within a given period. A heat spell occurs when the {window}-day "
+    description="{freq} maximum length of heat spells. A heat spell occurs when the {window}-day "
     "averages of daily minimum and maximum temperatures each exceed {threshold1} and {threshold2}. "
     "All days of the {window}-day period are considered part of the spell.",
     abstract="The longest heat spell of a period. A heat spell occurs when rolling averages of daily minimum and maximum temperatures exceed given "
@@ -341,7 +341,7 @@ heat_spell_total_length = Temp(
     units="days",
     standard_name="spell_length_of_days_with_air_temperature_above_threshold",
     long_name="Total length of heat spells.",
-    description="{freq} total length of heat spell events occurring within a given period. "
+    description="{freq} total length of heat spell events. "
     "A heat spell occurs when the {window}-day  averages of daily minimum and maximum temperatures "
     "each exceed {threshold1} and {threshold2}.  All days of the {window}-day period are considered part of the spell.",
     abstract="Total length of heat spells. A heat spell occurs when rolling averages of daily minimum and maximum temperatures exceed given "
