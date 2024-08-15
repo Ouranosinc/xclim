@@ -57,7 +57,7 @@ __all__ = [
 units = deepcopy(cf_xarray.units.units)
 # Changing the default string format for units/quantities. cf is implemented by cf-xarray
 # g is the most versatile float format.
-units.default_format = "gcf"
+units.formatter.default_format = "gcf"
 # Switch this flag back to False. Not sure what that implies, but it breaks some tests.
 units.force_ndarray_like = False  # noqa: F841
 # Another alias not included by cf_xarray
