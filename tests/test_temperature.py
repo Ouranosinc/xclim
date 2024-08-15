@@ -621,7 +621,11 @@ class TestHeatSpellFrequency:
         tx = tasmax_series(tx1 + K2C, start="1/1/2000")
 
         hsf = atmos.heat_spell_frequency(
-            tn, tx, thresh_tasmin="22 C", thresh_tasmax="30 C", freq="YS", op=">"
+            tn,
+            tx,
+            thresh_tasmin="22.1 C",
+            thresh_tasmax="30.1 C",
+            freq="YS",
         )
         np.testing.assert_allclose(hsf.values[:1], 2)
 
@@ -648,7 +652,11 @@ class TestHeatSpellMaxLength:
         tx = tasmax_series(tx1 + K2C, start="1/1/2000")
 
         hsf = atmos.heat_spell_max_length(
-            tn, tx, thresh_tasmin="22 C", thresh_tasmax="30 C", freq="YS", op=">"
+            tn,
+            tx,
+            thresh_tasmin="22.1 C",
+            thresh_tasmax="30.1 C",
+            freq="YS",
         )
         np.testing.assert_allclose(hsf.values[:1], 4)
 
@@ -680,12 +688,12 @@ class TestHeatSpellTotalLength:
         tx = tasmax_series(tx1 + K2C, start="1/1/2000")
 
         hsf = atmos.heat_spell_total_length(
-            tn, tx, thresh_tasmin="22 C", thresh_tasmax="30 C", freq="YS", op=">"
+            tn, tx, thresh_tasmin="22.1 C", thresh_tasmax="30.1 C", freq="YS"
         )
         np.testing.assert_allclose(hsf.values[:1], 7)
 
         hsf = atmos.heat_spell_total_length(
-            tn, tx, thresh_tasmin="20 C", thresh_tasmax="30 C", window=5, freq="YS"
+            tn, tx, thresh_tasmin="22 C", thresh_tasmax="30 C", window=5, freq="YS"
         )
         np.testing.assert_allclose(hsf.values[:1], 5)
 

@@ -279,10 +279,13 @@ heat_spell_frequency = Temp(
     compute=indices.generic.bivariate_spell_length_statistics,
     input={"data1": "tasmin", "data2": "tasmax"},
     parameters=dict(
-        win_reducer="mean",
         spell_reducer="count",
+        op=">=",
         window={"default": 3},
-        op={"default": ">="},
+        win_reducer={
+            "default": "mean",
+            "name": "op",
+        },  # To mirror other spell indicators
         freq={"default": "YS"},
         threshold1={
             "description": "Threshold for tasmin",
@@ -311,10 +314,13 @@ heat_spell_max_length = Temp(
     compute=indices.generic.bivariate_spell_length_statistics,
     input={"data1": "tasmin", "data2": "tasmax"},
     parameters=dict(
-        win_reducer="mean",
         spell_reducer="max",
+        op=">=",
         window={"default": 3},
-        op={"default": ">="},
+        win_reducer={
+            "default": "mean",
+            "name": "op",
+        },  # To mirror other spell indicators
         freq={"default": "YS"},
         threshold1={
             "description": "Threshold for tasmin",
@@ -343,10 +349,13 @@ heat_spell_total_length = Temp(
     compute=indices.generic.bivariate_spell_length_statistics,
     input={"data1": "tasmin", "data2": "tasmax"},
     parameters=dict(
-        win_reducer="mean",
-        spell_reducer="max",
+        spell_reducer="sum",
+        op=">=",
         window={"default": 3},
-        op={"default": ">="},
+        win_reducer={
+            "default": "mean",
+            "name": "op",
+        },  # To mirror other spell indicators
         freq={"default": "YS"},
         threshold1={
             "description": "Threshold for tasmin",
