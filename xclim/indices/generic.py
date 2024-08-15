@@ -92,6 +92,7 @@ def select_resample_op(
     r = da.resample(time=freq)
     if isinstance(op, str):
         op = _xclim_ops.get(op, op)
+    if isinstance(op, str):
         out = getattr(r, op.replace("integral", "sum"))(dim="time", keep_attrs=True)
     else:
         with xr.set_options(keep_attrs=True):
