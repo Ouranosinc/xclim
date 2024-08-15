@@ -358,6 +358,7 @@ def test_to_agg_units(in_u, opfunc, op, exp, exp_u):
         attrs={"units": in_u},
     )
 
+    # FIXME: This is emitting warnings from deprecated DataArray.argmax() usage.
     out = to_agg_units(getattr(da, opfunc)(), da, op)
     np.testing.assert_allclose(out, exp)
 
