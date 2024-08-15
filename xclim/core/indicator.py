@@ -949,7 +949,8 @@ class Indicator(IndicatorRegistrar):
             if p.compute_name is not _empty:
                 if key in das:
                     compute_das[p.compute_name] = das[key]
-                if key in params:
+                # elif because some args are in both (percentile DataArrays)
+                elif key in params:
                     if p.kind == InputKind.KWARGS:
                         var_kwargs.update(params[key])
                     else:
