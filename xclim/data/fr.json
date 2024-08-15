@@ -337,19 +337,19 @@
   },
   "HEAT_SPELL_FREQUENCY": {
     "long_name": "Nombre de vagues de chaleur.",
-    "description": "Nombre {freq:m} de vagues de chaleur. Une vague de chaleur se produit lorsque les moyennes sur {window} jours des températures minimale et maximale quotidiennes excèdent {thresh_tasmin} et {thresh_tasmax}, respectivement. Les {windows} jours de la moyenne sont comptés dans la vague.",
+    "description": "Nombre {freq:m} de vagues de chaleur. Une vague de chaleur se produit lorsque les moyennes sur {window} jours des températures minimale et maximale quotidiennes excèdent {thresh_tasmin} et {thresh_tasmax}, respectivement. Les {window} jours de la moyenne sont comptés dans la vague.",
     "title": "Fréquence des vagues de chaleur",
     "abstract": "Nombre de vagues de chaleur. Une vague de chaleur se produit lorsque les moyennes mobiles des températures minimale et maximale quotidiennes excèdent des seuils donnés."
   },
   "HEAT_SPELL_MAX_LENGTH": {
     "long_name": "Vague de chaleur la plus longue.",
-    "description": "Durée maximale {freq:f} des vagues de chaleur. Une vague de chaleur se produit lorsque les moyennes sur {window} jours des températures minimale et maximale quotidiennes excèdent {thresh_tasmin} et {thresh_tasmax}, respectivement. Les {windows} jours de la moyenne sont comptés dans la vague.",
+    "description": "Durée maximale {freq:f} des vagues de chaleur. Une vague de chaleur se produit lorsque les moyennes sur {window} jours des températures minimale et maximale quotidiennes excèdent {thresh_tasmin} et {thresh_tasmax}, respectivement. Les {window} jours de la moyenne sont comptés dans la vague.",
     "title": "Durée maximale des vagues de chaleur",
     "abstract": "Durée maximale des vagues de chaleur. Une vague de chaleur se produit lorsque les moyennes mobiles des températures minimale et maximale quotidiennes excèdent des seuils donnés."
   },
   "HEAT_SPELL_TOTAL_LENGTH": {
     "long_name": "Durée totale des vagues de chaleur.",
-    "description": "Durée totale {freq:f} des vagues de chaleur. Une vague de chaleur se produit lorsque les moyennes sur {window} jours des températures minimale et maximale quotidiennes excèdent {thresh_tasmin} et {thresh_tasmax}, respectivement. Les {windows} jours de la moyenne sont comptés dans la vague.",
+    "description": "Durée totale {freq:f} des vagues de chaleur. Une vague de chaleur se produit lorsque les moyennes sur {window} jours des températures minimale et maximale quotidiennes excèdent {thresh_tasmin} et {thresh_tasmax}, respectivement. Les {window} jours de la moyenne sont comptés dans la vague.",
     "title": "Durée totale des vagues de chaleur",
     "abstract": "Durée totale des vagues de chaleur. Une vague de chaleur se produit lorsque les moyennes mobiles des températures minimale et maximale quotidiennes excèdent des seuils donnés."
   },
