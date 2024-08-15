@@ -78,8 +78,9 @@ details on each.
             units: <param units>  # Only valid if "compute" points to a generic function
             default : <param default>
             description: <param description>
+            name : <param name>  # A name to use when generating the docstring and signature.
             kind: <param kind> # Override the parameter kind.
-                             # This is mostly useful for transforming an optional variable into a required one by passing ``kind: 0``.
+                               # This is mostly useful for transforming an optional variable into a required one by passing ``kind: 0``.
         ...
       ...  # and so on.
 
@@ -179,7 +180,7 @@ class _empty:
 class Parameter:
     """Class for storing an indicator's controllable parameter.
 
-    For retrocompatibility, this class implements a "getitem" and a special "contains".
+    For convenience, this class implements a special "contains".
 
     Example
     -------
@@ -195,6 +196,7 @@ class Parameter:
     _empty = _empty
 
     kind: InputKind
+    name: str = _empty
     default: Any = _empty_default
     description: str = ""
     units: str = _empty
@@ -788,9 +790,10 @@ class Indicator(IndicatorRegistrar):
                     )
                 )
             else:
+                show_name = name if meta.name is meta._empty else meta.name
                 parameters.append(
                     _Parameter(
-                        name,
+                        show_name,
                         kind=_Parameter.KEYWORD_ONLY,
                         default=meta.default,
                         annotation=compute_sig.parameters[name].annotation,
@@ -905,6 +908,11 @@ class Indicator(IndicatorRegistrar):
         # Bind call arguments to `compute` arguments and set defaults.
         ba = self.__signature__.bind(*args, **kwds)
         ba.apply_defaults()
+
+        # Assign parameters with different signature-names correctly
+        for name, param in self._all_parameters.items():
+            if param.name is not param._empty:
+                ba.arguments[name] = ba.arguments.pop(param.name)
 
         # Assign inputs passed as strings from ds.
         self._assign_named_args(ba)
