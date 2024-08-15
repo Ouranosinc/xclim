@@ -8,12 +8,12 @@ Contributors to this version: Pascal Bourgault (:user:`aulemahal`).
 
 New indicators
 ^^^^^^^^^^^^^^
-* New ``heat_spell_frequency``, ``heat_spell_max_length`` and ``heat_spell_total_length`` : spell length statistics on a bivariate condition that uses the average over a window by default.
+* New ``heat_spell_frequency``, ``heat_spell_max_length`` and ``heat_spell_total_length`` : spell length statistics on a bivariate condition that uses the average over a window by default. (:pull:`1885`).
 
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-* New generic ``xclim.indices.generic.spell_mask``  that returns a mask of which days are part of a spell. Supports multivariate conditions and weights. Used in new generic index ``xclim.indices.generic.bivariate_spell_length_statistics`` that extends ``spell_length_statistics`` to two variables.
-* Indicator parameters can now be assigned a new name that is used in the indicator's signature and docstring.
+* New generic ``xclim.indices.generic.spell_mask``  that returns a mask of which days are part of a spell. Supports multivariate conditions and weights. Used in new generic index ``xclim.indices.generic.bivariate_spell_length_statistics`` that extends ``spell_length_statistics`` to two variables.  (:pull:`1885`).
+* Indicator parameters can now be assigned a new name that is used in the indicator's signature and docstring.  (:pull:`1885`).
 
 v0.52.0 (2024-08-08)
 --------------------
