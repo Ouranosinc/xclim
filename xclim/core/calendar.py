@@ -10,7 +10,6 @@ from __future__ import annotations
 import datetime as pydt
 from collections.abc import Sequence
 from typing import Any, TypeVar
-from warnings import warn
 
 import cftime
 import numpy as np
@@ -33,18 +32,12 @@ __all__ = [
     "common_calendar",
     "compare_offsets",
     "construct_offset",
-    "convert_calendar",
     "convert_doy",
-    "date_range",
-    "date_range_like",
-    "datetime_to_decimal_year",
-    "days_in_year",
     "days_since_to_doy",
     "doy_from_string",
     "doy_to_days_since",
     "ensure_cftime_array",
     "get_calendar",
-    "interp_calendar",
     "is_offset_divisor",
     "max_doy",
     "parse_offset",
@@ -81,49 +74,10 @@ uniform_calendars = ("noleap", "all_leap", "365_day", "366_day", "360_day")
 DataType = TypeVar("DataType", xr.DataArray, xr.Dataset)
 
 
-def _get_usecf_and_warn(calendar: str, xcfunc: str, xrfunc: str):
-    if calendar == "default":
-        calendar = "standard"
-        use_cftime = False
-        msg = " and use use_cftime=False instead of calendar='default' to get numpy objects."
-    else:
-        use_cftime = None
-        msg = ""
-    warn(
-        f"`xclim` function {xcfunc} is deprecated in favour of {xrfunc} and will be removed in v0.51.0. Please adjust your script{msg}.",
-        FutureWarning,
-    )
-    return calendar, use_cftime
-
-
-def days_in_year(year: int, calendar: str = "proleptic_gregorian") -> int:
-    """Deprecated : use :py:func:`xarray.coding.calendar_ops._days_in_year` instead. Passing use_cftime=False instead of calendar='default'.
-
-    Return the number of days in the input year according to the input calendar.
-    """
-    calendar, usecf = _get_usecf_and_warn(
-        calendar, "days_in_year", "xarray.coding.calendar_ops._days_in_year"
-    )
-    return xr.coding.calendar_ops._days_in_year(year, calendar, use_cftime=usecf)
-
-
 def doy_from_string(doy: DayOfYearStr, year: int, calendar: str) -> int:
     """Return the day-of-year corresponding to a "MM-DD" string for a given year and calendar."""
     MM, DD = doy.split("-")
     return datetime_classes[calendar](year, int(MM), int(DD)).timetuple().tm_yday
-
-
-def date_range(*args, **kwargs) -> pd.DatetimeIndex | CFTimeIndex:
-    """Deprecated : use :py:func:`xarray.date_range` instead. Passing use_cftime=False instead of calendar='default'.
-
-    Wrap a Pandas date_range object.
-
-    Uses pd.date_range (if calendar == 'default') or xr.cftime_range (otherwise).
-    """
-    calendar, usecf = _get_usecf_and_warn(
-        kwargs.pop("calendar", "default"), "date_range", "xarray.date_range"
-    )
-    return xr.date_range(*args, calendar=calendar, use_cftime=usecf, **kwargs)
 
 
 def get_calendar(obj: Any, dim: str = "time") -> str:
@@ -323,54 +277,6 @@ def convert_doy(
     return new_doy.assign_attrs(is_dayofyear=np.int32(1), calendar=target_cal)
 
 
-def convert_calendar(
-    source: xr.DataArray | xr.Dataset,
-    target: xr.DataArray | str,
-    align_on: str | None = None,
-    missing: Any | None = None,
-    doy: bool | str = False,
-    dim: str = "time",
-) -> DataType:
-    """Deprecated : use :py:meth:`xarray.Dataset.convert_calendar` or :py:meth:`xarray.DataArray.convert_calendar`
-    or :py:func:`xarray.coding.calendar_ops.convert_calendar` instead. Passing use_cftime=False instead of calendar='default'.
-
-    Convert a DataArray/Dataset to another calendar using the specified method.
-    """
-    if isinstance(target, xr.DataArray):
-        raise NotImplementedError(
-            "In `xclim` v0.50.0, `convert_calendar` is a direct copy of `xarray.coding.calendar_ops.convert_calendar`. "
-            "To retrieve the previous behaviour with target as a DataArray, convert the source first then reindex to the target."
-        )
-    if doy is not False:
-        raise NotImplementedError(
-            "In `xclim` v0.50.0, `convert_calendar` is a direct copy of `xarray.coding.calendar_ops.convert_calendar`. "
-            "To retrieve the previous behaviour of doy=True, do convert_doy(obj, target_cal).convert_cal(target_cal)."
-        )
-    target, _usecf = _get_usecf_and_warn(
-        target,
-        "convert_calendar",
-        "xarray.coding.calendar_ops.convert_calendar or obj.convert_calendar",
-    )
-    return xr.coding.calendar_ops.convert_calendar(
-        source, target, dim=dim, align_on=align_on, missing=missing
-    )
-
-
-def interp_calendar(
-    source: xr.DataArray | xr.Dataset,
-    target: xr.DataArray,
-    dim: str = "time",
-) -> xr.DataArray | xr.Dataset:
-    """Deprecated : use :py:func:`xarray.coding.calendar_ops.interp_calendar` instead.
-
-    Interpolates a DataArray/Dataset to another calendar based on decimal year measure.
-    """
-    _, _ = _get_usecf_and_warn(
-        "standard", "interp_calendar", "xarray.coding.calendar_ops.interp_calendar"
-    )
-    return xr.coding.calendar_ops.interp_calendar(source, target, dim=dim)
-
-
 def ensure_cftime_array(time: Sequence) -> np.ndarray | Sequence[cftime.datetime]:
     """Convert an input 1D array to a numpy array of cftime objects.
 
@@ -402,21 +308,6 @@ def ensure_cftime_array(time: Sequence) -> np.ndarray | Sequence[cftime.datetime
             [cftime.DatetimeGregorian(*ele.timetuple()[:6]) for ele in time]
         )
     raise ValueError("Unable to cast array to cftime dtype")
-
-
-def datetime_to_decimal_year(times: xr.DataArray, calendar: str = "") -> xr.DataArray:
-    """Deprecated : use :py:func:`xarray.coding.calendar_ops_datetime_to_decimal_year` instead.
-
-    Convert a datetime xr.DataArray to decimal years according to its calendar or the given one.
-    """
-    _, _ = _get_usecf_and_warn(
-        "standard",
-        "datetime_to_decimal_year",
-        "xarray.coding.calendar_ops._datetime_to_decimal_year",
-    )
-    return xr.coding.calendar_ops._datetime_to_decimal_year(
-        times, dim="time", calendar=calendar
-    )
 
 
 @update_xclim_history
@@ -1168,19 +1059,6 @@ def days_since_to_doy(
     )
     out.attrs.update(calendar=calendar, is_dayofyear=1)
     return out.convert_calendar(base_calendar).rename(da.name)
-
-
-def date_range_like(source: xr.DataArray, calendar: str) -> xr.DataArray:
-    """Deprecated : use :py:func:`xarray.date_range_like` instead. Passing use_cftime=False instead of calendar='default'.
-
-    Generate a datetime array with the same frequency, start and end as another one, but in a different calendar.
-    """
-    calendar, usecf = _get_usecf_and_warn(
-        calendar, "date_range_like", "xarray.date_range_like"
-    )
-    return xr.coding.calendar_ops.date_range_like(
-        source=source, calendar=calendar, use_cftime=usecf
-    )
 
 
 def select_time(

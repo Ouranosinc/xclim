@@ -696,7 +696,6 @@ def standardized_index_fit_params(
     method: str,
     zero_inflated: bool = False,
     fitkwargs: dict | None = None,
-    offset: Quantified | None = None,
     **indexer,
 ) -> xr.DataArray:
     r"""Standardized Index fitting parameters.
@@ -725,10 +724,6 @@ def standardized_index_fit_params(
         If True, the zeroes of `da` are treated separately when fitting a probability density function.
     fitkwargs : dict, optional
         Kwargs passed to ``xclim.indices.stats.fit`` used to impose values of certains parameters (`floc`, `fscale`).
-    offset: Quantified
-        Distributions bounded by zero (e.g. "gamma", "fisk") can be used for datasets with negative values
-        by using an offset: `da + offset`. This option will be removed in xclim >=0.49.0, ``xclim``
-        will rely on a proper use three-parameters distributions instead.
     \*\*indexer
         Indexing parameters to compute the indicator on a temporal subset of the data.
         It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
@@ -759,12 +754,6 @@ def standardized_index_fit_params(
                 "The APP method is only supported for two-parameter distributions with `gamma` or `fisk` with `loc` being fixed."
                 "Pass a value for `floc` in `fitkwargs`."
             )
-    if offset is not None:
-        warnings.warn(
-            "Inputing an offset will be deprecated in xclim>=0.50.0. To achieve the same effect, pass `- offset` as `fitkwargs['floc']` instead."
-        )
-        with xr.set_options(keep_attrs=True):
-            da = da + convert_units_to(offset, da, context="hydro")
 
     # "WPM" method doesn't seem to work for gamma or pearson3
     dist_and_methods = {"gamma": ["ML", "APP", "PWM"], "fisk": ["ML", "APP"]}
@@ -802,8 +791,6 @@ def standardized_index_fit_params(
         "units": "",
     }
     params.attrs["time_indexer"] = json.dumps(indexer)
-    if offset:
-        params.attrs["offset"] = offset
     return params
 
 
