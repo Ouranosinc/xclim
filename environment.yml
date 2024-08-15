@@ -74,7 +74,7 @@ dependencies:
   - tokenize-rt >=5.2.0
   - tox >=4.16.0
   # - tox-conda  # Will be added when a tox@v4.0+ compatible plugin is released.
-  - vulture # ==2.11  # The conda-forge version is out of date.
+  - vulture ==2.11
   - xdoctest >=1.1.5
   - yamllint >=1.35.1
   - pip >=24.0

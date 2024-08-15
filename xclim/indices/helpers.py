@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from inspect import stack
-from typing import Any
+from typing import Any, cast
 
 import cf_xarray  # noqa: F401, pylint: disable=unused-import
 import cftime
@@ -185,14 +185,15 @@ def eccentricity_correction_factor(
         # It is quite used, I think the source is (not available online):
         # Perrin de Brichambaut, C. (1975).
         # Estimation des ressources énergétiques solaires en France. Ed. Européennes thermique et industrie.
-        return 1 + 0.033 * np.cos(da)
+        return cast(xr.DataArray, 1 + 0.033 * np.cos(da))
     if method == "spencer":
-        return (
+        return cast(
+            xr.DataArray,
             1.0001100
             + 0.034221 * np.cos(da)
             + 0.001280 * np.sin(da)
             + 0.000719 * np.cos(2 * da)
-            + 0.000077 * np.sin(2 * da)
+            + 0.000077 * np.sin(2 * da),
         )
     raise NotImplementedError("Method must be one of 'simple' or 'spencer'.")
 
@@ -283,17 +284,19 @@ def cosine_of_solar_zenith_angle(
 
     if stat == "instant":
         h_s = h_s + time_correction
-        return (
+
+        return cast(
+            xr.DataArray,
             np.sin(declination) * np.sin(lat)
-            + np.cos(declination) * np.cos(lat) * np.cos(h_s)
+            + np.cos(declination) * np.cos(lat) * np.cos(h_s),
         ).clip(0, None)
-    elif stat not in {"average", "integral"}:
+    if stat not in {"average", "integral"}:
         raise NotImplementedError(
             "Argument 'stat' must be one of 'integral', 'average' or 'instant'."
         )
     if sunlit:
         # hour angle of sunset (eq. 2.15), with NaNs inside the polar day/night
-        tantan = -np.tan(lat) * np.tan(declination)
+        tantan = cast(xr.DataArray, -np.tan(lat) * np.tan(declination))
         h_ss = np.arccos(tantan.where(abs(tantan) <= 1))
     else:
         # Whole period, so we put sunset at midnight
