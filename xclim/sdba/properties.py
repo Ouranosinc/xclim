@@ -91,9 +91,9 @@ class StatisticalProperty(Indicator):
         """Squeeze `group` dim if needed."""
         outs = super()._postprocess(outs, das, params)
 
-        for out in outs:
+        for ii, out in enumerate(outs):
             if "group" in out.dims:
-                out = out.squeeze("group", drop=True)
+                outs[ii] = out.squeeze("group", drop=True)
 
         return outs
 
