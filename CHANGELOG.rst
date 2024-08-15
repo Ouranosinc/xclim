@@ -13,7 +13,11 @@ New indicators
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 * New generic ``xclim.indices.generic.spell_mask``  that returns a mask of which days are part of a spell. Supports multivariate conditions and weights. Used in new generic index ``xclim.indices.generic.bivariate_spell_length_statistics`` that extends ``spell_length_statistics`` to two variables.  (:pull:`1885`).
-* Indicator parameters can now be assigned a new name that is used in the indicator's signature and docstring.  (:pull:`1885`).
+* Indicator parameters can now be assigned a new name, different from the argument name in the compute function. (:pull:`1885`).
+
+Internal changes
+^^^^^^^^^^^^^^^^
+* ``xclim.core.indicator.Parameter`` has a new attribute ``compute_name`` while ``xclim.core.indicator.Indicator`` lost its ``_variable_mapping``. The translation from parameter (and variable) names in the indicator to the names on the compute function is handled by ``Indicator._get_compute_args``. (:pull:`1885`).
 
 v0.52.0 (2024-08-08)
 --------------------
