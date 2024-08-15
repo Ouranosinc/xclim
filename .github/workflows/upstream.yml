@@ -24,7 +24,6 @@ jobs:
     name: test-upstream-dev (Python${{ matrix.python-version }})
     runs-on: ubuntu-latest
     permissions:
-      contents: read
       issues: write
     if: |
       (github.event_name == 'schedule') ||
@@ -40,7 +39,7 @@ jobs:
         shell: bash -l {0}
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@17d0e2bd7d51742c71671bd19fa12bdc9d40a3d6 # v2.8.1
+        uses: step-security/harden-runner@5c7944e73c4c2a096b17a9cb74d65b6c2bbafbde # v2.9.1
         with:
           disable-sudo: true
           egress-policy: block
@@ -65,17 +64,16 @@ jobs:
           cache-environment: true
           environment-file: environment.yml
           create-args: >-
-            conda
             eigen
             pybind11
             python=${{ matrix.python-version }}
             pytest-reportlog
-      - name: Conda and Mamba versions
+      - name: Micromamba version
         run: |
-          conda --version
           echo "micromamba: $(micromamba --version)"
       - name: Install upstream versions and SBCK
         run: |
+          # git-based dependencies cannot be installed from hashes
           python -m pip install -r CI/requirements_upstream.txt
           python -m pip install "sbck @ git+https://github.com/yrobink/SBCK-python.git@master"
       - name: Install xclim
@@ -83,7 +81,7 @@ jobs:
           python -m pip install --no-user --no-deps --editable .
       - name: Check versions
         run: |
-          conda list
+          micromamba list
           xclim show_version_info
           python -m pip check || true
       - name: Run Tests

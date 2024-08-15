@@ -706,7 +706,7 @@ def daily_pr_intensity(
     precipitation >= 5 mm at seasonal frequency, i.e. DJF, MAM, JJA, SON, DJF, etc.:
 
     >>> from xclim.indices import daily_pr_intensity
-    >>> pr = open_dataset(path_to_pr_file).pr
+    >>> pr = xr.open_dataset(path_to_pr_file).pr
     >>> daily_int = daily_pr_intensity(pr, thresh="5 mm/day", freq="QS-DEC")
     """
     t = convert_units_to(thresh, pr, "hydro")
@@ -933,7 +933,8 @@ def growing_season_start(
     thresh : Quantified
         Threshold temperature on which to base evaluation.
     mid_date : str, optional
-        Date of the year after before which the season must start. Should have the format '%m-%d'.
+        Date of the year before which the season must start. Should have the format '%m-%d'.
+        ``None`` removes that constraint.
     window : int
         Minimum number of days with temperature above threshold needed for evaluation.
     freq : str
@@ -986,6 +987,7 @@ def growing_season_end(
         Threshold temperature on which to base evaluation.
     mid_date : str, optional
         Date of the year after which to look for the end of the season. Should have the format '%m-%d'.
+        ``None`` removes that constraint.
     window : int
         Minimum number of days with temperature below threshold needed for evaluation.
     freq : str
@@ -1054,7 +1056,8 @@ def growing_season_length(
     window : int
         Minimum number of days with temperature above threshold to mark the beginning and end of growing season.
     mid_date : str, optional
-        Date of the year after which to look for the end of the season. Should have the format '%m-%d'.
+        Date of the year before which the season must start and after which it can end. Should have the format '%m-%d'.
+        ``None`` removes that constraint.
     freq : str
         Resampling frequency.
     op : {">", ">=", "gt", "ge"}
@@ -1083,7 +1086,7 @@ def growing_season_length(
     Examples
     --------
     >>> from xclim.indices import growing_season_length
-    >>> tas = open_dataset(path_to_tas_file).tas
+    >>> tas = xr.open_dataset(path_to_tas_file).tas
 
     For the Northern Hemisphere:
 
@@ -1138,7 +1141,7 @@ def frost_season_length(
         Minimum number of days with temperature below threshold to mark the beginning and end of frost season.
     mid_date : str, optional
         Date the must be included in the season. It is the earliest the end of the season can be.
-        If None, there is no limit.
+        ``None`` removes that constraint.
     thresh : Quantified
         Threshold temperature on which to base evaluation.
     freq : str
@@ -1169,7 +1172,7 @@ def frost_season_length(
     Examples
     --------
     >>> from xclim.indices import frost_season_length
-    >>> tasmin = open_dataset(path_to_tasmin_file).tasmin
+    >>> tasmin = xr.open_dataset(path_to_tasmin_file).tasmin
 
     For the Northern Hemisphere:
 
@@ -1196,7 +1199,7 @@ def frost_free_season_start(
     tasmin: xarray.DataArray,
     thresh: Quantified = "0.0 degC",
     window: int = 5,
-    mid_date: DayOfYearStr = "07-01",
+    mid_date: DayOfYearStr | None = "07-01",
     op: str = ">=",
     freq: str = "YS",
 ) -> xarray.DataArray:
@@ -1216,7 +1219,8 @@ def frost_free_season_start(
     window : int
         Minimum number of days with temperature above/under threshold to start/end the season.
     mid_date : DayOfYearStr, optional
-        A date what must be included in the season.
+        A date that must be included in the season.
+        ``None`` removes that constraint.
     op : {'>', '>=', 'ge', 'gt'}
         How to compare tasmin and the threshold.
     freq : str
@@ -1256,7 +1260,7 @@ def frost_free_season_end(
     tasmin: xarray.DataArray,
     thresh: Quantified = "0.0 degC",
     window: int = 5,
-    mid_date: DayOfYearStr = "07-01",
+    mid_date: DayOfYearStr | None = "07-01",
     op: str = ">=",
     freq: str = "YS",
 ) -> xarray.DataArray:
@@ -1276,7 +1280,7 @@ def frost_free_season_end(
     window : int
         Minimum number of days with temperature above/under threshold to start/end the season.
     mid_date : DayOfYearStr, optional
-        A date what must be included in the season.
+        A date what must be included in the season. ``None`` removes that constraint.
     op : {'>', '>=', 'ge', 'gt'}
         How to compare tasmin and the threshold.
     freq : str
@@ -1343,7 +1347,7 @@ def frost_free_season_length(
     window : int
         Minimum number of days with temperature above/under threshold to start/end the season.
     mid_date : DayOfYearStr, optional
-        A date what must be included in the season.
+        A date what must be included in the season. ``None`` removes that constraint.
     op : {'>', '>=', 'ge', 'gt'}
         How to compare tasmin and the threshold.
     freq : str
@@ -1376,7 +1380,7 @@ def frost_free_season_length(
     Examples
     --------
     >>> from xclim.indices import frost_season_length
-    >>> tasmin = open_dataset(path_to_tasmin_file).tasmin
+    >>> tasmin = xr.open_dataset(path_to_tasmin_file).tasmin
 
     For the Northern Hemisphere:
 
@@ -1407,7 +1411,7 @@ def frost_free_spell_max_length(
     op: str = ">=",
     resample_before_rl: bool = True,
 ) -> xarray.DataArray:
-    r"""Longest cold spell.
+    r"""Longest frost free spell.
 
     Longest spell of warm temperatures over a given period.
     Longest series of at least {window} consecutive days with temperature at or above the threshold.
@@ -2575,7 +2579,7 @@ def wetdays(
     at the seasonal frequency, i.e. DJF, MAM, JJA, SON, DJF, etc.:
 
     >>> from xclim.indices import wetdays
-    >>> pr = open_dataset(path_to_pr_file).pr
+    >>> pr = xr.open_dataset(path_to_pr_file).pr
     >>> wd = wetdays(pr, thresh="5 mm/day", freq="QS-DEC")
     """
     thresh = convert_units_to(thresh, pr, "hydro")
@@ -2617,7 +2621,7 @@ def wetdays_prop(
     5 mm at the seasonal frequency, i.e. DJF, MAM, JJA, SON, DJF, etc.:
 
     >>> from xclim.indices import wetdays_prop
-    >>> pr = open_dataset(path_to_pr_file).pr
+    >>> pr = xr.open_dataset(path_to_pr_file).pr
     >>> wd = wetdays_prop(pr, thresh="5 mm/day", freq="QS-DEC")
     """
     thresh = convert_units_to(thresh, pr, "hydro")
@@ -3159,7 +3163,7 @@ def dry_spell_frequency(
     Examples
     --------
     >>> from xclim.indices import dry_spell_frequency
-    >>> pr = open_dataset(path_to_pr_file).pr
+    >>> pr = xr.open_dataset(path_to_pr_file).pr
     >>> dsf = dry_spell_frequency(pr=pr, op="sum")
     >>> dsf = dry_spell_frequency(pr=pr, op="max")
     """
@@ -3200,7 +3204,7 @@ def dry_spell_total_length(
         Accumulated precipitation value under which a period is considered dry.
     window : int
         Number of days when the maximum or accumulated precipitation is under threshold.
-    op: {"sum", "max", "min", "mean"}
+    op : {"sum", "max", "min", "mean"}
         Operation to perform on the window.
         Default is "sum", which checks that the sum of accumulated precipitation over the whole window is less than the
         threshold.
@@ -3343,7 +3347,7 @@ def wet_spell_frequency(
     resample_before_rl : bool
         Determines if the resampling should take place before or after the run
         length encoding (or a similar algorithm) is applied to runs.
-    op: {"sum","min", "max", "mean"}
+    op : {"sum","min", "max", "mean"}
         Operation to perform on the window.
         Default is "sum", which checks that the sum of accumulated precipitation over the whole window is more than the
         threshold.
@@ -3366,7 +3370,7 @@ def wet_spell_frequency(
     Examples
     --------
     >>> from xclim.indices import wet_spell_frequency
-    >>> pr = open_dataset(path_to_pr_file).pr
+    >>> pr = xr.open_dataset(path_to_pr_file).pr
     >>> dsf = wet_spell_frequency(pr=pr, op="sum")
     >>> dsf = wet_spell_frequency(pr=pr, op="min")
     """
@@ -3414,7 +3418,7 @@ def wet_spell_total_length(
         In all cases, the whole window is marked a part of a wet spell.
     freq : str
         Resampling frequency.
-    resample_before_rl: bool
+    resample_before_rl : bool
         Determines if the resampling should take place before or after the run
         length encoding (or a similar algorithm) is applied to runs.
     \*\*indexer

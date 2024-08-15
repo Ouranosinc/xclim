@@ -19,6 +19,9 @@ import numpy as np
 import pandas as pd
 import pytest
 import xarray as xr
+from numpy import __version__ as __numpy_version__
+from packaging.version import Version
+from pint import __version__ as __pint_version__
 
 from xclim import indices as xci
 from xclim.core.calendar import percentile_doy
@@ -137,11 +140,11 @@ class TestColdSpellFreq:
 
         out = xci.cold_spell_frequency(da, thresh="-10. C", freq="ME")
         np.testing.assert_array_equal(out, [1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0])
-        assert out.units == ""
+        assert out.units == "1"
 
         out = xci.cold_spell_frequency(da, thresh="-10. C", freq="YS")
         np.testing.assert_array_equal(out, 3)
-        assert out.units == ""
+        assert out.units == "1"
 
 
 class TestColdSpellMaxLength:
@@ -231,7 +234,11 @@ class TestCoolingDegreeDays:
         a = tas_series(np.array([10, 15, -5, 18]) + K2C)
         cdd = xci.cooling_degree_days(a)
         assert cdd == 0
-        assert cdd.units == "K d"
+
+        if Version(__pint_version__) < Version("0.24.1"):
+            assert cdd.units == "K d"
+        else:
+            assert cdd.units == "d K"
 
     def test_cdd(self, tas_series):
         a = tas_series(np.array([20, 25, -15, 19]) + K2C)
@@ -454,7 +461,7 @@ class TestAgroclimaticIndices:
             tasmax=mx, tasmin=mn, method=method, freq="YS"
         )
 
-        np.testing.assert_array_equal(out, np.array([np.NaN, expected]))
+        np.testing.assert_array_equal(out, np.array([np.nan, expected]))
 
 
 class TestStandardizedIndices:
@@ -530,7 +537,7 @@ class TestStandardizedIndices:
                 1,
                 "gamma",
                 "ML",
-                [-0.011698, 1.597031, 0.969714, 0.265561, -0.132654],
+                [-0.083785, 1.457647, 0.993296, 0.271894, -0.449684],
                 2e-2,
             ),
             (
@@ -538,7 +545,7 @@ class TestStandardizedIndices:
                 12,
                 "gamma",
                 "ML",
-                [-0.158116, -0.049222, 0.672544, 1.08332, 0.660903],
+                [-0.158854, -0.049165, 0.675863, 0.960247, 0.660831],
                 2e-2,
             ),
             (
@@ -546,7 +553,7 @@ class TestStandardizedIndices:
                 1,
                 "fisk",
                 "ML",
-                [-0.158949, 1.308225, 0.449846, 0.146699, -0.502737],
+                [-0.194235, 1.308198, 0.530768, 0.22234, -0.502635],
                 2e-2,
             ),
             (
@@ -594,9 +601,15 @@ class TestStandardizedIndices:
     def test_standardized_precipitation_index(
         self, open_dataset, freq, window, dist, method, values, diff_tol
     ):
+        if (
+            method == "ML"
+            and freq == "D"
+            and Version(__numpy_version__) < Version("2.0.0")
+        ):
+            pytest.skip("Skipping SPI/ML/D on older numpy")
         ds = open_dataset("sdba/CanESM2_1950-2100.nc").isel(location=1)
         if freq == "D":
-            ds = ds.convert_calendar("366_day", missing=np.NaN)
+            ds = ds.convert_calendar("366_day", missing=np.nan)
             # to compare with ``climate_indices``
         pr = ds.pr.sel(time=slice("1998", "2000"))
         pr_cal = ds.pr.sel(time=slice("1950", "1980"))
@@ -693,6 +706,13 @@ class TestStandardizedIndices:
     def test_standardized_precipitation_evapotranspiration_index(
         self, open_dataset, freq, window, dist, method, values, diff_tol
     ):
+        if (
+            method == "ML"
+            and freq == "D"
+            and Version(__numpy_version__) < Version("2.0.0")
+        ):
+            pytest.skip("Skipping SPI/ML/D on older numpy")
+
         ds = (
             open_dataset("sdba/CanESM2_1950-2100.nc")
             .isel(location=1)
@@ -731,7 +751,15 @@ class TestStandardizedIndices:
 
         np.testing.assert_allclose(spei.values, values, rtol=0, atol=diff_tol)
 
-    def test_standardized_index_modularity(self, open_dataset):
+    @pytest.mark.parametrize(
+        "indexer",
+        [
+            ({}),
+            ({"month": [2, 3]}),
+            ({"month": [2, 3], "drop": True}),
+        ],
+    )
+    def test_standardized_index_modularity(self, open_dataset, tmp_path, indexer):
         freq, window, dist, method = "MS", 6, "gamma", "APP"
         ds = (
             open_dataset("sdba/CanESM2_1950-2100.nc")
@@ -756,8 +784,15 @@ class TestStandardizedIndices:
             dist=dist,
             method=method,
             fitkwargs=fitkwargs,
-            month=[2, 3],
+            **indexer,
         )
+
+        # Save the parameters to a file to test against that saving process may modify the netCDF file
+        paramsfile = tmp_path / "params0.nc"
+        params.to_netcdf(paramsfile, engine="h5netcdf")
+        params.close()
+        params = open_dataset(paramsfile).__xarray_dataarray_variable__
+
         spei1 = xci.standardized_precipitation_evapotranspiration_index(
             wb.sel(time=slice("1998", "2000")), params=params
         )
@@ -771,13 +806,18 @@ class TestStandardizedIndices:
             fitkwargs=fitkwargs,
             cal_start="1950",
             cal_end="1980",
-            month=[2, 3],
+            **indexer,
         ).sel(time=slice("1998", "2000"))
 
         # In the previous computation, the first {window-1} values are NaN because the rolling is performed on the period [1998,2000].
         # Here, the computation is performed on the period [1950,2000], *then* subsetted to [1998,2000], so it doesn't have NaNs
         # for the first values
-        spei2[{"time": slice(0, window - 1)}] = np.nan
+        nan_window = xr.cftime_range(
+            spei1.time.values[0], periods=window - 1, freq=freq
+        )
+        spei2.loc[{"time": spei2.time.isin(nan_window)}] = (
+            np.nan
+        )  # select time based on the window is necessary when `drop=True`
 
         np.testing.assert_allclose(spei1.values, spei2.values, rtol=0, atol=1e-4)
 
@@ -885,7 +925,7 @@ class TestLastSpringFrost:
         assert lsf == 180
         for attr in ["units", "is_dayofyear", "calendar"]:
             assert attr in lsf.attrs.keys()
-        assert lsf.attrs["units"] == ""
+        assert lsf.attrs["units"] == "1"
         assert lsf.attrs["is_dayofyear"] == 1
         assert lsf.attrs["is_dayofyear"].dtype == np.int32
 
@@ -906,7 +946,7 @@ class TestFirstDayBelow:
         assert np.isnan(fdb)
         for attr in ["units", "is_dayofyear", "calendar"]:
             assert attr in fdb.attrs.keys()
-        assert fdb.attrs["units"] == ""
+        assert fdb.attrs["units"] == "1"
         assert fdb.attrs["is_dayofyear"] == 1
 
     def test_below_forbidden(self, tasmax_series):
@@ -937,7 +977,7 @@ class TestFirstDayAbove:
         assert np.isnan(fda)
         for attr in ["units", "is_dayofyear", "calendar"]:
             assert attr in fda.attrs.keys()
-        assert fda.attrs["units"] == ""
+        assert fda.attrs["units"] == "1"
         assert fda.attrs["is_dayofyear"] == 1
 
     def test_thresholds(self, tas_series):
@@ -962,7 +1002,7 @@ class TestFirstDayAbove:
         assert out[0] == tg.indexes["time"][30].dayofyear
         for attr in ["units", "is_dayofyear", "calendar"]:
             assert attr in out.attrs.keys()
-        assert out.attrs["units"] == ""
+        assert out.attrs["units"] == "1"
         assert out.attrs["is_dayofyear"] == 1
 
     def test_above_forbidden(self, tasmax_series):
@@ -1049,7 +1089,7 @@ class TestGrowingSeasonStart:
         assert out[0] == tg.indexes["time"][20].dayofyear
         for attr in ["units", "is_dayofyear", "calendar"]:
             assert attr in out.attrs.keys()
-        assert out.attrs["units"] == ""
+        assert out.attrs["units"] == "1"
         assert out.attrs["is_dayofyear"] == 1
 
     def test_no_start(self, tas_series):
@@ -1082,7 +1122,7 @@ class TestGrowingSeasonEnd:
         np.testing.assert_array_equal(gs_end, expected)
         for attr in ["units", "is_dayofyear", "calendar"]:
             assert attr in gs_end.attrs.keys()
-        assert gs_end.attrs["units"] == ""
+        assert gs_end.attrs["units"] == "1"
         assert gs_end.attrs["is_dayofyear"] == 1
 
 
@@ -1162,7 +1202,8 @@ class TestFrostFreeSeasonStart:
         assert out[0] == tn.indexes["time"][20].dayofyear
         for attr in ["units", "is_dayofyear", "calendar"]:
             assert attr in out.attrs.keys()
-        assert out.attrs["units"] == ""
+        assert out.attrs["units"] == "1"
+
         assert out.attrs["is_dayofyear"] == 1
 
     def test_no_start(self, tasmin_series):
@@ -1195,7 +1236,9 @@ class TestFrostFreeSeasonEnd:
         np.testing.assert_array_equal(gs_end, expected)
         for attr in ["units", "is_dayofyear", "calendar"]:
             assert attr in gs_end.attrs.keys()
-        assert gs_end.attrs["units"] == ""
+
+        assert gs_end.attrs["units"] == "1"
+
         assert gs_end.attrs["is_dayofyear"] == 1
 
 
@@ -2704,7 +2747,8 @@ def test_degree_days_exceedance_date(tas_series):
 
     for attr in ["units", "is_dayofyear", "calendar"]:
         assert attr in out.attrs.keys()
-    assert out.attrs["units"] == ""
+    assert out.attrs["units"] == "1"
+
     assert out.attrs["is_dayofyear"] == 1
 
 
@@ -2744,7 +2788,7 @@ def test_first_snowfall(prsn_series, prsnd_series):
     assert out[0] == 166
     for attr in ["units", "is_dayofyear", "calendar"]:
         assert attr in out.attrs.keys()
-    assert out.attrs["units"] == ""
+    assert out.attrs["units"] == "1"
     assert out.attrs["is_dayofyear"] == 1
 
     # test with prsnd [m s-1]
@@ -2753,7 +2797,7 @@ def test_first_snowfall(prsn_series, prsnd_series):
     assert out[0] == 166
     for attr in ["units", "is_dayofyear", "calendar"]:
         assert attr in out.attrs.keys()
-    assert out.attrs["units"] == ""
+    assert out.attrs["units"] == "1"
     assert out.attrs["is_dayofyear"] == 1
 
     # test with prsn [kg m-2 s-1]
@@ -2765,7 +2809,8 @@ def test_first_snowfall(prsn_series, prsnd_series):
     assert out[0] == 166
     for attr in ["units", "is_dayofyear", "calendar"]:
         assert attr in out.attrs.keys()
-    assert out.attrs["units"] == ""
+
+    assert out.attrs["units"] == "1"
     assert out.attrs["is_dayofyear"] == 1
 
 
@@ -2833,7 +2878,7 @@ class TestSnowMax:
         np.testing.assert_array_equal(out, [0.3, 0.01])
 
     def test_nan_slices(self, snd_series, snw_series):
-        a = np.ones(366) * np.NaN
+        a = np.ones(366) * np.nan
         snd = snd_series(a)
         snw = snw_series(a)
 
@@ -2858,7 +2903,7 @@ class TestSnowMaxDoy:
         np.testing.assert_array_equal(out, [193, 182])
 
     def test_nan_slices(self, snd_series, snw_series):
-        a = np.ones(366) * np.NaN
+        a = np.ones(366) * np.nan
         snd = snd_series(a)
         snw = snw_series(a)
 
@@ -2902,7 +2947,7 @@ class TestSnowCover:
         np.testing.assert_array_equal(out, [snd.time.dt.dayofyear[0].data + 2, np.nan])
         for attr in ["units", "is_dayofyear", "calendar"]:
             assert attr in out.attrs.keys()
-        assert out.attrs["units"] == ""
+        assert out.attrs["units"] == "1"
         assert out.attrs["is_dayofyear"] == 1
 
         out = xci.snw_season_start(snw)
@@ -2910,7 +2955,7 @@ class TestSnowCover:
         np.testing.assert_array_equal(out, [snw.time.dt.dayofyear[0].data + 1, np.nan])
         for attr in ["units", "is_dayofyear", "calendar"]:
             assert attr in out.attrs.keys()
-        assert out.attrs["units"] == ""
+        assert out.attrs["units"] == "1"
         assert out.attrs["is_dayofyear"] == 1
 
     def test_snow_season_end(self, snd_series, snw_series):
@@ -2932,7 +2977,7 @@ class TestSnowCover:
         np.testing.assert_array_equal(out, [(doy + 219) % 366, np.nan])
         for attr in ["units", "is_dayofyear", "calendar"]:
             assert attr in out.attrs.keys()
-        assert out.attrs["units"] == ""
+        assert out.attrs["units"] == "1"
         assert out.attrs["is_dayofyear"] == 1
 
         out = xci.snw_season_end(snw)
@@ -2941,7 +2986,7 @@ class TestSnowCover:
         np.testing.assert_array_equal(out, [(doy + 219) % 366, np.nan])
         for attr in ["units", "is_dayofyear", "calendar"]:
             assert attr in out.attrs.keys()
-        assert out.attrs["units"] == ""
+        assert out.attrs["units"] == "1"
         assert out.attrs["is_dayofyear"] == 1
 
 
@@ -2954,7 +2999,7 @@ class TestSnowCover:
     ["per_day", "total"],
 )
 def test_rain_season(pr_series, result_type, method_dry_start):
-    pr = pr_series(np.arange(365) * np.NaN, start="2000-01-01", units="mm/d")
+    pr = pr_series(np.arange(365) * np.nan, start="2000-01-01", units="mm/d")
     # input values in mm (amount): a correcting factor is used below
     pr[{"time": slice(0, 0 + 3)}] = 10  # to satisfy cond1_start
     pr[{"time": slice(3, 3 + 30)}] = 5  # to satisfy cond2_start
@@ -2963,13 +3008,13 @@ def test_rain_season(pr_series, result_type, method_dry_start):
         out_exp = [3, 100, 97]
     elif result_type == "start_cond1_fails":
         pr[{"time": 2}] = 0
-        out_exp = [np.NaN, np.NaN, np.NaN]
+        out_exp = [np.nan, np.nan, np.nan]
     elif result_type == "start_cond2_fails":
         pr[{"time": slice(10, 10 + 7)}] = 0
-        out_exp = [np.NaN, np.NaN, np.NaN]
+        out_exp = [np.nan, np.nan, np.nan]
     elif result_type == "end_cond_fails":
         pr[{"time": 99 + 20 - 1}] = 5
-        out_exp = [3, np.NaN, 363]
+        out_exp = [3, np.nan, 363]
     else:
         raise ValueError(f"Unknown result_type: {result_type}")
 
@@ -3099,7 +3144,7 @@ def test_wind_chill(tas_series, sfcWind_series):
     # The calculator was altered to remove the rounding of the output.
     np.testing.assert_allclose(
         out,
-        [-4.509267062481955, -22.619869069856854, -30.478945408950928, np.NaN, -16.443],
+        [-4.509267062481955, -22.619869069856854, -30.478945408950928, np.nan, -16.443],
     )
 
     out = xci.wind_chill_index(tas=tas, sfcWind=sfcWind, method="US")
@@ -3520,16 +3565,16 @@ class TestRPRCTot:
             [
                 2,
                 0,
-                np.NaN,
+                np.nan,
                 2,
-                np.NaN,
-                np.NaN,
-                np.NaN,
-                np.NaN,
-                np.NaN,
-                np.NaN,
-                np.NaN,
-                np.NaN,
+                np.nan,
+                np.nan,
+                np.nan,
+                np.nan,
+                np.nan,
+                np.nan,
+                np.nan,
+                np.nan,
             ],
         )
 
@@ -3652,7 +3697,7 @@ class TestDrynessIndex:
         (-47, "usda", 1),
         (-6, "anbg", 1),
         (19, "anbg", 6),
-        (-47, "anbg", np.NaN),
+        (-47, "anbg", np.nan),
     ],
     # There are 26 USDA zones: 1a -> 1, 1b -> 2, ... 13b -> 26
     # There are 7 angb zones: 1,2, ..., 7

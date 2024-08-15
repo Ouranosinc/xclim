@@ -19,11 +19,10 @@ jobs:
     if: |
      (github.event.pull_request.head.repo.full_name == github.event.pull_request.base.repo.full_name)
     permissions:
-      contents: read
       pull-requests: write
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@17d0e2bd7d51742c71671bd19fa12bdc9d40a3d6 # v2.8.1
+        uses: step-security/harden-runner@5c7944e73c4c2a096b17a9cb74d65b6c2bbafbde # v2.9.1
         with:
           disable-sudo: true
           egress-policy: block
@@ -66,7 +65,7 @@ jobs:
           comment-id: ${{ steps.fc.outputs.comment-id }}
           issue-number: ${{ github.event.pull_request.number }}
           body: |
-            > **Warning**
+            > [!WARNING]
             > It appears that this Pull Request modifies the `main.yml` workflow.
 
             On inspection, it seems that the `XCLIM_TESTDATA_BRANCH` environment variable is set to a tag that is not the latest in the `Ouranosinc/xclim-testdata` repository.
@@ -82,7 +81,7 @@ jobs:
           comment-id: ${{ steps.fc.outputs.comment-id }}
           issue-number: ${{ github.event.pull_request.number }}
           body: |
-            > **Note**
+            > [!NOTE]
             > It appears that this Pull Request modifies the `main.yml` workflow.
 
             On inspection, the `XCLIM_TESTDATA_BRANCH` environment variable is set to the most recent tag (`${{ env.XCLIM_TESTDATA_TAG }}`).

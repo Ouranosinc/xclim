@@ -101,7 +101,8 @@ class TestFlowGeneric:
         for da in [dmx, dmn]:
             for attr in ["units", "is_dayofyear", "calendar"]:
                 assert attr in da.attrs.keys()
-            assert da.attrs["units"] == ""
+
+            assert da.attrs["units"] == "1"
             assert da.attrs["is_dayofyear"] == 1
 
 
@@ -393,13 +394,13 @@ class TestFirstDayThreshold:
 
 class TestGetDailyEvents:
     def test_simple(self, tas_series):
-        arr = xr.DataArray(np.array([-10, 15, 20, np.NaN, 10]), name="Stuff")
+        arr = xr.DataArray(np.array([-10, 15, 20, np.nan, 10]), name="Stuff")
 
         out = generic.get_daily_events(arr, threshold=10, op=">=")
 
         assert out.name == "events"
         assert out.sum() == 3
-        np.testing.assert_array_equal(out, [0, 1, 1, np.NaN, 1])
+        np.testing.assert_array_equal(out, [0, 1, 1, np.nan, 1])
 
 
 class TestGenericCountingIndices:
@@ -470,7 +471,7 @@ class TestGenericCountingIndices:
     @pytest.mark.parametrize(
         "op, constrain, expected, should_fail",
         [
-            ("<", None, np.NaN, False),
+            ("<", None, np.nan, False),
             ("<=", None, 3, False),
             ("!=", ("!=",), 1, False),
             ("==", ("==", "!="), 3, False),
@@ -497,7 +498,7 @@ class TestGenericCountingIndices:
     @pytest.mark.parametrize(
         "op, constrain, expected, should_fail",
         [
-            ("<", None, np.NaN, False),
+            ("<", None, np.nan, False),
             ("<=", None, 8, False),
             ("!=", ("!=",), 9, False),
             ("==", ("==", "!="), 8, False),
@@ -662,3 +663,77 @@ class TestTimeSelection:
 
         with pytest.raises(TypeError):
             select_time(da, doy_bounds=(300, 203, 202))
+
+
+class TestSpellMask:
+    def test_single_variable(self):
+        data = xr.DataArray([0, 1, 2, 3, 2, 1, 0, 0], dims=("time",))
+
+        out = generic.spell_mask(data, 3, "min", ">=", 2)
+        np.testing.assert_array_equal(
+            out, np.array([0, 0, 1, 1, 1, 0, 0, 0]).astype(bool)
+        )
+
+        out = generic.spell_mask(data, 3, "max", ">=", 2)
+        np.testing.assert_array_equal(
+            out, np.array([1, 1, 1, 1, 1, 1, 1, 0]).astype(bool)
+        )
+
+        out = generic.spell_mask(data, 2, "mean", ">=", 2)
+        np.testing.assert_array_equal(
+            out, np.array([0, 0, 1, 1, 1, 0, 0, 0]).astype(bool)
+        )
+
+        out = generic.spell_mask(data, 3, "mean", ">", 2, weights=[0.2, 0.4, 0.4])
+        np.testing.assert_array_equal(
+            out, np.array([0, 1, 1, 1, 1, 0, 0, 0]).astype(bool)
+        )
+
+    def test_multiple_variables(self):
+        data1 = xr.DataArray([0, 1, 2, 3, 2, 1, 0, 0], dims=("time",))
+        data2 = xr.DataArray([1, 2, 3, 2, 1, 0, 0, 0], dims=("time",))
+
+        out = generic.spell_mask([data1, data2], 3, "min", ">=", [2, 2])
+        np.testing.assert_array_equal(
+            out, np.array([0, 0, 0, 0, 0, 0, 0, 0]).astype(bool)
+        )
+
+        out = generic.spell_mask(
+            [data1, data2], 3, "min", ">=", [2, 2], var_reducer="any"
+        )
+        np.testing.assert_array_equal(
+            out, np.array([0, 1, 1, 1, 1, 0, 0, 0]).astype(bool)
+        )
+
+        out = generic.spell_mask([data1, data2], 2, "mean", ">=", [2, 2])
+        np.testing.assert_array_equal(
+            out, np.array([0, 0, 1, 1, 0, 0, 0, 0]).astype(bool)
+        )
+
+        out = generic.spell_mask(
+            [data1, data2], 3, "mean", ">", [2, 1.5], weights=[0.2, 0.4, 0.4]
+        )
+        np.testing.assert_array_equal(
+            out, np.array([0, 1, 1, 1, 1, 0, 0, 0]).astype(bool)
+        )
+
+    def test_errors(self):
+        data = xr.DataArray([0, 1, 2, 3, 2, 1, 0, 0], dims=("time",))
+
+        # Threshold must be seq
+        with pytest.raises(ValueError, match="must be a sequence of the same length"):
+            generic.spell_mask([data, data], 3, "min", "<=", 2)
+
+        # Threshold must be same length
+        with pytest.raises(ValueError, match="must be a sequence of the same length"):
+            generic.spell_mask([data, data], 3, "min", "<=", [2])
+
+        # Weights must have win_reducer = 'mean'
+        with pytest.raises(
+            ValueError, match="is only supported if 'win_reducer' is 'mean'"
+        ):
+            generic.spell_mask(data, 3, "min", "<=", 2, weights=[1, 2, 3])
+
+        # Weights must have same length as window
+        with pytest.raises(ValueError, match="Weights have a different length"):
+            generic.spell_mask(data, 3, "mean", "<=", 2, weights=[1, 2])

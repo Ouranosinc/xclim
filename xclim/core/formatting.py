@@ -582,6 +582,8 @@ def _gen_parameters_section(
     """
     section = "Parameters\n----------\n"
     for name, param in parameters.items():
+        if param.name is not param._empty:
+            name = param.name
         desc_str = param.description
         if param.kind == InputKind.FREQ_STR:
             desc_str += (

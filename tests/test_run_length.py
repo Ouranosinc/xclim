@@ -492,7 +492,7 @@ class TestRunsWithDates:
             runs,
             window=1,
             dim="time",
-            date=date,
+            mid_date=date,
         )
         np.testing.assert_array_equal(np.mean(out.load()), expected)
 
@@ -501,7 +501,7 @@ class TestRunsWithDates:
         [
             ("dayofyear", "07-01", 210, 211),
             (False, "07-01", 190, 190),
-            ("dayofyear", "04-01", 150, np.NaN),  # date falls early
+            ("dayofyear", "04-01", 150, np.nan),  # date falls early
             ("dayofyear", "11-01", 150, 306),  # date ends late
         ],
     )
@@ -529,7 +529,7 @@ class TestRunsWithDates:
         [
             ("dayofyear", "07-01", 210, 211),
             (False, "07-01", 190, 190),
-            ("dayofyear", "04-01", False, np.NaN),  # no run
+            ("dayofyear", "04-01", False, np.nan),  # no run
             ("dayofyear", "11-01", 150, 306),  # run already started
         ],
     )
@@ -559,7 +559,7 @@ class TestRunsWithDates:
         [
             ("dayofyear", "07-01", 210, 183),
             (False, "07-01", 190, 182),
-            ("dayofyear", "04-01", 150, np.NaN),  # date falls early
+            ("dayofyear", "04-01", 150, np.nan),  # date falls early
             ("dayofyear", "11-01", 150, 150),  # date ends late
         ],
     )
@@ -625,7 +625,7 @@ class TestRunsWithDates:
         out = (
             (tas > 0)
             .resample(time="YS-MAR")
-            .map(rl.season_length, date="03-02", window=2)
+            .map(rl.season_length, mid_date="03-02", window=2)
         )
         np.testing.assert_array_equal(out.values[1:], [250, 250])
 
@@ -643,9 +643,7 @@ class TestRunsWithDates:
         )
         np.testing.assert_array_equal(out.values[1:], np.array(expected) + 1)
 
-    @pytest.mark.parametrize(
-        "func", [rl.first_run_after_date, rl.season_length, rl.run_end_after_date]
-    )
+    @pytest.mark.parametrize("func", [rl.first_run_after_date, rl.run_end_after_date])
     def test_too_many_dates(self, func, tas_series):
         tas = tas_series(np.zeros(730), start="2000-01-01")
         with pytest.raises(ValueError, match="More than 1 instance of date"):

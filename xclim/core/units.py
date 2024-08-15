@@ -35,6 +35,7 @@ __all__ = [
     "convert_units_to",
     "declare_relative_units",
     "declare_units",
+    "ensure_absolute_temperature",
     "ensure_cf_units",
     "ensure_delta",
     "flux2rate",
@@ -183,11 +184,8 @@ def pint2cfunits(value: units.Quantity | units.Unit) -> str:
     if isinstance(value, (pint.Quantity, units.Quantity)):
         value = value.units
 
-    # Issue originally introduced in https://github.com/hgrecco/pint/issues/1486
-    # Should be resolved in pint v0.24. See: https://github.com/hgrecco/pint/issues/1913
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore", category=DeprecationWarning)
-        return f"{value:cf}".replace("dimensionless", "")
+    # Force "1" if the formatted string is "" (pint < 0.24)
+    return f"{value:~cf}" or "1"
 
 
 def ensure_cf_units(ustr: str) -> str:
@@ -469,10 +467,14 @@ DELTA_ABSOLUTE_TEMP = {
 }
 
 
-def ensure_absolute_temperature(units: str):
+def ensure_absolute_temperature(units: str) -> str:
     """Convert temperature units to their absolute counterpart, assuming they represented a difference (delta).
 
     Celsius becomes Kelvin, Fahrenheit becomes Rankine. Does nothing for other units.
+
+    See Also
+    --------
+    :py:func:`ensure_delta`
     """
     a = str2pint(units)
     # ensure a delta pint unit
@@ -480,6 +482,33 @@ def ensure_absolute_temperature(units: str):
     if a.units in DELTA_ABSOLUTE_TEMP:
         return pint2cfunits(DELTA_ABSOLUTE_TEMP[a.units])
     return units
+
+
+def ensure_delta(unit: str) -> str:
+    """Return delta units for temperature.
+
+    For dimensions where delta exist in pint (Temperature), it replaces the temperature unit by delta_degC or
+    delta_degF based on the input unit. For other dimensionality, it just gives back the input units.
+
+    Parameters
+    ----------
+    unit : str
+        unit to transform in delta (or not)
+
+    See Also
+    --------
+    :py:func:`ensure_absolute_temperature`
+    """
+    u = units2pint(unit)
+    d = 1 * u
+    #
+    delta_unit = pint2cfunits(d - d)
+    # replace kelvin/rankine by delta_degC/F
+    if "kelvin" in u._units:
+        delta_unit = pint2cfunits(u / units2pint("K") * units2pint("delta_degC"))
+    if "degree_Rankine" in u._units:
+        delta_unit = pint2cfunits(u / units2pint("°R") * units2pint("delta_degF"))
+    return delta_unit
 
 
 def to_agg_units(
@@ -543,7 +572,7 @@ def to_agg_units(
 
     >>> degdays = convert_units_to(degdays, "K days")
     >>> degdays.units
-    'K d'
+    'd K'
     """
     if op in ["amin", "min", "amax", "max", "mean", "sum"]:
         out.attrs["units"] = orig.attrs["units"]
@@ -558,7 +587,7 @@ def to_agg_units(
 
     elif op in ["doymin", "doymax"]:
         out.attrs.update(
-            units="", is_dayofyear=np.int32(1), calendar=get_calendar(orig)
+            units="1", is_dayofyear=np.int32(1), calendar=get_calendar(orig)
         )
 
     elif op in ["count", "integral"]:
@@ -1219,11 +1248,7 @@ def declare_relative_units(**units_by_name) -> Callable:
                 context = None
                 for ref, refvar in bound_args.arguments.items():
                     if f"<{ref}>" in dim:
-                        # Issue originally introduced in https://github.com/hgrecco/pint/issues/1486
-                        # Should be resolved in pint v0.24. See: https://github.com/hgrecco/pint/issues/1913
-                        with warnings.catch_warnings():
-                            warnings.simplefilter("ignore", category=DeprecationWarning)
-                            dim = dim.replace(f"<{ref}>", f"({units2pint(refvar)})")
+                        dim = dim.replace(f"<{ref}>", f"({units2pint(refvar)})")
 
                         # check_units will guess the hydro context if "precipitation" appears in dim,
                         # but here we pass a real unit. It will also check the standard name of the arg,
@@ -1326,29 +1351,6 @@ def declare_units(**units_by_name) -> Callable:
         return wrapper
 
     return dec
-
-
-def ensure_delta(unit: str) -> str:
-    """Return delta units for temperature.
-
-    For dimensions where delta exist in pint (Temperature), it replaces the temperature unit by delta_degC or
-    delta_degF based on the input unit. For other dimensionality, it just gives back the input units.
-
-    Parameters
-    ----------
-    unit : str
-        unit to transform in delta (or not)
-    """
-    u = units2pint(unit)
-    d = 1 * u
-    #
-    delta_unit = pint2cfunits(d - d)
-    # replace kelvin/rankine by delta_degC/F
-    if "kelvin" in u._units:
-        delta_unit = pint2cfunits(u / units2pint("K") * units2pint("delta_degC"))
-    if "degree_Rankine" in u._units:
-        delta_unit = pint2cfunits(u / units2pint("°R") * units2pint("delta_degF"))
-    return delta_unit
 
 
 def infer_context(

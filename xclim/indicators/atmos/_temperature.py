@@ -45,6 +45,9 @@ __all__ = [
     "growing_season_end",
     "growing_season_length",
     "growing_season_start",
+    "heat_spell_frequency",
+    "heat_spell_max_length",
+    "heat_spell_total_length",
     "heat_wave_frequency",
     "heat_wave_index",
     "heat_wave_max_length",
@@ -201,7 +204,6 @@ heat_wave_frequency = Temp(
     title="Heat wave frequency",
     identifier="heat_wave_frequency",
     units="",
-    standard_name="heat_wave_events",
     long_name="Total number of series of at least {window} consecutive days with daily minimum temperature above "
     "{thresh_tasmin} and daily maximum temperature above {thresh_tasmax}",
     description="{freq} number of heat wave events within a given period. A heat wave occurs when daily minimum and "
@@ -223,7 +225,7 @@ heat_wave_max_length = Temp(
     description="{freq} maximum length of heat wave events occurring within a given period. "
     "A heat wave occurs when daily minimum and maximum temperatures exceed {thresh_tasmin} and {thresh_tasmax}, "
     "respectively, over at least {window} days.",
-    abstract="Total duration of heat waves. A heat wave occurs when daily minimum and maximum temperatures exceed "
+    abstract="Maximal duration of heat waves. A heat wave occurs when daily minimum and maximum temperatures exceed "
     "given thresholds for a number of days.",
     cell_methods="",
     keywords="health,",
@@ -240,7 +242,7 @@ heat_wave_total_length = Temp(
     description="{freq} total length of heat wave events occurring within a given period. "
     "A heat wave occurs when daily minimum and maximum temperatures exceed {thresh_tasmin} and {thresh_tasmax}, "
     "respectively, over at least {window} days.",
-    abstract="Maximum length of heat waves. A heat wave occurs when daily minimum and maximum temperatures exceed "
+    abstract="Total length of heat waves. A heat wave occurs when daily minimum and maximum temperatures exceed "
     "given thresholds for a number of days.",
     cell_methods="",
     keywords="health,",
@@ -252,7 +254,6 @@ heat_wave_index = Temp(
     title="Heat wave index",
     identifier="heat_wave_index",
     units="days",
-    standard_name="heat_wave_index",
     long_name="Total number of days constituting events of at least {window} consecutive days "
     "with daily maximum temperature above {thresh}",
     description="{freq} total number of days that are part of a heatwave within a given period. "
@@ -261,6 +262,112 @@ heat_wave_index = Temp(
     "temperatures exceed given thresholds for a number of days.",
     cell_methods="",
     compute=indices.heat_wave_index,
+)
+
+heat_spell_frequency = Temp(
+    title="Heat spell frequency",
+    identifier="heat_spell_frequency",
+    units="",
+    long_name="Number of heat spells",
+    description="{freq} number of heat spells events. A heat spell occurs when the {window}-day "
+    "averages of daily minimum and maximum temperatures each exceed {threshold1} and {threshold2}. "
+    "All days of the {window}-day period are considered part of the spell.",
+    abstract="Number of heat spells. A heat spell occurs when rolling averages of daily minimum and maximum temperatures exceed given "
+    "thresholds for a number of days.",
+    cell_methods="",
+    keywords="health,",
+    compute=indices.generic.bivariate_spell_length_statistics,
+    input={"data1": "tasmin", "data2": "tasmax"},
+    parameters=dict(
+        spell_reducer="count",
+        op=">=",
+        window={"default": 3},
+        win_reducer={
+            "default": "mean",
+            "name": "op",
+        },  # To mirror other spell indicators
+        freq={"default": "YS"},
+        threshold1={
+            "description": "Threshold for tasmin",
+            "default": "20 °C",
+            "name": "thresh_tasmin",
+        },
+        threshold2={
+            "description": "Threshold for tasmax",
+            "default": "33 °C",
+            "name": "thresh_tasmax",
+        },
+    ),
+)
+
+heat_spell_max_length = Temp(
+    title="Heat spell maximum length",
+    identifier="heat_spell_max_length",
+    units="days",
+    standard_name="spell_length_of_days_with_air_temperature_above_threshold",
+    long_name="Longest heat spell",
+    description="{freq} maximum length of heat spells. A heat spell occurs when the {window}-day "
+    "averages of daily minimum and maximum temperatures each exceed {threshold1} and {threshold2}. "
+    "All days of the {window}-day period are considered part of the spell.",
+    abstract="The longest heat spell of a period. A heat spell occurs when rolling averages of daily minimum and maximum temperatures exceed given "
+    "thresholds for a number of days.",
+    compute=indices.generic.bivariate_spell_length_statistics,
+    input={"data1": "tasmin", "data2": "tasmax"},
+    parameters=dict(
+        spell_reducer="max",
+        op=">=",
+        window={"default": 3},
+        win_reducer={
+            "default": "mean",
+            "name": "op",
+        },  # To mirror other spell indicators
+        freq={"default": "YS"},
+        threshold1={
+            "description": "Threshold for tasmin",
+            "default": "20 °C",
+            "name": "thresh_tasmin",
+        },
+        threshold2={
+            "description": "Threshold for tasmax",
+            "default": "33 °C",
+            "name": "thresh_tasmax",
+        },
+    ),
+)
+
+heat_spell_total_length = Temp(
+    title="Heat spell total length",
+    identifier="heat_spell_total_length",
+    units="days",
+    standard_name="spell_length_of_days_with_air_temperature_above_threshold",
+    long_name="Total length of heat spells.",
+    description="{freq} total length of heat spell events. "
+    "A heat spell occurs when the {window}-day  averages of daily minimum and maximum temperatures "
+    "each exceed {threshold1} and {threshold2}.  All days of the {window}-day period are considered part of the spell.",
+    abstract="Total length of heat spells. A heat spell occurs when rolling averages of daily minimum and maximum temperatures exceed given "
+    "thresholds for a number of days.",
+    compute=indices.generic.bivariate_spell_length_statistics,
+    input={"data1": "tasmin", "data2": "tasmax"},
+    parameters=dict(
+        spell_reducer="sum",
+        op=">=",
+        window={"default": 3},
+        win_reducer={
+            "default": "mean",
+            "name": "op",
+        },  # To mirror other spell indicators
+        freq={"default": "YS"},
+        threshold1={
+            "description": "Threshold for tasmin",
+            "default": "20 °C",
+            "name": "thresh_tasmin",
+        },
+        threshold2={
+            "description": "Threshold for tasmax",
+            "default": "33 °C",
+            "name": "thresh_tasmax",
+        },
+    ),
 )
 
 hot_spell_frequency = Temp(

@@ -413,6 +413,11 @@ class XclimCli(click.MultiCommand):
     help="Chunks to use when opening the input dataset(s). "
     "Given as <dim1>:num,<dim2:num>. Ex: time:365,lat:168,lon:150.",
 )
+@click.option(
+    "--engine",
+    help="Engine to use when opening the input dataset(s). "
+    "If not specified, xarray decides.",
+)
 @click.pass_context
 def cli(ctx, **kwargs):
     """Entry point for the command line interface.
@@ -463,7 +468,9 @@ def cli(ctx, **kwargs):
             for dim, num in map(lambda x: x.split(":"), kwargs["chunks"].split(","))
         }
 
-    kwargs["xr_kwargs"] = {"chunks": kwargs["chunks"] or {}}
+    kwargs["xr_kwargs"] = {
+        "chunks": kwargs["chunks"] or {},
+    }
     ctx.obj = kwargs
 
 
@@ -475,7 +482,9 @@ def write_file(ctx, *args, **kwargs):
         if ctx.obj["verbose"]:
             click.echo(f"Writing to file {ctx.obj['output']}")
         with ProgressBar():
-            r = ctx.obj["ds_out"].to_netcdf(ctx.obj["output"], compute=False)
+            r = ctx.obj["ds_out"].to_netcdf(
+                ctx.obj["output"], engine=kwargs["engine"], compute=False
+            )
             if ctx.obj["dask_nthreads"] is not None:
                 progress(r.data)
             r.compute()
