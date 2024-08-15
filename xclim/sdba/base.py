@@ -226,7 +226,9 @@ class Grouper(Parametrizable):
         They are broadcast, merged to the grouping dataset and regrouped in the output.
         """
         if das:
-            from .utils import broadcast  # pylint: disable=cyclic-import
+            from .utils import (  # pylint: disable=cyclic-import,import-outside-toplevel
+                broadcast,
+            )
 
             if da is not None:
                 das[da.name] = da

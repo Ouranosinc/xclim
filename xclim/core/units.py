@@ -336,10 +336,8 @@ def convert_units_to(  # noqa: C901
                 for direction, sign in [("to", 1), ("from", -1)]:
                     # If the dimensionality diff is compatible with this conversion
                     compatible = all(
-                        [
-                            dimdiff == (sign * dim_order_diff.get(f"[{dim}]"))
-                            for dim, dimdiff in convconf["dimensionality"].items()
-                        ]
+                        dimdiff == sign * dim_order_diff.get(f"[{dim}]")
+                        for dim, dimdiff in convconf["dimensionality"].items()
                     )
                     # Does the input cf standard name have an equivalent after conversion
                     valid = cf_conversion(standard_name, convname, direction)
@@ -372,9 +370,7 @@ def convert_units_to(  # noqa: C901
     raise NotImplementedError(f"Source of type `{type(source)}` is not supported.")
 
 
-def cf_conversion(
-    standard_name: str, conversion: str, direction: Literal["to", "from"]
-) -> str | None:
+def cf_conversion(standard_name: str, conversion: str, direction: str) -> str | None:
     """Get the standard name of the specific conversion for the given standard name.
 
     Parameters

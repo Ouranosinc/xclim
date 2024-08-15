@@ -417,10 +417,9 @@ def _drought_code(  # pragma: no cover
     """
     fl = _day_length_factor(lat, mth)  # type: ignore
 
-    if t < -2.8:
-        t = -2.8  # type: ignore
+    t = max(t, -2.8)  # type: ignore
     pe = (0.36 * (t + 2.8) + fl) / 2  # *Eq.22*#
-    pe = max(pe, 0.0)
+    pe = max(pe, 0.0)  # type: ignore
 
     if p > 2.8:
         ra = p
@@ -1074,7 +1073,7 @@ def fire_weather_ufunc(  # noqa: C901
 
     # Verification of all arguments
     for i, (arg, name, usedby, has_time_dim) in enumerate(needed_args):
-        if any([ind in indexes + [season_method] for ind in usedby]):
+        if any(ind in indexes + [season_method] for ind in usedby):
             if arg is None:
                 raise TypeError(
                     f"Missing input argument {name} for index combination {indexes} "
@@ -1172,7 +1171,8 @@ def fire_weather_ufunc(  # noqa: C901
 
     if len(outputs) == 1:
         return {outputs[0]: das}
-    return {name: da for name, da in zip(outputs, das)}
+
+    return dict(zip(outputs, das))
 
 
 @declare_units(last_dc="[]", winter_pr="[length]")
@@ -1644,14 +1644,14 @@ def fire_season(
     ):
         raise ValueError("Thresholds must be scalar.")
 
-    kwargs = dict(
-        method=method,
-        temp_start_thresh=convert_units_to(temp_start_thresh, "degC"),
-        temp_end_thresh=convert_units_to(temp_end_thresh, "degC"),
-        temp_condition_days=temp_condition_days,
-        snow_condition_days=snow_condition_days,
-        snow_thresh=convert_units_to(snow_thresh, "m"),
-    )
+    kwargs = {
+        "method": method,
+        "temp_start_thresh": convert_units_to(temp_start_thresh, "degC"),
+        "temp_end_thresh": convert_units_to(temp_end_thresh, "degC"),
+        "temp_condition_days": temp_condition_days,
+        "snow_condition_days": snow_condition_days,
+        "snow_thresh": convert_units_to(snow_thresh, "m"),
+    }
 
     def _apply_fire_season(ds, **kwargs):
         season_mask = ds.tas.copy(

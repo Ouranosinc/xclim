@@ -5,7 +5,7 @@ from typing import cast
 
 import numpy as np
 import xarray as xr
-from numba import float32, float64, vectorize  # noqa
+from numba import vectorize
 
 from xclim.core.units import (
     amount2rate,
@@ -1584,12 +1584,7 @@ def potential_evapotranspiration(
     return out
 
 
-@vectorize(
-    # [
-    #     float64(float64, float64, float64, float64),
-    #     float32(float32, float32, float32, float32),
-    # ],
-)
+@vectorize
 def _utci(tas, sfcWind, dt, wvp):
     """Return the empirical polynomial function for UTCI. See :py:func:`universal_thermal_climate_index`."""
     # Taken directly from the original Fortran code by Peter Bröde.

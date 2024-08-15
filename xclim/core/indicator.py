@@ -1631,7 +1631,7 @@ def build_indicator_module(
     ModuleType
         A indicator module built from a mapping of Indicators.
     """
-    from xclim import indicators
+    from xclim import indicators  # pylint: disable=import-outside-toplevel
 
     out: ModuleType
     if hasattr(indicators, name):

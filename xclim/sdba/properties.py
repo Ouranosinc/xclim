@@ -99,7 +99,9 @@ class StatisticalProperty(Indicator):
 
     def get_measure(self):
         """Get the statistical measure indicator that is best used with this statistical property."""
-        from xclim.core.indicator import registry
+        from xclim.core.indicator import (  # pylint: disable=import-outside-toplevel
+            registry,
+        )
 
         return registry[self.measure].get_instance()
 
@@ -354,7 +356,7 @@ def _spell_length_distribution(
         stat_resample,
     ):
         # PB: This prevents an import error in the distributed dask scheduler, but I don't know why.
-        import xarray.core.resample_cftime  # noqa: F401, pylint: disable=unused-import
+        import xarray.core.resample_cftime  # noqa: F401, pylint: disable=unused-import,import-outside-toplevel
 
         da = ds.data
         mask = ~(da.isel({dim: 0}).isnull()).drop_vars(
@@ -906,7 +908,7 @@ def _bivariate_spell_length_distribution(
         stat_resample,
     ):
         # PB: This prevents an import error in the distributed dask scheduler, but I don't know why.
-        import xarray.core.resample_cftime  # noqa: F401, pylint: disable=unused-import
+        import xarray.core.resample_cftime  # noqa: F401, pylint: disable=unused-import,import-outside-toplevel
 
         conds = []
         masks = []

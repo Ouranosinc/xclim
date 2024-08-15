@@ -90,9 +90,8 @@ def select_resample_op(
     """
     da = select_time(da, **indexer)
     r = da.resample(time=freq)
-    if op in _xclim_ops:
-        op = _xclim_ops[op]
     if isinstance(op, str):
+        op = _xclim_ops.get(op, op)
         out = getattr(r, op.replace("integral", "sum"))(dim="time", keep_attrs=True)
     else:
         with xr.set_options(keep_attrs=True):

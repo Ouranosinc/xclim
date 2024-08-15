@@ -172,8 +172,7 @@ def _griffiths_drought_factor(p, smd, lim, df):  # pragma: no cover
                 dflim = 9.0
             else:
                 dflim = 10.0
-            if dfw > dflim:
-                dfw = dflim
+            dfw = min(dfw, dflim)
 
         dfw = min(dfw, 10.0)
 

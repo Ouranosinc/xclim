@@ -153,7 +153,9 @@ def time_correction_for_solar_angle(time: xr.DataArray) -> xr.DataArray:
     return _wrap_radians(convert_units_to(tc, "rad"))
 
 
-def eccentricity_correction_factor(time: xr.DataArray, method="spencer"):
+def eccentricity_correction_factor(
+    time: xr.DataArray, method: str = "spencer"
+) -> xr.DataArray:
     """Eccentricity correction factor of the Earth's orbit.
 
     The squared ratio of the mean distance Earth-Sun to the distance at a specific moment.
@@ -163,9 +165,10 @@ def eccentricity_correction_factor(time: xr.DataArray, method="spencer"):
     ----------
     time: xr.DataArray
         Time coordinate
-    method : str
-        Which approximation to use. The default ("spencer") uses the first five terms of the fourier series of the
-        eccentricity, while "simple" approximates with only the first two.
+    method : {'spencer', 'simple'}
+        Which approximation to use.
+        The default ("spencer") uses the first five terms of the fourier series of the eccentricity.
+        The "simple" method approximates with only the first two.
 
     Returns
     -------
@@ -191,6 +194,7 @@ def eccentricity_correction_factor(time: xr.DataArray, method="spencer"):
             + 0.000719 * np.cos(2 * da)
             + 0.000077 * np.sin(2 * da)
         )
+    raise NotImplementedError("Method must be one of 'simple' or 'spencer'.")
 
 
 def cosine_of_solar_zenith_angle(

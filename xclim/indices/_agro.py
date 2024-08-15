@@ -662,12 +662,12 @@ def dryness_index(
     adjustment_array_north = xarray.DataArray(
         [0, 0, 0, 0.1, 0.3, 0.5, 0.5, 0.5, 0.5, 0, 0, 0],
         dims="month",
-        coords=dict(month=np.arange(1, 13)),
+        coords={"month": np.arange(1, 13)},
     )
     adjustment_array_south = xarray.DataArray(
         [0.5, 0.5, 0.5, 0, 0, 0, 0, 0, 0, 0.1, 0.3, 0.5],
         dims="month",
-        coords=dict(month=np.arange(1, 13)),
+        coords={"month": np.arange(1, 13)},
     )
 
     has_north, has_south = False, False

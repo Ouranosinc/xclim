@@ -80,17 +80,15 @@ def _valid_locales(locales):
     if isinstance(locales, str):
         return True
     return all(
-        [
-            # A locale is valid if it is a string from the list
-            (isinstance(locale, str) and locale in _LOCALES)
-            or (
-                # Or if it is a tuple of a string and either a file or a dict.
-                not isinstance(locale, str)
-                and isinstance(locale[0], str)
-                and (isinstance(locale[1], dict) or Path(locale[1]).is_file())
-            )
-            for locale in locales
-        ]
+        # A locale is valid if it is a string from the list
+        (isinstance(locale, str) and locale in _LOCALES)
+        or (
+            # Or if it is a tuple of a string and either a file or a dict.
+            not isinstance(locale, str)
+            and isinstance(locale[0], str)
+            and (isinstance(locale[1], dict) or Path(locale[1]).is_file())
+        )
+        for locale in locales
     )
 
 

@@ -133,13 +133,13 @@ def fit(
         dask="parallelized",
         output_dtypes=[float],
         keep_attrs=True,
-        kwargs=dict(
+        kwargs={
             # Don't know how APP should be included, this works for now
-            dist=dist,
-            nparams=len(dist_params),
-            method=method,
+            "dist": dist,
+            "nparams": len(dist_params),
+            "method": method,
             **fitkwargs,
-        ),
+        },
         dask_gufunc_kwargs={"output_sizes": {"dparams": len(dist_params)}},
     )
 

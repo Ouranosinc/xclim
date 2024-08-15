@@ -1398,7 +1398,8 @@ def stack_periods(
         If ``stride`` is a divisor of ``window``, the correct timeseries can be reconstructed with :py:func:`unstack_periods`.
         The coordinate of `period` is the first timestep of each window.
     """
-    from xclim.core.units import (  # Import in function to avoid cyclical imports
+    # Import in function to avoid cyclical imports
+    from xclim.core.units import (  # pylint: disable=import-outside-toplevel
         ensure_cf_units,
         infer_sampling_units,
     )
@@ -1575,7 +1576,7 @@ def unstack_periods(da: xr.DataArray | xr.Dataset, dim: str = "period"):
          0   o   o   o   x   x
         === === === === === === === ===
     """
-    from xclim.core.units import infer_sampling_units
+    from xclim.core.units import infer_sampling_units  # pylint: disable=import-outside-toplevel
 
     try:
         starts = da[dim]
