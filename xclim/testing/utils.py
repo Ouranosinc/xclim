@@ -6,25 +6,20 @@ Testing and Tutorial Utilities' Module
 # Some of this code was copied and adapted from xarray
 from __future__ import annotations
 
-import hashlib
-import json
 import logging
 import os
 import platform
 import re
 import sys
-import warnings
 from collections.abc import Sequence
 from importlib import import_module
 from io import StringIO
 from pathlib import Path
-from shutil import copy
 from typing import TextIO
 from urllib.error import HTTPError, URLError
 from urllib.parse import urljoin, urlparse
-from urllib.request import urlopen, urlretrieve
+from urllib.request import urlretrieve
 
-import pandas as pd
 from platformdirs import user_cache_dir
 from xarray import Dataset
 from xarray import open_dataset as _open_dataset
@@ -64,22 +59,12 @@ logger = logging.getLogger("xclim")
 __all__ = [
     "_default_cache_dir",
     "audit_url",
-    "get_file",
-    "get_local_testdata",
-    "list_datasets",
     "list_input_variables",
     "open_dataset",
     "publish_release_notes",
     "run_doctests",
     "show_versions",
 ]
-
-
-def file_md5_checksum(f_name):
-    hash_md5 = hashlib.md5()  # noqa: S324
-    with open(f_name, "rb") as f:
-        hash_md5.update(f.read())
-    return hash_md5.hexdigest()
 
 
 def audit_url(url: str, context: str = None) -> str:
@@ -103,212 +88,37 @@ def audit_url(url: str, context: str = None) -> str:
     return url
 
 
-def get_file(
-    name: str | os.PathLike[str] | Sequence[str | os.PathLike[str]],
-    github_url: str = "https://github.com/Ouranosinc/xclim-testdata",
-    branch: str = "main",
-    cache_dir: Path = _default_cache_dir,
-) -> Path | list[Path]:
-    """Return a file from an online GitHub-like repository.
-
-    If a local copy is found then always use that to avoid network traffic.
-
-    Parameters
-    ----------
-    name : str | os.PathLike[str] | Sequence[str | os.PathLike[str]]
-        Name of the file or list/tuple of names of files containing the dataset(s) including suffixes.
-    github_url : str
-        URL to GitHub repository where the data is stored.
-    branch : str, optional
-        For GitHub-hosted files, the branch to download from.
-    cache_dir : Path
-        The directory in which to search for and write cached data.
-
-    Returns
-    -------
-    Path | list[Path]
-    """
-    if isinstance(name, (str, os.PathLike)):
-        name = [name]
-
-    files = []
-    for n in name:
-        fullname = Path(n)
-        suffix = fullname.suffix
-        files.append(
-            _get(
-                fullname=fullname,
-                github_url=github_url,
-                branch=branch,
-                suffix=suffix,
-                cache_dir=cache_dir,
-            )
-        )
-    if len(files) == 1:
-        return files[0]
-    return files
-
-
-def get_local_testdata(
-    patterns: str | Sequence[str],
-    temp_folder: str | os.PathLike,
-    branch: str = "master",
-    _local_cache: str | os.PathLike = _default_cache_dir,
-) -> Path | list[Path]:
-    """Copy specific testdata from a default cache to a temporary folder.
-
-    Return files matching `pattern` in the default cache dir and move to a local temp folder.
-
-    Parameters
-    ----------
-    patterns : str | Sequence[str]
-        Glob patterns, which must include the folder.
-    temp_folder : str | os.PathLike
-        Target folder to copy files and filetree to.
-    branch : str
-        For GitHub-hosted files, the branch to download from.
-    _local_cache : str | os.PathLike
-        Local cache of testing data.
-
-    Returns
-    -------
-    Path | list[Path]
-    """
-    temp_paths = []
-
-    if isinstance(patterns, str):
-        patterns = [patterns]
-
-    for pattern in patterns:
-        potential_paths = [
-            path for path in Path(temp_folder).joinpath(branch).glob(pattern)
-        ]
-        if potential_paths:
-            temp_paths.extend(potential_paths)
-            continue
-
-        testdata_path = Path(_local_cache)
-        if not testdata_path.exists():
-            raise RuntimeError(f"{testdata_path} does not exists")
-        paths = [path for path in testdata_path.joinpath(branch).glob(pattern)]
-        if not paths:
-            raise FileNotFoundError(
-                f"No data found for {pattern} at {testdata_path}/{branch}."
-            )
-
-        main_folder = Path(temp_folder).joinpath(branch).joinpath(Path(pattern).parent)
-        main_folder.mkdir(exist_ok=True, parents=True)
-
-        for file in paths:
-            temp_file = main_folder.joinpath(file.name)
-            if not temp_file.exists():
-                copy(file, main_folder)
-            temp_paths.append(temp_file)
-
-    # Return item directly when singleton, for convenience
-    return temp_paths[0] if len(temp_paths) == 1 else temp_paths
-
-
 def _get(
-    fullname: Path,
+    name: Path,
     github_url: str,
     branch: str,
-    suffix: str,
     cache_dir: Path,
 ) -> Path:
     cache_dir = cache_dir.absolute()
-    local_file = cache_dir / branch / fullname
-    md5_name = fullname.with_suffix(f"{suffix}.md5")
-    md5_file = cache_dir / branch / md5_name
+    local_file = cache_dir / branch / name
 
     if not github_url.startswith("https"):
         raise ValueError(f"GitHub URL not secure: '{github_url}'.")
-
-    if local_file.is_file():
-        local_md5 = file_md5_checksum(local_file)
-        try:
-            url = "/".join((github_url, "raw", branch, md5_name.as_posix()))
-            msg = f"Attempting to fetch remote file md5: {md5_name.as_posix()}"
-            logger.info(msg)
-            urlretrieve(audit_url(url), md5_file)  # noqa: S310
-            with open(md5_file) as f:
-                remote_md5 = f.read()
-            if local_md5.strip() != remote_md5.strip():
-                local_file.unlink()
-                msg = (
-                    f"MD5 checksum for {local_file.as_posix()} does not match upstream md5. "
-                    "Attempting new download."
-                )
-                warnings.warn(msg)
-        except HTTPError:
-            msg = (
-                f"{md5_name.as_posix()} not accessible in remote repository. "
-                "Unable to determine validity with upstream repo."
-            )
-            warnings.warn(msg)
-        except URLError:
-            msg = (
-                f"{md5_name.as_posix()} not found in remote repository. "
-                "Unable to determine validity with upstream repo."
-            )
-            warnings.warn(msg)
-        except SocketBlockedError:
-            msg = f"Unable to access {md5_name.as_posix()} online. Testing suite is being run with `--disable-socket`."
-            warnings.warn(msg)
 
     if not local_file.is_file():
         # This will always leave this directory on disk.
         # We may want to add an option to remove it.
         local_file.parent.mkdir(exist_ok=True, parents=True)
-
-        url = "/".join((github_url, "raw", branch, fullname.as_posix()))
-        msg = f"Fetching remote file: {fullname.as_posix()}"
+        url = "/".join((github_url, "raw", branch, name.as_posix()))
+        msg = f"Fetching remote file: {name.as_posix()}"
         logger.info(msg)
         try:
             urlretrieve(audit_url(url), local_file)  # noqa: S310
         except HTTPError as e:
-            msg = f"{fullname.as_posix()} not accessible in remote repository. Aborting file retrieval."
-            raise FileNotFoundError(msg) from e
-        except URLError as e:
-            msg = (
-                f"{fullname.as_posix()} not found in remote repository. "
-                "Verify filename and repository address. Aborting file retrieval."
-            )
+            msg = f"{name.as_posix()} not accessible in remote repository. Aborting file retrieval."
             raise FileNotFoundError(msg) from e
         except SocketBlockedError as e:
             msg = (
-                f"Unable to access {fullname.as_posix()} online. Testing suite is being run with `--disable-socket`. "
+                f"Unable to access {name.as_posix()} online. Testing suite is being run with `--disable-socket`. "
                 f"If you intend to run tests with this option enabled, please download the file beforehand with the "
                 f"following console command: `xclim prefetch_testing_data`."
             )
             raise FileNotFoundError(msg) from e
-        try:
-            url = "/".join((github_url, "raw", branch, md5_name.as_posix()))
-            msg = f"Fetching remote file md5: {md5_name.as_posix()}"
-            logger.info(msg)
-            urlretrieve(audit_url(url), md5_file)  # noqa: S310
-        except (HTTPError, URLError) as e:
-            msg = (
-                f"{md5_name.as_posix()} not accessible online. "
-                "Unable to determine validity of file from upstream repo. "
-                "Aborting file retrieval."
-            )
-            local_file.unlink()
-            raise FileNotFoundError(msg) from e
-
-        local_md5 = file_md5_checksum(local_file)
-        try:
-            with open(md5_file) as f:
-                remote_md5 = f.read()
-            if local_md5.strip() != remote_md5.strip():
-                local_file.unlink()
-                msg = (
-                    f"{local_file.as_posix()} and md5 checksum do not match. "
-                    "There may be an issue with the upstream origin data."
-                )
-                raise OSError(msg)
-        except OSError as e:
-            logger.error(e)
 
     return local_file
 
@@ -316,9 +126,8 @@ def _get(
 # idea copied from raven that it borrowed from xclim that borrowed it from xarray that was borrowed from Seaborn
 def open_dataset(
     name: str | os.PathLike[str],
-    suffix: str | None = None,
     dap_url: str | None = None,
-    github_url: str = "https://github.com/Ouranosinc/xclim-testdata",
+    github_url: str = "https://github.com/Ouranosinc/xclim-testdata/data",
     branch: str = "main",
     cache: bool = True,
     cache_dir: Path = _default_cache_dir,
@@ -332,8 +141,6 @@ def open_dataset(
     ----------
     name : str or os.PathLike
         Name of the file containing the dataset.
-    suffix : str, optional
-        If no suffix is given, assumed to be netCDF ('.nc' is appended). For no suffix, set "".
     dap_url : str, optional
         URL to OPeNDAP folder where the data is stored. If supplied, supersedes github_url.
     github_url : str
@@ -357,9 +164,6 @@ def open_dataset(
     """
     if isinstance(name, (str, os.PathLike)):
         name = Path(name)
-    if suffix is None:
-        suffix = ".nc"
-    fullname = name.with_suffix(suffix)
 
     if dap_url is not None:
         dap_file_address = urljoin(dap_url, str(name))
@@ -374,10 +178,9 @@ def open_dataset(
             raise OSError(msg)
 
     local_file = _get(
-        fullname=fullname,
+        name=name,
         github_url=github_url,
         branch=branch,
-        suffix=suffix,
         cache_dir=cache_dir,
     )
 
@@ -389,38 +192,6 @@ def open_dataset(
         return ds
     except OSError as err:
         raise err
-
-
-def list_datasets(github_repo="Ouranosinc/xclim-testdata", branch="main"):
-    """Return a DataFrame listing all xclim test datasets available on the GitHub repo for the given branch.
-
-    The result includes the filepath, as passed to `open_dataset`, the file size (in KB) and the html url to the file.
-    This uses an unauthenticated call to GitHub's REST API, so it is limited to 60 requests per hour (per IP).
-    A single call of this function triggers one request per subdirectory, so use with parsimony.
-    """
-    with urlopen(  # noqa: S310
-        audit_url(f"https://api.github.com/repos/{github_repo}/contents?ref={branch}")
-    ) as res:
-        base = json.loads(res.read().decode())
-    records = []
-    for folder in base:
-        if folder["path"].startswith(".") or folder["size"] > 0:
-            # drop hidden folders and other files.
-            continue
-        with urlopen(audit_url(folder["url"])) as res:  # noqa: S310
-            listing = json.loads(res.read().decode())
-        for file in listing:
-            if file["path"].endswith(".nc"):
-                records.append(
-                    {
-                        "name": file["path"],
-                        "size": file["size"] / 2**10,
-                        "url": file["html_url"],
-                    }
-                )
-    df = pd.DataFrame.from_records(records).set_index("name")
-    print(f"Found {len(df)} datasets.")
-    return df
 
 
 def list_input_variables(
