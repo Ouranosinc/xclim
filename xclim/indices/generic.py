@@ -359,13 +359,13 @@ def get_daily_events(
 
 
 def spell_mask(
-    data: xarray.DataArray,
+    data: xarray.DataArray | Sequence[xarray.DataArray],
     window: int,
     win_reducer: str,
     op: str,
-    thresh: float | xarray.DataArray,
+    thresh: float | Sequence[float],
     weights: Sequence[float] = None,
-    var_reducer: str | None = None,
+    var_reducer: str = "all",
 ) -> xarray.DataArray:
     """Compute the boolean mask of data points that are part of a spell as defined by a rolling statistic.
 
@@ -373,40 +373,41 @@ def spell_mask(
 
     Parameters
     ----------
-    data: DataArray
-        The input data. Considered multivariate if `var_reducer` is given and data has a "variable" dimension.
-        See `var_reducer` and `threshold` for the later case.
+    data: DataArray or sequence of DataArray
+        The input data. Can be a list, in which case the condition is checked on all variables.
+        See var_reducer for the latter case.
     window: int
         The length of the rolling window in which to compute statistics.
     win_reducer: {'min', 'max', 'sum', 'mean'}
         The statistics to compute on the rolling window.
     op: {">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"}
         The comparison operator to use when finding spells.
-    thresh: float or DataArray
+    thresh: float or sequence of floats
         The threshold to compare the rolling statistics against, as ``window_stats op threshold``.
-        If data is multivariate, this must be a DataArray with a "variable" dimension of the same length, with a threshold for each variable.
-        This function does not handle units.
+        If data is a list, this must be a list of the same length with a threshold for each variable.
+        This function does not handle units and can't accept Quantified objects.
     weights: sequence of floats
         A list of weights of the same length as the window.
         Only supported if `win_reducer` is "mean".
-    var_reducer: {'all', 'any'}, optional
-        If the data is multivariate, the condition must either be fulfilled on *all*
+    var_reducer: {'all', 'any'}
+        If the data is a list, the condition must either be fulfilled on *all*
         or *any* variables for the period to be considered a spell.
-        If None (default), the data is not considered multivariate.
 
     Returns
     -------
     xarray.DataArray
         Same shape as ``data``, but boolean.
-        If ``data`` was multivariate, the variable dimension has been removed.
+        If ``data`` was a list, this is a DataArray of the same shape as the alignment of all variables.
     """
     # Checks
-    multivariate = False
-    if var_reducer is not None:
-        if 'variable' in data.dims and 'variable' in thresh.dims:
-            multivariate = True
-        else:
-            raise ValueError("'var_reducer' was given but the data does not have 'variable' dimension.")
+    if not isinstance(data, xarray.DataArray):
+        # thus a sequence
+        if np.isscalar(thresh) or len(data) != len(thresh):
+            raise ValueError(
+                "When ``data`` is given as a list, ``threshold`` must be a sequence of the same length."
+            )
+        data = xarray.concat(data, "variable")
+        thresh = xarray.DataArray(thresh, dims=("variable",))
     if weights is not None:
         if win_reducer != "mean":
             raise ValueError(
@@ -420,7 +421,7 @@ def spell_mask(
 
     if window == 1:  # Fast path
         mask = compare(data, op, thresh)
-        if multivariate:
+        if not np.isscalar(thresh):
             is_in_spell = getattr(mask, var_reducer)("variable")
     elif (win_reducer == "min" and op in [">", ">=", "ge", "gt"]) or (
         win_reducer == "max" and op in ["`<", "<=", "le", "lt"]
@@ -428,7 +429,7 @@ def spell_mask(
         # Fast path for specific cases, this yields a smaller dask graph (rolling twice is expensive!)
         # For these two cases, a day can't be part of a spell if it doesn't respect the condition itself
         mask = compare(data, op, thresh)
-        if multivariate:
+        if not np.isscalar(thresh):
             mask = getattr(mask, var_reducer)("variable")
         # We need to filter out the spells shorter than "window"
         # find sequences of consecutive respected constraints
@@ -448,7 +449,7 @@ def spell_mask(
             spell_value = getattr(data_pad.rolling(time=window), win_reducer)()
         # True at the end of a spell respecting the condition
         mask = compare(spell_value, op, thresh)
-        if multivariate:
+        if not np.isscalar(thresh):
             mask = getattr(mask, var_reducer)("variable")
         # True for all days part of a spell that respected the condition (shift because of the two rollings)
         is_in_spell = (mask.rolling(time=window).sum() >= 1).shift(time=-(window - 1))
@@ -466,7 +467,7 @@ def spell_length_statistics(
     op: str,
     spell_reducer: str,
     freq: str,
-    resample_before_spells: bool = False,
+    resample_before_rl: bool = True,
     **indexer,
 ):
     r"""Statistics on spells lengths.
@@ -491,9 +492,9 @@ def spell_length_statistics(
         Statistic on the spell lengths.
     freq : str
         Resampling frequency.
-    resample_before_spells : bool
-        Determines if the resampling should take place before or after finding the 
-        spells. If it takes place before, spells cannot cross the period boundary.
+    resample_before_rl : bool
+        Determines if the resampling should take place before or after the run
+        length encoding (or a similar algorithm) is applied to runs.
     \*\*indexer
         Indexing parameters to compute the indicator on a temporal subset of the data.
         It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
@@ -534,23 +535,18 @@ def spell_length_statistics(
     bivariate_spell_length_statistics : The bivariate version of this function.
     """
     thresh = convert_units_to(threshold, data, context="infer")
+    is_in_spell = spell_mask(data, window, win_reducer, op, thresh).astype(np.float32)
+    is_in_spell = select_time(is_in_spell, **indexer)
 
-    def _spell(da, frq = None):
-        is_in_spell = spell_mask(da, window, win_reducer, op, thresh).astype(np.float32)
-        is_in_spell = select_time(is_in_spell, **indexer)
-
-        return rl.rle_statistics(
-            is_in_spell,
-            reducer=spell_reducer,
-            # The code above already ensured only spell of the minimum length are selected
-            window=1,
-            freq=frq,
-        )
-
-    if resample_before_spells:
-        out = resample_map(data, 'time', freq, _spell)
-    else:
-        out = _spell(data, freq)
+    out = rl.resample_and_rl(
+        is_in_spell,
+        resample_before_rl,
+        rl.rle_statistics,
+        reducer=spell_reducer,
+        # The code above already ensured only spell of the minimum length are selected
+        window=1,
+        freq=freq,
+    )
 
     if spell_reducer == "count":
         return out.assign_attrs(units="")
@@ -569,7 +565,7 @@ def bivariate_spell_length_statistics(
     op: str,
     spell_reducer: str,
     freq: str,
-    resample_before_spells: bool = True,
+    resample_before_rl: bool = True,
     **indexer,
 ):
     r"""Statistics on spells lengths based on two variables.
@@ -598,9 +594,9 @@ def bivariate_spell_length_statistics(
         Statistic on the spell lengths.
     freq : str
         Resampling frequency.
-    resample_before_spells : bool
-        Determines if the resampling should take place before or after finding the 
-        spells. If it takes place before, spells cannot cross the period boundary.
+    resample_before_rl : bool
+        Determines if the resampling should take place before or after the run
+        length encoding (or a similar algorithm) is applied to runs.
     \*\*indexer
         Indexing parameters to compute the indicator on a temporal subset of the data.
         It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
@@ -613,34 +609,25 @@ def bivariate_spell_length_statistics(
     """
     thresh1 = convert_units_to(threshold1, data1, context="infer")
     thresh2 = convert_units_to(threshold2, data2, context="infer")
+    is_in_spell = spell_mask(
+        [data1, data2], window, win_reducer, op, [thresh1, thresh2], var_reducer="all"
+    ).astype(np.float32)
+    is_in_spell = select_time(is_in_spell, **indexer)
 
-    data = xr.concat([data2, data2], 'variable')
-    if isinstance(thresh1, xr.DataArray):
-        thresh = xr.concat([thresh1, thresh2], 'variable')
-    else:
-        thresh = xr.DataArray([thresh1, thresh2], dims=('variable',))
-
-    def _spell(da, frq = None):
-        is_in_spell = spell_mask(da, window, win_reducer, op, thresh, var_reducer='all').astype(np.float32)
-        is_in_spell = select_time(is_in_spell, **indexer)
-
-        return rl.rle_statistics(
-            is_in_spell,
-            reducer=spell_reducer,
-            # The code above already ensured only spell of the minimum length are selected
-            window=1,
-            freq=frq,
-        )
-
-    if resample_before_spells:
-        out = resample_map(data, 'time', freq, _spell, reduced_dims=['variable'])
-    else:
-        out = _spell(data, freq)
+    out = rl.resample_and_rl(
+        is_in_spell,
+        resample_before_rl,
+        rl.rle_statistics,
+        reducer=spell_reducer,
+        # The code above already ensured only spell of the minimum length are selected
+        window=1,
+        freq=freq,
+    )
 
     if spell_reducer == "count":
         return out.assign_attrs(units="")
     # All other cases are statistics of the number of timesteps
-    return to_agg_units(out, data, "count")
+    return to_agg_units(out, data1, "count")
 
 
 @declare_relative_units(thresh="<data>")
