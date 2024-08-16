@@ -552,7 +552,7 @@ def resample_map(
     map_blocks: bool | Literal["from_context"] = "from_context",
     resample_kwargs: dict | None = None,
     map_kwargs: dict | None = None,
-    reduced_dims: Sequence[str] | None = None
+    reduced_dims: Sequence[str] | None = None,
 ) -> xr.DataArray | xr.Dataset:
     r"""
     Wraps xarray's resample(...).map() with a :py:func:`xarray.map_blocks`, ensuring the chunking is appropriate using flox.
@@ -608,7 +608,7 @@ def resample_map(
 
     # Template. We are hoping that this takes a negligeable time as it is never loaded.
     template = obj_rechunked.resample(**{dim: freq}, **resample_kwargs).first()
-    if reduced_dims: # Removed reduced dims
+    if reduced_dims:  # Removed reduced dims
         template = template.isel({d: 0 for d in reduced_dims}, drop=True)
 
     # New chunks along time : infer the number of elements resulting from the resampling of each chunk

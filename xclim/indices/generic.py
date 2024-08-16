@@ -403,10 +403,12 @@ def spell_mask(
     # Checks
     multivariate = False
     if var_reducer is not None:
-        if 'variable' in data.dims and 'variable' in thresh.dims:
+        if "variable" in data.dims and "variable" in thresh.dims:
             multivariate = True
         else:
-            raise ValueError("'var_reducer' was given but the data does not have 'variable' dimension.")
+            raise ValueError(
+                "'var_reducer' was given but the data does not have 'variable' dimension."
+            )
     if weights is not None:
         if win_reducer != "mean":
             raise ValueError(
@@ -492,7 +494,7 @@ def spell_length_statistics(
     freq : str
         Resampling frequency.
     resample_before_spells : bool
-        Determines if the resampling should take place before or after finding the 
+        Determines if the resampling should take place before or after finding the
         spells. If it takes place before, spells cannot cross the period boundary.
     \*\*indexer
         Indexing parameters to compute the indicator on a temporal subset of the data.
@@ -535,7 +537,7 @@ def spell_length_statistics(
     """
     thresh = convert_units_to(threshold, data, context="infer")
 
-    def _spell(da, frq = None):
+    def _spell(da, frq=None):
         is_in_spell = spell_mask(da, window, win_reducer, op, thresh).astype(np.float32)
         is_in_spell = select_time(is_in_spell, **indexer)
 
@@ -548,7 +550,7 @@ def spell_length_statistics(
         )
 
     if resample_before_spells:
-        out = resample_map(data, 'time', freq, _spell)
+        out = resample_map(data, "time", freq, _spell)
     else:
         out = _spell(data, freq)
 
@@ -599,7 +601,7 @@ def bivariate_spell_length_statistics(
     freq : str
         Resampling frequency.
     resample_before_spells : bool
-        Determines if the resampling should take place before or after finding the 
+        Determines if the resampling should take place before or after finding the
         spells. If it takes place before, spells cannot cross the period boundary.
     \*\*indexer
         Indexing parameters to compute the indicator on a temporal subset of the data.
@@ -614,14 +616,16 @@ def bivariate_spell_length_statistics(
     thresh1 = convert_units_to(threshold1, data1, context="infer")
     thresh2 = convert_units_to(threshold2, data2, context="infer")
 
-    data = xr.concat([data2, data2], 'variable')
+    data = xr.concat([data2, data2], "variable")
     if isinstance(thresh1, xr.DataArray):
-        thresh = xr.concat([thresh1, thresh2], 'variable')
+        thresh = xr.concat([thresh1, thresh2], "variable")
     else:
-        thresh = xr.DataArray([thresh1, thresh2], dims=('variable',))
+        thresh = xr.DataArray([thresh1, thresh2], dims=("variable",))
 
-    def _spell(da, frq = None):
-        is_in_spell = spell_mask(da, window, win_reducer, op, thresh, var_reducer='all').astype(np.float32)
+    def _spell(da, frq=None):
+        is_in_spell = spell_mask(
+            da, window, win_reducer, op, thresh, var_reducer="all"
+        ).astype(np.float32)
         is_in_spell = select_time(is_in_spell, **indexer)
 
         return rl.rle_statistics(
@@ -633,7 +637,7 @@ def bivariate_spell_length_statistics(
         )
 
     if resample_before_spells:
-        out = resample_map(data, 'time', freq, _spell, reduced_dims=['variable'])
+        out = resample_map(data, "time", freq, _spell, reduced_dims=["variable"])
     else:
         out = _spell(data, freq)
 
