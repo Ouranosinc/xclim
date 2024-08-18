@@ -418,9 +418,9 @@ def spell_mask(
         weights = xarray.DataArray(weights, dims=("window",))
 
     if window == 1:  # Fast path
-        mask = compare(data, op, thresh)
+        is_in_spell = compare(data, op, thresh)
         if not np.isscalar(thresh):
-            is_in_spell = getattr(mask, var_reducer)("variable")
+            is_in_spell = getattr(is_in_spell, var_reducer)("variable")
     elif (win_reducer == "min" and op in [">", ">=", "ge", "gt"]) or (
         win_reducer == "max" and op in ["`<", "<=", "le", "lt"]
     ):
