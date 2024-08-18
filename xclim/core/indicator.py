@@ -197,10 +197,9 @@ class Parameter:
     _empty = _empty
 
     kind: InputKind
-    compute_name: str = (
-        _empty  # Name of the compute function's argument corresponding to this parameter.
-    )
     default: Any = _empty_default
+    # Name of the compute function's argument corresponding to this parameter.
+    compute_name: str = _empty
     description: str = ""
     units: str = _empty
     choices: set = _empty
@@ -817,9 +816,9 @@ class Indicator(IndicatorRegistrar):
         das, params = self._preprocess_and_checks(das, params)
 
         # get mappings where keys are the actual compute function's argument names
-        compute_das, compute_params, var_kwargs = self._get_compute_args(das, params)
+        args = self._get_compute_args(das, params)
         with xarray.set_options(keep_attrs=False):
-            outs = self.compute(**compute_das, **compute_params, **var_kwargs)
+            outs = self.compute(**args)
 
         if isinstance(outs, DataArray):
             outs = [outs]
@@ -945,18 +944,19 @@ class Indicator(IndicatorRegistrar):
         """Rename variables and parameters to match the compute function's names and split VAR_KEYWORD arguments."""
         # Get correct variable names for the compute function.
         # Exclude param without a mapping inside the compute functions (those injected by the indicator class)
-        compute_das, compute_params, var_kwargs = {}, {}, {}
+        args = {}
         for key, p in self._all_parameters.items():
             if p.compute_name is not _empty:
                 if key in das:
-                    compute_das[p.compute_name] = das[key]
-                if key in params:
+                    args[p.compute_name] = das[key]
+                # elif because some args are in both (percentile DataArrays)
+                elif key in params:
                     if p.kind == InputKind.KWARGS:
-                        var_kwargs.update(params[key])
+                        args.update(params[key])
                     else:
-                        compute_params[p.compute_name] = params[key]
+                        args[p.compute_name] = params[key]
 
-        return compute_das, compute_params, var_kwargs
+        return args
 
     def _postprocess(self, outs, das, params):
         """Actions to done after computing."""
