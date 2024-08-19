@@ -13,9 +13,9 @@ import xarray as xr
 from xclim.core import indicator
 from xclim.core.calendar import max_doy
 from xclim.testing import helpers
+from xclim.testing.helpers import nimbus as _nimbus
 from xclim.testing.helpers import test_timeseries
-from xclim.testing.utils import _default_cache_dir  # noqa
-from xclim.testing.utils import get_file
+from xclim.testing.utils import default_cache_dir  # noqa
 from xclim.testing.utils import open_dataset as _open_dataset
 
 
@@ -25,13 +25,22 @@ def random() -> np.random.Generator:
 
 
 @pytest.fixture
-def tmp_netcdf_filename(tmpdir) -> Path:
+def tmp_netcdf_filename(tmpdir):
     yield Path(tmpdir).joinpath("testfile.nc")
 
 
 @pytest.fixture(autouse=True, scope="session")
-def threadsafe_data_dir(tmp_path_factory) -> Path:
+def threadsafe_data_dir(tmp_path_factory):
     yield Path(tmp_path_factory.getbasetemp().joinpath("data"))
+
+
+@pytest.fixture(autouse=True, scope="session")
+def nimbus(threadsafe_data_dir):
+    yield _nimbus(
+        data_dir=threadsafe_data_dir,
+        repo=helpers.TESTDATA_REPO_URL,
+        branch=helpers.TESTDATA_BRANCH,
+    )
 
 
 @pytest.fixture
@@ -313,6 +322,14 @@ def cmip3_day_tas(threadsafe_data_dir):
 
 
 @pytest.fixture(scope="session")
+def get_file(nimbus):
+    def _get_session_scoped_file(file: str):
+        nimbus.fetch(file)
+
+    return _get_session_scoped_file
+
+
+@pytest.fixture(scope="session")
 def open_dataset(threadsafe_data_dir):
     def _open_session_scoped_file(
         file: str | os.PathLike, branch: str = helpers.TESTDATA_BRANCH, **xr_kwargs
@@ -361,30 +378,6 @@ def ensemble_dataset_objects() -> dict[str, str]:
     return edo
 
 
-@pytest.fixture(scope="session")
-def lafferty_sriver_ds() -> xr.Dataset:
-    """Get data from Lafferty & Sriver unit test.
-
-    Notes
-    -----
-    https://github.com/david0811/lafferty-sriver_2023_npjCliAtm/tree/main/unit_test
-    """
-    fn = get_file(
-        "uncertainty_partitioning/seattle_avg_tas.csv",
-        cache_dir=_default_cache_dir,
-        branch=helpers.TESTDATA_BRANCH,
-    )
-
-    df = pd.read_csv(fn, parse_dates=["time"]).rename(
-        columns={"ssp": "scenario", "ensemble": "downscaling"}
-    )
-
-    # Make xarray dataset
-    return xr.Dataset.from_dataframe(
-        df.set_index(["scenario", "model", "downscaling", "time"])
-    )
-
-
 @pytest.fixture(scope="session", autouse=True)
 def gather_session_data(threadsafe_data_dir, worker_id):
     """Gather testing data on pytest run.
@@ -408,7 +401,7 @@ def cleanup(request):
     """
 
     def remove_data_written_flag():
-        flag = _default_cache_dir.joinpath(".data_written")
+        flag = default_cache_dir.joinpath(".data_written")
         if flag.exists():
             flag.unlink()
 

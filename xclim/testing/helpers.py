@@ -20,7 +20,7 @@ import numpy as np
 import pandas as pd
 import pooch
 import xarray as xr
-from dask.diagnostics import Callback
+from dask.callbacks import Callback
 from filelock import FileLock
 from packaging.version import Version
 
@@ -37,8 +37,11 @@ from xclim.indices import (
     longwave_upwelling_radiation_from_net_downwelling,
     shortwave_upwelling_radiation_from_net_downwelling,
 )
-from xclim.testing.utils import _default_cache_dir  # noqa
+from xclim.testing.utils import default_cache_dir
 from xclim.testing.utils import open_dataset as _open_dataset
+
+default_testdata_version = "v2023.12.14"
+
 
 TESTDATA_REPO_URL = str(
     os.getenv("XCLIM_TESTDATA_REPO_URL", "https://github.com/Ouranosinc/xclim-testdata")
@@ -99,7 +102,7 @@ or setting the variable at runtime:
     $ env XCLIM_PREFETCH_TESTING_DATA=1 pytest
 """
 
-CACHE_DIR = os.getenv("XCLIM_DATA_DIR", _default_cache_dir)
+CACHE_DIR = os.getenv("XCLIM_DATA_DIR", default_cache_dir)
 """Sets the directory to store the testing datasets.
 
 If not set, the default location will be used (based on ``platformdirs``, see :func:`pooch.os_cache`).
@@ -139,12 +142,8 @@ or setting the variable at runtime:
     $ env XCLIM_DATA_UPDATES=True pytest
 """
 
-
-DATA_URL = f"{TESTDATA_REPO_URL}/raw/{TESTDATA_BRANCH}/data"
-
 __all__ = [
     "DATA_UPDATES",
-    "DATA_URL",
     "PREFETCH_TESTING_DATA",
     "TESTDATA_BRANCH",
     "add_example_file_paths",
@@ -156,11 +155,11 @@ __all__ = [
 
 def testing_setup_warnings():
     """Warn users about potential incompatibilities between xclim and xclim-testdata versions."""
-    if re.match(r"^\d+\.\d+\.\d+$", __xclim_version__) and TESTDATA_BRANCH == "main":
+    if re.match(r"^\d+\.\d+\.\d+$", __xclim_version__) and TESTDATA_BRANCH != "main":
         # This does not need to be emitted on GitHub Workflows and ReadTheDocs
         if not os.getenv("CI") and not os.getenv("READTHEDOCS"):
             warnings.warn(
-                f'`xclim` {__xclim_version__} is running tests against the "main" branch of the testing data. '
+                f"`xclim` stable ({__xclim_version__}) is running tests against a non-default branch of the testing data. "
                 "It is possible that changes to the testing data may be incompatible with some assertions in this version. "
                 f"Please be sure to check {TESTDATA_REPO_URL} for more information.",
             )
@@ -183,7 +182,9 @@ def testing_setup_warnings():
 
 
 def load_registry(
-    file: str | Path | None = None, remote: str = DATA_URL
+    file: str | Path | None = None,
+    repo: str = TESTDATA_REPO_URL,
+    branch: str = TESTDATA_BRANCH,
 ) -> dict[str, str]:
     """Load the registry file for the test data.
 
@@ -191,36 +192,28 @@ def load_registry(
     ----------
     file : str or Path, optional
         Path to the registry file. If not provided, the registry file found within the package data will be used.
-    remote : str
-        URL to the remote registry folder.
 
     Returns
     -------
     dict
         Dictionary of filenames and hashes.
     """
-
-    def _fetcher(f: str, r: str, c: str) -> str:
-        try:
-            return pooch.retrieve(
-                url=f"{r}/{f}",
-                known_hash=None,
-                path=c,
-                fname="registry.txt",
-            )
-        except HTTPError:
-            raise
-        except SocketBlockedError:
-            raise
+    remote = f"{repo}/raw/{branch}/data"
 
     # Get registry file from package_data
     if file is None:
         registry_file = Path(str(ilr.files("xclim").joinpath("testing/registry.txt")))
         if not registry_file.exists():
             registry_file.touch()
+        url = f"{remote}/{registry_file.name}"
         try:
             with tempfile.TemporaryDirectory() as tempdir:
-                remote_registry_file = _fetcher(registry_file.name, remote, tempdir)
+                remote_registry_file = pooch.retrieve(
+                    url=url,
+                    known_hash=None,
+                    path=tempdir,
+                    fname="registry.txt",
+                )
                 # Check if the local registry file matches the remote registry
                 if pooch.file_hash(remote_registry_file) != pooch.file_hash(
                     registry_file.as_posix()
@@ -262,8 +255,9 @@ def load_registry(
 def nimbus(  # noqa: PR01
     data_dir: str | Path = CACHE_DIR,
     data_updates: bool = DATA_UPDATES,
-    data_url: str = DATA_URL,
-):
+    repo: str = TESTDATA_REPO_URL,
+    branch: str = TESTDATA_BRANCH,
+) -> pooch.Pooch:
     """Pooch registry instance for xhydro test data.
 
     Parameters
@@ -272,8 +266,10 @@ def nimbus(  # noqa: PR01
         Path to the directory where the data files are stored.
     data_updates : bool
         If True, allow updates to the data files.
-    data_url : str
-        Base URL to download the data files.
+    repo : str
+        URL of the repository to use when fetching testing datasets.
+    branch : str
+        Branch of repository to use when fetching testing datasets.
 
     Returns
     -------
@@ -288,7 +284,10 @@ def nimbus(  # noqa: PR01
           the default location will be used (based on ``platformdirs``, see :py:func:`pooch.os_cache`).
         - ``XCLIM_DATA_UPDATES``: If this environment variable is set, then the data files will be downloaded even if the
           upstream hashes do not match. This is useful if you want to always use the latest version of the data files.
-        - ``XCLIM_DATA_URL``: If this environment variable is set, it will be used as the base URL to download the data files.
+        - ``XCLIM_TESTDATA_REPO_URL``: If this environment variable is set, it will be used as the URL of the repository
+          to use when fetching datasets. Otherwise, the default repository will be used.
+        - ``XCLIM_TESTDATA_BRANCH``: If this environment variable is set, it will be used as the branch of the repository
+          to use when fetching datasets. Otherwise, the default branch will be used.
 
     Examples
     --------
@@ -302,37 +301,36 @@ def nimbus(  # noqa: PR01
         example_file = nimbus().fetch("example.nc")
         data = xr.open_dataset(example_file)
     """
+    remote = f"{repo}/raw/{branch}/data"
+
     return pooch.create(
         path=data_dir,
-        base_url=data_url,
-        version=__xclim_version__,
-        version_dev="main",
+        base_url=remote,
+        version=default_testdata_version,
+        version_dev=branch,
         allow_updates=data_updates,
-        registry=load_registry(remote=data_url),
+        registry=load_registry(repo=repo, branch=branch),
     )
 
 
 def populate_testing_data(
     registry_file: str | Path | None = None,
     temp_folder: Path | None = None,
-    branch: str = TESTDATA_BRANCH,
-    _data_url: str = DATA_URL,
-    _local_cache: Path = _default_cache_dir,
+    repo: str | None = None,
+    branch: str | None = None,
+    local_cache: Path = default_cache_dir,
 ) -> None:
     """Populate the local cache with the testing data.
 
     Parameters
     ----------
-    registry_file : str or Path, optional
-        Path to the registry file. If not provided, the registry file from package_data will be used.
     temp_folder : Path, optional
         Path to a temporary folder to use as the local cache. If not provided, the default location will be used.
+    repo : str, optional
+        URL of the repository to use when fetching testing datasets.
     branch : str, optional
         Branch of hydrologie/xhydro-testdata to use when fetching testing datasets.
-    _data_url : Path
-        URL for the testing data.
-        Set via the `DATA_URL` environment variable ({TESTDATA_REPO_URL}/raw/{TESTDATA_BRANCH}/data).
-    _local_cache : Path
+    local_cache : Path
         Path to the local cache. Defaults to the location set by the platformdirs library.
         The testing data will be downloaded to this local cache.
 
@@ -340,19 +338,24 @@ def populate_testing_data(
     -------
     None
     """
-    # Get registry file from package_data or provided path
-    registry = load_registry(registry_file)
-    # Set the local cache to the temp folder
+    if repo is None:
+        _repo = TESTDATA_REPO_URL
+    else:
+        _repo = repo
+    if branch is None:
+        _branch = TESTDATA_BRANCH
+    else:
+        _branch = branch
     if temp_folder is not None:
         _local_cache = temp_folder
+    else:
+        _local_cache = Path(local_cache)
 
     # Create the Pooch instance
-    n = nimbus(data_url=_data_url)
+    n = nimbus(data_dir=_local_cache, repo=_repo, branch=_branch)
 
-    # Set the branch
-    n.version_dev = branch
-    # Set the local cache
-    n.path = _local_cache
+    # Load the registry file
+    registry = load_registry(file=registry_file, repo=_repo, branch=_branch)
 
     # Download the files
     errored_files = []
@@ -363,7 +366,7 @@ def populate_testing_data(
             msg = f"File `{file}` not accessible in remote repository."
             logging.error(msg)
             errored_files.append(file)
-        except SocketBlockedError as e:
+        except SocketBlockedError as e:  # noqa
             msg = (
                 "Unable to access registry file online. Testing suite is being run with `--disable-socket`. "
                 "If you intend to run tests with this option enabled, please download the file beforehand with the "
@@ -421,10 +424,7 @@ def generate_atmos(cache_dir: Path) -> dict[str, xr.DataArray]:
 
 def gather_testing_data(threadsafe_data_dir: Path, worker_id: str):
     """Gather testing data across workers."""
-    if (
-        not _default_cache_dir.joinpath(TESTDATA_BRANCH).exists()
-        or PREFETCH_TESTING_DATA
-    ):
+    if not default_cache_dir.exists() or PREFETCH_TESTING_DATA:
         if PREFETCH_TESTING_DATA:
             print("`XCLIM_PREFETCH_TESTING_DATA` set. Prefetching testing data...")
         if platform == "win32":
@@ -435,17 +435,17 @@ def gather_testing_data(threadsafe_data_dir: Path, worker_id: str):
         elif worker_id in ["master"]:
             populate_testing_data(branch=TESTDATA_BRANCH)
         else:
-            _default_cache_dir.mkdir(exist_ok=True, parents=True)
-            lockfile = _default_cache_dir.joinpath(".lock")
+            default_cache_dir.mkdir(exist_ok=True, parents=True)
+            lockfile = default_cache_dir.joinpath(".lock")
             test_data_being_written = FileLock(lockfile)
             with test_data_being_written:
                 # This flag prevents multiple calls from re-attempting to download testing data in the same pytest run
                 populate_testing_data(branch=TESTDATA_BRANCH)
-                _default_cache_dir.joinpath(".data_written").touch()
+                default_cache_dir.joinpath(".data_written").touch()
             with test_data_being_written.acquire():
                 if lockfile.exists():
                     lockfile.unlink()
-    copytree(_default_cache_dir, threadsafe_data_dir)
+    copytree(default_cache_dir, threadsafe_data_dir)
 
 
 def add_example_file_paths() -> dict[str, str | list[xr.DataArray]]:

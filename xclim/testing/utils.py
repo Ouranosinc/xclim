@@ -20,7 +20,7 @@ from urllib.error import HTTPError, URLError
 from urllib.parse import urljoin, urlparse
 from urllib.request import urlretrieve
 
-from platformdirs import user_cache_dir
+import pooch
 from xarray import Dataset
 from xarray import open_dataset as _open_dataset
 
@@ -51,14 +51,14 @@ _xclim_deps = [
     "boltons",
 ]
 
-
-_default_cache_dir = Path(user_cache_dir("xclim-testdata"))
+default_cache_dir = Path(pooch.os_cache("xclim-testdata"))
+"""Default location for the testing data cache."""
 
 logger = logging.getLogger("xclim")
 
 __all__ = [
-    "_default_cache_dir",
     "audit_url",
+    "default_cache_dir",
     "list_input_variables",
     "open_dataset",
     "publish_release_notes",
@@ -67,7 +67,7 @@ __all__ = [
 ]
 
 
-def audit_url(url: str, context: str = None) -> str:
+def audit_url(url: str, context: str | None = None) -> str:
     """Check if the URL is well-formed.
 
     Raises
@@ -104,13 +104,16 @@ def _get(
         # This will always leave this directory on disk.
         # We may want to add an option to remove it.
         local_file.parent.mkdir(exist_ok=True, parents=True)
-        url = "/".join((github_url, "raw", branch, name.as_posix()))
+        url = "/".join((github_url, "raw", branch, "data", name.as_posix()))
         msg = f"Fetching remote file: {name.as_posix()}"
         logger.info(msg)
         try:
             urlretrieve(audit_url(url), local_file)  # noqa: S310
         except HTTPError as e:
-            msg = f"{name.as_posix()} not accessible in remote repository. Aborting file retrieval."
+            msg = (
+                f"{name.as_posix()} not accessible in remote repository: {url}. "
+                "Aborting file retrieval."
+            )
             raise FileNotFoundError(msg) from e
         except SocketBlockedError as e:
             msg = (
@@ -127,10 +130,10 @@ def _get(
 def open_dataset(
     name: str | os.PathLike[str],
     dap_url: str | None = None,
-    github_url: str = "https://github.com/Ouranosinc/xclim-testdata/data",
+    github_url: str = "https://github.com/Ouranosinc/xclim-testdata",
     branch: str = "main",
     cache: bool = True,
-    cache_dir: Path = _default_cache_dir,
+    cache_dir: Path = default_cache_dir,
     **kwargs,
 ) -> Dataset:
     r"""Open a dataset from the online GitHub-like repository.

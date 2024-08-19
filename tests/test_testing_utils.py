@@ -29,6 +29,16 @@ class TestFixtures:
 
 
 class TestFileRequests:
+
+    @staticmethod
+    def file_md5_checksum(f_name):
+        import hashlib
+
+        hash_md5 = hashlib.md5()  # noqa: S324
+        with open(f_name, "rb") as f:
+            hash_md5.update(f.read())
+        return hash_md5.hexdigest()
+
     @pytest.mark.requires_internet
     def test_get_failure(self, tmp_path):
         bad_repo_address = "https://github.com/beard/of/zeus/"
@@ -37,7 +47,6 @@ class TestFileRequests:
                 Path("san_diego", "60_percent_of_the_time_it_works_everytime"),
                 bad_repo_address,
                 "main",
-                ".rudd",
                 tmp_path,
             )
 
@@ -58,20 +67,18 @@ class TestFileRequests:
             new_cmip3_file = utilities._get(
                 Path("cmip3", cmip3_file),
                 github_url="https://github.com/Ouranosinc/xclim-testdata",
-                suffix=".nc",
                 branch="main",
                 cache_dir=tmp_path,
             )
 
         # Ensure that the new cmip3 file is in the cache directory
         assert (
-            utilities.file_md5_checksum(Path(cmip3_folder, new_cmip3_file))
-            != bad_cmip3_md5
+            self.file_md5_checksum(Path(cmip3_folder, new_cmip3_file)) != bad_cmip3_md5
         )
 
         # Ensure that the md5 file was updated at the same time
         assert (
-            utilities.file_md5_checksum(Path(cmip3_folder, new_cmip3_file))
+            self.file_md5_checksum(Path(cmip3_folder, new_cmip3_file))
             == Path(cmip3_folder, cmip3_md5).read_text()
         )
 
@@ -82,26 +89,10 @@ class TestFileRequests:
         )
         assert ds.lon.size == 128
 
-    # Not that this test is super slow, but there is no real value in spamming GitHub's API for no reason.
-    @pytest.mark.slow
-    @pytest.mark.xfail(reason="Test is rate limited by GitHub.")
-    def test_list_datasets(self):
-        out = utilities.list_datasets()
-
-        assert list(out.columns) == ["size", "url"]
-        np.testing.assert_allclose(
-            out.loc["cmip6/o3_Amon_GFDL-ESM4_historical_r1i1p1f1_gr1_185001-194912.nc"][
-                "size"
-            ],
-            845.021484375,
-        )
-
-
-class TestFileAssertions:
     def test_md5_sum(self):
         test_data = Path(__file__).parent / "data"
         callendar = test_data / "callendar_1938.txt"
-        md5_sum = utilities.file_md5_checksum(callendar)
+        md5_sum = self.file_md5_checksum(callendar)
         if sys.platform == "win32":
             # Windows has a different line ending (CR-LF) than Unix (LF)
             assert md5_sum == "38083271c2d4c85dea6bd6baf23d34de"  # noqa
