@@ -11,12 +11,11 @@ from pathlib import Path
 import pytest
 
 from xclim.testing import helpers
-from xclim.testing.utils import _default_cache_dir  # noqa
-from xclim.testing.utils import open_dataset as _open_dataset
+from xclim.testing.helpers import open_dataset as _open_dataset
 
 
 @pytest.fixture(autouse=True, scope="session")
-def threadsafe_data_dir(tmp_path_factory) -> Path:
+def threadsafe_data_dir(tmp_path_factory):
     """Return a threadsafe temporary directory for storing testing data."""
     yield Path(tmp_path_factory.getbasetemp().joinpath("data"))
 

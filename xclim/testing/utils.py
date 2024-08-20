@@ -16,18 +16,6 @@ from importlib import import_module
 from io import StringIO
 from pathlib import Path
 from typing import TextIO
-from urllib.error import HTTPError, URLError
-from urllib.parse import urljoin, urlparse
-from urllib.request import urlretrieve
-
-import pooch
-from xarray import Dataset
-from xarray import open_dataset as _open_dataset
-
-try:
-    from pytest_socket import SocketBlockedError
-except ImportError:
-    SocketBlockedError = None
 
 _xclim_deps = [
     "xclim",
@@ -51,150 +39,16 @@ _xclim_deps = [
     "boltons",
 ]
 
-default_cache_dir = Path(pooch.os_cache("xclim-testdata"))
-"""Default location for the testing data cache."""
 
 logger = logging.getLogger("xclim")
 
+
 __all__ = [
-    "audit_url",
-    "default_cache_dir",
     "list_input_variables",
-    "open_dataset",
     "publish_release_notes",
     "run_doctests",
     "show_versions",
 ]
-
-
-def audit_url(url: str, context: str | None = None) -> str:
-    """Check if the URL is well-formed.
-
-    Raises
-    ------
-    URLError
-        If the URL is not well-formed.
-    """
-    msg = ""
-    result = urlparse(url)
-    if result.scheme == "http":
-        msg = f"{context if context else ''} URL is not using secure HTTP: '{url}'".strip()
-    if not all([result.scheme, result.netloc]):
-        msg = f"{context if context else ''} URL is not well-formed: '{url}'".strip()
-
-    if msg:
-        logger.error(msg)
-        raise URLError(msg)
-    return url
-
-
-def _get(
-    name: Path,
-    github_url: str,
-    branch: str,
-    cache_dir: Path,
-) -> Path:
-    cache_dir = cache_dir.absolute()
-    local_file = cache_dir / branch / name
-
-    if not github_url.startswith("https"):
-        raise ValueError(f"GitHub URL not secure: '{github_url}'.")
-
-    if not local_file.is_file():
-        # This will always leave this directory on disk.
-        # We may want to add an option to remove it.
-        local_file.parent.mkdir(exist_ok=True, parents=True)
-        url = "/".join((github_url, "raw", branch, "data", name.as_posix()))
-        msg = f"Fetching remote file: {name.as_posix()}"
-        logger.info(msg)
-        try:
-            urlretrieve(audit_url(url), local_file)  # noqa: S310
-        except HTTPError as e:
-            msg = (
-                f"{name.as_posix()} not accessible in remote repository: {url}. "
-                "Aborting file retrieval."
-            )
-            raise FileNotFoundError(msg) from e
-        except SocketBlockedError as e:
-            msg = (
-                f"Unable to access {name.as_posix()} online. Testing suite is being run with `--disable-socket`. "
-                f"If you intend to run tests with this option enabled, please download the file beforehand with the "
-                f"following console command: `xclim prefetch_testing_data`."
-            )
-            raise FileNotFoundError(msg) from e
-
-    return local_file
-
-
-# idea copied from raven that it borrowed from xclim that borrowed it from xarray that was borrowed from Seaborn
-def open_dataset(
-    name: str | os.PathLike[str],
-    dap_url: str | None = None,
-    github_url: str = "https://github.com/Ouranosinc/xclim-testdata",
-    branch: str = "main",
-    cache: bool = True,
-    cache_dir: Path = default_cache_dir,
-    **kwargs,
-) -> Dataset:
-    r"""Open a dataset from the online GitHub-like repository.
-
-    If a local copy is found then always use that to avoid network traffic.
-
-    Parameters
-    ----------
-    name : str or os.PathLike
-        Name of the file containing the dataset.
-    dap_url : str, optional
-        URL to OPeNDAP folder where the data is stored. If supplied, supersedes github_url.
-    github_url : str
-        URL to GitHub repository where the data is stored.
-    branch : str, optional
-        For GitHub-hosted files, the branch to download from.
-    cache_dir : Path
-        The directory in which to search for and write cached data.
-    cache : bool
-        If True, then cache data locally for use on subsequent calls.
-    \*\*kwargs
-        For NetCDF files, keywords passed to :py:func:`xarray.open_dataset`.
-
-    Returns
-    -------
-    Union[Dataset, Path]
-
-    See Also
-    --------
-    xarray.open_dataset
-    """
-    if isinstance(name, (str, os.PathLike)):
-        name = Path(name)
-
-    if dap_url is not None:
-        dap_file_address = urljoin(dap_url, str(name))
-        try:
-            ds = _open_dataset(audit_url(dap_file_address, context="OPeNDAP"), **kwargs)
-            return ds
-        except URLError:
-            raise
-        except OSError:
-            msg = f"OPeNDAP file not read. Verify that the service is available: '{dap_file_address}'"
-            logger.error(msg)
-            raise OSError(msg)
-
-    local_file = _get(
-        name=name,
-        github_url=github_url,
-        branch=branch,
-        cache_dir=cache_dir,
-    )
-
-    try:
-        ds = _open_dataset(local_file, **kwargs)
-        if not cache:
-            ds = ds.load()
-            local_file.unlink()
-        return ds
-    except OSError as err:
-        raise err
 
 
 def list_input_variables(

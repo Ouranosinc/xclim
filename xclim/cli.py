@@ -11,13 +11,17 @@ import warnings
 
 import click
 import xarray as xr
-from dask.diagnostics import ProgressBar
+from dask.diagnostics.progress import ProgressBar
 
 import xclim as xc
 from xclim.core.dataflags import DataQualityException, data_flags, ecad_compliant
 from xclim.core.utils import InputKind
-from xclim.testing.helpers import TESTDATA_BRANCH, populate_testing_data
-from xclim.testing.utils import _default_cache_dir, publish_release_notes, show_versions
+from xclim.testing.helpers import (
+    TESTDATA_BRANCH,
+    default_cache_dir,
+    populate_testing_data,
+)
+from xclim.testing.utils import publish_release_notes, show_versions
 
 distributed = False
 try:
@@ -169,7 +173,7 @@ def prefetch_testing_data(ctx, branch):
         f"Gathering testing data from xclim-testdata `{testdata_branch}` branch..."
     )
     click.echo(populate_testing_data(branch=testdata_branch))
-    click.echo(f"Testing data saved to `{_default_cache_dir}`.")
+    click.echo(f"Testing data saved to `{default_cache_dir}`.")
     ctx.exit()
 
 

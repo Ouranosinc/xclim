@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import numpy as np
-import pandas as pd
 import xarray as xr
 
 from xclim.ensembles import fractional_uncertainty, hawkins_sutton, lafferty_sriver
@@ -108,19 +107,8 @@ def test_lafferty_sriver_synthetic(random):
     lafferty_sriver(da, sm=sm)
 
 
-def test_lafferty_sriver(get_file):
-    seattle = get_file("uncertainty_partitioning/seattle_avg_tas.csv")
-
-    df = pd.read_csv(seattle, parse_dates=["time"]).rename(
-        columns={"ssp": "scenario", "ensemble": "downscaling"}
-    )
-
-    # Make xarray dataset
-    ds = xr.Dataset.from_dataframe(
-        df.set_index(["scenario", "model", "downscaling", "time"])
-    )
-
-    _g, u = lafferty_sriver(ds.tas)
+def test_lafferty_sriver(lafferty_sriver_ds):
+    _g, u = lafferty_sriver(lafferty_sriver_ds.tas)
 
     fu = fractional_uncertainty(u)
 

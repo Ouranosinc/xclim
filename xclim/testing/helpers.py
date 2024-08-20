@@ -6,15 +6,14 @@ import importlib.resources as ilr
 import logging
 import os
 import re
-import shutil
-import tempfile
 import time
 import warnings
 from datetime import datetime as dt
 from pathlib import Path
 from shutil import copytree
 from sys import platform
-from urllib.error import HTTPError
+from urllib.error import HTTPError, URLError
+from urllib.parse import urljoin, urlparse
 
 import numpy as np
 import pandas as pd
@@ -23,6 +22,8 @@ import xarray as xr
 from dask.callbacks import Callback
 from filelock import FileLock
 from packaging.version import Version
+from xarray import Dataset
+from xarray import open_dataset as _open_dataset
 
 try:
     from pytest_socket import SocketBlockedError
@@ -37,11 +38,14 @@ from xclim.indices import (
     longwave_upwelling_radiation_from_net_downwelling,
     shortwave_upwelling_radiation_from_net_downwelling,
 )
-from xclim.testing.utils import default_cache_dir
-from xclim.testing.utils import open_dataset as _open_dataset
+
+logger = logging.getLogger("xclim")
 
 default_testdata_version = "v2023.12.14"
+"""Default version of the testing data to use when fetching datasets."""
 
+default_cache_dir = Path(pooch.os_cache("xclim-testdata"))
+"""Default location for the testing data cache."""
 
 TESTDATA_REPO_URL = str(
     os.getenv("XCLIM_TESTDATA_REPO_URL", "https://github.com/Ouranosinc/xclim-testdata")
@@ -122,33 +126,17 @@ or setting the variable at runtime:
     $ env XCLIM_DATA_DIR="/path/to/my/data" pytest
 """
 
-DATA_UPDATES = bool(os.getenv("XCLIM_DATA_UPDATES"))
-"""Sets whether to allow updates to the testing datasets.
-
-If set to ``True``, the data files will be downloaded even if the upstream hashes do not match.
-
-Notes
------
-When running tests locally, this can be set for both `pytest` and `tox` by exporting the variable:
-
-.. code-block:: console
-
-    $ export XCLIM_DATA_UPDATES=True
-
-or setting the variable at runtime:
-
-.. code-block:: console
-
-    $ env XCLIM_DATA_UPDATES=True pytest
-"""
 
 __all__ = [
-    "DATA_UPDATES",
     "PREFETCH_TESTING_DATA",
     "TESTDATA_BRANCH",
     "add_example_file_paths",
     "assert_lazy",
+    "default_cache_dir",
     "generate_atmos",
+    "nimbus",
+    "open_dataset",
+    "populate_testing_data",
     "test_timeseries",
 ]
 
@@ -181,100 +169,48 @@ def testing_setup_warnings():
             )
 
 
-def load_registry(
-    file: str | Path | None = None,
-    repo: str = TESTDATA_REPO_URL,
-    branch: str = TESTDATA_BRANCH,
-) -> dict[str, str]:
+def load_registry() -> dict[str, str]:
     """Load the registry file for the test data.
-
-    Parameters
-    ----------
-    file : str or Path, optional
-        Path to the registry file. If not provided, the registry file found within the package data will be used.
 
     Returns
     -------
     dict
         Dictionary of filenames and hashes.
     """
-    remote = f"{repo}/raw/{branch}/data"
-
-    # Get registry file from package_data
-    if file is None:
-        registry_file = Path(str(ilr.files("xclim").joinpath("testing/registry.txt")))
-        if not registry_file.exists():
-            registry_file.touch()
-        url = f"{remote}/{registry_file.name}"
-        try:
-            with tempfile.TemporaryDirectory() as tempdir:
-                remote_registry_file = pooch.retrieve(
-                    url=url,
-                    known_hash=None,
-                    path=tempdir,
-                    fname="registry.txt",
-                )
-                # Check if the local registry file matches the remote registry
-                if pooch.file_hash(remote_registry_file) != pooch.file_hash(
-                    registry_file.as_posix()
-                ):
-                    warnings.warn(
-                        "Local registry file does not match remote registry file."
-                    )
-                    shutil.move(remote_registry_file, registry_file)
-        except FileNotFoundError:
-            warnings.warn(
-                "Registry file not accessible in remote repository. "
-                "Aborting file retrieval and using local registry file."
-            )
-        except SocketBlockedError:
-            warnings.warn(
-                "Testing suite is being run with `--disable-socket`. Using local registry file."
-            )
-        if not registry_file.exists():
-            raise FileNotFoundError(
-                f"Local registry file not found: {registry_file}. "
-                "Testing setup cannot proceed without registry file."
-            )
-    else:
-        registry_file = Path(file)
-        if not registry_file.exists():
-            raise FileNotFoundError(f"Registry file not found: {registry_file}")
-
-    logging.info("Registry file found: %s", registry_file)
+    registry_file = Path(str(ilr.files("xclim").joinpath("testing/registry.txt")))
+    if not registry_file.exists():
+        raise FileNotFoundError(f"Registry file not found: {registry_file}")
 
     # Load the registry file
-    registry = dict()
-    with registry_file.open() as buffer:
-        for entry in buffer.readlines():
-            registry[entry.split()[0]] = entry.split()[1]
-
+    with registry_file.open() as f:
+        registry = {line.split()[0]: line.split()[1] for line in f}
     return registry
 
 
 def nimbus(  # noqa: PR01
     data_dir: str | Path = CACHE_DIR,
-    data_updates: bool = DATA_UPDATES,
     repo: str = TESTDATA_REPO_URL,
     branch: str = TESTDATA_BRANCH,
+    data_updates: bool = True,
 ) -> pooch.Pooch:
-    """Pooch registry instance for xhydro test data.
+    """Pooch registry instance for xclim test data.
 
     Parameters
     ----------
     data_dir : str or Path
         Path to the directory where the data files are stored.
-    data_updates : bool
-        If True, allow updates to the data files.
+
     repo : str
         URL of the repository to use when fetching testing datasets.
     branch : str
         Branch of repository to use when fetching testing datasets.
+    data_updates : bool
+        If True, allow updates to the data files. Default is True.
 
     Returns
     -------
     pooch.Pooch
-        Pooch instance for the xhydro test data.
+        Pooch instance for the xclim test data.
 
     Notes
     -----
@@ -282,8 +218,6 @@ def nimbus(  # noqa: PR01
         - ``XCLIM_DATA_DIR``: If this environment variable is set, it will be used as the base directory to store the data
           files. The directory should be an absolute path (i.e., it should start with ``/``). Otherwise,
           the default location will be used (based on ``platformdirs``, see :py:func:`pooch.os_cache`).
-        - ``XCLIM_DATA_UPDATES``: If this environment variable is set, then the data files will be downloaded even if the
-          upstream hashes do not match. This is useful if you want to always use the latest version of the data files.
         - ``XCLIM_TESTDATA_REPO_URL``: If this environment variable is set, it will be used as the URL of the repository
           to use when fetching datasets. Otherwise, the default repository will be used.
         - ``XCLIM_TESTDATA_BRANCH``: If this environment variable is set, it will be used as the branch of the repository
@@ -302,22 +236,68 @@ def nimbus(  # noqa: PR01
         data = xr.open_dataset(example_file)
     """
     remote = f"{repo}/raw/{branch}/data"
-
     return pooch.create(
         path=data_dir,
         base_url=remote,
         version=default_testdata_version,
         version_dev=branch,
         allow_updates=data_updates,
-        registry=load_registry(repo=repo, branch=branch),
+        registry=load_registry(),
     )
 
 
+# idea copied from raven that it borrowed from xclim that borrowed it from xarray that was borrowed from Seaborn
+def open_dataset(
+    name: str | os.PathLike[str],
+    dap_url: str | None = None,
+    cache_dir: str | os.PathLike[str] = default_cache_dir,
+    **kwargs,
+) -> Dataset:
+    r"""Open a dataset from the online GitHub-like repository.
+
+    If a local copy is found then always use that to avoid network traffic.
+
+    Parameters
+    ----------
+    name : str
+        Name of the file containing the dataset.
+    dap_url : str, optional
+        URL to OPeNDAP folder where the data is stored. If supplied, supersedes github_url.
+    cache_dir : Path
+        The directory in which to search for and write cached data.
+    \*\*kwargs
+        For NetCDF files, keywords passed to :py:func:`xarray.open_dataset`.
+
+    Returns
+    -------
+    Union[Dataset, Path]
+
+    See Also
+    --------
+    xarray.open_dataset
+    """
+    if dap_url:
+        try:
+            return _open_dataset(
+                audit_url(urljoin(dap_url, str(name)), context="OPeNDAP"), **kwargs
+            )
+        except (OSError, URLError):
+            msg = f"OPeNDAP file not read. Verify that the service is available: '{urljoin(dap_url, str(name))}'"
+            logger.error(msg)
+            raise
+
+    local_file = Path(cache_dir).joinpath(name)
+    try:
+        ds = _open_dataset(local_file, **kwargs)
+        return ds
+    except OSError as err:
+        raise err
+
+
 def populate_testing_data(
-    registry_file: str | Path | None = None,
     temp_folder: Path | None = None,
-    repo: str | None = None,
-    branch: str | None = None,
+    repo: str = TESTDATA_REPO_URL,
+    branch: str = TESTDATA_BRANCH,
     local_cache: Path = default_cache_dir,
 ) -> None:
     """Populate the local cache with the testing data.
@@ -329,37 +309,21 @@ def populate_testing_data(
     repo : str, optional
         URL of the repository to use when fetching testing datasets.
     branch : str, optional
-        Branch of hydrologie/xhydro-testdata to use when fetching testing datasets.
+        Branch of Ouranosinc/xclim-testdata to use when fetching testing datasets.
     local_cache : Path
-        Path to the local cache. Defaults to the location set by the platformdirs library.
+        The path to the local cache. Defaults to the location set by the platformdirs library.
         The testing data will be downloaded to this local cache.
 
     Returns
     -------
     None
     """
-    if repo is None:
-        _repo = TESTDATA_REPO_URL
-    else:
-        _repo = repo
-    if branch is None:
-        _branch = TESTDATA_BRANCH
-    else:
-        _branch = branch
-    if temp_folder is not None:
-        _local_cache = temp_folder
-    else:
-        _local_cache = Path(local_cache)
-
     # Create the Pooch instance
-    n = nimbus(data_dir=_local_cache, repo=_repo, branch=_branch)
-
-    # Load the registry file
-    registry = load_registry(file=registry_file, repo=_repo, branch=_branch)
+    n = nimbus(data_dir=temp_folder or local_cache, repo=repo, branch=branch)
 
     # Download the files
     errored_files = []
-    for file in registry.keys():
+    for file in load_registry():
         try:
             n.fetch(file)
         except HTTPError:
@@ -375,29 +339,27 @@ def populate_testing_data(
             raise SocketBlockedError(msg) from e
         else:
             logging.info("Files were downloaded successfully.")
-        finally:
-            if errored_files:
-                logging.error(
-                    "The following files were unable to be downloaded: %s",
-                    errored_files,
-                )
+
+    if errored_files:
+        logging.error(
+            "The following files were unable to be downloaded: %s",
+            errored_files,
+        )
 
 
-def generate_atmos(cache_dir: Path) -> dict[str, xr.DataArray]:
+def generate_atmos(cache_dir: str | os.PathLike[str] | Path) -> dict[str, xr.DataArray]:
     """Create the `atmosds` synthetic testing dataset."""
-    with _open_dataset(
+    with open_dataset(
         "ERA5/daily_surface_cancities_1990-1993.nc",
         cache_dir=cache_dir,
-        branch=TESTDATA_BRANCH,
         engine="h5netcdf",
     ) as ds:
+        rsus = shortwave_upwelling_radiation_from_net_downwelling(ds.rss, ds.rsds)
+        rlus = longwave_upwelling_radiation_from_net_downwelling(ds.rls, ds.rlds)
         tn10 = calendar.percentile_doy(ds.tasmin, per=10)
         t10 = calendar.percentile_doy(ds.tas, per=10)
         t90 = calendar.percentile_doy(ds.tas, per=90)
         tx90 = calendar.percentile_doy(ds.tasmax, per=90)
-
-        rsus = shortwave_upwelling_radiation_from_net_downwelling(ds.rss, ds.rsds)
-        rlus = longwave_upwelling_radiation_from_net_downwelling(ds.rls, ds.rlds)
 
         ds = ds.assign(
             rsus=rsus,
@@ -413,18 +375,19 @@ def generate_atmos(cache_dir: Path) -> dict[str, xr.DataArray]:
         ds.to_netcdf(atmos_file, engine="h5netcdf")
 
     # Give access to dataset variables by name in namespace
-    namespace = dict()
-    with _open_dataset(
-        atmos_file, branch=TESTDATA_BRANCH, cache_dir=cache_dir, engine="h5netcdf"
-    ) as ds:
-        for variable in ds.data_vars:
-            namespace[f"{variable}_dataset"] = ds.get(variable)
+    with open_dataset(atmos_file, cache_dir=cache_dir, engine="h5netcdf") as ds:
+        namespace = {f"{var}_dataset": ds[var] for var in ds.data_vars}
     return namespace
 
 
-def gather_testing_data(threadsafe_data_dir: Path, worker_id: str):
+def gather_testing_data(
+    threadsafe_data_dir: str | os.PathLike[str] | Path, worker_id: str
+):
     """Gather testing data across workers."""
-    if not default_cache_dir.exists() or PREFETCH_TESTING_DATA:
+    if (
+        not default_cache_dir.joinpath(default_testdata_version).exists()
+        or PREFETCH_TESTING_DATA
+    ):
         if PREFETCH_TESTING_DATA:
             print("`XCLIM_PREFETCH_TESTING_DATA` set. Prefetching testing data...")
         if platform == "win32":
@@ -432,7 +395,7 @@ def gather_testing_data(threadsafe_data_dir: Path, worker_id: str):
                 "UNIX-style file-locking is not supported on Windows. "
                 "Consider running `$ xclim prefetch_testing_data` to download testing data."
             )
-        elif worker_id in ["master"]:
+        elif worker_id == "master":
             populate_testing_data(branch=TESTDATA_BRANCH)
         else:
             default_cache_dir.mkdir(exist_ok=True, parents=True)
@@ -445,29 +408,33 @@ def gather_testing_data(threadsafe_data_dir: Path, worker_id: str):
             with test_data_being_written.acquire():
                 if lockfile.exists():
                     lockfile.unlink()
-    copytree(default_cache_dir, threadsafe_data_dir)
+    copytree(default_cache_dir.joinpath(default_testdata_version), threadsafe_data_dir)
 
 
 def add_example_file_paths() -> dict[str, str | list[xr.DataArray]]:
     """Create a dictionary of relevant datasets to be patched into the xdoctest namespace."""
-    namespace: dict = dict()
-    namespace["path_to_ensemble_file"] = "EnsembleReduce/TestEnsReduceCriteria.nc"
-    namespace["path_to_pr_file"] = "NRCANdaily/nrcan_canada_daily_pr_1990.nc"
-    namespace["path_to_sfcWind_file"] = "ERA5/daily_surface_cancities_1990-1993.nc"
-    namespace["path_to_tas_file"] = "ERA5/daily_surface_cancities_1990-1993.nc"
-    namespace["path_to_tasmax_file"] = "NRCANdaily/nrcan_canada_daily_tasmax_1990.nc"
-    namespace["path_to_tasmin_file"] = "NRCANdaily/nrcan_canada_daily_tasmin_1990.nc"
+    namespace = {
+        "path_to_ensemble_file": "EnsembleReduce/TestEnsReduceCriteria.nc",
+        "path_to_pr_file": "NRCANdaily/nrcan_canada_daily_pr_1990.nc",
+        "path_to_sfcWind_file": "ERA5/daily_surface_cancities_1990-1993.nc",
+        "path_to_tas_file": "ERA5/daily_surface_cancities_1990-1993.nc",
+        "path_to_tasmax_file": "NRCANdaily/nrcan_canada_daily_tasmax_1990.nc",
+        "path_to_tasmin_file": "NRCANdaily/nrcan_canada_daily_tasmin_1990.nc",
+        "path_to_example_py": (
+            Path(__file__).parent.parent.parent.parent
+            / "docs"
+            / "notebooks"
+            / "example.py"
+        ),
+    }
 
     # For core.utils.load_module example
-    namespace["path_to_example_py"] = (
-        Path(__file__).parent.parent.parent.parent / "docs" / "notebooks" / "example.py"
-    )
 
-    time = xr.cftime_range("1990-01-01", "2049-12-31", freq="D")
+    sixty_years = xr.cftime_range("1990-01-01", "2049-12-31", freq="D")
     namespace["temperature_datasets"] = [
         xr.DataArray(
-            12 * np.random.random_sample(time.size) + 273,
-            coords={"time": time},
+            12 * np.random.random_sample(sixty_years.size) + 273,
+            coords={"time": sixty_years},
             name="tas",
             dims=("time",),
             attrs={
@@ -477,8 +444,8 @@ def add_example_file_paths() -> dict[str, str | list[xr.DataArray]]:
             },
         ),
         xr.DataArray(
-            12 * np.random.random_sample(time.size) + 273,
-            coords={"time": time},
+            12 * np.random.random_sample(sixty_years.size) + 273,
+            coords={"time": sixty_years},
             name="tas",
             dims=("time",),
             attrs={
@@ -551,3 +518,24 @@ def _raise_on_compute(dsk: dict):
 
 assert_lazy = Callback(start=_raise_on_compute)
 """Context manager that raises an AssertionError if any dask computation is triggered."""
+
+
+def audit_url(url: str, context: str | None = None) -> str:
+    """Check if the URL is well-formed.
+
+    Raises
+    ------
+    URLError
+        If the URL is not well-formed.
+    """
+    msg = ""
+    result = urlparse(url)
+    if result.scheme == "http":
+        msg = f"{context if context else ''} URL is not using secure HTTP: '{url}'".strip()
+    if not all([result.scheme, result.netloc]):
+        msg = f"{context if context else ''} URL is not well-formed: '{url}'".strip()
+
+    if msg:
+        logger.error(msg)
+        raise URLError(msg)
+    return url

@@ -13,10 +13,10 @@ import xarray as xr
 from xclim.core import indicator
 from xclim.core.calendar import max_doy
 from xclim.testing import helpers
+from xclim.testing.helpers import default_cache_dir  # noqa
 from xclim.testing.helpers import nimbus as _nimbus
+from xclim.testing.helpers import open_dataset as _open_dataset
 from xclim.testing.helpers import test_timeseries
-from xclim.testing.utils import default_cache_dir  # noqa
-from xclim.testing.utils import open_dataset as _open_dataset
 
 
 @pytest.fixture
@@ -26,21 +26,7 @@ def random() -> np.random.Generator:
 
 @pytest.fixture
 def tmp_netcdf_filename(tmpdir):
-    yield Path(tmpdir).joinpath("testfile.nc")
-
-
-@pytest.fixture(autouse=True, scope="session")
-def threadsafe_data_dir(tmp_path_factory):
-    yield Path(tmp_path_factory.getbasetemp().joinpath("data"))
-
-
-@pytest.fixture(autouse=True, scope="session")
-def nimbus(threadsafe_data_dir):
-    yield _nimbus(
-        data_dir=threadsafe_data_dir,
-        repo=helpers.TESTDATA_REPO_URL,
-        branch=helpers.TESTDATA_BRANCH,
-    )
+    return Path(tmpdir).joinpath("testfile.nc")
 
 
 @pytest.fixture
@@ -55,6 +41,11 @@ def lat_series():
         )
 
     return _lat_series
+
+
+@pytest.fixture
+def timeseries():
+    return test_timeseries
 
 
 @pytest.fixture
@@ -309,40 +300,30 @@ def rlus_series():
 
 
 @pytest.fixture(scope="session")
-def cmip3_day_tas(threadsafe_data_dir):
-    # xr.set_options(enable_cftimeindex=False)
-    ds = _open_dataset(
-        "cmip3/tas.sresb1.giss_model_e_r.run1.atm.da.nc",
-        cache_dir=threadsafe_data_dir,
+def threadsafe_data_dir(tmp_path_factory):
+    return Path(tmp_path_factory.getbasetemp().joinpath("data"))
+
+
+@pytest.fixture(scope="session")
+def nimbus(threadsafe_data_dir):
+    return _nimbus(
+        data_dir=threadsafe_data_dir,
+        repo=helpers.TESTDATA_REPO_URL,
         branch=helpers.TESTDATA_BRANCH,
-        engine="h5netcdf",
     )
-    yield ds.tas
-    ds.close()
 
 
 @pytest.fixture(scope="session")
-def get_file(nimbus):
-    def _get_session_scoped_file(file: str):
-        nimbus.fetch(file)
-
-    return _get_session_scoped_file
-
-
-@pytest.fixture(scope="session")
-def open_dataset(threadsafe_data_dir):
-    def _open_session_scoped_file(
-        file: str | os.PathLike, branch: str = helpers.TESTDATA_BRANCH, **xr_kwargs
-    ):
+def open_dataset(nimbus):
+    def _open_session_scoped_file(file: str | os.PathLike, **xr_kwargs):
+        xr_kwargs.setdefault("cache", True)
         xr_kwargs.setdefault("engine", "h5netcdf")
-        return _open_dataset(
-            file, cache_dir=threadsafe_data_dir, branch=branch, **xr_kwargs
-        )
+        return _open_dataset(file, cache_dir=nimbus.path, **xr_kwargs)
 
     return _open_session_scoped_file
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def official_indicators():
     # Remove unofficial indicators (as those created during the tests, and those from YAML-built modules)
     registry_cp = indicator.registry.copy()
@@ -352,17 +333,39 @@ def official_indicators():
     return registry_cp
 
 
-@pytest.fixture(scope="function")
-def atmosds(threadsafe_data_dir) -> xr.Dataset:
+@pytest.fixture
+def lafferty_sriver_ds(nimbus) -> xr.Dataset:
+    """Get data from Lafferty & Sriver unit test.
+
+    Notes
+    -----
+    https://github.com/david0811/lafferty-sriver_2023_npjCliAtm/tree/main/unit_test
+    """
+    fn = nimbus.fetch(
+        "uncertainty_partitioning/seattle_avg_tas.csv",
+    )
+
+    df = pd.read_csv(fn, parse_dates=["time"]).rename(
+        columns={"ssp": "scenario", "ensemble": "downscaling"}
+    )
+
+    # Make xarray dataset
+    return xr.Dataset.from_dataframe(
+        df.set_index(["scenario", "model", "downscaling", "time"])
+    )
+
+
+@pytest.fixture
+def atmosds(nimbus) -> xr.Dataset:
+    """Get synthetic atmospheric dataset."""
     return _open_dataset(
-        threadsafe_data_dir.joinpath("atmosds.nc"),
-        cache_dir=threadsafe_data_dir,
-        branch=helpers.TESTDATA_BRANCH,
+        "atmosds.nc",
+        cache_dir=nimbus.path,
         engine="h5netcdf",
     ).load()
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture(scope="session")
 def ensemble_dataset_objects() -> dict[str, str]:
     edo = dict()
     edo["nc_files_simple"] = [
@@ -378,8 +381,8 @@ def ensemble_dataset_objects() -> dict[str, str]:
     return edo
 
 
-@pytest.fixture(scope="session", autouse=True)
-def gather_session_data(threadsafe_data_dir, worker_id):
+@pytest.fixture(autouse=True, scope="session")
+def gather_session_data(request, nimbus, worker_id):
     """Gather testing data on pytest run.
 
     When running pytest with multiple workers, one worker will copy data remotely to _default_cache_dir while
@@ -389,25 +392,13 @@ def gather_session_data(threadsafe_data_dir, worker_id):
     Additionally, this fixture is also used to generate the `atmosds` synthetic testing dataset.
     """
     helpers.testing_setup_warnings()
-    helpers.gather_testing_data(threadsafe_data_dir, worker_id)
-    helpers.generate_atmos(threadsafe_data_dir)
-
-
-@pytest.fixture(scope="session", autouse=True)
-def cleanup(request):
-    """Cleanup a testing file once we are finished.
-
-    This flag prevents remote data from being downloaded multiple times in the same pytest run.
-    """
+    helpers.gather_testing_data(nimbus.path, worker_id)
+    helpers.generate_atmos(nimbus.path)
 
     def remove_data_written_flag():
+        """Cleanup cache folder once we are finished."""
         flag = default_cache_dir.joinpath(".data_written")
         if flag.exists():
             flag.unlink()
 
     request.addfinalizer(remove_data_written_flag)
-
-
-@pytest.fixture
-def timeseries():
-    return test_timeseries
