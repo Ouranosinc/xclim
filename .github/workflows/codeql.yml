@@ -16,6 +16,9 @@ on:
       - docs/*/*.rst
       - .github/*/*.yml
       - .pre-commit-config.yaml
+  pull_request:
+    branches:
+      - main
   schedule:
     - cron: '30 23 * * 5'
 
