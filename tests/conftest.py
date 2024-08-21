@@ -25,11 +25,6 @@ def random() -> np.random.Generator:
 
 
 @pytest.fixture
-def tmp_netcdf_filename(tmpdir):
-    return Path(tmpdir).joinpath("testfile.nc")
-
-
-@pytest.fixture
 def lat_series():
     def _lat_series(values):
         return xr.DataArray(
@@ -367,27 +362,20 @@ def atmosds(nimbus) -> xr.Dataset:
 
 @pytest.fixture(scope="session")
 def ensemble_dataset_objects() -> dict[str, str]:
-    edo = dict()
-    edo["nc_files_simple"] = [
-        "EnsembleStats/BCCAQv2+ANUSPLIN300_ACCESS1-0_historical+rcp45_r1i1p1_1950-2100_tg_mean_YS.nc",
-        "EnsembleStats/BCCAQv2+ANUSPLIN300_BNU-ESM_historical+rcp45_r1i1p1_1950-2100_tg_mean_YS.nc",
-        "EnsembleStats/BCCAQv2+ANUSPLIN300_CCSM4_historical+rcp45_r1i1p1_1950-2100_tg_mean_YS.nc",
-        "EnsembleStats/BCCAQv2+ANUSPLIN300_CCSM4_historical+rcp45_r2i1p1_1950-2100_tg_mean_YS.nc",
-    ]
-    edo["nc_files_extra"] = [
-        "EnsembleStats/BCCAQv2+ANUSPLIN300_CNRM-CM5_historical+rcp45_r1i1p1_1970-2050_tg_mean_YS.nc"
-    ]
-    edo["nc_files"] = edo["nc_files_simple"] + edo["nc_files_extra"]
-    return edo
+    return helpers.add_ensemble_dataset_objects()
 
 
 @pytest.fixture(autouse=True, scope="session")
 def gather_session_data(request, nimbus, worker_id):
     """Gather testing data on pytest run.
 
-    When running pytest with multiple workers, one worker will copy data remotely to _default_cache_dir while
+    When running pytest with multiple workers, one worker will copy data remotely to default cache dir while
     other workers wait using lockfile. Once the lock is released, all workers will then copy data to their local
-    threadsafe_data_dir.As this fixture is scoped to the session, it will only run once per pytest run.
+    threadsafe_data_dir. As this fixture is scoped to the session, it will only run once per pytest run.
+
+    Due to the lack of UNIX sockets on Windows, the lockfile mechanism is not supported, requiring users on
+    Windows to run `$ xclim prefetch_testing_data` before running any tests for the first time to populate the
+    default cache dir.
 
     Additionally, this fixture is also used to generate the `atmosds` synthetic testing dataset.
     """

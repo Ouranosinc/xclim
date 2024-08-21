@@ -12,12 +12,12 @@ from datetime import datetime as dt
 from pathlib import Path
 from shutil import copytree
 from sys import platform
+from typing import Any
 from urllib.error import HTTPError, URLError
 from urllib.parse import urljoin, urlparse
 
 import numpy as np
 import pandas as pd
-import pooch
 import xarray as xr
 from dask.callbacks import Callback
 from filelock import FileLock
@@ -29,6 +29,15 @@ try:
     from pytest_socket import SocketBlockedError
 except ImportError:
     SocketBlockedError = None
+
+try:
+    import pooch
+except ImportError:
+    warnings.warn(
+        "The `pooch` library is not installed. "
+        "The default cache directory for testing data will not be set."
+    )
+    pooch = None
 
 import xclim
 from xclim import __version__ as __xclim_version__
@@ -44,8 +53,11 @@ logger = logging.getLogger("xclim")
 default_testdata_version = "v2023.12.14"
 """Default version of the testing data to use when fetching datasets."""
 
-default_cache_dir = Path(pooch.os_cache("xclim-testdata"))
-"""Default location for the testing data cache."""
+try:
+    default_cache_dir = Path(pooch.os_cache("xclim-testdata"))
+    """Default location for the testing data cache."""
+except AttributeError:
+    default_cache_dir = None
 
 TESTDATA_REPO_URL = str(
     os.getenv("XCLIM_TESTDATA_REPO_URL", "https://github.com/Ouranosinc/xclim-testdata")
@@ -67,7 +79,7 @@ or setting the variable at runtime:
     $ env XCLIM_TESTDATA_REPO_URL="https://github.com/my_username/xclim-testdata" pytest
 """
 
-TESTDATA_BRANCH = str(os.getenv("XCLIM_TESTDATA_BRANCH", "main"))
+TESTDATA_BRANCH = str(os.getenv("XCLIM_TESTDATA_BRANCH", default_testdata_version))
 """Sets the branch of the testing data repository to use when fetching datasets.
 
 Notes
@@ -124,7 +136,10 @@ __all__ = [
 
 def testing_setup_warnings():
     """Warn users about potential incompatibilities between xclim and xclim-testdata versions."""
-    if re.match(r"^\d+\.\d+\.\d+$", __xclim_version__) and TESTDATA_BRANCH != "main":
+    if (
+        re.match(r"^\d+\.\d+\.\d+$", __xclim_version__)
+        and TESTDATA_BRANCH != default_testdata_version
+    ):
         # This does not need to be emitted on GitHub Workflows and ReadTheDocs
         if not os.getenv("CI") and not os.getenv("READTHEDOCS"):
             warnings.warn(
@@ -145,7 +160,8 @@ def testing_setup_warnings():
 
         if Version(TESTDATA_BRANCH) > Version(install_calendar_version):
             warnings.warn(
-                f"The installation date of `xclim` ({install_date.ctime()}) predates the last release of testing data ({TESTDATA_BRANCH}). "
+                f"The installation date of `xclim` ({install_date.ctime()}) "
+                f"predates the last release of testing data ({TESTDATA_BRANCH}). "
                 "It is very likely that the testing data is incompatible with this build of `xclim`.",
             )
 
@@ -173,7 +189,7 @@ def nimbus(  # noqa: PR01
     repo: str = TESTDATA_REPO_URL,
     branch: str = TESTDATA_BRANCH,
     data_updates: bool = True,
-) -> pooch.Pooch:
+):
     """Pooch registry instance for xclim test data.
 
     Parameters
@@ -190,7 +206,7 @@ def nimbus(  # noqa: PR01
     Returns
     -------
     pooch.Pooch
-        Pooch instance for the xclim test data.
+        The Pooch instance for accessing the xclim testing data.
 
     Notes
     -----
@@ -215,6 +231,12 @@ def nimbus(  # noqa: PR01
         example_file = nimbus().fetch("example.nc")
         data = xr.open_dataset(example_file)
     """
+    if pooch is None:
+        raise ImportError(
+            "The `pooch` package is required to fetch the xclim testing data. "
+            "You can install it with `pip install pooch` or `pip install xclim[dev]`."
+        )
+
     remote = f"{repo}/raw/{branch}/data"
     return pooch.create(
         path=data_dir,
@@ -230,7 +252,7 @@ def nimbus(  # noqa: PR01
 def open_dataset(
     name: str | os.PathLike[str],
     dap_url: str | None = None,
-    cache_dir: str | os.PathLike[str] = default_cache_dir,
+    cache_dir: str | os.PathLike[str] | None = CACHE_DIR,
     **kwargs,
 ) -> Dataset:
     r"""Open a dataset from the online GitHub-like repository.
@@ -256,6 +278,12 @@ def open_dataset(
     --------
     xarray.open_dataset
     """
+    if cache_dir is None:
+        raise ValueError(
+            "The cache directory must be set. "
+            "Please set the `cache_dir` parameter or the `XCLIM_DATA_DIR` environment variable."
+        )
+
     if dap_url:
         try:
             return _open_dataset(
@@ -280,7 +308,7 @@ def populate_testing_data(
     temp_folder: Path | None = None,
     repo: str = TESTDATA_REPO_URL,
     branch: str = TESTDATA_BRANCH,
-    local_cache: Path = default_cache_dir,
+    local_cache: Path = CACHE_DIR,
 ) -> None:
     """Populate the local cache with the testing data.
 
@@ -291,7 +319,7 @@ def populate_testing_data(
     repo : str, optional
         URL of the repository to use when fetching testing datasets.
     branch : str, optional
-        Branch of Ouranosinc/xclim-testdata to use when fetching testing datasets.
+        Branch of xclim-testdata to use when fetching testing datasets.
     local_cache : Path
         The path to the local cache. Defaults to the location set by the platformdirs library.
         The testing data will be downloaded to this local cache.
@@ -363,32 +391,55 @@ def generate_atmos(cache_dir: str | os.PathLike[str] | Path) -> dict[str, xr.Dat
 
 
 def gather_testing_data(
-    threadsafe_data_dir: str | os.PathLike[str] | Path, worker_id: str
+    threadsafe_data_dir: str | os.PathLike[str] | Path,
+    worker_id: str,
+    cache_dir: str | os.PathLike[str] | None = CACHE_DIR,
 ):
     """Gather testing data across workers."""
+    if cache_dir is None:
+        raise ValueError(
+            "The cache directory must be set. "
+            "Please set the `cache_dir` parameter or the `XCLIM_DATA_DIR` environment variable."
+        )
+    cache_dir = Path(cache_dir)
+
     if worker_id == "master":
         populate_testing_data(branch=TESTDATA_BRANCH)
     else:
         if platform == "win32":
-            if not default_cache_dir.joinpath(default_testdata_version).exists():
+            if not cache_dir.joinpath(default_testdata_version).exists():
                 raise FileNotFoundError(
                     "Testing data not found and UNIX-style file-locking is not supported on Windows. "
                     "Consider running `$ xclim prefetch_testing_data` to download testing data beforehand."
                 )
         else:
-            default_cache_dir.mkdir(exist_ok=True, parents=True)
-            lockfile = default_cache_dir.joinpath(".lock")
+            cache_dir.mkdir(exist_ok=True, parents=True)
+            lockfile = cache_dir.joinpath(".lock")
             test_data_being_written = FileLock(lockfile)
             with test_data_being_written:
                 # This flag prevents multiple calls from re-attempting to download testing data in the same pytest run
                 populate_testing_data(branch=TESTDATA_BRANCH)
-                default_cache_dir.joinpath(".data_written").touch()
+                cache_dir.joinpath(".data_written").touch()
             with test_data_being_written.acquire():
                 if lockfile.exists():
                     lockfile.unlink()
-        copytree(
-            default_cache_dir.joinpath(default_testdata_version), threadsafe_data_dir
-        )
+        copytree(cache_dir.joinpath(default_testdata_version), threadsafe_data_dir)
+
+
+def add_ensemble_dataset_objects() -> dict[str, str]:
+    namespace = {
+        "nc_files_simple": [
+            "EnsembleStats/BCCAQv2+ANUSPLIN300_ACCESS1-0_historical+rcp45_r1i1p1_1950-2100_tg_mean_YS.nc",
+            "EnsembleStats/BCCAQv2+ANUSPLIN300_BNU-ESM_historical+rcp45_r1i1p1_1950-2100_tg_mean_YS.nc",
+            "EnsembleStats/BCCAQv2+ANUSPLIN300_CCSM4_historical+rcp45_r1i1p1_1950-2100_tg_mean_YS.nc",
+            "EnsembleStats/BCCAQv2+ANUSPLIN300_CCSM4_historical+rcp45_r2i1p1_1950-2100_tg_mean_YS.nc",
+        ],
+        "nc_files_extra": [
+            "EnsembleStats/BCCAQv2+ANUSPLIN300_CNRM-CM5_historical+rcp45_r1i1p1_1970-2050_tg_mean_YS.nc"
+        ],
+    }
+    namespace["nc_files"] = namespace["nc_files_simple"] + namespace["nc_files_extra"]
+    return namespace
 
 
 def add_example_file_paths() -> dict[str, str | list[xr.DataArray]]:
@@ -409,7 +460,6 @@ def add_example_file_paths() -> dict[str, str | list[xr.DataArray]]:
     }
 
     # For core.utils.load_module example
-
     sixty_years = xr.cftime_range("1990-01-01", "2049-12-31", freq="D")
     namespace["temperature_datasets"] = [
         xr.DataArray(
@@ -435,11 +485,10 @@ def add_example_file_paths() -> dict[str, str | list[xr.DataArray]]:
             },
         ),
     ]
-
     return namespace
 
 
-def add_doctest_filepaths():
+def add_doctest_filepaths() -> dict[str, Any]:
     """Add filepaths to the xdoctest namespace."""
     namespace: dict = dict()
     namespace["np"] = np
@@ -448,7 +497,6 @@ def add_doctest_filepaths():
         np.random.rand(365) * 20 + 253.15, variable="tas"
     )
     namespace["pr"] = test_timeseries(np.random.rand(365) * 5, variable="pr")
-
     return namespace
 
 
