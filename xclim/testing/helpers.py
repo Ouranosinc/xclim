@@ -85,27 +85,6 @@ or setting the variable at runtime:
     $ env XCLIM_TESTDATA_BRANCH="my_testing_branch" pytest
 """
 
-PREFETCH_TESTING_DATA = bool(os.getenv("XCLIM_PREFETCH_TESTING_DATA"))
-"""Indicates whether the testing data should be downloaded when running tests.
-
-Notes
------
-When running tests multiple times, this flag allows developers to significantly speed up the pytest suite
-by preventing sha256sum checks for all downloaded files. Proceed with caution.
-
-This can be set for both `pytest` and `tox` by exporting the variable:
-
-.. code-block:: console
-
-    $ export XCLIM_PREFETCH_TESTING_DATA=1
-
-or setting the variable at runtime:
-
-.. code-block:: console
-
-    $ env XCLIM_PREFETCH_TESTING_DATA=1 pytest
-"""
-
 CACHE_DIR = os.getenv("XCLIM_DATA_DIR", default_cache_dir)
 """Sets the directory to store the testing datasets.
 
@@ -128,11 +107,13 @@ or setting the variable at runtime:
 
 
 __all__ = [
-    "PREFETCH_TESTING_DATA",
+    "CACHE_DIR",
     "TESTDATA_BRANCH",
+    "TESTDATA_REPO_URL",
     "add_example_file_paths",
     "assert_lazy",
     "default_cache_dir",
+    "default_testdata_version",
     "generate_atmos",
     "nimbus",
     "open_dataset",

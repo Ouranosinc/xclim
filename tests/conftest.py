@@ -305,9 +305,9 @@ def threadsafe_data_dir(tmp_path_factory):
 
 
 @pytest.fixture(scope="session")
-def nimbus(threadsafe_data_dir):
+def nimbus(threadsafe_data_dir, worker_id):
     return _nimbus(
-        data_dir=threadsafe_data_dir,
+        data_dir=default_cache_dir if worker_id == "master" else threadsafe_data_dir,
         repo=helpers.TESTDATA_REPO_URL,
         branch=helpers.TESTDATA_BRANCH,
     )
