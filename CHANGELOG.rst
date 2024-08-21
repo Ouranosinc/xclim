@@ -15,7 +15,7 @@ New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 * ``xclim.sdba.nbutils.quantile`` and its child functions are now faster. If the `fastnanquantile` library is installed, it is used as the backend for the computation of quantiles and yields even faster results. This dependency is now listed in the `xclim[extras]` recipe. (:issue:`1255`, :pull:`1513`).
 * New multivariate bias adjustment class ``MBCn``, giving a faster and more accurate implementation of the ``MBCn`` algorithm. (:issue:`1551`, :pull:`1580`).
-* New multivariate bias adjustment classes ``OTC`` and ``dOTC``. Requires the `POT` library which can be installed via the `xclim[extras]` recipe. (:pull:`1787`).
+* New multivariate bias adjustment classes ``OTC`` and ``dOTC``. Requires the `POT` library which can be installed via the `xclim[extras]` recipe. (:pull:`1787`, :pull:`1890`).
 * `xclim` is now compatible with `pytest` versions `>=8.0.0`. (:pull:`1632`).
 
 Breaking changes
