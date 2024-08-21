@@ -199,7 +199,6 @@ def nimbus(  # noqa: PR01
     ----------
     data_dir : str or Path
         Path to the directory where the data files are stored.
-
     repo : str
         URL of the repository to use when fetching testing datasets.
     branch : str
@@ -287,6 +286,8 @@ def open_dataset(
             raise
 
     local_file = Path(cache_dir).joinpath(name)
+    if not local_file.exists():
+        raise OSError(f"File not found: {local_file}")
     try:
         ds = _open_dataset(local_file, **kwargs)
         return ds
@@ -384,19 +385,15 @@ def gather_testing_data(
     threadsafe_data_dir: str | os.PathLike[str] | Path, worker_id: str
 ):
     """Gather testing data across workers."""
-    if (
-        not default_cache_dir.joinpath(default_testdata_version).exists()
-        or PREFETCH_TESTING_DATA
-    ):
-        if PREFETCH_TESTING_DATA:
-            print("`XCLIM_PREFETCH_TESTING_DATA` set. Prefetching testing data...")
+    if worker_id == "master":
+        populate_testing_data(branch=TESTDATA_BRANCH)
+    else:
         if platform == "win32":
-            raise OSError(
-                "UNIX-style file-locking is not supported on Windows. "
-                "Consider running `$ xclim prefetch_testing_data` to download testing data."
-            )
-        elif worker_id == "master":
-            populate_testing_data(branch=TESTDATA_BRANCH)
+            if not default_cache_dir.joinpath(default_testdata_version).exists():
+                raise FileNotFoundError(
+                    "Testing data not found and UNIX-style file-locking is not supported on Windows. "
+                    "Consider running `$ xclim prefetch_testing_data` to download testing data beforehand."
+                )
         else:
             default_cache_dir.mkdir(exist_ok=True, parents=True)
             lockfile = default_cache_dir.joinpath(".lock")
@@ -408,7 +405,9 @@ def gather_testing_data(
             with test_data_being_written.acquire():
                 if lockfile.exists():
                     lockfile.unlink()
-    copytree(default_cache_dir.joinpath(default_testdata_version), threadsafe_data_dir)
+        copytree(
+            default_cache_dir.joinpath(default_testdata_version), threadsafe_data_dir
+        )
 
 
 def add_example_file_paths() -> dict[str, str | list[xr.DataArray]]:
