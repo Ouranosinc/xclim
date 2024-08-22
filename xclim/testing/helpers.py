@@ -3,15 +3,24 @@
 from __future__ import annotations
 
 import os
+import re
+import time
 import warnings
+from datetime import datetime as dt
 from pathlib import Path
+from shutil import copytree
+from sys import platform
 
 import numpy as np
 import pandas as pd
 import xarray as xr
 from dask.diagnostics import Callback
+from filelock import FileLock
+from packaging.version import Version
 
-from xclim.core.calendar import percentile_doy
+import xclim
+from xclim import __version__ as __xclim_version__
+from xclim.core import calendar
 from xclim.core.utils import VARIABLES
 from xclim.indices import (
     longwave_upwelling_radiation_from_net_downwelling,
@@ -74,7 +83,38 @@ __all__ = [
 ]
 
 
-def generate_atmos(cache_dir: Path):
+def testing_setup_warnings():
+    """Warn users about potential incompatibilities between xclim and xclim-testdata versions."""
+    if re.match(r"^\d+\.\d+\.\d+$", __xclim_version__) and TESTDATA_BRANCH == "main":
+        # This does not need to be emitted on GitHub Workflows and ReadTheDocs
+        if not os.getenv("CI") and not os.getenv("READTHEDOCS"):
+            warnings.warn(
+                f'`xclim` {__xclim_version__} is running tests against the "main" branch of `Ouranosinc/xclim-testdata`. '
+                "It is possible that changes in xclim-testdata may be incompatible with test assertions in this version. "
+                "Please be sure to check https://github.com/Ouranosinc/xclim-testdata for more information.",
+                UserWarning,
+            )
+
+    if re.match(r"^v\d+\.\d+\.\d+", TESTDATA_BRANCH):
+        # Find the date of last modification of xclim source files to generate a calendar version
+        install_date = dt.strptime(
+            time.ctime(os.path.getmtime(xclim.__file__)),
+            "%a %b %d %H:%M:%S %Y",
+        )
+        install_calendar_version = (
+            f"{install_date.year}.{install_date.month}.{install_date.day}"
+        )
+
+        if Version(TESTDATA_BRANCH) > Version(install_calendar_version):
+            warnings.warn(
+                f"Installation date of `xclim` ({install_date.ctime()}) "
+                f"predates the last release of `xclim-testdata` ({TESTDATA_BRANCH}). "
+                "It is very likely that the testing data is incompatible with this build of `xclim`.",
+                UserWarning,
+            )
+
+
+def generate_atmos(cache_dir: Path) -> dict[str, xr.DataArray]:
     """Create the `atmosds` synthetic testing dataset."""
     with _open_dataset(
         "ERA5/daily_surface_cancities_1990-1993.nc",
@@ -82,10 +122,10 @@ def generate_atmos(cache_dir: Path):
         branch=TESTDATA_BRANCH,
         engine="h5netcdf",
     ) as ds:
-        tn10 = percentile_doy(ds.tasmin, per=10)
-        t10 = percentile_doy(ds.tas, per=10)
-        t90 = percentile_doy(ds.tas, per=90)
-        tx90 = percentile_doy(ds.tasmax, per=90)
+        tn10 = calendar.percentile_doy(ds.tasmin, per=10)
+        t10 = calendar.percentile_doy(ds.tas, per=10)
+        t90 = calendar.percentile_doy(ds.tas, per=90)
+        tx90 = calendar.percentile_doy(ds.tasmax, per=90)
 
         rsus = shortwave_upwelling_radiation_from_net_downwelling(ds.rss, ds.rsds)
         rlus = longwave_upwelling_radiation_from_net_downwelling(ds.rls, ds.rlds)
@@ -101,7 +141,16 @@ def generate_atmos(cache_dir: Path):
 
         # Create a file in session scoped temporary directory
         atmos_file = cache_dir.joinpath("atmosds.nc")
-        ds.to_netcdf(atmos_file)
+        ds.to_netcdf(atmos_file, engine="h5netcdf")
+
+    # Give access to dataset variables by name in namespace
+    namespace = dict()
+    with _open_dataset(
+        atmos_file, branch=TESTDATA_BRANCH, cache_dir=cache_dir, engine="h5netcdf"
+    ) as ds:
+        for variable in ds.data_vars:
+            namespace[f"{variable}_dataset"] = ds.get(variable)
+    return namespace
 
 
 def populate_testing_data(
@@ -151,7 +200,10 @@ def populate_testing_data(
                 data[filepattern] = _get_file(
                     filepattern, branch=branch, cache_dir=_local_cache
                 )
-            except FileNotFoundError:  # noqa: S112
+            except FileNotFoundError:
+                warnings.warn(
+                    "File {filepattern} was not found. Consider verifying the file exists."
+                )
                 continue
         elif temp_folder:
             try:
@@ -161,30 +213,58 @@ def populate_testing_data(
                     branch=branch,
                     _local_cache=_local_cache,
                 )
-            except FileNotFoundError:  # noqa: S112
+            except FileNotFoundError:
+                warnings.warn("File {filepattern} was not found.")
                 continue
     return
 
 
-def add_example_file_paths(
-    cache_dir: Path,
-) -> dict[str, str | list[xr.DataArray]]:
+def gather_testing_data(threadsafe_data_dir: Path, worker_id: str):
+    """Gather testing data across workers."""
+    if (
+        not _default_cache_dir.joinpath(TESTDATA_BRANCH).exists()
+        or PREFETCH_TESTING_DATA
+    ):
+        if PREFETCH_TESTING_DATA:
+            print("`XCLIM_PREFETCH_TESTING_DATA` set. Prefetching testing data...")
+        if platform == "win32":
+            raise OSError(
+                "UNIX-style file-locking is not supported on Windows. "
+                "Consider running `$ xclim prefetch_testing_data` to download testing data."
+            )
+        elif worker_id in ["master"]:
+            populate_testing_data(branch=TESTDATA_BRANCH)
+        else:
+            _default_cache_dir.mkdir(exist_ok=True, parents=True)
+            lockfile = _default_cache_dir.joinpath(".lock")
+            test_data_being_written = FileLock(lockfile)
+            with test_data_being_written:
+                # This flag prevents multiple calls from re-attempting to download testing data in the same pytest run
+                populate_testing_data(branch=TESTDATA_BRANCH)
+                _default_cache_dir.joinpath(".data_written").touch()
+            with test_data_being_written.acquire():
+                if lockfile.exists():
+                    lockfile.unlink()
+    copytree(_default_cache_dir, threadsafe_data_dir)
+
+
+def add_example_file_paths() -> dict[str, str | list[xr.DataArray]]:
     """Create a dictionary of relevant datasets to be patched into the xdoctest namespace."""
-    ns: dict = dict()
-    ns["path_to_ensemble_file"] = "EnsembleReduce/TestEnsReduceCriteria.nc"
-    ns["path_to_pr_file"] = "NRCANdaily/nrcan_canada_daily_pr_1990.nc"
-    ns["path_to_sfcWind_file"] = "ERA5/daily_surface_cancities_1990-1993.nc"
-    ns["path_to_tas_file"] = "ERA5/daily_surface_cancities_1990-1993.nc"
-    ns["path_to_tasmax_file"] = "NRCANdaily/nrcan_canada_daily_tasmax_1990.nc"
-    ns["path_to_tasmin_file"] = "NRCANdaily/nrcan_canada_daily_tasmin_1990.nc"
+    namespace: dict = dict()
+    namespace["path_to_ensemble_file"] = "EnsembleReduce/TestEnsReduceCriteria.nc"
+    namespace["path_to_pr_file"] = "NRCANdaily/nrcan_canada_daily_pr_1990.nc"
+    namespace["path_to_sfcWind_file"] = "ERA5/daily_surface_cancities_1990-1993.nc"
+    namespace["path_to_tas_file"] = "ERA5/daily_surface_cancities_1990-1993.nc"
+    namespace["path_to_tasmax_file"] = "NRCANdaily/nrcan_canada_daily_tasmax_1990.nc"
+    namespace["path_to_tasmin_file"] = "NRCANdaily/nrcan_canada_daily_tasmin_1990.nc"
 
     # For core.utils.load_module example
-    ns["path_to_example_py"] = (
+    namespace["path_to_example_py"] = (
         Path(__file__).parent.parent.parent.parent / "docs" / "notebooks" / "example.py"
     )
 
     time = xr.cftime_range("1990-01-01", "2049-12-31", freq="D")
-    ns["temperature_datasets"] = [
+    namespace["temperature_datasets"] = [
         xr.DataArray(
             12 * np.random.random_sample(time.size) + 273,
             coords={"time": time},
@@ -209,17 +289,20 @@ def add_example_file_paths(
         ),
     ]
 
-    # Give access to this file within xdoctest namespace
-    atmos_file = cache_dir.joinpath("atmosds.nc")
+    return namespace
 
-    # Give access to dataset variables by name in xdoctest namespace
-    with _open_dataset(
-        atmos_file, branch=TESTDATA_BRANCH, cache_dir=cache_dir, engine="h5netcdf"
-    ) as ds:
-        for variable in ds.data_vars:
-            ns[f"{variable}_dataset"] = ds.get(variable)
 
-    return ns
+def add_doctest_filepaths():
+    """Add filepaths to the xdoctest namespace."""
+    namespace: dict = dict()
+    namespace["np"] = np
+    namespace["xclim"] = xclim
+    namespace["tas"] = test_timeseries(
+        np.random.rand(365) * 20 + 253.15, variable="tas"
+    )
+    namespace["pr"] = test_timeseries(np.random.rand(365) * 5, variable="pr")
+
+    return namespace
 
 
 def test_timeseries(

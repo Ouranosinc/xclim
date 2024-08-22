@@ -101,7 +101,8 @@ class TestFlowGeneric:
         for da in [dmx, dmn]:
             for attr in ["units", "is_dayofyear", "calendar"]:
                 assert attr in da.attrs.keys()
-            assert da.attrs["units"] == ""
+
+            assert da.attrs["units"] == "1"
             assert da.attrs["is_dayofyear"] == 1
 
 
@@ -393,13 +394,13 @@ class TestFirstDayThreshold:
 
 class TestGetDailyEvents:
     def test_simple(self, tas_series):
-        arr = xr.DataArray(np.array([-10, 15, 20, np.NaN, 10]), name="Stuff")
+        arr = xr.DataArray(np.array([-10, 15, 20, np.nan, 10]), name="Stuff")
 
         out = generic.get_daily_events(arr, threshold=10, op=">=")
 
         assert out.name == "events"
         assert out.sum() == 3
-        np.testing.assert_array_equal(out, [0, 1, 1, np.NaN, 1])
+        np.testing.assert_array_equal(out, [0, 1, 1, np.nan, 1])
 
 
 class TestGenericCountingIndices:
@@ -470,7 +471,7 @@ class TestGenericCountingIndices:
     @pytest.mark.parametrize(
         "op, constrain, expected, should_fail",
         [
-            ("<", None, np.NaN, False),
+            ("<", None, np.nan, False),
             ("<=", None, 3, False),
             ("!=", ("!=",), 1, False),
             ("==", ("==", "!="), 3, False),
@@ -497,7 +498,7 @@ class TestGenericCountingIndices:
     @pytest.mark.parametrize(
         "op, constrain, expected, should_fail",
         [
-            ("<", None, np.NaN, False),
+            ("<", None, np.nan, False),
             ("<=", None, 8, False),
             ("!=", ("!=",), 9, False),
             ("==", ("==", "!="), 8, False),

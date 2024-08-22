@@ -40,7 +40,7 @@ class TestSnwMaxDoy:
         snw = snw_series(a, start="1999-01-01")
         out = xci.snw_max_doy(snw, freq="YS")
         np.testing.assert_array_equal(out, [11, np.nan])
-        assert out.units == ""
+        assert out.attrs["units"] == "1"
 
 
 class TestSnowMeltWEMax:

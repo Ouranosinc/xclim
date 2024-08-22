@@ -260,7 +260,7 @@ def test_wind_profile(atmosds):
 
 def test_wind_power_potential(atmosds):
     out = atmos.wind_power_potential(wind_speed=atmosds.sfcWind)
-    assert out.attrs["units"] == ""
+    assert out.attrs["units"] == "1"
     assert (out >= 0).all()
     assert (out <= 1).all()
 
