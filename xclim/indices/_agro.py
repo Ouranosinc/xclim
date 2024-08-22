@@ -1,7 +1,6 @@
 # noqa: D100
 from __future__ import annotations
 
-import warnings
 from typing import cast
 
 import numpy as np
@@ -1232,7 +1231,6 @@ def standardized_precipitation_index(
 
 @declare_units(
     wb="[precipitation]",
-    offset="[precipitation]",
     params="[]",
 )
 def standardized_precipitation_evapotranspiration_index(
@@ -1242,7 +1240,6 @@ def standardized_precipitation_evapotranspiration_index(
     dist: str = "gamma",
     method: str = "ML",
     fitkwargs: dict | None = None,
-    offset: Quantified = "0.000 mm/d",
     cal_start: DateStr | None = None,
     cal_end: DateStr | None = None,
     params: Quantified | None = None,
@@ -1273,10 +1270,6 @@ def standardized_precipitation_evapotranspiration_index(
         vary with the distribution: 'gamma':{'APP', 'ML', 'PWM'}, 'fisk':{'APP', 'ML'}
     fitkwargs : dict, optional
         Kwargs passed to ``xclim.indices.stats.fit`` used to impose values of certains parameters (`floc`, `fscale`).
-    offset : Quantified
-        For distributions bounded by zero (e.g. "gamma", "fisk"), the two-parameters distributions only accept positive
-        values. An offset can be added to make sure this is the case. This option will be removed in xclim >=0.50.0, ``xclim``
-        will rely on proper use of three-parameters distributions instead.
     cal_start : DateStr, optional
         Start date of the calibration period. A `DateStr` is expected, that is a `str` in format `"YYYY-MM-DD"`.
         Default option `None` means that the calibration period begins at the start of the input dataset.
@@ -1301,27 +1294,6 @@ def standardized_precipitation_evapotranspiration_index(
     standardized_precipitation_index
     """
     fitkwargs = fitkwargs or {}
-    uses_default_offset = offset != "0.000 mm/d"
-    if uses_default_offset is False:
-        warnings.warn("Inputting an offset will be deprecated in xclim>=0.50.0. ")
-    if params is not None:
-        if "offset" in params.attrs:
-            params_offset = params.attrs["offset"]
-            # no more offset in params needed after the next step.
-            # This step will be removed in xclim >=0.50.0 once offset is no longer needed
-            params.attrs.pop("offset")
-        else:
-            params_offset = ""
-        if uses_default_offset is False and offset != params_offset:
-            warnings.warn(
-                "The offset in `params` differs from the input `offset`."
-                "Proceeding with the value given in `params`."
-            )
-        offset = params_offset
-    offset = 0 if offset == "" else convert_units_to(offset, wb, context="hydro")
-    if offset != 0:
-        with xarray.set_options(keep_attrs=True):
-            wb = wb + offset
 
     dist_methods = {"gamma": ["ML", "APP", "PWM"], "fisk": ["ML", "APP"]}
     if dist in dist_methods:

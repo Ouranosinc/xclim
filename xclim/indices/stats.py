@@ -13,7 +13,6 @@ import xarray as xr
 
 from xclim.core.calendar import compare_offsets, resample_doy, select_time
 from xclim.core.formatting import prefix_attrs, unprefix_attrs, update_history
-from xclim.core.units import convert_units_to
 from xclim.core.utils import DateStr, Quantified, uses_dask
 
 from . import generic
@@ -876,10 +875,6 @@ def standardized_index(
                 "If `cal_start`, `cal_end`, `freq`, `window`, and/or `dist` were given as input, they will be ignored."
             )
 
-        if "offset" in params.attrs:
-            offset = convert_units_to(params.attrs["offset"], da, context="hydro")
-            with xr.set_options(keep_attrs=True):
-                da = da + offset
     else:
         for p in [window, dist, method, zero_inflated]:
             if p is None:
