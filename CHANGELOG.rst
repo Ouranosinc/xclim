@@ -2,6 +2,14 @@
 Changelog
 =========
 
+v0.53.0
+--------------------
+Contributors to this version: Adrien Lamarche (:user:`LamAdr`).
+
+Bug fixes
+^^^^^^^^^
+* Fixed a small inefficiency in ``_otc_adjust`` (:pull:`1890`).
+
 v0.52.0 (2024-08-08)
 --------------------
 Contributors to this version: David Huard (:user:`huard`), Trevor James Smith (:user:`Zeitsperre`), Hui-Min Wang (:user:`Hem-W`), Éric Dupuis (:user:`coxipi`), Sarah Gammon (:user:`SarahG-579462`), Pascal Bourgault (:user:`aulemahal`), Juliette Lavoie (:user:`juliettelavoie`), Adrien Lamarche (:user:`LamAdr`).
