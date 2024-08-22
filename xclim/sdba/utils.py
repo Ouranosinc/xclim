@@ -1031,7 +1031,7 @@ def optimal_transport(gridX, gridY, muX, muY, numItermax, transform):
     except ImportError as e:
         raise ImportError(
             "The optional dependency `POT` is required for optimal_transport. "
-            "You can install it with `pip install POT` or `pip install 'xclim[extras]'`."
+            "You can install it with `pip install POT`, `conda install -c conda-forge pot` or `pip install 'xclim[extras]'`."
         ) from e
 
     if transform == "standardize":
