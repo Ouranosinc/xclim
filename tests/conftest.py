@@ -13,7 +13,7 @@ import xarray as xr
 from xclim.core import indicator
 from xclim.core.calendar import max_doy
 from xclim.testing import helpers
-from xclim.testing.helpers import default_cache_dir  # noqa
+from xclim.testing.helpers import default_testdata_cache  # noqa
 from xclim.testing.helpers import nimbus as _nimbus
 from xclim.testing.helpers import open_dataset as _open_dataset
 from xclim.testing.helpers import test_timeseries
@@ -302,7 +302,9 @@ def threadsafe_data_dir(tmp_path_factory):
 @pytest.fixture(scope="session")
 def nimbus(threadsafe_data_dir, worker_id):
     return _nimbus(
-        data_dir=default_cache_dir if worker_id == "master" else threadsafe_data_dir,
+        data_dir=(
+            default_testdata_cache if worker_id == "master" else threadsafe_data_dir
+        ),
         repo=helpers.TESTDATA_REPO_URL,
         branch=helpers.TESTDATA_BRANCH,
     )
@@ -385,7 +387,7 @@ def gather_session_data(request, nimbus, worker_id):
 
     def remove_data_written_flag():
         """Cleanup cache folder once we are finished."""
-        flag = default_cache_dir.joinpath(".data_written")
+        flag = default_testdata_cache.joinpath(".data_written")
         if flag.exists():
             flag.unlink()
 

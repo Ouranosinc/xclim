@@ -52,16 +52,16 @@ logger = logging.getLogger("xclim")
 
 default_testdata_version = "v2023.12.14"
 """Default version of the testing data to use when fetching datasets."""
+default_testdata_repo_url = "https://github.com/Ouranosinc/xclim-testdata"
+"""Default URL of the testing data repository to use when fetching datasets."""
 
 try:
-    default_cache_dir = Path(pooch.os_cache("xclim-testdata"))
+    default_testdata_cache = Path(pooch.os_cache("xclim-testdata"))
     """Default location for the testing data cache."""
 except AttributeError:
-    default_cache_dir = None
+    default_testdata_cache = None
 
-TESTDATA_REPO_URL = str(
-    os.getenv("XCLIM_TESTDATA_REPO_URL", "https://github.com/Ouranosinc/xclim-testdata")
-)
+TESTDATA_REPO_URL = str(os.getenv("XCLIM_TESTDATA_REPO_URL", default_testdata_repo_url))
 """Sets the URL of the testing data repository to use when fetching datasets.
 
 Notes
@@ -97,7 +97,7 @@ or setting the variable at runtime:
     $ env XCLIM_TESTDATA_BRANCH="my_testing_branch" pytest
 """
 
-CACHE_DIR = os.getenv("XCLIM_DATA_DIR", default_cache_dir)
+TESTDATA_CACHE = os.getenv("XCLIM_TESTDATA_CACHE", default_testdata_cache)
 """Sets the directory to store the testing datasets.
 
 If not set, the default location will be used (based on ``platformdirs``, see :func:`pooch.os_cache`).
@@ -119,12 +119,13 @@ or setting the variable at runtime:
 
 
 __all__ = [
-    "CACHE_DIR",
     "TESTDATA_BRANCH",
+    "TESTDATA_CACHE",
     "TESTDATA_REPO_URL",
     "add_example_file_paths",
     "assert_lazy",
-    "default_cache_dir",
+    "default_testdata_cache",
+    "default_testdata_repo_url",
     "default_testdata_version",
     "generate_atmos",
     "nimbus",
@@ -185,7 +186,7 @@ def load_registry() -> dict[str, str]:
 
 
 def nimbus(  # noqa: PR01
-    data_dir: str | Path = CACHE_DIR,
+    data_dir: str | Path = TESTDATA_CACHE,
     repo: str = TESTDATA_REPO_URL,
     branch: str = TESTDATA_BRANCH,
     data_updates: bool = True,
@@ -252,7 +253,7 @@ def nimbus(  # noqa: PR01
 def open_dataset(
     name: str | os.PathLike[str],
     dap_url: str | None = None,
-    cache_dir: str | os.PathLike[str] | None = CACHE_DIR,
+    cache_dir: str | os.PathLike[str] | None = TESTDATA_CACHE,
     **kwargs,
 ) -> Dataset:
     r"""Open a dataset from the online GitHub-like repository.
@@ -308,7 +309,7 @@ def populate_testing_data(
     temp_folder: Path | None = None,
     repo: str = TESTDATA_REPO_URL,
     branch: str = TESTDATA_BRANCH,
-    local_cache: Path = CACHE_DIR,
+    local_cache: Path = TESTDATA_CACHE,
 ) -> None:
     """Populate the local cache with the testing data.
 
@@ -393,7 +394,7 @@ def generate_atmos(cache_dir: str | os.PathLike[str] | Path) -> dict[str, xr.Dat
 def gather_testing_data(
     threadsafe_data_dir: str | os.PathLike[str] | Path,
     worker_id: str,
-    cache_dir: str | os.PathLike[str] | None = CACHE_DIR,
+    cache_dir: str | os.PathLike[str] | None = TESTDATA_CACHE,
 ):
     """Gather testing data across workers."""
     if cache_dir is None:

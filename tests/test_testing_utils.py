@@ -43,11 +43,14 @@ class TestFileRequests:
     def test_open_testdata(
         self,
     ):
-        from xclim.testing.helpers import default_cache_dir, default_testdata_version
+        from xclim.testing.helpers import (
+            default_testdata_cache,
+            default_testdata_version,
+        )
 
         ds = helpers.open_dataset(
             Path("cmip5/tas_Amon_CanESM2_rcp85_r1i1p1_200701-200712.nc"),
-            cache_dir=default_cache_dir.joinpath(default_testdata_version),
+            cache_dir=default_testdata_cache.joinpath(default_testdata_version),
             engine="h5netcdf",
         )
         assert ds.lon.size == 128
