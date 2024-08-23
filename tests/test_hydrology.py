@@ -33,7 +33,7 @@ class TestStandardizedStreamflow:
     def test_3d_data_with_nans(self, open_dataset):
         nc_ds = Path("Raven", "q_sim.nc")
         # test with data
-        ds = open_dataset(self.nc_ds)
+        ds = open_dataset(nc_ds)
         q = ds.q_obs.sel(time=slice("2008")).rename("q")
         qMM = convert_units_to(q, "mm**3/s", context="hydro")  # noqa
         # put a nan somewhere
