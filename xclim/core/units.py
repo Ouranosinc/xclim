@@ -20,6 +20,7 @@ import numpy as np
 import pint
 import xarray as xr
 from boltons.funcutils import wraps
+from pint import UndefinedUnitError
 from yaml import safe_load
 
 from .calendar import get_calendar, parse_offset
@@ -55,9 +56,13 @@ __all__ = [
 
 # shamelessly adapted from `cf-xarray` (which adopted it from MetPy and xclim itself)
 units = deepcopy(cf_xarray.units.units)
-# Changing the default string format for units/quantities. cf is implemented by cf-xarray
-# g is the most versatile float format.
-units.formatter.default_format = "gcf"
+# Changing the default string format for units/quantities.
+# CF is implemented by cf-xarray, g is the most versatile float format.
+# The following try/except logic can be removed when xclim drops support numpy <2.0.
+try:
+    units.formatter.default_format = "gcf"
+except UndefinedUnitError:
+    units.default_format = "gcf"
 # Switch this flag back to False. Not sure what that implies, but it breaks some tests.
 units.force_ndarray_like = False  # noqa: F841
 # Another alias not included by cf_xarray
