@@ -2,13 +2,22 @@
 Changelog
 =========
 
-v0.53.0
+v0.53.0 (unreleased)
 --------------------
-Contributors to this version: Adrien Lamarche (:user:`LamAdr`).
+Contributors to this version: Adrien Lamarche (:user:`LamAdr`), Trevor James Smith (:user:`Zeitsperre`).
 
 Bug fixes
 ^^^^^^^^^
 * Fixed a small inefficiency in ``_otc_adjust`` (:pull:`1890`).
+
+Breaking changes
+^^^^^^^^^^^^^^^^
+* The following previously-deprecated functions have now been removed from `xclim`: ``xclim.core.calendar.convert_calendar``, ``xclim.core.calendar.date_range``, ``xclim.core.calendar.date_range_like``, ``xclim.core.calendar.interp_calendar``, ``xclim.core.calendar.days_in_year``, ``xclim.core.calendar.datetime_to_decimal_year``. For guidance on how to migrate to alternatives, see the `version 0.50.0 Breaking changes <#v0-50-0-2024-06-17>`_. (:issue:`1010`, :pull:`1845`).
+
+Internal changes
+^^^^^^^^^^^^^^^^
+* Many ``DeprecationWarning`` and ``FutureWarning`` messages emitted from `xarray` and `pint` have been addressed. (:issue:`1719`, :pull:`1881`).
+* The codebase has been adjusted to address many `pylint`-related warnings and errors. In some cases, `casting` was used to redefine some `numpy` and `xarray` objects. (:issue:`1719`, :pull:`1881`).
 
 v0.52.0 (2024-08-08)
 --------------------
@@ -31,7 +40,6 @@ Breaking changes
 * As of ``cf_xarray>=0.9.3``, dimensionless quantities now use the ``"1"`` units attribute as specified by the CF conventions, previously an empty string was returned. (:pull:`1814`).
 * The definitions of the ``frost_free_season_start`` and ``frost_free_season_end`` have been slightly changed to be coherent with the ``frost_free_season_length`` and `xclim`'s notion of ``season`` in general. Indicator and indices signature have been adapted to the new conventions. (:pull:`1845`).
 * Season length indicators have been modified to return ``0`` for all cases where a proper season was not found, but the data is valid. Previously, a ``nan`` was given if neither a start nor an end were found, even if the data was valid, and a ``0`` was given if an end was found but without a valid start. (:pull:`1845`).
-* The following previously-deprecated functions have now been removed from `xclim`: ``xclim.core.calendar.convert_calendar``, ``xclim.core.calendar.date_range``, ``xclim.core.calendar.date_range_like``, ``xclim.core.calendar.interp_calendar``, ``xclim.core.calendar.days_in_year``, ``xclim.core.calendar.datetime_to_decimal_year``. For guidance on how to migrate to alternatives, see the `version 0.50.0 Breaking changes <#v0-50-0-2024-06-17>`_. (:issue:`1010`, :pull:`1845`).
 
 Bug fixes
 ^^^^^^^^^
@@ -46,8 +54,6 @@ Internal changes
 * In order to adapt to changes in `pytest`, the doctest fixtures have been split from the main testing suite and doctests are now run using ``$ python -c 'from xclim.testing.utils import run_doctests; run_doctests()'``. (:pull:`1632`).
 * `tox` has been reconfigured to run doctests in a separate environment (``tox -e doctests``). (:pull:`1632`).
 * Added ``xclim.indices.generic.season`` to make season start, end, and length indices. Added a ``stat`` argument to ``xclim.indices.run_length.season`` to avoid returning a dataset. (:pull:`1845`).
-* Many ``DeprecationWarning`` and ``FutureWarning`` messages emitted from `xarray` and `pint` have been addressed. (:issue:`1719`, :pull:`1881`).
-* The codebase has been adjusted to address many `pylint`-related warnings and errors. In some cases, `casting` was used to redefine some `numpy` and `xarray` objects. (:issue:`1719`, :pull:`1881`).
 
 CI changes
 ^^^^^^^^^^
