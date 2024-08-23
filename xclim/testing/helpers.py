@@ -15,6 +15,7 @@ from sys import platform
 from typing import Any
 from urllib.error import HTTPError, URLError
 from urllib.parse import urljoin, urlparse
+from urllib.request import urlretrieve
 
 import numpy as np
 import pandas as pd
@@ -167,7 +168,9 @@ def testing_setup_warnings():
             )
 
 
-def load_registry() -> dict[str, str]:
+def load_registry(
+    branch: str = TESTDATA_BRANCH, repo: str = TESTDATA_REPO_URL
+) -> dict[str, str]:
     """Load the registry file for the test data.
 
     Returns
@@ -175,6 +178,20 @@ def load_registry() -> dict[str, str]:
     dict
         Dictionary of filenames and hashes.
     """
+    remote_registry = audit_url(f"{repo}/raw/{branch}/data/registry.txt")
+
+    if branch is not default_testdata_version:
+        custom_registry_folder = Path(
+            str(ilr.files("xclim").joinpath(f"testing/{branch}"))
+        )
+        custom_registry_folder.mkdir(parents=True, exist_ok=True)
+        registry_file = custom_registry_folder.joinpath("registry.txt")
+        urlretrieve(remote_registry, registry_file)  # noqa: S310
+
+    elif repo is not default_testdata_repo_url:
+        registry_file = Path(str(ilr.files("xclim").joinpath("testing/registry.txt")))
+        urlretrieve(remote_registry, registry_file)  # noqa: S310
+
     registry_file = Path(str(ilr.files("xclim").joinpath("testing/registry.txt")))
     if not registry_file.exists():
         raise FileNotFoundError(f"Registry file not found: {registry_file}")
@@ -238,14 +255,14 @@ def nimbus(  # noqa: PR01
             "You can install it with `pip install pooch` or `pip install xclim[dev]`."
         )
 
-    remote = f"{repo}/raw/{branch}/data"
+    remote = audit_url(f"{repo}/raw/{branch}/data")
     return pooch.create(
         path=data_dir,
         base_url=remote,
         version=default_testdata_version,
         version_dev=branch,
         allow_updates=data_updates,
-        registry=load_registry(),
+        registry=load_registry(branch=branch, repo=repo),
     )
 
 
