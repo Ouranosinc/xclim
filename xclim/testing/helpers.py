@@ -51,8 +51,9 @@ from xclim.indices import (
 
 logger = logging.getLogger("xclim")
 
-default_testdata_version = "v2023.12.14"
+default_testdata_version = "v2024.8.23"
 """Default version of the testing data to use when fetching datasets."""
+
 default_testdata_repo_url = "https://github.com/Ouranosinc/xclim-testdata"
 """Default URL of the testing data repository to use when fetching datasets."""
 
@@ -109,13 +110,13 @@ When running tests locally, this can be set for both `pytest` and `tox` by expor
 
 .. code-block:: console
 
-    $ export XCLIM_DATA_DIR="/path/to/my/data"
+    $ export XCLIM_TESTDATA_CACHE="/path/to/my/data"
 
 or setting the variable at runtime:
 
 .. code-block:: console
 
-    $ env XCLIM_DATA_DIR="/path/to/my/data" pytest
+    $ env XCLIM_TESTDATA_CACHE="/path/to/my/data" pytest
 """
 
 
@@ -123,6 +124,8 @@ __all__ = [
     "TESTDATA_BRANCH",
     "TESTDATA_CACHE",
     "TESTDATA_REPO_URL",
+    "add_doctest_filepaths",
+    "add_ensemble_dataset_objects",
     "add_example_file_paths",
     "assert_lazy",
     "default_testdata_cache",
@@ -445,6 +448,7 @@ def gather_testing_data(
 
 
 def add_ensemble_dataset_objects() -> dict[str, str]:
+    """Create a dictionary of xclim ensemble-related datasets to be patched into the xdoctest namespace."""
     namespace = {
         "nc_files_simple": [
             "EnsembleStats/BCCAQv2+ANUSPLIN300_ACCESS1-0_historical+rcp45_r1i1p1_1950-2100_tg_mean_YS.nc",
@@ -461,7 +465,7 @@ def add_ensemble_dataset_objects() -> dict[str, str]:
 
 
 def add_example_file_paths() -> dict[str, str | list[xr.DataArray]]:
-    """Create a dictionary of relevant datasets to be patched into the xdoctest namespace."""
+    """Create a dictionary of doctest-relevant datasets to be patched into the xdoctest namespace."""
     namespace = {
         "path_to_ensemble_file": "EnsembleReduce/TestEnsReduceCriteria.nc",
         "path_to_pr_file": "NRCANdaily/nrcan_canada_daily_pr_1990.nc",
@@ -507,7 +511,7 @@ def add_example_file_paths() -> dict[str, str | list[xr.DataArray]]:
 
 
 def add_doctest_filepaths() -> dict[str, Any]:
-    """Add filepaths to the xdoctest namespace."""
+    """Overload some libraries directly into the xdoctest namespace."""
     namespace: dict = dict()
     namespace["np"] = np
     namespace["xclim"] = xclim

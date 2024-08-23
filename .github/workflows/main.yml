@@ -19,7 +19,7 @@ on:
       - submitted
 
 env:
-  XCLIM_TESTDATA_BRANCH: cleanup
+  XCLIM_TESTDATA_BRANCH: v2024.8.23
 
 concurrency:
   # For a given workflow, if we push to the same branch, cancel all previous builds on that branch except on main.
