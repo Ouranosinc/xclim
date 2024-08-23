@@ -41,6 +41,9 @@ class TestFileRequests:
                 tmp_path,
             )
 
+    @pytest.mark.skip(
+        "This test has been rendered obsolete. Will remove when #1889 is merged."
+    )
     @pytest.mark.requires_internet
     def test_open_dataset_with_bad_file(self, tmp_path):
         cmip3_folder = tmp_path.joinpath("main", "cmip3")
@@ -75,6 +78,9 @@ class TestFileRequests:
             == Path(cmip3_folder, cmip3_md5).read_text()
         )
 
+    @pytest.mark.skip(
+        "This test has been significantly modified. Will adjust when #1889 is merged."
+    )
     @pytest.mark.requires_internet
     def test_open_testdata(self):
         ds = utilities.open_dataset(
