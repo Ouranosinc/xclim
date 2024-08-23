@@ -273,6 +273,8 @@ def nimbus(  # noqa: PR01
 def open_dataset(
     name: str | os.PathLike[str],
     dap_url: str | None = None,
+    branch: str = TESTDATA_BRANCH,
+    repo: str = TESTDATA_REPO_URL,
     cache_dir: str | os.PathLike[str] | None = TESTDATA_CACHE,
     **kwargs,
 ) -> Dataset:
@@ -286,6 +288,10 @@ def open_dataset(
         Name of the file containing the dataset.
     dap_url : str, optional
         URL to OPeNDAP folder where the data is stored. If supplied, supersedes github_url.
+    branch : str
+        Branch of the repository to use when fetching datasets.
+    repo: str
+        URL of the repository to use when fetching testing datasets.
     cache_dir : Path
         The directory in which to search for and write cached data.
     \*\*kwargs
@@ -294,6 +300,11 @@ def open_dataset(
     Returns
     -------
     Union[Dataset, Path]
+
+    Raises
+    ------
+    OSError
+        If the file is not found in the cache directory or cannot be read.
 
     See Also
     --------
@@ -310,19 +321,25 @@ def open_dataset(
             return _open_dataset(
                 audit_url(urljoin(dap_url, str(name)), context="OPeNDAP"), **kwargs
             )
-        except (OSError, URLError):
-            msg = f"OPeNDAP file not read. Verify that the service is available: '{urljoin(dap_url, str(name))}'"
-            logger.error(msg)
+        except URLError:
             raise
+        except OSError as e:
+            msg = f"OPeNDAP file not read. Verify that the service is available: '{urljoin(dap_url, str(name))}'"
+            raise OSError(msg) from e
 
-    local_file = Path(cache_dir).joinpath(name)
+    local_file = Path(cache_dir).joinpath(branch).joinpath(name)
     if not local_file.exists():
-        raise OSError(f"File not found: {local_file}")
+        try:
+            local_file = nimbus(branch=branch, repo=repo).fetch(name)
+        except OSError as e:
+            raise OSError(
+                f"File not found locally. Verify that the testing data is available in remote: {local_file}"
+            ) from e
     try:
         ds = _open_dataset(local_file, **kwargs)
         return ds
-    except OSError as err:
-        raise err
+    except OSError:
+        raise
 
 
 def populate_testing_data(
