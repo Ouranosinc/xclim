@@ -183,7 +183,7 @@ def load_registry(
     """
     remote_registry = audit_url(f"{repo}/raw/{branch}/data/registry.txt")
 
-    if branch is not default_testdata_version:
+    if branch != default_testdata_version:
         custom_registry_folder = Path(
             str(ilr.files("xclim").joinpath(f"testing/{branch}"))
         )
@@ -191,7 +191,7 @@ def load_registry(
         registry_file = custom_registry_folder.joinpath("registry.txt")
         urlretrieve(remote_registry, registry_file)  # noqa: S310
 
-    elif repo is not default_testdata_repo_url:
+    elif repo != default_testdata_repo_url:
         registry_file = Path(str(ilr.files("xclim").joinpath("testing/registry.txt")))
         urlretrieve(remote_registry, registry_file)  # noqa: S310
 
@@ -327,7 +327,7 @@ def open_dataset(
             msg = f"OPeNDAP file not read. Verify that the service is available: '{urljoin(dap_url, str(name))}'"
             raise OSError(msg) from e
 
-    local_file = Path(cache_dir).joinpath(branch).joinpath(name)
+    local_file = Path(cache_dir).joinpath(name)
     if not local_file.exists():
         try:
             local_file = nimbus(branch=branch, repo=repo).fetch(name)
@@ -395,10 +395,14 @@ def populate_testing_data(
         )
 
 
-def generate_atmos(cache_dir: str | os.PathLike[str] | Path) -> dict[str, xr.DataArray]:
+def generate_atmos(
+    branch: str | os.PathLike[str] | Path = TESTDATA_BRANCH,
+    cache_dir: str | os.PathLike[str] | Path = TESTDATA_CACHE,
+) -> dict[str, xr.DataArray]:
     """Create the `atmosds` synthetic testing dataset."""
     with open_dataset(
         "ERA5/daily_surface_cancities_1990-1993.nc",
+        branch=branch,
         cache_dir=cache_dir,
         engine="h5netcdf",
     ) as ds:
@@ -423,23 +427,25 @@ def generate_atmos(cache_dir: str | os.PathLike[str] | Path) -> dict[str, xr.Dat
         ds.to_netcdf(atmos_file, engine="h5netcdf")
 
     # Give access to dataset variables by name in namespace
-    with open_dataset(atmos_file, cache_dir=cache_dir, engine="h5netcdf") as ds:
+    with open_dataset(
+        atmos_file, branch=branch, cache_dir=cache_dir, engine="h5netcdf"
+    ) as ds:
         namespace = {f"{var}_dataset": ds[var] for var in ds.data_vars}
     return namespace
 
 
 def gather_testing_data(
-    threadsafe_data_dir: str | os.PathLike[str] | Path,
+    worker_cache_dir: str | os.PathLike[str] | Path,
     worker_id: str,
-    cache_dir: str | os.PathLike[str] | None = TESTDATA_CACHE,
+    _cache_dir: str | os.PathLike[str] | None = TESTDATA_CACHE,
 ):
     """Gather testing data across workers."""
-    if cache_dir is None:
+    if _cache_dir is None:
         raise ValueError(
             "The cache directory must be set. "
             "Please set the `cache_dir` parameter or the `XCLIM_DATA_DIR` environment variable."
         )
-    cache_dir = Path(cache_dir)
+    cache_dir = Path(_cache_dir)
 
     if worker_id == "master":
         populate_testing_data(branch=TESTDATA_BRANCH)
@@ -461,7 +467,7 @@ def gather_testing_data(
             with test_data_being_written.acquire():
                 if lockfile.exists():
                     lockfile.unlink()
-        copytree(cache_dir.joinpath(default_testdata_version), threadsafe_data_dir)
+        copytree(cache_dir.joinpath(default_testdata_version), worker_cache_dir)
 
 
 def add_ensemble_dataset_objects() -> dict[str, str]:

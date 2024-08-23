@@ -382,8 +382,8 @@ def gather_session_data(request, nimbus, worker_id):
     Additionally, this fixture is also used to generate the `atmosds` synthetic testing dataset.
     """
     helpers.testing_setup_warnings()
-    helpers.gather_testing_data(nimbus.path, worker_id)
-    helpers.generate_atmos(nimbus.path)
+    helpers.gather_testing_data(worker_cache_dir=nimbus.path, worker_id=worker_id)
+    helpers.generate_atmos(cache_dir=nimbus.path)
 
     def remove_data_written_flag():
         """Cleanup cache folder once we are finished."""
