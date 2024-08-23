@@ -9,6 +9,7 @@ from xclim.indices import (
     base_flow_index,
     generic,
     rb_flashiness_index,
+    standardized_groundwater_index,
     standardized_streamflow_index,
 )
 
@@ -17,6 +18,7 @@ __all__ = [
     "doy_qmax",
     "doy_qmin",
     "rb_flashiness_index",
+    "standardized_groundwater_index",
     "standardized_streamflow_index",
 ]
 
@@ -99,4 +101,20 @@ standardized_streamflow_index = StandardizedStreamflowIndexes(
     cell_methods="",
     keywords="streamflow",
     compute=standardized_streamflow_index,
+)
+
+
+standardized_groundwater_index = StandardizedStreamflowIndexes(
+    title="Standardized Groundwater Index (SGI)",
+    identifier="sgi",
+    units="",
+    standard_name="sgi",
+    long_name="Standardized Groundwater Index (SGI)",
+    description="Groundwater over a moving {window}-X window, normalized such that SGI averages to 0 for "
+    "calibration data. The window unit `X` is the minimal time period defined by resampling frequency {freq}.",
+    abstract="Groundwater over a moving window, normalized such that SGI averages to 0 for the calibration data. "
+    "The window unit `X` is the minimal time period defined by the resampling frequency.",
+    cell_methods="",
+    keywords="groundwater",
+    compute=standardized_groundwater_index,
 )

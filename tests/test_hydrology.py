@@ -29,10 +29,9 @@ class TestRBIndex:
 
 
 class TestStandardizedStreamflow:
-    nc_ds = Path("Raven", "q_sim.nc")
-
     @pytest.mark.slow
     def test_3d_data_with_nans(self, open_dataset):
+        nc_ds = Path("Raven", "q_sim.nc")
         # test with data
         ds = open_dataset(self.nc_ds)
         q = ds.q_obs.sel(time=slice("2008")).rename("q")
