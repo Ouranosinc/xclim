@@ -375,7 +375,9 @@ def convert_units_to(  # noqa: C901
     raise NotImplementedError(f"Source of type `{type(source)}` is not supported.")
 
 
-def cf_conversion(standard_name: str, conversion: str, direction: str) -> str | None:
+def cf_conversion(
+    standard_name: str, conversion: str, direction: Literal["to", "from"]
+) -> str | None:
     """Get the standard name of the specific conversion for the given standard name.
 
     Parameters
