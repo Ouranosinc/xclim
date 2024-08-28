@@ -1,10 +1,13 @@
 from __future__ import annotations
 
 import os
+import warnings
 
 import numpy as np
 import pytest
 import xarray as xr
+from packaging.version import Version
+from pint import __version__ as __pint_version__
 
 from xclim import atmos
 from xclim.core.calendar import percentile_doy
@@ -367,7 +370,7 @@ class TestConsecutiveFrostFreeDays:
 
 class TestFrostSeasonLength:
     def test_simple(self, tasmin_series):
-        a = np.zeros(730) + K2C + 15
+        a = np.zeros(731) + K2C + 15
         a[300:400] = K2C - 5
         a[404:407] = K2C - 5
         tasmin = tasmin_series(a, start="2000-01-01")
@@ -379,7 +382,7 @@ class TestFrostSeasonLength:
         np.testing.assert_array_equal(out, [np.nan, 100, np.nan])
 
         out = atmos.frost_season_length(tasmin=tasmin, mid_date="07-01", freq="YS")
-        np.testing.assert_array_equal(out, [np.nan, np.nan])
+        np.testing.assert_array_equal(out, [0, 181])
 
 
 class TestColdSpellDays:
@@ -826,7 +829,11 @@ class TestDailyFreezeThaw:
         # put a nan somewhere
         tasmin.values[180, 1, 0] = np.nan
 
-        with pytest.warns(None) as record:
+        with warnings.catch_warnings():
+            if Version(__pint_version__) < Version("0.24.0"):
+                warnings.simplefilter("always", DeprecationWarning)
+            else:
+                warnings.simplefilter("error")
             frzthw = atmos.daily_freezethaw_cycles(
                 tasmin,
                 tasmax,
@@ -840,15 +847,8 @@ class TestDailyFreezeThaw:
 
         frzthw1 = (((min1 < 0) & (max1 > 0)) * 1.0).sum()
 
-        assert (
-            "This index calculation will soon require user-specified thresholds."
-            not in [str(q.message) for q in record]
-        )
-
         np.testing.assert_allclose(frzthw1, frzthw.values[0, 0, 0])
-
         assert np.isnan(frzthw.values[0, 1, 0])
-
         assert np.isnan(frzthw.values[0, -1, -1])
 
 
@@ -1290,7 +1290,7 @@ def test_degree_days_exceedance_date(open_dataset):
 
 
 @pytest.mark.parametrize(
-    "never_reached,exp", [(None, np.NaN), (300, 300), ("12-01", 335)]
+    "never_reached,exp", [(None, np.nan), (300, 300), ("12-01", 335)]
 )
 def test_degree_days_exceedance_date_never_reached(open_dataset, never_reached, exp):
     tas = open_dataset("FWI/GFWED_sample_2017.nc").tas

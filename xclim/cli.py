@@ -11,13 +11,22 @@ import warnings
 
 import click
 import xarray as xr
-from dask.diagnostics import ProgressBar
+from dask.diagnostics.progress import ProgressBar
 
 import xclim as xc
 from xclim.core.dataflags import DataQualityException, data_flags, ecad_compliant
 from xclim.core.utils import InputKind
-from xclim.testing.helpers import TESTDATA_BRANCH, populate_testing_data
-from xclim.testing.utils import _default_cache_dir, publish_release_notes, show_versions
+from xclim.testing.utils import (
+    TESTDATA_BRANCH,
+    TESTDATA_CACHE_DIR,
+    TESTDATA_REPO_URL,
+    default_testdata_cache,
+    default_testdata_repo_url,
+    default_testdata_version,
+    populate_testing_data,
+    publish_release_notes,
+    show_versions,
+)
 
 distributed = False
 try:
@@ -152,24 +161,46 @@ def show_version_info(ctx):
 
 @click.command(short_help="Prefetch xclim testing data for development purposes.")
 @click.option(
+    "-r",
+    "--repo",
+    help="The xclim-testdata repo to be fetched and cached. If not specified, defaults to "
+    f"`XCLIM_TESTDATA_REPO_URL` (if set) or `{default_testdata_repo_url}`.",
+)
+@click.option(
     "-b",
     "--branch",
     help="The xclim-testdata branch to be fetched and cached. If not specified, defaults to "
-    "`XCLIM_TESTING_DATA_BRANCH` (if set) or `main`.",
+    f"`XCLIM_TESTDATA_BRANCH` (if set) or `{default_testdata_version}`.",
+)
+@click.option(
+    "-c",
+    "--cache-dir",
+    help="The xclim-testdata branch to be fetched and cached. If not specified, defaults to "
+    f"`XCLIM_TESTDATA_CACHE` (if set) or `{default_testdata_cache}`.",
 )
 @click.pass_context
-def prefetch_testing_data(ctx, branch):
+def prefetch_testing_data(ctx, repo, branch, cache_dir):
     """Prefetch xclim testing data for development purposes."""
+    if repo:
+        testdata_repo = repo
+    else:
+        testdata_repo = TESTDATA_REPO_URL
     if branch:
         testdata_branch = branch
     else:
         testdata_branch = TESTDATA_BRANCH
+    if cache_dir:
+        testdata_cache_dir = cache_dir
+    else:
+        testdata_cache_dir = TESTDATA_CACHE_DIR
 
+    click.echo(f"Gathering testing data from {testdata_repo}/{testdata_branch} ...")
     click.echo(
-        f"Gathering testing data from xclim-testdata `{testdata_branch}` branch..."
+        populate_testing_data(
+            repo=testdata_repo, branch=testdata_branch, local_cache=testdata_cache_dir
+        )
     )
-    click.echo(populate_testing_data(branch=testdata_branch))
-    click.echo(f"Testing data saved to `{_default_cache_dir}`.")
+    click.echo(f"Testing data saved to `{testdata_cache_dir}`.")
     ctx.exit()
 
 
@@ -413,6 +444,11 @@ class XclimCli(click.MultiCommand):
     help="Chunks to use when opening the input dataset(s). "
     "Given as <dim1>:num,<dim2:num>. Ex: time:365,lat:168,lon:150.",
 )
+@click.option(
+    "--engine",
+    help="Engine to use when opening the input dataset(s). "
+    "If not specified, xarray decides.",
+)
 @click.pass_context
 def cli(ctx, **kwargs):
     """Entry point for the command line interface.
@@ -463,7 +499,9 @@ def cli(ctx, **kwargs):
             for dim, num in map(lambda x: x.split(":"), kwargs["chunks"].split(","))
         }
 
-    kwargs["xr_kwargs"] = {"chunks": kwargs["chunks"] or {}}
+    kwargs["xr_kwargs"] = {
+        "chunks": kwargs["chunks"] or {},
+    }
     ctx.obj = kwargs
 
 
@@ -475,7 +513,9 @@ def write_file(ctx, *args, **kwargs):
         if ctx.obj["verbose"]:
             click.echo(f"Writing to file {ctx.obj['output']}")
         with ProgressBar():
-            r = ctx.obj["ds_out"].to_netcdf(ctx.obj["output"], compute=False)
+            r = ctx.obj["ds_out"].to_netcdf(
+                ctx.obj["output"], engine=kwargs["engine"], compute=False
+            )
             if ctx.obj["dask_nthreads"] is not None:
                 progress(r.data)
             r.compute()

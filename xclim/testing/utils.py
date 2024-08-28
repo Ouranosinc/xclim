@@ -3,422 +3,139 @@ Testing and Tutorial Utilities' Module
 ======================================
 """
 
-# Some of this code was copied and adapted from xarray
 from __future__ import annotations
 
-import hashlib
-import json
+import importlib.resources as ilr
 import logging
 import os
 import platform
 import re
 import sys
+import time
 import warnings
 from collections.abc import Sequence
+from datetime import datetime as dt
 from importlib import import_module
 from io import StringIO
 from pathlib import Path
-from shutil import copy
+from shutil import copytree
 from typing import TextIO
 from urllib.error import HTTPError, URLError
 from urllib.parse import urljoin, urlparse
-from urllib.request import urlopen, urlretrieve
+from urllib.request import urlretrieve
 
-import pandas as pd
-from platformdirs import user_cache_dir
+from filelock import FileLock
+from packaging.version import Version
 from xarray import Dataset
 from xarray import open_dataset as _open_dataset
+
+import xclim
+from xclim import __version__ as __xclim_version__
 
 try:
     from pytest_socket import SocketBlockedError
 except ImportError:
     SocketBlockedError = None
 
-_xclim_deps = [
-    "xclim",
-    "xarray",
-    "statsmodels",
-    "sklearn",
-    "scipy",
-    "pint",
-    "pandas",
-    "numba",
-    "lmoments3",
-    "jsonpickle",
-    "flox",
-    "dask",
-    "cf_xarray",
-    "cftime",
-    "clisops",
-    "click",
-    "bottleneck",
-    "boltons",
-]
+try:
+    import pooch
+except ImportError:
+    warnings.warn(
+        "The `pooch` library is not installed. "
+        "The default cache directory for testing data will not be set."
+    )
+    pooch = None
 
-
-_default_cache_dir = Path(user_cache_dir("xclim-testdata"))
 
 logger = logging.getLogger("xclim")
 
+
 __all__ = [
-    "_default_cache_dir",
+    "TESTDATA_BRANCH",
+    "TESTDATA_CACHE_DIR",
+    "TESTDATA_REPO_URL",
     "audit_url",
-    "get_file",
-    "get_local_testdata",
-    "list_datasets",
+    "default_testdata_cache",
+    "default_testdata_repo_url",
+    "default_testdata_version",
+    "gather_testing_data",
     "list_input_variables",
+    "nimbus",
     "open_dataset",
+    "populate_testing_data",
     "publish_release_notes",
+    "run_doctests",
     "show_versions",
+    "testing_setup_warnings",
 ]
 
+default_testdata_version = "v2024.8.23"
+"""Default version of the testing data to use when fetching datasets."""
 
-def file_md5_checksum(f_name):
-    hash_md5 = hashlib.md5()  # noqa: S324
-    with open(f_name, "rb") as f:
-        hash_md5.update(f.read())
-    return hash_md5.hexdigest()
+default_testdata_repo_url = "https://github.com/Ouranosinc/xclim-testdata"
+"""Default URL of the testing data repository to use when fetching datasets."""
 
+try:
+    default_testdata_cache = Path(pooch.os_cache("xclim-testdata"))
+    """Default location for the testing data cache."""
+except AttributeError:
+    default_testdata_cache = None
 
-def audit_url(url: str, context: str = None) -> str:
-    """Check if the URL is well-formed.
+TESTDATA_REPO_URL = str(os.getenv("XCLIM_TESTDATA_REPO_URL", default_testdata_repo_url))
+"""Sets the URL of the testing data repository to use when fetching datasets.
 
-    Raises
-    ------
-    URLError
-        If the URL is not well-formed.
-    """
-    msg = ""
-    result = urlparse(url)
-    if result.scheme == "http":
-        msg = f"{context if context else ''} URL is not using secure HTTP: '{url}'".strip()
-    if not all([result.scheme, result.netloc]):
-        msg = f"{context if context else ''} URL is not well-formed: '{url}'".strip()
+Notes
+-----
+When running tests locally, this can be set for both `pytest` and `tox` by exporting the variable:
 
-    if msg:
-        logger.error(msg)
-        raise URLError(msg)
-    return url
+.. code-block:: console
 
+    $ export XCLIM_TESTDATA_REPO_URL="https://github.com/my_username/xclim-testdata"
 
-def get_file(
-    name: str | os.PathLike[str] | Sequence[str | os.PathLike[str]],
-    github_url: str = "https://github.com/Ouranosinc/xclim-testdata",
-    branch: str = "main",
-    cache_dir: Path = _default_cache_dir,
-) -> Path | list[Path]:
-    """Return a file from an online GitHub-like repository.
+or setting the variable at runtime:
 
-    If a local copy is found then always use that to avoid network traffic.
+.. code-block:: console
 
-    Parameters
-    ----------
-    name : str | os.PathLike[str] | Sequence[str | os.PathLike[str]]
-        Name of the file or list/tuple of names of files containing the dataset(s) including suffixes.
-    github_url : str
-        URL to GitHub repository where the data is stored.
-    branch : str, optional
-        For GitHub-hosted files, the branch to download from.
-    cache_dir : Path
-        The directory in which to search for and write cached data.
+    $ env XCLIM_TESTDATA_REPO_URL="https://github.com/my_username/xclim-testdata" pytest
+"""
 
-    Returns
-    -------
-    Path | list[Path]
-    """
-    if isinstance(name, (str, os.PathLike)):
-        name = [name]
+TESTDATA_BRANCH = str(os.getenv("XCLIM_TESTDATA_BRANCH", default_testdata_version))
+"""Sets the branch of the testing data repository to use when fetching datasets.
 
-    files = []
-    for n in name:
-        fullname = Path(n)
-        suffix = fullname.suffix
-        files.append(
-            _get(
-                fullname=fullname,
-                github_url=github_url,
-                branch=branch,
-                suffix=suffix,
-                cache_dir=cache_dir,
-            )
-        )
-    if len(files) == 1:
-        return files[0]
-    return files
+Notes
+-----
+When running tests locally, this can be set for both `pytest` and `tox` by exporting the variable:
 
+.. code-block:: console
 
-def get_local_testdata(
-    patterns: str | Sequence[str],
-    temp_folder: str | os.PathLike,
-    branch: str = "master",
-    _local_cache: str | os.PathLike = _default_cache_dir,
-) -> Path | list[Path]:
-    """Copy specific testdata from a default cache to a temporary folder.
+    $ export XCLIM_TESTDATA_BRANCH="my_testing_branch"
 
-    Return files matching `pattern` in the default cache dir and move to a local temp folder.
+or setting the variable at runtime:
 
-    Parameters
-    ----------
-    patterns : str | Sequence[str]
-        Glob patterns, which must include the folder.
-    temp_folder : str | os.PathLike
-        Target folder to copy files and filetree to.
-    branch : str
-        For GitHub-hosted files, the branch to download from.
-    _local_cache : str | os.PathLike
-        Local cache of testing data.
+.. code-block:: console
 
-    Returns
-    -------
-    Path | list[Path]
-    """
-    temp_paths = []
+    $ env XCLIM_TESTDATA_BRANCH="my_testing_branch" pytest
+"""
 
-    if isinstance(patterns, str):
-        patterns = [patterns]
+TESTDATA_CACHE_DIR = os.getenv("XCLIM_TESTDATA_CACHE_DIR", default_testdata_cache)
+"""Sets the directory to store the testing datasets.
 
-    for pattern in patterns:
-        potential_paths = [
-            path for path in Path(temp_folder).joinpath(branch).glob(pattern)
-        ]
-        if potential_paths:
-            temp_paths.extend(potential_paths)
-            continue
+If not set, the default location will be used (based on ``platformdirs``, see :func:`pooch.os_cache`).
 
-        testdata_path = Path(_local_cache)
-        if not testdata_path.exists():
-            raise RuntimeError(f"{testdata_path} does not exists")
-        paths = [path for path in testdata_path.joinpath(branch).glob(pattern)]
-        if not paths:
-            raise FileNotFoundError(
-                f"No data found for {pattern} at {testdata_path}/{branch}."
-            )
+Notes
+-----
+When running tests locally, this can be set for both `pytest` and `tox` by exporting the variable:
 
-        main_folder = Path(temp_folder).joinpath(branch).joinpath(Path(pattern).parent)
-        main_folder.mkdir(exist_ok=True, parents=True)
+.. code-block:: console
 
-        for file in paths:
-            temp_file = main_folder.joinpath(file.name)
-            if not temp_file.exists():
-                copy(file, main_folder)
-            temp_paths.append(temp_file)
+    $ export XCLIM_TESTDATA_CACHE_DIR="/path/to/my/data"
 
-    # Return item directly when singleton, for convenience
-    return temp_paths[0] if len(temp_paths) == 1 else temp_paths
+or setting the variable at runtime:
 
+.. code-block:: console
 
-def _get(
-    fullname: Path,
-    github_url: str,
-    branch: str,
-    suffix: str,
-    cache_dir: Path,
-) -> Path:
-    cache_dir = cache_dir.absolute()
-    local_file = cache_dir / branch / fullname
-    md5_name = fullname.with_suffix(f"{suffix}.md5")
-    md5_file = cache_dir / branch / md5_name
-
-    if not github_url.startswith("https"):
-        raise ValueError(f"GitHub URL not secure: '{github_url}'.")
-
-    if local_file.is_file():
-        local_md5 = file_md5_checksum(local_file)
-        try:
-            url = "/".join((github_url, "raw", branch, md5_name.as_posix()))
-            msg = f"Attempting to fetch remote file md5: {md5_name.as_posix()}"
-            logger.info(msg)
-            urlretrieve(audit_url(url), md5_file)  # noqa: S310
-            with open(md5_file) as f:
-                remote_md5 = f.read()
-            if local_md5.strip() != remote_md5.strip():
-                local_file.unlink()
-                msg = (
-                    f"MD5 checksum for {local_file.as_posix()} does not match upstream md5. "
-                    "Attempting new download."
-                )
-                warnings.warn(msg)
-        except HTTPError:
-            msg = (
-                f"{md5_name.as_posix()} not accessible in remote repository. "
-                "Unable to determine validity with upstream repo."
-            )
-            warnings.warn(msg)
-        except URLError:
-            msg = (
-                f"{md5_name.as_posix()} not found in remote repository. "
-                "Unable to determine validity with upstream repo."
-            )
-            warnings.warn(msg)
-        except SocketBlockedError:
-            msg = f"Unable to access {md5_name.as_posix()} online. Testing suite is being run with `--disable-socket`."
-            warnings.warn(msg)
-
-    if not local_file.is_file():
-        # This will always leave this directory on disk.
-        # We may want to add an option to remove it.
-        local_file.parent.mkdir(exist_ok=True, parents=True)
-
-        url = "/".join((github_url, "raw", branch, fullname.as_posix()))
-        msg = f"Fetching remote file: {fullname.as_posix()}"
-        logger.info(msg)
-        try:
-            urlretrieve(audit_url(url), local_file)  # noqa: S310
-        except HTTPError as e:
-            msg = f"{fullname.as_posix()} not accessible in remote repository. Aborting file retrieval."
-            raise FileNotFoundError(msg) from e
-        except URLError as e:
-            msg = (
-                f"{fullname.as_posix()} not found in remote repository. "
-                "Verify filename and repository address. Aborting file retrieval."
-            )
-            raise FileNotFoundError(msg) from e
-        except SocketBlockedError as e:
-            msg = (
-                f"Unable to access {fullname.as_posix()} online. Testing suite is being run with `--disable-socket`. "
-                f"If you intend to run tests with this option enabled, please download the file beforehand with the "
-                f"following console command: `xclim prefetch_testing_data`."
-            )
-            raise FileNotFoundError(msg) from e
-        try:
-            url = "/".join((github_url, "raw", branch, md5_name.as_posix()))
-            msg = f"Fetching remote file md5: {md5_name.as_posix()}"
-            logger.info(msg)
-            urlretrieve(audit_url(url), md5_file)  # noqa: S310
-        except (HTTPError, URLError) as e:
-            msg = (
-                f"{md5_name.as_posix()} not accessible online. "
-                "Unable to determine validity of file from upstream repo. "
-                "Aborting file retrieval."
-            )
-            local_file.unlink()
-            raise FileNotFoundError(msg) from e
-
-        local_md5 = file_md5_checksum(local_file)
-        try:
-            with open(md5_file) as f:
-                remote_md5 = f.read()
-            if local_md5.strip() != remote_md5.strip():
-                local_file.unlink()
-                msg = (
-                    f"{local_file.as_posix()} and md5 checksum do not match. "
-                    "There may be an issue with the upstream origin data."
-                )
-                raise OSError(msg)
-        except OSError as e:
-            logger.error(e)
-
-    return local_file
-
-
-# idea copied from raven that it borrowed from xclim that borrowed it from xarray that was borrowed from Seaborn
-def open_dataset(
-    name: str | os.PathLike[str],
-    suffix: str | None = None,
-    dap_url: str | None = None,
-    github_url: str = "https://github.com/Ouranosinc/xclim-testdata",
-    branch: str = "main",
-    cache: bool = True,
-    cache_dir: Path = _default_cache_dir,
-    **kwargs,
-) -> Dataset:
-    r"""Open a dataset from the online GitHub-like repository.
-
-    If a local copy is found then always use that to avoid network traffic.
-
-    Parameters
-    ----------
-    name : str or os.PathLike
-        Name of the file containing the dataset.
-    suffix : str, optional
-        If no suffix is given, assumed to be netCDF ('.nc' is appended). For no suffix, set "".
-    dap_url : str, optional
-        URL to OPeNDAP folder where the data is stored. If supplied, supersedes github_url.
-    github_url : str
-        URL to GitHub repository where the data is stored.
-    branch : str, optional
-        For GitHub-hosted files, the branch to download from.
-    cache_dir : Path
-        The directory in which to search for and write cached data.
-    cache : bool
-        If True, then cache data locally for use on subsequent calls.
-    \*\*kwargs
-        For NetCDF files, keywords passed to :py:func:`xarray.open_dataset`.
-
-    Returns
-    -------
-    Union[Dataset, Path]
-
-    See Also
-    --------
-    xarray.open_dataset
-    """
-    if isinstance(name, (str, os.PathLike)):
-        name = Path(name)
-    if suffix is None:
-        suffix = ".nc"
-    fullname = name.with_suffix(suffix)
-
-    if dap_url is not None:
-        dap_file_address = urljoin(dap_url, str(name))
-        try:
-            ds = _open_dataset(audit_url(dap_file_address, context="OPeNDAP"), **kwargs)
-            return ds
-        except URLError:
-            raise
-        except OSError:
-            msg = f"OPeNDAP file not read. Verify that the service is available: '{dap_file_address}'"
-            logger.error(msg)
-            raise OSError(msg)
-
-    local_file = _get(
-        fullname=fullname,
-        github_url=github_url,
-        branch=branch,
-        suffix=suffix,
-        cache_dir=cache_dir,
-    )
-
-    try:
-        ds = _open_dataset(local_file, **kwargs)
-        if not cache:
-            ds = ds.load()
-            local_file.unlink()
-        return ds
-    except OSError as err:
-        raise err
-
-
-def list_datasets(github_repo="Ouranosinc/xclim-testdata", branch="main"):
-    """Return a DataFrame listing all xclim test datasets available on the GitHub repo for the given branch.
-
-    The result includes the filepath, as passed to `open_dataset`, the file size (in KB) and the html url to the file.
-    This uses an unauthenticated call to GitHub's REST API, so it is limited to 60 requests per hour (per IP).
-    A single call of this function triggers one request per subdirectory, so use with parsimony.
-    """
-    with urlopen(  # noqa: S310
-        audit_url(f"https://api.github.com/repos/{github_repo}/contents?ref={branch}")
-    ) as res:
-        base = json.loads(res.read().decode())
-    records = []
-    for folder in base:
-        if folder["path"].startswith(".") or folder["size"] > 0:
-            # drop hidden folders and other files.
-            continue
-        with urlopen(audit_url(folder["url"])) as res:  # noqa: S310
-            listing = json.loads(res.read().decode())
-        for file in listing:
-            if file["path"].endswith(".nc"):
-                records.append(
-                    {
-                        "name": file["path"],
-                        "size": file["size"] / 2**10,
-                        "url": file["html_url"],
-                    }
-                )
-    df = pd.DataFrame.from_records(records).set_index("name")
-    print(f"Found {len(df)} datasets.")
-    return df
+    $ env XCLIM_TESTDATA_CACHE_DIR="/path/to/my/data" pytest
+"""
 
 
 def list_input_variables(
@@ -474,6 +191,9 @@ def list_input_variables(
                 variables[var].append(ind)
 
     return variables
+
+
+# Publishing Tools ###
 
 
 def publish_release_notes(
@@ -561,6 +281,29 @@ def publish_release_notes(
     return None
 
 
+_xclim_deps = [
+    "xclim",
+    "xarray",
+    "statsmodels",
+    "sklearn",
+    "scipy",
+    "pint",
+    "pandas",
+    "numpy",
+    "numba",
+    "lmoments3",
+    "jsonpickle",
+    "flox",
+    "dask",
+    "cf_xarray",
+    "cftime",
+    "clisops",
+    "click",
+    "bottleneck",
+    "boltons",
+]
+
+
 def show_versions(
     file: os.PathLike | StringIO | TextIO | None = None,
     deps: list[str] | None = None,
@@ -622,3 +365,338 @@ def show_versions(
     else:
         print(message, file=file)
     return None
+
+
+# Test Data Utilities ###
+
+
+def run_doctests():
+    """Run the doctests for the module."""
+    import pytest
+
+    cmd = [
+        f"--rootdir={Path(__file__).absolute().parent}",
+        "--numprocesses=0",
+        "--xdoctest",
+        f"{Path(__file__).absolute().parents[1]}",
+    ]
+
+    sys.exit(pytest.main(cmd))
+
+
+def testing_setup_warnings():
+    """Warn users about potential incompatibilities between xclim and xclim-testdata versions."""
+    if (
+        re.match(r"^\d+\.\d+\.\d+$", __xclim_version__)
+        and TESTDATA_BRANCH != default_testdata_version
+    ):
+        # This does not need to be emitted on GitHub Workflows and ReadTheDocs
+        if not os.getenv("CI") and not os.getenv("READTHEDOCS"):
+            warnings.warn(
+                f"`xclim` stable ({__xclim_version__}) is running tests against a non-default branch of the testing data. "
+                "It is possible that changes to the testing data may be incompatible with some assertions in this version. "
+                f"Please be sure to check {TESTDATA_REPO_URL} for more information.",
+            )
+
+    if re.match(r"^v\d+\.\d+\.\d+", TESTDATA_BRANCH):
+        # Find the date of last modification of xclim source files to generate a calendar version
+        install_date = dt.strptime(
+            time.ctime(os.path.getmtime(xclim.__file__)),
+            "%a %b %d %H:%M:%S %Y",
+        )
+        install_calendar_version = (
+            f"{install_date.year}.{install_date.month}.{install_date.day}"
+        )
+
+        if Version(TESTDATA_BRANCH) > Version(install_calendar_version):
+            warnings.warn(
+                f"The installation date of `xclim` ({install_date.ctime()}) "
+                f"predates the last release of testing data ({TESTDATA_BRANCH}). "
+                "It is very likely that the testing data is incompatible with this build of `xclim`.",
+            )
+
+
+def load_registry(
+    branch: str = TESTDATA_BRANCH, repo: str = TESTDATA_REPO_URL
+) -> dict[str, str]:
+    """Load the registry file for the test data.
+
+    Returns
+    -------
+    dict
+        Dictionary of filenames and hashes.
+    """
+    remote_registry = audit_url(f"{repo}/raw/{branch}/data/registry.txt")
+
+    if branch != default_testdata_version:
+        custom_registry_folder = Path(
+            str(ilr.files("xclim").joinpath(f"testing/{branch}"))
+        )
+        custom_registry_folder.mkdir(parents=True, exist_ok=True)
+        registry_file = custom_registry_folder.joinpath("registry.txt")
+        urlretrieve(remote_registry, registry_file)  # noqa: S310
+
+    elif repo != default_testdata_repo_url:
+        registry_file = Path(str(ilr.files("xclim").joinpath("testing/registry.txt")))
+        urlretrieve(remote_registry, registry_file)  # noqa: S310
+
+    registry_file = Path(str(ilr.files("xclim").joinpath("testing/registry.txt")))
+    if not registry_file.exists():
+        raise FileNotFoundError(f"Registry file not found: {registry_file}")
+
+    # Load the registry file
+    with registry_file.open() as f:
+        registry = {line.split()[0]: line.split()[1] for line in f}
+    return registry
+
+
+def nimbus(  # noqa: PR01
+    repo: str = TESTDATA_REPO_URL,
+    branch: str = TESTDATA_BRANCH,
+    cache_dir: str | Path = TESTDATA_CACHE_DIR,
+    data_updates: bool = True,
+):
+    """Pooch registry instance for xclim test data.
+
+    Parameters
+    ----------
+    repo : str
+        URL of the repository to use when fetching testing datasets.
+    branch : str
+        Branch of repository to use when fetching testing datasets.
+    cache_dir : str or Path
+        The path to the directory where the data files are stored.
+    data_updates : bool
+        If True, allow updates to the data files. Default is True.
+
+    Returns
+    -------
+    pooch.Pooch
+        The Pooch instance for accessing the xclim testing data.
+
+    Notes
+    -----
+    There are three environment variables that can be used to control the behaviour of this registry:
+        - ``XCLIM_TESTDATA_CACHE_DIR``: If this environment variable is set, it will be used as the base directory to
+          store the data files. The directory should be an absolute path (i.e., it should start with ``/``).
+          Otherwise,the default location will be used (based on ``platformdirs``, see :py:func:`pooch.os_cache`).
+        - ``XCLIM_TESTDATA_REPO_URL``: If this environment variable is set, it will be used as the URL of the repository
+          to use when fetching datasets. Otherwise, the default repository will be used.
+        - ``XCLIM_TESTDATA_BRANCH``: If this environment variable is set, it will be used as the branch of the repository
+          to use when fetching datasets. Otherwise, the default branch will be used.
+
+    Examples
+    --------
+    Using the registry to download a file:
+
+    .. code-block:: python
+
+        import xarray as xr
+        from xclim.testing.helpers import nimbus
+
+        example_file = nimbus().fetch("example.nc")
+        data = xr.open_dataset(example_file)
+    """
+    if pooch is None:
+        raise ImportError(
+            "The `pooch` package is required to fetch the xclim testing data. "
+            "You can install it with `pip install pooch` or `pip install xclim[dev]`."
+        )
+
+    remote = audit_url(f"{repo}/raw/{branch}/data")
+    return pooch.create(
+        path=cache_dir,
+        base_url=remote,
+        version=default_testdata_version,
+        version_dev=branch,
+        allow_updates=data_updates,
+        registry=load_registry(branch=branch, repo=repo),
+    )
+
+
+# idea copied from raven that it borrowed from xclim that borrowed it from xarray that was borrowed from Seaborn
+def open_dataset(
+    name: str | os.PathLike[str],
+    dap_url: str | None = None,
+    branch: str = TESTDATA_BRANCH,
+    repo: str = TESTDATA_REPO_URL,
+    cache_dir: str | os.PathLike[str] | None = TESTDATA_CACHE_DIR,
+    **kwargs,
+) -> Dataset:
+    r"""Open a dataset from the online GitHub-like repository.
+
+    If a local copy is found then always use that to avoid network traffic.
+
+    Parameters
+    ----------
+    name : str
+        Name of the file containing the dataset.
+    dap_url : str, optional
+        URL to OPeNDAP folder where the data is stored. If supplied, supersedes github_url.
+    branch : str
+        Branch of the repository to use when fetching datasets.
+    repo: str
+        URL of the repository to use when fetching testing datasets.
+    cache_dir : Path
+        The directory in which to search for and write cached data.
+    \*\*kwargs
+        For NetCDF files, keywords passed to :py:func:`xarray.open_dataset`.
+
+    Returns
+    -------
+    Union[Dataset, Path]
+
+    Raises
+    ------
+    OSError
+        If the file is not found in the cache directory or cannot be read.
+
+    See Also
+    --------
+    xarray.open_dataset
+    """
+    if cache_dir is None:
+        raise ValueError(
+            "The cache directory must be set. "
+            "Please set the `cache_dir` parameter or the `XCLIM_DATA_DIR` environment variable."
+        )
+
+    if dap_url:
+        try:
+            return _open_dataset(
+                audit_url(urljoin(dap_url, str(name)), context="OPeNDAP"), **kwargs
+            )
+        except URLError:
+            raise
+        except OSError as e:
+            msg = f"OPeNDAP file not read. Verify that the service is available: '{urljoin(dap_url, str(name))}'"
+            raise OSError(msg) from e
+
+    local_file = Path(cache_dir).joinpath(name)
+    if not local_file.exists():
+        try:
+            local_file = nimbus(branch=branch, repo=repo, cache_dir=cache_dir).fetch(
+                name
+            )
+        except OSError as e:
+            raise OSError(
+                f"File not found locally. Verify that the testing data is available in remote: {local_file}"
+            ) from e
+    try:
+        ds = _open_dataset(local_file, **kwargs)
+        return ds
+    except OSError:
+        raise
+
+
+def populate_testing_data(
+    temp_folder: Path | None = None,
+    repo: str = TESTDATA_REPO_URL,
+    branch: str = TESTDATA_BRANCH,
+    local_cache: Path = TESTDATA_CACHE_DIR,
+) -> None:
+    """Populate the local cache with the testing data.
+
+    Parameters
+    ----------
+    temp_folder : Path, optional
+        Path to a temporary folder to use as the local cache. If not provided, the default location will be used.
+    repo : str, optional
+        URL of the repository to use when fetching testing datasets.
+    branch : str, optional
+        Branch of xclim-testdata to use when fetching testing datasets.
+    local_cache : Path
+        The path to the local cache. Defaults to the location set by the platformdirs library.
+        The testing data will be downloaded to this local cache.
+
+    Returns
+    -------
+    None
+    """
+    # Create the Pooch instance
+    n = nimbus(repo=repo, branch=branch, cache_dir=temp_folder or local_cache)
+
+    # Download the files
+    errored_files = []
+    for file in load_registry():
+        try:
+            n.fetch(file)
+        except HTTPError:
+            msg = f"File `{file}` not accessible in remote repository."
+            logging.error(msg)
+            errored_files.append(file)
+        except SocketBlockedError as e:  # noqa
+            msg = (
+                "Unable to access registry file online. Testing suite is being run with `--disable-socket`. "
+                "If you intend to run tests with this option enabled, please download the file beforehand with the "
+                "following console command: `$ xclim prefetch_testing_data`."
+            )
+            raise SocketBlockedError(msg) from e
+        else:
+            logging.info("Files were downloaded successfully.")
+
+    if errored_files:
+        logging.error(
+            "The following files were unable to be downloaded: %s",
+            errored_files,
+        )
+
+
+def gather_testing_data(
+    worker_cache_dir: str | os.PathLike[str] | Path,
+    worker_id: str,
+    _cache_dir: str | os.PathLike[str] | None = TESTDATA_CACHE_DIR,
+):
+    """Gather testing data across workers."""
+    if _cache_dir is None:
+        raise ValueError(
+            "The cache directory must be set. "
+            "Please set the `cache_dir` parameter or the `XCLIM_DATA_DIR` environment variable."
+        )
+    cache_dir = Path(_cache_dir)
+
+    if worker_id == "master":
+        populate_testing_data(branch=TESTDATA_BRANCH)
+    else:
+        if platform.system() == "Windows":
+            if not cache_dir.joinpath(default_testdata_version).exists():
+                raise FileNotFoundError(
+                    "Testing data not found and UNIX-style file-locking is not supported on Windows. "
+                    "Consider running `$ xclim prefetch_testing_data` to download testing data beforehand."
+                )
+        else:
+            cache_dir.mkdir(exist_ok=True, parents=True)
+            lockfile = cache_dir.joinpath(".lock")
+            test_data_being_written = FileLock(lockfile)
+            with test_data_being_written:
+                # This flag prevents multiple calls from re-attempting to download testing data in the same pytest run
+                populate_testing_data(branch=TESTDATA_BRANCH)
+                cache_dir.joinpath(".data_written").touch()
+            with test_data_being_written.acquire():
+                if lockfile.exists():
+                    lockfile.unlink()
+        copytree(cache_dir.joinpath(default_testdata_version), worker_cache_dir)
+
+
+# Testing Utilities ###
+
+
+def audit_url(url: str, context: str | None = None) -> str:
+    """Check if the URL is well-formed.
+
+    Raises
+    ------
+    URLError
+        If the URL is not well-formed.
+    """
+    msg = ""
+    result = urlparse(url)
+    if result.scheme == "http":
+        msg = f"{context if context else ''} URL is not using secure HTTP: '{url}'".strip()
+    if not all([result.scheme, result.netloc]):
+        msg = f"{context if context else ''} URL is not well-formed: '{url}'".strip()
+
+    if msg:
+        logger.error(msg)
+        raise URLError(msg)
+    return url

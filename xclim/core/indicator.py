@@ -1460,7 +1460,7 @@ class CheckMissingIndicator(Indicator):
                 and mask.time.size < outs[0].time.size
             ):
                 mask = mask.reindex(time=outs[0].time, fill_value=True)
-            outs = [out.where(~mask) for out in outs]
+            outs = [out.where(np.logical_not(mask)) for out in outs]
 
         return outs
 

@@ -26,7 +26,7 @@ class TestSnowDepthCoverDuration:
 
 class TestSnowWaterCoverDuration:
     @pytest.mark.parametrize(
-        "factor,exp", ([1000, [31, 28, 31, np.NaN]], [0, [0, 0, 0, np.NaN]])
+        "factor,exp", ([1000, [31, 28, 31, np.nan]], [0, [0, 0, 0, np.nan]])
     )
     def test_simple(self, snw_series, factor, exp):
         snw = snw_series(np.ones(110) * factor, start="2001-01-01")
@@ -45,11 +45,13 @@ class TestContinuousSnowDepthSeason:
         snd = snd.expand_dims(lat=[0, 1, 2])
 
         out = land.snd_season_start(snd)
-        assert out.units == ""
+        assert out.units == "1"
+
         np.testing.assert_array_equal(out.isel(lat=0), snd.time.dt.dayofyear[100])
 
         out = land.snd_season_end(snd)
-        assert out.units == ""
+        assert out.units == "1"
+
         np.testing.assert_array_equal(out.isel(lat=0), snd.time.dt.dayofyear[200])
 
         out = land.snd_season_length(snd)
@@ -67,11 +69,13 @@ class TestContinuousSnowWaterSeason:
         snw = snw.expand_dims(lat=[0, 1, 2])
 
         out = land.snw_season_start(snw)
-        assert out.units == ""
+        assert out.units == "1"
+
         np.testing.assert_array_equal(out.isel(lat=0), snw.time.dt.dayofyear[100])
 
         out = land.snw_season_end(snw)
-        assert out.units == ""
+        assert out.units == "1"
+
         np.testing.assert_array_equal(out.isel(lat=0), snw.time.dt.dayofyear[200])
 
         out = land.snw_season_length(snw)
@@ -97,7 +101,7 @@ class TestSndMaxDoy:
         # Put 0 on one row.
         snd = atmosds.snd.where(atmosds.location != "Victoria", 0)
         out = land.snd_max_doy(snd)
-        np.testing.assert_array_equal(out.isel(time=1), [16, 13, 91, 29, np.NaN])
+        np.testing.assert_array_equal(out.isel(time=1), [16, 13, 91, 29, np.nan])
 
 
 class TestSnwMax:

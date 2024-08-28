@@ -53,8 +53,10 @@ __all__ = [
     "get_zones",
     "interday_diurnal_temperature_range",
     "last_occurrence",
+    "season",
     "select_resample_op",
     "spell_length",
+    "spell_length_statistics",
     "statistics",
     "temperature_sum",
     "threshold_count",
@@ -358,6 +360,212 @@ def get_daily_events(
     events = events.where(~(np.isnan(da)))
     events = events.rename("events")
     return events
+
+
+@declare_relative_units(threshold="<data>")
+def spell_length_statistics(
+    data: xarray.DataArray,
+    threshold: Quantified,
+    window: int,
+    win_reducer: str,
+    op: str,
+    spell_reducer: str,
+    freq: str,
+    resample_before_rl: bool = True,
+    **indexer,
+):
+    r"""Statistics on spells lengths.
+
+    A spell is when a statistic (`win_reducer`) over a minimum number (`window`) of consecutive timesteps respects a condition (`op` `thresh`).
+    This returns a statistic over the spell's count or length.
+
+    Parameters
+    ----------
+    data : xr.DataArray
+        Input data.
+    threshold : Quantified
+        Threshold to test against.
+    window : int
+        Minimum length of a spell.
+    win_reducer : {'min', 'max', 'sum', 'mean'}
+        Reduction along the spell length to compute the spell value.
+        Note that this does not matter when `window` is 1.
+    op : {">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"}
+        Logical operator. Ex: spell_value > thresh.
+    spell_reducer : {'max', 'sum', 'count'}
+        Statistic on the spell lengths.
+    freq : str
+        Resampling frequency.
+    resample_before_rl : bool
+        Determines if the resampling should take place before or after the run
+        length encoding (or a similar algorithm) is applied to runs.
+    \*\*indexer
+        Indexing parameters to compute the indicator on a temporal subset of the data.
+        It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
+        Indexing is done after finding the days part of a spell, but before taking the spell statistics.
+
+    Examples
+    --------
+    >>> spell_length_statistics(
+    ...     tas,
+    ...     threshold="35 °C",
+    ...     window=7,
+    ...     op=">",
+    ...     win_reducer="min",
+    ...     spell_reducer="sum",
+    ...     freq="YS",
+    ... )
+
+    Here, a day is part of a spell if it is in any seven (7) day period where the minimum temperature is over 35°C.
+    We then return the annual sum of the spell lengths, so the total number of days in such spells.
+    >>> from xclim.core.units import rate2amount
+    >>> pram = rate2amount(pr, out_units="mm")
+    >>> spell_length_statistics(
+    ...     pram,
+    ...     threshold="20 mm",
+    ...     window=5,
+    ...     op=">=",
+    ...     win_reducer="sum",
+    ...     spell_reducer="max",
+    ...     freq="YS",
+    ... )
+
+    Here, a day is part of a spell if it is in any five (5) day period where the total accumulated precipitation reaches
+    or exceeds 20 mm. We then return the length of the longest of such spells.
+    """
+    thresh = convert_units_to(
+        threshold,
+        data,
+        context=infer_context(standard_name=data.attrs.get("standard_name")),
+    )
+
+    if window == 1:  # Fast path
+        is_in_spell = compare(data, op, thresh)
+    elif (win_reducer == "min" and op in [">", ">=", "ge", "gt"]) or (
+        win_reducer == "max" and op in ["`<", "<=", "le", "lt"]
+    ):
+        # Fast path for specific cases, this yields a smaller dask graph (rolling twice is expensive!)
+        # For these two cases, a day can't be part of a spell if it doesn't respect the condition itself
+        mask = compare(data, op, thresh)
+        # We need to filter out the spells shorter than "window"
+        # find sequences of consecutive respected constraints
+        cs_s = rl._cumsum_reset_on_zero(mask)
+        # end of these sequences
+        cs_s = cs_s.where(mask.shift({"time": -1}, fill_value=0) == 0)
+        # propagate these end of sequences
+        # the `.where(mask>0, 0)` acts a stopper
+        is_in_spell = cs_s.where(cs_s >= window).where(mask > 0, 0).bfill("time") > 0
+    else:
+        data_pad = data.pad(time=(0, window))
+        # The spell-wise value to test
+        # For example "win_reducer='sum'", we want the sum over the minimum spell length (window) to be above the thresh
+        spell_value = getattr(data_pad.rolling(time=window), win_reducer)()
+        # True at the end of a spell respecting the condition
+        mask = compare(spell_value, op, thresh)
+        # True for all days part of a spell that respected the condition (shift because of the two rollings)
+        is_in_spell = (mask.rolling(time=window).sum() >= 1).shift(time=-(window - 1))
+        # Cut back to the original size
+        is_in_spell = is_in_spell.isel(time=slice(0, data.time.size)).astype(float)
+
+    is_in_spell = select_time(is_in_spell, **indexer)
+
+    out = rl.resample_and_rl(
+        is_in_spell,
+        resample_before_rl,
+        rl.rle_statistics,
+        reducer=spell_reducer,
+        # The code above already ensured only spell of the minimum length are selected
+        window=1,
+        freq=freq,
+    )
+
+    if spell_reducer == "count":
+        return out.assign_attrs(units="")
+    # All other cases are statistics of the number of timesteps
+    return to_agg_units(out, data, "count")
+
+
+@declare_relative_units(thresh="<data>")
+def season(
+    data: xarray.DataArray,
+    thresh: Quantified,
+    window: int,
+    op: str,
+    stat: str,
+    freq: str,
+    mid_date: DayOfYearStr | None = None,
+    constrain: Sequence[str] | None = None,
+) -> xarray.DataArray:
+    r"""Season.
+
+    A season starts when a variable respects some condition for a consecutive run of `N` days. It stops
+    when the condition is inverted for `N` days. Runs where the condition is not met for fewer than `N` days
+    are thus allowed. Additionally a middle date can serve as a maximal start date and minimum end date.
+
+    Parameters
+    ----------
+    data : xarray.DataArray
+        Variable.
+    thresh : Quantified
+        Threshold on which to base evaluation.
+    window : int
+        Minimum number of days that the condition must be met / not met for the start / end of the season.
+    op : str
+        Comparison operation.
+    stat : {'start', 'end', 'length'}
+        Which season facet to return.
+    freq : str
+        Resampling frequency.
+    mid_date : DayOfYearStr, optional
+        An optional middle date. The start must happen before and the end after for the season to be valid.
+    constrain : Sequence of strings, optional
+        A list of acceptable comparison operators. Optional, but indicators wrapping this function should inject it.
+
+    Returns
+    -------
+    xarray.DataArray, [dimensionless] or [time]
+        Depends on 'stat'. If 'start' or 'end', this is the day of year of the season's start or end.
+        If 'length', this is the length of the season.
+
+    Examples
+    --------
+    >>> season(tas, thresh="0 °C", window=5, op=">", stat="start", freq="YS")
+
+    Returns the start of the "frost-free" season. The season starts with 5 consecutive days with mean temperature
+    above 0°C and ends with as many days under or equal to 0°C. And end does not need to be found for a start to be valid.
+
+    >>> season(
+    ...     pr,
+    ...     thresh="2 mm/d",
+    ...     window=7,
+    ...     op="<=",
+    ...     mid_date="08-01",
+    ...     stat="length",
+    ...     freq="YS",
+    ... )
+
+    Returns the length of the "dry" season. The season starts with 7 consecutive days with precipitation under or equal to
+    2 mm/d and ends with as many days above 2 mm/d. If no start is found before the first of august, the season is invalid.
+    If a start is found but no end, the end is set to the last day of the period (December 31st if the dataset is complete).
+
+    See Also
+    --------
+    xclim.indices.run_length.season_start
+    xclim.indices.run_length.season_length
+    xclim.indices.run_length.season_end
+    """
+    thresh = convert_units_to(thresh, data, context="infer")
+    cond = compare(data, op, thresh, constrain=constrain)
+    FUNC = {"start": rl.season_start, "end": rl.season_end, "length": rl.season_length}
+    map_kwargs = dict(window=window, mid_date=mid_date)
+    if stat in ["start", "end"]:
+        map_kwargs["coord"] = "dayofyear"
+    out = cond.resample(time=freq).map(FUNC[stat], **map_kwargs)
+    if stat == "length":
+        return to_agg_units(out, data, "count")
+    # else, a date
+    out.attrs.update(units="", is_dayofyear=np.int32(1), calendar=get_calendar(data))
+    return out
 
 
 # CF-INDEX-META Indices

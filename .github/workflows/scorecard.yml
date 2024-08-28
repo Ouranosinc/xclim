@@ -30,7 +30,7 @@ jobs:
 
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@0d381219ddf674d61a7572ddd19d7941e271515c # v2.9.0
+        uses: step-security/harden-runner@5c7944e73c4c2a096b17a9cb74d65b6c2bbafbde # v2.9.1
         with:
           egress-policy: audit
 
@@ -40,7 +40,7 @@ jobs:
           persist-credentials: false
 
       - name: Run Analysis
-        uses: ossf/scorecard-action@dc50aa9510b46c811795eb24b2f1ba02a914e534
+        uses: ossf/scorecard-action@62b2cac7ed8198b15735ed49ab1e5cf35480ba46
         with:
           results_file: results.sarif
           results_format: sarif
@@ -59,7 +59,7 @@ jobs:
       # Upload the results as artifacts (optional). Commenting out will disable uploads of run results in SARIF
       # format to the repository Actions tab.
       - name: Upload Artifact
-        uses: actions/upload-artifact@0b2256b8c012f0828dc542b3febcab082c67f72b
+        uses: actions/upload-artifact@834a144ee995460fba8ed112a2fc961b36a5ec5a
         with:
           name: SARIF file
           path: results.sarif

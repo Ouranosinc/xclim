@@ -26,7 +26,6 @@ from scipy.stats.mstats import mquantiles
 
 from xclim import ensembles
 from xclim.indices.stats import get_dist
-from xclim.testing.helpers import TESTDATA_BRANCH
 
 
 # sklearn's KMeans doesn't accept the standard numpy Generator, so we create a special fixture for these tests
@@ -38,9 +37,7 @@ def random_state():
 
 
 class TestEnsembleStats:
-    def test_create_ensemble(
-        self, open_dataset, ensemble_dataset_objects, threadsafe_data_dir
-    ):
+    def test_create_ensemble(self, open_dataset, ensemble_dataset_objects, nimbus):
         ds_all = []
         for n in ensemble_dataset_objects["nc_files_simple"]:
             ds = open_dataset(n, decode_times=False)
@@ -62,10 +59,7 @@ class TestEnsembleStats:
         ens1 = ensembles.create_ensemble(ds_all, realizations=reals)
 
         # Kinda a hack? Alternative is to open and rewrite in a temp folder.
-        files = [
-            threadsafe_data_dir / TESTDATA_BRANCH / "EnsembleStats" / Path(f).name
-            for f in ensemble_dataset_objects["nc_files_simple"]
-        ]
+        files = [nimbus.fetch(f) for f in ensemble_dataset_objects["nc_files_simple"]]
         ens2 = ensembles.create_ensemble(dict(zip(reals, files)))
         xr.testing.assert_identical(ens1, ens2)
 
@@ -79,7 +73,7 @@ class TestEnsembleStats:
             ds["time"] = xr.decode_cf(ds).time
             ds_all.append(ds.groupby(ds.time.dt.month).mean("time", keep_attrs=True))
             ds.groupby(ds.time.dt.month).mean("time", keep_attrs=True).to_netcdf(
-                f1.joinpath(Path(n).name)
+                f1.joinpath(Path(n).name), engine="h5netcdf"
             )
         ens = ensembles.create_ensemble(ds_all)
 
@@ -288,8 +282,14 @@ class TestEnsembleStats:
         )
         out2 = ensembles.ensemble_mean_std_max_min(ens, weights=weights)
         values = ens["tg_mean"][:, 0, 5, 5]
+        # Explicit float64 so numpy does the expected datatype promotion (change in numpy 2)
         np.testing.assert_array_equal(
-            (values[0] * 1 + values[1] * 0.1 + values[2] * 3.5 + values[3] * 5)
+            (
+                values[0] * np.float64(1)
+                + values[1] * np.float64(0.1)
+                + values[2] * np.float64(3.5)
+                + values[3] * np.float64(5)
+            )
             / np.sum(weights),
             out2.tg_mean_mean[0, 5, 5],
         )
@@ -311,7 +311,7 @@ class TestEnsembleStats:
         ds_all = [open_dataset(n) for n in ensemble_dataset_objects["nc_files_simple"]]
         ens = ensembles.create_ensemble(ds_all).isel(lat=0, lon=0)
         ens = ens.where(ens.realization > 0)
-        ens = xr.where((ens.realization == 1) & (ens.time.dt.year == 1950), np.NaN, ens)
+        ens = xr.where((ens.realization == 1) & (ens.time.dt.year == 1950), np.nan, ens)
 
         def first(ds):
             return ds[list(ds.data_vars.keys())[0]]
