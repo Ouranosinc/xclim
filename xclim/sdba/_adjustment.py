@@ -1031,10 +1031,8 @@ def _otc_adjust(
     rng = np.random.default_rng()
     # The plan row corresponding to a source bin indicates its probabilities to be transported to every target bin
     for i, binX_group in enumerate(binX_groups):
-        # Get the plan row of this bin
-        pi = np.where((binX[binX_group[0]] == gridX).all(1))[0][0]
         # Pick as much target bins for this source bin as there are points in the source bin
-        choice = rng.choice(range(muY.size), p=plan[pi, :], size=binX_count[i])
+        choice = rng.choice(range(muY.size), p=plan[i, :], size=binX_count[i])
         out[binX_group] = (gridY[choice] + 1 / 2) * bin_width + bin_origin
 
     if jitter_inside_bins:

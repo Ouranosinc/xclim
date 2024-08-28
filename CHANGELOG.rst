@@ -4,7 +4,7 @@ Changelog
 
 v0.53.0 (unreleased)
 --------------------
-Contributors to this version: Pascal Bourgault (:user:`aulemahal`).
+Contributors to this version: Pascal Bourgault (:user:`aulemahal`), Adrien Lamarche (:user:`LamAdr`).
 
 New indicators
 ^^^^^^^^^^^^^^
@@ -18,6 +18,11 @@ New features and enhancements
 Internal changes
 ^^^^^^^^^^^^^^^^
 * ``xclim.core.indicator.Parameter`` has a new attribute ``compute_name`` while ``xclim.core.indicator.Indicator`` lost its ``_variable_mapping``. The translation from parameter (and variable) names in the indicator to the names on the compute function is handled by ``Indicator._get_compute_args``. (:pull:`1885`).
+
+Bug fixes
+^^^^^^^^^
+* Fixed a small inefficiency in ``_otc_adjust`` (:pull:`1890`).
+
 
 v0.52.0 (2024-08-08)
 --------------------
