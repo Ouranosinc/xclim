@@ -94,7 +94,7 @@ def test_humidex(tas_series):
 
 
 def test_heat_index(atmosds):
-    # Keep just Montreal values for summertime as we need tas > 20 degC
+    # Keep just Montreal values for summer as we need tas > 20 degC
     tas = atmosds.tasmax[1][150:170]
     hurs = atmosds.hurs[1][150:170]
 
