@@ -4,12 +4,27 @@ Changelog
 
 v0.53.0 (unreleased)
 --------------------
-Contributors to this version: Adrien Lamarche (:user:`LamAdr`), Éric Dupuis (:user:`coxipi`).
+Contributors to this version: Adrien Lamarche (:user:`LamAdr`), Trevor James Smith (:user:`Zeitsperre`), Éric Dupuis (:user:`coxipi`).
 
 Bug fixes
 ^^^^^^^^^
 * Fixed a small inefficiency in ``_otc_adjust`` (:pull:`1890`).
 * Remove deprecated cells in the tutorial notebook `sdba.ipynb` (:pull:`1895`).
+
+Breaking changes
+^^^^^^^^^^^^^^^^
+* `platformdirs` is no longer a direct dependency of `xclim`, but `pooch` is required to use many of the new testing functions (installable via `pip install pooch` or `pip install 'xclim[dev]'`). (:pull:`1889`).
+
+Internal changes
+^^^^^^^^^^^^^^^^
+* The `Ouranosinc/xclim-testdata` repository has been restructured for better organization and to make better use of `pooch` and data registries for testing data fetching (see: `xclim-testdata PR/29 <https://github.com/Ouranosinc/xclim-testdata/pull/29>`_). (:pull:`1889`).
+* The ``xclim.testing`` module has been refactored to make use of `pooch` with file registries. Several testing functions have been removed as a result: (:pull:`1889`)
+    * ``xclim.testing.utils.open_dataset`` now uses a `pooch` instance to deliver locally-stored datasets. Its call signature has also changed.
+    * ``xclim`` now accepts more environment variables to control the behaviour of the testing setup functions. These include ``XCLIM_TESTDATA_BRANCH``, ``XCLIM_TESTDATA_REPO_URL``, and ``XCLIM_TESTDATA_CACHE_DIR``.
+    * ``xclim.testing.utils.get_file``, ``xclim.testing.utils.get_local_testdata``, ``xclim.testing.utils.list_datasets``, and ``xclim.testing.utils.file_md5_checksum`` have been removed.
+        * ``xclim.testing.utils.nimbus`` replaces much of this functionality. See the `xclim` documentation for more information.
+* Many tests focused on evaluating the normal operation of remote file access tools under ``xclim.testing`` have been removed. (:pull:`1889`).
+* Setup and teardown functions that were found under ``tests/conftest.py`` have been optimized to reduce redundant calls when running ``pytest xclim``. Some obsolete `pytest` fixtures have also been removed.(:pull:`1889`).
 
 v0.52.0 (2024-08-08)
 --------------------
