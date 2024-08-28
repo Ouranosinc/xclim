@@ -194,7 +194,9 @@ def list_input_variables(
 
     return variables
 
-### Publishing Tools ###
+
+# Publishing Tools ###
+
 
 def publish_release_notes(
     style: str = "md",
@@ -367,7 +369,7 @@ def show_versions(
     return None
 
 
-### Test Data Utilities ###
+# Test Data Utilities ###
 
 
 def run_doctests():
@@ -678,7 +680,7 @@ def gather_testing_data(
         copytree(cache_dir.joinpath(default_testdata_version), worker_cache_dir)
 
 
-### Testing Utilities ###
+# Testing Utilities ###
 
 
 def audit_url(url: str, context: str | None = None) -> str:
