@@ -197,7 +197,7 @@ def hawkins_sutton_09_weighting(da, obs, baseline=("1971", "2000")):
 
 def lafferty_sriver(
     da: xr.DataArray,
-    sm: xr.DataArray = None,
+    sm: xr.DataArray | None = None,
     bb13: bool = False,
 ) -> tuple[xr.DataArray, xr.DataArray]:
     """Return the mean and partitioned variance of an ensemble based on method from Lafferty and Sriver (2023).
