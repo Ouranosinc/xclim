@@ -302,11 +302,11 @@ def threadsafe_data_dir(tmp_path_factory):
 @pytest.fixture(scope="session")
 def nimbus(threadsafe_data_dir, worker_id):
     return _nimbus(
-        data_dir=(
-            default_testdata_cache if worker_id == "master" else threadsafe_data_dir
-        ),
         repo=helpers.TESTDATA_REPO_URL,
         branch=helpers.TESTDATA_BRANCH,
+        cache_dir=(
+            helpers.TESTDATA_CACHE_DIR if worker_id == "master" else threadsafe_data_dir
+        ),
     )
 
 
@@ -315,7 +315,13 @@ def open_dataset(nimbus):
     def _open_session_scoped_file(file: str | os.PathLike, **xr_kwargs):
         xr_kwargs.setdefault("cache", True)
         xr_kwargs.setdefault("engine", "h5netcdf")
-        return _open_dataset(file, cache_dir=nimbus.path, **xr_kwargs)
+        return _open_dataset(
+            file,
+            branch=helpers.TESTDATA_BRANCH,
+            repo=helpers.TESTDATA_REPO_URL,
+            cache_dir=nimbus.path,
+            **xr_kwargs,
+        )
 
     return _open_session_scoped_file
 

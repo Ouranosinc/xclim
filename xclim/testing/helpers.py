@@ -99,7 +99,7 @@ or setting the variable at runtime:
     $ env XCLIM_TESTDATA_BRANCH="my_testing_branch" pytest
 """
 
-TESTDATA_CACHE = os.getenv("XCLIM_TESTDATA_CACHE", default_testdata_cache)
+TESTDATA_CACHE_DIR = os.getenv("XCLIM_TESTDATA_CACHE_DIR", default_testdata_cache)
 """Sets the directory to store the testing datasets.
 
 If not set, the default location will be used (based on ``platformdirs``, see :func:`pooch.os_cache`).
@@ -110,19 +110,19 @@ When running tests locally, this can be set for both `pytest` and `tox` by expor
 
 .. code-block:: console
 
-    $ export XCLIM_TESTDATA_CACHE="/path/to/my/data"
+    $ export XCLIM_TESTDATA_CACHE_DIR="/path/to/my/data"
 
 or setting the variable at runtime:
 
 .. code-block:: console
 
-    $ env XCLIM_TESTDATA_CACHE="/path/to/my/data" pytest
+    $ env XCLIM_TESTDATA_CACHE_DIR="/path/to/my/data" pytest
 """
 
 
 __all__ = [
     "TESTDATA_BRANCH",
-    "TESTDATA_CACHE",
+    "TESTDATA_CACHE_DIR",
     "TESTDATA_REPO_URL",
     "add_doctest_filepaths",
     "add_ensemble_dataset_objects",
@@ -206,21 +206,21 @@ def load_registry(
 
 
 def nimbus(  # noqa: PR01
-    data_dir: str | Path = TESTDATA_CACHE,
     repo: str = TESTDATA_REPO_URL,
     branch: str = TESTDATA_BRANCH,
+    cache_dir: str | Path = TESTDATA_CACHE_DIR,
     data_updates: bool = True,
 ):
     """Pooch registry instance for xclim test data.
 
     Parameters
     ----------
-    data_dir : str or Path
-        Path to the directory where the data files are stored.
     repo : str
         URL of the repository to use when fetching testing datasets.
     branch : str
         Branch of repository to use when fetching testing datasets.
+    cache_dir : str or Path
+        The path to the directory where the data files are stored.
     data_updates : bool
         If True, allow updates to the data files. Default is True.
 
@@ -232,9 +232,9 @@ def nimbus(  # noqa: PR01
     Notes
     -----
     There are three environment variables that can be used to control the behaviour of this registry:
-        - ``XCLIM_DATA_DIR``: If this environment variable is set, it will be used as the base directory to store the data
-          files. The directory should be an absolute path (i.e., it should start with ``/``). Otherwise,
-          the default location will be used (based on ``platformdirs``, see :py:func:`pooch.os_cache`).
+        - ``XCLIM_TESTDATA_CACHE_DIR``: If this environment variable is set, it will be used as the base directory to
+          store the data files. The directory should be an absolute path (i.e., it should start with ``/``).
+          Otherwise,the default location will be used (based on ``platformdirs``, see :py:func:`pooch.os_cache`).
         - ``XCLIM_TESTDATA_REPO_URL``: If this environment variable is set, it will be used as the URL of the repository
           to use when fetching datasets. Otherwise, the default repository will be used.
         - ``XCLIM_TESTDATA_BRANCH``: If this environment variable is set, it will be used as the branch of the repository
@@ -260,7 +260,7 @@ def nimbus(  # noqa: PR01
 
     remote = audit_url(f"{repo}/raw/{branch}/data")
     return pooch.create(
-        path=data_dir,
+        path=cache_dir,
         base_url=remote,
         version=default_testdata_version,
         version_dev=branch,
@@ -275,7 +275,7 @@ def open_dataset(
     dap_url: str | None = None,
     branch: str = TESTDATA_BRANCH,
     repo: str = TESTDATA_REPO_URL,
-    cache_dir: str | os.PathLike[str] | None = TESTDATA_CACHE,
+    cache_dir: str | os.PathLike[str] | None = TESTDATA_CACHE_DIR,
     **kwargs,
 ) -> Dataset:
     r"""Open a dataset from the online GitHub-like repository.
@@ -330,7 +330,9 @@ def open_dataset(
     local_file = Path(cache_dir).joinpath(name)
     if not local_file.exists():
         try:
-            local_file = nimbus(branch=branch, repo=repo).fetch(name)
+            local_file = nimbus(branch=branch, repo=repo, cache_dir=cache_dir).fetch(
+                name
+            )
         except OSError as e:
             raise OSError(
                 f"File not found locally. Verify that the testing data is available in remote: {local_file}"
@@ -346,7 +348,7 @@ def populate_testing_data(
     temp_folder: Path | None = None,
     repo: str = TESTDATA_REPO_URL,
     branch: str = TESTDATA_BRANCH,
-    local_cache: Path = TESTDATA_CACHE,
+    local_cache: Path = TESTDATA_CACHE_DIR,
 ) -> None:
     """Populate the local cache with the testing data.
 
@@ -367,7 +369,7 @@ def populate_testing_data(
     None
     """
     # Create the Pooch instance
-    n = nimbus(data_dir=temp_folder or local_cache, repo=repo, branch=branch)
+    n = nimbus(repo=repo, branch=branch, cache_dir=temp_folder or local_cache)
 
     # Download the files
     errored_files = []
@@ -397,7 +399,7 @@ def populate_testing_data(
 
 def generate_atmos(
     branch: str | os.PathLike[str] | Path = TESTDATA_BRANCH,
-    cache_dir: str | os.PathLike[str] | Path = TESTDATA_CACHE,
+    cache_dir: str | os.PathLike[str] | Path = TESTDATA_CACHE_DIR,
 ) -> dict[str, xr.DataArray]:
     """Create the `atmosds` synthetic testing dataset."""
     with open_dataset(
@@ -437,7 +439,7 @@ def generate_atmos(
 def gather_testing_data(
     worker_cache_dir: str | os.PathLike[str] | Path,
     worker_id: str,
-    _cache_dir: str | os.PathLike[str] | None = TESTDATA_CACHE,
+    _cache_dir: str | os.PathLike[str] | None = TESTDATA_CACHE_DIR,
 ):
     """Gather testing data across workers."""
     if _cache_dir is None:

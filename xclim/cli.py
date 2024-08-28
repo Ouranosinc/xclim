@@ -18,7 +18,7 @@ from xclim.core.dataflags import DataQualityException, data_flags, ecad_complian
 from xclim.core.utils import InputKind
 from xclim.testing.helpers import (
     TESTDATA_BRANCH,
-    TESTDATA_CACHE,
+    TESTDATA_CACHE_DIR,
     TESTDATA_REPO_URL,
     default_testdata_cache,
     default_testdata_repo_url,
@@ -189,17 +189,17 @@ def prefetch_testing_data(ctx, repo, branch, cache_dir):
     else:
         testdata_branch = TESTDATA_BRANCH
     if cache_dir:
-        testdata_cache = cache_dir
+        testdata_cache_dir = cache_dir
     else:
-        testdata_cache = TESTDATA_CACHE
+        testdata_cache_dir = TESTDATA_CACHE_DIR
 
     click.echo(f"Gathering testing data from {testdata_repo}/{testdata_branch} ...")
     click.echo(
         populate_testing_data(
-            repo=testdata_repo, branch=testdata_branch, local_cache=testdata_cache
+            repo=testdata_repo, branch=testdata_branch, local_cache=testdata_cache_dir
         )
     )
-    click.echo(f"Testing data saved to `{testdata_cache}`.")
+    click.echo(f"Testing data saved to `{testdata_cache_dir}`.")
     ctx.exit()
 
 

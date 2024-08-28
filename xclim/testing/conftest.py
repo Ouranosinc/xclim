@@ -21,21 +21,36 @@ def threadsafe_data_dir(tmp_path_factory):
 
 
 @pytest.fixture(scope="session")
-def open_dataset(threadsafe_data_dir):
-    """Return a function that opens a dataset from the test data directory."""
+def nimbus(threadsafe_data_dir, worker_id):
+    """Return a nimbus object for the test data."""
+    return helpers.nimbus(
+        repo=helpers.TESTDATA_REPO_URL,
+        branch=helpers.TESTDATA_BRANCH,
+        cache_dir=(
+            helpers.TESTDATA_CACHE_DIR if worker_id == "master" else threadsafe_data_dir
+        ),
+    )
 
-    def _open_session_scoped_file(
-        file: str | os.PathLike, branch: str = helpers.TESTDATA_BRANCH, **xr_kwargs
-    ):
+
+@pytest.fixture(scope="session")
+def open_dataset(nimbus):
+    """Return a function that opens a dataset from the test data."""
+
+    def _open_session_scoped_file(file: str | os.PathLike, **xr_kwargs):
+        xr_kwargs.setdefault("cache", True)
         xr_kwargs.setdefault("engine", "h5netcdf")
         return _open_dataset(
-            file, cache_dir=threadsafe_data_dir, branch=branch, **xr_kwargs
+            file,
+            branch=helpers.TESTDATA_BRANCH,
+            repo=helpers.TESTDATA_REPO_URL,
+            cache_dir=nimbus.path,
+            **xr_kwargs,
         )
 
     return _open_session_scoped_file
 
 
-@pytest.fixture(autouse=True, scope="session")
+@pytest.fixture(scope="session", autouse=True)
 def is_matplotlib_installed(xdoctest_namespace) -> None:
     """Skip tests that require matplotlib if it is not installed."""
 
@@ -50,14 +65,12 @@ def is_matplotlib_installed(xdoctest_namespace) -> None:
     xdoctest_namespace["is_matplotlib_installed"] = _is_matplotlib_installed
 
 
-@pytest.fixture(autouse=True, scope="session")
-def doctest_setup(
-    xdoctest_namespace, threadsafe_data_dir, worker_id, open_dataset
-) -> None:
+@pytest.fixture(scope="session", autouse=True)
+def doctest_setup(xdoctest_namespace, nimbus, worker_id, open_dataset) -> None:
     """Gather testing data on doctest run."""
     helpers.testing_setup_warnings()
-    helpers.gather_testing_data(threadsafe_data_dir, worker_id)
-    xdoctest_namespace.update(helpers.generate_atmos(threadsafe_data_dir))
+    helpers.gather_testing_data(worker_cache_dir=nimbus.path, worker_id=worker_id)
+    xdoctest_namespace.update(helpers.generate_atmos(cache_dir=nimbus.path))
 
     class AttrDict(dict):
         def __init__(self, *args, **kwargs):
