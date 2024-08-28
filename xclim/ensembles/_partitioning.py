@@ -401,6 +401,7 @@ def general_partition(
 
     uncertainty.attrs["indicator_long_name"] = da.attrs.get("long_name", "unknown")
     uncertainty.attrs["indicator_description"] = da.attrs.get("description", "unknown")
+    uncertainty.attrs["indicator_units"] = da.attrs.get("units", "unknown")
     uncertainty.attrs["partition_fit"] = sm if isinstance(sm, str) else "unknown"
     # Keep a trace of the elements for each uncertainty component
     for t in all_types:
