@@ -2,7 +2,7 @@
 Changelog
 =========
 
-v0.53.0
+v0.53.0 (unreleased)
 --------------------
 Contributors to this version: Adrien Lamarche (:user:`LamAdr`), Éric Dupuis (:user:`coxipi`).
 
