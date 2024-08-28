@@ -14,13 +14,13 @@ import xarray as xr
 from dask.callbacks import Callback
 
 import xclim
+import xclim.testing.utils as xtu
 from xclim.core import calendar
 from xclim.core.utils import VARIABLES
 from xclim.indices import (
     longwave_upwelling_radiation_from_net_downwelling,
     shortwave_upwelling_radiation_from_net_downwelling,
 )
-from xclim.testing.utils import open_dataset
 
 logger = logging.getLogger("xclim")
 
@@ -40,7 +40,7 @@ def generate_atmos(
     cache_dir: str | os.PathLike[str] | Path,
 ) -> dict[str, xr.DataArray]:
     """Create the `atmosds` synthetic testing dataset."""
-    with open_dataset(
+    with xtu.open_dataset(
         "ERA5/daily_surface_cancities_1990-1993.nc",
         branch=branch,
         cache_dir=cache_dir,
@@ -67,7 +67,7 @@ def generate_atmos(
         ds.to_netcdf(atmos_file, engine="h5netcdf")
 
     # Give access to dataset variables by name in namespace
-    with open_dataset(
+    with xtu.open_dataset(
         atmos_file, branch=branch, cache_dir=cache_dir, engine="h5netcdf"
     ) as ds:
         namespace = {f"{var}_dataset": ds[var] for var in ds.data_vars}
