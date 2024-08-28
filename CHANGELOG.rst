@@ -12,16 +12,16 @@ Bug fixes
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
-* The ``xclim.testing`` module has been refactored to make use of `pooch` and many now-redundant functions have been removed: (:pull:`1889`)
-    * ``xclim.testing.utilities.open_dataset`` is now found under ``xclim.testing.helpers.open_dataset`` and uses a `pooch` instance to deliver locally-stored datasets. Its call signature has also changed.
-    * ``xclim.testing.utilities.get_file``, ``xclim.testing.utilities.get_local_testdata``, ``xclim.testing.utilities.list_datasets``, and ``xclim.testing.utilities.file_md5_checksum`` have been removed.
-        * ``xclim.testing.helpers.nimbus`` replaces much of this functionality. See the `xclim` documentation for more information.
-* The `Ouranosinc/xclim-testdata` repository has been restructured for better organization and to make better use of `pooch` and data registries for testing data fetching. (:pull:`1889`).
 * `platformdirs` is no longer a direct dependency of `xclim`, but `pooch` is required to use many of the new testing functions (installable via `pip install pooch` or `pip install 'xclim[dev]'`). (:pull:`1889`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
-* The testing data fetching mechanism has been completely rewritten to use `pooch` and file registries. (:pull:`1889`).
+* The `Ouranosinc/xclim-testdata` repository has been restructured for better organization and to make better use of `pooch` and data registries for testing data fetching (see: `xclim-testdata PR/29 <https://github.com/Ouranosinc/xclim-testdata/pull/29>`_). (:pull:`1889`).
+* The ``xclim.testing`` module has been refactored to make use of `pooch` with file registries. Several testing functions have been removed as a result: (:pull:`1889`)
+    * ``xclim.testing.utils.open_dataset`` now uses a `pooch` instance to deliver locally-stored datasets. Its call signature has also changed.
+    * ``xclim`` now accepts more environment variables to control the behaviour of the testing setup functions. These include ``XCLIM_TESTDATA_BRANCH``, ``XCLIM_TESTDATA_REPO_URL``, and ``XCLIM_TESTDATA_CACHE_DIR``.
+    * ``xclim.testing.utils.get_file``, ``xclim.testing.utils.get_local_testdata``, ``xclim.testing.utils.list_datasets``, and ``xclim.testing.utils.file_md5_checksum`` have been removed.
+        * ``xclim.testing.utils.nimbus`` replaces much of this functionality. See the `xclim` documentation for more information.
 * Many tests focused on evaluating the normal operation of remote file access tools under ``xclim.testing`` have been removed. (:pull:`1889`).
 * Setup and teardown functions that were found under ``tests/conftest.py`` have been optimized to reduce redundant calls when running ``pytest xclim``. Some obsolete `pytest` fixtures have also been removed.(:pull:`1889`).
 
