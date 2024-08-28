@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import platform
-import sys
 from pathlib import Path
 
 import numpy as np
@@ -9,9 +8,9 @@ import pytest
 from xarray import Dataset
 
 from xclim import __version__ as __xclim_version__
-from xclim.testing import helpers
-from xclim.testing import utils as utilities
 from xclim.testing.helpers import test_timeseries as timeseries
+from xclim.testing.utils import open_dataset as testing_open_dataset
+from xclim.testing.utils import publish_release_notes, show_versions
 
 
 class TestFixtures:
@@ -43,12 +42,9 @@ class TestFileRequests:
     def test_open_testdata(
         self,
     ):
-        from xclim.testing.helpers import (
-            default_testdata_cache,
-            default_testdata_version,
-        )
+        from xclim.testing.utils import default_testdata_cache, default_testdata_version
 
-        ds = helpers.open_dataset(
+        ds = testing_open_dataset(
             Path("cmip5/tas_Amon_CanESM2_rcp85_r1i1p1_200701-200712.nc"),
             cache_dir=default_testdata_cache.joinpath(default_testdata_version),
             engine="h5netcdf",
@@ -59,7 +55,7 @@ class TestFileRequests:
         test_data = Path(__file__).parent / "data"
         callendar = test_data / "callendar_1938.txt"
         md5_sum = self.file_md5_checksum(callendar)
-        if sys.platform == "win32":
+        if platform.system() == "Windows":
             # Windows has a different line ending (CR-LF) than Unix (LF)
             assert md5_sum == "38083271c2d4c85dea6bd6baf23d34de"  # noqa
         else:
@@ -69,7 +65,7 @@ class TestFileRequests:
 class TestReleaseSupportFuncs:
     def test_show_version_file(self, tmp_path):
         temp_filename = tmp_path.joinpath("version_info.txt")
-        utilities.show_versions(file=temp_filename)
+        show_versions(file=temp_filename)
 
         with open(temp_filename) as f:
             contents = f.readlines().copy()
@@ -82,7 +78,7 @@ class TestReleaseSupportFuncs:
     @pytest.mark.requires_docs
     def test_release_notes_file(self, tmp_path):
         temp_filename = tmp_path.joinpath("version_info.txt")
-        utilities.publish_release_notes(style="md", file=temp_filename)
+        publish_release_notes(style="md", file=temp_filename)
 
         with open(temp_filename) as f:
             assert "# Changelog" in f.readlines()[0]
@@ -91,4 +87,4 @@ class TestReleaseSupportFuncs:
     def test_release_notes_file_not_implemented(self, tmp_path):
         temp_filename = tmp_path.joinpath("version_info.txt")
         with pytest.raises(NotImplementedError):
-            utilities.publish_release_notes(style="qq", file=temp_filename)
+            publish_release_notes(style="qq", file=temp_filename)

@@ -10,8 +10,20 @@ from pathlib import Path
 
 import pytest
 
-from xclim.testing import helpers
-from xclim.testing.helpers import open_dataset as _open_dataset
+from xclim.testing.helpers import (
+    add_doctest_filepaths,
+    add_example_file_paths,
+    generate_atmos,
+)
+from xclim.testing.utils import (
+    TESTDATA_BRANCH,
+    TESTDATA_CACHE_DIR,
+    TESTDATA_REPO_URL,
+    gather_testing_data,
+)
+from xclim.testing.utils import nimbus as _nimbus
+from xclim.testing.utils import open_dataset as _open_dataset
+from xclim.testing.utils import testing_setup_warnings
 
 
 @pytest.fixture(autouse=True, scope="session")
@@ -23,11 +35,11 @@ def threadsafe_data_dir(tmp_path_factory):
 @pytest.fixture(scope="session")
 def nimbus(threadsafe_data_dir, worker_id):
     """Return a nimbus object for the test data."""
-    return helpers.nimbus(
-        repo=helpers.TESTDATA_REPO_URL,
-        branch=helpers.TESTDATA_BRANCH,
+    return _nimbus(
+        repo=TESTDATA_REPO_URL,
+        branch=TESTDATA_BRANCH,
         cache_dir=(
-            helpers.TESTDATA_CACHE_DIR if worker_id == "master" else threadsafe_data_dir
+            TESTDATA_CACHE_DIR if worker_id == "master" else threadsafe_data_dir
         ),
     )
 
@@ -41,8 +53,8 @@ def open_dataset(nimbus):
         xr_kwargs.setdefault("engine", "h5netcdf")
         return _open_dataset(
             file,
-            branch=helpers.TESTDATA_BRANCH,
-            repo=helpers.TESTDATA_REPO_URL,
+            branch=TESTDATA_BRANCH,
+            repo=TESTDATA_REPO_URL,
             cache_dir=nimbus.path,
             **xr_kwargs,
         )
@@ -68,9 +80,11 @@ def is_matplotlib_installed(xdoctest_namespace) -> None:
 @pytest.fixture(scope="session", autouse=True)
 def doctest_setup(xdoctest_namespace, nimbus, worker_id, open_dataset) -> None:
     """Gather testing data on doctest run."""
-    helpers.testing_setup_warnings()
-    helpers.gather_testing_data(worker_cache_dir=nimbus.path, worker_id=worker_id)
-    xdoctest_namespace.update(helpers.generate_atmos(cache_dir=nimbus.path))
+    testing_setup_warnings()
+    gather_testing_data(worker_cache_dir=nimbus.path, worker_id=worker_id)
+    xdoctest_namespace.update(
+        generate_atmos(branch=TESTDATA_BRANCH, cache_dir=nimbus.path)
+    )
 
     class AttrDict(dict):
         def __init__(self, *args, **kwargs):
@@ -80,5 +94,5 @@ def doctest_setup(xdoctest_namespace, nimbus, worker_id, open_dataset) -> None:
     xdoctest_namespace["open_dataset"] = open_dataset
     xdoctest_namespace["xr"] = AttrDict()
     xdoctest_namespace["xr"].update({"open_dataset": open_dataset})
-    xdoctest_namespace.update(helpers.add_doctest_filepaths())
-    xdoctest_namespace.update(helpers.add_example_file_paths())
+    xdoctest_namespace.update(add_doctest_filepaths())
+    xdoctest_namespace.update(add_example_file_paths())

@@ -16,7 +16,7 @@ from dask.diagnostics.progress import ProgressBar
 import xclim as xc
 from xclim.core.dataflags import DataQualityException, data_flags, ecad_compliant
 from xclim.core.utils import InputKind
-from xclim.testing.helpers import (
+from xclim.testing.utils import (
     TESTDATA_BRANCH,
     TESTDATA_CACHE_DIR,
     TESTDATA_REPO_URL,
@@ -24,8 +24,9 @@ from xclim.testing.helpers import (
     default_testdata_repo_url,
     default_testdata_version,
     populate_testing_data,
+    publish_release_notes,
+    show_versions,
 )
-from xclim.testing.utils import publish_release_notes, show_versions
 
 distributed = False
 try:

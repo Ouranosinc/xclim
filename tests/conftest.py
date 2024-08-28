@@ -12,11 +12,21 @@ import xarray as xr
 
 from xclim.core import indicator
 from xclim.core.calendar import max_doy
-from xclim.testing import helpers
-from xclim.testing.helpers import default_testdata_cache  # noqa
-from xclim.testing.helpers import nimbus as _nimbus
-from xclim.testing.helpers import open_dataset as _open_dataset
-from xclim.testing.helpers import test_timeseries
+from xclim.testing.helpers import (
+    add_ensemble_dataset_objects,
+    generate_atmos,
+    test_timeseries,
+)
+from xclim.testing.utils import (
+    TESTDATA_BRANCH,
+    TESTDATA_CACHE_DIR,
+    TESTDATA_REPO_URL,
+    default_testdata_cache,
+    gather_testing_data,
+)
+from xclim.testing.utils import nimbus as _nimbus
+from xclim.testing.utils import open_dataset as _open_dataset
+from xclim.testing.utils import testing_setup_warnings
 
 
 @pytest.fixture
@@ -302,10 +312,10 @@ def threadsafe_data_dir(tmp_path_factory):
 @pytest.fixture(scope="session")
 def nimbus(threadsafe_data_dir, worker_id):
     return _nimbus(
-        repo=helpers.TESTDATA_REPO_URL,
-        branch=helpers.TESTDATA_BRANCH,
+        repo=TESTDATA_REPO_URL,
+        branch=TESTDATA_BRANCH,
         cache_dir=(
-            helpers.TESTDATA_CACHE_DIR if worker_id == "master" else threadsafe_data_dir
+            TESTDATA_CACHE_DIR if worker_id == "master" else threadsafe_data_dir
         ),
     )
 
@@ -317,8 +327,8 @@ def open_dataset(nimbus):
         xr_kwargs.setdefault("engine", "h5netcdf")
         return _open_dataset(
             file,
-            branch=helpers.TESTDATA_BRANCH,
-            repo=helpers.TESTDATA_REPO_URL,
+            branch=TESTDATA_BRANCH,
+            repo=TESTDATA_REPO_URL,
             cache_dir=nimbus.path,
             **xr_kwargs,
         )
@@ -370,7 +380,7 @@ def atmosds(nimbus) -> xr.Dataset:
 
 @pytest.fixture(scope="session")
 def ensemble_dataset_objects() -> dict[str, str]:
-    return helpers.add_ensemble_dataset_objects()
+    return add_ensemble_dataset_objects()
 
 
 @pytest.fixture(autouse=True, scope="session")
@@ -387,9 +397,9 @@ def gather_session_data(request, nimbus, worker_id):
 
     Additionally, this fixture is also used to generate the `atmosds` synthetic testing dataset.
     """
-    helpers.testing_setup_warnings()
-    helpers.gather_testing_data(worker_cache_dir=nimbus.path, worker_id=worker_id)
-    helpers.generate_atmos(cache_dir=nimbus.path)
+    testing_setup_warnings()
+    gather_testing_data(worker_cache_dir=nimbus.path, worker_id=worker_id)
+    generate_atmos(branch=TESTDATA_BRANCH, cache_dir=nimbus.path)
 
     def remove_data_written_flag():
         """Cleanup cache folder once we are finished."""
