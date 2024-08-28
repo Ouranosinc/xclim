@@ -4,11 +4,12 @@ Changelog
 
 v0.53.0
 --------------------
-Contributors to this version: Adrien Lamarche (:user:`LamAdr`).
+Contributors to this version: Adrien Lamarche (:user:`LamAdr`), Éric Dupuis (:user:`coxipi`).
 
 Bug fixes
 ^^^^^^^^^
 * Fixed a small inefficiency in ``_otc_adjust`` (:pull:`1890`).
+* Remove deprecated cells in the tutorial notebook `sdba.ipynb` (:pull:`1895`).
 
 v0.52.0 (2024-08-08)
 --------------------
