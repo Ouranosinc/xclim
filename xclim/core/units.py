@@ -23,9 +23,11 @@ from boltons.funcutils import wraps
 from pint import UndefinedUnitError
 from yaml import safe_load
 
-from .calendar import get_calendar, parse_offset
-from .options import datacheck
-from .utils import InputKind, Quantified, ValidationError, infer_kind_from_parameter
+from xclim.core._exceptions import ValidationError
+from xclim.core._types import Quantified
+from xclim.core.calendar import get_calendar, parse_offset
+from xclim.core.options import datacheck
+from xclim.core.utils import InputKind, infer_kind_from_parameter
 
 logging.getLogger("pint").setLevel(logging.ERROR)
 

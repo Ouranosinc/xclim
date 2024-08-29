@@ -7,6 +7,7 @@ import numpy as np
 import xarray
 
 import xclim.indices.run_length as rl
+from xclim.core import DateStr, DayOfYearStr, Quantified
 from xclim.core.calendar import parse_offset, select_time
 from xclim.core.units import (
     amount2lwethickness,
@@ -15,7 +16,6 @@ from xclim.core.units import (
     rate2amount,
     to_agg_units,
 )
-from xclim.core.utils import DateStr, DayOfYearStr, Quantified
 from xclim.indices._conversion import potential_evapotranspiration
 from xclim.indices._simple import tn_min
 from xclim.indices._threshold import (

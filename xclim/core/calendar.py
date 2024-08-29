@@ -20,9 +20,9 @@ from xarray.coding.cftimeindex import CFTimeIndex
 from xarray.core import dtypes
 from xarray.core.resample import DataArrayResample, DatasetResample
 
-from xclim.core.utils import DayOfYearStr, uses_dask
-
-from .formatting import update_xclim_history
+from xclim.core._types import DayOfYearStr
+from xclim.core.formatting import update_xclim_history
+from xclim.core.utils import uses_dask
 
 __all__ = [
     "DayOfYearStr",
@@ -75,9 +75,26 @@ DataType = TypeVar("DataType", xr.DataArray, xr.Dataset)
 
 
 def doy_from_string(doy: DayOfYearStr, year: int, calendar: str) -> int:
-    """Return the day-of-year corresponding to a "MM-DD" string for a given year and calendar."""
-    MM, DD = doy.split("-")
-    return datetime_classes[calendar](year, int(MM), int(DD)).timetuple().tm_yday
+    """Return the day-of-year corresponding to an "MM-DD" string for a given year and calendar.
+
+    Parameters
+    ----------
+    doy : str
+        The day of year in the format "MM-DD".
+    year : int
+        The year.
+    calendar : str
+        The calendar name.
+
+    Returns
+    -------
+    int
+        The day of year.
+    """
+    if len(doy.split("-")) != 2:
+        raise ValueError("Day of year must be in the format 'MM-DD'.")
+    mm, dd = doy.split("-")
+    return datetime_classes[calendar](year, int(mm), int(dd)).timetuple().tm_yday
 
 
 def get_calendar(obj: Any, dim: str = "time") -> str:
@@ -86,24 +103,24 @@ def get_calendar(obj: Any, dim: str = "time") -> str:
     Parameters
     ----------
     obj : Any
-      An object defining some date.
-      If `obj` is an array/dataset with a datetime coordinate, use `dim` to specify its name.
-      Values must have either a datetime64 dtype or a cftime dtype.
-      `obj` can also be a python datetime.datetime, a cftime object or a pandas Timestamp
-      or an iterable of those, in which case the calendar is inferred from the first value.
+        An object defining some date.
+        If `obj` is an array/dataset with a datetime coordinate, use `dim` to specify its name.
+        Values must have either a datetime64 dtype or a cftime dtype.
+        `obj` can also be a python datetime.datetime, a cftime object or a pandas Timestamp
+        or an iterable of those, in which case the calendar is inferred from the first value.
     dim : str
-      Name of the coordinate to check (if `obj` is a DataArray or Dataset).
+        Name of the coordinate to check (if `obj` is a DataArray or Dataset).
 
     Raises
     ------
     ValueError
-      If no calendar could be inferred.
+        If no calendar could be inferred.
 
     Returns
     -------
     str
-      The Climate and Forecasting (CF) calendar name.
-      Will always return "standard" instead of "gregorian", following CF conventions 1.9.
+        The Climate and Forecasting (CF) calendar name.
+        Will always return "standard" instead of "gregorian", following CF conventions 1.9.
     """
     if isinstance(obj, (xr.DataArray, xr.Dataset)):
         return obj[dim].dt.calendar
@@ -198,21 +215,21 @@ def convert_doy(
     Parameters
     ----------
     source : xr.DataArray or xr.Dataset
-      Day of year data (range [1, 366], max depending on the calendar).
-      If a Dataset, the function is mapped to each variables with attribute `is_day_of_year == 1`.
+        Day of year data (range [1, 366], max depending on the calendar).
+        If a Dataset, the function is mapped to each variable with attribute `is_day_of_year == 1`.
     target_cal : str
-      Name of the calendar to convert to.
+        Name of the calendar to convert to.
     source_cal : str, optional
-      Calendar the doys are in. If not given, uses the "calendar" attribute of `source` or,
-      if absent, the calendar of its `dim` axis.
+        Calendar the doys are in. If not given, uses the "calendar" attribute of `source` or,
+        if absent, the calendar of its `dim` axis.
     align_on : {'date', 'year'}
-      If 'year' (default), the doy is seen as a "percentage" of the year and is simply rescaled unto the new doy range.
-      This always result in floating point data, changing the decimal part of the value.
-      if 'date', the doy is seen as a specific date. See notes. This never changes the decimal part of the value.
+        If 'year' (default), the doy is seen as a "percentage" of the year and is simply rescaled unto the new doy range.
+        This always result in floating point data, changing the decimal part of the value.
+        If 'date', the doy is seen as a specific date. See notes. This never changes the decimal part of the value.
     missing : Any
-      If `align_on` is "date" and the new doy doesn't exist in the new calendar, this value is used.
+        If `align_on` is "date" and the new doy doesn't exist in the new calendar, this value is used.
     dim : str
-      Name of the temporal dimension.
+        Name of the temporal dimension.
     """
     if isinstance(source, xr.Dataset):
         return source.map(
@@ -329,11 +346,11 @@ def percentile_doy(
     Parameters
     ----------
     arr : xr.DataArray
-      Input data, a daily frequency (or coarser) is required.
+        Input data, a daily frequency (or coarser) is required.
     window : int
-      Number of time-steps around each day of the year to include in the calculation.
+        Number of time-steps around each day of the year to include in the calculation.
     per : float or sequence of floats
-      Percentile(s) between [0, 100]
+        Percentile(s) between [0, 100]
     alpha : float
         Plotting position parameter.
     beta : float
@@ -521,7 +538,7 @@ def construct_offset(mult: int, base: str, start_anchored: bool, anchor: str | N
     Returns
     -------
     str
-      An offset string, conformant to pandas-like naming conventions.
+        An offset string, conformant to pandas-like naming conventions.
 
     Notes
     -----
@@ -1021,7 +1038,7 @@ def days_since_to_doy(
     Returns
     -------
     xr.DataArray
-      Same shape as `da`, values as `day of year`.
+        Same shape as `da`, values as `day of year`.
 
     Examples
     --------

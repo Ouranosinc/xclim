@@ -20,9 +20,10 @@ from xarray.coding.calendar_ops import (
     _datetime_to_decimal_year as datetime_to_decimal_year,
 )
 
+from xclim.core import Quantified
 from xclim.core.calendar import ensure_cftime_array, get_calendar
 from xclim.core.units import convert_units_to
-from xclim.core.utils import Quantified, _chunk_like
+from xclim.core.utils import _chunk_like
 
 
 def _wrap_radians(da):
@@ -269,7 +270,9 @@ def cosine_of_solar_zenith_angle(
         h_e = np.pi - 1e-9  # just below pi
     else:
         if time.dtype == "O":  # cftime
-            time_as_s = time.copy(data=xr.CFTimeIndex(time.values).asi8 / 1e6)
+            time_as_s = time.copy(
+                data=xr.CFTimeIndex(cast(time.values, np.ndarray)).asi8 / 1e6
+            )
         else:  # numpy
             time_as_s = time.copy(data=time.astype(float) / 1e9)
         h_s_utc = (((time_as_s % S_IN_D) / S_IN_D) * 2 * np.pi + np.pi).assign_attrs(

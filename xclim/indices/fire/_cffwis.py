@@ -139,8 +139,8 @@ import numpy as np
 import xarray as xr
 from numba import njit, vectorize
 
+from xclim.core._types import Quantified
 from xclim.core.units import convert_units_to, declare_units
-from xclim.core.utils import Quantified
 from xclim.indices import run_length as rl
 
 __all__ = [

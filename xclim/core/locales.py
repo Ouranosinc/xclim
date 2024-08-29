@@ -53,7 +53,7 @@ from collections.abc import Sequence
 from copy import deepcopy
 from pathlib import Path
 
-from .formatting import AttrFormatter, default_formatter
+from xclim.core.formatting import AttrFormatter, default_formatter
 
 TRANSLATABLE_ATTRS = [
     "long_name",

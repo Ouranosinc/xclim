@@ -7,6 +7,7 @@ import numpy as np
 import xarray as xr
 from numba import vectorize
 
+from xclim.core import Quantified
 from xclim.core.units import (
     amount2rate,
     convert_units_to,
@@ -15,7 +16,6 @@ from xclim.core.units import (
     rate2flux,
     units2pint,
 )
-from xclim.core.utils import Quantified
 from xclim.indices.helpers import (
     _gather_lat,
     _gather_lon,

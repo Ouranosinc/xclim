@@ -11,8 +11,9 @@ import fnmatch
 import re
 from collections.abc import Sequence
 
-from .options import cfcheck
-from .utils import VARIABLES, ValidationError
+from xclim.core._exceptions import ValidationError
+from xclim.core._types import VARIABLES
+from xclim.core.options import cfcheck
 
 
 @cfcheck

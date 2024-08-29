@@ -14,8 +14,10 @@ from typing import Callable
 import cftime
 import numpy as np
 import xarray as xr
+from pint import Quantity
 from xarray.coding.cftime_offsets import _MONTH_ABBREVIATIONS  # noqa
 
+from xclim.core import DayOfYearStr, Quantified
 from xclim.core.calendar import doy_to_days_since, get_calendar, select_time
 from xclim.core.units import (
     convert_units_to,
@@ -25,9 +27,7 @@ from xclim.core.units import (
     str2pint,
     to_agg_units,
 )
-from xclim.core.utils import DayOfYearStr, Quantified, Quantity
-
-from . import run_length as rl
+from xclim.indices import run_length as rl
 
 __all__ = [
     "aggregate_between_dates",

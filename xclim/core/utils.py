@@ -15,47 +15,18 @@ import warnings
 from collections import defaultdict
 from collections.abc import Sequence
 from enum import IntEnum
-from importlib.resources import as_file, files
 from inspect import _empty  # noqa
 from io import StringIO
 from pathlib import Path
-from typing import Callable, NewType, TypeVar
+from typing import Callable
 
 import numpy as np
 import xarray as xr
 from dask import array as dsk
-from pint import Quantity
 from yaml import safe_dump, safe_load
 
 logger = logging.getLogger("xclim")
 
-#: Type annotation for strings representing full dates (YYYY-MM-DD), may include time.
-DateStr = NewType("DateStr", str)
-
-#: Type annotation for strings representing dates without a year (MM-DD).
-DayOfYearStr = NewType("DayOfYearStr", str)
-
-#: Type annotation for thresholds and other not-exactly-a-variable quantities
-Quantified = TypeVar("Quantified", xr.DataArray, str, Quantity)
-
-with as_file(files("xclim.data")) as data_dir:
-    with (data_dir / "variables.yml").open() as f:
-        VARIABLES = safe_load(f)["variables"]
-        """Official variables definitions.
-
-A mapping from variable name to a dict with the following keys:
-
-- canonical_units [required] : The conventional units used by this variable.
-- cell_methods [optional] : The conventional `cell_methods` CF attribute
-- description [optional] : A description of the variable, to populate dynamically generated docstrings.
-- dimensions [optional] : The dimensionality of the variable, an abstract version of the units.
-  See `xclim.units.units._dimensions.keys()` for available terms. This is especially useful for making xclim aware of
-  "[precipitation]" variables.
-- standard_name [optional] : If it exists, the CF standard name.
-- data_flags [optional] : Data flags methods (:py:mod:`xclim.core.dataflags`) applicable to this variable.
-  The method names are keys and values are dicts of keyword arguments to pass
-  (an empty dict if there's nothing to configure).
-"""
 
 # Input cell methods for clix-meta
 ICM = {
@@ -159,18 +130,6 @@ def load_module(path: os.PathLike, name: str | None = None):
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)  # This executes code, effectively loading the module
     return mod
-
-
-class ValidationError(ValueError):
-    """Error raised when input data to an indicator fails the validation tests."""
-
-    @property
-    def msg(self):  # noqa
-        return self.args[0]
-
-
-class MissingVariableError(ValueError):
-    """Error raised when a dataset is passed to an indicator but one of the needed variable is missing."""
 
 
 def ensure_chunk_size(da: xr.DataArray, **minchunks: int) -> xr.DataArray:
@@ -483,40 +442,6 @@ def _nan_quantile(
     # Move quantile axis in front
     result = np.moveaxis(result, axis, 0)
     return result
-
-
-def raise_warn_or_log(
-    err: Exception,
-    mode: str,
-    msg: str | None = None,
-    err_type: type = ValueError,
-    stacklevel: int = 1,
-):
-    """Raise, warn or log an error according.
-
-    Parameters
-    ----------
-    err : Exception
-        An error.
-    mode : {'ignore', 'log', 'warn', 'raise'}
-        What to do with the error.
-    msg : str, optional
-        The string used when logging or warning.
-        Defaults to the `msg` attr of the error (if present) or to "Failed with <err>".
-    err_type : type
-        The type of error/exception to raise.
-    stacklevel : int
-        Stacklevel when warning. Relative to the call of this function (1 is added).
-    """
-    message = msg or getattr(err, "msg", f"Failed with {err!r}.")
-    if mode == "ignore":
-        pass
-    elif mode == "log":
-        logger.info(message)
-    elif mode == "warn":
-        warnings.warn(message, stacklevel=stacklevel + 1)
-    else:  # mode == "raise"
-        raise err from err_type(message)
 
 
 class InputKind(IntEnum):

@@ -11,11 +11,11 @@ import numpy as np
 import scipy.stats
 import xarray as xr
 
+from xclim.core import DateStr, Quantified
 from xclim.core.calendar import compare_offsets, resample_doy, select_time
 from xclim.core.formatting import prefix_attrs, unprefix_attrs, update_history
-from xclim.core.utils import DateStr, Quantified, uses_dask
-
-from . import generic
+from xclim.core.utils import uses_dask
+from xclim.indices import generic
 
 __all__ = [
     "_fit_start",
@@ -788,8 +788,8 @@ def standardized_index_fit_params(
         "method": method,
         "group": group,
         "units": "",
+        "time_indexer": json.dumps(indexer),
     }
-    params.attrs["time_indexer"] = json.dumps(indexer)
     return params
 
 

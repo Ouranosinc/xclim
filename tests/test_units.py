@@ -11,6 +11,7 @@ from packaging.version import Version
 from pint import __version__ as __pint_version__
 
 from xclim import indices, set_options
+from xclim.core import Quantified, ValidationError
 from xclim.core.units import (
     amount2lwethickness,
     amount2rate,
@@ -28,7 +29,6 @@ from xclim.core.units import (
     units,
     units2pint,
 )
-from xclim.core.utils import Quantified, ValidationError
 
 
 class TestUnits:

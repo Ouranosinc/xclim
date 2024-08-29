@@ -122,11 +122,17 @@ import yamale
 from xarray import DataArray, Dataset
 from yaml import safe_load
 
-from .. import indices
-from . import datachecks
-from .calendar import parse_offset, select_time
-from .cfchecks import cfcheck_from_name
-from .formatting import (
+from xclim import indices
+from xclim.core import datachecks
+from xclim.core._exceptions import (
+    MissingVariableError,
+    ValidationError,
+    raise_warn_or_log,
+)
+from xclim.core._types import VARIABLES
+from xclim.core.calendar import parse_offset, select_time
+from xclim.core.cfchecks import cfcheck_from_name
+from xclim.core.formatting import (
     AttrFormatter,
     default_formatter,
     gen_call_string,
@@ -136,14 +142,14 @@ from .formatting import (
     parse_doc,
     update_history,
 )
-from .locales import (
+from xclim.core.locales import (
     TRANSLATABLE_ATTRS,
     get_local_attrs,
     get_local_formatter,
     load_locale,
     read_locale_file,
 )
-from .options import (
+from xclim.core.options import (
     AS_DATASET,
     CHECK_MISSING,
     KEEP_ATTRS,
@@ -152,16 +158,12 @@ from .options import (
     MISSING_OPTIONS,
     OPTIONS,
 )
-from .units import check_units, convert_units_to, declare_units, units
-from .utils import (
-    VARIABLES,
+from xclim.core.units import check_units, convert_units_to, declare_units, units
+from xclim.core.utils import (
     InputKind,
-    MissingVariableError,
-    ValidationError,
     infer_kind_from_parameter,
     is_percentile_dataarray,
     load_module,
-    raise_warn_or_log,
 )
 
 # Indicators registry

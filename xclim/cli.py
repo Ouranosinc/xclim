@@ -14,6 +14,7 @@ import xarray as xr
 from dask.diagnostics.progress import ProgressBar
 
 import xclim as xc
+from xclim.core import MissingVariableError
 from xclim.core.dataflags import DataQualityException, data_flags, ecad_compliant
 from xclim.core.utils import InputKind
 from xclim.testing.utils import (
@@ -102,7 +103,7 @@ def _process_indicator(indicator, ctx, **params):
 
     try:
         out = indicator(**params)
-    except xc.core.utils.MissingVariableError as err:
+    except MissingVariableError as err:
         raise click.BadArgumentUsage(err.args[0])
 
     if isinstance(out, tuple):

@@ -13,8 +13,7 @@ from boltons.funcutils import wraps
 from xarray.core.dataarray import DataArray
 
 import xclim.core.utils
-
-from .calendar import parse_offset, percentile_doy
+from xclim.core.calendar import parse_offset, percentile_doy
 
 BOOTSTRAP_DIM = "_bootstrap"
 
