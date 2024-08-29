@@ -12,7 +12,6 @@ import importlib.util
 import logging
 import os
 import warnings
-from collections import defaultdict
 from collections.abc import Sequence
 from enum import IntEnum
 from inspect import _empty  # noqa
@@ -73,31 +72,6 @@ def deprecated(from_version: str | None, suggested: str | None = None) -> Callab
         return wrapper
 
     return decorator
-
-
-# TODO Reconsider the utility of this
-def walk_map(d: dict, func: Callable) -> dict:
-    """Apply a function recursively to values of dictionary.
-
-    Parameters
-    ----------
-    d : dict
-        Input dictionary, possibly nested.
-    func : Callable
-        Function to apply to dictionary values.
-
-    Returns
-    -------
-    dict
-        Dictionary whose values are the output of the given function.
-    """
-    out = {}
-    for k, v in d.items():
-        if isinstance(v, (dict, defaultdict)):
-            out[k] = walk_map(v, func)
-        else:
-            out[k] = func(v)
-    return out
 
 
 def load_module(path: os.PathLike, name: str | None = None):

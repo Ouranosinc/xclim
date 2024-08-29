@@ -344,15 +344,15 @@ def _sunlit_integral_of_cosine_of_solar_zenith_angle(
     ):
         return 0
     # Interval crossing midnight, starting after sunset (before midnight), finishing after sunrise
-    elif h_end < h_start and h_start >= h_sunset and h_end >= h_sunrise:
+    elif h_start > h_end >= h_sunrise and h_start >= h_sunset:
         num = np.sin(h_end) - np.sin(h_sunrise)
         denum = h_end - h_sunrise
     # Interval crossing midnight, starting after sunrise, finishing after sunset (after midnight)
-    elif h_end < h_start and h_start >= h_sunrise and h_end <= h_sunrise:
+    elif h_end < h_start and h_start >= h_sunrise >= h_end:
         num = np.sin(h_sunset) - np.sin(h_start)
         denum = h_sunset - h_start
-    # Interval crossing midnight, starting before sunset, finsing after sunrise (2 sunlit parts)
-    elif h_end < h_start and h_start <= h_sunset and h_end >= h_sunrise:
+    # Interval crossing midnight, starting before sunset, finishing after sunrise (2 sunlit parts)
+    elif h_sunset >= h_start > h_end >= h_sunrise:
         num = np.sin(h_sunset) - np.sin(h_start) + np.sin(h_end) - np.sin(h_sunrise)
         denum = h_sunset - h_start + h_end - h_sunrise
     # All other cases : interval not crossing midnight, overlapping with the sunlit part

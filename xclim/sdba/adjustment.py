@@ -139,33 +139,36 @@ class BaseAdjustment(ParametrizableWithDataset):
         """
 
         def _harmonize_units_multivariate(
-            *inputs, dim, target: dict[str] | None = None
+            *_inputs, _dim, _target: dict[str] | None = None
         ):
-            def _convert_units_to(inda, dim, target):
-                varss = inda[dim].values
+            def __convert_units_to(_input_da, _internal_dim, _internal_target):
+                varss = _input_da[_internal_dim].values
                 input_units = {
-                    v: inda[dim].attrs["_units"][iv] for iv, v in enumerate(varss)
+                    v: _input_da[_internal_dim].attrs["_units"][iv]
+                    for iv, v in enumerate(varss)
                 }
-                if input_units == target:
-                    return inda
+                if input_units == _internal_target:
+                    return _input_da
                 input_standard_names = {
-                    v: inda[dim].attrs["_standard_name"][iv]
+                    v: _input_da[_internal_dim].attrs["_standard_name"][iv]
                     for iv, v in enumerate(varss)
                 }
                 for iv, v in enumerate(varss):
-                    inda.attrs["units"] = input_units[v]
-                    inda.attrs["standard_name"] = input_standard_names[v]
-                    inda[{dim: iv}] = convert_units_to(
-                        inda[{dim: iv}], target[v], context="infer"
+                    _input_da.attrs["units"] = input_units[v]
+                    _input_da.attrs["standard_name"] = input_standard_names[v]
+                    _input_da[{_internal_dim: iv}] = convert_units_to(
+                        _input_da[{_internal_dim: iv}],
+                        _internal_target[v],
+                        context="infer",
                     )
-                    inda[dim].attrs["_units"][iv] = target[v]
-                inda.attrs["units"] = ""
-                inda.attrs.pop("standard_name")
-                return inda
+                    _input_da[_internal_dim].attrs["_units"][iv] = _internal_target[v]
+                _input_da.attrs["units"] = ""
+                _input_da.attrs.pop("standard_name")
+                return _input_da
 
-            if target is None:
-                if "_units" not in inputs[0][dim].attrs or any(
-                    [u is None for u in inputs[0][dim].attrs["_units"]]
+            if _target is None:
+                if "_units" not in _inputs[0][_dim].attrs or any(
+                    u is None for u in _inputs[0][_dim].attrs["_units"]
                 ):
                     error_msg = (
                         "Units are missing in some or all of the stacked variables."
@@ -173,17 +176,20 @@ class BaseAdjustment(ParametrizableWithDataset):
                     )
                     raise ValueError(error_msg)
 
-                target = {
-                    v: inputs[0][dim].attrs["_units"][iv]
-                    for iv, v in enumerate(inputs[0][dim].values)
+                _target = {
+                    v: _inputs[0][_dim].attrs["_units"][iv]
+                    for iv, v in enumerate(_inputs[0][_dim].values)
                 }
             return (
-                _convert_units_to(inda, dim=dim, target=target) for inda in inputs
-            ), target
+                __convert_units_to(
+                    _input_da, _internal_dim=_dim, _internal_target=_target
+                )
+                for _input_da in _inputs
+            ), _target
 
-        for _dim, _crd in inputs[0].coords.items():
-            if _crd.attrs.get("is_variables"):
-                return _harmonize_units_multivariate(*inputs, dim=_dim, target=target)
+        for dim, crd in inputs[0].coords.items():
+            if crd.attrs.get("is_variables"):
+                return _harmonize_units_multivariate(*inputs, _dim=dim, _target=target)
 
         if target is None:
             target = inputs[0].units
@@ -292,7 +298,7 @@ class TrainAdjust(BaseAdjustment):
         scen.attrs["bias_adjustment"] = infostr
 
         _is_multivariate = any(
-            [_crd.attrs.get("is_variables") for _crd in sim.coords.values()]
+            _crd.attrs.get("is_variables") for _crd in sim.coords.values()
         )
         if _is_multivariate is False:
             scen.attrs["units"] = self.train_units

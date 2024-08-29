@@ -26,6 +26,8 @@ __all__ = [
     "get_dist",
     "parametric_cdf",
     "parametric_quantile",
+    "standardized_index",
+    "standardized_index_fit_params",
 ]
 
 

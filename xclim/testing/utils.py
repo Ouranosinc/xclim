@@ -374,7 +374,11 @@ def show_versions(
 
 def run_doctests():
     """Run the doctests for the module."""
-    import pytest
+    if pytest is None:
+        raise ImportError(
+            "The `pytest` package is required to run the doctests. "
+            "You can install it with `pip install pytest` or `pip install xclim[dev]`."
+        )
 
     cmd = [
         f"--rootdir={Path(__file__).absolute().parent}",
@@ -447,7 +451,7 @@ def load_registry(
         raise FileNotFoundError(f"Registry file not found: {registry_file}")
 
     # Load the registry file
-    with registry_file.open() as f:
+    with registry_file.open(encoding="utf-8") as f:
         registry = {line.split()[0]: line.split()[1] for line in f}
     return registry
 
@@ -564,15 +568,16 @@ def open_dataset(
         )
 
     if dap_url:
+        dap_target = urljoin(dap_url, str(name))
         try:
-            return _open_dataset(
-                audit_url(urljoin(dap_url, str(name)), context="OPeNDAP"), **kwargs
-            )
+            return _open_dataset(audit_url(dap_target, context="OPeNDAP"), **kwargs)
         except URLError:
             raise
-        except OSError as e:
-            msg = f"OPeNDAP file not read. Verify that the service is available: '{urljoin(dap_url, str(name))}'"
-            raise OSError(msg) from e
+        except OSError:
+            raise OSError(
+                "OPeNDAP file not read. Verify that the service is available: %s"
+                % dap_target
+            )
 
     local_file = Path(cache_dir).joinpath(name)
     if not local_file.exists():
@@ -580,10 +585,11 @@ def open_dataset(
             local_file = nimbus(branch=branch, repo=repo, cache_dir=cache_dir).fetch(
                 name
             )
-        except OSError as e:
+        except OSError:
             raise OSError(
-                f"File not found locally. Verify that the testing data is available in remote: {local_file}"
-            ) from e
+                "File not found locally. Verify that the testing data is available in remote: %s"
+                % local_file
+            )
     try:
         ds = _open_dataset(local_file, **kwargs)
         return ds
