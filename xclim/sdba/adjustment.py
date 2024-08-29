@@ -1306,7 +1306,7 @@ class OTC(Adjust):
         See :py:class:`xclim.sdba.processing.adapt_freq` for details.
         Frequency adaptation is not applied to missing variables if is dict.
         Applied to all variables if is string.
-    transform : {None, 'standardize', 'max_distance', 'max_value'}
+    normalization : {None, 'standardize', 'max_distance', 'max_value'}
         Per-variable transformation applied before the distances are calculated.
         Default is "max_distance".
         See notes for details.
@@ -1337,12 +1337,12 @@ class OTC(Adjust):
     with probability :math:`P_{ij}`. A transformation of bin positions can be applied before computing the distances :math:`C_{ij}`
     to make variables on different scales more evenly taken into consideration by the optimization step. Available transformations are
 
-    - `transform = 'standardize'` :
+    - `normalization = 'standardize'` :
         .. math::
 
             i_v' = \frac{i_v - mean(i_v)}{std(i_v)} \quad\quad\quad j_v' = \frac{j_v - mean(j_v)}{std(j_v)}
 
-    - `transform = 'max_distance'` :
+    - `normalization = 'max_distance'` :
         .. math::
 
             i_v' = \frac{i_v}{max \{|i_v - j_v|\}} \quad\quad\quad j_v' = \frac{j_v}{max \{|i_v - j_v|\}}
@@ -1352,7 +1352,7 @@ class OTC(Adjust):
 
                 max \{|i_v' - j_v'|\} = max \{|i_w' - j_w'|\} = 1
 
-    - `transform = 'max_value'` :
+    - `normalization = 'max_value'` :
         .. math::
 
             i_v' = \frac{i_v}{max\{i_v\}} \quad\quad\quad j_v' = \frac{j_v}{max\{j_v\}}
@@ -1388,7 +1388,7 @@ class OTC(Adjust):
         num_iter_max: int | None = 100_000_000,
         jitter_inside_bins: bool = True,
         adapt_freq_thresh: dict | str | None = None,
-        transform: str | None = "max_distance",
+        normalization: str | None = "max_distance",
         group: str | Grouper = "time",
         pts_dim: str = "multivar",
         **kwargs,
@@ -1398,7 +1398,7 @@ class OTC(Adjust):
                 "POT is required for OTC and dOTC. Please install with `pip install POT`."
             )
 
-        if transform not in [None, "standardize", "max_distance", "max_value"]:
+        if normalization not in [None, "standardize", "max_distance", "max_value"]:
             raise ValueError(
                 "`transform` should be in [None, 'standardize', 'max_distance', 'max_value']."
             )
@@ -1423,7 +1423,7 @@ class OTC(Adjust):
             num_iter_max=num_iter_max,
             jitter_inside_bins=jitter_inside_bins,
             adapt_freq_thresh=adapt_freq_thresh,
-            transform=transform,
+            normalization=normalization,
             group=group,
             pts_dim=pts_dim,
         ).scen
@@ -1479,9 +1479,9 @@ class dOTC(Adjust):
         See :py:class:`xclim.sdba.processing.adapt_freq` for details.
         Frequency adaptation is not applied to missing variables if is dict.
         Applied to all variables if is string.
-    transform : {None, 'standardize', 'max_distance', 'max_value'}
-        Per-variable transformation applied before the distances are calculated.
-        Default is "max_distance".
+    normalization : {None, 'standardize', 'max_distance', 'max_value'}
+        Per-variable transformation applied before the distances are calculated
+        in the optimal transport. Default is "max_distance".
         See :py:class:`~xclim.sdba.adjustment.OTC` for details.
     group : Union[str, Grouper]
         The grouping information. See :py:class:`xclim.sdba.base.Grouper` for details.
@@ -1546,7 +1546,7 @@ class dOTC(Adjust):
         jitter_inside_bins: bool = True,
         kind: dict | str | None = None,
         adapt_freq_thresh: dict | str | None = None,
-        transform: str | None = "max_distance",
+        normalization: str | None = "max_distance",
         group: str | Grouper = "time",
         pts_dim: str = "multivar",
     ) -> xr.DataArray:
@@ -1565,9 +1565,9 @@ class dOTC(Adjust):
         if cov_factor not in [None, "std", "cholesky"]:
             raise ValueError("`cov_factor` should be in [None, 'std', 'cholesky'].")
 
-        if transform not in [None, "standardize", "max_distance", "max_value"]:
+        if normalization not in [None, "standardize", "max_distance", "max_value"]:
             raise ValueError(
-                "`transform` should be in [None, 'standardize', 'max_distance', 'max_value']."
+                "`normalization` should be in [None, 'standardize', 'max_distance', 'max_value']."
             )
 
         if isinstance(adapt_freq_thresh, str):
@@ -1588,7 +1588,7 @@ class dOTC(Adjust):
             jitter_inside_bins=jitter_inside_bins,
             kind=kind,
             adapt_freq_thresh=adapt_freq_thresh,
-            transform=transform,
+            normalization=normalization,
             group=group,
             pts_dim=pts_dim,
         ).scen

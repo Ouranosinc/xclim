@@ -1018,7 +1018,7 @@ def histogram(data, bin_width, bin_origin):
     return grid, mu, idx_bin
 
 
-def optimal_transport(gridX, gridY, muX, muY, numItermax, transform):
+def optimal_transport(gridX, gridY, muX, muY, num_iter_max, normalization):
     """Computes the optimal transportation plan on (transformations of) X and Y.
 
     References
@@ -1027,18 +1027,18 @@ def optimal_transport(gridX, gridY, muX, muY, numItermax, transform):
     """
     from ot import emd
 
-    if transform == "standardize":
-        gridX = (gridX - gridX.mean()) / gridX.std()
-        gridY = (gridY - gridY.mean()) / gridY.std()
+    if normalization == "standardize":
+        gridX = (gridX - gridX.mean(axis=0)) / gridX.std(axis=0)
+        gridY = (gridY - gridY.mean(axis=0)) / gridY.std(axis=0)
 
-    elif transform == "max_distance":
+    elif normalization == "max_distance":
         max1 = np.abs(gridX.max(axis=0) - gridY.min(axis=0))
         max2 = np.abs(gridY.max(axis=0) - gridX.min(axis=0))
         max_dist = np.maximum(max1, max2)
         gridX = gridX / max_dist
         gridY = gridY / max_dist
 
-    elif transform == "max_value":
+    elif normalization == "max_value":
         max_value = np.maximum(gridX.max(axis=0), gridY.max(axis=0))
         gridX = gridX / max_value
         gridY = gridY / max_value
@@ -1047,7 +1047,7 @@ def optimal_transport(gridX, gridY, muX, muY, numItermax, transform):
     C = distance.cdist(gridX, gridY, "sqeuclidean")
 
     # Compute the optimal transportation plan
-    gamma = emd(muX, muY, C, numItermax=numItermax)
+    gamma = emd(muX, muY, C, numItermax=num_iter_max)
     plan = (gamma.T / gamma.sum(axis=1)).T
 
     return plan
