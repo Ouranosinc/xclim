@@ -289,6 +289,9 @@ extend-include = [
 line-ending = "auto"
 
 [tool.ruff.lint]
+exclude = [
+  "docs/notebooks/xclim_training/*.ipynb"
+]
 extend-select = [
   "RUF022" # unsorted-dunder-all
 ]
@@ -331,6 +334,7 @@ max-complexity = 20
 
 [tool.ruff.lint.per-file-ignores]
 "docs/*.py" = ["D100", "D101", "D102", "D103"]
+"docs/notebooks/*.ipynb" = ["E225", "E226", "E231"]
 "tests/**/*test*.py" = ["D100", "D101", "D102", "D103", "N802", "S101"]
 "xclim/**/__init__.py" = ["F401", "F403"]
 "xclim/core/indicator.py" = ["D214", "D405", "D406", "D407", "D411"]
