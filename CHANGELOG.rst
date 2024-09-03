@@ -27,6 +27,7 @@ Internal changes
 * Setup and teardown functions that were found under ``tests/conftest.py`` have been optimized to reduce redundant calls when running ``pytest xclim``. Some obsolete `pytest` fixtures have also been removed.(:pull:`1889`).
 * Many ``DeprecationWarning`` and ``FutureWarning`` messages emitted from `xarray` and `pint` have been addressed. (:issue:`1719`, :pull:`1881`).
 * The codebase has been adjusted to address many `pylint`-related warnings and errors. In some cases, `casting` was used to redefine some `numpy` and `xarray` objects. (:issue:`1719`, :pull:`1881`).
+* ``xclim.core`` now uses absolute imports for clarity and some objects commonly used in the module have been moved to hidden submodules. (:issue:`1719`, :pull:`1881`).
 
 v0.52.0 (2024-08-08)
 --------------------
