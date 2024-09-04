@@ -13,8 +13,7 @@ from boltons.funcutils import wraps
 from xarray.core.dataarray import DataArray
 
 import xclim.core.utils
-
-from .calendar import parse_offset, percentile_doy
+from xclim.core.calendar import parse_offset, percentile_doy
 
 BOOTSTRAP_DIM = "_bootstrap"
 
@@ -153,12 +152,12 @@ def bootstrap_func(compute_index_func: Callable, **kwargs) -> xarray.DataArray:
             "`bootstrap` is unnecessary when no year overlap between reference "
             "(percentiles period) and studied (index period) periods."
         )
-    pdoy_args = dict(
-        window=per_da.attrs["window"],
-        alpha=per_da.attrs["alpha"],
-        beta=per_da.attrs["beta"],
-        per=per_da.percentiles.data[()],
-    )
+    pdoy_args = {
+        "window": per_da.attrs["window"],
+        "alpha": per_da.attrs["alpha"],
+        "beta": per_da.attrs["beta"],
+        "per": per_da.percentiles.data[()],
+    }
     bfreq = _get_bootstrap_freq(kwargs["freq"])
     # Group input array in years, with an offset matching freq
     overlap_years_groups = overlap_da.resample(time=bfreq).groups

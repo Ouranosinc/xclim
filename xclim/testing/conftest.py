@@ -68,11 +68,10 @@ def is_matplotlib_installed(xdoctest_namespace) -> None:
 
     def _is_matplotlib_installed():
         try:
-            import matplotlib  # noqa
+            import matplotlib  # noqa: F401
 
-            return
         except ImportError:
-            return pytest.skip("This doctest requires matplotlib to be installed.")
+            pytest.skip("This doctest requires matplotlib to be installed.")
 
     xdoctest_namespace["is_matplotlib_installed"] = _is_matplotlib_installed
 
@@ -87,6 +86,8 @@ def doctest_setup(xdoctest_namespace, nimbus, worker_id, open_dataset) -> None:
     )
 
     class AttrDict(dict):
+        """A dictionary that allows access to its keys as attributes."""
+
         def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
             self.__dict__ = self

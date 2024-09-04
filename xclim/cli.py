@@ -14,6 +14,7 @@ import xarray as xr
 from dask.diagnostics.progress import ProgressBar
 
 import xclim as xc
+from xclim.core import MissingVariableError
 from xclim.core.dataflags import DataQualityException, data_flags, ecad_compliant
 from xclim.core.utils import InputKind
 from xclim.testing.utils import (
@@ -30,7 +31,7 @@ from xclim.testing.utils import (
 
 distributed = False
 try:
-    from dask.distributed import Client, progress
+    from dask.distributed import Client, progress  # pylint: disable=ungrouped-imports
 
     distributed = True
 except ImportError:  # noqa: S110
@@ -102,7 +103,7 @@ def _process_indicator(indicator, ctx, **params):
 
     try:
         out = indicator(**params)
-    except xc.core.utils.MissingVariableError as err:
+    except MissingVariableError as err:
         raise click.BadArgumentUsage(err.args[0])
 
     if isinstance(out, tuple):
@@ -392,7 +393,7 @@ class XclimCli(click.MultiCommand):
             "show_version_info",
         )
 
-    def get_command(self, ctx, name):
+    def get_command(self, ctx, cmd_name):
         """Return the requested command."""
         command = {
             "dataflags": dataflags,
@@ -401,9 +402,9 @@ class XclimCli(click.MultiCommand):
             "prefetch_testing_data": prefetch_testing_data,
             "release_notes": release_notes,
             "show_version_info": show_version_info,
-        }.get(name)
+        }.get(cmd_name)
         if command is None:
-            command = _create_command(name)
+            command = _create_command(cmd_name)
         return command
 
 

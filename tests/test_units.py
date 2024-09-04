@@ -11,6 +11,7 @@ from packaging.version import Version
 from pint import __version__ as __pint_version__
 
 from xclim import indices, set_options
+from xclim.core import Quantified, ValidationError
 from xclim.core.units import (
     amount2lwethickness,
     amount2rate,
@@ -28,7 +29,6 @@ from xclim.core.units import (
     units,
     units2pint,
 )
-from xclim.core.utils import Quantified, ValidationError
 
 
 class TestUnits:
@@ -358,6 +358,7 @@ def test_to_agg_units(in_u, opfunc, op, exp, exp_u):
         attrs={"units": in_u},
     )
 
+    # FIXME: This is emitting warnings from deprecated DataArray.argmax() usage.
     out = to_agg_units(getattr(da, opfunc)(), da, op)
     np.testing.assert_allclose(out, exp)
 

@@ -8,8 +8,7 @@ import pytest
 import xarray as xr
 
 from xclim import set_options
-from xclim.core import cfchecks, datachecks
-from xclim.core.utils import ValidationError
+from xclim.core import ValidationError, cfchecks, datachecks
 from xclim.indicators.atmos import tg_mean
 
 K2C = 273.15

@@ -10,7 +10,6 @@ from __future__ import annotations
 import datetime as pydt
 from collections.abc import Sequence
 from typing import Any, TypeVar
-from warnings import warn
 
 import cftime
 import numpy as np
@@ -21,9 +20,9 @@ from xarray.coding.cftimeindex import CFTimeIndex
 from xarray.core import dtypes
 from xarray.core.resample import DataArrayResample, DatasetResample
 
-from xclim.core.utils import DayOfYearStr, uses_dask
-
-from .formatting import update_xclim_history
+from xclim.core._types import DayOfYearStr
+from xclim.core.formatting import update_xclim_history
+from xclim.core.utils import uses_dask
 
 __all__ = [
     "DayOfYearStr",
@@ -33,18 +32,12 @@ __all__ = [
     "common_calendar",
     "compare_offsets",
     "construct_offset",
-    "convert_calendar",
     "convert_doy",
-    "date_range",
-    "date_range_like",
-    "datetime_to_decimal_year",
-    "days_in_year",
     "days_since_to_doy",
     "doy_from_string",
     "doy_to_days_since",
     "ensure_cftime_array",
     "get_calendar",
-    "interp_calendar",
     "is_offset_divisor",
     "max_doy",
     "parse_offset",
@@ -81,49 +74,27 @@ uniform_calendars = ("noleap", "all_leap", "365_day", "366_day", "360_day")
 DataType = TypeVar("DataType", xr.DataArray, xr.Dataset)
 
 
-def _get_usecf_and_warn(calendar: str, xcfunc: str, xrfunc: str):
-    if calendar == "default":
-        calendar = "standard"
-        use_cftime = False
-        msg = " and use use_cftime=False instead of calendar='default' to get numpy objects."
-    else:
-        use_cftime = None
-        msg = ""
-    warn(
-        f"`xclim` function {xcfunc} is deprecated in favour of {xrfunc} and will be removed in v0.51.0. Please adjust your script{msg}.",
-        FutureWarning,
-    )
-    return calendar, use_cftime
-
-
-def days_in_year(year: int, calendar: str = "proleptic_gregorian") -> int:
-    """Deprecated : use :py:func:`xarray.coding.calendar_ops._days_in_year` instead. Passing use_cftime=False instead of calendar='default'.
-
-    Return the number of days in the input year according to the input calendar.
-    """
-    calendar, usecf = _get_usecf_and_warn(
-        calendar, "days_in_year", "xarray.coding.calendar_ops._days_in_year"
-    )
-    return xr.coding.calendar_ops._days_in_year(year, calendar, use_cftime=usecf)
-
-
 def doy_from_string(doy: DayOfYearStr, year: int, calendar: str) -> int:
-    """Return the day-of-year corresponding to a "MM-DD" string for a given year and calendar."""
-    MM, DD = doy.split("-")
-    return datetime_classes[calendar](year, int(MM), int(DD)).timetuple().tm_yday
+    """Return the day-of-year corresponding to an "MM-DD" string for a given year and calendar.
 
+    Parameters
+    ----------
+    doy : str
+        The day of year in the format "MM-DD".
+    year : int
+        The year.
+    calendar : str
+        The calendar name.
 
-def date_range(*args, **kwargs) -> pd.DatetimeIndex | CFTimeIndex:
-    """Deprecated : use :py:func:`xarray.date_range` instead. Passing use_cftime=False instead of calendar='default'.
-
-    Wrap a Pandas date_range object.
-
-    Uses pd.date_range (if calendar == 'default') or xr.cftime_range (otherwise).
+    Returns
+    -------
+    int
+        The day of year.
     """
-    calendar, usecf = _get_usecf_and_warn(
-        kwargs.pop("calendar", "default"), "date_range", "xarray.date_range"
-    )
-    return xr.date_range(*args, calendar=calendar, use_cftime=usecf, **kwargs)
+    if len(doy.split("-")) != 2:
+        raise ValueError("Day of year must be in the format 'MM-DD'.")
+    mm, dd = doy.split("-")
+    return datetime_classes[calendar](year, int(mm), int(dd)).timetuple().tm_yday
 
 
 def get_calendar(obj: Any, dim: str = "time") -> str:
@@ -132,28 +103,28 @@ def get_calendar(obj: Any, dim: str = "time") -> str:
     Parameters
     ----------
     obj : Any
-      An object defining some date.
-      If `obj` is an array/dataset with a datetime coordinate, use `dim` to specify its name.
-      Values must have either a datetime64 dtype or a cftime dtype.
-      `obj` can also be a python datetime.datetime, a cftime object or a pandas Timestamp
-      or an iterable of those, in which case the calendar is inferred from the first value.
+        An object defining some date.
+        If `obj` is an array/dataset with a datetime coordinate, use `dim` to specify its name.
+        Values must have either a datetime64 dtype or a cftime dtype.
+        `obj` can also be a python datetime.datetime, a cftime object or a pandas Timestamp
+        or an iterable of those, in which case the calendar is inferred from the first value.
     dim : str
-      Name of the coordinate to check (if `obj` is a DataArray or Dataset).
+        Name of the coordinate to check (if `obj` is a DataArray or Dataset).
 
     Raises
     ------
     ValueError
-      If no calendar could be inferred.
+        If no calendar could be inferred.
 
     Returns
     -------
     str
-      The Climate and Forecasting (CF) calendar name.
-      Will always return "standard" instead of "gregorian", following CF conventions 1.9.
+        The Climate and Forecasting (CF) calendar name.
+        Will always return "standard" instead of "gregorian", following CF conventions 1.9.
     """
     if isinstance(obj, (xr.DataArray, xr.Dataset)):
         return obj[dim].dt.calendar
-    elif isinstance(obj, xr.CFTimeIndex):
+    if isinstance(obj, xr.CFTimeIndex):
         obj = obj.values[0]
     else:
         obj = np.take(obj, 0)
@@ -220,14 +191,15 @@ def common_calendar(calendars: Sequence[str], join="outer") -> str:
 def _convert_doy_date(doy: int, year: int, src, tgt):
     fracpart = doy - int(doy)
     date = src(year, 1, 1) + pydt.timedelta(days=int(doy - 1))
+
     try:
         same_date = tgt(date.year, date.month, date.day)
     except ValueError:
         return np.nan
-    else:
-        if tgt is pydt.datetime:
-            return float(same_date.timetuple().tm_yday) + fracpart
-        return float(same_date.dayofyr) + fracpart
+
+    if tgt is pydt.datetime:
+        return float(same_date.timetuple().tm_yday) + fracpart
+    return float(same_date.dayofyr) + fracpart
 
 
 def convert_doy(
@@ -243,21 +215,21 @@ def convert_doy(
     Parameters
     ----------
     source : xr.DataArray or xr.Dataset
-      Day of year data (range [1, 366], max depending on the calendar).
-      If a Dataset, the function is mapped to each variables with attribute `is_day_of_year == 1`.
+        Day of year data (range [1, 366], max depending on the calendar).
+        If a Dataset, the function is mapped to each variable with attribute `is_day_of_year == 1`.
     target_cal : str
-      Name of the calendar to convert to.
+        Name of the calendar to convert to.
     source_cal : str, optional
-      Calendar the doys are in. If not given, uses the "calendar" attribute of `source` or,
-      if absent, the calendar of its `dim` axis.
+        Calendar the doys are in. If not given, uses the "calendar" attribute of `source` or,
+        if absent, the calendar of its `dim` axis.
     align_on : {'date', 'year'}
-      If 'year' (default), the doy is seen as a "percentage" of the year and is simply rescaled unto the new doy range.
-      This always result in floating point data, changing the decimal part of the value.
-      if 'date', the doy is seen as a specific date. See notes. This never changes the decimal part of the value.
+        If 'year' (default), the doy is seen as a "percentage" of the year and is simply rescaled unto the new doy range.
+        This always result in floating point data, changing the decimal part of the value.
+        If 'date', the doy is seen as a specific date. See notes. This never changes the decimal part of the value.
     missing : Any
-      If `align_on` is "date" and the new doy doesn't exist in the new calendar, this value is used.
+        If `align_on` is "date" and the new doy doesn't exist in the new calendar, this value is used.
     dim : str
-      Name of the temporal dimension.
+        Name of the temporal dimension.
     """
     if isinstance(source, xr.Dataset):
         return source.map(
@@ -322,54 +294,6 @@ def convert_doy(
     return new_doy.assign_attrs(is_dayofyear=np.int32(1), calendar=target_cal)
 
 
-def convert_calendar(
-    source: xr.DataArray | xr.Dataset,
-    target: xr.DataArray | str,
-    align_on: str | None = None,
-    missing: Any | None = None,
-    doy: bool | str = False,
-    dim: str = "time",
-) -> DataType:
-    """Deprecated : use :py:meth:`xarray.Dataset.convert_calendar` or :py:meth:`xarray.DataArray.convert_calendar`
-    or :py:func:`xarray.coding.calendar_ops.convert_calendar` instead. Passing use_cftime=False instead of calendar='default'.
-
-    Convert a DataArray/Dataset to another calendar using the specified method.
-    """
-    if isinstance(target, xr.DataArray):
-        raise NotImplementedError(
-            "In `xclim` v0.50.0, `convert_calendar` is a direct copy of `xarray.coding.calendar_ops.convert_calendar`. "
-            "To retrieve the previous behaviour with target as a DataArray, convert the source first then reindex to the target."
-        )
-    if doy is not False:
-        raise NotImplementedError(
-            "In `xclim` v0.50.0, `convert_calendar` is a direct copy of `xarray.coding.calendar_ops.convert_calendar`. "
-            "To retrieve the previous behaviour of doy=True, do convert_doy(obj, target_cal).convert_cal(target_cal)."
-        )
-    target, _usecf = _get_usecf_and_warn(
-        target,
-        "convert_calendar",
-        "xarray.coding.calendar_ops.convert_calendar or obj.convert_calendar",
-    )
-    return xr.coding.calendar_ops.convert_calendar(
-        source, target, dim=dim, align_on=align_on, missing=missing
-    )
-
-
-def interp_calendar(
-    source: xr.DataArray | xr.Dataset,
-    target: xr.DataArray,
-    dim: str = "time",
-) -> xr.DataArray | xr.Dataset:
-    """Deprecated : use :py:func:`xarray.coding.calendar_ops.interp_calendar` instead.
-
-    Interpolates a DataArray/Dataset to another calendar based on decimal year measure.
-    """
-    _, _ = _get_usecf_and_warn(
-        "standard", "interp_calendar", "xarray.coding.calendar_ops.interp_calendar"
-    )
-    return xr.coding.calendar_ops.interp_calendar(source, target, dim=dim)
-
-
 def ensure_cftime_array(time: Sequence) -> np.ndarray | Sequence[cftime.datetime]:
     """Convert an input 1D array to a numpy array of cftime objects.
 
@@ -403,21 +327,6 @@ def ensure_cftime_array(time: Sequence) -> np.ndarray | Sequence[cftime.datetime
     raise ValueError("Unable to cast array to cftime dtype")
 
 
-def datetime_to_decimal_year(times: xr.DataArray, calendar: str = "") -> xr.DataArray:
-    """Deprecated : use :py:func:`xarray.coding.calendar_ops_datetime_to_decimal_year` instead.
-
-    Convert a datetime xr.DataArray to decimal years according to its calendar or the given one.
-    """
-    _, _ = _get_usecf_and_warn(
-        "standard",
-        "datetime_to_decimal_year",
-        "xarray.coding.calendar_ops._datetime_to_decimal_year",
-    )
-    return xr.coding.calendar_ops._datetime_to_decimal_year(
-        times, dim="time", calendar=calendar
-    )
-
-
 @update_xclim_history
 def percentile_doy(
     arr: xr.DataArray,
@@ -437,11 +346,11 @@ def percentile_doy(
     Parameters
     ----------
     arr : xr.DataArray
-      Input data, a daily frequency (or coarser) is required.
+        Input data, a daily frequency (or coarser) is required.
     window : int
-      Number of time-steps around each day of the year to include in the calculation.
+        Number of time-steps around each day of the year to include in the calculation.
     per : float or sequence of floats
-      Percentile(s) between [0, 100]
+        Percentile(s) between [0, 100]
     alpha : float
         Plotting position parameter.
     beta : float
@@ -486,7 +395,7 @@ def percentile_doy(
         # Preserve chunk size
         time_chunks_count = len(arr.chunks[arr.get_axis_num("time")])
         doy_chunk_size = np.ceil(len(rrr.dayofyear) / (window * time_chunks_count))
-        rrr = rrr.chunk(dict(stack_dim=-1, dayofyear=doy_chunk_size))
+        rrr = rrr.chunk({"stack_dim": -1, "dayofyear": doy_chunk_size})
 
     if np.isscalar(per):
         per = [per]
@@ -497,10 +406,10 @@ def percentile_doy(
         input_core_dims=[["stack_dim"]],
         output_core_dims=[["percentiles"]],
         keep_attrs=True,
-        kwargs=dict(percentiles=per, alpha=alpha, beta=beta, copy=copy),
+        kwargs={"percentiles": per, "alpha": alpha, "beta": beta, "copy": copy},
         dask="parallelized",
         output_dtypes=[rrr.dtype],
-        dask_gufunc_kwargs=dict(output_sizes={"percentiles": len(per)}),
+        dask_gufunc_kwargs={"output_sizes": {"percentiles": len(per)}},
     )
     p = p.assign_coords(percentiles=xr.DataArray(per, dims=("percentiles",)))
 
@@ -629,7 +538,7 @@ def construct_offset(mult: int, base: str, start_anchored: bool, anchor: str | N
     Returns
     -------
     str
-      An offset string, conformant to pandas-like naming conventions.
+        An offset string, conformant to pandas-like naming conventions.
 
     Notes
     -----
@@ -735,7 +644,7 @@ def _interpolate_doy_calendar(
     da = source
     if uses_dask(source):
         # interpolate_na cannot run on chunked dayofyear.
-        da = source.chunk(dict(dayofyear=-1))
+        da = source.chunk({"dayofyear": -1})
     filled_na = da.interpolate_na(dim="dayofyear")
 
     # Interpolate to target dayofyear range
@@ -1073,7 +982,7 @@ def doy_to_days_since(
 
     Examples
     --------
-    >>> from xarray import DataArray
+    >>> from xarray import DataArray, date_range
     >>> time = date_range("2020-07-01", "2021-07-01", freq="YS-JUL")
     >>> # July 8th 2020 and Jan 2nd 2022
     >>> da = DataArray([190, 2], dims=("time",), coords={"time": time})
@@ -1129,11 +1038,11 @@ def days_since_to_doy(
     Returns
     -------
     xr.DataArray
-      Same shape as `da`, values as `day of year`.
+        Same shape as `da`, values as `day of year`.
 
     Examples
     --------
-    >>> from xarray import DataArray
+    >>> from xarray import DataArray, date_range
     >>> time = date_range("2020-07-01", "2021-07-01", freq="YS-JUL")
     >>> da = DataArray(
     ...     [-86, 92],
@@ -1167,19 +1076,6 @@ def days_since_to_doy(
     )
     out.attrs.update(calendar=calendar, is_dayofyear=1)
     return out.convert_calendar(base_calendar).rename(da.name)
-
-
-def date_range_like(source: xr.DataArray, calendar: str) -> xr.DataArray:
-    """Deprecated : use :py:func:`xarray.date_range_like` instead. Passing use_cftime=False instead of calendar='default'.
-
-    Generate a datetime array with the same frequency, start and end as another one, but in a different calendar.
-    """
-    calendar, usecf = _get_usecf_and_warn(
-        calendar, "date_range_like", "xarray.date_range_like"
-    )
-    return xr.coding.calendar_ops.date_range_like(
-        source=source, calendar=calendar, use_cftime=usecf
-    )
 
 
 def select_time(
@@ -1397,7 +1293,8 @@ def stack_periods(
         If ``stride`` is a divisor of ``window``, the correct timeseries can be reconstructed with :py:func:`unstack_periods`.
         The coordinate of `period` is the first timestep of each window.
     """
-    from xclim.core.units import (  # Import in function to avoid cyclical imports
+    # Import in function to avoid cyclical imports
+    from xclim.core.units import (  # pylint: disable=import-outside-toplevel
         ensure_cf_units,
         infer_sampling_units,
     )
@@ -1574,7 +1471,9 @@ def unstack_periods(da: xr.DataArray | xr.Dataset, dim: str = "period"):
          0   o   o   o   x   x
         === === === === === === === ===
     """
-    from xclim.core.units import infer_sampling_units
+    from xclim.core.units import (  # pylint: disable=import-outside-toplevel
+        infer_sampling_units,
+    )
 
     try:
         starts = da[dim]
