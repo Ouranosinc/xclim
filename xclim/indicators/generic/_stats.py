@@ -9,10 +9,14 @@ __all__ = ["fit", "return_level", "stats"]
 
 
 class Generic(ReducingIndicator):
+    """Generic class."""
+
     realm = "generic"
 
 
 class GenericResampling(ResamplingIndicator):
+    """Generic Resampling class."""
+
     realm = "generic"
 
 
@@ -50,5 +54,5 @@ stats = GenericResampling(
     long_name="{op:noun} of variable",
     description="{freq} {op:noun} of variable ({indexer}).",
     compute=select_resample_op,
-    parameters=dict(out_units=None),
+    parameters={"out_units": None},
 )

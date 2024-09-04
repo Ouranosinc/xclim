@@ -15,7 +15,7 @@
 # A comma-separated list of package or module names from where C extensions may
 # be loaded. Extensions are loading into the active Python interpreter and may
 # run arbitrary code.
-# extension-pkg-allow-list =
+extension-pkg-allow-list = ["cftime"]
 
 # A comma-separated list of package or module names from where C extensions may
 # be loaded. Extensions are loading into the active Python interpreter and may
@@ -36,7 +36,7 @@ fail-under = 10
 # from-stdin =
 
 # Files or directories to be skipped. They should be base names, not paths.
-ignore = ["CVS"]
+ignore = ["CVS", "conftest.py"]
 
 # Add files or directories matching the regular expressions patterns to the
 # ignore-list. The regex matches against paths and can be in Posix or Windows
@@ -62,7 +62,7 @@ ignored-modules = ["xclim.indicators"]
 # Use multiple processes to speed up Pylint. Specifying 0 will auto-detect the
 # number of processors available to use, and will cap the count on Windows to
 # avoid hangs.
-jobs = 1
+jobs = 4
 
 # Control the amount of potential inferred values when inferring a single object.
 # This can help the performance when dealing with large functions or complex,
@@ -78,7 +78,7 @@ persistent = true
 
 # Minimum Python version to use for version dependent checks. Will default to the
 # version used to run pylint.
-py-version = "3.8"
+py-version = "3.9"
 
 # Discover python modules and packages in the file system subtree.
 # recursive =
@@ -253,13 +253,13 @@ max-args = 15
 max-attributes = 7
 
 # Maximum number of boolean expressions in an if statement (see R0916).
-max-bool-expr = 5
+max-bool-expr = 10
 
 # Maximum number of branch for function / method body.
 max-branches = 30
 
 # Maximum number of locals for function / method body.
-max-locals = 50
+max-locals = 75
 
 # Maximum number of parents for a class (see R0901).
 max-parents = 7
@@ -268,7 +268,7 @@ max-parents = 7
 max-public-methods = 20
 
 # Maximum number of return / yield for function / method body.
-max-returns = 13
+max-returns = 15
 
 # Maximum number of statements in function / method body.
 max-statements = 100
@@ -295,10 +295,10 @@ indent-after-paren = 4
 indent-string = "    "
 
 # Maximum number of characters on a single line.
-max-line-length = 150
+max-line-length = 200
 
 # Maximum number of lines in a module.
-max-module-lines = 1500
+max-module-lines = 2000
 
 # Allow the body of a class to be on the same line as the declaration if body
 # contains single statement.
@@ -373,6 +373,7 @@ disable = [
     "invalid-name",
     "invalid-unary-operand-type",
     "locally-disabled",
+    "missing-function-docstring",
     "missing-module-docstring",
     "no-member",
     "protected-access",

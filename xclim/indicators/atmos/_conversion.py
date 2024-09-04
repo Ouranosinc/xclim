@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from inspect import _empty  # noqa
-
 from xclim import indices
 from xclim.core.cfchecks import cfcheck_from_name
 from xclim.core.indicator import Indicator
