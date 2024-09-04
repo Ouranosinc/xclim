@@ -359,7 +359,9 @@ def kmeans_reduce_ensemble(
     z = z * variable_weights
     rsq = _calc_rsq(z, method, make_graph, n_sim, random_state, sample_weights)
 
-    n_clusters = _get_nclust(method, n_sim, rsq, max_clusters)
+    n_clusters = _get_nclust(
+        method=method, n_sim=n_sim, rsq=rsq, max_clusters=max_clusters
+    )
 
     if make_graph:
         fig_data["method"] = method
@@ -423,27 +425,27 @@ def _calc_rsq(z, method, make_graph, n_sim, random_state, sample_weights):
     rsq = None
     if list(method.keys())[0] != "n_clusters" or make_graph is True:
         # generate r2 profile data
-        sumd = np.zeros(shape=n_sim) + np.nan
-        for nclust in range(n_sim):
+        sum_d = np.zeros(shape=n_sim) + np.nan
+        for n_clust in range(n_sim):
             # This is k-means with only 10 iterations, to limit the computation times
             kmeans = KMeans(
-                n_clusters=nclust + 1,
+                n_clusters=n_clust + 1,
                 n_init=15,
                 max_iter=300,
                 random_state=random_state,
             )
             kmeans = kmeans.fit(z, sample_weight=sample_weights)
-            sumd[nclust] = (
+            sum_d[n_clust] = (
                 kmeans.inertia_
             )  # sum of the squared distance between each simulation and the nearest cluster centroid
 
         # R² of the groups vs. the full ensemble
-        rsq = (sumd[0] - sumd) / sumd[0]
+        rsq = (sum_d[0] - sum_d) / sum_d[0]
 
     return rsq
 
 
-def _get_nclust(method=None, n_sim=None, rsq=None, max_clusters=None):
+def _get_nclust(method: dict, n_sim, rsq, max_clusters):
     """Sub-function to kmeans_reduce_ensemble. Determine number of clusters to create depending on various methods."""
     # if we actually need to find the optimal number of clusters, this is where it is done
     if list(method.keys())[0] == "rsq_cutoff":
@@ -462,7 +464,7 @@ def _get_nclust(method=None, n_sim=None, rsq=None, max_clusters=None):
     elif list(method.keys())[0] == "n_clusters":
         n_clusters = method["n_clusters"]
     else:
-        raise Exception(f"Unknown selection method : {list(method.keys())}")
+        raise KeyError(f"Unknown selection method : {list(method.keys())}")
     if n_clusters > max_clusters:
         warn(
             f"{n_clusters} clusters has been found to be the optimal number of clusters, but limiting "

@@ -7,6 +7,7 @@ from typing import Literal
 import numpy as np
 import xarray
 
+from xclim.core import DayOfYearStr, Quantified
 from xclim.core.calendar import doy_from_string, get_calendar
 from xclim.core.missing import at_least_n_valid
 from xclim.core.units import (
@@ -18,10 +19,8 @@ from xclim.core.units import (
     to_agg_units,
     units2pint,
 )
-from xclim.core.utils import DayOfYearStr, Quantified
-
-from . import run_length as rl
-from .generic import (
+from xclim.indices import run_length as rl
+from xclim.indices.generic import (
     compare,
     cumulative_difference,
     domain_count,
@@ -3090,11 +3089,12 @@ def degree_days_exceedance_date(
         if never_reached is None:
             # This is slightly faster in numpy and generates fewer tasks in dask
             return out
-        never_reached_val = (
-            doy_from_string(never_reached, grp.time.dt.year[0], grp.time.dt.calendar)
-            if isinstance(never_reached, str)
-            else never_reached
-        )
+        if isinstance(never_reached, str):
+            never_reached_val = doy_from_string(
+                DayOfYearStr(never_reached), grp.time.dt.year[0], grp.time.dt.calendar
+            )
+        else:
+            never_reached_val = never_reached
         return xarray.where((cumsum <= sum_thresh).all("time"), never_reached_val, out)
 
     dded = c.clip(0).resample(time=freq).map(_exceedance_date)

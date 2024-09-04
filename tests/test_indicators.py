@@ -14,6 +14,7 @@ import xarray as xr
 
 import xclim
 from xclim import __version__, atmos
+from xclim.core import VARIABLES, MissingVariableError, Quantified
 from xclim.core.calendar import select_time
 from xclim.core.formatting import (
     AttrFormatter,
@@ -24,7 +25,7 @@ from xclim.core.formatting import (
 )
 from xclim.core.indicator import Daily, Indicator, ResamplingIndicator, registry
 from xclim.core.units import convert_units_to, declare_units, units
-from xclim.core.utils import VARIABLES, InputKind, MissingVariableError, Quantified
+from xclim.core.utils import InputKind
 from xclim.indices import tg_mean
 from xclim.testing import list_input_variables
 

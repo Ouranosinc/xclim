@@ -28,8 +28,13 @@ from __future__ import annotations
 import numpy as np
 import xarray as xr
 
-from .calendar import get_calendar, is_offset_divisor, parse_offset, select_time
-from .options import (
+from xclim.core.calendar import (
+    get_calendar,
+    is_offset_divisor,
+    parse_offset,
+    select_time,
+)
+from xclim.core.options import (
     CHECK_MISSING,
     MISSING_METHODS,
     MISSING_OPTIONS,
@@ -298,7 +303,7 @@ class MissingWMO(MissingAny):
         return MissingAny(mda, freq, "ME", **indexer)()
 
     def is_missing(self, null, count, nm=11, nc=5):
-        from ..indices import (
+        from xclim.indices import (
             run_length as rl,  # pylint: disable=import-outside-toplevel
         )
 
@@ -399,7 +404,7 @@ class AtLeastNValid(MissingBase):
 
 
 @register_missing_method("skip")
-class Skip(MissingBase):
+class Skip(MissingBase):  # pylint: disable=missing-class-docstring
     def __init__(self, da, freq=None, src_timestep=None, **indexer):
         pass
 
@@ -445,7 +450,7 @@ def missing_any(da, freq, src_timestep=None, **indexer):  # noqa: D103
 def missing_wmo(da, freq, nm=11, nc=5, src_timestep=None, **indexer):  # noqa: D103
     src_timestep = src_timestep or xr.infer_freq(da.time)
     return MissingWMO.execute(
-        da, freq, src_timestep, options=dict(nm=nm, nc=nc), indexer=indexer
+        da, freq, src_timestep, options={"nm": nm, "nc": nc}, indexer=indexer
     )
 
 

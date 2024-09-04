@@ -5,8 +5,9 @@ from typing import cast
 
 import numpy as np
 import xarray as xr
-from numba import float32, float64, vectorize  # noqa
+from numba import vectorize
 
+from xclim.core import Quantified
 from xclim.core.units import (
     amount2rate,
     convert_units_to,
@@ -15,7 +16,6 @@ from xclim.core.units import (
     rate2flux,
     units2pint,
 )
-from xclim.core.utils import Quantified
 from xclim.indices.helpers import (
     _gather_lat,
     _gather_lon,
@@ -773,11 +773,11 @@ def specific_humidity_from_dewpoint(
     ----------
     :cite:cts:`world_meteorological_organization_guide_2008`
     """
-    ε = 0.6219569  # weight of water vs dry air []
+    EPSILON = 0.6219569  # weight of water vs dry air []
     e = saturation_vapor_pressure(tas=tdps, method=method)  # vapour pressure [Pa]
     ps = convert_units_to(ps, "Pa")  # total air pressure
 
-    q: xr.DataArray = ε * e / (ps - e * (1 - ε))
+    q: xr.DataArray = EPSILON * e / (ps - e * (1 - EPSILON))
     q = q.assign_attrs(units="")
     return q
 
@@ -1538,12 +1538,13 @@ def potential_evapotranspiration(
     elif method in ["allen98", "FAO_PM98"]:
         _tasmax = convert_units_to(tasmax, "degC")
         _tasmin = convert_units_to(tasmin, "degC")
+
         if sfcWind is None:
             raise ValueError("Wind speed is required for Allen98 method.")
-        else:
-            # wind speed at two meters
-            wa2 = wind_speed_height_conversion(sfcWind, h_source="10 m", h_target="2 m")
-            wa2 = convert_units_to(wa2, "m s-1")
+
+        # wind speed at two meters
+        wa2 = wind_speed_height_conversion(sfcWind, h_source="10 m", h_target="2 m")
+        wa2 = convert_units_to(wa2, "m s-1")
 
         with xr.set_options(keep_attrs=True):
             # mean temperature [degC]
@@ -1583,12 +1584,7 @@ def potential_evapotranspiration(
     return out
 
 
-@vectorize(
-    # [
-    #     float64(float64, float64, float64, float64),
-    #     float32(float32, float32, float32, float32),
-    # ],
-)
+@vectorize
 def _utci(tas, sfcWind, dt, wvp):
     """Return the empirical polynomial function for UTCI. See :py:func:`universal_thermal_climate_index`."""
     # Taken directly from the original Fortran code by Peter Bröde.
@@ -2133,8 +2129,7 @@ def wind_profile(
         out: xr.DataArray = wind_speed * (h / h_r) ** alpha
         out = out.assign_attrs(units=wind_speed.attrs["units"])
         return out
-    else:
-        raise NotImplementedError(f"Method {method} not implemented.")
+    raise NotImplementedError(f"Method {method} not implemented.")
 
 
 @declare_units(
