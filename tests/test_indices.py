@@ -24,9 +24,10 @@ from packaging.version import Version
 from pint import __version__ as __pint_version__
 
 from xclim import indices as xci
+from xclim.core import ValidationError
 from xclim.core.calendar import percentile_doy
 from xclim.core.options import set_options
-from xclim.core.units import ValidationError, convert_units_to, units
+from xclim.core.units import convert_units_to, units
 
 K2C = 273.15
 
@@ -2562,12 +2563,14 @@ class TestTG:
         out = ind(ds.tas.sel(location="Victoria"))
         np.testing.assert_almost_equal(out[0], exp, decimal=4)
 
-    def test_indice_against_icclim(self, cmip3_day_tas):
+    def test_indice_against_icclim(self, open_dataset):
         from xclim.indicators import icclim  # noqa
 
+        cmip3_tas = open_dataset("cmip3/tas.sresb1.giss_model_e_r.run1.atm.da.nc").tas
+
         with set_options(cf_compliance="log"):
-            ind = xci.tg_mean(cmip3_day_tas)
-            icclim = icclim.TG(cmip3_day_tas)
+            ind = xci.tg_mean(cmip3_tas)
+            icclim = icclim.TG(cmip3_tas)
 
         np.testing.assert_array_equal(icclim, ind)
 

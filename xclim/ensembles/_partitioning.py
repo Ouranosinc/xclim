@@ -13,6 +13,7 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 
+# pylint: disable=pointless-string-statement
 """
 Implemented partitioning algorithms:
 
@@ -49,6 +50,7 @@ Related bixtex entries:
  - lehner_2020
  - evin_2019
 """
+# pylint: enable=pointless-string-statement
 
 # TODO: Add ref for Brekke and Barsugli (2013)
 
@@ -197,7 +199,7 @@ def hawkins_sutton_09_weighting(da, obs, baseline=("1971", "2000")):
 
 def lafferty_sriver(
     da: xr.DataArray,
-    sm: xr.DataArray = None,
+    sm: xr.DataArray | None = None,
     bb13: bool = False,
 ) -> tuple[xr.DataArray, xr.DataArray]:
     """Return the mean and partitioned variance of an ensemble based on method from Lafferty and Sriver (2023).

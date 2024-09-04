@@ -11,17 +11,27 @@ import warnings
 
 import click
 import xarray as xr
-from dask.diagnostics import ProgressBar
+from dask.diagnostics.progress import ProgressBar
 
 import xclim as xc
+from xclim.core import MissingVariableError
 from xclim.core.dataflags import DataQualityException, data_flags, ecad_compliant
 from xclim.core.utils import InputKind
-from xclim.testing.helpers import TESTDATA_BRANCH, populate_testing_data
-from xclim.testing.utils import _default_cache_dir, publish_release_notes, show_versions
+from xclim.testing.utils import (
+    TESTDATA_BRANCH,
+    TESTDATA_CACHE_DIR,
+    TESTDATA_REPO_URL,
+    default_testdata_cache,
+    default_testdata_repo_url,
+    default_testdata_version,
+    populate_testing_data,
+    publish_release_notes,
+    show_versions,
+)
 
 distributed = False
 try:
-    from dask.distributed import Client, progress
+    from dask.distributed import Client, progress  # pylint: disable=ungrouped-imports
 
     distributed = True
 except ImportError:  # noqa: S110
@@ -93,7 +103,7 @@ def _process_indicator(indicator, ctx, **params):
 
     try:
         out = indicator(**params)
-    except xc.core.utils.MissingVariableError as err:
+    except MissingVariableError as err:
         raise click.BadArgumentUsage(err.args[0])
 
     if isinstance(out, tuple):
@@ -152,24 +162,46 @@ def show_version_info(ctx):
 
 @click.command(short_help="Prefetch xclim testing data for development purposes.")
 @click.option(
+    "-r",
+    "--repo",
+    help="The xclim-testdata repo to be fetched and cached. If not specified, defaults to "
+    f"`XCLIM_TESTDATA_REPO_URL` (if set) or `{default_testdata_repo_url}`.",
+)
+@click.option(
     "-b",
     "--branch",
     help="The xclim-testdata branch to be fetched and cached. If not specified, defaults to "
-    "`XCLIM_TESTING_DATA_BRANCH` (if set) or `main`.",
+    f"`XCLIM_TESTDATA_BRANCH` (if set) or `{default_testdata_version}`.",
+)
+@click.option(
+    "-c",
+    "--cache-dir",
+    help="The xclim-testdata branch to be fetched and cached. If not specified, defaults to "
+    f"`XCLIM_TESTDATA_CACHE` (if set) or `{default_testdata_cache}`.",
 )
 @click.pass_context
-def prefetch_testing_data(ctx, branch):
+def prefetch_testing_data(ctx, repo, branch, cache_dir):
     """Prefetch xclim testing data for development purposes."""
+    if repo:
+        testdata_repo = repo
+    else:
+        testdata_repo = TESTDATA_REPO_URL
     if branch:
         testdata_branch = branch
     else:
         testdata_branch = TESTDATA_BRANCH
+    if cache_dir:
+        testdata_cache_dir = cache_dir
+    else:
+        testdata_cache_dir = TESTDATA_CACHE_DIR
 
+    click.echo(f"Gathering testing data from {testdata_repo}/{testdata_branch} ...")
     click.echo(
-        f"Gathering testing data from xclim-testdata `{testdata_branch}` branch..."
+        populate_testing_data(
+            repo=testdata_repo, branch=testdata_branch, local_cache=testdata_cache_dir
+        )
     )
-    click.echo(populate_testing_data(branch=testdata_branch))
-    click.echo(f"Testing data saved to `{_default_cache_dir}`.")
+    click.echo(f"Testing data saved to `{testdata_cache_dir}`.")
     ctx.exit()
 
 
@@ -361,7 +393,7 @@ class XclimCli(click.MultiCommand):
             "show_version_info",
         )
 
-    def get_command(self, ctx, name):
+    def get_command(self, ctx, cmd_name):
         """Return the requested command."""
         command = {
             "dataflags": dataflags,
@@ -370,9 +402,9 @@ class XclimCli(click.MultiCommand):
             "prefetch_testing_data": prefetch_testing_data,
             "release_notes": release_notes,
             "show_version_info": show_version_info,
-        }.get(name)
+        }.get(cmd_name)
         if command is None:
-            command = _create_command(name)
+            command = _create_command(cmd_name)
         return command
 
 

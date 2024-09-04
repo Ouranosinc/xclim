@@ -458,7 +458,7 @@ def kolmogorov_smirnov(x: np.ndarray, y: np.ndarray) -> float:
 
         return np.max(np.abs(cx - cy))
 
-    return max(pivot(x, y), pivot(y, x))
+    return max(pivot(x, y), pivot(y, x))  # pylint: disable=arguments-out-of-order
 
 
 @metric
