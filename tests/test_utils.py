@@ -5,20 +5,8 @@ from __future__ import annotations
 import numpy as np
 import xarray as xr
 
-from xclim.core.utils import (
-    _chunk_like,
-    ensure_chunk_size,
-    nan_calc_percentiles,
-    walk_map,
-)
+from xclim.core.utils import _chunk_like, ensure_chunk_size, nan_calc_percentiles
 from xclim.testing.helpers import test_timeseries as _test_timeseries
-
-
-def test_walk_map():
-    d = {"a": -1, "b": {"c": -2}}
-    o = walk_map(d, lambda x: 0)
-    assert o["a"] == 0
-    assert o["b"]["c"] == 0
 
 
 def test_ensure_chunk_size():

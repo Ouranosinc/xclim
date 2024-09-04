@@ -340,10 +340,10 @@ def ensemble_percentiles(
             input_core_dims=[["realization"]],
             output_core_dims=[["percentiles"]],
             keep_attrs=True,
-            kwargs=dict(percentiles=values, alpha=alpha, beta=beta),
+            kwargs={"percentiles": values, "alpha": alpha, "beta": beta},
             dask="parallelized",
             output_dtypes=[ens.dtype],
-            dask_gufunc_kwargs=dict(output_sizes={"percentiles": len(values)}),
+            dask_gufunc_kwargs={"output_sizes": {"percentiles": len(values)}},
         )
     else:
         if method != "linear":

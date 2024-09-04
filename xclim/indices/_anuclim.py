@@ -6,6 +6,7 @@ from typing import Callable, cast
 import numpy as np
 import xarray
 
+from xclim.core import Quantified
 from xclim.core.units import (
     convert_units_to,
     declare_units,
@@ -13,16 +14,15 @@ from xclim.core.units import (
     units,
     units2pint,
 )
-from xclim.core.utils import Quantified, ensure_chunk_size
-
-from ._multivariate import (
+from xclim.core.utils import ensure_chunk_size
+from xclim.indices._multivariate import (
     daily_temperature_range,
     extreme_temperature_range,
     precip_accumulation,
 )
-from ._simple import tg_mean
-from .generic import select_resample_op
-from .run_length import lazy_indexing
+from xclim.indices._simple import tg_mean
+from xclim.indices.generic import select_resample_op
+from xclim.indices.run_length import lazy_indexing
 
 # Frequencies : YS: year start, QS-DEC: seasons starting in december, MS: month start
 # See http://pandas.pydata.org/pandas-docs/stable/timeseries.html#offset-aliases
@@ -575,7 +575,7 @@ def _to_quarter(
     """
     if pr is not None and tas is not None:
         raise ValueError("Supply only one variable, 'tas' (exclusive) or 'pr'.")
-    elif tas is not None:
+    if tas is not None:
         ts_var = tas
     elif pr is not None:
         ts_var = pr

@@ -47,7 +47,7 @@ def _concat_hist(da: xr.DataArray, **hist) -> xr.DataArray:
         raise ValueError("Too many values in hist scenario.")
 
     # Scenario dimension, and name of the historical scenario
-    ((dim, _),) = hist.items()
+    ((dim, _),) = hist.items()  # pylint: disable=unbalanced-dict-unpacking
 
     # Select historical scenario and drop it from the data
     h = da.sel(drop=True, **hist).dropna("time", how="all")
