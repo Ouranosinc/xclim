@@ -8,12 +8,12 @@ import xarray as xr
 import yamale
 from yaml import safe_load
 
-import xclim.core.utils
 from xclim import indicators
+from xclim.core import VARIABLES
 from xclim.core.indicator import build_indicator_module_from_yaml
 from xclim.core.locales import read_locale_file
 from xclim.core.options import set_options
-from xclim.core.utils import VARIABLES, InputKind, load_module
+from xclim.core.utils import InputKind, adapt_clix_meta_yaml, load_module
 
 
 def all_virtual_indicators():
@@ -201,7 +201,7 @@ indices:
     def test_simple_clix_meta_adaptor(self, tmp_path):
         test_yaml = tmp_path.joinpath("test.yaml")
 
-        xclim.core.utils.adapt_clix_meta_yaml(self.cdd, test_yaml)
+        adapt_clix_meta_yaml(self.cdd, test_yaml)
 
         converted = safe_load(Path(test_yaml).open())
         assert "cdd" in converted["indicators"]

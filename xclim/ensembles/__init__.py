@@ -10,15 +10,23 @@ or models are concatenated along the `realization` dimension.
 
 from __future__ import annotations
 
-from ._base import create_ensemble, ensemble_mean_std_max_min, ensemble_percentiles
-from ._partitioning import fractional_uncertainty, hawkins_sutton, lafferty_sriver
-from ._reduce import (
+from xclim.ensembles._base import (
+    create_ensemble,
+    ensemble_mean_std_max_min,
+    ensemble_percentiles,
+)
+from xclim.ensembles._partitioning import (
+    fractional_uncertainty,
+    hawkins_sutton,
+    lafferty_sriver,
+)
+from xclim.ensembles._reduce import (
     kkz_reduce_ensemble,
     kmeans_reduce_ensemble,
     make_criteria,
     plot_rsqprofile,
 )
-from ._robustness import (
+from xclim.ensembles._robustness import (
     robustness_categories,
     robustness_coefficient,
     robustness_fractions,

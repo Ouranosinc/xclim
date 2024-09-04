@@ -32,7 +32,7 @@ def _adapt_freq_hist(ds: xr.Dataset, adapt_freq_thresh: str):
         thresh = convert_units_to(adapt_freq_thresh, ds.ref)
     dim = ["time"] + ["window"] * ("window" in ds.hist.dims)
     return _adapt_freq.func(
-        xr.Dataset(dict(sim=ds.hist, ref=ds.ref)), thresh=thresh, dim=dim
+        xr.Dataset({"sim": ds.hist, "ref": ds.ref}), thresh=thresh, dim=dim
     ).sim_ad
 
 
@@ -96,7 +96,7 @@ def dqm_train(
     mu_hist = ds.hist.mean(dim)
     scaling = u.get_correction(mu_hist, mu_ref, kind=kind)
 
-    return xr.Dataset(data_vars=dict(af=af, hist_q=hist_q, scaling=scaling))
+    return xr.Dataset(data_vars={"af": af, "hist_q": hist_q, "scaling": scaling})
 
 
 @map_groups(
@@ -151,7 +151,7 @@ def eqm_train(
 
     af = u.get_correction(hist_q, ref_q, kind)
 
-    return xr.Dataset(data_vars=dict(af=af, hist_q=hist_q))
+    return xr.Dataset(data_vars={"af": af, "hist_q": hist_q})
 
 
 def _npdft_train(ref, hist, rots, quantiles, method, extrap, n_escore, standardize):
@@ -180,8 +180,8 @@ def _npdft_train(ref, hist, rots, quantiles, method, extrap, n_escore, standardi
         ref_step, hist_step = (
             int(np.ceil(arr.shape[1] / n_escore)) for arr in [ref, hist]
         )
-    for ii in range(len(rots)):
-        rot = rots[0] if ii == 0 else rots[ii] @ rots[ii - 1].T
+    for ii, _rot in enumerate(rots):
+        rot = _rot if ii == 0 else _rot @ rots[ii - 1].T
         ref, hist = rot @ ref, rot @ hist
         # loop over variables
         for iv in range(ref.shape[0]):
@@ -293,7 +293,7 @@ def mbcn_train(
         escores_l.append(escores.expand_dims({gr_dim: [ib]}))
     af_q = xr.concat(af_q_l, dim=gr_dim)
     escores = xr.concat(escores_l, dim=gr_dim)
-    out = xr.Dataset(dict(af_q=af_q, escores=escores)).assign_coords(
+    out = xr.Dataset({"af_q": af_q, "escores": escores}).assign_coords(
         {"quantiles": quantiles, gr_dim: gw_idxs[gr_dim].values}
     )
     return out
@@ -317,8 +317,8 @@ def _npdft_adjust(sim, af_q, rots, quantiles, method, extrap):
         sim = sim[:, np.newaxis, :]
 
     # adjust npdft
-    for ii in range(len(rots)):
-        rot = rots[0] if ii == 0 else rots[ii] @ rots[ii - 1].T
+    for ii, _rot in enumerate(rots):
+        rot = _rot if ii == 0 else _rot @ rots[ii - 1].T
         sim = np.einsum("ij,j...->i...", rot, sim)
         # loop over variables
         for iv in range(sim.shape[0]):
@@ -597,7 +597,7 @@ def qdm_adjust(ds: xr.Dataset, *, group, interp, extrapolation, kind) -> xr.Data
         extrapolation=extrapolation,
     )
     scen = u.apply_correction(ds.sim, af, kind)
-    return xr.Dataset(dict(scen=scen, sim_q=sim_q))
+    return xr.Dataset({"scen": scen, "sim_q": sim_q})
 
 
 @map_blocks(
@@ -1118,13 +1118,13 @@ def otc_adjust(
         _otc_adjust,
         hist,
         ref,
-        kwargs=dict(
-            bin_width=bin_width,
-            bin_origin=bin_origin,
-            num_iter_max=num_iter_max,
-            jitter_inside_bins=jitter_inside_bins,
-            normalization=normalization,
-        ),
+        kwargs={
+            "bin_width": bin_width,
+            "bin_origin": bin_origin,
+            "num_iter_max": num_iter_max,
+            "jitter_inside_bins": jitter_inside_bins,
+            "normalization": normalization,
+        },
         input_core_dims=[["dim_hist", pts_dim], ["dim_ref", pts_dim]],
         output_core_dims=[["dim_hist", pts_dim]],
         keep_attrs=True,
@@ -1365,15 +1365,15 @@ def dotc_adjust(
         sim,
         ref,
         hist,
-        kwargs=dict(
-            bin_width=bin_width,
-            bin_origin=bin_origin,
-            num_iter_max=num_iter_max,
-            cov_factor=cov_factor,
-            jitter_inside_bins=jitter_inside_bins,
-            kind=kind,
-            normalization=normalization,
-        ),
+        kwargs={
+            "bin_width": bin_width,
+            "bin_origin": bin_origin,
+            "num_iter_max": num_iter_max,
+            "cov_factor": cov_factor,
+            "jitter_inside_bins": jitter_inside_bins,
+            "kind": kind,
+            "normalization": normalization,
+        },
         input_core_dims=[
             ["dim_sim", pts_dim],
             ["dim_ref", pts_dim],
