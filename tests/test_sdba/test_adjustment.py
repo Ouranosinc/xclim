@@ -903,9 +903,11 @@ class TestOTC:
         assert not np.isin(hist.x[hist.x.isnull()].time.values, scen.time.values).any()
 
 
+# TODO: Add tests for normalization methods
 class TestdOTC:
     @pytest.mark.parametrize("use_dask", [True, False])
     @pytest.mark.parametrize("cov_factor", ["std", "cholesky"])
+    # FIXME: Should this comparison not fail if `standardization` != `None`?
     def test_compare_sbck(self, random, series, use_dask, cov_factor):
         pytest.importorskip("ot")
         pytest.importorskip("SBCK", minversion="0.4.0")
