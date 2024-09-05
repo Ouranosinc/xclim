@@ -198,7 +198,7 @@ jobs:
           python -m pip install --require-hashes -r CI/requirements_ci.txt
       - name: Test Data Cache
         # if prefetch is not in tox-env
-        if: ${{ matrix.tox-env != *prefetch* }}
+        if: contains(matrix.tox-env, 'prefetch') == false
         uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
         with:
           path: ${{ matrix.testdata-cache }}
