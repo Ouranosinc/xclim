@@ -407,7 +407,10 @@ def spell_mask(
                 "When ``data`` is given as a list, ``threshold`` must be a sequence of the same length."
             )
         data = xarray.concat(data, "variable")
-        thresh = xarray.DataArray(thresh, dims=("variable",))
+        if isinstance(thresh[0], xarray.DataArray):
+            thresh = xr.concat(thresh, "variable")
+        else:
+            thresh = xarray.DataArray(thresh, dims=("variable",))
     if weights is not None:
         if win_reducer != "mean":
             raise ValueError(
@@ -458,6 +461,50 @@ def spell_mask(
     return is_in_spell
 
 
+def _spell_length_statistics(
+    data: xarray.DataArray | Sequence[xarray.DataArray],
+    thresh: float | xarray.DataArray | Sequence[xarray.DataArray] | Sequence[float],
+    window: int,
+    win_reducer: str,
+    op: str,
+    spell_reducer: str | Sequence[str],
+    freq: str,
+    resample_before_rl: bool = True,
+    **indexer,
+) -> xarray.DataArray | Sequence[xarray.DataArray]:
+    if isinstance(spell_reducer, str):
+        spell_reducer = [spell_reducer]
+    is_in_spell = spell_mask(data, window, win_reducer, op, thresh).astype(np.float32)
+    is_in_spell = select_time(is_in_spell, **indexer)
+
+    outs = []
+    for sr in spell_reducer:
+        out = rl.resample_and_rl(
+            is_in_spell,
+            resample_before_rl,
+            rl.rle_statistics,
+            reducer=sr,
+            # The code above already ensured only spell of the minimum length are selected
+            window=1,
+            freq=freq,
+        )
+
+        if sr == "count":
+            outs.append(out.assign_attrs(units=""))
+        else:
+            # All other cases are statistics of the number of timesteps
+            outs.append(
+                to_agg_units(
+                    out,
+                    data if isinstance(data, xarray.DataArray) else data[0],
+                    "count",
+                )
+            )
+    if len(outs) == 1:
+        return outs[0]
+    return tuple(outs)
+
+
 @declare_relative_units(threshold="<data>")
 def spell_length_statistics(
     data: xarray.DataArray,
@@ -488,8 +535,8 @@ def spell_length_statistics(
         Note that this does not matter when `window` is 1.
     op : {">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"}
         Logical operator. Ex: spell_value > thresh.
-    spell_reducer : {'max', 'sum', 'count'}
-        Statistic on the spell lengths.
+    spell_reducer : {'max', 'sum', 'count'} or sequence thereof
+        Statistic on the spell lengths. If a list, multiple statistics are computed.
     freq : str
         Resampling frequency.
     resample_before_rl : bool
@@ -535,23 +582,17 @@ def spell_length_statistics(
     bivariate_spell_length_statistics : The bivariate version of this function.
     """
     thresh = convert_units_to(threshold, data, context="infer")
-    is_in_spell = spell_mask(data, window, win_reducer, op, thresh).astype(np.float32)
-    is_in_spell = select_time(is_in_spell, **indexer)
-
-    out = rl.resample_and_rl(
-        is_in_spell,
+    return _spell_length_statistics(
+        data,
+        thresh,
+        window,
+        win_reducer,
+        op,
+        spell_reducer,
+        freq,
         resample_before_rl,
-        rl.rle_statistics,
-        reducer=spell_reducer,
-        # The code above already ensured only spell of the minimum length are selected
-        window=1,
-        freq=freq,
+        **indexer,
     )
-
-    if spell_reducer == "count":
-        return out.assign_attrs(units="")
-    # All other cases are statistics of the number of timesteps
-    return to_agg_units(out, data, "count")
 
 
 @declare_relative_units(threshold1="<data1>", threshold2="<data2>")
@@ -590,8 +631,8 @@ def bivariate_spell_length_statistics(
         Note that this does not matter when `window` is 1.
     op : {">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"}
         Logical operator. Ex: spell_value > thresh.
-    spell_reducer : {'max', 'sum', 'count'}
-        Statistic on the spell lengths.
+    spell_reducer : {'max', 'sum', 'count'} or sequence thereof
+        Statistic on the spell lengths. If a list, multiple statistics are computed.
     freq : str
         Resampling frequency.
     resample_before_rl : bool
@@ -609,25 +650,17 @@ def bivariate_spell_length_statistics(
     """
     thresh1 = convert_units_to(threshold1, data1, context="infer")
     thresh2 = convert_units_to(threshold2, data2, context="infer")
-    is_in_spell = spell_mask(
-        [data1, data2], window, win_reducer, op, [thresh1, thresh2], var_reducer="all"
-    ).astype(np.float32)
-    is_in_spell = select_time(is_in_spell, **indexer)
-
-    out = rl.resample_and_rl(
-        is_in_spell,
+    return _spell_length_statistics(
+        [data1, data2],
+        [thresh1, thresh2],
+        window,
+        win_reducer,
+        op,
+        spell_reducer,
+        freq,
         resample_before_rl,
-        rl.rle_statistics,
-        reducer=spell_reducer,
-        # The code above already ensured only spell of the minimum length are selected
-        window=1,
-        freq=freq,
+        **indexer,
     )
-
-    if spell_reducer == "count":
-        return out.assign_attrs(units="")
-    # All other cases are statistics of the number of timesteps
-    return to_agg_units(out, data1, "count")
 
 
 @declare_relative_units(thresh="<data>")
