@@ -737,3 +737,34 @@ class TestSpellMask:
         # Weights must have same length as window
         with pytest.raises(ValueError, match="Weights have a different length"):
             generic.spell_mask(data, 3, "mean", "<=", 2, weights=[1, 2])
+
+
+def test_spell_length_statistics_multi(tasmin_series, tasmax_series):
+    tn = tasmin_series(
+        np.zeros(
+            365,
+        )
+        + 270,
+        start="2001-01-01",
+    )
+    tx = tasmax_series(
+        np.zeros(
+            365,
+        )
+        + 270,
+        start="2001-01-01",
+    )
+
+    outc, outs, outm = generic.bivariate_spell_length_statistics(
+        tn,
+        "0 °C",
+        tx,
+        "1°C",
+        window=5,
+        win_reducer="min",
+        op="<",
+        spell_reducer=["count", "sum", "max"],
+        freq="YS",
+    )
+    xr.testing.assert_equal(outs, outm)
+    np.testing.assert_allclose(outc, 1)
