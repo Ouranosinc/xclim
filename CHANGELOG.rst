@@ -33,6 +33,10 @@ Internal changes
 * The codebase has been adjusted to address many `pylint`-related warnings and errors. In some cases, `casting` was used to redefine some `numpy` and `xarray` objects. (:issue:`1719`, :pull:`1881`).
 * ``xclim.core`` now uses absolute imports for clarity and some objects commonly used in the module have been moved to hidden submodules. (:issue:`1719`, :pull:`1881`).
 
+CI changes
+^^^^^^^^^^
+* The `pip` cache and the `xclim-testdata` are now cached between workflow runs (using `actions/cache`) to reduce the time spent installing dependencies and downloading testing data. (:pull:`1889`).
+
 v0.52.0 (2024-08-08)
 --------------------
 Contributors to this version: David Huard (:user:`huard`), Trevor James Smith (:user:`Zeitsperre`), Hui-Min Wang (:user:`Hem-W`), Éric Dupuis (:user:`coxipi`), Sarah Gammon (:user:`SarahG-579462`), Pascal Bourgault (:user:`aulemahal`), Juliette Lavoie (:user:`juliettelavoie`), Adrien Lamarche (:user:`LamAdr`).
