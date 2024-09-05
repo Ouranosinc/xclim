@@ -41,7 +41,6 @@ jobs:
     strategy:
       matrix:
         python-version: [ "3.9" ]
-        tox-env: [ 'lint' ]
     steps:
       - name: Harden Runner
         uses: step-security/harden-runner@5c7944e73c4c2a096b17a9cb74d65b6c2bbafbde # v2.9.1
@@ -67,14 +66,14 @@ jobs:
         with:
           path: |
             ${{ matrix.testdata-cache }}
-            .tox/${{ matrix.tox-env }}
-          key: ${{ runner.os }}-xclim-testdata-${{ env.XCLIM_TESTDATA_BRANCH }}-${{ matrix.tox-env }}
+            .tox
+          key: ${{ runner.os }}-xclim-testdata-${{ env.XCLIM_TESTDATA_BRANCH }}-lint
       - name: Run pylint
         run: |
           python -m pylint --rcfile=.pylintrc.toml --disable=import-error --exit-zero xclim
       - name: Run linting suite
         run: |
-          python -m tox -e ${{ matrix.tox-env }}
+          python -m tox -e lint
 
   test-preliminary:
     name: Python${{ matrix.python-version }} (${{ matrix.os }})

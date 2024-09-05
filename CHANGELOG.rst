@@ -35,7 +35,7 @@ Internal changes
 
 CI changes
 ^^^^^^^^^^
-* The `pip` cache and the `xclim-testdata` are now cached between workflow runs (using `actions/cache`) to reduce the time spent installing dependencies and downloading testing data. (:pull:`1889`).
+* The `pip` cache, `tox` environments, and the `xclim-testdata` cache are now saved between workflow runs (using `actions/cache`) to reduce the time spent installing dependencies and downloading testing data. (:pull:`1906`).
 
 v0.52.0 (2024-08-08)
 --------------------
