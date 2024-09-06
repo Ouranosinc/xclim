@@ -4,7 +4,7 @@ Changelog
 
 v0.53.0 (unreleased)
 --------------------
-Contributors to this version: Adrien Lamarche (:user:`LamAdr`), Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`).
+Contributors to this version: Adrien Lamarche (:user:`LamAdr`), Trevor James Smith (:user:`Zeitsperre`),  Éric Dupuis (:user:`coxipi`), Pascal Bourgault (:user:`aulemahal`).
 
 New indicators
 ^^^^^^^^^^^^^^
@@ -17,7 +17,11 @@ New features and enhancements
 
 Bug fixes
 ^^^^^^^^^
-* Fixed a small inefficiency in ``_otc_adjust`` (:pull:`1890`).
+* Fixed a small inefficiency in ``_otc_adjust``, and the `standardize` method of `OTC/dOTC` is now applied on individual variable  (:pull:`1890`, :pull:`1896`).
+
+Breaking changes
+^^^^^^^^^^^^^^^^
+* `transform` argument of `OTC/dOTC` classes (and child functions) is changed to `normalization`, and `numIterMax` is changed to `num_iter_max` in `utils.optimal_transport` (:pull:`1896`).
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
