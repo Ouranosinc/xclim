@@ -356,14 +356,14 @@ def get_daily_events(
 
 
 def spell_mask(
-    data: xarray.DataArray | Sequence[xarray.DataArray],
+    data: xr.DataArray | Sequence[xr.DataArray],
     window: int,
     win_reducer: str,
     op: str,
     thresh: float | Sequence[float],
     weights: Sequence[float] = None,
     var_reducer: str = "all",
-) -> xarray.DataArray:
+) -> xr.DataArray:
     """Compute the boolean mask of data points that are part of a spell as defined by a rolling statistic.
 
     A day is part of a spell (True in the mask) if it is contained in any period that fulfills the condition.
@@ -392,22 +392,22 @@ def spell_mask(
 
     Returns
     -------
-    xarray.DataArray
+    xr.DataArray
         Same shape as ``data``, but boolean.
         If ``data`` was a list, this is a DataArray of the same shape as the alignment of all variables.
     """
     # Checks
-    if not isinstance(data, xarray.DataArray):
+    if not isinstance(data, xr.DataArray):
         # thus a sequence
         if np.isscalar(thresh) or len(data) != len(thresh):
             raise ValueError(
                 "When ``data`` is given as a list, ``threshold`` must be a sequence of the same length."
             )
-        data = xarray.concat(data, "variable")
-        if isinstance(thresh[0], xarray.DataArray):
+        data = xr.concat(data, "variable")
+        if isinstance(thresh[0], xr.DataArray):
             thresh = xr.concat(thresh, "variable")
         else:
-            thresh = xarray.DataArray(thresh, dims=("variable",))
+            thresh = xr.DataArray(thresh, dims=("variable",))
     if weights is not None:
         if win_reducer != "mean":
             raise ValueError(
@@ -417,7 +417,7 @@ def spell_mask(
             raise ValueError(
                 f"Weights have a different length ({len(weights)}) than the window ({window})."
             )
-        weights = xarray.DataArray(weights, dims=("window",))
+        weights = xr.DataArray(weights, dims=("window",))
 
     if window == 1:  # Fast path
         is_in_spell = compare(data, op, thresh)
@@ -459,8 +459,8 @@ def spell_mask(
 
 
 def _spell_length_statistics(
-    data: xarray.DataArray | Sequence[xarray.DataArray],
-    thresh: float | xarray.DataArray | Sequence[xarray.DataArray] | Sequence[float],
+    data: xr.DataArray | Sequence[xr.DataArray],
+    thresh: float | xr.DataArray | Sequence[xr.DataArray] | Sequence[float],
     window: int,
     win_reducer: str,
     op: str,
@@ -468,7 +468,7 @@ def _spell_length_statistics(
     freq: str,
     resample_before_rl: bool = True,
     **indexer,
-) -> xarray.DataArray | Sequence[xarray.DataArray]:
+) -> xr.DataArray | Sequence[xr.DataArray]:
     if isinstance(spell_reducer, str):
         spell_reducer = [spell_reducer]
     is_in_spell = spell_mask(data, window, win_reducer, op, thresh).astype(np.float32)
@@ -493,7 +493,7 @@ def _spell_length_statistics(
             outs.append(
                 to_agg_units(
                     out,
-                    data if isinstance(data, xarray.DataArray) else data[0],
+                    data if isinstance(data, xr.DataArray) else data[0],
                     "count",
                 )
             )
@@ -594,9 +594,9 @@ def spell_length_statistics(
 
 @declare_relative_units(threshold1="<data1>", threshold2="<data2>")
 def bivariate_spell_length_statistics(
-    data1: xarray.DataArray,
+    data1: xr.DataArray,
     threshold1: Quantified,
-    data2: xarray.DataArray,
+    data2: xr.DataArray,
     threshold2: Quantified,
     window: int,
     win_reducer: str,
