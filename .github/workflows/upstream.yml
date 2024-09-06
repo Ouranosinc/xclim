@@ -32,8 +32,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version:
-          - "3.10"
+        python-version: [ "3.9", "3.12" ]
+        testdata-cache: [ '~/.cache/xclim-testdata' ]
     defaults:
       run:
         shell: bash -l {0}
@@ -66,8 +66,8 @@ jobs:
           create-args: >-
             eigen
             pybind11
-            python=${{ matrix.python-version }}
             pytest-reportlog
+            python=${{ matrix.python-version }}
       - name: Micromamba version
         run: |
           echo "micromamba: $(micromamba --version)"
@@ -84,6 +84,12 @@ jobs:
           micromamba list
           xclim show_version_info
           python -m pip check || true
+      - name: Test Data Caching
+        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
+        with:
+          path: |
+            ${{ matrix.testdata-cache }}
+          key: ${{ runner.os }}-xclim-testdata-upstream-${{ hashFiles('pyproject.toml', 'tox.ini') }}
       - name: Run Tests
         if: success()
         id: status
@@ -97,4 +103,5 @@ jobs:
           && github.repository_owner == 'Ouranosinc'
         uses: xarray-contrib/issue-from-pytest-log@f94477e45ef40e4403d7585ba639a9a3bcc53d43 # v1.3.0
         with:
+          issue-title: "⚠️ Nightly upstream-dev CI failed for Python${{ matrix.python-version }} ⚠️"
           log-path: output-${{ matrix.python-version }}-log.jsonl
