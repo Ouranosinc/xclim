@@ -33,8 +33,10 @@ import xclim
 from xclim import __version__ as __xclim_version__
 
 try:
+    import pytest
     from pytest_socket import SocketBlockedError
 except ImportError:
+    pytest = None
     SocketBlockedError = None
 
 try:
@@ -198,8 +200,8 @@ def list_input_variables(
 
 def publish_release_notes(
     style: str = "md",
-    file: os.PathLike | StringIO | TextIO | None = None,
-    changes: str | os.PathLike | None = None,
+    file: os.PathLike[str] | StringIO | TextIO | None = None,
+    changes: str | os.PathLike[str] | None = None,
 ) -> str | None:
     """Format release notes in Markdown or ReStructuredText.
 
@@ -209,7 +211,7 @@ def publish_release_notes(
         Use ReStructuredText formatting or Markdown. Default: Markdown.
     file : {os.PathLike, StringIO, TextIO}, optional
         If provided, prints to the given file-like object. Otherwise, returns a string.
-    changes : {str, os.PathLike}, optional
+    changes : str or os.PathLike[str], optional
         If provided, manually points to the file where the changelog can be found.
         Assumes a relative path otherwise.
 
@@ -229,7 +231,7 @@ def publish_release_notes(
     if not changes_file.exists():
         raise FileNotFoundError("Changelog file not found in xclim folder tree.")
 
-    with open(changes_file) as hf:
+    with open(changes_file, encoding="utf-8") as hf:
         changes = hf.read()
 
     if style == "rst":
@@ -274,7 +276,7 @@ def publish_release_notes(
     if not file:
         return changes
     if isinstance(file, (Path, os.PathLike)):
-        with Path(file).open("w") as f:
+        with open(file, "w", encoding="utf-8") as f:
             print(changes, file=f)
     else:
         print(changes, file=file)
@@ -360,7 +362,7 @@ def show_versions(
     if not file:
         return message
     if isinstance(file, (Path, os.PathLike)):
-        with Path(file).open("w") as f:
+        with open(file, "w", encoding="utf-8") as f:
             print(message, file=f)
     else:
         print(message, file=file)
@@ -372,7 +374,11 @@ def show_versions(
 
 def run_doctests():
     """Run the doctests for the module."""
-    import pytest
+    if pytest is None:
+        raise ImportError(
+            "The `pytest` package is required to run the doctests. "
+            "You can install it with `pip install pytest` or `pip install xclim[dev]`."
+        )
 
     cmd = [
         f"--rootdir={Path(__file__).absolute().parent}",
@@ -445,7 +451,7 @@ def load_registry(
         raise FileNotFoundError(f"Registry file not found: {registry_file}")
 
     # Load the registry file
-    with registry_file.open() as f:
+    with registry_file.open(encoding="utf-8") as f:
         registry = {line.split()[0]: line.split()[1] for line in f}
     return registry
 
@@ -562,15 +568,16 @@ def open_dataset(
         )
 
     if dap_url:
+        dap_target = urljoin(dap_url, str(name))
         try:
-            return _open_dataset(
-                audit_url(urljoin(dap_url, str(name)), context="OPeNDAP"), **kwargs
-            )
+            return _open_dataset(audit_url(dap_target, context="OPeNDAP"), **kwargs)
         except URLError:
             raise
-        except OSError as e:
-            msg = f"OPeNDAP file not read. Verify that the service is available: '{urljoin(dap_url, str(name))}'"
-            raise OSError(msg) from e
+        except OSError:
+            raise OSError(
+                "OPeNDAP file not read. Verify that the service is available: %s"
+                % dap_target
+            )
 
     local_file = Path(cache_dir).joinpath(name)
     if not local_file.exists():
@@ -578,10 +585,11 @@ def open_dataset(
             local_file = nimbus(branch=branch, repo=repo, cache_dir=cache_dir).fetch(
                 name
             )
-        except OSError as e:
+        except OSError:
             raise OSError(
-                f"File not found locally. Verify that the testing data is available in remote: {local_file}"
-            ) from e
+                "File not found locally. Verify that the testing data is available in remote: %s"
+                % local_file
+            )
     try:
         ds = _open_dataset(local_file, **kwargs)
         return ds

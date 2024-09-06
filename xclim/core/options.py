@@ -12,8 +12,8 @@ from typing import Callable
 
 from boltons.funcutils import wraps
 
-from .locales import _valid_locales
-from .utils import ValidationError, raise_warn_or_log
+from xclim.core._exceptions import ValidationError, raise_warn_or_log
+from xclim.core.locales import _valid_locales
 
 METADATA_LOCALES = "metadata_locales"
 DATA_VALIDATION = "data_validation"
@@ -49,17 +49,17 @@ _KEEP_ATTRS_OPTIONS = frozenset(["xarray", True, False])
 
 
 def _valid_missing_options(mopts):
-    for meth, opts in mopts.items():
-        cls = MISSING_METHODS.get(meth, None)
-        if (
-            cls is None  # Method must be registered
-            # All options must exist
-            or any([opt not in OPTIONS[MISSING_OPTIONS][meth] for opt in opts.keys()])
-            # Method option validator must pass, default validator is always True.
-            or not cls.validate(**opts)  # noqa
-        ):
-            return False
-    return True
+    """Check if all methods and their options in mopts are valid."""
+    return all(
+        meth in MISSING_METHODS  # Ensure the method is registered in MISSING_METHODS
+        and all(
+            opt in OPTIONS[MISSING_OPTIONS][meth] for opt in opts.keys()
+        )  # Check if all options provided for the method are valid
+        and MISSING_METHODS[meth].validate(
+            **opts
+        )  # Validate the options using the method's validator; defaults to True if no validation is needed
+        for meth, opts in mopts.items()  # Iterate over each method and its options in mopts
+    )
 
 
 _VALIDATORS = {
@@ -215,10 +215,8 @@ class set_options:
         self.old = {}
         for k, v in kwargs.items():
             if k not in OPTIONS:
-                raise ValueError(
-                    "argument name %r is not in the set of valid options %r"
-                    % (k, set(OPTIONS))
-                )
+                msg = f"Argument name {k!r} is not in the set of valid options {set(OPTIONS)!r}."
+                raise ValueError(msg)
             if k in _VALIDATORS and not _VALIDATORS[k](v):
                 raise ValueError(f"option {k!r} given an invalid value: {v!r}")
 

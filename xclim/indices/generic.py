@@ -13,10 +13,11 @@ from typing import Callable
 
 import cftime
 import numpy as np
-import xarray
 import xarray as xr
+from pint import Quantity
 from xarray.coding.cftime_offsets import _MONTH_ABBREVIATIONS  # noqa
 
+from xclim.core import DayOfYearStr, Quantified
 from xclim.core.calendar import doy_to_days_since, get_calendar, select_time
 from xclim.core.units import (
     convert_units_to,
@@ -26,10 +27,8 @@ from xclim.core.units import (
     str2pint,
     to_agg_units,
 )
-from xclim.core.utils import DayOfYearStr, Quantified, Quantity
-
-from . import run_length as rl
-from .helpers import resample_map
+from xclim.indices import run_length as rl
+from xclim.indices.helpers import resample_map
 
 __all__ = [
     "aggregate_between_dates",
@@ -68,7 +67,7 @@ binary_ops = {">": "gt", "<": "lt", ">=": "ge", "<=": "le", "==": "eq", "!=": "n
 
 
 def select_resample_op(
-    da: xr.DataArray, op: str, freq: str = "YS", out_units=None, **indexer
+    da: xr.DataArray, op: str | Callable, freq: str = "YS", out_units=None, **indexer
 ) -> xr.DataArray:
     """Apply operation over each period that is part of the index selection.
 
@@ -93,8 +92,8 @@ def select_resample_op(
         The maximum value for each period.
     """
     da = select_time(da, **indexer)
-    if op in _xclim_ops:
-        op = _xclim_ops[op]
+    if isinstance(op, str):
+        op = _xclim_ops.get(op, op)
     if isinstance(op, str):
         out = getattr(da.resample(time=freq), op.replace("integral", "sum"))(
             dim="time", keep_attrs=True
@@ -209,14 +208,14 @@ def get_op(op: str, constrain: Sequence[str] | None = None) -> Callable:
         warnings.warn(f"`{op}` is being renamed `le` for compatibility.")
         op = "le"
 
-    if op in binary_ops.keys():
+    if op in binary_ops:
         binary_op = binary_ops[op]
     elif op in binary_ops.values():
         binary_op = op
     else:
         raise ValueError(f"Operation `{op}` not recognized.")
 
-    constraints = list()
+    constraints = []
     if isinstance(constrain, (list, tuple, set)):
         constraints.extend([binary_ops[c] for c in constrain])
         constraints.extend(constrain)
@@ -359,14 +358,14 @@ def get_daily_events(
 
 
 def spell_mask(
-    data: xarray.DataArray | Sequence[xarray.DataArray],
+    data: xr.DataArray | Sequence[xr.DataArray],
     window: int,
     win_reducer: str,
     op: str,
     thresh: float | Sequence[float],
     weights: Sequence[float] = None,
     var_reducer: str = "all",
-) -> xarray.DataArray:
+) -> xr.DataArray:
     """Compute the boolean mask of data points that are part of a spell as defined by a rolling statistic.
 
     A day is part of a spell (True in the mask) if it is contained in any period that fulfills the condition.
@@ -395,22 +394,22 @@ def spell_mask(
 
     Returns
     -------
-    xarray.DataArray
+    xr.DataArray
         Same shape as ``data``, but boolean.
         If ``data`` was a list, this is a DataArray of the same shape as the alignment of all variables.
     """
     # Checks
-    if not isinstance(data, xarray.DataArray):
+    if not isinstance(data, xr.DataArray):
         # thus a sequence
         if np.isscalar(thresh) or len(data) != len(thresh):
             raise ValueError(
                 "When ``data`` is given as a list, ``threshold`` must be a sequence of the same length."
             )
-        data = xarray.concat(data, "variable")
-        if isinstance(thresh[0], xarray.DataArray):
+        data = xr.concat(data, "variable")
+        if isinstance(thresh[0], xr.DataArray):
             thresh = xr.concat(thresh, "variable")
         else:
-            thresh = xarray.DataArray(thresh, dims=("variable",))
+            thresh = xr.DataArray(thresh, dims=("variable",))
     if weights is not None:
         if win_reducer != "mean":
             raise ValueError(
@@ -420,7 +419,7 @@ def spell_mask(
             raise ValueError(
                 f"Weights have a different length ({len(weights)}) than the window ({window})."
             )
-        weights = xarray.DataArray(weights, dims=("window",))
+        weights = xr.DataArray(weights, dims=("window",))
 
     if window == 1:  # Fast path
         is_in_spell = compare(data, op, thresh)
@@ -462,8 +461,8 @@ def spell_mask(
 
 
 def _spell_length_statistics(
-    data: xarray.DataArray | Sequence[xarray.DataArray],
-    thresh: float | xarray.DataArray | Sequence[xarray.DataArray] | Sequence[float],
+    data: xr.DataArray | Sequence[xr.DataArray],
+    thresh: float | xr.DataArray | Sequence[xr.DataArray] | Sequence[float],
     window: int,
     win_reducer: str,
     op: str,
@@ -471,7 +470,7 @@ def _spell_length_statistics(
     freq: str,
     resample_before_rl: bool = True,
     **indexer,
-) -> xarray.DataArray | Sequence[xarray.DataArray]:
+) -> xr.DataArray | Sequence[xr.DataArray]:
     if isinstance(spell_reducer, str):
         spell_reducer = [spell_reducer]
     is_in_spell = spell_mask(data, window, win_reducer, op, thresh).astype(np.float32)
@@ -496,7 +495,7 @@ def _spell_length_statistics(
             outs.append(
                 to_agg_units(
                     out,
-                    data if isinstance(data, xarray.DataArray) else data[0],
+                    data if isinstance(data, xr.DataArray) else data[0],
                     "count",
                 )
             )
@@ -507,7 +506,7 @@ def _spell_length_statistics(
 
 @declare_relative_units(threshold="<data>")
 def spell_length_statistics(
-    data: xarray.DataArray,
+    data: xr.DataArray,
     threshold: Quantified,
     window: int,
     win_reducer: str,
@@ -597,9 +596,9 @@ def spell_length_statistics(
 
 @declare_relative_units(threshold1="<data1>", threshold2="<data2>")
 def bivariate_spell_length_statistics(
-    data1: xarray.DataArray,
+    data1: xr.DataArray,
     threshold1: Quantified,
-    data2: xarray.DataArray,
+    data2: xr.DataArray,
     threshold2: Quantified,
     window: int,
     win_reducer: str,
@@ -665,7 +664,7 @@ def bivariate_spell_length_statistics(
 
 @declare_relative_units(thresh="<data>")
 def season(
-    data: xarray.DataArray,
+    data: xr.DataArray,
     thresh: Quantified,
     window: int,
     op: str,
@@ -673,7 +672,7 @@ def season(
     freq: str,
     mid_date: DayOfYearStr | None = None,
     constrain: Sequence[str] | None = None,
-) -> xarray.DataArray:
+) -> xr.DataArray:
     r"""Season.
 
     A season starts when a variable respects some condition for a consecutive run of `N` days. It stops
@@ -682,7 +681,7 @@ def season(
 
     Parameters
     ----------
-    data : xarray.DataArray
+    data : xr.DataArray
         Variable.
     thresh : Quantified
         Threshold on which to base evaluation.
@@ -701,7 +700,7 @@ def season(
 
     Returns
     -------
-    xarray.DataArray, [dimensionless] or [time]
+    xr.DataArray, [dimensionless] or [time]
         Depends on 'stat'. If 'start' or 'end', this is the day of year of the season's start or end.
         If 'length', this is the length of the season.
 
@@ -735,7 +734,7 @@ def season(
     thresh = convert_units_to(thresh, data, context="infer")
     cond = compare(data, op, thresh, constrain=constrain)
     FUNC = {"start": rl.season_start, "end": rl.season_end, "length": rl.season_length}
-    map_kwargs = dict(window=window, mid_date=mid_date)
+    map_kwargs = {"window": window, "mid_date": mid_date}
     if stat in ["start", "end"]:
         map_kwargs["coord"] = "dayofyear"
     out = resample_map(cond, "time", freq, FUNC[stat], map_kwargs=map_kwargs)
@@ -1310,7 +1309,7 @@ def first_day_threshold_reached(
 
     Parameters
     ----------
-    data : xarray.DataArray
+    data xr.DataArray
         Dataset being evaluated.
     threshold : str
         Threshold on which to base evaluation.
@@ -1328,7 +1327,7 @@ def first_day_threshold_reached(
 
     Returns
     -------
-    xarray.DataArray, [dimensionless]
+    xr.DataArray, [dimensionless]
         Day of the year when value reaches or exceeds a threshold over a given number of days for the first time.
         If there is no such day, returns np.nan.
     """
@@ -1336,7 +1335,7 @@ def first_day_threshold_reached(
 
     cond = compare(data, op, threshold, constrain=constrain)
 
-    out = resample_map(
+    out: xr.DataArray = resample_map(
         cond,
         "time",
         freq,
@@ -1365,7 +1364,7 @@ def _get_zone_bins(
 
     Returns
     -------
-    xarray.DataArray, [units of `zone_step`]
+    xr.DataArray, [units of `zone_step`]
         Array of values corresponding to each zone: [zone_min, zone_min+step, ..., zone_max]
     """
     units = pint2cfunits(str2pint(zone_step))
@@ -1397,7 +1396,7 @@ def get_zones(
 
     Parameters
     ----------
-    da : xarray.DataArray
+    da : xr.DataArray
         Input data
     zone_min : Quantity | None
         Left boundary of the first zone
@@ -1414,7 +1413,7 @@ def get_zones(
 
     Returns
     -------
-    xarray.DataArray, [dimensionless]
+    xr.DataArray, [dimensionless]
         Zone index for each value in `da`. Zones are returned as an integer range, starting from `0`
     """
     # Check compatibility of arguments

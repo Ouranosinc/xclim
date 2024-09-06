@@ -880,12 +880,12 @@ first_day_tn_below = Temp(
     long_name="First day of year with a period of at least {window} days of minimum temperature below {thresh}",
     description="First day of year with minimum temperature below {thresh} for at least {window} days.",
     compute=indices.first_day_temperature_below,
-    input=dict(tas="tasmin"),
-    parameters=dict(
-        thresh={"default": "0 degC"},
-        after_date={"default": "07-01"},
-        op={"default": "<"},
-    ),
+    input={"tas": "tasmin"},
+    parameters={
+        "thresh": {"default": "0 degC"},
+        "after_date": {"default": "07-01"},
+        "op": {"default": "<"},
+    },
 )
 
 first_day_tg_below = Temp(
@@ -895,11 +895,11 @@ first_day_tg_below = Temp(
     long_name="First day of year with a period of at least {window} days of mean temperature below {thresh}",
     description="First day of year with mean temperature below {thresh} for at least {window} days.",
     compute=indices.first_day_temperature_below,
-    parameters=dict(
-        thresh={"default": "0 degC"},
-        after_date={"default": "07-01"},
-        op={"default": "<"},
-    ),
+    parameters={
+        "thresh": {"default": "0 degC"},
+        "after_date": {"default": "07-01"},
+        "op": {"default": "<"},
+    },
 )
 
 first_day_tx_below = Temp(
@@ -909,12 +909,12 @@ first_day_tx_below = Temp(
     long_name="First day of year with a period of at least {window} days of maximum temperature below {thresh}",
     description="First day of year with maximum temperature below {thresh} for at least {window} days.",
     compute=indices.first_day_temperature_below,
-    input=dict(tas="tasmax"),
-    parameters=dict(
-        thresh={"default": "0 degC"},
-        after_date={"default": "07-01"},
-        op={"default": "<"},
-    ),
+    input={"tas": "tasmax"},
+    parameters={
+        "thresh": {"default": "0 degC"},
+        "after_date": {"default": "07-01"},
+        "op": {"default": "<"},
+    },
 )
 
 first_day_tn_above = Temp(
@@ -924,12 +924,12 @@ first_day_tn_above = Temp(
     long_name="First day of year with a period of at least {window} days of minimum temperature above {thresh}",
     description="First day of year with minimum temperature above {thresh} for at least {window} days.",
     compute=indices.first_day_temperature_above,
-    input=dict(tas="tasmin"),
-    parameters=dict(
-        thresh={"default": "0 degC"},
-        after_date={"default": "01-01"},
-        op={"default": ">"},
-    ),
+    input={"tas": "tasmin"},
+    parameters={
+        "thresh": {"default": "0 degC"},
+        "after_date": {"default": "01-01"},
+        "op": {"default": ">"},
+    },
 )
 
 
@@ -940,11 +940,11 @@ first_day_tg_above = Temp(
     long_name="First day of year with a period of at least {window} days of mean temperature above {thresh}",
     description="First day of year with mean temperature above {thresh} for at least {window} days.",
     compute=indices.first_day_temperature_above,
-    parameters=dict(
-        thresh={"default": "0 degC"},
-        after_date={"default": "01-01"},
-        op={"default": ">"},
-    ),
+    parameters={
+        "thresh": {"default": "0 degC"},
+        "after_date": {"default": "01-01"},
+        "op": {"default": ">"},
+    },
 )
 
 first_day_tx_above = Temp(
@@ -954,12 +954,12 @@ first_day_tx_above = Temp(
     long_name="First day of year with a period of at least {window} days of maximum temperature above {thresh}",
     description="First day of year with maximum temperature above {thresh} for at least {window} days.",
     compute=indices.first_day_temperature_above,
-    input=dict(tas="tasmax"),
-    parameters=dict(
-        thresh={"default": "0 degC"},
-        after_date={"default": "01-01"},
-        op={"default": ">"},
-    ),
+    input={"tas": "tasmax"},
+    parameters={
+        "thresh": {"default": "0 degC"},
+        "after_date": {"default": "01-01"},
+        "op": {"default": ">"},
+    },
 )
 
 ice_days = TempWithIndexing(

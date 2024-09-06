@@ -123,11 +123,17 @@ import yamale
 from xarray import DataArray, Dataset
 from yaml import safe_load
 
-from .. import indices
-from . import datachecks
-from .calendar import parse_offset, select_time
-from .cfchecks import cfcheck_from_name
-from .formatting import (
+from xclim import indices
+from xclim.core import datachecks
+from xclim.core._exceptions import (
+    MissingVariableError,
+    ValidationError,
+    raise_warn_or_log,
+)
+from xclim.core._types import VARIABLES
+from xclim.core.calendar import parse_offset, select_time
+from xclim.core.cfchecks import cfcheck_from_name
+from xclim.core.formatting import (
     AttrFormatter,
     default_formatter,
     gen_call_string,
@@ -137,14 +143,14 @@ from .formatting import (
     parse_doc,
     update_history,
 )
-from .locales import (
+from xclim.core.locales import (
     TRANSLATABLE_ATTRS,
     get_local_attrs,
     get_local_formatter,
     load_locale,
     read_locale_file,
 )
-from .options import (
+from xclim.core.options import (
     AS_DATASET,
     CHECK_MISSING,
     KEEP_ATTRS,
@@ -153,16 +159,12 @@ from .options import (
     MISSING_OPTIONS,
     OPTIONS,
 )
-from .units import check_units, convert_units_to, declare_units, units
-from .utils import (
-    VARIABLES,
+from xclim.core.units import check_units, convert_units_to, declare_units, units
+from xclim.core.utils import (
     InputKind,
-    MissingVariableError,
-    ValidationError,
     infer_kind_from_parameter,
     is_percentile_dataarray,
     load_module,
-    raise_warn_or_log,
     split_auxiliary_coordinates,
 )
 
@@ -173,7 +175,7 @@ _indicators_registry = defaultdict(list)  # Private instance registry
 
 
 # Sentinel class for unset properties of Indicator's parameters."""
-class _empty:
+class _empty:  # pylint: disable=too-few-public-methods
     pass
 
 
@@ -989,9 +991,8 @@ class Indicator(IndicatorRegistrar):
         except TypeError:
             # If this fails, simply call the function using positional arguments
             return func(*das.values())
-        else:
-            # Call the func using bound arguments
-            return func(*ba.args, **ba.kwargs)
+        # Call the func using bound arguments
+        return func(*ba.args, **ba.kwargs)
 
     @classmethod
     def _get_translated_metadata(
@@ -1087,7 +1088,7 @@ class Indicator(IndicatorRegistrar):
         return attrs
 
     def _history_string(self, das, params):
-        kwargs = dict(**das)
+        kwargs = {**das}
         for k, v in params.items():
             if self._all_parameters[k].injected:
                 continue
@@ -1102,8 +1103,8 @@ class Indicator(IndicatorRegistrar):
         """Verify that the identifier is a proper slug."""
         if not re.match(r"^[-\w]+$", identifier):
             warnings.warn(
-                "The identifier contains non-alphanumeric characters. It could make "
-                "life difficult for downstream software reusing this class.",
+                "The identifier contains non-alphanumeric characters. "
+                "It could make life difficult for downstream software reusing this class.",
                 UserWarning,
             )
 
@@ -1157,7 +1158,7 @@ class Indicator(IndicatorRegistrar):
         return attrs
 
     @classmethod
-    def json(self, args=None):
+    def json(cls, args=None):
         """Return a serializable dictionary representation of the class.
 
         Parameters
@@ -1172,21 +1173,21 @@ class Indicator(IndicatorRegistrar):
 
         """
         names = ["identifier", "title", "abstract", "keywords"]
-        out = {key: getattr(self, key) for key in names}
-        out = self._format(out, args)
+        out = {key: getattr(cls, key) for key in names}
+        out = cls._format(out, args)
 
         # Format attributes
-        out["outputs"] = [self._format(attrs, args) for attrs in self.cf_attrs]
-        out["notes"] = self.notes
+        out["outputs"] = [cls._format(attrs, args) for attrs in cls.cf_attrs]
+        out["notes"] = cls.notes
 
         # We need to deepcopy, otherwise empty defaults get overwritten!
         # All those tweaks are to ensure proper serialization of the returned dictionary.
         out["parameters"] = {
             k: p.asdict() if not p.injected else deepcopy(p.value)
-            for k, p in self._all_parameters.items()
+            for k, p in cls._all_parameters.items()
         }
         for name, param in list(out["parameters"].items()):
-            if not self._all_parameters[name].injected:
+            if not cls._all_parameters[name].injected:
                 param["kind"] = param["kind"].value  # Get the int.
                 if "choices" in param:  # A set is stored, convert to list
                     param["choices"] = list(param["choices"])
@@ -1305,7 +1306,7 @@ class Indicator(IndicatorRegistrar):
         If there are multiple inputs, it also checks if they all have the same frequency and the same anchor.
         """
         if self.src_freq is not None:
-            for key, da in das.items():
+            for da in das.values():
                 if "time" in da.coords and da.time.ndim == 1 and len(da.time) > 3:
                     datachecks.check_freq(da, self.src_freq, strict=True)
 
@@ -1556,8 +1557,6 @@ class IndexingIndicator(Indicator):
 class ResamplingIndicatorWithIndexing(ResamplingIndicator, IndexingIndicator):
     """Resampling indicator that also injects "indexer" kwargs to subset the inputs before computation."""
 
-    pass
-
 
 class Daily(ResamplingIndicator):
     """Class for daily inputs and resampling computes."""
@@ -1624,7 +1623,7 @@ def build_indicator_module(
     ModuleType
         A indicator module built from a mapping of Indicators.
     """
-    from xclim import indicators
+    from xclim import indicators  # pylint: disable=import-outside-toplevel
 
     out: ModuleType
     if hasattr(indicators, name):

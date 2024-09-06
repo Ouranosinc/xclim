@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from inspect import stack
-from typing import Any, Callable, Literal
+from typing import Any, Callable, Literal, cast
 
 import cf_xarray  # noqa: F401, pylint: disable=unused-import
 import cftime
@@ -21,10 +21,11 @@ from xarray.coding.calendar_ops import (
     _datetime_to_decimal_year as datetime_to_decimal_year,
 )
 
+from xclim.core import Quantified
 from xclim.core.calendar import ensure_cftime_array, get_calendar
 from xclim.core.options import MAP_BLOCKS, OPTIONS
 from xclim.core.units import convert_units_to
-from xclim.core.utils import Quantified, _chunk_like, uses_dask
+from xclim.core.utils import _chunk_like, uses_dask
 
 
 def _wrap_radians(da):
@@ -155,7 +156,9 @@ def time_correction_for_solar_angle(time: xr.DataArray) -> xr.DataArray:
     return _wrap_radians(convert_units_to(tc, "rad"))
 
 
-def eccentricity_correction_factor(time: xr.DataArray, method="spencer"):
+def eccentricity_correction_factor(
+    time: xr.DataArray, method: str = "spencer"
+) -> xr.DataArray:
     """Eccentricity correction factor of the Earth's orbit.
 
     The squared ratio of the mean distance Earth-Sun to the distance at a specific moment.
@@ -165,9 +168,10 @@ def eccentricity_correction_factor(time: xr.DataArray, method="spencer"):
     ----------
     time: xr.DataArray
         Time coordinate
-    method : str
-        Which approximation to use. The default ("spencer") uses the first five terms of the fourier series of the
-        eccentricity, while "simple" approximates with only the first two.
+    method : {'spencer', 'simple'}
+        Which approximation to use.
+        The default ("spencer") uses the first five terms of the fourier series of the eccentricity.
+        The "simple" method approximates with only the first two.
 
     Returns
     -------
@@ -184,15 +188,17 @@ def eccentricity_correction_factor(time: xr.DataArray, method="spencer"):
         # It is quite used, I think the source is (not available online):
         # Perrin de Brichambaut, C. (1975).
         # Estimation des ressources énergétiques solaires en France. Ed. Européennes thermique et industrie.
-        return 1 + 0.033 * np.cos(da)
+        return cast(xr.DataArray, 1 + 0.033 * np.cos(da))
     if method == "spencer":
-        return (
+        return cast(
+            xr.DataArray,
             1.0001100
             + 0.034221 * np.cos(da)
             + 0.001280 * np.sin(da)
             + 0.000719 * np.cos(2 * da)
-            + 0.000077 * np.sin(2 * da)
+            + 0.000077 * np.sin(2 * da),
         )
+    raise NotImplementedError("Method must be one of 'simple' or 'spencer'.")
 
 
 def cosine_of_solar_zenith_angle(
@@ -266,7 +272,9 @@ def cosine_of_solar_zenith_angle(
         h_e = np.pi - 1e-9  # just below pi
     else:
         if time.dtype == "O":  # cftime
-            time_as_s = time.copy(data=xr.CFTimeIndex(time.values).asi8 / 1e6)
+            time_as_s = time.copy(
+                data=xr.CFTimeIndex(cast(time.values, np.ndarray)).asi8 / 1e6
+            )
         else:  # numpy
             time_as_s = time.copy(data=time.astype(float) / 1e9)
         h_s_utc = (((time_as_s % S_IN_D) / S_IN_D) * 2 * np.pi + np.pi).assign_attrs(
@@ -281,17 +289,19 @@ def cosine_of_solar_zenith_angle(
 
     if stat == "instant":
         h_s = h_s + time_correction
-        return (
+
+        return cast(
+            xr.DataArray,
             np.sin(declination) * np.sin(lat)
-            + np.cos(declination) * np.cos(lat) * np.cos(h_s)
+            + np.cos(declination) * np.cos(lat) * np.cos(h_s),
         ).clip(0, None)
-    elif stat not in {"average", "integral"}:
+    if stat not in {"average", "integral"}:
         raise NotImplementedError(
             "Argument 'stat' must be one of 'integral', 'average' or 'instant'."
         )
     if sunlit:
         # hour angle of sunset (eq. 2.15), with NaNs inside the polar day/night
-        tantan = -np.tan(lat) * np.tan(declination)
+        tantan = cast(xr.DataArray, -np.tan(lat) * np.tan(declination))
         h_ss = np.arccos(tantan.where(abs(tantan) <= 1))
     else:
         # Whole period, so we put sunset at midnight
@@ -336,15 +346,15 @@ def _sunlit_integral_of_cosine_of_solar_zenith_angle(
     ):
         return 0
     # Interval crossing midnight, starting after sunset (before midnight), finishing after sunrise
-    elif h_end < h_start and h_start >= h_sunset and h_end >= h_sunrise:
+    elif h_start > h_end >= h_sunrise and h_start >= h_sunset:
         num = np.sin(h_end) - np.sin(h_sunrise)
         denum = h_end - h_sunrise
     # Interval crossing midnight, starting after sunrise, finishing after sunset (after midnight)
-    elif h_end < h_start and h_start >= h_sunrise and h_end <= h_sunrise:
+    elif h_end < h_start and h_start >= h_sunrise >= h_end:
         num = np.sin(h_sunset) - np.sin(h_start)
         denum = h_sunset - h_start
-    # Interval crossing midnight, starting before sunset, finsing after sunrise (2 sunlit parts)
-    elif h_end < h_start and h_start <= h_sunset and h_end >= h_sunrise:
+    # Interval crossing midnight, starting before sunset, finishing after sunrise (2 sunlit parts)
+    elif h_sunset >= h_start > h_end >= h_sunrise:
         num = np.sin(h_sunset) - np.sin(h_start) + np.sin(h_end) - np.sin(h_sunrise)
         denum = h_sunset - h_start + h_end - h_sunrise
     # All other cases : interval not crossing midnight, overlapping with the sunlit part

@@ -53,7 +53,7 @@ class Parametrizable(dict):
     @property
     def parameters(self) -> dict:
         """All parameters as a dictionary. Read-only."""
-        return dict(**self)
+        return {**self}
 
     def __repr__(self) -> str:
         """Return a string representation."""
@@ -226,7 +226,9 @@ class Grouper(Parametrizable):
         They are broadcast, merged to the grouping dataset and regrouped in the output.
         """
         if das:
-            from .utils import broadcast  # pylint: disable=cyclic-import
+            from .utils import (  # pylint: disable=cyclic-import,import-outside-toplevel
+                broadcast,
+            )
 
             if da is not None:
                 das[da.name] = da
