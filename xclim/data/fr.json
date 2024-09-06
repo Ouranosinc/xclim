@@ -204,16 +204,16 @@
     "abstract": "Proportion de la précipitation totale due aux processus de convections. Seuls les jours avec un flux minimum de précipitation sont considérés."
   },
   "WETDAYS": {
-    "long_name": "Nombre de jours où la précipitation est au-dessus ou égale à {thresh}",
-    "description": "Nombre {freq:m} de jours où la précipitation est au-dessus ou égale à {thresh}.",
-    "title": "Jours mouillés",
-    "abstract": "Nombre de jours où la précipitation est au-dessus ou égale à un seuil donné."
+    "long_name": "Nombre de jours où la précipitation est supérieure ou égale à {thresh}",
+    "description": "Nombre {freq:m} de jours où la précipitation est supérieure ou égale à {thresh}.",
+    "title": "Jours pluvieux",
+    "abstract": "Nombre de jours où la précipitation est supérieure ou égale à un seuil donné."
   },
   "WETDAYS_PROP": {
-    "long_name": "Proportion de jours où les précipitations sont au-dessus ou égale à {thresh}",
-    "description": "Proportion {freq:m} de jours où les précipitations sont au-dessus ou égale à {thresh}.",
+    "long_name": "Proportion de jours où la précipitation est supérieure ou égale à {thresh}",
+    "description": "Proportion {freq:m} de jours où la précipitation est supérieure ou égale à {thresh}.",
     "title": "Proportion de jours avec précipitation",
-    "abstract": "Proportion de jours où la précipitation est au-dessus ou égale à un seuil donné."
+    "abstract": "Proportion de jours où la précipitation est supérieure ou égale à un seuil donné."
   },
   "CDD": {
     "long_name": "Durée maximale d'une période où la précipitation est sous {thresh}",
@@ -334,6 +334,24 @@
     "description": "Nombre {freq:m} de jours où la température maximale quotidienne est au-dessus {thresh_tasmax} et la température minimale quotidienne est au-dessus {thresh_tasmin}.",
     "title": "Nombre de jours ayant des températures minimale et maximale quotidiennes au-dessus de seuils donnés",
     "abstract": "Nombre de jours où les températures maximale et minimale quotidiennes sont au-dessus de seuils donnés."
+  },
+  "HEAT_SPELL_FREQUENCY": {
+    "long_name": "Nombre de vagues de chaleur.",
+    "description": "Nombre {freq:m} de vagues de chaleur. Une vague de chaleur se produit lorsque les moyennes sur {window} jours des températures minimale et maximale quotidiennes excèdent {thresh_tasmin} et {thresh_tasmax}, respectivement. Les {window} jours de la moyenne sont comptés dans la vague.",
+    "title": "Fréquence des vagues de chaleur",
+    "abstract": "Nombre de vagues de chaleur. Une vague de chaleur se produit lorsque les moyennes mobiles des températures minimale et maximale quotidiennes excèdent des seuils donnés."
+  },
+  "HEAT_SPELL_MAX_LENGTH": {
+    "long_name": "Vague de chaleur la plus longue.",
+    "description": "Durée maximale {freq:f} des vagues de chaleur. Une vague de chaleur se produit lorsque les moyennes sur {window} jours des températures minimale et maximale quotidiennes excèdent {thresh_tasmin} et {thresh_tasmax}, respectivement. Les {window} jours de la moyenne sont comptés dans la vague.",
+    "title": "Durée maximale des vagues de chaleur",
+    "abstract": "Durée maximale des vagues de chaleur. Une vague de chaleur se produit lorsque les moyennes mobiles des températures minimale et maximale quotidiennes excèdent des seuils donnés."
+  },
+  "HEAT_SPELL_TOTAL_LENGTH": {
+    "long_name": "Durée totale des vagues de chaleur.",
+    "description": "Durée totale {freq:f} des vagues de chaleur. Une vague de chaleur se produit lorsque les moyennes sur {window} jours des températures minimale et maximale quotidiennes excèdent {thresh_tasmin} et {thresh_tasmax}, respectivement. Les {window} jours de la moyenne sont comptés dans la vague.",
+    "title": "Durée totale des vagues de chaleur",
+    "abstract": "Durée totale des vagues de chaleur. Une vague de chaleur se produit lorsque les moyennes mobiles des températures minimale et maximale quotidiennes excèdent des seuils donnés."
   },
   "HEAT_WAVE_FREQUENCY": {
     "long_name": "Nombre de séries d'au moins {window} jours consécutifs ayant des températures minimales quotidiennes au-dessus {thresh_tasmin} et températures maximales quotidiennes au-dessus {thresh_tasmax}",
@@ -651,8 +669,8 @@
     "abstract": "Nombre de jours entre la première occurrence d'une série de jours ayant une température moyenne quotidienne au-dessus d'un seuil et la première occurrence d'une série de jours avec une température moyenne quotidienne sous ce même seuil, survenant après une date de calendrier donnée."
   },
   "GROWING_SEASON_START": {
-    "long_name": "Premier jour de la première série de {window} jours ayant une température moyenne quotidienne égale ou au-dessus de {thresh}",
-    "description": "Jour de l’année marquant le début de la saison de croissance, défini comme le premier jour de la première série de {window} jours ayant une température moyenne quotidienne au-dessus ou égale à {thresh}",
+    "long_name": "Premier jour de la première série de {window} jours ayant une température moyenne quotidienne {op} {thresh}",
+    "description": "Jour de l’année marquant le début de la saison de croissance, défini comme le premier jour de la première série de {window} jours ayant une température moyenne quotidienne {op} {thresh}",
     "title": "Jour de l'année du début de la saison de croissance",
     "abstract": "Premier jour où la température moyenne quotidienne est au-dessus d'un seuil donné depuis un certain nombre de jours consécutifs."
   },
@@ -759,7 +777,7 @@
     "abstract": "Nombre maximal de jours consécutifs sans gel où la température minimale quotidienne est au-dessus ou égale à 0°C."
   },
   "GROWING_SEASON_END": {
-    "long_name": "Premier jour de la première série de {window} jours ayant une température journalière moyenne sous {thresh}, survenant après {mid_date}",
+    "long_name": "Premier jour de la première série de {window} jours ayant une température journalière moyenne {op} {thresh}, survenant après {mid_date}",
     "description": "Jour de l'année de la fin de la saison de croissance, défini comme le premier jour après {mid_date} ayant une température moyenne quotidienne au-dessus ou égale à {thresh} après une série de {window} jours ayant une température moyenne quotidienne sous {thresh}.",
     "title": "Fin de la saison de croissance",
     "abstract": "Le premier jour où la température moyenne quotidienne est sous un seuil donné pendant un certain nombre de jours consécutifs après une date de calendrier donnée."

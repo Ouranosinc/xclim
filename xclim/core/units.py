@@ -12,7 +12,7 @@ import logging
 import warnings
 from copy import deepcopy
 from importlib.resources import files
-from inspect import _empty, signature  # noqa
+from inspect import signature
 from typing import Any, Callable, Literal, cast
 
 import cf_xarray.units
@@ -20,11 +20,14 @@ import numpy as np
 import pint
 import xarray as xr
 from boltons.funcutils import wraps
+from pint import UndefinedUnitError
 from yaml import safe_load
 
-from .calendar import get_calendar, parse_offset
-from .options import datacheck
-from .utils import InputKind, Quantified, ValidationError, infer_kind_from_parameter
+from xclim.core._exceptions import ValidationError
+from xclim.core._types import Quantified
+from xclim.core.calendar import get_calendar, parse_offset
+from xclim.core.options import datacheck
+from xclim.core.utils import InputKind, infer_kind_from_parameter
 
 logging.getLogger("pint").setLevel(logging.ERROR)
 
@@ -35,6 +38,7 @@ __all__ = [
     "convert_units_to",
     "declare_relative_units",
     "declare_units",
+    "ensure_absolute_temperature",
     "ensure_cf_units",
     "ensure_delta",
     "flux2rate",
@@ -54,9 +58,13 @@ __all__ = [
 
 # shamelessly adapted from `cf-xarray` (which adopted it from MetPy and xclim itself)
 units = deepcopy(cf_xarray.units.units)
-# Changing the default string format for units/quantities. cf is implemented by cf-xarray
-# g is the most versatile float format.
-units.default_format = "gcf"
+# Changing the default string format for units/quantities.
+# CF is implemented by cf-xarray, g is the most versatile float format.
+# The following try/except logic can be removed when xclim drops support numpy <2.0.
+try:
+    units.formatter.default_format = "gcf"
+except UndefinedUnitError:
+    units.default_format = "gcf"
 # Switch this flag back to False. Not sure what that implies, but it breaks some tests.
 units.force_ndarray_like = False  # noqa: F841
 # Another alias not included by cf_xarray
@@ -183,11 +191,8 @@ def pint2cfunits(value: units.Quantity | units.Unit) -> str:
     if isinstance(value, (pint.Quantity, units.Quantity)):
         value = value.units
 
-    # Issue originally introduced in https://github.com/hgrecco/pint/issues/1486
-    # Should be resolved in pint v0.24. See: https://github.com/hgrecco/pint/issues/1913
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore", category=DeprecationWarning)
-        return f"{value:cf}".replace("dimensionless", "")
+    # Force "1" if the formatted string is "" (pint < 0.24)
+    return f"{value:~cf}" or "1"
 
 
 def ensure_cf_units(ustr: str) -> str:
@@ -338,10 +343,8 @@ def convert_units_to(  # noqa: C901
                 for direction, sign in [("to", 1), ("from", -1)]:
                     # If the dimensionality diff is compatible with this conversion
                     compatible = all(
-                        [
-                            dimdiff == (sign * dim_order_diff.get(f"[{dim}]"))
-                            for dim, dimdiff in convconf["dimensionality"].items()
-                        ]
+                        dimdiff == sign * dim_order_diff.get(f"[{dim}]")
+                        for dim, dimdiff in convconf["dimensionality"].items()
                     )
                     # Does the input cf standard name have an equivalent after conversion
                     valid = cf_conversion(standard_name, convname, direction)
@@ -349,13 +352,12 @@ def convert_units_to(  # noqa: C901
                         # The new cf standard name is inserted by the converter
                         try:
                             source = _CONVERSIONS[(convname, direction)](source)
-                        except Exception:
-                            # FIXME: This is a broad exception. Bad practice.
-                            # Failing automatic conversion
-                            # It will anyway fail further down with a correct error message.
-                            pass
-                        else:
-                            source_unit = units2pint(source)
+                        except Exception as err:
+                            raise ValueError(
+                                f"There is a dimensionality incompatibility between the source and the target "
+                                f"and no CF-based conversions have been found for this standard name: {standard_name}"
+                            ) from err
+                        source_unit = units2pint(source)
 
         out: xr.DataArray
         if source_unit == target_unit:
@@ -464,6 +466,56 @@ def infer_sampling_units(
     return out
 
 
+DELTA_ABSOLUTE_TEMP = {
+    units.delta_degC: units.kelvin,
+    units.delta_degF: units.rankine,
+}
+
+
+def ensure_absolute_temperature(units: str) -> str:
+    """Convert temperature units to their absolute counterpart, assuming they represented a difference (delta).
+
+    Celsius becomes Kelvin, Fahrenheit becomes Rankine. Does nothing for other units.
+
+    See Also
+    --------
+    :py:func:`ensure_delta`
+    """
+    a = str2pint(units)
+    # ensure a delta pint unit
+    a = a - 0 * a
+    if a.units in DELTA_ABSOLUTE_TEMP:
+        return pint2cfunits(DELTA_ABSOLUTE_TEMP[a.units])
+    return units
+
+
+def ensure_delta(unit: str) -> str:
+    """Return delta units for temperature.
+
+    For dimensions where delta exist in pint (Temperature), it replaces the temperature unit by delta_degC or
+    delta_degF based on the input unit. For other dimensionality, it just gives back the input units.
+
+    Parameters
+    ----------
+    unit : str
+        unit to transform in delta (or not)
+
+    See Also
+    --------
+    :py:func:`ensure_absolute_temperature`
+    """
+    u = units2pint(unit)
+    d = 1 * u
+    #
+    delta_unit = pint2cfunits(d - d)
+    # replace kelvin/rankine by delta_degC/F
+    if "kelvin" in u._units:
+        delta_unit = pint2cfunits(u / units2pint("K") * units2pint("delta_degC"))
+    if "degree_Rankine" in u._units:
+        delta_unit = pint2cfunits(u / units2pint("°R") * units2pint("delta_degF"))
+    return delta_unit
+
+
 def to_agg_units(
     out: xr.DataArray, orig: xr.DataArray, op: str, dim: str = "time"
 ) -> xr.DataArray:
@@ -519,28 +571,33 @@ def to_agg_units(
     >>> degdays = dt.clip(0).sum("time")  # Integral of temperature above a threshold
     >>> degdays = to_agg_units(degdays, dt, op="integral")
     >>> degdays.units
-    'week delta_degC'
+    'K week'
 
     Which we can always convert to the more common "K days":
 
     >>> degdays = convert_units_to(degdays, "K days")
     >>> degdays.units
-    'K d'
+    'd K'
     """
-    if op in ["amin", "min", "amax", "max", "mean", "std", "sum"]:
+    if op in ["amin", "min", "amax", "max", "mean", "sum"]:
         out.attrs["units"] = orig.attrs["units"]
 
+    elif op in ["std"]:
+        out.attrs["units"] = ensure_absolute_temperature(orig.attrs["units"])
+
     elif op in ["var"]:
-        out.attrs["units"] = pint2cfunits(str2pint(orig.units) ** 2)
+        out.attrs["units"] = pint2cfunits(
+            str2pint(ensure_absolute_temperature(orig.units)) ** 2
+        )
 
     elif op in ["doymin", "doymax"]:
         out.attrs.update(
-            units="", is_dayofyear=np.int32(1), calendar=get_calendar(orig)
+            units="1", is_dayofyear=np.int32(1), calendar=get_calendar(orig)
         )
 
     elif op in ["count", "integral"]:
         m, freq_u_raw = infer_sampling_units(orig[dim])
-        orig_u = str2pint(orig.units)
+        orig_u = str2pint(ensure_absolute_temperature(orig.units))
         freq_u = str2pint(freq_u_raw)
         out = out * m
 
@@ -1196,11 +1253,7 @@ def declare_relative_units(**units_by_name) -> Callable:
                 context = None
                 for ref, refvar in bound_args.arguments.items():
                     if f"<{ref}>" in dim:
-                        # Issue originally introduced in https://github.com/hgrecco/pint/issues/1486
-                        # Should be resolved in pint v0.24. See: https://github.com/hgrecco/pint/issues/1913
-                        with warnings.catch_warnings():
-                            warnings.simplefilter("ignore", category=DeprecationWarning)
-                            dim = dim.replace(f"<{ref}>", f"({units2pint(refvar)})")
+                        dim = dim.replace(f"<{ref}>", f"({units2pint(refvar)})")
 
                         # check_units will guess the hydro context if "precipitation" appears in dim,
                         # but here we pass a real unit. It will also check the standard name of the arg,
@@ -1303,29 +1356,6 @@ def declare_units(**units_by_name) -> Callable:
         return wrapper
 
     return dec
-
-
-def ensure_delta(unit: str) -> str:
-    """Return delta units for temperature.
-
-    For dimensions where delta exist in pint (Temperature), it replaces the temperature unit by delta_degC or
-    delta_degF based on the input unit. For other dimensionality, it just gives back the input units.
-
-    Parameters
-    ----------
-    unit : str
-        unit to transform in delta (or not)
-    """
-    u = units2pint(unit)
-    d = 1 * u
-    #
-    delta_unit = pint2cfunits(d - d)
-    # replace kelvin/rankine by delta_degC/F
-    if "kelvin" in u._units:
-        delta_unit = pint2cfunits(u / units2pint("K") * units2pint("delta_degC"))
-    if "degree_Rankine" in u._units:
-        delta_unit = pint2cfunits(u / units2pint("°R") * units2pint("delta_degF"))
-    return delta_unit
 
 
 def infer_context(

@@ -68,7 +68,7 @@ def test_equally_spaced_nodes():
 @pytest.mark.parametrize(
     "interp,expi", [("nearest", 2.9), ("linear", 2.95), ("cubic", 2.95)]
 )
-@pytest.mark.parametrize("extrap,expe", [("constant", 4.4), ("nan", np.NaN)])
+@pytest.mark.parametrize("extrap,expe", [("constant", 4.4), ("nan", np.nan)])
 def test_interp_on_quantiles_constant(interp, expi, extrap, expe):
     quantiles = np.linspace(0, 1, num=25)
     xq = xr.DataArray(
@@ -163,7 +163,7 @@ def test_interp_on_quantiles_monthly(random):
 @pytest.mark.parametrize(
     "interp,expi", [("nearest", 2.9), ("linear", 2.95), ("cubic", 2.95)]
 )
-@pytest.mark.parametrize("extrap,expe", [("constant", 4.4), ("nan", np.NaN)])
+@pytest.mark.parametrize("extrap,expe", [("constant", 4.4), ("nan", np.nan)])
 def test_interp_on_quantiles_constant_with_nan(interp, expi, extrap, expe):
     quantiles = np.linspace(0, 1, num=30)
     xq = xr.DataArray(

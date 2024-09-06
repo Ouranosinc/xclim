@@ -2,24 +2,136 @@
 Changelog
 =========
 
-v0.50.0 (unreleased)
+v0.53.0 (unreleased)
 --------------------
-Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Éric Dupuis (:user:`coxipi`).
+Contributors to this version: Adrien Lamarche (:user:`LamAdr`), Trevor James Smith (:user:`Zeitsperre`),  Éric Dupuis (:user:`coxipi`), Pascal Bourgault (:user:`aulemahal`).
 
 New indicators
 ^^^^^^^^^^^^^^
+* New ``heat_spell_frequency``, ``heat_spell_max_length`` and ``heat_spell_total_length`` : spell length statistics on a bivariate condition that uses the average over a window by default. (:pull:`1885`).
 * New indicator ``freezing_rain_events`` gives statistics about freezing rain sequences. (:pull:`1778`).
-
 
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-* New properties: Bivariate Spell Length (``xclim.sdba.properties.bivariate_spell_length``), generalized spell lengths with an argument for `window`, and specific spell lengths with `window` fixed to 1  (``xclim.sdba.propertiies.threshold_count``, ``xclim.sdba.propertiies.bivariate_threshold_count``). (:pull:`1758`).
-* New option `normalize` in ``sdba.measures.taylordiagram`` to obtain normalized Taylor diagrams (divide standard deviations by standard deviation of the reference). (:pull:`1764`).
+* New generic ``xclim.indices.generic.spell_mask``  that returns a mask of which days are part of a spell. Supports multivariate conditions and weights. Used in new generic index ``xclim.indices.generic.bivariate_spell_length_statistics`` that extends ``spell_length_statistics`` to two variables.  (:pull:`1885`).
+* Indicator parameters can now be assigned a new name, different from the argument name in the compute function. (:pull:`1885`).
 * ``xclim.indices.run_length.runs_with_holes`` allows to input a condition that must be met for a run to start and a second condition that must be met for the run to stop. (:pull:`1778`).
+
+Bug fixes
+^^^^^^^^^
+* Fixed a small inefficiency in ``_otc_adjust``, and the `standardize` method of `OTC/dOTC` is now applied on individual variable  (:pull:`1890`, :pull:`1896`).
+
+Breaking changes
+^^^^^^^^^^^^^^^^
+* `transform` argument of `OTC/dOTC` classes (and child functions) is changed to `normalization`, and `numIterMax` is changed to `num_iter_max` in `utils.optimal_transport` (:pull:`1896`).
+
+Breaking changes
+^^^^^^^^^^^^^^^^
+* `platformdirs` is no longer a direct dependency of `xclim`, but `pooch` is required to use many of the new testing functions (installable via `pip install pooch` or `pip install 'xclim[dev]'`). (:pull:`1889`).
+* The following previously-deprecated functions have now been removed from `xclim`: ``xclim.core.calendar.convert_calendar``, ``xclim.core.calendar.date_range``, ``xclim.core.calendar.date_range_like``, ``xclim.core.calendar.interp_calendar``, ``xclim.core.calendar.days_in_year``, ``xclim.core.calendar.datetime_to_decimal_year``. For guidance on how to migrate to alternatives, see the `version 0.50.0 Breaking changes <#v0-50-0-2024-06-17>`_. (:issue:`1010`, :pull:`1845`).
+
+Internal changes
+^^^^^^^^^^^^^^^^
+* The `Ouranosinc/xclim-testdata` repository has been restructured for better organization and to make better use of `pooch` and data registries for testing data fetching (see: `xclim-testdata PR/29 <https://github.com/Ouranosinc/xclim-testdata/pull/29>`_). (:pull:`1889`).
+* The ``xclim.testing`` module has been refactored to make use of `pooch` with file registries. Several testing functions have been removed as a result: (:pull:`1889`)
+    * ``xclim.testing.utils.open_dataset`` now uses a `pooch` instance to deliver locally-stored datasets. Its call signature has also changed.
+    * ``xclim`` now accepts more environment variables to control the behaviour of the testing setup functions. These include ``XCLIM_TESTDATA_BRANCH``, ``XCLIM_TESTDATA_REPO_URL``, and ``XCLIM_TESTDATA_CACHE_DIR``.
+    * ``xclim.testing.utils.get_file``, ``xclim.testing.utils.get_local_testdata``, ``xclim.testing.utils.list_datasets``, and ``xclim.testing.utils.file_md5_checksum`` have been removed.
+        * ``xclim.testing.utils.nimbus`` replaces much of this functionality. See the `xclim` documentation for more information.
+* Many tests focused on evaluating the normal operation of remote file access tools under ``xclim.testing`` have been removed. (:pull:`1889`).
+* Setup and teardown functions that were found under ``tests/conftest.py`` have been optimized to reduce redundant calls when running ``pytest xclim``. Some obsolete `pytest` fixtures have also been removed.(:pull:`1889`).
+* Many ``DeprecationWarning`` and ``FutureWarning`` messages emitted from `xarray` and `pint` have been addressed. (:issue:`1719`, :pull:`1881`).
+* The codebase has been adjusted to address many `pylint`-related warnings and errors. In some cases, `casting` was used to redefine some `numpy` and `xarray` objects. (:issue:`1719`, :pull:`1881`).
+* ``xclim.core`` now uses absolute imports for clarity and some objects commonly used in the module have been moved to hidden submodules. (:issue:`1719`, :pull:`1881`).
+* ``xclim.core.indicator.Parameter`` has a new attribute ``compute_name`` while ``xclim.core.indicator.Indicator`` lost its ``_variable_mapping``. The translation from parameter (and variable) names in the indicator to the names on the compute function is handled by ``Indicator._get_compute_args``. (:pull:`1885`).
+
+v0.52.0 (2024-08-08)
+--------------------
+Contributors to this version: David Huard (:user:`huard`), Trevor James Smith (:user:`Zeitsperre`), Hui-Min Wang (:user:`Hem-W`), Éric Dupuis (:user:`coxipi`), Sarah Gammon (:user:`SarahG-579462`), Pascal Bourgault (:user:`aulemahal`), Juliette Lavoie (:user:`juliettelavoie`), Adrien Lamarche (:user:`LamAdr`).
+
+Announcements
+^^^^^^^^^^^^^
+* `xclim` now supports both `numpy` versions `>=1.20` and `>=2.0`. (:issue:`1785`, :pull:`1814`, :pull:`1870`).
+* `xclim` now needs ``cf_xarray>=0.9.3`` but continues to support older versions of `pint` (`<0.24`) for compatibility reasons. (:pull:`1870`).
+
+New features and enhancements
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+* ``xclim.sdba.nbutils.quantile`` and its child functions are now faster. If the `fastnanquantile` library is installed, it is used as the backend for the computation of quantiles and yields even faster results. This dependency is now listed in the `xclim[extras]` recipe. (:issue:`1255`, :pull:`1513`).
+* New multivariate bias adjustment class ``MBCn``, giving a faster and more accurate implementation of the ``MBCn`` algorithm. (:issue:`1551`, :pull:`1580`).
+* New multivariate bias adjustment classes ``OTC`` and ``dOTC``. Requires the `POT` library which can be installed via the `xclim[extras]` recipe. (:pull:`1787`).
+* `xclim` is now compatible with `pytest` versions `>=8.0.0`. (:pull:`1632`).
+
+Breaking changes
+^^^^^^^^^^^^^^^^
+* As of ``cf_xarray>=0.9.3``, dimensionless quantities now use the ``"1"`` units attribute as specified by the CF conventions, previously an empty string was returned. (:pull:`1814`).
+* The definitions of the ``frost_free_season_start`` and ``frost_free_season_end`` have been slightly changed to be coherent with the ``frost_free_season_length`` and `xclim`'s notion of ``season`` in general. Indicator and indices signature have been adapted to the new conventions. (:pull:`1845`).
+* Season length indicators have been modified to return ``0`` for all cases where a proper season was not found, but the data is valid. Previously, a ``nan`` was given if neither a start nor an end were found, even if the data was valid, and a ``0`` was given if an end was found but without a valid start. (:pull:`1845`).
+
+Bug fixes
+^^^^^^^^^
+* Fixed the indexer bug in the ``xclim.indices.standardized_index_fit_params`` when multiple or non-array indexers are specified and fitted parameters are reloaded from netCDF. (:issue:`1842`, :pull:`1843`).
+* Addressed a bug found in ``wet_spell_*`` indicators that was contributing to erroneous results. A new generic spell length statistic function (``xclim.indices.generic.spell_length_statistics``) is now used in wet and dry spells indicators. (:issue:`1834`, :pull:`1838`).
+* Syntax for ``nan`` and ``inf`` was adapted to support `numpy>=2.0`. (:pull:`1814`, :issue:`1785`).
+* The type in ``jitter`` now works with modern version of `dask` (`>=2024.8.0`). (:pull:`1864`).
+
+Internal changes
+^^^^^^^^^^^^^^^^
+* Changed the French translation of "wet days" from "jours mouillés" to "jours pluvieux". (:issue:`1825`, :pull:`1826`).
+* In order to adapt to changes in `pytest`, the doctest fixtures have been split from the main testing suite and doctests are now run using ``$ python -c 'from xclim.testing.utils import run_doctests; run_doctests()'``. (:pull:`1632`).
+* `tox` has been reconfigured to run doctests in a separate environment (``tox -e doctests``). (:pull:`1632`).
+* Added ``xclim.indices.generic.season`` to make season start, end, and length indices. Added a ``stat`` argument to ``xclim.indices.run_length.season`` to avoid returning a dataset. (:pull:`1845`).
+
+CI changes
+^^^^^^^^^^
+* `pip-tools` (`pip-compile`) has been used to generate a lock file with hashes for the CI dependencies. (:pull:`1841`).
+* The ``main.yml`` workflow has been updated to use simpler trigger logic. (:pull:`1841`).
+* A workflow bug has been fixed that was causing multiple duplicate comments to be made on Pull Requests originating from forks. (:pull:`1841`).
+* The ``upstream.yml`` workflow was adapted to not install upstream Python dependencies using hashes (as it is impossible to install directly from GitHub sources using ``--require-hashes``). (:pull:`1859`).
+* The `tox-gh` configuration has been set to handle the environment configurations on GitHub Workflows. The tox.ini file is also a bit more organized/consistent. (:pull:`1859`).
+
+v0.51.0 (2024-07-04)
+--------------------
+Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`).
+
+New features and enhancements
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+* Added the `op` keyword to the `growing_season_{start|end}` indices and indicators, allowing for customizable threshold operators using `indices.generic.compare()`. (:issue:`1794`, :pull:`1796`).
+* `xclim` now separates the optional dependencies into `dev` and `docs` recipes. Both can be installed with the `all` option (`$ python -m pip install xclim[all]`). (:pull:`1806`).
+
+Bug fixes
+^^^^^^^^^
+* Units of degree-days computations with Fahrenheit input fixed to yield "°R d". Added a new ``xclim.core.units.ensure_absolute_temperature`` method to convert from delta to absolute temperatures. (:issue:`1789`, :pull:`1804`).
+* Clarified a typo in the docstring formula for `xclim.indices.growing_season_length`. (:pull:`1796`).
+
+Internal changes
+^^^^^^^^^^^^^^^^
+* `netcdf4` has been pinned below v1.7 for test stability reasons. (:pull:`1791`).
+* `flake8-bandit`-like checks have been enabled via `ruff`, with fixes for a few security-related issues. (:pull:`1806`).
+* ``xclim.testing.utils`` now employs more secure URL auditing checks. (:pull:`1806`).
+* `CHANGES.rst` has been renamed to `CHANGELOG.rst`, adhering to suggestions from the `keepachangelog v.1.1.0 <https://keepachangelog.com/en/1.1.0/>`_ specifications. (:pull:`1823`).
+
+CI changes
+^^^^^^^^^^
+* GitHub repository now uses Rulesets for branch protection. (:pull:`1790`).
+* Version bumping and project triage is now handled by the Ouranos Helper GitHub App. (:pull:`1790`).
+* `bump-my-version` has been updated to v0.23.0. (:pull:`1790`).
+* The Ouranos Helper GitHub App now provides verified commits. (:issue:`1811`, :pull:`1812`).
+* Added the `deptry <https://github.com/fpgmaas/deptry>`_ package to the `dev` linter tools and linting workflows for performing dependency analyses. (:pull:`1806`).
+* Several linting tools have been updated to the latest versions and pinned. (:pull:`1806`).
+
+v0.50.0 (2024-06-17)
+--------------------
+Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Éric Dupuis (:user:`coxipi`).
+
+New features and enhancements
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+* New properties: Bivariate Spell Length (``xclim.sdba.properties.bivariate_spell_length``), Generalized Spell Lengths with an argument for `window`, and Specific Spell Lengths with `window` fixed to '1' (``xclim.sdba.properties.threshold_count``, ``xclim.sdba.properties.bivariate_threshold_count``). (:pull:`1758`).
+* New option `normalize` in ``sdba.measures.taylordiagram`` to obtain normalized Taylor Diagrams (divide standard deviations by standard deviation of the reference). (:pull:`1764`).
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
 * `pint` has been pinned below v0.24 until `xclim` can be updated to support the latest version. (:issue:`1771`, :pull:`1772`).
+* `numpy` has been pinned below v2.0.0 until `xclim` can be updated to support the latest version. (:pull:`1783`).
 * Calendar utilities that have an equivalent in `xarray` have been deprecated and will be removed in `xclim` v0.51.0. (:issue:`1010`, :pull:`1761`). This concerns the following members of ``xclim.core.calendar``:
     - ``convert_calendar`` : Use ``Dataset.convert_calendar``, ``DataArray.convert_calendar`` or ``xr.coding.calendar_ops.convert_calendar``  instead.
         + If your code passes ``target`` as an array, first convert the source to the target's calendar and then reindex the result to ``target``.
@@ -42,6 +154,7 @@ Internal changes
 Bug fixes
 ^^^^^^^^^
 * ``xclim.indices.{cold|hot}_spell_total_length`` now properly uses the argument `window` to only count spells with at least `window` time steps. (:issue:`1765`, :pull:`1777`).
+* Addressed an error in ``xclim.ensembles._filters._concat_hist`` where remnants of a scenario selection were not being dropped properly. (:pull:`1780`).
 
 v0.49.0 (2024-05-02)
 --------------------

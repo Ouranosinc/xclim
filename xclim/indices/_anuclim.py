@@ -6,6 +6,7 @@ from typing import Callable, cast
 import numpy as np
 import xarray
 
+from xclim.core import Quantified
 from xclim.core.units import (
     convert_units_to,
     declare_units,
@@ -13,16 +14,15 @@ from xclim.core.units import (
     units,
     units2pint,
 )
-from xclim.core.utils import Quantified, ensure_chunk_size
-
-from ._multivariate import (
+from xclim.core.utils import ensure_chunk_size
+from xclim.indices._multivariate import (
     daily_temperature_range,
     extreme_temperature_range,
     precip_accumulation,
 )
-from ._simple import tg_mean
-from .generic import select_resample_op
-from .run_length import lazy_indexing
+from xclim.indices._simple import tg_mean
+from xclim.indices.generic import select_resample_op
+from xclim.indices.run_length import lazy_indexing
 
 # Frequencies : YS: year start, QS-DEC: seasons starting in december, MS: month start
 # See http://pandas.pydata.org/pandas-docs/stable/timeseries.html#offset-aliases
@@ -128,7 +128,7 @@ def temperature_seasonality(
     The following would compute for each grid cell of file `tas.day.nc` the annual temperature seasonality:
 
     >>> import xclim.indices as xci
-    >>> t = open_dataset(path_to_tas_file).tas
+    >>> t = xr.open_dataset(path_to_tas_file).tas
     >>> tday_seasonality = xci.temperature_seasonality(t)
     >>> t_weekly = xci.tg_mean(t, freq="7D")
     >>> tweek_seasonality = xci.temperature_seasonality(t_weekly)
@@ -179,7 +179,7 @@ def precip_seasonality(pr: xarray.DataArray, freq: str = "YS") -> xarray.DataArr
     The following would compute for each grid cell of file `pr.day.nc` the annual precipitation seasonality:
 
     >>> import xclim.indices as xci
-    >>> p = open_dataset(path_to_pr_file).pr
+    >>> p = xr.open_dataset(path_to_pr_file).pr
     >>> pday_seasonality = xci.precip_seasonality(p)
     >>> p_weekly = xci.precip_accumulation(p, freq="7D")
 
@@ -242,7 +242,7 @@ def tg_mean_warmcold_quarter(
     warmest quarter mean temperature:
 
     >>> from xclim.indices import tg_mean_warmcold_quarter
-    >>> t = open_dataset(path_to_tas_file)
+    >>> t = xr.open_dataset(path_to_tas_file)
     >>> t_warm_qrt = tg_mean_warmcold_quarter(tas=t.tas, op="warmest")
 
     Notes
@@ -353,7 +353,7 @@ def prcptot_wetdry_quarter(
     The following would compute for each grid cell of file `pr.day.nc` the annual wettest quarter total precipitation:
 
     >>> from xclim.indices import prcptot_wetdry_quarter
-    >>> p = open_dataset(path_to_pr_file)
+    >>> p = xr.open_dataset(path_to_pr_file)
     >>> pr_warm_qrt = prcptot_wetdry_quarter(pr=p.pr, op="wettest")
 
     Notes
@@ -575,7 +575,7 @@ def _to_quarter(
     """
     if pr is not None and tas is not None:
         raise ValueError("Supply only one variable, 'tas' (exclusive) or 'pr'.")
-    elif tas is not None:
+    if tas is not None:
         ts_var = tas
     elif pr is not None:
         ts_var = pr

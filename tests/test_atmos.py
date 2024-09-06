@@ -94,7 +94,7 @@ def test_humidex(tas_series):
 
 
 def test_heat_index(atmosds):
-    # Keep just Montreal values for summertime as we need tas > 20 degC
+    # Keep just Montreal values for summer as we need tas > 20 degC
     tas = atmosds.tasmax[1][150:170]
     hurs = atmosds.hurs[1][150:170]
 
@@ -260,7 +260,7 @@ def test_wind_profile(atmosds):
 
 def test_wind_power_potential(atmosds):
     out = atmos.wind_power_potential(wind_speed=atmosds.sfcWind)
-    assert out.attrs["units"] == ""
+    assert out.attrs["units"] == "1"
     assert (out >= 0).all()
     assert (out <= 1).all()
 
@@ -569,7 +569,7 @@ class TestUTCI:
 
         tas = dataset.tas
         hurs = dataset.hurs
-        sfcWind, sfcWindfromdir = atmos.wind_speed_from_vector(
+        sfcWind, _sfcWindfromdir = atmos.wind_speed_from_vector(
             uas=dataset.uas, vas=dataset.vas
         )
         rsds = dataset.rsds

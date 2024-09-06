@@ -53,7 +53,7 @@ class Parametrizable(dict):
     @property
     def parameters(self) -> dict:
         """All parameters as a dictionary. Read-only."""
-        return dict(**self)
+        return {**self}
 
     def __repr__(self) -> str:
         """Return a string representation."""
@@ -89,7 +89,7 @@ class ParametrizableWithDataset(Parametrizable):
         and that attribute must be the result of `jsonpickle.encode(object)` where object is
         of the same type as this object.
         """
-        obj = jsonpickle.decode(ds.attrs[cls._attribute])
+        obj = jsonpickle.decode(ds.attrs[cls._attribute])  # noqa: S301
         obj.set_dataset(ds)
         return obj
 
@@ -226,7 +226,9 @@ class Grouper(Parametrizable):
         They are broadcast, merged to the grouping dataset and regrouped in the output.
         """
         if das:
-            from .utils import broadcast  # pylint: disable=cyclic-import
+            from .utils import (  # pylint: disable=cyclic-import,import-outside-toplevel
+                broadcast,
+            )
 
             if da is not None:
                 das[da.name] = da

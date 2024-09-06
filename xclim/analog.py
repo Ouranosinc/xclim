@@ -139,7 +139,7 @@ def metric(func):
     @wraps(func)
     def _metric_overhead(x, y, **kwargs):
         if np.any(np.isnan(x)) or np.any(np.isnan(y)):
-            return np.NaN
+            return np.nan
 
         x = np.atleast_2d(x)
         y = np.atleast_2d(y)
@@ -458,7 +458,7 @@ def kolmogorov_smirnov(x: np.ndarray, y: np.ndarray) -> float:
 
         return np.max(np.abs(cx - cy))
 
-    return max(pivot(x, y), pivot(y, x))
+    return max(pivot(x, y), pivot(y, x))  # pylint: disable=arguments-out-of-order
 
 
 @metric

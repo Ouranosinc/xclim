@@ -61,8 +61,8 @@ General notes for implementing new bias-adjustment methods:
 
 * Method are implemented as classes in ``xclim/sdba/adjustment.py``.
 * If the algorithm gets complicated and would generate many dask tasks, it should be implemented as functions wrapped by :py:func:`~xclim.sdba.map_blocks` or :py:func:`~xclim.sdba.map_groups` in ``xclim/sdba/_adjustment.py``.
-* xclim doesn't implement monolithic multi-parameter methods, but rather smaller modular functions to construct post-processing workflows.
-* If you are working on numba-accelerated function that use ``@guvectorize``, consider disabling caching during the development phase and reactivating it once all changes are ready for review. This is done by commenting ``cache=True`` in the decorator.
+* `xclim` doesn't implement monolithic multi-parameter methods, but rather smaller modular functions to construct post-processing workflows.
+* If you are working on numba-accelerated function that uses ``@guvectorize``, consider disabling caching during the development phase and reactivating it once all changes are ready for review. This is done by commenting ``cache=True`` in the decorator.
 
 Report Bugs
 ~~~~~~~~~~~
@@ -83,7 +83,7 @@ Look through the GitHub issues for bugs. Anything tagged with "bug" and "help wa
 Write Documentation
 ~~~~~~~~~~~~~~~~~~~
 
-xclim could always use more documentation, whether as part of the official xclim docs, in docstrings, or even on the web in blog posts, articles, and such.
+xclim could always use more documentation, whether as part of the official `xclim` docs, in docstrings, or even on the web in blog posts, articles, and such.
 
 To reference documents (article, presentation, thesis, etc) in the documentation or in a docstring, xclim uses `sphinxcontrib-bibtex`_.
 Metadata of the documents is stored as BibTeX entries in the ``docs/references.bib`` file.
@@ -122,7 +122,7 @@ Ready to contribute? Here's how to set up `xclim` for local development.
 #. Create a development environment. We recommend using ``conda``::
 
     $ conda create -n xclim python=3.10 --file=environment.yml
-    $ python -m pip install -e ".[dev]"
+    $ python -m pip install -e --no-deps .
 
 #. Create a branch for local development::
 
@@ -162,25 +162,26 @@ Ready to contribute? Here's how to set up `xclim` for local development.
 
    Alternatively, one can use ``$ tox`` to run very specific testing configurations, as GitHub Workflows would do when a Pull Request is submitted and new commits are pushed::
 
-    $ tox -e py39  # run tests on Python 3.9
-    $ tox -e py310-upstream-doctest  # run tests on Python 3.10, including doctests, with upstream dependencies
-    $ tox -e py311 -- -m "not slow  # run tests on Python 3.11, excluding "slow" marked tests
-    $ tox -e py312-numba -- -m "not slow  # run tests on Python 3.12, installing upstream `numba`, excluding "slow" marked tests
-    $ tox -e notebooks_doctests  # run tests using the base Python on doctests and evaluate all notebooks
-    $ tox -e offline  # run tests using the base Python, excluding tests requiring internet access
+    $ tox -e py39-coverage  # run tests on Python 3.9, reporting code coverage
+    $ tox -e py310-upstream  # run tests on Python 3.10, with upstream dependencies
+    $ tox -e py311-prefetch-offline -- -m "not slow"  # run tests on Python 3.11, force download of testing, ensure tests are all offline, exclude "slow" marked tests
+    $ tox -e py312-lmoments -- -m "not slow"  # run tests on Python 3.12, installing lmoments3, excluding "slow" marked tests
+    $ tox -e notebooks,doctests  # run the notebook-based tests, then run the doctests
 
-    $ tox -m test  # run all builds listed above
+    $ tox -m test  # run the standard tests used in GitHub Workflows
 
    .. warning::
+
     Starting from `xclim` v0.46.0, when running tests with `tox`, any `pytest` markers passed to `pyXX` builds (e.g. `-m "not slow"`) must be passed to `tox` directly. This can be done as follows::
 
-        $ tox -e py38 -- -m "not slow"
+        $ tox -e py310 -- -m "not slow"
 
     The exceptions to this rule are:
-      `notebooks_doctests`: this configuration does not pass test  markers to its `pytest` call.
+      `notebooks` and `doctests`: these configurations do not pass test markers to its `pytest` call.
       `offline`: this configuration runs by default with the `-m "not requires_internet"` test marker. Be aware that running `tox` and manually setting a `pytest` marker will override this default.
 
    .. note::
+
     `xclim` tests are organized to support the `pytest-xdist`_ plugin for distributed testing across workers or CPUs.
     In order to benefit from multiple processes, add the flag `--numprocesses=auto` or `-n auto` to your `pytest` calls.
 
@@ -253,7 +254,7 @@ Before you submit a pull request, please follow these guidelines:
     Ensure that your changes pass all tests prior to pushing your final commits to your branch.
     Code formatting errors are treated as build errors and will block your pull request from being accepted.
 
-#. The version changes (CHANGES.rst) should briefly describe changes introduced in the Pull request. Changes should be organized by type (ie: `New indicators`, `New features and enhancements`, `Breaking changes`, `Bug fixes`, `Internal changes`) and the GitHub Pull Request, GitHub Issue. Your name and/or GitHub handle should also be listed among the contributors to this version. This can be done as follows::
+#. The version changes (CHANGELOG.rst) should briefly describe changes introduced in the Pull request. Changes should be organized by type (ie: `New indicators`, `New features and enhancements`, `Breaking changes`, `Bug fixes`, `Internal changes`) and the GitHub Pull Request, GitHub Issue. Your name and/or GitHub handle should also be listed among the contributors to this version. This can be done as follows::
 
      Contributors to this version: John Jacob Jingleheimer Schmidt (:user:`username`).
 
@@ -268,9 +269,10 @@ Updating Testing Data
 
 If your code changes require changes to the testing data of `xclim` (i.e.: modifications to existing datasets or new datasets), these changes must be made via a Pull Request at the `xclim-testdata repository`_.
 
-`xclim` allows for developers to test specific branches/versions of `xclim-testdata` via the `XCLIM_TESTDATA_BRANCH` environment variable, either through export, e.g.::
+`xclim` allows for developers to test specific branches/versions or forks of the `xclim-testdata` repository via the `XCLIM_TESTDATA_BRANCH` and `XCLIM_TESTDATA_REPO` environment variables, respectively, either through export, e.g.::
 
     $ export XCLIM_TESTDATA_BRANCH="my_new_branch_of_testing_data"
+    $ export XCLIM_TESTDATA_REPO="https://github.com/my_username/xclim-testdata"
 
     $ pytest
     # or, alternatively:
@@ -278,11 +280,11 @@ If your code changes require changes to the testing data of `xclim` (i.e.: modif
 
 or by setting the variable at runtime::
 
-    $ env XCLIM_TESTDATA_BRANCH="my_new_branch_of_testing_data" pytest
+    $ env XCLIM_TESTDATA_BRANCH="my_new_branch_of_testing_data" XCLIM_TESTDATA_REPO="https://github.com/my_username/xclim-testdata" pytest
     # or, alternatively:
-    $ env XCLIM_TESTDATA_BRANCH="my_new_branch_of_testing_data" tox
+    $ env XCLIM_TESTDATA_BRANCH="my_new_branch_of_testing_data" XCLIM_TESTDATA_REPO="https://github.com/my_username/xclim-testdata" tox
 
-This will ensure that tests load the testing data from this branch before running.
+This will ensure that tests load the appropriate testing data from this branch or repository before running.
 
 If you anticipate not having internet access, we suggest prefetching the testing data from `xclim-testdata repository`_ and storing it in your local cache. This can be done by running the following console command::
 
@@ -295,7 +297,7 @@ If your development branch relies on a specific branch of `Ouranosinc/xclim-test
 
 or, alternatively, with the `--branch` option::
 
-    $ xclim prefetch_testing_data --branch my_new_branch_of_testing_data
+    $ xclim prefetch_testing_data --branch my_new_branch_of_testing_data --repo "https://github.com/my_username/xclim-testdata"
 
 If you wish to test a specific branch using GitHub CI, this can be set in `.github/workflows/main.yml`:
 
@@ -305,7 +307,7 @@ If you wish to test a specific branch using GitHub CI, this can be set in `.gith
       XCLIM_TESTDATA_BRANCH: my_new_branch_of_testing_data
 
 .. warning::
-    In order for a Pull Request to be allowed to merge to main development branch, this variable must match the latest tagged commit name on `xclim-testdata repository`_.
+    In order for a Pull Request to be allowed to merge to the `main` development branch, this variable must match the latest tagged commit name on `xclim-testdata repository`_.
     We suggest merging changed testing data first, tagging a new version of `xclim-testdata`, then re-running tests on your Pull Request at `Ouranosinc/xclim` with the newest tag.
 
 Running Tests in Offline Mode
@@ -322,8 +324,8 @@ or, alternatively, using `tox` ::
 
     $ tox -e offline
 
-These options will disable all network calls and skip tests marked with the `requires_internet` marker.
-The `--allow-unix-socket` option is required to allow the `pytest-xdist`_ plugin to function properly.
+These options will disable all network calls and skip tests marked with the ``requires_internet`` marker.
+The ``--allow-unix-socket`` option is required to allow the `pytest-xdist`_ plugin to function properly.
 
 Tips
 ----
@@ -367,7 +369,7 @@ This section serves as a reminder for the maintainers on how to prepare the libr
 
 When a new version has been minted (features have been successfully integrated test coverage and stability is adequate), maintainers should update the pip-installable package (wheel and source release) on PyPI as well as the binary on conda-forge.
 
-From a new branch (e.g. `prepare-v123`), open a Pull Request and make sure all your changes to support a new version are committed (**update the entry for newest version in CHANGES.rst**), Then run::
+From a new branch (e.g. `prepare-v123`), open a Pull Request and make sure all your changes to support a new version are committed (**update the entry for newest version in CHANGELOG.rst**), Then run::
 
     $ bump-my-version bump <option>  # possible options: major / minor / patch / release / build
 

@@ -274,7 +274,8 @@ def _parse_parameters(section):
                 try:
                     choices = literal_eval(match.groups()[0])
                     params[curr_key]["choices"] = choices
-                except ValueError:
+                except ValueError:  # noqa: S110
+                    # If the literal_eval fails, we just ignore the choices.
                     pass
     return params
 

@@ -11,9 +11,9 @@ from collections.abc import Sequence
 
 import xarray as xr
 
-from .calendar import compare_offsets, parse_offset
-from .options import datacheck
-from .utils import ValidationError
+from xclim.core._exceptions import ValidationError
+from xclim.core.calendar import compare_offsets, parse_offset
+from xclim.core.options import datacheck
 
 
 @datacheck

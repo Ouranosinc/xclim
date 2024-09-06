@@ -8,7 +8,9 @@ on:
       - .*
       - .github/*/*.md
       - .github/*/*.yml
-      - CHANGES.rst
+      - CHANGELOG.rst
+      - CI/*.in
+      - CI/*.txt
       - Makefile
       - docs/*/*.ipynb
       - docs/*/*.py
@@ -19,7 +21,6 @@ on:
       - environment.yml
       - pylintrc
       - pyproject.toml
-      - requirements_upstream.txt
       - tox.ini
       - xclim/__init__.py
 
@@ -32,37 +33,48 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       actions: read
-      contents: write
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@17d0e2bd7d51742c71671bd19fa12bdc9d40a3d6 # v2.8.1
+        uses: step-security/harden-runner@5c7944e73c4c2a096b17a9cb74d65b6c2bbafbde # v2.9.1
         with:
           disable-sudo: true
           egress-policy: block
           allowed-endpoints: >
+            api.github.com:443
             files.pythonhosted.org:443
             github.com:443
             pypi.org:443
-      - uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4.1.6
+      - name: Generate App Token
+        id: token_generator
+        uses: actions/create-github-app-token@3378cda945da322a8db4b193e19d46352ebe2de5 # v1.10.4
         with:
-          persist-credentials: false
-      - uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d # v5.1.0
+          app-id: ${{ secrets.OURANOS_HELPER_BOT_ID }}
+          private-key: ${{ secrets.OURANOS_HELPER_BOT_KEY }}
+      - name: Checkout Repository
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+        with:
+          token: ${{ steps.token_generator.outputs.token }}
+      - name: Set up Python3
+        uses: actions/setup-python@f677139bbe7f9c59b41e40162b753c062f5d49a3 # v5.2.0
         with:
           python-version: "3.x"
-      - name: Config Commit Bot
-        run: |
-          git config --local user.email "bumpversion[bot]@ouranos.ca"
-          git config --local user.name "bumpversion[bot]"
+      - name: Import GPG Key
+        uses: crazy-max/ghaction-import-gpg@01dd5d3ca463c7f10f7f4f7b4f177225ac661ee4 # v6.1.0
+        with:
+          gpg_private_key: ${{ secrets.OURANOS_HELPER_BOT_GPG_PRIVATE_KEY }}
+          passphrase: ${{ secrets.OURANOS_HELPER_BOT_GPG_PRIVATE_KEY_PASSWORD }}
+          git_user_signingkey: true
+          git_commit_gpgsign: true
+          trust_level: 5
       - name: Current Version
         run: |
           CURRENT_VERSION="$(grep -E '__version__'  xclim/__init__.py | cut -d ' ' -f3)"
           echo "current_version=${CURRENT_VERSION}"
           echo "CURRENT_VERSION=${CURRENT_VERSION}" >> $GITHUB_ENV
-      - name: Install bump-my-version
+      - name: Install CI libraries
         run: |
-          python -m pip install bump-my-version==0.21.0
+          python -m pip install --require-hashes -r CI/requirements_ci.txt
       - name: Conditional Bump
-        id: bump
         run: |
           if [[ ${{ env.CURRENT_VERSION }} =~ -dev(\.\d+)? ]]; then
             echo "Development version (ends in 'dev(\.\d+)?'), bumping 'build' version"
@@ -75,8 +87,7 @@ jobs:
           echo "new_version=${NEW_VERSION}"
           echo "NEW_VERSION=${NEW_VERSION}" >> $GITHUB_ENV
       - name: Push Changes
-        uses: ad-m/github-push-action@d91a481090679876dfc4178fef17f286781251df
+        uses: ad-m/github-push-action@d91a481090679876dfc4178fef17f286781251df # v0.8.0
         with:
           force: false
-          github_token: ${{ secrets.BUMP_VERSION_TOKEN }}
           branch: ${{ github.ref }}

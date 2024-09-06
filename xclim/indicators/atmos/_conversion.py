@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from inspect import _empty  # noqa
-
 from xclim import indices
 from xclim.core.cfchecks import cfcheck_from_name
 from xclim.core.indicator import Indicator
@@ -44,7 +42,7 @@ class Converter(Indicator):
             try:
                 # Only check standard_name, and not cell_methods which depends on the variable's frequency.
                 cfcheck_from_name(varname, vardata, attrs=["standard_name"])
-            except KeyError:
+            except KeyError:  # noqa: S110
                 # Silently ignore unknown variables.
                 pass
 

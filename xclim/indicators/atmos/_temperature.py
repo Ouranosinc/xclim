@@ -45,6 +45,9 @@ __all__ = [
     "growing_season_end",
     "growing_season_length",
     "growing_season_start",
+    "heat_spell_frequency",
+    "heat_spell_max_length",
+    "heat_spell_total_length",
     "heat_wave_frequency",
     "heat_wave_index",
     "heat_wave_max_length",
@@ -201,7 +204,6 @@ heat_wave_frequency = Temp(
     title="Heat wave frequency",
     identifier="heat_wave_frequency",
     units="",
-    standard_name="heat_wave_events",
     long_name="Total number of series of at least {window} consecutive days with daily minimum temperature above "
     "{thresh_tasmin} and daily maximum temperature above {thresh_tasmax}",
     description="{freq} number of heat wave events within a given period. A heat wave occurs when daily minimum and "
@@ -223,7 +225,7 @@ heat_wave_max_length = Temp(
     description="{freq} maximum length of heat wave events occurring within a given period. "
     "A heat wave occurs when daily minimum and maximum temperatures exceed {thresh_tasmin} and {thresh_tasmax}, "
     "respectively, over at least {window} days.",
-    abstract="Total duration of heat waves. A heat wave occurs when daily minimum and maximum temperatures exceed "
+    abstract="Maximal duration of heat waves. A heat wave occurs when daily minimum and maximum temperatures exceed "
     "given thresholds for a number of days.",
     cell_methods="",
     keywords="health,",
@@ -240,7 +242,7 @@ heat_wave_total_length = Temp(
     description="{freq} total length of heat wave events occurring within a given period. "
     "A heat wave occurs when daily minimum and maximum temperatures exceed {thresh_tasmin} and {thresh_tasmax}, "
     "respectively, over at least {window} days.",
-    abstract="Maximum length of heat waves. A heat wave occurs when daily minimum and maximum temperatures exceed "
+    abstract="Total length of heat waves. A heat wave occurs when daily minimum and maximum temperatures exceed "
     "given thresholds for a number of days.",
     cell_methods="",
     keywords="health,",
@@ -252,7 +254,6 @@ heat_wave_index = Temp(
     title="Heat wave index",
     identifier="heat_wave_index",
     units="days",
-    standard_name="heat_wave_index",
     long_name="Total number of days constituting events of at least {window} consecutive days "
     "with daily maximum temperature above {thresh}",
     description="{freq} total number of days that are part of a heatwave within a given period. "
@@ -261,6 +262,103 @@ heat_wave_index = Temp(
     "temperatures exceed given thresholds for a number of days.",
     cell_methods="",
     compute=indices.heat_wave_index,
+)
+
+heat_spell_frequency = Temp(
+    title="Heat spell frequency",
+    identifier="heat_spell_frequency",
+    units="",
+    long_name="Number of heat spells",
+    description="{freq} number of heat spells events. A heat spell occurs when the {window}-day "
+    "averages of daily minimum and maximum temperatures each exceed {thresh_tasmin} and {thresh_tasmax}. "
+    "All days of the {window}-day period are considered part of the spell.",
+    abstract="Number of heat spells. A heat spell occurs when rolling averages of daily minimum and maximum temperatures exceed given "
+    "thresholds for a number of days.",
+    cell_methods="",
+    keywords="health,",
+    compute=indices.generic.bivariate_spell_length_statistics,
+    input={"data1": "tasmin", "data2": "tasmax"},
+    parameters=dict(
+        spell_reducer="count",
+        op=">=",
+        window={"default": 3},
+        win_reducer={"default": "mean"},
+        freq={"default": "YS"},
+        threshold1={
+            "description": "Threshold for tasmin",
+            "default": "20 °C",
+            "name": "thresh_tasmin",
+        },
+        threshold2={
+            "description": "Threshold for tasmax",
+            "default": "33 °C",
+            "name": "thresh_tasmax",
+        },
+    ),
+)
+
+heat_spell_max_length = Temp(
+    title="Heat spell maximum length",
+    identifier="heat_spell_max_length",
+    units="days",
+    standard_name="spell_length_of_days_with_air_temperature_above_threshold",
+    long_name="Longest heat spell",
+    description="{freq} maximum length of heat spells. A heat spell occurs when the {window}-day "
+    "averages of daily minimum and maximum temperatures each exceed {thresh_tasmin} and {thresh_tasmax}. "
+    "All days of the {window}-day period are considered part of the spell.",
+    abstract="The longest heat spell of a period. A heat spell occurs when rolling averages of daily minimum and maximum temperatures exceed given "
+    "thresholds for a number of days.",
+    compute=indices.generic.bivariate_spell_length_statistics,
+    input={"data1": "tasmin", "data2": "tasmax"},
+    parameters=dict(
+        spell_reducer="max",
+        op=">=",
+        window={"default": 3},
+        win_reducer={"default": "mean"},
+        freq={"default": "YS"},
+        threshold1={
+            "description": "Threshold for tasmin",
+            "default": "20 °C",
+            "name": "thresh_tasmin",
+        },
+        threshold2={
+            "description": "Threshold for tasmax",
+            "default": "33 °C",
+            "name": "thresh_tasmax",
+        },
+    ),
+)
+
+heat_spell_total_length = Temp(
+    title="Heat spell total length",
+    identifier="heat_spell_total_length",
+    units="days",
+    standard_name="spell_length_of_days_with_air_temperature_above_threshold",
+    long_name="Total length of heat spells.",
+    description="{freq} total length of heat spell events. "
+    "A heat spell occurs when the {window}-day  averages of daily minimum and maximum temperatures "
+    "each exceed {thresh_tasmin} and {thresh_tasmax}.  All days of the {window}-day period are considered part of the spell.",
+    abstract="Total length of heat spells. A heat spell occurs when rolling averages of daily minimum and maximum temperatures exceed given "
+    "thresholds for a number of days.",
+    compute=indices.generic.bivariate_spell_length_statistics,
+    input={"data1": "tasmin", "data2": "tasmax"},
+    parameters=dict(
+        spell_reducer="sum",
+        op=">=",
+        window={"default": 3},
+        win_reducer={"default": "mean"},
+        freq={"default": "YS"},
+        threshold1={
+            "description": "Threshold for tasmin",
+            "default": "20 °C",
+            "name": "thresh_tasmin",
+        },
+        threshold2={
+            "description": "Threshold for tasmax",
+            "default": "33 °C",
+            "name": "thresh_tasmax",
+        },
+    ),
 )
 
 hot_spell_frequency = Temp(
@@ -782,12 +880,12 @@ first_day_tn_below = Temp(
     long_name="First day of year with a period of at least {window} days of minimum temperature below {thresh}",
     description="First day of year with minimum temperature below {thresh} for at least {window} days.",
     compute=indices.first_day_temperature_below,
-    input=dict(tas="tasmin"),
-    parameters=dict(
-        thresh={"default": "0 degC"},
-        after_date={"default": "07-01"},
-        op={"default": "<"},
-    ),
+    input={"tas": "tasmin"},
+    parameters={
+        "thresh": {"default": "0 degC"},
+        "after_date": {"default": "07-01"},
+        "op": {"default": "<"},
+    },
 )
 
 first_day_tg_below = Temp(
@@ -797,11 +895,11 @@ first_day_tg_below = Temp(
     long_name="First day of year with a period of at least {window} days of mean temperature below {thresh}",
     description="First day of year with mean temperature below {thresh} for at least {window} days.",
     compute=indices.first_day_temperature_below,
-    parameters=dict(
-        thresh={"default": "0 degC"},
-        after_date={"default": "07-01"},
-        op={"default": "<"},
-    ),
+    parameters={
+        "thresh": {"default": "0 degC"},
+        "after_date": {"default": "07-01"},
+        "op": {"default": "<"},
+    },
 )
 
 first_day_tx_below = Temp(
@@ -811,12 +909,12 @@ first_day_tx_below = Temp(
     long_name="First day of year with a period of at least {window} days of maximum temperature below {thresh}",
     description="First day of year with maximum temperature below {thresh} for at least {window} days.",
     compute=indices.first_day_temperature_below,
-    input=dict(tas="tasmax"),
-    parameters=dict(
-        thresh={"default": "0 degC"},
-        after_date={"default": "07-01"},
-        op={"default": "<"},
-    ),
+    input={"tas": "tasmax"},
+    parameters={
+        "thresh": {"default": "0 degC"},
+        "after_date": {"default": "07-01"},
+        "op": {"default": "<"},
+    },
 )
 
 first_day_tn_above = Temp(
@@ -826,12 +924,12 @@ first_day_tn_above = Temp(
     long_name="First day of year with a period of at least {window} days of minimum temperature above {thresh}",
     description="First day of year with minimum temperature above {thresh} for at least {window} days.",
     compute=indices.first_day_temperature_above,
-    input=dict(tas="tasmin"),
-    parameters=dict(
-        thresh={"default": "0 degC"},
-        after_date={"default": "01-01"},
-        op={"default": ">"},
-    ),
+    input={"tas": "tasmin"},
+    parameters={
+        "thresh": {"default": "0 degC"},
+        "after_date": {"default": "01-01"},
+        "op": {"default": ">"},
+    },
 )
 
 
@@ -842,11 +940,11 @@ first_day_tg_above = Temp(
     long_name="First day of year with a period of at least {window} days of mean temperature above {thresh}",
     description="First day of year with mean temperature above {thresh} for at least {window} days.",
     compute=indices.first_day_temperature_above,
-    parameters=dict(
-        thresh={"default": "0 degC"},
-        after_date={"default": "01-01"},
-        op={"default": ">"},
-    ),
+    parameters={
+        "thresh": {"default": "0 degC"},
+        "after_date": {"default": "01-01"},
+        "op": {"default": ">"},
+    },
 )
 
 first_day_tx_above = Temp(
@@ -856,12 +954,12 @@ first_day_tx_above = Temp(
     long_name="First day of year with a period of at least {window} days of maximum temperature above {thresh}",
     description="First day of year with maximum temperature above {thresh} for at least {window} days.",
     compute=indices.first_day_temperature_above,
-    input=dict(tas="tasmax"),
-    parameters=dict(
-        thresh={"default": "0 degC"},
-        after_date={"default": "01-01"},
-        op={"default": ">"},
-    ),
+    input={"tas": "tasmax"},
+    parameters={
+        "thresh": {"default": "0 degC"},
+        "after_date": {"default": "01-01"},
+        "op": {"default": ">"},
+    },
 )
 
 ice_days = TempWithIndexing(
@@ -971,13 +1069,13 @@ growing_season_start = Temp(
     identifier="growing_season_start",
     units="",
     standard_name="day_of_year",
-    long_name="First day of the first series of {window} days with mean daily temperature above or equal to {thresh}",
+    long_name="First day of the first series of {window} days with mean daily temperature {op} {thresh}",
     description="Day of the year marking the beginning of the growing season, defined as the first day of the first "
-    "series of {window} days with mean daily temperature above or equal to {thresh}.",
+    "series of {window} days with mean daily temperature {op} {thresh}.",
     abstract="The first day when the temperature exceeds a certain threshold for a given number of consecutive days.",
     cell_methods="",
     compute=indices.growing_season_start,
-    parameters={"thresh": {"default": "5.0 degC"}},
+    parameters={"thresh": {"default": "5.0 degC"}, "op": {"default": ">="}},
 )
 
 growing_season_length = Temp(
@@ -996,7 +1094,11 @@ growing_season_length = Temp(
     "threshold, occurring after a given calendar date.",
     cell_methods="",
     compute=indices.growing_season_length,
-    parameters={"thresh": {"default": "5.0 degC"}, "mid_date": {"default": "07-01"}},
+    parameters={
+        "thresh": {"default": "5.0 degC"},
+        "op": {"default": ">="},
+        "mid_date": {"default": "07-01"},
+    },
 )
 
 growing_season_end = Temp(
@@ -1004,7 +1106,7 @@ growing_season_end = Temp(
     identifier="growing_season_end",
     units="",
     standard_name="day_of_year",
-    long_name="First day of the first series of {window} days with mean daily temperature below {thresh}, "
+    long_name="First day of the first series of {window} days with mean daily temperature {op} {thresh}, "
     "occurring after {mid_date}",
     description="Day of year of end of growing season, defined as the first day of consistent inferior threshold "
     "temperature of {thresh} after a run of {window} days superior to threshold temperature, occurring after "
@@ -1013,7 +1115,11 @@ growing_season_end = Temp(
     "after a given calendar date.",
     cell_methods="",
     compute=indices.growing_season_end,
-    parameters={"thresh": {"default": "5.0 degC"}, "mid_date": {"default": "07-01"}},
+    parameters={
+        "thresh": {"default": "5.0 degC"},
+        "op": {"default": "<"},
+        "mid_date": {"default": "07-01"},
+    },
 )
 
 tropical_nights = TempWithIndexing(
