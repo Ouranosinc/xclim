@@ -189,8 +189,8 @@ class set_options:
     as_dataset : bool
         If True, indicators output datasets. If False, they output DataArrays. Default :``False``.
     resample_map_blocks: bool
-        If True, some indicators will wrap their resampling operations with `xr.map_blocks`, using :py:func:`xclim.indices.utils.resample_map`.
-        This requires `flox` to be installed in order to ensure the chunking is appropriate.
+        If True, some indicators will wrap their resampling operations with `xr.map_blocks`, using :py:func:`xclim.indices.helpers.resample_map`.
+        This requires `flox` to be installed in order to ensure the chunking is appropriate.git
 
     Examples
     --------
