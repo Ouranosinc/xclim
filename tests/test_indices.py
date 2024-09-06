@@ -1428,11 +1428,12 @@ class TestHotSpellFrequency:
     def test_resampling_order(self, tasmax_series, resample_before_rl, expected):
         a = np.zeros(365)
         a[5:35] = 31
-        tx = tasmax_series(a + K2C)
+        tx = tasmax_series(a + K2C).chunk()
 
-        hsf = xci.hot_spell_frequency(
-            tx, resample_before_rl=resample_before_rl, freq="MS"
-        )
+        with set_options(resample_map_blocks=resample_before_rl):
+            hsf = xci.hot_spell_frequency(
+                tx, resample_before_rl=resample_before_rl, freq="MS"
+            ).load()
         assert hsf[1] == expected
 
 
@@ -1708,10 +1709,11 @@ class TestMaximumConsecutiveDryDays:
     def test_resampling_order(self, pr_series, resample_before_rl, expected):
         a = np.zeros(365) + 10
         a[5:35] = 0
-        pr = pr_series(a)
-        out = xci.maximum_consecutive_dry_days(
-            pr, freq="ME", resample_before_rl=resample_before_rl
-        )
+        pr = pr_series(a).chunk()
+        with set_options(resample_map_blocks=resample_before_rl):
+            out = xci.maximum_consecutive_dry_days(
+                pr, freq="ME", resample_before_rl=resample_before_rl
+            ).load()
         assert out[0] == expected
 
 
