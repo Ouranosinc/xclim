@@ -29,7 +29,6 @@ from xclim.indices.generic import (
     spell_length_statistics,
     threshold_count,
 )
-
 from xclim.indices.helpers import resample_map
 
 # Frequencies : YS: year start, QS-DEC: seasons starting in december, MS: month start
