@@ -2,8 +2,8 @@
 Indices Helper Functions Submodule
 ==================================
 
-Functions that encapsulate logic but could be shared by many indices,
-but are not index-like themselves (these should go in the :py:mod:`xclim.indices.generic` module).
+Functions that encapsulate logic and can be shared by many indices,
+but are not particularly index-like themselves (those should go in the :py:mod:`xclim.indices.generic` module).
 """
 
 from __future__ import annotations
@@ -568,22 +568,22 @@ def resample_map(
 
     Parameters
     ----------
-    obj: DataArray or Dataset
+    obj : DataArray or Dataset
         The xarray object to resample.
-    dim: str
+    dim : str
         Dimension over which to resample.
     freq : str
         Resampling frequency along `dim`.
     func : callable
         Function to map on each resampled group.
-    map_blocks: bool or "from_context"
+    map_blocks : bool or "from_context"
         If True, the resample().map() call is wrapped inside a `map_blocks`.
         If False, this does not do anything special.
         If "from_context", xclim's "resample_map_blocks" option is used.
         If the object is not using dask, this is set to False.
-    resample_kwargs: dict, optional
+    resample_kwargs : dict, optional
         Other arguments to pass to `obj.resample()`.
-    map_kwargs: dict, optional
+    map_kwargs : dict, optional
         Arguments to pass to `map`.
 
     Returns
@@ -601,7 +601,8 @@ def resample_map(
     try:
         from flox.xarray import rechunk_for_blockwise
     except ImportError as err:
-        raise ValueError(f"Using {MAP_BLOCKS}=True requires flox.") from err
+        msg = f"Using {MAP_BLOCKS}=True requires flox."
+        raise ValueError(msg) from err
 
     # Make labels, a unique integer for each resample group
     labels = xr.full_like(obj[dim], -1, dtype=np.int32)
