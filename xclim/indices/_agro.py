@@ -1,6 +1,5 @@
 # noqa: D100
 from __future__ import annotations
-
 from typing import cast
 
 import numpy as np
@@ -26,6 +25,7 @@ from xclim.indices.generic import aggregate_between_dates, get_zones
 from xclim.indices.helpers import _gather_lat, day_lengths
 from xclim.indices.stats import standardized_index
 
+
 # Frequencies : YS: year start, QS-DEC: seasons starting in december, MS: month start
 # See https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html
 
@@ -35,6 +35,8 @@ from xclim.indices.stats import standardized_index
 
 __all__ = [
     "biologically_effective_degree_days",
+    "chill_portions",
+    "chill_units",
     "cool_night_index",
     "corn_heat_units",
     "dryness_index",
@@ -1526,17 +1528,6 @@ def hardiness_zones(
     return zones
 
 
-# Chill portion constants Dynamic Model described in Luedeling et al. (2009)
-E0 = 4153.5
-E1 = 12888.8
-A0 = 139500
-A1 = 2.567e18
-SLP = 1.6
-TETMLT = 277
-AA = A0 / A1
-EE = E1 - E0
-
-
 def _accumulate_intermediate(prev_E, prev_xi, curr_xs, curr_ak1):
     """Accumulate the intermediate product based on the previous concentration and the current temperature."""
     curr_S = np.where(prev_E < 1, prev_E, prev_E - prev_E * prev_xi)
@@ -1545,6 +1536,16 @@ def _accumulate_intermediate(prev_E, prev_xi, curr_xs, curr_ak1):
 
 def _chill_portion_one_season(tas_K):
     """Computes the chill portion for a single season based on the dynamic model on a numpy array."""
+    # Constants as described in Luedeling et al. (2009)
+    E0 = 4153.5
+    E1 = 12888.8
+    A0 = 139500
+    A1 = 2.567e18
+    SLP = 1.6
+    TETMLT = 277
+    AA = A0 / A1
+    EE = E1 - E0
+
     ftmprt = SLP * TETMLT * (tas_K - TETMLT) / tas_K
     sr = np.exp(ftmprt)
     xi = sr / (1 + sr)
@@ -1574,7 +1575,7 @@ def _apply_chill_portion_one_season(tas_K):
 
 
 @declare_units(tas="[temperature]")
-def chill_portion(tas: xarray.DataArray, time_dim: str = "time") -> xarray.DataArray:
+def chill_portions(tas: xarray.DataArray, time_dim: str = "time") -> xarray.DataArray:
     """Chill portion based on the dynamic model
 
     Chill portions are a measure to estimate the bud breaking potential of different crop.
@@ -1602,7 +1603,7 @@ def chill_portion(tas: xarray.DataArray, time_dim: str = "time") -> xarray.DataA
 
 
 @declare_units(tas="[temperature]")
-def utah_model_chill_unit(tas):
+def chill_units(tas):
     """Chill units using the Utah model
 
     Chill units are a measure to estimate the bud breaking potential of different crop based on Richardson et al. (1974).
