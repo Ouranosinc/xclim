@@ -1592,6 +1592,42 @@ def chill_portion(tas: xarray.DataArray, time_dim: str = "time") -> xarray.DataA
         Hourly temperature.
     time_dim : str, optional
         The name of the time dimension (default: "time").
+
+    Returns
+    -------
+    xr.DataArray
     """
     tas_K = convert_units_to(tas, "K")
     return tas_K.groupby(f"{time_dim}.year").apply(_apply_chill_portion_one_season)
+
+
+@declare_units(tas="[temperature]")
+def utah_model_chill_unit(tas):
+    """Chill units using the Utah model
+
+    Chill units are a measure to estimate the bud breaking potential of different crop based on Richardson et al. (1974).
+    The Utah model assigns a weight to each hour depending on the temperature recognising that high temperatures can actual decrease,
+    the potential for bud breaking.
+
+    Parameters
+    ----------
+    tas : xr.DataArray
+        Hourly temperature.
+
+    Returns
+    -------
+    xr.DataArray
+    """
+    return xarray.where(
+        (tas <= 1.4) | ((tas > 12.4) & (tas <= 15.9)),
+        0,
+        xarray.where(
+            ((tas > 1.4) & (tas <= 2.4)) | ((tas > 9.1) & (tas <= 12.4)),
+            0.5,
+            xarray.where(
+                (tas > 2.4) & (tas <= 9.1),
+                1,
+                xarray.where((tas > 15.9) & (tas <= 17.9), -0.5, -1),
+            ),
+        ),
+    )
