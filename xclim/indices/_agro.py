@@ -1,6 +1,5 @@
 # noqa: D100
 from __future__ import annotations
-
 from typing import cast
 
 import numpy as np
@@ -25,6 +24,7 @@ from xclim.indices._threshold import (
 from xclim.indices.generic import aggregate_between_dates, get_zones
 from xclim.indices.helpers import _gather_lat, day_lengths
 from xclim.indices.stats import standardized_index
+
 
 # Frequencies : YS: year start, QS-DEC: seasons starting in december, MS: month start
 # See https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html
@@ -1526,7 +1526,7 @@ def hardiness_zones(
     return zones
 
 
-# Chill portion constans Dynamic Model described in Luedeling et al. (2009)
+# Chill portion constants Dynamic Model described in Luedeling et al. (2009)
 E0 = 4153.5
 E1 = 12888.8
 A0 = 139500
@@ -1556,9 +1556,9 @@ def _chill_portion_one_season(tas_K):
         inter_E[..., i] = _accumulate_intermediate(
             inter_E[..., i - 1], xi[..., i - 1], xs[..., i], ak1[..., i]
         )
-    delt = np.where(inter_E >= 1, inter_E * xi, 0)
+    delta = np.where(inter_E >= 1, inter_E * xi, 0)
 
-    return delt.cumsum(axis=-1)
+    return delta.cumsum(axis=-1)
 
 
 def _apply_chill_portion_one_season(tas_K):
