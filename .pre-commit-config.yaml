@@ -85,7 +85,7 @@ repos:
     rev: 0.7.17
     hooks:
       - id: mdformat
-        exclude: '.github/\w+.md|docs/paper/paper.md'
+        exclude: '.github/\w+.md|.github/publish-mastodon-template.md|docs/paper/paper.md'
   - repo: https://github.com/keewis/blackdoc
     rev: v0.3.9
     hooks:
