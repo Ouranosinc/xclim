@@ -355,7 +355,7 @@ New features and enhancements
     * Optimized and noticeably faster calculation.
     * Can be computed in two steps: first compute fit parameters with ``xclim.indices.stats.standardized_index_fit_params``, then use the output in the standardized indices functions.
     * The standardized index values are now clipped to ±8.21. This reflects the ``float64`` precision of the computation when cumulative distributed function values are inverted to a normal distribution and avoids returning infinite values.
-    * An offset parameter is now available to account for negative water balance values``xclim.indices.standardized_precipitation_evapotranspiration_index``.
+    * An offset parameter is now available to account for negative water balance values ``xclim.indices.standardized_precipitation_evapotranspiration_index``.
 
 Bug fixes
 ^^^^^^^^^
@@ -1428,7 +1428,7 @@ New features and enhancements
 Breaking changes
 ^^^^^^^^^^^^^^^^
 * The `tropical_nights` indice is being deprecated in favour of `tn_days_above` with ``thresh="20 degC"``. The indicator remains valid, now wrapping this new indice.
-* Results of ``sdba.Grouper.apply`` for ``Grouper``s without a group (ex: ``Grouper('time')``) will contain a ``group`` singleton dimension.
+* Results of ``sdba.Grouper.apply`` for ``Grouper`` without a group (ex: ``Grouper('time')``) will contain a ``group`` singleton dimension.
 * The `daily_freezethaw_cycles` indice is being deprecated in favour of ``multiday_temperature_swing`` with temp thresholds at 0 degC and ``window=1, op="sum"``. The indicator remains valid, now wrapping this new indice.
 * CMIP6 variable names have been adopted whenever possible in xclim. Changes are:
 

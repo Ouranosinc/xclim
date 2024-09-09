@@ -224,11 +224,13 @@ exclude = [
 ]
 
 [tool.mypy]
-python_version = 3.9
-show_error_codes = true
-warn_return_any = true
-warn_unused_configs = true
+python_version = "3.9"
+enable_error_code = ["ignore-without-code", "redundant-expr", "truthy-bool"]
 plugins = ["numpy.typing.mypy_plugin"]
+strict = true
+warn_return_any = true
+warn_unreachable = true
+warn_unused_configs = true
 
 [[tool.mypy.overrides]]
 module = [
@@ -247,13 +249,18 @@ module = [
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]
+minversion = "7.0"
 addopts = [
+  "-ra",
   "--verbose",
   "--color=yes",
   "--numprocesses=0",
   "--maxprocesses=8",
-  "--dist=worksteal"
+  "--dist=worksteal",
+  "--strict-config",
+  "--strict-markers"
 ]
+log_cli_level = "INFO"
 norecursedirs = ["docs/notebooks/*"]
 filterwarnings = ["ignore::UserWarning"]
 testpaths = [
