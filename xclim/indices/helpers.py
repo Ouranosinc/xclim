@@ -6,11 +6,9 @@ Functions that encapsulate some geophysical logic but could be shared by many in
 """
 
 from __future__ import annotations
-
 from collections.abc import Mapping
 from datetime import timedelta
 from inspect import stack
-from math import pi
 from typing import Any, cast
 
 import cf_xarray  # noqa: F401, pylint: disable=unused-import
@@ -581,7 +579,7 @@ def _compute_daytime_temperature(
         Hourly daytime temperature.
     """
     return (tasmax - tasmin) * np.sin(
-        (pi * hour_after_sunrise) / (daylength + 4)
+        (np.pi * hour_after_sunrise) / (daylength + 4)
     ) + tasmin
 
 
