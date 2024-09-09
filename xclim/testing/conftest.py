@@ -20,10 +20,10 @@ from xclim.testing.utils import (
     TESTDATA_CACHE_DIR,
     TESTDATA_REPO_URL,
     gather_testing_data,
+    testing_setup_warnings,
 )
 from xclim.testing.utils import nimbus as _nimbus
 from xclim.testing.utils import open_dataset as _open_dataset
-from xclim.testing.utils import testing_setup_warnings
 
 
 @pytest.fixture(autouse=True, scope="session")

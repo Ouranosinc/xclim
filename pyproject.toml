@@ -327,11 +327,11 @@ scipy = "sp"
 xarray = "xr"
 
 [tool.ruff.lint.isort]
-known-first-party = ["xclim"]
 case-sensitive = true
 detect-same-package = false
-lines-after-imports = 2
-no-lines-before = ["future", "standard-library"]
+known-first-party = ["xclim"]
+no-lines-before = ["future"]
+required-imports = ["from __future__ import annotations"]
 
 [tool.ruff.lint.mccabe]
 max-complexity = 20

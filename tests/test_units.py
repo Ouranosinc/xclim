@@ -253,12 +253,12 @@ def test_amount2lwethickness(snw_series):
 
     swe = amount2lwethickness(snw, out_units="mm")
     # FIXME: Asserting these statements shows that they are not equal
-    swe.attrs["standard_name"] == "lwe_thickness_of_snowfall_amount"
+    assert swe.attrs["standard_name"] == "lwe_thickness_of_snowfall_amount"
     np.testing.assert_allclose(swe, 1)
 
     snw = lwethickness2amount(swe)
     # FIXME: Asserting these statements shows that they are not equal
-    snw.attrs["standard_name"] == "snowfall_amount"
+    assert snw.attrs["standard_name"] == "snowfall_amount"
 
 
 @pytest.mark.parametrize(

@@ -43,7 +43,7 @@ def test_indices():
     runner = CliRunner()
     results = runner.invoke(cli, ["indices"])
 
-    for name, ind in xclim.core.indicator.registry.items():
+    for name in xclim.core.indicator.registry:
         assert name.lower() in results.output
 
 
