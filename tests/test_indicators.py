@@ -14,6 +14,7 @@ import xarray as xr
 
 import xclim
 from xclim import __version__, atmos
+from xclim.core import VARIABLES, MissingVariableError, Quantified
 from xclim.core.calendar import select_time
 from xclim.core.formatting import (
     AttrFormatter,
@@ -24,7 +25,7 @@ from xclim.core.formatting import (
 )
 from xclim.core.indicator import Daily, Indicator, ResamplingIndicator, registry
 from xclim.core.units import convert_units_to, declare_units, units
-from xclim.core.utils import VARIABLES, InputKind, MissingVariableError, Quantified
+from xclim.core.utils import InputKind
 from xclim.indices import tg_mean
 from xclim.testing import list_input_variables
 
@@ -708,8 +709,7 @@ def test_indicator_from_dict():
     assert ind.parameters["threshold"].description == "A threshold temp"
     # Injection of parameters
     assert ind.injected_parameters["op"] == "<"
-    # Default value for input variable injected and meta injected
-    assert ind._variable_mapping["data"] == "tas"
+    assert ind.parameters["tas"].compute_name == "data"
     assert signature(ind).parameters["tas"].default == "tas"
     assert ind.parameters["tas"].units == "[temperature]"
 
@@ -848,7 +848,7 @@ def test_resampling_indicator_with_indexing(tas_series):
     out = xclim.atmos.tx_days_above(
         tas, thresh="0 degC", freq="YS-JUL", doy_bounds=(1, 50)
     )
-    np.testing.assert_allclose(out, [50, 50, np.NaN])
+    np.testing.assert_allclose(out, [50, 50, np.nan])
 
     out = xclim.atmos.tx_days_above(
         tas, thresh="0 degC", freq="YS", date_bounds=("02-29", "04-01")

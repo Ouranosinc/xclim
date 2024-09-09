@@ -7,8 +7,11 @@ import pint.errors
 import pytest
 import xarray as xr
 from dask import array as dsk
+from packaging.version import Version
+from pint import __version__ as __pint_version__
 
 from xclim import indices, set_options
+from xclim.core import Quantified, ValidationError
 from xclim.core.units import (
     amount2lwethickness,
     amount2rate,
@@ -26,7 +29,6 @@ from xclim.core.units import (
     units,
     units2pint,
 )
-from xclim.core.utils import Quantified, ValidationError
 
 
 class TestUnits:
@@ -140,7 +142,7 @@ class TestUnitConversion:
         assert pint2cfunits(u) == "%"
 
         u = units2pint("1")
-        assert pint2cfunits(u) == ""
+        assert pint2cfunits(u) == "1"
 
     def test_pint_multiply(self, pr_series):
         a = pr_series([1, 2, 3])
@@ -331,8 +333,20 @@ def test_declare_relative_units():
         ("", "sum", "count", 365, "d"),
         ("", "sum", "count", 365, "d"),
         ("kg m-2", "var", "var", 0, "kg2 m-4"),
-        ("°C", "argmax", "doymax", 0, ""),
-        ("°C", "sum", "integral", 365, "K d"),
+        (
+            "°C",
+            "argmax",
+            "doymax",
+            0,
+            "1",
+        ),
+        (
+            "°C",
+            "sum",
+            "integral",
+            365,
+            ("K d", "d K"),
+        ),  # dependent on numpy/pint version
         ("°F", "sum", "integral", 365, "d °R"),  # not sure why the order is different
     ],
 )
@@ -344,6 +358,14 @@ def test_to_agg_units(in_u, opfunc, op, exp, exp_u):
         attrs={"units": in_u},
     )
 
+    # FIXME: This is emitting warnings from deprecated DataArray.argmax() usage.
     out = to_agg_units(getattr(da, opfunc)(), da, op)
     np.testing.assert_allclose(out, exp)
-    assert out.attrs["units"] == exp_u
+
+    if isinstance(exp_u, tuple):
+        if Version(__pint_version__) < Version("0.24.1"):
+            assert out.attrs["units"] == exp_u[0]
+        else:
+            assert out.attrs["units"] == exp_u[1]
+    else:
+        assert out.attrs["units"] == exp_u

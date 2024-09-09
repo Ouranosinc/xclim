@@ -3,7 +3,7 @@ default_language_version:
 
 repos:
   - repo: https://github.com/asottile/pyupgrade
-    rev: v3.16.0
+    rev: v3.17.0
     hooks:
       - id: pyupgrade
         args: ['--py39-plus']
@@ -33,7 +33,7 @@ repos:
       - id: yamllint
         args: [ '--config-file=.yamllint.yaml' ]
   - repo: https://github.com/psf/black-pre-commit-mirror
-    rev: 24.4.2
+    rev: 24.8.0
     hooks:
       - id: black
   - repo: https://github.com/PyCQA/isort
@@ -41,17 +41,17 @@ repos:
     hooks:
       - id: isort
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.5.0
+    rev: v0.6.3
     hooks:
       - id: ruff
         args: [ '--fix' ]
   - repo: https://github.com/pylint-dev/pylint
-    rev: v3.2.4
+    rev: v3.2.7
     hooks:
       - id: pylint
         args: [ '--rcfile=.pylintrc.toml', '--errors-only', '--jobs=0', '--disable=import-error' ]
   - repo: https://github.com/pycqa/flake8
-    rev: 7.1.0
+    rev: 7.1.1
     hooks:
       - id: flake8
         additional_dependencies: [ 'flake8-rst-docstrings ']
@@ -61,7 +61,7 @@ repos:
     hooks:
       - id: vulture
   - repo: https://github.com/nbQA-dev/nbQA
-    rev: 1.8.5
+    rev: 1.8.7
     hooks:
       - id: nbqa-pyupgrade
         args: [ '--py39-plus' ]
@@ -92,7 +92,7 @@ repos:
     hooks:
       - id: gitleaks
   - repo: https://github.com/python-jsonschema/check-jsonschema
-    rev: 0.28.6
+    rev: 0.29.2
     hooks:
       - id: check-github-workflows
       - id: check-readthedocs

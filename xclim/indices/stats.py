@@ -11,12 +11,11 @@ import numpy as np
 import scipy.stats
 import xarray as xr
 
+from xclim.core import DateStr, Quantified
 from xclim.core.calendar import compare_offsets, resample_doy, select_time
 from xclim.core.formatting import prefix_attrs, unprefix_attrs, update_history
-from xclim.core.units import convert_units_to
-from xclim.core.utils import DateStr, Quantified, uses_dask
-
-from . import generic
+from xclim.core.utils import uses_dask
+from xclim.indices import generic
 
 __all__ = [
     "_fit_start",
@@ -27,6 +26,8 @@ __all__ = [
     "get_dist",
     "parametric_cdf",
     "parametric_quantile",
+    "standardized_index",
+    "standardized_index_fit_params",
 ]
 
 
@@ -47,6 +48,9 @@ def _fitfunc_1d(arr, *, dist, nparams, method, **fitkwargs):
     elif method == "MM":
         params = dist.fit(x, method="mm", **fitkwargs)
     elif method == "PWM":
+        # lmoments3 will raise an error if only dist.numargs + 2 values are provided
+        if len(x) <= dist.numargs + 2:
+            return np.asarray([np.nan] * nparams)
         params = list(dist.lmom_fit(x).values())
     elif method == "APP":
         args, kwargs = _fit_start(x, dist.name, **fitkwargs)
@@ -130,13 +134,13 @@ def fit(
         dask="parallelized",
         output_dtypes=[float],
         keep_attrs=True,
-        kwargs=dict(
+        kwargs={
             # Don't know how APP should be included, this works for now
-            dist=dist,
-            nparams=len(dist_params),
-            method=method,
+            "dist": dist,
+            "nparams": len(dist_params),
+            "method": method,
             **fitkwargs,
-        ),
+        },
         dask_gufunc_kwargs={"output_sizes": {"dparams": len(dist_params)}},
     )
 
@@ -147,19 +151,19 @@ def fit(
     out.attrs = prefix_attrs(
         da.attrs, ["standard_name", "long_name", "units", "description"], "original_"
     )
-    attrs = dict(
-        long_name=f"{dist.name} parameters",
-        description=f"Parameters of the {dist.name} distribution",
-        method=method,
-        estimator=method_name[method].capitalize(),
-        scipy_dist=dist.name,
-        units="",
-        history=update_history(
+    attrs = {
+        "long_name": f"{dist.name} parameters",
+        "description": f"Parameters of the {dist.name} distribution",
+        "method": method,
+        "estimator": method_name[method].capitalize(),
+        "scipy_dist": dist.name,
+        "units": "",
+        "history": update_history(
             f"Estimate distribution parameters by {method_name[method]} method along dimension {dim}.",
             new_name="fit",
             data=da,
         ),
-    )
+    }
     out.attrs.update(attrs)
     return out
 
@@ -223,16 +227,16 @@ def parametric_quantile(
     out = data.assign_coords(quantile=q).transpose(*dims)
     out.attrs = unprefix_attrs(p.attrs, ["units", "standard_name"], "original_")
 
-    attrs = dict(
-        long_name=f"{dist.name} quantiles",
-        description=f"Quantiles estimated by the {dist.name} distribution",
-        cell_methods="dparams: ppf",
-        history=update_history(
+    attrs = {
+        "long_name": f"{dist.name} quantiles",
+        "description": f"Quantiles estimated by the {dist.name} distribution",
+        "cell_methods": "dparams: ppf",
+        "history": update_history(
             "Compute parametric quantiles from distribution parameters",
             new_name="parametric_quantile",
             parameters=p,
         ),
-    )
+    }
     out.attrs.update(attrs)
     return out
 
@@ -285,16 +289,16 @@ def parametric_cdf(
     out = data.assign_coords(cdf=v).transpose(*dims)
     out.attrs = unprefix_attrs(p.attrs, ["units", "standard_name"], "original_")
 
-    attrs = dict(
-        long_name=f"{dist.name} cdf",
-        description=f"CDF estimated by the {dist.name} distribution",
-        cell_methods="dparams: cdf",
-        history=update_history(
+    attrs = {
+        "long_name": f"{dist.name} cdf",
+        "description": f"CDF estimated by the {dist.name} distribution",
+        "cell_methods": "dparams: cdf",
+        "history": update_history(
             "Compute parametric cdf from distribution parameters",
             new_name="parametric_cdf",
             parameters=p,
         ),
-    )
+    }
     out.attrs.update(attrs)
     return out
 
@@ -693,7 +697,6 @@ def standardized_index_fit_params(
     method: str,
     zero_inflated: bool = False,
     fitkwargs: dict | None = None,
-    offset: Quantified | None = None,
     **indexer,
 ) -> xr.DataArray:
     r"""Standardized Index fitting parameters.
@@ -722,10 +725,6 @@ def standardized_index_fit_params(
         If True, the zeroes of `da` are treated separately when fitting a probability density function.
     fitkwargs : dict, optional
         Kwargs passed to ``xclim.indices.stats.fit`` used to impose values of certains parameters (`floc`, `fscale`).
-    offset: Quantified
-        Distributions bounded by zero (e.g. "gamma", "fisk") can be used for datasets with negative values
-        by using an offset: `da + offset`. This option will be removed in xclim >=0.49.0, ``xclim``
-        will rely on a proper use three-parameters distributions instead.
     \*\*indexer
         Indexing parameters to compute the indicator on a temporal subset of the data.
         It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
@@ -756,12 +755,6 @@ def standardized_index_fit_params(
                 "The APP method is only supported for two-parameter distributions with `gamma` or `fisk` with `loc` being fixed."
                 "Pass a value for `floc` in `fitkwargs`."
             )
-    if offset is not None:
-        warnings.warn(
-            "Inputing an offset will be deprecated in xclim>=0.50.0. To achieve the same effect, pass `- offset` as `fitkwargs['floc']` instead."
-        )
-        with xr.set_options(keep_attrs=True):
-            da = da + convert_units_to(offset, da, context="hydro")
 
     # "WPM" method doesn't seem to work for gamma or pearson3
     dist_and_methods = {"gamma": ["ML", "APP", "PWM"], "fisk": ["ML", "APP"]}
@@ -797,10 +790,8 @@ def standardized_index_fit_params(
         "method": method,
         "group": group,
         "units": "",
+        "time_indexer": json.dumps(indexer),
     }
-    params.attrs["time_indexer"] = json.dumps(indexer)
-    if offset:
-        params.attrs["offset"] = offset
     return params
 
 
@@ -886,10 +877,6 @@ def standardized_index(
                 "If `cal_start`, `cal_end`, `freq`, `window`, and/or `dist` were given as input, they will be ignored."
             )
 
-        if "offset" in params.attrs:
-            offset = convert_units_to(params.attrs["offset"], da, context="hydro")
-            with xr.set_options(keep_attrs=True):
-                da = da + offset
     else:
         for p in [window, dist, method, zero_inflated]:
             if p is None:
@@ -948,8 +935,8 @@ def standardized_index(
     params_norm = xr.DataArray(
         [0, 1],
         dims=["dparams"],
-        coords=dict(dparams=(["loc", "scale"])),
-        attrs=dict(scipy_dist="norm"),
+        coords={"dparams": (["loc", "scale"])},
+        attrs={"scipy_dist": "norm"},
     )
     si = dist_method("ppf", params_norm, probs)
     # A cdf value of 0 or 1 gives ±np.inf when inverted to the normal distribution.

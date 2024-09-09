@@ -16,8 +16,9 @@ import xarray as xr
 from numba import njit
 from xarray.core.utils import get_temp_dimname
 
+from xclim.core import DateStr, DayOfYearStr
 from xclim.core.options import OPTIONS, RUN_LENGTH_UFUNC
-from xclim.core.utils import DateStr, DayOfYearStr, uses_dask
+from xclim.core.utils import uses_dask
 
 npts_opt = 9000
 """
@@ -746,8 +747,8 @@ def extract_events(
 
     start_runs = _cumsum_reset_on_zero(da_start, dim=dim, index="first")
     stop_runs = _cumsum_reset_on_zero(da_stop, dim=dim, index="first")
-    start_positions = xr.where(start_runs >= window_start, 1, np.NaN)
-    stop_positions = xr.where(stop_runs >= window_stop, 0, np.NaN)
+    start_positions = xr.where(start_runs >= window_start, 1, np.nan)
+    stop_positions = xr.where(stop_runs >= window_stop, 0, np.nan)
 
     # start positions (1) are f-filled until a stop position (0) is met
     runs = stop_positions.combine_first(start_positions).ffill(dim=dim).fillna(0)
@@ -755,18 +756,16 @@ def extract_events(
     return runs
 
 
-def season(
+def season_start(
     da: xr.DataArray,
     window: int,
-    date: DayOfYearStr | None = None,
+    mid_date: DayOfYearStr | None = None,
     dim: str = "time",
     coord: str | bool | None = False,
-) -> xr.Dataset:
-    """Calculate the bounds of a season along a dimension.
+) -> xr.DataArray:
+    """Start of a season.
 
-    A "season" is a run of True values that may include breaks under a given length (`window`).
-    The start is computed as the first run of `window` True values, then end as the first subsequent run
-    of  `window` False values. If a date is passed, it must be included in the season.
+    See :py:func:`season`.
 
     Parameters
     ----------
@@ -774,7 +773,116 @@ def season(
         Input N-dimensional DataArray (boolean).
     window : int
         Minimum duration of consecutive values to start and end the season.
-    date : DayOfYearStr, optional
+    mid_date : DayOfYearStr, optional
+        The date (in MM-DD format) that a season must include to be considered valid.
+    dim : str
+        Dimension along which to calculate the season (default: 'time').
+    coord : Optional[str]
+        If not False, the function returns values along `dim` instead of indexes.
+        If `dim` has a datetime dtype, `coord` can also be a str of the name of the
+        DateTimeAccessor object to use (ex: 'dayofyear').
+
+    Returns
+    -------
+    xr.DataArray
+        Start of the season, units depend on `coord`.
+
+    See Also
+    --------
+    season
+    season_end
+    season_length
+    """
+    return first_run_before_date(da, window=window, date=mid_date, dim=dim, coord=coord)
+
+
+def season_end(
+    da: xr.DataArray,
+    window: int,
+    mid_date: DayOfYearStr | None = None,
+    dim: str = "time",
+    coord: str | bool | None = False,
+    _beg: xr.DataArray | None = None,
+) -> xr.DataArray:
+    """End of a season.
+
+    See :py:func:`season`. Similar to :py:func:`first_run_after_date` but here a season
+    must have a start for an end to be valid. Also, if no end is found but a start was found
+    the end is set to the last element of the series.
+
+
+    Parameters
+    ----------
+    da : xr.DataArray
+        Input N-dimensional DataArray (boolean).
+    window : int
+        Minimum duration of consecutive values to start and end the season.
+    mid_date : DayOfYearStr, optional
+        The date (in MM-DD format) that a run must include to be considered valid.
+    dim : str
+        Dimension along which to calculate consecutive run (default: 'time').
+    coord : str, optional
+        If not False, the function returns values along `dim` instead of indexes.
+        If `dim` has a datetime dtype, `coord` can also be a str of the name of the
+        DateTimeAccessor object to use (ex: 'dayofyear').
+
+    Returns
+    -------
+    xr.DataArray
+        End of the season, units depend on `coord`.
+        If there is a start is found but no end, the end is set to the last element.
+
+    See Also
+    --------
+    season
+    season_start
+    season_length
+    """
+    # Fast path for `season` and `season_length`
+    if _beg is not None:
+        beg = _beg
+    else:
+        beg = season_start(da, window=window, dim=dim, mid_date=mid_date, coord=False)
+    # Invert the condition and mask all values after beginning
+    # we fillna(0) as so to differentiate series with no runs and all-nan series
+    not_da = (~da).where(da[dim].copy(data=np.arange(da[dim].size)) >= beg.fillna(0))
+    end = first_run_after_date(
+        not_da, window=window, dim=dim, date=mid_date, coord=False
+    )
+    if _beg is None:
+        # Where end is null and beg is not null (valid data, no end detected), put the last index
+        # Don't do this in the fast path, so that the length can use this information
+        end = xr.where(end.isnull() & beg.notnull(), da[dim].size - 1, end)
+        end = end.where(beg.notnull())
+    if coord:
+        crd = da[dim]
+        if isinstance(coord, str):
+            crd = getattr(crd.dt, coord)
+        end = lazy_indexing(crd, end)
+    return end
+
+
+def season(
+    da: xr.DataArray,
+    window: int,
+    mid_date: DayOfYearStr | None = None,
+    dim: str = "time",
+    coord: str | bool | None = False,
+) -> xr.Dataset:
+    """Calculate the bounds of a season along a dimension.
+
+    A "season" is a run of True values that may include breaks under a given length (`window`).
+    The start is computed as the first run of `window` True values, and the end as the first subsequent run
+    of  `window` False values. The end element is the first element after the season.
+    If a date is given, it must be included in the season, i.e. the start cannot occur later and the end cannot occur earlier.
+
+    Parameters
+    ----------
+    da : xr.DataArray
+        Input N-dimensional DataArray (boolean).
+    window : int
+        Minimum duration of consecutive values to start and end the season.
+    mid_date : DayOfYearStr, optional
         The date (in MM-DD format) that a run must include to be considered valid.
     dim : str
         Dimension along which to calculate consecutive run (default: 'time').
@@ -786,7 +894,10 @@ def season(
     Returns
     -------
     xr.Dataset
-        "dim" is reduced to "season_bnds" with 2 elements : season start and season end, both indices of da[dim].
+        Dataset variables:
+            start : start of the season (index or units depending on ``coord``)
+            end : end of the season (index or units depending on ``coord``)
+            length : length of the season (in number of elements along ``dim``)
 
     Notes
     -----
@@ -797,52 +908,39 @@ def season(
     Example : Length of the "warm season", where T > 25°C, with date = 1st August. Let's say the temperature is over
     25 for all June, but July and august have very cold temperatures. Instead of returning 30 days (June), the function
     will return 61 days (July + June).
+
+    The season's length is always the difference between the end and the start. Except if no
+    season end was found before the end of the data. In that case the end is set to last element and
+    the length is set to the data size minus the start index. Thus, for the specific case, :math:`length = end - start + 1`,
+    because the end falls on the last element of the season instead of the subsequent one.
+
+    See Also
+    --------
+    season_start
+    season_end
+    season_length
     """
-    beg = first_run(da, window=window, dim=dim)
-    # Invert the condition and mask all values after beginning
-    # we fillna(0) as so to differentiate series with no runs and all-nan series
-    not_da = (~da).where(da[dim].copy(data=np.arange(da[dim].size)) >= beg.fillna(0))
-
-    # Mask also values after "date"
-    mid_idx = index_of_date(da[dim], date, max_idxs=1, default=0)
-    if mid_idx.size == 0:
-        # The date is not within the group. Happens at boundaries.
-        base = da.isel({dim: 0})  # To have the proper shape
-        beg = xr.full_like(base, np.nan, float).drop_vars(dim)
-        end = xr.full_like(base, np.nan, float).drop_vars(dim)
-        length = xr.full_like(base, np.nan, float).drop_vars(dim)
-    else:
-        if date is not None:
-            # If the beginning was after the mid date, both bounds are NaT.
-            valid_start = beg < mid_idx.squeeze()
-        else:
-            valid_start = True
-
-        not_da = not_da.where(da[dim] >= da[dim][mid_idx][0])
-        end = first_run(
-            not_da,
-            window=window,
-            dim=dim,
-        )
-        # If there was a beginning but no end, season goes to the end of the array
-        no_end = beg.notnull() & end.isnull()
-
-        # Length
-        length = end - beg
-
-        # No end:  length is actually until the end of the array, so it is missing 1
-        length = xr.where(no_end, da[dim].size - beg, length)
-        # Where the beginning was before the mid-date, invalid.
-        length = length.where(valid_start)
-        # Where there were data points, but no season : put 0 length
-        length = xr.where(beg.isnull() & end.notnull(), 0, length)
-
-        # No end: end defaults to the last element (this differs from length, but heh)
-        end = xr.where(no_end, da[dim].size - 1, end)
-
-        # Where the beginning was before the mid-date
-        beg = beg.where(valid_start)
-        end = end.where(valid_start)
+    beg = season_start(da, window=window, dim=dim, mid_date=mid_date, coord=False)
+    # Use fast path in season_end : no recomputing of start, no masking of end where beg.isnull() and don't set end if none found
+    end = season_end(
+        da, window=window, dim=dim, mid_date=mid_date, _beg=beg, coord=False
+    )
+    # Three cases :
+    #           start     no start
+    # end       e - s        0
+    # no end   size - s      0
+    # da is boolean, so we have no way of knowing if the absence of season is due to missing values or to an actual absence.
+    length = xr.where(
+        beg.isnull(),
+        0,
+        # Where there is no end, from the start to the boundary
+        xr.where(end.isnull(), da[dim].size - beg, end - beg),
+    )
+    # Now masks ends
+    # Still give an end if we didn't find any : put the last element
+    # This breaks the length = end - beg, but yields a truer length
+    end = xr.where(end.isnull() & beg.notnull(), da[dim].size - 1, end)
+    end = end.where(beg.notnull())
 
     if coord:
         crd = da[dim]
@@ -857,7 +955,6 @@ def season(
         coordstr = "index"
 
     out = xr.Dataset({"start": beg, "end": end, "length": length})
-
     out.start.attrs.update(
         long_name="Start of the season.",
         description=f"First {coordstr} of a run of at least {window} steps respecting the condition.",
@@ -877,14 +974,10 @@ def season(
 def season_length(
     da: xr.DataArray,
     window: int,
-    date: DayOfYearStr | None = None,
+    mid_date: DayOfYearStr | None = None,
     dim: str = "time",
 ) -> xr.DataArray:
-    """Return the length of the longest semi-consecutive run of True values (optionally including a given date).
-
-    A "season" is a run of True values that may include breaks under a given length (`window`).
-    The start is computed as the first run of `window` True values, then end as the first subsequent run
-    of  `window` False values. If a date is passed, it must be included in the season.
+    """Length of a season.
 
     Parameters
     ----------
@@ -892,7 +985,7 @@ def season_length(
         Input N-dimensional DataArray (boolean).
     window : int
         Minimum duration of consecutive values to start and end the season.
-    date : DayOfYearStr, optional
+    mid_date : DayOfYearStr, optional
         The date (in MM-DD format) that a run must include to be considered valid.
     dim : str
         Dimension along which to calculate consecutive run (default: 'time').
@@ -900,20 +993,15 @@ def season_length(
     Returns
     -------
     xr.DataArray, [int]
-        Length of the longest run of True values along a given dimension (inclusive of a given date)
-        without breaks longer than a given length.
+        Length of the season, in number of elements along dimension `time`.
 
-    Notes
-    -----
-    The run can include holes of False or NaN values, so long as they do not exceed the window size.
-
-    If a date is given, the season start and end are forced to be on each side of this date. This means that
-    even if the "real" season has been over for a long time, this is the date used in the length calculation.
-    Example : Length of the "warm season", where T > 25°C, with date = 1st August. Let's say the temperature is over
-    25 for all June, but July and august have very cold temperatures. Instead of returning 30 days (June), the function
-    will return 61 days (July + June).
+    See Also
+    --------
+    season
+    season_start
+    season_end
     """
-    seas = season(da, window, date, dim, coord=False)
+    seas = season(da, window, mid_date, dim, coord=False)
     return seas.length
 
 
@@ -1053,6 +1141,54 @@ def last_run_before_date(
     return last_run(run, window=window, dim=dim, coord=coord)
 
 
+def first_run_before_date(
+    da: xr.DataArray,
+    window: int,
+    date: DayOfYearStr | None = "07-01",
+    dim: str = "time",
+    coord: bool | str | None = "dayofyear",
+) -> xr.DataArray:
+    """Return the index of the first item of the first run before a given date.
+
+    Parameters
+    ----------
+    da : xr.DataArray
+        Input N-dimensional DataArray (boolean).
+    window : int
+        Minimum duration of consecutive run to accumulate values.
+    date : DayOfYearStr
+        The date before which to look for the run.
+    dim : str
+        Dimension along which to calculate consecutive run (default: 'time').
+    coord : bool or str, optional
+        If not False, the function returns values along `dim` instead of indexes.
+        If `dim` has a datetime dtype, `coord` can also be a str of the name of the
+        DateTimeAccessor object to use (e.g. 'dayofyear').
+
+    Returns
+    -------
+    xr.DataArray
+        Index (or coordinate if `coord` is not False) of first item in the first valid run.
+        Returns np.nan if there are no valid runs.
+    """
+    if date is not None:
+        mid_idx = index_of_date(da[dim], date, max_idxs=1, default=0)
+        if (
+            mid_idx.size == 0
+        ):  # The date is not within the group. Happens at boundaries.
+            return xr.full_like(da.isel({dim: 0}), np.nan, float).drop_vars(dim)
+        # Mask anything after the mid_date + window - 1
+        # Thus, the latest run possible can begin on the day just before mid_idx
+        da = da.where(da[dim] < da[dim][mid_idx + window - 1][0])
+
+    return first_run(
+        da,
+        window=window,
+        dim=dim,
+        coord=coord,
+    )
+
+
 @njit
 def _rle_1d(ia):
     y = ia[1:] != ia[:-1]  # pairwise unequal (string safe)
@@ -1129,7 +1265,7 @@ def statistics_run_1d(arr: Sequence[bool], reducer: str, window: int) -> int:
     ----------
     arr : Sequence[bool]
         Input array (bool)
-    reducer : {'mean', 'sum', 'min', 'max', 'std'}
+    reducer : {"mean", "sum", "min", "max", "std", "count"}
         Reducing function name.
     window : int
         Minimal length of runs to be included in the statistics
@@ -1142,8 +1278,10 @@ def statistics_run_1d(arr: Sequence[bool], reducer: str, window: int) -> int:
     v, rl = rle_1d(arr)[:2]
     if not np.any(v) or np.all(v * rl < window):
         return 0
+    if reducer == "count":
+        return (v * rl >= window).sum()
     func = getattr(np, f"nan{reducer}")
-    return func(np.where(v * rl >= window, rl, np.NaN))
+    return func(np.where(v * rl >= window, rl, np.nan))
 
 
 def windowed_run_count_1d(arr: Sequence[bool], window: int) -> int:
@@ -1358,9 +1496,14 @@ def lazy_indexing(
         da2 = xr.DataArray(da.data, dims=(tmpname,), name=None)
         # for each chunk of index, take corresponding values from da
         out = index.map_blocks(_index_from_1d_array, args=(da2,)).rename(da.name)
+        # Map blocks chunks aux coords. Replace them by non-chunked from the original array.
+        # This avoids unwanted loading of the aux coord in a resample.map, for example
+        for name, crd in out.coords.items():
+            if uses_dask(crd) and name in index.coords and index[name].size == crd.size:
+                out = out.assign_coords(**{name: index[name]})
         # mask where index was NaN. Drop any auxiliary coord, they are already on `out`.
         # Chunked aux coord would have the same name on both sides and xarray will want to check if they are equal, which means loading them
-        # making lazy_indexing not lazy.
+        # making lazy_indexing not lazy. same issue as above
         out = out.where(
             ~invalid.drop_vars(
                 [crd for crd in invalid.coords if crd not in invalid.dims]
@@ -1532,5 +1675,5 @@ def suspicious_run(
         dask="parallelized",
         output_dtypes=[bool],
         keep_attrs=True,
-        kwargs=dict(window=window, op=op, thresh=thresh),
+        kwargs={"window": window, "op": op, "thresh": thresh},
     )

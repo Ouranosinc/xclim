@@ -13,10 +13,11 @@ from typing import Callable
 
 import cftime
 import numpy as np
-import xarray
 import xarray as xr
+from pint import Quantity
 from xarray.coding.cftime_offsets import _MONTH_ABBREVIATIONS  # noqa
 
+from xclim.core import DayOfYearStr, Quantified
 from xclim.core.calendar import doy_to_days_since, get_calendar, select_time
 from xclim.core.units import (
     convert_units_to,
@@ -26,13 +27,12 @@ from xclim.core.units import (
     str2pint,
     to_agg_units,
 )
-from xclim.core.utils import DayOfYearStr, Quantified, Quantity
-
-from . import run_length as rl
+from xclim.indices import run_length as rl
 
 __all__ = [
     "aggregate_between_dates",
     "binary_ops",
+    "bivariate_spell_length_statistics",
     "compare",
     "count_level_crossings",
     "count_occurrences",
@@ -51,8 +51,11 @@ __all__ = [
     "get_zones",
     "interday_diurnal_temperature_range",
     "last_occurrence",
+    "season",
     "select_resample_op",
     "spell_length",
+    "spell_length_statistics",
+    "spell_mask",
     "statistics",
     "temperature_sum",
     "threshold_count",
@@ -63,7 +66,7 @@ binary_ops = {">": "gt", "<": "lt", ">=": "ge", "<=": "le", "==": "eq", "!=": "n
 
 
 def select_resample_op(
-    da: xr.DataArray, op: str, freq: str = "YS", out_units=None, **indexer
+    da: xr.DataArray, op: str | Callable, freq: str = "YS", out_units=None, **indexer
 ) -> xr.DataArray:
     """Apply operation over each period that is part of the index selection.
 
@@ -89,8 +92,8 @@ def select_resample_op(
     """
     da = select_time(da, **indexer)
     r = da.resample(time=freq)
-    if op in _xclim_ops:
-        op = _xclim_ops[op]
+    if isinstance(op, str):
+        op = _xclim_ops.get(op, op)
     if isinstance(op, str):
         out = getattr(r, op.replace("integral", "sum"))(dim="time", keep_attrs=True)
     else:
@@ -203,14 +206,14 @@ def get_op(op: str, constrain: Sequence[str] | None = None) -> Callable:
         warnings.warn(f"`{op}` is being renamed `le` for compatibility.")
         op = "le"
 
-    if op in binary_ops.keys():
+    if op in binary_ops:
         binary_op = binary_ops[op]
     elif op in binary_ops.values():
         binary_op = op
     else:
         raise ValueError(f"Operation `{op}` not recognized.")
 
-    constraints = list()
+    constraints = []
     if isinstance(constrain, (list, tuple, set)):
         constraints.extend([binary_ops[c] for c in constrain])
         constraints.extend(constrain)
@@ -350,6 +353,394 @@ def get_daily_events(
     events = events.where(~(np.isnan(da)))
     events = events.rename("events")
     return events
+
+
+def spell_mask(
+    data: xr.DataArray | Sequence[xr.DataArray],
+    window: int,
+    win_reducer: str,
+    op: str,
+    thresh: float | Sequence[float],
+    weights: Sequence[float] = None,
+    var_reducer: str = "all",
+) -> xr.DataArray:
+    """Compute the boolean mask of data points that are part of a spell as defined by a rolling statistic.
+
+    A day is part of a spell (True in the mask) if it is contained in any period that fulfills the condition.
+
+    Parameters
+    ----------
+    data: DataArray or sequence of DataArray
+        The input data. Can be a list, in which case the condition is checked on all variables.
+        See var_reducer for the latter case.
+    window: int
+        The length of the rolling window in which to compute statistics.
+    win_reducer: {'min', 'max', 'sum', 'mean'}
+        The statistics to compute on the rolling window.
+    op: {">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"}
+        The comparison operator to use when finding spells.
+    thresh: float or sequence of floats
+        The threshold to compare the rolling statistics against, as ``window_stats op threshold``.
+        If data is a list, this must be a list of the same length with a threshold for each variable.
+        This function does not handle units and can't accept Quantified objects.
+    weights: sequence of floats
+        A list of weights of the same length as the window.
+        Only supported if `win_reducer` is "mean".
+    var_reducer: {'all', 'any'}
+        If the data is a list, the condition must either be fulfilled on *all*
+        or *any* variables for the period to be considered a spell.
+
+    Returns
+    -------
+    xr.DataArray
+        Same shape as ``data``, but boolean.
+        If ``data`` was a list, this is a DataArray of the same shape as the alignment of all variables.
+    """
+    # Checks
+    if not isinstance(data, xr.DataArray):
+        # thus a sequence
+        if np.isscalar(thresh) or len(data) != len(thresh):
+            raise ValueError(
+                "When ``data`` is given as a list, ``threshold`` must be a sequence of the same length."
+            )
+        data = xr.concat(data, "variable")
+        if isinstance(thresh[0], xr.DataArray):
+            thresh = xr.concat(thresh, "variable")
+        else:
+            thresh = xr.DataArray(thresh, dims=("variable",))
+    if weights is not None:
+        if win_reducer != "mean":
+            raise ValueError(
+                f"Argument 'weights' is only supported if 'win_reducer' is 'mean'. Got :  {win_reducer}"
+            )
+        elif len(weights) != window:
+            raise ValueError(
+                f"Weights have a different length ({len(weights)}) than the window ({window})."
+            )
+        weights = xr.DataArray(weights, dims=("window",))
+
+    if window == 1:  # Fast path
+        is_in_spell = compare(data, op, thresh)
+        if not np.isscalar(thresh):
+            is_in_spell = getattr(is_in_spell, var_reducer)("variable")
+    elif (win_reducer == "min" and op in [">", ">=", "ge", "gt"]) or (
+        win_reducer == "max" and op in ["`<", "<=", "le", "lt"]
+    ):
+        # Fast path for specific cases, this yields a smaller dask graph (rolling twice is expensive!)
+        # For these two cases, a day can't be part of a spell if it doesn't respect the condition itself
+        mask = compare(data, op, thresh)
+        if not np.isscalar(thresh):
+            mask = getattr(mask, var_reducer)("variable")
+        # We need to filter out the spells shorter than "window"
+        # find sequences of consecutive respected constraints
+        cs_s = rl._cumsum_reset_on_zero(mask)
+        # end of these sequences
+        cs_s = cs_s.where(mask.shift({"time": -1}, fill_value=0) == 0)
+        # propagate these end of sequences
+        # the `.where(mask>0, 0)` acts a stopper
+        is_in_spell = cs_s.where(cs_s >= window).where(mask > 0, 0).bfill("time") > 0
+    else:
+        data_pad = data.pad(time=(0, window))
+        # The spell-wise value to test
+        # For example "window_reducer='sum'", we want the sum over the minimum spell length (window) to be above the thresh
+        if weights is not None:
+            spell_value = data_pad.rolling(time=window).construct("window").dot(weights)
+        else:
+            spell_value = getattr(data_pad.rolling(time=window), win_reducer)()
+        # True at the end of a spell respecting the condition
+        mask = compare(spell_value, op, thresh)
+        if not np.isscalar(thresh):
+            mask = getattr(mask, var_reducer)("variable")
+        # True for all days part of a spell that respected the condition (shift because of the two rollings)
+        is_in_spell = (mask.rolling(time=window).sum() >= 1).shift(time=-(window - 1))
+        # Cut back to the original size
+        is_in_spell = is_in_spell.isel(time=slice(0, data.time.size))
+    return is_in_spell
+
+
+def _spell_length_statistics(
+    data: xr.DataArray | Sequence[xr.DataArray],
+    thresh: float | xr.DataArray | Sequence[xr.DataArray] | Sequence[float],
+    window: int,
+    win_reducer: str,
+    op: str,
+    spell_reducer: str | Sequence[str],
+    freq: str,
+    resample_before_rl: bool = True,
+    **indexer,
+) -> xr.DataArray | Sequence[xr.DataArray]:
+    if isinstance(spell_reducer, str):
+        spell_reducer = [spell_reducer]
+    is_in_spell = spell_mask(data, window, win_reducer, op, thresh).astype(np.float32)
+    is_in_spell = select_time(is_in_spell, **indexer)
+
+    outs = []
+    for sr in spell_reducer:
+        out = rl.resample_and_rl(
+            is_in_spell,
+            resample_before_rl,
+            rl.rle_statistics,
+            reducer=sr,
+            # The code above already ensured only spell of the minimum length are selected
+            window=1,
+            freq=freq,
+        )
+
+        if sr == "count":
+            outs.append(out.assign_attrs(units=""))
+        else:
+            # All other cases are statistics of the number of timesteps
+            outs.append(
+                to_agg_units(
+                    out,
+                    data if isinstance(data, xr.DataArray) else data[0],
+                    "count",
+                )
+            )
+    if len(outs) == 1:
+        return outs[0]
+    return tuple(outs)
+
+
+@declare_relative_units(threshold="<data>")
+def spell_length_statistics(
+    data: xr.DataArray,
+    threshold: Quantified,
+    window: int,
+    win_reducer: str,
+    op: str,
+    spell_reducer: str,
+    freq: str,
+    resample_before_rl: bool = True,
+    **indexer,
+):
+    r"""Statistics on spells lengths.
+
+    A spell is when a statistic (`win_reducer`) over a minimum number (`window`) of consecutive timesteps respects a condition (`op` `thresh`).
+    This returns a statistic over the spells count or lengths.
+
+    Parameters
+    ----------
+    data : xr.DataArray
+        Input data.
+    threshold : Quantified
+        Threshold to test against.
+    window : int
+        Minimum length of a spell.
+    win_reducer : {'min', 'max', 'sum', 'mean'}
+        Reduction along the spell length to compute the spell value.
+        Note that this does not matter when `window` is 1.
+    op : {">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"}
+        Logical operator. Ex: spell_value > thresh.
+    spell_reducer : {'max', 'sum', 'count'} or sequence thereof
+        Statistic on the spell lengths. If a list, multiple statistics are computed.
+    freq : str
+        Resampling frequency.
+    resample_before_rl : bool
+        Determines if the resampling should take place before or after the run
+        length encoding (or a similar algorithm) is applied to runs.
+    \*\*indexer
+        Indexing parameters to compute the indicator on a temporal subset of the data.
+        It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
+        Indexing is done after finding the days part of a spell, but before taking the spell statistics.
+
+    Examples
+    --------
+    >>> spell_length_statistics(
+    ...     tas,
+    ...     threshold="35 °C",
+    ...     window=7,
+    ...     op=">",
+    ...     win_reducer="min",
+    ...     spell_reducer="sum",
+    ...     freq="YS",
+    ... )
+
+    Here, a day is part of a spell if it is in any seven (7) day period where the minimum temperature is over 35°C.
+    We then return the annual sum of the spell lengths, so the total number of days in such spells.
+    >>> from xclim.core.units import rate2amount
+    >>> pram = rate2amount(pr, out_units="mm")
+    >>> spell_length_statistics(
+    ...     pram,
+    ...     threshold="20 mm",
+    ...     window=5,
+    ...     op=">=",
+    ...     win_reducer="sum",
+    ...     spell_reducer="max",
+    ...     freq="YS",
+    ... )
+
+    Here, a day is part of a spell if it is in any five (5) day period where the total accumulated precipitation reaches
+    or exceeds 20 mm. We then return the length of the longest of such spells.
+
+    See Also
+    --------
+    spell_mask : The lower level functions that finds spells.
+    bivariate_spell_length_statistics : The bivariate version of this function.
+    """
+    thresh = convert_units_to(threshold, data, context="infer")
+    return _spell_length_statistics(
+        data,
+        thresh,
+        window,
+        win_reducer,
+        op,
+        spell_reducer,
+        freq,
+        resample_before_rl,
+        **indexer,
+    )
+
+
+@declare_relative_units(threshold1="<data1>", threshold2="<data2>")
+def bivariate_spell_length_statistics(
+    data1: xr.DataArray,
+    threshold1: Quantified,
+    data2: xr.DataArray,
+    threshold2: Quantified,
+    window: int,
+    win_reducer: str,
+    op: str,
+    spell_reducer: str,
+    freq: str,
+    resample_before_rl: bool = True,
+    **indexer,
+):
+    r"""Statistics on spells lengths based on two variables.
+
+    A spell is when a statistic (`win_reducer`) over a minimum number (`window`) of consecutive timesteps respects a condition (`op` `thresh`).
+    This returns a statistic over the spells count or lengths. In this bivariate version, conditions on both variables must be fulfilled.
+
+    Parameters
+    ----------
+    data1 : xr.DataArray
+        First input data.
+    threshold1 : Quantified
+        Threshold to test against data1.
+    data2 : xr.DataArray
+        Second input data.
+    threshold2 : Quantified
+        Threshold to test against data2.
+    window : int
+        Minimum length of a spell.
+    win_reducer : {'min', 'max', 'sum', 'mean'}
+        Reduction along the spell length to compute the spell value.
+        Note that this does not matter when `window` is 1.
+    op : {">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"}
+        Logical operator. Ex: spell_value > thresh.
+    spell_reducer : {'max', 'sum', 'count'} or sequence thereof
+        Statistic on the spell lengths. If a list, multiple statistics are computed.
+    freq : str
+        Resampling frequency.
+    resample_before_rl : bool
+        Determines if the resampling should take place before or after the run
+        length encoding (or a similar algorithm) is applied to runs.
+    \*\*indexer
+        Indexing parameters to compute the indicator on a temporal subset of the data.
+        It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
+        Indexing is done after finding the days part of a spell, but before taking the spell statistics.
+
+    See Also
+    --------
+    spell_length_statistics: The univariate version.
+    spell_mask : The lower level functions that finds spells.
+    """
+    thresh1 = convert_units_to(threshold1, data1, context="infer")
+    thresh2 = convert_units_to(threshold2, data2, context="infer")
+    return _spell_length_statistics(
+        [data1, data2],
+        [thresh1, thresh2],
+        window,
+        win_reducer,
+        op,
+        spell_reducer,
+        freq,
+        resample_before_rl,
+        **indexer,
+    )
+
+
+@declare_relative_units(thresh="<data>")
+def season(
+    data: xr.DataArray,
+    thresh: Quantified,
+    window: int,
+    op: str,
+    stat: str,
+    freq: str,
+    mid_date: DayOfYearStr | None = None,
+    constrain: Sequence[str] | None = None,
+) -> xr.DataArray:
+    r"""Season.
+
+    A season starts when a variable respects some condition for a consecutive run of `N` days. It stops
+    when the condition is inverted for `N` days. Runs where the condition is not met for fewer than `N` days
+    are thus allowed. Additionally a middle date can serve as a maximal start date and minimum end date.
+
+    Parameters
+    ----------
+    data : xr.DataArray
+        Variable.
+    thresh : Quantified
+        Threshold on which to base evaluation.
+    window : int
+        Minimum number of days that the condition must be met / not met for the start / end of the season.
+    op : str
+        Comparison operation.
+    stat : {'start', 'end', 'length'}
+        Which season facet to return.
+    freq : str
+        Resampling frequency.
+    mid_date : DayOfYearStr, optional
+        An optional middle date. The start must happen before and the end after for the season to be valid.
+    constrain : Sequence of strings, optional
+        A list of acceptable comparison operators. Optional, but indicators wrapping this function should inject it.
+
+    Returns
+    -------
+    xr.DataArray, [dimensionless] or [time]
+        Depends on 'stat'. If 'start' or 'end', this is the day of year of the season's start or end.
+        If 'length', this is the length of the season.
+
+    Examples
+    --------
+    >>> season(tas, thresh="0 °C", window=5, op=">", stat="start", freq="YS")
+
+    Returns the start of the "frost-free" season. The season starts with 5 consecutive days with mean temperature
+    above 0°C and ends with as many days under or equal to 0°C. And end does not need to be found for a start to be valid.
+
+    >>> season(
+    ...     pr,
+    ...     thresh="2 mm/d",
+    ...     window=7,
+    ...     op="<=",
+    ...     mid_date="08-01",
+    ...     stat="length",
+    ...     freq="YS",
+    ... )
+
+    Returns the length of the "dry" season. The season starts with 7 consecutive days with precipitation under or equal to
+    2 mm/d and ends with as many days above 2 mm/d. If no start is found before the first of august, the season is invalid.
+    If a start is found but no end, the end is set to the last day of the period (December 31st if the dataset is complete).
+
+    See Also
+    --------
+    xclim.indices.run_length.season_start
+    xclim.indices.run_length.season_length
+    xclim.indices.run_length.season_end
+    """
+    thresh = convert_units_to(thresh, data, context="infer")
+    cond = compare(data, op, thresh, constrain=constrain)
+    FUNC = {"start": rl.season_start, "end": rl.season_end, "length": rl.season_length}
+    map_kwargs = {"window": window, "mid_date": mid_date}
+    if stat in ["start", "end"]:
+        map_kwargs["coord"] = "dayofyear"
+    out = cond.resample(time=freq).map(FUNC[stat], **map_kwargs)
+    if stat == "length":
+        return to_agg_units(out, data, "count")
+    # else, a date
+    out.attrs.update(units="", is_dayofyear=np.int32(1), calendar=get_calendar(data))
+    return out
 
 
 # CF-INDEX-META Indices
@@ -913,7 +1304,7 @@ def first_day_threshold_reached(
 
     Parameters
     ----------
-    data : xarray.DataArray
+    data xr.DataArray
         Dataset being evaluated.
     threshold : str
         Threshold on which to base evaluation.
@@ -931,7 +1322,7 @@ def first_day_threshold_reached(
 
     Returns
     -------
-    xarray.DataArray, [dimensionless]
+    xr.DataArray, [dimensionless]
         Day of the year when value reaches or exceeds a threshold over a given number of days for the first time.
         If there is no such day, returns np.nan.
     """
@@ -939,7 +1330,7 @@ def first_day_threshold_reached(
 
     cond = compare(data, op, threshold, constrain=constrain)
 
-    out: xarray.DataArray = cond.resample(time=freq).map(
+    out: xr.DataArray = cond.resample(time=freq).map(
         rl.first_run_after_date,
         window=window,
         date=after_date,
@@ -968,7 +1359,7 @@ def _get_zone_bins(
 
     Returns
     -------
-    xarray.DataArray, [units of `zone_step`]
+    xr.DataArray, [units of `zone_step`]
         Array of values corresponding to each zone: [zone_min, zone_min+step, ..., zone_max]
     """
     units = pint2cfunits(str2pint(zone_step))
@@ -1000,7 +1391,7 @@ def get_zones(
 
     Parameters
     ----------
-    da : xarray.DataArray
+    da : xr.DataArray
         Input data
     zone_min : Quantity | None
         Left boundary of the first zone
@@ -1017,7 +1408,7 @@ def get_zones(
 
     Returns
     -------
-    xarray.DataArray, [dimensionless]
+    xr.DataArray, [dimensionless]
         Zone index for each value in `da`. Zones are returned as an integer range, starting from `0`
     """
     # Check compatibility of arguments

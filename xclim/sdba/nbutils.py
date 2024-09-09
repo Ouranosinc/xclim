@@ -9,19 +9,158 @@ from collections.abc import Hashable, Sequence
 
 import numpy as np
 from numba import boolean, float32, float64, guvectorize, njit
-from xarray import DataArray
+from xarray import DataArray, apply_ufunc
 from xarray.core import utils
+
+try:
+    from fastnanquantile.xrcompat import xr_apply_nanquantile
+
+    USE_FASTNANQUANTILE = True
+except ImportError:
+    USE_FASTNANQUANTILE = False
+
+
+@njit(
+    fastmath={"arcp", "contract", "reassoc", "nsz", "afn"},
+    nogil=True,
+    cache=False,
+)
+def _get_indexes(
+    arr: np.array, virtual_indexes: np.array, valid_values_count: np.array
+) -> tuple[np.array, np.array]:
+    """Get the valid indexes of arr neighbouring virtual_indexes.
+
+    Parameters
+    ----------
+    arr : array-like
+    virtual_indexes : array-like
+    valid_values_count : array-like
+
+    Returns
+    -------
+    array-like, array-like
+        A tuple of virtual_indexes neighbouring indexes (previous and next)
+
+    Notes
+    -----
+    This is a companion function to linear interpolation of quantiles.
+    """
+    previous_indexes = np.asarray(np.floor(virtual_indexes))
+    next_indexes = np.asarray(previous_indexes + 1)
+    indexes_above_bounds = virtual_indexes >= valid_values_count - 1
+    # When indexes is above max index, take the max value of the array
+    if indexes_above_bounds.any():
+        previous_indexes[indexes_above_bounds] = -1
+        next_indexes[indexes_above_bounds] = -1
+    # When indexes is below min index, take the min value of the array
+    indexes_below_bounds = virtual_indexes < 0
+    if indexes_below_bounds.any():
+        previous_indexes[indexes_below_bounds] = 0
+        next_indexes[indexes_below_bounds] = 0
+    if (arr.dtype is np.dtype(np.float64)) or (arr.dtype is np.dtype(np.float32)):
+        # After the sort, slices having NaNs will have for last element a NaN
+        virtual_indexes_nans = np.isnan(virtual_indexes)
+        if virtual_indexes_nans.any():
+            previous_indexes[virtual_indexes_nans] = -1
+            next_indexes[virtual_indexes_nans] = -1
+    previous_indexes = previous_indexes.astype(np.intp)
+    next_indexes = next_indexes.astype(np.intp)
+    return previous_indexes, next_indexes
+
+
+@njit(
+    fastmath={"arcp", "contract", "reassoc", "nsz", "afn"},
+    nogil=True,
+    cache=False,
+)
+def _linear_interpolation(
+    left: np.array,
+    right: np.array,
+    gamma: np.array,
+) -> np.array:
+    """Compute the linear interpolation weighted by gamma on each point of two same shape arrays.
+
+    Parameters
+    ----------
+    left : array_like
+        Left bound.
+    right : array_like
+        Right bound.
+    gamma : array_like
+        The interpolation weight.
+
+    Returns
+    -------
+    array_like
+
+    Notes
+    -----
+    This is a companion function for `_nan_quantile_1d`
+    """
+    diff_b_a = np.subtract(right, left)
+    lerp_interpolation = np.asarray(np.add(left, diff_b_a * gamma))
+    ind = gamma >= 0.5
+    lerp_interpolation[ind] = right[ind] - diff_b_a[ind] * (1 - gamma[ind])
+    return lerp_interpolation
+
+
+@njit(
+    fastmath={"arcp", "contract", "reassoc", "nsz", "afn"},
+    nogil=True,
+    cache=False,
+)
+def _nan_quantile_1d(
+    arr: np.array,
+    quantiles: np.array,
+    alpha: float = 1.0,
+    beta: float = 1.0,
+) -> float | np.array:
+    """Get the quantiles of the 1-dimensional array.
+
+    A  linear interpolation is performed using alpha and beta.
+
+    Notes
+    -----
+    By default, `alpha == beta == 1` which performs the 7th method of :cite:t:`hyndman_sample_1996`.
+    with `alpha == beta == 1/3` we get the 8th method. alpha == beta == 1 reproduces the behaviour of `np.nanquantile`.
+    """
+    # We need at least two values to do an interpolation
+    valid_values_count = (~np.isnan(arr)).sum()
+
+    # Computation of indexes
+    virtual_indexes = (
+        valid_values_count * quantiles + (alpha + quantiles * (1 - alpha - beta)) - 1
+    )
+    virtual_indexes = np.asarray(virtual_indexes)
+    previous_indexes, next_indexes = _get_indexes(
+        arr, virtual_indexes, valid_values_count
+    )
+    # Sorting
+    arr.sort()
+
+    previous = arr[previous_indexes]
+    next_elements = arr[next_indexes]
+
+    # Linear interpolation
+    gamma = np.asarray(virtual_indexes - previous_indexes, dtype=arr.dtype)
+    interpolation = _linear_interpolation(previous, next_elements, gamma)
+    # When an interpolation is in Nan range, (near the end of the sorted array) it means
+    # we can clip to the array max value.
+    result = np.where(
+        np.isnan(interpolation), arr[np.intp(valid_values_count) - 1], interpolation
+    )
+    return result
 
 
 @guvectorize(
     [(float32[:], float32, float32[:]), (float64[:], float64, float64[:])],
     "(n),()->()",
     nopython=True,
-    cache=True,
+    cache=False,
 )
 def _vecquantiles(arr, rnk, res):
     if np.isnan(rnk):
-        res[0] = np.NaN
+        res[0] = np.nan
     else:
         res[0] = np.nanquantile(arr, rnk)
 
@@ -62,14 +201,28 @@ def vecquantiles(
 
 
 @njit
-def _quantile(arr, q):
-    if arr.ndim == 1:
-        out = np.empty((q.size,), dtype=arr.dtype)
-        out[:] = np.nanquantile(arr, q)
+def _wrapper_quantile1d(arr, q):
+    out = np.empty((arr.shape[0], q.size), dtype=arr.dtype)
+    for index in range(out.shape[0]):
+        out[index] = _nan_quantile_1d(arr[index], q)
+    return out
+
+
+def _quantile(arr, q, nreduce=None):
+    nreduce = nreduce or arr.ndim
+    if arr.ndim == nreduce:
+        out = _nan_quantile_1d(arr.flatten(), q)
     else:
-        out = np.empty((arr.shape[0], q.size), dtype=arr.dtype)
-        for index in range(out.shape[0]):
-            out[index] = np.nanquantile(arr[index], q)
+        # dimensions that are reduced by quantile
+        red_axis = np.arange(len(arr.shape) - nreduce, len(arr.shape))
+        reduction_dim_size = np.prod([arr.shape[idx] for idx in red_axis])
+        # kept dimensions
+        keep_axis = np.arange(len(arr.shape) - nreduce)
+        final_shape = [arr.shape[idx] for idx in keep_axis] + [len(q)]
+        # reshape as (keep_dims, red_dims), compute, reshape back
+        arr = arr.reshape(-1, reduction_dim_size)
+        out = _wrapper_quantile1d(arr, q)
+        out = out.reshape(final_shape)
     return out
 
 
@@ -90,49 +243,39 @@ def quantile(da: DataArray, q: np.ndarray, dim: str | Sequence[Hashable]) -> Dat
     xarray.DataArray
         The quantiles computed along the `dim` dimension.
     """
-    # We have two cases :
-    # - When all dims are processed : we stack them and use _quantile1d
-    # - When the quantiles are vectorized over some dims, these are also stacked and then _quantile2D is used.
-    # All this stacking is so that we can cover all ND+1D cases with one numba function.
+    if USE_FASTNANQUANTILE is True:
+        return xr_apply_nanquantile(da, dim=dim, q=q).rename({"quantile": "quantiles"})
 
-    # Stack the dims and send to the last position
-    # This is in case there are more than one
+    qc = np.array(q, dtype=da.dtype)
     dims = [dim] if isinstance(dim, str) else dim
-    tem = utils.get_temp_dimname(da.dims, "temporal")
-    da = da.stack({tem: dims})
-
-    # So we cut in half the definitions to declare in numba
-    # We still use q as the coords, so it corresponds to what was done upstream
-    if not hasattr(q, "dtype") or q.dtype != da.dtype:
-        qc = np.array(q, dtype=da.dtype)
-    else:
-        qc = q
-
-    if len(da.dims) > 1:
-        # There are some extra dims
-        extra = utils.get_temp_dimname(da.dims, "extra")
-        da = da.stack({extra: list(set(da.dims) - {tem})})
-        da = da.transpose(..., tem)
-        res = DataArray(
-            _quantile(da.values, qc),
-            dims=(extra, "quantiles"),
-            coords={extra: da[extra], "quantiles": q},
-            attrs=da.attrs,
-        ).unstack([extra])
-
-    else:
-        # All dims are processed
-        res = DataArray(
-            _quantile(da.values, qc),
-            dims="quantiles",
-            coords={"quantiles": q},
-            attrs=da.attrs,
+    kwargs = {"nreduce": len(dims), "q": qc}
+    res = (
+        apply_ufunc(
+            _quantile,
+            da,
+            input_core_dims=[dims],
+            exclude_dims=set(dims),
+            output_core_dims=[["quantiles"]],
+            output_dtypes=[da.dtype],
+            dask_gufunc_kwargs={"output_sizes": {"quantiles": len(q)}},
+            dask="parallelized",
+            kwargs=kwargs,
         )
-
+        .assign_coords(quantiles=q)
+        .assign_attrs(da.attrs)
+    )
     return res
 
 
-@njit
+@njit(
+    [
+        float32[:, :](float32[:, :]),
+        float64[:, :](float64[:, :]),
+    ],
+    fastmath=False,
+    nogil=True,
+    cache=False,
+)
 def remove_NaNs(x):  # noqa
     """Remove NaN values from series."""
     remove = np.zeros_like(x[0, :], dtype=boolean)
@@ -141,7 +284,15 @@ def remove_NaNs(x):  # noqa
     return x[:, ~remove]
 
 
-@njit(fastmath=True)
+@njit(
+    [
+        float32(float32[:, :], float32[:, :]),
+        float64(float64[:, :], float64[:, :]),
+    ],
+    fastmath=True,
+    nogil=True,
+    cache=False,
+)
 def _correlation(X, Y):
     """Compute a correlation as the mean of pairwise distances between points in X and Y.
 
@@ -158,7 +309,15 @@ def _correlation(X, Y):
     return d / (X.shape[1] * Y.shape[1])
 
 
-@njit(fastmath=True)
+@njit(
+    [
+        float32(float32[:, :]),
+        float64(float64[:, :]),
+    ],
+    fastmath=True,
+    nogil=True,
+    cache=False,
+)
 def _autocorrelation(X):
     """Mean of the NxN pairwise distances of points in X of shape KxN.
 
@@ -181,7 +340,7 @@ def _autocorrelation(X):
     ],
     "(k, n),(k, m)->()",
     nopython=True,
-    cache=True,
+    cache=False,
 )
 def _escore(tgt, sim, out):
     """E-score based on the Székely-Rizzo e-distances between clusters.
@@ -204,7 +363,11 @@ def _escore(tgt, sim, out):
     out[0] = w * (sXY + sXY - sXX - sYY) / 2
 
 
-@njit
+@njit(
+    fastmath=False,
+    nogil=True,
+    cache=False,
+)
 def _first_and_last_nonnull(arr):
     """For each row of arr, get the first and last non NaN elements."""
     out = np.empty((arr.shape[0], 2))
@@ -213,12 +376,18 @@ def _first_and_last_nonnull(arr):
         if idxs.size > 0:
             out[i] = arr[i][idxs[np.array([0, -1])]]
         else:
-            out[i] = np.array([np.NaN, np.NaN])
+            out[i] = np.array([np.nan, np.nan])
     return out
 
 
-@njit
-def _extrapolate_on_quantiles(interp, oldx, oldg, oldy, newx, newg, method="constant"):
+@njit(
+    fastmath=False,
+    nogil=True,
+    cache=False,
+)
+def _extrapolate_on_quantiles(
+    interp, oldx, oldg, oldy, newx, newg, method="constant"
+):  # noqa
     """Apply extrapolation to the output of interpolation on quantiles with a given grouping.
 
     Arguments are the same as _interp_on_quantiles_2D.
@@ -234,12 +403,16 @@ def _extrapolate_on_quantiles(interp, oldx, oldg, oldy, newx, newg, method="cons
         interp[toolow] = cnstlow[toolow]
         interp[toohigh] = cnsthigh[toohigh]
     else:  # 'nan'
-        interp[toolow] = np.NaN
-        interp[toohigh] = np.NaN
+        interp[toolow] = np.nan
+        interp[toohigh] = np.nan
     return interp
 
 
-@njit
+@njit(
+    fastmath=False,
+    nogil=True,
+    cache=False,
+)
 def _pairwise_haversine_and_bins(lond, latd, transpose=False):
     """Inter-site distances with the haversine approximation."""
     N = lond.shape[0]
