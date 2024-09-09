@@ -272,6 +272,7 @@ markers = [
   "requires_docs: mark tests that can only be run with documentation present (deselect with '-m \"not requires_docs\"')",
   "requires_internet: mark tests that require internet access (deselect with '-m \"not requires_internet\"')"
 ]
+xfail_strict = true
 
 [tool.ruff]
 src = ["xclim"]
