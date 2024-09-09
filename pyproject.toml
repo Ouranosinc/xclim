@@ -223,12 +223,6 @@ exclude = [
   "pylintrc"
 ]
 
-[tool.isort]
-profile = "black"
-py_version = 39
-append_only = true
-add_imports = "from __future__ import annotations"
-
 [tool.mypy]
 python_version = 3.9
 show_error_codes = true
@@ -275,7 +269,6 @@ markers = [
 [tool.ruff]
 src = ["xclim"]
 line-length = 150
-target-version = "py39"
 exclude = [
   ".git",
   "build",
@@ -296,18 +289,22 @@ extend-select = [
   "RUF022" # unsorted-dunder-all
 ]
 ignore = [
+  "B028", # no-explicit-stacklevel
   "D205", # blank-line-after-summary
   "D400", # ends-in-period
   "D401" # non-imperative-mood
 ]
 preview = true
 select = [
+  "B", # bugbear
   "C90", # mccabe-complexity
   "D", # docstrings
   "E", # pycodestyle errors
   "F", # pyflakes
+  "I", # imports
   "N802", # invalid-function-name
   "S", # bandit
+  "UP", # pyupgrade
   "W" # pycodestyle warnings
 ]
 
