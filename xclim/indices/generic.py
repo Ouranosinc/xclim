@@ -32,6 +32,7 @@ from xclim.indices import run_length as rl
 __all__ = [
     "aggregate_between_dates",
     "binary_ops",
+    "bivariate_spell_length_statistics",
     "compare",
     "count_level_crossings",
     "count_occurrences",
@@ -54,6 +55,7 @@ __all__ = [
     "select_resample_op",
     "spell_length",
     "spell_length_statistics",
+    "spell_mask",
     "statistics",
     "temperature_sum",
     "threshold_count",
@@ -353,6 +355,153 @@ def get_daily_events(
     return events
 
 
+def spell_mask(
+    data: xr.DataArray | Sequence[xr.DataArray],
+    window: int,
+    win_reducer: str,
+    op: str,
+    thresh: float | Sequence[float],
+    weights: Sequence[float] = None,
+    var_reducer: str = "all",
+) -> xr.DataArray:
+    """Compute the boolean mask of data points that are part of a spell as defined by a rolling statistic.
+
+    A day is part of a spell (True in the mask) if it is contained in any period that fulfills the condition.
+
+    Parameters
+    ----------
+    data: DataArray or sequence of DataArray
+        The input data. Can be a list, in which case the condition is checked on all variables.
+        See var_reducer for the latter case.
+    window: int
+        The length of the rolling window in which to compute statistics.
+    win_reducer: {'min', 'max', 'sum', 'mean'}
+        The statistics to compute on the rolling window.
+    op: {">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"}
+        The comparison operator to use when finding spells.
+    thresh: float or sequence of floats
+        The threshold to compare the rolling statistics against, as ``window_stats op threshold``.
+        If data is a list, this must be a list of the same length with a threshold for each variable.
+        This function does not handle units and can't accept Quantified objects.
+    weights: sequence of floats
+        A list of weights of the same length as the window.
+        Only supported if `win_reducer` is "mean".
+    var_reducer: {'all', 'any'}
+        If the data is a list, the condition must either be fulfilled on *all*
+        or *any* variables for the period to be considered a spell.
+
+    Returns
+    -------
+    xr.DataArray
+        Same shape as ``data``, but boolean.
+        If ``data`` was a list, this is a DataArray of the same shape as the alignment of all variables.
+    """
+    # Checks
+    if not isinstance(data, xr.DataArray):
+        # thus a sequence
+        if np.isscalar(thresh) or len(data) != len(thresh):
+            raise ValueError(
+                "When ``data`` is given as a list, ``threshold`` must be a sequence of the same length."
+            )
+        data = xr.concat(data, "variable")
+        if isinstance(thresh[0], xr.DataArray):
+            thresh = xr.concat(thresh, "variable")
+        else:
+            thresh = xr.DataArray(thresh, dims=("variable",))
+    if weights is not None:
+        if win_reducer != "mean":
+            raise ValueError(
+                f"Argument 'weights' is only supported if 'win_reducer' is 'mean'. Got :  {win_reducer}"
+            )
+        elif len(weights) != window:
+            raise ValueError(
+                f"Weights have a different length ({len(weights)}) than the window ({window})."
+            )
+        weights = xr.DataArray(weights, dims=("window",))
+
+    if window == 1:  # Fast path
+        is_in_spell = compare(data, op, thresh)
+        if not np.isscalar(thresh):
+            is_in_spell = getattr(is_in_spell, var_reducer)("variable")
+    elif (win_reducer == "min" and op in [">", ">=", "ge", "gt"]) or (
+        win_reducer == "max" and op in ["`<", "<=", "le", "lt"]
+    ):
+        # Fast path for specific cases, this yields a smaller dask graph (rolling twice is expensive!)
+        # For these two cases, a day can't be part of a spell if it doesn't respect the condition itself
+        mask = compare(data, op, thresh)
+        if not np.isscalar(thresh):
+            mask = getattr(mask, var_reducer)("variable")
+        # We need to filter out the spells shorter than "window"
+        # find sequences of consecutive respected constraints
+        cs_s = rl._cumsum_reset_on_zero(mask)
+        # end of these sequences
+        cs_s = cs_s.where(mask.shift({"time": -1}, fill_value=0) == 0)
+        # propagate these end of sequences
+        # the `.where(mask>0, 0)` acts a stopper
+        is_in_spell = cs_s.where(cs_s >= window).where(mask > 0, 0).bfill("time") > 0
+    else:
+        data_pad = data.pad(time=(0, window))
+        # The spell-wise value to test
+        # For example "window_reducer='sum'", we want the sum over the minimum spell length (window) to be above the thresh
+        if weights is not None:
+            spell_value = data_pad.rolling(time=window).construct("window").dot(weights)
+        else:
+            spell_value = getattr(data_pad.rolling(time=window), win_reducer)()
+        # True at the end of a spell respecting the condition
+        mask = compare(spell_value, op, thresh)
+        if not np.isscalar(thresh):
+            mask = getattr(mask, var_reducer)("variable")
+        # True for all days part of a spell that respected the condition (shift because of the two rollings)
+        is_in_spell = (mask.rolling(time=window).sum() >= 1).shift(time=-(window - 1))
+        # Cut back to the original size
+        is_in_spell = is_in_spell.isel(time=slice(0, data.time.size))
+    return is_in_spell
+
+
+def _spell_length_statistics(
+    data: xr.DataArray | Sequence[xr.DataArray],
+    thresh: float | xr.DataArray | Sequence[xr.DataArray] | Sequence[float],
+    window: int,
+    win_reducer: str,
+    op: str,
+    spell_reducer: str | Sequence[str],
+    freq: str,
+    resample_before_rl: bool = True,
+    **indexer,
+) -> xr.DataArray | Sequence[xr.DataArray]:
+    if isinstance(spell_reducer, str):
+        spell_reducer = [spell_reducer]
+    is_in_spell = spell_mask(data, window, win_reducer, op, thresh).astype(np.float32)
+    is_in_spell = select_time(is_in_spell, **indexer)
+
+    outs = []
+    for sr in spell_reducer:
+        out = rl.resample_and_rl(
+            is_in_spell,
+            resample_before_rl,
+            rl.rle_statistics,
+            reducer=sr,
+            # The code above already ensured only spell of the minimum length are selected
+            window=1,
+            freq=freq,
+        )
+
+        if sr == "count":
+            outs.append(out.assign_attrs(units=""))
+        else:
+            # All other cases are statistics of the number of timesteps
+            outs.append(
+                to_agg_units(
+                    out,
+                    data if isinstance(data, xr.DataArray) else data[0],
+                    "count",
+                )
+            )
+    if len(outs) == 1:
+        return outs[0]
+    return tuple(outs)
+
+
 @declare_relative_units(threshold="<data>")
 def spell_length_statistics(
     data: xr.DataArray,
@@ -368,7 +517,7 @@ def spell_length_statistics(
     r"""Statistics on spells lengths.
 
     A spell is when a statistic (`win_reducer`) over a minimum number (`window`) of consecutive timesteps respects a condition (`op` `thresh`).
-    This returns a statistic over the spell's count or length.
+    This returns a statistic over the spells count or lengths.
 
     Parameters
     ----------
@@ -383,8 +532,8 @@ def spell_length_statistics(
         Note that this does not matter when `window` is 1.
     op : {">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"}
         Logical operator. Ex: spell_value > thresh.
-    spell_reducer : {'max', 'sum', 'count'}
-        Statistic on the spell lengths.
+    spell_reducer : {'max', 'sum', 'count'} or sequence thereof
+        Statistic on the spell lengths. If a list, multiple statistics are computed.
     freq : str
         Resampling frequency.
     resample_before_rl : bool
@@ -423,57 +572,92 @@ def spell_length_statistics(
 
     Here, a day is part of a spell if it is in any five (5) day period where the total accumulated precipitation reaches
     or exceeds 20 mm. We then return the length of the longest of such spells.
+
+    See Also
+    --------
+    spell_mask : The lower level functions that finds spells.
+    bivariate_spell_length_statistics : The bivariate version of this function.
     """
-    thresh = convert_units_to(
-        threshold,
+    thresh = convert_units_to(threshold, data, context="infer")
+    return _spell_length_statistics(
         data,
-        context=infer_context(standard_name=data.attrs.get("standard_name")),
-    )
-
-    if window == 1:  # Fast path
-        is_in_spell = compare(data, op, thresh)
-    elif (win_reducer == "min" and op in [">", ">=", "ge", "gt"]) or (
-        win_reducer == "max" and op in ["`<", "<=", "le", "lt"]
-    ):
-        # Fast path for specific cases, this yields a smaller dask graph (rolling twice is expensive!)
-        # For these two cases, a day can't be part of a spell if it doesn't respect the condition itself
-        mask = compare(data, op, thresh)
-        # We need to filter out the spells shorter than "window"
-        # find sequences of consecutive respected constraints
-        cs_s = rl._cumsum_reset_on_zero(mask)
-        # end of these sequences
-        cs_s = cs_s.where(mask.shift({"time": -1}, fill_value=0) == 0)
-        # propagate these end of sequences
-        # the `.where(mask>0, 0)` acts a stopper
-        is_in_spell = cs_s.where(cs_s >= window).where(mask > 0, 0).bfill("time") > 0
-    else:
-        data_pad = data.pad(time=(0, window))
-        # The spell-wise value to test
-        # For example "win_reducer='sum'", we want the sum over the minimum spell length (window) to be above the thresh
-        spell_value = getattr(data_pad.rolling(time=window), win_reducer)()
-        # True at the end of a spell respecting the condition
-        mask = compare(spell_value, op, thresh)
-        # True for all days part of a spell that respected the condition (shift because of the two rollings)
-        is_in_spell = (mask.rolling(time=window).sum() >= 1).shift(time=-(window - 1))
-        # Cut back to the original size
-        is_in_spell = is_in_spell.isel(time=slice(0, data.time.size)).astype(float)
-
-    is_in_spell = select_time(is_in_spell, **indexer)
-
-    out = rl.resample_and_rl(
-        is_in_spell,
+        thresh,
+        window,
+        win_reducer,
+        op,
+        spell_reducer,
+        freq,
         resample_before_rl,
-        rl.rle_statistics,
-        reducer=spell_reducer,
-        # The code above already ensured only spell of the minimum length are selected
-        window=1,
-        freq=freq,
+        **indexer,
     )
 
-    if spell_reducer == "count":
-        return out.assign_attrs(units="")
-    # All other cases are statistics of the number of timesteps
-    return to_agg_units(out, data, "count")
+
+@declare_relative_units(threshold1="<data1>", threshold2="<data2>")
+def bivariate_spell_length_statistics(
+    data1: xr.DataArray,
+    threshold1: Quantified,
+    data2: xr.DataArray,
+    threshold2: Quantified,
+    window: int,
+    win_reducer: str,
+    op: str,
+    spell_reducer: str,
+    freq: str,
+    resample_before_rl: bool = True,
+    **indexer,
+):
+    r"""Statistics on spells lengths based on two variables.
+
+    A spell is when a statistic (`win_reducer`) over a minimum number (`window`) of consecutive timesteps respects a condition (`op` `thresh`).
+    This returns a statistic over the spells count or lengths. In this bivariate version, conditions on both variables must be fulfilled.
+
+    Parameters
+    ----------
+    data1 : xr.DataArray
+        First input data.
+    threshold1 : Quantified
+        Threshold to test against data1.
+    data2 : xr.DataArray
+        Second input data.
+    threshold2 : Quantified
+        Threshold to test against data2.
+    window : int
+        Minimum length of a spell.
+    win_reducer : {'min', 'max', 'sum', 'mean'}
+        Reduction along the spell length to compute the spell value.
+        Note that this does not matter when `window` is 1.
+    op : {">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"}
+        Logical operator. Ex: spell_value > thresh.
+    spell_reducer : {'max', 'sum', 'count'} or sequence thereof
+        Statistic on the spell lengths. If a list, multiple statistics are computed.
+    freq : str
+        Resampling frequency.
+    resample_before_rl : bool
+        Determines if the resampling should take place before or after the run
+        length encoding (or a similar algorithm) is applied to runs.
+    \*\*indexer
+        Indexing parameters to compute the indicator on a temporal subset of the data.
+        It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
+        Indexing is done after finding the days part of a spell, but before taking the spell statistics.
+
+    See Also
+    --------
+    spell_length_statistics: The univariate version.
+    spell_mask : The lower level functions that finds spells.
+    """
+    thresh1 = convert_units_to(threshold1, data1, context="infer")
+    thresh2 = convert_units_to(threshold2, data2, context="infer")
+    return _spell_length_statistics(
+        [data1, data2],
+        [thresh1, thresh2],
+        window,
+        win_reducer,
+        op,
+        spell_reducer,
+        freq,
+        resample_before_rl,
+        **indexer,
+    )
 
 
 @declare_relative_units(thresh="<data>")

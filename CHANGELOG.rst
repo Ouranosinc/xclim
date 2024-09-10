@@ -4,7 +4,16 @@ Changelog
 
 v0.53.0 (unreleased)
 --------------------
-Contributors to this version: Adrien Lamarche (:user:`LamAdr`), Trevor James Smith (:user:`Zeitsperre`), Éric Dupuis (:user:`coxipi`).
+Contributors to this version: Adrien Lamarche (:user:`LamAdr`), Trevor James Smith (:user:`Zeitsperre`),  Éric Dupuis (:user:`coxipi`), Pascal Bourgault (:user:`aulemahal`).
+
+New indicators
+^^^^^^^^^^^^^^
+* New ``heat_spell_frequency``, ``heat_spell_max_length`` and ``heat_spell_total_length`` : spell length statistics on a bivariate condition that uses the average over a window by default. (:pull:`1885`).
+
+New features and enhancements
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+* New generic ``xclim.indices.generic.spell_mask``  that returns a mask of which days are part of a spell. Supports multivariate conditions and weights. Used in new generic index ``xclim.indices.generic.bivariate_spell_length_statistics`` that extends ``spell_length_statistics`` to two variables.  (:pull:`1885`).
+* Indicator parameters can now be assigned a new name, different from the argument name in the compute function. (:pull:`1885`).
 
 Bug fixes
 ^^^^^^^^^
@@ -33,6 +42,7 @@ Internal changes
 * Many ``DeprecationWarning`` and ``FutureWarning`` messages emitted from `xarray` and `pint` have been addressed. (:issue:`1719`, :pull:`1881`).
 * The codebase has been adjusted to address many `pylint`-related warnings and errors. In some cases, `casting` was used to redefine some `numpy` and `xarray` objects. (:issue:`1719`, :pull:`1881`).
 * ``xclim.core`` now uses absolute imports for clarity and some objects commonly used in the module have been moved to hidden submodules. (:issue:`1719`, :pull:`1881`).
+* ``xclim.core.indicator.Parameter`` has a new attribute ``compute_name`` while ``xclim.core.indicator.Indicator`` lost its ``_variable_mapping``. The translation from parameter (and variable) names in the indicator to the names on the compute function is handled by ``Indicator._get_compute_args``. (:pull:`1885`).
 
 v0.52.0 (2024-08-08)
 --------------------
