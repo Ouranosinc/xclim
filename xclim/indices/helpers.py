@@ -6,6 +6,7 @@ Functions that encapsulate some geophysical logic but could be shared by many in
 """
 
 from __future__ import annotations
+
 from collections.abc import Mapping
 from datetime import timedelta
 from inspect import stack
