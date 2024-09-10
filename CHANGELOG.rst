@@ -6,6 +6,11 @@ v0.53.0 (unreleased)
 --------------------
 Contributors to this version: Adrien Lamarche (:user:`LamAdr`), Trevor James Smith (:user:`Zeitsperre`),  Éric Dupuis (:user:`coxipi`), Pascal Bourgault (:user:`aulemahal`).
 
+Announcements
+^^^^^^^^^^^^^
+* `xclim` has now adopted the `Scientific Python SPEC 0 <https://scientific-python.org/specs/spec-0000/>`_ conventions for its suggested dependency support schedule. (:issue:`1914`, :pull:`1915`).
+* `xclim` now supports the latest Python 3.13 release candidate and has dropped support for Python 3.9. (:issue:`1914`, :pull:`1915`).
+
 New indicators
 ^^^^^^^^^^^^^^
 * New ``heat_spell_frequency``, ``heat_spell_max_length`` and ``heat_spell_total_length`` : spell length statistics on a bivariate condition that uses the average over a window by default. (:pull:`1885`).
@@ -22,6 +27,7 @@ Bug fixes
 Breaking changes
 ^^^^^^^^^^^^^^^^
 * `transform` argument of `OTC/dOTC` classes (and child functions) is changed to `normalization`, and `numIterMax` is changed to `num_iter_max` in `utils.optimal_transport` (:pull:`1896`).
+* `xclim` now requires `numpy >=1.23.0` and `scikit-learn >=1.1.0`, as well as (optionally) `ipython >=8.5.0` and `matplotlib >=3.6.0` . (:issue:`1914`, :pull:`1915`).
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
