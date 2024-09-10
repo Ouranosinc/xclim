@@ -6,7 +6,6 @@ Functions that encapsulate some geophysical logic but could be shared by many in
 """
 
 from __future__ import annotations
-
 from collections.abc import Mapping
 from datetime import timedelta
 from inspect import stack
@@ -616,6 +615,27 @@ def _compute_nighttime_temperature(
     )
 
 
+def _add_one_day(time: xr.DataArray) -> xr.DataArray:
+    """Add one day to a time coordinate.
+
+    Depending on the calendar/dtype of the time array we need can use numpy's or
+    datetime's (for cftimes) timedelta.
+
+    Parameters
+    ----------
+    time : xr.DataArray
+        Time coordinate.
+
+    Returns
+    -------
+    xr.DataArray
+        Next day.
+    """
+    if time.dtype == "O":
+        return time + timedelta(days=1)
+    return time + np.timedelta64(1, "D")
+
+
 def make_hourly_temperature(tasmin: xr.DataArray, tasmax: xr.DataArray) -> xr.DataArray:
     """Compute hourly temperatures from tasmin and tasmax.
 
@@ -624,7 +644,7 @@ def make_hourly_temperature(tasmin: xr.DataArray, tasmax: xr.DataArray) -> xr.Da
     we assume a sinusoidal temperature profile during daylight and a logarithmic decrease after sunset
     with tasmin reached at sunsrise and tasmax reached 2h before sunset.
 
-    For simplicity and because we do daily aggregation, we assume that sunrise globally happens at midnight
+    For simplicity and because it's used for daily aggregation, we assume that sunrise globally happens at midnight
     and the sunsets after `daylength` hours computed via the day_lengths function.
 
     Parameters
@@ -645,7 +665,7 @@ def make_hourly_temperature(tasmin: xr.DataArray, tasmax: xr.DataArray) -> xr.Da
         [
             data,
             data.isel(time=-1).assign_coords(
-                time=data.isel(time=-1).time + timedelta(days=1)
+                time=_add_one_day(data.isel(time=-1).time)
             ),
         ],
         dim="time",
@@ -679,4 +699,4 @@ def make_hourly_temperature(tasmin: xr.DataArray, tasmax: xr.DataArray) -> xr.Da
             hourly.sunset_temp,
             hourly.daylength - 1,
         ),
-    )
+    ).assign_attrs(units=tasmin.units)
