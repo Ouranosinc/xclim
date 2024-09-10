@@ -1,7 +1,6 @@
 """Module for loading testing data."""
 
 from __future__ import annotations
-
 import logging
 import os
 import warnings
@@ -21,6 +20,7 @@ from xclim.indices import (
     longwave_upwelling_radiation_from_net_downwelling,
     shortwave_upwelling_radiation_from_net_downwelling,
 )
+
 
 logger = logging.getLogger("xclim")
 

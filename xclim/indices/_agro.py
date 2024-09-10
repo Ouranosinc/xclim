@@ -1,6 +1,5 @@
 # noqa: D100
 from __future__ import annotations
-
 from typing import cast
 
 import numpy as np
@@ -25,6 +24,7 @@ from xclim.indices._threshold import (
 from xclim.indices.generic import aggregate_between_dates, get_zones
 from xclim.indices.helpers import _gather_lat, day_lengths
 from xclim.indices.stats import standardized_index
+
 
 # Frequencies : YS: year start, QS-DEC: seasons starting in december, MS: month start
 # See https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html
@@ -1603,7 +1603,7 @@ def chill_portions(tas: xarray.DataArray, time_dim: str = "time") -> xarray.Data
 
 
 @declare_units(tas="[temperature]")
-def chill_units(tas):
+def chill_units(tas: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
     """Chill units using the Utah model
 
     Chill units are a measure to estimate the bud breaking potential of different crop based on Richardson et al. (1974).
@@ -1619,16 +1619,22 @@ def chill_units(tas):
     -------
     xr.DataArray
     """
-    return xarray.where(
-        (tas <= 1.4) | ((tas > 12.4) & (tas <= 15.9)),
-        0,
+    tas = convert_units_to(tas, "degC")
+    cu = (
         xarray.where(
-            ((tas > 1.4) & (tas <= 2.4)) | ((tas > 9.1) & (tas <= 12.4)),
-            0.5,
+            (tas <= 1.4) | ((tas > 12.4) & (tas <= 15.9)),
+            0,
             xarray.where(
-                (tas > 2.4) & (tas <= 9.1),
-                1,
-                xarray.where((tas > 15.9) & (tas <= 17.9), -0.5, -1),
+                ((tas > 1.4) & (tas <= 2.4)) | ((tas > 9.1) & (tas <= 12.4)),
+                0.5,
+                xarray.where(
+                    (tas > 2.4) & (tas <= 9.1),
+                    1,
+                    xarray.where((tas > 15.9) & (tas <= 17.9), -0.5, -1),
+                ),
             ),
-        ),
+        )
+        .assign_attrs(units="")
+        .rename("cu")
     )
+    return cu.resample(time=freq).sum()

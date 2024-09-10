@@ -4,8 +4,13 @@ from __future__ import annotations
 
 from xclim import indices
 from xclim.core import cfchecks
-from xclim.core.indicator import Daily, Indicator, ResamplingIndicatorWithIndexing
+from xclim.core.indicator import (
+    Daily,
+    Indicator,
+    ResamplingIndicatorWithIndexing,
+)
 from xclim.core.utils import InputKind
+
 
 __all__ = [
     "australian_hardiness_zones",
@@ -97,6 +102,13 @@ __all__ = [
 class Temp(Daily):
     """Indicators involving daily temperature."""
 
+    keywords = "temperature"
+
+
+class TempHourly(Indicator):
+    """Temperature indicators involving hourly temperature."""
+
+    src_freq = "H"
     keywords = "temperature"
 
 
@@ -1444,4 +1456,24 @@ usda_hardiness_zones = Temp(
     var_name="hz",
     compute=indices.hardiness_zones,
     parameters={"method": "usda"},
+)
+
+chill_portions = TempHourly(
+    title="Chill portions",
+    identifier="cp",
+    units="",
+    long_name="Chill portions after the Dynamic Model",
+    allowed_periods=["A"],
+    varname="cp",
+    compute=indices.chill_portions,
+)
+
+chill_units = TempHourly(
+    title="Chill units",
+    identifier="cu",
+    units="",
+    long_name="Chill units after the Utah Model",
+    allowed_periods=["A"],
+    varname="cu",
+    compute=indices.chill_units,
 )
