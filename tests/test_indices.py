@@ -12,6 +12,7 @@
 # saving the results in a reference netcdf dataset. We could then compare the hailstorm output to this reference as
 # a first line of defense.
 from __future__ import annotations
+
 import calendar
 
 import numpy as np
@@ -27,7 +28,6 @@ from xclim.core import ValidationError
 from xclim.core.calendar import percentile_doy
 from xclim.core.options import set_options
 from xclim.core.units import convert_units_to, units
-
 
 K2C = 273.15
 

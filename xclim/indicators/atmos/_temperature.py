@@ -4,13 +4,8 @@ from __future__ import annotations
 
 from xclim import indices
 from xclim.core import cfchecks
-from xclim.core.indicator import (
-    Daily,
-    Indicator,
-    ResamplingIndicatorWithIndexing,
-)
+from xclim.core.indicator import Daily, Indicator, ResamplingIndicatorWithIndexing
 from xclim.core.utils import InputKind
-
 
 __all__ = [
     "australian_hardiness_zones",
