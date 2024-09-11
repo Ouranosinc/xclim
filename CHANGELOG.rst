@@ -2,6 +2,14 @@
 Changelog
 =========
 
+v0.52.1 (2024-09-11)
+--------------------
+Contributors to this version: Trevor James Smith (:user:`Zeitsperre`).
+
+Bug fixes
+^^^^^^^^^
+* Adjusted the required base version of `pyarrow` to be `v10.0.1` to address an environment resolution error on conda-forge.
+
 v0.52.0 (2024-08-08)
 --------------------
 Contributors to this version: David Huard (:user:`huard`), Trevor James Smith (:user:`Zeitsperre`), Hui-Min Wang (:user:`Hem-W`), Éric Dupuis (:user:`coxipi`), Sarah Gammon (:user:`SarahG-579462`), Pascal Bourgault (:user:`aulemahal`), Juliette Lavoie (:user:`juliettelavoie`), Adrien Lamarche (:user:`LamAdr`).
