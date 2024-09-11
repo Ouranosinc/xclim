@@ -8,7 +8,7 @@ Contributors to this version: Trevor James Smith (:user:`Zeitsperre`).
 
 Bug fixes
 ^^^^^^^^^
-* Adjusted the required base version of `pyarrow` to be `v10.0.1` to address an environment resolution error on conda-forge.
+* Adjusted the required base version of `pyarrow` to be `v10.0.1` to address an environment resolution error on conda-forge. (:pull:`1918`).
 
 v0.52.0 (2024-08-08)
 --------------------
