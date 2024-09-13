@@ -79,7 +79,7 @@ class TestFileRequests:
         )
 
     @pytest.mark.xfail(
-        "The underlying engine here has been significantly modified. "
+        reason="The underlying engine here has been significantly modified. "
         "This test needs to be fully rewritten in xclim v0.53.0+."
     )
     @pytest.mark.requires_internet
