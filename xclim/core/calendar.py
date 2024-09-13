@@ -37,7 +37,6 @@ __all__ = [
     "convert_doy",
     "date_range",
     "date_range_like",
-    "datetime_to_decimal_year",
     "days_in_year",
     "days_since_to_doy",
     "doy_from_string",
@@ -401,21 +400,6 @@ def ensure_cftime_array(time: Sequence) -> np.ndarray | Sequence[cftime.datetime
             [cftime.DatetimeGregorian(*ele.timetuple()[:6]) for ele in time]
         )
     raise ValueError("Unable to cast array to cftime dtype")
-
-
-def datetime_to_decimal_year(times: xr.DataArray, calendar: str = "") -> xr.DataArray:
-    """Deprecated : use :py:func:`xarray.coding.calendar_ops_datetime_to_decimal_year` instead.
-
-    Convert a datetime xr.DataArray to decimal years according to its calendar or the given one.
-    """
-    _, _ = _get_usecf_and_warn(
-        "standard",
-        "datetime_to_decimal_year",
-        "xarray.coding.calendar_ops._datetime_to_decimal_year",
-    )
-    return xr.coding.calendar_ops._datetime_to_decimal_year(
-        times, dim="time", calendar=calendar
-    )
 
 
 @update_xclim_history

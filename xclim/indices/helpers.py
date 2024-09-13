@@ -16,9 +16,15 @@ import cftime
 import numba as nb
 import numpy as np
 import xarray as xr
-from xarray.coding.calendar_ops import (
-    _datetime_to_decimal_year as datetime_to_decimal_year,
-)
+
+try:
+    from xarray.coding.calendar_ops import (
+        _datetime_to_decimal_year as datetime_to_decimal_year,
+    )
+except ImportError:
+    XR2409 = True
+else:
+    XR2409 = False
 
 from xclim.core.calendar import ensure_cftime_array, get_calendar
 from xclim.core.units import convert_units_to
@@ -69,7 +75,10 @@ def day_angle(time: xr.DataArray):
     the beginning of the year up to that timestep. Also called the "julian day fraction".
     See :py:func:`~xclim.core.calendar.datetime_to_decimal_year`.
     """
-    decimal_year = datetime_to_decimal_year(times=time, calendar=time.dt.calendar)
+    if XR2409:
+        decimal_year = time.dt.decimal_year
+    else:
+        decimal_year = datetime_to_decimal_year(times=time, calendar=time.dt.calendar)
     return ((decimal_year % 1) * 2 * np.pi).assign_attrs(units="rad")
 
 
