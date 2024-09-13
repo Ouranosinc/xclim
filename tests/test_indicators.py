@@ -709,8 +709,7 @@ def test_indicator_from_dict():
     assert ind.parameters["threshold"].description == "A threshold temp"
     # Injection of parameters
     assert ind.injected_parameters["op"] == "<"
-    # Default value for input variable injected and meta injected
-    assert ind._variable_mapping["data"] == "tas"
+    assert ind.parameters["tas"].compute_name == "data"
     assert signature(ind).parameters["tas"].default == "tas"
     assert ind.parameters["tas"].units == "[temperature]"
 
