@@ -41,6 +41,9 @@ class TestFileRequests:
                 tmp_path,
             )
 
+    @pytest.mark.xfail(
+        reason="This test can no longer pass due to upstream changes and has been removed on main."
+    )
     @pytest.mark.requires_internet
     def test_open_dataset_with_bad_file(self, tmp_path):
         cmip3_folder = tmp_path.joinpath("main", "cmip3")
@@ -75,6 +78,10 @@ class TestFileRequests:
             == Path(cmip3_folder, cmip3_md5).read_text()
         )
 
+    @pytest.mark.xfail(
+        "The underlying engine here has been significantly modified. "
+        "This test needs to be fully rewritten in xclim v0.53.0+."
+    )
     @pytest.mark.requires_internet
     def test_open_testdata(self):
         ds = utilities.open_dataset(
