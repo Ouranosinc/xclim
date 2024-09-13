@@ -2,6 +2,14 @@
 Changelog
 =========
 
+v0.52.2 (2024-09-13)
+--------------------
+Contributors to this version: Pascal Bourgault (:user:`aulemahal`). (:pull:`1920`).
+
+Bug fixes
+^^^^^^^^^
+* Fixed ``decimal_year`` import for xarray 2024.09.0. Removed ``datetime_to_decimal_year`` as the mirrored xarray functions was replaced by ``ds.time.dt.decimal_year``.
+
 v0.52.1 (2024-09-11)
 --------------------
 Contributors to this version: Trevor James Smith (:user:`Zeitsperre`).
@@ -9,7 +17,6 @@ Contributors to this version: Trevor James Smith (:user:`Zeitsperre`).
 Bug fixes
 ^^^^^^^^^
 * Adjusted the required base version of `pyarrow` to be `v10.0.1` to address an environment resolution error on conda-forge. (:pull:`1918`).
-* Fixed ``decimal_year`` import for xarray 2024.09.0. Removed ``datetime_to_decimal_year`` as the mirrored xarray functions was replaced by ``ds.time.dt.decimal_year``.
 
 v0.52.0 (2024-08-08)
 --------------------
