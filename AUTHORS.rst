@@ -46,3 +46,4 @@ Contributors
 * Javier Diez-Sierra <javier.diez@unican.es> `@JavierDiezSierra <https://github.com/JavierDiezSierra>`_
 * Hui-Min Wang `@Hem-W <https://github.com/Hem-W>`_
 * Adrien Lamarche `@LamAdr <https://github.com/LamAdr>`_
+* Sebastian Lehner <sebastian.lehner@geosphere.at> `@seblehner <https://github.com/seblehner>`_
