@@ -64,6 +64,7 @@ __all__ = [
     "growing_season_length",
     "growing_season_start",
     "heat_wave_index",
+    "heat_wave_magnitude",
     "heating_degree_days",
     "hot_spell_frequency",
     "hot_spell_max_length",
