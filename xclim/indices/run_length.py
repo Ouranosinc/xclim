@@ -259,6 +259,50 @@ def rle_statistics(
     return rl_stat
 
 
+def rse(
+    da: xr.DataArray,
+    dim: str = "time",
+    index: str = "first",
+) -> xr.DataArray:
+    """Generate basic run summation function for positive values, containing accumulated values along runs.
+
+    Parameters
+    ----------
+    da : xr.DataArray
+        Input array.
+    dim : str
+        Dimension name.
+    index : {'first', 'last'}
+        If 'first' (default), the run length is indexed with the first element in the run.
+        If 'last', with the last element in the run.
+
+    Returns
+    -------
+    xr.DataArray
+        Values are 0 where da is False (out of runs).
+    """
+    da = da.astype(float)
+
+    # "first" case: Algorithm is applied on inverted array and output is inverted back
+    if index == "first":
+        da = da[{dim: slice(None, None, -1)}]
+
+    # Get cumulative sum for each series of 1, e.g. da == 100110111 -> cs_s == 100120123
+    cs_s = _cumsum_reset_on_zero(da, dim)
+
+    # Keep total length of each series (and also keep 0's), e.g. 100120123 -> 100N20NN3
+    # Keep numbers with a 0 to the right and also the last number
+    cs_s = cs_s.where(da.shift({dim: -1}, fill_value=0) == 0)
+    out = cs_s.where(da > 0, 0)  # Reinsert 0's at their original place
+
+    # Inverting back if needed e.g. 100N20NN3 -> 3NN02N001. This is the output of
+    # `rse` for 111011001 with index == "first"
+    if index == "first":
+        out = out[{dim: slice(None, None, -1)}]
+
+    return out
+
+
 def longest_run(
     da: xr.DataArray,
     dim: str = "time",
@@ -405,6 +449,61 @@ def windowed_run_count(
         if freq is not None:
             d = d.resample({dim: freq})
         out = d.sum(dim=dim)
+
+    return out
+
+
+def windowed_run_sum(
+    da: xr.DataArray,
+    window: int,
+    dim: str = "time",
+    freq: str | None = None,
+    ufunc_1dim: str | bool = "from_context",
+    index: str = "first",
+) -> xr.DataArray:
+    """Return the sum of consecutive float values for runs at least as long as the given window length.
+
+    Parameters
+    ----------
+    da : xr.DataArray
+        Input N-dimensional DataArray (boolean).
+    window : int
+        Minimum run length.
+        When equal to 1, an optimized version of the algorithm is used.
+    dim : str
+      Dimension along which to calculate consecutive run (default: 'time').
+    freq : str
+      Resampling frequency.
+    ufunc_1dim : Union[str, bool]
+        Use the 1d 'ufunc' version of this function : default (auto) will attempt to select optimal
+        usage based on number of data points. Using 1D_ufunc=True is typically more efficient
+        for DataArray with a small number of grid points.
+        Ignored when `window=1`. It can be modified globally through the "run_length_ufunc" global option.
+    index : {'first', 'last'}
+        If 'first', the run length is indexed with the first element in the run.
+        If 'last', with the last element in the run.
+
+    Returns
+    -------
+    xr.DataArray, [int]
+        Total number of `True` values part of a consecutive runs of at least `window` long.
+    """
+    # TODO: implement ufunc function
+    # ufunc_1dim = use_ufunc(ufunc_1dim, da, dim=dim, index=index, freq=freq)
+
+    # if ufunc_1dim:
+    #     out = windowed_run_sum_ufunc(da, window, dim)
+
+    if window == 1 and freq is None:
+        out = da.max(dim=dim)
+
+    else:
+        d_rse = rse(da, dim=dim, index=index)
+        d_rle = rle(xr.where(da > 0, 1, 0), dim=dim, index=index)
+        d = d_rse.where(d_rle >= window, 0)
+        if freq is not None:
+            d = d.resample({dim: freq})
+        out = d.max(dim=dim)
 
     return out
 
