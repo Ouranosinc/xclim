@@ -618,7 +618,7 @@ def _compute_nighttime_temperature(
 def _add_one_day(time: xr.DataArray) -> xr.DataArray:
     """Add one day to a time coordinate.
 
-    Depending on the calendar/dtype of the time array we need can use numpy's or
+    Depending on the calendar/dtype of the time array we need to use numpy's or
     datetime's (for cftimes) timedelta.
 
     Parameters

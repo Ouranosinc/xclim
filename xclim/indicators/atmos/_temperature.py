@@ -7,6 +7,7 @@ from xclim.core import cfchecks
 from xclim.core.indicator import Daily, Indicator, ResamplingIndicatorWithIndexing
 from xclim.core.utils import InputKind
 
+
 __all__ = [
     "australian_hardiness_zones",
     "biologically_effective_degree_days",
@@ -1457,6 +1458,15 @@ chill_portions = TempHourly(
     title="Chill portions",
     identifier="cp",
     units="",
+    description="Chill portions are a measure to estimate the bud breaking potential of different crops. "
+    "The constants and functions are taken from Luedeling et al. (2009) which formalises "
+    "the method described in Fishman et al. (1987). "
+    "The model computes the accumulation of cold temperatures in a two-step process. "
+    "First, cold temperatures contribute to an intermediate product that is transformed to a chill portion "
+    "once it exceeds a certain concentration. The intermediate product can be broken down at higher temperatures "
+    "but the final product is stable even at higher temperature. "
+    "Thus the dynamic model is more accurate than other chill models like the Chilling hours or Utah model, "
+    "especially in moderate climates like Israel, California or Spain.",
     long_name="Chill portions after the Dynamic Model",
     allowed_periods=["A"],
     varname="cp",
@@ -1467,6 +1477,9 @@ chill_units = TempHourly(
     title="Chill units",
     identifier="cu",
     units="",
+    description="Chill units are a measure to estimate the bud breaking potential of different crops based on the Utah model developed in "
+    "Richardson et al. (1974). The Utah model assigns a weight to each hour depending on the temperature recognising that high temperatures can "
+    "actually decrease the potential for bud breaking.",
     long_name="Chill units after the Utah Model",
     allowed_periods=["A"],
     varname="cu",
