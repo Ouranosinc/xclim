@@ -37,7 +37,6 @@ class TestFileRequests:
             hash_md5.update(f.read())
         return hash_md5.hexdigest()
 
-
     @pytest.mark.requires_internet
     def test_open_testdata(
         self,
