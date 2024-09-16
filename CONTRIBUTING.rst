@@ -269,9 +269,10 @@ Updating Testing Data
 
 If your code changes require changes to the testing data of `xclim` (i.e.: modifications to existing datasets or new datasets), these changes must be made via a Pull Request at the `xclim-testdata repository`_.
 
-`xclim` allows for developers to test specific branches/versions of `xclim-testdata` via the `XCLIM_TESTDATA_BRANCH` environment variable, either through export, e.g.::
+`xclim` allows for developers to test specific branches/versions or forks of the `xclim-testdata` repository via the `XCLIM_TESTDATA_BRANCH` and `XCLIM_TESTDATA_REPO` environment variables, respectively, either through export, e.g.::
 
     $ export XCLIM_TESTDATA_BRANCH="my_new_branch_of_testing_data"
+    $ export XCLIM_TESTDATA_REPO="https://github.com/my_username/xclim-testdata"
 
     $ pytest
     # or, alternatively:
@@ -279,11 +280,11 @@ If your code changes require changes to the testing data of `xclim` (i.e.: modif
 
 or by setting the variable at runtime::
 
-    $ env XCLIM_TESTDATA_BRANCH="my_new_branch_of_testing_data" pytest
+    $ env XCLIM_TESTDATA_BRANCH="my_new_branch_of_testing_data" XCLIM_TESTDATA_REPO="https://github.com/my_username/xclim-testdata" pytest
     # or, alternatively:
-    $ env XCLIM_TESTDATA_BRANCH="my_new_branch_of_testing_data" tox
+    $ env XCLIM_TESTDATA_BRANCH="my_new_branch_of_testing_data" XCLIM_TESTDATA_REPO="https://github.com/my_username/xclim-testdata" tox
 
-This will ensure that tests load the testing data from this branch before running.
+This will ensure that tests load the appropriate testing data from this branch or repository before running.
 
 If you anticipate not having internet access, we suggest prefetching the testing data from `xclim-testdata repository`_ and storing it in your local cache. This can be done by running the following console command::
 
@@ -296,7 +297,7 @@ If your development branch relies on a specific branch of `Ouranosinc/xclim-test
 
 or, alternatively, with the `--branch` option::
 
-    $ xclim prefetch_testing_data --branch my_new_branch_of_testing_data
+    $ xclim prefetch_testing_data --branch my_new_branch_of_testing_data --repo "https://github.com/my_username/xclim-testdata"
 
 If you wish to test a specific branch using GitHub CI, this can be set in `.github/workflows/main.yml`:
 
@@ -306,7 +307,7 @@ If you wish to test a specific branch using GitHub CI, this can be set in `.gith
       XCLIM_TESTDATA_BRANCH: my_new_branch_of_testing_data
 
 .. warning::
-    In order for a Pull Request to be allowed to merge to main development branch, this variable must match the latest tagged commit name on `xclim-testdata repository`_.
+    In order for a Pull Request to be allowed to merge to the `main` development branch, this variable must match the latest tagged commit name on `xclim-testdata repository`_.
     We suggest merging changed testing data first, tagging a new version of `xclim-testdata`, then re-running tests on your Pull Request at `Ouranosinc/xclim` with the newest tag.
 
 Running Tests in Offline Mode
@@ -323,8 +324,8 @@ or, alternatively, using `tox` ::
 
     $ tox -e offline
 
-These options will disable all network calls and skip tests marked with the `requires_internet` marker.
-The `--allow-unix-socket` option is required to allow the `pytest-xdist`_ plugin to function properly.
+These options will disable all network calls and skip tests marked with the ``requires_internet`` marker.
+The ``--allow-unix-socket`` option is required to allow the `pytest-xdist`_ plugin to function properly.
 
 Tips
 ----

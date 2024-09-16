@@ -12,7 +12,7 @@ import logging
 import warnings
 from copy import deepcopy
 from importlib.resources import files
-from inspect import _empty, signature  # noqa
+from inspect import signature
 from typing import Any, Callable, Literal, cast
 
 import cf_xarray.units
@@ -21,11 +21,14 @@ import pandas as pd
 import pint
 import xarray as xr
 from boltons.funcutils import wraps
+from pint import UndefinedUnitError
 from yaml import safe_load
 
-from .calendar import get_calendar, parse_offset
-from .options import datacheck
-from .utils import InputKind, Quantified, ValidationError, infer_kind_from_parameter
+from xclim.core._exceptions import ValidationError
+from xclim.core._types import Quantified
+from xclim.core.calendar import get_calendar, parse_offset
+from xclim.core.options import datacheck
+from xclim.core.utils import InputKind, infer_kind_from_parameter
 
 logging.getLogger("pint").setLevel(logging.ERROR)
 
@@ -56,9 +59,13 @@ __all__ = [
 
 # shamelessly adapted from `cf-xarray` (which adopted it from MetPy and xclim itself)
 units = deepcopy(cf_xarray.units.units)
-# Changing the default string format for units/quantities. cf is implemented by cf-xarray
-# g is the most versatile float format.
-units.default_format = "gcf"
+# Changing the default string format for units/quantities.
+# CF is implemented by cf-xarray, g is the most versatile float format.
+# The following try/except logic can be removed when xclim drops support numpy <2.0.
+try:
+    units.formatter.default_format = "gcf"
+except UndefinedUnitError:
+    units.default_format = "gcf"
 # Switch this flag back to False. Not sure what that implies, but it breaks some tests.
 units.force_ndarray_like = False  # noqa: F841
 # Another alias not included by cf_xarray
@@ -337,10 +344,8 @@ def convert_units_to(  # noqa: C901
                 for direction, sign in [("to", 1), ("from", -1)]:
                     # If the dimensionality diff is compatible with this conversion
                     compatible = all(
-                        [
-                            dimdiff == (sign * dim_order_diff.get(f"[{dim}]"))
-                            for dim, dimdiff in convconf["dimensionality"].items()
-                        ]
+                        dimdiff == sign * dim_order_diff.get(f"[{dim}]")
+                        for dim, dimdiff in convconf["dimensionality"].items()
                     )
                     # Does the input cf standard name have an equivalent after conversion
                     valid = cf_conversion(standard_name, convname, direction)
@@ -353,8 +358,7 @@ def convert_units_to(  # noqa: C901
                                 f"There is a dimensionality incompatibility between the source and the target "
                                 f"and no CF-based conversions have been found for this standard name: {standard_name}"
                             ) from err
-                        else:
-                            source_unit = units2pint(source)
+                        source_unit = units2pint(source)
 
         out: xr.DataArray
         if source_unit == target_unit:

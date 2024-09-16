@@ -45,7 +45,7 @@ def map_cdf(
     ds: xr.Dataset,
     *,
     y_value: xr.DataArray,
-    dim,
+    dim: str,
 ):
     """Return the value in `x` with the same CDF as `y_value` in `y`.
 
@@ -54,17 +54,18 @@ def map_cdf(
     Parameters
     ----------
     ds : xr.Dataset
-      Variables: x, Values from which to pick,
-      y, Reference values giving the ranking
+        Variables:
+            x, Values from which to pick,
+            y, Reference values giving the ranking
     y_value : float, array
-      Value within the support of `y`.
+        Value within the support of `y`.
     dim : str
-      Dimension along which to compute quantile.
+        Dimension along which to compute quantile.
 
     Returns
     -------
     array
-      Quantile of `x` with the same CDF as `y_value` in `y`.
+        Quantile of `x` with the same CDF as `y_value` in `y`.
     """
     return xr.apply_ufunc(
         map_cdf_1d,
@@ -85,16 +86,16 @@ def ecdf(x: xr.DataArray, value: float, dim: str = "time") -> xr.DataArray:
     Parameters
     ----------
     x : array
-      Sample.
+        Sample.
     value : float
-      The value within the support of `x` for which to compute the CDF value.
+        The value within the support of `x` for which to compute the CDF value.
     dim : str
-      Dimension name.
+        Dimension name.
 
     Returns
     -------
     xr.DataArray
-      Empirical CDF.
+        Empirical CDF.
     """
     return (x <= value).sum(dim) / x.notnull().sum(dim)
 
@@ -195,15 +196,15 @@ def broadcast(
     Parameters
     ----------
     grouped : xr.DataArray
-      The grouped array to broadcast like `x`.
+        The grouped array to broadcast like `x`.
     x : xr.DataArray
-      The array to broadcast grouped to.
+        The array to broadcast grouped to.
     group : str or Grouper
-      Grouping information. See :py:class:`xclim.sdba.base.Grouper` for details.
+        Grouping information. See :py:class:`xclim.sdba.base.Grouper` for details.
     interp : {'nearest', 'linear', 'cubic'}
-      The interpolation method to use,
+        The interpolation method to use,
     sel : dict[str, xr.DataArray]
-      Mapping of grouped coordinates to x coordinates (other than the grouping one).
+        Mapping of grouped coordinates to x coordinates (other than the grouping one).
 
     Returns
     -------
@@ -252,14 +253,14 @@ def equally_spaced_nodes(n: int, eps: float | None = None) -> np.ndarray:
     Parameters
     ----------
     n : int
-      Number of equally spaced nodes.
+        Number of equally spaced nodes.
     eps : float, optional
-      Distance from 0 and 1 of added end nodes. If None (default), do not add endpoints.
+        Distance from 0 and 1 of added end nodes. If None (default), do not add endpoints.
 
     Returns
     -------
     np.array
-      Nodes between 0 and 1. Nodes can be seen as the middle points of `n` equal bins.
+        Nodes between 0 and 1. Nodes can be seen as the middle points of `n` equal bins.
 
     Warnings
     --------
@@ -1018,27 +1019,33 @@ def histogram(data, bin_width, bin_origin):
     return grid, mu, idx_bin
 
 
-def optimal_transport(gridX, gridY, muX, muY, numItermax, transform):
+def optimal_transport(gridX, gridY, muX, muY, num_iter_max, normalization):
     """Computes the optimal transportation plan on (transformations of) X and Y.
 
     References
     ----------
     :cite:cts:`sdba-robin_2021`
     """
-    from ot import emd
+    try:
+        from ot import emd  # pylint: disable=import-outside-toplevel
+    except ImportError as e:
+        raise ImportError(
+            "The optional dependency `POT` is required for optimal_transport. "
+            "You can install it with `pip install POT`, `conda install -c conda-forge pot` or `pip install 'xclim[extras]'`."
+        ) from e
 
-    if transform == "standardize":
-        gridX = (gridX - gridX.mean()) / gridX.std()
-        gridY = (gridY - gridY.mean()) / gridY.std()
+    if normalization == "standardize":
+        gridX = (gridX - gridX.mean(axis=0)) / gridX.std(axis=0)
+        gridY = (gridY - gridY.mean(axis=0)) / gridY.std(axis=0)
 
-    elif transform == "max_distance":
+    elif normalization == "max_distance":
         max1 = np.abs(gridX.max(axis=0) - gridY.min(axis=0))
         max2 = np.abs(gridY.max(axis=0) - gridX.min(axis=0))
         max_dist = np.maximum(max1, max2)
         gridX = gridX / max_dist
         gridY = gridY / max_dist
 
-    elif transform == "max_value":
+    elif normalization == "max_value":
         max_value = np.maximum(gridX.max(axis=0), gridY.max(axis=0))
         gridX = gridX / max_value
         gridY = gridY / max_value
@@ -1047,7 +1054,7 @@ def optimal_transport(gridX, gridY, muX, muY, numItermax, transform):
     C = distance.cdist(gridX, gridY, "sqeuclidean")
 
     # Compute the optimal transportation plan
-    gamma = emd(muX, muY, C, numItermax=numItermax)
+    gamma = emd(muX, muY, C, numItermax=num_iter_max)
     plan = (gamma.T / gamma.sum(axis=1)).T
 
     return plan
