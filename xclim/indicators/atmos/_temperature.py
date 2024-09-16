@@ -50,6 +50,7 @@ __all__ = [
     "heat_spell_total_length",
     "heat_wave_frequency",
     "heat_wave_index",
+    "heat_wave_magnitude",
     "heat_wave_max_length",
     "heat_wave_total_length",
     "heating_degree_days",
@@ -213,6 +214,21 @@ heat_wave_frequency = Temp(
     cell_methods="",
     keywords="health,",
     compute=indices.heat_wave_frequency,
+)
+
+heat_wave_magnitude = Temp(
+    title="Heat wave magnitude",
+    identifier="heat_wave_magnitude",
+    units="degC",
+    long_name="Maximum difference between daily maximum temperature and {thresh_tasmax} for days within a heat wave. "
+    "A heat wave is defined as a series of at least {window} consecutive days with daily maximum temperature above "
+    "{thresh_tasmax}.",
+    description="Magnitude of the most intensive heat wave per {freq} as accumulated deg C above a given threshold "
+    "A heat wave occurs when daily maximum temperatures exceed {thresh_tasmax} for {window} days.",
+    abstract="Magnitude of the most intensive heat wave per {freq}. A heat wave occurs when daily maximum "
+    "temperatures exceed given thresholds for a number of days.",
+    cell_methods="",
+    compute=indices.heat_wave_magnitude,
 )
 
 heat_wave_max_length = Temp(
