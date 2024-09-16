@@ -1402,6 +1402,25 @@ def windowed_run_count_1d(arr: Sequence[bool], window: int) -> int:
     return np.where(v * rl >= window, rl, 0).sum()
 
 
+def windowed_run_sum_1d(arr: Sequence[float], window: int) -> float:
+    """Return the accumulated values of consecutive positive values in array for runs at least as long as given duration.
+
+    Parameters
+    ----------
+    arr : Sequence[float]
+        Input array (float).
+    window : int
+        Minimum duration of consecutive run to accumulate values.
+
+    Returns
+    -------
+    float
+        Accumulated values of positive values of a consecutive run at least `window` long.
+    """
+    # TODO: implement rse_1d function
+    raise NotImplementedError()
+
+
 def windowed_run_events_1d(arr: Sequence[bool], window: int) -> xr.DataArray:
     """Return the number of runs of a minimum length.
 
@@ -1447,6 +1466,38 @@ def windowed_run_count_ufunc(
         vectorize=True,
         dask="parallelized",
         output_dtypes=[int],
+        keep_attrs=True,
+        kwargs={"window": window},
+    )
+
+
+def windowed_run_sum_ufunc(
+    x: xr.DataArray | Sequence[float], window: int, dim: str
+) -> xr.DataArray:
+    """Dask-parallel version of indowed_run_sum_1d, ie: accumulated sums of floats in consecutive positive values in array for runs at least as long
+    as given duration.
+
+    Parameters
+    ----------
+    x : Sequence[float]
+        Input array (float).
+    window : int
+        Minimum duration of consecutive run to accumulate values.
+    dim : str
+        Dimension along which to calculate windowed run.
+
+    Returns
+    -------
+    xr.DataArray
+        A function operating along the time dimension of a dask-array.
+    """
+    return xr.apply_ufunc(
+        windowed_run_sum_1d,
+        x,
+        input_core_dims=[[dim]],
+        vectorize=True,
+        dask="parallelized",
+        output_dtypes=[float],
         keep_attrs=True,
         kwargs={"window": window},
     )
