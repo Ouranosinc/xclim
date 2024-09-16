@@ -2,14 +2,13 @@
 Changelog
 =========
 
-v0.52.2 (2024-09-13)
+v0.52.2 (2024-09-16)
 --------------------
 Contributors to this version: Pascal Bourgault (:user:`aulemahal`).
 
 Bug fixes
 ^^^^^^^^^
-* Fixed ``decimal_year`` import, fixed functions ``rate2amount``, ``amount2rate``, ``time_bnds`` and ``stack_periods``  for xarray 2024.09.0. Removed ``datetime_to_decimal_year`` as the mirrored xarray functions was replaced by ``ds.time.dt.decimal_year``. (:pull:`1920`).
-
+* Fixed ``decimal_year`` import, fixed functions ``rate2amount``, ``amount2rate``, ``time_bnds`` and ``stack_periods``  for `xarray` version 2024.09.0. Removed ``datetime_to_decimal_year`` as the mirrored `xarray` function was replaced by ``ds.time.dt.decimal_year``. (:pull:`1920`).
 
 v0.52.1 (2024-09-11)
 --------------------
