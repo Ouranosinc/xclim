@@ -11,6 +11,8 @@ from xclim.core.utils import InputKind
 __all__ = [
     "australian_hardiness_zones",
     "biologically_effective_degree_days",
+    "chill_portions",
+    "chill_units",
     "cold_spell_days",
     "cold_spell_duration_index",
     "cold_spell_frequency",
@@ -1458,6 +1460,9 @@ chill_portions = TempHourly(
     title="Chill portions",
     identifier="cp",
     units="",
+    standard_name="chill_portions",
+    # TODO: check what this does
+    cell_methods="",
     description="Chill portions are a measure to estimate the bud breaking potential of different crops. "
     "The constants and functions are taken from Luedeling et al. (2009) which formalises "
     "the method described in Fishman et al. (1987). "
@@ -1480,6 +1485,8 @@ chill_units = TempHourly(
     description="Chill units are a measure to estimate the bud breaking potential of different crops based on the Utah model developed in "
     "Richardson et al. (1974). The Utah model assigns a weight to each hour depending on the temperature recognising that high temperatures can "
     "actually decrease the potential for bud breaking.",
+    # TODO: check what this does
+    standard_name="chill_units",
     long_name="Chill units after the Utah Model",
     allowed_periods=["A"],
     varname="cu",

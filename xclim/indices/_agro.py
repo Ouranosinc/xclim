@@ -1,6 +1,5 @@
 # noqa: D100
 from __future__ import annotations
-
 from typing import cast
 
 import numpy as np
@@ -25,6 +24,7 @@ from xclim.indices._threshold import (
 from xclim.indices.generic import aggregate_between_dates, get_zones
 from xclim.indices.helpers import _gather_lat, day_lengths
 from xclim.indices.stats import standardized_index
+
 
 # Frequencies : YS: year start, QS-DEC: seasons starting in december, MS: month start
 # See https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html
@@ -1571,11 +1571,11 @@ def _apply_chill_portion_one_season(tas_K):
         input_core_dims=[["time"]],
         output_core_dims=[["time"]],
         dask="parallelized",
-    )
+    ).max("time")
 
 
 @declare_units(tas="[temperature]")
-def chill_portions(tas: xarray.DataArray, time_dim: str = "time") -> xarray.DataArray:
+def chill_portions(tas: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
     """Chill portion based on the dynamic model
 
     Chill portions are a measure to estimate the bud breaking potential of different crop.
@@ -1591,15 +1591,17 @@ def chill_portions(tas: xarray.DataArray, time_dim: str = "time") -> xarray.Data
     ----------
     tas : xr.DataArray
         Hourly temperature.
-    time_dim : str, optional
-        The name of the time dimension (default: "time").
 
     Returns
     -------
     xr.DataArray
     """
-    tas_K = convert_units_to(tas, "K")
-    return tas_K.groupby(f"{time_dim}.year").apply(_apply_chill_portion_one_season)
+    tas_K: xarray.DataArray = convert_units_to(tas, "K")
+    return (
+        tas_K.resample(time=freq)
+        .apply(_apply_chill_portion_one_season)
+        .assign_attrs(units="")
+    )
 
 
 @declare_units(tas="[temperature]")
