@@ -52,6 +52,7 @@ dependencies:
   - nbsphinx
   - nbval >=0.11.0
   - nc-time-axis >=1.4.1
+  - netcdf4  # Required for some Jupyter notebooks
   - notebook
   - pandas-stubs >=2.2
   - pooch >=1.8.0
