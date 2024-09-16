@@ -889,6 +889,32 @@ class TestHeatWaveIndex:
         np.testing.assert_array_equal(hwi, [np.nan])
 
 
+class TestHeatWaveMagnitude:
+    def test_simple(self, tasmax_series):
+        tx = np.zeros(366)
+        tx[:5] = np.array([30, 30, 30, 30, 30])
+        tx = tasmax_series(tx + K2C, start="1/1/2000")
+        hwm = atmos.heat_wave_magnitude(tx, freq="YS")
+        np.testing.assert_array_equal(hwm, [25])
+
+    def test_convert_units(self, tasmax_series):
+        tx = np.zeros(366)
+        tx[:5] = np.array([30, 30, 30, 30, 30])
+        tx = tasmax_series(tx, start="1/1/2000")
+        tx.attrs["units"] = "C"
+        hwm = atmos.heat_wave_magnitude(tx, freq="YS")
+        np.testing.assert_array_equal(hwm, [25])
+
+    def test_nan_presence(self, tasmax_series):
+        tx = np.zeros(366)
+        tx[:5] = np.array([30, 30, 30, 30, 30])
+        tx[-1] = np.nan
+        tx = tasmax_series(tx + K2C, start="1/1/2000")
+
+        hwm = atmos.heat_wave_magnitude(tx, freq="YS")
+        np.testing.assert_array_equal(hwm, [np.nan])
+
+
 class TestDailyFreezeThaw:
     nc_tasmax = os.path.join("NRCANdaily", "nrcan_canada_daily_tasmax_1990.nc")
     nc_tasmin = os.path.join("NRCANdaily", "nrcan_canada_daily_tasmin_1990.nc")

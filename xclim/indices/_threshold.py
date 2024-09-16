@@ -1974,7 +1974,7 @@ def heat_wave_magnitude(
     out = rl.resample_and_rl(
         over_values,
         resample_before_rl,
-        rl.windowed_run_sum,
+        rl.windowed_max_run_sum,
         window=window,
         freq=freq,
     )
