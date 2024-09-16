@@ -9,11 +9,13 @@ Contributors to this version: Adrien Lamarche (:user:`LamAdr`), Trevor James Smi
 New indicators
 ^^^^^^^^^^^^^^
 * New ``heat_spell_frequency``, ``heat_spell_max_length`` and ``heat_spell_total_length`` : spell length statistics on a bivariate condition that uses the average over a window by default. (:pull:`1885`).
+* New ``heat_wave_magnitude`` : yields the magnitude of the most intensive heat wave. (:pull:`TODO`).
 
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 * New generic ``xclim.indices.generic.spell_mask``  that returns a mask of which days are part of a spell. Supports multivariate conditions and weights. Used in new generic index ``xclim.indices.generic.bivariate_spell_length_statistics`` that extends ``spell_length_statistics`` to two variables.  (:pull:`1885`).
 * Indicator parameters can now be assigned a new name, different from the argument name in the compute function. (:pull:`1885`).
+* ``xclim.indices.run_length.windowed_max_run_sum`` accumulates positive values across runs and yields the the maximum valued run. (:pull:`TODO`).
 
 Bug fixes
 ^^^^^^^^^
