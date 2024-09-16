@@ -1928,6 +1928,58 @@ def heat_wave_index(
     return to_agg_units(out, tasmax, "count")
 
 
+@declare_units(tasmax="[temperature]", thresh="[temperature]")
+def heat_wave_magnitude(
+    tasmax: xarray.DataArray,
+    thresh: Quantified = "25.0 degC",
+    window: int = 3,
+    freq: str = "YS",
+    op: str = ">",
+    resample_before_rl: bool = True,
+) -> xarray.DataArray:
+    """Heat wave magnitude index.
+
+    Magnitude of the most intensive heat wave event as sum of differences between tasmax
+    and the given threshold for Heat Wave days, defined as three or more consecutive days
+    over the threshold.
+
+    Parameters
+    ----------
+    tasmax : xarray.DataArray
+        Maximum daily temperature.
+    thresh : xarray.DataArray
+        Threshold temperature on which to designate a heatwave.
+    window : int
+        Minimum number of days with temperature above threshold to qualify as a heatwave.
+    freq : str
+        Resampling frequency.
+    op : {">", ">=", "gt", "ge"}
+        Comparison operation. Default: ">".
+    resample_before_rl : bool
+        Determines if the resampling should take place before or after the run
+        length encoding (or a similar algorithm) is applied to runs.
+
+    Returns
+    -------
+    DataArray, [time]
+        Heat wave magnitude.
+    """
+    thresh = convert_units_to(thresh, tasmax)
+    # condition where over threshold is fulfilled
+    cond = compare(tasmax, op, thresh, constrain=(">", ">="))
+    # difference for heatwave magnitude calculation
+    over_values = (tasmax - thresh).where(cond, 0)
+
+    out = rl.resample_and_rl(
+        over_values,
+        resample_before_rl,
+        rl.windowed_run_sum,
+        window=window,
+        freq=freq,
+    )
+    return to_agg_units(out, tasmax, op="max")
+
+
 @declare_units(tas="[temperature]", thresh="[temperature]")
 def heating_degree_days(
     tas: xarray.DataArray,
