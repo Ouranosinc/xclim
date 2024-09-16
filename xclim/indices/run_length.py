@@ -453,7 +453,7 @@ def windowed_run_count(
     return out
 
 
-def windowed_run_sum(
+def windowed_max_run_sum(
     da: xr.DataArray,
     window: int,
     dim: str = "time",
@@ -461,7 +461,7 @@ def windowed_run_sum(
     ufunc_1dim: str | bool = "from_context",
     index: str = "first",
 ) -> xr.DataArray:
-    """Return the sum of consecutive float values for runs at least as long as the given window length.
+    """Return the maximum sum of consecutive float values for runs at least as long as the given window length.
 
     Parameters
     ----------
@@ -492,7 +492,7 @@ def windowed_run_sum(
     # ufunc_1dim = use_ufunc(ufunc_1dim, da, dim=dim, index=index, freq=freq)
 
     # if ufunc_1dim:
-    #     out = windowed_run_sum_ufunc(da, window, dim)
+    #     out = windowed_max_run_sum_ufunc(da, window, dim)
 
     if window == 1 and freq is None:
         out = da.max(dim=dim)
@@ -1402,7 +1402,7 @@ def windowed_run_count_1d(arr: Sequence[bool], window: int) -> int:
     return np.where(v * rl >= window, rl, 0).sum()
 
 
-def windowed_run_sum_1d(arr: Sequence[float], window: int) -> float:
+def windowed_max_run_sum_1d(arr: Sequence[float], window: int) -> float:
     """Return the accumulated values of consecutive positive values in array for runs at least as long as given duration.
 
     Parameters
@@ -1471,7 +1471,7 @@ def windowed_run_count_ufunc(
     )
 
 
-def windowed_run_sum_ufunc(
+def windowed_max_run_sum_ufunc(
     x: xr.DataArray | Sequence[float], window: int, dim: str
 ) -> xr.DataArray:
     """Dask-parallel version of indowed_run_sum_1d, ie: accumulated sums of floats in consecutive positive values in array for runs at least as long
@@ -1492,7 +1492,7 @@ def windowed_run_sum_ufunc(
         A function operating along the time dimension of a dask-array.
     """
     return xr.apply_ufunc(
-        windowed_run_sum_1d,
+        windowed_max_run_sum_1d,
         x,
         input_core_dims=[[dim]],
         vectorize=True,
