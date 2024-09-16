@@ -20,6 +20,7 @@ New features and enhancements
 Bug fixes
 ^^^^^^^^^
 * Fixed a small inefficiency in ``_otc_adjust``, and the `standardize` method of `OTC/dOTC` is now applied on individual variable  (:pull:`1890`, :pull:`1896`).
+* Remove deprecated cells in the tutorial notebook `sdba.ipynb` (:pull:`1895`).
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
@@ -44,6 +45,22 @@ Internal changes
 * The codebase has been adjusted to address many `pylint`-related warnings and errors. In some cases, `casting` was used to redefine some `numpy` and `xarray` objects. (:issue:`1719`, :pull:`1881`).
 * ``xclim.core`` now uses absolute imports for clarity and some objects commonly used in the module have been moved to hidden submodules. (:issue:`1719`, :pull:`1881`).
 * ``xclim.core.indicator.Parameter`` has a new attribute ``compute_name`` while ``xclim.core.indicator.Indicator`` lost its ``_variable_mapping``. The translation from parameter (and variable) names in the indicator to the names on the compute function is handled by ``Indicator._get_compute_args``. (:pull:`1885`).
+
+v0.52.2 (2024-09-16)
+--------------------
+Contributors to this version: Pascal Bourgault (:user:`aulemahal`).
+
+Bug fixes
+^^^^^^^^^
+* Fixed ``decimal_year`` import, fixed functions ``rate2amount``, ``amount2rate``, ``time_bnds`` and ``stack_periods``  for `xarray` version 2024.09.0. Removed ``datetime_to_decimal_year`` as the mirrored `xarray` function was replaced by ``ds.time.dt.decimal_year``. (:pull:`1920`).
+
+v0.52.1 (2024-09-11)
+--------------------
+Contributors to this version: Trevor James Smith (:user:`Zeitsperre`).
+
+Bug fixes
+^^^^^^^^^
+* Adjusted the required base version of `pyarrow` to be `v10.0.1` to address an environment resolution error on conda-forge. (:pull:`1918`).
 
 v0.52.0 (2024-08-08)
 --------------------
