@@ -124,7 +124,7 @@ jobs:
             tox-env: standard
           - os: ubuntu-latest
             markers: -m 'not slow'
-            python-version: "3.12-dev.1"
+            python-version: "3.13-dev.1"
             tox-env: standard
           # Windows builds
           - os: windows-latest
@@ -170,7 +170,7 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
       - name: Install Eigen3 (SBCK)
-        if: ${{ matrix.python-version == '3.11' }}
+        if: ${{ matrix.python-version == '3.13-dev.1' && matrix.os == 'ubuntu-latest' }}
         run: |
           sudo apt-get update
           sudo apt-get install libeigen3-dev
