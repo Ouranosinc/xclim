@@ -1978,8 +1978,7 @@ def heat_wave_magnitude(
         window=window,
         freq=freq,
     )
-    out.attrs["units"] = tasmax.attrs["units"]
-    return out
+    return to_agg_units(out, tasmax, op="integral")
 
 
 @declare_units(tas="[temperature]", thresh="[temperature]")
