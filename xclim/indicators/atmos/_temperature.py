@@ -219,7 +219,7 @@ heat_wave_frequency = Temp(
 heat_wave_magnitude = Temp(
     title="Heat wave magnitude",
     identifier="heat_wave_magnitude",
-    units="degC",
+    units="K d",
     long_name="Maximum difference between daily maximum temperature and {thresh} for days within a heat wave. "
     "A heat wave is defined as a series of at least {window} consecutive days with daily maximum temperature above "
     "{thresh}.",
