@@ -1966,10 +1966,7 @@ def heat_wave_magnitude(
         Heat wave magnitude.
     """
     thresh = convert_units_to(thresh, tasmax)
-    # condition where over threshold is fulfilled
-    cond = compare(tasmax, op, thresh, constrain=(">", ">="))
-    # difference for heatwave magnitude calculation
-    over_values = (tasmax - thresh).where(cond, 0)
+    over_values = (tasmax - thresh).clip(0)
 
     out = rl.resample_and_rl(
         over_values,
