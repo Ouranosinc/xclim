@@ -21,12 +21,9 @@ Bug fixes
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
-* `transform` argument of `OTC/dOTC` classes (and child functions) is changed to `normalization`, and `numIterMax` is changed to `num_iter_max` in `utils.optimal_transport` (:pull:`1896`).
-
-Breaking changes
-^^^^^^^^^^^^^^^^
 * `platformdirs` is no longer a direct dependency of `xclim`, but `pooch` is required to use many of the new testing functions (installable via `pip install pooch` or `pip install 'xclim[dev]'`). (:pull:`1889`).
 * The following previously-deprecated functions have now been removed from `xclim`: ``xclim.core.calendar.convert_calendar``, ``xclim.core.calendar.date_range``, ``xclim.core.calendar.date_range_like``, ``xclim.core.calendar.interp_calendar``, ``xclim.core.calendar.days_in_year``, ``xclim.core.calendar.datetime_to_decimal_year``. For guidance on how to migrate to alternatives, see the `version 0.50.0 Breaking changes <#v0-50-0-2024-06-17>`_. (:issue:`1010`, :pull:`1845`).
+* `transform` argument of `OTC/dOTC` classes (and child functions) is changed to `normalization`, and `numIterMax` is changed to `num_iter_max` in `utils.optimal_transport` (:pull:`1896`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
@@ -46,6 +43,7 @@ Internal changes
 CI changes
 ^^^^^^^^^^
 * The `pip` cache, `tox` environments, and the `xclim-testdata` cache are now saved between workflow runs (using `actions/cache`) to reduce the time spent installing dependencies and downloading testing data. (:pull:`1906`).
+
 v0.52.2 (2024-09-16)
 --------------------
 Contributors to this version: Pascal Bourgault (:user:`aulemahal`).
