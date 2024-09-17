@@ -7,7 +7,6 @@ from xclim.core import cfchecks
 from xclim.core.indicator import Daily, Indicator, ResamplingIndicatorWithIndexing
 from xclim.core.utils import InputKind
 
-
 __all__ = [
     "australian_hardiness_zones",
     "biologically_effective_degree_days",
