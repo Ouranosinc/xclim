@@ -20,6 +20,7 @@ New features and enhancements
 Bug fixes
 ^^^^^^^^^
 * Fixed a small inefficiency in ``_otc_adjust``, and the `standardize` method of `OTC/dOTC` is now applied on individual variable  (:pull:`1890`, :pull:`1896`).
+* Remove deprecated cells in the tutorial notebook `sdba.ipynb` (:pull:`1895`).
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
