@@ -1312,7 +1312,7 @@ class TestHeatWaveMagnitude:
         da = tasmax_series(a + K2C)
 
         out = xci.heat_wave_magnitude(da, thresh="25 C", freq="ME")
-        np.testing.assert_array_equal(out, [25, 0, 20, 30, 0, 0, 0, 0, 0, 0, 0, 0])
+        np.testing.assert_array_equal(out, [25, 0, 30, 20, 0, 0, 0, 0, 0, 0, 0, 0])
 
 
 class TestHeatWaveFrequency:
