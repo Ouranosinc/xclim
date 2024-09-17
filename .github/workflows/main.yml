@@ -124,7 +124,7 @@ jobs:
             tox-env: standard
           - os: ubuntu-latest
             markers: -m 'not slow'
-            python-version: "3.13-dev.1"
+            python-version: "3.13.0-rc.2"
             tox-env: standard
           # Windows builds
           - os: windows-latest
@@ -139,7 +139,7 @@ jobs:
           # Specialized tests
           - os: ubuntu-latest
             markers: -m 'not requires_internet and not slow'
-            python-version: "3.13-dev.1"
+            python-version: "3.13.0-rc.2"
             tox-env: py39-coverage-offline-prefetch
           - os: ubuntu-latest
             markers: ''
@@ -170,7 +170,7 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
       - name: Install Eigen3 (SBCK)
-        if: ${{ matrix.python-version == '3.13-dev.1' && matrix.os == 'ubuntu-latest' }}
+        if: ${{ matrix.python-version == '3.13-rc.2' && matrix.os == 'ubuntu-latest' }}
         run: |
           sudo apt-get update
           sudo apt-get install libeigen3-dev
