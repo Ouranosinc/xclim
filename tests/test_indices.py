@@ -12,7 +12,6 @@
 # saving the results in a reference netcdf dataset. We could then compare the hailstorm output to this reference as
 # a first line of defense.
 from __future__ import annotations
-
 import calendar
 
 import numpy as np
@@ -28,6 +27,7 @@ from xclim.core import ValidationError
 from xclim.core.calendar import percentile_doy
 from xclim.core.options import set_options
 from xclim.core.units import convert_units_to, units
+
 
 K2C = 273.15
 
@@ -347,7 +347,9 @@ class TestAgroclimaticIndices:
                 np.testing.assert_array_equal(bedd, bedd_high_lat)
 
     def test_chill_portions(self, tas_series):
-        assert False
+        tas = tas_series(np.linspace(0, 15, 120 * 24) + K2C, freq="h")
+        out = xci.chill_portions(tas)
+        assert out[0] == 72.24417644977083
 
     def test_chill_units(self, tas_series):
         num_cu_0 = 10
@@ -365,7 +367,7 @@ class TestAgroclimaticIndices:
                 + num_cu_min_1 * [20.0]
             )
             + K2C,
-            freq="H",
+            freq="h",
         )
         out = xci.chill_units(tas)
         assert out[0] == 0.5 * num_cu_05 + num_cu_1 - 0.5 * num_cu_min_05 - num_cu_min_1

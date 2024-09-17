@@ -1599,7 +1599,8 @@ def chill_portions(tas: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
     tas_K: xarray.DataArray = convert_units_to(tas, "K")
     return (
         tas_K.resample(time=freq)
-        .apply(_apply_chill_portion_one_season)
+        .map(_apply_chill_portion_one_season)
+        .rename("cp")
         .assign_attrs(units="")
     )
 
