@@ -16,8 +16,9 @@ import xarray as xr
 from numba import njit
 from xarray.core.utils import get_temp_dimname
 
+from xclim.core import DateStr, DayOfYearStr
 from xclim.core.options import OPTIONS, RUN_LENGTH_UFUNC
-from xclim.core.utils import DateStr, DayOfYearStr, uses_dask
+from xclim.core.utils import uses_dask
 
 npts_opt = 9000
 """
@@ -1674,5 +1675,5 @@ def suspicious_run(
         dask="parallelized",
         output_dtypes=[bool],
         keep_attrs=True,
-        kwargs=dict(window=window, op=op, thresh=thresh),
+        kwargs={"window": window, "op": op, "thresh": thresh},
     )

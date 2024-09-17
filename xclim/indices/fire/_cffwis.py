@@ -139,8 +139,8 @@ import numpy as np
 import xarray as xr
 from numba import njit, vectorize
 
+from xclim.core._types import Quantified
 from xclim.core.units import convert_units_to, declare_units
-from xclim.core.utils import Quantified
 from xclim.indices import run_length as rl
 
 __all__ = [
@@ -158,24 +158,24 @@ __all__ = [
     "overwintering_drought_code",
 ]
 
-default_params: dict[str, int | float | tuple[float, str]] = dict(
-    temp_start_thresh=(12.0, "degC"),
-    temp_end_thresh=(5.0, "degC"),
-    snow_thresh=(0.01, "m"),
-    temp_condition_days=3,
-    snow_condition_days=3,
-    carry_over_fraction=0.75,
-    wetting_efficiency_fraction=0.75,
-    dc_start=15,
-    dmc_start=6,
-    ffmc_start=85,
-    prec_thresh=(1.0, "mm/d"),
-    dc_dry_factor=5,
-    dmc_dry_factor=2,
-    snow_cover_days=60,
-    snow_min_cover_frac=0.75,
-    snow_min_mean_depth=(0.1, "m"),
-)
+default_params: dict[str, int | float | tuple[float, str]] = {
+    "temp_start_thresh": (12.0, "degC"),
+    "temp_end_thresh": (5.0, "degC"),
+    "snow_thresh": (0.01, "m"),
+    "temp_condition_days": 3,
+    "snow_condition_days": 3,
+    "carry_over_fraction": 0.75,
+    "wetting_efficiency_fraction": 0.75,
+    "dc_start": 15,
+    "dmc_start": 6,
+    "ffmc_start": 85,
+    "prec_thresh": (1.0, "mm/d"),
+    "dc_dry_factor": 5,
+    "dmc_dry_factor": 2,
+    "snow_cover_days": 60,
+    "snow_min_cover_frac": 0.75,
+    "snow_min_mean_depth": (0.1, "m"),
+}
 """
 Default values for numerical parameters of fire_weather_ufunc.
 
@@ -417,10 +417,9 @@ def _drought_code(  # pragma: no cover
     """
     fl = _day_length_factor(lat, mth)  # type: ignore
 
-    if t < -2.8:
-        t = -2.8  # type: ignore
+    t = max(t, -2.8)  # type: ignore
     pe = (0.36 * (t + 2.8) + fl) / 2  # *Eq.22*#
-    pe = max(pe, 0.0)
+    pe = max(pe, 0.0)  # type: ignore
 
     if p > 2.8:
         ra = p
@@ -1074,7 +1073,7 @@ def fire_weather_ufunc(  # noqa: C901
 
     # Verification of all arguments
     for i, (arg, name, usedby, has_time_dim) in enumerate(needed_args):
-        if any([ind in indexes + [season_method] for ind in usedby]):
+        if any(ind in indexes + [season_method] for ind in usedby):
             if arg is None:
                 raise TypeError(
                     f"Missing input argument {name} for index combination {indexes} "
@@ -1148,9 +1147,9 @@ def fire_weather_ufunc(  # noqa: C901
         dummy_dim = xr.core.utils.get_temp_dimname(tas.dims, "dummy")  # noqa
         # When arrays only have the 'time' dimension, non-temporal inputs of the wrapped ufunc
         # become scalars. We add a dummy dimension so that we don't have to deal with that.
-        for i in range(len(args)):
-            if isinstance(args[i], xr.DataArray):
-                args[i] = args[i].expand_dims({dummy_dim: [1]})
+        for i, arg in enumerate(args):
+            if isinstance(arg, xr.DataArray):
+                args[i] = arg.expand_dims({dummy_dim: [1]})
 
     das = xr.apply_ufunc(
         _fire_weather_calc,
@@ -1172,7 +1171,8 @@ def fire_weather_ufunc(  # noqa: C901
 
     if len(outputs) == 1:
         return {outputs[0]: das}
-    return {name: da for name, da in zip(outputs, das)}
+
+    return dict(zip(outputs, das))
 
 
 @declare_units(last_dc="[]", winter_pr="[length]")
@@ -1644,14 +1644,14 @@ def fire_season(
     ):
         raise ValueError("Thresholds must be scalar.")
 
-    kwargs = dict(
-        method=method,
-        temp_start_thresh=convert_units_to(temp_start_thresh, "degC"),
-        temp_end_thresh=convert_units_to(temp_end_thresh, "degC"),
-        temp_condition_days=temp_condition_days,
-        snow_condition_days=snow_condition_days,
-        snow_thresh=convert_units_to(snow_thresh, "m"),
-    )
+    kwargs = {
+        "method": method,
+        "temp_start_thresh": convert_units_to(temp_start_thresh, "degC"),
+        "temp_end_thresh": convert_units_to(temp_end_thresh, "degC"),
+        "temp_condition_days": temp_condition_days,
+        "snow_condition_days": snow_condition_days,
+        "snow_thresh": convert_units_to(snow_thresh, "m"),
+    }
 
     def _apply_fire_season(ds, **kwargs):
         season_mask = ds.tas.copy(
