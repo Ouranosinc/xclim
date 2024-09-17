@@ -46,6 +46,21 @@ Internal changes
 CI changes
 ^^^^^^^^^^
 * The `pip` cache, `tox` environments, and the `xclim-testdata` cache are now saved between workflow runs (using `actions/cache`) to reduce the time spent installing dependencies and downloading testing data. (:pull:`1906`).
+v0.52.2 (2024-09-16)
+--------------------
+Contributors to this version: Pascal Bourgault (:user:`aulemahal`).
+
+Bug fixes
+^^^^^^^^^
+* Fixed ``decimal_year`` import, fixed functions ``rate2amount``, ``amount2rate``, ``time_bnds`` and ``stack_periods``  for `xarray` version 2024.09.0. Removed ``datetime_to_decimal_year`` as the mirrored `xarray` function was replaced by ``ds.time.dt.decimal_year``. (:pull:`1920`).
+
+v0.52.1 (2024-09-11)
+--------------------
+Contributors to this version: Trevor James Smith (:user:`Zeitsperre`).
+
+Bug fixes
+^^^^^^^^^
+* Adjusted the required base version of `pyarrow` to be `v10.0.1` to address an environment resolution error on conda-forge. (:pull:`1918`).
 
 v0.52.0 (2024-08-08)
 --------------------

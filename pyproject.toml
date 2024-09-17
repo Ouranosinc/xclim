@@ -48,7 +48,7 @@ dependencies = [
   "packaging >=24.0",
   "pandas >=2.2",
   "pint >=0.18",
-  "pyarrow >=15.0.0", # Strongly encouraged for pandas v2.2.0+
+  "pyarrow >=10.0.1", # Strongly encouraged for pandas v2.2.0+
   "pyyaml >=6.0.1",
   "scikit-learn >=0.21.3",
   "scipy >=1.9.0",
@@ -136,7 +136,7 @@ target-version = [
 ]
 
 [tool.bumpversion]
-current_version = "0.52.1-dev.5"
+current_version = "0.52.3-dev.0"
 commit = true
 commit_args = "--no-verify"
 tag = false
