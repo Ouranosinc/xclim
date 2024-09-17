@@ -8,8 +8,7 @@ This file defines the different steps, to be wrapped into the Adjustment objects
 
 from __future__ import annotations
 
-from collections.abc import Sequence
-from typing import Callable
+from collections.abc import Callable, Sequence
 
 import numpy as np
 import xarray as xr

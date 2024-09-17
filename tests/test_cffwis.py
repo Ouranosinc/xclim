@@ -418,7 +418,7 @@ class TestCFFWIS:
             temp_end_thresh="6 degC",
         )
 
-        for exp, out in zip([ds.DC, ds.DMC, ds.FFMC, ds.ISI, ds.BUI, ds.FWI], outs):
+        for exp, out in zip([ds.DC, ds.DMC, ds.FFMC, ds.ISI, ds.BUI, ds.FWI], outs, strict=False):
             np.testing.assert_allclose(
                 out.isel(loc=[0, 1]), exp.isel(loc=[0, 1]), rtol=0.03
             )
@@ -455,7 +455,7 @@ class TestCFFWIS:
             )
 
         for exp, out in zip(
-            [ds2.DC, ds2.DMC, ds2.FFMC, ds2.ISI, ds2.BUI, ds2.FWI], outs
+            [ds2.DC, ds2.DMC, ds2.FFMC, ds2.ISI, ds2.BUI, ds2.FWI], outs, strict=False
         ):
             np.testing.assert_allclose(out, exp, rtol=0.03)
 

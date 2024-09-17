@@ -278,7 +278,7 @@ def test_suspicious_precipitation_flags(pr_series, tmp_path):
 @pytest.mark.slow
 def test_dataflags_output(tmp_path, tas_series, tasmax_series, tasmin_series):
     ds = xr.Dataset()
-    for series, val in zip([tas_series, tasmax_series, tasmin_series], [0, 10, -10]):
+    for series, val in zip([tas_series, tasmax_series, tasmin_series], [0, 10, -10], strict=False):
         vals = val + K2C + np.sin(np.pi * np.arange(366 * 3) / 366)
         arr = series(vals, start="1971-01-01")
         ds = xr.merge([ds, arr])

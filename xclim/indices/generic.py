@@ -8,8 +8,7 @@ Helper functions for common generic actions done in the computation of indices.
 from __future__ import annotations
 
 import warnings
-from collections.abc import Sequence
-from typing import Callable
+from collections.abc import Callable, Sequence
 
 import cftime
 import numpy as np

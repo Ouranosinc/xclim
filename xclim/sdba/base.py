@@ -5,9 +5,8 @@ Base Classes and Developer Tools
 
 from __future__ import annotations
 
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from inspect import _empty, signature  # noqa
-from typing import Callable
 
 import dask.array as dsk
 import jsonpickle
@@ -601,7 +600,7 @@ def map_blocks(  # noqa: C901
                 chunks = (
                     dict(ds.chunks)
                     if isinstance(ds, xr.Dataset)
-                    else dict(zip(ds.dims, ds.chunks))
+                    else dict(zip(ds.dims, ds.chunks, strict=False))
                 )
                 badchunks = {}
                 if group is not None:

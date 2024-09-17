@@ -105,7 +105,7 @@ import re
 import warnings
 import weakref
 from collections import OrderedDict, defaultdict
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from copy import deepcopy
 from dataclasses import asdict, dataclass
 from functools import reduce
@@ -115,7 +115,7 @@ from inspect import _empty as _empty_default  # noqa
 from os import PathLike
 from pathlib import Path
 from types import ModuleType
-from typing import Any, Callable, Optional, Union
+from typing import Any, Optional, Union
 
 import numpy as np
 import xarray
@@ -652,7 +652,7 @@ class Indicator(IndicatorRegistrar):
                     raise ValueError(
                         f"Attribute {name} has {len(values)} elements but xclim expected {n_outs}."
                     )
-                for attrs, value in zip(cf_attrs, values):
+                for attrs, value in zip(cf_attrs, values, strict=False):
                     if value:  # Skip the empty ones (None or "")
                         attrs[name] = value
         # else we assume a list of dicts
@@ -663,7 +663,7 @@ class Indicator(IndicatorRegistrar):
 
         # update from parent, if they have the same length.
         if parent_cf_attrs is not None and len(parent_cf_attrs) == len(cf_attrs):
-            for old, new in zip(parent_cf_attrs, cf_attrs):
+            for old, new in zip(parent_cf_attrs, cf_attrs, strict=False):
                 for attr, value in old.items():
                     new.setdefault(attr, value)
 
@@ -832,7 +832,7 @@ class Indicator(IndicatorRegistrar):
 
         # Metadata attributes from templates
         var_id = None
-        for out, attrs, base_attrs in zip(outs, out_attrs, self.cf_attrs):
+        for out, attrs, base_attrs in zip(outs, out_attrs, self.cf_attrs, strict=False):
             if self.n_outs > 1:
                 var_id = base_attrs["var_name"]
             attrs.update(units=out.units)
@@ -849,13 +849,13 @@ class Indicator(IndicatorRegistrar):
         # Convert to output units
         outs = [
             convert_units_to(out, attrs["units"], self.context)
-            for out, attrs in zip(outs, out_attrs)
+            for out, attrs in zip(outs, out_attrs, strict=False)
         ]
 
         outs = self._postprocess(outs, das, params)
 
         # Update variable attributes
-        for out, attrs in zip(outs, out_attrs):
+        for out, attrs in zip(outs, out_attrs, strict=False):
             var_name = attrs.pop("var_name")
             out.attrs.update(attrs)
             out.name = var_name

@@ -12,12 +12,11 @@ import importlib.util
 import logging
 import os
 import warnings
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from enum import IntEnum
 from inspect import _empty  # noqa
 from io import StringIO
 from pathlib import Path
-from typing import Callable
 
 import numpy as np
 import xarray as xr
@@ -127,7 +126,7 @@ def ensure_chunk_size(da: xr.DataArray, **minchunks: int) -> xr.DataArray:
     if not uses_dask(da):
         return da
 
-    all_chunks = dict(zip(da.dims, da.chunks))
+    all_chunks = dict(zip(da.dims, da.chunks, strict=False))
     chunking = {}
     for dim, minchunk in minchunks.items():
         chunks = all_chunks[dim]

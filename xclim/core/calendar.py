@@ -1519,7 +1519,7 @@ def unstack_periods(da: xr.DataArray | xr.Dataset, dim: str = "period"):
     if window == stride:
         # just concat them all
         periods = []
-        for i, (start, length) in enumerate(zip(starts.values, lengths.values)):
+        for i, (start, length) in enumerate(zip(starts.values, lengths.values, strict=False)):
             real_time = _reconstruct_time(time_as_delta, start)
             periods.append(
                 da.isel(**{dim: i}, drop=True)
@@ -1543,7 +1543,7 @@ def unstack_periods(da: xr.DataArray | xr.Dataset, dim: str = "period"):
     strd_frq = construct_offset(mult * stride, *args)
 
     periods = []
-    for i, (start, length) in enumerate(zip(starts.values, lengths.values)):
+    for i, (start, length) in enumerate(zip(starts.values, lengths.values, strict=False)):
         real_time = _reconstruct_time(time_as_delta, start)
         slices = list(real_time.resample(time=strd_frq).groups.values())
         if i == 0:

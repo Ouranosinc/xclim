@@ -11,10 +11,10 @@ import re
 import string
 import warnings
 from ast import literal_eval
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from fnmatch import fnmatch
 from inspect import _empty, signature  # noqa
-from typing import Any, Callable
+from typing import Any
 
 import xarray as xr
 from boltons.funcutils import wraps
@@ -473,7 +473,7 @@ def gen_call_string(funcname: str, *args, **kwargs) -> str:
     "func(A, b=2.0, c='3', d=<list>)"
     """
     elements = []
-    chain = itertools.chain(zip([None] * len(args), args), kwargs.items())
+    chain = itertools.chain(zip([None] * len(args), args, strict=False), kwargs.items())
     for name, val in chain:
         if isinstance(val, xr.DataArray):
             rep = val.name or "<array>"
