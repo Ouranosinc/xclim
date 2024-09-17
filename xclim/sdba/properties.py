@@ -912,7 +912,9 @@ def _bivariate_spell_length_distribution(
 
         conds = []
         masks = []
-        for da, thresh, op, method in zip([ds.da1, ds.da2], threshs, opss, methods, strict=False):
+        for da, thresh, op, method in zip(
+            [ds.da1, ds.da2], threshs, opss, methods, strict=False
+        ):
             masks.append(
                 ~(da.isel({dim: 0}).isnull()).drop_vars(dim)
             )  # mask of the ocean with NaNs

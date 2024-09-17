@@ -752,7 +752,7 @@ def _chunk_like(*inputs: xr.DataArray | xr.Dataset, chunks: dict[str, int] | Non
             da.variable, xr.core.variable.IndexVariable
         ):
             da = xr.DataArray(da, dims=da.dims, coords=da.coords, name=da.name)
-        if not isinstance(da, (xr.DataArray, xr.Dataset)):
+        if not isinstance(da, xr.DataArray | xr.Dataset):
             outputs.append(da)
         else:
             outputs.append(

@@ -115,7 +115,7 @@ from inspect import _empty as _empty_default  # noqa
 from os import PathLike
 from pathlib import Path
 from types import ModuleType
-from typing import Any, Optional, Union
+from typing import Any
 
 import numpy as np
 import xarray
@@ -636,7 +636,7 @@ class Indicator(IndicatorRegistrar):
             n_outs = len(parent_cf_attrs) if parent_cf_attrs is not None else 1
             for name in cls._cf_names:
                 arg = kwds.get(name)
-                if isinstance(arg, (tuple, list)):
+                if isinstance(arg, tuple | list):
                     n_outs = len(arg)
 
             # Populate new cf_attrs from parsing cf_names passed directly.
@@ -645,7 +645,7 @@ class Indicator(IndicatorRegistrar):
                 values = kwds.pop(name, None)
                 if values is None:  # None passed, skip
                     continue
-                if not isinstance(values, (tuple, list)):
+                if not isinstance(values, tuple | list):
                     # a single string or callable, same for all outputs
                     values = [values] * n_outs
                 elif len(values) != n_outs:  # A sequence of the wrong length.
@@ -756,9 +756,9 @@ class Indicator(IndicatorRegistrar):
                 InputKind.VARIABLE,
                 InputKind.OPTIONAL_VARIABLE,
             ]:
-                annot = Union[DataArray, str]
+                annot = DataArray | str
                 if meta.kind == InputKind.OPTIONAL_VARIABLE:
-                    annot = Optional[annot]
+                    annot = annot | None
                 variables.append(
                     _Parameter(
                         name,
@@ -1232,7 +1232,7 @@ class Indicator(IndicatorRegistrar):
         for k, v in args.items():
             if isinstance(v, units.Quantity):
                 mba[k] = f"{v:g~P}"
-            elif isinstance(v, (int, float)):
+            elif isinstance(v, int | float):
                 mba[k] = f"{v:g}"
             # TODO: What about InputKind.NUMBER_SEQUENCE
             elif k == "indexer":
@@ -1762,7 +1762,7 @@ def build_indicator_module_from_yaml(  # noqa: C901
         # No suffix means we try to automatically detect the python file
         indices = indfile
 
-    if isinstance(indices, (str, Path)):
+    if isinstance(indices, str | Path):
         indices = load_module(indices, name=module_name)
 
     _translations: dict[str, dict] = {}
@@ -1778,7 +1778,7 @@ def build_indicator_module_from_yaml(  # noqa: C901
         _translations = {
             lng: (
                 read_locale_file(trans, module=module_name, encoding=encoding)
-                if isinstance(trans, (str, Path))
+                if isinstance(trans, str | Path)
                 else trans
             )
             for lng, trans in translations.items()

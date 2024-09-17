@@ -374,7 +374,7 @@ class Grouper(Parametrizable):
         function may add a "_group_apply_reshape" attribute set to `True` on the variables that should be reduced and
         these will be re-grouped by calling `da.groupby(self.name).first()`.
         """
-        if isinstance(da, (dict, xr.Dataset)):
+        if isinstance(da, dict | xr.Dataset):
             grpd = self.group(main_only=main_only, **da)
             dim_chunks = min(  # Get smallest chunking to rechunk if the operation is non-grouping
                 [

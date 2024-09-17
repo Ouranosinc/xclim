@@ -992,7 +992,7 @@ def _otc_adjust(
         for k, v in bin_width.items():
             _bin_width[k] = v
         bin_width = _bin_width
-    elif isinstance(bin_width, (float, int)):
+    elif isinstance(bin_width, float | int):
         bin_width = np.ones(X.shape[1]) * bin_width
 
     if bin_origin is None:
@@ -1003,7 +1003,7 @@ def _otc_adjust(
             for v, k in bin_origin.items():
                 _bin_origin[v] = k
         bin_origin = _bin_origin
-    elif isinstance(bin_origin, (float, int)):
+    elif isinstance(bin_origin, float | int):
         bin_origin = np.ones(X.shape[1]) * bin_origin
 
     num_iter_max = 100_000_000 if num_iter_max is None else num_iter_max
@@ -1195,7 +1195,7 @@ def _dotc_adjust(
         for v, k in bin_width.items():
             _bin_width[v] = k
         bin_width = _bin_width
-    elif isinstance(bin_width, (float, int)):
+    elif isinstance(bin_width, float | int):
         bin_width = np.ones(X0.shape[1]) * bin_width
 
     if isinstance(bin_origin, dict):
@@ -1203,7 +1203,7 @@ def _dotc_adjust(
         for v, k in bin_origin.items():
             _bin_origin[v] = k
         bin_origin = _bin_origin
-    elif isinstance(bin_origin, (float, int)):
+    elif isinstance(bin_origin, float | int):
         bin_origin = np.ones(X0.shape[1]) * bin_origin
 
     # Map ref to hist
