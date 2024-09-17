@@ -247,7 +247,8 @@ def publish_release_notes(
             r":user:`([a-zA-Z0-9_.-]+)`": r"[@\1](https://github.com/\1)",
         }
     else:
-        raise NotImplementedError()
+        msg = f"Formatting style not supported: {style}"
+        raise NotImplementedError(msg)
 
     for search, replacement in hyperlink_replacements.items():
         changes = re.sub(search, replacement, changes)
@@ -573,11 +574,9 @@ def open_dataset(
             return _open_dataset(audit_url(dap_target, context="OPeNDAP"), **kwargs)
         except URLError:
             raise
-        except OSError:
-            raise OSError(
-                "OPeNDAP file not read. Verify that the service is available: %s"
-                % dap_target
-            )
+        except OSError as err:
+            msg = f"OPeNDAP file not read. Verify that the service is available: {dap_target}"
+            raise OSError(msg) from err
 
     local_file = Path(cache_dir).joinpath(name)
     if not local_file.exists():
@@ -585,11 +584,9 @@ def open_dataset(
             local_file = nimbus(branch=branch, repo=repo, cache_dir=cache_dir).fetch(
                 name
             )
-        except OSError:
-            raise OSError(
-                "File not found locally. Verify that the testing data is available in remote: %s"
-                % local_file
-            )
+        except OSError as err:
+            msg = f"File not found locally. Verify that the testing data is available in remote: {local_file}"
+            raise OSError(msg) from err
     try:
         ds = _open_dataset(local_file, **kwargs)
         return ds
@@ -633,13 +630,13 @@ def populate_testing_data(
             msg = f"File `{file}` not accessible in remote repository."
             logging.error(msg)
             errored_files.append(file)
-        except SocketBlockedError as e:  # noqa
+        except SocketBlockedError as err:  # noqa
             msg = (
                 "Unable to access registry file online. Testing suite is being run with `--disable-socket`. "
                 "If you intend to run tests with this option enabled, please download the file beforehand with the "
                 "following console command: `$ xclim prefetch_testing_data`."
             )
-            raise SocketBlockedError(msg) from e
+            raise SocketBlockedError(msg) from err
         else:
             logging.info("Files were downloaded successfully.")
 

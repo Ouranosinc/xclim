@@ -771,7 +771,7 @@ def stack_variables(ds: xr.Dataset, rechunk: bool = True, dim: str = "multivar")
     # sort to have coherent order with different datasets
     data_vars = sorted(ds.data_vars.items(), key=lambda e: e[0])
     nvar = len(data_vars)
-    for i, (nm, var) in enumerate(data_vars):
+    for i, (_nm, var) in enumerate(data_vars):
         for name, attr in var.attrs.items():
             attrs.setdefault(f"_{name}", [None] * nvar)[i] = attr
 

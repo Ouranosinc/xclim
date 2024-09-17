@@ -223,18 +223,14 @@ exclude = [
   "pylintrc"
 ]
 
-[tool.isort]
-profile = "black"
-py_version = 39
-append_only = true
-add_imports = "from __future__ import annotations"
-
 [tool.mypy]
-python_version = 3.9
-show_error_codes = true
-warn_return_any = true
-warn_unused_configs = true
+python_version = "3.9"
+enable_error_code = ["ignore-without-code", "redundant-expr", "truthy-bool"]
 plugins = ["numpy.typing.mypy_plugin"]
+strict = true
+warn_return_any = true
+warn_unreachable = true
+warn_unused_configs = true
 
 [[tool.mypy.overrides]]
 module = [
@@ -253,13 +249,17 @@ module = [
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]
+minversion = "7.0"
 addopts = [
-  "--verbose",
+  "-ra",
   "--color=yes",
   "--numprocesses=0",
   "--maxprocesses=8",
-  "--dist=worksteal"
+  "--dist=worksteal",
+  "--strict-config",
+  "--strict-markers"
 ]
+log_cli_level = "INFO"
 norecursedirs = ["docs/notebooks/*"]
 filterwarnings = ["ignore::UserWarning"]
 testpaths = [
@@ -271,11 +271,11 @@ markers = [
   "requires_docs: mark tests that can only be run with documentation present (deselect with '-m \"not requires_docs\"')",
   "requires_internet: mark tests that require internet access (deselect with '-m \"not requires_internet\"')"
 ]
+xfail_strict = true
 
 [tool.ruff]
 src = ["xclim"]
 line-length = 150
-target-version = "py39"
 exclude = [
   ".git",
   "build",
@@ -296,18 +296,22 @@ extend-select = [
   "RUF022" # unsorted-dunder-all
 ]
 ignore = [
+  "B028", # no-explicit-stacklevel
   "D205", # blank-line-after-summary
   "D400", # ends-in-period
   "D401" # non-imperative-mood
 ]
 preview = true
 select = [
+  "B", # bugbear
   "C90", # mccabe-complexity
   "D", # docstrings
   "E", # pycodestyle errors
   "F", # pyflakes
+  "I", # imports
   "N802", # invalid-function-name
   "S", # bandit
+  "UP", # pyupgrade
   "W" # pycodestyle warnings
 ]
 
@@ -323,11 +327,11 @@ scipy = "sp"
 xarray = "xr"
 
 [tool.ruff.lint.isort]
-known-first-party = ["xclim"]
 case-sensitive = true
 detect-same-package = false
-lines-after-imports = 2
-no-lines-before = ["future", "standard-library"]
+known-first-party = ["xclim"]
+no-lines-before = ["future"]
+required-imports = ["from __future__ import annotations"]
 
 [tool.ruff.lint.mccabe]
 max-complexity = 20

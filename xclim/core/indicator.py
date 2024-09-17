@@ -105,17 +105,17 @@ import re
 import warnings
 import weakref
 from collections import OrderedDict, defaultdict
+from collections.abc import Sequence
 from copy import deepcopy
 from dataclasses import asdict, dataclass
 from functools import reduce
 from inspect import Parameter as _Parameter
-from inspect import Signature
+from inspect import Signature, signature
 from inspect import _empty as _empty_default  # noqa
-from inspect import signature
 from os import PathLike
 from pathlib import Path
 from types import ModuleType
-from typing import Any, Callable, Optional, Sequence, Union
+from typing import Any, Callable, Optional, Union
 
 import numpy as np
 import xarray
