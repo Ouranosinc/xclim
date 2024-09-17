@@ -13,7 +13,7 @@ repos:
     hooks:
       - id: trailing-whitespace
       - id: end-of-file-fixer
-        exclude: '.ipynb|.github/publish-mastodon.template.md'
+        exclude: '.ipynb|.github/publish-mastodon-template.md'
       - id: check-json
       - id: check-toml
       - id: check-yaml
@@ -36,15 +36,11 @@ repos:
     rev: 24.8.0
     hooks:
       - id: black
-  - repo: https://github.com/PyCQA/isort
-    rev: 5.13.2
-    hooks:
-      - id: isort
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.6.3
     hooks:
       - id: ruff
-        args: [ '--fix' ]
+        args: [ '--fix', '--show-fixes' ]
   - repo: https://github.com/pylint-dev/pylint
     rev: v3.2.7
     hooks:
@@ -68,20 +64,35 @@ repos:
         additional_dependencies: [ 'pyupgrade==3.16.0' ]
       - id: nbqa-black
         additional_dependencies: [ 'black==24.4.2' ]
-      - id: nbqa-isort
-        additional_dependencies: [ 'isort==5.13.2' ]
   - repo: https://github.com/kynan/nbstripout
     rev: 0.7.1
     hooks:
       - id: nbstripout
         files: '.ipynb'
         args: [ '--extra-keys', 'metadata.kernelspec' ]
+  - repo: https://github.com/pre-commit/pygrep-hooks
+    rev: v1.10.0
+    hooks:
+#      - id: python-check-blanket-noqa
+#      - id: python-check-blanket-type-ignore
+      - id: python-no-eval
+      - id: python-no-log-warn
+      - id: python-use-type-annotations
+      - id: rst-directive-colons
+      - id: rst-inline-touching-normal
+      - id: text-unicode-replacement-char
+  - repo: https://github.com/executablebooks/mdformat
+    rev: 0.7.17
+    hooks:
+      - id: mdformat
+        exclude: '.github/\w+.md|.github/publish-mastodon-template.md|docs/paper/paper.md'
   - repo: https://github.com/keewis/blackdoc
     rev: v0.3.9
     hooks:
       - id: blackdoc
-        additional_dependencies: [ 'black==24.4.2' ]
+        additional_dependencies: [ 'black==24.8.0' ]
         exclude: '(xclim/indices/__init__.py|docs/installation.rst)'
+      - id: blackdoc-autoupdate-black
   - repo: https://github.com/codespell-project/codespell
     rev: v2.3.0
     hooks:
