@@ -1275,7 +1275,7 @@ def declare_relative_units(**units_by_name) -> Callable:
 
             return out
 
-        setattr(wrapper, "relative_units", units_by_name)
+        wrapper.relative_units = units_by_name
         return wrapper
 
     return dec
@@ -1355,7 +1355,7 @@ def declare_units(**units_by_name) -> Callable:
 
             return out
 
-        setattr(wrapper, "in_units", units_by_name)
+        wrapper.in_units = units_by_name
         return wrapper
 
     return dec
