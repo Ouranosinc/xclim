@@ -104,7 +104,7 @@ def _process_indicator(indicator, ctx, **params):
     try:
         out = indicator(**params)
     except MissingVariableError as err:
-        raise click.BadArgumentUsage(err.args[0])
+        raise click.BadArgumentUsage(err.args[0]) from err
 
     if isinstance(out, tuple):
         dsout = dsout.assign(**{var.name: var for var in out})
