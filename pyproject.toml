@@ -62,7 +62,7 @@ dev = [
   # Dev tools and testing
   "black[jupyter] ==24.8.0",
   "blackdoc ==0.3.9",
-  "bump-my-version ==0.26.0",
+  "bump-my-version ==0.26.1",
   "codespell ==2.3.0",
   "coverage[toml] >=7.5.0",
   "coveralls >=4.0.1; python_version < '3.13'", # coveralls is not yet compatible with Python 3.13
@@ -89,7 +89,7 @@ dev = [
   "tokenize-rt >=5.2.0",
   "tox >=4.18.1",
   # "tox-conda",  # Will be added when a tox@v4.0+ compatible plugin is released.
-  "vulture ==2.11",
+  "vulture ==2.12",
   "xdoctest >=1.1.5",
   "yamllint ==1.35.1"
 ]
