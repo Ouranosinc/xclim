@@ -16,8 +16,9 @@ import xarray as xr
 from numba import njit
 from xarray.core.utils import get_temp_dimname
 
+from xclim.core import DateStr, DayOfYearStr
 from xclim.core.options import OPTIONS, RUN_LENGTH_UFUNC
-from xclim.core.utils import DateStr, DayOfYearStr, uses_dask
+from xclim.core.utils import uses_dask
 
 npts_opt = 9000
 """
@@ -1632,7 +1633,7 @@ def suspicious_run_1d(
             raise NotImplementedError(f"{op}")
 
     out = np.zeros_like(arr, dtype=bool)
-    for st, l in zip(pos[sus_runs], rl[sus_runs]):  # noqa: E741
+    for st, l in zip(pos[sus_runs], rl[sus_runs], strict=False):  # noqa: E741
         out[st : st + l] = True  # noqa: E741
     return out
 
@@ -1674,5 +1675,5 @@ def suspicious_run(
         dask="parallelized",
         output_dtypes=[bool],
         keep_attrs=True,
-        kwargs=dict(window=window, op=op, thresh=thresh),
+        kwargs={"window": window, "op": op, "thresh": thresh},
     )

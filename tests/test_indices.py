@@ -24,9 +24,10 @@ from packaging.version import Version
 from pint import __version__ as __pint_version__
 
 from xclim import indices as xci
+from xclim.core import ValidationError
 from xclim.core.calendar import percentile_doy
 from xclim.core.options import set_options
-from xclim.core.units import ValidationError, convert_units_to, units
+from xclim.core.units import convert_units_to, units
 
 K2C = 273.15
 

@@ -1,11 +1,13 @@
 # noqa: D100
 from __future__ import annotations
 
-from typing import Callable, cast
+from collections.abc import Callable
+from typing import cast
 
 import numpy as np
 import xarray
 
+from xclim.core import Quantified
 from xclim.core.bootstrapping import percentile_bootstrap
 from xclim.core.calendar import resample_doy
 from xclim.core.units import (
@@ -16,11 +18,9 @@ from xclim.core.units import (
     str2pint,
     to_agg_units,
 )
-from xclim.core.utils import Quantified
-
-from . import run_length as rl
-from ._conversion import rain_approximation, snowfall_approximation
-from .generic import compare, select_resample_op, threshold_count
+from xclim.indices import run_length as rl
+from xclim.indices._conversion import rain_approximation, snowfall_approximation
+from xclim.indices.generic import compare, select_resample_op, threshold_count
 
 # Frequencies : YS: year start, QS-DEC: seasons starting in december, MS: month start
 # See https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html

@@ -5,7 +5,6 @@ from __future__ import annotations
 import gc
 import json
 from inspect import signature
-from typing import Union
 
 import dask
 import numpy as np
@@ -14,6 +13,7 @@ import xarray as xr
 
 import xclim
 from xclim import __version__, atmos
+from xclim.core import VARIABLES, MissingVariableError, Quantified
 from xclim.core.calendar import select_time
 from xclim.core.formatting import (
     AttrFormatter,
@@ -24,7 +24,7 @@ from xclim.core.formatting import (
 )
 from xclim.core.indicator import Daily, Indicator, ResamplingIndicator, registry
 from xclim.core.units import convert_units_to, declare_units, units
-from xclim.core.utils import VARIABLES, InputKind, MissingVariableError, Quantified
+from xclim.core.utils import InputKind
 from xclim.indices import tg_mean
 from xclim.testing import list_input_variables
 
@@ -507,7 +507,7 @@ def test_signature():
         "ds",
         "indexer",
     ]
-    assert sig.parameters["pr"].annotation == Union[xr.DataArray, str]
+    assert sig.parameters["pr"].annotation == xr.DataArray | str
     assert sig.parameters["tas"].default == "tas"
     assert sig.parameters["tas"].kind == sig.parameters["tas"].POSITIONAL_OR_KEYWORD
     assert sig.parameters["thresh"].kind == sig.parameters["thresh"].KEYWORD_ONLY
@@ -708,8 +708,7 @@ def test_indicator_from_dict():
     assert ind.parameters["threshold"].description == "A threshold temp"
     # Injection of parameters
     assert ind.injected_parameters["op"] == "<"
-    # Default value for input variable injected and meta injected
-    assert ind._variable_mapping["data"] == "tas"
+    assert ind.parameters["tas"].compute_name == "data"
     assert signature(ind).parameters["tas"].default == "tas"
     assert ind.parameters["tas"].units == "[temperature]"
 

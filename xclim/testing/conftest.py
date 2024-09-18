@@ -20,10 +20,10 @@ from xclim.testing.utils import (
     TESTDATA_CACHE_DIR,
     TESTDATA_REPO_URL,
     gather_testing_data,
+    testing_setup_warnings,
 )
 from xclim.testing.utils import nimbus as _nimbus
 from xclim.testing.utils import open_dataset as _open_dataset
-from xclim.testing.utils import testing_setup_warnings
 
 
 @pytest.fixture(autouse=True, scope="session")
@@ -68,11 +68,10 @@ def is_matplotlib_installed(xdoctest_namespace) -> None:
 
     def _is_matplotlib_installed():
         try:
-            import matplotlib  # noqa
+            import matplotlib  # noqa: F401
 
-            return
         except ImportError:
-            return pytest.skip("This doctest requires matplotlib to be installed.")
+            pytest.skip("This doctest requires matplotlib to be installed.")
 
     xdoctest_namespace["is_matplotlib_installed"] = _is_matplotlib_installed
 
@@ -87,6 +86,8 @@ def doctest_setup(xdoctest_namespace, nimbus, worker_id, open_dataset) -> None:
     )
 
     class AttrDict(dict):
+        """A dictionary that allows access to its keys as attributes."""
+
         def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
             self.__dict__ = self

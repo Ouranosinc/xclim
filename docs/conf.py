@@ -30,6 +30,7 @@ xarray.Dataset.__module__ = "xarray"
 xarray.CFTimeIndex.__module__ = "xarray"
 
 import xclim  # noqa
+from xclim import indicators as _indicators  # noqa
 from xclim.core.indicator import registry  # noqa
 
 # If extensions (or modules to document with autodoc) are in another
@@ -45,7 +46,7 @@ sys.path.insert(0, os.path.abspath("."))
 indicators = {}
 # FIXME: Include cf module when its indicators documentation is improved.
 for module in ("atmos", "generic", "land", "seaIce", "icclim", "anuclim"):
-    for key, ind in getattr(xclim.indicators, module).__dict__.items():
+    for key, ind in getattr(_indicators, module).__dict__.items():
         if hasattr(ind, "_registry_id") and ind._registry_id in registry:  # noqa
             indicators[ind._registry_id] = {  # noqa
                 "realm": ind.realm,

@@ -24,10 +24,13 @@ __all__ = [
 
 
 class Streamflow(ResamplingIndicator):
+    """Streamflow class."""
+
     context = "hydro"
     src_freq = "D"
     keywords = "streamflow hydrology"
 
+    # TODO: TJS: The signature of this method seems wrong. Should it be `def cfcheck(cls, q):` or something else? Is it a static method?
     @staticmethod
     def cfcheck(q):
         check_valid(q, "standard_name", "water_volume_transport_in_river_channel")
@@ -72,7 +75,7 @@ doy_qmax = Streamflow(
     description="Day of the year of the maximum streamflow over {indexer}.",
     units="",
     compute=declare_units(da="[discharge]")(generic.select_resample_op),
-    parameters=dict(op=generic.doymax, out_units=None),
+    parameters={"op": generic.doymax, "out_units": None},
 )
 
 
@@ -84,7 +87,7 @@ doy_qmin = Streamflow(
     description="Day of the year of the minimum streamflow over {indexer}.",
     units="",
     compute=declare_units(da="[discharge]")(generic.select_resample_op),
-    parameters=dict(op=generic.doymin, out_units=None),
+    parameters={"op": generic.doymin, "out_units": None},
 )
 
 
