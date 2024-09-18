@@ -495,7 +495,7 @@ def windowed_max_run_sum(
     #     out = windowed_max_run_sum_ufunc(da, window, dim)
 
     if window == 1 and freq is None:
-        out = da.max(dim=dim)
+        out = rse(da, dim=dim, index=index).max(dim=dim)
 
     else:
         d_rse = rse(da, dim=dim, index=index)
