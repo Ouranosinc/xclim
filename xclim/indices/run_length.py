@@ -281,8 +281,8 @@ def rse(
     xr.DataArray
         Values are 0 where da is False (out of runs).
     """
-    if da.dtype == bool: 
-       da = da.astype(int)
+    if da.dtype == bool:
+        da = da.astype(int)
     # "first" case: Algorithm is applied on inverted array and output is inverted back
     if index == "first":
         da = da[{dim: slice(None, None, -1)}]
