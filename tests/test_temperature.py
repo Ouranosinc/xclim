@@ -897,6 +897,20 @@ class TestHeatWaveMagnitude:
         hwm = atmos.heat_wave_magnitude(tx, freq="YS")
         np.testing.assert_array_equal(hwm, [25])
 
+    def test_small_window_single_day(self, tasmax_series):
+        tx = np.zeros(366)
+        tx[5:8] = np.array([30, 0, 30])
+        tx = tasmax_series(tx + K2C, start="1/1/2000")
+        hwm = atmos.heat_wave_magnitude(tx, window=1, freq="YS")
+        np.testing.assert_array_equal(hwm, [5])
+
+    def test_small_window_double_day(self, tasmax_series):
+        tx = np.zeros(366)
+        tx[5:7] = np.array([30, 30])
+        tx = tasmax_series(tx + K2C, start="1/1/2000")
+        hwm = atmos.heat_wave_magnitude(tx, window=1, freq="YS")
+        np.testing.assert_array_equal(hwm, [10])
+
     def test_convert_units(self, tasmax_series):
         tx = np.zeros(366)
         tx[:5] = np.array([30, 30, 30, 30, 30])
