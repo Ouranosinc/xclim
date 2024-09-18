@@ -105,7 +105,7 @@ def create_ensemble(
     """
     if isinstance(datasets, dict):
         if realizations is None:
-            realizations, datasets = zip(*datasets.items())
+            realizations, datasets = zip(*datasets.items(), strict=False)
         else:
             datasets = datasets.values()
     elif isinstance(datasets, str) and realizations is not None:

@@ -95,7 +95,7 @@ def ufunc(request):
 @pytest.mark.parametrize("index", ["first", "last"])
 def test_rle(ufunc, use_dask, index):
     if use_dask and ufunc:
-        pytest.xfail("rle_1d is not implemented for dask arrays.")
+        pytest.skip("rle_1d is not implemented for dask arrays.")
 
     values = np.zeros((10, 365, 4, 4))
     time = pd.date_range("2000-01-01", periods=365, freq="D")

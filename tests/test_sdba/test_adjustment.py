@@ -242,6 +242,7 @@ class TestDQM:
     @pytest.mark.xfail(
         raises=ValueError,
         reason="This test sometimes fails due to a block/indexing error",
+        strict=False,
     )
     @pytest.mark.parametrize("kind,name", [(ADDITIVE, "tas"), (MULTIPLICATIVE, "pr")])
     @pytest.mark.parametrize("add_dims", [True, False])
