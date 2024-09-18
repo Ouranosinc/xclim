@@ -223,7 +223,7 @@ def publish_release_notes(
     -----
     This function is used solely for development and packaging purposes.
     """
-    if isinstance(changes, (str, Path)):
+    if isinstance(changes, str | Path):
         changes_file = Path(changes).absolute()
     else:
         changes_file = Path(__file__).absolute().parents[2].joinpath("CHANGELOG.rst")
@@ -276,7 +276,7 @@ def publish_release_notes(
 
     if not file:
         return changes
-    if isinstance(file, (Path, os.PathLike)):
+    if isinstance(file, Path | os.PathLike):
         with open(file, "w", encoding="utf-8") as f:
             print(changes, file=f)
     else:
@@ -362,7 +362,7 @@ def show_versions(
 
     if not file:
         return message
-    if isinstance(file, (Path, os.PathLike)):
+    if isinstance(file, Path | os.PathLike):
         with open(file, "w", encoding="utf-8") as f:
             print(message, file=f)
     else:

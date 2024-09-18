@@ -10,10 +10,11 @@ from __future__ import annotations
 
 import logging
 import warnings
+from collections.abc import Callable
 from copy import deepcopy
 from importlib.resources import files
 from inspect import signature
-from typing import Any, Callable, Literal, cast
+from typing import Any, Literal, cast
 
 import cf_xarray.units
 import numpy as np
@@ -189,7 +190,7 @@ def pint2cfunits(value: units.Quantity | units.Unit) -> str:
     str
         Units following CF-Convention, using symbols.
     """
-    if isinstance(value, (pint.Quantity, units.Quantity)):
+    if isinstance(value, pint.Quantity | units.Quantity):
         value = value.units
 
     # Force "1" if the formatted string is "" (pint < 0.24)
@@ -300,7 +301,7 @@ def convert_units_to(  # noqa: C901
     # Target units
     if isinstance(target, units.Unit):
         target_unit = target
-    elif isinstance(target, (str, xr.DataArray)):
+    elif isinstance(target, str | xr.DataArray):
         target_unit = units2pint(target)
     else:
         raise NotImplementedError(
@@ -372,7 +373,7 @@ def convert_units_to(  # noqa: C901
             return out
 
     # TODO remove backwards compatibility of int/float thresholds after v1.0 release
-    if isinstance(source, (float, int)):
+    if isinstance(source, float | int):
         raise TypeError("Please specify units explicitly.")
 
     raise NotImplementedError(f"Source of type `{type(source)}` is not supported.")
@@ -1115,7 +1116,7 @@ def check_units(
             )
             val = str(val).replace("UNSET ", "")
 
-    if isinstance(val, (int, float)):
+    if isinstance(val, int | float):
         raise TypeError("Please set units explicitly using a string.")
 
     try:
