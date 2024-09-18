@@ -151,19 +151,19 @@ jobs:
             testdata-cache: 'C:\Users\runneradmin\AppData\Local\xclim-testdata\xclim-testdata\Cache'
             markers: -m 'not slow'
             python-version: "3.10"
-            tox-env: py39-coverage-prefetch  # Test data prefetch is needed for Windows
+            tox-env: py310-coverage-prefetch  # Test data prefetch is needed for Windows
           # macOS builds
           - os: 'macos-latest'
             testdata-cache: '~/Library/Caches/xclim-testdata'
             markers: ''  # Slow tests
             python-version: "3.11"
-            tox-env: py310-coverage-extras
+            tox-env: py311-coverage-extras
           # Specialized tests
           - os: 'ubuntu-latest'
             testdata-cache: '~/.cache/xclim-testdata'
             markers: -m 'not requires_internet and not slow'
             python-version: "3.11.0"
-            tox-env: py39-coverage-offline-prefetch
+            tox-env: py311-coverage-offline-prefetch
           - os: 'ubuntu-latest'
             testdata-cache: '~/.cache/xclim-testdata'
             markers: '' # No markers for notebooks
