@@ -60,7 +60,7 @@ class TestEnsembleStats:
 
         # Kinda a hack? Alternative is to open and rewrite in a temp folder.
         files = [nimbus.fetch(f) for f in ensemble_dataset_objects["nc_files_simple"]]
-        ens2 = ensembles.create_ensemble(dict(zip(reals, files)))
+        ens2 = ensembles.create_ensemble(dict(zip(reals, files, strict=False)))
         xr.testing.assert_identical(ens1, ens2)
 
     def test_no_time(self, tmp_path, ensemble_dataset_objects, open_dataset):

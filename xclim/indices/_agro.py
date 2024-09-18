@@ -417,7 +417,7 @@ def biologically_effective_degree_days(
             lat = _gather_lat(tasmin)
 
         if method.lower() == "gladstones":
-            if isinstance(lat, (int, float)):
+            if isinstance(lat, int | float):
                 lat = xarray.DataArray(lat)
             lat_mask = abs(lat) <= 50
             k = 1 + xarray.where(

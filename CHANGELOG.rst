@@ -6,6 +6,11 @@ v0.53.0 (unreleased)
 --------------------
 Contributors to this version: Adrien Lamarche (:user:`LamAdr`), Trevor James Smith (:user:`Zeitsperre`),  Éric Dupuis (:user:`coxipi`), Pascal Bourgault (:user:`aulemahal`), Sascha Hofmann (:user:`saschahofmann`).
 
+Announcements
+^^^^^^^^^^^^^
+* `xclim` has now adopted the `Scientific Python SPEC 0 <https://scientific-python.org/specs/spec-0000/>`_ conventions for its suggested dependency support schedule. (:issue:`1914`, :pull:`1915`).
+* `xclim` has dropped support for Python 3.9 and adopted Python 3.10+ code styling conventions. (:issue:`1914`, :pull:`1915`).
+
 New indicators
 ^^^^^^^^^^^^^^
 * New ``heat_spell_frequency``, ``heat_spell_max_length`` and ``heat_spell_total_length`` : spell length statistics on a bivariate condition that uses the average over a window by default. (:pull:`1885`).
@@ -27,6 +32,7 @@ Breaking changes
 * `platformdirs` is no longer a direct dependency of `xclim`, but `pooch` is required to use many of the new testing functions (installable via `pip install pooch` or `pip install 'xclim[dev]'`). (:pull:`1889`).
 * The following previously-deprecated functions have now been removed from `xclim`: ``xclim.core.calendar.convert_calendar``, ``xclim.core.calendar.date_range``, ``xclim.core.calendar.date_range_like``, ``xclim.core.calendar.interp_calendar``, ``xclim.core.calendar.days_in_year``, ``xclim.core.calendar.datetime_to_decimal_year``. For guidance on how to migrate to alternatives, see the `version 0.50.0 Breaking changes <#v0-50-0-2024-06-17>`_. (:issue:`1010`, :pull:`1845`).
 * `transform` argument of `OTC/dOTC` classes (and child functions) is changed to `normalization`, and `numIterMax` is changed to `num_iter_max` in `utils.optimal_transport` (:pull:`1896`).
+* `xclim` now requires `numpy >=1.23.0` and `scikit-learn >=1.1.0`, as well as (optionally) `ipython >=8.5.0`, `nbsphinx >=0.9.5`, and `matplotlib >=3.6.0` . (:issue:`1914`, :pull:`1915`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
