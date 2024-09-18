@@ -16,9 +16,9 @@ bracex==2.4 \
     --hash=sha256:a27eaf1df42cf561fed58b7a8f3fdf129d1ea16a81e1fadd1d17989bc6384beb \
     --hash=sha256:efdc71eff95eaff5e0f8cfebe7d01adf2c8637c8c92edaf63ef348c241a82418
     # via wcmatch
-bump-my-version==0.26.0 \
-    --hash=sha256:9e2c01b7639960379440c4a371b3c8c0aa66cf6979985f1c9ba2e7c2fb4a185f \
-    --hash=sha256:fe35ebae91e92deebe809ce06bfa37303e45e4f087ad4a371f605702e767623f
+bump-my-version==0.26.1 \
+    --hash=sha256:af1cada726cf6f9a723d18941c68c325d5196453a180b3a42f8e0b38567d734d \
+    --hash=sha256:be09c48111eeba56f8c870b69718013f52b5b6c6e65bc3bda5bc928181901c48
     # via -r CI/requirements_ci.in
 cachetools==5.5.0 \
     --hash=sha256:02134e8439cdc2ffb62023ce1debca2944c3f289d66bb17ead3ab3dede74b292 \
@@ -369,9 +369,9 @@ tomlkit==0.13.0 \
     # via
     #   bump-my-version
     #   pylint
-tox==4.18.1 \
-    --hash=sha256:35d472032ee1f73fe20c3e0e73d7073a4e85075c86ff02c576f9fc7c6a15a578 \
-    --hash=sha256:3c0c96bc3a568a5c7e66387a4cfcf8c875b52e09f4d47c9f7a277ec82f1a0b11
+tox==4.19.0 \
+    --hash=sha256:66177d887f9d7ef8eaa9b58b187f7b865fa4c58650086c01336e82c9831e1867 \
+    --hash=sha256:6e20a520db7710f6980b8ec96bde189d6b8cf41b327ec703b03e1a2a447b1aaf
     # via
     #   -r CI/requirements_ci.in
     #   tox-gh
