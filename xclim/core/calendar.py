@@ -152,7 +152,7 @@ def common_calendar(calendars: Sequence[str], join="outer") -> str:
     join : {'inner', 'outer'}
       The criterion for the common calendar.
 
-      - 'outer': the common calendar is the smallest calendar (in number of days by year) that will include all the
+      - 'outer': the common calendar is the biggest calendar (in number of days by year) that will include all the
                  dates of the other calendars.
                  When converting the data to this calendar, no timeseries will lose elements, but some
                  might be missing (gaps or NaNs in the series).
