@@ -26,7 +26,7 @@ classifiers = [
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
-  "Programming Language :: Python :: 3.13",
+  # "Programming Language :: Python :: 3.13",
   "Programming Language :: Python :: 3 :: Only",
   "Topic :: Scientific/Engineering :: Atmospheric Science",
   "Topic :: Scientific/Engineering :: Hydrology",
@@ -36,8 +36,7 @@ dynamic = ["description", "version"]
 dependencies = [
   "boltons >=20.1",
   "bottleneck >=1.3.1",
-  # cf-xarray is differently named on conda-forge
-  "cf-xarray >=0.9.3",
+  "cf-xarray >=0.9.3", # cf-xarray is differently named on conda-forge
   "cftime >=1.4.1",
   "click >=8.1",
   "dask[array] >=2.6",
@@ -65,7 +64,7 @@ dev = [
   "bump-my-version ==0.26.1",
   "codespell ==2.3.0",
   "coverage[toml] >=7.5.0",
-  # "coveralls >=4.0.1", # coveralls is not yet compatible with Python 3.13
+  "coveralls >=4.0.1", # coveralls is not yet compatible with Python 3.13
   "deptry ==0.20.0",
   "flake8 >=7.1.1",
   "flake8-rst-docstrings >=0.3.0",
@@ -99,7 +98,7 @@ docs = [
   "furo >=2023.9.10",
   "ipykernel",
   "matplotlib >=3.6.0",
-  "nbsphinx",
+  "nbsphinx >=0.9.5",
   "nc-time-axis >=1.4.1",
   "pooch >=1.8.0",
   "pybtex >=0.24.0",

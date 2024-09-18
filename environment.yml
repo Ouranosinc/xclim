@@ -49,7 +49,7 @@ dependencies:
   - mypy >=1.10.0
   - nbconvert <7.14  # Pinned due to directive errors in sphinx. See: https://github.com/jupyter/nbconvert/issues/2092
   - nbqa >=1.8.2
-  - nbsphinx
+  - nbsphinx >=0.9.5
   - nbval >=0.11.0
   - nc-time-axis >=1.4.1
   - netcdf4  # Required for some Jupyter notebooks

@@ -134,17 +134,17 @@ jobs:
           - os: 'ubuntu-latest'
             testdata-cache: '~/.cache/xclim-testdata'
             markers: -m 'not slow'
+            python-version: "3.10"
+            tox-env: standard
+          - os: 'ubuntu-latest'
+            testdata-cache: '~/.cache/xclim-testdata'
+            markers: -m 'not slow'
             python-version: "3.11"
             tox-env: standard
           - os: 'ubuntu-latest'
             testdata-cache: '~/.cache/xclim-testdata'
             markers: -m 'not slow'
             python-version: "3.12"
-            tox-env: standard
-          - os: 'ubuntu-latest'
-            testdata-cache: '~/.cache/xclim-testdata'
-            markers: -m 'not slow'
-            python-version: "3.13.0-rc.2"
             tox-env: standard
           # Windows builds
           - os: 'windows-latest'
@@ -172,7 +172,7 @@ jobs:
           - os: 'ubuntu-latest'
             testdata-cache: '~/.cache/xclim-testdata'
             markers: '' # No markers for doctests
-            python-version: "3.13.0-rc.2"
+            python-version: "3.12"
             tox-env: doctests
     steps:
       - name: Harden Runner
@@ -195,7 +195,7 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
       - name: Install Eigen3 (SBCK)
-        if: ${{ matrix.python-version == '3.13-rc.2' && matrix.os == 'ubuntu-latest' }}
+        if: ${{ matrix.python-version == '3.12' && matrix.os == 'ubuntu-latest' }}
         run: |
           sudo apt-get update
           sudo apt-get install libeigen3-dev
