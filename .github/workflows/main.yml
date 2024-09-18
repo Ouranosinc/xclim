@@ -162,7 +162,7 @@ jobs:
           - os: 'ubuntu-latest'
             testdata-cache: '~/.cache/xclim-testdata'
             markers: -m 'not requires_internet and not slow'
-            python-version: "3.13.0-rc.2"
+            python-version: "3.11.0"
             tox-env: py39-coverage-offline-prefetch
           - os: 'ubuntu-latest'
             testdata-cache: '~/.cache/xclim-testdata'
@@ -172,7 +172,7 @@ jobs:
           - os: 'ubuntu-latest'
             testdata-cache: '~/.cache/xclim-testdata'
             markers: '' # No markers for doctests
-            python-version: "3.12"
+            python-version: "3.13.0-rc.2"
             tox-env: doctests
     steps:
       - name: Harden Runner
