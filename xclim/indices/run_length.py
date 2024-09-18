@@ -499,7 +499,7 @@ def windowed_max_run_sum(
 
     else:
         d_rse = rse(da, dim=dim, index=index)
-        d_rle = rle(xr.where(da > 0, 1, 0), dim=dim, index=index)
+        d_rle = rle(da>0, dim=dim, index=index)
         d = d_rse.where(d_rle >= window, 0)
         if freq is not None:
             d = d.resample({dim: freq})
