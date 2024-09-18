@@ -378,10 +378,16 @@
     "abstract": "Nombre de jours de vagues de chaleur. Une vague de chaleur se produit lorsque la température maximale quotidienne excède un seuil donné durant un certain nombre de jours."
   },
   "HEAT_WAVE_MAGNITUDE": {
-    "long_name": "TODO",
-    "description": "TODO",
-    "title": "TODO",
-    "abstract": "TODO"
+    "long_name": "Différence cumulative maximale entre la température maximale quotidienne et {thresh} "
+    "pour les jours faisant partie d'une vague de chaleur. Une vague de chaleur est définie comme une série d'au moins "
+    "{window} jours consécutifs où la température maximale quotidien est au-dessus de {thresh}",
+    "description": "Cumul {freq:m} maximal de la différence entre la température et {thresh} pour les jours faisant partie "
+    "d'une vague de chaleur. Une vague de chaleur est définie comme une série d'au moins {window} jours consécutifs où la "
+    "température maximale quotidien est au-dessus de {thresh}",
+    "title": "Magnitude de la vague de chaleur {freq:m} la plus intense. Une vague de chaleur est définie comme une série d'au moins "
+    "{window} jours consécutifs où la température maximale quotidien est au-dessus de {thresh}.", 
+    "abstract": "Magnitude de la vague de chaleur {freq:m} la plus intense. Une vague de chaleur est définie comme une série d'au moins "
+    "{window} jours consécutifs où la température maximale quotidien est au-dessus de {thresh}.", 
   },
   "TG": {
     "long_name": "Moyenne des températures maximale et minimale quotidennes",
