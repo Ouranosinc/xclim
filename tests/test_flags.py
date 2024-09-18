@@ -23,7 +23,7 @@ class TestDataFlags:
     ):
         ds = xr.Dataset()
         for series, val in zip(
-            [tas_series, tasmax_series, tasmin_series], [0, 10, -10]
+            [tas_series, tasmax_series, tasmin_series], [0, 10, -10], strict=False
         ):
             vals = val + K2C + np.sin(2 * np.pi * np.arange(366 * 3) / 366)
             arr = series(vals, start="1971-01-01")
@@ -84,7 +84,7 @@ class TestDataFlags:
     def test_suspicious_tas_data(self, tas_series, tasmax_series, tasmin_series):
         bad_ds = xr.Dataset()
         for series, val in zip(
-            [tas_series, tasmax_series, tasmin_series], [0, 10, -10]
+            [tas_series, tasmax_series, tasmin_series], [0, 10, -10], strict=False
         ):
             vals = val + K2C + np.sin(2 * np.pi * np.arange(366 * 7) / 366)
             arr = series(vals, start="1971-01-01")
@@ -118,7 +118,7 @@ class TestDataFlags:
 
     def test_raises(self, tasmax_series, tasmin_series):
         bad_ds = xr.Dataset()
-        for series, val in zip([tasmax_series, tasmin_series], [10, -10]):
+        for series, val in zip([tasmax_series, tasmin_series], [10, -10], strict=False):
             vals = val + K2C + np.sin(2 * np.pi * np.arange(366 * 3) / 366)
             arr = series(vals, start="1971-01-01")
             bad_ds = xr.merge([bad_ds, arr])

@@ -3,7 +3,7 @@ channels:
   - conda-forge
   - defaults
 dependencies:
-  - python >=3.9
+  - python >=3.10,<3.14
   - boltons >=20.1
   - bottleneck >=1.3.1
   - cf_xarray >=0.9.3
@@ -13,13 +13,13 @@ dependencies:
   - filelock >=3.14.0
   - jsonpickle >=3.1.0
   - numba >=0.54.1
-  - numpy >=1.20.0
+  - numpy >=1.23.0
   - packaging >=24.0
   - pandas >=2.2.0
   - pint >=0.18.0
   - pyarrow >=15.0.0  # Strongly encouraged for Pandas v2.2.0+
   - pyyaml >=6.0.1
-  - scikit-learn >=0.21.3
+  - scikit-learn >=1.1.0
   - scipy >=1.9.0
   - statsmodels >=0.14.2
   - xarray >=2023.11.0
@@ -34,7 +34,7 @@ dependencies:
   - cairosvg
   - codespell ==2.3.0
   - coverage >=7.5.0
-  - coveralls >=4.0.0
+  - coveralls >=4.0.1  # Note: coveralls is not yet compatible with Python 3.13
   - deptry ==0.18.0
   - distributed >=2.0
   - flake8 >=7.1.1
@@ -43,13 +43,13 @@ dependencies:
   - furo >=2023.9.10
   - h5netcdf >=1.3.0
   - ipykernel
-  - ipython
+  - ipython >=8.5.0
   - isort ==5.13.2
-  - matplotlib
+  - matplotlib >=3.6.0
   - mypy >=1.10.0
   - nbconvert <7.14  # Pinned due to directive errors in sphinx. See: https://github.com/jupyter/nbconvert/issues/2092
   - nbqa >=1.8.2
-  - nbsphinx
+  - nbsphinx >=0.9.5
   - nbval >=0.11.0
   - nc-time-axis >=1.4.1
   - netcdf4  # Required for some Jupyter notebooks
@@ -72,11 +72,11 @@ dependencies:
   - sphinx-mdinclude
   - sphinxcontrib-bibtex
   - tokenize-rt >=5.2.0
-  - tox >=4.16.0
+  - tox >=4.18.1
   # - tox-conda  # Will be added when a tox@v4.0+ compatible plugin is released.
   - vulture ==2.11
   - xdoctest >=1.1.5
   - yamllint >=1.35.1
-  - pip >=24.0
+  - pip >=24.2.0
   - pip:
     - sphinxcontrib-svg2pdfconverter

@@ -6,7 +6,7 @@ Statistical Downscaling and Bias Adjustment Utilities
 from __future__ import annotations
 
 import itertools
-from typing import Callable
+from collections.abc import Callable
 from warnings import warn
 
 import bottleneck as bn
@@ -757,7 +757,7 @@ def get_clusters_1d(
     cl_maxval = []
     cl_start = []
     cl_end = []
-    for start, end in zip(starts, ends):
+    for start, end in zip(starts, ends, strict=False):
         cluster_max = data[start:end].max()
         if cluster_max > u1:
             cl_maxval.append(cluster_max)
