@@ -34,7 +34,7 @@ dependencies:
   - cairosvg
   - codespell ==2.3.0
   - coverage >=7.5.0
-  - coveralls >=4.0.1  # coveralls is not yet compatible with Python 3.13
+  - coveralls >=4.0.1  # Note: coveralls is not yet compatible with Python 3.13
   - deptry ==0.18.0
   - distributed >=2.0
   - flake8 >=7.1.1
