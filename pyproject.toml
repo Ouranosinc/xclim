@@ -12,7 +12,7 @@ maintainers = [
   {name = "Pascal Bourgault", email = "bourgault.pascal@ouranos.ca"}
 ]
 readme = {file = "README.rst", content-type = "text/x-rst"}
-requires-python = ">=3.9.0"
+requires-python = ">=3.10.0"
 keywords = ["xclim", "xarray", "climate", "climatology", "bias correction", "ensemble", "indicators", "analysis"]
 license = {file = "LICENSE"}
 classifiers = [
@@ -23,10 +23,10 @@ classifiers = [
   "Natural Language :: English",
   "Operating System :: OS Independent",
   "Programming Language :: Python :: 3",
-  "Programming Language :: Python :: 3.9",
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
+  # "Programming Language :: Python :: 3.13",
   "Programming Language :: Python :: 3 :: Only",
   "Topic :: Scientific/Engineering :: Atmospheric Science",
   "Topic :: Scientific/Engineering :: Hydrology",
@@ -36,21 +36,20 @@ dynamic = ["description", "version"]
 dependencies = [
   "boltons >=20.1",
   "bottleneck >=1.3.1",
-  # cf-xarray is differently named on conda-forge
-  "cf-xarray >=0.9.3",
+  "cf-xarray >=0.9.3", # cf-xarray is differently named on conda-forge
   "cftime >=1.4.1",
   "click >=8.1",
   "dask[array] >=2.6",
   "filelock >=3.14.0",
   "jsonpickle >=3.1.0",
   "numba >=0.54.1",
-  "numpy >=1.20.0",
+  "numpy >=1.23.0",
   "packaging >=24.0",
   "pandas >=2.2",
   "pint >=0.18",
   "pyarrow >=10.0.1", # Strongly encouraged for pandas v2.2.0+
   "pyyaml >=6.0.1",
-  "scikit-learn >=0.21.3",
+  "scikit-learn >=1.1.0",
   "scipy >=1.9.0",
   "statsmodels >=0.14.2",
   "xarray >=2023.11.0",
@@ -62,22 +61,22 @@ dev = [
   # Dev tools and testing
   "black[jupyter] ==24.8.0",
   "blackdoc ==0.3.9",
-  "bump-my-version ==0.26.0",
+  "bump-my-version ==0.26.1",
   "codespell ==2.3.0",
   "coverage[toml] >=7.5.0",
-  "coveralls >=4.0.0",
+  "coveralls >=4.0.1", # coveralls is not yet compatible with Python 3.13
   "deptry ==0.20.0",
   "flake8 >=7.1.1",
   "flake8-rst-docstrings >=0.3.0",
   "h5netcdf>=1.3.0",
-  "ipython",
+  "ipython >=8.5.0",
   "isort ==5.13.2",
   "mypy >=1.10.0",
   "nbconvert <7.14", # Pinned due to directive errors in sphinx. See: https://github.com/jupyter/nbconvert/issues/2092
   "nbqa >=1.8.2",
   "nbval >=0.11.0",
   "pandas-stubs >=2.2",
-  "pip >=24.0",
+  "pip >=24.2.0",
   "pooch >=1.8.0",
   "pre-commit >=3.7",
   "pylint >=3.2.4",
@@ -87,9 +86,9 @@ dev = [
   "pytest-xdist[psutil] >=3.2",
   "ruff >=0.5.6",
   "tokenize-rt >=5.2.0",
-  "tox >=4.17.0",
+  "tox >=4.18.1",
   # "tox-conda",  # Will be added when a tox@v4.0+ compatible plugin is released.
-  "vulture ==2.11",
+  "vulture ==2.12",
   "xdoctest >=1.1.5",
   "yamllint ==1.35.1"
 ]
@@ -98,8 +97,8 @@ docs = [
   "distributed >=2.0",
   "furo >=2023.9.10",
   "ipykernel",
-  "matplotlib",
-  "nbsphinx",
+  "matplotlib >=3.6.0",
+  "nbsphinx >=0.9.5",
   "nc-time-axis >=1.4.1",
   "pooch >=1.8.0",
   "pybtex >=0.24.0",
@@ -136,7 +135,7 @@ target-version = [
 ]
 
 [tool.bumpversion]
-current_version = "0.52.3-dev.0"
+current_version = "0.52.3-dev.2"
 commit = true
 commit_args = "--no-verify"
 tag = false
@@ -223,18 +222,15 @@ exclude = [
   "pylintrc"
 ]
 
-[tool.isort]
-profile = "black"
-py_version = 39
-append_only = true
-add_imports = "from __future__ import annotations"
-
 [tool.mypy]
-python_version = 3.9
+python_version = 3.10
 show_error_codes = true
-warn_return_any = true
-warn_unused_configs = true
+enable_error_code = ["ignore-without-code", "redundant-expr", "truthy-bool"]
 plugins = ["numpy.typing.mypy_plugin"]
+strict = true
+warn_return_any = true
+warn_unreachable = true
+warn_unused_configs = true
 
 [[tool.mypy.overrides]]
 module = [
@@ -253,13 +249,17 @@ module = [
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]
+minversion = "7.0"
 addopts = [
-  "--verbose",
+  "-ra",
   "--color=yes",
   "--numprocesses=0",
   "--maxprocesses=8",
-  "--dist=worksteal"
+  "--dist=worksteal",
+  "--strict-config",
+  "--strict-markers"
 ]
+log_cli_level = "INFO"
 norecursedirs = ["docs/notebooks/*"]
 filterwarnings = ["ignore::UserWarning"]
 testpaths = [
@@ -271,11 +271,11 @@ markers = [
   "requires_docs: mark tests that can only be run with documentation present (deselect with '-m \"not requires_docs\"')",
   "requires_internet: mark tests that require internet access (deselect with '-m \"not requires_internet\"')"
 ]
+xfail_strict = true
 
 [tool.ruff]
 src = ["xclim"]
 line-length = 150
-target-version = "py39"
 exclude = [
   ".git",
   "build",
@@ -296,18 +296,22 @@ extend-select = [
   "RUF022" # unsorted-dunder-all
 ]
 ignore = [
+  "B028", # no-explicit-stacklevel
   "D205", # blank-line-after-summary
   "D400", # ends-in-period
   "D401" # non-imperative-mood
 ]
 preview = true
 select = [
+  "B", # bugbear
   "C90", # mccabe-complexity
   "D", # docstrings
   "E", # pycodestyle errors
   "F", # pyflakes
+  "I", # imports
   "N802", # invalid-function-name
   "S", # bandit
+  "UP", # pyupgrade
   "W" # pycodestyle warnings
 ]
 
@@ -323,11 +327,11 @@ scipy = "sp"
 xarray = "xr"
 
 [tool.ruff.lint.isort]
-known-first-party = ["xclim"]
 case-sensitive = true
 detect-same-package = false
-lines-after-imports = 2
-no-lines-before = ["future", "standard-library"]
+known-first-party = ["xclim"]
+no-lines-before = ["future"]
+required-imports = ["from __future__ import annotations"]
 
 [tool.ruff.lint.mccabe]
 max-complexity = 20

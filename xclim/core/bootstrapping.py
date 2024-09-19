@@ -3,8 +3,9 @@
 from __future__ import annotations
 
 import warnings
+from collections.abc import Callable
 from inspect import signature
-from typing import Any, Callable
+from typing import Any
 
 import cftime
 import numpy as np

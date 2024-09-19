@@ -655,7 +655,7 @@ def make_hourly_temperature(tasmin: xr.DataArray, tasmax: xr.DataArray) -> xr.Da
     with tasmin reached at sunsrise and tasmax reached 2h before sunset.
 
     For simplicity and because it's used for daily aggregation, we assume that sunrise globally happens at midnight
-    and the sunsets after `daylength` hours computed via the day_lengths function.
+    and the sunsets after `daylength` hours computed via the :py:func:`day_lengths` function.
 
     Parameters
     ----------

@@ -417,7 +417,7 @@ def biologically_effective_degree_days(
             lat = _gather_lat(tasmin)
 
         if method.lower() == "gladstones":
-            if isinstance(lat, (int, float)):
+            if isinstance(lat, int | float):
                 lat = xarray.DataArray(lat)
             lat_mask = abs(lat) <= 50
             k = 1 + xarray.where(
@@ -1594,7 +1594,8 @@ def chill_portions(tas: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
 
     Returns
     -------
-    xr.DataArray
+    xr.DataArray, [unitless]
+        Chill portions after the Dynamic Model
     """
     tas_K: xarray.DataArray = convert_units_to(tas, "K")
     return (
@@ -1624,21 +1625,17 @@ def chill_units(tas: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
         Chill units using the Utah model
     """
     tas = convert_units_to(tas, "degC")
-    cu = (
+    cu = xarray.where(
+        (tas <= 1.4) | ((tas > 12.4) & (tas <= 15.9)),
+        0,
         xarray.where(
-            (tas <= 1.4) | ((tas > 12.4) & (tas <= 15.9)),
-            0,
+            ((tas > 1.4) & (tas <= 2.4)) | ((tas > 9.1) & (tas <= 12.4)),
+            0.5,
             xarray.where(
-                ((tas > 1.4) & (tas <= 2.4)) | ((tas > 9.1) & (tas <= 12.4)),
-                0.5,
-                xarray.where(
-                    (tas > 2.4) & (tas <= 9.1),
-                    1,
-                    xarray.where((tas > 15.9) & (tas <= 17.9), -0.5, -1),
-                ),
+                (tas > 2.4) & (tas <= 9.1),
+                1,
+                xarray.where((tas > 15.9) & (tas <= 17.9), -0.5, -1),
             ),
-        )
-        .assign_attrs(units="")
-        .rename("cu")
+        ),
     )
-    return cu.resample(time=freq).sum()
+    return cu.resample(time=freq).sum().assign_attrs(units="")

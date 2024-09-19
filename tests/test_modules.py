@@ -269,9 +269,8 @@ class TestOfficialYaml(yamale.YamaleTestCase):
 # It's not really slow, but this is an unstable test (when it fails) and we might not want to execute it on all builds
 @pytest.mark.slow
 def test_encoding():
-    import sys
-
     import _locale
+    import sys
 
     # remove xclim
     del sys.modules["xclim"]

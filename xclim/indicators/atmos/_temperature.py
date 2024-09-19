@@ -106,7 +106,7 @@ class Temp(Daily):
 class TempHourly(Indicator):
     """Temperature indicators involving hourly temperature."""
 
-    src_freq = "H"
+    src_freq = "h"
     keywords = "temperature"
 
 
@@ -1460,7 +1460,6 @@ chill_portions = TempHourly(
     title="Chill portions",
     identifier="cp",
     units="",
-    standard_name="chill_portions",
     # TODO: check what this does
     cell_methods="",
     description="Chill portions are a measure to estimate the bud breaking potential of different crops. "
@@ -1488,8 +1487,6 @@ chill_units = TempHourly(
     description="Chill units are a measure to estimate the bud breaking potential of different crops based on the Utah model developed in "
     "Richardson et al. (1974). The Utah model assigns a weight to each hour depending on the temperature recognising that high temperatures can "
     "actually decrease the potential for bud breaking.",
-    # TODO: check what this does
-    standard_name="chill_units",
     long_name="Chill units after the Utah Model",
     allowed_periods=["A"],
     varname="cu",

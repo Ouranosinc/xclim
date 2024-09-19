@@ -5,7 +5,6 @@ from __future__ import annotations
 import gc
 import json
 from inspect import signature
-from typing import Union
 
 import dask
 import numpy as np
@@ -508,7 +507,7 @@ def test_signature():
         "ds",
         "indexer",
     ]
-    assert sig.parameters["pr"].annotation == Union[xr.DataArray, str]
+    assert sig.parameters["pr"].annotation == xr.DataArray | str
     assert sig.parameters["tas"].default == "tas"
     assert sig.parameters["tas"].kind == sig.parameters["tas"].POSITIONAL_OR_KEYWORD
     assert sig.parameters["thresh"].kind == sig.parameters["thresh"].KEYWORD_ONLY
