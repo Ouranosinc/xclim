@@ -6,6 +6,7 @@ import numpy as np
 import xarray as xr
 
 from xclim import atmos, set_options
+from xclim.indices.helpers import make_hourly_temperature
 
 K2C = 273.16
 
@@ -624,3 +625,16 @@ class TestLateFrostDays:
         lfd = atmos.late_frost_days(tasmin, date_bounds=("04-01", "06-30"))
 
         np.testing.assert_allclose(lfd.isel(time=0), exp, rtol=1e-03)
+
+
+def test_chill_units(atmosds):
+    tasmax = atmosds.tasmax
+    tasmin = atmosds.tasmin
+    tas = make_hourly_temperature(tasmin, tasmax)
+    cu = atmos.chill_units(tas, date_bounds=("04-01", "06-30"))
+    assert cu.attrs["units"] == "1"
+    assert cu.name == "cu"
+    assert cu.time.size == 4
+
+    exp = [-5029.5, -6634.5, -5993.0, -6596.0, -5654.0]
+    np.testing.assert_allclose(cu.isel(time=0), exp, rtol=1e-03)

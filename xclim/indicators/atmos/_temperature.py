@@ -116,6 +116,13 @@ class TempWithIndexing(ResamplingIndicatorWithIndexing):
     keywords = "temperature"
 
 
+class TempHourlyWithIndexing(ResamplingIndicatorWithIndexing):
+    """Indicators involving hourly temperature and adding an indexing possibility."""
+
+    src_freq = "h"
+    keywords = "temperature"
+
+
 tn_days_above = TempWithIndexing(
     title="Number of days with minimum temperature above a given threshold",
     identifier="tn_days_above",
@@ -1459,8 +1466,7 @@ chill_portions = TempHourly(
     title="Chill portions",
     identifier="cp",
     units="",
-    # TODO: check what this does
-    cell_methods="",
+    cell_methods="time: sum",
     description="Chill portions are a measure to estimate the bud breaking potential of different crops. "
     "The constants and functions are taken from Luedeling et al. (2009) which formalises "
     "the method described in Fishman et al. (1987). ",
@@ -1478,14 +1484,15 @@ chill_portions = TempHourly(
     compute=indices.chill_portions,
 )
 
-chill_units = TempHourly(
+chill_units = TempHourlyWithIndexing(
     title="Chill units",
     identifier="cu",
     units="",
+    cell_methods="time: sum",
     description="Chill units are a measure to estimate the bud breaking potential of different crops based on the Utah model developed in "
     "Richardson et al. (1974). The Utah model assigns a weight to each hour depending on the temperature recognising that high temperatures can "
     "actually decrease the potential for bud breaking.",
     long_name="Chill units after the Utah Model",
-    allowed_periods=["A"],
+    allowed_periods=["Y"],
     compute=indices.chill_units,
 )

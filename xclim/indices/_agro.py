@@ -1570,6 +1570,7 @@ def _apply_chill_portion_one_season(tas_K):
         tas_K,
         input_core_dims=[["time"]],
         output_core_dims=[["time"]],
+        output_dtypes=[tas_K.dtype],
         dask="parallelized",
     ).sum("time")
 
