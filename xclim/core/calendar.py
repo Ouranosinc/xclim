@@ -122,7 +122,7 @@ def get_calendar(obj: Any, dim: str = "time") -> str:
         The Climate and Forecasting (CF) calendar name.
         Will always return "standard" instead of "gregorian", following CF conventions 1.9.
     """
-    if isinstance(obj, (xr.DataArray, xr.Dataset)):
+    if isinstance(obj, xr.DataArray | xr.Dataset):
         return obj[dim].dt.calendar
     if isinstance(obj, xr.CFTimeIndex):
         obj = obj.values[0]
@@ -152,7 +152,7 @@ def common_calendar(calendars: Sequence[str], join="outer") -> str:
     join : {'inner', 'outer'}
       The criterion for the common calendar.
 
-      - 'outer': the common calendar is the smallest calendar (in number of days by year) that will include all the
+      - 'outer': the common calendar is the biggest calendar (in number of days by year) that will include all the
                  dates of the other calendars.
                  When converting the data to this calendar, no timeseries will lose elements, but some
                  might be missing (gaps or NaNs in the series).
@@ -769,11 +769,11 @@ def time_bnds(  # noqa: C901
     So "2000-01-31 00:00:00" with a "3h" frequency, means a period going from "2000-01-31 00:00:00" to
     "2000-01-31 02:59:59.999999".
     """
-    if isinstance(time, (xr.DataArray, xr.Dataset)):
+    if isinstance(time, xr.DataArray | xr.Dataset):
         time = time.indexes[time.name]
-    elif isinstance(time, (DataArrayResample, DatasetResample)):
+    elif isinstance(time, DataArrayResample | DatasetResample):
         for grouper in time.groupers:
-            if "time" in grouper.dims:
+            if isinstance(grouper.grouper, xr.groupers.TimeResampler):
                 datetime = grouper.unique_coord.data
                 freq = freq or grouper.grouper.freq
                 if datetime.dtype == "O":
@@ -1354,13 +1354,13 @@ def stack_periods(
     for _, strd_slc in da.resample(time=strd_frq).groups.items():
         win_resamp = time2.isel(time=slice(strd_slc.start, None)).resample(time=win_frq)
         # Get slice for first group
-        win_slc = win_resamp._group_indices[0]
+        win_slc = list(win_resamp.groups.values())[0]
         if min_length < window:
             # If we ask for a min_length period instead is it complete ?
             min_resamp = time2.isel(time=slice(strd_slc.start, None)).resample(
                 time=minl_frq
             )
-            min_slc = min_resamp._group_indices[0]
+            min_slc = list(min_resamp.groups.values())[0]
             open_ended = min_slc.stop is None
         else:
             # The end of the group slice is None if no outside-group value was found after the last element
@@ -1519,7 +1519,9 @@ def unstack_periods(da: xr.DataArray | xr.Dataset, dim: str = "period"):
     if window == stride:
         # just concat them all
         periods = []
-        for i, (start, length) in enumerate(zip(starts.values, lengths.values)):
+        for i, (start, length) in enumerate(
+            zip(starts.values, lengths.values, strict=False)
+        ):
             real_time = _reconstruct_time(time_as_delta, start)
             periods.append(
                 da.isel(**{dim: i}, drop=True)
@@ -1543,9 +1545,11 @@ def unstack_periods(da: xr.DataArray | xr.Dataset, dim: str = "period"):
     strd_frq = construct_offset(mult * stride, *args)
 
     periods = []
-    for i, (start, length) in enumerate(zip(starts.values, lengths.values)):
+    for i, (start, length) in enumerate(
+        zip(starts.values, lengths.values, strict=False)
+    ):
         real_time = _reconstruct_time(time_as_delta, start)
-        slices = real_time.resample(time=strd_frq)._group_indices
+        slices = list(real_time.resample(time=strd_frq).groups.values())
         if i == 0:
             slc = slice(slices[0].start, min(slices[mid].stop, length))
         elif i == da.period.size - 1:

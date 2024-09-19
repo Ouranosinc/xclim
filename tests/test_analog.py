@@ -256,7 +256,7 @@ class TestKLDIV:
 
         out = []
         n = 500
-        for i in range(500):
+        for _i in range(500):
             out.append(
                 xca.kldiv(
                     p.rvs(n, random_state=random), q.rvs(n, random_state=random), k=k

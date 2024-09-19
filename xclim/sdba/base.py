@@ -5,9 +5,8 @@ Base Classes and Developer Tools
 
 from __future__ import annotations
 
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from inspect import _empty, signature  # noqa
-from typing import Callable
 
 import dask.array as dsk
 import jsonpickle
@@ -375,7 +374,7 @@ class Grouper(Parametrizable):
         function may add a "_group_apply_reshape" attribute set to `True` on the variables that should be reduced and
         these will be re-grouped by calling `da.groupby(self.name).first()`.
         """
-        if isinstance(da, (dict, xr.Dataset)):
+        if isinstance(da, dict | xr.Dataset):
             grpd = self.group(main_only=main_only, **da)
             dim_chunks = min(  # Get smallest chunking to rechunk if the operation is non-grouping
                 [
@@ -601,7 +600,7 @@ def map_blocks(  # noqa: C901
                 chunks = (
                     dict(ds.chunks)
                     if isinstance(ds, xr.Dataset)
-                    else dict(zip(ds.dims, ds.chunks))
+                    else dict(zip(ds.dims, ds.chunks, strict=False))
                 )
                 badchunks = {}
                 if group is not None:
