@@ -99,7 +99,7 @@ def adapt_freq(
         sim = convert_units_to(sim, ref)
         thresh = convert_units_to(thresh, ref)
 
-    out = _adapt_freq(xr.Dataset(dict(sim=sim, ref=ref)), group=group, thresh=thresh)
+    out = _adapt_freq(xr.Dataset({"sim": sim, "ref": ref}), group=group, thresh=thresh)
 
     # Set some metadata
     copy_all_attrs(out, sim)
@@ -291,7 +291,7 @@ def normalize(
     norm : xr.DataArray
         Mean over each group.
     """
-    ds = xr.Dataset(dict(data=data))
+    ds = xr.Dataset({"data": data})
 
     if norm is not None:
         norm = convert_units_to(
@@ -486,11 +486,11 @@ def escore(
 
     out.name = "escores"
     out = out.assign_attrs(
-        dict(
-            long_name="Energy dissimilarity metric",
-            description=f"Escores computed from {N or 'all'} points.",
-            references="Székely, G. J. and Rizzo, M. L. (2004) Testing for Equal Distributions in High Dimension, InterStat, November (5)",
-        )
+        {
+            "long_name": "Energy dissimilarity metric",
+            "description": f"Escores computed from {N or 'all'} points.",
+            "references": "Székely, G. J. and Rizzo, M. L. (2004) Testing for Equal Distributions in High Dimension, InterStat, November (5)",
+        }
     )
     return out
 
@@ -771,7 +771,7 @@ def stack_variables(ds: xr.Dataset, rechunk: bool = True, dim: str = "multivar")
     # sort to have coherent order with different datasets
     data_vars = sorted(ds.data_vars.items(), key=lambda e: e[0])
     nvar = len(data_vars)
-    for i, (nm, var) in enumerate(data_vars):
+    for i, (_nm, var) in enumerate(data_vars):
         for name, attr in var.attrs.items():
             attrs.setdefault(f"_{name}", [None] * nvar)[i] = attr
 
@@ -824,7 +824,7 @@ def unstack_variables(da: xr.DataArray, dim: str | None = None) -> xr.Dataset:
     for name, attr_list in da[dim].attrs.items():
         if not name.startswith("_"):
             continue
-        for attr, var in zip(attr_list, da[dim]):
+        for attr, var in zip(attr_list, da[dim], strict=False):
             if attr is not None:
                 ds[var.item()].attrs[name[1:]] = attr
 
@@ -858,6 +858,7 @@ def grouped_time_indexes(times, group):
             return da.time.dt.year
         if gr == "time.month":
             return da.time.dt.strftime("%Y-%d")
+        raise NotImplementedError(f"Grouping {gr} not implemented.")
 
     # does not work with group == "time.month"
     group = group if isinstance(group, Grouper) else Grouper(group)

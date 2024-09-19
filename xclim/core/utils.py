@@ -12,50 +12,19 @@ import importlib.util
 import logging
 import os
 import warnings
-from collections import defaultdict
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from enum import IntEnum
-from importlib.resources import as_file, files
-from inspect import Parameter, _empty  # noqa
+from inspect import _empty  # noqa
 from io import StringIO
 from pathlib import Path
-from typing import Callable, NewType, TypeVar
 
 import numpy as np
 import xarray as xr
 from dask import array as dsk
-from pint import Quantity
 from yaml import safe_dump, safe_load
 
 logger = logging.getLogger("xclim")
 
-#: Type annotation for strings representing full dates (YYYY-MM-DD), may include time.
-DateStr = NewType("DateStr", str)
-
-#: Type annotation for strings representing dates without a year (MM-DD).
-DayOfYearStr = NewType("DayOfYearStr", str)
-
-#: Type annotation for thresholds and other not-exactly-a-variable quantities
-Quantified = TypeVar("Quantified", xr.DataArray, str, Quantity)
-
-with as_file(files("xclim.data")) as data_dir:
-    with (data_dir / "variables.yml").open() as f:
-        VARIABLES = safe_load(f)["variables"]
-        """Official variables definitions.
-
-A mapping from variable name to a dict with the following keys:
-
-- canonical_units [required] : The conventional units used by this variable.
-- cell_methods [optional] : The conventional `cell_methods` CF attribute
-- description [optional] : A description of the variable, to populate dynamically generated docstrings.
-- dimensions [optional] : The dimensionality of the variable, an abstract version of the units.
-  See `xclim.units.units._dimensions.keys()` for available terms. This is especially useful for making xclim aware of
-  "[precipitation]" variables.
-- standard_name [optional] : If it exists, the CF standard name.
-- data_flags [optional] : Data flags methods (:py:mod:`xclim.core.dataflags`) applicable to this variable.
-  The method names are keys and values are dicts of keyword arguments to pass
-  (an empty dict if there's nothing to configure).
-"""
 
 # Input cell methods for clix-meta
 ICM = {
@@ -104,31 +73,6 @@ def deprecated(from_version: str | None, suggested: str | None = None) -> Callab
     return decorator
 
 
-# TODO Reconsider the utility of this
-def walk_map(d: dict, func: Callable) -> dict:
-    """Apply a function recursively to values of dictionary.
-
-    Parameters
-    ----------
-    d : dict
-        Input dictionary, possibly nested.
-    func : Callable
-        Function to apply to dictionary values.
-
-    Returns
-    -------
-    dict
-        Dictionary whose values are the output of the given function.
-    """
-    out = {}
-    for k, v in d.items():
-        if isinstance(v, (dict, defaultdict)):
-            out[k] = walk_map(v, func)
-        else:
-            out[k] = func(v)
-    return out
-
-
 def load_module(path: os.PathLike, name: str | None = None):
     """Load a python module from a python file, optionally changing its name.
 
@@ -161,18 +105,6 @@ def load_module(path: os.PathLike, name: str | None = None):
     return mod
 
 
-class ValidationError(ValueError):
-    """Error raised when input data to an indicator fails the validation tests."""
-
-    @property
-    def msg(self):  # noqa
-        return self.args[0]
-
-
-class MissingVariableError(ValueError):
-    """Error raised when a dataset is passed to an indicator but one of the needed variable is missing."""
-
-
 def ensure_chunk_size(da: xr.DataArray, **minchunks: int) -> xr.DataArray:
     r"""Ensure that the input DataArray has chunks of at least the given size.
 
@@ -194,7 +126,7 @@ def ensure_chunk_size(da: xr.DataArray, **minchunks: int) -> xr.DataArray:
     if not uses_dask(da):
         return da
 
-    all_chunks = dict(zip(da.dims, da.chunks))
+    all_chunks = dict(zip(da.dims, da.chunks, strict=False))
     chunking = {}
     for dim, minchunk in minchunks.items():
         chunks = all_chunks[dim]
@@ -238,16 +170,15 @@ def uses_dask(*das: xr.DataArray | xr.Dataset) -> bool:
     bool
         True if any of the passed objects is using dask.
     """
-    if len(das) > 1:
-        return any([uses_dask(da) for da in das])
-    da = das[0]
-    if isinstance(da, xr.DataArray) and isinstance(da.data, dsk.Array):
-        return True
-    if isinstance(da, xr.Dataset) and any(
-        isinstance(var.data, dsk.Array) for var in da.variables.values()
-    ):
-        return True
-    return False
+
+    def _is_dask_array(da):
+        if isinstance(da, xr.DataArray):
+            return isinstance(da.data, dsk.Array)
+        if isinstance(da, xr.Dataset):
+            return any(isinstance(var.data, dsk.Array) for var in da.variables.values())
+        return False
+
+    return any(_is_dask_array(da) for da in das)
 
 
 def calc_perc(
@@ -486,40 +417,6 @@ def _nan_quantile(
     return result
 
 
-def raise_warn_or_log(
-    err: Exception,
-    mode: str,
-    msg: str | None = None,
-    err_type: type = ValueError,
-    stacklevel: int = 1,
-):
-    """Raise, warn or log an error according.
-
-    Parameters
-    ----------
-    err : Exception
-        An error.
-    mode : {'ignore', 'log', 'warn', 'raise'}
-        What to do with the error.
-    msg : str, optional
-        The string used when logging or warning.
-        Defaults to the `msg` attr of the error (if present) or to "Failed with <err>".
-    err_type : type
-        The type of error/exception to raise.
-    stacklevel : int
-        Stacklevel when warning. Relative to the call of this function (1 is added).
-    """
-    message = msg or getattr(err, "msg", f"Failed with {err!r}.")
-    if mode == "ignore":
-        pass
-    elif mode == "log":
-        logger.info(message)
-    elif mode == "warn":
-        warnings.warn(message, stacklevel=stacklevel + 1)
-    else:  # mode == "raise"
-        raise err from err_type(message)
-
-
 class InputKind(IntEnum):
     """Constants for input parameter kinds.
 
@@ -684,7 +581,7 @@ def adapt_clix_meta_yaml(  # noqa: C901
     freq_defs = {"annual": "YS", "seasonal": "QS-DEC", "monthly": "MS", "weekly": "W"}
 
     if isinstance(raw, os.PathLike):
-        with open(raw) as f:
+        with open(raw, encoding="utf-8") as f:
             yml = safe_load(f)
     else:
         yml = safe_load(raw)
@@ -824,7 +721,7 @@ def adapt_clix_meta_yaml(  # noqa: C901
 
     yml["indicators"] = yml.pop("indices")
 
-    with open(adapted, "w") as f:
+    with open(adapted, "w", encoding="utf-8") as f:
         safe_dump(yml, f)
 
 
@@ -855,7 +752,7 @@ def _chunk_like(*inputs: xr.DataArray | xr.Dataset, chunks: dict[str, int] | Non
             da.variable, xr.core.variable.IndexVariable
         ):
             da = xr.DataArray(da, dims=da.dims, coords=da.coords, name=da.name)
-        if not isinstance(da, (xr.DataArray, xr.Dataset)):
+        if not isinstance(da, xr.DataArray | xr.Dataset):
             outputs.append(da)
         else:
             outputs.append(

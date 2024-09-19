@@ -58,8 +58,8 @@ def test_exact_randn(exact_randn):
 @pytest.mark.slow
 @pytest.mark.parametrize("method", xca.metrics.keys())
 def test_spatial_analogs(method, open_dataset):
-    diss = open_dataset("SpatialAnalogs/dissimilarity")
-    data = open_dataset("SpatialAnalogs/indicators")
+    diss = open_dataset("SpatialAnalogs/dissimilarity.nc")
+    data = open_dataset("SpatialAnalogs/indicators.nc")
 
     target = data.sel(lat=46.1875, lon=-72.1875, time=slice("1970", "1990"))
     candidates = data.sel(time=slice("1970", "1990"))
@@ -75,7 +75,7 @@ def test_spatial_analogs(method, open_dataset):
 def test_unsupported_spatial_analog_method(open_dataset):
     method = "KonMari"
 
-    data = open_dataset("SpatialAnalogs/indicators")
+    data = open_dataset("SpatialAnalogs/indicators.nc")
     target = data.sel(lat=46.1875, lon=-72.1875, time=slice("1970", "1990"))
     candidates = data.sel(time=slice("1970", "1990"))
 
@@ -87,8 +87,8 @@ def test_unsupported_spatial_analog_method(open_dataset):
 
 def test_spatial_analogs_multi_index(open_dataset):
     # Test multi-indexes
-    diss = open_dataset("SpatialAnalogs/dissimilarity")
-    data = open_dataset("SpatialAnalogs/indicators")
+    diss = open_dataset("SpatialAnalogs/dissimilarity.nc")
+    data = open_dataset("SpatialAnalogs/indicators.nc")
 
     target = data.sel(lat=46.1875, lon=-72.1875, time=slice("1970", "1990"))
     candidates = data.sel(time=slice("1970", "1990"))
@@ -256,7 +256,7 @@ class TestKLDIV:
 
         out = []
         n = 500
-        for i in range(500):
+        for _i in range(500):
             out.append(
                 xca.kldiv(
                     p.rvs(n, random_state=random), q.rvs(n, random_state=random), k=k

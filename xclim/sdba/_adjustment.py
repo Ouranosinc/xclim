@@ -8,8 +8,7 @@ This file defines the different steps, to be wrapped into the Adjustment objects
 
 from __future__ import annotations
 
-from collections.abc import Sequence
-from typing import Callable
+from collections.abc import Callable, Sequence
 
 import numpy as np
 import xarray as xr
@@ -32,7 +31,7 @@ def _adapt_freq_hist(ds: xr.Dataset, adapt_freq_thresh: str):
         thresh = convert_units_to(adapt_freq_thresh, ds.ref)
     dim = ["time"] + ["window"] * ("window" in ds.hist.dims)
     return _adapt_freq.func(
-        xr.Dataset(dict(sim=ds.hist, ref=ds.ref)), thresh=thresh, dim=dim
+        xr.Dataset({"sim": ds.hist, "ref": ds.ref}), thresh=thresh, dim=dim
     ).sim_ad
 
 
@@ -96,7 +95,7 @@ def dqm_train(
     mu_hist = ds.hist.mean(dim)
     scaling = u.get_correction(mu_hist, mu_ref, kind=kind)
 
-    return xr.Dataset(data_vars=dict(af=af, hist_q=hist_q, scaling=scaling))
+    return xr.Dataset(data_vars={"af": af, "hist_q": hist_q, "scaling": scaling})
 
 
 @map_groups(
@@ -151,7 +150,7 @@ def eqm_train(
 
     af = u.get_correction(hist_q, ref_q, kind)
 
-    return xr.Dataset(data_vars=dict(af=af, hist_q=hist_q))
+    return xr.Dataset(data_vars={"af": af, "hist_q": hist_q})
 
 
 def _npdft_train(ref, hist, rots, quantiles, method, extrap, n_escore, standardize):
@@ -180,8 +179,8 @@ def _npdft_train(ref, hist, rots, quantiles, method, extrap, n_escore, standardi
         ref_step, hist_step = (
             int(np.ceil(arr.shape[1] / n_escore)) for arr in [ref, hist]
         )
-    for ii in range(len(rots)):
-        rot = rots[0] if ii == 0 else rots[ii] @ rots[ii - 1].T
+    for ii, _rot in enumerate(rots):
+        rot = _rot if ii == 0 else _rot @ rots[ii - 1].T
         ref, hist = rot @ ref, rot @ hist
         # loop over variables
         for iv in range(ref.shape[0]):
@@ -293,7 +292,7 @@ def mbcn_train(
         escores_l.append(escores.expand_dims({gr_dim: [ib]}))
     af_q = xr.concat(af_q_l, dim=gr_dim)
     escores = xr.concat(escores_l, dim=gr_dim)
-    out = xr.Dataset(dict(af_q=af_q, escores=escores)).assign_coords(
+    out = xr.Dataset({"af_q": af_q, "escores": escores}).assign_coords(
         {"quantiles": quantiles, gr_dim: gw_idxs[gr_dim].values}
     )
     return out
@@ -317,8 +316,8 @@ def _npdft_adjust(sim, af_q, rots, quantiles, method, extrap):
         sim = sim[:, np.newaxis, :]
 
     # adjust npdft
-    for ii in range(len(rots)):
-        rot = rots[0] if ii == 0 else rots[ii] @ rots[ii - 1].T
+    for ii, _rot in enumerate(rots):
+        rot = _rot if ii == 0 else _rot @ rots[ii - 1].T
         sim = np.einsum("ij,j...->i...", rot, sim)
         # loop over variables
         for iv in range(sim.shape[0]):
@@ -597,7 +596,7 @@ def qdm_adjust(ds: xr.Dataset, *, group, interp, extrapolation, kind) -> xr.Data
         extrapolation=extrapolation,
     )
     scen = u.apply_correction(ds.sim, af, kind)
-    return xr.Dataset(dict(scen=scen, sim_q=sim_q))
+    return xr.Dataset({"scen": scen, "sim_q": sim_q})
 
 
 @map_blocks(
@@ -953,7 +952,7 @@ def _otc_adjust(
     bin_origin: dict | float | np.ndarray | None = None,
     num_iter_max: int | None = 100_000_000,
     jitter_inside_bins: bool = True,
-    transform: str | None = "max_distance",
+    normalization: str | None = "max_distance",
 ):
     """Optimal Transport Correction of the bias of X with respect to Y.
 
@@ -972,8 +971,9 @@ def _otc_adjust(
     jitter_inside_bins : bool
         If `False`, output points are located at the center of their bin.
         If `True`, a random location is picked uniformly inside their bin. Default is `True`.
-    transform : {None, 'standardize', 'max_distance', 'max_value'}
-        Per-variable transformation applied before the distances are calculated.
+    normalization : {None, 'standardize', 'max_distance', 'max_value'}
+        Per-variable transformation applied before the distances are calculated
+        in the optimal transport.
 
     Returns
     -------
@@ -992,7 +992,7 @@ def _otc_adjust(
         for k, v in bin_width.items():
             _bin_width[k] = v
         bin_width = _bin_width
-    elif isinstance(bin_width, (float, int)):
+    elif isinstance(bin_width, float | int):
         bin_width = np.ones(X.shape[1]) * bin_width
 
     if bin_origin is None:
@@ -1003,7 +1003,7 @@ def _otc_adjust(
             for v, k in bin_origin.items():
                 _bin_origin[v] = k
         bin_origin = _bin_origin
-    elif isinstance(bin_origin, (float, int)):
+    elif isinstance(bin_origin, float | int):
         bin_origin = np.ones(X.shape[1]) * bin_origin
 
     num_iter_max = 100_000_000 if num_iter_max is None else num_iter_max
@@ -1013,7 +1013,7 @@ def _otc_adjust(
     gridY, muY, _ = u.histogram(Y, bin_width, bin_origin)
 
     # Compute the optimal transportation plan
-    plan = u.optimal_transport(gridX, gridY, muX, muY, num_iter_max, transform)
+    plan = u.optimal_transport(gridX, gridY, muX, muY, num_iter_max, normalization)
 
     gridX = np.floor((gridX - bin_origin) / bin_width)
     gridY = np.floor((gridY - bin_origin) / bin_width)
@@ -1031,10 +1031,8 @@ def _otc_adjust(
     rng = np.random.default_rng()
     # The plan row corresponding to a source bin indicates its probabilities to be transported to every target bin
     for i, binX_group in enumerate(binX_groups):
-        # Get the plan row of this bin
-        pi = np.where((binX[binX_group[0]] == gridX).all(1))[0][0]
         # Pick as much target bins for this source bin as there are points in the source bin
-        choice = rng.choice(range(muY.size), p=plan[pi, :], size=binX_count[i])
+        choice = rng.choice(range(muY.size), p=plan[i, :], size=binX_count[i])
         out[binX_group] = (gridY[choice] + 1 / 2) * bin_width + bin_origin
 
     if jitter_inside_bins:
@@ -1053,7 +1051,7 @@ def otc_adjust(
     num_iter_max: int | None = 100_000_000,
     jitter_inside_bins: bool = True,
     adapt_freq_thresh: dict | None = None,
-    transform: str | None = "max_distance",
+    normalization: str | None = "max_distance",
 ):
     """Optimal Transport Correction of the bias of `hist` with respect to `ref`.
 
@@ -1078,8 +1076,9 @@ def otc_adjust(
         If `True`, a random location is picked uniformly inside their bin. Default is `True`.
     adapt_freq_thresh : dict, optional
         Threshold for frequency adaptation per variable.
-    transform : {None, 'standardize', 'max_distance', 'max_value'}
-        Per-variable transformation applied before the distances are calculated.
+    normalization : {None, 'standardize', 'max_distance', 'max_value'}
+        Per-variable transformation applied before the distances are calculated
+        in the optimal transport.
 
     Returns
     -------
@@ -1118,13 +1117,13 @@ def otc_adjust(
         _otc_adjust,
         hist,
         ref,
-        kwargs=dict(
-            bin_width=bin_width,
-            bin_origin=bin_origin,
-            num_iter_max=num_iter_max,
-            jitter_inside_bins=jitter_inside_bins,
-            transform=transform,
-        ),
+        kwargs={
+            "bin_width": bin_width,
+            "bin_origin": bin_origin,
+            "num_iter_max": num_iter_max,
+            "jitter_inside_bins": jitter_inside_bins,
+            "normalization": normalization,
+        },
         input_core_dims=[["dim_hist", pts_dim], ["dim_ref", pts_dim]],
         output_core_dims=[["dim_hist", pts_dim]],
         keep_attrs=True,
@@ -1151,7 +1150,7 @@ def _dotc_adjust(
     cov_factor: str | None = "std",
     jitter_inside_bins: bool = True,
     kind: dict | None = None,
-    transform: str | None = "max_distance",
+    normalization: str | None = "max_distance",
 ):
     """Dynamical Optimal Transport Correction of the bias of X with respect to Y.
 
@@ -1177,8 +1176,9 @@ def _dotc_adjust(
     kind : dict, optional
         Keys are variable names and values are adjustment kinds, either additive or multiplicative.
         Unspecified dimensions are treated as "+".
-    transform : {None, 'standardize', 'max_distance', 'max_value'}
-        Per-variable transformation applied before the distances are calculated.
+    normalization : {None, 'standardize', 'max_distance', 'max_value'}
+        Per-variable transformation applied before the distances are calculated
+        in the optimal transport.
 
     Returns
     -------
@@ -1195,7 +1195,7 @@ def _dotc_adjust(
         for v, k in bin_width.items():
             _bin_width[v] = k
         bin_width = _bin_width
-    elif isinstance(bin_width, (float, int)):
+    elif isinstance(bin_width, float | int):
         bin_width = np.ones(X0.shape[1]) * bin_width
 
     if isinstance(bin_origin, dict):
@@ -1203,7 +1203,7 @@ def _dotc_adjust(
         for v, k in bin_origin.items():
             _bin_origin[v] = k
         bin_origin = _bin_origin
-    elif isinstance(bin_origin, (float, int)):
+    elif isinstance(bin_origin, float | int):
         bin_origin = np.ones(X0.shape[1]) * bin_origin
 
     # Map ref to hist
@@ -1214,7 +1214,7 @@ def _dotc_adjust(
         bin_origin=bin_origin,
         num_iter_max=num_iter_max,
         jitter_inside_bins=False,
-        transform=transform,
+        normalization=normalization,
     )
 
     # Map hist to sim
@@ -1225,7 +1225,7 @@ def _dotc_adjust(
         bin_origin=bin_origin,
         num_iter_max=num_iter_max,
         jitter_inside_bins=False,
-        transform=transform,
+        normalization=normalization,
     )
 
     # Temporal evolution
@@ -1262,7 +1262,7 @@ def _dotc_adjust(
         bin_origin=bin_origin,
         num_iter_max=num_iter_max,
         jitter_inside_bins=jitter_inside_bins,
-        transform=transform,
+        normalization=normalization,
     )
 
     return Z1
@@ -1280,7 +1280,7 @@ def dotc_adjust(
     jitter_inside_bins: bool = True,
     kind: dict | None = None,
     adapt_freq_thresh: dict | None = None,
-    transform: str | None = "max_distance",
+    normalization: str | None = "max_distance",
 ):
     """Dynamical Optimal Transport Correction of the bias of X with respect to Y.
 
@@ -1311,8 +1311,9 @@ def dotc_adjust(
         Unspecified dimensions are treated as "+".
     adapt_freq_thresh : dict, optional
         Threshold for frequency adaptation per variable.
-    transform : {None, 'standardize', 'max_distance', 'max_value'}
-        Per-variable transformation applied before the distances are calculated.
+    normalization : {None, 'standardize', 'max_distance', 'max_value'}
+        Per-variable transformation applied before the distances are calculated
+        in the optimal transport.
 
     Returns
     -------
@@ -1363,15 +1364,15 @@ def dotc_adjust(
         sim,
         ref,
         hist,
-        kwargs=dict(
-            bin_width=bin_width,
-            bin_origin=bin_origin,
-            num_iter_max=num_iter_max,
-            cov_factor=cov_factor,
-            jitter_inside_bins=jitter_inside_bins,
-            kind=kind,
-            transform=transform,
-        ),
+        kwargs={
+            "bin_width": bin_width,
+            "bin_origin": bin_origin,
+            "num_iter_max": num_iter_max,
+            "cov_factor": cov_factor,
+            "jitter_inside_bins": jitter_inside_bins,
+            "kind": kind,
+            "normalization": normalization,
+        },
         input_core_dims=[
             ["dim_sim", pts_dim],
             ["dim_ref", pts_dim],

@@ -26,7 +26,6 @@ from scipy.stats.mstats import mquantiles
 
 from xclim import ensembles
 from xclim.indices.stats import get_dist
-from xclim.testing.helpers import TESTDATA_BRANCH
 
 
 # sklearn's KMeans doesn't accept the standard numpy Generator, so we create a special fixture for these tests
@@ -38,9 +37,7 @@ def random_state():
 
 
 class TestEnsembleStats:
-    def test_create_ensemble(
-        self, open_dataset, ensemble_dataset_objects, threadsafe_data_dir
-    ):
+    def test_create_ensemble(self, open_dataset, ensemble_dataset_objects, nimbus):
         ds_all = []
         for n in ensemble_dataset_objects["nc_files_simple"]:
             ds = open_dataset(n, decode_times=False)
@@ -62,11 +59,8 @@ class TestEnsembleStats:
         ens1 = ensembles.create_ensemble(ds_all, realizations=reals)
 
         # Kinda a hack? Alternative is to open and rewrite in a temp folder.
-        files = [
-            threadsafe_data_dir / TESTDATA_BRANCH / "EnsembleStats" / Path(f).name
-            for f in ensemble_dataset_objects["nc_files_simple"]
-        ]
-        ens2 = ensembles.create_ensemble(dict(zip(reals, files)))
+        files = [nimbus.fetch(f) for f in ensemble_dataset_objects["nc_files_simple"]]
+        ens2 = ensembles.create_ensemble(dict(zip(reals, files, strict=False)))
         xr.testing.assert_identical(ens1, ens2)
 
     def test_no_time(self, tmp_path, ensemble_dataset_objects, open_dataset):

@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 
 from xclim import land
-from xclim.core.utils import ValidationError
+from xclim.core import ValidationError
 
 
 class TestSnowDepth:
