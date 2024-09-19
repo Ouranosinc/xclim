@@ -638,3 +638,24 @@ def test_chill_units(atmosds):
 
     exp = [-5029.5, -6634.5, -5993.0, -6596.0, -5654.0]
     np.testing.assert_allclose(cu.isel(time=0), exp, rtol=1e-03)
+
+
+def test_chill_portions(atmosds):
+    tasmax = atmosds.tasmax
+    tasmin = atmosds.tasmin
+    tas = make_hourly_temperature(tasmin, tasmax)
+    cp = atmos.chill_portions(tas, date_bounds=("09-01", "03-30"), freq="YS-JUL")
+    assert cp.attrs["units"] == "1"
+    assert cp.name == "cp"
+    # Although its 4 years of data its 5 seasons starting in July
+    assert cp.time.size == 5
+
+    # First timestamp is all nan so we test on second
+    exp = [
+        99.91534493319304,
+        96.84276565115084,
+        16.720155001987106,
+        77.86606372811245,
+        140.85516682327875,
+    ]
+    np.testing.assert_allclose(cp.isel(time=1), exp, rtol=1e-03)

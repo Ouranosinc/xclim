@@ -1576,7 +1576,9 @@ def _apply_chill_portion_one_season(tas_K):
 
 
 @declare_units(tas="[temperature]")
-def chill_portions(tas: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
+def chill_portions(
+    tas: xarray.DataArray, freq: str = "YS", **indexer
+) -> xarray.DataArray:
     """Chill portion based on the dynamic model
 
     Chill portions are a measure to estimate the bud breaking potential of different crop.
@@ -1598,7 +1600,9 @@ def chill_portions(tas: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
     xr.DataArray, [unitless]
         Chill portions after the Dynamic Model
     """
-    tas_K: xarray.DataArray = convert_units_to(tas, "K")
+    tas_K: xarray.DataArray = select_time(
+        convert_units_to(tas, "K"), drop=True, **indexer
+    )
     return (
         tas_K.resample(time=freq)
         .map(_apply_chill_portion_one_season)

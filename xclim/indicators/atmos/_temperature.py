@@ -4,7 +4,12 @@ from __future__ import annotations
 
 from xclim import indices
 from xclim.core import cfchecks
-from xclim.core.indicator import Daily, Indicator, ResamplingIndicatorWithIndexing
+from xclim.core.indicator import (
+    Daily,
+    Hourly,
+    Indicator,
+    ResamplingIndicatorWithIndexing,
+)
 from xclim.core.utils import InputKind
 
 __all__ = [
@@ -102,10 +107,9 @@ class Temp(Daily):
     keywords = "temperature"
 
 
-class TempHourly(Indicator):
+class TempHourly(Hourly):
     """Temperature indicators involving hourly temperature."""
 
-    src_freq = "h"
     keywords = "temperature"
 
 
@@ -1480,7 +1484,7 @@ chill_portions = TempHourly(
     "Thus the dynamic model is more accurate than other chill models like the Chilling hours or Utah model, "
     "especially in moderate climates like Israel, California or Spain.",
     long_name="Chill portions after the Dynamic Model",
-    allowed_periods=["A"],
+    allowed_periods=["Y"],
     compute=indices.chill_portions,
 )
 
