@@ -1624,19 +1624,17 @@ def chill_units(tas: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
     xr.DataArray
     """
     tas = convert_units_to(tas, "degC")
-    cu = (
+    cu = xarray.where(
+        (tas <= 1.4) | ((tas > 12.4) & (tas <= 15.9)),
+        0,
         xarray.where(
-            (tas <= 1.4) | ((tas > 12.4) & (tas <= 15.9)),
-            0,
+            ((tas > 1.4) & (tas <= 2.4)) | ((tas > 9.1) & (tas <= 12.4)),
+            0.5,
             xarray.where(
-                ((tas > 1.4) & (tas <= 2.4)) | ((tas > 9.1) & (tas <= 12.4)),
-                0.5,
-                xarray.where(
-                    (tas > 2.4) & (tas <= 9.1),
-                    1,
-                    xarray.where((tas > 15.9) & (tas <= 17.9), -0.5, -1),
-                ),
+                (tas > 2.4) & (tas <= 9.1),
+                1,
+                xarray.where((tas > 15.9) & (tas <= 17.9), -0.5, -1),
             ),
-        )
+        ),
     )
     return cu.resample(time=freq).sum().assign_attrs(units="")
