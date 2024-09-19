@@ -100,6 +100,7 @@ to one of those official variables.
 """
 
 from __future__ import annotations
+
 import re
 import warnings
 import weakref
@@ -164,7 +165,6 @@ from xclim.core.utils import (
     is_percentile_dataarray,
     load_module,
 )
-
 
 # Indicators registry
 registry = {}  # Main class registry

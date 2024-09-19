@@ -1,6 +1,7 @@
 # pylint: disable=unsubscriptable-object,function-redefined
 # Tests for the Indicator objects
 from __future__ import annotations
+
 import gc
 import json
 from inspect import signature
