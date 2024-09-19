@@ -6,7 +6,6 @@ Helper functions for the indices computations, indicator construction and other 
 """
 
 from __future__ import annotations
-
 import functools
 import importlib.util
 import logging
@@ -23,6 +22,7 @@ import numpy as np
 import xarray as xr
 from dask import array as dsk
 from yaml import safe_dump, safe_load
+
 
 logger = logging.getLogger("xclim")
 
@@ -578,7 +578,6 @@ def adapt_clix_meta_yaml(  # noqa: C901
     """Read in a clix-meta yaml representation and refactor it to fit xclim's yaml specifications."""
     from ..indices import generic  # pylint: disable=import-outside-toplevel
 
-    # freq_names = {"annual": "A", "seasonal": "Q", "monthly": "M", "weekly": "W"}
     freq_defs = {"annual": "YS", "seasonal": "QS-DEC", "monthly": "MS", "weekly": "W"}
 
     if isinstance(raw, os.PathLike):

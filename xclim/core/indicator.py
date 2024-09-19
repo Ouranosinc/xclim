@@ -100,7 +100,6 @@ to one of those official variables.
 """
 
 from __future__ import annotations
-
 import re
 import warnings
 import weakref
@@ -109,9 +108,8 @@ from copy import deepcopy
 from dataclasses import asdict, dataclass
 from functools import reduce
 from inspect import Parameter as _Parameter
-from inspect import Signature
+from inspect import Signature, signature
 from inspect import _empty as _empty_default  # noqa
-from inspect import signature
 from os import PathLike
 from pathlib import Path
 from types import ModuleType
@@ -166,6 +164,7 @@ from xclim.core.utils import (
     is_percentile_dataarray,
     load_module,
 )
+
 
 # Indicators registry
 registry = {}  # Main class registry
@@ -1495,7 +1494,7 @@ class ResamplingIndicator(CheckMissingIndicator):
         If None, this will be determined by the global configuration.
     allowed_periods : Sequence[str], optional
         A list of allowed periods, i.e. base parts of the `freq` parameter.
-        For example, indicators meant to be computed annually only will have `allowed_periods=["A"]`.
+        For example, indicators meant to be computed annually only will have `allowed_periods=["Y"]`.
         `None` means "any period" or that the indicator doesn't take a `freq` argument.
     """
 
