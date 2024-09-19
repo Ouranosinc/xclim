@@ -1594,7 +1594,8 @@ def chill_portions(tas: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
 
     Returns
     -------
-    xr.DataArray
+    xr.DataArray, [unitless]
+        Chill portions after the Dynamic Model
     """
     tas_K: xarray.DataArray = convert_units_to(tas, "K")
     return (
@@ -1637,7 +1638,5 @@ def chill_units(tas: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
                 ),
             ),
         )
-        .assign_attrs(units="")
-        .rename("cu")
     )
-    return cu.resample(time=freq).sum()
+    return cu.resample(time=freq).sum().assign_attrs(units="")
