@@ -7,7 +7,6 @@ from xclim.core import cfchecks
 from xclim.core.indicator import Daily, Indicator, ResamplingIndicatorWithIndexing
 from xclim.core.utils import InputKind
 
-
 __all__ = [
     "australian_hardiness_zones",
     "biologically_effective_degree_days",
@@ -1476,7 +1475,6 @@ chill_portions = TempHourly(
     "especially in moderate climates like Israel, California or Spain.",
     long_name="Chill portions after the Dynamic Model",
     allowed_periods=["A"],
-    varname="cp",
     compute=indices.chill_portions,
 )
 
@@ -1489,6 +1487,5 @@ chill_units = TempHourly(
     "actually decrease the potential for bud breaking.",
     long_name="Chill units after the Utah Model",
     allowed_periods=["A"],
-    varname="cu",
     compute=indices.chill_units,
 )

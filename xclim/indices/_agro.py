@@ -1,5 +1,6 @@
 # noqa: D100
 from __future__ import annotations
+
 from typing import cast
 
 import numpy as np
@@ -24,7 +25,6 @@ from xclim.indices._threshold import (
 from xclim.indices.generic import aggregate_between_dates, get_zones
 from xclim.indices.helpers import _gather_lat, day_lengths
 from xclim.indices.stats import standardized_index
-
 
 # Frequencies : YS: year start, QS-DEC: seasons starting in december, MS: month start
 # See https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html
@@ -1559,7 +1559,7 @@ def _chill_portion_one_season(tas_K):
         )
     delta = np.where(inter_E >= 1, inter_E * xi, 0)
 
-    return delta.cumsum(axis=-1)
+    return delta
 
 
 def _apply_chill_portion_one_season(tas_K):
@@ -1571,7 +1571,7 @@ def _apply_chill_portion_one_season(tas_K):
         input_core_dims=[["time"]],
         output_core_dims=[["time"]],
         dask="parallelized",
-    ).max("time")
+    ).sum("time")
 
 
 @declare_units(tas="[temperature]")
@@ -1601,7 +1601,6 @@ def chill_portions(tas: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
     return (
         tas_K.resample(time=freq)
         .map(_apply_chill_portion_one_season)
-        .rename("cp")
         .assign_attrs(units="")
     )
 

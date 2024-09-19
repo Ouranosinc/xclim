@@ -689,7 +689,7 @@ def make_hourly_temperature(tasmin: xr.DataArray, tasmax: xr.DataArray) -> xr.Da
             daylength, data.tasmin, data.tasmax, daylength
         ),
         next_tasmin=data.tasmin.shift(time=-1).ffill("time"),
-    ).chunk(time=1)
+    )
     # Compute hourly data by resampling and remove the last time stamp that was added earlier
     hourly = data.resample(time="h").ffill().isel(time=slice(0, -1))
     # To avoid "invalid value encountered in log" warning we set hours before sunset to 1
