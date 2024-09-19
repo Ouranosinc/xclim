@@ -1,6 +1,5 @@
 # noqa: D100
 from __future__ import annotations
-
 from typing import cast
 
 import numpy as np
@@ -25,6 +24,7 @@ from xclim.indices._threshold import (
 from xclim.indices.generic import aggregate_between_dates, get_zones
 from xclim.indices.helpers import _gather_lat, day_lengths
 from xclim.indices.stats import standardized_index
+
 
 # Frequencies : YS: year start, QS-DEC: seasons starting in december, MS: month start
 # See https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html
@@ -1620,7 +1620,8 @@ def chill_units(tas: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
 
     Returns
     -------
-    xr.DataArray
+    xr.DataArray, [unitless]
+        Chill units using the Utah model
     """
     tas = convert_units_to(tas, "degC")
     cu = (

@@ -7,6 +7,7 @@ from xclim.core import cfchecks
 from xclim.core.indicator import Daily, Indicator, ResamplingIndicatorWithIndexing
 from xclim.core.utils import InputKind
 
+
 __all__ = [
     "australian_hardiness_zones",
     "biologically_effective_degree_days",
@@ -1463,6 +1464,9 @@ chill_portions = TempHourly(
     # TODO: check what this does
     cell_methods="",
     description="Chill portions are a measure to estimate the bud breaking potential of different crops. "
+    "The constants and functions are taken from Luedeling et al. (2009) which formalises "
+    "the method described in Fishman et al. (1987). ",
+    abstract="Chill portions are a measure to estimate the bud breaking potential of different crops. "
     "The constants and functions are taken from Luedeling et al. (2009) which formalises "
     "the method described in Fishman et al. (1987). "
     "The model computes the accumulation of cold temperatures in a two-step process. "
