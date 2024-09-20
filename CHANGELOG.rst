@@ -52,6 +52,7 @@ Internal changes
     * Added formatting for `Markdown` files.
     * Added the `bugbear`, `pyupgrade` checks to the `ruff` formatter.
     * Adjusted `mypy` checks to be more standardized.
+* Renamed annual deprecated frequency alias `"A"` to `"Y"` (:pull:`1930`).
 
 CI changes
 ^^^^^^^^^^
