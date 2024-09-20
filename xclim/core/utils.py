@@ -577,7 +577,6 @@ def adapt_clix_meta_yaml(  # noqa: C901
     """Read in a clix-meta yaml representation and refactor it to fit xclim's yaml specifications."""
     from ..indices import generic  # pylint: disable=import-outside-toplevel
 
-    # freq_names = {"annual": "A", "seasonal": "Q", "monthly": "M", "weekly": "W"}
     freq_defs = {"annual": "YS", "seasonal": "QS-DEC", "monthly": "MS", "weekly": "W"}
 
     if isinstance(raw, os.PathLike):

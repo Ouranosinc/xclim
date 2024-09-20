@@ -1495,7 +1495,7 @@ class ResamplingIndicator(CheckMissingIndicator):
         If None, this will be determined by the global configuration.
     allowed_periods : Sequence[str], optional
         A list of allowed periods, i.e. base parts of the `freq` parameter.
-        For example, indicators meant to be computed annually only will have `allowed_periods=["A"]`.
+        For example, indicators meant to be computed annually only will have `allowed_periods=["Y"]`.
         `None` means "any period" or that the indicator doesn't take a `freq` argument.
     """
 
