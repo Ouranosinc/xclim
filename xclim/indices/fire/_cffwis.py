@@ -1172,7 +1172,7 @@ def fire_weather_ufunc(  # noqa: C901
     if len(outputs) == 1:
         return {outputs[0]: das}
 
-    return dict(zip(outputs, das))
+    return dict(zip(outputs, das, strict=False))
 
 
 @declare_units(last_dc="[]", winter_pr="[length]")
