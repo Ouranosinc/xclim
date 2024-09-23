@@ -1303,18 +1303,6 @@ class TestHeatWaveIndex:
         np.testing.assert_array_equal(out, [10, 0, 12, 8, 0, 0, 0, 0, 0, 0, 0, 0])
 
 
-class TestHeatWaveMagnitude:
-    def test_simple(self, tasmax_series):
-        a = np.zeros(365)
-        a[15:20] += 30  # 5 days
-        a[40:42] += 50  # too short -> 0
-        a[86:96] += 30  # at the end and beginning
-        da = tasmax_series(a + K2C)
-
-        out = xci.hot_spell_max_magnitude(da, thresh="25 C", freq="ME")
-        np.testing.assert_array_equal(out, [25, 0, 30, 20, 0, 0, 0, 0, 0, 0, 0, 0])
-
-
 class TestHeatWaveFrequency:
     @pytest.mark.parametrize(
         "thresh_tasmin,thresh_tasmax,window,expected",
@@ -1484,6 +1472,18 @@ class TestHotSpellTotalLength:
 
         hsml = xci.hot_spell_total_length(tx, thresh=thresh, window=window, op=op)
         np.testing.assert_allclose(hsml.values, expected)
+
+
+class TestHotSpellMaxMagnitude:
+    def test_simple(self, tasmax_series):
+        a = np.zeros(365)
+        a[15:20] += 30  # 5 days
+        a[40:42] += 50  # too short -> 0
+        a[86:96] += 30  # at the end and beginning
+        da = tasmax_series(a + K2C)
+
+        out = xci.hot_spell_max_magnitude(da, thresh="25 C", freq="ME")
+        np.testing.assert_array_equal(out, [25, 0, 30, 20, 0, 0, 0, 0, 0, 0, 0, 0])
 
 
 class TestTnDays:
