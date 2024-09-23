@@ -217,7 +217,7 @@ heat_wave_frequency = Temp(
 )
 
 hot_spell_max_magnitude = Temp(
-    title="Hot spell max magnitude",
+    title="Hot spell maximum magnitude",
     identifier="hot_spell_max_magnitude",
     units="K d",
     long_name="Maximum cumulative difference between daily maximum temperature and {thresh} for days within a heat wave. "
