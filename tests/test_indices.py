@@ -1311,7 +1311,7 @@ class TestHeatWaveMagnitude:
         a[86:96] += 30  # at the end and beginning
         da = tasmax_series(a + K2C)
 
-        out = xci.heat_wave_magnitude(da, thresh="25 C", freq="ME")
+        out = xci.hot_spell_max_magnitude(da, thresh="25 C", freq="ME")
         np.testing.assert_array_equal(out, [25, 0, 30, 20, 0, 0, 0, 0, 0, 0, 0, 0])
 
 

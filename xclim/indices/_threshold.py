@@ -64,10 +64,10 @@ __all__ = [
     "growing_season_length",
     "growing_season_start",
     "heat_wave_index",
-    "heat_wave_magnitude",
     "heating_degree_days",
     "hot_spell_frequency",
     "hot_spell_max_length",
+    "hot_spell_max_magnitude",
     "hot_spell_total_length",
     "last_snowfall",
     "last_spring_frost",
@@ -1930,7 +1930,7 @@ def heat_wave_index(
 
 
 @declare_units(tasmax="[temperature]", thresh="[temperature]")
-def heat_wave_magnitude(
+def hot_spell_max_magnitude(
     tasmax: xarray.DataArray,
     thresh: Quantified = "25.0 degC",
     window: int = 3,
@@ -1938,7 +1938,7 @@ def heat_wave_magnitude(
     op: str = ">",
     resample_before_rl: bool = True,
 ) -> xarray.DataArray:
-    """Heat wave magnitude index.
+    """Hot spell maximum magnitude.
 
     Magnitude of the most intensive heat wave event as sum of differences between tasmax
     and the given threshold for Heat Wave days, defined as three or more consecutive days
@@ -1963,7 +1963,7 @@ def heat_wave_magnitude(
     Returns
     -------
     DataArray, [time]
-        Heat wave magnitude.
+        Hot spell maximum magnitude.
     """
     thresh = convert_units_to(thresh, tasmax)
     over_values = (tasmax - thresh).clip(0)

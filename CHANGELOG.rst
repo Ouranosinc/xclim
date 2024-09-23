@@ -14,7 +14,7 @@ Announcements
 New indicators
 ^^^^^^^^^^^^^^
 * New ``heat_spell_frequency``, ``heat_spell_max_length`` and ``heat_spell_total_length`` : spell length statistics on a bivariate condition that uses the average over a window by default. (:pull:`1885`).
-* New ``heat_wave_magnitude`` : yields the magnitude of the most intensive heat wave. (:pull:`1926`).
+* New ``hot_spell_max_magnitude`` : yields the magnitude of the most intensive heat wave. (:pull:`1926`).
 
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

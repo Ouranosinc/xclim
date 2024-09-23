@@ -50,12 +50,12 @@ __all__ = [
     "heat_spell_total_length",
     "heat_wave_frequency",
     "heat_wave_index",
-    "heat_wave_magnitude",
     "heat_wave_max_length",
     "heat_wave_total_length",
     "heating_degree_days",
     "hot_spell_frequency",
     "hot_spell_max_length",
+    "hot_spell_max_magnitude",
     "hot_spell_total_length",
     "huglin_index",
     "ice_days",
@@ -216,18 +216,19 @@ heat_wave_frequency = Temp(
     compute=indices.heat_wave_frequency,
 )
 
-heat_wave_magnitude = Temp(
-    title="Heat wave magnitude",
-    identifier="heat_wave_magnitude",
+hot_spell_max_magnitude = Temp(
+    title="Hot spell max magnitude",
+    identifier="hot_spell_max_magnitude",
     units="K d",
     long_name="Maximum cumulative difference between daily maximum temperature and {thresh} for days within a heat wave. "
     "A heat wave is defined as a series of at least {window} consecutive days with daily maximum temperature above {thresh}.",
-    description="Magnitude of the most intensive heat wave per {freq}. The magnitude is the cumulative exceedance of daily maximum temperature over {thresh}. "
-    "A heat wave is defined as a series of at least {window} consecutive days with daily maximum temperature above {thresh}",
+    description="Magnitude of the most intensive heat wave per {freq}. The magnitude is the cumulative exceedance of daily "
+    "maximum temperature over {thresh}. A heat wave is defined as a series of at least {window} consecutive days with daily "
+    "maximum temperature above {thresh}",
     abstract="Magnitude of the most intensive heat wave per {freq}. A heat wave occurs when daily maximum "
     "temperatures exceed given thresholds for a number of days.",
     cell_methods="",
-    compute=indices.heat_wave_magnitude,
+    compute=indices.hot_spell_max_magnitude,
 )
 
 heat_wave_max_length = Temp(
