@@ -636,8 +636,8 @@ def test_chill_units(atmosds):
     assert cu.name == "cu"
     assert cu.time.size == 4
 
-    exp = [-5029.5, -6634.5, -5993.0, -6596.0, -5654.0]
-    np.testing.assert_allclose(cu.isel(time=0), exp, rtol=1e-03)
+    exp = [1546.5, 1344.0, 1162.0, 1457.5]
+    np.testing.assert_allclose(cu.isel(location=0), exp, rtol=1e-03)
 
 
 def test_chill_portions(atmosds):

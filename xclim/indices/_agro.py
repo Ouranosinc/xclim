@@ -1642,4 +1642,5 @@ def chill_units(tas: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
             ),
         ),
     )
+    cu = cu.where(tas.notnull())
     return cu.resample(time=freq).sum().assign_attrs(units="")
