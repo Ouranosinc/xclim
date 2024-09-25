@@ -650,12 +650,5 @@ def test_chill_portions(atmosds):
     # Although its 4 years of data its 5 seasons starting in July
     assert cp.time.size == 5
 
-    # First timestamp is all nan so we test on second
-    exp = [
-        99.91534493319304,
-        96.84276565115084,
-        16.720155001987106,
-        77.86606372811245,
-        140.85516682327875,
-    ]
-    np.testing.assert_allclose(cp.isel(time=1), exp, rtol=1e-03)
+    exp = [np.nan, 99.91534493, 92.5473925, 99.03177047, np.nan]
+    np.testing.assert_allclose(cp.isel(location=0), exp, rtol=1e-03)
