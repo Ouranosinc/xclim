@@ -1403,7 +1403,7 @@ latitude_temperature_index = Temp(
     "Mean temperature of warmest month multiplied by the difference of latitude factor coefficient minus latitude. "
     "Metric originally published in Jackson, D. I., & Cherry, N. J. (1988).",
     cell_methods="",
-    allowed_periods=["A"],
+    allowed_periods=["Y"],
     var_name="lti",
     compute=indices.latitude_temperature_index,
     parameters={"lat": {"kind": InputKind.VARIABLE}, "lat_factor": 60},
@@ -1439,7 +1439,7 @@ australian_hardiness_zones = Temp(
     "Botanical Gardens (ANBG) classification scheme divides categories into 5-degree Celsius zones, starting from -15 "
     "degrees Celsius and ending at 20 degrees Celsius.",
     cell_methods="",
-    allowed_periods=["A"],
+    allowed_periods=["Y"],
     var_name="hz",
     compute=indices.hardiness_zones,
     parameters={"method": "anbg"},
@@ -1460,7 +1460,7 @@ usda_hardiness_zones = Temp(
     "scheme divides categories into 10 degree Fahrenheit zones, with 5-degree Fahrenheit half-zones, "
     "starting from -65 degrees Fahrenheit and ending at 65 degrees Fahrenheit.",
     cell_methods="",
-    allowed_periods=["A"],
+    allowed_periods=["Y"],
     var_name="hz",
     compute=indices.hardiness_zones,
     parameters={"method": "usda"},

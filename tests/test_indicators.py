@@ -884,6 +884,6 @@ def test_freq_doc():
     from xclim import atmos
 
     doc = atmos.latitude_temperature_index.__doc__
-    allowed_periods = ["A"]
+    allowed_periods = ["Y"]
     exp = f"Restricted to frequencies equivalent to one of {allowed_periods}"
     assert exp in doc
