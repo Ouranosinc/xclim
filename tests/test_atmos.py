@@ -636,6 +636,8 @@ def test_chill_units(atmosds):
     assert cu.name == "cu"
     assert cu.time.size == 4
 
+    # Values are confirmed with chillR package although not an exact match
+    # due to implementation details
     exp = [1546.5, 1344.0, 1162.0, 1457.5]
     np.testing.assert_allclose(cu.isel(location=0), exp, rtol=1e-03)
 
@@ -650,5 +652,7 @@ def test_chill_portions(atmosds):
     # Although its 4 years of data its 5 seasons starting in July
     assert cp.time.size == 5
 
+    # Values are confirmed with chillR package although not an exact match
+    # due to implementation details
     exp = [np.nan, 99.91534493, 92.5473925, 99.03177047, np.nan]
     np.testing.assert_allclose(cp.isel(location=0), exp, rtol=1e-03)

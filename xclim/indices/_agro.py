@@ -1599,6 +1599,30 @@ def chill_portions(
     -------
     xr.DataArray, [unitless]
         Chill portions after the Dynamic Model
+
+    Notes
+    -----
+    Typically, this indicator is computed for a period of the year. You can use the `**indexer` arguments
+    of `select_time` in combination with the `freq` argument to select e.g. a winter period:
+
+    .. code-block:: python
+
+        cp = chill_portions(tas, date_bounds=("09-01", "03-30"), freq="YS-JUL")
+
+    Note that incomplete periods will lead to NaNs.
+
+    Examples
+    --------
+    >>> from xclim.indices import chill_portions
+    >>> from xclim.indices.helpers import make_hourly_temperature
+    >>> tasmin = xr.open_dataset(path_to_tasmin_file).tasmin
+    >>> tasmax = xr.open_dataset(path_to_tasmax_file).tasmax
+    >>> tas_hourly = make_hourly_temperature(tasmin, tasmax)
+    >>> cp = chill_portions(tasmin)
+
+    References
+    ----------
+    :cite:cts:`fishman_chill_1987,luedeling_chill_2009`
     """
     tas_K: xarray.DataArray = select_time(
         convert_units_to(tas, "K"), drop=True, **indexer
@@ -1627,6 +1651,19 @@ def chill_units(tas: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
     -------
     xr.DataArray, [unitless]
         Chill units using the Utah model
+
+    Examples
+    --------
+    >>> from xclim.indices import chill_units
+    >>> from xclim.indices.helpers import make_hourly_temperature
+    >>> tasmin = xr.open_dataset(path_to_tasmin_file).tasmin
+    >>> tasmax = xr.open_dataset(path_to_tasmax_file).tasmax
+    >>> tas_hourly = make_hourly_temperature(tasmin, tasmax)
+    >>> cu = chill_units(tasmin)
+
+    References
+    ----------
+    :cite:cts:`richardson_chill_1974`
     """
     tas = convert_units_to(tas, "degC")
     cu = xarray.where(
