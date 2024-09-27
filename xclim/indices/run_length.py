@@ -1639,7 +1639,7 @@ def suspicious_run_1d(
             raise NotImplementedError(f"{op}")
 
     out = np.zeros_like(arr, dtype=bool)
-    for st, l in zip(pos[sus_runs], rl[sus_runs]):  # noqa: E741
+    for st, l in zip(pos[sus_runs], rl[sus_runs], strict=False):  # noqa: E741
         out[st : st + l] = True  # noqa: E741
     return out
 

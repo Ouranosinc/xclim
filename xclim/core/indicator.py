@@ -105,17 +105,17 @@ import re
 import warnings
 import weakref
 from collections import OrderedDict, defaultdict
+from collections.abc import Callable, Sequence
 from copy import deepcopy
 from dataclasses import asdict, dataclass
 from functools import reduce
 from inspect import Parameter as _Parameter
-from inspect import Signature
+from inspect import Signature, signature
 from inspect import _empty as _empty_default  # noqa
-from inspect import signature
 from os import PathLike
 from pathlib import Path
 from types import ModuleType
-from typing import Any, Callable, Optional, Sequence, Union
+from typing import Any
 
 import numpy as np
 import xarray
@@ -637,7 +637,7 @@ class Indicator(IndicatorRegistrar):
             n_outs = len(parent_cf_attrs) if parent_cf_attrs is not None else 1
             for name in cls._cf_names:
                 arg = kwds.get(name)
-                if isinstance(arg, (tuple, list)):
+                if isinstance(arg, tuple | list):
                     n_outs = len(arg)
 
             # Populate new cf_attrs from parsing cf_names passed directly.
@@ -646,14 +646,14 @@ class Indicator(IndicatorRegistrar):
                 values = kwds.pop(name, None)
                 if values is None:  # None passed, skip
                     continue
-                if not isinstance(values, (tuple, list)):
+                if not isinstance(values, tuple | list):
                     # a single string or callable, same for all outputs
                     values = [values] * n_outs
                 elif len(values) != n_outs:  # A sequence of the wrong length.
                     raise ValueError(
                         f"Attribute {name} has {len(values)} elements but xclim expected {n_outs}."
                     )
-                for attrs, value in zip(cf_attrs, values):
+                for attrs, value in zip(cf_attrs, values, strict=False):
                     if value:  # Skip the empty ones (None or "")
                         attrs[name] = value
         # else we assume a list of dicts
@@ -664,7 +664,7 @@ class Indicator(IndicatorRegistrar):
 
         # update from parent, if they have the same length.
         if parent_cf_attrs is not None and len(parent_cf_attrs) == len(cf_attrs):
-            for old, new in zip(parent_cf_attrs, cf_attrs):
+            for old, new in zip(parent_cf_attrs, cf_attrs, strict=False):
                 for attr, value in old.items():
                     new.setdefault(attr, value)
 
@@ -757,9 +757,9 @@ class Indicator(IndicatorRegistrar):
                 InputKind.VARIABLE,
                 InputKind.OPTIONAL_VARIABLE,
             ]:
-                annot = Union[DataArray, str]
+                annot = DataArray | str
                 if meta.kind == InputKind.OPTIONAL_VARIABLE:
-                    annot = Optional[annot]
+                    annot = annot | None
                 variables.append(
                     _Parameter(
                         name,
@@ -833,7 +833,7 @@ class Indicator(IndicatorRegistrar):
 
         # Metadata attributes from templates
         var_id = None
-        for out, attrs, base_attrs in zip(outs, out_attrs, self.cf_attrs):
+        for out, attrs, base_attrs in zip(outs, out_attrs, self.cf_attrs, strict=False):
             if self.n_outs > 1:
                 var_id = base_attrs["var_name"]
             attrs.update(units=out.units)
@@ -850,13 +850,13 @@ class Indicator(IndicatorRegistrar):
         # Convert to output units
         outs = [
             convert_units_to(out, attrs["units"], self.context)
-            for out, attrs in zip(outs, out_attrs)
+            for out, attrs in zip(outs, out_attrs, strict=False)
         ]
 
         outs = self._postprocess(outs, das, params)
 
         # Update variable attributes
-        for out, attrs in zip(outs, out_attrs):
+        for out, attrs in zip(outs, out_attrs, strict=False):
             var_name = attrs.pop("var_name")
             out.attrs.update(attrs)
             out.name = var_name
@@ -1233,7 +1233,7 @@ class Indicator(IndicatorRegistrar):
         for k, v in args.items():
             if isinstance(v, units.Quantity):
                 mba[k] = f"{v:g~P}"
-            elif isinstance(v, (int, float)):
+            elif isinstance(v, int | float):
                 mba[k] = f"{v:g}"
             # TODO: What about InputKind.NUMBER_SEQUENCE
             elif k == "indexer":
@@ -1495,7 +1495,7 @@ class ResamplingIndicator(CheckMissingIndicator):
         If None, this will be determined by the global configuration.
     allowed_periods : Sequence[str], optional
         A list of allowed periods, i.e. base parts of the `freq` parameter.
-        For example, indicators meant to be computed annually only will have `allowed_periods=["A"]`.
+        For example, indicators meant to be computed annually only will have `allowed_periods=["Y"]`.
         `None` means "any period" or that the indicator doesn't take a `freq` argument.
     """
 
@@ -1762,7 +1762,7 @@ def build_indicator_module_from_yaml(  # noqa: C901
         # No suffix means we try to automatically detect the python file
         indices = indfile
 
-    if isinstance(indices, (str, Path)):
+    if isinstance(indices, str | Path):
         indices = load_module(indices, name=module_name)
 
     _translations: dict[str, dict] = {}
@@ -1778,7 +1778,7 @@ def build_indicator_module_from_yaml(  # noqa: C901
         _translations = {
             lng: (
                 read_locale_file(trans, module=module_name, encoding=encoding)
-                if isinstance(trans, (str, Path))
+                if isinstance(trans, str | Path)
                 else trans
             )
             for lng, trans in translations.items()

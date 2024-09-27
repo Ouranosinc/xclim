@@ -12,12 +12,11 @@ import importlib.util
 import logging
 import os
 import warnings
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from enum import IntEnum
 from inspect import _empty  # noqa
 from io import StringIO
 from pathlib import Path
-from typing import Callable
 
 import numpy as np
 import xarray as xr
@@ -127,7 +126,7 @@ def ensure_chunk_size(da: xr.DataArray, **minchunks: int) -> xr.DataArray:
     if not uses_dask(da):
         return da
 
-    all_chunks = dict(zip(da.dims, da.chunks))
+    all_chunks = dict(zip(da.dims, da.chunks, strict=False))
     chunking = {}
     for dim, minchunk in minchunks.items():
         chunks = all_chunks[dim]
@@ -578,7 +577,6 @@ def adapt_clix_meta_yaml(  # noqa: C901
     """Read in a clix-meta yaml representation and refactor it to fit xclim's yaml specifications."""
     from ..indices import generic  # pylint: disable=import-outside-toplevel
 
-    # freq_names = {"annual": "A", "seasonal": "Q", "monthly": "M", "weekly": "W"}
     freq_defs = {"annual": "YS", "seasonal": "QS-DEC", "monthly": "MS", "weekly": "W"}
 
     if isinstance(raw, os.PathLike):
@@ -753,7 +751,7 @@ def _chunk_like(*inputs: xr.DataArray | xr.Dataset, chunks: dict[str, int] | Non
             da.variable, xr.core.variable.IndexVariable
         ):
             da = xr.DataArray(da, dims=da.dims, coords=da.coords, name=da.name)
-        if not isinstance(da, (xr.DataArray, xr.Dataset)):
+        if not isinstance(da, xr.DataArray | xr.Dataset):
             outputs.append(da)
         else:
             outputs.append(

@@ -162,8 +162,8 @@ Ready to contribute? Here's how to set up `xclim` for local development.
 
    Alternatively, one can use ``$ tox`` to run very specific testing configurations, as GitHub Workflows would do when a Pull Request is submitted and new commits are pushed::
 
-    $ tox -e py39-coverage  # run tests on Python 3.9, reporting code coverage
-    $ tox -e py310-upstream  # run tests on Python 3.10, with upstream dependencies
+    $ tox -e py310-coverage  # run tests on Python 3.10, reporting code coverage
+    $ tox -e py313-upstream  # run tests on Python 3.13, with upstream dependencies
     $ tox -e py311-prefetch-offline -- -m "not slow"  # run tests on Python 3.11, force download of testing, ensure tests are all offline, exclude "slow" marked tests
     $ tox -e py312-lmoments -- -m "not slow"  # run tests on Python 3.12, installing lmoments3, excluding "slow" marked tests
     $ tox -e notebooks,doctests  # run the notebook-based tests, then run the doctests
@@ -227,7 +227,8 @@ Before you submit a pull request, please follow these guidelines:
 
    .. warning::
     Try to keep your contributions within the scope of the issue that you are addressing.
-    While it might be tempting to fix other aspects of the library as it comes up, it's better to simply to flag the problems in case others are already working on it.
+    While it might be tempting to fix other aspects of the library as it comes up,
+    it's better to simply to flag the problems in case others are already working on it.
 
     Consider adding a "**# TODO:**" or "**# FIXME:**" comment if the need arises.
 
@@ -235,7 +236,9 @@ Before you submit a pull request, please follow these guidelines:
 
    If you are adding a new set of functions, they **must be tested** and **coverage percentage should not significantly decrease.**
 
-#. If the pull request adds functionality, your functions should include docstring explanations. So long as the docstrings are syntactically correct, sphinx-autodoc will be able to automatically parse the information. Please ensure that the docstrings and documentation adhere to the following standards (badly formed docstrings will fail build tests):
+#. If the pull request adds functionality, your functions should include docstring explanations.
+   So long as the docstrings are syntactically correct, sphinx-autodoc will be able to automatically parse the information.
+   Please ensure that the docstrings and documentation adhere to the following standards (badly formed docstrings will fail build tests):
 
    * `numpydoc`_
    * `reStructuredText (ReST)`_
@@ -244,17 +247,24 @@ Before you submit a pull request, please follow these guidelines:
     If you aren't accustomed to writing documentation in reStructuredText (`.rst`), we encourage you to spend a few minutes going over the
     incredibly well-summarized `reStructuredText Primer`_ from the sphinx-doc maintainer community.
 
-#. The pull request should work for Python 3.9, 3.10, 3.11, and 3.12 as well as raise test coverage.
+#. The pull request should work for all currently-supported Python versions as well as raise test coverage.
    Pull requests are also checked for documentation build status and for `PEP8`_ compliance.
 
    The build statuses and build errors for pull requests can be found at: https://github.com/Ouranosinc/xclim/actions
+
+   .. note::
+    The currently-supported Python versions are loosely based on the Scientific Python Ecosystem's `SPEC 0` schedule.
+    Generally, when `numpy` and `xarray` drop support for a dependency, `xclim` will follow suit in a subsequent release.
+    For more information, see the `SPEC 0 Schedule <https://scientific-python.org/specs/spec-0000/>`_
 
    .. warning::
     PEP8, black, pytest (with xdoctest) and pydocstyle (for numpy docstrings) conventions are strongly enforced.
     Ensure that your changes pass all tests prior to pushing your final commits to your branch.
     Code formatting errors are treated as build errors and will block your pull request from being accepted.
 
-#. The version changes (CHANGELOG.rst) should briefly describe changes introduced in the Pull request. Changes should be organized by type (ie: `New indicators`, `New features and enhancements`, `Breaking changes`, `Bug fixes`, `Internal changes`) and the GitHub Pull Request, GitHub Issue. Your name and/or GitHub handle should also be listed among the contributors to this version. This can be done as follows::
+#. The version changes (CHANGELOG.rst) should briefly describe changes introduced in the Pull request.
+   Changes should be organized by type (ie: `New indicators`, `New features and enhancements`, `Breaking changes`, `Bug fixes`, `Internal changes`) and the GitHub Pull Request, GitHub Issue.
+   Your name and/or GitHub handle should also be listed among the contributors to this version. This can be done as follows::
 
      Contributors to this version: John Jacob Jingleheimer Schmidt (:user:`username`).
 
