@@ -8,9 +8,9 @@ but are not particularly index-like themselves (those should go in the :py:mod:`
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from inspect import stack
-from typing import Any, Callable, Literal, cast
+from typing import Any, Literal, cast
 
 import cf_xarray  # noqa: F401, pylint: disable=unused-import
 import cftime
