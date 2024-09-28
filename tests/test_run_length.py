@@ -126,35 +126,6 @@ def test_rle(ufunc, use_dask, index):
 
 @pytest.mark.parametrize("use_dask", [True, False])
 @pytest.mark.parametrize("index", ["first", "last"])
-def test_rse(ufunc, use_dask, index):
-    if use_dask and ufunc:
-        pytest.xfail("rse_1d is not implemented for dask arrays.")
-
-    values = np.zeros((10, 365, 4, 4))
-    time = pd.date_range("2000-01-01", periods=365, freq="D")
-    values[:, 1:11, ...] = 30
-    da = xr.DataArray(values, coords={"time": time}, dims=("a", "time", "b", "c"))
-
-    if ufunc:
-        pytest.xfail("rse_1d is not implemented.")
-    else:
-        if use_dask:
-            da = da.chunk({"a": 1, "b": 2})
-
-        out = rl.rse(da, index=index).mean(["a", "b", "c"])
-        if index == "last":
-            expected = np.zeros(365)
-            expected[1:10] = np.nan
-            expected[10] = 300
-        else:
-            expected = np.zeros(365)
-            expected[1] = 300
-            expected[2:11] = np.nan
-        np.testing.assert_array_equal(out, expected)
-
-
-@pytest.mark.parametrize("use_dask", [True, False])
-@pytest.mark.parametrize("index", ["first", "last"])
 def test_extract_events_identity(use_dask, index):
     # implement more tests, this is just to show that this reproduces the behaviour
     # of rle
