@@ -163,7 +163,15 @@ def rle(
     dim: str = "time",
     index: str = "first",
 ) -> xr.DataArray:
-    """Generate basic run length function.
+    """Run length
+
+    Despite its name, this is not an actual run-length encoder : it returns an array of the same shape
+    as the input with 0 where the input was <= 0, nan where the input was > 0, except on the first (or last) element
+    of each run of consecutive > 0 values, where it is set to the sum of the elements within the run.
+    For an actual run length encoder, see :py:func:`rle_1d`.
+
+    Usually, the input would be a boolean mask and the first element of each run would then be set to the run's length (thus the name).
+    But the function also accepts int and float inputs.
 
     Parameters
     ----------
@@ -178,7 +186,6 @@ def rle(
     Returns
     -------
     xr.DataArray
-        Values are 0 where da is False (out of runs).
     """
     if da.dtype == bool:
         da = da.astype(int)
@@ -1253,6 +1260,8 @@ def rle_1d(
     arr: int | float | bool | Sequence[int | float | bool],
 ) -> tuple[np.array, np.array, np.array]:
     """Return the length, starting position and value of consecutive identical values.
+
+    In opposition to py:func:`rle`, this is an actuel run length encoder.
 
     Parameters
     ----------
