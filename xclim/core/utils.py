@@ -775,7 +775,7 @@ def split_auxiliary_coordinates(
 
     Returns
     -------
-    clean_obj :
+    clean_obj : DataArray or Dataset
         Same as `obj` but without any auxiliary coordinate.
     aux_coords : Dataset
         The auxiliary coordinates as a dataset. Might be empty.

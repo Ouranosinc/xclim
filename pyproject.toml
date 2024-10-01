@@ -111,7 +111,7 @@ docs = [
   "sphinxcontrib-bibtex",
   "sphinxcontrib-svg2pdfconverter[Cairosvg]"
 ]
-extras = ["fastnanquantile >=0.0.2", "POT >=0.9.4"]
+extras = ["fastnanquantile >=0.0.2", "flox >=0.9", "POT >=0.9.4"]
 all = ["xclim[dev]", "xclim[docs]", "xclim[extras]"]
 
 [project.scripts]
@@ -180,7 +180,7 @@ pep621_dev_dependency_groups = ["all", "dev", "docs"]
 "POT" = "ot"
 
 [tool.deptry.per_rule_ignores]
-DEP001 = ["SBCK", "flox"]
+DEP001 = ["SBCK"]
 DEP002 = ["bottleneck", "h5netcdf", "pyarrow"]
 DEP004 = ["matplotlib", "pooch", "pytest", "pytest_socket"]
 

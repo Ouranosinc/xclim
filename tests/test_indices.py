@@ -29,11 +29,6 @@ from xclim.core.calendar import percentile_doy
 from xclim.core.options import set_options
 from xclim.core.units import convert_units_to, units
 
-try:
-    import flox
-except ImportError:
-    flox = None
-
 K2C = 273.15
 
 
@@ -1435,13 +1430,21 @@ class TestHotSpellFrequency:
         a[5:35] = 31
         tx = tasmax_series(a + K2C).chunk()
 
-        with set_options(
-            resample_map_blocks=(resample_before_rl and (flox is not None))
-        ):
-            hsf = xci.hot_spell_frequency(
-                tx, resample_before_rl=resample_before_rl, freq="MS"
-            ).load()
+        hsf = xci.hot_spell_frequency(
+            tx, resample_before_rl=resample_before_rl, freq="MS"
+        ).load()
         assert hsf[1] == expected
+
+    @pytest.importorskip("flox")
+    @pytest.mark.parametrize("resample_map", [True, False])
+    def test_resampling_map(self, tasmax_series, resample_map):
+        a = np.zeros(365)
+        a[5:35] = 31
+        tx = tasmax_series(a + K2C).chunk()
+
+        with set_options(resample_map_blocks=resample_map):
+            hsf = xci.hot_spell_frequency(tx, resample_before_rl=True, freq="MS").load()
+        assert hsf[1] == 1
 
 
 class TestHotSpellMaxLength:
@@ -1717,12 +1720,9 @@ class TestMaximumConsecutiveDryDays:
         a = np.zeros(365) + 10
         a[5:35] = 0
         pr = pr_series(a).chunk()
-        with set_options(
-            resample_map_blocks=(resample_before_rl and (flox is not None))
-        ):
-            out = xci.maximum_consecutive_dry_days(
-                pr, freq="ME", resample_before_rl=resample_before_rl
-            ).load()
+        out = xci.maximum_consecutive_dry_days(
+            pr, freq="ME", resample_before_rl=resample_before_rl
+        ).load()
         assert out[0] == expected
 
 
