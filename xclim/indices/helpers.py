@@ -8,6 +8,7 @@ Functions that encapsulate some geophysical logic but could be shared by many in
 from __future__ import annotations
 
 from collections.abc import Mapping
+from datetime import timedelta
 from inspect import stack
 from typing import Any, cast
 
@@ -559,3 +560,153 @@ def _gather_lon(da: xr.DataArray) -> xr.DataArray:
             "Try passing it explicitly (`lon=ds.lon`)."
         )
         raise ValueError(msg) from err
+
+
+def _compute_daytime_temperature(
+    hour_after_sunrise: xr.DataArray,
+    tasmin: xr.DataArray,
+    tasmax: xr.DataArray,
+    daylength: xr.DataArray,
+) -> xr.DataArray:
+    """Compute daytime temperature based on a sinusoidal profile.
+
+    Minimum temperature is reached at sunrise and maximum temperature 2h before sunset.
+
+    Parameters
+    ----------
+    hours_after_sunrise : xarray.DataArray
+        Hours after the last sunrise.
+    tasmin : xarray.DataArray
+        Daily minimum temperature.
+    tasmax : xarray.DataArray
+        Daily maximum temperature.
+    daylength : xarray.DataArray
+        Length of the day in hours.
+
+    Returns
+    -------
+    xarray.DataArray
+        Hourly daytime temperature.
+    """
+    return (tasmax - tasmin) * np.sin(
+        (np.pi * hour_after_sunrise) / (daylength + 4)
+    ) + tasmin
+
+
+def _compute_nighttime_temperature(
+    hours_after_sunset: xr.DataArray,
+    tasmin: xr.DataArray,
+    tas_sunset: xr.DataArray,
+    daylength: xr.DataArray,
+) -> xr.DataArray:
+    """Compute nighttime temperature based on a logarithmic profile.
+
+    Temperature at sunset is computed from previous daytime temperature,
+    minimum temperature is reached at sunrise.
+
+    Parameters
+    ----------
+    hours_after_sunset : xarray.DataArray
+        Hours after the last sunset.
+    tasmin : xarray.DataArray
+        Daily minimum temperature.
+    tas_sunset : xarray.DataArray
+        Temperature at last sunset.
+    daylength : xarray.DataArray
+        Length of the day in hours.
+
+    Returns
+    -------
+    xarray.DataArray
+        Hourly nighttime temperature.
+    """
+    return tas_sunset - ((tas_sunset - tasmin) / np.log(24 - daylength)) * np.log(
+        hours_after_sunset
+    )
+
+
+def _add_one_day(time: xr.DataArray) -> xr.DataArray:
+    """Add one day to a time coordinate.
+
+    Depending on the calendar/dtype of the time array we need to use numpy's or
+    datetime's (for cftimes) timedelta.
+
+    Parameters
+    ----------
+    time : xr.DataArray
+        Time coordinate.
+
+    Returns
+    -------
+    xr.DataArray
+        Next day.
+    """
+    if time.dtype == "O":
+        return time + timedelta(days=1)
+    return time + np.timedelta64(1, "D")
+
+
+def make_hourly_temperature(tasmin: xr.DataArray, tasmax: xr.DataArray) -> xr.DataArray:
+    """Compute hourly temperatures from tasmin and tasmax.
+
+    Based on the Linvill et al. "Calculating Chilling Hours and Chill Units from Daily
+    Maximum and Minimum Temperature Observations", HortScience, 1990
+    we assume a sinusoidal temperature profile during daylight and a logarithmic decrease after sunset
+    with tasmin reached at sunsrise and tasmax reached 2h before sunset.
+
+    For simplicity and because it's used for daily aggregation, we assume that sunrise globally happens at midnight
+    and the sunsets after `daylength` hours computed via the :py:func:`day_lengths` function.
+
+    Parameters
+    ----------
+    tasmin : xarray.DataArray
+        Daily minimum temperature.
+    tasmax : xarray.DataArray
+        Daily maximum temperature.
+
+    Returns
+    -------
+    xarray.DataArray
+        Hourly temperature.
+    """
+    data = xr.merge([tasmin, tasmax])
+    # We add one more timestamp so the resample function includes the last day
+    data = xr.concat(
+        [
+            data,
+            data.isel(time=-1).assign_coords(
+                time=_add_one_day(data.isel(time=-1).time)
+            ),
+        ],
+        dim="time",
+    )
+
+    daylength = day_lengths(data.time, data.lat)
+    # Create daily chunks to avoid memory issues after the resampling
+    data = data.assign(
+        daylength=daylength,
+        sunset_temp=_compute_daytime_temperature(
+            daylength, data.tasmin, data.tasmax, daylength
+        ),
+        next_tasmin=data.tasmin.shift(time=-1),
+    )
+    # Compute hourly data by resampling and remove the last time stamp that was added earlier
+    hourly = data.resample(time="h").ffill().isel(time=slice(0, -1))
+
+    # To avoid "invalid value encountered in log" warning we set hours before sunset to 1
+    nighttime_hours = nighttime_hours = (
+        hourly.time.dt.hour + 1 - hourly.daylength
+    ).clip(1)
+
+    return xr.where(
+        hourly.time.dt.hour < hourly.daylength,
+        _compute_daytime_temperature(
+            hourly.time.dt.hour, hourly.tasmin, hourly.tasmax, hourly.daylength
+        ),
+        _compute_nighttime_temperature(
+            nighttime_hours,
+            hourly.next_tasmin,
+            hourly.sunset_temp,
+            hourly.daylength - 1,
+        ),
+    ).assign_attrs(units=tasmin.units)
