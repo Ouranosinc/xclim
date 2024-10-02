@@ -4,12 +4,19 @@ from __future__ import annotations
 
 from xclim import indices
 from xclim.core import cfchecks
-from xclim.core.indicator import Daily, Indicator, ResamplingIndicatorWithIndexing
+from xclim.core.indicator import (
+    Daily,
+    Hourly,
+    Indicator,
+    ResamplingIndicatorWithIndexing,
+)
 from xclim.core.utils import InputKind
 
 __all__ = [
     "australian_hardiness_zones",
     "biologically_effective_degree_days",
+    "chill_portions",
+    "chill_units",
     "cold_spell_days",
     "cold_spell_duration_index",
     "cold_spell_frequency",
@@ -101,10 +108,23 @@ class Temp(Daily):
     keywords = "temperature"
 
 
+class TempHourly(Hourly):
+    """Temperature indicators involving hourly temperature."""
+
+    keywords = "temperature"
+
+
 class TempWithIndexing(ResamplingIndicatorWithIndexing):
     """Indicators involving daily temperature and adding an indexing possibility."""
 
     src_freq = "D"
+    keywords = "temperature"
+
+
+class TempHourlyWithIndexing(ResamplingIndicatorWithIndexing):
+    """Indicators involving hourly temperature and adding an indexing possibility."""
+
+    src_freq = "h"
     keywords = "temperature"
 
 
@@ -1460,4 +1480,39 @@ usda_hardiness_zones = Temp(
     var_name="hz",
     compute=indices.hardiness_zones,
     parameters={"method": "usda"},
+)
+
+chill_portions = TempHourly(
+    title="Chill portions",
+    identifier="cp",
+    units="",
+    cell_methods="time: sum",
+    description="Chill portions are a measure to estimate the bud breaking potential of different crops. "
+    "The constants and functions are taken from Luedeling et al. (2009) which formalises "
+    "the method described in Fishman et al. (1987). ",
+    abstract="Chill portions are a measure to estimate the bud breaking potential of different crops. "
+    "The constants and functions are taken from Luedeling et al. (2009) which formalises "
+    "the method described in Fishman et al. (1987). "
+    "The model computes the accumulation of cold temperatures in a two-step process. "
+    "First, cold temperatures contribute to an intermediate product that is transformed to a chill portion "
+    "once it exceeds a certain concentration. The intermediate product can be broken down at higher temperatures "
+    "but the final product is stable even at higher temperature. "
+    "Thus the dynamic model is more accurate than other chill models like the Chilling hours or Utah model, "
+    "especially in moderate climates like Israel, California or Spain.",
+    long_name="Chill portions after the Dynamic Model",
+    allowed_periods=["Y"],
+    compute=indices.chill_portions,
+)
+
+chill_units = TempHourlyWithIndexing(
+    title="Chill units",
+    identifier="cu",
+    units="",
+    cell_methods="time: sum",
+    description="Chill units are a measure to estimate the bud breaking potential of different crops based on the Utah model developed in "
+    "Richardson et al. (1974). The Utah model assigns a weight to each hour depending on the temperature recognising that high temperatures can "
+    "actually decrease the potential for bud breaking.",
+    long_name="Chill units after the Utah Model",
+    allowed_periods=["Y"],
+    compute=indices.chill_units,
 )
