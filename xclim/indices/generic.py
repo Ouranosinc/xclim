@@ -20,7 +20,6 @@ from xclim.core import DayOfYearStr, Quantified
 from xclim.core.calendar import (
     doy_to_days_since,
     get_calendar,
-    parse_offset,
     select_time,
 )
 from xclim.core.units import (
@@ -1481,13 +1480,14 @@ def detrend(
         return ds - trend
 
 
-@declare_relative_units(thresh="<data>")
+# @declare_relative_units(thresh="<data>")
+
+
 def thresholded_events(
     data: xr.DataArray,
-    thresh: Quantified = "1 kg m-2 d-1",
-    window_start: int = 3,
-    window_stop: int = 3,
-    freq: str | None = None,
+    thresh: Quantified,
+    window_start: int,
+    window_stop: int,
     data_is_rate: bool = False,
 ) -> xr.Dataset:
     r"""Thresholded events.
@@ -1502,8 +1502,6 @@ def thresholded_events(
         Number of time steps above the threshold required to start an event
     window_stop : int
         Number of time steps below the threshold required to stop an event
-    freq : str
-        Resampling frequency.
     data_is_rate : bool
         True if the data is a rate that needs to be converted to an amount
         when computing an accumulation.
@@ -1512,12 +1510,10 @@ def thresholded_events(
     -------
     xr.Dataset
     """
-    freq = xr.infer_freq(data.time)
-    mag, units, _, _ = parse_offset(freq)
     # condition to respect for `window_start` time steps to start a run
     thresh = convert_units_to(thresh, data)
     da_start = data >= thresh
-    da_stop = (1 - da_start).astype(bool)
+    da_stop = ~da_start
 
     # Get basic blocks to work with, our runs with holes and the lengths of those runs
     # Series of ones indicating where we have continuous runs of freezing rain with pauses
@@ -1526,28 +1522,25 @@ def thresholded_events(
 
     # Compute the length of freezing rain events
     # I think int16 is safe enough
-    ds = rl.rle(runs).astype(np.int16).to_dataset(name="run_lengths")
-    ds.run_lengths.attrs["units"] = ""
+    ds = rl.rle(runs).astype(np.int16).to_dataset(name="length")
+    ds.length.attrs["units"] = "1"
 
     # Time duration where the precipitation threshold is exceeded during an event
     # (duration of complete run - duration of holes in the run )
-    ds["effective_duration"] = (
-        rl._cumsum_reset(
-            da_start.where(runs == 1), index="first", reset_on_zero=False
-        ).astype(np.int16)
-        * mag
-    )
-    ds["effective_duration"].attrs["units"] = units
+    ds["effective_length"] = rl._cumsum_reset(
+        da_start.where(runs == 1), index="first", reset_on_zero=False
+    ).astype(np.int16)
+    ds["effective_length"].attrs["units"] = "1"
 
     # # Cumulated precipitation in a given freezing rain event
     if data_is_rate:
         dataam = rate2amount(data)
     else:
         dataam = data
-    ds["event_accumulation"] = rl._cumsum_reset(
+    ds["accumulation"] = rl._cumsum_reset(
         dataam.where(runs == 1), index="first", reset_on_zero=False
     )
-    ds["event_accumulation"].attrs["units"] = dataam.units
+    ds["accumulation"].attrs["units"] = dataam.units
 
     # Keep time as a variable, it will be used to keep start of events
     ds["start"] = ds["time"].broadcast_like(ds)  # .astype(int)
@@ -1555,11 +1548,13 @@ def thresholded_events(
     # Since there are conversion needing a time object earlier, I think it's ok
     # to assume this here?
     time_min = ds.start.min()
-    ds["start"] = (ds.start - time_min).astype("timedelta64[s]").astype(int)
+    ds["start"] = ds.start.copy(
+        data=(ds.start - time_min).values.astype("timedelta64[s]").astype(int)
+    )
 
     # Filter events: Reduce time dimension
     def _filter_events(da, rl, max_event_number):
-        out = np.full(max_event_number, np.NaN)
+        out = np.full(max_event_number, np.nan)
         events_start = da[rl > 0]
         out[: len(events_start)] = events_start
         return out
@@ -1569,24 +1564,26 @@ def thresholded_events(
     ds = xr.apply_ufunc(
         _filter_events,
         ds,
-        ds.run_lengths,
+        ds.length,
         input_core_dims=[["time"], ["time"]],
         output_core_dims=[["event"]],
         kwargs=dict(max_event_number=max_event_number),
-        output_sizes={"event": max_event_number},
+        dask_gufunc_kwargs=dict(output_sizes={"event": max_event_number}),
         dask="parallelized",
         vectorize=True,
     ).assign_attrs(ds.attrs)
 
     ds["event"] = np.arange(1, ds.event.size + 1)
+    ds.event.assign_attrs(units="")
     for v in ds.data_vars:
         ds[v].attrs = v_attrs[v]
 
     # convert back start to a time
     # TODO fix for calendars
-    ds["start"] = time_min.astype("datetime64[ns]") + ds["start"].astype(
-        "timedelta64[ns]"
+    ds["start"] = time_min + ds.start.copy(
+        data=ds.start.values.astype("timedelta64[s]").astype("timedelta64[ns]")
     )
+    ds["start"].assign_attrs(units="")
     return ds
 
     # # Other indices that could be completely done outside of the function, no input needed anymore

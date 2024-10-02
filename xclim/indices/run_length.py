@@ -717,7 +717,7 @@ def keep_longest_run(
     return da.copy(data=out.transpose(*da.dims).data)
 
 
-def extract_events(
+def runs_with_holes(
     da_start: xr.DataArray,
     window_start: int,
     da_stop: xr.DataArray,
@@ -747,31 +747,15 @@ def extract_events(
     Notes
     -----
     A season (as defined in ``season``) could be considered as an event with  `window_stop == window_start` and `da_stop == 1 - da_start`,
-    although it has more constraints on when to start and stop a run through the `date` argument.
+    although it has more constraints on when to start and stop a run through the `date` argument and only one season can be found.
     """
     da_start = da_start.astype(int).fillna(0)
     da_stop = da_stop.astype(int).fillna(0)
 
     start_runs = _cumsum_reset(da_start, dim=dim, index="first")
     stop_runs = _cumsum_reset(da_stop, dim=dim, index="first")
-    start_positions = xr.where(start_runs >= window_start, 1, np.NaN)
-    stop_positions = xr.where(stop_runs >= window_stop, 0, np.NaN)
-
-    # start positions (1) are f-filled until a stop position (0) is met
-    runs = stop_positions.combine_first(start_positions).ffill(dim=dim).fillna(0)
-
-    return runs
-
-
-def runs_with_holes(da_start, window_start, da_stop, window_stop, dim="time"):
-    """Runs with holes"""
-    da_start = da_start.astype(int).fillna(0)
-    da_stop = da_stop.astype(int).fillna(0)
-
-    start_runs = _cumsum_reset(da_start, dim=dim, index="first")
-    stop_runs = _cumsum_reset(da_stop, dim=dim, index="first")
-    start_positions = xr.where(start_runs >= window_start, 1, np.NaN)
-    stop_positions = xr.where(stop_runs >= window_stop, 0, np.NaN)
+    start_positions = xr.where(start_runs >= window_start, 1, np.nan)
+    stop_positions = xr.where(stop_runs >= window_stop, 0, np.nan)
 
     # start positions (1) are f-filled until a stop position (0) is met
     runs = stop_positions.combine_first(start_positions).ffill(dim=dim).fillna(0)
