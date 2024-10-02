@@ -1627,6 +1627,7 @@ def chill_portions(
     tas_K: xarray.DataArray = select_time(
         convert_units_to(tas, "K"), drop=True, **indexer
     )
+    # TODO: use resample_map once #1848 is merged
     return (
         tas_K.resample(time=freq)
         .map(_apply_chill_portion_one_season)
