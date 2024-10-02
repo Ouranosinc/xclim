@@ -1387,15 +1387,15 @@
     "abstract": "Calcul du rayonnement de grandes longueurs d'onde ascendant à partir du rayonnement de grandes longueurs d'onde net et descendant."
   },
   "CP": {
-    "long_name": "Chill portions selon le modèle Dynamique",
-    "description": "Les « chill portions » sont une mesure du potentiel de débourrement de différentes récoltes.",
-    "abstract": "Les « chill portions » sont une mesure du potentiel de débourrement de différentes récoltes.",
-    "title": "Chill portions selon le modèle Dynamique."
+    "title": "Portions de froid (Chill Portions) selon le modèle Dynamique.",
+    "abstract": "Les portions de froid (chill portions) sont une mesure du potentiel de débourrement de différentes récoltes basée sur le modèle Dynamique.",
+    "long_name": "Portions de froid selon le modèle Dynamique",
+    "description": "Les portions de froid (chill portions) sont une mesure du potentiel de débourrement de différentes récoltes basée sur le modèle Dynamique."
   },
   "CU": {
-    "title": "Unités de froid (chill) selon le modèle Utah",
+    "title": "Unités de froid (chill units) selon le modèle Utah",
+    "abstract": "Les unités de froid (chill units) sont une mesure du potentiel de débourrement de différentes récoltes basée sur le modèle Utah.",
     "long_name": "Unités de froid selon le modèle Utah",
-    "description": "Les « chill units » sont une mesure du potentiel de débourrement de différentes récoltes basés sur le modèle Utah.",
-    "abstract": "Les « chill units » sont une mesure du potentiel de débourrement de différentes récoltes basés sur le modèle Utah."
+    "description": "Les unités de froid (chill units) sont une mesure du potentiel de débourrement de différentes récoltes basée sur le modèle Utah."
   }
 }
