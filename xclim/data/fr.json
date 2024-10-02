@@ -1394,7 +1394,7 @@
   },
   "HIGH_FLOW_FREQUENCY": {
     "long_name": "Fréquence des débits élevés",
-    "description": "Nombre de jours où le débit est {thresholf_factor} fois supérieur à la médiane.",
+    "description": "Nombre de jours où le débit est {threshold_factor} fois supérieur à la médiane.",
     "title": "Fréquence des débits élevés",
     "abstract": "Fréquence des débits élevés, calculée comme le nombre de jours où le débit est supérieur à un multiple de la médiane."
   },
