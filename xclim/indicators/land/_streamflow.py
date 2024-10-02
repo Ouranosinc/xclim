@@ -5,13 +5,21 @@ from __future__ import annotations
 from xclim.core.cfchecks import check_valid
 from xclim.core.indicator import ResamplingIndicator
 from xclim.core.units import declare_units
-from xclim.indices import base_flow_index, generic, rb_flashiness_index
+from xclim.indices import (
+    base_flow_index,
+    generic,
+    rb_flashiness_index,
+    standardized_groundwater_index,
+    standardized_streamflow_index,
+)
 
 __all__ = [
     "base_flow_index",
     "doy_qmax",
     "doy_qmin",
     "rb_flashiness_index",
+    "standardized_groundwater_index",
+    "standardized_streamflow_index",
 ]
 
 
@@ -26,6 +34,13 @@ class Streamflow(ResamplingIndicator):
     @staticmethod
     def cfcheck(q):
         check_valid(q, "standard_name", "water_volume_transport_in_river_channel")
+
+
+class StandardizedStreamflowIndexes(ResamplingIndicator):
+    """Resampling but flexible inputs indicators."""
+
+    src_freq = ["D", "MS"]
+    context = "hydro"
 
 
 base_flow_index = Streamflow(
@@ -73,4 +88,36 @@ doy_qmin = Streamflow(
     units="",
     compute=declare_units(da="[discharge]")(generic.select_resample_op),
     parameters={"op": generic.doymin, "out_units": None},
+)
+
+
+standardized_streamflow_index = StandardizedStreamflowIndexes(
+    title="Standardized Streamflow Index (SSI)",
+    identifier="ssi",
+    units="",
+    standard_name="ssi",
+    long_name="Standardized Streamflow Index (SSI)",
+    description="Streamflow over a moving {window}-X window, normalized such that SSI averages to 0 for "
+    "calibration data. The window unit `X` is the minimal time period defined by resampling frequency {freq}.",
+    abstract="Streamflow over a moving window, normalized such that SSI averages to 0 for the calibration data. "
+    "The window unit `X` is the minimal time period defined by the resampling frequency.",
+    cell_methods="",
+    keywords="streamflow",
+    compute=standardized_streamflow_index,
+)
+
+
+standardized_groundwater_index = StandardizedStreamflowIndexes(
+    title="Standardized Groundwater Index (SGI)",
+    identifier="sgi",
+    units="",
+    standard_name="sgi",
+    long_name="Standardized Groundwater Index (SGI)",
+    description="Groundwater over a moving {window}-X window, normalized such that SGI averages to 0 for "
+    "calibration data. The window unit `X` is the minimal time period defined by resampling frequency {freq}.",
+    abstract="Groundwater over a moving window, normalized such that SGI averages to 0 for the calibration data. "
+    "The window unit `X` is the minimal time period defined by the resampling frequency.",
+    cell_methods="",
+    keywords="groundwater",
+    compute=standardized_groundwater_index,
 )
