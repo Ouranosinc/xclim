@@ -6,6 +6,7 @@ import numpy as np
 import xarray as xr
 
 from xclim import atmos, set_options
+from xclim.indices.helpers import make_hourly_temperature
 
 K2C = 273.16
 
@@ -624,3 +625,34 @@ class TestLateFrostDays:
         lfd = atmos.late_frost_days(tasmin, date_bounds=("04-01", "06-30"))
 
         np.testing.assert_allclose(lfd.isel(time=0), exp, rtol=1e-03)
+
+
+def test_chill_units(atmosds):
+    tasmax = atmosds.tasmax
+    tasmin = atmosds.tasmin
+    tas = make_hourly_temperature(tasmin, tasmax)
+    cu = atmos.chill_units(tas, date_bounds=("04-01", "06-30"))
+    assert cu.attrs["units"] == "1"
+    assert cu.name == "cu"
+    assert cu.time.size == 4
+
+    # Values are confirmed with chillR package although not an exact match
+    # due to implementation details
+    exp = [1546.5, 1344.0, 1162.0, 1457.5]
+    np.testing.assert_allclose(cu.isel(location=0), exp, rtol=1e-03)
+
+
+def test_chill_portions(atmosds):
+    tasmax = atmosds.tasmax
+    tasmin = atmosds.tasmin
+    tas = make_hourly_temperature(tasmin, tasmax)
+    cp = atmos.chill_portions(tas, date_bounds=("09-01", "03-30"), freq="YS-JUL")
+    assert cp.attrs["units"] == "1"
+    assert cp.name == "cp"
+    # Although its 4 years of data its 5 seasons starting in July
+    assert cp.time.size == 5
+
+    # Values are confirmed with chillR package although not an exact match
+    # due to implementation details
+    exp = [np.nan, 99.91534493, 92.5473925, 99.03177047, np.nan]
+    np.testing.assert_allclose(cp.isel(location=0), exp, rtol=1e-03)

@@ -1403,5 +1403,17 @@
     "description": "Nombre de jours où le débit est inférieur à une fraction ({threshold_factor}) de la moyenne.",
     "title": "Fréquence des débits faibles",
     "abstract": "Fréquence des débits faibles, calculée comme le nombre de jours où le débit est inférieur à une fraction de la moyenne."
+  },
+  "CP": {
+    "title": "Portions de froid (Chill Portions) selon le modèle Dynamique.",
+    "abstract": "Les portions de froid (chill portions) sont une mesure du potentiel de débourrement de différentes récoltes basée sur le modèle Dynamique.",
+    "long_name": "Portions de froid selon le modèle Dynamique",
+    "description": "Les portions de froid (chill portions) sont une mesure du potentiel de débourrement de différentes récoltes basée sur le modèle Dynamique."
+  },
+  "CU": {
+    "title": "Unités de froid (chill units) selon le modèle Utah",
+    "abstract": "Les unités de froid (chill units) sont une mesure du potentiel de débourrement de différentes récoltes basée sur le modèle Utah.",
+    "long_name": "Unités de froid selon le modèle Utah",
+    "description": "Les unités de froid (chill units) sont une mesure du potentiel de débourrement de différentes récoltes basée sur le modèle Utah."
   }
 }

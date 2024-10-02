@@ -35,6 +35,8 @@ from xclim.indices.stats import standardized_index
 
 __all__ = [
     "biologically_effective_degree_days",
+    "chill_portions",
+    "chill_units",
     "cool_night_index",
     "corn_heat_units",
     "dryness_index",
@@ -415,7 +417,7 @@ def biologically_effective_degree_days(
             lat = _gather_lat(tasmin)
 
         if method.lower() == "gladstones":
-            if isinstance(lat, (int, float)):
+            if isinstance(lat, int | float):
                 lat = xarray.DataArray(lat)
             lat_mask = abs(lat) <= 50
             k = 1 + xarray.where(
@@ -1524,3 +1526,159 @@ def hardiness_zones(
 
     zones = zones.assign_attrs(units="")
     return zones
+
+
+def _accumulate_intermediate(prev_E, prev_xi, curr_xs, curr_ak1):
+    """Accumulate the intermediate product based on the previous concentration and the current temperature."""
+    curr_S = np.where(prev_E < 1, prev_E, prev_E - prev_E * prev_xi)
+    return curr_xs - (curr_xs - curr_S) * np.exp(-curr_ak1)
+
+
+def _chill_portion_one_season(tas_K):
+    """Computes the chill portion for a single season based on the dynamic model on a numpy array."""
+    # Constants as described in Luedeling et al. (2009)
+    E0 = 4153.5
+    E1 = 12888.8
+    A0 = 139500
+    A1 = 2.567e18
+    SLP = 1.6
+    TETMLT = 277
+    AA = A0 / A1
+    EE = E1 - E0
+
+    ftmprt = SLP * TETMLT * (tas_K - TETMLT) / tas_K
+    sr = np.exp(ftmprt)
+    xi = sr / (1 + sr)
+    xs = AA * np.exp(EE / tas_K)
+    ak1 = A1 * np.exp(-E1 / tas_K)
+
+    inter_E = np.zeros_like(tas_K)
+    for i in range(1, tas_K.shape[-1]):
+        inter_E[..., i] = _accumulate_intermediate(
+            inter_E[..., i - 1], xi[..., i - 1], xs[..., i], ak1[..., i]
+        )
+    delta = np.where(inter_E >= 1, inter_E * xi, 0)
+
+    return delta
+
+
+def _apply_chill_portion_one_season(tas_K):
+    """Apply the chill portion function on to an xarray DataArray."""
+    tas_K = tas_K.chunk(time=-1)
+    return xarray.apply_ufunc(
+        _chill_portion_one_season,
+        tas_K,
+        input_core_dims=[["time"]],
+        output_core_dims=[["time"]],
+        output_dtypes=[tas_K.dtype],
+        dask="parallelized",
+    ).sum("time")
+
+
+@declare_units(tas="[temperature]")
+def chill_portions(
+    tas: xarray.DataArray, freq: str = "YS", **indexer
+) -> xarray.DataArray:
+    """Chill portion based on the dynamic model
+
+    Chill portions are a measure to estimate the bud breaking potential of different crop.
+    The constants and functions are taken from Luedeling et al. (2009) which formalises
+    the method described in Fishman et al. (1987). The model computes the accumulation of
+    an intermediate product that is transformed to the final product once it exceeds a
+    certain concentration. The intermediate product can be broken down at higher temperatures
+    but the final product is stable even at higher temperature. Thus the dynamic model is
+    more accurate than the Utah model especially in moderate climates like Israel,
+    California or Spain.
+
+    Parameters
+    ----------
+    tas : xr.DataArray
+        Hourly temperature.
+
+    Returns
+    -------
+    xr.DataArray, [unitless]
+        Chill portions after the Dynamic Model
+
+    Notes
+    -----
+    Typically, this indicator is computed for a period of the year. You can use the `**indexer` arguments
+    of `select_time` in combination with the `freq` argument to select e.g. a winter period:
+
+    .. code-block:: python
+
+        cp = chill_portions(tas, date_bounds=("09-01", "03-30"), freq="YS-JUL")
+
+    Note that incomplete periods will lead to NaNs.
+
+    Examples
+    --------
+    >>> from xclim.indices import chill_portions
+    >>> from xclim.indices.helpers import make_hourly_temperature
+    >>> tasmin = xr.open_dataset(path_to_tasmin_file).tasmin
+    >>> tasmax = xr.open_dataset(path_to_tasmax_file).tasmax
+    >>> tas_hourly = make_hourly_temperature(tasmin, tasmax)
+    >>> cp = chill_portions(tasmin)
+
+    References
+    ----------
+    :cite:cts:`fishman_chill_1987,luedeling_chill_2009`
+    """
+    tas_K: xarray.DataArray = select_time(
+        convert_units_to(tas, "K"), drop=True, **indexer
+    )
+    # TODO: use resample_map once #1848 is merged
+    return (
+        tas_K.resample(time=freq)
+        .map(_apply_chill_portion_one_season)
+        .assign_attrs(units="")
+    )
+
+
+@declare_units(tas="[temperature]")
+def chill_units(tas: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
+    """Chill units using the Utah model
+
+    Chill units are a measure to estimate the bud breaking potential of different crop based on Richardson et al. (1974).
+    The Utah model assigns a weight to each hour depending on the temperature recognising that high temperatures can actual decrease,
+    the potential for bud breaking.
+
+    Parameters
+    ----------
+    tas : xr.DataArray
+        Hourly temperature.
+
+    Returns
+    -------
+    xr.DataArray, [unitless]
+        Chill units using the Utah model
+
+    Examples
+    --------
+    >>> from xclim.indices import chill_units
+    >>> from xclim.indices.helpers import make_hourly_temperature
+    >>> tasmin = xr.open_dataset(path_to_tasmin_file).tasmin
+    >>> tasmax = xr.open_dataset(path_to_tasmax_file).tasmax
+    >>> tas_hourly = make_hourly_temperature(tasmin, tasmax)
+    >>> cu = chill_units(tasmin)
+
+    References
+    ----------
+    :cite:cts:`richardson_chill_1974`
+    """
+    tas = convert_units_to(tas, "degC")
+    cu = xarray.where(
+        (tas <= 1.4) | ((tas > 12.4) & (tas <= 15.9)),
+        0,
+        xarray.where(
+            ((tas > 1.4) & (tas <= 2.4)) | ((tas > 9.1) & (tas <= 12.4)),
+            0.5,
+            xarray.where(
+                (tas > 2.4) & (tas <= 9.1),
+                1,
+                xarray.where((tas > 15.9) & (tas <= 17.9), -0.5, -1),
+            ),
+        ),
+    )
+    cu = cu.where(tas.notnull())
+    return cu.resample(time=freq).sum().assign_attrs(units="")

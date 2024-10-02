@@ -32,15 +32,12 @@ permissions:
 
 jobs:
   lint:
-    name: Lint (Python${{ matrix.python-version }})
+    name: Lint
     runs-on: ubuntu-latest
     if: |
       (github.event.action != 'labeled') ||
       (github.event.review.state == 'approved') ||
       (github.event_name == 'push')
-    strategy:
-      matrix:
-        python-version: [ "3.9" ]
     steps:
       - name: Harden Runner
         uses: step-security/harden-runner@91182cccc01eb5e619899d80e4e971d6181294a7 # v2.10.1
@@ -53,10 +50,10 @@ jobs:
             pypi.org:443
       - name: Checkout Repository
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
-      - name: Set up Python${{ matrix.python-version }}
+      - name: Set up Python3
         uses: actions/setup-python@f677139bbe7f9c59b41e40162b753c062f5d49a3 # v5.2.0
         with:
-          python-version: ${{ matrix.python-version }}
+          python-version: "3.x"
           cache: 'pip'
       - name: Install CI libraries
         run: |
@@ -82,7 +79,7 @@ jobs:
     strategy:
       matrix:
         os: [ 'ubuntu-latest' ]
-        python-version: [ "3.9" ]
+        python-version: [ "3.10" ]
         testdata-cache: [ '~/.cache/xclim-testdata' ]
     steps:
       - name: Harden Runner
@@ -153,20 +150,20 @@ jobs:
           - os: 'windows-latest'
             testdata-cache: 'C:\Users\runneradmin\AppData\Local\xclim-testdata\xclim-testdata\Cache'
             markers: -m 'not slow'
-            python-version: "3.9"
-            tox-env: py39-coverage-prefetch  # Test data prefetch is needed for Windows
+            python-version: "3.10"
+            tox-env: py310-coverage-prefetch  # Test data prefetch is needed for Windows
           # macOS builds
           - os: 'macos-latest'
             testdata-cache: '~/Library/Caches/xclim-testdata'
             markers: ''  # Slow tests
-            python-version: "3.10"
-            tox-env: py310-coverage-extras
+            python-version: "3.11"
+            tox-env: py311-coverage-extras
           # Specialized tests
           - os: 'ubuntu-latest'
             testdata-cache: '~/.cache/xclim-testdata'
             markers: -m 'not requires_internet and not slow'
-            python-version: "3.9"
-            tox-env: py39-coverage-offline-prefetch
+            python-version: "3.11"
+            tox-env: py311-coverage-sbck-offline-prefetch
           - os: 'ubuntu-latest'
             testdata-cache: '~/.cache/xclim-testdata'
             markers: '' # No markers for notebooks
@@ -198,7 +195,7 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
       - name: Install Eigen3 (SBCK)
-        if: ${{ matrix.python-version == '3.11' }}
+        if: ${{ matrix.python-version == '3.11' && matrix.os == 'ubuntu-latest' }}
         run: |
           sudo apt-get update
           sudo apt-get install libeigen3-dev
@@ -247,7 +244,7 @@ jobs:
     strategy:
       matrix:
         os: [ 'ubuntu-latest' ]
-        python-version: [ "3.9", "3.12" ]
+        python-version: [ "3.10", "3.12" ]
         testdata-cache: [ '~/.cache/xclim-testdata' ]
     defaults:
       run:
@@ -327,7 +324,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@5c7944e73c4c2a096b17a9cb74d65b6c2bbafbde # v2.9.1
+        uses: step-security/harden-runner@91182cccc01eb5e619899d80e4e971d6181294a7 # v2.10.1
         with:
           disable-sudo: true
           egress-policy: audit
