@@ -6,6 +6,11 @@ v0.53.0 (unreleased)
 --------------------
 Contributors to this version: Adrien Lamarche (:user:`LamAdr`), Trevor James Smith (:user:`Zeitsperre`),  Éric Dupuis (:user:`coxipi`), Pascal Bourgault (:user:`aulemahal`).
 
+Announcements
+^^^^^^^^^^^^^
+* `xclim` has now adopted the `Scientific Python SPEC 0 <https://scientific-python.org/specs/spec-0000/>`_ conventions for its suggested dependency support schedule. (:issue:`1914`, :pull:`1915`).
+* `xclim` has dropped support for Python 3.9 and adopted Python 3.10+ code styling conventions. (:issue:`1914`, :pull:`1915`).
+
 New indicators
 ^^^^^^^^^^^^^^
 * New ``heat_spell_frequency``, ``heat_spell_max_length`` and ``heat_spell_total_length`` : spell length statistics on a bivariate condition that uses the average over a window by default. (:pull:`1885`).
@@ -20,15 +25,14 @@ New features and enhancements
 Bug fixes
 ^^^^^^^^^
 * Fixed a small inefficiency in ``_otc_adjust``, and the `standardize` method of `OTC/dOTC` is now applied on individual variable  (:pull:`1890`, :pull:`1896`).
-
-Breaking changes
-^^^^^^^^^^^^^^^^
-* `transform` argument of `OTC/dOTC` classes (and child functions) is changed to `normalization`, and `numIterMax` is changed to `num_iter_max` in `utils.optimal_transport` (:pull:`1896`).
+* Remove deprecated cells in the tutorial notebook `sdba.ipynb` (:pull:`1895`).
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
 * `platformdirs` is no longer a direct dependency of `xclim`, but `pooch` is required to use many of the new testing functions (installable via `pip install pooch` or `pip install 'xclim[dev]'`). (:pull:`1889`).
 * The following previously-deprecated functions have now been removed from `xclim`: ``xclim.core.calendar.convert_calendar``, ``xclim.core.calendar.date_range``, ``xclim.core.calendar.date_range_like``, ``xclim.core.calendar.interp_calendar``, ``xclim.core.calendar.days_in_year``, ``xclim.core.calendar.datetime_to_decimal_year``. For guidance on how to migrate to alternatives, see the `version 0.50.0 Breaking changes <#v0-50-0-2024-06-17>`_. (:issue:`1010`, :pull:`1845`).
+* `transform` argument of `OTC/dOTC` classes (and child functions) is changed to `normalization`, and `numIterMax` is changed to `num_iter_max` in `utils.optimal_transport` (:pull:`1896`).
+* `xclim` now requires `numpy >=1.23.0` and `scikit-learn >=1.1.0`, as well as (optionally) `ipython >=8.5.0`, `nbsphinx >=0.9.5`, and `matplotlib >=3.6.0` . (:issue:`1914`, :pull:`1915`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
@@ -44,6 +48,33 @@ Internal changes
 * The codebase has been adjusted to address many `pylint`-related warnings and errors. In some cases, `casting` was used to redefine some `numpy` and `xarray` objects. (:issue:`1719`, :pull:`1881`).
 * ``xclim.core`` now uses absolute imports for clarity and some objects commonly used in the module have been moved to hidden submodules. (:issue:`1719`, :pull:`1881`).
 * ``xclim.core.indicator.Parameter`` has a new attribute ``compute_name`` while ``xclim.core.indicator.Indicator`` lost its ``_variable_mapping``. The translation from parameter (and variable) names in the indicator to the names on the compute function is handled by ``Indicator._get_compute_args``. (:pull:`1885`).
+* Adopted many linting and formatting suggestions from the Scientific Python `repo-review <https://github.com/scientific-python/repo-review>`_ tool: (:pull:`1910`)
+    * Applied several linting suggestions adopted by the `scipy` community.
+    * Replaced `isort` with `ruff`-based import-sorting formatting.
+    * Added formatting for `Markdown` files.
+    * Added the `bugbear`, `pyupgrade` checks to the `ruff` formatter.
+    * Adjusted `mypy` checks to be more standardized.
+* Renamed annual deprecated frequency alias `"A"` to `"Y"` (:pull:`1930`).
+
+CI changes
+^^^^^^^^^^
+* The `pip` cache, `tox` environments, and the `xclim-testdata` cache are now saved between workflow runs (using `actions/cache`) to reduce the time spent installing dependencies and downloading testing data. (:pull:`1906`).
+
+v0.52.2 (2024-09-16)
+--------------------
+Contributors to this version: Pascal Bourgault (:user:`aulemahal`).
+
+Bug fixes
+^^^^^^^^^
+* Fixed ``decimal_year`` import, fixed functions ``rate2amount``, ``amount2rate``, ``time_bnds`` and ``stack_periods``  for `xarray` version 2024.09.0. Removed ``datetime_to_decimal_year`` as the mirrored `xarray` function was replaced by ``ds.time.dt.decimal_year``. (:pull:`1920`).
+
+v0.52.1 (2024-09-11)
+--------------------
+Contributors to this version: Trevor James Smith (:user:`Zeitsperre`).
+
+Bug fixes
+^^^^^^^^^
+* Adjusted the required base version of `pyarrow` to be `v10.0.1` to address an environment resolution error on conda-forge. (:pull:`1918`).
 
 v0.52.0 (2024-08-08)
 --------------------
@@ -363,7 +394,7 @@ New features and enhancements
     * Optimized and noticeably faster calculation.
     * Can be computed in two steps: first compute fit parameters with ``xclim.indices.stats.standardized_index_fit_params``, then use the output in the standardized indices functions.
     * The standardized index values are now clipped to ±8.21. This reflects the ``float64`` precision of the computation when cumulative distributed function values are inverted to a normal distribution and avoids returning infinite values.
-    * An offset parameter is now available to account for negative water balance values``xclim.indices.standardized_precipitation_evapotranspiration_index``.
+    * An offset parameter is now available to account for negative water balance values ``xclim.indices.standardized_precipitation_evapotranspiration_index``.
 
 Bug fixes
 ^^^^^^^^^
@@ -1436,7 +1467,7 @@ New features and enhancements
 Breaking changes
 ^^^^^^^^^^^^^^^^
 * The `tropical_nights` indice is being deprecated in favour of `tn_days_above` with ``thresh="20 degC"``. The indicator remains valid, now wrapping this new indice.
-* Results of ``sdba.Grouper.apply`` for ``Grouper``s without a group (ex: ``Grouper('time')``) will contain a ``group`` singleton dimension.
+* Results of ``sdba.Grouper.apply`` for ``Grouper`` without a group (ex: ``Grouper('time')``) will contain a ``group`` singleton dimension.
 * The `daily_freezethaw_cycles` indice is being deprecated in favour of ``multiday_temperature_swing`` with temp thresholds at 0 degC and ``window=1, op="sum"``. The indicator remains valid, now wrapping this new indice.
 * CMIP6 variable names have been adopted whenever possible in xclim. Changes are:
 

@@ -10,13 +10,15 @@ from __future__ import annotations
 
 import logging
 import warnings
+from collections.abc import Callable
 from copy import deepcopy
 from importlib.resources import files
 from inspect import signature
-from typing import Any, Callable, Literal, cast
+from typing import Any, Literal, cast
 
 import cf_xarray.units
 import numpy as np
+import pandas as pd
 import pint
 import xarray as xr
 from boltons.funcutils import wraps
@@ -188,7 +190,7 @@ def pint2cfunits(value: units.Quantity | units.Unit) -> str:
     str
         Units following CF-Convention, using symbols.
     """
-    if isinstance(value, (pint.Quantity, units.Quantity)):
+    if isinstance(value, pint.Quantity | units.Quantity):
         value = value.units
 
     # Force "1" if the formatted string is "" (pint < 0.24)
@@ -299,7 +301,7 @@ def convert_units_to(  # noqa: C901
     # Target units
     if isinstance(target, units.Unit):
         target_unit = target
-    elif isinstance(target, (str, xr.DataArray)):
+    elif isinstance(target, str | xr.DataArray):
         target_unit = units2pint(target)
     else:
         raise NotImplementedError(
@@ -371,7 +373,7 @@ def convert_units_to(  # noqa: C901
             return out
 
     # TODO remove backwards compatibility of int/float thresholds after v1.0 release
-    if isinstance(source, (float, int)):
+    if isinstance(source, float | int):
         raise TypeError("Please specify units explicitly.")
 
     raise NotImplementedError(f"Source of type `{type(source)}` is not supported.")
@@ -651,7 +653,10 @@ def _rate_and_amount_converter(
             start = time.indexes[dim][0]
             if not start_anchor:
                 # Anchor is on the end of the period, subtract 1 period.
-                start = start - xr.coding.cftime_offsets.to_offset(freq)
+                if isinstance(start, pd.Timestamp):
+                    start = start - pd.tseries.frequencies.to_offset(freq)
+                else:
+                    start = start - xr.coding.cftime_offsets.to_offset(freq)
                 # In the diff below, assign to upper label!
                 label = "upper"
             # We generate "time" with an extra element, so we do not need to repeat the last element below.
@@ -1112,7 +1117,7 @@ def check_units(
             )
             val = str(val).replace("UNSET ", "")
 
-    if isinstance(val, (int, float)):
+    if isinstance(val, int | float):
         raise TypeError("Please set units explicitly using a string.")
 
     try:
@@ -1272,7 +1277,7 @@ def declare_relative_units(**units_by_name) -> Callable:
 
             return out
 
-        setattr(wrapper, "relative_units", units_by_name)
+        wrapper.relative_units = units_by_name
         return wrapper
 
     return dec
@@ -1352,7 +1357,7 @@ def declare_units(**units_by_name) -> Callable:
 
             return out
 
-        setattr(wrapper, "in_units", units_by_name)
+        wrapper.in_units = units_by_name
         return wrapper
 
     return dec
