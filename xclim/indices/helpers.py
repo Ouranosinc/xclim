@@ -670,6 +670,7 @@ def make_hourly_temperature(tasmin: xr.DataArray, tasmax: xr.DataArray) -> xr.Da
         Hourly temperature.
     """
     data = xr.merge([tasmin, tasmax])
+    data = data.assign_coords(time=data.time.dt.floor("D"))
     # We add one more timestamp so the resample function includes the last day
     data = xr.concat(
         [
