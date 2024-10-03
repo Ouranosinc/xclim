@@ -1960,6 +1960,10 @@ def hot_spell_max_magnitude(
         Determines if the resampling should take place before or after the run
         length encoding (or a similar algorithm) is applied to runs.
 
+    References
+    ----------
+    :cite:cts:`russo_magnitude_2014,zhang_high_2022`
+
     Returns
     -------
     DataArray, [time]
