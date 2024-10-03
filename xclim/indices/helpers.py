@@ -563,7 +563,7 @@ def _gather_lon(da: xr.DataArray) -> xr.DataArray:
         )
         raise ValueError(msg) from err
 
-        
+
 def resample_map(
     obj: xr.DataArray | xr.Dataset,
     dim: str,
@@ -643,7 +643,7 @@ def resample_map(
         _resample_map, (dim, freq, resample_kwargs, func, map_kwargs), template=template
     )
 
-  
+
 def _compute_daytime_temperature(
     hour_after_sunrise: xr.DataArray,
     tasmin: xr.DataArray,

@@ -178,7 +178,7 @@ def test_resample_map_passthrough(tas_series):
         out = helpers.resample_map(tas, "time", "MS", lambda da: da.mean("time"))
     assert not uses_dask(out)
 
-    
+
 @pytest.mark.parametrize("cftime", [False, True])
 def test_make_hourly_temperature(tasmax_series, tasmin_series, cftime):
     tasmax = tasmax_series(np.array([20]), units="degC", cftime=cftime)
