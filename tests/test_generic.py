@@ -815,7 +815,7 @@ class TestThresholdedEvents:
                 0,
                 0,
             ]
-        )
+        )  # noqa
         pr = pr_series(arr, start="2000-01-01", units="mm")
         if use_dask:
             pr = pr.chunk(-1)
@@ -883,7 +883,7 @@ class TestThresholdedEvents:
                 0,
                 0,
             ]
-        )
+        )  # noqa
         pr = pr_series(arr, start="2000-01-01", units="mm")
         if use_dask:
             pr = pr.chunk(-1)
@@ -949,7 +949,7 @@ class TestThresholdedEvents:
                 0,
                 0,
             ]
-        )
+        )  # noqa
         pr = pr_series(arr, start="2000-01-01", units="mm").convert_calendar("noleap")
         if use_dask:
             pr = pr.chunk(-1)
@@ -1014,7 +1014,7 @@ class TestThresholdedEvents:
             2,
             3,
             2,
-        ]
+        ]  # noqa
         fev = [
             2,
             2,
@@ -1045,7 +1045,7 @@ class TestThresholdedEvents:
             0,
             0,
             0,
-        ]
+        ]  # noqa
         pr = pr_series(np.array(jan + fev), start="2000-01-01", units="mm")
         if use_dask:
             pr = pr.chunk(-1)
