@@ -623,8 +623,8 @@ def to_agg_units(
 
 
 def _rate_and_amount_converter(
-    da: xr.DataArray,
-    dim: str = "time",
+    da: Quantified,
+    dim: str | xr.DataArray = "time",
     to: str = "amount",
     sampling_rate_from_coord: bool = False,
     out_units: str | None = None,
@@ -633,10 +633,27 @@ def _rate_and_amount_converter(
     m = 1
     u = None  # Default to assume a non-uniform axis
     label: Literal["lower", "upper"] = "lower"  # Default to "lower" label for diff
-    time = da[dim]
+    if isinstance(dim, str):
+        if not isinstance(da, xr.DataArray):
+            raise ValueError(
+                "If `dim` is a string, the data to convert must be a DataArray."
+            )
+        time = da[dim]
+    else:
+        time = dim
+        dim = time.name
+
+    # We accept str, Quantity or DataArray
+    # Ensure the code below has a DataArray, so its simpler
+    # We convert back at the end
+    orig_da = da
+    if isinstance(da, str):
+        da = str2pint(da)
+    if isinstance(da, units.Quantity):
+        da = xr.DataArray(da.magnitude, attrs={"units": f"{da.units:~cf}"})
 
     try:
-        freq = xr.infer_freq(da[dim])
+        freq = xr.infer_freq(time)
     except ValueError as err:
         if sampling_rate_from_coord:
             freq = None
@@ -670,7 +687,7 @@ def _rate_and_amount_converter(
                 ),
                 dims=(dim,),
                 name=dim,
-                attrs=da[dim].attrs,
+                attrs=time.attrs,
             )
         else:
             m, u = multi, FREQ_UNITS[base]
@@ -684,7 +701,7 @@ def _rate_and_amount_converter(
         # and `label` has been updated accordingly.
         dt = (
             time.diff(dim, label=label)
-            .reindex({dim: da[dim]}, method="ffill")
+            .reindex({dim: time}, method="ffill")
             .astype(float)
         )
         dt = dt / 1e9  # Convert to seconds
@@ -717,15 +734,17 @@ def _rate_and_amount_converter(
         out = out.assign_attrs(standard_name=new_name)
 
     if out_units:
-        out = cast(xr.DataArray, convert_units_to(out, out_units))
+        out = convert_units_to(out, out_units)
 
+    if not isinstance(orig_da, xr.DataArray):
+        out = units.Quantity(out.item(), out.attrs["units"])
     return out
 
 
 @_register_conversion("amount2rate", "from")
 def rate2amount(
-    rate: xr.DataArray,
-    dim: str = "time",
+    rate: Quantified,
+    dim: str | xr.DataArray = "time",
     sampling_rate_from_coord: bool = False,
     out_units: str | None = None,
 ) -> xr.DataArray:
@@ -739,10 +758,10 @@ def rate2amount(
 
     Parameters
     ----------
-    rate : xr.DataArray
+    rate : xr.DataArray, pint.Quantity or string
         "Rate" variable, with units of "amount" per time. Ex: Precipitation in "mm / d".
-    dim : str
-        The time dimension.
+    dim : str or DataArray
+        The name of time dimension or the coordinate itself.
     sampling_rate_from_coord : boolean
         For data with irregular time coordinates. If True, the diff of the time coordinate will be used as the sampling rate,
         meaning each data point will be assumed to apply for the interval ending at the next point. See notes.
@@ -757,7 +776,7 @@ def rate2amount(
 
     Returns
     -------
-    xr.DataArray
+    xr.DataArray or Quantity
 
     Examples
     --------
@@ -805,8 +824,8 @@ def rate2amount(
 
 @_register_conversion("amount2rate", "to")
 def amount2rate(
-    amount: xr.DataArray,
-    dim: str = "time",
+    amount: Quantified,
+    dim: str | xr.DataArray = "time",
     sampling_rate_from_coord: bool = False,
     out_units: str | None = None,
 ) -> xr.DataArray:
@@ -820,10 +839,10 @@ def amount2rate(
 
     Parameters
     ----------
-    amount : xr.DataArray
+    amount : xr.DataArray, pint.Quantity or string
         "amount" variable. Ex: Precipitation amount in "mm".
-    dim : str
-        The time dimension.
+    dim : str or xr.DataArray
+        The name of the time dimension or the time coordinate itself.
     sampling_rate_from_coord : boolean
         For data with irregular time coordinates.
         If True, the diff of the time coordinate will be used as the sampling rate,
@@ -840,7 +859,7 @@ def amount2rate(
 
     Returns
     -------
-    xr.DataArray
+    xr.DataArray or Quantity
 
     See Also
     --------
@@ -1158,12 +1177,16 @@ def check_units(
         )
 
 
-def _check_output_has_units(out: xr.DataArray | tuple[xr.DataArray]) -> None:
+def _check_output_has_units(
+    out: xr.DataArray | tuple[xr.DataArray] | xr.Dataset,
+) -> None:
     """Perform very basic sanity check on the output.
 
     Indices are responsible for unit management. If this fails, it's a developer's error.
     """
-    if not isinstance(out, tuple):
+    if isinstance(out, xr.Dataset):
+        out = out.data_vars.values()
+    elif not isinstance(out, tuple):
         out = (out,)
 
     for outd in out:
