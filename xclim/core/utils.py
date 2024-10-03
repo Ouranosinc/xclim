@@ -758,3 +758,44 @@ def _chunk_like(*inputs: xr.DataArray | xr.Dataset, chunks: dict[str, int] | Non
                 da.chunk(**{d: c for d, c in chunks.items() if d in da.dims})
             )
     return tuple(outputs)
+
+
+def split_auxiliary_coordinates(
+    obj: xr.DataArray | xr.Dataset,
+) -> tuple[xr.DataArray | xr.Dataset, xr.Dataset]:
+    """Split auxiliary coords from the dataset.
+
+    An auxiliary coordinate is a coordinate variable that does not define a dimension and thus is not necessarily needed for dataset alignment.
+    Any coordinate that has a name different than its dimension(s) is flagged as auxiliary. All scalar coordinates are flagged as auxiliary.
+
+    Parameters
+    ----------
+    obj : DataArray or Dataset
+        Xarray object
+
+    Returns
+    -------
+    clean_obj : DataArray or Dataset
+        Same as `obj` but without any auxiliary coordinate.
+    aux_coords : Dataset
+        The auxiliary coordinates as a dataset. Might be empty.
+
+    Note
+    ----
+    This is useful to circumvent xarray's alignment checks that will sometimes look the auxiliary coordinate's data, which can trigger
+    unwanted dask computations.
+
+    The auxiliary coordinates can be merged back with the dataset with
+    :py:meth:`xarray.Dataset.assign_coords` or :py:meth:`xarray.DataArray.assign_coords`.
+
+    >>> # xdoctest: +SKIP
+    >>> clean, aux = split_auxiliary_coordinates(ds)
+    >>> merged = clean.assign_coords(da.coords)
+    >>> merged.identical(ds)  # True
+    """
+    aux_crd_names = [
+        nm for nm, crd in obj.coords.items() if len(crd.dims) != 1 or crd.dims[0] != nm
+    ]
+    aux_crd_ds = obj.coords.to_dataset()[aux_crd_names]
+    clean_obj = obj.drop_vars(aux_crd_names)
+    return clean_obj, aux_crd_ds

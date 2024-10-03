@@ -29,6 +29,7 @@ from xclim.indices.generic import (
     spell_length_statistics,
     threshold_count,
 )
+from xclim.indices.helpers import resample_map
 
 # Frequencies : YS: year start, QS-DEC: seasons starting in december, MS: month start
 # See http://pandas.pydata.org/pandas-docs/stable/timeseries.html#offset-aliases
@@ -1491,12 +1492,17 @@ def last_spring_frost(
     thresh = convert_units_to(thresh, tasmin)
     cond = compare(tasmin, op, thresh, constrain=("<", "<="))
 
-    out = cond.resample(time=freq).map(
+    out = resample_map(
+        cond,
+        "time",
+        freq,
         rl.last_run_before_date,
-        window=window,
-        date=before_date,
-        dim="time",
-        coord="dayofyear",
+        map_kwargs=dict(
+            window=window,
+            date=before_date,
+            dim="time",
+            coord="dayofyear",
+        ),
     )
     out.attrs.update(units="", is_dayofyear=np.int32(1), calendar=get_calendar(tasmin))
     return out
@@ -1662,11 +1668,12 @@ def first_snowfall(
     thresh = convert_units_to(thresh, prsn, context="hydro")
     cond = prsn >= thresh
 
-    out = cond.resample(time=freq).map(
+    out = resample_map(
+        cond,
+        "time",
+        freq,
         rl.first_run,
-        window=1,
-        dim="time",
-        coord="dayofyear",
+        map_kwargs=dict(window=1, dim="time", coord="dayofyear"),
     )
     out.attrs.update(units="", is_dayofyear=np.int32(1), calendar=get_calendar(prsn))
     return out
@@ -1717,11 +1724,12 @@ def last_snowfall(
     thresh = convert_units_to(thresh, prsn, context="hydro")
     cond = prsn >= thresh
 
-    out = cond.resample(time=freq).map(
+    out = resample_map(
+        cond,
+        "time",
+        freq,
         rl.last_run,
-        window=1,
-        dim="time",
-        coord="dayofyear",
+        map_kwargs=dict(window=1, dim="time", coord="dayofyear"),
     )
     out.attrs.update(units="", is_dayofyear=np.int32(1), calendar=get_calendar(prsn))
     return out
@@ -3097,7 +3105,7 @@ def degree_days_exceedance_date(
             never_reached_val = never_reached
         return xarray.where((cumsum <= sum_thresh).all("time"), never_reached_val, out)
 
-    dded = c.clip(0).resample(time=freq).map(_exceedance_date)
+    dded = resample_map(c.clip(0), "time", freq, _exceedance_date)
     dded = dded.assign_attrs(
         units="", is_dayofyear=np.int32(1), calendar=get_calendar(tas)
     )
