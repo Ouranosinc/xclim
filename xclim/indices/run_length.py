@@ -422,7 +422,6 @@ def windowed_max_run_sum(
     window: int,
     dim: str = "time",
     freq: str | None = None,
-    ufunc_1dim: str | bool = "from_context",
     index: str = "first",
 ) -> xr.DataArray:
     """Return the maximum sum of consecutive float values for runs at least as long as the given window length.
@@ -438,11 +437,6 @@ def windowed_max_run_sum(
       Dimension along which to calculate consecutive run (default: 'time').
     freq : str
       Resampling frequency.
-    ufunc_1dim : Union[str, bool]
-        Use the 1d 'ufunc' version of this function : default (auto) will attempt to select optimal
-        usage based on number of data points. Using 1D_ufunc=True is typically more efficient
-        for DataArray with a small number of grid points.
-        Ignored when `window=1`. It can be modified globally through the "run_length_ufunc" global option.
     index : {'first', 'last'}
         If 'first', the run length is indexed with the first element in the run.
         If 'last', with the last element in the run.
