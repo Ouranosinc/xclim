@@ -177,3 +177,45 @@ def test_resample_map_passthrough(tas_series):
     with assert_lazy:
         out = helpers.resample_map(tas, "time", "MS", lambda da: da.mean("time"))
     assert not uses_dask(out)
+
+
+@pytest.mark.parametrize("cftime", [False, True])
+def test_make_hourly_temperature(tasmax_series, tasmin_series, cftime):
+    tasmax = tasmax_series(np.array([20]), units="degC", cftime=cftime)
+    tasmin = tasmin_series(np.array([0]), units="degC", cftime=cftime).expand_dims(
+        lat=[0]
+    )
+
+    tasmin.lat.attrs["units"] = "degree_north"
+    tas_hourly = helpers.make_hourly_temperature(tasmax, tasmin)
+    assert tas_hourly.attrs["units"] == "degC"
+    assert tas_hourly.time.size == 24
+    expected = np.array(
+        [
+            0.0,
+            3.90180644,
+            7.65366865,
+            11.11140466,
+            14.14213562,
+            16.62939225,
+            18.47759065,
+            19.61570561,
+            20.0,
+            19.61570561,
+            18.47759065,
+            16.62939225,
+            14.14213562,
+            10.32039099,
+            8.0848137,
+            6.49864636,
+            5.26831939,
+            4.26306907,
+            3.41314202,
+            2.67690173,
+            2.02749177,
+            1.44657476,
+            0.92107141,
+            0.44132444,
+        ]
+    )
+    np.testing.assert_allclose(tas_hourly.isel(lat=0).values, expected)
