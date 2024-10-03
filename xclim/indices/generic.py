@@ -27,12 +27,10 @@ from xclim.core.units import (
     declare_relative_units,
     infer_context,
     pint2cfunits,
-    rate2amount,
     str2pint,
     to_agg_units,
 )
 from xclim.indices import run_length as rl
-from xclim.indices.helpers import resample_map
 
 __all__ = [
     "aggregate_between_dates",
@@ -96,15 +94,14 @@ def select_resample_op(
         The maximum value for each period.
     """
     da = select_time(da, **indexer)
+    r = da.resample(time=freq)
     if isinstance(op, str):
         op = _xclim_ops.get(op, op)
     if isinstance(op, str):
-        out = getattr(da.resample(time=freq), op.replace("integral", "sum"))(
-            dim="time", keep_attrs=True
-        )
+        out = getattr(r, op.replace("integral", "sum"))(dim="time", keep_attrs=True)
     else:
         with xr.set_options(keep_attrs=True):
-            out = resample_map(da, "time", freq, op)
+            out = r.map(op)
         op = op.__name__
     if out_units is not None:
         return out.assign_attrs(units=out_units)
@@ -439,7 +436,7 @@ def spell_mask(
             mask = getattr(mask, var_reducer)("variable")
         # We need to filter out the spells shorter than "window"
         # find sequences of consecutive respected constraints
-        cs_s = rl._cumsum_reset_on_zero(mask)
+        cs_s = rl._cumsum_reset(mask)
         # end of these sequences
         cs_s = cs_s.where(mask.shift({"time": -1}, fill_value=0) == 0)
         # propagate these end of sequences
@@ -741,7 +738,7 @@ def season(
     map_kwargs = {"window": window, "mid_date": mid_date}
     if stat in ["start", "end"]:
         map_kwargs["coord"] = "dayofyear"
-    out = resample_map(cond, "time", freq, FUNC[stat], map_kwargs=map_kwargs)
+    out = cond.resample(time=freq).map(FUNC[stat], **map_kwargs)
     if stat == "length":
         return to_agg_units(out, data, "count")
     # else, a date
@@ -902,12 +899,11 @@ def first_occurrence(
 
     cond = compare(data, op, threshold, constrain)
 
-    out = resample_map(
-        cond,
-        "time",
-        freq,
+    out = cond.resample(time=freq).map(
         rl.first_run,
-        map_kwargs=dict(window=1, dim="time", coord="dayofyear"),
+        window=1,
+        dim="time",
+        coord="dayofyear",
     )
     out.attrs["units"] = ""
     return out
@@ -948,12 +944,11 @@ def last_occurrence(
 
     cond = compare(data, op, threshold, constrain)
 
-    out = resample_map(
-        cond,
-        "time",
-        freq,
+    out = cond.resample(time=freq).map(
         rl.last_run,
-        map_kwargs=dict(window=1, dim="time", coord="dayofyear"),
+        window=1,
+        dim="time",
+        coord="dayofyear",
     )
     out.attrs["units"] = ""
     return out
@@ -994,12 +989,11 @@ def spell_length(
 
     cond = compare(data, op, threshold)
 
-    out = resample_map(
-        cond,
-        "time",
-        freq,
+    out = cond.resample(time=freq).map(
         rl.rle_statistics,
-        map_kwargs=dict(reducer=reducer, window=1, dim="time"),
+        reducer=reducer,
+        window=1,
+        dim="time",
     )
     return to_agg_units(out, data, "count")
 
@@ -1339,12 +1333,12 @@ def first_day_threshold_reached(
 
     cond = compare(data, op, threshold, constrain=constrain)
 
-    out: xr.DataArray = resample_map(
-        cond,
-        "time",
-        freq,
+    out: xr.DataArray = cond.resample(time=freq).map(
         rl.first_run_after_date,
-        map_kwargs=dict(window=window, date=after_date, dim="time", coord="dayofyear"),
+        window=window,
+        date=after_date,
+        dim="time",
+        coord="dayofyear",
     )
     out.attrs.update(units="", is_dayofyear=np.int32(1), calendar=get_calendar(data))
     return out
@@ -1485,123 +1479,68 @@ def detrend(
         return ds - trend
 
 
-# @declare_relative_units(thresh="<data>")
-
-
+@declare_relative_units(thresh="<data>")
 def thresholded_events(
     data: xr.DataArray,
     thresh: Quantified,
-    window_start: int,
-    window_stop: int,
-    data_is_rate: bool = False,
+    op: str,
+    window: int,
+    thresh_stop: Quantified | None = None,
+    op_stop: str | None = None,
+    window_stop: int | None = None,
+    freq: str | None = None,
 ) -> xr.Dataset:
     r"""Thresholded events.
+
+    Finds all events along the time dimension. An event starts if the start condition is fulfilled for a given number of consecutive time steps.
+    It ends when the end condition is fulfilled for a given number of consecutive time steps.
+
+    Conditions are simple comparison of the data with a threshold: ``cond = data op thresh``.
+    The end conditions defaults to the negation of the start condition.
+
+    The resulting ``event`` dimension always has its maximal possible size : ``data.size / (window + window_stop)``.
 
     Parameters
     ----------
     data : xr.DataArray
         Variable.
     thresh : Quantified
-        Threshold that must be exceeded to be considered an event
-    window_start: int
-        Number of time steps above the threshold required to start an event
-    window_stop : int
-        Number of time steps below the threshold required to stop an event
-    data_is_rate : bool
-        True if the data is a rate that needs to be converted to an amount
-        when computing an accumulation.
+        Threshold defining the event.
+    op : {">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"}
+        Logical operator defining the event, e.g. arr > thresh.
+    window: int
+        Number of time steps where the event condition must be true to start an event.
+    thresh_stop : Quantified, optional
+        Threshold defining the end of an event. Defaults to `thresh`.
+    op_stop : {">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"}, optional
+        Logical operator for the end of an event. Defaults to the opposite of `op`.
+    window_stop: int, optional
+        Number of time steps where the end condition must be true to end an event. Defaults to `window`.
+    freq: str, optional
+        A frequency to divide the data into periods. If absent, the output has not time dimension.
+        If given, the events are searched within in each resample period independently.
 
     Returns
     -------
-    xr.Dataset
+    xr.Dataset, same shape as the data except the time dimension is replaced by an "event" dimension.
+        event_length: The number of time steps in each event
+        event_effective_length: The number of time steps of even event where the start condition is true.
+        event_sum: The sum within each event, only considering the steps where start condition is true.
+        event_start: The datetime of the start of the run.
     """
     # condition to respect for `window_start` time steps to start a run
+    window_stop = window_stop or window
     thresh = convert_units_to(thresh, data)
-    da_start = data >= thresh
-    da_stop = ~da_start
 
-    # Get basic blocks to work with, our runs with holes and the lengths of those runs
-    # Series of ones indicating where we have continuous runs of freezing rain with pauses
-    # not exceeding `window_stop`
-    runs = rl.runs_with_holes(da_start, window_start, da_stop, window_stop)
-
-    # Compute the length of freezing rain events
-    # I think int16 is safe enough
-    ds = rl.rle(runs).astype(np.int16).to_dataset(name="length")
-    ds.length.attrs["units"] = "1"
-
-    # Time duration where the precipitation threshold is exceeded during an event
-    # (duration of complete run - duration of holes in the run )
-    ds["effective_length"] = rl._cumsum_reset(
-        da_start.where(runs == 1), index="first", reset_on_zero=False
-    ).astype(np.int16)
-    ds["effective_length"].attrs["units"] = "1"
-
-    # # Cumulated precipitation in a given freezing rain event
-    if data_is_rate:
-        dataam = rate2amount(data)
+    # Start and end conditions
+    da_start = compare(data, op, thresh)
+    if thresh_stop is None and op_stop is None:
+        da_stop = ~da_start
     else:
-        dataam = data
-    ds["accumulation"] = rl._cumsum_reset(
-        dataam.where(runs == 1), index="first", reset_on_zero=False
-    )
-    ds["accumulation"].attrs["units"] = dataam.units
+        thresh_stop = convert_units_to(thresh_stop or thresh, data)
+        if op_stop is not None:
+            da_stop = compare(data, op_stop, thresh_stop)
+        else:
+            da_stop = ~compare(data, op, thresh_stop)
 
-    # Keep time as a variable, it will be used to keep start of events
-    ds["start"] = ds["time"].broadcast_like(ds)  # .astype(int)
-    # I have to convert it to an integer for the filtering, time object won't do
-    # Since there are conversion needing a time object earlier, I think it's ok
-    # to assume this here?
-    time_min = ds.start.min()
-    ds["start"] = ds.start.copy(
-        data=(ds.start - time_min).values.astype("timedelta64[s]").astype(int)
-    )
-
-    # Filter events: Reduce time dimension
-    def _filter_events(da, rl, max_event_number):
-        out = np.full(max_event_number, np.nan)
-        events_start = da[rl > 0]
-        out[: len(events_start)] = events_start
-        return out
-
-    max_event_number = int(np.ceil(data.time.size / (window_start + window_stop)))
-    v_attrs = {v: ds[v].attrs for v in ds.data_vars}
-    ds = xr.apply_ufunc(
-        _filter_events,
-        ds,
-        ds.length,
-        input_core_dims=[["time"], ["time"]],
-        output_core_dims=[["event"]],
-        kwargs=dict(max_event_number=max_event_number),
-        dask_gufunc_kwargs=dict(output_sizes={"event": max_event_number}),
-        dask="parallelized",
-        vectorize=True,
-    ).assign_attrs(ds.attrs)
-
-    ds["event"] = np.arange(1, ds.event.size + 1)
-    ds.event.assign_attrs(units="")
-    for v in ds.data_vars:
-        ds[v].attrs = v_attrs[v]
-
-    # convert back start to a time
-    # TODO fix for calendars
-    ds["start"] = time_min + ds.start.copy(
-        data=ds.start.values.astype("timedelta64[s]").astype("timedelta64[ns]")
-    )
-    ds["start"].assign_attrs(units="")
-    return ds
-
-    # # Other indices that could be completely done outside of the function, no input needed anymore
-    # # number of events
-    # ds["number_of_events"] = (ds["run_lengths"] > 0).sum(dim="event").astype(np.int16)
-    # ds.number_of_events.attrs["units"] = ""
-
-    # # mean rate of precipitation during event
-    # ds["rate"] = ds["cumulative_precipitation"] / ds["precipitation_duration"]
-    # units = (
-    #     f"{ds['cumulative_precipitation'].units}/{ds['precipitation_duration'].units}"
-    # )
-    # ds["rate"].attrs["units"] = ensure_cf_units(units)
-
-    # ds.attrs["units"] = ""
-    # return ds
+    return rl.find_events(da_start, window, da_stop, window_stop, data, freq)
