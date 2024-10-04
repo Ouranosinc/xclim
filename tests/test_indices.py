@@ -1461,9 +1461,9 @@ class TestHotSpellFrequency:
         ).load()
         assert hsf[1] == expected
 
-    @pytest.importorskip("flox")
     @pytest.mark.parametrize("resample_map", [True, False])
     def test_resampling_map(self, tasmax_series, resample_map):
+        pytest.importorskip("flox")
         a = np.zeros(365)
         a[5:35] = 31
         tx = tasmax_series(a + K2C).chunk()
