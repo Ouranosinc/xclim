@@ -309,7 +309,7 @@ def flow_index(q: xr.DataArray, p: float = 0.95, **indexer) -> xr.DataArray:
 
     References
     ----------
-    :cite:cts:`addor2018,Clausen2000`
+    :cite:cts:`Clausen2000`
     """
     qt = select_time(q, **indexer)
     qp = qt.quantile(p, dim="time")
@@ -345,15 +345,15 @@ def high_flow_frequency(
     Returns
     -------
     xr.DataArray
-        Calculated mean of high flow days per water year
+        Number of high flow days.
 
     References
     ----------
     :cite:cts:`addor2018,Clausen2000`
     """
-    median_flow = q.median(dim="time")
-    threshold = threshold_factor * median_flow
     sel = select_time(q, **indexer)
+    median_flow = sel.median(dim="time")
+    threshold = threshold_factor * median_flow
     out = threshold_count(sel, ">", threshold, freq=freq)
     return to_agg_units(out, q, "count")
 
@@ -384,14 +384,14 @@ def low_flow_frequency(
     Returns
     -------
     xr.DataArray
-        Calculated mean of low flow days per water year.
+        Number of low flow days.
 
     References
     ----------
     :cite:cts:`Olden2003`
     """
-    mean_flow = q.mean(dim="time")
-    threshold = threshold_factor * mean_flow
     sel = select_time(q, **indexer)
+    mean_flow = sel.mean(dim="time")
+    threshold = threshold_factor * mean_flow
     out = threshold_count(sel, "<", threshold, freq=freq)
     return to_agg_units(out, q, "count")
