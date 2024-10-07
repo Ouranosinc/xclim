@@ -68,6 +68,7 @@ __all__ = [
     "heating_degree_days",
     "hot_spell_frequency",
     "hot_spell_max_length",
+    "hot_spell_max_magnitude",
     "hot_spell_total_length",
     "last_snowfall",
     "last_spring_frost",
@@ -1934,6 +1935,59 @@ def heat_wave_index(
         freq=freq,
     )
     return to_agg_units(out, tasmax, "count")
+
+
+@declare_units(tasmax="[temperature]", thresh="[temperature]")
+def hot_spell_max_magnitude(
+    tasmax: xarray.DataArray,
+    thresh: Quantified = "25.0 degC",
+    window: int = 3,
+    freq: str = "YS",
+    op: str = ">",
+    resample_before_rl: bool = True,
+) -> xarray.DataArray:
+    """Hot spell maximum magnitude.
+
+    Magnitude of the most intensive heat wave event as sum of differences between tasmax
+    and the given threshold for Heat Wave days, defined as three or more consecutive days
+    over the threshold.
+
+    Parameters
+    ----------
+    tasmax : xarray.DataArray
+        Maximum daily temperature.
+    thresh : xarray.DataArray
+        Threshold temperature on which to designate a heatwave.
+    window : int
+        Minimum number of days with temperature above threshold to qualify as a heatwave.
+    freq : str
+        Resampling frequency.
+    op : {">", ">=", "gt", "ge"}
+        Comparison operation. Default: ">".
+    resample_before_rl : bool
+        Determines if the resampling should take place before or after the run
+        length encoding (or a similar algorithm) is applied to runs.
+
+    References
+    ----------
+    :cite:cts:`russo_magnitude_2014,zhang_high_2022`
+
+    Returns
+    -------
+    DataArray, [time]
+        Hot spell maximum magnitude.
+    """
+    thresh = convert_units_to(thresh, tasmax)
+    over_values = (tasmax - thresh).clip(0)
+
+    out = rl.resample_and_rl(
+        over_values,
+        resample_before_rl,
+        rl.windowed_max_run_sum,
+        window=window,
+        freq=freq,
+    )
+    return to_agg_units(out, tasmax, op="integral")
 
 
 @declare_units(tas="[temperature]", thresh="[temperature]")

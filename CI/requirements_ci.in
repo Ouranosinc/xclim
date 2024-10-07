@@ -1,7 +1,7 @@
-bump-my-version==0.26.1
+bump-my-version==0.27.0
 deptry==0.20.0
 flit==3.9.0
 pip==24.2.0
 pylint==3.3.1
-tox==4.20.0
+tox==4.21.2
 tox-gh==1.4.1

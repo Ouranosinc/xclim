@@ -176,7 +176,15 @@ def rle(
     dim: str = "time",
     index: str = "first",
 ) -> xr.DataArray:
-    """Generate basic run length function.
+    """Run length
+
+    Despite its name, this is not an actual run-length encoder : it returns an array of the same shape
+    as the input with 0 where the input was <= 0, nan where the input was > 0, except on the first (or last) element
+    of each run of consecutive > 0 values, where it is set to the sum of the elements within the run.
+    For an actual run length encoder, see :py:func:`rle_1d`.
+
+    Usually, the input would be a boolean mask and the first element of each run would then be set to the run's length (thus the name).
+    But the function also accepts int and float inputs.
 
     Parameters
     ----------
@@ -191,9 +199,9 @@ def rle(
     Returns
     -------
     xr.DataArray
-        Values are 0 where da is False (out of runs).
     """
-    da = da.astype(int)
+    if da.dtype == bool:
+        da = da.astype(int)
 
     # "first" case: Algorithm is applied on inverted array and output is inverted back
     if index == "first":
@@ -205,7 +213,7 @@ def rle(
     # Keep total length of each series (and also keep 0's), e.g. 100120123 -> 100N20NN3
     # Keep numbers with a 0 to the right and also the last number
     cs_s = cs_s.where(da.shift({dim: -1}, fill_value=0) == 0)
-    out = cs_s.where(da == 1, 0)  # Reinsert 0's at their original place
+    out = cs_s.where(da > 0, 0)  # Reinsert 0's at their original place
 
     # Inverting back if needed e.g. 100N20NN3 -> 3NN02N001. This is the output of
     # `rle` for 111011001 with index == "first"
@@ -417,6 +425,50 @@ def windowed_run_count(
         if freq is not None:
             d = d.resample({dim: freq})
         out = d.sum(dim=dim)
+
+    return out
+
+
+def windowed_max_run_sum(
+    da: xr.DataArray,
+    window: int,
+    dim: str = "time",
+    freq: str | None = None,
+    index: str = "first",
+) -> xr.DataArray:
+    """Return the maximum sum of consecutive float values for runs at least as long as the given window length.
+
+    Parameters
+    ----------
+    da : xr.DataArray
+        Input N-dimensional DataArray (boolean).
+    window : int
+        Minimum run length.
+        When equal to 1, an optimized version of the algorithm is used.
+    dim : str
+      Dimension along which to calculate consecutive run (default: 'time').
+    freq : str
+      Resampling frequency.
+    index : {'first', 'last'}
+        If 'first', the run length is indexed with the first element in the run.
+        If 'last', with the last element in the run.
+
+    Returns
+    -------
+    xr.DataArray, [int]
+        Total number of `True` values part of a consecutive runs of at least `window` long.
+    """
+    if window == 1 and freq is None:
+        out = rle(da, dim=dim, index=index).max(dim=dim)
+
+    else:
+        d_rse = rle(da, dim=dim, index=index)
+        d_rle = rle((da > 0).astype(bool), dim=dim, index=index)
+
+        d = d_rse.where(d_rle >= window, 0)
+        if freq is not None:
+            d = d.resample({dim: freq})
+        out = d.max(dim=dim)
 
     return out
 
@@ -1217,6 +1269,8 @@ def rle_1d(
     arr: int | float | bool | Sequence[int | float | bool],
 ) -> tuple[np.array, np.array, np.array]:
     """Return the length, starting position and value of consecutive identical values.
+
+    In opposition to py:func:`rle`, this is an actuel run length encoder.
 
     Parameters
     ----------
