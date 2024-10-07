@@ -370,6 +370,16 @@ class TestWindowedRunCount:
         ) + len(a[34:45])
 
 
+class TestWindowedMaxRunSum:
+    @pytest.mark.parametrize("index", ["first", "last"])
+    def test_simple(self, index):
+        a = xr.DataArray(np.zeros(50, float), dims=("time",))
+        a[4:6] = 5  # too short
+        a[25:30] = 5  # long enough, but not max
+        a[35:45] = 5  # max sum => yields 10*5
+        assert rl.windowed_max_run_sum(a, 3, dim="time", index=index) == 50
+
+
 class TestLastRun:
     @pytest.mark.parametrize(
         "coord,expected",
