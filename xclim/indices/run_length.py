@@ -1778,7 +1778,7 @@ def find_events(
     condition: xr.DataArray,
     window: int,
     condition_stop: xr.DataArray | None = None,
-    window_stop: int | None = None,
+    window_stop: int = 1,
     data: xr.DataArray | None = None,
     freq: str | None = None,
 ):
@@ -1799,9 +1799,9 @@ def find_events(
     condition_stop : DataArray of boolean values, optional
         The stopping boolean mask, true where the end condition of the event is fulfilled.
         Defaults to the opposite of ``condition``.
-    window_stop : int, optional
+    window_stop : int
         The number of consecutive True values in ``condition_stop`` for an event to end.
-        Defaults to ``window``.
+        Defaults to 1.
     data: DataArray, optional
         The actual data. If present, its sum within each event is added to the output.
     freq: str, optional
@@ -1816,7 +1816,6 @@ def find_events(
         event_start: The datetime of the start of the run.
         event_sum: The sum within each event, only considering the steps where start condition is true. Only present if ``data`` is given.
     """
-    window_stop = window_stop or window
     if condition_stop is None:
         condition_stop = ~condition
 

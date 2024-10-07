@@ -1037,7 +1037,7 @@ def rain_season(
             raise ValueError(f"Unknown method_dry_start: {method_dry_start}.")
 
         # First and second condition combined in a run length
-        events = rl.extract_events(da_start, 1, da_stop, window_dry)
+        events = rl.runs_with_holes(da_start, 1, da_stop, window_dry)
         run_positions = rl.rle(events) >= (window_not_dry_start + window_wet_start)
 
         return _get_first_run(run_positions, date_min_start, date_max_start)

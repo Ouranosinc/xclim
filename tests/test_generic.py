@@ -775,47 +775,7 @@ class TestThresholdedEvents:
 
     @pytest.mark.parametrize("use_dask", [True, False])
     def test_simple(self, pr_series, use_dask):
-        arr = np.array(
-            [
-                0,
-                0,
-                0,
-                1,
-                2,
-                3,
-                0,
-                3,
-                3,
-                10,
-                0,
-                0,
-                0,
-                0,
-                0,
-                1,
-                2,
-                2,
-                2,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                1,
-                3,
-                3,
-                2,
-                0,
-                0,
-                0,
-                2,
-                0,
-                0,
-                0,
-                0,
-            ]
-        )  # noqa
+        arr = np.array([0, 0, 0, 1, 2, 3, 0, 3, 3, 10, 0, 0, 0, 0, 0, 1, 2, 2, 2, 0, 0, 0, 0, 0, 0, 1, 3, 3, 2, 0, 0, 0, 2, 0, 0, 0, 0])  # fmt: skip
         pr = pr_series(arr, start="2000-01-01", units="mm")
         if use_dask:
             pr = pr.chunk(-1)
@@ -828,12 +788,12 @@ class TestThresholdedEvents:
                 window=3,
             )
 
-        assert out.event.size == np.ceil(arr.size / 6)
+        assert out.event.size == np.ceil(arr.size / (3 + 1))
         out = out.load().dropna("event", how="all")
 
-        np.testing.assert_array_equal(out.event_length, [7, 4, 4])
-        np.testing.assert_array_equal(out.event_effective_length, [6, 4, 4])
-        np.testing.assert_array_equal(out.event_sum, [22, 7, 9])
+        np.testing.assert_array_equal(out.event_length, [3, 3, 4, 4])
+        np.testing.assert_array_equal(out.event_effective_length, [3, 3, 4, 4])
+        np.testing.assert_array_equal(out.event_sum, [6, 16, 7, 9])
         np.testing.assert_array_equal(
             out.event_start,
             np.array(
@@ -843,47 +803,7 @@ class TestThresholdedEvents:
 
     @pytest.mark.parametrize("use_dask", [True, False])
     def test_diff_windows(self, pr_series, use_dask):
-        arr = np.array(
-            [
-                0,
-                0,
-                0,
-                1,
-                2,
-                3,
-                0,
-                3,
-                3,
-                10,
-                0,
-                0,
-                0,
-                0,
-                0,
-                1,
-                2,
-                2,
-                2,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                1,
-                3,
-                3,
-                2,
-                0,
-                0,
-                0,
-                2,
-                0,
-                0,
-                0,
-                0,
-            ]
-        )  # noqa
+        arr = np.array([0, 0, 0, 1, 2, 3, 0, 3, 3, 10, 0, 0, 0, 0, 0, 1, 2, 2, 2, 0, 0, 0, 0, 0, 0, 1, 3, 3, 2, 0, 0, 0, 2, 0, 0, 0, 0])  # fmt: skip
         pr = pr_series(arr, start="2000-01-01", units="mm")
         if use_dask:
             pr = pr.chunk(-1)
@@ -909,47 +829,7 @@ class TestThresholdedEvents:
 
     @pytest.mark.parametrize("use_dask", [True, False])
     def test_cftime(self, pr_series, use_dask):
-        arr = np.array(
-            [
-                0,
-                0,
-                0,
-                1,
-                2,
-                3,
-                0,
-                3,
-                3,
-                10,
-                0,
-                0,
-                0,
-                0,
-                0,
-                1,
-                2,
-                2,
-                2,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                1,
-                3,
-                3,
-                2,
-                0,
-                0,
-                0,
-                2,
-                0,
-                0,
-                0,
-                0,
-            ]
-        )  # noqa
+        arr = np.array([0, 0, 0, 1, 2, 3, 0, 3, 3, 10, 0, 0, 0, 0, 0, 1, 2, 2, 2, 0, 0, 0, 0, 0, 0, 1, 3, 3, 2, 0, 0, 0, 2, 0, 0, 0, 0])  # fmt: skip
         pr = pr_series(arr, start="2000-01-01", units="mm").convert_calendar("noleap")
         if use_dask:
             pr = pr.chunk(-1)
@@ -961,6 +841,7 @@ class TestThresholdedEvents:
                 thresh="1 mm",
                 op=">=",
                 window=3,
+                window_stop=3,
             )
         out = out.load().dropna("event", how="all")
 
@@ -982,77 +863,15 @@ class TestThresholdedEvents:
 
     @pytest.mark.parametrize("use_dask", [True, False])
     def test_freq(self, pr_series, use_dask):
-        jan = [
-            0,
-            0,
-            0,
-            1,
-            2,
-            3,
-            0,
-            3,
-            3,
-            10,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            2,
-            2,
-            2,
-            2,
-            2,
-            2,
-            0,
-            0,
-            0,
-            0,
-            0,
-            3,
-            2,
-            3,
-            2,
-        ]  # noqa
-        fev = [
-            2,
-            2,
-            1,
-            0,
-            0,
-            0,
-            3,
-            3,
-            4,
-            5,
-            2,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-        ]  # noqa
+        jan = [0, 0, 0, 1, 2, 3, 0, 3, 3, 10, 0, 0, 0, 0, 0, 0, 2, 2, 2, 2, 2, 2, 0, 0, 0, 0, 0, 3, 2, 3, 2]  # fmt: skip
+        fev = [2, 2, 1, 0, 0, 0, 3, 3, 4, 5, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]  # fmt: skip
         pr = pr_series(np.array(jan + fev), start="2000-01-01", units="mm")
         if use_dask:
             pr = pr.chunk(-1)
 
         with assert_lazy:
             out = generic.thresholded_events(
-                pr, thresh="1 mm", op=">=", window=3, freq="MS"
+                pr, thresh="1 mm", op=">=", window=3, freq="MS", window_stop=3
             )
         assert out.event_length.shape == (2, 6)
         out = out.load().dropna("event", how="all")

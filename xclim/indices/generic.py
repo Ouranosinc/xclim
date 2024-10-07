@@ -1488,7 +1488,7 @@ def thresholded_events(
     window: int,
     thresh_stop: Quantified | None = None,
     op_stop: str | None = None,
-    window_stop: int | None = None,
+    window_stop: int = 1,
     freq: str | None = None,
 ) -> xr.Dataset:
     r"""Thresholded events.
@@ -1516,7 +1516,7 @@ def thresholded_events(
     op_stop : {">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"}, optional
         Logical operator for the end of an event. Defaults to the opposite of `op`.
     window_stop: int, optional
-        Number of time steps where the end condition must be true to end an event. Defaults to `window`.
+        Number of time steps where the end condition must be true to end an event. Defaults to 1.
     freq: str, optional
         A frequency to divide the data into periods. If absent, the output has not time dimension.
         If given, the events are searched within in each resample period independently.
@@ -1529,8 +1529,6 @@ def thresholded_events(
         event_sum: The sum within each event, only considering the steps where start condition is true.
         event_start: The datetime of the start of the run.
     """
-    # condition to respect for `window_start` time steps to start a run
-    window_stop = window_stop or window
     thresh = convert_units_to(thresh, data)
 
     # Start and end conditions

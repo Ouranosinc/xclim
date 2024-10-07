@@ -126,7 +126,7 @@ def test_rle(ufunc, use_dask, index):
 
 @pytest.mark.parametrize("use_dask", [True, False])
 @pytest.mark.parametrize("index", ["first", "last"])
-def test_extract_events_identity(use_dask, index):
+def test_runs_with_holes_identity(use_dask, index):
     # implement more tests, this is just to show that this reproduces the behaviour
     # of rle
     values = np.zeros((10, 365, 4, 4))
@@ -137,19 +137,19 @@ def test_extract_events_identity(use_dask, index):
     if use_dask:
         da = da.chunk({"a": 1, "b": 2})
 
-    events = rl.extract_events(da != 0, 1, da == 0, 1)
+    events = rl.runs_with_holes(da != 0, 1, da == 0, 1)
     expected = da
     np.testing.assert_array_equal(events, expected)
 
 
-def test_extract_events():
+def test_runs_with_holes():
     values = np.zeros(365)
     time = pd.date_range("2000-01-01", periods=365, freq="D")
     a = [0, 1, 0, 1, 1, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0]
     values[0 : len(a)] = a
     da = xr.DataArray(values, coords={"time": time}, dims=("time"))
 
-    events = rl.extract_events(da == 1, 1, da == 0, 3)
+    events = rl.runs_with_holes(da == 1, 1, da == 0, 3)
 
     expected = values * 0
     expected[1:11] = 1
