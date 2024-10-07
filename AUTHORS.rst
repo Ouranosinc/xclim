@@ -47,3 +47,4 @@ Contributors
 * Hui-Min Wang `@Hem-W <https://github.com/Hem-W>`_
 * Adrien Lamarche `@LamAdr <https://github.com/LamAdr>`_
 * Faisal Mahmood <mahmood.faisal@ouranos.ca> <faisal.shovon.007@gmail.com> `@faimahsho <https://github.com/faimahsho>`_
+* Sebastian Lehner <sebastian.lehner@geosphere.at> `@seblehner <https://github.com/seblehner>`_
