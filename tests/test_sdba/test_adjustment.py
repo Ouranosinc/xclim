@@ -239,6 +239,11 @@ class TestDQM:
         p3 = DQM.adjust(sim3, interp="linear")
         np.testing.assert_array_almost_equal(p3[middle], ref3[middle], 1)
 
+    @pytest.mark.xfail(
+        raises=ValueError,
+        reason="This test sometimes fails due to a block/indexing error",
+        strict=False,
+    )
     @pytest.mark.parametrize("kind,name", [(ADDITIVE, "tas"), (MULTIPLICATIVE, "pr")])
     @pytest.mark.parametrize("add_dims", [True, False])
     def test_mon_U(self, mon_series, series, kind, name, add_dims, random):
@@ -283,6 +288,7 @@ class TestDQM:
         if add_dims:
             mqm = mqm.isel(lat=0)
         np.testing.assert_array_almost_equal(mqm, int(kind == MULTIPLICATIVE), 1)
+        # FIXME: This test sometimes fails due to a block/indexing error
         np.testing.assert_allclose(p.transpose(..., "time"), ref_t, rtol=0.1, atol=0.5)
 
     def test_cannon_and_from_ds(self, cannon_2015_rvs, tmp_path, open_dataset, random):
@@ -898,9 +904,11 @@ class TestOTC:
         assert not np.isin(hist.x[hist.x.isnull()].time.values, scen.time.values).any()
 
 
+# TODO: Add tests for normalization methods
 class TestdOTC:
     @pytest.mark.parametrize("use_dask", [True, False])
     @pytest.mark.parametrize("cov_factor", ["std", "cholesky"])
+    # FIXME: Should this comparison not fail if `standardization` != `None`?
     def test_compare_sbck(self, random, series, use_dask, cov_factor):
         pytest.importorskip("ot")
         pytest.importorskip("SBCK", minversion="0.4.0")

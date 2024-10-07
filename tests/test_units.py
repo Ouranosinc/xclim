@@ -11,6 +11,7 @@ from packaging.version import Version
 from pint import __version__ as __pint_version__
 
 from xclim import indices, set_options
+from xclim.core import Quantified, ValidationError
 from xclim.core.units import (
     amount2lwethickness,
     amount2rate,
@@ -29,7 +30,6 @@ from xclim.core.units import (
     units,
     units2pint,
 )
-from xclim.core.utils import Quantified, ValidationError
 
 
 class TestUnits:
@@ -261,13 +261,11 @@ def test_amount2lwethickness(snw_series):
     snw = snw_series(np.ones(365), start="2019-01-01")
 
     swe = amount2lwethickness(snw, out_units="mm")
-    # FIXME: Asserting these statements shows that they are not equal
-    swe.attrs["standard_name"] == "lwe_thickness_of_snowfall_amount"
+    assert swe.attrs["standard_name"] == "lwe_thickness_of_surface_snow_amount"
     np.testing.assert_allclose(swe, 1)
 
     snw = lwethickness2amount(swe)
-    # FIXME: Asserting these statements shows that they are not equal
-    snw.attrs["standard_name"] == "snowfall_amount"
+    assert snw.attrs["standard_name"] == "surface_snow_amount"
 
 
 @pytest.mark.parametrize(
@@ -367,6 +365,7 @@ def test_to_agg_units(in_u, opfunc, op, exp, exp_u):
         attrs={"units": in_u},
     )
 
+    # FIXME: This is emitting warnings from deprecated DataArray.argmax() usage.
     out = to_agg_units(getattr(da, opfunc)(), da, op)
     np.testing.assert_allclose(out, exp)
     if isinstance(exp_u, tuple):

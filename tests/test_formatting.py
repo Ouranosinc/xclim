@@ -35,7 +35,7 @@ def test_indicator_docstring():
     assert (
         doc[41]
         == "    Total number of series of at least {window} consecutive days with daily minimum temperature above "
-        "{thresh_tasmin} and daily maximum temperature above {thresh_tasmax} (heat_wave_events), "
+        "{thresh_tasmin} and daily maximum temperature above {thresh_tasmax}, "
         "with additional attributes: **description**: {freq} number of heat wave events within a given period. "
         "A heat wave occurs when daily minimum and maximum temperatures exceed {thresh_tasmin} and {thresh_tasmax}, "
         "respectively, over at least {window} days."

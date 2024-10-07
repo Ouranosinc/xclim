@@ -33,8 +33,10 @@ import xclim
 from xclim import __version__ as __xclim_version__
 
 try:
+    import pytest
     from pytest_socket import SocketBlockedError
 except ImportError:
+    pytest = None
     SocketBlockedError = None
 
 try:
@@ -198,8 +200,8 @@ def list_input_variables(
 
 def publish_release_notes(
     style: str = "md",
-    file: os.PathLike | StringIO | TextIO | None = None,
-    changes: str | os.PathLike | None = None,
+    file: os.PathLike[str] | StringIO | TextIO | None = None,
+    changes: str | os.PathLike[str] | None = None,
 ) -> str | None:
     """Format release notes in Markdown or ReStructuredText.
 
@@ -209,7 +211,7 @@ def publish_release_notes(
         Use ReStructuredText formatting or Markdown. Default: Markdown.
     file : {os.PathLike, StringIO, TextIO}, optional
         If provided, prints to the given file-like object. Otherwise, returns a string.
-    changes : {str, os.PathLike}, optional
+    changes : str or os.PathLike[str], optional
         If provided, manually points to the file where the changelog can be found.
         Assumes a relative path otherwise.
 
@@ -229,7 +231,7 @@ def publish_release_notes(
     if not changes_file.exists():
         raise FileNotFoundError("Changelog file not found in xclim folder tree.")
 
-    with open(changes_file) as hf:
+    with open(changes_file, encoding="utf-8") as hf:
         changes = hf.read()
 
     if style == "rst":
@@ -245,7 +247,8 @@ def publish_release_notes(
             r":user:`([a-zA-Z0-9_.-]+)`": r"[@\1](https://github.com/\1)",
         }
     else:
-        raise NotImplementedError()
+        msg = f"Formatting style not supported: {style}"
+        raise NotImplementedError(msg)
 
     for search, replacement in hyperlink_replacements.items():
         changes = re.sub(search, replacement, changes)
@@ -274,7 +277,7 @@ def publish_release_notes(
     if not file:
         return changes
     if isinstance(file, (Path, os.PathLike)):
-        with Path(file).open("w") as f:
+        with open(file, "w", encoding="utf-8") as f:
             print(changes, file=f)
     else:
         print(changes, file=file)
@@ -360,7 +363,7 @@ def show_versions(
     if not file:
         return message
     if isinstance(file, (Path, os.PathLike)):
-        with Path(file).open("w") as f:
+        with open(file, "w", encoding="utf-8") as f:
             print(message, file=f)
     else:
         print(message, file=file)
@@ -372,7 +375,11 @@ def show_versions(
 
 def run_doctests():
     """Run the doctests for the module."""
-    import pytest
+    if pytest is None:
+        raise ImportError(
+            "The `pytest` package is required to run the doctests. "
+            "You can install it with `pip install pytest` or `pip install xclim[dev]`."
+        )
 
     cmd = [
         f"--rootdir={Path(__file__).absolute().parent}",
@@ -445,7 +452,7 @@ def load_registry(
         raise FileNotFoundError(f"Registry file not found: {registry_file}")
 
     # Load the registry file
-    with registry_file.open() as f:
+    with registry_file.open(encoding="utf-8") as f:
         registry = {line.split()[0]: line.split()[1] for line in f}
     return registry
 
@@ -562,15 +569,14 @@ def open_dataset(
         )
 
     if dap_url:
+        dap_target = urljoin(dap_url, str(name))
         try:
-            return _open_dataset(
-                audit_url(urljoin(dap_url, str(name)), context="OPeNDAP"), **kwargs
-            )
+            return _open_dataset(audit_url(dap_target, context="OPeNDAP"), **kwargs)
         except URLError:
             raise
-        except OSError as e:
-            msg = f"OPeNDAP file not read. Verify that the service is available: '{urljoin(dap_url, str(name))}'"
-            raise OSError(msg) from e
+        except OSError as err:
+            msg = f"OPeNDAP file not read. Verify that the service is available: {dap_target}"
+            raise OSError(msg) from err
 
     local_file = Path(cache_dir).joinpath(name)
     if not local_file.exists():
@@ -578,10 +584,9 @@ def open_dataset(
             local_file = nimbus(branch=branch, repo=repo, cache_dir=cache_dir).fetch(
                 name
             )
-        except OSError as e:
-            raise OSError(
-                f"File not found locally. Verify that the testing data is available in remote: {local_file}"
-            ) from e
+        except OSError as err:
+            msg = f"File not found locally. Verify that the testing data is available in remote: {local_file}"
+            raise OSError(msg) from err
     try:
         ds = _open_dataset(local_file, **kwargs)
         return ds
@@ -625,13 +630,13 @@ def populate_testing_data(
             msg = f"File `{file}` not accessible in remote repository."
             logging.error(msg)
             errored_files.append(file)
-        except SocketBlockedError as e:  # noqa
+        except SocketBlockedError as err:  # noqa
             msg = (
                 "Unable to access registry file online. Testing suite is being run with `--disable-socket`. "
                 "If you intend to run tests with this option enabled, please download the file beforehand with the "
                 "following console command: `$ xclim prefetch_testing_data`."
             )
-            raise SocketBlockedError(msg) from e
+            raise SocketBlockedError(msg) from err
         else:
             logging.info("Files were downloaded successfully.")
 

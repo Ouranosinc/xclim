@@ -3,10 +3,10 @@ from __future__ import annotations
 
 import xarray
 
+from xclim.core import Quantified
+from xclim.core.calendar import select_time
 from xclim.core.units import convert_units_to, declare_units, rate2amount, to_agg_units
-from xclim.core.utils import Quantified
-
-from .generic import select_resample_op, select_time, threshold_count
+from xclim.indices.generic import select_resample_op, threshold_count
 
 # Frequencies : YS: year start, QS-DEC: seasons starting in december, MS: month start
 # See http://pandas.pydata.org/pandas-docs/stable/timeseries.html#offset-aliases

@@ -2,15 +2,15 @@
 
 from __future__ import annotations
 
-from ._agro import *
-from ._anuclim import *
-from ._conversion import *
-from ._hydrology import *
-from ._multivariate import *
-from ._simple import *
-from ._synoptic import *
-from ._threshold import *
-from .fire import (
+from xclim.indices._agro import *
+from xclim.indices._anuclim import *
+from xclim.indices._conversion import *
+from xclim.indices._hydrology import *
+from xclim.indices._multivariate import *
+from xclim.indices._simple import *
+from xclim.indices._synoptic import *
+from xclim.indices._threshold import *
+from xclim.indices.fire import (
     cffwis_indices,
     drought_code,
     duff_moisture_code,
@@ -20,6 +20,7 @@ from .fire import (
     mcarthur_forest_fire_danger_index,
 )
 
+# pylint: disable=pointless-string-statement
 """
 Notes for docstrings
 --------------------
@@ -93,6 +94,7 @@ Indice Descriptions
 ===================
 .. _`NumPy`: https://numpydoc.readthedocs.io/en/latest/format.html#docstring-standard
 """
+# pylint: enable=pointless-string-statement
 
 # TODO: Should we reference the standard vocabulary we're using ?
 # E.g. http://vocab.nerc.ac.uk/collection/P07/current/BHMHISG2/

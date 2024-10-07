@@ -63,7 +63,7 @@ def _keetch_byram_drought_index(p, t, pa, kbdi0, kbdi: float):  # pragma: no cov
     no_p = 0.0  # Where to define zero rainfall
     rr = 5.0  # Initialise remaining runoff
 
-    for d in range(len(p)):
+    for d in range(len(p)):  # pylint: disable=consider-using-enumerate
         # Calculate the runoff and remaining runoff for this timestep
         if p[d] <= no_p:
             r = p[d]
@@ -83,13 +83,9 @@ def _keetch_byram_drought_index(p, t, pa, kbdi0, kbdi: float):  # pragma: no cov
         kbdi0 += ET - Peff
 
         # Limit kbdi to between 0 and 200 mm
-        if kbdi0 < 0.0:
-            kbdi0 = 0.0
+        kbdi0 = min(max(kbdi0, 0.0), 203.2)
 
-        if kbdi0 > 203.2:
-            kbdi0 = 203.2
-
-        kbdi[d] = kbdi0
+        kbdi[d] = kbdi0  # type: ignore
 
 
 @guvectorize(
@@ -156,8 +152,7 @@ def _griffiths_drought_factor(p, smd, lim, df):  # pragma: no cover
                 xlim = 1 / (1 + 0.1135 * smd[d])
             else:
                 xlim = 75 / (270.525 - 1.267 * smd[d])
-            if x > xlim:
-                x = xlim
+            x = min(x, xlim)
 
         dfw = (
             10.5
@@ -177,11 +172,9 @@ def _griffiths_drought_factor(p, smd, lim, df):  # pragma: no cover
                 dflim = 9.0
             else:
                 dflim = 10.0
-            if dfw > dflim:
-                dfw = dflim
+            dfw = min(dfw, dflim)
 
-        if dfw > 10.0:
-            dfw = 10.0
+        dfw = min(dfw, 10.0)
 
         df[d] = dfw
 
@@ -343,7 +336,7 @@ def griffiths_drought_factor(
         _griffiths_drought_factor_pass,
         pr,
         smd,
-        kwargs=dict(_lim=lim),
+        kwargs={"_lim": lim},
         input_core_dims=[["time"], ["time"]],
         output_core_dims=[["time"]],
         dask="parallelized",

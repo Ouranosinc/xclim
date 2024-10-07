@@ -610,6 +610,100 @@ class TestGrowingDegreeDays:
         assert np.isnan(gdd.values[0, -1, -1])
 
 
+class TestHeatSpellFrequency:
+    def test_1d(self, tasmax_series, tasmin_series):
+        tn1 = np.zeros(366)
+        tx1 = np.zeros(366)
+        tn1[:10] = np.array([20, 23, 23, 23, 20, 20, 23, 23, 23, 23])
+        tx1[:10] = np.array([29, 31, 31, 31, 28, 28, 31, 31, 31, 31])
+
+        tn = tasmin_series(tn1 + K2C, start="1/1/2000")
+        tx = tasmax_series(tx1 + K2C, start="1/1/2000")
+
+        hsf = atmos.heat_spell_frequency(
+            tn,
+            tx,
+            thresh_tasmin="22.1 C",
+            thresh_tasmax="30.1 C",
+            freq="YS",
+        )
+        np.testing.assert_allclose(hsf.values[:1], 2)
+
+        hsf = atmos.heat_spell_frequency(
+            tn, tx, thresh_tasmin="22 C", thresh_tasmax="30 C", window=5, freq="YS"
+        )
+        np.testing.assert_allclose(hsf.values[:1], 1)
+
+        # no hs
+        hsf = atmos.heat_spell_frequency(
+            tn, tx, thresh_tasmin="40 C", thresh_tasmax="40 C", freq="YS"
+        )
+        np.testing.assert_allclose(hsf.values[:1], 0)
+
+
+class TestHeatSpellMaxLength:
+    def test_1d(self, tasmax_series, tasmin_series):
+        tn1 = np.zeros(366)
+        tx1 = np.zeros(366)
+        tn1[:10] = np.array([20, 23, 23, 23, 20, 20, 23, 23, 23, 23])
+        tx1[:10] = np.array([29, 31, 31, 31, 28, 28, 31, 31, 31, 31])
+
+        tn = tasmin_series(tn1 + K2C, start="1/1/2000")
+        tx = tasmax_series(tx1 + K2C, start="1/1/2000")
+
+        hsf = atmos.heat_spell_max_length(
+            tn,
+            tx,
+            thresh_tasmin="22.1 C",
+            thresh_tasmax="30.1 C",
+            freq="YS",
+        )
+        np.testing.assert_allclose(hsf.values[:1], 4)
+
+        hsf = atmos.heat_spell_max_length(
+            tn,
+            tx,
+            thresh_tasmin="22 C",
+            thresh_tasmax="30 C",
+            window=5,
+            freq="YS",
+        )
+        np.testing.assert_allclose(hsf.values[:1], 5)
+
+        # no hs
+        hsf = atmos.heat_spell_max_length(
+            tn, tx, thresh_tasmin="40 C", thresh_tasmax="40 C", freq="YS"
+        )
+        np.testing.assert_allclose(hsf.values[:1], 0)
+
+
+class TestHeatSpellTotalLength:
+    def test_1d(self, tasmax_series, tasmin_series):
+        tn1 = np.zeros(366)
+        tx1 = np.zeros(366)
+        tn1[:10] = np.array([20, 23, 23, 23, 20, 20, 23, 23, 23, 23])
+        tx1[:10] = np.array([29, 31, 31, 31, 28, 28, 31, 31, 31, 31])
+
+        tn = tasmin_series(tn1 + K2C, start="1/1/2000")
+        tx = tasmax_series(tx1 + K2C, start="1/1/2000")
+
+        hsf = atmos.heat_spell_total_length(
+            tn, tx, thresh_tasmin="22.1 C", thresh_tasmax="30.1 C", freq="YS"
+        )
+        np.testing.assert_allclose(hsf.values[:1], 7)
+
+        hsf = atmos.heat_spell_total_length(
+            tn, tx, thresh_tasmin="22 C", thresh_tasmax="30 C", window=5, freq="YS"
+        )
+        np.testing.assert_allclose(hsf.values[:1], 5)
+
+        # no hs
+        hsf = atmos.heat_spell_total_length(
+            tn, tx, thresh_tasmin="40 C", thresh_tasmax="40 C", freq="YS"
+        )
+        np.testing.assert_allclose(hsf.values[:1], 0)
+
+
 class TestHeatWaveFrequency:
     def test_1d(self, tasmax_series, tasmin_series):
         tn1 = np.zeros(366)
