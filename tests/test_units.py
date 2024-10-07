@@ -352,9 +352,9 @@ def test_declare_relative_units():
             "sum",
             "integral",
             365,
-            ("K d", "d K"),
+            ("degC d", "d degC"),
         ),  # dependent on numpy/pint version
-        ("°F", "sum", "integral", 365, "d °R"),  # not sure why the order is different
+        ("°F", "sum", "integral", 365, "d degF"),  # not sure why the order is different
     ],
 )
 def test_to_agg_units(in_u, opfunc, op, exp, exp_u):
@@ -364,6 +364,8 @@ def test_to_agg_units(in_u, opfunc, op, exp, exp_u):
         coords={"time": xr.cftime_range("1993-01-01", periods=365, freq="D")},
         attrs={"units": in_u},
     )
+    if units(in_u).dimensionality == "[temperature]":
+        da.attrs["units_metadata"] = "temperature: difference"
 
     # FIXME: This is emitting warnings from deprecated DataArray.argmax() usage.
     out = to_agg_units(getattr(da, opfunc)(), da, op)

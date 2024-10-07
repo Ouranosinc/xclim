@@ -20,7 +20,7 @@ __all__ = ["cannon_2015_dist", "cannon_2015_rvs", "nancov", "series"]
 def series(values, name, start="2000-01-01"):
     """Create a DataArray with time, lon and lat dimensions."""
     coords = collections.OrderedDict()
-    for dim, n in zip(("time", "lon", "lat"), values.shape):
+    for dim, n in zip(("time", "lon", "lat"), values.shape, strict=False):
         if dim == "time":
             coords[dim] = pd.date_range(start, periods=n, freq="D")
         else:

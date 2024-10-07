@@ -265,7 +265,7 @@ def load_locale(locdata: str | Path | dict[str, dict], locale: str):
     locale : str
         The locale name (IETF tag).
     """
-    if isinstance(locdata, (str, Path)):
+    if isinstance(locdata, str | Path):
         filename = Path(locdata)
         locdata = read_locale_file(filename)
 

@@ -8,8 +8,7 @@ Helper functions for common generic actions done in the computation of indices.
 from __future__ import annotations
 
 import warnings
-from collections.abc import Sequence
-from typing import Callable
+from collections.abc import Callable, Sequence
 
 import cftime
 import numpy as np
@@ -222,7 +221,7 @@ def get_op(op: str, constrain: Sequence[str] | None = None) -> Callable:
         raise ValueError(f"Operation `{op}` not recognized.")
 
     constraints = []
-    if isinstance(constrain, (list, tuple, set)):
+    if isinstance(constrain, list | tuple | set):
         constraints.extend([binary_ops[c] for c in constrain])
         constraints.extend(constrain)
     elif isinstance(constrain, str):

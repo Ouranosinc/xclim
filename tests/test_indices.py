@@ -346,6 +346,32 @@ class TestAgroclimaticIndices:
             if method == "icclim":
                 np.testing.assert_array_equal(bedd, bedd_high_lat)
 
+    def test_chill_portions(self, tas_series):
+        tas = tas_series(np.linspace(0, 15, 120 * 24) + K2C, freq="h")
+        out = xci.chill_portions(tas)
+        assert out[0] == 72.24417644977083
+
+    def test_chill_units(self, tas_series):
+        num_cu_0 = 10
+        num_cu_1 = 20
+        num_cu_05 = 15
+        num_cu_min_05 = 10
+        num_cu_min_1 = 5
+
+        tas = tas_series(
+            np.array(
+                num_cu_0 * [1.1]
+                + num_cu_05 * [2.0]
+                + num_cu_1 * [5.6]
+                + num_cu_min_05 * [16.0]
+                + num_cu_min_1 * [20.0]
+            )
+            + K2C,
+            freq="h",
+        )
+        out = xci.chill_units(tas)
+        assert out[0] == 0.5 * num_cu_05 + num_cu_1 - 0.5 * num_cu_min_05 - num_cu_min_1
+
     def test_cool_night_index(self, open_dataset):
         ds = open_dataset("cmip5/tas_Amon_CanESM2_rcp85_r1i1p1_200701-200712.nc")
         ds = ds.rename(dict(tas="tasmin"))
@@ -1472,6 +1498,18 @@ class TestHotSpellTotalLength:
 
         hsml = xci.hot_spell_total_length(tx, thresh=thresh, window=window, op=op)
         np.testing.assert_allclose(hsml.values, expected)
+
+
+class TestHotSpellMaxMagnitude:
+    def test_simple(self, tasmax_series):
+        a = np.zeros(365)
+        a[15:20] += 30  # 5 days
+        a[40:42] += 50  # too short -> 0
+        a[86:96] += 30  # at the end and beginning
+        da = tasmax_series(a + K2C)
+
+        out = xci.hot_spell_max_magnitude(da, thresh="25 C", freq="ME")
+        np.testing.assert_array_equal(out, [25, 0, 30, 20, 0, 0, 0, 0, 0, 0, 0, 0])
 
 
 class TestTnDays:

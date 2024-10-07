@@ -10,10 +10,11 @@ from __future__ import annotations
 
 import logging
 import warnings
+from collections.abc import Callable
 from copy import deepcopy
 from importlib.resources import files
 from inspect import signature
-from typing import Any, Callable, Literal, cast
+from typing import Any, Literal, cast
 
 import cf_xarray.units
 import numpy as np
@@ -210,7 +211,7 @@ def pint2cfunits(value: units.Quantity | units.Unit) -> str:
     str
         Units following CF-Convention, using symbols.
     """
-    if isinstance(value, (pint.Quantity, units.Quantity)):
+    if isinstance(value, pint.Quantity | units.Quantity):
         value = value.units
 
     # Force "1" if the formatted string is "" (pint < 0.24)
@@ -420,7 +421,7 @@ def convert_units_to(  # noqa: C901
             return out
 
     # TODO remove backwards compatibility of int/float thresholds after v1.0 release
-    if isinstance(source, (float, int)):
+    if isinstance(source, float | int):
         raise TypeError("Please specify units explicitly.")
 
     raise NotImplementedError(f"Source of type `{type(source)}` is not supported.")
@@ -625,16 +626,13 @@ def to_agg_units(
     >>> degdays.units
     'd K'
     """
-    if op in ["amin", "min", "amax", "max", "mean", "sum"]:
+    is_difference = True if op in ["std", "var"] else None
+
+    if op in ["amin", "min", "amax", "max", "mean", "sum", "std"]:
         out.attrs["units"] = orig.attrs["units"]
 
-    elif op in ["std"]:
-        out.attrs["units"] = ensure_absolute_temperature(orig.attrs["units"])
-
     elif op in ["var"]:
-        out.attrs["units"] = pint2cfunits(
-            str2pint(ensure_absolute_temperature(orig.units)) ** 2
-        )
+        out.attrs["units"] = pint2cfunits(str2pint(orig.units) ** 2)
 
     elif op in ["doymin", "doymax"]:
         out.attrs.update(
@@ -644,7 +642,7 @@ def to_agg_units(
     elif op in ["count", "integral"]:
         m, freq_u_raw = infer_sampling_units(orig[dim])
         # TODO: Use delta here
-        orig_u = str2pint(ensure_absolute_temperature(orig.units))
+        orig_u = units2pint(orig)
         freq_u = str2pint(freq_u_raw)
         with xr.set_options(keep_attrs=True):
             out = out * m
@@ -658,9 +656,9 @@ def to_agg_units(
                 out_units = (orig_u * freq_u).to_reduced_units()
                 with xr.set_options(keep_attrs=True):
                     out = out * out_units.magnitude
-                out.attrs["units"] = pint2cfunits(out_units)
+                out.attrs.update(pint2cfattrs(out_units, is_difference))
             else:
-                out.attrs["units"] = pint2cfunits(orig_u * freq_u)
+                out.attrs.update(pint2cfattrs(orig_u * freq_u, is_difference))
     else:
         raise ValueError(
             f"Unknown aggregation op {op}. "
@@ -1169,7 +1167,7 @@ def check_units(
             )
             val = str(val).replace("UNSET ", "")
 
-    if isinstance(val, (int, float)):
+    if isinstance(val, int | float):
         raise TypeError("Please set units explicitly using a string.")
 
     try:
