@@ -14,12 +14,14 @@ Announcements
 New indicators
 ^^^^^^^^^^^^^^
 * New ``heat_spell_frequency``, ``heat_spell_max_length`` and ``heat_spell_total_length`` : spell length statistics on a bivariate condition that uses the average over a window by default. (:pull:`1885`).
+* New ``hot_spell_max_magnitude`` : yields the magnitude of the most intensive heat wave. (:pull:`1926`).
 * New ``chill_portion`` and ``chill_unit``: chill portion based on the Dynamic Model and chill unit based on the Utah model indicators. (:issue:`1753`, :pull:`1909`).
 
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 * New generic ``xclim.indices.generic.spell_mask``  that returns a mask of which days are part of a spell. Supports multivariate conditions and weights. Used in new generic index ``xclim.indices.generic.bivariate_spell_length_statistics`` that extends ``spell_length_statistics`` to two variables.  (:pull:`1885`).
 * Indicator parameters can now be assigned a new name, different from the argument name in the compute function. (:pull:`1885`).
+* ``xclim.indices.run_length.windowed_max_run_sum`` accumulates positive values across runs and yields the the maximum valued run. (:pull:`1926`).
 * Helper function ``xclim.indices.helpers.make_hourly_temperature`` to estimate hourly temperatures from daily min and max temperatures. (:pull:`1909`).
 * New global option ``resample_map_blocks`` to wrap all ``resample().map()`` code inside a ``xr.map_blocks`` to lower the number of dask tasks. Uses utility ``xclim.indices.helpers.resample_map`` and requires ``flox`` to ensure the chunking allows such block-mapping. Defaults to False. (:pull:`1848`).
 
