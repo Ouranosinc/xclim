@@ -362,6 +362,7 @@ def spell_mask(
     win_reducer: str,
     op: str,
     thresh: float | Sequence[float],
+    min_gap: int = 1,
     weights: Sequence[float] = None,
     var_reducer: str = "all",
 ) -> xr.DataArray:
@@ -384,6 +385,9 @@ def spell_mask(
         The threshold to compare the rolling statistics against, as ``window_stats op threshold``.
         If data is a list, this must be a list of the same length with a threshold for each variable.
         This function does not handle units and can't accept Quantified objects.
+    min_gap: int
+        The shortest possible gap between two spells. Spells closer than this are merged by assigning
+        the gap steps to the merged spell.
     weights: sequence of floats
         A list of weights of the same length as the window.
         Only supported if `win_reducer` is "mean".
@@ -453,9 +457,17 @@ def spell_mask(
         if not np.isscalar(thresh):
             mask = getattr(mask, var_reducer)("variable")
         # True for all days part of a spell that respected the condition (shift because of the two rollings)
-        is_in_spell = (mask.rolling(time=window).sum() >= 1).shift(time=-(window - 1))
+        is_in_spell = (mask.rolling(time=window).sum() >= 1).shift(
+            time=-(window - 1), fill_value=False
+        )
         # Cut back to the original size
         is_in_spell = is_in_spell.isel(time=slice(0, data.time.size))
+
+    if min_gap > 1:
+        is_in_spell = rl.runs_with_holes(is_in_spell, 1, ~is_in_spell, min_gap).astype(
+            bool
+        )
+
     return is_in_spell
 
 
@@ -467,12 +479,15 @@ def _spell_length_statistics(
     op: str,
     spell_reducer: str | Sequence[str],
     freq: str,
+    min_gap: int = 1,
     resample_before_rl: bool = True,
     **indexer,
 ) -> xr.DataArray | Sequence[xr.DataArray]:
     if isinstance(spell_reducer, str):
         spell_reducer = [spell_reducer]
-    is_in_spell = spell_mask(data, window, win_reducer, op, thresh).astype(np.float32)
+    is_in_spell = spell_mask(
+        data, window, win_reducer, op, thresh, min_gap=min_gap
+    ).astype(np.float32)
     is_in_spell = select_time(is_in_spell, **indexer)
 
     outs = []
@@ -512,6 +527,7 @@ def spell_length_statistics(
     op: str,
     spell_reducer: str,
     freq: str,
+    min_gap: int = 1,
     resample_before_rl: bool = True,
     **indexer,
 ):
@@ -537,6 +553,9 @@ def spell_length_statistics(
         Statistic on the spell lengths. If a list, multiple statistics are computed.
     freq : str
         Resampling frequency.
+    min_gap : int
+        The shortest possible gap between two spells. Spells closer than this are merged by assigning
+        the gap steps to the merged spell.
     resample_before_rl : bool
         Determines if the resampling should take place before or after the run
         length encoding (or a similar algorithm) is applied to runs.
@@ -588,7 +607,8 @@ def spell_length_statistics(
         op,
         spell_reducer,
         freq,
-        resample_before_rl,
+        min_gap=min_gap,
+        resample_before_rl=resample_before_rl,
         **indexer,
     )
 
@@ -604,6 +624,7 @@ def bivariate_spell_length_statistics(
     op: str,
     spell_reducer: str,
     freq: str,
+    min_gap: int = 1,
     resample_before_rl: bool = True,
     **indexer,
 ):
@@ -633,6 +654,9 @@ def bivariate_spell_length_statistics(
         Statistic on the spell lengths. If a list, multiple statistics are computed.
     freq : str
         Resampling frequency.
+    min_gap : int
+        The shortest possible gap between two spells. Spells closer than this are merged by assigning
+        the gap steps to the merged spell.
     resample_before_rl : bool
         Determines if the resampling should take place before or after the run
         length encoding (or a similar algorithm) is applied to runs.
@@ -656,6 +680,7 @@ def bivariate_spell_length_statistics(
         op,
         spell_reducer,
         freq,
+        min_gap,
         resample_before_rl,
         **indexer,
     )

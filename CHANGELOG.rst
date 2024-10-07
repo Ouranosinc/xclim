@@ -13,7 +13,7 @@ Announcements
 
 New indicators
 ^^^^^^^^^^^^^^
-* New ``heat_spell_frequency``, ``heat_spell_max_length`` and ``heat_spell_total_length`` : spell length statistics on a bivariate condition that uses the average over a window by default. (:pull:`1885`).
+* New ``heat_spell_frequency``, ``heat_spell_max_length`` and ``heat_spell_total_length`` : spell length statistics on a bivariate condition that uses the average over a window by default. (:pull:`1885`, :pull:`1778`).
 * New ``chill_portion`` and ``chill_unit``: chill portion based on the Dynamic Model and chill unit based on the Utah model indicators. (:issue:`1753`, :pull:`1909`).
 
 New features and enhancements
