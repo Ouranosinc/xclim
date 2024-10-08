@@ -614,11 +614,13 @@ def to_agg_units(
     ...     dims=("time",),
     ...     coords={"time": time},
     ... )
-    >>> dt = (tas - 16).assign_attrs(units="delta_degC")
+    >>> dt = (tas - 16).assign_attrs(
+    ...     units="degC", units_metadata="temperature: difference"
+    ... )
     >>> degdays = dt.clip(0).sum("time")  # Integral of temperature above a threshold
     >>> degdays = to_agg_units(degdays, dt, op="integral")
     >>> degdays.units
-    'K week'
+    'degC week'
 
     Which we can always convert to the more common "K days":
 
