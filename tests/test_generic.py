@@ -797,7 +797,8 @@ class TestThresholdedEvents:
         np.testing.assert_array_equal(
             out.event_start,
             np.array(
-                ["2000-01-04", "2000-01-16", "2000-01-26"], dtype="datetime64[ns]"
+                ["2000-01-04", "2000-01-08", "2000-01-16", "2000-01-26"],
+                dtype="datetime64[ns]",
             ),
         )
 
