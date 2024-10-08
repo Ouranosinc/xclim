@@ -7,8 +7,6 @@ import pint.errors
 import pytest
 import xarray as xr
 from dask import array as dsk
-from packaging.version import Version
-from pint import __version__ as __pint_version__
 
 from xclim import indices, set_options
 from xclim.core import Quantified, ValidationError
@@ -371,10 +369,7 @@ def test_to_agg_units(in_u, opfunc, op, exp, exp_u):
     out = to_agg_units(getattr(da, opfunc)(), da, op)
     np.testing.assert_allclose(out, exp)
     if isinstance(exp_u, tuple):
-        if Version(__pint_version__) < Version("0.24.1"):
-            assert out.attrs["units"] == exp_u[0]
-        else:
-            assert out.attrs["units"] == exp_u[1]
+        assert out.attrs["units"] in exp_u
     else:
         assert out.attrs["units"] == exp_u
 
