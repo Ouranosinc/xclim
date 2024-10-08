@@ -656,3 +656,11 @@ def test_chill_portions(atmosds):
     # due to implementation details
     exp = [np.nan, 99.91534493, 92.5473925, 99.03177047, np.nan]
     np.testing.assert_allclose(cp.isel(location=0), exp, rtol=1e-03)
+
+
+def test_water_cycle_intensity(pr_series, evspsbl_series):
+    pr = pr_series(np.ones(31))
+    evspsbl = evspsbl_series(np.ones(31))
+
+    wci = atmos.water_cycle_intensity(pr=pr, evspsbl=evspsbl, freq="MS")
+    np.testing.assert_allclose(wci, 2 * 60 * 60 * 24 * 31)

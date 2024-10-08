@@ -1895,7 +1895,7 @@ def water_cycle_intensity(
     pr = convert_units_to(pr, evspsbl)
 
     # Water cycle intensity
-    wci = pr + evspsbl
+    wci = (pr + evspsbl).assign_attrs(units=pr.units)
     wci = rate2amount(wci)
     wci = wci.resample(time=freq).sum(dim="time").assign_attrs(units=wci.units)
     return wci
