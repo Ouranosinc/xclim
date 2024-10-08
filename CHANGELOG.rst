@@ -7,7 +7,7 @@ v0.54.0 (unreleased)
 
 New indicators
 ^^^^^^^^^^^^^^
-* New ``water_cycle_intensity`` : yields the sum of precipitation and actual evapotranspiration. (:issue:`410`, :pull:``).
+* New ``water_cycle_intensity`` : yields the sum of precipitation and actual evapotranspiration. (:issue:`410`, :pull:`1947`).
 
 v0.53.0 (unreleased)
 --------------------
