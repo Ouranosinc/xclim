@@ -70,3 +70,33 @@ class TestMeltandPrecipMax:
         out = xci.melt_and_precip_max(snw, pr)
         np.testing.assert_array_equal(out, 2)
         assert out.units == "kg m-2"
+
+
+class TestFlowindex:
+    def test_simple(self, q_series):
+        a = np.ones(365 * 2) * 10
+        a[10:50] = 50
+        q = q_series(a)
+        out = xci.flow_index(q, 0.95)
+        np.testing.assert_array_equal(out, 5)
+
+
+class TestHighflowfrequency:
+    def test_simple(self, q_series):
+        a = np.zeros(365 * 2)
+        a[50:60] = 10
+        a[200:210] = 20
+        q = q_series(a)
+        out = xci.high_flow_frequency(q, 9, freq="YS")
+        np.testing.assert_array_equal(out, [20, 0])
+
+
+class TestLowflowfrequency:
+    def test_simple(self, q_series):
+        a = np.ones(365 * 2) * 10
+        a[50:60] = 1
+        a[200:210] = 1
+        q = q_series(a)
+        out = xci.low_flow_frequency(q, 0.2, freq="YS")
+
+        np.testing.assert_array_equal(out, [20, 0])
