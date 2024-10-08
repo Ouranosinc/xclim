@@ -2,6 +2,13 @@
 Changelog
 =========
 
+v0.54.0 (unreleased)
+--------------------
+
+New indicators
+^^^^^^^^^^^^^^
+* New ``water_cycle_intensity`` : yields the sum of precipitation and actual evapotranspiration. (:issue:`410`, :pull:``).
+
 v0.53.0 (unreleased)
 --------------------
 Contributors to this version: Adrien Lamarche (:user:`LamAdr`), Trevor James Smith (:user:`Zeitsperre`),  Éric Dupuis (:user:`coxipi`), Pascal Bourgault (:user:`aulemahal`), Sascha Hofmann (:user:`saschahofmann`).
