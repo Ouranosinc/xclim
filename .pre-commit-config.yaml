@@ -9,7 +9,7 @@ repos:
         args: ['--py39-plus']
         exclude: 'xclim/core/indicator.py'
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.6.0
+    rev: v5.0.0
     hooks:
       - id: trailing-whitespace
       - id: end-of-file-fixer
@@ -33,16 +33,16 @@ repos:
       - id: yamllint
         args: [ '--config-file=.yamllint.yaml' ]
   - repo: https://github.com/psf/black-pre-commit-mirror
-    rev: 24.8.0
+    rev: 24.10.0
     hooks:
       - id: black
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.6.3
+    rev: v0.6.9
     hooks:
       - id: ruff
         args: [ '--fix', '--show-fixes' ]
   - repo: https://github.com/pylint-dev/pylint
-    rev: v3.2.7
+    rev: v3.3.1
     hooks:
       - id: pylint
         args: [ '--rcfile=.pylintrc.toml', '--errors-only', '--jobs=0', '--disable=import-error' ]
@@ -53,7 +53,7 @@ repos:
         additional_dependencies: [ 'flake8-rst-docstrings ']
         args: [ '--config=.flake8' ]
   - repo: https://github.com/jendrikseipp/vulture
-    rev: 'v2.11'
+    rev: 'v2.13'
     hooks:
       - id: vulture
   - repo: https://github.com/nbQA-dev/nbQA
@@ -90,7 +90,7 @@ repos:
     rev: v0.3.9
     hooks:
       - id: blackdoc
-        additional_dependencies: [ 'black==24.8.0' ]
+        additional_dependencies: [ 'black==24.10.0' ]
         exclude: '(xclim/indices/__init__.py|docs/installation.rst)'
       - id: blackdoc-autoupdate-black
   - repo: https://github.com/codespell-project/codespell
@@ -99,11 +99,11 @@ repos:
       - id: codespell
         additional_dependencies: [ 'tomli' ]
   - repo: https://github.com/gitleaks/gitleaks
-    rev: v8.18.4
+    rev: v8.20.1
     hooks:
       - id: gitleaks
   - repo: https://github.com/python-jsonschema/check-jsonschema
-    rev: 0.29.2
+    rev: 0.29.3
     hooks:
       - id: check-github-workflows
       - id: check-readthedocs
