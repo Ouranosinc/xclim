@@ -864,7 +864,7 @@ def diurnal_temperature_range(
     out = getattr(dtr.resample(time=freq), reducer)()
 
     u = str2pint(low_data.units)
-    out.attrs["units"] = pint2cfunits(u - u)
+    out.attrs.update(pint2cfattrs(u, is_difference=True))
     return out
 
 
