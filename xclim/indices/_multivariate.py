@@ -58,6 +58,7 @@ __all__ = [
     "warm_and_dry_days",
     "warm_and_wet_days",
     "warm_spell_duration_index",
+    "water_cycle_intensity",
     "winter_rain_ratio",
 ]
 
@@ -1865,3 +1866,36 @@ def blowing_snow(
     out = cond.resample(time=freq).sum(dim="time")
     out = out.assign_attrs(units=to_agg_units(out, snd, "count"))
     return out
+
+
+@declare_units(pr="[precipitation]", evspsbl="[precipitation]")
+def water_cycle_intensity(
+    pr: xarray.DataArray, evspsbl: xarray.DataArray, freq="YS"
+) -> xarray.DataArray:
+    """Water cycle intensity.
+
+    The sum of precipitation and actual evapotranspiration.
+
+    Parameters
+    ----------
+    pr : xarray.DataArray
+        Precipitation flux.
+    evspsbl : xarray.DataArray
+        Actual evapotranspiration flux.
+
+    Returns
+    -------
+    xarray.DataArray
+        The sum of precipitation and actual evapotranspiration for each period.
+
+    References
+    ----------
+    :cite:cts:`huntington_2018`
+    """
+    pr = convert_units_to(pr, evspsbl)
+
+    # Water cycle intensity
+    wci = pr + evspsbl
+    wci = rate2amount(wci)
+    wci = wci.resample(time=freq).sum(dim="time").assign_attrs(units=wci.units)
+    return wci

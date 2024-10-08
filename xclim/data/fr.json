@@ -1403,5 +1403,11 @@
     "abstract": "Les unités de froid (chill units) sont une mesure du potentiel de débourrement de différentes récoltes basée sur le modèle Utah.",
     "long_name": "Unités de froid selon le modèle Utah",
     "description": "Les unités de froid (chill units) sont une mesure du potentiel de débourrement de différentes récoltes basée sur le modèle Utah."
+  },
+  "WATER_CYCLE_INTENSITY": {
+    "title": "Intensité du cycle de l'eau",
+    "long_name": "Intensité du cycle de l'eau",
+    "description": "Indice {freq} de l'intensité du cycle de l'eau, défini comme la somme de la précipitation et de l'évapotranspiration.",
+    "abstract": "la somme de la précipitation et de l'évapotranspiration."
   }
 }
