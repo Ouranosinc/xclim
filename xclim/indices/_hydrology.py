@@ -7,7 +7,7 @@ import xarray as xr
 from xclim.core.calendar import get_calendar
 from xclim.core.missing import at_least_n_valid
 from xclim.core.units import declare_units, rate2amount, to_agg_units
-from xclim.indices.generic import select_time, threshold_count
+from xclim.indices.generic import threshold_count
 
 from . import generic
 
@@ -286,7 +286,7 @@ def melt_and_precip_max(
 
 
 @declare_units(q="[discharge]")
-def flow_index(q: xr.DataArray, p: float = 0.95, **indexer) -> xr.DataArray:
+def flow_index(q: xr.DataArray, p: float = 0.95) -> xr.DataArray:
     """
     Flow index
 
@@ -298,9 +298,6 @@ def flow_index(q: xr.DataArray, p: float = 0.95, **indexer) -> xr.DataArray:
         Daily streamflow data.
     p : float
         Percentile for calculating the flow index, between 0 and 1. Default of 0.95 is for high flows.
-    indexer
-        Indexing parameters to perform a temporal subset of the data.
-        It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
 
     Returns
     -------
@@ -311,9 +308,8 @@ def flow_index(q: xr.DataArray, p: float = 0.95, **indexer) -> xr.DataArray:
     ----------
     :cite:cts:`Clausen2000`
     """
-    qt = select_time(q, **indexer)
-    qp = qt.quantile(p, dim="time")
-    q_median = qt.median(dim="time")
+    qp = q.quantile(p, dim="time")
+    q_median = q.median(dim="time")
     out = qp / q_median
     out.attrs["units"] = "1"
     return out
@@ -321,7 +317,7 @@ def flow_index(q: xr.DataArray, p: float = 0.95, **indexer) -> xr.DataArray:
 
 @declare_units(q="[discharge]")
 def high_flow_frequency(
-    q: xr.DataArray, threshold_factor: int = 9, freq: str = "YS-OCT", **indexer
+    q: xr.DataArray, threshold_factor: int = 9, freq: str = "YS-OCT"
 ) -> xr.DataArray:
     """
     High flow frequency.
@@ -338,9 +334,6 @@ def high_flow_frequency(
         Factor by which the median flow is multiplied to set the high flow threshold, default is 9.
     freq : str, optional
         Resampling frequency, default is 'YS-OCT' for water year starting in October and ending in September.
-    indexer
-        Indexing parameters to perform a temporal subset of the data.
-        It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
 
     Returns
     -------
@@ -351,16 +344,15 @@ def high_flow_frequency(
     ----------
     :cite:cts:`addor2018,Clausen2000`
     """
-    sel = select_time(q, **indexer)
-    median_flow = sel.median(dim="time")
+    median_flow = q.median(dim="time")
     threshold = threshold_factor * median_flow
-    out = threshold_count(sel, ">", threshold, freq=freq)
+    out = threshold_count(q, ">", threshold, freq=freq)
     return to_agg_units(out, q, "count")
 
 
 @declare_units(q="[discharge]")
 def low_flow_frequency(
-    q: xr.DataArray, threshold_factor: float = 0.2, freq: str = "YS-OCT", **indexer
+    q: xr.DataArray, threshold_factor: float = 0.2, freq: str = "YS-OCT"
 ) -> xr.DataArray:
     """
     Low flow frequency.
@@ -377,9 +369,6 @@ def low_flow_frequency(
         Factor by which the mean flow is multiplied to set the low flow threshold, default is 0.2.
     freq : str, optional
         Resampling frequency, default is 'YS-OCT' for water year starting in October and ending in September.
-    indexer
-        Indexing parameters to perform a temporal subset of the data.
-        It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
 
     Returns
     -------
@@ -390,8 +379,7 @@ def low_flow_frequency(
     ----------
     :cite:cts:`Olden2003`
     """
-    sel = select_time(q, **indexer)
-    mean_flow = sel.mean(dim="time")
+    mean_flow = q.mean(dim="time")
     threshold = threshold_factor * mean_flow
-    out = threshold_count(sel, "<", threshold, freq=freq)
+    out = threshold_count(q, "<", threshold, freq=freq)
     return to_agg_units(out, q, "count")

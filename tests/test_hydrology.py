@@ -80,20 +80,6 @@ class TestFlowindex:
         out = xci.flow_index(q, 0.95)
         np.testing.assert_array_equal(out, 5)
 
-    def test_indexer(self, q_series):
-        a = np.ones(365 * 2) * 10
-        a[10:30] = 50
-        a[375:395] = 50
-        q = q_series(a)
-        out = xci.flow_index(
-            q,
-            0.95,
-            month=[
-                1,
-            ],
-        )
-        np.testing.assert_array_equal(out, 1)
-
 
 class TestHighflowfrequency:
     def test_simple(self, q_series):

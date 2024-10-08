@@ -1394,7 +1394,7 @@
   },
   "FLOW_INDEX": {
     "long_name": "Indice de débit",
-    "description": "Le {p}e percentile du débit normalisé par le débit médian ({indexer}).",
+    "description": "Le {p}e percentile du débit normalisé par le débit médian.",
     "title": "Indice de débit",
     "abstract": "Indice de débit, calculé comme le rapport entre un percentile donné du débit et la médiane."
   },
