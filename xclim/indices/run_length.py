@@ -1848,7 +1848,7 @@ def find_events(
     ----------
     condition : DataArray of boolean values
         The boolean mask, true where the start condition of the event is fulfilled.
-    window: int
+    window : int
         The number of consecutive True values for an event to start.
     condition_stop : DataArray of boolean values, optional
         The stopping boolean mask, true where the end condition of the event is fulfilled.
@@ -1856,9 +1856,9 @@ def find_events(
     window_stop : int
         The number of consecutive True values in ``condition_stop`` for an event to end.
         Defaults to 1.
-    data: DataArray, optional
+    data : DataArray, optional
         The actual data. If present, its sum within each event is added to the output.
-    freq: str, optional
+    freq : str, optional
         A frequency to divide the data into periods. If absent, the output has not time dimension.
         If given, the events are searched within in each resample period independently.
 
