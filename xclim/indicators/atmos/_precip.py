@@ -57,6 +57,7 @@ __all__ = [
     "standardized_precipitation_index",
     "warm_and_dry_days",
     "warm_and_wet_days",
+    "water_cycle_intensity",
     "wet_precip_accumulation",
     "wet_spell_frequency",
     "wet_spell_max_length",
@@ -790,7 +791,19 @@ rain_season = Precip(
     units=["", "", "days"],
     abstract="Start time, end time and length of the rain season, notably useful for West Africa (sivakumar, 1998). "
     "The rain season starts with a period of abundant rainfall, followed by a period without prolonged dry sequences, "
-    "which must happen before a given date. The rain season stops during a dry period happening after a given date",
+    "which must happen before a given date. The rain season stops during a dry period happening after a given date.",
     cell_methods="",
     compute=indices.rain_season,
+)
+
+water_cycle_intensity = PrecipWithIndexing(
+    title="Water cycle intensity",
+    identifier="water_cycle_intensity",
+    realm="atmos",
+    units="mm",
+    long_name="Water cycle intensity",
+    description="The {freq} water cycle intensity, defined as the sum of precipitation and actual evapotranspiration.",
+    abstract="The sum of precipitation and actual evapotranspiration.",
+    cell_methods="time: sum over days",
+    compute=indices.water_cycle_intensity,
 )
