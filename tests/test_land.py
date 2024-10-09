@@ -66,3 +66,34 @@ def test_snw_storm_days(snw_series):
     snw = snw_series(a)
     out = land.snw_storm_days(snw, thresh="0.5 kg m-2")
     np.testing.assert_array_equal(out, [9, np.nan])
+
+
+def test_flow_index(q_series):
+    a = np.ones(365 * 2) * 10
+    a[10:50] = 50
+    q = q_series(a)
+
+    out = land.flow_index(q, p=0.95)
+    np.testing.assert_array_equal(out, 5)
+
+
+def test_high_flow_frequency(q_series):
+    a = np.zeros(366 * 2) * 10
+    a[50:60] = 10
+    a[200:210] = 20
+    q = q_series(a)
+    out = land.high_flow_frequency(
+        q,
+        threshold_factor=9,
+        freq="YS",
+    )
+    np.testing.assert_array_equal(out, [20, 0, np.nan])
+
+
+def test_low_flow_frequency(q_series):
+    a = np.ones(366 * 2) * 10
+    a[50:60] = 1
+    a[200:210] = 1
+    q = q_series(a)
+    out = land.low_flow_frequency(q, threshold_factor=0.2, freq="YS")
+    np.testing.assert_array_equal(out, [20, 0, np.nan])
