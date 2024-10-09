@@ -1392,6 +1392,24 @@
     "title": "Rayonnement de grandes longueurs d'onde ascendant",
     "abstract": "Calcul du rayonnement de grandes longueurs d'onde ascendant à partir du rayonnement de grandes longueurs d'onde net et descendant."
   },
+  "FLOW_INDEX": {
+    "long_name": "Indice de débit",
+    "description": "Le {p}e percentile du débit normalisé par le débit médian.",
+    "title": "Indice de débit",
+    "abstract": "Indice de débit, calculé comme le rapport entre un percentile donné du débit et la médiane."
+  },
+  "HIGH_FLOW_FREQUENCY": {
+    "long_name": "Fréquence des débits élevés",
+    "description": "Nombre de jours où le débit est {threshold_factor} fois supérieur à la médiane.",
+    "title": "Fréquence des débits élevés",
+    "abstract": "Fréquence des débits élevés, calculée comme le nombre de jours où le débit est supérieur à un multiple de la médiane."
+  },
+  "LOW_FLOW_FREQUENCY": {
+    "long_name": "Fréquence des débits faibles",
+    "description": "Nombre de jours où le débit est inférieur à une fraction ({threshold_factor}) de la moyenne.",
+    "title": "Fréquence des débits faibles",
+    "abstract": "Fréquence des débits faibles, calculée comme le nombre de jours où le débit est inférieur à une fraction de la moyenne."
+  },
   "CP": {
     "title": "Portions de froid (Chill Portions) selon le modèle Dynamique.",
     "abstract": "Les portions de froid (chill portions) sont une mesure du potentiel de débourrement de différentes récoltes basée sur le modèle Dynamique.",
