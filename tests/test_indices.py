@@ -3994,3 +3994,12 @@ class TestWindPowerPotential:
         pb = xci.wind_power_potential(b)
 
         np.testing.assert_array_almost_equal(pa, pb, decimal=6)
+
+
+class TestWaterCycleIntensity:
+    def test_simple(self, pr_series, evspsbl_series):
+        pr = pr_series(np.ones(31))
+        evspsbl = evspsbl_series(np.ones(31))
+
+        wci = xci.water_cycle_intensity(pr=pr, evspsbl=evspsbl, freq="MS")
+        np.testing.assert_allclose(wci, 2 * 60 * 60 * 24 * 31)
