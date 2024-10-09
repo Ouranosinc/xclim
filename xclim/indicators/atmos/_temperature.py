@@ -307,7 +307,7 @@ heat_spell_frequency = Temp(
     long_name="Number of heat spells",
     description="{freq} number of heat spells events. A heat spell occurs when the {window}-day "
     "averages of daily minimum and maximum temperatures each exceed {thresh_tasmin} and {thresh_tasmax}. "
-    "All days of the {window}-day period are considered part of the spell. Gaps of under {min_gap} days are allowed "
+    "All days of the {window}-day period are considered part of the spell. Gaps of fewer than {min_gap} day(s) are allowed "
     "within a spell.",
     abstract="Number of heat spells. A heat spell occurs when rolling averages of daily minimum and maximum temperatures exceed given "
     "thresholds for a number of days.",
@@ -342,7 +342,7 @@ heat_spell_max_length = Temp(
     long_name="Longest heat spell",
     description="{freq} maximum length of heat spells. A heat spell occurs when the {window}-day "
     "averages of daily minimum and maximum temperatures each exceed {thresh_tasmin} and {thresh_tasmax}. "
-    "All days of the {window}-day period are considered part of the spell. Gaps of under {min_gap} days are allowed "
+    "All days of the {window}-day period are considered part of the spell. Gaps of fewer than {min_gap} day(s) are allowed "
     "within a spell.",
     abstract="The longest heat spell of a period. A heat spell occurs when rolling averages of daily minimum and maximum temperatures exceed given "
     "thresholds for a number of days.",
@@ -376,7 +376,7 @@ heat_spell_total_length = Temp(
     description="{freq} total length of heat spell events. "
     "A heat spell occurs when the {window}-day  averages of daily minimum and maximum temperatures "
     "each exceed {thresh_tasmin} and {thresh_tasmax}.  All days of the {window}-day period are considered part of the spell."
-    "Gaps of under {min_gap} days are allowed within a spell.",
+    "Gaps of fewer than {min_gap} day(s) are allowed within a spell.",
     abstract="Total length of heat spells. A heat spell occurs when rolling averages of daily minimum and maximum temperatures exceed given "
     "thresholds for a number of days.",
     compute=indices.generic.bivariate_spell_length_statistics,

@@ -1747,9 +1747,12 @@ def suspicious_run(
 
 
 def _find_events(da_start, da_stop, data, window_start, window_stop):
-    # Get basic blocks to work with, our runs with holes and the lengths of those runs
-    # Series of ones indicating where we have continuous runs of freezing rain with pauses
-    # not exceeding `window_stop`
+    """Actual finding of events for each period.
+
+    Get basic blocks to work with, our runs with holes and the lengths of those runs.
+    Series of ones indicating where we have continuous runs with pauses
+    not exceeding `window_stop`
+    """
     runs = runs_with_holes(da_start, window_start, da_stop, window_stop)
 
     # Compute the length of freezing rain events
