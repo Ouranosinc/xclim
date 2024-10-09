@@ -573,8 +573,7 @@ def resample_map(
     resample_kwargs: dict | None = None,
     map_kwargs: dict | None = None,
 ) -> xr.DataArray | xr.Dataset:
-    r"""
-    Wraps xarray's resample(...).map() with a :py:func:`xarray.map_blocks`, ensuring the chunking is appropriate using flox.
+    r"""Wraps xarray's resample(...).map() with a :py:func:`xarray.map_blocks`, ensuring the chunking is appropriate using flox.
 
     Parameters
     ----------
