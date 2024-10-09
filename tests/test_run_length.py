@@ -127,8 +127,7 @@ def test_rle(ufunc, use_dask, index):
 @pytest.mark.parametrize("use_dask", [True, False])
 @pytest.mark.parametrize("index", ["first", "last"])
 def test_runs_with_holes_identity(use_dask, index):
-    # implement more tests, this is just to show that this reproduces the behaviour
-    # of rle
+    # This test reproduces the behaviour or `rle`
     values = np.zeros((10, 365, 4, 4))
     time = pd.date_range("2000-01-01", periods=365, freq="D")
     values[:, 1:11, ...] = 1
