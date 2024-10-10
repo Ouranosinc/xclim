@@ -165,6 +165,7 @@ from xclim.core.utils import (
     infer_kind_from_parameter,
     is_percentile_dataarray,
     load_module,
+    split_auxiliary_coordinates,
 )
 
 # Indicators registry
@@ -1446,13 +1447,12 @@ class CheckMissingIndicator(Indicator):
             # Reduce by or and broadcast to ensure the same length in time
             # When indexing is used and there are no valid points in the last period, mask will not include it
             mask = reduce(np.logical_or, miss)
-            if (
-                isinstance(mask, DataArray)
-                and "time" in mask.dims
-                and mask.time.size < outs[0].time.size
-            ):
-                mask = mask.reindex(time=outs[0].time, fill_value=True)
-            outs = [out.where(np.logical_not(mask)) for out in outs]
+            if isinstance(mask, DataArray):  # mask might be a bool in some cases
+                if "time" in mask.dims and mask.time.size < outs[0].time.size:
+                    mask = mask.reindex(time=outs[0].time, fill_value=True)
+                # Remove any aux coord to avoid any unwanted dask computation in the alignment within "where"
+                mask, _ = split_auxiliary_coordinates(mask)
+            outs = [out.where(~mask) for out in outs]
 
         return outs
 

@@ -27,6 +27,7 @@ from xclim.core.units import (
     to_agg_units,
 )
 from xclim.indices import run_length as rl
+from xclim.indices.helpers import resample_map
 
 __all__ = [
     "aggregate_between_dates",
@@ -90,14 +91,15 @@ def select_resample_op(
         The maximum value for each period.
     """
     da = select_time(da, **indexer)
-    r = da.resample(time=freq)
     if isinstance(op, str):
         op = _xclim_ops.get(op, op)
     if isinstance(op, str):
-        out = getattr(r, op.replace("integral", "sum"))(dim="time", keep_attrs=True)
+        out = getattr(da.resample(time=freq), op.replace("integral", "sum"))(
+            dim="time", keep_attrs=True
+        )
     else:
         with xr.set_options(keep_attrs=True):
-            out = r.map(op)
+            out = resample_map(da, "time", freq, op)
         op = op.__name__
     if out_units is not None:
         return out.assign_attrs(units=out_units)
@@ -734,7 +736,7 @@ def season(
     map_kwargs = {"window": window, "mid_date": mid_date}
     if stat in ["start", "end"]:
         map_kwargs["coord"] = "dayofyear"
-    out = cond.resample(time=freq).map(FUNC[stat], **map_kwargs)
+    out = resample_map(cond, "time", freq, FUNC[stat], map_kwargs=map_kwargs)
     if stat == "length":
         return to_agg_units(out, data, "count")
     # else, a date
@@ -895,11 +897,12 @@ def first_occurrence(
 
     cond = compare(data, op, threshold, constrain)
 
-    out = cond.resample(time=freq).map(
+    out = resample_map(
+        cond,
+        "time",
+        freq,
         rl.first_run,
-        window=1,
-        dim="time",
-        coord="dayofyear",
+        map_kwargs=dict(window=1, dim="time", coord="dayofyear"),
     )
     out.attrs["units"] = ""
     return out
@@ -940,11 +943,12 @@ def last_occurrence(
 
     cond = compare(data, op, threshold, constrain)
 
-    out = cond.resample(time=freq).map(
+    out = resample_map(
+        cond,
+        "time",
+        freq,
         rl.last_run,
-        window=1,
-        dim="time",
-        coord="dayofyear",
+        map_kwargs=dict(window=1, dim="time", coord="dayofyear"),
     )
     out.attrs["units"] = ""
     return out
@@ -985,11 +989,12 @@ def spell_length(
 
     cond = compare(data, op, threshold)
 
-    out = cond.resample(time=freq).map(
+    out = resample_map(
+        cond,
+        "time",
+        freq,
         rl.rle_statistics,
-        reducer=reducer,
-        window=1,
-        dim="time",
+        map_kwargs=dict(reducer=reducer, window=1, dim="time"),
     )
     return to_agg_units(out, data, "count")
 
@@ -1329,12 +1334,12 @@ def first_day_threshold_reached(
 
     cond = compare(data, op, threshold, constrain=constrain)
 
-    out: xr.DataArray = cond.resample(time=freq).map(
+    out: xr.DataArray = resample_map(
+        cond,
+        "time",
+        freq,
         rl.first_run_after_date,
-        window=window,
-        date=after_date,
-        dim="time",
-        coord="dayofyear",
+        map_kwargs=dict(window=window, date=after_date, dim="time", coord="dayofyear"),
     )
     out.attrs.update(units="", is_dayofyear=np.int32(1), calendar=get_calendar(data))
     return out

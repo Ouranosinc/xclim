@@ -25,6 +25,7 @@ SDBA_EXTRA_OUTPUT = "sdba_extra_output"
 SDBA_ENCODE_CF = "sdba_encode_cf"
 KEEP_ATTRS = "keep_attrs"
 AS_DATASET = "as_dataset"
+MAP_BLOCKS = "resample_map_blocks"
 
 MISSING_METHODS: dict[str, Callable] = {}
 
@@ -39,6 +40,7 @@ OPTIONS = {
     SDBA_ENCODE_CF: False,
     KEEP_ATTRS: "xarray",
     AS_DATASET: False,
+    MAP_BLOCKS: False,
 }
 
 _LOUDNESS_OPTIONS = frozenset(["log", "warn", "raise"])
@@ -71,6 +73,7 @@ _VALIDATORS = {
     SDBA_ENCODE_CF: lambda opt: isinstance(opt, bool),
     KEEP_ATTRS: _KEEP_ATTRS_OPTIONS.__contains__,
     AS_DATASET: lambda opt: isinstance(opt, bool),
+    MAP_BLOCKS: lambda opt: isinstance(opt, bool),
 }
 
 
@@ -185,6 +188,9 @@ class set_options:
         Note that xarray's "default" is equivalent to False. Default: ``"xarray"``.
     as_dataset : bool
         If True, indicators output datasets. If False, they output DataArrays. Default :``False``.
+    resample_map_blocks: bool
+        If True, some indicators will wrap their resampling operations with `xr.map_blocks`, using :py:func:`xclim.indices.helpers.resample_map`.
+        This requires `flox` to be installed in order to ensure the chunking is appropriate.git
 
     Examples
     --------
