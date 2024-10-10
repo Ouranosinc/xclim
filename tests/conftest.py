@@ -82,6 +82,12 @@ def pr_series():
 
 
 @pytest.fixture
+def evspsbl_series():
+    """Return precipitation time series."""
+    return partial(test_timeseries, variable="evspsbl")
+
+
+@pytest.fixture
 def prc_series():
     """Return convective precipitation time series."""
     _prc_series = partial(test_timeseries, variable="prc")

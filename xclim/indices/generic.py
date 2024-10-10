@@ -29,6 +29,7 @@ from xclim.core.units import (
     units2pint,
 )
 from xclim.indices import run_length as rl
+from xclim.indices.helpers import resample_map
 
 __all__ = [
     "aggregate_between_dates",
@@ -92,14 +93,15 @@ def select_resample_op(
         The maximum value for each period.
     """
     da = select_time(da, **indexer)
-    r = da.resample(time=freq)
     if isinstance(op, str):
         op = _xclim_ops.get(op, op)
     if isinstance(op, str):
-        out = getattr(r, op.replace("integral", "sum"))(dim="time", keep_attrs=True)
+        out = getattr(da.resample(time=freq), op.replace("integral", "sum"))(
+            dim="time", keep_attrs=True
+        )
     else:
         with xr.set_options(keep_attrs=True):
-            out = r.map(op)
+            out = resample_map(da, "time", freq, op)
         op = op.__name__
     if out_units is not None:
         return out.assign_attrs(units=out_units)
@@ -368,6 +370,7 @@ def spell_mask(
     win_reducer: str,
     op: str,
     thresh: float | Sequence[float],
+    min_gap: int = 1,
     weights: Sequence[float] = None,
     var_reducer: str = "all",
 ) -> xr.DataArray:
@@ -390,6 +393,9 @@ def spell_mask(
         The threshold to compare the rolling statistics against, as ``window_stats op threshold``.
         If data is a list, this must be a list of the same length with a threshold for each variable.
         This function does not handle units and can't accept Quantified objects.
+    min_gap: int
+        The shortest possible gap between two spells. Spells closer than this are merged by assigning
+        the gap steps to the merged spell.
     weights: sequence of floats
         A list of weights of the same length as the window.
         Only supported if `win_reducer` is "mean".
@@ -440,7 +446,7 @@ def spell_mask(
             mask = getattr(mask, var_reducer)("variable")
         # We need to filter out the spells shorter than "window"
         # find sequences of consecutive respected constraints
-        cs_s = rl._cumsum_reset_on_zero(mask)
+        cs_s = rl._cumsum_reset(mask)
         # end of these sequences
         cs_s = cs_s.where(mask.shift({"time": -1}, fill_value=0) == 0)
         # propagate these end of sequences
@@ -459,9 +465,17 @@ def spell_mask(
         if not np.isscalar(thresh):
             mask = getattr(mask, var_reducer)("variable")
         # True for all days part of a spell that respected the condition (shift because of the two rollings)
-        is_in_spell = (mask.rolling(time=window).sum() >= 1).shift(time=-(window - 1))
+        is_in_spell = (mask.rolling(time=window).sum() >= 1).shift(
+            time=-(window - 1), fill_value=False
+        )
         # Cut back to the original size
         is_in_spell = is_in_spell.isel(time=slice(0, data.time.size))
+
+    if min_gap > 1:
+        is_in_spell = rl.runs_with_holes(is_in_spell, 1, ~is_in_spell, min_gap).astype(
+            bool
+        )
+
     return is_in_spell
 
 
@@ -473,12 +487,15 @@ def _spell_length_statistics(
     op: str,
     spell_reducer: str | Sequence[str],
     freq: str,
+    min_gap: int = 1,
     resample_before_rl: bool = True,
     **indexer,
 ) -> xr.DataArray | Sequence[xr.DataArray]:
     if isinstance(spell_reducer, str):
         spell_reducer = [spell_reducer]
-    is_in_spell = spell_mask(data, window, win_reducer, op, thresh).astype(np.float32)
+    is_in_spell = spell_mask(
+        data, window, win_reducer, op, thresh, min_gap=min_gap
+    ).astype(np.float32)
     is_in_spell = select_time(is_in_spell, **indexer)
 
     outs = []
@@ -518,6 +535,7 @@ def spell_length_statistics(
     op: str,
     spell_reducer: str,
     freq: str,
+    min_gap: int = 1,
     resample_before_rl: bool = True,
     **indexer,
 ):
@@ -543,6 +561,9 @@ def spell_length_statistics(
         Statistic on the spell lengths. If a list, multiple statistics are computed.
     freq : str
         Resampling frequency.
+    min_gap : int
+        The shortest possible gap between two spells. Spells closer than this are merged by assigning
+        the gap steps to the merged spell.
     resample_before_rl : bool
         Determines if the resampling should take place before or after the run
         length encoding (or a similar algorithm) is applied to runs.
@@ -594,7 +615,8 @@ def spell_length_statistics(
         op,
         spell_reducer,
         freq,
-        resample_before_rl,
+        min_gap=min_gap,
+        resample_before_rl=resample_before_rl,
         **indexer,
     )
 
@@ -610,6 +632,7 @@ def bivariate_spell_length_statistics(
     op: str,
     spell_reducer: str,
     freq: str,
+    min_gap: int = 1,
     resample_before_rl: bool = True,
     **indexer,
 ):
@@ -639,6 +662,9 @@ def bivariate_spell_length_statistics(
         Statistic on the spell lengths. If a list, multiple statistics are computed.
     freq : str
         Resampling frequency.
+    min_gap : int
+        The shortest possible gap between two spells. Spells closer than this are merged by assigning
+        the gap steps to the merged spell.
     resample_before_rl : bool
         Determines if the resampling should take place before or after the run
         length encoding (or a similar algorithm) is applied to runs.
@@ -662,6 +688,7 @@ def bivariate_spell_length_statistics(
         op,
         spell_reducer,
         freq,
+        min_gap,
         resample_before_rl,
         **indexer,
     )
@@ -742,7 +769,7 @@ def season(
     map_kwargs = {"window": window, "mid_date": mid_date}
     if stat in ["start", "end"]:
         map_kwargs["coord"] = "dayofyear"
-    out = cond.resample(time=freq).map(FUNC[stat], **map_kwargs)
+    out = resample_map(cond, "time", freq, FUNC[stat], map_kwargs=map_kwargs)
     if stat == "length":
         return to_agg_units(out, data, "count")
     # else, a date
@@ -903,11 +930,12 @@ def first_occurrence(
 
     cond = compare(data, op, threshold, constrain)
 
-    out = cond.resample(time=freq).map(
+    out = resample_map(
+        cond,
+        "time",
+        freq,
         rl.first_run,
-        window=1,
-        dim="time",
-        coord="dayofyear",
+        map_kwargs=dict(window=1, dim="time", coord="dayofyear"),
     )
     out.attrs["units"] = ""
     return out
@@ -948,11 +976,12 @@ def last_occurrence(
 
     cond = compare(data, op, threshold, constrain)
 
-    out = cond.resample(time=freq).map(
+    out = resample_map(
+        cond,
+        "time",
+        freq,
         rl.last_run,
-        window=1,
-        dim="time",
-        coord="dayofyear",
+        map_kwargs=dict(window=1, dim="time", coord="dayofyear"),
     )
     out.attrs["units"] = ""
     return out
@@ -993,11 +1022,12 @@ def spell_length(
 
     cond = compare(data, op, threshold)
 
-    out = cond.resample(time=freq).map(
+    out = resample_map(
+        cond,
+        "time",
+        freq,
         rl.rle_statistics,
-        reducer=reducer,
-        window=1,
-        dim="time",
+        map_kwargs=dict(reducer=reducer, window=1, dim="time"),
     )
     return to_agg_units(out, data, "count")
 
@@ -1339,12 +1369,12 @@ def first_day_threshold_reached(
 
     cond = compare(data, op, threshold, constrain=constrain)
 
-    out: xr.DataArray = cond.resample(time=freq).map(
+    out: xr.DataArray = resample_map(
+        cond,
+        "time",
+        freq,
         rl.first_run_after_date,
-        window=window,
-        date=after_date,
-        dim="time",
-        coord="dayofyear",
+        map_kwargs=dict(window=window, date=after_date, dim="time", coord="dayofyear"),
     )
     out.attrs.update(units="", is_dayofyear=np.int32(1), calendar=get_calendar(data))
     return out
@@ -1483,3 +1513,68 @@ def detrend(
     trend = xr.polyval(ds[dim], coeff.polyfit_coefficients)
     with xr.set_options(keep_attrs=True):
         return ds - trend
+
+
+@declare_relative_units(thresh="<data>")
+def thresholded_events(
+    data: xr.DataArray,
+    thresh: Quantified,
+    op: str,
+    window: int,
+    thresh_stop: Quantified | None = None,
+    op_stop: str | None = None,
+    window_stop: int = 1,
+    freq: str | None = None,
+) -> xr.Dataset:
+    r"""Thresholded events.
+
+    Finds all events along the time dimension. An event starts if the start condition is fulfilled for a given number of consecutive time steps.
+    It ends when the end condition is fulfilled for a given number of consecutive time steps.
+
+    Conditions are simple comparison of the data with a threshold: ``cond = data op thresh``.
+    The end conditions defaults to the negation of the start condition.
+
+    The resulting ``event`` dimension always has its maximal possible size : ``data.size / (window + window_stop)``.
+
+    Parameters
+    ----------
+    data : xr.DataArray
+        Variable.
+    thresh : Quantified
+        Threshold defining the event.
+    op : {">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"}
+        Logical operator defining the event, e.g. arr > thresh.
+    window: int
+        Number of time steps where the event condition must be true to start an event.
+    thresh_stop : Quantified, optional
+        Threshold defining the end of an event. Defaults to `thresh`.
+    op_stop : {">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"}, optional
+        Logical operator for the end of an event. Defaults to the opposite of `op`.
+    window_stop: int, optional
+        Number of time steps where the end condition must be true to end an event. Defaults to 1.
+    freq: str, optional
+        A frequency to divide the data into periods. If absent, the output has not time dimension.
+        If given, the events are searched within in each resample period independently.
+
+    Returns
+    -------
+    xr.Dataset, same shape as the data except the time dimension is replaced by an "event" dimension.
+        event_length: The number of time steps in each event
+        event_effective_length: The number of time steps of even event where the start condition is true.
+        event_sum: The sum within each event, only considering the steps where start condition is true.
+        event_start: The datetime of the start of the run.
+    """
+    thresh = convert_units_to(thresh, data)
+
+    # Start and end conditions
+    da_start = compare(data, op, thresh)
+    if thresh_stop is None and op_stop is None:
+        da_stop = ~da_start
+    else:
+        thresh_stop = convert_units_to(thresh_stop or thresh, data)
+        if op_stop is not None:
+            da_stop = compare(data, op_stop, thresh_stop)
+        else:
+            da_stop = ~compare(data, op, thresh_stop)
+
+    return rl.find_events(da_start, window, da_stop, window_stop, data, freq)
