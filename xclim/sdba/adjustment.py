@@ -1772,21 +1772,24 @@ class MBCn(TrainAdjust):
             ).rename(matrices="iterations")
         pts_dims = [rot_matrices.attrs[d] for d in ["crd_dim", "new_dim"]]
 
-        # time indices corresponding to group and windowed group
-        # used to divide datasets as map_blocks or groupby would do
-        _, gw_idxs = grouped_time_indexes(ref.time, base_kws["group"])
-
         # training, obtain adjustment factors of the npdf transform
         ds = xr.Dataset({"ref": ref, "hist": hist})
         params = {
+            "rot_matrices": rot_matrices,
             "quantiles": base_kws["nquantiles"],
+            "iterations": rot_matrices.iterations.values,
             "interp": adj_kws["interp"],
             "extrapolation": adj_kws["extrapolation"],
             "pts_dims": pts_dims,
             "n_escore": n_escore,
+            "group": base_kws["group"],
         }
-        out = mbcn_train(ds, rot_matrices=rot_matrices, gw_idxs=gw_idxs, **params)
-        params["group"] = base_kws["group"]
+
+        # improve this template?
+        # eventually, add escores ...
+        template = mbcn_train(ds, **params)
+
+        out = xr.map_blocks(mbcn_train, ds, template=template, kwargs=params)
 
         # postprocess
         out["rot_matrices"] = rot_matrices

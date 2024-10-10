@@ -202,12 +202,18 @@ def _npdft_train(ref, hist, rots, quantiles, method, extrap, n_escore, standardi
     return af_q, escores
 
 
+@map_groups(
+    af_q=[Grouper.PROP, "quantiles", "iterations"],
+    escores=[Grouper.PROP, "quantiles", "iterations"],
+)
 def mbcn_train(
     ds: xr.Dataset,
+    *,
+    dim: str,
     rot_matrices: xr.DataArray,
     pts_dims: Sequence[str],
     quantiles: np.ndarray,
-    gw_idxs: xr.DataArray,
+    iterations: np.ndarray,
     interp: str,
     extrapolation: str,
     n_escore: int,
@@ -215,7 +221,7 @@ def mbcn_train(
     """Npdf transform training.
 
     Adjusting factors obtained for each rotation in the npdf transform and conserved to be applied in
-    the adjusting step in :py:func:`mcbn_adjust`.
+    the adjusting step in :py:func:`mbcn_adjust`.
 
     Parameters
     ----------
@@ -230,8 +236,8 @@ def mbcn_train(
         is the normal case when using :py:func:`xclim.sdba.base.stack_variables`, and "multivar_prime",
     quantiles : array-like
         The quantiles to compute.
-    gw_idxs : xr.DataArray
-        Indices of the times in each windowed time group
+    iterations : array-like
+        The iterations for the various rotations in `rot_matrices`.
     interp : str
         The interpolation method to use.
     extrapolation : str
@@ -248,53 +254,38 @@ def mbcn_train(
     # unpack data
     ref = ds.ref
     hist = ds.hist
-    gr_dim = gw_idxs.attrs["group_dim"]
-
     # npdf training core
-    af_q_l = []
-    escores_l = []
-
-    # loop over time blocks
-    for ib in range(gw_idxs[gr_dim].size):
-        # indices in a given time block
-        indices = gw_idxs[{gr_dim: ib}].fillna(-1).astype(int).values
-        ind = indices[indices >= 0]
-
-        # npdft training : multiple rotations on standardized datasets
-        # keep track of adjustment factors in each rotation for later use
-        af_q, escores = xr.apply_ufunc(
-            _npdft_train,
-            ref[{"time": ind}],
-            hist[{"time": ind}],
-            rot_matrices,
-            quantiles,
-            input_core_dims=[
-                [pts_dims[0], "time"],
-                [pts_dims[0], "time"],
-                ["iterations", pts_dims[1], pts_dims[0]],
-                ["quantiles"],
-            ],
-            output_core_dims=[
-                ["iterations", pts_dims[1], "quantiles"],
-                ["iterations"],
-            ],
-            dask="parallelized",
-            output_dtypes=[hist.dtype, hist.dtype],
-            kwargs={
-                "method": interp,
-                "extrap": extrapolation,
-                "n_escore": n_escore,
-                "standardize": True,
-            },
-            vectorize=True,
-        )
-        af_q_l.append(af_q.expand_dims({gr_dim: [ib]}))
-        escores_l.append(escores.expand_dims({gr_dim: [ib]}))
-    af_q = xr.concat(af_q_l, dim=gr_dim)
-    escores = xr.concat(escores_l, dim=gr_dim)
-    out = xr.Dataset({"af_q": af_q, "escores": escores}).assign_coords(
-        {"quantiles": quantiles, gr_dim: gw_idxs[gr_dim].values}
+    af_q, escores = xr.apply_ufunc(
+        _npdft_train,
+        ref,
+        hist,
+        rot_matrices,
+        quantiles,
+        input_core_dims=[
+            [pts_dims[0], "time"],
+            [pts_dims[0], "time"],
+            ["iterations", pts_dims[1], pts_dims[0]],
+            ["quantiles"],
+        ],
+        output_core_dims=[
+            # this should really be pts_dims[1], but useful to keep same dim name
+            ["iterations", pts_dims[0], "quantiles"],
+            ["iterations"],
+        ],
+        dask="parallelized",
+        output_dtypes=[hist.dtype, hist.dtype],
+        kwargs={
+            "method": interp,
+            "extrap": extrapolation,
+            "n_escore": n_escore,
+            "standardize": True,
+        },
+        vectorize=True,
     )
+    # I broadcast escores like af_q for now
+    # the problem is with the multivar
+    out = xr.Dataset({"af_q": af_q, "escores": escores.broadcast_like(af_q)})
+    out = out.assign_coords({"quantiles": quantiles, "iterations": iterations})
     return out
 
 
@@ -355,7 +346,7 @@ def mbcn_adjust(
 
     The function :py:func:`mbcn_train` pre-computes the adjustment factors for each rotation
     in the npdf portion of the MBCn algorithm. The rest of adjustment is performed here
-    in `mbcn_adjust``.
+    in `mbcn_adjust`.
 
     Parameters
     ----------
