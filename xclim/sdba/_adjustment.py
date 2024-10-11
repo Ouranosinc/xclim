@@ -329,11 +329,14 @@ def _npdft_adjust(sim, af_q, rots, quantiles, method, extrap):
     return sim
 
 
+@map_groups(
+    reduces=[Grouper.PROP, "iterations", "quantiles", "multivar_prime"], scen=[]
+)
 def mbcn_adjust(
-    ref: xr.Dataset,
-    hist: xr.Dataset,
-    sim: xr.Dataset,
     ds: xr.Dataset,
+    *,
+    dim: str,
+    rot_matrices: xr.DataArray,
     pts_dims: Sequence[str],
     interp: str,
     extrapolation: str,
@@ -350,18 +353,15 @@ def mbcn_adjust(
 
     Parameters
     ----------
-    ref : xr.DataArray
-        training target
-    hist : xr.DataArray
-        training data
-    sim : xr.DataArray
-        data to adjust (stacked with multivariate dimension)
     ds : xr.Dataset
         Dataset variables:
             rot_matrices : Rotation matrices used in the training step.
+            ref : training target
+            hist : training data
+            hist : data to adjust
             af_q : Adjustment factors obtained in the training step for the npdf transform
-            g_idxs : Indices of the times in each time group
-            gw_idxs: Indices of the times in each windowed time group
+    rot_matrices : xr.DataArray
+        The rotation matrices as a 3D array ('iterations', <pts_dims[0]>, <pts_dims[1]>), with shape (n_iter, <N>, <N>).
     pts_dims : [str, str]
         The name of the "multivariate" dimension and its primed counterpart. Defaults to "multivar", which
         is the normal case when using :py:func:`xclim.sdba.base.stack_variables`, and "multivar_prime"
@@ -388,72 +388,55 @@ def mbcn_adjust(
         The adjusted data.
     """
     # unpacking training parameters
-    rot_matrices = ds.rot_matrices
-    af_q = ds.af_q
+    ref = ds.ref
+    hist = ds.hist
+    sim = ds.sim
+    # TODO: investigate this below
+    # according to other docstrings, dim should have been a str
+    # but it's a list[str]. Are there times where len(dim)>1 ?
+    dim = dim if isinstance(dim, str) else dim[0]
+    # multivar_prime was renamed multivar, changing back
+    # drop "time", af_q was broadcasted to be used with map_groups
+    af_q = ds.af_q.rename({pts_dims[0]: pts_dims[1]})[{dim: 0}].drop(dim)
     quantiles = af_q.quantiles
-    g_idxs = ds.g_idxs
-    gw_idxs = ds.gw_idxs
-    gr_dim = gw_idxs.attrs["group_dim"]
-    win = gw_idxs.attrs["group"][1]
 
-    # this way of handling was letting open the possibility to perform
-    # interpolation for multiple periods in the simulation all at once
-    # in principle, avoiding redundancy. Need to test this on small data
-    # to confirm it works,  and on big data to check performance.
-    dims = ["time"] if period_dim is None else [period_dim, "time"]
+    # 1. univariate adjustment of sim -> scen
+    # the kind may differ depending on the variables
+    scen_block = xr.zeros_like(sim)
+    for iv, v in enumerate(sim[pts_dims[0]].values):
+        sl = {pts_dims[0]: iv}
+        with set_options(sdba_extra_output=False):
+            ADJ = base.train(
+                ref[sl], hist[sl], **base_kws_vars[v], skip_input_checks=True
+            )
+            scen_block[{pts_dims[0]: iv}] = ADJ.adjust(
+                sim[sl], **adj_kws, skip_input_checks=True
+            )
 
-    # mbcn core
-    scen_mbcn = xr.zeros_like(sim)
-    for ib in range(gw_idxs[gr_dim].size):
-        # indices in a given time block (with and without the window)
-        indices_gw = gw_idxs[{gr_dim: ib}].fillna(-1).astype(int).values
-        ind_gw = indices_gw[indices_gw >= 0]
-        indices_g = g_idxs[{gr_dim: ib}].fillna(-1).astype(int).values
-        ind_g = indices_g[indices_g >= 0]
+    # 2. npdft adjustment of sim
+    npdft_block = xr.apply_ufunc(
+        _npdft_adjust,
+        standardize(sim, dim=dim)[0],
+        af_q,
+        rot_matrices,
+        quantiles,
+        input_core_dims=[
+            [pts_dims[0], dim],
+            ["iterations", pts_dims[1], "quantiles"],
+            ["iterations", pts_dims[1], pts_dims[0]],
+            ["quantiles"],
+        ],
+        output_core_dims=[
+            [pts_dims[0], dim],
+        ],
+        dask="parallelized",
+        output_dtypes=[sim.dtype],
+        kwargs={"method": interp, "extrap": extrapolation},
+        vectorize=True,
+    )
 
-        # 1. univariate adjustment of sim -> scen
-        # the kind may differ depending on the variables
-        scen_block = xr.zeros_like(sim[{"time": ind_gw}])
-        for iv, v in enumerate(sim[pts_dims[0]].values):
-            sl = {"time": ind_gw, pts_dims[0]: iv}
-            with set_options(sdba_extra_output=False):
-                ADJ = base.train(
-                    ref[sl], hist[sl], **base_kws_vars[v], skip_input_checks=True
-                )
-                scen_block[{pts_dims[0]: iv}] = ADJ.adjust(
-                    sim[sl], **adj_kws, skip_input_checks=True
-                )
-
-        # 2. npdft adjustment of sim
-        npdft_block = xr.apply_ufunc(
-            _npdft_adjust,
-            standardize(sim[{"time": ind_gw}].copy(), dim="time")[0],
-            af_q[{gr_dim: ib}],
-            rot_matrices,
-            quantiles,
-            input_core_dims=[
-                [pts_dims[0]] + dims,
-                ["iterations", pts_dims[1], "quantiles"],
-                ["iterations", pts_dims[1], pts_dims[0]],
-                ["quantiles"],
-            ],
-            output_core_dims=[
-                [pts_dims[0]] + dims,
-            ],
-            dask="parallelized",
-            output_dtypes=[sim.dtype],
-            kwargs={"method": interp, "extrap": extrapolation},
-            vectorize=True,
-        )
-
-        # 3. reorder scen according to npdft results
-        reordered = reordering(ref=npdft_block, sim=scen_block)
-        if win > 1:
-            # keep  central value of window (intersecting indices in gw_idxs and g_idxs)
-            scen_mbcn[{"time": ind_g}] = reordered[{"time": np.in1d(ind_gw, ind_g)}]
-        else:
-            scen_mbcn[{"time": ind_g}] = reordered
-
+    # 3. reorder scen according to npdft results
+    scen_mbcn = reordering(ref=npdft_block, sim=scen_block)
     return scen_mbcn.to_dataset(name="scen")
 
 

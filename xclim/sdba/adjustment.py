@@ -39,8 +39,7 @@ from ._adjustment import (
     scaling_adjust,
     scaling_train,
 )
-from .base import Grouper, ParametrizableWithDataset, parse_group
-from .processing import grouped_time_indexes
+from .base import Grouper, ParametrizableWithDataset, map_groups, parse_group
 from .utils import (
     ADDITIVE,
     best_pc_orientation_full,
@@ -1610,6 +1609,12 @@ class dOTC(Adjust):
         return scen
 
 
+# TODO: put this somewhere else
+@map_groups(reduces=[Grouper.DIM], times=[Grouper.PROP])
+def get_times(t, *, dim):
+    return xr.Dataset(dict(times=t.isel(time=0).time.values))
+
+
 class MBCn(TrainAdjust):
     r"""Multivariate bias correction function using the N-dimensional probability density function transform.
 
@@ -1786,7 +1791,6 @@ class MBCn(TrainAdjust):
         }
 
         # improve this template?
-        # eventually, add escores ...
         template = mbcn_train(ds, **params)
 
         out = xr.map_blocks(mbcn_train, ds, template=template, kwargs=params)
@@ -1858,17 +1862,25 @@ class MBCn(TrainAdjust):
         adj_kws.setdefault("interp", self.interp)
         adj_kws.setdefault("extrapolation", self.extrapolation)
 
-        g_idxs, gw_idxs = grouped_time_indexes(ref.time, self.group)
-        ds = self.ds.copy()
-        ds["g_idxs"] = g_idxs
-        ds["gw_idxs"] = gw_idxs
+        af_q = self.ds.af_q
+        rot_matrices = self.ds.rot_matrices
+        group = self.group
 
-        # adjust (adjust for npft transform, train/adjust for univariate bias correction)
-        out = mbcn_adjust(
-            ref=ref,
-            hist=hist,
-            sim=sim,
-            ds=ds,
+        times = get_times(hist.time, group=group)
+        af_q[group.prop] = times.times.values
+        af_q = af_q.rename({group.prop: "time"})
+        af_q = af_q.broadcast_like(hist)
+        # a bit dirty, should avoid this situation before
+        af_q = af_q.chunk({"time": -1})
+
+        ds = af_q.to_dataset(name="af_q")
+        ds["ref"] = ref
+        ds["hist"] = hist
+        ds["sim"] = sim
+
+        kwargs = dict(
+            rot_matrices=rot_matrices,
+            group=group,
             pts_dims=self.pts_dims,
             interp=self.interp,
             extrapolation=self.extrapolation,
@@ -1877,6 +1889,24 @@ class MBCn(TrainAdjust):
             adj_kws=adj_kws,
             period_dim=period_dim,
         )
+
+        template = mbcn_adjust(ds, **kwargs)
+
+        out = xr.map_blocks(mbcn_adjust, ds, template=template, kwargs=kwargs)
+
+        # adjust (adjust for npft transform, train/adjust for univariate bias correction)
+        # out = mbcn_adjust(
+        #     ds=ds,
+        #     rot_matrices = rot_matrices,
+        #     group=group,
+        #     pts_dims=self.pts_dims,
+        #     interp=self.interp,
+        #     extrapolation=self.extrapolation,
+        #     base=base,
+        #     base_kws_vars=base_kws_vars,
+        #     adj_kws=adj_kws,
+        #     period_dim=period_dim,
+        # )
 
         return out
 
