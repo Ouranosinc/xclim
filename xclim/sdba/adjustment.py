@@ -1794,6 +1794,7 @@ class MBCn(TrainAdjust):
 
         # postprocess
         out["rot_matrices"] = rot_matrices
+        # those are dummy dimensions added in to better work with map_groups
         out["escores"] = (
             out.escores.isel(quantiles=0, multivar=0).drop("multivar").drop("quantiles")
         )
