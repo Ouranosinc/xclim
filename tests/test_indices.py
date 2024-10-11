@@ -1454,12 +1454,23 @@ class TestHotSpellFrequency:
     def test_resampling_order(self, tasmax_series, resample_before_rl, expected):
         a = np.zeros(365)
         a[5:35] = 31
-        tx = tasmax_series(a + K2C)
+        tx = tasmax_series(a + K2C).chunk()
 
         hsf = xci.hot_spell_frequency(
             tx, resample_before_rl=resample_before_rl, freq="MS"
-        )
+        ).load()
         assert hsf[1] == expected
+
+    @pytest.mark.parametrize("resample_map", [True, False])
+    def test_resampling_map(self, tasmax_series, resample_map):
+        pytest.importorskip("flox")
+        a = np.zeros(365)
+        a[5:35] = 31
+        tx = tasmax_series(a + K2C).chunk()
+
+        with set_options(resample_map_blocks=resample_map):
+            hsf = xci.hot_spell_frequency(tx, resample_before_rl=True, freq="MS").load()
+        assert hsf[1] == 1
 
 
 class TestHotSpellMaxLength:
@@ -1746,10 +1757,10 @@ class TestMaximumConsecutiveDryDays:
     def test_resampling_order(self, pr_series, resample_before_rl, expected):
         a = np.zeros(365) + 10
         a[5:35] = 0
-        pr = pr_series(a)
+        pr = pr_series(a).chunk()
         out = xci.maximum_consecutive_dry_days(
             pr, freq="ME", resample_before_rl=resample_before_rl
-        )
+        ).load()
         assert out[0] == expected
 
 
@@ -3983,3 +3994,12 @@ class TestWindPowerPotential:
         pb = xci.wind_power_potential(b)
 
         np.testing.assert_array_almost_equal(pa, pb, decimal=6)
+
+
+class TestWaterCycleIntensity:
+    def test_simple(self, pr_series, evspsbl_series):
+        pr = pr_series(np.ones(31))
+        evspsbl = evspsbl_series(np.ones(31))
+
+        wci = xci.water_cycle_intensity(pr=pr, evspsbl=evspsbl, freq="MS")
+        np.testing.assert_allclose(wci, 2 * 60 * 60 * 24 * 31)

@@ -16,6 +16,7 @@ from xclim.core.units import (
     rate2amount,
     to_agg_units,
 )
+from xclim.core.utils import uses_dask
 from xclim.indices._conversion import potential_evapotranspiration
 from xclim.indices._simple import tn_min
 from xclim.indices._threshold import (
@@ -23,7 +24,7 @@ from xclim.indices._threshold import (
     first_day_temperature_below,
 )
 from xclim.indices.generic import aggregate_between_dates, get_zones
-from xclim.indices.helpers import _gather_lat, day_lengths
+from xclim.indices.helpers import _gather_lat, day_lengths, resample_map
 from xclim.indices.stats import standardized_index
 
 # Frequencies : YS: year start, QS-DEC: seasons starting in december, MS: month start
@@ -1037,7 +1038,7 @@ def rain_season(
             raise ValueError(f"Unknown method_dry_start: {method_dry_start}.")
 
         # First and second condition combined in a run length
-        events = rl.extract_events(da_start, 1, da_stop, window_dry)
+        events = rl.runs_with_holes(da_start, 1, da_stop, window_dry)
         run_positions = rl.rle(events) >= (window_not_dry_start + window_wet_start)
 
         return _get_first_run(run_positions, date_min_start, date_max_start)
@@ -1564,7 +1565,8 @@ def _chill_portion_one_season(tas_K):
 
 def _apply_chill_portion_one_season(tas_K):
     """Apply the chill portion function on to an xarray DataArray."""
-    tas_K = tas_K.chunk(time=-1)
+    if uses_dask(tas_K):
+        tas_K = tas_K.chunk(time=-1)
     return xarray.apply_ufunc(
         _chill_portion_one_season,
         tas_K,
@@ -1627,12 +1629,9 @@ def chill_portions(
     tas_K: xarray.DataArray = select_time(
         convert_units_to(tas, "K"), drop=True, **indexer
     )
-    # TODO: use resample_map once #1848 is merged
-    return (
-        tas_K.resample(time=freq)
-        .map(_apply_chill_portion_one_season)
-        .assign_attrs(units="")
-    )
+    return resample_map(
+        tas_K, "time", freq, _apply_chill_portion_one_season
+    ).assign_attrs(units="")
 
 
 @declare_units(tas="[temperature]")
