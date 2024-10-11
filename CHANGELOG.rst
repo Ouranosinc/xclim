@@ -23,6 +23,7 @@ New features and enhancements
 * Indicator parameters can now be assigned a new name, different from the argument name in the compute function. (:pull:`1885`).
 * ``xclim.indices.run_length.windowed_max_run_sum`` accumulates positive values across runs and yields the the maximum valued run. (:pull:`1926`).
 * Helper function ``xclim.indices.helpers.make_hourly_temperature`` to estimate hourly temperatures from daily min and max temperatures. (:pull:`1909`).
+* `xclim.indices.stats.standardized_index` now supports a weekly resampling frequency. Only standard calendar is supported for this mode. (:pull:``)
 
 Bug fixes
 ^^^^^^^^^
