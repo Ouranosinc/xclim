@@ -203,6 +203,9 @@ def _npdft_train(ref, hist, rots, quantiles, method, extrap, n_escore, standardi
 
 
 @map_groups(
+    # that is never used elsewhere, but we should precise that
+    # Grouper.DIM is dropped no?
+    reduces=[Grouper.DIM],
     af_q=[Grouper.PROP, "quantiles", "iterations"],
     escores=[Grouper.PROP, "quantiles", "iterations"],
 )

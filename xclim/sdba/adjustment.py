@@ -1790,13 +1790,13 @@ class MBCn(TrainAdjust):
             "group": base_kws["group"],
         }
 
-        # improve this template?
-        template = mbcn_train(ds, **params)
-
-        out = xr.map_blocks(mbcn_train, ds, template=template, kwargs=params)
+        out = mbcn_train(ds, **params)
 
         # postprocess
         out["rot_matrices"] = rot_matrices
+        out["escores"] = (
+            out.escores.isel(quantiles=0, multivar=0).drop("multivar").drop("quantiles")
+        )
 
         out.af_q.attrs.update(
             standard_name="Adjustment factors",
@@ -1890,9 +1890,7 @@ class MBCn(TrainAdjust):
             period_dim=period_dim,
         )
 
-        template = mbcn_adjust(ds, **kwargs)
-
-        out = xr.map_blocks(mbcn_adjust, ds, template=template, kwargs=kwargs)
+        out = mbcn_adjust(ds, **kwargs)
 
         return out
 
