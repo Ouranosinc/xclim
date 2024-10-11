@@ -1894,20 +1894,6 @@ class MBCn(TrainAdjust):
 
         out = xr.map_blocks(mbcn_adjust, ds, template=template, kwargs=kwargs)
 
-        # adjust (adjust for npft transform, train/adjust for univariate bias correction)
-        # out = mbcn_adjust(
-        #     ds=ds,
-        #     rot_matrices = rot_matrices,
-        #     group=group,
-        #     pts_dims=self.pts_dims,
-        #     interp=self.interp,
-        #     extrapolation=self.extrapolation,
-        #     base=base,
-        #     base_kws_vars=base_kws_vars,
-        #     adj_kws=adj_kws,
-        #     period_dim=period_dim,
-        # )
-
         return out
 
 

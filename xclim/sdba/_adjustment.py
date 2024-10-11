@@ -329,9 +329,7 @@ def _npdft_adjust(sim, af_q, rots, quantiles, method, extrap):
     return sim
 
 
-@map_groups(
-    reduces=[Grouper.PROP, "iterations", "quantiles", "multivar_prime"], scen=[]
-)
+@map_groups(reduces=[Grouper.PROP, "iterations", "quantiles"], scen=[])
 def mbcn_adjust(
     ds: xr.Dataset,
     *,
@@ -358,7 +356,7 @@ def mbcn_adjust(
             rot_matrices : Rotation matrices used in the training step.
             ref : training target
             hist : training data
-            hist : data to adjust
+            sim : data to adjust
             af_q : Adjustment factors obtained in the training step for the npdf transform
     rot_matrices : xr.DataArray
         The rotation matrices as a 3D array ('iterations', <pts_dims[0]>, <pts_dims[1]>), with shape (n_iter, <N>, <N>).
