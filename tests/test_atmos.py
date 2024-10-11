@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import numpy as np
+import pytest
 import xarray as xr
 
 from xclim import atmos, set_options
@@ -642,11 +643,18 @@ def test_chill_units(atmosds):
     np.testing.assert_allclose(cu.isel(location=0), exp, rtol=1e-03)
 
 
-def test_chill_portions(atmosds):
+@pytest.mark.parametrize("use_dask", [True, False])
+def test_chill_portions(atmosds, use_dask):
+    pytest.importorskip("flox")
     tasmax = atmosds.tasmax
     tasmin = atmosds.tasmin
     tas = make_hourly_temperature(tasmin, tasmax)
-    cp = atmos.chill_portions(tas, date_bounds=("09-01", "03-30"), freq="YS-JUL")
+    if use_dask:
+        tas = tas.chunk(time=tas.time.size // 2, location=1)
+
+    with set_options(resample_map_blocks=True):
+        cp = atmos.chill_portions(tas, date_bounds=("09-01", "03-30"), freq="YS-JUL")
+
     assert cp.attrs["units"] == "1"
     assert cp.name == "cp"
     # Although its 4 years of data its 5 seasons starting in July
@@ -656,3 +664,11 @@ def test_chill_portions(atmosds):
     # due to implementation details
     exp = [np.nan, 99.91534493, 92.5473925, 99.03177047, np.nan]
     np.testing.assert_allclose(cp.isel(location=0), exp, rtol=1e-03)
+
+
+def test_water_cycle_intensity(pr_series, evspsbl_series):
+    pr = pr_series(np.ones(31))
+    evspsbl = evspsbl_series(np.ones(31))
+
+    wci = atmos.water_cycle_intensity(pr=pr, evspsbl=evspsbl, freq="MS")
+    np.testing.assert_allclose(wci, 2 * 60 * 60 * 24 * 31)

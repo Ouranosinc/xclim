@@ -111,7 +111,7 @@ docs = [
   "sphinxcontrib-bibtex",
   "sphinxcontrib-svg2pdfconverter[Cairosvg]"
 ]
-extras = ["fastnanquantile >=0.0.2", "POT >=0.9.4"]
+extras = ["fastnanquantile >=0.0.2", "flox >=0.9", "POT >=0.9.4"]
 all = ["xclim[dev]", "xclim[docs]", "xclim[extras]"]
 
 [project.scripts]
@@ -135,7 +135,7 @@ target-version = [
 ]
 
 [tool.bumpversion]
-current_version = "0.52.3-dev.7"
+current_version = "0.52.3-dev.11"
 commit = true
 commit_args = "--no-verify"
 tag = false
