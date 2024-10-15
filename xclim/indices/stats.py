@@ -2,7 +2,7 @@
 Statistical indices module
 ==========================
 
-Functions to aid in computing various statistical indices from climate data.
+Functions to aid in computing various statistical indices.
 
 See the `frequency_analysis` notebook for working examples.
 """
@@ -191,7 +191,7 @@ def parametric_quantile(
         and attribute `scipy_dist`, storing the name of the distribution.
     q : float or Sequence of float
         Quantile to compute, which must be between `0` and `1`, inclusive.
-    dist: str or rv_continuous distribution object, optional
+    dist : str or rv_continuous distribution object, optional
         The distribution name or instance if the `scipy_dist` attribute is not available on `p`.
 
     Returns
@@ -264,7 +264,7 @@ def parametric_cdf(
         and attribute `scipy_dist`, storing the name of the distribution.
     v : float or Sequence of float
         Value to compute the CDF.
-    dist: str or rv_continuous distribution object, optional
+    dist : str or rv_continuous distribution object, optional
         The distribution name or instance is the `scipy_dist` attribute is not available on `p`.
 
     Returns
@@ -403,10 +403,10 @@ def frequency_analysis(
         Fitting method, either maximum likelihood (ML or MLE), method of moments (MOM) or approximate method (APP).
         Also accepts probability weighted moments (PWM), also called L-Moments, if `dist` is an instance from the lmoments3 library.
         The PWM method is usually more robust to outliers.
-    \*\*indexer : dict
+    \*\*indexer
         Time attribute and values over which to subset the array. For example, use season='DJF' to select winter values,
-        month=1 to select January, or month=[6,7,8] to select summer months. If indexer is not provided, all values are
-        considered.
+        month=1 to select January, or month=[6,7,8] to select summer months.
+        If indexer is not provided, all values are considered.
 
     Returns
     -------
@@ -466,8 +466,9 @@ def _fit_start(x, dist: str, **fitkwargs: Any) -> tuple[tuple, dict]:
         Input data.
     dist : str
         Name of the univariate distribution, e.g. `beta`, `expon`, `genextreme`, `gamma`, `gumbel_r`, `lognorm`, `norm`.
-        (see :py:mod:scipy.stats). Only `genextreme` and `weibull_exp` distributions are supported.
-    \*\*fitkwargs : dict
+        (see :py:mod:scipy.stats).
+        Only `genextreme` and `weibull_exp` distributions are supported.
+    \*\*fitkwargs
         Kwargs passed to fit.
 
     Returns
@@ -476,7 +477,7 @@ def _fit_start(x, dist: str, **fitkwargs: Any) -> tuple[tuple, dict]:
 
     References
     ----------
-    :cite:cts:`coles_introduction_2001,cohen_parameter_2019, thom_1958, cooke_1979, muralidhar_1992`
+    :cite:cts:`coles_introduction_2001,cohen_parameter_2019,thom_1958,cooke_1979,muralidhar_1992`
     """
     x = np.asarray(x)
     m = x.mean()
@@ -566,13 +567,13 @@ def _dist_method_1D(  # noqa: N802
 
     Parameters
     ----------
-    \*args : Sequence
+    \*args
         The arguments for the requested scipy function.
     dist : str or rv_continuous distribution object
         The scipy name of the distribution.
     function : str
         The name of the function to call.
-    \*\*kwargs : dict
+    \*\*kwargs
         Other parameters to pass to the function call.
 
     Returns
@@ -607,7 +608,7 @@ def dist_method(
         The first argument for the requested function if different from `fit_params`.
     dist : str or rv_continuous distribution object, optional
         The distribution name or instance. Defaults to the `scipy_dist` attribute or `fit_params`.
-    \*\*kwargs : dict
+    \*\*kwargs
         Other parameters to pass to the function call.
 
     Returns
@@ -656,7 +657,7 @@ def preprocess_standardized_index(
     window : int
         Averaging window length relative to the resampling frequency. For example, if `freq="MS"`,
         i.e. a monthly resampling, the window is an integer number of months.
-    \*\*indexer : dict
+    \*\*indexer
         Indexing parameters to compute the indicator on a temporal subset of the data.
         It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
 
@@ -846,8 +847,8 @@ def standardized_index(
     dist : str or rv_continuous instance
         Name of the univariate distribution. (see :py:mod:`scipy.stats`).
     method : str
-        Name of the fitting method, such as `ML` (maximum likelihood), `APP` (approximate). The approximate method
-        uses a deterministic function that doesn't involve any optimization.
+        Name of the fitting method, such as `ML` (maximum likelihood), `APP` (approximate).
+        The approximate method uses a deterministic function that doesn't involve any optimization.
     zero_inflated : bool
         If True, the zeroes of `da` are treated separately.
     fitkwargs : dict
@@ -862,7 +863,7 @@ def standardized_index(
         Fit parameters.
         The `params` can be computed using ``xclim.indices.stats.standardized_index_fit_params`` in advance.
         The output can be given here as input, and it overrides other options.
-    \*\*indexer : dict
+    \*\*indexer
         Indexing parameters to compute the indicator on a temporal subset of the data.
         It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
 
