@@ -375,9 +375,9 @@ tox==4.21.2 \
     # via
     #   -r CI/requirements_ci.in
     #   tox-gh
-tox-gh==1.4.1 \
-    --hash=sha256:005b33d16eef1bd1dae9f7d8b3cef53374af7d475f9c9c33ef098247741fb694 \
-    --hash=sha256:da422beccbdc5ad5994fe8faf6c193f2d794e957628b052ba23e7fcf9e2e340f
+tox-gh==1.4.4 \
+    --hash=sha256:4ea585f66585b90f5826b1677cfc9453747792a0f9ff83d468603bc17556e07b \
+    --hash=sha256:b962e0f8c4619e98d11c2a135939876691e148b843b7dac4cff7de1dc4f7c215
     # via -r CI/requirements_ci.in
 typing-extensions==4.12.2 \
     --hash=sha256:04e5ca0351e0f3f85c6853954072df659d0d13fac324d0072316b67d7794700d \
