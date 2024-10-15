@@ -1,4 +1,11 @@
-"""Statistic-related functions. See the `frequency_analysis` notebook for examples."""
+"""
+Statistical indices module
+==========================
+
+Functions to aid in computing various statistical indices from climate data.
+
+See the `frequency_analysis` notebook for working examples.
+"""
 
 from __future__ import annotations
 
@@ -10,6 +17,7 @@ from typing import Any
 import numpy as np
 import scipy.stats
 import xarray as xr
+from scipy.stats import rv_continuous
 
 from xclim.core import DateStr, Quantified
 from xclim.core.calendar import compare_offsets, resample_doy, select_time
@@ -70,7 +78,7 @@ def _fitfunc_1d(arr, *, dist, nparams, method, **fitkwargs):
 
 def fit(
     da: xr.DataArray,
-    dist: str | scipy.stats.rv_continuous = "norm",
+    dist: str | rv_continuous = "norm",
     method: str = "ML",
     dim: str = "time",
     **fitkwargs: Any,
@@ -171,7 +179,7 @@ def fit(
 def parametric_quantile(
     p: xr.DataArray,
     q: float | Sequence[float],
-    dist: str | scipy.stats.rv_continuous | None = None,
+    dist: str | rv_continuous | None = None,
 ) -> xr.DataArray:
     """Return the value corresponding to the given distribution parameters and quantile.
 
@@ -183,7 +191,7 @@ def parametric_quantile(
         and attribute `scipy_dist`, storing the name of the distribution.
     q : float or Sequence of float
         Quantile to compute, which must be between `0` and `1`, inclusive.
-    dist: str, rv_continuous instance, optional
+    dist: str or rv_continuous distribution object, optional
         The distribution name or instance if the `scipy_dist` attribute is not available on `p`.
 
     Returns
@@ -244,7 +252,7 @@ def parametric_quantile(
 def parametric_cdf(
     p: xr.DataArray,
     v: float | Sequence[float],
-    dist: str | scipy.stats.rv_continuous | None = None,
+    dist: str | rv_continuous | None = None,
 ) -> xr.DataArray:
     """Return the cumulative distribution function corresponding to the given distribution parameters and value.
 
@@ -256,7 +264,7 @@ def parametric_cdf(
         and attribute `scipy_dist`, storing the name of the distribution.
     v : float or Sequence of float
         Value to compute the CDF.
-    dist: str, rv_continuous instance, optional
+    dist: str or rv_continuous distribution object, optional
         The distribution name or instance is the `scipy_dist` attribute is not available on `p`.
 
     Returns
@@ -306,7 +314,7 @@ def parametric_cdf(
 def fa(
     da: xr.DataArray,
     t: int | Sequence,
-    dist: str | scipy.stats.rv_continuous = "norm",
+    dist: str | rv_continuous = "norm",
     mode: str = "max",
     method: str = "ML",
 ) -> xr.DataArray:
@@ -319,7 +327,7 @@ def fa(
     t : int or Sequence of int
         Return period. The period depends on the resolution of the input data. If the input array's resolution is
         yearly, then the return period is in years.
-    dist : str or rv_continuous instance
+    dist : str or rv_continuous distribution object
         Name of the univariate distribution, such as:
         `beta`, `expon`, `genextreme`, `gamma`, `gumbel_r`, `lognorm`, `norm`
         Or the distribution instance itself.
@@ -366,7 +374,7 @@ def frequency_analysis(
     da: xr.DataArray,
     mode: str,
     t: int | Sequence[int],
-    dist: str | scipy.stats.rv_continuous,
+    dist: str | rv_continuous,
     window: int = 1,
     freq: str | None = None,
     method: str = "ML",
@@ -383,7 +391,7 @@ def frequency_analysis(
     t : int or sequence
         Return period. The period depends on the resolution of the input data. If the input array's resolution is
         yearly, then the return period is in years.
-    dist : str or rv_continuous
+    dist : str or rv_continuous distribution object
         Name of the univariate distribution, e.g. `beta`, `expon`, `genextreme`, `gamma`, `gumbel_r`, `lognorm`, `norm`.
         Or an instance of the distribution.
     window : int
@@ -395,7 +403,7 @@ def frequency_analysis(
         Fitting method, either maximum likelihood (ML or MLE), method of moments (MOM) or approximate method (APP).
         Also accepts probability weighted moments (PWM), also called L-Moments, if `dist` is an instance from the lmoments3 library.
         The PWM method is usually more robust to outliers.
-    \*\*indexer
+    \*\*indexer : dict
         Time attribute and values over which to subset the array. For example, use season='DJF' to select winter values,
         month=1 to select January, or month=[6,7,8] to select summer months. If indexer is not provided, all values are
         considered.
@@ -427,9 +435,17 @@ def frequency_analysis(
     return fa(sel, t, dist=dist, mode=mode, method=method)
 
 
-def get_dist(dist: str | scipy.stats.rv_continuous):
-    """Return a distribution object from `scipy.stats`."""
-    if isinstance(dist, scipy.stats.rv_continuous):
+def get_dist(dist: str | rv_continuous):
+    """
+    Return a distribution object from `scipy.stats`.
+
+    Parameters
+    ----------
+    dist : str or rv_continuous distribution object
+        Name of the univariate distribution, e.g. `beta`, `expon`, `genextreme`, `gamma`, `gumbel_r`, `lognorm`, `norm`.
+        Or an instance of the distribution.
+    """
+    if isinstance(dist, rv_continuous):
         return dist
 
     dc = getattr(scipy.stats, dist, None)
@@ -451,7 +467,7 @@ def _fit_start(x, dist: str, **fitkwargs: Any) -> tuple[tuple, dict]:
     dist : str
         Name of the univariate distribution, e.g. `beta`, `expon`, `genextreme`, `gamma`, `gumbel_r`, `lognorm`, `norm`.
         (see :py:mod:scipy.stats). Only `genextreme` and `weibull_exp` distributions are supported.
-    \*\*fitkwargs
+    \*\*fitkwargs : dict
         Kwargs passed to fit.
 
     Returns
@@ -461,7 +477,6 @@ def _fit_start(x, dist: str, **fitkwargs: Any) -> tuple[tuple, dict]:
     References
     ----------
     :cite:cts:`coles_introduction_2001,cohen_parameter_2019, thom_1958, cooke_1979, muralidhar_1992`
-
     """
     x = np.asarray(x)
     m = x.mean()
@@ -542,7 +557,7 @@ def _fit_start(x, dist: str, **fitkwargs: Any) -> tuple[tuple, dict]:
 
 
 def _dist_method_1D(  # noqa: N802
-    *args, dist: str | scipy.stats.rv_continuous, function: str, **kwargs: Any
+    *args, dist: str | rv_continuous, function: str, **kwargs: Any
 ) -> xr.DataArray:
     r"""Statistical function for given argument on given distribution initialized with params.
 
@@ -551,13 +566,13 @@ def _dist_method_1D(  # noqa: N802
 
     Parameters
     ----------
-    \*args
+    \*args : Sequence
         The arguments for the requested scipy function.
-    dist : str
+    dist : str or rv_continuous distribution object
         The scipy name of the distribution.
     function : str
         The name of the function to call.
-    \*\*kwargs
+    \*\*kwargs : dict
         Other parameters to pass to the function call.
 
     Returns
@@ -572,10 +587,11 @@ def dist_method(
     function: str,
     fit_params: xr.DataArray,
     arg: xr.DataArray | None = None,
-    dist: str | scipy.stats.rv_continuous | None = None,
+    dist: str | rv_continuous | None = None,
     **kwargs: Any,
 ) -> xr.DataArray:
-    r"""Vectorized statistical function for given argument on given distribution initialized with params.
+    r"""
+    Vectorized statistical function for given argument on given distribution initialized with params.
 
     Methods where `"*args"` are the distribution parameters can be wrapped, except those that reduce dimensions (
     e.g. `nnlf`) or create new dimensions (eg: 'rvs' with size != 1, 'stats' with more than one moment, 'interval',
@@ -589,9 +605,9 @@ def dist_method(
         Distribution parameters are along `dparams`, in the same order as given by :py:func:`fit`.
     arg : array_like, optional
         The first argument for the requested function if different from `fit_params`.
-    dist : str pr rv_continuous, optional
+    dist : str or rv_continuous distribution object, optional
         The distribution name or instance. Defaults to the `scipy_dist` attribute or `fit_params`.
-    \*\*kwargs
+    \*\*kwargs : dict
         Other parameters to pass to the function call.
 
     Returns
@@ -629,17 +645,18 @@ def dist_method(
 def preprocess_standardized_index(
     da: xr.DataArray, freq: str | None, window: int, **indexer
 ):
-    r"""Perform resample and roll operations involved in computing a standardized index.
+    r"""
+    Perform resample and roll operations involved in computing a standardized index.
 
     da : xarray.DataArray
         Input array.
-    freq : {D, MS}, optional
+    freq : {'D', 'MS'}, optional
         Resampling frequency. A monthly or daily frequency is expected. Option `None` assumes that desired resampling
         has already been applied input dataset and will skip the resampling step.
     window : int
         Averaging window length relative to the resampling frequency. For example, if `freq="MS"`,
         i.e. a monthly resampling, the window is an integer number of months.
-    \*\*indexer
+    \*\*indexer : dict
         Indexing parameters to compute the indicator on a temporal subset of the data.
         It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
 
@@ -693,7 +710,7 @@ def standardized_index_fit_params(
     da: xr.DataArray,
     freq: str | None,
     window: int,
-    dist: str | scipy.stats.rv_continuous,
+    dist: str | rv_continuous,
     method: str,
     zero_inflated: bool = False,
     fitkwargs: dict | None = None,
@@ -702,9 +719,9 @@ def standardized_index_fit_params(
     r"""Standardized Index fitting parameters.
 
     A standardized index measures the deviation of a variable averaged over a rolling temporal window and
-    fitted with a given distribution `dist` with respect to a calibration dataset. The comparison is done by porting
-    back results to a normalized distribution. The fitting parameters of the calibration dataset fitted with `dist`
-    are obtained here.
+    fitted with a given distribution `dist` with respect to a calibration dataset.
+    The comparison is done by porting back results to a normalized distribution.
+    The fitting parameters of the calibration dataset fitted with `dist` are obtained here.
 
     Parameters
     ----------
@@ -716,7 +733,7 @@ def standardized_index_fit_params(
     window : int
         Averaging window length relative to the resampling frequency. For example, if `freq="MS"`,
         i.e. a monthly resampling, the window is an integer number of months.
-    dist : {'gamma', 'fisk'} or rv_continuous instance
+    dist : {'gamma', 'fisk'} or rv_continuous distribution object
         Name of the univariate distribution. (see :py:mod:`scipy.stats`).
     method : {'ML', 'APP', 'PWM'}
         Name of the fitting method, such as `ML` (maximum likelihood), `APP` (approximate). The approximate method
@@ -732,7 +749,7 @@ def standardized_index_fit_params(
     Returns
     -------
     xarray.DataArray
-        Standardized Index fitting parameters. The time dimension of the initial array is reduced to
+        Standardized Index fitting parameters. The time dimension of the initial array is reduced to.
 
     Notes
     -----
@@ -743,9 +760,10 @@ def standardized_index_fit_params(
 
     When using the zero inflated option, : A probability density function :math:`\texttt{pdf}_0(X)` is fitted for :math:`X \neq 0`
     and a supplementary parameter :math:`\pi` takes into account the probability of :math:`X = 0`. The full probability density
-    function is a piecewise function
+    function is a piecewise function:
 
     .. math::
+
       \texttt{pdf}(X) = \pi  \texttt{ if }  X=0  \texttt{ else } (1-\pi) \texttt{pdf}_0(X)
     """
     fitkwargs = fitkwargs or {}
@@ -799,7 +817,7 @@ def standardized_index(
     da: xr.DataArray,
     freq: str | None,
     window: int | None,
-    dist: str | scipy.stats.rv_continuous | None,
+    dist: str | rv_continuous | None,
     method: str | None,
     zero_inflated: bool | None,
     fitkwargs: dict | None,
@@ -825,7 +843,7 @@ def standardized_index(
     window : int
         Averaging window length relative to the resampling frequency. For example, if `freq="MS"`,
         i.e. a monthly resampling, the window is an integer number of months.
-    dist : str or rv_continuous
+    dist : str or rv_continuous instance
         Name of the univariate distribution. (see :py:mod:`scipy.stats`).
     method : str
         Name of the fitting method, such as `ML` (maximum likelihood), `APP` (approximate). The approximate method
@@ -844,7 +862,7 @@ def standardized_index(
         Fit parameters.
         The `params` can be computed using ``xclim.indices.stats.standardized_index_fit_params`` in advance.
         The output can be given here as input, and it overrides other options.
-    \*\*indexer
+    \*\*indexer : dict
         Indexing parameters to compute the indicator on a temporal subset of the data.
         It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
 
