@@ -28,7 +28,7 @@ New features and enhancements
 * ``xclim.indices.run_length.runs_with_holes`` allows to input a condition that must be met for a run to start and a second condition that must be met for the run to stop. (:pull:`1778`).
 * New generic compute function ``xclim.indices.generic.thresholded_events`` that finds events based on a threshold condition and returns basic stats for each. See also ``xclim.indices.run_length.find_events``. (:pull:`1778`).
 * ``xclim.core.units.rate2amount`` and ``xclim.core.units.amount2rate`` can now also accept quantities (pint objects or strings), in which case the ``dim`` argument must be the ``time`` coordinate through which we can find the sampling rate. (:pull:`1778`).
-* `xclim.indices.stats.standardized_index` now supports a weekly resampling frequency. Only standard calendar is supported for this mode. (:issue:`1892`, :pull:`1952`)
+* ``xclim.indices.stats.standardized_index`` now supports a weekly resampling frequency. Only "standard" calendar is supported for this mode. (:issue:`1892`, :pull:`1952`)
 
 Bug fixes
 ^^^^^^^^^
