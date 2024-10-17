@@ -540,6 +540,8 @@ def _fit_start(x, dist: str, **fitkwargs: Any) -> tuple[tuple, dict]:
             loc0 = (x1 * xn - x2**2) / (x1 + xn - 2 * x2)
             loc0 = loc0 if loc0 < x1 else (0.9999 * x1 if x1 > 0 else 1.0001 * x1)
         x_pos = x - loc0
+        # TODO: change this?
+        # not necessary for log-logistic, according to SPEI package
         x_pos = x_pos[x_pos > 0]
         # method of moments:
         # LHS is computed analytically with the two-parameters log-logistic distribution
@@ -675,6 +677,8 @@ def preprocess_standardized_index(
             group = "time.dayofyear"
         elif compare_offsets(final_freq, "==", "MS"):
             group = "time.month"
+        elif compare_offsets(final_freq, "==", "W"):
+            group = "time.week"
         else:
             raise ValueError(
                 f"The input (following resampling if applicable) has a frequency `{final_freq}` "
@@ -775,8 +779,7 @@ def standardized_index_fit_params(
                 "Pass a value for `floc` in `fitkwargs`."
             )
 
-    # "WPM" method doesn't seem to work for gamma or pearson3
-    dist_and_methods = {"gamma": ["ML", "APP", "PWM"], "fisk": ["ML", "APP"]}
+    dist_and_methods = {"gamma": ["ML", "APP"], "fisk": ["ML", "APP"]}
     dist = get_dist(dist)
     if dist.name not in dist_and_methods:
         raise NotImplementedError(f"The distribution `{dist.name}` is not supported.")
@@ -928,6 +931,9 @@ def standardized_index(
             da = resample_doy(da, da_ref)
         elif group == "time.month":
             da = da.rename(month="time").reindex(time=da_ref.time.dt.month)
+            da["time"] = da_ref.time
+        elif group == "time.week":
+            da = da.rename(week="time").reindex(time=da_ref.time.dt.week)
             da["time"] = da_ref.time
         # I don't think rechunking is necessary here, need to check
         return da if not uses_dask(da) else da.chunk({"time": -1})
