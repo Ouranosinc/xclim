@@ -499,6 +499,7 @@ class TestStandardizedIndices:
     # Repeated tests with lower tolerance means we want a more precise comparison, so we compare
     # the current version of XClim with the version where the test was implemented
     @pytest.mark.slow
+    @pytest.mark.filterwarnings("ignore:dt.weekofyear and dt.week have been deprecated")
     @pytest.mark.parametrize(
         "freq, window, dist, method,  values, diff_tol",
         [
@@ -2227,6 +2228,7 @@ class TestTgMaxTgMinIndices:
 
 
 class TestTemperatureSeasonality:
+
     def test_simple(self, tas_series):
         a = np.zeros(365)
         a = tas_series(a + K2C, start="1971-01-01")

@@ -67,6 +67,8 @@ Internal changes
     * Adjusted `mypy` checks to be more standardized.
 * Renamed annual deprecated frequency alias `"A"` to `"Y"` (:pull:`1930`).
 * The ``indices`` documentation now includes the members of ``xclim.indices.stats``. (:issue:`1913`, :pull:`1958`).
+* The default URL for fetching testing data is now set to the ``raw.githubusercontent.com`` mirror of `xclim-testdata`. (:pull:`1961`).
+* The ``upstream`` `tox` environment has been updated to not install the latest `numpy` until `numba` supports it. (:pull:`1961`).
 
 CI changes
 ^^^^^^^^^^
