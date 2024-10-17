@@ -1204,7 +1204,7 @@ def standardized_precipitation_index(
     :cite:cts:`mckee_relationship_1993`
     """
     fitkwargs = fitkwargs or {}
-    dist_methods = {"gamma": ["ML", "APP", "PWM"], "fisk": ["ML", "APP"]}
+    dist_methods = {"gamma": ["ML", "APP"], "fisk": ["ML", "APP"]}
     if dist in dist_methods:
         if method not in dist_methods[dist]:
             raise NotImplementedError(
@@ -1298,7 +1298,7 @@ def standardized_precipitation_evapotranspiration_index(
     """
     fitkwargs = fitkwargs or {}
 
-    dist_methods = {"gamma": ["ML", "APP", "PWM"], "fisk": ["ML", "APP"]}
+    dist_methods = {"gamma": ["ML", "APP"], "fisk": ["ML", "APP"]}
     if dist in dist_methods:
         if method not in dist_methods[dist]:
             raise NotImplementedError(

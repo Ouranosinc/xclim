@@ -524,6 +524,8 @@ def _fit_start(x, dist: str, **fitkwargs: Any) -> tuple[tuple, dict]:
             loc0 = (x1 * xn - x2**2) / (x1 + xn - 2 * x2)
             loc0 = loc0 if loc0 < x1 else (0.9999 * x1 if x1 > 0 else 1.0001 * x1)
         x_pos = x - loc0
+        # TODO: change this?
+        # not necessary for log-logistic, according to SPEI package
         x_pos = x_pos[x_pos > 0]
         # method of moments:
         # LHS is computed analytically with the two-parameters log-logistic distribution
@@ -758,8 +760,7 @@ def standardized_index_fit_params(
                 "Pass a value for `floc` in `fitkwargs`."
             )
 
-    # "WPM" method doesn't seem to work for gamma or pearson3
-    dist_and_methods = {"gamma": ["ML", "APP", "PWM"], "fisk": ["ML", "APP"]}
+    dist_and_methods = {"gamma": ["ML", "APP"], "fisk": ["ML", "APP"]}
     dist = get_dist(dist)
     if dist.name not in dist_and_methods:
         raise NotImplementedError(f"The distribution `{dist.name}` is not supported.")

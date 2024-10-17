@@ -623,6 +623,38 @@ class TestStandardizedIndices:
                 [-0.24417774, -0.11404418, 0.64997039, 1.07670517, 0.6462852],
                 2e-2,
             ),
+            (
+                "W",
+                1,
+                "gamma",
+                "APP",
+                [0.64820146, 0.04991201, -1.62956493, 1.08898709, -0.01741762],
+                2e-2,
+            ),
+            (
+                "W",
+                12,
+                "gamma",
+                "APP",
+                [-1.08683311, -0.47230036, -0.7884111, 0.3341876, 0.06282969],
+                2e-2,
+            ),
+            (
+                "W",
+                1,
+                "gamma",
+                "ML",
+                [0.64676962, -0.06904886, -1.60493289, 1.07864037, -0.01415902],
+                2e-2,
+            ),
+            (
+                "W",
+                12,
+                "gamma",
+                "ML",
+                [-1.08627775, -0.46491398, -0.77806462, 0.31759127, 0.03794528],
+                2e-2,
+            ),
         ],
     )
     def test_standardized_precipitation_index(
@@ -636,8 +668,11 @@ class TestStandardizedIndices:
             pytest.skip("Skipping SPI/ML/D on older numpy")
         ds = open_dataset("sdba/CanESM2_1950-2100.nc").isel(location=1)
         if freq == "D":
-            ds = ds.convert_calendar("366_day", missing=np.nan)
             # to compare with ``climate_indices``
+            ds = ds.convert_calendar("366_day", missing=np.nan)
+        elif freq == "W":
+            # only standard calendar supported with freq="W"
+            ds = ds.convert_calendar("standard", missing=np.nan, align_on="year")
         pr = ds.pr.sel(time=slice("1998", "2000"))
         pr_cal = ds.pr.sel(time=slice("1950", "1980"))
         fitkwargs = {}
