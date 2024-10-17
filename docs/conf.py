@@ -232,8 +232,7 @@ nbsphinx_allow_errors = False
 templates_path = ["_templates"]
 
 # The suffix(es) of source filenames.
-# If a list of string, all suffixes will be understood as restructured text variants.
-source_suffix = [".rst"]
+source_suffix = {".rst": "restructuredtext", ".md": "markdown"}
 
 # The root toctree document.
 root_doc = "index"

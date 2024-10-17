@@ -55,6 +55,11 @@ Indices submodules
    :undoc-members:
    :show-inheritance:
 
+.. automodule:: xclim.indices.stats
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 Fire indices submodule
 ^^^^^^^^^^^^^^^^^^^^^^
 Indices related to fire and fire weather. Currently, submodules exist for calculating indices from the Canadian Forest Fire Weather Index System and the McArthur Forest Fire Danger (Mark 5) System. All fire indices can be accessed from the :py:mod:`xclim.indices` module.

@@ -22,13 +22,14 @@ New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 * New generic ``xclim.indices.generic.spell_mask``  that returns a mask of which days are part of a spell. Supports multivariate conditions and weights. Used in new generic index ``xclim.indices.generic.bivariate_spell_length_statistics`` that extends ``spell_length_statistics`` to two variables.  (:pull:`1885`).
 * Indicator parameters can now be assigned a new name, different from the argument name in the compute function. (:pull:`1885`).
+* Add attribute ``units_metadata`` to outputs representing a difference between temperatures. This is needed to disambiguate temperature differences from absolute temperature. Changes affect indicators ``daily_temperature_range``, ``daily_temperature_range_variability``, ``extreme_temperature_range``, ``interday_diurnal_temperature_range``, and all degree-day indicators. Implemented using a new ``pint2cfattrs`` function to convert pint units to a dictionary of CF attributes. ``units2pint`` is also modified to support ``units_metadata`` attributes in DataArrays. Some SDBA properties and measures previously returning units of ``delta_degC`` will now return the original input DataArray units accompanied with the ``units_metadata`` attribute. (:issue:`1822`, :pull:`1830`).
 * ``xclim.indices.run_length.windowed_max_run_sum`` accumulates positive values across runs and yields the the maximum valued run. (:pull:`1926`).
 * Helper function ``xclim.indices.helpers.make_hourly_temperature`` to estimate hourly temperatures from daily min and max temperatures. (:pull:`1909`).
 * New global option ``resample_map_blocks`` to wrap all ``resample().map()`` code inside a ``xr.map_blocks`` to lower the number of dask tasks. Uses utility ``xclim.indices.helpers.resample_map`` and requires ``flox`` to ensure the chunking allows such block-mapping. Defaults to False. (:pull:`1848`).
 * ``xclim.indices.run_length.runs_with_holes`` allows to input a condition that must be met for a run to start and a second condition that must be met for the run to stop. (:pull:`1778`).
 * New generic compute function ``xclim.indices.generic.thresholded_events`` that finds events based on a threshold condition and returns basic stats for each. See also ``xclim.indices.run_length.find_events``. (:pull:`1778`).
 * ``xclim.core.units.rate2amount`` and ``xclim.core.units.amount2rate`` can now also accept quantities (pint objects or strings), in which case the ``dim`` argument must be the ``time`` coordinate through which we can find the sampling rate. (:pull:`1778`).
-* `xclim.indices.stats.standardized_index` now supports a weekly resampling frequency. Only standard calendar is supported for this mode. (:issue:`1892`, :pull:`1952`)
+* ``xclim.indices.stats.standardized_index`` now supports a weekly resampling frequency. Only "standard" calendar is supported for this mode. (:issue:`1892`, :pull:`1952`)
 
 Bug fixes
 ^^^^^^^^^
@@ -63,6 +64,7 @@ Internal changes
     * Added the `bugbear`, `pyupgrade` checks to the `ruff` formatter.
     * Adjusted `mypy` checks to be more standardized.
 * Renamed annual deprecated frequency alias `"A"` to `"Y"` (:pull:`1930`).
+* The ``indices`` documentation now includes the members of ``xclim.indices.stats``. (:issue:`1913`, :pull:`1958`).
 
 CI changes
 ^^^^^^^^^^
