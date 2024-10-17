@@ -933,7 +933,7 @@ def standardized_index(
             da = da.rename(month="time").reindex(time=da_ref.time.dt.month)
             da["time"] = da_ref.time
         elif group == "time.week":
-            da = da.rename(week="time").reindex(time=da_ref.time.dt.week)
+            da = da.rename(week="time").reindex(time=da_ref.time.dt.isocalendar().week)
             da["time"] = da_ref.time
         # I don't think rechunking is necessary here, need to check
         return da if not uses_dask(da) else da.chunk({"time": -1})
