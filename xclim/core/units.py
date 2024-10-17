@@ -470,7 +470,7 @@ FREQ_UNITS = {
 """
 Resampling frequency units for :py:func:`xclim.core.units.infer_sampling_units`.
 
-Mapping from offset base to CF-compliant unit. Only constant-length frequencies that are not also pint units are included
+Mapping from offset base to CF-compliant unit. Only constant-length frequencies that are not also pint units are included.
 """
 
 
