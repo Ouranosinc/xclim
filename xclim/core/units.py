@@ -91,6 +91,11 @@ hydro.add_transformation(
     lambda ureg, x: x / (1000 * ureg.kg / ureg.m**3),
 )
 hydro.add_transformation(
+    "[length]",
+    "[mass] / [length]**2",
+    lambda ureg, x: x * (1000 * ureg.kg / ureg.m**3),
+)
+hydro.add_transformation(
     "[mass] / [length]**2 / [time]",
     "[length] / [time]",
     lambda ureg, x: x / (1000 * ureg.kg / ureg.m**3),
@@ -461,12 +466,11 @@ def cf_conversion(
 FREQ_UNITS = {
     "D": "d",
     "W": "week",
-    "h": "h",
 }
 """
 Resampling frequency units for :py:func:`xclim.core.units.infer_sampling_units`.
 
-Mapping from offset base to CF-compliant unit. Only constant-length frequencies are included.
+Mapping from offset base to CF-compliant unit. Only constant-length frequencies that are not also pint units are included
 """
 
 
@@ -718,7 +722,7 @@ def _rate_and_amount_converter(
                 "can be used as the sampling rate, pass `sampling_rate_from_coord=True`."
             ) from err
     if freq is not None:
-        multi, base, start_anchor, _ = parse_offset(freq)
+        _, base, start_anchor, _ = parse_offset(freq)
         if base in ["M", "Q", "A", "Y"]:
             start = time.indexes[dim][0]
             if not start_anchor:
@@ -743,7 +747,7 @@ def _rate_and_amount_converter(
                 attrs=time.attrs,
             )
         else:
-            m, u = multi, FREQ_UNITS[base]
+            m, u = infer_sampling_units(da, freq)
 
     out: xr.DataArray
     # Freq is month, season or year, which are not constant units, or simply freq is not inferrable.

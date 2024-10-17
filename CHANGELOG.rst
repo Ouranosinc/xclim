@@ -33,6 +33,8 @@ New features and enhancements
 
 Bug fixes
 ^^^^^^^^^
+* Fixed ``rate2amount`` and ``amount2rate`` for sub-daily frequencies. (:issue:`1962`, :pull:`1963`).
+* Added the liquid water equivalent thickness ("[length]") to amount ("[mass]/[area]") transformation to the ``hydro`` context (the inverse operation was already there). (:pull:`1963`).
 * Fixed a small inefficiency in ``_otc_adjust``, and the `standardize` method of `OTC/dOTC` is now applied on individual variable  (:pull:`1890`, :pull:`1896`).
 * Remove deprecated cells in the tutorial notebook `sdba.ipynb` (:pull:`1895`).
 
