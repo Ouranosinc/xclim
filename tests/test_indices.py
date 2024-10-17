@@ -672,7 +672,7 @@ class TestStandardizedIndices:
             ds = ds.convert_calendar("366_day", missing=np.nan)
         elif freq == "W":
             # only standard calendar supported with freq="W"
-            ds = ds.convert_calendar("standard", missing=np.nan, align_on="year")
+            ds = ds.convert_calendar("standard", missing=np.nan, align_on="year", use_cftime=False)
         pr = ds.pr.sel(time=slice("1998", "2000"))
         pr_cal = ds.pr.sel(time=slice("1950", "1980"))
         fitkwargs = {}
