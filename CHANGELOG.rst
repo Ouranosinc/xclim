@@ -63,6 +63,7 @@ Internal changes
     * Added the `bugbear`, `pyupgrade` checks to the `ruff` formatter.
     * Adjusted `mypy` checks to be more standardized.
 * Renamed annual deprecated frequency alias `"A"` to `"Y"` (:pull:`1930`).
+* The ``indices`` documentation now includes the members of ``xclim.indices.stats``. (:issue:`1913`, :pull:`1958`).
 
 CI changes
 ^^^^^^^^^^
