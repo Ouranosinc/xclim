@@ -234,6 +234,20 @@ def test_rate2amount(pr_series):
         np.testing.assert_array_equal(am_ys, 86400 * np.array([365, 366, 365]))
 
 
+@pytest.mark.parametrize(
+    "srcfreq, exp", [("h", 3600), ("min", 60), ("s", 1), ("ns", 1e-9)]
+)
+def test_rate2amount_subdaily(srcfreq, exp):
+    pr = xr.DataArray(
+        np.ones(1000),
+        dims=("time",),
+        coords={"time": xr.date_range("2019-01-01", periods=1000, freq=srcfreq)},
+        attrs={"units": "kg m-2 s-1"},
+    )
+    am = rate2amount(pr)
+    np.testing.assert_array_equal(am, exp)
+
+
 def test_amount2rate(pr_series):
     pr = pr_series(np.ones(365 + 366 + 365), start="2019-01-01")
     am = rate2amount(pr)
