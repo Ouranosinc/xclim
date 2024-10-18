@@ -2,9 +2,17 @@
 Changelog
 =========
 
-v0.53.0 (unreleased)
+v0.54.0 (unreleased)
 --------------------
-Contributors to this version: Adrien Lamarche (:user:`LamAdr`), Trevor James Smith (:user:`Zeitsperre`),  Éric Dupuis (:user:`coxipi`), Pascal Bourgault (:user:`aulemahal`), Sascha Hofmann (:user:`saschahofmann`), David Huard (:user:`huard`).
+Contributors to this version: Éric Dupuis (:user:`coxipi`).
+
+New features and enhancements
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+* `xclim.sdba.MBCn` nows uses `map_groups` to performing grouping operations, as other adjustment methods. (:pull:`1951`)
+
+v0.53.0 (2024-10-17)
+--------------------
+Contributors to this version: Adrien Lamarche (:user:`LamAdr`), Trevor James Smith (:user:`Zeitsperre`), Éric Dupuis (:user:`coxipi`), Pascal Bourgault (:user:`aulemahal`), Sascha Hofmann (:user:`saschahofmann`), David Huard (:user:`huard`).
 
 Announcements
 ^^^^^^^^^^^^^
@@ -15,32 +23,35 @@ New indicators
 ^^^^^^^^^^^^^^
 * New ``heat_spell_frequency``, ``heat_spell_max_length`` and ``heat_spell_total_length`` : spell length statistics on a bivariate condition that uses the average over a window by default. (:pull:`1885`, :pull:`1778`).
 * New ``hot_spell_max_magnitude`` : yields the magnitude of the most intensive heat wave. (:pull:`1926`).
-* New ``chill_portion`` and ``chill_unit``: chill portion based on the Dynamic Model and chill unit based on the Utah model indicators. (:issue:`1753`, :pull:`1909`).
-* New ``water_cycle_intensity``: yields the sum of precipitation and actual evapotranspiration. (:issue:`410`, :pull:`1947`).
+* New ``chill_portion`` and ``chill_unit`` : chill portion based on the Dynamic Model and chill unit based on the Utah model indicators. (:issue:`1753`, :pull:`1909`).
+* New ``water_cycle_intensity`` : yields the sum of precipitation and actual evapotranspiration. (:issue:`410`, :pull:`1947`).
 
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-* New generic ``xclim.indices.generic.spell_mask``  that returns a mask of which days are part of a spell. Supports multivariate conditions and weights. Used in new generic index ``xclim.indices.generic.bivariate_spell_length_statistics`` that extends ``spell_length_statistics`` to two variables.  (:pull:`1885`).
+* New generic ``xclim.indices.generic.spell_mask``  that returns a mask of which days are part of a spell. Supports multivariate conditions and weights. Used in new generic index ``xclim.indices.generic.bivariate_spell_length_statistics`` that extends ``spell_length_statistics`` to two variables. (:pull:`1885`).
 * Indicator parameters can now be assigned a new name, different from the argument name in the compute function. (:pull:`1885`).
-* ``xclim.indices.run_length.windowed_max_run_sum`` accumulates positive values across runs and yields the the maximum valued run. (:pull:`1926`).
+* Add attribute ``units_metadata`` to outputs representing a difference between temperatures. This is needed to disambiguate temperature differences from absolute temperature. Changes affect indicators ``daily_temperature_range``, ``daily_temperature_range_variability``, ``extreme_temperature_range``, ``interday_diurnal_temperature_range``, and all degree-day indicators. Implemented using a new ``pint2cfattrs`` function to convert pint units to a dictionary of CF attributes. ``units2pint`` is also modified to support ``units_metadata`` attributes in DataArrays. Some SDBA properties and measures previously returning units of ``delta_degC`` will now return the original input DataArray units accompanied with the ``units_metadata`` attribute. (:issue:`1822`, :pull:`1830`).
+* ``xclim.indices.run_length.windowed_max_run_sum`` accumulates positive values across runs and yields the maximum valued run. (:pull:`1926`).
 * Helper function ``xclim.indices.helpers.make_hourly_temperature`` to estimate hourly temperatures from daily min and max temperatures. (:pull:`1909`).
 * New global option ``resample_map_blocks`` to wrap all ``resample().map()`` code inside a ``xr.map_blocks`` to lower the number of dask tasks. Uses utility ``xclim.indices.helpers.resample_map`` and requires ``flox`` to ensure the chunking allows such block-mapping. Defaults to False. (:pull:`1848`).
 * ``xclim.indices.run_length.runs_with_holes`` allows to input a condition that must be met for a run to start and a second condition that must be met for the run to stop. (:pull:`1778`).
-* New generic compute function ``xclim.indices.generic.thresholded_events`` that finds events based on a threshold condition and returns basic stats for each. See also ``xclim.indices.run_length.find_events``. (:pull:`1778`).
+* New generic compute function ``xclim.indices.generic.thresholded_events`` that finds events based on a threshold condition and returns basic stats for each. See also: ``xclim.indices.run_length.find_events``. (:pull:`1778`).
 * ``xclim.core.units.rate2amount`` and ``xclim.core.units.amount2rate`` can now also accept quantities (pint objects or strings), in which case the ``dim`` argument must be the ``time`` coordinate through which we can find the sampling rate. (:pull:`1778`).
-* `xclim.sdba.MBCn` nows uses `map_groups` to performing grouping operations, as other adjustment methods. (:pull:`1951`)
+* ``xclim.indices.stats.standardized_index`` now supports a weekly resampling frequency. Only "standard" calendars using `numpy`'s ``datetime64`` dtype are supported for this mode. (:issue:`1892`, :pull:`1952`)
 
 Bug fixes
 ^^^^^^^^^
-* Fixed a small inefficiency in ``_otc_adjust``, and the `standardize` method of `OTC/dOTC` is now applied on individual variable  (:pull:`1890`, :pull:`1896`).
-* Remove deprecated cells in the tutorial notebook `sdba.ipynb` (:pull:`1895`).
+* Fixed ``rate2amount`` and ``amount2rate`` for sub-daily frequencies. (:issue:`1962`, :pull:`1963`).
+* Added the liquid water equivalent thickness ("[length]") to amount ("[mass]/[area]") transformation to the ``hydro`` context (the inverse operation was already there). (:pull:`1963`).
+* Fixed a small inefficiency in ``_otc_adjust``, and the `standardize` method of `OTC/dOTC` is now applied on individual variable. (:pull:`1890`, :pull:`1896`).
+* Removed deprecated cells in the tutorial notebook ``sdba.ipynb``. (:pull:`1895`).
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
 * `platformdirs` is no longer a direct dependency of `xclim`, but `pooch` is required to use many of the new testing functions (installable via `pip install pooch` or `pip install 'xclim[dev]'`). (:pull:`1889`).
-* The following previously-deprecated functions have now been removed from `xclim`: ``xclim.core.calendar.convert_calendar``, ``xclim.core.calendar.date_range``, ``xclim.core.calendar.date_range_like``, ``xclim.core.calendar.interp_calendar``, ``xclim.core.calendar.days_in_year``, ``xclim.core.calendar.datetime_to_decimal_year``. For guidance on how to migrate to alternatives, see the `version 0.50.0 Breaking changes <#v0-50-0-2024-06-17>`_. (:issue:`1010`, :pull:`1845`).
-* `transform` argument of `OTC/dOTC` classes (and child functions) is changed to `normalization`, and `numIterMax` is changed to `num_iter_max` in `utils.optimal_transport` (:pull:`1896`).
-* `xclim` now requires `numpy >=1.23.0` and `scikit-learn >=1.1.0`, as well as (optionally) `ipython >=8.5.0`, `nbsphinx >=0.9.5`, and `matplotlib >=3.6.0` . (:issue:`1914`, :pull:`1915`).
+* The following previously-deprecated functions have now been removed from `xclim` : ``xclim.core.calendar.convert_calendar``, ``xclim.core.calendar.date_range``, ``xclim.core.calendar.date_range_like``, ``xclim.core.calendar.interp_calendar``, ``xclim.core.calendar.days_in_year``, ``xclim.core.calendar.datetime_to_decimal_year``. For guidance on how to migrate to alternatives, see the `version 0.50.0 Breaking changes <#v0-50-0-2024-06-17>`_. (:issue:`1010`, :pull:`1845`).
+* The `transform` argument of `OTC/dOTC` classes (and child functions) has been changed to `normalization`, and `numIterMax` has been changed to `num_iter_max` in ``xclim.core.utils.optimal_transport`` (:pull:`1896`).
+* `xclim` now requires `numpy >=1.23.0` and `scikit-learn >=1.1.0`, as well as (optionally) `ipython >=8.5.0`, `nbsphinx >=0.9.5`, and `matplotlib >=3.6.0`. (:issue:`1914`, :pull:`1915`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
@@ -51,11 +62,11 @@ Internal changes
     * ``xclim.testing.utils.get_file``, ``xclim.testing.utils.get_local_testdata``, ``xclim.testing.utils.list_datasets``, and ``xclim.testing.utils.file_md5_checksum`` have been removed.
         * ``xclim.testing.utils.nimbus`` replaces much of this functionality. See the `xclim` documentation for more information.
 * Many tests focused on evaluating the normal operation of remote file access tools under ``xclim.testing`` have been removed. (:pull:`1889`).
-* Setup and teardown functions that were found under ``tests/conftest.py`` have been optimized to reduce redundant calls when running ``pytest xclim``. Some obsolete `pytest` fixtures have also been removed.(:pull:`1889`).
+* Setup and teardown functions that were found under ``tests/conftest.py`` have been optimised to reduce redundant calls when running ``pytest xclim``. Some obsolete `pytest` fixtures have also been removed. (:pull:`1889`).
 * Many ``DeprecationWarning`` and ``FutureWarning`` messages emitted from `xarray` and `pint` have been addressed. (:issue:`1719`, :pull:`1881`).
-* The codebase has been adjusted to address many `pylint`-related warnings and errors. In some cases, `casting` was used to redefine some `numpy` and `xarray` objects. (:issue:`1719`, :pull:`1881`).
+* The code base has been adjusted to address many `pylint`-related warnings and errors. In some cases, `casting` was used to redefine some `numpy` and `xarray` objects. (:issue:`1719`, :pull:`1881`).
 * ``xclim.core`` now uses absolute imports for clarity and some objects commonly used in the module have been moved to hidden submodules. (:issue:`1719`, :pull:`1881`).
-* ``xclim.core.indicator.Parameter`` has a new attribute ``compute_name`` while ``xclim.core.indicator.Indicator`` lost its ``_variable_mapping``. The translation from parameter (and variable) names in the indicator to the names on the compute function is handled by ``Indicator._get_compute_args``. (:pull:`1885`).
+* ``xclim.core.indicator.Parameter`` has a new attribute ``compute_name`` while ``xclim.core.indicator.Indicator`` lost its ``_variable_mapping``. The translation from parameter (and variable) names in the indicator to the names on the compute function is now handled by ``Indicator._get_compute_args``. (:pull:`1885`).
 * Adopted many linting and formatting suggestions from the Scientific Python `repo-review <https://github.com/scientific-python/repo-review>`_ tool: (:pull:`1910`)
     * Applied several linting suggestions adopted by the `scipy` community.
     * Replaced `isort` with `ruff`-based import-sorting formatting.
@@ -63,6 +74,9 @@ Internal changes
     * Added the `bugbear`, `pyupgrade` checks to the `ruff` formatter.
     * Adjusted `mypy` checks to be more standardized.
 * Renamed annual deprecated frequency alias `"A"` to `"Y"` (:pull:`1930`).
+* The ``indices`` documentation now includes the members of ``xclim.indices.stats``. (:issue:`1913`, :pull:`1958`).
+* The default URL for fetching testing data is now set to the ``raw.githubusercontent.com`` mirror of `xclim-testdata`. (:pull:`1961`).
+* The ``upstream`` `tox` environment has been updated to not install the latest `numpy` until `numba` supports it. (:pull:`1961`).
 
 CI changes
 ^^^^^^^^^^
