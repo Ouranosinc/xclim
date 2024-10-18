@@ -2,6 +2,14 @@
 Changelog
 =========
 
+v0.54.0 (unreleased)
+--------------------
+Contributors to this version: Éric Dupuis (:user:`coxipi`).
+
+New features and enhancements
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+* `xclim.sdba.MBCn` nows uses `map_groups` to performing grouping operations, as other adjustment methods. (:pull:`1951`)
+
 v0.53.0 (2024-10-17)
 --------------------
 Contributors to this version: Adrien Lamarche (:user:`LamAdr`), Trevor James Smith (:user:`Zeitsperre`), Éric Dupuis (:user:`coxipi`), Pascal Bourgault (:user:`aulemahal`), Sascha Hofmann (:user:`saschahofmann`), David Huard (:user:`huard`).
