@@ -3,7 +3,7 @@ default_language_version:
 
 repos:
   - repo: https://github.com/asottile/pyupgrade
-    rev: v3.17.0
+    rev: v3.18.0
     hooks:
       - id: pyupgrade
         args: ['--py39-plus']
@@ -37,7 +37,7 @@ repos:
     hooks:
       - id: black
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.6.9
+    rev: v0.7.0
     hooks:
       - id: ruff
         args: [ '--fix', '--show-fixes' ]
@@ -61,9 +61,9 @@ repos:
     hooks:
       - id: nbqa-pyupgrade
         args: [ '--py39-plus' ]
-        additional_dependencies: [ 'pyupgrade==3.16.0' ]
+        additional_dependencies: [ 'pyupgrade==3.18.0' ]
       - id: nbqa-black
-        additional_dependencies: [ 'black==24.4.2' ]
+        additional_dependencies: [ 'black==24.10.0' ]
   - repo: https://github.com/kynan/nbstripout
     rev: 0.7.1
     hooks:
@@ -82,7 +82,7 @@ repos:
       - id: rst-inline-touching-normal
       - id: text-unicode-replacement-char
   - repo: https://github.com/executablebooks/mdformat
-    rev: 0.7.17
+    rev: 0.7.18
     hooks:
       - id: mdformat
         exclude: '.github/\w+.md|.github/publish-mastodon-template.md|docs/paper/paper.md'
@@ -99,11 +99,11 @@ repos:
       - id: codespell
         additional_dependencies: [ 'tomli' ]
   - repo: https://github.com/gitleaks/gitleaks
-    rev: v8.20.1
+    rev: v8.21.1
     hooks:
       - id: gitleaks
   - repo: https://github.com/python-jsonschema/check-jsonschema
-    rev: 0.29.3
+    rev: 0.29.4
     hooks:
       - id: check-github-workflows
       - id: check-readthedocs

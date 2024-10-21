@@ -27,6 +27,7 @@ python:
       path: .
       extra_requirements:
         - dev
+        - extras
 
 search:
   ranking:
