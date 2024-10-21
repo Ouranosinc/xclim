@@ -2,6 +2,14 @@
 Changelog
 =========
 
+v0.53.1 (2024-10-21)
+--------------------
+Contributors to this version: Trevor James Smith (:user:`Zeitsperre`).
+
+Internal changes
+^^^^^^^^^^^^^^^^
+* Fixed a few missing dependencies in the documentation build recipe that were causing errors in the CI workflow on ReadTheDocs. (:pull:`1970`).
+
 v0.53.0 (2024-10-17)
 --------------------
 Contributors to this version: Adrien Lamarche (:user:`LamAdr`), Trevor James Smith (:user:`Zeitsperre`), Éric Dupuis (:user:`coxipi`), Pascal Bourgault (:user:`aulemahal`), Sascha Hofmann (:user:`saschahofmann`), David Huard (:user:`huard`).
