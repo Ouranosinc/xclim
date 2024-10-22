@@ -210,8 +210,11 @@ def prefetch_testing_data(ctx, repo, branch, cache_dir):
 @click.option(
     "-r", "--rst", is_flag=True, help="Prints the history in ReStructuredText format."
 )
+@click.option(
+    "-c", "--changes", help="Pass a custom changelog file to be used instead."
+)
 @click.pass_context
-def release_notes(ctx, md, rst):
+def release_notes(ctx, md, rst, changes):
     """Generate the release notes history for publishing purposes."""
     if md and rst:
         raise click.BadArgumentUsage(
@@ -226,7 +229,10 @@ def release_notes(ctx, md, rst):
             "Must specify Markdown (-m) or ReStructuredText (-r)."
         )
 
-    click.echo(f"{publish_release_notes(style)}")
+    if changes:
+        click.echo(f"{publish_release_notes(style, changes=changes)}")
+    else:
+        click.echo(f"{publish_release_notes(style)}")
     ctx.exit()
 
 

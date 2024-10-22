@@ -2,6 +2,14 @@
 Changelog
 =========
 
+v0.54.0 (unreleased)
+--------------------
+Contributors to this version: Trevor James Smith (:user:`Zeitsperre`).
+
+Internal changes
+^^^^^^^^^^^^^^^^
+* `xclim` now uses a `src` layout for the codebase. Structure-dependent functions, documentation, and build commands have been adapted to reflect these changes.
+
 v0.53.1 (2024-10-21)
 --------------------
 Contributors to this version: Trevor James Smith (:user:`Zeitsperre`).
