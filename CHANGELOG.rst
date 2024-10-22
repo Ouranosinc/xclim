@@ -8,7 +8,8 @@ Contributors to this version: Trevor James Smith (:user:`Zeitsperre`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
-* `xclim` now uses a `src` layout for the codebase. Structure-dependent functions, documentation, and build commands have been adapted to reflect these changes.
+* `xclim` now uses a `src` layout for the codebase. Structure-dependent functions, documentation, and build commands have been adapted to reflect these changes. (:pull:`1971`).
+* Added a more robust `yamllint` configuration to ensure that all YAML files are linted consistently. (:pull:`1971`).
 
 v0.53.1 (2024-10-21)
 --------------------
