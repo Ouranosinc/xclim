@@ -135,7 +135,7 @@ target-version = [
 ]
 
 [tool.bumpversion]
-current_version = "0.53.1"
+current_version = "0.53.2-dev.0"
 commit = true
 commit_args = "--no-verify"
 tag = false
