@@ -180,12 +180,21 @@ class BaseAdjustment(ParametrizableWithDataset):
                     v: _inputs[0][_dim].attrs["_units"][iv]
                     for iv, v in enumerate(_inputs[0][_dim].values)
                 }
-            return (
-                __convert_units_to(
-                    _input_da, _internal_dim=_dim, _internal_target=_target
+
+            # `__convert_units_to`` was changing the units of the 3rd dataset during the 2nd loop
+            # This explicit loop is designed to avoid this
+            _outputs = []
+            original_units = list(
+                [_inp[_dim].attrs["_units"].copy() for _inp in _inputs]
+            )
+            for _inp, units in zip(_inputs, original_units, strict=False):
+                _inp[_dim].attrs["_units"] = units
+                _outputs.append(
+                    __convert_units_to(
+                        _inp, _internal_dim=_dim, _internal_target=_target
+                    )
                 )
-                for _input_da in _inputs
-            ), _target
+            return _outputs, _target
 
         for dim, crd in inputs[0].coords.items():
             if crd.attrs.get("is_variables"):
