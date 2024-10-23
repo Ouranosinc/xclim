@@ -8,7 +8,7 @@ Contributors to this version: Éric (:user:`coxipi`).
 
 Bug fixes
 ^^^^^^^^^
-* Conversion of units of multivariate DataArray is now properly handled `sdba.TrainAdjust` and `sdba.Adjust`. There was a bug where the units could be changed before a conversion of the magntitudes could occur. ()
+* Conversion of units of multivariate DataArray is now properly handled `sdba.TrainAdjust` and `sdba.Adjust`. There was a bug where the units could be changed before a conversion of the magntitudes could occur. (:pull:`1972`).
 
 v0.53.1 (2024-10-21)
 --------------------
