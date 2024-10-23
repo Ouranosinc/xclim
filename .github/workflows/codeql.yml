@@ -10,7 +10,7 @@ on:
       - Makefile
       - pyproject.toml
       - tox.ini
-      - xclim/__init__.py
+      - src/xclim/__init__.py
       - docs/*/*.ipynb
       - docs/*/*.py
       - docs/*/*.rst

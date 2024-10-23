@@ -8,7 +8,7 @@ on:
       - CHANGELOG.rst
       - README.rst
       - pyproject.toml
-      - xclim/__init__.py
+      - src/xclim/__init__.py
   pull_request:
     types:
       - opened

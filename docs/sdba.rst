@@ -55,6 +55,7 @@ for each day of the year but across all realizations of an ensemble : ``group = 
 In a conventional empirical quantile mapping (EQM), this will compute the quantiles for each day of year and all realizations together, yielding a single set of adjustment factors for all realizations.
 
 .. warning::
+
     If grouping according to the day of the year is needed, the :py:mod:`xclim.core.calendar` submodule contains useful
     tools to manage the different calendars that the input data can have. By default, if 2 different calendars are
     passed, the adjustment factors will always be interpolated to the largest range of day of the years but this can

@@ -40,10 +40,10 @@
 'indicators':
   - changed-files:
     - any-glob-to-any-file:
-      - 'xclim/indicators/**/*'
-      - 'xclim/indices/**/_*.py'
-      - 'xclim/data/**/*.json'
-      - 'xclim/data/**/*.yml'
+      - 'src/xclim/indicators/**/*'
+      - 'src/xclim/indices/**/_*.py'
+      - 'src/xclim/data/**/*.json'
+      - 'src/xclim/data/**/*.yml'
 
 'information':
   - changed-files:
@@ -53,5 +53,5 @@
 'sdba':
   - changed-files:
     - any-glob-to-any-file:
-      - 'xclim/sdba/**/*'
+      - 'src/xclim/sdba/**/*'
       - 'tests/test_sdba/*.py'

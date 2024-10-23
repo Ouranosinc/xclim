@@ -21,8 +21,8 @@ on:
       - environment.yml
       - pylintrc
       - pyproject.toml
+      - src/xclim/__init__.py
       - tox.ini
-      - xclim/__init__.py
 
 permissions:
   contents: read
@@ -68,7 +68,7 @@ jobs:
           trust_level: 5
       - name: Current Version
         run: |
-          CURRENT_VERSION="$(grep -E '__version__'  xclim/__init__.py | cut -d ' ' -f3)"
+          CURRENT_VERSION="$(grep -E '__version__'  src/xclim/__init__.py | cut -d ' ' -f3)"
           echo "current_version=${CURRENT_VERSION}"
           echo "CURRENT_VERSION=${CURRENT_VERSION}" >> $GITHUB_ENV
       - name: Install CI libraries
@@ -83,7 +83,7 @@ jobs:
             echo "Version is stable, bumping 'patch' version"
             bump-my-version bump patch
           fi
-          NEW_VERSION="$(grep -E '__version__'  xclim/__init__.py | cut -d ' ' -f3)"
+          NEW_VERSION="$(grep -E '__version__'  src/xclim/__init__.py | cut -d ' ' -f3)"
           echo "new_version=${NEW_VERSION}"
           echo "NEW_VERSION=${NEW_VERSION}" >> $GITHUB_ENV
       - name: Push Changes
