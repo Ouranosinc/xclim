@@ -53,6 +53,7 @@ General to-do list for implementing a new Indicator:
     This part can be done by the core team after you open a Pull Request.
 
 .. note::
+
     If you are adding new translations to the library (for languages other than French), please begin by opening a discussion on the `xclim Discussions page`_ to coordinate the scope and implementation of these translations.
 
 General notes for implementing new bias-adjustment methods:
@@ -186,7 +187,7 @@ Ready to contribute? Here's how to set up `xclim` for local development.
 
     .. warning::
 
-    Starting from `xclim` v0.46.0, when running tests with `tox`, any `pytest` markers passed to `pyXX` builds (e.g. `-m "not slow"`) must be passed to `tox` directly. This can be done as follows:
+        Starting from `xclim` v0.46.0, when running tests with `tox`, any `pytest` markers passed to `pyXX` builds (e.g. `-m "not slow"`) must be passed to `tox` directly. This can be done as follows:
 
     .. code-block:: shell
 
@@ -275,30 +276,31 @@ Before you submit a pull request, please follow these guidelines:
 
 #. The pull request should work for all currently-supported Python versions as well as raise test coverage.
    Pull requests are also checked for documentation build status and for `PEP8`_ compliance.
-
    The build statuses and build errors for pull requests can be found at: https://github.com/Ouranosinc/xclim/actions
 
-   .. note::
-    The currently-supported Python versions are loosely based on the Scientific Python Ecosystem's `SPEC 0` schedule.
-    Generally, when `numpy` and `xarray` drop support for a dependency, `xclim` will follow suit in a subsequent release.
-    For more information, see the `SPEC 0 Schedule <https://scientific-python.org/specs/spec-0000/>`_
+    .. note::
 
-   .. warning::
-    PEP8, black, pytest (with xdoctest) and pydocstyle (for numpy docstrings) conventions are strongly enforced.
-    Ensure that your changes pass all tests prior to pushing your final commits to your branch.
-    Code formatting errors are treated as build errors and will block your pull request from being accepted.
+        The currently-supported Python versions are loosely based on the Scientific Python Ecosystem's `SPEC 0` schedule.
+        Generally, when `numpy` and `xarray` drop support for a dependency, `xclim` will follow suit in a subsequent release.
+        For more information, see the `SPEC 0 Schedule <https://scientific-python.org/specs/spec-0000/>`_
+
+    .. warning::
+
+        PEP8, black, pytest (with xdoctest) and pydocstyle (for numpy docstrings) conventions are strongly enforced.
+        Ensure that your changes pass all tests prior to pushing your final commits to your branch.
+        Code formatting errors are treated as build errors and will block your pull request from being accepted.
 
 #. The version changes (CHANGELOG.rst) should briefly describe changes introduced in the Pull request.
    Changes should be organized by type (ie: `New indicators`, `New features and enhancements`, `Breaking changes`, `Bug fixes`, `Internal changes`) and the GitHub Pull Request, GitHub Issue.
    Your name and/or GitHub handle should also be listed among the contributors to this version. This can be done as follows:
 
-.. code-block:: restructuredtext
+    .. code-block:: restructuredtext
 
-     Contributors to this version: John Jacob Jingleheimer Schmidt (:user:`username`).
+        Contributors to this version: John Jacob Jingleheimer Schmidt (:user:`username`).
 
-     Internal changes
-     ^^^^^^^^^^^^^^^^
-     * Updated the contribution guidelines. (:issue:`868`, :pull:`869`).
+        Internal changes
+        ^^^^^^^^^^^^^^^^
+        * Updated the contribution guidelines. (:issue:`868`, :pull:`869`).
 
 If this is your first contribution to `Ouranosinc/xclim`, we ask that you also add your name to the `AUTHORS.rst <https://github.com/Ouranosinc/xclim/blob/main/AUTHORS.rst>`_, under *Contributors* as well as to the `.zenodo.json <https://github.com/Ouranosinc/xclim/blob/main/.zenodo.json>`_, at the end of the *creators* block.
 
@@ -355,6 +357,7 @@ If you wish to test a specific branch using GitHub CI, this can be set in `.gith
       XCLIM_TESTDATA_BRANCH: my_new_branch_of_testing_data
 
 .. warning::
+
     In order for a Pull Request to be allowed to merge to the `main` development branch, this variable must match the latest tagged commit name on `xclim-testdata repository`_.
     We suggest merging changed testing data first, tagging a new version of `xclim-testdata`, then re-running tests on your Pull Request at `Ouranosinc/xclim` with the newest tag.
 
@@ -451,6 +454,7 @@ With this performed, we can tag a version that will act as the GitHub-provided s
     git push --tags
 
 .. note::
+
     Starting from October, 2021, all tags pushed to GitHub will trigger a build and publish a package to TestPyPI by default. TestPyPI is a testing ground that is not indexed or easily available to `pip`. The test package can be found at `xclim on TestPyPI`_.
 
 The Automated Approach
@@ -461,7 +465,7 @@ The simplest way to package `xclim` is to "publish" a version on GitHub. GitHub 
 When publishing on GitHub, maintainers will need to generate the release notes for the current version, replacing the ``:issue:``, ``:pull:``, and ``:user:`` tags.
 The `xclim` CLI offers a helper function for performing this action:
 
-.. code-block:: bash
+.. code-block:: shell
 
     # For Markdown format (needed when publishing a new version on GitHub):
     xclim release_notes -m
@@ -469,9 +473,11 @@ The `xclim` CLI offers a helper function for performing this action:
     xclim release_notes -r
 
 .. note::
+
     The changelog should not extend past those entries relevant for the current version.
 
 .. warning::
+
     A published version on PyPI can never be overwritten. Be sure to verify that the package published at https://test.pypi.org/project/xclim/ matches expectations before publishing a version on GitHub.
 
 The Manual Approach
@@ -481,7 +487,7 @@ The manual approach to library packaging for general support (pip wheels) requir
 
 From the command line on your Linux distribution, simply run the following from the clone's main dev branch:
 
-.. code-block:: bash
+.. code-block:: shell
 
     # To build the packages (sources and wheel)
     flit build
