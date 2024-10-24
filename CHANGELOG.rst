@@ -2,9 +2,9 @@
 Changelog
 =========
 
-v0.54 (unpublished)
+v0.54.0 (unreleased)
 --------------------
-Contributors to this version: Éric (:user:`coxipi`), Pascal Bourgault (:user:`aulemahal`).
+Contributors to this version: Éric Dupuis (:user:`coxipi`), Pascal Bourgault (:user:`aulemahal`).
 
 Bug fixes
 ^^^^^^^^^
