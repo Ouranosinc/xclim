@@ -853,7 +853,7 @@ class Indicator(IndicatorRegistrar):
 
         # Convert to output units
         outs = [
-            convert_units_to(out, attrs["units"], self.context)
+            convert_units_to(out, attrs, self.context)
             for out, attrs in zip(outs, out_attrs, strict=False)
         ]
 

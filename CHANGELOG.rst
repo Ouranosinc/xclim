@@ -4,11 +4,12 @@ Changelog
 
 v0.54 (unpublished)
 --------------------
-Contributors to this version: Éric (:user:`coxipi`).
+Contributors to this version: Éric (:user:`coxipi`), Pascal Bourgault (:user:`aulemahal`).
 
 Bug fixes
 ^^^^^^^^^
 * Conversion of units of multivariate DataArray is now properly handled in `sdba.TrainAdjust` and `sdba.Adjust`. There was a bug where the units could be changed before a conversion of the magntitudes could occur. (:pull:`1972`).
+* Fix for indicators that output "delta" Celsius degrees.
 
 v0.53.1 (2024-10-21)
 --------------------
