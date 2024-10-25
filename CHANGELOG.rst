@@ -2,8 +2,8 @@
 Changelog
 =========
 
-v0.53.2 (202410-24)
--------------------
+v0.53.2 (2024-10-25)
+--------------------
 Contributors to this version: Éric Dupuis (:user:`coxipi`), Pascal Bourgault (:user:`aulemahal`).
 
 Bug fixes
