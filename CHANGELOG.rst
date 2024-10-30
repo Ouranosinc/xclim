@@ -4,11 +4,11 @@ Changelog
 
 v0.54.0 (unreleased)
 --------------------
-Contributors to this version: Éric Dupuis (:user:`coxipi`), Pascal Bourgault (:user:`aulemahal`).
+Contributors to this version: Éric Dupuis (:user:`coxipi`), Pascal Bourgault (:user:`aulemahal`), Trevor James Smith (:user:`Zeitsperre`).
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
-* Due to a regression affecting symmetry of ``polyfit`` and ``polyval`` in `xarray`, `xclim` now requires `xarray>=2023.11.0,!=2024.10.0` (see: `pydata/xarray PR/9691 <https://github.com/pydata/xarray/pull/9691>`_. (:pull:`1972`).
+* Due to a regression affecting symmetry of ``polyfit`` and ``polyval`` in `xarray`, `xclim` now requires `xarray>=2023.11.0,!=2024.10.0` (see: `pydata/xarray PR/9691 <https://github.com/pydata/xarray/pull/9691>`_. (:pull:`1978`).
 
 Bug fixes
 ^^^^^^^^^
