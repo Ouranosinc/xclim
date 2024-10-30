@@ -427,7 +427,7 @@ class Indicator(IndicatorRegistrar):
                 # title, abstract, references, notes, long_name
                 kwds.setdefault(name, value)
 
-            # Inject parameters
+            # Added parameters
             # Subclasses can override or extend this through the classmethod _added_parameters
             for name, param in cls._added_parameters():
                 if name in parameters:
@@ -957,7 +957,7 @@ class Indicator(IndicatorRegistrar):
     def _get_compute_args(self, das, params):
         """Rename variables and parameters to match the compute function's names and split VAR_KEYWORD arguments."""
         # Get correct variable names for the compute function.
-        # Exclude param without a mapping inside the compute functions (those injected by the indicator class)
+        # Exclude param without a mapping inside the compute functions (those added by the indicator class)
         args = {}
         for key, p in self._all_parameters.items():
             if p.compute_name is not _empty:
@@ -1542,7 +1542,7 @@ class ResamplingIndicator(CheckMissingIndicator):
 
 
 class IndexingIndicator(Indicator):
-    """Indicator that also injects "indexer" kwargs to subset the inputs before computation."""
+    """Indicator that also adds the "indexer" kwargs to subset the inputs before computation."""
 
     @classmethod
     def _added_parameters(cls):
@@ -1573,7 +1573,7 @@ class IndexingIndicator(Indicator):
 
 
 class ResamplingIndicatorWithIndexing(ResamplingIndicator, IndexingIndicator):
-    """Resampling indicator that also injects "indexer" kwargs to subset the inputs before computation."""
+    """Resampling indicator that also adds "indexer" kwargs to subset the inputs before computation."""
 
 
 class Daily(ResamplingIndicator):
