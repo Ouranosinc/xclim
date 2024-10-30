@@ -3,17 +3,7 @@ name: Publish Release Announcement to Mastodon
 on:
   release:
     types:
-      - published
-  workflow_dispatch:
-    inputs:
-      version-tag:
-        description: 'Version to announce'
-        required: true
-        type: string
-      dry-run:
-        description: 'Dry run'
-        default: true
-        type: boolean
+      - released
 
 permissions:
   contents: read
@@ -37,23 +27,11 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
-      - name: Current Version
-        if: ${{ !github.event.inputs.version-tag }}
-        run: |
-          CURRENT_VERSION="$(grep -E '__version__'  xclim/__init__.py | cut -d ' ' -f3)"
-          echo "version=v${CURRENT_VERSION}" >> $GITHUB_ENV
-      - name: Set Version from Input
-        if: ${{ github.event.inputs.version-tag }}
-        run: |
-          echo "version=${{ github.event.inputs.version-tag }}" >> $GITHUB_ENV
-
       - name: Get Release Description
-        if: ${{ !endsWith(env.current_version, '-dev') }}
-        id: get_release_description
         run: |
           # Fetch the release information using the GitHub API
           RELEASE_INFO=$(curl -sH "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
-            "https://api.github.com/repos/${{ github.repository }}/releases/tags/${{ env.version }}")
+            "https://api.github.com/repos/${{ github.repository }}/releases/tags/${{ github.event.release.tag_name }}")
 
           # Extract the release description from the response
           RELEASE_DESCRIPTION=$(echo "$RELEASE_INFO" | jq -r .body)
@@ -72,14 +50,14 @@ jobs:
         with:
           template: .github/publish-mastodon-template.md
           vars: |
-            version: ${{ env.version }}
+            tag: ${{ github.event.release.tag_name }}
+            url: https://github.com/Ouranosinc/xclim/releases/tag/${{ github.event.release.tag_name }}
 
       - name: Message Preview
         run: |
           echo "${{ steps.render_template.outputs.result }}${{ env.contributors }}"
 
       - name: Send toot to Mastodon
-        if: ${{ github.event.inputs.dry-run != 'true' }} || ${{ github.event_name == 'release' }}
         uses: cbrgm/mastodon-github-action@b26d62619432b20c2129edd86f07f7ede9797fc9 # v2.1.9
         with:
           url: ${{ secrets.MASTODON_URL }}
