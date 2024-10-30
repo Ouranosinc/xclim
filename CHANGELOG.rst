@@ -2,7 +2,7 @@
 Changelog
 =========
 
-v0.53.2 (2024-10-25)
+v0.53.2 (2024-10-30)
 --------------------
 Contributors to this version: Éric Dupuis (:user:`coxipi`), Pascal Bourgault (:user:`aulemahal`), Trevor James Smith (:user:`Zeitsperre`).
 
