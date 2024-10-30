@@ -12,8 +12,9 @@ Breaking changes
 
 Bug fixes
 ^^^^^^^^^
-* Conversion of units of multivariate DataArray is now properly handled in `sdba.TrainAdjust` and `sdba.Adjust`. There was a bug where the units could be changed before a conversion of the magntitudes could occur. (:pull:`1972`).
-* Fix for indicators that output "delta" Celsius degrees. (:pull:`1973`).
+* Fixed a bug where the units could be changed before a conversion of the magnitudes could occur. Conversion of units for multivariate ``DataArray`` is now properly handled in `sdba.TrainAdjust` and `sdba.Adjust`. (:pull:`1972`).
+* Fixed a units formatting bug with indicators that output "delta" Celsius degrees. (:pull:`1973`).
+* Corrected the ``"choices"`` of parameter ``op`` in the docstring of ``frost_free_spell_max_length``. (:pull:`1977`).
 
 v0.53.1 (2024-10-21)
 --------------------

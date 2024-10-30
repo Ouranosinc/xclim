@@ -1426,8 +1426,8 @@ def frost_free_spell_max_length(
         Minimum number of days with temperatures above thresholds to qualify as a frost free day.
     freq : str
         Resampling frequency.
-    op : {"<", "<=", "lt", "le"}
-        Comparison operation. Default: "<".
+    op : {">", ">=", "gt", "ge"}
+        Comparison operation. Default: ">=".
     resample_before_rl : bool
         Determines if the resampling should take place before or after the run
         length encoding (or a similar algorithm) is applied to runs.
