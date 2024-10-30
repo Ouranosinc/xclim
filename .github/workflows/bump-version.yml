@@ -8,6 +8,8 @@ on:
       - .*
       - .github/*/*.md
       - .github/*/*.yml
+      - .github/*.md
+      - .github/*.yml
       - CHANGELOG.rst
       - CI/*.in
       - CI/*.txt
