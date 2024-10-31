@@ -22,7 +22,7 @@ dependencies:
   - scikit-learn >=1.1.0
   - scipy >=1.9.0
   - statsmodels >=0.14.2
-  - xarray >=2023.11.0
+  - xarray >=2023.11.0,!=2024.10.0
   - yamale >=5.0.0
   # Extras
   - fastnanquantile >=0.0.2

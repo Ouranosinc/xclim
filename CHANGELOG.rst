@@ -2,14 +2,19 @@
 Changelog
 =========
 
-v0.54.0 (unreleased)
+v0.53.2 (2024-10-30)
 --------------------
-Contributors to this version: Éric Dupuis (:user:`coxipi`), Pascal Bourgault (:user:`aulemahal`).
+Contributors to this version: Éric Dupuis (:user:`coxipi`), Pascal Bourgault (:user:`aulemahal`), Trevor James Smith (:user:`Zeitsperre`).
+
+Breaking changes
+^^^^^^^^^^^^^^^^
+* Due to a regression affecting symmetry of ``polyfit`` and ``polyval`` in `xarray`, `xclim` now requires `xarray>=2023.11.0,!=2024.10.0` (see: `pydata/xarray PR/9691 <https://github.com/pydata/xarray/pull/9691>`_. (:pull:`1978`).
 
 Bug fixes
 ^^^^^^^^^
-* Conversion of units of multivariate DataArray is now properly handled in `sdba.TrainAdjust` and `sdba.Adjust`. There was a bug where the units could be changed before a conversion of the magntitudes could occur. (:pull:`1972`).
-* Fix for indicators that output "delta" Celsius degrees. (:pull:`1973`).
+* Fixed a bug where the units could be changed before a conversion of the magnitudes could occur. Conversion of units for multivariate ``DataArray`` is now properly handled in `sdba.TrainAdjust` and `sdba.Adjust`. (:pull:`1972`).
+* Fixed a units formatting bug with indicators that output "delta" Celsius degrees. (:pull:`1973`).
+* Corrected the ``"choices"`` of parameter ``op`` in the docstring of ``frost_free_spell_max_length``. (:pull:`1977`).
 
 v0.53.1 (2024-10-21)
 --------------------
