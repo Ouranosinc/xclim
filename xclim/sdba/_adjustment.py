@@ -784,8 +784,8 @@ def _extremes_train_1d(ref, hist, ref_params, *, q_thresh, cluster_thresh, dist,
 
     # Find quantile q_thresh
     thresh = (
-        np.quantile(ref[ref >= cluster_thresh], q_thresh)
-        + np.quantile(hist[hist >= cluster_thresh], q_thresh)
+        np.nanquantile(ref[ref >= cluster_thresh], q_thresh)
+        + np.nanquantile(hist[hist >= cluster_thresh], q_thresh)
     ) / 2
 
     # Fit genpareto on cluster maximums on ref (if needed) and hist.
