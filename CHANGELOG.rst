@@ -15,6 +15,7 @@ Bug fixes
 * Fixed a bug where the units could be changed before a conversion of the magnitudes could occur. Conversion of units for multivariate ``DataArray`` is now properly handled in `sdba.TrainAdjust` and `sdba.Adjust`. (:pull:`1972`).
 * Fixed a units formatting bug with indicators that output "delta" Celsius degrees. (:pull:`1973`).
 * Corrected the ``"choices"`` of parameter ``op`` in the docstring of ``frost_free_spell_max_length``. (:pull:`1977`).
+* All-nan slices are now treated correctly in method `ExtremeValues`. (:issue:`1982`, :pull:`1983`).
 
 v0.53.1 (2024-10-21)
 --------------------
