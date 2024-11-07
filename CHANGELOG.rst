@@ -11,6 +11,22 @@ Internal changes
 * `xclim` now uses a `src` layout for the codebase. Structure-dependent functions, documentation, and build commands have been adapted to reflect these changes. (:pull:`1971`).
 * Added a more robust `yamllint` configuration to ensure that all YAML files are linted consistently. (:pull:`1971`).
 
+v0.53.2 (2024-10-31)
+--------------------
+Contributors to this version: Éric Dupuis (:user:`coxipi`), Pascal Bourgault (:user:`aulemahal`), Trevor James Smith (:user:`Zeitsperre`).
+
+Breaking changes
+^^^^^^^^^^^^^^^^
+* Due to a regression affecting symmetry of ``polyfit`` and ``polyval`` in `xarray`, `xclim` now requires `xarray>=2023.11.0,!=2024.10.0` (see: `pydata/xarray PR/9691 <https://github.com/pydata/xarray/pull/9691>`_. (:pull:`1978`).
+
+Bug fixes
+^^^^^^^^^
+* Fixed a bug where the units could be changed before a conversion of the magnitudes could occur. Conversion of units for multivariate ``DataArray`` is now properly handled in `sdba.TrainAdjust` and `sdba.Adjust`. (:pull:`1972`).
+* Fixed a units formatting bug with indicators that output "delta" Celsius degrees. (:pull:`1973`).
+* Corrected the ``"choices"`` of parameter ``op`` in the docstring of ``frost_free_spell_max_length``. (:pull:`1977`).
+* Reorganised how ``Indicator`` subclasses can added arguments to the call signature. Injecting such arguments now works. For xclim's subclasses, this bug only affected the ``indexer`` argument of indicators subclassing ``xc.core.indicator.IndexingIndicator``. (:pull:`1981`).
+* All-nan slices are now treated correctly in method `ExtremeValues`. (:issue:`1982`, :pull:`1983`).
+
 v0.53.1 (2024-10-21)
 --------------------
 Contributors to this version: Trevor James Smith (:user:`Zeitsperre`).

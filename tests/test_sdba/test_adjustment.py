@@ -725,6 +725,8 @@ class TestPrincipalComponents:
         assert (ref - scen).mean().tasmin < 5e-3
 
 
+# TODO: below we use `.adjust(scen,sim)`, but in the function signature, `sim` comes before
+# are we testing the right thing below?
 class TestExtremeValues:
     @pytest.mark.parametrize(
         "c_thresh,q_thresh,frac,power",
@@ -804,6 +806,19 @@ class TestExtremeValues:
         EX = ExtremeValues.train(ref, hist, cluster_thresh="1 mm/day", q_thresh=0.97)
         new_scen = EX.adjust(scen, hist, frac=0.000000001)
         new_scen.load()
+
+    def test_nan_values(self):
+        times = xr.cftime_range("1990-01-01", periods=365, calendar="noleap")
+        ref = xr.DataArray(
+            np.arange(365),
+            dims=("time"),
+            coords={"time": times},
+            attrs={"units": "mm/day"},
+        )
+        hist = (ref.copy() * np.nan).assign_attrs(ref.attrs)
+        EX = ExtremeValues.train(ref, hist, cluster_thresh="10 mm/day", q_thresh=0.9)
+        new_scen = EX.adjust(sim=hist, scen=ref)
+        assert new_scen.isnull().all()
 
 
 class TestOTC:

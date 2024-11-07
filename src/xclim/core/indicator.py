@@ -88,6 +88,8 @@ All fields are optional. Other fields found in the yaml file will trigger errors
 In the following, the section under `<identifier>` is referred to as `data`. When creating indicators from
 a dictionary, with :py:meth:`Indicator.from_dict`, the input dict must follow the same structure of `data`.
 
+Note that kwargs-like parameters like ``indexer`` must be injected as a dictionary (``param data`` above should be a dictionary).
+
 When a module is built from a yaml file, the yaml is first validated against the schema (see xclim/data/schema.yml)
 using the YAMALE library (:cite:p:`lopker_yamale_2022`). See the "Extending xclim" notebook for more info.
 
@@ -301,7 +303,7 @@ class Indicator(IndicatorRegistrar):
     Both are simply views of :py:attr:`xclim.core.indicator.Indicator._all_parameters`.
 
     Compared to their base `compute` function, indicators add the possibility of using dataset as input,
-    with the injected argument `ds` in the call signature. All arguments that were indicated
+    with the added argument `ds` in the call signature. All arguments that were indicated
     by the compute function to be variables (DataArrays) through annotations will be promoted
     to also accept strings that correspond to variable names in the `ds` dataset.
 
@@ -425,12 +427,13 @@ class Indicator(IndicatorRegistrar):
                 # title, abstract, references, notes, long_name
                 kwds.setdefault(name, value)
 
-            # Inject parameters (subclasses can override or extend this through _injected_parameters)
-            for name, param in cls._injected_parameters():
+            # Added parameters
+            # Subclasses can override or extend this through the classmethod _added_parameters
+            for name, param in cls._added_parameters():
                 if name in parameters:
                     raise ValueError(
                         f"Class {cls.__name__} can't wrap indices that have a `{name}`"
-                        " argument as it conflicts with arguments it injects."
+                        " argument as it conflicts with an argument it adds."
                     )
                 parameters[name] = param
         else:  # inherit parameters from base class
@@ -529,8 +532,13 @@ class Indicator(IndicatorRegistrar):
         return parameters, docmeta
 
     @classmethod
-    def _injected_parameters(cls):
-        """Create a list of tuples for arguments to inject, (name, Parameter)."""
+    def _added_parameters(cls):
+        """Create a list of tuples for arguments to add to the call signature (name, Parameter).
+
+        These can't be in the compute function signature, the class is in charge of removing them
+        from the params passed to the compute function, likely through an override of
+        _preprocess_and_checks.
+        """
         return [
             (
                 "ds",
@@ -853,7 +861,7 @@ class Indicator(IndicatorRegistrar):
 
         # Convert to output units
         outs = [
-            convert_units_to(out, attrs["units"], self.context)
+            convert_units_to(out, attrs, self.context)
             for out, attrs in zip(outs, out_attrs, strict=False)
         ]
 
@@ -949,7 +957,7 @@ class Indicator(IndicatorRegistrar):
     def _get_compute_args(self, das, params):
         """Rename variables and parameters to match the compute function's names and split VAR_KEYWORD arguments."""
         # Get correct variable names for the compute function.
-        # Exclude param without a mapping inside the compute functions (those injected by the indicator class)
+        # Exclude param without a mapping inside the compute functions (those added by the indicator class)
         args = {}
         for key, p in self._all_parameters.items():
             if p.compute_name is not _empty:
@@ -1534,18 +1542,24 @@ class ResamplingIndicator(CheckMissingIndicator):
 
 
 class IndexingIndicator(Indicator):
-    """Indicator that also injects "indexer" kwargs to subset the inputs before computation."""
+    """Indicator that also adds the "indexer" kwargs to subset the inputs before computation."""
 
-    def __init__(self, *args, **kwargs):
-        self._all_parameters["indexer"] = Parameter(
-            kind=InputKind.KWARGS,
-            description=(
-                "Indexing parameters to compute the indicator on a temporal "
-                "subset of the data. It accepts the same arguments as "
-                ":py:func:`xclim.indices.generic.select_time`."
-            ),
-        )
-        super().__init__(*args, **kwargs)
+    @classmethod
+    def _added_parameters(cls):
+        """Create a list of tuples for arguments to add (name, Parameter)."""
+        return super()._added_parameters() + [
+            (
+                "indexer",
+                Parameter(
+                    kind=InputKind.KWARGS,
+                    description=(
+                        "Indexing parameters to compute the indicator on a temporal "
+                        "subset of the data. It accepts the same arguments as "
+                        ":py:func:`xclim.indices.generic.select_time`."
+                    ),
+                ),
+            )
+        ]
 
     def _preprocess_and_checks(self, das: dict[str, DataArray], params: dict[str, Any]):
         """Perform parent's checks and also check if freq is allowed."""
@@ -1559,7 +1573,7 @@ class IndexingIndicator(Indicator):
 
 
 class ResamplingIndicatorWithIndexing(ResamplingIndicator, IndexingIndicator):
-    """Resampling indicator that also injects "indexer" kwargs to subset the inputs before computation."""
+    """Resampling indicator that also adds "indexer" kwargs to subset the inputs before computation."""
 
 
 class Daily(ResamplingIndicator):
