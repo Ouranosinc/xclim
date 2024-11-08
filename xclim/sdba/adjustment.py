@@ -233,7 +233,7 @@ class TrainAdjust(BaseAdjustment):
     _repr_hide_params = ["hist_calendar", "train_units"]
 
     @classmethod
-    def train(cls, ref: DataArray, hist: DataArray, **kwargs: dict) -> TrainAdjust:
+    def train(cls, ref: DataArray, hist: DataArray, **kwargs) -> TrainAdjust:
         r"""Train the adjustment object.
 
         Refer to the class documentation for the algorithm details.

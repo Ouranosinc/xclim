@@ -1,4 +1,5 @@
-# noqa: D100
+"""Specialized setup for running xclim doctests."""
+
 # This file is the setup for the doctest suite.
 # This must be run using the following commands:
 # python -c "from xclim.testing.utils import run_doctests; run_doctests()"
@@ -27,14 +28,26 @@ from xclim.testing.utils import open_dataset as _open_dataset
 
 
 @pytest.fixture(autouse=True, scope="session")
-def threadsafe_data_dir(tmp_path_factory):
-    """Return a threadsafe temporary directory for storing testing data."""
+def threadsafe_data_dir(tmp_path_factory):  # numpydoc ignore=PR01
+    """Return a threadsafe temporary directory for storing testing data.
+
+    Yields
+    ------
+    Path
+        The path to the temporary directory.
+    """
     yield Path(tmp_path_factory.getbasetemp().joinpath("data"))
 
 
 @pytest.fixture(scope="session")
-def nimbus(threadsafe_data_dir, worker_id):
-    """Return a nimbus object for the test data."""
+def nimbus(threadsafe_data_dir, worker_id):  # numpydoc ignore=PR01
+    """Return a nimbus object for the test data.
+
+    Returns
+    -------
+    nimbus
+        An preconfigured pooch object.
+    """
     return _nimbus(
         repo=TESTDATA_REPO_URL,
         branch=TESTDATA_BRANCH,
@@ -45,8 +58,14 @@ def nimbus(threadsafe_data_dir, worker_id):
 
 
 @pytest.fixture(scope="session")
-def open_dataset(nimbus):
-    """Return a function that opens a dataset from the test data."""
+def open_dataset(nimbus):  # numpydoc ignore=PR01
+    """Return a function that opens a dataset from the test data.
+
+    Returns
+    -------
+    function
+        A function that opens a dataset from the test data.
+    """
 
     def _open_session_scoped_file(file: str | os.PathLike, **xr_kwargs):
         xr_kwargs.setdefault("cache", True)
@@ -63,7 +82,7 @@ def open_dataset(nimbus):
 
 
 @pytest.fixture(scope="session", autouse=True)
-def is_matplotlib_installed(xdoctest_namespace) -> None:
+def is_matplotlib_installed(xdoctest_namespace) -> None:  # numpydoc ignore=PR01
     """Skip tests that require matplotlib if it is not installed."""
 
     def _is_matplotlib_installed():
@@ -77,7 +96,9 @@ def is_matplotlib_installed(xdoctest_namespace) -> None:
 
 
 @pytest.fixture(scope="session", autouse=True)
-def doctest_setup(xdoctest_namespace, nimbus, worker_id, open_dataset) -> None:
+def doctest_setup(
+    xdoctest_namespace, nimbus, worker_id, open_dataset
+) -> None:  # numpydoc ignore=PR01
     """Gather testing data on doctest run."""
     testing_setup_warnings()
     gather_testing_data(worker_cache_dir=nimbus.path, worker_id=worker_id)
@@ -85,7 +106,7 @@ def doctest_setup(xdoctest_namespace, nimbus, worker_id, open_dataset) -> None:
         generate_atmos(branch=TESTDATA_BRANCH, cache_dir=nimbus.path)
     )
 
-    class AttrDict(dict):
+    class AttrDict(dict):  # numpydoc ignore=PR01
         """A dictionary that allows access to its keys as attributes."""
 
         def __init__(self, *args, **kwargs):

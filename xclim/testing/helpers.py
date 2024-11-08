@@ -38,7 +38,20 @@ def generate_atmos(
     branch: str | os.PathLike[str] | Path,
     cache_dir: str | os.PathLike[str] | Path,
 ) -> dict[str, xr.DataArray]:
-    """Create the `atmosds` synthetic testing dataset."""
+    """Create the `atmosds` synthetic testing dataset.
+
+    Parameters
+    ----------
+    branch : str or os.PathLike[str] or Path
+        The branch to use for the testing dataset.
+    cache_dir : str or os.PathLike[str] or Path
+        The directory to store the testing dataset.
+
+    Returns
+    -------
+    dict[str, xr.DataArray]
+        A dictionary of xarray DataArrays.
+    """
     with xtu.open_dataset(
         "ERA5/daily_surface_cancities_1990-1993.nc",
         branch=branch,
@@ -74,7 +87,13 @@ def generate_atmos(
 
 
 def add_ensemble_dataset_objects() -> dict[str, str]:
-    """Create a dictionary of xclim ensemble-related datasets to be patched into the xdoctest namespace."""
+    """Create a dictionary of xclim ensemble-related datasets to be patched into the xdoctest namespace.
+
+    Returns
+    -------
+    dict[str, str]
+        A dictionary of xclim ensemble-related datasets.
+    """
     namespace = {
         "nc_files_simple": [
             "EnsembleStats/BCCAQv2+ANUSPLIN300_ACCESS1-0_historical+rcp45_r1i1p1_1950-2100_tg_mean_YS.nc",
@@ -137,7 +156,13 @@ def add_example_file_paths() -> dict[str, str | list[xr.DataArray]]:
 
 
 def add_doctest_filepaths() -> dict[str, Any]:
-    """Overload some libraries directly into the xdoctest namespace."""
+    """Overload some libraries directly into the xdoctest namespace.
+
+    Returns
+    -------
+    dict[str, Any]
+        A dictionary of xdoctest namespace objects.
+    """
     namespace: dict = {}
     namespace["np"] = np
     namespace["xclim"] = xclim
@@ -157,7 +182,30 @@ def test_timeseries(
     as_dataset: bool = False,
     cftime: bool = False,
 ) -> xr.DataArray | xr.Dataset:
-    """Create a generic timeseries object based on pre-defined dictionaries of existing variables."""
+    """Create a generic timeseries object based on pre-defined dictionaries of existing variables.
+
+    Parameters
+    ----------
+    values : np.ndarray
+        The values of the DataArray.
+    variable : str
+        The name of the DataArray.
+    start : str
+        The start date of the time dimension. Default is "2000-07-01".
+    units : str or None
+        The units of the DataArray. Default is None.
+    freq : str
+        The frequency of the time dimension. Default is daily/"D".
+    as_dataset : bool
+        Whether to return a Dataset or a DataArray. Default is False.
+    cftime : bool
+        Whether to use cftime or not. Default is False.
+
+    Returns
+    -------
+    xr.DataArray or xr.Dataset
+        A DataArray or Dataset with time, lon and lat dimensions.
+    """
     if cftime:
         coords = xr.cftime_range(start, periods=len(values), freq=freq)
     else:
@@ -185,7 +233,18 @@ def test_timeseries(
 
 
 def _raise_on_compute(dsk: dict):
-    """Raise an AssertionError mentioning the number triggered tasks."""
+    """Raise an AssertionError mentioning the number triggered tasks.
+
+    Parameters
+    ----------
+    dsk : dict
+        The dask graph.
+
+    Raises
+    ------
+    AssertionError
+        If the dask computation is triggered.
+    """
     raise AssertionError(
         f"Not lazy. Computation was triggered with a graph of {len(dsk)} tasks."
     )

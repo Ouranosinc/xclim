@@ -31,8 +31,28 @@ except ModuleNotFoundError:
 __all__ = ["adapt_freq_graph", "cannon_2015_figure_2", "synth_rainfall"]
 
 
-def synth_rainfall(shape, scale=1, wet_freq=0.25, size=1):
+def synth_rainfall(
+    shape: float, scale: float = 1.0, wet_freq: float = 0.25, size: int = 1
+) -> np.ndarray:
     r"""Return gamma distributed rainfall values for wet days.
+
+    The returned values are zero for dry days.
+
+    Parameters
+    ----------
+    shape : float
+        The shape parameter of the gamma distribution.
+    scale : float
+        The scale parameter of the gamma distribution.
+    wet_freq : float
+        The frequency of wet days.
+    size : int
+        The number of values to generate.
+
+    Returns
+    -------
+    np.ndarray
+        The generated values.
 
     Notes
     -----
@@ -49,8 +69,16 @@ def synth_rainfall(shape, scale=1, wet_freq=0.25, size=1):
     return np.where(is_wet, wet_intensity, 0)
 
 
-def cannon_2015_figure_2():
-    """Create a graphic similar to figure 2 of Cannon et al. 2015."""
+def cannon_2015_figure_2() -> plt.Figure:
+    """Create a graphic similar to figure 2 of Cannon et al. 2015.
+
+    The figure shows the distributions of the reference, historical and simulated data, as well as the future
+
+    Returns
+    -------
+    plt.Figure
+        The generated figure.
+    """
     # noqa: D103
     if plt is None:
         raise ModuleNotFoundError("Matplotlib not found.")
@@ -130,7 +158,13 @@ def cannon_2015_figure_2():
 
 
 def adapt_freq_graph():
-    """Create a graphic with the additive adjustment factors estimated after applying the adapt_freq method."""
+    """Create a graphic with the additive adjustment factors estimated after applying the adapt_freq method.
+
+    Returns
+    -------
+    plt.Figure
+        The generated figure.
+    """
     if plt is None:
         raise ModuleNotFoundError("Matplotlib not found.")
 

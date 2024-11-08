@@ -17,8 +17,23 @@ from xclim.sdba.utils import equally_spaced_nodes
 __all__ = ["cannon_2015_dist", "cannon_2015_rvs", "series"]
 
 
-def series(values, name, start="2000-01-01"):
-    """Create a DataArray with time, lon and lat dimensions."""
+def series(values: np.ndarray, name: str, start: str = "2000-01-01"):
+    """Create a DataArray with time, lon and lat dimensions.
+
+    Parameters
+    ----------
+    values : np.ndarray
+        The values of the DataArray.
+    name : str
+        The name of the DataArray.
+    start : str
+        The start date of the time dimension.
+
+    Returns
+    -------
+    xr.DataArray
+        A DataArray with time, lon and lat dimensions.
+    """
     coords = collections.OrderedDict()
     for dim, n in zip(("time", "lon", "lat"), values.shape, strict=False):
         if dim == "time":
@@ -52,7 +67,14 @@ def series(values, name, start="2000-01-01"):
     )
 
 
-def cannon_2015_dist():  # noqa: D103
+def cannon_2015_dist() -> (gamma, gamma, gamma):  # noqa: D103
+    """Generate the distributions used in Cannon et al. 2015.
+
+    Returns
+    -------
+    tuple[gamma, gamma, gamma]
+        The reference, historical and simulated distributions.
+    """
     # ref ~ gamma(k=4, theta=7.5)  mu: 30, sigma: 15
     ref = gamma(4, scale=7.5)
 
@@ -65,7 +87,21 @@ def cannon_2015_dist():  # noqa: D103
     return ref, hist, sim
 
 
-def cannon_2015_rvs(n, random=True):  # noqa: D103
+def cannon_2015_rvs(n: int, random: bool = True) -> list[xr.DataArray]:  # noqa: D103
+    """Generate the Random Variables used in Cannon et al. 2015.
+
+    Parameters
+    ----------
+    n : int
+        The number of random variables to generate.
+    random : bool
+        If True, generate random variables. Otherwise, generate evenly spaced nodes.
+
+    Returns
+    -------
+    list[xr.DataArray]
+        A list of DataArrays with time, lon and lat dimensions.
+    """
     # Frozen distributions
     fd = cannon_2015_dist()
 
@@ -75,4 +111,4 @@ def cannon_2015_rvs(n, random=True):  # noqa: D103
         u = equally_spaced_nodes(n, None)
         r = [d.ppf(u) for d in fd]
 
-    return map(lambda x: series(x, "pr"), r)
+    return list(map(lambda x: series(x, "pr"), r))

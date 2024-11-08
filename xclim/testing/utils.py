@@ -152,10 +152,10 @@ def list_input_variables(
 
     Parameters
     ----------
-    realms : Sequence of str, optional
-        Restrict the output to indicators of a list of realms only. Default None, which parses all indicators.
     submodules : str, optional
         Restrict the output to indicators of a list of submodules only. Default None, which parses all indicators.
+    realms : Sequence of str, optional
+        Restrict the output to indicators of a list of realms only. Default None, which parses all indicators.
 
     Returns
     -------
@@ -220,6 +220,7 @@ def publish_release_notes(
     Returns
     -------
     str, optional
+        If `file` not provided, the formatted release notes.
 
     Notes
     -----
@@ -623,10 +624,6 @@ def populate_testing_data(
     local_cache : Path
         The path to the local cache. Defaults to the location set by the platformdirs library.
         The testing data will be downloaded to this local cache.
-
-    Returns
-    -------
-    None
     """
     # Create the Pooch instance
     n = nimbus(repo=repo, branch=branch, cache_dir=temp_folder or local_cache)
@@ -672,10 +669,6 @@ def gather_testing_data(
         The worker ID.
     _cache_dir : str or Path, optional
         The directory to store the testing data. Default is None.
-
-    Returns
-    -------
-    None
 
     Raises
     ------
