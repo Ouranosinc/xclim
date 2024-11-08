@@ -64,14 +64,16 @@ class AttrFormatter(string.Formatter):
         self.modifiers = modifiers
         self.mapping = mapping
 
-    def format(self, format_string: str, /, *args: Any, **kwargs: Any) -> str:
+    def format(
+        self, format_string: str, /, *args: Any, **kwargs: dict[str, Any]
+    ) -> str:
         r"""Format a string.
 
         Parameters
         ----------
         format_string: str
-        \*args: Any
-        \*\*kwargs: Any
+        \*args : Any
+        \*\*kwargs : dict
 
         Returns
         -------
@@ -463,11 +465,13 @@ def gen_call_string(funcname: str, *args, **kwargs) -> str:
     ----------
     funcname : str
         Name of the function
-    \*args, \*\*kwargs
+    \*args : Any
         Arguments given to the function.
+    \*\*kwargs : dict
+        Keyword arguments given to the function.
 
-    Example
-    -------
+    Examples
+    --------
     >>> A = xr.DataArray([1], dims=("x",), name="A")
     >>> gen_call_string("func", A, b=2.0, c="3", d=[10] * 100)
     "func(A, b=2.0, c='3', d=<list>)"

@@ -152,15 +152,15 @@ def list_input_variables(
 
     Parameters
     ----------
-    realms: Sequence of str, optional
-      Restrict the output to indicators of a list of realms only. Default None, which parses all indicators.
-    submodules: str, optional
-      Restrict the output to indicators of a list of submodules only. Default None, which parses all indicators.
+    realms : Sequence of str, optional
+        Restrict the output to indicators of a list of realms only. Default None, which parses all indicators.
+    submodules : str, optional
+        Restrict the output to indicators of a list of submodules only. Default None, which parses all indicators.
 
     Returns
     -------
     dict
-      A mapping from variable name to indicator class.
+        A mapping from variable name to indicator class.
     """
     from collections import defaultdict  # pylint: disable=import-outside-toplevel
 
@@ -325,6 +325,7 @@ def show_versions(
     Returns
     -------
     str or None
+        If `file` not provided, the versions of xclim and its dependencies.
     """
     dependencies: list[str]
     if deps is None:
@@ -429,6 +430,13 @@ def load_registry(
     branch: str = TESTDATA_BRANCH, repo: str = TESTDATA_REPO_URL
 ) -> dict[str, str]:
     """Load the registry file for the test data.
+
+    Parameters
+    ----------
+    branch : str
+        Branch of the repository to use when fetching testing datasets.
+    repo : str
+        URL of the repository to use when fetching testing datasets.
 
     Returns
     -------
@@ -548,7 +556,7 @@ def open_dataset(
         URL of the repository to use when fetching testing datasets.
     cache_dir : Path
         The directory in which to search for and write cached data.
-    \*\*kwargs
+    \*\*kwargs : dict
         For NetCDF files, keywords passed to :py:func:`xarray.open_dataset`.
 
     Returns
@@ -653,8 +661,29 @@ def gather_testing_data(
     worker_cache_dir: str | os.PathLike[str] | Path,
     worker_id: str,
     _cache_dir: str | os.PathLike[str] | None = TESTDATA_CACHE_DIR,
-):
-    """Gather testing data across workers."""
+) -> None:
+    """Gather testing data across workers.
+
+    Parameters
+    ----------
+    worker_cache_dir : str or Path
+        The directory to store the testing data.
+    worker_id : str
+        The worker ID.
+    _cache_dir : str or Path, optional
+        The directory to store the testing data. Default is None.
+
+    Returns
+    -------
+    None
+
+    Raises
+    ------
+    ValueError
+        If the cache directory is not set.
+    FileNotFoundError
+        If the testing data is not found.
+    """
     if _cache_dir is None:
         raise ValueError(
             "The cache directory must be set. "
@@ -690,6 +719,18 @@ def gather_testing_data(
 
 def audit_url(url: str, context: str | None = None) -> str:
     """Check if the URL is well-formed.
+
+    Parameters
+    ----------
+    url : str
+        The URL to check.
+    context : str, optional
+        Additional context to include in the error message. Default is None.
+
+    Returns
+    -------
+    str
+        The URL if it is well-formed.
 
     Raises
     ------

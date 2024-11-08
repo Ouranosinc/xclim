@@ -575,7 +575,7 @@ def _dist_method_1D(  # noqa: N802
         The scipy name of the distribution.
     function : str
         The name of the function to call.
-    \*\*kwargs
+    \*\*kwargs : dict
         Other parameters to pass to the function call.
 
     Returns
@@ -610,7 +610,7 @@ def dist_method(
         The first argument for the requested function if different from `fit_params`.
     dist : str or rv_continuous distribution object, optional
         The distribution name or instance. Defaults to the `scipy_dist` attribute or `fit_params`.
-    \*\*kwargs
+    \*\*kwargs : dict
         Other parameters to pass to the function call.
 
     Returns
@@ -620,7 +620,7 @@ def dist_method(
 
     See Also
     --------
-    scipy:scipy.stats.rv_continuous : for all available functions and their arguments.
+    scipy.stats.rv_continuous : for all available functions and their arguments.
     """
     # Typically the data to be transformed
     arg = [arg] if arg is not None else []

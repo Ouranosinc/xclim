@@ -780,8 +780,8 @@ def split_auxiliary_coordinates(
     aux_coords : Dataset
         The auxiliary coordinates as a dataset. Might be empty.
 
-    Note
-    ----
+    Notes
+    -----
     This is useful to circumvent xarray's alignment checks that will sometimes look the auxiliary coordinate's data, which can trigger
     unwanted dask computations.
 

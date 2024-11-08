@@ -972,7 +972,7 @@ def season(
 
     If a date is given, the season start and end are forced to be on each side of this date. This means that
     even if the "real" season has been over for a long time, this is the date used in the length calculation.
-    Example : Length of the "warm season", where T > 25°C, with date = 1st August. Let's say the temperature is over
+    e.g. Length of the "warm season", where T > 25°C, with date = 1st August. Let's say the temperature is over
     25 for all June, but July and august have very cold temperatures. Instead of returning 30 days (June), the function
     will return 61 days (July + June).
 

@@ -1884,9 +1884,7 @@ def universal_thermal_climate_index(
 
     This code was inspired by the `pythermalcomfort` and `thermofeel` packages.
 
-    Notes
-    -----
-    See: http://www.utci.org/utcineu/utcineu.php
+    For more information: https://www.utci.org/
 
     References
     ----------

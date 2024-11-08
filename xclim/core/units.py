@@ -1262,7 +1262,7 @@ def declare_relative_units(**units_by_name) -> Callable:
 
     Parameters
     ----------
-    \*\*kwargs
+    \*\*kwargs : dict
         Mapping from the input parameter names to dimensions relative to other parameters.
         The dimensions can be a single parameter name as `<other_var>` or more complex expressions,
         like: `<other_var> * [time]`.

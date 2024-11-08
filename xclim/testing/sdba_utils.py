@@ -14,7 +14,7 @@ from scipy.stats import gamma
 
 from xclim.sdba.utils import equally_spaced_nodes
 
-__all__ = ["cannon_2015_dist", "cannon_2015_rvs", "nancov", "series"]
+__all__ = ["cannon_2015_dist", "cannon_2015_rvs", "series"]
 
 
 def series(values, name, start="2000-01-01"):
@@ -76,9 +76,3 @@ def cannon_2015_rvs(n, random=True):  # noqa: D103
         r = [d.ppf(u) for d in fd]
 
     return map(lambda x: series(x, "pr"), r)
-
-
-def nancov(X):
-    """Numpy's cov but dropping observations with NaNs."""
-    X_na = np.isnan(X).any(axis=0)
-    return np.cov(X[:, ~X_na])

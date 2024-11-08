@@ -37,7 +37,12 @@ from xclim.sdba.utils import (
     get_correction,
     invert,
 )
-from xclim.testing.sdba_utils import nancov  # noqa
+
+
+def nancov(X):
+    """Numpy's cov but dropping observations with NaNs."""
+    X_na = np.isnan(X).any(axis=0)
+    return np.cov(X[:, ~X_na])
 
 
 class TestBaseAdjustment:

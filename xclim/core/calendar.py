@@ -143,22 +143,25 @@ def common_calendar(calendars: Sequence[str], join="outer") -> str:
     """Return a calendar common to all calendars from a list.
 
     Uses the hierarchy: 360_day < noleap < standard < all_leap.
-    Returns "default" only if all calendars are "default."
 
     Parameters
     ----------
-    calendars: Sequence of string
-      List of calendar names.
+    calendars : Sequence of string
+        List of calendar names.
     join : {'inner', 'outer'}
-      The criterion for the common calendar.
+        The criterion for the common calendar.
+            - 'outer': the common calendar is the biggest calendar (in number of days by year) that will include all the
+                dates of the other calendars.
+                When converting the data to this calendar, no timeseries will lose elements, but some
+                might be missing (gaps or NaNs in the series).
+            - 'inner': the common calendar is the smallest calendar of the list.
+                When converting the data to this calendar, no timeseries will have missing elements (no gaps or NaNs),
+                but some might be dropped.
 
-      - 'outer': the common calendar is the biggest calendar (in number of days by year) that will include all the
-                 dates of the other calendars.
-                 When converting the data to this calendar, no timeseries will lose elements, but some
-                 might be missing (gaps or NaNs in the series).
-      - 'inner': the common calendar is the smallest calendar of the list.
-                 When converting the data to this calendar, no timeseries will have missing elements (no gaps or NaNs),
-                 but some might be dropped.
+    Returns
+    -------
+    str
+        Returns "default" only if all calendars are "default."
 
     Examples
     --------
@@ -230,6 +233,10 @@ def convert_doy(
         If `align_on` is "date" and the new doy doesn't exist in the new calendar, this value is used.
     dim : str
         Name of the temporal dimension.
+
+    Returns
+    -------
+    xr.DataArray
     """
     if isinstance(source, xr.Dataset):
         return source.map(
@@ -488,7 +495,7 @@ def parse_offset(freq: str) -> tuple[int, str, bool, str | None]:
     Parameters
     ----------
     freq : str
-      Frequency offset.
+        Frequency offset.
 
     Returns
     -------
@@ -504,7 +511,6 @@ def parse_offset(freq: str) -> tuple[int, str, bool, str | None]:
     anchor : str, optional
         Anchor date for bases Y or Q. As xarray doesn't support "W",
         neither does xclim (anchor information is lost when given).
-
     """
     # Useful to raise on invalid freqs, convert Y to A and get default anchor (A, Q)
     offset = pd.tseries.frequencies.to_offset(freq)
@@ -1282,8 +1288,8 @@ def stack_periods(
         Passed directly as argument ``fill_value`` to :py:func:`xarray.concat`,
         the default is the same as on that function.
 
-    Return
-    ------
+    Returns
+    -------
     xr.DataArray
         A DataArray with a new `period` dimension and a `time` dimension with the length of the longest window.
         The new time coordinate has the same frequency as the input data but is generated using

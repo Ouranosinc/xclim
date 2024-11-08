@@ -1144,8 +1144,8 @@ def high_precip_low_temp(
     xarray.DataArray, [time]
         Count of days with high precipitation and low temperatures.
 
-    Example
-    -------
+    Examples
+    --------
     To compute the number of days with intense rainfall while minimum temperatures dip below -0.2C:
     >>> pr = xr.open_dataset(path_to_pr_file).pr
     >>> tasmin = xr.open_dataset(path_to_tasmin_file).tasmin

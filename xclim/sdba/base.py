@@ -346,7 +346,7 @@ class Grouper(Parametrizable):
             (if False, default) (including the window and dimensions given through `add_dims`).
             The dimensions used are also written in the "group_compute_dims" attribute.
             If all the input arrays are missing one of the 'add_dims', it is silently omitted.
-        \*\*kwargs
+        \*\*kwargs : dict
             Other keyword arguments to pass to the function.
 
         Returns

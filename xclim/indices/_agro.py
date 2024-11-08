@@ -1170,8 +1170,8 @@ def standardized_precipitation_index(
       the inversion to the normal distribution.
     * The results from `climate_indices` library can be reproduced with `method = "APP"` and `fitwkargs = {"floc": 0}`
 
-    Example
-    -------
+    Examples
+    --------
     >>> from datetime import datetime
     >>> from xclim.indices import standardized_precipitation_index
     >>> ds = xr.open_dataset(path_to_pr_file)

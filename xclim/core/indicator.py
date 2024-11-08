@@ -187,8 +187,8 @@ class Parameter:
 
     For convenience, this class implements a special "contains".
 
-    Example
-    -------
+    Examples
+    --------
     >>> p = Parameter(InputKind.NUMBER, default=2, description="A simple number")
     >>> p.units is Parameter._empty  # has not been set
     True

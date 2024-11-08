@@ -75,7 +75,7 @@ def robustness_fractions(  # noqa: C901
         Name of the statistical test used to determine if there was significant change. See notes.
     weights : xr.DataArray
         Weights to apply along the 'realization' dimension. This array cannot contain missing values.
-    \*\*kwargs
+    \*\*kwargs : dict
         Other arguments specific to the statistical test. See notes.
 
     Returns
@@ -137,8 +137,8 @@ def robustness_fractions(  # noqa: C901
     :cite:cts:`tebaldi_mapping_2011`
     :cite:cts:`ipccatlas_ar6wg1`
 
-    Example
-    -------
+    Examples
+    --------
     This example computes the mean temperature in an ensemble and compares two time
     periods, qualifying significant change through a single sample T-test.
 

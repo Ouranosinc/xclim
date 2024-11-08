@@ -83,7 +83,7 @@ def bootstrap_func(compute_index_func: Callable, **kwargs) -> xarray.DataArray:
     ----------
     compute_index_func : Callable
         Index function.
-    \*\*kwargs
+    \*\*kwargs : dict
         Arguments to `func`.
 
     Returns
