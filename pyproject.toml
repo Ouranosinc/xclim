@@ -162,7 +162,7 @@ values = [
 ]
 
 [tool.codespell]
-skip = 'xclim/data/*.json,docs/_build,docs/notebooks/xclim_training/*.ipynb,docs/references.bib,__pycache__,*.gz,*.nc,*.png,*.svg,*.whl'
+skip = '*xclim/data/*.json,*docs/_build,*docs/notebooks/xclim_training/*.ipynb,*docs/references.bib,*.gz,*.nc,*.png,*.svg,*.whl'
 ignore-words-list = "absolue,astroid,bloc,bui,callendar,degreee,environnement,hanel,inferrable,lond,nam,nd,ot,ressources,socio-economic,sie,vas"
 
 [tool.coverage.run]
@@ -247,6 +247,31 @@ module = [
   "yaml.*"
 ]
 ignore_missing_imports = true
+
+[tool.numpydoc_validation]
+checks = [
+  "all", # report on all checks, except the below
+  "ES01", # "No extended summary found"
+  "EX01", # "No examples section found"
+  "GL01", # "Docstring text (summary) should start in the line immediately after the opening quotes (not in the same line, or leaving a blank line in between)"
+  "GL06", # "Found unknown section \"{section}\""
+  "SA01", # "See Also section not found",
+  "SS01" # "No summary found"
+]
+# remember to use single quotes for regex in TOML
+exclude = [
+  # don't report on objects that match any of these regex
+  '\.undocumented_method$',
+  '\.__repr__$',
+  # any object starting with an underscore is a private object
+  '\._\w+'
+]
+override_SS05 = [
+  # override SS05 to allow docstrings starting with these words
+  '^Process ',
+  '^Assess ',
+  '^Access '
+]
 
 [tool.pytest.ini_options]
 minversion = "7.0"

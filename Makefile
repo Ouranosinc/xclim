@@ -53,16 +53,17 @@ clean-test: ## remove test and coverage artifacts
 	rm -fr .pytest_cache
 
 lint: ## check style with flake8 and black
-	black --check xclim tests
-	ruff check xclim tests
-	flake8 --config=.flake8 xclim tests
-	vulture xclim tests
-	nbqa black --check docs
-	blackdoc --check --exclude=xclim/indices/__init__.py xclim
-	blackdoc --check docs
-	codespell xclim tests docs
-	deptry .
-	yamllint --config-file=.yamllint.yaml xclim
+	python -m black --check xclim tests
+	python -m ruff check xclim tests
+	python -m flake8 --config=.flake8 xclim tests
+	python -m vulture xclim tests
+	python -m nbqa black --check docs
+	python -m blackdoc --check --exclude=xclim/indices/__init__.py xclim
+	python -m blackdoc --check docs
+	codespell .
+	python -m numpydoc lint xclim/**.py
+	python -m deptry .
+	python -m yamllint --config-file=.yamllint.yaml xclim
 
 test: ## run tests quickly with the default Python
 	pytest
@@ -73,9 +74,9 @@ test-all: ## run tests on every Python version with tox
 	tox
 
 coverage: ## check code coverage quickly with the default Python
-	coverage run --source xclim -m pytest
-	coverage report -m
-	coverage html
+	python -m coverage run --source xclim -m pytest
+	python -m coverage report -m
+	python -m coverage html
 	$(BROWSER) htmlcov/index.html
 
 autodoc-obsolete: clean-docs ## create sphinx-apidoc files (obsolete)
@@ -105,10 +106,10 @@ servedocs: autodoc-custom-index ## generate Sphinx HTML documentation, including
 	$(MAKE) -C docs livehtml
 
 release: dist ## package and upload a release
-	flit publish dist/*
+	python -m flit publish dist/*
 
 dist: clean ## builds source and wheel package
-	flit build
+	python -m flit build
 	ls -l dist
 
 install: clean ## install the package to the active Python's site-packages
