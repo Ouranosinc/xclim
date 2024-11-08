@@ -46,7 +46,7 @@ dependencies = [
   "numpy >=1.23.0",
   "packaging >=24.0",
   "pandas >=2.2",
-  "pint >=0.18",
+  "pint >=0.24.4",
   "pyarrow >=10.0.1", # Strongly encouraged for pandas v2.2.0+
   "pyyaml >=6.0.1",
   "scikit-learn >=1.1.0",
@@ -94,6 +94,7 @@ dev = [
 ]
 docs = [
   # Documentation and examples
+  "cairosvg >=2.6.0",
   "distributed >=2.0",
   "furo >=2023.9.10",
   "ipykernel",
