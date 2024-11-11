@@ -123,7 +123,7 @@ xclim = "xclim.cli:cli"
 "Source" = "https://github.com/Ouranosinc/xclim/"
 "Changelog" = "https://xclim.readthedocs.io/en/stable/history.html"
 "Issue tracker" = "https://github.com/Ouranosinc/xclim/issues"
-"About Ouranos" = "https://ouranos.ca/en/"
+"About Ouranos" = "https://www.ouranos.ca/en/"
 
 [tool]
 
