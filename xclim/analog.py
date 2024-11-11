@@ -6,7 +6,7 @@
 # Code adapted from flyingpigeon.dissimilarity, Nov 2020.
 from __future__ import annotations
 
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from typing import Any
 
 import numpy as np
@@ -129,9 +129,21 @@ def standardize(x: np.ndarray, y: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
     return x / s, y / s
 
 
-def metric(func):
+def metric(func: Callable):
     """Register a metric function in the `metrics` mapping and add some preparation/checking code.
 
+    Parameters
+    ----------
+    func : callable
+        The metric function to be registered.
+
+    Returns
+    -------
+    callable
+        The metric function with some overhead code.
+
+    Notes
+    -----
     All metric functions accept 2D inputs. This reshapes 1D inputs to (n, 1) and (m, 1).
     All metric functions are invalid when any non-finite values are present in the inputs.
     """
@@ -435,17 +447,31 @@ def kolmogorov_smirnov(x: np.ndarray, y: np.ndarray) -> float:
     :cite:cts:`fasano_multidimensional_1987`
     """
 
-    def pivot(x, y):
-        nx, d = x.shape
-        ny, d = y.shape
+    def pivot(_x: np.ndarray, _y: np.ndarray) -> np.ndarray:
+        """Pivot function to compute the KS statistic.
+
+        Parameters
+        ----------
+        _x : np.ndarray
+            Reference sample.
+        _y : np.ndarray
+            Candidate sample.
+
+        Returns
+        -------
+        float
+            Kolmogorov-Smirnov dissimilarity metric ranging from 0 to 1.
+        """
+        nx, d = _x.shape
+        ny, d = _y.shape
 
         # Multiplicative factor converting d-dim booleans to a unique integer.
         mf = (2 ** np.arange(d)).reshape(1, d, 1)
         minlength = 2**d
 
-        # Assign a unique integer according on whether or not x[i] <= sample
-        ix = ((x.T <= np.atleast_3d(x)) * mf).sum(1)
-        iy = ((x.T <= np.atleast_3d(y)) * mf).sum(1)
+        # Assign a unique integer according to whether or not x[i] <= sample
+        ix = ((_x.T <= np.atleast_3d(_x)) * mf).sum(1)
+        iy = ((_x.T <= np.atleast_3d(_y)) * mf).sum(1)
 
         # Count the number of samples in each quadrant
         cx = 1.0 * np.apply_along_axis(np.bincount, 0, ix, minlength=minlength) / nx
@@ -458,7 +484,9 @@ def kolmogorov_smirnov(x: np.ndarray, y: np.ndarray) -> float:
 
         return np.max(np.abs(cx - cy))
 
-    return max(pivot(x, y), pivot(y, x))  # pylint: disable=arguments-out-of-order
+    return float(
+        np.max(pivot(x, y), pivot(y, x))
+    )  # pylint: disable=arguments-out-of-order
 
 
 @metric
@@ -481,7 +509,7 @@ def kldiv(
     x : np.ndarray (n,d)
         Samples from distribution P, which typically represents the true distribution (reference).
     y : np.ndarray (m,d)
-        Samples from distribution Q, which typically represents the approximate distribution (candidate)
+        Samples from distribution Q, which typically represents the approximate distribution (candidate).
     k : int or sequence
         The kth neighbours to look for when estimating the density of the distributions.
         Defaults to 1, which can be noisy.
