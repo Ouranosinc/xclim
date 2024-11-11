@@ -99,12 +99,12 @@ def resample_and_rl(
         or after the run length algorithms are applied.
     compute : Callable
         Run length function to apply.
-    args : Any
+    \*args : Any
         Positional arguments needed in `compute`.
-    dim : str
-        The dimension along which to find runs.
     freq : str
         Resampling frequency.
+    dim : str
+        The dimension along which to find runs.
     \*\*kwargs
         Keyword arguments needed in `compute`.
 

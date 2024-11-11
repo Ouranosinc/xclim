@@ -72,12 +72,22 @@ def distance_from_sun(dates: xr.DataArray) -> xr.DataArray:
     return xr.DataArray(sun_earth, coords=dates.coords, dims=dates.dims)
 
 
-def day_angle(time: xr.DataArray):
+def day_angle(time: xr.DataArray) -> xr.DataArray:
     """Day of year as an angle.
 
-    Assuming the earth makes a full circle in a year, this is the angle covered from
+    Assuming the Earth makes a full circle in a year, this is the angle covered from
     the beginning of the year up to that timestep. Also called the "julian day fraction".
     See :py:func:`~xclim.core.calendar.datetime_to_decimal_year`.
+
+    Parameters
+    ----------
+    time : xr.DataArray
+        Time coordinate.
+
+    Returns
+    -------
+    xr.DataArray, [rad]
+        Day angle.
     """
     if XR2409:
         decimal_year = time.dt.decimal_year
@@ -94,13 +104,13 @@ def solar_declination(time: xr.DataArray, method="spencer") -> xr.DataArray:
 
     Parameters
     ----------
-    time: xr.DataArray
-      Time coordinate.
+    time : xr.DataArray
+        Time coordinate.
     method : {'spencer', 'simple'}
-      Which approximation to use. The default ("spencer") uses the first 7 terms of the
-      Fourier series representing the observed declination, while "simple" assumes
-      the orbit is a circle with a fixed obliquity and that the solstice/equinox happen
-      at fixed angles on the orbit (the exact calendar date changes for leap years).
+        Which approximation to use. The default ("spencer") uses the first seven (7) terms of the
+        Fourier series representing the observed declination, while "simple" assumes the orbit is
+        a circle with a fixed obliquity and that the solstice/equinox happen at fixed angles on
+        the orbit (the exact calendar date changes for leap years).
 
     Returns
     -------
@@ -142,8 +152,8 @@ def time_correction_for_solar_angle(time: xr.DataArray) -> xr.DataArray:
 
     Parameters
     ----------
-    time: xr.DataArray
-      Time coordinate.
+    time : xr.DataArray
+        Time coordinate.
 
     Returns
     -------
@@ -176,12 +186,12 @@ def eccentricity_correction_factor(
 
     Parameters
     ----------
-    time: xr.DataArray
-        Time coordinate
+    time : xr.DataArray
+        Time coordinate.
     method : {'spencer', 'simple'}
         Which approximation to use.
-        The default ("spencer") uses the first five terms of the fourier series of the eccentricity.
-        The "simple" method approximates with only the first two.
+        The default ("spencer") uses the first five (5) terms of the fourier series of the eccentricity.
+        The "simple" method approximates with only the first two (2).
 
     Returns
     -------
@@ -230,7 +240,7 @@ def cosine_of_solar_zenith_angle(
 
     Parameters
     ----------
-    time: xr.DataArray
+    time : xr.DataArray
         The UTC time. If not daily and `stat` is "integral" or "average", the timestamp is taken as the start of interval.
         If daily, the interval is assumed to be centered on Noon.
         If fewer than three timesteps are given, a daily frequency is assumed.
@@ -248,7 +258,7 @@ def cosine_of_solar_zenith_angle(
         If "average", this returns the average of the cosine of the zenith angle
         If "integral", this returns the integral of the cosine of the zenith angle
         If "instant", this returns the instantaneous cosine of the zenith angle
-    sunlit: bool
+    sunlit : bool
         If True, only the sunlit part of the interval is considered in the integral or average.
         Does nothing if stat is "instant".
     chunks : dictionary
@@ -404,15 +414,16 @@ def extraterrestrial_solar_radiation(
     solar_constant : str
         The solar constant, the energy received on earth from the sun per surface per time.
     method : {'spencer', 'simple'}
-        Which method to use when computing the solar declination and the eccentricity
-        correction factor. See :py:func:`solar_declination` and :py:func:`eccentricity_correction_factor`.
+        Which method to use when computing the solar declination and the eccentricity correction factor.
+        See :py:func:`solar_declination` and :py:func:`eccentricity_correction_factor`.
     chunks : dict
         When `times` and `lat` originate from coordinates of a large chunked dataset, passing the dataset's chunks here
         will ensure the computation is chunked as well.
 
     Returns
     -------
-    Extraterrestrial solar radiation, [J m-2 d-1]
+    xr.DataArray, [J m-2 d-1]
+        Extraterrestrial solar radiation.
 
     References
     ----------
@@ -437,16 +448,17 @@ def day_lengths(
     lat: xr.DataArray,
     method: str = "spencer",
 ) -> xr.DataArray:
-    r"""Day-lengths according to latitude and day of year.
+    r"""Calculate day-length according to latitude and day of year.
 
     See :py:func:`solar_declination` for the approximation used to compute the solar declination angle.
     Based on :cite:t:`kalogirou_chapter_2014`.
 
     Parameters
     ----------
-    dates: xr.DataArray
-        Daily datetime data. This function makes no sense with data of other frequency.
-    lat: xarray.DataArray
+    dates : xr.DataArray
+        Daily datetime data.
+        This function makes no sense with data of other frequency.
+    lat : xarray.DataArray
         Latitude coordinate.
     method : {'spencer', 'simple'}
         Which approximation to use when computing the solar declination angle.
@@ -484,18 +496,18 @@ def wind_speed_height_conversion(
     Parameters
     ----------
     ua : xarray.DataArray
-        Wind speed at height h
+        Wind speed at height `h`.
     h_source : str
-        Height of the input wind speed `ua` (e.g. `h == "10 m"` for a wind speed at `10 meters`)
+        Height of the input wind speed `ua` (e.g. `h == "10 m"` for a wind speed at `10 meters`).
     h_target : str
-        Height of the output wind speed
+        Height of the output wind speed.
     method : {"log"}
-        Method used to convert wind speed from one height to another
+        Method used to convert wind speed from one height to another.
 
     Returns
     -------
     xarray.DataArray
-        Wind speed at height `h_target`
+        Wind speed at height `h_target`.
 
     References
     ----------
@@ -573,7 +585,7 @@ def resample_map(
     resample_kwargs: dict | None = None,
     map_kwargs: dict | None = None,
 ) -> xr.DataArray | xr.Dataset:
-    r"""Wraps xarray's resample(...).map() with a :py:func:`xarray.map_blocks`, ensuring the chunking is appropriate using flox.
+    r"""Wrap xarray's resample(...).map() with a :py:func:`xarray.map_blocks`, ensuring the chunking is appropriate using flox.
 
     Parameters
     ----------
@@ -597,7 +609,8 @@ def resample_map(
 
     Returns
     -------
-    Resampled object.
+    xr.DataArray or xr.Dataset
+        Resampled object.
     """
     resample_kwargs = resample_kwargs or {}
     map_kwargs = map_kwargs or {}
