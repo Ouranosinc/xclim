@@ -80,11 +80,16 @@ __all__ = [
 ]
 
 
-def register_methods(variable_name=None):
-    """Register a data flag functioné.
+def register_methods(variable_name: str = None):
+    """Register a data flag as functional.
 
-    Argument can be the output variable name template. The template may use any of the stringable input arguments.
+    Argument can be the output variable name template. The template may use any of the string-like input arguments.
     If not given, the function name is used instead, which may create variable conflicts.
+
+    Parameters
+    ----------
+    variable_name : str, optional
+        The output variable name template. Default is None.
     """
 
     def _register_methods(func):
@@ -118,11 +123,14 @@ def tasmax_below_tasmin(
     Parameters
     ----------
     tasmax : xarray.DataArray
+        Maximum temperature.
     tasmin : xarray.DataArray
+        Minimum temperature.
 
     Returns
     -------
     xarray.DataArray, [bool]
+        Boolean array of True where tasmax is below tasmin.
 
     Examples
     --------
@@ -151,11 +159,14 @@ def tas_exceeds_tasmax(
     Parameters
     ----------
     tas : xarray.DataArray
+        Mean temperature.
     tasmax : xarray.DataArray
+        Maximum temperature.
 
     Returns
     -------
     xarray.DataArray, [bool]
+        Boolean array of True where tas is above tasmax.
 
     Examples
     --------
@@ -183,11 +194,14 @@ def tas_below_tasmin(
     Parameters
     ----------
     tas : xarray.DataArray
+        Mean temperature.
     tasmin : xarray.DataArray
+        Minimum temperature.
 
     Returns
     -------
     xarray.DataArray, [bool]
+        Boolean array of True where tas is below tasmin.
 
     Examples
     --------
@@ -215,11 +229,15 @@ def temperature_extremely_low(
     Parameters
     ----------
     da : xarray.DataArray
+        The DataArray of temperatures being examined.
     thresh : str
+        The threshold to search array for that will trigger flag if any day exceeds value.
+        Default is -90 degrees Celsius.
 
     Returns
     -------
     xarray.DataArray, [bool]
+        Boolean array of True where temperatures are below the threshold.
 
     Examples
     --------
@@ -249,11 +267,15 @@ def temperature_extremely_high(
     Parameters
     ----------
     da : xarray.DataArray
+        The DatArray of temperature being examined.
     thresh : str
+        The threshold to search array for that will trigger flag if any day exceeds value.
+        Default is 60 degrees Celsius.
 
     Returns
     -------
     xarray.DataArray, [bool]
+        Boolean array of True where temperatures are above the threshold.
 
     Examples
     --------
@@ -282,10 +304,12 @@ def negative_accumulation_values(
     Parameters
     ----------
     da : xarray.DataArray
+        The DataArray being examined.
 
     Returns
     -------
     xarray.DataArray, [bool]
+        Boolean array of True where values are negative.
 
     Examples
     --------
@@ -320,6 +344,7 @@ def very_large_precipitation_events(
     Returns
     -------
     xarray.DataArray, [bool]
+        Boolean array of True where precipitation values exceed the threshold.
 
     Examples
     --------
@@ -359,6 +384,7 @@ def values_op_thresh_repeating_for_n_or_more_days(
     Returns
     -------
     xarray.DataArray, [bool]
+        Boolean array of True where values repeat at threshold for `N` or more days.
 
     Examples
     --------
@@ -409,6 +435,7 @@ def wind_values_outside_of_bounds(
     Returns
     -------
     xarray.DataArray, [bool]
+        The boolean array of True where values exceed the bounds.
 
     Examples
     --------
@@ -453,6 +480,7 @@ def outside_n_standard_deviations_of_climatology(
     Returns
     -------
     xarray.DataArray, [bool]
+        The boolean array of True where values exceed the bounds.
 
     Notes
     -----
@@ -504,6 +532,7 @@ def values_repeating_for_n_or_more_days(
     Returns
     -------
     xarray.DataArray, [bool]
+        The boolean array of True where values repeat for `n` or more days.
 
     Examples
     --------
@@ -528,10 +557,12 @@ def percentage_values_outside_of_bounds(da: xarray.DataArray) -> xarray.DataArra
     Parameters
     ----------
     da : xarray.DataArray
+        The DataArray being examined.
 
     Returns
     -------
     xarray.DataArray, [bool]
+        The boolean array of True where values exceed the bounds.
 
     Examples
     --------
@@ -581,6 +612,7 @@ def data_flags(  # noqa: C901
     Returns
     -------
     xarray.Dataset
+        The Dataset of boolean flag arrays.
 
     Examples
     --------
@@ -601,14 +633,14 @@ def data_flags(  # noqa: C901
     ... )
     """
 
-    def get_variable_name(function, kwargs):
-        fmtargs = {}
-        kwargs = kwargs or {}
+    def _get_variable_name(function, _kwargs):  #
+        format_args = {}
+        _kwargs = _kwargs or {}
         for arg, param in signature(function).parameters.items():
-            val = kwargs.get(arg, param.default)
+            val = _kwargs.get(arg, param.default)
             kind = infer_kind_from_parameter(param)
             if arg == "op":
-                fmtargs[arg] = val if val not in binary_ops else binary_ops[val]
+                format_args[arg] = val if val not in binary_ops else binary_ops[val]
             elif kind in [
                 InputKind.FREQ_STR,
                 InputKind.NUMBER,
@@ -617,10 +649,10 @@ def data_flags(  # noqa: C901
                 InputKind.DATE,
                 InputKind.BOOL,
             ]:
-                fmtargs[arg] = val
+                format_args[arg] = val
             elif kind == InputKind.QUANTIFIED:
                 if isinstance(val, xarray.DataArray):
-                    fmtargs[arg] = "array"
+                    format_args[arg] = "array"
                 else:
                     val = str2pint(val).magnitude
                     if Decimal(val) % 1 == 0:
@@ -628,8 +660,8 @@ def data_flags(  # noqa: C901
                     else:
                         val = str(val).replace(".", "point")
                     val = val.replace("-", "minus")
-                    fmtargs[arg] = str(val)
-        return function.variable_name.format(**fmtargs)
+                    format_args[arg] = str(val)
+        return function.variable_name.format(**format_args)
 
     def _missing_vars(function, dataset: xarray.Dataset, var_provided: str):
         """Handle missing variables in passed datasets."""
@@ -678,7 +710,7 @@ def data_flags(  # noqa: C901
     for flag_func in flag_funcs:
         for name, kwargs in flag_func.items():
             func = _REGISTRY[name]
-            variable_name = get_variable_name(func, kwargs)
+            variable_name = _get_variable_name(func, kwargs)
             named_da_variable = None
 
             try:
@@ -705,13 +737,13 @@ def data_flags(  # noqa: C901
 
                 flags[variable_name] = out
 
-    dsflags = xarray.Dataset(data_vars=flags)
+    ds_flags = xarray.Dataset(data_vars=flags)
 
     if raise_flags:
-        if np.any([dsflags[dv] for dv in dsflags.data_vars]):
-            raise DataQualityException(dsflags)
+        if np.any([ds_flags[dv] for dv in ds_flags.data_vars]):
+            raise DataQualityException(ds_flags)
 
-    return dsflags
+    return ds_flags
 
 
 def ecad_compliant(
@@ -739,6 +771,7 @@ def ecad_compliant(
     Returns
     -------
     xarray.DataArray or xarray.Dataset or None
+        Flag array or Dataset with flag array(s) appended.
     """
     flags = xarray.Dataset()
     history: list[str] = []

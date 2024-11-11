@@ -64,20 +64,22 @@ class AttrFormatter(string.Formatter):
         self.modifiers = modifiers
         self.mapping = mapping
 
-    def format(
-        self, format_string: str, /, *args: Any, **kwargs: dict[str, Any]
-    ) -> str:
+    def format(self, format_string: str, /, *args: Any, **kwargs: dict) -> str:
         r"""Format a string.
 
         Parameters
         ----------
         format_string: str
+            The string to format.
         \*args : Any
+            Arguments to format.
         \*\*kwargs : dict
+            Keyword arguments to format.
 
         Returns
         -------
         str
+            The formatted string.
         """
         for k, v in DEFAULT_FORMAT_PARAMS.items():
             if k not in kwargs:

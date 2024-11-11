@@ -908,6 +908,7 @@ def within_bnds_doy(
     Returns
     -------
     xarray.DataArray
+        Boolean array of values within doy.
     """
     low = resample_doy(low, arr)
     high = resample_doy(high, arr)
@@ -1117,17 +1118,17 @@ def select_time(
         Input data.
     drop : bool
         Whether to drop elements outside the period of interest or to simply mask them (default).
-    season : string or sequence of strings, optional
+    season : str or sequence of str, optional
         One or more of 'DJF', 'MAM', 'JJA' and 'SON'.
-    month : integer or sequence of integers, optional
+    month : int or sequence of int, optional
         Sequence of month numbers (January = 1 ... December = 12).
     doy_bounds : 2-tuple of int, optional
         The bounds as (start, end) of the period of interest expressed in day-of-year, integers going from
         1 (January 1st) to 365 or 366 (December 31st).
         If calendar awareness is needed, consider using ``date_bounds`` instead.
-    date_bounds : 2-tuple of strings, optional
+    date_bounds : 2-tuple of str, optional
         The bounds as (start, end) of the period of interest expressed as dates in the month-day (%m-%d) format.
-    include_bounds : bool or 2-tuple of booleans
+    include_bounds : bool or 2-tuple of bool
         Whether the bounds of `doy_bounds` or `date_bounds` should be inclusive or not.
         Either one value for both or a tuple. Default is True, meaning bounds are inclusive.
 

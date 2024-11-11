@@ -7,8 +7,9 @@ Computation of statistics on runs of True values in boolean arrays.
 
 from __future__ import annotations
 
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from datetime import datetime
+from typing import Any
 from warnings import warn
 
 import numpy as np
@@ -81,36 +82,36 @@ def use_ufunc(
 def resample_and_rl(
     da: xr.DataArray,
     resample_before_rl: bool,
-    compute,
-    *args,
+    compute: Callable,
+    *args: Any,
     freq: str,
     dim: str = "time",
     **kwargs,
 ) -> xr.DataArray:
-    """Wrap run length algorithms to control if resampling occurs before or after the algorithms.
+    r"""Wrap run length algorithms to control if resampling occurs before or after the algorithms.
 
     Parameters
     ----------
-    da: xr.DataArray
-      N-dimensional array (boolean).
+    da : xr.DataArray
+        N-dimensional array (boolean).
     resample_before_rl : bool
-      Determines whether if input arrays of runs `da` should be separated in period before
-      or after the run length algorithms are applied.
-    compute
-      Run length function to apply
-    args
-      Positional arguments needed in `compute`.
-    dim: str
-      The dimension along which to find runs.
+        Determines whether if input arrays of runs `da` should be separated in period before
+        or after the run length algorithms are applied.
+    compute : Callable
+        Run length function to apply.
+    args : Any
+        Positional arguments needed in `compute`.
+    dim : str
+        The dimension along which to find runs.
     freq : str
-      Resampling frequency.
-    kwargs
-      Keyword arguments needed in `compute`.
+        Resampling frequency.
+    \*\*kwargs
+        Keyword arguments needed in `compute`.
 
     Returns
     -------
     xr.DataArray
-      Output of compute resampled according to frequency {freq}.
+        Output of compute resampled according to frequency {freq}.
     """
     if resample_before_rl:
         out = resample_map(
@@ -176,7 +177,7 @@ def rle(
     dim: str = "time",
     index: str = "first",
 ) -> xr.DataArray:
-    """Run length
+    """Run length.
 
     Despite its name, this is not an actual run-length encoder : it returns an array of the same shape
     as the input with 0 where the input was <= 0, nan where the input was > 0, except on the first (or last) element
@@ -199,6 +200,7 @@ def rle(
     Returns
     -------
     xr.DataArray
+        The run length array.
     """
     if da.dtype == bool:
         da = da.astype(int)
@@ -759,20 +761,20 @@ def keep_longest_run(
     # Get run lengths
     rls = rle(da, dim)
 
-    def get_out(rls):
-        out = xr.where(
+    def _get_out(_rls):  # numpydoc ignore=GL08
+        _out = xr.where(
             # Construct an integer array and find the max
-            rls[dim].copy(data=np.arange(rls[dim].size)) == rls.argmax(dim),
-            rls + 1,  # Add one to the First longest run
-            rls,
+            _rls[dim].copy(data=np.arange(_rls[dim].size)) == _rls.argmax(dim),
+            _rls + 1,  # Add one to the First longest run
+            _rls,
         )
-        out = out.ffill(dim) == out.max(dim)
-        return out
+        _out = _out.ffill(dim) == _out.max(dim)
+        return _out
 
     if freq is not None:
-        out = resample_map(rls, dim, freq, get_out)
+        out = resample_map(rls, dim, freq, _get_out)
     else:
-        out = get_out(rls)
+        out = _get_out(rls)
 
     return da.copy(data=out.transpose(*da.dims).data)
 
@@ -789,13 +791,13 @@ def runs_with_holes(
     Parameters
     ----------
     da_start : xr.DataArray
-        Input array where run sequences are searched to define the start points in the main runs
-    window_start: int,
-        Number of True (1) values needed to start a run in `da_start`
+        Input array where run sequences are searched to define the start points in the main runs.
+    window_start : int
+        Number of True (1) values needed to start a run in `da_start`.
     da_stop : xr.DataArray
-        Input array where run sequences are searched to define the stop points in the main runs
-    window_stop: int,
-        Number of True (1) values needed to start a run in `da_stop`
+        Input array where run sequences are searched to define the stop points in the main runs.
+    window_stop : int
+        Number of True (1) values needed to start a run in `da_stop`.
     dim : str
         Dimension name.
 
@@ -855,9 +857,9 @@ def season_start(
 
     See Also
     --------
-    season
-    season_end
-    season_length
+    season : Calculate the bounds of a season along a dimension.
+    season_end : End of a season.
+    season_length : Length of a season.
     """
     return first_run_before_date(da, window=window, date=mid_date, dim=dim, coord=coord)
 
@@ -876,7 +878,6 @@ def season_end(
     must have a start for an end to be valid. Also, if no end is found but a start was found
     the end is set to the last element of the series.
 
-
     Parameters
     ----------
     da : xr.DataArray
@@ -891,6 +892,8 @@ def season_end(
         If not False, the function returns values along `dim` instead of indexes.
         If `dim` has a datetime dtype, `coord` can also be a str of the name of the
         DateTimeAccessor object to use (ex: 'dayofyear').
+    _beg : xr.DataArray, optional
+        If given, the start of the season. This is used to avoid recomputing the start.
 
     Returns
     -------
@@ -900,9 +903,9 @@ def season_end(
 
     See Also
     --------
-    season
-    season_start
-    season_length
+    season : Calculate the bounds of a season along a dimension.
+    season_start : Start of a season.
+    season_length : Length of a season.
     """
     # Fast path for `season` and `season_length`
     if _beg is not None:
@@ -953,6 +956,9 @@ def season(
         The date (in MM-DD format) that a run must include to be considered valid.
     dim : str
         Dimension along which to calculate consecutive run (default: 'time').
+    stat : str, optional
+        Not currently implemented.
+        If not None, return a statistic of the season. The statistic is calculated on the season's values.
     coord : Optional[str]
         If not False, the function returns values along `dim` instead of indexes.
         If `dim` has a datetime dtype, `coord` can also be a str of the name of the
@@ -961,7 +967,7 @@ def season(
     Returns
     -------
     xr.Dataset
-        Dataset variables:
+        The Dataset variables:
             start : start of the season (index or units depending on ``coord``)
             end : end of the season (index or units depending on ``coord``)
             length : length of the season (in number of elements along ``dim``)
@@ -983,9 +989,9 @@ def season(
 
     See Also
     --------
-    season_start
-    season_end
-    season_length
+    season_start : Start of a season.
+    season_end : End of a season.
+    season_length : Length of a season.
     """
     beg = season_start(da, window=window, dim=dim, mid_date=mid_date, coord=False)
     # Use fast path in season_end : no recomputing of start, no masking of end where beg.isnull() and don't set end if none found
@@ -1064,9 +1070,9 @@ def season_length(
 
     See Also
     --------
-    season
-    season_start
-    season_end
+    season : Calculate the bounds of a season along a dimension.
+    season_start : Start of a season.
+    season_end : End of a season.
     """
     seas = season(da, window, mid_date, dim, coord=False)
     return seas.length
@@ -1308,7 +1314,7 @@ def first_run_1d(arr: Sequence[int | float], window: int) -> int | np.nan:
 
     Parameters
     ----------
-    arr : Sequence[Union[int, float]]
+    arr : sequence of int or float
         Input array.
     window : int
         Minimum duration of consecutive run to accumulate values.
@@ -1332,12 +1338,12 @@ def statistics_run_1d(arr: Sequence[bool], reducer: str, window: int) -> int:
 
     Parameters
     ----------
-    arr : Sequence[bool]
-        Input array (bool)
+    arr : sequence of bool
+        Input array (bool).
     reducer : {"mean", "sum", "min", "max", "std", "count"}
         Reducing function name.
     window : int
-        Minimal length of runs to be included in the statistics
+        Minimal length of runs to be included in the statistics.
 
     Returns
     -------
@@ -1463,9 +1469,9 @@ def statistics_run_ufunc(
 
     Parameters
     ----------
-    x : Sequence[bool]
-        Input array (bool)
-    reducer: {'min', 'max', 'mean', 'sum', 'std'}
+    x : sequence of bool
+        Input array (bool).
+    reducer : {'min', 'max', 'mean', 'sum', 'std'}
         Reducing function name.
     window : int
         Minimal length of runs.
@@ -1534,7 +1540,7 @@ def lazy_indexing(
     da : xr.DataArray
         Input array. If not 1D, `dim` must be given and must not appear in index.
     index : xr.DataArray
-        N-d integer indices, if da is not 1D, all dimensions of index must be in da
+        N-d integer indices, if DataArray is not 1D, all dimensions of index must be in DataArray.
     dim : str, optional
         Dimension along which to index, unused if `da` is 1D, should not be present in `index`.
 
@@ -1732,6 +1738,7 @@ def suspicious_run(
     Returns
     -------
     xarray.DataArray
+        A boolean array of the same shape as the input, indicating where runs of identical values are found.
     """
     return xr.apply_ufunc(
         suspicious_run_1d,
@@ -1849,11 +1856,11 @@ def find_events(
 
     Parameters
     ----------
-    condition : DataArray of boolean values
+    condition : DataArray of bool
         The boolean mask, true where the start condition of the event is fulfilled.
     window : int
         The number of consecutive True values for an event to start.
-    condition_stop : DataArray of boolean values, optional
+    condition_stop : DataArray of bool, optional
         The stopping boolean mask, true where the end condition of the event is fulfilled.
         Defaults to the opposite of ``condition``.
     window_stop : int
@@ -1868,10 +1875,11 @@ def find_events(
     Returns
     -------
     xr.Dataset, same shape as the data it has a new "event" dimension (and the time dimension is resample or removed, according to ``freq``).
-        event_length: The number of time steps in each event
-        event_effective_length: The number of time steps of even event where the start condition is true.
-        event_start: The datetime of the start of the run.
-        event_sum: The sum within each event, only considering the steps where start condition is true. Only present if ``data`` is given.
+        The Dataset has the following variables:
+            event_length: The number of time steps in each event
+            event_effective_length: The number of time steps of even event where the start condition is true.
+            event_start: The datetime of the start of the run.
+            event_sum: The sum within each event, only considering the steps where start condition is true. Only present if ``data`` is given.
     """
     if condition_stop is None:
         condition_stop = ~condition

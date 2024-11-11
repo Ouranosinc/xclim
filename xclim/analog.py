@@ -447,7 +447,7 @@ def kolmogorov_smirnov(x: np.ndarray, y: np.ndarray) -> float:
     :cite:cts:`fasano_multidimensional_1987`
     """
 
-    def pivot(_x: np.ndarray, _y: np.ndarray) -> np.ndarray:
+    def pivot(_x: np.ndarray, _y: np.ndarray) -> float:
         """Pivot function to compute the KS statistic.
 
         Parameters
@@ -482,11 +482,9 @@ def kolmogorov_smirnov(x: np.ndarray, y: np.ndarray) -> float:
         # D[0,:] -= 1. / nx # I don't understand this...
         # dmin, dmax = -D.min(), D.max() + .1 / nx
 
-        return np.max(np.abs(cx - cy))
+        return float(np.max(np.abs(cx - cy)))
 
-    return float(
-        np.max(pivot(x, y), pivot(y, x))
-    )  # pylint: disable=arguments-out-of-order
+    return max(pivot(x, y), pivot(y, x))  # pylint: disable=arguments-out-of-order
 
 
 @metric
