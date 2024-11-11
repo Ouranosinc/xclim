@@ -4,11 +4,15 @@ Changelog
 
 v0.54.0 (unreleased)
 --------------------
-Contributors to this version: Trevor James Smith (:user:`Zeitsperre`),
+Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`).
 
 Breaking changes
 ----------------
 * The minimum required version of `dask` has been increased to `2024.8.1`. `dask` versions at or above `2024.11` are not yet supported. (:issue:`1992`, :pull:`1991`).
+
+Bug fixes
+^^^^^^^^^
+* Fixes ``xclim.sdba.Grouper`` and other classes for usage with dask 2024.11 (:issue:`1992`, :pull:`1993`).
 
 v0.53.2 (2024-10-31)
 --------------------
