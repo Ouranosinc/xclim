@@ -2,6 +2,14 @@
 Changelog
 =========
 
+v0.54.0 (unreleased)
+--------------------
+Contributors to this version: Trevor James Smith (:user:`Zeitsperre`),
+
+Breaking changes
+----------------
+* The minimum required version of `dask` has been increased to `2024.8.1`. `dask` version `2024.11.0` is now excluded due to a regression in the `dask` library.
+
 v0.53.2 (2024-10-31)
 --------------------
 Contributors to this version: Éric Dupuis (:user:`coxipi`), Pascal Bourgault (:user:`aulemahal`), Trevor James Smith (:user:`Zeitsperre`).
