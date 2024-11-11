@@ -61,7 +61,7 @@ lint: ## check style with flake8 and black
 	python -m blackdoc --check --exclude=xclim/indices/__init__.py xclim
 	python -m blackdoc --check docs
 	codespell .
-	python -m numpydoc lint xclim/**.py
+	python -m numpydoc lint xclim/*.py xclim/ensembles/*.py xclim/indices/*.py xclim/indicators/*.py xclim/testing/*.py
 	python -m deptry .
 	python -m yamllint --config-file=.yamllint.yaml xclim
 

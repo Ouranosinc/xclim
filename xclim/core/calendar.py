@@ -146,7 +146,7 @@ def common_calendar(calendars: Sequence[str], join="outer") -> str:
 
     Parameters
     ----------
-    calendars : Sequence of string
+    calendars : Sequence of str
         List of calendar names.
     join : {'inner', 'outer'}
         The criterion for the common calendar.
@@ -161,7 +161,7 @@ def common_calendar(calendars: Sequence[str], join="outer") -> str:
     Returns
     -------
     str
-        Returns "default" only if all calendars are "default."
+        Returns "default" only if all calendars are "default".
 
     Examples
     --------
@@ -212,7 +212,7 @@ def convert_doy(
     align_on: str = "year",
     missing: Any = np.nan,
     dim: str = "time",
-) -> xr.DataArray:
+) -> xr.DataArray | xr.Dataset:
     """Convert the calendar of day of year (doy) data.
 
     Parameters
@@ -236,7 +236,8 @@ def convert_doy(
 
     Returns
     -------
-    xr.DataArray
+    xr.DataArray or xr.Dataset
+        The converted doy data.
     """
     if isinstance(source, xr.Dataset):
         return source.map(
@@ -314,6 +315,7 @@ def ensure_cftime_array(time: Sequence) -> np.ndarray | Sequence[cftime.datetime
     Returns
     -------
     np.ndarray
+        An array of cftime.datetime objects.
 
     Raises
     ------
@@ -357,7 +359,7 @@ def percentile_doy(
     window : int
         Number of time-steps around each day of the year to include in the calculation.
     per : float or sequence of floats
-        Percentile(s) between [0, 100]
+        Percentile(s) between [0, 100].
     alpha : float
         Plotting position parameter.
     beta : float
@@ -443,6 +445,11 @@ def build_climatology_bounds(da: xr.DataArray) -> list[str]:
     da : xr.DataArray
         The input data.
         Must have a time dimension.
+
+    Returns
+    -------
+    list of str
+        The climatology bounds.
     """
     n = len(da.time)
     return da.time[0 :: n - 1].dt.strftime("%Y-%m-%d").values.tolist()
@@ -459,16 +466,16 @@ def compare_offsets(freqA: str, op: str, freqB: str) -> bool:  # noqa
     Parameters
     ----------
     freqA : str
-        RHS Date offset string ('YS', '1D', 'QS-DEC', ...)
+        RHS Date offset string ('YS', '1D', 'QS-DEC', ...).
     op : {'<', '<=', '==', '>', '>=', '!='}
         Operator to use.
     freqB : str
-        LHS Date offset string ('YS', '1D', 'QS-DEC', ...)
+        LHS Date offset string ('YS', '1D', 'QS-DEC', ...).
 
     Returns
     -------
     bool
-        freqA op freqB
+        The result of `freqA` `op` `freqB`.
     """
     from ..indices.generic import get_op  # pylint: disable=import-outside-toplevel
 
@@ -568,12 +575,13 @@ def is_offset_divisor(divisor: str, offset: str):
     ----------
     divisor : str
         The divisor frequency.
-    offset: str
+    offset : str
         The large frequency.
 
     Returns
     -------
     bool
+        Whether divisor is a divisor of offset.
 
     Examples
     --------
@@ -683,18 +691,22 @@ def adjust_doy_calendar(
     max_target_doy = int(target.time.dt.dayofyear.max())
     min_target_doy = int(target.time.dt.dayofyear.min())
 
-    def has_same_calendar():
+    def has_same_calendar(_source, _target):  # numpydoc ignore=GL08
         # case of full year (doys between 1 and 360|365|366)
-        return source.dayofyear.max() == max_doy[get_calendar(target)]
+        return _source.dayofyear.max() == max_doy[get_calendar(_target)]
 
-    def has_similar_doys():
+    def has_similar_doys(
+        _source, _min_target_doy, _max_target_doy
+    ):  # numpydoc ignore=GL08
         # case of partial year (e.g. JJA, doys between 152|153 and 243|244)
         return (
-            source.dayofyear.min == min_target_doy
-            and source.dayofyear.max == max_target_doy
+            _source.dayofyear.min == _min_target_doy
+            and _source.dayofyear.max == _max_target_doy
         )
 
-    if has_same_calendar() or has_similar_doys():
+    if has_same_calendar(source, target) or has_similar_doys(
+        source, min_target_doy, max_target_doy
+    ):
         return source
     return _interpolate_doy_calendar(source, max_target_doy, min_target_doy)
 
@@ -798,7 +810,7 @@ def time_bnds(  # noqa: C901
     if freq is None:
         freq = xr.infer_freq(time)
     elif hasattr(freq, "freqstr"):
-        # When freq is a Offset
+        # When freq is an Offset
         freq = freq.freqstr
 
     freq_base, freq_is_start = parse_offset(freq)[1:3]
@@ -828,7 +840,7 @@ def time_bnds(  # noqa: C901
         eps = pd.Timedelta(precision or "1ns")
         day = pd.Timedelta("1D")
 
-    def shift_time(t):
+    def shift_time(t):  # numpydoc ignore=GL08
         if not is_on_offset(t):
             if freq_is_start:
                 t = period.rollback(t)
@@ -1095,10 +1107,9 @@ def select_time(
 ) -> DataType:
     """Select entries according to a time period.
 
-    This conveniently improves xarray's :py:meth:`xarray.DataArray.where` and
-    :py:meth:`xarray.DataArray.sel` with fancier ways of indexing over time elements.
-    In addition to the data `da` and argument `drop`, only one of `season`, `month`,
-    `doy_bounds` or `date_bounds` may be passed.
+    This conveniently improves xarray's :py:meth:`xarray.DataArray.where` and :py:meth:`xarray.DataArray.sel`
+    with fancier ways of indexing over time elements. In addition to the data `da` and argument `drop`,
+    only one of `season`, `month`, `doy_bounds` or `date_bounds` may be passed.
 
     Parameters
     ----------
@@ -1109,8 +1120,8 @@ def select_time(
     season : string or sequence of strings, optional
         One or more of 'DJF', 'MAM', 'JJA' and 'SON'.
     month : integer or sequence of integers, optional
-        Sequence of month numbers (January = 1 ... December = 12)
-    doy_bounds : 2-tuple of integers, optional
+        Sequence of month numbers (January = 1 ... December = 12).
+    doy_bounds : 2-tuple of int, optional
         The bounds as (start, end) of the period of interest expressed in day-of-year, integers going from
         1 (January 1st) to 365 or 366 (December 31st).
         If calendar awareness is needed, consider using ``date_bounds`` instead.
@@ -1444,7 +1455,9 @@ def stack_periods(
     return out
 
 
-def unstack_periods(da: xr.DataArray | xr.Dataset, dim: str = "period"):
+def unstack_periods(
+    da: xr.DataArray | xr.Dataset, dim: str = "period"
+) -> xr.DataArray | xr.Dataset:
     """Unstack an array constructed with :py:func:`stack_periods`.
 
     Can only work with periods stacked with a ``stride`` that divides ``window`` in an odd number of sections.
@@ -1453,10 +1466,15 @@ def unstack_periods(da: xr.DataArray | xr.Dataset, dim: str = "period"):
 
     Parameters
     ----------
-    da : xr.DataArray
+    da : xr.DataArray or xr.Dataset
         As constructed by :py:func:`stack_periods`, attributes of the period coordinates must have been preserved.
     dim : str
         The period dimension name.
+
+    Returns
+    -------
+    xr.DataArray or xr.Dataset
+        The unstacked data.
 
     Notes
     -----

@@ -19,11 +19,23 @@ from xclim.core.calendar import parse_offset, percentile_doy
 BOOTSTRAP_DIM = "_bootstrap"
 
 
-def percentile_bootstrap(func):
+def percentile_bootstrap(func: Callable) -> Callable:
     """Decorator applying a bootstrap step to the calculation of exceedance over a percentile threshold.
 
     This feature is experimental.
 
+    Parameters
+    ----------
+    func : Callable
+        The function to decorate.
+
+    Returns
+    -------
+    Callable
+        The decorated function.
+
+    Notes
+    -----
     Bootstrapping avoids discontinuities in the exceedance between the reference period over which percentiles are
     computed, and "out of reference" periods. See `bootstrap_func` for details.
 
@@ -53,7 +65,7 @@ def percentile_bootstrap(func):
     """
 
     @wraps(func)
-    def wrapper(*args, **kwargs):
+    def wrapper(*args, **kwargs):  # numpydoc ignore=GL08
         ba = signature(func).bind(*args, **kwargs)
         ba.apply_defaults()
         bootstrap = ba.arguments.get("bootstrap", False)
@@ -110,7 +122,6 @@ def bootstrap_func(compute_index_func: Callable, **kwargs) -> xarray.DataArray:
                     Compute index function using percentile
                 Average output from index function over all resampled time series
             Else compute index function using original percentile
-
     """
     # Identify the input and the percentile arrays from the bound arguments
     per_key = None

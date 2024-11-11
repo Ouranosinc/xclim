@@ -110,7 +110,13 @@ def add_ensemble_dataset_objects() -> dict[str, str]:
 
 
 def add_example_file_paths() -> dict[str, str | list[xr.DataArray]]:
-    """Create a dictionary of doctest-relevant datasets to be patched into the xdoctest namespace."""
+    """Create a dictionary of doctest-relevant datasets to be patched into the xdoctest namespace.
+
+    Returns
+    -------
+    dict of str or dict of list of xr.DataArray
+        A dictionary of doctest-relevant datasets.
+    """
     namespace = {
         "path_to_ensemble_file": "EnsembleReduce/TestEnsReduceCriteria.nc",
         "path_to_pr_file": "NRCANdaily/nrcan_canada_daily_pr_1990.nc",

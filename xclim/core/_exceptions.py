@@ -1,3 +1,5 @@
+"""Exceptions and error handling utilities."""
+
 from __future__ import annotations
 
 import logging
@@ -12,7 +14,7 @@ class ValidationError(ValueError):
     """Error raised when input data to an indicator fails the validation tests."""
 
     @property
-    def msg(self):  # noqa
+    def msg(self):  # numpydoc ignore=GL08
         return self.args[0]
 
 

@@ -532,6 +532,7 @@ def nimbus(  # noqa: PR01
     )
 
 
+# FIXME: This function is soon to be deprecated.
 # idea copied from raven that it borrowed from xclim that borrowed it from xarray that was borrowed from Seaborn
 def open_dataset(
     name: str | os.PathLike[str],
@@ -553,7 +554,7 @@ def open_dataset(
         URL to OPeNDAP folder where the data is stored. If supplied, supersedes github_url.
     branch : str
         Branch of the repository to use when fetching datasets.
-    repo: str
+    repo : str
         URL of the repository to use when fetching testing datasets.
     cache_dir : Path
         The directory in which to search for and write cached data.
@@ -563,6 +564,7 @@ def open_dataset(
     Returns
     -------
     Union[Dataset, Path]
+        The dataset.
 
     Raises
     ------
@@ -571,7 +573,7 @@ def open_dataset(
 
     See Also
     --------
-    xarray.open_dataset
+    xarray.open_dataset : Open and read a dataset from a file or file-like object.
     """
     if cache_dir is None:
         raise ValueError(
