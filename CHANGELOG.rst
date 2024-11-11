@@ -6,6 +6,10 @@ v0.54.0 (unreleased)
 --------------------
 Contributors to this version: Trevor James Smith (:user:`Zeitsperre`).
 
+Breaking changes
+----------------
+* The minimum required version of `dask` has been increased to `2024.8.1`. `dask` versions at or above `2024.11` are not yet supported. (:issue:`1992`, :pull:`1991`).
+
 Internal changes
 ^^^^^^^^^^^^^^^^
 * `xclim` now uses a `src` layout for the codebase. Structure-dependent functions, documentation, and build commands have been adapted to reflect these changes. (:pull:`1971`).
