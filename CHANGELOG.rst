@@ -10,6 +10,11 @@ Breaking changes
 ----------------
 * The minimum required version of `dask` has been increased to `2024.8.1`. `dask` versions at or above `2024.11` are not yet supported. (:issue:`1992`, :pull:`1991`).
 
+Internal changes
+^^^^^^^^^^^^^^^^
+* Changed french translations with word "pluvieux" to "avec précipitations". (:issue:`1960`, :pull:`1994`).
+
+
 v0.53.2 (2024-10-31)
 --------------------
 Contributors to this version: Éric Dupuis (:user:`coxipi`), Pascal Bourgault (:user:`aulemahal`), Trevor James Smith (:user:`Zeitsperre`).
