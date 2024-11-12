@@ -14,7 +14,6 @@ Internal changes
 ^^^^^^^^^^^^^^^^
 * Changed french translations with word "pluvieux" to "avec précipitations". (:issue:`1960`, :pull:`1994`).
 
-
 v0.53.2 (2024-10-31)
 --------------------
 Contributors to this version: Éric Dupuis (:user:`coxipi`), Pascal Bourgault (:user:`aulemahal`), Trevor James Smith (:user:`Zeitsperre`).
