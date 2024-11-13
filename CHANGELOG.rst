@@ -17,7 +17,7 @@ Bug fixes
 Internal changes
 ^^^^^^^^^^^^^^^^
 * Changed french translations with word "pluvieux" to "avec précipitations". (:issue:`1960`, :pull:`1994`).
-* Using different time for `ref` and `hist` is now explicitly forbidden in many bias adjustment methods (e.g. `EmpiricalQuantileMapping`). (:issue:`1903`, :pull:``)
+* Using different time for `ref` and `hist` is now explicitly forbidden in many bias adjustment methods (e.g. `EmpiricalQuantileMapping`). (:issue:`1903`, :pull:`1995`)
 
 v0.53.2 (2024-10-31)
 --------------------
