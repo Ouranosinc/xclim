@@ -778,10 +778,14 @@ def _fit_on_cluster(data, thresh, dist, cluster_thresh):
 
 def _extremes_train_1d(ref, hist, ref_params, *, q_thresh, cluster_thresh, dist, N):
     """Train for method ExtremeValues, only for 1D input along time."""
+    # Fast-track, do nothing for all-nan slices
+    if all(np.isnan(ref)) or all(np.isnan(hist)):
+        return np.full(N, np.nan), np.full(N, np.nan), np.nan
+
     # Find quantile q_thresh
     thresh = (
-        np.quantile(ref[ref >= cluster_thresh], q_thresh)
-        + np.quantile(hist[hist >= cluster_thresh], q_thresh)
+        np.nanquantile(ref[ref >= cluster_thresh], q_thresh)
+        + np.nanquantile(hist[hist >= cluster_thresh], q_thresh)
     ) / 2
 
     # Fit genpareto on cluster maximums on ref (if needed) and hist.

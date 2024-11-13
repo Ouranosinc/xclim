@@ -3,14 +3,27 @@
 from __future__ import annotations
 
 from xclim.core.cfchecks import check_valid
-from xclim.core.indicator import ResamplingIndicator
+from xclim.core.indicator import (
+    ReducingIndicator,
+    ResamplingIndicator,
+)
 from xclim.core.units import declare_units
-from xclim.indices import base_flow_index, generic, rb_flashiness_index
+from xclim.indices import (
+    base_flow_index,
+    flow_index,
+    generic,
+    high_flow_frequency,
+    low_flow_frequency,
+    rb_flashiness_index,
+)
 
 __all__ = [
     "base_flow_index",
     "doy_qmax",
     "doy_qmin",
+    "flow_index",
+    "high_flow_frequency",
+    "low_flow_frequency",
     "rb_flashiness_index",
 ]
 
@@ -73,4 +86,38 @@ doy_qmin = Streamflow(
     units="",
     compute=declare_units(da="[discharge]")(generic.select_resample_op),
     parameters={"op": generic.doymin, "out_units": None},
+)
+
+flow_index = ReducingIndicator(
+    realm="land",
+    context="hydro",
+    title="Flow index",
+    identifier="flow_index",
+    var_name="q_flow_index",
+    long_name="Flow index",
+    description="{p}th percentile normalized by the median flow.",
+    units="1",
+    compute=flow_index,
+)
+
+
+high_flow_frequency = Streamflow(
+    title="High flow frequency",
+    identifier="high_flow_frequency",
+    var_name="q_high_flow_frequency",
+    long_name="High flow frequency",
+    description="{freq} frequency of flows greater than {threshold_factor} times the median flow.",
+    units="days",
+    compute=high_flow_frequency,
+)
+
+
+low_flow_frequency = Streamflow(
+    title="Low flow frequency",
+    identifier="low_flow_frequency",
+    var_name="q_low_flow_frequency",
+    long_name="Low flow frequency",
+    description="{freq} frequency of flows smaller than a fraction ({threshold_factor}) of the mean flow.",
+    units="days",
+    compute=low_flow_frequency,
 )

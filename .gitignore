@@ -122,3 +122,6 @@ docs/variables.json
 
 # dask
 dask-worker-space
+
+# Apple
+.DS_Store

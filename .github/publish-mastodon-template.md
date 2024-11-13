@@ -1,5 +1,5 @@
-New #xclim release: {{ .version }} 🎉
+New #xclim release: {{ .tag }} 🎉
 
-Latest source code available at: https://github.com/Ouranosinc/xclim/releases/tag/{{ .version }}
+Latest source code available at: {{ .url }}
 Check out the docs for more information: https://xclim.readthedocs.io/en/stable/
 

@@ -5,8 +5,11 @@ import pandas as pd
 import pytest
 import xarray as xr
 
+from xclim.core.options import set_options
 from xclim.core.units import convert_units_to
+from xclim.core.utils import uses_dask
 from xclim.indices import helpers
+from xclim.testing.helpers import assert_lazy
 
 
 @pytest.mark.parametrize("method,rtol", [("spencer", 5e3), ("simple", 1e2)])
@@ -132,3 +135,87 @@ def test_cosine_of_solar_zenith_angle():
         ]
     )
     np.testing.assert_allclose(cza[:4, :], exp_cza, rtol=1e-3)
+
+
+def _test_function(da, op, dim):
+    return getattr(da, op)(dim)
+
+
+@pytest.mark.parametrize(
+    ["in_chunks", "exp_chunks"], [(60, 6 * (2,)), (30, 12 * (1,)), (-1, (12,))]
+)
+def test_resample_map(tas_series, in_chunks, exp_chunks):
+    pytest.importorskip("flox")
+    tas = tas_series(365 * [1]).chunk(time=in_chunks)
+    with assert_lazy:
+        out = helpers.resample_map(
+            tas, "time", "MS", lambda da: da.mean("time"), map_blocks=True
+        )
+    assert out.chunks[0] == exp_chunks
+    out.load()  # Trigger compute to see if it actually works
+
+
+def test_resample_map_dataset(tas_series, pr_series):
+    pytest.importorskip("flox")
+    tas = tas_series(3 * 365 * [1], start="2000-01-01").chunk(time=365)
+    pr = pr_series(3 * 365 * [1], start="2000-01-01").chunk(time=365)
+    ds = xr.Dataset({"pr": pr, "tas": tas})
+    with set_options(resample_map_blocks=True):
+        with assert_lazy:
+            out = helpers.resample_map(
+                ds,
+                "time",
+                "YS",
+                lambda da: da.mean("time"),
+            )
+    assert out.chunks["time"] == (1, 1, 1)
+    out.load()
+
+
+def test_resample_map_passthrough(tas_series):
+    tas = tas_series(365 * [1])
+    with assert_lazy:
+        out = helpers.resample_map(tas, "time", "MS", lambda da: da.mean("time"))
+    assert not uses_dask(out)
+
+
+@pytest.mark.parametrize("cftime", [False, True])
+def test_make_hourly_temperature(tasmax_series, tasmin_series, cftime):
+    tasmax = tasmax_series(np.array([20]), units="degC", cftime=cftime)
+    tasmin = tasmin_series(np.array([0]), units="degC", cftime=cftime).expand_dims(
+        lat=[0]
+    )
+
+    tasmin.lat.attrs["units"] = "degree_north"
+    tas_hourly = helpers.make_hourly_temperature(tasmax, tasmin)
+    assert tas_hourly.attrs["units"] == "degC"
+    assert tas_hourly.time.size == 24
+    expected = np.array(
+        [
+            0.0,
+            3.90180644,
+            7.65366865,
+            11.11140466,
+            14.14213562,
+            16.62939225,
+            18.47759065,
+            19.61570561,
+            20.0,
+            19.61570561,
+            18.47759065,
+            16.62939225,
+            14.14213562,
+            10.32039099,
+            8.0848137,
+            6.49864636,
+            5.26831939,
+            4.26306907,
+            3.41314202,
+            2.67690173,
+            2.02749177,
+            1.44657476,
+            0.92107141,
+            0.44132444,
+        ]
+    )
+    np.testing.assert_allclose(tas_hourly.isel(lat=0).values, expected)
