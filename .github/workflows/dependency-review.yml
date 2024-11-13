@@ -34,7 +34,7 @@ jobs:
             sum.golang.org:443
 
       - name: Start Energy Measurement
-        uses: green-coding-solutions/eco-ci-energy-estimation@escape-test
+        uses: green-coding-solutions/eco-ci-energy-estimation@86f1b2ee12db687bca0d15160a529bb64a7b60d9 # v4.0.0
         with:
           task: start-measurement
           branch: ${{ github.head_ref || github.ref_name }}
@@ -46,14 +46,14 @@ jobs:
         uses: actions/dependency-review-action@4081bf99e2866ebe428fc0477b69eb4fcda7220a # v4.4.0
 
       - name: Energy Measurement
-        uses: green-coding-solutions/eco-ci-energy-estimation@escape-test
+        uses: green-coding-solutions/eco-ci-energy-estimation@86f1b2ee12db687bca0d15160a529bb64a7b60d9 # v4.0.0
         with:
           task: get-measurement
           label: 'Dependency Review'
         continue-on-error: true
 
       - name: Show Energy Results
-        uses: green-coding-solutions/eco-ci-energy-estimation@escape-test
+        uses: green-coding-solutions/eco-ci-energy-estimation@86f1b2ee12db687bca0d15160a529bb64a7b60d9 # v4.0.0
         with:
           task: display-results
         continue-on-error: true
