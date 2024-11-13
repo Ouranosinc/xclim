@@ -1205,7 +1205,7 @@ class Indicator(IndicatorRegistrar):
                     param["choices"] = list(param["choices"])
                 if param["default"] is _empty_default:
                     del param["default"]
-            elif callable(param):  # Rare special case (doy_qmax and doy_qmin).
+            elif callable(param):  # Rare special case (doy_strfmax and doy_strfmin).
                 out["parameters"][name] = f"{param.__module__}.{param.__name__}"
 
         return out

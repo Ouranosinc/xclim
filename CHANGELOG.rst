@@ -4,7 +4,7 @@ Changelog
 
 v0.54.0 (unreleased)
 --------------------
-Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`).
+Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), Éric Dupuis (:user:`coxipi`).
 
 Breaking changes
 ----------------
@@ -17,6 +17,7 @@ Bug fixes
 Internal changes
 ^^^^^^^^^^^^^^^^
 * Changed french translations with word "pluvieux" to "avec précipitations". (:issue:`1960`, :pull:`1994`).
+* Streamflow variables now expressed as `strf` instead of `q`, with a proper entry in ``variables.yml`` (:issue:`1912`, :pull:``)
 
 v0.53.2 (2024-10-31)
 --------------------

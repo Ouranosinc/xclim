@@ -140,8 +140,8 @@ def pr_ndseries():
 
 
 @pytest.fixture
-def q_series():
-    def _q_series(values, start="1/1/2000", units="m3 s-1"):
+def strf_series():
+    def _strf_series(values, start="1/1/2000", units="m3 s-1"):
         coords = pd.date_range(start, periods=len(values), freq="D")
         return xr.DataArray(
             values,
@@ -154,11 +154,11 @@ def q_series():
             },
         )
 
-    return _q_series
+    return _strf_series
 
 
 @pytest.fixture
-def ndq_series(random):
+def ndstrf_series(random):
     nx, ny, nt = 2, 3, 5000
     x = np.arange(0, nx)
     y = np.arange(0, ny)

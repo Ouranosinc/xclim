@@ -26,15 +26,15 @@ __all__ = [
 ]
 
 
-@declare_units(q="[discharge]")
-def base_flow_index(q: xr.DataArray, freq: str = "YS") -> xr.DataArray:
+@declare_units(strf="[discharge]")
+def base_flow_index(strf: xr.DataArray, freq: str = "YS") -> xr.DataArray:
     r"""Base flow index.
 
     Return the base flow index, defined as the minimum 7-day average flow divided by the mean flow.
 
     Parameters
     ----------
-    q : xarray.DataArray
+    strf : xarray.DataArray
         Rate of river discharge.
     freq : str
         Resampling frequency.
@@ -61,8 +61,8 @@ def base_flow_index(q: xr.DataArray, freq: str = "YS") -> xr.DataArray:
        \mathrm{CMA}_7(q_i) = \frac{\sum_{j=i-3}^{i+3} q_j}{7}
 
     """
-    m7 = q.rolling(time=7, center=True).mean(skipna=False).resample(time=freq)
-    mq = q.resample(time=freq)
+    m7 = strf.rolling(time=7, center=True).mean(skipna=False).resample(time=freq)
+    mq = strf.resample(time=freq)
 
     m7m = m7.min(dim="time")
     out = m7m / mq.mean(dim="time")
@@ -70,8 +70,8 @@ def base_flow_index(q: xr.DataArray, freq: str = "YS") -> xr.DataArray:
     return out
 
 
-@declare_units(q="[discharge]")
-def rb_flashiness_index(q: xr.DataArray, freq: str = "YS") -> xr.DataArray:
+@declare_units(strf="[discharge]")
+def rb_flashiness_index(strf: xr.DataArray, freq: str = "YS") -> xr.DataArray:
     r"""Richards-Baker flashiness index.
 
     Measures oscillations in flow relative to total flow, quantifying the frequency and rapidity of short term changes
@@ -79,7 +79,7 @@ def rb_flashiness_index(q: xr.DataArray, freq: str = "YS") -> xr.DataArray:
 
     Parameters
     ----------
-    q : xarray.DataArray
+    strf : xarray.DataArray
         Rate of river discharge.
     freq : str
         Resampling frequency.
@@ -101,8 +101,8 @@ def rb_flashiness_index(q: xr.DataArray, freq: str = "YS") -> xr.DataArray:
     ----------
     :cite:cts:`baker_new_2004`
     """
-    d = np.abs(q.diff(dim="time")).resample(time=freq)
-    mq = q.resample(time=freq)
+    d = np.abs(strf.diff(dim="time")).resample(time=freq)
+    mq = strf.resample(time=freq)
     out = d.sum(dim="time") / mq.sum(dim="time")
     out.attrs["units"] = ""
     return out
@@ -285,8 +285,8 @@ def melt_and_precip_max(
     return out
 
 
-@declare_units(q="[discharge]")
-def flow_index(q: xr.DataArray, p: float = 0.95) -> xr.DataArray:
+@declare_units(strf="[discharge]")
+def flow_index(strf: xr.DataArray, p: float = 0.95) -> xr.DataArray:
     """
     Flow index
 
@@ -294,7 +294,7 @@ def flow_index(q: xr.DataArray, p: float = 0.95) -> xr.DataArray:
 
     Parameters
     ----------
-    q : xr.DataArray
+    strf : xr.DataArray
         Daily streamflow data.
     p : float
         Percentile for calculating the flow index, between 0 and 1. Default of 0.95 is for high flows.
@@ -308,16 +308,16 @@ def flow_index(q: xr.DataArray, p: float = 0.95) -> xr.DataArray:
     ----------
     :cite:cts:`Clausen2000`
     """
-    qp = q.quantile(p, dim="time")
-    q_median = q.median(dim="time")
-    out = qp / q_median
+    strfp = strf.quantile(p, dim="time")
+    strf_median = strf.median(dim="time")
+    out = strfp / strf_median
     out.attrs["units"] = "1"
     return out
 
 
-@declare_units(q="[discharge]")
+@declare_units(strf="[discharge]")
 def high_flow_frequency(
-    q: xr.DataArray, threshold_factor: int = 9, freq: str = "YS-OCT"
+    strf: xr.DataArray, threshold_factor: int = 9, freq: str = "YS-OCT"
 ) -> xr.DataArray:
     """
     High flow frequency.
@@ -328,7 +328,7 @@ def high_flow_frequency(
 
     Parameters
     ----------
-    q : xr.DataArray
+    strf : xr.DataArray
         Daily streamflow data.
     threshold_factor : int
         Factor by which the median flow is multiplied to set the high flow threshold, default is 9.
@@ -344,15 +344,15 @@ def high_flow_frequency(
     ----------
     :cite:cts:`addor2018,Clausen2000`
     """
-    median_flow = q.median(dim="time")
+    median_flow = strf.median(dim="time")
     threshold = threshold_factor * median_flow
-    out = threshold_count(q, ">", threshold, freq=freq)
-    return to_agg_units(out, q, "count")
+    out = threshold_count(strf, ">", threshold, freq=freq)
+    return to_agg_units(out, strf, "count")
 
 
-@declare_units(q="[discharge]")
+@declare_units(strf="[discharge]")
 def low_flow_frequency(
-    q: xr.DataArray, threshold_factor: float = 0.2, freq: str = "YS-OCT"
+    strf: xr.DataArray, threshold_factor: float = 0.2, freq: str = "YS-OCT"
 ) -> xr.DataArray:
     """
     Low flow frequency.
@@ -363,7 +363,7 @@ def low_flow_frequency(
 
     Parameters
     ----------
-    q : xr.DataArray
+    strf : xr.DataArray
         Daily streamflow data.
     threshold_factor : float
         Factor by which the mean flow is multiplied to set the low flow threshold, default is 0.2.
@@ -379,7 +379,7 @@ def low_flow_frequency(
     ----------
     :cite:cts:`Olden2003`
     """
-    mean_flow = q.mean(dim="time")
+    mean_flow = strf.mean(dim="time")
     threshold = threshold_factor * mean_flow
-    out = threshold_count(q, "<", threshold, freq=freq)
-    return to_agg_units(out, q, "count")
+    out = threshold_count(strf, "<", threshold, freq=freq)
+    return to_agg_units(out, strf, "count")

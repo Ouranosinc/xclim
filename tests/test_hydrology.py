@@ -6,19 +6,19 @@ from xclim import indices as xci
 
 
 class TestBaseFlowIndex:
-    def test_simple(self, q_series):
+    def test_simple(self, strf_series):
         a = np.zeros(365) + 10
         a[10:17] = 1
-        q = q_series(a)
+        q = strf_series(a)
         out = xci.base_flow_index(q)
         np.testing.assert_array_equal(out, 1.0 / a.mean())
 
 
 class TestRBIndex:
-    def test_simple(self, q_series):
+    def test_simple(self, strf_series):
         a = np.zeros(365)
         a[10] = 10
-        q = q_series(a)
+        q = strf_series(a)
         out = xci.rb_flashiness_index(q)
         np.testing.assert_array_equal(out, 2)
 
@@ -73,30 +73,30 @@ class TestMeltandPrecipMax:
 
 
 class TestFlowindex:
-    def test_simple(self, q_series):
+    def test_simple(self, strf_series):
         a = np.ones(365 * 2) * 10
         a[10:50] = 50
-        q = q_series(a)
+        q = strf_series(a)
         out = xci.flow_index(q, 0.95)
         np.testing.assert_array_equal(out, 5)
 
 
 class TestHighflowfrequency:
-    def test_simple(self, q_series):
+    def test_simple(self, strf_series):
         a = np.zeros(365 * 2)
         a[50:60] = 10
         a[200:210] = 20
-        q = q_series(a)
+        q = strf_series(a)
         out = xci.high_flow_frequency(q, 9, freq="YS")
         np.testing.assert_array_equal(out, [20, 0])
 
 
 class TestLowflowfrequency:
-    def test_simple(self, q_series):
+    def test_simple(self, strf_series):
         a = np.ones(365 * 2) * 10
         a[50:60] = 1
         a[200:210] = 1
-        q = q_series(a)
+        q = strf_series(a)
         out = xci.low_flow_frequency(q, 0.2, freq="YS")
 
         np.testing.assert_array_equal(out, [20, 0])

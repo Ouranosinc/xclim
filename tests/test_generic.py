@@ -14,27 +14,27 @@ K2C = 273.15
 
 
 class TestSelectResampleOp:
-    def test_month(self, q_series):
-        q = q_series(np.arange(1000))
+    def test_month(self, strf_series):
+        q = strf_series(np.arange(1000))
         o = generic.select_resample_op(q, "count", freq="YS", month=3)
         np.testing.assert_array_equal(o, 31)
 
-    def test_season_default(self, q_series):
+    def test_season_default(self, strf_series):
         # Will use freq='YS', so count J, F and D of each year.
-        q = q_series(np.arange(1000))
+        q = strf_series(np.arange(1000))
         o = generic.select_resample_op(q, "min", season="DJF")
         assert o[0] == 0
         assert o[1] == 366
 
-    def test_season(self, q_series):
-        q = q_series(np.arange(1000))
+    def test_season(self, strf_series):
+        q = strf_series(np.arange(1000))
         o = generic.select_resample_op(q, "count", freq="YS-DEC", season="DJF")
         assert o[0] == 31 + 29
 
 
 class TestSelectRollingResampleOp:
-    def test_rollingmax(self, q_series):
-        q = q_series(np.arange(1, 366 + 365 + 365 + 1))  # 1st year is leap
+    def test_rollingmax(self, strf_series):
+        q = strf_series(np.arange(1, 366 + 365 + 365 + 1))  # 1st year is leap
         o = generic.select_rolling_resample_op(
             q, "max", window=14, window_center=False, window_op="mean"
         )
@@ -48,8 +48,8 @@ class TestSelectRollingResampleOp:
         )
         assert o.attrs["units"] == "m3 s-1"
 
-    def test_rollingmaxindexer(self, q_series):
-        q = q_series(np.arange(1, 366 + 365 + 365 + 1))  # 1st year is leap
+    def test_rollingmaxindexer(self, strf_series):
+        q = strf_series(np.arange(1, 366 + 365 + 365 + 1))  # 1st year is leap
         o = generic.select_rolling_resample_op(
             q, "min", window=14, window_center=False, window_op="max", season="DJF"
         )
@@ -58,8 +58,8 @@ class TestSelectRollingResampleOp:
         )  # 14th day for 1st year, then Jan 1st for the next two
         assert o.attrs["units"] == "m3 s-1"
 
-    def test_freq(self, q_series):
-        q = q_series(np.arange(1, 366 + 365 + 365 + 1))  # 1st year is leap
+    def test_freq(self, strf_series):
+        q = strf_series(np.arange(1, 366 + 365 + 365 + 1))  # 1st year is leap
         o = generic.select_rolling_resample_op(
             q, "max", window=3, window_center=True, window_op="integral", freq="MS"
         )
@@ -88,13 +88,13 @@ class TestDomainCount:
 
 
 class TestFlowGeneric:
-    def test_doyminmax(self, q_series):
+    def test_doyminmax(self, strf_series):
         a = np.ones(365)
         a[9] = 2
         a[19] = -2
         a[39] = 4
         a[49] = -4
-        q = q_series(a)
+        q = strf_series(a)
         dmx = generic.doymax(q)
         dmn = generic.doymin(q)
         assert dmx.values == [40]
