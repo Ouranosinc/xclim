@@ -208,6 +208,12 @@ class BaseAdjustment(ParametrizableWithDataset):
         ), target
 
     @classmethod
+    def _check_matching_time(cls, ref, hist):
+        """Raise an error ref and hist times don't match."""
+        if all(ref.time == hist.time) is False:
+            raise ValueError("`ref` and `hist` should have the same time arrays.")
+
+    @classmethod
     def _train(cls, ref, hist, **kwargs):
         raise NotImplementedError()
 
@@ -257,6 +263,9 @@ class TrainAdjust(BaseAdjustment):
             (ref, hist), train_units = cls._harmonize_units(ref, hist)
         else:
             train_units = ""
+
+        if cls._allow_diff_calendars is False:
+            cls._check_matching_time(ref, hist)
 
         ds, params = cls._train(ref, hist, **kwargs)
         obj = cls(
@@ -1736,6 +1745,8 @@ class MBCn(TrainAdjust):
     -----
     Only  "time" and "time.dayofyear" (with a suitable window) are implemented as possible values for `group`.
     """
+
+    _allow_diff_calendars = False
 
     @classmethod
     def _train(
