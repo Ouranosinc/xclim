@@ -8,27 +8,27 @@ import xarray as xr
 from xclim import land
 
 
-def test_base_flow_index(ndstrf_series):
-    out = land.base_flow_index(ndstrf_series, freq="YS")
+def test_base_flow_index(ndq_series):
+    out = land.base_flow_index(ndq_series, freq="YS")
 
     assert out.attrs["units"] == "1"
     assert isinstance(out, xr.DataArray)
 
 
-def test_rb_flashiness_index(ndstrf_series):
-    out = land.base_flow_index(ndstrf_series, freq="YS")
+def test_rb_flashiness_index(ndq_series):
+    out = land.base_flow_index(ndq_series, freq="YS")
 
     assert out.attrs["units"] == "1"
     assert isinstance(out, xr.DataArray)
 
 
-def test_qdoy_max(ndstrf_series, strf_series):
-    out = land.doy_strfmax(ndstrf_series, freq="YS", season="JJA")
+def test_qdoy_max(ndq_series, q_series):
+    out = land.doy_qmax(ndq_series, freq="YS", season="JJA")
     assert out.attrs["units"] == "1"
 
     a = np.ones(450)
     a[100] = 2
-    out = land.doy_strfmax(strf_series(a), freq="YS")
+    out = land.doy_qmax(q_series(a), freq="YS")
     assert out[0] == 101
 
 
@@ -68,20 +68,20 @@ def test_snw_storm_days(snw_series):
     np.testing.assert_array_equal(out, [9, np.nan])
 
 
-def test_flow_index(strf_series):
+def test_flow_index(q_series):
     a = np.ones(365 * 2) * 10
     a[10:50] = 50
-    q = strf_series(a)
+    q = q_series(a)
 
     out = land.flow_index(q, p=0.95)
     np.testing.assert_array_equal(out, 5)
 
 
-def test_high_flow_frequency(strf_series):
+def test_high_flow_frequency(q_series):
     a = np.zeros(366 * 2) * 10
     a[50:60] = 10
     a[200:210] = 20
-    q = strf_series(a)
+    q = q_series(a)
     out = land.high_flow_frequency(
         q,
         threshold_factor=9,
@@ -90,10 +90,10 @@ def test_high_flow_frequency(strf_series):
     np.testing.assert_array_equal(out, [20, 0, np.nan])
 
 
-def test_low_flow_frequency(strf_series):
+def test_low_flow_frequency(q_series):
     a = np.ones(366 * 2) * 10
     a[50:60] = 1
     a[200:210] = 1
-    q = strf_series(a)
+    q = q_series(a)
     out = land.low_flow_frequency(q, threshold_factor=0.2, freq="YS")
     np.testing.assert_array_equal(out, [20, 0, np.nan])
