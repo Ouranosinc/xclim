@@ -168,8 +168,8 @@ This package was created with Cookiecutter_ and the `audreyfeldroy/cookiecutter-
         :target: https://bestpractices.coreinfrastructure.org/projects/6041
         :alt: Open Source Security Foundation
 
-.. |energy| image:: https://api.green-coding.io/v1/ci/badge/get?repo=Ouranosinc/xclim&branch=main/merge&workflow=47013755
-        :target: https://metrics.green-coding.io/ci.html?repo=Ouranosinc/xclim&branch=main/merge&workflow=47013755
+.. |energy| image:: https://api.green-coding.io/v1/ci/badge/get?repo=Ouranosinc/xclim&branch=main&workflow=47013755
+        :target: https://metrics.green-coding.io/ci.html?repo=Ouranosinc/xclim&branch=main&workflow=47013755
         :alt: Energy Consumption
 
 .. |fair| image:: https://img.shields.io/badge/fair--software.eu-%E2%97%8F%20%20%E2%97%8F%20%20%E2%97%8F%20%20%E2%97%8F%20%20%E2%97%8B-yellow
