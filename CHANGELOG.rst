@@ -16,7 +16,7 @@ Bug fixes
 * Fixed an issue with ``nimbus`` that was causing URL path components to be improperly joined. (:pull:`1997`).
 
 Internal changes
-^^^^^^^^^^^^^^^^v
+^^^^^^^^^^^^^^^^
 * Changed french translations with word "pluvieux" to "avec précipitations". (:issue:`1960`, :pull:`1994`).
 
 v0.53.2 (2024-10-31)
