@@ -464,5 +464,4 @@ jobs:
         uses: green-coding-solutions/eco-ci-energy-estimation@86f1b2ee12db687bca0d15160a529bb64a7b60d9 # v4.0.0
         with:
           task: display-results
-          pr-comment: true
         continue-on-error: true

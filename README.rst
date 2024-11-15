@@ -11,7 +11,7 @@ xclim: Climate services library |logo| |logo-dark| |logo-light|
 +----------------------------+-----------------------------------------------------+
 | Coding Standards           | |black| |ruff| |pre-commit| |security| |fossa|      |
 +----------------------------+-----------------------------------------------------+
-| Development Status         | |status| |build| |coveralls|                        |
+| Development Status         | |status| |build| |coveralls| |energy|               |
 +----------------------------+-----------------------------------------------------+
 
 `xclim` is an operational Python library for climate services, providing numerous climate-related indicator tools
@@ -167,6 +167,10 @@ This package was created with Cookiecutter_ and the `audreyfeldroy/cookiecutter-
 .. |security| image:: https://bestpractices.coreinfrastructure.org/projects/6041/badge
         :target: https://bestpractices.coreinfrastructure.org/projects/6041
         :alt: Open Source Security Foundation
+
+.. |energy| image:: https://api.green-coding.io/v1/ci/badge/get?repo=Ouranosinc/xclim&branch=main/merge&workflow=47013755
+        :target: https://metrics.green-coding.io/ci.html?repo=Ouranosinc/xclim&branch=main/merge&workflow=47013755
+        :alt: Energy Consumption
 
 .. |fair| image:: https://img.shields.io/badge/fair--software.eu-%E2%97%8F%20%20%E2%97%8F%20%20%E2%97%8F%20%20%E2%97%8F%20%20%E2%97%8B-yellow
         :target: https://fair-software.eu
