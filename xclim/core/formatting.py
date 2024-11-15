@@ -19,6 +19,7 @@ from typing import Any
 import xarray as xr
 from boltons.funcutils import wraps
 
+from xclim.core.indicator import Indicator
 from xclim.core.utils import InputKind
 
 DEFAULT_FORMAT_PARAMS = {
@@ -40,7 +41,17 @@ DEFAULT_FORMAT_PARAMS = {
 class AttrFormatter(string.Formatter):
     """A formatter for frequently used attribute values.
 
-    See the doc of format_field() for more details.
+    Parameters
+    ----------
+    mapping : dict[str, Sequence[str]]
+        A mapping from values to their possible variations.
+    modifiers : Sequence[str]
+        The list of modifiers, must be the as long as the longest value of `mapping`.
+        Cannot include reserved modifier 'r'.
+
+    Notes
+    -----
+    See the doc of :py:meth:`format_field` for more details.
     """
 
     def __init__(
@@ -69,7 +80,7 @@ class AttrFormatter(string.Formatter):
 
         Parameters
         ----------
-        format_string: str
+        format_string : str
             The string to format.
         \*args : Any
             Arguments to format.
@@ -86,12 +97,24 @@ class AttrFormatter(string.Formatter):
                 kwargs.update({k: v})
         return super().format(format_string, *args, **kwargs)
 
-    def format_field(self, value, format_spec):
+    def format_field(self, value, format_spec: str) -> str:
         """Format a value given a formatting spec.
 
         If `format_spec` is in this Formatter's modifiers, the corresponding variation
         of value is given. If `format_spec` is 'r' (raw), the value is returned unmodified.
         If `format_spec` is not specified but `value` is in the mapping, the first variation is returned.
+
+        Parameters
+        ----------
+        value : Any
+            The value to format.
+        format_spec : str
+            The formatting spec.
+
+        Returns
+        -------
+        str
+            The formatted value.
 
         Examples
         --------
@@ -321,7 +344,7 @@ def merge_attributes(
     ----------
     attribute : str
         The attribute to merge.
-    inputs_list : xr.DataArray or xr.Dataset
+    \*inputs_list : xr.DataArray or xr.Dataset
         The datasets or variables that were used to produce the new object.
         Inputs given that way will be prefixed by their `name` attribute if available.
     new_line : str
@@ -389,7 +412,7 @@ def update_history(
 
     See Also
     --------
-    merge_attributes
+    merge_attributes : Merge attributes from several DataArrays or Datasets.
     """
     from xclim import (  # pylint: disable=cyclic-import,import-outside-toplevel
         __version__,
@@ -411,12 +434,22 @@ def update_history(
     return merged_history
 
 
-def update_xclim_history(func: Callable):
+def update_xclim_history(func: Callable) -> Callable:
     """Decorator that auto-generates and fills the history attribute.
 
     The history is generated from the signature of the function and added to the first output.
     Because of a limitation of the `boltons` wrapper, all arguments passed to the wrapped function
     will be printed as keyword arguments.
+
+    Parameters
+    ----------
+    func : Callable
+        The function to decorate.
+
+    Returns
+    -------
+    Callable
+        The decorated function.
     """
 
     @wraps(func)
@@ -466,11 +499,16 @@ def gen_call_string(funcname: str, *args, **kwargs) -> str:
     Parameters
     ----------
     funcname : str
-        Name of the function
+        Name of the function.
     \*args : Any
         Arguments given to the function.
     \*\*kwargs : dict
         Keyword arguments given to the function.
+
+    Returns
+    -------
+    str
+        The formatted string.
 
     Examples
     --------
@@ -652,17 +690,18 @@ def _gen_returns_section(cf_attrs: Sequence[dict[str, Any]]) -> str:
     return section
 
 
-def generate_indicator_docstring(ind) -> str:
+def generate_indicator_docstring(ind: Indicator) -> str:
     """Generate an indicator's docstring from keywords.
 
     Parameters
     ----------
-    ind
-        Indicator instance
+    ind : Indicator
+        An Indicator instance.
 
     Returns
     -------
     str
+        The docstring.
     """
     header = f"{ind.title} (realm: {ind.realm})\n\n{ind.abstract}\n"
 

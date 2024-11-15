@@ -4,7 +4,7 @@ Indicator Utilities
 
 The `Indicator` class wraps indices computations with pre- and post-processing functionality. Prior to computations,
 the class runs data and metadata health checks. After computations, the class masks values that should be considered
-missing and adds metadata attributes to the  object.
+missing and adds metadata attributes to the object.
 
 There are many ways to construct indicators. A good place to start is
 `this notebook <notebooks/extendxclim.ipynb#Defining-new-indicators>`_.
@@ -19,10 +19,8 @@ This functionality is inspired by the work of `clix-meta <https://github.com/cli
 YAML file structure
 ~~~~~~~~~~~~~~~~~~~
 
-Indicator-defining yaml files are structured in the following way.
-Most entries of the `indicators` section are mirroring attributes of
-the :py:class:`Indicator`, please refer to its documentation for more
-details on each.
+Indicator-defining yaml files are structured in the following way. Most entries of the `indicators` section are
+mirroring attributes of the :py:class:`Indicator`, please refer to its documentation for more details on each.
 
 .. code-block:: yaml
 
@@ -49,7 +47,7 @@ details on each.
                                       # Available classes are listed in `xclim.core.indicator.registry` and
                                       # `xclim.core.indicator.base_registry`.
 
-        # General metadata, usually parsed from the `compute`'s docstring when possible.
+        # General metadata, usually parsed from the `compute`s docstring when possible.
         realm: <realm>  # defaults to module-wide realm. One of "atmos", "land", "seaIce", "ocean".
         title: <title>
         abstract: <abstract>
@@ -68,7 +66,7 @@ details on each.
         input:  # When "compute" is a generic function, this is a mapping from argument name to the expected variable.
                 # This will allow the input units and CF metadata checks to run on the inputs.
                 # Can also be used to modify the expected variable, as long as it has the same dimensionality
-                # Ex: tas instead of tasmin.
+                # e.g. "tas" instead of "tasmin".
                 # Can refer to a variable declared in the `variables` section above.
           <var name in compute> : <variable official name>
           ...
@@ -98,8 +96,7 @@ Inputs
 As xclim has strict definitions of possible input variables (see :py:data:`xclim.core.utils.variables`),
 the mapping of `data.input` simply links an argument name from the function given in "compute"
 to one of those official variables.
-
-"""
+"""  # numpydoc ignore=GL07
 
 from __future__ import annotations
 
@@ -210,7 +207,13 @@ class Parameter:
     value: Any = _empty
 
     def update(self, other: dict) -> None:
-        """Update a parameter's values from a dict."""
+        """Update a parameter's values from a dict.
+
+        Parameters
+        ----------
+        other : dict
+            A dictionary of parameters to update the current
+        """
         for k, v in other.items():
             if hasattr(self, k):
                 setattr(self, k, v)
@@ -266,10 +269,17 @@ class IndicatorRegistrar:
         _indicators_registry[self.__class__].append(weakref.ref(self))
 
     @classmethod
-    def get_instance(cls):
+    def get_instance(cls) -> Any:
         """Return first found instance.
 
-        Raises `ValueError` if no instance exists.
+        Returns
+        -------
+        Any
+            FIXME: What is the return type?
+
+        Raises
+        ------
+        ValueError : if no instance exists.
         """
         for inst_ref in _indicators_registry[cls]:
             inst = inst_ref()
@@ -312,7 +322,7 @@ class Indicator(IndicatorRegistrar):
     identifier : str
         Unique ID for class registry, should be a valid slug.
     realm : {'atmos', 'seaIce', 'land', 'ocean'}
-        General domain of validity of the indicator. Indicators created outside xclim.indicators must set this attribute.
+        General domain of validity of the indicator. Indicators created outside ``xclim.indicators`` must set this attribute.
     compute : func
         The function computing the indicators. It should return one or more DataArray.
     cf_attrs : list of dicts
@@ -333,13 +343,13 @@ class Indicator(IndicatorRegistrar):
     src_freq : str, sequence of strings, optional
         The expected frequency of the input data. Can be a list for multiple frequencies, or None if irrelevant.
     context : str
-        The `pint` unit context, for example use 'hydro' to allow conversion from kg m-2 s-1 to mm/day.
+        The `pint` unit context, for example use 'hydro' to allow conversion from 'kg m-2 s-1' to 'mm/day'.
 
     Notes
     -----
     All subclasses created are available in the `registry` attribute and can be used to define custom subclasses
     or parse all available instances.
-    """
+    """  # numpydoc ignore=PR01,PR02
 
     # Officially-supported metadata attributes on the output variables
     _cf_names = [
@@ -506,7 +516,6 @@ class Indicator(IndicatorRegistrar):
         'passed_parameters' is only needed when compute is a generic function
         (not decorated by `declare_units`) and it takes a string parameter. In that case
         we need to check if that parameter has units (which have been passed explicitly).
-
         """
         docmeta = parse_doc(compute.__doc__)
         params_dict = docmeta.pop("parameters", {})  # override parent's parameters
@@ -690,7 +699,7 @@ class Indicator(IndicatorRegistrar):
         data: dict,
         identifier: str,
         module: str | None = None,
-    ):
+    ) -> Indicator:
         """Create an indicator subclass and instance from a dictionary of parameters.
 
         Most parameters are passed directly as keyword arguments to the class constructor, except:
@@ -704,13 +713,18 @@ class Indicator(IndicatorRegistrar):
 
         Parameters
         ----------
-        data: dict
-          The exact structure of this dictionary is detailed in the submodule documentation.
+        data : dict
+            The exact structure of this dictionary is detailed in the submodule documentation.
         identifier : str
-          The name of the subclass and internal indicator name.
+            The name of the subclass and internal indicator name.
         module : str
-          The module name of the indicator. This is meant to be used only if the indicator
-          is part of a dynamically generated submodule, to override the module of the base class.
+            The module name of the indicator. This is meant to be used only if the indicator
+            is part of a dynamically generated submodule, to override the module of the base class.
+
+        Returns
+        -------
+        Indicator
+            A new Indicator instance.
         """
         data = data.copy()
         if "base" in data:
@@ -1170,7 +1184,7 @@ class Indicator(IndicatorRegistrar):
         return attrs
 
     @classmethod
-    def json(cls, args=None):
+    def json(cls, args: dict | None = None) -> dict:
         """Return a serializable dictionary representation of the class.
 
         Parameters
@@ -1179,10 +1193,14 @@ class Indicator(IndicatorRegistrar):
             Arguments as passed to the call method of the indicator.
             If not given, the default arguments will be used when formatting the attributes.
 
+        Returns
+        -------
+        dict
+            A dictionary representation of the class.
+
         Notes
         -----
         This is meant to be used by a third-party library wanting to wrap this class into another interface.
-
         """
         names = ["identifier", "title", "abstract", "keywords"]
         out = {key: getattr(cls, key) for key in names}
@@ -1285,8 +1303,8 @@ class Indicator(IndicatorRegistrar):
         """Compute the indicator.
 
         This would typically be a function from `xclim.indices`.
-        """
-        raise NotImplementedError
+        """  # numpydoc ignore=PR01
+        raise NotImplementedError()
 
     def cfcheck(self, **das):
         """Compare metadata attributes to CF-Convention standards.
@@ -1296,6 +1314,11 @@ class Indicator(IndicatorRegistrar):
         Variables absent from these default specs are silently ignored.
 
         When subclassing this method, use functions decorated using `xclim.core.options.cfcheck`.
+
+        Parameters
+        ----------
+        das : dict
+            A dictionary of DataArrays to check.
         """
         for varname, vardata in das.items():
             try:
@@ -1310,12 +1333,16 @@ class Indicator(IndicatorRegistrar):
         When subclassing this method, use functions decorated using `xclim.core.options.datacheck`.
 
         For example, checks could include:
-
         * assert no precipitation is negative
         * assert no temperature has the same value 5 days in a row
 
         This base datacheck checks that the input data has a valid sampling frequency, as given in self.src_freq.
         If there are multiple inputs, it also checks if they all have the same frequency and the same anchor.
+
+        Parameters
+        ----------
+        das : dict
+            A dictionary of DataArrays to check.
         """
         if self.src_freq is not None:
             for da in das.values():
@@ -1340,15 +1367,26 @@ class Indicator(IndicatorRegistrar):
         raise AttributeError(attr)
 
     @property
-    def n_outs(self):
-        """Return the length of all cf_attrs."""
+    def n_outs(self) -> int:
+        """Return the length of all cf_attrs.
+
+        Returns
+        -------
+        int
+            The number of outputs.
+        """
         return len(self.cf_attrs)
 
     @property
-    def parameters(self):
+    def parameters(self) -> dict:
         """Create a dictionary of controllable parameters.
 
         Similar to :py:attr:`Indicator._all_parameters`, but doesn't include injected parameters.
+
+        Returns
+        -------
+        dict
+            A dictionary of controllable parameters.
         """
         return {
             name: param
@@ -1357,10 +1395,15 @@ class Indicator(IndicatorRegistrar):
         }
 
     @property
-    def injected_parameters(self):
+    def injected_parameters(self) -> dict:
         """Return a dictionary of all injected parameters.
 
         Opposite of :py:meth:`Indicator.parameters`.
+
+        Returns
+        -------
+        dict
+            A dictionary of all injected parameters.
         """
         return {
             name: param.value
@@ -1369,8 +1412,14 @@ class Indicator(IndicatorRegistrar):
         }
 
     @property
-    def is_generic(self):
-        """Return True if the indicator is "generic", meaning that it can accept variables with any units."""
+    def is_generic(self) -> bool:
+        """Return True if the indicator is "generic", meaning that it can accept variables with any units.
+
+        Returns
+        -------
+        bool
+            True if the indicator is generic.
+        """
         return not hasattr(self.compute, "in_units")
 
     def _show_deprecation_warning(self):

@@ -71,11 +71,11 @@ def check_daily(var: xr.DataArray) -> None:
     -----
     This does not check for gaps in series.
     """
-    return check_freq(var, "D")
+    check_freq(var, "D")
 
 
 @datacheck
-def check_common_time(inputs: Sequence[xr.DataArray]):
+def check_common_time(inputs: Sequence[xr.DataArray]) -> None:
     """Raise an error if the list of inputs doesn't have a single common frequency.
 
     Raises

@@ -7,7 +7,7 @@ Pseudo-indicators designed to analyse supplied variables for suspicious/erroneou
 
 from __future__ import annotations
 
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from decimal import Decimal
 from functools import reduce
 from inspect import signature
@@ -30,7 +30,7 @@ _REGISTRY = {}
 class DataQualityException(Exception):
     """Raised when any data evaluation checks are flagged as True.
 
-    Attributes
+    Parameters
     ----------
     flag_array : xarray.Dataset
         Xarray.Dataset of Data Flags.
@@ -80,7 +80,7 @@ __all__ = [
 ]
 
 
-def register_methods(variable_name: str = None):
+def register_methods(variable_name: str = None) -> Callable:
     """Register a data flag as functional.
 
     Argument can be the output variable name template. The template may use any of the string-like input arguments.
@@ -90,6 +90,11 @@ def register_methods(variable_name: str = None):
     ----------
     variable_name : str, optional
         The output variable name template. Default is None.
+
+    Returns
+    -------
+    callable
+        The function being registered.
     """
 
     def _register_methods(func):
