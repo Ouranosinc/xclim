@@ -423,12 +423,27 @@ jobs:
       - test-pypi
       - test-conda
     runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
     steps:
       - name: Harden Runner
         uses: step-security/harden-runner@91182cccc01eb5e619899d80e4e971d6181294a7 # v2.10.1
         with:
           disable-sudo: true
-          egress-policy: audit
+          egress-policy: block
+          allowed-endpoints: >
+            api.electricitymap.org:443
+            api.github.com:443
+            api.green-coding.io:443
+            coveralls.io:443
+            files.pythonhosted.org:443
+            github.com:443
+            ip-api.com:80
+            ipapi.co:443
+            objects.githubusercontent.com:443
+            proxy.golang.org:443
+            pypi.org:443
+            sum.golang.org:443
       - name: Start Energy Measurement
         uses: green-coding-solutions/eco-ci-energy-estimation@86f1b2ee12db687bca0d15160a529bb64a7b60d9 # v4.0.0
         with:
