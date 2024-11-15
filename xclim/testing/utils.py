@@ -435,9 +435,12 @@ def load_registry(
     dict
         Dictionary of filenames and hashes.
     """
-    if not branch.endswith("/"):
-        branch = f"{branch}/"
-    remote_registry = audit_url(urljoin(urljoin(repo, branch), "data/registry.txt"))
+    remote_registry = audit_url(
+        urljoin(
+            urljoin(repo, branch if branch.endswith("/") else f"{branch}/"),
+            "data/registry.txt",
+        )
+    )
 
     if branch != default_testdata_version:
         custom_registry_folder = Path(
@@ -513,9 +516,9 @@ def nimbus(  # noqa: PR01
             "The `pooch` package is required to fetch the xclim testing data. "
             "You can install it with `pip install pooch` or `pip install xclim[dev]`."
         )
-    if not branch.endswith("/"):
-        branch = f"{branch}/"
-    remote = audit_url(urljoin(urljoin(repo, branch), "data"))
+    remote = audit_url(
+        urljoin(urljoin(repo, branch if branch.endswith("/") else f"{branch}/"), "data")
+    )
     return pooch.create(
         path=cache_dir,
         base_url=remote,
