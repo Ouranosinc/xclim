@@ -19,7 +19,6 @@ from typing import Any
 import xarray as xr
 from boltons.funcutils import wraps
 
-from xclim.core.indicator import Indicator
 from xclim.core.utils import InputKind
 
 DEFAULT_FORMAT_PARAMS = {
@@ -690,7 +689,7 @@ def _gen_returns_section(cf_attrs: Sequence[dict[str, Any]]) -> str:
     return section
 
 
-def generate_indicator_docstring(ind: Indicator) -> str:
+def generate_indicator_docstring(ind) -> str:
     """Generate an indicator's docstring from keywords.
 
     Parameters

@@ -212,7 +212,7 @@ class Parameter:
         Parameters
         ----------
         other : dict
-            A dictionary of parameters to update the current
+            A dictionary of parameters to update the current.
         """
         for k, v in other.items():
             if hasattr(self, k):
@@ -222,7 +222,18 @@ class Parameter:
 
     @classmethod
     def is_parameter_dict(cls, other: dict) -> bool:
-        """Return whether other can update a parameter dictionary."""
+        """Return whether other can update a parameter dictionary.
+
+        Parameters
+        ----------
+        other : dict
+            A dictionary of parameters.
+
+        Returns
+        -------
+        bool
+            Whether other can update a parameter dictionary.
+        """
         # Passing compute_name is forbidden.
         # name is valid, but is handled by the indicator
         return set(other.keys()).issubset(
@@ -234,12 +245,24 @@ class Parameter:
         return getattr(self, key, _empty) is not _empty
 
     def asdict(self) -> dict:
-        """Format indicators as a dictionary."""
+        """Format indicators as a dictionary.
+
+        Returns
+        -------
+        dict
+            The indicators as a dictionary.
+        """
         return {k: v for k, v in asdict(self).items() if v is not _empty}
 
     @property
     def injected(self) -> bool:
-        """Indicate whether values are injected."""
+        """Indicate whether values are injected.
+
+        Returns
+        -------
+        bool
+            Whether values are injected.
+        """
         return self.value is not _empty
 
 
@@ -269,7 +292,7 @@ class IndicatorRegistrar:
         _indicators_registry[self.__class__].append(weakref.ref(self))
 
     @classmethod
-    def get_instance(cls) -> Any:
+    def get_instance(cls) -> Any:  # numpydoc ignore=RT05
         """Return first found instance.
 
         Returns
@@ -523,6 +546,7 @@ class Indicator(IndicatorRegistrar):
         compute_sig = signature(compute)
         # Check that the `Parameters` section of the docstring does not include parameters
         # that are not in the `compute` function signature.
+        # FIXME: How can we handle `\*args` and `\*\*kwargs` in the Parameters docstring?
         if not set(params_dict.keys()).issubset(compute_sig.parameters.keys()):
             raise ValueError(
                 f"Malformed docstring on {compute} : the parameters "
@@ -1135,7 +1159,9 @@ class Indicator(IndicatorRegistrar):
             )
 
     @classmethod
-    def translate_attrs(cls, locale: str | Sequence[str], fill_missing: bool = True):
+    def translate_attrs(
+        cls, locale: str | Sequence[str], fill_missing: bool = True
+    ) -> dict:
         """Return a dictionary of unformatted translated translatable attributes.
 
         Translatable attributes are defined in :py:const:`xclim.core.locales.TRANSLATABLE_ATTRS`.
@@ -1144,9 +1170,14 @@ class Indicator(IndicatorRegistrar):
         ----------
         locale : str or sequence of str
             The POSIX name of the locale or a tuple of a locale name and a path to a json file defining translations.
-            See `xclim.locale` for details.
+            See :py:mod:`xclim.locale` for details.
         fill_missing : bool
             If True (default) fill the missing attributes by their english values.
+
+        Returns
+        -------
+        dict
+            A dictionary of translated attributes.
         """
 
         def _translate(cf_attrs, names, var_id=None):
@@ -1306,8 +1337,8 @@ class Indicator(IndicatorRegistrar):
         """  # numpydoc ignore=PR01
         raise NotImplementedError()
 
-    def cfcheck(self, **das):
-        """Compare metadata attributes to CF-Convention standards.
+    def cfcheck(self, **das) -> None:
+        r"""Compare metadata attributes to CF-Convention standards.
 
         Default cfchecks use the specifications in `xclim.core.utils.VARIABLES`,
         assuming the indicator's inputs are using the CMIP6/xclim variable names correctly.
@@ -1317,7 +1348,7 @@ class Indicator(IndicatorRegistrar):
 
         Parameters
         ----------
-        das : dict
+        \*\*das : dict
             A dictionary of DataArrays to check.
         """
         for varname, vardata in das.items():
@@ -1327,8 +1358,8 @@ class Indicator(IndicatorRegistrar):
                 # Silently ignore unknown variables.
                 pass
 
-    def datacheck(self, **das):
-        """Verify that input data is valid.
+    def datacheck(self, **das) -> None:
+        r"""Verify that input data is valid.
 
         When subclassing this method, use functions decorated using `xclim.core.options.datacheck`.
 
@@ -1341,8 +1372,15 @@ class Indicator(IndicatorRegistrar):
 
         Parameters
         ----------
-        das : dict
+        \*\*das : dict
             A dictionary of DataArrays to check.
+
+        Raises
+        ------
+        ValidationError
+            - if the frequency of any input can't be inferred.
+            - if inputs have different frequencies.
+            - if inputs have a daily or hourly frequency, but they are not given at the same time of day.
         """
         if self.src_freq is not None:
             for da in das.values():
@@ -1432,8 +1470,8 @@ class Indicator(IndicatorRegistrar):
         )
 
 
-class CheckMissingIndicator(Indicator):
-    """Class adding missing value checks to indicators.
+class CheckMissingIndicator(Indicator):  # numpydoc ignore=PR01,PR02
+    r"""Class adding missing value checks to indicators.
 
     This should not be used as-is, but subclassed by implementing the `_get_missing_freq` method.
     This method will be called in `_postprocess` using the compute parameters as only argument.
@@ -1518,7 +1556,7 @@ class CheckMissingIndicator(Indicator):
         return outs
 
 
-class ReducingIndicator(CheckMissingIndicator):
+class ReducingIndicator(CheckMissingIndicator):  # numpydoc ignore=PR01,PR02
     """Indicator that performs a time-reducing computation.
 
     Compared to the base Indicator, this adds the handling of missing data.
@@ -1646,7 +1684,7 @@ base_registry["Hourly"] = Hourly
 base_registry["Daily"] = Daily
 
 
-def add_iter_indicators(module):
+def add_iter_indicators(module: ModuleType):
     """Create an iterable of loaded indicators."""
     if not hasattr(module, "iter_indicators"):
 
