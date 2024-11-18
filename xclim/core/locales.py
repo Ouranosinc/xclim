@@ -70,8 +70,16 @@ List of attributes to consider translatable when generating locale dictionaries.
 _LOCALES = {}
 
 
-def list_locales():
-    """List of loaded locales. Includes all loaded locales, no matter how complete the translations are."""
+def list_locales() -> list:
+    """List of loaded locales.
+
+    Includes all loaded locales, no matter how complete the translations are.
+
+    Returns
+    -------
+    list
+        A list of available locales.
+    """
     return list(_LOCALES.keys())
 
 
@@ -97,7 +105,7 @@ def get_local_dict(locale: str | Sequence[str] | tuple[str, dict]) -> tuple[str,
 
     Parameters
     ----------
-    locale: str or sequence of str
+    locale : str or sequence of str
         IETF language tag or a tuple of the language tag and a translation dict, or a tuple of the language
         tag and a path to a json file defining translation of attributes.
 
@@ -109,7 +117,7 @@ def get_local_dict(locale: str | Sequence[str] | tuple[str, dict]) -> tuple[str,
     Returns
     -------
     str
-        The best fitting locale string
+        The best fitting locale string.
     dict
         The available translations in this locale.
     """
@@ -141,7 +149,7 @@ def get_local_attrs(
     names: Sequence[str] | None = None,
     append_locale_name: bool = True,
 ) -> dict:
-    """Get all attributes of an indicator in the requested locales.
+    r"""Get all attributes of an indicator in the requested locales.
 
     Parameters
     ----------
@@ -149,7 +157,7 @@ def get_local_attrs(
         Indicator's class name, usually the same as in `xc.core.indicator.registry`.
         If multiple names are passed, the attrs from each indicator are merged,
         with the highest priority set to the first name.
-    locales : str or tuple of str
+    \*locales : str or tuple of str
         IETF language tag or a tuple of the language tag and a translation dict, or a tuple of the language tag
         and a path to a json file defining translation of attributes.
     names : sequence of str, optional
@@ -202,9 +210,14 @@ def get_local_formatter(
 
     Parameters
     ----------
-    locale: str or tuple of str
+    locale : str or tuple of str
         IETF language tag or a tuple of the language tag and a translation dict, or a tuple of the language tag
         and a path to a json file defining translation of attributes.
+
+    Returns
+    -------
+    AttrFormatter
+        A locale-based formatter object instance.
     """
     _, loc_dict = get_local_dict(locale)
     if "attrs_mapping" in loc_dict:
@@ -219,7 +232,13 @@ def get_local_formatter(
 
 
 class UnavailableLocaleError(ValueError):
-    """Error raised when a locale is requested but doesn't exist."""
+    """Error raised when a locale is requested but doesn't exist.
+
+    Parameters
+    ----------
+    locale : str
+        The locale code.
+    """
 
     def __init__(self, locale):
         super().__init__(
@@ -241,7 +260,12 @@ def read_locale_file(
         Defaults to None, and no module name is added (as if the indicator was an official xclim indicator).
     encoding : str
         The encoding to use when reading the file.
-        Defaults to UTF-8, overriding python's default mechanism which is machine dependent.
+        Defaults to `UTF-8`, overriding Python's default mechanism which is machine dependent.
+
+    Returns
+    -------
+    dict
+        The locale dictionary.
     """
     locdict: dict[str, dict]
     with open(filename, encoding=encoding) as f:
@@ -255,7 +279,7 @@ def read_locale_file(
     return locdict
 
 
-def load_locale(locdata: str | Path | dict[str, dict], locale: str):
+def load_locale(locdata: str | Path | dict[str, dict], locale: str) -> None:
     """Load translations from a json file into xclim.
 
     Parameters
@@ -281,10 +305,14 @@ def generate_local_dict(locale: str, init_english: bool = False) -> dict:
     Parameters
     ----------
     locale : str
-        Locale in the IETF format
+        Locale in the IETF format.
     init_english : bool
-        If True, fills the initial dictionary with the english versions of the attributes.
-        Defaults to False.
+        If True, fills the initial dictionary with the english versions of the attributes. Defaults to False.
+
+    Returns
+    -------
+    dict
+        Indicator translation dictionary.
     """
     from ..core.indicator import registry  # pylint: disable=import-outside-toplevel
 

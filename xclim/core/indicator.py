@@ -1577,7 +1577,7 @@ class ReducingIndicator(CheckMissingIndicator):  # numpydoc ignore=PR01,PR02
         return None
 
 
-class ResamplingIndicator(CheckMissingIndicator):
+class ResamplingIndicator(CheckMissingIndicator):  # numpydoc ignore=PR02
     """Indicator that performs a resampling computation.
 
     Compared to the base Indicator, this adds the handling of missing data,
@@ -1685,7 +1685,13 @@ base_registry["Daily"] = Daily
 
 
 def add_iter_indicators(module: ModuleType):
-    """Create an iterable of loaded indicators."""
+    """Create an iterable of loaded indicators.
+
+    Parameters
+    ----------
+    module : ModuleType
+        The module to add the iterator to.
+    """
     if not hasattr(module, "iter_indicators"):
 
         def iter_indicators():
@@ -1778,12 +1784,11 @@ def build_indicator_module_from_yaml(  # noqa: C901
     filename : PathLike
         Path to a YAML file or to the stem of all module files. See Notes for behaviour when passing a basename only.
     name : str, optional
-        The name of the new or existing module, defaults to the basename of the file.
-        (e.g: `atmos.yml` -> `atmos`)
+        The name of the new or existing module, defaults to the basename of the file (e.g: `atmos.yml` -> `atmos`).
     indices : Mapping of callables or module or path, optional
         A mapping or module of indice functions or a python file declaring such a file.
         When creating the indicator, the name in the `index_function` field is first sought
-        here, then the indicator class will search in xclim.indices.generic and finally in xclim.indices.
+        here, then the indicator class will search in :py:mod:`xclim.indices.generic` and finally in :py:mod:`xclim.indices`.
     translations : Mapping of dicts or path, optional
         Translated metadata for the new indicators. Keys of the mapping must be 2-char language tags.
         Values can be translations dictionaries as defined in :ref:`internationalization:Internationalization`.
@@ -1797,14 +1802,14 @@ def build_indicator_module_from_yaml(  # noqa: C901
         If reload is True and the module already exists, it is first removed before being rebuilt.
         If False (default), indicators are added or updated, but not removed.
     validate : bool or path
-        If True (default), the yaml module is validated against xclim's schema.
+        If True (default), the yaml module is validated against `xclim`s schema.
         Can also be the path to a yml schema against which to validate.
         Or False, in which case validation is simply skipped.
 
     Returns
     -------
     ModuleType
-        A submodule of `pym:mod:`xclim.indicators`.
+        A submodule of :py:mod:`xclim.indicators`.
 
     Notes
     -----
@@ -1821,9 +1826,9 @@ def build_indicator_module_from_yaml(  # noqa: C901
 
     See Also
     --------
-    xclim.core.indicator
+    xclim.core.indicator : Indicator build logic.
 
-    build_module
+    build_module : Function to build a module from a dictionary of indicators.
     """
     filepath = Path(filename)
 
