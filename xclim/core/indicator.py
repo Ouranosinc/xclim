@@ -1790,9 +1790,9 @@ def build_indicator_module_from_yaml(  # noqa: C901
         When creating the indicator, the name in the `index_function` field is first sought
         here, then the indicator class will search in :py:mod:`xclim.indices.generic` and finally in :py:mod:`xclim.indices`.
     translations : Mapping of dicts or path, optional
-        Translated metadata for the new indicators. Keys of the mapping must be 2-char language tags.
+        Translated metadata for the new indicators. Keys of the mapping must be two-character language tags.
         Values can be translations dictionaries as defined in :ref:`internationalization:Internationalization`.
-        They can also be a path to a json file defining the translations.
+        They can also be a path to a JSON file defining the translations.
     mode : {'raise', 'warn', 'ignore'}
         How to deal with broken indice definitions.
     encoding : str
@@ -1802,8 +1802,8 @@ def build_indicator_module_from_yaml(  # noqa: C901
         If reload is True and the module already exists, it is first removed before being rebuilt.
         If False (default), indicators are added or updated, but not removed.
     validate : bool or path
-        If True (default), the yaml module is validated against `xclim`s schema.
-        Can also be the path to a yml schema against which to validate.
+        If True (default), the yaml module is validated against the `xclim` schema.
+        Can also be the path to a YAML schema against which to validate;
         Or False, in which case validation is simply skipped.
 
     Returns

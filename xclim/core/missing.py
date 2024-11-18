@@ -375,7 +375,7 @@ class MissingWMO(MissingAny):
         Number of consecutive missing values per month that should not be exceeded.
     src_timestep : {"D"}
         Expected input frequency. Only daily values are supported.
-    indexer: {dim: indexer, }, optional
+    \*\*indexer : {dim: indexer, }, optional
         Time attribute and values over which to subset the array. For example, use season='DJF' to select winter
         Time attribute and values over which to subset the array. For example, use season='DJF' to select winter
         values, month=1 to select January, or month=[6,7,8] to select summer months.
@@ -405,8 +405,36 @@ class MissingWMO(MissingAny):
         super().__init__(da, freq, src_timestep, **indexer)
 
     @classmethod
-    def execute(cls, da, freq, src_timestep, options, indexer):
-        """Create the instance and call it in one operation."""
+    def execute(
+        cls,
+        da: xr.DataArray,
+        freq: str,
+        src_timestep: str,
+        options: dict,
+        indexer: dict,
+    ) -> xr.DataArray:
+        """Create the instance and call it in one operation.
+
+        Parameters
+        ----------
+        da : xr.DataArray
+            Input data.
+        freq : str
+            Resampling frequency.
+        src_timestep : str
+            The expected input frequency. If not given, it will be inferred from the input array.
+        options : dict
+            Dictionary of options to pass to the instance.
+        indexer : dict
+            Time attribute and values over which to subset the array. For example, use season='DJF' to select winter
+            values, month=1 to select January, or month=[6,7,8] to select summer months.
+            If not indexer is given, all values are considered.
+
+        Returns
+        -------
+        xr.DataArray
+            The executed WMO-missing standards-compliant DataArray.
+        """
         if freq[0] not in ["Y", "A", "Q", "M"]:
             raise ValueError(
                 "MissingWMO can only be used with Monthly or longer frequencies."
@@ -557,49 +585,49 @@ class FromContext(MissingBase):
 # user-friendly. This can also be useful for testing.
 
 
-def missing_any(
+def missing_any(  # noqa: D103 # numpydoc ignore=GL08
     da: xr.DataArray, freq: str, src_timestep: str | None = None, **indexer
-):  # noqa: D103 # numpydoc ignore=GL08
+) -> xr.DataArray:
     """Return whether there are missing days in the array."""
     src_timestep = src_timestep or xr.infer_freq(da.time)
     return MissingAny(da, freq, src_timestep, **indexer)()
 
 
-def missing_wmo(
+def missing_wmo(  # noqa: D103 # numpydoc ignore=GL08
     da: xr.DataArray,
     freq: str,
     nm: int = 11,
     nc: int = 5,
     src_timestep: str | None = None,
     **indexer,
-):  # noqa: D103 # numpydoc ignore=GL08
+) -> xr.DataArray:
     src_timestep = src_timestep or xr.infer_freq(da.time)
     return MissingWMO.execute(
         da, freq, src_timestep, options={"nm": nm, "nc": nc}, indexer=indexer
     )
 
 
-def missing_pct(
+def missing_pct(  # noqa: D103 # numpydoc ignore=GL08
     da: xr.DataArray,
     freq: str,
     tolerance: float,
     src_timestep: str | None = None,
     **indexer,
-):  # noqa: D103 # numpydoc ignore=GL08
+) -> xr.DataArray:
     src_timestep = src_timestep or xr.infer_freq(da.time)
     return MissingPct(da, freq, src_timestep, **indexer)(tolerance=tolerance)
 
 
-def at_least_n_valid(
+def at_least_n_valid(  # noqa: D103 # numpydoc ignore=GL08
     da: xr.DataArray, freq: str, n: int = 1, src_timestep: str | None = None, **indexer
-):  # noqa: D103 # numpydoc ignore=GL08
+) -> xr.DataArray:
     src_timestep = src_timestep or xr.infer_freq(da.time)
     return AtLeastNValid(da, freq, src_timestep, **indexer)(n=n)
 
 
-def missing_from_context(
+def missing_from_context(  # noqa: D103 # numpydoc ignore=GL08
     da: xr.DataArray, freq: str, src_timestep: str | None = None, **indexer
-):  # noqa: D103 # numpydoc ignore=GL08
+) -> xr.DataArray:
     src_timestep = src_timestep or xr.infer_freq(da.time)
     return FromContext.execute(da, freq, src_timestep, options={}, indexer=indexer)
 
