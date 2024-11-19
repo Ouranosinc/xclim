@@ -1,4 +1,5 @@
-# noqa: D100
+"""Threshold indice definitions."""
+
 from __future__ import annotations
 
 import warnings
@@ -215,8 +216,7 @@ def cold_spell_frequency(
 ) -> xarray.DataArray:
     r"""Cold spell frequency.
 
-    The number of cold spell events, defined as a sequence of consecutive {window} days
-    with mean daily temperature below a {thresh}.
+    The number of cold spell events, defined as a sequence of consecutive {window} days with mean daily temperature below a {thresh}.
 
     Parameters
     ----------
@@ -231,13 +231,12 @@ def cold_spell_frequency(
     op : {"<", "<=", "lt", "le"}
         Comparison operation. Default: "<".
     resample_before_rl : bool
-        Determines if the resampling should take place before or after the run
+        Determines if the resampling should take place before or after the run.
 
     Returns
     -------
     xarray.DataArray, [unitless]
         The {freq} number of cold periods of minimum {window} days.
-
     """
     t = convert_units_to(thresh, tas)
     over = compare(tas, op, t, constrain=("<", "<="))
@@ -473,8 +472,7 @@ def snw_season_start(
 ) -> xarray.DataArray:
     r"""Snow cover start date (amount).
 
-    Day of year when snow water is above or equal to a threshold
-    for at least `N` consecutive days.
+    Day of year when snow water is above or equal to a threshold for at least `N` consecutive days.
 
     Parameters
     ----------
@@ -495,7 +493,6 @@ def snw_season_start(
     References
     ----------
     :cite:cts:`chaumont_elaboration_2017`
-
     """
     valid = at_least_n_valid(snw.where(snw > 0), n=1, freq=freq)
     out = season(snw, thresh, window=window, op=">=", stat="start", freq=freq)
@@ -1037,8 +1034,8 @@ def growing_season_length(
     r"""Growing season length.
 
     The growing season starts with the first sequence of a minimum length of consecutive days above the threshold
-    and ends with the first sequence of the same minimum length of consecutive days under the threshold. Sequences
-    of consecutive days under the threshold shorter then `window` are allowed within the season.
+    and ends with the first sequence of the same minimum length of consecutive days under the threshold.
+    Sequences of consecutive days under the threshold shorter than `window` are allowed within the season.
     A middle date can be given, a start can't happen later and an end can't happen earlier.
     If the season starts but never ends, the length is computed up to the end of the resampling period.
     If no season start is found, but the data is valid, a length of 0 is returned.
@@ -1057,7 +1054,7 @@ def growing_season_length(
         Minimum number of days with temperature above threshold to mark the beginning and end of growing season.
     mid_date : str, optional
         Date of the year before which the season must start and after which it can end. Should have the format '%m-%d'.
-        ``None`` removes that constraint.
+        Setting `None` removes that constraint.
     freq : str
         Resampling frequency.
     op : {">", ">=", "gt", "ge"}
@@ -1099,7 +1096,6 @@ def growing_season_length(
     References
     ----------
     :cite:cts:`project_team_eca&d_algorithm_2013`
-
     """
     return season(
         tas,
@@ -1644,7 +1640,7 @@ def first_snowfall(
     prsn : xarray.DataArray
         Snowfall flux.
     thresh : Quantified
-        Threshold snowfall flux or liquid water equivalent snowfall rate. (default: 1 mm/day)
+        Threshold snowfall flux or liquid water equivalent snowfall rate. (default: 1 mm/day).
     freq : str
         Resampling frequency.
 
@@ -1709,7 +1705,6 @@ def last_snowfall(
         Last day of the year where snowfall is superior to a threshold.
         If there is no such day, returns np.nan.
 
-
     References
     ----------
     :cite:cts:`cbcl_climate_2020`.
@@ -1758,7 +1753,7 @@ def days_with_snow(
     Parameters
     ----------
     prsn : xarray.DataArray
-        Snowfall flux
+        Snowfall flux.
     low : Quantified
         Minimum threshold snowfall flux or liquid water equivalent snowfall rate.
     high : Quantified
@@ -2178,7 +2173,7 @@ def hot_spell_frequency(
     op : {">", ">=", "gt", "ge"}
         Comparison operation. Default: ">".
     resample_before_rl : bool
-        Determines if the resampling should take place before or after the run
+        Determines if the resampling should take place before or after the run.
 
     Returns
     -------
@@ -2272,7 +2267,6 @@ def snw_days_above(
     -------
     xarray.DataArray, [time]
         Number of days where snow amount is greater than or equal to {thresh}.
-
     """
     valid = at_least_n_valid(snw, n=1, freq=freq)
     thresh = convert_units_to(thresh, snw)
@@ -3090,10 +3084,10 @@ def degree_days_exceedance_date(
     op : {">", "gt", "<", "lt", ">=", "ge", "<=", "le"}
         If equivalent to '>', degree days are computed as `tas - thresh` and if
         equivalent to '<', they are computed as `thresh - tas`.
-    after_date: str, optional
+    after_date : str, optional
         Date at which to start the cumulative sum.
         In "MM-DD" format, defaults to the start of the sampling period.
-    never_reached: int, str, optional
+    never_reached : int, str, optional
         What to do when `sum_thresh` is never exceeded.
         If an int, the value to assign as a day-of-year.
         If a string, must be in "MM-DD" format, the day-of-year of that date is assigned.
@@ -3192,15 +3186,14 @@ def dry_spell_frequency(
     freq : str
         Resampling frequency.
     resample_before_rl : bool
-        Determines if the resampling should take place before or after the run
-        length encoding (or a similar algorithm) is applied to runs.
-    op: {"sum", "max", "min", "mean"}
+        Determines if the resampling should take place before or after the run length encoding (or a similar algorithm) is applied to runs.
+    op : {"sum", "max", "min", "mean"}
         Operation to perform on the window.
         Default is "sum", which checks that the sum of accumulated precipitation over the whole window is less than the
         threshold.
         "max" checks that the maximal daily precipitation amount within the window is less than the threshold.
         This is the same as verifying that each individual day is below the threshold.
-    \*\*indexer
+    \*\*indexer : {dim: indexer}, optional
         Indexing parameters to compute the indicator on a temporal subset of the data.
         It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
         Indexing is done after finding the dry days, but before finding the spells.
@@ -3212,7 +3205,7 @@ def dry_spell_frequency(
 
     See Also
     --------
-    xclim.indices.generic.spell_length_statistics
+    xclim.indices.generic.spell_length_statistics : The parent function that computes the spell length statistics.
 
     Examples
     --------
@@ -3267,9 +3260,8 @@ def dry_spell_total_length(
     freq : str
         Resampling frequency.
     resample_before_rl : bool
-        Determines if the resampling should take place before or after the run
-        length encoding (or a similar algorithm) is applied to runs.
-    \*\*indexer
+        Determines if the resampling should take place before or after the run length encoding (or a similar algorithm) is applied to runs.
+    \*\*indexer : {dim: indexer}, optional
         Indexing parameters to compute the indicator on a temporal subset of the data.
         It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
         Indexing is done after finding the dry days, but before finding the spells.
@@ -3281,7 +3273,7 @@ def dry_spell_total_length(
 
     See Also
     --------
-    xclim.indices.generic.spell_length_statistics
+    xclim.indices.generic.spell_length_statistics : The parent function that computes the spell length statistics.
 
     Notes
     -----
@@ -3336,14 +3328,14 @@ def dry_spell_max_length(
     resample_before_rl : bool
         Determines if the resampling should take place before or after the run
         length encoding (or a similar algorithm) is applied to runs.
-    \*\*indexer
+    \*\*indexer : {dim: indexer}, optional
         Indexing parameters to compute the indicator on a temporal subset of the data.
         It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
         Indexing is done after finding the dry days, but before finding the spells.
 
     See Also
     --------
-    xclim.indices.generic.spell_length_statistics
+    xclim.indices.generic.spell_length_statistics : The parent function that computes the spell length statistics.
 
     Returns
     -------
@@ -3393,28 +3385,27 @@ def wet_spell_frequency(
         Daily precipitation.
     thresh : Quantified
         Precipitation amount over which a period is considered dry.
-        The value against which the threshold is compared depends on  `op` .
+        The value against which the threshold is compared depends on `op`.
     window : int
         Minimum length of the spells.
     freq : str
         Resampling frequency.
     resample_before_rl : bool
-        Determines if the resampling should take place before or after the run
-        length encoding (or a similar algorithm) is applied to runs.
+        Determines if the resampling should take place before or after the run length encoding (or a similar algorithm) is applied to runs.
     op : {"sum","min", "max", "mean"}
         Operation to perform on the window.
         Default is "sum", which checks that the sum of accumulated precipitation over the whole window is more than the
         threshold.
         "min" checks that the maximal daily precipitation amount within the window is more than the threshold.
         This is the same as verifying that each individual day is above the threshold.
-    \*\*indexer
+    \*\*indexer : {dim: indexer}, optional
         Indexing parameters to compute the indicator on a temporal subset of the data.
         It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
         Indexing is done after finding the wet days, but before finding the spells.
 
     See Also
     --------
-    xclim.indices.generic.spell_length_statistics
+    xclim.indices.generic.spell_length_statistics : The parent function that computes the spell length statistics.
 
     Returns
     -------
@@ -3473,16 +3464,15 @@ def wet_spell_total_length(
     freq : str
         Resampling frequency.
     resample_before_rl : bool
-        Determines if the resampling should take place before or after the run
-        length encoding (or a similar algorithm) is applied to runs.
-    \*\*indexer
+        Determines if the resampling should take place before or after the run length encoding (or a similar algorithm) is applied to runs.
+    \*\*indexer : {dim: indexer}, optional
         Indexing parameters to compute the indicator on a temporal subset of the data.
         It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
         Indexing is done after finding the wet days, but before finding the spells.
 
     See Also
     --------
-    xclim.indices.generic.spell_length_statistics
+    xclim.indices.generic.spell_length_statistics : The parent function that computes the spell length statistics.
 
     Returns
     -------
@@ -3542,17 +3532,16 @@ def wet_spell_max_length(
         In all cases, the whole window is marked a part of a wet spell.
     freq : str
         Resampling frequency.
-    resample_before_rl: bool
-        Determines if the resampling should take place before or after the run
-        length encoding (or a similar algorithm) is applied to runs.
-    \*\*indexer
+    resample_before_rl : bool
+        Determines if the resampling should take place before or after the run length encoding (or a similar algorithm) is applied to runs.
+    \*\*indexer : {dim: indexer}, optional
         Indexing parameters to compute the indicator on a temporal subset of the data.
         It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
         Indexing is done after finding the wet days, but before finding the spells.
 
     See Also
     --------
-    xclim.indices.generic.spell_length_statistics
+    xclim.indices.generic.spell_length_statistics : The parent function that computes the spell length statistics.
 
     Returns
     -------

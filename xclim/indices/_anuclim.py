@@ -1,4 +1,5 @@
-# noqa: D100
+"""ANUCLIM indice definitions."""
+
 from __future__ import annotations
 
 from collections.abc import Callable
@@ -81,7 +82,7 @@ def isothermality(
     Returns
     -------
     xarray.DataArray, [%]
-       Isothermality
+       Isothermality.
 
     Notes
     -----
@@ -120,7 +121,7 @@ def temperature_seasonality(
     Returns
     -------
     xarray.DataArray, [%]
-      Mean temperature coefficient of variation
+      Mean temperature coefficient of variation.
     freq : str
       Resampling frequency.
 
@@ -173,7 +174,7 @@ def precip_seasonality(pr: xarray.DataArray, freq: str = "YS") -> xarray.DataArr
     Returns
     -------
     xarray.DataArray, [%]
-        Precipitation coefficient of variation
+        Precipitation coefficient of variation.
 
     Examples
     --------
@@ -235,7 +236,7 @@ def tg_mean_warmcold_quarter(
     Returns
     -------
     xarray.DataArray, [same as tas]
-       Mean temperature of {op} quarter
+       Mean temperature of {op} quarter.
 
     Examples
     --------
@@ -281,7 +282,7 @@ def tg_mean_wetdry_quarter(
 
     The wettest (or driest) quarter of the year is determined, and the mean temperature of this period is calculated.
     If the input data frequency is daily ("D") or weekly ("W"), quarters are defined as 13-week periods,
-    otherwise are 3 months.
+    otherwise as three (3) months.
 
     Parameters
     ----------
@@ -297,7 +298,7 @@ def tg_mean_wetdry_quarter(
     Returns
     -------
     xarray.DataArray, [same as tas]
-       Mean temperature of {op} quarter
+       Mean temperature of {op} quarter.
 
     Notes
     -----
@@ -332,7 +333,7 @@ def prcptot_wetdry_quarter(
     r"""Total precipitation of wettest/driest quarter.
 
     The wettest (or driest) quarter of the year is determined, and the total precipitation of this period is calculated.
-    If the input data frequency is daily ("D") or weekly ("W") quarters are defined as 13-week periods, otherwise are
+    If the input data frequency is daily ("D") or weekly ("W") quarters are defined as 13-week periods, otherwise as
     three (3) months.
 
     Parameters
@@ -347,7 +348,7 @@ def prcptot_wetdry_quarter(
     Returns
     -------
     xarray.DataArray, [length]
-       Precipitation of {op} quarter
+       Precipitation of {op} quarter.
 
     Examples
     --------
@@ -392,8 +393,8 @@ def prcptot_warmcold_quarter(
     r"""Total precipitation of warmest/coldest quarter.
 
     The warmest (or coldest) quarter of the year is determined, and the total precipitation of this period is
-    calculated. If the input data frequency is daily ("D) or weekly ("W"), quarters are defined as 13-week periods,
-    otherwise are 3 months.
+    calculated. If the input data frequency is daily ("D") or weekly ("W"), quarters are defined as 13-week periods,
+    otherwise as three (3) months.
 
     Parameters
     ----------
@@ -409,7 +410,7 @@ def prcptot_warmcold_quarter(
     Returns
     -------
     xarray.DataArray, [mm]
-       Precipitation of {op} quarter
+       Precipitation of {op} quarter.
 
     Notes
     -----
@@ -487,7 +488,7 @@ def prcptot_wetdry_period(
     Returns
     -------
     xarray.DataArray, [length]
-        Precipitation of {op} period
+        Precipitation of {op} period.
 
     Notes
     -----

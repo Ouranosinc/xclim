@@ -1,4 +1,5 @@
-# noqa: D100
+"""Multivariate indice definitions."""
+
 from __future__ import annotations
 
 from collections.abc import Callable
@@ -84,7 +85,7 @@ def cold_spell_duration_index(
     tasmin : xarray.DataArray
         Minimum daily temperature.
     tasmin_per : xarray.DataArray
-        nth percentile of daily minimum temperature with `dayofyear` coordinate.
+        The nth percentile of daily minimum temperature with `dayofyear` coordinate.
     window : int
         Minimum number of days with temperature below threshold to qualify as a cold spell.
     freq : str
@@ -97,8 +98,8 @@ def cold_spell_duration_index(
         Bootstrapping is only useful when the percentiles are computed on a part of the studied sample.
         This period, common to percentiles and the sample must be bootstrapped to avoid inhomogeneities with
         the rest of the time series.
-        Keep bootstrap to False when there is no common period, it would give wrong results
-        plus, bootstrapping is computationally expensive.
+        Keep bootstrap to `False` when there is no common period, as bootstrapping is computationally expensive,
+        and it might provide the wrong results.
     op : {"<", "<=", "lt", "le"}
         Comparison operation. Default: "<".
 
@@ -171,7 +172,7 @@ def cold_and_dry_days(
     Parameters
     ----------
     tas : xarray.DataArray
-        Mean daily temperature values
+        Mean daily temperature values.
     pr : xarray.DataArray
         Daily precipitation.
     tas_per : xarray.DataArray
@@ -201,7 +202,6 @@ def cold_and_dry_days(
     References
     ----------
     :cite:cts:`beniston_trends_2009`
-
     """
     tas_per = convert_units_to(tas_per, tas)
     thresh = resample_doy(tas_per, tas)
@@ -237,7 +237,7 @@ def warm_and_dry_days(
     Parameters
     ----------
     tas : xarray.DataArray
-        Mean daily temperature values
+        Mean daily temperature values.
     pr : xarray.DataArray
         Daily precipitation.
     tas_per : xarray.DataArray
@@ -267,7 +267,6 @@ def warm_and_dry_days(
     References
     ----------
     :cite:cts:`beniston_trends_2009`
-
     """
     tas_per = convert_units_to(tas_per, tas)
     thresh = resample_doy(tas_per, tas)
@@ -303,7 +302,7 @@ def warm_and_wet_days(
     Parameters
     ----------
     tas : xarray.DataArray
-        Mean daily temperature values
+        Mean daily temperature values.
     pr : xarray.DataArray
         Daily precipitation.
     tas_per : xarray.DataArray
@@ -373,7 +372,7 @@ def cold_and_wet_days(
     Parameters
     ----------
     tas : xarray.DataArray
-        Mean daily temperature values
+        Mean daily temperature values.
     pr : xarray.DataArray
         Daily precipitation.
     tas_per : xarray.DataArray
@@ -825,7 +824,7 @@ def heat_wave_total_length(
         Minimum number of days with temperatures above thresholds to qualify as a heatwave.
     freq : str
         Resampling frequency.
-    op: {">", ">=", "gt", "ge"}
+    op : {">", ">=", "gt", "ge"}
         Comparison operation. Default: ">".
     resample_before_rl : bool
         Determines if the resampling should take place before or after the run
@@ -907,7 +906,7 @@ def liquid_precip_ratio(
 
     See Also
     --------
-    winter_rain_ratio
+    winter_rain_ratio : The ratio of rainfall to total precipitation during winter.
     """
     if prsn is None and tas is not None:
         prsn = snowfall_approximation(pr, tas=tas, thresh=thresh, method="binary")
@@ -1096,12 +1095,12 @@ def rain_on_frozen_ground_days(
     t = convert_units_to(thresh, pr, context="hydro")
     frz = convert_units_to("0 C", tas)
 
-    def func(x, axis):
+    def _func(x, axis):
         """Check that temperature conditions are below 0 for seven days and above after."""
         frozen = x == np.array([0, 0, 0, 0, 0, 0, 0, 1], bool)
         return frozen.all(axis=axis)
 
-    tcond = (tas > frz).rolling(time=8).reduce(func)
+    tcond = (tas > frz).rolling(time=8).reduce(_func)
     pcond = pr > t
 
     out = (tcond * pcond * 1).resample(time=freq).sum(dim="time")
@@ -1262,7 +1261,6 @@ def fraction_over_precip_thresh(
     -------
     xarray.DataArray, [dimensionless]
         Fraction of precipitation over threshold during wet days.
-
     """
     pr_per = convert_units_to(pr_per, pr, context="hydro")
     thresh = convert_units_to(thresh, pr, context="hydro")
@@ -1674,7 +1672,7 @@ def tx_tn_days_above(
     Returns
     -------
     xarray.DataArray, [time]
-      the number of days with tasmin > thresh_tasmin and tasmax > thresh_tasmax per period.
+        The number of days with tasmin > thresh_tasmin and tasmax > thresh_tasmax per period.
 
     Notes
     -----
@@ -1692,7 +1690,6 @@ def tx_tn_days_above(
     .. math::
 
         TN_{ij} > TN_{thresh} [℃]
-
     """
     thresh_tasmax = convert_units_to(thresh_tasmax, tasmax)
     thresh_tasmin = convert_units_to(thresh_tasmin, tasmin)
@@ -1728,7 +1725,7 @@ def warm_spell_duration_index(
     tasmax : xarray.DataArray
         Maximum daily temperature.
     tasmax_per : xarray.DataArray
-        percentile(s) of daily maximum temperature.
+        Percentile(s) of daily maximum temperature.
     window : int
         Minimum number of days with temperature above threshold to qualify as a warm spell.
     freq : str
@@ -1839,7 +1836,7 @@ def blowing_snow(
     snd : xarray.DataArray
         Surface snow depth.
     sfcWind : xr.DataArray
-        Wind velocity
+        Wind velocity.
     snd_thresh : Quantified
         Threshold on net snowfall accumulation over the last `window` days.
     sfcWind_thresh : Quantified
@@ -1882,6 +1879,8 @@ def water_cycle_intensity(
         Precipitation flux.
     evspsbl : xarray.DataArray
         Actual evapotranspiration flux.
+    freq : str
+        Resampling frequency.
 
     Returns
     -------

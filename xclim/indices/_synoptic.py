@@ -1,4 +1,5 @@
-# noqa: D100
+"""Synoptic indice definitions."""
+
 from __future__ import annotations
 
 import cf_xarray  # noqa: F401, pylint: disable=unused-import

@@ -47,6 +47,7 @@ __all__ = [
     "infer_context",
     "infer_sampling_units",
     "lwethickness2amount",
+    "pint2cfattrs",
     "pint2cfunits",
     "pint_multiply",
     "rate2amount",

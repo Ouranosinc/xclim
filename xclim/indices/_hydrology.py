@@ -1,4 +1,5 @@
-# noqa: D100
+"""Hydrological indice definitions."""
+
 from __future__ import annotations
 
 import numpy as np
@@ -53,13 +54,11 @@ def base_flow_index(q: xr.DataArray, freq: str = "YS") -> xr.DataArray:
 
        \frac{\min(\mathrm{CMA}_7(\mathbf{q}))}{\overline{\mathbf{q}}}
 
-
     where :math:`\mathrm{CMA}_7` is the seven days moving average of the daily flow:
 
     .. math::
 
        \mathrm{CMA}_7(q_i) = \frac{\sum_{j=i-3}^{i+3} q_j}{7}
-
     """
     m7 = q.rolling(time=7, center=True).mean(skipna=False).resample(time=freq)
     mq = q.resample(time=freq)
@@ -116,7 +115,7 @@ def snd_max(snd: xr.DataArray, freq: str = "YS-JUL") -> xr.DataArray:
 
     Parameters
     ----------
-    snw : xarray.DataArray
+    snd : xarray.DataArray
         Snow depth (mass per area).
     freq : str
         Resampling frequency.
@@ -170,7 +169,7 @@ def snw_max(snw: xr.DataArray, freq: str = "YS-JUL") -> xr.DataArray:
     ----------
     snw : xarray.DataArray
         Snow amount (mass per area).
-    freq: str
+    freq : str
         Resampling frequency.
 
     Returns
@@ -262,7 +261,7 @@ def melt_and_precip_max(
         Daily precipitation flux.
     window : int
         Number of days during which the water input is accumulated.
-    freq: str
+    freq : str
         Resampling frequency.
 
     Returns
@@ -287,8 +286,7 @@ def melt_and_precip_max(
 
 @declare_units(q="[discharge]")
 def flow_index(q: xr.DataArray, p: float = 0.95) -> xr.DataArray:
-    """
-    Flow index
+    """Flow index.
 
     Calculate the pth percentile of daily streamflow normalized by the median flow.
 

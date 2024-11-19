@@ -1,4 +1,5 @@
-# noqa: D100
+"""Agroclimatic indice definitions."""
+
 from __future__ import annotations
 
 from typing import cast
@@ -355,7 +356,7 @@ def biologically_effective_degree_days(
     Returns
     -------
     xarray.DataArray, [K days]
-        Biologically effective growing degree days (BEDD)
+        Biologically effective growing degree days (BEDD).
 
     Warnings
     --------
@@ -542,7 +543,7 @@ def cool_night_index(
 
 
 @declare_units(pr="[precipitation]", evspsblpot="[precipitation]", wo="[length]")
-def dryness_index(
+def dryness_index(  # numpydoc ignore=SS05
     pr: xarray.DataArray,
     evspsblpot: xarray.DataArray,
     lat: xarray.DataArray | str | None = None,
@@ -645,7 +646,6 @@ def dryness_index(
     References
     ----------
     :cite:cts:`tonietto_multicriteria_2004,riou_determinisme_1994`
-
     """
     if parse_offset(freq) != (1, "Y", True, "JAN"):
         raise ValueError(f"Freq not allowed: {freq}. Must be `YS` or `YS-JAN`")
@@ -839,8 +839,8 @@ def water_budget(
     ----------
     pr : xarray.DataArray
         Daily precipitation.
-    evspsblpot: xarray.DataArray, optional
-        Potential evapotranspiration
+    evspsblpot : xarray.DataArray, optional
+        Potential evapotranspiration.
     tasmin : xarray.DataArray, optional
         Minimum daily temperature.
     tasmax : xarray.DataArray, optional
@@ -853,21 +853,21 @@ def water_budget(
     hurs : xarray.DataArray, optional
         Relative humidity.
     rsds : xarray.DataArray, optional
-        Surface Downwelling Shortwave Radiation
+        Surface Downwelling Shortwave Radiation.
     rsus : xarray.DataArray, optional
-        Surface Upwelling Shortwave Radiation
+        Surface Upwelling Shortwave Radiation.
     rlds : xarray.DataArray, optional
-        Surface Downwelling Longwave Radiation
+        Surface Downwelling Longwave Radiation.
     rlus : xarray.DataArray, optional
-        Surface Upwelling Longwave Radiation
+        Surface Upwelling Longwave Radiation.
     sfcWind : xarray.DataArray, optional
-        Surface wind velocity (at 10 m)
+        Surface wind velocity (at 10 m).
     method : str
         Method to use to calculate the potential evapotranspiration.
 
     See Also
     --------
-    xclim.indicators.atmos.potential_evapotranspiration
+    xclim.indicators.atmos.potential_evapotranspiration : Potential evapotranspiration calculation.
 
     Returns
     -------
@@ -942,7 +942,7 @@ def rain_season(
         Accumulated precipitation threshold associated with `window_wet_start`.
     window_wet_start : int
         Number of days when accumulated precipitation is above `thresh_wet_start`.
-        Defines the first condition to start the rain season
+        Defines the first condition to start the rain season.
     window_not_dry_start : int
         Number of days, after `window_wet_start` days, during which no dry period must be found as a second and last
         condition to start the rain season.
@@ -984,8 +984,11 @@ def rain_season(
     Returns
     -------
     rain_season_start: xr.DataArray, [dimensionless]
+        The beginning of the rain season.
     rain_season_end: xr.DataArray, [dimensionless]
+        The end of the rain season.
     rain_season_length: xr.DataArray, [time]
+        The length of the rain season.
 
     Notes
     -----
@@ -1133,9 +1136,9 @@ def standardized_precipitation_index(
         i.e. a monthly resampling, the window is an integer number of months.
     dist : {"gamma", "fisk"}
         Name of the univariate distribution. (see :py:mod:`scipy.stats`).
-    method : {'APP', 'ML'}
+    method : {"APP", "ML"}
         Name of the fitting method, such as `ML` (maximum likelihood), `APP` (approximate). The approximate method
-        uses a deterministic function that doesn't involve any optimization.
+        uses a deterministic function that does not involve any optimization.
     fitkwargs : dict, optional
         Kwargs passed to ``xclim.indices.stats.fit`` used to impose values of certains parameters (`floc`, `fscale`).
     cal_start : DateStr, optional
@@ -1148,7 +1151,7 @@ def standardized_precipitation_index(
         Fit parameters.
         The `params` can be computed using ``xclim.indices.stats.standardized_index_fit_params`` in advance.
         The output can be given here as input, and it overrides other options.
-    \*\*indexer
+    \*\*indexer : {dim: indexer}, optional
         Indexing parameters to compute the indicator on a temporal subset of the data.
         It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
 
@@ -1283,7 +1286,7 @@ def standardized_precipitation_evapotranspiration_index(
         Fit parameters.
         The `params` can be computed using ``xclim.indices.stats.standardized_index_fit_params`` in advance.
         The output can be given here as input, and it overrides other options.
-    \*\*indexer
+    \*\*indexer : {dim: indexer}, optional
         Indexing parameters to compute the indicator on a temporal subset of the data.
         It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
 
@@ -1294,7 +1297,7 @@ def standardized_precipitation_evapotranspiration_index(
 
     See Also
     --------
-    standardized_precipitation_index
+    standardized_precipitation_index : Standardized Precipitation Index.
     """
     fitkwargs = fitkwargs or {}
 
@@ -1478,7 +1481,7 @@ def effective_growing_degree_days(
 
 
 @declare_units(tasmin="[temperature]")
-def hardiness_zones(
+def hardiness_zones(  # numpydoc ignore=SS05
     tasmin: xarray.DataArray, window: int = 30, method: str = "usda", freq: str = "YS"
 ):
     """Hardiness zones.
@@ -1493,7 +1496,7 @@ def hardiness_zones(
         Minimum temperature.
     window : int
         The length of the averaging window, in years.
-    method : {'usda', 'anbg'}
+    method : {"usda", "anbg"}
         Whether to return the American (`usda`) or the Australian (`anbg`) classification zones.
     freq : str
         Resampling frequency.
@@ -1581,26 +1584,29 @@ def _apply_chill_portion_one_season(tas_K):
 def chill_portions(
     tas: xarray.DataArray, freq: str = "YS", **indexer
 ) -> xarray.DataArray:
-    """Chill portion based on the dynamic model
+    r"""Chill portion based on the dynamic model.
 
     Chill portions are a measure to estimate the bud breaking potential of different crop.
-    The constants and functions are taken from Luedeling et al. (2009) which formalises
-    the method described in Fishman et al. (1987). The model computes the accumulation of
-    an intermediate product that is transformed to the final product once it exceeds a
-    certain concentration. The intermediate product can be broken down at higher temperatures
-    but the final product is stable even at higher temperature. Thus the dynamic model is
-    more accurate than the Utah model especially in moderate climates like Israel,
-    California or Spain.
+    The constants and functions are taken from Luedeling et al. (2009) which formalises the method described in
+    Fishman et al. (1987). The model computes the accumulation of an intermediate product that is transformed to
+    the final product once it exceeds a certain concentration. The intermediate product can be broken down at higher
+    temperatures but the final product is stable even at higher temperature. Thus, the dynamic model is more accurate
+    than the Utah model especially in moderate climates like Israel, California, or Spain.
 
     Parameters
     ----------
     tas : xr.DataArray
         Hourly temperature.
+    freq : str
+        Resampling frequency.
+    \*\*indexer : {dim: indexer}, optional
+        Indexing parameters to compute the indicator on a temporal subset of the data.
+        It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
 
     Returns
     -------
     xr.DataArray, [unitless]
-        Chill portions after the Dynamic Model
+        Chill portions after the Dynamic Model.
 
     Notes
     -----
@@ -1636,21 +1642,23 @@ def chill_portions(
 
 @declare_units(tas="[temperature]")
 def chill_units(tas: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
-    """Chill units using the Utah model
+    """Chill units using the Utah model.
 
     Chill units are a measure to estimate the bud breaking potential of different crop based on Richardson et al. (1974).
-    The Utah model assigns a weight to each hour depending on the temperature recognising that high temperatures can actual decrease,
-    the potential for bud breaking.
+    The Utah model assigns a weight to each hour depending on the temperature recognising that high temperatures can
+    actually decrease the potential for bud breaking.
 
     Parameters
     ----------
     tas : xr.DataArray
         Hourly temperature.
+    freq : str
+        Resampling frequency.
 
     Returns
     -------
     xr.DataArray, [unitless]
-        Chill units using the Utah model
+        Chill units using the Utah model.
 
     Examples
     --------

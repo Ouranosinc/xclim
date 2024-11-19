@@ -1,4 +1,5 @@
-# noqa: D100
+"""Simple indice definitions."""
+
 from __future__ import annotations
 
 import xarray
@@ -86,7 +87,7 @@ def tg_mean(tas: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
     Returns
     -------
     xarray.DataArray, [same units as tas]
-        The mean daily temperature at the given time frequency
+        The mean daily temperature at the given time frequency.
 
     Notes
     -----
@@ -335,7 +336,7 @@ def frost_days(
         Freezing temperature.
     freq : str
         Resampling frequency.
-    indexer
+    \*\*indexer : {dim: indexer}, optional
         Indexing parameters to compute the frost days on a temporal subset of the data.
         It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
 
@@ -529,7 +530,7 @@ def snow_depth(
     Returns
     -------
     xarray.DataArray, [same units as snd]
-        The mean daily snow depth at the given time frequency
+        The mean daily snow depth at the given time frequency.
     """
     return snd.resample(time=freq).mean(dim="time").assign_attrs(units=snd.units)
 
@@ -593,7 +594,7 @@ def sfcWind_mean(  # noqa: N802
     Returns
     -------
     xarray.DataArray, [same units as sfcWind]
-        The mean daily wind speed at the given time frequency
+        The mean daily wind speed at the given time frequency.
 
     Notes
     -----
@@ -721,7 +722,7 @@ def sfcWindmax_mean(  # noqa: N802
     Returns
     -------
     xarray.DataArray, [same units as sfcWindmax]
-        The mean daily maximum wind speed at the given time frequency
+        The mean daily maximum wind speed at the given time frequency.
 
     Notes
     -----

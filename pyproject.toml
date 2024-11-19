@@ -269,8 +269,11 @@ override_SS05 = [
   # override SS05 to allow docstrings starting with these words
   '^Access ',
   '^Assess ',
+  '^Days ',
+  '^Degree-days ',
   '^Griffiths ',
-  '^Process '
+  '^Process ',
+  '^Statistics '
 ]
 
 [tool.pytest.ini_options]
