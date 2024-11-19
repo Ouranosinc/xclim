@@ -3,15 +3,14 @@ r"""
 McArthur Forest Fire Danger (Mark 5) System
 ===========================================
 
-This submodule defines indices related to the McArthur Forest Fire Danger Index Mark 5. Currently
-implemented are the :py:func:`xclim.indices.fire.keetch_byram_drought_index`,
+This submodule defines indices related to the McArthur Forest Fire Danger Index Mark 5.
+Currently implemented are the :py:func:`xclim.indices.fire.keetch_byram_drought_index`,
 :py:func:`xclim.indices.fire.griffiths_drought_factor` and
 :py:func:`xclim.indices.fire.mcarthur_forest_fire_danger_index` indices, which are used by the eponym indicators.
 The implementation of these indices follows :cite:t:`ffdi-finkele_2006` and :cite:t:`ffdi-noble_1980`,
-with any differences described in the documentation for each index. Users are encouraged to read this module's
-documentation and consult :cite:t:`ffdi-finkele_2006` for a full description of the methods used to calculate each
+with any differences described in the documentation for each index. Users are encouraged to read the documentation of
+this module and consult :cite:t:`ffdi-finkele_2006` for a full description of the methods used to calculate each
 index.
-
 """
 # This file is structured in the following way:
 # Section 1: individual codes, numba-accelerated and vectorized functions.
@@ -208,7 +207,7 @@ def keetch_byram_drought_index(
         Total rainfall over previous 24 hours [mm/day].
     tasmax : xr.DataArray
         Maximum temperature near the surface over previous 24 hours [degC].
-    pr_annual: xr.DataArray
+    pr_annual : xr.DataArray
         Mean (over years) annual accumulated rainfall [mm/year].
     kbdi0 : xr.DataArray, optional
         Previous KBDI values used to initialise the KBDI calculation [mm/day]. Defaults to 0.
@@ -296,7 +295,7 @@ def griffiths_drought_factor(
 
     Returns
     -------
-    df : xr.DataArray
+    xr.DataArray
         The limited Griffiths drought factor.
 
     Notes

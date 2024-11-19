@@ -98,7 +98,7 @@ def fit(
         The PWM method is usually more robust to outliers.
     dim : str
         The dimension upon which to perform the indexing (default: "time").
-    \*\*fitkwargs
+    \*\*fitkwargs : dict
         Other arguments passed directly to :py:func:`_fitstart` and to the distribution's `fit`.
 
     Returns
@@ -403,7 +403,7 @@ def frequency_analysis(
         Fitting method, either maximum likelihood (ML or MLE), method of moments (MOM) or approximate method (APP).
         Also accepts probability weighted moments (PWM), also called L-Moments, if `dist` is an instance from the lmoments3 library.
         The PWM method is usually more robust to outliers.
-    \*\*indexer
+    \*\*indexer : {dim: indexer, }, optional
         Time attribute and values over which to subset the array. For example, use season='DJF' to select winter values,
         month=1 to select January, or month=[6,7,8] to select summer months.
         If indexer is not provided, all values are considered.
@@ -666,7 +666,7 @@ def preprocess_standardized_index(
     window : int
         Averaging window length relative to the resampling frequency. For example, if `freq="MS"`,
         i.e. a monthly resampling, the window is an integer number of months.
-    \*\*indexer
+    \*\*indexer : {dim: indexer, }, optional
         Indexing parameters to compute the indicator on a temporal subset of the data.
         It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
 
@@ -754,7 +754,7 @@ def standardized_index_fit_params(
         If True, the zeroes of `da` are treated separately when fitting a probability density function.
     fitkwargs : dict, optional
         Kwargs passed to ``xclim.indices.stats.fit`` used to impose values of certains parameters (`floc`, `fscale`).
-    \*\*indexer
+    \*\*indexer : {dim: indexer, }, optional
         Indexing parameters to compute the indicator on a temporal subset of the data.
         It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
 
@@ -873,7 +873,7 @@ def standardized_index(
         Fit parameters.
         The `params` can be computed using ``xclim.indices.stats.standardized_index_fit_params`` in advance.
         The output can be given here as input, and it overrides other options.
-    \*\*indexer
+    \*\*indexer : {dim: indexer, }, optional
         Indexing parameters to compute the indicator on a temporal subset of the data.
         It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
 

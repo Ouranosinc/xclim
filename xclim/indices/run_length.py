@@ -76,7 +76,7 @@ def use_ufunc(
     # If resampling after run length is set up for the computation, the 1d method is not implemented
     # Unless ufunc_1dim is specifically set to False (in which case we flag an error above),
     # we simply forbid this possibility.
-    return (index == "first") and (ufunc_1dim) and (freq is None)
+    return (index == "first") and ufunc_1dim and (freq is None)
 
 
 def resample_and_rl(
@@ -105,7 +105,7 @@ def resample_and_rl(
         Resampling frequency.
     dim : str
         The dimension along which to find runs.
-    \*\*kwargs
+    \*\*kwargs : dict
         Keyword arguments needed in `compute`.
 
     Returns

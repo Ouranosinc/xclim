@@ -606,7 +606,7 @@ def spell_length_statistics(
     resample_before_rl : bool
         Determines if the resampling should take place before or after the run
         length encoding (or a similar algorithm) is applied to runs.
-    \*\*indexer
+    \*\*indexer : {dim: indexer, }, optional
         Indexing parameters to compute the indicator on a temporal subset of the data.
         It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
         Indexing is done after finding the days part of a spell, but before taking the spell statistics.
@@ -712,7 +712,7 @@ def bivariate_spell_length_statistics(
     resample_before_rl : bool
         Determines if the resampling should take place before or after the run
         length encoding (or a similar algorithm) is applied to runs.
-    \*\*indexer
+    \*\*indexer : {dim: indexer, }, optional
         Indexing parameters to compute the indicator on a temporal subset of the data.
         It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
         Indexing is done after finding the days part of a spell, but before taking the spell statistics.

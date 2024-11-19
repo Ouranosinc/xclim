@@ -267,9 +267,10 @@ exclude = [
 ]
 override_SS05 = [
   # override SS05 to allow docstrings starting with these words
-  '^Process ',
+  '^Access ',
   '^Assess ',
-  '^Access '
+  '^Griffiths ',
+  '^Process '
 ]
 
 [tool.pytest.ini_options]

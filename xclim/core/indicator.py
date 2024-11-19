@@ -545,10 +545,10 @@ class Indicator(IndicatorRegistrar):
 
         compute_sig = signature(compute)
         # Remove the \\* symbols from the parameter names
+        _sanitized_params_dict = {}
         for param in params_dict.keys():
-            if "\\*" in param:
-                sanitized = param.replace("\\*", "")
-                params_dict[sanitized] = params_dict.pop(param)
+            _sanitized_params_dict[param.replace("\\*", "")] = params_dict[param]
+        params_dict = _sanitized_params_dict
 
         # Check that the `Parameters` section of the docstring does not include parameters
         # that are not in the `compute` function signature.
