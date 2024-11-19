@@ -5,6 +5,7 @@ Adjustment Methods
 """
 from __future__ import annotations
 
+import copy
 from importlib.util import find_spec
 from inspect import signature
 from typing import Any
@@ -1818,7 +1819,7 @@ class MBCn(TrainAdjust):
         period_dim=None,
     ):
         # set default values for non-specified parameters
-        base_kws_vars = base_kws_vars or {}
+        base_kws_vars = copy.deepcopy(base_kws_vars) or {}
         pts_dim = self.pts_dims[0]
         for v in sim[pts_dim].values:
             base_kws_vars.setdefault(v, {})
