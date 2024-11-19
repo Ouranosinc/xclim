@@ -551,7 +551,7 @@ class Skip(MissingBase):  # pylint: disable=missing-class-docstring
     def __init__(self, da, freq=None, src_timestep=None, **indexer):
         pass
 
-    def is_missing(self, null, count, **kwargs):
+    def is_missing(self, null, count):
         """Return whether the values within each period should be considered missing or not."""
         return False
 
