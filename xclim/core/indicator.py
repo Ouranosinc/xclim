@@ -544,9 +544,14 @@ class Indicator(IndicatorRegistrar):
         params_dict = docmeta.pop("parameters", {})  # override parent's parameters
 
         compute_sig = signature(compute)
+        # Remove the \\* symbols from the parameter names
+        for param in params_dict.keys():
+            if "\\*" in param:
+                sanitized = param.replace("\\*", "")
+                params_dict[sanitized] = params_dict.pop(param)
+
         # Check that the `Parameters` section of the docstring does not include parameters
         # that are not in the `compute` function signature.
-        # FIXME: How can we handle `\*args` and `\*\*kwargs` in the Parameters docstring?
         if not set(params_dict.keys()).issubset(compute_sig.parameters.keys()):
             raise ValueError(
                 f"Malformed docstring on {compute} : the parameters "
