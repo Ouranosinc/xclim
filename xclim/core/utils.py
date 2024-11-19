@@ -575,6 +575,12 @@ def infer_kind_from_parameter(param) -> InputKind:
     Parameters
     ----------
     param : Parameter
+        An inspect.Parameter instance.
+
+    Returns
+    -------
+    InputKind
+        The appropriate InputKind constant.
 
     Notes
     -----
@@ -631,10 +637,19 @@ def infer_kind_from_parameter(param) -> InputKind:
     return InputKind.OTHER_PARAMETER
 
 
+# FIXME: Should we be using logging instead of print?
 def adapt_clix_meta_yaml(  # noqa: C901
     raw: os.PathLike | StringIO | str, adapted: os.PathLike
-):
-    """Read in a clix-meta yaml representation and refactor it to fit xclim's yaml specifications."""
+) -> None:
+    """Read in a clix-meta yaml representation and refactor it to fit xclim YAML specifications.
+
+    Parameters
+    ----------
+    raw : os.PathLike or StringIO or str
+        The path to the clix-meta yaml file or the string representation of the yaml.
+    adapted : os.PathLike
+        The path to the adapted yaml file.
+    """
     from ..indices import generic  # pylint: disable=import-outside-toplevel
 
     freq_defs = {"annual": "YS", "seasonal": "QS-DEC", "monthly": "MS", "weekly": "W"}
@@ -787,8 +802,18 @@ def adapt_clix_meta_yaml(  # noqa: C901
 def is_percentile_dataarray(source: xr.DataArray) -> bool:
     """Evaluate whether a DataArray is a Percentile.
 
-    A percentile dataarray must have climatology_bounds attributes and either a
+    A percentile DataArray must have 'climatology_bounds' attributes and either a
     quantile or percentiles coordinate, the window is not mandatory.
+
+    Parameters
+    ----------
+    source : xr.DataArray
+        The DataArray to evaluate.
+
+    Returns
+    -------
+    bool
+        True if the DataArray is a percentile.
     """
     return (
         isinstance(source, xr.DataArray)
@@ -826,24 +851,25 @@ def split_auxiliary_coordinates(
     """Split auxiliary coords from the dataset.
 
     An auxiliary coordinate is a coordinate variable that does not define a dimension and thus is not necessarily needed for dataset alignment.
-    Any coordinate that has a name different than its dimension(s) is flagged as auxiliary. All scalar coordinates are flagged as auxiliary.
+    Any coordinate that has a name different from its dimension(s) is flagged as auxiliary.
+    All scalar coordinates are flagged as auxiliary.
 
     Parameters
     ----------
-    obj : DataArray or Dataset
-        Xarray object
+    obj : xr.DataArray or xr.Dataset
+        An xarray object.
 
     Returns
     -------
-    clean_obj : DataArray or Dataset
+    clean_obj : xr.DataArray or xr.Dataset
         Same as `obj` but without any auxiliary coordinate.
-    aux_coords : Dataset
+    aux_crd_ds : xr.Dataset
         The auxiliary coordinates as a dataset. Might be empty.
 
     Notes
     -----
-    This is useful to circumvent xarray's alignment checks that will sometimes look the auxiliary coordinate's data, which can trigger
-    unwanted dask computations.
+    This is useful to circumvent xarray's alignment checks that will sometimes look the auxiliary coordinate's data,
+    which can trigger unwanted dask computations.
 
     The auxiliary coordinates can be merged back with the dataset with
     :py:meth:`xarray.Dataset.assign_coords` or :py:meth:`xarray.DataArray.assign_coords`.

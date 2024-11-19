@@ -9,6 +9,7 @@ more specifically :cite:p:`collins_long-term_2013` (AR5) and :cite:cts:`ipccatla
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from inspect import Parameter, signature
 
 import numpy as np
@@ -39,9 +40,22 @@ New tests must be decorated with :py:func:`significance_test` and fulfill the fo
 """
 
 
-def significance_test(func):
+def significance_test(func: Callable) -> Callable:
     """Register a significance test for use in :py:func:`robustness_fractions`.
 
+    Parameters
+    ----------
+    func : function
+        The significance test function.
+        See :py:func:`robustness_fractions` for requirements.
+
+    Returns
+    -------
+    Callable
+        The registered function.
+
+    Notes
+    -----
     See :py:data:`SIGNIFICANCE_TESTS`.
     """
     SIGNIFICANCE_TESTS[func.__name__[1:].replace("_", "-")] = func
@@ -58,7 +72,7 @@ def robustness_fractions(  # noqa: C901
     weights: xr.DataArray | None = None,
     **kwargs,
 ) -> xr.Dataset:
-    r"""Robustness statistics qualifying how members of an ensemble agree on the existence of change and on its sign.
+    r"""Calculate robustness statistics qualifying how members of an ensemble agree on the existence of change and on its sign.
 
     Parameters
     ----------
@@ -384,7 +398,7 @@ def robustness_categories(
 def robustness_coefficient(
     fut: xr.DataArray | xr.Dataset, ref: xr.DataArray | xr.Dataset
 ) -> xr.DataArray | xr.Dataset:
-    """Robustness coefficient quantifying the robustness of a climate change signal in an ensemble.
+    """Calculate the robustness coefficient quantifying the robustness of a climate change signal in an ensemble.
 
     Taken from :cite:ts:`knutti_robustness_2013`.
 
@@ -399,10 +413,10 @@ def robustness_coefficient(
 
     Parameters
     ----------
-    fut : Union[xr.DataArray, xr.Dataset]
-        Future ensemble values along 'realization' and 'time' (nr, nt). Can be a dataset,
-        in which case the coefficient is computed on each variable.
-    ref : Union[xr.DataArray, xr.Dataset]
+    fut : xr.DataArray or  xr.Dataset
+        Future ensemble values along 'realization' and 'time' (nr, nt).
+        Can be a dataset, in which case the coefficient is computed on each variable.
+    ref : xr.DataArray or xr.Dataset
         Reference period values along 'time' (nt). Same type as `fut`.
 
     Returns

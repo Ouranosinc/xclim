@@ -103,7 +103,8 @@ repos:
     rev: v1.8.0
     hooks:
       - id: numpydoc-validation
-        exclude: ^docs/|^tests/|^xclim/sdba
+        # Exclude the missing submodule from the xclim.core, see:
+        exclude: ^docs/|^tests/|^xclim/sdba|^xclim/core/missing.py
   - repo: https://github.com/gitleaks/gitleaks
     rev: v8.21.2
     hooks:

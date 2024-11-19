@@ -48,7 +48,7 @@ def create_ensemble(
 
     Parameters
     ----------
-    datasets : list or dict or string
+    datasets : list or dict or str
         List of netcdf file paths or xarray Dataset/DataArray objects . If `multifile` is True, ncfiles should be a
         list of lists where each sublist contains input .nc files of an xarray multifile Dataset.
         If DataArray objects are passed, they should have a name in order to be transformed into Datasets.
@@ -72,14 +72,13 @@ def create_ensemble(
     cal_kwargs : dict, optional
         Additional arguments to pass to py:func:`xclim.core.calendar.convert_calendar`.
         For conversions involving '360_day', the align_on='date' option is used by default.
-    \*\*xr_kwargs
-        Any keyword arguments to be given to `xr.open_dataset` when opening the files
-        (or to `xr.open_mfdataset` if `multifile` is True)
+    \*\*xr_kwargs : dict
+        Any keyword arguments to be given to `xr.open_dataset` when opening the files (or to `xr.open_mfdataset` if `multifile` is True).
 
     Returns
     -------
     xr.Dataset
-        Dataset containing concatenated data from all input files.
+        A Dataset containing concatenated data from all input files.
 
     Notes
     -----
@@ -259,8 +258,7 @@ def ensemble_percentiles(
     Returns
     -------
     xr.Dataset or xr.DataArray
-        If split is True, same type as ens; dataset otherwise,
-        containing data variable(s) of requested ensemble statistics
+        If split is True, same type as ens; dataset otherwise, containing data variable(s) of requested ensemble statistics.
 
     Examples
     --------

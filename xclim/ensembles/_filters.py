@@ -1,3 +1,8 @@
+"""
+Ensemble filters for data processing
+====================================
+"""
+
 from __future__ import annotations
 
 import numpy as np
@@ -150,5 +155,16 @@ def _single_member(da: xr.DataArray, dimensions: dict | None = None) -> xr.DataA
 
 
 def reverse_dict(d: dict) -> dict:
-    """Reverse dictionary."""
+    """Reverse dictionary.
+
+    Parameters
+    ----------
+    d : dict
+        Dictionary to reverse.
+
+    Returns
+    -------
+    dict
+        Reversed dictionary.
+    """
     return {v: k for (k, v) in d.items()}
