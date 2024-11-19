@@ -1819,7 +1819,7 @@ class MBCn(TrainAdjust):
         period_dim=None,
     ):
         # set default values for non-specified parameters
-        base_kws_vars = deepcopy(base_kws_vars) or {}
+        base_kws_vars = {} if base_kws_vars is None else deepcopy(base_kws_vars)
         pts_dim = self.pts_dims[0]
         for v in sim[pts_dim].values:
             base_kws_vars.setdefault(v, {})
