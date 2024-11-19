@@ -36,6 +36,7 @@ logging.getLogger("pint").setLevel(logging.ERROR)
 __all__ = [
     "amount2lwethickness",
     "amount2rate",
+    "cf_conversion",
     "check_units",
     "convert_units_to",
     "declare_relative_units",
