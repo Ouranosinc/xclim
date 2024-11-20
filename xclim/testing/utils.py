@@ -436,6 +436,8 @@ def load_registry(
     dict
         Dictionary of filenames and hashes.
     """
+    if not repo.endswith("/"):
+        repo = f"{repo}/"
     remote_registry = audit_url(
         urljoin(
             urljoin(repo, branch if branch.endswith("/") else f"{branch}/"),
@@ -443,7 +445,7 @@ def load_registry(
         )
     )
 
-    if branch != default_testdata_version:
+    if repo == default_testdata_repo_url and branch != default_testdata_version:
         custom_registry_folder = Path(
             str(ilr.files("xclim").joinpath(f"testing/{branch}"))
         )
@@ -452,10 +454,20 @@ def load_registry(
         urlretrieve(remote_registry, registry_file)  # noqa: S310
 
     elif repo != default_testdata_repo_url:
-        registry_file = Path(str(ilr.files("xclim").joinpath("testing/registry.txt")))
+        external_repo_name = urlparse(repo).path.split("/")[-2]
+        external_branch_name = branch.split("/")[-1]
+        registry_file = Path(
+            str(
+                ilr.files("xclim").joinpath(
+                    f"testing/registry.{external_repo_name}.{external_branch_name}.txt"
+                )
+            )
+        )
         urlretrieve(remote_registry, registry_file)  # noqa: S310
 
-    registry_file = Path(str(ilr.files("xclim").joinpath("testing/registry.txt")))
+    else:
+        registry_file = Path(str(ilr.files("xclim").joinpath("testing/registry.txt")))
+
     if not registry_file.exists():
         raise FileNotFoundError(f"Registry file not found: {registry_file}")
 
@@ -517,6 +529,8 @@ def nimbus(  # noqa: PR01
             "The `pooch` package is required to fetch the xclim testing data. "
             "You can install it with `pip install pooch` or `pip install xclim[dev]`."
         )
+    if not repo.endswith("/"):
+        repo = f"{repo}/"
     remote = audit_url(
         urljoin(urljoin(repo, branch if branch.endswith("/") else f"{branch}/"), "data")
     )
