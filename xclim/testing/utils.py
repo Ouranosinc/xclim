@@ -445,15 +445,7 @@ def load_registry(
         )
     )
 
-    if repo == default_testdata_repo_url and branch != default_testdata_version:
-        custom_registry_folder = Path(
-            str(ilr.files("xclim").joinpath(f"testing/{branch}"))
-        )
-        custom_registry_folder.mkdir(parents=True, exist_ok=True)
-        registry_file = custom_registry_folder.joinpath("registry.txt")
-        urlretrieve(remote_registry, registry_file)  # noqa: S310
-
-    elif repo != default_testdata_repo_url:
+    if repo != default_testdata_repo_url:
         external_repo_name = urlparse(repo).path.split("/")[-2]
         external_branch_name = branch.split("/")[-1]
         registry_file = Path(
@@ -463,6 +455,14 @@ def load_registry(
                 )
             )
         )
+        urlretrieve(remote_registry, registry_file)  # noqa: S310
+
+    elif branch != default_testdata_version:
+        custom_registry_folder = Path(
+            str(ilr.files("xclim").joinpath(f"testing/{branch}"))
+        )
+        custom_registry_folder.mkdir(parents=True, exist_ok=True)
+        registry_file = custom_registry_folder.joinpath("registry.txt")
         urlretrieve(remote_registry, registry_file)  # noqa: S310
 
     else:
