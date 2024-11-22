@@ -14,10 +14,13 @@ Bug fixes
 ^^^^^^^^^
 * Fixed pickling issue with ``xclim.sdba.Grouper`` and other classes for usage with `dask>=2024.11`. (:issue:`1992`, :pull:`1993`).
 * Fixed an issue with ``nimbus`` that was causing URL path components to be improperly joined. (:pull:`1997`).
+* `base_kws_vars` in `MBCn` is now copied inside the `adjust` function so that in-place changes do not change the dict globally. (:pull:`1999`).
+* Fixed a bug in the logic of ``xclim.testing.utils.load_registry`` that impacted the ability to load a `registry.txt` from a non-default repository. (:pull:`2001`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
-* Changed French translations with word "pluvieux" to "avec précipitations". (:issue:`1960`, :pull:`1994`).
+* Changed french translations with word "pluvieux" to "avec précipitations". (:issue:`1960`, :pull:`1994`).
+* In order to address 403 (forbidden) request errors when retrieving data from GitHub via ReadTheDocs, the ``nimbus`` class has been modified to use an overloaded `fetch` method that appends a User-Agent header to the request. (:pull:`2001`).
 * Addressed a very rare race condition that can happen if `pytest` is tearing down the test environment when running across multiple workers. (:pull:`1863`).
 
 CI changes
