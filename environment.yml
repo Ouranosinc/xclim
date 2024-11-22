@@ -56,6 +56,7 @@ dependencies:
   - nc-time-axis >=1.4.1
   - netcdf4  # Required for some Jupyter notebooks
   - notebook
+  - numpydoc >=1.8.0
   - pandas-stubs >=2.2
   - pooch >=1.8.0
   - pre-commit >=3.7
