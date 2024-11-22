@@ -206,7 +206,7 @@
   "WETDAYS": {
     "long_name": "Nombre de jours où la précipitation est supérieure ou égale à {thresh}",
     "description": "Nombre {freq:m} de jours où la précipitation est supérieure ou égale à {thresh}.",
-    "title": "Jours pluvieux",
+    "title": "Jours avec précipitations",
     "abstract": "Nombre de jours où la précipitation est supérieure ou égale à un seuil donné."
   },
   "WETDAYS_PROP": {
@@ -224,7 +224,7 @@
   "CWD": {
     "long_name": "Durée maximale d'une période où les précipitations sont au-dessus de {thresh}",
     "description": "Nombre {freq:m} maximal de jours consécutifs où les précipitations sont au-dessus de {thresh}.",
-    "title": "Durée de période pluvieuse",
+    "title": "Durée de la période de précipitation",
     "abstract": "Période la plus longue où la précipitation est au-dessus d'un seuil donné."
   },
   "SDII": {
@@ -1300,13 +1300,13 @@
   "WARM_AND_WET_DAYS": {
     "long_name": "Nombre de jours où la température est au-dessus du {tas_per_thresh}e centile et la précipitation au-dessus du {pr_per_thresh}e centile",
     "description": "Nombre {freq:m} de jours où la température est au-dessus du {tas_per_thresh}e centile et la précipitation au-dessus du {pr_per_thresh}e centile.",
-    "title": "Nombre de jours chauds et pluvieux",
+    "title": "Nombre de jours chauds avec précipitations",
     "abstract": "Nombre de jours où la température et la précipitation sont au-dessus de centiles donnés."
   },
   "COLD_AND_WET_DAYS": {
     "long_name": "Nombre de jours où la température est en dessous du {tas_per_thresh}e centile et la précipitation au-dessus du {pr_per_thresh}e centile",
     "description": "Nombre {freq:m} de jours où la température est en dessous du {tas_per_thresh}e centile et la précipitation au-dessus du {pr_per_thresh}e centile.",
-    "title": "Nombre de jours froids et pluvieux",
+    "title": "Nombre de jours froids avec précipitations",
     "abstract": "Nombre de jours où la température est en dessous d'un centile donné et la précipitation au-dessus d'un centile donné."
   },
   "CALM_DAYS": {
