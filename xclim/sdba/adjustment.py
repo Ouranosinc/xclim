@@ -350,6 +350,8 @@ class Adjust(BaseAdjustment):
     and returning the scen dataset/array.
     """
 
+    _replace_sim_time = True
+
     @classmethod
     def adjust(
         cls,
@@ -380,6 +382,13 @@ class Adjust(BaseAdjustment):
             sim = hist.copy()
             sim.attrs["_is_hist"] = True
 
+        # This below implies that ref.time and sim.time have the same size
+        # Since `ref,hist, sim` are in the same `map_groups` call, they must have
+        # the same time
+        if cls.__replace_sim_time:
+            sim_time = sim.time
+            sim["time"] = ref["time"]
+
         kwargs = parse_group(cls._adjust, kwargs)
         skip_checks = kwargs.pop("skip_input_checks", False)
 
@@ -395,6 +404,8 @@ class Adjust(BaseAdjustment):
             out = out.rename("scen").to_dataset()
 
         scen = out.scen
+        if cls.__replace_sim_time:
+            scen["time"] = sim_time
 
         params = ", ".join([f"{k}={repr(v)}" for k, v in kwargs.items()])
         infostr = f"{cls.__name__}.adjust(ref, hist, sim, {params})"
