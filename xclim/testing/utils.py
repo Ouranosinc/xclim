@@ -13,13 +13,14 @@ import re
 import sys
 import time
 import warnings
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from datetime import datetime as dt
+from functools import wraps
 from importlib import import_module
 from io import StringIO
 from pathlib import Path
 from shutil import copytree
-from typing import TextIO
+from typing import IO, TextIO
 from urllib.error import HTTPError, URLError
 from urllib.parse import urljoin, urlparse
 from urllib.request import urlretrieve
@@ -435,6 +436,8 @@ def load_registry(
     dict
         Dictionary of filenames and hashes.
     """
+    if not repo.endswith("/"):
+        repo = f"{repo}/"
     remote_registry = audit_url(
         urljoin(
             urljoin(repo, branch if branch.endswith("/") else f"{branch}/"),
@@ -442,7 +445,19 @@ def load_registry(
         )
     )
 
-    if branch != default_testdata_version:
+    if repo != default_testdata_repo_url:
+        external_repo_name = urlparse(repo).path.split("/")[-2]
+        external_branch_name = branch.split("/")[-1]
+        registry_file = Path(
+            str(
+                ilr.files("xclim").joinpath(
+                    f"testing/registry.{external_repo_name}.{external_branch_name}.txt"
+                )
+            )
+        )
+        urlretrieve(remote_registry, registry_file)  # noqa: S310
+
+    elif branch != default_testdata_version:
         custom_registry_folder = Path(
             str(ilr.files("xclim").joinpath(f"testing/{branch}"))
         )
@@ -450,11 +465,9 @@ def load_registry(
         registry_file = custom_registry_folder.joinpath("registry.txt")
         urlretrieve(remote_registry, registry_file)  # noqa: S310
 
-    elif repo != default_testdata_repo_url:
+    else:
         registry_file = Path(str(ilr.files("xclim").joinpath("testing/registry.txt")))
-        urlretrieve(remote_registry, registry_file)  # noqa: S310
 
-    registry_file = Path(str(ilr.files("xclim").joinpath("testing/registry.txt")))
     if not registry_file.exists():
         raise FileNotFoundError(f"Registry file not found: {registry_file}")
 
@@ -516,10 +529,13 @@ def nimbus(  # noqa: PR01
             "The `pooch` package is required to fetch the xclim testing data. "
             "You can install it with `pip install pooch` or `pip install xclim[dev]`."
         )
+    if not repo.endswith("/"):
+        repo = f"{repo}/"
     remote = audit_url(
         urljoin(urljoin(repo, branch if branch.endswith("/") else f"{branch}/"), "data")
     )
-    return pooch.create(
+
+    _nimbus = pooch.create(
         path=cache_dir,
         base_url=remote,
         version=default_testdata_version,
@@ -527,6 +543,35 @@ def nimbus(  # noqa: PR01
         allow_updates=data_updates,
         registry=load_registry(branch=branch, repo=repo),
     )
+
+    # Add a custom fetch method to the Pooch instance
+    # Needed to address: https://github.com/readthedocs/readthedocs.org/issues/11763
+    # Fix inspired by @bjlittle (https://github.com/bjlittle/geovista/pull/1202)
+    _nimbus.fetch_diversion = _nimbus.fetch
+
+    # Overload the fetch method to add user-agent headers
+    @wraps(_nimbus.fetch_diversion)
+    def _fetch(*args: str, **kwargs: bool | Callable) -> str:  # numpydoc ignore=GL08
+
+        def _downloader(
+            url: str,
+            output_file: str | IO,
+            poocher: pooch.Pooch,
+            check_only: bool | None = False,
+        ) -> None:
+            """Download the file from the URL and save it to the save_path."""
+            headers = {"User-Agent": f"xclim ({__xclim_version__})"}
+            downloader = pooch.HTTPDownloader(headers=headers)
+            return downloader(url, output_file, poocher, check_only=check_only)
+
+        # default to our http/s downloader with user-agent headers
+        kwargs.setdefault("downloader", _downloader)
+        return _nimbus.fetch_diversion(*args, **kwargs)
+
+    # Replace the fetch method with the custom fetch method
+    _nimbus.fetch = _fetch
+
+    return _nimbus
 
 
 # idea copied from raven that it borrowed from xclim that borrowed it from xarray that was borrowed from Seaborn

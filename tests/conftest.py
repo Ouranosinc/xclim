@@ -1,6 +1,7 @@
 # noqa: D104
 from __future__ import annotations
 
+import logging
 import os
 from functools import partial
 from pathlib import Path
@@ -411,6 +412,12 @@ def gather_session_data(request, nimbus, worker_id):
         """Cleanup cache folder once we are finished."""
         flag = default_testdata_cache.joinpath(".data_written")
         if flag.exists():
-            flag.unlink()
+            try:
+                flag.unlink()
+            except FileNotFoundError:
+                logging.info(
+                    "Teardown race condition occurred: .data_written flag already removed. Lucky!"
+                )
+                pass
 
     request.addfinalizer(remove_data_written_flag)
