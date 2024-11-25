@@ -76,6 +76,7 @@ class BaseAdjustment(ParametrizableWithDataset):
     """
 
     _allow_diff_calendars = True
+    _allow_diff_training_times = True
     _attribute = "_xclim_adjustment"
 
     def __init__(self, *args, _trained=False, **kwargs):
@@ -264,7 +265,7 @@ class TrainAdjust(BaseAdjustment):
         else:
             train_units = ""
 
-        if cls._allow_diff_calendars is False:
+        if cls._allow_diff_training_times is False:
             cls._check_matching_time(ref, hist)
 
         ds, params = cls._train(ref, hist, **kwargs)
@@ -450,7 +451,7 @@ class EmpiricalQuantileMapping(TrainAdjust):
     :cite:cts:`sdba-deque_frequency_2007`
     """
 
-    _allow_diff_calendars = False
+    _allow_diff_training_times = False
 
     @classmethod
     def _train(
@@ -550,7 +551,7 @@ class DetrendedQuantileMapping(TrainAdjust):
 
     """
 
-    _allow_diff_calendars = False
+    _allow_diff_training_times = False
 
     @classmethod
     def _train(
@@ -877,7 +878,7 @@ class LOCI(TrainAdjust):
     :cite:cts:`sdba-schmidli_downscaling_2006`
     """
 
-    _allow_diff_calendars = False
+    _allow_diff_training_times = False
 
     @classmethod
     def _train(
@@ -929,7 +930,7 @@ class Scaling(TrainAdjust):
         The interpolation method to use then interpolating the adjustment factors. Defaults to "nearest".
     """
 
-    _allow_diff_calendars = False
+    _allow_diff_training_times = False
 
     @classmethod
     def _train(
@@ -1746,7 +1747,7 @@ class MBCn(TrainAdjust):
     Only  "time" and "time.dayofyear" (with a suitable window) are implemented as possible values for `group`.
     """
 
-    _allow_diff_calendars = False
+    _allow_diff_training_times = False
 
     @classmethod
     def _train(
