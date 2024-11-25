@@ -109,7 +109,7 @@ class MissingBase:
         indexer : dict
             Time attribute and values over which to subset the array. For example, use season='DJF' to select winter
             values, month=1 to select January, or month=[6,7,8] to select summer months.
-            If not indexer is given, all values are considered.
+            If no indexer is given, all values are considered.
 
         Returns
         -------

@@ -222,7 +222,7 @@ class Parameter:
 
     @classmethod
     def is_parameter_dict(cls, other: dict) -> bool:
-        """Return whether other can update a parameter dictionary.
+        """Return whether `other` can update a parameter dictionary.
 
         Parameters
         ----------
@@ -232,7 +232,7 @@ class Parameter:
         Returns
         -------
         bool
-            Whether other can update a parameter dictionary.
+            Whether `other` can update a parameter dictionary.
         """
         # Passing compute_name is forbidden.
         # name is valid, but is handled by the indicator

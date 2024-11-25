@@ -236,8 +236,7 @@ def temperature_extremely_low(
     da : xarray.DataArray
         The DataArray of temperatures being examined.
     thresh : str
-        The threshold to search array for that will trigger flag if any day exceeds value.
-        Default is -90 degrees Celsius.
+        Threshold below which temperatures are considered problematic and a flag is raised. Default is -90 degrees Celsius.
 
     Returns
     -------
@@ -274,8 +273,7 @@ def temperature_extremely_high(
     da : xarray.DataArray
         The DatArray of temperature being examined.
     thresh : str
-        The threshold to search array for that will trigger flag if any day exceeds value.
-        Default is 60 degrees Celsius.
+        Threshold above which temperatures are considered problematic and a flag is raised. Default is 60 degrees Celsius.
 
     Returns
     -------
@@ -638,7 +636,7 @@ def data_flags(  # noqa: C901
     ... )
     """
 
-    def _get_variable_name(function, _kwargs):  #
+    def _get_variable_name(function, _kwargs):  
         format_args = {}
         _kwargs = _kwargs or {}
         for arg, param in signature(function).parameters.items():

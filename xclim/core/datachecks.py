@@ -60,7 +60,7 @@ def check_freq(
 
 
 def check_daily(var: xr.DataArray) -> None:
-    """Raise an error if not series has a frequency other that daily, or is not monotonically increasing.
+    """Raise an error if series has a frequency other that daily, or is not monotonically increasing.
 
     Parameters
     ----------
