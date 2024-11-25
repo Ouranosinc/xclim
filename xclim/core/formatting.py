@@ -38,14 +38,16 @@ DEFAULT_FORMAT_PARAMS = {
 
 
 class AttrFormatter(string.Formatter):
-    """A formatter for frequently used attribute values.
+    """
+    A formatter for frequently used attribute values.
 
     Parameters
     ----------
-    mapping : dict[str, Sequence[str]]
+    mapping : dict of str, sequence of str
         A mapping from values to their possible variations.
-    modifiers : Sequence[str]
-        The list of modifiers, must be the as long as the longest value of `mapping`.
+    modifiers : sequence of str
+        The list of modifiers.
+        Must at least match the length of the longest value of `mapping`.
         Cannot include reserved modifier 'r'.
 
     Notes
@@ -58,14 +60,16 @@ class AttrFormatter(string.Formatter):
         mapping: dict[str, Sequence[str]],
         modifiers: Sequence[str],
     ) -> None:
-        """Initialize the formatter.
+        """
+        Initialize the formatter.
 
         Parameters
         ----------
         mapping : dict[str, Sequence[str]]
             A mapping from values to their possible variations.
         modifiers : Sequence[str]
-            The list of modifiers, must be the as long as the longest value of `mapping`.
+            The list of modifiers.
+            Must at least match the length of the longest value of `mapping`.
             Cannot include reserved modifier 'r'.
         """
         super().__init__()
@@ -75,7 +79,8 @@ class AttrFormatter(string.Formatter):
         self.mapping = mapping
 
     def format(self, format_string: str, /, *args: Any, **kwargs: dict) -> str:
-        r"""Format a string.
+        r"""
+        Format a string.
 
         Parameters
         ----------
@@ -97,7 +102,8 @@ class AttrFormatter(string.Formatter):
         return super().format(format_string, *args, **kwargs)
 
     def format_field(self, value, format_spec: str) -> str:
-        """Format a value given a formatting spec.
+        """
+        Format a value given a formatting spec.
 
         If `format_spec` is in this Formatter's modifiers, the corresponding variation
         of value is given. If `format_spec` is 'r' (raw), the value is returned unmodified.
@@ -232,8 +238,9 @@ default_formatter = AttrFormatter(
 )
 
 
-def parse_doc(doc: str) -> dict[str, str]:
-    """Crude regex parsing reading an indice docstring and extracting information needed in indicator construction.
+def parse_doc(doc: str) -> dict:
+    """
+    Crude regex parsing reading an indice docstring and extracting information needed in indicator construction.
 
     The appropriate docstring syntax is detailed in :ref:`notebooks/extendxclim:Defining new indices`.
 
@@ -279,7 +286,8 @@ def parse_doc(doc: str) -> dict[str, str]:
 
 
 def _parse_parameters(section):
-    """Parse the 'parameters' section of a docstring into a dictionary.
+    """
+    Parse the 'parameters' section of a docstring into a dictionary.
 
     Works by mapping the parameter name to its description and, potentially, to its set of choices.
     The type annotation are not parsed, except for fixed sets of values (listed as "{'a', 'b', 'c'}").
@@ -335,7 +343,8 @@ def merge_attributes(
     missing_str: str | None = None,
     **inputs_kws: xr.DataArray | xr.Dataset,
 ) -> str:
-    r"""Merge attributes from several DataArrays or Datasets.
+    r"""
+    Merge attributes from several DataArrays or Datasets.
 
     If more than one input is given, its name (if available) is prepended as: "<input name> : <input attribute>".
 
@@ -387,7 +396,8 @@ def update_history(
     new_name: str | None = None,
     **inputs_kws: xr.DataArray | xr.Dataset,
 ) -> str:
-    r"""Return a history string with the timestamped message and the combination of the history of all inputs.
+    r"""
+    Return a history string with the timestamped message and the combination of the history of all inputs.
 
     The new history entry is formatted as "[<timestamp>] <new_name>: <hist_str> - xclim version: <xclim.__version__>."
 
@@ -434,7 +444,8 @@ def update_history(
 
 
 def update_xclim_history(func: Callable) -> Callable:
-    """Decorator that auto-generates and fills the history attribute.
+    """
+    Decorator that auto-generates and fills the history attribute.
 
     The history is generated from the signature of the function and added to the first output.
     Because of a limitation of the `boltons` wrapper, all arguments passed to the wrapped function
@@ -487,7 +498,8 @@ def update_xclim_history(func: Callable) -> Callable:
 
 
 def gen_call_string(funcname: str, *args, **kwargs) -> str:
-    r"""Generate a signature string for use in the history attribute.
+    r"""
+    Generate a signature string for use in the history attribute.
 
     DataArrays and Dataset are replaced with their name, while Nones, floats, ints and strings are printed directly.
     All other objects have their type printed between < >.
@@ -536,7 +548,8 @@ def gen_call_string(funcname: str, *args, **kwargs) -> str:
 
 
 def prefix_attrs(source: dict, keys: Sequence, prefix: str) -> dict:
-    """Rename some keys of a dictionary by adding a prefix.
+    """
+    Rename some keys of a dictionary by adding a prefix.
 
     Parameters
     ----------
@@ -562,7 +575,8 @@ def prefix_attrs(source: dict, keys: Sequence, prefix: str) -> dict:
 
 
 def unprefix_attrs(source: dict, keys: Sequence, prefix: str) -> dict:
-    """Remove prefix from keys in a dictionary.
+    """
+    Remove prefix from keys in a dictionary.
 
     Parameters
     ----------
@@ -610,7 +624,8 @@ KIND_ANNOTATION = {
 def _gen_parameters_section(
     parameters: dict[str, dict[str, Any]], allowed_periods: list[str] | None = None
 ) -> str:
-    """Generate the "parameters" section of the indicator docstring.
+    """
+    Generate the "parameters" section of the indicator docstring.
 
     Parameters
     ----------
@@ -622,6 +637,7 @@ def _gen_parameters_section(
     Returns
     -------
     str
+        The formatted section.
     """
     section = "Parameters\n----------\n"
     for name, param in parameters.items():
@@ -656,7 +672,8 @@ def _gen_parameters_section(
 
 
 def _gen_returns_section(cf_attrs: Sequence[dict[str, Any]]) -> str:
-    """Generate the "Returns" section of an indicator's docstring.
+    """
+    Generate the "Returns" section of an indicator's docstring.
 
     Parameters
     ----------
@@ -666,6 +683,7 @@ def _gen_returns_section(cf_attrs: Sequence[dict[str, Any]]) -> str:
     Returns
     -------
     str
+        The formatted section.
     """
     section = "Returns\n-------\n"
     for attrs in cf_attrs:
@@ -690,7 +708,8 @@ def _gen_returns_section(cf_attrs: Sequence[dict[str, Any]]) -> str:
 
 
 def generate_indicator_docstring(ind) -> str:
-    """Generate an indicator's docstring from keywords.
+    """
+    Generate an indicator's docstring from keywords.
 
     Parameters
     ----------
@@ -735,7 +754,8 @@ def generate_indicator_docstring(ind) -> str:
 
 
 def get_percentile_metadata(data: xr.DataArray, prefix: str) -> dict[str, str]:
-    """Get the metadata related to percentiles from the given DataArray as a dictionary.
+    """
+    Get the metadata related to percentiles from the given DataArray as a dictionary.
 
     Parameters
     ----------

@@ -70,7 +70,8 @@ binary_ops = {">": "gt", "<": "lt", ">=": "ge", "<=": "le", "==": "eq", "!=": "n
 def select_resample_op(
     da: xr.DataArray, op: str | Callable, freq: str = "YS", out_units=None, **indexer
 ) -> xr.DataArray:
-    r"""Apply operation over each period that is part of the index selection.
+    r"""
+    Apply operation over each period that is part of the index selection.
 
     Parameters
     ----------
@@ -124,7 +125,8 @@ def select_rolling_resample_op(
     out_units=None,
     **indexer,
 ) -> xr.DataArray:
-    r"""Apply operation over each period that is part of the index selection, using a rolling window before the operation.
+    r"""
+    Apply operation over each period that is part of the index selection, using a rolling window before the operation.
 
     Parameters
     ----------
@@ -161,7 +163,8 @@ def select_rolling_resample_op(
 
 
 def doymax(da: xr.DataArray) -> xr.DataArray:
-    """Return the day of year of the maximum value.
+    """
+    Return the day of year of the maximum value.
 
     Parameters
     ----------
@@ -179,7 +182,8 @@ def doymax(da: xr.DataArray) -> xr.DataArray:
 
 
 def doymin(da: xr.DataArray) -> xr.DataArray:
-    """Return the day of year of the minimum value.
+    """
+    Return the day of year of the minimum value.
 
     Parameters
     ----------
@@ -200,7 +204,8 @@ _xclim_ops = {"doymin": doymin, "doymax": doymax}
 
 
 def default_freq(**indexer) -> str:
-    r"""Return the default frequency.
+    r"""
+    Return the default frequency.
 
     Parameters
     ----------
@@ -230,7 +235,8 @@ def default_freq(**indexer) -> str:
 
 
 def get_op(op: str, constrain: Sequence[str] | None = None) -> Callable:
-    """Get python's comparing function according to its name of representation and validate allowed usage.
+    """
+    Get python's comparing function according to its name of representation and validate allowed usage.
 
     Accepted op string are keys and values of xclim.indices.generic.binary_ops.
 
@@ -280,7 +286,8 @@ def compare(
     right: float | int | np.ndarray | xr.DataArray,
     constrain: Sequence[str] | None = None,
 ) -> xr.DataArray:
-    """Compare a dataArray to a threshold using given operator.
+    """
+    Compare a DataArray to a threshold using given operator.
 
     Parameters
     ----------
@@ -308,7 +315,8 @@ def threshold_count(
     freq: str,
     constrain: Sequence[str] | None = None,
 ) -> xr.DataArray:
-    """Count number of days where value is above or below threshold.
+    """
+    Count number of days where value is above or below threshold.
 
     Parameters
     ----------
@@ -341,7 +349,8 @@ def domain_count(
     high: float | int | xr.DataArray,
     freq: str,
 ) -> xr.DataArray:
-    """Count number of days where value is within low and high thresholds.
+    """
+    Count number of days where value is within low and high thresholds.
 
     A value is counted if it is larger than `low`, and smaller or equal to `high`, i.e. in `]low, high]`.
 
@@ -371,7 +380,8 @@ def get_daily_events(
     op: str,
     constrain: Sequence[str] | None = None,
 ) -> xr.DataArray:
-    """Return a 0/1 mask when a condition is True or False.
+    """
+    Return a 0/1 mask when a condition is True or False.
 
     Parameters
     ----------
@@ -384,6 +394,11 @@ def get_daily_events(
     constrain : sequence of str, optional
         Optionally allowed conditions.
 
+    Returns
+    -------
+    xr.DataArray
+        The mask array of daily events.
+
     Notes
     -----
     The function returns:
@@ -391,11 +406,6 @@ def get_daily_events(
     - ``1`` where operator(da, da_value) is ``True``
     - ``0`` where operator(da, da_value) is ``False``
     - ``nan`` where da is ``nan``
-
-    Returns
-    -------
-    xr.DataArray
-        The mask array of daily events.
     """
     events = compare(da, op, threshold, constrain) * 1
     events = events.where(~(np.isnan(da)))
@@ -413,7 +423,8 @@ def spell_mask(
     weights: Sequence[float] = None,
     var_reducer: str = "all",
 ) -> xr.DataArray:
-    """Compute the boolean mask of data points that are part of a spell as defined by a rolling statistic.
+    """
+    Compute the boolean mask of data points that are part of a spell as defined by a rolling statistic.
 
     A day is part of a spell (True in the mask) if it is contained in any period that fulfills the condition.
 
@@ -578,7 +589,8 @@ def spell_length_statistics(
     resample_before_rl: bool = True,
     **indexer,
 ) -> xr.DataArray | Sequence[xr.DataArray]:
-    r"""Generate statistic on spells lengths.
+    r"""
+    Generate statistic on spells lengths.
 
     A spell is when a statistic (`win_reducer`) over a minimum number (`window`) of consecutive timesteps respects a condition (`op` `thresh`).
     This returns a statistic over the spells count or lengths.
@@ -616,6 +628,11 @@ def spell_length_statistics(
     xr.DataArray or sequence of xr.DataArray
         The length of the longest of such spells.
 
+    See Also
+    --------
+    spell_mask : The lower level functions that finds spells.
+    bivariate_spell_length_statistics : The bivariate version of this function.
+
     Examples
     --------
     >>> spell_length_statistics(
@@ -644,11 +661,6 @@ def spell_length_statistics(
 
     Here, a day is part of a spell if it is in any five (5) day period where the total accumulated precipitation reaches
     or exceeds 20 mm. We then return the length of the longest of such spells.
-
-    See Also
-    --------
-    spell_mask : The lower level functions that finds spells.
-    bivariate_spell_length_statistics : The bivariate version of this function.
     """
     thresh = convert_units_to(threshold, data, context="infer")
     return _spell_length_statistics(
@@ -680,7 +692,8 @@ def bivariate_spell_length_statistics(
     resample_before_rl: bool = True,
     **indexer,
 ) -> xr.DataArray | Sequence[xr.DataArray]:
-    r"""Generate statistic on spells lengths based on two variables.
+    r"""
+    Generate statistic on spells lengths based on two variables.
 
     A spell is when a statistic (`win_reducer`) over a minimum number (`window`) of consecutive timesteps respects a condition (`op` `thresh`).
     This returns a statistic over the spells count or lengths. In this bivariate version, conditions on both variables must be fulfilled.
@@ -754,7 +767,8 @@ def season(
     mid_date: DayOfYearStr | None = None,
     constrain: Sequence[str] | None = None,
 ) -> xr.DataArray:
-    r"""Season.
+    r"""
+    Season.
 
     A season starts when a variable respects some condition for a consecutive run of `N` days. It stops
     when the condition is inverted for `N` days. Runs where the condition is not met for fewer than `N` days
@@ -785,6 +799,12 @@ def season(
         Depends on 'stat'. If 'start' or 'end', this is the day of year of the season's start or end.
         If 'length', this is the length of the season.
 
+    See Also
+    --------
+    xclim.indices.run_length.season_start : The function that finds the start of the season.
+    xclim.indices.run_length.season_length : The function that finds the length of the season.
+    xclim.indices.run_length.season_end : The function that finds the end of the season.
+
     Examples
     --------
     >>> season(tas, thresh="0 °C", window=5, op=">", stat="start", freq="YS")
@@ -805,12 +825,6 @@ def season(
     Returns the length of the "dry" season. The season starts with 7 consecutive days with precipitation under or equal to
     2 mm/d and ends with as many days above 2 mm/d. If no start is found before the first of august, the season is invalid.
     If a start is found but no end, the end is set to the last day of the period (December 31st if the dataset is complete).
-
-    See Also
-    --------
-    xclim.indices.run_length.season_start : The function that finds the start of the season.
-    xclim.indices.run_length.season_length : The function that finds the length of the season.
-    xclim.indices.run_length.season_end : The function that finds the end of the season.
     """
     thresh = convert_units_to(thresh, data, context="infer")
     cond = compare(data, op, thresh, constrain=constrain)
@@ -840,7 +854,8 @@ def count_level_crossings(
     op_low: str = "<",
     op_high: str = ">=",
 ) -> xr.DataArray:
-    """Calculate the number of times low_data is below threshold while high_data is above threshold.
+    """
+    Calculate the number of times low_data is below threshold while high_data is above threshold.
 
     First, the threshold is transformed to the same standard_name and units as the input data,
     then the thresholding is performed, and finally, the number of occurrences is counted.
@@ -884,7 +899,8 @@ def count_occurrences(
     op: str,
     constrain: Sequence[str] | None = None,
 ) -> xr.DataArray:
-    """Calculate the number of times some condition is met.
+    """
+    Calculate the number of times some condition is met.
 
     First, the threshold is transformed to the same standard_name and units as the input data:
     Then the thresholding is performed as condition(data, threshold),
@@ -920,7 +936,8 @@ def count_occurrences(
 def diurnal_temperature_range(
     low_data: xr.DataArray, high_data: xr.DataArray, reducer: str, freq: str
 ) -> xr.DataArray:
-    """Calculate the diurnal temperature range and reduce according to a statistic.
+    """
+    Calculate the diurnal temperature range and reduce according to a statistic.
 
     Parameters
     ----------
@@ -956,7 +973,8 @@ def first_occurrence(
     op: str,
     constrain: Sequence[str] | None = None,
 ) -> xr.DataArray:
-    """Calculate the first time some condition is met.
+    """
+    Calculate the first time some condition is met.
 
     First, the threshold is transformed to the same standard_name and units as the input data.
     Then the thresholding is performed as condition(data, threshold), i.e. if condition is <, data < threshold.
@@ -1003,7 +1021,8 @@ def last_occurrence(
     op: str,
     constrain: Sequence[str] | None = None,
 ) -> xr.DataArray:
-    """Calculate the last time some condition is met.
+    """
+    Calculate the last time some condition is met.
 
     First, the threshold is transformed to the same standard_name and units as the input data.
     Then the thresholding is performed as condition(data, threshold), i.e. if condition is <, data < threshold.
@@ -1046,7 +1065,8 @@ def last_occurrence(
 def spell_length(
     data: xr.DataArray, threshold: Quantified, reducer: str, freq: str, op: str
 ) -> xr.DataArray:
-    """Calculate statistics on lengths of spells.
+    """
+    Calculate statistics on lengths of spells.
 
     First, the threshold is transformed to the same standard_name and units as the input data.
     Then the thresholding is performed as condition(data, threshold), i.e. if condition is <, data < threshold.
@@ -1089,7 +1109,8 @@ def spell_length(
 
 
 def statistics(data: xr.DataArray, reducer: str, freq: str) -> xr.DataArray:
-    """Calculate a simple statistic of the data.
+    """
+    Calculate a simple statistic of the data.
 
     Parameters
     ----------
@@ -1119,7 +1140,8 @@ def thresholded_statistics(
     freq: str,
     constrain: Sequence[str] | None = None,
 ) -> xr.DataArray:
-    """Calculate a simple statistic of the data for which some condition is met.
+    """
+    Calculate a simple statistic of the data for which some condition is met.
 
     First, the threshold is transformed to the same standard_name and units as the input data.
     Then the thresholding is performed as condition(data, threshold), i.e. if condition is <, data < threshold.
@@ -1158,7 +1180,8 @@ def thresholded_statistics(
 def temperature_sum(
     data: xr.DataArray, op: str, threshold: Quantified, freq: str
 ) -> xr.DataArray:
-    """Calculate the temperature sum above/below a threshold.
+    """
+    Calculate the temperature sum above/below a threshold.
 
     First, the threshold is transformed to the same standard_name and units as the input data.
     Then the thresholding is performed as condition(data, threshold), i.e. if condition is <, data < threshold.
@@ -1195,7 +1218,8 @@ def temperature_sum(
 def interday_diurnal_temperature_range(
     low_data: xr.DataArray, high_data: xr.DataArray, freq: str
 ) -> xr.DataArray:
-    """Calculate the average absolute day-to-day difference in diurnal temperature range.
+    """
+    Calculate the average absolute day-to-day difference in diurnal temperature range.
 
     Parameters
     ----------
@@ -1224,7 +1248,8 @@ def interday_diurnal_temperature_range(
 def extreme_temperature_range(
     low_data: xr.DataArray, high_data: xr.DataArray, freq: str
 ) -> xr.DataArray:
-    """Calculate the extreme temperature range as the maximum of daily maximum temperature minus the minimum of daily minimum temperature.
+    """
+    Calculate the extreme temperature range as the maximum of daily maximum temperature minus the minimum of daily minimum temperature.
 
     Parameters
     ----------
@@ -1256,7 +1281,8 @@ def aggregate_between_dates(
     op: str = "sum",
     freq: str | None = None,
 ) -> xr.DataArray:
-    """Aggregate the data over a period between start and end dates and apply the operator on the aggregated data.
+    """
+    Aggregate the data over a period between start and end dates and apply the operator on the aggregated data.
 
     Parameters
     ----------
@@ -1351,7 +1377,8 @@ def aggregate_between_dates(
 def cumulative_difference(
     data: xr.DataArray, threshold: Quantified, op: str, freq: str | None = None
 ) -> xr.DataArray:
-    """Calculate the cumulative difference below/above a given value threshold.
+    """
+    Calculate the cumulative difference below/above a given value threshold.
 
     Parameters
     ----------
@@ -1398,7 +1425,8 @@ def first_day_threshold_reached(
     freq: str = "YS",
     constrain: Sequence[str] | None = None,
 ) -> xr.DataArray:
-    r"""First day of values exceeding threshold.
+    r"""
+    First day of values exceeding threshold.
 
     Returns first day of period where values reach or exceed a threshold over a given number of days,
     limited to a starting calendar date.
@@ -1447,7 +1475,8 @@ def _get_zone_bins(
     zone_max: Quantity,
     zone_step: Quantity,
 ):
-    """Bin boundary values as defined by zone parameters.
+    """
+    Bin boundary values as defined by zone parameters.
 
     Parameters
     ----------
@@ -1485,7 +1514,8 @@ def get_zones(
     exclude_boundary_zones: bool = True,
     close_last_zone_right_boundary: bool = True,
 ) -> xr.DataArray:
-    r"""Divide data into zones and attribute a zone coordinate to each input value.
+    r"""
+    Divide data into zones and attribute a zone coordinate to each input value.
 
     Divide values into zones corresponding to bins of width zone_step beginning at zone_min and ending at zone_max.
     Bins are inclusive on the left values and exclusive on the right values.
@@ -1500,7 +1530,7 @@ def get_zones(
         Right boundary of the last zone.
     zone_step : Quantity, optional
         Size of zones.
-    bins : xr.DataArray or list of Quantity], optional
+    bins : xr.DataArray or list of Quantity, optional
         Zones to be used, either as a DataArray with appropriate units or a list of Quantity.
     exclude_boundary_zones : bool
         Determines whether a zone value is attributed for values in ]`-np.inf`, `zone_min`[ and [`zone_max`, `np.inf`\ [.
@@ -1551,7 +1581,8 @@ def get_zones(
 def detrend(
     ds: xr.DataArray | xr.Dataset, dim="time", deg=1
 ) -> xr.DataArray | xr.Dataset:
-    """Detrend data along a given dimension computing a polynomial trend of a given order.
+    """
+    Detrend data along a given dimension computing a polynomial trend of a given order.
 
     Parameters
     ----------
@@ -1588,7 +1619,8 @@ def thresholded_events(
     window_stop: int = 1,
     freq: str | None = None,
 ) -> xr.Dataset:
-    r"""Thresholded events.
+    r"""
+    Thresholded events.
 
     Finds all events along the time dimension. An event starts if the start condition is fulfilled for a given number of consecutive time steps.
     It ends when the end condition is fulfilled for a given number of consecutive time steps.

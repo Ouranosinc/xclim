@@ -253,7 +253,6 @@ checks = [
   "all", # report on all checks, except the below
   "ES01", # "No extended summary found"
   "EX01", # "No examples section found"
-  "GL01", # "Docstring text (summary) should start in the line immediately after the opening quotes (not in the same line, or leaving a blank line in between)"
   "GL06", # "Found unknown section \"{section}\""
   "SA01", # "See Also section not found",
   "SS01" # "No summary found"

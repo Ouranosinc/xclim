@@ -26,7 +26,8 @@ def spatial_analogs(
     method: str = "kldiv",
     **kwargs,
 ):
-    r"""Compute dissimilarity statistics between target points and candidate points.
+    r"""
+    Compute dissimilarity statistics between target points and candidate points.
 
     Spatial analogues based on the comparison of climate indices. The algorithm compares
     the distribution of the reference indices with the distribution of spatially
@@ -111,7 +112,8 @@ def spatial_analogs(
 
 
 def standardize(x: np.ndarray, y: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
-    """Standardize x and y by the square root of the product of their standard deviation.
+    """
+    Standardize x and y by the square root of the product of their standard deviation.
 
     Parameters
     ----------
@@ -130,7 +132,8 @@ def standardize(x: np.ndarray, y: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
 
 
 def metric(func: Callable):
-    """Register a metric function in the `metrics` mapping and add some preparation/checking code.
+    """
+    Register a metric function in the `metrics` mapping and add some preparation/checking code.
 
     Parameters
     ----------
@@ -178,7 +181,8 @@ def metric(func: Callable):
 
 @metric
 def seuclidean(x: np.ndarray, y: np.ndarray) -> float:
-    """Compute the Euclidean distance between the mean of a multivariate candidate sample with respect to the mean of a reference sample.
+    """
+    Compute the Euclidean distance between the mean of a multivariate candidate sample with respect to the mean of a reference sample.
 
     This method is scale-invariant.
 
@@ -212,7 +216,8 @@ def seuclidean(x: np.ndarray, y: np.ndarray) -> float:
 
 @metric
 def nearest_neighbor(x: np.ndarray, y: np.ndarray) -> np.ndarray:
-    """Compute a dissimilarity metric based on the number of points in the pooled sample whose nearest neighbor belongs to the same distribution.
+    """
+    Compute a dissimilarity metric based on the number of points in the pooled sample whose nearest neighbor belongs to the same distribution.
 
     This method is scale-invariant.
 
@@ -249,7 +254,8 @@ def nearest_neighbor(x: np.ndarray, y: np.ndarray) -> np.ndarray:
 
 @metric
 def zech_aslan(x: np.ndarray, y: np.ndarray, *, dmin: float = 1e-12) -> float:
-    r"""Compute a modified Zech-Aslan energy distance dissimilarity metric based on an analogy with the energy of a cloud of electrical charges.
+    r"""
+    Compute a modified Zech-Aslan energy distance dissimilarity metric based on an analogy with the energy of a cloud of electrical charges.
 
     This method is scale-invariant.
 
@@ -382,7 +388,8 @@ def szekely_rizzo(x: np.ndarray, y: np.ndarray, *, standardize: bool = True) -> 
 
 @metric
 def friedman_rafsky(x: np.ndarray, y: np.ndarray) -> float:
-    """Compute a dissimilarity metric based on the Friedman-Rafsky runs statistics.
+    """
+    Compute a dissimilarity metric based on the Friedman-Rafsky runs statistics.
 
     The algorithm builds a minimal spanning tree (the subset of edges connecting all points that minimizes the total
     edge length) then counts the edges linking points from the same distribution. This method is scale-dependent.
@@ -426,7 +433,8 @@ def friedman_rafsky(x: np.ndarray, y: np.ndarray) -> float:
 
 @metric
 def kolmogorov_smirnov(x: np.ndarray, y: np.ndarray) -> float:
-    """Compute the Kolmogorov-Smirnov statistic applied to two multivariate samples as described by Fasano and Franceschini.
+    """
+    Compute the Kolmogorov-Smirnov statistic applied to two multivariate samples as described by Fasano and Franceschini.
 
     This method is scale-dependent.
 
@@ -448,7 +456,8 @@ def kolmogorov_smirnov(x: np.ndarray, y: np.ndarray) -> float:
     """
 
     def pivot(_x: np.ndarray, _y: np.ndarray) -> float:
-        """Pivot function to compute the KS statistic.
+        """
+        Pivot function to compute the KS statistic.
 
         Parameters
         ----------
@@ -491,7 +500,8 @@ def kolmogorov_smirnov(x: np.ndarray, y: np.ndarray) -> float:
 def kldiv(
     x: np.ndarray, y: np.ndarray, *, k: int | Sequence[int] = 1
 ) -> float | Sequence[float]:
-    r"""Compute the Kullback-Leibler divergence between two multivariate samples.
+    r"""
+    Compute the Kullback-Leibler divergence between two multivariate samples.
 
     The formula to compute the K-L divergence from samples is given by:
 
