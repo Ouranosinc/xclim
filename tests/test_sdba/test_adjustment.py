@@ -66,6 +66,16 @@ class TestBaseAdjustment:
         ds, ds2 = unstack_variables(da), unstack_variables(da2)
         assert (ds.tas.units == ds2.tas.units) & (ds.pr.units == ds2.pr.units)
 
+    def test_matching_time(self, series, random):
+        n = 10
+        u = random.random(n)
+        da = series(u, "tas", start="2000-01-01")
+        da2 = series(u, "tas", start="2010-01-01")
+        with pytest.raises(
+            ValueError, match="`ref` and `hist` should have the same time arrays."
+        ):
+            BaseAdjustment._check_matching_time(ref=da, hist=da2)
+
 
 class TestLoci:
     @pytest.mark.parametrize("group,dec", (["time", 2], ["time.month", 1]))
@@ -1067,6 +1077,33 @@ class TestdOTC:
         assert scen.shape == (3, sim_ns - sim_na)
         sim = unstack_variables(sim)
         assert not np.isin(sim.x[sim.x.isnull()].time.values, scen.time.values).any()
+
+    # just check it runs
+    def test_different_times(self, tasmax_series, tasmin_series):
+        # `sim` has a different time than `ref,hist` (but same size)
+        ref = xr.merge(
+            [
+                tasmax_series(np.arange(730).astype(float), start="2000-01-01").chunk(
+                    {"time": -1}
+                ),
+                tasmin_series(np.arange(730).astype(float), start="2000-01-01").chunk(
+                    {"time": -1}
+                ),
+            ]
+        )
+        hist = ref.copy()
+        sim = xr.merge(
+            [
+                tasmax_series(np.arange(730).astype(float), start="2020-01-01").chunk(
+                    {"time": -1}
+                ),
+                tasmin_series(np.arange(730).astype(float), start="2020-01-01").chunk(
+                    {"time": -1}
+                ),
+            ]
+        )
+        ref, hist, sim = (stack_variables(arr) for arr in [ref, hist, sim])
+        dOTC.adjust(ref, hist, sim)
 
 
 def test_raise_on_multiple_chunks(tas_series):

@@ -212,7 +212,7 @@ class BaseAdjustment(ParametrizableWithDataset):
     @classmethod
     def _check_matching_time(cls, ref, hist):
         """Raise an error ref and hist times don't match."""
-        if all(ref.time == hist.time) is False:
+        if all(ref.time.values == hist.time.values) is False:
             raise ValueError("`ref` and `hist` should have the same time arrays.")
 
     @classmethod
@@ -385,7 +385,7 @@ class Adjust(BaseAdjustment):
         # This below implies that ref.time and sim.time have the same size
         # Since `ref,hist, sim` are in the same `map_groups` call, they must have
         # the same time
-        if cls.__replace_sim_time:
+        if cls._replace_sim_time:
             sim_time = sim.time
             sim["time"] = ref["time"]
 
@@ -404,7 +404,7 @@ class Adjust(BaseAdjustment):
             out = out.rename("scen").to_dataset()
 
         scen = out.scen
-        if cls.__replace_sim_time:
+        if cls._replace_sim_time:
             scen["time"] = sim_time
 
         params = ", ".join([f"{k}={repr(v)}" for k, v in kwargs.items()])
