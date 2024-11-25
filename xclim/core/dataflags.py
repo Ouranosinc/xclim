@@ -636,7 +636,7 @@ def data_flags(  # noqa: C901
     ... )
     """
 
-    def _get_variable_name(function, _kwargs):  
+    def _get_variable_name(function, _kwargs):
         format_args = {}
         _kwargs = _kwargs or {}
         for arg, param in signature(function).parameters.items():
