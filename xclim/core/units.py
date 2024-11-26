@@ -110,8 +110,8 @@ hydro.add_transformation(
 units.add_context(hydro)
 
 
-with (files("xclim.data") / "variables.yml").open() as f:
-    CF_CONVERSIONS = safe_load(f)["conversions"]
+with (files("xclim.data") / "variables.yml").open() as variables:
+    CF_CONVERSIONS = safe_load(variables)["conversions"]
 _CONVERSIONS = {}
 
 
@@ -297,13 +297,13 @@ def pint_multiply(
         The product DataArray.
     """
     a = 1 * units2pint(da)  # noqa
-    _f = a * q.to_base_units()
+    f = a * q.to_base_units()
     if out_units:
-        _f = _f.to(out_units)
+        f = f.to(out_units)
     else:
-        _f = _f.to_reduced_units()
-    out: xr.DataArray = da * _f.magnitude
-    out = out.assign_attrs(units=pint2cfunits(_f.units))
+        f = f.to_reduced_units()
+    out: xr.DataArray = da * f.magnitude
+    out = out.assign_attrs(units=pint2cfunits(f.units))
     return out
 
 
