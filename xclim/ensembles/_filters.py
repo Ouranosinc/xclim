@@ -10,7 +10,8 @@ import xarray as xr
 
 
 def _concat_hist(da: xr.DataArray, **hist) -> xr.DataArray:
-    r"""Concatenate historical scenario with future scenarios along the time dimension.
+    r"""
+    Concatenate historical scenario with future scenarios along the time dimension.
 
     Parameters
     ----------
@@ -67,7 +68,8 @@ def _concat_hist(da: xr.DataArray, **hist) -> xr.DataArray:
 def _model_in_all_scens(
     da: xr.DataArray, dimensions: dict | None = None
 ) -> xr.DataArray:
-    """Return data with only simulations that have at least one member in each scenario.
+    """
+    Return data with only simulations that have at least one member in each scenario.
 
     Parameters
     ----------
@@ -108,7 +110,8 @@ def _model_in_all_scens(
 
 
 def _single_member(da: xr.DataArray, dimensions: dict | None = None) -> xr.DataArray:
-    """Return data for a single member per model.
+    """
+    Return data for a single member per model.
 
     Parameters
     ----------
@@ -155,7 +158,8 @@ def _single_member(da: xr.DataArray, dimensions: dict | None = None) -> xr.DataA
 
 
 def reverse_dict(d: dict) -> dict:
-    """Reverse dictionary.
+    """
+    Reverse dictionary.
 
     Parameters
     ----------

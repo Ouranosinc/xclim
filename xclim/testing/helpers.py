@@ -38,7 +38,8 @@ def generate_atmos(
     branch: str | os.PathLike[str] | Path,
     cache_dir: str | os.PathLike[str] | Path,
 ) -> dict[str, xr.DataArray]:
-    """Create the `atmosds` synthetic testing dataset.
+    """
+    Create the `atmosds` synthetic testing dataset.
 
     Parameters
     ----------
@@ -87,7 +88,8 @@ def generate_atmos(
 
 
 def add_ensemble_dataset_objects() -> dict[str, str]:
-    """Create a dictionary of xclim ensemble-related datasets to be patched into the xdoctest namespace.
+    """
+    Create a dictionary of xclim ensemble-related datasets to be patched into the xdoctest namespace.
 
     Returns
     -------
@@ -110,7 +112,8 @@ def add_ensemble_dataset_objects() -> dict[str, str]:
 
 
 def add_example_file_paths() -> dict[str, str | list[xr.DataArray]]:
-    """Create a dictionary of doctest-relevant datasets to be patched into the xdoctest namespace.
+    """
+    Create a dictionary of doctest-relevant datasets to be patched into the xdoctest namespace.
 
     Returns
     -------
@@ -162,7 +165,8 @@ def add_example_file_paths() -> dict[str, str | list[xr.DataArray]]:
 
 
 def add_doctest_filepaths() -> dict[str, Any]:
-    """Overload some libraries directly into the xdoctest namespace.
+    """
+    Overload some libraries directly into the xdoctest namespace.
 
     Returns
     -------
@@ -188,7 +192,8 @@ def test_timeseries(
     as_dataset: bool = False,
     cftime: bool = False,
 ) -> xr.DataArray | xr.Dataset:
-    """Create a generic timeseries object based on pre-defined dictionaries of existing variables.
+    """
+    Create a generic timeseries object based on pre-defined dictionaries of existing variables.
 
     Parameters
     ----------
@@ -239,7 +244,8 @@ def test_timeseries(
 
 
 def _raise_on_compute(dsk: dict):
-    """Raise an AssertionError mentioning the number triggered tasks.
+    """
+    Raise an AssertionError mentioning the number triggered tasks.
 
     Parameters
     ----------

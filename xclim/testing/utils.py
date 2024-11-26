@@ -87,7 +87,8 @@ except AttributeError:
     default_testdata_cache = None
 
 TESTDATA_REPO_URL = str(os.getenv("XCLIM_TESTDATA_REPO_URL", default_testdata_repo_url))
-"""Sets the URL of the testing data repository to use when fetching datasets.
+"""
+Sets the URL of the testing data repository to use when fetching datasets.
 
 Notes
 -----
@@ -105,7 +106,8 @@ or setting the variable at runtime:
 """
 
 TESTDATA_BRANCH = str(os.getenv("XCLIM_TESTDATA_BRANCH", default_testdata_version))
-"""Sets the branch of the testing data repository to use when fetching datasets.
+"""
+Sets the branch of the testing data repository to use when fetching datasets.
 
 Notes
 -----
@@ -123,7 +125,8 @@ or setting the variable at runtime:
 """
 
 TESTDATA_CACHE_DIR = os.getenv("XCLIM_TESTDATA_CACHE_DIR", default_testdata_cache)
-"""Sets the directory to store the testing datasets.
+"""
+Sets the directory to store the testing datasets.
 
 If not set, the default location will be used (based on ``platformdirs``, see :func:`pooch.os_cache`).
 
@@ -146,7 +149,8 @@ or setting the variable at runtime:
 def list_input_variables(
     submodules: Sequence[str] | None = None, realms: Sequence[str] | None = None
 ) -> dict:
-    """List all possible variables names used in xclim's indicators.
+    """
+    List all possible variables names used in xclim's indicators.
 
     Made for development purposes. Parses all indicator parameters with the
     :py:attr:`xclim.core.utils.InputKind.VARIABLE` or `OPTIONAL_VARIABLE` kinds.
@@ -206,7 +210,8 @@ def publish_release_notes(
     file: os.PathLike[str] | StringIO | TextIO | None = None,
     changes: str | os.PathLike[str] | None = None,
 ) -> str | None:
-    """Format release notes in Markdown or ReStructuredText.
+    """
+    Format release notes in Markdown or ReStructuredText.
 
     Parameters
     ----------
@@ -315,7 +320,8 @@ def show_versions(
     file: os.PathLike | StringIO | TextIO | None = None,
     deps: list[str] | None = None,
 ) -> str | None:
-    """Print the versions of xclim and its dependencies.
+    """
+    Print the versions of xclim and its dependencies.
 
     Parameters
     ----------
@@ -431,7 +437,8 @@ def testing_setup_warnings():
 def load_registry(
     branch: str = TESTDATA_BRANCH, repo: str = TESTDATA_REPO_URL
 ) -> dict[str, str]:
-    """Load the registry file for the test data.
+    """
+    Load the registry file for the test data.
 
     Parameters
     ----------
@@ -492,7 +499,8 @@ def nimbus(  # noqa: PR01
     cache_dir: str | Path = TESTDATA_CACHE_DIR,
     data_updates: bool = True,
 ):
-    """Pooch registry instance for xclim test data.
+    """
+    Pooch registry instance for xclim test data.
 
     Parameters
     ----------
@@ -593,7 +601,8 @@ def open_dataset(
     cache_dir: str | os.PathLike[str] | None = TESTDATA_CACHE_DIR,
     **kwargs,
 ) -> Dataset:
-    r"""Open a dataset from the online GitHub-like repository.
+    r"""
+    Open a dataset from the online GitHub-like repository.
 
     If a local copy is found then always use that to avoid network traffic.
 
@@ -664,7 +673,8 @@ def populate_testing_data(
     branch: str = TESTDATA_BRANCH,
     local_cache: Path = TESTDATA_CACHE_DIR,
 ) -> None:
-    """Populate the local cache with the testing data.
+    """
+    Populate the local cache with the testing data.
 
     Parameters
     ----------
@@ -712,7 +722,8 @@ def gather_testing_data(
     worker_id: str,
     _cache_dir: str | os.PathLike[str] | None = TESTDATA_CACHE_DIR,
 ) -> None:
-    """Gather testing data across workers.
+    """
+    Gather testing data across workers.
 
     Parameters
     ----------
@@ -764,7 +775,8 @@ def gather_testing_data(
 
 
 def audit_url(url: str, context: str | None = None) -> str:
-    """Check if the URL is well-formed.
+    """
+    Check if the URL is well-formed.
 
     Parameters
     ----------

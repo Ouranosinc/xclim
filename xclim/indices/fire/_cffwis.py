@@ -243,7 +243,8 @@ def _day_length_factor(lat: float, mth: int):  # pragma: no cover
 
 @vectorize(nopython=True)
 def _fine_fuel_moisture_code(t, p, w, h, ffmc0):  # pragma: no cover
-    """Compute the fine fuel moisture code over one time step.
+    """
+    Compute the fine fuel moisture code over one time step.
 
     Parameters
     ----------
@@ -329,7 +330,8 @@ def _duff_moisture_code(
     lat: float,
     dmc0: float,
 ):  # pragma: no cover
-    """Compute the Duff moisture code over one time step.
+    """
+    Compute the Duff moisture code over one time step.
 
     Parameters
     ----------
@@ -395,7 +397,8 @@ def _drought_code(  # pragma: no cover
     lat: float,
     dc0: float,
 ) -> np.ndarray:
-    """Compute the drought code over one time step.
+    """
+    Compute the drought code over one time step.
 
     Parameters
     ----------
@@ -438,7 +441,8 @@ def _drought_code(  # pragma: no cover
 
 
 def initial_spread_index(ws: np.ndarray, ffmc: np.ndarray) -> np.ndarray:
-    """Initialize spread index.
+    """
+    Initialize spread index.
 
     Parameters
     ----------
@@ -459,7 +463,8 @@ def initial_spread_index(ws: np.ndarray, ffmc: np.ndarray) -> np.ndarray:
 
 
 def build_up_index(dmc, dc):
-    """Build-up index.
+    """
+    Build-up index.
 
     Parameters
     ----------
@@ -483,7 +488,8 @@ def build_up_index(dmc, dc):
 
 # TODO: Does this need to be renamed?
 def fire_weather_index(isi: np.ndarray, bui: np.ndarray) -> np.ndarray:
-    """Fire Weather Index.
+    """
+    Fire Weather Index.
 
     Parameters
     ----------
@@ -507,7 +513,8 @@ def fire_weather_index(isi: np.ndarray, bui: np.ndarray) -> np.ndarray:
 
 
 def daily_severity_rating(fwi: np.ndarray) -> np.ndarray:
-    """Daily Severity Rating.
+    """
+    Daily Severity Rating.
 
     Parameters
     ----------
@@ -526,7 +533,8 @@ def daily_severity_rating(fwi: np.ndarray) -> np.ndarray:
 def _overwintering_drought_code(
     DCf: np.ndarray, wpr: np.ndarray, a: float, b: float, minDC: int
 ) -> np.ndarray | np.nan:  # pragma: no cover
-    """Compute the season-starting drought code based on the previous season's last drought code and the total winter precipitation.
+    """
+    Compute the season-starting drought code based on the previous season's last drought code and the total winter precipitation.
 
     Parameters
     ----------
@@ -569,7 +577,8 @@ def _fire_season(
     snow_condition_days: int = default_params["snow_condition_days"],
     snow_thresh: float = default_params["snow_thresh"][0],
 ) -> np.ndarray:
-    """Compute the active fire season mask.
+    """
+    Compute the active fire season mask.
 
     Parameters
     ----------
@@ -920,7 +929,8 @@ def fire_weather_ufunc(  # noqa: C901 # numpydoc ignore=PR01,PR02
     initial_start_up: bool = True,
     **params,
 ) -> dict[str, xr.DataArray]:
-    """Fire Weather Indexes computation using xarray's apply_ufunc.
+    """
+    Fire Weather Indexes computation using xarray's apply_ufunc.
 
     No unit handling. Meant to be used by power users only. Please prefer using the :py:indicator:`DC` and
     :py:indicator:`CFFWIS` indicators or the :py:func:`drought_code` and :py:func:`cffwis_indices` indices defined
@@ -1192,7 +1202,8 @@ def overwintering_drought_code(
     ],
     min_dc: xr.DataArray | float = default_params["dc_start"],
 ) -> xr.DataArray:
-    """Compute season-starting drought code based on previous season's last drought code and total winter precipitation.
+    """
+    Compute season-starting drought code based on previous season's last drought code and total winter precipitation.
 
     This method replicates the "wDC" method of the "cffdrs R package :cite:p:`cantin_canadian_2014`, with an added
     control on the "minimum" DC.
@@ -1310,7 +1321,8 @@ def cffwis_indices(
 ) -> tuple[
     xr.DataArray, xr.DataArray, xr.DataArray, xr.DataArray, xr.DataArray, xr.DataArray
 ]:
-    r"""Canadian Fire Weather Index System indices.
+    r"""
+    Canadian Fire Weather Index System indices.
 
     Computes the six (6) fire weather indexes, as defined by the Canadian Forest Service:
     - The Drought Code
@@ -1433,7 +1445,8 @@ def drought_code(
     initial_start_up: bool = True,
     **params,
 ) -> xr.DataArray:
-    r"""Drought code (FWI component).
+    r"""
+    Drought code (FWI component).
 
     The drought code is part of the Canadian Forest Fire Weather Index System.
     It is a numeric rating of the average moisture content of organic layers.
@@ -1528,7 +1541,8 @@ def duff_moisture_code(
     initial_start_up: bool = True,
     **params,
 ) -> xr.DataArray:
-    r"""Duff moisture code (FWI component).
+    r"""
+    Duff moisture code (FWI component).
 
     The duff moisture code is part of the Canadian Forest Fire Weather Index System.
     It is a numeric rating of the average moisture content of loosely compacted organic layers of moderate depth.
@@ -1619,7 +1633,8 @@ def fire_season(
     snow_condition_days: int = 3,
     snow_thresh: Quantified = "0.01 m",
 ) -> xr.DataArray:
-    """Fire season mask.
+    """
+    Fire season mask.
 
     Binary mask of the active fire season, defined by conditions on consecutive daily temperatures and, optionally, snow depths.
 

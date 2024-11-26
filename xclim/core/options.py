@@ -96,7 +96,8 @@ _SETTERS = {
 
 
 def register_missing_method(name: str) -> Callable:
-    """Register missing method.
+    """
+    Register missing method.
 
     Parameters
     ----------
@@ -125,7 +126,8 @@ def register_missing_method(name: str) -> Callable:
 
 
 def run_check(func, option, *args, **kwargs):
-    r"""Run function and customize exception handling based on option.
+    r"""
+    Run function and customize exception handling based on option.
 
     Parameters
     ----------
@@ -150,7 +152,8 @@ def run_check(func, option, *args, **kwargs):
 
 
 def datacheck(func: Callable) -> Callable:
-    """Decorate functions checking data inputs validity.
+    """
+    Decorate functions checking data inputs validity.
 
     Parameters
     ----------
@@ -171,7 +174,8 @@ def datacheck(func: Callable) -> Callable:
 
 
 def cfcheck(func: Callable) -> Callable:
-    """Decorate functions checking CF-compliance of DataArray attributes.
+    """
+    Decorate functions checking CF-compliance of DataArray attributes.
 
     Functions should raise ValidationError exceptions whenever attributes are non-conformant.
 
@@ -194,7 +198,8 @@ def cfcheck(func: Callable) -> Callable:
 
 
 class set_options:  # numpydoc ignore=PR01,PR02
-    r"""Set options for xclim in a controlled context.
+    r"""
+    Set options for xclim in a controlled context.
 
     Parameters
     ----------

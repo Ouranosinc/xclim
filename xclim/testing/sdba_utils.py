@@ -18,7 +18,8 @@ __all__ = ["cannon_2015_dist", "cannon_2015_rvs", "series"]
 
 
 def series(values: np.ndarray, name: str, start: str = "2000-01-01"):
-    """Create a DataArray with time, lon and lat dimensions.
+    """
+    Create a DataArray with time, lon and lat dimensions.
 
     Parameters
     ----------
@@ -68,7 +69,8 @@ def series(values: np.ndarray, name: str, start: str = "2000-01-01"):
 
 
 def cannon_2015_dist() -> (gamma, gamma, gamma):  # noqa: D103
-    """Generate the distributions used in Cannon et al. 2015.
+    """
+    Generate the distributions used in Cannon et al. 2015.
 
     Returns
     -------
@@ -88,7 +90,8 @@ def cannon_2015_dist() -> (gamma, gamma, gamma):  # noqa: D103
 
 
 def cannon_2015_rvs(n: int, random: bool = True) -> list[xr.DataArray]:  # noqa: D103
-    """Generate the Random Variables used in Cannon et al. 2015.
+    """
+    Generate the Random Variables used in Cannon et al. 2015.
 
     Parameters
     ----------

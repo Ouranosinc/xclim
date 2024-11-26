@@ -66,7 +66,8 @@ def corn_heat_units(
     thresh_tasmin: Quantified = "4.44 degC",
     thresh_tasmax: Quantified = "10 degC",
 ) -> xarray.DataArray:
-    r"""Corn heat units.
+    r"""
+    Corn heat units.
 
     Temperature-based index used to estimate the development of corn crops.
     Formula adapted from :cite:t:`bootsma_risk_1999`.
@@ -152,7 +153,8 @@ def huglin_index(
     end_date: DayOfYearStr = "10-01",
     freq: str = "YS",
 ) -> xarray.DataArray:
-    r"""Huglin Heliothermal Index.
+    r"""
+    Huglin Heliothermal Index.
 
     Growing-degree days with a base of 10°C and adjusted for latitudes between 40°N and 50°N for April-September
     (Northern Hemisphere; October-March in Southern Hemisphere). Originally proposed in :cite:t:`huglin_nouveau_1978`.
@@ -316,7 +318,8 @@ def biologically_effective_degree_days(
     end_date: DayOfYearStr = "11-01",
     freq: str = "YS",
 ) -> xarray.DataArray:
-    r"""Biologically effective growing degree days.
+    r"""
+    Biologically effective growing degree days.
 
     Growing-degree days with a base of 10°C and an upper limit of 19°C and adjusted for latitudes between 40°N and 50°N
     for April to October (Northern Hemisphere; October to April in Southern Hemisphere). A temperature range adjustment
@@ -469,15 +472,11 @@ def cool_night_index(
     lat: xarray.DataArray | str | None = None,
     freq: str = "YS",
 ) -> xarray.DataArray:
-    """Cool Night Index.
+    """
+    Cool Night Index.
 
     Mean minimum temperature for September (northern hemisphere) or March (Southern hemisphere).
     Used in calculating the Géoviticulture Multicriteria Classification System (:cite:t:`tonietto_multicriteria_2004`).
-
-    Warnings
-    --------
-    This indice is calculated using minimum temperature resampled to monthly average, and therefore will accept monthly
-    averaged data as inputs.
 
     Parameters
     ----------
@@ -494,6 +493,11 @@ def cool_night_index(
     xarray.DataArray, [degC]
         Mean of daily minimum temperature for month of interest.
 
+    Warnings
+    --------
+    This indice is calculated using minimum temperature resampled to monthly average, and therefore will accept monthly
+    averaged data as inputs.
+
     Notes
     -----
     Given that this indice only examines September and March months, it is possible to send in DataArrays containing
@@ -506,15 +510,15 @@ def cool_night_index(
         with xclim.set_options(check_missing="skip"):
             cni = cool_night_index(tasmin)
 
+    References
+    ----------
+    :cite:cts:`tonietto_multicriteria_2004`
+
     Examples
     --------
     >>> from xclim.indices import cool_night_index
     >>> tasmin = xr.open_dataset(path_to_tasmin_file).tasmin
     >>> cni = cool_night_index(tasmin)
-
-    References
-    ----------
-    :cite:cts:`tonietto_multicriteria_2004`
     """
     tasmin = convert_units_to(tasmin, "degC")
 
@@ -550,18 +554,13 @@ def dryness_index(  # numpydoc ignore=SS05
     wo: Quantified = "200 mm",
     freq: str = "YS",
 ) -> xarray.DataArray:
-    r"""Dryness Index.
+    r"""
+    Dryness Index.
 
     Approximation of the water balance for the categorizing the winegrowing season. Uses both precipitation and an
     adjustment of potential evapotranspiration between April and September (Northern Hemisphere) or October and March
     (Southern hemisphere). Used in calculating the Géoviticulture Multicriteria Classification System
     (:cite:t:`tonietto_multicriteria_2004`).
-
-    Warnings
-    --------
-    Dryness Index expects CF-Convention conformant potential evapotranspiration (positive up). This indice is calculated
-    using evapotranspiration and precipitation resampled and converted to monthly total accumulations, and therefore
-    will accept monthly fluxes as inputs.
 
     Parameters
     ----------
@@ -581,6 +580,12 @@ def dryness_index(  # numpydoc ignore=SS05
     -------
     xarray.DataArray, [mm]
         Dryness Index.
+
+    Warnings
+    --------
+    Dryness Index expects CF-Convention conformant potential evapotranspiration (positive up). This indice is calculated
+    using evapotranspiration and precipitation resampled and converted to monthly total accumulations, and therefore
+    will accept monthly fluxes as inputs.
 
     Notes
     -----
@@ -638,14 +643,14 @@ def dryness_index(  # numpydoc ignore=SS05
 
         JPm = \max\left( P / 5, N \right)
 
+    References
+    ----------
+    :cite:cts:`tonietto_multicriteria_2004,riou_determinisme_1994`
+
     Examples
     --------
     >>> from xclim.indices import dryness_index
     >>> dryi = dryness_index(pr_dataset, evspsblpot_dataset, wo="200 mm")
-
-    References
-    ----------
-    :cite:cts:`tonietto_multicriteria_2004,riou_determinisme_1994`
     """
     if parse_offset(freq) != (1, "Y", True, "JAN"):
         raise ValueError(f"Freq not allowed: {freq}. Must be `YS` or `YS-JAN`")
@@ -746,7 +751,8 @@ def latitude_temperature_index(
     lat_factor: float = 75,
     freq: str = "YS",
 ) -> xarray.DataArray:
-    """Latitude-Temperature Index.
+    """
+    Latitude-Temperature Index.
 
     Mean temperature of the warmest month with a latitude-based scaling factor :cite:p:`jackson_prediction_1988`.
     Used for categorizing wine-growing regions.
@@ -830,7 +836,8 @@ def water_budget(
     sfcWind: xarray.DataArray | None = None,
     method: str = "BR65",
 ) -> xarray.DataArray:
-    r"""Precipitation minus potential evapotranspiration.
+    r"""
+    Precipitation minus potential evapotranspiration.
 
     Precipitation minus potential evapotranspiration as a measure of an approximated surface water budget,
     where the potential evapotranspiration can be calculated with a given method.
@@ -865,14 +872,14 @@ def water_budget(
     method : str
         Method to use to calculate the potential evapotranspiration.
 
-    See Also
-    --------
-    xclim.indicators.atmos.potential_evapotranspiration : Potential evapotranspiration calculation.
-
     Returns
     -------
     xarray.DataArray
         Precipitation minus potential evapotranspiration.
+
+    See Also
+    --------
+    xclim.indicators.atmos.potential_evapotranspiration : Potential evapotranspiration calculation.
     """
     pr = convert_units_to(pr, "kg m-2 s-1", context="hydro")
 
@@ -927,7 +934,8 @@ def rain_season(
     date_max_end: DayOfYearStr = "12-31",
     freq="YS-JAN",
 ) -> tuple[xarray.DataArray, xarray.DataArray, xarray.DataArray]:
-    """Find the length of the rain season and the day of year of its start and its end.
+    """
+    Find the length of the rain season and the day of year of its start and its end.
 
     The rain season begins when two conditions are met: 1) There must be a number of wet days with precipitations above
     or equal to a given threshold; 2) There must be another sequence following, where, for a given period in time, there
@@ -1122,7 +1130,8 @@ def standardized_precipitation_index(
     params: Quantified | None = None,
     **indexer,
 ) -> xarray.DataArray:
-    r"""Standardized Precipitation Index (SPI).
+    r"""
+    Standardized Precipitation Index (SPI).
 
     Parameters
     ----------
@@ -1173,6 +1182,10 @@ def standardized_precipitation_index(
       the inversion to the normal distribution.
     * The results from `climate_indices` library can be reproduced with `method = "APP"` and `fitwkargs = {"floc": 0}`
 
+    References
+    ----------
+    :cite:cts:`mckee_relationship_1993`
+
     Examples
     --------
     >>> from datetime import datetime
@@ -1203,10 +1216,6 @@ def standardized_precipitation_index(
     ...     zero_inflated=True,
     ... )  # First getting params
     >>> spi_3 = standardized_precipitation_index(pr, params=params)
-
-    References
-    ----------
-    :cite:cts:`mckee_relationship_1993`
     """
     fitkwargs = fitkwargs or {}
     dist_methods = {"gamma": ["ML", "APP"], "fisk": ["ML", "APP"]}
@@ -1253,7 +1262,8 @@ def standardized_precipitation_evapotranspiration_index(
     params: Quantified | None = None,
     **indexer,
 ) -> xarray.DataArray:
-    r"""Standardized Precipitation Evapotranspiration Index (SPEI).
+    r"""
+    Standardized Precipitation Evapotranspiration Index (SPEI).
 
     Precipitation minus potential evapotranspiration data (PET) fitted to a statistical distribution (dist), transformed
     to a cdf,  and inverted back to a gaussian normal pdf. The potential evapotranspiration is calculated with a given
@@ -1333,7 +1343,8 @@ def standardized_precipitation_evapotranspiration_index(
 def qian_weighted_mean_average(
     tas: xarray.DataArray, dim: str = "time"
 ) -> xarray.DataArray:
-    r"""Binomial smoothed, five-day weighted mean average temperature.
+    r"""
+    Binomial smoothed, five-day weighted mean average temperature.
 
     Calculates a five-day weighted moving average with emphasis on temperatures closer to day of interest.
 
@@ -1390,7 +1401,8 @@ def effective_growing_degree_days(
     dim: str = "time",
     freq: str = "YS",
 ) -> xarray.DataArray:
-    r"""Effective growing degree days.
+    r"""
+    Effective growing degree days.
 
     Growing degree days based on a dynamic start and end of the growing season,
     as defined in :cite:p:`bootsma_impacts_2005`.
@@ -1484,7 +1496,8 @@ def effective_growing_degree_days(
 def hardiness_zones(  # numpydoc ignore=SS05
     tasmin: xarray.DataArray, window: int = 30, method: str = "usda", freq: str = "YS"
 ):
-    """Hardiness zones.
+    """
+    Hardiness zones.
 
     Hardiness zones are a categorization of the annual extreme temperature minima, averaged over a certain period.
     The USDA method defines 14 zones, each divided into two sub-zones, using steps of 5°F, starting at -60°F.
@@ -1584,7 +1597,8 @@ def _apply_chill_portion_one_season(tas_K):
 def chill_portions(
     tas: xarray.DataArray, freq: str = "YS", **indexer
 ) -> xarray.DataArray:
-    r"""Chill portion based on the dynamic model.
+    r"""
+    Chill portion based on the dynamic model.
 
     Chill portions are a measure to estimate the bud breaking potential of different crop.
     The constants and functions are taken from Luedeling et al. (2009) which formalises the method described in
@@ -1619,6 +1633,10 @@ def chill_portions(
 
     Note that incomplete periods will lead to NaNs.
 
+    References
+    ----------
+    :cite:cts:`fishman_chill_1987,luedeling_chill_2009`
+
     Examples
     --------
     >>> from xclim.indices import chill_portions
@@ -1627,10 +1645,6 @@ def chill_portions(
     >>> tasmax = xr.open_dataset(path_to_tasmax_file).tasmax
     >>> tas_hourly = make_hourly_temperature(tasmin, tasmax)
     >>> cp = chill_portions(tasmin)
-
-    References
-    ----------
-    :cite:cts:`fishman_chill_1987,luedeling_chill_2009`
     """
     tas_K: xarray.DataArray = select_time(
         convert_units_to(tas, "K"), drop=True, **indexer
@@ -1642,7 +1656,8 @@ def chill_portions(
 
 @declare_units(tas="[temperature]")
 def chill_units(tas: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
-    """Chill units using the Utah model.
+    """
+    Chill units using the Utah model.
 
     Chill units are a measure to estimate the bud breaking potential of different crop based on Richardson et al. (1974).
     The Utah model assigns a weight to each hour depending on the temperature recognising that high temperatures can
@@ -1660,6 +1675,10 @@ def chill_units(tas: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
     xr.DataArray, [unitless]
         Chill units using the Utah model.
 
+    References
+    ----------
+    :cite:cts:`richardson_chill_1974`
+
     Examples
     --------
     >>> from xclim.indices import chill_units
@@ -1668,10 +1687,6 @@ def chill_units(tas: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
     >>> tasmax = xr.open_dataset(path_to_tasmax_file).tasmax
     >>> tas_hourly = make_hourly_temperature(tasmin, tasmax)
     >>> cu = chill_units(tasmin)
-
-    References
-    ----------
-    :cite:cts:`richardson_chill_1974`
     """
     tas = convert_units_to(tas, "degC")
     cu = xarray.where(

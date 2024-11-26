@@ -34,7 +34,8 @@ __all__ = ["adapt_freq_graph", "cannon_2015_figure_2", "synth_rainfall"]
 def synth_rainfall(
     shape: float, scale: float = 1.0, wet_freq: float = 0.25, size: int = 1
 ) -> np.ndarray:
-    r"""Return gamma distributed rainfall values for wet days.
+    r"""
+    Return gamma distributed rainfall values for wet days.
 
     The returned values are zero for dry days.
 
@@ -70,7 +71,8 @@ def synth_rainfall(
 
 
 def cannon_2015_figure_2() -> plt.Figure:
-    """Create a graphic similar to figure 2 of Cannon et al. 2015.
+    """
+    Create a graphic similar to figure 2 of Cannon et al. 2015.
 
     The figure shows the distributions of the reference, historical and simulated data, as well as the future
 
@@ -158,7 +160,8 @@ def cannon_2015_figure_2() -> plt.Figure:
 
 
 def adapt_freq_graph():
-    """Create a graphic with the additive adjustment factors estimated after applying the adapt_freq method.
+    """
+    Create a graphic with the additive adjustment factors estimated after applying the adapt_freq method.
 
     Returns
     -------

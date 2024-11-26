@@ -1317,7 +1317,8 @@ class FireSeasonBase(Indicator):
     keywords = "fire"
 
     def cfcheck(self, tas: DataArray, snd: DataArray = None):
-        r"""Verify the CF-compliance of the input data.
+        r"""
+        Verify the CF-compliance of the input data.
 
         Parameters
         ----------

@@ -39,7 +39,8 @@ class Streamflow(ResamplingIndicator):
 
     @staticmethod
     def cfcheck(q: DataArray):
-        r"""Verify the CF-compliance of the input data.
+        r"""
+        Verify the CF-compliance of the input data.
 
         Parameters
         ----------

@@ -20,7 +20,8 @@ from xclim.core.options import cfcheck
 
 @cfcheck
 def check_valid(var: xr.DataArray, key: str, expected: str | Sequence[str]):
-    r"""Check that a variable's attribute has one of the expected values and raise a ValidationError if otherwise.
+    r"""
+    Check that a variable's attribute has one of the expected values and raise a ValidationError if otherwise.
 
     Parameters
     ----------
@@ -53,7 +54,8 @@ def check_valid(var: xr.DataArray, key: str, expected: str | Sequence[str]):
 def cfcheck_from_name(
     varname: str, vardata: xr.DataArray, attrs: list[str] | None = None
 ):
-    """Perform cfchecks on a DataArray using specifications from xclim's default variables.
+    """
+    Perform cfchecks on a DataArray using specifications from xclim's default variables.
 
     Parameters
     ----------

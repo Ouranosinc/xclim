@@ -38,7 +38,8 @@ class Converter(Indicator):
     """Class for indicators doing variable conversion (dimension-independent 1-to-1 computation)."""
 
     def cfcheck(self, **das) -> None:
-        r"""Verify the CF-compliance of the input data.
+        r"""
+        Verify the CF-compliance of the input data.
 
         Parameters
         ----------

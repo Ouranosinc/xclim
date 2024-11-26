@@ -29,7 +29,8 @@ from xclim.testing.utils import open_dataset as _open_dataset
 
 @pytest.fixture(autouse=True, scope="session")
 def threadsafe_data_dir(tmp_path_factory):  # numpydoc ignore=PR01
-    """Return a threadsafe temporary directory for storing testing data.
+    """
+    Return a threadsafe temporary directory for storing testing data.
 
     Yields
     ------
@@ -41,7 +42,8 @@ def threadsafe_data_dir(tmp_path_factory):  # numpydoc ignore=PR01
 
 @pytest.fixture(scope="session")
 def nimbus(threadsafe_data_dir, worker_id):  # numpydoc ignore=PR01
-    """Return a nimbus object for the test data.
+    """
+    Return a nimbus object for the test data.
 
     Returns
     -------
@@ -59,7 +61,8 @@ def nimbus(threadsafe_data_dir, worker_id):  # numpydoc ignore=PR01
 
 @pytest.fixture(scope="session")
 def open_dataset(nimbus):  # numpydoc ignore=PR01
-    """Return a function that opens a dataset from the test data.
+    """
+    Return a function that opens a dataset from the test data.
 
     Returns
     -------

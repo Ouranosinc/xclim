@@ -28,7 +28,8 @@ except ImportError:
 
 
 def make_criteria(ds: xarray.Dataset | xarray.DataArray):
-    """Reshape the input into a criteria 2D DataArray.
+    """
+    Reshape the input into a criteria 2D DataArray.
 
     The reshaping preserves the "realization" dimension but stacks all other dimensions and variables into a new
     "criteria" dimension, as expected by functions :py:func:`xclim.ensembles._reduce.kkz_reduce_ensemble` and
@@ -129,7 +130,8 @@ def kkz_reduce_ensemble(
     standardize: bool = True,
     **cdist_kwargs,
 ) -> list:
-    r"""Return a sample of ensemble members using KKZ selection.
+    r"""
+    Return a sample of ensemble members using KKZ selection.
 
     The algorithm selects `num_select` ensemble members spanning the overall range of the ensemble.
     The selection is ordered, smaller groups are always subsets of larger ones for given criteria.
@@ -203,7 +205,8 @@ def kmeans_reduce_ensemble(
     sample_weights: np.ndarray | None = None,
     random_state: int | np.random.RandomState | None = None,
 ) -> tuple[list, np.ndarray, dict]:
-    """Return a sample of ensemble members using k-means clustering.
+    """
+    Return a sample of ensemble members using k-means clustering.
 
     The algorithm attempts to reduce the total number of ensemble members while maintaining adequate coverage of
     the ensemble uncertainty in an N-dimensional data space. K-Means clustering is carried out on the input
@@ -240,6 +243,15 @@ def kmeans_reduce_ensemble(
         Use to make the randomness deterministic.
         See: https://scikit-learn.org/stable/modules/generated/sklearn.cluster.KMeans.html.
 
+    Returns
+    -------
+    list
+        Selected model indexes (positions).
+    np.ndarray
+        KMeans clustering results.
+    dict
+        Dictionary of input data for creating R² profile plot. 'None' when make_graph=False.
+
     Notes
     -----
     Parameters for method in call must follow these conventions:
@@ -265,15 +277,6 @@ def kmeans_reduce_ensemble(
         val : integer between 1 and N
 
         method={'n_clusters': val}
-
-    Returns
-    -------
-    list
-        Selected model indexes (positions).
-    np.ndarray
-        KMeans clustering results.
-    dict
-        Dictionary of input data for creating R² profile plot. 'None' when make_graph=False.
 
     References
     ----------
@@ -423,7 +426,8 @@ def kmeans_reduce_ensemble(
 def _calc_rsq(
     z, method: dict, make_graph: bool, n_sim: np.ndarray, random_state, sample_weights
 ):
-    """Sub-function to kmeans_reduce_ensemble.
+    """
+    Sub-function to kmeans_reduce_ensemble.
 
     Calculates r-square profile (r-square versus number of clusters).
     """
@@ -482,7 +486,8 @@ def _get_nclust(method: dict, n_sim: int, rsq: float, max_clusters: int):
 
 
 def plot_rsqprofile(fig_data: dict) -> None:
-    """Create an R² profile plot using kmeans_reduce_ensemble output.
+    """
+    Create an R² profile plot using `kmeans_reduce_ensemble` output.
 
     The R² plot allows evaluation of the proportion of total uncertainty in the original ensemble that is provided
     by the reduced selected.

@@ -71,7 +71,8 @@ _LOCALES = {}
 
 
 def list_locales() -> list:
-    """List of loaded locales.
+    """
+    List of loaded locales.
 
     Includes all loaded locales, no matter how complete the translations are.
 
@@ -101,7 +102,8 @@ def _valid_locales(locales):
 
 
 def get_local_dict(locale: str | Sequence[str] | tuple[str, dict]) -> tuple[str, dict]:
-    """Return all translated metadata for a given locale.
+    """
+    Return all translated metadata for a given locale.
 
     Parameters
     ----------
@@ -109,17 +111,17 @@ def get_local_dict(locale: str | Sequence[str] | tuple[str, dict]) -> tuple[str,
         IETF language tag or a tuple of the language tag and a translation dict, or a tuple of the language
         tag and a path to a json file defining translation of attributes.
 
-    Raises
-    ------
-    UnavailableLocaleError
-        If the given locale is not available.
-
     Returns
     -------
     str
         The best fitting locale string.
     dict
         The available translations in this locale.
+
+    Raises
+    ------
+    UnavailableLocaleError
+        If the given locale is not available.
     """
     _valid_locales([locale])
 
@@ -149,7 +151,8 @@ def get_local_attrs(
     names: Sequence[str] | None = None,
     append_locale_name: bool = True,
 ) -> dict:
-    r"""Get all attributes of an indicator in the requested locales.
+    r"""
+    Get all attributes of an indicator in the requested locales.
 
     Parameters
     ----------
@@ -165,16 +168,16 @@ def get_local_attrs(
     append_locale_name : bool
         If True (default), append the language tag (as "{attr_name}_{locale}") to the returned attributes.
 
-    Raises
-    ------
-    ValueError
-        If `append_locale_name` is False and multiple `locales` are requested.
-
     Returns
     -------
     dict
         All CF attributes available for given indicator and locales.
         Warns and returns an empty dict if none were available.
+
+    Raises
+    ------
+    ValueError
+        If `append_locale_name` is False and multiple `locales` are requested.
     """
     if isinstance(indicator, str):
         indicator = [indicator]
@@ -206,7 +209,8 @@ def get_local_attrs(
 def get_local_formatter(
     locale: str | Sequence[str] | tuple[str, dict]
 ) -> AttrFormatter:
-    """Return an AttrFormatter instance for the given locale.
+    """
+    Return an AttrFormatter instance for the given locale.
 
     Parameters
     ----------
@@ -232,7 +236,8 @@ def get_local_formatter(
 
 
 class UnavailableLocaleError(ValueError):
-    """Error raised when a locale is requested but doesn't exist.
+    """
+    Error raised when a locale is requested but doesn't exist.
 
     Parameters
     ----------
@@ -249,7 +254,8 @@ class UnavailableLocaleError(ValueError):
 def read_locale_file(
     filename, module: str | None = None, encoding: str = "UTF8"
 ) -> dict[str, dict]:
-    """Read a locale file (.json) and return its dictionary.
+    """
+    Read a locale file (.json) and return its dictionary.
 
     Parameters
     ----------
@@ -280,7 +286,8 @@ def read_locale_file(
 
 
 def load_locale(locdata: str | Path | dict[str, dict], locale: str) -> None:
-    """Load translations from a json file into xclim.
+    """
+    Load translations from a json file into xclim.
 
     Parameters
     ----------
@@ -300,7 +307,8 @@ def load_locale(locdata: str | Path | dict[str, dict], locale: str) -> None:
 
 
 def generate_local_dict(locale: str, init_english: bool = False) -> dict:
-    """Generate a dictionary with keys for each indicator and translatable attributes.
+    """
+    Generate a dictionary with keys for each indicator and translatable attributes.
 
     Parameters
     ----------

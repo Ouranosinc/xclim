@@ -20,7 +20,8 @@ from xclim.core.options import datacheck
 def check_freq(
     var: xr.DataArray, freq: str | Sequence[str], strict: bool = True
 ) -> None:
-    """Raise an error if not series has not the expected temporal frequency or is not monotonically increasing.
+    """
+    Raise an error if not series has not the expected temporal frequency or is not monotonically increasing.
 
     Parameters
     ----------
@@ -60,7 +61,8 @@ def check_freq(
 
 
 def check_daily(var: xr.DataArray) -> None:
-    """Raise an error if series has a frequency other that daily, or is not monotonically increasing.
+    """
+    Raise an error if series has a frequency other that daily, or is not monotonically increasing.
 
     Parameters
     ----------
@@ -76,7 +78,13 @@ def check_daily(var: xr.DataArray) -> None:
 
 @datacheck
 def check_common_time(inputs: Sequence[xr.DataArray]) -> None:
-    """Raise an error if the list of inputs doesn't have a single common frequency.
+    """
+    Raise an error if the list of inputs doesn't have a single common frequency.
+
+    Parameters
+    ----------
+    inputs : Sequence of xr.DataArray
+        Input arrays.
 
     Raises
     ------
@@ -84,11 +92,6 @@ def check_common_time(inputs: Sequence[xr.DataArray]) -> None:
         - if the frequency of any input can't be inferred
         - if inputs have different frequencies
         - if inputs have a daily or hourly frequency, but they are not given at the same time of day.
-
-    Parameters
-    ----------
-    inputs : Sequence of xr.DataArray
-        Input arrays.
     """
     # Check all have the same freq
     freqs = [xr.infer_freq(da.time) for da in inputs]

@@ -20,7 +20,8 @@ BOOTSTRAP_DIM = "_bootstrap"
 
 
 def percentile_bootstrap(func: Callable) -> Callable:
-    """Decorator applying a bootstrap step to the calculation of exceedance over a percentile threshold.
+    """
+    Decorator applying a bootstrap step to the calculation of exceedance over a percentile threshold.
 
     This feature is experimental.
 
@@ -78,7 +79,8 @@ def percentile_bootstrap(func: Callable) -> Callable:
 
 
 def bootstrap_func(compute_index_func: Callable, **kwargs) -> xarray.DataArray:
-    r"""Bootstrap the computation of percentile-based indices.
+    r"""
+    Bootstrap the computation of percentile-based indices.
 
     Indices measuring exceedance over percentile-based thresholds (such as tx90p) may contain artificial discontinuities
     at the beginning and end of the reference period used to calculate percentiles. The bootstrap procedure can reduce
@@ -103,10 +105,6 @@ def bootstrap_func(compute_index_func: Callable, **kwargs) -> xarray.DataArray:
     xr.DataArray
         The result of func with bootstrapping.
 
-    References
-    ----------
-    :cite:cts:`zhang_avoiding_2005`
-
     Notes
     -----
     This function is meant to be used by the `percentile_bootstrap` decorator.
@@ -122,6 +120,10 @@ def bootstrap_func(compute_index_func: Callable, **kwargs) -> xarray.DataArray:
                     Compute index function using percentile
                 Average output from index function over all resampled time series
             Else compute index function using original percentile
+
+    References
+    ----------
+    :cite:cts:`zhang_avoiding_2005`
     """
     # Identify the input and the percentile arrays from the bound arguments
     per_key = None
@@ -236,7 +238,8 @@ def _get_year_label(year_dt) -> str:
 def build_bootstrap_year_da(
     da: DataArray, groups: dict[Any, slice], label: Any, dim: str = "time"
 ) -> DataArray:
-    """Return an array where a group in the original is replaced by every other groups along a new dimension.
+    """
+    Return an array where a group in the original is replaced by every other groups along a new dimension.
 
     Parameters
     ----------

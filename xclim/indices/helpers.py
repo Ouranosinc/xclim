@@ -73,7 +73,8 @@ def distance_from_sun(dates: xr.DataArray) -> xr.DataArray:
 
 
 def day_angle(time: xr.DataArray) -> xr.DataArray:
-    """Day of year as an angle.
+    """
+    Day of year as an angle.
 
     Assuming the Earth makes a full circle in a year, this is the angle covered from
     the beginning of the year up to that timestep. Also called the "julian day fraction".
@@ -97,7 +98,8 @@ def day_angle(time: xr.DataArray) -> xr.DataArray:
 
 
 def solar_declination(time: xr.DataArray, method="spencer") -> xr.DataArray:
-    """Solar declination.
+    """
+    Solar declination.
 
     The angle between the sun rays and the earth's equator, in radians, as approximated
     by :cite:t:`spencer_fourier_1971` or assuming the orbit is a circle.
@@ -145,7 +147,8 @@ def solar_declination(time: xr.DataArray, method="spencer") -> xr.DataArray:
 
 
 def time_correction_for_solar_angle(time: xr.DataArray) -> xr.DataArray:
-    """Time correction for solar angle.
+    """
+    Time correction for solar angle.
 
     Every 1° of angular rotation on earth is equal to 4 minutes of time.
     The time correction is needed to adjust local watch time to solar time.
@@ -179,7 +182,8 @@ def time_correction_for_solar_angle(time: xr.DataArray) -> xr.DataArray:
 def eccentricity_correction_factor(
     time: xr.DataArray, method: str = "spencer"
 ) -> xr.DataArray:
-    """Eccentricity correction factor of the Earth's orbit.
+    """
+    Eccentricity correction factor of the Earth's orbit.
 
     The squared ratio of the mean distance Earth-Sun to the distance at a specific moment.
     As approximated by :cite:t:`spencer_fourier_1971`.
@@ -231,7 +235,8 @@ def cosine_of_solar_zenith_angle(
     sunlit: bool = False,
     chunks: dict[str, int] | None = None,
 ) -> xr.DataArray:
-    """Cosine of the solar zenith angle.
+    """
+    Cosine of the solar zenith angle.
 
     The solar zenith angle is the angle between a vertical line (perpendicular to the ground) and the sun rays.
     This function computes a statistic of its cosine : its instantaneous value, the integral from sunrise to sunset or the average over
@@ -344,7 +349,7 @@ def cosine_of_solar_zenith_angle(
 def _sunlit_integral_of_cosine_of_solar_zenith_angle(
     declination, lat, h_sunset, h_start, h_end, average
 ):
-    """Integral of the cosine of the the solar zenith angle over the sunlit part of the interval."""
+    """Integral of the cosine of the solar zenith angle over the sunlit part of the interval."""
     # Code inspired by PyWBGT
     h_sunrise = -h_sunset
     # Polar day
@@ -399,7 +404,8 @@ def extraterrestrial_solar_radiation(
     method: str = "spencer",
     chunks: Mapping[Any, tuple] | None = None,
 ) -> xr.DataArray:
-    """Extraterrestrial solar radiation.
+    """
+    Extraterrestrial solar radiation.
 
     This is the daily energy received on a surface parallel to the ground at the mean distance of the earth to the sun.
     It neglects the effect of the atmosphere. Computation is based on :cite:t:`kalogirou_chapter_2014` and the default
@@ -448,7 +454,8 @@ def day_lengths(
     lat: xr.DataArray,
     method: str = "spencer",
 ) -> xr.DataArray:
-    r"""Calculate day-length according to latitude and day of year.
+    r"""
+    Calculate day-length according to latitude and day of year.
 
     See :py:func:`solar_declination` for the approximation used to compute the solar declination angle.
     Based on :cite:t:`kalogirou_chapter_2014`.
@@ -491,7 +498,8 @@ def wind_speed_height_conversion(
     h_target: str,
     method: str = "log",
 ) -> xr.DataArray:
-    r"""Wind speed at two meters.
+    r"""
+    Wind speed at two meters.
 
     Parameters
     ----------
@@ -527,7 +535,8 @@ def wind_speed_height_conversion(
 
 
 def _gather_lat(da: xr.DataArray) -> xr.DataArray:
-    """Gather latitude coordinate using cf-xarray.
+    """
+    Gather latitude coordinate using cf-xarray.
 
     Parameters
     ----------
@@ -552,7 +561,8 @@ def _gather_lat(da: xr.DataArray) -> xr.DataArray:
 
 
 def _gather_lon(da: xr.DataArray) -> xr.DataArray:
-    """Gather longitude coordinate using cf-xarray.
+    """
+    Gather longitude coordinate using cf-xarray.
 
     Parameters
     ----------
@@ -585,7 +595,8 @@ def resample_map(
     resample_kwargs: dict | None = None,
     map_kwargs: dict | None = None,
 ) -> xr.DataArray | xr.Dataset:
-    r"""Wrap xarray's resample(...).map() with a :py:func:`xarray.map_blocks`, ensuring the chunking is appropriate using flox.
+    r"""
+    Wrap xarray's resample(...).map() with a :py:func:`xarray.map_blocks`, ensuring the chunking is appropriate using flox.
 
     Parameters
     ----------
@@ -662,13 +673,14 @@ def _compute_daytime_temperature(
     tasmax: xr.DataArray,
     daylength: xr.DataArray,
 ) -> xr.DataArray:
-    """Compute daytime temperature based on a sinusoidal profile.
+    """
+    Compute daytime temperature based on a sinusoidal profile.
 
     Minimum temperature is reached at sunrise and maximum temperature 2h before sunset.
 
     Parameters
     ----------
-    hours_after_sunrise : xarray.DataArray
+    hour_after_sunrise : xarray.DataArray
         Hours after the last sunrise.
     tasmin : xarray.DataArray
         Daily minimum temperature.
@@ -693,7 +705,8 @@ def _compute_nighttime_temperature(
     tas_sunset: xr.DataArray,
     daylength: xr.DataArray,
 ) -> xr.DataArray:
-    """Compute nighttime temperature based on a logarithmic profile.
+    """
+    Compute nighttime temperature based on a logarithmic profile.
 
     Temperature at sunset is computed from previous daytime temperature,
     minimum temperature is reached at sunrise.
@@ -720,10 +733,10 @@ def _compute_nighttime_temperature(
 
 
 def _add_one_day(time: xr.DataArray) -> xr.DataArray:
-    """Add one day to a time coordinate.
+    """
+    Add one day to a time coordinate.
 
-    Depending on the calendar/dtype of the time array we need to use numpy's or
-    datetime's (for cftimes) timedelta.
+    Depending on the calendar/dtype of the time array we need to use numpy's or datetime's (for cftimes) timedelta.
 
     Parameters
     ----------
@@ -741,7 +754,8 @@ def _add_one_day(time: xr.DataArray) -> xr.DataArray:
 
 
 def make_hourly_temperature(tasmin: xr.DataArray, tasmax: xr.DataArray) -> xr.DataArray:
-    """Compute hourly temperatures from tasmin and tasmax.
+    """
+    Compute hourly temperatures from tasmin and tasmax.
 
     Based on the Linvill et al. "Calculating Chilling Hours and Chill Units from Daily
     Maximum and Minimum Temperature Observations", HortScience, 1990

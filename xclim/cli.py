@@ -455,7 +455,8 @@ class XclimCli(click.MultiCommand):
 )
 @click.pass_context
 def cli(ctx, **kwargs):  # numpydoc ignore=PR01
-    """Entry point for the command line interface.
+    """
+    Entry point for the command line interface.
 
     Manages the global options.
     """

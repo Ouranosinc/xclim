@@ -83,7 +83,8 @@ def fit(
     dim: str = "time",
     **fitkwargs: Any,
 ) -> xr.DataArray:
-    r"""Fit an array to a univariate distribution along the time dimension.
+    r"""
+    Fit an array to a univariate distribution along the time dimension.
 
     Parameters
     ----------
@@ -181,7 +182,8 @@ def parametric_quantile(
     q: float | Sequence[float],
     dist: str | rv_continuous | None = None,
 ) -> xr.DataArray:
-    """Return the value corresponding to the given distribution parameters and quantile.
+    """
+    Return the value corresponding to the given distribution parameters and quantile.
 
     Parameters
     ----------
@@ -254,7 +256,8 @@ def parametric_cdf(
     v: float | Sequence[float],
     dist: str | rv_continuous | None = None,
 ) -> xr.DataArray:
-    """Return the cumulative distribution function corresponding to the given distribution parameters and value.
+    """
+    Return the cumulative distribution function corresponding to the given distribution parameters and value.
 
     Parameters
     ----------
@@ -318,7 +321,8 @@ def fa(
     mode: str = "max",
     method: str = "ML",
 ) -> xr.DataArray:
-    """Return the value corresponding to the given return period.
+    """
+    Return the value corresponding to the given return period.
 
     Parameters
     ----------
@@ -380,7 +384,8 @@ def frequency_analysis(
     method: str = "ML",
     **indexer: int | float | str,
 ) -> xr.DataArray:
-    r"""Return the value corresponding to a return period.
+    r"""
+    Return the value corresponding to a return period.
 
     Parameters
     ----------
@@ -461,7 +466,8 @@ def get_dist(dist: str | rv_continuous) -> rv_continuous:
 
 
 def _fit_start(x, dist: str, **fitkwargs: Any) -> tuple[tuple, dict]:
-    r"""Return initial values for distribution parameters.
+    r"""
+    Return initial values for distribution parameters.
 
     Providing the ML fit method initial values can help the optimizer find the global optimum.
 
@@ -473,7 +479,7 @@ def _fit_start(x, dist: str, **fitkwargs: Any) -> tuple[tuple, dict]:
         Name of the univariate distribution, e.g. `beta`, `expon`, `genextreme`, `gamma`, `gumbel_r`, `lognorm`, `norm`.
         (see :py:mod:scipy.stats).
         Only `genextreme` and `weibull_exp` distributions are supported.
-    **fitkwargs
+    **fitkwargs : dict
         Kwargs passed to fit.
 
     Returns
@@ -482,7 +488,7 @@ def _fit_start(x, dist: str, **fitkwargs: Any) -> tuple[tuple, dict]:
 
     References
     ----------
-    :cite:cts:`coles_introduction_2001,cohen_parameter_2019,thom_1958,cooke_1979,muralidhar_1992`
+    :cite:cts:`coles_introduction_2001,cohen_parameter_2019,thom_1958,cooke_1979,muralidhar_1992`.
     """
     x = np.asarray(x)
     m = x.mean()
@@ -567,7 +573,8 @@ def _fit_start(x, dist: str, **fitkwargs: Any) -> tuple[tuple, dict]:
 def _dist_method_1D(  # noqa: N802
     *args, dist: str | rv_continuous, function: str, **kwargs: Any
 ) -> xr.DataArray:
-    r"""Statistical function for given argument on given distribution initialized with params.
+    r"""
+    Statistical function for given argument on given distribution initialized with params.
 
     See :py:ref:`scipy:scipy.stats.rv_continuous` for all available functions and their arguments.
     Every method where `"*args"` are the distribution parameters can be wrapped.
@@ -602,7 +609,7 @@ def dist_method(
     Vectorized statistical function for given argument on given distribution initialized with params.
 
     Methods where `"*args"` are the distribution parameters can be wrapped, except those that reduce dimensions
-    (e.g. `nnlf`) or create new dimensions (eg: 'rvs' with size != 1, 'stats' with more than one moment, 'interval',
+    (e.g. `nnlf`) or create new dimensions (e.g. 'rvs' with size != 1, 'stats' with more than one moment, 'interval',
     'support').
 
     Parameters
@@ -728,7 +735,8 @@ def standardized_index_fit_params(
     fitkwargs: dict | None = None,
     **indexer,
 ) -> xr.DataArray:
-    r"""Standardized Index fitting parameters.
+    r"""
+    Standardized Index fitting parameters.
 
     A standardized index measures the deviation of a variable averaged over a rolling temporal window and
     fitted with a given distribution `dist` with respect to a calibration dataset.
@@ -837,7 +845,8 @@ def standardized_index(
     params: Quantified | None = None,
     **indexer,
 ) -> xr.DataArray:
-    r"""Standardized Index (SI).
+    r"""
+    Standardized Index (SI).
 
     This computes standardized indices which measure the deviation of  variables in the dataset compared
     to a reference distribution. The reference is a statistical distribution computed with fitting parameters `params`
@@ -890,7 +899,7 @@ def standardized_index(
 
     References
     ----------
-    :cite:cts:`mckee_relationship_1993`
+    :cite:cts:`mckee_relationship_1993`.
     """
     # use input arguments from ``params`` if it is given
     if params is not None:

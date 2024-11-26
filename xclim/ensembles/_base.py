@@ -37,7 +37,8 @@ def create_ensemble(
     cal_kwargs: dict | None = None,
     **xr_kwargs,
 ) -> xr.Dataset:
-    r"""Create an xarray dataset of an ensemble of climate simulation from a list of netcdf files.
+    r"""
+    Create an xarray dataset of an ensemble of climate simulation from a list of netcdf files.
 
     Input data is concatenated along a newly created data dimension ('realization'). Returns an xarray dataset object
     containing input data from the list of netcdf files concatenated along a new dimension (name:'realization').
@@ -138,7 +139,8 @@ def create_ensemble(
 def ensemble_mean_std_max_min(
     ens: xr.Dataset, min_members: int | None = 1, weights: xr.DataArray | None = None
 ) -> xr.Dataset:
-    """Calculate ensemble statistics between a results from an ensemble of climate simulations.
+    """
+    Calculate ensemble statistics between a results from an ensemble of climate simulations.
 
     Returns an xarray Dataset containing ensemble mean, standard-deviation, minimum and maximum for input climate
     simulations.
@@ -225,7 +227,8 @@ def ensemble_percentiles(
         "normal_unbiased",
     ] = "linear",
 ) -> xr.DataArray | xr.Dataset:
-    """Calculate ensemble statistics between a results from an ensemble of climate simulations.
+    """
+    Calculate ensemble statistics between a results from an ensemble of climate simulations.
 
     Returns a Dataset containing ensemble percentiles for input climate simulations.
 
@@ -390,7 +393,8 @@ def _ens_align_datasets(
     cal_kwargs: dict | None = None,
     **xr_kwargs,
 ) -> list[xr.Dataset]:
-    r"""Create a list of aligned xarray Datasets for ensemble Dataset creation.
+    r"""
+    Create a list of aligned xarray Datasets for ensemble Dataset creation.
 
     Parameters
     ----------
@@ -410,7 +414,7 @@ def _ens_align_datasets(
         the align_on='date' option is used.
         See :py:func:`xclim.core.calendar.convert_calendar`.
         'default' is the standard calendar using np.datetime64 objects.
-    **xr_kwargs
+    **xr_kwargs : dict
         Any keyword arguments to be given to xarray when opening the files.
 
     Returns

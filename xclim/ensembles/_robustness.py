@@ -41,7 +41,8 @@ New tests must be decorated with :py:func:`significance_test` and fulfill the fo
 
 
 def significance_test(func: Callable) -> Callable:
-    """Register a significance test for use in :py:func:`robustness_fractions`.
+    """
+    Register a significance test for use in :py:func:`robustness_fractions`.
 
     Parameters
     ----------
@@ -72,7 +73,8 @@ def robustness_fractions(  # noqa: C901
     weights: xr.DataArray | None = None,
     **kwargs,
 ) -> xr.Dataset:
-    r"""Calculate robustness statistics qualifying how members of an ensemble agree on the existence of change and on its sign.
+    r"""
+    Calculate robustness statistics qualifying how members of an ensemble agree on the existence of change and on its sign.
 
     Parameters
     ----------
@@ -314,7 +316,8 @@ def robustness_categories(
     ops: list[tuple[str, str]] | None = None,
     thresholds: list[tuple[float, float]] | None = None,
 ) -> xr.DataArray:
-    """Create a categorical robustness map for mapping hatching patterns.
+    """
+    Create a categorical robustness map for mapping hatching patterns.
 
     Each robustness category is defined by a double threshold, one on the fraction of members showing significant
     change (`change_frac`) and one on the fraction of member agreeing on the sign of change (`agree_frac`).
@@ -398,7 +401,8 @@ def robustness_categories(
 def robustness_coefficient(
     fut: xr.DataArray | xr.Dataset, ref: xr.DataArray | xr.Dataset
 ) -> xr.DataArray | xr.Dataset:
-    """Calculate the robustness coefficient quantifying the robustness of a climate change signal in an ensemble.
+    """
+    Calculate the robustness coefficient quantifying the robustness of a climate change signal in an ensemble.
 
     Taken from :cite:ts:`knutti_robustness_2013`.
 
@@ -413,7 +417,7 @@ def robustness_coefficient(
 
     Parameters
     ----------
-    fut : xr.DataArray or  xr.Dataset
+    fut : xr.DataArray or xr.Dataset
         Future ensemble values along 'realization' and 'time' (nr, nt).
         Can be a dataset, in which case the coefficient is computed on each variable.
     ref : xr.DataArray or xr.Dataset
@@ -482,7 +486,8 @@ def robustness_coefficient(
 
 @significance_test
 def _ttest(fut, ref, *, p_change=0.05):
-    """Single sample T-test. Same test as used by :cite:t:`tebaldi_mapping_2011`.
+    """
+    Single sample T-test. Same test as used by :cite:t:`tebaldi_mapping_2011`.
 
     The future values are compared against the reference mean (over 'time').
     Accepts argument p_change (float, default : 0.05) the p-value threshold for rejecting the hypothesis of no significant change.
@@ -513,7 +518,8 @@ def _ttest(fut, ref, *, p_change=0.05):
 
 @significance_test
 def _welch_ttest(fut, ref, *, p_change=0.05):
-    """Two-sided T-test, without assuming equal population variance.
+    """
+    Two-sided T-test, without assuming equal population variance.
 
     Same significance criterion and argument as 'ttest'.
     """
@@ -591,7 +597,8 @@ def _brownforsythe_test(fut, ref, *, p_change=0.05):
 
 @significance_test
 def _ipcc_ar6_c(fut, ref, *, ref_pi=None):
-    r"""The advanced approach used in the IPCC Atlas chapter (:cite:t:`ipccatlas_ar6wg1`).
+    r"""
+    The advanced approach used in the IPCC Atlas chapter (:cite:t:`ipccatlas_ar6wg1`).
 
     Change is considered significant if the delta exceeds a threshold related to the internal variability.
     If pre-industrial data is given in argument `ref_pi`, the threshold is defined as

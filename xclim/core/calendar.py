@@ -75,7 +75,8 @@ DataType = TypeVar("DataType", xr.DataArray, xr.Dataset)
 
 
 def doy_from_string(doy: DayOfYearStr, year: int, calendar: str) -> int:
-    """Return the day-of-year corresponding to an "MM-DD" string for a given year and calendar.
+    """
+    Return the day-of-year corresponding to an "MM-DD" string for a given year and calendar.
 
     Parameters
     ----------
@@ -98,7 +99,8 @@ def doy_from_string(doy: DayOfYearStr, year: int, calendar: str) -> int:
 
 
 def get_calendar(obj: Any, dim: str = "time") -> str:
-    """Return the calendar of an object.
+    """
+    Return the calendar of an object.
 
     Parameters
     ----------
@@ -111,16 +113,16 @@ def get_calendar(obj: Any, dim: str = "time") -> str:
     dim : str
         Name of the coordinate to check (if `obj` is a DataArray or Dataset).
 
-    Raises
-    ------
-    ValueError
-        If no calendar could be inferred.
-
     Returns
     -------
     str
         The Climate and Forecasting (CF) calendar name.
-        Will always return "standard" instead of "gregorian", following CF conventions 1.9.
+        Will always return "standard" instead of "gregorian", following CF-Conventions v1.9.
+
+    Raises
+    ------
+    ValueError
+        If no calendar could be inferred.
     """
     if isinstance(obj, xr.DataArray | xr.Dataset):
         return obj[dim].dt.calendar
@@ -140,7 +142,8 @@ def get_calendar(obj: Any, dim: str = "time") -> str:
 
 
 def common_calendar(calendars: Sequence[str], join="outer") -> str:
-    """Return a calendar common to all calendars from a list.
+    """
+    Return a calendar common to all calendars from a list.
 
     Uses the hierarchy: 360_day < noleap < standard < all_leap.
 
@@ -213,7 +216,8 @@ def convert_doy(
     missing: Any = np.nan,
     dim: str = "time",
 ) -> xr.DataArray | xr.Dataset:
-    """Convert the calendar of day of year (doy) data.
+    """
+    Convert the calendar of day of year (doy) data.
 
     Parameters
     ----------
@@ -303,7 +307,8 @@ def convert_doy(
 
 
 def ensure_cftime_array(time: Sequence) -> np.ndarray | Sequence[cftime.datetime]:
-    """Convert an input 1D array to a numpy array of cftime objects.
+    """
+    Convert an input 1D array to a numpy array of cftime objects.
 
     Python's datetime are converted to cftime.DatetimeGregorian ("standard" calendar).
 
@@ -345,7 +350,8 @@ def percentile_doy(
     beta: float = 1.0 / 3.0,
     copy: bool = True,
 ) -> xr.DataArray:
-    """Percentile value for each day of the year.
+    """
+    Percentile value for each day of the year.
 
     Return the climatological percentile over a moving window around each day of the year. Different quantile estimators
     can be used by specifying `alpha` and `beta` according to specifications given by :cite:t:`hyndman_sample_1996`.
@@ -438,7 +444,8 @@ def percentile_doy(
 
 
 def build_climatology_bounds(da: xr.DataArray) -> list[str]:
-    """Build the climatology_bounds property with the start and end dates of input data.
+    """
+    Build the climatology_bounds property with the start and end dates of input data.
 
     Parameters
     ----------
@@ -456,7 +463,8 @@ def build_climatology_bounds(da: xr.DataArray) -> list[str]:
 
 
 def compare_offsets(freqA: str, op: str, freqB: str) -> bool:  # noqa
-    """Compare offsets string based on their approximate length, according to a given operator.
+    """
+    Compare offsets string based on their approximate length, according to a given operator.
 
     Offset are compared based on their length approximated for a period starting
     after 1970-01-01 00:00:00. If the offsets are from the same category (same first letter),
@@ -495,7 +503,8 @@ def compare_offsets(freqA: str, op: str, freqB: str) -> bool:  # noqa
 
 
 def parse_offset(freq: str) -> tuple[int, str, bool, str | None]:
-    """Parse an offset string.
+    """
+    Parse an offset string.
 
     Parse a frequency offset and, if needed, convert to cftime-compatible components.
 
@@ -535,7 +544,8 @@ def parse_offset(freq: str) -> tuple[int, str, bool, str | None]:
 
 
 def construct_offset(mult: int, base: str, start_anchored: bool, anchor: str | None):
-    """Reconstruct an offset string from its parts.
+    """
+    Reconstruct an offset string from its parts.
 
     Parameters
     ----------
@@ -566,7 +576,8 @@ def construct_offset(mult: int, base: str, start_anchored: bool, anchor: str | N
 
 
 def is_offset_divisor(divisor: str, offset: str):
-    """Check that divisor is a divisor of offset.
+    """
+    Check that divisor is a divisor of offset.
 
     A frequency is a "divisor" of another if a whole number of periods of the
     former fit within a single period of the latter.
@@ -630,7 +641,8 @@ def is_offset_divisor(divisor: str, offset: str):
 def _interpolate_doy_calendar(
     source: xr.DataArray, doy_max: int, doy_min: int = 1
 ) -> xr.DataArray:
-    """Interpolate from one set of dayofyear range to another.
+    """
+    Interpolate from one set of dayofyear range to another.
 
     Interpolate an array defined over a `dayofyear` range (say 1 to 360) to another `dayofyear` range (say 1
     to 365).
@@ -672,7 +684,8 @@ def _interpolate_doy_calendar(
 def adjust_doy_calendar(
     source: xr.DataArray, target: xr.DataArray | xr.Dataset
 ) -> xr.DataArray:
-    """Interpolate from one set of dayofyear range to another calendar.
+    """
+    Interpolate from one set of dayofyear range to another calendar.
 
     Interpolate an array defined over a `dayofyear` range (say 1 to 360) to another `dayofyear` range (say 1 to 365).
 
@@ -712,7 +725,8 @@ def adjust_doy_calendar(
 
 
 def resample_doy(doy: xr.DataArray, arr: xr.DataArray | xr.Dataset) -> xr.DataArray:
-    """Create a temporal DataArray where each day takes the value defined by the day-of-year.
+    """
+    Create a temporal DataArray where each day takes the value defined by the day-of-year.
 
     Parameters
     ----------
@@ -752,7 +766,8 @@ def time_bnds(  # noqa: C901
     freq: str | None = None,
     precision: str | None = None,
 ):
-    """Find the time bounds for a datetime index.
+    """
+    Find the time bounds for a datetime index.
 
     As we are using datetime indices to stand in for period indices, assumptions regarding the period
     are made based on the given freq.
@@ -866,7 +881,8 @@ def time_bnds(  # noqa: C901
 def climatological_mean_doy(
     arr: xr.DataArray, window: int = 5
 ) -> tuple[xr.DataArray, xr.DataArray]:
-    """Calculate the climatological mean and standard deviation for each day of the year.
+    """
+    Calculate the climatological mean and standard deviation for each day of the year.
 
     Parameters
     ----------
@@ -894,7 +910,8 @@ def climatological_mean_doy(
 def within_bnds_doy(
     arr: xr.DataArray, *, low: xr.DataArray, high: xr.DataArray
 ) -> xr.DataArray:
-    """Return whether array values are within bounds for each day of the year.
+    """
+    Return whether array values are within bounds for each day of the year.
 
     Parameters
     ----------
@@ -918,7 +935,8 @@ def within_bnds_doy(
 def _doy_days_since_doys(
     base: xr.DataArray, start: DayOfYearStr | None = None
 ) -> tuple[xr.DataArray, xr.DataArray, xr.DataArray]:
-    """Calculate dayofyear to days since, or the inverse.
+    """
+    Calculate dayofyear to days since, or the inverse.
 
     Parameters
     ----------
@@ -968,7 +986,8 @@ def doy_to_days_since(
     start: DayOfYearStr | None = None,
     calendar: str | None = None,
 ) -> xr.DataArray:
-    """Convert day-of-year data to days since a given date.
+    """
+    Convert day-of-year data to days since a given date.
 
     This is useful for computing meaningful statistics on doy data.
 
@@ -1039,7 +1058,8 @@ def days_since_to_doy(
     start: DayOfYearStr | None = None,
     calendar: str | None = None,
 ) -> xr.DataArray:
-    """Reverse the conversion made by :py:func:`doy_to_days_since`.
+    """
+    Reverse the conversion made by :py:func:`doy_to_days_since`.
 
     Converts data given in days since a specific date to day-of-year.
 
@@ -1106,7 +1126,8 @@ def select_time(
     date_bounds: tuple[str, str] | None = None,
     include_bounds: bool | tuple[bool, bool] = True,
 ) -> DataType:
-    """Select entries according to a time period.
+    """
+    Select entries according to a time period.
 
     This conveniently improves xarray's :py:meth:`xarray.DataArray.where` and :py:meth:`xarray.DataArray.sel`
     with fancier ways of indexing over time elements. In addition to the data `da` and argument `drop`,
@@ -1252,7 +1273,8 @@ def stack_periods(
     align_days: bool = True,
     pad_value=dtypes.NA,
 ):
-    """Construct a multi-period array.
+    """
+    Construct a multi-period array.
 
     Stack different equal-length periods of `da` into a new 'period' dimension.
 
@@ -1459,7 +1481,8 @@ def stack_periods(
 def unstack_periods(
     da: xr.DataArray | xr.Dataset, dim: str = "period"
 ) -> xr.DataArray | xr.Dataset:
-    """Unstack an array constructed with :py:func:`stack_periods`.
+    """
+    Unstack an array constructed with :py:func:`stack_periods`.
 
     Can only work with periods stacked with a ``stride`` that divides ``window`` in an odd number of sections.
     When ``stride`` is smaller than ``window``, only the center-most stride of each window is kept,

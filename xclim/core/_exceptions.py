@@ -29,7 +29,8 @@ def raise_warn_or_log(
     err_type: type = ValueError,
     stacklevel: int = 1,
 ):
-    """Raise, warn or log an error according.
+    """
+    Raise, warn or log an error according.
 
     Parameters
     ----------
