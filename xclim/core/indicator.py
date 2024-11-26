@@ -304,7 +304,7 @@ class IndicatorRegistrar:
         Returns
         -------
         Indicator
-             First instance found of this class in the indicators registry.
+            First instance found of this class in the indicators registry.
 
         Raises
         ------
