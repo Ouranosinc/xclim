@@ -297,8 +297,8 @@ class IndicatorRegistrar:
 
         Returns
         -------
-        Any
-            FIXME: What is the return type?
+        Indicator
+             First instance found of this class in the indicators registry.
 
         Raises
         ------
