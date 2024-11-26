@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from xarray import DataArray
+
 from xclim.core.cfchecks import check_valid
 from xclim.core.indicator import (
     ReducingIndicator,
@@ -35,9 +37,16 @@ class Streamflow(ResamplingIndicator):
     src_freq = "D"
     keywords = "streamflow hydrology"
 
-    # TODO: TJS: The signature of this method seems wrong. Should it be `def cfcheck(cls, q):` or something else? Is it a static method?
     @staticmethod
-    def cfcheck(q):
+    def cfcheck(q: DataArray):
+        r"""
+        Verify the CF-compliance of the input data.
+
+        Parameters
+        ----------
+        q : xarray.DataArray
+            The input data array.
+        """
         check_valid(q, "standard_name", "water_volume_transport_in_river_channel")
 
 

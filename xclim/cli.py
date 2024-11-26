@@ -2,7 +2,7 @@
 =============================
 Command Line Interface module
 =============================
-"""
+"""  # numpydoc ignore=SS03,SS06
 
 from __future__ import annotations
 
@@ -35,6 +35,7 @@ try:
 
     distributed = True
 except ImportError:  # noqa: S110
+    Client, progress = None, None
     # Distributed is not a dependency of xclim
     pass
 
@@ -154,7 +155,7 @@ def _create_command(indicator_name):
 
 @click.command(short_help="Print versions of dependencies for debugging purposes.")
 @click.pass_context
-def show_version_info(ctx):
+def show_version_info(ctx):  # numpydoc ignore=PR01
     """Print versions of dependencies for debugging purposes."""
     click.echo(show_versions())
     ctx.exit()
@@ -180,7 +181,7 @@ def show_version_info(ctx):
     f"`XCLIM_TESTDATA_CACHE` (if set) or `{default_testdata_cache}`.",
 )
 @click.pass_context
-def prefetch_testing_data(ctx, repo, branch, cache_dir):
+def prefetch_testing_data(ctx, repo, branch, cache_dir):  # numpydoc ignore=PR01
     """Prefetch xclim testing data for development purposes."""
     if repo:
         testdata_repo = repo
@@ -211,7 +212,7 @@ def prefetch_testing_data(ctx, repo, branch, cache_dir):
     "-r", "--rst", is_flag=True, help="Prints the history in ReStructuredText format."
 )
 @click.pass_context
-def release_notes(ctx, md, rst):
+def release_notes(ctx, md, rst):  # numpydoc ignore=PR01
     """Generate the release notes history for publishing purposes."""
     if md and rst:
         raise click.BadArgumentUsage(
@@ -257,7 +258,7 @@ def release_notes(ctx, md, rst):
     help="Resampling periods frequency used for aggregation. Default: None. Ignored if no variable provided.",
 )
 @click.pass_context
-def dataflags(ctx, variables, raise_flags, append, dims, freq):
+def dataflags(ctx, variables, raise_flags, append, dims, freq):  # numpydoc ignore=PR01
     """Run quality control checks on input data variables and flag for quality control issues or suspicious values."""
     ds = _get_input(ctx)
     flagged = xr.Dataset()
@@ -318,7 +319,7 @@ def dataflags(ctx, variables, raise_flags, append, dims, freq):
 @click.option(
     "-i", "--info", is_flag=True, help="Prints more details for each indicator."
 )
-def indices(info):  # noqa
+def indices(info):  # numpydoc ignore=PR01
     """List all indicators."""
     formatter = click.HelpFormatter()
     formatter.write_heading("Listing all available indicators for computation.")
@@ -343,7 +344,7 @@ def indices(info):  # noqa
 @click.command()
 @click.argument("indicator", nargs=-1)
 @click.pass_context
-def info(ctx, indicator):
+def info(ctx, indicator):  # numpydoc ignore=PR01
     """Give information about INDICATOR."""
     for indname in indicator:
         ind = _get_indicator(indname)
@@ -382,7 +383,9 @@ def _format_dict(data, formatter, key_fg="blue", spaces=2):
 class XclimCli(click.MultiCommand):
     """Main cli class."""
 
-    def list_commands(self, ctx):
+    def list_commands(
+        self, ctx
+    ) -> tuple[str, str, str, str, str, str]:  # numpydoc ignore=PR01,RT01
         """Return the available commands (other than the indicators)."""
         return (
             "indices",
@@ -393,7 +396,7 @@ class XclimCli(click.MultiCommand):
             "show_version_info",
         )
 
-    def get_command(self, ctx, cmd_name):
+    def get_command(self, ctx, cmd_name) -> click.Command:  # numpydoc ignore=PR01,RT01
         """Return the requested command."""
         command = {
             "dataflags": dataflags,
@@ -451,8 +454,9 @@ class XclimCli(click.MultiCommand):
     "If not specified, xarray decides.",
 )
 @click.pass_context
-def cli(ctx, **kwargs):
-    """Entry point for the command line interface.
+def cli(ctx, **kwargs):  # numpydoc ignore=PR01
+    """
+    Entry point for the command line interface.
 
     Manages the global options.
     """
@@ -508,7 +512,7 @@ def cli(ctx, **kwargs):
 
 @cli.result_callback()
 @click.pass_context
-def write_file(ctx, *args, **kwargs):
+def write_file(ctx, *args, **kwargs):  # numpydoc ignore=PR01
     """Write the output dataset to file."""
     if ctx.obj["output"] is not None:
         if ctx.obj["verbose"]:

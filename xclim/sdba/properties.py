@@ -1255,7 +1255,7 @@ def _return_value(
     Return the value corresponding to a return period. On average, the return value will be exceeded
     (or not exceed for op='min') every return period (e.g. 20 years). The return value is computed by first extracting
     the variable annual maxima/minima, fitting a statistical distribution to the maxima/minima,
-    then estimating the percentile associated with the return period (eg. 95th percentile (1/20) for 20 years)
+    then estimating the percentile associated with the return period (e.g. 95th percentile (1/20) for 20 years)
 
     Parameters
     ----------

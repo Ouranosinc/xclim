@@ -37,7 +37,15 @@ __all__ = [
 class Converter(Indicator):
     """Class for indicators doing variable conversion (dimension-independent 1-to-1 computation)."""
 
-    def cfcheck(self, **das):
+    def cfcheck(self, **das) -> None:
+        r"""
+        Verify the CF-compliance of the input data.
+
+        Parameters
+        ----------
+        **das : Mapping[str, xarray.DataArray]
+            The input data arrays.
+        """
         for varname, vardata in das.items():
             try:
                 # Only check standard_name, and not cell_methods which depends on the variable's frequency.

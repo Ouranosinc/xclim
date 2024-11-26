@@ -591,7 +591,7 @@ def test_parse_doc():
     assert doc["notes"].startswith("Let")
     assert "math::" in doc["notes"]
     assert "references" not in doc
-    assert doc["long_name"] == "The mean daily temperature at the given time frequency"
+    assert doc["long_name"] == "The mean daily temperature at the given time frequency."
 
     doc = parse_doc(xclim.indices.saturation_vapor_pressure.__doc__)
     assert (

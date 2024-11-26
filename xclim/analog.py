@@ -6,7 +6,7 @@
 # Code adapted from flyingpigeon.dissimilarity, Nov 2020.
 from __future__ import annotations
 
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from typing import Any
 
 import numpy as np
@@ -26,7 +26,8 @@ def spatial_analogs(
     method: str = "kldiv",
     **kwargs,
 ):
-    r"""Compute dissimilarity statistics between target points and candidate points.
+    r"""
+    Compute dissimilarity statistics between target points and candidate points.
 
     Spatial analogues based on the comparison of climate indices. The algorithm compares
     the distribution of the reference indices with the distribution of spatially
@@ -45,7 +46,7 @@ def spatial_analogs(
         The dimension over which the *distributions* are constructed. This can be a multi-index dimension.
     method : {'seuclidean', 'nearest_neighbor', 'zech_aslan', 'kolmogorov_smirnov', 'friedman_rafsky', 'kldiv'}
         Which method to use when computing the dissimilarity statistic.
-    \*\*kwargs
+    **kwargs : dict
         Any other parameter passed directly to the dissimilarity method.
 
     Returns
@@ -111,7 +112,8 @@ def spatial_analogs(
 
 
 def standardize(x: np.ndarray, y: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
-    """Standardize x and y by the square root of the product of their standard deviation.
+    """
+    Standardize x and y by the square root of the product of their standard deviation.
 
     Parameters
     ----------
@@ -129,9 +131,22 @@ def standardize(x: np.ndarray, y: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
     return x / s, y / s
 
 
-def metric(func):
-    """Register a metric function in the `metrics` mapping and add some preparation/checking code.
+def metric(func: Callable):
+    """
+    Register a metric function in the `metrics` mapping and add some preparation/checking code.
 
+    Parameters
+    ----------
+    func : callable
+        The metric function to be registered.
+
+    Returns
+    -------
+    callable
+        The metric function with some overhead code.
+
+    Notes
+    -----
     All metric functions accept 2D inputs. This reshapes 1D inputs to (n, 1) and (m, 1).
     All metric functions are invalid when any non-finite values are present in the inputs.
     """
@@ -166,7 +181,8 @@ def metric(func):
 
 @metric
 def seuclidean(x: np.ndarray, y: np.ndarray) -> float:
-    """Compute the Euclidean distance between the mean of a multivariate candidate sample with respect to the mean of a reference sample.
+    """
+    Compute the Euclidean distance between the mean of a multivariate candidate sample with respect to the mean of a reference sample.
 
     This method is scale-invariant.
 
@@ -200,7 +216,8 @@ def seuclidean(x: np.ndarray, y: np.ndarray) -> float:
 
 @metric
 def nearest_neighbor(x: np.ndarray, y: np.ndarray) -> np.ndarray:
-    """Compute a dissimilarity metric based on the number of points in the pooled sample whose nearest neighbor belongs to the same distribution.
+    """
+    Compute a dissimilarity metric based on the number of points in the pooled sample whose nearest neighbor belongs to the same distribution.
 
     This method is scale-invariant.
 
@@ -237,7 +254,8 @@ def nearest_neighbor(x: np.ndarray, y: np.ndarray) -> np.ndarray:
 
 @metric
 def zech_aslan(x: np.ndarray, y: np.ndarray, *, dmin: float = 1e-12) -> float:
-    r"""Compute a modified Zech-Aslan energy distance dissimilarity metric based on an analogy with the energy of a cloud of electrical charges.
+    r"""
+    Compute a modified Zech-Aslan energy distance dissimilarity metric based on an analogy with the energy of a cloud of electrical charges.
 
     This method is scale-invariant.
 
@@ -370,7 +388,8 @@ def szekely_rizzo(x: np.ndarray, y: np.ndarray, *, standardize: bool = True) -> 
 
 @metric
 def friedman_rafsky(x: np.ndarray, y: np.ndarray) -> float:
-    """Compute a dissimilarity metric based on the Friedman-Rafsky runs statistics.
+    """
+    Compute a dissimilarity metric based on the Friedman-Rafsky runs statistics.
 
     The algorithm builds a minimal spanning tree (the subset of edges connecting all points that minimizes the total
     edge length) then counts the edges linking points from the same distribution. This method is scale-dependent.
@@ -414,7 +433,8 @@ def friedman_rafsky(x: np.ndarray, y: np.ndarray) -> float:
 
 @metric
 def kolmogorov_smirnov(x: np.ndarray, y: np.ndarray) -> float:
-    """Compute the Kolmogorov-Smirnov statistic applied to two multivariate samples as described by Fasano and Franceschini.
+    """
+    Compute the Kolmogorov-Smirnov statistic applied to two multivariate samples as described by Fasano and Franceschini.
 
     This method is scale-dependent.
 
@@ -435,17 +455,32 @@ def kolmogorov_smirnov(x: np.ndarray, y: np.ndarray) -> float:
     :cite:cts:`fasano_multidimensional_1987`
     """
 
-    def pivot(x, y):
-        nx, d = x.shape
-        ny, d = y.shape
+    def pivot(_x: np.ndarray, _y: np.ndarray) -> float:
+        """
+        Pivot function to compute the KS statistic.
+
+        Parameters
+        ----------
+        _x : np.ndarray
+            Reference sample.
+        _y : np.ndarray
+            Candidate sample.
+
+        Returns
+        -------
+        float
+            Kolmogorov-Smirnov dissimilarity metric ranging from 0 to 1.
+        """
+        nx, d = _x.shape
+        ny, d = _y.shape
 
         # Multiplicative factor converting d-dim booleans to a unique integer.
         mf = (2 ** np.arange(d)).reshape(1, d, 1)
         minlength = 2**d
 
-        # Assign a unique integer according on whether or not x[i] <= sample
-        ix = ((x.T <= np.atleast_3d(x)) * mf).sum(1)
-        iy = ((x.T <= np.atleast_3d(y)) * mf).sum(1)
+        # Assign a unique integer according to whether or not x[i] <= sample
+        ix = ((_x.T <= np.atleast_3d(_x)) * mf).sum(1)
+        iy = ((_x.T <= np.atleast_3d(_y)) * mf).sum(1)
 
         # Count the number of samples in each quadrant
         cx = 1.0 * np.apply_along_axis(np.bincount, 0, ix, minlength=minlength) / nx
@@ -456,7 +491,7 @@ def kolmogorov_smirnov(x: np.ndarray, y: np.ndarray) -> float:
         # D[0,:] -= 1. / nx # I don't understand this...
         # dmin, dmax = -D.min(), D.max() + .1 / nx
 
-        return np.max(np.abs(cx - cy))
+        return float(np.max(np.abs(cx - cy)))
 
     return max(pivot(x, y), pivot(y, x))  # pylint: disable=arguments-out-of-order
 
@@ -465,7 +500,8 @@ def kolmogorov_smirnov(x: np.ndarray, y: np.ndarray) -> float:
 def kldiv(
     x: np.ndarray, y: np.ndarray, *, k: int | Sequence[int] = 1
 ) -> float | Sequence[float]:
-    r"""Compute the Kullback-Leibler divergence between two multivariate samples.
+    r"""
+    Compute the Kullback-Leibler divergence between two multivariate samples.
 
     The formula to compute the K-L divergence from samples is given by:
 
@@ -481,7 +517,7 @@ def kldiv(
     x : np.ndarray (n,d)
         Samples from distribution P, which typically represents the true distribution (reference).
     y : np.ndarray (m,d)
-        Samples from distribution Q, which typically represents the approximate distribution (candidate)
+        Samples from distribution Q, which typically represents the approximate distribution (candidate).
     k : int or sequence
         The kth neighbours to look for when estimating the density of the distributions.
         Defaults to 1, which can be noisy.

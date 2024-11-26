@@ -1,3 +1,5 @@
+"""Snow indicator definitions."""
+
 from __future__ import annotations
 
 from xclim import indices as xci

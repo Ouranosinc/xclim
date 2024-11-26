@@ -8,7 +8,6 @@ and missing value masking.
 
 The concept followed here is to define Indicator subclasses for each input variable, then create instances
 for each indicator.
-
 """
 
 from __future__ import annotations

@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from xarray import DataArray
+
 from xclim import indices
 from xclim.core import cfchecks
 from xclim.core.indicator import (
@@ -97,7 +99,18 @@ class PrTasxWithIndexing(ResamplingIndicatorWithIndexing):
     context = "hydro"
     keywords = "precipitation"
 
-    def cfcheck(self, pr, tas):
+    @staticmethod
+    def cfcheck(pr: DataArray, tas: DataArray):
+        r"""
+        Verify the CF-compliance of the input data.
+
+        Parameters
+        ----------
+        pr : xarray.DataArray
+            Precipitation data.
+        tas : xarray.DataArray
+            Temperature data.
+        """
         cfchecks.cfcheck_from_name("pr", pr)
         cfchecks.check_valid(tas, "standard_name", "air_temperature")
 

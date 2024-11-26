@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from xarray import DataArray
+
 from xclim import indices
 from xclim.core import cfchecks
 from xclim.core.indicator import (
@@ -1314,7 +1316,17 @@ class FireSeasonBase(Indicator):
 
     keywords = "fire"
 
-    def cfcheck(self, tas, snd=None):
+    def cfcheck(self, tas: DataArray, snd: DataArray = None):
+        r"""
+        Verify the CF-compliance of the input data.
+
+        Parameters
+        ----------
+        tas : xarray.DataArray
+            Near-surface air temperature.
+        snd : xarray.DataArray, optional
+            Snow depth.
+        """
         cfchecks.check_valid(tas, "standard_name", "air_temperature")
         cfchecks.cfcheck_from_name("snd", snd)
 
