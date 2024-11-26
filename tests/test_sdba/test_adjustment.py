@@ -1080,6 +1080,7 @@ class TestdOTC:
 
     # just check it runs
     def test_different_times(self, tasmax_series, tasmin_series):
+        pytest.importorskip("ot")
         # `sim` has a different time than `ref,hist` (but same size)
         ref = xr.merge(
             [
