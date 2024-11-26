@@ -609,7 +609,7 @@ def open_dataset(
         URL of the repository to use when fetching testing datasets.
     cache_dir : Path
         The directory in which to search for and write cached data.
-    \*\*kwargs : dict
+    **kwargs : dict
         For NetCDF files, keywords passed to :py:func:`xarray.open_dataset`.
 
     Returns

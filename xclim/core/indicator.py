@@ -547,7 +547,7 @@ class Indicator(IndicatorRegistrar):
         # Remove the \\* symbols from the parameter names
         _sanitized_params_dict = {}
         for param in params_dict.keys():
-            _sanitized_params_dict[param.replace("\\*", "")] = params_dict[param]
+            _sanitized_params_dict[param.replace("*", "")] = params_dict[param]
         params_dict = _sanitized_params_dict
 
         # Check that the `Parameters` section of the docstring does not include parameters
@@ -1353,7 +1353,7 @@ class Indicator(IndicatorRegistrar):
 
         Parameters
         ----------
-        \*\*das : dict
+        **das : dict
             A dictionary of DataArrays to check.
         """
         for varname, vardata in das.items():
@@ -1377,7 +1377,7 @@ class Indicator(IndicatorRegistrar):
 
         Parameters
         ----------
-        \*\*das : dict
+        **das : dict
             A dictionary of DataArrays to check.
 
         Raises

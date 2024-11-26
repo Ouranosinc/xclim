@@ -2106,7 +2106,7 @@ def wind_profile(
         Reference height.
     method : {"power_law"}
         Method to use. Currently only "power_law" is implemented.
-    \*\*kwds : dict
+    **kwds : dict
         Additional keyword arguments to pass to the method.For power_law, this is alpha, which takes a default value
         of 1/7, but is highly variable based on topography, surface cover and atmospheric stability.
 

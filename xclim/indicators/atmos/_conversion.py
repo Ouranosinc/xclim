@@ -42,7 +42,7 @@ class Converter(Indicator):
 
         Parameters
         ----------
-        \*\*das : Mapping[str, xarray.DataArray]
+        **das : Mapping[str, xarray.DataArray]
             The input data arrays.
         """
         for varname, vardata in das.items():

@@ -157,7 +157,7 @@ def get_local_attrs(
         Indicator's class name, usually the same as in `xc.core.indicator.registry`.
         If multiple names are passed, the attrs from each indicator are merged,
         with the highest priority set to the first name.
-    \*locales : str or tuple of str
+    *locales : str or tuple of str
         IETF language tag or a tuple of the language tag and a translation dict, or a tuple of the language tag
         and a path to a json file defining translation of attributes.
     names : sequence of str, optional

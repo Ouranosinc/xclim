@@ -83,7 +83,7 @@ def select_resample_op(
         Resampling frequency defining the periods as defined in :ref:`timeseries.resampling`.
     out_units : str, optional
         Output units to assign. Only necessary if `op` is function not supported by :py:func:`xclim.core.units.to_agg_units`.
-    \*\*indexer : {dim: indexer, }, optional
+    **indexer : {dim: indexer, }, optional
         Time attribute and values over which to subset the array. For example, use season='DJF' to select winter values,
         month=1 to select January, or month=[6,7,8] to select summer months. If not indexer is given, all values are
         considered.
@@ -144,7 +144,7 @@ def select_rolling_resample_op(
         Resampling frequency defining the periods as defined in :ref:`timeseries.resampling`. Applied after the rolling window.
     out_units : str, optional
         Output units to assign. Only necessary if `op` is function not supported by :py:func:`xclim.core.units.to_agg_units`.
-    \*\*indexer : {dim: indexer, }, optional
+    **indexer : {dim: indexer, }, optional
         Time attribute and values over which to subset the array. For example, use season='DJF' to select winter values,
         month=1 to select January, or month=[6,7,8] to select summer months. If not indexer is given, all values are
         considered.
@@ -209,7 +209,7 @@ def default_freq(**indexer) -> str:
 
     Parameters
     ----------
-    \*\*indexer : {dim: indexer, }
+    **indexer : {dim: indexer, }
         The indexer to use to compute the frequency.
 
     Returns
@@ -618,7 +618,7 @@ def spell_length_statistics(
     resample_before_rl : bool
         Determines if the resampling should take place before or after the run
         length encoding (or a similar algorithm) is applied to runs.
-    \*\*indexer : {dim: indexer, }, optional
+    **indexer : {dim: indexer, }, optional
         Indexing parameters to compute the indicator on a temporal subset of the data.
         It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
         Indexing is done after finding the days part of a spell, but before taking the spell statistics.
@@ -725,7 +725,7 @@ def bivariate_spell_length_statistics(
     resample_before_rl : bool
         Determines if the resampling should take place before or after the run
         length encoding (or a similar algorithm) is applied to runs.
-    \*\*indexer : {dim: indexer, }, optional
+    **indexer : {dim: indexer, }, optional
         Indexing parameters to compute the indicator on a temporal subset of the data.
         It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
         Indexing is done after finding the days part of a spell, but before taking the spell statistics.

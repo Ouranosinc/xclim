@@ -336,7 +336,7 @@ def frost_days(
         Freezing temperature.
     freq : str
         Resampling frequency.
-    \*\*indexer : {dim: indexer}, optional
+    **indexer : {dim: indexer}, optional
         Indexing parameters to compute the frost days on a temporal subset of the data.
         It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
 

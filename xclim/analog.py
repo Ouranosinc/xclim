@@ -46,7 +46,7 @@ def spatial_analogs(
         The dimension over which the *distributions* are constructed. This can be a multi-index dimension.
     method : {'seuclidean', 'nearest_neighbor', 'zech_aslan', 'kolmogorov_smirnov', 'friedman_rafsky', 'kldiv'}
         Which method to use when computing the dissimilarity statistic.
-    \*\*kwargs : dict
+    **kwargs : dict
         Any other parameter passed directly to the dissimilarity method.
 
     Returns

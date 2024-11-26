@@ -89,7 +89,7 @@ def robustness_fractions(  # noqa: C901
         Name of the statistical test used to determine if there was significant change. See notes.
     weights : xr.DataArray
         Weights to apply along the 'realization' dimension. This array cannot contain missing values.
-    \*\*kwargs : dict
+    **kwargs : dict
         Other arguments specific to the statistical test. See notes.
 
     Returns

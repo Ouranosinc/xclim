@@ -72,7 +72,7 @@ def create_ensemble(
     cal_kwargs : dict, optional
         Additional arguments to pass to py:func:`xclim.core.calendar.convert_calendar`.
         For conversions involving '360_day', the align_on='date' option is used by default.
-    \*\*xr_kwargs : dict
+    **xr_kwargs : dict
         Any keyword arguments to be given to `xr.open_dataset` when opening the files (or to `xr.open_mfdataset` if `multifile` is True).
 
     Returns
@@ -410,7 +410,7 @@ def _ens_align_datasets(
         the align_on='date' option is used.
         See :py:func:`xclim.core.calendar.convert_calendar`.
         'default' is the standard calendar using np.datetime64 objects.
-    \*\*xr_kwargs
+    **xr_kwargs
         Any keyword arguments to be given to xarray when opening the files.
 
     Returns

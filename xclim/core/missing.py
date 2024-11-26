@@ -70,7 +70,7 @@ class MissingBase:
         Resampling frequency.
     src_timestep : str, Optional
         The expected input frequency. If not given, it will be inferred from the input array.
-    \*\*indexer : Indexer
+    **indexer : Indexer
         Time attribute and values over which to subset the array. For example, use season='DJF' to select winter
         values, month=1 to select January, or month=[6,7,8] to select summer months.
         If not indexer is given, all values are considered.
@@ -153,7 +153,7 @@ class MissingBase:
             Input data.
         freq : str
             Resampling frequency, from the periods defined in :ref:`timeseries.resampling`.
-        \*\*indexer : {dim: indexer}, optional
+        **indexer : {dim: indexer}, optional
             The time attribute and values over which to subset the array. For example, use season='DJF' to select winter
             values, month=1 to select January, or month=[6,7,8] to select summer months.
 
@@ -191,7 +191,7 @@ class MissingBase:
             Resampling frequency, from the periods defined in :ref:`timeseries.resampling`.
         src_timestep : str
             Expected input frequency, from the periods defined in :ref:`timeseries.resampling`.
-        \*\*indexer : {dim: indexer}, optional
+        **indexer : {dim: indexer}, optional
             Time attribute and values over which to subset the array. For example, use season='DJF' to select winter
             values, month=1 to select January, or month=[6,7,8] to select summer months. If not indexer is given,
             all values are considered.
@@ -279,7 +279,7 @@ class MissingBase:
 
         Parameters
         ----------
-        \*\*kwargs : dict
+        **kwargs : dict
             Options arguments.
 
         Returns
@@ -312,7 +312,7 @@ class MissingAny(MissingBase):
         Resampling frequency.
     src_timestep : {"D", "h", "M"}
         Expected input frequency.
-    \*\*indexer : {dim: indexer, }, optional
+    **indexer : {dim: indexer, }, optional
         Time attribute and values over which to subset the array. For example, use season='DJF' to select winter
         values, month=1 to select January, or month=[6,7,8] to select summer months.
         If not indexer is given, all values are considered.
@@ -337,7 +337,7 @@ class MissingAny(MissingBase):
             Boolean array indicating which values are null.
         count : xr.DataArray
             Array of expected number of valid values.
-        \*\*kwargs : dict
+        **kwargs : dict
             Additional arguments.
 
         Returns
@@ -375,7 +375,7 @@ class MissingWMO(MissingAny):
         Number of consecutive missing values per month that should not be exceeded.
     src_timestep : {"D"}
         Expected input frequency. Only daily values are supported.
-    \*\*indexer : {dim: indexer, }, optional
+    **indexer : {dim: indexer, }, optional
         Time attribute and values over which to subset the array. For example, use season='DJF' to select winter
         Time attribute and values over which to subset the array. For example, use season='DJF' to select winter
         values, month=1 to select January, or month=[6,7,8] to select summer months.
@@ -480,7 +480,7 @@ class MissingPct(MissingBase):
         Fraction of missing values that are tolerated [0,1].
     src_timestep : {"D", "h"}
         Expected input frequency.
-    \*\*indexer : {dim: indexer, }, optional
+    **indexer : {dim: indexer, }, optional
         Time attribute and values over which to subset the array. For example, use season='DJF' to select winter values,
         month=1 to select January, or month=[6,7,8] to select summer months.
         If not indexer is given, all values are considered.

@@ -3193,7 +3193,7 @@ def dry_spell_frequency(
         threshold.
         "max" checks that the maximal daily precipitation amount within the window is less than the threshold.
         This is the same as verifying that each individual day is below the threshold.
-    \*\*indexer : {dim: indexer}, optional
+    **indexer : {dim: indexer}, optional
         Indexing parameters to compute the indicator on a temporal subset of the data.
         It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
         Indexing is done after finding the dry days, but before finding the spells.
@@ -3261,7 +3261,7 @@ def dry_spell_total_length(
         Resampling frequency.
     resample_before_rl : bool
         Determines if the resampling should take place before or after the run length encoding (or a similar algorithm) is applied to runs.
-    \*\*indexer : {dim: indexer}, optional
+    **indexer : {dim: indexer}, optional
         Indexing parameters to compute the indicator on a temporal subset of the data.
         It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
         Indexing is done after finding the dry days, but before finding the spells.
@@ -3328,7 +3328,7 @@ def dry_spell_max_length(
     resample_before_rl : bool
         Determines if the resampling should take place before or after the run
         length encoding (or a similar algorithm) is applied to runs.
-    \*\*indexer : {dim: indexer}, optional
+    **indexer : {dim: indexer}, optional
         Indexing parameters to compute the indicator on a temporal subset of the data.
         It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
         Indexing is done after finding the dry days, but before finding the spells.
@@ -3398,7 +3398,7 @@ def wet_spell_frequency(
         threshold.
         "min" checks that the maximal daily precipitation amount within the window is more than the threshold.
         This is the same as verifying that each individual day is above the threshold.
-    \*\*indexer : {dim: indexer}, optional
+    **indexer : {dim: indexer}, optional
         Indexing parameters to compute the indicator on a temporal subset of the data.
         It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
         Indexing is done after finding the wet days, but before finding the spells.
@@ -3465,7 +3465,7 @@ def wet_spell_total_length(
         Resampling frequency.
     resample_before_rl : bool
         Determines if the resampling should take place before or after the run length encoding (or a similar algorithm) is applied to runs.
-    \*\*indexer : {dim: indexer}, optional
+    **indexer : {dim: indexer}, optional
         Indexing parameters to compute the indicator on a temporal subset of the data.
         It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
         Indexing is done after finding the wet days, but before finding the spells.
@@ -3534,7 +3534,7 @@ def wet_spell_max_length(
         Resampling frequency.
     resample_before_rl : bool
         Determines if the resampling should take place before or after the run length encoding (or a similar algorithm) is applied to runs.
-    \*\*indexer : {dim: indexer}, optional
+    **indexer : {dim: indexer}, optional
         Indexing parameters to compute the indicator on a temporal subset of the data.
         It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
         Indexing is done after finding the wet days, but before finding the spells.

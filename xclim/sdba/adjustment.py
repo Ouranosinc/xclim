@@ -245,7 +245,7 @@ class TrainAdjust(BaseAdjustment):
             Training target, usually a reference time series drawn from observations.
         hist : DataArray
             Training data, usually a model output whose biases are to be adjusted.
-        \*\*kwargs : dict
+        **kwargs : dict
             Algorithm-specific keyword arguments, see class doc.
         """
         kwargs = parse_group(cls._train, kwargs)
@@ -278,9 +278,9 @@ class TrainAdjust(BaseAdjustment):
         ----------
         sim : DataArray
             Time series to be bias-adjusted, usually a model output.
-        \*args : xr.DataArray
+        *args : xr.DataArray
             Other DataArrays needed for the adjustment (usually none).
-        \*\*kwargs : dict
+        **kwargs : dict
             Algorithm-specific keyword arguments, see class doc.
         """
         skip_checks = kwargs.pop("skip_input_checks", False)
@@ -358,7 +358,7 @@ class Adjust(BaseAdjustment):
             Training data, usually a model output whose biases are to be adjusted.
         sim : DataArray
             Time series to be bias-adjusted, usually a model output.
-        \*\*kwargs : dict
+        **kwargs : dict
             Algorithm-specific keyword arguments, see class doc.
 
         Returns

@@ -98,7 +98,7 @@ def fit(
         The PWM method is usually more robust to outliers.
     dim : str
         The dimension upon which to perform the indexing (default: "time").
-    \*\*fitkwargs : dict
+    **fitkwargs : dict
         Other arguments passed directly to :py:func:`_fitstart` and to the distribution's `fit`.
 
     Returns
@@ -403,7 +403,7 @@ def frequency_analysis(
         Fitting method, either maximum likelihood (ML or MLE), method of moments (MOM) or approximate method (APP).
         Also accepts probability weighted moments (PWM), also called L-Moments, if `dist` is an instance from the lmoments3 library.
         The PWM method is usually more robust to outliers.
-    \*\*indexer : {dim: indexer, }, optional
+    **indexer : {dim: indexer, }, optional
         Time attribute and values over which to subset the array. For example, use season='DJF' to select winter values,
         month=1 to select January, or month=[6,7,8] to select summer months.
         If indexer is not provided, all values are considered.
@@ -473,7 +473,7 @@ def _fit_start(x, dist: str, **fitkwargs: Any) -> tuple[tuple, dict]:
         Name of the univariate distribution, e.g. `beta`, `expon`, `genextreme`, `gamma`, `gumbel_r`, `lognorm`, `norm`.
         (see :py:mod:scipy.stats).
         Only `genextreme` and `weibull_exp` distributions are supported.
-    \*\*fitkwargs
+    **fitkwargs
         Kwargs passed to fit.
 
     Returns
@@ -574,13 +574,13 @@ def _dist_method_1D(  # noqa: N802
 
     Parameters
     ----------
-    \*args
+    *args
         The arguments for the requested scipy function.
     dist : str or rv_continuous distribution object
         The scipy name of the distribution.
     function : str
         The name of the function to call.
-    \*\*kwargs : dict
+    **kwargs : dict
         Other parameters to pass to the function call.
 
     Returns
@@ -615,7 +615,7 @@ def dist_method(
         The first argument for the requested function if different from `fit_params`.
     dist : str or rv_continuous distribution object, optional
         The distribution name or instance. Defaults to the `scipy_dist` attribute or `fit_params`.
-    \*\*kwargs : dict
+    **kwargs : dict
         Other parameters to pass to the function call.
 
     Returns
@@ -666,7 +666,7 @@ def preprocess_standardized_index(
     window : int
         Averaging window length relative to the resampling frequency. For example, if `freq="MS"`,
         i.e. a monthly resampling, the window is an integer number of months.
-    \*\*indexer : {dim: indexer, }, optional
+    **indexer : {dim: indexer, }, optional
         Indexing parameters to compute the indicator on a temporal subset of the data.
         It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
 
@@ -754,7 +754,7 @@ def standardized_index_fit_params(
         If True, the zeroes of `da` are treated separately when fitting a probability density function.
     fitkwargs : dict, optional
         Kwargs passed to ``xclim.indices.stats.fit`` used to impose values of certains parameters (`floc`, `fscale`).
-    \*\*indexer : {dim: indexer, }, optional
+    **indexer : {dim: indexer, }, optional
         Indexing parameters to compute the indicator on a temporal subset of the data.
         It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
 
@@ -873,7 +873,7 @@ def standardized_index(
         Fit parameters.
         The `params` can be computed using ``xclim.indices.stats.standardized_index_fit_params`` in advance.
         The output can be given here as input, and it overrides other options.
-    \*\*indexer : {dim: indexer, }, optional
+    **indexer : {dim: indexer, }, optional
         Indexing parameters to compute the indicator on a temporal subset of the data.
         It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
 

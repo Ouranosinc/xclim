@@ -133,9 +133,9 @@ def run_check(func, option, *args, **kwargs):
         Function to run.
     option : str
         Option to use.
-    \*args : tuple
+    *args : tuple
         Positional arguments to pass to the function.
-    \*\*kwargs : dict
+    **kwargs : dict
         Keyword arguments to pass to the function.
 
     Raises

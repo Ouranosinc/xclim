@@ -1295,7 +1295,7 @@ def declare_relative_units(**units_by_name) -> Callable:
 
     Parameters
     ----------
-    \*\*units_by_name : dict
+    **units_by_name : dict
         Mapping from the input parameter names to dimensions relative to other parameters.
         The dimensions can be a single parameter name as `<other_var>` or more complex expressions,
         such as `<other_var> * [time]`.
@@ -1407,7 +1407,7 @@ def declare_units(**units_by_name) -> Callable:
 
     Parameters
     ----------
-    \*\*units_by_name : dict
+    **units_by_name : dict
         Mapping from the input parameter names to their units or dimensionality ("[...]").
         If this decorates a function previously decorated with :py:func:`declare_relative_units`,
         the relative unit declarations are made absolute with the information passed here.

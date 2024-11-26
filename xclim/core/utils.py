@@ -130,7 +130,7 @@ def ensure_chunk_size(da: xr.DataArray, **minchunks: int) -> xr.DataArray:
     ----------
     da : xr.DataArray
         The input DataArray, with or without the dask backend. Does nothing when passed a non-dask array.
-    \*\*minchunks : dict[str, int]
+    **minchunks : dict[str, int]
         A kwarg mapping from dimension name to minimum chunk size.
         Pass -1 to force a single chunk along that dimension.
 
@@ -178,7 +178,7 @@ def uses_dask(*das: xr.DataArray | xr.Dataset) -> bool:
 
     Parameters
     ----------
-    \*das : xr.DataArray or xr.Dataset
+    *das : xr.DataArray or xr.Dataset
         DataArrays or Datasets to check.
 
     Returns

@@ -1354,7 +1354,7 @@ def cffwis_indices(
         If True (default), gridpoints where the fire season is active on the first timestep go through a start_up phase
         for that time step. Otherwise, previous codes must be given as a continuing fire season is assumed for those
         points.
-    \*\*params : dict
+    **params : dict
         Any other keyword parameters as defined in :py:func:`fire_weather_ufunc` and in :py:data:`default_params`.
 
     Returns
@@ -1465,7 +1465,7 @@ def drought_code(
         If True (default), grid points where the fire season is active on the first timestep go through a start_up phase
         for that time step. Otherwise, previous codes must be given as a continuing fire season is assumed for those
         points.
-    \*\*params : dict
+    **params : dict
         Any other keyword parameters as defined in `xclim.indices.fire.fire_weather_ufunc` and in :py:data:`default_params`.
 
     Returns
@@ -1560,7 +1560,7 @@ def duff_moisture_code(
         If True (default), grid points where the fire season is active on the first timestep go through a start_up phase
         for that time step. Otherwise, previous codes must be given as a continuing fire season is assumed for those
         points.
-    \*\*params : dict
+    **params : dict
         Any other keyword parameters as defined in `xclim.indices.fire.fire_weather_ufunc` and in :py:data:`default_params`.
 
     Returns

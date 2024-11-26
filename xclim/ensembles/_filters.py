@@ -16,7 +16,7 @@ def _concat_hist(da: xr.DataArray, **hist) -> xr.DataArray:
     ----------
     da : xr.DataArray
         Input data where the historical scenario is stored alongside other, future, scenarios.
-    \*\*hist : dict
+    **hist : dict
         Mapping of the scenario dimension name to the historical scenario coordinate, e.g. `scenario="historical"`.
 
     Returns
