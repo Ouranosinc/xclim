@@ -906,6 +906,7 @@ class LOCI(TrainAdjust):
     :cite:cts:`sdba-schmidli_downscaling_2006`
     """
 
+    _allow_diff_calendars = False
     _allow_diff_training_times = False
 
     @classmethod
