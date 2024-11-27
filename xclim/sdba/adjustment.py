@@ -477,6 +477,7 @@ class EmpiricalQuantileMapping(TrainAdjust):
     :cite:cts:`sdba-deque_frequency_2007`
     """
 
+    _allow_diff_calendars = False
     _allow_diff_training_times = False
 
     @classmethod
@@ -577,6 +578,7 @@ class DetrendedQuantileMapping(TrainAdjust):
 
     """
 
+    _allow_diff_calendars = False
     _allow_diff_training_times = False
 
     @classmethod
@@ -956,6 +958,7 @@ class Scaling(TrainAdjust):
         The interpolation method to use then interpolating the adjustment factors. Defaults to "nearest".
     """
 
+    _allow_diff_calendars = False
     _allow_diff_training_times = False
 
     @classmethod
@@ -1428,6 +1431,7 @@ class OTC(Adjust):
     :cite:cts:`sdba-robin_2019,sdba-robin_2021`
     """
 
+    _allow_diff_calendars = False
     _allow_diff_time_sizes = False
 
     @classmethod
@@ -1585,7 +1589,7 @@ class dOTC(Adjust):
     :cite:cts:`sdba-robin_2019,sdba-robin_2021`
     """
 
-    _allow_diff_training_times = False
+    _allow_diff_calendars = False
     _allow_diff_time_sizes = False
 
     @classmethod
@@ -1778,6 +1782,7 @@ class MBCn(TrainAdjust):
     Only  "time" and "time.dayofyear" (with a suitable window) are implemented as possible values for `group`.
     """
 
+    _allow_diff_calendars = False
     _allow_diff_training_times = False
     _allow_diff_time_sizes = False
 
