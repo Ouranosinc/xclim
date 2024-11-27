@@ -74,7 +74,7 @@ class TestBaseAdjustment:
         with pytest.raises(
             ValueError, match="`ref` and `hist` should have the same time arrays."
         ):
-            BaseAdjustment._check_matching_time(ref=da, hist=da2)
+            BaseAdjustment._check_matching_times(ref=da, hist=da2)
 
 
 class TestLoci:
