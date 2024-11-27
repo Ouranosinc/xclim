@@ -78,6 +78,7 @@ class BaseAdjustment(ParametrizableWithDataset):
 
     _allow_diff_calendars = True
     _allow_diff_training_times = True
+    _allow_diff_time_sizes = True
     _attribute = "_xclim_adjustment"
 
     def __init__(self, *args, _trained=False, **kwargs):
@@ -210,10 +211,24 @@ class BaseAdjustment(ParametrizableWithDataset):
         ), target
 
     @classmethod
-    def _check_matching_time(cls, ref, hist):
+    def _check_matching_times(cls, ref, hist):
         """Raise an error ref and hist times don't match."""
         if all(ref.time.values == hist.time.values) is False:
-            raise ValueError("`ref` and `hist` should have the same time arrays.")
+            raise ValueError(
+                "`ref` and `hist` have distinct time arrays,"
+                f" this is not supported for {cls.__name__} adjustment."
+            )
+
+    @classmethod
+    def _check_matching_time_sizes(cls, *inputs):
+        """Raise an error if inputs have different size for the time arrays."""
+        ref_size = inputs[0].time.size
+        for inp in inputs[1:]:
+            if inp.time.size != ref_size:
+                raise ValueError(
+                    "Inputs have different size for the time array,"
+                    f" this is not supported for {cls.__name__} adjustment."
+                )
 
     @classmethod
     def _train(cls, ref, hist, **kwargs):
@@ -266,8 +281,9 @@ class TrainAdjust(BaseAdjustment):
         else:
             train_units = ""
 
-        if cls._allow_diff_training_times is False:
-            cls._check_matching_time(ref, hist)
+        # For some methods, `ref` and `hist` must share the same time array
+        if not cls._allow_diff_training_times:
+            cls._check_matching_times(ref, hist)
 
         ds, params = cls._train(ref, hist, **kwargs)
         obj = cls(
@@ -350,8 +366,6 @@ class Adjust(BaseAdjustment):
     and returning the scen dataset/array.
     """
 
-    _replace_sim_time = True
-
     @classmethod
     def adjust(
         cls,
@@ -382,16 +396,16 @@ class Adjust(BaseAdjustment):
             sim = hist.copy()
             sim.attrs["_is_hist"] = True
 
-        # This below implies that ref.time and sim.time have the same size
-        # Since `ref,hist, sim` are in the same `map_groups` call, they must have
-        # the same time
-        if cls._replace_sim_time:
+        if not cls._allow_diff_time_sizes:
+            cls._check_matching_time_sizes(ref, hist, sim)
+            # If `ref,hist, sim` are in the same `map_groups` call, they must have the same time
+            # As long as `sim` has the same time dimension, we can temporarily replace its time
+            # with the reference time
             sim_time = sim.time
             sim["time"] = ref["time"]
 
         kwargs = parse_group(cls._adjust, kwargs)
         skip_checks = kwargs.pop("skip_input_checks", False)
-
         if not skip_checks:
             if "group" in kwargs:
                 cls._check_inputs(ref, hist, sim, group=kwargs["group"])
@@ -404,7 +418,7 @@ class Adjust(BaseAdjustment):
             out = out.rename("scen").to_dataset()
 
         scen = out.scen
-        if cls._replace_sim_time:
+        if not cls._allow_diff_time_sizes:
             scen["time"] = sim_time
 
         params = ", ".join([f"{k}={repr(v)}" for k, v in kwargs.items()])
@@ -1414,6 +1428,8 @@ class OTC(Adjust):
     :cite:cts:`sdba-robin_2019,sdba-robin_2021`
     """
 
+    _allow_diff_times = False
+
     @classmethod
     def _adjust(
         cls,
@@ -1568,6 +1584,9 @@ class dOTC(Adjust):
     ----------
     :cite:cts:`sdba-robin_2019,sdba-robin_2021`
     """
+
+    _allow_diff_training_times = False
+    _allow_diff_time_sizes = False
 
     @classmethod
     def _adjust(
@@ -1760,6 +1779,7 @@ class MBCn(TrainAdjust):
     """
 
     _allow_diff_training_times = False
+    _allow_diff_time_sizes = False
 
     @classmethod
     def _train(
