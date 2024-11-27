@@ -66,15 +66,29 @@ class TestBaseAdjustment:
         ds, ds2 = unstack_variables(da), unstack_variables(da2)
         assert (ds.tas.units == ds2.tas.units) & (ds.pr.units == ds2.pr.units)
 
-    def test_matching_time(self, series, random):
+    def test_matching_times(self, series, random):
         n = 10
         u = random.random(n)
         da = series(u, "tas", start="2000-01-01")
         da2 = series(u, "tas", start="2010-01-01")
         with pytest.raises(
-            ValueError, match="`ref` and `hist` should have the same time arrays."
+            ValueError,
+            match="`ref` and `hist` have distinct time arrays, this is not supported for BaseAdjustment adjustment.",
         ):
             BaseAdjustment._check_matching_times(ref=da, hist=da2)
+
+    def test_matching_time_sizes(self, series, random):
+        n = 10
+        u = random.random(n)
+        da = series(u, "tas", start="2000-01-01")
+        n = 20
+        u = random.random(n)
+        da2 = series(u, "tas", start="2010-01-01")
+        with pytest.raises(
+            ValueError,
+            match="Inputs have different size for the time array, this is not supported for BaseAdjustment adjustment.",
+        ):
+            BaseAdjustment._check_matching_time_sizes(ref=da, hist=da2)
 
 
 class TestLoci:
