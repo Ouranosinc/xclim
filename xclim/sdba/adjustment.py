@@ -1428,7 +1428,7 @@ class OTC(Adjust):
     :cite:cts:`sdba-robin_2019,sdba-robin_2021`
     """
 
-    _allow_diff_times = False
+    _allow_diff_time_sizes = False
 
     @classmethod
     def _adjust(
