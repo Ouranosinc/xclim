@@ -81,14 +81,12 @@ class TestBaseAdjustment:
         n = 10
         u = random.random(n)
         da = series(u, "tas", start="2000-01-01")
-        n = 20
-        u = random.random(n)
-        da2 = series(u, "tas", start="2010-01-01")
+        da2 = da.isel(time=slice(0, 5)).copy()
         with pytest.raises(
             ValueError,
             match="Inputs have different size for the time array, this is not supported for BaseAdjustment adjustment.",
         ):
-            BaseAdjustment._check_matching_time_sizes(ref=da, hist=da2)
+            BaseAdjustment._check_matching_time_sizes(da, da2)
 
 
 class TestLoci:
