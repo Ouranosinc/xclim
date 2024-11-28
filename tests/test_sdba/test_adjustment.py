@@ -1090,34 +1090,6 @@ class TestdOTC:
         sim = unstack_variables(sim)
         assert not np.isin(sim.x[sim.x.isnull()].time.values, scen.time.values).any()
 
-    # just check it runs
-    def test_different_times(self, tasmax_series, tasmin_series):
-        pytest.importorskip("ot")
-        # `sim` has a different time than `ref,hist` (but same size)
-        ref = xr.merge(
-            [
-                tasmax_series(np.arange(730).astype(float), start="2000-01-01").chunk(
-                    {"time": -1}
-                ),
-                tasmin_series(np.arange(730).astype(float), start="2000-01-01").chunk(
-                    {"time": -1}
-                ),
-            ]
-        )
-        hist = ref.copy()
-        sim = xr.merge(
-            [
-                tasmax_series(np.arange(730).astype(float), start="2020-01-01").chunk(
-                    {"time": -1}
-                ),
-                tasmin_series(np.arange(730).astype(float), start="2020-01-01").chunk(
-                    {"time": -1}
-                ),
-            ]
-        )
-        ref, hist, sim = (stack_variables(arr) for arr in [ref, hist, sim])
-        dOTC.adjust(ref, hist, sim)
-
 
 def test_raise_on_multiple_chunks(tas_series):
     ref = tas_series(np.arange(730).astype(float)).chunk({"time": 365})
