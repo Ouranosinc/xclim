@@ -5,6 +5,7 @@ Base Classes and Developer Tools
 
 from __future__ import annotations
 
+from collections import UserDict
 from collections.abc import Callable, Sequence
 from inspect import _empty, signature  # noqa
 
@@ -20,7 +21,7 @@ from xclim.core.utils import uses_dask
 
 
 # ## Base class for the sdba module
-class Parametrizable(dict):
+class Parametrizable(UserDict):
     """Helper base class resembling a dictionary.
 
     This object is _completely_ defined by the content of its internal dictionary, accessible through item access
@@ -35,24 +36,23 @@ class Parametrizable(dict):
 
     def __getstate__(self):
         """For (json)pickle, a Parametrizable should be defined by its internal dict only."""
-        return self.parameters
+        return self.data
 
     def __setstate__(self, state):
         """For (json)pickle, a Parametrizable in only defined by its internal dict."""
-        self.update(state)
+        # Unpickling skips the init, so we must _set_ data, we can't just update it - it's not there yet
+        self.data = {**state}
 
     def __getattr__(self, attr):
         """Get attributes."""
-        try:
-            return self.__getitem__(attr)
-        except KeyError as err:
-            # Raise the proper error type for getattr
-            raise AttributeError(*err.args) from err
+        if attr == "data" or attr not in self.data:
+            return self.__getattribute__(attr)
+        return self.data[attr]
 
     @property
     def parameters(self) -> dict:
         """All parameters as a dictionary. Read-only."""
-        return {**self}
+        return {**self.data}
 
     def __repr__(self) -> str:
         """Return a string representation."""

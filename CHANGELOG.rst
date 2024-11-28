@@ -4,16 +4,31 @@ Changelog
 
 v0.54.0 (unreleased)
 --------------------
-Contributors to this version: Trevor James Smith (:user:`Zeitsperre`).
+Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), Éric Dupuis (:user:`coxipi`).
 
 Breaking changes
-----------------
-* The minimum required version of `dask` has been increased to `2024.8.1`. `dask` versions at or above `2024.11` are not yet supported. (:issue:`1992`, :pull:`1991`).
+^^^^^^^^^^^^^^^^
+* The minimum required version of `dask` has been increased to `2024.8.1`. (:issue:`1992`, :pull:`1991`).
+
+Bug fixes
+^^^^^^^^^
+* Fixed pickling issue with ``xclim.sdba.Grouper`` and other classes for usage with `dask>=2024.11`. (:issue:`1992`, :pull:`1993`).
+* Fixed an issue with ``nimbus`` that was causing URL path components to be improperly joined. (:pull:`1997`).
+* `base_kws_vars` in `MBCn` is now copied inside the `adjust` function so that in-place changes do not change the dict globally. (:pull:`1999`).
+* Fixed a bug in the logic of ``xclim.testing.utils.load_registry`` that impacted the ability to load a `registry.txt` from a non-default repository. (:pull:`2001`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
+* Changed french translations with word "pluvieux" to "avec précipitations". (:issue:`1960`, :pull:`1994`).
+* `streamflow` entry replaced with `q` in ``variables.yml``.  (:issue:`1912`, :pull:`1996`)
+* In order to address 403 (forbidden) request errors when retrieving data from GitHub via ReadTheDocs, the ``nimbus`` class has been modified to use an overloaded `fetch` method that appends a User-Agent header to the request. (:pull:`2001`).
+* Addressed a very rare race condition that can happen if `pytest` is tearing down the test environment when running across multiple workers. (:pull:`1863`).
 * `xclim` now uses a `src` layout for the codebase. Structure-dependent functions, documentation, and build commands have been adapted to reflect these changes. (:pull:`1971`).
 * Added a more robust `yamllint` configuration to ensure that all YAML files are linted consistently. (:pull:`1971`).
+
+CI changes
+^^^^^^^^^^
+* Added the `green-coding-solutions/eco-ci-energy-estimation` GitHub Action to the workflows to establish energy and carbon usage of CI activity. (:pull:`1863`).
 
 v0.53.2 (2024-10-31)
 --------------------
