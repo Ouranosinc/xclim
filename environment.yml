@@ -1,7 +1,6 @@
 name: xclim
 channels:
   - conda-forge
-  - defaults
 dependencies:
   - python >=3.10,<3.14
   - boltons >=20.1
