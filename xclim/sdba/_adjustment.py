@@ -1049,10 +1049,10 @@ def _otc_adjust(
         out += np.random.uniform(low=-bin_width / 2, high=bin_width / 2, size=out.shape)
 
     # reintroduce nans
-    Xadj = X_og
-    Xadj[mask] = out
-    Xadj[~mask] = np.nan
-    return Xadj
+    Z = X_og
+    Z[mask] = out
+    Z[~mask] = np.nan
+    return Z
 
 
 @map_groups(scen=[Grouper.DIM])
