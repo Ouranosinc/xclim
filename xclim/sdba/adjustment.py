@@ -1433,8 +1433,7 @@ class OTC(Adjust):
     """
 
     _allow_diff_calendars = False
-    # TODO: uncomment after fixing OTC/dOTC, next PR
-    # _allow_diff_time_sizes = False
+    _allow_diff_time_sizes = False
 
     @classmethod
     def _adjust(
@@ -1468,7 +1467,10 @@ class OTC(Adjust):
 
         if isinstance(adapt_freq_thresh, str):
             adapt_freq_thresh = {v: adapt_freq_thresh for v in hist[pts_dim].values}
-        if adapt_freq_thresh is not None:
+        adapt_freq_thresh = (
+            {} if adapt_freq_thresh is None else deepcopy(adapt_freq_thresh)
+        )
+        if adapt_freq_thresh != {}:
             _, units = cls._harmonize_units(sim)
             for var, thresh in adapt_freq_thresh.items():
                 adapt_freq_thresh[var] = str(
@@ -1486,14 +1488,6 @@ class OTC(Adjust):
             group=group,
             pts_dim=pts_dim,
         ).scen
-
-        if adapt_freq_thresh is not None:
-            for var in adapt_freq_thresh.keys():
-                adapt_freq_thresh[var] = adapt_freq_thresh[var] + " " + units[var]
-
-        for d in scen.dims:
-            if d != pts_dim:
-                scen = scen.dropna(dim=d)
 
         return scen
 
@@ -1592,8 +1586,7 @@ class dOTC(Adjust):
     """
 
     _allow_diff_calendars = False
-    # TODO: uncomment after fixing OTC/dOTC, next PR
-    # _allow_diff_time_sizes = False
+    _allow_diff_time_sizes = False
 
     @classmethod
     def _adjust(
@@ -1635,7 +1628,10 @@ class dOTC(Adjust):
 
         if isinstance(adapt_freq_thresh, str):
             adapt_freq_thresh = {v: adapt_freq_thresh for v in hist[pts_dim].values}
-        if adapt_freq_thresh is not None:
+        adapt_freq_thresh = (
+            {} if adapt_freq_thresh is None else deepcopy(adapt_freq_thresh)
+        )
+        if adapt_freq_thresh != {}:
             _, units = cls._harmonize_units(sim)
             for var, thresh in adapt_freq_thresh.items():
                 adapt_freq_thresh[var] = str(
@@ -1655,14 +1651,6 @@ class dOTC(Adjust):
             group=group,
             pts_dim=pts_dim,
         ).scen
-
-        if adapt_freq_thresh is not None:
-            for var in adapt_freq_thresh.keys():
-                adapt_freq_thresh[var] = adapt_freq_thresh[var] + " " + units[var]
-
-        for d in scen.dims:
-            if d != pts_dim:
-                scen = scen.dropna(dim=d, how="all")
 
         return scen
 
