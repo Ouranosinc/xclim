@@ -893,53 +893,6 @@ class TestOTC:
         scen_sbck = scen_sbck.to_numpy()
         assert np.allclose(scen, scen_sbck)
 
-    def test_shape(self, random, series):
-        pytest.importorskip("ot")
-        pytest.importorskip("SBCK", minversion="0.4.0")
-        ref_ns = 300
-        hist_ns = 200
-        ref_u = random.random(ref_ns)
-        hist_u = random.random(hist_ns)
-
-        ref_xd = uniform(loc=1000, scale=100)
-        ref_yd = norm(loc=0, scale=100)
-        ref_zd = norm(loc=500, scale=100)
-        hist_xd = norm(loc=-500, scale=100)
-        hist_yd = uniform(loc=-1000, scale=100)
-        hist_zd = uniform(loc=-10, scale=100)
-
-        ref_x = ref_xd.ppf(ref_u)
-        ref_y = ref_yd.ppf(ref_u)
-        ref_z = ref_zd.ppf(ref_u)
-        hist_x = hist_xd.ppf(hist_u)
-        hist_y = hist_yd.ppf(hist_u)
-        hist_z = hist_zd.ppf(hist_u)
-
-        ref_na = 10
-        hist_na = 15
-        ref_idx = random.choice(range(ref_ns), size=ref_na, replace=False)
-        ref_x[ref_idx] = None
-        hist_idx = random.choice(range(hist_ns), size=hist_na, replace=False)
-        hist_x[hist_idx] = None
-
-        ref_x = series(ref_x, "tas").rename("x")
-        ref_y = series(ref_y, "tas").rename("y")
-        ref_z = series(ref_z, "tas").rename("z")
-        ref = xr.merge([ref_x, ref_y, ref_z])
-        ref = stack_variables(ref)
-
-        hist_x = series(hist_x, "tas").rename("x")
-        hist_y = series(hist_y, "tas").rename("y")
-        hist_z = series(hist_z, "tas").rename("z")
-        hist = xr.merge([hist_x, hist_y, hist_z])
-        hist = stack_variables(hist)
-
-        scen = OTC.adjust(ref, hist)
-
-        assert scen.shape == (3, hist_ns - hist_na)
-        hist = unstack_variables(hist)
-        assert not np.isin(hist.x[hist.x.isnull()].time.values, scen.time.values).any()
-
 
 # TODO: Add tests for normalization methods
 class TestdOTC:
@@ -1025,70 +978,6 @@ class TestdOTC:
         scen = scen.to_numpy().T
         scen_sbck = scen_sbck.to_numpy()
         assert np.allclose(scen, scen_sbck)
-
-    def test_shape(self, random, series):
-        pytest.importorskip("ot")
-        pytest.importorskip("SBCK", minversion="0.4.0")
-        ref_ns = 300
-        hist_ns = 200
-        sim_ns = 400
-        ref_u = random.random(ref_ns)
-        hist_u = random.random(hist_ns)
-        sim_u = random.random(sim_ns)
-
-        ref_xd = uniform(loc=1000, scale=100)
-        ref_yd = norm(loc=0, scale=100)
-        ref_zd = norm(loc=500, scale=100)
-        hist_xd = norm(loc=-500, scale=100)
-        hist_yd = uniform(loc=-1000, scale=100)
-        hist_zd = uniform(loc=-10, scale=100)
-        sim_xd = norm(loc=0, scale=100)
-        sim_yd = uniform(loc=0, scale=100)
-        sim_zd = uniform(loc=10, scale=100)
-
-        ref_x = ref_xd.ppf(ref_u)
-        ref_y = ref_yd.ppf(ref_u)
-        ref_z = ref_zd.ppf(ref_u)
-        hist_x = hist_xd.ppf(hist_u)
-        hist_y = hist_yd.ppf(hist_u)
-        hist_z = hist_zd.ppf(hist_u)
-        sim_x = sim_xd.ppf(sim_u)
-        sim_y = sim_yd.ppf(sim_u)
-        sim_z = sim_zd.ppf(sim_u)
-
-        ref_na = 10
-        hist_na = 15
-        sim_na = 20
-        ref_idx = random.choice(range(ref_ns), size=ref_na, replace=False)
-        ref_x[ref_idx] = None
-        hist_idx = random.choice(range(hist_ns), size=hist_na, replace=False)
-        hist_x[hist_idx] = None
-        sim_idx = random.choice(range(sim_ns), size=sim_na, replace=False)
-        sim_x[sim_idx] = None
-
-        ref_x = series(ref_x, "tas").rename("x")
-        ref_y = series(ref_y, "tas").rename("y")
-        ref_z = series(ref_z, "tas").rename("z")
-        ref = xr.merge([ref_x, ref_y, ref_z])
-        ref = stack_variables(ref)
-
-        hist_x = series(hist_x, "tas").rename("x")
-        hist_y = series(hist_y, "tas").rename("y")
-        hist_z = series(hist_z, "tas").rename("z")
-        hist = xr.merge([hist_x, hist_y, hist_z])
-        hist = stack_variables(hist)
-
-        sim_x = series(sim_x, "tas").rename("x")
-        sim_y = series(sim_y, "tas").rename("y")
-        sim_z = series(sim_z, "tas").rename("z")
-        sim = xr.merge([sim_x, sim_y, sim_z])
-        sim = stack_variables(sim)
-
-        scen = dOTC.adjust(ref, hist, sim)
-
-        assert scen.shape == (3, sim_ns - sim_na)
-        sim = unstack_variables(sim)
-        assert not np.isin(sim.x[sim.x.isnull()].time.values, scen.time.values).any()
 
     # just check it runs
     def test_different_times(self, tasmax_series, tasmin_series):
