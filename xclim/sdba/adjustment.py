@@ -401,7 +401,6 @@ class Adjust(BaseAdjustment):
             # If `ref,hist, sim` are in the same `map_groups` call, they must have the same time
             # As long as `sim` has the same time dimension, we can temporarily replace its time
             # with the reference time
-            print("here")
             sim_time = sim.time
             sim["time"] = ref["time"]
 
