@@ -1433,7 +1433,8 @@ class OTC(Adjust):
     """
 
     _allow_diff_calendars = False
-    _allow_diff_time_sizes = False
+    # TODO: uncomment after fixing OTC/dOTC, next PR
+    # _allow_diff_time_sizes = False
 
     @classmethod
     def _adjust(
@@ -1591,7 +1592,8 @@ class dOTC(Adjust):
     """
 
     _allow_diff_calendars = False
-    _allow_diff_time_sizes = False
+    # TODO: uncomment after fixing OTC/dOTC, next PR
+    # _allow_diff_time_sizes = False
 
     @classmethod
     def _adjust(
