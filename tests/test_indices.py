@@ -497,10 +497,11 @@ class TestAgroclimaticIndices:
 class TestStandardizedIndices:
     # gamma/APP reference results: Obtained with `monocongo/climate_indices` library
     # MS/fisk/ML reference results: Obtained with R package `SPEI`
-    # Using the method `APP` in XClim matches the method from monocongo, hence the very low
-    # tolerance possible.
+    # Using the method `APP` in XClim matches the method from monocongo, hence the very low tolerance possible.
     # Repeated tests with lower tolerance means we want a more precise comparison, so we compare
-    # the current version of XClim with the version where the test was implemented
+    # the current version of XClim with the version where the test was implemented.
+    # Additionally, xarray does not yet access "week" or "weekofyear" with groupby in a pandas-compatible way for cftime objects.
+    # See: https://github.com/pydata/xarray/discussions/6375
     @pytest.mark.slow
     @pytest.mark.parametrize(
         "freq, window, dist, method,  values, diff_tol",
@@ -626,6 +627,38 @@ class TestStandardizedIndices:
                 [-0.24417774, -0.11404418, 0.64997039, 1.07670517, 0.6462852],
                 2e-2,
             ),
+            (
+                "W",
+                1,
+                "gamma",
+                "APP",
+                [0.64820146, 0.04991201, -1.62956493, 1.08898709, -0.01741762],
+                2e-2,
+            ),
+            (
+                "W",
+                12,
+                "gamma",
+                "APP",
+                [-1.08683311, -0.47230036, -0.7884111, 0.3341876, 0.06282969],
+                2e-2,
+            ),
+            (
+                "W",
+                1,
+                "gamma",
+                "ML",
+                [0.64676962, -0.06904886, -1.60493289, 1.07864037, -0.01415902],
+                2e-2,
+            ),
+            (
+                "W",
+                12,
+                "gamma",
+                "ML",
+                [-1.08627775, -0.46491398, -0.77806462, 0.31759127, 0.03794528],
+                2e-2,
+            ),
         ],
     )
     def test_standardized_precipitation_index(
@@ -639,8 +672,13 @@ class TestStandardizedIndices:
             pytest.skip("Skipping SPI/ML/D on older numpy")
         ds = open_dataset("sdba/CanESM2_1950-2100.nc").isel(location=1)
         if freq == "D":
-            ds = ds.convert_calendar("366_day", missing=np.nan)
             # to compare with ``climate_indices``
+            ds = ds.convert_calendar("366_day", missing=np.nan)
+        elif freq == "W":
+            # only standard calendar supported with freq="W"
+            ds = ds.convert_calendar(
+                "standard", missing=np.nan, align_on="year", use_cftime=False
+            )
         pr = ds.pr.sel(time=slice("1998", "2000"))
         pr_cal = ds.pr.sel(time=slice("1950", "1980"))
         fitkwargs = {}
@@ -1457,12 +1495,23 @@ class TestHotSpellFrequency:
     def test_resampling_order(self, tasmax_series, resample_before_rl, expected):
         a = np.zeros(365)
         a[5:35] = 31
-        tx = tasmax_series(a + K2C)
+        tx = tasmax_series(a + K2C).chunk()
 
         hsf = xci.hot_spell_frequency(
             tx, resample_before_rl=resample_before_rl, freq="MS"
-        )
+        ).load()
         assert hsf[1] == expected
+
+    @pytest.mark.parametrize("resample_map", [True, False])
+    def test_resampling_map(self, tasmax_series, resample_map):
+        pytest.importorskip("flox")
+        a = np.zeros(365)
+        a[5:35] = 31
+        tx = tasmax_series(a + K2C).chunk()
+
+        with set_options(resample_map_blocks=resample_map):
+            hsf = xci.hot_spell_frequency(tx, resample_before_rl=True, freq="MS").load()
+        assert hsf[1] == 1
 
 
 class TestHotSpellMaxLength:
@@ -1501,6 +1550,18 @@ class TestHotSpellTotalLength:
 
         hsml = xci.hot_spell_total_length(tx, thresh=thresh, window=window, op=op)
         np.testing.assert_allclose(hsml.values, expected)
+
+
+class TestHotSpellMaxMagnitude:
+    def test_simple(self, tasmax_series):
+        a = np.zeros(365)
+        a[15:20] += 30  # 5 days
+        a[40:42] += 50  # too short -> 0
+        a[86:96] += 30  # at the end and beginning
+        da = tasmax_series(a + K2C)
+
+        out = xci.hot_spell_max_magnitude(da, thresh="25 C", freq="ME")
+        np.testing.assert_array_equal(out, [25, 0, 30, 20, 0, 0, 0, 0, 0, 0, 0, 0])
 
 
 class TestTnDays:
@@ -1737,10 +1798,10 @@ class TestMaximumConsecutiveDryDays:
     def test_resampling_order(self, pr_series, resample_before_rl, expected):
         a = np.zeros(365) + 10
         a[5:35] = 0
-        pr = pr_series(a)
+        pr = pr_series(a).chunk()
         out = xci.maximum_consecutive_dry_days(
             pr, freq="ME", resample_before_rl=resample_before_rl
-        )
+        ).load()
         assert out[0] == expected
 
 
@@ -2095,6 +2156,7 @@ class TestTgMaxTgMinIndices:
         tasmin, tasmax = self.static_tmin_tmax_setup(tasmin_series, tasmax_series)
         dtr = xci.daily_temperature_range(tasmin, tasmax, freq="YS")
         assert dtr.units == "K"
+        assert dtr.units_metadata == "temperature: difference"
         output = np.mean(tasmax - tasmin)
 
         np.testing.assert_equal(dtr, output)
@@ -2114,12 +2176,14 @@ class TestTgMaxTgMinIndices:
         dtr = xci.daily_temperature_range_variability(tasmin, tasmax, freq="YS")
 
         np.testing.assert_almost_equal(dtr, 2.667, decimal=3)
+        assert dtr.units_metadata == "temperature: difference"
 
     def test_static_extreme_temperature_range(self, tasmin_series, tasmax_series):
         tasmin, tasmax = self.static_tmin_tmax_setup(tasmin_series, tasmax_series)
         etr = xci.extreme_temperature_range(tasmin, tasmax)
 
         np.testing.assert_array_almost_equal(etr, 31.7)
+        assert etr.units_metadata == "temperature: difference"
 
     def test_uniform_freeze_thaw_cycles(self, tasmin_series, tasmax_series):
         temp_values = np.zeros(365)
@@ -2167,6 +2231,7 @@ class TestTgMaxTgMinIndices:
 
 
 class TestTemperatureSeasonality:
+
     def test_simple(self, tas_series):
         a = np.zeros(365)
         a = tas_series(a + K2C, start="1971-01-01")
@@ -3974,3 +4039,12 @@ class TestWindPowerPotential:
         pb = xci.wind_power_potential(b)
 
         np.testing.assert_array_almost_equal(pa, pb, decimal=6)
+
+
+class TestWaterCycleIntensity:
+    def test_simple(self, pr_series, evspsbl_series):
+        pr = pr_series(np.ones(31))
+        evspsbl = evspsbl_series(np.ones(31))
+
+        wci = xci.water_cycle_intensity(pr=pr, evspsbl=evspsbl, freq="MS")
+        np.testing.assert_allclose(wci, 2 * 60 * 60 * 24 * 31)

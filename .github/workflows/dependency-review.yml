@@ -22,11 +22,38 @@ jobs:
           egress-policy: block
           allowed-endpoints: >
             api.deps.dev:443
+            api.electricitymap.org:443
             api.github.com:443
+            api.green-coding.io:443
+            api.securityscorecards.dev:443
             github.com:443
+            ip-api.com:80
+            ipapi.co:443
+            proxy.golang.org:443
+            pypi.org:443
+            sum.golang.org:443
+
+      - name: Start Energy Measurement
+        uses: green-coding-solutions/eco-ci-energy-estimation@86f1b2ee12db687bca0d15160a529bb64a7b60d9 # v4.0.0
+        with:
+          task: start-measurement
+          branch: ${{ github.head_ref || github.ref_name }}
 
       - name: Checkout Repository
-        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
       - name: Dependency Review
-        uses: actions/dependency-review-action@5a2ce3f5b92ee19cbb1541a4984c76d921601d7c # v4.3.4
+        uses: actions/dependency-review-action@4081bf99e2866ebe428fc0477b69eb4fcda7220a # v4.4.0
+
+      - name: Energy Measurement
+        uses: green-coding-solutions/eco-ci-energy-estimation@86f1b2ee12db687bca0d15160a529bb64a7b60d9 # v4.0.0
+        with:
+          task: get-measurement
+          label: 'Dependency Review'
+        continue-on-error: true
+
+      - name: Show Energy Results
+        uses: green-coding-solutions/eco-ci-energy-estimation@86f1b2ee12db687bca0d15160a529bb64a7b60d9 # v4.0.0
+        with:
+          task: display-results
+        continue-on-error: true

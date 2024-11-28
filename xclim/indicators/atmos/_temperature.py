@@ -62,6 +62,7 @@ __all__ = [
     "heating_degree_days",
     "hot_spell_frequency",
     "hot_spell_max_length",
+    "hot_spell_max_magnitude",
     "hot_spell_total_length",
     "huglin_index",
     "ice_days",
@@ -235,6 +236,21 @@ heat_wave_frequency = Temp(
     compute=indices.heat_wave_frequency,
 )
 
+hot_spell_max_magnitude = Temp(
+    title="Hot spell maximum magnitude",
+    identifier="hot_spell_max_magnitude",
+    units="K d",
+    long_name="Maximum cumulative difference between daily maximum temperature and {thresh} for days within a heat wave. "
+    "A heat wave is defined as a series of at least {window} consecutive days with daily maximum temperature above {thresh}.",
+    description="Magnitude of the most intensive heat wave per {freq}. The magnitude is the cumulative exceedance of daily "
+    "maximum temperature over {thresh}. A heat wave is defined as a series of at least {window} consecutive days with daily "
+    "maximum temperature above {thresh}",
+    abstract="Magnitude of the most intensive heat wave per {freq}. A heat wave occurs when daily maximum "
+    "temperatures exceed given thresholds for a number of days.",
+    cell_methods="",
+    compute=indices.hot_spell_max_magnitude,
+)
+
 heat_wave_max_length = Temp(
     title="Heat wave maximum length",
     identifier="heat_wave_max_length",
@@ -291,7 +307,8 @@ heat_spell_frequency = Temp(
     long_name="Number of heat spells",
     description="{freq} number of heat spells events. A heat spell occurs when the {window}-day "
     "averages of daily minimum and maximum temperatures each exceed {thresh_tasmin} and {thresh_tasmax}. "
-    "All days of the {window}-day period are considered part of the spell.",
+    "All days of the {window}-day period are considered part of the spell. Gaps of fewer than {min_gap} day(s) are allowed "
+    "within a spell.",
     abstract="Number of heat spells. A heat spell occurs when rolling averages of daily minimum and maximum temperatures exceed given "
     "thresholds for a number of days.",
     cell_methods="",
@@ -325,7 +342,8 @@ heat_spell_max_length = Temp(
     long_name="Longest heat spell",
     description="{freq} maximum length of heat spells. A heat spell occurs when the {window}-day "
     "averages of daily minimum and maximum temperatures each exceed {thresh_tasmin} and {thresh_tasmax}. "
-    "All days of the {window}-day period are considered part of the spell.",
+    "All days of the {window}-day period are considered part of the spell. Gaps of fewer than {min_gap} day(s) are allowed "
+    "within a spell.",
     abstract="The longest heat spell of a period. A heat spell occurs when rolling averages of daily minimum and maximum temperatures exceed given "
     "thresholds for a number of days.",
     compute=indices.generic.bivariate_spell_length_statistics,
@@ -357,7 +375,8 @@ heat_spell_total_length = Temp(
     long_name="Total length of heat spells.",
     description="{freq} total length of heat spell events. "
     "A heat spell occurs when the {window}-day  averages of daily minimum and maximum temperatures "
-    "each exceed {thresh_tasmin} and {thresh_tasmax}.  All days of the {window}-day period are considered part of the spell.",
+    "each exceed {thresh_tasmin} and {thresh_tasmax}.  All days of the {window}-day period are considered part of the spell."
+    "Gaps of fewer than {min_gap} day(s) are allowed within a spell.",
     abstract="Total length of heat spells. A heat spell occurs when rolling averages of daily minimum and maximum temperatures exceed given "
     "thresholds for a number of days.",
     compute=indices.generic.bivariate_spell_length_statistics,

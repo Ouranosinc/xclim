@@ -206,7 +206,7 @@
   "WETDAYS": {
     "long_name": "Nombre de jours où la précipitation est supérieure ou égale à {thresh}",
     "description": "Nombre {freq:m} de jours où la précipitation est supérieure ou égale à {thresh}.",
-    "title": "Jours pluvieux",
+    "title": "Jours avec précipitations",
     "abstract": "Nombre de jours où la précipitation est supérieure ou égale à un seuil donné."
   },
   "WETDAYS_PROP": {
@@ -224,7 +224,7 @@
   "CWD": {
     "long_name": "Durée maximale d'une période où les précipitations sont au-dessus de {thresh}",
     "description": "Nombre {freq:m} maximal de jours consécutifs où les précipitations sont au-dessus de {thresh}.",
-    "title": "Durée de période pluvieuse",
+    "title": "Durée de la période de précipitation",
     "abstract": "Période la plus longue où la précipitation est au-dessus d'un seuil donné."
   },
   "SDII": {
@@ -376,6 +376,12 @@
     "description": "Nombre {freq:m} de jours de vague de chaleur. Une vague de chaleur se produit lorsque la température maximale quotidienne excède {thresh} durant au moins {window} jours.",
     "title": "Indice de vague de chaleur",
     "abstract": "Nombre de jours de vagues de chaleur. Une vague de chaleur se produit lorsque la température maximale quotidienne excède un seuil donné durant un certain nombre de jours."
+  },
+  "HOT_SPELL_MAX_MAGNITUDE": {
+    "long_name": "Différence cumulative maximale entre la température maximale quotidienne et {thresh} pour les jours faisant partie d'une vague de chaleur. Une vague de chaleur est définie comme une série d'au moins {window} jours consécutifs où la température maximale quotidien est au-dessus de {thresh}",
+    "description": "Cumul {freq:m} maximal de la différence entre la température et {thresh} pour les jours faisant partie d'une vague de chaleur. Une vague de chaleur est définie comme une série d'au moins {window} jours consécutifs où la température maximale quotidien est au-dessus de {thresh}",
+    "title": "Magnitude de la vague de chaleur {freq:m} la plus intense. Une vague de chaleur est définie comme une série d'au moins {window} jours consécutifs où la température maximale quotidien est au-dessus de {thresh}.",
+    "abstract": "Magnitude de la vague de chaleur {freq:m} la plus intense. Une vague de chaleur est définie comme une série d'au moins {window} jours consécutifs où la température maximale quotidien est au-dessus de {thresh}."
   },
   "TG": {
     "long_name": "Moyenne des températures maximale et minimale quotidennes",
@@ -1294,13 +1300,13 @@
   "WARM_AND_WET_DAYS": {
     "long_name": "Nombre de jours où la température est au-dessus du {tas_per_thresh}e centile et la précipitation au-dessus du {pr_per_thresh}e centile",
     "description": "Nombre {freq:m} de jours où la température est au-dessus du {tas_per_thresh}e centile et la précipitation au-dessus du {pr_per_thresh}e centile.",
-    "title": "Nombre de jours chauds et pluvieux",
+    "title": "Nombre de jours chauds avec précipitations",
     "abstract": "Nombre de jours où la température et la précipitation sont au-dessus de centiles donnés."
   },
   "COLD_AND_WET_DAYS": {
     "long_name": "Nombre de jours où la température est en dessous du {tas_per_thresh}e centile et la précipitation au-dessus du {pr_per_thresh}e centile",
     "description": "Nombre {freq:m} de jours où la température est en dessous du {tas_per_thresh}e centile et la précipitation au-dessus du {pr_per_thresh}e centile.",
-    "title": "Nombre de jours froids et pluvieux",
+    "title": "Nombre de jours froids avec précipitations",
     "abstract": "Nombre de jours où la température est en dessous d'un centile donné et la précipitation au-dessus d'un centile donné."
   },
   "CALM_DAYS": {
@@ -1386,6 +1392,24 @@
     "title": "Rayonnement de grandes longueurs d'onde ascendant",
     "abstract": "Calcul du rayonnement de grandes longueurs d'onde ascendant à partir du rayonnement de grandes longueurs d'onde net et descendant."
   },
+  "FLOW_INDEX": {
+    "long_name": "Indice de débit",
+    "description": "Le {p}e percentile du débit normalisé par le débit médian.",
+    "title": "Indice de débit",
+    "abstract": "Indice de débit, calculé comme le rapport entre un percentile donné du débit et la médiane."
+  },
+  "HIGH_FLOW_FREQUENCY": {
+    "long_name": "Fréquence des débits élevés",
+    "description": "Nombre de jours où le débit est {threshold_factor} fois supérieur à la médiane.",
+    "title": "Fréquence des débits élevés",
+    "abstract": "Fréquence des débits élevés, calculée comme le nombre de jours où le débit est supérieur à un multiple de la médiane."
+  },
+  "LOW_FLOW_FREQUENCY": {
+    "long_name": "Fréquence des débits faibles",
+    "description": "Nombre de jours où le débit est inférieur à une fraction ({threshold_factor}) de la moyenne.",
+    "title": "Fréquence des débits faibles",
+    "abstract": "Fréquence des débits faibles, calculée comme le nombre de jours où le débit est inférieur à une fraction de la moyenne."
+  },
   "CP": {
     "title": "Portions de froid (Chill Portions) selon le modèle Dynamique.",
     "abstract": "Les portions de froid (chill portions) sont une mesure du potentiel de débourrement de différentes récoltes basée sur le modèle Dynamique.",
@@ -1397,5 +1421,11 @@
     "abstract": "Les unités de froid (chill units) sont une mesure du potentiel de débourrement de différentes récoltes basée sur le modèle Utah.",
     "long_name": "Unités de froid selon le modèle Utah",
     "description": "Les unités de froid (chill units) sont une mesure du potentiel de débourrement de différentes récoltes basée sur le modèle Utah."
+  },
+  "WATER_CYCLE_INTENSITY": {
+    "title": "Intensité du cycle de l'eau",
+    "long_name": "Intensité du cycle de l'eau",
+    "description": "Indice {freq} de l'intensité du cycle de l'eau, défini comme la somme de la précipitation et de l'évapotranspiration.",
+    "abstract": "la somme de la précipitation et de l'évapotranspiration."
   }
 }

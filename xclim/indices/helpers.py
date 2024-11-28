@@ -2,15 +2,16 @@
 Indices Helper Functions Submodule
 ==================================
 
-Functions that encapsulate some geophysical logic but could be shared by many indices.
+Functions that encapsulate logic and can be shared by many indices,
+but are not particularly index-like themselves (those should go in the :py:mod:`xclim.indices.generic` module).
 """
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from datetime import timedelta
 from inspect import stack
-from typing import Any, cast
+from typing import Any, Literal, cast
 
 import cf_xarray  # noqa: F401, pylint: disable=unused-import
 import cftime
@@ -29,8 +30,9 @@ else:
 
 from xclim.core import Quantified
 from xclim.core.calendar import ensure_cftime_array, get_calendar
+from xclim.core.options import MAP_BLOCKS, OPTIONS
 from xclim.core.units import convert_units_to
-from xclim.core.utils import _chunk_like
+from xclim.core.utils import _chunk_like, uses_dask
 
 
 def _wrap_radians(da):
@@ -562,6 +564,85 @@ def _gather_lon(da: xr.DataArray) -> xr.DataArray:
         raise ValueError(msg) from err
 
 
+def resample_map(
+    obj: xr.DataArray | xr.Dataset,
+    dim: str,
+    freq: str,
+    func: Callable,
+    map_blocks: bool | Literal["from_context"] = "from_context",
+    resample_kwargs: dict | None = None,
+    map_kwargs: dict | None = None,
+) -> xr.DataArray | xr.Dataset:
+    r"""Wraps xarray's resample(...).map() with a :py:func:`xarray.map_blocks`, ensuring the chunking is appropriate using flox.
+
+    Parameters
+    ----------
+    obj : DataArray or Dataset
+        The xarray object to resample.
+    dim : str
+        Dimension over which to resample.
+    freq : str
+        Resampling frequency along `dim`.
+    func : callable
+        Function to map on each resampled group.
+    map_blocks : bool or "from_context"
+        If True, the resample().map() call is wrapped inside a `map_blocks`.
+        If False, this does not do anything special.
+        If "from_context", xclim's "resample_map_blocks" option is used.
+        If the object is not using dask, this is set to False.
+    resample_kwargs : dict, optional
+        Other arguments to pass to `obj.resample()`.
+    map_kwargs : dict, optional
+        Arguments to pass to `map`.
+
+    Returns
+    -------
+    Resampled object.
+    """
+    resample_kwargs = resample_kwargs or {}
+    map_kwargs = map_kwargs or {}
+    if map_blocks == "from_context":
+        map_blocks = OPTIONS[MAP_BLOCKS]
+
+    if not uses_dask(obj) or not map_blocks:
+        return obj.resample({dim: freq}, **resample_kwargs).map(func, **map_kwargs)
+
+    try:
+        from flox.xarray import rechunk_for_blockwise
+    except ImportError as err:
+        msg = f"Using {MAP_BLOCKS}=True requires flox."
+        raise ValueError(msg) from err
+
+    # Make labels, a unique integer for each resample group
+    labels = xr.full_like(obj[dim], -1, dtype=np.int32)
+    for lbl, group_slice in enumerate(obj[dim].resample({dim: freq}).groups.values()):
+        labels[group_slice] = lbl
+
+    obj_rechunked = rechunk_for_blockwise(obj, dim, labels)
+
+    def _resample_map(obj_chnk, dm, frq, rs_kws, fun, mp_kws):
+        return obj_chnk.resample({dm: frq}, **rs_kws).map(fun, **mp_kws)
+
+    # Template. We are hoping that this takes a negligeable time as it is never loaded.
+    template = obj_rechunked.resample(**{dim: freq}, **resample_kwargs).first()
+
+    # New chunks along time : infer the number of elements resulting from the resampling of each chunk
+    if isinstance(obj_rechunked, xr.Dataset):
+        chunksizes = obj_rechunked.chunks[dim]
+    else:
+        chunksizes = obj_rechunked.chunks[obj_rechunked.get_axis_num(dim)]
+    new_chunks = []
+    i = 0
+    for chunksize in chunksizes:
+        new_chunks.append(len(np.unique(labels[i : i + chunksize])))
+        i += chunksize
+    template = template.chunk({dim: tuple(new_chunks)})
+
+    return obj_rechunked.map_blocks(
+        _resample_map, (dim, freq, resample_kwargs, func, map_kwargs), template=template
+    )
+
+
 def _compute_daytime_temperature(
     hour_after_sunrise: xr.DataArray,
     tasmin: xr.DataArray,
@@ -670,6 +751,7 @@ def make_hourly_temperature(tasmin: xr.DataArray, tasmax: xr.DataArray) -> xr.Da
         Hourly temperature.
     """
     data = xr.merge([tasmin, tasmax])
+    data = data.assign_coords(time=data.time.dt.floor("D"))
     # We add one more timestamp so the resample function includes the last day
     data = xr.concat(
         [

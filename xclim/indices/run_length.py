@@ -12,13 +12,15 @@ from datetime import datetime
 from warnings import warn
 
 import numpy as np
+import pandas as pd
 import xarray as xr
 from numba import njit
 from xarray.core.utils import get_temp_dimname
 
 from xclim.core import DateStr, DayOfYearStr
 from xclim.core.options import OPTIONS, RUN_LENGTH_UFUNC
-from xclim.core.utils import uses_dask
+from xclim.core.utils import split_auxiliary_coordinates, uses_dask
+from xclim.indices.helpers import resample_map
 
 npts_opt = 9000
 """
@@ -111,18 +113,23 @@ def resample_and_rl(
       Output of compute resampled according to frequency {freq}.
     """
     if resample_before_rl:
-        out = da.resample({dim: freq}).map(
-            compute, args=args, freq=None, dim=dim, **kwargs
+        out = resample_map(
+            da,
+            dim,
+            freq,
+            compute,
+            map_kwargs=dict(args=args, freq=None, dim=dim, **kwargs),
         )
     else:
         out = compute(da, *args, dim=dim, freq=freq, **kwargs)
     return out
 
 
-def _cumsum_reset_on_zero(
+def _cumsum_reset(
     da: xr.DataArray,
     dim: str = "time",
     index: str = "last",
+    reset_on_zero: bool = True,
 ) -> xr.DataArray:
     """Compute the cumulative sum for each series of numbers separated by zero.
 
@@ -135,6 +142,9 @@ def _cumsum_reset_on_zero(
     index : {'first', 'last'}
         If 'first', the largest value of the cumulative sum is indexed with the first element in the run.
         If 'last'(default), with the last element in the run.
+    reset_on_zero : bool
+        If True, the cumulative sum is reset on each zero value of `da`. Otherwise, the cumulative sum resets
+        on NaNs. Default is True.
 
     Returns
     -------
@@ -146,7 +156,10 @@ def _cumsum_reset_on_zero(
 
     # Example: da == 100110111 -> cs_s == 100120123
     cs = da.cumsum(dim=dim)  # cumulative sum  e.g. 111233456
-    cs2 = cs.where(da == 0)  # keep only numbers at positions of zeroes e.g. N11NN3NNN
+    cond = da == 0 if reset_on_zero else da.isnull()  # reset condition
+    cs2 = cs.where(
+        cond
+    )  # keep only numbers at positions of zeroes e.g. N11NN3NNN (default)
     cs2[{dim: 0}] = 0  # put a zero in front e.g. 011NN3NNN
     cs2 = cs2.ffill(dim=dim)  # e.g. 011113333
     out = cs - cs2
@@ -163,7 +176,15 @@ def rle(
     dim: str = "time",
     index: str = "first",
 ) -> xr.DataArray:
-    """Generate basic run length function.
+    """Run length
+
+    Despite its name, this is not an actual run-length encoder : it returns an array of the same shape
+    as the input with 0 where the input was <= 0, nan where the input was > 0, except on the first (or last) element
+    of each run of consecutive > 0 values, where it is set to the sum of the elements within the run.
+    For an actual run length encoder, see :py:func:`rle_1d`.
+
+    Usually, the input would be a boolean mask and the first element of each run would then be set to the run's length (thus the name).
+    But the function also accepts int and float inputs.
 
     Parameters
     ----------
@@ -178,21 +199,21 @@ def rle(
     Returns
     -------
     xr.DataArray
-        Values are 0 where da is False (out of runs).
     """
-    da = da.astype(int)
+    if da.dtype == bool:
+        da = da.astype(int)
 
     # "first" case: Algorithm is applied on inverted array and output is inverted back
     if index == "first":
         da = da[{dim: slice(None, None, -1)}]
 
     # Get cumulative sum for each series of 1, e.g. da == 100110111 -> cs_s == 100120123
-    cs_s = _cumsum_reset_on_zero(da, dim)
+    cs_s = _cumsum_reset(da, dim)
 
     # Keep total length of each series (and also keep 0's), e.g. 100120123 -> 100N20NN3
     # Keep numbers with a 0 to the right and also the last number
     cs_s = cs_s.where(da.shift({dim: -1}, fill_value=0) == 0)
-    out = cs_s.where(da == 1, 0)  # Reinsert 0's at their original place
+    out = cs_s.where(da > 0, 0)  # Reinsert 0's at their original place
 
     # Inverting back if needed e.g. 100N20NN3 -> 3NN02N001. This is the output of
     # `rle` for 111011001 with index == "first"
@@ -254,8 +275,7 @@ def rle_statistics(
         if freq is None:
             rl_stat = get_rl_stat(d)
         else:
-            rl_stat = d.resample({dim: freq}).map(get_rl_stat)
-
+            rl_stat = resample_map(d, dim, freq, get_rl_stat)
     return rl_stat
 
 
@@ -409,6 +429,50 @@ def windowed_run_count(
     return out
 
 
+def windowed_max_run_sum(
+    da: xr.DataArray,
+    window: int,
+    dim: str = "time",
+    freq: str | None = None,
+    index: str = "first",
+) -> xr.DataArray:
+    """Return the maximum sum of consecutive float values for runs at least as long as the given window length.
+
+    Parameters
+    ----------
+    da : xr.DataArray
+        Input N-dimensional DataArray (boolean).
+    window : int
+        Minimum run length.
+        When equal to 1, an optimized version of the algorithm is used.
+    dim : str
+      Dimension along which to calculate consecutive run (default: 'time').
+    freq : str
+      Resampling frequency.
+    index : {'first', 'last'}
+        If 'first', the run length is indexed with the first element in the run.
+        If 'last', with the last element in the run.
+
+    Returns
+    -------
+    xr.DataArray, [int]
+        Total number of `True` values part of a consecutive runs of at least `window` long.
+    """
+    if window == 1 and freq is None:
+        out = rle(da, dim=dim, index=index).max(dim=dim)
+
+    else:
+        d_rse = rle(da, dim=dim, index=index)
+        d_rle = rle((da > 0).astype(bool), dim=dim, index=index)
+
+        d = d_rse.where(d_rle >= window, 0)
+        if freq is not None:
+            d = d.resample({dim: freq})
+        out = d.max(dim=dim)
+
+    return out
+
+
 def _boundary_run(
     da: xr.DataArray,
     window: int,
@@ -456,7 +520,6 @@ def _boundary_run(
             crd = da[dim]
             if isinstance(coord, str):
                 crd = getattr(crd.dt, coord)
-
             out = lazy_indexing(crd, out)
 
         if dim in out.coords:
@@ -481,7 +544,9 @@ def _boundary_run(
     da = da.fillna(0)  # We expect a boolean array, but there could be NaNs nonetheless
     if window == 1:
         if freq is not None:
-            out = da.resample({dim: freq}).map(find_boundary_run, position=position)
+            out = resample_map(
+                da, dim, freq, find_boundary_run, map_kwargs=dict(position=position)
+            )
         else:
             out = find_boundary_run(da, position)
 
@@ -496,11 +561,13 @@ def _boundary_run(
 
     else:
         # _cusum_reset_on_zero() is an intermediate step in rle, which is sufficient here
-        d = _cumsum_reset_on_zero(da, dim=dim, index=position)
+        d = _cumsum_reset(da, dim=dim, index=position)
         d = xr.where(d >= window, 1, 0)
         # for "first" run, return "first" element in the run (and conversely for "last" run)
         if freq is not None:
-            out = d.resample({dim: freq}).map(find_boundary_run, position=position)
+            out = resample_map(
+                d, dim, freq, find_boundary_run, map_kwargs=dict(position=position)
+            )
         else:
             out = find_boundary_run(d, position)
 
@@ -703,14 +770,14 @@ def keep_longest_run(
         return out
 
     if freq is not None:
-        out = rls.resample({dim: freq}).map(get_out)
+        out = resample_map(rls, dim, freq, get_out)
     else:
         out = get_out(rls)
 
     return da.copy(data=out.transpose(*da.dims).data)
 
 
-def extract_events(
+def runs_with_holes(
     da_start: xr.DataArray,
     window_start: int,
     da_stop: xr.DataArray,
@@ -740,19 +807,18 @@ def extract_events(
     Notes
     -----
     A season (as defined in ``season``) could be considered as an event with  `window_stop == window_start` and `da_stop == 1 - da_start`,
-    although it has more constraints on when to start and stop a run through the `date` argument.
+    although it has more constraints on when to start and stop a run through the `date` argument and only one season can be found.
     """
     da_start = da_start.astype(int).fillna(0)
     da_stop = da_stop.astype(int).fillna(0)
 
-    start_runs = _cumsum_reset_on_zero(da_start, dim=dim, index="first")
-    stop_runs = _cumsum_reset_on_zero(da_stop, dim=dim, index="first")
+    start_runs = _cumsum_reset(da_start, dim=dim, index="first")
+    stop_runs = _cumsum_reset(da_stop, dim=dim, index="first")
     start_positions = xr.where(start_runs >= window_start, 1, np.nan)
     stop_positions = xr.where(stop_runs >= window_stop, 0, np.nan)
 
     # start positions (1) are f-filled until a stop position (0) is met
     runs = stop_positions.combine_first(start_positions).ffill(dim=dim).fillna(0)
-
     return runs
 
 
@@ -867,8 +933,9 @@ def season(
     window: int,
     mid_date: DayOfYearStr | None = None,
     dim: str = "time",
+    stat: str | None = None,
     coord: str | bool | None = False,
-) -> xr.Dataset:
+) -> xr.Dataset | xr.DataArray:
     """Calculate the bounds of a season along a dimension.
 
     A "season" is a run of True values that may include breaks under a given length (`window`).
@@ -1203,6 +1270,8 @@ def rle_1d(
 ) -> tuple[np.array, np.array, np.array]:
     """Return the length, starting position and value of consecutive identical values.
 
+    In opposition to py:func:`rle`, this is an actuel run length encoder.
+
     Parameters
     ----------
     arr : Sequence[Union[int, float, bool]]
@@ -1494,13 +1563,10 @@ def lazy_indexing(
         # Renaming with no name to fix bug in xr 2024.01.0
         tmpname = get_temp_dimname(da.dims, "temp")
         da2 = xr.DataArray(da.data, dims=(tmpname,), name=None)
+        # Map blocks chunks aux coords. Remove them to avoid the alignment check load in `where`
+        index, auxcrd = split_auxiliary_coordinates(index)
         # for each chunk of index, take corresponding values from da
         out = index.map_blocks(_index_from_1d_array, args=(da2,)).rename(da.name)
-        # Map blocks chunks aux coords. Replace them by non-chunked from the original array.
-        # This avoids unwanted loading of the aux coord in a resample.map, for example
-        for name, crd in out.coords.items():
-            if uses_dask(crd) and name in index.coords and index[name].size == crd.size:
-                out = out.assign_coords(**{name: index[name]})
         # mask where index was NaN. Drop any auxiliary coord, they are already on `out`.
         # Chunked aux coord would have the same name on both sides and xarray will want to check if they are equal, which means loading them
         # making lazy_indexing not lazy. same issue as above
@@ -1509,6 +1575,7 @@ def lazy_indexing(
                 [crd for crd in invalid.coords if crd not in invalid.dims]
             )
         )
+        out = out.assign_coords(auxcrd.coords)
         if idx_ndim == 0:
             # 0-D case, drop useless coords and dummy dim
             out = out.drop_vars(da.dims[0], errors="ignore").squeeze()
@@ -1676,4 +1743,147 @@ def suspicious_run(
         output_dtypes=[bool],
         keep_attrs=True,
         kwargs={"window": window, "op": op, "thresh": thresh},
+    )
+
+
+def _find_events(da_start, da_stop, data, window_start, window_stop):
+    """Actual finding of events for each period.
+
+    Get basic blocks to work with, our runs with holes and the lengths of those runs.
+    Series of ones indicating where we have continuous runs with pauses
+    not exceeding `window_stop`
+    """
+    runs = runs_with_holes(da_start, window_start, da_stop, window_stop)
+
+    # Compute the length of freezing rain events
+    # I think int16 is safe enough, fillna first to suppress warning
+    ds = rle(runs).fillna(0).astype(np.int16).to_dataset(name="event_length")
+    # Time duration where the precipitation threshold is exceeded during an event
+    # (duration of complete run - duration of holes in the run )
+    ds["event_effective_length"] = _cumsum_reset(
+        da_start.where(runs == 1), index="first", reset_on_zero=False
+    ).astype(np.int16)
+
+    if data is not None:
+        # Ex: Cumulated precipitation in a given freezing rain event
+        ds["event_sum"] = _cumsum_reset(
+            data.where(runs == 1), index="first", reset_on_zero=False
+        )
+
+    # Keep time as a variable, it will be used to keep start of events
+    ds["event_start"] = ds["time"].broadcast_like(ds)  # .astype(int)
+    # We convert to an integer for the filtering, time object won't do well in the apply_ufunc/vectorize
+    time_min = ds.event_start.min()
+    ds["event_start"] = ds.event_start.copy(
+        data=(ds.event_start - time_min).values.astype("timedelta64[s]").astype(int)
+    )
+
+    # Filter events: Reduce time dimension
+    def _filter_events(da, rl, max_event_number):
+        out = np.full(max_event_number, np.nan)
+        events_start = da[rl > 0]
+        out[: len(events_start)] = events_start
+        return out
+
+    # Dask inputs need to be told their length before computing anything.
+    max_event_number = int(np.ceil(da_start.time.size / (window_start + window_stop)))
+    ds = xr.apply_ufunc(
+        _filter_events,
+        ds,
+        ds.event_length,
+        input_core_dims=[["time"], ["time"]],
+        output_core_dims=[["event"]],
+        kwargs=dict(max_event_number=max_event_number),
+        dask_gufunc_kwargs=dict(output_sizes={"event": max_event_number}),
+        dask="parallelized",
+        vectorize=True,
+    )
+
+    # convert back start to a time
+    if time_min.dtype == "O":
+        # Can't add a numpy array of timedeltas to an array of cftime (because they have non-compatible dtypes)
+        # Also, we can't add cftime to NaTType. So we fill with negative timedeltas and mask them after the addition
+
+        def _get_start_cftime(deltas, time_min=None):
+            starts = time_min + pd.to_timedelta(deltas, "s").to_pytimedelta()
+            starts[starts < time_min] = np.nan
+            return starts
+
+        ds["event_start"] = xr.apply_ufunc(
+            _get_start_cftime,
+            ds.event_start.fillna(-1),
+            dask="parallelized",
+            kwargs={"time_min": time_min.item()},
+            output_dtypes=[time_min.dtype],
+        )
+    else:
+        ds["event_start"] = ds.event_start.copy(
+            data=time_min.values + ds.event_start.data.astype("timedelta64[s]")
+        )
+
+    ds["event"] = np.arange(1, ds.event.size + 1)
+    ds["event_length"].attrs["units"] = "1"
+    ds["event_effective_length"].attrs["units"] = "1"
+    ds["event_start"].attrs["units"] = ""
+    if data is not None:
+        ds["event_sum"].attrs["units"] = data.units
+    return ds
+
+
+# TODO: Implement more event stats ? (max, effective sum, etc)
+def find_events(
+    condition: xr.DataArray,
+    window: int,
+    condition_stop: xr.DataArray | None = None,
+    window_stop: int = 1,
+    data: xr.DataArray | None = None,
+    freq: str | None = None,
+):
+    """Find events (runs).
+
+    An event starts with a run of ``window`` consecutive True values in the condition
+    and stops with ``window_stop`` consecutive True values in the stop condition.
+
+    This returns a Dataset with each event along an `event` dimension. It does not
+    perform statistics over the events like other function in this module do.
+
+    Parameters
+    ----------
+    condition : DataArray of boolean values
+        The boolean mask, true where the start condition of the event is fulfilled.
+    window : int
+        The number of consecutive True values for an event to start.
+    condition_stop : DataArray of boolean values, optional
+        The stopping boolean mask, true where the end condition of the event is fulfilled.
+        Defaults to the opposite of ``condition``.
+    window_stop : int
+        The number of consecutive True values in ``condition_stop`` for an event to end.
+        Defaults to 1.
+    data : DataArray, optional
+        The actual data. If present, its sum within each event is added to the output.
+    freq : str, optional
+        A frequency to divide the data into periods. If absent, the output has not time dimension.
+        If given, the events are searched within in each resample period independently.
+
+    Returns
+    -------
+    xr.Dataset, same shape as the data it has a new "event" dimension (and the time dimension is resample or removed, according to ``freq``).
+        event_length: The number of time steps in each event
+        event_effective_length: The number of time steps of even event where the start condition is true.
+        event_start: The datetime of the start of the run.
+        event_sum: The sum within each event, only considering the steps where start condition is true. Only present if ``data`` is given.
+    """
+    if condition_stop is None:
+        condition_stop = ~condition
+
+    if freq is None:
+        return _find_events(condition, condition_stop, data, window, window_stop)
+
+    ds = xr.Dataset({"da_start": condition, "da_stop": condition_stop})
+    if data is not None:
+        ds = ds.assign(data=data)
+    return ds.resample(time=freq).map(
+        lambda grp: _find_events(
+            grp.da_start, grp.da_stop, grp.get("data", None), window, window_stop
+        )
     )

@@ -29,6 +29,7 @@ from xclim.indices.generic import (
     spell_length_statistics,
     threshold_count,
 )
+from xclim.indices.helpers import resample_map
 
 # Frequencies : YS: year start, QS-DEC: seasons starting in december, MS: month start
 # See http://pandas.pydata.org/pandas-docs/stable/timeseries.html#offset-aliases
@@ -67,6 +68,7 @@ __all__ = [
     "heating_degree_days",
     "hot_spell_frequency",
     "hot_spell_max_length",
+    "hot_spell_max_magnitude",
     "hot_spell_total_length",
     "last_snowfall",
     "last_spring_frost",
@@ -1424,8 +1426,8 @@ def frost_free_spell_max_length(
         Minimum number of days with temperatures above thresholds to qualify as a frost free day.
     freq : str
         Resampling frequency.
-    op : {"<", "<=", "lt", "le"}
-        Comparison operation. Default: "<".
+    op : {">", ">=", "gt", "ge"}
+        Comparison operation. Default: ">=".
     resample_before_rl : bool
         Determines if the resampling should take place before or after the run
         length encoding (or a similar algorithm) is applied to runs.
@@ -1491,12 +1493,17 @@ def last_spring_frost(
     thresh = convert_units_to(thresh, tasmin)
     cond = compare(tasmin, op, thresh, constrain=("<", "<="))
 
-    out = cond.resample(time=freq).map(
+    out = resample_map(
+        cond,
+        "time",
+        freq,
         rl.last_run_before_date,
-        window=window,
-        date=before_date,
-        dim="time",
-        coord="dayofyear",
+        map_kwargs=dict(
+            window=window,
+            date=before_date,
+            dim="time",
+            coord="dayofyear",
+        ),
     )
     out.attrs.update(units="", is_dayofyear=np.int32(1), calendar=get_calendar(tasmin))
     return out
@@ -1662,11 +1669,12 @@ def first_snowfall(
     thresh = convert_units_to(thresh, prsn, context="hydro")
     cond = prsn >= thresh
 
-    out = cond.resample(time=freq).map(
+    out = resample_map(
+        cond,
+        "time",
+        freq,
         rl.first_run,
-        window=1,
-        dim="time",
-        coord="dayofyear",
+        map_kwargs=dict(window=1, dim="time", coord="dayofyear"),
     )
     out.attrs.update(units="", is_dayofyear=np.int32(1), calendar=get_calendar(prsn))
     return out
@@ -1717,11 +1725,12 @@ def last_snowfall(
     thresh = convert_units_to(thresh, prsn, context="hydro")
     cond = prsn >= thresh
 
-    out = cond.resample(time=freq).map(
+    out = resample_map(
+        cond,
+        "time",
+        freq,
         rl.last_run,
-        window=1,
-        dim="time",
-        coord="dayofyear",
+        map_kwargs=dict(window=1, dim="time", coord="dayofyear"),
     )
     out.attrs.update(units="", is_dayofyear=np.int32(1), calendar=get_calendar(prsn))
     return out
@@ -1926,6 +1935,59 @@ def heat_wave_index(
         freq=freq,
     )
     return to_agg_units(out, tasmax, "count")
+
+
+@declare_units(tasmax="[temperature]", thresh="[temperature]")
+def hot_spell_max_magnitude(
+    tasmax: xarray.DataArray,
+    thresh: Quantified = "25.0 degC",
+    window: int = 3,
+    freq: str = "YS",
+    op: str = ">",
+    resample_before_rl: bool = True,
+) -> xarray.DataArray:
+    """Hot spell maximum magnitude.
+
+    Magnitude of the most intensive heat wave event as sum of differences between tasmax
+    and the given threshold for Heat Wave days, defined as three or more consecutive days
+    over the threshold.
+
+    Parameters
+    ----------
+    tasmax : xarray.DataArray
+        Maximum daily temperature.
+    thresh : xarray.DataArray
+        Threshold temperature on which to designate a heatwave.
+    window : int
+        Minimum number of days with temperature above threshold to qualify as a heatwave.
+    freq : str
+        Resampling frequency.
+    op : {">", ">=", "gt", "ge"}
+        Comparison operation. Default: ">".
+    resample_before_rl : bool
+        Determines if the resampling should take place before or after the run
+        length encoding (or a similar algorithm) is applied to runs.
+
+    References
+    ----------
+    :cite:cts:`russo_magnitude_2014,zhang_high_2022`
+
+    Returns
+    -------
+    DataArray, [time]
+        Hot spell maximum magnitude.
+    """
+    thresh = convert_units_to(thresh, tasmax)
+    over_values = (tasmax - thresh).clip(0)
+
+    out = rl.resample_and_rl(
+        over_values,
+        resample_before_rl,
+        rl.windowed_max_run_sum,
+        window=window,
+        freq=freq,
+    )
+    return to_agg_units(out, tasmax, op="integral")
 
 
 @declare_units(tas="[temperature]", thresh="[temperature]")
@@ -3097,7 +3159,7 @@ def degree_days_exceedance_date(
             never_reached_val = never_reached
         return xarray.where((cumsum <= sum_thresh).all("time"), never_reached_val, out)
 
-    dded = c.clip(0).resample(time=freq).map(_exceedance_date)
+    dded = resample_map(c.clip(0), "time", freq, _exceedance_date)
     dded = dded.assign_attrs(
         units="", is_dayofyear=np.int32(1), calendar=get_calendar(tas)
     )

@@ -91,6 +91,11 @@ hydro.add_transformation(
     lambda ureg, x: x / (1000 * ureg.kg / ureg.m**3),
 )
 hydro.add_transformation(
+    "[length]",
+    "[mass] / [length]**2",
+    lambda ureg, x: x * (1000 * ureg.kg / ureg.m**3),
+)
+hydro.add_transformation(
     "[mass] / [length]**2 / [time]",
     "[length] / [time]",
     lambda ureg, x: x / (1000 * ureg.kg / ureg.m**3),
@@ -132,26 +137,44 @@ def _register_conversion(conversion, direction):
 units.define("[radiation] = [power] / [length]**2")
 
 
-def units2pint(value: xr.DataArray | str | units.Quantity) -> pint.Unit:
+def units2pint(
+    value: xr.DataArray | units.Unit | units.Quantity | dict | str,
+) -> pint.Unit:
     """Return the pint Unit for the DataArray units.
 
     Parameters
     ----------
-    value : xr.DataArray or str or pint.Quantity
+    value : xr.DataArray or pint.Unit or pint.Quantity or dict or str
         Input data array or string representing a unit (with no magnitude).
 
     Returns
     -------
     pint.Unit
         Units of the data array.
+
+    Notes
+    -----
+    To avoid ambiguity related to differences in temperature vs absolute temperatures, set the `units_metadata`
+    attribute to `"temperature: difference"` or `"temperature: on_scale"` on the DataArray.
     """
-    if isinstance(value, str):
-        unit = value
-    elif isinstance(value, xr.DataArray):
-        unit = value.attrs["units"]
-    elif isinstance(value, units.Quantity):
+    # Value is already a pint unit or a pint quantity
+    if isinstance(value, units.Unit):
+        return value
+
+    if isinstance(value, units.Quantity):
         # This is a pint.PlainUnit, which is not the same as a pint.Unit
         return cast(pint.Unit, value.units)
+
+    # We only need the attributes
+    if isinstance(value, xr.DataArray):
+        value = value.attrs
+
+    if isinstance(value, str):
+        unit = value
+        metadata = None
+    elif isinstance(value, dict):
+        unit = value["units"]
+        metadata = value.get("units_metadata", None)
     else:
         raise NotImplementedError(f"Value of type `{type(value)}` not supported.")
 
@@ -174,7 +197,10 @@ def units2pint(value: xr.DataArray | str | units.Quantity) -> pint.Unit:
             "Remove white space from temperature units, e.g. use `degC`."
         )
 
-    return units.parse_units(unit)
+    pu = units.parse_units(unit)
+    if metadata == "temperature: difference":
+        return (1 * pu - 1 * pu).units
+    return pu
 
 
 def pint2cfunits(value: units.Quantity | units.Unit) -> str:
@@ -195,6 +221,40 @@ def pint2cfunits(value: units.Quantity | units.Unit) -> str:
 
     # Force "1" if the formatted string is "" (pint < 0.24)
     return f"{value:~cf}" or "1"
+
+
+def pint2cfattrs(value: units.Quantity | units.Unit, is_difference=None) -> dict:
+    """Return CF-compliant units attributes from a `pint` unit.
+
+    Parameters
+    ----------
+    value : pint.Unit
+        Input unit.
+    is_difference : bool
+        Whether the value represent a difference in temperature, which is ambiguous in the case of absolute
+        temperature scales like Kelvin or Rankine. It will automatically be set to True if units are "delta_*"
+        units.
+
+    Returns
+    -------
+    dict
+        Units following CF-Convention, using symbols.
+    """
+    s = pint2cfunits(value)
+    if "delta_" in s:
+        is_difference = True
+        s = s.replace("delta_", "")
+
+    attrs = {"units": s}
+    if "[temperature]" in value.dimensionality:
+        if is_difference:
+            attrs["units_metadata"] = "temperature: difference"
+        elif is_difference is False:
+            attrs["units_metadata"] = "temperature: on_scale"
+        else:
+            attrs["units_metadata"] = "temperature: unknown"
+
+    return attrs
 
 
 def ensure_cf_units(ustr: str) -> str:
@@ -260,7 +320,7 @@ def str2pint(val: str) -> pint.Quantity:
 # FIXME: The typing here is difficult to determine, as Generics cannot be used to track the type of the output.
 def convert_units_to(  # noqa: C901
     source: Quantified,
-    target: Quantified | units.Unit,
+    target: Quantified | units.Unit | dict,
     context: Literal["infer", "hydro", "none"] | None = None,
 ) -> xr.DataArray | float:
     """Convert a mathematical expression into a value with the same units as a DataArray.
@@ -272,7 +332,7 @@ def convert_units_to(  # noqa: C901
     ----------
     source : str or xr.DataArray or units.Quantity
         The value to be converted, e.g. '4C' or '1 mm/d'.
-    target : str or xr.DataArray or units.Quantity or units.Unit
+    target : str or xr.DataArray or units.Quantity or units.Unit or dict
         Target array of values to which units must conform.
     context : {"infer", "hydro", "none"}, optional
         The unit definition context. Default: None.
@@ -299,14 +359,7 @@ def convert_units_to(  # noqa: C901
     context = context or "none"
 
     # Target units
-    if isinstance(target, units.Unit):
-        target_unit = target
-    elif isinstance(target, str | xr.DataArray):
-        target_unit = units2pint(target)
-    else:
-        raise NotImplementedError(
-            "target must be either a pint Unit or a xarray DataArray."
-        )
+    target_unit = units2pint(target)
 
     if context == "infer":
         ctxs = []
@@ -332,7 +385,7 @@ def convert_units_to(  # noqa: C901
 
     if isinstance(source, xr.DataArray):
         source_unit = units2pint(source)
-        target_cf_unit = pint2cfunits(target_unit)
+        target_cf_attrs = pint2cfattrs(target_unit)
 
         # Automatic pre-conversions based on the dimensionalities and CF standard names
         standard_name = source.attrs.get("standard_name")
@@ -364,12 +417,12 @@ def convert_units_to(  # noqa: C901
         out: xr.DataArray
         if source_unit == target_unit:
             # The units are the same, but the symbol may not be.
-            out = source.assign_attrs(units=target_cf_unit)
+            out = source.assign_attrs(**target_cf_attrs)
             return out
 
         with units.context(context or "none"):
             out = source.copy(data=units.convert(source.data, source_unit, target_unit))
-            out = out.assign_attrs(units=target_cf_unit)
+            out = out.assign_attrs(**target_cf_attrs)
             return out
 
     # TODO remove backwards compatibility of int/float thresholds after v1.0 release
@@ -417,7 +470,7 @@ FREQ_UNITS = {
 """
 Resampling frequency units for :py:func:`xclim.core.units.infer_sampling_units`.
 
-Mapping from offset base to CF-compliant unit. Only constant-length frequencies are included.
+Mapping from offset base to CF-compliant unit. Only constant-length frequencies that are not also pint units are included.
 """
 
 
@@ -490,7 +543,7 @@ def ensure_absolute_temperature(units: str) -> str:
     return units
 
 
-def ensure_delta(unit: str) -> str:
+def ensure_delta(unit: xr.DataArray | str | units.Quantity) -> str:
     """Return delta units for temperature.
 
     For dimensions where delta exist in pint (Temperature), it replaces the temperature unit by delta_degC or
@@ -500,16 +553,14 @@ def ensure_delta(unit: str) -> str:
     ----------
     unit : str
         unit to transform in delta (or not)
-
-    See Also
-    --------
-    :py:func:`ensure_absolute_temperature`
     """
     u = units2pint(unit)
     d = 1 * u
     #
     delta_unit = pint2cfunits(d - d)
     # replace kelvin/rankine by delta_degC/F
+    # Note (DH): This will fail if dimension is [temperature]^-1 or [temperature]^2 (e.g. variance)
+    # Recent versions of pint have a `to_preferred` method that could be used here (untested).
     if "kelvin" in u._units:
         delta_unit = pint2cfunits(u / units2pint("K") * units2pint("delta_degC"))
     if "degree_Rankine" in u._units:
@@ -568,11 +619,13 @@ def to_agg_units(
     ...     dims=("time",),
     ...     coords={"time": time},
     ... )
-    >>> dt = (tas - 16).assign_attrs(units="delta_degC")
+    >>> dt = (tas - 16).assign_attrs(
+    ...     units="degC", units_metadata="temperature: difference"
+    ... )
     >>> degdays = dt.clip(0).sum("time")  # Integral of temperature above a threshold
     >>> degdays = to_agg_units(degdays, dt, op="integral")
     >>> degdays.units
-    'K week'
+    'degC week'
 
     Which we can always convert to the more common "K days":
 
@@ -580,16 +633,13 @@ def to_agg_units(
     >>> degdays.units
     'd K'
     """
-    if op in ["amin", "min", "amax", "max", "mean", "sum"]:
+    is_difference = True if op in ["std", "var"] else None
+
+    if op in ["amin", "min", "amax", "max", "mean", "sum", "std"]:
         out.attrs["units"] = orig.attrs["units"]
 
-    elif op in ["std"]:
-        out.attrs["units"] = ensure_absolute_temperature(orig.attrs["units"])
-
     elif op in ["var"]:
-        out.attrs["units"] = pint2cfunits(
-            str2pint(ensure_absolute_temperature(orig.units)) ** 2
-        )
+        out.attrs["units"] = pint2cfunits(str2pint(orig.units) ** 2)
 
     elif op in ["doymin", "doymax"]:
         out.attrs.update(
@@ -598,32 +648,40 @@ def to_agg_units(
 
     elif op in ["count", "integral"]:
         m, freq_u_raw = infer_sampling_units(orig[dim])
-        orig_u = str2pint(ensure_absolute_temperature(orig.units))
+        # TODO: Use delta here
+        orig_u = units2pint(orig)
         freq_u = str2pint(freq_u_raw)
-        out = out * m
+        with xr.set_options(keep_attrs=True):
+            out = out * m
 
         if op == "count":
             out.attrs["units"] = freq_u_raw
         elif op == "integral":
             if "[time]" in orig_u.dimensionality:
                 # We need to simplify units after multiplication
+
                 out_units = (orig_u * freq_u).to_reduced_units()
-                out = out * out_units.magnitude
-                out.attrs["units"] = pint2cfunits(out_units)
+                with xr.set_options(keep_attrs=True):
+                    out = out * out_units.magnitude
+                out.attrs.update(pint2cfattrs(out_units, is_difference))
             else:
-                out.attrs["units"] = pint2cfunits(orig_u * freq_u)
+                out.attrs.update(pint2cfattrs(orig_u * freq_u, is_difference))
     else:
         raise ValueError(
             f"Unknown aggregation op {op}. "
             "Known ops are [min, max, mean, std, var, doymin, doymax, count, integral, sum]."
         )
 
+    # Remove units_metadata where it doesn't make sense
+    if op in ["doymin", "doymax", "count"]:
+        out.attrs.pop("units_metadata", None)
+
     return out
 
 
 def _rate_and_amount_converter(
-    da: xr.DataArray,
-    dim: str = "time",
+    da: Quantified,
+    dim: str | xr.DataArray = "time",
     to: str = "amount",
     sampling_rate_from_coord: bool = False,
     out_units: str | None = None,
@@ -632,10 +690,27 @@ def _rate_and_amount_converter(
     m = 1
     u = None  # Default to assume a non-uniform axis
     label: Literal["lower", "upper"] = "lower"  # Default to "lower" label for diff
-    time = da[dim]
+    if isinstance(dim, str):
+        if not isinstance(da, xr.DataArray):
+            raise ValueError(
+                "If `dim` is a string, the data to convert must be a DataArray."
+            )
+        time = da[dim]
+    else:
+        time = dim
+        dim = time.name
+
+    # We accept str, Quantity or DataArray
+    # Ensure the code below has a DataArray, so its simpler
+    # We convert back at the end
+    orig_da = da
+    if isinstance(da, str):
+        da = str2pint(da)
+    if isinstance(da, units.Quantity):
+        da = xr.DataArray(da.magnitude, attrs={"units": f"{da.units:~cf}"})
 
     try:
-        freq = xr.infer_freq(da[dim])
+        freq = xr.infer_freq(time)
     except ValueError as err:
         if sampling_rate_from_coord:
             freq = None
@@ -647,7 +722,7 @@ def _rate_and_amount_converter(
                 "can be used as the sampling rate, pass `sampling_rate_from_coord=True`."
             ) from err
     if freq is not None:
-        multi, base, start_anchor, _ = parse_offset(freq)
+        _, base, start_anchor, _ = parse_offset(freq)
         if base in ["M", "Q", "A", "Y"]:
             start = time.indexes[dim][0]
             if not start_anchor:
@@ -669,10 +744,10 @@ def _rate_and_amount_converter(
                 ),
                 dims=(dim,),
                 name=dim,
-                attrs=da[dim].attrs,
+                attrs=time.attrs,
             )
         else:
-            m, u = multi, FREQ_UNITS[base]
+            m, u = infer_sampling_units(da, freq)
 
     out: xr.DataArray
     # Freq is month, season or year, which are not constant units, or simply freq is not inferrable.
@@ -683,7 +758,7 @@ def _rate_and_amount_converter(
         # and `label` has been updated accordingly.
         dt = (
             time.diff(dim, label=label)
-            .reindex({dim: da[dim]}, method="ffill")
+            .reindex({dim: time}, method="ffill")
             .astype(float)
         )
         dt = dt / 1e9  # Convert to seconds
@@ -716,15 +791,17 @@ def _rate_and_amount_converter(
         out = out.assign_attrs(standard_name=new_name)
 
     if out_units:
-        out = cast(xr.DataArray, convert_units_to(out, out_units))
+        out = convert_units_to(out, out_units)
 
+    if not isinstance(orig_da, xr.DataArray):
+        out = units.Quantity(out.item(), out.attrs["units"])
     return out
 
 
 @_register_conversion("amount2rate", "from")
 def rate2amount(
-    rate: xr.DataArray,
-    dim: str = "time",
+    rate: Quantified,
+    dim: str | xr.DataArray = "time",
     sampling_rate_from_coord: bool = False,
     out_units: str | None = None,
 ) -> xr.DataArray:
@@ -738,10 +815,10 @@ def rate2amount(
 
     Parameters
     ----------
-    rate : xr.DataArray
+    rate : xr.DataArray, pint.Quantity or string
         "Rate" variable, with units of "amount" per time. Ex: Precipitation in "mm / d".
-    dim : str
-        The time dimension.
+    dim : str or DataArray
+        The name of time dimension or the coordinate itself.
     sampling_rate_from_coord : boolean
         For data with irregular time coordinates. If True, the diff of the time coordinate will be used as the sampling rate,
         meaning each data point will be assumed to apply for the interval ending at the next point. See notes.
@@ -756,7 +833,7 @@ def rate2amount(
 
     Returns
     -------
-    xr.DataArray
+    xr.DataArray or Quantity
 
     Examples
     --------
@@ -804,8 +881,8 @@ def rate2amount(
 
 @_register_conversion("amount2rate", "to")
 def amount2rate(
-    amount: xr.DataArray,
-    dim: str = "time",
+    amount: Quantified,
+    dim: str | xr.DataArray = "time",
     sampling_rate_from_coord: bool = False,
     out_units: str | None = None,
 ) -> xr.DataArray:
@@ -819,10 +896,10 @@ def amount2rate(
 
     Parameters
     ----------
-    amount : xr.DataArray
+    amount : xr.DataArray, pint.Quantity or string
         "amount" variable. Ex: Precipitation amount in "mm".
-    dim : str
-        The time dimension.
+    dim : str or xr.DataArray
+        The name of the time dimension or the time coordinate itself.
     sampling_rate_from_coord : boolean
         For data with irregular time coordinates.
         If True, the diff of the time coordinate will be used as the sampling rate,
@@ -839,7 +916,7 @@ def amount2rate(
 
     Returns
     -------
-    xr.DataArray
+    xr.DataArray or Quantity
 
     See Also
     --------
@@ -1157,12 +1234,16 @@ def check_units(
         )
 
 
-def _check_output_has_units(out: xr.DataArray | tuple[xr.DataArray]) -> None:
+def _check_output_has_units(
+    out: xr.DataArray | tuple[xr.DataArray] | xr.Dataset,
+) -> None:
     """Perform very basic sanity check on the output.
 
     Indices are responsible for unit management. If this fails, it's a developer's error.
     """
-    if not isinstance(out, tuple):
+    if isinstance(out, xr.Dataset):
+        out = out.data_vars.values()
+    elif not isinstance(out, tuple):
         out = (out,)
 
     for outd in out:
