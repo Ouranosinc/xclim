@@ -8,7 +8,7 @@ on:
       - CHANGELOG.rst
       - README.rst
       - pyproject.toml
-      - xclim/__init__.py
+      - src/xclim/__init__.py
   pull_request:
     types:
       - opened
@@ -86,7 +86,7 @@ jobs:
           key: ${{ runner.os }}-xclim-testdata-${{ env.XCLIM_TESTDATA_BRANCH }}-${{ hashFiles('pyproject.toml', 'tox.ini') }}-lint
       - name: Run pylint
         run: |
-          python -m pylint --rcfile=.pylintrc.toml --disable=import-error --exit-zero xclim
+          python -m pylint --rcfile=.pylintrc.toml --disable=import-error --exit-zero src/xclim
       - name: Run linting suite
         run: |
           python -m tox -e lint

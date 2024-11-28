@@ -1,5 +1,3 @@
-.. highlight:: shell
-
 ============
 Installation
 ============
@@ -11,7 +9,7 @@ To install `xclim` via `pip`, run this command in your terminal:
 
 .. code-block:: shell
 
-    $ python -m pip install xclim
+    python -m pip install xclim
 
 If you don't have `pip`_ installed, this `Python installation guide`_ can guide you through the process.
 
@@ -28,7 +26,7 @@ This version tends to be updated at around the same frequency as the PyPI-hosted
 
 .. code-block:: shell
 
-    $ conda install -c conda-forge xclim
+    conda install -c conda-forge xclim
 
 .. _extra-dependencies:
 
@@ -47,7 +45,7 @@ On Debian/Ubuntu, `GDAL` can be installed via `apt`:
 
 .. code-block:: shell
 
-    $ sudo apt-get install libgdal-dev
+    sudo apt-get install libgdal-dev
 
 If on Anaconda Python, `GDAL` will be installed if needed as a `clisops` dependency.
 
@@ -55,9 +53,13 @@ Both of these libraries are available on PyPI and conda-forge:
 
 .. code-block:: shell
 
-    $ python -m pip install flox clisops
-    # Or, alternatively:
-    $ conda install -c conda-forge flox clisops
+    python -m pip install flox clisops
+
+Or, alternatively:
+
+.. code-block:: shell
+
+    conda install -c conda-forge flox clisops
 
 .. _GDAL: https://gdal.org/download.html#binaries
 .. _Pangeo: https://pangeo.io/
@@ -70,13 +72,13 @@ For convenience, these libraries can be installed alongside `xclim` using the fo
 
 .. code-block:: shell
 
-    $ python -m pip install -r requirements_upstream.txt
+    python -m pip install -r requirements_upstream.txt
 
 Or, alternatively:
 
 .. code-block:: shell
 
-    $ make upstream
+    make upstream
 
 .. _flox: https://github.com/xarray-contrib/flox
 .. _clisops: https://github.com/roocs/clisops
@@ -93,19 +95,19 @@ On Debian/Ubuntu, `Eigen3` can be installed via `apt`:
 
 .. code-block:: shell
 
-    $ sudo apt-get install libeigen3-dev
+    sudo apt-get install libeigen3-dev
 
 Eigen3 is also available on conda-forge, so, if already using Anaconda, one can do:
 
 .. code-block:: shell
 
-    $ conda install -c conda-forge eigen
+    conda install -c conda-forge eigen
 
 Afterwards, `SBCK` can be installed from PyPI using `pip`:
 
 .. code-block:: shell
 
-    $ python -m pip install pybind11 sbck
+    python -m pip install pybind11 sbck
 
 .. _SBCK: https://github.com/yrobink/SBCK
 .. _Eigen3: https://eigen.tuxfamily.org/index.php
@@ -114,6 +116,7 @@ From Sources
 ------------
 
 .. warning::
+
     While `xclim` strives to be compatible with latest releases and development versions of upstream libraries, many of the required base libraries (`numpy`, `scipy`, `numba`, etc.) may lag by several months before supporting the latest minor releases of Python.
 
     In order to ensure that installation of `xclim` doesn't fail, we suggest installing the `Cython` module before installing `xclim` in order to compile necessary libraries from their source packages, if required.
@@ -124,25 +127,25 @@ You can either clone the public repository:
 
 .. code-block:: shell
 
-    $ git clone git@github.com:Ouranosinc/xclim.git
+    git clone git@github.com:Ouranosinc/xclim.git
 
 Or download the `tarball`_:
 
 .. code-block:: shell
 
-    $ curl -OL https://github.com/Ouranosinc/xclim/tarball/main
+    curl -OL https://github.com/Ouranosinc/xclim/tarball/main
 
 Once you have extracted a copy of the source, you can install it with `pip`_:
 
 .. code-block:: shell
 
-    $ python -m pip install -e ".[all]"
+    python -m pip install -e ".[all]"
 
 Alternatively, you can also install a local development copy via `flit`_:
 
 .. code-block:: shell
 
-    $ flit install [--symlink] xclim
+    flit install [--symlink] xclim
 
 .. _Github repo: https://github.com/Ouranosinc/xclim
 .. _tarball: https://github.com/Ouranosinc/xclim/tarball/main
@@ -155,6 +158,6 @@ To create a conda environment including `xclim`'s dependencies and several optio
 
 .. code-block:: console
 
-    $ conda env create -n my_xclim_env python=3.10 --file=environment.yml
-    $ conda activate my_xclim_env
-    (my_xclim_env) $ python -m pip install -e --no-deps .
+    conda env create -n my_xclim_env python=3.10 --file=environment.yml
+    conda activate my_xclim_env
+    (my_xclim_env) python -m pip install -e --no-deps .

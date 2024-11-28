@@ -67,7 +67,7 @@ class TestReleaseSupportFuncs:
         temp_filename = tmp_path.joinpath("version_info.txt")
         show_versions(file=temp_filename)
 
-        with open(temp_filename) as f:
+        with temp_filename.open(encoding="utf-8") as f:
             contents = f.readlines().copy()
             assert "INSTALLED VERSIONS\n" in contents
             assert "------------------\n" in contents
@@ -78,13 +78,26 @@ class TestReleaseSupportFuncs:
     @pytest.mark.requires_docs
     def test_release_notes_file(self, tmp_path):
         temp_filename = tmp_path.joinpath("version_info.txt")
-        publish_release_notes(style="md", file=temp_filename)
+        publish_release_notes(
+            style="md",
+            file=temp_filename,
+            changes=Path(__file__).parent.parent.joinpath("CHANGELOG.rst"),
+        )
 
-        with open(temp_filename) as f:
+        with temp_filename.open(encoding="utf-8") as f:
             assert "# Changelog" in f.readlines()[0]
 
     @pytest.mark.requires_docs
     def test_release_notes_file_not_implemented(self, tmp_path):
         temp_filename = tmp_path.joinpath("version_info.txt")
         with pytest.raises(NotImplementedError):
-            publish_release_notes(style="qq", file=temp_filename)
+            publish_release_notes(
+                style="qq",
+                file=temp_filename,
+                changes=Path(__file__).parent.parent.joinpath("CHANGELOG.rst"),
+            )
+
+    @pytest.mark.requires_docs
+    def test_error(self):
+        with pytest.raises(FileNotFoundError):
+            publish_release_notes("md", changes="foo")

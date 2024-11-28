@@ -73,7 +73,7 @@ with open("_dynamic/indicators.json", "w") as f:
 
 # Dump variables information
 with open("variables.json", "w") as fout:
-    with open("../xclim/data/variables.yml") as fin:
+    with open("../src/xclim/data/variables.yml") as fin:
         data = yaml.safe_load(fin)
     json.dump(data, fout)
 
