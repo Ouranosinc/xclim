@@ -48,7 +48,6 @@ jobs:
             api.electricitymap.org:443
             api.github.com:443
             api.green-coding.io:443
-            conda.anaconda.org:443
             files.pythonhosted.org:443
             github.com:443
             ip-api.com:80
