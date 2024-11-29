@@ -343,6 +343,8 @@ def mbcn_adjust(
     hist: xr.Dataset,
     sim: xr.Dataset,
     ds: xr.Dataset,
+    g_idxs: xr.DataArray,
+    gw_idxs: xr.DataArray,
     pts_dims: Sequence[str],
     interp: str,
     extrapolation: str,
@@ -400,8 +402,6 @@ def mbcn_adjust(
     rot_matrices = ds.rot_matrices
     af_q = ds.af_q
     quantiles = af_q.quantiles
-    g_idxs = ds.g_idxs
-    gw_idxs = ds.gw_idxs
     gr_dim = gw_idxs.attrs["group_dim"]
     win = gw_idxs.attrs["group"][1]
 
@@ -457,6 +457,7 @@ def mbcn_adjust(
 
         # 3. reorder scen according to npdft results
         reordered = reordering(ref=npdft_block, sim=scen_block)
+
         if win > 1:
             # keep  central value of window (intersecting indices in gw_idxs and g_idxs)
             scen_mbcn[{"time": ind_g}] = reordered[{"time": np.in1d(ind_gw, ind_g)}]

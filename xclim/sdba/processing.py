@@ -886,6 +886,34 @@ def grouped_time_indexes(times, group):
     elif gr == "time":
         gw_idxs = timeind.rename({"time": win_dim}).expand_dims({win_dim0: [-1]})
         g_idxs = gw_idxs.copy()
+    elif gr == "5D":
+        if win % 2 == 0:
+            raise ValueError(
+                f"Group 5D only works with an odd window, got `window` = {win}"
+            )
+
+        gr_dim = "five_days"
+        imin, imax = 0, times.size - 1
+
+        def _get_idxs(win):
+            block0 = np.concat(
+                [
+                    np.arange(5) + iwin * 5 + iyear * 365
+                    for iyear in range(len(set(times.dt.year.values)))
+                    for iwin in range(-(win - 1) // 2, (win - 1) // 2 + 1)
+                ]
+            )
+            base = xr.DataArray(
+                block0, dims=[win_dim], coords={win_dim: np.arange(len(block0))}
+            )
+            idxs = xr.concat(
+                [(base + i * 5).expand_dims({gr_dim: [i]}) for i in range(365 // 5)],
+                dim=gr_dim,
+            )
+            return idxs.where((idxs >= imin) & (idxs <= imax), -1)
+
+        gw_idxs, g_idxs = _get_idxs(win), _get_idxs(1)
+
     else:
         raise NotImplementedError(f"Grouping {gr} not implemented.")
     gw_idxs.attrs["group"] = (gr, win)
