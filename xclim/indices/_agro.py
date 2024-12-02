@@ -1636,7 +1636,7 @@ def chill_portions(
 
 @declare_units(tas="[temperature]")
 def chill_units(
-    tas: xarray.DataArray, positive_only=False, freq: str = "YS"
+    tas: xarray.DataArray, positive_only: bool = False, freq: str = "YS"
 ) -> xarray.DataArray:
     """Chill units using the Utah model
 
@@ -1649,7 +1649,7 @@ def chill_units(
     tas : xr.DataArray
         Hourly temperature.
     positive_only : bool
-        If True, only positive daily chill units are aggregated.
+        If `True`, only positive daily chill units are aggregated.
 
     Returns
     -------
@@ -1684,7 +1684,8 @@ def chill_units(
         ),
     )
     cu = cu.where(tas.notnull())
-    daily = cu.resample(time="1D").sum()
+
     if positive_only:
-        daily = daily.where(daily > 0)
-    return daily.resample(time=freq).sum().assign_attrs(units="")
+        daily = cu.resample(time="1D").sum()
+        cu = daily.where(daily > 0)
+    return cu.resample(time=freq).sum().assign_attrs(units="")

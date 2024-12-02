@@ -4,7 +4,7 @@ Changelog
 
 v0.54.0 (unreleased)
 --------------------
-Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), Éric Dupuis (:user:`coxipi`).
+Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), Éric Dupuis (:user:`coxipi`), Sascha Hofmann (:user:`saschahofmann`).
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
@@ -28,6 +28,10 @@ CI changes
 ^^^^^^^^^^
 * Added the `green-coding-solutions/eco-ci-energy-estimation` GitHub Action to the workflows to establish energy and carbon usage of CI activity. (:pull:`1863`).
 
+New features and enhancements
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+* ``chill_unit`` now accepts a new argument `positive_only` to compute the daily positive chill units. (:pull:`2003`).
+
 v0.53.2 (2024-10-31)
 --------------------
 Contributors to this version: Éric Dupuis (:user:`coxipi`), Pascal Bourgault (:user:`aulemahal`), Trevor James Smith (:user:`Zeitsperre`).
@@ -44,9 +48,6 @@ Bug fixes
 * Reorganised how ``Indicator`` subclasses can added arguments to the call signature. Injecting such arguments now works. For xclim's subclasses, this bug only affected the ``indexer`` argument of indicators subclassing ``xc.core.indicator.IndexingIndicator``. (:pull:`1981`).
 * All-nan slices are now treated correctly in method `ExtremeValues`. (:issue:`1982`, :pull:`1983`).
 
-New features and enhancements
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-* ``chill_unit`` now accepts a new argument `positive_only` to compute the daily positive chill units. (:pull:`2003`).
 
 v0.53.1 (2024-10-21)
 --------------------

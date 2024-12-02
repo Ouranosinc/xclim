@@ -1518,5 +1518,4 @@ chill_units = TempHourlyWithIndexing(
     long_name="Chill units after the Utah Model",
     allowed_periods=["Y"],
     compute=indices.chill_units,
-    parameters=dict(positive_only={"default": False, "kind": InputKind.BOOL}),
 )
