@@ -372,6 +372,10 @@ class TestAgroclimaticIndices:
         out = xci.chill_units(tas)
         assert out[0] == 0.5 * num_cu_05 + num_cu_1 - 0.5 * num_cu_min_05 - num_cu_min_1
 
+        out = xci.chill_units(tas, positive_only=True)
+        # Only the last day contains negative chill units.
+        assert out[0] == 0.5 * num_cu_05 + num_cu_1 - 0.5 * 3
+
     def test_cool_night_index(self, open_dataset):
         ds = open_dataset("cmip5/tas_Amon_CanESM2_rcp85_r1i1p1_200701-200712.nc")
         ds = ds.rename(dict(tas="tasmin"))
