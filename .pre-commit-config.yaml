@@ -23,7 +23,7 @@ repos:
         args: [ '--autofix', '--no-ensure-ascii', '--no-sort-keys' ]
         exclude: '.ipynb'
   - repo: https://github.com/pappasam/toml-sort
-    rev: v0.23.1
+    rev: v0.24.2
     hooks:
       - id: toml-sort-fix
         exclude: '.pylintrc.toml'
@@ -37,12 +37,12 @@ repos:
     hooks:
       - id: black
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.7.2
+    rev: v0.8.1
     hooks:
       - id: ruff
         args: [ '--fix', '--show-fixes' ]
   - repo: https://github.com/pylint-dev/pylint
-    rev: v3.3.1
+    rev: v3.3.2
     hooks:
       - id: pylint
         args: [ '--rcfile=.pylintrc.toml', '--errors-only', '--jobs=0', '--disable=import-error' ]
@@ -57,7 +57,7 @@ repos:
     hooks:
       - id: vulture
   - repo: https://github.com/nbQA-dev/nbQA
-    rev: 1.8.7
+    rev: 1.9.1
     hooks:
       - id: nbqa-pyupgrade
         args: [ '--py39-plus' ]
@@ -65,7 +65,7 @@ repos:
       - id: nbqa-black
         additional_dependencies: [ 'black==24.10.0' ]
   - repo: https://github.com/kynan/nbstripout
-    rev: 0.8.0
+    rev: 0.8.1
     hooks:
       - id: nbstripout
         files: '.ipynb'
@@ -82,7 +82,7 @@ repos:
       - id: rst-inline-touching-normal
       - id: text-unicode-replacement-char
   - repo: https://github.com/executablebooks/mdformat
-    rev: 0.7.18
+    rev: 0.7.19
     hooks:
       - id: mdformat
         exclude: '.github/\w+.md|.github/publish-mastodon-template.md|docs/paper/paper.md'
@@ -103,7 +103,7 @@ repos:
     hooks:
       - id: gitleaks
   - repo: https://github.com/python-jsonschema/check-jsonschema
-    rev: 0.29.4
+    rev: 0.30.0
     hooks:
       - id: check-github-workflows
       - id: check-readthedocs
