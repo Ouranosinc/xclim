@@ -37,6 +37,7 @@ __all__ = [
     "stack_variables",
     "standardize",
     "to_additive_space",
+    "uniform_noise_like",
     "unstack_variables",
     "unstandardize",
 ]

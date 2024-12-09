@@ -1,4 +1,5 @@
-# noqa: D100
+"""Synoptic indice definitions."""
+
 from __future__ import annotations
 
 import cf_xarray  # noqa: F401, pylint: disable=unused-import
@@ -23,15 +24,12 @@ __all__ = [
 def jetstream_metric_woollings(
     ua: xarray.DataArray,
 ) -> tuple[xarray.DataArray, xarray.DataArray]:
-    """Strength and latitude of jetstream.
+    """
+    Strength and latitude of jetstream.
 
     Identify latitude and strength of maximum smoothed zonal wind speed in the region from 15 to 75°N and -60 to 0°E,
     using the formula outlined in :cite:p:`woollings_variability_2010`. Wind is smoothened using a Lanczos filter
     approach.
-
-    Warnings
-    --------
-    This metric expects eastward wind component (u) to be on a regular grid (i.e. Plate Carree, 1D lat and lon)
 
     Parameters
     ----------
@@ -42,6 +40,10 @@ def jetstream_metric_woollings(
     -------
     (xarray.DataArray, xarray.DataArray)
         Daily time series of latitude of jetstream and daily time series of strength of jetstream.
+
+    Warnings
+    --------
+    This metric expects eastward wind component (u) to be on a regular grid (i.e. Plate Carree, 1D lat and lon)
 
     References
     ----------

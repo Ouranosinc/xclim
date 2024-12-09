@@ -1,4 +1,5 @@
-# noqa: D100
+"""Simple indice definitions."""
+
 from __future__ import annotations
 
 import xarray
@@ -42,7 +43,8 @@ __all__ = [
 
 @declare_units(tas="[temperature]")
 def tg_max(tas: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
-    r"""Highest mean temperature.
+    r"""
+    Highest mean temperature.
 
     The maximum of daily mean temperature.
 
@@ -72,7 +74,8 @@ def tg_max(tas: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
 
 @declare_units(tas="[temperature]")
 def tg_mean(tas: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
-    r"""Mean of daily average temperature.
+    r"""
+    Mean of daily average temperature.
 
     Resample the original daily mean temperature series by taking the mean over each period.
 
@@ -86,7 +89,7 @@ def tg_mean(tas: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
     Returns
     -------
     xarray.DataArray, [same units as tas]
-        The mean daily temperature at the given time frequency
+        The mean daily temperature at the given time frequency.
 
     Notes
     -----
@@ -111,7 +114,8 @@ def tg_mean(tas: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
 
 @declare_units(tas="[temperature]")
 def tg_min(tas: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
-    r"""Lowest mean temperature.
+    r"""
+    Lowest mean temperature.
 
     Minimum of daily mean temperature.
 
@@ -141,7 +145,8 @@ def tg_min(tas: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
 
 @declare_units(tasmin="[temperature]")
 def tn_max(tasmin: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
-    r"""Highest minimum temperature.
+    r"""
+    Highest minimum temperature.
 
     The maximum of daily minimum temperature.
 
@@ -171,7 +176,8 @@ def tn_max(tasmin: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
 
 @declare_units(tasmin="[temperature]")
 def tn_mean(tasmin: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
-    r"""Mean minimum temperature.
+    r"""
+    Mean minimum temperature.
 
     Mean of daily minimum temperature.
 
@@ -201,7 +207,8 @@ def tn_mean(tasmin: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
 
 @declare_units(tasmin="[temperature]")
 def tn_min(tasmin: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
-    r"""Lowest minimum temperature.
+    r"""
+    Lowest minimum temperature.
 
     Minimum of daily minimum temperature.
 
@@ -231,7 +238,8 @@ def tn_min(tasmin: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
 
 @declare_units(tasmax="[temperature]")
 def tx_max(tasmax: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
-    r"""Highest max temperature.
+    r"""
+    Highest max temperature.
 
     The maximum value of daily maximum temperature.
 
@@ -261,7 +269,8 @@ def tx_max(tasmax: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
 
 @declare_units(tasmax="[temperature]")
 def tx_mean(tasmax: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
-    r"""Mean max temperature.
+    r"""
+    Mean max temperature.
 
     The mean of daily maximum temperature.
 
@@ -291,7 +300,8 @@ def tx_mean(tasmax: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
 
 @declare_units(tasmax="[temperature]")
 def tx_min(tasmax: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
-    r"""Lowest max temperature.
+    r"""
+    Lowest max temperature.
 
     The minimum of daily maximum temperature.
 
@@ -323,7 +333,8 @@ def tx_min(tasmax: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
 def frost_days(
     tasmin: xarray.DataArray, thresh: Quantified = "0 degC", freq: str = "YS", **indexer
 ) -> xarray.DataArray:
-    r"""Frost days index.
+    r"""
+    Frost days index.
 
     Number of days where daily minimum temperatures are below a threshold temperature.
 
@@ -335,7 +346,7 @@ def frost_days(
         Freezing temperature.
     freq : str
         Resampling frequency.
-    indexer
+    **indexer : {dim: indexer}, optional
         Indexing parameters to compute the frost days on a temporal subset of the data.
         It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
 
@@ -363,7 +374,8 @@ def frost_days(
 def ice_days(
     tasmax: xarray.DataArray, thresh: Quantified = "0 degC", freq: str = "YS"
 ) -> xarray.DataArray:
-    r"""Number of ice/freezing days.
+    r"""
+    Number of ice/freezing days.
 
     Number of days when daily maximum temperatures are below a threshold.
 
@@ -399,7 +411,8 @@ def ice_days(
 def max_1day_precipitation_amount(
     pr: xarray.DataArray, freq: str = "YS"
 ) -> xarray.DataArray:
-    r"""Highest 1-day precipitation amount for a period (frequency).
+    r"""
+    Highest 1-day precipitation amount for a period (frequency).
 
     Resample the original daily total precipitation temperature series by taking the max over each period.
 
@@ -438,7 +451,8 @@ def max_1day_precipitation_amount(
 def max_n_day_precipitation_amount(
     pr: xarray.DataArray, window: int = 1, freq: str = "YS"
 ) -> xarray.DataArray:
-    r"""Highest precipitation amount cumulated over a n-day moving window.
+    r"""
+    Highest precipitation amount cumulated over a n-day moving window.
 
     Calculate the n-day rolling sum of the original daily total precipitation series
     and determine the maximum value over each period.
@@ -475,7 +489,8 @@ def max_n_day_precipitation_amount(
 def max_pr_intensity(
     pr: xarray.DataArray, window: int = 1, freq: str = "YS"
 ) -> xarray.DataArray:
-    r"""Highest precipitation intensity over a n-hour moving window.
+    r"""
+    Highest precipitation intensity over a n-hour moving window.
 
     Calculate the n-hour rolling average of the original hourly total precipitation series
     and determine the maximum value over each period.
@@ -515,7 +530,8 @@ def snow_depth(
     snd: xarray.DataArray,
     freq: str = "YS",
 ) -> xarray.DataArray:
-    """Mean of daily average snow depth.
+    """
+    Mean of daily average snow depth.
 
     Resample the original daily mean snow depth series by taking the mean over each period.
 
@@ -529,7 +545,7 @@ def snow_depth(
     Returns
     -------
     xarray.DataArray, [same units as snd]
-        The mean daily snow depth at the given time frequency
+        The mean daily snow depth at the given time frequency.
     """
     return snd.resample(time=freq).mean(dim="time").assign_attrs(units=snd.units)
 
@@ -538,7 +554,8 @@ def snow_depth(
 def sfcWind_max(  # noqa: N802
     sfcWind: xarray.DataArray, freq: str = "YS"
 ) -> xarray.DataArray:
-    r"""Highest daily mean wind speed.
+    r"""
+    Highest daily mean wind speed.
 
     The maximum of daily mean wind speed.
 
@@ -579,7 +596,8 @@ def sfcWind_max(  # noqa: N802
 def sfcWind_mean(  # noqa: N802
     sfcWind: xarray.DataArray, freq: str = "YS"
 ) -> xarray.DataArray:
-    r"""Mean of daily mean wind speed.
+    r"""
+    Mean of daily mean wind speed.
 
     Resample the original daily mean wind speed series by taking the mean over each period.
 
@@ -593,7 +611,7 @@ def sfcWind_mean(  # noqa: N802
     Returns
     -------
     xarray.DataArray, [same units as sfcWind]
-        The mean daily wind speed at the given time frequency
+        The mean daily wind speed at the given time frequency.
 
     Notes
     -----
@@ -622,7 +640,8 @@ def sfcWind_mean(  # noqa: N802
 def sfcWind_min(  # noqa: N802
     sfcWind: xarray.DataArray, freq: str = "YS"
 ) -> xarray.DataArray:
-    r"""Lowest daily mean wind speed.
+    r"""
+    Lowest daily mean wind speed.
 
     The minimum of daily mean wind speed.
 
@@ -663,7 +682,8 @@ def sfcWind_min(  # noqa: N802
 def sfcWindmax_max(  # noqa: N802
     sfcWindmax: xarray.DataArray, freq: str = "YS"
 ) -> xarray.DataArray:
-    r"""Highest maximum wind speed.
+    r"""
+    Highest maximum wind speed.
 
     The maximum of daily maximum wind speed.
 
@@ -707,7 +727,8 @@ def sfcWindmax_max(  # noqa: N802
 def sfcWindmax_mean(  # noqa: N802
     sfcWindmax: xarray.DataArray, freq: str = "YS"
 ) -> xarray.DataArray:
-    r"""Mean of daily maximum wind speed.
+    r"""
+    Mean of daily maximum wind speed.
 
     Resample the original daily maximum wind speed series by taking the mean over each period.
 
@@ -721,7 +742,7 @@ def sfcWindmax_mean(  # noqa: N802
     Returns
     -------
     xarray.DataArray, [same units as sfcWindmax]
-        The mean daily maximum wind speed at the given time frequency
+        The mean daily maximum wind speed at the given time frequency.
 
     Notes
     -----
@@ -751,7 +772,8 @@ def sfcWindmax_mean(  # noqa: N802
 def sfcWindmax_min(  # noqa: N802
     sfcWindmax: xarray.DataArray, freq: str = "YS"
 ) -> xarray.DataArray:
-    r"""Lowest daily maximum wind speed.
+    r"""
+    Lowest daily maximum wind speed.
 
     The minimum of daily maximum wind speed.
 
@@ -769,8 +791,8 @@ def sfcWindmax_min(  # noqa: N802
 
     Notes
     -----
-    Let :math:`FX_{ij}` be the maximum wind speed at day :math:`i` of period :math:`j`. Then the minimum
-    daily maximum wind speed for period :math:`j` is:
+    Let :math:`FX_{ij}` be the maximum wind speed at day :math:`i` of period :math:`j`.
+    Then the minimum daily maximum wind speed for period :math:`j` is:
 
     .. math::
 

@@ -9,6 +9,7 @@ more specifically :cite:p:`collins_long-term_2013` (AR5) and :cite:cts:`ipccatla
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from inspect import Parameter, signature
 
 import numpy as np
@@ -39,9 +40,23 @@ New tests must be decorated with :py:func:`significance_test` and fulfill the fo
 """
 
 
-def significance_test(func):
-    """Register a significance test for use in :py:func:`robustness_fractions`.
+def significance_test(func: Callable) -> Callable:
+    """
+    Register a significance test for use in :py:func:`robustness_fractions`.
 
+    Parameters
+    ----------
+    func : function
+        The significance test function.
+        See :py:func:`robustness_fractions` for requirements.
+
+    Returns
+    -------
+    Callable
+        The registered function.
+
+    Notes
+    -----
     See :py:data:`SIGNIFICANCE_TESTS`.
     """
     SIGNIFICANCE_TESTS[func.__name__[1:].replace("_", "-")] = func
@@ -58,7 +73,8 @@ def robustness_fractions(  # noqa: C901
     weights: xr.DataArray | None = None,
     **kwargs,
 ) -> xr.Dataset:
-    r"""Robustness statistics qualifying how members of an ensemble agree on the existence of change and on its sign.
+    r"""
+    Calculate robustness statistics qualifying how members of an ensemble agree on the existence of change and on its sign.
 
     Parameters
     ----------
@@ -75,33 +91,38 @@ def robustness_fractions(  # noqa: C901
         Name of the statistical test used to determine if there was significant change. See notes.
     weights : xr.DataArray
         Weights to apply along the 'realization' dimension. This array cannot contain missing values.
-    \*\*kwargs
+    **kwargs : dict
         Other arguments specific to the statistical test. See notes.
 
     Returns
     -------
     xr.Dataset
-        Same coordinates as `fut` and  `ref`, but no `time` and no `realization`.
+        Same coordinates as `fut` and  `ref`, but no `time` and no `realization`. Variables returned are:
 
-        Variables:
+        - changed
+            - The weighted fraction of valid members showing significant change.
+              Passing `test=None` yields change_frac = 1 everywhere. Same type as `fut`.
 
-        changed :
-                The weighted fraction of valid members showing significant change.
-                Passing `test=None` yields change_frac = 1 everywhere. Same type as `fut`.
-        positive :
-                The weighted fraction of valid members showing strictly positive change, no matter if it is significant or not.
-        changed_positive :
-                The weighted fraction of valid members showing significant and positive change.
-        negative :
-                The weighted fraction of valid members showing strictly negative change, no matter if it is significant or not.
-        changed_negative :
-                The weighted fraction of valid members showing significant and negative change.
-        agree :
-                The weighted fraction of valid members agreeing on the sign of change. It is the maximum between positive, negative and the rest.
-        valid :
-                The weighted fraction of valid members. A member is valid is there are no NaNs along the time axes of `fut` and  `ref`.
-        pvals :
-                The p-values estimated by the significance tests. Only returned if the test uses `pvals`. Has the  `realization` dimension.
+        - positive
+            - The weighted fraction of valid members showing strictly positive change, no matter if it is significant or not.
+
+        - changed_positive
+            - The weighted fraction of valid members showing significant and positive change.
+
+        - negative
+            - The weighted fraction of valid members showing strictly negative change, no matter if it is significant or not.
+
+        - changed_negative
+            - The weighted fraction of valid members showing significant and negative change.
+
+        - agree
+            - The weighted fraction of valid members agreeing on the sign of change. It is the maximum between positive, negative and the rest.
+
+        - valid
+            - The weighted fraction of valid members. A member is valid is there are no NaNs along the time axes of `fut` and `ref`.
+
+        - pvals
+            - The p-values estimated by the significance tests. Only returned if the test uses `pvals`. Has the `realization` dimension.
 
     Notes
     -----
@@ -125,20 +146,20 @@ def robustness_fractions(  # noqa: C901
     Available statistical tests are :
 
     {tests_doc}
-        threshold :
-                Change is considered significant when it exceeds an absolute or relative threshold.
-                Accepts one argument, either "abs_thresh" or "rel_thresh".
-        None :
-                Significant change is not tested. Members showing any positive change are
-                included in the `pos_frac` output.
+
+    - threshold
+        - Change is considered significant when it exceeds an absolute or relative threshold.
+          Accepts one argument, either "abs_thresh" or "rel_thresh".
+
+    - None
+        - Significant change is not tested. Members showing any positive change are included in the `pos_frac` output.
 
     References
     ----------
-    :cite:cts:`tebaldi_mapping_2011`
-    :cite:cts:`ipccatlas_ar6wg1`
+    :cite:cts:`tebaldi_mapping_2011,ipccatlas_ar6wg1`.
 
-    Example
-    -------
+    Examples
+    --------
     This example computes the mean temperature in an ensemble and compares two time
     periods, qualifying significant change through a single sample T-test.
 
@@ -300,7 +321,8 @@ def robustness_categories(
     ops: list[tuple[str, str]] | None = None,
     thresholds: list[tuple[float, float]] | None = None,
 ) -> xr.DataArray:
-    """Create a categorical robustness map for mapping hatching patterns.
+    """
+    Create a categorical robustness map for mapping hatching patterns.
 
     Each robustness category is defined by a double threshold, one on the fraction of members showing significant
     change (`change_frac`) and one on the fraction of member agreeing on the sign of change (`agree_frac`).
@@ -384,7 +406,8 @@ def robustness_categories(
 def robustness_coefficient(
     fut: xr.DataArray | xr.Dataset, ref: xr.DataArray | xr.Dataset
 ) -> xr.DataArray | xr.Dataset:
-    """Robustness coefficient quantifying the robustness of a climate change signal in an ensemble.
+    """
+    Calculate the robustness coefficient quantifying the robustness of a climate change signal in an ensemble.
 
     Taken from :cite:ts:`knutti_robustness_2013`.
 
@@ -399,10 +422,10 @@ def robustness_coefficient(
 
     Parameters
     ----------
-    fut : Union[xr.DataArray, xr.Dataset]
-        Future ensemble values along 'realization' and 'time' (nr, nt). Can be a dataset,
-        in which case the coefficient is computed on each variable.
-    ref : Union[xr.DataArray, xr.Dataset]
+    fut : xr.DataArray or xr.Dataset
+        Future ensemble values along 'realization' and 'time' (nr, nt).
+        Can be a dataset, in which case the coefficient is computed on each variable.
+    ref : xr.DataArray or xr.Dataset
         Reference period values along 'time' (nt). Same type as `fut`.
 
     Returns
@@ -468,9 +491,11 @@ def robustness_coefficient(
 
 @significance_test
 def _ttest(fut, ref, *, p_change=0.05):
-    """Single sample T-test. Same test as used by :cite:t:`tebaldi_mapping_2011`.
+    """
+    Single sample T-test. Same test as used by :cite:t:`tebaldi_mapping_2011`.
 
     The future values are compared against the reference mean (over 'time').
+
     Accepts argument p_change (float, default : 0.05) the p-value threshold for rejecting the hypothesis of no significant change.
     """
 
@@ -499,7 +524,8 @@ def _ttest(fut, ref, *, p_change=0.05):
 
 @significance_test
 def _welch_ttest(fut, ref, *, p_change=0.05):
-    """Two-sided T-test, without assuming equal population variance.
+    """
+    Two-sided T-test, without assuming equal population variance.
 
     Same significance criterion and argument as 'ttest'.
     """
@@ -555,7 +581,8 @@ def _mannwhitney_utest(ref, fut, *, p_change=0.05):
 
 @significance_test
 def _brownforsythe_test(fut, ref, *, p_change=0.05):
-    """Brown-Forsythe test assuming skewed, non-normal distributions.
+    """
+    Brown-Forsythe test assuming skewed, non-normal distributions.
 
     Same significance criterion and argument as 'ttest'.
     """
@@ -577,7 +604,8 @@ def _brownforsythe_test(fut, ref, *, p_change=0.05):
 
 @significance_test
 def _ipcc_ar6_c(fut, ref, *, ref_pi=None):
-    r"""The advanced approach used in the IPCC Atlas chapter (:cite:t:`ipccatlas_ar6wg1`).
+    r"""
+    The advanced approach used in the IPCC Atlas chapter (:cite:t:`ipccatlas_ar6wg1`).
 
     Change is considered significant if the delta exceeds a threshold related to the internal variability.
     If pre-industrial data is given in argument `ref_pi`, the threshold is defined as
@@ -608,10 +636,12 @@ def _ipcc_ar6_c(fut, ref, *, ref_pi=None):
 def _gen_test_entry(namefunc):
     name, func = namefunc
     doc = func.__doc__.replace("\n    ", "\n\t\t").rstrip()
-    return f"\t{name}:\n\t\t{doc}"
+    return f"    - {name}\n\t    - {doc}"
 
 
 robustness_fractions.__doc__ = robustness_fractions.__doc__.format(
     tests_list="{" + ", ".join(list(SIGNIFICANCE_TESTS.keys()) + ["threshold"]) + "}",
-    tests_doc="\n".join(map(_gen_test_entry, SIGNIFICANCE_TESTS.items())),
+    tests_doc="\n".join(map(_gen_test_entry, SIGNIFICANCE_TESTS.items()))[
+        4:  # strip first 4 chars
+    ],
 )

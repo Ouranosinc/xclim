@@ -1,3 +1,5 @@
+"""Type annotations and constants used throughout xclim."""
+
 from __future__ import annotations
 
 from importlib.resources import as_file, files

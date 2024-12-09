@@ -96,7 +96,19 @@ _SETTERS = {
 
 
 def register_missing_method(name: str) -> Callable:
-    """Register missing method."""
+    """
+    Register missing method.
+
+    Parameters
+    ----------
+    name : str
+        Name of missing method.
+
+    Returns
+    -------
+    Callable
+        Decorator function.
+    """
 
     def _register_missing_method(cls):
         sig = signature(cls.is_missing)
@@ -113,8 +125,26 @@ def register_missing_method(name: str) -> Callable:
     return _register_missing_method
 
 
-def _run_check(func, option, *args, **kwargs):
-    """Run function and customize exception handling based on option."""
+def run_check(func, option, *args, **kwargs):
+    r"""
+    Run function and customize exception handling based on option.
+
+    Parameters
+    ----------
+    func : Callable
+        Function to run.
+    option : str
+        Option to use.
+    *args : tuple
+        Positional arguments to pass to the function.
+    **kwargs : dict
+        Keyword arguments to pass to the function.
+
+    Raises
+    ------
+    ValidationError
+        If the function raises a ValidationError and the option is set to "raise".
+    """
     try:
         func(*args, **kwargs)
     except ValidationError as err:
@@ -122,32 +152,56 @@ def _run_check(func, option, *args, **kwargs):
 
 
 def datacheck(func: Callable) -> Callable:
-    """Decorate functions checking data inputs validity."""
+    """
+    Decorate functions checking data inputs validity.
 
-    @wraps(func)
-    def run_check(*args, **kwargs):
-        return _run_check(func, DATA_VALIDATION, *args, **kwargs)
+    Parameters
+    ----------
+    func : Callable
+        Function to decorate.
 
-    return run_check
-
-
-def cfcheck(func: Callable) -> Callable:
-    """Decorate functions checking CF-compliance of DataArray attributes.
-
-    Functions should raise ValidationError exceptions whenever attributes are non-conformant.
+    Returns
+    -------
+    Callable
+        Decorated function.
     """
 
     @wraps(func)
-    def run_check(*args, **kwargs):
-        return _run_check(func, CF_COMPLIANCE, *args, **kwargs)
+    def _run_check(*args, **kwargs):
+        return run_check(func, DATA_VALIDATION, *args, **kwargs)
 
-    return run_check
+    return _run_check
 
 
-class set_options:
-    """Set options for xclim in a controlled context.
+def cfcheck(func: Callable) -> Callable:
+    """
+    Decorate functions checking CF-compliance of DataArray attributes.
 
-    Attributes
+    Functions should raise ValidationError exceptions whenever attributes are non-conformant.
+
+    Parameters
+    ----------
+    func : Callable
+        Function to decorate.
+
+    Returns
+    -------
+    Callable
+        Decorated function.
+    """
+
+    @wraps(func)
+    def _run_check(*args, **kwargs):
+        return run_check(func, CF_COMPLIANCE, *args, **kwargs)
+
+    return _run_check
+
+
+class set_options:  # numpydoc ignore=PR01,PR02
+    r"""
+    Set options for xclim in a controlled context.
+
+    Parameters
     ----------
     metadata_locales : list[Any]
         List of IETF language tags or tuples of language tags and a translation dict, or
@@ -168,14 +222,15 @@ class set_options:
         Dictionary of options to pass to the missing method. Keys must the name of
         missing method and values must be mappings from option names to values.
     run_length_ufunc : str
-      Whether to use the 1D ufunc version of run length algorithms or the dask-ready broadcasting version.
-      Default is ``"auto"``, which means the latter is used for dask-backed and large arrays.
+        Whether to use the 1D ufunc version of run length algorithms or the dask-ready broadcasting version.
+        Default is ``"auto"``, which means the latter is used for dask-backed and large arrays.
     sdba_extra_output : bool
-        Whether to add diagnostic variables to outputs of sdba's `train`, `adjust`
-        and `processing` operations. Details about these additional variables are given in the object's
-        docstring. When activated, `adjust` will return a Dataset with `scen` and those extra diagnostics
-        For `processing` functions, see the doc, the output type might change, or not depending on the
-        algorithm. Default: ``False``.
+        Whether to add diagnostic variables to outputs of sdba's `train`, `adjust` and `processing` operations.
+        Details about these additional variables are given in the object's docstring.
+        When activated, `adjust` will return a Dataset with `scen` and those extra diagnostics.
+        For `processing` functions, see the documentation, the output type might change, or not depending on the
+        algorithm.
+        Default: ``False``.
     sdba_encode_cf : bool
         Whether to encode cf coordinates in the ``map_blocks`` optimization that most adjustment methods are based on.
         This should have no impact on the results, but should run much faster in the graph creation phase.
@@ -183,14 +238,14 @@ class set_options:
         Controls attributes handling in indicators. If True, attributes from all inputs are merged
         using the `drop_conflicts` strategy and then updated with xclim-provided attributes.
         If ``as_dataset`` is also True and a dataset was passed to the ``ds`` argument of the Indicator,
-        the dataset's attributes are copied to the indicator's output.
-        If False, attributes from the inputs are ignored. If "xarray", xclim will use xarray's `keep_attrs` option.
+        the dataset's attributes are copied to the indicator's output. If False, attributes from the inputs are ignored.
+        If "xarray", xclim will use xarray's `keep_attrs` option.
         Note that xarray's "default" is equivalent to False. Default: ``"xarray"``.
     as_dataset : bool
         If True, indicators output datasets. If False, they output DataArrays. Default :``False``.
-    resample_map_blocks: bool
+    resample_map_blocks : bool
         If True, some indicators will wrap their resampling operations with `xr.map_blocks`, using :py:func:`xclim.indices.helpers.resample_map`.
-        This requires `flox` to be installed in order to ensure the chunking is appropriate.git
+        This requires `flox` to be installed in order to ensure the chunking is appropriate.
 
     Examples
     --------

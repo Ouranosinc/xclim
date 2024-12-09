@@ -267,7 +267,7 @@ class TrainAdjust(BaseAdjustment):
             Training target, usually a reference time series drawn from observations.
         hist : DataArray
             Training data, usually a model output whose biases are to be adjusted.
-        \*\*kwargs
+        **kwargs : dict
             Algorithm-specific keyword arguments, see class doc.
         """
         kwargs = parse_group(cls._train, kwargs)
@@ -299,7 +299,7 @@ class TrainAdjust(BaseAdjustment):
         obj.set_dataset(ds)
         return obj
 
-    def adjust(self, sim: DataArray, *args, **kwargs):
+    def adjust(self, sim: DataArray, *args: xr.DataArray, **kwargs):
         r"""Return bias-adjusted data.
 
         Refer to the class documentation for the algorithm details.
@@ -308,9 +308,9 @@ class TrainAdjust(BaseAdjustment):
         ----------
         sim : DataArray
             Time series to be bias-adjusted, usually a model output.
-        args : xr.DataArray
+        *args : xr.DataArray
             Other DataArrays needed for the adjustment (usually none).
-        \*\*kwargs
+        **kwargs : dict
             Algorithm-specific keyword arguments, see class doc.
         """
         skip_checks = kwargs.pop("skip_input_checks", False)
@@ -388,7 +388,7 @@ class Adjust(BaseAdjustment):
             Training data, usually a model output whose biases are to be adjusted.
         sim : DataArray
             Time series to be bias-adjusted, usually a model output.
-        \*\*kwargs
+        **kwargs : dict
             Algorithm-specific keyword arguments, see class doc.
 
         Returns
@@ -1768,13 +1768,11 @@ class MBCn(TrainAdjust):
 
     The random matrices are generated following a method laid out by :cite:t:`sdba-mezzadri_how_2007`.
 
+    Only "time" and "time.dayofyear" (with a suitable window) are implemented as possible values for `group`.
+
     References
     ----------
     :cite:cts:`sdba-cannon_multivariate_2018,sdba-cannon_mbc_2020,sdba-pitie_n-dimensional_2005,sdba-mezzadri_how_2007,sdba-szekely_testing_2004`
-
-    Notes
-    -----
-    Only  "time" and "time.dayofyear" (with a suitable window) are implemented as possible values for `group`.
     """
 
     _allow_diff_calendars = False

@@ -83,7 +83,8 @@ def fit(
     dim: str = "time",
     **fitkwargs: Any,
 ) -> xr.DataArray:
-    r"""Fit an array to a univariate distribution along the time dimension.
+    r"""
+    Fit an array to a univariate distribution along the time dimension.
 
     Parameters
     ----------
@@ -98,7 +99,7 @@ def fit(
         The PWM method is usually more robust to outliers.
     dim : str
         The dimension upon which to perform the indexing (default: "time").
-    \*\*fitkwargs
+    **fitkwargs : dict
         Other arguments passed directly to :py:func:`_fitstart` and to the distribution's `fit`.
 
     Returns
@@ -181,7 +182,8 @@ def parametric_quantile(
     q: float | Sequence[float],
     dist: str | rv_continuous | None = None,
 ) -> xr.DataArray:
-    """Return the value corresponding to the given distribution parameters and quantile.
+    """
+    Return the value corresponding to the given distribution parameters and quantile.
 
     Parameters
     ----------
@@ -254,7 +256,8 @@ def parametric_cdf(
     v: float | Sequence[float],
     dist: str | rv_continuous | None = None,
 ) -> xr.DataArray:
-    """Return the cumulative distribution function corresponding to the given distribution parameters and value.
+    """
+    Return the cumulative distribution function corresponding to the given distribution parameters and value.
 
     Parameters
     ----------
@@ -277,7 +280,7 @@ def parametric_cdf(
     dist = get_dist(dist or p.attrs["scipy_dist"])
 
     # Create a lambda function to facilitate passing arguments to dask. There is probably a better way to do this.
-    def func(x):
+    def func(x):  # numpydoc ignore=GL08
         return dist.cdf(v, *x)
 
     data = xr.apply_ufunc(
@@ -318,7 +321,8 @@ def fa(
     mode: str = "max",
     method: str = "ML",
 ) -> xr.DataArray:
-    """Return the value corresponding to the given return period.
+    """
+    Return the value corresponding to the given return period.
 
     Parameters
     ----------
@@ -380,7 +384,8 @@ def frequency_analysis(
     method: str = "ML",
     **indexer: int | float | str,
 ) -> xr.DataArray:
-    r"""Return the value corresponding to a return period.
+    r"""
+    Return the value corresponding to a return period.
 
     Parameters
     ----------
@@ -403,7 +408,7 @@ def frequency_analysis(
         Fitting method, either maximum likelihood (ML or MLE), method of moments (MOM) or approximate method (APP).
         Also accepts probability weighted moments (PWM), also called L-Moments, if `dist` is an instance from the lmoments3 library.
         The PWM method is usually more robust to outliers.
-    \*\*indexer
+    **indexer : {dim: indexer, }, optional
         Time attribute and values over which to subset the array. For example, use season='DJF' to select winter values,
         month=1 to select January, or month=[6,7,8] to select summer months.
         If indexer is not provided, all values are considered.
@@ -435,7 +440,7 @@ def frequency_analysis(
     return fa(sel, t, dist=dist, mode=mode, method=method)
 
 
-def get_dist(dist: str | rv_continuous):
+def get_dist(dist: str | rv_continuous) -> rv_continuous:
     """
     Return a distribution object from `scipy.stats`.
 
@@ -444,6 +449,11 @@ def get_dist(dist: str | rv_continuous):
     dist : str or rv_continuous distribution object
         Name of the univariate distribution, e.g. `beta`, `expon`, `genextreme`, `gamma`, `gumbel_r`, `lognorm`, `norm`.
         Or an instance of the distribution.
+
+    Returns
+    -------
+    rv_continuous
+        A distribution object from `scipy.stats`.
     """
     if isinstance(dist, rv_continuous):
         return dist
@@ -456,7 +466,8 @@ def get_dist(dist: str | rv_continuous):
 
 
 def _fit_start(x, dist: str, **fitkwargs: Any) -> tuple[tuple, dict]:
-    r"""Return initial values for distribution parameters.
+    r"""
+    Return initial values for distribution parameters.
 
     Providing the ML fit method initial values can help the optimizer find the global optimum.
 
@@ -468,7 +479,7 @@ def _fit_start(x, dist: str, **fitkwargs: Any) -> tuple[tuple, dict]:
         Name of the univariate distribution, e.g. `beta`, `expon`, `genextreme`, `gamma`, `gumbel_r`, `lognorm`, `norm`.
         (see :py:mod:scipy.stats).
         Only `genextreme` and `weibull_exp` distributions are supported.
-    \*\*fitkwargs
+    **fitkwargs : dict
         Kwargs passed to fit.
 
     Returns
@@ -477,7 +488,7 @@ def _fit_start(x, dist: str, **fitkwargs: Any) -> tuple[tuple, dict]:
 
     References
     ----------
-    :cite:cts:`coles_introduction_2001,cohen_parameter_2019,thom_1958,cooke_1979,muralidhar_1992`
+    :cite:cts:`coles_introduction_2001,cohen_parameter_2019,thom_1958,cooke_1979,muralidhar_1992`.
     """
     x = np.asarray(x)
     m = x.mean()
@@ -562,20 +573,21 @@ def _fit_start(x, dist: str, **fitkwargs: Any) -> tuple[tuple, dict]:
 def _dist_method_1D(  # noqa: N802
     *args, dist: str | rv_continuous, function: str, **kwargs: Any
 ) -> xr.DataArray:
-    r"""Statistical function for given argument on given distribution initialized with params.
+    r"""
+    Statistical function for given argument on given distribution initialized with params.
 
     See :py:ref:`scipy:scipy.stats.rv_continuous` for all available functions and their arguments.
     Every method where `"*args"` are the distribution parameters can be wrapped.
 
     Parameters
     ----------
-    \*args
+    *args
         The arguments for the requested scipy function.
     dist : str or rv_continuous distribution object
         The scipy name of the distribution.
     function : str
         The name of the function to call.
-    \*\*kwargs
+    **kwargs : dict
         Other parameters to pass to the function call.
 
     Returns
@@ -596,8 +608,8 @@ def dist_method(
     r"""
     Vectorized statistical function for given argument on given distribution initialized with params.
 
-    Methods where `"*args"` are the distribution parameters can be wrapped, except those that reduce dimensions (
-    e.g. `nnlf`) or create new dimensions (eg: 'rvs' with size != 1, 'stats' with more than one moment, 'interval',
+    Methods where `"*args"` are the distribution parameters can be wrapped, except those that reduce dimensions
+    (e.g. `nnlf`) or create new dimensions (e.g. 'rvs' with size != 1, 'stats' with more than one moment, 'interval',
     'support').
 
     Parameters
@@ -610,7 +622,7 @@ def dist_method(
         The first argument for the requested function if different from `fit_params`.
     dist : str or rv_continuous distribution object, optional
         The distribution name or instance. Defaults to the `scipy_dist` attribute or `fit_params`.
-    \*\*kwargs
+    **kwargs : dict
         Other parameters to pass to the function call.
 
     Returns
@@ -620,7 +632,7 @@ def dist_method(
 
     See Also
     --------
-    scipy:scipy.stats.rv_continuous : for all available functions and their arguments.
+    scipy.stats.rv_continuous : For all available functions and their arguments.
     """
     # Typically the data to be transformed
     arg = [arg] if arg is not None else []
@@ -651,6 +663,8 @@ def preprocess_standardized_index(
     r"""
     Perform resample and roll operations involved in computing a standardized index.
 
+    Parameters
+    ----------
     da : xarray.DataArray
         Input array.
     freq : {'D', 'MS'}, optional
@@ -659,7 +673,7 @@ def preprocess_standardized_index(
     window : int
         Averaging window length relative to the resampling frequency. For example, if `freq="MS"`,
         i.e. a monthly resampling, the window is an integer number of months.
-    \*\*indexer
+    **indexer : {dim: indexer, }, optional
         Indexing parameters to compute the indicator on a temporal subset of the data.
         It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
 
@@ -721,7 +735,8 @@ def standardized_index_fit_params(
     fitkwargs: dict | None = None,
     **indexer,
 ) -> xr.DataArray:
-    r"""Standardized Index fitting parameters.
+    r"""
+    Standardized Index fitting parameters.
 
     A standardized index measures the deviation of a variable averaged over a rolling temporal window and
     fitted with a given distribution `dist` with respect to a calibration dataset.
@@ -747,7 +762,7 @@ def standardized_index_fit_params(
         If True, the zeroes of `da` are treated separately when fitting a probability density function.
     fitkwargs : dict, optional
         Kwargs passed to ``xclim.indices.stats.fit`` used to impose values of certains parameters (`floc`, `fscale`).
-    \*\*indexer
+    **indexer : {dim: indexer, }, optional
         Indexing parameters to compute the indicator on a temporal subset of the data.
         It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
 
@@ -830,7 +845,8 @@ def standardized_index(
     params: Quantified | None = None,
     **indexer,
 ) -> xr.DataArray:
-    r"""Standardized Index (SI).
+    r"""
+    Standardized Index (SI).
 
     This computes standardized indices which measure the deviation of  variables in the dataset compared
     to a reference distribution. The reference is a statistical distribution computed with fitting parameters `params`
@@ -866,7 +882,7 @@ def standardized_index(
         Fit parameters.
         The `params` can be computed using ``xclim.indices.stats.standardized_index_fit_params`` in advance.
         The output can be given here as input, and it overrides other options.
-    \*\*indexer
+    **indexer : {dim: indexer, }, optional
         Indexing parameters to compute the indicator on a temporal subset of the data.
         It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
 
@@ -883,7 +899,7 @@ def standardized_index(
 
     References
     ----------
-    :cite:cts:`mckee_relationship_1993`
+    :cite:cts:`mckee_relationship_1993`.
     """
     # use input arguments from ``params`` if it is given
     if params is not None:
@@ -926,17 +942,21 @@ def standardized_index(
     if paramsd != template.sizes:
         params = params.broadcast_like(template)
 
-    def reindex_time(da, da_ref, group):
+    def reindex_time(
+        _da: xr.DataArray, _da_ref: xr.DataArray, _group: str
+    ):  # numpydoc ignore=GL08
         if group == "time.dayofyear":
-            da = resample_doy(da, da_ref)
+            _da = resample_doy(_da, _da_ref)
         elif group == "time.month":
-            da = da.rename(month="time").reindex(time=da_ref.time.dt.month)
-            da["time"] = da_ref.time
+            _da = _da.rename(month="time").reindex(time=_da_ref.time.dt.month)
+            _da["time"] = _da_ref.time
         elif group == "time.week":
-            da = da.rename(week="time").reindex(time=da_ref.time.dt.isocalendar().week)
-            da["time"] = da_ref.time
+            _da = _da.rename(week="time").reindex(
+                time=_da_ref.time.dt.isocalendar().week
+            )
+            _da["time"] = _da_ref.time
         # I don't think rechunking is necessary here, need to check
-        return da if not uses_dask(da) else da.chunk({"time": -1})
+        return _da if not uses_dask(_da) else _da.chunk({"time": -1})
 
     # this should be restricted to some distributions / in some context
     zero_inflated = "prob_of_zero" in params.coords

@@ -62,7 +62,8 @@ def hawkins_sutton(
     baseline: tuple[str, str] = ("1971", "2000"),
     kind: str = "+",
 ) -> tuple[xr.DataArray, xr.DataArray]:
-    """Return the mean and partitioned variance of an ensemble based on method from Hawkins & Sutton (2009).
+    """
+    Return the mean and partitioned variance of an ensemble based on method from Hawkins & Sutton (2009).
 
     Parameters
     ----------
@@ -81,7 +82,7 @@ def hawkins_sutton(
 
     Returns
     -------
-    xr.DataArray, xr.DataArray
+    (xr.DataArray, xr.DataArray)
         The mean relative to the baseline, and the components of variance of the ensemble. These components are
         coordinates along the `uncertainty` dimension: `variability`, `model`, `scenario`, and `total`.
 
@@ -172,7 +173,8 @@ def hawkins_sutton(
 
 
 def hawkins_sutton_09_weighting(da, obs, baseline=("1971", "2000")):
-    """Return weights according to the ability of models to simulate observed climate change.
+    """
+    Return weights according to the ability of models to simulate observed climate change.
 
     Weights are computed by comparing the 2000 value to the baseline mean: w_m = 1 / (x_{obs} + | x_{m,
     2000} - x_obs | )
@@ -189,7 +191,7 @@ def hawkins_sutton_09_weighting(da, obs, baseline=("1971", "2000")):
     Returns
     -------
     xr.DataArray
-      Weights over the model dimension.
+        Weights over the model dimension.
     """
     mm = da.sel(time=slice(*baseline)).mean("time")
     xm = da.sel(time=baseline[1]) - mm
@@ -202,7 +204,8 @@ def lafferty_sriver(
     sm: xr.DataArray | None = None,
     bb13: bool = False,
 ) -> tuple[xr.DataArray, xr.DataArray]:
-    """Return the mean and partitioned variance of an ensemble based on method from Lafferty and Sriver (2023).
+    """
+    Return the mean and partitioned variance of an ensemble based on method from Lafferty and Sriver (2023).
 
     Parameters
     ----------
@@ -300,7 +303,8 @@ def lafferty_sriver(
 
 
 def fractional_uncertainty(u: xr.DataArray) -> xr.DataArray:
-    """Return the fractional uncertainty.
+    """
+    Return the fractional uncertainty.
 
     Parameters
     ----------

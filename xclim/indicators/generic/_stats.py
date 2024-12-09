@@ -1,3 +1,5 @@
+"""Statistical indicator definitions."""
+
 from __future__ import annotations
 
 from xclim.core.indicator import ReducingIndicator, ResamplingIndicator
