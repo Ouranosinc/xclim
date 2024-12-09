@@ -286,7 +286,7 @@ class TrainAdjust(BaseAdjustment):
             cls._check_matching_times(ref, hist)
         # We may also use a different time period for `hist` but still require
         # it has the same size as `ref`'s time.
-        elif not cls._allow_diff_time_sizes: 
+        elif not cls._allow_diff_time_sizes:
             cls._check_matching_time_sizes(ref, hist)
             hist["time"] = ref.time
         ds, params = cls._train(ref, hist, **kwargs)
