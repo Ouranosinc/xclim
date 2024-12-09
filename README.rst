@@ -7,9 +7,9 @@ xclim: Climate services library |logo| |logo-dark| |logo-light|
 +----------------------------+-----------------------------------------------------+
 | Documentation and Support  | |docs| |discussions|                                |
 +----------------------------+-----------------------------------------------------+
-| Open Source                | |license| |ossf| |zenodo| |pyOpenSci| |joss|        |
+| Open Source                | |license| |ossf-score| |zenodo| |pyOpenSci| |joss|  |
 +----------------------------+-----------------------------------------------------+
-| Coding Standards           | |black| |ruff| |pre-commit| |security| |fossa|      |
+| Coding Standards           | |black| |ruff| |pre-commit| |ossf-bp| |fossa|       |
 +----------------------------+-----------------------------------------------------+
 | Development Status         | |status| |build| |coveralls| |energy|               |
 +----------------------------+-----------------------------------------------------+
@@ -164,7 +164,7 @@ This package was created with Cookiecutter_ and the `audreyfeldroy/cookiecutter-
         :target: https://github.com/Ouranosinc/xclim/blob/main/LICENSE
         :alt: License
 
-.. |security| image:: https://bestpractices.coreinfrastructure.org/projects/6041/badge
+.. |ossf-bp| image:: https://bestpractices.coreinfrastructure.org/projects/6041/badge
         :target: https://bestpractices.coreinfrastructure.org/projects/6041
         :alt: Open Source Security Foundation Best Practices
 
@@ -172,9 +172,9 @@ This package was created with Cookiecutter_ and the `audreyfeldroy/cookiecutter-
         :target: https://metrics.green-coding.io/ci.html?repo=Ouranosinc/xclim&branch=main&workflow=47013755
         :alt: Energy Consumption
 
-.. |ossf| image:: https://api.securityscorecards.dev/projects/github.com/Ouranosinc/xclim/badge
+.. |ossf-score| image:: https://api.securityscorecards.dev/projects/github.com/Ouranosinc/xclim/badge
         :target: https://securityscorecards.dev/viewer/?uri=github.com/Ouranosinc/xclim
-        :alt: OpenSSF Scorecard
+        :alt: Open Source Security Foundation Scorecard
 
 .. |fossa| image:: https://app.fossa.com/api/projects/git%2Bgithub.com%2FOuranosinc%2Fxclim.svg?type=shield
         :target: https://app.fossa.com/projects/git%2Bgithub.com%2FOuranosinc%2Fxclim?ref=badge_shield
