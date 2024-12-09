@@ -7,7 +7,7 @@ xclim: Climate services library |logo| |logo-dark| |logo-light|
 +----------------------------+-----------------------------------------------------+
 | Documentation and Support  | |docs| |discussions|                                |
 +----------------------------+-----------------------------------------------------+
-| Open Source                | |license| |fair| |ossf| |zenodo| |pyOpenSci| |joss| |
+| Open Source                | |license| |ossf| |zenodo| |pyOpenSci| |joss|        |
 +----------------------------+-----------------------------------------------------+
 | Coding Standards           | |black| |ruff| |pre-commit| |security| |fossa|      |
 +----------------------------+-----------------------------------------------------+
@@ -166,15 +166,11 @@ This package was created with Cookiecutter_ and the `audreyfeldroy/cookiecutter-
 
 .. |security| image:: https://bestpractices.coreinfrastructure.org/projects/6041/badge
         :target: https://bestpractices.coreinfrastructure.org/projects/6041
-        :alt: Open Source Security Foundation
+        :alt: Open Source Security Foundation Best Practices
 
 .. |energy| image:: https://api.green-coding.io/v1/ci/badge/get?repo=Ouranosinc/xclim&branch=main&workflow=47013755
         :target: https://metrics.green-coding.io/ci.html?repo=Ouranosinc/xclim&branch=main&workflow=47013755
         :alt: Energy Consumption
-
-.. |fair| image:: https://img.shields.io/badge/fair--software.eu-%E2%97%8F%20%20%E2%97%8F%20%20%E2%97%8F%20%20%E2%97%8F%20%20%E2%97%8B-yellow
-        :target: https://fair-software.eu
-        :alt: FAIR Software Compliance
 
 .. |ossf| image:: https://api.securityscorecards.dev/projects/github.com/Ouranosinc/xclim/badge
         :target: https://securityscorecards.dev/viewer/?uri=github.com/Ouranosinc/xclim
