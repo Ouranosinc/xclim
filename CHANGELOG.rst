@@ -4,7 +4,7 @@ Changelog
 
 v0.54.0 (unreleased)
 --------------------
-Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), Éric Dupuis (:user:`coxipi`).
+Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), Éric Dupuis (:user:`coxipi`), Sascha Hofmann (:user:`saschahofmann`).
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
@@ -29,6 +29,10 @@ Internal changes
 CI changes
 ^^^^^^^^^^
 * Added the `green-coding-solutions/eco-ci-energy-estimation` GitHub Action to the workflows to establish energy and carbon usage of CI activity. (:pull:`1863`).
+
+New features and enhancements
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+* ``chill_unit`` now accepts a new argument `positive_only` to compute the daily positive chill units. (:pull:`2003`).
 
 v0.53.2 (2024-10-31)
 --------------------
