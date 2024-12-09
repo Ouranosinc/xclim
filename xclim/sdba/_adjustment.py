@@ -988,6 +988,12 @@ def _otc_adjust(
     ----------
     :cite:cts:`sdba-robin_2021`
     """
+    # nans are removed and put back in place at the end
+    X_og = X.copy()
+    mask = (~np.isnan(X)).all(axis=1)
+    X = X[mask]
+    Y = Y[(~np.isnan(Y)).all(axis=1)]
+
     # Initialize parameters
     if bin_width is None:
         bin_width = u.bin_width_estimator([Y, X])
@@ -1042,7 +1048,11 @@ def _otc_adjust(
     if jitter_inside_bins:
         out += np.random.uniform(low=-bin_width / 2, high=bin_width / 2, size=out.shape)
 
-    return out
+    # reintroduce nans
+    Z = X_og
+    Z[mask] = out
+    Z[~mask] = np.nan
+    return Z
 
 
 @map_groups(scen=[Grouper.DIM])
@@ -1102,9 +1112,9 @@ def otc_adjust(
             )
 
     ref_map = {d: f"ref_{d}" for d in dim}
-    ref = ref.rename(ref_map).stack(dim_ref=ref_map.values()).dropna(dim="dim_ref")
+    ref = ref.rename(ref_map).stack(dim_ref=ref_map.values())
 
-    hist = hist.stack(dim_hist=dim).dropna(dim="dim_hist")
+    hist = hist.stack(dim_hist=dim)
 
     if isinstance(bin_width, dict):
         bin_width = {
@@ -1134,12 +1144,7 @@ def otc_adjust(
         vectorize=True,
     )
 
-    # Pad dim differences with NA to please map_blocks
-    ref = ref.unstack().rename({v: k for k, v in ref_map.items()})
     scen = scen.unstack().rename("scen")
-    for d in dim:
-        full_d = xr.concat([ref[d], scen[d]], dim=d).drop_duplicates(d)
-        scen = scen.reindex({d: full_d})
 
     return scen.to_dataset()
 
@@ -1193,6 +1198,12 @@ def _dotc_adjust(
     ----------
     :cite:cts:`sdba-robin_2021`
     """
+    # nans are removed and put back in place at the end
+    X1_og = X1.copy()
+    mask = ~np.isnan(X1).any(axis=1)
+    X1 = X1[mask]
+    X0 = X0[~np.isnan(X0).any(axis=1)]
+    Y0 = Y0[~np.isnan(Y0).any(axis=1)]
     # Initialize parameters
     if isinstance(bin_width, dict):
         _bin_width = u.bin_width_estimator([Y0, X0, X1])
@@ -1259,7 +1270,7 @@ def _dotc_adjust(
             Y1[:, j] = Y0[:, j] + motion[:, j]
 
     # Map sim to the evolution of ref
-    Z1 = _otc_adjust(
+    out = _otc_adjust(
         X1,
         Y1,
         bin_width=bin_width,
@@ -1268,6 +1279,10 @@ def _dotc_adjust(
         jitter_inside_bins=jitter_inside_bins,
         normalization=normalization,
     )
+    # reintroduce nans
+    Z1 = X1_og
+    Z1[mask] = out
+    Z1[~mask] = np.nan
 
     return Z1
 
@@ -1339,14 +1354,12 @@ def dotc_adjust(
 
     # Drop data added by map_blocks and prepare for apply_ufunc
     hist_map = {d: f"hist_{d}" for d in dim}
-    hist = (
-        hist.rename(hist_map).stack(dim_hist=hist_map.values()).dropna(dim="dim_hist")
-    )
+    hist = hist.rename(hist_map).stack(dim_hist=hist_map.values())
 
     ref_map = {d: f"ref_{d}" for d in dim}
-    ref = ref.rename(ref_map).stack(dim_ref=ref_map.values()).dropna(dim="dim_ref")
+    ref = ref.rename(ref_map).stack(dim_ref=ref_map.values())
 
-    sim = sim.stack(dim_sim=dim).dropna(dim="dim_sim")
+    sim = sim.stack(dim_sim=dim)
 
     if kind is not None:
         kind = {
@@ -1387,12 +1400,6 @@ def dotc_adjust(
         vectorize=True,
     )
 
-    # Pad dim differences with NA to please map_blocks
-    hist = hist.unstack().rename({v: k for k, v in hist_map.items()})
-    ref = ref.unstack().rename({v: k for k, v in ref_map.items()})
     scen = scen.unstack().rename("scen")
-    for d in dim:
-        full_d = xr.concat([hist[d], ref[d], scen[d]], dim=d).drop_duplicates(d)
-        scen = scen.reindex({d: full_d})
 
     return scen.to_dataset()
