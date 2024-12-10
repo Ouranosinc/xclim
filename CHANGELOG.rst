@@ -33,6 +33,7 @@ Internal changes
 * The `numpydoc` linting tool has been added to the development dependencies, linting checks, and the `pre-commit` configuration. (:pull:`1988`).
 * `xclim` now uses a `src` layout for the codebase. Structure-dependent functions, documentation, and build commands have been adapted to reflect these changes. (:pull:`1971`).
 * Added a more robust `yamllint` configuration to ensure that all YAML files are linted consistently. (:pull:`1971`).
+* Addressed a very rare singular matrix error that can happen in ``test_loess_smoothing_nan``.
 
 CI changes
 ^^^^^^^^^^
