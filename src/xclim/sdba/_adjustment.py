@@ -339,9 +339,9 @@ def _npdft_adjust(sim, af_q, rots, quantiles, method, extrap):
 
 
 def mbcn_adjust(
-    ref: xr.Dataset,
-    hist: xr.Dataset,
-    sim: xr.Dataset,
+    ref: xr.DataArray,
+    hist: xr.DataArray,
+    sim: xr.DataArray,
     ds: xr.Dataset,
     pts_dims: Sequence[str],
     interp: str,
@@ -350,7 +350,7 @@ def mbcn_adjust(
     base_kws_vars: dict,
     adj_kws: dict,
     period_dim: str | None,
-) -> xr.DataArray:
+) -> xr.Dataset:
     """Perform the adjustment portion MBCn multivariate bias correction technique.
 
     The function :py:func:`mbcn_train` pre-computes the adjustment factors for each rotation
@@ -696,7 +696,7 @@ def npdf_transform(ds: xr.Dataset, **kwargs) -> xr.Dataset:
             hist : simulated timeseries on the reference period
             sim : Simulated timeseries on the projected period.
             rot_matrices : Random rotation matrices.
-    **kwargs : dict
+    **kwargs : Any
         pts_dim : multivariate dimension name
         base : Adjustment class
         base_kws : Kwargs for initialising the adjustment object

@@ -639,11 +639,11 @@ def data_flags(  # noqa: C901
 
     >>> from xclim.core.dataflags import data_flags
     >>> ds = xr.open_dataset(path_to_pr_file)
-    >>> flagged = data_flags(ds.pr, ds)
+    >>> flagged_multi = data_flags(ds.pr, ds)
     >>> # The next example evaluates only one data flag, passing specific parameters. It also aggregates the flags
     >>> # yearly over the "time" dimension only, such that a True means there is a bad data point for that year
     >>> # at that location.
-    >>> flagged = data_flags(
+    >>> flagged_single = data_flags(
     ...     ds.pr,
     ...     ds,
     ...     flags={"very_large_precipitation_events": {"thresh": "250 mm d-1"}},

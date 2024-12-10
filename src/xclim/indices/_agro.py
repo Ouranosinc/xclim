@@ -1215,7 +1215,7 @@ def standardized_precipitation_index(
     ...     method="ML",
     ...     zero_inflated=True,
     ... )  # First getting params
-    >>> spi_3 = standardized_precipitation_index(pr, params=params)
+    >>> spi_3_fitted = standardized_precipitation_index(pr, params=params)
     """
     fitkwargs = fitkwargs or {}
     dist_methods = {"gamma": ["ML", "APP"], "fisk": ["ML", "APP"]}

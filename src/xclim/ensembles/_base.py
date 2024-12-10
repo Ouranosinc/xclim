@@ -187,6 +187,7 @@ def ensemble_mean_std_max_min(
         ds_out[f"{v}_max"] = ens[v].max(dim="realization")
         ds_out[f"{v}_min"] = ens[v].min(dim="realization")
 
+        enough = None
         if min_members != 1:
             enough = ens[v].notnull().sum("realization") >= min_members
 
