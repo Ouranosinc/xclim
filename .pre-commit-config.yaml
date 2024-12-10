@@ -7,7 +7,7 @@ repos:
     hooks:
       - id: pyupgrade
         args: ['--py310-plus']
-        exclude: 'xclim/core/indicator.py'
+        exclude: 'src/xclim/core/indicator.py'
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v5.0.0
     hooks:
@@ -91,7 +91,7 @@ repos:
     hooks:
       - id: blackdoc
         additional_dependencies: [ 'black==24.10.0' ]
-        exclude: '(xclim/indices/__init__.py|docs/installation.rst)'
+        exclude: '(src/xclim/indices/__init__.py|docs/installation.rst)'
       - id: blackdoc-autoupdate-black
   - repo: https://github.com/codespell-project/codespell
     rev: v2.3.0
@@ -104,7 +104,7 @@ repos:
     hooks:
       - id: numpydoc-validation
         # Exclude the missing submodule from the xclim.core, see:
-        exclude: ^docs/|^tests/|^xclim/sdba|^xclim/core/missing.py
+        exclude: ^docs/|^tests/|^src/xclim/sdba|^src/xclim/core/missing.py
   - repo: https://github.com/gitleaks/gitleaks
     rev: v8.21.2
     hooks:

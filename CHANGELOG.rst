@@ -31,6 +31,8 @@ Internal changes
 * In order to address 403 (forbidden) request errors when retrieving data from GitHub via ReadTheDocs, the ``nimbus`` class has been modified to use an overloaded `fetch` method that appends a User-Agent header to the request. (:pull:`2001`).
 * Addressed a very rare race condition that can happen if `pytest` is tearing down the test environment when running across multiple workers. (:pull:`1863`).
 * The `numpydoc` linting tool has been added to the development dependencies, linting checks, and the `pre-commit` configuration. (:pull:`1988`).
+* `xclim` now uses a `src` layout for the codebase. Structure-dependent functions, documentation, and build commands have been adapted to reflect these changes. (:pull:`1971`).
+* Added a more robust `yamllint` configuration to ensure that all YAML files are linted consistently. (:pull:`1971`).
 
 CI changes
 ^^^^^^^^^^
