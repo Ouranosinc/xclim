@@ -38,9 +38,21 @@ DEFAULT_FORMAT_PARAMS = {
 
 
 class AttrFormatter(string.Formatter):
-    """A formatter for frequently used attribute values.
+    """
+    A formatter for frequently used attribute values.
 
-    See the doc of format_field() for more details.
+    Parameters
+    ----------
+    mapping : dict of str, sequence of str
+        A mapping from values to their possible variations.
+    modifiers : sequence of str
+        The list of modifiers.
+        Must at least match the length of the longest value of `mapping`.
+        Cannot include reserved modifier 'r'.
+
+    Notes
+    -----
+    See the doc of :py:meth:`format_field` for more details.
     """
 
     def __init__(
@@ -48,14 +60,16 @@ class AttrFormatter(string.Formatter):
         mapping: dict[str, Sequence[str]],
         modifiers: Sequence[str],
     ) -> None:
-        """Initialize the formatter.
+        """
+        Initialize the formatter.
 
         Parameters
         ----------
         mapping : dict[str, Sequence[str]]
             A mapping from values to their possible variations.
         modifiers : Sequence[str]
-            The list of modifiers, must be the as long as the longest value of `mapping`.
+            The list of modifiers.
+            Must at least match the length of the longest value of `mapping`.
             Cannot include reserved modifier 'r'.
         """
         super().__init__()
@@ -64,30 +78,48 @@ class AttrFormatter(string.Formatter):
         self.modifiers = modifiers
         self.mapping = mapping
 
-    def format(self, format_string: str, /, *args: Any, **kwargs: Any) -> str:
-        r"""Format a string.
+    def format(self, format_string: str, /, *args: Any, **kwargs: dict) -> str:
+        r"""
+        Format a string.
 
         Parameters
         ----------
-        format_string: str
-        \*args: Any
-        \*\*kwargs: Any
+        format_string : str
+            The string to format.
+        *args : Any
+            Arguments to format.
+        **kwargs : dict
+            Keyword arguments to format.
 
         Returns
         -------
         str
+            The formatted string.
         """
         for k, v in DEFAULT_FORMAT_PARAMS.items():
             if k not in kwargs:
                 kwargs.update({k: v})
         return super().format(format_string, *args, **kwargs)
 
-    def format_field(self, value, format_spec):
-        """Format a value given a formatting spec.
+    def format_field(self, value, format_spec: str) -> str:
+        """
+        Format a value given a formatting spec.
 
         If `format_spec` is in this Formatter's modifiers, the corresponding variation
         of value is given. If `format_spec` is 'r' (raw), the value is returned unmodified.
         If `format_spec` is not specified but `value` is in the mapping, the first variation is returned.
+
+        Parameters
+        ----------
+        value : Any
+            The value to format.
+        format_spec : str
+            The formatting spec.
+
+        Returns
+        -------
+        str
+            The formatted value.
 
         Examples
         --------
@@ -206,8 +238,9 @@ default_formatter = AttrFormatter(
 )
 
 
-def parse_doc(doc: str) -> dict[str, str]:
-    """Crude regex parsing reading an indice docstring and extracting information needed in indicator construction.
+def parse_doc(doc: str) -> dict:
+    """
+    Crude regex parsing reading an indice docstring and extracting information needed in indicator construction.
 
     The appropriate docstring syntax is detailed in :ref:`notebooks/extendxclim:Defining new indices`.
 
@@ -253,7 +286,8 @@ def parse_doc(doc: str) -> dict[str, str]:
 
 
 def _parse_parameters(section):
-    """Parse the 'parameters' section of a docstring into a dictionary.
+    """
+    Parse the 'parameters' section of a docstring into a dictionary.
 
     Works by mapping the parameter name to its description and, potentially, to its set of choices.
     The type annotation are not parsed, except for fixed sets of values (listed as "{'a', 'b', 'c'}").
@@ -309,7 +343,8 @@ def merge_attributes(
     missing_str: str | None = None,
     **inputs_kws: xr.DataArray | xr.Dataset,
 ) -> str:
-    r"""Merge attributes from several DataArrays or Datasets.
+    r"""
+    Merge attributes from several DataArrays or Datasets.
 
     If more than one input is given, its name (if available) is prepended as: "<input name> : <input attribute>".
 
@@ -317,7 +352,7 @@ def merge_attributes(
     ----------
     attribute : str
         The attribute to merge.
-    inputs_list : xr.DataArray or xr.Dataset
+    *inputs_list : xr.DataArray or xr.Dataset
         The datasets or variables that were used to produce the new object.
         Inputs given that way will be prefixed by their `name` attribute if available.
     new_line : str
@@ -326,7 +361,7 @@ def merge_attributes(
     missing_str : str
         A string that is printed if an input doesn't have the attribute. Defaults to None, in which
         case the input is simply skipped.
-    \*\*inputs_kws : xr.DataArray or xr.Dataset
+    **inputs_kws : xr.DataArray or xr.Dataset
         Mapping from names to the datasets or variables that were used to produce the new object.
         Inputs given that way will be prefixes by the passed name.
 
@@ -361,7 +396,8 @@ def update_history(
     new_name: str | None = None,
     **inputs_kws: xr.DataArray | xr.Dataset,
 ) -> str:
-    r"""Return a history string with the timestamped message and the combination of the history of all inputs.
+    r"""
+    Return a history string with the timestamped message and the combination of the history of all inputs.
 
     The new history entry is formatted as "[<timestamp>] <new_name>: <hist_str> - xclim version: <xclim.__version__>."
 
@@ -369,12 +405,12 @@ def update_history(
     ----------
     hist_str : str
         The string describing what has been done on the data.
-    \*inputs_list : xr.DataArray or xr.Dataset
+    *inputs_list : xr.DataArray or xr.Dataset
         The datasets or variables that were used to produce the new object.
         Inputs given that way will be prefixed by their "name" attribute if available.
     new_name : str, optional
         The name of the newly created variable or dataset to prefix hist_msg.
-    \*\*inputs_kws : xr.DataArray or xr.Dataset
+    **inputs_kws : xr.DataArray or xr.Dataset
         Mapping from names to the datasets or variables that were used to produce the new object.
         Inputs given that way will be prefixes by the passed name.
 
@@ -385,7 +421,7 @@ def update_history(
 
     See Also
     --------
-    merge_attributes
+    merge_attributes : Merge attributes from several DataArrays or Datasets.
     """
     from xclim import (  # pylint: disable=cyclic-import,import-outside-toplevel
         __version__,
@@ -407,12 +443,23 @@ def update_history(
     return merged_history
 
 
-def update_xclim_history(func: Callable):
-    """Decorator that auto-generates and fills the history attribute.
+def update_xclim_history(func: Callable) -> Callable:
+    """
+    Decorator that auto-generates and fills the history attribute.
 
     The history is generated from the signature of the function and added to the first output.
     Because of a limitation of the `boltons` wrapper, all arguments passed to the wrapped function
     will be printed as keyword arguments.
+
+    Parameters
+    ----------
+    func : Callable
+        The function to decorate.
+
+    Returns
+    -------
+    Callable
+        The decorated function.
     """
 
     @wraps(func)
@@ -451,7 +498,8 @@ def update_xclim_history(func: Callable):
 
 
 def gen_call_string(funcname: str, *args, **kwargs) -> str:
-    r"""Generate a signature string for use in the history attribute.
+    r"""
+    Generate a signature string for use in the history attribute.
 
     DataArrays and Dataset are replaced with their name, while Nones, floats, ints and strings are printed directly.
     All other objects have their type printed between < >.
@@ -462,12 +510,19 @@ def gen_call_string(funcname: str, *args, **kwargs) -> str:
     Parameters
     ----------
     funcname : str
-        Name of the function
-    \*args, \*\*kwargs
+        Name of the function.
+    *args : Any
         Arguments given to the function.
+    **kwargs : dict
+        Keyword arguments given to the function.
 
-    Example
+    Returns
     -------
+    str
+        The formatted string.
+
+    Examples
+    --------
     >>> A = xr.DataArray([1], dims=("x",), name="A")
     >>> gen_call_string("func", A, b=2.0, c="3", d=[10] * 100)
     "func(A, b=2.0, c='3', d=<list>)"
@@ -493,7 +548,8 @@ def gen_call_string(funcname: str, *args, **kwargs) -> str:
 
 
 def prefix_attrs(source: dict, keys: Sequence, prefix: str) -> dict:
-    """Rename some keys of a dictionary by adding a prefix.
+    """
+    Rename some keys of a dictionary by adding a prefix.
 
     Parameters
     ----------
@@ -519,7 +575,8 @@ def prefix_attrs(source: dict, keys: Sequence, prefix: str) -> dict:
 
 
 def unprefix_attrs(source: dict, keys: Sequence, prefix: str) -> dict:
-    """Remove prefix from keys in a dictionary.
+    """
+    Remove prefix from keys in a dictionary.
 
     Parameters
     ----------
@@ -567,7 +624,8 @@ KIND_ANNOTATION = {
 def _gen_parameters_section(
     parameters: dict[str, dict[str, Any]], allowed_periods: list[str] | None = None
 ) -> str:
-    """Generate the "parameters" section of the indicator docstring.
+    """
+    Generate the "parameters" section of the indicator docstring.
 
     Parameters
     ----------
@@ -579,6 +637,7 @@ def _gen_parameters_section(
     Returns
     -------
     str
+        The formatted section.
     """
     section = "Parameters\n----------\n"
     for name, param in parameters.items():
@@ -613,7 +672,8 @@ def _gen_parameters_section(
 
 
 def _gen_returns_section(cf_attrs: Sequence[dict[str, Any]]) -> str:
-    """Generate the "Returns" section of an indicator's docstring.
+    """
+    Generate the "Returns" section of an indicator's docstring.
 
     Parameters
     ----------
@@ -623,6 +683,7 @@ def _gen_returns_section(cf_attrs: Sequence[dict[str, Any]]) -> str:
     Returns
     -------
     str
+        The formatted section.
     """
     section = "Returns\n-------\n"
     for attrs in cf_attrs:
@@ -647,16 +708,18 @@ def _gen_returns_section(cf_attrs: Sequence[dict[str, Any]]) -> str:
 
 
 def generate_indicator_docstring(ind) -> str:
-    """Generate an indicator's docstring from keywords.
+    """
+    Generate an indicator's docstring from keywords.
 
     Parameters
     ----------
-    ind
-        Indicator instance
+    ind : Indicator
+        An Indicator instance.
 
     Returns
     -------
     str
+        The docstring.
     """
     header = f"{ind.title} (realm: {ind.realm})\n\n{ind.abstract}\n"
 
@@ -691,7 +754,8 @@ def generate_indicator_docstring(ind) -> str:
 
 
 def get_percentile_metadata(data: xr.DataArray, prefix: str) -> dict[str, str]:
-    """Get the metadata related to percentiles from the given DataArray as a dictionary.
+    """
+    Get the metadata related to percentiles from the given DataArray as a dictionary.
 
     Parameters
     ----------

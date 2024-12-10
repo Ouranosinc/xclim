@@ -31,7 +31,7 @@ dependencies:
   # Testing and development dependencies
   - black ==24.10.0
   - blackdoc ==0.3.9
-  - bump-my-version >=0.27.0
+  - bump-my-version >=0.28.1
   - cairosvg
   - codespell ==2.3.0
   - coverage >=7.5.0
@@ -55,6 +55,7 @@ dependencies:
   - nc-time-axis >=1.4.1
   - netcdf4  # Required for some Jupyter notebooks
   - notebook
+  - numpydoc >=1.8.0
   - pandas-stubs >=2.2
   - pooch >=1.8.0
   - pre-commit >=3.7
@@ -64,7 +65,7 @@ dependencies:
   - pytest-cov >=5.0.0
   - pytest-socket >=0.6.0
   - pytest-xdist >=3.2
-  - ruff >=0.5.6
+  - ruff >=0.7.0
   - sphinx >=7.0.0
   - sphinx-autobuild >=2024.4.16
   - sphinx-autodoc-typehints

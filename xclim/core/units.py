@@ -36,6 +36,7 @@ logging.getLogger("pint").setLevel(logging.ERROR)
 __all__ = [
     "amount2lwethickness",
     "amount2rate",
+    "cf_conversion",
     "check_units",
     "convert_units_to",
     "declare_relative_units",
@@ -47,6 +48,7 @@ __all__ = [
     "infer_context",
     "infer_sampling_units",
     "lwethickness2amount",
+    "pint2cfattrs",
     "pint2cfunits",
     "pint_multiply",
     "rate2amount",
@@ -108,15 +110,16 @@ hydro.add_transformation(
 units.add_context(hydro)
 
 
-with (files("xclim.data") / "variables.yml").open() as f:
-    CF_CONVERSIONS = safe_load(f)["conversions"]
+with (files("xclim.data") / "variables.yml").open() as variables:
+    CF_CONVERSIONS = safe_load(variables)["conversions"]
 _CONVERSIONS = {}
 
 
 # FIXME: This needs to be properly annotated for mypy compliance.
 # See: https://mypy.readthedocs.io/en/stable/generics.html#declaring-decorators
 def _register_conversion(conversion, direction):
-    """Register a conversion function to be automatically picked up in `convert_units_to`.
+    """
+    Register a conversion function to be automatically picked up in `convert_units_to`.
 
     The function must correspond to a name in `CF_CONVERSIONS`, so to a section in
     `xclim/data/variables.yml::conversions`.
@@ -140,7 +143,8 @@ units.define("[radiation] = [power] / [length]**2")
 def units2pint(
     value: xr.DataArray | units.Unit | units.Quantity | dict | str,
 ) -> pint.Unit:
-    """Return the pint Unit for the DataArray units.
+    """
+    Return the pint Unit for the DataArray units.
 
     Parameters
     ----------
@@ -204,7 +208,8 @@ def units2pint(
 
 
 def pint2cfunits(value: units.Quantity | units.Unit) -> str:
-    """Return a CF-compliant unit string from a `pint` unit.
+    """
+    Return a CF-compliant unit string from a `pint` unit.
 
     Parameters
     ----------
@@ -224,7 +229,8 @@ def pint2cfunits(value: units.Quantity | units.Unit) -> str:
 
 
 def pint2cfattrs(value: units.Quantity | units.Unit, is_difference=None) -> dict:
-    """Return CF-compliant units attributes from a `pint` unit.
+    """
+    Return CF-compliant units attributes from a `pint` unit.
 
     Parameters
     ----------
@@ -258,9 +264,20 @@ def pint2cfattrs(value: units.Quantity | units.Unit, is_difference=None) -> dict
 
 
 def ensure_cf_units(ustr: str) -> str:
-    """Ensure the passed unit string is CF-compliant.
+    """
+    Ensure the passed unit string is CF-compliant.
 
-    The string will be parsed to pint then recast to a string by xclim's `pint2cfunits`.
+    The string will be parsed to `pint` then recast to a string by :py:func:`xclim.core.units.pint2cfunits`.
+
+    Parameters
+    ----------
+    ustr : str
+        A unit string.
+
+    Returns
+    -------
+    str
+        The unit string in CF-compliant form.
     """
     return pint2cfunits(units2pint(ustr))
 
@@ -268,7 +285,8 @@ def ensure_cf_units(ustr: str) -> str:
 def pint_multiply(
     da: xr.DataArray, q: Any, out_units: str | None = None
 ) -> xr.DataArray:
-    """Multiply xarray.DataArray by pint.Quantity.
+    """
+    Multiply xarray.DataArray by pint.Quantity.
 
     Parameters
     ----------
@@ -282,6 +300,7 @@ def pint_multiply(
     Returns
     -------
     xr.DataArray
+        The product DataArray.
     """
     a = 1 * units2pint(da)  # noqa
     f = a * q.to_base_units()
@@ -295,13 +314,14 @@ def pint_multiply(
 
 
 def str2pint(val: str) -> pint.Quantity:
-    """Convert a string to a pint.Quantity, splitting the magnitude and the units.
+    """
+    Convert a string to a pint.Quantity, splitting the magnitude and the units.
 
     Parameters
     ----------
     val : str
         A quantity in the form "[{magnitude} ]{units}", where magnitude can be cast to a float and
-        units is understood by `units2pint`.
+        units is understood by :py:func:`xclim.core.units.units2pint`.
 
     Returns
     -------
@@ -323,7 +343,8 @@ def convert_units_to(  # noqa: C901
     target: Quantified | units.Unit | dict,
     context: Literal["infer", "hydro", "none"] | None = None,
 ) -> xr.DataArray | float:
-    """Convert a mathematical expression into a value with the same units as a DataArray.
+    """
+    Convert a mathematical expression into a value with the same units as a DataArray.
 
     If the dimensionalities of source and target units differ, automatic CF conversions
     will be applied when possible. See :py:func:`xclim.core.units.cf_conversion`.
@@ -350,11 +371,11 @@ def convert_units_to(  # noqa: C901
 
     See Also
     --------
-    cf_conversion
-    amount2rate
-    rate2amount
-    amount2lwethickness
-    lwethickness2amount
+    cf_conversion : Get the standard name of the specific conversion for the given standard name.
+    amount2rate : Convert an amount to a rate.
+    rate2amount : Convert a rate to an amount.
+    amount2lwethickness : Convert an amount to a liquid water equivalent thickness.
+    lwethickness2amount : Convert a liquid water equivalent thickness to an amount.
     """
     context = context or "none"
 
@@ -435,7 +456,8 @@ def convert_units_to(  # noqa: C901
 def cf_conversion(
     standard_name: str, conversion: str, direction: Literal["to", "from"]
 ) -> str | None:
-    """Get the standard name of the specific conversion for the given standard name.
+    """
+    Get the standard name of the specific conversion for the given standard name.
 
     Parameters
     ----------
@@ -479,7 +501,8 @@ def infer_sampling_units(
     deffreq: str | None = "D",
     dim: str = "time",
 ) -> tuple[int, str]:
-    """Infer a multiplier and the units corresponding to one sampling period.
+    """
+    Infer a multiplier and the units corresponding to one sampling period.
 
     Parameters
     ----------
@@ -490,17 +513,17 @@ def infer_sampling_units(
     dim : str
         Dimension from which to infer the frequency.
 
+    Returns
+    -------
+    int
+        The magnitude (number of base periods per period).
+    str
+        Units as a string, understandable by pint.
+
     Raises
     ------
     ValueError
         If the frequency has no exact corresponding units.
-
-    Returns
-    -------
-    int
-        The magnitude (number of base periods per period)
-    str
-        Units as a string, understandable by pint.
     """
     dimmed = getattr(da, dim)
     freq = xr.infer_freq(dimmed)
@@ -527,13 +550,24 @@ DELTA_ABSOLUTE_TEMP = {
 
 
 def ensure_absolute_temperature(units: str) -> str:
-    """Convert temperature units to their absolute counterpart, assuming they represented a difference (delta).
+    """
+    Convert temperature units to their absolute counterpart, assuming they represented a difference (delta).
 
     Celsius becomes Kelvin, Fahrenheit becomes Rankine. Does nothing for other units.
 
+    Parameters
+    ----------
+    units : str
+        Units to transform.
+
+    Returns
+    -------
+    str
+        The transformed units.
+
     See Also
     --------
-    :py:func:`ensure_delta`
+    ensure_delta : Ensure a unit is a delta unit.
     """
     a = str2pint(units)
     # ensure a delta pint unit
@@ -544,7 +578,8 @@ def ensure_absolute_temperature(units: str) -> str:
 
 
 def ensure_delta(unit: xr.DataArray | str | units.Quantity) -> str:
-    """Return delta units for temperature.
+    """
+    Return delta units for temperature.
 
     For dimensions where delta exist in pint (Temperature), it replaces the temperature unit by delta_degC or
     delta_degF based on the input unit. For other dimensionality, it just gives back the input units.
@@ -552,7 +587,12 @@ def ensure_delta(unit: xr.DataArray | str | units.Quantity) -> str:
     Parameters
     ----------
     unit : str
-        unit to transform in delta (or not)
+        Unit to transform in delta (or not).
+
+    Returns
+    -------
+    str
+        The transformed units.
     """
     u = units2pint(unit)
     d = 1 * u
@@ -571,7 +611,8 @@ def ensure_delta(unit: xr.DataArray | str | units.Quantity) -> str:
 def to_agg_units(
     out: xr.DataArray, orig: xr.DataArray, op: str, dim: str = "time"
 ) -> xr.DataArray:
-    """Set and convert units of an array after an aggregation operation along the sampling dimension (time).
+    """
+    Set and convert units of an array after an aggregation operation along the sampling dimension (time).
 
     Parameters
     ----------
@@ -589,6 +630,7 @@ def to_agg_units(
     Returns
     -------
     xr.DataArray
+        The DataArray with aggregated values.
 
     Examples
     --------
@@ -805,7 +847,8 @@ def rate2amount(
     sampling_rate_from_coord: bool = False,
     out_units: str | None = None,
 ) -> xr.DataArray:
-    """Convert a rate variable to an amount by multiplying by the sampling period length.
+    """
+    Convert a rate variable to an amount by multiplying by the sampling period length.
 
     If the sampling period length cannot be inferred, the rate values
     are multiplied by the duration between their time coordinate and the next one. The last period
@@ -815,25 +858,30 @@ def rate2amount(
 
     Parameters
     ----------
-    rate : xr.DataArray, pint.Quantity or string
+    rate : xr.DataArray or pint.Quantity or str
         "Rate" variable, with units of "amount" per time. Ex: Precipitation in "mm / d".
     dim : str or DataArray
         The name of time dimension or the coordinate itself.
-    sampling_rate_from_coord : boolean
+    sampling_rate_from_coord : bool
         For data with irregular time coordinates. If True, the diff of the time coordinate will be used as the sampling rate,
         meaning each data point will be assumed to apply for the interval ending at the next point. See notes.
         Defaults to False, which raises an error if the time coordinate is irregular.
     out_units : str, optional
         Specific output units, if needed.
 
+    Returns
+    -------
+    xr.DataArray or Quantity
+        The converted variable. The standard_name of `rate` is modified if a conversion is found.
+
     Raises
     ------
     ValueError
         If the time coordinate is irregular and `sampling_rate_from_coord` is False (default).
 
-    Returns
-    -------
-    xr.DataArray or Quantity
+    See Also
+    --------
+    amount2rate : Convert an amount to a rate.
 
     Examples
     --------
@@ -865,10 +913,6 @@ def rate2amount(
     >>> pram = rate2amount(pr, out_units="pc")  # Get rain amount in parsecs. Why not.
     >>> pram.values
     array([7.00008327e-18, 1.63335276e-17, 1.63335276e-17])
-
-    See Also
-    --------
-    amount2rate
     """
     return _rate_and_amount_converter(
         rate,
@@ -886,7 +930,8 @@ def amount2rate(
     sampling_rate_from_coord: bool = False,
     out_units: str | None = None,
 ) -> xr.DataArray:
-    """Convert an amount variable to a rate by dividing by the sampling period length.
+    """
+    Convert an amount variable to a rate by dividing by the sampling period length.
 
     If the sampling period length cannot be inferred, the amount values
     are divided by the duration between their time coordinate and the next one. The last period
@@ -896,11 +941,11 @@ def amount2rate(
 
     Parameters
     ----------
-    amount : xr.DataArray, pint.Quantity or string
+    amount : xr.DataArray or pint.Quantity or str
         "amount" variable. Ex: Precipitation amount in "mm".
     dim : str or xr.DataArray
         The name of the time dimension or the time coordinate itself.
-    sampling_rate_from_coord : boolean
+    sampling_rate_from_coord : bool
         For data with irregular time coordinates.
         If True, the diff of the time coordinate will be used as the sampling rate,
         meaning each data point will be assumed to span the interval ending at the next point.
@@ -909,18 +954,19 @@ def amount2rate(
     out_units : str, optional
         Specific output units, if needed.
 
+    Returns
+    -------
+    xr.DataArray or Quantity
+        The converted variable. The standard_name of `amount` is modified if a conversion is found.
+
     Raises
     ------
     ValueError
         If the time coordinate is irregular and `sampling_rate_from_coord` is False (default).
 
-    Returns
-    -------
-    xr.DataArray or Quantity
-
     See Also
     --------
-    rate2amount
+    rate2amount : Convert a rate to an amount.
     """
     return _rate_and_amount_converter(
         amount,
@@ -935,7 +981,8 @@ def amount2rate(
 def amount2lwethickness(
     amount: xr.DataArray, out_units: str | None = None
 ) -> xr.DataArray | Quantified:
-    """Convert a liquid water amount (mass over area) to its equivalent area-averaged thickness (length).
+    """
+    Convert a liquid water amount (mass over area) to its equivalent area-averaged thickness (length).
 
     This will simply divide the amount by the density of liquid water, 1000 kg/m³.
     This is equivalent to using the "hydro" context of :py:data:`xclim.core.units.units`.
@@ -956,7 +1003,7 @@ def amount2lwethickness(
 
     See Also
     --------
-    lwethickness2amount
+    lwethickness2amount : Convert a liquid water equivalent thickness to an amount.
     """
     water_density = str2pint("1000 kg m-3")
     out = pint_multiply(amount, 1 / water_density)
@@ -972,7 +1019,8 @@ def amount2lwethickness(
 def lwethickness2amount(
     thickness: xr.DataArray, out_units: str | None = None
 ) -> xr.DataArray | Quantified:
-    """Convert a liquid water thickness (length) to its equivalent amount (mass over area).
+    """
+    Convert a liquid water thickness (length) to its equivalent amount (mass over area).
 
     This will simply multiply the thickness by the density of liquid water, 1000 kg/m³.
     This is equivalent to using the "hydro" context of :py:data:`xclim.core.units.units`.
@@ -992,7 +1040,7 @@ def lwethickness2amount(
 
     See Also
     --------
-    amount2lwethickness
+    amount2lwethickness : Convert an amount to a liquid water equivalent thickness.
     """
     water_density = str2pint("1000 kg m-3")
     out = pint_multiply(thickness, water_density)
@@ -1055,23 +1103,29 @@ def rate2flux(
     density: Quantified,
     out_units: str | None = None,
 ) -> xr.DataArray:
-    """Convert a rate variable to a flux by multiplying with a density.
+    """
+    Convert a rate variable to a flux by multiplying with a density.
 
     This is the inverse operation of :py:func:`xclim.core.units.flux2rate`.
 
     Parameters
     ----------
     rate : xr.DataArray
-        "Rate" variable. Ex: Snowfall rate in "mm / d".
+        "Rate" variable, e.g. Snowfall rate in "mm / d".
     density : Quantified
-        Density used to convert from a rate to a flux. Ex: Snowfall density "312 kg m-3".
+        Density used to convert from a rate to a flux, e.g. Snowfall density "312 kg m-3".
         Density can also be an array with the same shape as `rate`.
     out_units : str, optional
         Specific output units, if needed.
 
     Returns
     -------
-    flux: xr.DataArray
+    xr.DataArray
+        The converted flux value.
+
+    See Also
+    --------
+    flux2rate : Convert a flux to a rate.
 
     Examples
     --------
@@ -1087,10 +1141,6 @@ def rate2flux(
     'kg m-2 s-1'
     >>> float(prsn[0])
     0.1
-
-    See Also
-    --------
-    flux2rate
     """
     return _flux_and_rate_converter(
         rate,
@@ -1105,23 +1155,29 @@ def flux2rate(
     density: Quantified,
     out_units: str | None = None,
 ) -> xr.DataArray:
-    """Convert a flux variable to a rate by dividing with a density.
+    """
+    Convert a flux variable to a rate by dividing with a density.
 
     This is the inverse operation of :py:func:`xclim.core.units.rate2flux`.
 
     Parameters
     ----------
     flux : xr.DataArray
-        "flux" variable. Ex: Snowfall flux in "kg m-2 s-1".
+        "flux" variable, e.g. Snowfall flux in "kg m-2 s-1".
     density : Quantified
-        Density used to convert from a flux to a rate. Ex: Snowfall density "312 kg m-3".
+        Density used to convert from a flux to a rate, e.g. Snowfall density "312 kg m-3".
         Density can also be an array with the same shape as `flux`.
     out_units : str, optional
         Specific output units, if needed.
 
     Returns
     -------
-    rate: xr.DataArray
+    xr.DataArray
+        The converted rate value.
+
+    See Also
+    --------
+    rate2flux : Convert a rate to a flux.
 
     Examples
     --------
@@ -1140,10 +1196,6 @@ def flux2rate(
     'mm s-1'
     >>> float(prsnd[0])
     1.0
-
-    See Also
-    --------
-    rate2flux
     """
     return _flux_and_rate_converter(
         flux,
@@ -1157,7 +1209,8 @@ def flux2rate(
 def check_units(
     val: str | xr.DataArray | None, dim: str | xr.DataArray | None = None
 ) -> None:
-    """Check that units are compatible with dimensions, otherwise raise a `ValidationError`.
+    """
+    Check that units are compatible with dimensions, otherwise raise a `ValidationError`.
 
     Parameters
     ----------
@@ -1237,7 +1290,8 @@ def check_units(
 def _check_output_has_units(
     out: xr.DataArray | tuple[xr.DataArray] | xr.Dataset,
 ) -> None:
-    """Perform very basic sanity check on the output.
+    """
+    Perform very basic sanity check on the output.
 
     Indices are responsible for unit management. If this fails, it's a developer's error.
     """
@@ -1255,21 +1309,27 @@ def _check_output_has_units(
 # FIXME: This needs to be properly annotated for mypy compliance.
 # See: https://mypy.readthedocs.io/en/stable/generics.html#declaring-decorators
 def declare_relative_units(**units_by_name) -> Callable:
-    r"""Function decorator checking the units of arguments.
+    r"""
+    Function decorator checking the units of arguments.
 
     The decorator checks that input values have units that are compatible with each other.
     It also stores the input units as a 'relative_units' attribute.
 
     Parameters
     ----------
-    \*\*kwargs
+    **units_by_name : dict
         Mapping from the input parameter names to dimensions relative to other parameters.
         The dimensions can be a single parameter name as `<other_var>` or more complex expressions,
-        like: `<other_var> * [time]`.
+        such as `<other_var> * [time]`.
 
     Returns
     -------
     Callable
+        The decorated function.
+
+    See Also
+    --------
+    declare_units : A decorator to check units of function arguments.
 
     Examples
     --------
@@ -1291,13 +1351,9 @@ def declare_relative_units(**units_by_name) -> Callable:
         temperature_func = declare_units(da="[temperature]")(func)
 
     This call will replace the "<da>" by "[temperature]" everywhere needed.
-
-    See Also
-    --------
-    declare_units
     """
 
-    def dec(func):
+    def dec(func):  # numpydoc ignore=GL08
         sig = signature(func)
 
         # Check if units are valid
@@ -1331,7 +1387,7 @@ def declare_relative_units(**units_by_name) -> Callable:
                     ) from e
 
         @wraps(func)
-        def wrapper(*args, **kwargs):
+        def wrapper(*args, **kwargs):  # numpydoc ignore=GL08
             # Match all passed values to their proper arguments, so we can check units
             bound_args = sig.bind(*args, **kwargs)
             for name, dim in units_by_name.items():
@@ -1366,14 +1422,15 @@ def declare_relative_units(**units_by_name) -> Callable:
 # FIXME: This needs to be properly annotated for mypy compliance.
 # See: https://mypy.readthedocs.io/en/stable/generics.html#declaring-decorators
 def declare_units(**units_by_name) -> Callable:
-    r"""Create a decorator to check units of function arguments.
+    r"""
+    Create a decorator to check units of function arguments.
 
     The decorator checks that input and output values have units that are compatible with expected dimensions.
-    It also stores the input units as a 'in_units' attribute.
+    It also stores the input units as an 'in_units' attribute.
 
     Parameters
     ----------
-    \*\*units_by_name
+    **units_by_name : dict
         Mapping from the input parameter names to their units or dimensionality ("[...]").
         If this decorates a function previously decorated with :py:func:`declare_relative_units`,
         the relative unit declarations are made absolute with the information passed here.
@@ -1381,6 +1438,11 @@ def declare_units(**units_by_name) -> Callable:
     Returns
     -------
     Callable
+        The decorated function.
+
+    See Also
+    --------
+    declare_relative_units : A decorator to check for relative units of function arguments.
 
     Examples
     --------
@@ -1392,13 +1454,9 @@ def declare_units(**units_by_name) -> Callable:
         def func(tas): ...
 
     The decorator will check that `tas` has units of temperature (C, K, F).
-
-    See Also
-    --------
-    declare_relative_units
     """
 
-    def dec(func):
+    def dec(func):  # numpydoc ignore=GL08
         # The `_in_units` attr denotes a previously partially-declared function, update with that info.
         if hasattr(func, "relative_units"):
             # Make relative declarations absolute if possible
@@ -1425,7 +1483,7 @@ def declare_units(**units_by_name) -> Callable:
                 raise ValueError(f"Argument {name} has no declared dimensions.")
 
         @wraps(func)
-        def wrapper(*args, **kwargs):
+        def wrapper(*args, **kwargs):  # numpydoc ignore=GL08
             # Match all passed in value to their proper arguments, so we can check units
             bound_args = sig.bind(*args, **kwargs)
             for name, dim in units_by_name.items():
@@ -1446,7 +1504,8 @@ def declare_units(**units_by_name) -> Callable:
 def infer_context(
     standard_name: str | None = None, dimension: str | None = None
 ) -> str:
-    """Return units context based on either the variable's standard name or the pint dimension.
+    """
+    Return units context based on either the variable's standard name or the pint dimension.
 
     Valid standard names for the hydro context are those including the terms "rainfall",
     "lwe" (liquid water equivalent) and "precipitation". The latter is technically incorrect,

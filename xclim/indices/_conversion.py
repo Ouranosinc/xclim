@@ -1,4 +1,5 @@
-# noqa: D100
+"""Conversion and approximation functions."""
+
 from __future__ import annotations
 
 from typing import cast
@@ -62,25 +63,26 @@ def humidex(
     tdps: xr.DataArray | None = None,
     hurs: xr.DataArray | None = None,
 ) -> xr.DataArray:
-    r"""Humidex index.
+    r"""
+    Humidex Index.
 
-    The humidex indicates how hot the air feels to an average person, accounting for the effect of humidity. It
-    can be loosely interpreted as the equivalent perceived temperature when the air is dry.
+    The Humidex indicates how hot the air feels to an average person, accounting for the effect of humidity.
+    It can be loosely interpreted as the equivalent perceived temperature when the air is dry.
 
     Parameters
     ----------
     tas : xarray.DataArray
-        Air temperature.
+        Mean Temperature.
     tdps : xarray.DataArray, optional
-        Dewpoint temperature, used to compute the vapour pressure.
+        Dewpoint Temperature, used to compute the vapour pressure.
     hurs : xarray.DataArray, optional
-        Relative humidity, used as an alternative way to compute the vapour pressure if the dewpoint temperature is not
+        Relative Humidity, used as an alternative way to compute the vapour pressure if the dewpoint temperature is not
         available.
 
     Returns
     -------
     xarray.DataArray, [temperature]
-      The humidex index.
+      The Humidex Index.
 
     Notes
     -----
@@ -155,7 +157,8 @@ def humidex(
 
 @declare_units(tas="[temperature]", hurs="[]")
 def heat_index(tas: xr.DataArray, hurs: xr.DataArray) -> xr.DataArray:
-    r"""Heat index.
+    r"""
+    Heat index.
 
     Perceived temperature after relative humidity is taken into account :cite:p:`blazejczyk_comparison_2012`.
     The index is only valid for temperatures above 20°C.
@@ -163,25 +166,25 @@ def heat_index(tas: xr.DataArray, hurs: xr.DataArray) -> xr.DataArray:
     Parameters
     ----------
     tas : xr.DataArray
-        Temperature. The equation assumes an instantaneous value.
+        Mean Temperature. The equation assumes an instantaneous value.
     hurs : xr.DataArray
-        Relative humidity. The equation assumes an instantaneous value.
+        Relative Humidity. The equation assumes an instantaneous value.
 
     Returns
     -------
     xr.DataArray, [temperature]
         Heat index for moments with temperature above 20°C.
 
+    Notes
+    -----
+    While both the Humidex and the heat index are calculated using dew point the Humidex uses a dew point of 7 °C
+    (45 °F) as a base, whereas the heat index uses a dew point base of 14 °C (57 °F). Further, the heat index uses
+    heat balance equations which account for many variables other than vapour pressure, which is used exclusively in the
+    Humidex calculation.
+
     References
     ----------
     :cite:cts:`blazejczyk_comparison_2012`
-
-    Notes
-    -----
-    While both the humidex and the heat index are calculated using dew point the humidex uses a dew point of 7 °C
-    (45 °F) as a base, whereas the heat index uses a dew point base of 14 °C (57 °F). Further, the heat index uses
-    heat balance equations which account for many variables other than vapour pressure, which is used exclusively in the
-    humidex calculation.
     """
     thresh = 20  # degC
     t = convert_units_to(tas, "degC")
@@ -205,21 +208,22 @@ def heat_index(tas: xr.DataArray, hurs: xr.DataArray) -> xr.DataArray:
 
 @declare_units(tasmin="[temperature]", tasmax="[temperature]")
 def tas(tasmin: xr.DataArray, tasmax: xr.DataArray) -> xr.DataArray:
-    """Average temperature from minimum and maximum temperatures.
+    """
+    Average temperature from minimum and maximum temperatures.
 
-    We assume a symmetrical distribution for the temperature and retrieve the average value as Tg = (Tx + Tn) / 2
+    We assume a symmetrical distribution for the temperature and retrieve the average value as Tg = (Tx + Tn) / 2.
 
     Parameters
     ----------
     tasmin : xarray.DataArray
-        Minimum (daily) temperature
+        Minimum (daily) Temperature.
     tasmax : xarray.DataArray
-        Maximum (daily) temperature
+        Maximum (daily) Temperature.
 
     Returns
     -------
     xarray.DataArray
-        Mean (daily) temperature [same units as tasmin]
+        Mean (daily) Temperature [same units as tasmin].
 
     Examples
     --------
@@ -236,7 +240,8 @@ def tas(tasmin: xr.DataArray, tasmax: xr.DataArray) -> xr.DataArray:
 def uas_vas_2_sfcwind(
     uas: xr.DataArray, vas: xr.DataArray, calm_wind_thresh: Quantified = "0.5 m/s"
 ) -> tuple[xr.DataArray, xr.DataArray]:
-    """Wind speed and direction from the eastward and northward wind components.
+    """
+    Wind speed and direction from the eastward and northward wind components.
 
     Computes the magnitude and angle of the wind vector from its northward and eastward components,
     following the meteorological convention that sets calm wind to a direction of 0° and northerly wind to 360°.
@@ -244,20 +249,23 @@ def uas_vas_2_sfcwind(
     Parameters
     ----------
     uas : xr.DataArray
-        Eastward wind velocity
+        Eastward Wind Velocity.
     vas : xr.DataArray
-        Northward wind velocity
+        Northward Wind Velocity.
     calm_wind_thresh : Quantified
-        The threshold under which winds are considered "calm" and for which the direction
-        is set to 0. On the Beaufort scale, calm winds are defined as < 0.5 m/s.
+        The threshold under which winds are considered "calm" and for which the direction is set to 0.
+        On the Beaufort scale, calm winds are defined as < 0.5 m/s.
 
     Returns
     -------
     wind : xr.DataArray, [m s-1]
-        Wind velocity
+        Wind Velocity.
     wind_from_dir : xr.DataArray, [°]
-        Direction from which the wind blows, following the meteorological convention where
-        360 stands for North and 0 for calm winds.
+        Direction from which the wind blows, following the meteorological convention where 360 stands for North and 0 for calm winds.
+
+    Notes
+    -----
+    Winds with a velocity less than `calm_wind_thresh` are given a wind direction of 0°, while stronger northerly winds are set to 360°.
 
     Examples
     --------
@@ -265,11 +273,6 @@ def uas_vas_2_sfcwind(
     >>> sfcWind = uas_vas_2_sfcwind(
     ...     uas=uas_dataset, vas=vas_dataset, calm_wind_thresh="0.5 m/s"
     ... )
-
-    Notes
-    -----
-    Winds with a velocity less than `calm_wind_thresh` are given a wind direction of 0°,
-    while stronger northerly winds are set to 360°.
     """
     # Converts the wind speed to m s-1
     uas = convert_units_to(uas, "m/s")
@@ -299,24 +302,24 @@ def uas_vas_2_sfcwind(
 def sfcwind_2_uas_vas(
     sfcWind: xr.DataArray, sfcWindfromdir: xr.DataArray  # noqa
 ) -> tuple[xr.DataArray, xr.DataArray]:
-    """Eastward and northward wind components from the wind speed and direction.
+    """
+    Eastward and northward wind components from the wind speed and direction.
 
     Compute the eastward and northward wind components from the wind speed and direction.
 
     Parameters
     ----------
     sfcWind : xr.DataArray
-        Wind velocity
+        Wind Velocity.
     sfcWindfromdir : xr.DataArray
-        Direction from which the wind blows, following the meteorological convention
-        where 360 stands for North.
+        Direction from which the wind blows, following the meteorological convention, where "360" denotes "North".
 
     Returns
     -------
     uas : xr.DataArray, [m s-1]
-        Eastward wind velocity.
+        Eastward Wind Velocity.
     vas : xr.DataArray, [m s-1]
-        Northward wind velocity.
+        Northward Wind Velocity.
 
     Examples
     --------
@@ -354,12 +357,13 @@ def saturation_vapor_pressure(
     ice_thresh: Quantified | None = None,
     method: str = "sonntag90",  # noqa
 ) -> xr.DataArray:
-    """Saturation vapour pressure from temperature.
+    """
+    Saturation vapour pressure from temperature.
 
     Parameters
     ----------
     tas : xr.DataArray
-        Temperature array.
+        Mean Temperature.
     ice_thresh : Quantified, optional
         Threshold temperature under which to switch to equations in reference to ice instead of water.
         If None (default) everything is computed with reference to water.
@@ -369,7 +373,7 @@ def saturation_vapor_pressure(
     Returns
     -------
     xarray.DataArray, [Pa]
-        Saturation vapour pressure.
+        Saturation Vapour Pressure.
 
     Notes
     -----
@@ -382,16 +386,16 @@ def saturation_vapor_pressure(
     - "wmo08" or "WMO08", taken from :cite:t:`world_meteorological_organization_guide_2008`.
     - "its90" or "ITS90", taken from :cite:t:`hardy_its-90_1998`.
 
+    References
+    ----------
+    :cite:cts:`goff_low-pressure_1946,hardy_its-90_1998,sonntag_important_1990,tetens_uber_1930,vomel_saturation_2016,world_meteorological_organization_guide_2008`
+
     Examples
     --------
     >>> from xclim.indices import saturation_vapor_pressure
     >>> rh = saturation_vapor_pressure(
     ...     tas=tas_dataset, ice_thresh="0 degC", method="wmo08"
     ... )
-
-    References
-    ----------
-    :cite:cts:`goff_low-pressure_1946,hardy_its-90_1998,sonntag_important_1990,tetens_uber_1930,vomel_saturation_2016,world_meteorological_organization_guide_2008`
     """
     if ice_thresh is not None:
         thresh = convert_units_to(ice_thresh, "K")
@@ -503,7 +507,8 @@ def relative_humidity(
     method: str = "sonntag90",
     invalid_values: str = "clip",
 ) -> xr.DataArray:
-    r"""Relative humidity.
+    r"""
+    Relative humidity.
 
     Compute relative humidity from temperature and either dewpoint temperature or specific humidity and pressure through
     the saturation vapour pressure.
@@ -511,13 +516,14 @@ def relative_humidity(
     Parameters
     ----------
     tas : xr.DataArray
-        Temperature array
+        Mean Temperature.
     tdps : xr.DataArray, optional
-        Dewpoint temperature, if specified, overrides huss and ps.
+        Dewpoint Temperature.
+        If specified, overrides `huss` and `ps`.
     huss : xr.DataArray, optional
-        Specific humidity. Must be given if tdps is not given.
+        Specific Humidity. Must be given if `tdps` is not given.
     ps : xr.DataArray, optional
-        Air Pressure. Must be given if tdps is not given.
+        Air Pressure. Must be given if `tdps` is not given.
     ice_thresh : Quantified, optional
         Threshold temperature under which to switch to equations in reference to ice instead of water.
         If None (default) everything is computed with reference to water. Does nothing if 'method' is "bohren98".
@@ -530,7 +536,7 @@ def relative_humidity(
     Returns
     -------
     xr.DataArray, [%]
-        Relative humidity.
+        Relative Humidity.
 
     Notes
     -----
@@ -567,6 +573,10 @@ def relative_humidity(
 
     The methods differ by how :math:`e_{sat}` is computed. See the doc of :py:func:`xclim.core.utils.saturation_vapor_pressure`.
 
+    References
+    ----------
+    :cite:cts:`bohren_atmospheric_1998,lawrence_relationship_2005`
+
     Examples
     --------
     >>> from xclim.indices import relative_humidity
@@ -579,10 +589,6 @@ def relative_humidity(
     ...     method="wmo08",
     ...     invalid_values="clip",
     ... )
-
-    References
-    ----------
-    :cite:cts:`bohren_atmospheric_1998,lawrence_relationship_2005`
     """
     hurs: xr.DataArray
     if method in ("bohren98", "BA90"):
@@ -636,7 +642,8 @@ def specific_humidity(
     method: str = "sonntag90",
     invalid_values: str | None = None,
 ) -> xr.DataArray:
-    r"""Specific humidity from temperature, relative humidity and pressure.
+    r"""
+    Specific humidity from temperature, relative humidity, and pressure.
 
     Specific humidity is the ratio between the mass of water vapour
     and the mass of moist air :cite:p:`world_meteorological_organization_guide_2008`.
@@ -644,7 +651,7 @@ def specific_humidity(
     Parameters
     ----------
     tas : xr.DataArray
-        Temperature array
+        Mean Temperature.
     hurs : xr.DataArray
         Relative Humidity.
     ps : xr.DataArray
@@ -663,7 +670,7 @@ def specific_humidity(
     Returns
     -------
     xarray.DataArray, [dimensionless]
-        Specific humidity.
+        Specific Humidity.
 
     Notes
     -----
@@ -685,6 +692,10 @@ def specific_humidity(
 
         q_{sat} = w_{sat} / (1 + w_{sat})
 
+    References
+    ----------
+    :cite:cts:`world_meteorological_organization_guide_2008`
+
     Examples
     --------
     >>> from xclim.indices import specific_humidity
@@ -696,10 +707,6 @@ def specific_humidity(
     ...     method="wmo08",
     ...     invalid_values="mask",
     ... )
-
-    References
-    ----------
-    :cite:cts:`world_meteorological_organization_guide_2008`
     """
     ps = convert_units_to(ps, "Pa")
     hurs = convert_units_to(hurs, "")
@@ -730,7 +737,8 @@ def specific_humidity_from_dewpoint(
     ps: xr.DataArray,
     method: str = "sonntag90",
 ) -> xr.DataArray:
-    r"""Specific humidity from dewpoint temperature and air pressure.
+    r"""
+    Specific humidity from dewpoint temperature and air pressure.
 
     Specific humidity is the ratio between the mass of water vapour
     and the mass of moist air :cite:p:`world_meteorological_organization_guide_2008`.
@@ -738,16 +746,16 @@ def specific_humidity_from_dewpoint(
     Parameters
     ----------
     tdps : xr.DataArray
-        Dewpoint temperature array.
+        Dewpoint Temperature.
     ps : xr.DataArray
-        Air pressure array.
+        Air Pressure.
     method : {"goffgratch46", "sonntag90", "tetens30", "wmo08"}
         Method to compute the saturation vapour pressure.
 
     Returns
     -------
     xarray.DataArray, [dimensionless]
-        Specific humidity.
+        Specific Humidity.
 
     Notes
     -----
@@ -760,6 +768,10 @@ def specific_humidity_from_dewpoint(
     where :math:`m_w` and :math:`m_a` are the molecular weights of water and dry air respectively. This formula is often
     written with :math:`ε = m_w / m_a`, which simplifies to :math:`q = ε e / (p - e (1 - ε))`.
 
+    References
+    ----------
+    :cite:cts:`world_meteorological_organization_guide_2008`
+
     Examples
     --------
     >>> from xclim.indices import specific_humidity_from_dewpoint
@@ -768,10 +780,6 @@ def specific_humidity_from_dewpoint(
     ...     ps=ps_dataset,
     ...     method="wmo08",
     ... )
-
-    References
-    ----------
-    :cite:cts:`world_meteorological_organization_guide_2008`
     """
     EPSILON = 0.6219569  # weight of water vs dry air []
     e = saturation_vapor_pressure(tas=tdps, method=method)  # vapour pressure [Pa]
@@ -789,16 +797,17 @@ def snowfall_approximation(
     thresh: Quantified = "0 degC",
     method: str = "binary",
 ) -> xr.DataArray:
-    """Snowfall approximation from total precipitation and temperature.
+    """
+    Snowfall approximation from total precipitation and temperature.
 
     Solid precipitation estimated from precipitation and temperature according to a given method.
 
     Parameters
     ----------
     pr : xarray.DataArray
-        Mean daily precipitation flux.
+        Mean daily Precipitation Flux.
     tas : xarray.DataArray, optional
-        Mean, maximum, or minimum daily temperature.
+        Mean, Maximum, or Minimum daily Temperature.
     thresh : Quantified
         Freezing point temperature. Non-scalar values are not allowed with method "brown".
     method : {"binary", "brown", "auer"}
@@ -807,7 +816,11 @@ def snowfall_approximation(
     Returns
     -------
     xarray.DataArray, [same units as pr]
-        Solid precipitation flux.
+        Solid Precipitation Flux.
+
+    See Also
+    --------
+    rain_approximation : Rainfall approximation from total precipitation and temperature.
 
     Notes
     -----
@@ -886,7 +899,8 @@ def rain_approximation(
     thresh: Quantified = "0 degC",
     method: str = "binary",
 ) -> xr.DataArray:
-    """Rainfall approximation from total precipitation and temperature.
+    """
+    Rainfall approximation from total precipitation and temperature.
 
     Liquid precipitation estimated from precipitation and temperature according to a given method.
     This is a convenience method based on :py:func:`snowfall_approximation`, see the latter for details.
@@ -894,9 +908,9 @@ def rain_approximation(
     Parameters
     ----------
     pr : xarray.DataArray
-        Mean daily precipitation flux.
+        Mean daily Precipitation Flux.
     tas : xarray.DataArray, optional
-        Mean, maximum, or minimum daily temperature.
+        Mean, Maximum, or Minimum daily Temperature.
     thresh : Quantified
         Freezing point temperature. Non-scalar values are not allowed with method 'brown'.
     method : {"binary", "brown", "auer"}
@@ -907,14 +921,14 @@ def rain_approximation(
     xarray.DataArray, [same units as pr]
         Liquid precipitation rate.
 
+    See Also
+    --------
+    snowfall_approximation : Snowfall approximation from total precipitation and temperature.
+
     Notes
     -----
     This method computes the snowfall approximation and subtracts it from the total
     precipitation to estimate the liquid rain precipitation.
-
-    See Also
-    --------
-    snowfall_approximation
     """
     prra: xr.DataArray = pr - snowfall_approximation(
         pr, tas, thresh=thresh, method=method
@@ -930,24 +944,26 @@ def snd_to_snw(
     const: Quantified = "312 kg m-3",
     out_units: str | None = None,
 ) -> xr.DataArray:
-    """Snow amount from snow depth and density.
+    """
+    Snow amount from snow depth and density.
 
     Parameters
     ----------
     snd : xr.DataArray
-        Snow depth.
+        Snow Depth.
     snr : Quantified, optional
-        Snow density.
-    const: Quantified
-        Constant snow density
-        `const` is only used if `snr` is None.
-    out_units: str, optional
-        Desired units of the snow amount output. If `None`, output units simply follow from `snd * snr`.
+        Snow Density.
+    const : Quantified
+        Constant snow density.
+        `const` is only used if `snr` is `None`.
+    out_units : str, optional
+        Desired units of the snow amount output.
+        If `None`, output units simply follow from `snd * snr`.
 
     Returns
     -------
     xr.DataArray
-        Snow amount
+        Snow Amount.
 
     Notes
     -----
@@ -973,7 +989,8 @@ def snw_to_snd(
     const: Quantified = "312 kg m-3",
     out_units: str | None = None,
 ) -> xr.DataArray:
-    """Snow depth from snow amount and density.
+    """
+    Snow depth from snow amount and density.
 
     Parameters
     ----------
@@ -981,16 +998,16 @@ def snw_to_snd(
         Snow amount.
     snr : Quantified, optional
         Snow density.
-    const: Quantified
-        Constant snow density
-        `const` is only used if `snr` is None.
-    out_units: str, optional
+    const : Quantified
+        Constant snow density.
+        `const` is only used if `snr` is `None`.
+    out_units : str, optional
         Desired units of the snow depth output. If `None`, output units simply follow from `snw / snr`.
 
     Returns
     -------
     xr.DataArray
-        Snow depth
+        Snow Depth.
 
     Notes
     -----
@@ -1017,29 +1034,30 @@ def prsn_to_prsnd(
     const: Quantified = "100 kg m-3",
     out_units: str | None = None,
 ) -> xr.DataArray:
-    """Snowfall rate from snowfall flux and density.
+    """
+    Snowfall rate from snowfall flux and density.
 
     Parameters
     ----------
     prsn : xr.DataArray
-        Snowfall flux.
+        Snowfall Flux.
     snr : xr.DataArray, optional
-        Snow density.
-    const: Quantified
+        Snow Density.
+    const : Quantified
         Constant snow density.
-        `const` is only used if `snr` is None.
-    out_units: str, optional
-        Desired units of the snowfall rate. If `None`, output units simply follow from `snd * snr`.
+        `const` is only used if `snr` is `None`.
+    out_units : str, optional
+        Desired units of the snowfall rate.
+        If `None`, output units simply follow from `snd * snr`.
 
     Returns
     -------
     xr.DataArray
-        Snowfall rate.
+        Snowfall Rate.
 
     Notes
     -----
-    The estimated mean snow density value of 100 kg m-3 is taken from
-    :cite:cts:`frei_snowfall_2018, cbcl_climate_2020`.
+    The estimated mean snow density value of 100 kg m-3 is taken from :cite:cts:`frei_snowfall_2018, cbcl_climate_2020`.
 
     References
     ----------
@@ -1059,29 +1077,29 @@ def prsnd_to_prsn(
     const: Quantified = "100 kg m-3",
     out_units: str | None = None,
 ) -> xr.DataArray:
-    """Snowfall flux from snowfall rate and density.
+    """
+    Snowfall flux from snowfall rate and density.
 
     Parameters
     ----------
     prsnd : xr.DataArray
-        Snowfall rate.
+        Snowfall Rate.
     snr : xr.DataArray, optional
-        Snow density.
-    const: Quantified
-        Constant snow density.
-        `const` is only used if `snr` is None.
-    out_units: str, optional
+        Snow Density.
+    const : Quantified
+        Constant Snow Density.
+        `const` is only used if `snr` is `None`.
+    out_units : str, optional
         Desired units of the snowfall rate. If `None`, output units simply follow from `snd * snr`.
 
     Returns
     -------
     xr.DataArray
-        Snowfall flux.
+        Snowfall Flux.
 
     Notes
     -----
-    The estimated mean snow density value of 100 kg m-3 is taken from
-    :cite:cts:`frei_snowfall_2018, cbcl_climate_2020`.
+    The estimated mean snow density value of 100 kg m-3 is taken from :cite:cts:`frei_snowfall_2018, cbcl_climate_2020`.
 
     References
     ----------
@@ -1099,7 +1117,8 @@ def prsnd_to_prsn(
 def longwave_upwelling_radiation_from_net_downwelling(
     rls: xr.DataArray, rlds: xr.DataArray
 ) -> xr.DataArray:
-    """Calculate upwelling thermal radiation from net thermal radiation and downwelling thermal radiation.
+    """
+    Calculate upwelling thermal radiation from net thermal radiation and downwelling thermal radiation.
 
     Parameters
     ----------
@@ -1123,7 +1142,8 @@ def longwave_upwelling_radiation_from_net_downwelling(
 def shortwave_upwelling_radiation_from_net_downwelling(
     rss: xr.DataArray, rsds: xr.DataArray
 ) -> xr.DataArray:
-    """Calculate upwelling solar radiation from net solar radiation and downwelling solar radiation.
+    """
+    Calculate upwelling solar radiation from net solar radiation and downwelling solar radiation.
 
     Parameters
     ----------
@@ -1153,7 +1173,8 @@ def wind_chill_index(
     method: str = "CAN",
     mask_invalid: bool = True,
 ) -> xr.DataArray:
-    r"""Wind chill index.
+    r"""
+    Wind chill index.
 
     The Wind Chill Index is an estimation of how cold the weather feels to the average person.
     It is computed from the air temperature and the 10-m wind. As defined by the Environment and Climate Change Canada
@@ -1239,7 +1260,8 @@ def clausius_clapeyron_scaled_precipitation(
     pr_baseline: xr.DataArray,
     cc_scale_factor: float = 1.07,
 ) -> xr.DataArray:
-    r"""Scale precipitation according to the Clausius-Clapeyron relation.
+    r"""
+    Scale precipitation according to the Clausius-Clapeyron relation.
 
     Parameters
     ----------
@@ -1255,6 +1277,12 @@ def clausius_clapeyron_scaled_precipitation(
     xarray.DataArray
         Baseline precipitation scaled to other climatology using Clausius-Clapeyron relationship.
 
+    Warnings
+    --------
+    Make sure that `delta_tas` is computed over a baseline compatible with `pr_baseline`. So for example,
+    if `delta_tas` is the climatological difference between a baseline and a future period, then `pr_baseline`
+    should be precipitations over a period within the same baseline.
+
     Notes
     -----
     The Clausius-Clapeyron equation for water vapour under typical atmospheric conditions states that the saturation
@@ -1264,12 +1292,6 @@ def clausius_clapeyron_scaled_precipitation(
         \frac{\mathrm{d}e_s(T)}{\mathrm{d}T} \approx 1.07 e_s(T)
 
     This function assumes that precipitation can be scaled by the same factor.
-
-    Warnings
-    --------
-    Make sure that `delta_tas` is computed over a baseline compatible with `pr_baseline`. So for example,
-    if `delta_tas` is the climatological difference between a baseline and a future period, then `pr_baseline`
-    should be precipitations over a period within the same baseline.
     """
     # Get difference in temperature.  Time-invariant baseline temperature (from above) is broadcast.
     delta_tas = convert_units_to(delta_tas, "delta_degreeC")
@@ -1326,7 +1348,8 @@ def potential_evapotranspiration(
     peta: float = 0.00516409319477,
     petb: float = 0.0874972822289,
 ) -> xr.DataArray:
-    r"""Potential evapotranspiration.
+    r"""
+    Potential evapotranspiration.
 
     The potential for water evaporation from soil and transpiration by plants if the water supply is sufficient,
     according to a given method.
@@ -1334,29 +1357,30 @@ def potential_evapotranspiration(
     Parameters
     ----------
     tasmin : xarray.DataArray, optional
-        Minimum daily temperature.
+        Minimum daily Temperature.
     tasmax : xarray.DataArray, optional
-        Maximum daily temperature.
+        Maximum daily Temperature.
     tas : xarray.DataArray, optional
-        Mean daily temperature.
+        Mean daily Temperature.
     lat : xarray.DataArray, optional
-        Latitude. If not given, it is sought on tasmin or tas using cf-xarray accessors.
+        Latitude.
+        If not provided, it is sought on `tasmin` or `tas` using cf-xarray accessors.
     hurs : xarray.DataArray, optional
-        Relative humidity.
+        Relative Humidity.
     rsds : xarray.DataArray, optional
-        Surface Downwelling Shortwave Radiation
+        Surface Downwelling Shortwave Radiation.
     rsus : xarray.DataArray, optional
-        Surface Upwelling Shortwave Radiation
+        Surface Upwelling Shortwave Radiation.
     rlds : xarray.DataArray, optional
-        Surface Downwelling Longwave Radiation
+        Surface Downwelling Longwave Radiation.
     rlus : xarray.DataArray, optional
-        Surface Upwelling Longwave Radiation
+        Surface Upwelling Longwave Radiation.
     sfcWind : xarray.DataArray, optional
-        Surface wind velocity (at 10 m)
+        Surface Wind Velocity (at 10 m).
     pr : xarray.DataArray
-        Mean daily precipitation flux.
+        Mean daily Precipitation Flux.
     method : {"baierrobertson65", "BR65", "hargreaves85", "HG85", "thornthwaite48", "TW48", "mcguinnessbordne05", "MB05", "allen98", "FAO_PM98", "droogersallen02", "DA02"}
-        Which method to use, see notes.
+        Which method to use, see Notes.
     peta : float
         Used only with method MB05 as :math:`a` for calculation of PET, see Notes section.
         Default value resulted from calibration of PET over the UK.
@@ -1367,6 +1391,7 @@ def potential_evapotranspiration(
     Returns
     -------
     xarray.DataArray
+        Potential Evapotranspiration.
 
     Notes
     -----
@@ -1831,7 +1856,8 @@ def universal_thermal_climate_index(
     mask_invalid: bool = True,
     wind_cap_min: bool = False,
 ) -> xr.DataArray:
-    r"""Universal thermal climate index (UTCI).
+    r"""
+    Universal thermal climate index (UTCI).
 
     The UTCI is the equivalent temperature for the environment derived from a
     reference environment and is used to evaluate heat stress in outdoor spaces.
@@ -1839,38 +1865,38 @@ def universal_thermal_climate_index(
     Parameters
     ----------
     tas : xarray.DataArray
-        Mean temperature
+        Mean Temperature.
     hurs : xarray.DataArray
-        Relative Humidity
+        Relative Humidity.
     sfcWind : xarray.DataArray
-        Wind velocity
-    mrt: xarray.DataArray, optional
-        Mean radiant temperature
+        Wind Velocity.
+    mrt : xarray.DataArray, optional
+        Mean Radiant Temperature.
     rsds : xr.DataArray, optional
-        Surface Downwelling Shortwave Radiation
-        This is necessary if mrt is not None.
+        Surface Downwelling Shortwave Radiation.
+        This is necessary if `mrt` is not `None`.
     rsus : xr.DataArray, optional
-        Surface Upwelling Shortwave Radiation
-        This is necessary if mrt is not None.
+        Surface Upwelling Shortwave Radiation.
+        This is necessary if `mrt` is not `None`.
     rlds : xr.DataArray, optional
-        Surface Downwelling Longwave Radiation
-        This is necessary if mrt is not None.
+        Surface Downwelling Longwave Radiation.
+        This is necessary if `mrt` is not `None`.
     rlus : xr.DataArray, optional
-        Surface Upwelling Longwave Radiation
-        This is necessary if mrt is not None.
+        Surface Upwelling Longwave Radiation.
+        This is necessary if `mrt` is not `None`.
     stat : {'instant', 'sunlit'}
-        Which statistic to apply. If "instant", the instantaneous cosine
-        of the solar zenith angle is calculated. If "sunlit", the cosine of the
-        solar zenith angle is calculated during the sunlit period of each interval.
-        This is necessary if mrt is not None.
-    mask_invalid: bool
-        If True (default), UTCI values are NaN where any of the inputs are outside
-        their validity ranges : -50°C < tas < 50°C,  -30°C < tas - mrt < 30°C
-        and  0.5 m/s < sfcWind < 17.0 m/s.
-    wind_cap_min: bool
-        If True, wind velocities are capped to a minimum of 0.5 m/s following
-        :cite:t:`brode_utci_2012` usage guidalines. This ensures UTCI calculation
-        for low winds. Default value False.
+        Which statistic to apply.
+        If "instant", the instantaneous cosine of the solar zenith angle is calculated.
+        If "sunlit", the cosine of the solar zenith angle is calculated during the sunlit period of each interval.
+        This is necessary if `mrt` is not `None`.
+    mask_invalid : bool
+        If True (default), UTCI values are NaN where any of the inputs are outside their validity ranges:
+        - -50°C < tas < 50°C.
+        - -30°C < tas - mrt < 30°C.
+        - 0.5 m/s < sfcWind < 17.0 m/s.
+    wind_cap_min : bool
+        If True, wind velocities are capped to a minimum of 0.5 m/s following :cite:t:`brode_utci_2012` usage guidelines.
+        This ensures UTCI calculation for low winds. Default value False.
 
     Returns
     -------
@@ -1884,9 +1910,7 @@ def universal_thermal_climate_index(
 
     This code was inspired by the `pythermalcomfort` and `thermofeel` packages.
 
-    Notes
-    -----
-    See: http://www.utci.org/utcineu/utcineu.php
+    For more information: https://www.utci.org/
 
     References
     ----------
@@ -1934,7 +1958,8 @@ def _fdir_ratio(
     csza: xr.DataArray,
     rsds: xr.DataArray,
 ) -> xr.DataArray:
-    r"""Return ratio of direct solar radiation.
+    r"""
+    Return ratio of direct solar radiation.
 
     The ratio of direct solar radiation is the fraction of the total horizontal solar irradiance
     due to the direct beam of the sun.
@@ -1942,16 +1967,16 @@ def _fdir_ratio(
     Parameters
     ----------
     dates : xr.DataArray
-        Series of dates and time of day
+        Series of dates and time of day.
     csza : xr.DataArray
-        Cosine of the solar zenith angle during the sunlit period of each interval or at an instant
+        Cosine of the solar zenith angle during the sunlit period of each interval or at an instant.
     rsds : xr.DataArray
-        Surface Downwelling Shortwave Radiation
+        Surface Downwelling Shortwave Radiation.
 
     Returns
     -------
     xarray.DataArray, [dimensionless]
-        Ratio of direct solar radiation
+        Ratio of direct solar radiation.
 
     Notes
     -----
@@ -1983,33 +2008,33 @@ def mean_radiant_temperature(
     rlus: xr.DataArray,
     stat: str = "sunlit",
 ) -> xr.DataArray:
-    r"""Mean radiant temperature.
+    r"""
+    Mean radiant temperature.
 
     The mean radiant temperature is the incidence of radiation on the body from all directions.
 
     Parameters
     ----------
     rsds : xr.DataArray
-       Surface Downwelling Shortwave Radiation
+       Surface Downwelling Shortwave Radiation.
     rsus : xr.DataArray
-        Surface Upwelling Shortwave Radiation
+        Surface Upwelling Shortwave Radiation.
     rlds : xr.DataArray
-        Surface Downwelling Longwave Radiation
+        Surface Downwelling Longwave Radiation.
     rlus : xr.DataArray
-        Surface Upwelling Longwave Radiation
+        Surface Upwelling Longwave Radiation.
     stat : {'instant', 'sunlit'}
-        Which statistic to apply. If "instant", the instantaneous cosine
-        of the solar zenith angle is calculated. If "sunlit", the cosine of the
-        solar zenith angle is calculated during the sunlit period of each interval.
+        Which statistic to apply. If "instant", the instantaneous cosine of the solar zenith angle is calculated.
+        If "sunlit", the cosine of the solar zenith angle is calculated during the sunlit period of each interval.
 
     Returns
     -------
     xarray.DataArray, [K]
-        Mean radiant temperature
+        Mean Radiant Temperature.
 
     Warnings
     --------
-    There are some issues in the calculation of mrt in polar regions.
+    There are some issues in the calculation of `mrt` in extreme polar regions.
 
     Notes
     -----
@@ -2089,28 +2114,34 @@ def wind_profile(
     h_r: Quantified,
     method: str = "power_law",
     **kwds,
-):
-    r"""Wind speed at a given height estimated from the wind speed at a reference height.
+) -> xr.DataArray:
+    r"""
+    Wind speed at a given height estimated from the wind speed at a reference height.
 
     Estimate the wind speed based on a power law profile relating wind speed to height above the surface.
 
     Parameters
     ----------
     wind_speed : xarray.DataArray
-        Wind speed at the reference height.
+        Wind Speed at the reference height.
     h : Quantified
-        Height at which to compute the wind speed.
+        Height at which to compute the Wind Speed.
     h_r : Quantified
         Reference height.
     method : {"power_law"}
         Method to use. Currently only "power_law" is implemented.
-    kwds : dict
-        Additional keyword arguments to pass to the method. For power_law, this is alpha, which takes a default value
+    **kwds : dict
+        Additional keyword arguments to pass to the method.For power_law, this is alpha, which takes a default value
         of 1/7, but is highly variable based on topography, surface cover and atmospheric stability.
+
+    Returns
+    -------
+    xarray.DataArray
+        Wind Speed at the desired height.
 
     Notes
     -----
-    The power law profile is given by
+    The power law profile is given by:
 
     .. math::
 
@@ -2118,7 +2149,6 @@ def wind_profile(
 
     where :math:`v_r` is the wind speed at the reference height, :math:`h` is the height at which the wind speed is
     desired, and :math:`h_r` is the reference height.
-
     """
     # Convert units to meters
     h = convert_units_to(h, "m")
@@ -2146,7 +2176,8 @@ def wind_power_potential(
     rated: Quantified = "13 m/s",
     cut_out: Quantified = "25 m/s",
 ) -> xr.DataArray:
-    r"""Wind power potential estimated from an idealized wind power production factor.
+    r"""
+    Wind power potential estimated from an idealized wind power production factor.
 
     The actual power production of a wind farm can be estimated by multiplying its nominal (nameplate) capacity by the
     wind power potential, which depends on wind speed at the hub height, the turbine specifications and air density.
@@ -2154,9 +2185,10 @@ def wind_power_potential(
     Parameters
     ----------
     wind_speed : xarray.DataArray
-        Wind speed at the hub height. Use the `wind_profile` function to estimate from the surface wind speed.
-    air_density: xarray.DataArray
-        Air density at the hub height. Defaults to 1.225 kg/m³.
+        Wind Speed at the hub height.
+        Use the `wind_profile` function to estimate from the surface wind speed.
+    air_density : xarray.DataArray
+        Air Density at the hub height. Defaults to 1.225 kg/m³.
         This is worth changing if applying in cold or mountainous regions with non-standard air density.
     cut_in : Quantified
         Cut-in wind speed. Default is 3.5 m/s.
@@ -2168,7 +2200,7 @@ def wind_power_potential(
     Returns
     -------
     xr.DataArray
-      The power production factor. Multiply by the nominal capacity to get the actual power production.
+        The power production factor. Multiply by the nominal capacity to get the actual power production.
 
     See Also
     --------
@@ -2206,7 +2238,6 @@ def wind_power_potential(
     References
     ----------
     :cite:cts:`chen_2020,tobin_2018`.
-
     """
     # Convert units
     cut_in = convert_units_to(cut_in, wind_speed)

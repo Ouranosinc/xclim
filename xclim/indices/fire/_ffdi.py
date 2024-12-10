@@ -3,15 +3,14 @@ r"""
 McArthur Forest Fire Danger (Mark 5) System
 ===========================================
 
-This submodule defines indices related to the McArthur Forest Fire Danger Index Mark 5. Currently
-implemented are the :py:func:`xclim.indices.fire.keetch_byram_drought_index`,
+This submodule defines indices related to the McArthur Forest Fire Danger Index Mark 5.
+Currently implemented are the :py:func:`xclim.indices.fire.keetch_byram_drought_index`,
 :py:func:`xclim.indices.fire.griffiths_drought_factor` and
 :py:func:`xclim.indices.fire.mcarthur_forest_fire_danger_index` indices, which are used by the eponym indicators.
 The implementation of these indices follows :cite:t:`ffdi-finkele_2006` and :cite:t:`ffdi-noble_1980`,
-with any differences described in the documentation for each index. Users are encouraged to read this module's
-documentation and consult :cite:t:`ffdi-finkele_2006` for a full description of the methods used to calculate each
+with any differences described in the documentation for each index. Users are encouraged to read the documentation of
+this module and consult :cite:t:`ffdi-finkele_2006` for a full description of the methods used to calculate each
 index.
-
 """
 # This file is structured in the following way:
 # Section 1: individual codes, numba-accelerated and vectorized functions.
@@ -194,7 +193,8 @@ def keetch_byram_drought_index(
     pr_annual: xr.DataArray,
     kbdi0: xr.DataArray | None = None,
 ) -> xr.DataArray:
-    """Keetch-Byram drought index (KBDI) for soil moisture deficit.
+    """
+    Keetch-Byram drought index (KBDI) for soil moisture deficit.
 
     The KBDI indicates the amount of water necessary to bring the soil moisture content back to
     field capacity. It is often used in the calculation of the McArthur Forest Fire Danger
@@ -208,7 +208,7 @@ def keetch_byram_drought_index(
         Total rainfall over previous 24 hours [mm/day].
     tasmax : xr.DataArray
         Maximum temperature near the surface over previous 24 hours [degC].
-    pr_annual: xr.DataArray
+    pr_annual : xr.DataArray
         Mean (over years) annual accumulated rainfall [mm/year].
     kbdi0 : xr.DataArray, optional
         Previous KBDI values used to initialise the KBDI calculation [mm/day]. Defaults to 0.
@@ -276,7 +276,8 @@ def griffiths_drought_factor(
     smd: xr.DataArray,
     limiting_func: str = "xlim",
 ) -> xr.DataArray:
-    """Griffiths drought factor based on the soil moisture deficit.
+    """
+    Griffiths drought factor based on the soil moisture deficit.
 
     The drought factor is a numeric indicator of the forest fire fuel availability in the
     deep litter bed. It is often used in the calculation of the McArthur Forest Fire Danger
@@ -296,7 +297,7 @@ def griffiths_drought_factor(
 
     Returns
     -------
-    df : xr.DataArray
+    xr.DataArray
         The limited Griffiths drought factor.
 
     Notes
@@ -361,7 +362,8 @@ def mcarthur_forest_fire_danger_index(
     hurs: xr.DataArray,
     sfcWind: xr.DataArray,
 ):
-    """McArthur forest fire danger index (FFDI) Mark 5.
+    """
+    McArthur forest fire danger index (FFDI) Mark 5.
 
     The FFDI is a numeric indicator of the potential danger of a forest fire.
 

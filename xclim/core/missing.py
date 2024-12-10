@@ -55,12 +55,25 @@ _np_timedelta64 = {"D": "timedelta64[D]", "h": "timedelta64[h]"}
 
 
 class MissingBase:
-    """Base class used to determined where Indicator outputs should be masked.
+    r"""Base class used to determined where Indicator outputs should be masked.
 
     Subclasses should implement `is_missing` and `validate` methods.
 
     Decorate subclasses with `xclim.core.options.register_missing_method` to add them
     to the registry before using them in an Indicator.
+
+    Parameters
+    ----------
+    da : xr.DataArray
+        Input data.
+    freq : str
+        Resampling frequency.
+    src_timestep : str, Optional
+        The expected input frequency. If not given, it will be inferred from the input array.
+    **indexer : Indexer
+        Time attribute and values over which to subset the array. For example, use season='DJF' to select winter
+        values, month=1 to select January, or month=[6,7,8] to select summer months.
+        If not indexer is given, all values are considered.
     """
 
     def __init__(self, da, freq, src_timestep, **indexer):
@@ -73,13 +86,53 @@ class MissingBase:
         self.null, self.count = self.prepare(da, freq, src_timestep, **indexer)
 
     @classmethod
-    def execute(cls, da, freq, src_timestep, options, indexer):
-        """Create the instance and call it in one operation."""
+    def execute(
+        cls,
+        da: xr.DataArray,
+        freq: str,
+        src_timestep: str,
+        options: dict,
+        indexer: dict,
+    ) -> xr.DataArray:
+        """Create the instance and call it in one operation.
+
+        Parameters
+        ----------
+        da : xr.DataArray
+            Input data.
+        freq : str
+            Resampling frequency.
+        src_timestep : str
+            The expected input frequency. If not given, it will be inferred from the input array.
+        options : dict
+            Dictionary of options to pass to the instance.
+        indexer : dict
+            Time attribute and values over which to subset the array. For example, use season='DJF' to select winter
+            values, month=1 to select January, or month=[6,7,8] to select summer months.
+            If no indexer is given, all values are considered.
+
+        Returns
+        -------
+        xr.DataArray
+            The executed DataArray.
+        """
         obj = cls(da, freq, src_timestep, **indexer)
         return obj(**options)
 
     @staticmethod
-    def split_freq(freq):
+    def split_freq(freq: str) -> list[str] | tuple[str, None]:
+        """Split the frequency into a base frequency and a suffix.
+
+        Parameters
+        ----------
+        freq : str
+            The frequency string.
+
+        Returns
+        -------
+        list of str or (str, None)
+            A list of the base frequency and the suffix, or a tuple with the base frequency and None.
+        """
         if freq is None:
             return "", None
 
@@ -89,8 +142,31 @@ class MissingBase:
         return freq, None
 
     @staticmethod
-    def is_null(da, freq, **indexer):
-        """Return a boolean array indicating which values are null."""
+    def is_null(
+        da: xr.DataArray, freq: str, **indexer
+    ) -> xr.DataArray | xr.DataArray.resample:
+        r"""Return a boolean array indicating which values are null.
+
+        Parameters
+        ----------
+        da : xr.DataArray
+            Input data.
+        freq : str
+            Resampling frequency, from the periods defined in :ref:`timeseries.resampling`.
+        **indexer : {dim: indexer}, optional
+            The time attribute and values over which to subset the array. For example, use season='DJF' to select winter
+            values, month=1 to select January, or month=[6,7,8] to select summer months.
+
+        Returns
+        -------
+        xr.DataArray
+            Boolean array indicating which values are null.
+
+        Raises
+        ------
+        ValueError
+            If no data is available for the selected period.
+        """
         indexer.update({"drop": True})
         selected = select_time(da, **indexer)
         if selected.time.size == 0:
@@ -102,7 +178,9 @@ class MissingBase:
 
         return null
 
-    def prepare(self, da, freq, src_timestep, **indexer):
+    def prepare(
+        self, da: xr.DataArray, freq: str, src_timestep: str, **indexer
+    ) -> tuple[xr.DataArray, xr.DataArray]:
         r"""Prepare arrays to be fed to the `is_missing` function.
 
         Parameters
@@ -113,7 +191,7 @@ class MissingBase:
             Resampling frequency, from the periods defined in :ref:`timeseries.resampling`.
         src_timestep : str
             Expected input frequency, from the periods defined in :ref:`timeseries.resampling`.
-        \*\*indexer : {dim: indexer}, optional
+        **indexer : {dim: indexer}, optional
             Time attribute and values over which to subset the array. For example, use season='DJF' to select winter
             values, month=1 to select January, or month=[6,7,8] to select summer months. If not indexer is given,
             all values are considered.
@@ -122,6 +200,11 @@ class MissingBase:
         -------
         xr.DataArray, xr.DataArray
             Boolean array indicating which values are null, array of expected number of valid values.
+
+        Raises
+        ------
+        NotImplementedError
+            If no frequency is provided and the source timestep is not a divisor of the resampling frequency.
 
         Notes
         -----
@@ -186,13 +269,24 @@ class MissingBase:
 
         return null, count
 
-    def is_missing(self, null, count, **kwargs):
+    def is_missing(self, null, count, **kwargs):  # numpydoc ignore=PR01
         """Return whether the values within each period should be considered missing or not."""
-        raise NotImplementedError
+        raise NotImplementedError()
 
     @staticmethod
-    def validate(**kwargs):
-        """Return whether options arguments are valid or not."""
+    def validate(**kwargs) -> bool:
+        r"""Return whether options arguments are valid or not.
+
+        Parameters
+        ----------
+        **kwargs : dict
+            Options arguments.
+
+        Returns
+        -------
+        bool
+            Whether the options are valid or not.
+        """
         return True
 
     def __call__(self, **kwargs):
@@ -210,15 +304,15 @@ class MissingBase:
 class MissingAny(MissingBase):
     r"""Return whether there are missing days in the array.
 
-    Attributes
+    Parameters
     ----------
     da : xr.DataArray
         Input array.
-    freq: str
+    freq : str
         Resampling frequency.
-    src_timestep: {"D", "h", "M"}
+    src_timestep : {"D", "h", "M"}
         Expected input frequency.
-    indexer: {dim: indexer, }, optional
+    **indexer : {dim: indexer, }, optional
         Time attribute and values over which to subset the array. For example, use season='DJF' to select winter
         values, month=1 to select January, or month=[6,7,8] to select summer months.
         If not indexer is given, all values are considered.
@@ -229,7 +323,28 @@ class MissingAny(MissingBase):
         A boolean array set to True if period has missing values.
     """
 
-    def is_missing(self, null, count):  # noqa
+    def __init__(self, da, freq, src_timestep, **indexer):
+        super().__init__(da, freq, src_timestep, **indexer)
+
+    def is_missing(
+        self, null: xr.DataArray, count: xr.DataArray, **kwargs
+    ) -> xr.DataArray:  # noqa
+        r"""Return whether the values within each period should be considered missing or not.
+
+        Parameters
+        ----------
+        null : xr.DataArray
+            Boolean array indicating which values are null.
+        count : xr.DataArray
+            Array of expected number of valid values.
+        **kwargs : dict
+            Additional arguments.
+
+        Returns
+        -------
+        xr.DataArray
+            A boolean array set to True if period has missing values.
+        """
         cond0 = null.count(dim="time") != count  # Check total number of days
         cond1 = null.sum(dim="time") > 0  # Check if any is missing
         return cond0 | cond1
@@ -248,7 +363,7 @@ class MissingWMO(MissingAny):
     Stricter criteria are sometimes used in practice, with a tolerance of 5 missing values or 3 consecutive missing
     values.
 
-    Attributes
+    Parameters
     ----------
     da : DataArray
         Input array.
@@ -260,7 +375,7 @@ class MissingWMO(MissingAny):
         Number of consecutive missing values per month that should not be exceeded.
     src_timestep : {"D"}
         Expected input frequency. Only daily values are supported.
-    indexer: {dim: indexer, }, optional
+    **indexer : {dim: indexer, }, optional
         Time attribute and values over which to subset the array. For example, use season='DJF' to select winter
         Time attribute and values over which to subset the array. For example, use season='DJF' to select winter
         values, month=1 to select January, or month=[6,7,8] to select summer months.
@@ -290,8 +405,36 @@ class MissingWMO(MissingAny):
         super().__init__(da, freq, src_timestep, **indexer)
 
     @classmethod
-    def execute(cls, da, freq, src_timestep, options, indexer):
-        """Create the instance and call it in one operation."""
+    def execute(
+        cls,
+        da: xr.DataArray,
+        freq: str,
+        src_timestep: str,
+        options: dict,
+        indexer: dict,
+    ) -> xr.DataArray:
+        """Create the instance and call it in one operation.
+
+        Parameters
+        ----------
+        da : xr.DataArray
+            Input data.
+        freq : str
+            Resampling frequency.
+        src_timestep : str
+            The expected input frequency. If not given, it will be inferred from the input array.
+        options : dict
+            Dictionary of options to pass to the instance.
+        indexer : dict
+            Time attribute and values over which to subset the array. For example, use season='DJF' to select winter
+            values, month=1 to select January, or month=[6,7,8] to select summer months.
+            If not indexer is given, all values are considered.
+
+        Returns
+        -------
+        xr.DataArray
+            The executed WMO-missing standards-compliant DataArray.
+        """
         if freq[0] not in ["Y", "A", "Q", "M"]:
             raise ValueError(
                 "MissingWMO can only be used with Monthly or longer frequencies."
@@ -327,7 +470,7 @@ class MissingWMO(MissingAny):
 class MissingPct(MissingBase):
     r"""Return whether there are more missing days in the array than a given percentage.
 
-    Attributes
+    Parameters
     ----------
     da : DataArray
         Input array.
@@ -337,7 +480,7 @@ class MissingPct(MissingBase):
         Fraction of missing values that are tolerated [0,1].
     src_timestep : {"D", "h"}
         Expected input frequency.
-    indexer : {dim: indexer, }, optional
+    **indexer : {dim: indexer, }, optional
         Time attribute and values over which to subset the array. For example, use season='DJF' to select winter values,
         month=1 to select January, or month=[6,7,8] to select summer months.
         If not indexer is given, all values are considered.
@@ -422,8 +565,8 @@ class FromContext(MissingBase):
 
     See Also
     --------
-    xclim.set_options
-    xclim.core.options.register_missing_method
+    xclim.set_options : For modifying run configurations
+    xclim.core.options.register_missing_method : For adding new missing value detection algorithms.
     """
 
     @classmethod
@@ -442,29 +585,49 @@ class FromContext(MissingBase):
 # user-friendly. This can also be useful for testing.
 
 
-def missing_any(da, freq, src_timestep=None, **indexer):  # noqa: D103
+def missing_any(  # noqa: D103 # numpydoc ignore=GL08
+    da: xr.DataArray, freq: str, src_timestep: str | None = None, **indexer
+) -> xr.DataArray:
+    """Return whether there are missing days in the array."""
     src_timestep = src_timestep or xr.infer_freq(da.time)
     return MissingAny(da, freq, src_timestep, **indexer)()
 
 
-def missing_wmo(da, freq, nm=11, nc=5, src_timestep=None, **indexer):  # noqa: D103
+def missing_wmo(  # noqa: D103 # numpydoc ignore=GL08
+    da: xr.DataArray,
+    freq: str,
+    nm: int = 11,
+    nc: int = 5,
+    src_timestep: str | None = None,
+    **indexer,
+) -> xr.DataArray:
     src_timestep = src_timestep or xr.infer_freq(da.time)
     return MissingWMO.execute(
         da, freq, src_timestep, options={"nm": nm, "nc": nc}, indexer=indexer
     )
 
 
-def missing_pct(da, freq, tolerance, src_timestep=None, **indexer):  # noqa: D103
+def missing_pct(  # noqa: D103 # numpydoc ignore=GL08
+    da: xr.DataArray,
+    freq: str,
+    tolerance: float,
+    src_timestep: str | None = None,
+    **indexer,
+) -> xr.DataArray:
     src_timestep = src_timestep or xr.infer_freq(da.time)
     return MissingPct(da, freq, src_timestep, **indexer)(tolerance=tolerance)
 
 
-def at_least_n_valid(da, freq, n=1, src_timestep=None, **indexer):  # noqa: D103
+def at_least_n_valid(  # noqa: D103 # numpydoc ignore=GL08
+    da: xr.DataArray, freq: str, n: int = 1, src_timestep: str | None = None, **indexer
+) -> xr.DataArray:
     src_timestep = src_timestep or xr.infer_freq(da.time)
     return AtLeastNValid(da, freq, src_timestep, **indexer)(n=n)
 
 
-def missing_from_context(da, freq, src_timestep=None, **indexer):  # noqa: D103
+def missing_from_context(  # noqa: D103 # numpydoc ignore=GL08
+    da: xr.DataArray, freq: str, src_timestep: str | None = None, **indexer
+) -> xr.DataArray:
     src_timestep = src_timestep or xr.infer_freq(da.time)
     return FromContext.execute(da, freq, src_timestep, options={}, indexer=indexer)
 

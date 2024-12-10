@@ -28,7 +28,8 @@ except ImportError:
 
 
 def make_criteria(ds: xarray.Dataset | xarray.DataArray):
-    """Reshapes the input into a criteria 2D DataArray.
+    """
+    Reshape the input into a criteria 2D DataArray.
 
     The reshaping preserves the "realization" dimension but stacks all other dimensions and variables into a new
     "criteria" dimension, as expected by functions :py:func:`xclim.ensembles._reduce.kkz_reduce_ensemble` and
@@ -36,14 +37,14 @@ def make_criteria(ds: xarray.Dataset | xarray.DataArray):
 
     Parameters
     ----------
-    ds : Dataset or DataArray
+    ds : xr.Dataset or xr.DataArray
         Must at least have a "realization" dimension.
         All values are considered independent "criterion" for the ensemble reduction.
         If a Dataset, variables may have different sizes, but all must include the "realization" dimension.
 
     Returns
     -------
-    crit : DataArray
+    xr.DataArray
         Same data, reshaped. Old coordinates (and variables) are available as a multiindex.
 
     Notes
@@ -113,7 +114,7 @@ def make_criteria(ds: xarray.Dataset | xarray.DataArray):
         # Previous ops gave the first variable's attributes, replace by the original dataset ones.
         crit.attrs = ds.attrs
     else:
-        # Easy peasy, skip all the convoluted stuff
+        # Easy-peasy, skip all the convoluted stuff
         crit = _make_crit(ds)
 
     # drop criteria that are all NaN
@@ -129,7 +130,8 @@ def kkz_reduce_ensemble(
     standardize: bool = True,
     **cdist_kwargs,
 ) -> list:
-    r"""Return a sample of ensemble members using KKZ selection.
+    r"""
+    Return a sample of ensemble members using KKZ selection.
 
     The algorithm selects `num_select` ensemble members spanning the overall range of the ensemble.
     The selection is ordered, smaller groups are always subsets of larger ones for given criteria.
@@ -140,8 +142,8 @@ def kkz_reduce_ensemble(
     Parameters
     ----------
     data : xr.DataArray
-        Selection criteria data : 2-D xr.DataArray with dimensions 'realization' (N) and
-        'criteria' (P). These are the values used for clustering. Realizations represent the individual original
+        Selection criteria data : 2-D xr.DataArray with dimensions 'realization' (N) and 'criteria' (P).
+        These are the values used for clustering. Realizations represent the individual original
         ensemble members and criteria the variables/indicators used in the grouping algorithm.
     num_select : int
         The number of members to select.
@@ -150,7 +152,7 @@ def kkz_reduce_ensemble(
     standardize : bool
         Whether to standardize the input before running the selection or not.
         Standardization consists in translation as to have a zero mean and scaling as to have a unit standard deviation.
-    \*\*cdist_kwargs
+    **cdist_kwargs : dict
         All extra arguments are passed as-is to `scipy.spatial.distance.cdist`, see its docs for more information.
 
     Returns
@@ -203,7 +205,8 @@ def kmeans_reduce_ensemble(
     sample_weights: np.ndarray | None = None,
     random_state: int | np.random.RandomState | None = None,
 ) -> tuple[list, np.ndarray, dict]:
-    """Return a sample of ensemble members using k-means clustering.
+    """
+    Return a sample of ensemble members using k-means clustering.
 
     The algorithm attempts to reduce the total number of ensemble members while maintaining adequate coverage of
     the ensemble uncertainty in an N-dimensional data space. K-Means clustering is carried out on the input
@@ -218,27 +221,36 @@ def kmeans_reduce_ensemble(
         ensemble members and criteria the variables/indicators used in the grouping algorithm.
     method : dict, optional
         Dictionary defining selection method and associated value when required. See Notes.
+    make_graph : bool
+        Output a dictionary of input for displays a plot of R² vs. the number of clusters.
+        Defaults to True if matplotlib is installed in the runtime environment.
     max_clusters : int, optional
         Maximum number of members to include in the output ensemble selection.
         When using 'rsq_optimize' or 'rsq_cutoff' methods, limit the final selection to a maximum number even if method
         results indicate a higher value. Defaults to N.
     variable_weights : np.ndarray, optional
-        An array of size P. This weighting can be used to influence of weight of the climate indices
-        (criteria dimension) on the clustering itself.
+        An array of size P.
+        This weighting can be used to influence of weight of the climate indices (criteria dimension) on the clustering itself.
     model_weights : np.ndarray, optional
         An array of size N. This weighting can be used to influence which realization is selected
         from within each cluster. This parameter has no influence on the clustering itself.
     sample_weights : np.ndarray, optional
-        An array of size N. sklearn.cluster.KMeans() sample_weights parameter. This weighting can be
-        used to influence of weight of simulations on the clustering itself.
-        See: https://scikit-learn.org/stable/modules/generated/sklearn.cluster.KMeans.html
-    random_state: int or np.random.RandomState, optional
-        sklearn.cluster.KMeans() random_state parameter. Determines random number generation for centroid
-        initialization. Use to make the randomness deterministic.
-        See: https://scikit-learn.org/stable/modules/generated/sklearn.cluster.KMeans.html
-    make_graph: bool
-        output a dictionary of input for displays a plot of R² vs. the number of clusters.
-        Defaults to True if matplotlib is installed in runtime environment.
+        An array of size N. sklearn.cluster.KMeans() sample_weights parameter.
+        This weighting can be used to influence of weight of simulations on the clustering itself.
+        See: https://scikit-learn.org/stable/modules/generated/sklearn.cluster.KMeans.html.
+    random_state : int or np.random.RandomState, optional
+        A sklearn.cluster.KMeans() random_state parameter. Determines random number generation for centroid initialization.
+        Use to make the randomness deterministic.
+        See: https://scikit-learn.org/stable/modules/generated/sklearn.cluster.KMeans.html.
+
+    Returns
+    -------
+    list
+        Selected model indexes (positions).
+    np.ndarray
+        KMeans clustering results.
+    dict
+        Dictionary of input data for creating R² profile plot. 'None' when make_graph=False.
 
     Notes
     -----
@@ -265,15 +277,6 @@ def kmeans_reduce_ensemble(
         val : integer between 1 and N
 
         method={'n_clusters': val}
-
-    Returns
-    -------
-    list
-        Selected model indexes (positions)
-    np.ndarray
-        KMeans clustering results
-    dict
-        Dictionary of input data for creating R² profile plot. 'None' when make_graph=False
 
     References
     ----------
@@ -420,8 +423,14 @@ def kmeans_reduce_ensemble(
     return out, clusters, fig_data
 
 
-def _calc_rsq(z, method, make_graph, n_sim, random_state, sample_weights):
-    """Sub-function to kmeans_reduce_ensemble. Calculates r-square profile (r-square versus number of clusters."""
+def _calc_rsq(
+    z, method: dict, make_graph: bool, n_sim: np.ndarray, random_state, sample_weights
+):
+    """
+    Sub-function to kmeans_reduce_ensemble.
+
+    Calculates r-square profile (r-square versus number of clusters).
+    """
     rsq = None
     if list(method.keys())[0] != "n_clusters" or make_graph is True:
         # generate r2 profile data
@@ -445,7 +454,7 @@ def _calc_rsq(z, method, make_graph, n_sim, random_state, sample_weights):
     return rsq
 
 
-def _get_nclust(method: dict, n_sim, rsq, max_clusters):
+def _get_nclust(method: dict, n_sim: int, rsq: float, max_clusters: int):
     """Sub-function to kmeans_reduce_ensemble. Determine number of clusters to create depending on various methods."""
     # if we actually need to find the optimal number of clusters, this is where it is done
     if list(method.keys())[0] == "rsq_cutoff":
@@ -476,11 +485,17 @@ def _get_nclust(method: dict, n_sim, rsq, max_clusters):
     return n_clusters
 
 
-def plot_rsqprofile(fig_data):
-    """Create an R² profile plot using kmeans_reduce_ensemble output.
+def plot_rsqprofile(fig_data: dict) -> None:
+    """
+    Create an R² profile plot using `kmeans_reduce_ensemble` output.
 
     The R² plot allows evaluation of the proportion of total uncertainty in the original ensemble that is provided
     by the reduced selected.
+
+    Parameters
+    ----------
+    fig_data : dict
+        Dictionary of input data for creating R² profile plot.
 
     Examples
     --------

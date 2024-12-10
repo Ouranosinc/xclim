@@ -1,4 +1,5 @@
-# noqa: D100
+"""Hydrological indice definitions."""
+
 from __future__ import annotations
 
 import numpy as np
@@ -28,7 +29,8 @@ __all__ = [
 
 @declare_units(q="[discharge]")
 def base_flow_index(q: xr.DataArray, freq: str = "YS") -> xr.DataArray:
-    r"""Base flow index.
+    r"""
+    Base flow index.
 
     Return the base flow index, defined as the minimum 7-day average flow divided by the mean flow.
 
@@ -53,13 +55,11 @@ def base_flow_index(q: xr.DataArray, freq: str = "YS") -> xr.DataArray:
 
        \frac{\min(\mathrm{CMA}_7(\mathbf{q}))}{\overline{\mathbf{q}}}
 
-
     where :math:`\mathrm{CMA}_7` is the seven days moving average of the daily flow:
 
     .. math::
 
        \mathrm{CMA}_7(q_i) = \frac{\sum_{j=i-3}^{i+3} q_j}{7}
-
     """
     m7 = q.rolling(time=7, center=True).mean(skipna=False).resample(time=freq)
     mq = q.resample(time=freq)
@@ -72,7 +72,8 @@ def base_flow_index(q: xr.DataArray, freq: str = "YS") -> xr.DataArray:
 
 @declare_units(q="[discharge]")
 def rb_flashiness_index(q: xr.DataArray, freq: str = "YS") -> xr.DataArray:
-    r"""Richards-Baker flashiness index.
+    r"""
+    Richards-Baker flashiness index.
 
     Measures oscillations in flow relative to total flow, quantifying the frequency and rapidity of short term changes
     in flow, based on :cite:t:`baker_new_2004`.
@@ -110,13 +111,14 @@ def rb_flashiness_index(q: xr.DataArray, freq: str = "YS") -> xr.DataArray:
 
 @declare_units(snd="[length]")
 def snd_max(snd: xr.DataArray, freq: str = "YS-JUL") -> xr.DataArray:
-    """Maximum snow depth.
+    """
+    Maximum snow depth.
 
     The maximum daily snow depth.
 
     Parameters
     ----------
-    snw : xarray.DataArray
+    snd : xarray.DataArray
         Snow depth (mass per area).
     freq : str
         Resampling frequency.
@@ -131,7 +133,8 @@ def snd_max(snd: xr.DataArray, freq: str = "YS-JUL") -> xr.DataArray:
 
 @declare_units(snd="[length]")
 def snd_max_doy(snd: xr.DataArray, freq: str = "YS-JUL") -> xr.DataArray:
-    """Maximum snow depth day of year.
+    """
+    Day of year of maximum snow depth.
 
     Day of year when surface snow reaches its peak value. If snow depth is 0 over entire period, return NaN.
 
@@ -162,7 +165,8 @@ def snd_max_doy(snd: xr.DataArray, freq: str = "YS-JUL") -> xr.DataArray:
 
 @declare_units(snw="[mass]/[area]")
 def snw_max(snw: xr.DataArray, freq: str = "YS-JUL") -> xr.DataArray:
-    """Maximum snow amount.
+    """
+    Maximum snow amount.
 
     The maximum daily snow amount.
 
@@ -170,7 +174,7 @@ def snw_max(snw: xr.DataArray, freq: str = "YS-JUL") -> xr.DataArray:
     ----------
     snw : xarray.DataArray
         Snow amount (mass per area).
-    freq: str
+    freq : str
         Resampling frequency.
 
     Returns
@@ -183,7 +187,8 @@ def snw_max(snw: xr.DataArray, freq: str = "YS-JUL") -> xr.DataArray:
 
 @declare_units(snw="[mass]/[area]")
 def snw_max_doy(snw: xr.DataArray, freq: str = "YS-JUL") -> xr.DataArray:
-    """Maximum snow amount day of year.
+    """
+    Day of year of maximum snow amount.
 
     Day of year when surface snow amount reaches its peak value. If snow amount is 0 over entire period, return NaN.
 
@@ -216,7 +221,8 @@ def snw_max_doy(snw: xr.DataArray, freq: str = "YS-JUL") -> xr.DataArray:
 def snow_melt_we_max(
     snw: xr.DataArray, window: int = 3, freq: str = "YS-JUL"
 ) -> xr.DataArray:
-    """Maximum snow melt.
+    """
+    Maximum snow melt.
 
     The maximum snow melt over a given number of days expressed in snow water equivalent.
 
@@ -250,7 +256,8 @@ def snow_melt_we_max(
 def melt_and_precip_max(
     snw: xr.DataArray, pr: xr.DataArray, window: int = 3, freq: str = "YS-JUL"
 ) -> xr.DataArray:
-    """Maximum snow melt and precipitation.
+    """
+    Maximum snow melt and precipitation.
 
     The maximum snow melt plus precipitation over a given number of days expressed in snow water equivalent.
 
@@ -262,7 +269,7 @@ def melt_and_precip_max(
         Daily precipitation flux.
     window : int
         Number of days during which the water input is accumulated.
-    freq: str
+    freq : str
         Resampling frequency.
 
     Returns
@@ -288,7 +295,7 @@ def melt_and_precip_max(
 @declare_units(q="[discharge]")
 def flow_index(q: xr.DataArray, p: float = 0.95) -> xr.DataArray:
     """
-    Flow index
+    Flow index.
 
     Calculate the pth percentile of daily streamflow normalized by the median flow.
 
