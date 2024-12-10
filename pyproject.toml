@@ -75,6 +75,7 @@ dev = [
   "nbconvert <7.14", # Pinned due to directive errors in sphinx. See: https://github.com/jupyter/nbconvert/issues/2092
   "nbqa >=1.8.2",
   "nbval >=0.11.0",
+  "numpydoc >=1.8.0",
   "pandas-stubs >=2.2",
   "pip >=24.2.0",
   "pooch >=1.8.0",
@@ -84,11 +85,11 @@ dev = [
   "pytest-cov >=5.0.0",
   "pytest-socket >=0.6.0",
   "pytest-xdist[psutil] >=3.2",
-  "ruff >=0.5.6",
+  "ruff >=0.7.0",
   "tokenize-rt >=5.2.0",
   "tox >=4.21.2",
   "tox-gh >=1.4.4",
-  "vulture ==2.13",
+  "vulture ==2.14",
   "xdoctest >=1.1.5",
   "yamllint ==1.35.1"
 ]
@@ -135,7 +136,7 @@ target-version = [
 ]
 
 [tool.bumpversion]
-current_version = "0.53.3-dev.6"
+current_version = "0.53.3-dev.12"
 commit = true
 commit_args = "--no-verify"
 tag = false
@@ -162,7 +163,7 @@ values = [
 ]
 
 [tool.codespell]
-skip = 'src/xclim/data/*.json,docs/_build,docs/notebooks/xclim_training/*.ipynb,docs/references.bib,__pycache__,*.gz,*.nc,*.png,*.svg,*.whl'
+skip = '*xclim/data/*.json,*docs/_build,*docs/notebooks/xclim_training/*.ipynb,*docs/references.bib,*.gz,*.nc,*.png,*.svg,*.whl'
 ignore-words-list = "absolue,astroid,bloc,bui,callendar,degreee,environnement,hanel,inferrable,lond,nam,nd,ot,ressources,socio-economic,sie,vas"
 
 [tool.coverage.run]
@@ -247,6 +248,34 @@ module = [
   "yaml.*"
 ]
 ignore_missing_imports = true
+
+[tool.numpydoc_validation]
+checks = [
+  "all", # report on all checks, except the below
+  "ES01", # "No extended summary found"
+  "EX01", # "No examples section found"
+  "GL06", # "Found unknown section \"{section}\""
+  "SA01", # "See Also section not found",
+  "SS01" # "No summary found"
+]
+# remember to use single quotes for regex in TOML
+exclude = [
+  # don't report on objects that match any of these regex
+  '\.undocumented_method$',
+  '\.__repr__$',
+  # any object starting with an underscore is a private object
+  '\._\w+'
+]
+override_SS05 = [
+  # override SS05 to allow docstrings starting with these words
+  '^Access ',
+  '^Assess ',
+  '^Days ',
+  '^Degree-days ',
+  '^Griffiths ',
+  '^Process ',
+  '^Statistics '
+]
 
 [tool.pytest.ini_options]
 minversion = "7.0"

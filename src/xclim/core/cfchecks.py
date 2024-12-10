@@ -11,14 +11,32 @@ import fnmatch
 import re
 from collections.abc import Sequence
 
+import xarray as xr
+
 from xclim.core._exceptions import ValidationError
 from xclim.core._types import VARIABLES
 from xclim.core.options import cfcheck
 
 
 @cfcheck
-def check_valid(var, key: str, expected: str | Sequence[str]):
-    r"""Check that a variable's attribute has one of the expected values. Raise a ValidationError otherwise."""
+def check_valid(var: xr.DataArray, key: str, expected: str | Sequence[str]):
+    r"""
+    Check that a variable's attribute has one of the expected values and raise a ValidationError if otherwise.
+
+    Parameters
+    ----------
+    var : xr.DataArray
+        The variable to check.
+    key : str
+        The attribute to check.
+    expected : str or sequence of str
+        The expected value(s).
+
+    Raises
+    ------
+    ValidationError
+        If the attribute is not present or does not match the expected value(s).
+    """
     att = getattr(var, key, None)
     if att is None:
         raise ValidationError(f"Variable does not have a `{key}` attribute.")
@@ -33,8 +51,26 @@ def check_valid(var, key: str, expected: str | Sequence[str]):
         )
 
 
-def cfcheck_from_name(varname, vardata, attrs: list[str] | None = None):
-    """Perform cfchecks on a DataArray using specifications from xclim's default variables."""
+def cfcheck_from_name(
+    varname: str, vardata: xr.DataArray, attrs: list[str] | None = None
+):
+    """
+    Perform cfchecks on a DataArray using specifications from xclim's default variables.
+
+    Parameters
+    ----------
+    varname : str
+        The name of the variable to check.
+    vardata : xr.DataArray
+        The variable to check.
+    attrs : list of str, optional
+        The attributes to check. Default is ["cell_methods", "standard_name"].
+
+    Raises
+    ------
+    ValidationError
+        If the variable does not meet the expected CF-Convention.
+    """
     if attrs is None:
         attrs = ["cell_methods", "standard_name"]
 

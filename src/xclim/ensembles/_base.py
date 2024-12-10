@@ -37,7 +37,8 @@ def create_ensemble(
     cal_kwargs: dict | None = None,
     **xr_kwargs,
 ) -> xr.Dataset:
-    r"""Create an xarray dataset of an ensemble of climate simulation from a list of netcdf files.
+    r"""
+    Create an xarray dataset of an ensemble of climate simulation from a list of netcdf files.
 
     Input data is concatenated along a newly created data dimension ('realization'). Returns an xarray dataset object
     containing input data from the list of netcdf files concatenated along a new dimension (name:'realization').
@@ -48,7 +49,7 @@ def create_ensemble(
 
     Parameters
     ----------
-    datasets : list or dict or string
+    datasets : list or dict or str
         List of netcdf file paths or xarray Dataset/DataArray objects . If `multifile` is True, ncfiles should be a
         list of lists where each sublist contains input .nc files of an xarray multifile Dataset.
         If DataArray objects are passed, they should have a name in order to be transformed into Datasets.
@@ -72,14 +73,13 @@ def create_ensemble(
     cal_kwargs : dict, optional
         Additional arguments to pass to py:func:`xclim.core.calendar.convert_calendar`.
         For conversions involving '360_day', the align_on='date' option is used by default.
-    \*\*xr_kwargs
-        Any keyword arguments to be given to `xr.open_dataset` when opening the files
-        (or to `xr.open_mfdataset` if `multifile` is True)
+    **xr_kwargs : dict
+        Any keyword arguments to be given to `xr.open_dataset` when opening the files (or to `xr.open_mfdataset` if `multifile` is True).
 
     Returns
     -------
     xr.Dataset
-        Dataset containing concatenated data from all input files.
+        A Dataset containing concatenated data from all input files.
 
     Notes
     -----
@@ -139,7 +139,8 @@ def create_ensemble(
 def ensemble_mean_std_max_min(
     ens: xr.Dataset, min_members: int | None = 1, weights: xr.DataArray | None = None
 ) -> xr.Dataset:
-    """Calculate ensemble statistics between a results from an ensemble of climate simulations.
+    """
+    Calculate ensemble statistics between a results from an ensemble of climate simulations.
 
     Returns an xarray Dataset containing ensemble mean, standard-deviation, minimum and maximum for input climate
     simulations.
@@ -226,7 +227,8 @@ def ensemble_percentiles(
         "normal_unbiased",
     ] = "linear",
 ) -> xr.DataArray | xr.Dataset:
-    """Calculate ensemble statistics between a results from an ensemble of climate simulations.
+    """
+    Calculate ensemble statistics between a results from an ensemble of climate simulations.
 
     Returns a Dataset containing ensemble percentiles for input climate simulations.
 
@@ -259,8 +261,7 @@ def ensemble_percentiles(
     Returns
     -------
     xr.Dataset or xr.DataArray
-        If split is True, same type as ens; dataset otherwise,
-        containing data variable(s) of requested ensemble statistics
+        If split is True, same type as ens; dataset otherwise, containing data variable(s) of requested ensemble statistics.
 
     Examples
     --------
@@ -392,7 +393,8 @@ def _ens_align_datasets(
     cal_kwargs: dict | None = None,
     **xr_kwargs,
 ) -> list[xr.Dataset]:
-    r"""Create a list of aligned xarray Datasets for ensemble Dataset creation.
+    r"""
+    Create a list of aligned xarray Datasets for ensemble Dataset creation.
 
     Parameters
     ----------
@@ -412,7 +414,7 @@ def _ens_align_datasets(
         the align_on='date' option is used.
         See :py:func:`xclim.core.calendar.convert_calendar`.
         'default' is the standard calendar using np.datetime64 objects.
-    \*\*xr_kwargs
+    **xr_kwargs : dict
         Any keyword arguments to be given to xarray when opening the files.
 
     Returns

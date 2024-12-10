@@ -1,4 +1,5 @@
-# noqa: D100
+"""ANUCLIM indice definitions."""
+
 from __future__ import annotations
 
 from collections.abc import Callable
@@ -65,7 +66,8 @@ _np_ops = {
 def isothermality(
     tasmin: xarray.DataArray, tasmax: xarray.DataArray, freq: str = "YS"
 ) -> xarray.DataArray:
-    r"""Isothermality.
+    r"""
+    Isothermality.
 
     The mean diurnal temperature range divided by the annual temperature range.
 
@@ -81,7 +83,7 @@ def isothermality(
     Returns
     -------
     xarray.DataArray, [%]
-       Isothermality
+       Isothermality.
 
     Notes
     -----
@@ -105,7 +107,8 @@ def isothermality(
 def temperature_seasonality(
     tas: xarray.DataArray, freq: str = "YS"
 ) -> xarray.DataArray:
-    r"""Temperature seasonality (coefficient of variation).
+    r"""
+    Temperature seasonality (coefficient of variation).
 
     The annual temperature coefficient of variation expressed in percent. Calculated as the standard deviation
     of temperature values for a given year expressed as a percentage of the mean of those temperatures.
@@ -120,19 +123,9 @@ def temperature_seasonality(
     Returns
     -------
     xarray.DataArray, [%]
-      Mean temperature coefficient of variation
+        Mean temperature coefficient of variation.
     freq : str
-      Resampling frequency.
-
-    Examples
-    --------
-    The following would compute for each grid cell of file `tas.day.nc` the annual temperature seasonality:
-
-    >>> import xclim.indices as xci
-    >>> t = xr.open_dataset(path_to_tas_file).tas
-    >>> tday_seasonality = xci.temperature_seasonality(t)
-    >>> t_weekly = xci.tg_mean(t, freq="7D")
-    >>> tweek_seasonality = xci.temperature_seasonality(t_weekly)
+        Resampling frequency.
 
     Notes
     -----
@@ -147,6 +140,16 @@ def temperature_seasonality(
     References
     ----------
     :cite:cts:`xu_anuclim_2010`
+
+    Examples
+    --------
+    The following would compute for each grid cell of file `tas.day.nc` the annual temperature seasonality:
+
+    >>> import xclim.indices as xci
+    >>> t = xr.open_dataset(path_to_tas_file).tas
+    >>> tday_seasonality = xci.temperature_seasonality(t)
+    >>> t_weekly = xci.tg_mean(t, freq="7D")
+    >>> tweek_seasonality = xci.temperature_seasonality(t_weekly)
     """
     tas = convert_units_to(tas, "K")
 
@@ -157,7 +160,8 @@ def temperature_seasonality(
 
 @declare_units(pr="[precipitation]")
 def precip_seasonality(pr: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
-    r"""Precipitation Seasonality (C of V).
+    r"""
+    Precipitation Seasonality (C of V).
 
     The annual precipitation Coefficient of Variation (C of V) expressed in percent. Calculated as the standard
     deviation of precipitation values for a given year expressed as a percentage of the mean of those values.
@@ -173,20 +177,7 @@ def precip_seasonality(pr: xarray.DataArray, freq: str = "YS") -> xarray.DataArr
     Returns
     -------
     xarray.DataArray, [%]
-        Precipitation coefficient of variation
-
-    Examples
-    --------
-    The following would compute for each grid cell of file `pr.day.nc` the annual precipitation seasonality:
-
-    >>> import xclim.indices as xci
-    >>> p = xr.open_dataset(path_to_pr_file).pr
-    >>> pday_seasonality = xci.precip_seasonality(p)
-    >>> p_weekly = xci.precip_accumulation(p, freq="7D")
-
-    # Input units need to be a rate
-    >>> p_weekly.attrs["units"] = "mm/week"
-    >>> pweek_seasonality = xci.precip_seasonality(p_weekly)
+        Precipitation coefficient of variation.
 
     Notes
     -----
@@ -201,6 +192,19 @@ def precip_seasonality(pr: xarray.DataArray, freq: str = "YS") -> xarray.DataArr
     References
     ----------
     :cite:cts:`xu_anuclim_2010`
+
+    Examples
+    --------
+    The following would compute for each grid cell of file `pr.day.nc` the annual precipitation seasonality:
+
+    >>> import xclim.indices as xci
+    >>> p = xr.open_dataset(path_to_pr_file).pr
+    >>> pday_seasonality = xci.precip_seasonality(p)
+    >>> p_weekly = xci.precip_accumulation(p, freq="7D")
+
+    # Input units need to be a rate
+    >>> p_weekly.attrs["units"] = "mm/week"
+    >>> pweek_seasonality = xci.precip_seasonality(p_weekly)
     """
     # If units in mm/sec convert to mm/days to avoid potentially small denominator
     if units2pint(pr) == units("mm / s"):
@@ -217,7 +221,8 @@ def tg_mean_warmcold_quarter(
     op: str,
     freq: str = "YS",
 ) -> xarray.DataArray:
-    r"""Mean temperature of warmest/coldest quarter.
+    r"""
+    Mean temperature of warmest/coldest quarter.
 
     The warmest (or coldest) quarter of the year is determined, and the mean temperature of this period is calculated.
     If the input data frequency is daily ("D") or weekly ("W"), quarters are defined as 13-week periods, otherwise as
@@ -235,16 +240,7 @@ def tg_mean_warmcold_quarter(
     Returns
     -------
     xarray.DataArray, [same as tas]
-       Mean temperature of {op} quarter
-
-    Examples
-    --------
-    The following would compute for each grid cell of file `tas.day.nc` the annual temperature of the
-    warmest quarter mean temperature:
-
-    >>> from xclim.indices import tg_mean_warmcold_quarter
-    >>> t = xr.open_dataset(path_to_tas_file)
-    >>> t_warm_qrt = tg_mean_warmcold_quarter(tas=t.tas, op="warmest")
+       Mean temperature of {op} quarter.
 
     Notes
     -----
@@ -256,6 +252,15 @@ def tg_mean_warmcold_quarter(
     References
     ----------
     :cite:cts:`xu_anuclim_2010`
+
+    Examples
+    --------
+    The following would compute for each grid cell of file `tas.day.nc` the annual temperature of the
+    warmest quarter mean temperature:
+
+    >>> from xclim.indices import tg_mean_warmcold_quarter
+    >>> t = xr.open_dataset(path_to_tas_file)
+    >>> t_warm_qrt = tg_mean_warmcold_quarter(tas=t.tas, op="warmest")
     """
     out = _to_quarter(tas=tas)
 
@@ -277,11 +282,12 @@ def tg_mean_wetdry_quarter(
     op: str,
     freq: str = "YS",
 ) -> xarray.DataArray:
-    r"""Mean temperature of wettest/driest quarter.
+    r"""
+    Mean temperature of wettest/driest quarter.
 
     The wettest (or driest) quarter of the year is determined, and the mean temperature of this period is calculated.
     If the input data frequency is daily ("D") or weekly ("W"), quarters are defined as 13-week periods,
-    otherwise are 3 months.
+    otherwise as three (3) months.
 
     Parameters
     ----------
@@ -297,7 +303,7 @@ def tg_mean_wetdry_quarter(
     Returns
     -------
     xarray.DataArray, [same as tas]
-       Mean temperature of {op} quarter
+       Mean temperature of {op} quarter.
 
     Notes
     -----
@@ -329,10 +335,11 @@ def tg_mean_wetdry_quarter(
 def prcptot_wetdry_quarter(
     pr: xarray.DataArray, op: str, freq: str = "YS"
 ) -> xarray.DataArray:
-    r"""Total precipitation of wettest/driest quarter.
+    r"""
+    Total precipitation of wettest/driest quarter.
 
     The wettest (or driest) quarter of the year is determined, and the total precipitation of this period is calculated.
-    If the input data frequency is daily ("D") or weekly ("W") quarters are defined as 13-week periods, otherwise are
+    If the input data frequency is daily ("D") or weekly ("W") quarters are defined as 13-week periods, otherwise as
     three (3) months.
 
     Parameters
@@ -347,15 +354,7 @@ def prcptot_wetdry_quarter(
     Returns
     -------
     xarray.DataArray, [length]
-       Precipitation of {op} quarter
-
-    Examples
-    --------
-    The following would compute for each grid cell of file `pr.day.nc` the annual wettest quarter total precipitation:
-
-    >>> from xclim.indices import prcptot_wetdry_quarter
-    >>> p = xr.open_dataset(path_to_pr_file)
-    >>> pr_warm_qrt = prcptot_wetdry_quarter(pr=p.pr, op="wettest")
+       Precipitation of {op} quarter.
 
     Notes
     -----
@@ -367,6 +366,14 @@ def prcptot_wetdry_quarter(
     References
     ----------
     :cite:cts:`xu_anuclim_2010`
+
+    Examples
+    --------
+    The following would compute for each grid cell of file `pr.day.nc` the annual wettest quarter total precipitation:
+
+    >>> from xclim.indices import prcptot_wetdry_quarter
+    >>> p = xr.open_dataset(path_to_pr_file)
+    >>> pr_warm_qrt = prcptot_wetdry_quarter(pr=p.pr, op="wettest")
     """
     # returns mm values
     pr_qrt = _to_quarter(pr=pr)
@@ -389,11 +396,12 @@ def prcptot_warmcold_quarter(
     op: str,
     freq: str = "YS",
 ) -> xarray.DataArray:
-    r"""Total precipitation of warmest/coldest quarter.
+    r"""
+    Total precipitation of warmest/coldest quarter.
 
     The warmest (or coldest) quarter of the year is determined, and the total precipitation of this period is
-    calculated. If the input data frequency is daily ("D) or weekly ("W"), quarters are defined as 13-week periods,
-    otherwise are 3 months.
+    calculated. If the input data frequency is daily ("D") or weekly ("W"), quarters are defined as 13-week periods,
+    otherwise as three (3) months.
 
     Parameters
     ----------
@@ -409,7 +417,7 @@ def prcptot_warmcold_quarter(
     Returns
     -------
     xarray.DataArray, [mm]
-       Precipitation of {op} quarter
+       Precipitation of {op} quarter.
 
     Notes
     -----
@@ -442,7 +450,8 @@ def prcptot_warmcold_quarter(
 def prcptot(
     pr: xarray.DataArray, thresh: Quantified = "0 mm/d", freq: str = "YS"
 ) -> xarray.DataArray:
-    r"""Accumulated total precipitation.
+    r"""
+    Accumulated total precipitation.
 
     The total accumulated precipitation from days where precipitation exceeds a given amount. A threshold is provided in
     order to allow the option of reducing the impact of days with trace precipitation amounts on period totals.
@@ -471,7 +480,8 @@ def prcptot(
 def prcptot_wetdry_period(
     pr: xarray.DataArray, *, op: str, freq: str = "YS"
 ) -> xarray.DataArray:
-    r"""Precipitation of the wettest/driest day, week, or month, depending on the time step.
+    r"""
+    Precipitation of the wettest/driest day, week, or month, depending on the time step.
 
     The wettest (or driest) period is determined, and the total precipitation of this period is calculated.
 
@@ -487,7 +497,7 @@ def prcptot_wetdry_period(
     Returns
     -------
     xarray.DataArray, [length]
-        Precipitation of {op} period
+        Precipitation of {op} period.
 
     Notes
     -----
@@ -560,7 +570,8 @@ def _to_quarter(
     pr: xarray.DataArray | None = None,
     tas: xarray.DataArray | None = None,
 ) -> xarray.DataArray:
-    """Convert daily, weekly or monthly time series to quarterly time series according to ANUCLIM specifications.
+    """
+    Convert daily, weekly or monthly time series to quarterly time series according to ANUCLIM specifications.
 
     Parameters
     ----------

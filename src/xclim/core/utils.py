@@ -17,6 +17,7 @@ from enum import IntEnum
 from inspect import _empty  # noqa
 from io import StringIO
 from pathlib import Path
+from types import ModuleType
 
 import numpy as np
 import xarray as xr
@@ -36,7 +37,8 @@ ICM = {
 
 
 def deprecated(from_version: str | None, suggested: str | None = None) -> Callable:
-    """Mark an index as deprecated and optionally suggest a replacement.
+    """
+    Mark an index as deprecated and optionally suggest a replacement.
 
     Parameters
     ----------
@@ -48,11 +50,12 @@ def deprecated(from_version: str | None, suggested: str | None = None) -> Callab
     Returns
     -------
     Callable
+        The decorated function.
     """
 
-    def decorator(func):
+    def _decorator(func):
         @functools.wraps(func)
-        def wrapper(*args, **kwargs):
+        def _wrapper(*args, **kwargs):
             msg = (
                 f"`{func.__name__}` is deprecated"
                 f"{f' from version {from_version}' if from_version else ''} "
@@ -68,13 +71,27 @@ def deprecated(from_version: str | None, suggested: str | None = None) -> Callab
 
             return func(*args, **kwargs)
 
-        return wrapper
+        return _wrapper
 
-    return decorator
+    return _decorator
 
 
-def load_module(path: os.PathLike, name: str | None = None):
-    """Load a python module from a python file, optionally changing its name.
+def load_module(path: os.PathLike, name: str | None = None) -> ModuleType:
+    """
+    Load a python module from a python file, optionally changing its name.
+
+    Parameters
+    ----------
+    path : os.PathLike
+        The path to the python file.
+    name : str, optional
+        The name to give to the module.
+        If None, the module name will be the stem of the path.
+
+    Returns
+    -------
+    ModuleType
+        The loaded module.
 
     Examples
     --------
@@ -106,7 +123,8 @@ def load_module(path: os.PathLike, name: str | None = None):
 
 
 def ensure_chunk_size(da: xr.DataArray, **minchunks: int) -> xr.DataArray:
-    r"""Ensure that the input DataArray has chunks of at least the given size.
+    r"""
+    Ensure that the input DataArray has chunks of at least the given size.
 
     If only one chunk is too small, it is merged with an adjacent chunk.
     If many chunks are too small, they are grouped together by merging adjacent chunks.
@@ -115,13 +133,14 @@ def ensure_chunk_size(da: xr.DataArray, **minchunks: int) -> xr.DataArray:
     ----------
     da : xr.DataArray
         The input DataArray, with or without the dask backend. Does nothing when passed a non-dask array.
-    \*\*minchunks : dict[str, int]
+    **minchunks : dict[str, int]
         A kwarg mapping from dimension name to minimum chunk size.
         Pass -1 to force a single chunk along that dimension.
 
     Returns
     -------
     xr.DataArray
+        The input DataArray, possibly rechunked.
     """
     if not uses_dask(da):
         return da
@@ -158,11 +177,12 @@ def ensure_chunk_size(da: xr.DataArray, **minchunks: int) -> xr.DataArray:
 
 
 def uses_dask(*das: xr.DataArray | xr.Dataset) -> bool:
-    """Evaluate whether dask is installed and array is loaded as a dask array.
+    r"""
+    Evaluate whether dask is installed and array is loaded as a dask array.
 
     Parameters
     ----------
-    das: xr.DataArray or xr.Dataset
+    *das : xr.DataArray or xr.Dataset
         DataArrays or Datasets to check.
 
     Returns
@@ -188,7 +208,27 @@ def calc_perc(
     beta: float = 1.0,
     copy: bool = True,
 ) -> np.ndarray:
-    """Compute percentiles using nan_calc_percentiles and move the percentiles' axis to the end."""
+    """
+    Compute percentiles using nan_calc_percentiles and move the percentiles' axis to the end.
+
+    Parameters
+    ----------
+    arr : array-like
+        The input array.
+    percentiles : sequence of float, optional
+        The percentiles to compute. If None, only the median is computed.
+    alpha : float
+        A constant used to correct the index computed.
+    beta : float
+        A constant used to correct the index computed.
+    copy : bool
+        If True, the input array is copied before computation. Default is True.
+
+    Returns
+    -------
+    np.ndarray
+        The percentiles along the last axis.
+    """
     if percentiles is None:
         _percentiles = [50.0]
     else:
@@ -216,7 +256,29 @@ def nan_calc_percentiles(
     beta: float = 1.0,
     copy: bool = True,
 ) -> np.ndarray:
-    """Convert the percentiles to quantiles and compute them using _nan_quantile."""
+    """
+    Convert the percentiles to quantiles and compute them using _nan_quantile.
+
+    Parameters
+    ----------
+    arr : array-like
+        The input array.
+    percentiles : sequence of float, optional
+        The percentiles to compute. If None, only the median is computed.
+    axis : int
+        The axis along which to compute the percentiles.
+    alpha : float
+        A constant used to correct the index computed.
+    beta : float
+        A constant used to correct the index computed.
+    copy : bool
+        If True, the input array is copied before computation. Default is True.
+
+    Returns
+    -------
+    np.ndarray
+        The percentiles along the specified axis.
+    """
     if percentiles is None:
         _percentiles = [50.0]
     else:
@@ -233,13 +295,14 @@ def nan_calc_percentiles(
 def _compute_virtual_index(
     n: np.ndarray, quantiles: np.ndarray, alpha: float, beta: float
 ):
-    """Compute the floating point indexes of an array for the linear interpolation of quantiles.
+    """
+    Compute the floating point indexes of an array for the linear interpolation of quantiles.
 
     Based on the approach used by :cite:t:`hyndman_sample_1996`.
 
     Parameters
     ----------
-    n : array_like
+    n : array-like
         The sample sizes.
     quantiles : array_like
         The quantiles values.
@@ -260,14 +323,15 @@ def _compute_virtual_index(
 
 
 def _get_gamma(virtual_indexes: np.ndarray, previous_indexes: np.ndarray):
-    """Compute gamma (AKA 'm' or 'weight') for the linear interpolation of quantiles.
+    """
+    Compute gamma (AKA 'm' or 'weight') for the linear interpolation of quantiles.
 
     Parameters
     ----------
-    virtual_indexes: array_like
-      The indexes where the percentile is supposed to be found in the sorted sample.
-    previous_indexes: array_like
-      The floor values of virtual_indexes.
+    virtual_indexes : array-like
+        The indexes where the percentile is supposed to be found in the sorted sample.
+    previous_indexes : array-like
+        The floor values of virtual_indexes.
 
     Notes
     -----
@@ -280,22 +344,26 @@ def _get_gamma(virtual_indexes: np.ndarray, previous_indexes: np.ndarray):
 def _get_indexes(
     arr: np.ndarray, virtual_indexes: np.ndarray, valid_values_count: np.ndarray
 ) -> tuple[np.ndarray, np.ndarray]:
-    """Get the valid indexes of arr neighbouring virtual_indexes.
-
-    Notes
-    -----
-    This is a companion function to linear interpolation of quantiles.
+    """
+    Get the valid indexes of arr neighbouring virtual_indexes.
 
     Parameters
     ----------
     arr : array-like
+        The input array.
     virtual_indexes : array-like
+        The indexes where the percentile is supposed to be found in the sorted sample.
     valid_values_count : array-like
+        The number of valid values in the sorted array.
 
     Returns
     -------
     array-like, array-like
-        A tuple of virtual_indexes neighbouring indexes (previous and next)
+        A tuple of virtual_indexes neighbouring indexes (previous and next).
+
+    Notes
+    -----
+    This is a companion function to linear interpolation of quantiles.
     """
     previous_indexes = np.asanyarray(np.floor(virtual_indexes))
     next_indexes = np.asanyarray(previous_indexes + 1)
@@ -325,20 +393,22 @@ def _linear_interpolation(
     right: np.ndarray,
     gamma: np.ndarray,
 ) -> np.ndarray:
-    """Compute the linear interpolation weighted by gamma on each point of two same shape arrays.
+    """
+    Compute the linear interpolation weighted by gamma on each point of two same shape arrays.
 
     Parameters
     ----------
-    left : array_like
+    left : array-like
         Left bound.
-    right : array_like
+    right : array-like
         Right bound.
-    gamma : array_like
+    gamma : array-like
         The interpolation weight.
 
     Returns
     -------
-    array_like
+    array-like
+        The linearly interpolated array.
     """
     diff_b_a = np.subtract(right, left)
     lerp_interpolation = np.asanyarray(np.add(left, diff_b_a * gamma))
@@ -357,14 +427,15 @@ def _nan_quantile(
     alpha: float = 1.0,
     beta: float = 1.0,
 ) -> float | np.ndarray:
-    """Get the quantiles of the array for the given axis.
+    """
+    Get the quantiles of the array for the given axis.
 
     A linear interpolation is performed using alpha and beta.
 
     Notes
     -----
     By default, alpha == beta == 1 which performs the 7th method of :cite:t:`hyndman_sample_1996`.
-    with alpha == beta == 1/3 we get the 8th method.
+    With alpha == beta == 1/3 we get the 8th method.
     """
     # --- Setup
     data_axis_length = arr.shape[axis]
@@ -418,7 +489,8 @@ def _nan_quantile(
 
 
 class InputKind(IntEnum):
-    """Constants for input parameter kinds.
+    """
+    Constants for input parameter kinds.
 
     For use by external parses to determine what kind of data the indicator expects.
     On the creation of an indicator, the appropriate constant is stored in
@@ -444,8 +516,8 @@ class InputKind(IntEnum):
     QUANTIFIED = 2
     """A quantity with units, either as a string (scalar), a pint.Quantity (scalar) or a DataArray (with units set).
 
-       Annotation : ``xclim.core.utils.Quantified`` and an entry in the :py:func:`xclim.core.units.declare_units`
-       decorator. "Quantified" translates to ``str | xr.DataArray | pint.util.Quantity``.
+       Annotation : ``xclim.core.utils.Quantified`` and an entry in the :py:func:`xclim.core.units.declare_units` decorator.
+       "Quantified" translates to ``str | xr.DataArray | pint.util.Quantity``.
     """
     FREQ_STR = 3
     """A string representing an "offset alias", as defined by pandas.
@@ -510,11 +582,18 @@ class InputKind(IntEnum):
 
 
 def infer_kind_from_parameter(param) -> InputKind:
-    """Return the appropriate InputKind constant from an ``inspect.Parameter`` object.
+    """
+    Return the appropriate InputKind constant from an ``inspect.Parameter`` object.
 
     Parameters
     ----------
     param : Parameter
+        An inspect.Parameter instance.
+
+    Returns
+    -------
+    InputKind
+        The appropriate InputKind constant.
 
     Notes
     -----
@@ -571,10 +650,20 @@ def infer_kind_from_parameter(param) -> InputKind:
     return InputKind.OTHER_PARAMETER
 
 
+# FIXME: Should we be using logging instead of print?
 def adapt_clix_meta_yaml(  # noqa: C901
     raw: os.PathLike | StringIO | str, adapted: os.PathLike
-):
-    """Read in a clix-meta yaml representation and refactor it to fit xclim's yaml specifications."""
+) -> None:
+    """
+    Read in a clix-meta yaml representation and refactor it to fit xclim YAML specifications.
+
+    Parameters
+    ----------
+    raw : os.PathLike or StringIO or str
+        The path to the clix-meta yaml file or the string representation of the yaml.
+    adapted : os.PathLike
+        The path to the adapted yaml file.
+    """
     from ..indices import generic  # pylint: disable=import-outside-toplevel
 
     freq_defs = {"annual": "YS", "seasonal": "QS-DEC", "monthly": "MS", "weekly": "W"}
@@ -725,10 +814,21 @@ def adapt_clix_meta_yaml(  # noqa: C901
 
 
 def is_percentile_dataarray(source: xr.DataArray) -> bool:
-    """Evaluate whether a DataArray is a Percentile.
+    """
+    Evaluate whether a DataArray is a Percentile.
 
-    A percentile dataarray must have climatology_bounds attributes and either a
+    A percentile DataArray must have 'climatology_bounds' attributes and either a
     quantile or percentiles coordinate, the window is not mandatory.
+
+    Parameters
+    ----------
+    source : xr.DataArray
+        The DataArray to evaluate.
+
+    Returns
+    -------
+    bool
+        True if the DataArray is a percentile.
     """
     return (
         isinstance(source, xr.DataArray)
@@ -763,27 +863,29 @@ def _chunk_like(*inputs: xr.DataArray | xr.Dataset, chunks: dict[str, int] | Non
 def split_auxiliary_coordinates(
     obj: xr.DataArray | xr.Dataset,
 ) -> tuple[xr.DataArray | xr.Dataset, xr.Dataset]:
-    """Split auxiliary coords from the dataset.
+    """
+    Split auxiliary coords from the dataset.
 
     An auxiliary coordinate is a coordinate variable that does not define a dimension and thus is not necessarily needed for dataset alignment.
-    Any coordinate that has a name different than its dimension(s) is flagged as auxiliary. All scalar coordinates are flagged as auxiliary.
+    Any coordinate that has a name different from its dimension(s) is flagged as auxiliary.
+    All scalar coordinates are flagged as auxiliary.
 
     Parameters
     ----------
-    obj : DataArray or Dataset
-        Xarray object
+    obj : xr.DataArray or xr.Dataset
+        An xarray object.
 
     Returns
     -------
-    clean_obj : DataArray or Dataset
+    clean_obj : xr.DataArray or xr.Dataset
         Same as `obj` but without any auxiliary coordinate.
-    aux_coords : Dataset
+    aux_crd_ds : xr.Dataset
         The auxiliary coordinates as a dataset. Might be empty.
 
-    Note
-    ----
-    This is useful to circumvent xarray's alignment checks that will sometimes look the auxiliary coordinate's data, which can trigger
-    unwanted dask computations.
+    Notes
+    -----
+    This is useful to circumvent xarray's alignment checks that will sometimes look the auxiliary coordinate's data,
+    which can trigger unwanted dask computations.
 
     The auxiliary coordinates can be merged back with the dataset with
     :py:meth:`xarray.Dataset.assign_coords` or :py:meth:`xarray.DataArray.assign_coords`.

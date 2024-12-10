@@ -87,7 +87,8 @@ except AttributeError:
     default_testdata_cache = None
 
 TESTDATA_REPO_URL = str(os.getenv("XCLIM_TESTDATA_REPO_URL", default_testdata_repo_url))
-"""Sets the URL of the testing data repository to use when fetching datasets.
+"""
+Sets the URL of the testing data repository to use when fetching datasets.
 
 Notes
 -----
@@ -105,7 +106,8 @@ or setting the variable at runtime:
 """
 
 TESTDATA_BRANCH = str(os.getenv("XCLIM_TESTDATA_BRANCH", default_testdata_version))
-"""Sets the branch of the testing data repository to use when fetching datasets.
+"""
+Sets the branch of the testing data repository to use when fetching datasets.
 
 Notes
 -----
@@ -123,7 +125,8 @@ or setting the variable at runtime:
 """
 
 TESTDATA_CACHE_DIR = os.getenv("XCLIM_TESTDATA_CACHE_DIR", default_testdata_cache)
-"""Sets the directory to store the testing datasets.
+"""
+Sets the directory to store the testing datasets.
 
 If not set, the default location will be used (based on ``platformdirs``, see :func:`pooch.os_cache`).
 
@@ -146,22 +149,23 @@ or setting the variable at runtime:
 def list_input_variables(
     submodules: Sequence[str] | None = None, realms: Sequence[str] | None = None
 ) -> dict:
-    """List all possible variables names used in xclim's indicators.
+    """
+    List all possible variables names used in xclim's indicators.
 
     Made for development purposes. Parses all indicator parameters with the
     :py:attr:`xclim.core.utils.InputKind.VARIABLE` or `OPTIONAL_VARIABLE` kinds.
 
     Parameters
     ----------
-    realms: Sequence of str, optional
-      Restrict the output to indicators of a list of realms only. Default None, which parses all indicators.
-    submodules: str, optional
-      Restrict the output to indicators of a list of submodules only. Default None, which parses all indicators.
+    submodules : str, optional
+        Restrict the output to indicators of a list of submodules only. Default None, which parses all indicators.
+    realms : Sequence of str, optional
+        Restrict the output to indicators of a list of realms only. Default None, which parses all indicators.
 
     Returns
     -------
     dict
-      A mapping from variable name to indicator class.
+        A mapping from variable name to indicator class.
     """
     from collections import defaultdict  # pylint: disable=import-outside-toplevel
 
@@ -206,7 +210,8 @@ def publish_release_notes(
     file: os.PathLike[str] | StringIO | TextIO | None = None,
     changes: str | os.PathLike[str] | None = None,
 ) -> str | None:
-    """Format release notes in Markdown or ReStructuredText.
+    """
+    Format release notes in Markdown or ReStructuredText.
 
     Parameters
     ----------
@@ -221,6 +226,7 @@ def publish_release_notes(
     Returns
     -------
     str, optional
+        If `file` not provided, the formatted release notes.
 
     Notes
     -----
@@ -314,7 +320,8 @@ def show_versions(
     file: os.PathLike | StringIO | TextIO | None = None,
     deps: list[str] | None = None,
 ) -> str | None:
-    """Print the versions of xclim and its dependencies.
+    """
+    Print the versions of xclim and its dependencies.
 
     Parameters
     ----------
@@ -326,6 +333,7 @@ def show_versions(
     Returns
     -------
     str or None
+        If `file` not provided, the versions of xclim and its dependencies.
     """
     dependencies: list[str]
     if deps is None:
@@ -429,7 +437,15 @@ def testing_setup_warnings():
 def load_registry(
     branch: str = TESTDATA_BRANCH, repo: str = TESTDATA_REPO_URL
 ) -> dict[str, str]:
-    """Load the registry file for the test data.
+    """
+    Load the registry file for the test data.
+
+    Parameters
+    ----------
+    branch : str
+        Branch of the repository to use when fetching testing datasets.
+    repo : str
+        URL of the repository to use when fetching testing datasets.
 
     Returns
     -------
@@ -483,7 +499,8 @@ def nimbus(  # noqa: PR01
     cache_dir: str | Path = TESTDATA_CACHE_DIR,
     data_updates: bool = True,
 ):
-    """Pooch registry instance for xclim test data.
+    """
+    Pooch registry instance for xclim test data.
 
     Parameters
     ----------
@@ -574,6 +591,7 @@ def nimbus(  # noqa: PR01
     return _nimbus
 
 
+# FIXME: This function is soon to be deprecated.
 # idea copied from raven that it borrowed from xclim that borrowed it from xarray that was borrowed from Seaborn
 def open_dataset(
     name: str | os.PathLike[str],
@@ -583,7 +601,8 @@ def open_dataset(
     cache_dir: str | os.PathLike[str] | None = TESTDATA_CACHE_DIR,
     **kwargs,
 ) -> Dataset:
-    r"""Open a dataset from the online GitHub-like repository.
+    r"""
+    Open a dataset from the online GitHub-like repository.
 
     If a local copy is found then always use that to avoid network traffic.
 
@@ -595,16 +614,17 @@ def open_dataset(
         URL to OPeNDAP folder where the data is stored. If supplied, supersedes github_url.
     branch : str
         Branch of the repository to use when fetching datasets.
-    repo: str
+    repo : str
         URL of the repository to use when fetching testing datasets.
     cache_dir : Path
         The directory in which to search for and write cached data.
-    \*\*kwargs
+    **kwargs : dict
         For NetCDF files, keywords passed to :py:func:`xarray.open_dataset`.
 
     Returns
     -------
     Union[Dataset, Path]
+        The dataset.
 
     Raises
     ------
@@ -613,7 +633,7 @@ def open_dataset(
 
     See Also
     --------
-    xarray.open_dataset
+    xarray.open_dataset : Open and read a dataset from a file or file-like object.
     """
     if cache_dir is None:
         raise ValueError(
@@ -653,7 +673,8 @@ def populate_testing_data(
     branch: str = TESTDATA_BRANCH,
     local_cache: Path = TESTDATA_CACHE_DIR,
 ) -> None:
-    """Populate the local cache with the testing data.
+    """
+    Populate the local cache with the testing data.
 
     Parameters
     ----------
@@ -666,10 +687,6 @@ def populate_testing_data(
     local_cache : Path
         The path to the local cache. Defaults to the location set by the platformdirs library.
         The testing data will be downloaded to this local cache.
-
-    Returns
-    -------
-    None
     """
     # Create the Pooch instance
     n = nimbus(repo=repo, branch=branch, cache_dir=temp_folder or local_cache)
@@ -704,8 +721,26 @@ def gather_testing_data(
     worker_cache_dir: str | os.PathLike[str] | Path,
     worker_id: str,
     _cache_dir: str | os.PathLike[str] | None = TESTDATA_CACHE_DIR,
-):
-    """Gather testing data across workers."""
+) -> None:
+    """
+    Gather testing data across workers.
+
+    Parameters
+    ----------
+    worker_cache_dir : str or Path
+        The directory to store the testing data.
+    worker_id : str
+        The worker ID.
+    _cache_dir : str or Path, optional
+        The directory to store the testing data. Default is None.
+
+    Raises
+    ------
+    ValueError
+        If the cache directory is not set.
+    FileNotFoundError
+        If the testing data is not found.
+    """
     if _cache_dir is None:
         raise ValueError(
             "The cache directory must be set. "
@@ -740,7 +775,20 @@ def gather_testing_data(
 
 
 def audit_url(url: str, context: str | None = None) -> str:
-    """Check if the URL is well-formed.
+    """
+    Check if the URL is well-formed.
+
+    Parameters
+    ----------
+    url : str
+        The URL to check.
+    context : str, optional
+        Additional context to include in the error message. Default is None.
+
+    Returns
+    -------
+    str
+        The URL if it is well-formed.
 
     Raises
     ------

@@ -114,7 +114,7 @@ def ref_hist_sim_tuto(socket_enabled):  # noqa: F841
     """
 
     def _ref_hist_sim_tuto(sim_offset=3, delta=0.1, smth_win=3, trend=True):
-        ds = xr.tutorial.open_dataset("air_temperature")
+        ds = xr.tutorial.load_dataset("air_temperature")
         ref = ds.air.resample(time="D").mean(keep_attrs=True)
         hist = ref.rolling(time=smth_win, min_periods=1).mean(keep_attrs=True) + delta
         hist.attrs["units"] = ref.attrs["units"]

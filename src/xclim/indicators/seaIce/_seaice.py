@@ -1,7 +1,4 @@
-"""
-Sea ice indicators
-------------------
-"""
+"""Sea ice indicator definitions."""
 
 from __future__ import annotations
 
