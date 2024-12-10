@@ -1659,7 +1659,7 @@ def chill_units(
     tas: xarray.DataArray, positive_only: bool = False, freq: str = "YS"
 ) -> xarray.DataArray:
     """
-    Chill units using the Utah model
+    Chill units using the Utah model.
 
     Chill units are a measure to estimate the bud breaking potential of different crop based on Richardson et al. (1974).
     The Utah model assigns a weight to each hour depending on the temperature recognising that high temperatures can actual decrease,
