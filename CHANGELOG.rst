@@ -16,7 +16,7 @@ Breaking changes
 * The minimum required version of `dask` has been increased to `2024.8.1`. (:issue:`1992`, :pull:`1991`).
 * The docstrings of many `xclim` modules, classes, methods, and functions have been slightly adjusted to ensure stricter compliance with established `numpy` docstring conventions. (:pull:`1988`).
 * Using different time for ``ref`` and ``hist`` is now explicitly forbidden in many bias adjustment methods (e.g. `EmpiricalQuantileMapping`). Methods that combine ``ref``, ``hist``, and ``sim`` in the same `map_groups` also require that time arrays be equal in size. (:issue:`1903`, :pull:`1995`, :pull:`2013`).
-* `xclim` now uses a `src` layout for the codebase. Structure-dependent functions, documentation, and build commands have been adapted to reflect these changes. Developers will need to reinstall `xclim` using `pip install -e .`. (:pull:`1971`).
+* `xclim` now uses a `src` layout for the codebase. Structure-dependent functions, documentation, and build commands have been adapted to reflect these changes. Developers will need to reinstall `xclim` using ``pip install -e .``. (:pull:`1971`).
 
 Bug fixes
 ^^^^^^^^^
@@ -28,9 +28,9 @@ Bug fixes
 Internal changes
 ^^^^^^^^^^^^^^^^
 * Changed French translations with word "pluvieux" to "avec précipitations". (:issue:`1960`, :pull:`1994`).
-* Nan values in `OTC` and `dOTC` are only dropped and replaced at the lowest level so that the size of time arrays never changes on xarray levels. (:pull:`1995`, :pull:`2013`)
+* Nan values in `OTC` and `dOTC` are only dropped and replaced at the lowest level so that the size of time arrays never changes on `xarray` levels. (:pull:`1995`, :pull:`2013`)
 * `streamflow` entry replaced with ``"q"`` in ``variables.yml``. (:issue:`1912`, :pull:`1996`).
-* In order to address 403 (forbidden) request errors when retrieving data from GitHub via ReadTheDocs, the ``nimbus`` class has been modified to use an overloaded `fetch` method that appends a User-Agent header to the request. (:pull:`2001`).
+* In order to address ``Error 403`` (forbidden) requests when retrieving data from GitHub via ReadTheDocs, the ``nimbus`` class has been modified to use an overloaded `fetch` method that appends a modified User-Agent header to the request. (:pull:`2001`).
 * Addressed a very rare race condition that can happen if `pytest` is tearing down the test environment when running across multiple workers. (:pull:`1863`).
 * The `numpydoc` linting tool has been added to the development dependencies, linting checks, and the `pre-commit` configuration. (:pull:`1988`).
 * Added a more robust `yamllint` configuration to ensure that all YAML files are linted consistently. (:pull:`1971`).
