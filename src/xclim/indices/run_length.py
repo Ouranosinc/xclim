@@ -107,7 +107,7 @@ def resample_and_rl(
         Resampling frequency.
     dim : str
         The dimension along which to find runs.
-    **kwargs : dict
+    **kwargs : Any
         Keyword arguments needed in `compute`.
 
     Returns

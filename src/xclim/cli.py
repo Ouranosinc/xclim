@@ -518,7 +518,7 @@ def cli(ctx, **kwargs):  # numpydoc ignore=PR01
 
 @cli.result_callback()
 @click.pass_context
-def write_file(ctx, *args, **kwargs):  # numpydoc ignore=PR01
+def write_file(ctx, *_, **kwargs):  # numpydoc ignore=PR01
     """Write the output dataset to file."""
     if ctx.obj["output"] is not None:
         if ctx.obj["verbose"]:

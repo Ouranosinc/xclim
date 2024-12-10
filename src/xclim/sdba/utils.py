@@ -6,7 +6,7 @@ Statistical Downscaling and Bias Adjustment Utilities
 from __future__ import annotations
 
 import itertools
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from warnings import warn
 
 import bottleneck as bn
@@ -80,7 +80,9 @@ def map_cdf(
     )
 
 
-def ecdf(x: xr.DataArray, value: float, dim: str = "time") -> xr.DataArray:
+def ecdf(
+    x: xr.DataArray, value: float, dim: str | Sequence[str] = "time"
+) -> xr.DataArray:
     """Return the empirical CDF of a sample at a given value.
 
     Parameters
@@ -948,7 +950,7 @@ def _pairwise_spearman(da, dims):
         # The output
         out = np.empty((nv, nv), dtype=coef.dtype)
         # A 2D mask of removed variables
-        M = (mask_omit)[:, np.newaxis] | (mask_omit)[np.newaxis, :]
+        M = mask_omit[:, np.newaxis] | mask_omit[np.newaxis, :]
         out[~M] = coef.flatten()
         out[M] = np.nan
         return out

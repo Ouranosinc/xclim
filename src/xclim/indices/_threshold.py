@@ -1973,7 +1973,6 @@ def hot_spell_max_magnitude(
     thresh: Quantified = "25.0 degC",
     window: int = 3,
     freq: str = "YS",
-    op: str = ">",
     resample_before_rl: bool = True,
 ) -> xarray.DataArray:
     """
@@ -1993,8 +1992,6 @@ def hot_spell_max_magnitude(
         Minimum number of days with temperature above threshold to qualify as a heatwave.
     freq : str
         Resampling frequency.
-    op : {">", ">=", "gt", "ge"}
-        Comparison operation. Default: ">".
     resample_before_rl : bool
         Determines if the resampling should take place before or after the run
         length encoding (or a similar algorithm) is applied to runs.
@@ -3273,8 +3270,8 @@ def dry_spell_frequency(
     --------
     >>> from xclim.indices import dry_spell_frequency
     >>> pr = xr.open_dataset(path_to_pr_file).pr
-    >>> dsf = dry_spell_frequency(pr=pr, op="sum")
-    >>> dsf = dry_spell_frequency(pr=pr, op="max")
+    >>> dsf_sum = dry_spell_frequency(pr=pr, op="sum")
+    >>> dsf_max = dry_spell_frequency(pr=pr, op="max")
     """
     pram = rate2amount(convert_units_to(pr, "mm/d", context="hydro"), out_units="mm")
     return spell_length_statistics(
@@ -3481,8 +3478,8 @@ def wet_spell_frequency(
     --------
     >>> from xclim.indices import wet_spell_frequency
     >>> pr = xr.open_dataset(path_to_pr_file).pr
-    >>> dsf = wet_spell_frequency(pr=pr, op="sum")
-    >>> dsf = wet_spell_frequency(pr=pr, op="min")
+    >>> dsf_sum = wet_spell_frequency(pr=pr, op="sum")
+    >>> dsf_min = wet_spell_frequency(pr=pr, op="min")
     """
     pram = rate2amount(convert_units_to(pr, "mm/d", context="hydro"), out_units="mm")
     return spell_length_statistics(

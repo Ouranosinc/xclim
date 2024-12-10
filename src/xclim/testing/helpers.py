@@ -173,13 +173,12 @@ def add_doctest_filepaths() -> dict[str, Any]:
     dict[str, Any]
         A dictionary of xdoctest namespace objects.
     """
-    namespace: dict = {}
-    namespace["np"] = np
-    namespace["xclim"] = xclim
-    namespace["tas"] = test_timeseries(
-        np.random.rand(365) * 20 + 253.15, variable="tas"
-    )
-    namespace["pr"] = test_timeseries(np.random.rand(365) * 5, variable="pr")
+    namespace = {
+        "np": np,
+        "xclim": xclim,
+        "tas": test_timeseries(np.random.rand(365) * 20 + 253.15, variable="tas"),
+        "pr": test_timeseries(np.random.rand(365) * 5, variable="pr"),
+    }
     return namespace
 
 

@@ -8,6 +8,7 @@ computation needed while still covering a good portion of the simulated climate 
 
 from __future__ import annotations
 
+from typing import Any
 from warnings import warn
 
 import numpy as np
@@ -128,7 +129,7 @@ def kkz_reduce_ensemble(
     *,
     dist_method: str = "euclidean",
     standardize: bool = True,
-    **cdist_kwargs,
+    **cdist_kwargs: Any,
 ) -> list:
     r"""
     Return a sample of ensemble members using KKZ selection.
@@ -152,7 +153,7 @@ def kkz_reduce_ensemble(
     standardize : bool
         Whether to standardize the input before running the selection or not.
         Standardization consists in translation as to have a zero mean and scaling as to have a unit standard deviation.
-    **cdist_kwargs : dict
+    **cdist_kwargs : Any
         All extra arguments are passed as-is to `scipy.spatial.distance.cdist`, see its docs for more information.
 
     Returns

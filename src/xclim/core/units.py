@@ -1308,7 +1308,7 @@ def _check_output_has_units(
 
 # FIXME: This needs to be properly annotated for mypy compliance.
 # See: https://mypy.readthedocs.io/en/stable/generics.html#declaring-decorators
-def declare_relative_units(**units_by_name) -> Callable:
+def declare_relative_units(**units_by_name: str) -> Callable:
     r"""
     Function decorator checking the units of arguments.
 
@@ -1317,7 +1317,7 @@ def declare_relative_units(**units_by_name) -> Callable:
 
     Parameters
     ----------
-    **units_by_name : dict
+    **units_by_name : str
         Mapping from the input parameter names to dimensions relative to other parameters.
         The dimensions can be a single parameter name as `<other_var>` or more complex expressions,
         such as `<other_var> * [time]`.
@@ -1430,7 +1430,7 @@ def declare_units(**units_by_name) -> Callable:
 
     Parameters
     ----------
-    **units_by_name : dict
+    **units_by_name : str
         Mapping from the input parameter names to their units or dimensionality ("[...]").
         If this decorates a function previously decorated with :py:func:`declare_relative_units`,
         the relative unit declarations are made absolute with the information passed here.
