@@ -616,6 +616,19 @@ class TestQM:
             scen2 = EQM2.adjust(sim).load()
             assert scen2.sel(location=["Kugluktuk", "Vancouver"]).isnull().all()
 
+    def test_different_times_training(self, series, random):
+        n = 10
+        u = random.random(n)
+        ref = series(u, "tas", start="2000-01-01")
+        u2 = random.random(n)
+        hist = series(u2, "tas", start="2000-01-01")
+        hist_fut = series(u2, "tas", start="2001-01-01")
+        ds = EmpiricalQuantileMapping.train(ref, hist).ds
+        EmpiricalQuantileMapping._allow_diff_training_times = True
+        ds_fut = EmpiricalQuantileMapping.train(ref, hist_fut).ds
+        EmpiricalQuantileMapping._allow_diff_training_times = False
+        assert (ds.af == ds_fut.af).all()
+
 
 @pytest.mark.slow
 class TestMBCn:
