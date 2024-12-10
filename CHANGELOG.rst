@@ -4,7 +4,7 @@ Changelog
 
 v0.54.0 (unreleased)
 --------------------
-Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), Éric Dupuis (:user:`coxipi`).
+Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), Éric Dupuis (:user:`coxipi`), Sascha Hofmann (:user:`saschahofmann`).
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
@@ -20,6 +20,8 @@ Bug fixes
 Internal changes
 ^^^^^^^^^^^^^^^^
 * Changed french translations with word "pluvieux" to "avec précipitations". (:issue:`1960`, :pull:`1994`).
+* Using different time for `ref` and `hist` is now explicitly forbidden in many bias adjustment methods (e.g. `EmpiricalQuantileMapping`). Methods that combine `ref,hist,sim` in a same `map_groups` also require the time arrays to be equal in size. (:issue:`1903`, :pull:`1995`, :pull:`2013`)
+* Nans in `OTC` and `dOTC` are only dropped and put back in place at the lowest level so that the size of time array never changes on xarray levels. (:pull:`1995`, :pull:`2013`)
 * `streamflow` entry replaced with `q` in ``variables.yml``.  (:issue:`1912`, :pull:`1996`)
 * In order to address 403 (forbidden) request errors when retrieving data from GitHub via ReadTheDocs, the ``nimbus`` class has been modified to use an overloaded `fetch` method that appends a User-Agent header to the request. (:pull:`2001`).
 * Addressed a very rare race condition that can happen if `pytest` is tearing down the test environment when running across multiple workers. (:pull:`1863`).
@@ -27,6 +29,10 @@ Internal changes
 CI changes
 ^^^^^^^^^^
 * Added the `green-coding-solutions/eco-ci-energy-estimation` GitHub Action to the workflows to establish energy and carbon usage of CI activity. (:pull:`1863`).
+
+New features and enhancements
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+* ``chill_unit`` now accepts a new argument `positive_only` to compute the daily positive chill units. (:pull:`2003`).
 
 v0.53.2 (2024-10-31)
 --------------------
