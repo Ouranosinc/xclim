@@ -89,7 +89,7 @@ dev = [
   "tokenize-rt >=5.2.0",
   "tox >=4.21.2",
   "tox-gh >=1.4.4",
-  "vulture ==2.13",
+  "vulture ==2.14",
   "xdoctest >=1.1.5",
   "yamllint ==1.35.1"
 ]
@@ -135,7 +135,7 @@ target-version = [
 ]
 
 [tool.bumpversion]
-current_version = "0.53.3-dev.7"
+current_version = "0.53.3-dev.10"
 commit = true
 commit_args = "--no-verify"
 tag = false

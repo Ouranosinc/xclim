@@ -1655,18 +1655,22 @@ def chill_portions(
 
 
 @declare_units(tas="[temperature]")
-def chill_units(tas: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
+def chill_units(
+    tas: xarray.DataArray, positive_only: bool = False, freq: str = "YS"
+) -> xarray.DataArray:
     """
-    Chill units using the Utah model.
+    Chill units using the Utah model
 
     Chill units are a measure to estimate the bud breaking potential of different crop based on Richardson et al. (1974).
-    The Utah model assigns a weight to each hour depending on the temperature recognising that high temperatures can
-    actually decrease the potential for bud breaking.
+    The Utah model assigns a weight to each hour depending on the temperature recognising that high temperatures can actual decrease,
+    the potential for bud breaking. Providing `positive_only=True` will ignore days with negative chill units.
 
     Parameters
     ----------
     tas : xr.DataArray
         Hourly temperature.
+    positive_only : bool
+        If `True`, only positive daily chill units are aggregated.
     freq : str
         Resampling frequency.
 
@@ -1703,4 +1707,8 @@ def chill_units(tas: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
         ),
     )
     cu = cu.where(tas.notnull())
+
+    if positive_only:
+        daily = cu.resample(time="1D").sum()
+        cu = daily.where(daily > 0)
     return cu.resample(time=freq).sum().assign_attrs(units="")
