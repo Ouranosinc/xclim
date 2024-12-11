@@ -181,7 +181,7 @@ def test_resample_map_passthrough(tas_series):
 
 @pytest.mark.parametrize("calendar", [None, "standard"])
 def test_make_hourly_temperature(tasmax_series, tasmin_series, calendar):
-    tasmax = tasmax_series(np.array([20]), units="degC", calendar="standard")
+    tasmax = tasmax_series(np.array([20]), units="degC", calendar=calendar)
     tasmin = tasmin_series(np.array([0]), units="degC", calendar=calendar).expand_dims(
         lat=[0]
     )
