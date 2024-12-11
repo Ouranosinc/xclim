@@ -307,6 +307,9 @@ class Grouper(Parametrizable):
                     if calendar == "360_day"
                     else 365 + (0 if calendar == "noleap" else ind.is_leap_year)
                 )
+                # This is assuming that seasons have the same length. The factor 1/6 comes from the fact that
+                # the first season is shifted by 1 month the but the middle of the season is shifted in the other direction
+                # by half a month so -(1/12-1/24)*4 = -1/6
                 i = ind.dayofyear / length_year * 4 - 1 / 6
             else:
                 raise ValueError(
