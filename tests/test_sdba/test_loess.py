@@ -1,6 +1,5 @@
+# ruff: noqa: E241
 from __future__ import annotations
-
-import logging
 
 import numpy as np
 import pandas as pd
@@ -13,7 +12,7 @@ from xclim.sdba.loess import (
     _linear_regression,  # noqa
     _loess_nb,  # noqa
     _tricube_weighting,  # noqa
-    loess_smoothing,
+    loess_smoothing,  # noqa
 )
 
 
@@ -87,9 +86,9 @@ def test_loess_smoothing_nan(use_dask):
             -1.126,  0.933,  1.987,  0.638,  0.789,
              0.767,  0.676, -1.028,  1.422,  0.453,
         ]
-    ) 
+    )
     # fmt: on
-    data = data.reshape(2, 2, 10)
+    data = data.reshape(2, 2, 10)  # pylint: disable=too-many-function-args
     data[0, 0] = [np.nan] * 10
     da = xr.DataArray(
         data,
