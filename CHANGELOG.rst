@@ -21,6 +21,7 @@ Bug fixes
 * Fixed an issue with ``nimbus`` that was causing URL path components to be improperly joined. (:pull:`1997`).
 * `base_kws_vars` in `MBCn` is now copied inside the `adjust` function so that in-place changes do not change the dict globally. (:pull:`1999`).
 * Fixed a bug in the logic of ``xclim.testing.utils.load_registry`` that impacted the ability to load a `registry.txt` from a non-default repository. (:pull:`2001`).
+* Fixed a bug in ``xclim.sdba.Grouper.get_index`` that didnt correctly interpolate seasonal values (:issue:`2014`, :pull:`2019`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
