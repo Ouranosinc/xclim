@@ -209,8 +209,8 @@ def test_timeseries(
         The frequency of the time dimension. Default is daily/"D".
     as_dataset : bool
         Whether to return a Dataset or a DataArray. Default is False.
-    cftime : bool
-        Whether to use cftime or not. Default is False.
+    calendar : str or None
+        Whether to use a calendar. If a calendar is provided, cftime is used.
 
     Returns
     -------
