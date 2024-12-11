@@ -295,21 +295,36 @@ class Grouper(Parametrizable):
             return da[self.dim].rename("group")
 
         ind = da.indexes[self.dim]
-        if self.prop == "week":
-            i = da[self.dim].copy(data=ind.isocalendar().week).astype(int)
-        elif self.prop == "season":
-            i = da[self.dim].copy(data=ind.month % 12 // 3)
+
+        if interp and self.dim == "time":
+            if interp and self.dim == "time" and self.prop == "month":
+                i = ind.month - 0.5 + ind.day / ind.days_in_month
+
+            elif interp and self.dim == "time" and self.prop == "season":
+                calendar = ind.calendar if hasattr(ind, "calendar") else "standard"
+                length_year = (
+                    360
+                    if calendar == "360_day"
+                    else 365 + (0 if calendar == "noleap" else ind.is_leap_year)
+                )
+                i = ind.dayofyear / length_year * 4 - 1 / 6
+            else:
+                raise ValueError(
+                    f"Interpolation is not supported for {self.dim}.{self.prop}."
+                )
         else:
-            i = getattr(ind, self.prop)
+            if self.prop == "week":
+                i = da[self.dim].copy(data=ind.isocalendar().week).astype(int)
+            elif self.prop == "season":
+                i = da[self.dim].copy(data=ind.month % 12 // 3)
+            else:
+                i = getattr(ind, self.prop)
 
-        if not np.issubdtype(i.dtype, np.integer):
-            raise ValueError(
-                f"Index {self.name} is not of type int (rather {i.dtype}), "
-                f"but {self.__class__.__name__} requires integer indexes."
-            )
-
-        if interp and self.dim == "time" and self.prop == "month":
-            i = ind.month - 0.5 + ind.day / ind.days_in_month
+            if not np.issubdtype(i.dtype, np.integer):
+                raise ValueError(
+                    f"Index {self.name} is not of type int (rather {i.dtype}), "
+                    f"but {self.__class__.__name__} requires integer indexes."
+                )
 
         xi = xr.DataArray(
             i,

@@ -179,10 +179,10 @@ def test_resample_map_passthrough(tas_series):
     assert not uses_dask(out)
 
 
-@pytest.mark.parametrize("cftime", [False, True])
-def test_make_hourly_temperature(tasmax_series, tasmin_series, cftime):
-    tasmax = tasmax_series(np.array([20]), units="degC", cftime=cftime)
-    tasmin = tasmin_series(np.array([0]), units="degC", cftime=cftime).expand_dims(
+@pytest.mark.parametrize("calendar", [None, "standard"])
+def test_make_hourly_temperature(tasmax_series, tasmin_series, calendar):
+    tasmax = tasmax_series(np.array([20]), units="degC", calendar="standard")
+    tasmin = tasmin_series(np.array([0]), units="degC", calendar=calendar).expand_dims(
         lat=[0]
     )
 
