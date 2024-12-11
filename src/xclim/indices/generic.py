@@ -55,6 +55,7 @@ __all__ = [
     "last_occurrence",
     "season",
     "select_resample_op",
+    "select_rolling_resample_op",
     "spell_length",
     "spell_length_statistics",
     "spell_mask",
