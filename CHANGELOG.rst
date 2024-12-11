@@ -14,6 +14,7 @@ Breaking changes
 ^^^^^^^^^^^^^^^^
 * The minimum required version of `dask` has been increased to `2024.8.1`. (:issue:`1992`, :pull:`1991`).
 * The docstrings of many `xclim` modules, classes, methods, and functions have been slightly adjusted to ensure stricter compliance with established `numpy` docstring conventions. (:pull:`1988`).
+* The call signature of ``xclim.indices.hot_spell_magnitude`` originally asked for an `op` argument that was not used. This argument has been removed. (:pull:`2018`).
 
 Bug fixes
 ^^^^^^^^^
@@ -34,6 +35,7 @@ Internal changes
 * `xclim` now uses a `src` layout for the codebase. Structure-dependent functions, documentation, and build commands have been adapted to reflect these changes. (:pull:`1971`).
 * Added a more robust `yamllint` configuration to ensure that all YAML files are linted consistently. (:pull:`1971`).
 * Addressed a very rare singular matrix error that can happen in ``test_loess_smoothing_nan``. (:pull:`2015`).
+* Addressed a handful of typing and call signature issues in the `xclim` codebase. (:pull:`2018`).
 
 CI changes
 ^^^^^^^^^^
