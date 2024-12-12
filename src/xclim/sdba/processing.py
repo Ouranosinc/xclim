@@ -852,14 +852,14 @@ def grouped_time_indexes(times, group):
         Time indexes of the blocks (built with a rolling window of `group.window` if any).
     """
 
-    def _get_group_complement(da, group):
+    def _get_group_complement(_da, _group):
         # complement of "dayofyear": "year", etc.
-        gr = group if isinstance(group, str) else group.name
-        if gr == "time.dayofyear":
-            return da.time.dt.year
-        if gr == "time.month":
-            return da.time.dt.strftime("%Y-%d")
-        raise NotImplementedError(f"Grouping {gr} not implemented.")
+        _gr = _group if isinstance(_group, str) else _group.name
+        if _gr == "time.dayofyear":
+            return _da.time.dt.year
+        if _gr == "time.month":
+            return _da.time.dt.strftime("%Y-%d")
+        raise NotImplementedError(f"Grouping {_gr} not implemented.")
 
     # does not work with group == "time.month"
     group = group if isinstance(group, Grouper) else Grouper(group)
@@ -871,14 +871,14 @@ def grouped_time_indexes(times, group):
     )
     if gr == "time.dayofyear":
         # time indices for each block with window = 1
-        g_idxs = timeind.groupby(gr).apply(
+        g_idxs = timeind.groupby(gr).map(
             lambda da: da.assign_coords(time=_get_group_complement(da, gr)).rename(
                 {"time": "year"}
             )
         )
         # time indices for each block with general window
         da = timeind.rolling(time=win, center=True).construct(window_dim=win_dim0)
-        gw_idxs = da.groupby(gr).apply(
+        gw_idxs = da.groupby(gr).map(
             lambda da: da.assign_coords(time=_get_group_complement(da, gr)).stack(
                 {win_dim: ["time", win_dim0]}
             )

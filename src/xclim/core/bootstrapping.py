@@ -126,13 +126,17 @@ def bootstrap_func(compute_index_func: Callable, **kwargs) -> xarray.DataArray:
     :cite:cts:`zhang_avoiding_2005`
     """
     # Identify the input and the percentile arrays from the bound arguments
-    per_key = None
+    per_key, da_key = None, None
     for name, val in kwargs.items():
         if isinstance(val, DataArray):
             if "percentile_doy" in val.attrs.get("history", ""):
                 per_key = name
             else:
                 da_key = name
+    if da_key is None or per_key is None:
+        raise KeyError(
+            "The input data and the percentile DataArray must be provided as named arguments."
+        )
     # Extract the DataArray inputs from the arguments
     da: DataArray = kwargs.pop(da_key)
     per_da: DataArray | None = kwargs.pop(per_key, None)

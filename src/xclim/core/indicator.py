@@ -873,7 +873,7 @@ class Indicator(IndicatorRegistrar):
             out_attrs.pop("units", None)
         else:
             out_attrs = {}
-        out_attrs = [out_attrs.copy() for i in range(self.n_outs)]
+        out_attrs = [out_attrs.copy() for _ in range(self.n_outs)]
 
         das, params = self._preprocess_and_checks(das, params)
 
@@ -943,7 +943,9 @@ class Indicator(IndicatorRegistrar):
             return outs[0]
         return tuple(outs)
 
-    def _parse_variables_from_call(self, args, kwds) -> tuple[OrderedDict, dict]:
+    def _parse_variables_from_call(
+        self, args, kwds
+    ) -> tuple[OrderedDict, OrderedDict, OrderedDict | dict]:
         """Extract variable and optional variables from call arguments."""
         # Bind call arguments to `compute` arguments and set defaults.
         ba = self.__signature__.bind(*args, **kwds)
