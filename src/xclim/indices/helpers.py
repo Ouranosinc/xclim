@@ -803,9 +803,7 @@ def make_hourly_temperature(tasmin: xr.DataArray, tasmax: xr.DataArray) -> xr.Da
     hourly = data.resample(time="h").ffill().isel(time=slice(0, -1))
 
     # To avoid "invalid value encountered in log" warning we set hours before sunset to 1
-    nighttime_hours = nighttime_hours = (
-        hourly.time.dt.hour + 1 - hourly.daylength
-    ).clip(1)
+    nighttime_hours = (hourly.time.dt.hour + 1 - hourly.daylength).clip(1)
 
     return xr.where(
         hourly.time.dt.hour < hourly.daylength,
