@@ -16,7 +16,9 @@ on:
       - main
 
 # Declare default permissions as read only.
-permissions: read-all
+# Read-all permission is not technically needed for this workflow.
+permissions:
+  contents: read
 
 jobs:
   analysis:
