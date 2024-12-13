@@ -40,6 +40,9 @@ Internal changes
 CI changes
 ^^^^^^^^^^
 * Added the `green-coding-solutions/eco-ci-energy-estimation` GitHub Action to the workflows to establish energy and carbon usage of CI activity. (:pull:`1863`).
+* Various workflow security fixes: (:pull:`2023`)
+    * Simplified the `bump-version.yml` version string parsing to harden against template injection.
+    * Further de-escalated privileges for most workflows.
 
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
