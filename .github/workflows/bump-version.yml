@@ -74,15 +74,15 @@ jobs:
           python -m pip install --require-hashes -r CI/requirements_ci.txt
       - name: Conditional Bump
         run: |
-          if [[ $(bump-my-version show-bump | head -n 2 | tail -n 1 | cut -d' ' -f1) =~ -dev(\.\d+)? ]]; then
+          CURRENT_VERSION=$(bump-my-version show current_version)
+          if [[ ${CURRENT_VERSION} =~ -dev(\.\d+)? ]]; then
             echo "Development version (ends in 'dev(\.\d+)?'), bumping 'build' version"
             bump-my-version bump build
           else
             echo "Version is stable, bumping 'patch' version"
             bump-my-version bump patch
           fi
-          NEW_VERSION="$(grep -E '__version__'  src/xclim/__init__.py | cut -d ' ' -f3)"
-          echo "new_version=${NEW_VERSION}"
+          echo "new_version=$(bump-my-version show current_version)"
       - name: Push Changes
         uses: ad-m/github-push-action@d91a481090679876dfc4178fef17f286781251df # v0.8.0
         with:
