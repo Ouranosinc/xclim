@@ -2,37 +2,38 @@
 Changelog
 =========
 
-v0.54.0 (unreleased)
+v0.54.0 (2024-12-16)
 --------------------
 Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), Éric Dupuis (:user:`coxipi`), Sascha Hofmann (:user:`saschahofmann`).
 
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 * Python 3.9 coding conventions have been dropped in favour of Python 3.10+ conventions. (:pull:`1988`).
+* ``xclim.indices.chill_unit`` now accepts a new argument ``positive_only`` to compute the daily positive chill units. (:pull:`2003`).
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
 * The minimum required version of `dask` has been increased to `2024.8.1`. (:issue:`1992`, :pull:`1991`).
 * The docstrings of many `xclim` modules, classes, methods, and functions have been slightly adjusted to ensure stricter compliance with established `numpy` docstring conventions. (:pull:`1988`).
+* Using different time for ``ref`` and ``hist`` is now explicitly forbidden in many bias adjustment methods (e.g. `EmpiricalQuantileMapping`). Methods that combine ``ref``, ``hist``, and ``sim`` in the same `map_groups` also require that time arrays be equal in size. (:issue:`1903`, :pull:`1995`, :pull:`2013`).
+* `xclim` now uses a `src` layout for the codebase. Structure-dependent functions, documentation, and build commands have been adapted to reflect these changes. Developers will need to reinstall `xclim` using ``pip install -e .``. (:pull:`1971`).
 * The call signature of ``xclim.indices.hot_spell_magnitude`` originally asked for an `op` argument that was not used. This argument has been removed. (:pull:`2018`).
 
 Bug fixes
 ^^^^^^^^^
 * Fixed pickling issue with ``xclim.sdba.Grouper`` and other classes for usage with `dask>=2024.11`. (:issue:`1992`, :pull:`1993`).
 * Fixed an issue with ``nimbus`` that was causing URL path components to be improperly joined. (:pull:`1997`).
-* `base_kws_vars` in `MBCn` is now copied inside the `adjust` function so that in-place changes do not change the dict globally. (:pull:`1999`).
-* Fixed a bug in the logic of ``xclim.testing.utils.load_registry`` that impacted the ability to load a `registry.txt` from a non-default repository. (:pull:`2001`).
+* ``base_kws_vars`` in `MBCn` is now copied inside the `adjust` function so that in-place changes do not change the dict globally. (:pull:`1999`).
+* Fixed a bug in the logic of ``xclim.testing.utils.load_registry`` that impacted the ability to load a ``registry.txt`` from a non-default repository. (:pull:`2001`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
-* Changed french translations with word "pluvieux" to "avec précipitations". (:issue:`1960`, :pull:`1994`).
-* Using different time for `ref` and `hist` is now explicitly forbidden in many bias adjustment methods (e.g. `EmpiricalQuantileMapping`). Methods that combine `ref,hist,sim` in a same `map_groups` also require the time arrays to be equal in size. (:issue:`1903`, :pull:`1995`, :pull:`2013`)
-* Nans in `OTC` and `dOTC` are only dropped and put back in place at the lowest level so that the size of time array never changes on xarray levels. (:pull:`1995`, :pull:`2013`)
-* `streamflow` entry replaced with `q` in ``variables.yml``.  (:issue:`1912`, :pull:`1996`)
-* In order to address 403 (forbidden) request errors when retrieving data from GitHub via ReadTheDocs, the ``nimbus`` class has been modified to use an overloaded `fetch` method that appends a User-Agent header to the request. (:pull:`2001`).
+* Changed French translations with word "pluvieux" to "avec précipitations". (:issue:`1960`, :pull:`1994`).
+* Nan values in `OTC` and `dOTC` are only dropped and replaced at the lowest level so that the size of time arrays never changes on `xarray` levels. (:pull:`1995`, :pull:`2013`)
+* `streamflow` entry replaced with ``"q"`` in ``variables.yml``. (:issue:`1912`, :pull:`1996`).
+* In order to address ``Error 403`` (forbidden) requests when retrieving data from GitHub via ReadTheDocs, the ``nimbus`` class has been modified to use an overloaded `fetch` method that appends a modified User-Agent header to the request. (:pull:`2001`).
 * Addressed a very rare race condition that can happen if `pytest` is tearing down the test environment when running across multiple workers. (:pull:`1863`).
 * The `numpydoc` linting tool has been added to the development dependencies, linting checks, and the `pre-commit` configuration. (:pull:`1988`).
-* `xclim` now uses a `src` layout for the codebase. Structure-dependent functions, documentation, and build commands have been adapted to reflect these changes. (:pull:`1971`).
 * Added a more robust `yamllint` configuration to ensure that all YAML files are linted consistently. (:pull:`1971`).
 * Addressed a very rare singular matrix error that can happen in ``test_loess_smoothing_nan``. (:pull:`2015`).
 * Addressed a handful of typing and call signature issues in the `xclim` codebase. (:pull:`2018`).
@@ -43,10 +44,6 @@ CI changes
 * Various workflow security fixes: (:pull:`2023`)
     * Simplified the `bump-version.yml` version string parsing to harden against template injection.
     * Further de-escalated privileges for most workflows.
-
-New features and enhancements
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-* ``chill_unit`` now accepts a new argument `positive_only` to compute the daily positive chill units. (:pull:`2003`).
 
 v0.53.2 (2024-10-31)
 --------------------

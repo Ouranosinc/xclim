@@ -74,8 +74,13 @@ However, xclim will *always* assume the temporal coordinate is named "time". If 
 
     ds = ds.rename(T="time")
 
+`xclim` code uses the `black`_ formatter, a modified `ruff`_ linting configuration, and (mostly) adheres to the `NumPy docstring`_ style. For more information on coding and development conventions, see the `Contributing Guidelines`_.
+
+.. _black: https://black.readthedocs.io/en/stable/
+.. _ruff: https://docs.astral.sh/ruff/
 .. _CF Conventions: http://cfconventions.org/
 .. _CMIP6: https://clipc-services.ceda.ac.uk/dreq/mipVars.html
+.. _NumPy docstring: https://numpydoc.readthedocs.io/en/stable/format.html
 
 Contributing to xclim
 ---------------------
@@ -131,10 +136,6 @@ This package was created with Cookiecutter_ and the `audreyfeldroy/cookiecutter-
 .. |discussions| image:: https://img.shields.io/badge/GitHub-Discussions-blue
         :target: https://github.com/Ouranosinc/xclim/discussions
         :alt: Static Badge
-
-.. |gitter| image:: https://badges.gitter.im/Ouranosinc/xclim.svg
-        :target: https://gitter.im/Ouranosinc/xclim?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge
-        :alt: Gitter Chat
 
 .. |build| image:: https://github.com/Ouranosinc/xclim/actions/workflows/main.yml/badge.svg
         :target: https://github.com/Ouranosinc/xclim/actions/workflows/main.yml
@@ -204,8 +205,8 @@ This package was created with Cookiecutter_ and the `audreyfeldroy/cookiecutter-
         :alt: pre-commit.ci status
 
 .. |ruff| image:: https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json
-    :target: https://github.com/astral-sh/ruff
-    :alt: Ruff
+        :target: https://github.com/astral-sh/ruff
+        :alt: Ruff
 
 .. |status| image:: https://www.repostatus.org/badges/latest/active.svg
         :target: https://www.repostatus.org/#active
