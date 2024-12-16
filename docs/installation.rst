@@ -160,4 +160,4 @@ To create a conda environment including `xclim`'s dependencies and several optio
 
     conda env create -n my_xclim_env python=3.10 --file=environment.yml
     conda activate my_xclim_env
-    (my_xclim_env) python -m pip install -e --no-deps .
+    (my_xclim_env) python -m pip install --no-deps -e  .
