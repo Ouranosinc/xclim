@@ -88,4 +88,4 @@ jobs:
         with:
           force: false
           branch: ${{ github.ref }}
-          github_token: '${{ token_generator.outputs.token }}'
+          github_token: ${{ steps.token_generator.outputs.token }}
