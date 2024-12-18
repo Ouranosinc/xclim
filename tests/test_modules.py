@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from importlib.util import find_spec
 from inspect import _empty  # noqa
 from pathlib import Path
 
@@ -264,7 +265,7 @@ indicator:
 
 
 class TestOfficialYaml(yamale.YamaleTestCase):
-    base_dir = str(Path(__file__).parent.parent / "src" / "xclim" / "data")
+    base_dir = str(Path(find_spec("xclim").origin).parent.joinpath("data"))
     schema = "schema.yml"
     yaml = ["cf.yml", "anuclim.yml", "icclim.yml"]
 
