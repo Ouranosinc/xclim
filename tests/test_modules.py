@@ -265,7 +265,7 @@ indicator:
 
 
 class TestOfficialYaml(yamale.YamaleTestCase):
-    base_dir = Path(find_spec("xclim").origin).parent.joinpath("data").as_posix()
+    base_dir = str(Path(find_spec("xclim").origin).parent.joinpath("data"))
     schema = "schema.yml"
     yaml = ["cf.yml", "anuclim.yml", "icclim.yml"]
 
