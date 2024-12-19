@@ -3165,7 +3165,7 @@ def degree_days_exceedance_date(
     -----
     Let :math:`TG_{ij}` be the daily mean temperature at day :math:`i` of period :math:`j`,
     :math:`T` is the reference threshold and :math:`ST` is the sum threshold. Then, starting
-    at day :math:i_0:, the degree days exceedance date is the first day :math:`k` such that
+    at day :math:i_0:, the degree days exceedance date is the first day :math:`k` such that:
 
     .. math::
 
@@ -3708,7 +3708,7 @@ def holiday_snow_and_snowfall_days(
     snd: xarray.DataArray,
     prsn: xarray.DataArray | None = None,
     snd_thresh: Quantified = "20 mm",
-    prsn_thresh: Quantified = "10 mm",
+    prsn_thresh: Quantified = "1 mm",
     date_start: str = "12-25",
     date_end: str | None = None,
     freq: str = "YS-JUL",
@@ -3716,7 +3716,7 @@ def holiday_snow_and_snowfall_days(
     r"""
     Perfect Christmas Days.
 
-    Whether there is a significant amount of snow on the ground and snowfall occurring on December 25th.
+    Whether there is a significant amount of snow on the ground and measurable snowfall occurring on December 25th.
 
     Parameters
     ----------
@@ -3727,7 +3727,7 @@ def holiday_snow_and_snowfall_days(
     snd_thresh : Quantified
         Threshold snow amount. Default: 20 mm.
     prsn_thresh : Quantified
-        Threshold snowfall flux. Default: 10 mm.
+        Threshold snowfall flux. Default: 1 mm.
     date_start : str
         Beginning of analysis period. Default: "12-25" (December 25th).
     date_end : str, optional
