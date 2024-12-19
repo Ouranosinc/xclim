@@ -6,6 +6,8 @@ on:
       - main
     paths-ignore:
       - .*
+      - .github/*.md
+      - .github/*.yml
       - .github/*/*.md
       - .github/*/*.yml
       - CHANGELOG.rst
@@ -21,8 +23,8 @@ on:
       - environment.yml
       - pylintrc
       - pyproject.toml
+      - src/xclim/__init__.py
       - tox.ini
-      - xclim/__init__.py
 
 permissions:
   contents: read
@@ -35,7 +37,7 @@ jobs:
       actions: read
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@91182cccc01eb5e619899d80e4e971d6181294a7 # v2.10.1
+        uses: step-security/harden-runner@0080882f6c36860b6ba35c610c98ce87d4e2f26f # v2.10.2
         with:
           disable-sudo: true
           egress-policy: block
@@ -51,43 +53,39 @@ jobs:
           app-id: ${{ secrets.OURANOS_HELPER_BOT_ID }}
           private-key: ${{ secrets.OURANOS_HELPER_BOT_KEY }}
       - name: Checkout Repository
-        uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871 # v4.2.1
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           token: ${{ steps.token_generator.outputs.token }}
+          persist-credentials: false
       - name: Set up Python3
-        uses: actions/setup-python@f677139bbe7f9c59b41e40162b753c062f5d49a3 # v5.2.0
+        uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5.3.0
         with:
           python-version: "3.x"
       - name: Import GPG Key
-        uses: crazy-max/ghaction-import-gpg@01dd5d3ca463c7f10f7f4f7b4f177225ac661ee4 # v6.1.0
+        uses: crazy-max/ghaction-import-gpg@cb9bde2e2525e640591a934b1fd28eef1dcaf5e5 # v6.2.0
         with:
           gpg_private_key: ${{ secrets.OURANOS_HELPER_BOT_GPG_PRIVATE_KEY }}
           passphrase: ${{ secrets.OURANOS_HELPER_BOT_GPG_PRIVATE_KEY_PASSWORD }}
           git_user_signingkey: true
           git_commit_gpgsign: true
           trust_level: 5
-      - name: Current Version
-        run: |
-          CURRENT_VERSION="$(grep -E '__version__'  xclim/__init__.py | cut -d ' ' -f3)"
-          echo "current_version=${CURRENT_VERSION}"
-          echo "CURRENT_VERSION=${CURRENT_VERSION}" >> $GITHUB_ENV
       - name: Install CI libraries
         run: |
           python -m pip install --require-hashes -r CI/requirements_ci.txt
       - name: Conditional Bump
         run: |
-          if [[ ${{ env.CURRENT_VERSION }} =~ -dev(\.\d+)? ]]; then
+          CURRENT_VERSION=$(bump-my-version show current_version)
+          if [[ ${CURRENT_VERSION} =~ -dev(\.\d+)? ]]; then
             echo "Development version (ends in 'dev(\.\d+)?'), bumping 'build' version"
             bump-my-version bump build
           else
             echo "Version is stable, bumping 'patch' version"
             bump-my-version bump patch
           fi
-          NEW_VERSION="$(grep -E '__version__'  xclim/__init__.py | cut -d ' ' -f3)"
-          echo "new_version=${NEW_VERSION}"
-          echo "NEW_VERSION=${NEW_VERSION}" >> $GITHUB_ENV
+          echo "new_version=$(bump-my-version show current_version)"
       - name: Push Changes
         uses: ad-m/github-push-action@d91a481090679876dfc4178fef17f286781251df # v0.8.0
         with:
           force: false
           branch: ${{ github.ref }}
+          github_token: ${{ steps.token_generator.outputs.token }}

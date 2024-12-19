@@ -16,6 +16,7 @@ from __future__ import annotations
 import datetime
 import json
 import os
+import pathlib
 import sys
 import warnings
 
@@ -67,13 +68,13 @@ indicators = dict(sorted(indicators.items(), key=lambda kv: kv[1]["title"]))
 # Dump indicators to json. The json is added to the html output (html_extra_path)
 # It is read by _static/indsearch.js to populate the table in indicators.rst
 os.makedirs("_dynamic", exist_ok=True)
-with open("_dynamic/indicators.json", "w") as f:
+with pathlib.Path("_dynamic/indicators.json").open("w") as f:
     json.dump(indicators, f)
 
 
 # Dump variables information
-with open("variables.json", "w") as fout:
-    with open("../xclim/data/variables.yml") as fin:
+with pathlib.Path("variables.json").open("w") as fout:
+    with pathlib.Path("../src/xclim/data/variables.yml").open() as fin:
         data = yaml.safe_load(fin)
     json.dump(data, fout)
 

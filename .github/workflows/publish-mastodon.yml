@@ -3,17 +3,7 @@ name: Publish Release Announcement to Mastodon
 on:
   release:
     types:
-      - published
-  workflow_dispatch:
-    inputs:
-      version-tag:
-        description: 'Version to announce'
-        required: true
-        type: string
-      dry-run:
-        description: 'Dry run'
-        default: true
-        type: boolean
+      - released
 
 permissions:
   contents: read
@@ -25,7 +15,7 @@ jobs:
     environment: production
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@91182cccc01eb5e619899d80e4e971d6181294a7 # v2.10.1
+        uses: step-security/harden-runner@0080882f6c36860b6ba35c610c98ce87d4e2f26f # v2.10.2
         with:
           disable-sudo: true
           egress-policy: block
@@ -35,25 +25,15 @@ jobs:
             github.com:443
 
       - name: Checkout Repository
-        uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871 # v4.2.1
-
-      - name: Current Version
-        if: ${{ !github.event.inputs.version-tag }}
-        run: |
-          CURRENT_VERSION="$(grep -E '__version__'  xclim/__init__.py | cut -d ' ' -f3)"
-          echo "version=v${CURRENT_VERSION}" >> $GITHUB_ENV
-      - name: Set Version from Input
-        if: ${{ github.event.inputs.version-tag }}
-        run: |
-          echo "version=${{ github.event.inputs.version-tag }}" >> $GITHUB_ENV
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
 
       - name: Get Release Description
-        if: ${{ !endsWith(env.current_version, '-dev') }}
-        id: get_release_description
         run: |
           # Fetch the release information using the GitHub API
           RELEASE_INFO=$(curl -sH "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
-            "https://api.github.com/repos/${{ github.repository }}/releases/tags/${{ env.version }}")
+            "https://api.github.com/repos/${{ github.repository }}/releases/tags/${TAG_NAME}")
 
           # Extract the release description from the response
           RELEASE_DESCRIPTION=$(echo "$RELEASE_INFO" | jq -r .body)
@@ -65,6 +45,8 @@ jobs:
           CONTRIBUTORS=$(echo "$CLEANED_DESCRIPTION" | head -n 1)
 
           echo "contributors=${CONTRIBUTORS}" >> $GITHUB_ENV
+        env:
+          TAG_NAME: ${{ github.event.release.tag_name }}
 
       - name: Prepare Message
         id: render_template
@@ -72,15 +54,18 @@ jobs:
         with:
           template: .github/publish-mastodon-template.md
           vars: |
-            version: ${{ env.version }}
+            tag: ${{ github.event.release.tag_name }}
+            url: https://github.com/Ouranosinc/xclim/releases/tag/${{ github.event.release.tag_name }}
 
       - name: Message Preview
         run: |
-          echo "${{ steps.render_template.outputs.result }}${{ env.contributors }}"
+          echo "${TEMPLATE}${CONTRIBUTORS}"
+        env:
+          TEMPLATE: ${{ steps.render_template.outputs.result }}
+          CONTRIBUTORS: ${{ env.contributors }}
 
       - name: Send toot to Mastodon
-        if: ${{ github.event.inputs.dry-run != 'true' }} || ${{ github.event_name == 'release' }}
-        uses: cbrgm/mastodon-github-action@b26d62619432b20c2129edd86f07f7ede9797fc9 # v2.1.9
+        uses: cbrgm/mastodon-github-action@50b70e53ab0871a90fe364ff96e783c7e3633f15 # v2.1.11
         with:
           url: ${{ secrets.MASTODON_URL }}
           access-token: ${{ secrets.MASTODON_ACCESS_TOKEN }}

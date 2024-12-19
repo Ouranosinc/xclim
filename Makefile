@@ -53,40 +53,41 @@ clean-test: ## remove test and coverage artifacts
 	rm -fr .pytest_cache
 
 lint: ## check style with flake8 and black
-	black --check xclim tests
-	ruff check xclim tests
-	flake8 --config=.flake8 xclim tests
-	vulture xclim tests
-	nbqa black --check docs
-	blackdoc --check --exclude=xclim/indices/__init__.py xclim
-	blackdoc --check docs
-	codespell xclim tests docs
-	deptry .
-	yamllint --config-file=.yamllint.yaml xclim
+	python -m black --check src/xclim tests
+	python -m ruff check src/xclim tests
+	python -m flake8 --config=.flake8 src/xclim tests
+	python -m vulture src/xclim tests
+	python -m nbqa black --check docs
+	python -m blackdoc --check --exclude=src/xclim/indices/__init__.py src/xclim
+	python -m blackdoc --check docs
+	codespell src/xclim tests docs
+	python -m numpydoc lint src/xclim/*.py src/xclim/ensembles/*.py src/xclim/indices/*.py src/xclim/indicators/*.py src/xclim/testing/*.py
+	python -m deptry src
+	python -m yamllint --config-file=.yamllint.yaml src/xclim
 
 test: ## run tests quickly with the default Python
 	pytest
 	pytest --no-cov --nbval --dist=loadscope --rootdir=tests/ docs/notebooks --ignore=docs/notebooks/example.ipynb
-	pytest --rootdir=tests/ --xdoctest xclim
+	pytest --rootdir=tests/ --xdoctest src/xclim
 
 test-all: ## run tests on every Python version with tox
 	tox
 
 coverage: ## check code coverage quickly with the default Python
-	coverage run --source xclim -m pytest
-	coverage report -m
-	coverage html
+	python -m coverage run --source xclim -m pytest src/xclim
+	python -m coverage report -m
+	python -m coverage html
 	$(BROWSER) htmlcov/index.html
 
 autodoc-obsolete: clean-docs ## create sphinx-apidoc files (obsolete)
 	mkdir -p docs/apidoc/
-	sphinx-apidoc -o docs/apidoc/ --private --module-first xclim xclim/testing/tests
+	sphinx-apidoc -o docs/apidoc/ --private --module-first src/xclim src/xclim/testing/tests
 
 autodoc-custom-index: clean-docs ## create sphinx-apidoc files but with special index handling for indices and indicators
 	mkdir -p docs/apidoc/
-	sphinx-apidoc -o docs/apidoc/ --private --module-first xclim xclim/testing/tests xclim/indicators xclim/indices
+	sphinx-apidoc -o docs/apidoc/ --private --module-first src/xclim src/xclim/testing/tests src/xclim/indicators src/xclim/indices
 	rm docs/apidoc/xclim.rst
-	env SPHINX_APIDOC_OPTIONS="members,undoc-members,show-inheritance,noindex" sphinx-apidoc -o docs/apidoc/ --private --module-first xclim xclim/testing/tests
+	env SPHINX_APIDOC_OPTIONS="members,undoc-members,show-inheritance,noindex" sphinx-apidoc -o docs/apidoc/ --private --module-first src/xclim src/xclim/testing/tests
 
 linkcheck: autodoc-custom-index ## run checks over all external links found throughout the documentation
 	$(MAKE) -C docs linkcheck
@@ -105,10 +106,10 @@ servedocs: autodoc-custom-index ## generate Sphinx HTML documentation, including
 	$(MAKE) -C docs livehtml
 
 release: dist ## package and upload a release
-	flit publish dist/*
+	python -m flit publish dist/*
 
 dist: clean ## builds source and wheel package
-	flit build
+	python -m flit build
 	ls -l dist
 
 install: clean ## install the package to the active Python's site-packages

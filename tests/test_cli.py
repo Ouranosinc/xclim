@@ -345,11 +345,16 @@ def test_bad_usage(tas_series, tmp_path):
 
 @pytest.mark.requires_docs
 @pytest.mark.parametrize("method, pattern", [("-r", "`GH/"), ("-m", "[GH/")])
-def test_release_notes(method, pattern):
+def test_release_notes(method, pattern, pytestconfig):
     runner = CliRunner()
     results = runner.invoke(
         cli,
-        ["release_notes", method],
+        [
+            "release_notes",
+            method,
+            "--changes",
+            pytestconfig.rootpath.joinpath("CHANGELOG.rst"),
+        ],
     )
     assert ":pull:`" not in results.output
     assert ":issue:`" not in results.output

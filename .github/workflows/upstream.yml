@@ -7,7 +7,7 @@ on:
       - CHANGELOG.rst
       - README.rst
       - pyproject.toml
-      - xclim/__init__.py
+      - src/xclim/__init__.py
   schedule:
     - cron: "0 0 * * *" # Daily “At 00:00” UTC
   workflow_dispatch: # allows you to trigger the workflow run manually
@@ -39,26 +39,39 @@ jobs:
         shell: bash -l {0}
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@91182cccc01eb5e619899d80e4e971d6181294a7 # v2.10.1
+        uses: step-security/harden-runner@0080882f6c36860b6ba35c610c98ce87d4e2f26f # v2.10.2
         with:
           disable-sudo: true
           egress-policy: block
           allowed-endpoints: >
+            api.electricitymap.org:443
             api.github.com:443
+            api.green-coding.io:443
+            api.securityscorecards.dev:443
             conda.anaconda.org:443
             dap.service.does.not.exist:443
             files.pythonhosted.org:443
             github.com:443
+            ip-api.com:80
+            ipapi.co:443
             objects.githubusercontent.com:443
+            proxy.golang.org:4433
             pypi.org:443
             raw.githubusercontent.com:443
             repo.anaconda.com:443
+            sum.golang.org:443
+      - name: Start Measurement
+        uses: green-coding-solutions/eco-ci-energy-estimation@86f1b2ee12db687bca0d15160a529bb64a7b60d9 # v4.0.0
+        with:
+          task: start-measurement
+          branch: ${{ github.head_ref || github.ref_name }}
       - name: Checkout Repository
-        uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871 # v4.2.1
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           fetch-depth: 0 # Fetch all history for all branches and tags.
+          persist-credentials: false
       - name: Setup Conda (Micromamba) with Python${{ matrix.python-version }}
-        uses: mamba-org/setup-micromamba@617811f69075e3fd3ae68ca64220ad065877f246 # v2.0.0
+        uses: mamba-org/setup-micromamba@068f1ab4b37ed9b3d9f73da7db90a0cda0a48d29 # v2.0.3
         with:
           cache-downloads: true
           cache-environment: true
@@ -84,8 +97,14 @@ jobs:
           micromamba list
           xclim show_version_info
           python -m pip check || true
+      - name: Setup Python Measurement
+        uses: green-coding-solutions/eco-ci-energy-estimation@86f1b2ee12db687bca0d15160a529bb64a7b60d9 # v4.0.0
+        with:
+          task: get-measurement
+          label: 'Environment Setup (Upstream, Python${{ matrix.python-version }})'
+        continue-on-error: true
       - name: Test Data Caching
-        uses: actions/cache@3624ceb22c1c5a301c8db4169662070a689d9ea8 # v4.1.1
+        uses: actions/cache@1bd1e32a3bdc45362d1e726936510720a7c30a57 # v4.2.0
         with:
           path: |
             ${{ matrix.testdata-cache }}
@@ -105,3 +124,14 @@ jobs:
         with:
           issue-title: "⚠️ Nightly upstream-dev CI failed for Python${{ matrix.python-version }} ⚠️"
           log-path: output-${{ matrix.python-version }}-log.jsonl
+      - name: Tests measurement
+        uses: green-coding-solutions/eco-ci-energy-estimation@86f1b2ee12db687bca0d15160a529bb64a7b60d9 # v4.0.0
+        with:
+          task: get-measurement
+          label: 'Testing and Reporting (Upstream, Python${{ matrix.python-version }})'
+        continue-on-error: true
+      - name: Show Energy Results
+        uses: green-coding-solutions/eco-ci-energy-estimation@86f1b2ee12db687bca0d15160a529bb64a7b60d9 # v4.0.0
+        with:
+          task: display-results
+        continue-on-error: true

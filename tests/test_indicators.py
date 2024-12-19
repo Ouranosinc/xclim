@@ -286,6 +286,20 @@ def test_temp_unit_conversion(tas_series):
     np.testing.assert_array_almost_equal(txk, txc + 273.15)
 
 
+def test_temp_diff_unit_conversion(tasmax_series, tasmin_series):
+    tx = tasmax_series(np.arange(365) + 1, start="2001-01-01")
+    tn = tasmin_series(np.arange(365), start="2001-01-01")
+    txC = convert_units_to(tx, "degC")
+    tnC = convert_units_to(tn, "degC")
+
+    ind = xclim.atmos.daily_temperature_range.from_dict(
+        {"units": "degC"}, "dtr_degC", "test"
+    )
+    out = ind(tasmax=txC, tasmin=tnC)
+    assert out.attrs["units"] == "degC"
+    assert out.attrs["units_metadata"] == "temperature: difference"
+
+
 def test_multiindicator(tas_series):
     tas = tas_series(np.arange(366), start="2000-01-01")
     tmin, tmax = multiTemp(tas, freq="YS")
@@ -577,7 +591,7 @@ def test_parse_doc():
     assert doc["notes"].startswith("Let")
     assert "math::" in doc["notes"]
     assert "references" not in doc
-    assert doc["long_name"] == "The mean daily temperature at the given time frequency"
+    assert doc["long_name"] == "The mean daily temperature at the given time frequency."
 
     doc = parse_doc(xclim.indices.saturation_vapor_pressure.__doc__)
     assert (

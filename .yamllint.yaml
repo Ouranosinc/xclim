@@ -1,8 +1,39 @@
 ---
 
 rules:
+
+  brackets:
+    forbid: false
+    min-spaces-inside: 0
+    max-spaces-inside: 1
+
+  commas:
+    min-spaces-after: 1
+
   document-start: disable
+
+  float-values:
+    require-numeral-before-decimal: true
+
+  hyphens:
+    max-spaces-after: 1
+
+  indentation:
+    indent-sequences: whatever
+    spaces: consistent
+
+  key-duplicates:
+    forbid-duplicated-merge-keys: true
+
   line-length:
+    allow-non-breakable-words: true
+    allow-non-breakable-inline-mappings: true
     max: 120
     level: warning
+
+  new-lines:
+    type: unix
+
+  trailing-spaces: {}
+
   truthy: disable

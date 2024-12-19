@@ -16,7 +16,9 @@ on:
       - main
 
 # Declare default permissions as read only.
-permissions: read-all
+# Read-all permission is not technically needed for this workflow.
+permissions:
+  contents: read
 
 jobs:
   analysis:
@@ -30,17 +32,17 @@ jobs:
 
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@91182cccc01eb5e619899d80e4e971d6181294a7 # v2.10.1
+        uses: step-security/harden-runner@0080882f6c36860b6ba35c610c98ce87d4e2f26f # v2.10.2
         with:
           egress-policy: audit
 
       - name: Checkout Repository
-        uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           persist-credentials: false
 
       - name: Run Analysis
-        uses: ossf/scorecard-action@62b2cac7ed8198b15735ed49ab1e5cf35480ba46
+        uses: ossf/scorecard-action@62b2cac7ed8198b15735ed49ab1e5cf35480ba46 # v2.4.0
         with:
           results_file: results.sarif
           results_format: sarif
@@ -59,7 +61,7 @@ jobs:
       # Upload the results as artifacts (optional). Commenting out will disable uploads of run results in SARIF
       # format to the repository Actions tab.
       - name: Upload Artifact
-        uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882
+        uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4.4.3
         with:
           name: SARIF file
           path: results.sarif
@@ -67,6 +69,6 @@ jobs:
 
       # Upload the results to GitHub's code scanning dashboard.
       - name: Upload to code-scanning
-        uses: github/codeql-action/upload-sarif@e5f05b81d5b6ff8cfa111c80c22c5fd02a384118  # 3.23.0
+        uses: github/codeql-action/upload-sarif@e5f05b81d5b6ff8cfa111c80c22c5fd02a384118 # 3.23.0
         with:
           sarif_file: results.sarif

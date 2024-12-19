@@ -104,6 +104,12 @@ def test_custom_indices(open_dataset):
         example_path / "example.yml", name="ex4", mode="ignore"
     )
 
+    # Check that indexer was added and injected correctly
+    assert "indexer" not in ex1.RX1day_summer.parameters
+    assert ex1.RX1day_summer.injected_parameters["indexer"] == {
+        "month": [5, 6, 7, 8, 9]
+    }
+
 
 @pytest.mark.requires_docs
 def test_indicator_module_translations():
@@ -258,7 +264,7 @@ indicator:
 
 
 class TestOfficialYaml(yamale.YamaleTestCase):
-    base_dir = str(Path(__file__).parent.parent / "xclim" / "data")
+    base_dir = str(Path(__file__).parent.parent / "src" / "xclim" / "data")
     schema = "schema.yml"
     yaml = ["cf.yml", "anuclim.yml", "icclim.yml"]
 

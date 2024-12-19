@@ -8,17 +8,17 @@ annotated-types==0.7.0 \
     --hash=sha256:1f02e8b43a8fbbc3f3e0d4f0f4bfc8131bcb4eebe8849b8e5c773f3a1c582a53 \
     --hash=sha256:aff07c09a53a08bc8cfccb9c85b05f1aa9a2a6f23728d790723543408344ce89
     # via pydantic
-astroid==3.3.4 \
-    --hash=sha256:5eba185467253501b62a9f113c263524b4f5d55e1b30456370eed4cdbd6438fd \
-    --hash=sha256:e73d0b62dd680a7c07cb2cd0ce3c22570b044dd01bd994bc3a2dd16c6cbba162
+astroid==3.3.6 \
+    --hash=sha256:6aaea045f938c735ead292204afdb977a36e989522b7833ef6fea94de743f442 \
+    --hash=sha256:db676dc4f3ae6bfe31cda227dc60e03438378d7a896aec57422c95634e8d722f
     # via pylint
 bracex==2.4 \
     --hash=sha256:a27eaf1df42cf561fed58b7a8f3fdf129d1ea16a81e1fadd1d17989bc6384beb \
     --hash=sha256:efdc71eff95eaff5e0f8cfebe7d01adf2c8637c8c92edaf63ef348c241a82418
     # via wcmatch
-bump-my-version==0.27.0 \
-    --hash=sha256:483c517af91559644d45036648e5d99f4f8c85f8d01394097d3d3e42c9e6acad \
-    --hash=sha256:911bfaf7d847d4348844c8fd16f7a11322233fb8dc90123f638069a369003642
+bump-my-version==0.28.1 \
+    --hash=sha256:df7fdb02a1b43c122a6714df6d1fe4efc7a1220b5638ca5a0eb3018813c1b222 \
+    --hash=sha256:e608def5191baf505b6cde88bd679a0a95fc4cfeace4247adb60ac0f8a7e57ee
     # via -r CI/requirements_ci.in
 cachetools==5.5.0 \
     --hash=sha256:02134e8439cdc2ffb62023ce1debca2944c3f289d66bb17ead3ab3dede74b292 \
@@ -135,19 +135,19 @@ colorama==0.4.6 \
     --hash=sha256:08695f5cb7ed6e0531a20572697297273c47b8cae5a63ffc6d6ed5c201be6e44 \
     --hash=sha256:4f1d9991f5acc0ca119f9d443620b77f9d6b33703e51011c16baf57afb285fc6
     # via tox
-deptry==0.20.0 \
-    --hash=sha256:012fb106dbea6ca95196cdcd75ac90c516c8f01292f7934f2e802a7cf025a660 \
-    --hash=sha256:0c90ce64e637d0e902bc97c5a020adecfee9e9f09ee0bf4c61554994139bebdb \
-    --hash=sha256:41434d95124851b83cb05524d1a09ad6fea62006beafed2ef90a6b501c1b237f \
-    --hash=sha256:62e9aaf3aea9e2ca66c85da98a0ba0290b4d3daea4e1d0ad937d447bd3c36402 \
-    --hash=sha256:6886ff44aaf26fd83093f14f844ebc84589d90df9bbad9a1625e8a080e6f1be2 \
-    --hash=sha256:8ce3920e2bd6d2b4427ab31ab8efb94bbef897001c2d395782bc30002966d12d \
-    --hash=sha256:9f92e7e97ef42477717747b190bc6796ab94b35655af126d8c577f7eae0eb3a9 \
-    --hash=sha256:ace3b39b1d0763f357c79bab003d1b135bea2eb61102be539992621a42d1ac7b \
-    --hash=sha256:b3b4b22d1406147de5d606a24042126cd74d52fdfdb0232b9c5fd0270d601610 \
-    --hash=sha256:d1a00f8c9e6c0829a4a523edd5e526e3df06d2b50e0a99446f09f9723df2efad \
-    --hash=sha256:e233859f150df70ffff76e95f9b7326fc25494b9beb26e776edae20f0f515e7d \
-    --hash=sha256:f6cee6005997791bb77155667be055333fb63ae9a24f0f103f25faf1e7affe34
+deptry==0.21.1 \
+    --hash=sha256:091288cad2bd6029995d2e700e965cd574079365807f202ee232e4be0a571f43 \
+    --hash=sha256:145a172ea608bb86dd93a9d14f7d45ed8649a36d7f685ea725e0348cbf562f10 \
+    --hash=sha256:1adf29a5aa1d33d9e1140b9235b212d9753278604b4389b2186f638692e29876 \
+    --hash=sha256:4afef1c5eb0b48ebc31de2437b460df0363cb99722252b7faf7fa6f43e10cbcd \
+    --hash=sha256:4b53089c22d18076935a3e9e6325566fa712cd9b89fe602978a8e85f0f4209bf \
+    --hash=sha256:60332b8d58d6584b340511a4e1b694048499f273d69eaea413631b2e8bc186ff \
+    --hash=sha256:79593d7631cdbbc39d76503e3af80e46d8b4873e915b85c1567a04c81e8a17d5 \
+    --hash=sha256:98075550540c6b45f57abdfc453900bd2a179dc495d986ccc0757a813ee55103 \
+    --hash=sha256:981a28e1feeaad82f07a6e3c8d7842c5f6eae3807dc13b24d453a20cd0a42a72 \
+    --hash=sha256:b5eae7afbcb9b7f6baa855b323e0da016a23f2a98d4b181dcfd2c71766512387 \
+    --hash=sha256:c31e1a66502e28870e1e0a679598462a6119f4bcb656786e63cb545328170a3f \
+    --hash=sha256:e487f520d4fbee513f4767ab98334a29d5d932f78eb413b64e27c977f2bf2756
     # via -r CI/requirements_ci.in
 dill==0.3.8 \
     --hash=sha256:3ebe3c479ad625c4553aca177444d89b486b1d84982eeacded644afc0cf797ca \
@@ -167,13 +167,13 @@ filelock==3.16.1 \
     # via
     #   tox
     #   virtualenv
-flit==3.9.0 \
-    --hash=sha256:076c3aaba5ac24cf0ad3251f910900d95a08218e6bcb26f21fef1036cc4679ca \
-    --hash=sha256:d75edf5eb324da20d53570a6a6f87f51e606eee8384925cd66a90611140844c7
+flit==3.10.1 \
+    --hash=sha256:9c6258ae76d218ce60f9e39a43ca42006a3abcc5c44ea6bb2a1daa13857a8f1a \
+    --hash=sha256:d79c19c2caae73cc486d3d827af6a11c1a84b9efdfab8d9683b714ec8d1dc1f1
     # via -r CI/requirements_ci.in
-flit-core==3.9.0 \
-    --hash=sha256:72ad266176c4a3fcfab5f2930d76896059851240570ce9a98733b658cb786eba \
-    --hash=sha256:7aada352fb0c7f5538c4fafeddf314d3a6a92ee8e2b1de70482329e42de70301
+flit-core==3.10.1 \
+    --hash=sha256:66e5b87874a0d6e39691f0e22f09306736b633548670ad3c09ec9db03c5662f7 \
+    --hash=sha256:cb31a76e8b31ad3351bb89e531f64ef2b05d1e65bd939183250bf81ddf4922a8
     # via flit
 idna==3.7 \
     --hash=sha256:028ff3aadf0609c1fd278d8ea3089299412a7a8b9bd005dd08b9f8285bcb5cfc \
@@ -195,11 +195,13 @@ mdurl==0.1.2 \
     --hash=sha256:84008a41e51615a49fc9966191ff91509e3c40b939176e643fd50a5c2196b8f8 \
     --hash=sha256:bb413d29f5eea38f31dd4754dd7377d4465116fb207585f97bf925588687c1ba
     # via markdown-it-py
-packaging==24.1 \
-    --hash=sha256:026ed72c8ed3fcce5bf8950572258698927fd1dbda10a5e981cdf0ac37f4f002 \
-    --hash=sha256:5b8f2217dbdbd2f7f384c41c628544e6d52f2d0f53c6d0c3ea61aa5d1d7ff124
+packaging==24.2 \
+    --hash=sha256:09abb1bccd265c01f4a3aa3f7a7db064b36514d2cba19a2f694fe6150451a759 \
+    --hash=sha256:c228a6dc5e932d346bc5739379109d49e8853dd8223571c7c5b55260edc0b97f
     # via
+    #   deptry
     #   pyproject-api
+    #   requirements-parser
     #   tox
 platformdirs==4.3.6 \
     --hash=sha256:357fb2acbc885b0419afd3ce3ed34564c13c9b95c89360cd9563f73aa5e2b907 \
@@ -321,9 +323,9 @@ pygments==2.18.0 \
     --hash=sha256:786ff802f32e91311bff3889f6e9a86e81505fe99f2735bb6d60ae0c5004f199 \
     --hash=sha256:b8e6aca0523f3ab76fee51799c488e38782ac06eafcf95e7ba832985c8e7b13a
     # via rich
-pylint==3.3.1 \
-    --hash=sha256:2f846a466dd023513240bc140ad2dd73bfc080a5d85a710afdb728c420a5a2b9 \
-    --hash=sha256:9f3dcc87b1203e612b78d91a896407787e708b3f189b5fa0b307712d49ff0c6e
+pylint==3.3.2 \
+    --hash=sha256:77f068c287d49b8683cd7c6e624243c74f92890f767f106ffa1ddf3c0a54cb7a \
+    --hash=sha256:9ec054ec992cd05ad30a6df1676229739a73f8feeabf3912c995d17601052b01
     # via -r CI/requirements_ci.in
 pyproject-api==1.8.0 \
     --hash=sha256:3d7d347a047afe796fd5d1885b1e391ba29be7169bd2f102fcd378f04273d228 \
@@ -341,6 +343,10 @@ requests==2.32.3 \
     --hash=sha256:55365417734eb18255590a9ff9eb97e9e1da868d4ccd6402399eaf68af20a760 \
     --hash=sha256:70761cfe03c773ceb22aa2f671b4757976145175cdfca038c02654d061d6dcc6
     # via flit
+requirements-parser==0.11.0 \
+    --hash=sha256:35f36dc969d14830bf459803da84f314dc3d17c802592e9e970f63d0359e5920 \
+    --hash=sha256:50379eb50311834386c2568263ae5225d7b9d0867fb55cf4ecc93959de2c2684
+    # via deptry
 rich==13.7.1 \
     --hash=sha256:4edbae314f59eb482f54e9e30bf00d33350aaa94f4bfcd4e9e3110e64d0d7222 \
     --hash=sha256:9be308cb1fe2f1f57d67ce99e95af38a1e2bc71ad9813b0e247cf7ffbcc3a432
@@ -369,9 +375,9 @@ tomlkit==0.13.0 \
     # via
     #   bump-my-version
     #   pylint
-tox==4.21.2 \
-    --hash=sha256:13d996adcd792e7c82994b0e116d85efd84f0c6d185254d83d156f73f86b2038 \
-    --hash=sha256:49381ff102296753e378fa5ff30e42a35e695f149b4dbf8a2c49d15fdb5797b2
+tox==4.23.2 \
+    --hash=sha256:452bc32bb031f2282881a2118923176445bac783ab97c874b8770ab4c3b76c38 \
+    --hash=sha256:86075e00e555df6e82e74cfc333917f91ecb47ffbc868dcafbd2672e332f4a2c
     # via
     #   -r CI/requirements_ci.in
     #   tox-gh
@@ -379,6 +385,10 @@ tox-gh==1.4.4 \
     --hash=sha256:4ea585f66585b90f5826b1677cfc9453747792a0f9ff83d468603bc17556e07b \
     --hash=sha256:b962e0f8c4619e98d11c2a135939876691e148b843b7dac4cff7de1dc4f7c215
     # via -r CI/requirements_ci.in
+types-setuptools==75.6.0.20241126 \
+    --hash=sha256:7bf25ad4be39740e469f9268b6beddda6e088891fa5a27e985c6ce68bf62ace0 \
+    --hash=sha256:aaae310a0e27033c1da8457d4d26ac673b0c8a0de7272d6d4708e263f2ea3b9b
+    # via requirements-parser
 typing-extensions==4.12.2 \
     --hash=sha256:04e5ca0351e0f3f85c6853954072df659d0d13fac324d0072316b67d7794700d \
     --hash=sha256:1a7ead55c7e559dd4dee8856e3a88b41225abfe1ce8df57b7c13915fe121ffb8

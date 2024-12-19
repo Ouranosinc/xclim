@@ -1,7 +1,6 @@
 name: xclim
 channels:
   - conda-forge
-  - defaults
 dependencies:
   - python >=3.10,<3.14
   - boltons >=20.1
@@ -9,34 +8,35 @@ dependencies:
   - cf_xarray >=0.9.3
   - cftime >=1.4.1
   - click >=8.1
-  - dask >=2.6.0
+  - dask >=2024.8.1
   - filelock >=3.14.0
-  - flox >= 0.9
   - jsonpickle >=3.1.0
   - numba >=0.54.1
   - numpy >=1.23.0
   - packaging >=24.0
   - pandas >=2.2.0
-  - pint >=0.18.0
+  - pint >=0.24.4
   - pyarrow >=15.0.0  # Strongly encouraged for Pandas v2.2.0+
   - pyyaml >=6.0.1
   - scikit-learn >=1.1.0
   - scipy >=1.9.0
   - statsmodels >=0.14.2
-  - xarray >=2023.11.0
+  - xarray >=2023.11.0,!=2024.10.0
   - yamale >=5.0.0
   # Extras
-  - flox
-  - lmoments3  # Required for some Jupyter notebooks
+  - fastnanquantile >=0.0.2
+  - flox >=0.9
+  - lmoments3 >=1.0.7  # Required for some Jupyter notebooks
+  - pot >=0.9.4
   # Testing and development dependencies
-  - black ==24.8.0
+  - black ==24.10.0
   - blackdoc ==0.3.9
-  - bump-my-version >=0.25.4
-  - cairosvg
+  - bump-my-version >=0.28.1
+  - cairosvg >=2.6.0
   - codespell ==2.3.0
   - coverage >=7.5.0
   - coveralls >=4.0.1  # Note: coveralls is not yet compatible with Python 3.13
-  - deptry ==0.18.0
+  - deptry ==0.20.0
   - distributed >=2.0
   - flake8 >=7.1.1
   - flake8-rst-docstrings >=0.3.0
@@ -55,16 +55,17 @@ dependencies:
   - nc-time-axis >=1.4.1
   - netcdf4  # Required for some Jupyter notebooks
   - notebook
+  - numpydoc >=1.8.0
   - pandas-stubs >=2.2
   - pooch >=1.8.0
   - pre-commit >=3.7
   - pybtex >=0.24.0
-  - pylint >=3.1
+  - pylint >=3.3.1
   - pytest >=8.0.0
   - pytest-cov >=5.0.0
   - pytest-socket >=0.6.0
   - pytest-xdist >=3.2
-  - ruff >=0.5.6
+  - ruff >=0.7.0
   - sphinx >=7.0.0
   - sphinx-autobuild >=2024.4.16
   - sphinx-autodoc-typehints
@@ -72,12 +73,11 @@ dependencies:
   - sphinx-copybutton
   - sphinx-mdinclude
   - sphinxcontrib-bibtex
+  - sphinxcontrib-svg2pdfconverter
   - tokenize-rt >=5.2.0
-  - tox >=4.18.1
-  # - tox-conda  # Will be added when a tox@v4.0+ compatible plugin is released.
-  - vulture ==2.11
+  - tox >=4.21.2
+  - tox-gh >=1.4.4
+  - vulture ==2.13
   - xdoctest >=1.1.5
   - yamllint >=1.35.1
   - pip >=24.2.0
-  - pip:
-    - sphinxcontrib-svg2pdfconverter
