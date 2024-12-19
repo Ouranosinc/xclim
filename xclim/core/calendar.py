@@ -1078,12 +1078,124 @@ def days_since_to_doy(
     return out.convert_calendar(base_calendar).rename(da.name)
 
 
+def _get_doys(start: int, end: int, inclusive: tuple[bool, bool]):
+    """Get the day of year list from start to end.
+
+    Parameters
+    ----------
+    start : int
+        Start day of year.
+    end : int
+        End day of year.
+    inclusive : 2-tuple of booleans
+        Whether the bounds should be inclusive or not.
+
+    Returns
+    -------
+    np.ndarray
+        Array of day of year between the start and end.
+    """
+    if start <= end:
+        doys = np.arange(start, end + 1)
+    else:
+        doys = np.concatenate((np.arange(start, 367), np.arange(0, end + 1)))
+    if not inclusive[0]:
+        doys = doys[1:]
+    if not inclusive[1]:
+        doys = doys[:-1]
+    return doys
+
+
+def mask_between_doys(
+    da: xr.DataArray,
+    doy_bounds: tuple[int | xr.DataArray, int | xr.DataArray],
+    include_bounds: tuple[bool, bool] = [True, True],
+) -> xr.DataArray | xr.Dataset:
+    """Mask the data outside the day of year bounds.
+
+    Parameters
+    ----------
+    da : xr.DataArray or xr.Dataset
+        Input data.
+    doy_bounds : 2-tuple of integers or xr.DataArray
+        The bounds as (start, end) of the period of interest expressed in day-of-year, integers going from
+        1 (January 1st) to 365 or 366 (December 31st). If a combination of int and xr.DataArray is given,
+        the int day-of-year corresponds to the year of the xr.DataArray.
+    include_bounds : 2-tuple of booleans
+        Whether the bounds of `doy_bounds` should be inclusive or not.
+
+    Returns
+    -------
+    xr.DataArray or xr.Dataset
+        Boolean mask array with the same shape as `da` with True value inside the period of
+        interest and False outside.
+    """
+    if isinstance(doy_bounds[0], int) and isinstance(doy_bounds[1], int):
+        mask = da.time.dt.dayofyear.isin(_get_doys(*doy_bounds, [True, True]))
+
+    else:
+        cal = get_calendar(da, dim="time")
+
+        start, end = doy_bounds
+        if isinstance(start, int):
+            start = xr.where(end.isnull(), np.nan, start)
+            start = start.convert_calendar(cal)
+            start.attrs["calendar"] = cal
+        else:
+            start = start.convert_calendar(cal)
+            start.attrs["calendar"] = cal
+            start = doy_to_days_since(start)
+
+        if isinstance(end, int):
+            end = xr.where(start.isnull(), np.nan, end)
+            end = end.convert_calendar(cal)
+            end.attrs["calendar"] = cal
+        else:
+            end = end.convert_calendar(cal)
+            end.attrs["calendar"] = cal
+            end = doy_to_days_since(end)
+
+        freq = xr.infer_freq(start.time)
+        out = []
+        for base_time, indexes in da.resample(time=freq).groups.items():
+            # get group slice
+            group = da.isel(time=indexes)
+
+            if base_time in start.time:
+                start_d = start.sel(time=base_time)
+            else:
+                start_d = None
+            if base_time in end.time:
+                end_d = end.sel(time=base_time)
+            else:
+                end_d = None
+
+            if start_d is not None and end_d is not None:
+                if not include_bounds[0]:
+                    start_d += 1
+                if not include_bounds[1]:
+                    end_d -= 1
+
+                # select days between start and end for group
+                days = (group.time - base_time).dt.days
+                days[days < 0] = np.nan
+
+                mask = (days >= start_d) & (days <= end_d)
+            else:
+                # Get an array with the good shape and put False
+                mask = xr.where(group.isel(time=0), False, False)
+
+            out.append(mask)
+        mask = xr.concat(out, dim="time")
+    return mask
+
+
 def select_time(
     da: xr.DataArray | xr.Dataset,
     drop: bool = False,
     season: str | Sequence[str] | None = None,
     month: int | Sequence[int] | None = None,
-    doy_bounds: tuple[int, int] | None = None,
+    doy_bounds: tuple[int | xr.DataArray, int | xr.DataArray] | None = None,
     date_bounds: tuple[str, str] | None = None,
     include_bounds: bool | tuple[bool, bool] = True,
 ) -> DataType:
@@ -1104,9 +1216,10 @@ def select_time(
         One or more of 'DJF', 'MAM', 'JJA' and 'SON'.
     month : integer or sequence of integers, optional
         Sequence of month numbers (January = 1 ... December = 12)
-    doy_bounds : 2-tuple of integers, optional
+    doy_bounds : 2-tuple of integers or xr.DataArray, optional
         The bounds as (start, end) of the period of interest expressed in day-of-year, integers going from
-        1 (January 1st) to 365 or 366 (December 31st).
+        1 (January 1st) to 365 or 366 (December 31st). If a combination of int and xr.DataArray is given,
+        the int day-of-year corresponds to the year of the xr.DataArray.
         If calendar awareness is needed, consider using ``date_bounds`` instead.
     date_bounds : 2-tuple of strings, optional
         The bounds as (start, end) of the period of interest expressed as dates in the month-day (%m-%d) format.
@@ -1148,17 +1261,6 @@ def select_time(
     if N == 0:
         return da
 
-    def _get_doys(_start, _end, _inclusive):
-        if _start <= _end:
-            _doys = np.arange(_start, _end + 1)
-        else:
-            _doys = np.concatenate((np.arange(_start, 367), np.arange(0, _end + 1)))
-        if not _inclusive[0]:
-            _doys = _doys[1:]
-        if not _inclusive[1]:
-            _doys = _doys[:-1]
-        return _doys
-
     if isinstance(include_bounds, bool):
         include_bounds = (include_bounds, include_bounds)
 
@@ -1173,7 +1275,7 @@ def select_time(
         mask = da.time.dt.month.isin(month)
 
     elif doy_bounds is not None:
-        mask = da.time.dt.dayofyear.isin(_get_doys(*doy_bounds, include_bounds))
+        mask = mask_between_doys(da, doy_bounds, include_bounds)
 
     elif date_bounds is not None:
         # This one is a bit trickier.
