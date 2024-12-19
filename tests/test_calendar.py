@@ -482,13 +482,13 @@ def test_convert_doy():
     )
 
 
-@pytest.mark.parametrize("cftime", [True, False])
+@pytest.mark.parametrize("calendar", ["standard", None])
 @pytest.mark.parametrize(
     "w,s,m,f,ss",
     [(30, 10, None, "YS", 0), (3, 1, None, "QS-DEC", 60), (6, None, None, "MS", 0)],
 )
-def test_stack_periods(tas_series, cftime, w, s, m, f, ss):
-    da = tas_series(np.arange(365 * 50), start="2000-01-01", cftime=cftime)
+def test_stack_periods(tas_series, calendar, w, s, m, f, ss):
+    da = tas_series(np.arange(365 * 50), start="2000-01-01", calendar=calendar)
 
     da_stck = stack_periods(
         da, window=w, stride=s, min_length=m, freq=f, align_days=False
@@ -502,7 +502,7 @@ def test_stack_periods(tas_series, cftime, w, s, m, f, ss):
 
 
 def test_stack_periods_special(tas_series):
-    da = tas_series(np.arange(365 * 48 + 12), cftime=True, start="2004-01-01")
+    da = tas_series(np.arange(365 * 48 + 12), calendar="standard", start="2004-01-01")
 
     with pytest.raises(ValueError, match="unaligned day-of-year"):
         stack_periods(da)
