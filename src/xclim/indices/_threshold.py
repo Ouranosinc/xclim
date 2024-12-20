@@ -3680,8 +3680,8 @@ def holiday_snow_days(
     ----------
     https://www.canada.ca/en/environment-climate-change/services/weather-general-tools-resources/historical-christmas-snowfall-data.html
     """
-    snow_depth = convert_units_to(snd, "mm", context="hydro")
-    snow_depth_thresh = convert_units_to(snd_thresh, "mm", context="hydro")
+    snow_depth = convert_units_to(snd, "m")
+    snow_depth_thresh = convert_units_to(snd_thresh, "m")
     snow_depth_constrained = select_time(
         snow_depth,
         drop=True,
@@ -3691,7 +3691,7 @@ def holiday_snow_days(
     xmas_days = (
         (snow_depth_constrained >= snow_depth_thresh)
         .resample(time=freq)
-        .map(lambda x: x.all(dim="time"))
+        .map(lambda x: x.sum(dim="time"))
     )
 
     xmas_days = xmas_days.assign_attrs({"units": "1"})
@@ -3708,7 +3708,7 @@ def holiday_snow_and_snowfall_days(
     snd: xarray.DataArray,
     prsn: xarray.DataArray | None = None,
     snd_thresh: Quantified = "20 mm",
-    prsn_thresh: Quantified = "1 mm",
+    prsn_thresh: Quantified = "1 cm",
     date_start: str = "12-25",
     date_end: str | None = None,
     freq: str = "YS-JUL",
@@ -3739,27 +3739,27 @@ def holiday_snow_and_snowfall_days(
 
     Returns
     -------
-    xarray.DataArray, [bool]
-        Boolean array of years with Perfect Christmas Days.
+    xarray.DataArray, [int]
+        The total number of days with snow and snowfall during the holiday.
 
     References
     ----------
     https://www.canada.ca/en/environment-climate-change/services/weather-general-tools-resources/historical-christmas-snowfall-data.html
     """
-    snowfall_rate = rate2amount(
-        convert_units_to(prsn, "mm/d", context="hydro"), out_units="mm"
-    )
-    snowfall_thresh = convert_units_to(prsn_thresh, "mm", context="hydro")
-    snowfall_constrained = select_time(
-        snowfall_rate,
+    snow_depth = convert_units_to(snd, "m")
+    snow_depth_thresh = convert_units_to(snd_thresh, "m")
+    snow_depth_constrained = select_time(
+        snow_depth,
         drop=True,
         date_bounds=(date_start, date_start if date_end is None else date_end),
     )
 
-    snow_depth = convert_units_to(snd, "mm", context="hydro")
-    snow_depth_thresh = convert_units_to(snd_thresh, "mm", context="hydro")
-    snow_depth_constrained = select_time(
-        snow_depth,
+    snowfall_rate = rate2amount(
+        convert_units_to(prsn, "mm day-1", context="hydro"), out_units="mm"
+    )
+    snowfall_thresh = convert_units_to(prsn_thresh, "mm", context="hydro")
+    snowfall_constrained = select_time(
+        snowfall_rate,
         drop=True,
         date_bounds=(date_start, date_start if date_end is None else date_end),
     )
@@ -3770,7 +3770,7 @@ def holiday_snow_and_snowfall_days(
             & (snowfall_constrained >= snowfall_thresh)
         )
         .resample(time=freq)
-        .map(lambda x: x.all(dim="time"))
+        .map(lambda x: x.sum(dim="time"))
     )
 
     perfect_xmas_days = perfect_xmas_days.assign_attrs({"units": "1"})
