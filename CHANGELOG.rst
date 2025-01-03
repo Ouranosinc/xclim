@@ -2,6 +2,14 @@
 Changelog
 =========
 
+v0.55.0 (unreleased)
+--------------------
+Contributors to this version: Sascha Hofmann (:user:`saschahofmann`).
+
+Bug fixes
+^^^^^^^^^
+* Fixed a bug in ``xclim.sdba.Grouper.get_index`` that didn't correctly interpolate seasonal values (:issue:`2014`, :pull:`2019`).
+
 v0.54.0 (2024-12-16)
 --------------------
 Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), Éric Dupuis (:user:`coxipi`), Sascha Hofmann (:user:`saschahofmann`).
