@@ -362,7 +362,8 @@ def general_partition(
         raise ValueError("This algorithm expects annual time series.")
 
     if not ({"time"} | set(all_types)).issubset(da.dims):
-        raise ValueError(f"DataArray dimensions should include {all_types} and time.")
+        error_msg = f"DataArray dimensions should include {all_types} and time."
+        raise ValueError(error_msg)
 
     if sm == "poly":
         # Fit a 4th order polynomial
