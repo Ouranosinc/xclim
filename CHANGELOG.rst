@@ -8,7 +8,7 @@ Contributors to this version: Juliette Lavoie (:user:`juliettelavoie`)
 
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-* New function ``ensemble.partition.general_partition`
+* New function ``ensemble.partition.general_partition` (:pull:`2035`)
 
 
 v0.54.0 (2024-12-16)
