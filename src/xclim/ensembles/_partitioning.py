@@ -321,7 +321,7 @@ def general_partition(
     ----------
     da : xr.DataArray
         Time series with dimensions 'time', mean_first and var_first.
-    sm : xr.DataArray or str
+    sm : xr.DataArray or {"poly", "loess"}
         Smoothed time series over time, with the same dimensions as `da`.
         If 'poly', this is estimated using a 4th-order polynomial.
         If 'loess', this is estimated using a LOESS curve.
