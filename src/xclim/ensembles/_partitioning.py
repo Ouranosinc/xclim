@@ -326,13 +326,13 @@ def general_partition(
         If 'poly', this is estimated using a 4th-order polynomial.
         If 'loess', this is estimated using a LOESS curve.
         It is also possible to pass a precomputed smoothed time series.
-    var_first : list of strings
+    var_first : list of str
         List of dimensions where the variance is computed first of the dimension,
         followed by the mean over the other dimensions.
-    mean_first : list of strings
+    mean_first : list of str
         List of dimensions where the mean over the other dimensions is computed first,
         followed by the variance over the dimension.
-    weights : list of strings
+    weights : list of str
         List of dimensions where the first operation is weighted.
 
     Returns
@@ -375,7 +375,7 @@ def general_partition(
     elif isinstance(sm, xr.DataArray):
         sm = sm
     else:
-        raise ValueError("sm should be 'poly', 'loess' or a DataArray.")
+        raise ValueError("sm should be 'poly', 'loess', or a DataArray.")
 
     # "Interannual variability is then estimated as the centered rolling 11-year variance of the difference
     # between the extracted forced response and the raw outputs, averaged over all outputs."
@@ -407,8 +407,8 @@ def general_partition(
         total += t_u
 
     # Create output array with the uncertainty components
-    u = pd.Index(all_types + ["variability", "total"], name="uncertainty")
-    uncertainty = xr.concat(all_u + [nv_u, total], dim=u)
+    u = pd.Index([*all_types, "variability", "total"], name="uncertainty")
+    uncertainty = xr.concat([*all_u, nv_u, total], dim=u)
 
     uncertainty.attrs["indicator_long_name"] = da.attrs.get("long_name", "unknown")
     uncertainty.attrs["indicator_description"] = da.attrs.get("description", "unknown")
