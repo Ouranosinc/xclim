@@ -167,7 +167,7 @@ def _loess_nb(
             s = np.median(np.abs(residuals))
             xres = residuals / (6.0 * s)
             delta = (1 - xres**2) ** 2
-            delta[(np.abs(xres) >= 1) | np.isnan(xres)] = 0
+            delta[np.abs(xres) >= 1] = 0
 
     if skipna:
         out[~nan] = yest
