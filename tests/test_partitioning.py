@@ -164,9 +164,14 @@ def test_lafferty_sriver(lafferty_sriver_ds):
 
 
 def test_general_partition(lafferty_sriver_ds):
-    """Defaults should give the same thing as lafferty_sriver"""
+    """Reproduce Lafferty & Sriver's results using general_partition."""
     g1, u1 = lafferty_sriver(lafferty_sriver_ds.tas)
-    g2, u2 = general_partition(lafferty_sriver_ds.tas)
+    g2, u2 = general_partition(
+        lafferty_sriver_ds.tas,
+        var_first=["model", "downscaling"],
+        mean_first=["scenario"],
+        weights=["model", "downscaling"],
+    )
 
     assert u1.equals(u2)
     assert g1.equals(g2)
