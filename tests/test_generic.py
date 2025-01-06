@@ -6,8 +6,9 @@ import numpy as np
 import pytest
 import xarray as xr
 
-from xclim.core.calendar import date_range, doy_to_days_since, select_time
+from xclim.core.calendar import doy_to_days_since, select_time
 from xclim.indices import generic
+from xclim.testing.helpers import assert_lazy
 
 K2C = 273.15
 
@@ -101,15 +102,20 @@ class TestFlowGeneric:
         for da in [dmx, dmn]:
             for attr in ["units", "is_dayofyear", "calendar"]:
                 assert attr in da.attrs.keys()
-            assert da.attrs["units"] == ""
+
+            assert da.attrs["units"] == "1"
             assert da.attrs["is_dayofyear"] == 1
 
 
 class TestAggregateBetweenDates:
     def test_calendars(self):
         # generate test DataArray
-        time_std = date_range("1991-07-01", "1993-06-30", freq="D", calendar="standard")
-        time_365 = date_range("1991-07-01", "1993-06-30", freq="D", calendar="noleap")
+        time_std = xr.date_range(
+            "1991-07-01", "1993-06-30", freq="D", calendar="standard"
+        )
+        time_365 = xr.date_range(
+            "1991-07-01", "1993-06-30", freq="D", calendar="noleap"
+        )
         data_std = xr.DataArray(
             np.ones((time_std.size, 4)),
             dims=("time", "lon"),
@@ -159,13 +165,15 @@ class TestAggregateBetweenDates:
 
     def test_time_length(self):
         # generate test DataArray
-        time_data = date_range(
+        time_data = xr.date_range(
             "1991-01-01", "1993-12-31", freq="D", calendar="standard"
         )
-        time_start = date_range(
+        time_start = xr.date_range(
             "1990-01-01", "1992-12-31", freq="D", calendar="standard"
         )
-        time_end = date_range("1991-01-01", "1993-12-31", freq="D", calendar="standard")
+        time_end = xr.date_range(
+            "1991-01-01", "1993-12-31", freq="D", calendar="standard"
+        )
         data = xr.DataArray(
             np.ones((time_data.size, 4)),
             dims=("time", "lon"),
@@ -206,7 +214,7 @@ class TestAggregateBetweenDates:
 
     def test_frequency(self):
         # generate test DataArray
-        time_data = date_range(
+        time_data = xr.date_range(
             "1991-01-01", "1992-05-31", freq="D", calendar="standard"
         )
         data = xr.DataArray(
@@ -280,7 +288,7 @@ class TestAggregateBetweenDates:
 
     def test_day_of_year_strings(self):
         # generate test DataArray
-        time_data = date_range(
+        time_data = xr.date_range(
             "1990-08-01", "1995-06-01", freq="D", calendar="standard"
         )
         data = xr.DataArray(
@@ -325,6 +333,12 @@ class TestCumulativeDifference:
 
         with pytest.raises(NotImplementedError):
             generic.cumulative_difference(tas, threshold="10 degC", op="!=")
+
+    def test_delta_units(self, tas_series):
+        tas = tas_series(np.array([-10, 15, 20, 3, 10]) + K2C)
+
+        out = generic.cumulative_difference(tas, threshold="10 degC", op=">=")
+        assert "units_metadata" in out.attrs
 
 
 class TestFirstDayThreshold:
@@ -387,13 +401,13 @@ class TestFirstDayThreshold:
 
 class TestGetDailyEvents:
     def test_simple(self, tas_series):
-        arr = xr.DataArray(np.array([-10, 15, 20, np.NaN, 10]), name="Stuff")
+        arr = xr.DataArray(np.array([-10, 15, 20, np.nan, 10]), name="Stuff")
 
         out = generic.get_daily_events(arr, threshold=10, op=">=")
 
         assert out.name == "events"
         assert out.sum() == 3
-        np.testing.assert_array_equal(out, [0, 1, 1, np.NaN, 1])
+        np.testing.assert_array_equal(out, [0, 1, 1, np.nan, 1])
 
 
 class TestGenericCountingIndices:
@@ -464,7 +478,7 @@ class TestGenericCountingIndices:
     @pytest.mark.parametrize(
         "op, constrain, expected, should_fail",
         [
-            ("<", None, np.NaN, False),
+            ("<", None, np.nan, False),
             ("<=", None, 3, False),
             ("!=", ("!=",), 1, False),
             ("==", ("==", "!="), 3, False),
@@ -491,7 +505,7 @@ class TestGenericCountingIndices:
     @pytest.mark.parametrize(
         "op, constrain, expected, should_fail",
         [
-            ("<", None, np.NaN, False),
+            ("<", None, np.nan, False),
             ("<=", None, 8, False),
             ("!=", ("!=",), 9, False),
             ("==", ("==", "!="), 8, False),
@@ -519,7 +533,12 @@ class TestGenericCountingIndices:
 class TestTimeSelection:
     @staticmethod
     def series(start, end, calendar):
-        time = date_range(start, end, calendar=calendar)
+        time = xr.date_range(
+            start,
+            end,
+            calendar=calendar.replace("default", "proleptic_gregorian"),
+            use_cftime=(calendar != "default"),
+        )
         return xr.DataArray([1] * time.size, dims=("time",), coords={"time": time})
 
     def test_select_time_month(self):
@@ -651,3 +670,231 @@ class TestTimeSelection:
 
         with pytest.raises(TypeError):
             select_time(da, doy_bounds=(300, 203, 202))
+
+
+class TestSpellMask:
+    def test_single_variable(self):
+        data = xr.DataArray([0, 1, 2, 3, 2, 1, 0, 0], dims=("time",))
+
+        out = generic.spell_mask(data, 3, "min", ">=", 2)
+        np.testing.assert_array_equal(
+            out, np.array([0, 0, 1, 1, 1, 0, 0, 0]).astype(bool)
+        )
+
+        out = generic.spell_mask(data, 3, "max", ">=", 2)
+        np.testing.assert_array_equal(
+            out, np.array([1, 1, 1, 1, 1, 1, 1, 0]).astype(bool)
+        )
+
+        out = generic.spell_mask(data, 2, "mean", ">=", 2)
+        np.testing.assert_array_equal(
+            out, np.array([0, 0, 1, 1, 1, 0, 0, 0]).astype(bool)
+        )
+
+        out = generic.spell_mask(data, 3, "mean", ">", 2, weights=[0.2, 0.4, 0.4])
+        np.testing.assert_array_equal(
+            out, np.array([0, 1, 1, 1, 1, 0, 0, 0]).astype(bool)
+        )
+
+    def test_multiple_variables(self):
+        data1 = xr.DataArray([0, 1, 2, 3, 2, 1, 0, 0], dims=("time",))
+        data2 = xr.DataArray([1, 2, 3, 2, 1, 0, 0, 0], dims=("time",))
+
+        out = generic.spell_mask([data1, data2], 3, "min", ">=", [2, 2])
+        np.testing.assert_array_equal(
+            out, np.array([0, 0, 0, 0, 0, 0, 0, 0]).astype(bool)
+        )
+
+        out = generic.spell_mask(
+            [data1, data2], 3, "min", ">=", [2, 2], var_reducer="any"
+        )
+        np.testing.assert_array_equal(
+            out, np.array([0, 1, 1, 1, 1, 0, 0, 0]).astype(bool)
+        )
+
+        out = generic.spell_mask([data1, data2], 2, "mean", ">=", [2, 2])
+        np.testing.assert_array_equal(
+            out, np.array([0, 0, 1, 1, 0, 0, 0, 0]).astype(bool)
+        )
+
+        out = generic.spell_mask(
+            [data1, data2], 3, "mean", ">", [2, 1.5], weights=[0.2, 0.4, 0.4]
+        )
+        np.testing.assert_array_equal(
+            out, np.array([0, 1, 1, 1, 1, 0, 0, 0]).astype(bool)
+        )
+
+    def test_errors(self):
+        data = xr.DataArray([0, 1, 2, 3, 2, 1, 0, 0], dims=("time",))
+
+        # Threshold must be seq
+        with pytest.raises(ValueError, match="must be a sequence of the same length"):
+            generic.spell_mask([data, data], 3, "min", "<=", 2)
+
+        # Threshold must be same length
+        with pytest.raises(ValueError, match="must be a sequence of the same length"):
+            generic.spell_mask([data, data], 3, "min", "<=", [2])
+
+        # Weights must have win_reducer = 'mean'
+        with pytest.raises(
+            ValueError, match="is only supported if 'win_reducer' is 'mean'"
+        ):
+            generic.spell_mask(data, 3, "min", "<=", 2, weights=[1, 2, 3])
+
+        # Weights must have same length as window
+        with pytest.raises(ValueError, match="Weights have a different length"):
+            generic.spell_mask(data, 3, "mean", "<=", 2, weights=[1, 2])
+
+
+def test_spell_length_statistics_multi(tasmin_series, tasmax_series):
+    tn = tasmin_series(
+        np.zeros(
+            365,
+        )
+        + 270,
+        start="2001-01-01",
+    )
+    tx = tasmax_series(
+        np.zeros(
+            365,
+        )
+        + 270,
+        start="2001-01-01",
+    )
+
+    outc, outs, outm = generic.bivariate_spell_length_statistics(
+        tn,
+        "0 °C",
+        tx,
+        "1°C",
+        window=5,
+        win_reducer="min",
+        op="<",
+        spell_reducer=["count", "sum", "max"],
+        freq="YS",
+    )
+    xr.testing.assert_equal(outs, outm)
+    np.testing.assert_allclose(outc, 1)
+
+
+class TestThresholdedEvents:
+
+    @pytest.mark.parametrize("use_dask", [True, False])
+    def test_simple(self, pr_series, use_dask):
+        arr = np.array([0, 0, 0, 1, 2, 3, 0, 3, 3, 10, 0, 0, 0, 0, 0, 1, 2, 2, 2, 0, 0, 0, 0, 0, 0, 1, 3, 3, 2, 0, 0, 0, 2, 0, 0, 0, 0])  # fmt: skip
+        pr = pr_series(arr, start="2000-01-01", units="mm")
+        if use_dask:
+            pr = pr.chunk(-1)
+
+        with assert_lazy:
+            out = generic.thresholded_events(
+                pr,
+                thresh="1 mm",
+                op=">=",
+                window=3,
+            )
+
+        assert out.event.size == np.ceil(arr.size / (3 + 1))
+        out = out.load().dropna("event", how="all")
+
+        np.testing.assert_array_equal(out.event_length, [3, 3, 4, 4])
+        np.testing.assert_array_equal(out.event_effective_length, [3, 3, 4, 4])
+        np.testing.assert_array_equal(out.event_sum, [6, 16, 7, 9])
+        np.testing.assert_array_equal(
+            out.event_start,
+            np.array(
+                ["2000-01-04", "2000-01-08", "2000-01-16", "2000-01-26"],
+                dtype="datetime64[ns]",
+            ),
+        )
+
+    @pytest.mark.parametrize("use_dask", [True, False])
+    def test_diff_windows(self, pr_series, use_dask):
+        arr = np.array([0, 0, 0, 1, 2, 3, 0, 3, 3, 10, 0, 0, 0, 0, 0, 1, 2, 2, 2, 0, 0, 0, 0, 0, 0, 1, 3, 3, 2, 0, 0, 0, 2, 0, 0, 0, 0])  # fmt: skip
+        pr = pr_series(arr, start="2000-01-01", units="mm")
+        if use_dask:
+            pr = pr.chunk(-1)
+
+        # different window stop
+        out = (
+            generic.thresholded_events(
+                pr, thresh="2 mm", op=">=", window=3, window_stop=4
+            )
+            .load()
+            .dropna("event", how="all")
+        )
+
+        np.testing.assert_array_equal(out.event_length, [3, 3, 7])
+        np.testing.assert_array_equal(out.event_effective_length, [3, 3, 4])
+        np.testing.assert_array_equal(out.event_sum, [16, 6, 10])
+        np.testing.assert_array_equal(
+            out.event_start,
+            np.array(
+                ["2000-01-08", "2000-01-17", "2000-01-27"], dtype="datetime64[ns]"
+            ),
+        )
+
+    @pytest.mark.parametrize("use_dask", [True, False])
+    def test_cftime(self, pr_series, use_dask):
+        arr = np.array([0, 0, 0, 1, 2, 3, 0, 3, 3, 10, 0, 0, 0, 0, 0, 1, 2, 2, 2, 0, 0, 0, 0, 0, 0, 1, 3, 3, 2, 0, 0, 0, 2, 0, 0, 0, 0])  # fmt: skip
+        pr = pr_series(arr, start="2000-01-01", units="mm").convert_calendar("noleap")
+        if use_dask:
+            pr = pr.chunk(-1)
+
+        # cftime
+        with assert_lazy:
+            out = generic.thresholded_events(
+                pr,
+                thresh="1 mm",
+                op=">=",
+                window=3,
+                window_stop=3,
+            )
+        out = out.load().dropna("event", how="all")
+
+        np.testing.assert_array_equal(out.event_length, [7, 4, 4])
+        np.testing.assert_array_equal(out.event_effective_length, [6, 4, 4])
+        np.testing.assert_array_equal(out.event_sum, [22, 7, 9])
+        exp = xr.DataArray(
+            [1, 2, 3],
+            dims=("time",),
+            coords={
+                "time": np.array(
+                    ["2000-01-04", "2000-01-16", "2000-01-26"], dtype="datetime64[ns]"
+                )
+            },
+        )
+        np.testing.assert_array_equal(
+            out.event_start, exp.convert_calendar("noleap").time
+        )
+
+    @pytest.mark.parametrize("use_dask", [True, False])
+    def test_freq(self, pr_series, use_dask):
+        jan = [0, 0, 0, 1, 2, 3, 0, 3, 3, 10, 0, 0, 0, 0, 0, 0, 2, 2, 2, 2, 2, 2, 0, 0, 0, 0, 0, 3, 2, 3, 2]  # fmt: skip
+        fev = [2, 2, 1, 0, 0, 0, 3, 3, 4, 5, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]  # fmt: skip
+        pr = pr_series(np.array(jan + fev), start="2000-01-01", units="mm")
+        if use_dask:
+            pr = pr.chunk(-1)
+
+        with assert_lazy:
+            out = generic.thresholded_events(
+                pr, thresh="1 mm", op=">=", window=3, freq="MS", window_stop=3
+            )
+        assert out.event_length.shape == (2, 6)
+        out = out.load().dropna("event", how="all")
+
+        np.testing.assert_array_equal(out.event_length, [[7, 6, 4], [3, 5, np.nan]])
+        np.testing.assert_array_equal(
+            out.event_effective_length, [[6, 6, 4], [3, 5, np.nan]]
+        )
+        np.testing.assert_array_equal(out.event_sum, [[22, 12, 10], [5, 17, np.nan]])
+        np.testing.assert_array_equal(
+            out.event_start,
+            np.array(
+                [
+                    ["2000-01-04", "2000-01-17", "2000-01-28"],
+                    ["2000-02-01", "2000-02-07", "NaT"],
+                ],
+                dtype="datetime64[ns]",
+            ),
+        )

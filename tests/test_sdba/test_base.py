@@ -29,7 +29,7 @@ def test_param_class():
     )
 
     s = jsonpickle.encode(obj)
-    obj2 = jsonpickle.decode(s)
+    obj2 = jsonpickle.decode(s)  # noqa: S301
     assert obj.parameters == obj2.parameters
 
 
@@ -63,7 +63,6 @@ def test_grouper_get_index(tas_series, group, interp, val90):
 
 # xarray does not yet access "week" or "weekofyear" with groupby in a pandas-compatible way for cftime objects.
 # See: https://github.com/pydata/xarray/discussions/6375
-@pytest.mark.filterwarnings("ignore:dt.weekofyear and dt.week have been deprecated")
 @pytest.mark.slow
 @pytest.mark.parametrize(
     "group,n",

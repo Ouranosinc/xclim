@@ -1,5 +1,0 @@
-bottleneck @ git+https://github.com/pydata/bottleneck.git@master
-cftime @ git+https://github.com/Unidata/cftime.git@master
-flox @ git+https://github.com/xarray-contrib/flox.git@main
-numba @ git+https://github.com/numba/numba.git@main
-xarray @ git+https://github.com/pydata/xarray.git@main

@@ -9,6 +9,7 @@ import xarray as xr
 from dask import array as dsk
 
 from xclim import indices, set_options
+from xclim.core import Quantified, ValidationError
 from xclim.core.units import (
     amount2lwethickness,
     amount2rate,
@@ -18,6 +19,7 @@ from xclim.core.units import (
     declare_units,
     infer_context,
     lwethickness2amount,
+    pint2cfattrs,
     pint2cfunits,
     pint_multiply,
     rate2amount,
@@ -26,7 +28,6 @@ from xclim.core.units import (
     units,
     units2pint,
 )
-from xclim.core.utils import Quantified, ValidationError
 
 
 class TestUnits:
@@ -117,6 +118,14 @@ class TestConvertUnitsTo:
         assert out.attrs["units"] == "kg d-1 m-2"  # CF equivalent unit
         assert out.attrs["standard_name"] == "rainfall_flux"
 
+    def test_temperature_difference(self):
+        delta = xr.DataArray(
+            [2], attrs={"units": "K", "units_metadata": "temperature: difference"}
+        )
+        out = convert_units_to(source=delta, target="delta_degC")
+        assert out == 2
+        assert out.attrs["units"] == "degC"
+
 
 class TestUnitConversion:
     def test_pint2cfunits(self):
@@ -140,7 +149,7 @@ class TestUnitConversion:
         assert pint2cfunits(u) == "%"
 
         u = units2pint("1")
-        assert pint2cfunits(u) == ""
+        assert pint2cfunits(u) == "1"
 
     def test_pint_multiply(self, pr_series):
         a = pr_series([1, 2, 3])
@@ -225,6 +234,20 @@ def test_rate2amount(pr_series):
         np.testing.assert_array_equal(am_ys, 86400 * np.array([365, 366, 365]))
 
 
+@pytest.mark.parametrize(
+    "srcfreq, exp", [("h", 3600), ("min", 60), ("s", 1), ("ns", 1e-9)]
+)
+def test_rate2amount_subdaily(srcfreq, exp):
+    pr = xr.DataArray(
+        np.ones(1000),
+        dims=("time",),
+        coords={"time": xr.date_range("2019-01-01", periods=1000, freq=srcfreq)},
+        attrs={"units": "kg m-2 s-1"},
+    )
+    am = rate2amount(pr)
+    np.testing.assert_array_equal(am, exp)
+
+
 def test_amount2rate(pr_series):
     pr = pr_series(np.ones(365 + 366 + 365), start="2019-01-01")
     am = rate2amount(pr)
@@ -250,13 +273,11 @@ def test_amount2lwethickness(snw_series):
     snw = snw_series(np.ones(365), start="2019-01-01")
 
     swe = amount2lwethickness(snw, out_units="mm")
-    # FIXME: Asserting these statements shows that they are not equal
-    swe.attrs["standard_name"] == "lwe_thickness_of_snowfall_amount"
+    assert swe.attrs["standard_name"] == "lwe_thickness_of_surface_snow_amount"
     np.testing.assert_allclose(swe, 1)
 
     snw = lwethickness2amount(swe)
-    # FIXME: Asserting these statements shows that they are not equal
-    snw.attrs["standard_name"] == "snowfall_amount"
+    assert snw.attrs["standard_name"] == "surface_snow_amount"
 
 
 @pytest.mark.parametrize(
@@ -331,7 +352,21 @@ def test_declare_relative_units():
         ("", "sum", "count", 365, "d"),
         ("", "sum", "count", 365, "d"),
         ("kg m-2", "var", "var", 0, "kg2 m-4"),
-        ("°C", "argmax", "doymax", 0, ""),
+        (
+            "°C",
+            "argmax",
+            "doymax",
+            0,
+            "1",
+        ),
+        (
+            "°C",
+            "sum",
+            "integral",
+            365,
+            ("degC d", "d degC"),
+        ),  # dependent on numpy/pint version
+        ("°F", "sum", "integral", 365, "d degF"),  # not sure why the order is different
     ],
 )
 def test_to_agg_units(in_u, opfunc, op, exp, exp_u):
@@ -341,7 +376,37 @@ def test_to_agg_units(in_u, opfunc, op, exp, exp_u):
         coords={"time": xr.cftime_range("1993-01-01", periods=365, freq="D")},
         attrs={"units": in_u},
     )
+    if units(in_u).dimensionality == "[temperature]":
+        da.attrs["units_metadata"] = "temperature: difference"
 
+    # FIXME: This is emitting warnings from deprecated DataArray.argmax() usage.
     out = to_agg_units(getattr(da, opfunc)(), da, op)
     np.testing.assert_allclose(out, exp)
-    assert out.attrs["units"] == exp_u
+    if isinstance(exp_u, tuple):
+        assert out.attrs["units"] in exp_u
+    else:
+        assert out.attrs["units"] == exp_u
+
+
+def test_pint2cfattrs():
+    attrs = pint2cfattrs(units.degK, is_difference=True)
+    assert attrs == {"units": "K", "units_metadata": "temperature: difference"}
+
+    attrs = pint2cfattrs(units.meter, is_difference=True)
+    assert "units_metadata" not in attrs
+
+    attrs = pint2cfattrs(units.delta_degC)
+    assert attrs == {"units": "degC", "units_metadata": "temperature: difference"}
+
+
+def test_temp_difference_rountrip():
+    """Test roundtrip of temperature difference units."""
+    attrs = {"units": "degC", "units_metadata": "temperature: difference"}
+    da = xr.DataArray([1], attrs=attrs)
+    pu = units2pint(da)
+    # Confirm that we get delta pint units
+    assert pu == units.delta_degC
+
+    # and that converting those back to cf attrs gives the same result
+    attrs = pint2cfattrs(pu)
+    assert attrs == {"units": "degC", "units_metadata": "temperature: difference"}

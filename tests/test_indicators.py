@@ -5,7 +5,6 @@ from __future__ import annotations
 import gc
 import json
 from inspect import signature
-from typing import Union
 
 import dask
 import numpy as np
@@ -14,6 +13,7 @@ import xarray as xr
 
 import xclim
 from xclim import __version__, atmos
+from xclim.core import VARIABLES, MissingVariableError, Quantified
 from xclim.core.calendar import select_time
 from xclim.core.formatting import (
     AttrFormatter,
@@ -24,7 +24,7 @@ from xclim.core.formatting import (
 )
 from xclim.core.indicator import Daily, Indicator, ResamplingIndicator, registry
 from xclim.core.units import convert_units_to, declare_units, units
-from xclim.core.utils import VARIABLES, InputKind, MissingVariableError, Quantified
+from xclim.core.utils import InputKind
 from xclim.indices import tg_mean
 from xclim.testing import list_input_variables
 
@@ -286,6 +286,20 @@ def test_temp_unit_conversion(tas_series):
     np.testing.assert_array_almost_equal(txk, txc + 273.15)
 
 
+def test_temp_diff_unit_conversion(tasmax_series, tasmin_series):
+    tx = tasmax_series(np.arange(365) + 1, start="2001-01-01")
+    tn = tasmin_series(np.arange(365), start="2001-01-01")
+    txC = convert_units_to(tx, "degC")
+    tnC = convert_units_to(tn, "degC")
+
+    ind = xclim.atmos.daily_temperature_range.from_dict(
+        {"units": "degC"}, "dtr_degC", "test"
+    )
+    out = ind(tasmax=txC, tasmin=tnC)
+    assert out.attrs["units"] == "degC"
+    assert out.attrs["units_metadata"] == "temperature: difference"
+
+
 def test_multiindicator(tas_series):
     tas = tas_series(np.arange(366), start="2000-01-01")
     tmin, tmax = multiTemp(tas, freq="YS")
@@ -488,6 +502,9 @@ def test_all_parameters_understood(official_indicators):
     if problems - {
         ("COOL_NIGHT_INDEX", "lat"),
         ("DRYNESS_INDEX", "lat"),
+        # TODO: How should we handle the case of Literal[str]?
+        ("GROWING_SEASON_END", "op"),
+        ("GROWING_SEASON_START", "op"),
     }:
         raise ValueError(
             f"The following indicator/parameter couple {problems} use types not listed in InputKind."
@@ -504,7 +521,7 @@ def test_signature():
         "ds",
         "indexer",
     ]
-    assert sig.parameters["pr"].annotation == Union[xr.DataArray, str]
+    assert sig.parameters["pr"].annotation == xr.DataArray | str
     assert sig.parameters["tas"].default == "tas"
     assert sig.parameters["tas"].kind == sig.parameters["tas"].POSITIONAL_OR_KEYWORD
     assert sig.parameters["thresh"].kind == sig.parameters["thresh"].KEYWORD_ONLY
@@ -574,7 +591,7 @@ def test_parse_doc():
     assert doc["notes"].startswith("Let")
     assert "math::" in doc["notes"]
     assert "references" not in doc
-    assert doc["long_name"] == "The mean daily temperature at the given time frequency"
+    assert doc["long_name"] == "The mean daily temperature at the given time frequency."
 
     doc = parse_doc(xclim.indices.saturation_vapor_pressure.__doc__)
     assert (
@@ -705,8 +722,7 @@ def test_indicator_from_dict():
     assert ind.parameters["threshold"].description == "A threshold temp"
     # Injection of parameters
     assert ind.injected_parameters["op"] == "<"
-    # Default value for input variable injected and meta injected
-    assert ind._variable_mapping["data"] == "tas"
+    assert ind.parameters["tas"].compute_name == "data"
     assert signature(ind).parameters["tas"].default == "tas"
     assert ind.parameters["tas"].units == "[temperature]"
 
@@ -845,7 +861,7 @@ def test_resampling_indicator_with_indexing(tas_series):
     out = xclim.atmos.tx_days_above(
         tas, thresh="0 degC", freq="YS-JUL", doy_bounds=(1, 50)
     )
-    np.testing.assert_allclose(out, [50, 50, np.NaN])
+    np.testing.assert_allclose(out, [50, 50, np.nan])
 
     out = xclim.atmos.tx_days_above(
         tas, thresh="0 degC", freq="YS", date_bounds=("02-29", "04-01")
@@ -882,6 +898,6 @@ def test_freq_doc():
     from xclim import atmos
 
     doc = atmos.latitude_temperature_index.__doc__
-    allowed_periods = ["A"]
+    allowed_periods = ["Y"]
     exp = f"Restricted to frequencies equivalent to one of {allowed_periods}"
     assert exp in doc

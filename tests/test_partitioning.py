@@ -3,7 +3,12 @@ from __future__ import annotations
 import numpy as np
 import xarray as xr
 
-from xclim.ensembles import fractional_uncertainty, hawkins_sutton, lafferty_sriver
+from xclim.ensembles import (
+    fractional_uncertainty,
+    general_partition,
+    hawkins_sutton,
+    lafferty_sriver,
+)
 from xclim.ensembles._filters import _concat_hist, _model_in_all_scens, _single_member
 
 
@@ -108,7 +113,7 @@ def test_lafferty_sriver_synthetic(random):
 
 
 def test_lafferty_sriver(lafferty_sriver_ds):
-    g, u = lafferty_sriver(lafferty_sriver_ds.tas)
+    _g, u = lafferty_sriver(lafferty_sriver_ds.tas)
 
     fu = fractional_uncertainty(u)
 
@@ -140,7 +145,7 @@ def test_lafferty_sriver(lafferty_sriver_ds):
             "Variability": fu.sel(uncertainty="variability").to_numpy().flatten(),
         }
 
-        fig, ax = plt.subplots()
+        _fig, ax = plt.subplots()
         ax.stackplot(
             np.arange(2015, 2101),
             udict.values(),
@@ -156,3 +161,12 @@ def test_lafferty_sriver(lafferty_sriver_ds):
         plt.show()
 
     # graph()
+
+
+def test_general_partition(lafferty_sriver_ds):
+    """Defaults should give the same thing as lafferty_sriver"""
+    g1, u1 = lafferty_sriver(lafferty_sriver_ds.tas)
+    g2, u2 = general_partition(lafferty_sriver_ds.tas)
+
+    assert u1.equals(u2)
+    assert g1.equals(g2)

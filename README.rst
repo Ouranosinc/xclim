@@ -7,11 +7,11 @@ xclim: Climate services library |logo| |logo-dark| |logo-light|
 +----------------------------+-----------------------------------------------------+
 | Documentation and Support  | |docs| |discussions|                                |
 +----------------------------+-----------------------------------------------------+
-| Open Source                | |license| |fair| |ossf| |zenodo| |pyOpenSci| |joss| |
+| Open Source                | |license| |ossf-score| |zenodo| |pyOpenSci| |joss|  |
 +----------------------------+-----------------------------------------------------+
-| Coding Standards           | |black| |ruff| |pre-commit| |security| |fossa|      |
+| Coding Standards           | |black| |ruff| |pre-commit| |ossf-bp| |fossa|       |
 +----------------------------+-----------------------------------------------------+
-| Development Status         | |status| |build| |coveralls|                        |
+| Development Status         | |status| |build| |coveralls| |energy|               |
 +----------------------------+-----------------------------------------------------+
 
 `xclim` is an operational Python library for climate services, providing numerous climate-related indicator tools
@@ -74,8 +74,13 @@ However, xclim will *always* assume the temporal coordinate is named "time". If 
 
     ds = ds.rename(T="time")
 
+`xclim` code uses the `black`_ formatter, a modified `ruff`_ linting configuration, and (mostly) adheres to the `NumPy docstring`_ style. For more information on coding and development conventions, see the `Contributing Guidelines`_.
+
+.. _black: https://black.readthedocs.io/en/stable/
+.. _ruff: https://docs.astral.sh/ruff/
 .. _CF Conventions: http://cfconventions.org/
 .. _CMIP6: https://clipc-services.ceda.ac.uk/dreq/mipVars.html
+.. _NumPy docstring: https://numpydoc.readthedocs.io/en/stable/format.html
 
 Contributing to xclim
 ---------------------
@@ -132,10 +137,6 @@ This package was created with Cookiecutter_ and the `audreyfeldroy/cookiecutter-
         :target: https://github.com/Ouranosinc/xclim/discussions
         :alt: Static Badge
 
-.. |gitter| image:: https://badges.gitter.im/Ouranosinc/xclim.svg
-        :target: https://gitter.im/Ouranosinc/xclim?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge
-        :alt: Gitter Chat
-
 .. |build| image:: https://github.com/Ouranosinc/xclim/actions/workflows/main.yml/badge.svg
         :target: https://github.com/Ouranosinc/xclim/actions/workflows/main.yml
         :alt: Build Status
@@ -164,17 +165,17 @@ This package was created with Cookiecutter_ and the `audreyfeldroy/cookiecutter-
         :target: https://github.com/Ouranosinc/xclim/blob/main/LICENSE
         :alt: License
 
-.. |security| image:: https://bestpractices.coreinfrastructure.org/projects/6041/badge
+.. |ossf-bp| image:: https://bestpractices.coreinfrastructure.org/projects/6041/badge
         :target: https://bestpractices.coreinfrastructure.org/projects/6041
-        :alt: Open Source Security Foundation
+        :alt: Open Source Security Foundation Best Practices
 
-.. |fair| image:: https://img.shields.io/badge/fair--software.eu-%E2%97%8F%20%20%E2%97%8F%20%20%E2%97%8F%20%20%E2%97%8F%20%20%E2%97%8B-yellow
-        :target: https://fair-software.eu
-        :alt: FAIR Software Compliance
+.. |energy| image:: https://api.green-coding.io/v1/ci/badge/get?repo=Ouranosinc/xclim&branch=main&workflow=47013755
+        :target: https://metrics.green-coding.io/ci.html?repo=Ouranosinc/xclim&branch=main&workflow=47013755
+        :alt: Energy Consumption
 
-.. |ossf| image:: https://api.securityscorecards.dev/projects/github.com/Ouranosinc/xclim/badge
+.. |ossf-score| image:: https://api.securityscorecards.dev/projects/github.com/Ouranosinc/xclim/badge
         :target: https://securityscorecards.dev/viewer/?uri=github.com/Ouranosinc/xclim
-        :alt: OpenSSF Scorecard
+        :alt: Open Source Security Foundation Scorecard
 
 .. |fossa| image:: https://app.fossa.com/api/projects/git%2Bgithub.com%2FOuranosinc%2Fxclim.svg?type=shield
         :target: https://app.fossa.com/projects/git%2Bgithub.com%2FOuranosinc%2Fxclim?ref=badge_shield
@@ -204,8 +205,8 @@ This package was created with Cookiecutter_ and the `audreyfeldroy/cookiecutter-
         :alt: pre-commit.ci status
 
 .. |ruff| image:: https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json
-    :target: https://github.com/astral-sh/ruff
-    :alt: Ruff
+        :target: https://github.com/astral-sh/ruff
+        :alt: Ruff
 
 .. |status| image:: https://www.repostatus.org/badges/latest/active.svg
         :target: https://www.repostatus.org/#active

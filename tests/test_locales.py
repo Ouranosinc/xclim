@@ -125,7 +125,7 @@ def test_indicator_integration():
 
 @pytest.mark.parametrize("locale", xloc.list_locales())
 def test_xclim_translations(locale, official_indicators):
-    loc, dic = xloc.get_local_dict(locale)
+    _loc, dic = xloc.get_local_dict(locale)
     assert "attrs_mapping" in dic
     assert "modifiers" in dic["attrs_mapping"]
     for translatable, translations in dic["attrs_mapping"].items():
@@ -143,7 +143,7 @@ def test_xclim_translations(locale, official_indicators):
             continue
         # Both global attrs are present
         is_complete = {"title", "abstract"}.issubset(set(trans))
-        for attrs, transattrs in zip(indcls.cf_attrs, trans["cf_attrs"]):
+        for _attrs, transattrs in zip(indcls.cf_attrs, trans["cf_attrs"], strict=False):
             if {"long_name", "description"} - set(transattrs.keys()):
                 is_complete = False
 

@@ -3,9 +3,11 @@
 from __future__ import annotations
 
 import numpy as np
+import pytest
 import xarray as xr
 
 from xclim import atmos, set_options
+from xclim.indices.helpers import make_hourly_temperature
 
 K2C = 273.16
 
@@ -94,7 +96,7 @@ def test_humidex(tas_series):
 
 
 def test_heat_index(atmosds):
-    # Keep just Montreal values for summertime as we need tas > 20 degC
+    # Keep just Montreal values for summer as we need tas > 20 degC
     tas = atmosds.tasmax[1][150:170]
     hurs = atmosds.hurs[1][150:170]
 
@@ -260,7 +262,7 @@ def test_wind_profile(atmosds):
 
 def test_wind_power_potential(atmosds):
     out = atmos.wind_power_potential(wind_speed=atmosds.sfcWind)
-    assert out.attrs["units"] == ""
+    assert out.attrs["units"] == "1"
     assert (out >= 0).all()
     assert (out <= 1).all()
 
@@ -569,7 +571,7 @@ class TestUTCI:
 
         tas = dataset.tas
         hurs = dataset.hurs
-        sfcWind, sfcWindfromdir = atmos.wind_speed_from_vector(
+        sfcWind, _sfcWindfromdir = atmos.wind_speed_from_vector(
             uas=dataset.uas, vas=dataset.vas
         )
         rsds = dataset.rsds
@@ -624,3 +626,49 @@ class TestLateFrostDays:
         lfd = atmos.late_frost_days(tasmin, date_bounds=("04-01", "06-30"))
 
         np.testing.assert_allclose(lfd.isel(time=0), exp, rtol=1e-03)
+
+
+def test_chill_units(atmosds):
+    tasmax = atmosds.tasmax
+    tasmin = atmosds.tasmin
+    tas = make_hourly_temperature(tasmin, tasmax)
+    cu = atmos.chill_units(tas, date_bounds=("04-01", "06-30"))
+    assert cu.attrs["units"] == "1"
+    assert cu.name == "cu"
+    assert cu.time.size == 4
+
+    # Values are confirmed with chillR package although not an exact match
+    # due to implementation details
+    exp = [1546.5, 1344.0, 1162.0, 1457.5]
+    np.testing.assert_allclose(cu.isel(location=0), exp, rtol=1e-03)
+
+
+@pytest.mark.parametrize("use_dask", [True, False])
+def test_chill_portions(atmosds, use_dask):
+    pytest.importorskip("flox")
+    tasmax = atmosds.tasmax
+    tasmin = atmosds.tasmin
+    tas = make_hourly_temperature(tasmin, tasmax)
+    if use_dask:
+        tas = tas.chunk(time=tas.time.size // 2, location=1)
+
+    with set_options(resample_map_blocks=True):
+        cp = atmos.chill_portions(tas, date_bounds=("09-01", "03-30"), freq="YS-JUL")
+
+    assert cp.attrs["units"] == "1"
+    assert cp.name == "cp"
+    # Although its 4 years of data its 5 seasons starting in July
+    assert cp.time.size == 5
+
+    # Values are confirmed with chillR package although not an exact match
+    # due to implementation details
+    exp = [np.nan, 99.91534493, 92.5473925, 99.03177047, np.nan]
+    np.testing.assert_allclose(cp.isel(location=0), exp, rtol=1e-03)
+
+
+def test_water_cycle_intensity(pr_series, evspsbl_series):
+    pr = pr_series(np.ones(31))
+    evspsbl = evspsbl_series(np.ones(31))
+
+    wci = atmos.water_cycle_intensity(pr=pr, evspsbl=evspsbl, freq="MS")
+    np.testing.assert_allclose(wci, 2 * 60 * 60 * 24 * 31)

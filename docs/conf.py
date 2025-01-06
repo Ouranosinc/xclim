@@ -16,6 +16,7 @@ from __future__ import annotations
 import datetime
 import json
 import os
+import pathlib
 import sys
 import warnings
 
@@ -30,6 +31,7 @@ xarray.Dataset.__module__ = "xarray"
 xarray.CFTimeIndex.__module__ = "xarray"
 
 import xclim  # noqa
+from xclim import indicators as _indicators  # noqa
 from xclim.core.indicator import registry  # noqa
 
 # If extensions (or modules to document with autodoc) are in another
@@ -45,7 +47,7 @@ sys.path.insert(0, os.path.abspath("."))
 indicators = {}
 # FIXME: Include cf module when its indicators documentation is improved.
 for module in ("atmos", "generic", "land", "seaIce", "icclim", "anuclim"):
-    for key, ind in getattr(xclim.indicators, module).__dict__.items():
+    for key, ind in getattr(_indicators, module).__dict__.items():
         if hasattr(ind, "_registry_id") and ind._registry_id in registry:  # noqa
             indicators[ind._registry_id] = {  # noqa
                 "realm": ind.realm,
@@ -66,13 +68,13 @@ indicators = dict(sorted(indicators.items(), key=lambda kv: kv[1]["title"]))
 # Dump indicators to json. The json is added to the html output (html_extra_path)
 # It is read by _static/indsearch.js to populate the table in indicators.rst
 os.makedirs("_dynamic", exist_ok=True)
-with open("_dynamic/indicators.json", "w") as f:
+with pathlib.Path("_dynamic/indicators.json").open("w") as f:
     json.dump(indicators, f)
 
 
 # Dump variables information
-with open("variables.json", "w") as fout:
-    with open("../xclim/data/variables.yml") as fin:
+with pathlib.Path("variables.json").open("w") as fout:
+    with pathlib.Path("../src/xclim/data/variables.yml").open() as fin:
         data = yaml.safe_load(fin)
     json.dump(data, fout)
 
@@ -231,8 +233,7 @@ nbsphinx_allow_errors = False
 templates_path = ["_templates"]
 
 # The suffix(es) of source filenames.
-# If a list of string, all suffixes will be understood as restructured text variants.
-source_suffix = [".rst"]
+source_suffix = {".rst": "restructuredtext", ".md": "markdown"}
 
 # The root toctree document.
 root_doc = "index"
@@ -267,6 +268,7 @@ exclude_patterns = [
     "_build",
     "Thumbs.db",
     ".DS_Store",
+    "notebooks/benchmarks",
     "notebooks/xclim_training",
     "paper/paper.md",
     "**.ipynb_checkpoints",

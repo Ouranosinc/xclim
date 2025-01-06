@@ -5,7 +5,6 @@ import pandas as pd
 import pytest
 import xarray as xr
 
-from xclim.core.calendar import date_range
 from xclim.core.units import units
 from xclim.sdba.adjustment import EmpiricalQuantileMapping
 from xclim.sdba.base import Grouper
@@ -130,7 +129,7 @@ def test_adapt_freq_add_dims(use_dask, random):
     with xr.set_options(keep_attrs=True):
         prsim = xr.where(pr < 20, pr / 20, pr)
         prref = xr.where(pr < 10, pr / 20, pr)
-    sim_ad, pth, dP0 = adapt_freq(prref, prsim, thresh="1 mm d-1", group=group)
+    sim_ad, pth, _dP0 = adapt_freq(prref, prsim, thresh="1 mm d-1", group=group)
     assert set(sim_ad.dims) == set(prsim.dims)
     assert "lat" not in pth.dims
 
@@ -138,7 +137,7 @@ def test_adapt_freq_add_dims(use_dask, random):
     with xr.set_options(keep_attrs=True):
         prsim = xr.where(pr < 20, pr / 20, pr)
         prref = xr.where(pr < 10, pr / 20, pr)
-    sim_ad, pth, dP0 = adapt_freq(prref, prsim, thresh="1 mm d-1", group=group)
+    sim_ad, pth, _dP0 = adapt_freq(prref, prsim, thresh="1 mm d-1", group=group)
     assert set(sim_ad.dims) == set(prsim.dims)
 
 
@@ -158,7 +157,7 @@ def test_escore():
 
 def test_standardize(random):
     x = random.standard_normal((2, 10000))
-    x[0, 50] = np.NaN
+    x[0, 50] = np.nan
     x = xr.DataArray(x, dims=("x", "y"), attrs={"units": "m"})
 
     xp, avg, std = standardize(x, dim="y")
@@ -188,8 +187,8 @@ def test_reordering():
 
 def test_reordering_with_window():
     time = list(
-        date_range("2000-01-01", "2000-01-04", freq="D", calendar="noleap")
-    ) + list(date_range("2001-01-01", "2001-01-04", freq="D", calendar="noleap"))
+        xr.date_range("2000-01-01", "2000-01-04", freq="D", calendar="noleap")
+    ) + list(xr.date_range("2001-01-01", "2001-01-04", freq="D", calendar="noleap"))
 
     x = xr.DataArray(
         np.arange(1, 9, 1),
@@ -217,7 +216,7 @@ def test_to_additive(pr_series, hurs_series):
 
     with units.context("hydro"):
         prlog = to_additive_space(pr, lower_bound="0 mm/d", trans="log")
-    np.testing.assert_allclose(prlog, [-np.Inf, -11.512925, 0, 10])
+    np.testing.assert_allclose(prlog, [-np.inf, -11.512925, 0, 10])
     assert prlog.attrs["sdba_transform"] == "log"
     assert prlog.attrs["sdba_transform_units"] == "kg m-2 s-1"
 
@@ -225,7 +224,7 @@ def test_to_additive(pr_series, hurs_series):
         pr1 = pr + 1
     with units.context("hydro"):
         prlog2 = to_additive_space(pr1, trans="log", lower_bound="1.0 kg m-2 s-1")
-    np.testing.assert_allclose(prlog2, [-np.Inf, -11.512925, 0, 10])
+    np.testing.assert_allclose(prlog2, [-np.inf, -11.512925, 0, 10])
     assert prlog2.attrs["sdba_transform_lower"] == 1.0
 
     # logit
@@ -235,7 +234,7 @@ def test_to_additive(pr_series, hurs_series):
         hurs, lower_bound="0 %", trans="logit", upper_bound="100 %"
     )
     np.testing.assert_allclose(
-        hurslogit, [-np.Inf, -11.5129154649, 2.197224577, np.Inf]
+        hurslogit, [-np.inf, -11.5129154649, 2.197224577, np.inf]
     )
     assert hurslogit.attrs["sdba_transform"] == "logit"
     assert hurslogit.attrs["sdba_transform_units"] == "%"
@@ -246,7 +245,7 @@ def test_to_additive(pr_series, hurs_series):
         hursscl, trans="logit", lower_bound="2", upper_bound="6"
     )
     np.testing.assert_allclose(
-        hurslogit2, [-np.Inf, -11.5129154649, 2.197224577, np.Inf]
+        hurslogit2, [-np.inf, -11.5129154649, 2.197224577, np.inf]
     )
     assert hurslogit2.attrs["sdba_transform_lower"] == 200.0
     assert hurslogit2.attrs["sdba_transform_upper"] == 600.0

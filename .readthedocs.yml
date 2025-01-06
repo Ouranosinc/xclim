@@ -13,9 +13,9 @@ build:
     python: "mambaforge-22.9"
   jobs:
     pre_build:
-      - sphinx-apidoc -o docs/apidoc/ --private --module-first xclim xclim/testing/tests xclim/indicators xclim/indices
+      - sphinx-apidoc -o docs/apidoc/ --private --module-first src/xclim src/xclim/testing/tests src/xclim/indicators src/xclim/indices
       - rm docs/apidoc/xclim.rst
-      - env SPHINX_APIDOC_OPTIONS="members,undoc-members,show-inheritance,noindex" sphinx-apidoc -o docs/apidoc/ --private --module-first xclim xclim/testing/tests
+      - env SPHINX_APIDOC_OPTIONS="members,undoc-members,show-inheritance,noindex" sphinx-apidoc -o docs/apidoc/ --private --module-first src/xclim src/xclim/testing/tests
       - sphinx-build -b linkcheck docs/ _build/linkcheck || true
 
 conda:
@@ -27,6 +27,7 @@ python:
       path: .
       extra_requirements:
         - dev
+        - extras
 
 search:
   ranking:

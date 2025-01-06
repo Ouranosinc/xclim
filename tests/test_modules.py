@@ -8,12 +8,12 @@ import xarray as xr
 import yamale
 from yaml import safe_load
 
-import xclim.core.utils
 from xclim import indicators
+from xclim.core import VARIABLES
 from xclim.core.indicator import build_indicator_module_from_yaml
 from xclim.core.locales import read_locale_file
 from xclim.core.options import set_options
-from xclim.core.utils import VARIABLES, InputKind, load_module
+from xclim.core.utils import InputKind, adapt_clix_meta_yaml, load_module
 
 
 def all_virtual_indicators():
@@ -103,6 +103,12 @@ def test_custom_indices(open_dataset):
     build_indicator_module_from_yaml(
         example_path / "example.yml", name="ex4", mode="ignore"
     )
+
+    # Check that indexer was added and injected correctly
+    assert "indexer" not in ex1.RX1day_summer.parameters
+    assert ex1.RX1day_summer.injected_parameters["indexer"] == {
+        "month": [5, 6, 7, 8, 9]
+    }
 
 
 @pytest.mark.requires_docs
@@ -201,7 +207,7 @@ indices:
     def test_simple_clix_meta_adaptor(self, tmp_path):
         test_yaml = tmp_path.joinpath("test.yaml")
 
-        xclim.core.utils.adapt_clix_meta_yaml(self.cdd, test_yaml)
+        adapt_clix_meta_yaml(self.cdd, test_yaml)
 
         converted = safe_load(Path(test_yaml).open())
         assert "cdd" in converted["indicators"]
@@ -258,7 +264,7 @@ indicator:
 
 
 class TestOfficialYaml(yamale.YamaleTestCase):
-    base_dir = str(Path(__file__).parent.parent / "xclim" / "data")
+    base_dir = str(Path(__file__).parent.parent / "src" / "xclim" / "data")
     schema = "schema.yml"
     yaml = ["cf.yml", "anuclim.yml", "icclim.yml"]
 
@@ -269,9 +275,8 @@ class TestOfficialYaml(yamale.YamaleTestCase):
 # It's not really slow, but this is an unstable test (when it fails) and we might not want to execute it on all builds
 @pytest.mark.slow
 def test_encoding():
-    import sys
-
     import _locale
+    import sys
 
     # remove xclim
     del sys.modules["xclim"]

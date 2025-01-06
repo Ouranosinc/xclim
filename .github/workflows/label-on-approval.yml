@@ -21,18 +21,15 @@ jobs:
       (github.event.review.state == 'approved') &&
       (github.event.pull_request.head.repo.full_name == github.event.pull_request.base.repo.full_name)
     permissions:
-      checks: write
-      contents: read
       pull-requests: write
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@a4aa98b93cab29d9b1101a6143fb8bce00e2eac4 # v2.7.1
+        uses: step-security/harden-runner@0080882f6c36860b6ba35c610c98ce87d4e2f26f # v2.10.2
         with:
           disable-sudo: true
           egress-policy: block
           allowed-endpoints: >
             api.github.com:443
-
       - name: Label Approved
         uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
         with:
@@ -51,47 +48,53 @@ jobs:
       (github.event_name == 'pull_request_target') &&
       (github.event.pull_request.head.repo.full_name != github.event.pull_request.base.repo.full_name)
     permissions:
-      checks: write
-      contents: read
       pull-requests: write
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@a4aa98b93cab29d9b1101a6143fb8bce00e2eac4 # v2.7.1
+        uses: step-security/harden-runner@0080882f6c36860b6ba35c610c98ce87d4e2f26f # v2.10.2
         with:
           disable-sudo: true
           egress-policy: block
           allowed-endpoints: >
             api.github.com:443
-      - name: Find comment
+      - name: Find Warning Comment
         uses: peter-evans/find-comment@3eae4d37986fb5a8592848f6a574fdf654e61f9e # v3.1.0
-        id: fc
+        id: fc_warning
         with:
           issue-number: ${{ github.event.pull_request.number }}
           comment-author: 'github-actions[bot]'
           body-includes: This Pull Request is coming from a fork and must be manually tagged `approved` in order to perform additional testing.
-      - name: Create comment
+      - name: Update Warning Comment
         if: |
-          (steps.fc.outputs.comment-id == '') &&
+          (steps.fc_warning.outputs.comment-id == '') &&
           (!contains(github.event.pull_request.labels.*.name, 'approved')) &&
           (github.event.pull_request.head.repo.full_name != github.event.pull_request.base.repo.full_name)
         uses: peter-evans/create-or-update-comment@71345be0265236311c031f5c7866368bd1eff043 # v4.0.0
         with:
-          comment-id: ${{ steps.fc.outputs.comment-id }}
+          comment-id: ${{ steps.fc_warning.outputs.comment-id }}
           issue-number: ${{ github.event.pull_request.number }}
           body: |
-            > **Warning**
+            > [!WARNING]
             > This Pull Request is coming from a fork and must be manually tagged `approved` in order to perform additional testing.
           edit-mode: replace
-      - name: Update comment
+      - name: Find Note Comment
+        uses: peter-evans/find-comment@3eae4d37986fb5a8592848f6a574fdf654e61f9e # v3.1.0
+        id: fc_note
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          comment-author: 'github-actions[bot]'
+          body-includes: This Pull Request has been manually approved for additional testing!
+      - name: Update Note Comment
         if: |
+          (steps.fc_note.outputs.comment-id == '') &&
           contains(github.event.pull_request.labels.*.name, 'approved')
         uses: peter-evans/create-or-update-comment@71345be0265236311c031f5c7866368bd1eff043 # v4.0.0
         with:
-          comment-id: ${{ steps.fc.outputs.comment-id }}
+          comment-id: ${{ steps.fc_note.outputs.comment-id }}
           issue-number: ${{ github.event.pull_request.number }}
           body: |
-            > **Note**
-            > This Pull Request is approved!
+            > [!NOTE]
+            > This Pull Request has been manually approved for additional testing!
           reactions: |
             hooray
           edit-mode: append

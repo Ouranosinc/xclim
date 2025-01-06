@@ -95,7 +95,7 @@ def ufunc(request):
 @pytest.mark.parametrize("index", ["first", "last"])
 def test_rle(ufunc, use_dask, index):
     if use_dask and ufunc:
-        pytest.xfail("rle_1d is not implemented for dask arrays.")
+        pytest.skip("rle_1d is not implemented for dask arrays.")
 
     values = np.zeros((10, 365, 4, 4))
     time = pd.date_range("2000-01-01", periods=365, freq="D")
@@ -126,9 +126,8 @@ def test_rle(ufunc, use_dask, index):
 
 @pytest.mark.parametrize("use_dask", [True, False])
 @pytest.mark.parametrize("index", ["first", "last"])
-def test_extract_events_identity(use_dask, index):
-    # implement more tests, this is just to show that this reproduces the behaviour
-    # of rle
+def test_runs_with_holes_identity(use_dask, index):
+    # This test reproduces the behaviour or `rle`
     values = np.zeros((10, 365, 4, 4))
     time = pd.date_range("2000-01-01", periods=365, freq="D")
     values[:, 1:11, ...] = 1
@@ -137,19 +136,19 @@ def test_extract_events_identity(use_dask, index):
     if use_dask:
         da = da.chunk({"a": 1, "b": 2})
 
-    events = rl.extract_events(da != 0, 1, da == 0, 1)
+    events = rl.runs_with_holes(da != 0, 1, da == 0, 1)
     expected = da
     np.testing.assert_array_equal(events, expected)
 
 
-def test_extract_events():
+def test_runs_with_holes():
     values = np.zeros(365)
     time = pd.date_range("2000-01-01", periods=365, freq="D")
     a = [0, 1, 0, 1, 1, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0]
     values[0 : len(a)] = a
     da = xr.DataArray(values, coords={"time": time}, dims=("time"))
 
-    events = rl.extract_events(da == 1, 1, da == 0, 3)
+    events = rl.runs_with_holes(da == 1, 1, da == 0, 3)
 
     expected = values * 0
     expected[1:11] = 1
@@ -370,6 +369,16 @@ class TestWindowedRunCount:
         ) + len(a[34:45])
 
 
+class TestWindowedMaxRunSum:
+    @pytest.mark.parametrize("index", ["first", "last"])
+    def test_simple(self, index):
+        a = xr.DataArray(np.zeros(50, float), dims=("time",))
+        a[4:6] = 5  # too short
+        a[25:30] = 5  # long enough, but not max
+        a[35:45] = 5  # max sum => yields 10*5
+        assert rl.windowed_max_run_sum(a, 3, dim="time", index=index) == 50
+
+
 class TestLastRun:
     @pytest.mark.parametrize(
         "coord,expected",
@@ -470,7 +479,7 @@ class TestRunsWithDates:
         [
             ("07-01", 210, 70),
             ("07-01", 190, 50),
-            ("04-01", 150, np.NaN),  # date falls early
+            ("04-01", 150, 0),  # date falls early
             ("11-01", 150, 165),  # date ends late
             (None, 150, 10),  # no date, real length
         ],
@@ -492,7 +501,7 @@ class TestRunsWithDates:
             runs,
             window=1,
             dim="time",
-            date=date,
+            mid_date=date,
         )
         np.testing.assert_array_equal(np.mean(out.load()), expected)
 
@@ -501,7 +510,7 @@ class TestRunsWithDates:
         [
             ("dayofyear", "07-01", 210, 211),
             (False, "07-01", 190, 190),
-            ("dayofyear", "04-01", 150, np.NaN),  # date falls early
+            ("dayofyear", "04-01", 150, np.nan),  # date falls early
             ("dayofyear", "11-01", 150, 306),  # date ends late
         ],
     )
@@ -529,7 +538,7 @@ class TestRunsWithDates:
         [
             ("dayofyear", "07-01", 210, 211),
             (False, "07-01", 190, 190),
-            ("dayofyear", "04-01", False, np.NaN),  # no run
+            ("dayofyear", "04-01", False, np.nan),  # no run
             ("dayofyear", "11-01", 150, 306),  # run already started
         ],
     )
@@ -559,7 +568,7 @@ class TestRunsWithDates:
         [
             ("dayofyear", "07-01", 210, 183),
             (False, "07-01", 190, 182),
-            ("dayofyear", "04-01", 150, np.NaN),  # date falls early
+            ("dayofyear", "04-01", 150, np.nan),  # date falls early
             ("dayofyear", "11-01", 150, 150),  # date ends late
         ],
     )
@@ -625,7 +634,7 @@ class TestRunsWithDates:
         out = (
             (tas > 0)
             .resample(time="YS-MAR")
-            .map(rl.season_length, date="03-02", window=2)
+            .map(rl.season_length, mid_date="03-02", window=2)
         )
         np.testing.assert_array_equal(out.values[1:], [250, 250])
 
@@ -643,9 +652,7 @@ class TestRunsWithDates:
         )
         np.testing.assert_array_equal(out.values[1:], np.array(expected) + 1)
 
-    @pytest.mark.parametrize(
-        "func", [rl.first_run_after_date, rl.season_length, rl.run_end_after_date]
-    )
+    @pytest.mark.parametrize("func", [rl.first_run_after_date, rl.run_end_after_date])
     def test_too_many_dates(self, func, tas_series):
         tas = tas_series(np.zeros(730), start="2000-01-01")
         with pytest.raises(ValueError, match="More than 1 instance of date"):

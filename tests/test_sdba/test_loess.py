@@ -1,3 +1,4 @@
+# ruff: noqa: E241
 from __future__ import annotations
 
 import numpy as np
@@ -5,12 +6,14 @@ import pandas as pd
 import pytest
 import xarray as xr
 
-from xclim.sdba.loess import _constant_regression  # noqa
-from xclim.sdba.loess import _gaussian_weighting  # noqa
-from xclim.sdba.loess import _linear_regression  # noqa
-from xclim.sdba.loess import _loess_nb  # noqa
-from xclim.sdba.loess import _tricube_weighting  # noqa
-from xclim.sdba.loess import loess_smoothing
+from xclim.sdba.loess import (
+    _constant_regression,  # noqa
+    _gaussian_weighting,  # noqa
+    _linear_regression,  # noqa
+    _loess_nb,  # noqa
+    _tricube_weighting,  # noqa
+    loess_smoothing,  # noqa
+)
 
 
 @pytest.mark.slow
@@ -70,7 +73,22 @@ def test_loess_smoothing(use_dask, open_dataset):
 @pytest.mark.parametrize("use_dask", [True, False])
 def test_loess_smoothing_nan(use_dask):
     # create data with one axis full of nan
-    data = np.random.randn(2, 2, 10)
+    # (random array taken from np.random.randn)
+    # fmt: off
+    data = np.array(
+        [
+            -0.993, -0.980, -0.452, -0.076,  0.447,
+             0.389,  2.408,  0.966, -0.793,  0.090,
+            -0.173,  1.713, -1.579,  0.454, -0.272,
+            -0.005, -0.926, -2.022, -1.661, -0.493,
+            -0.643,  0.891,  0.194,  0.086,  0.983,
+            -1.048,  2.032,  1.174, -0.441, -0.204,
+            -1.126,  0.933,  1.987,  0.638,  0.789,
+             0.767,  0.676, -1.028,  1.422,  0.453,
+        ]
+    )
+    # fmt: on
+    data = data.reshape(2, 2, 10)  # pylint: disable=too-many-function-args
     data[0, 0] = [np.nan] * 10
     da = xr.DataArray(
         data,

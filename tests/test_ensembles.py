@@ -26,7 +26,6 @@ from scipy.stats.mstats import mquantiles
 
 from xclim import ensembles
 from xclim.indices.stats import get_dist
-from xclim.testing.helpers import TESTDATA_BRANCH
 
 
 # sklearn's KMeans doesn't accept the standard numpy Generator, so we create a special fixture for these tests
@@ -38,9 +37,7 @@ def random_state():
 
 
 class TestEnsembleStats:
-    def test_create_ensemble(
-        self, open_dataset, ensemble_dataset_objects, threadsafe_data_dir
-    ):
+    def test_create_ensemble(self, open_dataset, ensemble_dataset_objects, nimbus):
         ds_all = []
         for n in ensemble_dataset_objects["nc_files_simple"]:
             ds = open_dataset(n, decode_times=False)
@@ -62,11 +59,8 @@ class TestEnsembleStats:
         ens1 = ensembles.create_ensemble(ds_all, realizations=reals)
 
         # Kinda a hack? Alternative is to open and rewrite in a temp folder.
-        files = [
-            threadsafe_data_dir / TESTDATA_BRANCH / "EnsembleStats" / Path(f).name
-            for f in ensemble_dataset_objects["nc_files_simple"]
-        ]
-        ens2 = ensembles.create_ensemble(dict(zip(reals, files)))
+        files = [nimbus.fetch(f) for f in ensemble_dataset_objects["nc_files_simple"]]
+        ens2 = ensembles.create_ensemble(dict(zip(reals, files, strict=False)))
         xr.testing.assert_identical(ens1, ens2)
 
     def test_no_time(self, tmp_path, ensemble_dataset_objects, open_dataset):
@@ -79,7 +73,7 @@ class TestEnsembleStats:
             ds["time"] = xr.decode_cf(ds).time
             ds_all.append(ds.groupby(ds.time.dt.month).mean("time", keep_attrs=True))
             ds.groupby(ds.time.dt.month).mean("time", keep_attrs=True).to_netcdf(
-                f1.joinpath(Path(n).name)
+                f1.joinpath(Path(n).name), engine="h5netcdf"
             )
         ens = ensembles.create_ensemble(ds_all)
 
@@ -288,8 +282,14 @@ class TestEnsembleStats:
         )
         out2 = ensembles.ensemble_mean_std_max_min(ens, weights=weights)
         values = ens["tg_mean"][:, 0, 5, 5]
+        # Explicit float64 so numpy does the expected datatype promotion (change in numpy 2)
         np.testing.assert_array_equal(
-            (values[0] * 1 + values[1] * 0.1 + values[2] * 3.5 + values[3] * 5)
+            (
+                values[0] * np.float64(1)
+                + values[1] * np.float64(0.1)
+                + values[2] * np.float64(3.5)
+                + values[3] * np.float64(5)
+            )
             / np.sum(weights),
             out2.tg_mean_mean[0, 5, 5],
         )
@@ -311,7 +311,7 @@ class TestEnsembleStats:
         ds_all = [open_dataset(n) for n in ensemble_dataset_objects["nc_files_simple"]]
         ens = ensembles.create_ensemble(ds_all).isel(lat=0, lon=0)
         ens = ens.where(ens.realization > 0)
-        ens = xr.where((ens.realization == 1) & (ens.time.dt.year == 1950), np.NaN, ens)
+        ens = xr.where((ens.realization == 1) & (ens.time.dt.year == 1950), np.nan, ens)
 
         def first(ds):
             return ds[list(ds.data_vars.keys())[0]]
@@ -342,7 +342,7 @@ class TestEnsembleReduction:
         ds = open_dataset(self.nc_file)
 
         # use random state variable to ensure consistent clustering in tests:
-        [ids, cluster, fig_data] = ensembles.kmeans_reduce_ensemble(
+        [ids, _cluster, _fig_data] = ensembles.kmeans_reduce_ensemble(
             data=ds.data,
             method={"rsq_cutoff": 0.5},
             random_state=random_state,
@@ -353,7 +353,7 @@ class TestEnsembleReduction:
         assert len(ids) == 4
 
         # Test max cluster option
-        [ids, cluster, fig_data] = ensembles.kmeans_reduce_ensemble(
+        [ids, _cluster, _fig_data] = ensembles.kmeans_reduce_ensemble(
             data=ds.data,
             method={"rsq_cutoff": 0.5},
             random_state=random_state,
@@ -366,7 +366,7 @@ class TestEnsembleReduction:
     def test_kmeans_rsqopt(self, open_dataset, random_state):
         pytest.importorskip("sklearn", minversion="0.24.1")
         ds = open_dataset(self.nc_file)
-        [ids, cluster, fig_data] = ensembles.kmeans_reduce_ensemble(
+        [ids, _cluster, _fig_data] = ensembles.kmeans_reduce_ensemble(
             data=ds.data,
             method={"rsq_optimize": None},
             random_state=random_state,
@@ -377,7 +377,7 @@ class TestEnsembleReduction:
     def test_kmeans_nclust(self, open_dataset, random_state):
         ds = open_dataset(self.nc_file)
 
-        [ids, cluster, fig_data] = ensembles.kmeans_reduce_ensemble(
+        [ids, _cluster, _fig_data] = ensembles.kmeans_reduce_ensemble(
             data=ds.data,
             method={"n_clusters": 4},
             random_state=random_state,
@@ -385,7 +385,7 @@ class TestEnsembleReduction:
         )
         assert ids == [4, 7, 10, 23]
 
-        [ids, cluster, fig_data] = ensembles.kmeans_reduce_ensemble(
+        [ids, _cluster, _fig_data] = ensembles.kmeans_reduce_ensemble(
             ds.data,
             method={"n_clusters": 9},
             random_state=random_state,
@@ -400,7 +400,7 @@ class TestEnsembleReduction:
         # boost weights for some sims
         sample_weights[[0, 20]] = 15
 
-        [ids, cluster, fig_data] = ensembles.kmeans_reduce_ensemble(
+        [ids, _cluster, _fig_data] = ensembles.kmeans_reduce_ensemble(
             data=ds.data,
             method={"rsq_cutoff": 0.5},
             random_state=random_state,
@@ -414,7 +414,7 @@ class TestEnsembleReduction:
         # try zero weights
         sample_weights[[6, 18, 22]] = 0
 
-        [ids, cluster, fig_data] = ensembles.kmeans_reduce_ensemble(
+        [ids, _cluster, _fig_data] = ensembles.kmeans_reduce_ensemble(
             data=ds.data,
             method={"rsq_optimize": None},
             random_state=random_state,
@@ -432,7 +432,7 @@ class TestEnsembleReduction:
         # reduce weights for some variables
         var_weights[3:] = 0.25
 
-        [ids, cluster, fig_data] = ensembles.kmeans_reduce_ensemble(
+        [ids, _cluster, _fig_data] = ensembles.kmeans_reduce_ensemble(
             data=ds.data,
             method={"rsq_cutoff": 0.9},
             random_state=random_state,
@@ -445,7 +445,7 @@ class TestEnsembleReduction:
         var_weights = np.ones(ds.data.shape[1])
         var_weights[[1, 4]] = 0
 
-        [ids, cluster, fig_data] = ensembles.kmeans_reduce_ensemble(
+        [ids, _cluster, _fig_data] = ensembles.kmeans_reduce_ensemble(
             data=ds.data,
             method={"rsq_optimize": None},
             random_state=random_state,
@@ -463,7 +463,7 @@ class TestEnsembleReduction:
         model_weights[[4, 7, 10, 23]] = 0
 
         # set to zero for some models that are selected in n_cluster test - these models should not be selected now
-        [ids, cluster, fig_data] = ensembles.kmeans_reduce_ensemble(
+        [ids, cluster, _fig_data] = ensembles.kmeans_reduce_ensemble(
             data=ds.data,
             method={"n_clusters": 4},
             random_state=random_state,
@@ -484,7 +484,7 @@ class TestEnsembleReduction:
         ds = open_dataset(self.nc_file)
 
         # use random state variable to ensure consistent clustering in tests:
-        [ids, cluster, fig_data] = ensembles.kmeans_reduce_ensemble(
+        [ids, _cluster, _fig_data] = ensembles.kmeans_reduce_ensemble(
             data=ds.data,
             method={"rsq_cutoff": 0.5},
             random_state=random_state,
@@ -494,7 +494,7 @@ class TestEnsembleReduction:
         assert ids == [4, 7, 10, 23]
 
         # Test max cluster option
-        [ids, cluster, fig_data] = ensembles.kmeans_reduce_ensemble(
+        [ids, _cluster, _fig_data] = ensembles.kmeans_reduce_ensemble(
             data=ds.data,
             method={"rsq_cutoff": 0.5},
             random_state=random_state,
