@@ -171,6 +171,11 @@ def test_general_partition(lafferty_sriver_ds):
         var_first=["model", "downscaling"],
         mean_first=["scenario"],
         weights=["model", "downscaling"],
+        sm="poly",
+    )
+    # fix order
+    u2 = u2.sel(
+        uncertainty=["model", "scenario", "downscaling", "variability", "total"]
     )
 
     assert u1.equals(u2)

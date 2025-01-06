@@ -422,7 +422,9 @@ def general_partition(
     # Mean projection:
     # This is not part of the original algorithm,
     # but we want all partition algos to have similar outputs.
-    g = sm.mean(dim=all_types)
+    g = sm.mean(dim=all_types[0])
+    for dim in all_types[1:]:
+        g = g.mean(dim=dim)
 
     return g, uncertainty
 
