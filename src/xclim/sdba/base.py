@@ -297,10 +297,10 @@ class Grouper(Parametrizable):
         ind = da.indexes[self.dim]
 
         if interp and self.dim == "time":
-            if interp and self.dim == "time" and self.prop == "month":
+            if self.prop == "month":
                 i = ind.month - 0.5 + ind.day / ind.days_in_month
 
-            elif interp and self.dim == "time" and self.prop == "season":
+            elif self.prop == "season":
                 calendar = ind.calendar if hasattr(ind, "calendar") else "standard"
                 length_year = (
                     360
