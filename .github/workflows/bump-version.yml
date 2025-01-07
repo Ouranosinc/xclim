@@ -6,10 +6,10 @@ on:
       - main
     paths-ignore:
       - .*
-      - .github/*/*.md
-      - .github/*/*.yml
       - .github/*.md
       - .github/*.yml
+      - .github/*/*.md
+      - .github/*/*.yml
       - CHANGELOG.rst
       - CI/*.in
       - CI/*.txt
@@ -56,6 +56,7 @@ jobs:
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           token: ${{ steps.token_generator.outputs.token }}
+          persist-credentials: false
       - name: Set up Python3
         uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5.3.0
         with:
@@ -68,28 +69,23 @@ jobs:
           git_user_signingkey: true
           git_commit_gpgsign: true
           trust_level: 5
-      - name: Current Version
-        run: |
-          CURRENT_VERSION="$(grep -E '__version__'  src/xclim/__init__.py | cut -d ' ' -f3)"
-          echo "current_version=${CURRENT_VERSION}"
-          echo "CURRENT_VERSION=${CURRENT_VERSION}" >> $GITHUB_ENV
       - name: Install CI libraries
         run: |
           python -m pip install --require-hashes -r CI/requirements_ci.txt
       - name: Conditional Bump
         run: |
-          if [[ ${{ env.CURRENT_VERSION }} =~ -dev(\.\d+)? ]]; then
+          CURRENT_VERSION=$(bump-my-version show current_version)
+          if [[ ${CURRENT_VERSION} =~ -dev(\.\d+)? ]]; then
             echo "Development version (ends in 'dev(\.\d+)?'), bumping 'build' version"
             bump-my-version bump build
           else
             echo "Version is stable, bumping 'patch' version"
             bump-my-version bump patch
           fi
-          NEW_VERSION="$(grep -E '__version__'  src/xclim/__init__.py | cut -d ' ' -f3)"
-          echo "new_version=${NEW_VERSION}"
-          echo "NEW_VERSION=${NEW_VERSION}" >> $GITHUB_ENV
+          echo "new_version=$(bump-my-version show current_version)"
       - name: Push Changes
         uses: ad-m/github-push-action@d91a481090679876dfc4178fef17f286781251df # v0.8.0
         with:
           force: false
           branch: ${{ github.ref }}
+          github_token: ${{ steps.token_generator.outputs.token }}
