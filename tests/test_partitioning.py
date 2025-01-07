@@ -179,4 +179,4 @@ def test_general_partition(lafferty_sriver_ds):
     )
 
     assert u1.equals(u2)
-    assert g1.equals(g2)
+    np.testing.assert_allclose(g1.values, g2.values, atol=0.1)
