@@ -15,7 +15,7 @@ import numpy as np
 import xarray as xr
 from boltons.funcutils import wraps
 
-from xclim.core.calendar import get_calendar
+from xclim.core.calendar import get_calendar, max_doy
 from xclim.core.options import OPTIONS, SDBA_ENCODE_CF
 from xclim.core.utils import uses_dask
 
@@ -195,10 +195,8 @@ class Grouper(Parametrizable):
         if self.prop == "dayofyear":
             if ds is not None:
                 cal = get_calendar(ds, dim=self.dim)
-                mdoy = max(
-                    xr.coding.calendar_ops._days_in_year(yr, cal)
-                    for yr in np.unique(ds[self.dim].dt.year)
-                )
+                # TODO : Change this to `ds[self.dim].dt.days_in_year.max().item()` when minimum xarray is 2024.09
+                mdoy = max_doy[cal]
             else:
                 mdoy = 365
             return xr.DataArray(
