@@ -319,7 +319,7 @@ def general_partition(
     ----------
     da : xr.DataArray
         Time series with dimensions 'time', 'mean_first', and 'var_first'.
-    sm : xr.DataArray or "poly"
+    sm : xr.DataArray or {"poly"}
         Smoothed time series over time, with the same dimensions as `da`.
         If 'poly', this is estimated using a 4th-order polynomial.
         It is also possible to pass a precomputed smoothed time series.
