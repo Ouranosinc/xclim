@@ -3688,11 +3688,7 @@ def holiday_snow_days(
         date_bounds=(date_start, date_start if date_end is None else date_end),
     )
 
-    xmas_days = (
-        (snow_depth_constrained >= snow_depth_thresh)
-        .resample(time=freq)
-        .sum()
-    )
+    xmas_days = (snow_depth_constrained >= snow_depth_thresh).resample(time=freq).sum()
 
     xmas_days = xmas_days.assign_attrs({"units": "1"})
     return xmas_days
