@@ -13,8 +13,6 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 
-from xclim.sdba import loess
-
 # pylint: disable=pointless-string-statement
 """
 Implemented partitioning algorithms:
@@ -306,7 +304,7 @@ def lafferty_sriver(
 
 def general_partition(
     da: xr.DataArray,
-    sm: xr.DataArray | str = "loess",
+    sm: xr.DataArray | str = "poly",
     var_first: list | None = None,
     mean_first: list | None = None,
     weights: list | None = None,
@@ -321,10 +319,9 @@ def general_partition(
     ----------
     da : xr.DataArray
         Time series with dimensions 'time', 'mean_first', and 'var_first'.
-    sm : xr.DataArray or {"poly", "loess"}
+    sm : xr.DataArray or "poly"
         Smoothed time series over time, with the same dimensions as `da`.
         If 'poly', this is estimated using a 4th-order polynomial.
-        If 'loess', this is estimated using a LOESS curve.
         It is also possible to pass a precomputed smoothed time series.
     var_first : list of str
         List of dimensions where the variance is computed first of the dimension,
@@ -371,12 +368,10 @@ def general_partition(
         sm = xr.polyval(coord=da.time, coeffs=fit.polyfit_coefficients).where(
             da.notnull()
         )
-    elif sm == "loess":
-        sm = loess.loess_smoothing(da)
     elif isinstance(sm, xr.DataArray):
         sm = sm
     else:
-        raise ValueError("sm should be 'poly', 'loess', or a DataArray.")
+        raise ValueError("sm should be 'poly' or a DataArray.")
 
     # "Interannual variability is then estimated as the centered rolling 11-year variance of the difference
     # between the extracted forced response and the raw outputs, averaged over all outputs."
