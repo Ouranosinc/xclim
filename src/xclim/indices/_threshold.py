@@ -3691,7 +3691,7 @@ def holiday_snow_days(
     xmas_days = (
         (snow_depth_constrained >= snow_depth_thresh)
         .resample(time=freq)
-        .map(lambda x: x.sum(dim="time"))
+        .sum()
     )
 
     xmas_days = xmas_days.assign_attrs({"units": "1"})
@@ -3770,7 +3770,7 @@ def holiday_snow_and_snowfall_days(
             & (snowfall_constrained >= snowfall_thresh)
         )
         .resample(time=freq)
-        .map(lambda x: x.sum(dim="time"))
+        .sum()
     )
 
     perfect_xmas_days = perfect_xmas_days.assign_attrs({"units": "1"})

@@ -260,7 +260,7 @@ snw_days_above = SnowWithIndexing(
 holiday_snow_days = Snow(
     title="Christmas snow days",
     identifier="holiday_snow_days",
-    units="1",
+    units="days",
     long_name="Number of holiday days with snow",
     description="The total number of days where snow on the ground was greater than or equal to {snd_thresh} "
     "occurring on {date_start} and ending on {date_end}.",
@@ -271,7 +271,7 @@ holiday_snow_days = Snow(
 holiday_snow_and_snowfall_days = Snow(
     title="Perfect Christmas snow days",
     identifier="holiday_snow_and_snowfall_days",
-    units="1",
+    units="days",
     long_name="Number of holiday days with snow and snowfall",
     description="The total number of days where snow on the ground was greater than or equal to {snd_thresh} "
     "and snowfall was greater than or equal to {prsn_thresh} occurring on {date_start} and ending on {date_end}.",
