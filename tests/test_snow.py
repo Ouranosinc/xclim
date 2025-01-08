@@ -135,7 +135,7 @@ class TestHolidaySnowIndicators:
 
         out = land.holiday_snow_days(snd)
 
-        assert out.units == "1"
+        assert out.units == "days"
         assert out.long_name == "Number of holiday days with snow"
         np.testing.assert_array_equal(
             out.sum(dim="time"),
@@ -166,7 +166,7 @@ class TestHolidaySnowIndicators:
 
         out = land.holiday_snow_and_snowfall_days(snd, prsn)
 
-        assert out.units == "1"
+        assert out.units == "days"
         assert out.long_name == "Number of holiday days with snow and snowfall"
         np.testing.assert_array_equal(
             out.sum(dim="time"),
