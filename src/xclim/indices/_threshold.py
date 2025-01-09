@@ -22,7 +22,9 @@ from xclim.core.units import (
 )
 from xclim.indices import run_length as rl
 from xclim.indices.generic import (
+    bivariate_count_occurrences,
     compare,
+    count_occurrences,
     cumulative_difference,
     domain_count,
     first_day_threshold_reached,
@@ -3457,7 +3459,7 @@ def wet_spell_frequency(
         Resampling frequency.
     resample_before_rl : bool
         Determines if the resampling should take place before or after the run length encoding (or a similar algorithm) is applied to runs.
-    op : {"sum","min", "max", "mean"}
+    op : {"sum", "min", "max", "mean"}
         Operation to perform on the window.
         Default is "sum", which checks that the sum of accumulated precipitation over the whole window is more than the
         threshold.
@@ -3647,14 +3649,15 @@ def wet_spell_max_length(
 def holiday_snow_days(
     snd: xarray.DataArray,
     snd_thresh: Quantified = "20 mm",
+    op: str = ">=",
     date_start: str = "12-25",
     date_end: str | None = None,
     freq: str = "YS",
 ) -> xarray.DataArray:  # numpydoc ignore=SS05
-    r"""
+    """
     Christmas Days.
 
-    Whether there is a significant amount of snow on the ground on December 25th (or around that time).
+    Whether there is a significant amount of snow on the ground on December 25th (or a given date range).
 
     Parameters
     ----------
@@ -3662,6 +3665,8 @@ def holiday_snow_days(
         Surface snow depth.
     snd_thresh : Quantified
         Threshold snow amount. Default: 20 mm.
+    op : {">", "gt", ">=", "ge"}
+        Comparison operation. Default: ">=".
     date_start : str
         Beginning of analysis period. Default: "12-25" (December 25th).
     date_end : str, optional
@@ -3680,15 +3685,15 @@ def holiday_snow_days(
     ----------
     https://www.canada.ca/en/environment-climate-change/services/weather-general-tools-resources/historical-christmas-snowfall-data.html
     """
-    snow_depth = convert_units_to(snd, "m")
-    snow_depth_thresh = convert_units_to(snd_thresh, "m")
-    snow_depth_constrained = select_time(
-        snow_depth,
+    snd_constrained = select_time(
+        snd,
         drop=True,
         date_bounds=(date_start, date_start if date_end is None else date_end),
     )
 
-    xmas_days = (snow_depth_constrained >= snow_depth_thresh).resample(time=freq).sum()
+    xmas_days = count_occurrences(
+        snd_constrained, snd_thresh, freq, op, constrain=[">=", ">"]
+    )
 
     xmas_days = xmas_days.assign_attrs({"units": "days"})
     return xmas_days
@@ -3705,6 +3710,8 @@ def holiday_snow_and_snowfall_days(
     prsn: xarray.DataArray | None = None,
     snd_thresh: Quantified = "20 mm",
     prsn_thresh: Quantified = "1 cm",
+    snd_op: str = ">=",
+    prsn_op: str = ">=",
     date_start: str = "12-25",
     date_end: str | None = None,
     freq: str = "YS-JUL",
@@ -3724,6 +3731,10 @@ def holiday_snow_and_snowfall_days(
         Threshold snow amount. Default: 20 mm.
     prsn_thresh : Quantified
         Threshold snowfall flux. Default: 1 mm.
+    snd_op : {">", "gt", ">=", "ge"}
+        Comparison operation for snow depth. Default: ">=".
+    prsn_op : {">", "gt", ">=", "ge"}
+        Comparison operation for snowfall flux. Default: ">=".
     date_start : str
         Beginning of analysis period. Default: "12-25" (December 25th).
     date_end : str, optional
@@ -3742,31 +3753,32 @@ def holiday_snow_and_snowfall_days(
     ----------
     https://www.canada.ca/en/environment-climate-change/services/weather-general-tools-resources/historical-christmas-snowfall-data.html
     """
-    snow_depth = convert_units_to(snd, "m")
-    snow_depth_thresh = convert_units_to(snd_thresh, "m")
-    snow_depth_constrained = select_time(
-        snow_depth,
+    snd_constrained = select_time(
+        snd,
         drop=True,
         date_bounds=(date_start, date_start if date_end is None else date_end),
     )
 
-    snowfall_rate = rate2amount(
+    prsn_mm = rate2amount(
         convert_units_to(prsn, "mm day-1", context="hydro"), out_units="mm"
     )
-    snowfall_thresh = convert_units_to(prsn_thresh, "mm", context="hydro")
-    snowfall_constrained = select_time(
-        snowfall_rate,
+    prsn_mm_constrained = select_time(
+        prsn_mm,
         drop=True,
         date_bounds=(date_start, date_start if date_end is None else date_end),
     )
 
-    perfect_xmas_days = (
-        (
-            (snow_depth_constrained >= snow_depth_thresh)
-            & (snowfall_constrained >= snowfall_thresh)
-        )
-        .resample(time=freq)
-        .sum()
+    perfect_xmas_days = bivariate_count_occurrences(
+        data_var1=snd_constrained,
+        data_var2=prsn_mm_constrained,
+        threshold_var1=snd_thresh,
+        threshold_var2=prsn_thresh,
+        op_var1=snd_op,
+        op_var2=prsn_op,
+        freq=freq,
+        var_reducer="all",
+        constrain_var1=[">=", ">"],
+        constrain_var2=[">=", ">"],
     )
 
     perfect_xmas_days = perfect_xmas_days.assign_attrs({"units": "days"})

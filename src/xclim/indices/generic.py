@@ -34,6 +34,7 @@ from xclim.indices.helpers import resample_map
 __all__ = [
     "aggregate_between_dates",
     "binary_ops",
+    "bivariate_count_occurrences",
     "bivariate_spell_length_statistics",
     "compare",
     "count_level_crossings",
@@ -903,9 +904,9 @@ def count_occurrences(
     """
     Calculate the number of times some condition is met.
 
-    First, the threshold is transformed to the same standard_name and units as the input data:
+    First, the threshold is transformed to the same standard_name and units as the input data;
     Then the thresholding is performed as condition(data, threshold),
-    i.e. if condition is `<`, then this counts the number of times `data < threshold`:
+    i.e. if condition is `<`, then this counts the number of times `data < threshold`;
     Finally, count the number of occurrences when condition is met.
 
     Parameters
@@ -932,6 +933,79 @@ def count_occurrences(
 
     out = cond.resample(time=freq).sum()
     return to_agg_units(out, data, "count", dim="time")
+
+
+@declare_relative_units(threshold_var1="<data_var1>", threshold_var2="<data_var2>")
+def bivariate_count_occurrences(
+    *,
+    data_var1: xr.DataArray,
+    data_var2: xr.DataArray,
+    threshold_var1: Quantified,
+    threshold_var2: Quantified,
+    freq: str,
+    op_var1: str,
+    op_var2: str,
+    var_reducer: str,
+    constrain_var1: Sequence[str] | None = None,
+    constrain_var2: Sequence[str] | None = None,
+) -> xr.DataArray:
+    """
+    Calculate the number of times some conditions are met for two variables.
+
+    First, the thresholds are transformed to the same standard_name and units as their corresponding input data;
+    Then the thresholding is performed as condition(data, threshold) for each variable,
+    i.e. if condition is `<`, then this counts the number of times `data < threshold`;
+    Then the conditions are combined according to `var_reducer`;
+    Finally, the number of occurrences where conditions are met for "all" or "any" events are counted.
+
+    Parameters
+    ----------
+    data_var1 : xr.DataArray
+        An array.
+    data_var2 : xr.DataArray
+        An array.
+    threshold_var1 : Quantified
+        Threshold for data variable 1.
+    threshold_var2 : Quantified
+        Threshold for data variable 2.
+    freq : str
+        Resampling frequency defining the periods as defined in :ref:`timeseries.resampling`.
+    op_var1 : {">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"}
+        Logical operator for data variable 1. e.g. arr > thresh.
+    op_var2 : {">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"}
+        Logical operator for data variable 2. e.g. arr > thresh.
+    var_reducer : {"all", "any"}
+        The condition must either be fulfilled on *all* or *any* variables for the period to be considered an occurrence.
+    constrain_var1 : sequence of str, optional
+        Optionally allowed comparison operators for variable 1.
+    constrain_var2 : sequence of str, optional
+        Optionally allowed comparison operators for variable 2.
+
+    Returns
+    -------
+    xr.DataArray
+        The DataArray of counted occurrences.
+
+    Notes
+    -----
+    Sampling and variable units are derived from `data_var1`.
+    """
+    threshold_var1 = convert_units_to(threshold_var1, data_var1)
+    threshold_var2 = convert_units_to(threshold_var2, data_var2)
+
+    cond_var1 = compare(data_var1, op_var1, threshold_var1, constrain_var1)
+    cond_var2 = compare(data_var2, op_var2, threshold_var2, constrain_var2)
+
+    if var_reducer == "all":
+        cond = cond_var1 & cond_var2
+    elif var_reducer == "any":
+        cond = cond_var1 | cond_var2
+    else:
+        raise ValueError(f"Unsupported value for var_reducer: {var_reducer}")
+
+    out = cond.resample(time=freq).sum()
+
+    return to_agg_units(out, data_var1, "count", dim="time")
 
 
 def diurnal_temperature_range(
