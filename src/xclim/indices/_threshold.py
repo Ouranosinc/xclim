@@ -3687,7 +3687,6 @@ def holiday_snow_days(
     """
     snd_constrained = select_time(
         snd,
-        drop=True,
         date_bounds=(date_start, date_start if date_end is None else date_end),
     )
 
@@ -3695,7 +3694,7 @@ def holiday_snow_days(
         snd_constrained, snd_thresh, freq, op, constrain=[">=", ">"]
     )
 
-    xmas_days = xmas_days.assign_attrs({"units": "days"})
+    xmas_days = to_agg_units(xmas_days, snd,  "count")
     return xmas_days
 
 
@@ -3709,7 +3708,7 @@ def holiday_snow_and_snowfall_days(
     snd: xarray.DataArray,
     prsn: xarray.DataArray | None = None,
     snd_thresh: Quantified = "20 mm",
-    prsn_thresh: Quantified = "1 cm",
+    prsn_thresh: Quantified = "1 mm",
     snd_op: str = ">=",
     prsn_op: str = ">=",
     date_start: str = "12-25",
@@ -3755,7 +3754,6 @@ def holiday_snow_and_snowfall_days(
     """
     snd_constrained = select_time(
         snd,
-        drop=True,
         date_bounds=(date_start, date_start if date_end is None else date_end),
     )
 
@@ -3764,7 +3762,6 @@ def holiday_snow_and_snowfall_days(
     )
     prsn_mm_constrained = select_time(
         prsn_mm,
-        drop=True,
         date_bounds=(date_start, date_start if date_end is None else date_end),
     )
 
@@ -3781,5 +3778,5 @@ def holiday_snow_and_snowfall_days(
         constrain_var2=[">=", ">"],
     )
 
-    perfect_xmas_days = perfect_xmas_days.assign_attrs({"units": "days"})
+    perfect_xmas_days = to_agg_units(perfect_xmas_days, snd, "count")
     return perfect_xmas_days
