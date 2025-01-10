@@ -64,28 +64,26 @@ __all__ = [
 units = deepcopy(cf_xarray.units.units)
 # Changing the default string format for units/quantities.
 # CF is implemented by cf-xarray, g is the most versatile float format.
-# The following try/except logic can be removed when xclim drops support numpy <2.0.
+# The following try/except logic can be removed when xclim drops support for pint < 0.24  (i.e. numpy <2.0).
 try:
     units.formatter.default_format = "gcf"
 except UndefinedUnitError:
     units.default_format = "gcf"
-# Switch this flag back to False. Not sure what that implies, but it breaks some tests.
-units.force_ndarray_like = False  # noqa: F841
-# Another alias not included by cf_xarray
-units.define("@alias percent = pct")
 
-# Default context.
+# CF-xarray forces numpy arrays even for scalar values, not sure why.
+# We don't want that in xclim, the magnitude of a scalar is a scalar (float).
+units.force_ndarray_like = False
+
+# Precipitation units. This is an artificial unit that we're using to verify that a given unit can be converted into
+# a precipitation unit. It is essentially added for convenience when writing `declare_units` decorators.
+units.define("[precipitation] = [mass] / [length] ** 2 / [time]")
+units.define("[discharge] = [length] ** 3 / [time]")
+
+# Default context. This is essentially a convenience, so that we can pass a context systemtically to pint's methods.
 null = pint.Context("none")
 units.add_context(null)
 
-# Precipitation units. This is an artificial unit that we're using to verify that a given unit can be converted into
-# a precipitation unit. Ideally this could be checked through the `dimensionality`, but I can't get it to work.
-units.define("[precipitation] = [mass] / [length] ** 2 / [time]")
-units.define("mmday = 1 kg / meter ** 2 / day")
-
-units.define("[discharge] = [length] ** 3 / [time]")
-units.define("cms = meter ** 3 / second")
-
+# Convenience context for common transformation involving liquid water
 hydro = pint.Context("hydro")
 hydro.add_transformation(
     "[mass] / [length]**2",
@@ -109,6 +107,8 @@ hydro.add_transformation(
 )
 units.add_context(hydro)
 
+# Set as application registry
+pint.set_application_registry(units)
 
 with (files("xclim.data") / "variables.yml").open() as variables:
     CF_CONVERSIONS = safe_load(variables)["conversions"]
