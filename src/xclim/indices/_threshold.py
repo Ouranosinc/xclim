@@ -3694,7 +3694,7 @@ def holiday_snow_days(
         snd_constrained, snd_thresh, freq, op, constrain=[">=", ">"]
     )
 
-    xmas_days = to_agg_units(xmas_days, snd,  "count")
+    xmas_days = to_agg_units(xmas_days, snd, "count")
     return xmas_days
 
 
