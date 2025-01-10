@@ -22,7 +22,6 @@ import pandas as pd
 import pint
 import xarray as xr
 from boltons.funcutils import wraps
-from pint import UndefinedUnitError
 from yaml import safe_load
 
 from xclim.core._exceptions import ValidationError
@@ -64,20 +63,15 @@ __all__ = [
 units = deepcopy(cf_xarray.units.units)
 # Changing the default string format for units/quantities.
 # CF is implemented by cf-xarray, g is the most versatile float format.
-# The following try/except logic can be removed when xclim drops support for pint < 0.24  (i.e. numpy <2.0).
-try:
-    units.formatter.default_format = "gcf"
-except UndefinedUnitError:
-    units.default_format = "gcf"
-
+units.formatter.default_format = "gcf"
 # CF-xarray forces numpy arrays even for scalar values, not sure why.
 # We don't want that in xclim, the magnitude of a scalar is a scalar (float).
 units.force_ndarray_like = False
 
-# Precipitation units. This is an artificial unit that we're using to verify that a given unit can be converted into
-# a precipitation unit. It is essentially added for convenience when writing `declare_units` decorators.
+# Define dimensionalities for convenience with the `declare_units` decorator
 units.define("[precipitation] = [mass] / [length] ** 2 / [time]")
 units.define("[discharge] = [length] ** 3 / [time]")
+units.define("[radiation] = [power] / [length]**2")
 
 # Default context. This is essentially a convenience, so that we can pass a context systemtically to pint's methods.
 null = pint.Context("none")
@@ -110,6 +104,7 @@ units.add_context(hydro)
 # Set as application registry
 pint.set_application_registry(units)
 
+
 with (files("xclim.data") / "variables.yml").open() as variables:
     CF_CONVERSIONS = safe_load(variables)["conversions"]
 _CONVERSIONS = {}
@@ -134,10 +129,6 @@ def _register_conversion(conversion, direction):
         return func
 
     return _func_register
-
-
-# Radiation units
-units.define("[radiation] = [power] / [length]**2")
 
 
 def units2pint(
