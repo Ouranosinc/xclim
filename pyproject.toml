@@ -72,7 +72,7 @@ dev = [
   "ipython >=8.5.0",
   "isort ==5.13.2",
   "mypy >=1.10.0",
-  "nbconvert <7.14", # Pinned due to directive errors in sphinx. See: https://github.com/jupyter/nbconvert/issues/2092
+  "nbconvert >=7.16.4",
   "nbqa >=1.8.2",
   "nbval >=0.11.0",
   "numpydoc >=1.8.0",
@@ -104,6 +104,7 @@ docs = [
   "nc-time-axis >=1.4.1",
   "pooch >=1.8.0",
   "pybtex >=0.24.0",
+  "pygments <2.19", # FIXME: temporary fix for sphinx-codeautolink
   "sphinx >=7.0.0",
   "sphinx-autobuild >=2024.4.16",
   "sphinx-autodoc-typehints",

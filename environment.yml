@@ -30,7 +30,7 @@ dependencies:
   - pot >=0.9.4
   # Testing and development dependencies
   - black =24.10.0
-  - blackdoc ==0.3.9
+  - blackdoc =0.3.9
   - bump-my-version >=0.28.1
   - cairosvg >=2.6.0
   - codespell =2.3.0
@@ -48,7 +48,7 @@ dependencies:
   - isort =5.13.2
   - matplotlib >=3.6.0
   - mypy >=1.10.0
-  - nbconvert <7.14  # Pinned due to directive errors in sphinx. See: https://github.com/jupyter/nbconvert/issues/2092
+  - nbconvert >=7.16.4
   - nbqa >=1.8.2
   - nbsphinx >=0.9.5
   - nbval >=0.11.0
@@ -60,6 +60,7 @@ dependencies:
   - pooch >=1.8.0
   - pre-commit >=3.7
   - pybtex >=0.24.0
+  - pygments <2.19  # FIXME: temporary fix for sphinx-codeautolink
   - pylint >=3.3.1
   - pytest >=8.0.0
   - pytest-cov >=5.0.0
@@ -77,7 +78,7 @@ dependencies:
   - tokenize-rt >=5.2.0
   - tox >=4.21.2
   - tox-gh >=1.4.4
-  - vulture ==2.14
+  - vulture =2.14
   - xdoctest >=1.1.5
   - yamllint >=1.35.1
   - pip >=24.2.0
