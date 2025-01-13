@@ -11,8 +11,20 @@ xclim: Climate services library |logo| |logo-dark| |logo-light|
 +----------------------------+-----------------------------------------------------+
 | Coding Standards           | |black| |ruff| |pre-commit| |ossf-bp| |fossa|       |
 +----------------------------+-----------------------------------------------------+
-| Development Status         | |status| |build| |coveralls| |energy|               |
+| Development Status         | |status| |build| |coveralls|                        |
 +----------------------------+-----------------------------------------------------+
+
++----------------------------------------------------------------------------------------------+
+| `ECO-CI`_ Energy Consumption and Carbon Emissions from CI (since November 2024)              |
++------------------+----------------+----------------------------------------------------------+
+| Energy Usage     | (main.yml)     | |energy-last-mn| |energy-average-mn| |energy-total-mn|   |
+|                  +----------------+----------------------------------------------------------+
+|                  | (upstream.yml) | |energy-last-up| |energy-average-up| |energy-total-up|   |
++------------------+----------------+----------------------------------------------------------+
+| Carbon Emissions | (main.yml)     | |carbon-last-mn| |carbon-average-mn| |carbon-total-mn|   |
+| (estimated)      +----------------+----------------------------------------------------------+
+|                  | (upstream.yml) | |carbon-last-up| |carbon-average-up| |carbon-total-up|   |
++------------------+----------------+----------------------------------------------------------+
 
 `xclim` is an operational Python library for climate services, providing numerous climate-related indicator tools
 with an extensible framework for constructing custom climate indicators, statistical downscaling and bias
@@ -120,6 +132,7 @@ This package was created with Cookiecutter_ and the `audreyfeldroy/cookiecutter-
 .. _CFI: https://www.innovation.ca/
 .. _Cookiecutter: https://github.com/cookiecutter/cookiecutter/
 .. _ECCC: https://www.canada.ca/en/environment-climate-change.html
+.. _ECO-CI: https://www.green-coding.io/
 .. _FECC: https://www.environnement.gouv.qc.ca/ministere/fonds-electrification-changements-climatiques/index.htm
 .. _Fonds vert: https://www.environnement.gouv.qc.ca/ministere/fonds-vert/index.htm
 .. _FRQ: https://frq.gouv.qc.ca/
@@ -169,10 +182,6 @@ This package was created with Cookiecutter_ and the `audreyfeldroy/cookiecutter-
         :target: https://bestpractices.coreinfrastructure.org/projects/6041
         :alt: Open Source Security Foundation Best Practices
 
-.. |energy| image:: https://api.green-coding.io/v1/ci/badge/get?repo=Ouranosinc/xclim&branch=main&workflow=47013755
-        :target: https://metrics.green-coding.io/ci.html?repo=Ouranosinc/xclim&branch=main&workflow=47013755
-        :alt: Energy Consumption
-
 .. |ossf-score| image:: https://api.securityscorecards.dev/projects/github.com/Ouranosinc/xclim/badge
         :target: https://securityscorecards.dev/viewer/?uri=github.com/Ouranosinc/xclim
         :alt: Open Source Security Foundation Scorecard
@@ -215,3 +224,54 @@ This package was created with Cookiecutter_ and the `audreyfeldroy/cookiecutter-
 .. |versions| image:: https://img.shields.io/pypi/pyversions/xclim.svg
         :target: https://pypi.python.org/pypi/xclim
         :alt: Supported Python Versions
+
+..
+    Energy Metrics by https://github.com/green-coding-solutions/eco-ci-energy-estimation
+
+.. |energy-total-mn| image:: https://api.green-coding.io/v1/ci/badge/get?repo=Ouranosinc/xclim&branch=main&workflow=5828641&mode=totals
+        :target: https://metrics.green-coding.io/ci.html?repo=Ouranosinc/xclim&branch=main&workflow=5828641
+        :alt: Energy Consumption (Total)
+
+.. |energy-last-mn| image:: https://api.green-coding.io/v1/ci/badge/get?repo=Ouranosinc/xclim&branch=main&workflow=5828641
+        :target: https://metrics.green-coding.io/ci.html?repo=Ouranosinc/xclim&branch=main&workflow=5828641
+        :alt: Energy Consumption (Last run)
+
+.. |energy-average-mn| image:: https://api.green-coding.io/v1/ci/badge/get?repo=Ouranosinc/xclim&branch=main&workflow=5828641&mode=avg&duration_days=90
+        :target: https://metrics.green-coding.io/ci.html?repo=Ouranosinc/xclim&branch=main&workflow=5828641
+        :alt: Energy Consumption (Last 90 days moving average)
+
+.. |carbon-total-mn| image:: https://api.green-coding.io/v1/ci/badge/get?repo=Ouranosinc/xclim&branch=main&workflow=5828641&mode=totals&metric=carbon
+        :target: https://metrics.green-coding.io/ci.html?repo=Ouranosinc/xclim&branch=festive-indices&workflow=5828641
+        :alt: Carbon Emissions (Total)
+
+.. |carbon-last-mn| image:: https://api.green-coding.io/v1/ci/badge/get?repo=Ouranosinc/xclim&branch=main&workflow=5828641&metric=carbon
+        :target: https://metrics.green-coding.io/ci.html?repo=Ouranosinc/xclim&branch=main&workflow=5828641
+        :alt: Carbon Emissions (Last run)
+
+.. |carbon-average-mn| image:: https://api.green-coding.io/v1/ci/badge/get?repo=Ouranosinc/xclim&branch=main&workflow=5828641&mode=avg&duration_days=90&metric=carbon
+        :target: https://metrics.green-coding.io/ci.html?repo=Ouranosinc/xclim&branch=main&workflow=5828641
+        :alt: Carbon Emissions (Last 90 days moving average)
+
+.. |energy-total-up| image:: https://api.green-coding.io/v1/ci/badge/get?repo=Ouranosinc/xclim&branch=main&workflow=51773173&mode=totals
+        :target: https://metrics.green-coding.io/ci.html?repo=Ouranosinc/xclim&branch=main&workflow=51773173
+        :alt: Energy Consumption (Total)
+
+.. |energy-last-up| image:: https://api.green-coding.io/v1/ci/badge/get?repo=Ouranosinc/xclim&branch=main&workflow=51773173
+        :target: https://metrics.green-coding.io/ci.html?repo=Ouranosinc/xclim&branch=main&workflow=51773173
+        :alt: Energy Consumption (Last run)
+
+.. |energy-average-up| image:: https://api.green-coding.io/v1/ci/badge/get?repo=Ouranosinc/xclim&branch=main&workflow=51773173&mode=avg&duration_days=90
+        :target: https://metrics.green-coding.io/ci.html?repo=Ouranosinc/xclim&branch=main&workflow=51773173
+        :alt: Energy Consumption (Last 90 days moving average)
+
+.. |carbon-total-up| image:: https://api.green-coding.io/v1/ci/badge/get?repo=Ouranosinc/xclim&branch=main&workflow=51773173&mode=totals&metric=carbon
+        :target: https://metrics.green-coding.io/ci.html?repo=Ouranosinc/xclim&branch=festive-indices&workflow=51773173
+        :alt: Carbon Emissions (Total)
+
+.. |carbon-last-up| image:: https://api.green-coding.io/v1/ci/badge/get?repo=Ouranosinc/xclim&branch=main&workflow=51773173&metric=carbon
+        :target: https://metrics.green-coding.io/ci.html?repo=Ouranosinc/xclim&branch=main&workflow=51773173
+        :alt: Carbon Emissions (Last run)
+
+.. |carbon-average-up| image:: https://api.green-coding.io/v1/ci/badge/get?repo=Ouranosinc/xclim&branch=main&workflow=51773173&mode=avg&duration_days=90&metric=carbon
+        :target: https://metrics.green-coding.io/ci.html?repo=Ouranosinc/xclim&branch=main&workflow=51773173
+        :alt: Carbon Emissions (Last 90 days moving average)
