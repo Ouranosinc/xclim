@@ -3,7 +3,12 @@ from __future__ import annotations
 import numpy as np
 import xarray as xr
 
-from xclim.ensembles import fractional_uncertainty, hawkins_sutton, lafferty_sriver
+from xclim.ensembles import (
+    fractional_uncertainty,
+    general_partition,
+    hawkins_sutton,
+    lafferty_sriver,
+)
 from xclim.ensembles._filters import _concat_hist, _model_in_all_scens, _single_member
 
 
@@ -156,3 +161,22 @@ def test_lafferty_sriver(lafferty_sriver_ds):
         plt.show()
 
     # graph()
+
+
+def test_general_partition(lafferty_sriver_ds):
+    """Reproduce Lafferty & Sriver's results using general_partition."""
+    g1, u1 = lafferty_sriver(lafferty_sriver_ds.tas)
+    g2, u2 = general_partition(
+        lafferty_sriver_ds.tas,
+        var_first=["model", "downscaling"],
+        mean_first=["scenario"],
+        weights=["model", "downscaling"],
+        sm="poly",
+    )
+    # fix order
+    u2 = u2.sel(
+        uncertainty=["model", "scenario", "downscaling", "variability", "total"]
+    )
+
+    assert u1.equals(u2)
+    np.testing.assert_allclose(g1.values, g2.values, atol=0.1)
