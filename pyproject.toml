@@ -111,7 +111,8 @@ docs = [
   "sphinx-copybutton",
   "sphinx-mdinclude",
   "sphinxcontrib-bibtex",
-  "sphinxcontrib-svg2pdfconverter[Cairosvg]"
+  "sphinxcontrib-svg2pdfconverter[Cairosvg]",
+  "pygments <2.19" # FIXME: temporary fix, https://github.com/felix-hilden/sphinx-codeautolink/issues/153
 ]
 extras = ["fastnanquantile >=0.0.2", "flox >=0.9", "POT >=0.9.4"]
 all = ["xclim[dev]", "xclim[docs]", "xclim[extras]"]
@@ -138,7 +139,7 @@ target-version = [
 ]
 
 [tool.bumpversion]
-current_version = "0.54.0"
+current_version = "0.54.1-dev.0"
 commit = true
 commit_args = "--no-verify --signoff"
 tag = false
