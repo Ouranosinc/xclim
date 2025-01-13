@@ -70,7 +70,7 @@ dependencies:
   - sphinx >=7.0.0
   - sphinx-autobuild >=2024.4.16
   - sphinx-autodoc-typehints
-  - sphinx-codeautolink
+  - sphinx-codeautolink >=0.15.2,!=0.16.0  # FIXME: temporary fix for sphinx-codeautolink
   - sphinx-copybutton
   - sphinx-mdinclude
   - sphinxcontrib-bibtex
