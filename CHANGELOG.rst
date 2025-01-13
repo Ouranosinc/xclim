@@ -2,6 +2,14 @@
 Changelog
 =========
 
+v0.55.0 (unreleased)
+--------------------
+Contributors to this version: Juliette Lavoie (:user:`juliettelavoie`)
+
+New features and enhancements
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+* New function ``ensemble.partition.general_partition`` (:pull:`2035`)
+
 v0.54.0 (2024-12-16)
 --------------------
 Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), Éric Dupuis (:user:`coxipi`), Sascha Hofmann (:user:`saschahofmann`).
