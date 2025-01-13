@@ -28,6 +28,7 @@ from xclim.core import ValidationError
 from xclim.core.calendar import percentile_doy
 from xclim.core.options import set_options
 from xclim.core.units import convert_units_to, units
+from xclim.indices import prsnd_to_prsn
 
 K2C = 273.15
 
@@ -1471,7 +1472,7 @@ class TestHeatWaveTotalLength:
 class TestHolidayIndices:
 
     def test_xmas_days_simple(self, snd_series):
-        # 5ish years of data
+        # 5ish years of data, starting from 2000-07-01
         snd = snd_series(np.zeros(365 * 5), units="cm")
 
         # add snow on ground on December 25 for first 3 years
@@ -1482,10 +1483,10 @@ class TestHolidayIndices:
         snd.loc["2004-12-25"] = 6
 
         out = xci.holiday_snow_days(snd)
-        np.testing.assert_array_equal(out, [1, 0, 1, 0, 1])
+        np.testing.assert_array_equal(out, [1, 0, 1, 0, 1, 0])
 
     def test_xmas_days_range(self, snd_series):
-        # 5ish years of data
+        # 5ish years of data, starting from 2000-07-01
         snd = snd_series(np.zeros(365 * 5), units="cm")
 
         # add snow on ground on December 25 for first 3 years
@@ -1497,13 +1498,14 @@ class TestHolidayIndices:
         snd.loc["2004-12-25"] = 6
 
         out = xci.holiday_snow_days(snd, date_start="12-24", date_end="12-25")
-        np.testing.assert_array_equal(out, [1, 0, 2, 0, 1])
+        np.testing.assert_array_equal(out, [1, 0, 2, 0, 1, 0])
 
-    def test_perfect_xmas_days_simple(self, snd_series, prsn_series):
-        # 5ish years of data
+    def test_perfect_xmas_days(self, snd_series, prsn_series):
+        # 5ish years of data, starting from 2000-07-01
         a = np.zeros(365 * 5)
         snd = snd_series(a, units="mm")
-        prsn = prsn_series(a.copy(), units="cm day-1")
+        # prsnd is snowfall using snow density of 100 kg/m3
+        prsnd = prsn_series(a.copy(), units="cm day-1")
 
         # add snow on ground on December 25
         snd.loc["2000-12-25"] = 20
@@ -1514,16 +1516,33 @@ class TestHolidayIndices:
         snd.loc["2004-12-25"] = 60
 
         # add snowfall on December 25
-        prsn.loc["2000-12-25"] = 5
-        prsn.loc["2001-12-25"] = 2
-        prsn.loc["2001-12-26"] = 30  # too bad it's Boxing Day
-        prsn.loc["2002-12-25"] = 0.5  # not quite enough
-        prsn.loc["2003-12-25"] = 0  # no snow
-        prsn.loc["2004-12-25"] = 10
+        prsnd.loc["2000-12-25"] = 5
+        prsnd.loc["2001-12-25"] = 2
+        prsnd.loc["2001-12-26"] = 30  # too bad it's Boxing Day
+        prsnd.loc["2002-12-25"] = 1  # not quite enough
+        prsnd.loc["2003-12-25"] = 0  # no snow
+        prsnd.loc["2004-12-25"] = 10
+
+        prsn = prsnd_to_prsn(prsnd)
         prsn = convert_units_to(prsn, "kg m-2 s-1", context="hydro")
 
-        out = xci.holiday_snow_and_snowfall_days(snd, prsn)
-        np.testing.assert_array_equal(out, [1, 0, 0, 0, 1])
+        out1 = xci.holiday_snow_and_snowfall_days(snd, prsn)
+        np.testing.assert_array_equal(out1, [1, 0, 0, 0, 1])
+
+        out2 = xci.holiday_snow_and_snowfall_days(
+            snd, prsn, snd_thresh="15 mm", prsn_thresh="0.5 mm"
+        )
+        np.testing.assert_array_equal(out2, [1, 1, 1, 0, 1])
+
+        out3 = xci.holiday_snow_and_snowfall_days(
+            snd,
+            prsn,
+            snd_thresh="10 mm",
+            prsn_thresh="0.5 mm",
+            date_start="12-25",
+            date_end="12-26",
+        )
+        np.testing.assert_array_equal(out3, [1, 2, 1, 0, 1])
 
 
 class TestHotSpellFrequency:
