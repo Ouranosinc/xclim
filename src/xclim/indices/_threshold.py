@@ -3729,7 +3729,7 @@ def holiday_snow_and_snowfall_days(
     snd_thresh : Quantified
         Threshold snow amount. Default: 20 mm.
     prsn_thresh : Quantified
-        Threshold snowfall flux. Default: 1 mm.
+        Threshold daily snowfall liquid-water equivalent thickness. Default: 1 mm.
     snd_op : {">", "gt", ">=", "ge"}
         Comparison operation for snow depth. Default: ">=".
     prsn_op : {">", "gt", ">=", "ge"}
