@@ -2,6 +2,14 @@
 Changelog
 =========
 
+v0.55.0 (unpublished)
+--------------------
+Contributors to this version: Éric Dupuis (:user:`coxipi`).
+
+Internal changes
+^^^^^^^^^^^^^^^^
+* There is now a warning stating that `fitkwargs` are not employed when using `lmoments3` distribution. One exception is the use of `floc` which is allowed with the gamma distribution. `floc`  is used to shift the distribution before computing fitting parameters with the lmoments3 distribution since `loc=0` is always assumed in the library.
+
 v0.54.0 (2024-12-16)
 --------------------
 Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), Éric Dupuis (:user:`coxipi`), Sascha Hofmann (:user:`saschahofmann`).
