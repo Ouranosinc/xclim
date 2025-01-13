@@ -9,6 +9,7 @@ Contributors to this version: Juliette Lavoie (:user:`juliettelavoie`)
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 * New function ``ensemble.partition.general_partition`` (:pull:`2035`)
+* `xclim` now tracks energy usage and carbon emissions (last run, averages, and totals) during CI workflows using the `eco-ci-energy-estimation` GitHub Action. (:pull:`2046`).
 
 v0.54.0 (2024-12-16)
 --------------------

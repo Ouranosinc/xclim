@@ -14,17 +14,17 @@ xclim: Climate services library |logo| |logo-dark| |logo-light|
 | Development Status         | |status| |build| |coveralls|                        |
 +----------------------------+-----------------------------------------------------+
 
-+----------------------------------------------------------------------------------------------+
-| `ECO-CI`_ Energy Consumption and Carbon Emissions from CI (since November 2024)              |
-+------------------+----------------+----------------------------------------------------------+
-| Energy Usage     | (main.yml)     | |energy-last-mn| |energy-average-mn| |energy-total-mn|   |
-|                  +----------------+----------------------------------------------------------+
-|                  | (upstream.yml) | |energy-last-up| |energy-average-up| |energy-total-up|   |
-+------------------+----------------+----------------------------------------------------------+
-| Carbon Emissions | (main.yml)     | |carbon-last-mn| |carbon-average-mn| |carbon-total-mn|   |
-| (estimated)      +----------------+----------------------------------------------------------+
-|                  | (upstream.yml) | |carbon-last-up| |carbon-average-up| |carbon-total-up|   |
-+------------------+----------------+----------------------------------------------------------+
++------------------------------------------------------------------------------------------------+
+| `ECO-CI`_ Energy Consumption and Carbon Emissions from CI (since November 2024)                |
++------------------+------------------+----------------------------------------------------------+
+|                  | Energy Usage     | |energy-last-mn| |energy-average-mn| |energy-total-mn|   |
+| Main Branch      +------------------+----------------------------------------------------------+
+|                  | Carbon Emissions | |carbon-last-mn| |carbon-average-mn| |carbon-total-mn|   |
++------------------+------------------+----------------------------------------------------------+
+|                  | Energy Usage     | |energy-last-up| |energy-average-up| |energy-total-up|   |
+| Upstream Testing +------------------+----------------------------------------------------------+
+|                  | Carbon Emissions | |carbon-last-up| |carbon-average-up| |carbon-total-up|   |
++------------------+------------------+----------------------------------------------------------+
 
 `xclim` is an operational Python library for climate services, providing numerous climate-related indicator tools
 with an extensible framework for constructing custom climate indicators, statistical downscaling and bias
