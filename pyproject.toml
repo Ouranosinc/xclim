@@ -65,7 +65,7 @@ dev = [
   "codespell ==2.3.0",
   "coverage[toml] >=7.5.0",
   "coveralls >=4.0.1", # coveralls is not yet compatible with Python 3.13
-  "deptry ==0.21.2",
+  "deptry ==0.22.0",
   "flake8 >=7.1.1",
   "flake8-rst-docstrings >=0.3.0",
   "h5netcdf>=1.3.0",
@@ -104,7 +104,7 @@ docs = [
   "nc-time-axis >=1.4.1",
   "pooch >=1.8.0",
   "pybtex >=0.24.0",
-  "pygments <2.19", # FIXME: temporary fix for sphinx-codeautolink
+  "pygments <2.20", # FIXME: temporary fix for sphinx-codeautolink
   "sphinx >=7.0.0",
   "sphinx-autobuild >=2024.4.16",
   "sphinx-autodoc-typehints",
@@ -113,7 +113,7 @@ docs = [
   "sphinx-mdinclude",
   "sphinxcontrib-bibtex",
   "sphinxcontrib-svg2pdfconverter[Cairosvg]",
-  "pygments <2.19" # FIXME: temporary fix, https://github.com/felix-hilden/sphinx-codeautolink/issues/153
+  "pygments <2.20" # FIXME: temporary fix, https://github.com/felix-hilden/sphinx-codeautolink/issues/153
 ]
 extras = ["fastnanquantile >=0.0.2", "flox >=0.9", "POT >=0.9.4"]
 all = ["xclim[dev]", "xclim[docs]", "xclim[extras]"]
