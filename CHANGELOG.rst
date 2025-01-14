@@ -13,6 +13,7 @@ New features and enhancements
 Internal changes
 ^^^^^^^^^^^^^^^^
 * There is now a warning stating that `fitkwargs` are not employed when using `lmoments3` distribution. One exception is the use of `floc` which is allowed with the gamma distribution. `floc`  is used to shift the distribution before computing fitting parameters with the lmoments3 distribution since `loc=0` is always assumed in the library.  (:issue:`2043`, :pull:`2045`).
+* `PWM` method (`lmoments3`) is now available to be used with the `gamma` distribution in ``xclim.indices.standardized_precipitation_index`` and ``xclim.indices.standardized_precipitation_evapotranspiration_index``. (:issue:`2043`, :pull:`2045`).
 
 v0.54.0 (2024-12-16)
 --------------------
