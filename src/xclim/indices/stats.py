@@ -63,7 +63,7 @@ def _fitfunc_1d(arr, *, dist, nparams, method, **fitkwargs):
             type(dist).__name__ == "GammaGen"
             and set(fitkwargs.keys()) - {"floc"} != set()
         ):
-            warnings.warn(
+            raise ValueError(
                 "Lmoments3 does not use `fitkwargs` arguments, except for `floc` with the Gamma distribution."
             )
         if "floc" in fitkwargs and type(dist).__name__ == "GammaGen":
@@ -884,8 +884,9 @@ def standardized_index(
         The approximate method uses a deterministic function that doesn't involve any optimization.
     zero_inflated : bool
         If True, the zeroes of `da` are treated separately.
-    fitkwargs : dict
+    fitkwargs : dict, optional
         Kwargs passed to ``xclim.indices.stats.fit`` used to impose values of certains parameters (`floc`, `fscale`).
+        If method is `PWM`, `fitkwargs` should be empty, except for `floc` with `dist`=`gamma` which is allowed.
     cal_start : DateStr, optional
         Start date of the calibration period. A `DateStr` is expected, that is a `str` in format `"YYYY-MM-DD"`.
         Default option `None` means that the calibration period begins at the start of the input dataset.

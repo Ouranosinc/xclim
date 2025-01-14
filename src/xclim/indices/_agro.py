@@ -1150,6 +1150,7 @@ def standardized_precipitation_index(
         uses a deterministic function that does not involve any optimization.
     fitkwargs : dict, optional
         Kwargs passed to ``xclim.indices.stats.fit`` used to impose values of certains parameters (`floc`, `fscale`).
+        If method is `PWM`, `fitkwargs` should be empty, except for `floc` with `dist`=`gamma` which is allowed.
     cal_start : DateStr, optional
         Start date of the calibration period. A `DateStr` is expected, that is a `str` in format `"YYYY-MM-DD"`.
         Default option `None` means that the calibration period begins at the start of the input dataset.
@@ -1281,11 +1282,12 @@ def standardized_precipitation_evapotranspiration_index(
         resampling, the window is an integer number of months.
     dist : {'gamma', 'fisk'}
         Name of the univariate distribution. (see :py:mod:`scipy.stats`).
-    method : {'APP', 'ML'}
+    method : {'APP', 'ML', 'PWM'}
         Name of the fitting method, such as `ML` (maximum likelihood), `APP` (approximate). The approximate method
         uses a deterministic function that doesn't involve any optimization.
     fitkwargs : dict, optional
         Kwargs passed to ``xclim.indices.stats.fit`` used to impose values of certains parameters (`floc`, `fscale`).
+        If method is `PWM`, `fitkwargs` should be empty, except for `floc` with `dist`=`gamma` which is allowed.
     cal_start : DateStr, optional
         Start date of the calibration period. A `DateStr` is expected, that is a `str` in format `"YYYY-MM-DD"`.
         Default option `None` means that the calibration period begins at the start of the input dataset.
@@ -1311,7 +1313,7 @@ def standardized_precipitation_evapotranspiration_index(
     """
     fitkwargs = fitkwargs or {}
 
-    dist_methods = {"gamma": ["ML", "APP"], "fisk": ["ML", "APP"]}
+    dist_methods = {"gamma": ["ML", "APP", "PWM"], "fisk": ["ML", "APP", "PWM"]}
     if dist in dist_methods:
         if method not in dist_methods[dist]:
             raise NotImplementedError(
