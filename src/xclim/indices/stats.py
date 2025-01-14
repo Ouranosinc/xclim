@@ -74,7 +74,6 @@ def _fitfunc_1d(arr, *, dist, nparams, method, **fitkwargs):
             params = list(params.values())
         else:
             params = list(dist.lmom_fit(x).values())
-        params = list(dist.lmom_fit(x).values())
     elif method == "APP":
         args, kwargs = _fit_start(x, dist.name, **fitkwargs)
         kwargs.setdefault("loc", 0)
