@@ -1145,7 +1145,7 @@ def standardized_precipitation_index(
         i.e. a monthly resampling, the window is an integer number of months.
     dist : {"gamma", "fisk"}
         Name of the univariate distribution. (see :py:mod:`scipy.stats`).
-    method : {"APP", "ML"}
+    method : {"APP", "ML", "PWM"}
         Name of the fitting method, such as `ML` (maximum likelihood), `APP` (approximate). The approximate method
         uses a deterministic function that does not involve any optimization.
     fitkwargs : dict, optional
@@ -1219,7 +1219,7 @@ def standardized_precipitation_index(
     >>> spi_3_fitted = standardized_precipitation_index(pr, params=params)
     """
     fitkwargs = fitkwargs or {}
-    dist_methods = {"gamma": ["ML", "APP"], "fisk": ["ML", "APP"]}
+    dist_methods = {"gamma": ["ML", "APP", "PWM"], "fisk": ["ML", "APP"]}
     if dist in dist_methods:
         if method not in dist_methods[dist]:
             raise NotImplementedError(
@@ -1313,7 +1313,7 @@ def standardized_precipitation_evapotranspiration_index(
     """
     fitkwargs = fitkwargs or {}
 
-    dist_methods = {"gamma": ["ML", "APP", "PWM"], "fisk": ["ML", "APP", "PWM"]}
+    dist_methods = {"gamma": ["ML", "APP", "PWM"], "fisk": ["ML", "APP"]}
     if dist in dist_methods:
         if method not in dist_methods[dist]:
             raise NotImplementedError(

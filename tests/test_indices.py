@@ -660,6 +660,38 @@ class TestStandardizedIndices:
                 [-1.08627775, -0.46491398, -0.77806462, 0.31759127, 0.03794528],
                 2e-2,
             ),
+            (
+                "D",
+                1,
+                "gamma",
+                "PWM",
+                [-0.13002, 1.346689, 0.965731, 0.245408, -0.427896],
+                2e-2,
+            ),
+            (
+                "D",
+                12,
+                "gamma",
+                "PWM",
+                [-0.209411, -0.086357, 0.636851, 1.022608, 0.634409],
+                2e-2,
+            ),
+            (
+                "MS",
+                1,
+                "gamma",
+                "PWM",
+                [1.364243, 1.478565, 1.915559, -3.055828, 0.905304],
+                2e-2,
+            ),
+            (
+                "MS",
+                12,
+                "gamma",
+                "PWM",
+                [0.577214, 1.522867, 1.634222, 0.967847, 0.689001],
+                2e-2,
+            ),
         ],
     )
     def test_standardized_precipitation_index(
@@ -671,6 +703,13 @@ class TestStandardizedIndices:
             and Version(__numpy_version__) < Version("2.0.0")
         ):
             pytest.skip("Skipping SPI/ML/D on older numpy")
+
+        # change `dist` to a lmoments3 object if needed
+        if method == "PWM":
+            lmom = pytest.importorskip("lmoments3.distr")
+            scipy2lmom = {"gamma": "gam"}
+            dist = getattr(lmom, scipy2lmom[dist])
+
         ds = open_dataset("sdba/CanESM2_1950-2100.nc").isel(location=1)
         if freq == "D":
             # to compare with ``climate_indices``
@@ -921,6 +960,42 @@ class TestStandardizedIndices:
         np.testing.assert_equal(
             np.all(np.not_equal(spid[False].values, spid[True].values)), True
         )
+
+    def test_PWM_and_fitkwargs(self, open_dataset):
+        pr = (
+            open_dataset("sdba/CanESM2_1950-2100.nc")
+            .isel(location=1)
+            .sel(time=slice("1950", "1980"))
+        ).pr
+
+        lmom = pytest.importorskip("lmoments3.distr")
+        # for now, only one function used
+        scipy2lmom = {"gamma": "gam"}
+        dist = getattr(lmom, scipy2lmom["gamma"])
+        fitkwargs = {"floc": 0}
+        input_params = dict(
+            freq=None,
+            window=1,
+            method="PWM",
+            dist=dist,
+            fitkwargs=fitkwargs,
+            # doy_bounds=(180, 180),
+        )
+        # this should not cause a problem
+        params_d0 = xci.stats.standardized_index_fit_params(pr, **input_params).isel(
+            dayofyear=0
+        )
+        np.testing.assert_allclose(
+            params_d0, np.array([5.63e-01, 0, 3.37e-05]), rtol=0, atol=2e-2
+        )
+        # this should cause a problem
+        fitkwargs["fscale"] = 1
+        input_params["fitkwargs"] = fitkwargs
+        with pytest.raises(
+            ValueError,
+            match="Lmoments3 does not use `fitkwargs` arguments, except for `floc` with the Gamma distribution.",
+        ):
+            xci.stats.standardized_index_fit_params(pr, **input_params)
 
 
 class TestDailyFreezeThawCycles:
