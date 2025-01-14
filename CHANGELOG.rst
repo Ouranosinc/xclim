@@ -4,7 +4,12 @@ Changelog
 
 v0.55.0 (unreleased)
 --------------------
-Contributors to this version: Sascha Hofmann (:user:`saschahofmann`).
+Contributors to this version: Juliette Lavoie (:user:`juliettelavoie`), Sascha Hofmann (:user:`saschahofmann`).
+
+
+New features and enhancements
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+* New function ``ensemble.partition.general_partition`` (:pull:`2035`)
 
 Bug fixes
 ^^^^^^^^^
