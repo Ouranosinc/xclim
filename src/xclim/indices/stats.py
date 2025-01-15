@@ -808,14 +808,17 @@ def standardized_index_fit_params(
                 "Pass a value for `floc` in `fitkwargs`."
             )
 
-    dist_and_methods = {"gamma": ["ML", "APP", "PWM"], "fisk": ["ML", "APP"]}
+    dist_and_methods = {"gamma": ["ML", "APP"], "fisk": ["ML", "APP"]}
     dist = get_dist(dist)
-    if dist.name not in dist_and_methods:
-        raise NotImplementedError(f"The distribution `{dist.name}` is not supported.")
-    if method not in dist_and_methods[dist.name]:
-        raise NotImplementedError(
-            f"The method `{method}` is not supported for distribution `{dist.name}`."
-        )
+    if method != "PWM":
+        if dist.name not in dist_and_methods:
+            raise NotImplementedError(
+                f"The distribution `{dist.name}` is not supported."
+            )
+        if method not in dist_and_methods[dist.name]:
+            raise NotImplementedError(
+                f"The method `{method}` is not supported for distribution `{dist.name}`."
+            )
     da, group = preprocess_standardized_index(da, freq, window, **indexer)
     if zero_inflated:
         prob_of_zero = da.groupby(group).map(
