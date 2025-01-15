@@ -54,9 +54,9 @@ class TestUnits:
             np.isclose(1 * fu, 1 * tu)
 
     def test_dimensionality(self):
+        # Check that the hydro context allows flux to rate conversion
         with units.context("hydro"):
             fu = 1 * units.parse_units("kg / m**2 / s")
-            tu = 1 * units.parse_units("mm / d")
             fu.to("mm/day")
 
     def test_fraction(self):
