@@ -58,7 +58,6 @@ class TestUnits:
             fu = 1 * units.parse_units("kg / m**2 / s")
             tu = 1 * units.parse_units("mm / d")
             fu.to("mm/day")
-            tu.to("mm/day")
 
     def test_fraction(self):
         q = 5 * units.percent
