@@ -16,6 +16,7 @@ from xclim.ensembles._base import (
 )
 from xclim.ensembles._partitioning import (
     fractional_uncertainty,
+    general_partition,
     hawkins_sutton,
     lafferty_sriver,
 )
