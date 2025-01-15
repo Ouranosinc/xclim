@@ -8,6 +8,8 @@ from xclim.indicators.atmos._conversion import Converter  # noqa
 
 __all__ = [
     "blowing_snow",
+    "holiday_snow_and_snowfall_days",
+    "holiday_snow_days",
     "snd_days_above",
     "snd_max_doy",
     "snd_season_end",
@@ -253,4 +255,27 @@ snw_days_above = SnowWithIndexing(
     description="The {freq} number of days with snow amount greater than or equal to {thresh}.",
     abstract="Number of days when the snow amount is greater than or equal to a given threshold.",
     compute=xci.snw_days_above,
+)
+
+holiday_snow_days = Snow(
+    title="Christmas snow days",
+    identifier="holiday_snow_days",
+    units="days",
+    long_name="Number of holiday days with snow",
+    description="The total number of days where snow on the ground was greater than or equal to {snd_thresh} "
+    "occurring on {date_start} and ending on {date_end}.",
+    abstract="The total number of days where there is a significant amount of snow on the ground on December 25th.",
+    compute=xci.holiday_snow_days,
+)
+
+holiday_snow_and_snowfall_days = Snow(
+    title="Perfect Christmas snow days",
+    identifier="holiday_snow_and_snowfall_days",
+    units="days",
+    long_name="Number of holiday days with snow and snowfall",
+    description="The total number of days where snow on the ground was greater than or equal to {snd_thresh} "
+    "and snowfall was greater than or equal to {prsn_thresh} occurring on {date_start} and ending on {date_end}.",
+    abstract="The total number of days where there is a significant amount of snow on the ground "
+    "and a measurable snowfall occurring on December 25th.",
+    compute=xci.holiday_snow_and_snowfall_days,
 )
