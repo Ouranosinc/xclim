@@ -302,6 +302,128 @@ def lafferty_sriver(
     return g, uncertainty
 
 
+def general_partition(
+    da: xr.DataArray,
+    sm: xr.DataArray | str = "poly",
+    var_first: list | None = None,
+    mean_first: list | None = None,
+    weights: list | None = None,
+) -> tuple[xr.DataArray, xr.DataArray]:
+    """
+    Return the mean and partitioned variance of an ensemble.
+
+    This is a general function that can be used to implemented methods from different papers.
+    The defaults are set to match the Lavoie et al. (2025, in preparation) method.
+
+    Parameters
+    ----------
+    da : xr.DataArray
+        Time series with dimensions 'time', 'mean_first', and 'var_first'.
+    sm : xr.DataArray or {"poly"}
+        Smoothed time series over time, with the same dimensions as `da`.
+        If 'poly', this is estimated using a 4th-order polynomial.
+        It is also possible to pass a precomputed smoothed time series.
+    var_first : list of str
+        List of dimensions where the variance is computed first of the dimension,
+        followed by the mean over the other dimensions.
+    mean_first : list of str
+        List of dimensions where the mean over the other dimensions is computed first,
+        followed by the variance over the dimension.
+    weights : list of str
+        List of dimensions where the first operation is weighted.
+
+    Returns
+    -------
+    xr.DataArray, xr.DataArray
+        The mean relative to the baseline, and the components of variance of the
+        ensemble. These components are coordinates along the `uncertainty` dimension:
+        element of var_first, elements of mean_first and `total`.
+
+    Notes
+    -----
+    To prepare input data, make sure `da` has dimensions list in both var_first and
+    mean_first, as well as time.
+    e.g. `da.rename({"experiment": "scenario"})`.
+
+    To get the fraction of the total variance instead of the variance itself, call `fractional_uncertainty` on the
+    output.
+    """
+    # set defaults
+    var_first = var_first or ["model", "reference", "adjustment"]
+    mean_first = mean_first or ["scenario"]
+    weights = weights or ["model", "reference", "adjustment"]
+
+    all_types = mean_first + var_first
+
+    if xr.infer_freq(da.time)[0] not in ["A", "Y"]:
+        raise ValueError("This algorithm expects annual time series.")
+
+    if not ({"time"} | set(all_types)).issubset(da.dims):
+        error_msg = f"DataArray dimensions should include {all_types} and time."
+        raise ValueError(error_msg)
+
+    if sm == "poly":
+        # Fit a 4th order polynomial
+        fit = da.polyfit(dim="time", deg=4, skipna=True)
+        sm = xr.polyval(coord=da.time, coeffs=fit.polyfit_coefficients).where(
+            da.notnull()
+        )
+    elif isinstance(sm, xr.DataArray):
+        sm = sm
+    else:
+        raise ValueError("sm should be 'poly' or a DataArray.")
+
+    # "Interannual variability is then estimated as the centered rolling 11-year variance of the difference
+    # between the extracted forced response and the raw outputs, averaged over all outputs."
+    # same as lafferty_sriver()
+    nv_u = (da - sm).rolling(time=11, center=True).var().mean(dim=all_types)
+
+    all_u = []
+    total = nv_u.copy()
+    for t in mean_first:
+        all_but_t = [x for x in all_types if x != t]
+        if t in weights:
+            tw = sm.count(t)
+            t_u = sm.mean(dim=all_but_t).weighted(tw).var(dim=t)
+
+        else:
+            t_u = sm.mean(dim=all_but_t).var(dim=t)
+        all_u.append(t_u)
+        total += t_u
+
+    for t in var_first:
+        all_but_t = [x for x in all_types if x != t]
+        if t in weights:
+            tw = sm.count(t)
+            t_u = sm.var(dim=t).weighted(tw).mean(dim=all_but_t)
+
+        else:
+            t_u = sm.var(dim=t).mean(dim=all_but_t)
+        all_u.append(t_u)
+        total += t_u
+
+    # Create output array with the uncertainty components
+    u = pd.Index([*all_types, "variability", "total"], name="uncertainty")
+    uncertainty = xr.concat([*all_u, nv_u, total], dim=u)
+
+    uncertainty.attrs["indicator_long_name"] = da.attrs.get("long_name", "unknown")
+    uncertainty.attrs["indicator_description"] = da.attrs.get("description", "unknown")
+    uncertainty.attrs["indicator_units"] = da.attrs.get("units", "unknown")
+    uncertainty.attrs["partition_fit"] = sm if isinstance(sm, str) else "unknown"
+    # Keep a trace of the elements for each uncertainty component
+    for t in all_types:
+        uncertainty.attrs[t] = da[t].values
+
+    # Mean projection:
+    # This is not part of the original algorithm,
+    # but we want all partition algos to have similar outputs.
+    g = sm.mean(dim=all_types[0])
+    for dim in all_types[1:]:
+        g = g.mean(dim=dim)
+
+    return g, uncertainty
+
+
 def fractional_uncertainty(u: xr.DataArray) -> xr.DataArray:
     """
     Return the fractional uncertainty.
@@ -316,8 +438,9 @@ def fractional_uncertainty(u: xr.DataArray) -> xr.DataArray:
     xr.DataArray
         Fractional, or relative uncertainty with respect to the total uncertainty.
     """
-    uncertainty = u / u.sel(uncertainty="total") * 100
-    uncertainty.attrs.update(u.attrs)
-    uncertainty.attrs["long_name"] = "Fraction of total variance"
-    uncertainty.attrs["units"] = "%"
-    return uncertainty
+    with xr.set_options(keep_attrs=True):
+        uncertainty = u / u.sel(uncertainty="total") * 100
+        uncertainty.attrs.update(u.attrs)
+        uncertainty.attrs["long_name"] = "Fraction of total variance"
+        uncertainty.attrs["units"] = "%"
+        return uncertainty
