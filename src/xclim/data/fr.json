@@ -1033,6 +1033,18 @@
     "title": "Jours avec neige",
     "abstract": "Nombre de jours où la neige est entre une borne inférieure et supérieure."
   },
+  "HOLIDAY_SNOW_DAYS": {
+    "long_name": "Nombre de jours de neige durant les jours de Noël",
+    "description": "Nombre de jours de neige durant les jours de Noël.",
+    "title": "Jours de neige durant les jours de Noël",
+    "abstract": "Nombre de jours de neige durant les jours de Noël."
+  },
+  "HOLIDAY_SNOW_AND_SNOWFALL_DAYS": {
+    "long_name": "Nombre de jours de neige et de jours de chute de neige durant les jours de Noël",
+    "description": "Nombre de jours de neige et de jours de chute de neige durant les jours de Noël.",
+    "title": "Jours de neige et de chute de neige durant les jours de Noël",
+    "abstract": "Nombre de jours de neige et de jours de chute de neige durant les jours de Noël."
+  },
   "SND_SEASON_LENGTH": {
     "long_name": "Durée de couvert de neige",
     "description": "La saison débute lorsque l'épaisseur de neige est au-dessus de {thresh} durant {window} jours et se termine lorsqu'elle redescend sous {thresh} durant {window} jours.",
