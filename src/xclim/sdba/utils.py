@@ -475,9 +475,10 @@ def interp_on_quantiles(
         return out
 
     if prop not in xq.dims:
-        xq = xq.expand_dims({prop: group.get_coordinate()})
+        prop_coords = group.get_coordinate(newx)
+        xq = xq.expand_dims({prop: prop_coords})
     if prop not in yq.dims:
-        yq = yq.expand_dims({prop: group.get_coordinate()})
+        yq = yq.expand_dims({prop: prop_coords})
 
     # Adding the cyclic bounds fails for string coordinates like seasons
     # That's why we map the seasons to integers

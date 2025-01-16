@@ -179,7 +179,9 @@ class Grouper(Parametrizable):
         """Create a significant name for the grouping."""
         return "year" if self.prop == "group" else self.prop
 
-    def get_coordinate(self, ds: xr.Dataset | None = None) -> xr.DataArray:
+    def get_coordinate(
+        self, ds: xr.Dataset | xr.DataArray | None = None
+    ) -> xr.DataArray:
         """Return the coordinate as in the output of group.apply.
 
         Currently, only implemented for groupings with prop == `month` or `dayofyear`.
@@ -196,8 +198,7 @@ class Grouper(Parametrizable):
             if ds is not None:
                 cal = get_calendar(ds, dim=self.dim)
                 mdoy = max(
-                    xr.coding.calendar_ops._days_in_year(yr, cal)
-                    for yr in np.unique(ds[self.dim].dt.year)
+                    xr.coding.calendar_ops._days_in_year(ds[self.dim].dt.year, cal)
                 )
             else:
                 mdoy = 365
