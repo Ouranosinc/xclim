@@ -219,6 +219,8 @@ def broadcast(
         sel.update({group.prop: group.get_index(x, interp=interp != "nearest")})
 
     if sel:
+        if group.prop == "season":
+            grouped = grouped.assign_coords(season=map_season_to_int(grouped.season))
         # Extract the correct mean factor for each time step.
         if interp == "nearest":  # Interpolate both the time group and the quantile.
             grouped = grouped.sel(sel, method="nearest")
