@@ -19,6 +19,7 @@ New features and enhancements
 Internal changes
 ^^^^^^^^^^^^^^^^
 * `sphinx-codeautolink` and `pygments` have been temporarily pinned due to breaking API changes. (:pull:`2030`).
+* Adjusted the ``TestOfficialYaml`` test to use a dynamic method for finding the installed location of `xclim`. (:pull:`2028`).
 
 Bug fixes
 ^^^^^^^^^
