@@ -1460,10 +1460,10 @@ class OTC(Adjust):
                 "POT is required for OTC and dOTC. Please install with `pip install POT`."
             )
 
-        if normalization not in [None, "standardize", "max_distance", "max_value"]:
-            raise ValueError(
-                "`transform` should be in [None, 'standardize', 'max_distance', 'max_value']."
-            )
+        # if normalization not in [None, "standardize", "max_distance", "max_value"]:
+        #     raise ValueError(
+        #         "`transform` should be in [None, 'standardize', 'max_distance', 'max_value']."
+        #     )
 
         sim = kwargs.pop("sim")
         if "_is_hist" not in sim.attrs:
@@ -1625,10 +1625,10 @@ class dOTC(Adjust):
         if cov_factor not in [None, "std", "cholesky"]:
             raise ValueError("`cov_factor` should be in [None, 'std', 'cholesky'].")
 
-        if normalization not in [None, "standardize", "max_distance", "max_value"]:
-            raise ValueError(
-                "`normalization` should be in [None, 'standardize', 'max_distance', 'max_value']."
-            )
+        # if normalization not in [None, "standardize", "max_distance", "max_value"]:
+        #     raise ValueError(
+        #         "`normalization` should be in [None, 'standardize', 'max_distance', 'max_value']."
+        #     )
 
         if isinstance(adapt_freq_thresh, str):
             adapt_freq_thresh = {v: adapt_freq_thresh for v in hist[pts_dim].values}
