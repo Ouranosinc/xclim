@@ -259,6 +259,7 @@ jobs:
             ip-api.com:80
             ipapi.co:443
             motd.ubuntu.com:443
+            objects.githubusercontent.com:443
             proxy.golang.org:443
             pypi.org:443
             raw.githubusercontent.com:443
@@ -424,7 +425,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           COVERALLS_FLAG_NAME: run-{{ matrix.python-version }}-conda
           COVERALLS_PARALLEL: true
-
       - name: Tests measurement
         uses: green-coding-solutions/eco-ci-energy-estimation@e79d33b08b0c47de4438c161d432730fce23f246 # v4.2.0
         with:
