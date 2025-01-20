@@ -1171,7 +1171,7 @@ def mask_between_doys(
         interest and False outside.
     """
     if isinstance(doy_bounds[0], int) and isinstance(doy_bounds[1], int):
-        mask = da.time.dt.dayofyear.isin(_get_doys(*doy_bounds, [True, True]))
+        mask = da.time.dt.dayofyear.isin(_get_doys(*doy_bounds, include_bounds))
 
     else:
         cal = get_calendar(da, dim="time")
