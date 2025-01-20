@@ -64,7 +64,6 @@ dev = [
   "bump-my-version ==0.29.0",
   "codespell ==2.3.0",
   "coverage[toml] >=7.5.0",
-  "coveralls >=4.0.1", # coveralls is not yet compatible with Python 3.13
   "deptry ==0.22.0",
   "flake8 >=7.1.1",
   "flake8-rst-docstrings >=0.3.0",
