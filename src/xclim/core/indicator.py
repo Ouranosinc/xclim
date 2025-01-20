@@ -1311,7 +1311,7 @@ class Indicator(IndicatorRegistrar):
         # Add formatting {} around values to be able to replace them with _attrs_mapping using format.
         for k, v in args.items():
             if isinstance(v, units.Quantity):
-                mba[k] = f"{v:g~P}"
+                mba[k] = f"{v:gcf}"
             elif isinstance(v, int | float):
                 mba[k] = f"{v:g}"
             # TODO: What about InputKind.NUMBER_SEQUENCE
