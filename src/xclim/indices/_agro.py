@@ -1143,13 +1143,14 @@ def standardized_precipitation_index(
     window : int
         Averaging window length relative to the resampling frequency. For example, if `freq="MS"`,
         i.e. a monthly resampling, the window is an integer number of months.
-    dist : {"gamma", "fisk"}
-        Name of the univariate distribution. (see :py:mod:`scipy.stats`).
-    method : {"APP", "ML"}
+    dist : {'gamma', 'fisk'}
+        Name of the univariate distribution. (see :py:mod:`scipy.stats`). All possible distributions are allowed with 'PWM'.
+    method : {"APP", "ML", "PWM"}
         Name of the fitting method, such as `ML` (maximum likelihood), `APP` (approximate). The approximate method
         uses a deterministic function that does not involve any optimization.
     fitkwargs : dict, optional
         Kwargs passed to ``xclim.indices.stats.fit`` used to impose values of certains parameters (`floc`, `fscale`).
+        If method is `PWM`, `fitkwargs` should be empty, except for `floc` with `dist`=`gamma` which is allowed.
     cal_start : DateStr, optional
         Start date of the calibration period. A `DateStr` is expected, that is a `str` in format `"YYYY-MM-DD"`.
         Default option `None` means that the calibration period begins at the start of the input dataset.
@@ -1218,13 +1219,15 @@ def standardized_precipitation_index(
     >>> spi_3_fitted = standardized_precipitation_index(pr, params=params)
     """
     fitkwargs = fitkwargs or {}
+
     dist_methods = {"gamma": ["ML", "APP"], "fisk": ["ML", "APP"]}
     if dist in dist_methods:
         if method not in dist_methods[dist]:
             raise NotImplementedError(
-                f"{method} method is not implemented for {dist} distribution."
+                f"{method} method is not implemented for {dist} distribution"
             )
-    else:
+    # Constraints on distributions except for PWM
+    elif method != "PWM":
         raise NotImplementedError(f"{dist} distribution is not yet implemented.")
 
     # Precipitation is expected to be zero-inflated
@@ -1280,12 +1283,13 @@ def standardized_precipitation_evapotranspiration_index(
         Averaging window length relative to the resampling frequency. For example, if `freq="MS"`, i.e. a monthly
         resampling, the window is an integer number of months.
     dist : {'gamma', 'fisk'}
-        Name of the univariate distribution. (see :py:mod:`scipy.stats`).
-    method : {'APP', 'ML'}
+        Name of the univariate distribution. (see :py:mod:`scipy.stats`). All possible distributions are allowed with 'PWM'.
+    method : {'APP', 'ML', 'PWM'}
         Name of the fitting method, such as `ML` (maximum likelihood), `APP` (approximate). The approximate method
         uses a deterministic function that doesn't involve any optimization.
     fitkwargs : dict, optional
         Kwargs passed to ``xclim.indices.stats.fit`` used to impose values of certains parameters (`floc`, `fscale`).
+        If method is `PWM`, `fitkwargs` should be empty, except for `floc` with `dist`=`gamma` which is allowed.
     cal_start : DateStr, optional
         Start date of the calibration period. A `DateStr` is expected, that is a `str` in format `"YYYY-MM-DD"`.
         Default option `None` means that the calibration period begins at the start of the input dataset.
@@ -1317,7 +1321,8 @@ def standardized_precipitation_evapotranspiration_index(
             raise NotImplementedError(
                 f"{method} method is not implemented for {dist} distribution"
             )
-    else:
+    # Constraints on distributions except for PWM
+    elif method != "PWM":
         raise NotImplementedError(f"{dist} distribution is not yet implemented.")
 
     # Water budget is not expected to be zero-inflated
