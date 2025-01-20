@@ -394,7 +394,7 @@ def mcarthur_forest_fire_danger_index(
     :cite:cts:`ffdi-noble_1980,ffdi-dowdy_2018,ffdi-holgate_2017`
     """
     tasmax = convert_units_to(tasmax, "C")
-    hurs = convert_units_to(hurs, "pct")
+    hurs = convert_units_to(hurs, "%")
     sfcWind = convert_units_to(sfcWind, "km/h")
 
     ffdi = drought_factor**0.987 * np.exp(
