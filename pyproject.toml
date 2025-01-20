@@ -26,7 +26,7 @@ classifiers = [
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
-  # "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.13",
   "Programming Language :: Python :: 3 :: Only",
   "Topic :: Scientific/Engineering :: Atmospheric Science",
   "Topic :: Scientific/Engineering :: Hydrology",
@@ -104,16 +104,14 @@ docs = [
   "nc-time-axis >=1.4.1",
   "pooch >=1.8.0",
   "pybtex >=0.24.0",
-  "pygments <2.19", # FIXME: temporary fix for sphinx-codeautolink
   "sphinx >=7.0.0",
   "sphinx-autobuild >=2024.4.16",
   "sphinx-autodoc-typehints",
-  "sphinx-codeautolink >=0.15.2,!=0.16.0", # FIXME: temporary fix for sphinx-codeautolink
+  "sphinx-codeautolink >=0.16.2",
   "sphinx-copybutton",
   "sphinx-mdinclude",
   "sphinxcontrib-bibtex",
-  "sphinxcontrib-svg2pdfconverter[Cairosvg]",
-  "pygments <2.19" # FIXME: temporary fix, https://github.com/felix-hilden/sphinx-codeautolink/issues/153
+  "sphinxcontrib-svg2pdfconverter[Cairosvg]"
 ]
 extras = ["fastnanquantile >=0.0.2", "flox >=0.9", "POT >=0.9.4"]
 all = ["xclim[dev]", "xclim[docs]", "xclim[extras]"]
