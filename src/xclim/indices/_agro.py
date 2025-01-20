@@ -1219,11 +1219,12 @@ def standardized_precipitation_index(
     >>> spi_3_fitted = standardized_precipitation_index(pr, params=params)
     """
     fitkwargs = fitkwargs or {}
-    dist_methods = {"gamma": ["ML", "APP", "PWM"], "fisk": ["ML", "APP"]}
+
+    dist_methods = {"gamma": ["ML", "APP"], "fisk": ["ML", "APP"]}
     if dist in dist_methods:
         if method not in dist_methods[dist]:
             raise NotImplementedError(
-                f"{method} method is not implemented for {dist} distribution."
+                f"{method} method is not implemented for {dist} distribution"
             )
     # Constraints on distributions except for PWM
     elif method != "PWM":
