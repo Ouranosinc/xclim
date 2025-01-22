@@ -22,7 +22,6 @@ import pandas as pd
 import pint
 import xarray as xr
 from boltons.funcutils import wraps
-from pint import UndefinedUnitError
 from yaml import safe_load
 
 from xclim.core._exceptions import ValidationError
@@ -64,28 +63,21 @@ __all__ = [
 units = deepcopy(cf_xarray.units.units)
 # Changing the default string format for units/quantities.
 # CF is implemented by cf-xarray, g is the most versatile float format.
-# The following try/except logic can be removed when xclim drops support numpy <2.0.
-try:
-    units.formatter.default_format = "gcf"
-except UndefinedUnitError:
-    units.default_format = "gcf"
-# Switch this flag back to False. Not sure what that implies, but it breaks some tests.
-units.force_ndarray_like = False  # noqa: F841
-# Another alias not included by cf_xarray
-units.define("@alias percent = pct")
+units.formatter.default_format = "gcf"
+# CF-xarray forces numpy arrays even for scalar values, not sure why.
+# We don't want that in xclim, the magnitude of a scalar is a scalar (float).
+units.force_ndarray_like = False
 
-# Default context.
+# Define dimensionalities for convenience with the `declare_units` decorator
+units.define("[precipitation] = [mass] / [length] ** 2 / [time]")
+units.define("[discharge] = [length] ** 3 / [time]")
+units.define("[radiation] = [power] / [length]**2")
+
+# Default context. This is essentially a convenience, so that we can pass a context systemtically to pint's methods.
 null = pint.Context("none")
 units.add_context(null)
 
-# Precipitation units. This is an artificial unit that we're using to verify that a given unit can be converted into
-# a precipitation unit. Ideally this could be checked through the `dimensionality`, but I can't get it to work.
-units.define("[precipitation] = [mass] / [length] ** 2 / [time]")
-units.define("mmday = 1 kg / meter ** 2 / day")
-
-units.define("[discharge] = [length] ** 3 / [time]")
-units.define("cms = meter ** 3 / second")
-
+# Convenience context for common transformation involving liquid water
 hydro = pint.Context("hydro")
 hydro.add_transformation(
     "[mass] / [length]**2",
@@ -108,6 +100,9 @@ hydro.add_transformation(
     lambda ureg, x: x * (1000 * ureg.kg / ureg.m**3),
 )
 units.add_context(hydro)
+
+# Set as application registry
+pint.set_application_registry(units)
 
 
 with (files("xclim.data") / "variables.yml").open() as variables:
@@ -134,10 +129,6 @@ def _register_conversion(conversion, direction):
         return func
 
     return _func_register
-
-
-# Radiation units
-units.define("[radiation] = [power] / [length]**2")
 
 
 def units2pint(

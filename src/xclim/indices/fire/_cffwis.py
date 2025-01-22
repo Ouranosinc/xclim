@@ -1397,7 +1397,7 @@ def cffwis_indices(
     tas = convert_units_to(tas, "C")
     pr = convert_units_to(pr, "mm/day")
     sfcWind = convert_units_to(sfcWind, "km/h")
-    hurs = convert_units_to(hurs, "pct")
+    hurs = convert_units_to(hurs, "%")
     if snd is not None:
         snd = convert_units_to(snd, "m")
 
