@@ -48,3 +48,4 @@ Contributors
 * Adrien Lamarche `@LamAdr <https://github.com/LamAdr>`_
 * Faisal Mahmood <mahmood.faisal@ouranos.ca> <faisal.shovon.007@gmail.com> `@faimahsho <https://github.com/faimahsho>`_
 * Sebastian Lehner <sebastian.lehner@geosphere.at> `@seblehner <https://github.com/seblehner>`_
+* Baptiste Hamon <baptiste.hamon@pg.canterbury.ac.nz> `@baptistehamon <https://github.com/baptistehamon>`_
