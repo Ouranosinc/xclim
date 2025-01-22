@@ -9,7 +9,7 @@ import numpy as np
 import xarray
 
 from xclim.core import DayOfYearStr, Quantified
-from xclim.core.calendar import doy_from_string, get_calendar
+from xclim.core.calendar import doy_from_string, get_calendar, select_time
 from xclim.core.missing import at_least_n_valid
 from xclim.core.units import (
     convert_units_to,
@@ -22,7 +22,9 @@ from xclim.core.units import (
 )
 from xclim.indices import run_length as rl
 from xclim.indices.generic import (
+    bivariate_count_occurrences,
     compare,
+    count_occurrences,
     cumulative_difference,
     domain_count,
     first_day_threshold_reached,
@@ -67,6 +69,8 @@ __all__ = [
     "growing_season_start",
     "heat_wave_index",
     "heating_degree_days",
+    "holiday_snow_and_snowfall_days",
+    "holiday_snow_days",
     "hot_spell_frequency",
     "hot_spell_max_length",
     "hot_spell_max_magnitude",
@@ -376,7 +380,8 @@ def snd_season_end(
     window : int
         Minimum number of days with snow depth below threshold.
     freq : str
-        Resampling frequency. The default value is chosen for the northern hemisphere.
+        Resampling frequency. Default: "YS-JUL".
+        The default value is chosen for the northern hemisphere.
 
     Returns
     -------
@@ -2766,7 +2771,7 @@ def maximum_consecutive_frost_days(
     Let :math:`\mathbf{t}=t_0, t_1, \ldots, t_n` be a minimum daily temperature series and :math:`thresh` the threshold
     below which a day is considered a frost day. Let :math:`\mathbf{s}` be the sorted vector of indices :math:`i`
     where :math:`[t_i < thresh] \neq [t_{i+1} < thresh]`, that is, the days where the temperature crosses the threshold.
-    Then the maximum number of consecutive frost days is given by
+    Then the maximum number of consecutive frost days is given by:
 
     .. math::
 
@@ -2821,7 +2826,7 @@ def maximum_consecutive_dry_days(
     Let :math:`\mathbf{p}=p_0, p_1, \ldots, p_n` be a daily precipitation series and :math:`thresh` the threshold
     under which a day is considered dry. Then let :math:`\mathbf{s}` be the sorted vector of indices :math:`i` where
     :math:`[p_i < thresh] \neq [p_{i+1} < thresh]`, that is, the days where the precipitation crosses the threshold.
-    Then the maximum number of consecutive dry days is given by
+    Then the maximum number of consecutive dry days is given by:
 
     .. math::
 
@@ -2958,7 +2963,7 @@ def maximum_consecutive_tx_days(
 
 @declare_units(siconc="[]", areacello="[area]", thresh="[]")
 def sea_ice_area(
-    siconc: xarray.DataArray, areacello: xarray.DataArray, thresh: Quantified = "15 pct"
+    siconc: xarray.DataArray, areacello: xarray.DataArray, thresh: Quantified = "15 %"
 ) -> xarray.DataArray:
     """
     Total sea ice area.
@@ -2989,7 +2994,7 @@ def sea_ice_area(
     "What is the difference between sea ice area and extent?" - :cite:cts:`nsidc_frequently_2008`
     """
     t = convert_units_to(thresh, siconc)
-    factor = convert_units_to("100 pct", siconc)
+    factor = convert_units_to("100 %", siconc)
     sia = xarray.dot(siconc.where(siconc >= t, 0), areacello) / factor
     sia = sia.assign_attrs(units=areacello.units)
     return sia
@@ -2997,7 +3002,7 @@ def sea_ice_area(
 
 @declare_units(siconc="[]", areacello="[area]", thresh="[]")
 def sea_ice_extent(
-    siconc: xarray.DataArray, areacello: xarray.DataArray, thresh: Quantified = "15 pct"
+    siconc: xarray.DataArray, areacello: xarray.DataArray, thresh: Quantified = "15 %"
 ) -> xarray.DataArray:
     """
     Total sea ice extent.
@@ -3162,7 +3167,7 @@ def degree_days_exceedance_date(
     -----
     Let :math:`TG_{ij}` be the daily mean temperature at day :math:`i` of period :math:`j`,
     :math:`T` is the reference threshold and :math:`ST` is the sum threshold. Then, starting
-    at day :math:i_0:, the degree days exceedance date is the first day :math:`k` such that
+    at day :math:i_0:, the degree days exceedance date is the first day :math:`k` such that:
 
     .. math::
 
@@ -3454,7 +3459,7 @@ def wet_spell_frequency(
         Resampling frequency.
     resample_before_rl : bool
         Determines if the resampling should take place before or after the run length encoding (or a similar algorithm) is applied to runs.
-    op : {"sum","min", "max", "mean"}
+    op : {"sum", "min", "max", "mean"}
         Operation to perform on the window.
         Default is "sum", which checks that the sum of accumulated precipitation over the whole window is more than the
         threshold.
@@ -3633,3 +3638,145 @@ def wet_spell_max_length(
         resample_before_rl=resample_before_rl,
         **indexer,
     )
+
+
+@declare_units(
+    snd="[length]",
+    prsn="[precipitation]",
+    snd_thresh="[length]",
+    prsn_thresh="[length]",
+)
+def holiday_snow_days(
+    snd: xarray.DataArray,
+    snd_thresh: Quantified = "20 mm",
+    op: str = ">=",
+    date_start: str = "12-25",
+    date_end: str | None = None,
+    freq: str = "YS",
+) -> xarray.DataArray:  # numpydoc ignore=SS05
+    """
+    Christmas Days.
+
+    Whether there is a significant amount of snow on the ground on December 25th (or a given date range).
+
+    Parameters
+    ----------
+    snd : xarray.DataArray
+        Surface snow depth.
+    snd_thresh : Quantified
+        Threshold snow amount. Default: 20 mm.
+    op : {">", "gt", ">=", "ge"}
+        Comparison operation. Default: ">=".
+    date_start : str
+        Beginning of analysis period. Default: "12-25" (December 25th).
+    date_end : str, optional
+        End of analysis period. If not provided, `date_start` is used.
+        Default: None.
+    freq : str
+        Resampling frequency. Default: "YS".
+        The default value is chosen for the northern hemisphere.
+
+    Returns
+    -------
+    xarray.DataArray, [bool]
+        Boolean array of years with Christmas Days.
+
+    References
+    ----------
+    https://www.canada.ca/en/environment-climate-change/services/weather-general-tools-resources/historical-christmas-snowfall-data.html
+    """
+    snd_constrained = select_time(
+        snd,
+        date_bounds=(date_start, date_start if date_end is None else date_end),
+    )
+
+    xmas_days = count_occurrences(
+        snd_constrained, snd_thresh, freq, op, constrain=[">=", ">"]
+    )
+
+    xmas_days = to_agg_units(xmas_days, snd, "count")
+    return xmas_days
+
+
+@declare_units(
+    snd="[length]",
+    prsn="[precipitation]",
+    snd_thresh="[length]",
+    prsn_thresh="[length]",
+)
+def holiday_snow_and_snowfall_days(
+    snd: xarray.DataArray,
+    prsn: xarray.DataArray | None = None,
+    snd_thresh: Quantified = "20 mm",
+    prsn_thresh: Quantified = "1 mm",
+    snd_op: str = ">=",
+    prsn_op: str = ">=",
+    date_start: str = "12-25",
+    date_end: str | None = None,
+    freq: str = "YS-JUL",
+) -> xarray.DataArray:
+    r"""
+    Perfect Christmas Days.
+
+    Whether there is a significant amount of snow on the ground and measurable snowfall occurring on December 25th.
+
+    Parameters
+    ----------
+    snd : xarray.DataArray
+        Surface snow depth.
+    prsn : xarray.DataArray
+        Snowfall flux.
+    snd_thresh : Quantified
+        Threshold snow amount. Default: 20 mm.
+    prsn_thresh : Quantified
+        Threshold daily snowfall liquid-water equivalent thickness. Default: 1 mm.
+    snd_op : {">", "gt", ">=", "ge"}
+        Comparison operation for snow depth. Default: ">=".
+    prsn_op : {">", "gt", ">=", "ge"}
+        Comparison operation for snowfall flux. Default: ">=".
+    date_start : str
+        Beginning of analysis period. Default: "12-25" (December 25th).
+    date_end : str, optional
+        End of analysis period. If not provided, `date_start` is used.
+        Default: None.
+    freq : str
+        Resampling frequency. Default: "YS-JUL".
+        The default value is chosen for the northern hemisphere.
+
+    Returns
+    -------
+    xarray.DataArray, [int]
+        The total number of days with snow and snowfall during the holiday.
+
+    References
+    ----------
+    https://www.canada.ca/en/environment-climate-change/services/weather-general-tools-resources/historical-christmas-snowfall-data.html
+    """
+    snd_constrained = select_time(
+        snd,
+        date_bounds=(date_start, date_start if date_end is None else date_end),
+    )
+
+    prsn_mm = rate2amount(
+        convert_units_to(prsn, "mm day-1", context="hydro"), out_units="mm"
+    )
+    prsn_mm_constrained = select_time(
+        prsn_mm,
+        date_bounds=(date_start, date_start if date_end is None else date_end),
+    )
+
+    perfect_xmas_days = bivariate_count_occurrences(
+        data_var1=snd_constrained,
+        data_var2=prsn_mm_constrained,
+        threshold_var1=snd_thresh,
+        threshold_var2=prsn_thresh,
+        op_var1=snd_op,
+        op_var2=prsn_op,
+        freq=freq,
+        var_reducer="all",
+        constrain_var1=[">=", ">"],
+        constrain_var2=[">=", ">"],
+    )
+
+    perfect_xmas_days = to_agg_units(perfect_xmas_days, snd, "count")
+    return perfect_xmas_days

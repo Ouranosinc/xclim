@@ -3,7 +3,7 @@ default_language_version:
 
 repos:
   - repo: https://github.com/asottile/pyupgrade
-    rev: v3.19.0
+    rev: v3.19.1
     hooks:
       - id: pyupgrade
         args: ['--py310-plus']
@@ -37,12 +37,12 @@ repos:
     hooks:
       - id: black
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.8.1
+    rev: v0.8.6
     hooks:
       - id: ruff
         args: [ '--fix', '--show-fixes' ]
   - repo: https://github.com/pylint-dev/pylint
-    rev: v3.3.2
+    rev: v3.3.3
     hooks:
       - id: pylint
         args: [ '--rcfile=.pylintrc.toml', '--errors-only', '--jobs=0', '--disable=import-error' ]
@@ -53,7 +53,7 @@ repos:
         additional_dependencies: [ 'flake8-rst-docstrings ']
         args: [ '--config=.flake8' ]
   - repo: https://github.com/jendrikseipp/vulture
-    rev: 'v2.13'
+    rev: 'v2.14'
     hooks:
       - id: vulture
   - repo: https://github.com/nbQA-dev/nbQA
@@ -82,7 +82,7 @@ repos:
       - id: rst-inline-touching-normal
       - id: text-unicode-replacement-char
   - repo: https://github.com/executablebooks/mdformat
-    rev: 0.7.19
+    rev: 0.7.21
     hooks:
       - id: mdformat
         exclude: '.github/\w+.md|.github/publish-mastodon-template.md|docs/paper/paper.md'
@@ -106,7 +106,7 @@ repos:
         # Exclude the missing submodule from the xclim.core, see:
         exclude: ^docs/|^tests/|^src/xclim/sdba|^src/xclim/core/missing.py
   - repo: https://github.com/gitleaks/gitleaks
-    rev: v8.21.2
+    rev: v8.22.1
     hooks:
       - id: gitleaks
   - repo: https://github.com/python-jsonschema/check-jsonschema

@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@0080882f6c36860b6ba35c610c98ce87d4e2f26f # v2.10.2
+        uses: step-security/harden-runner@cb605e52c26070c328afc4562f0b4ada7618a84e # v2.10.4
         with:
           disable-sudo: true
           egress-policy: block
@@ -34,7 +34,7 @@ jobs:
             sum.golang.org:443
 
       - name: Start Energy Measurement
-        uses: green-coding-solutions/eco-ci-energy-estimation@86f1b2ee12db687bca0d15160a529bb64a7b60d9 # v4.0.0
+        uses: green-coding-solutions/eco-ci-energy-estimation@e79d33b08b0c47de4438c161d432730fce23f246 # v4.2.0
         with:
           task: start-measurement
           branch: ${{ github.head_ref || github.ref_name }}
@@ -48,14 +48,14 @@ jobs:
         uses: actions/dependency-review-action@3b139cfc5fae8b618d3eae3675e383bb1769c019 # v4.5.0
 
       - name: Energy Measurement
-        uses: green-coding-solutions/eco-ci-energy-estimation@86f1b2ee12db687bca0d15160a529bb64a7b60d9 # v4.0.0
+        uses: green-coding-solutions/eco-ci-energy-estimation@e79d33b08b0c47de4438c161d432730fce23f246 # v4.2.0
         with:
           task: get-measurement
           label: 'Dependency Review'
         continue-on-error: true
 
       - name: Show Energy Results
-        uses: green-coding-solutions/eco-ci-energy-estimation@86f1b2ee12db687bca0d15160a529bb64a7b60d9 # v4.0.0
+        uses: green-coding-solutions/eco-ci-energy-estimation@e79d33b08b0c47de4438c161d432730fce23f246 # v4.2.0
         with:
           task: display-results
         continue-on-error: true

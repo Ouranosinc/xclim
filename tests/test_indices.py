@@ -28,6 +28,7 @@ from xclim.core import ValidationError
 from xclim.core.calendar import percentile_doy
 from xclim.core.options import set_options
 from xclim.core.units import convert_units_to, units
+from xclim.indices import prsnd_to_prsn
 
 K2C = 273.15
 
@@ -1466,6 +1467,82 @@ class TestHeatWaveTotalLength:
             window=window,
         )
         np.testing.assert_allclose(hwml.values, expected)
+
+
+class TestHolidayIndices:
+
+    def test_xmas_days_simple(self, snd_series):
+        # 5ish years of data, starting from 2000-07-01
+        snd = snd_series(np.zeros(365 * 5), units="cm")
+
+        # add snow on ground on December 25 for first 3 years
+        snd.loc["2000-12-25"] = 2
+        snd.loc["2001-12-25"] = 1.5  # not enough
+        snd.loc["2002-12-25"] = 2
+        snd.loc["2003-12-25"] = 0  # no snow
+        snd.loc["2004-12-25"] = 6
+
+        out = xci.holiday_snow_days(snd)
+        np.testing.assert_array_equal(out, [1, 0, 1, 0, 1, 0])
+
+    def test_xmas_days_range(self, snd_series):
+        # 5ish years of data, starting from 2000-07-01
+        snd = snd_series(np.zeros(365 * 5), units="cm")
+
+        # add snow on ground on December 25 for first 3 years
+        snd.loc["2000-12-25"] = 2
+        snd.loc["2001-12-25"] = 1.5  # not enough
+        snd.loc["2002-12-24"] = 10  # a réveillon miracle
+        snd.loc["2002-12-25"] = 2
+        snd.loc["2003-12-25"] = 0  # no snow
+        snd.loc["2004-12-25"] = 6
+
+        out = xci.holiday_snow_days(snd, date_start="12-24", date_end="12-25")
+        np.testing.assert_array_equal(out, [1, 0, 2, 0, 1, 0])
+
+    def test_perfect_xmas_days(self, snd_series, prsn_series):
+        # 5ish years of data, starting from 2000-07-01
+        a = np.zeros(365 * 5)
+        snd = snd_series(a, units="mm")
+        # prsnd is snowfall using snow density of 100 kg/m3
+        prsnd = prsn_series(a.copy(), units="cm day-1")
+
+        # add snow on ground on December 25
+        snd.loc["2000-12-25"] = 20
+        snd.loc["2001-12-25"] = 15  # not enough
+        snd.loc["2001-12-26"] = 30  # too bad it's Boxing Day
+        snd.loc["2002-12-25"] = 20
+        snd.loc["2003-12-25"] = 0  # no snow
+        snd.loc["2004-12-25"] = 60
+
+        # add snowfall on December 25
+        prsnd.loc["2000-12-25"] = 5
+        prsnd.loc["2001-12-25"] = 2
+        prsnd.loc["2001-12-26"] = 30  # too bad it's Boxing Day
+        prsnd.loc["2002-12-25"] = 1  # not quite enough
+        prsnd.loc["2003-12-25"] = 0  # no snow
+        prsnd.loc["2004-12-25"] = 10
+
+        prsn = prsnd_to_prsn(prsnd)
+        prsn = convert_units_to(prsn, "kg m-2 s-1", context="hydro")
+
+        out1 = xci.holiday_snow_and_snowfall_days(snd, prsn)
+        np.testing.assert_array_equal(out1, [1, 0, 0, 0, 1])
+
+        out2 = xci.holiday_snow_and_snowfall_days(
+            snd, prsn, snd_thresh="15 mm", prsn_thresh="0.5 mm"
+        )
+        np.testing.assert_array_equal(out2, [1, 1, 1, 0, 1])
+
+        out3 = xci.holiday_snow_and_snowfall_days(
+            snd,
+            prsn,
+            snd_thresh="10 mm",
+            prsn_thresh="0.5 mm",
+            date_start="12-25",
+            date_end="12-26",
+        )
+        np.testing.assert_array_equal(out3, [1, 2, 1, 0, 1])
 
 
 class TestHotSpellFrequency:
@@ -3255,19 +3332,19 @@ class TestClausiusClapeyronScaledPrecip:
             np.arange(4).reshape(1, 2, 2),
             dims=["time", "lat", "lon"],
             coords={"time": [1], "lat": [-45, 45], "lon": [30, 60]},
-            attrs={"units": "mmday"},
+            attrs={"units": "mm/day"},
         )
         tas_baseline = xr.DataArray(
             np.arange(4).reshape(1, 2, 2),
             dims=["time", "lat", "lon"],
             coords={"time": [1], "lat": [-45, 45], "lon": [30, 60]},
-            attrs={"units": "C"},
+            attrs={"units": "degC"},
         )
         tas_future = xr.DataArray(
             np.arange(40).reshape(10, 2, 2),
             dims=["time_fut", "lat", "lon"],
             coords={"time_fut": np.arange(10), "lat": [-45, 45], "lon": [30, 60]},
-            attrs={"units": "C"},
+            attrs={"units": "degC"},
         )
         delta_tas = tas_future - tas_baseline
         delta_tas.attrs["units"] = "delta_degC"
