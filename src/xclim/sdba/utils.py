@@ -475,9 +475,8 @@ def interp_on_quantiles(
             output_dtypes=[yq.dtype],
         )
         return out
-
+    prop_coords = group.get_coordinate(newx)
     if prop not in xq.dims:
-        prop_coords = group.get_coordinate(newx)
         xq = xq.expand_dims({prop: prop_coords})
     if prop not in yq.dims:
         yq = yq.expand_dims({prop: prop_coords})
