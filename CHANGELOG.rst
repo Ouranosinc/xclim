@@ -16,11 +16,16 @@ New features and enhancements
 * New function ``ensemble.partition.general_partition`` (:pull:`2035`)
 * Added a new ``xclim.indices.generic.bivariate_count_occurrences`` function to count instances where operations and performed and validated for two variables. (:pull:`2030`).
 * `xclim` now tracks energy usage and carbon emissions ("last run", "average", and "total") during CI workflows using the `eco-ci-energy-estimation` GitHub Action. (:pull:`2046`).
+* Missing values method "pct" and "at_least_n" now accept a new "subfreq" option that allows to compute the missing mask in two steps. When given, the algorithm is applied at this "subfreq" resampling frequency first and then the result is resampled at the target indicator frequency. In the output, a period is invalid if any of its subgroup where flagged as invalid by the chosen method.
 
 Internal changes
 ^^^^^^^^^^^^^^^^
 * `sphinx-codeautolink` and `pygments` have been temporarily pinned due to breaking API changes. (:pull:`2030`).
 * Adjusted the ``TestOfficialYaml`` test to use a dynamic method for finding the installed location of `xclim`. (:pull:`2028`).
+* Refactor of the ``xclim.core.missing`` module, usage of the ``Missing`` objects has been broken.
+    - Objects are initialized with their options and then called with the data, input frequency, target frequency and indexer.
+    - Subclasses receive non-resampled DataArray in their ``is_missing`` methods.
+    - ``MissingWMO`` now uses ``xclim.indices.helpers.resample_map`` which should greatly improve performance in a dask context.
 
 v0.54.0 (2024-12-16)
 --------------------
