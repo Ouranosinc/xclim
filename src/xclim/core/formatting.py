@@ -259,7 +259,7 @@ def parse_doc(doc: str) -> dict:
 
     out = {}
 
-    sections = re.split(r"(\w+\s?\w+)\n\s+-{3,50}", doc)  # obj.__doc__.split('\n\n')
+    sections = re.split(r"(\w+\s?\w+)\n\s?-{3,50}", doc)  # obj.__doc__.split('\n\n')
     intro = sections.pop(0)
     if intro:
         intro_content = list(map(str.strip, intro.strip().split("\n\n")))
@@ -295,11 +295,16 @@ def _parse_parameters(section):
     """
     curr_key = None
     params = {}
+    # Base indent : common indent of all lines
+    bi = min(
+        [len(line) - len(line.lstrip()) for line in section.split("\n") if line.strip()]
+    )
     for line in section.split("\n"):
-        if line.startswith(" " * 6):  # description
+        line = line[bi:]
+        if line.startswith(" " * 2):  # description
             s = " " if params[curr_key]["description"] else ""
             params[curr_key]["description"] += s + line.strip()
-        elif line.startswith(" " * 4) and ":" in line:  # param title
+        elif not line.startswith(" ") and ":" in line:  # param title
             name, annot = line.split(":", maxsplit=1)
             curr_key = name.strip()
             params[curr_key] = {"description": ""}
@@ -318,12 +323,16 @@ def _parse_returns(section):
     """Parse the returns section of a docstring into a dictionary mapping the parameter name to its description."""
     curr_key = None
     params = {}
+    bi = min(
+        [len(line) - len(line.lstrip()) for line in section.split("\n") if line.strip()]
+    )
     for line in section.split("\n"):
+        line = line[bi:]
         if line.strip():
-            if line.startswith(" " * 6):  # long_name
+            if line.startswith(" " * 2):  # long_name
                 s = " " if params[curr_key]["long_name"] else ""
                 params[curr_key]["long_name"] += s + line.strip()
-            elif line.startswith(" " * 4):  # param title
+            elif not line.startswith(" "):  # param title
                 annot, *name = reversed(line.split(":", maxsplit=1))
                 if name:
                     curr_key = name[0].strip()
