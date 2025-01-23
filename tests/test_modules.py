@@ -274,7 +274,7 @@ class TestOfficialYaml(yamale.YamaleTestCase):
         assert self.validate()
 
 
-@pytest.mark.xfail(reason="This is test is relatively unstable.", strict=False)
+@pytest.mark.xfail(reason="This test is relatively unstable.", strict=False)
 @pytest.mark.skipif(
     platform.system() == "Windows", reason="nl_langinfo not available on Windows."
 )
