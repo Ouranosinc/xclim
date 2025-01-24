@@ -9,6 +9,8 @@ more specifically :cite:p:`collins_long-term_2013` (AR5) and :cite:cts:`ipccatla
 
 from __future__ import annotations
 
+import sys
+import textwrap
 from collections.abc import Callable
 from inspect import Parameter, signature
 
@@ -143,9 +145,7 @@ def robustness_fractions(  # noqa: C901
 
     And members showing absolutely no change are ``1 - nf - pf``.
 
-    Available statistical tests are:
-
-    {tests_doc}
+    Available statistical tests are:{tests_doc}
 
     - threshold
         - Change is considered significant when it exceeds an absolute or relative threshold.
@@ -556,7 +556,11 @@ def _welch_ttest(fut, ref, *, p_change=0.05):
 
 @significance_test
 def _mannwhitney_utest(ref, fut, *, p_change=0.05):
-    """Two-sided Mann-Whiney U-test. Same significance criterion and argument as 'ttest'."""
+    """
+    Two-sided Mann-Whiney U-test.
+
+    Same significance criterion and argument as 'ttest'.
+    """
 
     def mwu_wrapper(f, r):  # This specific test can't manage an all-NaN slice
         if np.isnan(f).all() or np.isnan(r).all():
@@ -632,16 +636,19 @@ def _ipcc_ar6_c(fut, ref, *, ref_pi=None):
     return changed, None
 
 
-# Add doc of each significance test to `robustness_fractions` output's doc.
 def _gen_test_entry(namefunc):
     name, func = namefunc
-    doc = func.__doc__.replace("\n    ", "\n\t\t").rstrip()
-    return f"    - {name}\n\t    - {doc}"
+    indented = textwrap.indent(textwrap.dedent(name), "- ")
+    doc = textwrap.indent(textwrap.dedent(func.__doc__), "      ")[7:]
+    entry = f"{indented}\n    - {doc}".rstrip()
+
+    if sys.version < "3.13":
+        entry = textwrap.indent(entry, "    ")
+
+    return entry
 
 
 robustness_fractions.__doc__ = robustness_fractions.__doc__.format(
     tests_list="{" + ", ".join(list(SIGNIFICANCE_TESTS.keys()) + ["threshold"]) + "}",
-    tests_doc="\n".join(map(_gen_test_entry, SIGNIFICANCE_TESTS.items()))[
-        4:  # strip first 4 chars
-    ],
+    tests_doc="\n\n" + "\n\n".join(map(_gen_test_entry, SIGNIFICANCE_TESTS.items())),
 )
