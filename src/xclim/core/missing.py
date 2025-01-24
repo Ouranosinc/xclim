@@ -445,8 +445,10 @@ class MissingWMO(MissingTwoSteps):
 
         nullr = null.resample(time=freq)
 
+        # Total number of missing or invalid days
+        missing_days = (count - nullr.count(dim="time")) + nullr.sum(dim="time")
         # Check if more than threshold is missing
-        cond1 = nullr.sum(dim="time") >= self.options["nm"]
+        cond1 = missing_days >= self.options["nm"]
 
         # Check for consecutive missing values
         longest_run = resample_map(null, "time", freq, rl.longest_run, map_blocks=True)

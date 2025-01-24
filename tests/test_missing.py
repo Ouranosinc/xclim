@@ -185,7 +185,7 @@ class TestMissingWMO:
         assert out[2]
 
     def test_missing_days_in_quarter(self, tas_series):
-        a = np.arange(360.0)
+        a = np.arange(350.0)
         a[5:16] = np.nan  # Number of missing values under acceptable limit in a month
         ts = tas_series(a)
         out = missing.missing_wmo(ts, freq="QS-JAN")

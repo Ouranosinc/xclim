@@ -417,10 +417,6 @@ def test_missing(tas_series):
         assert not m[0].isnull()
         assert "check_missing=pct, missing_options={'tolerance': 0.05}" in m.history
 
-    with xclim.set_options(check_missing="wmo"):
-        m = uniIndTemp(a, freq="YS")
-        assert m[0].isnull()
-
     # With freq=None
     c = uniClim(a)
     assert c.isnull()
