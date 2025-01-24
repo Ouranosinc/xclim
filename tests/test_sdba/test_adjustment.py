@@ -131,6 +131,7 @@ class TestLoci:
         np.testing.assert_array_equal(p, p2)
 
     @pytest.mark.requires_internet
+    @pytest.mark.enable_socket
     def test_reduce_dims(self, ref_hist_sim_tuto):
         ref, hist, _sim = ref_hist_sim_tuto()
         hist = hist.expand_dims(member=[0, 1])
