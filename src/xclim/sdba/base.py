@@ -22,7 +22,8 @@ from xclim.core.utils import uses_dask
 
 # ## Base class for the sdba module
 class Parametrizable(UserDict):
-    """Helper base class resembling a dictionary.
+    """
+    Helper base class resembling a dictionary.
 
     This object is _completely_ defined by the content of its internal dictionary, accessible through item access
     (`self['attr']`) or in `self.parameters`. When serializing and restoring this object, only members of that internal
@@ -82,7 +83,8 @@ class ParametrizableWithDataset(Parametrizable):
 
     @classmethod
     def from_dataset(cls, ds: xr.Dataset):
-        """Create an instance from a dataset.
+        """
+        Create an instance from a dataset.
 
         The dataset must have a global attribute with a name corresponding to `cls._attribute`,
         and that attribute must be the result of `jsonpickle.encode(object)` where object is
@@ -93,7 +95,8 @@ class ParametrizableWithDataset(Parametrizable):
         return obj
 
     def set_dataset(self, ds: xr.Dataset) -> None:
-        """Store an xarray dataset in the `ds` attribute.
+        """
+        Store an xarray dataset in the `ds` attribute.
 
         Useful with custom object initialization or if some external processing was performed.
         """
@@ -117,7 +120,8 @@ class Grouper(Parametrizable):
         window: int = 1,
         add_dims: Sequence[str] | set[str] | None = None,
     ):
-        """Create the Grouper object.
+        """
+        Create the Grouper object.
 
         Parameters
         ----------
@@ -162,7 +166,8 @@ class Grouper(Parametrizable):
 
     @property
     def freq(self):
-        """Format a frequency string corresponding to the group.
+        """
+        Format a frequency string corresponding to the group.
 
         For use with xarray's resampling functions.
         """
@@ -180,7 +185,8 @@ class Grouper(Parametrizable):
         return "year" if self.prop == "group" else self.prop
 
     def get_coordinate(self, ds: xr.Dataset | None = None) -> xr.DataArray:
-        """Return the coordinate as in the output of group.apply.
+        """
+        Return the coordinate as in the output of group.apply.
 
         Currently, only implemented for groupings with prop == `month` or `dayofyear`.
         For prop == `dayfofyear`, a ds (Dataset or DataArray) can be passed to infer
@@ -213,7 +219,8 @@ class Grouper(Parametrizable):
         main_only: bool = False,
         **das: xr.DataArray,
     ) -> xr.core.groupby.GroupBy:  # pylint: disable=no-member
-        """Return a xr.core.groupby.GroupBy object.
+        """
+        Return a xr.core.groupby.GroupBy object.
 
         More than one array can be combined to a dataset before grouping using the `das` kwargs.
         A new `window` dimension is added if `self.window` is larger than 1.
@@ -266,7 +273,8 @@ class Grouper(Parametrizable):
         da: xr.DataArray | xr.Dataset,
         interp: bool | None = None,
     ) -> xr.DataArray:
-        """Return the group index of each element along the main dimension.
+        """
+        Return the group index of each element along the main dimension.
 
         Parameters
         ----------
@@ -329,7 +337,8 @@ class Grouper(Parametrizable):
         main_only: bool = False,
         **kwargs,
     ) -> xr.DataArray | xr.Dataset:
-        r"""Apply a function group-wise on DataArrays.
+        r"""
+        Apply a function group-wise on DataArrays.
 
         Parameters
         ----------
@@ -443,7 +452,8 @@ class Grouper(Parametrizable):
 
 
 def parse_group(func: Callable, kwargs=None, allow_only=None) -> Callable:
-    """Parse the kwargs given to a function to set the `group` arg with a Grouper object.
+    """
+    Parse the kwargs given to a function to set the `group` arg with a Grouper object.
 
     This function can be used as a decorator, in which case the parsing and updating of the kwargs is done at call time.
     It can also be called with a function from which extract the default group and kwargs to update,
@@ -512,7 +522,8 @@ def _decode_cf_coords(ds: xr.Dataset):
 def map_blocks(  # noqa: C901
     reduces: Sequence[str] | None = None, **out_vars
 ) -> Callable:
-    r"""Decorator for declaring functions and wrapping them into a map_blocks.
+    r"""
+    Decorator for declaring functions and wrapping them into a map_blocks.
 
     Takes care of constructing the template dataset. Dimension order is not preserved.
     The decorated function must always have the signature: ``func(ds, **kwargs)``, where ds is a DataArray or a Dataset.
@@ -729,7 +740,8 @@ def map_blocks(  # noqa: C901
 def map_groups(
     reduces: Sequence[str] | None = None, main_only: bool = False, **out_vars
 ) -> Callable:
-    r"""Decorator for declaring functions acting only on groups and wrapping them into a map_blocks.
+    r"""
+    Decorator for declaring functions acting only on groups and wrapping them into a map_blocks.
 
     This is the same as `map_blocks` but adds a call to `group.apply()` in the mapped func and the default
     value of `reduces` is changed.

@@ -355,7 +355,8 @@ def official_indicators():
 
 @pytest.fixture
 def lafferty_sriver_ds(nimbus) -> xr.Dataset:
-    """Get data from Lafferty & Sriver unit test.
+    """
+    Get data from Lafferty & Sriver unit test.
 
     Notes
     -----
@@ -392,7 +393,8 @@ def ensemble_dataset_objects() -> dict[str, str]:
 
 @pytest.fixture(autouse=True, scope="session")
 def gather_session_data(request, nimbus, worker_id):
-    """Gather testing data on pytest run.
+    """
+    Gather testing data on pytest run.
 
     When running pytest with multiple workers, one worker will copy data remotely to default cache dir while
     other workers wait using lockfile. Once the lock is released, all workers will then copy data to their local

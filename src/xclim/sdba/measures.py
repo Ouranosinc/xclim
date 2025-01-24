@@ -23,7 +23,8 @@ from .utils import _pairwise_spearman
 
 
 class StatisticalMeasure(Indicator):
-    """Base indicator class for statistical measures used when validating bias-adjusted outputs.
+    """
+    Base indicator class for statistical measures used when validating bias-adjusted outputs.
 
     Statistical measures use input data where the time dimension was reduced, usually by the computation
     of a :py:class:`xclim.sdba.properties.StatisticalProperty` instance.  They usually take two arrays
@@ -71,7 +72,8 @@ class StatisticalMeasure(Indicator):
 
 
 class StatisticalPropertyMeasure(Indicator):
-    """Base indicator class for statistical properties that include the comparison measure, used when validating bias-adjusted outputs.
+    """
+    Base indicator class for statistical properties that include the comparison measure, used when validating bias-adjusted outputs.
 
     StatisticalPropertyMeasure objects combine the functionalities of
     :py:class:`xclim.sdba.properties.StatisticalProperty` and
@@ -156,7 +158,8 @@ base_registry["StatisticalPropertyMeasure"] = StatisticalPropertyMeasure
 
 
 def _bias(sim: xr.DataArray, ref: xr.DataArray) -> xr.DataArray:
-    """Bias.
+    """
+    Bias.
 
     The bias is the simulation minus the reference.
 
@@ -181,7 +184,8 @@ bias = StatisticalMeasure(identifier="bias", compute=_bias)
 
 
 def _relative_bias(sim: xr.DataArray, ref: xr.DataArray) -> xr.DataArray:
-    """Relative Bias.
+    """
+    Relative Bias.
 
     The relative bias is the simulation minus reference, divided by the reference.
 
@@ -207,7 +211,8 @@ relative_bias = StatisticalMeasure(
 
 
 def _circular_bias(sim: xr.DataArray, ref: xr.DataArray) -> xr.DataArray:
-    """Circular bias.
+    """
+    Circular bias.
 
     Bias considering circular time series.
     E.g. The bias between doy 365 and doy 1 is 364, but the circular bias is -1.
@@ -238,7 +243,8 @@ circular_bias = StatisticalMeasure(
 
 
 def _ratio(sim: xr.DataArray, ref: xr.DataArray) -> xr.DataArray:
-    """Ratio.
+    """
+    Ratio.
 
     The ratio is the quotient of the simulation over the reference.
 
@@ -265,7 +271,8 @@ ratio = StatisticalMeasure(identifier="ratio", compute=_ratio, units="")
 def _rmse(
     sim: xr.DataArray, ref: xr.DataArray, group: str | Grouper = "time"
 ) -> xr.DataArray:
-    """Root mean square error.
+    """
+    Root mean square error.
 
     The root mean square error on the time dimension between the simulation and the reference.
 
@@ -312,7 +319,8 @@ rmse = StatisticalPropertyMeasure(
 def _mae(
     sim: xr.DataArray, ref: xr.DataArray, group: str | Grouper = "time"
 ) -> xr.DataArray:
-    """Mean absolute error.
+    """
+    Mean absolute error.
 
     The mean absolute error on the time dimension between the simulation and the reference.
 
@@ -362,7 +370,8 @@ def _annual_cycle_correlation(
     window: int = 15,
     group: str | Grouper = "time",
 ) -> xr.DataArray:
-    """Annual cycle correlation.
+    """
+    Annual cycle correlation.
 
     Pearson correlation coefficient between the smooth day-of-year averaged annual cycles of the simulation and
     the reference. In the smooth day-of-year averaged annual cycles, each day-of-year is averaged over all years
@@ -410,7 +419,8 @@ def _scorr(
     dims: Sequence | None = None,
     group: str | Grouper = "time",
 ):
-    """Spatial correllogram.
+    """
+    Spatial correllogram.
 
     Compute the inter-site correlations of each array, compute the difference in correlations and sum.
     Taken from Vrac (2018). The spatial and temporal dimensions are reduced.
@@ -453,7 +463,8 @@ def _taylordiagram(
     group: str | Grouper = "time",
     normalize: bool = False,
 ) -> xr.DataArray:
-    """Taylor diagram.
+    """
+    Taylor diagram.
 
     Compute the respective standard deviations of a simulation and a reference array, as well as the Pearson
     correlation coefficient between both, all necessary parameters to plot points on a Taylor diagram.

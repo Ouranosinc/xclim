@@ -50,7 +50,8 @@ def _get_indicator(indicator_name):
 
 
 def _get_input(ctx):
-    """Return the input dataset stored in the given context.
+    """
+    Return the input dataset stored in the given context.
 
     If the dataset is not open, opens it with open_dataset if a single path was given,
     or with `open_mfdataset` if a tuple or glob path was given.
@@ -71,7 +72,8 @@ def _get_input(ctx):
 
 
 def _get_output(ctx):
-    """Return the output dataset stored in the given context.
+    """
+    Return the output dataset stored in the given context.
 
     If the output dataset doesn't exist, create it.
     """
@@ -86,7 +88,8 @@ def _get_output(ctx):
 
 
 def _process_indicator(indicator, ctx, **params):
-    """Add given climate indicator to the output dataset from variables in the input dataset.
+    """
+    Add given climate indicator to the output dataset from variables in the input dataset.
 
     Computation is not triggered here if dask is enabled.
     """
