@@ -40,8 +40,6 @@ from xclim.core.options import (
     OPTIONS,
     register_missing_method,
 )
-from xclim.indices import run_length as rl
-from xclim.indices.helpers import resample_map
 
 __all__ = [
     "at_least_n_valid",
@@ -427,6 +425,9 @@ class MissingWMO(MissingTwoSteps):
     def is_missing(
         self, null: xr.DataArray, count: xr.DataArray, freq: str
     ) -> xr.DataArray:
+        from xclim.indices import run_length as rl
+        from xclim.indices.helpers import resample_map
+
         nullr = null.resample(time=freq)
 
         # Check total number of days
