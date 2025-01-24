@@ -445,9 +445,6 @@ class MissingWMO(MissingTwoSteps):
 
         nullr = null.resample(time=freq)
 
-        # Check total number of days
-        cond0 = nullr.count(dim="time") != count
-
         # Check if more than threshold is missing
         cond1 = nullr.sum(dim="time") >= self.options["nm"]
 
@@ -455,7 +452,7 @@ class MissingWMO(MissingTwoSteps):
         longest_run = resample_map(null, "time", freq, rl.longest_run, map_blocks=True)
         cond2 = longest_run >= self.options["nc"]
 
-        return cond0 | cond1 | cond2
+        return cond1 | cond2
 
 
 @register_missing_method("pct")
