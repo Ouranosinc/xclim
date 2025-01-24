@@ -1524,12 +1524,6 @@ class CheckMissingIndicator(Indicator):  # numpydoc ignore=PR01,PR02
                 "Cannot set `missing_options` with `missing` method being from context."
             )
 
-        # Validate hard-coded missing options
-        kls = MISSING_METHODS[self.missing]
-        self._missing = kls.execute
-        if self.missing_options:
-            kls.validate(**self.missing_options)
-
         super().__init__(**kwds)
 
     def _history_string(self, das, params):
@@ -1541,6 +1535,8 @@ class CheckMissingIndicator(Indicator):  # numpydoc ignore=PR01,PR02
 
         if missing != "skip":
             mopts = self.missing_options or OPTIONS[MISSING_OPTIONS].get(missing)
+            if mopts.get("subfreq", "absent") is None:
+                mopts.pop("subfreq")  # impertinent default
             if mopts:
                 opt_str += f", missing_options={mopts}"
 
@@ -1555,17 +1551,19 @@ class CheckMissingIndicator(Indicator):  # numpydoc ignore=PR01,PR02
         outs = super()._postprocess(outs, das, params)
 
         freq = self._get_missing_freq(params)
-        if self.missing != "skip" or freq is False:
+        method = (
+            self.missing if self.missing != "from_context" else OPTIONS[CHECK_MISSING]
+        )
+        if method != "skip" and freq is not False:
             # Mask results that do not meet criteria defined by the `missing` method.
             # This means all outputs must have the same dimensions as the broadcasted inputs (excluding time)
-            options = self.missing_options or OPTIONS[MISSING_OPTIONS].get(
-                self.missing, {}
-            )
+            options = self.missing_options or OPTIONS[MISSING_OPTIONS].get(method, {})
+            misser = MISSING_METHODS[method](**options)
 
             # We flag periods according to the missing method. skip variables without a time coordinate.
             src_freq = self.src_freq if isinstance(self.src_freq, str) else None
             miss = (
-                self._missing(da, freq, src_freq, options, params.get("indexer", {}))
+                misser(da, freq, src_freq, **params.get("indexer", {}))
                 for da in das.values()
                 if "time" in da.coords
             )

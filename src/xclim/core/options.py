@@ -51,13 +51,12 @@ _KEEP_ATTRS_OPTIONS = frozenset(["xarray", True, False])
 def _valid_missing_options(mopts):
     """Check if all methods and their options in mopts are valid."""
     return all(
-        meth in MISSING_METHODS  # Ensure the method is registered in MISSING_METHODS
-        and all(
-            opt in OPTIONS[MISSING_OPTIONS][meth] for opt in opts.keys()
-        )  # Check if all options provided for the method are valid
-        and MISSING_METHODS[meth].validate(
-            **opts
-        )  # Validate the options using the method's validator; defaults to True if no validation is needed
+        # Ensure the method is registered in MISSING_METHODS
+        meth in MISSING_METHODS
+        # Check if all options provided for the method are valid
+        and all(opt in OPTIONS[MISSING_OPTIONS][meth] for opt in opts.keys())
+        # Validate the options using the method's validator; defaults to True if no validation is needed
+        and MISSING_METHODS[meth].validate(**(OPTIONS[MISSING_OPTIONS][meth] | opts))
         for meth, opts in mopts.items()  # Iterate over each method and its options in mopts
     )
 
@@ -66,7 +65,7 @@ _VALIDATORS = {
     METADATA_LOCALES: _valid_locales,
     DATA_VALIDATION: _LOUDNESS_OPTIONS.__contains__,
     CF_COMPLIANCE: _LOUDNESS_OPTIONS.__contains__,
-    CHECK_MISSING: lambda meth: meth != "from_context" and meth in MISSING_METHODS,
+    CHECK_MISSING: lambda meth: meth in MISSING_METHODS or meth == "skip",
     MISSING_OPTIONS: _valid_missing_options,
     RUN_LENGTH_UFUNC: _RUN_LENGTH_UFUNC_OPTIONS.__contains__,
     SDBA_EXTRA_OUTPUT: lambda opt: isinstance(opt, bool),
@@ -111,11 +110,11 @@ def register_missing_method(name: str) -> Callable:
     """
 
     def _register_missing_method(cls):
-        sig = signature(cls.is_missing)
+        sig = signature(cls.__init__)
         opts = {
             key: param.default if param.default != param.empty else None
             for key, param in sig.parameters.items()
-            if key not in ["self", "null", "count"]
+            if key not in ["self"]
         }
 
         MISSING_METHODS[name] = cls
