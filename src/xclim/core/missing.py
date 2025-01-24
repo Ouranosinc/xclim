@@ -24,6 +24,8 @@ To define another missing value algorithm, subclass :py:class:`MissingBase` and 
 
 from __future__ import annotations
 
+import textwrap
+
 import numpy as np
 import xarray as xr
 
@@ -155,7 +157,8 @@ def expected_count(
 
 
 class MissingBase:
-    r"""Base class used to determined where Indicator outputs should be masked.
+    r"""
+    Base class used to determined where Indicator outputs should be masked.
 
     Subclasses should implement the ``is_missing``, ``validate`` and ``__init__``
     methods. The ``__init__`` is to be implement in order to change the docstring
@@ -177,7 +180,8 @@ class MissingBase:
 
     @staticmethod
     def validate(**options):
-        r"""Validates optional arguments.
+        r"""
+        Validates optional arguments.
 
         Parameters
         ----------
@@ -193,7 +197,8 @@ class MissingBase:
 
     @staticmethod
     def is_null(da: xr.DataArray, **indexer) -> xr.DataArray:
-        r"""Return a boolean array indicating which values are null.
+        r"""
+        Return a boolean array indicating which values are null.
 
         Parameters
         ----------
@@ -231,7 +236,8 @@ class MissingBase:
         count: xr.DataArray,
         freq: str | None,
     ) -> xr.DataArray:
-        """Return whether the values within each period should be considered missing or not.
+        """
+        Return whether the values within each period should be considered missing or not.
 
         Must be implemented by subclasses.
 
@@ -329,7 +335,8 @@ class MissingAny(MissingBase):
 
 
 class MissingTwoSteps(MissingBase):
-    r"""Base class used to determined where Indicator outputs should be masked,
+    r"""
+    Base class used to determined where Indicator outputs should be masked,
     in a two step process.
 
     In addition to what :py:class:`MissingBase` does, subclasses first perform the mask
@@ -365,6 +372,12 @@ class MissingTwoSteps(MissingBase):
             values, month=1 to select January, or month=[6,7,8] to select summer months.
             If not indexer is given, all values are considered.
             See :py:func:`xclim.core.calendar.select_time`.
+
+        Returns
+        -------
+        DataArray
+            Boolean array at the resampled frequency,
+            True on the periods that should be considered missing or invalid.
         """
         subfreq = self.options["subfreq"] or freq
         if (
@@ -386,7 +399,8 @@ class MissingTwoSteps(MissingBase):
 
 @register_missing_method("wmo")
 class MissingWMO(MissingTwoSteps):
-    """Mask periods as missing using the WMO criteria for missing days.
+    """
+    Mask periods as missing using the WMO criteria for missing days.
 
     The World Meteorological Organisation recommends that where monthly means are computed from daily values,
     it should be considered missing if either of these two criteria are met:
@@ -404,7 +418,8 @@ class MissingWMO(MissingTwoSteps):
     """
 
     def __init__(self, nm: int = 11, nc: int = 5):
-        """Create a MissingWMO object.
+        """
+        Create a MissingWMO object.
 
         Parameters
         ----------
@@ -448,7 +463,8 @@ class MissingPct(MissingTwoSteps):
     """Mask periods as missing when there are more then a given percentage of missing days."""
 
     def __init__(self, tolerance: float = 0.1, subfreq: str | None = None):
-        """Create a MissingPct object.
+        """
+        Create a MissingPct object.
 
         Parameters
         ----------
@@ -480,7 +496,8 @@ class AtLeastNValid(MissingTwoSteps):
     r"""Mask periods as missing if they don't have at least a given number of valid values (ignoring the expected count of elements)."""
 
     def __init__(self, n: int = 20, subfreq: str | None = None):
-        """Create a AtLeastNValid object.
+        """
+        Create a AtLeastNValid object.
 
         Parameters
         ----------
@@ -523,9 +540,9 @@ def missing_any(  # noqa: D103 # numpydoc ignore=GL08
 def missing_wmo(  # noqa: D103 # numpydoc ignore=GL08
     da: xr.DataArray,
     freq: str,
+    src_timestep: str | None = None,
     nm: int = 11,
     nc: int = 5,
-    src_timestep: str | None = None,
     **indexer,
 ) -> xr.DataArray:
     return MissingWMO(nm=nm, nc=nc)(da, freq, src_timestep, **indexer)
@@ -534,8 +551,8 @@ def missing_wmo(  # noqa: D103 # numpydoc ignore=GL08
 def missing_pct(  # noqa: D103 # numpydoc ignore=GL08
     da: xr.DataArray,
     freq: str,
-    tolerance: float,
     src_timestep: str | None = None,
+    tolerance: float = 0.1,
     subfreq: str | None = None,
     **indexer,
 ) -> xr.DataArray:
@@ -547,8 +564,8 @@ def missing_pct(  # noqa: D103 # numpydoc ignore=GL08
 def at_least_n_valid(  # noqa: D103 # numpydoc ignore=GL08
     da: xr.DataArray,
     freq: str,
-    n: int = 20,
     src_timestep: str | None = None,
+    n: int = 20,
     subfreq: str | None = None,
     **indexer,
 ) -> xr.DataArray:
@@ -558,7 +575,8 @@ def at_least_n_valid(  # noqa: D103 # numpydoc ignore=GL08
 def missing_from_context(
     da: xr.DataArray, freq: str, src_timestep: str | None = None, **indexer
 ) -> xr.DataArray:
-    """Mask periods as missing according to the algorithm and options set in xclim's global options.
+    """
+    Mask periods as missing according to the algorithm and options set in xclim's global options.
 
     The options can be manipulated with :py:func:`xclim.core.options.set_options`.
 
@@ -589,27 +607,30 @@ def missing_from_context(
 
 
 def _get_convenient_doc(cls):
-    maindoc = cls.__doc__
-    initdoc = cls.__init__.__doc__
-    calldoc = cls.__call__.__doc__
+    maindoc = textwrap.dedent(cls.__doc__)
+    initdoc = textwrap.dedent(cls.__init__.__doc__)
+    calldoc = textwrap.dedent(cls.__call__.__doc__)
 
     params = []
     ip = 10000
     for i, line in enumerate(initdoc.split("\n")):
         if line.strip() == "Parameters":
             ip = i
-        if i >= ip + 2:
+        if i >= ip + 2 and line.strip():
             params.append(line)
 
-    doc = [maindoc, ""]
+    doc = [maindoc]
+    if "\n" not in maindoc:
+        doc.append("")
+
     ip = 10000
     for i, line in enumerate(calldoc.split("\n")):
         if line.strip() == "Parameters":
             ip = i
+        elif "**indexer" in line:
+            doc.extend(params)
         if i >= ip:
             doc.append(line)
-        if i >= ip + 1:
-            doc.extend(params)
     return "\n".join(doc)
 
 
