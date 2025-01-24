@@ -143,7 +143,7 @@ def robustness_fractions(  # noqa: C901
 
     And members showing absolutely no change are ``1 - nf - pf``.
 
-    Available statistical tests are :
+    Available statistical tests are:
 
     {tests_doc}
 
