@@ -450,7 +450,8 @@ class MissingWMO(MissingTwoSteps):
         # Check if more than threshold is missing
         cond1 = missing_days >= self.options["nm"]
 
-        # Check for consecutive missing values
+        # Check for consecutive invalid values
+        # FIXME: This does not take holes in consideration
         longest_run = resample_map(null, "time", freq, rl.longest_run, map_blocks=True)
         cond2 = longest_run >= self.options["nc"]
 
