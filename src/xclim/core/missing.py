@@ -555,7 +555,7 @@ def at_least_n_valid(  # noqa: D103 # numpydoc ignore=GL08
     return AtLeastNValid(n=n, subfreq=subfreq)(da, freq, src_timestep, **indexer)
 
 
-def missing_from_context(  # noqa: D103 # numpydoc ignore=GL08
+def missing_from_context(
     da: xr.DataArray, freq: str, src_timestep: str | None = None, **indexer
 ) -> xr.DataArray:
     """Mask periods as missing according to the algorithm and options set in xclim's global options.
