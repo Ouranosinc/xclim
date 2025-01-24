@@ -9,6 +9,7 @@ import datetime as dt
 import itertools
 import re
 import string
+import textwrap
 import warnings
 from ast import literal_eval
 from collections.abc import Callable, Sequence
@@ -257,9 +258,11 @@ def parse_doc(doc: str) -> dict:
     if doc is None:
         return {}
 
+    # Retrocompatilbity as python 3.13 does this by default
+    doc = textwrap.dedent(doc)
     out = {}
 
-    sections = re.split(r"(\w+\s?\w+)\n\s?-{3,50}", doc)  # obj.__doc__.split('\n\n')
+    sections = re.split(r"(\w+\s?\w+)\n-{3,50}", doc)  # obj.__doc__.split('\n\n')
     intro = sections.pop(0)
     if intro:
         intro_content = list(map(str.strip, intro.strip().split("\n\n")))
@@ -295,13 +298,9 @@ def _parse_parameters(section):
     """
     curr_key = None
     params = {}
-    # Base indent : common indent of all lines
-    bi = min(
-        [len(line) - len(line.lstrip()) for line in section.split("\n") if line.strip()]
-    )
+
     for line in section.split("\n"):
-        line = line[bi:]
-        if line.startswith(" " * 2):  # description
+        if line.startswith(" "):  # description
             s = " " if params[curr_key]["description"] else ""
             params[curr_key]["description"] += s + line.strip()
         elif not line.startswith(" ") and ":" in line:  # param title
@@ -323,13 +322,9 @@ def _parse_returns(section):
     """Parse the returns section of a docstring into a dictionary mapping the parameter name to its description."""
     curr_key = None
     params = {}
-    bi = min(
-        [len(line) - len(line.lstrip()) for line in section.split("\n") if line.strip()]
-    )
     for line in section.split("\n"):
-        line = line[bi:]
         if line.strip():
-            if line.startswith(" " * 2):  # long_name
+            if line.startswith(" "):  # long_name
                 s = " " if params[curr_key]["long_name"] else ""
                 params[curr_key]["long_name"] += s + line.strip()
             elif not line.startswith(" "):  # param title
