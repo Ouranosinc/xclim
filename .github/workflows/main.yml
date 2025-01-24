@@ -210,6 +210,7 @@ jobs:
             markers: -m 'not slow'
             python-version: "3.12"
             tox-env: standard
+          # Coverage is not yet supported on Python3.13 . See `tox.ini`.
           - os: 'ubuntu-latest'
             testdata-cache: '~/.cache/xclim-testdata'
             markers: -m 'not slow'
@@ -320,12 +321,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           COVERALLS_FLAG_NAME: run-${{ matrix.python-version }}-${{ matrix.os }}-${{ matrix.tox-env }}
           COVERALLS_PARALLEL: true
-      - name: Coveralls Finished
-        if: ${{ matrix.python-version == '3.13' }} # Coveralls Python package does not officially support 3.13
-        uses: coverallsapp/github-action@cfd0633edbd2411b532b808ba7a8b5e04f76d2c8 # v2.3.4
-        with:
-          flag-name: run-${{ matrix.python-version }}-${{ matrix.os }}-${{ matrix.tox-env }}
-          parallel: true
       - name: Tests measurement
         if : ${{ matrix.os == 'ubuntu-latest' }}
         uses: green-coding-solutions/eco-ci-energy-estimation@e79d33b08b0c47de4438c161d432730fce23f246 # v4.2.0
