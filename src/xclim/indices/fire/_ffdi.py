@@ -41,7 +41,8 @@ __all__ = [
     cache=True,
 )
 def _keetch_byram_drought_index(p, t, pa, kbdi0, kbdi: float):  # pragma: no cover
-    """Compute the Keetch-Byram drought (KBDI) index.
+    """
+    Compute the Keetch-Byram drought (KBDI) index.
 
     Parameters
     ----------
@@ -94,7 +95,8 @@ def _keetch_byram_drought_index(p, t, pa, kbdi0, kbdi: float):  # pragma: no cov
     cache=True,
 )
 def _griffiths_drought_factor(p, smd, lim, df):  # pragma: no cover
-    """Compute the Griffiths drought factor.
+    """
+    Compute the Griffiths drought factor.
 
     Parameters
     ----------
@@ -233,7 +235,8 @@ def keetch_byram_drought_index(
     """
 
     def _keetch_byram_drought_index_pass(_pr, _tasmax, _pr_annual, _kbdi0):
-        """Pass inputs on to guvectorized function `_keetch_byram_drought_index`.
+        """
+        Pass inputs on to guvectorized function `_keetch_byram_drought_index`.
 
         This function is actually only required as `xr.apply_ufunc` will not receive
         a guvectorized function which has the output(s) in its function signature.
@@ -312,7 +315,8 @@ def griffiths_drought_factor(
     """
 
     def _griffiths_drought_factor_pass(_pr, _smd, _lim):
-        """Pass inputs on to guvectorized function `_griffiths_drought_factor`.
+        """
+        Pass inputs on to guvectorized function `_griffiths_drought_factor`.
 
         This function is actually only required as xr.apply_ufunc will not receive
         a guvectorized function which has the output(s) in its function signature.

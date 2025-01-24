@@ -538,7 +538,8 @@ class Indicator(IndicatorRegistrar):
 
     @staticmethod
     def _parse_indice(compute, passed_parameters):  # noqa: F841
-        """Parse the compute function.
+        """
+        Parse the compute function.
 
         - Metadata is extracted from the docstring
         - Parameters are parsed from the docstring (description, choices), decorator (units), signature (kind, default)
@@ -578,7 +579,8 @@ class Indicator(IndicatorRegistrar):
 
     @classmethod
     def _added_parameters(cls):
-        """Create a list of tuples for arguments to add to the call signature (name, Parameter).
+        """
+        Create a list of tuples for arguments to add to the call signature (name, Parameter).
 
         These can't be in the compute function signature, the class is in charge of removing them
         from the params passed to the compute function, likely through an override of
@@ -1030,7 +1032,8 @@ class Indicator(IndicatorRegistrar):
         return outs
 
     def _bind_call(self, func, **das):
-        """Call function using `__call__` `DataArray` arguments.
+        """
+        Call function using `__call__` `DataArray` arguments.
 
         This will try to bind keyword arguments to `func` arguments. If this fails,
         `func` is called with positional arguments only.
@@ -1063,7 +1066,8 @@ class Indicator(IndicatorRegistrar):
     def _get_translated_metadata(
         cls, locale, var_id=None, names=None, append_locale_name=True
     ):
-        """Get raw translated metadata for the current indicator and a given locale.
+        """
+        Get raw translated metadata for the current indicator and a given locale.
 
         All available translated metadata from the current indicator and those it is
         based on are merged, with the highest priority set to the current one.
@@ -1094,7 +1098,8 @@ class Indicator(IndicatorRegistrar):
         var_id: str | None = None,
         names: Sequence[str] | None = None,
     ):
-        """Format attributes with the run-time values of `compute` call parameters.
+        """
+        Format attributes with the run-time values of `compute` call parameters.
 
         Cell methods and history attributes are updated, adding to existing values.
         The language of the string is taken from the `OPTIONS` configuration dictionary.

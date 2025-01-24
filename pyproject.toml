@@ -67,6 +67,7 @@ dev = [
   "deptry ==0.22.0",
   "flake8 >=7.1.1",
   "flake8-rst-docstrings >=0.3.0",
+  "flake8-rst-docstrings >=0.3.0",
   "h5netcdf>=1.3.0",
   "ipython >=8.5.0",
   "isort ==5.13.2",
@@ -326,11 +327,13 @@ exclude = [
   "docs/notebooks/xclim_training/*.ipynb"
 ]
 extend-select = [
+  "D213", # multi-line-summary-second-line
   "RUF022" # unsorted-dunder-all
 ]
 ignore = [
   "B028", # no-explicit-stacklevel
   "D205", # blank-line-after-summary
+  "D212", # multi-line-summary-first-line
   "D400", # ends-in-period
   "D401" # non-imperative-mood
 ]

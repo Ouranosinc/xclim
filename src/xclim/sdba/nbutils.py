@@ -28,7 +28,8 @@ except ImportError:
 def _get_indexes(
     arr: np.array, virtual_indexes: np.array, valid_values_count: np.array
 ) -> tuple[np.array, np.array]:
-    """Get the valid indexes of arr neighbouring virtual_indexes.
+    """
+    Get the valid indexes of arr neighbouring virtual_indexes.
 
     Parameters
     ----------
@@ -78,7 +79,8 @@ def _linear_interpolation(
     right: np.array,
     gamma: np.array,
 ) -> np.array:
-    """Compute the linear interpolation weighted by gamma on each point of two same shape arrays.
+    """
+    Compute the linear interpolation weighted by gamma on each point of two same shape arrays.
 
     Parameters
     ----------
@@ -115,7 +117,8 @@ def _nan_quantile_1d(
     alpha: float = 1.0,
     beta: float = 1.0,
 ) -> float | np.array:
-    """Get the quantiles of the 1-dimensional array.
+    """
+    Get the quantiles of the 1-dimensional array.
 
     A  linear interpolation is performed using alpha and beta.
 
@@ -168,7 +171,8 @@ def _vecquantiles(arr, rnk, res):
 def vecquantiles(
     da: DataArray, rnk: DataArray, dim: str | Sequence[Hashable]
 ) -> DataArray:
-    """For when the quantile (rnk) is different for each point.
+    """
+    For when the quantile (rnk) is different for each point.
 
     da and rnk must share all dimensions but dim.
 
@@ -227,7 +231,8 @@ def _quantile(arr, q, nreduce=None):
 
 
 def quantile(da: DataArray, q: np.ndarray, dim: str | Sequence[Hashable]) -> DataArray:
-    """Compute the quantiles from a fixed list `q`.
+    """
+    Compute the quantiles from a fixed list `q`.
 
     Parameters
     ----------
@@ -294,7 +299,8 @@ def remove_NaNs(x):  # noqa
     cache=False,
 )
 def _correlation(X, Y):
-    """Compute a correlation as the mean of pairwise distances between points in X and Y.
+    """
+    Compute a correlation as the mean of pairwise distances between points in X and Y.
 
     X is KxN and Y is KxM, the result is the mean of the MxN distances.
     Similar to scipy.spatial.distance.cdist(X, Y, 'euclidean')
@@ -319,7 +325,8 @@ def _correlation(X, Y):
     cache=False,
 )
 def _autocorrelation(X):
-    """Mean of the NxN pairwise distances of points in X of shape KxN.
+    """
+    Mean of the NxN pairwise distances of points in X of shape KxN.
 
     Similar to scipy.spatial.distance.pdist(..., 'euclidean')
     """
@@ -343,7 +350,8 @@ def _autocorrelation(X):
     cache=False,
 )
 def _escore(tgt, sim, out):
-    """E-score based on the Székely-Rizzo e-distances between clusters.
+    """
+    E-score based on the Székely-Rizzo e-distances between clusters.
 
     tgt and sim are KxN and KxM, where dimensions are along K and observations along M and N.
     When N > 0, only this many points of target and sim are used, taken evenly distributed in the series.
@@ -388,7 +396,8 @@ def _first_and_last_nonnull(arr):
 def _extrapolate_on_quantiles(
     interp, oldx, oldg, oldy, newx, newg, method="constant"
 ):  # noqa
-    """Apply extrapolation to the output of interpolation on quantiles with a given grouping.
+    """
+    Apply extrapolation to the output of interpolation on quantiles with a given grouping.
 
     Arguments are the same as _interp_on_quantiles_2D.
     """

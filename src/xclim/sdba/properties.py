@@ -32,7 +32,8 @@ from .utils import _pairwise_spearman, copy_all_attrs
 
 
 class StatisticalProperty(Indicator):
-    """Base indicator class for statistical properties used for validating bias-adjusted outputs.
+    """
+    Base indicator class for statistical properties used for validating bias-adjusted outputs.
 
     Statistical properties reduce the time dimension, sometimes adding a grouping dimension
     according to the passed value of `group` (e.g.: group='time.month' means the loss of the
