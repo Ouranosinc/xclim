@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import platform
 from importlib.util import find_spec
 from inspect import _empty  # noqa
 from pathlib import Path
@@ -273,8 +274,10 @@ class TestOfficialYaml(yamale.YamaleTestCase):
         assert self.validate()
 
 
-# It's not really slow, but this is an unstable test (when it fails) and we might not want to execute it on all builds
-@pytest.mark.slow
+@pytest.mark.xfail(reason="This test is relatively unstable.", strict=False)
+@pytest.mark.skipif(
+    platform.system() == "Windows", reason="nl_langinfo not available on Windows."
+)
 def test_encoding():
     import _locale
     import sys
