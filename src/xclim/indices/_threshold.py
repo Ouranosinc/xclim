@@ -2963,7 +2963,7 @@ def maximum_consecutive_tx_days(
 
 @declare_units(siconc="[]", areacello="[area]", thresh="[]")
 def sea_ice_area(
-    siconc: xarray.DataArray, areacello: xarray.DataArray, thresh: Quantified = "15 pct"
+    siconc: xarray.DataArray, areacello: xarray.DataArray, thresh: Quantified = "15 %"
 ) -> xarray.DataArray:
     """
     Total sea ice area.
@@ -2994,7 +2994,7 @@ def sea_ice_area(
     "What is the difference between sea ice area and extent?" - :cite:cts:`nsidc_frequently_2008`
     """
     t = convert_units_to(thresh, siconc)
-    factor = convert_units_to("100 pct", siconc)
+    factor = convert_units_to("100 %", siconc)
     sia = xarray.dot(siconc.where(siconc >= t, 0), areacello) / factor
     sia = sia.assign_attrs(units=areacello.units)
     return sia
@@ -3002,7 +3002,7 @@ def sea_ice_area(
 
 @declare_units(siconc="[]", areacello="[area]", thresh="[]")
 def sea_ice_extent(
-    siconc: xarray.DataArray, areacello: xarray.DataArray, thresh: Quantified = "15 pct"
+    siconc: xarray.DataArray, areacello: xarray.DataArray, thresh: Quantified = "15 %"
 ) -> xarray.DataArray:
     """
     Total sea ice extent.

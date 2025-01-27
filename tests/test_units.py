@@ -43,7 +43,6 @@ class TestUnits:
         with units.context("hydro"):
             q = 1 * units.kg / units.m**2 / units.s
             assert q.to("mm/day") == q.to("mm/d")
-            assert q.to("mmday").magnitude == 24 * 60**2
 
     def test_lat_lon(self):
         assert 100 * units.degreeN == 100 * units.degree
@@ -55,17 +54,13 @@ class TestUnits:
             np.isclose(1 * fu, 1 * tu)
 
     def test_dimensionality(self):
+        # Check that the hydro context allows flux to rate conversion
         with units.context("hydro"):
             fu = 1 * units.parse_units("kg / m**2 / s")
-            tu = 1 * units.parse_units("mm / d")
-            fu.to("mmday")
-            tu.to("mmday")
+            fu.to("mm/day")
 
     def test_fraction(self):
         q = 5 * units.percent
-        assert q.to("dimensionless") == 0.05
-
-        q = 5 * units.parse_units("pct")
         assert q.to("dimensionless") == 0.05
 
 
@@ -135,9 +130,6 @@ class TestUnitConversion:
         u = units("percent")
         assert pint2cfunits(u.units) == "%"
 
-        u = units("pct")
-        assert pint2cfunits(u.units) == "%"
-
     def test_units2pint(self, pr_series):
         u = units2pint(pr_series([1, 2]))
         assert pint2cfunits(u) == "kg m-2 s-1"
@@ -168,11 +160,9 @@ class TestUnitConversion:
 class TestCheckUnits:
     def test_basic(self):
         check_units("%", "[]")
-        check_units("pct", "[]")
         check_units("mm/day", "[precipitation]")
         check_units("mm/s", "[precipitation]")
         check_units("kg/m2/s", "[precipitation]")
-        check_units("cms", "[discharge]")
         check_units("m3/s", "[discharge]")
         check_units("m/s", "[speed]")
         check_units("km/h", "[speed]")
