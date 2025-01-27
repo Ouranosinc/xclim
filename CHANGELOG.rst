@@ -16,7 +16,7 @@ New features and enhancements
 * New function ``ensemble.partition.general_partition`` (:pull:`2035`)
 * Added a new ``xclim.indices.generic.bivariate_count_occurrences`` function to count instances where operations and performed and validated for two variables. (:pull:`2030`).
 * `xclim` now tracks energy usage and carbon emissions ("last run", "average", and "total") during CI workflows using the `eco-ci-energy-estimation` GitHub Action. (:pull:`2046`).
-* ``xclim.testing.helpers.test_timeseries`` (:pull:`2019`) now accepts a `calendar` argument thats forwarded to ``xr.cftime_range``.
+* ``xclim.testing.helpers.test_timeseries`` now accepts a `calendar` argument that is forwarded to ``xr.cftime_range``. (:pull:`2019`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
