@@ -666,6 +666,9 @@ def to_agg_units(
     >>> degdays.units
     'd K'
     """
+    if "units" not in orig.attrs:
+        return out
+
     is_difference = True if op in ["std", "var"] else None
 
     if op in ["amin", "min", "amax", "max", "mean", "sum", "std"]:
