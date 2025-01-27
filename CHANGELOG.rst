@@ -25,7 +25,8 @@ Internal changes
 
 Bug fixes
 ^^^^^^^^^
-* Fixed an issue in ``xclim.core.units.to_agg_units`` that broke the resampling when computing on unitless data
+* Fixed an issue in ``xclim.core.units.to_agg_units`` that broke the resampling when computing on unitless data (:pull:`2060`).
+
 v0.54.0 (2024-12-16)
 --------------------
 Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), Éric Dupuis (:user:`coxipi`), Sascha Hofmann (:user:`saschahofmann`).
