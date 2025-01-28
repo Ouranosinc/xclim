@@ -311,8 +311,6 @@ class Grouper(Parametrizable):
                 # the first season is shifted by 1 month the but the middle of the season is shifted in the other direction
                 # by half a month so -(1/12-1/24)*4 = -1/6
                 i = ind.dayofyear / length_year * 4 - 1 / 6
-            elif self.prop == "dayofyear":
-                i = ind.dayofyear
             else:
                 raise ValueError(
                     f"Interpolation is not supported for {self.dim}.{self.prop}."
