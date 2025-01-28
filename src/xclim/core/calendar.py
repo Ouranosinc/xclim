@@ -1237,7 +1237,8 @@ def mask_between_doys(
                 mask = (days >= start_d) & (days <= end_d)
             else:
                 # Get an array with the good shape and put False
-                mask = xr.where(group.isel(time=0), False, False)
+                mask = start.isel(time=0).drop_vars("time").expand_dims(time=group.time)
+                mask = xr.full_like(mask, False)
 
             out.append(mask)
         mask = xr.concat(out, dim="time")
