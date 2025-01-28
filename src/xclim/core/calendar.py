@@ -1195,7 +1195,21 @@ def mask_between_doys(
             end.attrs["calendar"] = cal
             end = doy_to_days_since(end)
 
-        freq = xr.infer_freq(start.time)
+        freq = []
+        for bound in [start, end]:
+            try:
+                freq.append(xr.infer_freq(bound.time))
+            except ValueError:
+                freq.append(None)
+        freq = set(freq) - {None}
+        if len(freq) != 1:
+            raise ValueError(
+                f"Non-inferrable resampling frequency or inconsistent frequencies. Got start, end = {freq}."
+                " Please consider providing `freq` manually."
+            )
+        else:
+            freq = freq.pop()
+
         out = []
         for base_time, indexes in da.resample(time=freq).groups.items():
             # get group slice
