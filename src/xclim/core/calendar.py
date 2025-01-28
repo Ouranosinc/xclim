@@ -1205,7 +1205,6 @@ def mask_between_doys(
         if len(freq) != 1:
             raise ValueError(
                 f"Non-inferrable resampling frequency or inconsistent frequencies. Got start, end = {freq}."
-                " Please consider providing `freq` manually."
             )
         else:
             freq = freq.pop()
