@@ -33,16 +33,16 @@ repos:
       - id: yamllint
         args: [ '--config-file=.yamllint.yaml' ]
   - repo: https://github.com/psf/black-pre-commit-mirror
-    rev: 24.10.0
+    rev: 25.1.0
     hooks:
       - id: black
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.8.6
+    rev: v0.9.4
     hooks:
       - id: ruff
         args: [ '--fix', '--show-fixes' ]
   - repo: https://github.com/pylint-dev/pylint
-    rev: v3.3.3
+    rev: v3.3.4
     hooks:
       - id: pylint
         args: [ '--rcfile=.pylintrc.toml', '--errors-only', '--jobs=0', '--disable=import-error' ]
@@ -82,7 +82,7 @@ repos:
       - id: rst-inline-touching-normal
       - id: text-unicode-replacement-char
   - repo: https://github.com/executablebooks/mdformat
-    rev: 0.7.21
+    rev: 0.7.22
     hooks:
       - id: mdformat
         exclude: '.github/\w+.md|.github/publish-mastodon-template.md|docs/paper/paper.md'
@@ -94,7 +94,7 @@ repos:
         exclude: '(src/xclim/indices/__init__.py|docs/installation.rst)'
       - id: blackdoc-autoupdate-black
   - repo: https://github.com/codespell-project/codespell
-    rev: v2.3.0
+    rev: v2.4.1
     hooks:
       - id: codespell
         additional_dependencies: [ 'tomli' ]
@@ -106,11 +106,11 @@ repos:
         # Exclude the missing submodule from the xclim.core, see:
         exclude: ^docs/|^tests/|^src/xclim/sdba|^src/xclim/core/missing.py
   - repo: https://github.com/gitleaks/gitleaks
-    rev: v8.22.1
+    rev: v8.23.3
     hooks:
       - id: gitleaks
   - repo: https://github.com/python-jsonschema/check-jsonschema
-    rev: 0.30.0
+    rev: 0.31.1
     hooks:
       - id: check-github-workflows
       - id: check-readthedocs
