@@ -588,13 +588,6 @@ def qdm_adjust(ds: xr.Dataset, *, group, interp, extrapolation, kind) -> xr.Data
             sim : Data to adjust.
     """
     sim_q = group.apply(u.rank, ds.sim, main_only=True, pct=True)
-    if group.prop and interp != "nearest":
-
-        msg = (
-            f"Using a {interp} interpolation with QuantileDeltaMapping might create sudden jumps between different"
-            " groups. See discussion https://github.com/Ouranosinc/xclim/discussions/2048 for more information."
-        )
-        warnings.warn(msg)
     af = u.interp_on_quantiles(
         sim_q,
         ds.quantiles,
