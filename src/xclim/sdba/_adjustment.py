@@ -8,7 +8,6 @@ This file defines the different steps, to be wrapped into the Adjustment objects
 
 from __future__ import annotations
 
-import warnings
 from collections.abc import Callable, Sequence
 
 import numpy as np
