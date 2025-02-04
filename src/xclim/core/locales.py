@@ -207,7 +207,7 @@ def get_local_attrs(
 
 
 def get_local_formatter(
-    locale: str | Sequence[str] | tuple[str, dict]
+    locale: str | Sequence[str] | tuple[str, dict],
 ) -> AttrFormatter:
     """
     Return an AttrFormatter instance for the given locale.
