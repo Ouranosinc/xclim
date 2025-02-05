@@ -1118,7 +1118,8 @@ def days_since_to_doy(
 
 
 def _get_doys(start: int, end: int, inclusive: tuple[bool, bool]):
-    """Get the day of year list from start to end.
+    """
+    Get the day of year list from start to end.
 
     Parameters
     ----------
