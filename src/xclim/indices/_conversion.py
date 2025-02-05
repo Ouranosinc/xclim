@@ -1333,6 +1333,7 @@ def _get_D_from_M(time):  # noqa: N802
 def fao_allen98(net_radiation, tas, wind, es, ea, delta_svp, gamma, G=0):
     r"""
     FAO-56 Penman-Monteith equation.
+
     Estimates reference evapotranspiration (ETo) from a hypothetical short grass reference surface (
     height = 0.12m, surface resistance = 70 s m-1, albedo  = 0.23 and a ``moderately dry soil surface resulting from
     about a weekly irrigation frequency``).
