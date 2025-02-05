@@ -1333,7 +1333,9 @@ def _get_D_from_M(time):  # noqa: N802
 def fao_allen98(net_radiation, tas, wind, es, ea, delta_svp, gamma, G=0):
     r"""
     FAO-56 Penman-Monteith equation.
-    Estimates reference evapotranspiration (ETo) from a hypothetical short grass reference surface.
+    Estimates reference evapotranspiration (ETo) from a hypothetical short grass reference surface (
+    height = 0.12m, surface resistance = 70 s m-1, albedo  = 0.23 and a ``moderately dry soil surface resulting from
+    about a weekly irrigation frequency``).
     Based on equation 6 in based on :cite:t:`allen_crop_1998`.
 
     Parameters
@@ -1352,7 +1354,7 @@ def fao_allen98(net_radiation, tas, wind, es, ea, delta_svp, gamma, G=0):
         Slope of saturation vapour pressure curve [kPa degC-1].
     gamma : xarray.DataArray
         Psychrometric constant [kPa deg C].
-    G : xarray.DataArray, optional
+    G : float, optional
         Soil heat flux (G) [MJ m-2 day-1] (For daily default to 0).
 
     Returns
@@ -1639,10 +1641,6 @@ def potential_evapotranspiration(
             P = 101.325  # Atmospheric pressure [kPa]
             gamma = 0.665e-03 * P  # psychrometric const = C_p*P/(eps*lam) [kPa degC-1]
 
-            # Penman-Monteith formula with reference grass:
-            # height = 0.12m, surface resistance = 70 s m-1, albedo  = 0.23
-            # Surface resistance implies a ``moderately dry soil surface resulting from
-            # about a weekly irrigation frequency''
             pet = fao_allen98(Rn, tas_m, wa2, es, ea, delta, gamma)
 
     else:
