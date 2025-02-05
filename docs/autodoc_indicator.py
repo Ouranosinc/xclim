@@ -1,4 +1,5 @@
-"""Sphinx extension that acts as a autodoc patch for documenting Indicator instances.
+"""
+Sphinx extension that acts as a autodoc patch for documenting Indicator instances.
 
 By default, indicator instances are skipped by autodoc because their subclass is not a builtin type of python.
 

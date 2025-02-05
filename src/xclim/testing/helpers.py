@@ -190,6 +190,7 @@ def test_timeseries(
     freq: str = "D",
     as_dataset: bool = False,
     cftime: bool = False,
+    calendar: str | None = None,
 ) -> xr.DataArray | xr.Dataset:
     """
     Create a generic timeseries object based on pre-defined dictionaries of existing variables.
@@ -210,14 +211,18 @@ def test_timeseries(
         Whether to return a Dataset or a DataArray. Default is False.
     cftime : bool
         Whether to use cftime or not. Default is False.
+    calendar : str or None
+        Whether to use a calendar. If a calendar is provided, cftime is used.
 
     Returns
     -------
     xr.DataArray or xr.Dataset
         A DataArray or Dataset with time, lon and lat dimensions.
     """
-    if cftime:
-        coords = xr.cftime_range(start, periods=len(values), freq=freq)
+    if calendar or cftime:
+        coords = xr.cftime_range(
+            start, periods=len(values), freq=freq, calendar=calendar or "standard"
+        )
     else:
         coords = pd.date_range(start, periods=len(values), freq=freq)
 

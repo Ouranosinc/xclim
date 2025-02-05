@@ -57,7 +57,8 @@ def _loess_nb(
     dx=0,
     skipna=True,
 ):  # pragma: no cover
-    """1D Locally weighted regression: fits a nonparametric regression curve to a scatter plot.
+    """
+    1D Locally weighted regression: fits a nonparametric regression curve to a scatter plot.
 
     The arrays x and y contain an equal number of elements; each pair (x[i], y[i]) defines
     a data point in the scatter plot. The function returns the estimated (smooth) values of y.
@@ -185,7 +186,8 @@ def loess_smoothing(
     equal_spacing: bool | None = None,
     skipna: bool = True,
 ):
-    r"""Locally weighted regression in 1D: fits a nonparametric regression curve to a scatter plot.
+    r"""
+    Locally weighted regression in 1D: fits a nonparametric regression curve to a scatter plot.
 
     Returns a smoothed curve along given dimension. The regression is computed for each point using a subset of
     neighbouring points as given from evaluating the weighting function locally.

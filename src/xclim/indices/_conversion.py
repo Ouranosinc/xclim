@@ -1397,24 +1397,30 @@ def potential_evapotranspiration(
     -----
     Available methods are:
 
-    - "baierrobertson65" or "BR65", based on :cite:t:`baier_estimation_1965`.
-      Requires tasmin and tasmax, daily [D] freq.
-    - "hargreaves85" or "HG85", based on :cite:t:`george_h_hargreaves_reference_1985`.
-      Requires tasmin and tasmax, daily [D] freq. (optional: tas can be given in addition of tasmin and tasmax).
-    - "mcguinnessbordne05" or "MB05", based on :cite:t:`tanguy_historical_2018`.
-      Requires tas, daily [D] freq, with latitudes 'lat'.
-    - "thornthwaite48" or "TW48", based on :cite:t:`thornthwaite_approach_1948`.
-      Requires tasmin and tasmax, monthly [MS] or daily [D] freq.
-      (optional: tas can be given instead of tasmin and tasmax).
-    - "allen98" or "FAO_PM98", based on :cite:t:`allen_crop_1998`. Modification of Penman-Monteith method.
-      Requires tasmin and tasmax, relative humidity, radiation flux and wind speed (10 m wind will be converted to 2 m).
-    - "droogersallen02" or "DA02", based on :cite:t:`droogers2002`.
-      Requires tasmin, tasmax and precipitation, monthly [MS] or daily [D] freq. (optional: tas can be given in addition of tasmin and tasmax).
+        - "baierrobertson65" or "BR65", based on :cite:t:`baier_estimation_1965`.
+          Requires tasmin and tasmax, daily [D] freq.
+
+        - "hargreaves85" or "HG85", based on :cite:t:`george_h_hargreaves_reference_1985`.
+          Requires tasmin and tasmax, daily [D] freq. (optional: tas can be given in addition of tasmin and tasmax).
+
+        - "mcguinnessbordne05" or "MB05", based on :cite:t:`tanguy_historical_2018`.
+          Requires tas, daily [D] freq, with latitudes 'lat'.
+
+        - "thornthwaite48" or "TW48", based on :cite:t:`thornthwaite_approach_1948`.
+          Requires tasmin and tasmax, monthly [MS] or daily [D] freq.
+          (optional: tas can be given instead of tasmin and tasmax).
+
+        - "allen98" or "FAO_PM98", based on :cite:t:`allen_crop_1998`. Modification of Penman-Monteith method.
+          Requires tasmin and tasmax, relative humidity, radiation flux and wind speed (10 m wind will be converted to 2 m).
+
+        - "droogersallen02" or "DA02", based on :cite:t:`droogers2002`.
+          Requires tasmin, tasmax and precipitation, monthly [MS] or daily [D] freq. (optional: tas can be given in addition of tasmin and tasmax).
 
     The McGuinness-Bordne :cite:p:`mcguinness_comparison_1972` equation is:
 
     .. math::
-        PET[mm day^{-1}] = a * \frac{S_0}{\lambda}T_a + b *\frsc{S_0}{\lambda}
+
+        PET[mm day^{-1}] = a * \frac{S_0}{\lambda}T_a + b * \frac{S_0}{\lambda}
 
     where :math:`a` and :math:`b` are empirical parameters; :math:`S_0` is the extraterrestrial radiation [MJ m-2 day-1],
     assuming a solar constant of 1367 W m-2; :math:`\\lambda` is the latent heat of vaporisation [MJ kg-1]

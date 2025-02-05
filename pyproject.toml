@@ -26,7 +26,7 @@ classifiers = [
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
-  # "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.13",
   "Programming Language :: Python :: 3 :: Only",
   "Topic :: Scientific/Engineering :: Atmospheric Science",
   "Topic :: Scientific/Engineering :: Hydrology",
@@ -64,7 +64,6 @@ dev = [
   "bump-my-version ==0.31.1",
   "codespell ==2.4.1",
   "coverage[toml] >=7.5.0",
-  "coveralls >=4.0.1", # coveralls is not yet compatible with Python 3.13
   "deptry ==0.23.0",
   "flake8 >=7.1.1",
   "flake8-rst-docstrings >=0.3.0",
@@ -104,16 +103,14 @@ docs = [
   "nc-time-axis >=1.4.1",
   "pooch >=1.8.0",
   "pybtex >=0.24.0",
-  "pygments <2.19", # FIXME: temporary fix for sphinx-codeautolink
   "sphinx >=7.0.0",
   "sphinx-autobuild >=2024.4.16",
   "sphinx-autodoc-typehints",
-  "sphinx-codeautolink >=0.15.2,!=0.16.0", # FIXME: temporary fix for sphinx-codeautolink
+  "sphinx-codeautolink >=0.16.2",
   "sphinx-copybutton",
   "sphinx-mdinclude",
   "sphinxcontrib-bibtex",
-  "sphinxcontrib-svg2pdfconverter[Cairosvg]",
-  "pygments <2.19" # FIXME: temporary fix, https://github.com/felix-hilden/sphinx-codeautolink/issues/153
+  "sphinxcontrib-svg2pdfconverter[Cairosvg]"
 ]
 extras = ["fastnanquantile >=0.0.2", "flox >=0.9", "POT >=0.9.4"]
 all = ["xclim[dev]", "xclim[docs]", "xclim[extras]"]
@@ -140,7 +137,7 @@ target-version = [
 ]
 
 [tool.bumpversion]
-current_version = "0.54.1-dev.6"
+current_version = "0.54.1-dev.9"
 commit = true
 commit_args = "--no-verify --signoff"
 tag = false
@@ -168,7 +165,7 @@ values = [
 
 [tool.codespell]
 skip = '*xclim/data/*.json,*docs/_build,*docs/notebooks/xclim_training/*.ipynb,*docs/references.bib,*.gz,*.nc,*.png,*.svg,*.whl'
-ignore-words-list = "absolue,astroid,bloc,bui,callendar,degreee,environnement,hanel,inferrable,lond,nam,nd,ot,ressources,socio-economic,sie,vas"
+ignore-words-list = "absolue,astroid,bloc,bui,callendar,degreee,environnement,hanel,indx,inferrable,lond,nam,nd,ot,ressources,socio-economic,sie,vas"
 
 [tool.coverage.run]
 relative_files = true
@@ -329,11 +326,13 @@ exclude = [
   "docs/notebooks/xclim_training/*.ipynb"
 ]
 extend-select = [
+  "D213", # multi-line-summary-second-line
   "RUF022" # unsorted-dunder-all
 ]
 ignore = [
   "B028", # no-explicit-stacklevel
   "D205", # blank-line-after-summary
+  "D212", # multi-line-summary-first-line
   "D400", # ends-in-period
   "D401" # non-imperative-mood
 ]
