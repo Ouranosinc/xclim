@@ -1202,7 +1202,7 @@ def standardized_precipitation_index(
     ...     cal_start=cal_start,
     ...     cal_end=cal_end,
     ... )  # Computing SPI-3 months using a gamma distribution for the fit
-    >>> # Fitting parameters can also be obtained first, then re-used as input.
+    >>> # Fitting parameters can also be obtained first, then reused as input.
     >>> # To properly reproduce the example, we also need to specify that we use a
     >>> # (potentially) zero-inflated distribution. For a monthly SPI, this should rarely
     >>> # make a difference.

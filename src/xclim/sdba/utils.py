@@ -224,6 +224,8 @@ def broadcast(
         sel.update({group.prop: group.get_index(x, interp=interp != "nearest")})
 
     if sel:
+        if group.prop == "season":
+            grouped = grouped.assign_coords(season=map_season_to_int(grouped.season))
         # Extract the correct mean factor for each time step.
         if interp == "nearest":  # Interpolate both the time group and the quantile.
             grouped = grouped.sel(sel, method="nearest")
@@ -481,11 +483,11 @@ def interp_on_quantiles(
             output_dtypes=[yq.dtype],
         )
         return out
-
+    prop_coords = group.get_coordinate(newx)
     if prop not in xq.dims:
-        xq = xq.expand_dims({prop: group.get_coordinate()})
+        xq = xq.expand_dims({prop: prop_coords})
     if prop not in yq.dims:
-        yq = yq.expand_dims({prop: group.get_coordinate()})
+        yq = yq.expand_dims({prop: prop_coords})
 
     # Adding the cyclic bounds fails for string coordinates like seasons
     # That's why we map the seasons to integers
