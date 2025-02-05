@@ -1319,22 +1319,23 @@ def _get_D_from_M(time):  # noqa: N802
     )
 
 
-# TODO: How can I check exact units for inputs
-# @declare_units(
-#     net_radiation="[MJ m-2 day-1]",
-#     tas="[degC]",
-#     wind="[m s-1]",
-#     es="[kPa]",
-#     ea="[kPa]",
-#     delta_svp="[kPa degC-1]",
-#     gamma="[kPa degC]",
-#     G="[MJ m-2 day-1]",
-# )
-def fao_allen98(net_radiation, tas, wind, es, ea, delta_svp, gamma, G=0):
+@declare_units(
+    net_radiation="[radiation]",
+    tas="[temperature]",
+    wind="[speed]",
+    es="[pressure]",
+    ea="[pressure]",
+    delta_svp="[pressure] / [temperature]",
+    # gamma="[pressure] * [temperature]",
+    # G="[radiation]",
+)
+def fao_allen98(
+    net_radiation, tas, wind, es, ea, delta_svp, gamma, G=0  # "0 MJ m-2 day-1"
+):
     r"""
     FAO-56 Penman-Monteith equation.
 
-    Estimates reference evapotranspiration (ETo) from a hypothetical short grass reference surface (
+    Estimates reference evapotranspiration from a hypothetical short grass reference surface (
     height = 0.12m, surface resistance = 70 s m-1, albedo  = 0.23 and a ``moderately dry soil surface resulting from
     about a weekly irrigation frequency``).
     Based on equation 6 in based on :cite:t:`allen_crop_1998`.
@@ -1363,7 +1364,14 @@ def fao_allen98(net_radiation, tas, wind, es, ea, delta_svp, gamma, G=0):
     xarray.DataArray
         Potential Evapotranspiration from a hypothetical grass reference surface [mm day-1].
     """
+    net_radiation = convert_units_to(net_radiation, "MJ m-2 day-1")
+    wind = convert_units_to(wind, "m s-1")
     tasK = convert_units_to(tas, "K")
+    es = convert_units_to(es, "kPa")
+    ea = convert_units_to(ea, "kPa")
+    delta_svp = convert_units_to(delta_svp, "kPa degC-1")
+    # gamma = convert_units_to(gamma, "kPa degC-1")
+    # G = convert_units_to(G, "MJ m-2 day-1")
     a1 = 0.408 * delta_svp * (net_radiation - G)
     a2 = gamma * 900 / (tasK) * wind * (es - ea)
     a3 = delta_svp + (gamma * (1 + 0.34 * wind))
@@ -1632,10 +1640,10 @@ def potential_evapotranspiration(
             )
             es = convert_units_to(es, "kPa")
             # mean actual vapour pressure [kPa]
-            ea = _hurs * es
+            ea = es * _hurs
 
             # slope of saturation vapour pressure curve  [kPa degC-1]
-            delta = 4098 * es / (tas_m + 237.3) ** 2
+            delta = (4098 * es / (tas_m + 237.3) ** 2).assign_attrs(units="kPa degC-1")
             # net radiation
             Rn = convert_units_to(rsds - rsus - (rlus - rlds), "MJ m-2 d-1")
 
