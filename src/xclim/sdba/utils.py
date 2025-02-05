@@ -47,7 +47,8 @@ def map_cdf(
     y_value: xr.DataArray,
     dim: str,
 ):
-    """Return the value in `x` with the same CDF as `y_value` in `y`.
+    """
+    Return the value in `x` with the same CDF as `y_value` in `y`.
 
     This function is meant to be wrapped in a `Grouper.apply`.
 
@@ -83,7 +84,8 @@ def map_cdf(
 def ecdf(
     x: xr.DataArray, value: float, dim: str | Sequence[str] = "time"
 ) -> xr.DataArray:
-    """Return the empirical CDF of a sample at a given value.
+    """
+    Return the empirical CDF of a sample at a given value.
 
     Parameters
     ----------
@@ -154,7 +156,8 @@ def get_correction(x: xr.DataArray, y: xr.DataArray, kind: str) -> xr.DataArray:
 def apply_correction(
     x: xr.DataArray, factor: xr.DataArray, kind: str | None = None
 ) -> xr.DataArray:
-    """Apply the additive or multiplicative correction/adjustment factors.
+    """
+    Apply the additive or multiplicative correction/adjustment factors.
 
     If kind is not given, default to the one stored in the "kind" attribute of factor.
     """
@@ -171,7 +174,8 @@ def apply_correction(
 
 
 def invert(x: xr.DataArray, kind: str | None = None) -> xr.DataArray:
-    """Invert a DataArray either by addition (-x) or by multiplication (1/x).
+    """
+    Invert a DataArray either by addition (-x) or by multiplication (1/x).
 
     If kind is not given, default to the one stored in the "kind" attribute of x.
     """
@@ -193,7 +197,8 @@ def broadcast(
     interp: str = "nearest",
     sel: dict[str, xr.DataArray] | None = None,
 ) -> xr.DataArray:
-    """Broadcast a grouped array back to the same shape as a given array.
+    """
+    Broadcast a grouped array back to the same shape as a given array.
 
     Parameters
     ----------
@@ -252,7 +257,8 @@ def broadcast(
 
 
 def equally_spaced_nodes(n: int, eps: float | None = None) -> np.ndarray:
-    """Return nodes with `n` equally spaced points within [0, 1], optionally adding two end-points.
+    """
+    Return nodes with `n` equally spaced points within [0, 1], optionally adding two end-points.
 
     Parameters
     ----------
@@ -286,7 +292,8 @@ def equally_spaced_nodes(n: int, eps: float | None = None) -> np.ndarray:
 def add_cyclic_bounds(
     da: xr.DataArray, att: str, cyclic_coords: bool = True
 ) -> xr.DataArray | xr.Dataset:
-    """Reindex an array to include the last slice at the beginning and the first at the end.
+    """
+    Reindex an array to include the last slice at the beginning and the first at the end.
 
     This is done to allow interpolation near the end-points.
 
@@ -417,7 +424,8 @@ def interp_on_quantiles(
     method: str = "linear",
     extrapolation: str = "constant",
 ):
-    """Interpolate values of yq on new values of x.
+    """
+    Interpolate values of yq on new values of x.
 
     Interpolate in 2D with :py:func:`scipy.interpolate.griddata` if grouping is used, in 1D otherwise, with
     :py:class:`scipy.interpolate.interp1d`.
@@ -517,7 +525,8 @@ def interp_on_quantiles(
 def rank(
     da: xr.DataArray, dim: str | list[str] = "time", pct: bool = False
 ) -> xr.DataArray:
-    """Ranks data along a dimension.
+    """
+    Ranks data along a dimension.
 
     Replicates `xr.DataArray.rank` but as a function usable in a Grouper.apply(). Xarray's docstring is below:
 
@@ -582,7 +591,8 @@ def _rank_bn(arr, axis=None):
 
 
 def pc_matrix(arr: np.ndarray | dsk.Array) -> np.ndarray | dsk.Array:
-    """Construct a Principal Component matrix.
+    """
+    Construct a Principal Component matrix.
 
     This matrix can be used to transform points in arr to principal components
     coordinates. Note that this function does not manage nans; if a single observation is null, all elements
@@ -619,7 +629,8 @@ def pc_matrix(arr: np.ndarray | dsk.Array) -> np.ndarray | dsk.Array:
 def best_pc_orientation_simple(
     R: np.ndarray, Hinv: np.ndarray, val: float = 1000
 ) -> np.ndarray:
-    """Return best orientation vector according to a simple test.
+    """
+    Return best orientation vector according to a simple test.
 
     Eigenvectors returned by `pc_matrix` do not have a defined orientation.
     Given an inverse transform `Hinv` and a transform `R`, this returns the orientation minimizing the projected
@@ -668,7 +679,8 @@ def best_pc_orientation_full(
     Hmean: np.ndarray,
     hist: np.ndarray,
 ) -> np.ndarray:
-    """Return best orientation vector for `A` according to the method of :cite:t:`sdba-alavoine_distinct_2022`.
+    """
+    Return best orientation vector for `A` according to the method of :cite:t:`sdba-alavoine_distinct_2022`.
 
     Eigenvectors returned by `pc_matrix` do not have a defined orientation.
     Given an inverse transform `Hinv`, a transform `R`, the actual and target origins `Hmean` and `Rmean` and the matrix
@@ -724,7 +736,8 @@ def best_pc_orientation_full(
 def get_clusters_1d(
     data: np.ndarray, u1: float, u2: float
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
-    """Get clusters of a 1D array.
+    """
+    Get clusters of a 1D array.
 
     A cluster is defined as a sequence of values larger than u2 with at least one value larger than u1.
 
@@ -778,7 +791,8 @@ def get_clusters_1d(
 
 
 def get_clusters(data: xr.DataArray, u1, u2, dim: str = "time") -> xr.Dataset:
-    """Get cluster count, maximum and position along a given dim.
+    """
+    Get cluster count, maximum and position along a given dim.
 
     See `get_clusters_1d`. Used by `adjustment.ExtremeValues`.
 
@@ -860,7 +874,8 @@ def get_clusters(data: xr.DataArray, u1, u2, dim: str = "time") -> xr.Dataset:
 def rand_rot_matrix(
     crd: xr.DataArray, num: int = 1, new_dim: str | None = None
 ) -> xr.DataArray:
-    r"""Generate random rotation matrices.
+    r"""
+    Generate random rotation matrices.
 
     Rotation matrices are members of the SO(n) group, where n is the matrix size (`crd.size`).
     They can be characterized as orthogonal matrices with determinant 1. A square matrix :math:`R`
@@ -923,7 +938,8 @@ def copy_all_attrs(ds: xr.Dataset | xr.DataArray, ref: xr.Dataset | xr.DataArray
 
 
 def _pairwise_spearman(da, dims):
-    """Area-averaged pairwise temporal correlation.
+    """
+    Area-averaged pairwise temporal correlation.
 
     With skipna-shortcuts for cases where all times or all points are nan.
     """
@@ -976,7 +992,8 @@ def _pairwise_spearman(da, dims):
 
 
 def bin_width_estimator(X):
-    """Estimate the bin width of an histogram.
+    """
+    Estimate the bin width of an histogram.
 
     References
     ----------
@@ -1005,7 +1022,8 @@ def bin_width_estimator(X):
 
 
 def histogram(data, bin_width, bin_origin):
-    """Construct an histogram of the data.
+    """
+    Construct an histogram of the data.
 
     Returns the position of the center of bins, their corresponding frequency and the bin of every data point.
     """
@@ -1024,7 +1042,8 @@ def histogram(data, bin_width, bin_origin):
 
 
 def optimal_transport(gridX, gridY, muX, muY, num_iter_max, normalization):
-    """Computes the optimal transportation plan on (transformations of) X and Y.
+    """
+    Computes the optimal transportation plan on (transformations of) X and Y.
 
     References
     ----------
@@ -1065,7 +1084,8 @@ def optimal_transport(gridX, gridY, muX, muY, num_iter_max, normalization):
 
 
 def eps_cholesky(M, nit=26):
-    """Cholesky decomposition.
+    """
+    Cholesky decomposition.
 
     References
     ----------
