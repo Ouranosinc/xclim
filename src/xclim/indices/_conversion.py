@@ -1364,7 +1364,7 @@ def fao_allen98(net_radiation, tas, wind, es, ea, delta_svp, gamma, G=0):
     """
     tasK = convert_units_to(tas, "K")
     a1 = 0.408 * delta_svp * (net_radiation - G)
-    a2 = gamma * 900 / (tas + 273) * wind * (es - ea)
+    a2 = gamma * 900 / (tasK) * wind * (es - ea)
     a3 = delta_svp + (gamma * (1 + 0.34 * wind))
 
     return (a1 + a2) / a3
