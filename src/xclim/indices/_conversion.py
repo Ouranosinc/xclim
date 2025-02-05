@@ -1319,6 +1319,55 @@ def _get_D_from_M(time):  # noqa: N802
     )
 
 
+# TODO: How can I check exact units for inputs
+# @declare_units(
+#     net_radiation="[MJ m-2 day-1]",
+#     tas="[degC]",
+#     wind="[m s-1]",
+#     es="[kPa]",
+#     ea="[kPa]",
+#     delta_svp="[kPa degC-1]",
+#     gamma="[kPa degC]",
+#     G="[MJ m-2 day-1]",
+# )
+def fao_allen98(net_radiation, tas, wind, es, ea, delta_svp, gamma, G=0):
+    r"""
+    FAO-56 Penman-Monteith equation.
+    Estimates reference evapotranspiration (ETo) from a hypothetical short grass reference surface.
+    Based on equation 6 in based on :cite:t:`allen_crop_1998`.
+
+    Parameters
+    ----------
+    net_radiation : xarray.DataArray
+        Net radiation at crop surface [MJ m-2 day-1].
+    tas : xarray.DataArray
+        Air temperature at 2 m height [degC].
+    wind : xarray.DataArray
+        Wind speed at 2 m height [m s-1].
+    es : xarray.DataArray
+        Saturation vapour pressure [kPa].
+    ea : xarray.DataArray
+        Actual vapour pressure [kPa].
+    delta_svp : xarray.DataArray
+        Slope of saturation vapour pressure curve [kPa degC-1].
+    gamma : xarray.DataArray
+        Psychrometric constant [kPa deg C].
+    G : xarray.DataArray, optional
+        Soil heat flux (G) [MJ m-2 day-1] (For daily default to 0).
+
+    Returns
+    -------
+    xarray.DataArray
+        Potential Evapotranspiration from a hypothetical grass reference surface [mm day-1].
+    """
+    tasK = convert_units_to(tas, "K")
+    a1 = 0.408 * delta_svp * (net_radiation - G)
+    a2 = gamma * 900 / (tas + 273) * wind * (es - ea)
+    a3 = delta_svp + (gamma * (1 + 0.34 * wind))
+
+    return (a1 + a2) / a3
+
+
 @declare_units(
     tasmin="[temperature]",
     tasmax="[temperature]",
@@ -1563,7 +1612,7 @@ def potential_evapotranspiration(
     elif method in ["allen98", "FAO_PM98"]:
         _tasmax = convert_units_to(tasmax, "degC")
         _tasmin = convert_units_to(tasmin, "degC")
-
+        _hurs = convert_units_to(hurs, "1")
         if sfcWind is None:
             raise ValueError("Wind speed is required for Allen98 method.")
 
@@ -1580,14 +1629,13 @@ def potential_evapotranspiration(
             )
             es = convert_units_to(es, "kPa")
             # mean actual vapour pressure [kPa]
-            ea = hurs * es
+            ea = _hurs * es
 
             # slope of saturation vapour pressure curve  [kPa degC-1]
             delta = 4098 * es / (tas_m + 237.3) ** 2
             # net radiation
             Rn = convert_units_to(rsds - rsus - (rlus - rlds), "MJ m-2 d-1")
 
-            G = 0  # Daily soil heat flux density [MJ m-2 d-1]
             P = 101.325  # Atmospheric pressure [kPa]
             gamma = 0.665e-03 * P  # psychrometric const = C_p*P/(eps*lam) [kPa degC-1]
 
@@ -1595,10 +1643,7 @@ def potential_evapotranspiration(
             # height = 0.12m, surface resistance = 70 s m-1, albedo  = 0.23
             # Surface resistance implies a ``moderately dry soil surface resulting from
             # about a weekly irrigation frequency''
-            pet = (
-                0.408 * delta * (Rn - G)
-                + gamma * (900 / (tas_m + 273)) * wa2 * (es - ea)
-            ) / (delta + gamma * (1 + 0.34 * wa2))
+            pet = fao_allen98(Rn, tas_m, wa2, es, ea, delta, gamma)
 
     else:
         raise NotImplementedError(f"'{method}' method is not implemented.")
