@@ -140,7 +140,7 @@ target-version = [
 ]
 
 [tool.bumpversion]
-current_version = "0.54.1-dev.6"
+current_version = "0.54.1-dev.7"
 commit = true
 commit_args = "--no-verify --signoff"
 tag = false
@@ -168,7 +168,7 @@ values = [
 
 [tool.codespell]
 skip = '*xclim/data/*.json,*docs/_build,*docs/notebooks/xclim_training/*.ipynb,*docs/references.bib,*.gz,*.nc,*.png,*.svg,*.whl'
-ignore-words-list = "absolue,astroid,bloc,bui,callendar,degreee,environnement,hanel,inferrable,lond,nam,nd,ot,ressources,socio-economic,sie,vas"
+ignore-words-list = "absolue,astroid,bloc,bui,callendar,degreee,environnement,hanel,indx,inferrable,lond,nam,nd,ot,ressources,socio-economic,sie,vas"
 
 [tool.coverage.run]
 relative_files = true
