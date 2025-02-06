@@ -1326,12 +1326,10 @@ def _get_D_from_M(time):  # noqa: N802
     es="[pressure]",
     ea="[pressure]",
     delta_svp="[pressure] / [temperature]",
-    # gamma="[pressure] * [temperature]",
-    # G="[radiation]",
+    gamma="[pressure] [temperature]",
+    G="[radiation]",
 )
-def fao_allen98(
-    net_radiation, tas, wind, es, ea, delta_svp, gamma, G=0  # "0 MJ m-2 day-1"
-):
+def fao_allen98(net_radiation, tas, wind, es, ea, delta_svp, gamma, G="0 MJ m-2 day-1"):
     r"""
     FAO-56 Penman-Monteith equation.
 
@@ -1370,13 +1368,13 @@ def fao_allen98(
     es = convert_units_to(es, "kPa")
     ea = convert_units_to(ea, "kPa")
     delta_svp = convert_units_to(delta_svp, "kPa degC-1")
-    # gamma = convert_units_to(gamma, "kPa degC-1")
-    # G = convert_units_to(G, "MJ m-2 day-1")
+    gamma = convert_units_to(gamma, "kPa degC")
+    G = convert_units_to(G, "MJ m-2 day-1")
     a1 = 0.408 * delta_svp * (net_radiation - G)
     a2 = gamma * 900 / (tasK) * wind * (es - ea)
     a3 = delta_svp + (gamma * (1 + 0.34 * wind))
 
-    return (a1 + a2) / a3
+    return ((a1 + a2) / a3).assign_attrs(units="mm day-1")
 
 
 @declare_units(
@@ -1650,7 +1648,7 @@ def potential_evapotranspiration(
             P = 101.325  # Atmospheric pressure [kPa]
             gamma = 0.665e-03 * P  # psychrometric const = C_p*P/(eps*lam) [kPa degC-1]
 
-            pet = fao_allen98(Rn, tas_m, wa2, es, ea, delta, gamma)
+            pet = fao_allen98(Rn, tas_m, wa2, es, ea, delta, f"{gamma} kPa degC")
 
     else:
         raise NotImplementedError(f"'{method}' method is not implemented.")
