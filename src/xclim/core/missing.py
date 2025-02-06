@@ -55,7 +55,8 @@ _np_timedelta64 = {"D": "timedelta64[D]", "h": "timedelta64[h]"}
 
 
 class MissingBase:
-    r"""Base class used to determined where Indicator outputs should be masked.
+    r"""
+    Base class used to determined where Indicator outputs should be masked.
 
     Subclasses should implement `is_missing` and `validate` methods.
 
@@ -94,7 +95,8 @@ class MissingBase:
         options: dict,
         indexer: dict,
     ) -> xr.DataArray:
-        """Create the instance and call it in one operation.
+        """
+        Create the instance and call it in one operation.
 
         Parameters
         ----------
@@ -121,7 +123,8 @@ class MissingBase:
 
     @staticmethod
     def split_freq(freq: str) -> list[str] | tuple[str, None]:
-        """Split the frequency into a base frequency and a suffix.
+        """
+        Split the frequency into a base frequency and a suffix.
 
         Parameters
         ----------
@@ -145,7 +148,8 @@ class MissingBase:
     def is_null(
         da: xr.DataArray, freq: str, **indexer
     ) -> xr.DataArray | xr.DataArray.resample:
-        r"""Return a boolean array indicating which values are null.
+        r"""
+        Return a boolean array indicating which values are null.
 
         Parameters
         ----------
@@ -181,7 +185,8 @@ class MissingBase:
     def prepare(
         self, da: xr.DataArray, freq: str, src_timestep: str, **indexer
     ) -> tuple[xr.DataArray, xr.DataArray]:
-        r"""Prepare arrays to be fed to the `is_missing` function.
+        r"""
+        Prepare arrays to be fed to the `is_missing` function.
 
         Parameters
         ----------
@@ -275,7 +280,8 @@ class MissingBase:
 
     @staticmethod
     def validate(**kwargs) -> bool:
-        r"""Return whether options arguments are valid or not.
+        r"""
+        Return whether options arguments are valid or not.
 
         Parameters
         ----------
@@ -302,7 +308,8 @@ class MissingBase:
 
 @register_missing_method("any")
 class MissingAny(MissingBase):
-    r"""Return whether there are missing days in the array.
+    r"""
+    Return whether there are missing days in the array.
 
     Parameters
     ----------
@@ -329,7 +336,8 @@ class MissingAny(MissingBase):
     def is_missing(
         self, null: xr.DataArray, count: xr.DataArray, **kwargs
     ) -> xr.DataArray:  # noqa
-        r"""Return whether the values within each period should be considered missing or not.
+        r"""
+        Return whether the values within each period should be considered missing or not.
 
         Parameters
         ----------
@@ -352,7 +360,8 @@ class MissingAny(MissingBase):
 
 @register_missing_method("wmo")
 class MissingWMO(MissingAny):
-    r"""Return whether a series fails WMO criteria for missing days.
+    r"""
+    Return whether a series fails WMO criteria for missing days.
 
     The World Meteorological Organisation recommends that where monthly means are computed from daily values,
     it should be considered missing if either of these two criteria are met:
@@ -413,7 +422,8 @@ class MissingWMO(MissingAny):
         options: dict,
         indexer: dict,
     ) -> xr.DataArray:
-        """Create the instance and call it in one operation.
+        """
+        Create the instance and call it in one operation.
 
         Parameters
         ----------
@@ -468,7 +478,8 @@ class MissingWMO(MissingAny):
 
 @register_missing_method("pct")
 class MissingPct(MissingBase):
-    r"""Return whether there are more missing days in the array than a given percentage.
+    r"""
+    Return whether there are more missing days in the array than a given percentage.
 
     Parameters
     ----------
@@ -505,7 +516,8 @@ class MissingPct(MissingBase):
 
 @register_missing_method("at_least_n")
 class AtLeastNValid(MissingBase):
-    r"""Return whether there are at least a given number of valid values.
+    r"""
+    Return whether there are at least a given number of valid values.
 
     Parameters
     ----------
@@ -534,7 +546,8 @@ class AtLeastNValid(MissingBase):
         self.count = None  # Not needed
 
     def is_missing(self, null, count, n: int = 20):
-        """Check for missing results after a reduction operation.
+        """
+        Check for missing results after a reduction operation.
 
         The result of a reduction operation is considered missing if less than `n` values are valid.
         """
@@ -561,7 +574,8 @@ class Skip(MissingBase):  # pylint: disable=missing-class-docstring
 
 @register_missing_method("from_context")
 class FromContext(MissingBase):
-    """Return whether each element of the resampled da should be considered missing according to the currently set options in `xclim.set_options`.
+    """
+    Return whether each element of the resampled da should be considered missing according to the currently set options in `xclim.set_options`.
 
     See Also
     --------
