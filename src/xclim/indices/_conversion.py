@@ -31,6 +31,7 @@ from xclim.indices.helpers import (
 
 __all__ = [
     "clausius_clapeyron_scaled_precipitation",
+    "fao_allen98",
     "heat_index",
     "humidex",
     "longwave_upwelling_radiation_from_net_downwelling",
