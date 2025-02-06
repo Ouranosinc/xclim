@@ -1361,6 +1361,10 @@ def fao_allen98(net_radiation, tas, wind, es, ea, delta_svp, gamma, G="0 MJ m-2 
     -------
     xarray.DataArray
         Potential Evapotranspiration from a hypothetical grass reference surface [mm day-1].
+    
+    References
+    ----------
+    :cite:t:`allen_crop_1998`
     """
     net_radiation = convert_units_to(net_radiation, "MJ m-2 day-1")
     wind = convert_units_to(wind, "m s-1")
