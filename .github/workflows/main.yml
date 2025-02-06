@@ -210,6 +210,12 @@ jobs:
             markers: -m 'not slow'
             python-version: "3.12"
             tox-env: standard
+          # Coverage is not yet supported on Python3.13 . See `tox.ini`.
+          - os: 'ubuntu-latest'
+            testdata-cache: '~/.cache/xclim-testdata'
+            markers: -m 'not slow'
+            python-version: "3.13"
+            tox-env: standard
           # Windows builds
           - os: 'windows-latest'
             testdata-cache: 'C:\Users\runneradmin\AppData\Local\xclim-testdata\xclim-testdata\Cache'
@@ -254,6 +260,7 @@ jobs:
             ip-api.com:80
             ipapi.co:443
             motd.ubuntu.com:443
+            objects.githubusercontent.com:443
             proxy.golang.org:443
             pypi.org:443
             raw.githubusercontent.com:443

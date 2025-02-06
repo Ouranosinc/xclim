@@ -211,7 +211,8 @@ class TestKS:
 
 
 def analytical_KLDiv(p, q):
-    """Return the Kullback-Leibler divergence between two distributions.
+    """
+    Return the Kullback-Leibler divergence between two distributions.
 
     Parameters
     ----------

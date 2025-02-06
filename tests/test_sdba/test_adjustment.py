@@ -203,7 +203,8 @@ class TestScaling:
 class TestDQM:
     @pytest.mark.parametrize("kind,name", [(ADDITIVE, "tas"), (MULTIPLICATIVE, "pr")])
     def test_quantiles(self, series, kind, name, random):
-        """Train on
+        """
+        Train on
         hist: U
         ref: Normal
 
@@ -344,7 +345,8 @@ class TestDQM:
 class TestQDM:
     @pytest.mark.parametrize("kind,name", [(ADDITIVE, "tas"), (MULTIPLICATIVE, "pr")])
     def test_quantiles(self, series, kind, name, random):
-        """Train on
+        """
+        Train on
         x : U(1,1)
         y : U(1,2)
 
@@ -506,7 +508,8 @@ class TestQDM:
 class TestQM:
     @pytest.mark.parametrize("kind,name", [(ADDITIVE, "tas"), (MULTIPLICATIVE, "pr")])
     def test_quantiles(self, series, kind, name, random):
-        """Train on
+        """
+        Train on
         hist: U
         ref: Normal
 
