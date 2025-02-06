@@ -22,7 +22,7 @@ New features and enhancements
 * Added a new ``xclim.indices.generic.bivariate_count_occurrences`` function to count instances where operations and performed and validated for two variables. (:pull:`2030`).
 * `xclim` now tracks energy usage and carbon emissions ("last run", "average", and "total") during CI workflows using the `eco-ci-energy-estimation` GitHub Action. (:pull:`2046`).
 * ``xclim.testing.helpers.test_timeseries`` now accepts a `calendar` argument that is forwarded to ``xr.cftime_range``. (:pull:`2019`).
-* ``xclim.indices.atmos`` now exports the FAO-56 Penman-Monteith equation as `fao_allen98` (:issue:`2004`, :pull:`2067`).
+* New ``xclim.indices.fao_allen98``, exporting the FAO-56 Penman-Monteith equation for potential evapotranspiration (:issue:`2004`, :pull:`2067`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
