@@ -4,7 +4,7 @@ Changelog
 
 v0.55.0 (unreleased)
 --------------------
-Contributors to this version: Juliette Lavoie (:user:`juliettelavoie`), Trevor James Smith (:user:`Zeitsperre`), Sascha Hofmann (:user:`saschahofmann`).
+Contributors to this version: Juliette Lavoie (:user:`juliettelavoie`), Trevor James Smith (:user:`Zeitsperre`), Sascha Hofmann (:user:`saschahofmann`), Éric Dupuis (:user:`coxipi`).
 
 Announcements
 ^^^^^^^^^^^^^
@@ -33,6 +33,7 @@ Internal changes
 Bug fixes
 ^^^^^^^^^
 * Fixed a bug in ``xclim.sdba.Grouper.get_index`` that didn't correctly interpolate seasonal values (:issue:`2014`, :pull:`2019`).
+* When using a dayofyear grouping, `sdba.utils.interp_on_quantiles` will not interpolate on the dayofyear dimension.
 * Fixed a bug where ``xclim.indicators.atmos.potential_evapotranspiration`` would return wrong results when `hurs` was provided in `%` (:pull:`2067`).
 
 v0.54.0 (2024-12-16)

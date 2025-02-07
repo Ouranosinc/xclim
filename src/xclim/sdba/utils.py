@@ -464,11 +464,14 @@ def interp_on_quantiles(
     dim = group.dim
     prop = group.prop
 
-    if prop == "group":
-        if "group" in xq.dims:
-            xq = xq.squeeze("group", drop=True)
-        if "group" in yq.dims:
-            yq = yq.squeeze("group", drop=True)
+    # dayofyear case does not require interpolation
+    # on the dayofyear dimension
+    if prop in ["group", "dayofyear"]:
+        if prop == "group":
+            if "group" in xq.dims:
+                xq = xq.squeeze("group", drop=True)
+            if "group" in yq.dims:
+                yq = yq.squeeze("group", drop=True)
 
         out = xr.apply_ufunc(
             _interp_on_quantiles_1D,
