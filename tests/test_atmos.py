@@ -343,6 +343,8 @@ class TestPotentialEvapotranspiration:
             tnC.attrs["units"] = "degC"
             tmC = tm - K2C
             tmC.attrs["units"] = "degC"
+            hurs_pct = hurs * 100
+            hurs_pct.attrs["units"] = "%"
 
         pet_br65 = atmos.potential_evapotranspiration(tn, tx, method="BR65")
         pet_br65C = atmos.potential_evapotranspiration(tnC, tx, method="BR65")
@@ -374,12 +376,24 @@ class TestPotentialEvapotranspiration:
             sfcWind=sfcWind,
             method="FAO_PM98",
         )
+        pet_fao_pm98pct = atmos.potential_evapotranspiration(
+            tn,
+            tx,
+            hurs=hurs_pct,
+            rsds=rsds,
+            rsus=rsus,
+            rlds=rlds,
+            rlus=rlus,
+            sfcWind=sfcWind,
+            method="FAO_PM98",
+        )
 
         np.testing.assert_allclose(pet_br65, pet_br65C, atol=1)
         np.testing.assert_allclose(pet_hg85, pet_hg85C, atol=1)
         np.testing.assert_allclose(pet_tw48, pet_tw48C, atol=1)
         np.testing.assert_allclose(pet_mb05, pet_mb05C, atol=1)
         np.testing.assert_allclose(pet_fao_pm98, pet_fao_pm98C, atol=1)
+        np.testing.assert_allclose(pet_fao_pm98, pet_fao_pm98pct, atol=1)
 
     def test_nan_values(self, atmosds):
         ds = atmosds

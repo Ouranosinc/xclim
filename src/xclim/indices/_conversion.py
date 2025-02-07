@@ -31,6 +31,7 @@ from xclim.indices.helpers import (
 
 __all__ = [
     "clausius_clapeyron_scaled_precipitation",
+    "fao_allen98",
     "heat_index",
     "humidex",
     "longwave_upwelling_radiation_from_net_downwelling",
@@ -1320,6 +1321,68 @@ def _get_D_from_M(time):  # noqa: N802
 
 
 @declare_units(
+    net_radiation="[radiation]",
+    tas="[temperature]",
+    wind="[speed]",
+    es="[pressure]",
+    ea="[pressure]",
+    delta_svp="[pressure] / [temperature]",
+    gamma="[pressure] [temperature]",
+    G="[radiation]",
+)
+def fao_allen98(net_radiation, tas, wind, es, ea, delta_svp, gamma, G="0 MJ m-2 day-1"):
+    r"""
+    FAO-56 Penman-Monteith equation.
+
+    Estimates reference evapotranspiration from a hypothetical short grass reference surface (
+    height = 0.12m, surface resistance = 70 s m-1, albedo  = 0.23 and a ``moderately dry soil surface resulting from
+    about a weekly irrigation frequency``).
+    Based on equation 6 in based on :cite:t:`allen_crop_1998`.
+
+    Parameters
+    ----------
+    net_radiation : xarray.DataArray
+        Net radiation at crop surface [MJ m-2 day-1].
+    tas : xarray.DataArray
+        Air temperature at 2 m height [degC].
+    wind : xarray.DataArray
+        Wind speed at 2 m height [m s-1].
+    es : xarray.DataArray
+        Saturation vapour pressure [kPa].
+    ea : xarray.DataArray
+        Actual vapour pressure [kPa].
+    delta_svp : xarray.DataArray
+        Slope of saturation vapour pressure curve [kPa degC-1].
+    gamma : xarray.DataArray
+        Psychrometric constant [kPa deg C].
+    G : float, optional
+        Soil heat flux (G) [MJ m-2 day-1] (For daily default to 0).
+
+    Returns
+    -------
+    xarray.DataArray
+        Potential Evapotranspiration from a hypothetical grass reference surface [mm day-1].
+
+    References
+    ----------
+    :cite:t:`allen_crop_1998`
+    """
+    net_radiation = convert_units_to(net_radiation, "MJ m-2 day-1")
+    wind = convert_units_to(wind, "m s-1")
+    tasK = convert_units_to(tas, "K")
+    es = convert_units_to(es, "kPa")
+    ea = convert_units_to(ea, "kPa")
+    delta_svp = convert_units_to(delta_svp, "kPa degC-1")
+    gamma = convert_units_to(gamma, "kPa degC")
+    G = convert_units_to(G, "MJ m-2 day-1")
+    a1 = 0.408 * delta_svp * (net_radiation - G)
+    a2 = gamma * 900 / (tasK) * wind * (es - ea)
+    a3 = delta_svp + (gamma * (1 + 0.34 * wind))
+
+    return ((a1 + a2) / a3).assign_attrs(units="mm day-1")
+
+
+@declare_units(
     tasmin="[temperature]",
     tasmax="[temperature]",
     tas="[temperature]",
@@ -1569,7 +1632,7 @@ def potential_evapotranspiration(
     elif method in ["allen98", "FAO_PM98"]:
         _tasmax = convert_units_to(tasmax, "degC")
         _tasmin = convert_units_to(tasmin, "degC")
-
+        _hurs = convert_units_to(hurs, "1")
         if sfcWind is None:
             raise ValueError("Wind speed is required for Allen98 method.")
 
@@ -1586,25 +1649,17 @@ def potential_evapotranspiration(
             )
             es = convert_units_to(es, "kPa")
             # mean actual vapour pressure [kPa]
-            ea = hurs * es
+            ea = es * _hurs
 
             # slope of saturation vapour pressure curve  [kPa degC-1]
-            delta = 4098 * es / (tas_m + 237.3) ** 2
+            delta = (4098 * es / (tas_m + 237.3) ** 2).assign_attrs(units="kPa degC-1")
             # net radiation
             Rn = convert_units_to(rsds - rsus - (rlus - rlds), "MJ m-2 d-1")
 
-            G = 0  # Daily soil heat flux density [MJ m-2 d-1]
             P = 101.325  # Atmospheric pressure [kPa]
             gamma = 0.665e-03 * P  # psychrometric const = C_p*P/(eps*lam) [kPa degC-1]
 
-            # Penman-Monteith formula with reference grass:
-            # height = 0.12m, surface resistance = 70 s m-1, albedo  = 0.23
-            # Surface resistance implies a ``moderately dry soil surface resulting from
-            # about a weekly irrigation frequency''
-            pet = (
-                0.408 * delta * (Rn - G)
-                + gamma * (900 / (tas_m + 273)) * wa2 * (es - ea)
-            ) / (delta + gamma * (1 + 0.34 * wa2))
+            pet = fao_allen98(Rn, tas_m, wa2, es, ea, delta, f"{gamma} kPa degC")
 
     else:
         raise NotImplementedError(f"'{method}' method is not implemented.")
