@@ -11,6 +11,7 @@ from __future__ import annotations
 from collections.abc import Callable, Sequence
 
 import numpy as np
+import scipy as sc
 import xarray as xr
 
 from xclim import set_options
@@ -202,6 +203,25 @@ def _npdft_train(ref, hist, rots, quantiles, method, extrap, n_escore, standardi
     return af_q, escores
 
 
+def _norm(da, normalization, ref):
+    if normalization == "std_datasets":
+        return standardize(da, dim="time")[0]
+
+    if normalization in ["std", "min_max"]:
+        if normalization == "std":
+            _, offset, scale = standardize(ref, dim="time")
+        else:
+            mn, mx = ref.min(dim="time"), ref.max(dim="time")
+            offset = mn
+            scale = mx - mn
+
+        return (da - offset) / scale
+
+    if normalization == "waerden":
+        rnk = da.rank(dim="time") / (da.time.size + 1)
+        return xr.apply_ufunc(sc.stats.norm.ppf, rnk).assign_attrs({"units": ""})
+
+
 def mbcn_train(
     ds: xr.Dataset,
     rot_matrices: xr.DataArray,
@@ -211,6 +231,7 @@ def mbcn_train(
     interp: str,
     extrapolation: str,
     n_escore: int,
+    normalization: str = "std_datasets",
 ) -> xr.Dataset:
     """Npdf transform training.
 
@@ -238,6 +259,8 @@ def mbcn_train(
         The extrapolation method to use.
     n_escore : int
         Number of elements to include in the e_score test (0 for all, < 0 to skip)
+    normalization: str
+        hehe
 
     Returns
     -------
@@ -262,10 +285,11 @@ def mbcn_train(
 
         # npdft training : multiple rotations on standardized datasets
         # keep track of adjustment factors in each rotation for later use
+
         af_q, escores = xr.apply_ufunc(
             _npdft_train,
-            ref[{"time": ind}],
-            hist[{"time": ind}],
+            _norm(ref[{"time": ind}], normalization, ref[{"time": ind}]),
+            _norm(hist[{"time": ind}], normalization, ref[{"time": ind}]),
             rot_matrices,
             quantiles,
             input_core_dims=[
@@ -284,7 +308,7 @@ def mbcn_train(
                 "method": interp,
                 "extrap": extrapolation,
                 "n_escore": n_escore,
-                "standardize": True,
+                "standardize": False,
             },
             vectorize=True,
         )
@@ -350,6 +374,7 @@ def mbcn_adjust(
     base_kws_vars: dict,
     adj_kws: dict,
     period_dim: str | None,
+    normalization: str = "std_datasets",
 ) -> xr.Dataset:
     """Perform the adjustment portion MBCn multivariate bias correction technique.
 
@@ -390,6 +415,8 @@ def mbcn_adjust(
         Name of the period dimension used when stacking time periods of `sim`  using :py:func:`xclim.core.calendar.stack_periods`.
         If specified, the interpolation of the npdf transform is performed only once and applied on all periods simultaneously.
         This should be more performant, but also more memory intensive. Defaults to `None`: No optimization will be attempted.
+    normalization : str, optional
+        hehe
 
     Returns
     -------
@@ -434,9 +461,11 @@ def mbcn_adjust(
                 )
 
         # 2. npdft adjustment of sim
+        # keep track of adjustment factors in each rotation for later use
+
         npdft_block = xr.apply_ufunc(
             _npdft_adjust,
-            standardize(sim[{"time": ind_gw}].copy(), dim="time")[0],
+            _norm(sim[{"time": ind_gw}], normalization, ref[{"time": ind_gw}]),
             af_q[{gr_dim: ib}],
             rot_matrices,
             quantiles,

@@ -1791,6 +1791,7 @@ class MBCn(TrainAdjust):
         n_iter: int = 20,
         pts_dim: str = "multivar",
         rot_matrices: xr.DataArray | None = None,
+        normalization: str = "std_datasets",
     ):
         # set default values for non-specified parameters
         base_kws = base_kws if base_kws is not None else {}
@@ -1835,6 +1836,7 @@ class MBCn(TrainAdjust):
             "extrapolation": adj_kws["extrapolation"],
             "pts_dims": pts_dims,
             "n_escore": n_escore,
+            "normalization": normalization,
         }
         out = mbcn_train(ds, rot_matrices=rot_matrices, gw_idxs=gw_idxs, **params)
         params["group"] = base_kws["group"]
@@ -1924,6 +1926,7 @@ class MBCn(TrainAdjust):
             base_kws_vars=base_kws_vars,
             adj_kws=adj_kws,
             period_dim=period_dim,
+            normalization=self.normalization,
         )
 
         return out
