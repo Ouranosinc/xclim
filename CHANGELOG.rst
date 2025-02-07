@@ -33,7 +33,7 @@ Internal changes
 Bug fixes
 ^^^^^^^^^
 * Fixed a bug in ``xclim.sdba.Grouper.get_index`` that didn't correctly interpolate seasonal values (:issue:`2014`, :pull:`2019`).
-* When using a dayofyear grouping, `sdba.utils.interp_on_quantiles` will not interpolate on the dayofyear dimension.
+* When using a dayofyear grouping, `sdba.utils.interp_on_quantiles` will not interpolate on the dayofyear dimension. (:pull:`2068`).
 * Fixed a bug where ``xclim.indicators.atmos.potential_evapotranspiration`` would return wrong results when `hurs` was provided in `%` (:pull:`2067`).
 
 v0.54.0 (2024-12-16)
