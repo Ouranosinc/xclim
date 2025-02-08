@@ -219,7 +219,9 @@ def _norm(da, normalization, ref):
 
     if normalization == "waerden":
         rnk = da.rank(dim="time") / (da.time.size + 1)
-        return xr.apply_ufunc(sc.stats.norm.ppf, rnk).assign_attrs({"units": ""})
+        return xr.apply_ufunc(
+            sc.stats.norm.ppf, rnk, dask="parallelized", vectorize=True
+        ).assign_attrs({"units": ""})
 
 
 def mbcn_train(
