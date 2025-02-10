@@ -8,6 +8,10 @@ annotated-types==0.7.0 \
     --hash=sha256:1f02e8b43a8fbbc3f3e0d4f0f4bfc8131bcb4eebe8849b8e5c773f3a1c582a53 \
     --hash=sha256:aff07c09a53a08bc8cfccb9c85b05f1aa9a2a6f23728d790723543408344ce89
     # via pydantic
+anyio==4.8.0 \
+    --hash=sha256:1d9fe889df5212298c0c0723fa20479d1b94883a2df44bd3897aa91083316f7a \
+    --hash=sha256:b5011f270ab5eb0abf13385f851315585cc37ef330dd88e27ec3d34d651fd47a
+    # via httpx
 astroid==3.3.8 \
     --hash=sha256:187ccc0c248bfbba564826c26f070494f7bc964fd286b6d9fff4420e55de828c \
     --hash=sha256:a88c7994f914a4ea8572fac479459f4955eeccc877be3f2d959a33273b0cf40b
@@ -16,9 +20,9 @@ bracex==2.4 \
     --hash=sha256:a27eaf1df42cf561fed58b7a8f3fdf129d1ea16a81e1fadd1d17989bc6384beb \
     --hash=sha256:efdc71eff95eaff5e0f8cfebe7d01adf2c8637c8c92edaf63ef348c241a82418
     # via wcmatch
-bump-my-version==0.31.1 \
-    --hash=sha256:3b9f496eb5554208d91f84fcb781628bdd4549e055fd3282804959453ebd1857 \
-    --hash=sha256:83962dbd593b3edb426661a4c2276a0842a7eaa5dee896543b771c358ac78915
+bump-my-version==0.32.0 \
+    --hash=sha256:7c807110bdd8ecc845019e68a050ff378d836effb116440ba7f4a8ad59652b63 \
+    --hash=sha256:e8d964d13ba3ab6c090a872d0b5094ecf8df7ae8052b09288ace00fc6647df27
     # via -r CI/requirements_ci.in
 cachetools==5.5.0 \
     --hash=sha256:02134e8439cdc2ffb62023ce1debca2944c3f289d66bb17ead3ab3dede74b292 \
@@ -27,7 +31,10 @@ cachetools==5.5.0 \
 certifi==2024.7.4 \
     --hash=sha256:5a1e7645bc0ec61a09e26c36f6106dd4cf40c6db3a1fb6352b0244e7fb057c7b \
     --hash=sha256:c198e21b1289c2ab85ee4e67bb4b4ef3ead0892059901a8d5b622f24a1101e90
-    # via requests
+    # via
+    #   httpcore
+    #   httpx
+    #   requests
 chardet==5.2.0 \
     --hash=sha256:1b3b6ff479a8c414bc3fa2c0852995695c4a026dcd6d0633b2dd092ca39c1cf7 \
     --hash=sha256:e1cf59446890a00105fe7b7912492ea04b6e6f06d4b742b2c788469e34c82970
@@ -165,6 +172,10 @@ docutils==0.21.2 \
     --hash=sha256:3a6b18732edf182daa3cd12775bbb338cf5691468f91eeeb109deff6ebfa986f \
     --hash=sha256:dafca5b9e384f0e419294eb4d2ff9fa826435bf15f15b7bd45723e8ad76811b2
     # via flit
+exceptiongroup==1.2.2 \
+    --hash=sha256:3111b9d131c238bec2f8f516e123e14ba243563fb135d3fe885990585aa7795b \
+    --hash=sha256:47c2edf7c6738fafb49fd34290706d1a1a2f4d1c6df275526b62cbb4aa5393cc
+    # via anyio
 filelock==3.17.0 \
     --hash=sha256:533dc2f7ba78dc2f0f531fc6c4940addf7b70a481e269a5a3b93be94ffbe8338 \
     --hash=sha256:ee4e77401ef576ebb38cd7f13b9b28893194acc20a8e68e18730ba9c0e54660e
@@ -179,10 +190,25 @@ flit-core==3.10.1 \
     --hash=sha256:66e5b87874a0d6e39691f0e22f09306736b633548670ad3c09ec9db03c5662f7 \
     --hash=sha256:cb31a76e8b31ad3351bb89e531f64ef2b05d1e65bd939183250bf81ddf4922a8
     # via flit
+h11==0.14.0 \
+    --hash=sha256:8f19fbbe99e72420ff35c00b27a34cb9937e902a8b810e2c88300c6f0a3b699d \
+    --hash=sha256:e3fe4ac4b851c468cc8363d500db52c2ead036020723024a109d37346efaa761
+    # via httpcore
+httpcore==1.0.7 \
+    --hash=sha256:8551cb62a169ec7162ac7be8d4817d561f60e08eaa485234898414bb5a8a0b4c \
+    --hash=sha256:a3fff8f43dc260d5bd363d9f9cf1830fa3a458b332856f34282de498ed420edd
+    # via httpx
+httpx==0.28.1 \
+    --hash=sha256:75e98c5f16b0f35b567856f597f06ff2270a374470a5c2392242528e3e3e42fc \
+    --hash=sha256:d909fcccc110f8c7faf814ca82a9a4d816bc5a6dbfea25d6591d6985b8ba59ad
+    # via bump-my-version
 idna==3.7 \
     --hash=sha256:028ff3aadf0609c1fd278d8ea3089299412a7a8b9bd005dd08b9f8285bcb5cfc \
     --hash=sha256:82fee1fc78add43492d3a1898bfa6d8a904cc97d8427f683ed8e798d07761aa0
-    # via requests
+    # via
+    #   anyio
+    #   httpx
+    #   requests
 isort==5.13.2 \
     --hash=sha256:48fdfcb9face5d58a4f6dde2e72a1fb8dcaf8ab26f95ab49fab84c2ddefb0109 \
     --hash=sha256:8ca5e72a8d85860d5a3fa69b8745237f2939afe12dbf656afbcb47fe72d947a6
@@ -361,6 +387,10 @@ rich-click==1.8.3 \
     --hash=sha256:636d9c040d31c5eee242201b5bf4f2d358bfae4db14bb22ec1cafa717cfd02cd \
     --hash=sha256:6d75bdfa7aa9ed2c467789a0688bc6da23fbe3a143e19aa6ad3f8bac113d2ab3
     # via bump-my-version
+sniffio==1.3.1 \
+    --hash=sha256:2f6da418d1f1e0fddd844478f41680e794e6051915791a034ff65e5f100525a2 \
+    --hash=sha256:f4324edc670a0f49750a81b895f35c3adb843cca46f0530f79fc1babb23789dc
+    # via anyio
 tomli==2.2.1 \
     --hash=sha256:023aa114dd824ade0100497eb2318602af309e5a55595f76b626d6d9f3b7b0a6 \
     --hash=sha256:02abe224de6ae62c19f090f68da4e27b10af2b93213d36cf44e6e1c5abd19fdd \
@@ -427,6 +457,7 @@ typing-extensions==4.12.2 \
     --hash=sha256:04e5ca0351e0f3f85c6853954072df659d0d13fac324d0072316b67d7794700d \
     --hash=sha256:1a7ead55c7e559dd4dee8856e3a88b41225abfe1ce8df57b7c13915fe121ffb8
     # via
+    #   anyio
     #   astroid
     #   pydantic
     #   pydantic-core
