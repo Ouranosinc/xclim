@@ -732,7 +732,7 @@ def test_indicator_errors():
         return data
 
     doc = [
-        "The title",
+        "    The title",
         "",
         "    The abstract",
         "",
@@ -771,11 +771,6 @@ def test_indicator_errors():
 
     d["identifier"] = "bad_indi"
     d["module"] = "test"
-
-    bad_doc = doc[:12] + ["    extra: bool", "      Woupsi"] + doc[12:]
-    func.__doc__ = "\n".join(bad_doc)
-    with pytest.raises(ValueError, match="Malformed docstring"):
-        Daily(**d)
 
     func.__doc__ = "\n".join(doc)
     d["parameters"] = {}

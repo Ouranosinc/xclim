@@ -4,11 +4,16 @@ Changelog
 
 v0.55.0 (unreleased)
 --------------------
-Contributors to this version: Juliette Lavoie (:user:`juliettelavoie`), Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`).
+Contributors to this version: Juliette Lavoie (:user:`juliettelavoie`), Trevor James Smith (:user:`Zeitsperre`), Sascha Hofmann (:user:`saschahofmann`), Pascal Bourgault (:user:`aulemahal`).
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
 * Missing value method "WMO" was modified to remove the criterion that the timeseries needs to be continuous (without holes). (:pull:`2058`).
+
+Announcements
+^^^^^^^^^^^^^
+* `xclim` now officially supports Python 3.13 (using `numba` v0.61.0). (:issue:`2022`, :pull:`2054`).
+* `xclim` version 0.55.0 will be the last version to support Python 3.10. The next version will require Python 3.11 or higher. (:pull:`2054`).
 
 New indicators
 ^^^^^^^^^^^^^^
@@ -20,6 +25,8 @@ New features and enhancements
 * New function ``ensemble.partition.general_partition`` (:pull:`2035`)
 * Added a new ``xclim.indices.generic.bivariate_count_occurrences`` function to count instances where operations and performed and validated for two variables. (:pull:`2030`).
 * `xclim` now tracks energy usage and carbon emissions ("last run", "average", and "total") during CI workflows using the `eco-ci-energy-estimation` GitHub Action. (:pull:`2046`).
+* ``xclim.testing.helpers.test_timeseries`` now accepts a `calendar` argument that is forwarded to ``xr.cftime_range``. (:pull:`2019`).
+* New ``xclim.indices.fao_allen98``, exporting the FAO-56 Penman-Monteith equation for potential evapotranspiration (:issue:`2004`, :pull:`2067`).
 * Missing values method "pct" and "at_least_n" now accept a new "subfreq" option that allows to compute the missing mask in two steps. When given, the algorithm is applied at this "subfreq" resampling frequency first and then the result is resampled at the target indicator frequency. In the output, a period is invalid if any of its subgroup where flagged as invalid by the chosen method. (:pull:`2058`, :issue:`1820`).
 
 Internal changes
@@ -31,6 +38,11 @@ Internal changes
     - Objects are initialized with their options and then called with the data, input frequency, target frequency and indexer.
     - Subclasses receive non-resampled DataArray in their ``is_missing`` methods.
     - ``MissingWMO`` now uses ``xclim.indices.helpers.resample_map`` which should greatly improve performance in a dask context.
+
+Bug fixes
+^^^^^^^^^
+* Fixed a bug in ``xclim.sdba.Grouper.get_index`` that didn't correctly interpolate seasonal values (:issue:`2014`, :pull:`2019`).
+* Fixed a bug where ``xclim.indicators.atmos.potential_evapotranspiration`` would return wrong results when `hurs` was provided in `%` (:pull:`2067`).
 
 v0.54.0 (2024-12-16)
 --------------------

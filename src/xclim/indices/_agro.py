@@ -201,25 +201,25 @@ def huglin_index(
     .. math::
 
         k = f(lat) = \begin{cases}
-                        1, & \text{if } |lat| <= 40 \\
-                        1 + ((abs(lat) - 40) / 10) * 0.06, & \text{if } 40 < |lat| <= 50 \\
-                        NaN, & \text{if } |lat| > 50 \\
+                     1, & \text{if } | lat | <= 40 \\
+                     1 + ((abs(lat) - 40) / 10) * 0.06, & \text{if } 40 < | lat | <= 50 \\
+                     NaN, & \text{if } | lat | > 50 \\
                      \end{cases}
 
-    For compatibility with ICCLIM, `end_date` should be set to `11-01`, `method` should be set to `icclim`. The
-    day-length multiplication factor, :math:`k`, is calculated as follows:
+    For compatibility with ICCLIM, `end_date` should be set to `11-01`, `method` should be set to `icclim`.
+    The day-length multiplication factor, :math:`k`, is calculated as follows:
 
     .. math::
 
         k = f(lat) = \begin{cases}
-                        1.0, & \text{if } |lat| <= 40 \\
-                        1.02, & \text{if } 40 < |lat| <= 42 \\
-                        1.03, & \text{if } 42 < |lat| <= 44 \\
-                        1.04, & \text{if } 44 < |lat| <= 46 \\
-                        1.05, & \text{if } 46 < |lat| <= 48 \\
-                        1.06, & \text{if } 48 < |lat| <= 50 \\
-                        NaN, & \text{if } |lat| > 50 \\
-                    \end{cases}
+                     1.0, & \text{if } | lat | <= 40 \\
+                     1.02, & \text{if } 40 < | lat | <= 42 \\
+                     1.03, & \text{if } 42 < | lat | <= 44 \\
+                     1.04, & \text{if } 44 < | lat | <= 46 \\
+                     1.05, & \text{if } 46 < | lat | <= 48 \\
+                     1.06, & \text{if } 48 < | lat | <= 50 \\
+                     NaN, & \text{if } | lat | > 50 \\
+                     \end{cases}
 
     A more robust day-length calculation based on latitude, calendar, day-of-year, and obliquity is available with
     `method="jones"`. See: :py:func:`xclim.indices.generic.day_lengths` or :cite:t:`hall_spatial_2010` for more
@@ -389,7 +389,7 @@ def biologically_effective_degree_days(
 
     .. math::
 
-        k = f(lat) = 1 + \left(\frac{\left| lat  \right|}{50} * 0.06,  \text{if }40 < |lat| <50, \text{else } 0\right)
+        k = f(lat) = 1 + \left(\frac{\left| lat  \right|}{50} * 0.06,  \text{if }40 < ``|lat|`` <50, \text{else } 0\right)
 
     A second version of the BEDD (`method="icclim"`) does not consider :math:`TR_{adj}` and :math:`k` and employs a
     different end date (30 September) :cite:p:`project_team_eca&d_algorithm_2013`.
@@ -785,7 +785,7 @@ def latitude_temperature_index(
 
     .. math::
 
-        LTI = max(TN_{j}: j = 1..12)(lat_f - |lat|)
+        LTI = max(TN_{j}: j = 1..12)(lat_f - | lat | )
 
     References
     ----------
@@ -1202,7 +1202,7 @@ def standardized_precipitation_index(
     ...     cal_start=cal_start,
     ...     cal_end=cal_end,
     ... )  # Computing SPI-3 months using a gamma distribution for the fit
-    >>> # Fitting parameters can also be obtained first, then re-used as input.
+    >>> # Fitting parameters can also be obtained first, then reused as input.
     >>> # To properly reproduce the example, we also need to specify that we use a
     >>> # (potentially) zero-inflated distribution. For a monthly SPI, this should rarely
     >>> # make a difference.

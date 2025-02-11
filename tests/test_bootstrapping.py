@@ -23,30 +23,30 @@ class Test_bootstrap:
     @pytest.mark.slow
     @pytest.mark.parametrize("use_dask", [True, False])
     @pytest.mark.parametrize(
-        "var,p,index,freq, cftime",
+        "var,p,index,freq, calendar",
         (
-            ["tas", 98, tg90p, "MS", False],
-            ["tasmin", 98, tn90p, "YS-JUL", False],
-            ["tasmax", 98, tx90p, "QS-APR", False],
-            ["tasmax", 98, tx90p, "QS-APR", True],
-            ["tasmin", 2, tn10p, "MS", False],
-            ["tasmax", 2, tx10p, "YS", False],
-            ["tasmax", 2, tx10p, "YS", True],
-            ["tas", 2, tg10p, "MS", False],
-            ["tasmax", 98, warm_spell_duration_index, "MS", False],
-            ["tasmin", 2, cold_spell_duration_index, "MS", False],
-            ["pr", 99, days_over_precip_thresh, "MS", False],
-            ["pr", 98, fraction_over_precip_thresh, "MS", False],
-            ["pr", 98, fraction_over_precip_thresh, "MS", True],
+            ["tas", 98, tg90p, "MS", None],
+            ["tasmin", 98, tn90p, "YS-JUL", None],
+            ["tasmax", 98, tx90p, "QS-APR", None],
+            ["tasmax", 98, tx90p, "QS-APR", "standard"],
+            ["tasmin", 2, tn10p, "MS", None],
+            ["tasmax", 2, tx10p, "YS", None],
+            ["tasmax", 2, tx10p, "YS", "standard"],
+            ["tas", 2, tg10p, "MS", None],
+            ["tasmax", 98, warm_spell_duration_index, "MS", None],
+            ["tasmin", 2, cold_spell_duration_index, "MS", None],
+            ["pr", 99, days_over_precip_thresh, "MS", None],
+            ["pr", 98, fraction_over_precip_thresh, "MS", None],
+            ["pr", 98, fraction_over_precip_thresh, "MS", "standard"],
         ),
     )
-    def test_bootstrap(self, var, p, index, freq, cftime, use_dask, random):
+    def test_bootstrap(self, var, p, index, freq, calendar, use_dask, random):
         # -- GIVEN
         arr = self.ar1(
             alpha=0.8, n=int(4 * 365.25), random=random, positive_values=(var == "pr")
         )
         climate_var = _test_timeseries(
-            arr, start="2000-01-01", variable=var, cftime=cftime
+            arr, start="2000-01-01", variable=var, calendar=calendar
         )
         if use_dask:
             climate_var = climate_var.chunk(dict(time=50))
