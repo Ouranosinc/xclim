@@ -525,7 +525,7 @@ def vapor_pressure_deficit(
 
     See Also
     --------
-    :py:func:`xclim.indices.saturation_vapor_pressure`
+    saturation_vapor_pressure : Vapour pressure at saturation.
     """
     svp = saturation_vapor_pressure(tas, ice_thresh=ice_thresh, method=method)
 
