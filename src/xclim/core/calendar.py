@@ -1165,7 +1165,8 @@ def mask_between_doys(
         They may have a time dimension, in which case the masking is done independently for each period defined by the coordinate,
         which means the time coordinate must have an inferable frequency (see :py:func:`xr.infer_freq`).
         Timesteps of the input not appearing in the time coordinate of the bounds are masked as "outside the bounds".
-        Missing values (nan) in the bounds are treated as an open bound (same as a None in a slice).
+        Missing values (nan) in the start and end bounds default to 1 and 366 respectively in the non-temporal case
+        and to open bounds (the start and end of the period) in the temporal case.
     include_bounds : 2-tuple of booleans
         Whether the bounds of `doy_bounds` should be inclusive or not.
 
@@ -1232,11 +1233,10 @@ def mask_between_doys(
             end = end.fillna(366)
             mask = xr.where(
                 start <= end,
-                (doys >= start)
-                & (doys <= end),  # case 1 : start <= end, ROI is within a calendar year
-                ~(
-                    (doys >= end) & (doys <= start)
-                ),  # case 2 : start >  end, ROI crosses the new year
+                # case 1 : start <= end, ROI is within a calendar year
+                (doys >= start) & (doys <= end),
+                # case 2 : start >  end, ROI crosses the new year
+                ~((doys > end) & (doys < start)),
             )
     return mask
 

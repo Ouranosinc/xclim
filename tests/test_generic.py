@@ -624,6 +624,54 @@ class TestTimeSelection:
         )
         xr.testing.assert_equal(out, exp)
 
+    def test_select_time_doys_2D_spatial(self):
+        # first doy of da is 44, last is 366
+        da = self.series("2003-02-13", "2004-12-31", "default").expand_dims(
+            lat=[0, 10, 15, 20, 25]
+        )
+        # 5 cases
+        # normal : start < end
+        # over NYE : end < start
+        # end is nan (i.e. 366)
+        # start is nan (i.e. 1)
+        # both are nan (no drop)
+        start = xr.DataArray(
+            [50, 340, 100, np.nan, np.nan], dims=("lat",), coords={"lat": da.lat}
+        )
+        end = xr.DataArray(
+            [200, 20, np.nan, 200, np.nan], dims=("lat",), coords={"lat": da.lat}
+        )
+        out = select_time(da, doy_bounds=(start, end))
+
+        np.testing.assert_array_equal(
+            out.notnull().sum("time"),
+            [151 * 2, 26 + 20 + 27, 266 + 267, 200 - 43 + 200, 365 - 43 + 366],
+        )
+
+    def test_select_time_doys_2D_temporal(self):
+        # YS-JUL periods:
+        # -2003: 44 to 181, 03-04: 182 to 182, 04-05: 183 to 181, 05-06: 182 to 181, 06-07: 182 to 183, 07-: 182 to 365
+        da = self.series("2003-02-13", "2007-12-31", "default")
+        # Same 5 cases, but in YS-JUL
+        #   -03 : no bounds for the first period, so no selection.
+        # 03-04 : normal : start < end
+        # 04-05 : over NYE : end < start
+        # 05-06 : end is nan (i.e. end of period)
+        # 06-07 : start is nan (i.e. start of period)
+        # 07-   : both are nan (no drop)
+        time = xr.date_range("2003-07-01", freq="YS-JUL", periods=5)
+        start = xr.DataArray(
+            [50, 340, 100, np.nan, np.nan], dims=("time",), coords={"time": time}
+        )
+        end = xr.DataArray(
+            [100, 20, np.nan, 200, np.nan], dims=("time",), coords={"time": time}
+        )
+        out = select_time(da, doy_bounds=(start, end))
+
+        np.testing.assert_array_equal(
+            out.notnull().resample(time="YS-JUL").sum(), [0, 51, 47, 82, 19, 184]
+        )
+
     def test_select_time_dates(self):
         da = self.series("2003-02-13", "2004-11-01", "all_leap")
         da = da.where(da.time.dt.dayofyear != 92, drop=True)  # no 04-01
