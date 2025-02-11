@@ -2862,7 +2862,7 @@ def test_vapor_pressure_deficit(
     tas = tas_series(np.array([-1, 10, 20, 25, 30, 40, 60]) + K2C)
     hurs = hurs_series(np.array([0, 0.5, 0.8, 0.9, 0.95, 0.99, 1]))
 
-    # Expected values obtained with the GroffGratch46 method
+    # Expected values obtained with the GoffGratch46 method
     svp_exp = [567, 1220, 2317, 3136, 4200, 7300, 19717]
 
     vpd = xci.vapor_pressure_deficit(
