@@ -22,6 +22,7 @@ import xarray as xr
 from numpy import __version__ as __numpy_version__
 from packaging.version import Version
 from pint import __version__ as __pint_version__
+from scipy import stats
 
 from xclim import indices as xci
 from xclim.core import ValidationError
@@ -748,6 +749,34 @@ class TestStandardizedIndices:
         spi = spi.clip(-3.09, 3.09)
 
         np.testing.assert_allclose(spi.values, values, rtol=0, atol=diff_tol)
+
+    @pytest.mark.slow
+    @pytest.mark.parametrize("dist", ["gamma", "fisk"])
+    def test_str_vs_rv_continuous(self, open_dataset, dist):
+        ds = open_dataset("sdba/CanESM2_1950-2100.nc").isel(location=1)
+        window = 1
+        method = "ML"
+        freq = "MS"
+
+        pr = ds.pr.sel(time=slice("1998", "2000"))
+        pr_cal = ds.pr.sel(time=slice("1950", "1980"))
+        fitkwargs = {}
+
+        out = []
+        for dist0 in [dist, getattr(stats, dist)]:
+            params = xci.stats.standardized_index_fit_params(
+                pr_cal,
+                freq=freq,
+                window=window,
+                dist=dist0,
+                method=method,
+                fitkwargs=fitkwargs,
+                zero_inflated=True,
+            )
+            spi = xci.standardized_precipitation_index(pr, params=params)
+            # Only a few moments before year 2000 are tested
+            out.append(spi.isel(time=slice(-11, -1, 2)))
+        assert all(out[0] == out[1])
 
     # See SPI version
     @pytest.mark.slow
