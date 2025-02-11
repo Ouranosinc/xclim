@@ -274,7 +274,7 @@ specific_humidity_from_dewpoint = Converter(
 
 vapor_pressure_deficit = Converter(
     title="Water vapour pressure deficit",
-    identifier="e_deficit",
+    identifier="vapor_pressure_deficit",
     units="Pa",
     long_name='Vapour pressure deficit ("{method}" method)',
     standard_name="water_vapor_saturation_deficit_in_air",
