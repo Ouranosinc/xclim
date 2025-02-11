@@ -564,18 +564,18 @@ def test_formatting(pr_series):
     # pint 0.10 now pretty print day as d.
     assert (
         out.attrs["long_name"]
-        == "Number of days with daily precipitation at or above 1 mm/d"
+        == "Number of days with daily precipitation at or above 1 mm d-1"
     )
     assert out.attrs["description"] in [
-        "Annual number of days with daily precipitation at or above 1 mm/d."
+        "Annual number of days with daily precipitation at or above 1 mm d-1."
     ]
     out = atmos.wetdays(pr_series(np.arange(366)), thresh=1.5 * units.mm / units.day)
     assert (
         out.attrs["long_name"]
-        == "Number of days with daily precipitation at or above 1.5 mm/d"
+        == "Number of days with daily precipitation at or above 1.5 mm d-1"
     )
     assert out.attrs["description"] in [
-        "Annual number of days with daily precipitation at or above 1.5 mm/d."
+        "Annual number of days with daily precipitation at or above 1.5 mm d-1."
     ]
 
 
@@ -736,7 +736,7 @@ def test_indicator_errors():
         return data
 
     doc = [
-        "The title",
+        "    The title",
         "",
         "    The abstract",
         "",
@@ -775,11 +775,6 @@ def test_indicator_errors():
 
     d["identifier"] = "bad_indi"
     d["module"] = "test"
-
-    bad_doc = doc[:12] + ["    extra: bool", "      Woupsi"] + doc[12:]
-    func.__doc__ = "\n".join(bad_doc)
-    with pytest.raises(ValueError, match="Malformed docstring"):
-        Daily(**d)
 
     func.__doc__ = "\n".join(doc)
     d["parameters"] = {}

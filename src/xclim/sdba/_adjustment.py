@@ -49,7 +49,8 @@ def dqm_train(
     adapt_freq_thresh: str | None = None,
     jitter_under_thresh_value: str | None = None,
 ) -> xr.Dataset:
-    """Train step on one group.
+    """
+    Train step on one group.
 
     Parameters
     ----------
@@ -111,7 +112,8 @@ def eqm_train(
     adapt_freq_thresh: str | None = None,
     jitter_under_thresh_value: str | None = None,
 ) -> xr.Dataset:
-    """EQM: Train step on one group.
+    """
+    EQM: Train step on one group.
 
     Parameters
     ----------
@@ -154,7 +156,8 @@ def eqm_train(
 
 
 def _npdft_train(ref, hist, rots, quantiles, method, extrap, n_escore, standardize):
-    r"""Npdf transform to correct a source `hist` into target `ref`.
+    r"""
+    Npdf transform to correct a source `hist` into target `ref`.
 
     Perform a rotation, bias correct `hist` into `ref` with QuantileDeltaMapping, and rotate back.
     Do this iteratively over all rotations `rots` and conserve adjustment factors `af_q` in each iteration.
@@ -212,7 +215,8 @@ def mbcn_train(
     extrapolation: str,
     n_escore: int,
 ) -> xr.Dataset:
-    """Npdf transform training.
+    """
+    Npdf transform training.
 
     Adjusting factors obtained for each rotation in the npdf transform and conserved to be applied in
     the adjusting step in :py:func:`mcbn_adjust`.
@@ -299,7 +303,8 @@ def mbcn_train(
 
 
 def _npdft_adjust(sim, af_q, rots, quantiles, method, extrap):
-    """Npdf transform adjusting.
+    """
+    Npdf transform adjusting.
 
     Adjusting factors `af_q` obtained in the training step are applied on the simulated data `sim` at each iterated
     rotation, see :py:func:`_npdft_train`.
@@ -351,7 +356,8 @@ def mbcn_adjust(
     adj_kws: dict,
     period_dim: str | None,
 ) -> xr.Dataset:
-    """Perform the adjustment portion MBCn multivariate bias correction technique.
+    """
+    Perform the adjustment portion MBCn multivariate bias correction technique.
 
     The function :py:func:`mbcn_train` pre-computes the adjustment factors for each rotation
     in the npdf portion of the MBCn algorithm. The rest of adjustment is performed here
@@ -470,7 +476,8 @@ def mbcn_adjust(
 def qm_adjust(
     ds: xr.Dataset, *, group: Grouper, interp: str, extrapolation: str, kind: str
 ) -> xr.Dataset:
-    """QM (DQM and EQM): Adjust step on one block.
+    """
+    QM (DQM and EQM): Adjust step on one block.
 
     Parameters
     ----------
@@ -517,7 +524,8 @@ def dqm_adjust(
     extrapolation: str,
     detrend: int | PolyDetrend,
 ) -> xr.Dataset:
-    """DQM adjustment on one block.
+    """
+    DQM adjustment on one block.
 
     Parameters
     ----------
@@ -576,7 +584,8 @@ def dqm_adjust(
 
 @map_blocks(reduces=[Grouper.PROP, "quantiles"], scen=[], sim_q=[])
 def qdm_adjust(ds: xr.Dataset, *, group, interp, extrapolation, kind) -> xr.Dataset:
-    """QDM: Adjust process on one block.
+    """
+    QDM: Adjust process on one block.
 
     Parameters
     ----------
@@ -605,7 +614,8 @@ def qdm_adjust(ds: xr.Dataset, *, group, interp, extrapolation, kind) -> xr.Data
     hist_thresh=[Grouper.PROP],
 )
 def loci_train(ds: xr.Dataset, *, group, thresh) -> xr.Dataset:
-    """LOCI: Train on one block.
+    """
+    LOCI: Train on one block.
 
     Parameters
     ----------
@@ -631,7 +641,8 @@ def loci_train(ds: xr.Dataset, *, group, thresh) -> xr.Dataset:
 
 @map_blocks(reduces=[Grouper.PROP], scen=[])
 def loci_adjust(ds: xr.Dataset, *, group, thresh, interp) -> xr.Dataset:
-    """LOCI: Adjust on one block.
+    """
+    LOCI: Adjust on one block.
 
     Parameters
     ----------
@@ -652,7 +663,8 @@ def loci_adjust(ds: xr.Dataset, *, group, thresh, interp) -> xr.Dataset:
 
 @map_groups(af=[Grouper.PROP])
 def scaling_train(ds: xr.Dataset, *, dim, kind) -> xr.Dataset:
-    """Scaling: Train on one group.
+    """
+    Scaling: Train on one group.
 
     Parameters
     ----------
@@ -670,7 +682,8 @@ def scaling_train(ds: xr.Dataset, *, dim, kind) -> xr.Dataset:
 
 @map_blocks(reduces=[Grouper.PROP], scen=[])
 def scaling_adjust(ds: xr.Dataset, *, group, interp, kind) -> xr.Dataset:
-    """Scaling: Adjust on one block.
+    """
+    Scaling: Adjust on one block.
 
     Parameters
     ----------
@@ -686,7 +699,8 @@ def scaling_adjust(ds: xr.Dataset, *, group, interp, kind) -> xr.Dataset:
 
 
 def npdf_transform(ds: xr.Dataset, **kwargs) -> xr.Dataset:
-    r"""N-pdf transform : Iterative univariate adjustment in random rotated spaces.
+    r"""
+    N-pdf transform : Iterative univariate adjustment in random rotated spaces.
 
     Parameters
     ----------
@@ -830,7 +844,8 @@ def extremes_train(
     dist,
     quantiles: np.ndarray,
 ) -> xr.Dataset:
-    """Train extremes for a given variable series.
+    """
+    Train extremes for a given variable series.
 
     Parameters
     ----------
@@ -895,7 +910,8 @@ def extremes_adjust(
     extrapolation: str,
     cluster_thresh: float,
 ) -> xr.Dataset:
-    """Adjust extremes to reflect many distribution factors.
+    """
+    Adjust extremes to reflect many distribution factors.
 
     Parameters
     ----------
@@ -958,7 +974,8 @@ def _otc_adjust(
     jitter_inside_bins: bool = True,
     normalization: str | None = "max_distance",
 ):
-    """Optimal Transport Correction of the bias of X with respect to Y.
+    """
+    Optimal Transport Correction of the bias of X with respect to Y.
 
     Parameters
     ----------
@@ -1067,7 +1084,8 @@ def otc_adjust(
     adapt_freq_thresh: dict | None = None,
     normalization: str | None = "max_distance",
 ):
-    """Optimal Transport Correction of the bias of `hist` with respect to `ref`.
+    """
+    Optimal Transport Correction of the bias of `hist` with respect to `ref`.
 
     Parameters
     ----------
@@ -1161,7 +1179,8 @@ def _dotc_adjust(
     kind: dict | None = None,
     normalization: str | None = "max_distance",
 ):
-    """Dynamical Optimal Transport Correction of the bias of X with respect to Y.
+    """
+    Dynamical Optimal Transport Correction of the bias of X with respect to Y.
 
     Parameters
     ----------
@@ -1301,7 +1320,8 @@ def dotc_adjust(
     adapt_freq_thresh: dict | None = None,
     normalization: str | None = "max_distance",
 ):
-    """Dynamical Optimal Transport Correction of the bias of X with respect to Y.
+    """
+    Dynamical Optimal Transport Correction of the bias of X with respect to Y.
 
     Parameters
     ----------

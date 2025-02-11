@@ -533,7 +533,8 @@ def _anuclim_coeff_var(arr: xarray.DataArray, freq: str = "YS") -> xarray.DataAr
 def _from_other_arg(
     criteria: xarray.DataArray, output: xarray.DataArray, op: Callable, freq: str
 ) -> xarray.DataArray:
-    """Pick values from output based on operation returning an index from criteria.
+    """
+    Pick values from output based on operation returning an index from criteria.
 
     Parameters
     ----------

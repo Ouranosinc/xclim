@@ -838,7 +838,8 @@ def is_percentile_dataarray(source: xr.DataArray) -> bool:
 
 
 def _chunk_like(*inputs: xr.DataArray | xr.Dataset, chunks: dict[str, int] | None):
-    """Helper function that (re-)chunks inputs according to a single chunking dictionary.
+    """
+    Helper function that (re-)chunks inputs according to a single chunking dictionary.
 
     Will also ensure passed inputs are not IndexVariable types, so that they can be chunked.
     """

@@ -8,7 +8,6 @@ Pseudo-indicators designed to analyse supplied variables for suspicious/erroneou
 from __future__ import annotations
 
 from collections.abc import Callable, Sequence
-from decimal import Decimal
 from functools import reduce
 from inspect import signature
 
@@ -674,7 +673,7 @@ def data_flags(  # noqa: C901
                     format_args[arg] = "array"
                 else:
                     val = str2pint(val).magnitude
-                    if Decimal(val) % 1 == 0:
+                    if val == int(val):
                         val = str(int(val))
                     else:
                         val = str(val).replace(".", "point")

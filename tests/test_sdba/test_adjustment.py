@@ -131,6 +131,7 @@ class TestLoci:
         np.testing.assert_array_equal(p, p2)
 
     @pytest.mark.requires_internet
+    @pytest.mark.enable_socket
     def test_reduce_dims(self, ref_hist_sim_tuto):
         ref, hist, _sim = ref_hist_sim_tuto()
         hist = hist.expand_dims(member=[0, 1])
@@ -202,7 +203,8 @@ class TestScaling:
 class TestDQM:
     @pytest.mark.parametrize("kind,name", [(ADDITIVE, "tas"), (MULTIPLICATIVE, "pr")])
     def test_quantiles(self, series, kind, name, random):
-        """Train on
+        """
+        Train on
         hist: U
         ref: Normal
 
@@ -343,7 +345,8 @@ class TestDQM:
 class TestQDM:
     @pytest.mark.parametrize("kind,name", [(ADDITIVE, "tas"), (MULTIPLICATIVE, "pr")])
     def test_quantiles(self, series, kind, name, random):
-        """Train on
+        """
+        Train on
         x : U(1,1)
         y : U(1,2)
 
@@ -505,7 +508,8 @@ class TestQDM:
 class TestQM:
     @pytest.mark.parametrize("kind,name", [(ADDITIVE, "tas"), (MULTIPLICATIVE, "pr")])
     def test_quantiles(self, series, kind, name, random):
-        """Train on
+        """
+        Train on
         hist: U
         ref: Normal
 
@@ -841,7 +845,7 @@ class TestExtremeValues:
             ref, hist, group=Grouper("time.dayofyear", window=31), nquantiles=quantiles
         )
 
-        scen = EQM.adjust(hist, interp="linear", extrapolation="constant")
+        scen = EQM.adjust(hist, extrapolation="constant")
 
         EX = ExtremeValues.train(ref, hist, cluster_thresh="1 mm/day", q_thresh=0.97)
         new_scen = EX.adjust(scen, hist, frac=0.000000001)

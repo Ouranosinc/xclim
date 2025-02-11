@@ -3407,19 +3407,19 @@ class TestClausiusClapeyronScaledPrecip:
             np.arange(4).reshape(1, 2, 2),
             dims=["time", "lat", "lon"],
             coords={"time": [1], "lat": [-45, 45], "lon": [30, 60]},
-            attrs={"units": "mmday"},
+            attrs={"units": "mm/day"},
         )
         tas_baseline = xr.DataArray(
             np.arange(4).reshape(1, 2, 2),
             dims=["time", "lat", "lon"],
             coords={"time": [1], "lat": [-45, 45], "lon": [30, 60]},
-            attrs={"units": "C"},
+            attrs={"units": "degC"},
         )
         tas_future = xr.DataArray(
             np.arange(40).reshape(10, 2, 2),
             dims=["time_fut", "lat", "lon"],
             coords={"time_fut": np.arange(10), "lat": [-45, 45], "lon": [30, 60]},
-            attrs={"units": "C"},
+            attrs={"units": "degC"},
         )
         delta_tas = tas_future - tas_baseline
         delta_tas.attrs["units"] = "delta_degC"
@@ -3590,7 +3590,7 @@ class TestPotentialEvapotranspiration:
         tn = tasmin_series(np.array([0, 5, 10]) + 273.15).expand_dims(lat=lat)
         tx = tasmax_series(np.array([10, 15, 20]) + 273.15).expand_dims(lat=lat)
         tm = tas_series(np.array([5, 10, 15]) + 273.15).expand_dims(lat=lat)
-        hurs = hurs_series(np.array([0.8, 0.7, 0.73])).expand_dims(lat=lat)
+        hurs = hurs_series(np.array([80, 70, 73])).expand_dims(lat=lat)
         rsds = rsds_series(np.array([43.09, 43.57, 70.20])).expand_dims(lat=lat)
         rsus = rsus_series(np.array([12.51, 14.46, 20.36])).expand_dims(lat=lat)
         rlds = rlds_series(np.array([293.65, 228.96, 275.40])).expand_dims(lat=lat)
