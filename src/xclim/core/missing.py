@@ -78,7 +78,7 @@ def expected_count(
     time : xr.DataArray, optional
         Input time coordinate from which the final resample time coordinate is guessed.
     freq : str, optional.
-        Resampling frequency. If absent, the count for the full time range is returned.
+        Resampling frequency. If not given or None, the count for the full time range is returned.
     src_timestep : str, Optional
         The expected input frequency. If not given, it will be inferred from the input array.
     **indexer : Indexer
@@ -161,7 +161,7 @@ class MissingBase:
     Base class used to determined where Indicator outputs should be masked.
 
     Subclasses should implement the ``is_missing``, ``validate`` and ``__init__``
-    methods. The ``__init__`` is to be implement in order to change the docstring
+    methods. The ``__init__`` is to be implemented in order to change the docstring
     and signature but is not expected to do anything other than the validation
     of the options, everything else should happen in the call (i.e. ``is_missing``).
     Subclasses can also override the ``_validate_src_timestep`` method to add restrictions
@@ -181,7 +181,7 @@ class MissingBase:
     @staticmethod
     def validate(**options):
         r"""
-        Validates optional arguments.
+        Validate optional arguments.
 
         Parameters
         ----------
@@ -246,7 +246,7 @@ class MissingBase:
         null : DataArray
             Boolean array of invalid values (that has already been indexed).
         count : DataArray
-            Indexer-aware integer array of expected elements at the resampling frequency.
+            Indexer-aware integer array of number of expected elements at the resampling frequency.
         freq : str or None
             The resampling frequency, or None if the temporal dimension is to be collapsed.
 
@@ -273,7 +273,7 @@ class MissingBase:
         da : xr.DataArray
             Input data, must have a "time" coordinate.
         freq : str, optional
-            Resampling frequency. If absent, a collapse of the temporal dimension is assumed.
+            Resampling frequency. If None, a collapse of the temporal dimension is assumed.
         src_timestep : str, optional
             The expected source input frequency. If not given, it will be inferred from the input array.
         **indexer : Indexer
@@ -318,7 +318,7 @@ class MissingBase:
 
 @register_missing_method("any")
 class MissingAny(MissingBase):
-    """Mask periods as missing if in any of its elements is missing or invalid."""
+    """Mask periods as missing if any of its elements is missing or invalid."""
 
     def __init__(self):
         """Create a MissingAny object."""
@@ -364,13 +364,13 @@ class MissingTwoSteps(MissingBase):
         da : xr.DataArray
             Input data, must have a "time" coordinate.
         freq : str, optional
-            Target resampling frequency. If absent, a collapse of the temporal dimension is assumed.
+            Target resampling frequency. If None, a collapse of the temporal dimension is assumed.
         src_timestep : str, optional
             The expected source input frequency. If not given, it will be inferred from the input array.
         **indexer : Indexer
             Time attribute and values over which to subset the array. For example, use season='DJF' to select winter
             values, month=1 to select January, or month=[6,7,8] to select summer months.
-            If not indexer is given, all values are considered.
+            If no indexer is given, all values are considered.
             See :py:func:`xclim.core.calendar.select_time`.
 
         Returns
