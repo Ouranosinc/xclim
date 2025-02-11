@@ -52,6 +52,7 @@ __all__ = [
     "tas",
     "uas_vas_2_sfcwind",
     "universal_thermal_climate_index",
+    "vapor_pressure_deficit",
     "wind_chill_index",
     "wind_power_potential",
     "wind_profile",
@@ -356,7 +357,7 @@ def sfcwind_2_uas_vas(
 def saturation_vapor_pressure(
     tas: xr.DataArray,
     ice_thresh: Quantified | None = None,
-    method: str = "sonntag90",  # noqa
+    method: str = "sonntag90",
 ) -> xr.DataArray:
     """
     Saturation vapour pressure from temperature.
@@ -490,6 +491,48 @@ def saturation_vapor_pressure(
 
     e_sat = e_sat.assign_attrs(units="Pa")
     return e_sat
+
+
+@declare_units(tas="[temperature]", hurs="[]", ice_thresh="[temperature]")
+def vapor_pressure_deficit(
+    tas: xr.DataArray,
+    hurs: xr.DataArray,
+    ice_thresh: Quantified | None = None,
+    method: str = "sonntag90",
+) -> xr.DataArray:
+    """
+    Vapour pressure deficit.
+
+    The measure of the moisture deficit of the air.
+
+    Parameters
+    ----------
+    tas : xarray.DataArray
+        Mean daily temperature.
+    hurs : xarray.DataArray
+        Relative humidity.
+    ice_thresh : Quantified, optional
+        Threshold temperature under which to switch to equations in reference to ice instead of water.
+        If None (default) everything is computed with reference to water.
+    method : {"goffgratch46", "sonntag90", "tetens30", "wmo08", "its90"}
+        Which method to use, see notes of :py:func:`saturation_vapor_pressure`.
+        Default is "sonntag90".
+
+    Returns
+    -------
+    xarray.DataArray, [Pa]
+        Vapour pressure deficit.
+
+    See Also
+    --------
+    :py:func:`xclim.indices.saturation_vapor_pressure`
+    """
+    svp = saturation_vapor_pressure(tas, ice_thresh=ice_thresh, method=method)
+
+    vpd = cast(xr.DataArray, (1 - (hurs / 100)) * svp)
+
+    vpd = vpd.assign_attrs(units=svp.attrs["units"])
+    return vpd
 
 
 @declare_units(
