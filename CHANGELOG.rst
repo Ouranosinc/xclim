@@ -4,7 +4,7 @@ Changelog
 
 v0.55.0 (unreleased)
 --------------------
-Contributors to this version: Juliette Lavoie (:user:`juliettelavoie`), Trevor James Smith (:user:`Zeitsperre`), Sascha Hofmann (:user:`saschahofmann`).
+Contributors to this version: Juliette Lavoie (:user:`juliettelavoie`), Trevor James Smith (:user:`Zeitsperre`), Sascha Hofmann (:user:`saschahofmann`), Baptiste Hamon (:user:`baptistehamon`), Pascal Bourgault (:user:`aulemahal`).
 
 Announcements
 ^^^^^^^^^^^^^
@@ -23,6 +23,7 @@ New features and enhancements
 * `xclim` now tracks energy usage and carbon emissions ("last run", "average", and "total") during CI workflows using the `eco-ci-energy-estimation` GitHub Action. (:pull:`2046`).
 * ``xclim.testing.helpers.test_timeseries`` now accepts a `calendar` argument that is forwarded to ``xr.cftime_range``. (:pull:`2019`).
 * New ``xclim.indices.fao_allen98``, exporting the FAO-56 Penman-Monteith equation for potential evapotranspiration (:issue:`2004`, :pull:`2067`).
+* Time selection in ``xclim.core.calendar.select_time`` and the ``**indexer`` argument of indicators now support day-of-year bounds given as DataArrays with spatial and/or temporal dimensions. (:issue:`1987`, :pull:`2055`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
