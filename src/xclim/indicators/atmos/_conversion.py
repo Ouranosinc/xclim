@@ -24,6 +24,7 @@ __all__ = [
     "specific_humidity_from_dewpoint",
     "tg",
     "universal_thermal_climate_index",
+    "vapor_pressure_deficit",
     "water_budget",
     "water_budget_from_tas",
     "wind_chill_index",
@@ -268,6 +269,25 @@ specific_humidity_from_dewpoint = Converter(
     abstract="Calculation of the specific humidity from dew point temperature "
     "and pressure using the saturation vapour pressure.",
     compute=indices.specific_humidity_from_dewpoint,
+)
+
+
+vapor_pressure_deficit = Converter(
+    title="Water vapour pressure deficit",
+    identifier="e_deficit",
+    units="Pa",
+    long_name='Vapour pressure deficit ("{method}" method)',
+    standard_name="water_vapor_saturation_deficit_in_air",
+    description=lambda **kws: (
+        "The difference between the saturation vapour pressure and the actual vapour pressure,"
+        "calculated from temperature and relative humidity according to the {method} method."
+    ) + (
+        " The computation was done in reference to ice for temperatures below {ice_thresh}."
+        if kws["ice_thresh"] is not None
+        else ""
+    ),
+    abstract="Difference between the saturation vapour pressure and the actual vapour pressure.",
+    compute=indices.vapor_pressure_deficit,
 )
 
 snowfall_approximation = Converter(

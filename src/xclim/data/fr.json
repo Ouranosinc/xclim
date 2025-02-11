@@ -931,6 +931,12 @@
     "title": "Humidité spécifique calculée à partir de la température du point de rosée et de la pression",
     "abstract": "Humidité spécifique calculée à partir de la température du point de rosée et de la pression à l'aide de la pression de vapeur saturante."
   },
+    "E_DEFICIT": {
+    "long_name": "Déficit de pression de vapeur (méthode \"{method}\")",
+    "description": "Déficit de pression de vapeur calculé à partir de la température et de l'humidité relative à l'aide de la pression de vapeur saturante, laquelle fut calculée en suivant la méthode {method}.",
+    "title": "Déficit de pression de vapeur calculé à partir de la température et de l'humidité relative",
+    "abstract": "Déficit de pression de vapeur calculé à partir de la température et de l'humidité relative à l'aide de la pression de vapeur saturante."
+    },
   "FIRST_DAY_TG_BELOW": {
     "long_name": "Premier jour de l'année avec une température moyenne quotidienne sous {thresh} durant au moins {window} jours",
     "description": "Premier jour de l'année avec une température moyenne quotidienne sous {thresh} durant au moins {window} jours.",
