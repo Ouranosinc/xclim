@@ -23,6 +23,8 @@ New features and enhancements
 * `xclim` now tracks energy usage and carbon emissions ("last run", "average", and "total") during CI workflows using the `eco-ci-energy-estimation` GitHub Action. (:pull:`2046`).
 * ``xclim.testing.helpers.test_timeseries`` now accepts a `calendar` argument that is forwarded to ``xr.cftime_range``. (:pull:`2019`).
 * New ``xclim.indices.fao_allen98``, exporting the FAO-56 Penman-Monteith equation for potential evapotranspiration (:issue:`2004`, :pull:`2067`).
+* There is now a warning stating that `fitkwargs` are not employed when using the `lmoments3` distribution. One exception is the use of `'floc'` which is allowed with the gamma distribution. `'floc'` is used to shift the distribution before computing fitting parameters with the `lmoments3` distribution since ``loc=0`` is always assumed in the library. (:issue:`2043`, :pull:`2045`).
+* `rv_continuous` functions can now be given directly as the `dist` argument in ``standardized_precipitation_index`` and ``standardized_precipitation_evapotranspiration_index`` indicators. This includes `lmoments3` distribution when specifying `method="PWM"`. (:issue:`2043`, :pull:`2045`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
@@ -30,7 +32,6 @@ Internal changes
 * Adjusted the ``TestOfficialYaml`` test to use a dynamic method for finding the installed location of `xclim`. (:pull:`2028`).
 * Adjusted two tests for better handling when running in Windows environments. (:pull:`2057`).
 * There is now a warning stating that `fitkwargs` are not employed when using the `lmoments3` distribution. One exception is the use of `'floc'` which is allowed with the gamma distribution. `'floc'` is used to shift the distribution before computing fitting parameters with the `lmoments3` distribution since ``loc=0`` is always assumed in the library. (:issue:`2043`, :pull:`2045`).
-* The `PWM` method (from `lmoments3`) is now available to be used with the `gamma` distribution in ``xclim.indices.standardized_precipitation_index`` and ``xclim.indices.standardized_precipitation_evapotranspiration_index``. (:issue:`2043`, :pull:`2045`).
 
 Bug fixes
 ^^^^^^^^^
