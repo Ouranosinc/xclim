@@ -515,7 +515,7 @@ def vapor_pressure_deficit(
         Threshold temperature under which to switch to equations in reference to ice instead of water.
         If None (default) everything is computed with reference to water.
     method : {"goffgratch46", "sonntag90", "tetens30", "wmo08", "its90"}
-        Which method to use, see notes of :py:func:`saturation_vapor_pressure`.
+        Method used to calculate saturation vapour pressure, see notes of :py:func:`saturation_vapor_pressure`.
         Default is "sonntag90".
 
     Returns
