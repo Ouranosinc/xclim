@@ -334,6 +334,7 @@ class MissingAny(MissingBase):
         return cond0 | cond1
 
 
+# TODO: Make coarser method controllable.
 class MissingTwoSteps(MissingBase):
     r"""
     Base class used to determined where Indicator outputs should be masked,
