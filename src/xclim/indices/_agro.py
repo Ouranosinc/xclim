@@ -6,6 +6,7 @@ from typing import cast
 
 import numpy as np
 import xarray
+from scipy.stats import rv_continuous
 
 import xclim.indices.run_length as rl
 from xclim.core import DateStr, DayOfYearStr, Quantified
@@ -1122,7 +1123,7 @@ def standardized_precipitation_index(
     pr: xarray.DataArray,
     freq: str | None = "MS",
     window: int = 1,
-    dist: str = "gamma",
+    dist: str | rv_continuous = "gamma",
     method: str = "ML",
     fitkwargs: dict | None = None,
     cal_start: DateStr | None = None,
@@ -1143,11 +1144,11 @@ def standardized_precipitation_index(
     window : int
         Averaging window length relative to the resampling frequency. For example, if `freq="MS"`,
         i.e. a monthly resampling, the window is an integer number of months.
-    dist : {'gamma', 'fisk'}
-        Name of the univariate distribution. (see :py:mod:`scipy.stats`). All possible distributions are allowed with 'PWM'.
+    dist : {'gamma', 'fisk'} or `rv_continuous` function
+        Name of the univariate distribution, or a callable `rv_continuous` (see :py:mod:`scipy.stats`).
     method : {"APP", "ML", "PWM"}
         Name of the fitting method, such as `ML` (maximum likelihood), `APP` (approximate). The approximate method
-        uses a deterministic function that does not involve any optimization.
+        uses a deterministic function that does not involve any optimization. `PWM` should be used with a `lmoments3` distribution.
     fitkwargs : dict, optional
         Kwargs passed to ``xclim.indices.stats.fit`` used to impose values of certains parameters (`floc`, `fscale`).
         If method is `PWM`, `fitkwargs` should be empty, except for `floc` with `dist`=`gamma` which is allowed.
@@ -1221,14 +1222,14 @@ def standardized_precipitation_index(
     fitkwargs = fitkwargs or {}
 
     dist_methods = {"gamma": ["ML", "APP"], "fisk": ["ML", "APP"]}
-    if dist in dist_methods:
-        if method not in dist_methods[dist]:
-            raise NotImplementedError(
-                f"{method} method is not implemented for {dist} distribution"
-            )
-    # Constraints on distributions except for PWM
-    elif method != "PWM":
-        raise NotImplementedError(f"{dist} distribution is not yet implemented.")
+    if isinstance(dist, str):
+        if dist in dist_methods:
+            if method not in dist_methods[dist]:
+                raise NotImplementedError(
+                    f"{method} method is not implemented for {dist} distribution"
+                )
+        else:
+            raise NotImplementedError(f"{dist} distribution is not yet implemented.")
 
     # Precipitation is expected to be zero-inflated
     zero_inflated = True
@@ -1257,7 +1258,7 @@ def standardized_precipitation_evapotranspiration_index(
     wb: xarray.DataArray,
     freq: str | None = "MS",
     window: int = 1,
-    dist: str = "gamma",
+    dist: str | rv_continuous = "gamma",
     method: str = "ML",
     fitkwargs: dict | None = None,
     cal_start: DateStr | None = None,
@@ -1282,11 +1283,11 @@ def standardized_precipitation_evapotranspiration_index(
     window : int
         Averaging window length relative to the resampling frequency. For example, if `freq="MS"`, i.e. a monthly
         resampling, the window is an integer number of months.
-    dist : {'gamma', 'fisk'}
-        Name of the univariate distribution. (see :py:mod:`scipy.stats`). All possible distributions are allowed with 'PWM'.
-    method : {'APP', 'ML', 'PWM'}
+    dist : {'gamma', 'fisk'} or `rv_continuous` function
+        Name of the univariate distribution, or a callable `rv_continuous` (see :py:mod:`scipy.stats`).
+    method : {"APP", "ML", "PWM"}
         Name of the fitting method, such as `ML` (maximum likelihood), `APP` (approximate). The approximate method
-        uses a deterministic function that doesn't involve any optimization.
+        uses a deterministic function that does not involve any optimization. `PWM` should be used with a `lmoments3` distribution.
     fitkwargs : dict, optional
         Kwargs passed to ``xclim.indices.stats.fit`` used to impose values of certains parameters (`floc`, `fscale`).
         If method is `PWM`, `fitkwargs` should be empty, except for `floc` with `dist`=`gamma` which is allowed.
@@ -1316,14 +1317,14 @@ def standardized_precipitation_evapotranspiration_index(
     fitkwargs = fitkwargs or {}
 
     dist_methods = {"gamma": ["ML", "APP"], "fisk": ["ML", "APP"]}
-    if dist in dist_methods:
-        if method not in dist_methods[dist]:
-            raise NotImplementedError(
-                f"{method} method is not implemented for {dist} distribution"
-            )
-    # Constraints on distributions except for PWM
-    elif method != "PWM":
-        raise NotImplementedError(f"{dist} distribution is not yet implemented.")
+    if isinstance(dist, str):
+        if dist in dist_methods:
+            if method not in dist_methods[dist]:
+                raise NotImplementedError(
+                    f"{method} method is not implemented for {dist} distribution"
+                )
+        else:
+            raise NotImplementedError(f"{dist} distribution is not yet implemented.")
 
     # Water budget is not expected to be zero-inflated
     zero_inflated = False
