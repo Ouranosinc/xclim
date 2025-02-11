@@ -2856,9 +2856,7 @@ def test_saturation_vapor_pressure(tas_series, method, ice_thresh, exp0, temp_un
 @pytest.mark.parametrize(
     "method", ["tetens30", "sonntag90", "goffgratch46", "wmo08", "its90"]
 )
-def test_vapor_pressure_deficit(
-    tas_series, hurs_series, method
-):
+def test_vapor_pressure_deficit(tas_series, hurs_series, method):
     tas = tas_series(np.array([-1, 10, 20, 25, 30, 40, 60]) + K2C)
     hurs = hurs_series(np.array([0, 0.5, 0.8, 0.9, 0.95, 0.99, 1]))
 

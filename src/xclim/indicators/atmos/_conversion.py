@@ -281,7 +281,8 @@ vapor_pressure_deficit = Converter(
     description=lambda **kws: (
         "The difference between the saturation vapour pressure and the actual vapour pressure,"
         "calculated from temperature and relative humidity according to the {method} method."
-    ) + (
+    )
+    + (
         " The computation was done in reference to ice for temperatures below {ice_thresh}."
         if kws["ice_thresh"] is not None
         else ""
