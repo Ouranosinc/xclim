@@ -4,17 +4,22 @@ Changelog
 
 v0.55.0 (unreleased)
 --------------------
-Contributors to this version: Juliette Lavoie (:user:`juliettelavoie`), Trevor James Smith (:user:`Zeitsperre`), Sascha Hofmann (:user:`saschahofmann`), Éric Dupuis (:user:`coxipi`).
+Contributors to this version: Juliette Lavoie (:user:`juliettelavoie`), Trevor James Smith (:user:`Zeitsperre`), Sascha Hofmann (:user:`saschahofmann`), Pascal Bourgault (:user:`aulemahal`), Éric Dupuis (:user:`coxipi`).
 
 Announcements
 ^^^^^^^^^^^^^
 * `xclim` now officially supports Python 3.13 (using `numba` v0.61.0). (:issue:`2022`, :pull:`2054`).
 * `xclim` version 0.55.0 will be the last version to support Python 3.10. The next version will require Python 3.11 or higher. (:pull:`2054`).
 
+Breaking changes
+^^^^^^^^^^^^^^^^
+* Missing value method "WMO" was modified to remove the criterion that the timeseries needs to be continuous (without holes). (:pull:`2058`).
+
 New indicators
 ^^^^^^^^^^^^^^
 * Added ``xclim.indices.holiday_snow_days`` to compute the number of days with snow on the ground during holidays ("Christmas Days"). (:issue:`2029`, :pull:`2030`).
 * Added ``xclim.indices.holiday_snow_and_snowfall_days`` to compute the number of days with snow on the ground and measurable snowfall during holidays ("Perfect Christmas Days"). (:issue:`2029`, :pull:`2030`).
+* Added ``xclim.indices.vapor_pressure_deficit`` to compute the vapor pressure deficit from temperature and relative humidity. (:issue:`1917`, :pull:`2072`).
 
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -23,12 +28,17 @@ New features and enhancements
 * `xclim` now tracks energy usage and carbon emissions ("last run", "average", and "total") during CI workflows using the `eco-ci-energy-estimation` GitHub Action. (:pull:`2046`).
 * ``xclim.testing.helpers.test_timeseries`` now accepts a `calendar` argument that is forwarded to ``xr.cftime_range``. (:pull:`2019`).
 * New ``xclim.indices.fao_allen98``, exporting the FAO-56 Penman-Monteith equation for potential evapotranspiration (:issue:`2004`, :pull:`2067`).
+* Missing values method "pct" and "at_least_n" now accept a new "subfreq" option that allows to compute the missing mask in two steps. When given, the algorithm is applied at this "subfreq" resampling frequency first and then the result is resampled at the target indicator frequency. In the output, a period is invalid if any of its subgroup where flagged as invalid by the chosen method. (:pull:`2058`, :issue:`1820`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
 * `sphinx-codeautolink` and `pygments` have been temporarily pinned due to breaking API changes. (:pull:`2030`).
 * Adjusted the ``TestOfficialYaml`` test to use a dynamic method for finding the installed location of `xclim`. (:pull:`2028`).
 * Adjusted two tests for better handling when running in Windows environments. (:pull:`2057`).
+* Refactor of the ``xclim.core.missing`` module, usage of the ``Missing`` objects has been broken. (:pull:`2058`, :issue:`1820`, :issue:`2000`).
+    - Objects are initialized with their options and then called with the data, input frequency, target frequency and indexer.
+    - Subclasses receive non-resampled DataArray in their ``is_missing`` methods.
+    - ``MissingWMO`` now uses ``xclim.indices.helpers.resample_map`` which should greatly improve performance in a dask context.
 
 Bug fixes
 ^^^^^^^^^
