@@ -814,7 +814,7 @@ def standardized_index_fit_params(
 
     # "WPM" method doesn't seem to work for gamma or pearson3
     dist_and_methods = {
-        "gamma": ["ML", "APP"], 
+        "gamma": ["ML", "APP"],
         "fisk": ["ML", "APP"]
         "genextreme": ["ML", "APP"],
         "lognorm": ["ML", "APP"],
