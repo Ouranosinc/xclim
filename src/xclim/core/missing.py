@@ -203,9 +203,9 @@ class MissingBase:
         return True
 
     @staticmethod
-    def is_null(da: xr.DataArray, **indexer) -> xr.DataArray:
+    def is_valid(da: xr.DataArray, **indexer) -> xr.DataArray:
         r"""
-        Return a boolean array indicating which values are null.
+        Return a boolean array indicating which values are valid.
 
         Parameters
         ----------
@@ -219,27 +219,17 @@ class MissingBase:
         Returns
         -------
         xr.DataArray
-            Boolean array indicating which values are null.
-
-        Raises
-        ------
-        ValueError
-            If no data is available for the selected period.
+            Boolean array indicating which values are valid.
         """
-        indexer.update({"drop": True})
         selected = select_time(da, **indexer)
-        if selected.time.size == 0:
-            raise ValueError("No data for selected period.")
-
-        null = selected.isnull()
-        return null
+        return selected.notnull()
 
     def _validate_src_timestep(self, src_timestep):
         return True
 
     def is_missing(
         self,
-        null: xr.DataArray,
+        valid: xr.DataArray,
         count: xr.DataArray,
         freq: str | None,
     ) -> xr.DataArray:
@@ -250,8 +240,8 @@ class MissingBase:
 
         Parameters
         ----------
-        null : DataArray
-            Boolean array of invalid values (that has already been indexed).
+        valid : DataArray
+            Boolean array of valid values (that has already been indexed).
         count : DataArray
             Indexer-aware integer array of number of expected elements at the resampling frequency.
         freq : str or None
@@ -310,8 +300,8 @@ class MissingBase:
             )
 
         count = expected_count(da.time, freq=freq, src_timestep=src_timestep, **indexer)
-        null = self.is_null(da, **indexer)
-        return self.is_missing(null, count, freq)
+        valid = self.is_valid(da, **indexer)
+        return self.is_missing(valid, count, freq)
 
     def __repr__(self):
         opt_str = ", ".join([f"{k}={v}" for k, v in self.options.items()])
@@ -332,13 +322,12 @@ class MissingAny(MissingBase):
         super().__init__()
 
     def is_missing(
-        self, null: xr.DataArray, count: xr.DataArray, freq: str | None
+        self, valid: xr.DataArray, count: xr.DataArray, freq: str | None
     ) -> xr.DataArray:
         if freq is not None:
-            null = null.resample(time=freq)
-        cond0 = null.count(dim="time") != count  # Check total number of days
-        cond1 = null.sum(dim="time") > 0  # Check if any is missing
-        return cond0 | cond1
+            valid = valid.resample(time=freq)
+        # The number of valid values should fit the expected count.
+        return valid.sum(dim="time") != count
 
 
 # TODO: Make coarser method controllable.
@@ -446,21 +435,23 @@ class MissingWMO(MissingTwoSteps):
         return src_timestep == "D"
 
     def is_missing(
-        self, null: xr.DataArray, count: xr.DataArray, freq: str
+        self, valid: xr.DataArray, count: xr.DataArray, freq: str
     ) -> xr.DataArray:
         from xclim.indices import run_length as rl
         from xclim.indices.helpers import resample_map
 
-        nullr = null.resample(time=freq)
+        validr = valid.resample(time=freq)
 
         # Total number of missing or invalid days
-        missing_days = (count - nullr.count(dim="time")) + nullr.sum(dim="time")
+        missing_days = count - validr.sum(dim="time")
         # Check if more than threshold is missing
         cond1 = missing_days >= self.options["nm"]
 
         # Check for consecutive invalid values
         # FIXME: This does not take holes in consideration
-        longest_run = resample_map(null, "time", freq, rl.longest_run, map_blocks=True)
+        longest_run = resample_map(
+            ~valid, "time", freq, rl.longest_run, map_blocks=True
+        )
         cond2 = longest_run >= self.options["nc"]
 
         return cond1 | cond2
@@ -490,13 +481,14 @@ class MissingPct(MissingTwoSteps):
         return 0 <= tolerance <= 1
 
     def is_missing(
-        self, null: xr.DataArray, count: xr.DataArray, freq: str | None
+        self, valid: xr.DataArray, count: xr.DataArray, freq: str | None
     ) -> xr.DataArray:
         if freq is not None:
-            null = null.resample(time=freq)
+            valid = valid.resample(time=freq)
 
-        n = count - null.count(dim="time").fillna(0) + null.sum(dim="time").fillna(0)
-        return n / count >= self.options["tolerance"]
+        # Total number of missing or invalid days
+        missing_days = (count - valid.sum(dim="time")).fillna(count)
+        return (missing_days / count) >= self.options["tolerance"]
 
 
 @register_missing_method("at_least_n")
@@ -522,9 +514,8 @@ class AtLeastNValid(MissingTwoSteps):
         return n > 0
 
     def is_missing(
-        self, null: xr.DataArray, count: xr.DataArray, freq: str | None
+        self, valid: xr.DataArray, count: xr.DataArray, freq: str | None
     ) -> xr.DataArray:
-        valid = ~null
         if freq is not None:
             valid = valid.resample(time=freq)
         nvalid = valid.sum(dim="time")

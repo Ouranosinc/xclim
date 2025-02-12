@@ -35,9 +35,10 @@ Internal changes
 * `sphinx-codeautolink` and `pygments` have been temporarily pinned due to breaking API changes. (:pull:`2030`).
 * Adjusted the ``TestOfficialYaml`` test to use a dynamic method for finding the installed location of `xclim`. (:pull:`2028`).
 * Adjusted two tests for better handling when running in Windows environments. (:pull:`2057`).
-* Refactor of the ``xclim.core.missing`` module, usage of the ``Missing`` objects has been broken. (:pull:`2058`, :issue:`1820`, :issue:`2000`).
+* Refactor of the ``xclim.core.missing`` module, usage of the ``Missing`` objects has been broken. (:pull:`2058`, :pull:`2055`, :pull:`2076`, :issue:`1820`, :issue:`2000`).
     - Objects are initialized with their options and then called with the data, input frequency, target frequency and indexer.
     - Subclasses receive non-resampled DataArray in their ``is_missing`` methods.
+    - Subclasses receive the array of valid timesteps ``valid`` instead of ``null``, the invalid ones.
     - ``MissingWMO`` now uses ``xclim.indices.helpers.resample_map`` which should greatly improve performance in a dask context.
 
 Bug fixes
