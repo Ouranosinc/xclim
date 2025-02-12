@@ -1171,18 +1171,22 @@ def standardized_precipitation_index(
     xarray.DataArray, [unitless]
         Standardized Precipitation Index.
 
+    See Also
+    --------
+    xclim.indices.stats.standardized_index : Standardized Index.
+    xclim.indices.stats.standardized_index_fit_params : Standardized Index Fit Params.
+
     Notes
     -----
     * N-month SPI / N-day SPI is determined by choosing the `window = N` and the appropriate frequency `freq`.
     * Supported statistical distributions are: ["gamma", "fisk"], where "fisk" is scipy's implementation of
-       a log-logistic distribution
+      a log-logistic distribution
     * Supported frequencies are daily ("D"), weekly ("W"), and monthly ("MS").
-      Weekly frequency will only work if the input array has a "standard" (non-cftime) calendar.
+    * Weekly frequency will only work if the input array has a "standard" (non-cftime) calendar.
     * If `params` is given as input, it overrides the `cal_start`, `cal_end`, `freq` and `window`, `dist` and `method` options.
     * "APP" method only supports two-parameter distributions. Parameter `loc` needs to be fixed to use method `APP`.
-    * The standardized index is bounded by ±8.21. 8.21 is the largest standardized index as constrained by the float64 precision in
-      the inversion to the normal distribution.
-    * The results from `climate_indices` library can be reproduced with `method = "APP"` and `fitwkargs = {"floc": 0}`
+    * The results from `climate_indices` library can be reproduced with `method = "APP"` and `fitwkargs = {"floc": 0}`, except for the maximum
+      and minimum values allowed which are greater in xclim ±8.21, . See `xclim.indices.stats.standardized_index`
 
     References
     ----------
@@ -1313,6 +1317,8 @@ def standardized_precipitation_evapotranspiration_index(
     See Also
     --------
     standardized_precipitation_index : Standardized Precipitation Index.
+    xclim.indices.stats.standardized_index : Standardized Index.
+    xclim.indices.stats.standardized_index_fit_params : Standardized Index Fit Params.
     """
     fitkwargs = fitkwargs or {}
 

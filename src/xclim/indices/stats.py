@@ -788,9 +788,11 @@ def standardized_index_fit_params(
     Notes
     -----
     Supported combinations of `dist` and `method` are:
-    * Gamma ("gamma") : "ML", "APP", "PWM"
+    * Gamma ("gamma") : "ML", "APP"
     * Log-logistic ("fisk") : "ML", "APP"
     * "APP" method only supports two-parameter distributions. Parameter `loc` will be set to 0 (setting `floc=0` in `fitkwargs`).
+    * Otherwise, generic `rv_continuous` methods can be used. This includes distributions from `lmoments3` which should be used with
+    `method="PWM"`.
 
     When using the zero inflated option, : A probability density function :math:`\texttt{pdf}_0(X)` is fitted for :math:`X \neq 0`
     and a supplementary parameter :math:`\pi` takes into account the probability of :math:`X = 0`. The full probability density
@@ -909,11 +911,22 @@ def standardized_index(
     xarray.DataArray, [unitless]
         Standardized Precipitation Index.
 
+    See Also
+    --------
+    standardized_index_fit_params : Standardized Index Fit Params.
+
     Notes
     -----
     * The standardized index is bounded by ±8.21. 8.21 is the largest standardized index as constrained by the float64 precision in
       the inversion to the normal distribution.
-    * ``window``, ``dist``, ``method``, ``zero_inflated`` are only optional if ``params`` is given.
+    * ``window``, ``dist``, ``method``, ``zero_inflated`` are only optional if ``params`` is given. If `params` is given as input,
+      it overrides the `cal_start`, `cal_end`, `freq` and `window`, `dist` and `method` options.
+    * Supported combinations of `dist` and `method` are:
+      * Gamma ("gamma") : "ML", "APP"
+      * Log-logistic ("fisk") : "ML", "APP"
+      * "APP" method only supports two-parameter distributions. Parameter `loc` will be set to 0 (setting `floc=0` in `fitkwargs`).
+      * Otherwise, generic `rv_continuous` methods can be used. This includes distributions from `lmoments3` which should be used with
+      `method="PWM"`.
 
     References
     ----------
