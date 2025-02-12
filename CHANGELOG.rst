@@ -28,7 +28,7 @@ New features and enhancements
 * ``xclim.testing.helpers.test_timeseries`` now accepts a `calendar` argument that is forwarded to ``xr.cftime_range``. (:pull:`2019`).
 * New ``xclim.indices.fao_allen98``, exporting the FAO-56 Penman-Monteith equation for potential evapotranspiration (:issue:`2004`, :pull:`2067`).
 * Missing values method "pct" and "at_least_n" now accept a new "subfreq" option that allows to compute the missing mask in two steps. When given, the algorithm is applied at this "subfreq" resampling frequency first and then the result is resampled at the target indicator frequency. In the output, a period is invalid if any of its subgroup where flagged as invalid by the chosen method. (:pull:`2058`, :issue:`1820`).
-* Time selection in ``xclim.core.calendar.select_time`` and the ``**indexer`` argument of indicators now support day-of-year bounds given as DataArrays with spatial and/or temporal dimensions. (:issue:`1987`, :pull:`2055`).
+* Time selection in ``xclim.core.calendar.select_time`` and the ``**indexer`` argument of indicators now supports day-of-year bounds given as DataArrays with spatial and/or temporal dimensions. (:issue:`1987`, :pull:`2055`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
