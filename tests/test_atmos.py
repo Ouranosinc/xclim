@@ -3,9 +3,11 @@
 from __future__ import annotations
 
 import numpy as np
+import pytest
 import xarray as xr
 
 from xclim import atmos, set_options
+from xclim.indices.helpers import make_hourly_temperature
 
 K2C = 273.16
 
@@ -341,6 +343,8 @@ class TestPotentialEvapotranspiration:
             tnC.attrs["units"] = "degC"
             tmC = tm - K2C
             tmC.attrs["units"] = "degC"
+            hurs_pct = hurs * 100
+            hurs_pct.attrs["units"] = "%"
 
         pet_br65 = atmos.potential_evapotranspiration(tn, tx, method="BR65")
         pet_br65C = atmos.potential_evapotranspiration(tnC, tx, method="BR65")
@@ -372,12 +376,24 @@ class TestPotentialEvapotranspiration:
             sfcWind=sfcWind,
             method="FAO_PM98",
         )
+        pet_fao_pm98pct = atmos.potential_evapotranspiration(
+            tn,
+            tx,
+            hurs=hurs_pct,
+            rsds=rsds,
+            rsus=rsus,
+            rlds=rlds,
+            rlus=rlus,
+            sfcWind=sfcWind,
+            method="FAO_PM98",
+        )
 
         np.testing.assert_allclose(pet_br65, pet_br65C, atol=1)
         np.testing.assert_allclose(pet_hg85, pet_hg85C, atol=1)
         np.testing.assert_allclose(pet_tw48, pet_tw48C, atol=1)
         np.testing.assert_allclose(pet_mb05, pet_mb05C, atol=1)
         np.testing.assert_allclose(pet_fao_pm98, pet_fao_pm98C, atol=1)
+        np.testing.assert_allclose(pet_fao_pm98, pet_fao_pm98pct, atol=1)
 
     def test_nan_values(self, atmosds):
         ds = atmosds
@@ -624,3 +640,49 @@ class TestLateFrostDays:
         lfd = atmos.late_frost_days(tasmin, date_bounds=("04-01", "06-30"))
 
         np.testing.assert_allclose(lfd.isel(time=0), exp, rtol=1e-03)
+
+
+def test_chill_units(atmosds):
+    tasmax = atmosds.tasmax
+    tasmin = atmosds.tasmin
+    tas = make_hourly_temperature(tasmin, tasmax)
+    cu = atmos.chill_units(tas, date_bounds=("04-01", "06-30"))
+    assert cu.attrs["units"] == "1"
+    assert cu.name == "cu"
+    assert cu.time.size == 4
+
+    # Values are confirmed with chillR package although not an exact match
+    # due to implementation details
+    exp = [1546.5, 1344.0, 1162.0, 1457.5]
+    np.testing.assert_allclose(cu.isel(location=0), exp, rtol=1e-03)
+
+
+@pytest.mark.parametrize("use_dask", [True, False])
+def test_chill_portions(atmosds, use_dask):
+    pytest.importorskip("flox")
+    tasmax = atmosds.tasmax
+    tasmin = atmosds.tasmin
+    tas = make_hourly_temperature(tasmin, tasmax)
+    if use_dask:
+        tas = tas.chunk(time=tas.time.size // 2, location=1)
+
+    with set_options(resample_map_blocks=True):
+        cp = atmos.chill_portions(tas, date_bounds=("09-01", "03-30"), freq="YS-JUL")
+
+    assert cp.attrs["units"] == "1"
+    assert cp.name == "cp"
+    # Although its 4 years of data its 5 seasons starting in July
+    assert cp.time.size == 5
+
+    # Values are confirmed with chillR package although not an exact match
+    # due to implementation details
+    exp = [np.nan, 99.91534493, 92.5473925, 99.03177047, np.nan]
+    np.testing.assert_allclose(cp.isel(location=0), exp, rtol=1e-03)
+
+
+def test_water_cycle_intensity(pr_series, evspsbl_series):
+    pr = pr_series(np.ones(31))
+    evspsbl = evspsbl_series(np.ones(31))
+
+    wci = atmos.water_cycle_intensity(pr=pr, evspsbl=evspsbl, freq="MS")
+    np.testing.assert_allclose(wci, 2 * 60 * 60 * 24 * 31)

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import platform
+from importlib.util import find_spec
 from inspect import _empty  # noqa
 from pathlib import Path
 
@@ -103,6 +105,12 @@ def test_custom_indices(open_dataset):
     build_indicator_module_from_yaml(
         example_path / "example.yml", name="ex4", mode="ignore"
     )
+
+    # Check that indexer was added and injected correctly
+    assert "indexer" not in ex1.RX1day_summer.parameters
+    assert ex1.RX1day_summer.injected_parameters["indexer"] == {
+        "month": [5, 6, 7, 8, 9]
+    }
 
 
 @pytest.mark.requires_docs
@@ -258,7 +266,7 @@ indicator:
 
 
 class TestOfficialYaml(yamale.YamaleTestCase):
-    base_dir = str(Path(__file__).parent.parent / "xclim" / "data")
+    base_dir = str(Path(find_spec("xclim").origin).parent.joinpath("data"))
     schema = "schema.yml"
     yaml = ["cf.yml", "anuclim.yml", "icclim.yml"]
 
@@ -266,8 +274,10 @@ class TestOfficialYaml(yamale.YamaleTestCase):
         assert self.validate()
 
 
-# It's not really slow, but this is an unstable test (when it fails) and we might not want to execute it on all builds
-@pytest.mark.slow
+@pytest.mark.xfail(reason="This test is relatively unstable.", strict=False)
+@pytest.mark.skipif(
+    platform.system() == "Windows", reason="nl_langinfo not available on Windows."
+)
 def test_encoding():
     import _locale
     import sys

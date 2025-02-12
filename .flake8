@@ -10,9 +10,11 @@ ignore =
 	D,
 	E,
 	F,
+	RST210,
+	RST213,
 	W503
 per-file-ignores =
-	xclim/core/locales.py:RST399
+	src/xclim/core/locales.py:RST399
 rst-directives =
 	bibliography,
 	autolink-skip

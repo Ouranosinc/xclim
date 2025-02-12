@@ -126,9 +126,8 @@ def test_rle(ufunc, use_dask, index):
 
 @pytest.mark.parametrize("use_dask", [True, False])
 @pytest.mark.parametrize("index", ["first", "last"])
-def test_extract_events_identity(use_dask, index):
-    # implement more tests, this is just to show that this reproduces the behaviour
-    # of rle
+def test_runs_with_holes_identity(use_dask, index):
+    # This test reproduces the behaviour or `rle`
     values = np.zeros((10, 365, 4, 4))
     time = pd.date_range("2000-01-01", periods=365, freq="D")
     values[:, 1:11, ...] = 1
@@ -137,19 +136,19 @@ def test_extract_events_identity(use_dask, index):
     if use_dask:
         da = da.chunk({"a": 1, "b": 2})
 
-    events = rl.extract_events(da != 0, 1, da == 0, 1)
+    events = rl.runs_with_holes(da != 0, 1, da == 0, 1)
     expected = da
     np.testing.assert_array_equal(events, expected)
 
 
-def test_extract_events():
+def test_runs_with_holes():
     values = np.zeros(365)
     time = pd.date_range("2000-01-01", periods=365, freq="D")
     a = [0, 1, 0, 1, 1, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0]
     values[0 : len(a)] = a
     da = xr.DataArray(values, coords={"time": time}, dims=("time"))
 
-    events = rl.extract_events(da == 1, 1, da == 0, 3)
+    events = rl.runs_with_holes(da == 1, 1, da == 0, 3)
 
     expected = values * 0
     expected[1:11] = 1
@@ -368,6 +367,16 @@ class TestWindowedRunCount:
         assert rl.windowed_run_count(a, 3, dim="time", index=index) == len(
             a[4:7]
         ) + len(a[34:45])
+
+
+class TestWindowedMaxRunSum:
+    @pytest.mark.parametrize("index", ["first", "last"])
+    def test_simple(self, index):
+        a = xr.DataArray(np.zeros(50, float), dims=("time",))
+        a[4:6] = 5  # too short
+        a[25:30] = 5  # long enough, but not max
+        a[35:45] = 5  # max sum => yields 10*5
+        assert rl.windowed_max_run_sum(a, 3, dim="time", index=index) == 50
 
 
 class TestLastRun:

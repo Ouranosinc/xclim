@@ -7,9 +7,9 @@ xclim: Climate services library |logo| |logo-dark| |logo-light|
 +----------------------------+-----------------------------------------------------+
 | Documentation and Support  | |docs| |discussions|                                |
 +----------------------------+-----------------------------------------------------+
-| Open Source                | |license| |fair| |ossf| |zenodo| |pyOpenSci| |joss| |
+| Open Source                | |license| |ossf-score| |zenodo| |pyOpenSci| |joss|  |
 +----------------------------+-----------------------------------------------------+
-| Coding Standards           | |black| |ruff| |pre-commit| |security| |fossa|      |
+| Coding Standards           | |black| |ruff| |pre-commit| |ossf-bp| |fossa|       |
 +----------------------------+-----------------------------------------------------+
 | Development Status         | |status| |build| |coveralls|                        |
 +----------------------------+-----------------------------------------------------+
@@ -20,7 +20,7 @@ adjustment of climate model simulations, as well as climate model ensemble analy
 
 `xclim` is built using `xarray`_ and can seamlessly benefit from the parallelization handling provided by `dask`_.
 Its objective is to make it as simple as possible for users to perform typical climate services data treatment workflows.
-Leveraging xarray and dask, users can easily bias-adjust climate simulations over large spatial domains or compute indices from large climate datasets.
+Leveraging `xarray` and `dask`, users can easily bias-adjust climate simulations over large spatial domains or compute indices from large climate datasets.
 
 For example, the following would compute monthly mean temperature from daily mean temperature:
 
@@ -32,7 +32,7 @@ For example, the following would compute monthly mean temperature from daily mea
     ds = xr.open_dataset(filename)
     tg = xclim.atmos.tg_mean(ds.tas, freq="MS")
 
-For applications where metadata and missing values are important to get right, xclim provides a class for each index
+For applications where metadata and missing values are important to get right, `xclim` provides a class for each index
 that validates inputs, checks for missing values, converts units and assigns metadata attributes to the output.
 This also provides a mechanism for users to customize the indices to their own specifications and preferences.
 `xclim` currently provides over 150 indices related to mean, minimum and maximum daily temperature, daily precipitation,
@@ -74,8 +74,13 @@ However, xclim will *always* assume the temporal coordinate is named "time". If 
 
     ds = ds.rename(T="time")
 
+`xclim` code uses the `black`_ formatter, a modified `ruff`_ linting configuration, and (mostly) adheres to the `NumPy docstring`_ style. For more information on coding and development conventions, see the `Contributing Guidelines`_.
+
+.. _black: https://black.readthedocs.io/en/stable/
+.. _ruff: https://docs.astral.sh/ruff/
 .. _CF Conventions: http://cfconventions.org/
 .. _CMIP6: https://clipc-services.ceda.ac.uk/dreq/mipVars.html
+.. _NumPy docstring: https://numpydoc.readthedocs.io/en/stable/format.html
 
 Contributing to xclim
 ---------------------
@@ -105,6 +110,19 @@ This is free software: you can redistribute it and/or modify it under the terms 
 .. _Apache License 2.0: https://opensource.org/license/apache-2-0/
 .. _LICENSE: https://github.com/Ouranosinc/xclim/blob/main/LICENSE
 
+Energy and Carbon Usage
+-----------------------
+The `xclim` development team is interested in thoroughly testing our software while also reducing the environmental impact of the software we develop.
+This repository uses the `ECO-CI`_ tool to estimate and track the energy use and carbon emissions of our continuous integration workflows.
+
++---------------------------------------------------------------------------------------+
+| `ECO-CI`_ Energy Use and Carbon Emissions from CI Workflows (since November 2024)     |
++------------------+------------------+-------------------------------------------------+
+| Testing suite    | Energy Usage     | |energy-last| |energy-average| |energy-total|   |
+|                  +------------------+-------------------------------------------------+
+| (*main* branch)  | Carbon Emissions | |carbon-last| |carbon-average| |carbon-total|   |
++------------------+------------------+-------------------------------------------------+
+
 Credits
 -------
 `xclim` development is funded through Ouranos_, Environment and Climate Change Canada (ECCC_), the `Fonds vert`_ and the Fonds d'électrification et de changements climatiques (FECC_), the Canadian Foundation for Innovation (CFI_), and the Fonds de recherche du Québec (FRQ_).
@@ -115,6 +133,7 @@ This package was created with Cookiecutter_ and the `audreyfeldroy/cookiecutter-
 .. _CFI: https://www.innovation.ca/
 .. _Cookiecutter: https://github.com/cookiecutter/cookiecutter/
 .. _ECCC: https://www.canada.ca/en/environment-climate-change.html
+.. _ECO-CI: https://www.green-coding.io/
 .. _FECC: https://www.environnement.gouv.qc.ca/ministere/fonds-electrification-changements-climatiques/index.htm
 .. _Fonds vert: https://www.environnement.gouv.qc.ca/ministere/fonds-vert/index.htm
 .. _FRQ: https://frq.gouv.qc.ca/
@@ -131,10 +150,6 @@ This package was created with Cookiecutter_ and the `audreyfeldroy/cookiecutter-
 .. |discussions| image:: https://img.shields.io/badge/GitHub-Discussions-blue
         :target: https://github.com/Ouranosinc/xclim/discussions
         :alt: Static Badge
-
-.. |gitter| image:: https://badges.gitter.im/Ouranosinc/xclim.svg
-        :target: https://gitter.im/Ouranosinc/xclim?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge
-        :alt: Gitter Chat
 
 .. |build| image:: https://github.com/Ouranosinc/xclim/actions/workflows/main.yml/badge.svg
         :target: https://github.com/Ouranosinc/xclim/actions/workflows/main.yml
@@ -164,17 +179,13 @@ This package was created with Cookiecutter_ and the `audreyfeldroy/cookiecutter-
         :target: https://github.com/Ouranosinc/xclim/blob/main/LICENSE
         :alt: License
 
-.. |security| image:: https://bestpractices.coreinfrastructure.org/projects/6041/badge
+.. |ossf-bp| image:: https://bestpractices.coreinfrastructure.org/projects/6041/badge
         :target: https://bestpractices.coreinfrastructure.org/projects/6041
-        :alt: Open Source Security Foundation
+        :alt: Open Source Security Foundation Best Practices
 
-.. |fair| image:: https://img.shields.io/badge/fair--software.eu-%E2%97%8F%20%20%E2%97%8F%20%20%E2%97%8F%20%20%E2%97%8F%20%20%E2%97%8B-yellow
-        :target: https://fair-software.eu
-        :alt: FAIR Software Compliance
-
-.. |ossf| image:: https://api.securityscorecards.dev/projects/github.com/Ouranosinc/xclim/badge
+.. |ossf-score| image:: https://api.securityscorecards.dev/projects/github.com/Ouranosinc/xclim/badge
         :target: https://securityscorecards.dev/viewer/?uri=github.com/Ouranosinc/xclim
-        :alt: OpenSSF Scorecard
+        :alt: Open Source Security Foundation Scorecard
 
 .. |fossa| image:: https://app.fossa.com/api/projects/git%2Bgithub.com%2FOuranosinc%2Fxclim.svg?type=shield
         :target: https://app.fossa.com/projects/git%2Bgithub.com%2FOuranosinc%2Fxclim?ref=badge_shield
@@ -204,8 +215,8 @@ This package was created with Cookiecutter_ and the `audreyfeldroy/cookiecutter-
         :alt: pre-commit.ci status
 
 .. |ruff| image:: https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json
-    :target: https://github.com/astral-sh/ruff
-    :alt: Ruff
+        :target: https://github.com/astral-sh/ruff
+        :alt: Ruff
 
 .. |status| image:: https://www.repostatus.org/badges/latest/active.svg
         :target: https://www.repostatus.org/#active
@@ -214,3 +225,30 @@ This package was created with Cookiecutter_ and the `audreyfeldroy/cookiecutter-
 .. |versions| image:: https://img.shields.io/pypi/pyversions/xclim.svg
         :target: https://pypi.python.org/pypi/xclim
         :alt: Supported Python Versions
+
+..
+    Energy Metrics by https://github.com/green-coding-solutions/eco-ci-energy-estimation
+
+.. |energy-total| image:: https://api.green-coding.io/v1/ci/badge/get?repo=Ouranosinc/xclim&branch=main&workflow=5828641&mode=totals
+        :target: https://metrics.green-coding.io/ci.html?repo=Ouranosinc/xclim&branch=main&workflow=5828641
+        :alt: Energy Consumption (Total)
+
+.. |energy-last| image:: https://api.green-coding.io/v1/ci/badge/get?repo=Ouranosinc/xclim&branch=main&workflow=5828641
+        :target: https://metrics.green-coding.io/ci.html?repo=Ouranosinc/xclim&branch=main&workflow=5828641
+        :alt: Energy Consumption (Last run)
+
+.. |energy-average| image:: https://api.green-coding.io/v1/ci/badge/get?repo=Ouranosinc/xclim&branch=main&workflow=5828641&mode=avg&duration_days=90
+        :target: https://metrics.green-coding.io/ci.html?repo=Ouranosinc/xclim&branch=main&workflow=5828641
+        :alt: Energy Consumption (Last 90 days moving average)
+
+.. |carbon-total| image:: https://api.green-coding.io/v1/ci/badge/get?repo=Ouranosinc/xclim&branch=main&workflow=5828641&mode=totals&metric=carbon
+        :target: https://metrics.green-coding.io/ci.html?repo=Ouranosinc/xclim&branch=festive-indices&workflow=5828641
+        :alt: Carbon Emissions (Total)
+
+.. |carbon-last| image:: https://api.green-coding.io/v1/ci/badge/get?repo=Ouranosinc/xclim&branch=main&workflow=5828641&metric=carbon
+        :target: https://metrics.green-coding.io/ci.html?repo=Ouranosinc/xclim&branch=main&workflow=5828641
+        :alt: Carbon Emissions (Last run)
+
+.. |carbon-average| image:: https://api.green-coding.io/v1/ci/badge/get?repo=Ouranosinc/xclim&branch=main&workflow=5828641&mode=avg&duration_days=90&metric=carbon
+        :target: https://metrics.green-coding.io/ci.html?repo=Ouranosinc/xclim&branch=main&workflow=5828641
+        :alt: Carbon Emissions (Last 90 days moving average)

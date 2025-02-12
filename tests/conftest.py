@@ -1,6 +1,7 @@
 # noqa: D104
 from __future__ import annotations
 
+import logging
 import os
 from functools import partial
 from pathlib import Path
@@ -79,6 +80,12 @@ def pr_series():
     """Return precipitation time series."""
     _pr_series = partial(test_timeseries, variable="pr")
     return _pr_series
+
+
+@pytest.fixture
+def evspsbl_series():
+    """Return precipitation time series."""
+    return partial(test_timeseries, variable="evspsbl")
 
 
 @pytest.fixture
@@ -348,7 +355,8 @@ def official_indicators():
 
 @pytest.fixture
 def lafferty_sriver_ds(nimbus) -> xr.Dataset:
-    """Get data from Lafferty & Sriver unit test.
+    """
+    Get data from Lafferty & Sriver unit test.
 
     Notes
     -----
@@ -385,7 +393,8 @@ def ensemble_dataset_objects() -> dict[str, str]:
 
 @pytest.fixture(autouse=True, scope="session")
 def gather_session_data(request, nimbus, worker_id):
-    """Gather testing data on pytest run.
+    """
+    Gather testing data on pytest run.
 
     When running pytest with multiple workers, one worker will copy data remotely to default cache dir while
     other workers wait using lockfile. Once the lock is released, all workers will then copy data to their local
@@ -405,6 +414,12 @@ def gather_session_data(request, nimbus, worker_id):
         """Cleanup cache folder once we are finished."""
         flag = default_testdata_cache.joinpath(".data_written")
         if flag.exists():
-            flag.unlink()
+            try:
+                flag.unlink()
+            except FileNotFoundError:
+                logging.info(
+                    "Teardown race condition occurred: .data_written flag already removed. Lucky!"
+                )
+                pass
 
     request.addfinalizer(remove_data_written_flag)

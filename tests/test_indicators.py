@@ -286,6 +286,20 @@ def test_temp_unit_conversion(tas_series):
     np.testing.assert_array_almost_equal(txk, txc + 273.15)
 
 
+def test_temp_diff_unit_conversion(tasmax_series, tasmin_series):
+    tx = tasmax_series(np.arange(365) + 1, start="2001-01-01")
+    tn = tasmin_series(np.arange(365), start="2001-01-01")
+    txC = convert_units_to(tx, "degC")
+    tnC = convert_units_to(tn, "degC")
+
+    ind = xclim.atmos.daily_temperature_range.from_dict(
+        {"units": "degC"}, "dtr_degC", "test"
+    )
+    out = ind(tasmax=txC, tasmin=tnC)
+    assert out.attrs["units"] == "degC"
+    assert out.attrs["units_metadata"] == "temperature: difference"
+
+
 def test_multiindicator(tas_series):
     tas = tas_series(np.arange(366), start="2000-01-01")
     tmin, tmax = multiTemp(tas, freq="YS")
@@ -402,10 +416,6 @@ def test_missing(tas_series):
         m = uniIndTemp(a, freq="MS")
         assert not m[0].isnull()
         assert "check_missing=pct, missing_options={'tolerance': 0.05}" in m.history
-
-    with xclim.set_options(check_missing="wmo"):
-        m = uniIndTemp(a, freq="YS")
-        assert m[0].isnull()
 
     # With freq=None
     c = uniClim(a)
@@ -550,18 +560,18 @@ def test_formatting(pr_series):
     # pint 0.10 now pretty print day as d.
     assert (
         out.attrs["long_name"]
-        == "Number of days with daily precipitation at or above 1 mm/d"
+        == "Number of days with daily precipitation at or above 1 mm d-1"
     )
     assert out.attrs["description"] in [
-        "Annual number of days with daily precipitation at or above 1 mm/d."
+        "Annual number of days with daily precipitation at or above 1 mm d-1."
     ]
     out = atmos.wetdays(pr_series(np.arange(366)), thresh=1.5 * units.mm / units.day)
     assert (
         out.attrs["long_name"]
-        == "Number of days with daily precipitation at or above 1.5 mm/d"
+        == "Number of days with daily precipitation at or above 1.5 mm d-1"
     )
     assert out.attrs["description"] in [
-        "Annual number of days with daily precipitation at or above 1.5 mm/d."
+        "Annual number of days with daily precipitation at or above 1.5 mm d-1."
     ]
 
 
@@ -577,7 +587,7 @@ def test_parse_doc():
     assert doc["notes"].startswith("Let")
     assert "math::" in doc["notes"]
     assert "references" not in doc
-    assert doc["long_name"] == "The mean daily temperature at the given time frequency"
+    assert doc["long_name"] == "The mean daily temperature at the given time frequency."
 
     doc = parse_doc(xclim.indices.saturation_vapor_pressure.__doc__)
     assert (
@@ -722,7 +732,7 @@ def test_indicator_errors():
         return data
 
     doc = [
-        "The title",
+        "    The title",
         "",
         "    The abstract",
         "",
@@ -761,11 +771,6 @@ def test_indicator_errors():
 
     d["identifier"] = "bad_indi"
     d["module"] = "test"
-
-    bad_doc = doc[:12] + ["    extra: bool", "      Woupsi"] + doc[12:]
-    func.__doc__ = "\n".join(bad_doc)
-    with pytest.raises(ValueError, match="Malformed docstring"):
-        Daily(**d)
 
     func.__doc__ = "\n".join(doc)
     d["parameters"] = {}
@@ -884,6 +889,6 @@ def test_freq_doc():
     from xclim import atmos
 
     doc = atmos.latitude_temperature_index.__doc__
-    allowed_periods = ["A"]
+    allowed_periods = ["Y"]
     exp = f"Restricted to frequencies equivalent to one of {allowed_periods}"
     assert exp in doc

@@ -7,8 +7,6 @@ import pint.errors
 import pytest
 import xarray as xr
 from dask import array as dsk
-from packaging.version import Version
-from pint import __version__ as __pint_version__
 
 from xclim import indices, set_options
 from xclim.core import Quantified, ValidationError
@@ -21,6 +19,7 @@ from xclim.core.units import (
     declare_units,
     infer_context,
     lwethickness2amount,
+    pint2cfattrs,
     pint2cfunits,
     pint_multiply,
     rate2amount,
@@ -44,7 +43,6 @@ class TestUnits:
         with units.context("hydro"):
             q = 1 * units.kg / units.m**2 / units.s
             assert q.to("mm/day") == q.to("mm/d")
-            assert q.to("mmday").magnitude == 24 * 60**2
 
     def test_lat_lon(self):
         assert 100 * units.degreeN == 100 * units.degree
@@ -56,17 +54,13 @@ class TestUnits:
             np.isclose(1 * fu, 1 * tu)
 
     def test_dimensionality(self):
+        # Check that the hydro context allows flux to rate conversion
         with units.context("hydro"):
             fu = 1 * units.parse_units("kg / m**2 / s")
-            tu = 1 * units.parse_units("mm / d")
-            fu.to("mmday")
-            tu.to("mmday")
+            fu.to("mm/day")
 
     def test_fraction(self):
         q = 5 * units.percent
-        assert q.to("dimensionless") == 0.05
-
-        q = 5 * units.parse_units("pct")
         assert q.to("dimensionless") == 0.05
 
 
@@ -119,6 +113,14 @@ class TestConvertUnitsTo:
         assert out.attrs["units"] == "kg d-1 m-2"  # CF equivalent unit
         assert out.attrs["standard_name"] == "rainfall_flux"
 
+    def test_temperature_difference(self):
+        delta = xr.DataArray(
+            [2], attrs={"units": "K", "units_metadata": "temperature: difference"}
+        )
+        out = convert_units_to(source=delta, target="delta_degC")
+        assert out == 2
+        assert out.attrs["units"] == "degC"
+
 
 class TestUnitConversion:
     def test_pint2cfunits(self):
@@ -126,9 +128,6 @@ class TestUnitConversion:
         assert pint2cfunits(u.units) == "mm d-1"
 
         u = units("percent")
-        assert pint2cfunits(u.units) == "%"
-
-        u = units("pct")
         assert pint2cfunits(u.units) == "%"
 
     def test_units2pint(self, pr_series):
@@ -161,11 +160,9 @@ class TestUnitConversion:
 class TestCheckUnits:
     def test_basic(self):
         check_units("%", "[]")
-        check_units("pct", "[]")
         check_units("mm/day", "[precipitation]")
         check_units("mm/s", "[precipitation]")
         check_units("kg/m2/s", "[precipitation]")
-        check_units("cms", "[discharge]")
         check_units("m3/s", "[discharge]")
         check_units("m/s", "[speed]")
         check_units("km/h", "[speed]")
@@ -227,6 +224,20 @@ def test_rate2amount(pr_series):
         np.testing.assert_array_equal(am_ys, 86400 * np.array([365, 366, 365]))
 
 
+@pytest.mark.parametrize(
+    "srcfreq, exp", [("h", 3600), ("min", 60), ("s", 1), ("ns", 1e-9)]
+)
+def test_rate2amount_subdaily(srcfreq, exp):
+    pr = xr.DataArray(
+        np.ones(1000),
+        dims=("time",),
+        coords={"time": xr.date_range("2019-01-01", periods=1000, freq=srcfreq)},
+        attrs={"units": "kg m-2 s-1"},
+    )
+    am = rate2amount(pr)
+    np.testing.assert_array_equal(am, exp)
+
+
 def test_amount2rate(pr_series):
     pr = pr_series(np.ones(365 + 366 + 365), start="2019-01-01")
     am = rate2amount(pr)
@@ -273,7 +284,8 @@ def test_infer_context(std_name, dim, exp):
 
 
 def test_declare_units():
-    """Test that an error is raised when parameters with type Quantified do not declare their dimensions.
+    """
+    Test that an error is raised when parameters with type Quantified do not declare their dimensions.
 
     In this example, `wo` is a Quantified parameter, but does not declare its dimension as [length].
     """
@@ -343,9 +355,9 @@ def test_declare_relative_units():
             "sum",
             "integral",
             365,
-            ("K d", "d K"),
+            ("degC d", "d degC"),
         ),  # dependent on numpy/pint version
-        ("°F", "sum", "integral", 365, "d °R"),  # not sure why the order is different
+        ("°F", "sum", "integral", 365, "d degF"),  # not sure why the order is different
     ],
 )
 def test_to_agg_units(in_u, opfunc, op, exp, exp_u):
@@ -355,15 +367,37 @@ def test_to_agg_units(in_u, opfunc, op, exp, exp_u):
         coords={"time": xr.cftime_range("1993-01-01", periods=365, freq="D")},
         attrs={"units": in_u},
     )
+    if units(in_u).dimensionality == "[temperature]":
+        da.attrs["units_metadata"] = "temperature: difference"
 
     # FIXME: This is emitting warnings from deprecated DataArray.argmax() usage.
     out = to_agg_units(getattr(da, opfunc)(), da, op)
     np.testing.assert_allclose(out, exp)
-
     if isinstance(exp_u, tuple):
-        if Version(__pint_version__) < Version("0.24.1"):
-            assert out.attrs["units"] == exp_u[0]
-        else:
-            assert out.attrs["units"] == exp_u[1]
+        assert out.attrs["units"] in exp_u
     else:
         assert out.attrs["units"] == exp_u
+
+
+def test_pint2cfattrs():
+    attrs = pint2cfattrs(units.degK, is_difference=True)
+    assert attrs == {"units": "K", "units_metadata": "temperature: difference"}
+
+    attrs = pint2cfattrs(units.meter, is_difference=True)
+    assert "units_metadata" not in attrs
+
+    attrs = pint2cfattrs(units.delta_degC)
+    assert attrs == {"units": "degC", "units_metadata": "temperature: difference"}
+
+
+def test_temp_difference_rountrip():
+    """Test roundtrip of temperature difference units."""
+    attrs = {"units": "degC", "units_metadata": "temperature: difference"}
+    da = xr.DataArray([1], attrs=attrs)
+    pu = units2pint(da)
+    # Confirm that we get delta pint units
+    assert pu == units.delta_degC
+
+    # and that converting those back to cf attrs gives the same result
+    attrs = pint2cfattrs(pu)
+    assert attrs == {"units": "degC", "units_metadata": "temperature: difference"}
