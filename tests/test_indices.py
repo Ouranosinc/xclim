@@ -2941,10 +2941,11 @@ def test_specific_humidity_from_dewpoint(tas_series, ps_series):
 @pytest.mark.parametrize(
     "ice_thresh,exp0", [(None, [125, 286, 568]), ("0 degC", [103, 260, 563])]
 )
-@pytest.mark.parametrize("units", ["degC", "degK"])
-def test_saturation_vapor_pressure(tas_series, method, ice_thresh, exp0, units):
+@pytest.mark.parametrize("temp_units", ["degC", "degK"])
+def test_saturation_vapor_pressure(tas_series, method, ice_thresh, exp0, temp_units):
     tas = tas_series(np.array([-20, -10, -1, 10, 20, 25, 30, 40, 60]) + K2C)
-    tas = convert_units_to(tas, units)
+    tas = convert_units_to(tas, temp_units)
+
     # Expected values obtained with the Sonntag90 method
     e_sat_exp = exp0 + [1228, 2339, 3169, 4247, 7385, 19947]
 
@@ -2956,6 +2957,24 @@ def test_saturation_vapor_pressure(tas_series, method, ice_thresh, exp0, units):
     np.testing.assert_allclose(e_sat, e_sat_exp, atol=0.5, rtol=0.005)
 
 
+@pytest.mark.parametrize(
+    "method", ["tetens30", "sonntag90", "goffgratch46", "wmo08", "its90"]
+)
+def test_vapor_pressure_deficit(tas_series, hurs_series, method):
+    tas = tas_series(np.array([-1, 10, 20, 25, 30, 40, 60]) + K2C)
+    hurs = hurs_series(np.array([0, 0.5, 0.8, 0.9, 0.95, 0.99, 1]))
+
+    # Expected values obtained with the GoffGratch46 method
+    svp_exp = [567, 1220, 2317, 3136, 4200, 7300, 19717]
+
+    vpd = xci.vapor_pressure_deficit(
+        tas=tas,
+        hurs=hurs,
+        method=method,
+    )
+    np.testing.assert_allclose(vpd, svp_exp, atol=0.5, rtol=0.005)
+
+
 @pytest.mark.parametrize("method", ["tetens30", "sonntag90", "goffgratch46", "wmo08"])
 @pytest.mark.parametrize(
     "invalid_values,exp0", [("clip", 100), ("mask", np.nan), (None, 188)]
@@ -2964,6 +2983,7 @@ def test_relative_humidity(
     tas_series, hurs_series, huss_series, ps_series, method, invalid_values, exp0
 ):
     tas = tas_series(np.array([-10, -10, 10, 20, 35, 50, 75, 95]) + K2C)
+
     # Expected values obtained with the Sonntag90 method
     hurs_exp = hurs_series([exp0, 63.0, 66.0, 34.0, 14.0, 6.0, 1.0, 0.0])
     ps = ps_series([101325] * 8)

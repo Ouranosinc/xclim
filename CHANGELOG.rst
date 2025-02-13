@@ -19,6 +19,7 @@ New indicators
 ^^^^^^^^^^^^^^
 * Added ``xclim.indices.holiday_snow_days`` to compute the number of days with snow on the ground during holidays ("Christmas Days"). (:issue:`2029`, :pull:`2030`).
 * Added ``xclim.indices.holiday_snow_and_snowfall_days`` to compute the number of days with snow on the ground and measurable snowfall during holidays ("Perfect Christmas Days"). (:issue:`2029`, :pull:`2030`).
+* Added ``xclim.indices.vapor_pressure_deficit`` to compute the vapor pressure deficit from temperature and relative humidity. (:issue:`1917`, :pull:`2072`).
 
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
