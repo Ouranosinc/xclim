@@ -1198,7 +1198,7 @@ def standardized_precipitation_index(
     >>> from xclim.indices import standardized_precipitation_index
     >>> ds = xr.open_dataset(path_to_pr_file)
     >>> pr = ds.pr
-    >>> cal_start, cal_end = "1990-05-01", "1992-06-01"
+    >>> cal_start, cal_end = "1990-05-01", "1990-08-31"
     >>> spi_3 = standardized_precipitation_index(
     ...     pr,
     ...     freq="MS",
