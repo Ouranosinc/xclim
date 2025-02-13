@@ -27,7 +27,7 @@ from xclim import indices as xci
 from xclim.core import ValidationError
 from xclim.core.calendar import percentile_doy
 from xclim.core.options import set_options
-from xclim.core.units import convert_units_to, units
+from xclim.core.units import convert_units_to, rate2amount, units
 from xclim.indices import prsnd_to_prsn
 
 K2C = 273.15
@@ -895,7 +895,14 @@ class TestStandardizedIndices:
                 [0.0979, -1.6806, -0.5345, 0.7355, -0.7583],
                 2e-2,
             ),
-            ("MS", 1, "fisk", "ML", [0.5331, -1.5777, -0.4363, 0.2525, -0.8149], 2e-2),
+            (
+                "MS",
+                1,
+                "fisk",
+                "ML",
+                [0.533154, -1.5777, -0.436331, 0.29581, -0.814988],
+                2e-2,
+            ),
             ("MS", 1, "fisk", "APP", [0.4663, -1.9076, -0.5362, 0.8070, -0.8035], 2e-2),
             (
                 "MS",
@@ -955,6 +962,154 @@ class TestStandardizedIndices:
         ssi = ssi.isel(time=slice(-11, -1, 2)).values.flatten()
 
         np.testing.assert_allclose(ssi, values, rtol=0, atol=diff_tol)
+
+    # TODO: Find another package to test against
+    # For now, we just take a snapshot of what xclim produces when this function
+    # was added
+    @pytest.mark.slow
+    @pytest.mark.parametrize(
+        "freq, window, dist, method,  values, diff_tol",
+        [
+            (
+                "MS",
+                12,
+                "gamma",
+                "APP",
+                [0.598212, 1.559759, 1.693086, 0.996405, 0.702797],
+                2e-2,
+            ),
+            (
+                "MS",
+                12,
+                "gamma",
+                "ML",
+                [0.626364, 1.534493, 1.67347, 0.996994, 0.701663],
+                0.04,
+            ),
+            (
+                "D",
+                12,
+                "gamma",
+                "APP",
+                [-0.244186, -0.114052, 0.649965, 1.0767, 0.64628],
+                2e-2,
+            ),
+            (
+                "D",
+                12,
+                "gamma",
+                "ML",
+                [-0.158894, -0.048991, 0.677816, 0.960244, 0.6606],
+                2e-2,
+            ),
+            (
+                "MS",
+                12,
+                "lognorm",
+                "APP",
+                [0.61497, 1.529579, 1.649581, 0.995286, 0.70964],
+                2e-2,
+            ),
+            (
+                "MS",
+                12,
+                "lognorm",
+                "ML",
+                [0.631899, 1.532513, 1.691952, 0.997743, 0.68918],
+                0.04,
+            ),
+            (
+                "D",
+                12,
+                "lognorm",
+                "APP",
+                [-0.151103, -0.015488, 0.700311, 1.097219, 0.695601],
+                2e-2,
+            ),
+            (
+                "D",
+                12,
+                "lognorm",
+                "ML",
+                [-0.156812, -0.041269, 0.694897, 1.057204, 0.690219],
+                2e-2,
+            ),
+            (
+                "MS",
+                12,
+                "genextreme",
+                "ML",
+                [0.626085, 1.549041, 1.740867, 0.982377, 0.658135],
+                2e-2,
+            ),
+            (
+                "D",
+                12,
+                "genextreme",
+                "ML",
+                [-0.172489, -0.051075, 0.71535, 1.087408, 0.706588],
+                2e-2,
+            ),
+            (
+                "D",
+                12,
+                "genextreme",
+                "APP",
+                [-0.27661, -0.145505, 0.707217, 1.178342, 0.711621],
+                2e-2,
+            ),
+            (
+                "W",
+                1,
+                "gamma",
+                "ML",
+                [0.64676962, -0.06904886, -1.60493289, 1.07864037, -0.01415902],
+                2e-2,
+            ),
+        ],
+    )
+    def test_standardized_groundwater_index(
+        self, open_dataset, freq, window, dist, method, values, diff_tol
+    ):
+        if (
+            method == "ML"
+            and freq == "D"
+            and Version(__numpy_version__) < Version("2.0.0")
+        ):
+            pytest.skip("Skipping SPI/ML/D on older numpy")
+        ds = open_dataset("sdba/CanESM2_1950-2100.nc").isel(location=1)
+        if freq == "D":
+            # to compare with ``climate_indices``
+            ds = ds.convert_calendar("366_day", missing=np.nan)
+        elif freq == "W":
+            # only standard calendar supported with freq="W"
+            ds = ds.convert_calendar(
+                "standard", missing=np.nan, align_on="year", use_cftime=False
+            )
+        gwl0 = rate2amount(convert_units_to(ds.pr, "mm/d"))
+
+        gwl = gwl0.sel(time=slice("1998", "2000"))
+
+        gwl_cal = gwl0.sel(time=slice("1950", "1980"))
+        fitkwargs = {}
+        if method == "APP":
+            fitkwargs["floc"] = 0
+        params = xci.stats.standardized_index_fit_params(
+            gwl_cal,
+            freq=freq,
+            window=window,
+            dist=dist,
+            method=method,
+            fitkwargs=fitkwargs,
+            zero_inflated=True,
+        )
+        sgi = xci.standardized_groundwater_index(gwl, params=params)
+        # Only a few moments before year 2000 are tested
+        sgi = sgi.isel(time=slice(-11, -1, 2))
+
+        sgi = sgi.clip(-3.09, 3.09)
+
+        np.testing.assert_allclose(sgi.values, values, rtol=0, atol=diff_tol)
 
     @pytest.mark.parametrize(
         "indexer",
