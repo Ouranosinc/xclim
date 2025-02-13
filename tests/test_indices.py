@@ -22,6 +22,7 @@ import xarray as xr
 from numpy import __version__ as __numpy_version__
 from packaging.version import Version
 from pint import __version__ as __pint_version__
+from scipy import stats
 
 from xclim import indices as xci
 from xclim.core import ValidationError
@@ -661,6 +662,38 @@ class TestStandardizedIndices:
                 [-1.08627775, -0.46491398, -0.77806462, 0.31759127, 0.03794528],
                 2e-2,
             ),
+            (
+                "D",
+                1,
+                "gamma",
+                "PWM",
+                [-0.13002, 1.346689, 0.965731, 0.245408, -0.427896],
+                2e-2,
+            ),
+            (
+                "D",
+                12,
+                "gamma",
+                "PWM",
+                [-0.209411, -0.086357, 0.636851, 1.022608, 0.634409],
+                2e-2,
+            ),
+            (
+                "MS",
+                1,
+                "gamma",
+                "PWM",
+                [1.364243, 1.478565, 1.915559, -3.055828, 0.905304],
+                2e-2,
+            ),
+            (
+                "MS",
+                12,
+                "gamma",
+                "PWM",
+                [0.577214, 1.522867, 1.634222, 0.967847, 0.689001],
+                2e-2,
+            ),
         ],
     )
     def test_standardized_precipitation_index(
@@ -672,6 +705,13 @@ class TestStandardizedIndices:
             and Version(__numpy_version__) < Version("2.0.0")
         ):
             pytest.skip("Skipping SPI/ML/D on older numpy")
+
+        # change `dist` to a lmoments3 object if needed
+        if method == "PWM":
+            lmom = pytest.importorskip("lmoments3.distr")
+            scipy2lmom = {"gamma": "gam"}
+            dist = getattr(lmom, scipy2lmom[dist])
+
         ds = open_dataset("sdba/CanESM2_1950-2100.nc").isel(location=1)
         if freq == "D":
             # to compare with ``climate_indices``
@@ -709,6 +749,34 @@ class TestStandardizedIndices:
         spi = spi.clip(-3.09, 3.09)
 
         np.testing.assert_allclose(spi.values, values, rtol=0, atol=diff_tol)
+
+    @pytest.mark.slow
+    @pytest.mark.parametrize("dist", ["gamma", "fisk"])
+    def test_str_vs_rv_continuous(self, open_dataset, dist):
+        ds = open_dataset("sdba/CanESM2_1950-2100.nc").isel(location=1)
+        window = 1
+        method = "ML"
+        freq = "MS"
+
+        pr = ds.pr.sel(time=slice("1998", "2000"))
+        pr_cal = ds.pr.sel(time=slice("1950", "1980"))
+        fitkwargs = {}
+
+        out = []
+        for dist0 in [dist, getattr(stats, dist)]:
+            params = xci.stats.standardized_index_fit_params(
+                pr_cal,
+                freq=freq,
+                window=window,
+                dist=dist0,
+                method=method,
+                fitkwargs=fitkwargs,
+                zero_inflated=True,
+            )
+            spi = xci.standardized_precipitation_index(pr, params=params)
+            # Only a few moments before year 2000 are tested
+            out.append(spi.isel(time=slice(-11, -1, 2)))
+        assert all(out[0] == out[1])
 
     # See SPI version
     @pytest.mark.slow
@@ -1212,6 +1280,41 @@ class TestStandardizedIndices:
         np.testing.assert_equal(
             np.all(np.not_equal(spid[False].values, spid[True].values)), True
         )
+
+    def test_PWM_and_fitkwargs(self, open_dataset):
+        pr = (
+            open_dataset("sdba/CanESM2_1950-2100.nc")
+            .isel(location=1)
+            .sel(time=slice("1950", "1980"))
+        ).pr
+
+        lmom = pytest.importorskip("lmoments3.distr")
+        # for now, only one function used
+        scipy2lmom = {"gamma": "gam"}
+        dist = getattr(lmom, scipy2lmom["gamma"])
+        fitkwargs = {"floc": 0}
+        input_params = dict(
+            freq=None,
+            window=1,
+            method="PWM",
+            dist=dist,
+            fitkwargs=fitkwargs,
+        )
+        # this should not cause a problem
+        params_d0 = xci.stats.standardized_index_fit_params(pr, **input_params).isel(
+            dayofyear=0
+        )
+        np.testing.assert_allclose(
+            params_d0, np.array([5.63e-01, 0, 3.37e-05]), rtol=0, atol=2e-2
+        )
+        # this should cause a problem
+        fitkwargs["fscale"] = 1
+        input_params["fitkwargs"] = fitkwargs
+        with pytest.raises(
+            ValueError,
+            match="Lmoments3 does not use `fitkwargs` arguments, except for `floc` with the Gamma distribution.",
+        ):
+            xci.stats.standardized_index_fit_params(pr, **input_params)
 
 
 class TestDailyFreezeThawCycles:
@@ -3127,10 +3230,11 @@ def test_specific_humidity_from_dewpoint(tas_series, ps_series):
 @pytest.mark.parametrize(
     "ice_thresh,exp0", [(None, [125, 286, 568]), ("0 degC", [103, 260, 563])]
 )
-@pytest.mark.parametrize("units", ["degC", "degK"])
-def test_saturation_vapor_pressure(tas_series, method, ice_thresh, exp0, units):
+@pytest.mark.parametrize("temp_units", ["degC", "degK"])
+def test_saturation_vapor_pressure(tas_series, method, ice_thresh, exp0, temp_units):
     tas = tas_series(np.array([-20, -10, -1, 10, 20, 25, 30, 40, 60]) + K2C)
-    tas = convert_units_to(tas, units)
+    tas = convert_units_to(tas, temp_units)
+
     # Expected values obtained with the Sonntag90 method
     e_sat_exp = exp0 + [1228, 2339, 3169, 4247, 7385, 19947]
 
@@ -3142,6 +3246,24 @@ def test_saturation_vapor_pressure(tas_series, method, ice_thresh, exp0, units):
     np.testing.assert_allclose(e_sat, e_sat_exp, atol=0.5, rtol=0.005)
 
 
+@pytest.mark.parametrize(
+    "method", ["tetens30", "sonntag90", "goffgratch46", "wmo08", "its90"]
+)
+def test_vapor_pressure_deficit(tas_series, hurs_series, method):
+    tas = tas_series(np.array([-1, 10, 20, 25, 30, 40, 60]) + K2C)
+    hurs = hurs_series(np.array([0, 0.5, 0.8, 0.9, 0.95, 0.99, 1]))
+
+    # Expected values obtained with the GoffGratch46 method
+    svp_exp = [567, 1220, 2317, 3136, 4200, 7300, 19717]
+
+    vpd = xci.vapor_pressure_deficit(
+        tas=tas,
+        hurs=hurs,
+        method=method,
+    )
+    np.testing.assert_allclose(vpd, svp_exp, atol=0.5, rtol=0.005)
+
+
 @pytest.mark.parametrize("method", ["tetens30", "sonntag90", "goffgratch46", "wmo08"])
 @pytest.mark.parametrize(
     "invalid_values,exp0", [("clip", 100), ("mask", np.nan), (None, 188)]
@@ -3150,6 +3272,7 @@ def test_relative_humidity(
     tas_series, hurs_series, huss_series, ps_series, method, invalid_values, exp0
 ):
     tas = tas_series(np.array([-10, -10, 10, 20, 35, 50, 75, 95]) + K2C)
+
     # Expected values obtained with the Sonntag90 method
     hurs_exp = hurs_series([exp0, 63.0, 66.0, 34.0, 14.0, 6.0, 1.0, 0.0])
     ps = ps_series([101325] * 8)

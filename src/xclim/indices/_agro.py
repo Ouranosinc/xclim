@@ -6,6 +6,7 @@ from typing import cast
 
 import numpy as np
 import xarray
+from scipy.stats import rv_continuous
 
 import xclim.indices.run_length as rl
 from xclim.core import DateStr, DayOfYearStr, Quantified
@@ -1122,7 +1123,7 @@ def standardized_precipitation_index(
     pr: xarray.DataArray,
     freq: str | None = "MS",
     window: int = 1,
-    dist: str = "gamma",
+    dist: str | rv_continuous = "gamma",
     method: str = "ML",
     fitkwargs: dict | None = None,
     cal_start: DateStr | None = None,
@@ -1143,13 +1144,14 @@ def standardized_precipitation_index(
     window : int
         Averaging window length relative to the resampling frequency. For example, if `freq="MS"`,
         i.e. a monthly resampling, the window is an integer number of months.
-    dist : {"gamma", "fisk"}
-        Name of the univariate distribution. (see :py:mod:`scipy.stats`).
-    method : {"APP", "ML"}
+    dist : {'gamma', 'fisk'} or `rv_continuous` function
+        Name of the univariate distribution, or a callable `rv_continuous` (see :py:mod:`scipy.stats`).
+    method : {"APP", "ML", "PWM"}
         Name of the fitting method, such as `ML` (maximum likelihood), `APP` (approximate). The approximate method
-        uses a deterministic function that does not involve any optimization.
+        uses a deterministic function that does not involve any optimization. `PWM` should be used with a `lmoments3` distribution.
     fitkwargs : dict, optional
         Kwargs passed to ``xclim.indices.stats.fit`` used to impose values of certains parameters (`floc`, `fscale`).
+        If method is `PWM`, `fitkwargs` should be empty, except for `floc` with `dist`=`gamma` which is allowed.
     cal_start : DateStr, optional
         Start date of the calibration period. A `DateStr` is expected, that is a `str` in format `"YYYY-MM-DD"`.
         Default option `None` means that the calibration period begins at the start of the input dataset.
@@ -1169,18 +1171,22 @@ def standardized_precipitation_index(
     xarray.DataArray, [unitless]
         Standardized Precipitation Index.
 
+    See Also
+    --------
+    xclim.indices.stats.standardized_index : Standardized Index.
+    xclim.indices.stats.standardized_index_fit_params : Standardized Index Fit Params.
+
     Notes
     -----
     * N-month SPI / N-day SPI is determined by choosing the `window = N` and the appropriate frequency `freq`.
     * Supported statistical distributions are: ["gamma", "fisk"], where "fisk" is scipy's implementation of
-       a log-logistic distribution
+      a log-logistic distribution
     * Supported frequencies are daily ("D"), weekly ("W"), and monthly ("MS").
-      Weekly frequency will only work if the input array has a "standard" (non-cftime) calendar.
+    * Weekly frequency will only work if the input array has a "standard" (non-cftime) calendar.
     * If `params` is given as input, it overrides the `cal_start`, `cal_end`, `freq` and `window`, `dist` and `method` options.
     * "APP" method only supports two-parameter distributions. Parameter `loc` needs to be fixed to use method `APP`.
-    * The standardized index is bounded by ±8.21. 8.21 is the largest standardized index as constrained by the float64 precision in
-      the inversion to the normal distribution.
-    * The results from `climate_indices` library can be reproduced with `method = "APP"` and `fitwkargs = {"floc": 0}`
+    * The results from `climate_indices` library can be reproduced with `method = "APP"` and `fitwkargs = {"floc": 0}`, except for the maximum
+      and minimum values allowed which are greater in xclim ±8.21, . See `xclim.indices.stats.standardized_index`
 
     References
     ----------
@@ -1218,14 +1224,16 @@ def standardized_precipitation_index(
     >>> spi_3_fitted = standardized_precipitation_index(pr, params=params)
     """
     fitkwargs = fitkwargs or {}
+
     dist_methods = {"gamma": ["ML", "APP"], "fisk": ["ML", "APP"]}
-    if dist in dist_methods:
-        if method not in dist_methods[dist]:
-            raise NotImplementedError(
-                f"{method} method is not implemented for {dist} distribution."
-            )
-    else:
-        raise NotImplementedError(f"{dist} distribution is not yet implemented.")
+    if isinstance(dist, str):
+        if dist in dist_methods:
+            if method not in dist_methods[dist]:
+                raise NotImplementedError(
+                    f"{method} method is not implemented for {dist} distribution"
+                )
+        else:
+            raise NotImplementedError(f"{dist} distribution is not yet implemented.")
 
     # Precipitation is expected to be zero-inflated
     zero_inflated = True
@@ -1254,7 +1262,7 @@ def standardized_precipitation_evapotranspiration_index(
     wb: xarray.DataArray,
     freq: str | None = "MS",
     window: int = 1,
-    dist: str = "gamma",
+    dist: str | rv_continuous = "gamma",
     method: str = "ML",
     fitkwargs: dict | None = None,
     cal_start: DateStr | None = None,
@@ -1279,13 +1287,14 @@ def standardized_precipitation_evapotranspiration_index(
     window : int
         Averaging window length relative to the resampling frequency. For example, if `freq="MS"`, i.e. a monthly
         resampling, the window is an integer number of months.
-    dist : {'gamma', 'fisk'}
-        Name of the univariate distribution. (see :py:mod:`scipy.stats`).
-    method : {'APP', 'ML'}
+    dist : {'gamma', 'fisk'} or `rv_continuous` function
+        Name of the univariate distribution, or a callable `rv_continuous` (see :py:mod:`scipy.stats`).
+    method : {"APP", "ML", "PWM"}
         Name of the fitting method, such as `ML` (maximum likelihood), `APP` (approximate). The approximate method
-        uses a deterministic function that doesn't involve any optimization.
+        uses a deterministic function that does not involve any optimization. `PWM` should be used with a `lmoments3` distribution.
     fitkwargs : dict, optional
         Kwargs passed to ``xclim.indices.stats.fit`` used to impose values of certains parameters (`floc`, `fscale`).
+        If method is `PWM`, `fitkwargs` should be empty, except for `floc` with `dist`=`gamma` which is allowed.
     cal_start : DateStr, optional
         Start date of the calibration period. A `DateStr` is expected, that is a `str` in format `"YYYY-MM-DD"`.
         Default option `None` means that the calibration period begins at the start of the input dataset.
@@ -1308,17 +1317,20 @@ def standardized_precipitation_evapotranspiration_index(
     See Also
     --------
     standardized_precipitation_index : Standardized Precipitation Index.
+    xclim.indices.stats.standardized_index : Standardized Index.
+    xclim.indices.stats.standardized_index_fit_params : Standardized Index Fit Params.
     """
     fitkwargs = fitkwargs or {}
 
     dist_methods = {"gamma": ["ML", "APP"], "fisk": ["ML", "APP"]}
-    if dist in dist_methods:
-        if method not in dist_methods[dist]:
-            raise NotImplementedError(
-                f"{method} method is not implemented for {dist} distribution"
-            )
-    else:
-        raise NotImplementedError(f"{dist} distribution is not yet implemented.")
+    if isinstance(dist, str):
+        if dist in dist_methods:
+            if method not in dist_methods[dist]:
+                raise NotImplementedError(
+                    f"{method} method is not implemented for {dist} distribution"
+                )
+        else:
+            raise NotImplementedError(f"{dist} distribution is not yet implemented.")
 
     # Water budget is not expected to be zero-inflated
     zero_inflated = False

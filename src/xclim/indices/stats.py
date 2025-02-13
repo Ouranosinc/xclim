@@ -59,7 +59,21 @@ def _fitfunc_1d(arr, *, dist, nparams, method, **fitkwargs):
         # lmoments3 will raise an error if only dist.numargs + 2 values are provided
         if len(x) <= dist.numargs + 2:
             return np.asarray([np.nan] * nparams)
-        params = list(dist.lmom_fit(x).values())
+        if (type(dist).__name__ != "GammaGen" and len(fitkwargs.keys()) != 0) or (
+            type(dist).__name__ == "GammaGen"
+            and set(fitkwargs.keys()) - {"floc"} != set()
+        ):
+            raise ValueError(
+                "Lmoments3 does not use `fitkwargs` arguments, except for `floc` with the Gamma distribution."
+            )
+        if "floc" in fitkwargs and type(dist).__name__ == "GammaGen":
+            # lmoments3 assumes `loc` is 0, so `x` may need to be shifted
+            # note that `floc` must already be in appropriate units for `x`
+            params = dist.lmom_fit(x - fitkwargs["floc"])
+            params["loc"] = fitkwargs["floc"]
+            params = list(params.values())
+        else:
+            params = list(dist.lmom_fit(x).values())
     elif method == "APP":
         args, kwargs = _fit_start(x, dist.name, **fitkwargs)
         kwargs.setdefault("loc", 0)
@@ -791,9 +805,11 @@ def standardized_index_fit_params(
     Notes
     -----
     Supported combinations of `dist` and `method` are:
-    * Gamma ("gamma") : "ML", "APP", "PWM"
+    * Gamma ("gamma") : "ML", "APP"
     * Log-logistic ("fisk") : "ML", "APP"
     * "APP" method only supports two-parameter distributions. Parameter `loc` will be set to 0 (setting `floc=0` in `fitkwargs`).
+    * Otherwise, generic `rv_continuous` methods can be used. This includes distributions from `lmoments3` which should be used with
+    `method="PWM"`.
 
     When using the zero inflated option, : A probability density function :math:`\texttt{pdf}_0(X)` is fitted for :math:`X \neq 0`
     and a supplementary parameter :math:`\pi` takes into account the probability of :math:`X = 0`. The full probability density
@@ -820,12 +836,15 @@ def standardized_index_fit_params(
         "lognorm": ["ML", "APP"],
     }
     dist = get_dist(dist)
-    if dist.name not in dist_and_methods:
-        raise NotImplementedError(f"The distribution `{dist.name}` is not supported.")
-    if method not in dist_and_methods[dist.name]:
-        raise NotImplementedError(
-            f"The method `{method}` is not supported for distribution `{dist.name}`."
-        )
+    if method != "PWM":
+        if dist.name not in dist_and_methods:
+            raise NotImplementedError(
+                f"The distribution `{dist.name}` is not supported."
+            )
+        if method not in dist_and_methods[dist.name]:
+            raise NotImplementedError(
+                f"The method `{method}` is not supported for distribution `{dist.name}`."
+            )
     da, group = preprocess_standardized_index(da, freq, window, **indexer)
     if zero_inflated:
         prob_of_zero = da.groupby(group).map(
@@ -894,8 +913,9 @@ def standardized_index(
         The approximate method uses a deterministic function that doesn't involve any optimization.
     zero_inflated : bool
         If True, the zeroes of `da` are treated separately.
-    fitkwargs : dict
+    fitkwargs : dict, optional
         Kwargs passed to ``xclim.indices.stats.fit`` used to impose values of certains parameters (`floc`, `fscale`).
+        If method is `PWM`, `fitkwargs` should be empty, except for `floc` with `dist`=`gamma` which is allowed.
     cal_start : DateStr, optional
         Start date of the calibration period. A `DateStr` is expected, that is a `str` in format `"YYYY-MM-DD"`.
         Default option `None` means that the calibration period begins at the start of the input dataset.
@@ -915,11 +935,22 @@ def standardized_index(
     xarray.DataArray, [unitless]
         Standardized Precipitation Index.
 
+    See Also
+    --------
+    standardized_index_fit_params : Standardized Index Fit Params.
+
     Notes
     -----
     * The standardized index is bounded by ±8.21. 8.21 is the largest standardized index as constrained by the float64 precision in
       the inversion to the normal distribution.
-    * ``window``, ``dist``, ``method``, ``zero_inflated`` are only optional if ``params`` is given.
+    * ``window``, ``dist``, ``method``, ``zero_inflated`` are only optional if ``params`` is given. If `params` is given as input,
+      it overrides the `cal_start`, `cal_end`, `freq` and `window`, `dist` and `method` options.
+    * Supported combinations of `dist` and `method` are:
+      * Gamma ("gamma") : "ML", "APP"
+      * Log-logistic ("fisk") : "ML", "APP"
+      * "APP" method only supports two-parameter distributions. Parameter `loc` will be set to 0 (setting `floc=0` in `fitkwargs`).
+      * Otherwise, generic `rv_continuous` methods can be used. This includes distributions from `lmoments3` which should be used with
+      `method="PWM"`.
 
     References
     ----------
