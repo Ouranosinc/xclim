@@ -75,7 +75,7 @@ jobs:
           body: |
             > [!NOTE]
             > This Pull Request modifies the SDBA module.
-            **The changes made here has been approved. Be sure to port any relevant changes to `xsdba`.**
+            **The changes made here have been approved. Be sure to port any relevant changes to `xsdba`.**
           reactions: |
             hooray
           edit-mode: append
