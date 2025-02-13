@@ -5,8 +5,8 @@ SDBA submodule
 
 .. warning::
 
-    The SDBA submodule is in the process of being split from `xclim` in order to facilitate effective maintenance
-    of the SDBA utilities as well as speed up imports in `xclim`. `xclim.sdba` functionality will change in the future.
+    The SDBA submodule is in the process of being split from `xclim` in order to facilitate development and effective
+    maintenance of the SDBA utilities. The `xclim.sdba` functionality will change in the future.
     For more information, please visit https://xsdba.readthedocs.io/en/latest/.
 """
 
@@ -20,8 +20,8 @@ from .base import Grouper
 from .processing import stack_variables, unstack_variables
 
 warnings.warn(
-    "The SDBA module is in the process of being split from 'xclim' in order to facilitate effective maintenance "
-    "of the SDBA utilities as well as speed up imports in `xclim`. `xclim.sdba` functionality will change in the future. "
+    "The SDBA submodule is in the process of being split from `xclim` in order to facilitate development and effective "
+    "maintenance of the SDBA utilities. The `xclim.sdba` functionality will change in the future. "
     "For more information, please visit https://xsdba.readthedocs.io/en/latest/.",
     FutureWarning,
 )
