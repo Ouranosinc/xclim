@@ -1009,7 +1009,6 @@ class TestStandardizedIndices:
             method="PWM",
             dist=dist,
             fitkwargs=fitkwargs,
-            # doy_bounds=(180, 180),
         )
         # this should not cause a problem
         params_d0 = xci.stats.standardized_index_fit_params(pr, **input_params).isel(
