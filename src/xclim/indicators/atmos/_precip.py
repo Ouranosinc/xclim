@@ -10,8 +10,8 @@ from xclim.core.indicator import (
     Daily,
     Hourly,
     Indicator,
-    ResamplingIndicator,
     ResamplingIndicatorWithIndexing,
+    StandardizedIndexes,
 )
 from xclim.core.utils import InputKind
 
@@ -113,13 +113,6 @@ class PrTasxWithIndexing(ResamplingIndicatorWithIndexing):
         """
         cfchecks.cfcheck_from_name("pr", pr)
         cfchecks.check_valid(tas, "standard_name", "air_temperature")
-
-
-class StandardizedIndexes(ResamplingIndicator):
-    """Resampling but flexible inputs indicators."""
-
-    src_freq = ["D", "MS"]
-    context = "hydro"
 
 
 class HrPrecip(Hourly):

@@ -2007,3 +2007,10 @@ def build_indicator_module_from_yaml(  # noqa: C901
             load_locale(loc_dict, locale)
 
     return mod
+
+
+class StandardizedIndexes(ResamplingIndicator):
+    """Resampling but flexible inputs indicators."""
+
+    src_freq = ["D", "MS"]
+    context = "hydro"

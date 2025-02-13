@@ -8,6 +8,7 @@ from xclim.core.cfchecks import check_valid
 from xclim.core.indicator import (
     ReducingIndicator,
     ResamplingIndicator,
+    StandardizedIndexes,
 )
 from xclim.core.units import declare_units
 from xclim.indices import (
@@ -52,13 +53,6 @@ class Streamflow(ResamplingIndicator):
             The input data array.
         """
         check_valid(q, "standard_name", "water_volume_transport_in_river_channel")
-
-
-class StandardizedStreamflowIndexes(ResamplingIndicator):
-    """Resampling but flexible inputs indicators."""
-
-    src_freq = ["D", "MS"]
-    context = "hydro"
 
 
 base_flow_index = Streamflow(
@@ -143,7 +137,7 @@ low_flow_frequency = Streamflow(
     compute=low_flow_frequency,
 )
 
-standardized_streamflow_index = StandardizedStreamflowIndexes(
+standardized_streamflow_index = StandardizedIndexes(
     title="Standardized Streamflow Index (SSI)",
     identifier="ssi",
     units="",
@@ -159,7 +153,7 @@ standardized_streamflow_index = StandardizedStreamflowIndexes(
 )
 
 
-standardized_groundwater_index = StandardizedStreamflowIndexes(
+standardized_groundwater_index = StandardizedIndexes(
     title="Standardized Groundwater Index (SGI)",
     identifier="sgi",
     units="",
