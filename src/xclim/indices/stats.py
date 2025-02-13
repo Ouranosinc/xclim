@@ -592,6 +592,7 @@ def _fit_start(x, dist: str, **fitkwargs: Any) -> tuple[tuple, dict]:
             loc0 = (x1 * xn - xp**2) / (x1 + xn - 2 * xp)
         x_pos = x - loc0
         x_pos = x_pos[x_pos > 0]
+        # MLE estimation
         log_x_pos = np.log(x_pos)
         shape0 = log_x_pos.std()
         scale0 = np.exp(log_x_pos.mean())
