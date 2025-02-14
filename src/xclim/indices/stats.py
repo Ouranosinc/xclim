@@ -55,6 +55,9 @@ def _fitfunc_1d(arr, *, dist, nparams, method, **fitkwargs):
         params = dist.fit(x, *args, method="mle", **kwargs, **fitkwargs)
     elif method == "MM":
         params = dist.fit(x, method="mm", **fitkwargs)
+    elif method == "MSE":
+        fitresult = scipy.stats.fit(dist, x, method='mse', **kwargs, **fitkwargs)
+        params = fitresult.params
     elif method == "PWM":
         # lmoments3 will raise an error if only dist.numargs + 2 values are provided
         if len(x) <= dist.numargs + 2:
@@ -107,10 +110,10 @@ def fit(
     dist : str or rv_continuous distribution object
         Name of the univariate distribution, such as beta, expon, genextreme, gamma, gumbel_r, lognorm, norm
         (see :py:mod:scipy.stats for full list) or the distribution object itself.
-    method : {"ML", "MLE", "MM", "PWM", "APP"}
-        Fitting method, either maximum likelihood (ML or MLE), method of moments (MM) or approximate method (APP).
+    method : {"ML", "MLE", "MM", "PWM", "APP", "MSE"}
+        Fitting method, either maximum likelihood (ML or MLE), method of moments (MM), maximum product of spacings (MSE) or approximate method (APP).
         Can also be the probability weighted moments (PWM), also called L-Moments, if a compatible `dist` object is passed.
-        The PWM method is usually more robust to outliers.
+        The PWM method is usually more robust to outliers. The MSE method is more consistant than the MLE method, although it can be more sensitive to repeated data.
     dim : str
         The dimension upon which to perform the indexing (default: "time").
     **fitkwargs : dict
@@ -131,8 +134,9 @@ def fit(
         "ML": "maximum likelihood",
         "MM": "method of moments",
         "MLE": "maximum likelihood",
+        "MSE": "maximum product of spacings",
         "PWM": "probability weighted moments",
-        "APP": "approximative method",
+        "APP": "approximative method"
     }
     if method not in method_name:
         raise ValueError(f"Fitting method not recognized: {method}")
