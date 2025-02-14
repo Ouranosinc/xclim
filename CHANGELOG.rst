@@ -30,6 +30,7 @@ New features and enhancements
 * New ``xclim.indices.fao_allen98``, exporting the FAO-56 Penman-Monteith equation for potential evapotranspiration (:issue:`2004`, :pull:`2067`).
 * Missing values method "pct" and "at_least_n" now accept a new "subfreq" option that allows to compute the missing mask in two steps. When given, the algorithm is applied at this "subfreq" resampling frequency first and then the result is resampled at the target indicator frequency. In the output, a period is invalid if any of its subgroup where flagged as invalid by the chosen method. (:pull:`2058`, :issue:`1820`).
 * `rv_continuous` functions can now be given directly as the `dist` argument in ``standardized_precipitation_index`` and ``standardized_precipitation_evapotranspiration_index`` indicators. This includes `lmoments3` distribution when specifying `method="PWM"`. (:issue:`2043`, :pull:`2045`).
+* Maximum Spacing Estimation method for distribution fitting has been added to `xclim.indices.stats.fit` (:issue:`2078`, :pull:`2077`)
 
 Internal changes
 ^^^^^^^^^^^^^^^^
