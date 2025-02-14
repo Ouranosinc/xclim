@@ -56,7 +56,7 @@ def _fitfunc_1d(arr, *, dist, nparams, method, **fitkwargs):
     elif method == "MM":
         params = dist.fit(x, method="mm", **fitkwargs)
     elif method == "MSE":
-        fitresult = scipy.stats.fit(dist, x, method='mse', **kwargs, **fitkwargs)
+        fitresult = scipy.stats.fit(dist, x, method="mse", **kwargs, **fitkwargs)
         params = fitresult.params
     elif method == "PWM":
         # lmoments3 will raise an error if only dist.numargs + 2 values are provided
@@ -136,7 +136,7 @@ def fit(
         "MLE": "maximum likelihood",
         "MSE": "maximum product of spacings",
         "PWM": "probability weighted moments",
-        "APP": "approximative method"
+        "APP": "approximative method",
     }
     if method not in method_name:
         raise ValueError(f"Fitting method not recognized: {method}")
