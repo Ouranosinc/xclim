@@ -860,6 +860,43 @@ def test_resampling_indicator_with_indexing(tas_series):
     np.testing.assert_allclose(out, [32, 33])
 
 
+def test_indicator_indexing_doy_bounds_spatial(tasmin_series):
+    da = tasmin_series(np.ones(730), start="2005-01-01", units="°C").expand_dims(
+        lat=[0, 10, 15, 20, 25]
+    )
+
+    start = xr.DataArray(
+        [50, 340, 100, np.nan, np.nan], dims=("lat",), coords={"lat": da.lat}
+    )
+    end = xr.DataArray(
+        [200, 20, np.nan, 200, np.nan], dims=("lat",), coords={"lat": da.lat}
+    )
+    out = atmos.tn_days_above(da, thresh="0 °C", doy_bounds=(start, end))
+
+    np.testing.assert_array_equal(
+        out,
+        [[151.0, 151.0], [46.0, 46.0], [266.0, 266.0], [200.0, 200.0], [365.0, 365.0]],
+    )
+
+
+def test_indicator_indexing_doy_bounds_temporal(tasmin_series):
+    da = tasmin_series(np.ones(365 * 5 + 1), start="2005-01-01", units="°C")
+
+    time = xr.date_range("2005-01-01", freq="YS", periods=5)
+    start = xr.DataArray(
+        [50, 340, 100, np.nan, np.nan], dims=("time",), coords={"time": time}
+    )
+    end = xr.DataArray(
+        [200, 20, np.nan, 200, np.nan], dims=("time",), coords={"time": time}
+    )
+    out = atmos.tn_days_above(da, thresh="0 °C", doy_bounds=(start, end))
+
+    # 340, 20 is an invalid indexer for freq YS.
+    # such cases return an entirely masked array
+    # No values are missing as there are no values to count
+    np.testing.assert_array_equal(out, [151, 0, 266, 200, 365])
+
+
 def test_all_inputs_known():
     var_and_inds = list_input_variables()
     known_vars = (

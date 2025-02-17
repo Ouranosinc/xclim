@@ -1037,7 +1037,7 @@ def doy_to_days_since(
     # 2cases:
     # val is a day in the same year as its index : da - offset
     # val is a day in the next year : da + doy_max - offset
-    out = xr.where(dac > base_doy, dac, dac + doy_max) - start_doy
+    out = xr.where(dac >= base_doy, dac, dac + doy_max) - start_doy
     out.attrs.update(da.attrs)
     if start is not None:
         out.attrs.update(units=f"days after {start}")
@@ -1117,12 +1117,136 @@ def days_since_to_doy(
     return out.convert_calendar(base_calendar).rename(da.name)
 
 
+def _get_doys(start: int, end: int, inclusive: tuple[bool, bool]):
+    """
+    Get the day of year list from start to end.
+
+    Parameters
+    ----------
+    start : int
+        Start day of year.
+    end : int
+        End day of year.
+    inclusive : 2-tuple of booleans
+        Whether the bounds should be inclusive or not.
+
+    Returns
+    -------
+    np.ndarray
+        Array of day of year between the start and end.
+    """
+    if start <= end:
+        doys = np.arange(start, end + 1)
+    else:
+        doys = np.concatenate((np.arange(start, 367), np.arange(0, end + 1)))
+    if not inclusive[0]:
+        doys = doys[1:]
+    if not inclusive[1]:
+        doys = doys[:-1]
+    return doys
+
+
+def mask_between_doys(
+    da: xr.DataArray,
+    doy_bounds: tuple[int | xr.DataArray, int | xr.DataArray],
+    include_bounds: tuple[bool, bool] = [True, True],
+) -> xr.DataArray | xr.Dataset:
+    """
+    Mask the data outside the day of year bounds.
+
+    Parameters
+    ----------
+    da : xr.DataArray or xr.Dataset
+        Input data. It must have a time coordinate.
+    doy_bounds : 2-tuple of integers or DataArray
+        The bounds as (start, end) of the period of interest expressed in day-of-year, integers going from
+        1 (January 1st) to 365 or 366 (December 31st).
+        If DataArrays are passed, they must have the same coordinates on the dimensions they share.
+        They may have a time dimension, in which case the masking is done independently for each period defined by the coordinate,
+        which means the time coordinate must have an inferable frequency (see :py:func:`xr.infer_freq`).
+        Timesteps of the input not appearing in the time coordinate of the bounds are masked as "outside the bounds".
+        Missing values (nan) in the start and end bounds default to 1 and 366 respectively in the non-temporal case
+        and to open bounds (the start and end of the period) in the temporal case.
+    include_bounds : 2-tuple of booleans
+        Whether the bounds of `doy_bounds` should be inclusive or not.
+
+    Returns
+    -------
+    xr.DataArray
+        Boolean array with the same time coordinate as `da` and any other dimension present on the bounds.
+        True value inside the period of interest and False outside.
+    """
+    if isinstance(doy_bounds[0], int) and isinstance(doy_bounds[1], int):  # Simple case
+        mask = da.time.dt.dayofyear.isin(_get_doys(*doy_bounds, include_bounds))
+    else:
+        start, end = doy_bounds
+        # convert ints to DataArrays
+        if isinstance(start, int):
+            start = xr.full_like(end, start)
+        elif isinstance(end, int):
+            end = xr.full_like(start, end)
+        # Ensure they both have the same dims
+        # align join='exact' will fail on common but different coords, broadcast will add missing coords
+        start, end = xr.broadcast(*xr.align(start, end, join="exact"))
+
+        if not include_bounds[0]:
+            start += 1
+        if not include_bounds[1]:
+            end -= 1
+
+        if "time" in start.dims:
+            freq = xr.infer_freq(start.time)
+            # Convert the doy bounds to a duration since the beginning of each period defined in the bound's time coordinate
+            # Also ensures the bounds share the sime time calendar as the input
+            # Any missing value is replaced with the min/max of possible values
+            calkws = dict(
+                calendar=da.time.dt.calendar, use_cftime=(da.time.dtype == "O")
+            )
+            start = doy_to_days_since(start.convert_calendar(**calkws)).fillna(0)
+            end = doy_to_days_since(end.convert_calendar(**calkws)).fillna(366)
+
+            out = []
+            # For each period, mask the days since between start and end
+            for base_time, indexes in da.resample(time=freq).groups.items():
+                group = da.isel(time=indexes)
+
+                if base_time in start.time:
+                    start_d = start.sel(time=base_time)
+                    end_d = end.sel(time=base_time)
+
+                    # select days between start and end for group
+                    days = (group.time - base_time).dt.days
+                    days = days.where(days >= 0)
+                    mask = (days >= start_d) & (days <= end_d)
+                else:  # This group has no defined bounds : put False in the mask
+                    # Array with the same shape as the "mask" in the other case : broadcast of time and bounds dims
+                    template = xr.broadcast(
+                        group.time.dt.day, start.isel(time=0, drop=True)
+                    )[0]
+                    mask = xr.full_like(template, False, dtype="bool")
+                out.append(mask)
+            mask = xr.concat(out, dim="time")
+        else:  # Only "Spatial" dims, we can't constrain as in days since, so there are two cases
+            doys = da.time.dt.dayofyear  # for readability
+            # Any missing value is replaced with the min/max of possible values
+            start = start.fillna(1)
+            end = end.fillna(366)
+            mask = xr.where(
+                start <= end,
+                # case 1 : start <= end, ROI is within a calendar year
+                (doys >= start) & (doys <= end),
+                # case 2 : start >  end, ROI crosses the new year
+                ~((doys > end) & (doys < start)),
+            )
+    return mask
+
+
 def select_time(
     da: xr.DataArray | xr.Dataset,
     drop: bool = False,
     season: str | Sequence[str] | None = None,
     month: int | Sequence[int] | None = None,
-    doy_bounds: tuple[int, int] | None = None,
+    doy_bounds: tuple[int | xr.DataArray, int | xr.DataArray] | None = None,
     date_bounds: tuple[str, str] | None = None,
     include_bounds: bool | tuple[bool, bool] = True,
 ) -> DataType:
@@ -1138,14 +1262,16 @@ def select_time(
     da : xr.DataArray or xr.Dataset
         Input data.
     drop : bool
-        Whether to drop elements outside the period of interest or to simply mask them (default).
+        Whether to drop elements outside the period of interest (True) or to simply mask them (False, default).
+        This option is incompatible with passing array-like doy_bounds.
     season : str or sequence of str, optional
         One or more of 'DJF', 'MAM', 'JJA' and 'SON'.
     month : int or sequence of int, optional
         Sequence of month numbers (January = 1 ... December = 12).
-    doy_bounds : 2-tuple of int, optional
+    doy_bounds : 2-tuple of int or xr.DataArray, optional
         The bounds as (start, end) of the period of interest expressed in day-of-year, integers going from
-        1 (January 1st) to 365 or 366 (December 31st).
+        1 (January 1st) to 365 or 366 (December 31st). If a combination of int and xr.DataArray is given,
+        the int day-of-year corresponds to the year of the xr.DataArray.
         If calendar awareness is needed, consider using ``date_bounds`` instead.
     date_bounds : 2-tuple of str, optional
         The bounds as (start, end) of the period of interest expressed as dates in the month-day (%m-%d) format.
@@ -1187,17 +1313,6 @@ def select_time(
     if N == 0:
         return da
 
-    def _get_doys(_start, _end, _inclusive):
-        if _start <= _end:
-            _doys = np.arange(_start, _end + 1)
-        else:
-            _doys = np.concatenate((np.arange(_start, 367), np.arange(0, _end + 1)))
-        if not _inclusive[0]:
-            _doys = _doys[1:]
-        if not _inclusive[1]:
-            _doys = _doys[:-1]
-        return _doys
-
     if isinstance(include_bounds, bool):
         include_bounds = (include_bounds, include_bounds)
 
@@ -1212,7 +1327,15 @@ def select_time(
         mask = da.time.dt.month.isin(month)
 
     elif doy_bounds is not None:
-        mask = da.time.dt.dayofyear.isin(_get_doys(*doy_bounds, include_bounds))
+        if (
+            not (isinstance(doy_bounds[0], int) and isinstance(doy_bounds[1], int))
+            and drop
+        ):
+            # At least one of those is an array, this drop won't work
+            raise ValueError(
+                "Passing array-like doy bounds is incompatible with drop=True."
+            )
+        mask = mask_between_doys(da, doy_bounds, include_bounds)
 
     elif date_bounds is not None:
         # This one is a bit trickier.

@@ -105,9 +105,6 @@ class TestMissingAnyFills:
         miss = missing.missing_any(ts, freq="YS", month=8)
         np.testing.assert_equal(miss, [True])
 
-        with pytest.raises(ValueError, match=r"No data for selected period."):
-            missing.missing_any(ts, freq="YS", month=1)
-
         miss = missing.missing_any(ts, freq="YS", month=[7, 8])
         np.testing.assert_equal(miss, [True])
 
@@ -117,17 +114,14 @@ class TestMissingAnyFills:
 
     @pytest.mark.parametrize("calendar", ("proleptic_gregorian", "noleap", "360_day"))
     def test_season(self, tasmin_series, calendar):
-        ts = tasmin_series(np.zeros(360))
+        ts = tasmin_series(np.zeros(360), start="2000-01-01")
         ts = ts.convert_calendar(calendar, missing=0, align_on="date")
 
         miss = missing.missing_any(ts, freq="YS", season="MAM")
-        np.testing.assert_equal(miss, [False])
+        np.testing.assert_array_equal(miss, [False])
 
-        miss = missing.missing_any(ts, freq="YS", season="JJA")
-        np.testing.assert_array_equal(miss, [True, True])
-
-        miss = missing.missing_any(ts, freq="YS", season="SON")
-        np.testing.assert_equal(miss, [False])
+        miss = missing.missing_any(ts, freq="YS", season="DJF")
+        np.testing.assert_array_equal(miss, [True])
 
     def test_no_freq(self, tasmin_series):
         ts = tasmin_series(np.zeros(360))
@@ -153,9 +147,6 @@ class TestMissingAnyFills:
         miss = missing.missing_any(ds.q_sim, freq="YS")
         np.testing.assert_array_equal(miss[:-1], False)
         np.testing.assert_array_equal(miss[-1], True)
-
-        miss = missing.missing_any(ds.q_sim, freq="YS", season="JJA")
-        np.testing.assert_array_equal(miss, False)
 
     def test_hourly(self, pr_hr_series):
         a = np.arange(2.0 * 32 * 24)
@@ -244,12 +235,6 @@ class TestAtLeastNValid:
         pr = pr_hr_series(a)
         out = missing.at_least_n_valid(pr, freq="MS", n=25 * 24)
         np.testing.assert_array_equal(out, [True, False, True])
-
-    def test_missing_period(self, tas_series):
-        tas = tas_series(np.ones(366), start="2000-01-01")
-        tas = tas.sel(time=tas.time.dt.month.isin([1, 2, 3, 4, 12]))
-        out = missing.missing_pct(tas, freq="MS", tolerance=0.9, src_timestep="D")
-        np.testing.assert_array_equal(out, [False] * 4 + [True] * 7 + [False])
 
 
 class TestHourly:

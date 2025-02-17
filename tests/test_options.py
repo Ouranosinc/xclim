@@ -69,7 +69,7 @@ def test_set_options_invalid(option, value):
 def test_register_missing_method():
     @register_missing_method("test")
     class MissingTest(MissingBase):
-        def is_missing(self, null, count, a_param=2):
+        def is_missing(self, null, count, freq):
             return True
 
         @staticmethod
