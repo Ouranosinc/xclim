@@ -2,9 +2,9 @@
 Changelog
 =========
 
-v0.55.0 (unreleased)
+v0.55.0 (2025-02-17)
 --------------------
-Contributors to this version: Juliette Lavoie (:user:`juliettelavoie`), Trevor James Smith (:user:`Zeitsperre`), Sascha Hofmann (:user:`saschahofmann`), Pascal Bourgault (:user:`aulemahal`), Éric Dupuis (:user:`coxipi`), Baptiste Hamon (:user:`baptistehamon`).
+Contributors to this version: Juliette Lavoie (:user:`juliettelavoie`), Trevor James Smith (:user:`Zeitsperre`), Sascha Hofmann (:user:`saschahofmann`), Pascal Bourgault (:user:`aulemahal`), Éric Dupuis (:user:`coxipi`), Baptiste Hamon (:user:`baptistehamon`), Sarah Gammon (:user:`SarahG-579462`).
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
