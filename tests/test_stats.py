@@ -6,6 +6,8 @@ import numpy as np
 import pytest
 import xarray as xr
 from scipy.stats import lognorm, norm
+from scipy.optimize import differential_evolution
+from functools import partial
 
 from xclim.indices import stats
 
@@ -159,13 +161,18 @@ def test_genextreme_fit(genextreme):
 
 def test_mse_fit(genextreme):
     """Check MSE fit with a series that leads to poor values without good initial conditions."""
+    # Use fixed-seed rng to remove randomness of differential_evolution
+    # (alternative: change optimizer to non-stochastic gradient-based)
+    # TODO: change when minimum scipy exceeds 1.15.0 to rng=0
+    optimizer = partial(differential_evolution, seed=0)
     p = stats.fit(
         genextreme,
         "genextreme",
         "MSE",
         bounds=dict(c=(0, 1), scale=(0, 100), loc=(200, 400)),
+        optimizer=optimizer,
     )
-    np.testing.assert_allclose(p, (0.18397, 293.6795784, 86.60649), 1e-5)
+    np.testing.assert_allclose(p, (0.18435517630019815, 293.61049928703073, 86.70937297745427), 1e-3)
 
 
 def test_fa(fitda):
