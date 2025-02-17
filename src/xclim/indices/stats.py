@@ -55,7 +55,7 @@ def _fitfunc_1d(arr, *, dist, nparams, method, **fitkwargs):
         params = dist.fit(x, *args, method="mle", **kwargs, **fitkwargs)
     elif method == "MM":
         params = dist.fit(x, method="mm", **fitkwargs)
-    elif method == "MSE":
+    elif method in ["MSE", "MPS"]:
         fitresult = scipy.stats.fit(dist, x, method="mse", **kwargs, **fitkwargs)
         params = fitresult.params
     elif method == "PWM":
