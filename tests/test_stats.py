@@ -156,10 +156,17 @@ def test_genextreme_fit(genextreme):
     p = stats.fit(genextreme, "genextreme")
     np.testing.assert_allclose(p, (0.20949, 297.954091, 75.7911863), 1e-5)
 
+
 def test_mse_fit(genextreme):
     """Check MSE fit with a series that leads to poor values without good initial conditions."""
-    p = stats.fit(genextreme, "genextreme", "MSE", bounds=dict(c=(0,1), scale=(0,100), loc=(200,400)))
+    p = stats.fit(
+        genextreme,
+        "genextreme",
+        "MSE",
+        bounds=dict(c=(0, 1), scale=(0, 100), loc=(200, 400)),
+    )
     np.testing.assert_allclose(p, (0.18397, 293.6795784, 86.60649), 1e-5)
+
 
 def test_fa(fitda):
     T = 10
