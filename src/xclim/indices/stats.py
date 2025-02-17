@@ -121,7 +121,7 @@ def fit(
         Fitting method, either maximum likelihood (ML or MLE), method of moments (MM), maximum product of spacings (MSE or MPS) 
         or approximate method (APP).
         Can also be the probability weighted moments (PWM), also called L-Moments, if a compatible `dist` object is passed.
-        The PWM method is usually more robust to outliers. The MSE method is more consistant than the MLE method, although 
+        The PWM method is usually more robust to outliers. The MSE method is more consistent than the MLE method, although 
         it can be more sensitive to repeated data.
         For the MSE method, each variable parameter must be given finite bounds 
         (provided with keyword argument bounds={'param_name':(min,max),...}).
