@@ -118,12 +118,12 @@ def fit(
         Name of the univariate distribution, such as beta, expon, genextreme, gamma, gumbel_r, lognorm, norm
         (see :py:mod:scipy.stats for full list) or the distribution object itself.
     method : {"ML", "MLE", "MM", "PWM", "APP", "MSE", "MPS"}
-        Fitting method, either maximum likelihood (ML or MLE), method of moments (MM), maximum product of spacings (MSE or MPS) 
+        Fitting method, either maximum likelihood (ML or MLE), method of moments (MM), maximum product of spacings (MSE or MPS)
         or approximate method (APP).
         Can also be the probability weighted moments (PWM), also called L-Moments, if a compatible `dist` object is passed.
-        The PWM method is usually more robust to outliers. The MSE method is more consistant than the MLE method, although 
+        The PWM method is usually more robust to outliers. The MSE method is more consistant than the MLE method, although
         it can be more sensitive to repeated data.
-        For the MSE method, each variable parameter must be given finite bounds 
+        For the MSE method, each variable parameter must be given finite bounds
         (provided with keyword argument bounds={'param_name':(min,max),...}).
     dim : str
         The dimension upon which to perform the indexing (default: "time").
