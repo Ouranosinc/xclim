@@ -624,7 +624,8 @@ class TestTimeSelection:
         )
         xr.testing.assert_equal(out, exp)
 
-    def test_select_time_doys_2D_spatial(self):
+    @pytest.mark.parametrize("include_bounds", [True, False])
+    def test_select_time_doys_2D_spatial(self, include_bounds):
         # first doy of da is 44, last is 366
         da = self.series("2003-02-13", "2004-12-31", "default").expand_dims(
             lat=[0, 10, 15, 20, 25]
@@ -641,14 +642,23 @@ class TestTimeSelection:
         end = xr.DataArray(
             [200, 20, np.nan, 200, np.nan], dims=("lat",), coords={"lat": da.lat}
         )
-        out = select_time(da, doy_bounds=(start, end))
+        out = select_time(da, doy_bounds=(start, end), include_bounds=include_bounds)
 
-        np.testing.assert_array_equal(
-            out.notnull().sum("time"),
-            [151 * 2, 26 + 20 + 27, 266 + 267, 200 - 43 + 200, 365 - 43 + 366],
-        )
+        exp = [151 * 2, 26 + 20 + 27, 266 + 267, 200 - 43 + 200, 365 - 43 + 366]
+        if not include_bounds:
+            exp[0] = exp[0] - 4  # 2 years * 2
+            exp[1] = (
+                exp[1] - 3
+            )  # 2 on 1st year, 1 on 2nd (end bnd is after end of data)
+            exp[2] = (
+                exp[2] - 2
+            )  # "Open" bound so always included, 1 real bnd on each year
+            exp[3] = exp[3] - 2  # Same
+            # No real bound on exp[4]
+        np.testing.assert_array_equal(out.notnull().sum("time"), exp)
 
-    def test_select_time_doys_2D_temporal(self):
+    @pytest.mark.parametrize("include_bounds", [True, False])
+    def test_select_time_doys_2D_temporal(self, include_bounds):
         # YS-JUL periods:
         # -2003: 44 to 181, 03-04: 182 to 182, 04-05: 183 to 181, 05-06: 182 to 181, 06-07: 182 to 183, 07-: 182 to 365
         da = self.series("2003-02-13", "2007-12-31", "default")
@@ -666,11 +676,17 @@ class TestTimeSelection:
         end = xr.DataArray(
             [100, 20, np.nan, 200, np.nan], dims=("time",), coords={"time": time}
         )
-        out = select_time(da, doy_bounds=(start, end))
+        out = select_time(da, doy_bounds=(start, end), include_bounds=include_bounds)
 
-        np.testing.assert_array_equal(
-            out.notnull().resample(time="YS-JUL").sum(), [0, 51, 47, 82, 19, 184]
-        )
+        exp = [0, 51, 47, 82, 19, 184]
+        if not include_bounds:
+            # No selection on year 1
+            exp[1] = exp[1] - 2  # 2 real bounds
+            exp[2] = exp[2] - 2  # 2 real bounds
+            exp[3] = exp[3] - 1  # 1 real bound
+            exp[4] = exp[4] - 1  # Same
+            # No real bounds on year 6
+        np.testing.assert_array_equal(out.notnull().resample(time="YS-JUL").sum(), exp)
 
     def test_select_time_dates(self):
         da = self.series("2003-02-13", "2004-11-01", "all_leap")
