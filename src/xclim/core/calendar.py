@@ -1262,7 +1262,8 @@ def select_time(
     da : xr.DataArray or xr.Dataset
         Input data.
     drop : bool
-        Whether to drop elements outside the period of interest or to simply mask them (default).
+        Whether to drop elements outside the period of interest (True) or to simply mask them (False, default).
+        This option is incompatible with passing array-like doy_bounds.
     season : str or sequence of str, optional
         One or more of 'DJF', 'MAM', 'JJA' and 'SON'.
     month : int or sequence of int, optional
@@ -1326,6 +1327,14 @@ def select_time(
         mask = da.time.dt.month.isin(month)
 
     elif doy_bounds is not None:
+        if (
+            not (isinstance(doy_bounds[0], int) and isinstance(doy_bounds[1], int))
+            and drop
+        ):
+            # At least one of those is an array, this drop won't work
+            raise ValueError(
+                "Passing array-like doy bounds is incompatible with drop=True."
+            )
         mask = mask_between_doys(da, doy_bounds, include_bounds)
 
     elif date_bounds is not None:
