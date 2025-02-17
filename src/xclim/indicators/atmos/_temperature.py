@@ -1158,7 +1158,7 @@ growing_season_end = Temp(
     compute=indices.growing_season_end,
     parameters={
         "thresh": {"default": "5.0 degC"},
-        "op": {"default": "<"},
+        "op": {"default": ">="},
         "mid_date": {"default": "07-01"},
     },
 )
