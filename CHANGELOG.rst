@@ -4,7 +4,7 @@ Changelog
 
 v0.55.0 (unreleased)
 --------------------
-Contributors to this version: Juliette Lavoie (:user:`juliettelavoie`), Trevor James Smith (:user:`Zeitsperre`), Sascha Hofmann (:user:`saschahofmann`), Pascal Bourgault (:user:`aulemahal`), Éric Dupuis (:user:`coxipi`).
+Contributors to this version: Juliette Lavoie (:user:`juliettelavoie`), Trevor James Smith (:user:`Zeitsperre`), Sascha Hofmann (:user:`saschahofmann`), Pascal Bourgault (:user:`aulemahal`), Éric Dupuis (:user:`coxipi`), Baptiste Hamon (:user:`baptistehamon`).
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
@@ -29,7 +29,8 @@ New features and enhancements
 * ``xclim.testing.helpers.test_timeseries`` now accepts a `calendar` argument that is forwarded to ``xr.cftime_range``. (:pull:`2019`).
 * New ``xclim.indices.fao_allen98``, exporting the FAO-56 Penman-Monteith equation for potential evapotranspiration (:issue:`2004`, :pull:`2067`).
 * Missing values method "pct" and "at_least_n" now accept a new "subfreq" option that allows to compute the missing mask in two steps. When given, the algorithm is applied at this "subfreq" resampling frequency first and then the result is resampled at the target indicator frequency. In the output, a period is invalid if any of its subgroup where flagged as invalid by the chosen method. (:pull:`2058`, :issue:`1820`).
-* `rv_continuous` functions can now be given directly as the `dist` argument in ``standardized_precipitation_index`` and ``standardized_precipitation_evapotranspiration_index`` indicators. This includes `lmoments3` distribution when specifying `method="PWM"`. (:issue:`2043`, :pull:`2045`).
+* ``rv_continuous`` functions can now be given directly as the ``dist`` argument in ``standardized_precipitation_index`` and ``standardized_precipitation_evapotranspiration_index`` indicators. This includes `lmoments3` distribution when specifying ``method="PWM"``. (:issue:`2043`, :pull:`2045`).
+* Time selection in ``xclim.core.calendar.select_time`` and the ``**indexer`` argument of indicators now supports day-of-year bounds given as DataArrays with spatial and/or temporal dimensions. (:issue:`1987`, :pull:`2055`).
 * Maximum Spacing Estimation method for distribution fitting has been added to `xclim.indices.stats.fit` (:issue:`2078`, :pull:`2077`)
 
 Internal changes
@@ -37,9 +38,10 @@ Internal changes
 * `sphinx-codeautolink` and `pygments` have been temporarily pinned due to breaking API changes. (:pull:`2030`).
 * Adjusted the ``TestOfficialYaml`` test to use a dynamic method for finding the installed location of `xclim`. (:pull:`2028`).
 * Adjusted two tests for better handling when running in Windows environments. (:pull:`2057`).
-* Refactor of the ``xclim.core.missing`` module, usage of the ``Missing`` objects has been broken. (:pull:`2058`, :issue:`1820`, :issue:`2000`).
+* Refactor of the ``xclim.core.missing`` module, usage of the ``Missing`` objects has been broken. (:pull:`2058`, :pull:`2055`, :pull:`2076`, :issue:`1820`, :issue:`2000`).
     - Objects are initialized with their options and then called with the data, input frequency, target frequency and indexer.
     - Subclasses receive non-resampled DataArray in their ``is_missing`` methods.
+    - Subclasses receive the array of valid timesteps ``valid`` instead of ``null``, the invalid ones.
     - ``MissingWMO`` now uses ``xclim.indices.helpers.resample_map`` which should greatly improve performance in a dask context.
 * There is now a warning stating that `fitkwargs` are not employed when using the `lmoments3` distribution. One exception is the use of `'floc'` which is allowed with the gamma distribution. `'floc'` is used to shift the distribution before computing fitting parameters with the `lmoments3` distribution since ``loc=0`` is always assumed in the library. (:issue:`2043`, :pull:`2045`).
 
