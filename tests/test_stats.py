@@ -2,12 +2,13 @@
 
 from __future__ import annotations
 
+from functools import partial
+
 import numpy as np
 import pytest
 import xarray as xr
-from scipy.stats import lognorm, norm
 from scipy.optimize import differential_evolution
-from functools import partial
+from scipy.stats import lognorm, norm
 
 from xclim.indices import stats
 
@@ -172,7 +173,9 @@ def test_mse_fit(genextreme):
         bounds=dict(c=(0, 1), scale=(0, 100), loc=(200, 400)),
         optimizer=optimizer,
     )
-    np.testing.assert_allclose(p, (0.18435517630019815, 293.61049928703073, 86.70937297745427), 1e-3)
+    np.testing.assert_allclose(
+        p, (0.18435517630019815, 293.61049928703073, 86.70937297745427), 1e-3
+    )
 
 
 def test_fa(fitda):
