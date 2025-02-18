@@ -14,6 +14,7 @@ Announcements
 ^^^^^^^^^^^^^
 * `xclim` now officially supports Python 3.13 (using `numba` v0.61.0). (:issue:`2022`, :pull:`2054`).
 * `xclim` version 0.55.0 will be the last version to support Python 3.10. The next version will require Python 3.11 or higher. (:pull:`2054`).
+* `xclim.sdba` is in the process of being split into a separate package (`xsdba <https://github.com/Ouranosinc/xsdba>`_) to help with the maintenance of the codebase as well as better support new SDBA functionality. Feature additions to the `xclim.sdba` module will no longer be accepted and should be made instead to `xsdba`. The developers aim to ensure a high level of interoperability between `xclim` and `xsdba` so that users are minimally impacted; A migration guide will be made available in a future release. (:issue:`1948`, :issue:`2074`, :pull:`2073`).
 
 New indicators
 ^^^^^^^^^^^^^^
@@ -50,6 +51,7 @@ Internal changes
     - ``MissingWMO`` now uses ``xclim.indices.helpers.resample_map`` which should greatly improve performance in a dask context.
 * There is now a warning stating that `fitkwargs` are not employed when using the `lmoments3` distribution. One exception is the use of `'floc'` which is allowed with the gamma distribution. `'floc'` is used to shift the distribution before computing fitting parameters with the `lmoments3` distribution since ``loc=0`` is always assumed in the library. (:issue:`2043`, :pull:`2045`).
 * `xclim` now tracks energy usage and carbon emissions ("last run", "average", and "total") during CI workflows using the `eco-ci-energy-estimation` GitHub Action. (:pull:`2046`).
+* `xclim.sdba` now emits a `FutureWarning` on import to inform users that the submodule is being deprecated. (:pull:`2073`).
 
 v0.54.0 (2024-12-16)
 --------------------
