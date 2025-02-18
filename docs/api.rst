@@ -80,6 +80,12 @@ Units Handling Submodule
 SDBA Module
 ===========
 
+.. warning::
+
+    The SDBA submodule is in the process of being split from `xclim` in order to facilitate development and effective
+    maintenance of the SDBA utilities. The `xclim.sdba` functionality will change in the future.
+    For more information, please visit https://xsdba.readthedocs.io/en/latest/.
+
 .. automodule:: xclim.sdba.adjustment
    :members:
    :exclude-members: BaseAdjustment
@@ -214,6 +220,12 @@ Bootstrapping Algorithms for Indicators Submodule
 
 SDBA Utilities
 --------------
+
+.. warning::
+
+    The SDBA submodule is in the process of being split from `xclim` in order to facilitate development and effective
+    maintenance of the SDBA utilities. The `xclim.sdba` functionality will change in the future.
+    For more information, please visit https://xsdba.readthedocs.io/en/latest/.
 
 .. automodule:: xclim.sdba.base
    :members:
