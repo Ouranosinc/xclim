@@ -58,7 +58,6 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
   # Dev tools and testing
-  "black[jupyter] ==25.1.0",
   "blackdoc ==0.3.9",
   "bump-my-version ==0.32.1",
   "codespell ==2.4.1",
@@ -82,7 +81,7 @@ dev = [
   "pytest-cov >=5.0.0",
   "pytest-socket >=0.6.0",
   "pytest-xdist[psutil] >=3.2",
-  "ruff >=0.7.0",
+  "ruff >=0.9.6",
   "tokenize-rt >=5.2.0",
   "tox >=4.21.2",
   "tox-gh >=1.4.4",
@@ -308,9 +307,9 @@ xfail_strict = true
 src = ["xclim"]
 line-length = 150
 exclude = [
+  ".eggs",
   ".git",
-  "build",
-  ".eggs"
+  "build"
 ]
 extend-include = [
   "*.ipynb" # Include notebooks
@@ -364,7 +363,6 @@ case-sensitive = true
 detect-same-package = false
 known-first-party = ["xclim"]
 no-lines-before = ["future"]
-required-imports = ["from __future__ import annotations"]
 
 [tool.ruff.lint.mccabe]
 max-complexity = 20
