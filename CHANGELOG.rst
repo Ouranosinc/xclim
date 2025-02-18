@@ -2,14 +2,15 @@
 Changelog
 =========
 
-v0.55.0 (unreleased)
+v0.55.0 (2025-02-17)
 --------------------
-Contributors to this version: Juliette Lavoie (:user:`juliettelavoie`), Trevor James Smith (:user:`Zeitsperre`), Sascha Hofmann (:user:`saschahofmann`), Pascal Bourgault (:user:`aulemahal`), Éric Dupuis (:user:`coxipi`).
+Contributors to this version: Juliette Lavoie (:user:`juliettelavoie`), Trevor James Smith (:user:`Zeitsperre`), Sascha Hofmann (:user:`saschahofmann`), Pascal Bourgault (:user:`aulemahal`), Éric Dupuis (:user:`coxipi`), Baptiste Hamon (:user:`baptistehamon`), Sarah Gammon (:user:`SarahG-579462`).
 
 Announcements
 ^^^^^^^^^^^^^
 * `xclim` now officially supports Python 3.13 (using `numba` v0.61.0). (:issue:`2022`, :pull:`2054`).
 * `xclim` version 0.55.0 will be the last version to support Python 3.10. The next version will require Python 3.11 or higher. (:pull:`2054`).
+* `xclim.sdba` is in the process of being split into a separate package (`xsdba <https://github.com/Ouranosinc/xsdba>`_) to help with the maintenance of the codebase as well as better support new SDBA functionality. Feature additions to the `xclim.sdba` module will no longer be accepted and should be made instead to `xsdba`. The developers aim to ensure a high level of interoperability between `xclim` and `xsdba` so that users are minimally impacted; A migration guide will be made available in a future release. (:issue:`1948`, :issue:`2074`, :pull:`2073`).
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
@@ -17,36 +18,41 @@ Breaking changes
 
 New indicators
 ^^^^^^^^^^^^^^
-* Added ``xclim.indices.holiday_snow_days`` to compute the number of days with snow on the ground during holidays ("Christmas Days"). (:issue:`2029`, :pull:`2030`).
-* Added ``xclim.indices.holiday_snow_and_snowfall_days`` to compute the number of days with snow on the ground and measurable snowfall during holidays ("Perfect Christmas Days"). (:issue:`2029`, :pull:`2030`).
-* Added ``xclim.indices.vapor_pressure_deficit`` to compute the vapor pressure deficit from temperature and relative humidity. (:issue:`1917`, :pull:`2072`).
+* Added ``xclim.land.holiday_snow_days`` to compute the number of days with snow on the ground during holidays ("Christmas Days"). (:issue:`2029`, :pull:`2030`).
+* Added ``xclim.land.holiday_snow_and_snowfall_days`` to compute the number of days with snow on the ground and measurable snowfall during holidays ("Perfect Christmas Days"). (:issue:`2029`, :pull:`2030`).
+* Added ``xclim.atmos.vapor_pressure_deficit`` to compute the vapor pressure deficit from temperature and relative humidity. (:issue:`1917`, :pull:`2072`).
 
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 * New function ``ensemble.partition.general_partition``. (:pull:`2035`).
 * Added a new ``xclim.indices.generic.bivariate_count_occurrences`` function to count instances where operations and performed and validated for two variables. (:pull:`2030`).
-* `xclim` now tracks energy usage and carbon emissions ("last run", "average", and "total") during CI workflows using the `eco-ci-energy-estimation` GitHub Action. (:pull:`2046`).
 * ``xclim.testing.helpers.test_timeseries`` now accepts a `calendar` argument that is forwarded to ``xr.cftime_range``. (:pull:`2019`).
 * New ``xclim.indices.fao_allen98``, exporting the FAO-56 Penman-Monteith equation for potential evapotranspiration (:issue:`2004`, :pull:`2067`).
 * Missing values method "pct" and "at_least_n" now accept a new "subfreq" option that allows to compute the missing mask in two steps. When given, the algorithm is applied at this "subfreq" resampling frequency first and then the result is resampled at the target indicator frequency. In the output, a period is invalid if any of its subgroup where flagged as invalid by the chosen method. (:pull:`2058`, :issue:`1820`).
-* `rv_continuous` functions can now be given directly as the `dist` argument in ``standardized_precipitation_index`` and ``standardized_precipitation_evapotranspiration_index`` indicators. This includes `lmoments3` distribution when specifying `method="PWM"`. (:issue:`2043`, :pull:`2045`).
-
-Internal changes
-^^^^^^^^^^^^^^^^
-* `sphinx-codeautolink` and `pygments` have been temporarily pinned due to breaking API changes. (:pull:`2030`).
-* Adjusted the ``TestOfficialYaml`` test to use a dynamic method for finding the installed location of `xclim`. (:pull:`2028`).
-* Adjusted two tests for better handling when running in Windows environments. (:pull:`2057`).
-* Refactor of the ``xclim.core.missing`` module, usage of the ``Missing`` objects has been broken. (:pull:`2058`, :issue:`1820`, :issue:`2000`).
-    - Objects are initialized with their options and then called with the data, input frequency, target frequency and indexer.
-    - Subclasses receive non-resampled DataArray in their ``is_missing`` methods.
-    - ``MissingWMO`` now uses ``xclim.indices.helpers.resample_map`` which should greatly improve performance in a dask context.
-* There is now a warning stating that `fitkwargs` are not employed when using the `lmoments3` distribution. One exception is the use of `'floc'` which is allowed with the gamma distribution. `'floc'` is used to shift the distribution before computing fitting parameters with the `lmoments3` distribution since ``loc=0`` is always assumed in the library. (:issue:`2043`, :pull:`2045`).
+* ``scipy.stats.rv_continuous`` instances can now be given directly as the ``dist`` argument in ``standardized_precipitation_index`` and ``standardized_precipitation_evapotranspiration_index`` indicators. This includes `lmoments3` distributions when specifying ``method="PWM"``. (:issue:`2043`, :pull:`2045`).
+* Time selection in ``xclim.core.calendar.select_time`` and the ``**indexer`` argument of indicators now supports day-of-year bounds given as DataArrays with spatial and/or temporal dimensions. (:issue:`1987`, :pull:`2055`).
+* Maximum Spacing Estimation method for distribution fitting has been added to `xclim.indices.stats.fit` (:issue:`2078`, :pull:`2077`)
 
 Bug fixes
 ^^^^^^^^^
 * Fixed a bug in ``xclim.sdba.Grouper.get_index`` that didn't correctly interpolate seasonal values (:issue:`2014`, :pull:`2019`).
 * When using a dayofyear grouping, `sdba.utils.interp_on_quantiles` will not interpolate on the dayofyear dimension. (:pull:`2068`).
 * Fixed a bug where ``xclim.indicators.atmos.potential_evapotranspiration`` would return wrong results when `hurs` was provided in `%` (:pull:`2067`).
+* Fixed the default "op" argument of ``xclim.atmos.growing_season_end`` (:issue:`2056`, :pull:`2080`).
+* Removed the useless "thresh" argument from ``xclim.atmos.precip_accumulation`` (:issue:`1763`, :pull:`2080`).
+
+Internal changes
+^^^^^^^^^^^^^^^^
+* Adjusted the ``TestOfficialYaml`` test to use a dynamic method for finding the installed location of `xclim`. (:pull:`2028`).
+* Adjusted two tests for better handling when running in Windows environments. (:pull:`2057`).
+* Refactor of the ``xclim.core.missing`` module, usage of the ``Missing`` objects has been broken. (:pull:`2058`, :pull:`2055`, :pull:`2076`, :issue:`1820`, :issue:`2000`).
+    - Objects are initialized with their options and then called with the data, input frequency, target frequency and indexer.
+    - Subclasses receive non-resampled DataArray in their ``is_missing`` methods.
+    - Subclasses receive the array of valid timesteps ``valid`` instead of ``null``, the invalid ones.
+    - ``MissingWMO`` now uses ``xclim.indices.helpers.resample_map`` which should greatly improve performance in a dask context.
+* There is now a warning stating that `fitkwargs` are not employed when using the `lmoments3` distribution. One exception is the use of `'floc'` which is allowed with the gamma distribution. `'floc'` is used to shift the distribution before computing fitting parameters with the `lmoments3` distribution since ``loc=0`` is always assumed in the library. (:issue:`2043`, :pull:`2045`).
+* `xclim` now tracks energy usage and carbon emissions ("last run", "average", and "total") during CI workflows using the `eco-ci-energy-estimation` GitHub Action. (:pull:`2046`).
+* `xclim.sdba` now emits a `FutureWarning` on import to inform users that the submodule is being deprecated. (:pull:`2073`).
 
 v0.54.0 (2024-12-16)
 --------------------

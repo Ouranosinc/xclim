@@ -55,6 +55,16 @@ def _fitfunc_1d(arr, *, dist, nparams, method, **fitkwargs):
         params = dist.fit(x, *args, method="mle", **kwargs, **fitkwargs)
     elif method == "MM":
         params = dist.fit(x, method="mm", **fitkwargs)
+    elif method in ["MSE", "MPS"]:
+        args, guess = _fit_start(x, dist.name, **fitkwargs)
+        param_info = dist.shapes
+        for i, arg in enumerate(args):
+            guess[param_info[i]] = arg
+
+        fitresult = scipy.stats.fit(
+            dist=dist, data=x, method="mse", guess=guess, **fitkwargs
+        )
+        params = fitresult.params
     elif method == "PWM":
         # lmoments3 will raise an error if only dist.numargs + 2 values are provided
         if len(x) <= dist.numargs + 2:
@@ -107,10 +117,14 @@ def fit(
     dist : str or rv_continuous distribution object
         Name of the univariate distribution, such as beta, expon, genextreme, gamma, gumbel_r, lognorm, norm
         (see :py:mod:scipy.stats for full list) or the distribution object itself.
-    method : {"ML", "MLE", "MM", "PWM", "APP"}
-        Fitting method, either maximum likelihood (ML or MLE), method of moments (MM) or approximate method (APP).
+    method : {"ML", "MLE", "MM", "PWM", "APP", "MSE", "MPS"}
+        Fitting method, either maximum likelihood (ML or MLE), method of moments (MM), maximum product of spacings (MSE or MPS)
+        or approximate method (APP).
         Can also be the probability weighted moments (PWM), also called L-Moments, if a compatible `dist` object is passed.
-        The PWM method is usually more robust to outliers.
+        The PWM method is usually more robust to outliers. The MSE method is more consistent than the MLE method, although
+        it can be more sensitive to repeated data.
+        For the MSE method, each variable parameter must be given finite bounds
+        (provided with keyword argument bounds={'param_name':(min,max),...}).
     dim : str
         The dimension upon which to perform the indexing (default: "time").
     **fitkwargs : dict
@@ -131,6 +145,8 @@ def fit(
         "ML": "maximum likelihood",
         "MM": "method of moments",
         "MLE": "maximum likelihood",
+        "MSE": "maximum product of spacings",
+        "MPS": "maximum product of spacings",
         "PWM": "probability weighted moments",
         "APP": "approximative method",
     }
