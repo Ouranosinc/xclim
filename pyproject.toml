@@ -316,7 +316,12 @@ extend-include = [
 ]
 
 [tool.ruff.format]
-line-ending = "auto"
+exclude = [
+  "docs/notebooks/xclim_training/*.ipynb"
+]
+line-ending = "lf"
+docstring-code-format = true
+docstring-code-line-length = "dynamic"
 
 [tool.ruff.lint]
 exclude = [
@@ -357,6 +362,9 @@ numpy = "np"
 pandas = "pd"
 scipy = "sp"
 xarray = "xr"
+
+[tool.ruff.lint.flake8-quotes]
+docstring-quotes = "double"
 
 [tool.ruff.lint.isort]
 case-sensitive = true
