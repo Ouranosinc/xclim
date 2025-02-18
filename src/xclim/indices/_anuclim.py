@@ -63,9 +63,7 @@ _np_ops = {
 
 
 @declare_units(tasmin="[temperature]", tasmax="[temperature]")
-def isothermality(
-    tasmin: xarray.DataArray, tasmax: xarray.DataArray, freq: str = "YS"
-) -> xarray.DataArray:
+def isothermality(tasmin: xarray.DataArray, tasmax: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
     r"""
     Isothermality.
 
@@ -104,9 +102,7 @@ def isothermality(
 
 
 @declare_units(tas="[temperature]")
-def temperature_seasonality(
-    tas: xarray.DataArray, freq: str = "YS"
-) -> xarray.DataArray:
+def temperature_seasonality(tas: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
     r"""
     Temperature seasonality (coefficient of variation).
 
@@ -265,9 +261,7 @@ def tg_mean_warmcold_quarter(
     out = _to_quarter(tas=tas)
 
     if op not in ["warmest", "coldest"]:
-        raise NotImplementedError(
-            f'op parameter ({op}) may only be one of "warmest", "coldest"'
-        )
+        raise NotImplementedError(f'op parameter ({op}) may only be one of "warmest", "coldest"')
     oper = _np_ops[op]
 
     out = select_resample_op(out, oper, freq)
@@ -322,9 +316,7 @@ def tg_mean_wetdry_quarter(
     pr_qrt = _to_quarter(pr=pr)
 
     if op not in ["wettest", "driest", "dryest"]:
-        raise NotImplementedError(
-            f'op parameter ({op}) may only be one of "wettest" or "driest"'
-        )
+        raise NotImplementedError(f'op parameter ({op}) may only be one of "wettest" or "driest"')
     xr_op = _xr_argops[op]
 
     out = _from_other_arg(criteria=pr_qrt, output=tas_qrt, op=xr_op, freq=freq)
@@ -332,9 +324,7 @@ def tg_mean_wetdry_quarter(
 
 
 @declare_units(pr="[precipitation]")
-def prcptot_wetdry_quarter(
-    pr: xarray.DataArray, op: str, freq: str = "YS"
-) -> xarray.DataArray:
+def prcptot_wetdry_quarter(pr: xarray.DataArray, op: str, freq: str = "YS") -> xarray.DataArray:
     r"""
     Total precipitation of wettest/driest quarter.
 
@@ -379,9 +369,7 @@ def prcptot_wetdry_quarter(
     pr_qrt = _to_quarter(pr=pr)
 
     if op not in ["wettest", "driest", "dryest"]:
-        raise NotImplementedError(
-            f'op parameter ({op}) may only be one of "wettest" or "driest"'
-        )
+        raise NotImplementedError(f'op parameter ({op}) may only be one of "wettest" or "driest"')
     op = _np_ops[op]
 
     out = select_resample_op(pr_qrt, op, freq)
@@ -436,9 +424,7 @@ def prcptot_warmcold_quarter(
     pr_qrt = _to_quarter(pr=pr)
 
     if op not in ["warmest", "coldest"]:
-        raise NotImplementedError(
-            f'op parameter ({op}) may only be one of "warmest", "coldest"'
-        )
+        raise NotImplementedError(f'op parameter ({op}) may only be one of "warmest", "coldest"')
     xr_op = _xr_argops[op]
 
     out = _from_other_arg(criteria=tas_qrt, output=pr_qrt, op=xr_op, freq=freq)
@@ -447,9 +433,7 @@ def prcptot_warmcold_quarter(
 
 
 @declare_units(pr="[precipitation]", thresh="[precipitation]")
-def prcptot(
-    pr: xarray.DataArray, thresh: Quantified = "0 mm/d", freq: str = "YS"
-) -> xarray.DataArray:
+def prcptot(pr: xarray.DataArray, thresh: Quantified = "0 mm/d", freq: str = "YS") -> xarray.DataArray:
     r"""
     Accumulated total precipitation.
 
@@ -477,9 +461,7 @@ def prcptot(
 
 
 @declare_units(pr="[precipitation]")
-def prcptot_wetdry_period(
-    pr: xarray.DataArray, *, op: str, freq: str = "YS"
-) -> xarray.DataArray:
+def prcptot_wetdry_period(pr: xarray.DataArray, *, op: str, freq: str = "YS") -> xarray.DataArray:
     r"""
     Precipitation of the wettest/driest day, week, or month, depending on the time step.
 
@@ -513,9 +495,7 @@ def prcptot_wetdry_period(
     pram = rate2amount(pr)
 
     if op not in ["wettest", "driest", "dryest"]:
-        raise NotImplementedError(
-            f'op parameter ({op}) may only be one of "wettest" or "driest"'
-        )
+        raise NotImplementedError(f'op parameter ({op}) may only be one of "wettest" or "driest"')
     op = _np_ops[op]
 
     pwp: xarray.DataArray = getattr(pram.resample(time=freq), op)(dim="time")
@@ -530,9 +510,7 @@ def _anuclim_coeff_var(arr: xarray.DataArray, freq: str = "YS") -> xarray.DataAr
     return std / mu
 
 
-def _from_other_arg(
-    criteria: xarray.DataArray, output: xarray.DataArray, op: Callable, freq: str
-) -> xarray.DataArray:
+def _from_other_arg(criteria: xarray.DataArray, output: xarray.DataArray, op: Callable, freq: str) -> xarray.DataArray:
     """
     Pick values from output based on operation returning an index from criteria.
 
@@ -607,18 +585,14 @@ def _to_quarter(
             # Accumulate on a week
             # Ensure units are back to a "rate" for rate2amount below
             ts_var = precip_accumulation(ts_var, freq="7D")
-            ts_var = convert_units_to(ts_var, "mm", context="hydro").assign_attrs(
-                units="mm/week"
-            )
+            ts_var = convert_units_to(ts_var, "mm", context="hydro").assign_attrs(units="mm/week")
         freq_upper = "W"
     if freq_upper.startswith("W"):
         window = 13
     elif freq_upper.startswith("M"):
         window = 3
     else:
-        raise NotImplementedError(
-            f'Unknown input time frequency "{freq}": must be one of "D", "W" or "M".'
-        )
+        raise NotImplementedError(f'Unknown input time frequency "{freq}": must be one of "D", "W" or "M".')
 
     ts_var = ensure_chunk_size(ts_var, time=np.ceil(window / 2))
     if tas is not None:

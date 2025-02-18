@@ -305,7 +305,7 @@ xfail_strict = true
 
 [tool.ruff]
 src = ["xclim"]
-line-length = 150
+line-length = 120
 exclude = [
   ".eggs",
   ".git",
@@ -317,7 +317,8 @@ extend-include = [
 
 [tool.ruff.format]
 exclude = [
-  "docs/notebooks/xclim_training/*.ipynb"
+  "docs/notebooks/xclim_training/*.ipynb",
+  "src/xclim/sdba/*.py"
 ]
 line-ending = "lf"
 docstring-code-format = true
@@ -325,7 +326,8 @@ docstring-code-line-length = "dynamic"
 
 [tool.ruff.lint]
 exclude = [
-  "docs/notebooks/xclim_training/*.ipynb"
+  "docs/notebooks/xclim_training/*.ipynb",
+  "src/xclim/sdba/*.py"
 ]
 extend-select = [
   "D213", # multi-line-summary-second-line
@@ -377,15 +379,16 @@ max-complexity = 20
 
 [tool.ruff.lint.per-file-ignores]
 "docs/*.py" = ["D100", "D101", "D102", "D103"]
-"docs/notebooks/*.ipynb" = ["E225", "E226", "E231"]
+"docs/notebooks/*.ipynb" = ["E225", "E226", "E231", "E501"]
 "src/xclim/**/__init__.py" = ["F401", "F403"]
+"src/xclim/analog.py" = ["E501"]
 "src/xclim/core/indicator.py" = ["D214", "D405", "D406", "D407", "D411"]
 "src/xclim/core/locales.py" = ["E501", "W505"]
 "src/xclim/core/missing" = ["D103"]
 "src/xclim/indices/_agro.py" = ["E501"]
 "src/xclim/indices/fire/_cffwis.py" = ["D103"]
 "src/xclim/sdba/utils.py" = ["D103"]
-"tests/**/*test*.py" = ["D100", "D101", "D102", "D103", "N802", "S101"]
+"tests/**/*test*.py" = ["D100", "D101", "D102", "D103", "E501", "N802", "S101"]
 
 [tool.ruff.lint.pycodestyle]
 max-doc-length = 180

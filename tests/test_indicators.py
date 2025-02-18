@@ -152,10 +152,7 @@ def test_attrs(tas_series):
     txm = uniIndTemp(a, thresh="5 degC", freq="YS")
     assert txm.cell_methods == "time: mean time: mean within years"
     assert f"{dt.datetime.now():%Y-%m-%d %H}" in txm.attrs["history"]
-    assert (
-        "TMIN(da=tas, thresh='5 degC', freq='YS') with options check_missing=any"
-        in txm.attrs["history"]
-    )
+    assert "TMIN(da=tas, thresh='5 degC', freq='YS') with options check_missing=any" in txm.attrs["history"]
     assert f"xclim version: {__version__}" in txm.attrs["history"]
     assert txm.name == "tmin5 degC"
     assert uniIndTemp.standard_name == "{freq} mean temperature"
@@ -169,10 +166,7 @@ def test_attrs(tas_series):
         name="TT",
     )
     txm = uniIndTemp(a, thresh=thresh, freq="YS")
-    assert (
-        "TMIN(da=tas, thresh=TT, freq='YS') with options check_missing=any"
-        in txm.attrs["history"]
-    )
+    assert "TMIN(da=tas, thresh=TT, freq='YS') with options check_missing=any" in txm.attrs["history"]
     assert txm.attrs["long_name"].endswith("with <an array> threshold.")
 
 
@@ -266,9 +260,7 @@ def test_module():
     assert atmos.tg_mean.__module__.split(".")[2] == "atmos"
     # Virtual module also are stored under xclim.indicators
     assert xclim.indicators.cf.fg.__module__ == "xclim.indicators.cf"  # noqa: F821
-    assert (
-        xclim.indicators.icclim.GD4.__module__ == "xclim.indicators.icclim"
-    )  # noqa: F821
+    assert xclim.indicators.icclim.GD4.__module__ == "xclim.indicators.icclim"  # noqa: F821
 
 
 def test_temp_unit_conversion(tas_series):
@@ -292,9 +284,7 @@ def test_temp_diff_unit_conversion(tasmax_series, tasmin_series):
     txC = convert_units_to(tx, "degC")
     tnC = convert_units_to(tn, "degC")
 
-    ind = xclim.atmos.daily_temperature_range.from_dict(
-        {"units": "degC"}, "dtr_degC", "test"
-    )
+    ind = xclim.atmos.daily_temperature_range.from_dict({"units": "degC"}, "dtr_degC", "test")
     out = ind(tasmax=txC, tasmin=tnC)
     assert out.attrs["units"] == "degC"
     assert out.attrs["units_metadata"] == "temperature: difference"
@@ -410,9 +400,7 @@ def test_missing(tas_series):
     m = uniIndTemp(a, freq="MS")
     assert m[0].isnull()
 
-    with xclim.set_options(
-        check_missing="pct", missing_options={"pct": {"tolerance": 0.05}}
-    ):
+    with xclim.set_options(check_missing="pct", missing_options={"pct": {"tolerance": 0.05}}):
         m = uniIndTemp(a, freq="MS")
         assert not m[0].isnull()
         assert "check_missing=pct, missing_options={'tolerance': 0.05}" in m.history
@@ -482,9 +470,7 @@ def test_all_jsonable(official_indicators):
             problems.append(identifier)
             err = e
     if problems:
-        raise ValueError(
-            f"Indicators {problems} provide problematic json serialization.: {err}"
-        )
+        raise ValueError(f"Indicators {problems} provide problematic json serialization.: {err}")
 
 
 def test_all_parameters_understood(official_indicators):
@@ -502,9 +488,7 @@ def test_all_parameters_understood(official_indicators):
         ("GROWING_SEASON_END", "op"),
         ("GROWING_SEASON_START", "op"),
     }:
-        raise ValueError(
-            f"The following indicator/parameter couple {problems} use types not listed in InputKind."
-        )
+        raise ValueError(f"The following indicator/parameter couple {problems} use types not listed in InputKind.")
 
 
 def test_signature():
@@ -531,17 +515,12 @@ def test_doc():
     doc = xclim.atmos.cffwis_indices.__doc__
     assert doc.startswith("Canadian Fire Weather Index System indices. (realm: atmos)")
     assert "This indicator will check for missing values according to the method" in doc
-    assert (
-        "Based on indice :py:func:`~xclim.indices.fire._cffwis.cffwis_indices`." in doc
-    )
+    assert "Based on indice :py:func:`~xclim.indices.fire._cffwis.cffwis_indices`." in doc
     assert "ffmc0 : str or DataArray, optional" in doc
     assert "Returns\n-------" in doc
     assert "See :cite:t:`code-natural_resources_canada_data_nodate`, " in doc
     assert "the :py:mod:`xclim.indices.fire` module documentation," in doc
-    assert (
-        "and the docstring of :py:func:`fire_weather_ufunc` for more information."
-        in doc
-    )
+    assert "and the docstring of :py:func:`fire_weather_ufunc` for more information." in doc
 
 
 def test_delayed(tasmax_series):
@@ -558,30 +537,17 @@ def test_identifier():
 def test_formatting(pr_series):
     out = atmos.wetdays(pr_series(np.arange(366)), thresh=1.0 * units.mm / units.day)
     # pint 0.10 now pretty print day as d.
-    assert (
-        out.attrs["long_name"]
-        == "Number of days with daily precipitation at or above 1 mm d-1"
-    )
-    assert out.attrs["description"] in [
-        "Annual number of days with daily precipitation at or above 1 mm d-1."
-    ]
+    assert out.attrs["long_name"] == "Number of days with daily precipitation at or above 1 mm d-1"
+    assert out.attrs["description"] in ["Annual number of days with daily precipitation at or above 1 mm d-1."]
     out = atmos.wetdays(pr_series(np.arange(366)), thresh=1.5 * units.mm / units.day)
-    assert (
-        out.attrs["long_name"]
-        == "Number of days with daily precipitation at or above 1.5 mm d-1"
-    )
-    assert out.attrs["description"] in [
-        "Annual number of days with daily precipitation at or above 1.5 mm d-1."
-    ]
+    assert out.attrs["long_name"] == "Number of days with daily precipitation at or above 1.5 mm d-1"
+    assert out.attrs["description"] in ["Annual number of days with daily precipitation at or above 1.5 mm d-1."]
 
 
 def test_parse_doc():
     doc = parse_doc(tg_mean.__doc__)
     assert doc["title"] == "Mean of daily average temperature."
-    assert (
-        doc["abstract"]
-        == "Resample the original daily mean temperature series by taking the mean over each period."
-    )
+    assert doc["abstract"] == "Resample the original daily mean temperature series by taking the mean over each period."
     assert doc["parameters"]["tas"]["description"] == "Mean daily temperature."
     assert doc["parameters"]["freq"]["description"] == "Resampling frequency."
     assert doc["notes"].startswith("Let")
@@ -644,9 +610,7 @@ def test_merge_attributes(missing_str, new_line):
     b = xr.DataArray([0], attrs={})
     c = xr.Dataset(attrs={"text": "Text3"})
 
-    merged = merge_attributes(
-        "text", a, missing_str=missing_str, new_line=new_line, b=b, c=c
-    )
+    merged = merge_attributes("text", a, missing_str=missing_str, new_line=new_line, b=b, c=c)
 
     assert merged.startswith("a: Text1")
 
@@ -849,28 +813,18 @@ def test_resampling_indicator_with_indexing(tas_series):
     out = xclim.atmos.tx_days_above(tas, thresh="0 degC", freq="YS", month=2)
     np.testing.assert_allclose(out, [28, 29])
 
-    out = xclim.atmos.tx_days_above(
-        tas, thresh="0 degC", freq="YS-JUL", doy_bounds=(1, 50)
-    )
+    out = xclim.atmos.tx_days_above(tas, thresh="0 degC", freq="YS-JUL", doy_bounds=(1, 50))
     np.testing.assert_allclose(out, [50, 50, np.nan])
 
-    out = xclim.atmos.tx_days_above(
-        tas, thresh="0 degC", freq="YS", date_bounds=("02-29", "04-01")
-    )
+    out = xclim.atmos.tx_days_above(tas, thresh="0 degC", freq="YS", date_bounds=("02-29", "04-01"))
     np.testing.assert_allclose(out, [32, 33])
 
 
 def test_indicator_indexing_doy_bounds_spatial(tasmin_series):
-    da = tasmin_series(np.ones(730), start="2005-01-01", units="°C").expand_dims(
-        lat=[0, 10, 15, 20, 25]
-    )
+    da = tasmin_series(np.ones(730), start="2005-01-01", units="°C").expand_dims(lat=[0, 10, 15, 20, 25])
 
-    start = xr.DataArray(
-        [50, 340, 100, np.nan, np.nan], dims=("lat",), coords={"lat": da.lat}
-    )
-    end = xr.DataArray(
-        [200, 20, np.nan, 200, np.nan], dims=("lat",), coords={"lat": da.lat}
-    )
+    start = xr.DataArray([50, 340, 100, np.nan, np.nan], dims=("lat",), coords={"lat": da.lat})
+    end = xr.DataArray([200, 20, np.nan, 200, np.nan], dims=("lat",), coords={"lat": da.lat})
     out = atmos.tn_days_above(da, thresh="0 °C", doy_bounds=(start, end))
 
     np.testing.assert_array_equal(
@@ -883,12 +837,8 @@ def test_indicator_indexing_doy_bounds_temporal(tasmin_series):
     da = tasmin_series(np.ones(365 * 5 + 1), start="2005-01-01", units="°C")
 
     time = xr.date_range("2005-01-01", freq="YS", periods=5)
-    start = xr.DataArray(
-        [50, 340, 100, np.nan, np.nan], dims=("time",), coords={"time": time}
-    )
-    end = xr.DataArray(
-        [200, 20, np.nan, 200, np.nan], dims=("time",), coords={"time": time}
-    )
+    start = xr.DataArray([50, 340, 100, np.nan, np.nan], dims=("time",), coords={"time": time})
+    end = xr.DataArray([200, 20, np.nan, 200, np.nan], dims=("time",), coords={"time": time})
     out = atmos.tn_days_above(da, thresh="0 °C", doy_bounds=(start, end))
 
     # 340, 20 is an invalid indexer for freq YS.

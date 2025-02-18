@@ -64,9 +64,7 @@ def distance_from_sun(dates: xr.DataArray) -> xr.DataArray:
     cal = get_calendar(dates)
     if cal == "default":
         cal = "standard"
-    days_since = cftime.date2num(
-        ensure_cftime_array(dates), "days since 2000-01-01 12:00:00", calendar=cal
-    )
+    days_since = cftime.date2num(ensure_cftime_array(dates), "days since 2000-01-01 12:00:00", calendar=cal)
     g = ((357.528 + 0.9856003 * days_since) % 360) * np.pi / 180
     sun_earth = 1.00014 - 0.01671 * np.cos(g) - 0.00014 * np.cos(2.0 * g)
     return xr.DataArray(sun_earth, coords=dates.coords, dims=dates.dims)
@@ -140,9 +138,7 @@ def solar_declination(time: xr.DataArray, method="spencer") -> xr.DataArray:
             + 0.001480 * np.sin(3 * da)
         )
     else:
-        raise NotImplementedError(
-            f"Method {method} must be one of 'simple' or 'spencer'"
-        )
+        raise NotImplementedError(f"Method {method} must be one of 'simple' or 'spencer'")
     return _wrap_radians(sd).assign_attrs(units="rad").rename("declination")
 
 
@@ -169,19 +165,13 @@ def time_correction_for_solar_angle(time: xr.DataArray) -> xr.DataArray:
     """
     da = convert_units_to(day_angle(time), "rad")
     tc = (
-        0.004297
-        + 0.107029 * np.cos(da)
-        - 1.837877 * np.sin(da)
-        - 0.837378 * np.cos(2 * da)
-        - 2.340475 * np.sin(2 * da)
+        0.004297 + 0.107029 * np.cos(da) - 1.837877 * np.sin(da) - 0.837378 * np.cos(2 * da) - 2.340475 * np.sin(2 * da)
     )
     tc = tc.assign_attrs(units="degrees")
     return _wrap_radians(convert_units_to(tc, "rad"))
 
 
-def eccentricity_correction_factor(
-    time: xr.DataArray, method: str = "spencer"
-) -> xr.DataArray:
+def eccentricity_correction_factor(time: xr.DataArray, method: str = "spencer") -> xr.DataArray:
     """
     Eccentricity correction factor of the Earth's orbit.
 
@@ -239,14 +229,15 @@ def cosine_of_solar_zenith_angle(
     Cosine of the solar zenith angle.
 
     The solar zenith angle is the angle between a vertical line (perpendicular to the ground) and the sun rays.
-    This function computes a statistic of its cosine : its instantaneous value, the integral from sunrise to sunset or the average over
-    the same period or over a subdaily interval.
+    This function computes a statistic of its cosine : its instantaneous value,
+    the integral from sunrise to sunset or the average over the same period or over a subdaily interval.
     Based on :cite:t:`kalogirou_chapter_2014` and :cite:t:`di_napoli_mean_2020`.
 
     Parameters
     ----------
     time : xr.DataArray
-        The UTC time. If not daily and `stat` is "integral" or "average", the timestamp is taken as the start of interval.
+        The UTC time. If not daily and `stat` is "integral" or "average",
+        the timestamp is taken as the start of interval.
         If daily, the interval is assumed to be centered on Noon.
         If fewer than three timesteps are given, a daily frequency is assumed.
     declination : xr.DataArray
@@ -297,19 +288,13 @@ def cosine_of_solar_zenith_angle(
         h_e = np.pi - 1e-9  # just below pi
     else:
         if time.dtype == "O":  # cftime
-            time_as_s = time.copy(
-                data=xr.CFTimeIndex(cast(time.values, np.ndarray)).asi8 / 1e6
-            )
+            time_as_s = time.copy(data=xr.CFTimeIndex(cast(time.values, np.ndarray)).asi8 / 1e6)
         else:  # numpy
             time_as_s = time.copy(data=time.astype(float) / 1e9)
-        h_s_utc = (((time_as_s % S_IN_D) / S_IN_D) * 2 * np.pi + np.pi).assign_attrs(
-            units="rad"
-        )
+        h_s_utc = (((time_as_s % S_IN_D) / S_IN_D) * 2 * np.pi + np.pi).assign_attrs(units="rad")
         h_s = h_s_utc + lon
 
-        interval_as_s = time.diff("time").dt.seconds.reindex(
-            time=time.time, method="bfill"
-        )
+        interval_as_s = time.diff("time").dt.seconds.reindex(time=time.time, method="bfill")
         h_e = h_s + 2 * np.pi * interval_as_s / S_IN_D
 
     if stat == "instant":
@@ -317,13 +302,10 @@ def cosine_of_solar_zenith_angle(
 
         return cast(
             xr.DataArray,
-            np.sin(declination) * np.sin(lat)
-            + np.cos(declination) * np.cos(lat) * np.cos(h_s),
+            np.sin(declination) * np.sin(lat) + np.cos(declination) * np.cos(lat) * np.cos(h_s),
         ).clip(0, None)
     if stat not in {"average", "integral"}:
-        raise NotImplementedError(
-            "Argument 'stat' must be one of 'integral', 'average' or 'instant'."
-        )
+        raise NotImplementedError("Argument 'stat' must be one of 'integral', 'average' or 'instant'.")
     if sunlit:
         # hour angle of sunset (eq. 2.15), with NaNs inside the polar day/night
         tantan = cast(xr.DataArray, -np.tan(lat) * np.tan(declination))
@@ -346,9 +328,7 @@ def cosine_of_solar_zenith_angle(
 
 
 @nb.vectorize
-def _sunlit_integral_of_cosine_of_solar_zenith_angle(
-    declination, lat, h_sunset, h_start, h_end, average
-):
+def _sunlit_integral_of_cosine_of_solar_zenith_angle(declination, lat, h_sunset, h_start, h_end, average):
     """Integral of the cosine of the solar zenith angle over the sunlit part of the interval."""
     # Code inspired by PyWBGT
     h_sunrise = -h_sunset
@@ -388,10 +368,7 @@ def _sunlit_integral_of_cosine_of_solar_zenith_angle(
         h2 = min(h_sunset, h_end)
         num = np.sin(h2) - np.sin(h1)
         denum = h2 - h1
-    out = (
-        np.sin(declination) * np.sin(lat) * denum
-        + np.cos(declination) * np.cos(lat) * num
-    )
+    out = np.sin(declination) * np.sin(lat) * denum + np.cos(declination) * np.cos(lat) * num
     if average:
         out = out / denum
     return out
@@ -442,9 +419,7 @@ def extraterrestrial_solar_radiation(
     return (
         gsc
         * rad_to_day
-        * cosine_of_solar_zenith_angle(
-            times, ds, lat, stat="integral", sunlit=True, chunks=chunks
-        )
+        * cosine_of_solar_zenith_angle(times, ds, lat, stat="integral", sunlit=True, chunks=chunks)
         * dr
     ).assign_attrs(units="J m-2 d-1")
 
@@ -485,9 +460,7 @@ def day_lengths(
     # arccos gives the hour-angle at sunset, multiply by 24 / 2π to get hours.
     # The day length is twice that.
     with np.errstate(invalid="ignore"):
-        day_length_hours = (
-            (24 / np.pi) * np.arccos(-np.tan(lat) * np.tan(declination))
-        ).assign_attrs(units="h")
+        day_length_hours = ((24 / np.pi) * np.arccos(-np.tan(lat) * np.tan(declination))).assign_attrs(units="h")
 
     return day_length_hours
 
@@ -526,7 +499,8 @@ def wind_speed_height_conversion(
     if method == "log":
         if min(h_source, h_target) < 1 + 5.42 / 67.8:
             raise ValueError(
-                f"The height {min(h_source, h_target)}m is too small for method {method}. Heights must be greater than {1 + 5.42 / 67.8}"
+                f"The height {min(h_source, h_target)}m is too small for method {method}. "
+                f"Heights must be greater than {1 + 5.42 / 67.8}"
             )
         with xr.set_options(keep_attrs=True):
             return ua * np.log(67.8 * h_target - 5.42) / np.log(67.8 * h_source - 5.42)
@@ -553,10 +527,7 @@ def _gather_lat(da: xr.DataArray) -> xr.DataArray:
         return lat
     except KeyError as err:
         n_func = stack()[1].function
-        msg = (
-            f"{n_func} could not find latitude coordinate in DataArray. "
-            "Try passing it explicitly (`lat=ds.lat`)."
-        )
+        msg = f"{n_func} could not find latitude coordinate in DataArray. Try passing it explicitly (`lat=ds.lat`)."
         raise ValueError(msg) from err
 
 
@@ -579,10 +550,7 @@ def _gather_lon(da: xr.DataArray) -> xr.DataArray:
         return lat
     except KeyError as err:
         n_func = stack()[1].function
-        msg = (
-            f"{n_func} could not find longitude coordinate in DataArray. "
-            "Try passing it explicitly (`lon=ds.lon`)."
-        )
+        msg = f"{n_func} could not find longitude coordinate in DataArray. Try passing it explicitly (`lon=ds.lon`)."
         raise ValueError(msg) from err
 
 
@@ -596,7 +564,9 @@ def resample_map(
     map_kwargs: dict | None = None,
 ) -> xr.DataArray | xr.Dataset:
     r"""
-    Wrap xarray's resample(...).map() with a :py:func:`xarray.map_blocks`, ensuring the chunking is appropriate using flox.
+    Wrap xarray's resample(...).map() with a :py:func:`xarray.map_blocks`.
+
+    Ensures that the chunking is appropriate using `flox`.
 
     Parameters
     ----------
@@ -662,9 +632,7 @@ def resample_map(
         i += chunksize
     template = template.chunk({dim: tuple(new_chunks)})
 
-    return obj_rechunked.map_blocks(
-        _resample_map, (dim, freq, resample_kwargs, func, map_kwargs), template=template
-    )
+    return obj_rechunked.map_blocks(_resample_map, (dim, freq, resample_kwargs, func, map_kwargs), template=template)
 
 
 def _compute_daytime_temperature(
@@ -694,9 +662,7 @@ def _compute_daytime_temperature(
     xarray.DataArray
         Hourly daytime temperature.
     """
-    return (tasmax - tasmin) * np.sin(
-        (np.pi * hour_after_sunrise) / (daylength + 4)
-    ) + tasmin
+    return (tasmax - tasmin) * np.sin((np.pi * hour_after_sunrise) / (daylength + 4)) + tasmin
 
 
 def _compute_nighttime_temperature(
@@ -727,9 +693,7 @@ def _compute_nighttime_temperature(
     xarray.DataArray
         Hourly nighttime temperature.
     """
-    return tas_sunset - ((tas_sunset - tasmin) / np.log(24 - daylength)) * np.log(
-        hours_after_sunset
-    )
+    return tas_sunset - ((tas_sunset - tasmin) / np.log(24 - daylength)) * np.log(hours_after_sunset)
 
 
 def _add_one_day(time: xr.DataArray) -> xr.DataArray:
@@ -783,9 +747,7 @@ def make_hourly_temperature(tasmin: xr.DataArray, tasmax: xr.DataArray) -> xr.Da
     data = xr.concat(
         [
             data,
-            data.isel(time=-1).assign_coords(
-                time=_add_one_day(data.isel(time=-1).time)
-            ),
+            data.isel(time=-1).assign_coords(time=_add_one_day(data.isel(time=-1).time)),
         ],
         dim="time",
     )
@@ -794,9 +756,7 @@ def make_hourly_temperature(tasmin: xr.DataArray, tasmax: xr.DataArray) -> xr.Da
     # Create daily chunks to avoid memory issues after the resampling
     data = data.assign(
         daylength=daylength,
-        sunset_temp=_compute_daytime_temperature(
-            daylength, data.tasmin, data.tasmax, daylength
-        ),
+        sunset_temp=_compute_daytime_temperature(daylength, data.tasmin, data.tasmax, daylength),
         next_tasmin=data.tasmin.shift(time=-1),
     )
     # Compute hourly data by resampling and remove the last time stamp that was added earlier
@@ -807,9 +767,7 @@ def make_hourly_temperature(tasmin: xr.DataArray, tasmax: xr.DataArray) -> xr.Da
 
     return xr.where(
         hourly.time.dt.hour < hourly.daylength,
-        _compute_daytime_temperature(
-            hourly.time.dt.hour, hourly.tasmin, hourly.tasmax, hourly.daylength
-        ),
+        _compute_daytime_temperature(hourly.time.dt.hour, hourly.tasmin, hourly.tasmax, hourly.daylength),
         _compute_nighttime_temperature(
             nighttime_hours,
             hourly.next_tasmin,

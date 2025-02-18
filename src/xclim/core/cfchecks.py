@@ -51,9 +51,7 @@ def check_valid(var: xr.DataArray, key: str, expected: str | Sequence[str]):
         )
 
 
-def cfcheck_from_name(
-    varname: str, vardata: xr.DataArray, attrs: list[str] | None = None
-):
+def cfcheck_from_name(varname: str, vardata: xr.DataArray, attrs: list[str] | None = None):
     """
     Perform cfchecks on a DataArray using specifications from xclim's default variables.
 
@@ -76,9 +74,7 @@ def cfcheck_from_name(
 
     data = VARIABLES[varname]
     if "cell_methods" in data and "cell_methods" in attrs:
-        _check_cell_methods(
-            getattr(vardata, "cell_methods", None), data["cell_methods"]
-        )
+        _check_cell_methods(getattr(vardata, "cell_methods", None), data["cell_methods"])
     if "standard_name" in data and "standard_name" in attrs:
         check_valid(vardata, "standard_name", data["standard_name"])
 

@@ -371,9 +371,7 @@ def frost_days(
 
 
 @declare_units(tasmax="[temperature]", thresh="[temperature]")
-def ice_days(
-    tasmax: xarray.DataArray, thresh: Quantified = "0 degC", freq: str = "YS"
-) -> xarray.DataArray:
+def ice_days(tasmax: xarray.DataArray, thresh: Quantified = "0 degC", freq: str = "YS") -> xarray.DataArray:
     r"""
     Number of ice/freezing days.
 
@@ -408,9 +406,7 @@ def ice_days(
 
 
 @declare_units(pr="[precipitation]")
-def max_1day_precipitation_amount(
-    pr: xarray.DataArray, freq: str = "YS"
-) -> xarray.DataArray:
+def max_1day_precipitation_amount(pr: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
     r"""
     Highest 1-day precipitation amount for a period (frequency).
 
@@ -448,9 +444,7 @@ def max_1day_precipitation_amount(
 
 
 @declare_units(pr="[precipitation]")
-def max_n_day_precipitation_amount(
-    pr: xarray.DataArray, window: int = 1, freq: str = "YS"
-) -> xarray.DataArray:
+def max_n_day_precipitation_amount(pr: xarray.DataArray, window: int = 1, freq: str = "YS") -> xarray.DataArray:
     r"""
     Highest precipitation amount cumulated over a n-day moving window.
 
@@ -486,9 +480,7 @@ def max_n_day_precipitation_amount(
 
 
 @declare_units(pr="[precipitation]")
-def max_pr_intensity(
-    pr: xarray.DataArray, window: int = 1, freq: str = "YS"
-) -> xarray.DataArray:
+def max_pr_intensity(pr: xarray.DataArray, window: int = 1, freq: str = "YS") -> xarray.DataArray:
     r"""
     Highest precipitation intensity over a n-hour moving window.
 
@@ -631,9 +623,7 @@ def sfcWind_mean(  # noqa: N802
     >>> fg = xr.open_dataset(path_to_sfcWind_file).sfcWind
     >>> fg_mean = sfcWind_mean(fg, freq="QS-DEC")
     """
-    return (
-        sfcWind.resample(time=freq).mean(dim="time").assign_attrs(units=sfcWind.units)
-    )
+    return sfcWind.resample(time=freq).mean(dim="time").assign_attrs(units=sfcWind.units)
 
 
 @declare_units(sfcWind="[speed]")
@@ -716,11 +706,7 @@ def sfcWindmax_max(  # noqa: N802
     >>> from xclim.indices import sfcWindmax_max
     >>> max_sfcWindmax = sfcWindmax_max(sfcWindmax_dataset, freq="QS-DEC")
     """
-    return (
-        sfcWindmax.resample(time=freq)
-        .max(dim="time")
-        .assign_attrs(units=sfcWindmax.units)
-    )
+    return sfcWindmax.resample(time=freq).max(dim="time").assign_attrs(units=sfcWindmax.units)
 
 
 @declare_units(sfcWindmax="[speed]")
@@ -761,11 +747,7 @@ def sfcWindmax_mean(  # noqa: N802
     >>> from xclim.indices import sfcWindmax_mean
     >>> mean_sfcWindmax = sfcWindmax_mean(sfcWindmax_dataset, freq="QS-DEC")
     """
-    return (
-        sfcWindmax.resample(time=freq)
-        .mean(dim="time")
-        .assign_attrs(units=sfcWindmax.units)
-    )
+    return sfcWindmax.resample(time=freq).mean(dim="time").assign_attrs(units=sfcWindmax.units)
 
 
 @declare_units(sfcWindmax="[speed]")
@@ -806,8 +788,4 @@ def sfcWindmax_min(  # noqa: N802
     >>> from xclim.indices import sfcWindmax_min
     >>> min_sfcWindmax = sfcWindmax_min(sfcWindmax_dataset, freq="QS-DEC")
     """
-    return (
-        sfcWindmax.resample(time=freq)
-        .min(dim="time")
-        .assign_attrs(units=sfcWindmax.units)
-    )
+    return sfcWindmax.resample(time=freq).min(dim="time").assign_attrs(units=sfcWindmax.units)

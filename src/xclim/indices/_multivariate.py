@@ -598,9 +598,7 @@ def daily_temperature_range_variability(
 
 
 @declare_units(tasmax="[temperature]", tasmin="[temperature]")
-def extreme_temperature_range(
-    tasmin: xarray.DataArray, tasmax: xarray.DataArray, freq: str = "YS"
-) -> xarray.DataArray:
+def extreme_temperature_range(tasmin: xarray.DataArray, tasmax: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
     r"""
     Extreme intra-period temperature range.
 
@@ -693,7 +691,8 @@ def heat_wave_frequency(
     characterize the occurrence of hot weather events that can result in adverse health outcomes for Canadian
     communities :cite:p:`casati_regional_2013`.
 
-    In :cite:t:`robinson_definition_2001`, the parameters would be `thresh_tasmin=27.22, thresh_tasmax=39.44, window=2` (81F, 103F).
+    In :cite:t:`robinson_definition_2001`, the parameters would be ``thresh_tasmin=27.22,
+    thresh_tasmax=39.44, window=2`` (81F, 103F).
 
     References
     ----------
@@ -703,9 +702,7 @@ def heat_wave_frequency(
     thresh_tasmin = convert_units_to(thresh_tasmin, tasmin)
 
     constrain = (">", ">=")
-    cond = (compare(tasmin, op, thresh_tasmin, constrain)) & (
-        compare(tasmax, op, thresh_tasmax, constrain)
-    )
+    cond = (compare(tasmin, op, thresh_tasmin, constrain)) & (compare(tasmax, op, thresh_tasmax, constrain))
 
     out = rl.resample_and_rl(
         cond,
@@ -785,9 +782,7 @@ def heat_wave_max_length(
     thresh_tasmin = convert_units_to(thresh_tasmin, tasmin)
 
     constrain = (">", ">=")
-    cond = (compare(tasmin, op, thresh_tasmin, constrain)) & (
-        compare(tasmax, op, thresh_tasmax, constrain)
-    )
+    cond = (compare(tasmin, op, thresh_tasmin, constrain)) & (compare(tasmax, op, thresh_tasmax, constrain))
     out = rl.resample_and_rl(
         cond,
         resample_before_rl,
@@ -855,9 +850,7 @@ def heat_wave_total_length(
     thresh_tasmin = convert_units_to(thresh_tasmin, tasmin)
 
     constrain = (">", ">=")
-    cond = compare(tasmin, op, thresh_tasmin, constrain) & compare(
-        tasmax, op, thresh_tasmax, constrain
-    )
+    cond = compare(tasmin, op, thresh_tasmin, constrain) & compare(tasmax, op, thresh_tasmax, constrain)
     out = rl.resample_and_rl(
         cond,
         resample_before_rl,
@@ -1165,9 +1158,7 @@ def high_precip_low_temp(
     To compute the number of days with intense rainfall while minimum temperatures dip below -0.2C:
     >>> pr = xr.open_dataset(path_to_pr_file).pr
     >>> tasmin = xr.open_dataset(path_to_tasmin_file).tasmin
-    >>> high_precip_low_temp(
-    ...     pr, tas=tasmin, pr_thresh="10 mm/d", tas_thresh="-0.2 degC"
-    ... )
+    >>> high_precip_low_temp(pr, tas=tasmin, pr_thresh="10 mm/d", tas_thresh="-0.2 degC")
     """
     pr_thresh = convert_units_to(pr_thresh, pr, context="hydro")
     tas_thresh = convert_units_to(tas_thresh, tas)
@@ -1291,16 +1282,10 @@ def fraction_over_precip_thresh(
 
     constrain = (">", ">=")
     # Total precip during wet days over period
-    total = (
-        pr.where(compare(pr, op, thresh, constrain), 0)
-        .resample(time=freq)
-        .sum(dim="time")
-    )
+    total = pr.where(compare(pr, op, thresh, constrain), 0).resample(time=freq).sum(dim="time")
 
     # Compute the days when precip is both over the wet day threshold and the percentile threshold.
-    over = (
-        pr.where(compare(pr, op, tp, constrain), 0).resample(time=freq).sum(dim="time")
-    )
+    over = pr.where(compare(pr, op, tp, constrain), 0).resample(time=freq).sum(dim="time")
 
     out = over / total
     out.attrs["units"] = ""
@@ -1721,10 +1706,7 @@ def tx_tn_days_above(
     thresh_tasmin = convert_units_to(thresh_tasmin, tasmin)
 
     constrain = (">", ">=")
-    events = (
-        compare(tasmin, op, thresh_tasmin, constrain)
-        & compare(tasmax, op, thresh_tasmax, constrain)
-    ) * 1
+    events = (compare(tasmin, op, thresh_tasmin, constrain) & compare(tasmax, op, thresh_tasmax, constrain)) * 1
     out = events.resample(time=freq).sum(dim="time")
     return to_agg_units(out, tasmin, "count")
 
@@ -1844,9 +1826,7 @@ def winter_rain_ratio(
     return ratio
 
 
-@declare_units(
-    snd="[length]", sfcWind="[speed]", snd_thresh="[length]", sfcWind_thresh="[speed]"
-)
+@declare_units(snd="[length]", sfcWind="[speed]", snd_thresh="[length]", sfcWind_thresh="[speed]")
 def blowing_snow(
     snd: xarray.DataArray,
     sfcWind: xarray.DataArray,  # noqa
@@ -1895,9 +1875,7 @@ def blowing_snow(
 
 
 @declare_units(pr="[precipitation]", evspsbl="[precipitation]")
-def water_cycle_intensity(
-    pr: xarray.DataArray, evspsbl: xarray.DataArray, freq="YS"
-) -> xarray.DataArray:
+def water_cycle_intensity(pr: xarray.DataArray, evspsbl: xarray.DataArray, freq="YS") -> xarray.DataArray:
     """
     Water cycle intensity.
 

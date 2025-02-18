@@ -53,17 +53,13 @@ def jetstream_metric_woollings(
     lon = ua.cf["longitude"]
     ilon = (lon >= 300) * (lon <= 360) + (lon >= -60) * (lon <= 0)
     if not ilon.any():
-        raise ValueError(
-            "Make sure the grid includes longitude values in a range between -60 and 0°E."
-        )
+        raise ValueError("Make sure the grid includes longitude values in a range between -60 and 0°E.")
 
     # Select latitudes in the 15 to 75°N range
     lat = ua.cf["latitude"]
     ilat = (lat >= 15) * (lat <= 75)
     if not ilat.any():
-        raise ValueError(
-            "Make sure the grid includes latitude values in a range between 15 and 75°N."
-        )
+        raise ValueError("Make sure the grid includes latitude values in a range between 15 and 75°N.")
 
     # Select levels between 750 and 950 hPa
     pmin = convert_units_to("750 hPa", ua.cf["vertical"])
@@ -72,9 +68,7 @@ def jetstream_metric_woollings(
     p = ua.cf["vertical"]
     ip = (p >= pmin) * (p <= pmax)
     if not ip.any():
-        raise ValueError(
-            "Make sure the grid includes pressure values in a range between 750 and 950 hPa."
-        )
+        raise ValueError("Make sure the grid includes pressure values in a range between 750 and 950 hPa.")
 
     ua = ua.cf.sel(
         vertical=ip,
@@ -89,20 +83,12 @@ def jetstream_metric_woollings(
     window_size = 61
     cutoff = 1 / filter_freq
     if ua.time.size <= filter_freq or ua.time.size <= window_size:
-        raise ValueError(
-            f"Time series is too short to apply 61-day Lanczos filter (got a length of  {ua.time.size})"
-        )
+        raise ValueError(f"Time series is too short to apply 61-day Lanczos filter (got a length of  {ua.time.size})")
 
     # compute low-pass filter weights
-    lanczos_weights = _compute_low_pass_filter_weights(
-        window_size=window_size, cutoff=cutoff
-    )
+    lanczos_weights = _compute_low_pass_filter_weights(window_size=window_size, cutoff=cutoff)
     # apply the filter
-    ua_lf = (
-        zonal_mean.rolling(time=window_size, center=True)
-        .construct("window")
-        .dot(lanczos_weights)
-    )
+    ua_lf = zonal_mean.rolling(time=window_size, center=True).construct("window").dot(lanczos_weights)
 
     # Get latitude & eastward wind component units
     lat_name = ua.cf["latitude"].name
@@ -114,9 +100,7 @@ def jetstream_metric_woollings(
     return jetlat, jetstr
 
 
-def _compute_low_pass_filter_weights(
-    window_size: int, cutoff: float
-) -> xarray.DataArray:
+def _compute_low_pass_filter_weights(window_size: int, cutoff: float) -> xarray.DataArray:
     order = ((window_size - 1) // 2) + 1
     nwts = 2 * order + 1
     w = np.zeros([nwts])
