@@ -111,7 +111,7 @@ jobs:
     strategy:
       matrix:
         os: [ 'ubuntu-latest' ]
-        python-version: [ "3.10" ]
+        python-version: [ "3.11" ]
         testdata-cache: [ '~/.cache/xclim-testdata' ]
     steps:
       - name: Harden Runner
@@ -198,11 +198,6 @@ jobs:
           - os: 'ubuntu-latest'
             testdata-cache: '~/.cache/xclim-testdata'
             markers: -m 'not slow'
-            python-version: "3.10"
-            tox-env: standard
-          - os: 'ubuntu-latest'
-            testdata-cache: '~/.cache/xclim-testdata'
-            markers: -m 'not slow'
             python-version: "3.11"
             tox-env: standard
           - os: 'ubuntu-latest'
@@ -237,7 +232,7 @@ jobs:
           - os: 'ubuntu-latest'
             testdata-cache: '~/.cache/xclim-testdata'
             markers: '' # No markers for notebooks
-            python-version: "3.10"
+            python-version: "3.11"
             tox-env: notebooks
           - os: 'ubuntu-latest'
             testdata-cache: '~/.cache/xclim-testdata'
@@ -346,7 +341,7 @@ jobs:
     strategy:
       matrix:
         os: [ 'ubuntu-latest' ]
-        python-version: [ "3.10", "3.12" ]
+        python-version: [ "3.11", "3.13" ]
         testdata-cache: [ '~/.cache/xclim-testdata' ]
     defaults:
       run:
