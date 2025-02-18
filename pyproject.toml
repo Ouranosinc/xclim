@@ -126,13 +126,6 @@ xclim = "xclim.cli:cli"
 
 [tool]
 
-[tool.black]
-target-version = [
-  "py311",
-  "py312",
-  "py313"
-]
-
 [tool.bumpversion]
 current_version = "0.55.1-dev.0"
 commit = true
