@@ -35,7 +35,7 @@ dependencies:
   - codespell >=2.4.1
   - coverage >=7.5.0
   - coveralls >=4.0.1  # Note: coveralls is not yet compatible with Python 3.13
-  - deptry =0.23.0
+  - deptry >=0.22.0  # Version is lagging on conda-forge
   - distributed >=2.0
   - flake8 >=7.1.1
   - flake8-rst-docstrings >=0.3.0
