@@ -1,4 +1,4 @@
-name: Workflow Changes Warnings
+name: SDBA Changes Warnings
 
 on:
   # Note: potential security risk from this action using pull_request_target.
@@ -10,23 +10,21 @@ on:
       - reopened
       - synchronize
     paths:
-      - .github/workflows/*.yml
+      - src/xclim/sdba/*.py
 
 permissions:
   contents: read
 
 jobs:
   comment-concerning-workflow-changes:
-    name: Comment Concerning Workflow Changes
+    name: Comment Concerning Changes to SDBA module
     runs-on: ubuntu-latest
-    if: |
-      (github.event.pull_request.head.repo.full_name != github.event.pull_request.base.repo.full_name)
     permissions:
       contents: read
       pull-requests: write
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@4d991eb9b905ef189e4c376166672c3f2f230481 # v2.11.0
+        uses: step-security/harden-runner@cb605e52c26070c328afc4562f0b4ada7618a84e # v2.10.4
         with:
           disable-sudo: true
           egress-policy: block
@@ -39,28 +37,34 @@ jobs:
           issue-number: ${{ github.event.pull_request.number }}
           comment-author: 'github-actions[bot]'
           body-includes: |
-            This Pull Request modifies GitHub workflows and is coming from a fork.
+            This Pull Request modifies the SDBA module.
       - name: Create Warning Comment
         if: |
           (steps.fc_warning.outputs.comment-id == '') &&
-          (!contains(github.event.pull_request.labels.*.name, 'approved')) &&
-          (github.event.pull_request.head.repo.full_name != github.event.pull_request.base.repo.full_name)
+          (!contains(github.event.pull_request.labels.*.name, 'approved'))
         uses: peter-evans/create-or-update-comment@71345be0265236311c031f5c7866368bd1eff043 # v4.0.0
         with:
           comment-id: ${{ steps.fc_warning.outputs.comment-id }}
           issue-number: ${{ github.event.pull_request.number }}
           body: |
             > [!WARNING]
-            > This Pull Request modifies GitHub Workflows and is coming from a fork.
-            **It is very important for the reviewer to ensure that the workflow changes are appropriate.**
+            > This Pull Request modifies the SDBA module.
+            **The SDBA module is gradually being deprecated in favour of the `xsdba` package.**
+            **Any changes to `xclim.sdba` should be made in https://github.com/Ouranosinc/xsdba**
           edit-mode: replace
+      - name: Fail Workflow
+        if: (!contains(github.event.pull_request.labels.*.name, 'approved'))
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
+        with:
+          script: |
+            core.setFailed('Changes were made to `xclim.sdba`.')
       - name: Find Note Comment
         uses: peter-evans/find-comment@3eae4d37986fb5a8592848f6a574fdf654e61f9e # v3.1.0
         id: fc_note
         with:
           issue-number: ${{ github.event.pull_request.number }}
           comment-author: 'github-actions[bot]'
-          body-includes: Workflow changes in this Pull Request have been approved!
+          body-includes: This Pull Request modifies the SDBA module.
       - name: Update Comment
         if: |
           contains(github.event.pull_request.labels.*.name, 'approved')
@@ -70,7 +74,8 @@ jobs:
           issue-number: ${{ github.event.pull_request.number }}
           body: |
             > [!NOTE]
-            > Workflow changes in this Pull Request have been approved!
+            > This Pull Request modifies the SDBA module.
+            **The changes made here have been approved. Be sure to port any relevant changes to `xsdba`.**
           reactions: |
             hooray
           edit-mode: append
