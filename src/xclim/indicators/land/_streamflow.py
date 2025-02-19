@@ -138,6 +138,7 @@ low_flow_frequency = Streamflow(
 )
 
 standardized_streamflow_index = StandardizedIndexes(
+    realm="land",
     title="Standardized Streamflow Index (SSI)",
     identifier="ssi",
     units="",
@@ -154,6 +155,7 @@ standardized_streamflow_index = StandardizedIndexes(
 
 
 standardized_groundwater_index = StandardizedIndexes(
+    realm="land",
     title="Standardized Groundwater Index (SGI)",
     identifier="sgi",
     units="",

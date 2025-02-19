@@ -365,6 +365,7 @@ solid_precip_average = PrTasxWithIndexing(
 )
 
 standardized_precipitation_index = StandardizedIndexes(
+    realm="atmos",
     title="Standardized Precipitation Index (SPI)",
     identifier="spi",
     units="",
@@ -380,6 +381,7 @@ standardized_precipitation_index = StandardizedIndexes(
 )
 
 standardized_precipitation_evapotranspiration_index = StandardizedIndexes(
+    realm="atmos",
     title="Standardized Precipitation Evapotranspiration Index (SPEI)",
     identifier="spei",
     units="",
