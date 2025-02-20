@@ -13,7 +13,7 @@ Breaking changes
 
 Internal changes
 ^^^^^^^^^^^^^^^^
-* `black`, `isort`, and `nbqa` have all been dropped from the development dependencies. (:pull:`2082`).
+* `black`, `isort`, and `nbqa` have all been dropped from the development dependencies. (:issue:`1805`, :pull:`2082`).
 
 v0.55.0 (2025-02-17)
 --------------------
