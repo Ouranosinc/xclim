@@ -14,6 +14,11 @@ Breaking changes
 Internal changes
 ^^^^^^^^^^^^^^^^
 * `black`, `isort`, and `nbqa` have all been dropped from the development dependencies. (:issue:`1805`, :pull:`2082`).
+* `ruff` has been configured to provide code formatting. (:pull:`2083`):
+    * The maximum line-length is now 120 characters.
+    * Docstring formatting is now enabled.
+    * Line endings in files now must be `Unix`-compatible (`LF`).
+* The `blackdoc` pre-commit hook now only examines `.rst` and `.md` files. (:pull:`2083`).
 
 v0.55.0 (2025-02-17)
 --------------------
