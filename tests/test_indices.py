@@ -958,9 +958,7 @@ class TestStandardizedIndices:
             ),
         ],
     )
-    def test_standardized_streamflow_index(
-        self, open_dataset, freq, window, dist, method, values, diff_tol
-    ):
+    def test_standardized_streamflow_index(self, open_dataset, freq, window, dist, method, values, diff_tol):
         ds = open_dataset("Raven/q_sim.nc")
         q = ds.q_obs.rename("q")
         q_cal = ds.q_sim.rename("q").fillna(ds.q_sim.mean())
@@ -1088,14 +1086,8 @@ class TestStandardizedIndices:
             ),
         ],
     )
-    def test_standardized_groundwater_index(
-        self, open_dataset, freq, window, dist, method, values, diff_tol
-    ):
-        if (
-            method == "ML"
-            and freq == "D"
-            and Version(__numpy_version__) < Version("2.0.0")
-        ):
+    def test_standardized_groundwater_index(self, open_dataset, freq, window, dist, method, values, diff_tol):
+        if method == "ML" and freq == "D" and Version(__numpy_version__) < Version("2.0.0"):
             pytest.skip("Skipping SPI/ML/D on older numpy")
         ds = open_dataset("sdba/CanESM2_1950-2100.nc").isel(location=1)
         if freq == "D":
@@ -1103,9 +1095,7 @@ class TestStandardizedIndices:
             ds = ds.convert_calendar("366_day", missing=np.nan)
         elif freq == "W":
             # only standard calendar supported with freq="W"
-            ds = ds.convert_calendar(
-                "standard", missing=np.nan, align_on="year", use_cftime=False
-            )
+            ds = ds.convert_calendar("standard", missing=np.nan, align_on="year", use_cftime=False)
         gwl0 = rate2amount(convert_units_to(ds.pr, "mm/d"))
 
         gwl = gwl0.sel(time=slice("1998", "2000"))
