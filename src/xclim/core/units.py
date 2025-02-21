@@ -188,9 +188,7 @@ def units2pint(
     ]
     possibilities = [f"{d} {u}" for d in degree_ex for u in unit_ex]
     if unit.strip() in possibilities:
-        raise ValidationError(
-            "Remove white space from temperature units, e.g. use `degC`."
-        )
+        raise ValidationError("Remove white space from temperature units, e.g. use `degC`.")
 
     pu = units.parse_units(unit)
     if metadata == "temperature: difference":
@@ -273,9 +271,7 @@ def ensure_cf_units(ustr: str) -> str:
     return pint2cfunits(units2pint(ustr))
 
 
-def pint_multiply(
-    da: xr.DataArray, q: Any, out_units: str | None = None
-) -> xr.DataArray:
+def pint_multiply(da: xr.DataArray, q: Any, out_units: str | None = None) -> xr.DataArray:
     """
     Multiply xarray.DataArray by pint.Quantity.
 
@@ -401,10 +397,7 @@ def convert_units_to(  # noqa: C901
 
         # Automatic pre-conversions based on the dimensionalities and CF standard names
         standard_name = source.attrs.get("standard_name")
-        if (
-            standard_name is not None
-            and source_unit.dimensionality != target_unit.dimensionality
-        ):
+        if standard_name is not None and source_unit.dimensionality != target_unit.dimensionality:
             dim_order_diff = source_unit.dimensionality / target_unit.dimensionality
             for convname, convconf in CF_CONVERSIONS.items():
                 for direction, sign in [("to", 1), ("from", -1)]:
@@ -444,9 +437,7 @@ def convert_units_to(  # noqa: C901
     raise NotImplementedError(f"Source of type `{type(source)}` is not supported.")
 
 
-def cf_conversion(
-    standard_name: str, conversion: str, direction: Literal["to", "from"]
-) -> str | None:
+def cf_conversion(standard_name: str, conversion: str, direction: Literal["to", "from"]) -> str | None:
     """
     Get the standard name of the specific conversion for the given standard name.
 
@@ -483,7 +474,8 @@ FREQ_UNITS = {
 """
 Resampling frequency units for :py:func:`xclim.core.units.infer_sampling_units`.
 
-Mapping from offset base to CF-compliant unit. Only constant-length frequencies that are not also pint units are included.
+Mapping from offset base to CF-compliant unit. Only constant-length frequencies that are
+not also pint units are included.
 """
 
 
@@ -525,9 +517,7 @@ def infer_sampling_units(
     try:
         out = multi, FREQ_UNITS.get(base, base)
     except KeyError as err:
-        raise ValueError(
-            f"Sampling frequency {freq} has no corresponding units."
-        ) from err
+        raise ValueError(f"Sampling frequency {freq} has no corresponding units.") from err
     if out == (7, "d"):
         # Special case for weekly frequency. xarray's CFTimeOffsets do not have "W".
         return 1, "week"
@@ -599,9 +589,7 @@ def ensure_delta(unit: xr.DataArray | str | units.Quantity) -> str:
     return delta_unit
 
 
-def to_agg_units(
-    out: xr.DataArray, orig: xr.DataArray, op: str, dim: str = "time"
-) -> xr.DataArray:
+def to_agg_units(out: xr.DataArray, orig: xr.DataArray, op: str, dim: str = "time") -> xr.DataArray:
     """
     Set and convert units of an array after an aggregation operation along the sampling dimension (time).
 
@@ -652,9 +640,7 @@ def to_agg_units(
     ...     dims=("time",),
     ...     coords={"time": time},
     ... )
-    >>> dt = (tas - 16).assign_attrs(
-    ...     units="degC", units_metadata="temperature: difference"
-    ... )
+    >>> dt = (tas - 16).assign_attrs(units="degC", units_metadata="temperature: difference")
     >>> degdays = dt.clip(0).sum("time")  # Integral of temperature above a threshold
     >>> degdays = to_agg_units(degdays, dt, op="integral")
     >>> degdays.units
@@ -675,9 +661,7 @@ def to_agg_units(
         out.attrs["units"] = pint2cfunits(str2pint(orig.units) ** 2)
 
     elif op in ["doymin", "doymax"]:
-        out.attrs.update(
-            units="1", is_dayofyear=np.int32(1), calendar=get_calendar(orig)
-        )
+        out.attrs.update(units="1", is_dayofyear=np.int32(1), calendar=get_calendar(orig))
 
     elif op in ["count", "integral"]:
         m, freq_u_raw = infer_sampling_units(orig[dim])
@@ -725,9 +709,7 @@ def _rate_and_amount_converter(
     label: Literal["lower", "upper"] = "lower"  # Default to "lower" label for diff
     if isinstance(dim, str):
         if not isinstance(da, xr.DataArray):
-            raise ValueError(
-                "If `dim` is a string, the data to convert must be a DataArray."
-            )
+            raise ValueError("If `dim` is a string, the data to convert must be a DataArray.")
         time = da[dim]
     else:
         time = dim
@@ -789,11 +771,7 @@ def _rate_and_amount_converter(
         # In the case with no freq, last period as the same length as the one before.
         # In the case with freq in M, Q, A, this has been dealt with above in `time`
         # and `label` has been updated accordingly.
-        dt = (
-            time.diff(dim, label=label)
-            .reindex({dim: time}, method="ffill")
-            .astype(float)
-        )
+        dt = time.diff(dim, label=label).reindex({dim: time}, method="ffill").astype(float)
         dt = dt / 1e9  # Convert to seconds
 
         if to == "amount":
@@ -816,11 +794,7 @@ def _rate_and_amount_converter(
             raise ValueError("Argument `to` must be one of 'amount' or 'rate'.")
 
     old_name = da.attrs.get("standard_name")
-    if old_name and (
-        new_name := cf_conversion(
-            old_name, "amount2rate", "to" if to == "rate" else "from"
-        )
-    ):
+    if old_name and (new_name := cf_conversion(old_name, "amount2rate", "to" if to == "rate" else "from")):
         out = out.assign_attrs(standard_name=new_name)
 
     if out_units:
@@ -841,9 +815,9 @@ def rate2amount(
     """
     Convert a rate variable to an amount by multiplying by the sampling period length.
 
-    If the sampling period length cannot be inferred, the rate values
-    are multiplied by the duration between their time coordinate and the next one. The last period
-    is estimated with the duration of the one just before.
+    If the sampling period length cannot be inferred, the rate values are multiplied by the duration
+    between their time coordinate and the next one. The last period is estimated with the duration of
+    the one just before.
 
     This is the inverse operation of :py:func:`xclim.core.units.amount2rate`.
 
@@ -854,8 +828,9 @@ def rate2amount(
     dim : str or DataArray
         The name of time dimension or the coordinate itself.
     sampling_rate_from_coord : bool
-        For data with irregular time coordinates. If True, the diff of the time coordinate will be used as the sampling rate,
-        meaning each data point will be assumed to apply for the interval ending at the next point. See notes.
+        For data with irregular time coordinates.
+        If True, the diff of the time coordinate will be used as the sampling rate, meaning each data point
+        will be assumed to apply for the interval ending at the next point. See notes.
         Defaults to False, which raises an error if the time coordinate is irregular.
     out_units : str, optional
         Specific output units, if needed.
@@ -879,22 +854,18 @@ def rate2amount(
     The following converts a daily array of precipitation in mm/h to the daily amounts in mm:
 
     >>> time = xr.cftime_range("2001-01-01", freq="D", periods=365)
-    >>> pr = xr.DataArray(
-    ...     [1] * 365, dims=("time",), coords={"time": time}, attrs={"units": "mm/h"}
-    ... )
+    >>> pr = xr.DataArray([1] * 365, dims=("time",), coords={"time": time}, attrs={"units": "mm/h"})
     >>> pram = rate2amount(pr)
     >>> pram.units
     'mm'
     >>> float(pram[0])
     24.0
 
-    Also works if the time axis is irregular : the rates are assumed constant for the whole period
-    starting on the values timestamp to the next timestamp. This option is activated with `sampling_rate_from_coord=True`.
+    Also works if the time axis is irregular : the rates are assumed constant for the whole period starting on
+    the values timestamp to the next timestamp. This option is activated with `sampling_rate_from_coord=True`.
 
     >>> time = time[[0, 9, 30]]  # The time axis is Jan 1st, Jan 10th, Jan 31st
-    >>> pr = xr.DataArray(
-    ...     [1] * 3, dims=("time",), coords={"time": time}, attrs={"units": "mm/h"}
-    ... )
+    >>> pr = xr.DataArray([1] * 3, dims=("time",), coords={"time": time}, attrs={"units": "mm/h"})
     >>> pram = rate2amount(pr, sampling_rate_from_coord=True)
     >>> pram.values
     array([216., 504., 504.])
@@ -969,9 +940,7 @@ def amount2rate(
 
 
 @_register_conversion("amount2lwethickness", "to")
-def amount2lwethickness(
-    amount: xr.DataArray, out_units: str | None = None
-) -> xr.DataArray | Quantified:
+def amount2lwethickness(amount: xr.DataArray, out_units: str | None = None) -> xr.DataArray | Quantified:
     """
     Convert a liquid water amount (mass over area) to its equivalent area-averaged thickness (length).
 
@@ -1007,9 +976,7 @@ def amount2lwethickness(
 
 
 @_register_conversion("amount2lwethickness", "from")
-def lwethickness2amount(
-    thickness: xr.DataArray, out_units: str | None = None
-) -> xr.DataArray | Quantified:
+def lwethickness2amount(thickness: xr.DataArray, out_units: str | None = None) -> xr.DataArray | Quantified:
     """
     Convert a liquid water thickness (length) to its equivalent amount (mass over area).
 
@@ -1036,9 +1003,7 @@ def lwethickness2amount(
     water_density = str2pint("1000 kg m-3")
     out = pint_multiply(thickness, water_density)
     old_name = thickness.attrs.get("standard_name")
-    if old_name and (
-        new_name := cf_conversion(old_name, "amount2lwethickness", "from")
-    ):
+    if old_name and (new_name := cf_conversion(old_name, "amount2lwethickness", "from")):
         out.attrs["standard_name"] = new_name
     if out_units:
         out = cast(xr.DataArray, convert_units_to(out, out_units))
@@ -1124,9 +1089,7 @@ def rate2flux(
     assuming a density of 100 kg m-3:
 
     >>> time = xr.cftime_range("2001-01-01", freq="D", periods=365)
-    >>> prsnd = xr.DataArray(
-    ...     [1] * 365, dims=("time",), coords={"time": time}, attrs={"units": "mm/s"}
-    ... )
+    >>> prsnd = xr.DataArray([1] * 365, dims=("time",), coords={"time": time}, attrs={"units": "mm/s"})
     >>> prsn = rate2flux(prsnd, density="100 kg m-3", out_units="kg m-2 s-1")
     >>> prsn.units
     'kg m-2 s-1'
@@ -1197,9 +1160,7 @@ def flux2rate(
 
 
 @datacheck
-def check_units(
-    val: str | xr.DataArray | None, dim: str | xr.DataArray | None = None
-) -> None:
+def check_units(val: str | xr.DataArray | None, dim: str | xr.DataArray | None = None) -> None:
     """
     Check that units are compatible with dimensions, otherwise raise a `ValidationError`.
 
@@ -1273,9 +1234,7 @@ def check_units(
     # Should be resolved in pint v0.24. See: https://github.com/hgrecco/pint/issues/1913
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", category=DeprecationWarning)
-        raise ValidationError(
-            f"Data units {val_units} are not compatible with requested {dim}."
-        )
+        raise ValidationError(f"Data units {val_units} are not compatible with requested {dim}.")
 
 
 def _check_output_has_units(
@@ -1391,9 +1350,7 @@ def declare_relative_units(**units_by_name: str) -> Callable:
                         # but here we pass a real unit. It will also check the standard name of the arg,
                         # but we give it another chance by checking the ref arg.
                         context = context or infer_context(
-                            standard_name=getattr(refvar, "attrs", {}).get(
-                                "standard_name"
-                            )
+                            standard_name=getattr(refvar, "attrs", {}).get("standard_name")
                         )
                 with units.context(context):
                     check_units(bound_args.arguments.get(name), dim)
@@ -1468,9 +1425,7 @@ def declare_units(**units_by_name) -> Callable:
         # Check that all Quantified parameters have their dimension declared.
         sig = signature(func)
         for name, param in sig.parameters.items():
-            if infer_kind_from_parameter(param) == InputKind.QUANTIFIED and (
-                name not in units_by_name
-            ):
+            if infer_kind_from_parameter(param) == InputKind.QUANTIFIED and (name not in units_by_name):
                 raise ValueError(f"Argument {name} has no declared dimensions.")
 
         @wraps(func)
@@ -1492,9 +1447,7 @@ def declare_units(**units_by_name) -> Callable:
     return dec
 
 
-def infer_context(
-    standard_name: str | None = None, dimension: str | None = None
-) -> str:
+def infer_context(standard_name: str | None = None, dimension: str | None = None) -> str:
     """
     Return units context based on either the variable's standard name or the pint dimension.
 

@@ -60,11 +60,13 @@ def create_ensemble(
         If True, climate simulations are treated as xarray multifile Datasets before concatenation.
         Only applicable when "datasets" is sequence of list of file paths. Default: False.
     resample_freq : Optional[str]
-        If the members of the ensemble have the same frequency but not the same offset, they cannot be properly aligned.
+        If the members of the ensemble have the same frequency but not the same offset,
+        they cannot be properly aligned.
         If resample_freq is set, the time coordinate of each member will be modified to fit this frequency.
     calendar : str, optional
         The calendar of the time coordinate of the ensemble.
-        By default, the smallest common calendar is chosen. For example, a mixed input of "noleap" and "360_day" will default to "noleap".
+        By default, the smallest common calendar is chosen.
+        For example, a mixed input of "noleap" and "360_day" will default to "noleap".
         'default' is the standard calendar using np.datetime64 objects (xarray's "standard" with `use_cftime=False`).
     realizations : sequence, optional
         The coordinate values for the new `realization` axis.
@@ -74,7 +76,8 @@ def create_ensemble(
         Additional arguments to pass to py:func:`xclim.core.calendar.convert_calendar`.
         For conversions involving '360_day', the align_on='date' option is used by default.
     **xr_kwargs : dict
-        Any keyword arguments to be given to `xr.open_dataset` when opening the files (or to `xr.open_mfdataset` if `multifile` is True).
+        Any keyword arguments to be given to `xr.open_dataset` when opening the files
+        (or to `xr.open_mfdataset` if `multifile` is True).
 
     Returns
     -------
@@ -110,8 +113,7 @@ def create_ensemble(
             datasets = datasets.values()
     elif isinstance(datasets, str) and realizations is not None:
         raise ValueError(
-            "Passing `realizations` is not supported when `datasets` "
-            "is a glob pattern, as the final order is random."
+            "Passing `realizations` is not supported when `datasets` is a glob pattern, as the final order is random."
         )
 
     ds = _ens_align_datasets(
@@ -200,10 +202,7 @@ def ensemble_mean_std_max_min(
             if "description" in ds_out[vv].attrs.keys():
                 vv.split()
                 ds_out[vv].attrs["description"] = (
-                    ds_out[vv].attrs["description"]
-                    + " : "
-                    + vv.split("_")[-1]
-                    + " of ensemble"
+                    ds_out[vv].attrs["description"] + " : " + vv.split("_")[-1] + " of ensemble"
                 )
 
     ds_out.attrs["history"] = update_history(
@@ -262,7 +261,8 @@ def ensemble_percentiles(
     Returns
     -------
     xr.Dataset or xr.DataArray
-        If split is True, same type as ens; dataset otherwise, containing data variable(s) of requested ensemble statistics.
+        If split is True, same type as ens;
+        Otherwise, a dataset containing data variable(s) of requested ensemble statistics.
 
     Examples
     --------
@@ -315,21 +315,14 @@ def ensemble_percentiles(
     if ens.chunks and len(ens.chunks[ens.get_axis_num("realization")]) > 1:
         if keep_chunk_size is None:
             # Enable smart rechunking is chunksize exceed 2E8 elements after merging along realization
-            keep_chunk_size = (
-                np.prod(ens.isel(realization=0).data.chunksize) * ens.realization.size
-                > 2e8
-            )
+            keep_chunk_size = np.prod(ens.isel(realization=0).data.chunksize) * ens.realization.size > 2e8
         if keep_chunk_size:
             # Smart rechunk on dimension where chunks are the largest
             chk_dim, chks = max(
                 enumerate(ens.chunks),
-                key=lambda kv: (
-                    0 if kv[0] == ens.get_axis_num("realization") else max(kv[1])
-                ),
+                key=lambda kv: (0 if kv[0] == ens.get_axis_num("realization") else max(kv[1])),
             )
-            ens = ens.chunk(
-                {"realization": -1, ens.dims[chk_dim]: len(chks) * ens.realization.size}
-            )
+            ens = ens.chunk({"realization": -1, ens.dims[chk_dim]: len(chks) * ens.realization.size})
         else:
             ens = ens.chunk({"realization": -1})
 
@@ -349,9 +342,7 @@ def ensemble_percentiles(
         )
     else:
         if method != "linear":
-            raise ValueError(
-                "Only the 'linear' method is supported when using weights."
-            )
+            raise ValueError("Only the 'linear' method is supported when using weights.")
 
         with xr.set_options(keep_attrs=True):
             # xclim's calc_perc does not support weighted arrays, so xarray's native function is used instead.
@@ -364,17 +355,13 @@ def ensemble_percentiles(
 
     if min_members != 1:
         out = out.where(ens.notnull().sum("realization") >= min_members)
-    out = out.assign_coords(
-        percentiles=xr.DataArray(list(values), dims=("percentiles",))
-    )
+    out = out.assign_coords(percentiles=xr.DataArray(list(values), dims=("percentiles",)))
 
     if split:
         out = out.to_dataset(dim="percentiles")
         for p, perc in out.data_vars.items():
             perc.attrs.update(ens.attrs)
-            perc.attrs["description"] = (
-                perc.attrs.get("description", "") + f" {p}th percentile of ensemble."
-            )
+            perc.attrs["description"] = perc.attrs.get("description", "") + f" {p}th percentile of ensemble."
             out[p] = perc
             out = out.rename(name_dict={p: f"{ens.name}_p{int(p):02d}"})
 
@@ -450,8 +437,7 @@ def _ens_align_datasets(
                 counts = time.astype(bool).resample(time=resample_freq).count()
                 if any(counts > 1):
                     raise ValueError(
-                        f"Alignment of dataset #{i:02d} failed: "
-                        f"Time axis cannot be resampled to freq {resample_freq}."
+                        f"Alignment of dataset #{i:02d} failed: Time axis cannot be resampled to freq {resample_freq}."
                     )
                 time = counts.time
 

@@ -260,9 +260,7 @@ def huglin_index(
                         xarray.where(
                             (46 < abs(lat)) & (abs(lat) <= 48),
                             k_f[4],
-                            xarray.where(
-                                (48 < abs(lat)) & (abs(lat) <= 50), k_f[5], np.nan
-                            ),
+                            xarray.where((48 < abs(lat)) & (abs(lat) <= 50), k_f[5], np.nan),
                         ),
                     ),
                 ),
@@ -286,11 +284,7 @@ def huglin_index(
 
     hi: xarray.DataArray = (((tas + tasmax) / 2) - thresh).clip(min=0) * k
     hi = (
-        select_time(
-            hi, date_bounds=(start_date, end_date), include_bounds=(True, False)
-        )
-        .resample(time=freq)
-        .sum()
+        select_time(hi, date_bounds=(start_date, end_date), include_bounds=(True, False)).resample(time=freq).sum()
         * k_aggregated
     )
     hi = hi.assign_attrs(units="")
@@ -426,9 +420,7 @@ def biologically_effective_degree_days(
             if isinstance(lat, int | float):
                 lat = xarray.DataArray(lat)
             lat_mask = abs(lat) <= 50
-            k = 1 + xarray.where(
-                lat_mask, ((abs(lat) - 40) * 0.06 / 10).clip(0, None), 0
-            )
+            k = 1 + xarray.where(lat_mask, ((abs(lat) - 40) * 0.06 / 10).clip(0, None), 0)
             k_aggregated = 1
         else:
             day_length = (
@@ -450,16 +442,12 @@ def biologically_effective_degree_days(
     else:
         raise NotImplementedError()
 
-    bedd: xarray.DataArray = (
-        (((tasmin + tasmax) / 2) - thresh_tasmin).clip(min=0) * k + tr_adj
-    ).clip(max=max_daily_degree_days)
+    bedd: xarray.DataArray = ((((tasmin + tasmax) / 2) - thresh_tasmin).clip(min=0) * k + tr_adj).clip(
+        max=max_daily_degree_days
+    )
 
     bedd = (
-        select_time(
-            bedd, date_bounds=(start_date, end_date), include_bounds=(True, False)
-        )
-        .resample(time=freq)
-        .sum()
+        select_time(bedd, date_bounds=(start_date, end_date), include_bounds=(True, False)).resample(time=freq).sum()
         * k_aggregated
     )
 
@@ -657,11 +645,7 @@ def dryness_index(  # numpydoc ignore=SS05
         raise ValueError(f"Freq not allowed: {freq}. Must be `YS` or `YS-JAN`")
 
     # Resample all variables to monthly totals in mm units.
-    evspsblpot = (
-        amount2lwethickness(rate2amount(evspsblpot), out_units="mm")
-        .resample(time="MS")
-        .sum()
-    )
+    evspsblpot = amount2lwethickness(rate2amount(evspsblpot), out_units="mm").resample(time="MS").sum()
     pr = amount2lwethickness(rate2amount(pr), out_units="mm").resample(time="MS").sum()
     wo = convert_units_to(wo, "mm")
 
@@ -1023,9 +1007,7 @@ def rain_season(
     def _get_first_run(run_positions, start_date, end_date):
         run_positions = select_time(run_positions, date_bounds=(start_date, end_date))
         first_start = run_positions.argmax("time")
-        return xarray.where(
-            first_start != run_positions.argmin("time"), first_start, np.nan
-        )
+        return xarray.where(first_start != run_positions.argmin("time"), first_start, np.nan)
 
     # Find the start of the rain season
     def _get_first_run_start(_pram):
@@ -1040,9 +1022,7 @@ def rain_season(
             da_stop = _pram <= thresh_dry_start
             window_dry = window_dry_start
         elif method_dry_start == "total":
-            da_stop = (
-                _pram.rolling({"time": window_dry_start}).sum() <= thresh_dry_start
-            )
+            da_stop = _pram.rolling({"time": window_dry_start}).sum() <= thresh_dry_start
             # equivalent to rolling forward in time instead, i.e. end date will be at beginning of dry run
             da_stop = da_stop.shift({"time": -(window_dry_start - 1)}, fill_value=False)
             window_dry = 1
@@ -1062,9 +1042,7 @@ def rain_season(
             da_stop = _pram <= thresh_dry_end
             run_positions = rl.rle(da_stop) >= window_dry_end
         elif method_dry_end == "total":
-            run_positions = (
-                _pram.rolling({"time": window_dry_end}).sum() <= thresh_dry_end
-            )
+            run_positions = _pram.rolling({"time": window_dry_end}).sum() <= thresh_dry_end
         else:
             raise ValueError(f"Unknown method_dry_end: {method_dry_end}.")
         return _get_first_run(run_positions, date_min_end, date_max_end)
@@ -1105,12 +1083,8 @@ def rain_season(
 
     # Compute rain season, attribute units
     out = cast(xarray.Dataset, pram.resample(time=freq).map(_get_rain_season))
-    rain_season_start = out.rain_season_start.assign_attrs(
-        units="", is_dayofyear=np.int32(1)
-    )
-    rain_season_end = out.rain_season_end.assign_attrs(
-        units="", is_dayofyear=np.int32(1)
-    )
+    rain_season_start = out.rain_season_start.assign_attrs(units="", is_dayofyear=np.int32(1))
+    rain_season_end = out.rain_season_end.assign_attrs(units="", is_dayofyear=np.int32(1))
     rain_season_length = out.rain_season_length.assign_attrs(units="days")
     return rain_season_start, rain_season_end, rain_season_length
 
@@ -1229,9 +1203,7 @@ def standardized_precipitation_index(
     if isinstance(dist, str):
         if dist in dist_methods:
             if method not in dist_methods[dist]:
-                raise NotImplementedError(
-                    f"{method} method is not implemented for {dist} distribution"
-                )
+                raise NotImplementedError(f"{method} method is not implemented for {dist} distribution")
         else:
             raise NotImplementedError(f"{dist} distribution is not yet implemented.")
 
@@ -1326,9 +1298,7 @@ def standardized_precipitation_evapotranspiration_index(
     if isinstance(dist, str):
         if dist in dist_methods:
             if method not in dist_methods[dist]:
-                raise NotImplementedError(
-                    f"{method} method is not implemented for {dist} distribution"
-                )
+                raise NotImplementedError(f"{method} method is not implemented for {dist} distribution")
         else:
             raise NotImplementedError(f"{dist} distribution is not yet implemented.")
 
@@ -1352,9 +1322,7 @@ def standardized_precipitation_evapotranspiration_index(
 
 
 @declare_units(tas="[temperature]")
-def qian_weighted_mean_average(
-    tas: xarray.DataArray, dim: str = "time"
-) -> xarray.DataArray:
+def qian_weighted_mean_average(tas: xarray.DataArray, dim: str = "time") -> xarray.DataArray:
     r"""
     Binomial smoothed, five-day weighted mean average temperature.
 
@@ -1391,9 +1359,7 @@ def qian_weighted_mean_average(
     units = tas.attrs["units"]
 
     weights = xarray.DataArray([0.0625, 0.25, 0.375, 0.25, 0.0625], dims=["window"])
-    weighted_mean: xarray.DataArray = (
-        tas.rolling({dim: 5}, center=True).construct("window").dot(weights)
-    )
+    weighted_mean: xarray.DataArray = tas.rolling({dim: 5}, center=True).construct("window").dot(weights)
     weighted_mean = weighted_mean.assign_attrs(units=units)
     return weighted_mean
 
@@ -1472,15 +1438,11 @@ def effective_growing_degree_days(
     tas.attrs["units"] = "degC"
 
     if method.lower() == "bootsma":
-        fda = first_day_temperature_above(
-            tas=tas, thresh=thresh_with_units, window=1, freq=freq
-        )
+        fda = first_day_temperature_above(tas=tas, thresh=thresh_with_units, window=1, freq=freq)
         start = fda + 10
     elif method.lower() == "qian":
         tas_weighted = qian_weighted_mean_average(tas=tas, dim=dim)
-        start = first_day_temperature_above(
-            tas_weighted, thresh=thresh_with_units, window=5, freq=freq
-        )
+        start = first_day_temperature_above(tas_weighted, thresh=thresh_with_units, window=5, freq=freq)
     else:
         raise NotImplementedError(f"Method: {method}.")
 
@@ -1497,9 +1459,7 @@ def effective_growing_degree_days(
     )
 
     deg_days = (tas - thresh).clip(min=0)
-    egdd: xarray.DataArray = aggregate_between_dates(
-        deg_days, start=start, end=end, freq=freq
-    )
+    egdd: xarray.DataArray = aggregate_between_dates(deg_days, start=start, end=end, freq=freq)
     egdd = to_agg_units(egdd, tas, op="integral")
     return egdd
 
@@ -1544,14 +1504,10 @@ def hardiness_zones(  # numpydoc ignore=SS05
         zone_min, zone_max, zone_step = "-15 degC", "20 degC", "5 degC"
 
     else:
-        raise NotImplementedError(
-            f"Method must be one of `usda` or `anbg`. Got {method}."
-        )
+        raise NotImplementedError(f"Method must be one of `usda` or `anbg`. Got {method}.")
 
     tn_min_rolling = tn_min(tasmin, freq=freq).rolling(time=window).mean()
-    zones: xarray.DataArray = get_zones(
-        tn_min_rolling, zone_min=zone_min, zone_max=zone_max, zone_step=zone_step
-    )
+    zones: xarray.DataArray = get_zones(tn_min_rolling, zone_min=zone_min, zone_max=zone_max, zone_step=zone_step)
 
     zones = zones.assign_attrs(units="")
     return zones
@@ -1583,9 +1539,7 @@ def _chill_portion_one_season(tas_K):
 
     inter_E = np.zeros_like(tas_K)
     for i in range(1, tas_K.shape[-1]):
-        inter_E[..., i] = _accumulate_intermediate(
-            inter_E[..., i - 1], xi[..., i - 1], xs[..., i], ak1[..., i]
-        )
+        inter_E[..., i] = _accumulate_intermediate(inter_E[..., i - 1], xi[..., i - 1], xs[..., i], ak1[..., i])
     delta = np.where(inter_E >= 1, inter_E * xi, 0)
 
     return delta
@@ -1606,9 +1560,7 @@ def _apply_chill_portion_one_season(tas_K):
 
 
 @declare_units(tas="[temperature]")
-def chill_portions(
-    tas: xarray.DataArray, freq: str = "YS", **indexer
-) -> xarray.DataArray:
+def chill_portions(tas: xarray.DataArray, freq: str = "YS", **indexer) -> xarray.DataArray:
     r"""
     Chill portion based on the dynamic model.
 
@@ -1658,18 +1610,12 @@ def chill_portions(
     >>> tas_hourly = make_hourly_temperature(tasmin, tasmax)
     >>> cp = chill_portions(tasmin)
     """
-    tas_K: xarray.DataArray = select_time(
-        convert_units_to(tas, "K"), drop=True, **indexer
-    )
-    return resample_map(
-        tas_K, "time", freq, _apply_chill_portion_one_season
-    ).assign_attrs(units="")
+    tas_K: xarray.DataArray = select_time(convert_units_to(tas, "K"), drop=True, **indexer)
+    return resample_map(tas_K, "time", freq, _apply_chill_portion_one_season).assign_attrs(units="")
 
 
 @declare_units(tas="[temperature]")
-def chill_units(
-    tas: xarray.DataArray, positive_only: bool = False, freq: str = "YS"
-) -> xarray.DataArray:
+def chill_units(tas: xarray.DataArray, positive_only: bool = False, freq: str = "YS") -> xarray.DataArray:
     """
     Chill units using the Utah model.
 

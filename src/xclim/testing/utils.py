@@ -43,10 +43,7 @@ except ImportError:
 try:
     import pooch
 except ImportError:
-    warnings.warn(
-        "The `pooch` library is not installed. "
-        "The default cache directory for testing data will not be set."
-    )
+    warnings.warn("The `pooch` library is not installed. The default cache directory for testing data will not be set.")
     pooch = None
 
 
@@ -75,9 +72,7 @@ __all__ = [
 default_testdata_version = "v2025.1.8"
 """Default version of the testing data to use when fetching datasets."""
 
-default_testdata_repo_url = (
-    "https://raw.githubusercontent.com/Ouranosinc/xclim-testdata/"
-)
+default_testdata_repo_url = "https://raw.githubusercontent.com/Ouranosinc/xclim-testdata/"
 """Default URL of the testing data repository to use when fetching datasets."""
 
 try:
@@ -146,9 +141,7 @@ or setting the variable at runtime:
 """
 
 
-def list_input_variables(
-    submodules: Sequence[str] | None = None, realms: Sequence[str] | None = None
-) -> dict:
+def list_input_variables(submodules: Sequence[str] | None = None, realms: Sequence[str] | None = None) -> dict:
     """
     List all possible variables names used in xclim's indicators.
 
@@ -173,9 +166,7 @@ def list_input_variables(
     from xclim.core.indicator import registry  # pylint: disable=import-outside-toplevel
     from xclim.core.utils import InputKind  # pylint: disable=import-outside-toplevel
 
-    submodules = submodules or [
-        sub for sub in dir(indicators) if not sub.startswith("__")
-    ]
+    submodules = submodules or [sub for sub in dir(indicators) if not sub.startswith("__")]
     realms = realms or ["atmos", "ocean", "land", "seaIce"]
 
     variables = defaultdict(list)
@@ -269,9 +260,7 @@ def publish_release_notes(
         for title_expression, level in titles.items():
             found = re.findall(title_expression, changes)
             for grouping in found:
-                fixed_grouping = (
-                    str(grouping[0]).replace("(", r"\(").replace(")", r"\)")
-                )
+                fixed_grouping = str(grouping[0]).replace("(", r"\(").replace(")", r"\)")
                 search = rf"({fixed_grouping})\n([\{level}]{'{' + str(len(grouping[1])) + '}'})"
                 replacement = f"{'##' if level == '-' else '###'} {grouping[0]}"
                 changes = re.sub(search, replacement, changes)
@@ -328,7 +317,8 @@ def show_versions(
     file : {os.PathLike, StringIO, TextIO}, optional
         If provided, prints to the given file-like object. Otherwise, returns a string.
     deps : list of str, optional
-        A list of dependencies to gather and print version information from. Otherwise, prints `xclim` dependencies.
+        A list of dependencies to gather and print version information from.
+        Otherwise, prints `xclim` dependencies.
 
     Returns
     -------
@@ -404,15 +394,13 @@ def run_doctests():
 
 def testing_setup_warnings():
     """Warn users about potential incompatibilities between xclim and xclim-testdata versions."""
-    if (
-        re.match(r"^\d+\.\d+\.\d+$", __xclim_version__)
-        and TESTDATA_BRANCH != default_testdata_version
-    ):
+    if re.match(r"^\d+\.\d+\.\d+$", __xclim_version__) and TESTDATA_BRANCH != default_testdata_version:
         # This does not need to be emitted on GitHub Workflows and ReadTheDocs
         if not os.getenv("CI") and not os.getenv("READTHEDOCS"):
             warnings.warn(
-                f"`xclim` stable ({__xclim_version__}) is running tests against a non-default branch of the testing data. "
-                "It is possible that changes to the testing data may be incompatible with some assertions in this version. "
+                f"`xclim` stable ({__xclim_version__}) is running tests against a non-default "
+                f"branch of the testing data. It is possible that changes to the testing data may "
+                f"be incompatible with some assertions in this version. "
                 f"Please be sure to check {TESTDATA_REPO_URL} for more information.",
             )
 
@@ -422,9 +410,7 @@ def testing_setup_warnings():
             time.ctime(os.path.getmtime(xclim.__file__)),
             "%a %b %d %H:%M:%S %Y",
         )
-        install_calendar_version = (
-            f"{install_date.year}.{install_date.month}.{install_date.day}"
-        )
+        install_calendar_version = f"{install_date.year}.{install_date.month}.{install_date.day}"
 
         if Version(TESTDATA_BRANCH) > Version(install_calendar_version):
             warnings.warn(
@@ -434,9 +420,7 @@ def testing_setup_warnings():
             )
 
 
-def load_registry(
-    branch: str = TESTDATA_BRANCH, repo: str = TESTDATA_REPO_URL
-) -> dict[str, str]:
+def load_registry(branch: str = TESTDATA_BRANCH, repo: str = TESTDATA_REPO_URL) -> dict[str, str]:
     """
     Load the registry file for the test data.
 
@@ -465,18 +449,12 @@ def load_registry(
         external_repo_name = urlparse(repo).path.split("/")[-2]
         external_branch_name = branch.split("/")[-1]
         registry_file = Path(
-            str(
-                ilr.files("xclim").joinpath(
-                    f"testing/registry.{external_repo_name}.{external_branch_name}.txt"
-                )
-            )
+            str(ilr.files("xclim").joinpath(f"testing/registry.{external_repo_name}.{external_branch_name}.txt"))
         )
         urlretrieve(remote_registry, registry_file)  # noqa: S310
 
     elif branch != default_testdata_version:
-        custom_registry_folder = Path(
-            str(ilr.files("xclim").joinpath(f"testing/{branch}"))
-        )
+        custom_registry_folder = Path(str(ilr.files("xclim").joinpath(f"testing/{branch}")))
         custom_registry_folder.mkdir(parents=True, exist_ok=True)
         registry_file = custom_registry_folder.joinpath("registry.txt")
         urlretrieve(remote_registry, registry_file)  # noqa: S310
@@ -521,13 +499,14 @@ def nimbus(  # noqa: PR01
     Notes
     -----
     There are three environment variables that can be used to control the behaviour of this registry:
-        - ``XCLIM_TESTDATA_CACHE_DIR``: If this environment variable is set, it will be used as the base directory to
-          store the data files. The directory should be an absolute path (i.e., it should start with ``/``).
+        - ``XCLIM_TESTDATA_CACHE_DIR``: If this environment variable is set, it will be used as the
+          base directory to store the data files.
+          The directory should be an absolute path (i.e., it should start with ``/``).
           Otherwise,the default location will be used (based on ``platformdirs``, see :py:func:`pooch.os_cache`).
-        - ``XCLIM_TESTDATA_REPO_URL``: If this environment variable is set, it will be used as the URL of the repository
-          to use when fetching datasets. Otherwise, the default repository will be used.
-        - ``XCLIM_TESTDATA_BRANCH``: If this environment variable is set, it will be used as the branch of the repository
-          to use when fetching datasets. Otherwise, the default branch will be used.
+        - ``XCLIM_TESTDATA_REPO_URL``: If this environment variable is set, it will be used as the URL of
+          the repository to use when fetching datasets. Otherwise, the default repository will be used.
+        - ``XCLIM_TESTDATA_BRANCH``: If this environment variable is set, it will be used as the branch of
+          the repository to use when fetching datasets. Otherwise, the default branch will be used.
 
     Examples
     --------
@@ -548,9 +527,7 @@ def nimbus(  # noqa: PR01
         )
     if not repo.endswith("/"):
         repo = f"{repo}/"
-    remote = audit_url(
-        urljoin(urljoin(repo, branch if branch.endswith("/") else f"{branch}/"), "data")
-    )
+    remote = audit_url(urljoin(urljoin(repo, branch if branch.endswith("/") else f"{branch}/"), "data"))
 
     _nimbus = pooch.create(
         path=cache_dir,
@@ -569,7 +546,6 @@ def nimbus(  # noqa: PR01
     # Overload the fetch method to add user-agent headers
     @wraps(_nimbus.fetch_diversion)
     def _fetch(*args: str, **kwargs: bool | Callable) -> str:  # numpydoc ignore=GL08
-
         def _downloader(
             url: str,
             output_file: str | IO,
@@ -654,9 +630,7 @@ def open_dataset(
     local_file = Path(cache_dir).joinpath(name)
     if not local_file.exists():
         try:
-            local_file = nimbus(branch=branch, repo=repo, cache_dir=cache_dir).fetch(
-                name
-            )
+            local_file = nimbus(branch=branch, repo=repo, cache_dir=cache_dir).fetch(name)
         except OSError as err:
             msg = f"File not found locally. Verify that the testing data is available in remote: {local_file}"
             raise OSError(msg) from err

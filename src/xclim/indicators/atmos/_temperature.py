@@ -215,8 +215,8 @@ tx_tn_days_above = TempWithIndexing(
     standard_name="number_of_days_with_air_temperature_above_threshold",
     long_name="Number of days with daily minimum above {thresh_tasmin} "
     "and daily maximum temperatures above {thresh_tasmax}",
-    description="{freq} number of days where daily maximum temperature exceeds {thresh_tasmax} and minimum temperature "
-    "exceeds {thresh_tasmin}.",
+    description="{freq} number of days where daily maximum temperature exceeds {thresh_tasmax} and minimum "
+    "temperature exceeds {thresh_tasmin}.",
     abstract="Number of days with daily maximum and minimum temperatures above given thresholds.",
     cell_methods="",
     compute=indices.tx_tn_days_above,
@@ -242,11 +242,12 @@ hot_spell_max_magnitude = Temp(
     title="Hot spell maximum magnitude",
     identifier="hot_spell_max_magnitude",
     units="K d",
-    long_name="Maximum cumulative difference between daily maximum temperature and {thresh} for days within a heat wave. "
-    "A heat wave is defined as a series of at least {window} consecutive days with daily maximum temperature above {thresh}.",
-    description="Magnitude of the most intensive heat wave per {freq}. The magnitude is the cumulative exceedance of daily "
-    "maximum temperature over {thresh}. A heat wave is defined as a series of at least {window} consecutive days with daily "
-    "maximum temperature above {thresh}",
+    long_name="Maximum cumulative difference between daily maximum temperature and {thresh} for days within "
+    "a heat wave. A heat wave is defined as a series of at least {window} consecutive days with daily maximum "
+    "temperature above {thresh}.",
+    description="Magnitude of the most intensive heat wave per {freq}. The magnitude is the cumulative "
+    "exceedance of daily maximum temperature over {thresh}. A heat wave is defined as a series of at least "
+    "{window} consecutive days with daily maximum temperature above {thresh}",
     abstract="Magnitude of the most intensive heat wave per {freq}. A heat wave occurs when daily maximum "
     "temperatures exceed given thresholds for a number of days.",
     cell_methods="",
@@ -309,10 +310,10 @@ heat_spell_frequency = Temp(
     long_name="Number of heat spells",
     description="{freq} number of heat spells events. A heat spell occurs when the {window}-day "
     "averages of daily minimum and maximum temperatures each exceed {thresh_tasmin} and {thresh_tasmax}. "
-    "All days of the {window}-day period are considered part of the spell. Gaps of fewer than {min_gap} day(s) are allowed "
-    "within a spell.",
-    abstract="Number of heat spells. A heat spell occurs when rolling averages of daily minimum and maximum temperatures exceed given "
-    "thresholds for a number of days.",
+    "All days of the {window}-day period are considered part of the spell. Gaps of fewer than {min_gap} day(s) "
+    "are allowed within a spell.",
+    abstract="Number of heat spells. A heat spell occurs when rolling averages of daily minimum and maximum"
+    "temperatures exceed given thresholds for a number of days.",
     cell_methods="",
     keywords="health,",
     compute=indices.generic.bivariate_spell_length_statistics,
@@ -344,10 +345,10 @@ heat_spell_max_length = Temp(
     long_name="Longest heat spell",
     description="{freq} maximum length of heat spells. A heat spell occurs when the {window}-day "
     "averages of daily minimum and maximum temperatures each exceed {thresh_tasmin} and {thresh_tasmax}. "
-    "All days of the {window}-day period are considered part of the spell. Gaps of fewer than {min_gap} day(s) are allowed "
-    "within a spell.",
-    abstract="The longest heat spell of a period. A heat spell occurs when rolling averages of daily minimum and maximum temperatures exceed given "
-    "thresholds for a number of days.",
+    "All days of the {window}-day period are considered part of the spell. "
+    "Gaps of fewer than {min_gap} day(s) are allowed within a spell.",
+    abstract="The longest heat spell of a period. A heat spell occurs when rolling averages of daily minimum "
+    "and maximum temperatures exceed given thresholds for a number of days.",
     compute=indices.generic.bivariate_spell_length_statistics,
     input={"data1": "tasmin", "data2": "tasmax"},
     parameters=dict(
@@ -377,10 +378,10 @@ heat_spell_total_length = Temp(
     long_name="Total length of heat spells.",
     description="{freq} total length of heat spell events. "
     "A heat spell occurs when the {window}-day  averages of daily minimum and maximum temperatures "
-    "each exceed {thresh_tasmin} and {thresh_tasmax}.  All days of the {window}-day period are considered part of the spell."
-    "Gaps of fewer than {min_gap} day(s) are allowed within a spell.",
-    abstract="Total length of heat spells. A heat spell occurs when rolling averages of daily minimum and maximum temperatures exceed given "
-    "thresholds for a number of days.",
+    "each exceed {thresh_tasmin} and {thresh_tasmax}.  All days of the {window}-day period are considered part "
+    "of the spell. Gaps of fewer than {min_gap} day(s) are allowed within a spell.",
+    abstract="Total length of heat spells. A heat spell occurs when rolling averages of daily minimum and "
+    "maximum temperatures exceed given thresholds for a number of days.",
     compute=indices.generic.bivariate_spell_length_statistics,
     input={"data1": "tasmin", "data2": "tasmax"},
     parameters=dict(
@@ -696,11 +697,11 @@ daily_freezethaw_cycles = TempWithIndexing(
     units="days",
     long_name="Number of days where maximum daily temperatures are above {thresh_tasmax} "
     "and minimum daily temperatures are at or below {thresh_tasmin}",
-    description="{freq} number of days with a diurnal freeze-thaw cycle, where maximum daily temperatures are above "
-    "{thresh_tasmax} and minimum daily temperatures are at or below {thresh_tasmin}.",
-    abstract="The number of days with a freeze-thaw cycle. A freeze-thaw cycle is defined as a day where maximum daily "
-    "temperature is above a given threshold and minimum daily temperature is at or below a given threshold, "
-    "usually 0°C for both.",
+    description="{freq} number of days with a diurnal freeze-thaw cycle, where maximum daily temperatures "
+    "are above {thresh_tasmax} and minimum daily temperatures are at or below {thresh_tasmin}.",
+    abstract="The number of days with a freeze-thaw cycle. A freeze-thaw cycle is defined as a day where "
+    "maximum daily temperature is above a given threshold and minimum daily temperature is at or below a "
+    "given threshold, usually 0°C for both.",
     cell_methods="",
     compute=indices.multiday_temperature_swing,
     parameters={
@@ -744,11 +745,11 @@ freezethaw_spell_mean_length = Temp(
     long_name="Average length of events where maximum daily temperatures are above {thresh_tasmax} "
     "and minimum daily temperatures are at or below {thresh_tasmin} for at least {window} consecutive day(s).",
     description="{freq} average length of freeze-thaw spells, where maximum daily temperatures are above "
-    "{thresh_tasmax} and minimum daily temperatures are at or below {thresh_tasmin} for at least {window} consecutive "
-    "day(s).",
-    abstract="Average length of daily freeze-thaw spells. A freeze-thaw spell is defined as a number of consecutive "
-    "days where maximum daily temperatures are above a given threshold and minimum daily temperatures are at or below "
-    "a given threshold, usually 0°C for both.",
+    "{thresh_tasmax} and minimum daily temperatures are at or below {thresh_tasmin} for at least {window} "
+    "consecutive day(s).",
+    abstract="Average length of daily freeze-thaw spells. A freeze-thaw spell is defined as a number of "
+    "consecutive days where maximum daily temperatures are above a given threshold and minimum daily temperatures "
+    "are at or below a given threshold, usually 0°C for both.",
     cell_methods="",
     compute=indices.multiday_temperature_swing,
     parameters={
@@ -768,11 +769,11 @@ freezethaw_spell_max_length = Temp(
     long_name="Maximal length of events where maximum daily temperatures are above {thresh_tasmax} "
     "and minimum daily temperatures are at or below {thresh_tasmin} for at least {window} consecutive day(s).",
     description="{freq} maximal length of freeze-thaw spells, where maximum daily temperatures are above "
-    "{thresh_tasmax} and minimum daily temperatures are at or below {thresh_tasmin} for at least {window} consecutive "
-    "day(s).",
-    abstract="Maximal length of daily freeze-thaw spells. A freeze-thaw spell is defined as a number of consecutive "
-    "days where maximum daily temperatures are above a given threshold and minimum daily temperatures are at or below "
-    "a threshold, usually 0°C for both.",
+    "{thresh_tasmax} and minimum daily temperatures are at or below {thresh_tasmin} for at least {window} "
+    "consecutive day(s).",
+    abstract="Maximal length of daily freeze-thaw spells. A freeze-thaw spell is defined as a number of "
+    "consecutive days where maximum daily temperatures are above a given threshold and minimum daily "
+    "temperatures are at or below a threshold, usually 0°C for both.",
     cell_methods="",
     compute=indices.multiday_temperature_swing,
     parameters={
@@ -860,10 +861,10 @@ freshet_start = Temp(
     units="",
     standard_name="day_of_year",
     long_name="First day where temperature threshold of {thresh} is exceeded for at least {window} days",
-    description="Day of year of the spring freshet start, defined as the first day a temperature threshold of {thresh} "
-    "is exceeded for at least {window} days.",
-    abstract="Day of year of the spring freshet start, defined as the first day when the temperature exceeds a certain "
-    "threshold for a given number of consecutive days.",
+    description="Day of year of the spring freshet start, defined as the first day a temperature threshold "
+    "of {thresh} is exceeded for at least {window} days.",
+    abstract="Day of year of the spring freshet start, defined as the first day when the temperature exceeds "
+    "a certain threshold for a given number of consecutive days.",
     compute=indices.first_day_temperature_above,
     parameters={"thresh": {"default": "0 degC"}, "window": {"default": 5}},
 )
@@ -1039,8 +1040,8 @@ frost_free_season_length = Temp(
     description="{freq} number of days between the first occurrence of at least {window} consecutive days "
     "with minimum daily temperature at or above {thresh} and the first occurrence of at least "
     "{window} consecutive days with minimum daily temperature below {thresh} after {mid_date}.",
-    abstract="Duration of the frost free season, defined as the period when the minimum daily temperature is above 0°C "
-    "without a freezing window of `N` days, with freezing occurring after a median calendar date.",
+    abstract="Duration of the frost free season, defined as the period when the minimum daily temperature "
+    "is above 0°C without a freezing window of `N` days, with freezing occurring after a median calendar date.",
     cell_methods="time: sum over days",
     compute=indices.frost_free_season_length,
     parameters={"thresh": {"default": "0 degC"}},
@@ -1052,9 +1053,10 @@ frost_free_season_start = Temp(
     units="",
     standard_name="day_of_year",
     long_name="First day following a period of {window} days with minimum daily temperature at or above {thresh}",
-    description="Day of the year of the beginning of the frost-free season, defined as the {window}th consecutive day "
-    "when minimum daily temperature exceeds {thresh}.",
-    abstract="First day when minimum daily temperature exceeds a given threshold for a given number of consecutive days",
+    description="Day of the year of the beginning of the frost-free season, defined as the {window}th consecutive "
+    "day when minimum daily temperature exceeds {thresh}.",
+    abstract="First day when minimum daily temperature exceeds a given threshold for a given number of "
+    "consecutive days",
     compute=indices.frost_free_season_start,
     parameters={"thresh": {"default": "0 degC"}},
 )
@@ -1269,11 +1271,7 @@ degree_days_exceedance_date = Temp(
     long_name="Day of year when the integral of mean daily temperature {op} {thresh} exceeds {sum_thresh}",
     description=lambda **kws: "Day of year when the integral of degree days (mean daily temperature {op} {thresh}) "
     "exceeds {sum_thresh}"
-    + (
-        ", with the cumulative sum starting from {after_date}."
-        if kws["after_date"] is not None
-        else "."
-    ),
+    + (", with the cumulative sum starting from {after_date}." if kws["after_date"] is not None else "."),
     abstract="The day of the year when the sum of degree days exceeds a threshold, occurring after a given date. "
     "Degree days are calculated above or below a given temperature threshold.",
     cell_methods="",
@@ -1447,8 +1445,7 @@ late_frost_days = Temp(
     units="days",
     standard_name="days_with_air_temperature_below_threshold",
     long_name="Number of days where the daily minimum temperature is below {thresh}",
-    description="{freq} number of days where the daily minimum temperature is below {thresh}"
-    "over the period {indexer}.",
+    description="{freq} number of days where the daily minimum temperature is below {thresh}over the period {indexer}.",
     abstract="Number of days where the daily minimum temperature is below a given threshold between a given"
     "start date and a given end date.",
     cell_methods="time: sum over days",
@@ -1524,9 +1521,9 @@ chill_units = TempHourlyWithIndexing(
     identifier="cu",
     units="",
     cell_methods="time: sum",
-    description="Chill units are a measure to estimate the bud breaking potential of different crops based on the Utah model developed in "
-    "Richardson et al. (1974). The Utah model assigns a weight to each hour depending on the temperature recognising that high temperatures can "
-    "actually decrease the potential for bud breaking.",
+    description="Chill units are a measure to estimate the bud breaking potential of different crops based on the "
+    "Utah model developed in Richardson et al. (1974). The Utah model assigns a weight to each hour depending on "
+    "the temperature recognising that high temperatures can actually decrease the potential for bud breaking.",
     long_name="Chill units after the Utah Model",
     allowed_periods=["Y"],
     compute=indices.chill_units,

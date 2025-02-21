@@ -85,9 +85,7 @@ class TestConvertUnitsTo:
         out = convert_units_to(pr, "mm/day", context="hydro")
         assert isinstance(out.data, dsk.Array)
 
-    @pytest.mark.parametrize(
-        "alias", [units("Celsius"), units("degC"), units("C"), units("deg_C")]
-    )
+    @pytest.mark.parametrize("alias", [units("Celsius"), units("degC"), units("C"), units("deg_C")])
     def test_temperature_aliases(self, alias):
         assert alias == units("celsius")
 
@@ -114,9 +112,7 @@ class TestConvertUnitsTo:
         assert out.attrs["standard_name"] == "rainfall_flux"
 
     def test_temperature_difference(self):
-        delta = xr.DataArray(
-            [2], attrs={"units": "K", "units_metadata": "temperature: difference"}
-        )
+        delta = xr.DataArray([2], attrs={"units": "K", "units_metadata": "temperature: difference"})
         out = convert_units_to(source=delta, target="delta_degC")
         assert out == 2
         assert out.attrs["units"] == "degC"
@@ -224,9 +220,7 @@ def test_rate2amount(pr_series):
         np.testing.assert_array_equal(am_ys, 86400 * np.array([365, 366, 365]))
 
 
-@pytest.mark.parametrize(
-    "srcfreq, exp", [("h", 3600), ("min", 60), ("s", 1), ("ns", 1e-9)]
-)
+@pytest.mark.parametrize("srcfreq, exp", [("h", 3600), ("min", 60), ("s", 1), ("ns", 1e-9)])
 def test_rate2amount_subdaily(srcfreq, exp):
     pr = xr.DataArray(
         np.ones(1000),
@@ -304,13 +298,13 @@ def test_declare_units():
 
 def test_declare_relative_units():
     def index(
-        data: xr.DataArray, thresh: Quantified, dthreshdt: Quantified  # noqa: F841
+        data: xr.DataArray,
+        thresh: Quantified,
+        dthreshdt: Quantified,  # noqa: F841
     ):
         return xr.DataArray(1, attrs={"units": "rad"})
 
-    index_relative = declare_relative_units(thresh="<data>", dthreshdt="<data>/[time]")(
-        index
-    )
+    index_relative = declare_relative_units(thresh="<data>", dthreshdt="<data>/[time]")(index)
     assert hasattr(index_relative, "relative_units")
 
     index_full_mm = declare_units(data="mm")(index_relative)

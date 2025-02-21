@@ -79,16 +79,10 @@ def test_rollingmean_detrend(series):
     x = xr.DataArray(
         np.sin(2 * np.pi * np.arange(11 * 365) / 365),
         dims=("time",),
-        coords={
-            "time": xr.cftime_range(
-                "2010-01-01", periods=11 * 365, freq="D", calendar="noleap"
-            )
-        },
+        coords={"time": xr.cftime_range("2010-01-01", periods=11 * 365, freq="D", calendar="noleap")},
     )
     w = windows.get_window("triang", 11, False)
-    det = RollingMeanDetrend(
-        group=Grouper("time.dayofyear", window=3), win=11, weights=w
-    )
+    det = RollingMeanDetrend(group=Grouper("time.dayofyear", window=3), win=11, weights=w)
     fx = det.fit(x)
     assert fx.ds.trend.notnull().sum() == 365
 

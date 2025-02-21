@@ -17,9 +17,7 @@ from xclim.core.options import datacheck
 
 
 @datacheck
-def check_freq(
-    var: xr.DataArray, freq: str | Sequence[str], strict: bool = True
-) -> None:
+def check_freq(var: xr.DataArray, freq: str | Sequence[str], strict: bool = True) -> None:
     """
     Raise an error if not series has not the expected temporal frequency or is not monotonically increasing.
 
@@ -28,8 +26,9 @@ def check_freq(
     var : xr.DataArray
         Input array.
     freq : str or sequence of str
-        The expected temporal frequencies, using Pandas frequency terminology ({'Y', 'M', 'D', 'h', 'min', 's', 'ms', 'us'})
-        and multiples thereof. To test strictly for 'W', pass '7D' with `strict=True`.
+        The expected temporal frequencies, using Pandas frequency terminology
+        (e.g. {'Y', 'M', 'D', 'h', 'min', 's', 'ms', 'us'}) and multiples thereof.
+        To test strictly for 'W', pass '7D' with `strict=True`.
         This ignores the start/end flag and the anchor (ex: 'YS-JUL' will validate against 'Y').
     strict : bool
         Whether multiples of the frequencies are considered invalid or not. With `strict` set to False, a '3h' series
@@ -47,13 +46,10 @@ def check_freq(
     v_freq = xr.infer_freq(var.time)
     if v_freq is None:
         raise ValidationError(
-            "Unable to infer the frequency of the time series. "
-            "To mute this, set xclim's option data_validation='log'."
+            "Unable to infer the frequency of the time series. To mute this, set xclim's option data_validation='log'."
         )
     v_base = parse_offset(v_freq)[1]
-    if v_base not in exp_base or (
-        strict and all(compare_offsets(v_freq, "!=", frq) for frq in freq)
-    ):
+    if v_base not in exp_base or (strict and all(compare_offsets(v_freq, "!=", frq) for frq in freq)):
         raise ValidationError(
             f"Frequency of time series not {'strictly' if strict else ''} in {freq}. "
             "To mute this, set xclim's option data_validation='log'."
@@ -97,13 +93,11 @@ def check_common_time(inputs: Sequence[xr.DataArray]) -> None:
     freqs = [xr.infer_freq(da.time) for da in inputs]
     if None in freqs:
         raise ValidationError(
-            "Unable to infer the frequency of the time series. "
-            "To mute this, set xclim's option data_validation='log'."
+            "Unable to infer the frequency of the time series. To mute this, set xclim's option data_validation='log'."
         )
     if len(set(freqs)) != 1:
         raise ValidationError(
-            f"Inputs have different frequencies. Got : {freqs}."
-            "To mute this, set xclim's option data_validation='log'."
+            f"Inputs have different frequencies. Got : {freqs}.To mute this, set xclim's option data_validation='log'."
         )
 
     # Check if anchor is the same
@@ -114,7 +108,7 @@ def check_common_time(inputs: Sequence[xr.DataArray]) -> None:
         outs = {da.indexes["time"][0].strftime(fmt[base]) for da in inputs}
         if len(outs) > 1:
             raise ValidationError(
-                f"All inputs have the same frequency ({freq}), but they are not anchored on the same minutes (got {outs}). "
-                f"xarray's alignment would silently fail. You can try to fix this with `da.resample('{freq}').mean()`."
-                "To mute this, set xclim's option data_validation='log'."
+                f"All inputs have the same frequency ({freq}), but they are not anchored on the same "
+                f"minutes (got {outs}). xarray's alignment would silently fail. You can try to fix this "
+                f"with `da.resample('{freq}').mean()`. To mute this, set xclim's option data_validation='log'."
             )

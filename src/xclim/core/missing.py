@@ -9,13 +9,13 @@ values should be enforced. The World Meteorological Organisation (WMO) suggests 
 consecutive and overall missing values per month.
 
 `xclim` has a registry of missing value detection algorithms that can be extended by users to customize the behavior
-of indicators. Once registered, algorithms can be used by setting the global option as ``xc.set_options(check_missing="method")``
-or within indicators by setting the `missing` attribute of an `Indicator` subclass.
-By default, `xclim` registers the following algorithms:
+of indicators. Once registered, algorithms can be used by setting the global option as
+``xc.set_options(check_missing="method")`` or within indicators by setting the `missing` attribute of an
+`Indicator` subclass. By default, `xclim` registers the following algorithms:
 
  * `any`: A result is missing if any input value is missing.
  * `at_least_n`: A result is missing if less than a given number of valid values are present.
- * `pct`: A result is missing if more than a given fraction of values are missing.
+ * `pct`: A result is missing if more than a given fraction of its values are missing.
  * `wmo`: A result is missing if 11 days are missing, or 5 consecutive values are missing in a month.
 
 To define another missing value algorithm, subclass :py:class:`MissingBase` and decorate it with
@@ -95,9 +95,7 @@ def expected_count(
     if src_timestep is None:
         src_timestep = xr.infer_freq(time)
         if src_timestep is None:
-            raise ValueError(
-                "A src_timestep must be passed when it can't be inferred from the data."
-            )
+            raise ValueError("A src_timestep must be passed when it can't be inferred from the data.")
 
     if freq is not None and not is_offset_divisor(src_timestep, freq):
         raise NotImplementedError(
@@ -106,9 +104,7 @@ def expected_count(
         )
 
     # Ensure a DataArray constructed like we expect
-    time = xr.DataArray(
-        time.values, dims=("time",), coords={"time": time.values}, name="time"
-    )
+    time = xr.DataArray(time.values, dims=("time",), coords={"time": time.values}, name="time")
 
     if freq:
         resamp = time.resample(time=freq).first()
@@ -141,9 +137,7 @@ def expected_count(
         if "doy_bounds" in indexer:
             # This is the only case supported by select_time where DataArrays are supported
             # TODO: What happens when this new dim makes sda too large ? How do we involve dask here ?
-            da_bnds = [
-                bnd for bnd in indexer["doy_bounds"] if isinstance(bnd, xr.DataArray)
-            ]
+            da_bnds = [bnd for bnd in indexer["doy_bounds"] if isinstance(bnd, xr.DataArray)]
             sda = xr.broadcast(sda, *da_bnds, exclude=("time",))[0]
 
         st = select_time(sda, **indexer)
@@ -180,9 +174,7 @@ class MissingBase:
 
     def __init__(self, **options):
         if not self.validate(**options):
-            raise ValueError(
-                f"Options {options} are not valid for {self.__class__.__name__}."
-            )
+            raise ValueError(f"Options {options} are not valid for {self.__class__.__name__}.")
         self.options = options
 
     @staticmethod
@@ -295,8 +287,7 @@ class MissingBase:
 
         if not self._validate_src_timestep(src_timestep):
             raise ValueError(
-                f"Input source timestep {src_timestep} is invalid "
-                f"for missing method {self.__class__.__name__}."
+                f"Input source timestep {src_timestep} is invalid for missing method {self.__class__.__name__}."
             )
 
         count = expected_count(da.time, freq=freq, src_timestep=src_timestep, **indexer)
@@ -321,9 +312,7 @@ class MissingAny(MissingBase):
         """Create a MissingAny object."""
         super().__init__()
 
-    def is_missing(
-        self, valid: xr.DataArray, count: xr.DataArray, freq: str | None
-    ) -> xr.DataArray:
+    def is_missing(self, valid: xr.DataArray, count: xr.DataArray, freq: str | None) -> xr.DataArray:
         if freq is not None:
             valid = valid.resample(time=freq)
         # The number of valid values should fit the expected count.
@@ -333,8 +322,7 @@ class MissingAny(MissingBase):
 # TODO: Make coarser method controllable.
 class MissingTwoSteps(MissingBase):
     r"""
-    Base class used to determined where Indicator outputs should be masked,
-    in a two step process.
+    Base class used to determined where Indicator outputs should be masked in a two-step process.
 
     In addition to what :py:class:`MissingBase` does, subclasses first perform the mask
     determination at some frequency and then resample at the (coarser) target frequency.
@@ -377,20 +365,14 @@ class MissingTwoSteps(MissingBase):
             True on the periods that should be considered missing or invalid.
         """
         subfreq = self.options["subfreq"] or freq
-        if (
-            subfreq is not None
-            and freq is not None
-            and compare_offsets(freq, "<", subfreq)
-        ):
+        if subfreq is not None and freq is not None and compare_offsets(freq, "<", subfreq):
             raise ValueError(
                 "The target resampling frequency cannot be finer than the first-step "
                 f"frequency. Got : {subfreq} > {freq}."
             )
         miss = super().__call__(da, freq=subfreq, src_timestep=src_timestep, **indexer)
         if subfreq != freq:
-            miss = MissingAny()(
-                miss.where(~miss), freq, src_timestep=subfreq, **indexer
-            )
+            miss = MissingAny()(miss.where(~miss), freq, src_timestep=subfreq, **indexer)
         return miss
 
 
@@ -434,9 +416,7 @@ class MissingWMO(MissingTwoSteps):
     def _validate_src_timestep(self, src_timestep):
         return src_timestep == "D"
 
-    def is_missing(
-        self, valid: xr.DataArray, count: xr.DataArray, freq: str
-    ) -> xr.DataArray:
+    def is_missing(self, valid: xr.DataArray, count: xr.DataArray, freq: str) -> xr.DataArray:
         from xclim.indices import run_length as rl
         from xclim.indices.helpers import resample_map
 
@@ -449,9 +429,7 @@ class MissingWMO(MissingTwoSteps):
 
         # Check for consecutive invalid values
         # FIXME: This does not take holes in consideration
-        longest_run = resample_map(
-            ~valid, "time", freq, rl.longest_run, map_blocks=True
-        )
+        longest_run = resample_map(~valid, "time", freq, rl.longest_run, map_blocks=True)
         cond2 = longest_run >= self.options["nc"]
 
         return cond1 | cond2
@@ -459,7 +437,7 @@ class MissingWMO(MissingTwoSteps):
 
 @register_missing_method("pct")
 class MissingPct(MissingTwoSteps):
-    """Mask periods as missing when there are more then a given percentage of missing days."""
+    """Mask periods as missing when there are more than a given percentage of missing days."""
 
     def __init__(self, tolerance: float = 0.1, subfreq: str | None = None):
         """
@@ -480,9 +458,7 @@ class MissingPct(MissingTwoSteps):
     def validate(tolerance: float, subfreq: str | None = None):
         return 0 <= tolerance <= 1
 
-    def is_missing(
-        self, valid: xr.DataArray, count: xr.DataArray, freq: str | None
-    ) -> xr.DataArray:
+    def is_missing(self, valid: xr.DataArray, count: xr.DataArray, freq: str | None) -> xr.DataArray:
         if freq is not None:
             valid = valid.resample(time=freq)
 
@@ -493,7 +469,11 @@ class MissingPct(MissingTwoSteps):
 
 @register_missing_method("at_least_n")
 class AtLeastNValid(MissingTwoSteps):
-    r"""Mask periods as missing if they don't have at least a given number of valid values (ignoring the expected count of elements)."""
+    r"""
+    Mask periods as missing if they don't have at least a given number of valid values.
+
+    Ignores the expected count of elements.
+    """
 
     def __init__(self, n: int = 20, subfreq: str | None = None):
         """
@@ -513,9 +493,7 @@ class AtLeastNValid(MissingTwoSteps):
     def validate(n: int, subfreq: str | None = None):
         return n > 0
 
-    def is_missing(
-        self, valid: xr.DataArray, count: xr.DataArray, freq: str | None
-    ) -> xr.DataArray:
+    def is_missing(self, valid: xr.DataArray, count: xr.DataArray, freq: str | None) -> xr.DataArray:
         if freq is not None:
             valid = valid.resample(time=freq)
         nvalid = valid.sum(dim="time")
@@ -555,9 +533,7 @@ def missing_pct(  # noqa: D103 # numpydoc ignore=GL08
     subfreq: str | None = None,
     **indexer,
 ) -> xr.DataArray:
-    return MissingPct(tolerance=tolerance, subfreq=subfreq)(
-        da, freq, src_timestep, **indexer
-    )
+    return MissingPct(tolerance=tolerance, subfreq=subfreq)(da, freq, src_timestep, **indexer)
 
 
 def at_least_n_valid(  # noqa: D103 # numpydoc ignore=GL08
@@ -571,9 +547,7 @@ def at_least_n_valid(  # noqa: D103 # numpydoc ignore=GL08
     return AtLeastNValid(n=n, subfreq=subfreq)(da, freq, src_timestep, **indexer)
 
 
-def missing_from_context(
-    da: xr.DataArray, freq: str, src_timestep: str | None = None, **indexer
-) -> xr.DataArray:
+def missing_from_context(da: xr.DataArray, freq: str, src_timestep: str | None = None, **indexer) -> xr.DataArray:
     """
     Mask periods as missing according to the algorithm and options set in xclim's global options.
 

@@ -62,7 +62,8 @@ mirroring attributes of the :py:class:`Indicator`, please refer to its documenta
         allowed_periods: [<list>, <of>, <allowed>, <periods>]
 
         # Compute function
-        compute: <function name>  # Referring to a function in `Indices` module (xclim.indices.generic or xclim.indices)
+        compute: <function name>  # Referring to a function in `Indices` module
+                                  # (xclim.indices.generic or xclim.indices)
         input:  # When "compute" is a generic function, this is a mapping from argument name to the expected variable.
                 # This will allow the input units and CF metadata checks to run on the inputs.
                 # Can also be used to modify the expected variable, as long as it has the same dimensionality
@@ -77,8 +78,8 @@ mirroring attributes of the :py:class:`Indicator`, please refer to its documenta
             default : <param default>
             description: <param description>
             name : <param name>  # Change the name of the parameter (similar to what `input` does for variables)
-            kind: <param kind> # Override the parameter kind.
-                               # This is mostly useful for transforming an optional variable into a required one by passing ``kind: 0``.
+            kind: <param kind> # Override the parameter kind. This is mostly useful for transforming an
+                               # optional variable into a required one by passing ``kind: 0``.
         ...
       ...  # and so on.
 
@@ -86,7 +87,8 @@ All fields are optional. Other fields found in the yaml file will trigger errors
 In the following, the section under `<identifier>` is referred to as `data`. When creating indicators from
 a dictionary, with :py:meth:`Indicator.from_dict`, the input dict must follow the same structure of `data`.
 
-Note that kwargs-like parameters like ``indexer`` must be injected as a dictionary (``param data`` above should be a dictionary).
+Note that kwargs-like parameters like ``indexer`` must be injected as a dictionary
+(``param data`` above should be a dictionary).
 
 When a module is built from a yaml file, the yaml is first validated against the schema (see xclim/data/schema.yml)
 using the YAMALE library (:cite:p:`lopker_yamale_2022`). See the "Extending xclim" notebook for more info.
@@ -239,9 +241,7 @@ class Parameter:
         """
         # Passing compute_name is forbidden.
         # name is valid, but is handled by the indicator
-        return set(other.keys()).issubset(
-            {"kind", "default", "description", "units", "choices", "value", "name"}
-        )
+        return set(other.keys()).issubset({"kind", "default", "description", "units", "choices", "value", "name"})
 
     def __contains__(self, key) -> bool:
         """Imitate previous behaviour where "units" and "choices" were missing, instead of being "_empty"."""
@@ -286,9 +286,7 @@ class IndicatorRegistrar:
         else:
             name = f"{module}.{name}"
         if name in registry:
-            warnings.warn(
-                f"Class {name} already exists and will be overwritten.", stacklevel=1
-            )
+            warnings.warn(f"Class {name} already exists and will be overwritten.", stacklevel=1)
         registry[name] = cls
         cls._registry_id = name
         return super().__new__(cls)
@@ -350,26 +348,30 @@ class Indicator(IndicatorRegistrar):
     Parameters
     ----------
     identifier : str
-        Unique ID for class registry, should be a valid slug.
+        Unique ID for class registry. Should be a valid slug.
     realm : {'atmos', 'seaIce', 'land', 'ocean'}
-        General domain of validity of the indicator. Indicators created outside ``xclim.indicators`` must set this attribute.
+        General domain of validity of the indicator.
+        Indicators created outside ``xclim.indicators`` must set this attribute.
     compute : func
         The function computing the indicators. It should return one or more DataArray.
     cf_attrs : list of dicts
         Attributes to be formatted and added to the computation's output.
         See :py:attr:`xclim.core.indicator.Indicator.cf_attrs`.
     title : str
-        A succinct description of what is in the computed outputs. Parsed from `compute` docstring if None (first paragraph).
+        A succinct description of what is in the computed outputs.
+        Parsed from `compute` docstring if None (first paragraph).
     abstract : str
-        A long description of what is in the computed outputs. Parsed from `compute` docstring if None (second paragraph).
+        A long description of what is in the computed outputs.
+        Parsed from `compute` docstring if None (second paragraph).
     keywords : str
-        Comma separated list of keywords. Parsed from `compute` docstring if None (from a "Keywords" section).
+        Comma separated list of keywords.
+        Parsed from `compute` docstring if None (from a "Keywords" section).
     references : str
-        Published or web-based references that describe the data or methods used to produce it. Parsed from
-        `compute` docstring if None (from the "References" section).
+        Published or web-based references that describe the data or methods used to produce it.
+        Parsed from `compute` docstring if None (from the "References" section).
     notes : str
-        Notes regarding computing function, for example the mathematical formulation. Parsed from `compute`
-        docstring if None (form the "Notes" section).
+        Notes regarding computing function, for example the mathematical formulation.
+        Parsed from `compute` docstring if None (form the "Notes" section).
     src_freq : str, sequence of strings, optional
         The expected frequency of the input data. Can be a list for multiple frequencies, or None if irrelevant.
     context : str
@@ -460,9 +462,7 @@ class Indicator(IndicatorRegistrar):
 
         if "compute" in kwds:
             # Parsed parameters and metadata override parent's params entirely.
-            parameters, docmeta = cls._parse_indice(
-                kwds["compute"], kwds.get("parameters", {})
-            )
+            parameters, docmeta = cls._parse_indice(kwds["compute"], kwds.get("parameters", {}))
             for name, value in docmeta.items():
                 # title, abstract, references, notes, long_name
                 kwds.setdefault(name, value)
@@ -607,7 +607,8 @@ class Indicator(IndicatorRegistrar):
                         new_key = val.pop("name")
                         if new_key in parameters:
                             raise ValueError(
-                                f"Cannot rename a parameter or variable with the same name as another parameter. '{new_key}' is already a parameter."
+                                "Cannot rename a parameter or variable with the same name as another parameter. "
+                                f"'{new_key}' is already a parameter."
                             )
                         parameters[new_key] = parameters.pop(key)
                         key = new_key
@@ -706,9 +707,7 @@ class Indicator(IndicatorRegistrar):
                     # a single string or callable, same for all outputs
                     values = [values] * n_outs
                 elif len(values) != n_outs:  # A sequence of the wrong length.
-                    raise ValueError(
-                        f"Attribute {name} has {len(values)} elements but xclim expected {n_outs}."
-                    )
+                    raise ValueError(f"Attribute {name} has {len(values)} elements but xclim expected {n_outs}.")
                 for attrs, value in zip(cf_attrs, values, strict=False):
                     if value:  # Skip the empty ones (None or "")
                         attrs[name] = value
@@ -783,14 +782,9 @@ class Indicator(IndicatorRegistrar):
         # data.compute refers to a function in xclim.indices.generic or xclim.indices (in this order of priority).
         # It can also directly be a function (like if a module was passed to build_indicator_module_from_yaml)
         if isinstance(compute, str):
-            compute_func = getattr(
-                indices.generic, compute, getattr(indices, compute, None)
-            )
+            compute_func = getattr(indices.generic, compute, getattr(indices, compute, None))
             if compute_func is None:
-                raise ImportError(
-                    f"Indice function {compute} not found in xclim.indices or "
-                    "xclim.indices.generic."
-                )
+                raise ImportError(f"Indice function {compute} not found in xclim.indices or xclim.indices.generic.")
             data["compute"] = compute_func
 
         return cls(identifier=identifier, module=module, **data)
@@ -866,12 +860,9 @@ class Indicator(IndicatorRegistrar):
         das, params, dsattrs = self._parse_variables_from_call(args, kwds)
 
         if OPTIONS[KEEP_ATTRS] is True or (
-            OPTIONS[KEEP_ATTRS] == "xarray"
-            and xarray.core.options._get_keep_attrs(False)
+            OPTIONS[KEEP_ATTRS] == "xarray" and xarray.core.options._get_keep_attrs(False)
         ):
-            out_attrs = xarray.core.merge.merge_attrs(
-                [da.attrs for da in das.values()], "drop_conflicts"
-            )
+            out_attrs = xarray.core.merge.merge_attrs([da.attrs for da in das.values()], "drop_conflicts")
             out_attrs.pop("units", None)
         else:
             out_attrs = {}
@@ -889,8 +880,7 @@ class Indicator(IndicatorRegistrar):
 
         if len(outs) != self.n_outs:
             raise ValueError(
-                f"Indicator {self.identifier} was wrongly defined. Expected "
-                f"{self.n_outs} outputs, got {len(outs)}."
+                f"Indicator {self.identifier} was wrongly defined. Expected {self.n_outs} outputs, got {len(outs)}."
             )
 
         # Metadata attributes from templates
@@ -913,10 +903,7 @@ class Indicator(IndicatorRegistrar):
             )
 
         # Convert to output units
-        outs = [
-            convert_units_to(out, attrs, self.context)
-            for out, attrs in zip(outs, out_attrs, strict=False)
-        ]
+        outs = [convert_units_to(out, attrs, self.context) for out, attrs in zip(outs, out_attrs, strict=False)]
 
         outs = self._postprocess(outs, das, params)
 
@@ -929,8 +916,7 @@ class Indicator(IndicatorRegistrar):
         if OPTIONS[AS_DATASET]:
             out = Dataset({o.name: o for o in outs})
             if OPTIONS[KEEP_ATTRS] is True or (
-                OPTIONS[KEEP_ATTRS] == "xarray"
-                and xarray.core.options._get_keep_attrs(False)
+                OPTIONS[KEEP_ATTRS] == "xarray" and xarray.core.options._get_keep_attrs(False)
             ):
                 out.attrs.update(dsattrs)
             out.attrs["history"] = update_history(
@@ -945,9 +931,7 @@ class Indicator(IndicatorRegistrar):
             return outs[0]
         return tuple(outs)
 
-    def _parse_variables_from_call(
-        self, args, kwds
-    ) -> tuple[OrderedDict, OrderedDict, OrderedDict | dict]:
+    def _parse_variables_from_call(self, args, kwds) -> tuple[OrderedDict, OrderedDict, OrderedDict | dict]:
         """Extract variable and optional variables from call arguments."""
         # Bind call arguments to `compute` arguments and set defaults.
         ba = self.__signature__.bind(*args, **kwds)
@@ -987,8 +971,7 @@ class Indicator(IndicatorRegistrar):
             if kind <= InputKind.OPTIONAL_VARIABLE:
                 if isinstance(val, str) and ds is None:
                     raise ValueError(
-                        "Passing variable names as string requires giving the `ds` "
-                        f"dataset (got {name}='{val}')"
+                        f"Passing variable names as string requires giving the `ds` dataset (got {name}='{val}')"
                     )
                 if (isinstance(val, str) or val is None) and ds is not None:
                     # Set default name for DataArray
@@ -998,8 +981,7 @@ class Indicator(IndicatorRegistrar):
                         ba.arguments[name] = ds[key]
                     elif kind == InputKind.VARIABLE:
                         raise MissingVariableError(
-                            f"For input '{name}', variable '{key}' "
-                            "was not found in the input dataset."
+                            f"For input '{name}', variable '{key}' was not found in the input dataset."
                         )
 
     def _preprocess_and_checks(self, das, params):
@@ -1063,9 +1045,7 @@ class Indicator(IndicatorRegistrar):
         return func(*ba.args, **ba.kwargs)
 
     @classmethod
-    def _get_translated_metadata(
-        cls, locale, var_id=None, names=None, append_locale_name=True
-    ):
+    def _get_translated_metadata(cls, locale, var_id=None, names=None, append_locale_name=True):
         """
         Get raw translated metadata for the current indicator and a given locale.
 
@@ -1131,9 +1111,7 @@ class Indicator(IndicatorRegistrar):
         for locale in OPTIONS[METADATA_LOCALES]:
             out.update(
                 self._format(
-                    self._get_translated_metadata(
-                        locale, var_id=var_id, names=names or list(attrs.keys())
-                    ),
+                    self._get_translated_metadata(locale, var_id=var_id, names=names or list(attrs.keys())),
                     args=args,
                     formatter=get_local_formatter(locale),
                 )
@@ -1142,9 +1120,7 @@ class Indicator(IndicatorRegistrar):
         # Get history and cell method attributes from source data
         attrs = defaultdict(str)
         if names is None or "cell_methods" in names:
-            attrs["cell_methods"] = merge_attributes(
-                "cell_methods", new_line=" ", missing_str=None, **das
-            )
+            attrs["cell_methods"] = merge_attributes("cell_methods", new_line=" ", missing_str=None, **das)
             if "cell_methods" in out:
                 attrs["cell_methods"] += " " + out.pop("cell_methods")
 
@@ -1179,9 +1155,7 @@ class Indicator(IndicatorRegistrar):
             )
 
     @classmethod
-    def translate_attrs(
-        cls, locale: str | Sequence[str], fill_missing: bool = True
-    ) -> dict:
+    def translate_attrs(cls, locale: str | Sequence[str], fill_missing: bool = True) -> dict:
         """
         Return a dictionary of unformatted translated translatable attributes.
 
@@ -1266,8 +1240,7 @@ class Indicator(IndicatorRegistrar):
         # We need to deepcopy, otherwise empty defaults get overwritten!
         # All those tweaks are to ensure proper serialization of the returned dictionary.
         out["parameters"] = {
-            k: p.asdict() if not p.injected else deepcopy(p.value)
-            for k, p in cls._all_parameters.items()
+            k: p.asdict() if not p.injected else deepcopy(p.value) for k, p in cls._all_parameters.items()
         }
         for name, param in list(out["parameters"].items()):
             if not cls._all_parameters[name].injected:
@@ -1306,10 +1279,7 @@ class Indicator(IndicatorRegistrar):
         """
         # Use defaults
         if args is None:
-            args = {
-                k: p.default if not p.injected else p.value
-                for k, p in cls._all_parameters.items()
-            }
+            args = {k: p.default if not p.injected else p.value for k, p in cls._all_parameters.items()}
 
         # Prepare arguments
         mba = {}
@@ -1332,10 +1302,7 @@ class Indicator(IndicatorRegistrar):
                     mba["indexer"] = args.get("freq") or "YS"
             elif is_percentile_dataarray(v):
                 mba.update(get_percentile_metadata(v, k))
-            elif (
-                isinstance(v, DataArray)
-                and cls._all_parameters[k].kind == InputKind.QUANTIFIED
-            ):
+            elif isinstance(v, DataArray) and cls._all_parameters[k].kind == InputKind.QUANTIFIED:
                 mba[k] = "<an array>"
             else:
                 mba[k] = v
@@ -1414,11 +1381,7 @@ class Indicator(IndicatorRegistrar):
                     datachecks.check_freq(da, self.src_freq, strict=True)
 
             datachecks.check_common_time(
-                [
-                    da
-                    for da in das.values()
-                    if "time" in da.coords and da.time.ndim == 1 and len(da.time) > 3
-                ]
+                [da for da in das.values() if "time" in da.coords and da.time.ndim == 1 and len(da.time) > 3]
             )
 
     def __getattr__(self, attr):
@@ -1454,11 +1417,7 @@ class Indicator(IndicatorRegistrar):
         dict
             A dictionary of controllable parameters.
         """
-        return {
-            name: param
-            for name, param in self._all_parameters.items()
-            if not param.injected
-        }
+        return {name: param for name, param in self._all_parameters.items() if not param.injected}
 
     @property
     def injected_parameters(self) -> dict:
@@ -1472,11 +1431,7 @@ class Indicator(IndicatorRegistrar):
         dict
             A dictionary of all injected parameters.
         """
-        return {
-            name: param.value
-            for name, param in self._all_parameters.items()
-            if param.injected
-        }
+        return {name: param.value for name, param in self._all_parameters.items() if param.injected}
 
     @property
     def is_generic(self) -> bool:
@@ -1525,9 +1480,7 @@ class CheckMissingIndicator(Indicator):  # numpydoc ignore=PR01,PR02
 
     def __init__(self, **kwds):
         if self.missing == "from_context" and self.missing_options is not None:
-            raise ValueError(
-                "Cannot set `missing_options` with `missing` method being from context."
-            )
+            raise ValueError("Cannot set `missing_options` with `missing` method being from context.")
 
         super().__init__(**kwds)
 
@@ -1556,9 +1509,7 @@ class CheckMissingIndicator(Indicator):  # numpydoc ignore=PR01,PR02
         outs = super()._postprocess(outs, das, params)
 
         freq = self._get_missing_freq(params)
-        method = (
-            self.missing if self.missing != "from_context" else OPTIONS[CHECK_MISSING]
-        )
+        method = self.missing if self.missing != "from_context" else OPTIONS[CHECK_MISSING]
         if method != "skip" and freq is not False:
             # Mask results that do not meet criteria defined by the `missing` method.
             # This means all outputs must have the same dimensions as the broadcasted inputs (excluding time)
@@ -1568,9 +1519,7 @@ class CheckMissingIndicator(Indicator):  # numpydoc ignore=PR01,PR02
             # We flag periods according to the missing method. skip variables without a time coordinate.
             src_freq = self.src_freq if isinstance(self.src_freq, str) else None
             miss = (
-                misser(da, freq, src_freq, **params.get("indexer", {}))
-                for da in das.values()
-                if "time" in da.coords
+                misser(da, freq, src_freq, **params.get("indexer", {})) for da in das.values() if "time" in da.coords
             )
             # Reduce by or and broadcast to ensure the same length in time
             # When indexing is used and there are no valid points in the last period, mask will not include it
@@ -1772,9 +1721,7 @@ def build_indicator_module(
     out: ModuleType
     if hasattr(indicators, name):
         if doc is not None:
-            warnings.warn(
-                "Passed docstring ignored when extending existing module.", stacklevel=1
-            )
+            warnings.warn("Passed docstring ignored when extending existing module.", stacklevel=1)
         out = getattr(indicators, name)
         if reload:
             for n, ind in list(out.iter_indicators()):
@@ -1816,13 +1763,14 @@ def build_indicator_module_from_yaml(  # noqa: C901
     Parameters
     ----------
     filename : PathLike
-        Path to a YAML file or to the stem of all module files. See Notes for behaviour when passing a basename only.
+        Path to a YAML file or to the stem of all module files.
+        See Notes for behaviour when passing a basename only.
     name : str, optional
         The name of the new or existing module, defaults to the basename of the file (e.g: `atmos.yml` -> `atmos`).
     indices : Mapping of callables or module or path, optional
-        A mapping or module of indice functions or a python file declaring such a file.
-        When creating the indicator, the name in the `index_function` field is first sought
-        here, then the indicator class will search in :py:mod:`xclim.indices.generic` and finally in :py:mod:`xclim.indices`.
+        A mapping or module of indice functions or a python file declaring such a file. When creating the indicator,
+        the name in the `index_function` field is first sought here, then the indicator class will search
+        in :py:mod:`xclim.indices.generic` and finally in :py:mod:`xclim.indices`.
     translations : Mapping of dicts or path, optional
         Translated metadata for the new indicators. Keys of the mapping must be two-character language tags.
         Values can be translations dictionaries as defined in :ref:`internationalization:Internationalization`.
@@ -1880,28 +1828,18 @@ def build_indicator_module_from_yaml(  # noqa: C901
         if validate is not True:
             schema = yamale.make_schema(validate)
         else:
-            schema = yamale.make_schema(
-                Path(__file__).parent.parent / "data" / "schema.yml"
-            )
+            schema = yamale.make_schema(Path(__file__).parent.parent / "data" / "schema.yml")
 
         # Validate - a YamaleError will be raised if the module does not comply with the schema.
-        yamale.validate(
-            schema, yamale.make_data(content=ymlpath.read_text(encoding=encoding))
-        )
+        yamale.validate(schema, yamale.make_data(content=ymlpath.read_text(encoding=encoding)))
 
     # Load values from top-level in yml.
     # Priority of arguments differ.
     module_name = name or yml.get("module", filepath.stem)
-    default_base = registry.get(
-        yml.get("base"), base_registry.get(yml.get("base"), Daily)
-    )
+    default_base = registry.get(yml.get("base"), base_registry.get(yml.get("base"), Daily))
     doc = yml.get("doc")
 
-    if (
-        not filepath.suffix
-        and indices is None
-        and (indfile := filepath.with_suffix(".py")).is_file()
-    ):
+    if not filepath.suffix and indices is None and (indfile := filepath.with_suffix(".py")).is_file():
         # No suffix means we try to automatically detect the python file
         indices = indfile
 
@@ -1913,9 +1851,7 @@ def build_indicator_module_from_yaml(  # noqa: C901
         # No suffix mean we try to automatically detect the json files.
         for locfile in filepath.parent.glob(f"{filepath.stem}.*.json"):
             locale = locfile.suffixes[0][1:]
-            _translations[locale] = read_locale_file(
-                locfile, module=module_name, encoding=encoding
-            )
+            _translations[locale] = read_locale_file(locfile, module=module_name, encoding=encoding)
     elif translations is not None:
         # A mapping was passed, we read paths is any.
         _translations = {
@@ -1989,14 +1925,10 @@ def build_indicator_module_from_yaml(  # noqa: C901
             if data.get("realm") is None and defkwargs.get("realm") is not None:
                 data["realm"] = defkwargs["realm"]
 
-            mapping[identifier] = Indicator.from_dict(
-                data, identifier=identifier, module=module_name
-            )
+            mapping[identifier] = Indicator.from_dict(data, identifier=identifier, module=module_name)
 
         except Exception as err:  # pylint: disable=broad-except
-            raise_warn_or_log(
-                err, mode, msg=f"Constructing {identifier} failed with {err!r}"
-            )
+            raise_warn_or_log(err, mode, msg=f"Constructing {identifier} failed with {err!r}")
 
     # Construct module
     mod = build_indicator_module(module_name, objs=mapping, doc=doc, reload=reload)
