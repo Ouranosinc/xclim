@@ -200,7 +200,6 @@ jobs:
             markers: -m 'not slow'
             python-version: "3.11"
             tox-env: standard
-            eigen3: true
           - os: 'ubuntu-latest'
             testdata-cache: '~/.cache/xclim-testdata'
             markers: -m 'not slow'
@@ -211,7 +210,6 @@ jobs:
             markers: -m 'not slow'
             python-version: "3.13"
             tox-env: standard
-            eigen3: true
           # Windows builds
           - os: 'windows-latest'
             testdata-cache: 'C:\Users\runneradmin\AppData\Local\xclim-testdata\xclim-testdata\Cache'
@@ -273,7 +271,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Install Eigen3 (SBCK)
-        if: ${{ matrix.eigen3 == true }}
+        if: ${{ matrix.python-version == '3.11' && matrix.os == 'ubuntu-latest' }}
         run: |
           sudo apt-get update
           sudo apt-get install libeigen3-dev
