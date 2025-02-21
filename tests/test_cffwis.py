@@ -309,9 +309,9 @@ class TestCFFWIS:
 
         snd = xr.full_like(tas, 0)
         lat = xr.full_like(tas.isel(time=0), 45)
-        DC0 = xr.full_like(tas.isel(time=0), np.nan)  # noqa
-        DMC0 = xr.full_like(tas.isel(time=0), np.nan)  # noqa
-        FFMC0 = xr.full_like(tas.isel(time=0), np.nan)  # noqa
+        DC0 = xr.full_like(tas.isel(time=0), np.nan)
+        DMC0 = xr.full_like(tas.isel(time=0), np.nan)
+        FFMC0 = xr.full_like(tas.isel(time=0), np.nan)
 
         # Test invalid combination
         with pytest.raises(TypeError):
