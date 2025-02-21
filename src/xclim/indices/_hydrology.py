@@ -290,9 +290,7 @@ def snd_max_doy(snd: xr.DataArray, freq: str = "YS-JUL") -> xr.DataArray:
     valid = at_least_n_valid(snd.where(snd > 0), n=1, freq=freq)
 
     # Compute doymax. Will return first time step if all snow depths are 0.
-    out = generic.select_resample_op(
-        snd.where(snd > 0, 0), op=generic.doymax, freq=freq
-    )
+    out = generic.select_resample_op(snd.where(snd > 0, 0), op=generic.doymax, freq=freq)
     out.attrs.update(units="", is_dayofyear=np.int32(1), calendar=get_calendar(snd))
 
     # Mask arrays that miss at least one non-null snd.
@@ -344,9 +342,7 @@ def snw_max_doy(snw: xr.DataArray, freq: str = "YS-JUL") -> xr.DataArray:
     valid = at_least_n_valid(snw.where(snw > 0), n=1, freq=freq)
 
     # Compute doymax. Will return first time step if all snow depths are 0.
-    out = generic.select_resample_op(
-        snw.where(snw > 0, 0), op=generic.doymax, freq=freq
-    )
+    out = generic.select_resample_op(snw.where(snw > 0, 0), op=generic.doymax, freq=freq)
     out.attrs.update(units="", is_dayofyear=np.int32(1), calendar=get_calendar(snw))
 
     # Mask arrays that miss at least one non-null snd.
@@ -354,9 +350,7 @@ def snw_max_doy(snw: xr.DataArray, freq: str = "YS-JUL") -> xr.DataArray:
 
 
 @declare_units(snw="[mass]/[area]")
-def snow_melt_we_max(
-    snw: xr.DataArray, window: int = 3, freq: str = "YS-JUL"
-) -> xr.DataArray:
+def snow_melt_we_max(snw: xr.DataArray, window: int = 3, freq: str = "YS-JUL") -> xr.DataArray:
     """
     Maximum snow melt.
 
@@ -389,9 +383,7 @@ def snow_melt_we_max(
 
 
 @declare_units(snw="[mass]/[area]", pr="[precipitation]")
-def melt_and_precip_max(
-    snw: xr.DataArray, pr: xr.DataArray, window: int = 3, freq: str = "YS-JUL"
-) -> xr.DataArray:
+def melt_and_precip_max(snw: xr.DataArray, pr: xr.DataArray, window: int = 3, freq: str = "YS-JUL") -> xr.DataArray:
     """
     Maximum snow melt and precipitation.
 
@@ -592,9 +584,7 @@ def flow_index(q: xr.DataArray, p: float = 0.95) -> xr.DataArray:
 
 
 @declare_units(q="[discharge]")
-def high_flow_frequency(
-    q: xr.DataArray, threshold_factor: int = 9, freq: str = "YS-OCT"
-) -> xr.DataArray:
+def high_flow_frequency(q: xr.DataArray, threshold_factor: int = 9, freq: str = "YS-OCT") -> xr.DataArray:
     """
     High flow frequency.
 
@@ -627,9 +617,7 @@ def high_flow_frequency(
 
 
 @declare_units(q="[discharge]")
-def low_flow_frequency(
-    q: xr.DataArray, threshold_factor: float = 0.2, freq: str = "YS-OCT"
-) -> xr.DataArray:
+def low_flow_frequency(q: xr.DataArray, threshold_factor: float = 0.2, freq: str = "YS-OCT") -> xr.DataArray:
     """
     Low flow frequency.
 

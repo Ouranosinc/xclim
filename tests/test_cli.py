@@ -72,9 +72,7 @@ def test_indicator_help(indicator, indname):
         ("solidprcptot", 31622400.0, ["tas", "pr"]),
     ],
 )
-def test_normal_computation(
-    tasmin_series, tasmax_series, pr_series, tmp_path, indicator, expected, varnames
-):
+def test_normal_computation(tasmin_series, tasmax_series, pr_series, tmp_path, indicator, expected, varnames):
     tasmin = tasmin_series(np.ones(366) + 270.15, start="1/1/2000")
     tasmax = tasmax_series(np.ones(366) + 272.15, start="1/1/2000")
     pr = pr_series(np.ones(366), start="1/1/2000")
@@ -219,9 +217,7 @@ def test_missing_variable(tas_series, tmp_path):
     tas.to_netcdf(input_file, engine="h5netcdf")
 
     runner = CliRunner()
-    results = runner.invoke(
-        cli, ["-i", str(input_file), "-o", str(output_file), "tn_mean"]
-    )
+    results = runner.invoke(cli, ["-i", str(input_file), "-o", str(output_file), "tn_mean"])
     assert results.exit_code == 2
     assert "'tasmin' was not found in the input dataset." in results.output
 
@@ -267,9 +263,7 @@ def test_suspicious_precipitation_flags(pr_series, tmp_path):
     bad_pr.to_netcdf(input_file)
 
     runner = CliRunner()
-    runner.invoke(
-        cli, ["-i", str(input_file), "-o", str(output_file), "dataflags", "pr"]
-    )
+    runner.invoke(cli, ["-i", str(input_file), "-o", str(output_file), "dataflags", "pr"])
     with xr.open_dataset(output_file) as ds:
         for var in ds.data_vars:
             assert var
@@ -278,9 +272,7 @@ def test_suspicious_precipitation_flags(pr_series, tmp_path):
 @pytest.mark.slow
 def test_dataflags_output(tmp_path, tas_series, tasmax_series, tasmin_series):
     ds = xr.Dataset()
-    for series, val in zip(
-        [tas_series, tasmax_series, tasmin_series], [0, 10, -10], strict=False
-    ):
+    for series, val in zip([tas_series, tasmax_series, tasmin_series], [0, 10, -10], strict=False):
         vals = val + K2C + np.sin(np.pi * np.arange(366 * 3) / 366)
         arr = series(vals, start="1971-01-01")
         ds = xr.merge([ds, arr])

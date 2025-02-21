@@ -112,9 +112,7 @@ def prsnd_series():
 @pytest.fixture
 def pr_hr_series():
     """Return precipitation hourly time series."""
-    _pr_hr_series = partial(
-        test_timeseries, start="1/1/2000", variable="pr", units="kg m-2 s-1", freq="h"
-    )
+    _pr_hr_series = partial(test_timeseries, start="1/1/2000", variable="pr", units="kg m-2 s-1", freq="h")
     return _pr_hr_series
 
 
@@ -168,9 +166,7 @@ def ndq_series(random):
     cy = xr.IndexVariable("y", y)
     dates = pd.date_range("1900-01-01", periods=nt, freq="D")
 
-    time_range = xr.IndexVariable(
-        "time", dates, attrs={"units": "days since 1900-01-01", "calendar": "standard"}
-    )
+    time_range = xr.IndexVariable("time", dates, attrs={"units": "days since 1900-01-01", "calendar": "standard"})
 
     return xr.DataArray(
         random.lognormal(10, 1, (nt, nx, ny)),
@@ -195,13 +191,9 @@ def per_doy():
     def _per_doy(values, calendar="standard", units="kg m-2 s-1"):
         n = max_doy[calendar]
         if len(values) != n:
-            raise ValueError(
-                "Values must be same length as number of days in calendar."
-            )
+            raise ValueError("Values must be same length as number of days in calendar.")
         coords = xr.IndexVariable("dayofyear", np.arange(1, n + 1))
-        return xr.DataArray(
-            values, coords=[coords], attrs={"calendar": calendar, "units": units}
-        )
+        return xr.DataArray(values, coords=[coords], attrs={"calendar": calendar, "units": units})
 
     return _per_doy
 
@@ -216,13 +208,7 @@ def areacella() -> xr.DataArray:
     d_lat = np.diff(lat_bnds)
     lon = np.convolve(lon_bnds, [0.5, 0.5], "valid")
     lat = np.convolve(lat_bnds, [0.5, 0.5], "valid")
-    area = (
-        r
-        * np.radians(d_lat)[:, np.newaxis]
-        * r
-        * np.cos(np.radians(lat)[:, np.newaxis])
-        * np.radians(d_lon)
-    )
+    area = r * np.radians(d_lat)[:, np.newaxis] * r * np.cos(np.radians(lat)[:, np.newaxis]) * np.radians(d_lon)
     return xr.DataArray(
         data=area,
         dims=("lat", "lon"),
@@ -321,9 +307,7 @@ def nimbus(threadsafe_data_dir, worker_id):
     return _nimbus(
         repo=TESTDATA_REPO_URL,
         branch=TESTDATA_BRANCH,
-        cache_dir=(
-            TESTDATA_CACHE_DIR if worker_id == "master" else threadsafe_data_dir
-        ),
+        cache_dir=(TESTDATA_CACHE_DIR if worker_id == "master" else threadsafe_data_dir),
     )
 
 
@@ -366,14 +350,10 @@ def lafferty_sriver_ds(nimbus) -> xr.Dataset:
         "uncertainty_partitioning/seattle_avg_tas.csv",
     )
 
-    df = pd.read_csv(fn, parse_dates=["time"]).rename(
-        columns={"ssp": "scenario", "ensemble": "downscaling"}
-    )
+    df = pd.read_csv(fn, parse_dates=["time"]).rename(columns={"ssp": "scenario", "ensemble": "downscaling"})
 
     # Make xarray dataset
-    return xr.Dataset.from_dataframe(
-        df.set_index(["scenario", "model", "downscaling", "time"])
-    )
+    return xr.Dataset.from_dataframe(df.set_index(["scenario", "model", "downscaling", "time"]))
 
 
 @pytest.fixture
@@ -417,9 +397,7 @@ def gather_session_data(request, nimbus, worker_id):
             try:
                 flag.unlink()
             except FileNotFoundError:
-                logging.info(
-                    "Teardown race condition occurred: .data_written flag already removed. Lucky!"
-                )
+                logging.info("Teardown race condition occurred: .data_written flag already removed. Lucky!")
                 pass
 
     request.addfinalizer(remove_data_written_flag)

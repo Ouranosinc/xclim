@@ -2,6 +2,24 @@
 Changelog
 =========
 
+v0.56.0 (unreleased)
+--------------------
+Contributors to this version: Trevor James Smith (:user:`Zeitsperre`).
+
+Breaking changes
+^^^^^^^^^^^^^^^^
+* `xclim` no longer supports Python 3.10. The minimum required version is now Python 3.11. (:pull:`2082`).
+* The minimum versions of several key dependencies have been raised (`numpy` >=1.24.0; `scikit-learn` >=1.2.0; `scipy` >=1.11.0). (:pull:`2082`).
+
+Internal changes
+^^^^^^^^^^^^^^^^
+* `black`, `isort`, and `nbqa` have all been dropped from the development dependencies. (:issue:`1805`, :pull:`2082`).
+* `ruff` has been configured to provide code formatting. (:pull:`2083`):
+    * The maximum line-length is now 120 characters.
+    * Docstring formatting is now enabled.
+    * Line endings in files now must be `Unix`-compatible (`LF`).
+* The `blackdoc` pre-commit hook now only examines `.rst` and `.md` files. (:pull:`2083`).
+
 v0.55.0 (2025-02-17)
 --------------------
 Contributors to this version: Juliette Lavoie (:user:`juliettelavoie`), Trevor James Smith (:user:`Zeitsperre`), Sascha Hofmann (:user:`saschahofmann`), Pascal Bourgault (:user:`aulemahal`), Éric Dupuis (:user:`coxipi`), Baptiste Hamon (:user:`baptistehamon`), Sarah Gammon (:user:`SarahG-579462`).

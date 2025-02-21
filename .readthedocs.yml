@@ -8,10 +8,12 @@ sphinx:
 #  - pdf
 
 build:
-  os: ubuntu-22.04
+  os: ubuntu-24.04
   tools:
-    python: "mambaforge-22.9"
+    python: "mambaforge-23.11"
   jobs:
+    pre_create_environment:
+      - sed -i "s/python >=3.11,<3.14/python >=3.11,<3.13/" environment.yml
     pre_build:
       - sphinx-apidoc -o docs/apidoc/ --private --module-first src/xclim src/xclim/testing/tests src/xclim/indicators src/xclim/indices
       - rm docs/apidoc/xclim.rst
@@ -31,7 +33,6 @@ python:
 
 search:
   ranking:
-
     notebooks/*: 2
     api_indicators.html: 1
     indices.html: -1

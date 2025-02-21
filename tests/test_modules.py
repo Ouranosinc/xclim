@@ -53,8 +53,7 @@ def test_virtual_modules(virtual_indicator, atmosds):
         mod, indname, ind = virtual_indicator
         for name, param in ind.parameters.items():
             if param.kind not in [InputKind.DATASET, InputKind.KWARGS] and (
-                param.default in (None, _empty)
-                or (param.default == name and name not in atmosds)
+                param.default in (None, _empty) or (param.default == name and name not in atmosds)
             ):
                 pytest.skip(f"Indicator {mod}.{indname} has no default for {name}.")
         ind(ds=atmosds)
@@ -71,20 +70,14 @@ def test_custom_indices(open_dataset):
     example = load_module(example_path / "example.py")
 
     # From module
-    ex1 = build_indicator_module_from_yaml(
-        example_path / "example.yml", name="ex1", indices=example
-    )
+    ex1 = build_indicator_module_from_yaml(example_path / "example.yml", name="ex1", indices=example)
 
     # Did this register the new variable?
     assert "prveg" in VARIABLES
 
     # From mapping
-    extreme_inds = {
-        "extreme_precip_accumulation_and_days": example.extreme_precip_accumulation_and_days
-    }
-    ex2 = build_indicator_module_from_yaml(
-        example_path / "example.yml", name="ex2", indices=extreme_inds
-    )
+    extreme_inds = {"extreme_precip_accumulation_and_days": example.extreme_precip_accumulation_and_days}
+    ex2 = build_indicator_module_from_yaml(example_path / "example.yml", name="ex2", indices=extreme_inds)
 
     assert ex1.R95p.__doc__ == ex2.R95p.__doc__  # noqa
 
@@ -94,23 +87,16 @@ def test_custom_indices(open_dataset):
     xr.testing.assert_equal(out1[0], out2[0])
 
     # Check that missing was not modified even with injecting `freq`.
-    assert (
-        ex1.RX5day_canopy.missing
-        == indicators.atmos.max_n_day_precipitation_amount.missing
-    )
+    assert ex1.RX5day_canopy.missing == indicators.atmos.max_n_day_precipitation_amount.missing
 
     # Error when missing
     with pytest.raises(ImportError, match="extreme_precip_accumulation_and_days"):
         build_indicator_module_from_yaml(example_path / "example.yml", name="ex3")
-    build_indicator_module_from_yaml(
-        example_path / "example.yml", name="ex4", mode="ignore"
-    )
+    build_indicator_module_from_yaml(example_path / "example.yml", name="ex4", mode="ignore")
 
     # Check that indexer was added and injected correctly
     assert "indexer" not in ex1.RX1day_summer.parameters
-    assert ex1.RX1day_summer.injected_parameters["indexer"] == {
-        "month": [5, 6, 7, 8, 9]
-    }
+    assert ex1.RX1day_summer.injected_parameters["indexer"] == {"month": [5, 6, 7, 8, 9]}
 
 
 @pytest.mark.requires_docs
@@ -119,21 +105,17 @@ def test_indicator_module_translations():
     example_path = Path(__file__).parent.parent / "docs" / "notebooks" / "example"
 
     ex = build_indicator_module_from_yaml(example_path / "example", name="ex_trans")
-    assert ex.RX5day_canopy.translate_attrs("fr")["cf_attrs"][0][
-        "long_name"
-    ].startswith("Cumul maximal")
-    assert indicators.atmos.max_n_day_precipitation_amount.translate_attrs("fr")[
-        "cf_attrs"
-    ][0]["long_name"].startswith("Maximum du cumul")
+    assert ex.RX5day_canopy.translate_attrs("fr")["cf_attrs"][0]["long_name"].startswith("Cumul maximal")
+    assert indicators.atmos.max_n_day_precipitation_amount.translate_attrs("fr")["cf_attrs"][0]["long_name"].startswith(
+        "Maximum du cumul"
+    )
 
 
 @pytest.mark.requires_docs
 def test_indicator_module_input_mapping(atmosds):
     example_path = Path(__file__).parent.parent / "docs" / "notebooks" / "example"
     ex = build_indicator_module_from_yaml(example_path / "example", name="ex_input")
-    prveg = atmosds.pr.rename("prveg").assign_attrs(
-        standard_name="precipitation_flux_onto_canopy"
-    )
+    prveg = atmosds.pr.rename("prveg").assign_attrs(standard_name="precipitation_flux_onto_canopy")
 
     out = ex.RX5day_canopy(prveg=prveg)
     assert "RX5DAY_CANOPY(prveg=prveg)" in out.attrs["history"]
@@ -156,15 +138,9 @@ def test_build_indicator_module_from_yaml_edge_cases():
         name="ex5",
     )
     assert hasattr(indicators, "ex5")
-    assert ex5.R95p.translate_attrs("fr")["cf_attrs"][0]["description"].startswith(
-        "Épaisseur équivalente"
-    )
-    assert ex5.R95p.translate_attrs("ru")["cf_attrs"][0]["description"].startswith(
-        "Épaisseur équivalente"
-    )
-    assert ex5.R95p.translate_attrs("eo")["cf_attrs"][0]["description"].startswith(
-        "Épaisseur équivalente"
-    )
+    assert ex5.R95p.translate_attrs("fr")["cf_attrs"][0]["description"].startswith("Épaisseur équivalente")
+    assert ex5.R95p.translate_attrs("ru")["cf_attrs"][0]["description"].startswith("Épaisseur équivalente")
+    assert ex5.R95p.translate_attrs("eo")["cf_attrs"][0]["description"].startswith("Épaisseur équivalente")
 
 
 class TestClixMeta:
@@ -275,9 +251,7 @@ class TestOfficialYaml(yamale.YamaleTestCase):
 
 
 @pytest.mark.xfail(reason="This test is relatively unstable.", strict=False)
-@pytest.mark.skipif(
-    platform.system() == "Windows", reason="nl_langinfo not available on Windows."
-)
+@pytest.mark.skipif(platform.system() == "Windows", reason="nl_langinfo not available on Windows.")
 def test_encoding():
     import _locale
     import sys

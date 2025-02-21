@@ -32,9 +32,7 @@ def test_wind_speed_from_vectors():
     uas[:] = 0
     vas[0] = 0.9
     vas[1] = -1.1
-    wind, winddir = atmos.wind_speed_from_vector(
-        uas=uas, vas=vas, calm_wind_thresh="1 m/s"
-    )
+    wind, winddir = atmos.wind_speed_from_vector(uas=uas, vas=vas, calm_wind_thresh="1 m/s")
     np.testing.assert_array_equal(wind, [0.9, 1.1])
     np.testing.assert_allclose(winddir, [0.0, 360.0])
 
@@ -45,18 +43,14 @@ def test_wind_vector_from_speed():
     sfcWindfromdir = xr.DataArray(np.array([360.0, 36.86989764584402, 0.0]), dims=["x"])
     sfcWindfromdir.attrs["units"] = "degree"
 
-    uas, vas = atmos.wind_vector_from_speed(
-        sfcWind=sfcWind, sfcWindfromdir=sfcWindfromdir
-    )
+    uas, vas = atmos.wind_vector_from_speed(sfcWind=sfcWind, sfcWindfromdir=sfcWindfromdir)
     np.testing.assert_allclose(uas, [0.0, -3.0, 0.0], atol=1e-14)
     np.testing.assert_allclose(vas, [-3.0, -4.0, -0.2], atol=1e-14)
 
     # missing values
     sfcWind[0] = np.nan
     sfcWindfromdir[1] = np.nan
-    uas, vas = atmos.wind_vector_from_speed(
-        sfcWind=sfcWind, sfcWindfromdir=sfcWindfromdir
-    )
+    uas, vas = atmos.wind_vector_from_speed(sfcWind=sfcWind, sfcWindfromdir=sfcWindfromdir)
     np.testing.assert_array_equal(uas.isnull(), [True, True, False])
     np.testing.assert_array_equal(vas.isnull(), [True, True, False])
 
@@ -64,12 +58,8 @@ def test_wind_vector_from_speed():
 def test_relative_humidity_dewpoint(timeseries):
     np.testing.assert_allclose(
         atmos.relative_humidity_from_dewpoint(
-            tas=timeseries(
-                np.array([-20, -10, -1, 10, 20, 25, 30, 40, 60]) + K2C, "tas"
-            ),
-            tdps=timeseries(
-                np.array([-15, -10, -2, 5, 10, 20, 29, 20, 30]) + K2C, "tdps"
-            ),
+            tas=timeseries(np.array([-20, -10, -1, 10, 20, 25, 30, 40, 60]) + K2C, "tas"),
+            tdps=timeseries(np.array([-15, -10, -2, 5, 10, 20, 29, 20, 30]) + K2C, "tdps"),
         ),
         timeseries([np.nan, 100, 93, 71, 52, 73, 94, 31, 20], "hurs"),
         rtol=0.02,
@@ -164,9 +154,7 @@ def test_specific_humidity(tas_series, hurs_series, huss_series, ps_series):
     tas = tas_series(np.array([20, -10, 10, 20, 35, 50, 75, 95]) + K2C)
     hurs = hurs_series([150, 10, 90, 20, 80, 50, 70, 40, 30])
     ps = ps_series(1000 * np.array([100] * 4 + [101] * 4))
-    huss_exp = huss_series(
-        [np.nan, 1.6e-4, 6.9e-3, 3.0e-3, 2.9e-2, 4.1e-2, 2.1e-1, 5.7e-1]
-    )
+    huss_exp = huss_series([np.nan, 1.6e-4, 6.9e-3, 3.0e-3, 2.9e-2, 4.1e-2, 2.1e-1, 5.7e-1])
 
     huss = atmos.specific_humidity(
         tas=tas,
@@ -202,13 +190,9 @@ def test_snowfall_approximation(pr_series, tasmax_series):
     pr = pr_series(np.ones(10))
     tasmax = tasmax_series(np.arange(10) + K2C)
 
-    prsn = atmos.snowfall_approximation(
-        pr, tas=tasmax, thresh="5 degC", method="binary"
-    )
+    prsn = atmos.snowfall_approximation(pr, tas=tasmax, thresh="5 degC", method="binary")
 
-    np.testing.assert_allclose(
-        prsn, [1, 1, 1, 1, 1, 0, 0, 0, 0, 0], atol=1e-5, rtol=1e-3
-    )
+    np.testing.assert_allclose(prsn, [1, 1, 1, 1, 1, 0, 0, 0, 0, 0], atol=1e-5, rtol=1e-3)
 
 
 def test_rain_approximation(pr_series, tas_series):
@@ -217,9 +201,7 @@ def test_rain_approximation(pr_series, tas_series):
 
     prlp = atmos.rain_approximation(pr, tas=tas, thresh="5 degC", method="binary")
 
-    np.testing.assert_allclose(
-        prlp, [0, 0, 0, 0, 0, 1, 1, 1, 1, 1], atol=1e-5, rtol=1e-3
-    )
+    np.testing.assert_allclose(prlp, [0, 0, 0, 0, 0, 1, 1, 1, 1, 1], atol=1e-5, rtol=1e-3)
 
 
 def test_high_precip_low_temp(pr_series, tasmin_series):
@@ -232,30 +214,22 @@ def test_high_precip_low_temp(pr_series, tasmin_series):
     tas += K2C
     tas = tasmin_series(tas, start="1999-01-01")
 
-    out = atmos.high_precip_low_temp(
-        pr, tas, pr_thresh="1 kg m-2 s-1", tas_thresh="1 C"
-    )
+    out = atmos.high_precip_low_temp(pr, tas, pr_thresh="1 kg m-2 s-1", tas_thresh="1 C")
     np.testing.assert_array_equal(out, [1])
 
 
 def test_wind_chill_index(atmosds):
     out = atmos.wind_chill_index(ds=atmosds)
 
-    np.testing.assert_allclose(
-        out.isel(time=0), [np.nan, -6.716, -35.617, -8.486, np.nan], rtol=1e-3
-    )
+    np.testing.assert_allclose(out.isel(time=0), [np.nan, -6.716, -35.617, -8.486, np.nan], rtol=1e-3)
 
     out_us = atmos.wind_chill_index(ds=atmosds, method="US")
 
-    np.testing.assert_allclose(
-        out_us.isel(time=0), [-1.429, -6.716, -35.617, -8.486, 2.781], rtol=1e-3
-    )
+    np.testing.assert_allclose(out_us.isel(time=0), [-1.429, -6.716, -35.617, -8.486, 2.781], rtol=1e-3)
 
 
 def test_wind_profile(atmosds):
-    out = atmos.wind_profile(
-        wind_speed=atmosds.sfcWind, h_r="10 m", h="100 m", alpha=1 / 7
-    )
+    out = atmos.wind_profile(wind_speed=atmosds.sfcWind, h_r="10 m", h="100 m", alpha=1 / 7)
     assert out.attrs["units"] == "m s-1"
     assert (out > atmosds.sfcWind).all()
 
@@ -273,17 +247,13 @@ def test_wind_power_potential_from_3h_series():
     from xclim.indices.generic import select_resample_op
     from xclim.testing.helpers import test_timeseries
 
-    w = test_timeseries(
-        np.ones(96) * 15, variable="sfcWind", start="7/1/2000", units="m s-1", freq="3h"
-    )
+    w = test_timeseries(np.ones(96) * 15, variable="sfcWind", start="7/1/2000", units="m s-1", freq="3h")
     out = atmos.wind_power_potential(wind_speed=w)
 
     # Multiply with nominal capacity
     power = out * 100
     power.attrs["units"] = "MW"
-    annual_power = convert_units_to(
-        select_resample_op(power, op="integral", freq="D"), "MWh"
-    )
+    annual_power = convert_units_to(select_resample_op(power, op="integral", freq="D"), "MWh")
     assert (annual_power == 100 * 24).all()
 
 
@@ -295,9 +265,7 @@ class TestDrynessIndex:
         evspsblpot = ds.evspsblpot
 
         di = atmos.dryness_index(pr, evspsblpot)
-        np.testing.assert_allclose(
-            di, np.array([13.355, 102.426, 65.576, 158.078]), rtol=1e-03
-        )
+        np.testing.assert_allclose(di, np.array([13.355, 102.426, 65.576, 158.078]), rtol=1e-03)
         assert di.attrs["long_name"] == "Growing season humidity"
 
     def test_variable_initial_conditions(self, atmosds):
@@ -432,12 +400,8 @@ class TestPotentialEvapotranspiration:
 
         pet_tw48 = atmos.potential_evapotranspiration(tas=tm, method="TW48")
 
-        np.testing.assert_allclose(
-            pet_br65.isel(location=0, time=slice(100, 102)), [np.nan, np.nan]
-        )
-        np.testing.assert_allclose(
-            pet_hg85.isel(location=0, time=slice(100, 102)), [np.nan, np.nan]
-        )
+        np.testing.assert_allclose(pet_br65.isel(location=0, time=slice(100, 102)), [np.nan, np.nan])
+        np.testing.assert_allclose(pet_hg85.isel(location=0, time=slice(100, 102)), [np.nan, np.nan])
         np.testing.assert_allclose(
             pet_fao_pm98.isel(location=0, time=slice(100, 102)),
             [np.nan, np.nan],
@@ -471,24 +435,12 @@ class TestWaterBudget:
             petR = pet * 86400
             petR.attrs["units"] = "mm/day"
 
-        p_pet_br65 = atmos.water_budget_from_tas(
-            pr, tasmin=tn, tasmax=tx, method="BR65"
-        )
-        p_pet_br65C = atmos.water_budget_from_tas(
-            prR, tasmin=tnC, tasmax=tx, method="BR65"
-        )
-        p_pet_hg85 = atmos.water_budget_from_tas(
-            pr, tasmin=tn, tasmax=tx, method="HG85"
-        )
-        p_pet_hg85C = atmos.water_budget_from_tas(
-            prR, tasmin=tnC, tasmax=tx, method="HG85"
-        )
-        p_pet_tw48 = atmos.water_budget_from_tas(
-            pr, tasmin=tn, tasmax=tx, method="TW48"
-        )
-        p_pet_tw48C = atmos.water_budget_from_tas(
-            prR, tasmin=tnC, tasmax=tx, method="TW48"
-        )
+        p_pet_br65 = atmos.water_budget_from_tas(pr, tasmin=tn, tasmax=tx, method="BR65")
+        p_pet_br65C = atmos.water_budget_from_tas(prR, tasmin=tnC, tasmax=tx, method="BR65")
+        p_pet_hg85 = atmos.water_budget_from_tas(pr, tasmin=tn, tasmax=tx, method="HG85")
+        p_pet_hg85C = atmos.water_budget_from_tas(prR, tasmin=tnC, tasmax=tx, method="HG85")
+        p_pet_tw48 = atmos.water_budget_from_tas(pr, tasmin=tn, tasmax=tx, method="TW48")
+        p_pet_tw48C = atmos.water_budget_from_tas(prR, tasmin=tnC, tasmax=tx, method="TW48")
 
         p_pet_fao_pm98 = atmos.water_budget_from_tas(
             pr=pr,
@@ -545,12 +497,8 @@ class TestWaterBudget:
         tn[0, 100] = np.nan
         tx[0, 101] = np.nan
 
-        p_pet_br65 = atmos.water_budget_from_tas(
-            pr, tasmin=tn, tasmax=tx, method="BR65"
-        )
-        p_pet_hg85 = atmos.water_budget_from_tas(
-            pr, tasmin=tn, tasmax=tx, method="HG85"
-        )
+        p_pet_br65 = atmos.water_budget_from_tas(pr, tasmin=tn, tasmax=tx, method="BR65")
+        p_pet_hg85 = atmos.water_budget_from_tas(pr, tasmin=tn, tasmax=tx, method="HG85")
         p_pet_fao_pm98 = atmos.water_budget_from_tas(
             pr=pr,
             tasmin=tn,
@@ -585,9 +533,7 @@ class TestUTCI:
 
         tas = dataset.tas
         hurs = dataset.hurs
-        sfcWind, _sfcWindfromdir = atmos.wind_speed_from_vector(
-            uas=dataset.uas, vas=dataset.vas
-        )
+        sfcWind, _sfcWindfromdir = atmos.wind_speed_from_vector(uas=dataset.uas, vas=dataset.vas)
         rsds = dataset.rsds
         rsus = dataset.rsus
         rlds = dataset.rlds

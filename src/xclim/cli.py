@@ -44,9 +44,7 @@ def _get_indicator(indicator_name):
     try:
         return xc.core.indicator.registry[indicator_name.upper()].get_instance()  # noqa
     except KeyError as e:
-        raise click.BadArgumentUsage(
-            f"Indicator '{indicator_name}' not found in xclim."
-        ) from e
+        raise click.BadArgumentUsage(f"Indicator '{indicator_name}' not found in xclim.") from e
 
 
 def _get_input(ctx):
@@ -81,9 +79,7 @@ def _get_output(ctx):
         ds_in = _get_input(ctx)
         ctx.obj["ds_out"] = xr.Dataset(attrs=ds_in.attrs)
         if ctx.obj["output"] is None:
-            raise click.BadOptionUsage(
-                "output", "No output file name given.", ctx.parent
-            )
+            raise click.BadOptionUsage("output", "No output file name given.", ctx.parent)
     return ctx.obj["ds_out"]
 
 
@@ -200,38 +196,26 @@ def prefetch_testing_data(ctx, repo, branch, cache_dir):  # numpydoc ignore=PR01
         testdata_cache_dir = TESTDATA_CACHE_DIR
 
     click.echo(f"Gathering testing data from {testdata_repo}/{testdata_branch} ...")
-    click.echo(
-        populate_testing_data(
-            repo=testdata_repo, branch=testdata_branch, local_cache=testdata_cache_dir
-        )
-    )
+    click.echo(populate_testing_data(repo=testdata_repo, branch=testdata_branch, local_cache=testdata_cache_dir))
     click.echo(f"Testing data saved to `{testdata_cache_dir}`.")
     ctx.exit()
 
 
 @click.command(short_help="Print history for publishing purposes.")
 @click.option("-m", "--md", is_flag=True, help="Prints the history in Markdown format.")
-@click.option(
-    "-r", "--rst", is_flag=True, help="Prints the history in ReStructuredText format."
-)
-@click.option(
-    "-c", "--changes", help="Pass a custom changelog file to be used instead."
-)
+@click.option("-r", "--rst", is_flag=True, help="Prints the history in ReStructuredText format.")
+@click.option("-c", "--changes", help="Pass a custom changelog file to be used instead.")
 @click.pass_context
 def release_notes(ctx, md, rst, changes):  # numpydoc ignore=PR01
     """Generate the release notes history for publishing purposes."""
     if md and rst:
-        raise click.BadArgumentUsage(
-            "Cannot return both Markdown and ReStructuredText in same release_notes call."
-        )
+        raise click.BadArgumentUsage("Cannot return both Markdown and ReStructuredText in same release_notes call.")
     if md:
         style = "md"
     elif rst:
         style = "rst"
     else:
-        raise click.BadArgumentUsage(
-            "Must specify Markdown (-m) or ReStructuredText (-r)."
-        )
+        raise click.BadArgumentUsage("Must specify Markdown (-m) or ReStructuredText (-r).")
 
     if changes:
         click.echo(f"{publish_release_notes(style, changes=changes)}")
@@ -296,9 +280,7 @@ def dataflags(ctx, variables, raise_flags, append, dims, freq):  # numpydoc igno
         exit_code = 0
         for v in variables:
             try:
-                flagged_var = data_flags(
-                    ds[v], ds, dims=dims, freq=freq, raise_flags=raise_flags
-                )
+                flagged_var = data_flags(ds[v], ds, dims=dims, freq=freq, raise_flags=raise_flags)
                 if output:
                     flagged = xr.merge([flagged, flagged_var])
             except DataQualityException as e:
@@ -309,9 +291,7 @@ def dataflags(ctx, variables, raise_flags, append, dims, freq):  # numpydoc igno
             ctx.exit(exit_code)
     else:
         try:
-            flagged = ecad_compliant(
-                ds, dims=dims, raise_flags=raise_flags, append=append
-            )
+            flagged = ecad_compliant(ds, dims=dims, raise_flags=raise_flags, append=append)
             if raise_flags:
                 click.echo("Dataset passes quality control checks!")
                 ctx.exit()
@@ -325,9 +305,7 @@ def dataflags(ctx, variables, raise_flags, append, dims, freq):  # numpydoc igno
 
 
 @click.command(short_help="List indicators.")
-@click.option(
-    "-i", "--info", is_flag=True, help="Prints more details for each indicator."
-)
+@click.option("-i", "--info", is_flag=True, help="Prints more details for each indicator.")
 def indices(info):  # numpydoc ignore=PR01
     """List all indicators."""
     formatter = click.HelpFormatter()
@@ -335,13 +313,9 @@ def indices(info):  # numpydoc ignore=PR01
     rows = []
     for name, indcls in xc.core.indicator.registry.items():  # noqa
         left = click.style(name.lower(), fg="yellow")
-        right = ", ".join(
-            [var.get("long_name", var["var_name"]) for var in indcls.cf_attrs]
-        )
+        right = ", ".join([var.get("long_name", var["var_name"]) for var in indcls.cf_attrs])
         if indcls.cf_attrs[0]["var_name"] != name.lower():
-            right += (
-                " (" + ", ".join([var["var_name"] for var in indcls.cf_attrs]) + ")"
-            )
+            right += " (" + ", ".join([var["var_name"] for var in indcls.cf_attrs]) + ")"
         if info:
             right += "\n" + indcls.abstract
         rows.append((left, right))
@@ -359,10 +333,7 @@ def info(ctx, indicator):  # numpydoc ignore=PR01
         ind = _get_indicator(indname)
         command = _create_command(indname)
         formatter = click.HelpFormatter()
-        with formatter.section(
-            click.style("Indicator", fg="blue")
-            + click.style(f" {indname}", fg="yellow")
-        ):
+        with formatter.section(click.style("Indicator", fg="blue") + click.style(f" {indname}", fg="yellow")):
             data = ind.json()
             data.pop("parameters")
             _format_dict(data, formatter, key_fg="blue", spaces=2)
@@ -376,25 +347,19 @@ def _format_dict(data, formatter, key_fg="blue", spaces=2):
     for attr, val in data.items():
         if isinstance(val, list):
             for isub, sub in enumerate(val):
-                formatter.write_text(
-                    click.style(" " * spaces + f"{attr} (#{isub + 1})", fg=key_fg)
-                )
+                formatter.write_text(click.style(" " * spaces + f"{attr} (#{isub + 1})", fg=key_fg))
                 _format_dict(sub, formatter, key_fg=key_fg, spaces=spaces + 2)
         elif isinstance(val, dict):
             formatter.write_text(click.style(" " * spaces + f"{attr}:", fg=key_fg))
             _format_dict(val, formatter, key_fg=key_fg, spaces=spaces + 2)
         else:
-            formatter.write_text(
-                click.style(" " * spaces + attr + " :", fg=key_fg) + " " + str(val)
-            )
+            formatter.write_text(click.style(" " * spaces + attr + " :", fg=key_fg) + " " + str(val))
 
 
 class XclimCli(click.MultiCommand):
     """Main cli class."""
 
-    def list_commands(
-        self, ctx
-    ) -> tuple[str, str, str, str, str, str]:  # numpydoc ignore=PR01,RT01
+    def list_commands(self, ctx) -> tuple[str, str, str, str, str, str]:  # numpydoc ignore=PR01,RT01
         """Return the available commands (other than the indicators)."""
         return (
             "indices",
@@ -435,12 +400,8 @@ class XclimCli(click.MultiCommand):
     multiple=True,
 )
 @click.option("-o", "--output", help="Output filepath. A new file will be created")
-@click.option(
-    "-v", "--verbose", help="Print details about context and progress.", count=True
-)
-@click.option(
-    "-V", "--version", is_flag=True, help="Prints xclim's version number and exits"
-)
+@click.option("-v", "--verbose", help="Print details about context and progress.", count=True)
+@click.option("-V", "--version", is_flag=True, help="Prints xclim's version number and exits")
 @click.option(
     "--dask-nthreads",
     type=int,
@@ -459,8 +420,7 @@ class XclimCli(click.MultiCommand):
 )
 @click.option(
     "--engine",
-    help="Engine to use when opening the input dataset(s). "
-    "If not specified, xarray decides.",
+    help="Engine to use when opening the input dataset(s). If not specified, xarray decides.",
 )
 @click.pass_context
 def cli(ctx, **kwargs):  # numpydoc ignore=PR01
@@ -508,10 +468,7 @@ def cli(ctx, **kwargs):  # numpydoc ignore=PR01
             f"{client.scheduler_info()['services']['dashboard']}/status"
         )
     if kwargs["chunks"] is not None:
-        kwargs["chunks"] = {
-            dim: int(num)
-            for dim, num in map(lambda x: x.split(":"), kwargs["chunks"].split(","))
-        }
+        kwargs["chunks"] = {dim: int(num) for dim, num in map(lambda x: x.split(":"), kwargs["chunks"].split(","))}
 
     kwargs["xr_kwargs"] = {
         "chunks": kwargs["chunks"] or {},
@@ -527,9 +484,7 @@ def write_file(ctx, *_, **kwargs):  # numpydoc ignore=PR01
         if ctx.obj["verbose"]:
             click.echo(f"Writing to file {ctx.obj['output']}")
         with ProgressBar():
-            r = ctx.obj["ds_out"].to_netcdf(
-                ctx.obj["output"], engine=kwargs["engine"], compute=False
-            )
+            r = ctx.obj["ds_out"].to_netcdf(ctx.obj["output"], engine=kwargs["engine"], compute=False)
             if ctx.obj["dask_nthreads"] is not None:
                 progress(r.data)
             r.compute()

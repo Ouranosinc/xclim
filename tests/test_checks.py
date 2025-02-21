@@ -116,9 +116,7 @@ class TestDateHandling:
         with pytest.raises(ValidationError):
             n = 365
             times = date_range("2000-01-01", freq="12h", periods=n)
-            da = xr.DataArray(
-                np.arange(n), [("time", times[::-1])], attrs=self.tas_attrs
-            )
+            da = xr.DataArray(np.arange(n), [("time", times[::-1])], attrs=self.tas_attrs)
             tg_mean(da)
 
     # Missing one day between the two years
@@ -180,9 +178,7 @@ class TestDataCheck:
 
         # No freq
         db = da[np.array([0, 1, 4, 6, 10])]
-        with pytest.raises(
-            ValidationError, match="Unable to infer the frequency of the time series."
-        ):
+        with pytest.raises(ValidationError, match="Unable to infer the frequency of the time series."):
             datachecks.check_common_time([db, da])
 
         # Not same freq

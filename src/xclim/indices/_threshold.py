@@ -115,9 +115,7 @@ __all__ = [
 
 
 @declare_units(sfcWind="[speed]", thresh="[speed]")
-def calm_days(
-    sfcWind: xarray.DataArray, thresh: Quantified = "2 m s-1", freq: str = "MS"
-) -> xarray.DataArray:
+def calm_days(sfcWind: xarray.DataArray, thresh: Quantified = "2 m s-1", freq: str = "MS") -> xarray.DataArray:
     r"""
     Calm days.
 
@@ -223,7 +221,8 @@ def cold_spell_frequency(
     r"""
     Cold spell frequency.
 
-    The number of cold spell events, defined as a sequence of consecutive {window} days with mean daily temperature below a {thresh}.
+    The number of cold spell events, defined as a sequence of consecutive {window} days with mean daily
+    temperature below a {thresh}.
 
     Parameters
     ----------
@@ -593,9 +592,7 @@ def snw_season_length(
 
 
 @declare_units(snd="[length]", thresh="[length]")
-def snd_storm_days(
-    snd: xarray.DataArray, thresh: Quantified = "25 cm", freq: str = "YS-JUL"
-) -> xarray.DataArray:
+def snd_storm_days(snd: xarray.DataArray, thresh: Quantified = "25 cm", freq: str = "YS-JUL") -> xarray.DataArray:
     """
     Days with snowfall over threshold.
 
@@ -635,9 +632,7 @@ def snd_storm_days(
 
 
 @declare_units(snw="[mass]/[area]", thresh="[mass]/[area]")
-def snw_storm_days(
-    snw: xarray.DataArray, thresh: Quantified = "10 kg m-2", freq: str = "YS-JUL"
-) -> xarray.DataArray:
+def snw_storm_days(snw: xarray.DataArray, thresh: Quantified = "10 kg m-2", freq: str = "YS-JUL") -> xarray.DataArray:
     """
     Days with snowfall over threshold.
 
@@ -747,9 +742,7 @@ def daily_pr_intensity(
     # Should be resolved in pint v0.24. See: https://github.com/hgrecco/pint/issues/1913
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", category=DeprecationWarning)
-        dpr_int = dpr_int.assign_attrs(
-            units=f"{str2pint(pram.units) / str2pint(wd.units):~}"
-        )
+        dpr_int = dpr_int.assign_attrs(units=f"{str2pint(pram.units) / str2pint(wd.units):~}")
 
     return dpr_int
 
@@ -853,9 +846,7 @@ def maximum_consecutive_wet_days(
 
 
 @declare_units(tas="[temperature]", thresh="[temperature]")
-def cooling_degree_days(
-    tas: xarray.DataArray, thresh: Quantified = "18 degC", freq: str = "YS"
-) -> xarray.DataArray:
+def cooling_degree_days(tas: xarray.DataArray, thresh: Quantified = "18 degC", freq: str = "YS") -> xarray.DataArray:
     r"""
     Cooling degree days.
 
@@ -891,9 +882,7 @@ def cooling_degree_days(
 
 
 @declare_units(tas="[temperature]", thresh="[temperature]")
-def growing_degree_days(
-    tas: xarray.DataArray, thresh: Quantified = "4.0 degC", freq: str = "YS"
-) -> xarray.DataArray:
+def growing_degree_days(tas: xarray.DataArray, thresh: Quantified = "4.0 degC", freq: str = "YS") -> xarray.DataArray:
     r"""
     Growing degree-days over threshold temperature value.
 
@@ -2768,10 +2757,10 @@ def maximum_consecutive_frost_days(
 
     Notes
     -----
-    Let :math:`\mathbf{t}=t_0, t_1, \ldots, t_n` be a minimum daily temperature series and :math:`thresh` the threshold
-    below which a day is considered a frost day. Let :math:`\mathbf{s}` be the sorted vector of indices :math:`i`
-    where :math:`[t_i < thresh] \neq [t_{i+1} < thresh]`, that is, the days where the temperature crosses the threshold.
-    Then the maximum number of consecutive frost days is given by:
+    Let :math:`\mathbf{t}=t_0, t_1, \ldots, t_n` be a minimum daily temperature series and :math:`thresh`
+    the threshold below which a day is considered a frost day. Let :math:`\mathbf{s}` be the sorted vector
+    of indices :math:`i` where :math:`[t_i < thresh] \neq [t_{i+1} < thresh]`, that is, the days where the
+    temperature crosses the threshold. Then the maximum number of consecutive frost days is given by:
 
     .. math::
 
@@ -2883,10 +2872,11 @@ def maximum_consecutive_frost_free_days(
 
     Notes
     -----
-    Let :math:`\mathbf{t}=t_0, t_1, \ldots, t_n` be a daily minimum temperature series and :math:`thresh` the threshold
-    above or equal to which a day is considered a frost free day. Let :math:`\mathbf{s}` be the sorted vector of
-    indices :math:`i` where :math:`[t_i <= thresh] \neq [t_{i+1} <= thresh]`, that is, the days where the temperature
-    crosses the threshold. Then the maximum number of consecutive frost free days is given by:
+    Let :math:`\mathbf{t}=t_0, t_1, \ldots, t_n` be a daily minimum temperature series and :math:`thresh`
+    the threshold above or equal to which a day is considered a frost free day. Let :math:`\mathbf{s}`
+    be the sorted vector of indices :math:`i` where :math:`[t_i <= thresh] \neq [t_{i+1} <= thresh]`,
+    that is, the days where the temperature crosses the threshold.
+    Then the maximum number of consecutive frost free days is given by:
 
     .. math::
 
@@ -2938,10 +2928,10 @@ def maximum_consecutive_tx_days(
 
     Notes
     -----
-    Let :math:`\mathbf{t}=t_0, t_1, \ldots, t_n` be a daily maximum temperature series and :math:`thresh` the threshold
-    above which a day is considered a summer day. Let :math:`\mathbf{s}` be the sorted vector of indices :math:`i`
-    where :math:`[t_i < thresh] \neq [t_{i+1} < thresh]`, that is, the days where the temperature crosses the threshold.
-    Then the maximum number of consecutive tx_days (summer days) is given by:
+    Let :math:`\mathbf{t}=t_0, t_1, \ldots, t_n` be a daily maximum temperature series and :math:`thresh`
+    the threshold above which a day is considered a summer day. Let :math:`\mathbf{s}` be the sorted vector
+    of indices :math:`i` where :math:`[t_i < thresh] \neq [t_{i+1} < thresh]`, that is, the days where the
+    temperature crosses the threshold. Then the maximum number of consecutive tx_days (summer days) is given by:
 
     .. math::
 
@@ -3039,9 +3029,7 @@ def sea_ice_extent(
 
 
 @declare_units(sfcWind="[speed]", thresh="[speed]")
-def windy_days(
-    sfcWind: xarray.DataArray, thresh: Quantified = "10.8 m s-1", freq: str = "MS"
-) -> xarray.DataArray:
+def windy_days(sfcWind: xarray.DataArray, thresh: Quantified = "10.8 m s-1", freq: str = "MS") -> xarray.DataArray:
     r"""
     Windy days.
 
@@ -3179,7 +3167,7 @@ def degree_days_exceedance_date(
     The resulting :math:`k` is expressed as a day of year.
 
     Cumulated degree days have numerous applications including plant and insect phenology.
-    See https://en.wikipedia.org/wiki/Growing_degree-day for examples (:cite:t:`wikipedia_contributors_growing_2021`).
+    See: https://en.wikipedia.org/wiki/Growing_degree-day for examples (:cite:t:`wikipedia_contributors_growing_2021`).
     """
     thresh = convert_units_to(thresh, "K")
     tas = convert_units_to(tas, "K")
@@ -3194,9 +3182,7 @@ def degree_days_exceedance_date(
 
     def _exceedance_date(grp):
         strt_idx = rl.index_of_date(grp.time, after_date, max_idxs=1, default=0)
-        if (
-            strt_idx.size == 0
-        ):  # The date is not within the group. Happens at boundaries.
+        if strt_idx.size == 0:  # The date is not within the group. Happens at boundaries.
             return xarray.full_like(grp.isel(time=0), np.nan, float).drop_vars("time")  # type: ignore
         cumsum = grp.where(grp.time >= grp.time[strt_idx][0]).cumsum("time")
 
@@ -3209,17 +3195,13 @@ def degree_days_exceedance_date(
             # This is slightly faster in numpy and generates fewer tasks in dask
             return out
         if isinstance(never_reached, str):
-            never_reached_val = doy_from_string(
-                DayOfYearStr(never_reached), grp.time.dt.year[0], grp.time.dt.calendar
-            )
+            never_reached_val = doy_from_string(DayOfYearStr(never_reached), grp.time.dt.year[0], grp.time.dt.calendar)
         else:
             never_reached_val = never_reached
         return xarray.where((cumsum <= sum_thresh).all("time"), never_reached_val, out)
 
     dded = resample_map(c.clip(0), "time", freq, _exceedance_date)
-    dded = dded.assign_attrs(
-        units="", is_dayofyear=np.int32(1), calendar=get_calendar(tas)
-    )
+    dded = dded.assign_attrs(units="", is_dayofyear=np.int32(1), calendar=get_calendar(tas))
     return dded
 
 
@@ -3250,11 +3232,12 @@ def dry_spell_frequency(
     freq : str
         Resampling frequency.
     resample_before_rl : bool
-        Determines if the resampling should take place before or after the run length encoding (or a similar algorithm) is applied to runs.
+        Determines if the resampling should take place before or after the run length encoding
+        (or a similar algorithm) is applied to runs.
     op : {"sum", "max", "min", "mean"}
         Operation to perform on the window.
-        Default is "sum", which checks that the sum of accumulated precipitation over the whole window is less than the
-        threshold.
+        Default is "sum", which checks that the sum of accumulated precipitation over the whole window
+        is less than the threshold.
         "max" checks that the maximal daily precipitation amount within the window is less than the threshold.
         This is the same as verifying that each individual day is below the threshold.
     **indexer : {dim: indexer}, optional
@@ -3318,14 +3301,15 @@ def dry_spell_total_length(
         Number of days when the maximum or accumulated precipitation is under threshold.
     op : {"sum", "max", "min", "mean"}
         Operation to perform on the window.
-        Default is "sum", which checks that the sum of accumulated precipitation over the whole window is less than the
-        threshold.
+        Default is "sum", which checks that the sum of accumulated precipitation over the whole window
+        is less than the threshold.
         "max" checks that the maximal daily precipitation amount within the window is less than the threshold.
         This is the same as verifying that each individual day is below the threshold.
     freq : str
         Resampling frequency.
     resample_before_rl : bool
-        Determines if the resampling should take place before or after the run length encoding (or a similar algorithm) is applied to runs.
+        Determines if the resampling should take place before or after the run length encoding
+        (or a similar algorithm) is applied to runs.
     **indexer : {dim: indexer}, optional
         Indexing parameters to compute the indicator on a temporal subset of the data.
         It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
@@ -3411,11 +3395,11 @@ def dry_spell_max_length(
     Notes
     -----
     The algorithm assumes days before and after the timeseries are "wet", meaning that the condition for being
-    considered part of a dry spell is stricter on the edges. For example, with `window=3` and `op='sum'`, the first day
-    of the series is considered part of a dry spell only if the accumulated precipitation within the first three days is
-    under the threshold. In comparison, a day in the middle of the series is considered part of a dry spell if any of
-    the three 3-day periods of which it is part are considered dry (so a total of five days are included in the
-    computation, compared to only three).
+    considered part of a dry spell is stricter on the edges. For example, with `window=3` and `op='sum'`,
+    the first day of the series is considered part of a dry spell only if the accumulated precipitation within
+    the first three days is under the threshold. In comparison, a day in the middle of the series is considered
+    part of a dry spell if any of the three 3-day periods of which it is part are considered dry
+    (so a total of five days are included in the computation, compared to only three).
     """
     pram = rate2amount(convert_units_to(pr, "mm/d", context="hydro"), out_units="mm")
     return spell_length_statistics(
@@ -3444,7 +3428,8 @@ def wet_spell_frequency(
     r"""
     Return the number of wet periods of n days and more.
 
-    Periods during which the accumulated, minimal, or maximal daily precipitation amount on a window of n days is over threshold.
+    Periods during which the accumulated, minimal, or maximal daily precipitation amount on a window
+    of n days is over threshold.
 
     Parameters
     ----------
@@ -3458,11 +3443,12 @@ def wet_spell_frequency(
     freq : str
         Resampling frequency.
     resample_before_rl : bool
-        Determines if the resampling should take place before or after the run length encoding (or a similar algorithm) is applied to runs.
+        Determines if the resampling should take place before or after the run length encoding
+        (or a similar algorithm) is applied to runs.
     op : {"sum", "min", "max", "mean"}
         Operation to perform on the window.
-        Default is "sum", which checks that the sum of accumulated precipitation over the whole window is more than the
-        threshold.
+        Default is "sum", which checks that the sum of accumulated precipitation over the whole window is
+        more than the threshold.
         "min" checks that the maximal daily precipitation amount within the window is more than the threshold.
         This is the same as verifying that each individual day is above the threshold.
     **indexer : {dim: indexer}, optional
@@ -3532,7 +3518,8 @@ def wet_spell_total_length(
     freq : str
         Resampling frequency.
     resample_before_rl : bool
-        Determines if the resampling should take place before or after the run length encoding (or a similar algorithm) is applied to runs.
+        Determines if the resampling should take place before or after the run length encoding
+        (or a similar algorithm) is applied to runs.
     **indexer : {dim: indexer}, optional
         Indexing parameters to compute the indicator on a temporal subset of the data.
         It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
@@ -3602,7 +3589,8 @@ def wet_spell_max_length(
     freq : str
         Resampling frequency.
     resample_before_rl : bool
-        Determines if the resampling should take place before or after the run length encoding (or a similar algorithm) is applied to runs.
+        Determines if the resampling should take place before or after the run length encoding
+        (or a similar algorithm) is applied to runs.
     **indexer : {dim: indexer}, optional
         Indexing parameters to compute the indicator on a temporal subset of the data.
         It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
@@ -3690,9 +3678,7 @@ def holiday_snow_days(
         date_bounds=(date_start, date_start if date_end is None else date_end),
     )
 
-    xmas_days = count_occurrences(
-        snd_constrained, snd_thresh, freq, op, constrain=[">=", ">"]
-    )
+    xmas_days = count_occurrences(snd_constrained, snd_thresh, freq, op, constrain=[">=", ">"])
 
     xmas_days = to_agg_units(xmas_days, snd, "count")
     return xmas_days
@@ -3757,9 +3743,7 @@ def holiday_snow_and_snowfall_days(
         date_bounds=(date_start, date_start if date_end is None else date_end),
     )
 
-    prsn_mm = rate2amount(
-        convert_units_to(prsn, "mm day-1", context="hydro"), out_units="mm"
-    )
+    prsn_mm = rate2amount(convert_units_to(prsn, "mm day-1", context="hydro"), out_units="mm")
     prsn_mm_constrained = select_time(
         prsn_mm,
         date_bounds=(date_start, date_start if date_end is None else date_end),
