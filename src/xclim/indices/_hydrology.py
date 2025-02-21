@@ -147,7 +147,8 @@ def standardized_streamflow_index(
         Name of the univariate distribution, or a callable `rv_continuous` (see :py:mod:`scipy.stats`).
     method : {"APP", "ML", "PWM"}
         Name of the fitting method, such as `ML` (maximum likelihood), `APP` (approximate). The approximate method
-        uses a deterministic function that does not involve any optimization. `PWM` should be used with a `lmoments3` distribution.
+        uses a deterministic function that does not involve any optimization.
+        `PWM` should be used with a `lmoments3` distribution.
     fitkwargs : dict, optional
         Kwargs passed to ``xclim.indices.stats.fit`` used to impose values of certains parameters (`floc`, `fscale`).
     cal_start : DateStr, optional
@@ -179,11 +180,11 @@ def standardized_streamflow_index(
     -----
     * N-month SSI / N-day SSI is determined by choosing the `window = N` and the appropriate frequency `freq`.
     * Supported statistical distributions are: ["genextreme", "fisk"], where "fisk" is scipy's implementation of
-       a log-logistic distribution
-    * If `params` is given as input, it overrides the `cal_start`, `cal_end`, `freq` and `window`, `dist` and `method` options.
-    * "APP" method only supports two-parameter distributions. Parameter `loc` needs to be fixed to use method `APP`.
-    * The standardized index is bounded by ±8.21. 8.21 is the largest standardized index as constrained by the float64 precision in
-      the inversion to the normal distribution.
+       a log-logistic distribution.
+    * If `params` is provided, it overrides the `cal_start`, `cal_end`, `freq`, `window`, `dist`, and `method` options.
+    * "APP" method only supports two-parameter distributions. Parameter `loc` needs to be fixed to use method "APP".
+    * The standardized index is bounded by ±8.21. 8.21 is the largest standardized index as constrained by the
+      float64 precision in the inversion to the normal distribution.
 
     References
     ----------
@@ -450,8 +451,9 @@ def standardized_groundwater_index(
     dist : {"gamma", "genextreme", "lognorm"} or `rv_continuous`
         Name of the univariate distribution, or a callable `rv_continuous` (see :py:mod:`scipy.stats`).
     method : {"APP", "ML", "PWM"}
-        Name of the fitting method, such as `ML` (maximum likelihood), `APP` (approximate). The approximate method
-        uses a deterministic function that does not involve any optimization. `PWM` should be used with a `lmoments3` distribution.
+        Name of the fitting method, such as `ML` (maximum likelihood), `APP` (approximate).
+        The approximate method uses a deterministic function that does not involve any optimization.
+        `PWM` should be used with a `lmoments3` distribution.
     fitkwargs : dict, optional
         Kwargs passed to ``xclim.indices.stats.fit`` used to impose values of certains parameters (`floc`, `fscale`).
     cal_start : DateStr, optional
@@ -482,9 +484,9 @@ def standardized_groundwater_index(
     Notes
     -----
     * N-month SGI / N-day SGI is determined by choosing the `window = N` and the appropriate frequency `freq`.
-    * Supported statistical distributions are: ["gamma", "genextreme", "lognorm"]
-    * If `params` is given as input, it overrides the `cal_start`, `cal_end`, `freq` and `window`, `dist` and `method` options.
-    * "APP" method only supports two-parameter distributions. Parameter `loc` needs to be fixed to use method `APP`.
+    * Supported statistical distributions are: ["gamma", "genextreme", "lognorm"].
+    * If `params` is provided, it overrides the `cal_start`, `cal_end`, `freq`, `window`, `dist`, `method` options.
+    * "APP" method only supports two-parameter distributions. Parameter `loc` needs to be fixed to use method "APP".
 
     References
     ----------
