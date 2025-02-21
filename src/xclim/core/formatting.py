@@ -160,12 +160,8 @@ class AttrFormatter(string.Formatter):
         """
         baseval = self._match_value(value)
         if baseval is None:  # Not something we know how to translate
-            if format_spec in self.modifiers + [
-                "r"
-            ]:  # Woops, however a known format spec was asked
-                warnings.warn(
-                    f"Requested formatting `{format_spec}` for unknown string `{value}`."
-                )
+            if format_spec in self.modifiers + ["r"]:  # Woops, however a known format spec was asked
+                warnings.warn(f"Requested formatting `{format_spec}` for unknown string `{value}`.")
                 format_spec = ""
             return super().format_field(value, format_spec)
         # Thus, known value
@@ -384,9 +380,7 @@ def merge_attributes(
         if attribute in in_ds.attrs or missing_str is not None:
             if in_name is not None and len(inputs) > 1:
                 merged_attr += f"{in_name}: "
-            merged_attr += in_ds.attrs.get(
-                attribute, "" if in_name is None else missing_str
-            )
+            merged_attr += in_ds.attrs.get(attribute, "" if in_name is None else missing_str)
             merged_attr += new_line
 
     if len(new_line) > 0:
@@ -441,8 +435,7 @@ def update_history(
     if len(merged_history) > 0 and not merged_history.endswith("\n"):
         merged_history += "\n"
     merged_history += (
-        f"[{dt.datetime.now():%Y-%m-%d %H:%M:%S}] {new_name or ''}: "
-        f"{hist_str} - xclim version: {__version__}"
+        f"[{dt.datetime.now():%Y-%m-%d %H:%M:%S}] {new_name or ''}: {hist_str} - xclim version: {__version__}"
     )
     return merged_history
 
@@ -477,14 +470,10 @@ def update_xclim_history(func: Callable) -> Callable:
             out = outs
 
         if not isinstance(out, xr.DataArray | xr.Dataset):
-            raise TypeError(
-                f"Decorated `update_xclim_history` received a non-xarray output from {func.__name__}."
-            )
+            raise TypeError(f"Decorated `update_xclim_history` received a non-xarray output from {func.__name__}.")
 
         da_list = [arg for arg in args if isinstance(arg, xr.DataArray)]
-        da_dict = {
-            name: arg for name, arg in kwargs.items() if isinstance(arg, xr.DataArray)
-        }
+        da_dict = {name: arg for name, arg in kwargs.items() if isinstance(arg, xr.DataArray)}
 
         # The wrapper hides how the user passed the arguments (positional or keyword)
         # Instead of having it all position, we have it all keyword-like for explicitness.
@@ -625,9 +614,7 @@ KIND_ANNOTATION = {
 }
 
 
-def _gen_parameters_section(
-    parameters: dict[str, dict[str, Any]], allowed_periods: list[str] | None = None
-) -> str:
+def _gen_parameters_section(parameters: dict[str, dict[str, Any]], allowed_periods: list[str] | None = None) -> str:
     """
     Generate the "parameters" section of the indicator docstring.
 
@@ -652,9 +639,7 @@ def _gen_parameters_section(
                 "-aliases for available options."
             )
             if allowed_periods is not None:
-                desc_str += (
-                    f" Restricted to frequencies equivalent to one of {allowed_periods}"
-                )
+                desc_str += f" Restricted to frequencies equivalent to one of {allowed_periods}"
         if param.kind == InputKind.VARIABLE:
             defstr = f"Default : `ds.{param.default}`. "
         elif param.kind == InputKind.OPTIONAL_VARIABLE:
@@ -735,16 +720,12 @@ def generate_indicator_docstring(ind) -> str:
         special += f"Based on indice :py:func:`~{ind.compute.__module__}.{ind.compute.__name__}`.\n"
         if ind.injected_parameters:
             special += "With injected parameters: "
-            special += ", ".join(
-                [f"{k}={v}" for k, v in ind.injected_parameters.items()]
-            )
+            special += ", ".join([f"{k}={v}" for k, v in ind.injected_parameters.items()])
             special += ".\n"
     if ind.keywords:
         special += f"Keywords : {ind.keywords}.\n"
 
-    parameters = _gen_parameters_section(
-        ind.parameters, getattr(ind, "allowed_periods", None)
-    )
+    parameters = _gen_parameters_section(ind.parameters, getattr(ind, "allowed_periods", None))
 
     returns = _gen_returns_section(ind.cf_attrs)
 

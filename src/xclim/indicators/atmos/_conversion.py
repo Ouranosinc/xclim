@@ -390,9 +390,7 @@ water_budget = Converter(
     description=(
         "Precipitation minus potential evapotranspiration as a measure of an approximated surface water budget."
     ),
-    abstract=(
-        "Precipitation minus potential evapotranspiration as a measure of an approximated surface water budget."
-    ),
+    abstract=("Precipitation minus potential evapotranspiration as a measure of an approximated surface water budget."),
     compute=indices.water_budget,
     parameters={"method": "dummy"},
 )

@@ -61,9 +61,7 @@ def spatial_analogs(
     # Create the target DataArray
     # drop any (sub-)index along "dist_dim" that could conflict with target, and rename it.
     # The drop is the simplest solution that is compatible with both xarray <=2022.3.0 and >2022.3.1
-    candidate_array = candidates.to_array("_indices", "candidates").rename(
-        {dist_dim: "_dist_dim"}
-    )
+    candidate_array = candidates.to_array("_indices", "candidates").rename({dist_dim: "_dist_dim"})
     if isinstance(candidate_array.indexes["_dist_dim"], pd.MultiIndex):
         candidate_array = candidate_array.drop_vars(
             ["_dist_dim"] + candidate_array.indexes["_dist_dim"].names,
@@ -432,7 +430,7 @@ def friedman_rafsky(x: np.ndarray, y: np.ndarray) -> float:
 
 
 @metric
-def kolmogorov_smirnov(x: np.ndarray, y: np.ndarray) -> float:
+def kolmogorov_smirnov(x: np.ndarray, y: np.ndarray) -> float:  # noqa: E501
     """
     Compute the Kolmogorov-Smirnov statistic applied to two multivariate samples as described by Fasano and Franceschini.
 
@@ -497,9 +495,7 @@ def kolmogorov_smirnov(x: np.ndarray, y: np.ndarray) -> float:
 
 
 @metric
-def kldiv(
-    x: np.ndarray, y: np.ndarray, *, k: int | Sequence[int] = 1
-) -> float | Sequence[float]:
+def kldiv(x: np.ndarray, y: np.ndarray, *, k: int | Sequence[int] = 1) -> float | Sequence[float]:
     r"""
     Compute the Kullback-Leibler divergence between two multivariate samples.
 
@@ -529,9 +525,10 @@ def kldiv(
 
     Notes
     -----
-    In information theory, the Kullback–Leibler divergence :cite:p:`perez-cruz_kullback-leibler_2008` is a non-symmetric
-    measure of the difference between two probability distributions P and Q, where P is the "true" distribution and Q an
-    approximation. This nuance is important because :math:`D(P||Q)` is not equal to :math:`D(Q||P)`.
+    In information theory, the Kullback–Leibler divergence :cite:p:`perez-cruz_kullback-leibler_2008` is
+    a non-symmetric measure of the difference between two probability distributions P and Q, where P is the
+    "true" distribution and Q an approximation.
+    This nuance is important because :math:`D(P||Q)` is not equal to :math:`D(Q||P)`.
 
     For probability distributions P and Q of a continuous random variable, the K–L  divergence is defined as:
 
@@ -542,9 +539,9 @@ def kldiv(
     This formula assumes we have a representation of the probability densities :math:`p(x)` and :math:`q(x)`.
     In many cases, we only have samples from the distribution, and most methods first estimate the densities from the
     samples and then proceed to compute the K-L divergence. In :cite:t:`perez-cruz_kullback-leibler_2008`, the author
-    proposes an algorithm to estimate the K-L divergence directly from the sample using an empirical CDF. Even though the
-    CDFs do not converge to their true values, the paper proves that the K-L divergence almost surely does converge to
-    its true value.
+    proposes an algorithm to estimate the K-L divergence directly from the sample using an empirical CDF.
+    Even though the CDFs do not converge to their true values, the paper proves that the K-L divergence almost
+    surely does converge to its true value.
 
     References
     ----------
@@ -582,9 +579,7 @@ def kldiv(
         # Hence, we take the k'th + 1, which in 0-based indexing is given by
         # index k.
         with np.errstate(divide="ignore"):
-            ki_calc = -np.log(r[:, ki] / s[:, ki - 1]).sum() * d / nx + np.log(
-                ny / (nx - 1.0)
-            )
+            ki_calc = -np.log(r[:, ki] / s[:, ki - 1]).sum() * d / nx + np.log(ny / (nx - 1.0))
         out.append(ki_calc)
 
     if mk:

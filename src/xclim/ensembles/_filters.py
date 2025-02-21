@@ -65,9 +65,7 @@ def _concat_hist(da: xr.DataArray, **hist) -> xr.DataArray:
     return xr.concat([h, bare], dim="time").assign_coords({dim: index})
 
 
-def _model_in_all_scens(
-    da: xr.DataArray, dimensions: dict | None = None
-) -> xr.DataArray:
+def _model_in_all_scens(da: xr.DataArray, dimensions: dict | None = None) -> xr.DataArray:
     """
     Return data with only simulations that have at least one member in each scenario.
 

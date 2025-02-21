@@ -26,9 +26,7 @@ class TestSnowDepthCoverDuration:
 
 
 class TestSnowWaterCoverDuration:
-    @pytest.mark.parametrize(
-        "factor,exp", ([1000, [31, 28, 31, np.nan]], [0, [0, 0, 0, np.nan]])
-    )
+    @pytest.mark.parametrize("factor,exp", ([1000, [31, 28, 31, np.nan]], [0, [0, 0, 0, np.nan]]))
     def test_simple(self, snw_series, factor, exp):
         snw = snw_series(np.ones(110) * factor, start="2001-01-01")
         out = land.snw_days_above(snw, freq="ME")
@@ -124,13 +122,8 @@ class TestSnwMaxDoy:
 
 
 class TestHolidaySnowIndicators:
-
     def test_xmas_days_simple(self, nimbus):
-        ds = xr.open_dataset(
-            nimbus.fetch(
-                "cmip6/snw_day_CanESM5_historical_r1i1p1f1_gn_19910101-20101231.nc"
-            )
-        )
+        ds = xr.open_dataset(nimbus.fetch("cmip6/snw_day_CanESM5_historical_r1i1p1f1_gn_19910101-20101231.nc"))
         snd = land.snw_to_snd(ds.snw)
 
         out = land.holiday_snow_days(snd)
@@ -150,16 +143,8 @@ class TestHolidaySnowIndicators:
         )
 
     def test_perfect_xmas_days_simple(self, nimbus):
-        ds_snw = xr.open_dataset(
-            nimbus.fetch(
-                "cmip6/snw_day_CanESM5_historical_r1i1p1f1_gn_19910101-20101231.nc"
-            )
-        )
-        ds_prsn = xr.open_dataset(
-            nimbus.fetch(
-                "cmip6/prsn_day_CanESM5_historical_r1i1p1f1_gn_19910101-20101231.nc"
-            )
-        )
+        ds_snw = xr.open_dataset(nimbus.fetch("cmip6/snw_day_CanESM5_historical_r1i1p1f1_gn_19910101-20101231.nc"))
+        ds_prsn = xr.open_dataset(nimbus.fetch("cmip6/prsn_day_CanESM5_historical_r1i1p1f1_gn_19910101-20101231.nc"))
 
         snd = land.snw_to_snd(ds_snw.snw)
         prsn = ds_prsn.prsn

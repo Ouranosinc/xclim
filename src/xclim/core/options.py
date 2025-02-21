@@ -237,13 +237,15 @@ class set_options:  # numpydoc ignore=PR01,PR02
         Controls attributes handling in indicators. If True, attributes from all inputs are merged
         using the `drop_conflicts` strategy and then updated with xclim-provided attributes.
         If ``as_dataset`` is also True and a dataset was passed to the ``ds`` argument of the Indicator,
-        the dataset's attributes are copied to the indicator's output. If False, attributes from the inputs are ignored.
+        the dataset's attributes are copied to the indicator's output.
+        If False, attributes from the inputs are ignored.
         If "xarray", xclim will use xarray's `keep_attrs` option.
         Note that xarray's "default" is equivalent to False. Default: ``"xarray"``.
     as_dataset : bool
         If True, indicators output datasets. If False, they output DataArrays. Default :``False``.
     resample_map_blocks : bool
-        If True, some indicators will wrap their resampling operations with `xr.map_blocks`, using :py:func:`xclim.indices.helpers.resample_map`.
+        If True, some indicators will wrap their resampling operations with `xr.map_blocks`,
+        using :py:func:`xclim.indices.helpers.resample_map`.
         This requires `flox` to be installed in order to ensure the chunking is appropriate.
 
     Examples
@@ -254,7 +256,6 @@ class set_options:  # numpydoc ignore=PR01,PR02
     >>> ds = xr.open_dataset(path_to_tas_file).tas
     >>> with xclim.set_options(metadata_locales=["fr"]):
     ...     out = xclim.atmos.tg_mean(ds)
-    ...
 
     Or to set global options:
 

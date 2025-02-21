@@ -65,9 +65,7 @@ def use_ufunc(
         Otherwise, returns ufunc_1dim.
     """
     if ufunc_1dim is True and freq is not None:
-        raise ValueError(
-            "Resampling after run length operations is not implemented for 1d method"
-        )
+        raise ValueError("Resampling after run length operations is not implemented for 1d method")
 
     if ufunc_1dim == "from_context":
         ufunc_1dim = OPTIONS[RUN_LENGTH_UFUNC]
@@ -161,9 +159,7 @@ def _cumsum_reset(
     # Example: da == 100110111 -> cs_s == 100120123
     cs = da.cumsum(dim=dim)  # cumulative sum  e.g. 111233456
     cond = da == 0 if reset_on_zero else da.isnull()  # reset condition
-    cs2 = cs.where(
-        cond
-    )  # keep only numbers at positions of zeroes e.g. N11NN3NNN (default)
+    cs2 = cs.where(cond)  # keep only numbers at positions of zeroes e.g. N11NN3NNN (default)
     cs2[{dim: 0}] = 0  # put a zero in front e.g. 011NN3NNN
     cs2 = cs2.ffill(dim=dim)  # e.g. 011113333
     out = cs - cs2
@@ -188,8 +184,8 @@ def rle(
     of each run of consecutive > 0 values, where it is set to the sum of the elements within the run.
     For an actual run length encoder, see :py:func:`rle_1d`.
 
-    Usually, the input would be a boolean mask and the first element of each run would then be set to the run's length (thus the name).
-    But the function also accepts int and float inputs.
+    Usually, the input would be a boolean mask and the first element of each run would then be set to
+    the run's length (thus the name), but the function also accepts int and float inputs.
 
     Parameters
     ----------
@@ -558,9 +554,7 @@ def _boundary_run(
     da = da.fillna(0)  # We expect a boolean array, but there could be NaNs nonetheless
     if window == 1:
         if freq is not None:
-            out = resample_map(
-                da, dim, freq, find_boundary_run, map_kwargs=dict(position=position)
-            )
+            out = resample_map(da, dim, freq, find_boundary_run, map_kwargs=dict(position=position))
         else:
             out = find_boundary_run(da, position)
 
@@ -579,9 +573,7 @@ def _boundary_run(
         d = xr.where(d >= window, 1, 0)
         # for "first" run, return "first" element in the run (and conversely for "last" run)
         if freq is not None:
-            out = resample_map(
-                d, dim, freq, find_boundary_run, map_kwargs=dict(position=position)
-            )
+            out = resample_map(d, dim, freq, find_boundary_run, map_kwargs=dict(position=position))
         else:
             out = find_boundary_run(d, position)
 
@@ -710,13 +702,9 @@ def run_bounds(mask: xr.DataArray, dim: str = "time", coord: bool | str = True):
         With ``dim`` reduced to "events" and "bounds". The events dim is as long as needed, padded with NaN or NaT.
     """
     if uses_dask(mask):
-        raise NotImplementedError(
-            "Dask arrays not supported as we can't know the final event number before computing."
-        )
+        raise NotImplementedError("Dask arrays not supported as we can't know the final event number before computing.")
 
-    diff = xr.concat(
-        (mask.isel({dim: [0]}).astype(int), mask.astype(int).diff(dim)), dim
-    )
+    diff = xr.concat((mask.isel({dim: [0]}).astype(int), mask.astype(int).diff(dim)), dim)
 
     nstarts = (diff == 1).sum(dim).max().item()
 
@@ -754,9 +742,7 @@ def run_bounds(mask: xr.DataArray, dim: str = "time", coord: bool | str = True):
     return xr.concat((starts, ends), "bounds")
 
 
-def keep_longest_run(
-    da: xr.DataArray, dim: str = "time", freq: str | None = None
-) -> xr.DataArray:
+def keep_longest_run(da: xr.DataArray, dim: str = "time", freq: str | None = None) -> xr.DataArray:
     """
     Keep the longest run along a dimension.
 
@@ -825,8 +811,9 @@ def runs_with_holes(
 
     Notes
     -----
-    A season (as defined in ``season``) could be considered as an event with  `window_stop == window_start` and `da_stop == 1 - da_start`,
-    although it has more constraints on when to start and stop a run through the `date` argument and only one season can be found.
+    A season (as defined in ``season``) could be considered as an event with ``window_stop == window_start``
+    and ``da_stop == 1 - da_start``, although it has more constraints on when to start and stop a run through
+    the `date` argument and only one season can be found.
     """
     da_start = da_start.astype(int).fillna(0)
     da_stop = da_stop.astype(int).fillna(0)
@@ -934,9 +921,7 @@ def season_end(
     # Invert the condition and mask all values after beginning
     # we fillna(0) as so to differentiate series with no runs and all-nan series
     not_da = (~da).where(da[dim].copy(data=np.arange(da[dim].size)) >= beg.fillna(0))
-    end = first_run_after_date(
-        not_da, window=window, dim=dim, date=mid_date, coord=False
-    )
+    end = first_run_after_date(not_da, window=window, dim=dim, date=mid_date, coord=False)
     if _beg is None:
         # Where end is null and beg is not null (valid data, no end detected), put the last index
         # Don't do this in the fast path, so that the length can use this information
@@ -964,7 +949,8 @@ def season(
     A "season" is a run of True values that may include breaks under a given length (`window`).
     The start is computed as the first run of `window` True values, and the end as the first subsequent run
     of  `window` False values. The end element is the first element after the season.
-    If a date is given, it must be included in the season, i.e. the start cannot occur later and the end cannot occur earlier.
+    If a date is given, it must be included in the season
+    (i.e. the start cannot occur later and the end cannot occur earlier).
 
     Parameters
     ----------
@@ -1005,24 +991,24 @@ def season(
     If a date is given, the season start and end are forced to be on each side of this date. This means that
     even if the "real" season has been over for a long time, this is the date used in the length calculation.
     e.g. Length of the "warm season", where T > 25°C, with date = 1st August. Let's say the temperature is over
-    25 for all June, but July and august have very cold temperatures. Instead of returning 30 days (June), the function
-    will return 61 days (July + June).
+    25 for all June, but July and august have very cold temperatures. Instead of returning 30 days (June),
+    the function will return 61 days (July + June).
 
-    The season's length is always the difference between the end and the start. Except if no
-    season end was found before the end of the data. In that case the end is set to last element and
-    the length is set to the data size minus the start index. Thus, for the specific case, :math:`length = end - start + 1`,
+    The season's length is always the difference between the end and the start. Except if no season end was
+    found before the end of the data. In that case the end is set to last element and the length is set to
+    the data size minus the start index. Thus, for the specific case, :math:`length = end - start + 1`,
     because the end falls on the last element of the season instead of the subsequent one.
     """
     beg = season_start(da, window=window, dim=dim, mid_date=mid_date, coord=False)
-    # Use fast path in season_end : no recomputing of start, no masking of end where beg.isnull() and don't set end if none found
-    end = season_end(
-        da, window=window, dim=dim, mid_date=mid_date, _beg=beg, coord=False
-    )
+    # Use fast path in season_end : no recomputing of start,
+    # no masking of end where beg.isnull(), and don't set end if none found
+    end = season_end(da, window=window, dim=dim, mid_date=mid_date, _beg=beg, coord=False)
     # Three cases :
     #           start     no start
     # end       e - s        0
     # no end   size - s      0
-    # da is boolean, so we have no way of knowing if the absence of season is due to missing values or to an actual absence.
+    # da is boolean, so we have no way of knowing if the absence of season
+    # is due to missing values or to an actual absence.
     length = xr.where(
         beg.isnull(),
         0,
@@ -1271,9 +1257,7 @@ def first_run_before_date(
     """
     if date is not None:
         mid_idx = index_of_date(da[dim], date, max_idxs=1, default=0)
-        if (
-            mid_idx.size == 0
-        ):  # The date is not within the group. Happens at boundaries.
+        if mid_idx.size == 0:  # The date is not within the group. Happens at boundaries.
             return xr.full_like(da.isel({dim: 0}), np.nan, float).drop_vars(dim)
         # Mask anything after the mid_date + window - 1
         # Thus, the latest run possible can begin on the day just before mid_idx
@@ -1427,11 +1411,11 @@ def windowed_run_events_1d(arr: Sequence[bool], window: int) -> xr.DataArray:
     return (v * rl >= window).sum()
 
 
-def windowed_run_count_ufunc(
-    x: xr.DataArray | Sequence[bool], window: int, dim: str
-) -> xr.DataArray:
+def windowed_run_count_ufunc(x: xr.DataArray | Sequence[bool], window: int, dim: str) -> xr.DataArray:
     """
-    Dask-parallel version of windowed_run_count_1d, i.e. the number of consecutive true values in array for runs at least as long as given duration.
+    Dask-parallel version of windowed_run_count_1d.
+
+    The number of consecutive true values in array for runs at least as long as given duration.
 
     Parameters
     ----------
@@ -1459,11 +1443,11 @@ def windowed_run_count_ufunc(
     )
 
 
-def windowed_run_events_ufunc(
-    x: xr.DataArray | Sequence[bool], window: int, dim: str
-) -> xr.DataArray:
+def windowed_run_events_ufunc(x: xr.DataArray | Sequence[bool], window: int, dim: str) -> xr.DataArray:
     """
-    Dask-parallel version of windowed_run_events_1d, i.e. the number of runs at least as long as given duration.
+    Dask-parallel version of windowed_run_events_1d.
+
+    The number of runs at least as long as given duration.
 
     Parameters
     ----------
@@ -1498,7 +1482,9 @@ def statistics_run_ufunc(
     dim: str = "time",
 ) -> xr.DataArray:
     """
-    Dask-parallel version of statistics_run_1d, i.e. the {reducer} number of consecutive true values in array.
+    Dask-parallel version of statistics_run_1d.
+
+    The {reducer} number of consecutive true values in array.
 
     Parameters
     ----------
@@ -1534,7 +1520,9 @@ def first_run_ufunc(
     dim: str,
 ) -> xr.DataArray:
     """
-    Dask-parallel version of first_run_1d, i.e. the first entry in array of consecutive true values.
+    Dask-parallel version of first_run_1d.
+
+    The first entry in array of consecutive true values.
 
     Parameters
     ----------
@@ -1564,9 +1552,7 @@ def first_run_ufunc(
     return ind
 
 
-def lazy_indexing(
-    da: xr.DataArray, index: xr.DataArray, dim: str | None = None
-) -> xr.DataArray:
+def lazy_indexing(da: xr.DataArray, index: xr.DataArray, dim: str | None = None) -> xr.DataArray:
     """
     Get values of `da` at indices `index` in a NaN-aware and lazy manner.
 
@@ -1609,13 +1595,9 @@ def lazy_indexing(
         # for each chunk of index, take corresponding values from da
         out = index.map_blocks(_index_from_1d_array, args=(da2,)).rename(da.name)
         # mask where index was NaN. Drop any auxiliary coord, they are already on `out`.
-        # Chunked aux coord would have the same name on both sides and xarray will want to check if they are equal, which means loading them
-        # making lazy_indexing not lazy. same issue as above
-        out = out.where(
-            ~invalid.drop_vars(
-                [crd for crd in invalid.coords if crd not in invalid.dims]
-            )
-        )
+        # Chunked aux coord would have the same name on both sides and xarray will want to check if they are equal,
+        # which means loading them making lazy_indexing not lazy. same issue as above
+        out = out.where(~invalid.drop_vars([crd for crd in invalid.coords if crd not in invalid.dims]))
         out = out.assign_coords(auxcrd.coords)
         if idx_ndim == 0:
             # 0-D case, drop useless coords and dummy dim
@@ -1626,9 +1608,7 @@ def lazy_indexing(
     if dim is None:
         diff_dims = set(da.dims) - set(index.dims)
         if len(diff_dims) == 0:
-            raise ValueError(
-                "da must have at least one dimension more than index for lazy_indexing."
-            )
+            raise ValueError("da must have at least one dimension more than index for lazy_indexing.")
         if len(diff_dims) > 1:
             raise ValueError(
                 "If da has more than one dimension more than index, the indexing dim must be given through `dim`"
@@ -1689,13 +1669,9 @@ def index_of_date(
         date = datetime.strptime(date, "%m-%d")
         year_cond = True
 
-    idxs = np.where(
-        year_cond & (time.dt.month == date.month) & (time.dt.day == date.day)
-    )[0]
+    idxs = np.where(year_cond & (time.dt.month == date.month) & (time.dt.day == date.day))[0]
     if max_idxs is not None and idxs.size > max_idxs:
-        raise ValueError(
-            f"More than {max_idxs} instance of date {date} found in the coordinate array."
-        )
+        raise ValueError(f"More than {max_idxs} instance of date {date} found in the coordinate array.")
     return idxs
 
 
@@ -1806,15 +1782,13 @@ def _find_events(da_start, da_stop, data, window_start, window_stop):
     ds = rle(runs).fillna(0).astype(np.int16).to_dataset(name="event_length")
     # Time duration where the precipitation threshold is exceeded during an event
     # (duration of complete run - duration of holes in the run )
-    ds["event_effective_length"] = _cumsum_reset(
-        da_start.where(runs == 1), index="first", reset_on_zero=False
-    ).astype(np.int16)
+    ds["event_effective_length"] = _cumsum_reset(da_start.where(runs == 1), index="first", reset_on_zero=False).astype(
+        np.int16
+    )
 
     if data is not None:
         # Ex: Cumulated precipitation in a given freezing rain event
-        ds["event_sum"] = _cumsum_reset(
-            data.where(runs == 1), index="first", reset_on_zero=False
-        )
+        ds["event_sum"] = _cumsum_reset(data.where(runs == 1), index="first", reset_on_zero=False)
 
     # Keep time as a variable, it will be used to keep start of events
     ds["event_start"] = ds["time"].broadcast_like(ds)  # .astype(int)
@@ -1863,9 +1837,7 @@ def _find_events(da_start, da_stop, data, window_start, window_stop):
             output_dtypes=[time_min.dtype],
         )
     else:
-        ds["event_start"] = ds.event_start.copy(
-            data=time_min.values + ds.event_start.data.astype("timedelta64[s]")
-        )
+        ds["event_start"] = ds.event_start.copy(data=time_min.values + ds.event_start.data.astype("timedelta64[s]"))
 
     ds["event"] = np.arange(1, ds.event.size + 1)
     ds["event_length"].attrs["units"] = "1"
@@ -1891,8 +1863,8 @@ def find_events(
     An event starts with a run of ``window`` consecutive True values in the condition
     and stops with ``window_stop`` consecutive True values in the stop condition.
 
-    This returns a Dataset with each event along an `event` dimension. It does not
-    perform statistics over the events like other function in this module do.
+    This returns a Dataset with each event along an `event` dimension.
+    It does not perform statistics over the events like other function in this module do.
 
     Parameters
     ----------
@@ -1914,12 +1886,12 @@ def find_events(
 
     Returns
     -------
-    xr.Dataset, same shape as the data it has a new "event" dimension (and the time dimension is resample or removed, according to ``freq``).
+    xr.Dataset, same shape as the data (and the time dimension is resample or removed, according to ``freq``).
         The Dataset has the following variables:
             event_length: The number of time steps in each event
             event_effective_length: The number of time steps of even event where the start condition is true.
             event_start: The datetime of the start of the run.
-            event_sum: The sum within each event, only considering the steps where start condition is true. Only present if ``data`` is given.
+            event_sum: The sum within each event, only considering steps where start condition is true (if ``data``).
     """
     if condition_stop is None:
         condition_stop = ~condition
@@ -1931,7 +1903,5 @@ def find_events(
     if data is not None:
         ds = ds.assign(data=data)
     return ds.resample(time=freq).map(
-        lambda grp: _find_events(
-            grp.da_start, grp.da_stop, grp.get("data", None), window, window_stop
-        )
+        lambda grp: _find_events(grp.da_start, grp.da_stop, grp.get("data", None), window, window_stop)
     )

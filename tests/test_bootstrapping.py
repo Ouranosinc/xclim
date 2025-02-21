@@ -42,12 +42,8 @@ class Test_bootstrap:
     )
     def test_bootstrap(self, var, p, index, freq, calendar, use_dask, random):
         # -- GIVEN
-        arr = self.ar1(
-            alpha=0.8, n=int(4 * 365.25), random=random, positive_values=(var == "pr")
-        )
-        climate_var = _test_timeseries(
-            arr, start="2000-01-01", variable=var, calendar=calendar
-        )
+        arr = self.ar1(alpha=0.8, n=int(4 * 365.25), random=random, positive_values=(var == "pr"))
+        climate_var = _test_timeseries(arr, start="2000-01-01", variable=var, calendar=calendar)
         if use_dask:
             climate_var = climate_var.chunk(dict(time=50))
         in_base_slice = slice("2000-01-01", "2001-12-31")
@@ -70,9 +66,9 @@ class Test_bootstrap:
         # the closer the target percentile is to the median the less bootstrapping is
         # necessary.
         # Following assertions may even fail if chosen percentile is close to 50.
-        assert np.count_nonzero(
-            bootstrapped_in_base > no_bs_in_base
-        ) > np.count_nonzero(bootstrapped_in_base < no_bs_in_base)
+        assert np.count_nonzero(bootstrapped_in_base > no_bs_in_base) > np.count_nonzero(
+            bootstrapped_in_base < no_bs_in_base
+        )
         # bootstrapping should leave the out of base unchanged,
         # but precision above 15th decimal might differ.
         np.testing.assert_array_almost_equal(no_bs_out_base, bs_out_base, 15)
@@ -81,16 +77,12 @@ class Test_bootstrap:
     def test_bootstrap_fraction_over_precip_error_no_doy(self, pr_series):
         with pytest.raises(KeyError):
             # no "dayofyear" coords on per
-            fraction_over_precip_thresh(
-                pr_series([1, 2]), pr_series([1, 2]), bootstrap=True
-            )
+            fraction_over_precip_thresh(pr_series([1, 2]), pr_series([1, 2]), bootstrap=True)
 
     def test_bootstrap_days_over_precip_thresh_error_no_doy(self, pr_series):
         with pytest.raises(KeyError):
             # no "dayofyear" coords on per
-            days_over_precip_thresh(
-                pr_series([1, 2]), pr_series([1, 2]), bootstrap=True
-            )
+            days_over_precip_thresh(pr_series([1, 2]), pr_series([1, 2]), bootstrap=True)
 
     def test_bootstrap_no_doy(self, tas_series):
         # no "dayofyear" coords on per
@@ -100,9 +92,7 @@ class Test_bootstrap:
     def test_bootstrap_full_overlap(self, tas_series, random):
         # bootstrap is unnecessary when in base and out of base fully overlap
         # -- GIVEN
-        tas = tas_series(
-            self.ar1(alpha=0.8, n=int(4 * 365.25), random=random), start="2000-01-01"
-        )
+        tas = tas_series(self.ar1(alpha=0.8, n=int(4 * 365.25), random=random), start="2000-01-01")
         per = percentile_doy(tas, per=90)
         # -- THEN
         with pytest.raises(KeyError):
@@ -113,9 +103,7 @@ class Test_bootstrap:
     def test_bootstrap_no_overlap(self, tas_series, random):
         # bootstrap is unnecessary when in base and out of base fully overlap
         # -- GIVEN
-        tas = tas_series(
-            self.ar1(alpha=0.8, n=int(4 * 365.25), random=random), start="2000-01-01"
-        )
+        tas = tas_series(self.ar1(alpha=0.8, n=int(4 * 365.25), random=random), start="2000-01-01")
         tas_in_base = tas.sel(time=slice("2000-01-01", "2001-12-31"))
         tas_out_base = tas.sel(time=slice("2002-01-01", "2001-12-31"))
         per = percentile_doy(tas_in_base, per=90)
@@ -127,9 +115,7 @@ class Test_bootstrap:
     @pytest.mark.slow
     def test_multi_per(self, open_dataset):
         tas = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc").tas
-        t90 = percentile_doy(
-            tas.sel(time=slice("1990-01-01", "1991-12-31")), window=5, per=[90, 91]
-        )
+        t90 = percentile_doy(tas.sel(time=slice("1990-01-01", "1991-12-31")), window=5, per=[90, 91])
         res = tg90p(tas=tas, tas_per=t90, freq="YS", bootstrap=True)
         np.testing.assert_array_equal([90, 91], res.percentiles)
 
@@ -137,9 +123,7 @@ class Test_bootstrap:
     def test_doctest_ndims(self, open_dataset):
         """Replicates doctest to facilitate debugging."""
         tas = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc").tas
-        t90 = percentile_doy(
-            tas.sel(time=slice("1990-01-01", "1991-12-31")), window=5, per=90
-        )
+        t90 = percentile_doy(tas.sel(time=slice("1990-01-01", "1991-12-31")), window=5, per=90)
         tg90p(tas=tas, tas_per=t90.isel(percentiles=0), freq="YS", bootstrap=True)
         tg90p(tas=tas, tas_per=t90, freq="YS", bootstrap=True)
 

@@ -106,12 +106,8 @@ class TestPrecipAccumulation:
         assert out_sol.standard_name == "lwe_thickness_of_snowfall_amount"
 
         # With a non-default threshold
-        out_sol = atmos.solid_precip_accumulation(
-            pr, tas=tasmin, thresh="40 degF", freq="MS"
-        )
-        out_liq = atmos.liquid_precip_accumulation(
-            pr, tas=tasmin, thresh="40 degF", freq="MS"
-        )
+        out_sol = atmos.solid_precip_accumulation(pr, tas=tasmin, thresh="40 degF", freq="MS")
+        out_liq = atmos.liquid_precip_accumulation(pr, tas=tasmin, thresh="40 degF", freq="MS")
 
         np.testing.assert_array_almost_equal(out_liq + out_sol, out_tot, 4)
 
@@ -167,12 +163,8 @@ class TestPrecipAverage:
         assert out_sol.standard_name == "lwe_average_of_snowfall_amount"
 
         # With a non-default threshold
-        out_sol = atmos.solid_precip_average(
-            pr, tas=tasmin, thresh="40 degF", freq="MS"
-        )
-        out_liq = atmos.liquid_precip_average(
-            pr, tas=tasmin, thresh="40 degF", freq="MS"
-        )
+        out_sol = atmos.solid_precip_average(pr, tas=tasmin, thresh="40 degF", freq="MS")
+        out_liq = atmos.liquid_precip_average(pr, tas=tasmin, thresh="40 degF", freq="MS")
 
         np.testing.assert_array_almost_equal(out_liq + out_sol, out_tot, 4)
 
@@ -483,15 +475,11 @@ class TestSnowfallDate:
     @classmethod
     def get_snowfall(cls, open_dataset):
         dnr = xr.merge((open_dataset(cls.pr_file), open_dataset(cls.tasmin_file)))
-        return atmos.snowfall_approximation(
-            dnr.pr, tas=dnr.tasmin, thresh="-0.5 degC", method="binary"
-        )
+        return atmos.snowfall_approximation(dnr.pr, tas=dnr.tasmin, thresh="-0.5 degC", method="binary")
 
     def test_first_snowfall(self, open_dataset):
         with set_options(check_missing="skip"):
-            fs = atmos.first_snowfall(
-                prsn=self.get_snowfall(open_dataset), thresh="0.5 mm/day"
-            )
+            fs = atmos.first_snowfall(prsn=self.get_snowfall(open_dataset), thresh="0.5 mm/day")
 
         np.testing.assert_array_equal(
             fs[:, [0, 45, 82], [10, 105, 155]],
@@ -505,9 +493,7 @@ class TestSnowfallDate:
 
     def test_last_snowfall(self, open_dataset):
         with set_options(check_missing="skip"):
-            ls = atmos.last_snowfall(
-                prsn=self.get_snowfall(open_dataset), thresh="0.5 mm/day"
-            )
+            ls = atmos.last_snowfall(prsn=self.get_snowfall(open_dataset), thresh="0.5 mm/day")
 
         np.testing.assert_array_equal(
             ls[:, [0, 45, 82], [10, 105, 155]],
@@ -550,9 +536,7 @@ def test_days_over_precip_thresh(open_dataset):
 
     out = atmos.days_over_precip_thresh(pr, per)
 
-    np.testing.assert_allclose(
-        out[1, :], np.array([80.0, 64.0, 65.0, 83.0]), atol=0.001
-    )
+    np.testing.assert_allclose(out[1, :], np.array([80.0, 64.0, 65.0, 83.0]), atol=0.001)
     assert "80.0th percentile" in out.attrs["description"]
     assert "['1990-01-01', '1993-12-31'] period" in out.attrs["description"]
 
@@ -562,9 +546,7 @@ def test_days_over_precip_thresh__seasonal_indexer(open_dataset):
     pr = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc").pr
     per = pr.quantile(0.8, "time", keep_attrs=True)
     # WHEN
-    out = atmos.days_over_precip_thresh(
-        pr, per, freq="YS", date_bounds=("01-10", "12-31")
-    )
+    out = atmos.days_over_precip_thresh(pr, per, freq="YS", date_bounds=("01-10", "12-31"))
     # THEN
     np.testing.assert_almost_equal(out[0], np.array([81.0, 66.0, 66.0, 75.0]))
 
@@ -574,14 +556,10 @@ def test_fraction_over_precip_doy_thresh(open_dataset):
     per = percentile_doy(pr, window=5, per=80)
 
     out = atmos.fraction_over_precip_doy_thresh(pr, per)
-    np.testing.assert_allclose(
-        out[1, :, 0], np.array([0.803, 0.747, 0.745, 0.806]), atol=0.001
-    )
+    np.testing.assert_allclose(out[1, :, 0], np.array([0.803, 0.747, 0.745, 0.806]), atol=0.001)
 
     out = atmos.fraction_over_precip_doy_thresh(pr, per, thresh="0.002 m/d")
-    np.testing.assert_allclose(
-        out[1, :, 0], np.array([0.822, 0.780, 0.771, 0.829]), atol=0.001
-    )
+    np.testing.assert_allclose(out[1, :, 0], np.array([0.822, 0.780, 0.771, 0.829]), atol=0.001)
 
     assert "only days with at least 0.002 m/d are included" in out.description
     assert "[80]th percentile" in out.attrs["description"]
@@ -596,9 +574,7 @@ def test_fraction_over_precip_thresh(open_dataset):
 
     out = atmos.fraction_over_precip_thresh(pr, per)
 
-    np.testing.assert_allclose(
-        out[1, :], np.array([0.839, 0.812, 0.776, 0.864]), atol=0.001
-    )
+    np.testing.assert_allclose(out[1, :], np.array([0.839, 0.812, 0.776, 0.864]), atol=0.001)
 
     assert "80.0th percentile" in out.attrs["description"]
     assert "['1990-01-01', '1993-12-31'] period" in out.attrs["description"]
@@ -608,18 +584,12 @@ def test_liquid_precip_ratio(open_dataset):
     ds = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc")
 
     out = atmos.liquid_precip_ratio(pr=ds.pr, tas=ds.tas, thresh="0 degC", freq="YS")
-    np.testing.assert_allclose(
-        out[:, 0], np.array([0.919, 0.805, 0.525, 0.740, 0.993]), atol=1e3
-    )
+    np.testing.assert_allclose(out[:, 0], np.array([0.919, 0.805, 0.525, 0.740, 0.993]), atol=1e3)
 
     with set_options(cf_compliance="raise"):
         # Test if tasmax is allowed
-        out = atmos.liquid_precip_ratio(
-            pr=ds.pr, tas=ds.tasmax, thresh="33 degF", freq="YS"
-        )
-        np.testing.assert_allclose(
-            out[:, 0], np.array([0.975, 0.921, 0.547, 0.794, 0.999]), atol=1e3
-        )
+        out = atmos.liquid_precip_ratio(pr=ds.pr, tas=ds.tasmax, thresh="33 degF", freq="YS")
+        np.testing.assert_allclose(out[:, 0], np.array([0.975, 0.921, 0.547, 0.794, 0.999]), atol=1e3)
         assert "where temperature is above 33 degf." in out.description
 
 
@@ -627,18 +597,10 @@ def test_dry_spell(atmosds):
     pr = atmosds.pr
 
     events = atmos.dry_spell_frequency(pr, thresh="3 mm", window=7, freq="YS")
-    total_d_sum = atmos.dry_spell_total_length(
-        pr, thresh="3 mm", window=7, op="sum", freq="YS"
-    )
-    total_d_max = atmos.dry_spell_total_length(
-        pr, thresh="3 mm", window=7, op="max", freq="YS"
-    )
-    max_d_sum = atmos.dry_spell_max_length(
-        pr, thresh="3 mm", window=7, op="sum", freq="YS"
-    )
-    max_d_max = atmos.dry_spell_max_length(
-        pr, thresh="3 mm", window=7, op="max", freq="YS"
-    )
+    total_d_sum = atmos.dry_spell_total_length(pr, thresh="3 mm", window=7, op="sum", freq="YS")
+    total_d_max = atmos.dry_spell_total_length(pr, thresh="3 mm", window=7, op="max", freq="YS")
+    max_d_sum = atmos.dry_spell_max_length(pr, thresh="3 mm", window=7, op="sum", freq="YS")
+    max_d_max = atmos.dry_spell_max_length(pr, thresh="3 mm", window=7, op="max", freq="YS")
     total_d_sum = total_d_sum.sel(location="Halifax", drop=True).isel(time=slice(0, 2))
     total_d_max = total_d_max.sel(location="Halifax", drop=True).isel(time=slice(0, 2))
     max_d_sum = max_d_sum.sel(location="Halifax", drop=True).isel(time=slice(0, 2))
@@ -654,28 +616,14 @@ def test_dry_spell(atmosds):
         "The annual number of dry periods of 7 day(s) or more, "
         "during which the total precipitation on a window of 7 day(s) is below 3 mm."
     ) in events.description
-    assert (
-        "The annual number of days in dry periods of 7 day(s) or more"
-        in total_d_sum.description
-    )
-    assert (
-        "The annual number of days in dry periods of 7 day(s) or more"
-        in total_d_max.description
-    )
-    assert (
-        "The maximum annual number of consecutive days in a dry period of 7 day(s) or more"
-        in max_d_sum.description
-    )
-    assert (
-        "The maximum annual number of consecutive days in a dry period of 7 day(s) or more"
-        in max_d_max.description
-    )
+    assert "The annual number of days in dry periods of 7 day(s) or more" in total_d_sum.description
+    assert "The annual number of days in dry periods of 7 day(s) or more" in total_d_max.description
+    assert "The maximum annual number of consecutive days in a dry period of 7 day(s) or more" in max_d_sum.description
+    assert "The maximum annual number of consecutive days in a dry period of 7 day(s) or more" in max_d_max.description
 
 
 def test_dry_spell_total_length_indexer(pr_series):
-    pr = pr_series(
-        [np.nan] + [1] * 4 + [0] * 10 + [1] * 350, start="1900-01-01", units="mm/d"
-    )
+    pr = pr_series([np.nan] + [1] * 4 + [0] * 10 + [1] * 350, start="1900-01-01", units="mm/d")
     out = atmos.dry_spell_total_length(
         pr,
         window=7,
@@ -685,16 +633,12 @@ def test_dry_spell_total_length_indexer(pr_series):
     )
     np.testing.assert_allclose(out, [np.nan] + [0] * 11)
 
-    out = atmos.dry_spell_total_length(
-        pr, window=7, op="sum", thresh="3 mm", freq="MS", date_bounds=("01-10", "12-31")
-    )
+    out = atmos.dry_spell_total_length(pr, window=7, op="sum", thresh="3 mm", freq="MS", date_bounds=("01-10", "12-31"))
     np.testing.assert_allclose(out, [9] + [0] * 11)
 
 
 def test_dry_spell_max_length_indexer(pr_series):
-    pr = pr_series(
-        [np.nan] + [1] * 4 + [0] * 10 + [1] * 350, start="1900-01-01", units="mm/d"
-    )
+    pr = pr_series([np.nan] + [1] * 4 + [0] * 10 + [1] * 350, start="1900-01-01", units="mm/d")
     out = atmos.dry_spell_max_length(
         pr,
         window=7,
@@ -704,27 +648,17 @@ def test_dry_spell_max_length_indexer(pr_series):
     )
     np.testing.assert_allclose(out, [np.nan] + [0] * 11)
 
-    out = atmos.dry_spell_total_length(
-        pr, window=7, op="sum", thresh="3 mm", freq="MS", date_bounds=("01-10", "12-31")
-    )
+    out = atmos.dry_spell_total_length(pr, window=7, op="sum", thresh="3 mm", freq="MS", date_bounds=("01-10", "12-31"))
     np.testing.assert_allclose(out, [9] + [0] * 11)
 
 
 def test_dry_spell_frequency_op(open_dataset):
     pr = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc").pr
-    test_sum = atmos.dry_spell_frequency(
-        pr, thresh="3 mm", window=7, freq="MS", op="sum"
-    )
-    test_max = atmos.dry_spell_frequency(
-        pr, thresh="3 mm", window=7, freq="MS", op="max"
-    )
+    test_sum = atmos.dry_spell_frequency(pr, thresh="3 mm", window=7, freq="MS", op="sum")
+    test_max = atmos.dry_spell_frequency(pr, thresh="3 mm", window=7, freq="MS", op="max")
 
-    np.testing.assert_allclose(
-        test_sum[0, :14], [1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 0, 0, 1, 0], rtol=1e-1
-    )
-    np.testing.assert_allclose(
-        test_max[0, :14], [1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 2, 1], rtol=1e-1
-    )
+    np.testing.assert_allclose(test_sum[0, :14], [1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 0, 0, 1, 0], rtol=1e-1)
+    np.testing.assert_allclose(test_max[0, :14], [1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 2, 1], rtol=1e-1)
     assert (
         "The monthly number of dry periods of 7 day(s) or more, "
         "during which the total precipitation on a window of 7 day(s) is below 3 mm."
@@ -742,9 +676,7 @@ class TestSnowfallMeteoSwiss:
     @classmethod
     def get_snowfall(cls, open_dataset):
         dnr = xr.merge((open_dataset(cls.pr_file), open_dataset(cls.tasmin_file)))
-        return atmos.snowfall_approximation(
-            dnr.pr, tas=dnr.tasmin, thresh="-0.5 degC", method="binary"
-        )
+        return atmos.snowfall_approximation(dnr.pr, tas=dnr.tasmin, thresh="-0.5 degC", method="binary")
 
     def test_snowfall_frequency(self, open_dataset):
         prsn = self.get_snowfall(open_dataset)
