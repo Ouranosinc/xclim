@@ -407,14 +407,12 @@ jobs:
         continue-on-error: true
       - name: Test with pytest
         run: |
-          python -m pytest --numprocesses=logical --durations=10 --cov=xclim --cov-report=term-missing
-      - name: Report coverage
-        run: |
-          coveralls
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          COVERALLS_FLAG_NAME: run-{{ matrix.python-version }}-conda
-          COVERALLS_PARALLEL: true
+          python -m pytest --numprocesses=logical --durations=10 --cov=xclim --cov-report=lcov
+      - name: Report Coverage
+        uses: coverallsapp/github-action@648a8eb78e6d50909eff900e4ec85cab4524a45b # v2.3.6
+        with:
+          flag-name: run-{{ matrix.python-version }}-conda
+          parallel: true
       - name: Tests measurement
         uses: green-coding-solutions/eco-ci-energy-estimation@7ff5628108e21227662ce881f10156eb9deab891 # v4.4
         with:

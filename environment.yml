@@ -34,8 +34,7 @@ dependencies:
   - cairosvg >=2.6.0
   - codespell >=2.4.1
   - coverage >=7.5.0
-  - coveralls >=4.0.1  # Note: coveralls is not yet compatible with Python 3.13
-  - deptry =0.23.0
+  - deptry >=0.23.0
   - distributed >=2.0
   - flake8 >=7.1.1
   - flake8-rst-docstrings >=0.3.0
@@ -64,7 +63,7 @@ dependencies:
   - pytest-socket >=0.6.0
   - pytest-xdist >=3.2
   - ruff >=0.9.6
-  - sphinx >=7.0.0
+  - sphinx >=7.1.0,<8.2
   - sphinx-autobuild >=2024.4.16
   - sphinx-autodoc-typehints
   - sphinx-codeautolink >=0.16.2
