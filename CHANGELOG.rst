@@ -8,8 +8,7 @@ Contributors to this version: Éric Dupuis (:user:`coxipi`).
 
 Bug fixes
 ^^^^^^^^^
-* Re-allow the use of `interp="linear"` in adjustments that use day-of-year grouping, `group=Grouper("time.dayofyear", window)`. (:pull:`2087`). 
-
+* Re-allow the use of `interp="linear"` in adjustments that use day-of-year grouping, `group=Grouper("time.dayofyear", window)`. (:pull:`2087`).
 
 v0.55.0 (2025-02-17)
 --------------------
