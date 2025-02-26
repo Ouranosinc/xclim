@@ -58,10 +58,10 @@ def make_criteria(ds: xarray.Dataset | xarray.DataArray):
         ds2 = crit.unstack("criteria").to_dataset("variables")
 
     `ds2` will have all variables with the same dimensions, so if the original dataset had variables with different
-    dimensions, the added dimensions are filled with NaNs.
-    Also, note that criteria that are all NaN (such as lat/lon coordinates with no data) are dropped from `crit` to avoid issues with
-    the clustering algorithms, so the original dataset might not be able to be fully reconstructed.
-    The `to_dataset` part can be skipped if the original input was a DataArray.
+    dimensions, the added dimensions are filled with NaNs. Also, note that criteria that are all NaN (such as lat/lon
+    coordinates with no data) are dropped from `crit` to avoid issues with the clustering algorithms, so the original
+    dataset might not be able to be fully reconstructed. The `to_dataset` part can be skipped if the original input
+    was a DataArray.
     """
 
     def _make_crit(da):
@@ -69,22 +69,14 @@ def make_criteria(ds: xarray.Dataset | xarray.DataArray):
         return da.stack(criteria=set(da.dims) - {"realization"})
 
     if isinstance(ds, xarray.Dataset):
-        # When variables have different set of dims, missing dims on one variable results in duplicated values when a simple stack is done.
-        # To avoid that: stack each variable independently add a new "variables" dim
-        stacked = {
-            da.name: _make_crit(da.expand_dims(variables=[da.name]))
-            for da in ds.data_vars.values()
-        }
+        # When variables have different set of dims, missing dims on one variable results in duplicated values
+        # when a simple stack is done. To avoid that: stack each variable independently add a new "variables" dim
+        stacked = {da.name: _make_crit(da.expand_dims(variables=[da.name])) for da in ds.data_vars.values()}
         # Get name of all stacked coords
-        stacked_coords = set.union(
-            *[set(da.indexes["criteria"].names) for da in stacked.values()]
-        )
+        stacked_coords = set.union(*[set(da.indexes["criteria"].names) for da in stacked.values()])
         # Concat the variables by dropping old stacked index and related coords
         crit = xarray.concat(
-            [
-                da.reset_index("criteria").drop_vars(stacked_coords, errors="ignore")
-                for k, da in stacked.items()
-            ],
+            [da.reset_index("criteria").drop_vars(stacked_coords, errors="ignore") for k, da in stacked.items()],
             "criteria",
         )
         # Reconstruct proper stacked coordinates. When a variable is missing one of the coords, give NaNss
@@ -92,23 +84,14 @@ def make_criteria(ds: xarray.Dataset | xarray.DataArray):
             (
                 crd,
                 np.concatenate(
-                    [
-                        (
-                            da[crd].values
-                            if crd in da.coords
-                            else [np.nan] * da.criteria.size
-                        )
-                        for da in stacked.values()
-                    ],
+                    [(da[crd].values if crd in da.coords else [np.nan] * da.criteria.size) for da in stacked.values()],
                 ),
             )
             for crd in stacked_coords
         ]
         crit = crit.assign_coords(
             xarray.Coordinates.from_pandas_multiindex(
-                pd.MultiIndex.from_arrays(
-                    [arr for name, arr in coords], names=[name for name, arr in coords]
-                ),
+                pd.MultiIndex.from_arrays([arr for name, arr in coords], names=[name for name, arr in coords]),
                 "criteria",
             )
         )
@@ -152,7 +135,8 @@ def kkz_reduce_ensemble(
         Any distance metric name accepted by `scipy.spatial.distance.cdist`.
     standardize : bool
         Whether to standardize the input before running the selection or not.
-        Standardization consists in translation as to have a zero mean and scaling as to have a unit standard deviation.
+        Standardization consists in translation as to have a zero mean and scaling as to have a unit
+        standard deviation.
     **cdist_kwargs : Any
         All extra arguments are passed as-is to `scipy.spatial.distance.cdist`, see its docs for more information.
 
@@ -211,8 +195,8 @@ def kmeans_reduce_ensemble(
 
     The algorithm attempts to reduce the total number of ensemble members while maintaining adequate coverage of
     the ensemble uncertainty in an N-dimensional data space. K-Means clustering is carried out on the input
-    selection criteria data-array in order to group individual ensemble members into a reduced number of similar groups.
-    Subsequently, a single representative simulation is retained from each group.
+    selection criteria data-array in order to group individual ensemble members into a reduced number
+    of similar groups. Subsequently, a single representative simulation is retained from each group.
 
     Parameters
     ----------
@@ -227,11 +211,12 @@ def kmeans_reduce_ensemble(
         Defaults to True if matplotlib is installed in the runtime environment.
     max_clusters : int, optional
         Maximum number of members to include in the output ensemble selection.
-        When using 'rsq_optimize' or 'rsq_cutoff' methods, limit the final selection to a maximum number even if method
-        results indicate a higher value. Defaults to N.
+        When using 'rsq_optimize' or 'rsq_cutoff' methods, limit the final selection to a maximum number
+        even if method results indicate a higher value. Defaults to N.
     variable_weights : np.ndarray, optional
         An array of size P.
-        This weighting can be used to influence of weight of the climate indices (criteria dimension) on the clustering itself.
+        This weighting can be used to influence of weight of the climate indices (criteria dimension)
+        on the clustering itself.
     model_weights : np.ndarray, optional
         An array of size N. This weighting can be used to influence which realization is selected
         from within each cluster. This parameter has no influence on the clustering itself.
@@ -240,7 +225,8 @@ def kmeans_reduce_ensemble(
         This weighting can be used to influence of weight of simulations on the clustering itself.
         See: https://scikit-learn.org/stable/modules/generated/sklearn.cluster.KMeans.html.
     random_state : int or np.random.RandomState, optional
-        A sklearn.cluster.KMeans() random_state parameter. Determines random number generation for centroid initialization.
+        A sklearn.cluster.KMeans() random_state parameter.
+        Determines random number generation for centroid initialization.
         Use to make the randomness deterministic.
         See: https://scikit-learn.org/stable/modules/generated/sklearn.cluster.KMeans.html.
 
@@ -363,9 +349,7 @@ def kmeans_reduce_ensemble(
     z = z * variable_weights
     rsq = _calc_rsq(z, method, make_graph, n_sim, random_state, sample_weights)
 
-    n_clusters = _get_nclust(
-        method=method, n_sim=n_sim, rsq=rsq, max_clusters=max_clusters
-    )
+    n_clusters = _get_nclust(method=method, n_sim=n_sim, rsq=rsq, max_clusters=max_clusters)
 
     if make_graph:
         fig_data["method"] = method
@@ -374,27 +358,19 @@ def kmeans_reduce_ensemble(
         fig_data["realizations"] = n_sim
 
     # Final k-means clustering with 1000 iterations to avoid instabilities in the choice of final scenarios
-    kmeans = KMeans(
-        n_clusters=n_clusters, n_init=1000, max_iter=600, random_state=random_state
-    )
+    kmeans = KMeans(n_clusters=n_clusters, n_init=1000, max_iter=600, random_state=random_state)
     # we use 'fit_' only once, otherwise it computes everything again
     clusters = kmeans.fit_predict(z, sample_weight=sample_weights)
 
     # squared distance to centroids
-    d = np.square(
-        kmeans.transform(z)
-    )  # squared distance between each point and each centroid
+    d = np.square(kmeans.transform(z))  # squared distance between each point and each centroid
 
-    out = np.empty(
-        shape=n_clusters
-    )  # prepare an empty array in which to store the results
+    out = np.empty(shape=n_clusters)  # prepare an empty array in which to store the results
     r = np.arange(n_sim)
 
     # in each cluster, find the closest (weighted) simulation and select it
     for i in range(n_clusters):
-        d_i = d[
-            clusters == i, i
-        ]  # distance to the centroid for all simulations within the cluster 'i'
+        d_i = d[clusters == i, i]  # distance to the centroid for all simulations within the cluster 'i'
         if d_i.shape[0] >= 2:
             if d_i.shape[0] == 2:
                 sig = 1
@@ -403,18 +379,14 @@ def kmeans_reduce_ensemble(
                     d_i, ddof=1
                 )  # standard deviation of those distances (ddof = 1 gives the same as Matlab's std function)
 
-            like = (
-                scipy.stats.norm.pdf(d_i, 0, sig) * model_weights[clusters == i]
-            )  # weighted likelihood
+            like = scipy.stats.norm.pdf(d_i, 0, sig) * model_weights[clusters == i]  # weighted likelihood
 
             argmax = np.argmax(like)  # index of the maximum likelihood
 
         else:
             argmax = 0
 
-        r_clust = r[
-            clusters == i
-        ]  # index of the cluster simulations within the full ensemble
+        r_clust = r[clusters == i]  # index of the cluster simulations within the full ensemble
 
         out[i] = r_clust[argmax]
 
@@ -424,9 +396,7 @@ def kmeans_reduce_ensemble(
     return out, clusters, fig_data
 
 
-def _calc_rsq(
-    z, method: dict, make_graph: bool, n_sim: np.ndarray, random_state, sample_weights
-):
+def _calc_rsq(z, method: dict, make_graph: bool, n_sim: np.ndarray, random_state, sample_weights):
     """
     Sub-function to kmeans_reduce_ensemble.
 
@@ -464,9 +434,7 @@ def _get_nclust(method: dict, n_sim: int, rsq: float, max_clusters: int):
 
     elif list(method.keys())[0] == "rsq_optimize":
         # create constant benefits curve (one to one)
-        onetoone = -1 * (1.0 / (n_sim - 1)) + np.arange(1, n_sim + 1) * (
-            1.0 / (n_sim - 1)
-        )
+        onetoone = -1 * (1.0 / (n_sim - 1)) + np.arange(1, n_sim + 1) * (1.0 / (n_sim - 1))
 
         n_clusters = np.argmax(rsq - onetoone) + 1
 
@@ -547,9 +515,7 @@ def plot_rsqprofile(fig_data: dict) -> None:
         )
         plt.legend(loc="lower right")
     elif "rsq_optimize" in fig_data["method"].keys():
-        onetoone = -1 * (1.0 / (n_sim - 1)) + np.arange(1, n_sim + 1) * (
-            1.0 / (n_sim - 1)
-        )
+        onetoone = -1 * (1.0 / (n_sim - 1)) + np.arange(1, n_sim + 1) * (1.0 / (n_sim - 1))
         plt.plot(
             range(1, n_sim + 1),
             onetoone,

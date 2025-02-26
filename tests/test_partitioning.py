@@ -15,11 +15,7 @@ from xclim.ensembles._filters import _concat_hist, _model_in_all_scens, _single_
 def test_hawkins_sutton_smoke(open_dataset):
     """Just a smoke test."""
     dims = {"run": "member", "scen": "scenario"}
-    da = (
-        open_dataset("uncertainty_partitioning/cmip5_pr_global_mon.nc")
-        .pr.sel(time=slice("1950", None))
-        .rename(dims)
-    )
+    da = open_dataset("uncertainty_partitioning/cmip5_pr_global_mon.nc").pr.sel(time=slice("1950", None)).rename(dims)
     da1 = _model_in_all_scens(da)
     dac = _concat_hist(da1, scenario="historical")
     das = _single_member(dac)
@@ -68,10 +64,7 @@ def test_hawkins_sutton_synthetic(random):
     # We expect the scenario uncertainty to grow over time
     # The scenarios all have the same absolute slope, but since their reference mean is different, the relative increase
     # is not the same and this creates a spread over time across "relative" scenarios.
-    assert (
-        su.sel(time=slice("2020", None)).mean()
-        > su.sel(time=slice("2000", "2010")).mean()
-    )
+    assert su.sel(time=slice("2020", None)).mean() > su.sel(time=slice("2000", "2010")).mean()
 
 
 def test_lafferty_sriver_synthetic(random):
@@ -82,20 +75,14 @@ def test_lafferty_sriver_synthetic(random):
     sm = np.arange(10, 41, 10)  # Scenario mean (4)
     mm = np.arange(-6, 7, 1)  # Model mean (13)
     dm = np.arange(-2, 3, 1)  # Downscaling mean (5)
-    mean = (
-        dm[np.newaxis, np.newaxis, :]
-        + mm[np.newaxis, :, np.newaxis]
-        + sm[:, np.newaxis, np.newaxis]
-    )
+    mean = dm[np.newaxis, np.newaxis, :] + mm[np.newaxis, :, np.newaxis] + sm[:, np.newaxis, np.newaxis]
 
     # Natural variability
     r = random.standard_normal((4, 13, 5, 60))
 
     x = r + mean[:, :, :, np.newaxis]
     time = xr.date_range("1970-01-01", periods=60, freq="YE")
-    da = xr.DataArray(
-        x, dims=("scenario", "model", "downscaling", "time"), coords={"time": time}
-    )
+    da = xr.DataArray(x, dims=("scenario", "model", "downscaling", "time"), coords={"time": time})
     m, v = lafferty_sriver(da)
     # Mean uncertainty over time
     vm = v.mean(dim="time")
@@ -119,20 +106,10 @@ def test_lafferty_sriver(lafferty_sriver_ds):
 
     # Assertions based on expected results from
     # https://github.com/david0811/lafferty-sriver_2023_npjCliAtm/blob/main/unit_test/unit_test_check.ipynb
-    assert fu.sel(time="2020", uncertainty="downscaling") > fu.sel(
-        time="2020", uncertainty="model"
-    )
-    assert fu.sel(time="2020", uncertainty="variability") > fu.sel(
-        time="2020", uncertainty="scenario"
-    )
-    assert (
-        fu.sel(time="2090", uncertainty="scenario").data
-        > fu.sel(time="2020", uncertainty="scenario").data
-    )
-    assert (
-        fu.sel(time="2090", uncertainty="downscaling").data
-        < fu.sel(time="2020", uncertainty="downscaling").data
-    )
+    assert fu.sel(time="2020", uncertainty="downscaling") > fu.sel(time="2020", uncertainty="model")
+    assert fu.sel(time="2020", uncertainty="variability") > fu.sel(time="2020", uncertainty="scenario")
+    assert fu.sel(time="2090", uncertainty="scenario").data > fu.sel(time="2020", uncertainty="scenario").data
+    assert fu.sel(time="2090", uncertainty="downscaling").data < fu.sel(time="2020", uncertainty="downscaling").data
 
     def graph():
         """Return graphic like in https://github.com/david0811/lafferty-sriver_2023_npjCliAtm/blob/main/unit_test/unit_test_check.ipynb"""
@@ -174,9 +151,7 @@ def test_general_partition(lafferty_sriver_ds):
         sm="poly",
     )
     # fix order
-    u2 = u2.sel(
-        uncertainty=["model", "scenario", "downscaling", "variability", "total"]
-    )
+    u2 = u2.sel(uncertainty=["model", "scenario", "downscaling", "variability", "total"])
 
     assert u1.equals(u2)
     np.testing.assert_allclose(g1.values, g2.values, atol=0.1)

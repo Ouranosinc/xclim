@@ -134,17 +134,13 @@ def bootstrap_func(compute_index_func: Callable, **kwargs) -> xarray.DataArray:
             else:
                 da_key = name
     if da_key is None or per_key is None:
-        raise KeyError(
-            "The input data and the percentile DataArray must be provided as named arguments."
-        )
+        raise KeyError("The input data and the percentile DataArray must be provided as named arguments.")
     # Extract the DataArray inputs from the arguments
     da: DataArray = kwargs.pop(da_key)
     per_da: DataArray | None = kwargs.pop(per_key, None)
     if per_da is None:
         # per may be empty on non doy percentiles
-        raise KeyError(
-            "`bootstrap` can only be used with percentiles computed using `percentile_doy`"
-        )
+        raise KeyError("`bootstrap` can only be used with percentiles computed using `percentile_doy`")
     # Boundary years of reference period
     clim = per_da.attrs["climatology_bounds"]
     if xclim.core.utils.uses_dask(da) and len(da.chunks[da.get_axis_num("time")]) > 1:
@@ -189,13 +185,10 @@ def bootstrap_func(compute_index_func: Callable, **kwargs) -> xarray.DataArray:
             # If the group year is in both reference and studied periods, run the bootstrap
             bda = build_bootstrap_year_da(overlap_da, overlap_years_groups, year_key)
             if BOOTSTRAP_DIM not in per_template.dims:
-                per_template = per_template.expand_dims(
-                    {BOOTSTRAP_DIM: np.arange(len(bda._bootstrap))}
-                )
+                per_template = per_template.expand_dims({BOOTSTRAP_DIM: np.arange(len(bda._bootstrap))})
                 if xclim.core.utils.uses_dask(bda):
                     chunking = {
-                        d: bda.chunks[bda.get_axis_num(d)]
-                        for d in set(bda.dims).intersection(set(per_template.dims))
+                        d: bda.chunks[bda.get_axis_num(d)] for d in set(bda.dims).intersection(set(per_template.dims))
                     }
                     per_template = per_template.chunk(chunking)
             per = xarray.map_blocks(
@@ -239,9 +232,7 @@ def _get_year_label(year_dt) -> str:
 
 
 # TODO: Return a generator instead and assess performance
-def build_bootstrap_year_da(
-    da: DataArray, groups: dict[Any, slice], label: Any, dim: str = "time"
-) -> DataArray:
+def build_bootstrap_year_da(da: DataArray, groups: dict[Any, slice], label: Any, dim: str = "time") -> DataArray:
     """
     Return an array where a group in the original is replaced by every other groups along a new dimension.
 
@@ -281,9 +272,7 @@ def build_bootstrap_year_da(
         elif len(bloc) == 365:
             out_view.loc[{dim: bloc}] = source.convert_calendar("noleap").data
         elif len(bloc) == 366:
-            out_view.loc[{dim: bloc}] = source.convert_calendar(
-                "366_day", missing=np.nan
-            ).data
+            out_view.loc[{dim: bloc}] = source.convert_calendar("366_day", missing=np.nan).data
         elif len(bloc) < 365:
             # 360 days calendar case or anchored years for both source[dim] and bloc case
             out_view.loc[{dim: bloc}] = source.data[: len(bloc)]

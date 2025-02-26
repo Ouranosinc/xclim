@@ -9,7 +9,7 @@ xclim: Climate services library |logo| |logo-dark| |logo-light|
 +----------------------------+-----------------------------------------------------+
 | Open Source                | |license| |ossf-score| |zenodo| |pyOpenSci| |joss|  |
 +----------------------------+-----------------------------------------------------+
-| Coding Standards           | |black| |ruff| |pre-commit| |ossf-bp| |fossa|       |
+| Coding Standards           | |ruff| |pre-commit| |ossf-bp| |fossa|               |
 +----------------------------+-----------------------------------------------------+
 | Development Status         | |status| |build| |coveralls|                        |
 +----------------------------+-----------------------------------------------------+
@@ -68,13 +68,13 @@ Conventions
 -----------
 In order to provide a coherent interface, `xclim` tries to follow different sets of conventions. In particular, input data should follow the `CF conventions`_ whenever possible for variable attributes. Variable names are usually the ones used in `CMIP6`_, when they exist.
 
-However, xclim will *always* assume the temporal coordinate is named "time". If your data uses another name (for example: "T"), you can rename the variable with:
+However, `xclim` will *always* assume the temporal coordinate is named "time". If your data uses another name (for example: "T"), you can rename the variable with:
 
 .. code-block:: python
 
     ds = ds.rename(T="time")
 
-`xclim` code uses the `black`_ formatter, a modified `ruff`_ linting configuration, and (mostly) adheres to the `NumPy docstring`_ style. For more information on coding and development conventions, see the `Contributing Guidelines`_.
+`xclim` employs `black`_-like code formatting style, a modified `ruff`_ linting configuration, and (mostly) adheres to the `NumPy docstring`_ style. For more information on coding and development conventions, see the `Contributing Guidelines`_.
 
 .. _black: https://black.readthedocs.io/en/stable/
 .. _ruff: https://docs.astral.sh/ruff/
@@ -190,10 +190,6 @@ This package was created with Cookiecutter_ and the `audreyfeldroy/cookiecutter-
 .. |fossa| image:: https://app.fossa.com/api/projects/git%2Bgithub.com%2FOuranosinc%2Fxclim.svg?type=shield
         :target: https://app.fossa.com/projects/git%2Bgithub.com%2FOuranosinc%2Fxclim?ref=badge_shield
         :alt: FOSSA
-
-.. |black| image:: https://img.shields.io/badge/code%20style-black-000000.svg
-        :target: https://github.com/psf/black
-        :alt: Python Black
 
 .. |logo| image:: https://raw.githubusercontent.com/Ouranosinc/xclim/main/docs/logos/xclim-logo-small-light.png
         :target: https://github.com/Ouranosinc/xclim

@@ -61,17 +61,14 @@ def _fitfunc_1d(arr, *, dist, nparams, method, **fitkwargs):
         for i, arg in enumerate(args):
             guess[param_info[i]] = arg
 
-        fitresult = scipy.stats.fit(
-            dist=dist, data=x, method="mse", guess=guess, **fitkwargs
-        )
+        fitresult = scipy.stats.fit(dist=dist, data=x, method="mse", guess=guess, **fitkwargs)
         params = fitresult.params
     elif method == "PWM":
         # lmoments3 will raise an error if only dist.numargs + 2 values are provided
         if len(x) <= dist.numargs + 2:
             return np.asarray([np.nan] * nparams)
         if (type(dist).__name__ != "GammaGen" and len(fitkwargs.keys()) != 0) or (
-            type(dist).__name__ == "GammaGen"
-            and set(fitkwargs.keys()) - {"floc"} != set()
+            type(dist).__name__ == "GammaGen" and set(fitkwargs.keys()) - {"floc"} != set()
         ):
             raise ValueError(
                 "Lmoments3 does not use `fitkwargs` arguments, except for `floc` with the Gamma distribution."
@@ -118,13 +115,13 @@ def fit(
         Name of the univariate distribution, such as beta, expon, genextreme, gamma, gumbel_r, lognorm, norm
         (see :py:mod:scipy.stats for full list) or the distribution object itself.
     method : {"ML", "MLE", "MM", "PWM", "APP", "MSE", "MPS"}
-        Fitting method, either maximum likelihood (ML or MLE), method of moments (MM), maximum product of spacings (MSE or MPS)
-        or approximate method (APP).
-        Can also be the probability weighted moments (PWM), also called L-Moments, if a compatible `dist` object is passed.
-        The PWM method is usually more robust to outliers. The MSE method is more consistent than the MLE method, although
-        it can be more sensitive to repeated data.
+        Fitting method, either maximum likelihood (ML or MLE), method of moments (MM),
+        maximum product of spacings (MSE or MPS) or approximate method (APP).
+        If `dist` is an instance from the lmoments3 library, accepts probability weighted moments (PWM; "L-Moments").
+        The PWM method is usually more robust to outliers.
+        The MSE method is more consistent than the MLE method, although it can be more sensitive to repeated data.
         For the MSE method, each variable parameter must be given finite bounds
-        (provided with keyword argument bounds={'param_name':(min,max),...}).
+        (provided with keyword argument `bounds={'param_name':(min,max),...}`).
     dim : str
         The dimension upon which to perform the indexing (default: "time").
     **fitkwargs : dict
@@ -158,7 +155,8 @@ def fit(
 
     if method == "PWM" and not hasattr(dist, "lmom_fit"):
         raise ValueError(
-            f"The given distribution {dist} does not implement the PWM fitting method. Please pass an instance from the lmoments3 package."
+            f"The given distribution {dist} does not implement the PWM fitting method. "
+            "Please pass an instance from the lmoments3 package."
         )
 
     shape_params = [] if dist.shapes is None else dist.shapes.split(",")
@@ -187,9 +185,7 @@ def fit(
     dims = [d if d != dim else "dparams" for d in da.dims]
     out = data.assign_coords(dparams=dist_params).transpose(*dims)
 
-    out.attrs = prefix_attrs(
-        da.attrs, ["standard_name", "long_name", "units", "description"], "original_"
-    )
+    out.attrs = prefix_attrs(da.attrs, ["standard_name", "long_name", "units", "description"], "original_")
     attrs = {
         "long_name": f"{dist.name} parameters",
         "description": f"Parameters of the {dist.name} distribution",
@@ -369,7 +365,7 @@ def fa(
         Whether we are looking for a probability of exceedance (max) or a probability of non-exceedance (min).
     method : {"ML", "MLE", "MOM", "PWM", "APP"}
         Fitting method, either maximum likelihood (ML or MLE), method of moments (MOM) or approximate method (APP).
-        Also accepts probability weighted moments (PWM), also called L-Moments, if `dist` is an instance from the lmoments3 library.
+        If `dist` is an instance from the lmoments3 library, accepts probability weighted moments (PWM; "L-Moments").
         The PWM method is usually more robust to outliers.
 
     Returns
@@ -395,11 +391,7 @@ def fa(
         raise ValueError(f"Mode `{mode}` should be either 'max' or 'min'.")
 
     # Compute the quantiles
-    out = (
-        parametric_quantile(p, q, dist)
-        .rename({"quantile": "return_period"})
-        .assign_coords(return_period=t)
-    )
+    out = parametric_quantile(p, q, dist).rename({"quantile": "return_period"}).assign_coords(return_period=t)
     out.attrs["mode"] = mode
     return out
 
@@ -434,9 +426,9 @@ def frequency_analysis(
     freq : str, optional
         Resampling frequency. If None, the frequency is assumed to be 'YS' unless the indexer is season='DJF',
         in which case `freq` would be set to `YS-DEC`.
-    method : {"ML" or "MLE", "MOM", "PWM", "APP"}
+    method : {"ML", "MLE", "MOM", "PWM", "APP"}
         Fitting method, either maximum likelihood (ML or MLE), method of moments (MOM) or approximate method (APP).
-        Also accepts probability weighted moments (PWM), also called L-Moments, if `dist` is an instance from the lmoments3 library.
+        If `dist` is an instance from the lmoments3 library, accepts probability weighted moments (PWM; "L-Moments").
         The PWM method is usually more robust to outliers.
     **indexer : {dim: indexer, }, optional
         Time attribute and values over which to subset the array. For example, use season='DJF' to select winter values,
@@ -667,9 +659,7 @@ def dist_method(
     # Typically the data to be transformed
     arg = [arg] if arg is not None else []
     if function == "nnlf":
-        raise ValueError(
-            "This method is not supported because it reduces the dimensionality of the data."
-        )
+        raise ValueError("This method is not supported because it reduces the dimensionality of the data.")
 
     # We don't need to set `input_core_dims` because we're explicitly splitting the parameters here.
     args = arg + [fit_params.sel(dparams=dp) for dp in fit_params.dparams.values]
@@ -687,9 +677,7 @@ def dist_method(
     )
 
 
-def preprocess_standardized_index(
-    da: xr.DataArray, freq: str | None, window: int, **indexer
-):
+def preprocess_standardized_index(da: xr.DataArray, freq: str | None, window: int, **indexer):
     r"""
     Perform resample and roll operations involved in computing a standardized index.
 
@@ -698,8 +686,9 @@ def preprocess_standardized_index(
     da : xarray.DataArray
         Input array.
     freq : {'D', 'MS'}, optional
-        Resampling frequency. A monthly or daily frequency is expected. Option `None` assumes that desired resampling
-        has already been applied input dataset and will skip the resampling step.
+        Resampling frequency. A monthly or daily frequency is expected.
+        Option `None` assumes that desired resampling has already been applied input dataset
+        and will skip the resampling step.
     window : int
         Averaging window length relative to the resampling frequency. For example, if `freq="MS"`,
         i.e. a monthly resampling, the window is an integer number of months.
@@ -730,7 +719,8 @@ def preprocess_standardized_index(
             )
     else:
         warnings.warn(
-            "No resampling frequency was specified and a frequency for the dataset could not be identified with ``xr.infer_freq``"
+            "No resampling frequency was specified and a frequency "
+            "for the dataset could not be identified with ``xr.infer_freq``"
         )
         group = "time.dayofyear"
 
@@ -806,13 +796,14 @@ def standardized_index_fit_params(
     Supported combinations of `dist` and `method` are:
     * Gamma ("gamma") : "ML", "APP"
     * Log-logistic ("fisk") : "ML", "APP"
-    * "APP" method only supports two-parameter distributions. Parameter `loc` will be set to 0 (setting `floc=0` in `fitkwargs`).
-    * Otherwise, generic `rv_continuous` methods can be used. This includes distributions from `lmoments3` which should be used with
-    `method="PWM"`.
+    * "APP" method only supports two-parameter distributions. Parameter `loc` will be set to 0
+    (setting `floc=0` in `fitkwargs`).
+    * Otherwise, generic `rv_continuous` methods can be used. This includes distributions from `lmoments3`
+    which should be used with `method="PWM"`.
 
-    When using the zero inflated option, : A probability density function :math:`\texttt{pdf}_0(X)` is fitted for :math:`X \neq 0`
-    and a supplementary parameter :math:`\pi` takes into account the probability of :math:`X = 0`. The full probability density
-    function is a piecewise function:
+    When using the zero inflated option, : A probability density function :math:`\texttt{pdf}_0(X)` is fitted
+    for :math:`X \neq 0` and a supplementary parameter :math:`\pi` takes into account the probability of
+    :math:`X = 0`. The full probability density function is a piecewise function:
 
     .. math::
 
@@ -822,31 +813,21 @@ def standardized_index_fit_params(
     if method == "APP":
         if "floc" not in fitkwargs.keys():
             raise ValueError(
-                "The APP method is only supported for two-parameter distributions with `gamma` or `fisk` with `loc` being fixed."
-                "Pass a value for `floc` in `fitkwargs`."
+                "The APP method is only supported for two-parameter distributions with `gamma` or `fisk` "
+                "with `loc` being fixed. Pass a value for `floc` in `fitkwargs`."
             )
 
     dist_and_methods = {"gamma": ["ML", "APP"], "fisk": ["ML", "APP"]}
     dist = get_dist(dist)
     if method != "PWM":
         if dist.name not in dist_and_methods:
-            raise NotImplementedError(
-                f"The distribution `{dist.name}` is not supported."
-            )
+            raise NotImplementedError(f"The distribution `{dist.name}` is not supported.")
         if method not in dist_and_methods[dist.name]:
-            raise NotImplementedError(
-                f"The method `{method}` is not supported for distribution `{dist.name}`."
-            )
+            raise NotImplementedError(f"The method `{method}` is not supported for distribution `{dist.name}`.")
     da, group = preprocess_standardized_index(da, freq, window, **indexer)
     if zero_inflated:
-        prob_of_zero = da.groupby(group).map(
-            lambda x: (x == 0).sum("time") / x.notnull().sum("time")
-        )
-        params = (
-            da.where(da != 0)
-            .groupby(group)
-            .map(fit, dist=dist, method=method, **fitkwargs)
-        )
+        prob_of_zero = da.groupby(group).map(lambda x: (x == 0).sum("time") / x.notnull().sum("time"))
+        params = da.where(da != 0).groupby(group).map(fit, dist=dist, method=method, **fitkwargs)
         params["prob_of_zero"] = prob_of_zero
     else:
         params = da.groupby(group).map(fit, dist=dist, method=method, **fitkwargs)
@@ -933,16 +914,18 @@ def standardized_index(
 
     Notes
     -----
-    * The standardized index is bounded by ±8.21. 8.21 is the largest standardized index as constrained by the float64 precision in
-      the inversion to the normal distribution.
-    * ``window``, ``dist``, ``method``, ``zero_inflated`` are only optional if ``params`` is given. If `params` is given as input,
-      it overrides the `cal_start`, `cal_end`, `freq` and `window`, `dist` and `method` options.
+    * The standardized index is bounded by ±8.21. 8.21 is the largest standardized index as constrained by
+      the float64 precision in the inversion to the normal distribution.
+    * ``window``, ``dist``, ``method``, ``zero_inflated`` are only optional if ``params`` is given.
+      If `params` is given as input, it overrides the `cal_start`, `cal_end`, `freq` and `window`,
+      `dist` and `method` options.
     * Supported combinations of `dist` and `method` are:
       * Gamma ("gamma") : "ML", "APP"
       * Log-logistic ("fisk") : "ML", "APP"
-      * "APP" method only supports two-parameter distributions. Parameter `loc` will be set to 0 (setting `floc=0` in `fitkwargs`).
-      * Otherwise, generic `rv_continuous` methods can be used. This includes distributions from `lmoments3` which should be used with
-      `method="PWM"`.
+      * "APP" method only supports two-parameter distributions.
+      Parameter `loc` will be set to 0 (setting `floc=0` in `fitkwargs`).
+      * Otherwise, generic `rv_continuous` methods can be used.
+      This includes distributions from `lmoments3` which should be used with `method="PWM"`.
 
     References
     ----------
@@ -950,9 +933,7 @@ def standardized_index(
     """
     # use input arguments from ``params`` if it is given
     if params is not None:
-        freq, window, dist, indexer = (
-            params.attrs[s] for s in ["freq", "window", "scipy_dist", "time_indexer"]
-        )
+        freq, window, dist, indexer = (params.attrs[s] for s in ["freq", "window", "scipy_dist", "time_indexer"])
         # Unpack attrs to None and {} if needed
         freq = None if freq == "" else freq
         indexer = json.loads(indexer)
@@ -965,9 +946,7 @@ def standardized_index(
     else:
         for p in [window, dist, method, zero_inflated]:
             if p is None:
-                raise ValueError(
-                    "If `params` is `None`, `window`, `dist`, `method` and `zero_inflated` must be given."
-                )
+                raise ValueError("If `params` is `None`, `window`, `dist`, `method` and `zero_inflated` must be given.")
     # apply resampling and rolling operations
     da, _ = preprocess_standardized_index(da, freq=freq, window=window, **indexer)
     if params is None:
@@ -989,18 +968,14 @@ def standardized_index(
     if paramsd != template.sizes:
         params = params.broadcast_like(template)
 
-    def reindex_time(
-        _da: xr.DataArray, _da_ref: xr.DataArray, _group: str
-    ):  # numpydoc ignore=GL08
+    def reindex_time(_da: xr.DataArray, _da_ref: xr.DataArray, _group: str):  # numpydoc ignore=GL08
         if group == "time.dayofyear":
             _da = resample_doy(_da, _da_ref)
         elif group == "time.month":
             _da = _da.rename(month="time").reindex(time=_da_ref.time.dt.month)
             _da["time"] = _da_ref.time
         elif group == "time.week":
-            _da = _da.rename(week="time").reindex(
-                time=_da_ref.time.dt.isocalendar().week
-            )
+            _da = _da.rename(week="time").reindex(time=_da_ref.time.dt.isocalendar().week)
             _da["time"] = _da_ref.time
         # I don't think rechunking is necessary here, need to check
         return _da if not uses_dask(_da) else _da.chunk({"time": -1})

@@ -80,9 +80,7 @@ def generate_atmos(
         ds.to_netcdf(atmos_file, engine="h5netcdf")
 
     # Give access to dataset variables by name in namespace
-    with xtu.open_dataset(
-        atmos_file, branch=branch, cache_dir=cache_dir, engine="h5netcdf"
-    ) as ds:
+    with xtu.open_dataset(atmos_file, branch=branch, cache_dir=cache_dir, engine="h5netcdf") as ds:
         namespace = {f"{var}_dataset": ds[var] for var in ds.data_vars}
     return namespace
 
@@ -127,12 +125,7 @@ def add_example_file_paths() -> dict[str, str | list[xr.DataArray]]:
         "path_to_tas_file": "ERA5/daily_surface_cancities_1990-1993.nc",
         "path_to_tasmax_file": "NRCANdaily/nrcan_canada_daily_tasmax_1990.nc",
         "path_to_tasmin_file": "NRCANdaily/nrcan_canada_daily_tasmin_1990.nc",
-        "path_to_example_py": (
-            Path(__file__).parent.parent.parent.parent
-            / "docs"
-            / "notebooks"
-            / "example.py"
-        ),
+        "path_to_example_py": (Path(__file__).parent.parent.parent.parent / "docs" / "notebooks" / "example.py"),
     }
 
     # For core.utils.load_module example
@@ -220,17 +213,12 @@ def test_timeseries(
         A DataArray or Dataset with time, lon and lat dimensions.
     """
     if calendar or cftime:
-        coords = xr.cftime_range(
-            start, periods=len(values), freq=freq, calendar=calendar or "standard"
-        )
+        coords = xr.cftime_range(start, periods=len(values), freq=freq, calendar=calendar or "standard")
     else:
         coords = pd.date_range(start, periods=len(values), freq=freq)
 
     if variable in VARIABLES:
-        attrs = {
-            a: VARIABLES[variable].get(a, "")
-            for a in ["description", "standard_name", "cell_methods"]
-        }
+        attrs = {a: VARIABLES[variable].get(a, "") for a in ["description", "standard_name", "cell_methods"]}
         attrs["units"] = VARIABLES[variable]["canonical_units"]
 
     else:
@@ -261,9 +249,7 @@ def _raise_on_compute(dsk: dict):
     AssertionError
         If the dask computation is triggered.
     """
-    raise AssertionError(
-        f"Not lazy. Computation was triggered with a graph of {len(dsk)} tasks."
-    )
+    raise AssertionError(f"Not lazy. Computation was triggered with a graph of {len(dsk)} tasks.")
 
 
 assert_lazy = Callback(start=_raise_on_compute)

@@ -42,9 +42,7 @@ russian = (
 def test_local_dict(tmp_path):
     loc, dic = xloc.get_local_dict("fr")
     assert loc == "fr"
-    assert (
-        dic["TG_MEAN"]["long_name"] == "Moyenne de la température moyenne quotidienne"
-    )
+    assert dic["TG_MEAN"]["long_name"] == "Moyenne de la température moyenne quotidienne"
 
     loc, dic = xloc.get_local_dict(esperanto)
     assert loc == "eo"
@@ -63,15 +61,11 @@ def test_local_dict(tmp_path):
     loc, dic = xloc.get_local_dict(("fr", {"TX_MAX": {"long_name": "Fait chaud."}}))
     assert loc == "fr"
     assert dic["TX_MAX"]["long_name"] == "Fait chaud."
-    assert (
-        dic["TG_MEAN"]["long_name"] == "Moyenne de la température moyenne quotidienne"
-    )
+    assert dic["TG_MEAN"]["long_name"] == "Moyenne de la température moyenne quotidienne"
 
 
 def test_local_attrs_sing():
-    attrs = xloc.get_local_attrs(
-        atmos.tg_mean.__class__.__name__, esperanto, append_locale_name=False
-    )
+    attrs = xloc.get_local_attrs(atmos.tg_mean.__class__.__name__, esperanto, append_locale_name=False)
     assert "description" not in attrs
 
     with pytest.raises(ValueError):
@@ -108,10 +102,7 @@ def test_indicator_output(tas_series):
         tgmean = atmos.tg_mean(tas, freq="YS")
 
     assert "long_name_fr" in tgmean.attrs
-    assert (
-        tgmean.attrs["description_fr"]
-        == "Moyenne annuelle de la température quotidienne."
-    )
+    assert tgmean.attrs["description_fr"] == "Moyenne annuelle de la température quotidienne."
 
 
 def test_indicator_integration():

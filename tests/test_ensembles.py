@@ -48,14 +48,9 @@ class TestEnsembleStats:
         assert len(ens.realization) == len(ensemble_dataset_objects["nc_files_simple"])
         assert len(ens.time) == 151
         for i in np.arange(0, len(ens.realization)):
-            np.testing.assert_array_equal(
-                ens.isel(realization=i).tg_mean.values, ds_all[i].tg_mean.values
-            )
+            np.testing.assert_array_equal(ens.isel(realization=i).tg_mean.values, ds_all[i].tg_mean.values)
 
-        reals = [
-            "_".join(Path(f).name.split("_")[1:4:2])
-            for f in ensemble_dataset_objects["nc_files_simple"]
-        ]
+        reals = ["_".join(Path(f).name.split("_")[1:4:2]) for f in ensemble_dataset_objects["nc_files_simple"]]
         ens1 = ensembles.create_ensemble(ds_all, realizations=reals)
 
         # Kinda a hack? Alternative is to open and rewrite in a temp folder.
@@ -95,26 +90,14 @@ class TestEnsembleStats:
         assert ens.time.dt.year.max() == 2100
         assert len(ens.time) == 151
 
-        ii = [
-            i
-            for i, s in enumerate(ensemble_dataset_objects["nc_files"])
-            if "1970-2050" in s
-        ]
+        ii = [i for i, s in enumerate(ensemble_dataset_objects["nc_files"]) if "1970-2050" in s]
         # assert padded with nans
-        assert np.all(
-            np.isnan(ens.tg_mean.isel(realization=ii).sel(time=ens.time.dt.year < 1970))
-        )
-        assert np.all(
-            np.isnan(ens.tg_mean.isel(realization=ii).sel(time=ens.time.dt.year > 2050))
-        )
+        assert np.all(np.isnan(ens.tg_mean.isel(realization=ii).sel(time=ens.time.dt.year < 1970)))
+        assert np.all(np.isnan(ens.tg_mean.isel(realization=ii).sel(time=ens.time.dt.year > 2050)))
 
         ens_mean = ens.tg_mean.mean(dim=["realization", "lon", "lat"], skipna=False)
-        assert (
-            ens_mean.where(~(np.isnan(ens_mean)), drop=True).time.dt.year.min() == 1970
-        )
-        assert (
-            ens_mean.where(~(np.isnan(ens_mean)), drop=True).time.dt.year.max() == 2050
-        )
+        assert ens_mean.where(~(np.isnan(ens_mean)), drop=True).time.dt.year.min() == 1970
+        assert ens_mean.where(~(np.isnan(ens_mean)), drop=True).time.dt.year.max() == 2050
 
     @pytest.mark.parametrize(
         "timegen,calkw",
@@ -124,12 +107,8 @@ class TestEnsembleStats:
         t1 = timegen("2000-01-01", periods=24, freq="ME", **calkw)
         t2 = timegen("2000-01-01", periods=24, freq="MS", **calkw)
 
-        d1 = xr.DataArray(
-            np.arange(24), dims=("time",), coords={"time": t1}, name="tas"
-        )
-        d2 = xr.DataArray(
-            np.arange(24), dims=("time",), coords={"time": t2}, name="tas"
-        )
+        d1 = xr.DataArray(np.arange(24), dims=("time",), coords={"time": t1}, name="tas")
+        d2 = xr.DataArray(np.arange(24), dims=("time",), coords={"time": t2}, name="tas")
 
         if t1.dtype != "O":
             ens = ensembles.create_ensemble((d1, d2))
@@ -153,21 +132,15 @@ class TestEnsembleStats:
 
         out1 = ensembles.ensemble_percentiles(ens, split=True)
         np.testing.assert_array_almost_equal(
-            mquantiles(
-                ens["tg_mean"].isel(time=0, lon=5, lat=5), 0.1, alphap=1, betap=1
-            ),
+            mquantiles(ens["tg_mean"].isel(time=0, lon=5, lat=5), 0.1, alphap=1, betap=1),
             out1["tg_mean_p10"].isel(time=0, lon=5, lat=5),
         )
         np.testing.assert_array_almost_equal(
-            mquantiles(
-                ens["tg_mean"].isel(time=0, lon=5, lat=5), alphap=1, betap=1, prob=0.50
-            ),
+            mquantiles(ens["tg_mean"].isel(time=0, lon=5, lat=5), alphap=1, betap=1, prob=0.50),
             out1["tg_mean_p50"].isel(time=0, lon=5, lat=5),
         )
         np.testing.assert_array_almost_equal(
-            mquantiles(
-                ens["tg_mean"].isel(time=0, lon=5, lat=5), alphap=1, betap=1, prob=0.90
-            ),
+            mquantiles(ens["tg_mean"].isel(time=0, lon=5, lat=5), alphap=1, betap=1, prob=0.90),
             out1["tg_mean_p90"].isel(time=0, lon=5, lat=5),
         )
 
@@ -179,9 +152,7 @@ class TestEnsembleStats:
                 betap=0.5,
                 prob=0.90,
             ),
-            ensembles.ensemble_percentiles(
-                ens.isel(time=0, lon=5, lat=5), values=[90], method="hazen"
-            ).tg_mean_p90,
+            ensembles.ensemble_percentiles(ens.isel(time=0, lon=5, lat=5), values=[90], method="hazen").tg_mean_p90,
         )
 
         assert np.all(out1["tg_mean_p90"] > out1["tg_mean_p50"])
@@ -192,13 +163,9 @@ class TestEnsembleStats:
         assert "Computation of the percentiles on" in out1.attrs["history"]
 
         out3 = ensembles.ensemble_percentiles(ens, split=False)
-        xr.testing.assert_equal(
-            out1["tg_mean_p10"], out3.tg_mean.sel(percentiles=10, drop=True)
-        )
+        xr.testing.assert_equal(out1["tg_mean_p10"], out3.tg_mean.sel(percentiles=10, drop=True))
 
-        weights = xr.DataArray(
-            [1, 0.1, 3.5, 5], coords={"realization": ens.realization}
-        )
+        weights = xr.DataArray([1, 0.1, 3.5, 5], coords={"realization": ens.realization})
         out4 = ensembles.ensemble_percentiles(ens, weights=weights)
         np.testing.assert_array_almost_equal(
             ens["tg_mean"].isel(time=0, lon=5, lat=5).weighted(weights).quantile(0.5),
@@ -215,18 +182,14 @@ class TestEnsembleStats:
         assert np.all(out4["tg_mean_p90"] > out4["tg_mean_p10"])
 
     @pytest.mark.parametrize("keep_chunk_size", [False, True, None])
-    def test_calc_perc_dask(
-        self, keep_chunk_size, ensemble_dataset_objects, open_dataset
-    ):
+    def test_calc_perc_dask(self, keep_chunk_size, ensemble_dataset_objects, open_dataset):
         ds_all = []
         for n in ensemble_dataset_objects["nc_files_simple"]:
             ds = open_dataset(n)
             ds_all.append(ds)
         ens = ensembles.create_ensemble(ds_all)
 
-        out2 = ensembles.ensemble_percentiles(
-            ens.chunk({"time": 2}), keep_chunk_size=keep_chunk_size, split=False
-        )
+        out2 = ensembles.ensemble_percentiles(ens.chunk({"time": 2}), keep_chunk_size=keep_chunk_size, split=False)
         out1 = ensembles.ensemble_percentiles(ens.load(), split=False)
         np.testing.assert_array_equal(out1["tg_mean"], out2["tg_mean"])
 
@@ -269,17 +232,11 @@ class TestEnsembleStats:
             ens["tg_mean"][:, 0, 5, 5].std(dim="realization"),
             out1.tg_mean_stdev[0, 5, 5],
         )
-        np.testing.assert_array_equal(
-            ens["tg_mean"][:, 0, 5, 5].max(dim="realization"), out1.tg_mean_max[0, 5, 5]
-        )
-        np.testing.assert_array_equal(
-            ens["tg_mean"][:, 0, 5, 5].min(dim="realization"), out1.tg_mean_min[0, 5, 5]
-        )
+        np.testing.assert_array_equal(ens["tg_mean"][:, 0, 5, 5].max(dim="realization"), out1.tg_mean_max[0, 5, 5])
+        np.testing.assert_array_equal(ens["tg_mean"][:, 0, 5, 5].min(dim="realization"), out1.tg_mean_min[0, 5, 5])
         assert "Computation of statistics on" in out1.attrs["history"]
 
-        weights = xr.DataArray(
-            [1, 0.1, 3.5, 5], coords={"realization": ens.realization}
-        )
+        weights = xr.DataArray([1, 0.1, 3.5, 5], coords={"realization": ens.realization})
         out2 = ensembles.ensemble_mean_std_max_min(ens, weights=weights)
         values = ens["tg_mean"][:, 0, 5, 5]
         # Explicit float64 so numpy does the expected datatype promotion (change in numpy 2)
@@ -297,16 +254,10 @@ class TestEnsembleStats:
             ens["tg_mean"][:, 0, 5, 5].weighted(weights).std(dim="realization"),
             out2.tg_mean_stdev[0, 5, 5],
         )
-        np.testing.assert_array_equal(
-            out1.tg_mean_max[0, 5, 5], out2.tg_mean_max[0, 5, 5]
-        )
-        np.testing.assert_array_equal(
-            out1.tg_mean_min[0, 5, 5], out2.tg_mean_min[0, 5, 5]
-        )
+        np.testing.assert_array_equal(out1.tg_mean_max[0, 5, 5], out2.tg_mean_max[0, 5, 5])
+        np.testing.assert_array_equal(out1.tg_mean_min[0, 5, 5], out2.tg_mean_min[0, 5, 5])
 
-    @pytest.mark.parametrize(
-        "aggfunc", [ensembles.ensemble_percentiles, ensembles.ensemble_mean_std_max_min]
-    )
+    @pytest.mark.parametrize("aggfunc", [ensembles.ensemble_percentiles, ensembles.ensemble_mean_std_max_min])
     def test_stats_min_members(self, ensemble_dataset_objects, open_dataset, aggfunc):
         ds_all = [open_dataset(n) for n in ensemble_dataset_objects["nc_files_simple"]]
         ens = ensembles.create_ensemble(ds_all).isel(lat=0, lon=0)
@@ -323,9 +274,7 @@ class TestEnsembleStats:
         # A number
         out = first(aggfunc(ens, min_members=3))
         # Only 1950 is null
-        np.testing.assert_array_equal(
-            out.isnull(), [True] + [False] * (ens.time.size - 1)
-        )
+        np.testing.assert_array_equal(out.isnull(), [True] + [False] * (ens.time.size - 1))
 
         # Special value
         out = first(aggfunc(ens, min_members=None))
@@ -476,9 +425,7 @@ class TestEnsembleReduction:
             if np.sum(cluster == cluster[i]) > 1:
                 assert i not in ids
 
-    @pytest.mark.skipif(
-        "matplotlib.pyplot" not in sys.modules, reason="matplotlib.pyplot is required"
-    )
+    @pytest.mark.skipif("matplotlib.pyplot" not in sys.modules, reason="matplotlib.pyplot is required")
     def test_kmeans_rsqcutoff_with_graphs(self, open_dataset, random_state):
         pytest.importorskip("sklearn", minversion="0.24.1")
         ds = open_dataset(self.nc_file)
@@ -535,9 +482,7 @@ class TestEnsembleReduction:
         data = ens.data.isel(criteria=[1, 3, 5])
 
         sel_euc = ensembles.kkz_reduce_ensemble(data, 4, dist_method="euclidean")
-        sel_mah = ensembles.kkz_reduce_ensemble(
-            data, 4, dist_method="mahalanobis", VI=np.arange(24)
-        )
+        sel_mah = ensembles.kkz_reduce_ensemble(data, 4, dist_method="mahalanobis", VI=np.arange(24))
         assert sel_euc == [23, 10, 19, 14]
         assert sel_mah == [5, 3, 4, 0]
 
@@ -546,15 +491,9 @@ class TestEnsembleReduction:
         ens = open_dataset(self.nc_file)
         data = ens.data
         for n in np.arange(1, len(data)):
-            sel1 = ensembles.kkz_reduce_ensemble(
-                data, n, dist_method="seuclidean", standardize=True
-            )
-            sel2 = ensembles.kkz_reduce_ensemble(
-                data, n, dist_method="seuclidean", standardize=False
-            )
-            sel3 = ensembles.kkz_reduce_ensemble(
-                data, n, dist_method="euclidean", standardize=True
-            )
+            sel1 = ensembles.kkz_reduce_ensemble(data, n, dist_method="seuclidean", standardize=True)
+            sel2 = ensembles.kkz_reduce_ensemble(data, n, dist_method="seuclidean", standardize=False)
+            sel3 = ensembles.kkz_reduce_ensemble(data, n, dist_method="euclidean", standardize=True)
             assert sel1 == sel2
             assert sel1 == sel3
 
@@ -595,20 +534,12 @@ class TestEnsembleReduction:
 def robust_data(random):
     norm = get_dist("norm")
     ref = np.tile(
-        np.array(
-            [
-                norm.rvs(loc=274, scale=0.8, size=(40,), random_state=random)
-                for r in range(4)
-            ]
-        ),
+        np.array([norm.rvs(loc=274, scale=0.8, size=(40,), random_state=random) for r in range(4)]),
         (4, 1, 1),
     )
     fut = np.array(
         [
-            [
-                norm.rvs(loc=loc, scale=sc, size=(40,), random_state=random)
-                for loc, sc in shps
-            ]
+            [norm.rvs(loc=loc, scale=sc, size=(40,), random_state=random) for loc, sc in shps]
             for shps in (
                 [
                     (274.0, 0.7),
@@ -725,9 +656,7 @@ def robust_data(random):
         ),
     ],
 )
-def test_robustness_fractions(
-    robust_data, test, exp_chng_frac, exp_pos_frac, exp_changed, kws
-):
+def test_robustness_fractions(robust_data, test, exp_chng_frac, exp_pos_frac, exp_changed, kws):
     ref, fut = robust_data
     fracs = ensembles.robustness_fractions(fut, ref, test=test, **kws)
 
@@ -752,9 +681,7 @@ def test_robustness_fractions_weighted(robust_data):
     assert fracs.changed.attrs["test"] == "None"
 
     np.testing.assert_array_equal(fracs.changed, [1, 1, 1, 1])
-    np.testing.assert_array_almost_equal(
-        fracs.changed_positive, [0.53125, 0.88541667, 1.0, 1.0]
-    )
+    np.testing.assert_array_almost_equal(fracs.changed_positive, [0.53125, 0.88541667, 1.0, 1.0])
 
 
 def test_robustness_fractions_delta(robust_data):
@@ -767,9 +694,7 @@ def test_robustness_fractions_delta(robust_data):
 
     delta = xr.DataArray([-2, 1, -2, -1], dims=("realization",))
     weights = xr.DataArray([4, 3, 2, 1], dims=("realization",))
-    fracs = ensembles.robustness_fractions(
-        delta, test="threshold", abs_thresh=1.5, weights=weights
-    )
+    fracs = ensembles.robustness_fractions(delta, test="threshold", abs_thresh=1.5, weights=weights)
     np.testing.assert_array_equal(fracs.changed, [0.6])
     np.testing.assert_array_equal(fracs.positive, [0.3])
     np.testing.assert_array_equal(fracs.agree, [0.7])
@@ -795,10 +720,7 @@ def test_robustness_categories():
     categories = ensembles.robustness_categories(changed, agree)
     np.testing.assert_array_equal(categories, [2, 3, 3, 1])
     assert categories.flag_values == [1, 2, 3]
-    assert (
-        categories.flag_meanings
-        == "robust_signal no_change_or_no_signal conflicting_signal"
-    )
+    assert categories.flag_meanings == "robust_signal no_change_or_no_signal conflicting_signal"
     assert categories.lat.attrs["axis"] == "Y"
 
 

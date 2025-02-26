@@ -113,9 +113,7 @@ def ref_hist_sim_tuto():
         ref = ds.air.resample(time="D").mean(keep_attrs=True)
         hist = ref.rolling(time=smth_win, min_periods=1).mean(keep_attrs=True) + delta
         hist.attrs["units"] = ref.attrs["units"]
-        sim_time = hist.time + np.timedelta64(730 + sim_offset * 365, "D").astype(
-            "<m8[ns]"
-        )
+        sim_time = hist.time + np.timedelta64(730 + sim_offset * 365, "D").astype("<m8[ns]")
         sim = hist + (
             0
             if not trend

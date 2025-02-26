@@ -79,9 +79,7 @@ def weibull_min(request):
         ],
         dims=("time",),
     )
-    da = da.assign_coords(
-        time=xr.cftime_range("2045-02-02", periods=da.time.size, freq="D")
-    )
+    da = da.assign_coords(time=xr.cftime_range("2045-02-02", periods=da.time.size, freq="D"))
 
     if request.param:
         da = da.chunk()
@@ -115,9 +113,7 @@ def genextreme(request):
         ],
         dims=("time",),
     )
-    da = da.assign_coords(
-        time=xr.cftime_range("2045-02-02", periods=da.time.size, freq="D")
-    )
+    da = da.assign_coords(time=xr.cftime_range("2045-02-02", periods=da.time.size, freq="D"))
 
     if request.param:
         da = da.chunk()
@@ -173,9 +169,7 @@ def test_mse_fit(genextreme):
         bounds=dict(c=(0, 1), scale=(0, 100), loc=(200, 400)),
         optimizer=optimizer,
     )
-    np.testing.assert_allclose(
-        p, (0.18435517630019815, 293.61049928703073, 86.70937297745427), 1e-3
-    )
+    np.testing.assert_allclose(p, (0.18435517630019815, 293.61049928703073, 86.70937297745427), 1e-3)
 
 
 def test_fa(fitda):
@@ -293,9 +287,7 @@ def test_frequency_analysis(ndq_series, use_dask):
     if use_dask:
         q = q.chunk()
 
-    out = stats.frequency_analysis(
-        q, mode="max", t=2, dist="genextreme", window=6, freq="YS"
-    )
+    out = stats.frequency_analysis(q, mode="max", t=2, dist="genextreme", window=6, freq="YS")
     assert out.dims == ("return_period", "x", "y")
     assert out.shape == (1, 2, 3)
     v = out.values
@@ -305,9 +297,7 @@ def test_frequency_analysis(ndq_series, use_dask):
     assert out.units == "m3 s-1"
 
     # smoke test when time is not the first dimension
-    stats.frequency_analysis(
-        q.transpose(), mode="max", t=2, dist="genextreme", window=6, freq="YS"
-    )
+    stats.frequency_analysis(q.transpose(), mode="max", t=2, dist="genextreme", window=6, freq="YS")
 
 
 @pytest.mark.parametrize("use_dask", [True, False])
@@ -319,12 +309,8 @@ def test_frequency_analysis_lmoments(ndq_series, use_dask):
     if use_dask:
         q = q.chunk()
 
-    out = stats.frequency_analysis(
-        q, mode="max", t=2, dist="genextreme", window=6, freq="YS"
-    )
-    out1 = stats.frequency_analysis(
-        q, mode="max", t=2, dist=lmom.gev, window=6, freq="YS", method="PWM"
-    )
+    out = stats.frequency_analysis(q, mode="max", t=2, dist="genextreme", window=6, freq="YS")
+    out1 = stats.frequency_analysis(q, mode="max", t=2, dist=lmom.gev, window=6, freq="YS", method="PWM")
     np.testing.assert_allclose(
         out1,
         out,
@@ -381,12 +367,8 @@ def test_parametric_cdf(use_dask, random):
 
 def test_dist_method(fitda):
     params = stats.fit(fitda, "lognorm")
-    cdf = stats.dist_method(
-        "cdf", fit_params=params, arg=xr.DataArray([0.2, 0.8], dims="val")
-    )
+    cdf = stats.dist_method("cdf", fit_params=params, arg=xr.DataArray([0.2, 0.8], dims="val"))
     assert tuple(cdf.dims) == ("val", "x", "y")
 
     with pytest.raises(ValueError):
-        stats.dist_method(
-            "nnlf", fit_params=params, dims="val", x=xr.DataArray([0.2, 0.8])
-        )
+        stats.dist_method("nnlf", fit_params=params, dims="val", x=xr.DataArray([0.2, 0.8]))

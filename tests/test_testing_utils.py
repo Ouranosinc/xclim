@@ -27,7 +27,6 @@ class TestFixtures:
 
 
 class TestFileRequests:
-
     @staticmethod
     def file_md5_checksum(f_name):
         import hashlib
