@@ -2,6 +2,15 @@
 Changelog
 =========
 
+v0.55.1 (unreleased)
+--------------------
+Contributors to this version: Éric Dupuis (:user:`coxipi`).
+
+Bug fixes
+^^^^^^^^^
+* Re-allow the use of `interp="linear"` in adjustments that use day-of-year grouping, `group=Grouper("time.dayofyear", window)`. 
+
+
 v0.55.0 (2025-02-17)
 --------------------
 Contributors to this version: Juliette Lavoie (:user:`juliettelavoie`), Trevor James Smith (:user:`Zeitsperre`), Sascha Hofmann (:user:`saschahofmann`), Pascal Bourgault (:user:`aulemahal`), Éric Dupuis (:user:`coxipi`), Baptiste Hamon (:user:`baptistehamon`), Sarah Gammon (:user:`SarahG-579462`).
