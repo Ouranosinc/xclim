@@ -2,7 +2,7 @@
 Changelog
 =========
 
-v0.55.1 (unreleased)
+v0.55.1 (2025-02-26)
 --------------------
 Contributors to this version: Éric Dupuis (:user:`coxipi`).
 
