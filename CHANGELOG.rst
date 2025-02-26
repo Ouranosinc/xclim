@@ -20,6 +20,14 @@ Internal changes
     * Line endings in files now must be `Unix`-compatible (`LF`).
 * The `blackdoc` pre-commit hook now only examines `.rst` and `.md` files. (:pull:`2083`).
 
+v0.55.1 (2025-02-26)
+--------------------
+Contributors to this version: Éric Dupuis (:user:`coxipi`).
+
+Bug fixes
+^^^^^^^^^
+* Re-allow the use of `interp="linear"` in adjustments that use day-of-year grouping, `group=Grouper("time.dayofyear", window)`. (:pull:`2087`).
+
 v0.55.0 (2025-02-17)
 --------------------
 Contributors to this version: Juliette Lavoie (:user:`juliettelavoie`), Trevor James Smith (:user:`Zeitsperre`), Sascha Hofmann (:user:`saschahofmann`), Pascal Bourgault (:user:`aulemahal`), Éric Dupuis (:user:`coxipi`), Baptiste Hamon (:user:`baptistehamon`), Sarah Gammon (:user:`SarahG-579462`).

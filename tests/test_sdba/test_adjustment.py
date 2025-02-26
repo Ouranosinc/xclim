@@ -798,7 +798,7 @@ class TestExtremeValues:
             ref, hist, group=Grouper("time.dayofyear", window=31), nquantiles=quantiles
         )
 
-        scen = EQM.adjust(hist, extrapolation="constant")
+        scen = EQM.adjust(hist, interp="linear", extrapolation="constant")
 
         EX = ExtremeValues.train(ref, hist, cluster_thresh="1 mm/day", q_thresh=0.97)
         new_scen = EX.adjust(scen, hist, frac=0.000000001)
