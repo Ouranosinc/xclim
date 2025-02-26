@@ -320,9 +320,7 @@ class Grouper(Parametrizable):
                 # by half a month so -(1/12-1/24)*4 = -1/6
                 i = ind.dayofyear / length_year * 4 - 1 / 6
             else:
-                raise ValueError(
-                    f"Interpolation is not supported for {self.dim}.{self.prop}."
-                )
+                i = getattr(ind, self.prop)
         else:
             if self.prop == "week":
                 i = da[self.dim].copy(data=ind.isocalendar().week).astype(int)
