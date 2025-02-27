@@ -8,7 +8,7 @@ Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Hui-Min W
 
 Bug fixes
 ^^^^^^^^^
-* Fixed installation instructions in the Contributing guide.
+* Fix installation instructions in the Contributing guide (:issue:`2088`, :pull:`2089`).
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
