@@ -4,7 +4,11 @@ Changelog
 
 v0.56.0 (unreleased)
 --------------------
-Contributors to this version: Trevor James Smith (:user:`Zeitsperre`).
+Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Hui-Min Wang (:user:`Hem-W`).
+
+Bug fixes
+^^^^^^^^^
+* Fixed installation instructions in the Contributing guide.
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
