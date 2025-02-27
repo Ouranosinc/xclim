@@ -124,8 +124,9 @@ Ready to contribute? Here's how to set up `xclim` for local development.
 
     .. code-block:: shell
 
-        conda create -n xclim python=3.10 --file=environment.yml
-        python -m pip install -e --no-deps .
+        conda env create --file environment.yml
+        conda activate xclim
+        python -m pip install -e . --no-deps
 
 #. Create a branch for local development:
 
