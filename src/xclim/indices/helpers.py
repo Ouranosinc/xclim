@@ -288,7 +288,7 @@ def cosine_of_solar_zenith_angle(
         h_e = np.pi - 1e-9  # just below pi
     else:
         if time.dtype == "O":  # cftime
-            time_as_s = time.copy(data=xr.CFTimeIndex(cast(time.values, np.ndarray)).asi8 / 1e6)
+            time_as_s = time.copy(data=xr.CFTimeIndex(cast(np.ndarray, time.values)).asi8 / 1e6)
         else:  # numpy
             time_as_s = time.copy(data=time.astype(float) / 1e9)
         h_s_utc = (((time_as_s % S_IN_D) / S_IN_D) * 2 * np.pi + np.pi).assign_attrs(units="rad")
