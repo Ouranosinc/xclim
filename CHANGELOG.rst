@@ -4,11 +4,12 @@ Changelog
 
 v0.56.0 (unreleased)
 --------------------
-Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Hui-Min Wang (:user:`Hem-W`).
+Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Hui-Min Wang (:user:`Hem-W`), Jack Kit-tai Wong(:user:`jack-ktw`).
 
 Bug fixes
 ^^^^^^^^^
 * Fix installation instructions in the Contributing guide (:issue:`2088`, :pull:`2089`).
+* Fixed parameter order in typing.cast() causing intermittent errors in solar_zenith_angle calculation. (:issue:`2097`, :pull:`2098`)
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
