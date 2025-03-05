@@ -157,9 +157,7 @@ def ensure_chunk_size(da: xr.DataArray, **minchunks: int) -> xr.DataArray:
         if toosmall.sum() > 1:
             # Many chunks are too small, merge them by groups
             fac = np.ceil(minchunk / min(chunks)).astype(int)
-            chunking[dim] = tuple(
-                sum(chunks[i : i + fac]) for i in range(0, len(chunks), fac)
-            )
+            chunking[dim] = tuple(sum(chunks[i : i + fac]) for i in range(0, len(chunks), fac))
             # Reset counter is case the last chunks are still too small
             chunks = chunking[dim]
             toosmall = np.array(chunks) < minchunk
@@ -292,9 +290,7 @@ def nan_calc_percentiles(
     return _nan_quantile(arr, quantiles, axis, alpha, beta)
 
 
-def _compute_virtual_index(
-    n: np.ndarray, quantiles: np.ndarray, alpha: float, beta: float
-):
+def _compute_virtual_index(n: np.ndarray, quantiles: np.ndarray, alpha: float, beta: float):
     """
     Compute the floating point indexes of an array for the linear interpolation of quantiles.
 
@@ -412,9 +408,7 @@ def _linear_interpolation(
     """
     diff_b_a = np.subtract(right, left)
     lerp_interpolation = np.asanyarray(np.add(left, diff_b_a * gamma))
-    np.subtract(
-        right, diff_b_a * (1 - gamma), out=lerp_interpolation, where=gamma >= 0.5
-    )
+    np.subtract(right, diff_b_a * (1 - gamma), out=lerp_interpolation, where=gamma >= 0.5)
     if lerp_interpolation.ndim == 0:
         lerp_interpolation = lerp_interpolation[()]  # unpack 0d arrays
     return lerp_interpolation
@@ -462,9 +456,7 @@ def _nan_quantile(
     valid_values_count = valid_values_count[..., np.newaxis]
     virtual_indexes = _compute_virtual_index(valid_values_count, quantiles, alpha, beta)
     virtual_indexes = np.asanyarray(virtual_indexes)
-    previous_indexes, next_indexes = _get_indexes(
-        arr, virtual_indexes, valid_values_count
-    )
+    previous_indexes, next_indexes = _get_indexes(arr, virtual_indexes, valid_values_count)
     # --- Sorting
     arr.sort(axis=DATA_AXIS)
     # --- Get values from indexes
@@ -516,8 +508,8 @@ class InputKind(IntEnum):
     QUANTIFIED = 2
     """A quantity with units, either as a string (scalar), a pint.Quantity (scalar) or a DataArray (with units set).
 
-       Annotation : ``xclim.core.utils.Quantified`` and an entry in the :py:func:`xclim.core.units.declare_units` decorator.
-       "Quantified" translates to ``str | xr.DataArray | pint.util.Quantity``.
+       Annotation : ``xclim.core.utils.Quantified`` and an entry in the :py:func:`xclim.core.units.declare_units`
+       decorator. "Quantified" translates to ``str | xr.DataArray | pint.util.Quantity``.
     """
     FREQ_STR = 3
     """A string representing an "offset alias", as defined by pandas.
@@ -600,9 +592,7 @@ def infer_kind_from_parameter(param) -> InputKind:
     The correspondence between parameters and kinds is documented in :py:class:`xclim.core.utils.InputKind`.
     """
     if param.annotation is not _empty:
-        annot = set(
-            param.annotation.replace("xarray.", "").replace("xr.", "").split(" | ")
-        )
+        annot = set(param.annotation.replace("xarray.", "").replace("xr.", "").split(" | "))
     else:
         annot = {"no_annotation"}
 
@@ -675,9 +665,7 @@ def adapt_clix_meta_yaml(  # noqa: C901
         yml = safe_load(raw)
 
     yml["realm"] = "atmos"
-    yml[
-        "doc"
-    ] = """  ===================
+    yml["doc"] = """  ===================
   CF Standard indices
   ===================
 
@@ -708,14 +696,10 @@ def adapt_clix_meta_yaml(  # noqa: C901
         data["compute"] = index_function["name"]
         if getattr(generic, data["compute"], None) is None:
             remove_ids.append(cmid)
-            print(
-                f"Indicator {cmid} uses non-implemented function {data['compute']}, removing."
-            )
+            print(f"Indicator {cmid} uses non-implemented function {data['compute']}, removing.")
             continue
 
-        if (data["output"].get("standard_name") or "").startswith(
-            "number_of_days"
-        ) or cmid == "nzero":
+        if (data["output"].get("standard_name") or "").startswith("number_of_days") or cmid == "nzero":
             remove_ids.append(cmid)
             print(
                 f"Indicator {cmid} has a 'number_of_days' standard name"
@@ -751,15 +735,11 @@ def adapt_clix_meta_yaml(  # noqa: C901
                         data["parameters"][name] = {
                             "description": param.get(
                                 "long_name",
-                                param.get(
-                                    "proposed_standard_name", param.get("standard_name")
-                                ).replace("_", " "),
+                                param.get("proposed_standard_name", param.get("standard_name")).replace("_", " "),
                             ),
                             "units": param["units"],
                         }
-                        rename_params[f"{{{name}}}"] = (
-                            f"{{{list(param['data'].keys())[0]}}}"
-                        )
+                        rename_params[f"{{{name}}}"] = f"{{{list(param['data'].keys())[0]}}}"
                     else:
                         # Value
                         data["parameters"][name] = f"{param['data']} {param['units']}"
@@ -777,9 +757,7 @@ def adapt_clix_meta_yaml(  # noqa: C901
                 methods = []
                 for i, cell_method in enumerate(val):
                     # Construct cell_method string
-                    cm = "".join(
-                        [f"{dim}: {meth}" for dim, meth in cell_method.items()]
-                    )
+                    cm = "".join([f"{dim}: {meth}" for dim, meth in cell_method.items()])
 
                     # If cell_method seems to be describing input data, and not the operation, skip.
                     if i == 0:
@@ -848,16 +826,12 @@ def _chunk_like(*inputs: xr.DataArray | xr.Dataset, chunks: dict[str, int] | Non
 
     outputs = []
     for da in inputs:
-        if isinstance(da, xr.DataArray) and isinstance(
-            da.variable, xr.core.variable.IndexVariable
-        ):
+        if isinstance(da, xr.DataArray) and isinstance(da.variable, xr.core.variable.IndexVariable):
             da = xr.DataArray(da, dims=da.dims, coords=da.coords, name=da.name)
         if not isinstance(da, xr.DataArray | xr.Dataset):
             outputs.append(da)
         else:
-            outputs.append(
-                da.chunk(**{d: c for d, c in chunks.items() if d in da.dims})
-            )
+            outputs.append(da.chunk(**{d: c for d, c in chunks.items() if d in da.dims}))
     return tuple(outputs)
 
 
@@ -867,9 +841,9 @@ def split_auxiliary_coordinates(
     """
     Split auxiliary coords from the dataset.
 
-    An auxiliary coordinate is a coordinate variable that does not define a dimension and thus is not necessarily needed for dataset alignment.
-    Any coordinate that has a name different from its dimension(s) is flagged as auxiliary.
-    All scalar coordinates are flagged as auxiliary.
+    An auxiliary coordinate is a coordinate variable that does not define a dimension and thus
+    is not necessarily needed for dataset alignment. Any coordinate that has a name different from
+    its dimension(s) is flagged as auxiliary. All scalar coordinates are flagged as auxiliary.
 
     Parameters
     ----------
@@ -896,9 +870,7 @@ def split_auxiliary_coordinates(
     >>> merged = clean.assign_coords(da.coords)
     >>> merged.identical(ds)  # True
     """
-    aux_crd_names = [
-        nm for nm, crd in obj.coords.items() if len(crd.dims) != 1 or crd.dims[0] != nm
-    ]
+    aux_crd_names = [nm for nm, crd in obj.coords.items() if len(crd.dims) != 1 or crd.dims[0] != nm]
     aux_crd_ds = obj.coords.to_dataset()[aux_crd_names]
     clean_obj = obj.drop_vars(aux_crd_names)
     return clean_obj, aux_crd_ds

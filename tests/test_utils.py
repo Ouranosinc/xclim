@@ -35,9 +35,7 @@ class TestNanCalcPercentiles:
 
     def test_calc_perc_type8(self):
         # Example array from: https://en.wikipedia.org/wiki/Percentile#The_nearest-rank_method
-        arr = np.asarray(
-            [[15.0, 20.0, 35.0, 40.0, 50.0], [15.0, 20.0, 35.0, 40.0, 50.0]]
-        )
+        arr = np.asarray([[15.0, 20.0, 35.0, 40.0, 50.0], [15.0, 20.0, 35.0, 40.0, 50.0]])
         res = nan_calc_percentiles(
             arr,
             percentiles=[40.0],
@@ -50,9 +48,7 @@ class TestNanCalcPercentiles:
 
     def test_calc_perc_2d(self):
         # Example array from: https://en.wikipedia.org/wiki/Percentile#The_nearest-rank_method
-        arr = np.asarray(
-            [[15.0, 20.0, 35.0, 40.0, 50.0], [15.0, 20.0, 35.0, 40.0, 50.0]]
-        )
+        arr = np.asarray([[15.0, 20.0, 35.0, 40.0, 50.0], [15.0, 20.0, 35.0, 40.0, 50.0]])
         res = nan_calc_percentiles(arr, percentiles=[40.0])
         # The expected is from R ` quantile(c(15.0, 20.0, 35.0, 40.0, 50.0), probs=0.4)`
         assert np.all(res[0][0] == 29)

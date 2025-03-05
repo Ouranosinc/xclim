@@ -240,9 +240,7 @@ root_doc = "index"
 
 # General information about the project.
 project = "xclim"
-copyright = (
-    f"2018-{datetime.datetime.now().year}, Ouranos Inc., Travis Logan, and contributors"
-)
+copyright = f"2018-{datetime.datetime.now().year}, Ouranos Inc., Travis Logan, and contributors"
 author = "xclim Project Development Team"
 
 # The version info for the project you're documenting, acts as replacement

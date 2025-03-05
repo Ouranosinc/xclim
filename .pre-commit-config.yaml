@@ -6,7 +6,7 @@ repos:
     rev: v3.19.1
     hooks:
       - id: pyupgrade
-        args: ['--py310-plus']
+        args: ['--py311-plus']
         exclude: 'src/xclim/core/indicator.py'
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v5.0.0
@@ -14,6 +14,12 @@ repos:
       - id: trailing-whitespace
       - id: end-of-file-fixer
         exclude: '.ipynb|.github/publish-mastodon-template.md'
+      - id: fix-byte-order-marker
+      - id: name-tests-test
+        args: [ '--pytest-test-first' ]
+      - id: no-commit-to-branch
+        args: [ '--branch', 'main' ]
+      - id: check-merge-conflict
       - id: check-json
       - id: check-toml
       - id: check-yaml
@@ -32,22 +38,20 @@ repos:
     hooks:
       - id: yamllint
         args: [ '--config-file=.yamllint.yaml' ]
-  - repo: https://github.com/psf/black-pre-commit-mirror
-    rev: 25.1.0
-    hooks:
-      - id: black
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.9.4
+    rev: v0.9.6
     hooks:
       - id: ruff
         args: [ '--fix', '--show-fixes' ]
+      - id: ruff-format
+        exclude: '(src/xclim/indices/__init__.py|docs/installation.rst)'
   - repo: https://github.com/pylint-dev/pylint
     rev: v3.3.4
     hooks:
       - id: pylint
         args: [ '--rcfile=.pylintrc.toml', '--errors-only', '--jobs=0', '--disable=import-error' ]
   - repo: https://github.com/pycqa/flake8
-    rev: 7.1.1
+    rev: 7.1.2
     hooks:
       - id: flake8
         additional_dependencies: [ 'flake8-rst-docstrings ']
@@ -56,14 +60,6 @@ repos:
     rev: 'v2.14'
     hooks:
       - id: vulture
-  - repo: https://github.com/nbQA-dev/nbQA
-    rev: 1.9.1
-    hooks:
-      - id: nbqa-pyupgrade
-        args: [ '--py310-plus' ]
-        additional_dependencies: [ 'pyupgrade==3.19.0' ]
-      - id: nbqa-black
-        additional_dependencies: [ 'black==24.10.0' ]
   - repo: https://github.com/kynan/nbstripout
     rev: 0.8.1
     hooks:
@@ -91,8 +87,7 @@ repos:
     hooks:
       - id: blackdoc
         additional_dependencies: [ 'black==25.1.0' ]
-        exclude: '(src/xclim/indices/__init__.py|docs/installation.rst)'
-      - id: blackdoc-autoupdate-black
+        exclude: '(.py|docs/installation.rst)'
   - repo: https://github.com/codespell-project/codespell
     rev: v2.4.1
     hooks:

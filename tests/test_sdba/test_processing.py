@@ -47,8 +47,7 @@ def test_jitter_under_thresh():
     assert da[0] > 0
     np.testing.assert_allclose(da[1:], out[1:])
     assert (
-        "jitter(x=<array>, lower='1 K', upper=None, minimum=None, maximum=None) - xclim version"
-        in out.attrs["history"]
+        "jitter(x=<array>, lower='1 K', upper=None, minimum=None, maximum=None) - xclim version" in out.attrs["history"]
     )
 
 
@@ -90,12 +89,7 @@ def test_adapt_freq(use_dask, random):
     np.testing.assert_allclose(dP0_out, 0.5, atol=0.1)
 
     # Assert that corrected values were generated in the range ]1, 20 + tol[
-    corrected = (
-        input_zeros.where(input_zeros > 1)
-        .stack(flat=["lat", "time"])
-        .reset_index("flat")
-        .dropna("flat")
-    )
+    corrected = input_zeros.where(input_zeros > 1).stack(flat=["lat", "time"]).reset_index("flat").dropna("flat")
     assert ((corrected < 20.1) & (corrected > 1)).all()
 
     # Assert that non-corrected values are untouched
@@ -186,9 +180,9 @@ def test_reordering():
 
 
 def test_reordering_with_window():
-    time = list(
-        xr.date_range("2000-01-01", "2000-01-04", freq="D", calendar="noleap")
-    ) + list(xr.date_range("2001-01-01", "2001-01-04", freq="D", calendar="noleap"))
+    time = list(xr.date_range("2000-01-01", "2000-01-04", freq="D", calendar="noleap")) + list(
+        xr.date_range("2001-01-01", "2001-01-04", freq="D", calendar="noleap")
+    )
 
     x = xr.DataArray(
         np.arange(1, 9, 1),
@@ -230,23 +224,15 @@ def test_to_additive(pr_series, hurs_series):
     # logit
     hurs = hurs_series(np.array([0, 1e-3, 90, 100]))
 
-    hurslogit = to_additive_space(
-        hurs, lower_bound="0 %", trans="logit", upper_bound="100 %"
-    )
-    np.testing.assert_allclose(
-        hurslogit, [-np.inf, -11.5129154649, 2.197224577, np.inf]
-    )
+    hurslogit = to_additive_space(hurs, lower_bound="0 %", trans="logit", upper_bound="100 %")
+    np.testing.assert_allclose(hurslogit, [-np.inf, -11.5129154649, 2.197224577, np.inf])
     assert hurslogit.attrs["sdba_transform"] == "logit"
     assert hurslogit.attrs["sdba_transform_units"] == "%"
 
     with xr.set_options(keep_attrs=True):
         hursscl = hurs * 4 + 200
-    hurslogit2 = to_additive_space(
-        hursscl, trans="logit", lower_bound="2", upper_bound="6"
-    )
-    np.testing.assert_allclose(
-        hurslogit2, [-np.inf, -11.5129154649, 2.197224577, np.inf]
-    )
+    hurslogit2 = to_additive_space(hursscl, trans="logit", lower_bound="2", upper_bound="6")
+    np.testing.assert_allclose(hurslogit2, [-np.inf, -11.5129154649, 2.197224577, np.inf])
     assert hurslogit2.attrs["sdba_transform_lower"] == 200.0
     assert hurslogit2.attrs["sdba_transform_upper"] == 600.0
 
@@ -255,25 +241,19 @@ def test_from_additive(pr_series, hurs_series):
     # log
     pr = pr_series(np.array([0, 1e-5, 1, np.e**10]))
     with units.context("hydro"):
-        pr2 = from_additive_space(
-            to_additive_space(pr, lower_bound="0 mm/d", trans="log")
-        )
+        pr2 = from_additive_space(to_additive_space(pr, lower_bound="0 mm/d", trans="log"))
     np.testing.assert_allclose(pr[1:], pr2[1:])
     pr2.attrs.pop("history")
     assert pr.attrs == pr2.attrs
 
     # logit
     hurs = hurs_series(np.array([0, 1e-5, 0.9, 1]))
-    hurs2 = from_additive_space(
-        to_additive_space(hurs, lower_bound="0 %", trans="logit", upper_bound="100 %")
-    )
+    hurs2 = from_additive_space(to_additive_space(hurs, lower_bound="0 %", trans="logit", upper_bound="100 %"))
     np.testing.assert_allclose(hurs[1:-1], hurs2[1:-1])
 
 
 def test_normalize(tas_series, random):
-    tas = tas_series(
-        random.standard_normal((int(365.25 * 36),)) + 273.15, start="2000-01-01"
-    )
+    tas = tas_series(random.standard_normal((int(365.25 * 36),)) + 273.15, start="2000-01-01")
 
     xp, norm = normalize(tas, group="time.dayofyear")
     np.testing.assert_allclose(norm, 273.15, atol=1)

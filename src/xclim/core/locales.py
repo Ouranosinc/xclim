@@ -183,9 +183,7 @@ def get_local_attrs(
         indicator = [indicator]
 
     if not append_locale_name and len(locales) > 1:
-        raise ValueError(
-            "`append_locale_name` cannot be False if multiple locales are requested."
-        )
+        raise ValueError("`append_locale_name` cannot be False if multiple locales are requested.")
 
     attrs = {}
     for locale in locales:
@@ -229,9 +227,7 @@ def get_local_formatter(
         mods = attrs_mapping.pop("modifiers")
         return AttrFormatter(attrs_mapping, mods)
 
-    warnings.warn(
-        "No `attrs_mapping` entry found for locale {loc_name}, using default (english) formatter."
-    )
+    warnings.warn("No `attrs_mapping` entry found for locale {loc_name}, using default (english) formatter.")
     return default_formatter
 
 
@@ -251,9 +247,7 @@ class UnavailableLocaleError(ValueError):
         )
 
 
-def read_locale_file(
-    filename, module: str | None = None, encoding: str = "UTF8"
-) -> dict[str, dict]:
+def read_locale_file(filename, module: str | None = None, encoding: str = "UTF8") -> dict[str, dict]:
     """
     Read a locale file (.json) and return its dictionary.
 
@@ -278,10 +272,7 @@ def read_locale_file(
         locdict = json.load(f)
 
     if module is not None:
-        locdict = {
-            (k if k == "attrs_mapping" else f"{module}.{k}"): v
-            for k, v in locdict.items()
-        }
+        locdict = {(k if k == "attrs_mapping" else f"{module}.{k}"): v for k, v in locdict.items()}
     return locdict
 
 

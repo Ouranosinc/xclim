@@ -6,7 +6,6 @@ Uncertainty Partitioning
 This module implements methods and tools meant to partition climate projection uncertainties into different components.
 """
 
-
 from __future__ import annotations
 
 import numpy as np
@@ -106,9 +105,7 @@ def hawkins_sutton(
         raise ValueError("This algorithm expects annual time series.")
 
     if not {"time", "scenario", "model"}.issubset(da.dims):
-        raise ValueError(
-            "DataArray dimensions should include 'time', 'scenario' and 'model'."
-        )
+        raise ValueError("DataArray dimensions should include 'time', 'scenario' and 'model'.")
 
     # Confirm the same models have data for all scenarios
     check = da.notnull().any("time").all("scenario")
@@ -122,21 +119,14 @@ def hawkins_sutton(
         # Fit 4th order polynomial to smooth natural fluctuations
         # Note that the order of the polynomial has a substantial influence on the results.
         fit = da.polyfit(dim="time", deg=4, skipna=True)
-        sm = xr.polyval(coord=da.time, coeffs=fit.polyfit_coefficients).where(
-            da.notnull()
-        )
+        sm = xr.polyval(coord=da.time, coeffs=fit.polyfit_coefficients).where(da.notnull())
 
     # Decadal mean residuals
     res = (da - sm).rolling(time=10, center=True).mean()
 
     # Individual model variance after 2000: V
     # Note that the historical data is the same for all scenarios.
-    nv_u = (
-        res.sel(time=slice("2000", None))
-        .var(dim=("scenario", "time"))
-        .weighted(weights)
-        .mean("model")
-    )
+    nv_u = res.sel(time=slice("2000", None)).var(dim=("scenario", "time")).weighted(weights).mean("model")
 
     # Compute baseline average
     ref = sm.sel(time=slice(*baseline)).mean(dim="time")
@@ -241,25 +231,16 @@ def lafferty_sriver(
         raise ValueError("This algorithm expects annual time series.")
 
     if not {"time", "scenario", "model", "downscaling"}.issubset(da.dims):
-        raise ValueError(
-            "DataArray dimensions should include 'time', 'scenario', 'downscaling' and 'model'."
-        )
+        raise ValueError("DataArray dimensions should include 'time', 'scenario', 'downscaling' and 'model'.")
 
     if sm is None:
         # Fit a 4th order polynomial
         fit = da.polyfit(dim="time", deg=4, skipna=True)
-        sm = xr.polyval(coord=da.time, coeffs=fit.polyfit_coefficients).where(
-            da.notnull()
-        )
+        sm = xr.polyval(coord=da.time, coeffs=fit.polyfit_coefficients).where(da.notnull())
 
     # "Interannual variability is then estimated as the centered rolling 11-year variance of the difference
     # between the extracted forced response and the raw outputs, averaged over all outputs."
-    nv_u = (
-        (da - sm)
-        .rolling(time=11, center=True)
-        .var()
-        .mean(dim=["scenario", "model", "downscaling"])
-    )
+    nv_u = (da - sm).rolling(time=11, center=True).var().mean(dim=["scenario", "model", "downscaling"])
 
     # Scenario uncertainty: U_s(t)
     if bb13:
@@ -278,17 +259,13 @@ def lafferty_sriver(
 
     # Downscaling uncertainty: U_d(t)
     dw = sm.count("downscaling")
-    downscaling_u = (
-        sm.var(dim="downscaling").weighted(dw).mean(dim=["scenario", "model"])
-    )
+    downscaling_u = sm.var(dim="downscaling").weighted(dw).mean(dim=["scenario", "model"])
 
     # Total uncertainty: T(t)
     total = nv_u + scenario_u + model_u + downscaling_u
 
     # Create output array with the uncertainty components
-    u = pd.Index(
-        ["model", "scenario", "downscaling", "variability", "total"], name="uncertainty"
-    )
+    u = pd.Index(["model", "scenario", "downscaling", "variability", "total"], name="uncertainty")
     uncertainty = xr.concat([model_u, scenario_u, downscaling_u, nv_u, total], dim=u)
 
     # Keep a trace of the elements for each uncertainty component
@@ -365,9 +342,7 @@ def general_partition(
     if sm == "poly":
         # Fit a 4th order polynomial
         fit = da.polyfit(dim="time", deg=4, skipna=True)
-        sm = xr.polyval(coord=da.time, coeffs=fit.polyfit_coefficients).where(
-            da.notnull()
-        )
+        sm = xr.polyval(coord=da.time, coeffs=fit.polyfit_coefficients).where(da.notnull())
     elif isinstance(sm, xr.DataArray):
         sm = sm
     else:

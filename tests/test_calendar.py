@@ -30,9 +30,7 @@ from xclim.core.calendar import (
 )
 
 
-@pytest.fixture(
-    params=[dict(start="2004-01-01T12:07:01", periods=27, freq="3MS")], ids=["3MS"]
-)
+@pytest.fixture(params=[dict(start="2004-01-01T12:07:01", periods=27, freq="3MS")], ids=["3MS"])
 def time_range_kwargs(request):
     return request.param
 
@@ -48,9 +46,7 @@ def cftime_index(time_range_kwargs):
 
 
 def da(index):
-    return xr.DataArray(
-        np.arange(100.0, 100.0 + index.size), coords=[index], dims=["time"]
-    )
+    return xr.DataArray(np.arange(100.0, 100.0 + index.size), coords=[index], dims=["time"])
 
 
 @pytest.mark.parametrize("freq", ["6480h", "302431min", "23144781s"])
@@ -79,9 +75,7 @@ def test_time_bnds_irregular(typ):
     if typ == "xr":
         start = xr.cftime_range("1990-01-01", periods=24, freq="MS")
         # Well. xarray string parsers do not support sub-second resolution, but cftime does.
-        end = xr.cftime_range(
-            "1990-01-01T23:59:59", periods=24, freq="ME"
-        ) + pd.Timedelta(0.999999, "s")
+        end = xr.cftime_range("1990-01-01T23:59:59", periods=24, freq="ME") + pd.Timedelta(0.999999, "s")
     elif typ == "pd":
         start = pd.date_range("1990-01-01", periods=24, freq="MS")
         end = pd.date_range("1990-01-01 23:59:59.999999999", periods=24, freq="ME")
@@ -265,22 +259,14 @@ def test_convert_calendar_and_doy():
     doy = xr.DataArray(
         [31, 32, 336, 364.23, 365],
         dims=("time",),
-        coords={
-            "time": xr.date_range("2000-01-01", periods=5, freq="YS", calendar="noleap")
-        },
+        coords={"time": xr.date_range("2000-01-01", periods=5, freq="YS", calendar="noleap")},
         attrs={"is_dayofyear": 1, "calendar": "noleap"},
     )
-    out = convert_doy(doy, target_cal="360_day").convert_calendar(
-        "360_day", align_on="date"
-    )
+    out = convert_doy(doy, target_cal="360_day").convert_calendar("360_day", align_on="date")
     # out = convert_calendar(doy, "360_day", align_on="date", doy=True)
-    np.testing.assert_allclose(
-        out, [30.575342, 31.561644, 331.39726, 359.240548, 360.0]
-    )
+    np.testing.assert_allclose(out, [30.575342, 31.561644, 331.39726, 359.240548, 360.0])
     assert out.time.dt.calendar == "360_day"
-    out = convert_doy(doy, target_cal="360_day", align_on="date").convert_calendar(
-        "360_day", align_on="date"
-    )
+    out = convert_doy(doy, target_cal="360_day", align_on="date").convert_calendar("360_day", align_on="date")
     np.testing.assert_array_equal(out, [np.nan, 31, 332, 360.23, np.nan])
     assert out.time.dt.calendar == "360_day"
 
@@ -449,9 +435,7 @@ def test_convert_doy():
     doy = xr.DataArray(
         [31, 32, 336, 364.23, 365],
         dims=("time",),
-        coords={
-            "time": xr.date_range("2000-01-01", periods=5, freq="YS", calendar="noleap")
-        },
+        coords={"time": xr.date_range("2000-01-01", periods=5, freq="YS", calendar="noleap")},
         attrs={"is_dayofyear": 1, "calendar": "noleap"},
     )
 
@@ -459,27 +443,19 @@ def test_convert_doy():
     np.testing.assert_array_equal(out, [np.nan, 31, 332, 360.23, np.nan])
     assert out.time.dt.calendar == "noleap"
     out = convert_doy(doy, "360_day", align_on="year")
-    np.testing.assert_allclose(
-        out, [30.575342, 31.561644, 331.39726, 359.240548, 360.0]
-    )
+    np.testing.assert_allclose(out, [30.575342, 31.561644, 331.39726, 359.240548, 360.0])
 
     doy = xr.DataArray(
         [31, 200.48, 190, 60, 300.54],
         dims=("time",),
-        coords={
-            "time": xr.date_range(
-                "2000-01-01", periods=5, freq="YS-JUL", calendar="standard"
-            )
-        },
+        coords={"time": xr.date_range("2000-01-01", periods=5, freq="YS-JUL", calendar="standard")},
         attrs={"is_dayofyear": 1, "calendar": "standard"},
     ).expand_dims(lat=[10, 20, 30])
 
     out = convert_doy(doy, "noleap", align_on="date")
     np.testing.assert_array_equal(out.isel(lat=0), [31, 200.48, 190, np.nan, 299.54])
     out = convert_doy(doy, "noleap", align_on="year")
-    np.testing.assert_allclose(
-        out.isel(lat=0), [31.0, 200.48, 190.0, 59.83607, 299.71885]
-    )
+    np.testing.assert_allclose(out.isel(lat=0), [31.0, 200.48, 190.0, 59.83607, 299.71885])
 
 
 @pytest.mark.parametrize("calendar", ["standard", None])
@@ -490,9 +466,7 @@ def test_convert_doy():
 def test_stack_periods(tas_series, calendar, w, s, m, f, ss):
     da = tas_series(np.arange(365 * 50), start="2000-01-01", calendar=calendar)
 
-    da_stck = stack_periods(
-        da, window=w, stride=s, min_length=m, freq=f, align_days=False
-    )
+    da_stck = stack_periods(da, window=w, stride=s, min_length=m, freq=f, align_days=False)
 
     assert "period_length" in da_stck.coords
 

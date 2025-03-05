@@ -105,11 +105,7 @@ class TestColdSpellDurationIndex:
     def test_simple(self, tasmin_series, random):
         i = 3650
         A = 10.0
-        tn = (
-            np.zeros(i)
-            + A * np.sin(np.arange(i) / 365.0 * 2 * np.pi)
-            + 0.1 * random.random(i)
-        )
+        tn = np.zeros(i) + A * np.sin(np.arange(i) / 365.0 * 2 * np.pi) + 0.1 * random.random(i)
         tn[10:20] -= 2
         tn = tasmin_series(tn)
         tn10 = percentile_doy(tn, per=10).sel(percentiles=10)
@@ -254,9 +250,7 @@ class TestAgroclimaticIndices:
         tn = tasmin_series(np.array([-10, 5, 4, 3, 10]) + K2C)
         tx = tasmax_series(np.array([-5, 9, 10, 16, 20]) + K2C)
 
-        out = xci.corn_heat_units(
-            tn, tx, thresh_tasmin="4.44 degC", thresh_tasmax="10 degC"
-        )
+        out = xci.corn_heat_units(tn, tx, thresh_tasmin="4.44 degC", thresh_tasmax="10 degC")
         np.testing.assert_allclose(out, [0, 0.504, 0, 8.478, 17.454])
 
     @pytest.mark.parametrize(
@@ -268,9 +262,7 @@ class TestAgroclimaticIndices:
         ],
     )
     def test_bedd(self, method, end_date, deg_days, max_deg_days):
-        time_data = xr.date_range(
-            "1992-01-01", "1995-06-01", freq="D", calendar="standard"
-        )
+        time_data = xr.date_range("1992-01-01", "1995-06-01", freq="D", calendar="standard")
         tn = xr.DataArray(
             np.zeros(time_data.size) + 10 + K2C,
             dims="time",
@@ -292,9 +284,7 @@ class TestAgroclimaticIndices:
             attrs=dict(units="K"),
         )
 
-        lat = xr.DataArray(
-            [35, 45], dims=("lat",), name="lat", attrs={"units": "degrees_north"}
-        )
+        lat = xr.DataArray([35, 45], dims=("lat",), name="lat", attrs={"units": "degrees_north"})
         high_lat = xr.DataArray(48, name="lat", attrs={"units": "degrees_north"})
 
         bedd = xci.biologically_effective_degree_days(
@@ -326,23 +316,13 @@ class TestAgroclimaticIndices:
         )
 
         if method == "jones":
-            np.testing.assert_array_less(
-                bedd[1], bedd[0]
-            )  # Leap-year has slightly higher values
-            np.testing.assert_allclose(
-                bedd[:3], np.array([deg_days, deg_days, deg_days]), rtol=6e-4
-            )
-            np.testing.assert_allclose(
-                bedd_hot[:3], [max_deg_days, max_deg_days, max_deg_days], rtol=0.15
-            )
+            np.testing.assert_array_less(bedd[1], bedd[0])  # Leap-year has slightly higher values
+            np.testing.assert_allclose(bedd[:3], np.array([deg_days, deg_days, deg_days]), rtol=6e-4)
+            np.testing.assert_allclose(bedd_hot[:3], [max_deg_days, max_deg_days, max_deg_days], rtol=0.15)
 
         else:
-            np.testing.assert_allclose(
-                bedd[:3], np.array([deg_days, deg_days, deg_days])
-            )
-            np.testing.assert_array_equal(
-                bedd_hot[:3], [max_deg_days, max_deg_days, max_deg_days]
-            )
+            np.testing.assert_allclose(bedd[:3], np.array([deg_days, deg_days, deg_days]))
+            np.testing.assert_array_equal(bedd_hot[:3], [max_deg_days, max_deg_days, max_deg_days])
             if method == "gladstones":
                 np.testing.assert_array_less(bedd, bedd_high_lat)
             if method == "icclim":
@@ -362,11 +342,7 @@ class TestAgroclimaticIndices:
 
         tas = tas_series(
             np.array(
-                num_cu_0 * [1.1]
-                + num_cu_05 * [2.0]
-                + num_cu_1 * [5.6]
-                + num_cu_min_05 * [16.0]
-                + num_cu_min_1 * [20.0]
+                num_cu_0 * [1.1] + num_cu_05 * [2.0] + num_cu_1 * [5.6] + num_cu_min_05 * [16.0] + num_cu_min_1 * [20.0]
             )
             + K2C,
             freq="h",
@@ -415,9 +391,7 @@ class TestAgroclimaticIndices:
         lti = xci.latitude_temperature_index(tas=ds.tas, lat_factor=lat_factor)
         assert lti.where(abs(lti.lat) > lat_factor).sum() == 0
 
-        lti = lti.where(abs(lti.lat) <= lat_factor, drop=True).where(
-            lti.lon <= 35, drop=True
-        )
+        lti = lti.where(abs(lti.lat) <= lat_factor, drop=True).where(lti.lon <= 35, drop=True)
         lti = lti.groupby_bins(lti.lon, 1).mean().groupby_bins(lti.lat, 5).mean()
         np.testing.assert_array_almost_equal(lti[0].squeeze(), np.array(values), 2)
 
@@ -464,17 +438,13 @@ class TestAgroclimaticIndices:
 
         mg = tas_series(mg + K2C)
         out = xci.qian_weighted_mean_average(mg, dim="time")
-        np.testing.assert_array_equal(
-            out[7:12], [273.15, 273.2125, 273.525, 274.3375, 275.775]
-        )
+        np.testing.assert_array_equal(out[7:12], [273.15, 273.2125, 273.525, 274.3375, 275.775])
         assert out[50].values < (10 + K2C)
         assert out[51].values > K2C
         assert out.attrs["units"] == "K"
 
     @pytest.mark.parametrize("method,expected", [("bootsma", 2267), ("qian", 2252.0)])
-    def test_effective_growing_degree_days(
-        self, tasmax_series, tasmin_series, method, expected
-    ):
+    def test_effective_growing_degree_days(self, tasmax_series, tasmin_series, method, expected):
         mg = np.zeros(547)
 
         # False start
@@ -490,9 +460,7 @@ class TestAgroclimaticIndices:
         mx = tasmax_series(mg + K2C + 10)
         mn = tasmin_series(mg + K2C - 10)
 
-        out = xci.effective_growing_degree_days(
-            tasmax=mx, tasmin=mn, method=method, freq="YS"
-        )
+        out = xci.effective_growing_degree_days(tasmax=mx, tasmin=mn, method=method, freq="YS")
 
         np.testing.assert_array_equal(out, np.array([np.nan, expected]))
 
@@ -696,14 +664,8 @@ class TestStandardizedIndices:
             ),
         ],
     )
-    def test_standardized_precipitation_index(
-        self, open_dataset, freq, window, dist, method, values, diff_tol
-    ):
-        if (
-            method == "ML"
-            and freq == "D"
-            and Version(__numpy_version__) < Version("2.0.0")
-        ):
+    def test_standardized_precipitation_index(self, open_dataset, freq, window, dist, method, values, diff_tol):
+        if method == "ML" and freq == "D" and Version(__numpy_version__) < Version("2.0.0"):
             pytest.skip("Skipping SPI/ML/D on older numpy")
 
         # change `dist` to a lmoments3 object if needed
@@ -718,9 +680,7 @@ class TestStandardizedIndices:
             ds = ds.convert_calendar("366_day", missing=np.nan)
         elif freq == "W":
             # only standard calendar supported with freq="W"
-            ds = ds.convert_calendar(
-                "standard", missing=np.nan, align_on="year", use_cftime=False
-            )
+            ds = ds.convert_calendar("standard", missing=np.nan, align_on="year", use_cftime=False)
         pr = ds.pr.sel(time=slice("1998", "2000"))
         pr_cal = ds.pr.sel(time=slice("1950", "1980"))
         fitkwargs = {}
@@ -844,18 +804,10 @@ class TestStandardizedIndices:
     def test_standardized_precipitation_evapotranspiration_index(
         self, open_dataset, freq, window, dist, method, values, diff_tol
     ):
-        if (
-            method == "ML"
-            and freq == "D"
-            and Version(__numpy_version__) < Version("2.0.0")
-        ):
+        if method == "ML" and freq == "D" and Version(__numpy_version__) < Version("2.0.0"):
             pytest.skip("Skipping SPI/ML/D on older numpy")
 
-        ds = (
-            open_dataset("sdba/CanESM2_1950-2100.nc")
-            .isel(location=1)
-            .sel(time=slice("1950", "2000"))
-        )
+        ds = open_dataset("sdba/CanESM2_1950-2100.nc").isel(location=1).sel(time=slice("1950", "2000"))
         pr = ds.pr
         # generate water budget
         with xr.set_options(keep_attrs=True):
@@ -1006,9 +958,7 @@ class TestStandardizedIndices:
             ),
         ],
     )
-    def test_standardized_streamflow_index(
-        self, open_dataset, freq, window, dist, method, values, diff_tol
-    ):
+    def test_standardized_streamflow_index(self, open_dataset, freq, window, dist, method, values, diff_tol):
         ds = open_dataset("Raven/q_sim.nc")
         q = ds.q_obs.rename("q")
         q_cal = ds.q_sim.rename("q").fillna(ds.q_sim.mean())
@@ -1136,14 +1086,8 @@ class TestStandardizedIndices:
             ),
         ],
     )
-    def test_standardized_groundwater_index(
-        self, open_dataset, freq, window, dist, method, values, diff_tol
-    ):
-        if (
-            method == "ML"
-            and freq == "D"
-            and Version(__numpy_version__) < Version("2.0.0")
-        ):
+    def test_standardized_groundwater_index(self, open_dataset, freq, window, dist, method, values, diff_tol):
+        if method == "ML" and freq == "D" and Version(__numpy_version__) < Version("2.0.0"):
             pytest.skip("Skipping SPI/ML/D on older numpy")
         ds = open_dataset("sdba/CanESM2_1950-2100.nc").isel(location=1)
         if freq == "D":
@@ -1151,9 +1095,7 @@ class TestStandardizedIndices:
             ds = ds.convert_calendar("366_day", missing=np.nan)
         elif freq == "W":
             # only standard calendar supported with freq="W"
-            ds = ds.convert_calendar(
-                "standard", missing=np.nan, align_on="year", use_cftime=False
-            )
+            ds = ds.convert_calendar("standard", missing=np.nan, align_on="year", use_cftime=False)
         gwl0 = rate2amount(convert_units_to(ds.pr, "mm/d"))
 
         gwl = gwl0.sel(time=slice("1998", "2000"))
@@ -1189,11 +1131,7 @@ class TestStandardizedIndices:
     )
     def test_standardized_index_modularity(self, open_dataset, tmp_path, indexer):
         freq, window, dist, method = "MS", 6, "gamma", "APP"
-        ds = (
-            open_dataset("sdba/CanESM2_1950-2100.nc")
-            .isel(location=1)
-            .sel(time=slice("1950", "2000"))
-        )
+        ds = open_dataset("sdba/CanESM2_1950-2100.nc").isel(location=1).sel(time=slice("1950", "2000"))
         pr = ds.pr
         # generate water budget
         with xr.set_options(keep_attrs=True):
@@ -1237,12 +1175,10 @@ class TestStandardizedIndices:
             **indexer,
         ).sel(time=slice("1998", "2000"))
 
-        # In the previous computation, the first {window-1} values are NaN because the rolling is performed on the period [1998,2000].
-        # Here, the computation is performed on the period [1950,2000], *then* subsetted to [1998,2000], so it doesn't have NaNs
-        # for the first values
-        nan_window = xr.cftime_range(
-            spei1.time.values[0], periods=window - 1, freq=freq
-        )
+        # In the previous computation, the first {window-1} values are NaN because the rolling is performed
+        # on the period [1998,2000]. Here, the computation is performed on the period [1950,2000],
+        # *then* subsetted to [1998,2000], so it doesn't have NaNs for the first values
+        nan_window = xr.cftime_range(spei1.time.values[0], periods=window - 1, freq=freq)
         spei2.loc[{"time": spei2.time.isin(nan_window)}] = (
             np.nan
         )  # select time based on the window is necessary when `drop=True`
@@ -1251,11 +1187,7 @@ class TestStandardizedIndices:
 
     def test_zero_inflated(self, open_dataset):
         # This tests that the zero_inflated option makes a difference with zero inflated data
-        pr = (
-            open_dataset("sdba/CanESM2_1950-2100.nc")
-            .isel(location=1)
-            .sel(time=slice("1950", "1980"))
-        ).pr
+        pr = (open_dataset("sdba/CanESM2_1950-2100.nc").isel(location=1).sel(time=slice("1950", "1980"))).pr
         # july 1st (doy=180) with 10 years with zero precipitation
         pr[{"time": slice(179, 365 * 11, 365)}] = 0
         spid = {}
@@ -1274,19 +1206,11 @@ class TestStandardizedIndices:
                 pr, params=params, cal_start=None, cal_end=None, **input_params
             )
             # drop doys other than 180 that will be NaNs
-            spid[zero_inflated] = spid[zero_inflated].where(
-                spid[zero_inflated].notnull(), drop=True
-            )
-        np.testing.assert_equal(
-            np.all(np.not_equal(spid[False].values, spid[True].values)), True
-        )
+            spid[zero_inflated] = spid[zero_inflated].where(spid[zero_inflated].notnull(), drop=True)
+        np.testing.assert_equal(np.all(np.not_equal(spid[False].values, spid[True].values)), True)
 
     def test_PWM_and_fitkwargs(self, open_dataset):
-        pr = (
-            open_dataset("sdba/CanESM2_1950-2100.nc")
-            .isel(location=1)
-            .sel(time=slice("1950", "1980"))
-        ).pr
+        pr = (open_dataset("sdba/CanESM2_1950-2100.nc").isel(location=1).sel(time=slice("1950", "1980"))).pr
 
         lmom = pytest.importorskip("lmoments3.distr")
         # for now, only one function used
@@ -1301,12 +1225,8 @@ class TestStandardizedIndices:
             fitkwargs=fitkwargs,
         )
         # this should not cause a problem
-        params_d0 = xci.stats.standardized_index_fit_params(pr, **input_params).isel(
-            dayofyear=0
-        )
-        np.testing.assert_allclose(
-            params_d0, np.array([5.63e-01, 0, 3.37e-05]), rtol=0, atol=2e-2
-        )
+        params_d0 = xci.stats.standardized_index_fit_params(pr, **input_params).isel(dayofyear=0)
+        np.testing.assert_allclose(params_d0, np.array([5.63e-01, 0, 3.37e-05]), rtol=0, atol=2e-2)
         # this should cause a problem
         fitkwargs["fscale"] = 1
         input_params["fitkwargs"] = fitkwargs
@@ -1339,9 +1259,7 @@ class TestDailyFreezeThawCycles:
 
         mn = tasmin_series(mn + K2C)
         mx = tasmax_series(mx + K2C)
-        out = xci.multiday_temperature_swing(
-            mn, mx, **thresholds, op="sum", window=1, freq="ME"
-        )
+        out = xci.multiday_temperature_swing(mn, mx, **thresholds, op="sum", window=1, freq="ME")
         np.testing.assert_array_equal(out[:2], [5, 1])
         np.testing.assert_array_equal(out[2:], 0)
 
@@ -1496,9 +1414,7 @@ class TestDaysOverPrecipThresh:
         np.testing.assert_array_almost_equal(out[0], 4)
 
         out = xci.fraction_over_precip_thresh(pr, per, thresh="2 kg/m**2/s")
-        np.testing.assert_array_almost_equal(
-            out[0], (3 + 4 + 6 + 7) / (3 + 4 + 5 + 6 + 7)
-        )
+        np.testing.assert_array_almost_equal(out[0], (3 + 4 + 6 + 7) / (3 + 4 + 5 + 6 + 7))
 
     def test_quantile(self, pr_series):
         a = np.zeros(365)
@@ -1511,9 +1427,7 @@ class TestDaysOverPrecipThresh:
         per.attrs["units"] = "kg m-2 s-1"  # This won't be needed with xarray 0.13
 
         out = xci.days_over_precip_thresh(pr, per, thresh="2 kg/m**2/s")
-        np.testing.assert_array_almost_equal(
-            out[0], 2
-        )  # Only days 6 and 7 meet criteria.
+        np.testing.assert_array_almost_equal(out[0], 2)  # Only days 6 and 7 meet criteria.
 
     def test_nd(self, pr_ndseries):
         pr = pr_ndseries(np.ones((300, 2, 3)))
@@ -1863,7 +1777,6 @@ class TestHeatWaveTotalLength:
 
 
 class TestHolidayIndices:
-
     def test_xmas_days_simple(self, snd_series):
         # 5ish years of data, starting from 2000-07-01
         snd = snd_series(np.zeros(365 * 5), units="cm")
@@ -1922,9 +1835,7 @@ class TestHolidayIndices:
         out1 = xci.holiday_snow_and_snowfall_days(snd, prsn)
         np.testing.assert_array_equal(out1, [1, 0, 0, 0, 1])
 
-        out2 = xci.holiday_snow_and_snowfall_days(
-            snd, prsn, snd_thresh="15 mm", prsn_thresh="0.5 mm"
-        )
+        out2 = xci.holiday_snow_and_snowfall_days(snd, prsn, snd_thresh="15 mm", prsn_thresh="0.5 mm")
         np.testing.assert_array_equal(out2, [1, 1, 1, 0, 1])
 
         out3 = xci.holiday_snow_and_snowfall_days(
@@ -1968,9 +1879,7 @@ class TestHotSpellFrequency:
         a[5:35] = 31
         tx = tasmax_series(a + K2C).chunk()
 
-        hsf = xci.hot_spell_frequency(
-            tx, resample_before_rl=resample_before_rl, freq="MS"
-        ).load()
+        hsf = xci.hot_spell_frequency(tx, resample_before_rl=resample_before_rl, freq="MS").load()
         assert hsf[1] == expected
 
     @pytest.mark.parametrize("resample_map", [True, False])
@@ -2270,9 +2179,7 @@ class TestMaximumConsecutiveDryDays:
         a = np.zeros(365) + 10
         a[5:35] = 0
         pr = pr_series(a).chunk()
-        out = xci.maximum_consecutive_dry_days(
-            pr, freq="ME", resample_before_rl=resample_before_rl
-        ).load()
+        out = xci.maximum_consecutive_dry_days(pr, freq="ME", resample_before_rl=resample_before_rl).load()
         assert out[0] == expected
 
 
@@ -2289,9 +2196,7 @@ class TestMaximumConsecutiveTxDays:
 class TestPrecipAccumulation:
     # build test data for different calendar
     time_std = pd.date_range("2000-01-01", "2010-12-31", freq="D")
-    da_std = xr.DataArray(
-        time_std.year, coords=[time_std], dims="time", attrs={"units": "mm d-1"}
-    )
+    da_std = xr.DataArray(time_std.year, coords=[time_std], dims="time", attrs={"units": "mm d-1"})
 
     # calendar 365_day and 360_day not tested for now since xarray.resample
     # does not support other calendars than standard
@@ -2313,9 +2218,7 @@ class TestPrecipAccumulation:
     def test_yearly(self):
         da_std = self.da_std
         out_std = xci.precip_accumulation(da_std)
-        target = [
-            (365 + calendar.isleap(y)) * y for y in np.unique(da_std.time.dt.year)
-        ]
+        target = [(365 + calendar.isleap(y)) * y for y in np.unique(da_std.time.dt.year)]
         np.testing.assert_allclose(out_std.values, target)
 
     def test_mixed_phases(self, pr_series, tas_series):
@@ -2329,9 +2232,7 @@ class TestPrecipAccumulation:
         tas = tas_series(tas)
 
         outsn = xci.precip_accumulation(pr, tas=tas, phase="solid", freq="ME")
-        outsn2 = xci.precip_accumulation(
-            pr, tas=tas, phase="solid", thresh="269 K", freq="ME"
-        )
+        outsn2 = xci.precip_accumulation(pr, tas=tas, phase="solid", thresh="269 K", freq="ME")
         outrn = xci.precip_accumulation(pr, tas=tas, phase="liquid", freq="ME")
 
         np.testing.assert_array_equal(outsn[0], 10 * 3600 * 24)
@@ -2342,9 +2243,7 @@ class TestPrecipAccumulation:
 class TestPrecipAverage:
     # build test data for different calendar
     time_std = pd.date_range("2000-01-01", "2010-12-31", freq="D")
-    da_std = xr.DataArray(
-        time_std.year, coords=[time_std], dims="time", attrs={"units": "mm d-1"}
-    )
+    da_std = xr.DataArray(time_std.year, coords=[time_std], dims="time", attrs={"units": "mm d-1"})
 
     # "365_day" and "360_day" calendars not tested for now since xarray.resample
     # does not support calendars other than "standard" and "*gregorian"
@@ -2380,9 +2279,7 @@ class TestPrecipAverage:
         tas = tas_series(tas)
 
         outsn = xci.precip_average(pr, tas=tas, phase="solid", freq="ME")
-        outsn2 = xci.precip_average(
-            pr, tas=tas, phase="solid", thresh="269 K", freq="ME"
-        )
+        outsn2 = xci.precip_average(pr, tas=tas, phase="solid", thresh="269 K", freq="ME")
         outrn = xci.precip_average(pr, tas=tas, phase="liquid", freq="ME")
 
         np.testing.assert_array_equal(outsn[0], 10 * 3600 * 24 / 31)
@@ -2528,9 +2425,7 @@ class TestTGXN90p:
 class TestTas:
     @pytest.mark.parametrize("tasmin_units", ["K", "°C"])
     @pytest.mark.parametrize("tasmax_units", ["K", "°C"])
-    def test_tas(
-        self, tasmin_series, tasmax_series, tas_series, tasmin_units, tasmax_units
-    ):
+    def test_tas(self, tasmin_series, tasmax_series, tas_series, tasmin_units, tasmax_units):
         tas = tas_series(np.ones(10) + (K2C if tasmin_units == "K" else 0))
         tas.attrs["units"] = tasmin_units
         tasmin = tasmin_series(np.zeros(10) + (K2C if tasmin_units == "K" else 0))
@@ -2609,9 +2504,7 @@ class TestTgMaxTgMinIndices:
             (np.std, 2.72913233),
         ],
     )
-    def test_static_reduce_daily_temperature_range(
-        self, tasmin_series, tasmax_series, op, expected
-    ):
+    def test_static_reduce_daily_temperature_range(self, tasmin_series, tasmax_series, op, expected):
         tasmin, tasmax = self.static_tmin_tmax_setup(tasmin_series, tasmax_series)
         dtr = xci.daily_temperature_range(tasmin, tasmax, freq="YS", op=op)
         assert dtr.units == "K"
@@ -2640,9 +2533,7 @@ class TestTgMaxTgMinIndices:
     #     np.testing.assert_allclose(vdtr.mean(), 20, atol=10)
     #     np.testing.assert_array_less(-vdtr, [0, 0, 0, 0])
 
-    def test_static_variable_daily_temperature_range(
-        self, tasmin_series, tasmax_series
-    ):
+    def test_static_variable_daily_temperature_range(self, tasmin_series, tasmax_series):
         tasmin, tasmax = self.static_tmin_tmax_setup(tasmin_series, tasmax_series)
         dtr = xci.daily_temperature_range_variability(tasmin, tasmax, freq="YS")
 
@@ -2702,7 +2593,6 @@ class TestTgMaxTgMinIndices:
 
 
 class TestTemperatureSeasonality:
-
     def test_simple(self, tas_series):
         a = np.zeros(365)
         a = tas_series(a + K2C, start="1971-01-01")
@@ -2813,16 +2703,12 @@ class TestTempWetDryPrecipWarmColdQuarter:
         annual_cycle = np.sin(2 * np.pi * (times.dayofyear.values / 365.25 - 0.28))
         base = 10 + 15 * annual_cycle.reshape(-1, 1)
         values = base + 3 * random.standard_normal((annual_cycle.size, 1)) + K2C
-        tas = tas_series(values.squeeze(), start="2001-01-01").sel(
-            time=slice("2001", "2002")
-        )
+        tas = tas_series(values.squeeze(), start="2001-01-01").sel(time=slice("2001", "2002"))
         base = 15 * annual_cycle.reshape(-1, 1)
         values = base + 10 + 10 * random.standard_normal((annual_cycle.size, 1))
         values = values / 3600 / 24
         values[values < 0] = 0
-        pr = pr_series(values.squeeze(), start="2001-01-01").sel(
-            time=slice("2001", "2002")
-        )
+        pr = pr_series(values.squeeze(), start="2001-01-01").sel(time=slice("2001", "2002"))
         return tas, pr
 
     @pytest.mark.parametrize(
@@ -2837,9 +2723,7 @@ class TestTempWetDryPrecipWarmColdQuarter:
         ],
     )
     @pytest.mark.parametrize("use_dask", [True, False])
-    def test_tg_wetdry(
-        self, tas_series, pr_series, use_dask, freq, op, expected, random
-    ):
+    def test_tg_wetdry(self, tas_series, pr_series, use_dask, freq, op, expected, random):
         tas, pr = self.get_data(tas_series, pr_series, random)
         pr = pr.resample(time=freq).mean(keep_attrs=True)
 
@@ -2869,9 +2753,7 @@ class TestTempWetDryPrecipWarmColdQuarter:
     )
     def test_pr_warmcold(self, tas_series, pr_series, freq, op, expected, random):
         tas, pr = self.get_data(tas_series, pr_series, random)
-        pr = convert_units_to(
-            pr.resample(time=freq).mean(keep_attrs=True), "mm/d", context="hydro"
-        )
+        pr = convert_units_to(pr.resample(time=freq).mean(keep_attrs=True), "mm/d", context="hydro")
 
         tas = xci.tg_mean(tas, freq=freq)
 
@@ -2883,9 +2765,7 @@ class TestTempWarmestColdestQuarter:
     @staticmethod
     def get_data(tas_series, units="K"):
         a = np.zeros(365 * 2)
-        a = tas_series(
-            a + (K2C if units == "K" else 0), start="1971-01-01", units=units
-        )
+        a = tas_series(a + (K2C if units == "K" else 0), start="1971-01-01", units=units)
         a[(a.time.dt.season == "JJA") & (a.time.dt.year == 1971)] += 22
         a[(a.time.dt.season == "SON") & (a.time.dt.year == 1972)] += 25
         return a
@@ -2912,9 +2792,7 @@ class TestTempWarmestColdestQuarter:
     def test_celsius(self, tas_series):
         a = self.get_data(tas_series, units="°C")
 
-        a[
-            (a.time.dt.month >= 1) & (a.time.dt.month <= 3) & (a.time.dt.year == 1971)
-        ] += -15
+        a[(a.time.dt.month >= 1) & (a.time.dt.month <= 3) & (a.time.dt.year == 1971)] += -15
         a[(a.time.dt.season == "MAM") & (a.time.dt.year == 1972)] += -10
 
         out = xci.tg_mean_warmcold_quarter(a, op="warmest")
@@ -2993,13 +2871,9 @@ class TestIsothermality:
         annual_cycle = np.sin(2 * np.pi * (times.dayofyear.values / 365.25 - 0.28))
         base = 10 + 15 * annual_cycle.reshape(-1, 1)
         values = base + 3 * random.standard_normal((annual_cycle.size, 1)) + K2C
-        tasmin = tasmin_series(values.squeeze(), start="2001-01-01").sel(
-            time=slice("2001", "2002")
-        )
+        tasmin = tasmin_series(values.squeeze(), start="2001-01-01").sel(time=slice("2001", "2002"))
         values = base + 10 + 3 * random.standard_normal((annual_cycle.size, 1)) + K2C
-        tasmax = tasmax_series(values.squeeze(), start="2001-01-01").sel(
-            time=slice("2001", "2002")
-        )
+        tasmax = tasmax_series(values.squeeze(), start="2001-01-01").sel(time=slice("2001", "2002"))
 
         # weekly
         tmin = tasmin.resample(time=freq).mean(dim="time", keep_attrs=True)
@@ -3089,11 +2963,7 @@ class TestWarmSpellDurationIndex:
     def test_simple(self, tasmax_series, random):
         i = 3650
         A = 10.0
-        tx = (
-            np.zeros(i)
-            + A * np.sin(np.arange(i) / 365.0 * 2 * np.pi)
-            + 0.1 * random.random(i)
-        )
+        tx = np.zeros(i) + A * np.sin(np.arange(i) / 365.0 * 2 * np.pi) + 0.1 * random.random(i)
         tx[10:20] += 2
         tx = tasmax_series(tx)
         tx90 = percentile_doy(tx, per=90).sel(percentiles=90)
@@ -3169,14 +3039,8 @@ class TestWindConversion:
     def test_uas_vas_2_sfcwind(self):
         wind, windfromdir = xci.uas_vas_2_sfcwind(self.da_uas, self.da_vas)
 
-        assert np.all(
-            np.around(wind.values, decimals=10)
-            == np.around(self.da_wind.values / 3.6, decimals=10)
-        )
-        assert np.all(
-            np.around(windfromdir.values, decimals=10)
-            == np.around(self.da_windfromdir.values, decimals=10)
-        )
+        assert np.all(np.around(wind.values, decimals=10) == np.around(self.da_wind.values / 3.6, decimals=10))
+        assert np.all(np.around(windfromdir.values, decimals=10) == np.around(self.da_windfromdir.values, decimals=10))
 
     def test_sfcwind_2_uas_vas(self):
         uas, vas = xci.sfcwind_2_uas_vas(self.da_wind, self.da_windfromdir)
@@ -3188,15 +3052,9 @@ class TestWindConversion:
         )
 
 
-@pytest.mark.parametrize(
-    "method", ["bohren98", "tetens30", "sonntag90", "goffgratch46", "wmo08"]
-)
-@pytest.mark.parametrize(
-    "invalid_values,exp0", [("clip", 100), ("mask", np.nan), (None, 151)]
-)
-def test_relative_humidity_dewpoint(
-    tas_series, hurs_series, method, invalid_values, exp0
-):
+@pytest.mark.parametrize("method", ["bohren98", "tetens30", "sonntag90", "goffgratch46", "wmo08"])
+@pytest.mark.parametrize("invalid_values,exp0", [("clip", 100), ("mask", np.nan), (None, 151)])
+def test_relative_humidity_dewpoint(tas_series, hurs_series, method, invalid_values, exp0):
     np.testing.assert_allclose(
         xci.relative_humidity(
             tas=tas_series(np.array([-20, -10, -1, 10, 20, 25, 30, 40, 60]) + K2C),
@@ -3224,12 +3082,8 @@ def test_specific_humidity_from_dewpoint(tas_series, ps_series):
     np.testing.assert_allclose(q, 0.012, 3)
 
 
-@pytest.mark.parametrize(
-    "method", ["tetens30", "sonntag90", "goffgratch46", "wmo08", "its90"]
-)
-@pytest.mark.parametrize(
-    "ice_thresh,exp0", [(None, [125, 286, 568]), ("0 degC", [103, 260, 563])]
-)
+@pytest.mark.parametrize("method", ["tetens30", "sonntag90", "goffgratch46", "wmo08", "its90"])
+@pytest.mark.parametrize("ice_thresh,exp0", [(None, [125, 286, 568]), ("0 degC", [103, 260, 563])])
 @pytest.mark.parametrize("temp_units", ["degC", "degK"])
 def test_saturation_vapor_pressure(tas_series, method, ice_thresh, exp0, temp_units):
     tas = tas_series(np.array([-20, -10, -1, 10, 20, 25, 30, 40, 60]) + K2C)
@@ -3246,9 +3100,7 @@ def test_saturation_vapor_pressure(tas_series, method, ice_thresh, exp0, temp_un
     np.testing.assert_allclose(e_sat, e_sat_exp, atol=0.5, rtol=0.005)
 
 
-@pytest.mark.parametrize(
-    "method", ["tetens30", "sonntag90", "goffgratch46", "wmo08", "its90"]
-)
+@pytest.mark.parametrize("method", ["tetens30", "sonntag90", "goffgratch46", "wmo08", "its90"])
 def test_vapor_pressure_deficit(tas_series, hurs_series, method):
     tas = tas_series(np.array([-1, 10, 20, 25, 30, 40, 60]) + K2C)
     hurs = hurs_series(np.array([0, 0.5, 0.8, 0.9, 0.95, 0.99, 1]))
@@ -3265,12 +3117,8 @@ def test_vapor_pressure_deficit(tas_series, hurs_series, method):
 
 
 @pytest.mark.parametrize("method", ["tetens30", "sonntag90", "goffgratch46", "wmo08"])
-@pytest.mark.parametrize(
-    "invalid_values,exp0", [("clip", 100), ("mask", np.nan), (None, 188)]
-)
-def test_relative_humidity(
-    tas_series, hurs_series, huss_series, ps_series, method, invalid_values, exp0
-):
+@pytest.mark.parametrize("invalid_values,exp0", [("clip", 100), ("mask", np.nan), (None, 188)])
+def test_relative_humidity(tas_series, hurs_series, huss_series, ps_series, method, invalid_values, exp0):
     tas = tas_series(np.array([-10, -10, 10, 20, 35, 50, 75, 95]) + K2C)
 
     # Expected values obtained with the Sonntag90 method
@@ -3290,19 +3138,13 @@ def test_relative_humidity(
 
 
 @pytest.mark.parametrize("method", ["tetens30", "sonntag90", "goffgratch46", "wmo08"])
-@pytest.mark.parametrize(
-    "invalid_values,exp0", [("clip", 1.4e-2), ("mask", np.nan), (None, 2.2e-2)]
-)
-def test_specific_humidity(
-    tas_series, hurs_series, huss_series, ps_series, method, invalid_values, exp0
-):
+@pytest.mark.parametrize("invalid_values,exp0", [("clip", 1.4e-2), ("mask", np.nan), (None, 2.2e-2)])
+def test_specific_humidity(tas_series, hurs_series, huss_series, ps_series, method, invalid_values, exp0):
     tas = tas_series(np.array([20, -10, 10, 20, 35, 50, 75, 95]) + K2C)
     hurs = hurs_series([150, 10, 90, 20, 80, 50, 70, 40, 30])
     ps = ps_series(1000 * np.array([100] * 4 + [101] * 4))
     # Expected values obtained with the Sonntag90 method
-    huss_exp = huss_series(
-        [exp0, 1.6e-4, 6.9e-3, 3.0e-3, 2.9e-2, 4.1e-2, 2.1e-1, 5.7e-1]
-    )
+    huss_exp = huss_series([exp0, 1.6e-4, 6.9e-3, 3.0e-3, 2.9e-2, 4.1e-2, 2.1e-1, 5.7e-1])
 
     huss = xci.specific_humidity(
         tas=tas,
@@ -3318,19 +3160,13 @@ def test_specific_humidity(
 def test_degree_days_exceedance_date(tas_series):
     tas = tas_series(np.ones(366) + K2C, start="2000-01-01")
 
-    out = xci.degree_days_exceedance_date(
-        tas, thresh="0 degC", op=">", sum_thresh="150 K days"
-    )
+    out = xci.degree_days_exceedance_date(tas, thresh="0 degC", op=">", sum_thresh="150 K days")
     assert out[0] == 151
 
-    out = xci.degree_days_exceedance_date(
-        tas, thresh="2 degC", op="<", sum_thresh="150 degC days"
-    )
+    out = xci.degree_days_exceedance_date(tas, thresh="2 degC", op="<", sum_thresh="150 degC days")
     assert out[0] == 151
 
-    out = xci.degree_days_exceedance_date(
-        tas, thresh="2 degC", op="<", sum_thresh="150 K days", after_date="04-15"
-    )
+    out = xci.degree_days_exceedance_date(tas, thresh="2 degC", op="<", sum_thresh="150 K days", after_date="04-15")
     assert out[0] == 256
 
     for attr in ["units", "is_dayofyear", "calendar"]:
@@ -3369,9 +3205,7 @@ def test_rain_approximation(pr_series, tas_series, method, exp):
 
 def test_first_snowfall(prsn_series, prsnd_series):
     # test with prsnd [mm day-1]
-    prsnd = prsnd_series(
-        (30 - abs(np.arange(366) - 180)), start="2000-01-01", units="mm day-1"
-    )
+    prsnd = prsnd_series((30 - abs(np.arange(366) - 180)), start="2000-01-01", units="mm day-1")
     out = xci.first_snowfall(prsnd, thresh="15 mm/day", freq="YS")
     assert out[0] == 166
     for attr in ["units", "is_dayofyear", "calendar"]:
@@ -3389,9 +3223,7 @@ def test_first_snowfall(prsn_series, prsnd_series):
     assert out.attrs["is_dayofyear"] == 1
 
     # test with prsn [kg m-2 s-1]
-    prsn = prsn_series(
-        (30 - abs(np.arange(366) - 180)), start="2000-01-01", units="mm day-1"
-    )
+    prsn = prsn_series((30 - abs(np.arange(366) - 180)), start="2000-01-01", units="mm day-1")
     prsn = convert_units_to(prsn, "kg m-2 s-1", context="hydro")
     out = xci.first_snowfall(prsn, thresh="15 mm/day", freq="YS")
     assert out[0] == 166
@@ -3404,9 +3236,7 @@ def test_first_snowfall(prsn_series, prsnd_series):
 
 def test_last_snowfall(prsn_series, prsnd_series):
     # test with prsnd [mm day-1]
-    prsnd = prsnd_series(
-        (30 - abs(np.arange(366) - 180)), start="2000-01-01", units="mm day-1"
-    )
+    prsnd = prsnd_series((30 - abs(np.arange(366) - 180)), start="2000-01-01", units="mm day-1")
     out = xci.last_snowfall(prsnd, thresh="15 mm/day", freq="YS")
     assert out[0] == 196
 
@@ -3416,9 +3246,7 @@ def test_last_snowfall(prsn_series, prsnd_series):
     assert out[0] == 196
 
     # test with prsn [kg m-2 s-1]
-    prsn = prsn_series(
-        (30 - abs(np.arange(366) - 180)), start="2000-01-01", units="mm day-1"
-    )
+    prsn = prsn_series((30 - abs(np.arange(366) - 180)), start="2000-01-01", units="mm day-1")
     prsn = convert_units_to(prsn, "kg m-2 s-1", context="hydro")
     out = xci.last_snowfall(prsn, thresh="15 mm/day", freq="YS")
     assert out[0] == 196
@@ -3613,9 +3441,7 @@ def test_rain_season(pr_series, result_type, method_dry_start):
         date_min_end="01-01",
         method_dry_start=method_dry_start,
     )
-    out_arr = np.array(
-        [out[var].values for var in ["start", "end", "length"]]
-    ).flatten()
+    out_arr = np.array([out[var].values for var in ["start", "end", "length"]]).flatten()
     np.testing.assert_array_equal(out_arr, out_exp)
 
 
@@ -3685,9 +3511,7 @@ def test_heat_index(tas_series, hurs_series):
 
     hurs = hurs_series([5, 5, 0, 25, 25, 50, 25, 50, 25, 50, 25, 50, 25, 50])
 
-    expected = (
-        np.array([np.nan, np.nan, 24, 25, 28, 31, 34, 41, 41, 55, 50, 73]) * units.degC
-    )
+    expected = np.array([np.nan, np.nan, 24, 25, 28, 31, 34, 41, 41, 55, 50, 73]) * units.degC
 
     # Celsius
     hc = xci.heat_index(tas, hurs)
@@ -3702,9 +3526,7 @@ def test_heat_index(tas_series, hurs_series):
     np.testing.assert_array_almost_equal(hf, expected.to("fahrenheit"), 0)
 
 
-@pytest.mark.parametrize(
-    "op,exp", [("max", 11), ("sum", 21), ("count", 3), ("mean", 7)]
-)
+@pytest.mark.parametrize("op,exp", [("max", 11), ("sum", 21), ("count", 3), ("mean", 7)])
 def test_freezethaw_spell(tasmin_series, tasmax_series, op, exp):
     tmin = np.ones(365)
     tmax = np.ones(365)
@@ -3717,9 +3539,7 @@ def test_freezethaw_spell(tasmin_series, tasmax_series, op, exp):
     tasmax = tasmax_series(tmax + K2C)
     tasmin = tasmin_series(tmin + K2C)
 
-    out = xci.multiday_temperature_swing(
-        tasmin=tasmin, tasmax=tasmax, freq="YS-JUL", window=3, op=op
-    )
+    out = xci.multiday_temperature_swing(tasmin=tasmin, tasmax=tasmax, freq="YS-JUL", window=3, op=op)
     np.testing.assert_array_equal(out, exp)
 
 
@@ -3848,9 +3668,7 @@ class TestPotentialEvapotranspiration:
         tx = tasmax_series(np.array([10, 15, 20]) + 273.15).expand_dims(lat=lat)
 
         out = xci.potential_evapotranspiration(tn, tx, lat=lat, method="BR65")
-        np.testing.assert_allclose(
-            out.isel(lat=0, time=2), [3.861079 / 86400], rtol=1e-2
-        )
+        np.testing.assert_allclose(out.isel(lat=0, time=2), [3.861079 / 86400], rtol=1e-2)
 
     def test_hargreaves(self, tasmin_series, tasmax_series, tas_series, lat_series):
         lat = lat_series([45])
@@ -3859,33 +3677,17 @@ class TestPotentialEvapotranspiration:
         tm = tas_series(np.array([5, 10, 15]) + 273.15).expand_dims(lat=lat)
 
         out = xci.potential_evapotranspiration(tn, tx, tm, lat=lat, method="HG85")
-        np.testing.assert_allclose(
-            out.isel(lat=0, time=2), [4.030339 / 86400], rtol=1e-2
-        )
+        np.testing.assert_allclose(out.isel(lat=0, time=2), [4.030339 / 86400], rtol=1e-2)
 
-    def test_droogersallen02(
-        self, tasmin_series, tasmax_series, tas_series, pr_series, lat_series
-    ):
+    def test_droogersallen02(self, tasmin_series, tasmax_series, tas_series, pr_series, lat_series):
         lat = lat_series([45])
-        tn = tasmin_series(
-            np.array([0, 5, 10]), start="1990-01-01", freq="MS", units="degC"
-        ).expand_dims(lat=lat)
-        tx = tasmax_series(
-            np.array([10, 15, 20]), start="1990-01-01", freq="MS", units="degC"
-        ).expand_dims(lat=lat)
-        tg = tas_series(
-            np.array([5, 10, 15]), start="1990-01-01", freq="MS", units="degC"
-        ).expand_dims(lat=lat)
-        pr = pr_series(
-            np.array([30, 0, 60]), start="1990-01-01", freq="MS", units="mm/month"
-        ).expand_dims(lat=lat)
+        tn = tasmin_series(np.array([0, 5, 10]), start="1990-01-01", freq="MS", units="degC").expand_dims(lat=lat)
+        tx = tasmax_series(np.array([10, 15, 20]), start="1990-01-01", freq="MS", units="degC").expand_dims(lat=lat)
+        tg = tas_series(np.array([5, 10, 15]), start="1990-01-01", freq="MS", units="degC").expand_dims(lat=lat)
+        pr = pr_series(np.array([30, 0, 60]), start="1990-01-01", freq="MS", units="mm/month").expand_dims(lat=lat)
 
-        out = xci.potential_evapotranspiration(
-            tasmin=tn, tasmax=tx, tas=tg, pr=pr, lat=lat, method="DA02"
-        )
-        np.testing.assert_allclose(
-            out.isel(lat=0, time=2), [2.32659206 / 86400], rtol=1e-2
-        )
+        out = xci.potential_evapotranspiration(tasmin=tn, tasmax=tx, tas=tg, pr=pr, lat=lat, method="DA02")
+        np.testing.assert_allclose(out.isel(lat=0, time=2), [2.32659206 / 86400], rtol=1e-2)
 
     def test_thornthwaite(self, tas_series, lat_series):
         lat = lat_series([45])
@@ -3897,9 +3699,7 @@ class TestPotentialEvapotranspiration:
 
         # find lat implicitly
         out = xci.potential_evapotranspiration(tas=tm, method="TW48")
-        np.testing.assert_allclose(
-            out.isel(lat=0, time=1), [42.7619242 / (86400 * 30)], rtol=1e-1
-        )
+        np.testing.assert_allclose(out.isel(lat=0, time=1), [42.7619242 / (86400 * 30)], rtol=1e-1)
 
     def test_mcguinnessbordne(self, tasmin_series, tasmax_series, lat_series):
         lat = lat_series([45])
@@ -3907,9 +3707,7 @@ class TestPotentialEvapotranspiration:
         tx = tasmax_series(np.array([10, 15, 20]) + 273.15).expand_dims(lat=lat)
 
         out = xci.potential_evapotranspiration(tn, tx, lat=lat, method="MB05")
-        np.testing.assert_allclose(
-            out.isel(lat=0, time=2), [2.78253138816 / 86400], rtol=1e-2
-        )
+        np.testing.assert_allclose(out.isel(lat=0, time=2), [2.78253138816 / 86400], rtol=1e-2)
 
     def test_allen(
         self,
@@ -3947,27 +3745,15 @@ class TestPotentialEvapotranspiration:
             sfcWind=sfcWind,
             method="FAO_PM98",
         )
-        np.testing.assert_allclose(
-            out.isel(lat=0, time=2), [1.208832768 / 86400], rtol=1e-2
-        )
+        np.testing.assert_allclose(out.isel(lat=0, time=2), [1.208832768 / 86400], rtol=1e-2)
 
 
-def test_water_budget_from_tas(
-    pr_series, tasmin_series, tasmax_series, tas_series, lat_series
-):
+def test_water_budget_from_tas(pr_series, tasmin_series, tasmax_series, tas_series, lat_series):
     lat = lat_series([45])
     pr = pr_series(np.array([10, 10, 10])).expand_dims(lat=lat)
     pr.attrs["units"] = "mm/day"
-    tn = (
-        tasmin_series(np.array([0, 5, 10]) + K2C)
-        .expand_dims(lat=lat)
-        .assign_coords(lat=lat)
-    )
-    tx = (
-        tasmax_series(np.array([10, 15, 20]) + K2C)
-        .expand_dims(lat=lat)
-        .assign_coords(lat=lat)
-    )
+    tn = tasmin_series(np.array([0, 5, 10]) + K2C).expand_dims(lat=lat).assign_coords(lat=lat)
+    tx = tasmax_series(np.array([10, 15, 20]) + K2C).expand_dims(lat=lat).assign_coords(lat=lat)
 
     out = xci.water_budget(pr, tasmin=tn, tasmax=tx, lat=lat, method="BR65")
     np.testing.assert_allclose(out[0, 2], 6.138921 / 86400, rtol=2e-3)
@@ -3976,9 +3762,7 @@ def test_water_budget_from_tas(
     np.testing.assert_allclose(out[0, 2], 5.969661 / 86400, rtol=2e-3)
 
     tm = (
-        tas_series(np.ones(12), start="1990-01-01", freq="MS", units="degC")
-        .expand_dims(lat=lat)
-        .assign_coords(lat=lat)
+        tas_series(np.ones(12), start="1990-01-01", freq="MS", units="degC").expand_dims(lat=lat).assign_coords(lat=lat)
     )
     prm = (
         pr_series(np.ones(12) * 10, start="1990-01-01", freq="MS", units="mm/day")
@@ -4005,26 +3789,14 @@ def test_water_budget(pr_series, evspsblpot_series):
     "pr,thresh1,thresh2,window,outs",
     [
         (
-            [1.01] * 6
-            + [0.01] * 3
-            + [0.51] * 2
-            + [0.75] * 2
-            + [0.51]
-            + [0.01] * 3
-            + [1.01] * 3,
+            [1.01] * 6 + [0.01] * 3 + [0.51] * 2 + [0.75] * 2 + [0.51] + [0.01] * 3 + [1.01] * 3,
             3,
             3,
             7,
             (1, 12, 20, 12, 20),
         ),
         (
-            [0.01] * 6
-            + [1.01] * 3
-            + [0.51] * 2
-            + [0.75] * 2
-            + [0.51]
-            + [0.01] * 3
-            + [0.01] * 3,
+            [0.01] * 6 + [1.01] * 3 + [0.51] * 2 + [0.75] * 2 + [0.51] + [0.01] * 3 + [0.01] * 3,
             3,
             3,
             7,
@@ -4038,9 +3810,7 @@ def test_dry_spell(pr_series, pr, thresh1, thresh2, window, outs):
 
     out_events, out_total_d_sum, out_total_d_max, out_max_d_sum, out_max_d_max = outs
 
-    events = xci.dry_spell_frequency(
-        pr, thresh=f"{thresh1} mm", window=window, freq="YS"
-    )
+    events = xci.dry_spell_frequency(pr, thresh=f"{thresh1} mm", window=window, freq="YS")
     total_d_sum = xci.dry_spell_total_length(
         pr,
         thresh=f"{thresh2} mm",
@@ -4048,9 +3818,7 @@ def test_dry_spell(pr_series, pr, thresh1, thresh2, window, outs):
         op="sum",
         freq="YS",
     )
-    total_d_max = xci.dry_spell_total_length(
-        pr, thresh=f"{thresh1} mm", window=window, op="max", freq="YS"
-    )
+    total_d_max = xci.dry_spell_total_length(pr, thresh=f"{thresh1} mm", window=window, op="max", freq="YS")
     max_d_sum = xci.dry_spell_max_length(
         pr,
         thresh=f"{thresh2} mm",
@@ -4058,9 +3826,7 @@ def test_dry_spell(pr_series, pr, thresh1, thresh2, window, outs):
         op="sum",
         freq="YS",
     )
-    max_d_max = xci.dry_spell_max_length(
-        pr, thresh=f"{thresh1} mm", window=window, op="max", freq="YS"
-    )
+    max_d_max = xci.dry_spell_max_length(pr, thresh=f"{thresh1} mm", window=window, op="max", freq="YS")
     np.testing.assert_allclose(events[0], [out_events], rtol=1e-1)
     np.testing.assert_allclose(total_d_sum[0], [out_total_d_sum], rtol=1e-1)
     np.testing.assert_allclose(total_d_max[0], [out_total_d_max], rtol=1e-1)
@@ -4070,17 +3836,13 @@ def test_dry_spell(pr_series, pr, thresh1, thresh2, window, outs):
 
 def test_dry_spell_total_length_indexer(pr_series):
     pr = pr_series([1] * 5 + [0] * 10 + [1] * 350, start="1900-01-01", units="mm/d")
-    out = xci.dry_spell_total_length(
-        pr, window=7, op="sum", thresh="3 mm", freq="MS", date_bounds=("01-10", "12-31")
-    )
+    out = xci.dry_spell_total_length(pr, window=7, op="sum", thresh="3 mm", freq="MS", date_bounds=("01-10", "12-31"))
     np.testing.assert_allclose(out, [9] + [0] * 11)
 
 
 def test_dry_spell_max_length_indexer(pr_series):
     pr = pr_series([1] * 5 + [0] * 10 + [1] * 350, start="1900-01-01", units="mm/d")
-    out = xci.dry_spell_max_length(
-        pr, window=7, op="sum", thresh="3 mm", freq="MS", date_bounds=("01-10", "12-31")
-    )
+    out = xci.dry_spell_max_length(pr, window=7, op="sum", thresh="3 mm", freq="MS", date_bounds=("01-10", "12-31"))
     np.testing.assert_allclose(out, [9] + [0] * 11)
 
 
@@ -4271,9 +4033,7 @@ class TestDrynessIndex:
         di = xci.dryness_index(pr, evspsblpot)
         di_wet = xci.dryness_index(pr, evspsblpot, wo="300 mm")
         di_plus_100 = di + 100
-        np.testing.assert_allclose(
-            di, np.array([13.355, 102.426, 65.576, 158.078]), rtol=1e-03
-        )
+        np.testing.assert_allclose(di, np.array([13.355, 102.426, 65.576, 158.078]), rtol=1e-03)
         np.testing.assert_allclose(di_wet, di_plus_100)
 
 
@@ -4309,13 +4069,7 @@ def test_hardiness_zones(tasmin_series, tmin, meth, zone):
     "pr,threshmin,threshsum,window,outs",
     [
         (
-            [1.01] * 6
-            + [0.01] * 3
-            + [0.51] * 2
-            + [0.75] * 2
-            + [0.51]
-            + [0.01] * 3
-            + [1.01] * 3,
+            [1.01] * 6 + [0.01] * 3 + [0.51] * 2 + [0.75] * 2 + [0.51] + [0.01] * 3 + [1.01] * 3,
             3,
             3,
             7,
@@ -4342,9 +4096,7 @@ def test_wet_spell(pr_series, pr, threshmin, threshsum, window, outs):
 
     out_events, out_total_d_sum, out_total_d_min, out_max_d_sum, out_max_d_min = outs
 
-    events = xci.wet_spell_frequency(
-        pr, thresh=f"{threshsum} mm", window=window, freq="YS", op="sum"
-    )
+    events = xci.wet_spell_frequency(pr, thresh=f"{threshsum} mm", window=window, freq="YS", op="sum")
     total_d_sum = xci.wet_spell_total_length(
         pr,
         thresh=f"{threshsum} mm",
@@ -4352,9 +4104,7 @@ def test_wet_spell(pr_series, pr, threshmin, threshsum, window, outs):
         op="sum",
         freq="YS",
     )
-    total_d_min = xci.wet_spell_total_length(
-        pr, thresh=f"{threshmin} mm", window=window, op="min", freq="YS"
-    )
+    total_d_min = xci.wet_spell_total_length(pr, thresh=f"{threshmin} mm", window=window, op="min", freq="YS")
     max_d_sum = xci.wet_spell_max_length(
         pr,
         thresh=f"{threshsum} mm",
@@ -4362,9 +4112,7 @@ def test_wet_spell(pr_series, pr, threshmin, threshsum, window, outs):
         op="sum",
         freq="YS",
     )
-    max_d_min = xci.wet_spell_max_length(
-        pr, thresh=f"{threshmin} mm", window=window, op="min", freq="YS"
-    )
+    max_d_min = xci.wet_spell_max_length(pr, thresh=f"{threshmin} mm", window=window, op="min", freq="YS")
     np.testing.assert_allclose(events[0], [out_events], rtol=1e-1)
     np.testing.assert_allclose(total_d_sum[0], [out_total_d_sum], rtol=1e-1)
     np.testing.assert_allclose(total_d_min[0], [out_total_d_min], rtol=1e-1)
@@ -4516,9 +4264,7 @@ class TestWindProfile:
 class TestWindPowerPotential:
     def test_simple(self, sfcWind_series):
         v = [2, 6, 20, 30]
-        p = xci.wind_power_potential(
-            sfcWind_series(v, units="m/s"), cut_in="4 m/s", rated="8 m/s"
-        )
+        p = xci.wind_power_potential(sfcWind_series(v, units="m/s"), cut_in="4 m/s", rated="8 m/s")
         np.testing.assert_allclose(p, [0, (6**3 - 4**3) / (8**3 - 4**3), 1, 0])
 
         # Test discontinuities at the default thresholds

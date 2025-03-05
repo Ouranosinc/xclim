@@ -16,16 +16,13 @@ class ATestSubClass(Parametrizable):
 
 def test_param_class():
     gr = Grouper(group="time.month")
-    in_params = dict(
-        anint=4, abool=True, astring="a string", adict={"key": "val"}, group=gr
-    )
+    in_params = dict(anint=4, abool=True, astring="a string", adict={"key": "val"}, group=gr)
     obj = Parametrizable(**in_params)
 
     assert obj.parameters == in_params
 
     assert repr(obj).startswith(
-        "Parametrizable(anint=4, abool=True, astring='a string', adict={'key': 'val'}, "
-        "group=Grouper("
+        "Parametrizable(anint=4, abool=True, astring='a string', adict={'key': 'val'}, group=Grouper("
     )
 
     s = jsonpickle.encode(obj)
@@ -119,9 +116,7 @@ def test_grouper_apply(tas_series, use_dask, group, n):
     # With window
     win_grouper = Grouper(group, window=5)
     out = win_grouper.apply("mean", tas)
-    rolld = tas.rolling({win_grouper.dim: 5}, center=True).construct(
-        window_dim="window"
-    )
+    rolld = tas.rolling({win_grouper.dim: 5}, center=True).construct(window_dim="window")
     if grouper.prop != "group":
         exp = rolld.groupby(group).mean(dim=[win_grouper.dim, "window"])
     else:
@@ -162,9 +157,7 @@ def test_grouper_apply(tas_series, use_dask, group, n):
     def normalize_from_precomputed(grpds, dim=None):
         return (grpds.tas / grpds.tas1_mean).mean(dim=dim)
 
-    out = grouper.apply(
-        normalize_from_precomputed, {"tas": tas, "tas1_mean": out.tas1_mean}
-    ).isel(lat=0)
+    out = grouper.apply(normalize_from_precomputed, {"tas": tas, "tas1_mean": out.tas1_mean}).isel(lat=0)
     if grouper.prop == "group":
         exp = normed.mean("time").isel(lat=0)
     else:

@@ -194,9 +194,7 @@ def tas_exceeds_tasmax(
 @register_methods()
 @update_xclim_history
 @declare_units(tas="[temperature]", tasmin="[temperature]")
-def tas_below_tasmin(
-    tas: xarray.DataArray, tasmin: xarray.DataArray
-) -> xarray.DataArray:
+def tas_below_tasmin(tas: xarray.DataArray, tasmin: xarray.DataArray) -> xarray.DataArray:
     """
     Check if tas values are below tasmin values for any given day.
 
@@ -230,9 +228,7 @@ def tas_below_tasmin(
 @register_methods()
 @update_xclim_history
 @declare_units(da="[temperature]", thresh="[temperature]")
-def temperature_extremely_low(
-    da: xarray.DataArray, *, thresh: Quantified = "-90 degC"
-) -> xarray.DataArray:
+def temperature_extremely_low(da: xarray.DataArray, *, thresh: Quantified = "-90 degC") -> xarray.DataArray:
     """
     Check if temperatures values are below -90 degrees Celsius for any given day.
 
@@ -269,9 +265,7 @@ def temperature_extremely_low(
 @register_methods()
 @update_xclim_history
 @declare_units(da="[temperature]", thresh="[temperature]")
-def temperature_extremely_high(
-    da: xarray.DataArray, *, thresh: Quantified = "60 degC"
-) -> xarray.DataArray:
+def temperature_extremely_high(da: xarray.DataArray, *, thresh: Quantified = "60 degC") -> xarray.DataArray:
     """
     Check if temperatures values exceed 60 degrees Celsius for any given day.
 
@@ -280,7 +274,8 @@ def temperature_extremely_high(
     da : xarray.DataArray
         Temperature.
     thresh : str
-        Threshold above which temperatures are considered problematic and a flag is raised. Default is 60 degrees Celsius.
+        Threshold above which temperatures are considered problematic and a flag is raised.
+        Default is 60 degrees Celsius.
 
     Returns
     -------
@@ -340,9 +335,7 @@ def negative_accumulation_values(
 @register_methods()
 @update_xclim_history
 @declare_units(da="[precipitation]", thresh="[precipitation]")
-def very_large_precipitation_events(
-    da: xarray.DataArray, *, thresh: Quantified = "300 mm d-1"
-) -> xarray.DataArray:
+def very_large_precipitation_events(da: xarray.DataArray, *, thresh: Quantified = "300 mm d-1") -> xarray.DataArray:
     """
     Check if precipitation values exceed 300 mm/day for any given day.
 
@@ -408,18 +401,12 @@ def values_op_thresh_repeating_for_n_or_more_days(
     >>> units = "5 mm d-1"
     >>> days = 5
     >>> comparison = "eq"
-    >>> flagged = values_op_thresh_repeating_for_n_or_more_days(
-    ...     ds.pr, n=days, thresh=units, op=comparison
-    ... )
+    >>> flagged = values_op_thresh_repeating_for_n_or_more_days(ds.pr, n=days, thresh=units, op=comparison)
     """
-    thresh = convert_units_to(
-        thresh, da, context=infer_context(standard_name=da.attrs.get("standard_name"))
-    )
+    thresh = convert_units_to(thresh, da, context=infer_context(standard_name=da.attrs.get("standard_name")))
 
     repetitions = _sanitize_attrs(suspicious_run(da, window=n, op=op, thresh=thresh))
-    description = (
-        f"Repetitive values at {thresh} for at least {n} days found for {da.name}."
-    )
+    description = f"Repetitive values at {thresh} for at least {n} days found for {da.name}."
     repetitions.attrs["description"] = description
     repetitions.attrs["units"] = ""
     return repetitions
@@ -457,9 +444,7 @@ def wind_values_outside_of_bounds(
 
     >>> from xclim.core.dataflags import wind_values_outside_of_bounds
     >>> ceiling, floor = "46 m s-1", "0 m s-1"
-    >>> flagged = wind_values_outside_of_bounds(
-    ...     sfcWind_dataset, upper=ceiling, lower=floor
-    ... )
+    >>> flagged = wind_values_outside_of_bounds(sfcWind_dataset, upper=ceiling, lower=floor)
     """
     lower, upper = convert_units_to(lower, da), convert_units_to(upper, da)
     unbounded_percentages = _sanitize_attrs((da < lower) | (da > upper))
@@ -499,7 +484,8 @@ def outside_n_standard_deviations_of_climatology(
 
     Notes
     -----
-    A moving window of five (5) days is suggested for `tas` data flag calculations according to ICCLIM data quality standards.
+    A moving window of five (5) days is suggested for `tas` data flag calculations according to
+    ICCLIM data quality standards.
 
     References
     ----------
@@ -513,14 +499,10 @@ def outside_n_standard_deviations_of_climatology(
     >>> ds = xr.open_dataset(path_to_tas_file)
     >>> std_devs = 5
     >>> average_over = 5
-    >>> flagged = outside_n_standard_deviations_of_climatology(
-    ...     ds.tas, n=std_devs, window=average_over
-    ... )
+    >>> flagged = outside_n_standard_deviations_of_climatology(ds.tas, n=std_devs, window=average_over)
     """
     mu, sig = climatological_mean_doy(da, window=window)
-    within_bounds = _sanitize_attrs(
-        within_bnds_doy(da, high=(mu + n * sig), low=(mu - n * sig))
-    )
+    within_bounds = _sanitize_attrs(within_bnds_doy(da, high=(mu + n * sig), low=(mu - n * sig)))
     description = (
         f"Values outside of {n} standard deviations from climatology found for {da.name} "
         f"with moving window of {window} days."
@@ -532,9 +514,7 @@ def outside_n_standard_deviations_of_climatology(
 
 @register_methods("values_repeating_for_{n}_or_more_days")
 @update_xclim_history
-def values_repeating_for_n_or_more_days(
-    da: xarray.DataArray, *, n: int
-) -> xarray.DataArray:
+def values_repeating_for_n_or_more_days(da: xarray.DataArray, *, n: int) -> xarray.DataArray:
     """
     Check if exact values are found to be repeating for at least 5 or more days.
 
@@ -704,9 +684,7 @@ def data_flags(  # noqa: C901
         # Thus, a single dimension name, we allow this option to mirror xarray.
         dims = {dims}
     if freq is not None and dims is not None:
-        dims = (
-            set(dims) - {"time"}
-        ) or None  # Will return None if the only dimension was "time".
+        dims = (set(dims) - {"time"}) or None  # Will return None if the only dimension was "time".
 
     if flags is None:
         try:
@@ -799,10 +777,7 @@ def ecad_compliant(
         for flag_name, flag_data in df.data_vars.items():
             flags = flags.assign({f"{var}_{flag_name}": flag_data})
 
-            if (
-                "history" in flag_data.attrs.keys()
-                and np.all(flag_data.values) is not None
-            ):
+            if "history" in flag_data.attrs.keys() and np.all(flag_data.values) is not None:
                 # The extra `split("\n") should be removed when merge_attributes(missing_str=None)
                 history_elems = flag_data.attrs["history"].split("\n")[-1].split(" ")
                 if not history:

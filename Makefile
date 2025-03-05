@@ -53,13 +53,10 @@ clean-test: ## remove test and coverage artifacts
 	rm -fr .pytest_cache
 
 lint: ## check style with flake8 and black
-	python -m black --check src/xclim tests
 	python -m ruff check src/xclim tests
 	python -m flake8 --config=.flake8 src/xclim tests
 	python -m vulture src/xclim tests
-	python -m nbqa black --check docs
-	python -m blackdoc --check --exclude=src/xclim/indices/__init__.py src/xclim
-	python -m blackdoc --check docs
+	python -m blackdoc --check README.rst CHANGELOG.rst CONTRIBUTING.rst docs --exclude=".py"
 	codespell src/xclim tests docs
 	python -m numpydoc lint src/xclim/*.py src/xclim/ensembles/*.py src/xclim/indices/*.py src/xclim/indicators/*.py src/xclim/testing/*.py
 	python -m deptry src

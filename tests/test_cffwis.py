@@ -47,9 +47,7 @@ class TestCFFWIS:
     @classmethod
     def _get_cffdrs_fire_season(cls, key=None):
         def to_xr(arr):
-            return xr.DataArray(
-                np.array(arr, dtype=np.datetime64), dims=("bounds", "events")
-            )
+            return xr.DataArray(np.array(arr, dtype=np.datetime64), dims=("bounds", "events"))
 
         if key:
             return to_xr(cls.cffdrs_fire_season[key])
@@ -236,12 +234,7 @@ class TestCFFWIS:
 
         # Overwintering
         # Get last season's DC (from previous comp) and mask Saskatoon and Victoria
-        dc0 = (
-            out2["DC"]
-            .ffill("time")
-            .isel(time=-1)
-            .where([True, True, True, False, False])
-        )
+        dc0 = out2["DC"].ffill("time").isel(time=-1).where([True, True, True, False, False])
         winter_pr = out2["winter_pr"]
 
         out3 = fire_weather_ufunc(
@@ -254,9 +247,7 @@ class TestCFFWIS:
             overwintering=True,
             indexes=["DC"],
         )
-        np.testing.assert_allclose(
-            out3["winter_pr"].isel(location=0), 262.67575, rtol=1e-6
-        )
+        np.testing.assert_allclose(out3["winter_pr"].isel(location=0), 262.67575, rtol=1e-6)
         np.testing.assert_array_equal(out3["DC"].notnull(), season_mask_yr)
 
     def test_fire_weather_ufunc_drystart(self, atmosds):
@@ -299,9 +290,7 @@ class TestCFFWIS:
             out_no["DMC"].sel(location="Montréal", time="1992"),
         )
 
-    def test_fire_weather_ufunc_errors(
-        self, tas_series, pr_series, hurs_series, sfcWind_series
-    ):
+    def test_fire_weather_ufunc_errors(self, tas_series, pr_series, hurs_series, sfcWind_series):
         tas = tas_series(np.ones(100), start="2017-01-01")
         pr = pr_series(np.ones(100), start="2017-01-01")
         hurs = hurs_series(np.ones(100), start="2017-01-01")
@@ -309,9 +298,9 @@ class TestCFFWIS:
 
         snd = xr.full_like(tas, 0)
         lat = xr.full_like(tas.isel(time=0), 45)
-        DC0 = xr.full_like(tas.isel(time=0), np.nan)  # noqa
-        DMC0 = xr.full_like(tas.isel(time=0), np.nan)  # noqa
-        FFMC0 = xr.full_like(tas.isel(time=0), np.nan)  # noqa
+        DC0 = xr.full_like(tas.isel(time=0), np.nan)
+        DMC0 = xr.full_like(tas.isel(time=0), np.nan)
+        FFMC0 = xr.full_like(tas.isel(time=0), np.nan)
 
         # Test invalid combination
         with pytest.raises(TypeError):
@@ -418,12 +407,8 @@ class TestCFFWIS:
             temp_end_thresh="6 degC",
         )
 
-        for exp, out in zip(
-            [ds.DC, ds.DMC, ds.FFMC, ds.ISI, ds.BUI, ds.FWI], outs, strict=False
-        ):
-            np.testing.assert_allclose(
-                out.isel(loc=[0, 1]), exp.isel(loc=[0, 1]), rtol=0.03
-            )
+        for exp, out in zip([ds.DC, ds.DMC, ds.FFMC, ds.ISI, ds.BUI, ds.FWI], outs, strict=False):
+            np.testing.assert_allclose(out.isel(loc=[0, 1]), exp.isel(loc=[0, 1]), rtol=0.03)
 
         ds2 = ds.isel(time=slice(1, None))
 
@@ -456,9 +441,7 @@ class TestCFFWIS:
                 initial_start_up=False,
             )
 
-        for exp, out in zip(
-            [ds2.DC, ds2.DMC, ds2.FFMC, ds2.ISI, ds2.BUI, ds2.FWI], outs, strict=False
-        ):
+        for exp, out in zip([ds2.DC, ds2.DMC, ds2.FFMC, ds2.ISI, ds2.BUI, ds2.FWI], outs, strict=False):
             np.testing.assert_allclose(out, exp, rtol=0.03)
 
     def test_gfwed_drought_code(self, open_dataset):
@@ -479,9 +462,7 @@ class TestCFFWIS:
             temp_end_thresh="6 degC",
         )
 
-        np.testing.assert_allclose(
-            out.isel(loc=[0, 1]), ds.DC.isel(loc=[0, 1]), rtol=0.03
-        )
+        np.testing.assert_allclose(out.isel(loc=[0, 1]), ds.DC.isel(loc=[0, 1]), rtol=0.03)
 
     def test_gfwed_duff_moisture_code(self, open_dataset):
         # Also tests passing parameters as quantity strings
@@ -501,6 +482,4 @@ class TestCFFWIS:
             temp_end_thresh="6 degC",
         )
 
-        np.testing.assert_allclose(
-            out.isel(loc=[0, 1]), ds.DMC.isel(loc=[0, 1]), rtol=0.03
-        )
+        np.testing.assert_allclose(out.isel(loc=[0, 1]), ds.DMC.isel(loc=[0, 1]), rtol=0.03)
