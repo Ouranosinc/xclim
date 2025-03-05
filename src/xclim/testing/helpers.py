@@ -123,6 +123,7 @@ def add_example_file_paths() -> dict[str, str | list[xr.DataArray]]:
     namespace = {
         "path_to_ensemble_file": "EnsembleReduce/TestEnsReduceCriteria.nc",
         "path_to_pr_file": "NRCANdaily/nrcan_canada_daily_pr_1990.nc",
+        "path_to_q_file": "Raven/q_sim.nc",
         "path_to_sfcWind_file": "ERA5/daily_surface_cancities_1990-1993.nc",
         "path_to_tas_file": "ERA5/daily_surface_cancities_1990-1993.nc",
         "path_to_tasmax_file": "NRCANdaily/nrcan_canada_daily_tasmax_1990.nc",
