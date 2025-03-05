@@ -2,6 +2,8 @@
 Bias Adjustment and Downscaling Algorithms
 ==========================================
 
+# TODO : Trim this a bit?
+
 The `xclim.sdba` submodule provides a collection of bias-adjustment methods meant to correct for systematic biases found in climate model simulations relative to observations.
 Almost all adjustment algorithms conform to the `train` - `adjust` scheme, meaning that adjustment factors are first estimated on training data sets, then applied in a distinct step to the data to be adjusted.
 Given a reference time series (ref), historical simulations (hist) and simulations to be adjusted (sim),
@@ -107,15 +109,12 @@ some bugs or inconsistencies might exist. To see how one can install that packag
 
 Notes for Developers
 ====================
-To be scalable and performant, the sdba module makes use of the special decorators :py:func`xclim.sdba.base.map_blocks`
-and :py:func:`xclim.sdba.base.map_groups`. However, they have the inconvenient that functions wrapped by them are unable
-to manage xarray attributes (including units) correctly and their signatures are sometime wrong and often unclear. For
-this reason, the module is often divided in two parts : the (decorated) compute functions in a "private" file
-(ex: ``_adjustment.py``) and the user-facing functions or objects in corresponding public file (ex: ``adjustment.py``).
-See the `sdba-advanced` notebook for more info on the reasons for this move.
 
-Other restrictions : ``map_blocks`` will remove any "auxiliary" coordinates before calling the wrapped function and will
-add them back on exit.
+All new contributions should be made in the new module `xsdba`_
+
+.. _xsdba: https://xsdba.readthedocs.io/
+
+
 
 User API
 ========

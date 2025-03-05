@@ -310,8 +310,7 @@ extend-include = [
 
 [tool.ruff.format]
 exclude = [
-  "docs/notebooks/xclim_training/*.ipynb",
-  "src/xclim/sdba/*.py"
+  "docs/notebooks/xclim_training/*.ipynb"
 ]
 line-ending = "lf"
 docstring-code-format = true
@@ -319,8 +318,7 @@ docstring-code-line-length = "dynamic"
 
 [tool.ruff.lint]
 exclude = [
-  "docs/notebooks/xclim_training/*.ipynb",
-  "src/xclim/sdba/*.py"
+  "docs/notebooks/xclim_training/*.ipynb"
 ]
 extend-select = [
   "D213", # multi-line-summary-second-line
@@ -380,7 +378,6 @@ max-complexity = 20
 "src/xclim/core/missing" = ["D103"]
 "src/xclim/indices/_agro.py" = ["E501"]
 "src/xclim/indices/fire/_cffwis.py" = ["D103"]
-"src/xclim/sdba/utils.py" = ["D103"]
 "tests/**/*test*.py" = ["D100", "D101", "D102", "D103", "E501", "N802", "S101"]
 
 [tool.ruff.lint.pycodestyle]

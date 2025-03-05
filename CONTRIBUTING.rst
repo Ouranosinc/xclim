@@ -56,12 +56,6 @@ General to-do list for implementing a new Indicator:
 
     If you are adding new translations to the library (for languages other than French), please begin by opening a discussion on the `xclim Discussions page`_ to coordinate the scope and implementation of these translations.
 
-General notes for implementing new bias-adjustment methods:
-
-* Method are implemented as classes in ``src/xclim/sdba/adjustment.py``.
-* If the algorithm gets complicated and would generate many dask tasks, it should be implemented as functions wrapped by :py:func:`~xclim.sdba.map_blocks` or :py:func:`~xclim.sdba.map_groups` in ``src/xclim/sdba/_adjustment.py``.
-* `xclim` doesn't implement monolithic multi-parameter methods, but rather smaller modular functions to construct post-processing workflows.
-* If you are working on numba-accelerated function that uses ``@guvectorize``, consider disabling caching during the development phase and reactivating it once all changes are ready for review. This is done by commenting ``cache=True`` in the decorator.
 
 Report Bugs
 ~~~~~~~~~~~

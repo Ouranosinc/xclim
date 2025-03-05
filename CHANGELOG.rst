@@ -4,12 +4,17 @@ Changelog
 
 v0.56.0 (unreleased)
 --------------------
-Contributors to this version: Trevor James Smith (:user:`Zeitsperre`).
+Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Éric Dupuis (:user:`coxipi`).
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
 * `xclim` no longer supports Python 3.10. The minimum required version is now Python 3.11. (:pull:`2082`).
 * The minimum versions of several key dependencies have been raised (`numpy` >=1.24.0; `scikit-learn` >=1.2.0; `scipy` >=1.11.0). (:pull:`2082`).
+* `sdba` is now imported directly from `xsdba` instead of being a submodule. This implies a number of breaking changes (`issue`: `2074`)
+    * The sub-module `sdba` is no longer installed by default.
+    * Units handling: The "infer" context is no longer used in unit conversion in `sdba` functions.
+    * `SDBA_EXTRA_OUTPUT` global option can no longer be activated with `xclim.set_options`, instead use `sdba.set_options` where the option is now called `EXTRA_OUTPUT`.
+    * The other global `SDBA_ENCODE_CF` was removed as it is no longer necessary.
 
 Internal changes
 ^^^^^^^^^^^^^^^^

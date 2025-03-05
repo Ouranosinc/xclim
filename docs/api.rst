@@ -82,53 +82,10 @@ SDBA Module
 
 .. warning::
 
-    The SDBA submodule is in the process of being split from `xclim` in order to facilitate development and effective
-    maintenance of the SDBA utilities. The `xclim.sdba` functionality will change in the future.
+    The SDBA submodule was split from `xclim` in order to facilitate development and effective
+    maintenance of the SDBA utilities. The `xclim.sdba` functionality has been changed.
     For more information, please visit https://xsdba.readthedocs.io/en/latest/.
 
-.. automodule:: xclim.sdba.adjustment
-   :members:
-   :exclude-members: BaseAdjustment
-   :special-members:
-   :show-inheritance:
-   :noindex:
-
-.. automodule:: xclim.sdba.processing
-   :members:
-   :noindex:
-
-.. automodule:: xclim.sdba.detrending
-   :members:
-   :show-inheritance:
-   :exclude-members: BaseDetrend
-   :noindex:
-
-.. automodule:: xclim.sdba.utils
-   :members:
-   :noindex:
-
-.. autoclass:: xclim.sdba.base.Grouper
-   :members:
-   :class-doc-from: init
-   :noindex:
-
-.. automodule:: xclim.sdba.nbutils
-   :members:
-   :noindex:
-
-.. automodule:: xclim.sdba.loess
-   :members:
-   :noindex:
-
-.. automodule:: xclim.sdba.properties
-   :members:
-   :exclude-members: StatisticalProperty
-   :noindex:
-
-.. automodule:: xclim.sdba.measures
-   :members:
-   :exclude-members: StatisticalMeasure
-   :noindex:
 
 .. _spatial-analogues-api:
 
@@ -226,32 +183,6 @@ SDBA Utilities
     The SDBA submodule is in the process of being split from `xclim` in order to facilitate development and effective
     maintenance of the SDBA utilities. The `xclim.sdba` functionality will change in the future.
     For more information, please visit https://xsdba.readthedocs.io/en/latest/.
-
-.. automodule:: xclim.sdba.base
-   :members:
-   :show-inheritance:
-   :exclude-members: Grouper
-   :noindex:
-
-.. autoclass:: xclim.sdba.detrending.BaseDetrend
-   :members:
-   :noindex:
-
-.. autoclass:: xclim.sdba.adjustment.TrainAdjust
-   :members:
-   :noindex:
-
-.. autoclass:: xclim.sdba.adjustment.Adjust
-   :members:
-   :noindex:
-
-.. autofunction:: xclim.sdba.properties.StatisticalProperty
-   :noindex:
-
-.. autofunction:: xclim.sdba.measures.StatisticalMeasure
-   :noindex:
-
-.. _`spatial-analogues-developer-api`:
 
 Spatial Analogues Helpers
 -------------------------
