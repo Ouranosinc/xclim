@@ -81,8 +81,9 @@ def test_day_lengths(method):
                 np.testing.assert_allclose(dl.sel(time=e[0]).transpose(), np.array(e[1]), rtol=2e-1)
 
 
-def test_cosine_of_solar_zenith_angle():
-    time = xr.date_range("1900-01-01T00:30", "1900-01-03", freq="h")
+@pytest.mark.parametrize("calendar", ["standard", "noleap"])
+def test_cosine_of_solar_zenith_angle(calendar):
+    time = xr.date_range("1900-01-01T00:30", "1900-01-03", freq="h", calendar=calendar)
     time = xr.DataArray(time, dims=("time",), coords={"time": time}, name="time")
     lat = xr.DataArray([0, 45, 70], dims=("site",), name="lat", attrs={"units": "degree_north"})
     lon = xr.DataArray([-40, 0, 80], dims=("site",), name="lon", attrs={"units": "degree_east"})
