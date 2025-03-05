@@ -9,7 +9,7 @@ Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Hui-Min W
 Bug fixes
 ^^^^^^^^^
 * Fix installation instructions in the Contributing guide (:issue:`2088`, :pull:`2089`).
-* Fixed parameter order in typing.cast() causing intermittent errors in solar_zenith_angle calculation. (:issue:`2097`, :pull:``)
+* Fixed parameter order in typing.cast() causing intermittent errors in solar_zenith_angle calculation. (:issue:`2097`, :pull:`2098`)
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
