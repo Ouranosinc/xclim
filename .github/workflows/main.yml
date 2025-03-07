@@ -193,23 +193,13 @@ jobs:
     timeout-minutes: 20
     strategy:
       matrix:
+        # Linux builds
+        os: [ 'ubuntu-latest', ]
+        testdata-cache: [ '~/.cache/xclim-testdata' ]
+        python-version: [ "3.10", "3.11", "3.12", "3.13" ]
+        markers: [ '-m "not slow"' ]
+        tox-env: [ 'standard' ]
         include:
-          # Linux builds
-          - os: 'ubuntu-latest'
-            testdata-cache: '~/.cache/xclim-testdata'
-            markers: -m 'not slow'
-            python-version: "3.11"
-            tox-env: standard
-          - os: 'ubuntu-latest'
-            testdata-cache: '~/.cache/xclim-testdata'
-            markers: -m 'not slow'
-            python-version: "3.12"
-            tox-env: standard
-          - os: 'ubuntu-latest'
-            testdata-cache: '~/.cache/xclim-testdata'
-            markers: -m 'not slow'
-            python-version: "3.13"
-            tox-env: standard
           # Windows builds
           - os: 'windows-latest'
             testdata-cache: 'C:\Users\runneradmin\AppData\Local\xclim-testdata\xclim-testdata\Cache'
@@ -340,7 +330,7 @@ jobs:
     strategy:
       matrix:
         os: [ 'ubuntu-latest' ]
-        python-version: [ "3.11", "3.13" ]
+        python-version: [ "3.10", "3.13" ]
         testdata-cache: [ '~/.cache/xclim-testdata' ]
     defaults:
       run:
