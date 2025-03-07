@@ -195,6 +195,7 @@ jobs:
       matrix:
         # Linux builds
         os: [ 'ubuntu-latest', ]
+        testdata-cache: [ '~/.cache/xclim-testdata' ]
         python-version: [ "3.10", "3.11", "3.12", "3.13" ]
         markers: [ '-m "not slow"' ]
         tox-env: [ 'standard' ]
