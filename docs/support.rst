@@ -26,7 +26,7 @@ The lowest supported versions of libraries listed in the `xclim` package metadat
 `xclim` tends to support older Python versions until one or many of the following events occur:
 - The Python version no longer receives security patches by the Python Software Foundation (EoL).
 - The Python version is no longer supported by the last stable releases of the `xarray` or `dask` libraries.
-- Maintaining support for an older Python versions becomes a significant burden on the development team.
+- Maintaining support for an older Python versions becomes a burden on the development team.
 
 Versioning
 ----------
