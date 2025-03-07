@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import importlib.resources as _resources
+import importlib.util as _util
 
 from xclim import indices
 from xclim.core import units  # noqa
@@ -10,6 +11,11 @@ from xclim.core.indicator import build_indicator_module_from_yaml
 from xclim.core.locales import load_locale
 from xclim.core.options import set_options  # noqa
 from xclim.indicators import atmos, generic, land, seaIce  # noqa
+
+xsdba_installed = _util.find_spec("xsdba") is not None
+if xsdba_installed:
+    import xsdba as sdba
+
 
 __author__ = """Travis Logan"""
 __email__ = "logan.travis@ouranos.ca"
