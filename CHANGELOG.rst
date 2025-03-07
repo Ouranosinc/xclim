@@ -14,6 +14,7 @@ Bug fixes
 Breaking changes
 ^^^^^^^^^^^^^^^^
 * `xclim` no longer supports Python 3.10. The minimum required version is now Python 3.11. (:pull:`2082`).
+    * Reverted: Extended support for Python3.10 will continue until further notice.
 * The minimum versions of several key dependencies have been raised (`numpy` >=1.24.0; `scikit-learn` >=1.2.0; `scipy` >=1.11.0). (:pull:`2082`).
 
 Internal changes
