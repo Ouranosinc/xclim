@@ -4,11 +4,14 @@ from __future__ import annotations
 
 import numpy as np
 import xarray as xr
+from scipy.stats import rv_continuous
 
+from xclim.core._types import DateStr, Quantified
 from xclim.core.calendar import get_calendar
 from xclim.core.missing import at_least_n_valid
 from xclim.core.units import declare_units, rate2amount, to_agg_units
 from xclim.indices.generic import threshold_count
+from xclim.indices.stats import standardized_index
 
 from . import generic
 
@@ -24,6 +27,8 @@ __all__ = [
     "snow_melt_we_max",
     "snw_max",
     "snw_max_doy",
+    "standardized_groundwater_index",
+    "standardized_streamflow_index",
 ]
 
 
@@ -107,6 +112,136 @@ def rb_flashiness_index(q: xr.DataArray, freq: str = "YS") -> xr.DataArray:
     out = d.sum(dim="time") / mq.sum(dim="time")
     out.attrs["units"] = ""
     return out
+
+
+@declare_units(
+    q="[discharge]",
+    params="[]",
+)
+def standardized_streamflow_index(
+    q: xr.DataArray,
+    freq: str | None = "MS",
+    window: int = 1,
+    dist: str | rv_continuous = "genextreme",
+    method: str = "ML",
+    fitkwargs: dict | None = None,
+    cal_start: DateStr | None = None,
+    cal_end: DateStr | None = None,
+    params: Quantified | None = None,
+    **indexer,
+) -> xr.DataArray:
+    r"""
+    Standardized Streamflow Index (SSI).
+
+    Parameters
+    ----------
+    q : xarray.DataArray
+        Rate of river discharge.
+    freq : str, optional
+        Resampling frequency. A monthly or daily frequency is expected. Option `None` assumes that desired resampling
+        has already been applied input dataset and will skip the resampling step.
+    window : int
+        Averaging window length relative to the resampling frequency. For example, if `freq="MS"`,
+        i.e. a monthly resampling, the window is an integer number of months.
+    dist : {"genextreme", "fisk"} or `rv_continuous` function
+        Name of the univariate distribution, or a callable `rv_continuous` (see :py:mod:`scipy.stats`).
+    method : {"APP", "ML", "PWM"}
+        Name of the fitting method, such as `ML` (maximum likelihood), `APP` (approximate). The approximate method
+        uses a deterministic function that does not involve any optimization.
+        `PWM` should be used with a `lmoments3` distribution.
+    fitkwargs : dict, optional
+        Kwargs passed to ``xclim.indices.stats.fit`` used to impose values of certains parameters (`floc`, `fscale`).
+    cal_start : DateStr, optional
+        Start date of the calibration period. A `DateStr` is expected, that is a `str` in format `"YYYY-MM-DD"`.
+        Default option `None` means that the calibration period begins at the start of the input dataset.
+    cal_end : DateStr, optional
+        End date of the calibration period. A `DateStr` is expected, that is a `str` in format `"YYYY-MM-DD"`.
+        Default option `None` means that the calibration period finishes at the end of the input dataset.
+    params : xarray.DataArray, optional
+        Fit parameters.
+        The `params` can be computed using ``xclim.indices.stats.standardized_index_fit_params`` in advance.
+        The output can be given here as input, and it overrides other options.
+    **indexer : Indexer
+        Indexing parameters to compute the indicator on a temporal subset of the data.
+        It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
+
+    Returns
+    -------
+    xarray.DataArray, [unitless]
+        Standardized Streamflow Index.
+
+    See Also
+    --------
+    xclim.indices._agro.standardized_precipitation_index : Standardized Precipitation Index.
+    xclim.indices.stats.standardized_index : Standardized Index.
+    xclim.indices.stats.standardized_index_fit_params : Standardized Index Fit Params.
+
+    Notes
+    -----
+    * N-month SSI / N-day SSI is determined by choosing the `window = N` and the appropriate frequency `freq`.
+    * Supported statistical distributions are: ["genextreme", "fisk"], where "fisk" is scipy's implementation of
+       a log-logistic distribution.
+    * If `params` is provided, it overrides the `cal_start`, `cal_end`, `freq`, `window`, `dist`, and `method` options.
+    * "APP" method only supports two-parameter distributions. Parameter `loc` needs to be fixed to use method "APP".
+    * The standardized index is bounded by ±8.21. 8.21 is the largest standardized index as constrained by the
+      float64 precision in the inversion to the normal distribution.
+
+    References
+    ----------
+    :cite:cts:`vicente-serrano_2012`
+
+    Examples
+    --------
+    >>> from datetime import datetime
+    >>> from xclim.indices import standardized_streamflow_index
+    >>> ds = xr.open_dataset(path_to_q_file)
+    >>> q = ds.q
+    >>> cal_start, cal_end = "2006-05-01", "2008-06-01"
+    >>> ssi_3 = standardized_streamflow_index(
+    ...     q,
+    ...     freq="MS",
+    ...     window=3,
+    ...     dist="genextreme",
+    ...     method="ML",
+    ...     cal_start=cal_start,
+    ...     cal_end=cal_end,
+    ... )  # Computing SSI-3 months using a GEV distribution for the fit
+    >>> # Fitting parameters can also be obtained first, then reused as input.
+    >>> from xclim.indices.stats import standardized_index_fit_params
+    >>> params = standardized_index_fit_params(
+    ...     q.sel(time=slice(cal_start, cal_end)),
+    ...     freq="MS",
+    ...     window=3,
+    ...     dist="genextreme",
+    ...     method="ML",
+    ... )  # First getting params
+    >>> ssi_3 = standardized_streamflow_index(q, params=params)
+    """
+    fitkwargs = fitkwargs or {}
+    dist_methods = {"genextreme": ["ML", "APP"], "fisk": ["ML", "APP"]}
+    if isinstance(dist, str):
+        if dist in dist_methods:
+            if method not in dist_methods[dist]:
+                raise NotImplementedError(f"{method} method is not implemented for {dist} distribution")
+        else:
+            raise NotImplementedError(f"{dist} distribution is not yet implemented.")
+
+    zero_inflated = False
+    ssi = standardized_index(
+        q,
+        freq=freq,
+        window=window,
+        dist=dist,
+        method=method,
+        zero_inflated=zero_inflated,
+        fitkwargs=fitkwargs,
+        cal_start=cal_start,
+        cal_end=cal_end,
+        params=params,
+        **indexer,
+    )
+
+    return ssi
 
 
 @declare_units(snd="[length]")
@@ -282,6 +417,138 @@ def melt_and_precip_max(snw: xr.DataArray, pr: xr.DataArray, window: int = 3, fr
     out = agg.resample(time=freq).max(dim="time")
     out.attrs["units"] = snw.units
     return out
+
+
+@declare_units(
+    gwl="[length]",
+    params="[]",
+)
+def standardized_groundwater_index(
+    gwl: xr.DataArray,
+    freq: str | None = "MS",
+    window: int = 1,
+    dist: str | rv_continuous = "genextreme",
+    method: str = "ML",
+    fitkwargs: dict | None = None,
+    cal_start: DateStr | None = None,
+    cal_end: DateStr | None = None,
+    params: Quantified | None = None,
+    **indexer,
+) -> xr.DataArray:
+    r"""
+    Standardized Groundwater Index (SGI).
+
+    Parameters
+    ----------
+    gwl : xarray.DataArray
+        Groundwater head level.
+    freq : str, optional
+        Resampling frequency. A monthly or daily frequency is expected. Option `None` assumes that desired resampling
+        has already been applied input dataset and will skip the resampling step.
+    window : int
+        Averaging window length relative to the resampling frequency. For example, if `freq="MS"`,
+        i.e. a monthly resampling, the window is an integer number of months.
+    dist : {"gamma", "genextreme", "lognorm"} or `rv_continuous`
+        Name of the univariate distribution, or a callable `rv_continuous` (see :py:mod:`scipy.stats`).
+    method : {"APP", "ML", "PWM"}
+        Name of the fitting method, such as `ML` (maximum likelihood), `APP` (approximate).
+        The approximate method uses a deterministic function that does not involve any optimization.
+        `PWM` should be used with a `lmoments3` distribution.
+    fitkwargs : dict, optional
+        Kwargs passed to ``xclim.indices.stats.fit`` used to impose values of certains parameters (`floc`, `fscale`).
+    cal_start : DateStr, optional
+        Start date of the calibration period. A `DateStr` is expected, that is a `str` in format `"YYYY-MM-DD"`.
+        Default option `None` means that the calibration period begins at the start of the input dataset.
+    cal_end : DateStr, optional
+        End date of the calibration period. A `DateStr` is expected, that is a `str` in format `"YYYY-MM-DD"`.
+        Default option `None` means that the calibration period finishes at the end of the input dataset.
+    params : xarray.DataArray, optional
+        Fit parameters.
+        The `params` can be computed using ``xclim.indices.stats.standardized_index_fit_params`` in advance.
+        The output can be given here as input, and it overrides other options.
+    **indexer : Indexer
+        Indexing parameters to compute the indicator on a temporal subset of the data.
+        It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
+
+    Returns
+    -------
+    xarray.DataArray, [unitless]
+        Standardized Groundwater Index.
+
+    See Also
+    --------
+    xclim.indices._agro.standardized_precipitation_index : Standardized Precipitation Index.
+    xclim.indices.stats.standardized_index : Standardized Index.
+    xclim.indices.stats.standardized_index_fit_params : Standardized Index Fit Params.
+
+    Notes
+    -----
+    * N-month SGI / N-day SGI is determined by choosing the `window = N` and the appropriate frequency `freq`.
+    * Supported statistical distributions are: ["gamma", "genextreme", "lognorm"].
+    * If `params` is provided, it overrides the `cal_start`, `cal_end`, `freq`, `window`, `dist`, `method` options.
+    * "APP" method only supports two-parameter distributions. Parameter `loc` needs to be fixed to use method "APP".
+
+    References
+    ----------
+    :cite:cts:`bloomfield_2013`
+
+    Examples
+    --------
+    >>> from datetime import datetime
+    >>> from xclim.indices import standardized_groundwater_index
+    >>> ds = xr.open_dataset(path_to_gwl_file)
+    >>> gwl = ds.gwl
+    >>> cal_start, cal_end = "2006-05-01", "2008-06-01"
+    >>> sgi_3 = standardized_groundwater_index(
+    ...     gwl,
+    ...     freq="MS",
+    ...     window=3,
+    ...     dist="gamma",
+    ...     method="ML",
+    ...     cal_start=cal_start,
+    ...     cal_end=cal_end,
+    ... )  # Computing SGI-3 months using a Gamma distribution for the fit
+    >>> # Fitting parameters can also be obtained first, then reused as input.
+    >>> from xclim.indices.stats import standardized_index_fit_params
+    >>> params = standardized_index_fit_params(
+    ...     gwl.sel(time=slice(cal_start, cal_end)),
+    ...     freq="MS",
+    ...     window=3,
+    ...     dist="gamma",
+    ...     method="ML",
+    ... )  # First getting params
+    >>> sgi_3 = standardized_groundwater_index(gwl, params=params)
+    """
+    fitkwargs = fitkwargs or {}
+
+    dist_methods = {
+        "gamma": ["ML", "APP"],
+        "genextreme": ["ML", "APP"],
+        "lognorm": ["ML", "APP"],
+    }
+    if isinstance(dist, str):
+        if dist in dist_methods:
+            if method not in dist_methods[dist]:
+                raise NotImplementedError(f"{method} method is not implemented for {dist} distribution")
+        else:
+            raise NotImplementedError(f"{dist} distribution is not yet implemented.")
+
+    zero_inflated = False
+    sgi = standardized_index(
+        gwl,
+        freq=freq,
+        window=window,
+        dist=dist,
+        method=method,
+        zero_inflated=zero_inflated,
+        fitkwargs=fitkwargs,
+        cal_start=cal_start,
+        cal_end=cal_end,
+        params=params,
+        **indexer,
+    )
+
+    return sgi
 
 
 @declare_units(q="[discharge]")
