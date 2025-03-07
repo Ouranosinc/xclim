@@ -12,7 +12,7 @@ maintainers = [
   {name = "Pascal Bourgault", email = "bourgault.pascal@ouranos.ca"}
 ]
 readme = {file = "README.rst", content-type = "text/x-rst"}
-requires-python = ">=3.11.0"
+requires-python = ">=3.10.0"
 keywords = ["xclim", "xarray", "climate", "climatology", "bias correction", "ensemble", "indicators", "analysis"]
 license = {file = "LICENSE"}
 classifiers = [
