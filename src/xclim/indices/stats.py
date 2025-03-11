@@ -786,8 +786,8 @@ def standardized_index_fit_params(
     da : xarray.DataArray
         Input array.
     freq : str, optional
-        Resampling frequency. A monthly or daily frequency is expected. Option `None` assumes that desired resampling
-        has already been applied input dataset and will skip the resampling step.
+        Resampling frequency. A monthly or daily frequency is expected. Option `None` assumes
+        that the desired resampling has already been applied input dataset and will skip the resampling step.
     window : int
         Averaging window length relative to the resampling frequency. For example, if `freq="MS"`,
         i.e. a monthly resampling, the window is an integer number of months.
@@ -898,8 +898,8 @@ def standardized_index(
     da : xarray.DataArray
         Daily input data.
     freq : str, optional
-        Resampling frequency. A monthly or daily frequency is expected. Option `None` assumes that desired resampling
-        has already been applied input dataset and will skip the resampling step.
+        Resampling frequency. A monthly or daily frequency is expected. Option `None` assumes
+        that the desired resampling has already been applied input dataset and will skip the resampling step.
     window : int
         Averaging window length relative to the resampling frequency. For example, if `freq="MS"`,
         i.e. a monthly resampling, the window is an integer number of months.

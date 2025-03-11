@@ -138,8 +138,8 @@ def standardized_streamflow_index(
     q : xarray.DataArray
         Rate of river discharge.
     freq : str, optional
-        Resampling frequency. A monthly or daily frequency is expected. Option `None` assumes that the desired resampling
-        has already been applied to the input dataset and will skip the resampling step.
+        Resampling frequency. A monthly or daily frequency is expected. Option `None` assumes
+        that the desired resampling has already been applied input dataset and will skip the resampling step.
     window : int
         Averaging window length relative to the resampling frequency. For example, if `freq="MS"`,
         i.e. a monthly resampling, the window is an integer number of months.
@@ -443,8 +443,8 @@ def standardized_groundwater_index(
     gwl : xarray.DataArray
         Groundwater head level.
     freq : str, optional
-        Resampling frequency. A monthly or daily frequency is expected. Option `None` assumes that the desired resampling
-        has already been applied to the input dataset and will skip the resampling step.
+        Resampling frequency. A monthly or daily frequency is expected. Option `None` assumes
+        that the desired resampling has already been applied input dataset and will skip the resampling step.
     window : int
         Averaging window length relative to the resampling frequency. For example, if `freq="MS"`,
         i.e. a monthly resampling, the window is an integer number of months.
