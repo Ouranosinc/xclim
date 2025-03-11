@@ -43,13 +43,10 @@ class TestFit:
 
 class TestReturnLevel:
     def test_seasonal(self, ndq_series):
-        out = generic.return_level(
-            ndq_series, mode="max", t=[2, 5], dist="gamma", season="DJF"
-        )
+        out = generic.return_level(ndq_series, mode="max", t=[2, 5], dist="gamma", season="DJF")
 
         assert out.description == (
-            "Frequency analysis for the maximal winter 1-day value estimated using the "
-            "gamma distribution."
+            "Frequency analysis for the maximal winter 1-day value estimated using the gamma distribution."
         )
         assert out.name == "fa_1maxwinter"
         assert out.shape == (2, 2, 3)  # nrt, nx, ny
@@ -76,9 +73,7 @@ class TestReturnLevel:
     def test_empty(self, ndq_series):
         q = ndq_series.copy()
         q[:, 0, 0] = np.nan
-        out = generic.return_level(
-            q, mode="max", t=2, dist="genextreme", window=6, freq="YS"
-        )
+        out = generic.return_level(q, mode="max", t=2, dist="genextreme", window=6, freq="YS")
         assert np.isnan(out.values[:, 0, 0]).all()
 
 
@@ -99,9 +94,7 @@ class TestStats:
         assert out.attrs["units"] == "m3 s-1"
 
     def test_missing(self, ndq_series):
-        a = ndq_series.where(
-            ~((ndq_series.time.dt.dayofyear == 5) & (ndq_series.time.dt.year == 1902))
-        )
+        a = ndq_series.where(~((ndq_series.time.dt.dayofyear == 5) & (ndq_series.time.dt.year == 1902)))
         assert a.shape == (5000, 2, 3)
         out = generic.stats(a, op="max", month=1)
 

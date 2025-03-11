@@ -37,7 +37,12 @@ from xclim.sdba.utils import (
     get_correction,
     invert,
 )
-from xclim.testing.sdba_utils import nancov  # noqa
+
+
+def nancov(X):
+    """Numpy's cov but dropping observations with NaNs."""
+    X_na = np.isnan(X).any(axis=0)
+    return np.cov(X[:, ~X_na])
 
 
 class TestBaseAdjustment:
@@ -65,6 +70,28 @@ class TestBaseAdjustment:
         (da, da2), _ = BaseAdjustment._harmonize_units(da, da2)
         ds, ds2 = unstack_variables(da), unstack_variables(da2)
         assert (ds.tas.units == ds2.tas.units) & (ds.pr.units == ds2.pr.units)
+
+    def test_matching_times(self, series, random):
+        n = 10
+        u = random.random(n)
+        da = series(u, "tas", start="2000-01-01")
+        da2 = series(u, "tas", start="2010-01-01")
+        with pytest.raises(
+            ValueError,
+            match="`ref` and `hist` have distinct time arrays, this is not supported for BaseAdjustment adjustment.",
+        ):
+            BaseAdjustment._check_matching_times(ref=da, hist=da2)
+
+    def test_matching_time_sizes(self, series, random):
+        n = 10
+        u = random.random(n)
+        da = series(u, "tas", start="2000-01-01")
+        da2 = da.isel(time=slice(0, 5)).copy()
+        with pytest.raises(
+            ValueError,
+            match="Inputs have different size for the time array, this is not supported for BaseAdjustment adjustment.",
+        ):
+            BaseAdjustment._check_matching_time_sizes(da, da2)
 
 
 class TestLoci:
@@ -104,6 +131,7 @@ class TestLoci:
         np.testing.assert_array_equal(p, p2)
 
     @pytest.mark.requires_internet
+    @pytest.mark.enable_socket
     def test_reduce_dims(self, ref_hist_sim_tuto):
         ref, hist, _sim = ref_hist_sim_tuto()
         hist = hist.expand_dims(member=[0, 1])
@@ -175,7 +203,8 @@ class TestScaling:
 class TestDQM:
     @pytest.mark.parametrize("kind,name", [(ADDITIVE, "tas"), (MULTIPLICATIVE, "pr")])
     def test_quantiles(self, series, kind, name, random):
-        """Train on
+        """
+        Train on
         hist: U
         ref: Normal
 
@@ -211,9 +240,7 @@ class TestDQM:
         expected = get_correction(ex, ey, kind)
 
         # Results are not so good at the endpoints
-        np.testing.assert_array_almost_equal(
-            DQM.ds.af[:, 2:-2], expected[np.newaxis, 2:-2], 1
-        )
+        np.testing.assert_array_almost_equal(DQM.ds.af[:, 2:-2], expected[np.newaxis, 2:-2], 1)
 
         # Test predict
         # Accept discrepancies near extremes
@@ -231,9 +258,7 @@ class TestDQM:
         # np.testing.assert_array_almost_equal(p2[middle], ref2[middle], 1)
 
         # Test with actual trend in sim
-        trend = series(
-            np.linspace(-0.2, 0.2, ns) + (1 if kind == MULTIPLICATIVE else 0), name
-        )
+        trend = series(np.linspace(-0.2, 0.2, ns) + (1 if kind == MULTIPLICATIVE else 0), name)
         sim3 = apply_correction(sim, trend, kind)
         ref3 = apply_correction(ref, trend, kind)
         p3 = DQM.adjust(sim3, interp="linear")
@@ -279,9 +304,7 @@ class TestDQM:
             sim = sim.expand_dims(lat=[0, 1, 2]).chunk({"lat": 1})
             ref_t = ref_t.expand_dims(lat=[0, 1, 2])
 
-        DQM = DetrendedQuantileMapping.train(
-            ref, hist, kind=kind, group="time.month", nquantiles=5
-        )
+        DQM = DetrendedQuantileMapping.train(ref, hist, kind=kind, group="time.month", nquantiles=5)
         mqm = DQM.ds.af.mean(dim="quantiles")
         p = DQM.adjust(sim)
 
@@ -316,7 +339,8 @@ class TestDQM:
 class TestQDM:
     @pytest.mark.parametrize("kind,name", [(ADDITIVE, "tas"), (MULTIPLICATIVE, "pr")])
     def test_quantiles(self, series, kind, name, random):
-        """Train on
+        """
+        Train on
         x : U(1,1)
         y : U(1,2)
 
@@ -362,9 +386,7 @@ class TestQDM:
     @pytest.mark.parametrize("use_dask", [True, False])
     @pytest.mark.parametrize("kind,name", [(ADDITIVE, "tas"), (MULTIPLICATIVE, "pr")])
     @pytest.mark.parametrize("add_dims", [True, False])
-    def test_mon_U(
-        self, mon_series, series, mon_triangular, add_dims, kind, name, use_dask, random
-    ):
+    def test_mon_U(self, mon_series, series, mon_triangular, add_dims, kind, name, use_dask, random):
         """
         Train on
         hist: U
@@ -398,20 +420,14 @@ class TestQDM:
         else:
             sel = {}
 
-        QDM = QuantileDeltaMapping.train(
-            ref, hist, kind=kind, group="time.month", nquantiles=40
-        )
+        QDM = QuantileDeltaMapping.train(ref, hist, kind=kind, group="time.month", nquantiles=40)
         p = QDM.adjust(sim, interp="linear" if kind == "+" else "nearest")
 
         q = QDM.ds.coords["quantiles"]
         expected = get_correction(xd.ppf(q), yd.ppf(q), kind)
 
-        expected = apply_correction(
-            mon_triangular[:, np.newaxis], expected[np.newaxis, :], kind
-        )
-        np.testing.assert_array_almost_equal(
-            QDM.ds.af.sel(quantiles=q, **sel), expected, 1
-        )
+        expected = apply_correction(mon_triangular[:, np.newaxis], expected[np.newaxis, :], kind)
+        np.testing.assert_array_almost_equal(QDM.ds.af.sel(quantiles=q, **sel), expected, 1)
 
         # Test predict
         np.testing.assert_allclose(p, ref.transpose(*p.dims), rtol=0.1, atol=0.2)
@@ -451,9 +467,7 @@ class TestQDM:
 
         # Quantile mapping
         with set_options(sdba_extra_output=True):
-            QDM = QuantileDeltaMapping.train(
-                ref, hist, kind="*", group="time", nquantiles=50
-            )
+            QDM = QuantileDeltaMapping.train(ref, hist, kind="*", group="time", nquantiles=50)
             scends = QDM.adjust(sim)
 
         assert isinstance(scends, xr.Dataset)
@@ -478,7 +492,8 @@ class TestQDM:
 class TestQM:
     @pytest.mark.parametrize("kind,name", [(ADDITIVE, "tas"), (MULTIPLICATIVE, "pr")])
     def test_quantiles(self, series, kind, name, random):
-        """Train on
+        """
+        Train on
         hist: U
         ref: Normal
 
@@ -541,9 +556,7 @@ class TestQM:
         hist = sim = series(x, name)
         ref = mon_series(y, name)
 
-        QM = EmpiricalQuantileMapping.train(
-            ref, hist, kind=kind, group="time.month", nquantiles=5
-        )
+        QM = EmpiricalQuantileMapping.train(ref, hist, kind=kind, group="time.month", nquantiles=5)
         p = QM.adjust(sim)
         mqm = QM.ds.af.mean(dim="quantiles")
         expected = apply_correction(mon_triangular, 2, kind)
@@ -594,6 +607,19 @@ class TestQM:
             scen2 = EQM2.adjust(sim).load()
             assert scen2.sel(location=["Kugluktuk", "Vancouver"]).isnull().all()
 
+    def test_different_times_training(self, series, random):
+        n = 10
+        u = random.random(n)
+        ref = series(u, "tas", start="2000-01-01")
+        u2 = random.random(n)
+        hist = series(u2, "tas", start="2000-01-01")
+        hist_fut = series(u2, "tas", start="2001-01-01")
+        ds = EmpiricalQuantileMapping.train(ref, hist).ds
+        EmpiricalQuantileMapping._allow_diff_training_times = True
+        ds_fut = EmpiricalQuantileMapping.train(ref, hist_fut).ds
+        EmpiricalQuantileMapping._allow_diff_training_times = False
+        assert (ds.af == ds_fut.af).all()
+
 
 @pytest.mark.slow
 class TestMBCn:
@@ -617,14 +643,9 @@ class TestMBCn:
                 .expand_dims(location=["Amos"])
                 for file in ["ahccd_1950-2013.nc", "CanESM2_1950-2100.nc"]
             )
-            ref, hist = (
-                ds.sel(time=slice("1981", "2010")).isel(time=slice(365 * 4))
-                for ds in [ref, dsim]
-            )
+            ref, hist = (ds.sel(time=slice("1981", "2010")).isel(time=slice(365 * 4)) for ds in [ref, dsim])
             dsim = dsim.sel(time=slice("1981", None))
-            sim = (stack_periods(dsim).isel(period=slice(1, 2))).isel(
-                time=slice(365 * 4)
-            )
+            sim = (stack_periods(dsim).isel(period=slice(1, 2))).isel(time=slice(365 * 4))
 
             ref, hist, sim = (stack_variables(ds) for ds in [ref, hist, sim])
 
@@ -640,9 +661,7 @@ class TestMBCn:
 
 
 class TestPrincipalComponents:
-    @pytest.mark.parametrize(
-        "group", (Grouper("time.month"), Grouper("time", add_dims=["lon"]))
-    )
+    @pytest.mark.parametrize("group", (Grouper("time.month"), Grouper("time", add_dims=["lon"])))
     def test_simple(self, group, random):
         n = 15 * 365
         m = 2  # A dummy dimension to test vectorizing.
@@ -651,13 +670,9 @@ class TestPrincipalComponents:
         sim_x = norm.rvs(loc=4, scale=2, size=(m, n), random_state=random)
         sim_y = sim_x + norm.rvs(loc=1, scale=1, size=(m, n), random_state=random)
 
-        ref = xr.DataArray(
-            [ref_x, ref_y], dims=("lat", "lon", "time"), attrs={"units": "degC"}
-        )
+        ref = xr.DataArray([ref_x, ref_y], dims=("lat", "lon", "time"), attrs={"units": "degC"})
         ref["time"] = xr.cftime_range("1990-01-01", periods=n, calendar="noleap")
-        sim = xr.DataArray(
-            [sim_x, sim_y], dims=("lat", "lon", "time"), attrs={"units": "degC"}
-        )
+        sim = xr.DataArray([sim_x, sim_y], dims=("lat", "lon", "time"), attrs={"units": "degC"})
         sim["time"] = ref["time"]
 
         PCA = PrincipalComponents.train(ref, sim, group=group, crd_dim="lat")
@@ -686,9 +701,7 @@ class TestPrincipalComponents:
     @pytest.mark.parametrize("use_dask", [True, False])
     @pytest.mark.parametrize("pcorient", ["full", "simple"])
     def test_real_data(self, atmosds, use_dask, pcorient):
-        ds0 = xr.Dataset(
-            {"tasmax": atmosds.tasmax, "tasmin": atmosds.tasmin, "tas": atmosds.tas}
-        )
+        ds0 = xr.Dataset({"tasmax": atmosds.tasmax, "tasmin": atmosds.tasmin, "tas": atmosds.tas})
         ref = stack_variables(ds0).isel(location=3)
         hist0 = ds0
         with xr.set_options(keep_attrs=True):
@@ -706,9 +719,7 @@ class TestPrincipalComponents:
             hist = hist.chunk()
             sim = sim.chunk()
 
-        PCA = PrincipalComponents.train(
-            ref, hist, crd_dim="multivar", best_orientation=pcorient
-        )
+        PCA = PrincipalComponents.train(ref, hist, crd_dim="multivar", best_orientation=pcorient)
         scen = PCA.adjust(sim)
 
         def dist(ref, sim):
@@ -740,19 +751,13 @@ class TestExtremeValues:
         n = 45 * 365
 
         def gen_testdata(c, s):
-            base = np.clip(
-                norm.rvs(loc=0, scale=s, size=(n,), random_state=random), 0, None
-            )
+            base = np.clip(norm.rvs(loc=0, scale=s, size=(n,), random_state=random), 0, None)
             qv = np.quantile(base[base > 1], q_thresh)
-            base[base > qv] = genpareto.rvs(
-                c, loc=qv, scale=s, size=base[base > qv].shape, random_state=random
-            )
+            base[base > qv] = genpareto.rvs(c, loc=qv, scale=s, size=base[base > qv].shape, random_state=random)
             return xr.DataArray(
                 base,
                 dims=("time",),
-                coords={
-                    "time": xr.cftime_range("1990-01-01", periods=n, calendar="noleap")
-                },
+                coords={"time": xr.cftime_range("1990-01-01", periods=n, calendar="noleap")},
                 attrs={"units": "mm/day", "thresh": qv},
             )
 
@@ -760,9 +765,7 @@ class TestExtremeValues:
         hist = jitter_under_thresh(gen_testdata(-0.1, 2), "1e-3 mm/d")
         sim = gen_testdata(-0.15, 2.5)
 
-        EQM = EmpiricalQuantileMapping.train(
-            ref, hist, group="time.dayofyear", nquantiles=15, kind="*"
-        )
+        EQM = EmpiricalQuantileMapping.train(ref, hist, group="time.dayofyear", nquantiles=15, kind="*")
 
         scen = EQM.adjust(sim)
 
@@ -775,21 +778,15 @@ class TestExtremeValues:
         # What to test???
         # Test if extreme values of sim are still extreme
         exval = sim > EX.ds.thresh
-        assert (scen2.where(exval) > EX.ds.thresh).sum() > (
-            scen.where(exval) > EX.ds.thresh
-        ).sum()
+        assert (scen2.where(exval) > EX.ds.thresh).sum() > (scen.where(exval) > EX.ds.thresh).sum()
 
     @pytest.mark.slow
     def test_real_data(self, open_dataset):
         dsim = open_dataset("sdba/CanESM2_1950-2100.nc").chunk()
         dref = open_dataset("sdba/ahccd_1950-2013.nc").chunk()
 
-        ref = convert_units_to(
-            dref.sel(time=slice("1950", "2009")).pr, "mm/d", context="hydro"
-        )
-        hist = convert_units_to(
-            dsim.sel(time=slice("1950", "2009")).pr, "mm/d", context="hydro"
-        )
+        ref = convert_units_to(dref.sel(time=slice("1950", "2009")).pr, "mm/d", context="hydro")
+        hist = convert_units_to(dsim.sel(time=slice("1950", "2009")).pr, "mm/d", context="hydro")
 
         quantiles = np.linspace(0.01, 0.99, num=50)
 
@@ -863,60 +860,11 @@ class TestOTC:
         scen = OTC.adjust(ref, hist, bin_width=bin_width, jitter_inside_bins=False)
 
         otc_sbck = adjustment.SBCK_OTC
-        scen_sbck = otc_sbck.adjust(
-            ref, hist, hist, multi_dim="multivar", bin_width=bin_width
-        )
+        scen_sbck = otc_sbck.adjust(ref, hist, hist, multi_dim="multivar", bin_width=bin_width)
 
         scen = scen.to_numpy().T
         scen_sbck = scen_sbck.to_numpy()
         assert np.allclose(scen, scen_sbck)
-
-    def test_shape(self, random, series):
-        pytest.importorskip("ot")
-        pytest.importorskip("SBCK", minversion="0.4.0")
-        ref_ns = 300
-        hist_ns = 200
-        ref_u = random.random(ref_ns)
-        hist_u = random.random(hist_ns)
-
-        ref_xd = uniform(loc=1000, scale=100)
-        ref_yd = norm(loc=0, scale=100)
-        ref_zd = norm(loc=500, scale=100)
-        hist_xd = norm(loc=-500, scale=100)
-        hist_yd = uniform(loc=-1000, scale=100)
-        hist_zd = uniform(loc=-10, scale=100)
-
-        ref_x = ref_xd.ppf(ref_u)
-        ref_y = ref_yd.ppf(ref_u)
-        ref_z = ref_zd.ppf(ref_u)
-        hist_x = hist_xd.ppf(hist_u)
-        hist_y = hist_yd.ppf(hist_u)
-        hist_z = hist_zd.ppf(hist_u)
-
-        ref_na = 10
-        hist_na = 15
-        ref_idx = random.choice(range(ref_ns), size=ref_na, replace=False)
-        ref_x[ref_idx] = None
-        hist_idx = random.choice(range(hist_ns), size=hist_na, replace=False)
-        hist_x[hist_idx] = None
-
-        ref_x = series(ref_x, "tas").rename("x")
-        ref_y = series(ref_y, "tas").rename("y")
-        ref_z = series(ref_z, "tas").rename("z")
-        ref = xr.merge([ref_x, ref_y, ref_z])
-        ref = stack_variables(ref)
-
-        hist_x = series(hist_x, "tas").rename("x")
-        hist_y = series(hist_y, "tas").rename("y")
-        hist_z = series(hist_z, "tas").rename("z")
-        hist = xr.merge([hist_x, hist_y, hist_z])
-        hist = stack_variables(hist)
-
-        scen = OTC.adjust(ref, hist)
-
-        assert scen.shape == (3, hist_ns - hist_na)
-        hist = unstack_variables(hist)
-        assert not np.isin(hist.x[hist.x.isnull()].time.values, scen.time.values).any()
 
 
 # TODO: Add tests for normalization methods
@@ -1004,69 +952,25 @@ class TestdOTC:
         scen_sbck = scen_sbck.to_numpy()
         assert np.allclose(scen, scen_sbck)
 
-    def test_shape(self, random, series):
+    # just check it runs
+    def test_different_times(self, tasmax_series, tasmin_series):
         pytest.importorskip("ot")
-        pytest.importorskip("SBCK", minversion="0.4.0")
-        ref_ns = 300
-        hist_ns = 200
-        sim_ns = 400
-        ref_u = random.random(ref_ns)
-        hist_u = random.random(hist_ns)
-        sim_u = random.random(sim_ns)
-
-        ref_xd = uniform(loc=1000, scale=100)
-        ref_yd = norm(loc=0, scale=100)
-        ref_zd = norm(loc=500, scale=100)
-        hist_xd = norm(loc=-500, scale=100)
-        hist_yd = uniform(loc=-1000, scale=100)
-        hist_zd = uniform(loc=-10, scale=100)
-        sim_xd = norm(loc=0, scale=100)
-        sim_yd = uniform(loc=0, scale=100)
-        sim_zd = uniform(loc=10, scale=100)
-
-        ref_x = ref_xd.ppf(ref_u)
-        ref_y = ref_yd.ppf(ref_u)
-        ref_z = ref_zd.ppf(ref_u)
-        hist_x = hist_xd.ppf(hist_u)
-        hist_y = hist_yd.ppf(hist_u)
-        hist_z = hist_zd.ppf(hist_u)
-        sim_x = sim_xd.ppf(sim_u)
-        sim_y = sim_yd.ppf(sim_u)
-        sim_z = sim_zd.ppf(sim_u)
-
-        ref_na = 10
-        hist_na = 15
-        sim_na = 20
-        ref_idx = random.choice(range(ref_ns), size=ref_na, replace=False)
-        ref_x[ref_idx] = None
-        hist_idx = random.choice(range(hist_ns), size=hist_na, replace=False)
-        hist_x[hist_idx] = None
-        sim_idx = random.choice(range(sim_ns), size=sim_na, replace=False)
-        sim_x[sim_idx] = None
-
-        ref_x = series(ref_x, "tas").rename("x")
-        ref_y = series(ref_y, "tas").rename("y")
-        ref_z = series(ref_z, "tas").rename("z")
-        ref = xr.merge([ref_x, ref_y, ref_z])
-        ref = stack_variables(ref)
-
-        hist_x = series(hist_x, "tas").rename("x")
-        hist_y = series(hist_y, "tas").rename("y")
-        hist_z = series(hist_z, "tas").rename("z")
-        hist = xr.merge([hist_x, hist_y, hist_z])
-        hist = stack_variables(hist)
-
-        sim_x = series(sim_x, "tas").rename("x")
-        sim_y = series(sim_y, "tas").rename("y")
-        sim_z = series(sim_z, "tas").rename("z")
-        sim = xr.merge([sim_x, sim_y, sim_z])
-        sim = stack_variables(sim)
-
-        scen = dOTC.adjust(ref, hist, sim)
-
-        assert scen.shape == (3, sim_ns - sim_na)
-        sim = unstack_variables(sim)
-        assert not np.isin(sim.x[sim.x.isnull()].time.values, scen.time.values).any()
+        # `sim` has a different time than `ref,hist` (but same size)
+        ref = xr.merge(
+            [
+                tasmax_series(np.arange(730).astype(float), start="2000-01-01").chunk({"time": -1}),
+                tasmin_series(np.arange(730).astype(float), start="2000-01-01").chunk({"time": -1}),
+            ]
+        )
+        hist = ref.copy()
+        sim = xr.merge(
+            [
+                tasmax_series(np.arange(730).astype(float), start="2020-01-01").chunk({"time": -1}),
+                tasmin_series(np.arange(730).astype(float), start="2020-01-01").chunk({"time": -1}),
+            ]
+        )
+        ref, hist, sim = (stack_variables(arr) for arr in [ref, hist, sim])
+        dOTC.adjust(ref, hist, sim)
 
 
 def test_raise_on_multiple_chunks(tas_series):
@@ -1104,36 +1008,24 @@ class TestSBCKutils:
 
         ref = xr.Dataset(
             {
-                "tasmin": xr.DataArray(
-                    ref_x, dims=("lon", "time"), attrs={"units": "degC"}
-                ),
-                "tasmax": xr.DataArray(
-                    ref_y, dims=("lon", "time"), attrs={"units": "degC"}
-                ),
+                "tasmin": xr.DataArray(ref_x, dims=("lon", "time"), attrs={"units": "degC"}),
+                "tasmax": xr.DataArray(ref_y, dims=("lon", "time"), attrs={"units": "degC"}),
             }
         )
         ref["time"] = xr.cftime_range("1990-01-01", periods=n, calendar="noleap")
 
         hist = xr.Dataset(
             {
-                "tasmin": xr.DataArray(
-                    hist_x, dims=("lon", "time"), attrs={"units": "degC"}
-                ),
-                "tasmax": xr.DataArray(
-                    hist_y, dims=("lon", "time"), attrs={"units": "degC"}
-                ),
+                "tasmin": xr.DataArray(hist_x, dims=("lon", "time"), attrs={"units": "degC"}),
+                "tasmax": xr.DataArray(hist_y, dims=("lon", "time"), attrs={"units": "degC"}),
             }
         )
         hist["time"] = ref["time"]
 
         sim = xr.Dataset(
             {
-                "tasmin": xr.DataArray(
-                    sim_x, dims=("lon", "time"), attrs={"units": "degC"}
-                ),
-                "tasmax": xr.DataArray(
-                    sim_y, dims=("lon", "time"), attrs={"units": "degC"}
-                ),
+                "tasmin": xr.DataArray(sim_x, dims=("lon", "time"), attrs={"units": "degC"}),
+                "tasmax": xr.DataArray(sim_y, dims=("lon", "time"), attrs={"units": "degC"}),
             }
         )
         sim["time"] = xr.cftime_range("2090-01-01", periods=n, calendar="noleap")

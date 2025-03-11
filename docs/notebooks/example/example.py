@@ -10,7 +10,8 @@ from xclim.core.units import declare_units, rate2amount
 def extreme_precip_accumulation_and_days(
     pr: xr.DataArray, perc: float = 95, freq: str = "YS"
 ) -> tuple[xr.DataArray, xr.DataArray]:
-    """Total precipitation accumulation during extreme events and number of days of such precipitation.
+    """
+    Total precipitation accumulation during extreme events and number of days of such precipitation.
 
     The `perc` percentile of the precipitation (including all values, not in a day-of-year manner)
     is computed. Then, for each period, the days where `pr` is above the threshold are accumulated,

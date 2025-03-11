@@ -10,7 +10,7 @@ from xclim.core import missing
 K2C = 273.15
 
 
-class TestMissingBase:
+class test_expected_count:
     """The base class is well tested for daily input through the subclasses."""
 
     def test_3hourly_input(self, random):
@@ -18,39 +18,39 @@ class TestMissingBase:
         n = 21 * 8
         time = xr.cftime_range(start="2002-01-01", periods=n, freq="3h")
         ts = xr.DataArray(random.random(n), dims="time", coords={"time": time})
-        mb = missing.MissingBase(ts, freq="MS", src_timestep="3h")
+        count = missing.expected_count(ts, freq="MS", src_timestep="3h")
         # Make sure count is 31  * 8, because we're requesting a MS freq.
-        assert mb.count == 31 * 8
+        assert count == 31 * 8
 
     def test_monthly_input(self, random):
         """Creating array with 11 months."""
         n = 11
         time = xr.cftime_range(start="2002-01-01", periods=n, freq="ME")
         ts = xr.DataArray(random.random(n), dims="time", coords={"time": time})
-        mb = missing.MissingBase(ts, freq="YS", src_timestep="ME")
+        count = missing.expected_count(ts, freq="YS", src_timestep="ME")
         # Make sure count is 12, because we're requesting a YS freq.
-        assert mb.count == 12
+        assert count == 12
 
         n = 5
         time = xr.cftime_range(start="2002-06-01", periods=n, freq="MS")
         ts = xr.DataArray(random.random(n), dims="time", coords={"time": time})
-        mb = missing.MissingBase(ts, freq="YS", src_timestep="MS", season="JJA")
-        assert mb.count == 3
+        count = missing.expected_count(ts, freq="YS", src_timestep="MS", season="JJA")
+        assert count == 3
 
     def test_seasonal_input(self, random):
         """Creating array with 11 seasons."""
         n = 11
         time = xr.cftime_range(start="2002-04-01", periods=n, freq="QS-JAN")
         ts = xr.DataArray(random.random(n), dims="time", coords={"time": time})
-        mb = missing.MissingBase(ts, freq="YS", src_timestep="QS-JAN")
+        count = missing.expected_count(ts, freq="YS", src_timestep="QS-JAN")
         # Make sure count is 12, because we're requesting a YS freq.
-        np.testing.assert_array_equal(mb.count, [4, 4, 4, 1])
+        np.testing.assert_array_equal(count, [4, 4, 4, 1])
 
         with pytest.raises(
             NotImplementedError,
             match="frequency that is not aligned with the source timestep.",
         ):
-            missing.MissingBase(ts, freq="YS", src_timestep="QS-DEC")
+            missing.expect_count(ts, freq="YS", src_timestep="QS-DEC")
 
 
 class TestMissingAnyFills:
@@ -105,9 +105,6 @@ class TestMissingAnyFills:
         miss = missing.missing_any(ts, freq="YS", month=8)
         np.testing.assert_equal(miss, [True])
 
-        with pytest.raises(ValueError, match=r"No data for selected period."):
-            missing.missing_any(ts, freq="YS", month=1)
-
         miss = missing.missing_any(ts, freq="YS", month=[7, 8])
         np.testing.assert_equal(miss, [True])
 
@@ -117,17 +114,14 @@ class TestMissingAnyFills:
 
     @pytest.mark.parametrize("calendar", ("proleptic_gregorian", "noleap", "360_day"))
     def test_season(self, tasmin_series, calendar):
-        ts = tasmin_series(np.zeros(360))
+        ts = tasmin_series(np.zeros(360), start="2000-01-01")
         ts = ts.convert_calendar(calendar, missing=0, align_on="date")
 
         miss = missing.missing_any(ts, freq="YS", season="MAM")
-        np.testing.assert_equal(miss, [False])
+        np.testing.assert_array_equal(miss, [False])
 
-        miss = missing.missing_any(ts, freq="YS", season="JJA")
-        np.testing.assert_array_equal(miss, [True, True])
-
-        miss = missing.missing_any(ts, freq="YS", season="SON")
-        np.testing.assert_equal(miss, [False])
+        miss = missing.missing_any(ts, freq="YS", season="DJF")
+        np.testing.assert_array_equal(miss, [True])
 
     def test_no_freq(self, tasmin_series):
         ts = tasmin_series(np.zeros(360))
@@ -153,9 +147,6 @@ class TestMissingAnyFills:
         miss = missing.missing_any(ds.q_sim, freq="YS")
         np.testing.assert_array_equal(miss[:-1], False)
         np.testing.assert_array_equal(miss[-1], True)
-
-        miss = missing.missing_any(ds.q_sim, freq="YS", season="JJA")
-        np.testing.assert_array_equal(miss, False)
 
     def test_hourly(self, pr_hr_series):
         a = np.arange(2.0 * 32 * 24)
@@ -185,7 +176,7 @@ class TestMissingWMO:
         assert out[2]
 
     def test_missing_days_in_quarter(self, tas_series):
-        a = np.arange(360.0)
+        a = np.arange(350.0)
         a[5:16] = np.nan  # Number of missing values under acceptable limit in a month
         ts = tas_series(a)
         out = missing.missing_wmo(ts, freq="QS-JAN")
@@ -244,12 +235,6 @@ class TestAtLeastNValid:
         pr = pr_hr_series(a)
         out = missing.at_least_n_valid(pr, freq="MS", n=25 * 24)
         np.testing.assert_array_equal(out, [True, False, True])
-
-    def test_missing_period(self, tas_series):
-        tas = tas_series(np.ones(366), start="2000-01-01")
-        tas = tas.sel(time=tas.time.dt.month.isin([1, 2, 3, 4, 12]))
-        out = missing.missing_pct(tas, freq="MS", tolerance=0.9, src_timestep="D")
-        np.testing.assert_array_equal(out, [False] * 4 + [True] * 7 + [False])
 
 
 class TestHourly:

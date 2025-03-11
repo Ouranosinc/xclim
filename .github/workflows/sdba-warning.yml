@@ -1,0 +1,81 @@
+name: SDBA Changes Warnings
+
+on:
+  # Note: potential security risk from this action using pull_request_target.
+  # Do not add actions in here which need a checkout of the repo, and do not use any caching in here.
+  # See: https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#pull_request_target
+  pull_request_target:
+    types:
+      - opened
+      - reopened
+      - synchronize
+    paths:
+      - src/xclim/sdba/*.py
+
+permissions:
+  contents: read
+
+jobs:
+  comment-concerning-workflow-changes:
+    name: Comment Concerning Changes to SDBA module
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@4d991eb9b905ef189e4c376166672c3f2f230481 # v2.11.0
+        with:
+          disable-sudo: true
+          egress-policy: block
+          allowed-endpoints: >
+            api.github.com:443
+      - name: Find Warning Comment
+        uses: peter-evans/find-comment@3eae4d37986fb5a8592848f6a574fdf654e61f9e # v3.1.0
+        id: fc_warning
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          comment-author: 'github-actions[bot]'
+          body-includes: |
+            This Pull Request modifies the SDBA module.
+      - name: Create Warning Comment
+        if: |
+          (steps.fc_warning.outputs.comment-id == '') &&
+          (!contains(github.event.pull_request.labels.*.name, 'approved'))
+        uses: peter-evans/create-or-update-comment@71345be0265236311c031f5c7866368bd1eff043 # v4.0.0
+        with:
+          comment-id: ${{ steps.fc_warning.outputs.comment-id }}
+          issue-number: ${{ github.event.pull_request.number }}
+          body: |
+            > [!WARNING]
+            > This Pull Request modifies the SDBA module.
+            **The SDBA module is gradually being deprecated in favour of the `xsdba` package.**
+            **Any changes to `xclim.sdba` should be made in https://github.com/Ouranosinc/xsdba**
+          edit-mode: replace
+      - name: Fail Workflow
+        if: (!contains(github.event.pull_request.labels.*.name, 'approved'))
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
+        with:
+          script: |
+            core.setFailed('Changes were made to `xclim.sdba`.')
+      - name: Find Note Comment
+        uses: peter-evans/find-comment@3eae4d37986fb5a8592848f6a574fdf654e61f9e # v3.1.0
+        id: fc_note
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          comment-author: 'github-actions[bot]'
+          body-includes: This Pull Request modifies the SDBA module.
+      - name: Update Comment
+        if: |
+          contains(github.event.pull_request.labels.*.name, 'approved')
+        uses: peter-evans/create-or-update-comment@71345be0265236311c031f5c7866368bd1eff043 # v4.0.0
+        with:
+          comment-id: ${{ steps.fc_note.outputs.comment-id }}
+          issue-number: ${{ github.event.pull_request.number }}
+          body: |
+            > [!NOTE]
+            > This Pull Request modifies the SDBA module.
+            **The changes made here have been approved. Be sure to port any relevant changes to `xsdba`.**
+          reactions: |
+            hooray
+          edit-mode: append

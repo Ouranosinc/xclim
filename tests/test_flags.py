@@ -18,13 +18,9 @@ class TestDataFlags:
             ([], dict(tas_exceeds_tasmax=False, tas_below_tasmin=False)),
         ],
     )
-    def test_tas_temperature_flags(
-        self, vars_dropped, flags, tas_series, tasmax_series, tasmin_series
-    ):
+    def test_tas_temperature_flags(self, vars_dropped, flags, tas_series, tasmax_series, tasmin_series):
         ds = xr.Dataset()
-        for series, val in zip(
-            [tas_series, tasmax_series, tasmin_series], [0, 10, -10], strict=False
-        ):
+        for series, val in zip([tas_series, tasmax_series, tasmin_series], [0, 10, -10], strict=False):
             vals = val + K2C + np.sin(2 * np.pi * np.arange(366 * 3) / 366)
             arr = series(vals, start="1971-01-01")
             ds = xr.merge([ds, arr])
@@ -34,12 +30,8 @@ class TestDataFlags:
 
         np.testing.assert_equal(flagged_ds.temperature_extremely_high.values, False)
         np.testing.assert_equal(flagged_ds.temperature_extremely_low.values, False)
-        np.testing.assert_equal(
-            flagged_ds.values_repeating_for_5_or_more_days.values, False
-        )
-        np.testing.assert_equal(
-            flagged_ds.outside_5_standard_deviations_of_climatology.values, False
-        )
+        np.testing.assert_equal(flagged_ds.values_repeating_for_5_or_more_days.values, False)
+        np.testing.assert_equal(flagged_ds.outside_5_standard_deviations_of_climatology.values, False)
 
         for flag, val in flags.items():
             np.testing.assert_equal(getattr(flagged_ds, flag).values, val)
@@ -74,18 +66,12 @@ class TestDataFlags:
         flagged = df.data_flags(bad_pr)
         np.testing.assert_equal(flagged.negative_accumulation_values.values, True)
         np.testing.assert_equal(flagged.very_large_precipitation_events.values, True)
-        np.testing.assert_equal(
-            flagged.values_eq_1_repeating_for_10_or_more_days.values, True
-        )
-        np.testing.assert_equal(
-            flagged.values_eq_5_repeating_for_5_or_more_days.values, True
-        )
+        np.testing.assert_equal(flagged.values_eq_1_repeating_for_10_or_more_days.values, True)
+        np.testing.assert_equal(flagged.values_eq_5_repeating_for_5_or_more_days.values, True)
 
     def test_suspicious_tas_data(self, tas_series, tasmax_series, tasmin_series):
         bad_ds = xr.Dataset()
-        for series, val in zip(
-            [tas_series, tasmax_series, tasmin_series], [0, 10, -10], strict=False
-        ):
+        for series, val in zip([tas_series, tasmax_series, tasmin_series], [0, 10, -10], strict=False):
             vals = val + K2C + np.sin(2 * np.pi * np.arange(366 * 7) / 366)
             arr = series(vals, start="1971-01-01")
             bad_ds = xr.merge([bad_ds, arr])
@@ -106,9 +92,7 @@ class TestDataFlags:
         flagged = df.data_flags(bad_ds.tas, bad_ds)
         np.testing.assert_equal(flagged.temperature_extremely_high.values, True)
         np.testing.assert_equal(flagged.temperature_extremely_low.values, True)
-        np.testing.assert_equal(
-            flagged.values_repeating_for_5_or_more_days.values, True
-        )
+        np.testing.assert_equal(flagged.values_repeating_for_5_or_more_days.values, True)
         np.testing.assert_equal(
             flagged.outside_5_standard_deviations_of_climatology.values,
             True,
@@ -164,7 +148,4 @@ class TestDataFlags:
                 }
             },
         )
-        assert (
-            list(flgs.data_vars.keys())[0]
-            == "values_eq_minus5point1_repeating_for_5_or_more_days"
-        )
+        assert list(flgs.data_vars.keys())[0] == "values_eq_minus5point1_repeating_for_5_or_more_days"

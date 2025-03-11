@@ -16,16 +16,13 @@ class ATestSubClass(Parametrizable):
 
 def test_param_class():
     gr = Grouper(group="time.month")
-    in_params = dict(
-        anint=4, abool=True, astring="a string", adict={"key": "val"}, group=gr
-    )
+    in_params = dict(anint=4, abool=True, astring="a string", adict={"key": "val"}, group=gr)
     obj = Parametrizable(**in_params)
 
     assert obj.parameters == in_params
 
     assert repr(obj).startswith(
-        "Parametrizable(anint=4, abool=True, astring='a string', adict={'key': 'val'}, "
-        "group=Grouper("
+        "Parametrizable(anint=4, abool=True, astring='a string', adict={'key': 'val'}, group=Grouper("
     )
 
     s = jsonpickle.encode(obj)
@@ -50,11 +47,21 @@ def test_grouper_group(tas_series, group, window, nvals):
 
 
 @pytest.mark.parametrize(
-    "group,interp,val90",
-    [("time", False, True), ("time.month", False, 3), ("time.month", True, 3.5)],
+    "group,interp,val90,calendar",
+    [
+        ("time", False, True, None),
+        ("time.month", False, 3, None),
+        ("time.month", True, 3.5, None),
+        ("time.season", False, 1, None),
+        ("time.season", True, 0.8278688524590164, None),
+        ("time.month", True, 3.533333333333333, "360_day"),
+        ("time.month", True, 3.533333333333333, "noleap"),
+        ("time.season", True, 0.8444444444444444, "360_day"),
+        ("time.season", True, 0.8305936073059361, "noleap"),
+    ],
 )
-def test_grouper_get_index(tas_series, group, interp, val90):
-    tas = tas_series(np.ones(366), start="2000-01-01")
+def test_grouper_get_index(tas_series, group, interp, val90, calendar):
+    tas = tas_series(np.ones(366), start="2000-01-01", calendar=calendar)
     grouper = Grouper(group)
     indx = grouper.get_index(tas, interp=interp)
     # 90 is March 31st
@@ -109,9 +116,7 @@ def test_grouper_apply(tas_series, use_dask, group, n):
     # With window
     win_grouper = Grouper(group, window=5)
     out = win_grouper.apply("mean", tas)
-    rolld = tas.rolling({win_grouper.dim: 5}, center=True).construct(
-        window_dim="window"
-    )
+    rolld = tas.rolling({win_grouper.dim: 5}, center=True).construct(window_dim="window")
     if grouper.prop != "group":
         exp = rolld.groupby(group).mean(dim=[win_grouper.dim, "window"])
     else:
@@ -152,9 +157,7 @@ def test_grouper_apply(tas_series, use_dask, group, n):
     def normalize_from_precomputed(grpds, dim=None):
         return (grpds.tas / grpds.tas1_mean).mean(dim=dim)
 
-    out = grouper.apply(
-        normalize_from_precomputed, {"tas": tas, "tas1_mean": out.tas1_mean}
-    ).isel(lat=0)
+    out = grouper.apply(normalize_from_precomputed, {"tas": tas, "tas1_mean": out.tas1_mean}).isel(lat=0)
     if grouper.prop == "group":
         exp = normed.mean("time").isel(lat=0)
     else:

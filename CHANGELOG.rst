@@ -2,31 +2,132 @@
 Changelog
 =========
 
-v0.54.0 (unreleased)
+v0.56.0 (unreleased)
 --------------------
-Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), Éric Dupuis (:user:`coxipi`).
+Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Hui-Min Wang (:user:`Hem-W`), Jack Kit-tai Wong(:user:`jack-ktw`).
+
+Bug fixes
+^^^^^^^^^
+* Fix installation instructions in the Contributing guide (:issue:`2088`, :pull:`2089`).
+* Fixed parameter order in typing.cast() causing intermittent errors in solar_zenith_angle calculation. (:issue:`2097`, :pull:`2098`)
+
+Breaking changes
+^^^^^^^^^^^^^^^^
+* `xclim` no longer supports Python 3.10. The minimum required version is now Python 3.11. (:pull:`2082`).
+    * Reverted: Extended support for Python3.10 will continue until further notice. (:pull:`2100`).
+* The minimum versions of several key dependencies have been raised (`numpy` >=1.24.0; `scikit-learn` >=1.2.0; `scipy` >=1.11.0). (:pull:`2082`).
+
+Internal changes
+^^^^^^^^^^^^^^^^
+* `black`, `isort`, and `nbqa` have all been dropped from the development dependencies. (:issue:`1805`, :pull:`2082`).
+* `ruff` has been configured to provide code formatting. (:pull:`2083`):
+    * The maximum line-length is now 120 characters.
+    * Docstring formatting is now enabled.
+    * Line endings in files now must be `Unix`-compatible (`LF`).
+* The `blackdoc` pre-commit hook now only examines `.rst` and `.md` files. (:pull:`2083`).
+* The `xclim` documentation now has a ``support`` page for detailing the project's usage and version support policies. (:pull:`2100`).
+
+v0.55.1 (2025-02-26)
+--------------------
+Contributors to this version: Éric Dupuis (:user:`coxipi`).
+
+Bug fixes
+^^^^^^^^^
+* Re-allow the use of `interp="linear"` in adjustments that use day-of-year grouping, `group=Grouper("time.dayofyear", window)`. (:pull:`2087`).
+
+v0.55.0 (2025-02-17)
+--------------------
+Contributors to this version: Juliette Lavoie (:user:`juliettelavoie`), Trevor James Smith (:user:`Zeitsperre`), Sascha Hofmann (:user:`saschahofmann`), Pascal Bourgault (:user:`aulemahal`), Éric Dupuis (:user:`coxipi`), Baptiste Hamon (:user:`baptistehamon`), Sarah Gammon (:user:`SarahG-579462`).
+
+Breaking changes
+^^^^^^^^^^^^^^^^
+* Missing value method "WMO" was modified to remove the criterion that the timeseries needs to be continuous (without holes). (:pull:`2058`).
+
+Announcements
+^^^^^^^^^^^^^
+* `xclim` now officially supports Python 3.13 (using `numba` v0.61.0). (:issue:`2022`, :pull:`2054`).
+* `xclim` version 0.55.0 will be the last version to support Python 3.10. The next version will require Python 3.11 or higher. (:pull:`2054`).
+* `xclim.sdba` is in the process of being split into a separate package (`xsdba <https://github.com/Ouranosinc/xsdba>`_) to help with the maintenance of the codebase as well as better support new SDBA functionality. Feature additions to the `xclim.sdba` module will no longer be accepted and should be made instead to `xsdba`. The developers aim to ensure a high level of interoperability between `xclim` and `xsdba` so that users are minimally impacted; A migration guide will be made available in a future release. (:issue:`1948`, :issue:`2074`, :pull:`2073`).
+
+New indicators
+^^^^^^^^^^^^^^
+* Added ``xclim.land.holiday_snow_days`` to compute the number of days with snow on the ground during holidays ("Christmas Days"). (:issue:`2029`, :pull:`2030`).
+* Added ``xclim.land.holiday_snow_and_snowfall_days`` to compute the number of days with snow on the ground and measurable snowfall during holidays ("Perfect Christmas Days"). (:issue:`2029`, :pull:`2030`).
+* Added ``xclim.atmos.vapor_pressure_deficit`` to compute the vapor pressure deficit from temperature and relative humidity. (:issue:`1917`, :pull:`2072`).
+
+New features and enhancements
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+* New function ``ensemble.partition.general_partition``. (:pull:`2035`).
+* Added a new ``xclim.indices.generic.bivariate_count_occurrences`` function to count instances where operations and performed and validated for two variables. (:pull:`2030`).
+* ``xclim.testing.helpers.test_timeseries`` now accepts a `calendar` argument that is forwarded to ``xr.cftime_range``. (:pull:`2019`).
+* New ``xclim.indices.fao_allen98``, exporting the FAO-56 Penman-Monteith equation for potential evapotranspiration (:issue:`2004`, :pull:`2067`).
+* Missing values method "pct" and "at_least_n" now accept a new "subfreq" option that allows to compute the missing mask in two steps. When given, the algorithm is applied at this "subfreq" resampling frequency first and then the result is resampled at the target indicator frequency. In the output, a period is invalid if any of its subgroup where flagged as invalid by the chosen method. (:pull:`2058`, :issue:`1820`).
+* ``scipy.stats.rv_continuous`` instances can now be given directly as the ``dist`` argument in ``standardized_precipitation_index`` and ``standardized_precipitation_evapotranspiration_index`` indicators. This includes `lmoments3` distributions when specifying ``method="PWM"``. (:issue:`2043`, :pull:`2045`).
+* Time selection in ``xclim.core.calendar.select_time`` and the ``**indexer`` argument of indicators now supports day-of-year bounds given as DataArrays with spatial and/or temporal dimensions. (:issue:`1987`, :pull:`2055`).
+* Maximum Spacing Estimation method for distribution fitting has been added to `xclim.indices.stats.fit` (:issue:`2078`, :pull:`2077`)
+
+Bug fixes
+^^^^^^^^^
+* Fixed a bug in ``xclim.sdba.Grouper.get_index`` that didn't correctly interpolate seasonal values (:issue:`2014`, :pull:`2019`).
+* Fixed a bug where ``xclim.indicators.atmos.potential_evapotranspiration`` would return wrong results when `hurs` was provided in `%` (:pull:`2067`).
+* Fixed the default "op" argument of ``xclim.atmos.growing_season_end`` (:issue:`2056`, :pull:`2080`).
+* Removed the useless "thresh" argument from ``xclim.atmos.precip_accumulation`` (:issue:`1763`, :pull:`2080`).
+
+Internal changes
+^^^^^^^^^^^^^^^^
+* Adjusted the ``TestOfficialYaml`` test to use a dynamic method for finding the installed location of `xclim`. (:pull:`2028`).
+* Adjusted two tests for better handling when running in Windows environments. (:pull:`2057`).
+* Refactor of the ``xclim.core.missing`` module, usage of the ``Missing`` objects has been broken. (:pull:`2058`, :pull:`2055`, :pull:`2076`, :issue:`1820`, :issue:`2000`).
+    - Objects are initialized with their options and then called with the data, input frequency, target frequency and indexer.
+    - Subclasses receive non-resampled DataArray in their ``is_missing`` methods.
+    - Subclasses receive the array of valid timesteps ``valid`` instead of ``null``, the invalid ones.
+    - ``MissingWMO`` now uses ``xclim.indices.helpers.resample_map`` which should greatly improve performance in a dask context.
+* There is now a warning stating that `fitkwargs` are not employed when using the `lmoments3` distribution. One exception is the use of `'floc'` which is allowed with the gamma distribution. `'floc'` is used to shift the distribution before computing fitting parameters with the `lmoments3` distribution since ``loc=0`` is always assumed in the library. (:issue:`2043`, :pull:`2045`).
+* `xclim` now tracks energy usage and carbon emissions ("last run", "average", and "total") during CI workflows using the `eco-ci-energy-estimation` GitHub Action. (:pull:`2046`).
+* `xclim.sdba` now emits a `FutureWarning` on import to inform users that the submodule is being deprecated. (:pull:`2073`).
+
+v0.54.0 (2024-12-16)
+--------------------
+Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), Éric Dupuis (:user:`coxipi`), Sascha Hofmann (:user:`saschahofmann`).
+
+New features and enhancements
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+* Python 3.9 coding conventions have been dropped in favour of Python 3.10+ conventions. (:pull:`1988`).
+* ``xclim.indices.chill_unit`` now accepts a new argument ``positive_only`` to compute the daily positive chill units. (:pull:`2003`).
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
 * The minimum required version of `dask` has been increased to `2024.8.1`. (:issue:`1992`, :pull:`1991`).
+* The docstrings of many `xclim` modules, classes, methods, and functions have been slightly adjusted to ensure stricter compliance with established `numpy` docstring conventions. (:pull:`1988`).
+* Using different time for ``ref`` and ``hist`` is now explicitly forbidden in many bias adjustment methods (e.g. `EmpiricalQuantileMapping`). Methods that combine ``ref``, ``hist``, and ``sim`` in the same `map_groups` also require that time arrays be equal in size. (:issue:`1903`, :pull:`1995`, :pull:`2013`).
+* `xclim` now uses a `src` layout for the codebase. Structure-dependent functions, documentation, and build commands have been adapted to reflect these changes. Developers will need to reinstall `xclim` using ``pip install -e .``. (:pull:`1971`).
+* The call signature of ``xclim.indices.hot_spell_magnitude`` originally asked for an `op` argument that was not used. This argument has been removed. (:pull:`2018`).
 
 Bug fixes
 ^^^^^^^^^
 * Fixed pickling issue with ``xclim.sdba.Grouper`` and other classes for usage with `dask>=2024.11`. (:issue:`1992`, :pull:`1993`).
 * Fixed an issue with ``nimbus`` that was causing URL path components to be improperly joined. (:pull:`1997`).
-* `base_kws_vars` in `MBCn` is now copied inside the `adjust` function so that in-place changes do not change the dict globally. (:pull:`1999`).
-* Fixed a bug in the logic of ``xclim.testing.utils.load_registry`` that impacted the ability to load a `registry.txt` from a non-default repository. (:pull:`2001`).
+* ``base_kws_vars`` in `MBCn` is now copied inside the `adjust` function so that in-place changes do not change the dict globally. (:pull:`1999`).
+* Fixed a bug in the logic of ``xclim.testing.utils.load_registry`` that impacted the ability to load a ``registry.txt`` from a non-default repository. (:pull:`2001`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
-* Changed french translations with word "pluvieux" to "avec précipitations". (:issue:`1960`, :pull:`1994`).
-* `streamflow` entry replaced with `q` in ``variables.yml``.  (:issue:`1912`, :pull:`1996`)
-* In order to address 403 (forbidden) request errors when retrieving data from GitHub via ReadTheDocs, the ``nimbus`` class has been modified to use an overloaded `fetch` method that appends a User-Agent header to the request. (:pull:`2001`).
+* Changed French translations with word "pluvieux" to "avec précipitations". (:issue:`1960`, :pull:`1994`).
+* Nan values in `OTC` and `dOTC` are only dropped and replaced at the lowest level so that the size of time arrays never changes on `xarray` levels. (:pull:`1995`, :pull:`2013`)
+* `streamflow` entry replaced with ``"q"`` in ``variables.yml``. (:issue:`1912`, :pull:`1996`).
+* In order to address ``Error 403`` (forbidden) requests when retrieving data from GitHub via ReadTheDocs, the ``nimbus`` class has been modified to use an overloaded `fetch` method that appends a modified User-Agent header to the request. (:pull:`2001`).
 * Addressed a very rare race condition that can happen if `pytest` is tearing down the test environment when running across multiple workers. (:pull:`1863`).
+* The `numpydoc` linting tool has been added to the development dependencies, linting checks, and the `pre-commit` configuration. (:pull:`1988`).
+* Added a more robust `yamllint` configuration to ensure that all YAML files are linted consistently. (:pull:`1971`).
+* Addressed a very rare singular matrix error that can happen in ``test_loess_smoothing_nan``. (:pull:`2015`).
+* Addressed a handful of typing and call signature issues in the `xclim` codebase. (:pull:`2018`).
 
 CI changes
 ^^^^^^^^^^
 * Added the `green-coding-solutions/eco-ci-energy-estimation` GitHub Action to the workflows to establish energy and carbon usage of CI activity. (:pull:`1863`).
+* Various workflow security fixes: (:pull:`2023`)
+    * Simplified the `bump-version.yml` version string parsing to harden against template injection.
+    * Further de-escalated privileges for most workflows.
 
 v0.53.2 (2024-10-31)
 --------------------

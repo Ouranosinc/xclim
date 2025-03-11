@@ -255,9 +255,7 @@ class TestStatisticsRun:
         lt = rl.rle_statistics(da, freq="YS", reducer="min", window=1, ufunc_1dim=False)
         assert lt == 35
 
-        lt = rl.rle_statistics(
-            da, freq="YS", reducer="mean", window=36, ufunc_1dim=False
-        )
+        lt = rl.rle_statistics(da, freq="YS", reducer="mean", window=36, ufunc_1dim=False)
         assert lt == 329
 
         lt = rl.rle_statistics(da, freq="YS", reducer="std", window=1, ufunc_1dim=False)
@@ -269,24 +267,16 @@ class TestStatisticsRun:
         values[35:45] = 0
         time = pd.date_range("1/1/2000", periods=len(values), freq="D")
         da = xr.DataArray(values != 0, coords={"time": time}, dims="time")
-        lt_resample_before = da.resample(time="MS").map(
-            rl.rle_statistics, reducer=op, window=1, ufunc_1dim=False
-        )
-        lt_resample_after = rl.rle_statistics(
-            da, freq="MS", reducer=op, window=1, ufunc_1dim=False
-        )
+        lt_resample_before = da.resample(time="MS").map(rl.rle_statistics, reducer=op, window=1, ufunc_1dim=False)
+        lt_resample_after = rl.rle_statistics(da, freq="MS", reducer=op, window=1, ufunc_1dim=False)
         assert (lt_resample_before != lt_resample_after).any()
 
         values = np.zeros(365)
         values[0:-1:31] = 1
         time = pd.date_range("1/1/2000", periods=len(values), freq="D")
         da = xr.DataArray(values != 0, coords={"time": time}, dims="time")
-        lt_resample_before = da.resample(time="MS").map(
-            rl.rle_statistics, reducer=op, window=1, ufunc_1dim=False
-        )
-        lt_resample_after = rl.rle_statistics(
-            da, freq="MS", reducer=op, window=1, ufunc_1dim=False
-        )
+        lt_resample_before = da.resample(time="MS").map(rl.rle_statistics, reducer=op, window=1, ufunc_1dim=False)
+        lt_resample_after = rl.rle_statistics(da, freq="MS", reducer=op, window=1, ufunc_1dim=False)
         assert (lt_resample_before == lt_resample_after).any()
 
 
@@ -343,9 +333,7 @@ class TestFirstRun:
         if use_dask:
             runs = runs.chunk({"time": -1 if ufunc else 10, "dim0": 1})
 
-        out = rl.first_run(
-            runs, window=1, dim="time", coord=coord, freq="MS", ufunc_1dim=False
-        )
+        out = rl.first_run(runs, window=1, dim="time", coord=coord, freq="MS", ufunc_1dim=False)
         np.testing.assert_array_equal(out.load(), np.array([expected, expected]))
 
 
@@ -364,9 +352,7 @@ class TestWindowedRunCount:
         a = xr.DataArray(np.zeros(50, bool), dims=("time",))
         a[4:7] = True
         a[34:45] = True
-        assert rl.windowed_run_count(a, 3, dim="time", index=index) == len(
-            a[4:7]
-        ) + len(a[34:45])
+        assert rl.windowed_run_count(a, 3, dim="time", index=index) == len(a[4:7]) + len(a[34:45])
 
 
 class TestWindowedMaxRunSum:
@@ -418,16 +404,12 @@ class TestLastRun:
         if use_dask:
             runs = runs.chunk({"time": -1 if ufunc else 10, "dim0": 1})
 
-        out = rl.last_run(
-            runs, window=1, dim="time", coord=coord, freq="MS", ufunc_1dim=False
-        )
+        out = rl.last_run(runs, window=1, dim="time", coord=coord, freq="MS", ufunc_1dim=False)
         np.testing.assert_array_equal(out.load(), np.array([expected, expected]))
 
 
 def test_run_bounds_synthetic():
-    run = xr.DataArray(
-        [0, 1, 1, 1, 0, 0, 1, 1, 1, 0], dims="x", coords={"x": np.arange(10) ** 2}
-    )
+    run = xr.DataArray([0, 1, 1, 1, 0, 0, 1, 1, 1, 0], dims="x", coords={"x": np.arange(10) ** 2})
     bounds = rl.run_bounds(run, "x", coord=True)
     np.testing.assert_array_equal(bounds, [[1, 36], [16, 81]])
 
@@ -453,9 +435,7 @@ def test_run_bounds_data(open_dataset):
 def test_keep_longest_run_synthetic():
     runs = xr.DataArray([0, 1, 1, 1, 0, 0, 1, 1, 1, 0], dims="time").astype(bool)
     lrun = rl.keep_longest_run(runs, "time")
-    np.testing.assert_array_equal(
-        lrun, np.array([0, 1, 1, 1, 0, 0, 0, 0, 0, 0], dtype=bool)
-    )
+    np.testing.assert_array_equal(lrun, np.array([0, 1, 1, 1, 0, 0, 0, 0, 0, 0], dtype=bool))
 
 
 def test_keep_longest_run_data(open_dataset):
@@ -515,9 +495,7 @@ class TestRunsWithDates:
         ],
     )
     @pytest.mark.parametrize("use_dask", [True, False])
-    def test_run_end_after_date(
-        self, tas_series, coord, date, end, expected, use_dask, ufunc
-    ):
+    def test_run_end_after_date(self, tas_series, coord, date, end, expected, use_dask, ufunc):
         # if use_dask and ufunc:
         #     pytest.xfail("Ufunc run length algorithms not implemented for dask arrays.")
 
@@ -543,9 +521,7 @@ class TestRunsWithDates:
         ],
     )
     @pytest.mark.parametrize("use_dask", [True, False])
-    def test_first_run_after_date(
-        self, tas_series, coord, date, beg, expected, use_dask, ufunc
-    ):
+    def test_first_run_after_date(self, tas_series, coord, date, beg, expected, use_dask, ufunc):
         # if use_dask and ufunc:
         #     pytest.xfail("Ufunc run length algorithms not implemented for dask arrays.")
         t = np.zeros(365)
@@ -558,9 +534,7 @@ class TestRunsWithDates:
         if use_dask:
             runs = runs.chunk({"time": -1 if ufunc else 10, "dim0": 1})
 
-        out = rl.first_run_after_date(
-            runs, window=1, date=date, dim="time", coord=coord
-        )
+        out = rl.first_run_after_date(runs, window=1, date=date, dim="time", coord=coord)
         np.testing.assert_array_equal(np.mean(out.load()), expected)
 
     @pytest.mark.parametrize(
@@ -573,9 +547,7 @@ class TestRunsWithDates:
         ],
     )
     @pytest.mark.parametrize("use_dask", [True, False])
-    def test_last_run_before_date(
-        self, tas_series, coord, date, end, expected, use_dask, ufunc
-    ):
+    def test_last_run_before_date(self, tas_series, coord, date, end, expected, use_dask, ufunc):
         # if use_dask and ufunc:
         #     pytest.xfail("Ufunc run length algorithms not implemented for dask arrays.")
         t = np.zeros(360)
@@ -587,9 +559,7 @@ class TestRunsWithDates:
         if use_dask:
             runs = runs.chunk({"time": -1 if ufunc else 10, "dim0": 1})
 
-        out = rl.last_run_before_date(
-            runs, window=1, date=date, dim="time", coord=coord
-        )
+        out = rl.last_run_before_date(runs, window=1, date=date, dim="time", coord=coord)
         np.testing.assert_array_equal(np.mean(out.load()), expected)
 
     @pytest.mark.parametrize(
@@ -616,40 +586,22 @@ class TestRunsWithDates:
         [("standard", [61, 60]), ("365_day", [60, 60]), ("366_day", [61, 61])],
     )
     def test_run_with_dates_different_calendars(self, calendar, expected):
-        time = xr.cftime_range(
-            "2004-01-01", end="2005-12-31", freq="D", calendar=calendar
-        )
+        time = xr.cftime_range("2004-01-01", end="2005-12-31", freq="D", calendar=calendar)
         tas = np.zeros(time.size)
         start = np.where((time.day == 1) & (time.month == 3))[0]
         tas[start[0] : start[0] + 250] = 5
         tas[start[1] : start[1] + 250] = 5
         tas = xr.DataArray(tas, coords={"time": time}, dims=("time",))
-        out = (
-            (tas > 0)
-            .resample(time="YS-MAR")
-            .map(rl.first_run_after_date, date="03-01", window=2)
-        )
+        out = (tas > 0).resample(time="YS-MAR").map(rl.first_run_after_date, date="03-01", window=2)
         np.testing.assert_array_equal(out.values[1:], expected)
 
-        out = (
-            (tas > 0)
-            .resample(time="YS-MAR")
-            .map(rl.season_length, mid_date="03-02", window=2)
-        )
+        out = (tas > 0).resample(time="YS-MAR").map(rl.season_length, mid_date="03-02", window=2)
         np.testing.assert_array_equal(out.values[1:], [250, 250])
 
-        out = (
-            (tas > 0)
-            .resample(time="YS-MAR")
-            .map(rl.run_end_after_date, date="03-03", window=2)
-        )
+        out = (tas > 0).resample(time="YS-MAR").map(rl.run_end_after_date, date="03-03", window=2)
         np.testing.assert_array_equal(out.values[1:], np.array(expected) + 250)
 
-        out = (
-            (tas > 0)
-            .resample(time="YS-MAR")
-            .map(rl.last_run_before_date, date="03-02", window=2)
-        )
+        out = (tas > 0).resample(time="YS-MAR").map(rl.last_run_before_date, date="03-02", window=2)
         np.testing.assert_array_equal(out.values[1:], np.array(expected) + 1)
 
     @pytest.mark.parametrize("func", [rl.first_run_after_date, rl.run_end_after_date])

@@ -20,8 +20,11 @@ from xclim.core.options import OPTIONS, register_missing_method
         ("check_missing", "wmo"),
         ("check_missing", "any"),
         ("missing_options", {"wmo": {"nm": 10, "nc": 3}}),
-        ("missing_options", {"pct": {"tolerance": 0.1}}),
-        ("missing_options", {"wmo": {"nm": 10, "nc": 3}, "pct": {"tolerance": 0.1}}),
+        ("missing_options", {"pct": {"subfreq": None, "tolerance": 0.1}}),
+        (
+            "missing_options",
+            {"wmo": {"nm": 10, "nc": 3}, "pct": {"subfreq": None, "tolerance": 0.1}},
+        ),
     ],
 )
 def test_set_options_valid(option, value):
@@ -66,7 +69,7 @@ def test_set_options_invalid(option, value):
 def test_register_missing_method():
     @register_missing_method("test")
     class MissingTest(MissingBase):
-        def is_missing(self, null, count, a_param=2):
+        def is_missing(self, null, count, freq):
             return True
 
         @staticmethod

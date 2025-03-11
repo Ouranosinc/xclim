@@ -26,7 +26,7 @@ classifiers = [
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
-  # "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.13",
   "Programming Language :: Python :: 3 :: Only",
   "Topic :: Scientific/Engineering :: Atmospheric Science",
   "Topic :: Scientific/Engineering :: Hydrology",
@@ -42,15 +42,15 @@ dependencies = [
   "dask[array] >=2024.8.1",
   "filelock >=3.14.0",
   "jsonpickle >=3.1.0",
-  "numba >=0.54.1",
-  "numpy >=1.23.0",
+  "numba >=0.57.0",
+  "numpy >=1.24.0",
   "packaging >=24.0",
-  "pandas >=2.2",
-  "pint >=0.18",
-  "pyarrow >=10.0.1", # Strongly encouraged for pandas v2.2.0+
+  "pandas >=2.2.0",
+  "pint >=0.24.4",
+  "pyarrow >=15.0", # Strongly encouraged for pandas v2.2.0+
   "pyyaml >=6.0.1",
-  "scikit-learn >=1.1.0",
-  "scipy >=1.9.0",
+  "scikit-learn >=1.2.0",
+  "scipy >=1.11.0",
   "statsmodels >=0.14.2",
   "xarray >=2023.11.0,!=2024.10.0",
   "yamale >=5.0.0"
@@ -59,24 +59,22 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
   # Dev tools and testing
-  "black[jupyter] ==24.10.0",
   "blackdoc ==0.3.9",
-  "bump-my-version ==0.28.1",
-  "codespell ==2.3.0",
+  "bump-my-version >=0.32.1",
+  "codespell >=2.4.1",
   "coverage[toml] >=7.5.0",
-  "coveralls >=4.0.1", # coveralls is not yet compatible with Python 3.13
-  "deptry ==0.21.1",
+  "deptry >=0.23.0",
   "flake8 >=7.1.1",
-  "flake8-rst-docstrings >=0.3.0",
+  "flake8-rst-docstrings ==0.3.0",
   "h5netcdf>=1.3.0",
-  "ipython >=8.5.0",
-  "isort ==5.13.2",
-  "mypy >=1.10.0",
-  "nbconvert <7.14", # Pinned due to directive errors in sphinx. See: https://github.com/jupyter/nbconvert/issues/2092
+  "ipython >=8.10.0",
+  "mypy >=1.14.1",
+  "nbconvert >=7.16.4",
   "nbqa >=1.8.2",
   "nbval >=0.11.0",
+  "numpydoc >=1.8.0",
   "pandas-stubs >=2.2",
-  "pip >=24.2.0",
+  "pip >=25.0",
   "pooch >=1.8.0",
   "pre-commit >=3.7",
   "pylint >=3.3.1",
@@ -84,28 +82,29 @@ dev = [
   "pytest-cov >=5.0.0",
   "pytest-socket >=0.6.0",
   "pytest-xdist[psutil] >=3.2",
-  "ruff >=0.5.6",
+  "ruff >=0.9.6",
   "tokenize-rt >=5.2.0",
-  "tox >=4.21.2",
-  "tox-gh >=1.4.4",
-  "vulture ==2.13",
+  "tox >=4.24.1",
+  "tox-gh >=1.5.0",
+  "vulture >=2.14",
   "xdoctest >=1.1.5",
-  "yamllint ==1.35.1"
+  "yamllint >=1.35.1"
 ]
 docs = [
   # Documentation and examples
+  "cairosvg >=2.6.0",
   "distributed >=2.0",
   "furo >=2023.9.10",
   "ipykernel",
-  "matplotlib >=3.6.0",
+  "matplotlib >=3.7.0",
   "nbsphinx >=0.9.5",
   "nc-time-axis >=1.4.1",
   "pooch >=1.8.0",
   "pybtex >=0.24.0",
-  "sphinx >=7.0.0",
+  "sphinx >=8.2.0",
   "sphinx-autobuild >=2024.4.16",
-  "sphinx-autodoc-typehints",
-  "sphinx-codeautolink",
+  "sphinx-autodoc-typehints >=3.1.0",
+  "sphinx-codeautolink >=0.16.2",
   "sphinx-copybutton",
   "sphinx-mdinclude",
   "sphinxcontrib-bibtex",
@@ -122,21 +121,16 @@ xclim = "xclim.cli:cli"
 "Source" = "https://github.com/Ouranosinc/xclim/"
 "Changelog" = "https://xclim.readthedocs.io/en/stable/history.html"
 "Issue tracker" = "https://github.com/Ouranosinc/xclim/issues"
+"Mastodon" = "https://fosstodon.org/@xclim"
+"Zenodo" = "https://doi.org/10.5281/zenodo.2795043"
 "About Ouranos" = "https://www.ouranos.ca/en/"
 
 [tool]
 
-[tool.black]
-target-version = [
-  "py310",
-  "py311",
-  "py312"
-]
-
 [tool.bumpversion]
-current_version = "0.53.3-dev.6"
+current_version = "0.55.2-dev.3"
 commit = true
-commit_args = "--no-verify"
+commit_args = "--no-verify --signoff"
 tag = false
 allow_dirty = false
 parse = "(?P<major>\\d+)\\.(?P<minor>\\d+)\\.(?P<patch>\\d+)(\\-(?P<release>[a-z]+)(\\.(?P<build>\\d+)))?"
@@ -146,7 +140,7 @@ serialize = [
 ]
 
 [[tool.bumpversion.files]]
-filename = "xclim/__init__.py"
+filename = "src/xclim/__init__.py"
 search = "__version__ = \"{current_version}\""
 replace = "__version__ = \"{new_version}\""
 
@@ -161,8 +155,8 @@ values = [
 ]
 
 [tool.codespell]
-skip = 'xclim/data/*.json,docs/_build,docs/notebooks/xclim_training/*.ipynb,docs/references.bib,__pycache__,*.gz,*.nc,*.png,*.svg,*.whl'
-ignore-words-list = "absolue,astroid,bloc,bui,callendar,degreee,environnement,hanel,inferrable,lond,nam,nd,ot,ressources,socio-economic,sie,vas"
+skip = '*xclim/data/*.json,*docs/_build,*docs/notebooks/xclim_training/*.ipynb,*docs/references.bib,*.gz,*.nc,*.png,*.svg,*.whl'
+ignore-words-list = "absolue,astroid,bloc,bui,callendar,degreee,environnement,hanel,indx,inferrable,lond,nam,nd,ot,ressources,socio-economic,sie,vas"
 
 [tool.coverage.run]
 relative_files = true
@@ -201,13 +195,13 @@ include = [
   "docs/conf.py",
   "docs/make.bat",
   "docs/notebooks/_finder.py",
+  "src/xclim/**/*.json",
+  "src/xclim/**/*.py",
+  "src/xclim/**/*.txt",
+  "src/xclim/**/*.yml",
   "tests/**/*.py",
   "tests/**/*.txt",
-  "tox.ini",
-  "xclim/**/*.json",
-  "xclim/**/*.py",
-  "xclim/**/*.txt",
-  "xclim/**/*.yml"
+  "tox.ini"
 ]
 exclude = [
   "**/*.py[co]",
@@ -247,6 +241,34 @@ module = [
 ]
 ignore_missing_imports = true
 
+[tool.numpydoc_validation]
+checks = [
+  "all", # report on all checks, except the below
+  "ES01", # "No extended summary found"
+  "EX01", # "No examples section found"
+  "GL06", # "Found unknown section \"{section}\""
+  "SA01", # "See Also section not found",
+  "SS01" # "No summary found"
+]
+# remember to use single quotes for regex in TOML
+exclude = [
+  # don't report on objects that match any of these regex
+  '\.undocumented_method$',
+  '\.__repr__$',
+  # any object starting with an underscore is a private object
+  '\._\w+'
+]
+override_SS05 = [
+  # override SS05 to allow docstrings starting with these words
+  '^Access ',
+  '^Assess ',
+  '^Days ',
+  '^Degree-days ',
+  '^Griffiths ',
+  '^Process ',
+  '^Statistics '
+]
+
 [tool.pytest.ini_options]
 minversion = "7.0"
 addopts = [
@@ -264,6 +286,9 @@ filterwarnings = ["ignore::UserWarning"]
 testpaths = [
   "tests"
 ]
+pythonpath = [
+  "src"
+]
 doctest_optionflags = ["NORMALIZE_WHITESPACE", "IGNORE_EXCEPTION_DETAIL", "NUMBER", "ELLIPSIS"]
 markers = [
   "slow: marks tests as slow (deselect with '-m \"not slow\"')",
@@ -274,29 +299,38 @@ xfail_strict = true
 
 [tool.ruff]
 src = ["xclim"]
-line-length = 150
+line-length = 120
 exclude = [
+  ".eggs",
   ".git",
-  "build",
-  ".eggs"
+  "build"
 ]
 extend-include = [
   "*.ipynb" # Include notebooks
 ]
 
 [tool.ruff.format]
-line-ending = "auto"
+exclude = [
+  "docs/notebooks/xclim_training/*.ipynb",
+  "src/xclim/sdba/*.py"
+]
+line-ending = "lf"
+docstring-code-format = true
+docstring-code-line-length = "dynamic"
 
 [tool.ruff.lint]
 exclude = [
-  "docs/notebooks/xclim_training/*.ipynb"
+  "docs/notebooks/xclim_training/*.ipynb",
+  "src/xclim/sdba/*.py"
 ]
 extend-select = [
+  "D213", # multi-line-summary-second-line
   "RUF022" # unsorted-dunder-all
 ]
 ignore = [
   "B028", # no-explicit-stacklevel
   "D205", # blank-line-after-summary
+  "D212", # multi-line-summary-first-line
   "D400", # ends-in-period
   "D401" # non-imperative-mood
 ]
@@ -325,27 +359,30 @@ pandas = "pd"
 scipy = "sp"
 xarray = "xr"
 
+[tool.ruff.lint.flake8-quotes]
+docstring-quotes = "double"
+
 [tool.ruff.lint.isort]
 case-sensitive = true
 detect-same-package = false
 known-first-party = ["xclim"]
 no-lines-before = ["future"]
-required-imports = ["from __future__ import annotations"]
 
 [tool.ruff.lint.mccabe]
 max-complexity = 20
 
 [tool.ruff.lint.per-file-ignores]
 "docs/*.py" = ["D100", "D101", "D102", "D103"]
-"docs/notebooks/*.ipynb" = ["E225", "E226", "E231"]
-"tests/**/*test*.py" = ["D100", "D101", "D102", "D103", "N802", "S101"]
-"xclim/**/__init__.py" = ["F401", "F403"]
-"xclim/core/indicator.py" = ["D214", "D405", "D406", "D407", "D411"]
-"xclim/core/locales.py" = ["E501", "W505"]
-"xclim/core/missing" = ["D103"]
-"xclim/indices/_agro.py" = ["E501"]
-"xclim/indices/fire/_cffwis.py" = ["D103"]
-"xclim/sdba/utils.py" = ["D103"]
+"docs/notebooks/*.ipynb" = ["E225", "E226", "E231", "E501"]
+"src/xclim/**/__init__.py" = ["F401", "F403"]
+"src/xclim/analog.py" = ["E501"]
+"src/xclim/core/indicator.py" = ["D214", "D405", "D406", "D407", "D411"]
+"src/xclim/core/locales.py" = ["E501", "W505"]
+"src/xclim/core/missing" = ["D103"]
+"src/xclim/indices/_agro.py" = ["E501"]
+"src/xclim/indices/fire/_cffwis.py" = ["D103"]
+"src/xclim/sdba/utils.py" = ["D103"]
+"tests/**/*test*.py" = ["D100", "D101", "D102", "D103", "E501", "N802", "S101"]
 
 [tool.ruff.lint.pycodestyle]
 max-doc-length = 180
@@ -358,5 +395,5 @@ exclude = []
 ignore_decorators = ["@pytest.fixture"]
 ignore_names = []
 min_confidence = 90
-paths = ["xclim", "tests"]
+paths = ["src/xclim", "tests"]
 sort_by_size = true

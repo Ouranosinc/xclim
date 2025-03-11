@@ -97,16 +97,12 @@ def test_spatial_analogs_multi_index(open_dataset):
     candidates_stacked = candidates.stack(sample=["time"])
 
     method = "seuclidean"
-    out = xca.spatial_analogs(
-        target_stacked, candidates_stacked, dist_dim="sample", method=method
-    )
+    out = xca.spatial_analogs(target_stacked, candidates_stacked, dist_dim="sample", method=method)
     np.testing.assert_allclose(diss[method], out, rtol=1e-3, atol=1e-3)
 
     # Check that it works as well when time dimensions don't have the same length.
     candidates = data.sel(time=slice("1970", "1991"))
-    xca.spatial_analogs(
-        target_stacked, candidates_stacked, dist_dim="sample", method=method
-    )
+    xca.spatial_analogs(target_stacked, candidates_stacked, dist_dim="sample", method=method)
 
 
 class TestSEuclidean:
@@ -211,7 +207,8 @@ class TestKS:
 
 
 def analytical_KLDiv(p, q):
-    """Return the Kullback-Leibler divergence between two distributions.
+    """
+    Return the Kullback-Leibler divergence between two distributions.
 
     Parameters
     ----------
@@ -257,11 +254,7 @@ class TestKLDIV:
         out = []
         n = 500
         for _i in range(500):
-            out.append(
-                xca.kldiv(
-                    p.rvs(n, random_state=random), q.rvs(n, random_state=random), k=k
-                )
-            )
+            out.append(xca.kldiv(p.rvs(n, random_state=random), q.rvs(n, random_state=random), k=k))
         out = np.array(out)
 
         # Compare with analytical value
@@ -279,23 +272,14 @@ class TestKLDIV:
 
         n = 6000
         # Same sample size for x and y
-        re = [
-            xca.kldiv(p.rvs(n, random_state=random), q.rvs(n, random_state=random))
-            for i in range(30)
-        ]
+        re = [xca.kldiv(p.rvs(n, random_state=random), q.rvs(n, random_state=random)) for i in range(30)]
         assert_almost_equal(np.mean(re), ra, 2)
 
         # Different sample sizes
-        re = [
-            xca.kldiv(p.rvs(n * 2, random_state=random), q.rvs(n, random_state=random))
-            for i in range(30)
-        ]
+        re = [xca.kldiv(p.rvs(n * 2, random_state=random), q.rvs(n, random_state=random)) for i in range(30)]
         assert_almost_equal(np.mean(re), ra, 2)
 
-        re = [
-            xca.kldiv(p.rvs(n, random_state=random), q.rvs(n * 2, random_state=random))
-            for i in range(30)
-        ]
+        re = [xca.kldiv(p.rvs(n, random_state=random), q.rvs(n * 2, random_state=random)) for i in range(30)]
         assert_almost_equal(np.mean(re), ra, 2)
 
     #
@@ -316,14 +300,10 @@ def test_szekely_rizzo():
     x = iris.iloc[:80, :].to_xarray().to_array().T
     y = iris.iloc[80:, :].to_xarray().to_array().T
 
-    np.testing.assert_allclose(
-        xca.szekely_rizzo(x, y, standardize=False), 116.1987, atol=5e-5
-    )
+    np.testing.assert_allclose(xca.szekely_rizzo(x, y, standardize=False), 116.1987, atol=5e-5)
 
     # first 50 against last 100
     x = iris.iloc[:50, :].to_xarray().to_array().T
     y = iris.iloc[50:, :].to_xarray().to_array().T
 
-    np.testing.assert_allclose(
-        xca.szekely_rizzo(x, y, standardize=False), 199.6205, atol=5e-5
-    )
+    np.testing.assert_allclose(xca.szekely_rizzo(x, y, standardize=False), 199.6205, atol=5e-5)

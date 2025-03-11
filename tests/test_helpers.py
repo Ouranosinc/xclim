@@ -16,9 +16,7 @@ from xclim.testing.helpers import assert_lazy
 def test_solar_declinaton(method, rtol):
     # Expected values from https://gml.noaa.gov/grad/solcalc/azel.html
     times = xr.DataArray(
-        pd.to_datetime(
-            ["1793-01-21T10:22:00", "1969-07-20T20:17:40", "2022-05-20T16:55:48"]
-        ),
+        pd.to_datetime(["1793-01-21T10:22:00", "1969-07-20T20:17:40", "2022-05-20T16:55:48"]),
         dims=("time",),
     )
     exp = [-19.83, 20.64, 20.00]
@@ -46,9 +44,7 @@ def test_extraterrestrial_radiation(method):
     )
     exp = [99.06, 239.98, 520.01]
     np.testing.assert_allclose(
-        convert_units_to(
-            helpers.extraterrestrial_solar_radiation(times, lat, method=method), "W m-2"
-        ),
+        convert_units_to(helpers.extraterrestrial_solar_radiation(times, lat, method=method), "W m-2"),
         exp,
         rtol=3e-2,
     )
@@ -80,29 +76,20 @@ def test_day_lengths(method):
     for event, evaluations in events.items():
         for e in evaluations:
             if event == "solstice":
-                np.testing.assert_array_almost_equal(
-                    dl.sel(time=e[0]).transpose(), np.array(e[1]), 2
-                )
+                np.testing.assert_array_almost_equal(dl.sel(time=e[0]).transpose(), np.array(e[1]), 2)
             elif event == "equinox":
-                np.testing.assert_allclose(
-                    dl.sel(time=e[0]).transpose(), np.array(e[1]), rtol=2e-1
-                )
+                np.testing.assert_allclose(dl.sel(time=e[0]).transpose(), np.array(e[1]), rtol=2e-1)
 
 
-def test_cosine_of_solar_zenith_angle():
-    time = xr.date_range("1900-01-01T00:30", "1900-01-03", freq="h")
+@pytest.mark.parametrize("calendar", ["standard", "noleap"])
+def test_cosine_of_solar_zenith_angle(calendar):
+    time = xr.date_range("1900-01-01T00:30", "1900-01-03", freq="h", calendar=calendar)
     time = xr.DataArray(time, dims=("time",), coords={"time": time}, name="time")
-    lat = xr.DataArray(
-        [0, 45, 70], dims=("site",), name="lat", attrs={"units": "degree_north"}
-    )
-    lon = xr.DataArray(
-        [-40, 0, 80], dims=("site",), name="lon", attrs={"units": "degree_east"}
-    )
+    lat = xr.DataArray([0, 45, 70], dims=("site",), name="lat", attrs={"units": "degree_north"})
+    lon = xr.DataArray([-40, 0, 80], dims=("site",), name="lon", attrs={"units": "degree_east"})
     dec = helpers.solar_declination(time)
 
-    czda = helpers.cosine_of_solar_zenith_angle(
-        time, dec, lat, lon, stat="average", sunlit=True
-    )
+    czda = helpers.cosine_of_solar_zenith_angle(time, dec, lat, lon, stat="average", sunlit=True)
     # Data Generated with PyWGBT
     # raw = coszda(
     #     (time + pd.Timedelta('30 m')).data,
@@ -110,7 +97,11 @@ def test_cosine_of_solar_zenith_angle():
     #     convert_units_to(lon, 'rad').data[np.newaxis, :],
     #     1
     # )
-    # exp_cza = xr.DataArray(raw, dims=('time', 'd', 'site'), coords={'lat': lat, 'lon': lon, 'time': time}).squeeze('d')
+    # exp_cza = xr.DataArray(
+    #               raw,
+    #               dims=('time', 'd', 'site'),
+    #               coords={'lat': lat, 'lon': lon, 'time': time}
+    #           ).squeeze('d')
     exp_czda = np.array(
         [
             [0.0, 0.0610457, 0.0],
@@ -123,9 +114,7 @@ def test_cosine_of_solar_zenith_angle():
     np.testing.assert_allclose(czda[7:12, :], exp_czda, rtol=1e-3)
 
     # Same code as above, but with function "cosza".
-    cza = helpers.cosine_of_solar_zenith_angle(
-        time, dec, lat, lon, stat="average", sunlit=False
-    )
+    cza = helpers.cosine_of_solar_zenith_angle(time, dec, lat, lon, stat="average", sunlit=False)
     exp_cza = np.array(
         [
             [-0.83153798, -0.90358335, -0.34065474],
@@ -141,16 +130,12 @@ def _test_function(da, op, dim):
     return getattr(da, op)(dim)
 
 
-@pytest.mark.parametrize(
-    ["in_chunks", "exp_chunks"], [(60, 6 * (2,)), (30, 12 * (1,)), (-1, (12,))]
-)
+@pytest.mark.parametrize(["in_chunks", "exp_chunks"], [(60, 6 * (2,)), (30, 12 * (1,)), (-1, (12,))])
 def test_resample_map(tas_series, in_chunks, exp_chunks):
     pytest.importorskip("flox")
     tas = tas_series(365 * [1]).chunk(time=in_chunks)
     with assert_lazy:
-        out = helpers.resample_map(
-            tas, "time", "MS", lambda da: da.mean("time"), map_blocks=True
-        )
+        out = helpers.resample_map(tas, "time", "MS", lambda da: da.mean("time"), map_blocks=True)
     assert out.chunks[0] == exp_chunks
     out.load()  # Trigger compute to see if it actually works
 
@@ -179,12 +164,10 @@ def test_resample_map_passthrough(tas_series):
     assert not uses_dask(out)
 
 
-@pytest.mark.parametrize("cftime", [False, True])
-def test_make_hourly_temperature(tasmax_series, tasmin_series, cftime):
-    tasmax = tasmax_series(np.array([20]), units="degC", cftime=cftime)
-    tasmin = tasmin_series(np.array([0]), units="degC", cftime=cftime).expand_dims(
-        lat=[0]
-    )
+@pytest.mark.parametrize("calendar", [None, "standard"])
+def test_make_hourly_temperature(tasmax_series, tasmin_series, calendar):
+    tasmax = tasmax_series(np.array([20]), units="degC", calendar=calendar)
+    tasmin = tasmin_series(np.array([0]), units="degC", calendar=calendar).expand_dims(lat=[0])
 
     tasmin.lat.attrs["units"] = "degree_north"
     tas_hourly = helpers.make_hourly_temperature(tasmax, tasmin)

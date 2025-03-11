@@ -65,9 +65,7 @@ def test_equally_spaced_nodes():
     np.testing.assert_almost_equal(x[0], 0.5)
 
 
-@pytest.mark.parametrize(
-    "interp,expi", [("nearest", 2.9), ("linear", 2.95), ("cubic", 2.95)]
-)
+@pytest.mark.parametrize("interp,expi", [("nearest", 2.9), ("linear", 2.95), ("cubic", 2.95)])
 @pytest.mark.parametrize("extrap,expe", [("constant", 4.4), ("nan", np.nan)])
 def test_interp_on_quantiles_constant(interp, expi, extrap, expe):
     quantiles = np.linspace(0, 1, num=25)
@@ -94,9 +92,7 @@ def test_interp_on_quantiles_constant(interp, expi, extrap, expe):
     yq = yq.expand_dims(lat=[1, 2, 3])
     newx = newx.expand_dims(lat=[1, 2, 3])
 
-    out = u.interp_on_quantiles(
-        newx, xq, yq, group="time", method=interp, extrapolation=extrap
-    )
+    out = u.interp_on_quantiles(newx, xq, yq, group="time", method=interp, extrapolation=extrap)
 
     if np.isnan(expe):
         assert out.isel(time=0).isnull().all()
@@ -107,9 +103,7 @@ def test_interp_on_quantiles_constant(interp, expi, extrap, expe):
 
     xq = xq.where(xq != 220)
     yq = yq.where(yq != 3)
-    out = u.interp_on_quantiles(
-        newx, xq, yq, group="time", method=interp, extrapolation=extrap
-    )
+    out = u.interp_on_quantiles(newx, xq, yq, group="time", method=interp, extrapolation=extrap)
 
     if np.isnan(expe):
         assert out.isel(time=0).isnull().all()
@@ -154,15 +148,11 @@ def test_interp_on_quantiles_monthly(random):
     af = u.get_correction(hist_q, ref_q, "+")
 
     for interp in ["nearest", "linear", "cubic"]:
-        afi = u.interp_on_quantiles(
-            sim, hist_q, af, group="time.month", method=interp, extrapolation="constant"
-        )
+        afi = u.interp_on_quantiles(sim, hist_q, af, group="time.month", method=interp, extrapolation="constant")
         assert afi.isnull().sum("time") == 0, interp
 
 
-@pytest.mark.parametrize(
-    "interp,expi", [("nearest", 2.9), ("linear", 2.95), ("cubic", 2.95)]
-)
+@pytest.mark.parametrize("interp,expi", [("nearest", 2.9), ("linear", 2.95), ("cubic", 2.95)])
 @pytest.mark.parametrize("extrap,expe", [("constant", 4.4), ("nan", np.nan)])
 def test_interp_on_quantiles_constant_with_nan(interp, expi, extrap, expe):
     quantiles = np.linspace(0, 1, num=30)
@@ -189,9 +179,7 @@ def test_interp_on_quantiles_constant_with_nan(interp, expi, extrap, expe):
     yq = yq.expand_dims(lat=[1, 2, 3])
     newx = newx.expand_dims(lat=[1, 2, 3])
 
-    out = u.interp_on_quantiles(
-        newx, xq, yq, group="time", method=interp, extrapolation=extrap
-    )
+    out = u.interp_on_quantiles(newx, xq, yq, group="time", method=interp, extrapolation=extrap)
 
     if np.isnan(expe):
         assert out.isel(time=0).isnull().all()
@@ -202,9 +190,7 @@ def test_interp_on_quantiles_constant_with_nan(interp, expi, extrap, expe):
 
     xq = xq.where(xq != 220)
     yq = yq.where(yq != 3)
-    out = u.interp_on_quantiles(
-        newx, xq, yq, group="time", method=interp, extrapolation=extrap
-    )
+    out = u.interp_on_quantiles(newx, xq, yq, group="time", method=interp, extrapolation=extrap)
 
     if np.isnan(expe):
         assert out.isel(time=0).isnull().all()

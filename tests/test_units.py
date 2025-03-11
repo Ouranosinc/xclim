@@ -43,7 +43,6 @@ class TestUnits:
         with units.context("hydro"):
             q = 1 * units.kg / units.m**2 / units.s
             assert q.to("mm/day") == q.to("mm/d")
-            assert q.to("mmday").magnitude == 24 * 60**2
 
     def test_lat_lon(self):
         assert 100 * units.degreeN == 100 * units.degree
@@ -55,17 +54,13 @@ class TestUnits:
             np.isclose(1 * fu, 1 * tu)
 
     def test_dimensionality(self):
+        # Check that the hydro context allows flux to rate conversion
         with units.context("hydro"):
             fu = 1 * units.parse_units("kg / m**2 / s")
-            tu = 1 * units.parse_units("mm / d")
-            fu.to("mmday")
-            tu.to("mmday")
+            fu.to("mm/day")
 
     def test_fraction(self):
         q = 5 * units.percent
-        assert q.to("dimensionless") == 0.05
-
-        q = 5 * units.parse_units("pct")
         assert q.to("dimensionless") == 0.05
 
 
@@ -90,9 +85,7 @@ class TestConvertUnitsTo:
         out = convert_units_to(pr, "mm/day", context="hydro")
         assert isinstance(out.data, dsk.Array)
 
-    @pytest.mark.parametrize(
-        "alias", [units("Celsius"), units("degC"), units("C"), units("deg_C")]
-    )
+    @pytest.mark.parametrize("alias", [units("Celsius"), units("degC"), units("C"), units("deg_C")])
     def test_temperature_aliases(self, alias):
         assert alias == units("celsius")
 
@@ -119,9 +112,7 @@ class TestConvertUnitsTo:
         assert out.attrs["standard_name"] == "rainfall_flux"
 
     def test_temperature_difference(self):
-        delta = xr.DataArray(
-            [2], attrs={"units": "K", "units_metadata": "temperature: difference"}
-        )
+        delta = xr.DataArray([2], attrs={"units": "K", "units_metadata": "temperature: difference"})
         out = convert_units_to(source=delta, target="delta_degC")
         assert out == 2
         assert out.attrs["units"] == "degC"
@@ -133,9 +124,6 @@ class TestUnitConversion:
         assert pint2cfunits(u.units) == "mm d-1"
 
         u = units("percent")
-        assert pint2cfunits(u.units) == "%"
-
-        u = units("pct")
         assert pint2cfunits(u.units) == "%"
 
     def test_units2pint(self, pr_series):
@@ -168,11 +156,9 @@ class TestUnitConversion:
 class TestCheckUnits:
     def test_basic(self):
         check_units("%", "[]")
-        check_units("pct", "[]")
         check_units("mm/day", "[precipitation]")
         check_units("mm/s", "[precipitation]")
         check_units("kg/m2/s", "[precipitation]")
-        check_units("cms", "[discharge]")
         check_units("m3/s", "[discharge]")
         check_units("m/s", "[speed]")
         check_units("km/h", "[speed]")
@@ -234,9 +220,7 @@ def test_rate2amount(pr_series):
         np.testing.assert_array_equal(am_ys, 86400 * np.array([365, 366, 365]))
 
 
-@pytest.mark.parametrize(
-    "srcfreq, exp", [("h", 3600), ("min", 60), ("s", 1), ("ns", 1e-9)]
-)
+@pytest.mark.parametrize("srcfreq, exp", [("h", 3600), ("min", 60), ("s", 1), ("ns", 1e-9)])
 def test_rate2amount_subdaily(srcfreq, exp):
     pr = xr.DataArray(
         np.ones(1000),
@@ -294,7 +278,8 @@ def test_infer_context(std_name, dim, exp):
 
 
 def test_declare_units():
-    """Test that an error is raised when parameters with type Quantified do not declare their dimensions.
+    """
+    Test that an error is raised when parameters with type Quantified do not declare their dimensions.
 
     In this example, `wo` is a Quantified parameter, but does not declare its dimension as [length].
     """
@@ -313,13 +298,13 @@ def test_declare_units():
 
 def test_declare_relative_units():
     def index(
-        data: xr.DataArray, thresh: Quantified, dthreshdt: Quantified  # noqa: F841
+        data: xr.DataArray,
+        thresh: Quantified,
+        dthreshdt: Quantified,  # noqa: F841
     ):
         return xr.DataArray(1, attrs={"units": "rad"})
 
-    index_relative = declare_relative_units(thresh="<data>", dthreshdt="<data>/[time]")(
-        index
-    )
+    index_relative = declare_relative_units(thresh="<data>", dthreshdt="<data>/[time]")(index)
     assert hasattr(index_relative, "relative_units")
 
     index_full_mm = declare_units(data="mm")(index_relative)
