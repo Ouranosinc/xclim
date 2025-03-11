@@ -4,11 +4,17 @@ Changelog
 
 v0.56.0 (unreleased)
 --------------------
-Contributors to this version: Trevor James Smith (:user:`Zeitsperre`).
+Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Hui-Min Wang (:user:`Hem-W`), Jack Kit-tai Wong(:user:`jack-ktw`).
+
+Bug fixes
+^^^^^^^^^
+* Fix installation instructions in the Contributing guide (:issue:`2088`, :pull:`2089`).
+* Fixed parameter order in typing.cast() causing intermittent errors in solar_zenith_angle calculation. (:issue:`2097`, :pull:`2098`)
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
 * `xclim` no longer supports Python 3.10. The minimum required version is now Python 3.11. (:pull:`2082`).
+    * Reverted: Extended support for Python3.10 will continue until further notice. (:pull:`2100`).
 * The minimum versions of several key dependencies have been raised (`numpy` >=1.24.0; `scikit-learn` >=1.2.0; `scipy` >=1.11.0). (:pull:`2082`).
 
 Internal changes
@@ -19,6 +25,15 @@ Internal changes
     * Docstring formatting is now enabled.
     * Line endings in files now must be `Unix`-compatible (`LF`).
 * The `blackdoc` pre-commit hook now only examines `.rst` and `.md` files. (:pull:`2083`).
+* The `xclim` documentation now has a ``support`` page for detailing the project's usage and version support policies. (:pull:`2100`).
+
+v0.55.1 (2025-02-26)
+--------------------
+Contributors to this version: Éric Dupuis (:user:`coxipi`).
+
+Bug fixes
+^^^^^^^^^
+* Re-allow the use of `interp="linear"` in adjustments that use day-of-year grouping, `group=Grouper("time.dayofyear", window)`. (:pull:`2087`).
 
 v0.55.0 (2025-02-17)
 --------------------
