@@ -253,6 +253,8 @@ def broadcast(
 
     if group.prop == "group" and "group" in grouped.dims:
         grouped = grouped.squeeze("group", drop=True)
+    if x.chunks is not None:
+        grouped = grouped.transpose(*x.dims).chunk(x.chunks)
     return grouped
 
 
