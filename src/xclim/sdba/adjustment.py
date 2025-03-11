@@ -1134,6 +1134,10 @@ class PrincipalComponents(TrainAdjust):
             else:
                 reference = ds.ref.rename({dim[0]: lblP})
                 historical = ds.hist.rename({dim[0]: lblP})
+            if reference.chunks is not None:
+                reference = reference.chunk({lblR: -1})
+            if historical.chunks is not None:
+                historical = historical.chunk({lblM: -1})
             transformation = xr.apply_ufunc(
                 _compute_transform_matrix,
                 reference,
