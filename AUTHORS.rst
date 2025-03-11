@@ -50,3 +50,4 @@ Contributors
 * Sebastian Lehner <sebastian.lehner@geosphere.at> `@seblehner <https://github.com/seblehner>`_
 * Baptiste Hamon <baptiste.hamon@pg.canterbury.ac.nz> `@baptistehamon <https://github.com/baptistehamon>`_
 * Jack Kit-tai Wong <kit.tai.wong@gmail.com> `@jack-ktw <https://github.com/jack-ktw>`_
+* Jan Haacker `@j-haacker <https://github.com/j-haacker>`_
