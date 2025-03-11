@@ -297,7 +297,11 @@ heat_wave_index = Temp(
     abstract="Number of days that constitute heatwave events. A heat wave occurs when daily minimum and maximum "
     "temperatures exceed given thresholds for a number of days.",
     cell_methods="",
-    compute=indices.heat_wave_index,
+    compute=indices.hot_spell_total_length,
+    parameters=dict(
+        window={"default": 5},
+        thresh={"default": "25 degC"},
+    ),
 )
 
 heat_spell_frequency = Temp(
