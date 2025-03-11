@@ -150,7 +150,7 @@ def standardized_streamflow_index(
         uses a deterministic function that does not involve any optimization.
         `PWM` should be used with a `lmoments3` distribution.
     fitkwargs : dict, optional
-        Kwargs passed to ``xclim.indices.stats.fit`` used to impose values of certains parameters (`floc`, `fscale`).
+        Kwargs passed to ``xclim.indices.stats.fit`` used to impose values of certain parameters (`floc`, `fscale`).
     cal_start : DateStr, optional
         Start date of the calibration period. A `DateStr` is expected, that is a `str` in format `"YYYY-MM-DD"`.
         Default option `None` means that the calibration period begins at the start of the input dataset.
