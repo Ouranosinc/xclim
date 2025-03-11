@@ -1915,10 +1915,7 @@ def snowfall_intensity(
     return snow_int
 
 
-@deprecated(
-    "`heat_wave_index` will be deprecated in a future version. "
-    "Use `hot_spell_total_length` instead"
-)
+@deprecated(from_version="0.57.0", suggested="hot_spell_total_length")
 @declare_units(tasmax="[temperature]", thresh="[temperature]")
 def heat_wave_index(
     tasmax: xarray.DataArray,
