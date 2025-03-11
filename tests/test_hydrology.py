@@ -58,6 +58,24 @@ class TestStandardizedStreamflow:
         )
         np.testing.assert_array_almost_equal(out1, out2, 3)
 
+    @pytest.mark.slow
+    def test_3d_data_with_nans_value(self, open_dataset):
+        nc_ds = Path("Raven", "q_sim.nc")
+        # test with data
+        ds = open_dataset(nc_ds)
+        q = ds.q_obs.sel(time=slice("2008", "2018")).rename("q")
+        q[{"time": 10}] = np.nan
+
+        out1 = land.standardized_streamflow_index(
+            q,
+            freq=None,
+            window=1,
+            dist="genextreme",
+            method="APP",
+            fitkwargs={"floc": 0},
+        )
+        assert np.isnan(out1[{"time": 10}])
+
 
 class TestSnwMax:
     def test_simple(self, snw_series):
