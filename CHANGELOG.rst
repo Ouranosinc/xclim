@@ -11,6 +11,7 @@ Bug fixes
 * Fix installation instructions in the Contributing guide (:issue:`2088`, :pull:`2089`).
 * Fixed parameter order in typing.cast() causing intermittent errors in solar_zenith_angle calculation. (:issue:`2097`, :pull:`2098`)
 * Fix chunks in sdba.utils.broadcast output. (:issue:`2103`, :pull:`2104`)
+* Fix chunks inside sdba.adjustment.PrincipalComponent._train._compute_transform_matrices. (:issue:`2105`, :pull:`2106`)
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
