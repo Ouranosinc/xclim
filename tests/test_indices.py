@@ -1082,9 +1082,6 @@ class TestStandardizedIndices:
         if method == "ML" and freq == "D" and Version(__numpy_version__) < Version("2.0.0"):
             pytest.skip("Skipping SPI/ML/D on older numpy")
         ds = open_dataset("Raven/gwl_obs.nc")
-        if freq == "W":
-            # only standard calendar supported with freq="W"
-            ds = ds.convert_calendar("standard", missing=np.nan, align_on="year", use_cftime=False)
         gwl0 = ds.gwl
 
         gwl = gwl0.sel(time=slice("1989", "1991"))
