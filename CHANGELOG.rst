@@ -26,6 +26,7 @@ Internal changes
     * Line endings in files now must be `Unix`-compatible (`LF`).
 * The `blackdoc` pre-commit hook now only examines `.rst` and `.md` files. (:pull:`2083`).
 * The `xclim` documentation now has a ``support`` page for detailing the project's usage and version support policies. (:pull:`2100`).
+* The indicator `heat_wave_index` now uses `hot_spell_total_length` index. The `heat_wave_index` index is identitical to `hot_spell_total_length` and will be dropped in future versions. (:issue:`2031`, :pull:`2102`).
 
 New indicators
 ^^^^^^^^^^^^^^
