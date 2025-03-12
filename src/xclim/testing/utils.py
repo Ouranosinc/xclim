@@ -69,7 +69,7 @@ __all__ = [
     "testing_setup_warnings",
 ]
 
-default_testdata_version = "v2025.1.8"
+default_testdata_version = "v2025.3.11"
 """Default version of the testing data to use when fetching datasets."""
 
 default_testdata_repo_url = "https://raw.githubusercontent.com/Ouranosinc/xclim-testdata/"
@@ -520,6 +520,7 @@ def nimbus(  # noqa: PR01
         example_file = nimbus().fetch("example.nc")
         data = xr.open_dataset(example_file)
     """
+    branch = "v2025.3.11"
     if pooch is None:
         raise ImportError(
             "The `pooch` package is required to fetch the xclim testing data. "
@@ -611,6 +612,8 @@ def open_dataset(
     --------
     xarray.open_dataset : Open and read a dataset from a file or file-like object.
     """
+    branch = "v2025.3.11"
+
     if cache_dir is None:
         raise ValueError(
             "The cache directory must be set. "

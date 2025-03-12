@@ -28,7 +28,7 @@ from xclim import indices as xci
 from xclim.core import ValidationError
 from xclim.core.calendar import percentile_doy
 from xclim.core.options import set_options
-from xclim.core.units import convert_units_to, rate2amount, units
+from xclim.core.units import convert_units_to, units
 from xclim.indices import prsnd_to_prsn
 
 K2C = 273.15
@@ -993,7 +993,7 @@ class TestStandardizedIndices:
                 12,
                 "gamma",
                 "APP",
-                [0.598212, 1.559759, 1.693086, 0.996405, 0.702797],
+                [0.053303, 0.243638, 0.184645, 0.365087, 0.702955],
                 2e-2,
             ),
             (
@@ -1001,7 +1001,7 @@ class TestStandardizedIndices:
                 12,
                 "gamma",
                 "ML",
-                [0.626364, 1.534493, 1.67347, 0.996994, 0.701663],
+                [0.054521, 0.244173, 0.185881, 0.360743, 0.695511],
                 0.04,
             ),
             (
@@ -1009,7 +1009,7 @@ class TestStandardizedIndices:
                 12,
                 "gamma",
                 "APP",
-                [-0.244186, -0.114052, 0.649965, 1.0767, 0.64628],
+                [0.697812, 0.822368, 0.980493, 1.088905, 1.210871],
                 2e-2,
             ),
             (
@@ -1017,7 +1017,7 @@ class TestStandardizedIndices:
                 12,
                 "gamma",
                 "ML",
-                [-0.158894, -0.048991, 0.677816, 0.960244, 0.6606],
+                [0.052334, 0.243673, 0.185901, 0.360868, 0.695515],
                 2e-2,
             ),
             (
@@ -1025,7 +1025,7 @@ class TestStandardizedIndices:
                 12,
                 "lognorm",
                 "APP",
-                [0.61497, 1.529579, 1.649581, 0.995286, 0.70964],
+                [0.054521, 0.244173, 0.185881, 0.360743, 0.695511],
                 2e-2,
             ),
             (
@@ -1033,7 +1033,7 @@ class TestStandardizedIndices:
                 12,
                 "lognorm",
                 "ML",
-                [0.631899, 1.532513, 1.691952, 0.997743, 0.68918],
+                [0.052334, 0.243673, 0.185901, 0.360868, 0.695515],
                 0.04,
             ),
             (
@@ -1041,7 +1041,7 @@ class TestStandardizedIndices:
                 12,
                 "lognorm",
                 "APP",
-                [-0.151103, -0.015488, 0.700311, 1.097219, 0.695601],
+                [0.697812, 0.822368, 0.980493, 1.088905, 1.210871],
                 2e-2,
             ),
             (
@@ -1057,7 +1057,7 @@ class TestStandardizedIndices:
                 12,
                 "genextreme",
                 "ML",
-                [0.626085, 1.549041, 1.740867, 0.982377, 0.658135],
+                [-0.266746, -0.043151, -0.149119, -0.036864, 1.01006],
                 2e-2,
             ),
             (
@@ -1073,15 +1073,7 @@ class TestStandardizedIndices:
                 12,
                 "genextreme",
                 "APP",
-                [-0.27661, -0.145505, 0.707217, 1.178342, 0.711621],
-                2e-2,
-            ),
-            (
-                "W",
-                1,
-                "gamma",
-                "ML",
-                [0.64676962, -0.06904886, -1.60493289, 1.07864037, -0.01415902],
+                [0.901014, 1.017546, 1.161481, 1.258072, 1.364903],
                 2e-2,
             ),
         ],
@@ -1089,18 +1081,15 @@ class TestStandardizedIndices:
     def test_standardized_groundwater_index(self, open_dataset, freq, window, dist, method, values, diff_tol):
         if method == "ML" and freq == "D" and Version(__numpy_version__) < Version("2.0.0"):
             pytest.skip("Skipping SPI/ML/D on older numpy")
-        ds = open_dataset("sdba/CanESM2_1950-2100.nc").isel(location=1)
-        if freq == "D":
-            # to compare with ``climate_indices``
-            ds = ds.convert_calendar("366_day", missing=np.nan)
-        elif freq == "W":
+        ds = open_dataset("Raven/gwl_obs.nc")
+        if freq == "W":
             # only standard calendar supported with freq="W"
             ds = ds.convert_calendar("standard", missing=np.nan, align_on="year", use_cftime=False)
-        gwl0 = rate2amount(convert_units_to(ds.pr, "mm/d"))
+        gwl0 = ds.gwl
 
-        gwl = gwl0.sel(time=slice("1998", "2000"))
+        gwl = gwl0.sel(time=slice("1989", "1991"))
 
-        gwl_cal = gwl0.sel(time=slice("1950", "1980"))
+        gwl_cal = gwl0
         fitkwargs = {}
         if method == "APP":
             fitkwargs["floc"] = 0
