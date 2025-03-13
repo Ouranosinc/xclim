@@ -30,6 +30,10 @@ variables:
     standard_name: water_potential_evapotranspiration_flux
     data_flags:
       - negative_accumulation_values:
+  gwl:
+    canonical_units: m
+    description: Groundwater level.
+    dimensions: "[length]"
   hurs:
     canonical_units: '%'
     cell_methods: "time: mean"

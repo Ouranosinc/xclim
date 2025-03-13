@@ -41,6 +41,7 @@ Leveraging xarray and dask, users can easily bias-adjust climate simulations ove
 
    authors
    changelog
+   support
    security
    references
 
