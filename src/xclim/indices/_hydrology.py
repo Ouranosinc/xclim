@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import numpy as np
-import xarray as xr
+import xarray
 from scipy.stats import rv_continuous
 
 from xclim.core._types import DateStr, Quantified
@@ -33,7 +33,7 @@ __all__ = [
 
 
 @declare_units(q="[discharge]")
-def base_flow_index(q: xr.DataArray, freq: str = "YS") -> xr.DataArray:
+def base_flow_index(q: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
     r"""
     Base flow index.
 
@@ -76,7 +76,7 @@ def base_flow_index(q: xr.DataArray, freq: str = "YS") -> xr.DataArray:
 
 
 @declare_units(q="[discharge]")
-def rb_flashiness_index(q: xr.DataArray, freq: str = "YS") -> xr.DataArray:
+def rb_flashiness_index(q: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
     r"""
     Richards-Baker flashiness index.
 
@@ -119,7 +119,7 @@ def rb_flashiness_index(q: xr.DataArray, freq: str = "YS") -> xr.DataArray:
     params="[]",
 )
 def standardized_streamflow_index(
-    q: xr.DataArray,
+    q: xarray.DataArray,
     freq: str | None = "MS",
     window: int = 1,
     dist: str | rv_continuous = "genextreme",
@@ -129,7 +129,7 @@ def standardized_streamflow_index(
     cal_end: DateStr | None = None,
     params: Quantified | None = None,
     **indexer,
-) -> xr.DataArray:
+) -> xarray.DataArray:
     r"""
     Standardized Streamflow Index (SSI).
 
@@ -245,7 +245,7 @@ def standardized_streamflow_index(
 
 
 @declare_units(snd="[length]")
-def snd_max(snd: xr.DataArray, freq: str = "YS-JUL") -> xr.DataArray:
+def snd_max(snd: xarray.DataArray, freq: str = "YS-JUL") -> xarray.DataArray:
     """
     Maximum snow depth.
 
@@ -267,7 +267,7 @@ def snd_max(snd: xr.DataArray, freq: str = "YS-JUL") -> xr.DataArray:
 
 
 @declare_units(snd="[length]")
-def snd_max_doy(snd: xr.DataArray, freq: str = "YS-JUL") -> xr.DataArray:
+def snd_max_doy(snd: xarray.DataArray, freq: str = "YS-JUL") -> xarray.DataArray:
     """
     Day of year of maximum snow depth.
 
@@ -297,7 +297,7 @@ def snd_max_doy(snd: xr.DataArray, freq: str = "YS-JUL") -> xr.DataArray:
 
 
 @declare_units(snw="[mass]/[area]")
-def snw_max(snw: xr.DataArray, freq: str = "YS-JUL") -> xr.DataArray:
+def snw_max(snw: xarray.DataArray, freq: str = "YS-JUL") -> xarray.DataArray:
     """
     Maximum snow amount.
 
@@ -319,7 +319,7 @@ def snw_max(snw: xr.DataArray, freq: str = "YS-JUL") -> xr.DataArray:
 
 
 @declare_units(snw="[mass]/[area]")
-def snw_max_doy(snw: xr.DataArray, freq: str = "YS-JUL") -> xr.DataArray:
+def snw_max_doy(snw: xarray.DataArray, freq: str = "YS-JUL") -> xarray.DataArray:
     """
     Day of year of maximum snow amount.
 
@@ -349,7 +349,7 @@ def snw_max_doy(snw: xr.DataArray, freq: str = "YS-JUL") -> xr.DataArray:
 
 
 @declare_units(snw="[mass]/[area]")
-def snow_melt_we_max(snw: xr.DataArray, window: int = 3, freq: str = "YS-JUL") -> xr.DataArray:
+def snow_melt_we_max(snw: xarray.DataArray, window: int = 3, freq: str = "YS-JUL") -> xarray.DataArray:
     """
     Maximum snow melt.
 
@@ -382,7 +382,9 @@ def snow_melt_we_max(snw: xr.DataArray, window: int = 3, freq: str = "YS-JUL") -
 
 
 @declare_units(snw="[mass]/[area]", pr="[precipitation]")
-def melt_and_precip_max(snw: xr.DataArray, pr: xr.DataArray, window: int = 3, freq: str = "YS-JUL") -> xr.DataArray:
+def melt_and_precip_max(
+    snw: xarray.DataArray, pr: xarray.DataArray, window: int = 3, freq: str = "YS-JUL"
+) -> xarray.DataArray:
     """
     Maximum snow melt and precipitation.
 
@@ -424,7 +426,7 @@ def melt_and_precip_max(snw: xr.DataArray, pr: xr.DataArray, window: int = 3, fr
     params="[]",
 )
 def standardized_groundwater_index(
-    gwl: xr.DataArray,
+    gwl: xarray.DataArray,
     freq: str | None = "MS",
     window: int = 1,
     dist: str | rv_continuous = "genextreme",
@@ -434,7 +436,7 @@ def standardized_groundwater_index(
     cal_end: DateStr | None = None,
     params: Quantified | None = None,
     **indexer,
-) -> xr.DataArray:
+) -> xarray.DataArray:
     r"""
     Standardized Groundwater Index (SGI).
 
@@ -552,7 +554,7 @@ def standardized_groundwater_index(
 
 
 @declare_units(q="[discharge]")
-def flow_index(q: xr.DataArray, p: float = 0.95) -> xr.DataArray:
+def flow_index(q: xarray.DataArray, p: float = 0.95) -> xarray.DataArray:
     """
     Flow index.
 
@@ -560,14 +562,14 @@ def flow_index(q: xr.DataArray, p: float = 0.95) -> xr.DataArray:
 
     Parameters
     ----------
-    q : xr.DataArray
+    q : xarray.DataArray
         Daily streamflow data.
     p : float
         Percentile for calculating the flow index, between 0 and 1. Default of 0.95 is for high flows.
 
     Returns
     -------
-    xr.DataArray
+    xarray.DataArray
         Normalized Qp, which is the p th percentile of daily streamflow normalized by the median flow.
 
     References
@@ -582,7 +584,7 @@ def flow_index(q: xr.DataArray, p: float = 0.95) -> xr.DataArray:
 
 
 @declare_units(q="[discharge]")
-def high_flow_frequency(q: xr.DataArray, threshold_factor: int = 9, freq: str = "YS-OCT") -> xr.DataArray:
+def high_flow_frequency(q: xarray.DataArray, threshold_factor: int = 9, freq: str = "YS-OCT") -> xarray.DataArray:
     """
     High flow frequency.
 
@@ -592,7 +594,7 @@ def high_flow_frequency(q: xr.DataArray, threshold_factor: int = 9, freq: str = 
 
     Parameters
     ----------
-    q : xr.DataArray
+    q : xarray.DataArray
         Daily streamflow data.
     threshold_factor : int
         Factor by which the median flow is multiplied to set the high flow threshold, default is 9.
@@ -601,7 +603,7 @@ def high_flow_frequency(q: xr.DataArray, threshold_factor: int = 9, freq: str = 
 
     Returns
     -------
-    xr.DataArray
+    xarray.DataArray
         Number of high flow days.
 
     References
@@ -615,7 +617,7 @@ def high_flow_frequency(q: xr.DataArray, threshold_factor: int = 9, freq: str = 
 
 
 @declare_units(q="[discharge]")
-def low_flow_frequency(q: xr.DataArray, threshold_factor: float = 0.2, freq: str = "YS-OCT") -> xr.DataArray:
+def low_flow_frequency(q: xarray.DataArray, threshold_factor: float = 0.2, freq: str = "YS-OCT") -> xarray.DataArray:
     """
     Low flow frequency.
 
@@ -625,7 +627,7 @@ def low_flow_frequency(q: xr.DataArray, threshold_factor: float = 0.2, freq: str
 
     Parameters
     ----------
-    q : xr.DataArray
+    q : xarray.DataArray
         Daily streamflow data.
     threshold_factor : float
         Factor by which the mean flow is multiplied to set the low flow threshold, default is 0.2.
@@ -634,7 +636,7 @@ def low_flow_frequency(q: xr.DataArray, threshold_factor: float = 0.2, freq: str
 
     Returns
     -------
-    xr.DataArray
+    xarray.DataArray
         Number of low flow days.
 
     References
