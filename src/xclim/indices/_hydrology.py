@@ -500,7 +500,7 @@ def standardized_groundwater_index(
     >>> from xclim.indices import standardized_groundwater_index
     >>> ds = xr.open_dataset(path_to_gwl_file)
     >>> gwl = ds.gwl
-    >>> cal_start, cal_end = "2006-05-01", "2008-06-01"
+    >>> cal_start, cal_end = "1980-05-01", "1982-06-01"
     >>> sgi_3 = standardized_groundwater_index(
     ...     gwl,
     ...     freq="MS",
