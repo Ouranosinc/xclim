@@ -34,7 +34,6 @@ variables:
     canonical_units: m
     description: Groundwater level.
     dimensions: "[length]"
-
   hurs:
     canonical_units: '%'
     cell_methods: "time: mean"
