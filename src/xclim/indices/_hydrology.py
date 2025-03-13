@@ -195,7 +195,7 @@ def standardized_streamflow_index(
     >>> from datetime import datetime
     >>> from xclim.indices import standardized_streamflow_index
     >>> ds = xr.open_dataset(path_to_q_file)
-    >>> q = ds.q
+    >>> q = ds.q_sim
     >>> cal_start, cal_end = "2006-05-01", "2008-06-01"
     >>> ssi_3 = standardized_streamflow_index(
     ...     q,
