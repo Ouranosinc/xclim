@@ -28,6 +28,7 @@ dependencies:
   - flox >=0.9
   - lmoments3 >=1.0.7  # Required for some Jupyter notebooks
   - pot >=0.9.4
+  - xsdba >=0.3.0
   # Testing and development dependencies
   - blackdoc =0.3.9
   - bump-my-version >=0.32.1
