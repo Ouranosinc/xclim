@@ -40,7 +40,6 @@ dependencies = [
   "click >=8.1",
   "dask[array] >=2024.8.1",
   "filelock >=3.14.0",
-  "jsonpickle >=3.1.0",
   "numba >=0.57.0",
   "numpy >=1.24.0",
   "packaging >=24.0",
@@ -50,7 +49,6 @@ dependencies = [
   "pyyaml >=6.0.1",
   "scikit-learn >=1.2.0",
   "scipy >=1.11.0",
-  "statsmodels >=0.14.2",
   "xarray >=2023.11.0,!=2024.10.0",
   "yamale >=5.0.0"
 ]
@@ -109,7 +107,7 @@ docs = [
   "sphinxcontrib-bibtex",
   "sphinxcontrib-svg2pdfconverter[Cairosvg]"
 ]
-extras = ["fastnanquantile >=0.0.2", "flox >=0.9", "POT >=0.9.4"]
+extras = ["flox >=0.9"]
 all = ["xclim[dev]", "xclim[docs]", "xclim[extras]"]
 
 [project.scripts]
@@ -169,7 +167,6 @@ pep621_dev_dependency_groups = ["all", "dev", "docs"]
 [tool.deptry.package_module_name_map]
 "scikit-learn" = "sklearn"
 "pyyaml" = "yaml"
-"POT" = "ot"
 
 [tool.deptry.per_rule_ignores]
 DEP001 = ["SBCK"]
@@ -228,13 +225,11 @@ warn_unused_configs = true
 module = [
   "boltons.*",
   "cftime.*",
-  "jsonpickle.*",
   "numba.*",
   "pytest_socket.*",
   "SBCK.*",
   "scipy.*",
   "sklearn.*",
-  "statsmodels.*",
   "yamale.*",
   "yaml.*"
 ]
