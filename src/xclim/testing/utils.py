@@ -69,7 +69,7 @@ __all__ = [
     "testing_setup_warnings",
 ]
 
-default_testdata_version = "v2025.1.8"
+default_testdata_version = "v2025.3.11"
 """Default version of the testing data to use when fetching datasets."""
 
 default_testdata_repo_url = "https://raw.githubusercontent.com/Ouranosinc/xclim-testdata/"

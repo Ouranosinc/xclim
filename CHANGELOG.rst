@@ -4,7 +4,7 @@ Changelog
 
 v0.56.0 (unreleased)
 --------------------
-Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Hui-Min Wang (:user:`Hem-W`), Jack Kit-tai Wong(:user:`jack-ktw`).
+Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Hui-Min Wang (:user:`Hem-W`), Jack Kit-tai Wong(:user:`jack-ktw`), Adrien Lamarche (:user:`LamAdr`), Éric Dupuis (:user:`coxipi`).
 
 Bug fixes
 ^^^^^^^^^
@@ -14,6 +14,7 @@ Bug fixes
 Breaking changes
 ^^^^^^^^^^^^^^^^
 * `xclim` no longer supports Python 3.10. The minimum required version is now Python 3.11. (:pull:`2082`).
+    * Reverted: Extended support for Python3.10 will continue until further notice. (:pull:`2100`).
 * The minimum versions of several key dependencies have been raised (`numpy` >=1.24.0; `scikit-learn` >=1.2.0; `scipy` >=1.11.0). (:pull:`2082`).
 * `sdba` is now imported directly from `xsdba` instead of being a submodule. This implies a number of breaking changes (`issue`: `2074`)
     * The sub-module `sdba` is no longer installed by default.
@@ -29,6 +30,13 @@ Internal changes
     * Docstring formatting is now enabled.
     * Line endings in files now must be `Unix`-compatible (`LF`).
 * The `blackdoc` pre-commit hook now only examines `.rst` and `.md` files. (:pull:`2083`).
+* The `xclim` documentation now has a ``support`` page for detailing the project's usage and version support policies. (:pull:`2100`).
+* The indicator `heat_wave_index` now uses `hot_spell_total_length` index. The `heat_wave_index` index is identitical to `hot_spell_total_length` and will be dropped in future versions. (:issue:`2031`, :pull:`2102`).
+
+New indicators
+^^^^^^^^^^^^^^
+* Added standardized indicators for hydrology: ``xclim.land.standardized_streamflow_index`` and ``xclim.landstandardized_groundwater_index``.  (:issue:`1444`, :pull:`1877`).
+
 
 v0.55.1 (2025-02-26)
 --------------------

@@ -2,7 +2,19 @@
 Bias Adjustment and Downscaling Algorithms
 ==========================================
 
-# TODO : Trim this a bit?
+..
+    TODO: Trim the information here?
+
+.. warning::
+
+    The `xclim.sdba` module was split from the library in `xclim==0.57` in order to facilitate development and effective maintenance of the SDBA utilities. This functionality is now available in the `xsdba` package. While the package aims to maintain compatibility with `xclim`, some algorithms have been slightly modified.
+
+    For convenience, the `xclim.sdba` module will still available exposing the functionality of the `xsdba` package. This may change in the future.
+
+.. note::
+
+    For more information, the documentation is available at the following link: :doc:`xsdba API <xsdba:api>`
+
 
 The `xclim.sdba` submodule provides a collection of bias-adjustment methods meant to correct for systematic biases found in climate model simulations relative to observations.
 Almost all adjustment algorithms conform to the `train` - `adjust` scheme, meaning that adjustment factors are first estimated on training data sets, then applied in a distinct step to the data to be adjusted.
@@ -110,21 +122,27 @@ some bugs or inconsistencies might exist. To see how one can install that packag
 Notes for Developers
 ====================
 
-All new contributions should be made in the new module `xsdba`_
+.. warning::
 
-.. _xsdba: https://xsdba.readthedocs.io/
+    The `xclim.sdba` module was split from the library in `xclim==0.57` in order to facilitate development and effective maintenance of the SDBA utilities. This functionality is now available in the `xsdba` package. While the package aims to maintain compatibility with `xclim`, some algorithms have been slightly modified.
 
+.. note::
 
+    For more information, the contributor documentation is available at the following link: :doc:`xsdba contributor guidelines <xsdba:contributing>`
 
 User API
 ========
 
-See: :ref:`sdba-user-api`
+.. note::
+
+    For more information, the documentation is available at the following link: :doc:`xsdba API <xsdba:apidoc/modules>`
 
 Developer API
 =============
 
-See: :ref:`sdba-developer-api`
+.. note::
+
+    For more information, the documentation is available at the following link: :doc:`xsdba modules API <xsdba:apidoc/modules>`
 
 .. only:: html or text
 

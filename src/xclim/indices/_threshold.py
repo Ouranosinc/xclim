@@ -20,6 +20,7 @@ from xclim.core.units import (
     to_agg_units,
     units2pint,
 )
+from xclim.core.utils import deprecated
 from xclim.indices import run_length as rl
 from xclim.indices.generic import (
     bivariate_count_occurrences,
@@ -1914,6 +1915,7 @@ def snowfall_intensity(
     return snow_int
 
 
+@deprecated(from_version="0.57.0", suggested="hot_spell_total_length")
 @declare_units(tasmax="[temperature]", thresh="[temperature]")
 def heat_wave_index(
     tasmax: xarray.DataArray,

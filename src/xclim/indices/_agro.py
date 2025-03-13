@@ -1113,8 +1113,8 @@ def standardized_precipitation_index(
     pr : xarray.DataArray
         Daily precipitation.
     freq : str, optional
-        Resampling frequency. A monthly or daily frequency is expected. Option `None` assumes that desired resampling
-        has already been applied input dataset and will skip the resampling step.
+        Resampling frequency. A monthly or daily frequency is expected. Option `None` assumes
+        that the desired resampling has already been applied input dataset and will skip the resampling step.
     window : int
         Averaging window length relative to the resampling frequency. For example, if `freq="MS"`,
         i.e. a monthly resampling, the window is an integer number of months.
@@ -1254,8 +1254,8 @@ def standardized_precipitation_evapotranspiration_index(
     wb : xarray.DataArray
         Daily water budget (pr - pet).
     freq : str, optional
-        Resampling frequency. A monthly or daily frequency is expected. Option `None` assumes that desired resampling
-        has already been applied input dataset and will skip the resampling step.
+        Resampling frequency. A monthly or daily frequency is expected. Option `None` assumes
+        that the desired resampling has already been applied input dataset and will skip the resampling step.
     window : int
         Averaging window length relative to the resampling frequency. For example, if `freq="MS"`, i.e. a monthly
         resampling, the window is an integer number of months.

@@ -12,7 +12,7 @@ maintainers = [
   {name = "Pascal Bourgault", email = "bourgault.pascal@ouranos.ca"}
 ]
 readme = {file = "README.rst", content-type = "text/x-rst"}
-requires-python = ">=3.11.0"
+requires-python = ">=3.10.0"
 keywords = ["xclim", "xarray", "climate", "climatology", "bias correction", "ensemble", "indicators", "analysis"]
 license = {file = "LICENSE"}
 classifiers = [
@@ -23,6 +23,7 @@ classifiers = [
   "Natural Language :: English",
   "Operating System :: OS Independent",
   "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: 3.13",
@@ -107,7 +108,7 @@ docs = [
   "sphinxcontrib-bibtex",
   "sphinxcontrib-svg2pdfconverter[Cairosvg]"
 ]
-extras = ["flox >=0.9"]
+extras = ["flox >=0.9", "xsdba >=0.3.0"]
 all = ["xclim[dev]", "xclim[docs]", "xclim[extras]"]
 
 [project.scripts]
@@ -125,7 +126,7 @@ xclim = "xclim.cli:cli"
 [tool]
 
 [tool.bumpversion]
-current_version = "0.55.2-dev.2"
+current_version = "0.55.2-dev.5"
 commit = true
 commit_args = "--no-verify --signoff"
 tag = false
@@ -212,7 +213,7 @@ exclude = [
 ]
 
 [tool.mypy]
-python_version = 3.11
+python_version = 3.10
 show_error_codes = true
 enable_error_code = ["ignore-without-code", "redundant-expr", "truthy-bool"]
 plugins = ["numpy.typing.mypy_plugin"]
