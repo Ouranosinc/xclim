@@ -269,6 +269,12 @@
     "title": "Précipitation liquide accumulée totale",
     "abstract": "Précipitation liquide accumulée totale. Les précipitations sont considérées liquides lorsque la température quotidienne moyenne est au-dessus de 0°C."
   },
+  "SGI": {
+    "long_name": "Indice d'eau souterraine standardisé (SGI)",
+    "description": "Niveau de l'eau souterraine sur une fenêtre mobile de {window} {freq:nom}, normalisé telle que la moyenne du SGI est 0 pour les données de calibration. L'unité de la fenêtre 'X' est l'unité de temps déterminée par la fréquence de rééchantillonage,",
+    "title": "Indice d'eau souterraine standardisé (SGI)",
+    "abstract": "Niveau de l'eau souterraine sur une fenêtre mobile, normalisée telle que la moyenne du SGI est 0 pour les données de calibration. L'unité de la fenêtre est l'unité de temps déterminée par la fréquence de rééchantillonnage."
+  },
   "SOLIDPRCPTOT": {
     "long_name": "Précipitation totale lorsque la température moyenne est en dessous ou égale à {thresh}",
     "description": "Précipitation solide totale {freq:f}, estimée comme la précipitation lorsque la température moyenne est en dessous ou égale à {thresh}.",
@@ -286,6 +292,12 @@
     "description": "Budget d'eau (précipitation moins évapotranspiration) sur une fenêtre mobile de {window} {freq:nom}, normalisé tel que la moyenne du SPEI est 0 pour les données de calibration. L'unité de la fenêtre `X` est l'unité de temps determinée par la fréquence de rééchantillonnage {freq:f}.",
     "title": "Indice de précipitation évapotranspiration standardisé (SPEI)",
     "abstract": "Budget d'eau (précipitation - évapotranspiration) sur une fenêtre mobile, normalisé tel que la moyenne du SPEI est 0 pour les données de calibration. L'unité de la fenêtre est l'unité de temps déterminée par la fréquence de rééchantillonnage."
+  },
+  "SSI": {
+    "long_name": "Indice d'écoulement standardisé (SSI)",
+    "description": "Écoulement sur une fenêtre mobile de {window} {freq:nom}, normalisée telle que la moyenne du SSI est 0 pour les données de calibration. L'unité de la fenêtre 'X' est l'unité de temps déterminée par la fréquence de rééchantillonage,",
+    "title": "Indice d'écoulement standardisé (SSI)",
+    "abstract": "Écoulement sur une fenêtre mobile, normalisée telle que la moyenne du SSI est 0 pour les données de calibration. L'unité de la fenêtre est l'unité de temps déterminée par la fréquence de rééchantillonnage."
   },
   "DC": {
     "long_name": "Indice de sécheresse",

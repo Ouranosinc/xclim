@@ -4,7 +4,7 @@ Changelog
 
 v0.56.0 (unreleased)
 --------------------
-Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Hui-Min Wang (:user:`Hem-W`), Jack Kit-tai Wong(:user:`jack-ktw`), Éric Dupuis (:user:`coxipi`).
+Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Hui-Min Wang (:user:`Hem-W`), Jack Kit-tai Wong(:user:`jack-ktw`), Adrien Lamarche (:user:`LamAdr`), Éric Dupuis (:user:`coxipi`).
 
 Bug fixes
 ^^^^^^^^^
@@ -27,6 +27,11 @@ Internal changes
 * The `blackdoc` pre-commit hook now only examines `.rst` and `.md` files. (:pull:`2083`).
 * The `xclim` documentation now has a ``support`` page for detailing the project's usage and version support policies. (:pull:`2100`).
 * The indicator `heat_wave_index` now uses `hot_spell_total_length` index. The `heat_wave_index` index is identitical to `hot_spell_total_length` and will be dropped in future versions. (:issue:`2031`, :pull:`2102`).
+
+New indicators
+^^^^^^^^^^^^^^
+* Added standardized indicators for hydrology: ``xclim.land.standardized_streamflow_index`` and ``xclim.landstandardized_groundwater_index``.  (:issue:`1444`, :pull:`1877`).
+
 
 v0.55.1 (2025-02-26)
 --------------------

@@ -589,6 +589,24 @@ def _fit_start(x, dist: str, **fitkwargs: Any) -> tuple[tuple, dict]:
         c0 = np.pi * m / np.sqrt(3) / np.sqrt(m2 - m**2)
         kwargs = {"scale": scale0, "loc": loc0}
         return (c0,), kwargs
+
+    if dist in ["lognorm"]:
+        if "floc" in fitkwargs:
+            loc0 = fitkwargs["floc"]
+        else:
+            # muralidhar_1992
+            xs = sorted(x)
+            x1, xn, xp = xs[0], xs[-1], xs[int(len(x) / 2)]
+            loc0 = (x1 * xn - xp**2) / (x1 + xn - 2 * xp)
+        x_pos = x - loc0
+        x_pos = x_pos[x_pos > 0]
+        # MLE estimation
+        log_x_pos = np.log(x_pos)
+        shape0 = log_x_pos.std()
+        scale0 = np.exp(log_x_pos.mean())
+        kwargs = {"scale": scale0, "loc": loc0}
+        return (shape0,), kwargs
+
     return (), {}
 
 
@@ -768,8 +786,8 @@ def standardized_index_fit_params(
     da : xarray.DataArray
         Input array.
     freq : str, optional
-        Resampling frequency. A monthly or daily frequency is expected. Option `None` assumes that desired resampling
-        has already been applied input dataset and will skip the resampling step.
+        Resampling frequency. A monthly or daily frequency is expected. Option `None` assumes
+        that the desired resampling has already been applied input dataset and will skip the resampling step.
     window : int
         Averaging window length relative to the resampling frequency. For example, if `freq="MS"`,
         i.e. a monthly resampling, the window is an integer number of months.
@@ -813,11 +831,17 @@ def standardized_index_fit_params(
     if method == "APP":
         if "floc" not in fitkwargs.keys():
             raise ValueError(
-                "The APP method is only supported for two-parameter distributions with `gamma` or `fisk` "
-                "with `loc` being fixed. Pass a value for `floc` in `fitkwargs`."
+                "The APP method is only supported for two-parameter distributions with `gamma`, `fisk`, "
+                "`lognorm`, or `genextreme` with `loc` being fixed. Pass a value for `floc` in `fitkwargs`."
             )
 
-    dist_and_methods = {"gamma": ["ML", "APP"], "fisk": ["ML", "APP"]}
+    # "WPM" method doesn't seem to work for gamma or pearson3
+    dist_and_methods = {
+        "gamma": ["ML", "APP"],
+        "fisk": ["ML", "APP"],
+        "genextreme": ["ML", "APP"],
+        "lognorm": ["ML", "APP"],
+    }
     dist = get_dist(dist)
     if method != "PWM":
         if dist.name not in dist_and_methods:
@@ -874,8 +898,8 @@ def standardized_index(
     da : xarray.DataArray
         Daily input data.
     freq : str, optional
-        Resampling frequency. A monthly or daily frequency is expected. Option `None` assumes that desired resampling
-        has already been applied input dataset and will skip the resampling step.
+        Resampling frequency. A monthly or daily frequency is expected. Option `None` assumes
+        that the desired resampling has already been applied input dataset and will skip the resampling step.
     window : int
         Averaging window length relative to the resampling frequency. For example, if `freq="MS"`,
         i.e. a monthly resampling, the window is an integer number of months.
