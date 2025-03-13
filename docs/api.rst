@@ -192,6 +192,8 @@ SDBA Utilities
 
     For more information about `xsdba`, please refer to the documentation at the following link: :doc:`xsdba API <xsdba:api>`
 
+.. _`spatial-analogues-developer-api`:
+
 Spatial Analogues Helpers
 -------------------------
 
