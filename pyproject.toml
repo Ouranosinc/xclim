@@ -321,11 +321,13 @@ extend-select = [
   "RUF022" # unsorted-dunder-all
 ]
 ignore = [
+  "B904", # raise-without-from-inside-except
   "B028", # no-explicit-stacklevel
   "D205", # blank-line-after-summary
   "D212", # multi-line-summary-first-line
   "D400", # ends-in-period
-  "D401" # non-imperative-mood
+  "D401", # non-imperative-mood
+  "F403" # undefined-local-with-import-star
 ]
 preview = true
 select = [

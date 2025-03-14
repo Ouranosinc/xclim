@@ -12,11 +12,6 @@ from xclim.core.locales import load_locale
 from xclim.core.options import set_options  # noqa
 from xclim.indicators import atmos, generic, land, seaIce  # noqa
 
-xsdba_installed = _util.find_spec("xsdba") is not None
-if xsdba_installed:
-    import xsdba as sdba
-
-
 __author__ = """Travis Logan"""
 __email__ = "logan.travis@ouranos.ca"
 __version__ = "0.55.2-dev.5"
