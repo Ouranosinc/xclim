@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import importlib.resources as _resources
+import importlib.util as _util
 
 from xclim import indices
 from xclim.core import units  # noqa
