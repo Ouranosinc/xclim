@@ -2,9 +2,6 @@
 Bias Adjustment and Downscaling Algorithms
 ==========================================
 
-..
-    TODO: Trim the information here?
-
 .. warning::
 
     The `xclim.sdba` module was split from the library in `xclim==0.57` in order to facilitate development and effective maintenance of the SDBA utilities. This functionality is now available in the `xsdba` package. While the package aims to maintain compatibility with `xclim`, some algorithms have been slightly modified.
@@ -106,18 +103,6 @@ Some issues were also discussed on the Github repository. Most of these are stil
 * Bias-adjustment when the trend goes to zero: :issue:`1145`
 * Spatial downscaling: :issue:`1150`
 
-Experimental wrap of SBCK
-=========================
-The `SBCK`_ python package implements various bias-adjustment methods, with an emphasis on multivariate methods and with
-a care for performance. If the package is correctly installed alongside xclim, the methods will be wrapped into
-:py:class:`xclim.sdba.adjustment.Adjust` classes (names beginning with `SBCK_`) with a minimal overhead so that they can
-be parallelized with dask and accept xarray objects. For now, these experimental classes can't use the train-adjust
-approach, instead they only provide one method, ``adjust(ref, hist, sim, multi_dim=None, **kwargs)`` which performs all
-steps : initialization of the SBCK object, training (fit) and adjusting (predict). All SBCK wrappers accept a
-``multi_dim`` argument for specifying the name of the "multivariate" dimension. This wrapping is still experimental and
-some bugs or inconsistencies might exist. To see how one can install that package, see :ref:`extra-dependencies`.
-
-.. _SBCK: https://github.com/yrobink/SBCK
 
 Notes for Developers
 ====================
