@@ -35,13 +35,10 @@ def test_simple(timeseries):
 
 @pytest.mark.skipif(xsdba_installed, reason="Import failure of `sdba` only tested if `xsdba` is not installed")
 def test_import_failure():
-    error_msg = (
-        "No module named 'xsdba'. `sdba` was split from `xclim` in its "
-        "own submodule `xsdba`. Use conda or pip to install `xsdba`."
-    )
+    error_msg = "The `xclim.sdba` module has been split into its own package: `xsdba`"
     with pytest.raises(ModuleNotFoundError) as e:
         pass
-    assert e.value.args[0] == error_msg
+    assert error_msg in e.value.args[0]
 
 
 @pytest.mark.skipif(not xsdba_installed, reason="`xsdba` is not installed")

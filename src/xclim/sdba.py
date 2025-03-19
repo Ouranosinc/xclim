@@ -1,9 +1,12 @@
-"""Statistical downscaling and bias adjustment sub-module."""
+"""Statistical downscaling and bias adjustment submodule."""
 
 try:
     from xsdba import *
-except ModuleNotFoundError as e:
+except ModuleNotFoundError:
     error_msg = (
-        f"{str(e)}. `sdba` was split from `xclim` in its own submodule `xsdba`. Use conda or pip to install `xsdba`."
+        "The `xclim.sdba` module has been split into its own package: `xsdba`. "
+        "Run `pip install xclim[extras]` or install `xsdba` via `pip` or `conda`. "
+        "This will allow you to use the `xclim.sdba` module as before, though this behaviour may eventually change. "
+        "For more information, see: https://xsdba.readthedocs.io/en/stable/xclim_migration_guide.html"
     )
     raise ModuleNotFoundError(error_msg)
