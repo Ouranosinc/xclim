@@ -37,7 +37,7 @@ def test_simple(timeseries):
 def test_import_failure():
     error_msg = "The `xclim.sdba` module has been split into its own package: `xsdba`"
     with pytest.raises(ModuleNotFoundError) as e:
-        pass
+        import xclim.sdba  # noqa
     assert error_msg in e.value.args[0]
 
 
