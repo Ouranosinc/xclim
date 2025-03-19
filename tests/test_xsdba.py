@@ -36,7 +36,7 @@ def test_simple(timeseries):
 @pytest.mark.skipif(xsdba_installed, reason="Import failure of `sdba` only tested if `xsdba` is not installed")
 def test_import_failure():
     error_msg = "The `xclim.sdba` module has been split into its own package: `xsdba`"
-    with pytest.raises(ModuleNotFoundError) as e:
+    with pytest.raises(ImportError) as e:
         import xclim.sdba  # noqa
     assert error_msg in e.value.args[0]
 
