@@ -278,7 +278,10 @@ def get_op(op: str, constrain: Sequence[str] | None = None) -> Callable:
         if op not in constraints:
             raise ValueError(f"Operation `{op}` not permitted for indice.")
 
-    return xr.core.ops.get_op(binary_op)  # noqa
+    if xr.__version__ <= "2025.1.2":
+        return xr.core.ops.get_op(binary_op)
+    else:
+        return xr.computation.ops.get_op(binary_op)  # noqa
 
 
 def compare(
