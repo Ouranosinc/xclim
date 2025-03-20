@@ -4,7 +4,7 @@ Changelog
 
 v0.56.0 (unreleased)
 --------------------
-Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Hui-Min Wang (:user:`Hem-W`), Jack Kit-tai Wong(:user:`jack-ktw`), Adrien Lamarche (:user:`LamAdr`), Éric Dupuis (:user:`coxipi`), Hui-Min Wang (:user:`Hem-W`).
+Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Hui-Min Wang (:user:`Hem-W`), Jack Kit-tai Wong(:user:`jack-ktw`), Adrien Lamarche (:user:`LamAdr`), Éric Dupuis (:user:`coxipi`).
 
 Bug fixes
 ^^^^^^^^^
