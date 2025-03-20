@@ -10,6 +10,7 @@ Bug fixes
 ^^^^^^^^^
 * Fix installation instructions in the Contributing guide (:issue:`2088`, :pull:`2089`).
 * Fixed parameter order in typing.cast() causing intermittent errors in solar_zenith_angle calculation. (:issue:`2097`, :pull:`2098`)
+* Avoid unnecessary time resampling in `preprocess_standardized_index` when `freq` is not None but the same as the input data.
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
