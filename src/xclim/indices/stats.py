@@ -742,7 +742,7 @@ def preprocess_standardized_index(da: xr.DataArray, freq: str | None, window: in
         )
         group = "time.dayofyear"
 
-    if freq is not None:
+    if freq is not None and xr.infer_freq(da.time) != freq:
         da = da.resample(time=freq).mean(keep_attrs=True)
 
     if uses_dask(da) and len(da.chunks[da.get_axis_num("time")]) > 1:
