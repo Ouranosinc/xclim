@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import warnings
 from collections.abc import Callable, Sequence
+import operator
 
 import cftime
 import numpy as np
@@ -278,10 +279,7 @@ def get_op(op: str, constrain: Sequence[str] | None = None) -> Callable:
         if op not in constraints:
             raise ValueError(f"Operation `{op}` not permitted for indice.")
 
-    if xr.__version__ <= "2025.1.2":
-        return xr.core.ops.get_op(binary_op)
-    else:
-        return xr.computation.ops.get_op(binary_op)  # noqa
+    return  getattr(operator, f"__{binary_op}__")
 
 
 def compare(
