@@ -7,9 +7,9 @@ Helper functions for common generic actions done in the computation of indices.
 
 from __future__ import annotations
 
+import operator
 import warnings
 from collections.abc import Callable, Sequence
-import operator
 
 import cftime
 import numpy as np
@@ -279,7 +279,7 @@ def get_op(op: str, constrain: Sequence[str] | None = None) -> Callable:
         if op not in constraints:
             raise ValueError(f"Operation `{op}` not permitted for indice.")
 
-    return  getattr(operator, f"__{binary_op}__")
+    return getattr(operator, f"__{binary_op}__")
 
 
 def compare(
