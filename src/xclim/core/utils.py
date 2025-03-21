@@ -174,7 +174,7 @@ def ensure_chunk_size(da: xr.DataArray, **minchunks: int) -> xr.DataArray:
     return da
 
 
-def uses_dask(*das: xr.DataArray | xr.Dataset) -> bool:
+def uses_dask(*das) -> bool:
     r"""
     Evaluate whether dask is installed and array is loaded as a dask array.
 
@@ -815,7 +815,7 @@ def is_percentile_dataarray(source: xr.DataArray) -> bool:
     )
 
 
-def _chunk_like(*inputs: xr.DataArray | xr.Dataset, chunks: dict[str, int] | None):
+def _chunk_like(*inputs, chunks: dict[str, int] | None):  # *inputs : xr.DataArray | xr.Dataset
     """
     Helper function that (re-)chunks inputs according to a single chunking dictionary.
 

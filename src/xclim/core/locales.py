@@ -147,7 +147,7 @@ def get_local_dict(locale: str | Sequence[str] | tuple[str, dict]) -> tuple[str,
 
 def get_local_attrs(
     indicator: str | Sequence[str],
-    *locales: str | Sequence[str] | tuple[str, dict],
+    *locales,  # : str | Sequence[str] | tuple[str, dict],
     names: Sequence[str] | None = None,
     append_locale_name: bool = True,
 ) -> dict:

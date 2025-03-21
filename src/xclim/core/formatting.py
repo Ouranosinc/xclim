@@ -79,7 +79,7 @@ class AttrFormatter(string.Formatter):
         self.modifiers = modifiers
         self.mapping = mapping
 
-    def format(self, format_string: str, /, *args: Any, **kwargs: dict) -> str:
+    def format(self, format_string: str, /, *args, **kwargs: dict) -> str:
         r"""
         Format a string.
 
@@ -338,7 +338,7 @@ def _parse_returns(section):
 
 def merge_attributes(
     attribute: str,
-    *inputs_list: xr.DataArray | xr.Dataset,
+    *inputs_list,  # : xr.DataArray | xr.Dataset
     new_line: str = "\n",
     missing_str: str | None = None,
     **inputs_kws: xr.DataArray | xr.Dataset,
@@ -390,7 +390,7 @@ def merge_attributes(
 
 def update_history(
     hist_str: str,
-    *inputs_list: xr.DataArray | xr.Dataset,
+    *inputs_list,  # : xr.DataArray | xr.Dataset,
     new_name: str | None = None,
     **inputs_kws: xr.DataArray | xr.Dataset,
 ) -> str:
