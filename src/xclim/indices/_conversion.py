@@ -252,7 +252,7 @@ def uas_vas_2_sfcwind(*args, **kwargs):  # numpydoc ignore=PR01,RT01
 
     Warnings
     --------
-    This function has been deprecated in favor of `uas_vas_to_sfcwind`.
+    This function has been deprecated in favour of `uas_vas_to_sfcwind`.
     """
     return uas_vas_to_sfcwind(*args, **kwargs)
 
@@ -292,8 +292,8 @@ def uas_vas_to_sfcwind(
 
     Examples
     --------
-    >>> from xclim.indices import uas_vas_2_sfcwind
-    >>> sfcWind = uas_vas_2_sfcwind(uas=uas_dataset, vas=vas_dataset, calm_wind_thresh="0.5 m/s")
+    >>> from xclim.indices import uas_vas_to_sfcwind
+    >>> sfcWind = uas_vas_to_sfcwind(uas=uas_dataset, vas=vas_dataset, calm_wind_thresh="0.5 m/s")
     """
     # Converts the wind speed to m s-1
     uas = convert_units_to(uas, "m/s")
@@ -328,7 +328,7 @@ def sfcwind_2_uas_vas(*args, **kwargs):  # numpydoc ignore=PR01,RT01
 
     Warnings
     --------
-    This function has been deprecated in favor of `sfcwind_to_uas_vas`.
+    This function has been deprecated in favour of `sfcwind_to_uas_vas`.
     """
     return sfcwind_to_uas_vas(*args, **kwargs)
 
