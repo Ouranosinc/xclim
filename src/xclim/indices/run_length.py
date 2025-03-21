@@ -9,7 +9,6 @@ from __future__ import annotations
 
 from collections.abc import Callable, Sequence
 from datetime import datetime
-from typing import Any
 from warnings import warn
 
 import numpy as np
@@ -82,7 +81,7 @@ def resample_and_rl(
     da: xr.DataArray,
     resample_before_rl: bool,
     compute: Callable,
-    *args: Any,
+    *args,
     freq: str,
     dim: str = "time",
     **kwargs,
