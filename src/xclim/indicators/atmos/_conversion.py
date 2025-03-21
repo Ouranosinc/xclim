@@ -113,7 +113,7 @@ wind_speed_from_vector = Converter(
     cell_methods="",
     abstract="Calculation of the magnitude and direction of the wind speed "
     "from the two components west-east and south-north.",
-    compute=indices.uas_vas_2_sfcwind,
+    compute=indices.uas_vas_to_sfcwind,
 )
 
 
@@ -131,7 +131,7 @@ wind_vector_from_speed = Converter(
     cell_methods="",
     abstract="Calculation of the two components (west-east and north-south) of the wind "
     "from the magnitude of its speed and direction of origin.",
-    compute=indices.sfcwind_2_uas_vas,
+    compute=indices.sfcwind_to_uas_vas,
 )
 
 wind_power_potential = Converter(
