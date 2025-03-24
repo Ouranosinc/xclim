@@ -15,11 +15,15 @@ import cftime
 import numpy as np
 import pandas as pd
 import xarray as xr
+from packaging.version import Version
 from xarray import CFTimeIndex
 
 from xclim.core._types import DayOfYearStr
 from xclim.core.formatting import update_xclim_history
 from xclim.core.utils import uses_dask
+
+XR2409 = Version(xr.__version__) >= Version("2024.09")
+
 
 __all__ = [
     "DayOfYearStr",
@@ -222,6 +226,20 @@ def _convert_doy_date(doy: int, year: int, src, tgt):
     return float(same_date.dayofyr) + fracpart
 
 
+# Copied from xarray.coding.calendar_ops
+def _is_leap_year(years, calendar):
+    func = np.vectorize(cftime.is_leap_year)
+    return func(years, calendar=calendar)
+
+
+# Copied from xarray.coding.calendar_ops
+def _days_in_year(years, calendar):
+    """The number of days in the year according to given calendar."""
+    if calendar == "360_day":
+        return xr.full_like(years, 360)
+    return _is_leap_year(years, calendar).astype(int) + 365
+
+
 def convert_doy(
     source: xr.DataArray | xr.Dataset,
     target_cal: str,
@@ -286,7 +304,7 @@ def convert_doy(
             max_doy_src = max_doy[source_cal]
         else:
             max_doy_src = xr.apply_ufunc(
-                xr.coding.calendar_ops._days_in_year,
+                _days_in_year,
                 year_of_the_doy,
                 vectorize=True,
                 dask="parallelized",
@@ -296,7 +314,7 @@ def convert_doy(
             max_doy_tgt = max_doy[target_cal]
         else:
             max_doy_tgt = xr.apply_ufunc(
-                xr.coding.calendar_ops._days_in_year,
+                _days_in_year,
                 year_of_the_doy,
                 vectorize=True,
                 dask="parallelized",
@@ -795,7 +813,7 @@ def time_bnds(  # noqa: C901
     # elif isinstance(time, DataArrayResample | DatasetResample):
     elif hasattr(time, "groupers"):
         for grouper in time.groupers:
-            if isinstance(grouper.grouper, xr.groupers.TimeResampler):
+            if "time" in grouper.codes.dims:
                 datetime = grouper.unique_coord.data
                 freq = freq or grouper.grouper.freq
                 if datetime.dtype == "O":
@@ -937,11 +955,9 @@ def _doy_days_since_doys(
         Number of days (maximum doy) for the year of each value in base.
     """
     calendar = get_calendar(base)
-
     base_doy = base.dt.dayofyear
-
     doy_max = xr.apply_ufunc(
-        xr.coding.calendar_ops._days_in_year,
+        _days_in_year,
         base.dt.year,
         vectorize=True,
         kwargs={"calendar": calendar},

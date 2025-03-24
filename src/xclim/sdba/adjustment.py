@@ -42,6 +42,7 @@ from ._adjustment import (
 )
 from .base import Grouper, ParametrizableWithDataset, parse_group
 from .processing import grouped_time_indexes
+from .nbutils import get_temp_dimname
 from .utils import (
     ADDITIVE,
     best_pc_orientation_full,
@@ -1087,11 +1088,11 @@ class PrincipalComponents(TrainAdjust):
         all_dims = set(ref.dims + hist.dims)
 
         # Dimension name for the "points"
-        lblP = xr.core.utils.get_temp_dimname(all_dims, "points")
+        lblP = get_temp_dimname(all_dims, "points")
 
         # Rename coord on ref, multiindex do not like conflicting coordinates names
         lblM = crd_dim
-        lblR = xr.core.utils.get_temp_dimname(ref.dims, lblM + "_out")
+        lblR = get_temp_dimname(ref.dims, lblM + "_out")
         ref = ref.rename({lblM: lblR})
 
         # The real thing, acting on 2D numpy arrays
@@ -1301,7 +1302,7 @@ class NpdfTransform(Adjust):
 
         # Assuming sim has the same coords as hist
         # We get the safest new name of the rotated dim.
-        rot_dim = xr.core.utils.get_temp_dimname(
+        rot_dim = get_temp_dimname(
             set(ref.dims).union(hist.dims).union(sim.dims), pts_dim + "_prime"
         )
 
@@ -1835,7 +1836,7 @@ class MBCn(TrainAdjust):
                     f"`crd_dim` attribute of `rot_matrices` ({rot_matrices.attrs['crd_dim']}) does not correspond to `pts_dim` ({pts_dim})."
                 )
         else:
-            rot_dim = xr.core.utils.get_temp_dimname(
+            rot_dim = get_temp_dimname(
                 set(ref.dims).union(hist.dims), pts_dim + "_prime"
             )
             rot_matrices = rand_rot_matrix(
