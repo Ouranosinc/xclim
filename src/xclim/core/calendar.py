@@ -7,7 +7,6 @@ Helper function to handle dates, times and different calendars with xarray.
 
 from __future__ import annotations
 
-import calendar
 import datetime as pydt
 from collections.abc import Sequence
 from typing import Any, TypeVar
@@ -50,8 +49,20 @@ __all__ = [
 ]
 
 
-with calendar.different_locale("en_US"):
-    _MONTH_ABBREVIATIONS = {i: calendar.month_abbr[i].upper() for i in range(1, 13)}
+_MONTH_ABBREVIATIONS = {
+    1: "JAN",
+    2: "FEB",
+    3: "MAR",
+    4: "APR",
+    5: "MAY",
+    6: "JUN",
+    7: "JUL",
+    8: "AUG",
+    9: "SEP",
+    10: "OCT",
+    11: "NOV",
+    12: "DEC",
+}
 
 
 # Maximum day of year in each calendar.
