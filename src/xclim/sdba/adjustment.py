@@ -13,7 +13,7 @@ from warnings import warn
 
 import numpy as np
 import xarray as xr
-from xarray.core.dataarray import DataArray
+from xarray import DataArray
 
 from xclim.core.calendar import get_calendar
 from xclim.core.formatting import gen_call_string, update_history

@@ -107,7 +107,8 @@ def expected_count(
     time = xr.DataArray(time.values, dims=("time",), coords={"time": time.values}, name="time")
 
     if freq:
-        resamp = time.resample(time=freq).first()
+        # We only want the resulting time index, the actual resampling method is not important.
+        resamp = time.resample(time=freq).count()
         resamp_time = resamp.indexes["time"]
         _, _, is_start, _ = parse_offset(freq)
         if is_start:

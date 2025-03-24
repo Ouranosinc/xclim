@@ -7,6 +7,7 @@ Helper function to handle dates, times and different calendars with xarray.
 
 from __future__ import annotations
 
+import calendar
 import datetime as pydt
 from collections.abc import Sequence
 from typing import Any, TypeVar
@@ -15,10 +16,7 @@ import cftime
 import numpy as np
 import pandas as pd
 import xarray as xr
-from xarray.coding.cftime_offsets import to_cftime_datetime
-from xarray.coding.cftimeindex import CFTimeIndex
-from xarray.core import dtypes
-from xarray.core.resample import DataArrayResample, DatasetResample
+from xarray import CFTimeIndex
 
 from xclim.core._types import DayOfYearStr
 from xclim.core.formatting import update_xclim_history
@@ -50,6 +48,11 @@ __all__ = [
     "unstack_periods",
     "within_bnds_doy",
 ]
+
+
+with calendar.different_locale("en_US"):
+    _MONTH_ABBREVIATIONS = {i: calendar.month_abbr[i].upper() for i in range(1, 13)}
+
 
 # Maximum day of year in each calendar.
 max_doy = {
@@ -736,7 +739,7 @@ def resample_doy(doy: xr.DataArray, arr: xr.DataArray | xr.Dataset) -> xr.DataAr
 
 
 def time_bnds(  # noqa: C901
-    time: (xr.DataArray | xr.Dataset | CFTimeIndex | pd.DatetimeIndex | DataArrayResample | DatasetResample),
+    time: (xr.DataArray | xr.Dataset | CFTimeIndex | pd.DatetimeIndex),
     freq: str | None = None,
     precision: str | None = None,
 ):
@@ -778,7 +781,8 @@ def time_bnds(  # noqa: C901
     """
     if isinstance(time, xr.DataArray | xr.Dataset):
         time = time.indexes[time.name]
-    elif isinstance(time, DataArrayResample | DatasetResample):
+    # elif isinstance(time, DataArrayResample | DatasetResample):
+    elif hasattr(time, "groupers"):
         for grouper in time.groupers:
             if isinstance(grouper.grouper, xr.groupers.TimeResampler):
                 datetime = grouper.unique_coord.data
@@ -1309,8 +1313,8 @@ def select_time(
 
         # Get doy of date, this is now safe because the calendar is uniform.
         doys = _get_doys(
-            to_cftime_datetime(f"2000-{start}", calendar).dayofyr,
-            to_cftime_datetime(f"2000-{end}", calendar).dayofyr,
+            cftime.datetime.strptime(f"2000-{start}", "%Y-%m-%d", calendar=calendar).dayofyr,
+            cftime.datetime.strptime(f"2000-{end}", "%Y-%m-%d", calendar=calendar).dayofyr,
             include_bounds,
         )
         mask = time.time.dt.dayofyear.isin(doys)
@@ -1349,7 +1353,7 @@ def stack_periods(
     dim: str = "period",
     start: str = "1970-01-01",
     align_days: bool = True,
-    pad_value=dtypes.NA,
+    pad_value="<NA>",
 ):
     """
     Construct a multi-period array.
@@ -1527,11 +1531,12 @@ def stack_periods(
     # The "fake" axis that all periods share
     fake_time = xr.date_range(start, periods=longest, freq=srcfreq, calendar=cal, use_cftime=use_cftime)
     # Slice and concat along new dim. We drop the index and add a new one so that xarray can concat them together.
+    kwargs = {"fill_value": pad_value} if pad_value != "<NA>" else {}
     out = xr.concat(
         [da.isel(time=slc).drop_vars("time").assign_coords(time=np.arange(slc.stop - slc.start)) for slc in periods],
         dim,
         join="outer",
-        fill_value=pad_value,
+        **kwargs,
     )
     out = out.assign_coords(
         time=(("time",), fake_time, da.time.attrs.copy()),

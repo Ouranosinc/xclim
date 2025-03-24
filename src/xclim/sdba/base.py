@@ -440,9 +440,11 @@ class Grouper(Parametrizable):
         if isinstance(out, xr.Dataset):
             for name, outvar in out.data_vars.items():
                 if "_group_apply_reshape" in outvar.attrs:
-                    out[name] = self.group(outvar, main_only=True).first(
-                        skipna=False, keep_attrs=True
-                    )
+                    # Xarray 2025.3 activated flux by default for "first", but it doesn't support mixed chunking like we might have here
+                    with xr.set_options(use_flox=False):
+                        out[name] = self.group(outvar, main_only=True).first(
+                            skipna=False, keep_attrs=True
+                        )
                     del out[name].attrs["_group_apply_reshape"]
 
         # Save input parameters as attributes of output DataArray.
