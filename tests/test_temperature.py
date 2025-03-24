@@ -592,6 +592,16 @@ class TestGrowingDegreeDays:
 
         assert np.isnan(gdd.values[0, -1, -1])
 
+    def test_conversion(self, open_dataset):
+        ds = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc")
+
+        ds["tas_F"] = convert_units_to(ds.tas, "degF")
+        ds_pt = ds.isel(location=1)
+        out1 = atmos.growing_degree_days(tas=ds_pt.tas, thresh="5 degC", freq="MS")
+        out2 = atmos.growing_degree_days(tas=ds_pt.tas_F, thresh="5 degC", freq="MS")
+        np.testing.assert_allclose(out1.values, out2.values, rtol=1e-4)
+        assert out1.units == out2.units
+
 
 class TestHeatSpellFrequency:
     def test_1d(self, tasmax_series, tasmin_series):
