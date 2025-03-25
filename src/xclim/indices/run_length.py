@@ -9,18 +9,16 @@ from __future__ import annotations
 
 from collections.abc import Callable, Sequence
 from datetime import datetime
-from typing import Any
 from warnings import warn
 
 import numpy as np
 import pandas as pd
 import xarray as xr
 from numba import njit
-from xarray.core.utils import get_temp_dimname
 
 from xclim.core import DateStr, DayOfYearStr
 from xclim.core.options import OPTIONS, RUN_LENGTH_UFUNC
-from xclim.core.utils import split_auxiliary_coordinates, uses_dask
+from xclim.core.utils import get_temp_dimname, split_auxiliary_coordinates, uses_dask
 from xclim.indices.helpers import resample_map
 
 npts_opt = 9000
@@ -82,7 +80,7 @@ def resample_and_rl(
     da: xr.DataArray,
     resample_before_rl: bool,
     compute: Callable,
-    *args: Any,
+    *args,
     freq: str,
     dim: str = "time",
     **kwargs,

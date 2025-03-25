@@ -220,9 +220,9 @@ class Grouper(Parametrizable):
         da: xr.DataArray | xr.Dataset | None = None,
         main_only: bool = False,
         **das: xr.DataArray,
-    ) -> xr.core.groupby.GroupBy:  # pylint: disable=no-member
+    ):
         """
-        Return a xr.core.groupby.GroupBy object.
+        Return an xarray GroupBy object.
 
         More than one array can be combined to a dataset before grouping using the `das` kwargs.
         A new `window` dimension is added if `self.window` is larger than 1.
@@ -365,7 +365,7 @@ class Grouper(Parametrizable):
         Parameters
         ----------
         func : Callable or str
-            The function to apply to the groups, either a callable or a `xr.core.groupby.GroupBy` method name as a string.
+            The function to apply to the groups, either a callable or a xarray GroupBy method name as a string.
             The function will be called as `func(group, dim=dims, **kwargs)`. See `main_only` for the behaviour of `dims`.
         da : xr.DataArray or dict[str, xr.DataArray] or xr.Dataset
             The DataArray on which to apply the function. Multiple arrays can be passed through a dictionary.
@@ -440,9 +440,11 @@ class Grouper(Parametrizable):
         if isinstance(out, xr.Dataset):
             for name, outvar in out.data_vars.items():
                 if "_group_apply_reshape" in outvar.attrs:
-                    out[name] = self.group(outvar, main_only=True).first(
-                        skipna=False, keep_attrs=True
-                    )
+                    # Xarray 2025.3 activated flux by default for "first", but it doesn't support mixed chunking like we might have here
+                    with xr.set_options(use_flox=False):
+                        out[name] = self.group(outvar, main_only=True).first(
+                            skipna=False, keep_attrs=True
+                        )
                     del out[name].attrs["_group_apply_reshape"]
 
         # Save input parameters as attributes of output DataArray.

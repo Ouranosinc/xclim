@@ -136,6 +136,7 @@ from xclim.core.calendar import parse_offset, select_time
 from xclim.core.cfchecks import cfcheck_from_name
 from xclim.core.formatting import (
     AttrFormatter,
+    _merge_attrs_drop_conflicts,
     default_formatter,
     gen_call_string,
     generate_indicator_docstring,
@@ -860,9 +861,9 @@ class Indicator(IndicatorRegistrar):
         das, params, dsattrs = self._parse_variables_from_call(args, kwds)
 
         if OPTIONS[KEEP_ATTRS] is True or (
-            OPTIONS[KEEP_ATTRS] == "xarray" and xarray.core.options._get_keep_attrs(False)
+            OPTIONS[KEEP_ATTRS] == "xarray" and xarray.get_options()["keep_attrs"] is True
         ):
-            out_attrs = xarray.core.merge.merge_attrs([da.attrs for da in das.values()], "drop_conflicts")
+            out_attrs = _merge_attrs_drop_conflicts(*das.values())
             out_attrs.pop("units", None)
         else:
             out_attrs = {}
@@ -916,7 +917,7 @@ class Indicator(IndicatorRegistrar):
         if OPTIONS[AS_DATASET]:
             out = Dataset({o.name: o for o in outs})
             if OPTIONS[KEEP_ATTRS] is True or (
-                OPTIONS[KEEP_ATTRS] == "xarray" and xarray.core.options._get_keep_attrs(False)
+                OPTIONS[KEEP_ATTRS] == "xarray" and xarray.get_options()["keep_attrs"] is True
             ):
                 out.attrs.update(dsattrs)
             out.attrs["history"] = update_history(
