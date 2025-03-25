@@ -10,6 +10,7 @@ Bug fixes
 ^^^^^^^^^
 * Fix installation instructions in the Contributing guide (:issue:`2088`, :pull:`2089`).
 * Fixed parameter order in typing.cast() causing intermittent errors in solar_zenith_angle calculation. (:issue:`2097`, :pull:`2098`)
+* Fixed `to_agg_units` that was converting units of temperature differences prematurely, without changing accordingly the values in the related DataArrays. (:issue:`2121`, :pull:`2122`).
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
