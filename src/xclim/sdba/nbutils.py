@@ -10,7 +10,7 @@ from collections.abc import Hashable, Sequence
 import numpy as np
 from numba import boolean, float32, float64, guvectorize, njit
 from xarray import DataArray, apply_ufunc
-from xarray.core import utils
+
 
 try:
     from fastnanquantile.xrcompat import xr_apply_nanquantile
@@ -190,7 +190,7 @@ def vecquantiles(
     xarray.DataArray
         The quantiles computed along the `dim` dimension.
     """
-    tem = utils.get_temp_dimname(da.dims, "temporal")
+    tem = get_temp_dimname(da.dims, "temporal")
     dims = [dim] if isinstance(dim, str) else dim
     da = da.stack({tem: dims})
     da = da.transpose(*rnk.dims, tem)
@@ -450,3 +450,14 @@ def _pairwise_haversine_and_bins(lond, latd, transpose=False):
     if transpose:
         np.fill_diagonal(dists, 0)
     return dists, mn, mx
+
+
+# Copied from xarray
+def get_temp_dimname(dims: Sequence[str], new_dim: str) -> str:
+    """
+    Get an new dimension name based on new_dim, that is not used in dims.
+    If the same name exists, we add an underscore(s) in the head.
+    """
+    while new_dim in dims:
+        new_dim = "_" + str(new_dim)
+    return new_dim

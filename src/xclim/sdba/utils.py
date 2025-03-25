@@ -17,13 +17,12 @@ from dask import array as dsk
 from scipy.interpolate import griddata, interp1d
 from scipy.spatial import distance
 from scipy.stats import spearmanr
-from xarray.core.utils import get_temp_dimname
 
 from xclim.core.calendar import _interpolate_doy_calendar  # noqa
 from xclim.core.utils import ensure_chunk_size
 
 from .base import Grouper, parse_group
-from .nbutils import _extrapolate_on_quantiles
+from .nbutils import _extrapolate_on_quantiles, get_temp_dimname
 
 MULTIPLICATIVE = "*"
 ADDITIVE = "+"
