@@ -12,7 +12,6 @@ from typing import cast
 import dask.array as dsk
 import numpy as np
 import xarray as xr
-from xarray.core.utils import get_temp_dimname
 
 from xclim.core.calendar import get_calendar, max_doy, parse_offset
 from xclim.core.formatting import update_xclim_history
@@ -21,7 +20,7 @@ from xclim.core.utils import uses_dask
 
 from ._processing import _adapt_freq, _normalize, _reordering
 from .base import Grouper
-from .nbutils import _escore
+from .nbutils import _escore, get_temp_dimname
 from .utils import ADDITIVE, copy_all_attrs
 
 __all__ = [

@@ -471,7 +471,7 @@ def load_registry(branch: str = TESTDATA_BRANCH, repo: str = TESTDATA_REPO_URL) 
     return registry
 
 
-def nimbus(  # noqa: PR01
+def nimbus(
     repo: str = TESTDATA_REPO_URL,
     branch: str = TESTDATA_BRANCH,
     cache_dir: str | Path = TESTDATA_CACHE_DIR,
@@ -545,7 +545,7 @@ def nimbus(  # noqa: PR01
 
     # Overload the fetch method to add user-agent headers
     @wraps(_nimbus.fetch_diversion)
-    def _fetch(*args: str, **kwargs: bool | Callable) -> str:  # numpydoc ignore=GL08
+    def _fetch(*args, **kwargs: bool | Callable) -> str:  # numpydoc ignore=GL08  # *args: str
         def _downloader(
             url: str,
             output_file: str | IO,

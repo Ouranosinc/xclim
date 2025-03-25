@@ -4,12 +4,15 @@ Changelog
 
 v0.56.0 (unreleased)
 --------------------
-Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Hui-Min Wang (:user:`Hem-W`), Jack Kit-tai Wong(:user:`jack-ktw`), Adrien Lamarche (:user:`LamAdr`), Éric Dupuis (:user:`coxipi`).
+Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Hui-Min Wang (:user:`Hem-W`), Jack Kit-tai Wong(:user:`jack-ktw`), Adrien Lamarche (:user:`LamAdr`), Éric Dupuis (:user:`coxipi`), Jens de Bruijn (:user:`jensdebruijn`).
 
 Bug fixes
 ^^^^^^^^^
 * Fix installation instructions in the Contributing guide (:issue:`2088`, :pull:`2089`).
 * Fixed parameter order in typing.cast() causing intermittent errors in solar_zenith_angle calculation. (:issue:`2097`, :pull:`2098`)
+* `xclim` now uses directly `operator` instead of using `xarray`'s derived `get_op` function. A refactoring in `xarray` had changed the position of `get_op` which caused a bug.  (:issue:`2113`, :pull:`2114`).
+    + All other uses of `xarray`'s internal API were also removed (:pull:`2116`).
+* Fixed an issue with star-annotated call signatures to maintain Python 3.10 compatibility. (:pull:`2116`).
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
@@ -29,7 +32,8 @@ Internal changes
     * Line endings in files now must be `Unix`-compatible (`LF`).
 * The `blackdoc` pre-commit hook now only examines `.rst` and `.md` files. (:pull:`2083`).
 * The `xclim` documentation now has a ``support`` page for detailing the project's usage and version support policies. (:pull:`2100`).
-* The indicator `heat_wave_index` now uses `hot_spell_total_length` index. The `heat_wave_index` index is identitical to `hot_spell_total_length` and will be dropped in future versions. (:issue:`2031`, :pull:`2102`).
+* The indicator `heat_wave_index` now uses `hot_spell_total_length` index. The `heat_wave_index` index is identical to `hot_spell_total_length` and will be dropped in future versions. (:issue:`2031`, :pull:`2102`).
+* Updated pre-commit hooks to their latest versions. (:pull:`2116`).
 
 New indicators
 ^^^^^^^^^^^^^^
