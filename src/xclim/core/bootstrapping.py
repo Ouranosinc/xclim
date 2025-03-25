@@ -11,7 +11,7 @@ import cftime
 import numpy as np
 import xarray
 from boltons.funcutils import wraps
-from xarray.core.dataarray import DataArray
+from xarray import DataArray
 
 import xclim.core.utils
 from xclim.core.calendar import parse_offset, percentile_doy
