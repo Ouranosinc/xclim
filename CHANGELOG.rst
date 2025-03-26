@@ -13,6 +13,7 @@ Bug fixes
 * `xclim` now uses directly `operator` instead of using `xarray`'s derived `get_op` function. A refactoring in `xarray` had changed the position of `get_op` which caused a bug.  (:issue:`2113`, :pull:`2114`).
     + All other uses of `xarray`'s internal API were also removed (:pull:`2116`).
 * Fixed an issue with star-annotated call signatures to maintain Python 3.10 compatibility. (:pull:`2116`).
+* Fixed `to_agg_units` that was converting units of temperature differences prematurely, without changing accordingly the values in the related DataArrays. (:issue:`2121`, :pull:`2122`).
 * Avoid unnecessary time resampling in `preprocess_standardized_index` when `freq` is not None but the same as the input data. (:issue:`2111`, :pull:`2112`)
 
 Breaking changes
@@ -36,7 +37,6 @@ Internal changes
 New indicators
 ^^^^^^^^^^^^^^
 * Added standardized indicators for hydrology: ``xclim.land.standardized_streamflow_index`` and ``xclim.landstandardized_groundwater_index``.  (:issue:`1444`, :pull:`1877`).
-
 
 v0.55.1 (2025-02-26)
 --------------------
