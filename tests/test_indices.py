@@ -984,8 +984,10 @@ class TestStandardizedIndices:
         )
         ssi = xci.standardized_streamflow_index(q, params=params)
         ssi = ssi.isel(time=slice(-11, -1, 2)).values.flatten()
-
-        np.testing.assert_allclose(ssi, values, rtol=0, atol=diff_tol)
+        try:
+            np.testing.assert_allclose(ssi, values, rtol=0, atol=diff_tol)
+        except AssertionError as err:
+            raise ValueError(f"Failed with params: {params.sel(month=2).values}") from err
 
     # TODO: Find another package to test against
     # For now, we just take a snapshot of what xclim produces when this function
