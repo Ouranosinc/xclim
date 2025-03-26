@@ -14,6 +14,7 @@ Bug fixes
     + All other uses of `xarray`'s internal API were also removed (:pull:`2116`).
 * Fixed an issue with star-annotated call signatures to maintain Python 3.10 compatibility. (:pull:`2116`).
 * Fixed `to_agg_units` that was converting units of temperature differences prematurely, without changing accordingly the values in the related DataArrays. (:issue:`2121`, :pull:`2122`).
+* ``get_calendar`` now supports pandas' ``DatetimeIndex``. xclim no longer uses ``xarray.cftime_range``, which has been deprecated. (:pull:`2130`).
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
