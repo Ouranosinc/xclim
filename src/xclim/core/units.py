@@ -617,7 +617,7 @@ def to_agg_units(out: xr.DataArray, orig: xr.DataArray, op: str, dim: str = "tim
     `to_agg_units` will infer the units from the sampling rate along "time", so
     we ensure the final units are correct:
 
-    >>> time = xr.cftime_range("2001-01-01", freq="D", periods=365)
+    >>> time = xr.date_range("2001-01-01", freq="D", periods=365)
     >>> tas = xr.DataArray(
     ...     np.arange(365),
     ...     dims=("time",),
@@ -634,7 +634,7 @@ def to_agg_units(out: xr.DataArray, orig: xr.DataArray, op: str, dim: str = "tim
 
     Similarly, here we compute the total heating degree-days, but we have weekly data:
 
-    >>> time = xr.cftime_range("2001-01-01", freq="7D", periods=52)
+    >>> time = xr.date_range("2001-01-01", freq="7D", periods=52)
     >>> tas = xr.DataArray(
     ...     np.arange(52) + 10,
     ...     dims=("time",),
@@ -853,7 +853,7 @@ def rate2amount(
     --------
     The following converts a daily array of precipitation in mm/h to the daily amounts in mm:
 
-    >>> time = xr.cftime_range("2001-01-01", freq="D", periods=365)
+    >>> time = xr.date_range("2001-01-01", freq="D", periods=365)
     >>> pr = xr.DataArray([1] * 365, dims=("time",), coords={"time": time}, attrs={"units": "mm/h"})
     >>> pram = rate2amount(pr)
     >>> pram.units
@@ -1088,7 +1088,7 @@ def rate2flux(
     The following converts an array of snowfall rate in mm/s to snowfall flux in kg m-2 s-1,
     assuming a density of 100 kg m-3:
 
-    >>> time = xr.cftime_range("2001-01-01", freq="D", periods=365)
+    >>> time = xr.date_range("2001-01-01", freq="D", periods=365)
     >>> prsnd = xr.DataArray([1] * 365, dims=("time",), coords={"time": time}, attrs={"units": "mm/s"})
     >>> prsn = rate2flux(prsnd, density="100 kg m-3", out_units="kg m-2 s-1")
     >>> prsn.units
@@ -1138,7 +1138,7 @@ def flux2rate(
     The following converts an array of snowfall flux in kg m-2 s-1 to snowfall flux in mm/s,
     assuming a density of 100 kg m-3:
 
-    >>> time = xr.cftime_range("2001-01-01", freq="D", periods=365)
+    >>> time = xr.date_range("2001-01-01", freq="D", periods=365)
     >>> prsn = xr.DataArray(
     ...     [0.1] * 365,
     ...     dims=("time",),

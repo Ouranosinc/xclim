@@ -671,7 +671,7 @@ class TestPrincipalComponents:
         sim_y = sim_x + norm.rvs(loc=1, scale=1, size=(m, n), random_state=random)
 
         ref = xr.DataArray([ref_x, ref_y], dims=("lat", "lon", "time"), attrs={"units": "degC"})
-        ref["time"] = xr.cftime_range("1990-01-01", periods=n, calendar="noleap")
+        ref["time"] = xr.date_range("1990-01-01", periods=n, calendar="noleap")
         sim = xr.DataArray([sim_x, sim_y], dims=("lat", "lon", "time"), attrs={"units": "degC"})
         sim["time"] = ref["time"]
 
@@ -757,7 +757,7 @@ class TestExtremeValues:
             return xr.DataArray(
                 base,
                 dims=("time",),
-                coords={"time": xr.cftime_range("1990-01-01", periods=n, calendar="noleap")},
+                coords={"time": xr.date_range("1990-01-01", periods=n, calendar="noleap")},
                 attrs={"units": "mm/day", "thresh": qv},
             )
 
@@ -805,7 +805,7 @@ class TestExtremeValues:
         new_scen.load()
 
     def test_nan_values(self):
-        times = xr.cftime_range("1990-01-01", periods=365, calendar="noleap")
+        times = xr.date_range("1990-01-01", periods=365, calendar="noleap")
         ref = xr.DataArray(
             np.arange(365),
             dims=("time"),
@@ -1012,7 +1012,7 @@ class TestSBCKutils:
                 "tasmax": xr.DataArray(ref_y, dims=("lon", "time"), attrs={"units": "degC"}),
             }
         )
-        ref["time"] = xr.cftime_range("1990-01-01", periods=n, calendar="noleap")
+        ref["time"] = xr.date_range("1990-01-01", periods=n, calendar="noleap")
 
         hist = xr.Dataset(
             {
@@ -1028,7 +1028,7 @@ class TestSBCKutils:
                 "tasmax": xr.DataArray(sim_y, dims=("lon", "time"), attrs={"units": "degC"}),
             }
         )
-        sim["time"] = xr.cftime_range("2090-01-01", periods=n, calendar="noleap")
+        sim["time"] = xr.date_range("2090-01-01", periods=n, calendar="noleap")
 
         if use_dask:
             ref = ref.chunk({"lon": 1})
