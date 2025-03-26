@@ -477,7 +477,7 @@ def multiday_temperature_swing(
 
     .. math::
 
-        TX_{i} > 0℃ \land TN_{i} <  0℃
+       TX_{i} > 0℃ \land TN_{i} <  0℃
 
     This indice returns a given statistic of the found lengths, optionally dropping those shorter than the `window`
     argument. For example, `window=1` and `op='sum'` returns the same value as :py:func:`daily_freezethaw_cycles`.
@@ -547,7 +547,7 @@ def daily_temperature_range(
 
     .. math::
 
-        DTR_j = \frac{ \sum_{i=1}^I (TX_{ij} - TN_{ij}) }{I}
+       DTR_j = \frac{ \sum_{i=1}^I (TX_{ij} - TN_{ij}) }{I}
     """
     tasmax = convert_units_to(tasmax, tasmin)
     dtr = tasmax - tasmin
@@ -625,7 +625,7 @@ def extreme_temperature_range(tasmin: xarray.DataArray, tasmax: xarray.DataArray
 
     .. math::
 
-        ETR_j = max(TX_{ij}) - min(TN_{ij})
+       ETR_j = max(TX_{ij}) - min(TN_{ij})
     """
     tasmax = convert_units_to(tasmax, tasmin)
     tx_max = tasmax.resample(time=freq).max(dim="time")
@@ -910,9 +910,9 @@ def liquid_precip_ratio(
 
     .. math::
 
-        PR_{ij} = \sum_{i=a}^{b} PR_i
+       PR_{ij} = \sum_{i=a}^{b} PR_i
 
-        PRwet_{ij}
+       PRwet_{ij}
     """
     if prsn is None and tas is not None:
         prsn = snowfall_approximation(pr, tas=tas, thresh=thresh, method="binary")
@@ -1091,13 +1091,13 @@ def rain_on_frozen_ground_days(
 
     .. math::
 
-        PR_{i} > Threshold [mm]
+       PR_{i} > Threshold [mm]
 
     and where
 
     .. math::
 
-        TG_{i} ≤ 0℃
+       TG_{i} ≤ 0℃
 
     is true for continuous periods where :math:`i ≥ 7`
     """
@@ -1694,13 +1694,13 @@ def tx_tn_days_above(
 
     .. math::
 
-        TX_{ij} > TX_{thresh} [℃]
+       TX_{ij} > TX_{thresh} [℃]
 
     and where:
 
     .. math::
 
-        TN_{ij} > TN_{thresh} [℃]
+       TN_{ij} > TN_{thresh} [℃]
     """
     thresh_tasmax = convert_units_to(thresh_tasmax, tasmax)
     thresh_tasmin = convert_units_to(thresh_tasmin, tasmin)

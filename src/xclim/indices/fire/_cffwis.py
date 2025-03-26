@@ -1006,7 +1006,7 @@ def fire_weather_ufunc(  # noqa: C901 # numpydoc ignore=PR01,PR02
 
     .. math::
 
-        DC_0 = DC_{start} +  F_{dry-dc} * N_{dry}
+       DC_0 = DC_{start} +  F_{dry-dc} * N_{dry}
 
     The last significant precipitation event is the last day when precipitation was greater or equal to "prec_thresh".
     The same happens for the DMC, with corresponding parameters.
@@ -1016,7 +1016,7 @@ def fire_weather_ufunc(  # noqa: C901 # numpydoc ignore=PR01,PR02
 
     .. math::
 
-        DC_0 = F_{dry-dc} * N_{dry}
+       DC_0 = F_{dry-dc} * N_{dry}
 
     Where the current day is also included in the determination of :math:`N_{dry}` (:math:`DC_0` can thus be 0).
     Finally, for this "GFWED" mode, if snow cover is provided, a second check is performed: the dry start procedure is

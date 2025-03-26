@@ -81,7 +81,7 @@ The next sections would be **Notes** and **References**:
 
         .. math::
 
-            3987^12 + 4365^12 = 4472^12
+           3987^12 + 4365^12 = 4472^12
 
     References
     ----------
