@@ -665,15 +665,20 @@ def to_agg_units(out: xr.DataArray, orig: xr.DataArray, op: str, dim: str = "tim
 
     elif op in ["count", "integral"]:
         m, freq_u_raw = infer_sampling_units(orig[dim])
-        # TODO: Use delta here
         orig_u = units2pint(orig)
         freq_u = str2pint(freq_u_raw)
+
         with xr.set_options(keep_attrs=True):
             out = out * m
 
         if op == "count":
             out.attrs["units"] = freq_u_raw
+
         elif op == "integral":
+            if "[temperature]" in orig_u.dimensionality:
+                # ensure delta_temperature
+                orig_u = 1 * orig_u - 1 * orig_u
+
             if "[time]" in orig_u.dimensionality:
                 # We need to simplify units after multiplication
 
