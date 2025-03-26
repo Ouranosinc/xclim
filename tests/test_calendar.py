@@ -75,7 +75,7 @@ def test_time_bnds_irregular(use_cftime):
     start = xr.date_range("1990-01-01", periods=24, freq="MS", use_cftime=use_cftime)
     # Well. xarray string parsers do not support sub-second resolution, but cftime does.
     end = xr.date_range("1990-01-01T23:59:59", periods=24, freq="ME", use_cftime=use_cftime) + pd.Timedelta(
-        0.999999, "s"
+        0.999999999, "s"
     )
 
     time = start + (end - start) / 2

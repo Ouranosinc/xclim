@@ -183,7 +183,7 @@ def test_timeseries(
     units: str | None = None,
     freq: str = "D",
     as_dataset: bool = False,
-    cftime: bool = False,
+    cftime: bool | None = None,
     calendar: str | None = None,
 ) -> xr.DataArray | xr.Dataset:
     """
@@ -204,7 +204,7 @@ def test_timeseries(
     as_dataset : bool
         Whether to return a Dataset or a DataArray. Default is False.
     cftime : bool
-        Whether to use cftime or not. Default is False.
+        Whether to use cftime or not. Default is None, which uses cftime only for non-standard calendars.
     calendar : str or None
         Whether to use a calendar. If a calendar is provided, cftime is used.
 
