@@ -920,6 +920,7 @@ class TestStandardizedIndices:
             # The problem was first seen in #2126
             # ACTUAL: array([ 0.326194, -1.5777  , -0.436331,  0.252514, -0.814988])
             # DESIRED: array([ 0.533154, -1.5777  , -0.436331,  0.29581 , -0.814988])
+            # Probably due to parallelism/ non-thread safe algorithm (in scipy?)
             pytest.param(
                 "MS",
                 1,
@@ -927,7 +928,11 @@ class TestStandardizedIndices:
                 "ML",
                 [0.533154, -1.5777, -0.436331, 0.29581, -0.814988],
                 2e-2,
-                marks=[pytest.mark.xfail(reason="These values fail for unknown reason after an update, skipping.")],
+                marks=[
+                    pytest.mark.xfail(
+                        reason="These values fail for unknown reason after an update, skipping.", strict=False
+                    )
+                ],
             ),
             ("MS", 1, "fisk", "APP", [0.4663, -1.9076, -0.5362, 0.8070, -0.8035], 2e-2),
             (
