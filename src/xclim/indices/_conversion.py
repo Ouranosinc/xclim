@@ -17,6 +17,7 @@ from xclim.core.units import (
     rate2flux,
     units2pint,
 )
+from xclim.core.utils import deprecated
 from xclim.indices.helpers import (
     _gather_lat,
     _gather_lon,
@@ -43,6 +44,7 @@ __all__ = [
     "relative_humidity",
     "saturation_vapor_pressure",
     "sfcwind_2_uas_vas",
+    "sfcwind_to_uas_vas",
     "shortwave_upwelling_radiation_from_net_downwelling",
     "snd_to_snw",
     "snowfall_approximation",
@@ -51,6 +53,7 @@ __all__ = [
     "specific_humidity_from_dewpoint",
     "tas",
     "uas_vas_2_sfcwind",
+    "uas_vas_to_sfcwind",
     "universal_thermal_climate_index",
     "vapor_pressure_deficit",
     "wind_chill_index",
@@ -239,8 +242,23 @@ def tas(tasmin: xr.DataArray, tasmax: xr.DataArray) -> xr.DataArray:
     return tas
 
 
+@deprecated(from_version="0.56.0", suggested="uas_vas_to_sfcwind")
+def uas_vas_2_sfcwind(*args, **kwargs):  # numpydoc ignore=PR01,RT01
+    """
+    Wind speed and direction from the eastward and northward wind components.
+
+    Computes the magnitude and angle of the wind vector from its northward and eastward components,
+    following the meteorological convention that sets calm wind to a direction of 0° and northerly wind to 360°.
+
+    Warnings
+    --------
+    This function has been deprecated in favour of `uas_vas_to_sfcwind`.
+    """
+    return uas_vas_to_sfcwind(*args, **kwargs)
+
+
 @declare_units(uas="[speed]", vas="[speed]", calm_wind_thresh="[speed]")
-def uas_vas_2_sfcwind(
+def uas_vas_to_sfcwind(
     uas: xr.DataArray, vas: xr.DataArray, calm_wind_thresh: Quantified = "0.5 m/s"
 ) -> tuple[xr.DataArray, xr.DataArray]:
     """
@@ -274,8 +292,8 @@ def uas_vas_2_sfcwind(
 
     Examples
     --------
-    >>> from xclim.indices import uas_vas_2_sfcwind
-    >>> sfcWind = uas_vas_2_sfcwind(uas=uas_dataset, vas=vas_dataset, calm_wind_thresh="0.5 m/s")
+    >>> from xclim.indices import uas_vas_to_sfcwind
+    >>> sfcWind = uas_vas_to_sfcwind(uas=uas_dataset, vas=vas_dataset, calm_wind_thresh="0.5 m/s")
     """
     # Converts the wind speed to m s-1
     uas = convert_units_to(uas, "m/s")
@@ -301,8 +319,22 @@ def uas_vas_2_sfcwind(
     return wind, wind_from_dir
 
 
+@deprecated(from_version="0.56.0", suggested="sfcwind_to_uas_vas")
+def sfcwind_2_uas_vas(*args, **kwargs):  # numpydoc ignore=PR01,RT01
+    """
+    Eastward and northward wind components from the wind speed and direction.
+
+    Compute the eastward and northward wind components from the wind speed and direction.
+
+    Warnings
+    --------
+    This function has been deprecated in favour of `sfcwind_to_uas_vas`.
+    """
+    return sfcwind_to_uas_vas(*args, **kwargs)
+
+
 @declare_units(sfcWind="[speed]", sfcWindfromdir="[]")
-def sfcwind_2_uas_vas(
+def sfcwind_to_uas_vas(
     sfcWind: xr.DataArray,
     sfcWindfromdir: xr.DataArray,  # noqa
 ) -> tuple[xr.DataArray, xr.DataArray]:
@@ -327,8 +359,8 @@ def sfcwind_2_uas_vas(
 
     Examples
     --------
-    >>> from xclim.indices import sfcwind_2_uas_vas
-    >>> uas, vas = sfcwind_2_uas_vas(sfcWind=sfcWind_dataset, sfcWindfromdir=sfcWindfromdir_dataset)
+    >>> from xclim.indices import sfcwind_to_uas_vas
+    >>> uas, vas = sfcwind_to_uas_vas(sfcWind=sfcWind_dataset, sfcWindfromdir=sfcWindfromdir_dataset)
     """
     # Converts the wind speed to m s-1
     sfcWind = convert_units_to(sfcWind, "m/s")  # noqa

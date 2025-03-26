@@ -13,12 +13,16 @@ Bug fixes
 * `xclim` now uses directly `operator` instead of using `xarray`'s derived `get_op` function. A refactoring in `xarray` had changed the position of `get_op` which caused a bug.  (:issue:`2113`, :pull:`2114`).
     + All other uses of `xarray`'s internal API were also removed (:pull:`2116`).
 * Fixed an issue with star-annotated call signatures to maintain Python 3.10 compatibility. (:pull:`2116`).
+* Fixed `to_agg_units` that was converting units of temperature differences prematurely, without changing accordingly the values in the related DataArrays. (:issue:`2121`, :pull:`2122`).
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
 * `xclim` no longer supports Python 3.10. The minimum required version is now Python 3.11. (:pull:`2082`).
     * Reverted: Extended support for Python3.10 will continue until further notice. (:pull:`2100`).
 * The minimum versions of several key dependencies have been raised (`numpy` >=1.24.0; `scikit-learn` >=1.2.0; `scipy` >=1.11.0). (:pull:`2082`).
+* To ensure consistent naming of converters, the following indices have been deprecated with replacements. Changes will be made permanent in `xclim` v0.57.0 (:issue:`2039`, :pull:`2117`):
+    * ``sfcwind_2_uas_vas``: Use ``sfcwind_to_uas_vas`` instead.
+    * ``uas_vas_2_sfcwind``: Use ``uas_vas_to_sfcwind`` instead.
 
 Internal changes
 ^^^^^^^^^^^^^^^^
