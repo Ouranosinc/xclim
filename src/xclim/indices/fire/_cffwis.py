@@ -1669,7 +1669,7 @@ def fire_season(
         ds = ds.unify_chunks()
     ds = ds.transpose(..., "time")
 
-    tmpl = xr.full_like(tas, np.nan)
+    tmpl = xr.full_like(ds.tas, np.nan)
     out = ds.map_blocks(_apply_fire_season, template=tmpl, kwargs=kwargs)
     out.attrs["units"] = ""
     return out
