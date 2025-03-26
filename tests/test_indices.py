@@ -920,7 +920,6 @@ class TestStandardizedIndices:
             # The problem was first seen in #2126
             # ACTUAL: array([ 0.326194, -1.5777  , -0.436331,  0.252514, -0.814988])
             # DESIRED: array([ 0.533154, -1.5777  , -0.436331,  0.29581 , -0.814988])
-            # Probably due to parallelism/ non-thread safe algorithm (in scipy?)
             pytest.param(
                 "MS",
                 1,
