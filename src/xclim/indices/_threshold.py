@@ -142,7 +142,7 @@ def calm_days(sfcWind: xarray.DataArray, thresh: Quantified = "2 m s-1", freq: s
 
     .. math::
 
-        WS_{ij} < Threshold [m s-1]
+       WS_{ij} < Threshold [m s-1]
     """
     thresh = convert_units_to(thresh, sfcWind)
     out = threshold_count(sfcWind, "<", thresh, freq)
@@ -783,7 +783,7 @@ def dry_days(
 
     .. math::
 
-        \sum PR_{ij} < Threshold [mm/day]
+       \sum PR_{ij} < Threshold [mm/day]
     """
     thresh = convert_units_to(thresh, pr, context="hydro")
     count = threshold_count(pr, op, thresh, freq, constrain=("<", "<="))
@@ -874,7 +874,7 @@ def cooling_degree_days(tas: xarray.DataArray, thresh: Quantified = "18 degC", f
 
     .. math::
 
-        \sum_{i \in \phi} (x_{i}-{thresh} [x_i > thresh]
+       \sum_{i \in \phi} (x_{i}-{thresh} [x_i > thresh]
 
     where :math:`[P]` is 1 if :math:`P` is true, and 0 if false.
     """
@@ -910,7 +910,7 @@ def growing_degree_days(tas: xarray.DataArray, thresh: Quantified = "4.0 degC", 
 
     .. math::
 
-        GD4_j = \sum_{i=1}^I (TG_{ij}-{4} | TG_{ij} > {4}℃)
+       GD4_j = \sum_{i=1}^I (TG_{ij}-{4} | TG_{ij} > {4}℃)
     """
     cd = cumulative_difference(tas, threshold=thresh, op=">", freq=freq)
     return cd
@@ -1088,13 +1088,13 @@ def growing_season_length(
 
     .. math::
 
-        TG_{ij} >= 5 ℃
+       TG_{ij} >= 5 ℃
 
     and the first occurrence after 1 July of at least six (6) consecutive days with:
 
     .. math::
 
-        TG_{ij} < 5 ℃
+       TG_{ij} < 5 ℃
 
     References
     ----------
@@ -1174,13 +1174,13 @@ def frost_season_length(
 
     .. math::
 
-        TN_{ij} > 0 ℃
+       TN_{ij} > 0 ℃
 
     and the first subsequent occurrence of at least N consecutive days with:
 
     .. math::
 
-        TN_{ij} < 0 ℃
+       TN_{ij} < 0 ℃
 
     Examples
     --------
@@ -2050,7 +2050,7 @@ def heating_degree_days(
 
     .. math::
 
-        HD17_j = \sum_{i=1}^{I} (17℃ - TG_{ij}) | TG_{ij} < 17℃)
+       HD17_j = \sum_{i=1}^{I} (17℃ - TG_{ij}) | TG_{ij} < 17℃)
     """
     hdd = cumulative_difference(tas, threshold=thresh, op="<", freq=freq)
     return hdd
@@ -2344,7 +2344,7 @@ def tn_days_above(
 
     .. math::
 
-        TN_{ij} > Threshold [℃]
+       TN_{ij} > Threshold [℃]
     """
     thresh = convert_units_to(thresh, tasmin)
     f = threshold_count(tasmin, op, thresh, freq, constrain=(">", ">="))
@@ -2386,7 +2386,7 @@ def tn_days_below(
 
     .. math::
 
-        TN_{ij} < Threshold [℃]
+       TN_{ij} < Threshold [℃]
     """
     thresh = convert_units_to(thresh, tasmin)
     f1 = threshold_count(tasmin, op, thresh, freq, constrain=("<", "<="))
@@ -2428,7 +2428,7 @@ def tg_days_above(
 
     .. math::
 
-        TG_{ij} > Threshold [℃]
+       TG_{ij} > Threshold [℃]
     """
     thresh = convert_units_to(thresh, tas)
     f = threshold_count(tas, op, thresh, freq, constrain=(">", ">="))
@@ -2470,7 +2470,7 @@ def tg_days_below(
 
     .. math::
 
-        TG_{ij} < Threshold [℃]
+       TG_{ij} < Threshold [℃]
     """
     thresh = convert_units_to(thresh, tas)
     f1 = threshold_count(tas, op, thresh, freq, constrain=("<", "<="))
@@ -2512,7 +2512,7 @@ def tx_days_above(
 
     .. math::
 
-        TX_{ij} > Threshold [℃]
+       TX_{ij} > Threshold [℃]
     """
     thresh = convert_units_to(thresh, tasmax)
     f = threshold_count(tasmax, op, thresh, freq, constrain=(">", ">="))
@@ -2554,7 +2554,7 @@ def tx_days_below(
 
     .. math::
 
-        TX_{ij} < Threshold [℃]
+       TX_{ij} < Threshold [℃]
     """
     thresh = convert_units_to(thresh, tasmax)
     f1 = threshold_count(tasmax, op, thresh, freq, constrain=("<", "<="))
@@ -2596,7 +2596,7 @@ def warm_day_frequency(
 
     .. math::
 
-        TN_{ij} > Threshold [℃]
+       TN_{ij} > Threshold [℃]
     """
     thresh = convert_units_to(thresh, tasmax)
     events = threshold_count(tasmax, op, thresh, freq, constrain=(">", ">="))
@@ -3057,7 +3057,7 @@ def windy_days(sfcWind: xarray.DataArray, thresh: Quantified = "10.8 m s-1", fre
 
     .. math::
 
-        WS_{ij} >= Threshold [m s-1]
+       WS_{ij} >= Threshold [m s-1]
     """
     thresh = convert_units_to(thresh, sfcWind)
     out = threshold_count(sfcWind, ">=", thresh, freq)
@@ -3161,10 +3161,12 @@ def degree_days_exceedance_date(
 
     .. math::
 
-        \begin{cases}
-        ST < \sum_{i=i_0}^{k} \max(TG_{ij} - T, 0) & \text{if $op$ is '>'} \\
-        ST < \sum_{i=i_0}^{k} \max(T - TG_{ij}, 0) & \text{if $op$ is '<'}
-        \end{cases}
+       \begin{cases}
+       ST < \sum_{i=i_0}^{k} \max(TG_{ij} - T, 0) & \text{if $op$ is '>'} \\
+       ST < \sum_{i=i_0}^{k} \max(T - TG_{ij}, 0) & \text{if $op$ is '<'}
+       ST < \sum_{i=i_0}^{k} \max(T - TG_{ij}, 0) & \text{if $op$ is '<'}
+       \end{cases}
+       \end{cases}
 
     The resulting :math:`k` is expressed as a day of year.
 
