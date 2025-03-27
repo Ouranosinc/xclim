@@ -19,7 +19,6 @@ import sys
 from pathlib import Path
 
 import numpy as np
-import pandas as pd
 import pytest
 import xarray as xr
 from scipy.stats.mstats import mquantiles
@@ -100,12 +99,12 @@ class TestEnsembleStats:
         assert ens_mean.where(~(np.isnan(ens_mean)), drop=True).time.dt.year.max() == 2050
 
     @pytest.mark.parametrize(
-        "timegen,calkw",
-        [(xr.cftime_range, {"calendar": "360_day"}), (pd.date_range, {})],
+        "calkw",
+        [{"calendar": "360_day"}, {}],
     )
-    def test_create_unaligned_times(self, timegen, calkw):
-        t1 = timegen("2000-01-01", periods=24, freq="ME", **calkw)
-        t2 = timegen("2000-01-01", periods=24, freq="MS", **calkw)
+    def test_create_unaligned_times(self, calkw):
+        t1 = xr.date_range("2000-01-01", periods=24, freq="ME", **calkw)
+        t2 = xr.date_range("2000-01-01", periods=24, freq="MS", **calkw)
 
         d1 = xr.DataArray(np.arange(24), dims=("time",), coords={"time": t1}, name="tas")
         d2 = xr.DataArray(np.arange(24), dims=("time",), coords={"time": t2}, name="tas")
@@ -569,9 +568,9 @@ def robust_data(random):
         ]
     )
     ref = xr.DataArray(ref, dims=("lon", "realization", "time"), name="tas")
-    ref["time"] = xr.cftime_range("2000-01-01", periods=40, freq="YS")
+    ref["time"] = xr.date_range("2000-01-01", periods=40, freq="YS", use_cftime=True)
     fut = xr.DataArray(fut, dims=("lon", "realization", "time"), name="tas")
-    fut["time"] = xr.cftime_range("2040-01-01", periods=40, freq="YS")
+    fut["time"] = xr.date_range("2040-01-01", periods=40, freq="YS", use_cftime=True)
     return ref, fut
 
 
