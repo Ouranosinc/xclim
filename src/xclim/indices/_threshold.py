@@ -846,6 +846,63 @@ def maximum_consecutive_wet_days(
     return mcwd
 
 
+@declare_units(tasmax="[temperature]", tasmin="[temperature]", tas="[temperature]", thresh="[temperature]")
+def cooling_degree_days_approximation(
+    tasmax: xarray.DataArray,
+    tasmin: xarray.DataArray,
+    tas: xarray.DataArray,
+    thresh: Quantified = "18 degC",
+    freq: str = "YS",
+) -> xarray.DataArray:
+    """
+    Cooling degree days approximation.
+
+    A more robust approximation of cooling degree days as a function of the daily cycle of temperature.
+
+    Parameters
+    ----------
+    tasmax : xarray.DataArray
+        Maximum daily temperature.
+    tasmin : xarray.DataArray
+        Minimum daily temperature.
+    tas : xarray.DataArray
+        Mean daily temperature.
+    thresh : Quantified
+        Temperature threshold above which air is cooled.
+    freq : str
+        Resampling frequency.
+
+    Returns
+    -------
+    xarray.DataArray
+        Approximation of cooling degree days.
+
+    References
+    ----------
+    :cite:cts:`spinoni_2018`
+    """
+    # Where tasmax < thresh; CDD = 0
+    # Where tas <= thresh <= tasmax; CDD = (tasmax - tasmin)/4
+    # Where tasmin < thresh <= tas; CDD = [(tasmax - thresh)/2 - (thresh - tasmin)/4]
+    # Where tasmin >= thresh; CDD = tas - thresh
+    thresh = convert_units_to(thresh, tas, "degC")
+
+    cdd = xarray.where(
+        tasmax < thresh,
+        0,
+        xarray.where(
+            tasmin < thresh,
+            xarray.where(
+                tas <= thresh,
+                (tasmax - tasmin) / 4,
+                (tasmax - thresh) / 2 - (thresh - tasmin) / 4,
+            ),
+            tas - thresh,
+        ),
+    )
+    return cdd
+
+
 @declare_units(tas="[temperature]", thresh="[temperature]")
 def cooling_degree_days(tas: xarray.DataArray, thresh: Quantified = "18 degC", freq: str = "YS") -> xarray.DataArray:
     r"""
@@ -878,8 +935,8 @@ def cooling_degree_days(tas: xarray.DataArray, thresh: Quantified = "18 degC", f
 
     where :math:`[P]` is 1 if :math:`P` is true, and 0 if false.
     """
-    cd = cumulative_difference(tas, threshold=thresh, op=">", freq=freq)
-    return cd
+    cdd = cumulative_difference(tas, threshold=thresh, op=">", freq=freq)
+    return cdd
 
 
 @declare_units(tas="[temperature]", thresh="[temperature]")
@@ -2012,6 +2069,59 @@ def hot_spell_max_magnitude(
         freq=freq,
     )
     return to_agg_units(out, tasmax, op="integral")
+
+
+@declare_units(tasmax="[temperature]", tasmin="[temperature]", tas="[temperature]", thresh="[temperature]")
+def heating_degree_days_approximation(
+    tasmax: xarray.DataArray,
+    tasmin: xarray.DataArray,
+    tas: xarray.DataArray,
+    thresh: Quantified = "17.0 degC",
+    freq: str = "YS",
+) -> xarray.DataArray:
+    """
+    Heating degree days approximation.
+
+    A more robust approximation of heating degree days as a function of the daily cycle of temperature.
+
+    Parameters
+    ----------
+    tasmax : xarray.DataArray
+        Maximum daily temperature.
+    tasmin : xarray.DataArray
+        Minimum daily temperature.
+    tas : xarray.DataArray
+        Mean daily temperature.
+    thresh : Quantified
+        Threshold temperature on which to base evaluation.
+    freq : str
+        Resampling frequency.
+
+    Returns
+    -------
+    xarray.DataArray
+        Approximation of heating degree days.
+
+    References
+    ----------
+    :cite:cts:`spinoni_2018`
+    """
+    # Where tasmax <= thresh; HDD = thresh - tas
+    # Where tas <= thresh < tasmax; HDD = (thresh - tasmin)/2 - (tasmax - thresh)/4
+    # Where tasmin < thresh < tas; HDD = (thresh - tasmin)/4
+    # Where tasmin >= thresh; HDD = 0
+    thresh = convert_units_to(thresh, tasmax)
+
+    hdd = xarray.where(
+        tasmax <= thresh,
+        thresh - tas,
+        xarray.where(
+            tas <= thresh,
+            (thresh - tasmin) / 2 - (tasmax - thresh) / 4,
+            xarray.where(tasmin <= thresh, (thresh - tasmin) / 4, 0),
+        ),
+    )
+    return hdd.resample(time=freq).sum(dim="time")
 
 
 @declare_units(tas="[temperature]", thresh="[temperature]")
