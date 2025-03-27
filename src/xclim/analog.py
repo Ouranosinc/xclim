@@ -278,18 +278,18 @@ def zech_aslan(x: np.ndarray, y: np.ndarray, *, dmin: float = 1e-12) -> float:
 
     .. math::
 
-        e(X, Y) &= \left[\phi_{xx} + \phi_{yy} - \phi_{xy}\right] \\
-        \phi_{xy} &= \frac{1}{n m} \sum_{i = 1}^n \sum_{j = 1}^m R\left[SED(X_i, Y_j)\right] \\
-        \phi_{xx} &= \frac{1}{n^2} \sum_{i = 1}^n \sum_{j = i + 1}^n R\left[SED(X_i, X_j)\right] \\
-        \phi_{yy} &= \frac{1}{m^2} \sum_{i = 1}^m \sum_{j = i + 1}^m R\left[SED(X_i, Y_j)\right] \\
+       e(X, Y) &= \left[\phi_{xx} + \phi_{yy} - \phi_{xy}\right] \\
+       \phi_{xy} &= \frac{1}{n m} \sum_{i = 1}^n \sum_{j = 1}^m R\left[SED(X_i, Y_j)\right] \\
+       \phi_{xx} &= \frac{1}{n^2} \sum_{i = 1}^n \sum_{j = i + 1}^n R\left[SED(X_i, X_j)\right] \\
+       \phi_{yy} &= \frac{1}{m^2} \sum_{i = 1}^m \sum_{j = i + 1}^m R\left[SED(X_i, Y_j)\right] \\
 
     where :math:`X_i` denotes the i-th observation of :math:`X`. :math:`R` is a weight function and :math:`SED(A, B)`
     denotes the standardized Euclidean distance.
 
     .. math::
 
-        R(r) &= \left\{\begin{array}{r l} -\ln r & \text{for } r > d_{min} \\ -\ln d_{min} & \text{for } r \leq d_{min} \end{array}\right. \\
-        SED(X_i, Y_j) &= \sqrt{\sum_{k=1}^d \frac{\left(X_i(k) - Y_i(k)\right)^2}{\sigma_x(k)\sigma_y(k)}}
+       R(r) &= \left\{\begin{array}{r l} -\ln r & \text{for } r > d_{min} \\ -\ln d_{min} & \text{for } r \leq d_{min} \end{array}\right. \\
+       SED(X_i, Y_j) &= \sqrt{\sum_{k=1}^d \frac{\left(X_i(k) - Y_i(k)\right)^2}{\sigma_x(k)\sigma_y(k)}}
 
     where :math:`k` is a counter over dimensions (indices in the case of spatial analogs) and :math:`\sigma_x(k)` is the
     standard deviation of :math:`X` in dimension :math:`k`. Finally, :math:`d_{min}` is a cut-off to avoid poles when
@@ -346,15 +346,15 @@ def szekely_rizzo(x: np.ndarray, y: np.ndarray, *, standardize: bool = True) -> 
 
     .. math::
 
-        e(X, Y) = \frac{n m}{n + m} \left[2\phi_{xy} − \phi_{xx} − \phi_{yy} \right]
+       e(X, Y) = \frac{n m}{n + m} \left[2\phi_{xy} − \phi_{xx} − \phi_{yy} \right]
 
     where
 
     .. math::
 
-        \phi_{xy} &= \frac{1}{n m} \sum_{i = 1}^n \sum_{j = 1}^m \left\Vert X_i − Y_j \right\Vert \\
-        \phi_{xx} &= \frac{1}{n^2} \sum_{i = 1}^n \sum_{j = 1}^n \left\Vert X_i − X_j \right\Vert \\
-        \phi_{yy} &= \frac{1}{m^2} \sum_{i = 1}^m \sum_{j = 1}^m \left\Vert X_i − Y_j \right\Vert \\
+       \phi_{xy} &= \frac{1}{n m} \sum_{i = 1}^n \sum_{j = 1}^m \left\Vert X_i − Y_j \right\Vert \\
+       \phi_{xx} &= \frac{1}{n^2} \sum_{i = 1}^n \sum_{j = 1}^n \left\Vert X_i − X_j \right\Vert \\
+       \phi_{yy} &= \frac{1}{m^2} \sum_{i = 1}^m \sum_{j = 1}^m \left\Vert X_i − Y_j \right\Vert \\
 
     and where :math:`\Vert\cdot\Vert` denotes the Euclidean norm, :math:`X_i` denotes the i-th observation of :math:`X`.
     When `standardized=False`, this corresponds to the :math:`T` test of :cite:t:`rizzo_energy_2016` (p. 28) and to the
@@ -503,7 +503,7 @@ def kldiv(x: np.ndarray, y: np.ndarray, *, k: int | Sequence[int] = 1) -> float 
 
     .. math::
 
-        D(P||Q) = \frac{d}{n} \sum_i^n \log\left\{\frac{r_k(x_i)}{s_k(x_i)}\right\} + \log\left\{\frac{m}{n-1}\right\}
+       D(P||Q) = \frac{d}{n} \sum_i^n \log\left\{\frac{r_k(x_i)}{s_k(x_i)}\right\} + \log\left\{\frac{m}{n-1}\right\}
 
     where :math:`r_k(x_i)` and :math:`s_k(x_i)` are, respectively, the Euclidean distance to the kth neighbour of
     :math:`x_i` in the x array (excepting :math:`x_i`) and in the y array. This method is scale-dependent.
@@ -534,7 +534,7 @@ def kldiv(x: np.ndarray, y: np.ndarray, *, k: int | Sequence[int] = 1) -> float 
 
     .. math::
 
-        D_{KL}(P||Q) = \int p(x) \log\left(\frac{p(x)}{q(x)}\right) dx
+       D_{KL}(P||Q) = \int p(x) \log\left(\frac{p(x)}{q(x)}\right) dx
 
     This formula assumes we have a representation of the probability densities :math:`p(x)` and :math:`q(x)`.
     In many cases, we only have samples from the distribution, and most methods first estimate the densities from the

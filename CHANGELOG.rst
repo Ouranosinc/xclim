@@ -4,7 +4,7 @@ Changelog
 
 v0.56.0 (unreleased)
 --------------------
-Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Hui-Min Wang (:user:`Hem-W`), Jack Kit-tai Wong(:user:`jack-ktw`), Adrien Lamarche (:user:`LamAdr`), Éric Dupuis (:user:`coxipi`), Jens de Bruijn (:user:`jensdebruijn`), Pascal Bourgault (:user:`aulemahal`).
+Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Hui-Min Wang (:user:`Hem-W`), Jack Kit-tai Wong (:user:`jack-ktw`), Adrien Lamarche (:user:`LamAdr`), Éric Dupuis (:user:`coxipi`), Jens de Bruijn (:user:`jensdebruijn`), Pascal Bourgault (:user:`aulemahal`), Sarah Gammon (:user:`SarahG-579462`).
 
 Bug fixes
 ^^^^^^^^^
@@ -38,6 +38,7 @@ Internal changes
 * The `xclim` documentation now has a ``support`` page for detailing the project's usage and version support policies. (:pull:`2100`).
 * The indicator `heat_wave_index` now uses `hot_spell_total_length` index. The `heat_wave_index` index is identical to `hot_spell_total_length` and will be dropped in future versions. (:issue:`2031`, :pull:`2102`).
 * Updated pre-commit hooks to their latest versions. (:pull:`2116`).
+* ``math::`` tags in documentation are now properly indented with three spaces. (:pull:`2128`).
 
 New indicators
 ^^^^^^^^^^^^^^
