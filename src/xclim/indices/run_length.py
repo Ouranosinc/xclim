@@ -1661,7 +1661,7 @@ def index_of_date(
     if date is None:
         return np.array([default])
     if len(date.split("-")) == 2:
-        date = f"2000-{date}"
+        date = f"1840-{date}"
         date = datetime.strptime(date, "%Y-%m-%d")
         year_cond = True
     else:
