@@ -161,7 +161,7 @@ def _cumsum_reset(
     if index == "first":
         da = da[{dim: slice(None, None, -1)}]
 
-    if (ch := da.chunksizes.get(dim, -1)) == -1 or ch == da[dim].size:
+    if ((ch := da.chunksizes.get(dim, -1)) == -1 or ch == da[dim].size) and reset_on_zero:
         out = xr.apply_ufunc(
             _cum_prod_and_sum,
             da,
