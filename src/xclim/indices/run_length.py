@@ -124,6 +124,13 @@ def resample_and_rl(
     return out
 
 
+@njit
+def _cum_prod_and_sum(arr):
+    for i in range(1, len(arr), 1):
+        arr[i] = arr[i - 1] * arr[i] + arr[i]
+    return arr
+
+
 def _cumsum_reset(
     da: xr.DataArray,
     dim: str = "time",
@@ -154,13 +161,22 @@ def _cumsum_reset(
     if index == "first":
         da = da[{dim: slice(None, None, -1)}]
 
-    # Example: da == 100110111 -> cs_s == 100120123
-    cs = da.cumsum(dim=dim)  # cumulative sum  e.g. 111233456
-    cond = da == 0 if reset_on_zero else da.isnull()  # reset condition
-    cs2 = cs.where(cond)  # keep only numbers at positions of zeroes e.g. N11NN3NNN (default)
-    cs2[{dim: 0}] = 0  # put a zero in front e.g. 011NN3NNN
-    cs2 = cs2.ffill(dim=dim)  # e.g. 011113333
-    out = cs - cs2
+    if (ch := da.chunksizes.get(dim, -1)) == -1 or ch == da[dim].size:
+        out = xr.apply_ufunc(
+            _cum_prod_and_sum,
+            da,
+            input_core_dims=[[dim]],
+            output_core_dims=[[dim]],
+            dask="parallelized",
+        )
+    else:
+        # Example: da == 100110111 -> cs_s == 100120123
+        cs = da.cumsum(dim=dim)  # cumulative sum  e.g. 111233456
+        cond = da == 0 if reset_on_zero else da.isnull()  # reset condition
+        cs2 = cs.where(cond)  # keep only numbers at positions of zeroes e.g. N11NN3NNN (default)
+        cs2[{dim: 0}] = 0  # put a zero in front e.g. 011NN3NNN
+        cs2 = cs2.ffill(dim=dim)  # e.g. 011113333
+        out = cs - cs2
 
     if index == "first":
         out = out[{dim: slice(None, None, -1)}]
