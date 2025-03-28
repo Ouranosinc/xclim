@@ -124,11 +124,38 @@ def resample_and_rl(
     return out
 
 
-@njit
-def _cum_prod_and_sum(arr):
-    for i in range(1, len(arr), 1):
-        arr[i] = arr[i - 1] * arr[i] + arr[i]
+def _smallest_uint(da, dim):
+    for dtype in [np.uint8, np.uint16, np.uint32, np.uint64]:
+        if np.iinfo(dtype).max < da[dim].size:
+            return dtype
+    return np.uint64
+
+
+# TODO: Compare this with _rle_1d, but I think this has the edge. A single operation
+# a*b + b effectively replaces a cumsum and diff operations
+def _cumsum_reset_np(arr, index):
+    # run the cumsum and prod backwards or forward
+    it = range(1, len(arr), 1) if index == "last" else range(len(arr) - 2, -1, -1)
+    for i in it:
+        arr[i] = arr[i - it.step] * arr[i] + arr[i]
     return arr
+
+
+def _cumsum_reset_xr(da, dim, index, reset_on_zero):
+    # `index="first"` case: Algorithm is applied on inverted array and output is inverted back
+    if index == "first":
+        da = da[{dim: slice(None, None, -1)}]
+
+    # Example: da == 100110111 -> cs_s == 100120123
+    cs = da.cumsum(dim=dim)  # cumulative sum  e.g. 111233456
+    cond = da == 0 if reset_on_zero else da.isnull()  # reset condition
+    cs2 = cs.where(cond)  # keep only numbers at positions of zeroes e.g. N11NN3NNN (default)
+    cs2[{dim: 0}] = 0  # put a zero in front e.g. 011NN3NNN
+    cs2 = cs2.ffill(dim=dim)  # e.g. 011113333
+    out = cs - cs2
+    if index == "first":
+        out = out[{dim: slice(None, None, -1)}]
+    return out
 
 
 def _cumsum_reset(
@@ -158,29 +185,18 @@ def _cumsum_reset(
     xr.DataArray
         An array with cumulative sums.
     """
-    if index == "first":
-        da = da[{dim: slice(None, None, -1)}]
-
+    da = da.astype(_smallest_uint(da, dim))
     if ((ch := da.chunksizes.get(dim, -1)) == -1 or ch == da[dim].size) and reset_on_zero:
         out = xr.apply_ufunc(
-            _cum_prod_and_sum,
+            _cumsum_reset_np,
             da,
             input_core_dims=[[dim]],
             output_core_dims=[[dim]],
             dask="parallelized",
+            kwargs={"index": index},
         )
     else:
-        # Example: da == 100110111 -> cs_s == 100120123
-        cs = da.cumsum(dim=dim)  # cumulative sum  e.g. 111233456
-        cond = da == 0 if reset_on_zero else da.isnull()  # reset condition
-        cs2 = cs.where(cond)  # keep only numbers at positions of zeroes e.g. N11NN3NNN (default)
-        cs2[{dim: 0}] = 0  # put a zero in front e.g. 011NN3NNN
-        cs2 = cs2.ffill(dim=dim)  # e.g. 011113333
-        out = cs - cs2
-
-    if index == "first":
-        out = out[{dim: slice(None, None, -1)}]
-
+        out = _cumsum_reset_xr(da, dim, index, reset_on_zero)
     return out
 
 
@@ -216,26 +232,20 @@ def rle(
     xr.DataArray
         The run length array.
     """
-    if da.dtype == bool:
-        da = da.astype(int)
-
-    # "first" case: Algorithm is applied on inverted array and output is inverted back
-    if index == "first":
-        da = da[{dim: slice(None, None, -1)}]
-
     # Get cumulative sum for each series of 1, e.g. da == 100110111 -> cs_s == 100120123
-    cs_s = _cumsum_reset(da, dim)
+    cs_s = _cumsum_reset(da, dim, index=index)
 
     # Keep total length of each series (and also keep 0's), e.g. 100120123 -> 100N20NN3
-    # Keep numbers with a 0 to the right and also the last number
-    cs_s = cs_s.where(da.shift({dim: -1}, fill_value=0) == 0)
-    out = cs_s.where(da > 0, 0)  # Reinsert 0's at their original place
-
-    # Inverting back if needed e.g. 100N20NN3 -> 3NN02N001. This is the output of
-    # `rle` for 111011001 with index == "first"
+    # 1) Keep numbers with a 0 to the right(left) and always keep the last(first) number
+    sl, slc = {dim: slice(None, -1)}, {dim: slice(1, None)}
     if index == "first":
-        out = out[{dim: slice(None, None, -1)}]
-
+        sl, slc = slc, sl
+    mask_near_zero = (1 - da)[slc]
+    mask_near_zero[dim] = cs_s[sl][dim]
+    cs_s[sl] = cs_s[sl] * mask_near_zero
+    # 2) And only keep numbers part of a run. This also reinserts 0's
+    out = cs_s * da
+    # Result: 1) & 2) -> Only keep the largest number in any given run, the run length
     return out
 
 
@@ -775,7 +785,7 @@ def keep_longest_run(da: xr.DataArray, dim: str = "time", freq: str | None = Non
         Boolean array similar to da but with only one run, the (first) longest.
     """
     # Get run lengths
-    rls = rle(da, dim)
+    rls = _cumsum_reset(da, dim)
 
     def _get_out(_rls):  # numpydoc ignore=GL08
         _out = xr.where(
@@ -784,7 +794,7 @@ def keep_longest_run(da: xr.DataArray, dim: str = "time", freq: str | None = Non
             _rls + 1,  # Add one to the First longest run
             _rls,
         )
-        _out = _out.ffill(dim) == _out.max(dim)
+        _out = _out.bfill(dim) == _out.max(dim)
         return _out
 
     if freq is not None:
