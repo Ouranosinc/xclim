@@ -137,7 +137,7 @@ def _cumsum_reset_np(arr, index):
     # run the cumsum and prod backwards or forward
     it = range(1, len(arr), 1) if index == "last" else range(len(arr) - 2, -1, -1)
     for i in it:
-        arr[i] = arr[i - it.step] * arr[i] + arr[i]
+        arr[i] *= arr[i - it.step] + 1
     return arr
 
 
