@@ -146,6 +146,8 @@ def get_calendar(obj: Any, dim: str = "time") -> str:
         return obj[dim].dt.calendar
     if isinstance(obj, xr.CFTimeIndex):
         obj = obj.values[0]
+    elif isinstance(obj, pd.DatetimeIndex):
+        return "standard"
     else:
         obj = np.take(obj, 0)
         # Take zeroth element, overcome cases when arrays or lists are passed.

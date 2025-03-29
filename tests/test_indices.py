@@ -988,10 +988,7 @@ class TestStandardizedIndices:
         )
         ssi = xci.standardized_streamflow_index(q, params=params)
         ssi = ssi.isel(time=slice(-11, -1, 2)).values.flatten()
-        try:
-            np.testing.assert_allclose(ssi, values, rtol=0, atol=diff_tol)
-        except AssertionError as err:
-            raise ValueError(f"Failed with params: {params.sel(month=2).values}") from err
+        np.testing.assert_allclose(ssi, values, rtol=0, atol=diff_tol)
 
     # TODO: Find another package to test against
     # For now, we just take a snapshot of what xclim produces when this function
@@ -1176,7 +1173,7 @@ class TestStandardizedIndices:
         # In the previous computation, the first {window-1} values are NaN because the rolling is performed
         # on the period [1998,2000]. Here, the computation is performed on the period [1950,2000],
         # *then* subsetted to [1998,2000], so it doesn't have NaNs for the first values
-        nan_window = xr.cftime_range(spei1.time.values[0], periods=window - 1, freq=freq)
+        nan_window = xr.date_range(spei1.time.values[0], periods=window - 1, freq=freq, use_cftime=True)
         spei2.loc[{"time": spei2.time.isin(nan_window)}] = (
             np.nan
         )  # select time based on the window is necessary when `drop=True`

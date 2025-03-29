@@ -825,7 +825,7 @@ def standardized_index_fit_params(
 
     .. math::
 
-      \texttt{pdf}(X) = \pi  \texttt{ if }  X=0  \texttt{ else } (1-\pi) \texttt{pdf}_0(X)
+       \texttt{pdf}(X) = \pi  \texttt{ if }  X=0  \texttt{ else } (1-\pi) \texttt{pdf}_0(X)
     """
     fitkwargs = fitkwargs or {}
     if method == "APP":

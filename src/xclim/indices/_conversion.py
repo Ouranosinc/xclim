@@ -112,7 +112,7 @@ def humidex(
 
     .. math::
 
-      e = \frac{h}{100} \times 6.112 * 10^{7.5 T/(T + 237.7)}.
+       e = \frac{h}{100} \times 6.112 * 10^{7.5 T/(T + 237.7)}.
 
     The humidex *comfort scale* :cite:p:`canada_glossary_2011` can be interpreted as follows:
 
@@ -624,7 +624,7 @@ def relative_humidity(
 
     .. math::
 
-        RH = e^{\frac{-L (T - T_d)}{R_wTT_d}}
+       RH = e^{\frac{-L (T - T_d)}{R_wTT_d}}
 
     From :cite:t:`bohren_atmospheric_1998`, formula taken from :cite:t:`lawrence_relationship_2005`.
     :math:`L = 2.5\times 10^{-6}` J kg-1, exact for :math:`T = 273.15` K, is used.
@@ -635,15 +635,15 @@ def relative_humidity(
 
     .. math::
 
-        RH = 100\frac{e_{sat}(T_d)}{e_{sat}(T)}
+       RH = 100\frac{e_{sat}(T_d)}{e_{sat}(T)}
 
     Otherwise, the specific humidity and the air pressure must be given so relative humidity can be computed as:
 
     .. math::
 
-        RH = 100\frac{w}{w_{sat}}
-        w = \frac{q}{1-q}
-        w_{sat} = 0.622\frac{e_{sat}}{P - e_{sat}}
+       RH = 100\frac{w}{w_{sat}}
+       w = \frac{q}{1-q}
+       w_{sat} = 0.622\frac{e_{sat}}{P - e_{sat}}
 
     The methods differ by how :math:`e_{sat}` is computed.
     See the doc of :py:func:`xclim.core.utils.saturation_vapor_pressure`.
@@ -751,9 +751,9 @@ def specific_humidity(
 
     .. math::
 
-        w_{sat} = 0.622\frac{e_{sat}}{P - e_{sat}}
-        w = w_{sat} * hurs / 100
-        q = w / (1 + w)
+       w_{sat} = 0.622\frac{e_{sat}}{P - e_{sat}}
+       w = w_{sat} * hurs / 100
+       q = w / (1 + w)
 
     The methods differ by how :math:`e_{sat}` is computed. See :py:func:`xclim.core.utils.saturation_vapor_pressure`.
 
@@ -761,7 +761,7 @@ def specific_humidity(
 
     .. math::
 
-        q_{sat} = w_{sat} / (1 + w_{sat})
+       q_{sat} = w_{sat} / (1 + w_{sat})
 
     References
     ----------
@@ -1260,13 +1260,13 @@ def wind_chill_index(
 
     .. math::
 
-        W = 13.12 + 0.6125*T - 11.37*V^0.16 + 0.3965*T*V^0.16
+       W = 13.12 + 0.6125*T - 11.37*V^0.16 + 0.3965*T*V^0.16
 
     Under slow winds (:math:`V < 5` km/h), and using the canadian method, it becomes:
 
     .. math::
 
-        W = T + \frac{-1.59 + 0.1345 * T}{5} * V
+       W = T + \frac{-1.59 + 0.1345 * T}{5} * V
 
     Both equations are invalid for temperature over 0°C in the canadian method.
 
@@ -1340,7 +1340,7 @@ def clausius_clapeyron_scaled_precipitation(
     water vapour pressure :math:`e_s` changes approximately exponentially with temperature
 
     .. math::
-        \frac{\mathrm{d}e_s(T)}{\mathrm{d}T} \approx 1.07 e_s(T)
+       \frac{\mathrm{d}e_s(T)}{\mathrm{d}T} \approx 1.07 e_s(T)
 
     This function assumes that precipitation can be scaled by the same factor.
     """
@@ -1533,7 +1533,7 @@ def potential_evapotranspiration(
 
     .. math::
 
-        PET[mm day^{-1}] = a * \frac{S_0}{\lambda}T_a + b * \frac{S_0}{\lambda}
+       PET[mm day^{-1}] = a * \frac{S_0}{\lambda}T_a + b * \frac{S_0}{\lambda}
 
     where :math:`a` and :math:`b` are empirical parameters; :math:`S_0` is the extraterrestrial radiation [MJ m-2 day-1],
     assuming a solar constant of 1367 W m-2; :math:`\\lambda` is the latent heat of vaporisation [MJ kg-1]
@@ -2231,7 +2231,7 @@ def wind_profile(
 
     .. math::
 
-        v = v_r \left( \frac{h}{h_r} \right)^{\alpha},
+       v = v_r \left( \frac{h}{h_r} \right)^{\alpha},
 
     where :math:`v_r` is the wind speed at the reference height, :math:`h` is the height at which the wind speed is
     desired, and :math:`h_r` is the reference height.
@@ -2302,12 +2302,12 @@ def wind_power_potential(
 
     .. math::
 
-        \begin{cases}
-        0,  &  v < u_i \\
-        (v^3 - u_i^3) / (u_r^3 - u_i^3),  & u_i ≤ v < u_r \\
-        1, & u_r ≤ v < u_o \\
-        0, & v ≥ u_o
-        \end{cases}
+       \begin{cases}
+       0,  &  v < u_i \\
+       (v^3 - u_i^3) / (u_r^3 - u_i^3),  & u_i ≤ v < u_r \\
+       1, & u_r ≤ v < u_o \\
+       0, & v ≥ u_o
+       \end{cases}
 
     For non-standard air density (:math:`\rho`), the wind speed is scaled using
     :math:`v_n = v \left( \frac{\rho}{\rho_0} \right)^{1/3}`.
