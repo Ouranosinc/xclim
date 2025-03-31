@@ -2,6 +2,15 @@
 Changelog
 =========
 
+v0.57.0 (unreleased)
+--------------------
+Contributors to this version: Trevor James Smith (:user:`Zeitsperre`).
+
+Breaking changes
+^^^^^^^^^^^^^^^^
+* The previously deprecated functions ``sfcwind_2_uas_vas`` and ``uas_vas_2_sfcwind`` have been removed. (:pull:`2139`).
+* ``xclim.testing.open_dataset`` has been deprecated and will be removed in a future version. Contributors are encouraged to consult the documentation pertaining to ``xclim.testing.nimbus`` for the new approach to fetching testing data. (:pull:`2139`).
+
 v0.56.0 (2025-03-27)
 --------------------
 Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Hui-Min Wang (:user:`Hem-W`), Jack Kit-tai Wong (:user:`jack-ktw`), Adrien Lamarche (:user:`LamAdr`), Éric Dupuis (:user:`coxipi`), Jens de Bruijn (:user:`jensdebruijn`), Pascal Bourgault (:user:`aulemahal`), Sarah Gammon (:user:`SarahG-579462`).
