@@ -32,6 +32,7 @@ from xarray import open_dataset as _open_dataset
 
 import xclim
 from xclim import __version__ as __xclim_version__
+from xclim.core.utils import deprecated
 
 try:
     import pytest
@@ -567,8 +568,8 @@ def nimbus(
     return _nimbus
 
 
-# FIXME: This function is soon to be deprecated.
 # idea copied from raven that it borrowed from xclim that borrowed it from xarray that was borrowed from Seaborn
+@deprecated(from_version="0.57.0", suggested="nimbus")
 def open_dataset(
     name: str | os.PathLike[str],
     dap_url: str | None = None,
