@@ -133,11 +133,14 @@ def _smallest_uint(da, dim):
 
 # TODO: Compare this with _rle_1d, but I think this has the edge. A single operation
 # a*b + b effectively replaces a cumsum and diff operations
-def _cumsum_reset_np(arr, index):
+# TODO: Check if having index in the np function slows things up, it doesn't seem so
+# The `one` argument was weirdly necessary to avoid some type problems with jit
+@njit
+def _cumsum_reset_np(arr, index, one):
     # run the cumsum and prod backwards or forward
-    it = range(1, len(arr), 1) if index == "last" else range(len(arr) - 2, -1, -1)
+    it = range(1, arr.shape[-1]) if index == "last" else range(arr.shape[-1] - 2, -1, -1)
     for i in it:
-        arr[i] *= arr[i - it.step] + 1
+        arr[..., i] *= arr[..., i - it.step] + one
     return arr
 
 
@@ -185,7 +188,8 @@ def _cumsum_reset(
     xr.DataArray
         An array with cumulative sums.
     """
-    da = da.astype(_smallest_uint(da, dim))
+    typ = -_smallest_uint(da, dim)
+    da = da.astype(typ)
     if ((ch := da.chunksizes.get(dim, -1)) == -1 or ch == da[dim].size) and reset_on_zero:
         out = xr.apply_ufunc(
             _cumsum_reset_np,
@@ -193,7 +197,7 @@ def _cumsum_reset(
             input_core_dims=[[dim]],
             output_core_dims=[[dim]],
             dask="parallelized",
-            kwargs={"index": index},
+            kwargs={"index": index, "one": typ(1)},
         )
     else:
         out = _cumsum_reset_xr(da, dim, index, reset_on_zero)
