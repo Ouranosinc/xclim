@@ -2,6 +2,18 @@
 Changelog
 =========
 
+v0.57.0 (unreleased)
+--------------------
+Contributors to this version: Trevor James Smith (:user:`Zeitsperre`).
+
+New indicators
+^^^^^^^^^^^^^^
+* Added ``cooling_degree_days_approximation`` and ``heating_degree_days_approximation`` indices to compute the number of cooling and heating degree days with consideration for daily temperature cycles. (:issue:`1941`, :pull:`2135`).
+
+Internal changes
+^^^^^^^^^^^^^^^^
+* Added a `pre-commit` hook for formatting BibTeX files and reformatted existing BibTeX files. (:pull:`2135`).
+
 v0.56.0 (2025-03-27)
 --------------------
 Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Hui-Min Wang (:user:`Hem-W`), Jack Kit-tai Wong (:user:`jack-ktw`), Adrien Lamarche (:user:`LamAdr`), Éric Dupuis (:user:`coxipi`), Jens de Bruijn (:user:`jensdebruijn`), Pascal Bourgault (:user:`aulemahal`), Sarah Gammon (:user:`SarahG-579462`).
