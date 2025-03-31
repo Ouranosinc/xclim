@@ -446,13 +446,13 @@ def escore(
 
     .. math::
 
-        e(C_i,C_j) = \frac{1}{2}\frac{n_i n_j}{n_i + n_j} \left[2 M_{ij} − M_{ii} − M_{jj}\right]
+       e(C_i,C_j) = \frac{1}{2}\frac{n_i n_j}{n_i + n_j} \left[2 M_{ij} − M_{ii} − M_{jj}\right]
 
     where
 
     .. math::
 
-        M_{ij} = \frac{1}{n_i n_j} \sum_{p = 1}^{n_i} \sum_{q = 1}^{n_j} \left\Vert X_{ip} − X{jq} \right\Vert.
+       M_{ij} = \frac{1}{n_i n_j} \sum_{p = 1}^{n_i} \sum_{q = 1}^{n_j} \left\Vert X_{ip} − X{jq} \right\Vert.
 
     :math:`\Vert\cdot\Vert` denotes Euclidean norm, :math:`X_{ip}` denotes the p-th observation in the i-th cluster.
 
@@ -566,7 +566,7 @@ def to_additive_space(
 
         .. math::
 
-            Y = \ln\left( X - b_- \right)
+           Y = \ln\left( X - b_- \right)
 
         Usually used for variables with only a lower bound, like precipitation (`pr`,  `prsn`, etc)
         and daily temperature range (`dtr`). Both have a lower bound of 0.
@@ -575,8 +575,8 @@ def to_additive_space(
 
         .. math::
 
-            X' = (X - b_-) / (b_+ - b_-)
-            Y = \ln\left(\frac{X'}{1 - X'} \right)
+           X' = (X - b_-) / (b_+ - b_-)
+           Y = \ln\left(\frac{X'}{1 - X'} \right)
 
         Usually used for variables with both a lower and a upper bound, like relative and specific humidity,
         cloud cover fraction, etc.
@@ -676,14 +676,14 @@ def from_additive_space(
 
         .. math::
 
-            X = e^{Y} + b_-
+           X = e^{Y} + b_-
 
     - `logit`
 
         .. math::
 
-            X' = \frac{1}{1 + e^{-Y}}
-            X = X * (b_+ - b_-) + b_-
+           X' = \frac{1}{1 + e^{-Y}}
+           X = X * (b_+ - b_-) + b_-
 
     See Also
     --------

@@ -101,15 +101,14 @@ def corn_heat_units(
 
     .. math::
 
-        CHU_i = \frac{YX_{i} + YN_{i}}{2}
+       CHU_i = \frac{YX_{i} + YN_{i}}{2}
 
     with
 
     .. math::
 
-        YX_i & = 3.33(TX_i -10) - 0.084(TX_i -10)^2, &\text{if } TX_i > 10°C
-
-        YN_i & = 1.8(TN_i -4.44), &\text{if } TN_i > 4.44°C
+       YX_i & = 3.33(TX_i -10) - 0.084(TX_i -10)^2, &\text{if } TX_i > 10°C
+       YN_i & = 1.8(TN_i -4.44), &\text{if } TN_i > 4.44°C
 
     Where :math:`YX_{i}` and :math:`YN_{i}` is 0 when :math:`TX_i \leq 10°C` and :math:`TN_i \leq 4.44°C`, respectively.
 
@@ -195,13 +194,13 @@ def huglin_index(
 
     .. math::
 
-        HI = \sum_{i=\text{April 1}}^{\text{September 30}} \left( \frac{TX_i  + TG_i)}{2} - T_{thresh} \right) * k
+       HI = \sum_{i=\text{April 1}}^{\text{September 30}} \left( \frac{TX_i  + TG_i)}{2} - T_{thresh} \right) * k
 
     For the `smoothed` method, the day-length multiplication factor, :math:`k`, is calculated as follows:
 
     .. math::
 
-        k = f(lat) = \begin{cases}
+       k = f(lat) = \begin{cases}
                      1, & \text{if } | lat | <= 40 \\
                      1 + ((abs(lat) - 40) / 10) * 0.06, & \text{if } 40 < | lat | <= 50 \\
                      NaN, & \text{if } | lat | > 50 \\
@@ -212,7 +211,7 @@ def huglin_index(
 
     .. math::
 
-        k = f(lat) = \begin{cases}
+       k = f(lat) = \begin{cases}
                      1.0, & \text{if } | lat | <= 40 \\
                      1.02, & \text{if } 40 < | lat | <= 42 \\
                      1.03, & \text{if } 42 < | lat | <= 44 \\
@@ -372,19 +371,19 @@ def biologically_effective_degree_days(
 
     .. math::
 
-        BEDD_i = \sum_{i=\text{April 1}}^{\text{October 31}} min\left( \left( max\left( \frac{TX_i  + TN_i)}{2} - 10, 0 \right) * k \right) + TR_{adj}, degdays_{max}\right)
+       BEDD_i = \sum_{i=\text{April 1}}^{\text{October 31}} min\left( \left( max\left( \frac{TX_i  + TN_i)}{2} - 10, 0 \right) * k \right) + TR_{adj}, degdays_{max}\right)
 
     .. math::
 
-        TR_{adj} = f(TX_{i}, TN_{i}) = \begin{cases}
-        0.25(TX_{i} - TN_{i} - 13), & \text{if } (TX_{i} - TN_{i}) > 13 \\
-        0, & \text{if } 10 < (TX_{i} - TN_{i}) < 13\\
-        0.25(TX_{i} - TN_{i} - 10), & \text{if } (TX_{i} - TN_{i}) < 10 \\
-        \end{cases}
+       TR_{adj} = f(TX_{i}, TN_{i}) = \begin{cases}
+       0.25(TX_{i} - TN_{i} - 13), & \text{if } (TX_{i} - TN_{i}) > 13 \\
+       0, & \text{if } 10 < (TX_{i} - TN_{i}) < 13\\
+       0.25(TX_{i} - TN_{i} - 10), & \text{if } (TX_{i} - TN_{i}) < 10 \\
+       \end{cases}
 
     .. math::
 
-        k = f(lat) = 1 + \left(\frac{\left| lat  \right|}{50} * 0.06,  \text{if }40 < ``|lat|`` <50, \text{else } 0\right)
+       k = f(lat) = 1 + \left(\frac{\left| lat  \right|}{50} * 0.06,  \text{if }40 < ``|lat|`` <50, \text{else } 0\right)
 
     A second version of the BEDD (`method="icclim"`) does not consider :math:`TR_{adj}` and :math:`k` and employs a
     different end date (30 September) :cite:p:`project_team_eca&d_algorithm_2013`.
@@ -392,7 +391,7 @@ def biologically_effective_degree_days(
 
     .. math::
 
-        BEDD_i = \sum_{i=\text{April 1}}^{\text{September 30}} min\left( max\left(\frac{TX_i  + TN_i)}{2} - 10, 0\right), degdays_{max}\right)
+       BEDD_i = \sum_{i=\text{April 1}}^{\text{September 30}} min\left( max\left(\frac{TX_i  + TN_i)}{2} - 10, 0\right), degdays_{max}\right)
 
     References
     ----------
@@ -596,25 +595,25 @@ def dryness_index(  # numpydoc ignore=SS05
 
     .. math::
 
-        W = \sum_{\text{April 1}}^{\text{September 30}} \left( Wo + P - T_{v} - E_{s} \right)
+       W = \sum_{\text{April 1}}^{\text{September 30}} \left( Wo + P - T_{v} - E_{s} \right)
 
     or (for the Southern Hemisphere):
 
     .. math::
 
-        W = \sum_{\text{October 1}}^{\text{March 31}} \left( Wo + P - T_{v} - E_{s} \right)
+       W = \sum_{\text{October 1}}^{\text{March 31}} \left( Wo + P - T_{v} - E_{s} \right)
 
     Where :math:`T_{v}` and :math:`E_{s}` are given by the following formulae:
 
     .. math::
 
-        T_{v} = ETP * k
+       T_{v} = ETP * k
 
     and
 
     .. math::
 
-        E_{s} = \frac{ETP}{N}\left( 1 - k \right) * JPm
+       E_{s} = \frac{ETP}{N}\left( 1 - k \right) * JPm
 
     Where :math:`ETP` is evapotranspiration, :math:`N` is the number of days in the given month. :math:`k` is the
     coefficient for radiative absorption given by the vine plant architecture, and :math:`JPm` is the number of days of
@@ -622,7 +621,7 @@ def dryness_index(  # numpydoc ignore=SS05
 
     .. math::
 
-        k = \begin{cases}
+       k = \begin{cases}
             0.1, & \text{if month = April (NH) or October (SH)}  \\
             0.3, & \text{if month = May (NH) or November (SH)}  \\
             0.5, & \text{if month = June - September (NH) or December - March (SH)} \\
@@ -630,7 +629,7 @@ def dryness_index(  # numpydoc ignore=SS05
 
     .. math::
 
-        JPm = \max\left( P / 5, N \right)
+       JPm = \max\left( P / 5, N \right)
 
     References
     ----------
@@ -770,7 +769,7 @@ def latitude_temperature_index(
 
     .. math::
 
-        LTI = max(TN_{j}: j = 1..12)(lat_f - | lat | )
+       LTI = max(TN_{j}: j = 1..12)(lat_f - | lat | )
 
     References
     ----------
@@ -1350,7 +1349,7 @@ def qian_weighted_mean_average(tas: xarray.DataArray, dim: str = "time") -> xarr
 
     .. math::
 
-        \overline{X}_{n} = \frac{X_{n-2} + 4X_{n-1} + 6X_{n} + 4X_{n+1} + X_{n+2}}{16}
+       \overline{X}_{n} = \frac{X_{n-2} + 4X_{n-1} + 6X_{n} + 4X_{n+1} + X_{n+2}}{16}
 
     References
     ----------
@@ -1416,7 +1415,7 @@ def effective_growing_degree_days(
 
     .. math::
 
-        EGDD_i = \sum_{i=\text{j_{start}}^{\text{j_{end}}} max\left(TG - Thresh, 0 \right)
+       EGDD_i = \sum_{i=\text{j_{start}}^{\text{j_{end}}} max\left(TG - Thresh, 0 \right)
 
     Where :math:`TG` is the mean daly temperature, and :math:`j_{start}` and :math:`j_{end}` are the start and end dates
     of the growing season. The growing season start date methodology is determined via the `method` flag.

@@ -358,7 +358,7 @@ def test_to_agg_units(in_u, opfunc, op, exp, exp_u):
     da = xr.DataArray(
         np.ones((365,)),
         dims=("time",),
-        coords={"time": xr.cftime_range("1993-01-01", periods=365, freq="D")},
+        coords={"time": xr.date_range("1993-01-01", periods=365, freq="D")},
         attrs={"units": in_u},
     )
     if units(in_u).dimensionality == "[temperature]":

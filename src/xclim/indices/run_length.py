@@ -1690,12 +1690,13 @@ def index_of_date(
     """
     if date is None:
         return np.array([default])
-    try:
+    if len(date.split("-")) == 2:
+        date = f"1840-{date}"
+        date = datetime.strptime(date, "%Y-%m-%d")
+        year_cond = True
+    else:
         date = datetime.strptime(date, "%Y-%m-%d")
         year_cond = time.dt.year == date.year
-    except ValueError:
-        date = datetime.strptime(date, "%m-%d")
-        year_cond = True
 
     idxs = np.where(year_cond & (time.dt.month == date.month) & (time.dt.day == date.day))[0]
     if max_idxs is not None and idxs.size > max_idxs:

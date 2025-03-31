@@ -37,12 +37,12 @@ def time_range_kwargs(request):
 
 @pytest.fixture()
 def datetime_index(time_range_kwargs):
-    return pd.date_range(**time_range_kwargs)
+    return xr.date_range(**time_range_kwargs)
 
 
 @pytest.fixture()
 def cftime_index(time_range_kwargs):
-    return xr.cftime_range(**time_range_kwargs)
+    return xr.date_range(use_cftime=True, **time_range_kwargs)
 
 
 def da(index):
@@ -69,18 +69,14 @@ def test_time_bnds(freq, datetime_index, cftime_index):
     assert_array_equal(cftime_ends, out_periods.end_time)
 
 
-@pytest.mark.parametrize("typ", ["pd", "xr"])
-def test_time_bnds_irregular(typ):
+@pytest.mark.parametrize("use_cftime", [True, False])
+def test_time_bnds_irregular(use_cftime):
     """Test time_bnds for irregular `middle of the month` time series."""
-    if typ == "xr":
-        start = xr.cftime_range("1990-01-01", periods=24, freq="MS")
-        # Well. xarray string parsers do not support sub-second resolution, but cftime does.
-        end = xr.cftime_range("1990-01-01T23:59:59", periods=24, freq="ME") + pd.Timedelta(0.999999, "s")
-    elif typ == "pd":
-        start = pd.date_range("1990-01-01", periods=24, freq="MS")
-        end = pd.date_range("1990-01-01 23:59:59.999999999", periods=24, freq="ME")
-    else:
-        raise ValueError("`typ` must be 'pd' or 'xr'")
+    start = xr.date_range("1990-01-01", periods=24, freq="MS", use_cftime=use_cftime)
+    # Well. xarray string parsers do not support sub-second resolution, but cftime does.
+    end = xr.date_range("1990-01-01T23:59:59", periods=24, freq="ME", use_cftime=use_cftime) + pd.Timedelta(
+        0.999999999, "s"
+    )
 
     time = start + (end - start) / 2
 
@@ -165,7 +161,7 @@ def test_adjust_doy_360_to_366():
 def test_adjust_doy__max_93_to_max_94():
     # GIVEN
     source = xr.DataArray(np.arange(92), coords=[np.arange(152, 244)], dims="dayofyear")
-    time = xr.cftime_range("2000-06-01", periods=92, freq="D", calendar="all_leap")
+    time = xr.date_range("2000-06-01", periods=92, freq="D", calendar="all_leap")
     target = xr.DataArray(np.arange(len(time)), coords=[time], dims="time")
     # WHEN
     out = adjust_doy_calendar(source, target)
@@ -183,7 +179,7 @@ def test_adjust_doy__leap_to_noleap_djf():
         coords=[np.concatenate([np.arange(1, 61), np.arange(335, 367)])],
         dims="dayofyear",
     )
-    time = xr.cftime_range("2000-12-01", periods=91, freq="D", calendar="noleap")
+    time = xr.date_range("2000-12-01", periods=91, freq="D", calendar="noleap")
     no_leap_target = xr.DataArray(np.arange(len(time)), coords=[time], dims="time")
     # WHEN
     out = adjust_doy_calendar(leap_source, no_leap_target)
@@ -197,7 +193,7 @@ def test_adjust_doy__leap_to_noleap_djf():
 
 def test_adjust_doy_366_to_360():
     source = xr.DataArray(np.arange(366), coords=[np.arange(1, 367)], dims="dayofyear")
-    time = xr.cftime_range("2000", periods=360, freq="D", calendar="360_day")
+    time = xr.date_range("2000", periods=360, freq="D", calendar="360_day")
     target = xr.DataArray(np.arange(len(time)), coords=[time], dims="time")
 
     out = adjust_doy_calendar(source, target)
@@ -242,7 +238,7 @@ def test_get_calendar(file, cal, maxdoy, open_dataset):
         (pd.Timestamp.now(), "standard"),
         (cftime.DatetimeAllLeap(2000, 1, 1), "all_leap"),
         (np.array([cftime.DatetimeNoLeap(2000, 1, 1)]), "noleap"),
-        (xr.cftime_range("2000-01-01", periods=4, freq="D"), "standard"),
+        (xr.date_range("2000-01-01", periods=4, freq="D"), "standard"),
     ],
 )
 def test_get_calendar_nonxr(obj, cal):

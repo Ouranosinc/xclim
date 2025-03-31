@@ -460,7 +460,7 @@ class EmpiricalQuantileMapping(TrainAdjust):
 
     .. math::
 
-      F^{-1}_{ref} (F_{hist}(sim))
+       F^{-1}_{ref} (F_{hist}(sim))
 
     where :math:`F` is the cumulative distribution function (CDF) and `mod` stands for model data.
 
@@ -557,7 +557,7 @@ class DetrendedQuantileMapping(TrainAdjust):
 
     .. math::
 
-        F^{-1}_{ref}\left\{F_{hist}\left[\frac{\overline{hist}\cdot sim}{\overline{sim}}\right]\right\}\frac{\overline{sim}}{\overline{hist}}
+       F^{-1}_{ref}\left\{F_{hist}\left[\frac{\overline{hist}\cdot sim}{\overline{sim}}\right]\right\}\frac{\overline{sim}}{\overline{hist}}
 
     where :math:`F` is the cumulative distribution function (CDF) and :math:`\overline{xyz}` is the linear trend of the data.
     This equation is valid for multiplicative adjustment. Based on the DQM method of :cite:p:`sdba-cannon_bias_2015`.
@@ -671,7 +671,7 @@ class QuantileDeltaMapping(EmpiricalQuantileMapping):
 
     .. math::
 
-        sim\frac{F^{-1}_{ref}\left[F_{sim}(sim)\right]}{F^{-1}_{hist}\left[F_{sim}(sim)\right]}
+       sim\frac{F^{-1}_{ref}\left[F_{sim}(sim)\right]}{F^{-1}_{hist}\left[F_{sim}(sim)\right]}
 
     where :math:`F` is the cumulative distribution function (CDF). This equation is valid for multiplicative adjustment.
     The algorithm is based on the "QDM" method of :cite:p:`sdba-cannon_bias_2015`.
@@ -777,14 +777,14 @@ class ExtremeValues(TrainAdjust):
 
     .. math::
 
-        V_i = C_i * \tau + D_i * (1 - \tau)
+       V_i = C_i * \tau + D_i * (1 - \tau)
 
     Where :math:`\tau` is a function of sim's extreme values (unadjusted, :math:`S_i`)
     and of arguments ``frac`` (:math:`f`) and ``power`` (:math:`p`):
 
     .. math::
 
-        \tau = \left(\frac{1}{f}\frac{S - min(S)}{max(S) - min(S)}\right)^p
+       \tau = \left(\frac{1}{f}\frac{S - min(S)}{max(S) - min(S)}\right)^p
 
     Code based on an internal Matlab source and partly ib the `biascorrect_extremes` function of the julia package
     "ClimateTools.jl" :cite:p:`sdba-roy_juliaclimateclimatetoolsjl_2021`.
@@ -903,7 +903,7 @@ class LOCI(TrainAdjust):
 
     .. math::
 
-      sim(t) = \max\left(t_{ref} + s \cdot (hist(t) - t_{hist}), 0\right)
+       sim(t) = \max\left(t_{ref} + s \cdot (hist(t) - t_{hist}), 0\right)
 
     Attributes
     ----------
@@ -1055,13 +1055,13 @@ class PrincipalComponents(TrainAdjust):
 
     .. math::
 
-      scen = e_{R} + \mathrm{\mathbf{T}}(sim - e_{H})
+       scen = e_{R} + \mathrm{\mathbf{T}}(sim - e_{H})
 
     Where:
 
     .. math::
 
-      \mathrm{\mathbf{T}} = \mathrm{\mathbf{R}}\mathrm{\mathbf{H}}^{-1}
+       \mathrm{\mathbf{T}} = \mathrm{\mathbf{R}}\mathrm{\mathbf{H}}^{-1}
 
     :math:`\mathrm{\mathbf{R}}` is the matrix transforming from the PC coordinates computed on `ref` to the data
     coordinates. Similarly, :math:`\mathrm{\mathbf{H}}` is transform from the `hist` PC to the data coordinates
@@ -1236,23 +1236,23 @@ class NpdfTransform(Adjust):
 
     .. math::
 
-        \tilde{\mathbf{T}} = \mathbf{T}\mathbf{R} \
-        \tilde{\mathbf{H}} = \mathbf{H}\mathbf{R} \
-        \tilde{\mathbf{S}} = \mathbf{S}\mathbf{R}
+       \tilde{\mathbf{T}} = \mathbf{T}\mathbf{R} \
+       \tilde{\mathbf{H}} = \mathbf{H}\mathbf{R} \
+       \tilde{\mathbf{S}} = \mathbf{S}\mathbf{R}
 
     2. An univariate bias-adjustment :math:`\mathcal{F}` is used on the rotated datasets.
     The adjustments are made in additive mode, for each variable :math:`i`.
 
     .. math::
 
-        \hat{\mathbf{H}}_i, \hat{\mathbf{S}}_i = \mathcal{F}\left(\tilde{\mathbf{T}}_i, \tilde{\mathbf{H}}_i, \tilde{\mathbf{S}}_i\right)
+       \hat{\mathbf{H}}_i, \hat{\mathbf{S}}_i = \mathcal{F}\left(\tilde{\mathbf{T}}_i, \tilde{\mathbf{H}}_i, \tilde{\mathbf{S}}_i\right)
 
     3. The bias-adjusted datasets are rotated back.
 
     .. math::
 
-        \mathbf{H}' = \hat{\mathbf{H}}\mathbf{R} \\
-        \mathbf{S}' = \hat{\mathbf{S}}\mathbf{R}
+       \mathbf{H}' = \hat{\mathbf{H}}\mathbf{R} \\
+       \mathbf{S}' = \hat{\mathbf{S}}\mathbf{R}
 
 
     These three steps are repeated a certain number of times, prescribed by argument ``n_iter``. At each
@@ -1403,10 +1403,10 @@ class OTC(Adjust):
 
     .. math::
 
-        \mathop{\arg\!\min}_{P} \langle P,C\rangle \\
-        s.t. P\mathbf{1} = X \\
-            P^T\mathbf{1} = Y \\
-            P \geq 0
+       \mathop{\arg\!\min}_{P} \langle P,C\rangle \\
+       s.t. P\mathbf{1} = X \\
+           P^T\mathbf{1} = Y \\
+           P \geq 0
 
     where :math:`C_{ij}` is the squared euclidean distance between the bin at position :math:`i` of :math:`X`'s histogram and
     the bin at position :math:`j` of :math:`Y`'s.
@@ -1418,22 +1418,23 @@ class OTC(Adjust):
     - `normalization = 'standardize'` :
         .. math::
 
-            i_v' = \frac{i_v - mean(i_v)}{std(i_v)} \quad\quad\quad j_v' = \frac{j_v - mean(j_v)}{std(j_v)}
+           i_v' = \frac{i_v - mean(i_v)}{std(i_v)} \quad\quad\quad j_v' = \frac{j_v - mean(j_v)}{std(j_v)}
 
     - `normalization = 'max_distance'` :
         .. math::
 
-            i_v' = \frac{i_v}{max \{|i_v - j_v|\}} \quad\quad\quad j_v' = \frac{j_v}{max \{|i_v - j_v|\}}
+           i_v' = \frac{i_v}{max \{|i_v - j_v|\}} \quad\quad\quad j_v' = \frac{j_v}{max \{|i_v - j_v|\}}
 
         such that
-            .. math::
 
-                max \{|i_v' - j_v'|\} = max \{|i_w' - j_w'|\} = 1
+        .. math::
+
+           max \{|i_v' - j_v'|\} = max \{|i_w' - j_w'|\} = 1
 
     - `normalization = 'max_value'` :
         .. math::
 
-            i_v' = \frac{i_v}{max\{i_v\}} \quad\quad\quad j_v' = \frac{j_v}{max\{j_v\}}
+           i_v' = \frac{i_v}{max\{i_v\}} \quad\quad\quad j_v' = \frac{j_v}{max\{j_v\}}
 
     for variables :math:`v, w`. Default is `'max_distance'`.
 
@@ -1578,8 +1579,8 @@ class dOTC(Adjust):
 
     .. math::
 
-        Y1_i & := Y0_i + D \cdot v_i \;\; or \\
-        Y1_i & := Y0_i * D \cdot v_i
+       Y1_i & := Y0_i + D \cdot v_i \;\; or \\
+       Y1_i & := Y0_i * D \cdot v_i
 
     where
         - :math:`v_i` is the temporal evolution of historical simulated point :math:`i \in X0` to :math:`j \in X1`
@@ -1749,8 +1750,8 @@ class MBCn(TrainAdjust):
 
     .. math::
 
-        \tilde{\mathbf{T}} = \mathbf{T}\mathbf{R} \
-        \tilde{\mathbf{H}} = \mathbf{H}\mathbf{R}
+       \tilde{\mathbf{T}} = \mathbf{T}\mathbf{R} \
+       \tilde{\mathbf{H}} = \mathbf{H}\mathbf{R}
 
     3. QuantileDeltaMapping is used to perform bias adjustment  :math:`\mathcal{F}` on the rotated datasets.
     The adjustment factor is conserved for later use in the adjusting step. The adjustments are made in additive mode,
@@ -1758,14 +1759,14 @@ class MBCn(TrainAdjust):
 
     .. math::
 
-        \hat{\mathbf{H}}_i, \hat{\mathbf{S}}_i = \mathcal{F}\left(\tilde{\mathbf{T}}_i, \tilde{\mathbf{H}}_i, \tilde{\mathbf{S}}_i\right)
+       \hat{\mathbf{H}}_i, \hat{\mathbf{S}}_i = \mathcal{F}\left(\tilde{\mathbf{T}}_i, \tilde{\mathbf{H}}_i, \tilde{\mathbf{S}}_i\right)
 
     4. The bias-adjusted datasets are rotated back.
 
     .. math::
 
-        \mathbf{H}' = \hat{\mathbf{H}}\mathbf{R} \\
-        \mathbf{S}' = \hat{\mathbf{S}}\mathbf{R}
+       \mathbf{H}' = \hat{\mathbf{H}}\mathbf{R} \\
+       \mathbf{S}' = \hat{\mathbf{S}}\mathbf{R}
 
     5. Repeat steps 2,3,4  three steps ``n_iter`` times, i.e. the number of randomly generated rotation matrices.
 

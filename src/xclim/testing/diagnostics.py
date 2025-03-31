@@ -60,7 +60,7 @@ def synth_rainfall(shape: float, scale: float = 1.0, wet_freq: float = 0.25, siz
 
     .. math::
 
-        p(x) = x^{k-1}\frac{e^{-x/\theta}}{\theta^k\Gamma(k)},
+       p(x) = x^{k-1}\frac{e^{-x/\theta}}{\theta^k\Gamma(k)},
 
     where :math:`k` is the shape and :math:`\theta` the scale, and :math:`\Gamma` is the Gamma function.
     """
