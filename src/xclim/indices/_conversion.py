@@ -1217,7 +1217,7 @@ def shortwave_upwelling_radiation_from_net_downwelling(rss: xr.DataArray, rsds: 
 
 @declare_units(rsds="[radiation]")
 def clearness_index(rsds: xr.DataArray) -> xr.DataArray:
-    """
+    r"""
     Compute the clearness index.
 
     The clearness index is the ratio between the shortwave downwelling radiation
@@ -1232,6 +1232,17 @@ def clearness_index(rsds: xr.DataArray) -> xr.DataArray:
     -------
     xr.DataArray, [unitless]
         Clearness index.
+
+    Notes
+    -----
+    Clearness index is defined as
+
+    .. math :
+       ci = rsds / \text{extraterrestrial_solar_radiation}
+
+    References
+    ----------
+    :cite:cts:`lauret_solar_2022`
     """
     rtop = extraterrestrial_solar_radiation(rsds.time, rsds.lat)
     rtop = convert_units_to(rtop, rsds)
@@ -1243,7 +1254,7 @@ def clearness_index(rsds: xr.DataArray) -> xr.DataArray:
 
 @declare_units(ci="[]")
 def shortwave_downwelling_radiation_from_clearness_index(ci: xr.DataArray) -> xr.DataArray:
-    """
+    r"""
     Compute the surface downwelling solar radiation from clearness index.
 
     Parameters
@@ -1259,6 +1270,13 @@ def shortwave_downwelling_radiation_from_clearness_index(ci: xr.DataArray) -> xr
     See Also
     --------
     clearness_index : Inverse transformation, and definition of the clearness index.
+
+    Notes
+    -----
+    The computation is given by
+
+    .. math :
+       rsds = ci * \text{extraterrestrial_solar_radiation}
     """
     rtop = extraterrestrial_solar_radiation(ci.time, ci.lat)
     with xr.set_options(keep_attrs=True):
