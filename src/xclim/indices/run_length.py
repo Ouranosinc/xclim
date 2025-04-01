@@ -808,10 +808,13 @@ def _keep_longest_run_xr(_rls, dim):
         _rls,
     )
     _out = _out.bfill(dim) == _out.max(dim)
+    _out = _out.copy(data=_out.transpose(*_rls.dims).data)
     return _out
 
 
-def keep_longest_run(da: xr.DataArray, dim: str = "time", freq: str | None = None) -> xr.DataArray:
+def keep_longest_run(
+    da: xr.DataArray, dim: str = "time", freq: str | None = None, pre_post_season: bool = False
+) -> xr.DataArray:
     """
     Keep the longest run along a dimension.
 
@@ -823,6 +826,9 @@ def keep_longest_run(da: xr.DataArray, dim: str = "time", freq: str | None = Non
         Dimension along which to check for the longest run.
     freq : str
         Resampling frequency.
+    pre_post_season : bool
+        Controls whether the pre and post season periods are given as output as well. Only
+        works if `time` is not chunked in the relevant time period related to the resampling frequency.
 
     Returns
     -------
@@ -830,27 +836,33 @@ def keep_longest_run(da: xr.DataArray, dim: str = "time", freq: str | None = Non
         Boolean array similar to da but with only one run, the (first) longest.
     """
     # Get run lengths
-    rls = rle(da, dim)
+    rls = rle(da, dim).assign_attrs(da.attrs)
 
-    def _apply_ufunc_keep_longest_run(rls, dim):
+    def _apply_ufunc_keep_longest_run(rls, dim, pre_post_season):
         return xr.apply_ufunc(
             _keep_longest_run_np,
             rls,
             input_core_dims=[[dim]],
             output_core_dims=[[dim]],
             dask="parallelized",
+            kwargs={"pre_post_season": pre_post_season},
         )
 
-    keep_longest_run_func = (
-        _keep_longest_run_xr if (is_chunked := _is_chunked(rls, dim)) else _apply_ufunc_keep_longest_run
-    )
-    if freq is not None:
-        out = resample_map(rls, dim, freq, keep_longest_run_func)
-    else:
-        out = keep_longest_run_func(rls)
+    def _keep_longest_run_func(rls, dim):
+        is_chunked = _is_chunked(rls, dim)
+        if _is_chunked and pre_post_season:
+            raise ValueError("`pre_post_season` output only permitted when time is not chunked")
+        if is_chunked:
+            return _keep_longest_run_xr(rls, dim)
+        else:
+            # pre_post_season is used globally, probably not the best
+            return _apply_ufunc_keep_longest_run(rls, dim, pre_post_season=pre_post_season)
 
-    if is_chunked:
-        out = da.copy(data=out.transpose(*da.dims).data)
+    if freq is not None:
+        out = resample_map(rls, dim, freq, _keep_longest_run_func)
+    else:
+        out = _keep_longest_run_func(rls, dim)
+
     return out
 
 
