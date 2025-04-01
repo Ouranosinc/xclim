@@ -30,13 +30,13 @@ dependencies:
   - pot >=0.9.4
   # Testing and development dependencies
   - blackdoc =0.3.9
-  - bump-my-version >=0.32.1
+  - bump-my-version >=1.1.1
   - cairosvg >=2.6.0
   - codespell >=2.4.1
   - coverage >=7.5.0
   - deptry >=0.23.0
   - distributed >=2.0
-  - flake8 >=7.1.1
+  - flake8 >=7.2.0
   - flake8-rst-docstrings >=0.3.0
   - flit >=3.10.1,<4.0
   - furo >=2023.9.10
@@ -66,13 +66,13 @@ dependencies:
   - sphinx >=7.1.0,<8.2
   - sphinx-autobuild >=2024.4.16
   - sphinx-autodoc-typehints
-  - sphinx-codeautolink >=0.16.2
+  - sphinx-codeautolink
   - sphinx-copybutton
   - sphinx-mdinclude
   - sphinxcontrib-bibtex
   - sphinxcontrib-svg2pdfconverter
   - tokenize-rt >=5.2.0
-  - tox >=4.24.1
+  - tox >=4.25.0
   - tox-gh >=1.5.0
   - vulture =2.14
   - xdoctest >=1.1.5
