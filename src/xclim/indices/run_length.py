@@ -78,7 +78,7 @@ def use_ufunc(
 
 def _is_chunked(da, dim):
     """Check if `da` has non-trivial chunks"""
-    return (ch := da.chunksizes.get(dim, -1)) != -1 and ch != da[dim].size
+    return (ch := da.chunksizes.get(dim, (-1,))) != (-1,) and ch != (da[dim].size,)
 
 
 def resample_and_rl(
