@@ -1214,6 +1214,29 @@ def shortwave_upwelling_radiation_from_net_downwelling(rss: xr.DataArray, rsds: 
     return rsus
 
 
+@declare_units(rsds="[radiation]")
+def shortwave_downwards_radiation_fraction_of_extraterrestrial_radiation(rsds: xr.DataArray) -> xr.DataArray:
+    """
+    Compute the ratio between the shortwave radiation and the total extraterrestrial radiation on a given day.
+
+    Parameters
+    ----------
+    rsds : xr.DataArray
+        Surface downwelling solar radiation.
+
+    Returns
+    -------
+    xr.DataArray, [unitless]
+        Fraction of extraterrestrial radiation arriving at the surface, a number between 0 and 1.
+    """
+    rtop = extraterrestrial_solar_radiation(rsds.time, rsds.lat)
+    rtop = convert_units_to(rtop, rsds)
+    with xr.set_options(keep_attrs=True):
+        frac_of_rtop = rsds / rtop
+    frac_of_rtop = frac_of_rtop.assign_attrs(units="")
+    return frac_of_rtop
+
+
 @declare_units(
     tas="[temperature]",
     sfcWind="[speed]",
