@@ -11,6 +11,11 @@ variables:
     description: Cell area (over the ocean).
     dimensions: "[area]"
     standard_name: cell_area
+  ci:
+    canonical_units: W m-2
+    cell_methods: "time: mean"
+    description: Clearness index.
+    dimensions: "[]"
   discharge:
     canonical_units: m3 s-1
     cell_methods: "time: mean"
