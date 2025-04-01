@@ -4,7 +4,7 @@ Changelog
 
 v0.57.0 (unreleased)
 --------------------
-Contributors to this version: Éric (:user:`coxipi`).
+Contributors to this version: Éric Dupuis (:user:`coxipi`).
 
 New indicators
 ^^^^^^^^^^^^^^
@@ -12,7 +12,7 @@ New indicators
 
 Internal changes
 ^^^^^^^^^^^^^^^^
-* Conversion function ``xclim.indices._conversion.shortwave_downwelling_radiation_from_clearness_index`` that inverses ``xclim.indices._conversion.clearness_index``. (:pull:`2140`).
+* New conversion function ``xclim.indices._conversion.shortwave_downwelling_radiation_from_clearness_index`` provides the inverse of ``xclim.indices._conversion.clearness_index``. (:pull:`2140`).
 
 v0.56.0 (2025-03-27)
 --------------------

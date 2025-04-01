@@ -8,7 +8,7 @@ import xarray as xr
 
 from xclim import atmos, set_options
 from xclim.core.units import convert_units_to
-from xclim.indices._conversion import shortwave_downwelling_radiation_from_clearness_index
+from xclim.indices import shortwave_downwelling_radiation_from_clearness_index
 from xclim.indices.helpers import extraterrestrial_solar_radiation, make_hourly_temperature
 
 K2C = 273.16
