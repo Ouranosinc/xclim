@@ -465,7 +465,7 @@ longwave_upwelling_radiation_from_net_downwelling = Converter(
 )
 
 clearness_index = Converter(
-    title="Clearness idnex",
+    title="Clearness index",
     identifier="clearness_index",
     units="",
     long_name="Clear index",
