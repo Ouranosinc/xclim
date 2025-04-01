@@ -888,6 +888,8 @@ def cooling_degree_days_approximation(
     # Where tasmin < thresh <= tas; CDD = [(tasmax - thresh)/2 - (thresh - tasmin)/4]
     # Where tasmin >= thresh; CDD = tas - thresh
     thresh = convert_units_to(thresh, tas)
+    tasmax = convert_units_to(tasmax, tas)
+    tasmin = convert_units_to(tasmin, tas)
 
     cdd = xarray.where(
         tasmax < thresh,
@@ -903,7 +905,7 @@ def cooling_degree_days_approximation(
         ),
     )
     cdd = cdd.resample(time=freq).sum(dim="time")
-    cdd.attrs.update(units="K d")
+    cdd = to_agg_units(cdd, tas, 'integral')
     return cdd
 
 
@@ -2115,6 +2117,8 @@ def heating_degree_days_approximation(
     # Where tasmin < thresh < tas; HDD = (thresh - tasmin)/4
     # Where tasmin >= thresh; HDD = 0
     thresh = convert_units_to(thresh, tasmax)
+    tasmax = convert_units_to(tasmax, tas)
+    tasmin = convert_units_to(tasmin, tas)
 
     hdd = xarray.where(
         tasmax <= thresh,
@@ -2126,7 +2130,7 @@ def heating_degree_days_approximation(
         ),
     )
     hdd = hdd.resample(time=freq).sum(dim="time")
-    hdd.attrs.update(units=tas.units)
+    hdd = to_agg_units(hdd, tas, 'integral')
     return hdd
 
 
