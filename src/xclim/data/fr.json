@@ -1422,6 +1422,12 @@
     "title": "Rayonnement de grandes longueurs d'onde ascendant",
     "abstract": "Calcul du rayonnement de grandes longueurs d'onde ascendant à partir du rayonnement de grandes longueurs d'onde net et descendant."
   },
+  "CLEARNESSINDEX": {
+    "long_name": "Indice de clarté",
+    "description": "Rapport du rayonnement de courtes longueurs d'onde descendant relatif au rayonnement solaire extraterrestre.",
+    "title": "Indice de clarté.",
+    "abstract": "Rapport du rayonnement de courtes longueurs d'onde descendant relatif au rayonnement solaire extraterrestre."
+  },
   "FLOW_INDEX": {
     "long_name": "Indice de débit",
     "description": "Le {p}e percentile du débit normalisé par le débit médian.",
