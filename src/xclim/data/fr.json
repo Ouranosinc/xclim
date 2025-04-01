@@ -1422,7 +1422,7 @@
     "title": "Rayonnement de grandes longueurs d'onde ascendant",
     "abstract": "Calcul du rayonnement de grandes longueurs d'onde ascendant à partir du rayonnement de grandes longueurs d'onde net et descendant."
   },
-  "CLEARNESSINDEX": {
+  "CLEARNESS_INDEX": {
     "long_name": "Indice de clarté",
     "description": "Rapport du rayonnement de courtes longueurs d'onde descendant relatif au rayonnement solaire extraterrestre.",
     "title": "Indice de clarté.",
