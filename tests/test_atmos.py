@@ -7,7 +7,7 @@ import pytest
 import xarray as xr
 
 from xclim import atmos, set_options
-from xclim.indices.helpers import make_hourly_temperature
+from xclim.indices.helpers import extraterrestrial_solar_radiation, make_hourly_temperature
 
 K2C = 273.16
 
@@ -632,3 +632,11 @@ def test_water_cycle_intensity(pr_series, evspsbl_series):
 
     wci = atmos.water_cycle_intensity(pr=pr, evspsbl=evspsbl, freq="MS")
     np.testing.assert_allclose(wci, 2 * 60 * 60 * 24 * 31)
+
+
+class TestClearnessIndex:
+    def test_ci_smaller_than_rtop(self, atmosds):
+        rsds = atmosds.rsds
+        rtop = extraterrestrial_solar_radiation(rsds.time, rsds.lat)
+        ci = atmos.clearness_index(rsds)
+        assert ((ci <= rtop) | (ci.isnull() & rsds.isnull())).all()

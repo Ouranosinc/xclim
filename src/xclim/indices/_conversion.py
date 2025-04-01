@@ -32,6 +32,7 @@ from xclim.indices.helpers import (
 
 __all__ = [
     "clausius_clapeyron_scaled_precipitation",
+    "clearness_index",
     "fao_allen98",
     "heat_index",
     "humidex",
@@ -1235,7 +1236,7 @@ def clearness_index(rsds: xr.DataArray) -> xr.DataArray:
     rtop = extraterrestrial_solar_radiation(rsds.time, rsds.lat)
     rtop = convert_units_to(rtop, rsds)
     with xr.set_options(keep_attrs=True):
-        ci = rsds / rtop
+        ci = xr.where(rsds != 0, rsds / rtop, 0)
     ci = ci.assign_attrs(units="")
     return ci
 
