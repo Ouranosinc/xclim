@@ -4,12 +4,20 @@ Changelog
 
 v0.57.0 (unreleased)
 --------------------
-Contributors to this version: Trevor James Smith (:user:`Zeitsperre`).
+Contributors to this version: Éric Dupuis (:user:`coxipi`), Trevor James Smith (:user:`Zeitsperre`).
+
+New indicators
+^^^^^^^^^^^^^^
+* New indicator ``xclim.atmos.clearness_index`` computes the `clearness_index` (ratio of downwards solar radiation to extraterrestrial solar radiation). (:pull:`2140`).
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
 * The previously deprecated functions ``sfcwind_2_uas_vas`` and ``uas_vas_2_sfcwind`` have been removed. (:pull:`2139`).
 * ``xclim.testing.open_dataset`` has been deprecated and will be removed in a future version. Contributors are encouraged to consult the documentation pertaining to ``xclim.testing.nimbus`` for the new approach to fetching testing data. (:pull:`2139`).
+
+Internal changes
+^^^^^^^^^^^^^^^^
+* New conversion function ``xclim.indices._conversion.shortwave_downwelling_radiation_from_clearness_index`` provides the inverse of ``xclim.indices._conversion.clearness_index``. (:pull:`2140`).
 
 v0.56.0 (2025-03-27)
 --------------------

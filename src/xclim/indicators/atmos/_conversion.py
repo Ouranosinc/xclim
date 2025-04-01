@@ -8,6 +8,7 @@ from xclim.core.indicator import Indicator
 from xclim.core.utils import InputKind
 
 __all__ = [
+    "clearness_index",
     "corn_heat_units",
     "heat_index",
     "humidex",
@@ -461,4 +462,14 @@ longwave_upwelling_radiation_from_net_downwelling = Converter(
     "and downwelling surface longwave fluxes.",
     var_name="rlus",
     compute=indices.longwave_upwelling_radiation_from_net_downwelling,
+)
+
+clearness_index = Converter(
+    title="Clearness index",
+    identifier="clearness_index",
+    units="",
+    long_name="Clear index",
+    description="The ratio of shortwave downwelling radiation to extraterrestrial radiation.",
+    var_name="ci",
+    compute=indices.clearness_index,
 )

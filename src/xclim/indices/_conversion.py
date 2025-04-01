@@ -31,6 +31,7 @@ from xclim.indices.helpers import (
 
 __all__ = [
     "clausius_clapeyron_scaled_precipitation",
+    "clearness_index",
     "fao_allen98",
     "heat_index",
     "humidex",
@@ -43,6 +44,7 @@ __all__ = [
     "relative_humidity",
     "saturation_vapor_pressure",
     "sfcwind_to_uas_vas",
+    "shortwave_downwelling_radiation_from_clearness_index",
     "shortwave_upwelling_radiation_from_net_downwelling",
     "snd_to_snw",
     "snowfall_approximation",
@@ -1180,6 +1182,77 @@ def shortwave_upwelling_radiation_from_net_downwelling(rss: xr.DataArray, rsds: 
     rsus: xr.DataArray = rsds - rss
     rsus = rsus.assign_attrs(units=rsds.units)
     return rsus
+
+
+@declare_units(rsds="[radiation]")
+def clearness_index(rsds: xr.DataArray) -> xr.DataArray:
+    r"""
+    Compute the clearness index.
+
+    The clearness index is the ratio between the shortwave downwelling radiation
+    and the total extraterrestrial radiation on a given day.
+
+    Parameters
+    ----------
+    rsds : xr.DataArray
+        Surface downwelling solar radiation.
+
+    Returns
+    -------
+    xr.DataArray, [unitless]
+        Clearness index.
+
+    Notes
+    -----
+    Clearness Index (ci) is defined as:
+
+    .. math :
+
+       ci = rsds / \text{extraterrestrial_solar_radiation}
+
+    References
+    ----------
+    :cite:cts:`lauret_solar_2022`
+    """
+    rtop = extraterrestrial_solar_radiation(rsds.time, rsds.lat)
+    rtop = convert_units_to(rtop, rsds)
+    with xr.set_options(keep_attrs=True):
+        ci = xr.where(rsds != 0, rsds / rtop, 0)
+    ci = ci.assign_attrs(units="")
+    return ci
+
+
+@declare_units(ci="[]")
+def shortwave_downwelling_radiation_from_clearness_index(ci: xr.DataArray) -> xr.DataArray:
+    r"""
+    Compute the surface downwelling solar radiation from clearness index.
+
+    Parameters
+    ----------
+    ci : xr.DataArray
+        Clearness index.
+
+    Returns
+    -------
+    xr.DataArray, [unitless]
+        Surface downwelling solar radiation.
+
+    See Also
+    --------
+    clearness_index : Inverse transformation, and definition of the clearness index.
+
+    Notes
+    -----
+    The conversion from Clearness Index is defined as:
+
+    .. math :
+
+       rsds = ci * \text{extraterrestrial_solar_radiation}
+    """
+    rtop = extraterrestrial_solar_radiation(ci.time, ci.lat)
+    with xr.set_options(keep_attrs=True):
+        rsds = (rtop * ci).assign_attrs(units=rtop.units)
+    return rsds
 
 
 @declare_units(
