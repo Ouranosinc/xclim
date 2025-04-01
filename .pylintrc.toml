@@ -522,9 +522,6 @@ missing-member-max-choices = 1
 # Regex pattern to define which classes are considered mixins.
 mixin-class-rgx = ".*[Mm]ixin"
 
-# List of decorators that change the signature of a decorated function.
-signature-mutators = ["xclim.sdba.base.map_groups"]
-
 [tool.pylint.variables]
 # List of additional names supposed to be defined in builtins. Remember that you
 # should avoid defining new builtins when possible.

@@ -10,6 +10,14 @@ New indicators
 ^^^^^^^^^^^^^^
 * New indicator ``xclim.atmos.clearness_index`` computes the `clearness_index` (ratio of downwards solar radiation to extraterrestrial solar radiation). (:pull:`2140`).
 
+Breaking changes
+^^^^^^^^^^^^^^^^
+* `sdba` is now imported directly from `xsdba` instead of being a submodule. This implies a number of breaking changes (`issue`: `2074`)
+    * The sub-module `sdba` is no longer installed by default.
+    * Units handling: The "infer" context is no longer used in unit conversion in `sdba` functions.
+    * `SDBA_EXTRA_OUTPUT` global option can no longer be activated with `xclim.set_options`, instead use `sdba.set_options` where the option is now called `EXTRA_OUTPUT`.
+    * The other global `SDBA_ENCODE_CF` was removed as it is no longer necessary.
+
 Internal changes
 ^^^^^^^^^^^^^^^^
 * New conversion function ``xclim.indices._conversion.shortwave_downwelling_radiation_from_clearness_index`` provides the inverse of ``xclim.indices._conversion.clearness_index``. (:pull:`2140`).
