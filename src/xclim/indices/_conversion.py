@@ -1215,9 +1215,12 @@ def shortwave_upwelling_radiation_from_net_downwelling(rss: xr.DataArray, rsds: 
 
 
 @declare_units(rsds="[radiation]")
-def shortwave_downwards_radiation_fraction_of_extraterrestrial_radiation(rsds: xr.DataArray) -> xr.DataArray:
+def clearness_index(rsds: xr.DataArray) -> xr.DataArray:
     """
-    Compute the ratio between the shortwave radiation and the total extraterrestrial radiation on a given day.
+    Compute the clearness index.
+
+    The clearness index is the ratio between the shortwave downwelling radiation
+    and the total extraterrestrial radiation on a given day.
 
     Parameters
     ----------
@@ -1227,14 +1230,14 @@ def shortwave_downwards_radiation_fraction_of_extraterrestrial_radiation(rsds: x
     Returns
     -------
     xr.DataArray, [unitless]
-        Fraction of extraterrestrial radiation arriving at the surface, a number between 0 and 1.
+        Clearness index.
     """
     rtop = extraterrestrial_solar_radiation(rsds.time, rsds.lat)
     rtop = convert_units_to(rtop, rsds)
     with xr.set_options(keep_attrs=True):
-        frac_of_rtop = rsds / rtop
-    frac_of_rtop = frac_of_rtop.assign_attrs(units="")
-    return frac_of_rtop
+        ci = rsds / rtop
+    ci = ci.assign_attrs(units="")
+    return ci
 
 
 @declare_units(

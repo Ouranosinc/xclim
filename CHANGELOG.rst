@@ -2,6 +2,14 @@
 Changelog
 =========
 
+v0.57.0 (unreleased)
+--------------------
+Contributors to this version: Éric (:user:`coxipi`).
+
+Internal changes
+^^^^^^^^^^^^^^^^
+* New helper ``xclim._conversion.clearness_index`` computes the `clearness_index`, (downwards solar radiation / extraterrestrial solar radiation).
+
 v0.56.0 (2025-03-27)
 --------------------
 Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Hui-Min Wang (:user:`Hem-W`), Jack Kit-tai Wong (:user:`jack-ktw`), Adrien Lamarche (:user:`LamAdr`), Éric Dupuis (:user:`coxipi`), Jens de Bruijn (:user:`jensdebruijn`), Pascal Bourgault (:user:`aulemahal`), Sarah Gammon (:user:`SarahG-579462`).
