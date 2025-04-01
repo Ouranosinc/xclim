@@ -1236,9 +1236,10 @@ def clearness_index(rsds: xr.DataArray) -> xr.DataArray:
 
     Notes
     -----
-    Clearness index is defined as
+    Clearness Index (ci) is defined as:
 
     .. math :
+
        ci = rsds / \text{extraterrestrial_solar_radiation}
 
     References
@@ -1274,9 +1275,10 @@ def shortwave_downwelling_radiation_from_clearness_index(ci: xr.DataArray) -> xr
 
     Notes
     -----
-    The computation is given by
+    The conversion from Clearness Index is defined as:
 
     .. math :
+
        rsds = ci * \text{extraterrestrial_solar_radiation}
     """
     rtop = extraterrestrial_solar_radiation(ci.time, ci.lat)
