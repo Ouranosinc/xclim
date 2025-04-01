@@ -76,6 +76,11 @@ def use_ufunc(
     return (index == "first") and ufunc_1dim and (freq is None)
 
 
+def _is_chunked(da, dim):
+    """Check if `da` has non-trivial chunks"""
+    return (ch := da.chunksizes.get(dim, -1)) != -1 and ch != da[dim].size
+
+
 def resample_and_rl(
     da: xr.DataArray,
     resample_before_rl: bool,
@@ -190,7 +195,7 @@ def _cumsum_reset(
     """
     typ = -_smallest_uint(da, dim)
     da = da.astype(typ)
-    if ((ch := da.chunksizes.get(dim, -1)) == -1 or ch == da[dim].size) and reset_on_zero:
+    if _is_chunked(da, dim) and reset_on_zero:
         out = xr.apply_ufunc(
             _cumsum_reset_np,
             da,
@@ -494,13 +499,17 @@ def windowed_max_run_sum(
         Total number of `True` values part of a consecutive runs of at least `window` long.
     """
     if window == 1 and freq is None:
-        out = rle(da, dim=dim, index=index).max(dim=dim)
+        out = _cumsum_reset(da, dim=dim, index=index).max(dim=dim)
 
     else:
-        d_rse = rle(da, dim=dim, index=index)
-        d_rle = rle((da > 0).astype(bool), dim=dim, index=index)
+        if da.dtype == bool:
+            d_rle = rle(da, dim=dim, index=index)
+            d = d_rle.where(d_rle >= window, 0)
+        else:
+            d_rse = rle(da, dim=dim, index=index)
+            d_rle = rle((da > 0).astype(bool), dim=dim, index=index)
+            d = d_rse.where(d_rle >= window, 0)
 
-        d = d_rse.where(d_rle >= window, 0)
         if freq is not None:
             d = d.resample({dim: freq})
         out = d.max(dim=dim)
@@ -770,6 +779,38 @@ def run_bounds(mask: xr.DataArray, dim: str = "time", coord: bool | str = True):
     return xr.concat((starts, ends), "bounds")
 
 
+def _keep_longest_run_np(arr, pre_post_season=False):
+    sh = arr.shape
+    locshape = arr.shape[:-1]
+    arr = arr.reshape(1 if len(locshape) == 0 else np.prod(arr.shape[:-1]), arr.shape[-1])
+    imx = arr.argmax(axis=-1, keepdims=True)
+    arr0 = np.broadcast_to(np.arange(arr.shape[-1])[np.newaxis, :], arr.shape)
+    indices = np.array([[j, imx[j].item()] for j in range(len(imx))])
+    rlength = arr[indices[:, 0], indices[:, 1]]
+    rlength = rlength.reshape(imx.shape)
+    arr = (arr0 <= (imx)) & (arr0 > imx - rlength)
+    if pre_post_season:
+        arr = (
+            (arr0 <= (imx - rlength)).reshape(sh),
+            ((arr0 <= imx) & (arr0 > (imx - rlength))).reshape(sh),
+            (arr0 > imx).reshape(sh),
+        )
+    else:
+        ((arr0 <= (imx)) & (arr0 > imx - rlength)).reshape(sh)
+    return arr
+
+
+def _keep_longest_run_xr(_rls, dim):
+    _out = xr.where(
+        # Construct an integer array and find the max
+        _rls[dim].copy(data=np.arange(_rls[dim].size)) == _rls.argmax(dim),
+        _rls + 1,  # Add one to the First longest run
+        _rls,
+    )
+    _out = _out.bfill(dim) == _out.max(dim)
+    return _out
+
+
 def keep_longest_run(da: xr.DataArray, dim: str = "time", freq: str | None = None) -> xr.DataArray:
     """
     Keep the longest run along a dimension.
@@ -789,24 +830,28 @@ def keep_longest_run(da: xr.DataArray, dim: str = "time", freq: str | None = Non
         Boolean array similar to da but with only one run, the (first) longest.
     """
     # Get run lengths
-    rls = _cumsum_reset(da, dim)
+    rls = rle(da, dim)
 
-    def _get_out(_rls):  # numpydoc ignore=GL08
-        _out = xr.where(
-            # Construct an integer array and find the max
-            _rls[dim].copy(data=np.arange(_rls[dim].size)) == _rls.argmax(dim),
-            _rls + 1,  # Add one to the First longest run
-            _rls,
+    def _apply_ufunc_keep_longest_run(rls, dim):
+        return xr.apply_ufunc(
+            _keep_longest_run_np,
+            rls,
+            input_core_dims=[[dim]],
+            output_core_dims=[[dim]],
+            dask="parallelized",
         )
-        _out = _out.bfill(dim) == _out.max(dim)
-        return _out
 
+    keep_longest_run_func = (
+        _keep_longest_run_xr if (is_chunked := _is_chunked(rls, dim)) else _apply_ufunc_keep_longest_run
+    )
     if freq is not None:
-        out = resample_map(rls, dim, freq, _get_out)
+        out = resample_map(rls, dim, freq, keep_longest_run_func)
     else:
-        out = _get_out(rls)
+        out = keep_longest_run_func(rls)
 
-    return da.copy(data=out.transpose(*da.dims).data)
+    if is_chunked:
+        out = da.copy(data=out.transpose(*da.dims).data)
+    return out
 
 
 def runs_with_holes(
