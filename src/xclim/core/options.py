@@ -8,6 +8,7 @@ Global or contextual options for xclim, similar to xarray.set_options.
 from __future__ import annotations
 
 from collections.abc import Callable
+from copy import deepcopy
 from inspect import signature
 
 from boltons.funcutils import wraps
@@ -72,7 +73,7 @@ _VALIDATORS = {
 
 def _set_missing_options(mopts):
     for meth, opts in mopts.items():
-        OPTIONS[MISSING_OPTIONS][meth].update(opts)
+        OPTIONS[MISSING_OPTIONS][meth].update(**opts)
 
 
 def _set_metadata_locales(locales):
@@ -259,7 +260,7 @@ class set_options:  # numpydoc ignore=PR01,PR02
             if k in _VALIDATORS and not _VALIDATORS[k](v):
                 raise ValueError(f"option {k!r} given an invalid value: {v!r}")
 
-            self.old[k] = OPTIONS[k]
+            self.old[k] = deepcopy(OPTIONS[k])
 
         self._update(kwargs)
 

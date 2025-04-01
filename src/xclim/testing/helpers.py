@@ -9,7 +9,6 @@ from pathlib import Path
 from typing import Any
 
 import numpy as np
-import pandas as pd
 import xarray as xr
 from dask.callbacks import Callback
 
@@ -131,7 +130,7 @@ def add_example_file_paths() -> dict[str, str | list[xr.DataArray]]:
     }
 
     # For core.utils.load_module example
-    sixty_years = xr.cftime_range("1990-01-01", "2049-12-31", freq="D")
+    sixty_years = xr.date_range("1990-01-01", "2049-12-31", freq="D")
     namespace["temperature_datasets"] = [
         xr.DataArray(
             12 * np.random.random_sample(sixty_years.size) + 273,
@@ -184,7 +183,7 @@ def test_timeseries(
     units: str | None = None,
     freq: str = "D",
     as_dataset: bool = False,
-    cftime: bool = False,
+    cftime: bool | None = None,
     calendar: str | None = None,
 ) -> xr.DataArray | xr.Dataset:
     """
@@ -205,7 +204,7 @@ def test_timeseries(
     as_dataset : bool
         Whether to return a Dataset or a DataArray. Default is False.
     cftime : bool
-        Whether to use cftime or not. Default is False.
+        Whether to use cftime or not. Default is None, which uses cftime only for non-standard calendars.
     calendar : str or None
         Whether to use a calendar. If a calendar is provided, cftime is used.
 
@@ -214,10 +213,7 @@ def test_timeseries(
     xr.DataArray or xr.Dataset
         A DataArray or Dataset with time, lon and lat dimensions.
     """
-    if calendar or cftime:
-        coords = xr.cftime_range(start, periods=len(values), freq=freq, calendar=calendar or "standard")
-    else:
-        coords = pd.date_range(start, periods=len(values), freq=freq)
+    coords = xr.date_range(start, periods=len(values), freq=freq, calendar=calendar or "standard", use_cftime=cftime)
 
     if variable in VARIABLES:
         attrs = {a: VARIABLES[variable].get(a, "") for a in ["description", "standard_name", "cell_methods"]}

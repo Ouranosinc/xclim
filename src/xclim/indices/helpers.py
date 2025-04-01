@@ -20,9 +20,7 @@ import numpy as np
 import xarray as xr
 
 try:
-    from xarray.coding.calendar_ops import (
-        _datetime_to_decimal_year as datetime_to_decimal_year,
-    )
+    from xarray.coding.calendar_ops import _datetime_to_decimal_year
 except ImportError:
     XR2409 = True
 else:
@@ -76,7 +74,6 @@ def day_angle(time: xr.DataArray) -> xr.DataArray:
 
     Assuming the Earth makes a full circle in a year, this is the angle covered from
     the beginning of the year up to that timestep. Also called the "julian day fraction".
-    See :py:func:`~xclim.core.calendar.datetime_to_decimal_year`.
 
     Parameters
     ----------
@@ -91,7 +88,7 @@ def day_angle(time: xr.DataArray) -> xr.DataArray:
     if XR2409:
         decimal_year = time.dt.decimal_year
     else:
-        decimal_year = datetime_to_decimal_year(times=time, calendar=time.dt.calendar)
+        decimal_year = _datetime_to_decimal_year(times=time, calendar=time.dt.calendar)
     return ((decimal_year % 1) * 2 * np.pi).assign_attrs(units="rad")
 
 

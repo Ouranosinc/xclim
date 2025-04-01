@@ -742,7 +742,7 @@ def preprocess_standardized_index(da: xr.DataArray, freq: str | None, window: in
         )
         group = "time.dayofyear"
 
-    if freq is not None:
+    if freq is not None and xr.infer_freq(da.time) != freq:
         da = da.resample(time=freq).mean(keep_attrs=True)
 
     if uses_dask(da) and len(da.chunks[da.get_axis_num("time")]) > 1:
@@ -825,7 +825,7 @@ def standardized_index_fit_params(
 
     .. math::
 
-      \texttt{pdf}(X) = \pi  \texttt{ if }  X=0  \texttt{ else } (1-\pi) \texttt{pdf}_0(X)
+       \texttt{pdf}(X) = \pi  \texttt{ if }  X=0  \texttt{ else } (1-\pi) \texttt{pdf}_0(X)
     """
     fitkwargs = fitkwargs or {}
     if method == "APP":
