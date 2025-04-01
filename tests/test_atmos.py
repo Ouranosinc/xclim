@@ -7,6 +7,8 @@ import pytest
 import xarray as xr
 
 from xclim import atmos, set_options
+from xclim.core.units import convert_units_to
+from xclim.indices._conversion import shortwave_downwelling_radiation_from_clearness_index
 from xclim.indices.helpers import extraterrestrial_solar_radiation, make_hourly_temperature
 
 K2C = 273.16
@@ -635,8 +637,16 @@ def test_water_cycle_intensity(pr_series, evspsbl_series):
 
 
 class TestClearnessIndex:
-    def test_ci_smaller_than_rtop(self, atmosds):
+    def test_ci_physical_constraints(self, atmosds):
         rsds = atmosds.rsds
         rtop = extraterrestrial_solar_radiation(rsds.time, rsds.lat)
         ci = atmos.clearness_index(rsds)
-        assert ((ci <= rtop) | (ci.isnull() & rsds.isnull())).all()
+        assert ((ci >= 0) | (ci <= rtop) | (ci.isnull() & rsds.isnull())).all()
+
+    def test_ci_and_inverse_transform(self, atmosds):
+        rsds = atmosds.rsds
+        ci = atmos.clearness_index(rsds)
+        rsds2 = shortwave_downwelling_radiation_from_clearness_index(ci)
+        rsds2 = convert_units_to(rsds2, rsds)
+        assert not ((rsds.isnull() ^ rsds2.isnull()).all())
+        np.testing.assert_allclose(rsds.values, rsds2.transpose(*rsds.dims).values)

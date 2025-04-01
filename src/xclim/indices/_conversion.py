@@ -1241,7 +1241,7 @@ def clearness_index(rsds: xr.DataArray) -> xr.DataArray:
     return ci
 
 
-@declare_units(ci="[radiation]")
+@declare_units(ci="[]")
 def shortwave_downwelling_radiation_from_clearness_index(ci: xr.DataArray) -> xr.DataArray:
     """
     Compute the surface downwelling solar radiation from clearness index.
@@ -1261,7 +1261,6 @@ def shortwave_downwelling_radiation_from_clearness_index(ci: xr.DataArray) -> xr
     clearness_index : Inverse transformation, and definition of the clearness index.
     """
     rtop = extraterrestrial_solar_radiation(ci.time, ci.lat)
-    rtop = convert_units_to(rtop, ci)
     with xr.set_options(keep_attrs=True):
         rsds = (rtop * ci).assign_attrs(units=rtop.units)
     return rsds
