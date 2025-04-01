@@ -905,7 +905,7 @@ def cooling_degree_days_approximation(
         ),
     )
     cdd = cdd.resample(time=freq).sum(dim="time")
-    cdd = to_agg_units(cdd, tas, 'integral')
+    cdd = to_agg_units(cdd, tas, "integral")
     return cdd
 
 
@@ -2130,7 +2130,7 @@ def heating_degree_days_approximation(
         ),
     )
     hdd = hdd.resample(time=freq).sum(dim="time")
-    hdd = to_agg_units(hdd, tas, 'integral')
+    hdd = to_agg_units(hdd, tas, "integral")
     return hdd
 
 
