@@ -6,9 +6,9 @@ v0.57.0 (unreleased)
 --------------------
 Contributors to this version: Éric (:user:`coxipi`).
 
-Internal changes
-^^^^^^^^^^^^^^^^
-* New helper ``xclim._conversion.clearness_index`` computes the `clearness_index`, (downwards solar radiation / extraterrestrial solar radiation).
+New indicators
+^^^^^^^^^^^^^^
+* New indicator ``xclim.atmos.clearness_index`` computes the `clearness_index` (ratio of downwards solar radiation to extraterrestrial solar radiation). (:pull:`2140`).
 
 v0.56.0 (2025-03-27)
 --------------------
