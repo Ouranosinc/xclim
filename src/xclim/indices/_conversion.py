@@ -46,6 +46,7 @@ __all__ = [
     "saturation_vapor_pressure",
     "sfcwind_2_uas_vas",
     "sfcwind_to_uas_vas",
+    "shortwave_downwelling_radiation_from_clearness_index",
     "shortwave_upwelling_radiation_from_net_downwelling",
     "snd_to_snw",
     "snowfall_approximation",
