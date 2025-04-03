@@ -34,7 +34,7 @@ repos:
       - id: toml-sort-fix
         exclude: '.pylintrc.toml'
   - repo: https://github.com/adrienverge/yamllint.git
-    rev: v1.36.2
+    rev: v1.37.0
     hooks:
       - id: yamllint
         args: [ '--config-file=.yamllint.yaml' ]
@@ -51,7 +51,7 @@ repos:
       - id: pylint
         args: [ '--rcfile=.pylintrc.toml', '--errors-only', '--jobs=0', '--disable=import-error' ]
   - repo: https://github.com/pycqa/flake8
-    rev: 7.1.2
+    rev: 7.2.0
     hooks:
       - id: flake8
         additional_dependencies: [ 'flake8-rst-docstrings ']
@@ -105,11 +105,11 @@ repos:
     hooks:
       - id: formatbibtex
   - repo: https://github.com/gitleaks/gitleaks
-    rev: v8.24.0
+    rev: v8.24.2
     hooks:
       - id: gitleaks
   - repo: https://github.com/python-jsonschema/check-jsonschema
-    rev: 0.31.3
+    rev: 0.32.1
     hooks:
       - id: check-github-workflows
       - id: check-readthedocs

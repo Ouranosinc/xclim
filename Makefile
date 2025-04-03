@@ -78,13 +78,13 @@ coverage: ## check code coverage quickly with the default Python
 
 autodoc-obsolete: clean-docs ## create sphinx-apidoc files (obsolete)
 	mkdir -p docs/apidoc/
-	sphinx-apidoc -o docs/apidoc/ --private --module-first src/xclim src/xclim/testing/tests
+	sphinx-apidoc -o docs/apidoc/ --private --module-first src/xclim
 
 autodoc-custom-index: clean-docs ## create sphinx-apidoc files but with special index handling for indices and indicators
 	mkdir -p docs/apidoc/
-	sphinx-apidoc -o docs/apidoc/ --private --module-first src/xclim src/xclim/testing/tests src/xclim/indicators src/xclim/indices
+	sphinx-apidoc -o docs/apidoc/ --private --module-first src/xclim src/xclim/indicators src/xclim/indices
 	rm docs/apidoc/xclim.rst
-	env SPHINX_APIDOC_OPTIONS="members,undoc-members,show-inheritance,noindex" sphinx-apidoc -o docs/apidoc/ --private --module-first src/xclim src/xclim/testing/tests
+	env SPHINX_APIDOC_OPTIONS="members,undoc-members,show-inheritance,noindex" sphinx-apidoc -o docs/apidoc/ --private --module-first src/xclim
 
 linkcheck: autodoc-custom-index ## run checks over all external links found throughout the documentation
 	$(MAKE) -C docs linkcheck
