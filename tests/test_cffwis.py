@@ -53,8 +53,8 @@ class TestCFFWIS:
             return to_xr(cls.cffdrs_fire_season[key])
         return {key: to_xr(arr) for key, arr in cls.cffdrs_fire_season.items()}
 
-    def test_fine_fuel_moisture_code(self, open_dataset):
-        fwi_data = open_dataset(self.fwi_test_dataset)
+    def test_fine_fuel_moisture_code(self, nimbus):
+        fwi_data = xr.open_dataset(nimbus.fetch(self.fwi_test_dataset))
         ffmc = np.full(fwi_data.time.size + 1, np.nan)
         ffmc[0] = 85
         for i, t in enumerate(fwi_data.time):

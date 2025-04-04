@@ -15,7 +15,7 @@ from xclim.sdba.detrending import (
 )
 
 
-def test_poly_detrend_and_from_ds(series, tmp_path, open_dataset):
+def test_poly_detrend_and_from_ds(series, tmp_path):
     x = series(np.arange(20 * 365.25), "tas")
 
     poly = PolyDetrend(degree=1)
@@ -32,7 +32,7 @@ def test_poly_detrend_and_from_ds(series, tmp_path, open_dataset):
     file = tmp_path / "test_polydetrend.nc"
     fx.ds.to_netcdf(file, engine="h5netcdf")
 
-    ds = open_dataset(file)
+    ds = xr.open_dataset(file)
     fx2 = PolyDetrend.from_dataset(ds)
 
     xr.testing.assert_equal(fx.ds, fx2.ds)

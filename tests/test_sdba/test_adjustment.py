@@ -96,7 +96,7 @@ class TestBaseAdjustment:
 
 class TestLoci:
     @pytest.mark.parametrize("group,dec", (["time", 2], ["time.month", 1]))
-    def test_time_and_from_ds(self, series, group, dec, tmp_path, random, open_dataset):
+    def test_time_and_from_ds(self, series, group, dec, tmp_path, random):
         n = 10000
         u = random.random(n)
 
@@ -122,7 +122,7 @@ class TestLoci:
         file = tmp_path / "test_loci.nc"
         loci.ds.to_netcdf(file, engine="h5netcdf")
 
-        ds = open_dataset(file)
+        ds = xr.open_dataset(file)
         loci2 = LOCI.from_dataset(ds)
 
         xr.testing.assert_equal(loci.ds, loci2.ds)
@@ -314,7 +314,7 @@ class TestDQM:
         # FIXME: This test sometimes fails due to a block/indexing error
         np.testing.assert_allclose(p.transpose(..., "time"), ref_t, rtol=0.1, atol=0.5)
 
-    def test_cannon_and_from_ds(self, cannon_2015_rvs, tmp_path, open_dataset, random):
+    def test_cannon_and_from_ds(self, cannon_2015_rvs, tmp_path, random):
         ref, hist, sim = cannon_2015_rvs(15000, random=random)
 
         DQM = DetrendedQuantileMapping.train(ref, hist, kind="*", group="time")
@@ -326,7 +326,7 @@ class TestDQM:
         file = tmp_path / "test_dqm.nc"
         DQM.ds.to_netcdf(file, engine="h5netcdf")
 
-        ds = open_dataset(file)
+        ds = xr.open_dataset(file)
         DQM2 = DetrendedQuantileMapping.from_dataset(ds)
 
         xr.testing.assert_equal(DQM.ds, DQM2.ds)

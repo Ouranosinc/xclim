@@ -314,13 +314,12 @@ def nimbus(threadsafe_data_dir, worker_id):
 @pytest.fixture(scope="session")
 def open_dataset(nimbus):
     def _open_session_scoped_file(file: str | os.PathLike, **xr_kwargs):
+        nimbus_kwargs = dict(branch=TESTDATA_BRANCH, repo=TESTDATA_REPO_URL, cache_dir=nimbus.path)
         xr_kwargs.setdefault("cache", True)
         xr_kwargs.setdefault("engine", "h5netcdf")
         return _open_dataset(
             file,
-            branch=TESTDATA_BRANCH,
-            repo=TESTDATA_REPO_URL,
-            cache_dir=nimbus.path,
+            nimbus_kwargs=nimbus_kwargs,
             **xr_kwargs,
         )
 
@@ -359,9 +358,8 @@ def lafferty_sriver_ds(nimbus) -> xr.Dataset:
 @pytest.fixture
 def atmosds(nimbus) -> xr.Dataset:
     """Get synthetic atmospheric dataset."""
-    return _open_dataset(
-        "atmosds.nc",
-        cache_dir=nimbus.path,
+    return xr.open_dataset(
+        Path(nimbus.path).joinpath("atmosds.nc"),
         engine="h5netcdf",
     ).load()
 

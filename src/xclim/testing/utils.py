@@ -567,7 +567,7 @@ def nimbus(
     return _nimbus
 
 
-def open_dataset(name: str, nimbus_kwargs: dict[str, Path | str | bool], **xr_kwargs: Any) -> Dataset:
+def open_dataset(name: str, nimbus_kwargs: dict[str, Path | str | bool] | None = None, **xr_kwargs: Any) -> Dataset:
     r"""
     Convenience function to open a dataset from the xclim testing data using the `nimbus` class.
 
@@ -597,6 +597,8 @@ def open_dataset(name: str, nimbus_kwargs: dict[str, Path | str | bool], **xr_kw
     As of `xclim` v0.57.0, this function no longer supports the `dap_url` parameter. For OPeNDAP datasets, use
     `xarray.open_dataset` directly using the OPeNDAP URL with an appropriate backend installed (netCDF4, pydap, etc.).
     """
+    if nimbus_kwargs is None:
+        nimbus_kwargs = {}
     return _open_dataset(nimbus(**nimbus_kwargs).fetch(name), **xr_kwargs)
 
 
