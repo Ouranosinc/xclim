@@ -46,7 +46,7 @@ class TestFileRequests:
 
         # Test with top-level default engine
         ds = open_dataset(
-            Path("cmip5/tas_Amon_CanESM2_rcp85_r1i1p1_200701-200712.nc"),
+            "cmip5/tas_Amon_CanESM2_rcp85_r1i1p1_200701-200712.nc",
             nimbus_kwargs=nimbus_kwargs,
             engine="h5netcdf",
         )
