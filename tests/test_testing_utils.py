@@ -42,10 +42,12 @@ class TestFileRequests:
     ):
         from xclim.testing.utils import default_testdata_cache, default_testdata_version
 
+        nimbus_kwargs = {"cache_dir": default_testdata_cache.joinpath(default_testdata_version)}
+
         # Test with top-level default engine
         ds = open_dataset(
             Path("cmip5/tas_Amon_CanESM2_rcp85_r1i1p1_200701-200712.nc"),
-            cache_dir=default_testdata_cache.joinpath(default_testdata_version),
+            nimbus_kwargs=nimbus_kwargs,
             engine="h5netcdf",
         )
         assert ds.lon.size == 128

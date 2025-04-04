@@ -52,10 +52,10 @@ def generate_atmos(
     dict[str, xr.DataArray]
         A dictionary of xarray DataArrays.
     """
-    with xtu.open_dataset(
-        "ERA5/daily_surface_cancities_1990-1993.nc",
-        branch=branch,
-        cache_dir=cache_dir,
+    nimbus = xtu.nimbus(branch=branch, cache_dir=cache_dir)
+
+    with xr.open_dataset(
+        nimbus.fetch("ERA5/daily_surface_cancities_1990-1993.nc"),
         engine="h5netcdf",
     ) as ds:
         rsus = shortwave_upwelling_radiation_from_net_downwelling(ds.rss, ds.rsds)
@@ -79,7 +79,7 @@ def generate_atmos(
         ds.to_netcdf(atmos_file, engine="h5netcdf")
 
     # Give access to dataset variables by name in namespace
-    with xtu.open_dataset(atmos_file, branch=branch, cache_dir=cache_dir, engine="h5netcdf") as ds:
+    with xr.open_dataset(atmos_file, engine="h5netcdf") as ds:
         namespace = {f"{var}_dataset": ds[var] for var in ds.data_vars}
     return namespace
 

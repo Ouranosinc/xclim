@@ -20,7 +20,7 @@ from importlib import import_module
 from io import StringIO
 from pathlib import Path
 from shutil import copytree
-from typing import IO, TextIO
+from typing import IO, Any, TextIO
 from urllib.error import HTTPError, URLError
 from urllib.parse import urljoin, urlparse
 from urllib.request import urlretrieve
@@ -32,7 +32,6 @@ from xarray import open_dataset as _open_dataset
 
 import xclim
 from xclim import __version__ as __xclim_version__
-from xclim.core.utils import deprecated
 
 try:
     import pytest
@@ -568,78 +567,37 @@ def nimbus(
     return _nimbus
 
 
-# idea copied from raven that it borrowed from xclim that borrowed it from xarray that was borrowed from Seaborn
-@deprecated(from_version="0.57.0", suggested="nimbus")
-def open_dataset(
-    name: str | os.PathLike[str],
-    dap_url: str | None = None,
-    branch: str = TESTDATA_BRANCH,
-    repo: str = TESTDATA_REPO_URL,
-    cache_dir: str | os.PathLike[str] | None = TESTDATA_CACHE_DIR,
-    **kwargs,
-) -> Dataset:
+def open_dataset(name: str, nimbus_kwargs: dict[str, Path | str | bool], **xr_kwargs: Any) -> Dataset:
     r"""
-    Open a dataset from the online GitHub-like repository.
+    Convenience function to open a dataset from the xclim testing data using the `nimbus` class.
 
-    If a local copy is found then always use that to avoid network traffic.
+    This is a thin wrapper around the `nimbus` class to make it easier to open xclim testing datasets.
 
     Parameters
     ----------
     name : str
         Name of the file containing the dataset.
-    dap_url : str, optional
-        URL to OPeNDAP folder where the data is stored. If supplied, supersedes github_url.
-    branch : str
-        Branch of the repository to use when fetching datasets.
-    repo : str
-        URL of the repository to use when fetching testing datasets.
-    cache_dir : Path
-        The directory in which to search for and write cached data.
-    **kwargs : dict
-        For NetCDF files, keywords passed to :py:func:`xarray.open_dataset`.
+    nimbus_kwargs : dict
+        Keyword arguments passed to the nimbus function.
+    **xr_kwargs : Any
+        Keyword arguments passed to xarray.open_dataset.
 
     Returns
     -------
-    Union[Dataset, Path]
+    xarray.Dataset
         The dataset.
-
-    Raises
-    ------
-    OSError
-        If the file is not found in the cache directory or cannot be read.
 
     See Also
     --------
     xarray.open_dataset : Open and read a dataset from a file or file-like object.
+    nimbus : Pooch wrapper for accessing the xclim testing data.
+
+    Notes
+    -----
+    As of `xclim` v0.57.0, this function no longer supports the `dap_url` parameter. For OPeNDAP datasets, use
+    `xarray.open_dataset` directly using the OPeNDAP URL with an appropriate backend installed (netCDF4, pydap, etc.).
     """
-    if cache_dir is None:
-        raise ValueError(
-            "The cache directory must be set. "
-            "Please set the `cache_dir` parameter or the `XCLIM_DATA_DIR` environment variable."
-        )
-
-    if dap_url:
-        dap_target = urljoin(dap_url, str(name))
-        try:
-            return _open_dataset(audit_url(dap_target, context="OPeNDAP"), **kwargs)
-        except URLError:
-            raise
-        except OSError as err:
-            msg = f"OPeNDAP file not read. Verify that the service is available: {dap_target}"
-            raise OSError(msg) from err
-
-    local_file = Path(cache_dir).joinpath(name)
-    if not local_file.exists():
-        try:
-            local_file = nimbus(branch=branch, repo=repo, cache_dir=cache_dir).fetch(name)
-        except OSError as err:
-            msg = f"File not found locally. Verify that the testing data is available in remote: {local_file}"
-            raise OSError(msg) from err
-    try:
-        ds = _open_dataset(local_file, **kwargs)
-        return ds
-    except OSError:
-        raise
+    return _open_dataset(nimbus(**nimbus_kwargs).fetch(name), **xr_kwargs)
 
 
 def populate_testing_data(
