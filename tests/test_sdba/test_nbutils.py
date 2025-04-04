@@ -9,8 +9,8 @@ from xclim.sdba import nbutils as nbu
 
 class TestQuantiles:
     @pytest.mark.parametrize("uses_dask", [True, False])
-    def test_quantile(self, open_dataset, uses_dask):
-        da = (open_dataset("sdba/CanESM2_1950-2100.nc").sel(time=slice("1950", "1955")).pr).load()
+    def test_quantile(self, nimbus, uses_dask):
+        da = (xr.open_dataset(nimbus.fetch("sdba/CanESM2_1950-2100.nc")).sel(time=slice("1950", "1955")).pr).load()
         if uses_dask:
             da = da.chunk({"location": 1})
         else:
@@ -20,7 +20,7 @@ class TestQuantiles:
         out_xr = da.quantile(q=q, dim="time").transpose("location", ...)
         np.testing.assert_array_almost_equal(out_nbu.values, out_xr.values)
 
-    def test_edge_cases(self, open_dataset):
+    def test_edge_cases(self):
         q = np.linspace(0.1, 0.99, 50)
 
         # only 1 non-null value
