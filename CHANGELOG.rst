@@ -9,6 +9,11 @@ Contributors to this version: Éric Dupuis (:user:`coxipi`), Trevor James Smith 
 New indicators
 ^^^^^^^^^^^^^^
 * New indicator ``xclim.atmos.clearness_index`` computes the `clearness_index` (ratio of downwards solar radiation to extraterrestrial solar radiation). (:pull:`2140`).
+* Added ``cooling_degree_days_approximation`` and ``heating_degree_days_approximation`` indices to compute the number of cooling and heating degree days with consideration for daily temperature cycles. (:issue:`1941`, :pull:`2135`).
+
+Bug fixes
+^^^^^^^^^
+* Adjustments were made to the `docs` install recipe to ensure that the `xclim` documentation builds correctly. The minimum required Python for rendering the documentation is now 3.11. (:pull:`2141`).
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
@@ -18,6 +23,9 @@ Breaking changes
 Internal changes
 ^^^^^^^^^^^^^^^^
 * New conversion function ``xclim.indices._conversion.shortwave_downwelling_radiation_from_clearness_index`` provides the inverse of ``xclim.indices._conversion.clearness_index``. (:pull:`2140`).
+* Added a `pre-commit` hook for formatting BibTeX files and reformatted existing BibTeX files. (:pull:`2135`).
+* `pre-commit` hooks have been updated to their latest versions. (:pull:`2141`).
+* Updated a deprecated `pathlib` usage in the `xclim` documentation that was causing failures under Python 3.13. (:pull:`2141`).
 
 v0.56.0 (2025-03-27)
 --------------------

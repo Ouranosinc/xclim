@@ -244,6 +244,20 @@ class TestCoolingDegreeDays:
         cdd = xci.cooling_degree_days(a)
         assert cdd == 10
 
+    def test_simple_approximation(self, tas_series, tasmin_series, tasmax_series):
+        tmin = np.zeros(365) + 16
+        tmin[:7] += [-3, -2, -1, 0, 1, 2, 3]
+        tmean = np.zeros(365) + 18  # threshold
+        tmax = np.zeros(365) + 20
+
+        tas = tas_series(tmean + K2C)
+        tasmin = tasmin_series(tmin + K2C)
+        tasmax = tasmax_series(tmax + K2C)
+
+        out = xci.cooling_degree_days_approximation(tasmax, tasmin, tas)
+
+        np.testing.assert_array_equal(out[:1], 183.25)
+
 
 class TestAgroclimaticIndices:
     def test_corn_heat_units(self, tasmin_series, tasmax_series):
@@ -1664,6 +1678,20 @@ class TestHeatingDegreeDays:
         out = xci.heating_degree_days(da)
         np.testing.assert_array_equal(out[:1], 6)
         np.testing.assert_array_equal(out[1:], 0)
+
+    def test_simple_approximation(self, tas_series, tasmin_series, tasmax_series):
+        tmin = np.zeros(365) + 15
+        tmean = np.zeros(365) + 17  # threshold
+        tmax = np.zeros(365) + 19
+        tmax[:7] += [-3, -2, -1, 0, 1, 2, 3]
+
+        tas = tas_series(tmean + K2C)
+        tasmin = tasmin_series(tmin + K2C)
+        tasmax = tasmax_series(tmax + K2C)
+
+        out = xci.heating_degree_days_approximation(tasmax, tasmin, tas)
+
+        np.testing.assert_array_equal(out[:1], 89.75)
 
 
 class TestHeatWaveFrequency:
