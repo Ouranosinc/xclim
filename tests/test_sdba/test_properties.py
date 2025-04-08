@@ -11,9 +11,11 @@ from xclim.core.units import convert_units_to
 
 
 class TestProperties:
-    def test_mean(self, open_dataset):
+    def test_mean(self, nimbus):
         sim = (
-            open_dataset("sdba/CanESM2_1950-2100.nc").sel(time=slice("1950", "1980"), location="Vancouver").pr
+            xr.open_dataset(nimbus.fetch("sdba/CanESM2_1950-2100.nc"))
+            .sel(time=slice("1950", "1980"), location="Vancouver")
+            .pr
         ).load()
 
         out_year = sdba.properties.mean(sim)
@@ -27,9 +29,11 @@ class TestProperties:
 
         assert out_season.long_name.startswith("Mean")
 
-    def test_var(self, open_dataset):
+    def test_var(self, nimbus):
         sim = (
-            open_dataset("sdba/CanESM2_1950-2100.nc").sel(time=slice("1950", "1980"), location="Vancouver").pr
+            xr.open_dataset(nimbus.fetch("sdba/CanESM2_1950-2100.nc"))
+            .sel(time=slice("1950", "1980"), location="Vancouver")
+            .pr
         ).load()
 
         out_year = sdba.properties.var(sim)
@@ -43,9 +47,11 @@ class TestProperties:
         assert out_season.long_name.startswith("Variance")
         assert out_season.units == "kg2 m-4 s-2"
 
-    def test_std(self, open_dataset):
+    def test_std(self, nimbus):
         sim = (
-            open_dataset("sdba/CanESM2_1950-2100.nc").sel(time=slice("1950", "1980"), location="Vancouver").pr
+            xr.open_dataset(nimbus.fetch("sdba/CanESM2_1950-2100.nc"))
+            .sel(time=slice("1950", "1980"), location="Vancouver")
+            .pr
         ).load()
 
         out_year = sdba.properties.std(sim)
@@ -59,9 +65,11 @@ class TestProperties:
         assert out_season.long_name.startswith("Standard deviation")
         assert out_season.units == "kg m-2 s-1"
 
-    def test_skewness(self, open_dataset):
+    def test_skewness(self, nimbus):
         sim = (
-            open_dataset("sdba/CanESM2_1950-2100.nc").sel(time=slice("1950", "1980"), location="Vancouver").pr
+            xr.open_dataset(nimbus.fetch("sdba/CanESM2_1950-2100.nc"))
+            .sel(time=slice("1950", "1980"), location="Vancouver")
+            .pr
         ).load()
 
         out_year = sdba.properties.skewness(sim)
@@ -80,9 +88,11 @@ class TestProperties:
         assert out_season.long_name.startswith("Skewness")
         assert out_season.units == ""
 
-    def test_quantile(self, open_dataset):
+    def test_quantile(self, nimbus):
         sim = (
-            open_dataset("sdba/CanESM2_1950-2100.nc").sel(time=slice("1950", "1980"), location="Vancouver").pr
+            xr.open_dataset(nimbus.fetch("sdba/CanESM2_1950-2100.nc"))
+            .sel(time=slice("1950", "1980"), location="Vancouver")
+            .pr
         ).load()
 
         out_year = sdba.properties.quantile(sim, q=0.2)
@@ -101,8 +111,12 @@ class TestProperties:
         assert out_season.long_name.startswith("Quantile 0.2")
 
     # TODO: test theshold_count? it's the same a test_spell_length_distribution
-    def test_spell_length_distribution(self, open_dataset):
-        ds = open_dataset("sdba/CanESM2_1950-2100.nc").sel(time=slice("1950", "1952"), location="Vancouver").load()
+    def test_spell_length_distribution(self, nimbus):
+        ds = (
+            xr.open_dataset(nimbus.fetch("sdba/CanESM2_1950-2100.nc"))
+            .sel(time=slice("1950", "1952"), location="Vancouver")
+            .load()
+        )
 
         # test pr, with amount method
         sim = ds.pr
@@ -134,7 +148,7 @@ class TestProperties:
             == "Average of spell length distribution when the variable is >= the quantile 0.9 for 1 consecutive day(s)."
         )
 
-    def test_spell_length_distribution_mixed_stat(self, open_dataset):
+    def test_spell_length_distribution_mixed_stat(self):
         time = pd.date_range("2000-01-01", periods=2 * 365, freq="D")
         tas = xr.DataArray(
             np.array([0] * 365 + [40] * 365),
@@ -158,8 +172,12 @@ class TestProperties:
             (3, [1.333333, 4, 0], [2, 6, 0]),
         ],
     )
-    def test_bivariate_spell_length_distribution(self, open_dataset, window, expected_amount, expected_quantile):
-        ds = (open_dataset("sdba/CanESM2_1950-2100.nc").sel(time=slice("1950", "1952"), location="Vancouver")).load()
+    def test_bivariate_spell_length_distribution(self, nimbus, window, expected_amount, expected_quantile):
+        ds = (
+            xr.open_dataset(nimbus.fetch("sdba/CanESM2_1950-2100.nc")).sel(
+                time=slice("1950", "1952"), location="Vancouver"
+            )
+        ).load()
         tx = ds.tasmax
         with set_options(keep_attrs=True):
             tn = tx - 5
@@ -200,9 +218,11 @@ class TestProperties:
         }
         np.testing.assert_array_almost_equal([outd[k] for k in ["mean", "max", "min"]], expected_quantile)
 
-    def test_acf(self, open_dataset):
+    def test_acf(self, nimbus):
         sim = (
-            open_dataset("sdba/CanESM2_1950-2100.nc").sel(time=slice("1950", "1952"), location="Vancouver").pr
+            xr.open_dataset(nimbus.fetch("sdba/CanESM2_1950-2100.nc"))
+            .sel(time=slice("1950", "1952"), location="Vancouver")
+            .pr
         ).load()
 
         out = sdba.properties.acf(sim, lag=1, group="time.month").sel(month=1)
@@ -214,9 +234,11 @@ class TestProperties:
         assert out.long_name.startswith("Lag-1 autocorrelation")
         assert out.units == ""
 
-    def test_annual_cycle(self, open_dataset):
+    def test_annual_cycle(self, nimbus):
         simt = (
-            open_dataset("sdba/CanESM2_1950-2100.nc").sel(time=slice("1950", "1952"), location="Vancouver").tasmax
+            xr.open_dataset(nimbus.fetch("sdba/CanESM2_1950-2100.nc"))
+            .sel(time=slice("1950", "1952"), location="Vancouver")
+            .tasmax
         ).load()
 
         amp = sdba.properties.annual_cycle_amplitude(simt)
@@ -247,9 +269,11 @@ class TestProperties:
         assert relamp.units == "%"
         assert phase.units == ""
 
-    def test_annual_range(self, open_dataset):
+    def test_annual_range(self, nimbus):
         simt = (
-            open_dataset("sdba/CanESM2_1950-2100.nc").sel(time=slice("1950", "1952"), location="Vancouver").tasmax
+            xr.open_dataset(nimbus.fetch("sdba/CanESM2_1950-2100.nc"))
+            .sel(time=slice("1950", "1952"), location="Vancouver")
+            .tasmax
         ).load()
 
         # Initial annual cycle was this with window = 1
@@ -289,13 +313,17 @@ class TestProperties:
         assert relamp.units == "%"
         assert phase.units == ""
 
-    def test_corr_btw_var(self, open_dataset):
+    def test_corr_btw_var(self, nimbus):
         simt = (
-            open_dataset("sdba/CanESM2_1950-2100.nc").sel(time=slice("1950", "1952"), location="Vancouver").tasmax
+            xr.open_dataset(nimbus.fetch("sdba/CanESM2_1950-2100.nc"))
+            .sel(time=slice("1950", "1952"), location="Vancouver")
+            .tasmax
         ).load()
 
         sim = (
-            open_dataset("sdba/CanESM2_1950-2100.nc").sel(time=slice("1950", "1952"), location="Vancouver").pr
+            xr.open_dataset(nimbus.fetch("sdba/CanESM2_1950-2100.nc"))
+            .sel(time=slice("1950", "1952"), location="Vancouver")
+            .pr
         ).load()
 
         pc = sdba.properties.corr_btw_var(simt, sim, corr_type="Pearson")
@@ -326,9 +354,11 @@ class TestProperties:
         ):
             sdba.properties.corr_btw_var(sim, simt, group="time", corr_type="pear")
 
-    def test_relative_frequency(self, open_dataset):
+    def test_relative_frequency(self, nimbus):
         sim = (
-            open_dataset("sdba/CanESM2_1950-2100.nc").sel(time=slice("1950", "1952"), location="Vancouver").pr
+            xr.open_dataset(nimbus.fetch("sdba/CanESM2_1950-2100.nc"))
+            .sel(time=slice("1950", "1952"), location="Vancouver")
+            .pr
         ).load()
 
         test = sdba.properties.relative_frequency(sim, thresh="25 mm d-1", op=">=")
@@ -339,9 +369,11 @@ class TestProperties:
         assert test.long_name == "Relative frequency of values >= 25 mm d-1."
         assert test.units == ""
 
-    def test_transition(self, open_dataset):
+    def test_transition(self, nimbus):
         sim = (
-            open_dataset("sdba/CanESM2_1950-2100.nc").sel(time=slice("1950", "1952"), location="Vancouver").pr
+            xr.open_dataset(nimbus.fetch("sdba/CanESM2_1950-2100.nc"))
+            .sel(time=slice("1950", "1952"), location="Vancouver")
+            .pr
         ).load()
 
         test = sdba.properties.transition_probability(da=sim, initial_op="<", final_op=">=")
@@ -350,9 +382,11 @@ class TestProperties:
         assert test.long_name == "Transition probability of values < 1 mm d-1 to values >= 1 mm d-1."
         assert test.units == ""
 
-    def test_trend(self, open_dataset):
+    def test_trend(self, nimbus):
         simt = (
-            open_dataset("sdba/CanESM2_1950-2100.nc").sel(time=slice("1950", "1952"), location="Vancouver").tasmax
+            xr.open_dataset(nimbus.fetch("sdba/CanESM2_1950-2100.nc"))
+            .sel(time=slice("1950", "1952"), location="Vancouver")
+            .tasmax
         ).load()
 
         slope = sdba.properties.trend(simt).values
@@ -400,9 +434,11 @@ class TestProperties:
         assert slope.long_name.startswith("Slope of the interannual linear trend")
         assert slope.units == "K/year"
 
-    def test_return_value(self, open_dataset):
+    def test_return_value(self, nimbus):
         simt = (
-            open_dataset("sdba/CanESM2_1950-2100.nc").sel(time=slice("1950", "2010"), location="Vancouver").tasmax
+            xr.open_dataset(nimbus.fetch("sdba/CanESM2_1950-2100.nc"))
+            .sel(time=slice("1950", "2010"), location="Vancouver")
+            .tasmax
         ).load()
 
         out_y = sdba.properties.return_value(simt)
@@ -413,16 +449,16 @@ class TestProperties:
         assert out_y.long_name.startswith("20-year maximal return level")
 
     @pytest.mark.slow
-    def test_spatial_correlogram(self, open_dataset):
+    def test_spatial_correlogram(self, nimbus):
         # This also tests sdba.utils._pairwise_spearman and sdba.nbutils._pairwise_haversine_and_bins
         # Test 1, does it work with 1D data?
-        sim = (open_dataset("sdba/CanESM2_1950-2100.nc").sel(time=slice("1981", "2010")).tasmax).load()
+        sim = (xr.open_dataset(nimbus.fetch("sdba/CanESM2_1950-2100.nc")).sel(time=slice("1981", "2010")).tasmax).load()
 
         out = sdba.properties.spatial_correlogram(sim, dims=["location"], bins=3)
         np.testing.assert_allclose(out, [-1, np.nan, 0], atol=1e-6)
 
         # Test 2, not very exhaustive, this is more of a detect-if-we-break-it test.
-        sim = open_dataset("NRCANdaily/nrcan_canada_daily_tasmax_1990.nc").tasmax
+        sim = xr.open_dataset(nimbus.fetch("NRCANdaily/nrcan_canada_daily_tasmax_1990.nc")).tasmax
         out = sdba.properties.spatial_correlogram(sim.isel(lon=slice(0, 50)), dims=["lon", "lat"], bins=20)
         np.testing.assert_allclose(
             out[:5],
@@ -435,9 +471,9 @@ class TestProperties:
         )
 
     @pytest.mark.slow
-    def test_decorrelation_length(self, open_dataset):
+    def test_decorrelation_length(self, nimbus):
         sim = (
-            open_dataset("NRCANdaily/nrcan_canada_daily_tasmax_1990.nc")
+            xr.open_dataset(nimbus.fetch("NRCANdaily/nrcan_canada_daily_tasmax_1990.nc"))
             .tasmax.isel(lon=slice(0, 5), lat=slice(0, 1))
             .load()
         )
@@ -448,12 +484,18 @@ class TestProperties:
             [4.5, 4.5, 4.5, 4.5, 10.5],
         )
 
-    def test_get_measure(self, open_dataset):
+    def test_get_measure(self, nimbus):
         sim = (
-            open_dataset("sdba/CanESM2_1950-2100.nc").sel(time=slice("1981", "2010"), location="Vancouver").pr
+            xr.open_dataset(nimbus.fetch("sdba/CanESM2_1950-2100.nc"))
+            .sel(time=slice("1981", "2010"), location="Vancouver")
+            .pr
         ).load()
 
-        ref = (open_dataset("sdba/ahccd_1950-2013.nc").sel(time=slice("1981", "2010"), location="Vancouver").pr).load()
+        ref = (
+            xr.open_dataset(nimbus.fetch("sdba/ahccd_1950-2013.nc"))
+            .sel(time=slice("1981", "2010"), location="Vancouver")
+            .pr
+        ).load()
 
         sim = convert_units_to(sim, ref, context="hydro")
         sim_var = sdba.properties.var(sim)

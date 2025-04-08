@@ -865,10 +865,11 @@ def split_auxiliary_coordinates(
     The auxiliary coordinates can be merged back with the dataset with
     :py:meth:`xarray.Dataset.assign_coords` or :py:meth:`xarray.DataArray.assign_coords`.
 
-    >>> # xdoctest: +SKIP
-    >>> clean, aux = split_auxiliary_coordinates(ds)
-    >>> merged = clean.assign_coords(da.coords)
-    >>> merged.identical(ds)  # True
+    .. code-block:: python
+
+        clean, aux = split_auxiliary_coordinates(ds)
+        merged = clean.assign_coords(da.coords)
+        merged.identical(ds)  # -> True
     """
     aux_crd_names = [nm for nm, crd in obj.coords.items() if len(crd.dims) != 1 or crd.dims[0] != nm]
     aux_crd_ds = obj.coords.to_dataset()[aux_crd_names]
