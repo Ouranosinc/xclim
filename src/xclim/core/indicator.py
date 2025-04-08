@@ -160,6 +160,7 @@ from xclim.core.options import (
     MISSING_METHODS,
     MISSING_OPTIONS,
     OPTIONS,
+    set_options,
 )
 from xclim.core.units import check_units, convert_units_to, declare_units, units
 from xclim.core.utils import (
@@ -169,6 +170,11 @@ from xclim.core.utils import (
     load_module,
     split_auxiliary_coordinates,
 )
+
+try:
+    from xarray import DataTree
+except ImportError:
+    DataTree = None
 
 # Indicators registry
 registry = {}  # Main class registry
@@ -832,7 +838,7 @@ class Indicator(IndicatorRegistrar):
                     _Parameter(
                         name,
                         kind=_Parameter.KEYWORD_ONLY,
-                        annotation=Dataset,
+                        annotation=Dataset | DataTree if DataTree is not None else Dataset,
                         default=meta.default,
                     )
                 )
@@ -849,6 +855,12 @@ class Indicator(IndicatorRegistrar):
         ret_ann = DataArray if self.n_outs == 1 else tuple[(DataArray,) * self.n_outs]
         return Signature(variables + parameters, return_annotation=ret_ann)
 
+    def _apply_on_tree_node(self, node: Dataset, *args, **kwargs):
+        if not node.data_vars:
+            # empty node
+            return node
+        return self(*args, ds=node, **kwargs)
+
     def __call__(self, *args, **kwds):
         """Call function of Indicator class."""
         # Put the variables in `das`, parse them according to the following annotations:
@@ -857,6 +869,11 @@ class Indicator(IndicatorRegistrar):
 
         if self._version_deprecated:
             self._show_deprecation_warning()  # noqa
+
+        if "ds" in self._all_parameters and DataTree is not None and isinstance(kwds.get("ds"), DataTree):
+            dt = kwds.pop("ds")
+            with set_options(as_dataset=True):
+                return dt.map_over_datasets(self._apply_on_tree_node, *args, kwargs=kwds)
 
         das, params, dsattrs = self._parse_variables_from_call(args, kwds)
 
