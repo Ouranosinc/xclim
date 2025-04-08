@@ -27,6 +27,7 @@ __all__ = [
     "consecutive_frost_days",
     "cool_night_index",
     "cooling_degree_days",
+    "cooling_degree_days_approximation",
     "daily_freezethaw_cycles",
     "daily_temperature_range",
     "daily_temperature_range_variability",
@@ -62,6 +63,7 @@ __all__ = [
     "heat_wave_max_length",
     "heat_wave_total_length",
     "heating_degree_days",
+    "heating_degree_days_approximation",
     "hot_spell_frequency",
     "hot_spell_max_length",
     "hot_spell_max_magnitude",
@@ -804,6 +806,22 @@ cooling_degree_days = TempWithIndexing(
     parameters={"thresh": {"default": "18.0 degC"}},
 )
 
+cooling_degree_days_approximation = TempWithIndexing(
+    title="Cooling degree days approximation",
+    identifier="cooling_degree_days_approximation",
+    units="K days",
+    standard_name="integral_of_air_temperature_excess_wrt_time",
+    long_name="Cumulative sum of temperature degrees for daily temperatures above {thresh}",
+    description="{freq} cumulative cooling degree days (temperature above {thresh}) using a combination of minimum, "
+    "maximum, and mean daily temperatures.",
+    abstract="The cumulative degree days for days when temperatures are above a given threshold and buildings must "
+    "be air conditioned. This method integrates mean, minimum, and maximum temperatures, accounting for asymmetry "
+    "in the distributions of temperatures throughout the diurnal cycle.",
+    cell_methods="time: sum over days",
+    compute=indices.cooling_degree_days_approximation,
+    parameters={"thresh": {"default": "18.0 degC"}},
+)
+
 heating_degree_days = TempWithIndexing(
     title="Heating degree days",
     identifier="heating_degree_days",
@@ -815,6 +833,22 @@ heating_degree_days = TempWithIndexing(
     "buildings must be heated.",
     cell_methods="time: sum over days",
     compute=indices.heating_degree_days,
+    parameters={"thresh": {"default": "17.0 degC"}},
+)
+
+heating_degree_days_approximation = TempWithIndexing(
+    title="Heating degree days approximation",
+    identifier="heating_degree_days_approximation",
+    units="K days",
+    standard_name="integral_of_air_temperature_deficit_wrt_time",
+    long_name="Cumulative sum of temperature degrees for daily temperatures below {thresh}",
+    description="{freq} cumulative heating degree days (temperature below {thresh}) using a combination of minimum, "
+    "maximum, and mean daily temperatures.",
+    abstract="The cumulative degree days for days where temperatures are below a given threshold and buildings "
+    "must be heated. This method integrates mean, minimum, and maximum temperatures, accounting for asymmetry "
+    "in the distributions of temperatures throughout the diurnal cycle.",
+    cell_methods="time: sum over days",
+    compute=indices.heating_degree_days_approximation,
     parameters={"thresh": {"default": "17.0 degC"}},
 )
 

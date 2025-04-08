@@ -1,5 +1,5 @@
 [build-system]
-requires = ["flit_core >=3.9,<4"]
+requires = ["flit_core >=3.10.1,<4"]
 build-backend = "flit_core.buildapi"
 
 [project]
@@ -60,11 +60,11 @@ dependencies = [
 dev = [
   # Dev tools and testing
   "blackdoc ==0.3.9",
-  "bump-my-version >=0.32.1",
+  "bump-my-version >=1.1.1",
   "codespell >=2.4.1",
   "coverage[toml] >=7.5.0",
   "deptry >=0.23.0",
-  "flake8 >=7.1.1",
+  "flake8 >=7.2.0",
   "flake8-rst-docstrings ==0.3.0",
   "h5netcdf>=1.3.0",
   "ipython >=8.10.0",
@@ -84,7 +84,7 @@ dev = [
   "pytest-xdist[psutil] >=3.2",
   "ruff >=0.9.6",
   "tokenize-rt >=5.2.0",
-  "tox >=4.24.1",
+  "tox >=4.25.0",
   "tox-gh >=1.5.0",
   "vulture >=2.14",
   "xdoctest >=1.1.5",
@@ -128,7 +128,7 @@ xclim = "xclim.cli:cli"
 [tool]
 
 [tool.bumpversion]
-current_version = "0.56.0"
+current_version = "0.56.1-dev.2"
 commit = true
 commit_args = "--no-verify --signoff"
 tag = false
