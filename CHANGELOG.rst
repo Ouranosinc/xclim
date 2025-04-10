@@ -10,7 +10,7 @@ New indicators
 ^^^^^^^^^^^^^^
 * New indicator ``xclim.atmos.clearness_index`` computes the `clearness_index` (ratio of downwards solar radiation to extraterrestrial solar radiation). (:pull:`2140`).
 * Added ``cooling_degree_days_approximation`` and ``heating_degree_days_approximation`` indices to compute the number of cooling and heating degree days with consideration for daily temperature cycles. (:issue:`1941`, :pull:`2135`).
-* Added dtr in variables.yml. (:issue:`2146`, :pull:`2145`).
+* Added dtr in variables.yml. (:issue:`2146`, :pull:`2147`).
 
 Bug fixes
 ^^^^^^^^^
