@@ -21,6 +21,12 @@ variables:
     cell_methods: "time: mean"
     description: The amount of water, in all phases, flowing in the river channel and flood plain.
     standard_name: water_volume_transport_in_river_channel
+  dtr:
+    canonical_units: K
+    cell_methods: "time range within days"
+    description: Diurnal temperature range.
+    dimensions: "[temperature]"
+    standard_name: air_temperature
   evspsbl:
     canonical_units: kg m-2 s-1
     cell_methods: "time: mean"
