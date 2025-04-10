@@ -23,7 +23,7 @@ variables:
     standard_name: water_volume_transport_in_river_channel
   dtr:
     canonical_units: K
-    cell_methods: "time range within days"
+    cell_methods: "time: range within days"
     description: Diurnal temperature range.
     dimensions: "[temperature]"
     standard_name: air_temperature
