@@ -347,10 +347,11 @@ class Indicator(IndicatorRegistrar):
     injected in the compute function are in  :py:attr:`xclim.core.indicator.Indicator.injected_parameters`.
     Both are simply views of :py:attr:`xclim.core.indicator.Indicator._all_parameters`.
 
-    Compared to their base `compute` function, indicators add the possibility of using dataset as input,
-    with the added argument `ds` in the call signature. All arguments that were indicated
-    by the compute function to be variables (DataArrays) through annotations will be promoted
-    to also accept strings that correspond to variable names in the `ds` dataset.
+    Compared to their base `compute` function, indicators add the possibility of using a dataset
+    or a :py:class:`xarray.DataTree` as input, with the added argument `ds` in the call signature.
+    All arguments that were indicated by the compute function to be variables (DataArrays) through
+    annotations will be promoted to also accept strings that correspond to variable names
+    in the `ds` dataset (or on each DataTree nodes).
 
     Parameters
     ----------
@@ -856,6 +857,7 @@ class Indicator(IndicatorRegistrar):
         return Signature(variables + parameters, return_annotation=ret_ann)
 
     def _apply_on_tree_node(self, node: Dataset, *args, **kwargs):
+        """Compute this indicator on DataTree node."""
         if not node.data_vars:
             # empty node
             return node
