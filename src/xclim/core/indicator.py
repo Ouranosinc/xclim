@@ -174,7 +174,7 @@ from xclim.core.utils import (
 try:
     from xarray import DataTree
 except ImportError:
-    DataTree = None
+    DataTree = False
 
 # Indicators registry
 registry = {}  # Main class registry
@@ -838,7 +838,7 @@ class Indicator(IndicatorRegistrar):
                     _Parameter(
                         name,
                         kind=_Parameter.KEYWORD_ONLY,
-                        annotation=Dataset | DataTree if DataTree is not None else Dataset,
+                        annotation=Dataset | DataTree if DataTree else Dataset,
                         default=meta.default,
                     )
                 )
@@ -870,7 +870,7 @@ class Indicator(IndicatorRegistrar):
         if self._version_deprecated:
             self._show_deprecation_warning()  # noqa
 
-        if "ds" in self._all_parameters and DataTree is not None and isinstance(kwds.get("ds"), DataTree):
+        if "ds" in self._all_parameters and DataTree and isinstance(kwds.get("ds"), DataTree):
             dt = kwds.pop("ds")
             with set_options(as_dataset=True):
                 return dt.map_over_datasets(self._apply_on_tree_node, *args, kwargs=kwds)
