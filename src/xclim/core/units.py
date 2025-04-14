@@ -468,14 +468,15 @@ def cf_conversion(standard_name: str, conversion: str, direction: Literal["to", 
 
 
 FREQ_UNITS = {
+    "Y": "year",
+    "M": "month",
     "D": "d",
     "W": "week",
 }
 """
 Resampling frequency units for :py:func:`xclim.core.units.infer_sampling_units`.
 
-Mapping from offset base to CF-compliant unit. Only constant-length frequencies that are
-not also pint units are included.
+Mapping from offset base to CF-compliant unit.
 """
 
 
@@ -506,7 +507,7 @@ def infer_sampling_units(
     Raises
     ------
     ValueError
-        If the frequency has no exact corresponding units.
+        If the frequency has no corresponding units.
     """
     dimmed = getattr(da, dim)
     freq = xr.infer_freq(dimmed)
@@ -514,6 +515,9 @@ def infer_sampling_units(
         freq = deffreq
 
     multi, base, _, _ = parse_offset(freq)
+    if base == 'Q':
+        multi = multi * 3
+        base = 'M'
     try:
         out = multi, FREQ_UNITS.get(base, base)
     except KeyError as err:
