@@ -398,16 +398,18 @@ def test_temp_difference_rountrip():
     assert attrs == {"units": "degC", "units_metadata": "temperature: difference"}
 
 
-@pytest.mark.parametrize("freq,expm,expu", [('3D', 3, 'd'), ('MS', 1, 'month'), ('QS-DEC', 3, 'month'), ('W', 1, 'week'), ('min', 1, 'min')])
+@pytest.mark.parametrize(
+    "freq,expm,expu", [("3D", 3, "d"), ("MS", 1, "month"), ("QS-DEC", 3, "month"), ("W", 1, "week"), ("min", 1, "min")]
+)
 def test_infer_sampling_units(freq, expm, expu):
-    time = xr.date_range('14-04-2025', periods=10, freq=freq)
+    time = xr.date_range("14-04-2025", periods=10, freq=freq)
     m, u = infer_sampling_units(time)
     assert expm == m
     assert expu == u
 
 
 def test_infer_sampling_units_errors():
-    time = xr.date_range('14-04-2025', periods=10, freq='D')
+    time = xr.date_range("14-04-2025", periods=10, freq="D")
     time = time[[0, 1, 5, 6]]
-    with pytest.raises(ValueError, match='Unable to find'):
+    with pytest.raises(ValueError, match="Unable to find"):
         infer_sampling_units(time)
