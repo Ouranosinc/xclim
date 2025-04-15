@@ -69,13 +69,12 @@ def open_dataset(nimbus):  # numpydoc ignore=PR01
     """
 
     def _open_session_scoped_file(file: str | os.PathLike, **xr_kwargs):
+        nimbus_kwargs = dict(branch=TESTDATA_BRANCH, repo=TESTDATA_REPO_URL, cache_dir=nimbus.path)
         xr_kwargs.setdefault("cache", True)
         xr_kwargs.setdefault("engine", "h5netcdf")
         return _open_dataset(
             file,
-            branch=TESTDATA_BRANCH,
-            repo=TESTDATA_REPO_URL,
-            cache_dir=nimbus.path,
+            nimbus_kwargs=nimbus_kwargs,
             **xr_kwargs,
         )
 

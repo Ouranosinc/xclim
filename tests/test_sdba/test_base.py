@@ -239,8 +239,8 @@ class TestMapBlocks:
             func(xr.Dataset(dict(tas=tas)), group="time")
 
     @pytest.mark.parametrize("use_dask", [True, False])
-    def test_dataarray_cfencode(self, use_dask, open_dataset):
-        ds = open_dataset("sdba/CanESM2_1950-2100.nc")
+    def test_dataarray_cfencode(self, use_dask, nimbus):
+        ds = xr.open_dataset(nimbus.fetch("sdba/CanESM2_1950-2100.nc"))
         if use_dask:
             ds = ds.chunk()
 

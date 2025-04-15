@@ -16,6 +16,11 @@ Bug fixes
 ^^^^^^^^^
 * Adjustments were made to the `docs` install recipe to ensure that the `xclim` documentation builds correctly. The minimum required Python for rendering the documentation is now 3.11. (:pull:`2141`).
 
+Breaking changes
+^^^^^^^^^^^^^^^^
+* The previously deprecated functions ``sfcwind_2_uas_vas`` and ``uas_vas_2_sfcwind`` have been removed. (:pull:`2139`).
+* ``xclim.testing.open_dataset`` has been deprecated and will be removed in a future version. Contributors are encouraged to consult the documentation pertaining to ``xclim.testing.nimbus`` for the new approach to fetching testing data. (:pull:`2139`).
+
 Internal changes
 ^^^^^^^^^^^^^^^^
 * New conversion function ``xclim.indices._conversion.shortwave_downwelling_radiation_from_clearness_index`` provides the inverse of ``xclim.indices._conversion.clearness_index``. (:pull:`2140`).
