@@ -586,7 +586,7 @@ class TestRunsWithDates:
         [("standard", [61, 60]), ("365_day", [60, 60]), ("366_day", [61, 61])],
     )
     def test_run_with_dates_different_calendars(self, calendar, expected):
-        time = xr.cftime_range("2004-01-01", end="2005-12-31", freq="D", calendar=calendar)
+        time = xr.date_range("2004-01-01", end="2005-12-31", freq="D", calendar=calendar, use_cftime=True)
         tas = np.zeros(time.size)
         start = np.where((time.day == 1) & (time.month == 3))[0]
         tas[start[0] : start[0] + 250] = 5

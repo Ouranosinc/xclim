@@ -244,6 +244,20 @@ class TestCoolingDegreeDays:
         cdd = xci.cooling_degree_days(a)
         assert cdd == 10
 
+    def test_simple_approximation(self, tas_series, tasmin_series, tasmax_series):
+        tmin = np.zeros(365) + 16
+        tmin[:7] += [-3, -2, -1, 0, 1, 2, 3]
+        tmean = np.zeros(365) + 18  # threshold
+        tmax = np.zeros(365) + 20
+
+        tas = tas_series(tmean + K2C)
+        tasmin = tasmin_series(tmin + K2C)
+        tasmax = tasmax_series(tmax + K2C)
+
+        out = xci.cooling_degree_days_approximation(tasmax, tasmin, tas)
+
+        np.testing.assert_array_equal(out[:1], 183.25)
+
 
 class TestAgroclimaticIndices:
     def test_corn_heat_units(self, tasmin_series, tasmax_series):
@@ -841,6 +855,281 @@ class TestStandardizedIndices:
 
         np.testing.assert_allclose(spei.values, values, rtol=0, atol=diff_tol)
 
+    @pytest.mark.slow
+    @pytest.mark.parametrize(
+        "freq, window, dist, method,  values, diff_tol",
+        [
+            # reference results: Obtained with R package `standaRdized`
+            (
+                "D",
+                1,
+                "genextreme",
+                "ML",
+                [0.5331, 0.5338, 0.5098, 0.4656, 0.4937],
+                9e-2,
+            ),
+            (
+                "D",
+                12,
+                "genextreme",
+                "ML",
+                [0.4414, 0.4695, 0.4861, 0.4838, 0.4877],
+                9e-2,
+            ),
+            # reference results : xclim version where the test was implemented
+            (
+                "D",
+                1,
+                "genextreme",
+                "ML",
+                [0.6105, 0.6167, 0.5957, 0.5520, 0.5794],
+                2e-2,
+            ),
+            (
+                "D",
+                1,
+                "genextreme",
+                "APP",
+                [-0.0259, -0.0141, -0.0080, -0.0098, 0.0089],
+                2e-2,
+            ),
+            ("D", 1, "fisk", "ML", [0.3514, 0.3741, 0.1349, 0.4332, 0.1724], 2e-2),
+            ("D", 1, "fisk", "APP", [0.3321, 0.3477, 0.3536, 0.3468, 0.3723], 2e-2),
+            (
+                "D",
+                12,
+                "genextreme",
+                "ML",
+                [0.5131, 0.5442, 0.5645, 0.5660, 0.5720],
+                2e-2,
+            ),
+            (
+                "D",
+                12,
+                "genextreme",
+                "APP",
+                [-0.0697, -0.0550, -0.0416, -0.0308, -0.0194],
+                2e-2,
+            ),
+            ("D", 12, "fisk", "ML", [0.2096, 0.2728, 0.3259, 0.3466, 0.2836], 2e-2),
+            ("D", 12, "fisk", "APP", [0.2667, 0.2893, 0.3088, 0.3233, 0.3385], 2e-2),
+            (
+                "MS",
+                1,
+                "genextreme",
+                "ML",
+                [0.7315, -1.4919, -0.5405, 0.9965, -0.7449],
+                2e-2,
+            ),
+            (
+                "MS",
+                1,
+                "genextreme",
+                "APP",
+                [0.0979, -1.6806, -0.5345, 0.7355, -0.7583],
+                2e-2,
+            ),
+            # FIXME: Weird bug, only one test affected by this
+            # This was working in #1877 where it was introduced
+            # The problem was first seen in #2126
+            # ACTUAL: array([ 0.326194, -1.5777  , -0.436331,  0.252514, -0.814988])
+            # DESIRED: array([ 0.533154, -1.5777  , -0.436331,  0.29581 , -0.814988])
+            pytest.param(
+                "MS",
+                1,
+                "fisk",
+                "ML",
+                [0.533154, -1.5777, -0.436331, 0.29581, -0.814988],
+                2e-2,
+                marks=[
+                    pytest.mark.xfail(
+                        reason="These values fail for unknown reason after an update, skipping.", strict=False
+                    )
+                ],
+            ),
+            ("MS", 1, "fisk", "APP", [0.4663, -1.9076, -0.5362, 0.8070, -0.8035], 2e-2),
+            (
+                "MS",
+                12,
+                "genextreme",
+                "ML",
+                [-0.9795, -1.0398, -1.9019, -1.6970, -1.4761],
+                2e-2,
+            ),
+            (
+                "MS",
+                12,
+                "genextreme",
+                "APP",
+                [-0.9095, -1.0996, -1.9207, -2.2665, -2.1746],
+                2e-2,
+            ),
+            (
+                "MS",
+                12,
+                "fisk",
+                "ML",
+                [-1.0776, -1.0827, -1.9333, -1.7764, -1.8391],
+                2e-2,
+            ),
+            (
+                "MS",
+                12,
+                "fisk",
+                "APP",
+                [-0.9607, -1.1265, -1.7004, -1.8747, -1.8132],
+                2e-2,
+            ),
+        ],
+    )
+    def test_standardized_streamflow_index(self, open_dataset, freq, window, dist, method, values, diff_tol):
+        ds = open_dataset("Raven/q_sim.nc")
+        q = ds.q_obs.rename("q")
+        q_cal = ds.q_sim.rename("q").fillna(ds.q_sim.mean())
+        if freq == "D":
+            q = q.sel(time=slice("2008-01-01", "2008-01-30")).fillna(ds.q_obs.mean())
+        else:
+            q = q.sel(time=slice("2008-01-01", "2009-12-31")).fillna(ds.q_obs.mean())
+        fitkwargs = {"floc": 0} if method == "APP" else {}
+        params = xci.stats.standardized_index_fit_params(
+            q_cal,
+            freq=freq,
+            window=window,
+            dist=dist,
+            method=method,
+            fitkwargs=fitkwargs,
+            zero_inflated=True,
+        )
+        ssi = xci.standardized_streamflow_index(q, params=params)
+        ssi = ssi.isel(time=slice(-11, -1, 2)).values.flatten()
+        np.testing.assert_allclose(ssi, values, rtol=0, atol=diff_tol)
+
+    # TODO: Find another package to test against
+    # For now, we just take a snapshot of what xclim produces when this function
+    # was added
+    @pytest.mark.slow
+    @pytest.mark.parametrize(
+        "freq, window, dist, method,  values, diff_tol",
+        [
+            (
+                "MS",
+                12,
+                "gamma",
+                "APP",
+                [0.053303, 0.243638, 0.184645, 0.365087, 0.702955],
+                2e-2,
+            ),
+            (
+                "MS",
+                12,
+                "gamma",
+                "ML",
+                [0.054521, 0.244173, 0.185881, 0.360743, 0.695511],
+                0.04,
+            ),
+            (
+                "D",
+                12,
+                "gamma",
+                "APP",
+                [0.697812, 0.822368, 0.980493, 1.088905, 1.210871],
+                2e-2,
+            ),
+            (
+                "D",
+                12,
+                "gamma",
+                "ML",
+                [0.689838, 0.806486, 0.945229, 1.066726, 1.164071],
+                2e-2,
+            ),
+            (
+                "MS",
+                12,
+                "lognorm",
+                "APP",
+                [0.054521, 0.244173, 0.185881, 0.360743, 0.695511],
+                2e-2,
+            ),
+            (
+                "MS",
+                12,
+                "lognorm",
+                "ML",
+                [0.052334, 0.243673, 0.185901, 0.360868, 0.695515],
+                0.04,
+            ),
+            (
+                "D",
+                12,
+                "lognorm",
+                "APP",
+                [0.697812, 0.822368, 0.980493, 1.088905, 1.210871],
+                2e-2,
+            ),
+            (
+                "D",
+                12,
+                "lognorm",
+                "ML",
+                [0.698288, 0.822422, 0.983334, 1.094167, 1.212815],
+                2e-2,
+            ),
+            (
+                "MS",
+                12,
+                "genextreme",
+                "ML",
+                [-0.266746, -0.043151, -0.149119, -0.036864, 1.01006],
+                2e-2,
+            ),
+            (
+                "D",
+                12,
+                "genextreme",
+                "ML",
+                [0.466671, 0.69093, 1.126953, 3.09, 2.489967],
+                2e-2,
+            ),
+            (
+                "D",
+                12,
+                "genextreme",
+                "APP",
+                [0.901014, 1.017546, 1.161481, 1.258072, 1.364903],
+                2e-2,
+            ),
+        ],
+    )
+    def test_standardized_groundwater_index(self, open_dataset, freq, window, dist, method, values, diff_tol):
+        if method == "ML" and freq == "D" and Version(__numpy_version__) < Version("2.0.0"):
+            pytest.skip("Skipping SPI/ML/D on older numpy")
+        ds = open_dataset("Raven/gwl_obs.nc")
+        gwl0 = ds.gwl
+
+        gwl = gwl0.sel(time=slice("1989", "1991"))
+
+        gwl_cal = gwl0
+        fitkwargs = {}
+        if method == "APP":
+            fitkwargs["floc"] = 0
+        params = xci.stats.standardized_index_fit_params(
+            gwl_cal,
+            freq=freq,
+            window=window,
+            dist=dist,
+            method=method,
+            fitkwargs=fitkwargs,
+            zero_inflated=True,
+        )
+        sgi = xci.standardized_groundwater_index(gwl, params=params)
+        # Only a few moments before year 2000 are tested
+        sgi = sgi.isel(time=slice(-11, -1, 2))
+
+        sgi = sgi.clip(-3.09, 3.09)
+
+        np.testing.assert_allclose(sgi.values, values, rtol=0, atol=diff_tol)
+
     @pytest.mark.parametrize(
         "indexer",
         [
@@ -898,7 +1187,7 @@ class TestStandardizedIndices:
         # In the previous computation, the first {window-1} values are NaN because the rolling is performed
         # on the period [1998,2000]. Here, the computation is performed on the period [1950,2000],
         # *then* subsetted to [1998,2000], so it doesn't have NaNs for the first values
-        nan_window = xr.cftime_range(spei1.time.values[0], periods=window - 1, freq=freq)
+        nan_window = xr.date_range(spei1.time.values[0], periods=window - 1, freq=freq, use_cftime=True)
         spei2.loc[{"time": spei2.time.isin(nan_window)}] = (
             np.nan
         )  # select time based on the window is necessary when `drop=True`
@@ -1386,17 +1675,19 @@ class TestHeatingDegreeDays:
         np.testing.assert_array_equal(out[:1], 6)
         np.testing.assert_array_equal(out[1:], 0)
 
+    def test_simple_approximation(self, tas_series, tasmin_series, tasmax_series):
+        tmin = np.zeros(365) + 15
+        tmean = np.zeros(365) + 17  # threshold
+        tmax = np.zeros(365) + 19
+        tmax[:7] += [-3, -2, -1, 0, 1, 2, 3]
 
-class TestHeatWaveIndex:
-    def test_simple(self, tasmax_series):
-        a = np.zeros(365)
-        a[10:20] += 30  # 10 days
-        a[40:43] += 50  # too short -> 0
-        a[80:100] += 30  # at the end and beginning
-        da = tasmax_series(a + K2C)
+        tas = tas_series(tmean + K2C)
+        tasmin = tasmin_series(tmin + K2C)
+        tasmax = tasmax_series(tmax + K2C)
 
-        out = xci.heat_wave_index(da, thresh="25 C", freq="ME")
-        np.testing.assert_array_equal(out, [10, 0, 12, 8, 0, 0, 0, 0, 0, 0, 0, 0])
+        out = xci.heating_degree_days_approximation(tasmax, tasmin, tas)
+
+        np.testing.assert_array_equal(out[:1], 89.75)
 
 
 class TestHeatWaveFrequency:
@@ -1650,6 +1941,16 @@ class TestHotSpellTotalLength:
 
         hsml = xci.hot_spell_total_length(tx, thresh=thresh, window=window, op=op)
         np.testing.assert_allclose(hsml.values, expected)
+
+    def test_simple(self, tasmax_series):
+        a = np.zeros(365)
+        a[10:20] += 30  # 10 days
+        a[40:43] += 50  # too short -> 0
+        a[80:100] += 30  # at the end and beginning
+        da = tasmax_series(a + K2C)
+
+        out = xci.hot_spell_total_length(da, window=5, thresh="25 C", freq="ME")
+        np.testing.assert_array_equal(out, [10, 0, 12, 8, 0, 0, 0, 0, 0, 0, 0, 0])
 
 
 class TestHotSpellMaxMagnitude:
@@ -2757,13 +3058,15 @@ class TestWindConversion:
     da_windfromdir.attrs["units"] = "degree"
 
     def test_uas_vas_2_sfcwind(self):
-        wind, windfromdir = xci.uas_vas_2_sfcwind(self.da_uas, self.da_vas)
+        with pytest.deprecated_call():
+            wind, windfromdir = xci.uas_vas_2_sfcwind(self.da_uas, self.da_vas)
 
         assert np.all(np.around(wind.values, decimals=10) == np.around(self.da_wind.values / 3.6, decimals=10))
         assert np.all(np.around(windfromdir.values, decimals=10) == np.around(self.da_windfromdir.values, decimals=10))
 
     def test_sfcwind_2_uas_vas(self):
-        uas, vas = xci.sfcwind_2_uas_vas(self.da_wind, self.da_windfromdir)
+        with pytest.deprecated_call():
+            uas, vas = xci.sfcwind_2_uas_vas(self.da_wind, self.da_windfromdir)
 
         assert np.all(np.around(uas.values, decimals=10) == np.array([[1, -1], [0, 0]]))
         assert np.all(

@@ -404,7 +404,6 @@ def test_missing(tas_series):
         m = uniIndTemp(a, freq="MS")
         assert not m[0].isnull()
         assert "check_missing=pct, missing_options={'tolerance': 0.05}" in m.history
-
     # With freq=None
     c = uniClim(a)
     assert c.isnull()

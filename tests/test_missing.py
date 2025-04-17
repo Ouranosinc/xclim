@@ -16,7 +16,7 @@ class test_expected_count:
     def test_3hourly_input(self, random):
         """Creating array with 21 days of 3h"""
         n = 21 * 8
-        time = xr.cftime_range(start="2002-01-01", periods=n, freq="3h")
+        time = xr.date_range(start="2002-01-01", periods=n, freq="3h")
         ts = xr.DataArray(random.random(n), dims="time", coords={"time": time})
         count = missing.expected_count(ts, freq="MS", src_timestep="3h")
         # Make sure count is 31  * 8, because we're requesting a MS freq.
@@ -25,14 +25,14 @@ class test_expected_count:
     def test_monthly_input(self, random):
         """Creating array with 11 months."""
         n = 11
-        time = xr.cftime_range(start="2002-01-01", periods=n, freq="ME")
+        time = xr.date_range(start="2002-01-01", periods=n, freq="ME")
         ts = xr.DataArray(random.random(n), dims="time", coords={"time": time})
         count = missing.expected_count(ts, freq="YS", src_timestep="ME")
         # Make sure count is 12, because we're requesting a YS freq.
         assert count == 12
 
         n = 5
-        time = xr.cftime_range(start="2002-06-01", periods=n, freq="MS")
+        time = xr.date_range(start="2002-06-01", periods=n, freq="MS")
         ts = xr.DataArray(random.random(n), dims="time", coords={"time": time})
         count = missing.expected_count(ts, freq="YS", src_timestep="MS", season="JJA")
         assert count == 3
@@ -40,7 +40,7 @@ class test_expected_count:
     def test_seasonal_input(self, random):
         """Creating array with 11 seasons."""
         n = 11
-        time = xr.cftime_range(start="2002-04-01", periods=n, freq="QS-JAN")
+        time = xr.date_range(start="2002-04-01", periods=n, freq="QS-JAN")
         ts = xr.DataArray(random.random(n), dims="time", coords={"time": time})
         count = missing.expected_count(ts, freq="YS", src_timestep="QS-JAN")
         # Make sure count is 12, because we're requesting a YS freq.
@@ -157,7 +157,7 @@ class TestMissingAnyFills:
 
     def test_seasonal(self, random):
         n = 11
-        time = xr.cftime_range(start="2002-01-01", periods=n, freq="QS-JAN")
+        time = xr.date_range(start="2002-01-01", periods=n, freq="QS-JAN")
         ts = xr.DataArray(random.random(n), dims="time", coords={"time": time})
         out = missing.missing_any(ts, freq="YS")
         np.testing.assert_array_equal(out, [False, False, True])

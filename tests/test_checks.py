@@ -25,8 +25,8 @@ def teardown_module(module):
 TestObj = namedtuple("TestObj", ["test"])
 
 
-@pytest.fixture(scope="module", params=[xr.cftime_range, pd.date_range])
-def date_range(request):
+@pytest.fixture(scope="module", params=[True, False])
+def use_cftime(request):
     return request.param
 
 
@@ -97,60 +97,60 @@ class TestDateHandling:
         "standard_name": "air_temperature",
     }
 
-    def test_assert_daily(self, date_range):
+    def test_assert_daily(self, use_cftime):
         n = 365  # one day short of a full year
-        times = date_range("2000-01-01", freq="1D", periods=n)
+        times = xr.date_range("2000-01-01", freq="1D", periods=n, use_cftime=use_cftime)
         da = xr.DataArray(np.arange(n), [("time", times)], attrs=self.tas_attrs)
         tg_mean(da)
 
     # Bad frequency
-    def test_bad_frequency(self, date_range):
+    def test_bad_frequency(self, use_cftime):
         with pytest.raises(ValidationError):
             n = 365
-            times = date_range("2000-01-01", freq="12h", periods=n)
+            times = xr.date_range("2000-01-01", freq="12h", periods=n, use_cftime=use_cftime)
             da = xr.DataArray(np.arange(n), [("time", times)], attrs=self.tas_attrs)
             tg_mean(da)
 
     # Decreasing index
-    def test_decreasing_index(self, date_range):
+    def test_decreasing_index(self, use_cftime):
         with pytest.raises(ValidationError):
             n = 365
-            times = date_range("2000-01-01", freq="12h", periods=n)
+            times = xr.date_range("2000-01-01", freq="12h", periods=n, use_cftime=use_cftime)
             da = xr.DataArray(np.arange(n), [("time", times[::-1])], attrs=self.tas_attrs)
             tg_mean(da)
 
     # Missing one day between the two years
-    def test_missing_one_day_between_two_years(self, date_range):
+    def test_missing_one_day_between_two_years(self, use_cftime):
         with pytest.raises(ValidationError):
             n = 365
-            times = date_range("2000-01-01", freq="1D", periods=n)
-            times = times.append(date_range("2001-01-01", freq="1D", periods=n))
+            times = xr.date_range("2000-01-01", freq="1D", periods=n, use_cftime=use_cftime)
+            times = times.append(xr.date_range("2001-01-01", freq="1D", periods=n, use_cftime=use_cftime))
             da = xr.DataArray(np.arange(2 * n), [("time", times)], attrs=self.tas_attrs)
             tg_mean(da)
 
     # Duplicate dates
-    def test_duplicate_dates(self, date_range):
+    def test_duplicate_dates(self, use_cftime):
         with pytest.raises(ValidationError):
             n = 365
-            times = date_range("2000-01-01", freq="1D", periods=n)
-            times = times.append(date_range("2000-12-29", freq="1D", periods=n))
+            times = xr.date_range("2000-01-01", freq="1D", periods=n, use_cftime=use_cftime)
+            times = times.append(xr.date_range("2000-12-29", freq="1D", periods=n, use_cftime=use_cftime))
             da = xr.DataArray(np.arange(2 * n), [("time", times)], attrs=self.tas_attrs)
             tg_mean(da)
 
 
 class TestDataCheck:
-    def test_check_hourly(self, date_range, random):
+    def test_check_hourly(self, use_cftime, random):
         tas_attrs = {
             "units": "K",
             "standard_name": "air_temperature",
         }
 
         n = 100
-        time = date_range("2000-01-01", freq="h", periods=n)
+        time = xr.date_range("2000-01-01", freq="h", periods=n, use_cftime=use_cftime)
         da = xr.DataArray(random.random(n), [("time", time)], attrs=tas_attrs)
         datachecks.check_freq(da, "h")
 
-        time = date_range("2000-01-01", freq="3h", periods=n)
+        time = xr.date_range("2000-01-01", freq="3h", periods=n, use_cftime=use_cftime)
         da = xr.DataArray(random.random(n), [("time", time)], attrs=tas_attrs)
         with pytest.raises(ValidationError):
             datachecks.check_freq(da, "h")
@@ -166,14 +166,14 @@ class TestDataCheck:
         with pytest.raises(ValidationError, match="Unable to infer the frequency of"):
             datachecks.check_freq(da.where(da.time.dt.dayofyear != 5, drop=True), "3h")
 
-    def test_common_time(self, tas_series, date_range, random):
+    def test_common_time(self, tas_series, use_cftime, random):
         tas_attrs = {
             "units": "K",
             "standard_name": "air_temperature",
         }
 
         n = 100
-        time = date_range("2000-01-01", freq="h", periods=n)
+        time = xr.date_range("2000-01-01", freq="h", periods=n, use_cftime=use_cftime)
         da = xr.DataArray(random.random(n), [("time", time)], attrs=tas_attrs)
 
         # No freq
@@ -182,7 +182,7 @@ class TestDataCheck:
             datachecks.check_common_time([db, da])
 
         # Not same freq
-        time = date_range("2000-01-01", freq="6h", periods=n)
+        time = xr.date_range("2000-01-01", freq="6h", periods=n, use_cftime=use_cftime)
         db = xr.DataArray(random.random(n), [("time", time)], attrs=tas_attrs)
         with pytest.raises(ValidationError, match="Inputs have different frequencies"):
             datachecks.check_common_time([db, da])

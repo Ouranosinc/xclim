@@ -19,7 +19,7 @@ def fitda(request, random):
     x = np.arange(nx)
     y = np.arange(ny)
 
-    time = xr.cftime_range("2045-02-02", periods=nt, freq="D")
+    time = xr.date_range("2045-02-02", periods=nt, freq="D")
 
     da = xr.DataArray(
         random.lognormal(2, 1, (nt, nx, ny)),
@@ -79,7 +79,7 @@ def weibull_min(request):
         ],
         dims=("time",),
     )
-    da = da.assign_coords(time=xr.cftime_range("2045-02-02", periods=da.time.size, freq="D"))
+    da = da.assign_coords(time=xr.date_range("2045-02-02", periods=da.time.size, freq="D"))
 
     if request.param:
         da = da.chunk()
@@ -113,7 +113,7 @@ def genextreme(request):
         ],
         dims=("time",),
     )
-    da = da.assign_coords(time=xr.cftime_range("2045-02-02", periods=da.time.size, freq="D"))
+    da = da.assign_coords(time=xr.date_range("2045-02-02", periods=da.time.size, freq="D"))
 
     if request.param:
         da = da.chunk()
@@ -267,7 +267,7 @@ class TestPWMFit:
         da = xr.DataArray(
             dc(**par).rvs(size=n, random_state=random),
             dims=("time",),
-            coords={"time": xr.cftime_range("1980-01-01", periods=n)},
+            coords={"time": xr.date_range("1980-01-01", periods=n)},
         )
         if use_dask:
             da = da.chunk()
@@ -328,7 +328,7 @@ def test_parametric_quantile(use_dask, random):
     r = xr.DataArray(
         d.rvs(n, random_state=random),
         dims=("time",),
-        coords={"time": xr.cftime_range(start="1980-01-01", periods=n)},
+        coords={"time": xr.date_range(start="1980-01-01", periods=n)},
         attrs={"history": "Mosquito bytes per minute"},
     )
     expected = d.ppf(per)
@@ -350,7 +350,7 @@ def test_parametric_cdf(use_dask, random):
     r = xr.DataArray(
         d.rvs(n, random_state=random),
         dims=("time",),
-        coords={"time": xr.cftime_range(start="1980-01-01", periods=n)},
+        coords={"time": xr.date_range(start="1980-01-01", periods=n)},
         attrs={"history": "Mosquito bytes per minute"},
     )
     if use_dask:

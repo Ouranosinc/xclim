@@ -20,6 +20,7 @@ from xclim.core.units import (
     to_agg_units,
     units2pint,
 )
+from xclim.core.utils import deprecated
 from xclim.indices import run_length as rl
 from xclim.indices.generic import (
     bivariate_count_occurrences,
@@ -48,6 +49,7 @@ __all__ = [
     "cold_spell_max_length",
     "cold_spell_total_length",
     "cooling_degree_days",
+    "cooling_degree_days_approximation",
     "daily_pr_intensity",
     "days_with_snow",
     "degree_days_exceedance_date",
@@ -69,6 +71,7 @@ __all__ = [
     "growing_season_start",
     "heat_wave_index",
     "heating_degree_days",
+    "heating_degree_days_approximation",
     "holiday_snow_and_snowfall_days",
     "holiday_snow_days",
     "hot_spell_frequency",
@@ -141,7 +144,7 @@ def calm_days(sfcWind: xarray.DataArray, thresh: Quantified = "2 m s-1", freq: s
 
     .. math::
 
-        WS_{ij} < Threshold [m s-1]
+       WS_{ij} < Threshold [m s-1]
     """
     thresh = convert_units_to(thresh, sfcWind)
     out = threshold_count(sfcWind, "<", thresh, freq)
@@ -720,7 +723,7 @@ def daily_pr_intensity(
     >>> pr = xr.open_dataset(path_to_pr_file).pr
     >>> daily_int = daily_pr_intensity(pr, thresh="5 mm/day", freq="QS-DEC")
     """
-    t = convert_units_to(thresh, pr, "hydro")
+    t = convert_units_to(thresh, pr, context="hydro")
 
     # Get amount of rain (not rate)
     pram = rate2amount(pr)
@@ -782,7 +785,7 @@ def dry_days(
 
     .. math::
 
-        \sum PR_{ij} < Threshold [mm/day]
+       \sum PR_{ij} < Threshold [mm/day]
     """
     thresh = convert_units_to(thresh, pr, context="hydro")
     count = threshold_count(pr, op, thresh, freq, constrain=("<", "<="))
@@ -832,7 +835,7 @@ def maximum_consecutive_wet_days(
     where :math:`[P]` is 1 if :math:`P` is true, and 0 if false. Note that this formula does not handle sequences at
     the start and end of the series, but the numerical algorithm does.
     """
-    thresh = convert_units_to(thresh, pr, "hydro")
+    thresh = convert_units_to(thresh, pr, context="hydro")
 
     cond = pr > thresh
     mcwd = rl.resample_and_rl(
@@ -843,6 +846,67 @@ def maximum_consecutive_wet_days(
     )
     mcwd = to_agg_units(mcwd, pr, "count")
     return mcwd
+
+
+@declare_units(tasmax="[temperature]", tasmin="[temperature]", tas="[temperature]", thresh="[temperature]")
+def cooling_degree_days_approximation(
+    tasmax: xarray.DataArray,
+    tasmin: xarray.DataArray,
+    tas: xarray.DataArray,
+    thresh: Quantified = "18 degC",
+    freq: str = "YS",
+) -> xarray.DataArray:
+    """
+    Cooling degree days approximation.
+
+    A more robust approximation of cooling degree days as a function of the daily cycle of temperature.
+
+    Parameters
+    ----------
+    tasmax : xarray.DataArray
+        Maximum daily temperature.
+    tasmin : xarray.DataArray
+        Minimum daily temperature.
+    tas : xarray.DataArray
+        Mean daily temperature.
+    thresh : Quantified
+        Temperature threshold above which air is cooled.
+    freq : str
+        Resampling frequency.
+
+    Returns
+    -------
+    xarray.DataArray
+        Approximation of cooling degree days.
+
+    References
+    ----------
+    :cite:cts:`spinoni_2018`
+    """
+    # Where tasmax < thresh; CDD = 0
+    # Where tas <= thresh <= tasmax; CDD = (tasmax - tasmin)/4
+    # Where tasmin < thresh <= tas; CDD = [(tasmax - thresh)/2 - (thresh - tasmin)/4]
+    # Where tasmin >= thresh; CDD = tas - thresh
+    thresh = convert_units_to(thresh, tas)
+    tasmax = convert_units_to(tasmax, tas)
+    tasmin = convert_units_to(tasmin, tas)
+
+    cdd = xarray.where(
+        tasmax < thresh,
+        0,
+        xarray.where(
+            tasmin < thresh,
+            xarray.where(
+                tas <= thresh,
+                (tasmax - tasmin) / 4,
+                (tasmax - thresh) / 2 - (thresh - tasmin) / 4,
+            ),
+            tas - thresh,
+        ),
+    )
+    cdd = cdd.resample(time=freq).sum(dim="time")
+    cdd = to_agg_units(cdd, tas, "integral")
+    return cdd
 
 
 @declare_units(tas="[temperature]", thresh="[temperature]")
@@ -873,12 +937,12 @@ def cooling_degree_days(tas: xarray.DataArray, thresh: Quantified = "18 degC", f
 
     .. math::
 
-        \sum_{i \in \phi} (x_{i}-{thresh} [x_i > thresh]
+       \sum_{i \in \phi} (x_{i}-{thresh} [x_i > thresh]
 
     where :math:`[P]` is 1 if :math:`P` is true, and 0 if false.
     """
-    cd = cumulative_difference(tas, threshold=thresh, op=">", freq=freq)
-    return cd
+    cdd = cumulative_difference(tas, threshold=thresh, op=">", freq=freq)
+    return cdd
 
 
 @declare_units(tas="[temperature]", thresh="[temperature]")
@@ -909,7 +973,7 @@ def growing_degree_days(tas: xarray.DataArray, thresh: Quantified = "4.0 degC", 
 
     .. math::
 
-        GD4_j = \sum_{i=1}^I (TG_{ij}-{4} | TG_{ij} > {4}℃)
+       GD4_j = \sum_{i=1}^I (TG_{ij}-{4} | TG_{ij} > {4}℃)
     """
     cd = cumulative_difference(tas, threshold=thresh, op=">", freq=freq)
     return cd
@@ -1087,13 +1151,13 @@ def growing_season_length(
 
     .. math::
 
-        TG_{ij} >= 5 ℃
+       TG_{ij} >= 5 ℃
 
     and the first occurrence after 1 July of at least six (6) consecutive days with:
 
     .. math::
 
-        TG_{ij} < 5 ℃
+       TG_{ij} < 5 ℃
 
     References
     ----------
@@ -1173,13 +1237,13 @@ def frost_season_length(
 
     .. math::
 
-        TN_{ij} > 0 ℃
+       TN_{ij} > 0 ℃
 
     and the first subsequent occurrence of at least N consecutive days with:
 
     .. math::
 
-        TN_{ij} < 0 ℃
+       TN_{ij} < 0 ℃
 
     Examples
     --------
@@ -1914,6 +1978,7 @@ def snowfall_intensity(
     return snow_int
 
 
+@deprecated(from_version="0.57.0", suggested="hot_spell_total_length")
 @declare_units(tasmax="[temperature]", thresh="[temperature]")
 def heat_wave_index(
     tasmax: xarray.DataArray,
@@ -2012,6 +2077,63 @@ def hot_spell_max_magnitude(
     return to_agg_units(out, tasmax, op="integral")
 
 
+@declare_units(tasmax="[temperature]", tasmin="[temperature]", tas="[temperature]", thresh="[temperature]")
+def heating_degree_days_approximation(
+    tasmax: xarray.DataArray,
+    tasmin: xarray.DataArray,
+    tas: xarray.DataArray,
+    thresh: Quantified = "17.0 degC",
+    freq: str = "YS",
+) -> xarray.DataArray:
+    """
+    Heating degree days approximation.
+
+    A more robust approximation of heating degree days as a function of the daily cycle of temperature.
+
+    Parameters
+    ----------
+    tasmax : xarray.DataArray
+        Maximum daily temperature.
+    tasmin : xarray.DataArray
+        Minimum daily temperature.
+    tas : xarray.DataArray
+        Mean daily temperature.
+    thresh : Quantified
+        Threshold temperature on which to base evaluation.
+    freq : str
+        Resampling frequency.
+
+    Returns
+    -------
+    xarray.DataArray
+        Approximation of heating degree days.
+
+    References
+    ----------
+    :cite:cts:`spinoni_2018`
+    """
+    # Where tasmax <= thresh; HDD = thresh - tas
+    # Where tas <= thresh < tasmax; HDD = (thresh - tasmin)/2 - (tasmax - thresh)/4
+    # Where tasmin < thresh < tas; HDD = (thresh - tasmin)/4
+    # Where tasmin >= thresh; HDD = 0
+    thresh = convert_units_to(thresh, tasmax)
+    tasmax = convert_units_to(tasmax, tas)
+    tasmin = convert_units_to(tasmin, tas)
+
+    hdd = xarray.where(
+        tasmax <= thresh,
+        thresh - tas,
+        xarray.where(
+            tas <= thresh,
+            (thresh - tasmin) / 2 - (tasmax - thresh) / 4,
+            xarray.where(tasmin <= thresh, (thresh - tasmin) / 4, 0),
+        ),
+    )
+    hdd = hdd.resample(time=freq).sum(dim="time")
+    hdd = to_agg_units(hdd, tas, "integral")
+    return hdd
+
+
 @declare_units(tas="[temperature]", thresh="[temperature]")
 def heating_degree_days(
     tas: xarray.DataArray,
@@ -2048,7 +2170,7 @@ def heating_degree_days(
 
     .. math::
 
-        HD17_j = \sum_{i=1}^{I} (17℃ - TG_{ij}) | TG_{ij} < 17℃)
+       HD17_j = \sum_{i=1}^{I} (17℃ - TG_{ij}) | TG_{ij} < 17℃)
     """
     hdd = cumulative_difference(tas, threshold=thresh, op="<", freq=freq)
     return hdd
@@ -2342,7 +2464,7 @@ def tn_days_above(
 
     .. math::
 
-        TN_{ij} > Threshold [℃]
+       TN_{ij} > Threshold [℃]
     """
     thresh = convert_units_to(thresh, tasmin)
     f = threshold_count(tasmin, op, thresh, freq, constrain=(">", ">="))
@@ -2384,7 +2506,7 @@ def tn_days_below(
 
     .. math::
 
-        TN_{ij} < Threshold [℃]
+       TN_{ij} < Threshold [℃]
     """
     thresh = convert_units_to(thresh, tasmin)
     f1 = threshold_count(tasmin, op, thresh, freq, constrain=("<", "<="))
@@ -2426,7 +2548,7 @@ def tg_days_above(
 
     .. math::
 
-        TG_{ij} > Threshold [℃]
+       TG_{ij} > Threshold [℃]
     """
     thresh = convert_units_to(thresh, tas)
     f = threshold_count(tas, op, thresh, freq, constrain=(">", ">="))
@@ -2468,7 +2590,7 @@ def tg_days_below(
 
     .. math::
 
-        TG_{ij} < Threshold [℃]
+       TG_{ij} < Threshold [℃]
     """
     thresh = convert_units_to(thresh, tas)
     f1 = threshold_count(tas, op, thresh, freq, constrain=("<", "<="))
@@ -2510,7 +2632,7 @@ def tx_days_above(
 
     .. math::
 
-        TX_{ij} > Threshold [℃]
+       TX_{ij} > Threshold [℃]
     """
     thresh = convert_units_to(thresh, tasmax)
     f = threshold_count(tasmax, op, thresh, freq, constrain=(">", ">="))
@@ -2552,7 +2674,7 @@ def tx_days_below(
 
     .. math::
 
-        TX_{ij} < Threshold [℃]
+       TX_{ij} < Threshold [℃]
     """
     thresh = convert_units_to(thresh, tasmax)
     f1 = threshold_count(tasmax, op, thresh, freq, constrain=("<", "<="))
@@ -2594,7 +2716,7 @@ def warm_day_frequency(
 
     .. math::
 
-        TN_{ij} > Threshold [℃]
+       TN_{ij} > Threshold [℃]
     """
     thresh = convert_units_to(thresh, tasmax)
     events = threshold_count(tasmax, op, thresh, freq, constrain=(">", ">="))
@@ -2671,7 +2793,7 @@ def wetdays(
     >>> pr = xr.open_dataset(path_to_pr_file).pr
     >>> wd = wetdays(pr, thresh="5 mm/day", freq="QS-DEC")
     """
-    thresh = convert_units_to(thresh, pr, "hydro")
+    thresh = convert_units_to(thresh, pr, context="hydro")
 
     wd = threshold_count(pr, op, thresh, freq, constrain=(">", ">="))
     return to_agg_units(wd, pr, "count")
@@ -2714,7 +2836,7 @@ def wetdays_prop(
     >>> pr = xr.open_dataset(path_to_pr_file).pr
     >>> wd = wetdays_prop(pr, thresh="5 mm/day", freq="QS-DEC")
     """
-    thresh = convert_units_to(thresh, pr, "hydro")
+    thresh = convert_units_to(thresh, pr, context="hydro")
 
     wd = compare(pr, op, thresh, constrain=(">", ">="))
     fwd = wd.resample(time=freq).mean(dim="time").assign_attrs(units="1")
@@ -3055,7 +3177,7 @@ def windy_days(sfcWind: xarray.DataArray, thresh: Quantified = "10.8 m s-1", fre
 
     .. math::
 
-        WS_{ij} >= Threshold [m s-1]
+       WS_{ij} >= Threshold [m s-1]
     """
     thresh = convert_units_to(thresh, sfcWind)
     out = threshold_count(sfcWind, ">=", thresh, freq)
@@ -3095,7 +3217,7 @@ def rprctot(
     xarray.DataArray, [dimensionless]
         The proportion of the total precipitation accounted for by convective precipitation for each period.
     """
-    thresh = convert_units_to(thresh, pr, "hydro")
+    thresh = convert_units_to(thresh, pr, context="hydro")
     prc = convert_units_to(prc, pr)
 
     wd = compare(pr, op, thresh)
@@ -3159,10 +3281,12 @@ def degree_days_exceedance_date(
 
     .. math::
 
-        \begin{cases}
-        ST < \sum_{i=i_0}^{k} \max(TG_{ij} - T, 0) & \text{if $op$ is '>'} \\
-        ST < \sum_{i=i_0}^{k} \max(T - TG_{ij}, 0) & \text{if $op$ is '<'}
-        \end{cases}
+       \begin{cases}
+       ST < \sum_{i=i_0}^{k} \max(TG_{ij} - T, 0) & \text{if $op$ is '>'} \\
+       ST < \sum_{i=i_0}^{k} \max(T - TG_{ij}, 0) & \text{if $op$ is '<'}
+       ST < \sum_{i=i_0}^{k} \max(T - TG_{ij}, 0) & \text{if $op$ is '<'}
+       \end{cases}
+       \end{cases}
 
     The resulting :math:`k` is expressed as a day of year.
 

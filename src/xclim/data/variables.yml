@@ -11,11 +11,22 @@ variables:
     description: Cell area (over the ocean).
     dimensions: "[area]"
     standard_name: cell_area
+  ci:
+    canonical_units: W m-2
+    cell_methods: "time: mean"
+    description: Clearness index.
+    dimensions: "[]"
   discharge:
     canonical_units: m3 s-1
     cell_methods: "time: mean"
     description: The amount of water, in all phases, flowing in the river channel and flood plain.
     standard_name: water_volume_transport_in_river_channel
+  dtr:
+    canonical_units: K
+    cell_methods: "time: range within days"
+    description: Diurnal temperature range.
+    dimensions: "[temperature]"
+    standard_name: air_temperature
   evspsbl:
     canonical_units: kg m-2 s-1
     cell_methods: "time: mean"
@@ -30,6 +41,10 @@ variables:
     standard_name: water_potential_evapotranspiration_flux
     data_flags:
       - negative_accumulation_values:
+  gwl:
+    canonical_units: m
+    description: Groundwater level.
+    dimensions: "[length]"
   hurs:
     canonical_units: '%'
     cell_methods: "time: mean"

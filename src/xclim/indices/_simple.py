@@ -67,7 +67,7 @@ def tg_max(tas: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
 
     .. math::
 
-        TNx_j = max(TN_{ij})
+       TNx_j = max(TN_{ij})
     """
     return tas.resample(time=freq).max(dim="time").assign_attrs(units=tas.units)
 
@@ -138,7 +138,7 @@ def tg_min(tas: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
 
     .. math::
 
-        TGn_j = min(TG_{ij})
+       TGn_j = min(TG_{ij})
     """
     return select_resample_op(tas, op="min", freq=freq)
 
@@ -169,7 +169,7 @@ def tn_max(tasmin: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
 
     .. math::
 
-        TNx_j = max(TN_{ij})
+       TNx_j = max(TN_{ij})
     """
     return select_resample_op(tasmin, op="max", freq=freq)
 
@@ -200,7 +200,7 @@ def tn_mean(tasmin: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
 
     .. math::
 
-        TN_{ij} = \frac{ \sum_{i=1}^{I} TN_{ij} }{I}
+       TN_{ij} = \frac{ \sum_{i=1}^{I} TN_{ij} }{I}
     """
     return select_resample_op(tasmin, op="mean", freq=freq)
 
@@ -231,7 +231,7 @@ def tn_min(tasmin: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
 
     .. math::
 
-        TNn_j = min(TN_{ij})
+       TNn_j = min(TN_{ij})
     """
     return select_resample_op(tasmin, op="min", freq=freq)
 
@@ -262,7 +262,7 @@ def tx_max(tasmax: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
 
     .. math::
 
-        TXx_j = max(TX_{ij})
+       TXx_j = max(TX_{ij})
     """
     return select_resample_op(tasmax, op="max", freq=freq)
 
@@ -293,7 +293,7 @@ def tx_mean(tasmax: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
 
     .. math::
 
-        TX_{ij} = \frac{ \sum_{i=1}^{I} TX_{ij} }{I}
+       TX_{ij} = \frac{ \sum_{i=1}^{I} TX_{ij} }{I}
     """
     return select_resample_op(tasmax, op="mean", freq=freq)
 
@@ -324,7 +324,7 @@ def tx_min(tasmax: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
 
     .. math::
 
-        TXn_j = min(TX_{ij})
+       TXn_j = min(TX_{ij})
     """
     return select_resample_op(tasmax, op="min", freq=freq)
 
@@ -362,7 +362,7 @@ def frost_days(
 
     .. math::
 
-        TN_{ij} < TT
+       TN_{ij} < TT
     """
     frz = convert_units_to(thresh, tasmin)
     sel = select_time(tasmin, **indexer)
@@ -398,7 +398,7 @@ def ice_days(tasmax: xarray.DataArray, thresh: Quantified = "0 degC", freq: str 
 
     .. math::
 
-        TX_{ij} < TT
+       TX_{ij} < TT
     """
     frz = convert_units_to(thresh, tasmax)
     out = threshold_count(tasmax, "<", frz, freq)
@@ -570,7 +570,7 @@ def sfcWind_max(  # noqa: N802
 
     .. math::
 
-        FGx_j = max(FG_{ij})
+       FGx_j = max(FG_{ij})
 
     Examples
     --------
@@ -654,7 +654,7 @@ def sfcWind_min(  # noqa: N802
 
     .. math::
 
-        FGn_j = min(FG_{ij})
+       FGn_j = min(FG_{ij})
 
     Examples
     --------
@@ -696,7 +696,7 @@ def sfcWindmax_max(  # noqa: N802
 
     .. math::
 
-        FXx_j = max(FX_{ij})
+       FXx_j = max(FX_{ij})
 
     Examples
     --------
@@ -778,7 +778,7 @@ def sfcWindmax_min(  # noqa: N802
 
     .. math::
 
-        FXn_j = min(FX_{ij})
+       FXn_j = min(FX_{ij})
 
     Examples
     --------
