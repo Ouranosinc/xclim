@@ -37,6 +37,7 @@ target climate:
  * Friedman-Rafsky runs statistic
  * Kolmogorov-Smirnov statistic
  * Kullback-Leibler divergence
+ * Mahalanobis distance
 
 All methods accept arrays, the first is the reference (n, D) and the second is the candidate (m, D). Where the climate
 indicators vary along D and the distribution dimension along n or m. All methods output a single float. See their

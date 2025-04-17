@@ -1,7 +1,6 @@
 """Spatial Analogues module."""
 
 # TODO: Hellinger distance
-# TODO: Mahalanobis distance
 # TODO: Comment on "significance" of results.
 # Code adapted from flyingpigeon.dissimilarity, Nov 2020.
 from __future__ import annotations
@@ -585,3 +584,44 @@ def kldiv(x: np.ndarray, y: np.ndarray, *, k: int | Sequence[int] = 1) -> float 
     if mk:
         return out
     return out[0]
+
+
+@metric
+def mahalanobis(x: np.ndarray, y: np.ndarray, *, VI=None) -> float:
+    """
+    Compute the Mahalanobis distance.
+
+    This method is scale-invariant.
+
+    Parameters
+    ----------
+    x : np.ndarray (n,d)
+        Reference sample.
+    y : np.ndarray (m,d)
+        Candidate sample.
+    VI : np.ndarray(d,d)
+        Optional: Inverse of the covariance matrix used in the Mahalanobis Distance.
+
+    Returns
+    -------
+    float
+        Mahalanobis Distance between the mean of the samples.
+
+    Notes
+    -----
+    With no Inverse of the covariance matrix provided, the covariance matrix of the set of observation vectors of the reference sample is used.
+    The pseudoinverse is used if the covariance matrix is singular.
+
+    References
+    ----------
+    :cite:cts:`Deza2016`
+    """
+    if type(VI) is not np.ndarray:
+        if VI is not None:
+            raise AttributeError("VI not a matrix")
+        v = np.cov(x, rowvar=False)
+        try:
+            VI = np.linalg.inv(v)
+        except Exception:
+            VI = np.linalg.pinv(v)
+    return spatial.distance.mahalanobis(x.mean(axis=0), y.mean(axis=0), VI)
