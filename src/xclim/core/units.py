@@ -14,7 +14,7 @@ from collections.abc import Callable
 from copy import deepcopy
 from importlib.resources import files
 from inspect import signature
-from typing import Any, Literal, cast
+from typing import Any, Literal, cast, overload
 
 import cf_xarray.units
 import numpy as np
@@ -30,6 +30,11 @@ from xclim.core.calendar import get_calendar, parse_offset
 from xclim.core.options import datacheck
 from xclim.core.utils import InputKind, infer_kind_from_parameter
 
+try:
+    from xarray import DataTree
+except ImportError:
+    DataTree = False
+
 logging.getLogger("pint").setLevel(logging.ERROR)
 
 __all__ = [
@@ -38,6 +43,8 @@ __all__ = [
     "cf_conversion",
     "check_units",
     "convert_units_to",
+    "convert_units_to_dt",
+    "convert_units_to_ds",
     "declare_relative_units",
     "declare_units",
     "ensure_absolute_temperature",
@@ -323,6 +330,76 @@ def str2pint(val: str) -> pint.Quantity:
     except ValueError:
         return units.Quantity(1, units2pint(val))
 
+def convert_units_to_ds(
+    ds: xr.Dataset,
+    var: str,
+    target: Quantified | units.Unit | dict,
+    context: Literal["infer", "hydro", "none"] | None = None,
+) -> xr.Dataset:
+    """
+    Convert the units of a variable in a dataset to the target units.
+    This function will use :py:func:`xclim.core.units.convert_units_to` to perform the conversion.
+    Parameters
+    ----------
+    ds : xr.Dataset
+        The dataset containing the variable to convert.
+    var : str
+        The name of the variable to convert.
+    target : Quantified | units.Unit | dict
+        Target units to which the variable should be converted.
+    context : {"infer", "hydro", "none"}, optional
+        The unit definition context. Default: None.
+        If "infer", it will be inferred with :py:func:`xclim.core.units.infer_context` using
+        the standard name from the `source` or, if none is found, from the `target`.
+        This means that the "hydro" context could be activated if any one of the standard names allows it.
+
+    Returns
+    -------
+    xr.Dataset
+        The dataset with the variable converted to the target units.
+    """
+    ds = ds.copy()
+    if var in ds:
+        ds[var] = convert_units_to(source=ds[var], target=target, context=context)
+        return ds
+    else:
+        raise ValueError(f"Variable {var} not found in the dataset. Conversion not applied.")
+
+def convert_units_to_dt(
+    dt: DataTree,
+    var: str,
+    target: Quantified | units.Unit | dict,
+    context: Literal["infer", "hydro", "none"] | None = None,
+) -> DataTree:
+    """
+    Convert the units of all datasets with a given variable in a DataTree to the target units.
+    
+    Parameters
+    ----------
+    dt : DataTree
+        The DataTree containing the datasets to convert.
+    var : str
+        The name of the variable to convert.
+    target : Quantified | units.Unit | dict
+        Target units to which the variable should be converted.
+    context : {"infer", "hydro", "none"}, optional
+        The unit definition context. Default: None.
+        If "infer", it will be inferred with :py:func:`xclim.core.units.infer_context` using
+        the standard name from the `source` or, if none is found, from the `target`.
+        This means that the "hydro" context could be activated if any one of the standard names allows it.
+    Returns
+    -------
+    DataTree
+        The DataTree with the datasets converted to the target units.
+    """
+    if not DataTree:
+        raise ImportError("DataTree is not available in this version of xarray.")
+    return dt.map_over_datasets(
+        convert_units_to_ds,
+        var,
+        target,
+        context,
+    )
 
 # FIXME: The typing here is difficult to determine, as Generics cannot be used to track the type of the output.
 def convert_units_to(  # noqa: C901
