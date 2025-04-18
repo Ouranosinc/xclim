@@ -43,8 +43,8 @@ __all__ = [
     "cf_conversion",
     "check_units",
     "convert_units_to",
-    "convert_units_to_dt",
     "convert_units_to_ds",
+    "convert_units_to_dt",
     "declare_relative_units",
     "declare_units",
     "ensure_absolute_temperature",
@@ -330,6 +330,7 @@ def str2pint(val: str) -> pint.Quantity:
     except ValueError:
         return units.Quantity(1, units2pint(val))
 
+
 def convert_units_to_ds(
     ds: xr.Dataset,
     var: str,
@@ -339,6 +340,7 @@ def convert_units_to_ds(
     """
     Convert the units of a variable in a dataset to the target units.
     This function will use :py:func:`xclim.core.units.convert_units_to` to perform the conversion.
+
     Parameters
     ----------
     ds : xr.Dataset
@@ -365,6 +367,7 @@ def convert_units_to_ds(
     else:
         raise ValueError(f"Variable {var} not found in the dataset. Conversion not applied.")
 
+
 def convert_units_to_dt(
     dt: DataTree,
     var: str,
@@ -373,7 +376,7 @@ def convert_units_to_dt(
 ) -> DataTree:
     """
     Convert the units of all datasets with a given variable in a DataTree to the target units.
-    
+
     Parameters
     ----------
     dt : DataTree
@@ -387,6 +390,7 @@ def convert_units_to_dt(
         If "infer", it will be inferred with :py:func:`xclim.core.units.infer_context` using
         the standard name from the `source` or, if none is found, from the `target`.
         This means that the "hydro" context could be activated if any one of the standard names allows it.
+
     Returns
     -------
     DataTree
@@ -400,6 +404,7 @@ def convert_units_to_dt(
         target,
         context,
     )
+
 
 # FIXME: The typing here is difficult to determine, as Generics cannot be used to track the type of the output.
 def convert_units_to(  # noqa: C901
