@@ -14,7 +14,7 @@ from collections.abc import Callable
 from copy import deepcopy
 from importlib.resources import files
 from inspect import signature
-from typing import Any, Literal, cast, overload
+from typing import Any, Literal, cast
 
 import cf_xarray.units
 import numpy as np
