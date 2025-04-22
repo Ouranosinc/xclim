@@ -477,7 +477,7 @@ FREQ_UNITS = {
     "s": "s",
     "ms": "ms",
     "us": "us",
-    "ns": "ns"
+    "ns": "ns",
 }
 """
 Resampling frequency units for :py:func:`xclim.core.units.infer_sampling_units`.
@@ -519,18 +519,18 @@ def infer_sampling_units(
     freq = xr.infer_freq(dimmed)
     if freq is None:
         if deffreq is None:
-            raise ValueError('Unable to find the sampling frequency of the data.')
+            raise ValueError("Unable to find the sampling frequency of the data.")
         freq = deffreq
 
     multi, base, _, _ = parse_offset(freq)
-    if base == 'Q':
+    if base == "Q":
         multi = multi * 3
-        base = 'M'
+        base = "M"
     if base in FREQ_UNITS:
         u = FREQ_UNITS[base]
     else:
         raise ValueError(f"Sampling frequency {freq} has no corresponding pint or CF units.")
-    if u == 'd' and multi == 7
+    if u == "d" and multi == 7:
         # Special case for weekly frequency. xarray's CFTimeOffsets do not have "W".
         u = "week"
     return multi, u
