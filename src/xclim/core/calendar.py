@@ -1636,11 +1636,12 @@ def unstack_periods(da: xr.DataArray | xr.Dataset, dim: str = "period") -> xr.Da
         compare_offsets(src_freq, "<", "MS")
         or (compare_offsets(src_freq, ">=", "YS") and da.time.dt.calendar in uniform_calendars)
     ):
-        warnings.warn(
+        msg = (
             "xclim is not able to unstack periods that were constructed from non-uniform time steps. "
             f"(Found : {src_freq} with calendar {da.time.dt.calendar}). "
             "Results won't fit with the original coordinates passed to `stack_periods`."
         )
+        warnings.warn(msg)
 
     if unequal_lengths:
         try:
