@@ -403,13 +403,15 @@ def test_temp_difference_rountrip():
 )
 def test_infer_sampling_units(freq, expm, expu):
     time = xr.date_range("14-04-2025", periods=10, freq=freq)
-    m, u = infer_sampling_units(time)
+    da = xr.DataArray(list(range(10)), dims=("time",), coords={"time": time})
+    m, u = infer_sampling_units(da)
     assert expm == m
     assert expu == u
 
 
 def test_infer_sampling_units_errors():
     time = xr.date_range("14-04-2025", periods=10, freq="D")
-    time = time[[0, 1, 5, 6]]
+    da = xr.DataArray(list(range(10)), dims=("time",), coords={"time": time})
+    da = da[[0, 1, 5, 6]]
     with pytest.raises(ValueError, match="Unable to find"):
-        infer_sampling_units(time)
+        infer_sampling_units(da)

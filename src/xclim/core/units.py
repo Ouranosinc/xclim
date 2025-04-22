@@ -515,8 +515,8 @@ def infer_sampling_units(
     ValueError
         If the frequency has no corresponding units.
     """
-    dimmed = getattr(da, dim)
-    freq = xr.infer_freq(dimmed)
+    da = da[dim]
+    freq = xr.infer_freq(da)
     if freq is None:
         if deffreq is None:
             raise ValueError("Unable to find the sampling frequency of the data.")
@@ -533,6 +533,7 @@ def infer_sampling_units(
     if u == "d" and multi == 7:
         # Special case for weekly frequency. xarray's CFTimeOffsets do not have "W".
         u = "week"
+        multi = 1
     return multi, u
 
 
