@@ -8,6 +8,7 @@ Helper function to handle dates, times and different calendars with xarray.
 from __future__ import annotations
 
 import datetime as pydt
+import warnings
 from collections.abc import Sequence
 from typing import Any, TypeVar
 
@@ -1546,7 +1547,7 @@ def stack_periods(
     lengths.attrs["units"] = ensure_cf_units(u)
     # Start points for each period and remember parameters for unstacking
     starts = xr.DataArray(
-        [da.time[slc.start].item() for slc in periods],
+        [da.time.values[slc.start] for slc in periods],
         dims=(dim,),
         attrs={
             "long_name": "Start of the period",
@@ -1628,6 +1629,18 @@ def unstack_periods(da: xr.DataArray | xr.Dataset, dim: str = "period") -> xr.Da
         raise ValueError(
             f"`unstack_periods` can't find the window, stride and freq attributes on the {dim} coordinates."
         ) from err
+
+    src_freq = xr.infer_freq(da.time)
+    # Ok freqs are < D and uniform-calendar >= Y.
+    if not (
+        compare_offsets(src_freq, "<", "MS")
+        or (compare_offsets(src_freq, ">=", "YS") and da.time.dt.calendar in uniform_calendars)
+    ):
+        warnings.warn(
+            "xclim is not able to unstack periods that were constructed from non-uniform time steps. "
+            f"(Found : {src_freq} with calendar {da.time.dt.calendar}). "
+            "Results won't fit with the original coordinates passed to `stack_periods`."
+        )
 
     if unequal_lengths:
         try:
