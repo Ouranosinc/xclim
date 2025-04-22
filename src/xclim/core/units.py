@@ -339,6 +339,7 @@ def convert_units_to_ds(
 ) -> xr.Dataset:
     """
     Convert the units of a variable in a dataset to the target units.
+
     This function will use :py:func:`xclim.core.units.convert_units_to` to perform the conversion.
 
     Parameters
