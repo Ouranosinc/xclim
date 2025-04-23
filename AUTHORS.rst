@@ -51,4 +51,4 @@ Contributors
 * Baptiste Hamon <baptiste.hamon@pg.canterbury.ac.nz> `@baptistehamon <https://github.com/baptistehamon>`_
 * Jack Kit-tai Wong <kit.tai.wong@gmail.com> `@jack-ktw <https://github.com/jack-ktw>`_
 * Jens de Bruijn <j.a.debruijn@outlook.com> `@jensdebruijn <https://github.com/jensdebruijn>`_
-* Armin Hofmann @HofmannGeo <https://github.com/HofmannGeo>`_
+* Armin Hofmann `@HofmannGeo <https://github.com/HofmannGeo>`_
