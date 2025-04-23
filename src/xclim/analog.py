@@ -587,7 +587,7 @@ def kldiv(x: np.ndarray, y: np.ndarray, *, k: int | Sequence[int] = 1) -> float 
 
 
 @metric
-def mahalanobis(x: np.ndarray, y: np.ndarray, *, VI=None) -> float:
+def mahalanobis(x: np.ndarray, y: np.ndarray, *, VI: np.ndarray | None = None) -> float:
     """
     Compute the Mahalanobis distance.
 
@@ -595,12 +595,12 @@ def mahalanobis(x: np.ndarray, y: np.ndarray, *, VI=None) -> float:
 
     Parameters
     ----------
-    x : np.ndarray (n,d)
-        Reference sample.
-    y : np.ndarray (m,d)
-        Candidate sample.
-    VI : np.ndarray(d,d)
-        Optional: Inverse of the covariance matrix used in the Mahalanobis Distance.
+    x : np.ndarray
+        Reference sample (n,d).
+    y : np.ndarray
+        Candidate sample (m,d).
+    VI : np.ndarray, optional
+        Inverse of the covariance matrix used in the Mahalanobis Distance (d,d). Optional.
 
     Returns
     -------
@@ -616,7 +616,7 @@ def mahalanobis(x: np.ndarray, y: np.ndarray, *, VI=None) -> float:
     ----------
     :cite:cts:`Deza2016`
     """
-    if type(VI) is not np.ndarray:
+    if not isinstance(VI, np.ndarray):
         if VI is not None:
             raise AttributeError("VI not a matrix")
         v = np.cov(x, rowvar=False)
