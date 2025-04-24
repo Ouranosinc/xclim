@@ -622,6 +622,6 @@ def mahalanobis(x: np.ndarray, y: np.ndarray, *, VI: np.ndarray | None = None) -
         v = np.cov(x, rowvar=False)
         try:
             VI = np.linalg.inv(v)
-        except Exception:
+        except np.linalg.LinAlgError:
             VI = np.linalg.pinv(v)
     return spatial.distance.mahalanobis(x.mean(axis=0), y.mean(axis=0), VI)
