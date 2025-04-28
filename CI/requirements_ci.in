@@ -2,7 +2,7 @@ bump-my-version==1.1.2
 deptry==0.23.0
 exceptiongroup==1.2.2
 flit==3.12.0
-pip==25.0.1
+pip==25.1
 pylint==3.3.6
 tomli==2.2.1
 tox==4.25.0
