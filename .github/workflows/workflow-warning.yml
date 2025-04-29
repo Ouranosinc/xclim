@@ -73,4 +73,4 @@ jobs:
             > Workflow changes in this Pull Request have been approved!
           reactions: |
             hooray
-          edit-mode: append
+          edit-mode: replace
