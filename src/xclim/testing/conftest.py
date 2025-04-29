@@ -104,7 +104,7 @@ def doctest_setup(xdoctest_namespace, nimbus, worker_id, open_dataset) -> None: 
     """Gather testing data on doctest run."""
     testing_setup_warnings()
     gather_testing_data(worker_cache_dir=nimbus.path, worker_id=worker_id)
-    xdoctest_namespace.update(generate_atmos(branch=TESTDATA_BRANCH, cache_dir=nimbus.path))
+    xdoctest_namespace.update(generate_atmos(nimbus=nimbus))
 
     class AttrDict(dict):  # numpydoc ignore=PR01
         """A dictionary that allows access to its keys as attributes."""
