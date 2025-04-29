@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import os
-
 import numpy as np
 import pandas as pd
 import pytest
@@ -158,7 +156,7 @@ def test_runs_with_holes():
 
 
 class TestStatisticsRun:
-    nc_pr = os.path.join("NRCANdaily", "nrcan_canada_daily_pr_1990.nc")
+    nc_pr = "NRCANdaily/nrcan_canada_daily_pr_1990.nc"
 
     def test_simple(self):
         values = np.zeros(365)
@@ -281,7 +279,7 @@ class TestStatisticsRun:
 
 
 class TestFirstRun:
-    nc_pr = os.path.join("NRCANdaily", "nrcan_canada_daily_pr_1990.nc")
+    nc_pr = "NRCANdaily/nrcan_canada_daily_pr_1990.nc"
 
     def test_real_simple(self):
         a = xr.DataArray(np.zeros(100, bool), dims=("x",))
