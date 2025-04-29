@@ -112,9 +112,10 @@ docs/apidoc/xclim*.rst
 docs/_dynamic/indicators.json
 docs/variables.json
 
+# VS Code
 .vscode
 
-# netCDF
+# netCDF files
 *.nc
 
 # zarr store
@@ -125,3 +126,6 @@ dask-worker-space
 
 # Apple
 .DS_Store
+
+# Testing registries
+/src/xclim/testing/*/
