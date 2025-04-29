@@ -42,7 +42,7 @@ class TestFileRequests:
     ):
         from xclim.testing.utils import default_testdata_cache, default_testdata_version
 
-        nimbus_kwargs = {"cache_dir": default_testdata_cache.joinpath(default_testdata_version)}
+        nimbus_kwargs = {"cache_dir": default_testdata_cache, "branch": default_testdata_version}
 
         # Test with top-level default engine
         ds = open_dataset(

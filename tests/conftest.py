@@ -312,9 +312,13 @@ def nimbus(threadsafe_data_dir, worker_id):
 
 
 @pytest.fixture(scope="session")
-def open_dataset(nimbus):
+def open_dataset(threadsafe_data_dir, worker_id):
     def _open_session_scoped_file(file: str | os.PathLike, **xr_kwargs):
-        nimbus_kwargs = dict(branch=TESTDATA_BRANCH, repo=TESTDATA_REPO_URL, cache_dir=nimbus.path)
+        nimbus_kwargs = {
+            "branch": TESTDATA_BRANCH,
+            "repo": TESTDATA_REPO_URL,
+            "cache_dir": (TESTDATA_CACHE_DIR if worker_id == "master" else threadsafe_data_dir),
+        }
         xr_kwargs.setdefault("cache", True)
         xr_kwargs.setdefault("engine", "h5netcdf")
         return _open_dataset(
@@ -374,8 +378,8 @@ def gather_session_data(request, nimbus, worker_id):
     """
     Gather testing data on pytest run.
 
-    When running pytest with multiple workers, one worker will copy data remotely to default cache dir while
-    other workers wait using lockfile. Once the lock is released, all workers will then copy data to their local
+    When running pytest with multiple workers, one worker will copy data remotely to the default cache dir while
+    other workers wait using a lockfile. Once the lock is released, all workers will then copy data to their local
     threadsafe_data_dir. As this fixture is scoped to the session, it will only run once per pytest run.
 
     Due to the lack of UNIX sockets on Windows, the lockfile mechanism is not supported, requiring users on
@@ -386,10 +390,10 @@ def gather_session_data(request, nimbus, worker_id):
     """
     testing_setup_warnings()
     gather_testing_data(worker_cache_dir=nimbus.path, worker_id=worker_id)
-    generate_atmos(branch=TESTDATA_BRANCH, cache_dir=nimbus.path)
+    generate_atmos(nimbus=nimbus)
 
     def remove_data_written_flag():
-        """Cleanup cache folder once we are finished."""
+        """Clean up the cache folder once we are finished."""
         flag = default_testdata_cache.joinpath(".data_written")
         if flag.exists():
             try:

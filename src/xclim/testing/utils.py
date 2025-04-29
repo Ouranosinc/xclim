@@ -475,7 +475,7 @@ def nimbus(
     repo: str = TESTDATA_REPO_URL,
     branch: str = TESTDATA_BRANCH,
     cache_dir: str | Path = TESTDATA_CACHE_DIR,
-    data_updates: bool = True,
+    allow_updates: bool = True,
 ):
     """
     Pooch registry instance for xclim test data.
@@ -488,7 +488,7 @@ def nimbus(
         Branch of repository to use when fetching testing datasets.
     cache_dir : str or Path
         The path to the directory where the data files are stored.
-    data_updates : bool
+    allow_updates : bool
         If True, allow updates to the data files. Default is True.
 
     Returns
@@ -502,7 +502,7 @@ def nimbus(
         - ``XCLIM_TESTDATA_CACHE_DIR``: If this environment variable is set, it will be used as the
           base directory to store the data files.
           The directory should be an absolute path (i.e., it should start with ``/``).
-          Otherwise,the default location will be used (based on ``platformdirs``, see :py:func:`pooch.os_cache`).
+          Otherwise, the default location will be used (based on ``platformdirs``, see :py:func:`pooch.os_cache`).
         - ``XCLIM_TESTDATA_REPO_URL``: If this environment variable is set, it will be used as the URL of
           the repository to use when fetching datasets. Otherwise, the default repository will be used.
         - ``XCLIM_TESTDATA_BRANCH``: If this environment variable is set, it will be used as the branch of
@@ -534,7 +534,7 @@ def nimbus(
         base_url=remote,
         version=default_testdata_version,
         version_dev=branch,
-        allow_updates=data_updates,
+        allow_updates=allow_updates,
         registry=load_registry(branch=branch, repo=repo),
     )
 
@@ -559,7 +559,13 @@ def nimbus(
 
         # default to our http/s downloader with user-agent headers
         kwargs.setdefault("downloader", _downloader)
-        return _nimbus.fetch_diversion(*args, **kwargs)
+        try:
+            return _nimbus.fetch_diversion(*args, **kwargs)
+        except SocketBlockedError as err:
+            raise FileNotFoundError(
+                "File was not found in the testing data cache and remote socket connections are disabled. "
+                "You may need to download the testing data using `xclim prefetch_testing_data`."
+            ) from err
 
     # Replace the fetch method with the custom fetch method
     _nimbus.fetch = _fetch
