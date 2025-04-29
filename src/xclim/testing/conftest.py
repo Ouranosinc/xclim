@@ -58,7 +58,7 @@ def nimbus(threadsafe_data_dir, worker_id):  # numpydoc ignore=PR01
 
 
 @pytest.fixture(scope="session")
-def open_dataset(nimbus):  # numpydoc ignore=PR01
+def open_dataset(threadsafe_data_dir, worker_id):  # numpydoc ignore=PR01
     """
     Return a function that opens a dataset from the test data.
 
@@ -69,7 +69,11 @@ def open_dataset(nimbus):  # numpydoc ignore=PR01
     """
 
     def _open_session_scoped_file(file: str | os.PathLike, **xr_kwargs):
-        nimbus_kwargs = dict(branch=TESTDATA_BRANCH, repo=TESTDATA_REPO_URL, cache_dir=nimbus.path)
+        nimbus_kwargs = {
+            "branch": TESTDATA_BRANCH,
+            "repo": TESTDATA_REPO_URL,
+            "cache_dir": (TESTDATA_CACHE_DIR if worker_id == "master" else threadsafe_data_dir),
+        }
         xr_kwargs.setdefault("cache", True)
         xr_kwargs.setdefault("engine", "h5netcdf")
         return _open_dataset(
