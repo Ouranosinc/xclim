@@ -368,8 +368,8 @@ class TestAgroclimaticIndices:
         # Only the last day contains negative chill units.
         assert out[0] == 0.5 * num_cu_05 + num_cu_1 - 0.5 * 3
 
-    def test_cool_night_index(self, nimbus):
-        ds = xr.open_dataset(nimbus.fetch("cmip5/tas_Amon_CanESM2_rcp85_r1i1p1_200701-200712.nc"))
+    def test_cool_night_index(self, open_dataset):
+        ds = open_dataset("cmip5/tas_Amon_CanESM2_rcp85_r1i1p1_200701-200712.nc")
         ds = ds.rename(dict(tas="tasmin"))
 
         cni = xci.cool_night_index(tasmin=ds.tasmin)  # find latitude implicitly
@@ -397,8 +397,8 @@ class TestAgroclimaticIndices:
             (75, [55.35, 1058.55, 1895.97, 1472.18, 298.74]),
         ],
     )
-    def test_lat_temperature_index(self, lat_factor, nimbus, values):
-        ds = xr.open_dataset(nimbus.fetch("cmip5/tas_Amon_CanESM2_rcp85_r1i1p1_200701-200712.nc"))
+    def test_lat_temperature_index(self, lat_factor, values, open_dataset):
+        ds = open_dataset("cmip5/tas_Amon_CanESM2_rcp85_r1i1p1_200701-200712.nc")
         ds = ds.drop_isel(time=0)  # drop time=2006/12 for one year of data
 
         # find lat implicitly
@@ -418,8 +418,8 @@ class TestAgroclimaticIndices:
             ("jones", "11-01", 2219.51),
         ],
     )
-    def test_huglin_index(self, nimbus, method, end_date, values):
-        ds = xr.open_dataset(nimbus.fetch("cmip5/tas_Amon_CanESM2_rcp85_r1i1p1_200701-200712.nc"))
+    def test_huglin_index(self, method, end_date, values, open_dataset):
+        ds = open_dataset("cmip5/tas_Amon_CanESM2_rcp85_r1i1p1_200701-200712.nc")
         ds = ds.drop_isel(time=0)  # drop time=2006/12 for one year of data
 
         tasmax, tas = ds.tas + 15, ds.tas - 5
@@ -678,7 +678,7 @@ class TestStandardizedIndices:
             ),
         ],
     )
-    def test_standardized_precipitation_index(self, nimbus, freq, window, dist, method, values, diff_tol):
+    def test_standardized_precipitation_index(self, freq, window, dist, method, values, diff_tol, open_dataset):
         if method == "ML" and freq == "D" and Version(__numpy_version__) < Version("2.0.0"):
             pytest.skip("Skipping SPI/ML/D on older numpy")
 
@@ -688,7 +688,7 @@ class TestStandardizedIndices:
             scipy2lmom = {"gamma": "gam"}
             dist = getattr(lmom, scipy2lmom[dist])
 
-        ds = xr.open_dataset(nimbus.fetch("sdba/CanESM2_1950-2100.nc")).isel(location=1)
+        ds = open_dataset("sdba/CanESM2_1950-2100.nc").isel(location=1)
         if freq == "D":
             # to compare with ``climate_indices``
             ds = ds.convert_calendar("366_day", missing=np.nan)
@@ -726,8 +726,8 @@ class TestStandardizedIndices:
 
     @pytest.mark.slow
     @pytest.mark.parametrize("dist", ["gamma", "fisk"])
-    def test_str_vs_rv_continuous(self, nimbus, dist):
-        ds = xr.open_dataset(nimbus.fetch("sdba/CanESM2_1950-2100.nc")).isel(location=1)
+    def test_str_vs_rv_continuous(self, dist, open_dataset):
+        ds = open_dataset("sdba/CanESM2_1950-2100.nc").isel(location=1)
         window = 1
         method = "ML"
         freq = "MS"
@@ -816,12 +816,12 @@ class TestStandardizedIndices:
     # after the ``climate_indices`` 1000.0 offset, so it's a problem with ``climate_indices``
     # library. Address this in the future.
     def test_standardized_precipitation_evapotranspiration_index(
-        self, nimbus, freq, window, dist, method, values, diff_tol
+        self, freq, window, dist, method, values, diff_tol, open_dataset
     ):
         if method == "ML" and freq == "D" and Version(__numpy_version__) < Version("2.0.0"):
             pytest.skip("Skipping SPI/ML/D on older numpy")
 
-        ds = xr.open_dataset(nimbus.fetch("sdba/CanESM2_1950-2100.nc")).isel(location=1).sel(time=slice("1950", "2000"))
+        ds = open_dataset("sdba/CanESM2_1950-2100.nc").isel(location=1).sel(time=slice("1950", "2000"))
         pr = ds.pr
         # generate water budget
         with xr.set_options(keep_attrs=True):
@@ -987,8 +987,8 @@ class TestStandardizedIndices:
             ),
         ],
     )
-    def test_standardized_streamflow_index(self, nimbus, freq, window, dist, method, values, diff_tol):
-        ds = xr.open_dataset(nimbus.fetch("Raven/q_sim.nc"))
+    def test_standardized_streamflow_index(self, freq, window, dist, method, values, diff_tol, open_dataset):
+        ds = open_dataset("Raven/q_sim.nc")
         q = ds.q_obs.rename("q")
         q_cal = ds.q_sim.rename("q").fillna(ds.q_sim.mean())
         if freq == "D":
@@ -1106,10 +1106,10 @@ class TestStandardizedIndices:
             ),
         ],
     )
-    def test_standardized_groundwater_index(self, nimbus, freq, window, dist, method, values, diff_tol):
+    def test_standardized_groundwater_index(self, freq, window, dist, method, values, diff_tol, open_dataset):
         if method == "ML" and freq == "D" and Version(__numpy_version__) < Version("2.0.0"):
             pytest.skip("Skipping SPI/ML/D on older numpy")
-        ds = xr.open_dataset(nimbus.fetch("Raven/gwl_obs.nc"))
+        ds = open_dataset("Raven/gwl_obs.nc")
         gwl0 = ds.gwl
 
         gwl = gwl0.sel(time=slice("1989", "1991"))
@@ -1143,9 +1143,9 @@ class TestStandardizedIndices:
             ({"month": [2, 3], "drop": True}),
         ],
     )
-    def test_standardized_index_modularity(self, tmp_path, indexer, nimbus):
+    def test_standardized_index_modularity(self, tmp_path, indexer, open_dataset):
         freq, window, dist, method = "MS", 6, "gamma", "APP"
-        ds = xr.open_dataset(nimbus.fetch("sdba/CanESM2_1950-2100.nc")).isel(location=1).sel(time=slice("1950", "2000"))
+        ds = open_dataset("sdba/CanESM2_1950-2100.nc").isel(location=1).sel(time=slice("1950", "2000"))
         pr = ds.pr
 
         # generate water budget
@@ -1200,9 +1200,9 @@ class TestStandardizedIndices:
 
         np.testing.assert_allclose(spei1.values, spei2.values, rtol=0, atol=1e-4)
 
-    def test_zero_inflated(self, nimbus):
+    def test_zero_inflated(self, open_dataset):
         # This tests that the zero_inflated option makes a difference with zero inflated data
-        ds = xr.open_dataset(nimbus.fetch("sdba/CanESM2_1950-2100.nc")).isel(location=1).sel(time=slice("1950", "1980"))
+        ds = open_dataset("sdba/CanESM2_1950-2100.nc").isel(location=1).sel(time=slice("1950", "1980"))
         pr = ds.pr
 
         # july 1st (doy=180) with 10 years with zero precipitation
@@ -1226,8 +1226,8 @@ class TestStandardizedIndices:
             spid[zero_inflated] = spid[zero_inflated].where(spid[zero_inflated].notnull(), drop=True)
         np.testing.assert_equal(np.all(np.not_equal(spid[False].values, spid[True].values)), True)
 
-    def test_PWM_and_fitkwargs(self, nimbus):
-        ds = xr.open_dataset(nimbus.fetch("sdba/CanESM2_1950-2100.nc")).isel(location=1).sel(time=slice("1950", "1980"))
+    def test_PWM_and_fitkwargs(self, open_dataset):
+        ds = open_dataset("sdba/CanESM2_1950-2100.nc").isel(location=1).sel(time=slice("1950", "1980"))
         pr = ds.pr
 
         lmom = pytest.importorskip("lmoments3.distr")
@@ -2401,9 +2401,9 @@ class TestTGXN10p:
         assert out[0] == 0
         assert out[5] == 5
 
-    def test_doy_interpolation(self, nimbus):
+    def test_doy_interpolation(self, open_dataset):
         # Just a smoke test
-        with xr.open_dataset(nimbus.fetch("ERA5/daily_surface_cancities_1990-1993.nc")) as ds:
+        with open_dataset("ERA5/daily_surface_cancities_1990-1993.nc") as ds:
             t10 = percentile_doy(ds.tasmin, per=10).sel(percentiles=10)
             xci.tn10p(ds.tasmin, t10, freq="MS")
 
@@ -3023,15 +3023,15 @@ class TestTG:
         "ind,exp",
         [(xci.tg_mean, 283.0615), (xci.tg_min, 266.1208), (xci.tg_max, 291.5018)],
     )
-    def test_simple(self, nimbus, ind, exp):
-        ds = xr.open_dataset(nimbus.fetch("ERA5/daily_surface_cancities_1990-1993.nc"))
+    def test_simple(self, ind, exp, open_dataset):
+        ds = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc")
         out = ind(ds.tas.sel(location="Victoria"))
         np.testing.assert_almost_equal(out[0], exp, decimal=4)
 
-    def test_indice_against_icclim(self, nimbus):
+    def test_indice_against_icclim(self, open_dataset):
         from xclim.indicators import icclim  # noqa
 
-        cmip3_tas = xr.open_dataset(nimbus.fetch("cmip3/tas.sresb1.giss_model_e_r.run1.atm.da.nc")).tas
+        cmip3_tas = open_dataset("cmip3/tas.sresb1.giss_model_e_r.run1.atm.da.nc").tas
 
         with set_options(cf_compliance="log"):
             ind = xci.tg_mean(cmip3_tas)
