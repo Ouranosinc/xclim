@@ -264,13 +264,13 @@ language = "en"
 # directories to ignore when looking for source files.
 # This patterns also effect to html_static_path and html_extra_path
 exclude_patterns = [
-    "_build",
-    "Thumbs.db",
+    "**.ipynb_checkpoints",
     ".DS_Store",
+    "Thumbs.db",
+    "_build",
     "notebooks/benchmarks",
     "notebooks/xclim_training",
     "paper/paper.md",
-    "**.ipynb_checkpoints",
 ]
 
 # The name of the Pygments (syntax highlighting) style to use for light and dark themes.

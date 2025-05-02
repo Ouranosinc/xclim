@@ -563,11 +563,23 @@
     "title": "Degrés-jours de climatisation",
     "abstract": "Cumul des degrés-jours pour les jours où la température moyenne quotidienne est au-dessus d'un seuil donné et que les immeubles doivent être climatisés."
   },
+  "COOLING_DEGREE_DAYS_APPROXIMATION": {
+    "long_name": "Somme cumulée des degrés de température pour les températures quotidiennes au-dessus de {thresh}",
+    "description": "Cumul {freq:m} des degrés-jours de climatisation (températures quotidiennes au-dessus de {thresh}) en utilisant une combinaison des températures journalières minimales, maximales et moyennes.",
+    "title": "Degrés-jours de climatisation",
+    "abstract": "Cumul des degrés-jours pour les jours où les températures quotidiennes sont au-dessus d'un seuil donné et que les immeubles doivent être climatisés. Cette méthode intègre les températures moyennes, minimales et maximales, en tenant compte de l'asymétrie de la distribution des températures tout au long du cycle diurne."
+  },
   "HEATING_DEGREE_DAYS": {
     "long_name": "Somme cumulée des degrés de température pour la température moyenne quotidienne sous {thresh}",
     "description": "Cumul {freq:m} des degrés-jours de chauffage (température moyenne quotidienne sous {thresh}).",
     "title": "Degrés-jours de chauffage",
-    "abstract": "Cumul des degrés-jours pour les jours où la température moyenne est sous un seuil donné et que les immeubles doivent être chauffés."
+    "abstract": "Cumul des degrés-jours pour les jours où la température moyenne quotidienne est sous un seuil donné et que les immeubles doivent être chauffés."
+  },
+  "HEATING_DEGREE_DAYS_APPROXIMATION": {
+    "long_name": "Somme cumulée des degrés de température pour les températures quotidiennes sous {thresh}",
+    "description": "Cumul {freq:m} des degrés-jours de chauffage (température moyenne quotidienne sous {thresh}) en utilisant une combinaison des températures journalières minimales, maximales et moyennes.",
+    "title": "Degrés-jours de chauffage",
+    "abstract": "Cumul des degrés-jours pour les jours où les températures quotidiennes sont sous un seuil donné et que les immeubles doivent être chauffés. Cette méthode intègre les températures moyennes, minimales et maximales, en tenant compte de l'asymétrie de la distribution des températures tout au long du cycle diurne."
   },
   "GROWING_DEGREE_DAYS": {
     "long_name": "Somme cumulée des degrés de température pour la température moyenne quotidienne au-dessus de {thresh}",
