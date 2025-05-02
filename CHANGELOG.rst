@@ -22,7 +22,7 @@ Breaking changes
 * ``xclim.sdba`` is now a convenience mapping that imports `xsdba` members instead of being its own submodule. This implies a number of breaking changes (`issue`:`2074`):
     * The sub-module ``xclim.sdba`` is no longer installed by default. Users must install `xsdba` separately using ``pip install xclim[extras]`` or ``{pip|conda} install xsdba``.
     * Units handling: The "infer" context is no longer used in unit conversion in `sdba` functions.
-    * Thee `SDBA_EXTRA_OUTPUT` global option can no longer be activated with `xclim.set_options`, instead use ``sdba.set_options`` where the option is now called `EXTRA_OUTPUT`.
+    * The `SDBA_EXTRA_OUTPUT` global option can no longer be activated with `xclim.set_options`, instead use ``sdba.set_options`` where the option is now called `EXTRA_OUTPUT`.
     * The other global variable `SDBA_ENCODE_CF` was removed as it has been rendered obsolete.
 
 Internal changes
