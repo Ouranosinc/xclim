@@ -24,7 +24,7 @@ dependencies:
   # Extras
   - flox >=0.9
   - lmoments3 >=1.0.7  # Required for some Jupyter notebooks
-#  - xsdba >=0.4.0  # Re-enable when xsdba v0.4.0 is released
+  - xsdba >=0.4.0  # Re-enable when xsdba v0.4.0 is released
   - pip:
       - git+https://github.com/Ouranosinc/xsdba.git@main
   # Testing and development dependencies
