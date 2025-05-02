@@ -8,6 +8,7 @@ Helper function to handle dates, times and different calendars with xarray.
 from __future__ import annotations
 
 import datetime as pydt
+import warnings
 from collections.abc import Sequence
 from typing import Any, TypeVar
 
@@ -15,14 +16,15 @@ import cftime
 import numpy as np
 import pandas as pd
 import xarray as xr
-from xarray.coding.cftime_offsets import to_cftime_datetime
-from xarray.coding.cftimeindex import CFTimeIndex
-from xarray.core import dtypes
-from xarray.core.resample import DataArrayResample, DatasetResample
+from packaging.version import Version
+from xarray import CFTimeIndex
 
 from xclim.core._types import DayOfYearStr
 from xclim.core.formatting import update_xclim_history
 from xclim.core.utils import uses_dask
+
+XR2409 = Version(xr.__version__) >= Version("2024.09")
+
 
 __all__ = [
     "DayOfYearStr",
@@ -50,6 +52,23 @@ __all__ = [
     "unstack_periods",
     "within_bnds_doy",
 ]
+
+
+_MONTH_ABBREVIATIONS = {
+    1: "JAN",
+    2: "FEB",
+    3: "MAR",
+    4: "APR",
+    5: "MAY",
+    6: "JUN",
+    7: "JUL",
+    8: "AUG",
+    9: "SEP",
+    10: "OCT",
+    11: "NOV",
+    12: "DEC",
+}
+
 
 # Maximum day of year in each calendar.
 max_doy = {
@@ -128,6 +147,8 @@ def get_calendar(obj: Any, dim: str = "time") -> str:
         return obj[dim].dt.calendar
     if isinstance(obj, xr.CFTimeIndex):
         obj = obj.values[0]
+    elif isinstance(obj, pd.DatetimeIndex):
+        return "standard"
     else:
         obj = np.take(obj, 0)
         # Take zeroth element, overcome cases when arrays or lists are passed.
@@ -208,6 +229,20 @@ def _convert_doy_date(doy: int, year: int, src, tgt):
     return float(same_date.dayofyr) + fracpart
 
 
+# Copied from xarray.coding.calendar_ops
+def _is_leap_year(years, calendar):
+    func = np.vectorize(cftime.is_leap_year)
+    return func(years, calendar=calendar)
+
+
+# Copied from xarray.coding.calendar_ops
+def _days_in_year(years, calendar):
+    """The number of days in the year according to given calendar."""
+    if calendar == "360_day":
+        return xr.full_like(years, 360)
+    return _is_leap_year(years, calendar).astype(int) + 365
+
+
 def convert_doy(
     source: xr.DataArray | xr.Dataset,
     target_cal: str,
@@ -272,7 +307,7 @@ def convert_doy(
             max_doy_src = max_doy[source_cal]
         else:
             max_doy_src = xr.apply_ufunc(
-                xr.coding.calendar_ops._days_in_year,
+                _days_in_year,
                 year_of_the_doy,
                 vectorize=True,
                 dask="parallelized",
@@ -282,7 +317,7 @@ def convert_doy(
             max_doy_tgt = max_doy[target_cal]
         else:
             max_doy_tgt = xr.apply_ufunc(
-                xr.coding.calendar_ops._days_in_year,
+                _days_in_year,
                 year_of_the_doy,
                 vectorize=True,
                 dask="parallelized",
@@ -736,7 +771,7 @@ def resample_doy(doy: xr.DataArray, arr: xr.DataArray | xr.Dataset) -> xr.DataAr
 
 
 def time_bnds(  # noqa: C901
-    time: (xr.DataArray | xr.Dataset | CFTimeIndex | pd.DatetimeIndex | DataArrayResample | DatasetResample),
+    time: (xr.DataArray | xr.Dataset | CFTimeIndex | pd.DatetimeIndex),
     freq: str | None = None,
     precision: str | None = None,
 ):
@@ -778,9 +813,10 @@ def time_bnds(  # noqa: C901
     """
     if isinstance(time, xr.DataArray | xr.Dataset):
         time = time.indexes[time.name]
-    elif isinstance(time, DataArrayResample | DatasetResample):
+    # elif isinstance(time, DataArrayResample | DatasetResample):
+    elif hasattr(time, "groupers"):
         for grouper in time.groupers:
-            if isinstance(grouper.grouper, xr.groupers.TimeResampler):
+            if "time" in grouper.codes.dims:
                 datetime = grouper.unique_coord.data
                 freq = freq or grouper.grouper.freq
                 if datetime.dtype == "O":
@@ -922,11 +958,9 @@ def _doy_days_since_doys(
         Number of days (maximum doy) for the year of each value in base.
     """
     calendar = get_calendar(base)
-
     base_doy = base.dt.dayofyear
-
     doy_max = xr.apply_ufunc(
-        xr.coding.calendar_ops._days_in_year,
+        _days_in_year,
         base.dt.year,
         vectorize=True,
         kwargs={"calendar": calendar},
@@ -1309,8 +1343,8 @@ def select_time(
 
         # Get doy of date, this is now safe because the calendar is uniform.
         doys = _get_doys(
-            to_cftime_datetime(f"2000-{start}", calendar).dayofyr,
-            to_cftime_datetime(f"2000-{end}", calendar).dayofyr,
+            cftime.datetime.strptime(f"2000-{start}", "%Y-%m-%d", calendar=calendar).dayofyr,
+            cftime.datetime.strptime(f"2000-{end}", "%Y-%m-%d", calendar=calendar).dayofyr,
             include_bounds,
         )
         mask = time.time.dt.dayofyear.isin(doys)
@@ -1349,7 +1383,7 @@ def stack_periods(
     dim: str = "period",
     start: str = "1970-01-01",
     align_days: bool = True,
-    pad_value=dtypes.NA,
+    pad_value="<NA>",
 ):
     """
     Construct a multi-period array.
@@ -1513,7 +1547,7 @@ def stack_periods(
     lengths.attrs["units"] = ensure_cf_units(u)
     # Start points for each period and remember parameters for unstacking
     starts = xr.DataArray(
-        [da.time[slc.start].item() for slc in periods],
+        [da.time.values[slc.start] for slc in periods],
         dims=(dim,),
         attrs={
             "long_name": "Start of the period",
@@ -1527,11 +1561,12 @@ def stack_periods(
     # The "fake" axis that all periods share
     fake_time = xr.date_range(start, periods=longest, freq=srcfreq, calendar=cal, use_cftime=use_cftime)
     # Slice and concat along new dim. We drop the index and add a new one so that xarray can concat them together.
+    kwargs = {"fill_value": pad_value} if pad_value != "<NA>" else {}
     out = xr.concat(
         [da.isel(time=slc).drop_vars("time").assign_coords(time=np.arange(slc.stop - slc.start)) for slc in periods],
         dim,
         join="outer",
-        fill_value=pad_value,
+        **kwargs,
     )
     out = out.assign_coords(
         time=(("time",), fake_time, da.time.attrs.copy()),
@@ -1594,6 +1629,19 @@ def unstack_periods(da: xr.DataArray | xr.Dataset, dim: str = "period") -> xr.Da
         raise ValueError(
             f"`unstack_periods` can't find the window, stride and freq attributes on the {dim} coordinates."
         ) from err
+
+    src_freq = xr.infer_freq(da.time)
+    # Ok freqs are < D and uniform-calendar >= Y.
+    if not (
+        compare_offsets(src_freq, "<", "MS")
+        or (compare_offsets(src_freq, ">=", "YS") and da.time.dt.calendar in uniform_calendars)
+    ):
+        msg = (
+            "xclim is not able to unstack periods that were constructed from non-uniform time steps. "
+            f"(Found : {src_freq} with calendar {da.time.dt.calendar}). "
+            "Results won't fit with the original coordinates passed to `stack_periods`."
+        )
+        warnings.warn(msg)
 
     if unequal_lengths:
         try:

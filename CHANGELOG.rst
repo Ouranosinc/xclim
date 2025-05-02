@@ -2,18 +2,56 @@
 Changelog
 =========
 
-v0.56.0 (unreleased)
+v0.57.0 (unreleased)
 --------------------
-Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Hui-Min Wang (:user:`Hem-W`).
+Contributors to this version: Éric Dupuis (:user:`coxipi`), Trevor James Smith (:user:`Zeitsperre`), Juliette Lavoie (:user:`juliettelavoie`), Pascal Bourgault (:user:`aulemahal`).
+
+New indicators
+^^^^^^^^^^^^^^
+* New indicator ``xclim.atmos.clearness_index`` computes the `clearness_index` (ratio of downwards solar radiation to extraterrestrial solar radiation). (:pull:`2140`).
+* Added ``cooling_degree_days_approximation`` and ``heating_degree_days_approximation`` indices to compute the number of cooling and heating degree days with consideration for daily temperature cycles. (:issue:`1941`, :pull:`2135`).
+* Added dtr in variables.yml. (:issue:`2146`, :pull:`2147`).
 
 Bug fixes
 ^^^^^^^^^
-* Fix installation instructions in the Contributing guide (:issue:`2088`, :pull:`2089`).
+* Adjustments were made to the `docs` install recipe to ensure that the `xclim` documentation builds correctly. The minimum required Python for rendering the documentation is now 3.11. (:pull:`2141`).
+* ``xclim.core.calendar.stack_periods`` was fixed to work with larger-than-daily source timesteps. Users are still encouraged to use `da.resample(time=FREQ).construct('period')` when possible. (:issue:`2148`, :pull:`2150`).
+
+Internal changes
+^^^^^^^^^^^^^^^^
+* New conversion function ``xclim.indices._conversion.shortwave_downwelling_radiation_from_clearness_index`` provides the inverse of ``xclim.indices._conversion.clearness_index``. (:pull:`2140`).
+* Added a `pre-commit` hook for formatting BibTeX files and reformatted existing BibTeX files. (:pull:`2135`).
+* `pre-commit` hooks have been updated to their latest versions. (:pull:`2141`).
+* Updated a deprecated `pathlib` usage in the `xclim` documentation that was causing failures under Python 3.13. (:pull:`2141`).
+
+v0.56.0 (2025-03-27)
+--------------------
+Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Hui-Min Wang (:user:`Hem-W`), Jack Kit-tai Wong (:user:`jack-ktw`), Adrien Lamarche (:user:`LamAdr`), Éric Dupuis (:user:`coxipi`), Jens de Bruijn (:user:`jensdebruijn`), Pascal Bourgault (:user:`aulemahal`), Sarah Gammon (:user:`SarahG-579462`).
+
+New indicators
+^^^^^^^^^^^^^^
+* Added standardized indicators for hydrology: ``xclim.land.standardized_streamflow_index`` and ``xclim.land.standardized_groundwater_index``. (:issue:`1444`, :pull:`1877`).
+
+Bug fixes
+^^^^^^^^^
+* Fix installation instructions in the Contributing guide. (:issue:`2088`, :pull:`2089`).
+* Fixed parameter order in typing.cast() causing intermittent errors in solar_zenith_angle calculation. (:issue:`2097`, :pull:`2098`).
+* `xclim` now uses the `operator` standard library instead of using `xarray`'s derived ``get_op`` function. A refactoring in `xarray` had changed the position of `get_op` which caused breakage. (:issue:`2113`, :pull:`2114`).
+    * All other uses of `xarray`'s internal API were also removed. (:pull:`2116`).
+* Fixed an issue with star-annotated call signatures to maintain Python 3.10 compatibility. (:pull:`2116`).
+* Fixed ``to_agg_units`` that was converting units of temperature differences prematurely, without changing the values accordingly in the related DataArrays. (:issue:`2121`, :pull:`2122`).
+* ``get_calendar`` now supports ``pandas.DatetimeIndex``. `xclim` no longer uses ``xarray.cftime_range``, which has been deprecated. (:pull:`2130`).
+* Avoid unnecessary time resampling in ``xclim.indices.stats.preprocess_standardized_index`` when `freq` is not `None` but the same as the input data. (:issue:`2111`, :pull:`2112`).
+* Fixed an issue with ``fire_season`` that made it fail with datasets having non-uniform chunks. (:issue:`2129`, :pull:`2132`).
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
 * `xclim` no longer supports Python 3.10. The minimum required version is now Python 3.11. (:pull:`2082`).
+    * **Reverted**: Extended support for Python3.10 will continue until further notice. (:pull:`2100`).
 * The minimum versions of several key dependencies have been raised (`numpy` >=1.24.0; `scikit-learn` >=1.2.0; `scipy` >=1.11.0). (:pull:`2082`).
+* To ensure consistent naming of converters, the following indices have been deprecated with replacements. Changes will be made permanent in `xclim` v0.57.0. (:issue:`2039`, :pull:`2117`):
+    * ``sfcwind_2_uas_vas``: Use ``sfcwind_to_uas_vas`` instead.
+    * ``uas_vas_2_sfcwind``: Use ``uas_vas_to_sfcwind`` instead.
 
 Internal changes
 ^^^^^^^^^^^^^^^^
@@ -23,6 +61,10 @@ Internal changes
     * Docstring formatting is now enabled.
     * Line endings in files now must be `Unix`-compatible (`LF`).
 * The `blackdoc` pre-commit hook now only examines `.rst` and `.md` files. (:pull:`2083`).
+* The `xclim` documentation now has a ``support`` page for detailing the project's usage and version support policies. (:pull:`2100`).
+* The indicator `heat_wave_index` now uses `hot_spell_total_length` index. The `heat_wave_index` index is identical to `hot_spell_total_length` and will be dropped in future versions. (:issue:`2031`, :pull:`2102`).
+* Updated pre-commit hooks to their latest versions. (:pull:`2116`).
+* ``.. math::`` tags in documentation are now properly indented with three (3) spaces. (:pull:`2128`).
 
 v0.55.1 (2025-02-26)
 --------------------

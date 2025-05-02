@@ -6,7 +6,7 @@ repos:
     rev: v3.19.1
     hooks:
       - id: pyupgrade
-        args: ['--py311-plus']
+        args: ['--py310-plus']
         exclude: 'src/xclim/core/indicator.py'
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v5.0.0
@@ -34,24 +34,24 @@ repos:
       - id: toml-sort-fix
         exclude: '.pylintrc.toml'
   - repo: https://github.com/adrienverge/yamllint.git
-    rev: v1.35.1
+    rev: v1.37.0
     hooks:
       - id: yamllint
         args: [ '--config-file=.yamllint.yaml' ]
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.9.6
+    rev: v0.11.4
     hooks:
       - id: ruff
         args: [ '--fix', '--show-fixes' ]
       - id: ruff-format
         exclude: '(src/xclim/indices/__init__.py|docs/installation.rst)'
   - repo: https://github.com/pylint-dev/pylint
-    rev: v3.3.4
+    rev: v3.3.6
     hooks:
       - id: pylint
         args: [ '--rcfile=.pylintrc.toml', '--errors-only', '--jobs=0', '--disable=import-error' ]
   - repo: https://github.com/pycqa/flake8
-    rev: 7.1.2
+    rev: 7.2.0
     hooks:
       - id: flake8
         additional_dependencies: [ 'flake8-rst-docstrings ']
@@ -100,12 +100,16 @@ repos:
       - id: numpydoc-validation
         # Exclude the missing submodule from the xclim.core, see:
         exclude: ^docs/|^tests/|^src/xclim/sdba|^src/xclim/core/missing.py
+  - repo: https://github.com/fluiddyn/formattex-pre-commit
+    rev: 0.1.4
+    hooks:
+      - id: formatbibtex
   - repo: https://github.com/gitleaks/gitleaks
-    rev: v8.23.3
+    rev: v8.24.2
     hooks:
       - id: gitleaks
   - repo: https://github.com/python-jsonschema/check-jsonschema
-    rev: 0.31.1
+    rev: 0.32.1
     hooks:
       - id: check-github-workflows
       - id: check-readthedocs

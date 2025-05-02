@@ -7,6 +7,7 @@ Helper functions for common generic actions done in the computation of indices.
 
 from __future__ import annotations
 
+import operator
 import warnings
 from collections.abc import Callable, Sequence
 
@@ -14,10 +15,9 @@ import cftime
 import numpy as np
 import xarray as xr
 from pint import Quantity
-from xarray.coding.cftime_offsets import _MONTH_ABBREVIATIONS  # noqa
 
 from xclim.core import DayOfYearStr, Quantified
-from xclim.core.calendar import doy_to_days_since, get_calendar, select_time
+from xclim.core.calendar import _MONTH_ABBREVIATIONS, doy_to_days_since, get_calendar, select_time
 from xclim.core.units import (
     convert_units_to,
     declare_relative_units,
@@ -278,7 +278,7 @@ def get_op(op: str, constrain: Sequence[str] | None = None) -> Callable:
         if op not in constraints:
             raise ValueError(f"Operation `{op}` not permitted for indice.")
 
-    return xr.core.ops.get_op(binary_op)  # noqa
+    return getattr(operator, f"__{binary_op}__")
 
 
 def compare(
@@ -1465,7 +1465,7 @@ def cumulative_difference(data: xr.DataArray, threshold: Quantified, op: str, fr
         diff = diff.resample(time=freq).sum(dim="time")
 
     diff.attrs.update(pint2cfattrs(units2pint(data.attrs["units"]), is_difference=True))
-
+    # return diff
     return to_agg_units(diff, data, op="integral")
 
 

@@ -9,18 +9,16 @@ from __future__ import annotations
 
 from collections.abc import Callable, Sequence
 from datetime import datetime
-from typing import Any
 from warnings import warn
 
 import numpy as np
 import pandas as pd
 import xarray as xr
 from numba import njit
-from xarray.core.utils import get_temp_dimname
 
 from xclim.core import DateStr, DayOfYearStr
 from xclim.core.options import OPTIONS, RUN_LENGTH_UFUNC
-from xclim.core.utils import split_auxiliary_coordinates, uses_dask
+from xclim.core.utils import get_temp_dimname, split_auxiliary_coordinates, uses_dask
 from xclim.indices.helpers import resample_map
 
 npts_opt = 9000
@@ -82,7 +80,7 @@ def resample_and_rl(
     da: xr.DataArray,
     resample_before_rl: bool,
     compute: Callable,
-    *args: Any,
+    *args,
     freq: str,
     dim: str = "time",
     **kwargs,
@@ -1662,12 +1660,13 @@ def index_of_date(
     """
     if date is None:
         return np.array([default])
-    try:
+    if len(date.split("-")) == 2:
+        date = f"1840-{date}"
+        date = datetime.strptime(date, "%Y-%m-%d")
+        year_cond = True
+    else:
         date = datetime.strptime(date, "%Y-%m-%d")
         year_cond = time.dt.year == date.year
-    except ValueError:
-        date = datetime.strptime(date, "%m-%d")
-        year_cond = True
 
     idxs = np.where(year_cond & (time.dt.month == date.month) & (time.dt.day == date.day))[0]
     if max_idxs is not None and idxs.size > max_idxs:

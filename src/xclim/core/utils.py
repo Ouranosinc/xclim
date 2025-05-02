@@ -174,7 +174,7 @@ def ensure_chunk_size(da: xr.DataArray, **minchunks: int) -> xr.DataArray:
     return da
 
 
-def uses_dask(*das: xr.DataArray | xr.Dataset) -> bool:
+def uses_dask(*das) -> bool:
     r"""
     Evaluate whether dask is installed and array is loaded as a dask array.
 
@@ -815,7 +815,7 @@ def is_percentile_dataarray(source: xr.DataArray) -> bool:
     )
 
 
-def _chunk_like(*inputs: xr.DataArray | xr.Dataset, chunks: dict[str, int] | None):
+def _chunk_like(*inputs, chunks: dict[str, int] | None):  # *inputs : xr.DataArray | xr.Dataset
     """
     Helper function that (re-)chunks inputs according to a single chunking dictionary.
 
@@ -826,7 +826,7 @@ def _chunk_like(*inputs: xr.DataArray | xr.Dataset, chunks: dict[str, int] | Non
 
     outputs = []
     for da in inputs:
-        if isinstance(da, xr.DataArray) and isinstance(da.variable, xr.core.variable.IndexVariable):
+        if isinstance(da, xr.DataArray) and isinstance(da.variable, xr.IndexVariable):
             da = xr.DataArray(da, dims=da.dims, coords=da.coords, name=da.name)
         if not isinstance(da, xr.DataArray | xr.Dataset):
             outputs.append(da)
@@ -874,3 +874,25 @@ def split_auxiliary_coordinates(
     aux_crd_ds = obj.coords.to_dataset()[aux_crd_names]
     clean_obj = obj.drop_vars(aux_crd_names)
     return clean_obj, aux_crd_ds
+
+
+# Copied from xarray
+def get_temp_dimname(dims: Sequence[str], new_dim: str) -> str:
+    """
+    Get an new dimension name based on new_dim, that is not used in dims.
+
+    Parameters
+    ----------
+    dims : sequence of str
+        The dimension names that already exist.
+    new_dim : str
+        The new name we want.
+
+    Returns
+    -------
+    str
+        The new dimension name with as many underscores prepended as necessary to make it unique.
+    """
+    while new_dim in dims:
+        new_dim = "_" + str(new_dim)
+    return new_dim

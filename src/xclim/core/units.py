@@ -468,20 +468,27 @@ def cf_conversion(standard_name: str, conversion: str, direction: Literal["to", 
 
 
 FREQ_UNITS = {
-    "D": "d",
+    "Y": "year",
+    "M": "month",
     "W": "week",
+    "D": "d",
+    "h": "h",
+    "min": "min",
+    "s": "s",
+    "ms": "ms",
+    "us": "us",
+    "ns": "ns",
 }
 """
 Resampling frequency units for :py:func:`xclim.core.units.infer_sampling_units`.
 
-Mapping from offset base to CF-compliant unit. Only constant-length frequencies that are
-not also pint units are included.
+Mapping from offset base to CF-compliant unit.
 """
 
 
 def infer_sampling_units(
     da: xr.DataArray,
-    deffreq: str | None = "D",
+    deffreq: str | None = None,
     dim: str = "time",
 ) -> tuple[int, str]:
     """
@@ -506,22 +513,28 @@ def infer_sampling_units(
     Raises
     ------
     ValueError
-        If the frequency has no exact corresponding units.
+        If the frequency has no corresponding units.
     """
-    dimmed = getattr(da, dim)
-    freq = xr.infer_freq(dimmed)
+    da = da[dim]
+    freq = xr.infer_freq(da)
     if freq is None:
+        if deffreq is None:
+            raise ValueError("Unable to find the sampling frequency of the data.")
         freq = deffreq
 
     multi, base, _, _ = parse_offset(freq)
-    try:
-        out = multi, FREQ_UNITS.get(base, base)
-    except KeyError as err:
-        raise ValueError(f"Sampling frequency {freq} has no corresponding units.") from err
-    if out == (7, "d"):
+    if base == "Q":
+        multi = multi * 3
+        base = "M"
+    if base in FREQ_UNITS:
+        u = FREQ_UNITS[base]
+    else:
+        raise ValueError(f"Sampling frequency {freq} has no corresponding pint or CF units.")
+    if u == "d" and multi == 7:
         # Special case for weekly frequency. xarray's CFTimeOffsets do not have "W".
-        return 1, "week"
-    return out
+        u = "week"
+        multi = 1
+    return multi, u
 
 
 DELTA_ABSOLUTE_TEMP = {
@@ -617,7 +630,7 @@ def to_agg_units(out: xr.DataArray, orig: xr.DataArray, op: str, dim: str = "tim
     `to_agg_units` will infer the units from the sampling rate along "time", so
     we ensure the final units are correct:
 
-    >>> time = xr.cftime_range("2001-01-01", freq="D", periods=365)
+    >>> time = xr.date_range("2001-01-01", freq="D", periods=365)
     >>> tas = xr.DataArray(
     ...     np.arange(365),
     ...     dims=("time",),
@@ -634,7 +647,7 @@ def to_agg_units(out: xr.DataArray, orig: xr.DataArray, op: str, dim: str = "tim
 
     Similarly, here we compute the total heating degree-days, but we have weekly data:
 
-    >>> time = xr.cftime_range("2001-01-01", freq="7D", periods=52)
+    >>> time = xr.date_range("2001-01-01", freq="7D", periods=52)
     >>> tas = xr.DataArray(
     ...     np.arange(52) + 10,
     ...     dims=("time",),
@@ -665,15 +678,20 @@ def to_agg_units(out: xr.DataArray, orig: xr.DataArray, op: str, dim: str = "tim
 
     elif op in ["count", "integral"]:
         m, freq_u_raw = infer_sampling_units(orig[dim])
-        # TODO: Use delta here
         orig_u = units2pint(orig)
         freq_u = str2pint(freq_u_raw)
+
         with xr.set_options(keep_attrs=True):
             out = out * m
 
         if op == "count":
             out.attrs["units"] = freq_u_raw
+
         elif op == "integral":
+            if "[temperature]" in orig_u.dimensionality:
+                # ensure delta_temperature
+                orig_u = 1 * orig_u - 1 * orig_u
+
             if "[time]" in orig_u.dimensionality:
                 # We need to simplify units after multiplication
 
@@ -853,7 +871,7 @@ def rate2amount(
     --------
     The following converts a daily array of precipitation in mm/h to the daily amounts in mm:
 
-    >>> time = xr.cftime_range("2001-01-01", freq="D", periods=365)
+    >>> time = xr.date_range("2001-01-01", freq="D", periods=365)
     >>> pr = xr.DataArray([1] * 365, dims=("time",), coords={"time": time}, attrs={"units": "mm/h"})
     >>> pram = rate2amount(pr)
     >>> pram.units
@@ -1088,7 +1106,7 @@ def rate2flux(
     The following converts an array of snowfall rate in mm/s to snowfall flux in kg m-2 s-1,
     assuming a density of 100 kg m-3:
 
-    >>> time = xr.cftime_range("2001-01-01", freq="D", periods=365)
+    >>> time = xr.date_range("2001-01-01", freq="D", periods=365)
     >>> prsnd = xr.DataArray([1] * 365, dims=("time",), coords={"time": time}, attrs={"units": "mm/s"})
     >>> prsn = rate2flux(prsnd, density="100 kg m-3", out_units="kg m-2 s-1")
     >>> prsn.units
@@ -1138,7 +1156,7 @@ def flux2rate(
     The following converts an array of snowfall flux in kg m-2 s-1 to snowfall flux in mm/s,
     assuming a density of 100 kg m-3:
 
-    >>> time = xr.cftime_range("2001-01-01", freq="D", periods=365)
+    >>> time = xr.date_range("2001-01-01", freq="D", periods=365)
     >>> prsn = xr.DataArray(
     ...     [0.1] * 365,
     ...     dims=("time",),

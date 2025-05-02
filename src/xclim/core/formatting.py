@@ -17,6 +17,7 @@ from fnmatch import fnmatch
 from inspect import _empty, signature  # noqa
 from typing import Any
 
+import pandas as pd
 import xarray as xr
 from boltons.funcutils import wraps
 
@@ -79,7 +80,7 @@ class AttrFormatter(string.Formatter):
         self.modifiers = modifiers
         self.mapping = mapping
 
-    def format(self, format_string: str, /, *args: Any, **kwargs: dict) -> str:
+    def format(self, format_string: str, /, *args, **kwargs: dict) -> str:
         r"""
         Format a string.
 
@@ -338,7 +339,7 @@ def _parse_returns(section):
 
 def merge_attributes(
     attribute: str,
-    *inputs_list: xr.DataArray | xr.Dataset,
+    *inputs_list,  # : xr.DataArray | xr.Dataset
     new_line: str = "\n",
     missing_str: str | None = None,
     **inputs_kws: xr.DataArray | xr.Dataset,
@@ -390,7 +391,7 @@ def merge_attributes(
 
 def update_history(
     hist_str: str,
-    *inputs_list: xr.DataArray | xr.Dataset,
+    *inputs_list,  # : xr.DataArray | xr.Dataset,
     new_name: str | None = None,
     **inputs_kws: xr.DataArray | xr.Dataset,
 ) -> str:
@@ -770,3 +771,28 @@ def get_percentile_metadata(data: xr.DataArray, prefix: str) -> dict[str, str]:
         f"{prefix}_window": data.attrs.get("window", "<unknown window>"),
         f"{prefix}_period": clim_bounds,
     }
+
+
+# Adapted from xarray.structure.merge_attrs
+def _merge_attrs_drop_conflicts(*objs):
+    """Merge attributes from different xarray objects, dropping any attributes that conflict."""
+    out = {}
+    dropped = set()
+    for obj in objs:
+        attrs = obj.attrs
+        out.update({key: value for key, value in attrs.items() if key not in out and key not in dropped})
+        out = {key: value for key, value in out.items() if key not in attrs or _equivalent_attrs(attrs[key], value)}
+        dropped |= {key for key in attrs if key not in out}
+    return out
+
+
+# Adapted from xarray.core.utils.equivalent
+def _equivalent_attrs(first, second) -> bool:
+    """Return whether two attributes are identical or not."""
+    if first is second:
+        return True
+    if isinstance(first, list) or isinstance(second, list):
+        if len(first) != len(second):
+            return False
+        return all(_equivalent_attrs(f, s) for f, s in zip(first, second, strict=False))
+    return (first == second) or (pd.isnull(first) and pd.isnull(second))

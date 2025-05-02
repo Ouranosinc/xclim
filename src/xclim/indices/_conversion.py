@@ -17,6 +17,7 @@ from xclim.core.units import (
     rate2flux,
     units2pint,
 )
+from xclim.core.utils import deprecated
 from xclim.indices.helpers import (
     _gather_lat,
     _gather_lon,
@@ -31,6 +32,7 @@ from xclim.indices.helpers import (
 
 __all__ = [
     "clausius_clapeyron_scaled_precipitation",
+    "clearness_index",
     "fao_allen98",
     "heat_index",
     "humidex",
@@ -43,6 +45,8 @@ __all__ = [
     "relative_humidity",
     "saturation_vapor_pressure",
     "sfcwind_2_uas_vas",
+    "sfcwind_to_uas_vas",
+    "shortwave_downwelling_radiation_from_clearness_index",
     "shortwave_upwelling_radiation_from_net_downwelling",
     "snd_to_snw",
     "snowfall_approximation",
@@ -51,6 +55,7 @@ __all__ = [
     "specific_humidity_from_dewpoint",
     "tas",
     "uas_vas_2_sfcwind",
+    "uas_vas_to_sfcwind",
     "universal_thermal_climate_index",
     "vapor_pressure_deficit",
     "wind_chill_index",
@@ -109,7 +114,7 @@ def humidex(
 
     .. math::
 
-      e = \frac{h}{100} \times 6.112 * 10^{7.5 T/(T + 237.7)}.
+       e = \frac{h}{100} \times 6.112 * 10^{7.5 T/(T + 237.7)}.
 
     The humidex *comfort scale* :cite:p:`canada_glossary_2011` can be interpreted as follows:
 
@@ -239,8 +244,23 @@ def tas(tasmin: xr.DataArray, tasmax: xr.DataArray) -> xr.DataArray:
     return tas
 
 
+@deprecated(from_version="0.56.0", suggested="uas_vas_to_sfcwind")
+def uas_vas_2_sfcwind(*args, **kwargs):  # numpydoc ignore=PR01,RT01
+    """
+    Wind speed and direction from the eastward and northward wind components.
+
+    Computes the magnitude and angle of the wind vector from its northward and eastward components,
+    following the meteorological convention that sets calm wind to a direction of 0° and northerly wind to 360°.
+
+    Warnings
+    --------
+    This function has been deprecated in favour of `uas_vas_to_sfcwind`.
+    """
+    return uas_vas_to_sfcwind(*args, **kwargs)
+
+
 @declare_units(uas="[speed]", vas="[speed]", calm_wind_thresh="[speed]")
-def uas_vas_2_sfcwind(
+def uas_vas_to_sfcwind(
     uas: xr.DataArray, vas: xr.DataArray, calm_wind_thresh: Quantified = "0.5 m/s"
 ) -> tuple[xr.DataArray, xr.DataArray]:
     """
@@ -274,8 +294,8 @@ def uas_vas_2_sfcwind(
 
     Examples
     --------
-    >>> from xclim.indices import uas_vas_2_sfcwind
-    >>> sfcWind = uas_vas_2_sfcwind(uas=uas_dataset, vas=vas_dataset, calm_wind_thresh="0.5 m/s")
+    >>> from xclim.indices import uas_vas_to_sfcwind
+    >>> sfcWind = uas_vas_to_sfcwind(uas=uas_dataset, vas=vas_dataset, calm_wind_thresh="0.5 m/s")
     """
     # Converts the wind speed to m s-1
     uas = convert_units_to(uas, "m/s")
@@ -301,8 +321,22 @@ def uas_vas_2_sfcwind(
     return wind, wind_from_dir
 
 
+@deprecated(from_version="0.56.0", suggested="sfcwind_to_uas_vas")
+def sfcwind_2_uas_vas(*args, **kwargs):  # numpydoc ignore=PR01,RT01
+    """
+    Eastward and northward wind components from the wind speed and direction.
+
+    Compute the eastward and northward wind components from the wind speed and direction.
+
+    Warnings
+    --------
+    This function has been deprecated in favour of `sfcwind_to_uas_vas`.
+    """
+    return sfcwind_to_uas_vas(*args, **kwargs)
+
+
 @declare_units(sfcWind="[speed]", sfcWindfromdir="[]")
-def sfcwind_2_uas_vas(
+def sfcwind_to_uas_vas(
     sfcWind: xr.DataArray,
     sfcWindfromdir: xr.DataArray,  # noqa
 ) -> tuple[xr.DataArray, xr.DataArray]:
@@ -327,8 +361,8 @@ def sfcwind_2_uas_vas(
 
     Examples
     --------
-    >>> from xclim.indices import sfcwind_2_uas_vas
-    >>> uas, vas = sfcwind_2_uas_vas(sfcWind=sfcWind_dataset, sfcWindfromdir=sfcWindfromdir_dataset)
+    >>> from xclim.indices import sfcwind_to_uas_vas
+    >>> uas, vas = sfcwind_to_uas_vas(sfcWind=sfcWind_dataset, sfcWindfromdir=sfcWindfromdir_dataset)
     """
     # Converts the wind speed to m s-1
     sfcWind = convert_units_to(sfcWind, "m/s")  # noqa
@@ -592,7 +626,7 @@ def relative_humidity(
 
     .. math::
 
-        RH = e^{\frac{-L (T - T_d)}{R_wTT_d}}
+       RH = e^{\frac{-L (T - T_d)}{R_wTT_d}}
 
     From :cite:t:`bohren_atmospheric_1998`, formula taken from :cite:t:`lawrence_relationship_2005`.
     :math:`L = 2.5\times 10^{-6}` J kg-1, exact for :math:`T = 273.15` K, is used.
@@ -603,15 +637,15 @@ def relative_humidity(
 
     .. math::
 
-        RH = 100\frac{e_{sat}(T_d)}{e_{sat}(T)}
+       RH = 100\frac{e_{sat}(T_d)}{e_{sat}(T)}
 
     Otherwise, the specific humidity and the air pressure must be given so relative humidity can be computed as:
 
     .. math::
 
-        RH = 100\frac{w}{w_{sat}}
-        w = \frac{q}{1-q}
-        w_{sat} = 0.622\frac{e_{sat}}{P - e_{sat}}
+       RH = 100\frac{w}{w_{sat}}
+       w = \frac{q}{1-q}
+       w_{sat} = 0.622\frac{e_{sat}}{P - e_{sat}}
 
     The methods differ by how :math:`e_{sat}` is computed.
     See the doc of :py:func:`xclim.core.utils.saturation_vapor_pressure`.
@@ -719,9 +753,9 @@ def specific_humidity(
 
     .. math::
 
-        w_{sat} = 0.622\frac{e_{sat}}{P - e_{sat}}
-        w = w_{sat} * hurs / 100
-        q = w / (1 + w)
+       w_{sat} = 0.622\frac{e_{sat}}{P - e_{sat}}
+       w = w_{sat} * hurs / 100
+       q = w / (1 + w)
 
     The methods differ by how :math:`e_{sat}` is computed. See :py:func:`xclim.core.utils.saturation_vapor_pressure`.
 
@@ -729,7 +763,7 @@ def specific_humidity(
 
     .. math::
 
-        q_{sat} = w_{sat} / (1 + w_{sat})
+       q_{sat} = w_{sat} / (1 + w_{sat})
 
     References
     ----------
@@ -1182,6 +1216,77 @@ def shortwave_upwelling_radiation_from_net_downwelling(rss: xr.DataArray, rsds: 
     return rsus
 
 
+@declare_units(rsds="[radiation]")
+def clearness_index(rsds: xr.DataArray) -> xr.DataArray:
+    r"""
+    Compute the clearness index.
+
+    The clearness index is the ratio between the shortwave downwelling radiation
+    and the total extraterrestrial radiation on a given day.
+
+    Parameters
+    ----------
+    rsds : xr.DataArray
+        Surface downwelling solar radiation.
+
+    Returns
+    -------
+    xr.DataArray, [unitless]
+        Clearness index.
+
+    Notes
+    -----
+    Clearness Index (ci) is defined as:
+
+    .. math :
+
+       ci = rsds / \text{extraterrestrial_solar_radiation}
+
+    References
+    ----------
+    :cite:cts:`lauret_solar_2022`
+    """
+    rtop = extraterrestrial_solar_radiation(rsds.time, rsds.lat)
+    rtop = convert_units_to(rtop, rsds)
+    with xr.set_options(keep_attrs=True):
+        ci = xr.where(rsds != 0, rsds / rtop, 0)
+    ci = ci.assign_attrs(units="")
+    return ci
+
+
+@declare_units(ci="[]")
+def shortwave_downwelling_radiation_from_clearness_index(ci: xr.DataArray) -> xr.DataArray:
+    r"""
+    Compute the surface downwelling solar radiation from clearness index.
+
+    Parameters
+    ----------
+    ci : xr.DataArray
+        Clearness index.
+
+    Returns
+    -------
+    xr.DataArray, [unitless]
+        Surface downwelling solar radiation.
+
+    See Also
+    --------
+    clearness_index : Inverse transformation, and definition of the clearness index.
+
+    Notes
+    -----
+    The conversion from Clearness Index is defined as:
+
+    .. math :
+
+       rsds = ci * \text{extraterrestrial_solar_radiation}
+    """
+    rtop = extraterrestrial_solar_radiation(ci.time, ci.lat)
+    with xr.set_options(keep_attrs=True):
+        rsds = (rtop * ci).assign_attrs(units=rtop.units)
+    return rsds
+
+
 @declare_units(
     tas="[temperature]",
     sfcWind="[speed]",
@@ -1228,13 +1333,13 @@ def wind_chill_index(
 
     .. math::
 
-        W = 13.12 + 0.6125*T - 11.37*V^0.16 + 0.3965*T*V^0.16
+       W = 13.12 + 0.6125*T - 11.37*V^0.16 + 0.3965*T*V^0.16
 
     Under slow winds (:math:`V < 5` km/h), and using the canadian method, it becomes:
 
     .. math::
 
-        W = T + \frac{-1.59 + 0.1345 * T}{5} * V
+       W = T + \frac{-1.59 + 0.1345 * T}{5} * V
 
     Both equations are invalid for temperature over 0°C in the canadian method.
 
@@ -1308,7 +1413,7 @@ def clausius_clapeyron_scaled_precipitation(
     water vapour pressure :math:`e_s` changes approximately exponentially with temperature
 
     .. math::
-        \frac{\mathrm{d}e_s(T)}{\mathrm{d}T} \approx 1.07 e_s(T)
+       \frac{\mathrm{d}e_s(T)}{\mathrm{d}T} \approx 1.07 e_s(T)
 
     This function assumes that precipitation can be scaled by the same factor.
     """
@@ -1501,7 +1606,7 @@ def potential_evapotranspiration(
 
     .. math::
 
-        PET[mm day^{-1}] = a * \frac{S_0}{\lambda}T_a + b * \frac{S_0}{\lambda}
+       PET[mm day^{-1}] = a * \frac{S_0}{\lambda}T_a + b * \frac{S_0}{\lambda}
 
     where :math:`a` and :math:`b` are empirical parameters; :math:`S_0` is the extraterrestrial radiation [MJ m-2 day-1],
     assuming a solar constant of 1367 W m-2; :math:`\\lambda` is the latent heat of vaporisation [MJ kg-1]
@@ -2199,7 +2304,7 @@ def wind_profile(
 
     .. math::
 
-        v = v_r \left( \frac{h}{h_r} \right)^{\alpha},
+       v = v_r \left( \frac{h}{h_r} \right)^{\alpha},
 
     where :math:`v_r` is the wind speed at the reference height, :math:`h` is the height at which the wind speed is
     desired, and :math:`h_r` is the reference height.
@@ -2270,12 +2375,12 @@ def wind_power_potential(
 
     .. math::
 
-        \begin{cases}
-        0,  &  v < u_i \\
-        (v^3 - u_i^3) / (u_r^3 - u_i^3),  & u_i ≤ v < u_r \\
-        1, & u_r ≤ v < u_o \\
-        0, & v ≥ u_o
-        \end{cases}
+       \begin{cases}
+       0,  &  v < u_i \\
+       (v^3 - u_i^3) / (u_r^3 - u_i^3),  & u_i ≤ v < u_r \\
+       1, & u_r ≤ v < u_o \\
+       0, & v ≥ u_o
+       \end{cases}
 
     For non-standard air density (:math:`\rho`), the wind speed is scaled using
     :math:`v_n = v \left( \frac{\rho}{\rho_0} \right)^{1/3}`.

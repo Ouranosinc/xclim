@@ -49,3 +49,5 @@ Contributors
 * Faisal Mahmood <mahmood.faisal@ouranos.ca> <faisal.shovon.007@gmail.com> `@faimahsho <https://github.com/faimahsho>`_
 * Sebastian Lehner <sebastian.lehner@geosphere.at> `@seblehner <https://github.com/seblehner>`_
 * Baptiste Hamon <baptiste.hamon@pg.canterbury.ac.nz> `@baptistehamon <https://github.com/baptistehamon>`_
+* Jack Kit-tai Wong <kit.tai.wong@gmail.com> `@jack-ktw <https://github.com/jack-ktw>`_
+* Jens de Bruijn <j.a.debruijn@outlook.com> `@jensdebruijn <https://github.com/jensdebruijn>`_
