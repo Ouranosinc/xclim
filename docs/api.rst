@@ -119,6 +119,9 @@ Spatial Analogues Module
 .. autofunction:: xclim.analog.zech_aslan
    :noindex:
 
+.. autofunction:: xclim.analog.mahalanobis
+   :noindex:
+
 Subset Module
 =============
 
