@@ -170,7 +170,6 @@ pep621_dev_dependency_groups = ["all", "dev", "docs"]
 "pyyaml" = "yaml"
 
 [tool.deptry.per_rule_ignores]
-DEP001 = ["SBCK"]
 DEP002 = ["bottleneck", "h5netcdf", "pyarrow"]
 DEP004 = ["matplotlib", "pooch", "pytest", "pytest_socket"]
 
