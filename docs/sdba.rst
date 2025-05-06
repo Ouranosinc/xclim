@@ -6,11 +6,11 @@ Bias Adjustment and Downscaling Algorithms
 
     The `xclim.sdba` module was split from the library in `xclim==0.57` in order to facilitate development and effective maintenance of the SDBA utilities. This functionality is now available in the `xsdba` package. While the package aims to maintain compatibility with `xclim`, some algorithms have been slightly modified.
 
-    For convenience, the `xclim.sdba` module will still available exposing the functionality of the `xsdba` package. This may change in the future.
+    For convenience, the `xclim.sdba` module remains available as a reimport of `xsdba`, exposing the functionality of the `xsdba` package, though users are encouraged to import `xsdba` directly. This behaviour may eventually change.
 
 .. note::
 
-    For more information, the documentation is available at the following link: :doc:`xsdba API <xsdba:api>`
+    For more information on how to transition to using `xsdba`, a guide is available at the following link: :doc:`xclim Migration Guide <xsdba:xclim_migration_guide>`.
 
 
 The `xclim.sdba` submodule provides a collection of bias-adjustment methods meant to correct for systematic biases found in climate model simulations relative to observations.
@@ -103,6 +103,12 @@ Some issues were also discussed on the Github repository. Most of these are stil
 * Bias-adjustment when the trend goes to zero: :issue:`1145`
 * Spatial downscaling: :issue:`1150`
 
+User API
+========
+
+.. note::
+
+    For more information, the documentation is available at the following link: :doc:`xsdba API <xsdba:api>`
 
 Notes for Developers
 ====================
@@ -114,13 +120,6 @@ Notes for Developers
 .. note::
 
     For more information, the contributor documentation is available at the following link: :doc:`xsdba contributor guidelines <xsdba:contributing>`
-
-User API
-========
-
-.. note::
-
-    For more information, the documentation is available at the following link: :doc:`xsdba API <xsdba:apidoc/modules>`
 
 Developer API
 =============
