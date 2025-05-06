@@ -108,7 +108,7 @@ def add_example_file_paths() -> dict[str, str | list[xr.DataArray]]:
 
     Returns
     -------
-    dict of str or list of xr.DataArray
+    dict of str or dict of list of xr.DataArray
         A dictionary of doctest-relevant datasets.
     """
     namespace = {
