@@ -10,8 +10,6 @@ from xclim.core.options import set_options
 from xclim.indices import run_length as rl
 from xclim.testing.helpers import assert_lazy
 
-K2C = 273.15
-
 
 class TestSuspiciousRun:
     def test_simple(self, tas_series):
@@ -156,8 +154,6 @@ def test_runs_with_holes():
 
 
 class TestStatisticsRun:
-    nc_pr = "NRCANdaily/nrcan_canada_daily_pr_1990.nc"
-
     def test_simple(self):
         values = np.zeros(365)
         time = pd.date_range("7/1/2000", periods=len(values), freq="D")
@@ -290,7 +286,7 @@ class TestFirstRun:
     def test_real_data(self, nimbus):
         # FIXME: No test here?!
         # n-dim version versus ufunc
-        da3d = xr.open_dataset(nimbus.fetch(self.nc_pr)).pr[:, 40:50, 50:68] != 0
+        da3d = xr.open_dataset(nimbus.fetch(self.nc_pr), engine="h5netcdf").pr[:, 40:50, 50:68] != 0
         da3d.resample(time="ME").map(rl.first_run, window=5)
 
     @pytest.mark.parametrize(
@@ -416,7 +412,7 @@ def test_run_bounds_synthetic():
 
 
 def test_run_bounds_data(nimbus):
-    era5 = xr.open_dataset(nimbus.fetch("ERA5/daily_surface_cancities_1990-1993.nc"))
+    era5 = xr.open_dataset(nimbus.fetch("ERA5/daily_surface_cancities_1990-1993.nc"), engine="h5netcdf")
     cond = era5.tas.rolling(time=7).mean() > 285
 
     bounds = rl.run_bounds(cond, "time")  # def coord = True
@@ -437,7 +433,7 @@ def test_keep_longest_run_synthetic():
 
 
 def test_keep_longest_run_data(nimbus):
-    era5 = xr.open_dataset(nimbus.fetch("ERA5/daily_surface_cancities_1990-1993.nc"))
+    era5 = xr.open_dataset(nimbus.fetch("ERA5/daily_surface_cancities_1990-1993.nc"), engine="h5netcdf")
     cond = era5.swe > 0.002
     lrun = rl.keep_longest_run(cond, "time")
     np.testing.assert_array_equal(
