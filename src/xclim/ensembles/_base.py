@@ -65,7 +65,7 @@ def create_ensemble(
         If resample_freq is set, the time coordinate of each member will be modified to fit this frequency.
     calendar : str, optional
         The calendar of the time coordinate of the ensemble.
-        By default, the smallest common calendar is chosen.
+        By default, the biggest calendar (in number of days by year) is chosen.
         For example, a mixed input of "noleap" and "360_day" will default to "noleap".
         'default' is the standard calendar using np.datetime64 objects (xarray's "standard" with `use_cftime=False`).
     realizations : sequence, optional

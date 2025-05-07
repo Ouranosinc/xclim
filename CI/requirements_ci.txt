@@ -20,9 +20,9 @@ bracex==2.4 \
     --hash=sha256:a27eaf1df42cf561fed58b7a8f3fdf129d1ea16a81e1fadd1d17989bc6384beb \
     --hash=sha256:efdc71eff95eaff5e0f8cfebe7d01adf2c8637c8c92edaf63ef348c241a82418
     # via wcmatch
-bump-my-version==1.1.1 \
-    --hash=sha256:2f590e0eabe894196289c296c52170559c09876454514ae8fce5db75bd47289e \
-    --hash=sha256:6bd78e20421f6335c1a49d7e85a2f16ae8966897d0a2dd130a0e8b6b55954686
+bump-my-version==1.1.2 \
+    --hash=sha256:0122845a78502b5a5a635ca17c1efb3e1ec05e77d72d13b2314186b9806882fb \
+    --hash=sha256:71a2a8c3940c87749c4cc404b2ada2fafbeab4e478e0ef54537686905ae58e0d
     # via -r CI/requirements_ci.in
 cachetools==5.5.2 \
     --hash=sha256:1a661caa9175d26759571b2e19580f9d6393969e5dfca11fdb1f947a23e640d4 \
@@ -227,9 +227,9 @@ mdurl==0.1.2 \
     --hash=sha256:84008a41e51615a49fc9966191ff91509e3c40b939176e643fd50a5c2196b8f8 \
     --hash=sha256:bb413d29f5eea38f31dd4754dd7377d4465116fb207585f97bf925588687c1ba
     # via markdown-it-py
-packaging==24.2 \
-    --hash=sha256:09abb1bccd265c01f4a3aa3f7a7db064b36514d2cba19a2f694fe6150451a759 \
-    --hash=sha256:c228a6dc5e932d346bc5739379109d49e8853dd8223571c7c5b55260edc0b97f
+packaging==25.0 \
+    --hash=sha256:29572ef2b1f17581046b3a2227d5c611fb25ec70ca1ba8554b24b0e69331a484 \
+    --hash=sha256:d443872c98d677bf60f6a1f2f8c1cb748e8fe762d2bf9d3148b5599295b0fc4f
     # via
     #   deptry
     #   pyproject-api
@@ -355,9 +355,9 @@ pygments==2.18.0 \
     --hash=sha256:786ff802f32e91311bff3889f6e9a86e81505fe99f2735bb6d60ae0c5004f199 \
     --hash=sha256:b8e6aca0523f3ab76fee51799c488e38782ac06eafcf95e7ba832985c8e7b13a
     # via rich
-pylint==3.3.6 \
-    --hash=sha256:8b7c2d3e86ae3f94fb27703d521dd0b9b6b378775991f504d7c3a6275aa0a6a6 \
-    --hash=sha256:b634a041aac33706d56a0d217e6587228c66427e20ec21a019bc4cdee48c040a
+pylint==3.3.7 \
+    --hash=sha256:2b11de8bde49f9c5059452e0c310c079c746a0a8eeaa789e5aa966ecc23e4559 \
+    --hash=sha256:43860aafefce92fca4cf6b61fe199cdc5ae54ea28f9bf4cd49de267b5195803d
     # via -r CI/requirements_ci.in
 pyproject-api==1.8.0 \
     --hash=sha256:3d7d347a047afe796fd5d1885b1e391ba29be7169bd2f102fcd378f04273d228 \

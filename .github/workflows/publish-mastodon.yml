@@ -15,7 +15,7 @@ jobs:
     environment: production
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@c6295a65d1254861815972266d5933fd6e532bdf # v2.11.1
+        uses: step-security/harden-runner@0634a2670c59f64b4a01f0f96f84700a4088b9f0 # v2.12.0
         with:
           disable-sudo: true
           egress-policy: block
@@ -65,7 +65,7 @@ jobs:
           CONTRIBUTORS: ${{ env.contributors }}
 
       - name: Send toot to Mastodon
-        uses: cbrgm/mastodon-github-action@989a7e310c0d70240e101f15d9e4c11c10e17fda # v2.1.14
+        uses: cbrgm/mastodon-github-action@adb400a75e66109332b0e3dcd5f07ceec475e5f7 # v2.1.15
         with:
           url: ${{ secrets.MASTODON_URL }}
           access-token: ${{ secrets.MASTODON_ACCESS_TOKEN }}
