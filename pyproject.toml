@@ -41,7 +41,6 @@ dependencies = [
   "click >=8.1",
   "dask[array] >=2024.8.1",
   "filelock >=3.14.0",
-  "jsonpickle >=3.1.0",
   "numba >=0.57.0",
   "numpy >=1.24.0",
   "packaging >=24.0",
@@ -51,7 +50,6 @@ dependencies = [
   "pyyaml >=6.0.1",
   "scikit-learn >=1.2.0",
   "scipy >=1.11.0",
-  "statsmodels >=0.14.2",
   "xarray >=2023.11.0,!=2024.10.0",
   "yamale >=5.0.0"
 ]
@@ -110,7 +108,7 @@ docs = [
   "sphinxcontrib-bibtex",
   "sphinxcontrib-svg2pdfconverter[Cairosvg]"
 ]
-extras = ["fastnanquantile >=0.0.2", "flox >=0.9", "POT >=0.9.4"]
+extras = ["flox >=0.9", "xsdba >=0.4.0"]
 all = ["xclim[dev]", "xclim[docs]", "xclim[extras]"]
 
 [project.scripts]
@@ -170,10 +168,8 @@ pep621_dev_dependency_groups = ["all", "dev", "docs"]
 [tool.deptry.package_module_name_map]
 "scikit-learn" = "sklearn"
 "pyyaml" = "yaml"
-"POT" = "ot"
 
 [tool.deptry.per_rule_ignores]
-DEP001 = ["SBCK"]
 DEP002 = ["bottleneck", "h5netcdf", "pyarrow"]
 DEP004 = ["matplotlib", "pooch", "pytest", "pytest_socket"]
 
@@ -229,13 +225,11 @@ warn_unused_configs = true
 module = [
   "boltons.*",
   "cftime.*",
-  "jsonpickle.*",
   "numba.*",
   "pytest_socket.*",
   "SBCK.*",
   "scipy.*",
   "sklearn.*",
-  "statsmodels.*",
   "yamale.*",
   "yaml.*"
 ]
@@ -311,8 +305,7 @@ extend-include = [
 
 [tool.ruff.format]
 exclude = [
-  "docs/notebooks/xclim_training/*.ipynb",
-  "src/xclim/sdba/*.py"
+  "docs/notebooks/xclim_training/*.ipynb"
 ]
 line-ending = "lf"
 docstring-code-format = true
@@ -320,19 +313,20 @@ docstring-code-line-length = "dynamic"
 
 [tool.ruff.lint]
 exclude = [
-  "docs/notebooks/xclim_training/*.ipynb",
-  "src/xclim/sdba/*.py"
+  "docs/notebooks/xclim_training/*.ipynb"
 ]
 extend-select = [
   "D213", # multi-line-summary-second-line
   "RUF022" # unsorted-dunder-all
 ]
 ignore = [
+  "B904", # raise-without-from-inside-except
   "B028", # no-explicit-stacklevel
   "D205", # blank-line-after-summary
   "D212", # multi-line-summary-first-line
   "D400", # ends-in-period
-  "D401" # non-imperative-mood
+  "D401", # non-imperative-mood
+  "F403" # undefined-local-with-import-star
 ]
 preview = true
 select = [
@@ -381,7 +375,6 @@ max-complexity = 20
 "src/xclim/core/missing" = ["D103"]
 "src/xclim/indices/_agro.py" = ["E501"]
 "src/xclim/indices/fire/_cffwis.py" = ["D103"]
-"src/xclim/sdba/utils.py" = ["D103"]
 "tests/**/*test*.py" = ["D100", "D101", "D102", "D103", "E501", "N802", "S101"]
 
 [tool.ruff.lint.pycodestyle]
