@@ -2,6 +2,17 @@
 Bias Adjustment and Downscaling Algorithms
 ==========================================
 
+.. warning::
+
+    The `xclim.sdba` module was split from the library in `xclim==0.57` in order to facilitate development and effective maintenance of the SDBA utilities. This functionality is now available in the `xsdba` package. While the package aims to maintain compatibility with `xclim`, some algorithms have been slightly modified.
+
+    For convenience, the `xclim.sdba` module remains available as a reimport of `xsdba`, exposing the functionality of the `xsdba` package, though users are encouraged to import `xsdba` directly. This behaviour may eventually change.
+
+.. note::
+
+    For more information on how to transition to using `xsdba`, a guide is available at the following link: :doc:`xclim Migration Guide <xsdba:xclim_migration_guide>`.
+
+
 The `xclim.sdba` submodule provides a collection of bias-adjustment methods meant to correct for systematic biases found in climate model simulations relative to observations.
 Almost all adjustment algorithms conform to the `train` - `adjust` scheme, meaning that adjustment factors are first estimated on training data sets, then applied in a distinct step to the data to be adjusted.
 Given a reference time series (ref), historical simulations (hist) and simulations to be adjusted (sim),
@@ -92,40 +103,30 @@ Some issues were also discussed on the Github repository. Most of these are stil
 * Bias-adjustment when the trend goes to zero: :issue:`1145`
 * Spatial downscaling: :issue:`1150`
 
-Experimental wrap of SBCK
-=========================
-The `SBCK`_ python package implements various bias-adjustment methods, with an emphasis on multivariate methods and with
-a care for performance. If the package is correctly installed alongside xclim, the methods will be wrapped into
-:py:class:`xclim.sdba.adjustment.Adjust` classes (names beginning with `SBCK_`) with a minimal overhead so that they can
-be parallelized with dask and accept xarray objects. For now, these experimental classes can't use the train-adjust
-approach, instead they only provide one method, ``adjust(ref, hist, sim, multi_dim=None, **kwargs)`` which performs all
-steps : initialization of the SBCK object, training (fit) and adjusting (predict). All SBCK wrappers accept a
-``multi_dim`` argument for specifying the name of the "multivariate" dimension. This wrapping is still experimental and
-some bugs or inconsistencies might exist. To see how one can install that package, see :ref:`extra-dependencies`.
-
-.. _SBCK: https://github.com/yrobink/SBCK
-
-Notes for Developers
-====================
-To be scalable and performant, the sdba module makes use of the special decorators :py:func`xclim.sdba.base.map_blocks`
-and :py:func:`xclim.sdba.base.map_groups`. However, they have the inconvenient that functions wrapped by them are unable
-to manage xarray attributes (including units) correctly and their signatures are sometime wrong and often unclear. For
-this reason, the module is often divided in two parts : the (decorated) compute functions in a "private" file
-(ex: ``_adjustment.py``) and the user-facing functions or objects in corresponding public file (ex: ``adjustment.py``).
-See the `sdba-advanced` notebook for more info on the reasons for this move.
-
-Other restrictions : ``map_blocks`` will remove any "auxiliary" coordinates before calling the wrapped function and will
-add them back on exit.
-
 User API
 ========
 
-See: :ref:`sdba-user-api`
+.. note::
+
+    For more information, the documentation is available at the following link: :doc:`xsdba API <xsdba:api>`
+
+Notes for Developers
+====================
+
+.. warning::
+
+    The `xclim.sdba` module was split from the library in `xclim==0.57` in order to facilitate development and effective maintenance of the SDBA utilities. This functionality is now available in the `xsdba` package. While the package aims to maintain compatibility with `xclim`, some algorithms have been slightly modified.
+
+.. note::
+
+    For more information, the contributor documentation is available at the following link: :doc:`xsdba contributor guidelines <xsdba:contributing>`
 
 Developer API
 =============
 
-See: :ref:`sdba-developer-api`
+.. note::
+
+    For more information, the documentation is available at the following link: :doc:`xsdba modules API <xsdba:apidoc/modules>`
 
 .. only:: html or text
 

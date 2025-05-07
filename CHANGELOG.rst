@@ -21,6 +21,11 @@ Bug fixes
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
+* ``xclim.sdba`` is now a convenience mapping that imports `xsdba` members instead of being its own submodule. This implies a number of breaking changes (`issue`:`2074`):
+    * The sub-module ``xclim.sdba`` is no longer installed by default. Users must install `xsdba` separately using ``pip install xclim[extras]`` or ``{pip|conda} install xsdba``.
+    * Units handling: The "infer" context is no longer used in unit conversion in `sdba` functions.
+    * The `SDBA_EXTRA_OUTPUT` global option can no longer be activated with `xclim.set_options`, instead use ``xsdba.set_options`` where the option is now called `EXTRA_OUTPUT`.
+    * The other global variable `SDBA_ENCODE_CF` was removed as it has been rendered obsolete.
 * The previously deprecated functions ``sfcwind_2_uas_vas`` and ``uas_vas_2_sfcwind`` have been removed. (:pull:`2139`).
 * ``xclim.testing.open_dataset`` has been deprecated and will be removed in a future version. Contributors are encouraged to consult the documentation pertaining to ``xclim.testing.nimbus`` for the new approach to fetching testing data. (:pull:`2139`).
 

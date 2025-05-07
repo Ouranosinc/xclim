@@ -99,7 +99,7 @@ repos:
     hooks:
       - id: numpydoc-validation
         # Exclude the missing submodule from the xclim.core, see:
-        exclude: ^docs/|^tests/|^src/xclim/sdba|^src/xclim/core/missing.py
+        exclude: ^docs/|^tests/|^src/xclim/core/missing.py
   - repo: https://github.com/fluiddyn/formattex-pre-commit
     rev: 0.1.4
     hooks:
