@@ -11,7 +11,5 @@ Examples
    frequency_analysis
    customize
    extendxclim
-   sdba
-   sdba-advanced
    analogs
    partitioning

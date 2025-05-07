@@ -3,17 +3,16 @@
 from __future__ import annotations
 
 import logging
-import os
 import warnings
 from pathlib import Path
 from typing import Any
 
 import numpy as np
+import pooch
 import xarray as xr
 from dask.callbacks import Callback
 
 import xclim
-import xclim.testing.utils as xtu
 from xclim.core import VARIABLES
 from xclim.core.calendar import percentile_doy
 from xclim.indices import (
@@ -34,28 +33,23 @@ __all__ = [
 
 
 def generate_atmos(
-    branch: str | os.PathLike[str] | Path,
-    cache_dir: str | os.PathLike[str] | Path,
+    nimbus: pooch.Pooch,
 ) -> dict[str, xr.DataArray]:
     """
     Create the `atmosds` synthetic testing dataset.
 
     Parameters
     ----------
-    branch : str or os.PathLike[str] or Path
-        The branch to use for the testing dataset.
-    cache_dir : str or os.PathLike[str] or Path
-        The directory to store the testing dataset.
+    nimbus : pooch.Pooch
+        The Pooch object to use for downloading the data.
 
     Returns
     -------
     dict[str, xr.DataArray]
         A dictionary of xarray DataArrays.
     """
-    with xtu.open_dataset(
-        "ERA5/daily_surface_cancities_1990-1993.nc",
-        branch=branch,
-        cache_dir=cache_dir,
+    with xr.open_dataset(
+        nimbus.fetch("ERA5/daily_surface_cancities_1990-1993.nc"),
         engine="h5netcdf",
     ) as ds:
         rsus = shortwave_upwelling_radiation_from_net_downwelling(ds.rss, ds.rsds)
@@ -74,23 +68,23 @@ def generate_atmos(
             tx90=tx90,
         )
 
-        # Create a file in session scoped temporary directory
-        atmos_file = cache_dir.joinpath("atmosds.nc")
+        # Create a file in a session-scoped temporary directory or the main cache
+        atmos_file = Path(nimbus.path).joinpath("atmosds.nc")
         ds.to_netcdf(atmos_file, engine="h5netcdf")
 
     # Give access to dataset variables by name in namespace
-    with xtu.open_dataset(atmos_file, branch=branch, cache_dir=cache_dir, engine="h5netcdf") as ds:
+    with xr.open_dataset(atmos_file, engine="h5netcdf") as ds:
         namespace = {f"{var}_dataset": ds[var] for var in ds.data_vars}
     return namespace
 
 
-def add_ensemble_dataset_objects() -> dict[str, str]:
+def add_ensemble_dataset_objects() -> dict[str, list[str]]:
     """
     Create a dictionary of xclim ensemble-related datasets to be patched into the xdoctest namespace.
 
     Returns
     -------
-    dict[str, str]
+    dict[str, list[str]]
         A dictionary of xclim ensemble-related datasets.
     """
     namespace = {
@@ -126,7 +120,9 @@ def add_example_file_paths() -> dict[str, str | list[xr.DataArray]]:
         "path_to_tas_file": "ERA5/daily_surface_cancities_1990-1993.nc",
         "path_to_tasmax_file": "NRCANdaily/nrcan_canada_daily_tasmax_1990.nc",
         "path_to_tasmin_file": "NRCANdaily/nrcan_canada_daily_tasmin_1990.nc",
-        "path_to_example_py": (Path(__file__).parent.parent.parent.parent / "docs" / "notebooks" / "example.py"),
+        "path_to_example_py": (
+            Path(__file__).parent.parent.parent.parent / "docs" / "notebooks" / "example.py"
+        ).as_posix(),
     }
 
     # For core.utils.load_module example
