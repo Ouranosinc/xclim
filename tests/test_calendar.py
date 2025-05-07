@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import os
-
 import cftime
 import numpy as np
 import pandas as pd
@@ -206,26 +204,20 @@ def test_adjust_doy_366_to_360():
     "file,cal,maxdoy",
     [
         (
-            (
-                "CanESM2_365day",
-                "pr_day_CanESM2_rcp85_r1i1p1_na10kgrid_qm-moving-50bins-detrend_2095.nc",
-            ),
+            "CanESM2_365day/pr_day_CanESM2_rcp85_r1i1p1_na10kgrid_qm-moving-50bins-detrend_2095.nc",
             "noleap",
             365,
         ),
         (
-            (
-                "HadGEM2-CC_360day",
-                "pr_day_HadGEM2-CC_rcp85_r1i1p1_na10kgrid_qm-moving-50bins-detrend_2095.nc",
-            ),
+            "HadGEM2-CC_360day/pr_day_HadGEM2-CC_rcp85_r1i1p1_na10kgrid_qm-moving-50bins-detrend_2095.nc",
             "360_day",
             360,
         ),
-        (("NRCANdaily", "nrcan_canada_daily_pr_1990.nc"), "proleptic_gregorian", 366),
+        ("NRCANdaily/nrcan_canada_daily_pr_1990.nc", "proleptic_gregorian", 366),
     ],
 )
-def test_get_calendar(file, cal, maxdoy, open_dataset):
-    with open_dataset(os.path.join(*file)) as ds:
+def test_get_calendar(file, cal, maxdoy, nimbus):
+    with xr.open_dataset(nimbus.fetch(file)) as ds:
         out_cal = get_calendar(ds)
         assert cal == out_cal
         assert max_doy[cal] == maxdoy
