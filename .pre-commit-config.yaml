@@ -34,19 +34,19 @@ repos:
       - id: toml-sort-fix
         exclude: '.pylintrc.toml'
   - repo: https://github.com/adrienverge/yamllint.git
-    rev: v1.37.0
+    rev: v1.37.1
     hooks:
       - id: yamllint
         args: [ '--config-file=.yamllint.yaml' ]
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.11.4
+    rev: v0.11.8
     hooks:
       - id: ruff
         args: [ '--fix', '--show-fixes' ]
       - id: ruff-format
         exclude: '(src/xclim/indices/__init__.py|docs/installation.rst)'
   - repo: https://github.com/pylint-dev/pylint
-    rev: v3.3.6
+    rev: v3.3.7
     hooks:
       - id: pylint
         args: [ '--rcfile=.pylintrc.toml', '--errors-only', '--jobs=0', '--disable=import-error' ]
@@ -105,11 +105,11 @@ repos:
     hooks:
       - id: formatbibtex
   - repo: https://github.com/gitleaks/gitleaks
-    rev: v8.24.2
+    rev: v8.25.1
     hooks:
       - id: gitleaks
   - repo: https://github.com/python-jsonschema/check-jsonschema
-    rev: 0.32.1
+    rev: 0.33.0
     hooks:
       - id: check-github-workflows
       - id: check-readthedocs

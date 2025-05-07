@@ -4,18 +4,20 @@ Changelog
 
 v0.57.0 (unreleased)
 --------------------
-Contributors to this version: Éric Dupuis (:user:`coxipi`), Trevor James Smith (:user:`Zeitsperre`), Juliette Lavoie (:user:`juliettelavoie`), Pascal Bourgault (:user:`aulemahal`).
+Contributors to this version: Éric Dupuis (:user:`coxipi`), Trevor James Smith (:user:`Zeitsperre`), Juliette Lavoie (:user:`juliettelavoie`), Pascal Bourgault (:user:`aulemahal`), Armin Hofmann (:user:`HofmannGeo`), Baptiste Hamon (:user:`baptistehamon`).
 
 New indicators
 ^^^^^^^^^^^^^^
 * New indicator ``xclim.atmos.clearness_index`` computes the `clearness_index` (ratio of downwards solar radiation to extraterrestrial solar radiation). (:pull:`2140`).
 * Added ``cooling_degree_days_approximation`` and ``heating_degree_days_approximation`` indices to compute the number of cooling and heating degree days with consideration for daily temperature cycles. (:issue:`1941`, :pull:`2135`).
 * Added dtr in variables.yml. (:issue:`2146`, :pull:`2147`).
+* Added Mahalanobis distance. (:issue:`2151`, :pull:`2157`).
 
 Bug fixes
 ^^^^^^^^^
 * Adjustments were made to the `docs` install recipe to ensure that the `xclim` documentation builds correctly. The minimum required Python for rendering the documentation is now 3.11. (:pull:`2141`).
 * ``xclim.core.calendar.stack_periods`` was fixed to work with larger-than-daily source timesteps. Users are still encouraged to use `da.resample(time=FREQ).construct('period')` when possible. (:issue:`2148`, :pull:`2150`).
+* Update ``create_ensemble`` docstring to avoid confusion about how the function aligns realizations with different calendars. (:issue:`2108`, :pull:`2164`).
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
