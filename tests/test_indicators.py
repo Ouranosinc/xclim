@@ -479,13 +479,10 @@ def test_all_parameters_understood(official_indicators):
         for name, param in indinst.parameters.items():
             if param.kind == InputKind.OTHER_PARAMETER:
                 problems.add((identifier, name))
-    # this one we are ok with.
+    # We can deal with 'lat\ for the moment.
     if problems - {
         ("COOL_NIGHT_INDEX", "lat"),
         ("DRYNESS_INDEX", "lat"),
-        # TODO: How should we handle the case of Literal[str]?
-        ("GROWING_SEASON_END", "op"),
-        ("GROWING_SEASON_START", "op"),
     }:
         raise ValueError(f"The following indicator/parameter couple {problems} use types not listed in InputKind.")
 

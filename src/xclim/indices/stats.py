@@ -603,7 +603,9 @@ def _fit_start(x, dist: str, **fitkwargs: Any) -> tuple[tuple, dict]:
         # MLE estimation
         log_x_pos = np.log(x_pos)
         shape0 = log_x_pos.std()
-        scale0 = np.exp(log_x_pos.mean())
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", message="Mean of empty slice.", category=RuntimeWarning)
+            scale0 = np.exp(log_x_pos.mean())
         kwargs = {"scale": scale0, "loc": loc0}
         return (shape0,), kwargs
 
