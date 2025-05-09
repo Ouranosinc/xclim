@@ -622,7 +622,11 @@ def infer_kind_from_parameter(param) -> InputKind:
     if annot.issubset({"int", "float", "Sequence[int]", "Sequence[float]"}):
         return InputKind.NUMBER_SEQUENCE
 
-    if annot.issuperset({"str"}):
+    if (
+        annot.issuperset({"str"})
+        or any(a.startswith("Literal['") for a in annot)
+        or annot.issuperset({"REDUCTION_OPERATORS"})
+    ):
         return InputKind.STRING
 
     if annot == {"DateStr"}:

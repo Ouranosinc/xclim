@@ -41,10 +41,10 @@ repos:
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.11.8
     hooks:
-      - id: ruff
-        args: [ '--fix', '--show-fixes' ]
       - id: ruff-format
         exclude: '(src/xclim/indices/__init__.py|docs/installation.rst)'
+      - id: ruff
+        args: [ '--fix', '--show-fixes' ]
   - repo: https://github.com/pylint-dev/pylint
     rev: v3.3.7
     hooks:
