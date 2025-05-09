@@ -479,7 +479,7 @@ def test_all_parameters_understood(official_indicators):
         for name, param in indinst.parameters.items():
             if param.kind == InputKind.OTHER_PARAMETER:
                 problems.add((identifier, name))
-    # We can deal with 'lat\ for the moment.
+    # We can deal with 'lat' for the moment.
     if problems - {
         ("COOL_NIGHT_INDEX", "lat"),
         ("DRYNESS_INDEX", "lat"),
