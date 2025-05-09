@@ -478,7 +478,7 @@ def spell_mask(
     if weights is not None:
         if win_reducer != "mean":
             raise ValueError(f"Argument 'weights' is only supported if 'win_reducer' is 'mean'. Got :  {win_reducer}")
-        elif len(weights) != window:
+        if len(weights) != window:
             raise ValueError(f"Weights have a different length ({len(weights)}) than the window ({window}).")
         weights = xr.DataArray(weights, dims=("window",))
 
@@ -1079,7 +1079,7 @@ def first_occurrence(
         "time",
         freq,
         rl.first_run,
-        map_kwargs=dict(window=1, dim="time", coord="dayofyear"),
+        map_kwargs={"window": 1, "dim": "time", "coord": "dayofyear"},
     )
     out.attrs["units"] = ""
     return out
@@ -1127,7 +1127,7 @@ def last_occurrence(
         "time",
         freq,
         rl.last_run,
-        map_kwargs=dict(window=1, dim="time", coord="dayofyear"),
+        map_kwargs={"window": 1, "dim": "time", "coord": "dayofyear"},
     )
     out.attrs["units"] = ""
     return out
@@ -1179,7 +1179,7 @@ def spell_length(
         "time",
         freq,
         rl.rle_statistics,
-        map_kwargs=dict(reducer=reducer, window=1, dim="time"),
+        map_kwargs={"reducer": reducer, "window": 1, "dim": "time"},
     )
     return to_agg_units(out, data, "count")
 
@@ -1534,7 +1534,7 @@ def first_day_threshold_reached(
         "time",
         freq,
         rl.first_run_after_date,
-        map_kwargs=dict(window=window, date=after_date, dim="time", coord="dayofyear"),
+        map_kwargs={"window": window, "date": after_date, "dim": "time", "coord": "dayofyear"},
     )
     out.attrs.update(units="", is_dayofyear=np.int32(1), calendar=get_calendar(data))
     return out

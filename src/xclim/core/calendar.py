@@ -1149,7 +1149,7 @@ def _get_doys(start: int, end: int, inclusive: tuple[bool, bool]):
 def mask_between_doys(
     da: xr.DataArray,
     doy_bounds: tuple[int | xr.DataArray, int | xr.DataArray],
-    include_bounds: tuple[bool, bool] = [True, True],
+    include_bounds: tuple[bool, bool] = (True, True),
 ) -> xr.DataArray | xr.Dataset:
     """
     Mask the data outside the day of year bounds.
@@ -1201,7 +1201,7 @@ def mask_between_doys(
             # in the bound's time coordinate.
             # Also ensures the bounds share the same time calendar as the input.
             # Any missing value is replaced with the min/max of possible values.
-            calkws = dict(calendar=da.time.dt.calendar, use_cftime=(da.time.dtype == "O"))
+            calkws = {"calendar": da.time.dt.calendar, "use_cftime": (da.time.dtype == "O")}
             start = doy_to_days_since(start.convert_calendar(**calkws)).fillna(0)
             end = doy_to_days_since(end.convert_calendar(**calkws)).fillna(366)
 

@@ -344,7 +344,7 @@ def general_partition(
         fit = da.polyfit(dim="time", deg=4, skipna=True)
         sm = xr.polyval(coord=da.time, coeffs=fit.polyfit_coefficients).where(da.notnull())
     elif isinstance(sm, xr.DataArray):
-        sm = sm
+        pass
     else:
         raise ValueError("sm should be 'poly' or a DataArray.")
 

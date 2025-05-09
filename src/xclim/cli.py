@@ -29,6 +29,7 @@ from xclim.testing.utils import (
     show_versions,
 )
 
+# Distributed is not a dependency of xclim
 distributed = False
 try:
     from dask.distributed import Client, progress  # pylint: disable=ungrouped-imports
@@ -36,8 +37,6 @@ try:
     distributed = True
 except ImportError:  # noqa: S110
     Client, progress = None, None
-    # Distributed is not a dependency of xclim
-    pass
 
 
 def _get_indicator(indicator_name):

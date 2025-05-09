@@ -26,6 +26,13 @@ except ImportError:
 else:
     XR2409 = False
 
+try:
+    from flox.xarray import rechunk_for_blockwise
+
+    flox_err = None
+except ImportError:
+    rechunk_for_blockwise = None
+
 from xclim.core import Quantified
 from xclim.core.calendar import ensure_cftime_array, get_calendar
 from xclim.core.options import MAP_BLOCKS, OPTIONS
@@ -598,11 +605,9 @@ def resample_map(
     if not uses_dask(obj) or not map_blocks:
         return obj.resample({dim: freq}, **resample_kwargs).map(func, **map_kwargs)
 
-    try:
-        from flox.xarray import rechunk_for_blockwise
-    except ImportError as err:
+    if rechunk_for_blockwise is None:
         msg = f"Using {MAP_BLOCKS}=True requires flox."
-        raise ValueError(msg) from err
+        raise ValueError(msg) from flox_err
 
     # Make labels, a unique integer for each resample group
     labels = xr.full_like(obj[dim], -1, dtype=np.int32)

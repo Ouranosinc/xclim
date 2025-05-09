@@ -202,7 +202,7 @@ def ensemble_mean_std_max_min(
             if "description" in ds_out[vv].attrs.keys():
                 vv.split()
                 ds_out[vv].attrs["description"] = (
-                    ds_out[vv].attrs["description"] + " : " + vv.split("_")[-1] + " of ensemble"
+                    ds_out[vv].attrs["description"] + " : " + vv.split("_", maxsplit=1)[-1] + " of ensemble"
                 )
 
     ds_out.attrs["history"] = update_history(
