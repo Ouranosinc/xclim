@@ -1823,6 +1823,7 @@ def _find_events(da_start, da_stop, data, window_start, window_stop):
     if time_min.dtype == "O":
         # Can't add a numpy array of timedeltas to an array of cftime (because they have non-compatible dtypes)
         # Also, we can't add cftime to NaTType. So we fill with negative timedeltas and mask them after the addition
+        # Also, pd.to_timedelta can only handle 1D input, so we vectorize
 
         def _get_start_cftime(deltas, time_min=None):
             starts = time_min + pd.to_timedelta(deltas, "s").to_pytimedelta()
@@ -1832,6 +1833,9 @@ def _find_events(da_start, da_stop, data, window_start, window_stop):
         ds["event_start"] = xr.apply_ufunc(
             _get_start_cftime,
             ds.event_start.fillna(-1),
+            input_core_dims=[("event",)],
+            output_core_dims=[("event",)],
+            vectorize=True,
             dask="parallelized",
             kwargs={"time_min": time_min.item()},
             output_dtypes=[time_min.dtype],

@@ -666,3 +666,34 @@ def test_season(use_dask, tas_series, ufunc):
     np.testing.assert_array_equal(out.start.load(), [140, 140])
     np.testing.assert_array_equal(out.end.load(), [150, 150])
     np.testing.assert_array_equal(out.length.load(), [10, 10])
+
+
+# This test doesn't depend on any "ufunc" method.
+# We cheat and use the module-wide fixture as a parametrization of use_cftime
+@pytest.mark.parametrize("use_dask", [True, False])
+def test_find_events(use_dask, ufunc):
+    cond = np.array(
+        [
+            [0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0],  # Normal
+            [0, 0, 1, 1, 0, 0, 1, 1, 1, 1, 0],  # Two events, one short, one long
+            [0, 1, 1, 1, 1, 0, 0, 1, 0, 0, 0],  # Two, one long one short
+        ]
+    )
+    cond = xr.DataArray(
+        cond == 1,
+        dims=("lat", "time"),
+        coords={"time": xr.date_range("1960", periods=cond.shape[1], freq="MS", use_cftime=ufunc), "lat": [0, 1, 2]},
+    )
+    if use_dask:
+        cond = cond.chunk(lat=1)
+
+    # Test 1 : window 1, stop == start, no freq
+    events = rl.find_events(cond, 1)
+    exp = [[4, np.nan], [2, 4], [4, 1]]
+    np.testing.assert_equal(events.event_length, np.pad(exp, [(0, 0), (0, 4)], constant_values=np.nan))
+    np.testing.assert_equal(events.event_start.isel(event=0), cond.time.values[[3, 2, 1]])
+
+    # Test 2 : win start 2, win stop 3, no freq
+    events = rl.find_events(cond, window=2, window_stop=3)
+    exp = [[4.0], [9.0], [7.0]]
+    np.testing.assert_equal(events.event_length, np.pad(exp, [(0, 0), (0, 2)], constant_values=np.nan))
