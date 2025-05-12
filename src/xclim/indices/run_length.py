@@ -118,7 +118,7 @@ def resample_and_rl(
             dim,
             freq,
             compute,
-            map_kwargs=dict(args=args, freq=None, dim=dim, **kwargs),
+            map_kwargs={"args": args, "freq": None, "dim": dim, **kwargs},
         )
     else:
         out = compute(da, *args, dim=dim, freq=freq, **kwargs)
@@ -553,7 +553,7 @@ def _boundary_run(
     da = da.fillna(0)  # We expect a boolean array, but there could be NaNs nonetheless
     if window == 1:
         if freq is not None:
-            out = resample_map(da, dim, freq, find_boundary_run, map_kwargs=dict(position=position))
+            out = resample_map(da, dim, freq, find_boundary_run, map_kwargs={"position": position})
         else:
             out = find_boundary_run(da, position)
 
@@ -572,7 +572,7 @@ def _boundary_run(
         d = xr.where(d >= window, 1, 0)
         # for "first" run, return "first" element in the run (and conversely for "last" run)
         if freq is not None:
-            out = resample_map(d, dim, freq, find_boundary_run, map_kwargs=dict(position=position))
+            out = resample_map(d, dim, freq, find_boundary_run, map_kwargs={"position": position})
         else:
             out = find_boundary_run(d, position)
 
@@ -1813,8 +1813,8 @@ def _find_events(da_start, da_stop, data, window_start, window_stop):
         ds.event_length,
         input_core_dims=[["time"], ["time"]],
         output_core_dims=[["event"]],
-        kwargs=dict(max_event_number=max_event_number),
-        dask_gufunc_kwargs=dict(output_sizes={"event": max_event_number}),
+        kwargs={"max_event_number": max_event_number},
+        dask_gufunc_kwargs={"output_sizes": {"event": max_event_number}},
         dask="parallelized",
         vectorize=True,
     )

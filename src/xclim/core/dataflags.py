@@ -83,7 +83,7 @@ __all__ = [
 ]
 
 
-def register_methods(variable_name: str = None) -> Callable:
+def register_methods(variable_name: str | None = None) -> Callable:
     """
     Register a data flag as functional.
 

@@ -646,7 +646,7 @@ def _fire_season(
     return season_mask
 
 
-def _fire_weather_calc(  # noqa: C901
+def _fire_weather_calc(  # noqa: C901  # pylint: disable=R0912, R0915
     tas, pr, rh, ws, snd, mth, lat, season_mask, dc0, dmc0, ffmc0, winter_pr, **params
 ):
     """Primary function computing all Fire Weather Indexes. DO NOT CALL DIRECTLY, use `fire_weather_ufunc` instead."""
@@ -662,7 +662,7 @@ def _fire_weather_calc(  # noqa: C901
         ind_prevs["DC"][np.isnan(dc0)] = params["dc_start"]
         ind_prevs["DMC"][np.isnan(dmc0)] = params["dmc_start"]
         ind_prevs["FFMC"][np.isnan(ffmc0)] = params["ffmc_start"]
-    elif season_method != "mask":
+    elif isinstance(season_method, str) and season_method != "mask":
         # "mask" means it was passed as an arg. Other values are methods so we compute.
         season_mask = _fire_season(
             tas,
