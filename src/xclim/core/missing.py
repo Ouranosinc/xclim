@@ -323,7 +323,7 @@ class MissingAny(MissingBase):
 # TODO: Make coarser method controllable.
 class MissingTwoSteps(MissingBase):
     r"""
-    Base class used to determined where Indicator outputs should be masked in a two-step process.
+    Base class used to determine where Indicator outputs should be masked in a two-step process.
 
     In addition to what :py:class:`MissingBase` does, subclasses first perform the mask
     determination at some frequency and then resample at the (coarser) target frequency.
@@ -450,8 +450,8 @@ class MissingPct(MissingTwoSteps):
             The maximum tolerated proportion of missing values,
             given as a number between 0 and 1.
         subfreq : str, optional
-            If given, compute a mask at this frequency using this method and
-            then resample at the target frequency using the "any" method on sub-groups.
+            If given, computes a mask at this frequency using this method and
+            then resample at the target frequency using the "any" method on subgroups.
         """
         super().__init__(tolerance=tolerance, subfreq=subfreq)
 
@@ -478,15 +478,15 @@ class AtLeastNValid(MissingTwoSteps):
 
     def __init__(self, n: int = 20, subfreq: str | None = None):
         """
-        Create a AtLeastNValid object.
+        Create an AtLeastNValid object.
 
         Parameters
         ----------
         n: float
             The minimum number of valid values needed.
         subfreq : str, optional
-            If given, compute a mask at this frequency using this method and
-            then resample at the target frequency using the "any" method on sub-groups.
+            If given, computes a mask at this frequency using this method and
+            then resample at the target frequency using the "any" method on subgroups.
         """
         super().__init__(n=n, subfreq=subfreq)
 

@@ -10,7 +10,7 @@ from __future__ import annotations
 import datetime as pydt
 import warnings
 from collections.abc import Sequence
-from typing import Any, TypeVar
+from typing import Any, Literal, TypeVar
 
 import cftime
 import numpy as np
@@ -89,7 +89,7 @@ datetime_classes = cftime._cftime.DATE_TYPES
 # Names of calendars that have the same number of days for all years
 uniform_calendars = ("noleap", "all_leap", "365_day", "366_day", "360_day")
 
-
+# Type hint for xarray DataArray and Dataset
 DataType = TypeVar("DataType", xr.DataArray, xr.Dataset)
 
 
@@ -162,7 +162,7 @@ def get_calendar(obj: Any, dim: str = "time") -> str:
     raise ValueError(f"Calendar could not be inferred from object of type {type(obj)}.")
 
 
-def common_calendar(calendars: Sequence[str], join="outer") -> str:
+def common_calendar(calendars: Sequence[str], join: Literal["inner", "outer"] = "outer") -> str:
     """
     Return a calendar common to all calendars from a list.
 
@@ -247,7 +247,7 @@ def convert_doy(
     source: xr.DataArray | xr.Dataset,
     target_cal: str,
     source_cal: str | None = None,
-    align_on: str = "year",
+    align_on: Literal["date", "year"] = "year",
     missing: Any = np.nan,
     dim: str = "time",
 ) -> xr.DataArray | xr.Dataset:
@@ -262,11 +262,11 @@ def convert_doy(
     target_cal : str
         Name of the calendar to convert to.
     source_cal : str, optional
-        Calendar the doys are in. If not given, uses the "calendar" attribute of `source` or,
+        Calendar the doys are in. If not given, will use the "calendar" attribute of `source` or,
         if absent, the calendar of its `dim` axis.
     align_on : {'date', 'year'}
         If 'year' (default), the doy is seen as a "percentage" of the year and is simply rescaled onto
-        the new doy range. This always result in floating point data, changing the decimal part of the value.
+        the new doy range. This always results in floating point data, changing the decimal part of the value.
         If 'date', the doy is seen as a specific date. See notes. This never changes the decimal part of the value.
     missing : Any
         If `align_on` is "date" and the new doy doesn't exist in the new calendar, this value is used.
@@ -345,7 +345,7 @@ def ensure_cftime_array(time: Sequence) -> np.ndarray | Sequence[cftime.datetime
     """
     Convert an input 1D array to a numpy array of cftime objects.
 
-    Python's datetime are converted to cftime.DatetimeGregorian ("standard" calendar).
+    Python datetimes are converted to cftime.DatetimeGregorian ("standard" calendar).
 
     Parameters
     ----------
@@ -397,7 +397,7 @@ def percentile_doy(
         Input data, a daily frequency (or coarser) is required.
     window : int
         Number of time-steps around each day of the year to include in the calculation.
-    per : float or sequence of floats
+    per : float or sequence of float
         Percentile(s) between [0, 100].
     alpha : float
         Plotting position parameter.
@@ -407,7 +407,7 @@ def percentile_doy(
         If True (default) the input array will be deep-copied. It's a necessary step
         to keep the data integrity, but it can be costly.
         If False, no copy is made of the input array. It will be mutated and rendered
-        unusable but performances may significantly improve.
+        unusable, but performances may significantly improve.
         Put this flag to False only if you understand the consequences.
 
     Returns
@@ -495,11 +495,13 @@ def build_climatology_bounds(da: xr.DataArray) -> list[str]:
     return da.time[0 :: n - 1].dt.strftime("%Y-%m-%d").values.tolist()
 
 
-def compare_offsets(freqA: str, op: str, freqB: str) -> bool:  # noqa
+def compare_offsets(
+    freqA: str, op: Literal[">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"], freqB: str
+) -> bool:  # noqa
     """
     Compare offsets string based on their approximate length, according to a given operator.
 
-    Offset are compared based on their length approximated for a period starting
+    Offsets are compared based on their length approximated for a period starting
     after 1970-01-01 00:00:00. If the offsets are from the same category (same first letter),
     only the multiplier prefix is compared (QS-DEC == QS-JAN, MS < 2MS).
     "Business" offsets are not implemented.
@@ -508,7 +510,7 @@ def compare_offsets(freqA: str, op: str, freqB: str) -> bool:  # noqa
     ----------
     freqA : str
         RHS Date offset string ('YS', '1D', 'QS-DEC', ...).
-    op : {'<', '<=', '==', '>', '>=', '!='}
+    op : {">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"}
         Operator to use.
     freqB : str
         LHS Date offset string ('YS', '1D', 'QS-DEC', ...).
@@ -561,7 +563,7 @@ def parse_offset(freq: str) -> tuple[int, str, bool, str | None]:
         Anchor date for bases Y or Q. As xarray doesn't support "W",
         neither does xclim (anchor information is lost when given).
     """
-    # Useful to raise on invalid freqs, convert Y to A and get default anchor (A, Q)
+    # Useful to raise on invalid frequencies, convert Y to A and get default anchor (A, Q)
     offset = pd.tseries.frequencies.to_offset(freq)
     base, *anchor = offset.name.split("-")
     anchor = anchor[0] if len(anchor) > 0 else None
@@ -610,8 +612,8 @@ def is_offset_divisor(divisor: str, offset: str):
     """
     Check that divisor is a divisor of offset.
 
-    A frequency is a "divisor" of another if a whole number of periods of the
-    former fit within a single period of the latter.
+    A frequency is a "divisor" of another if a whole number of periods of the former fit within
+    a single period of the latter.
 
     Parameters
     ----------

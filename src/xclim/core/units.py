@@ -602,7 +602,12 @@ def ensure_delta(unit: xr.DataArray | str | units.Quantity) -> str:
     return delta_unit
 
 
-def to_agg_units(out: xr.DataArray, orig: xr.DataArray, op: str, dim: str = "time") -> xr.DataArray:
+def to_agg_units(
+    out: xr.DataArray,
+    orig: xr.DataArray,
+    op: Literal["min", "max", "mean", "std", "var", "doymin", "doymax", "count", "integral", "sum"],
+    dim: str = "time",
+) -> xr.DataArray:
     """
     Set and convert units of an array after an aggregation operation along the sampling dimension (time).
 
@@ -613,7 +618,7 @@ def to_agg_units(out: xr.DataArray, orig: xr.DataArray, op: str, dim: str = "tim
     orig : xr.DataArray
         The original array before the aggregation operation,
         used to infer the sampling units and get the variable units.
-    op : {'min', 'max', 'mean', 'std', 'var', 'doymin', 'doymax',  'count', 'integral', 'sum'}
+    op : {'min', 'max', 'mean', 'std', 'var', 'doymin', 'doymax', 'count', 'integral', 'sum'}
         The type of aggregation operation performed. "integral" is mathematically equivalent to "sum",
         but the units are multiplied by the timestep of the data (requires an inferrable frequency).
     dim : str

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable
-from typing import cast
+from typing import Literal, cast
 
 import numpy as np
 import xarray
@@ -73,7 +73,7 @@ def cold_spell_duration_index(
     freq: str = "YS",
     resample_before_rl: bool = True,
     bootstrap: bool = False,  # noqa  # noqa
-    op: str = "<",
+    op: Literal["<", "<=", "lt", "le"] = "<",
 ) -> xarray.DataArray:
     r"""
     Cold spell duration index.
@@ -429,9 +429,9 @@ def multiday_temperature_swing(
     thresh_tasmin: Quantified = "0 degC",
     thresh_tasmax: Quantified = "0 degC",
     window: int = 1,
-    op: str = "mean",
-    op_tasmin: str = "<=",
-    op_tasmax: str = ">",
+    op: Literal["mean", "sum", "max", "min", "std", "count"] = "mean",
+    op_tasmin: Literal["<", "<=", "lt", "le"] = "<=",
+    op_tasmax: Literal[">", ">=", "gt", "ge"] = ">",
     freq: str = "YS",
     resample_before_rl: bool = True,
 ) -> xarray.DataArray:
@@ -453,7 +453,7 @@ def multiday_temperature_swing(
         The temperature threshold needed to trigger a thaw event.
     window : int
         The minimal length of spells to be included in the statistics.
-    op : {'mean', 'sum', 'max', 'min', 'std', 'count'}
+    op : {"mean", "sum", "max", "min", "std", "count"}
         The statistical operation to use when reducing the list of spell lengths.
     op_tasmin : {"<", "<=", "lt", "le"}
         Comparison operation for tasmin. Default: "<=".
@@ -515,7 +515,7 @@ def daily_temperature_range(
     tasmin: xarray.DataArray,
     tasmax: xarray.DataArray,
     freq: str = "YS",
-    op: str | Callable = "mean",
+    op: Literal["min", "max", "mean", "std"] | Callable = "mean",
 ) -> xarray.DataArray:
     r"""
     Statistics of daily temperature range.
@@ -530,7 +530,7 @@ def daily_temperature_range(
         Maximum daily temperature.
     freq : str
         Resampling frequency.
-    op : {'min', 'max', 'mean', 'std'} or func
+    op : {"min", "max", "mean", "std"} or Callable
         Reduce operation. Can either be a DataArray method or a function that can be applied to a DataArray.
 
     Returns
@@ -650,7 +650,7 @@ def heat_wave_frequency(
     thresh_tasmax: Quantified = "30 degC",
     window: int = 3,
     freq: str = "YS",
-    op: str = ">",
+    op: Literal[">", ">=", "gt", "ge"] = ">",
     resample_before_rl: bool = True,
 ) -> xarray.DataArray:
     r"""
@@ -728,16 +728,16 @@ def heat_wave_max_length(
     thresh_tasmax: Quantified = "30 degC",
     window: int = 3,
     freq: str = "YS",
-    op: str = ">",
+    op: Literal[">", ">=", "gt", "ge"] = ">",
     resample_before_rl: bool = True,
 ) -> xarray.DataArray:
     r"""
     Heat wave max length.
 
     Maximum length of heat waves over a given period. A heat wave is defined as an event where the minimum and maximum
-    daily temperature both exceeds specific thresholds over a minimum number of days.
+    daily temperature both exceed specific thresholds over a minimum number of days.
 
-    By definition heat_wave_max_length must be >= window.
+    By definition, heat_wave_max_length must be >= window.
 
     Parameters
     ----------
@@ -807,15 +807,15 @@ def heat_wave_total_length(
     thresh_tasmax: Quantified = "30 degC",
     window: int = 3,
     freq: str = "YS",
-    op: str = ">",
+    op: Literal[">", ">=", "gt", "ge"] = ">",
     resample_before_rl: bool = True,
 ) -> xarray.DataArray:
     r"""
     Heat wave total length.
 
     Total length of heat waves over a given period. A heat wave is defined as an event where the minimum and maximum
-    daily temperature both exceeds specific thresholds over a minimum number of days.
-    This the sum of all days in such events.
+    daily temperature both exceed specific thresholds over a minimum number of days.
+    This is the sum of all days in such events.
 
     Parameters
     ----------
@@ -1176,12 +1176,12 @@ def days_over_precip_thresh(
     thresh: Quantified = "1 mm/day",
     freq: str = "YS",
     bootstrap: bool = False,  # noqa
-    op: str = ">",
+    op: Literal[">", ">=", "gt", "ge"] = ">",
 ) -> xarray.DataArray:
     r"""
     Number of wet days with daily precipitation over a given percentile.
 
-    Number of days over period where the precipitation is above a threshold defining wet days and above a given
+    Number of days over a period where the precipitation is above a threshold defining wet days and above a given
     percentile for that day.
 
     Parameters
@@ -1200,8 +1200,8 @@ def days_over_precip_thresh(
         Bootstrapping is only useful when the percentiles are computed on a part of the studied sample.
         This period, common to percentiles and the sample must be bootstrapped to avoid inhomogeneities with
         the rest of the time series.
-        Keep bootstrap to False when there is no common period, it would give wrong results
-        plus, bootstrapping is computationally expensive.
+        Do not enable bootstrap when there is no common period, otherwise it will provide the wrong results.
+        Note that bootstrapping is computationally expensive.
     op : {">", ">=", "gt", "ge"}
         Comparison operation. Default: ">".
 
@@ -1238,13 +1238,13 @@ def fraction_over_precip_thresh(
     thresh: Quantified = "1 mm/day",
     freq: str = "YS",
     bootstrap: bool = False,  # noqa
-    op: str = ">",
+    op: Literal[">", ">=", "gt", "ge"] = ">",
 ) -> xarray.DataArray:
     r"""
     Fraction of precipitation due to wet days with daily precipitation over a given percentile.
 
-    Percentage of the total precipitation over period occurring in days when the precipitation is above a threshold
-    defining wet days and above a given percentile for that day.
+    The percentage of the total precipitation over a period occurring for days when the precipitation is above
+    a threshold defining wet days and above a given percentile for that day.
 
     Parameters
     ----------
@@ -1262,8 +1262,8 @@ def fraction_over_precip_thresh(
         Bootstrapping is only useful when the percentiles are computed on a part of the studied sample.
         This period, common to percentiles and the sample must be bootstrapped to avoid inhomogeneities with
         the rest of the time series.
-        Keep bootstrap to False when there is no common period, it would give wrong results
-        plus, bootstrapping is computationally expensive.
+        Do not enable bootstrap when there is no common period, otherwise it will provide the wrong results.
+        Note that bootstrapping is computationally expensive.
     op : {">", ">=", "gt", "ge"}
         Comparison operation. Default: ">".
 
@@ -1299,7 +1299,7 @@ def tg90p(
     tas_per: xarray.DataArray,
     freq: str = "YS",
     bootstrap: bool = False,  # noqa
-    op: str = ">",
+    op: Literal[">", ">=", "gt", "ge"] = ">",
 ) -> xarray.DataArray:
     r"""
     Number of days with daily mean temperature over the 90th percentile.
@@ -1319,8 +1319,8 @@ def tg90p(
         Bootstrapping is only useful when the percentiles are computed on a part of the studied sample.
         This period, common to percentiles and the sample must be bootstrapped to avoid inhomogeneities with
         the rest of the time series.
-        Keep bootstrap to False when there is no common period, it would give wrong results
-        plus, bootstrapping is computationally expensive.
+        Do not enable bootstrap when there is no common period, otherwise it will provide the wrong results.
+        Note that bootstrapping is computationally expensive.
     op : {">", ">=", "gt", "ge"}
         Comparison operation. Default: ">".
 
@@ -1358,7 +1358,7 @@ def tg10p(
     tas_per: xarray.DataArray,
     freq: str = "YS",
     bootstrap: bool = False,  # noqa
-    op: str = "<",
+    op: Literal[">", ">=", "gt", "ge"] = "<",
 ) -> xarray.DataArray:
     r"""
     Number of days with daily mean temperature below the 10th percentile.
@@ -1378,8 +1378,8 @@ def tg10p(
         Bootstrapping is only useful when the percentiles are computed on a part of the studied sample.
         This period, common to percentiles and the sample must be bootstrapped to avoid inhomogeneities with
         the rest of the time series.
-        Keep bootstrap to False when there is no common period, it would give wrong results
-        plus, bootstrapping is computationally expensive.
+        Do not enable bootstrap when there is no common period, otherwise it will provide the wrong results.
+        Note that bootstrapping is computationally expensive.
     op : {"<", "<=", "lt", "le"}
         Comparison operation. Default: "<".
 
@@ -1417,7 +1417,7 @@ def tn90p(
     tasmin_per: xarray.DataArray,
     freq: str = "YS",
     bootstrap: bool = False,  # noqa
-    op: str = ">",
+    op: Literal[">", ">=", "gt", "ge"] = ">",
 ) -> xarray.DataArray:
     r"""
     Number of days with daily minimum temperature over the 90th percentile.
@@ -1437,8 +1437,8 @@ def tn90p(
         Bootstrapping is only useful when the percentiles are computed on a part of the studied sample.
         This period, common to percentiles and the sample must be bootstrapped to avoid inhomogeneities with
         the rest of the time series.
-        Keep bootstrap to False when there is no common period, it would give wrong results
-        plus, bootstrapping is computationally expensive.
+        Do not enable bootstrap when there is no common period, otherwise it will provide the wrong results.
+        Note that bootstrapping is computationally expensive.
     op : {">", ">=", "gt", "ge"}
         Comparison operation. Default: ">".
 
@@ -1476,7 +1476,7 @@ def tn10p(
     tasmin_per: xarray.DataArray,
     freq: str = "YS",
     bootstrap: bool = False,  # noqa
-    op: str = "<",
+    op: Literal["<", "<=", "lt", "le"] = "<",
 ) -> xarray.DataArray:
     r"""
     Number of days with daily minimum temperature below the 10th percentile.
@@ -1496,8 +1496,8 @@ def tn10p(
         Bootstrapping is only useful when the percentiles are computed on a part of the studied sample.
         This period, common to percentiles and the sample must be bootstrapped to avoid inhomogeneities with
         the rest of the time series.
-        Keep bootstrap to False when there is no common period, it would give wrong results
-        plus, bootstrapping is computationally expensive.
+        Do not enable bootstrap when there is no common period, otherwise it will provide the wrong results.
+        Note that bootstrapping is computationally expensive.
     op : {"<", "<=", "lt", "le"}
         Comparison operation. Default: "<".
 
@@ -1535,7 +1535,7 @@ def tx90p(
     tasmax_per: xarray.DataArray,
     freq: str = "YS",
     bootstrap: bool = False,  # noqa
-    op: str = ">",
+    op: Literal["<", "<=", "lt", "le"] = ">",
 ) -> xarray.DataArray:
     r"""
     Number of days with daily maximum temperature over the 90th percentile.
@@ -1555,8 +1555,8 @@ def tx90p(
         Bootstrapping is only useful when the percentiles are computed on a part of the studied sample.
         This period, common to percentiles and the sample must be bootstrapped to avoid inhomogeneities with
         the rest of the time series.
-        Keep bootstrap to False when there is no common period, it would give wrong results
-        plus, bootstrapping is computationally expensive.
+        Do not enable bootstrap when there is no common period, otherwise it will provide the wrong results.
+        Note that bootstrapping is computationally expensive.
     op : {">", ">=", "gt", "ge"}
         Comparison operation. Default: ">".
 
@@ -1594,7 +1594,7 @@ def tx10p(
     tasmax_per: xarray.DataArray,
     freq: str = "YS",
     bootstrap: bool = False,  # noqa
-    op: str = "<",
+    op: Literal["<", "<=", "lt", "le"] = "<",
 ) -> xarray.DataArray:
     r"""
     Number of days with daily maximum temperature below the 10th percentile.
@@ -1614,8 +1614,8 @@ def tx10p(
         Bootstrapping is only useful when the percentiles are computed on a part of the studied sample.
         This period, common to percentiles and the sample must be bootstrapped to avoid inhomogeneities with
         the rest of the time series.
-        Keep bootstrap to False when there is no common period, it would give wrong results
-        plus, bootstrapping is computationally expensive.
+        Do not enable bootstrap when there is no common period, otherwise it will provide the wrong results.
+        Note that bootstrapping is computationally expensive.
     op : {"<", "<=", "lt", "le"}
         Comparison operation. Default: "<".
 
@@ -1658,7 +1658,7 @@ def tx_tn_days_above(
     thresh_tasmin: Quantified = "22 degC",
     thresh_tasmax: Quantified = "30 degC",
     freq: str = "YS",
-    op: str = ">",
+    op: Literal[">", ">=", "gt", "ge"] = ">",
 ) -> xarray.DataArray:
     r"""
     Number of days with both hot maximum and minimum daily temperatures.
@@ -1720,7 +1720,7 @@ def warm_spell_duration_index(
     freq: str = "YS",
     resample_before_rl: bool = True,
     bootstrap: bool = False,  # noqa
-    op: str = ">",
+    op: Literal[">", ">=", "gt", "ge"] = ">",
 ) -> xarray.DataArray:
     r"""
     Warm spell duration index.
@@ -1747,8 +1747,8 @@ def warm_spell_duration_index(
         Bootstrapping is only useful when the percentiles are computed on a part of the studied sample.
         This period, common to percentiles and the sample must be bootstrapped to avoid inhomogeneities with
         the rest of the time series.
-        Keep bootstrap to False when there is no common period, it would give wrong results
-        plus, bootstrapping is computationally expensive.
+        Do not enable bootstrap when there is no common period, otherwise it will provide the wrong results.
+        Note that bootstrapping is computationally expensive.
     op : {">", ">=", "gt", "ge"}
         Comparison operation. Default: ">".
 

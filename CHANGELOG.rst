@@ -35,6 +35,7 @@ Internal changes
 * Added a `pre-commit` hook for formatting BibTeX files and reformatted existing BibTeX files. (:pull:`2135`).
 * `pre-commit` hooks have been updated to their latest versions. (:pull:`2141`).
 * Updated a deprecated `pathlib` usage in the `xclim` documentation that was causing failures under Python 3.13. (:pull:`2141`).
+* Call signatures for most `op` arguments in `xclim` have been updated to use `Literal` types instead of `str`. This change is intended to improve type checking and code clarity. (:issue:`1810`, :pull:`2168`).
 
 v0.56.0 (2025-03-27)
 --------------------
