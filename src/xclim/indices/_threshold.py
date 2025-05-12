@@ -1579,12 +1579,12 @@ def last_spring_frost(
         "time",
         freq,
         rl.last_run_before_date,
-        map_kwargs=dict(
-            window=window,
-            date=before_date,
-            dim="time",
-            coord="dayofyear",
-        ),
+        map_kwargs={
+            "window": window,
+            "date": before_date,
+            "dim": "time",
+            "coord": "dayofyear",
+        },
     )
     out.attrs.update(units="", is_dayofyear=np.int32(1), calendar=get_calendar(tasmin))
     return out
@@ -1758,7 +1758,7 @@ def first_snowfall(
         "time",
         freq,
         rl.first_run,
-        map_kwargs=dict(window=1, dim="time", coord="dayofyear"),
+        map_kwargs={"window": 1, "dim": "time", "coord": "dayofyear"},
     )
     out.attrs.update(units="", is_dayofyear=np.int32(1), calendar=get_calendar(prsn))
     return out
@@ -1814,7 +1814,7 @@ def last_snowfall(
         "time",
         freq,
         rl.last_run,
-        map_kwargs=dict(window=1, dim="time", coord="dayofyear"),
+        map_kwargs={"window": 1, "dim": "time", "coord": "dayofyear"},
     )
     out.attrs.update(units="", is_dayofyear=np.int32(1), calendar=get_calendar(prsn))
     return out

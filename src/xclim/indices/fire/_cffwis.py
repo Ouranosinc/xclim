@@ -646,7 +646,7 @@ def _fire_season(
     return season_mask
 
 
-def _fire_weather_calc(  # noqa: C901
+def _fire_weather_calc(  # noqa: C901  # pylint: disable=R0912, R0915
     tas, pr, rh, ws, snd, mth, lat, season_mask, dc0, dmc0, ffmc0, winter_pr, **params
 ):
     """Primary function computing all Fire Weather Indexes. DO NOT CALL DIRECTLY, use `fire_weather_ufunc` instead."""

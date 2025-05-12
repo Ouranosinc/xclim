@@ -644,7 +644,6 @@ def infer_kind_from_parameter(param) -> InputKind:
     return InputKind.OTHER_PARAMETER
 
 
-# FIXME: Should we be using logging instead of print?
 def adapt_clix_meta_yaml(  # noqa: C901
     raw: os.PathLike | StringIO | str, adapted: os.PathLike
 ) -> None:
@@ -700,12 +699,12 @@ def adapt_clix_meta_yaml(  # noqa: C901
         data["compute"] = index_function["name"]
         if getattr(generic, data["compute"], None) is None:
             remove_ids.append(cmid)
-            print(f"Indicator {cmid} uses non-implemented function {data['compute']}, removing.")
+            warnings.warn(f"Indicator {cmid} uses non-implemented function {data['compute']}, removing.")
             continue
 
         if (data["output"].get("standard_name") or "").startswith("number_of_days") or cmid == "nzero":
             remove_ids.append(cmid)
-            print(
+            warnings.warn(
                 f"Indicator {cmid} has a 'number_of_days' standard name"
                 " and xclim disagrees with the CF conventions on the correct output units, removing."
             )
@@ -713,7 +712,7 @@ def adapt_clix_meta_yaml(  # noqa: C901
 
         if (data["output"].get("standard_name") or "").endswith("precipitation_amount"):
             remove_ids.append(cmid)
-            print(
+            warnings.warn(
                 f"Indicator {cmid} has a 'precipitation_amount' standard name"
                 " and clix-meta has incoherent output units, removing."
             )
