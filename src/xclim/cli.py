@@ -195,7 +195,7 @@ def prefetch_testing_data(ctx, repo, branch, cache_dir):  # numpydoc ignore=PR01
         testdata_cache_dir = TESTDATA_CACHE_DIR
 
     click.echo(f"Gathering testing data from {testdata_repo}/{testdata_branch} ...")
-    click.echo(populate_testing_data(repo=testdata_repo, branch=testdata_branch, local_cache=testdata_cache_dir))
+    populate_testing_data(repo=testdata_repo, branch=testdata_branch, local_cache=testdata_cache_dir)
     click.echo(f"Testing data saved to `{testdata_cache_dir}`.")
     ctx.exit()
 
