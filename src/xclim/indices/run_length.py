@@ -145,6 +145,7 @@ def _cumsum_reset_np(arr, index, one):
     # run the cumsum and prod backwards or forward
     it = range(1, arr.shape[-1]) if index == "last" else range(arr.shape[-1] - 2, -1, -1)
     for i in it:
+        # this works because we assume to have 1's and 0's
         arr[..., i] *= arr[..., i - it.step] + one
     return arr
 
@@ -195,6 +196,8 @@ def _cumsum_reset(
         An array with cumulative sums.
     """
     if not _is_chunked(da, dim) and reset_on_zero:
+        # this means the type can be different depending on if we use the fast track
+        # or not. Do we want this?
         typ = _smallest_uint(da, dim)
         out = xr.apply_ufunc(
             _cumsum_reset_np,
@@ -203,7 +206,7 @@ def _cumsum_reset(
             output_core_dims=[[dim]],
             dask="parallelized",
             kwargs={"index": index, "one": typ(1)},
-        ).astype(da.dtype)
+        )
     else:
         out = _cumsum_reset_xr(da, dim, index, reset_on_zero)
     return out
@@ -505,9 +508,11 @@ def windowed_max_run_sum(
         Total number of `True` values part of a consecutive runs of at least `window` long.
     """
     if window == 1 and freq is None:
+        # using _cumsum_reset_xr instead of rle to be able to handle a float
         out = _cumsum_reset_xr(da, dim=dim, index=index, reset_on_zero=True).max(dim=dim)
 
     else:
+        # using _cumsum_reset_xr instead of rle to be able to handle a float
         d_rse = _cumsum_reset_xr(da, dim=dim, index=index, reset_on_zero=True)
         d_rle = rle(da > 0, dim=dim, index=index)
 
