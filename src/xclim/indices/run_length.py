@@ -180,7 +180,7 @@ def _cumsum_reset(
     Parameters
     ----------
     da : xr.DataArray
-        Input array.
+        Input boolean array.
     dim : str
         Dimension name along which the cumulative sum is taken.
     index : {'first', 'last'}
@@ -195,18 +195,19 @@ def _cumsum_reset(
     xr.DataArray
         An array with cumulative sums.
     """
+    typ = _smallest_uint(da, dim)
+    da = da.astype(typ)
     if not _is_chunked(da, dim) and reset_on_zero:
-        typ = _smallest_uint(da, dim)
         out = xr.apply_ufunc(
             _cumsum_reset_np,
-            da.astype(typ),
+            da,
             input_core_dims=[[dim]],
             output_core_dims=[[dim]],
             dask="parallelized",
             kwargs={"index": index, "one": typ(1)},
         )
     else:
-        out = _cumsum_reset_xr(da, dim, index, reset_on_zero)
+        out = _cumsum_reset_xr(da, dim, index, reset_on_zero).astype(typ)
     return out
 
 
@@ -242,9 +243,6 @@ def rle(
     xr.DataArray
         The run length array.
     """
-    if da.dtype == bool:
-        da = da.astype(int)
-
     # "first" case: Algorithm is applied on inverted array and output is inverted back
     if index == "first":
         da = da[{dim: slice(None, None, -1)}]
@@ -254,6 +252,7 @@ def rle(
 
     # Keep total length of each series (and also keep 0's), e.g. 100120123 -> 100N20NN3
     # Keep numbers with a 0 to the right and also the last number
+    # We could a -1 instead of nan to save space? Like this we could keep int.
     cs_s = cs_s.where(da.shift({dim: -1}, fill_value=0) == 0)
     out = cs_s.where(da > 0, 0)  # Reinsert 0's at their original place
 
