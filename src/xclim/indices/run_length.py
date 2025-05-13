@@ -133,7 +133,7 @@ def resample_and_rl(
 
 def _smallest_uint(da, dim):
     for dtype in [np.uint8, np.uint16, np.uint32, np.uint64]:
-        if np.iinfo(dtype).max < da[dim].size:
+        if np.iinfo(dtype).max > da[dim].size:
             return dtype
     return np.uint64
 
@@ -141,6 +141,7 @@ def _smallest_uint(da, dim):
 # The `one` argument was weirdly necessary to avoid some type problems with jit
 @njit
 def _cumsum_reset_np(arr, index, one):
+    """100110111 -> 100120123"""
     # run the cumsum and prod backwards or forward
     it = range(1, arr.shape[-1]) if index == "last" else range(arr.shape[-1] - 2, -1, -1)
     for i in it:
@@ -149,6 +150,7 @@ def _cumsum_reset_np(arr, index, one):
 
 
 def _cumsum_reset_xr(da, dim, index, reset_on_zero):
+    """100110111 -> 100120123"""
     # `index="first"` case: Algorithm is applied on inverted array and output is inverted back
     if index == "first":
         da = da[{dim: slice(None, None, -1)}]
@@ -503,17 +505,13 @@ def windowed_max_run_sum(
         Total number of `True` values part of a consecutive runs of at least `window` long.
     """
     if window == 1 and freq is None:
-        out = _cumsum_reset(da, dim=dim, index=index).max(dim=dim)
+        out = _cumsum_reset_xr(da, dim=dim, index=index, reset_on_zero=True).max(dim=dim)
 
     else:
-        if da.dtype == bool:
-            d_rle = rle(da, dim=dim, index=index)
-            d = d_rle.where(d_rle >= window, 0)
-        else:
-            d_rse = rle(da, dim=dim, index=index)
-            d_rle = rle((da > 0).astype(bool), dim=dim, index=index)
-            d = d_rse.where(d_rle >= window, 0)
+        d_rse = _cumsum_reset_xr(da, dim=dim, index=index, reset_on_zero=True)
+        d_rle = rle(da > 0, dim=dim, index=index)
 
+        d = d_rse.where(d_rle >= window, 0)
         if freq is not None:
             d = d.resample({dim: freq})
         out = d.max(dim=dim)

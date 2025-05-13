@@ -134,7 +134,7 @@ def test_runs_with_holes_identity(use_dask, index):
 
     events = rl.runs_with_holes(da != 0, 1, da == 0, 1)
     expected = da
-    np.testing.assert_array_equal(events, expected)
+    np.testing.assert_array_equal(events.transpose(*expected.dims), expected)
 
 
 def test_runs_with_holes():
