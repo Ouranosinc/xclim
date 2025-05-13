@@ -611,7 +611,7 @@ def _boundary_run(
         out = coord_transform(out, da)
 
     else:
-        # _cusum_reset_on is an intermediate step in rle, which is sufficient here
+        # _cusum_reset is an intermediate step in rle, which is sufficient here
         d = _cumsum_reset(da, dim=dim, index=position)
         d = xr.where(d >= window, 1, 0)
         # for "first" run, return "first" element in the run (and conversely for "last" run)
