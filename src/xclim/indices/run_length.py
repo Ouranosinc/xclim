@@ -138,7 +138,7 @@ def _smallest_uint(da, dim):
     return np.uint64
 
 
-# The `one` argument was weirdly necessary to avoid some type problems with jit
+# Specifying `one` allows in-place multiplication *=
 @njit
 def _cumsum_reset_np(arr, index, one):
     """100110111 -> 100120123"""
@@ -196,8 +196,6 @@ def _cumsum_reset(
         An array with cumulative sums.
     """
     if not _is_chunked(da, dim) and reset_on_zero:
-        # this means the type can be different depending on if we use the fast track
-        # or not. Do we want this?
         typ = _smallest_uint(da, dim)
         out = xr.apply_ufunc(
             _cumsum_reset_np,
