@@ -160,6 +160,7 @@ from xclim.core.options import (
     MISSING_METHODS,
     MISSING_OPTIONS,
     OPTIONS,
+    set_options,
 )
 from xclim.core.units import check_units, convert_units_to, declare_units, units
 from xclim.core.utils import (
@@ -169,6 +170,11 @@ from xclim.core.utils import (
     load_module,
     split_auxiliary_coordinates,
 )
+
+try:
+    from xarray import DataTree
+except ImportError:
+    DataTree = False
 
 # Indicators registry
 registry = {}  # Main class registry
@@ -341,10 +347,11 @@ class Indicator(IndicatorRegistrar):
     injected in the compute function are in  :py:attr:`xclim.core.indicator.Indicator.injected_parameters`.
     Both are simply views of :py:attr:`xclim.core.indicator.Indicator._all_parameters`.
 
-    Compared to their base `compute` function, indicators add the possibility of using dataset as input,
-    with the added argument `ds` in the call signature. All arguments that were indicated
-    by the compute function to be variables (DataArrays) through annotations will be promoted
-    to also accept strings that correspond to variable names in the `ds` dataset.
+    Compared to their base `compute` function, indicators add the possibility of using a dataset
+    or a :py:class:`xarray.DataTree` as input, with the added argument `ds` in the call signature.
+    All arguments that were indicated by the compute function to be variables (DataArrays) through
+    annotations will be promoted to also accept strings that correspond to variable names
+    in the `ds` dataset (or on each DataTree nodes).
 
     Parameters
     ----------
@@ -833,7 +840,7 @@ class Indicator(IndicatorRegistrar):
                     _Parameter(
                         name,
                         kind=_Parameter.KEYWORD_ONLY,
-                        annotation=Dataset,
+                        annotation=Dataset | DataTree if DataTree else Dataset,
                         default=meta.default,
                     )
                 )
@@ -850,6 +857,13 @@ class Indicator(IndicatorRegistrar):
         ret_ann = DataArray if self.n_outs == 1 else tuple[(DataArray,) * self.n_outs]
         return Signature(variables + parameters, return_annotation=ret_ann)
 
+    def _apply_on_tree_node(self, node: Dataset, *args, **kwargs):
+        """Compute this indicator on DataTree node."""
+        if not node.data_vars:
+            # empty node
+            return node
+        return self(*args, ds=node, **kwargs)
+
     def __call__(self, *args, **kwds):
         """Call function of Indicator class."""
         # Put the variables in `das`, parse them according to the following annotations:
@@ -858,6 +872,11 @@ class Indicator(IndicatorRegistrar):
 
         if self._version_deprecated:
             self._show_deprecation_warning()  # noqa
+
+        if "ds" in self._all_parameters and DataTree and isinstance(kwds.get("ds"), DataTree):
+            dt = kwds.pop("ds")
+            with set_options(as_dataset=True):
+                return dt.map_over_datasets(self._apply_on_tree_node, *args, kwargs=kwds)
 
         das, params, dsattrs = self._parse_variables_from_call(args, kwds)
 
