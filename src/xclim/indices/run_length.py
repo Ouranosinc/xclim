@@ -252,7 +252,7 @@ def rle(
 
     # Keep total length of each series (and also keep 0's), e.g. 100120123 -> 100N20NN3
     # Keep numbers with a 0 to the right and also the last number
-    # We could a -1 instead of nan to save space? Like this we could keep int.
+    # We could keep a -1 instead of nan to save space? Like this we could keep int types.
     cs_s = cs_s.where(da.shift({dim: -1}, fill_value=0) == 0)
     out = cs_s.where(da > 0, 0)  # Reinsert 0's at their original place
 
