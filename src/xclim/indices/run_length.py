@@ -780,42 +780,7 @@ def run_bounds(mask: xr.DataArray, dim: str = "time", coord: bool | str = True):
     return xr.concat((starts, ends), "bounds")
 
 
-def _keep_longest_run_np(arr, pre_post_season=False):
-    sh = arr.shape
-    locshape = arr.shape[:-1]
-    arr = arr.reshape(1 if len(locshape) == 0 else np.prod(arr.shape[:-1]), arr.shape[-1])
-    imx = arr.argmax(axis=-1, keepdims=True)
-    arr0 = np.broadcast_to(np.arange(arr.shape[-1])[np.newaxis, :], arr.shape)
-    indices = np.array([[j, imx[j].item()] for j in range(len(imx))])
-    rlength = arr[indices[:, 0], indices[:, 1]]
-    rlength = rlength.reshape(imx.shape)
-    arr = (arr0 <= (imx)) & (arr0 > imx - rlength)
-    if pre_post_season:
-        arr = (
-            (arr0 <= (imx - rlength)).reshape(sh),
-            ((arr0 <= imx) & (arr0 > (imx - rlength))).reshape(sh),
-            (arr0 > imx).reshape(sh),
-        )
-    else:
-        ((arr0 <= (imx)) & (arr0 > imx - rlength)).reshape(sh)
-    return arr
-
-
-def _keep_longest_run_xr(_rls, dim):
-    _out = xr.where(
-        # Construct an integer array and find the max
-        _rls[dim].copy(data=np.arange(_rls[dim].size)) == _rls.argmax(dim),
-        _rls + 1,  # Add one to the First longest run
-        _rls,
-    )
-    _out = _out.bfill(dim) == _out.max(dim)
-    _out = _out.copy(data=_out.transpose(*_rls.dims).data)
-    return _out
-
-
-def keep_longest_run(
-    da: xr.DataArray, dim: str = "time", freq: str | None = None, pre_post_season: bool = False
-) -> xr.DataArray:
+def keep_longest_run(da: xr.DataArray, dim: str = "time", freq: str | None = None) -> xr.DataArray:
     """
     Keep the longest run along a dimension.
 
@@ -827,9 +792,6 @@ def keep_longest_run(
         Dimension along which to check for the longest run.
     freq : str
         Resampling frequency.
-    pre_post_season : bool
-        Controls whether the pre and post season periods are given as output as well. Only
-        works if `time` is not chunked in the relevant time period related to the resampling frequency.
 
     Returns
     -------
@@ -837,34 +799,24 @@ def keep_longest_run(
         Boolean array similar to da but with only one run, the (first) longest.
     """
     # Get run lengths
-    rls = rle(da, dim).assign_attrs(da.attrs)
+    rls = rle(da, dim)
 
-    def _apply_ufunc_keep_longest_run(rls, dim, pre_post_season):
-        return xr.apply_ufunc(
-            _keep_longest_run_np,
-            rls,
-            input_core_dims=[[dim]],
-            output_core_dims=[[dim]],
-            dask="parallelized",
-            kwargs={"pre_post_season": pre_post_season},
+    def _get_out(_rls):  # numpydoc ignore=GL08
+        _out = xr.where(
+            # Construct an integer array and find the max
+            _rls[dim].copy(data=np.arange(_rls[dim].size)) == _rls.argmax(dim),
+            _rls + 1,  # Add one to the First longest run
+            _rls,
         )
-
-    def _keep_longest_run_func(rls, dim):
-        is_chunked = _is_chunked(rls, dim)
-        if _is_chunked and pre_post_season:
-            raise ValueError("`pre_post_season` output only permitted when time is not chunked")
-        if is_chunked:
-            return _keep_longest_run_xr(rls, dim)
-        else:
-            # pre_post_season is used globally, probably not the best
-            return _apply_ufunc_keep_longest_run(rls, dim, pre_post_season=pre_post_season)
+        _out = _out.ffill(dim) == _out.max(dim)
+        return _out
 
     if freq is not None:
-        out = resample_map(rls, dim, freq, _keep_longest_run_func)
+        out = resample_map(rls, dim, freq, _get_out)
     else:
-        out = _keep_longest_run_func(rls, dim)
+        out = _get_out(rls)
 
-    return out
+    return da.copy(data=out.transpose(*da.dims).data)
 
 
 def runs_with_holes(
