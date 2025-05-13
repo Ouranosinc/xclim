@@ -195,9 +195,10 @@ def _cumsum_reset(
     xr.DataArray
         An array with cumulative sums.
     """
-    typ = _smallest_uint(da, dim)
-    da = da.astype(typ)
     if not _is_chunked(da, dim) and reset_on_zero:
+        # only int can be used in this case
+        typ = _smallest_uint(da, dim)
+        da = da.astype(typ)
         out = xr.apply_ufunc(
             _cumsum_reset_np,
             da,
@@ -207,7 +208,7 @@ def _cumsum_reset(
             kwargs={"index": index, "one": typ(1)},
         )
     else:
-        out = _cumsum_reset_xr(da, dim, index, reset_on_zero).astype(typ)
+        out = _cumsum_reset_xr(da, dim, index, reset_on_zero)
     return out
 
 
