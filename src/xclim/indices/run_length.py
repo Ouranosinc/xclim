@@ -180,7 +180,7 @@ def _cumsum_reset(
     Parameters
     ----------
     da : xr.DataArray
-        Input boolean array.
+        Input array.
     dim : str
         Dimension name along which the cumulative sum is taken.
     index : {'first', 'last'}
