@@ -298,7 +298,7 @@ class IndicatorRegistrar:
         cls._registry_id = name
         return super().__new__(cls)
 
-    def __init__(self):
+    def __init__(self) -> None:
         _indicators_registry[self.__class__].append(weakref.ref(self))
 
     @classmethod
@@ -508,8 +508,9 @@ class Indicator(IndicatorRegistrar):
         # And before converting callables to static methods
         kwds["cf_attrs"] = cls._parse_output_attrs(kwds, identifier)
         # Parse keywords
-        if "keywords" in kwds:
-            kwds["keywords"] = cls.keywords + " " + kwds.get("keywords")
+        keywords = kwds.get("keywords")
+        if keywords is not None:
+            kwds["keywords"] = f"{cls.keywords} {keywords}"
 
         # Convert function objects to static methods.
         for key in cls._funcs:

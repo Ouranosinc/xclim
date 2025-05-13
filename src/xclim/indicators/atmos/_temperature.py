@@ -303,10 +303,10 @@ heat_wave_index = Temp(
     "temperatures exceed given thresholds for a number of days.",
     cell_methods="",
     compute=indices.hot_spell_total_length,
-    parameters=dict(
-        window={"default": 5},
-        thresh={"default": "25 degC"},
-    ),
+    parameters={
+        "window": {"default": 5},
+        "thresh": {"default": "25 degC"},
+    },
 )
 
 heat_spell_frequency = Temp(
@@ -324,23 +324,23 @@ heat_spell_frequency = Temp(
     keywords="health,",
     compute=indices.generic.bivariate_spell_length_statistics,
     input={"data1": "tasmin", "data2": "tasmax"},
-    parameters=dict(
-        spell_reducer="count",
-        op=">=",
-        window={"default": 3},
-        win_reducer={"default": "mean"},
-        freq={"default": "YS"},
-        threshold1={
+    parameters={
+        "spell_reducer": "count",
+        "op": ">=",
+        "window": {"default": 3},
+        "win_reducer": {"default": "mean"},
+        "freq": {"default": "YS"},
+        "threshold1": {
             "description": "Threshold for tasmin",
             "default": "20 °C",
             "name": "thresh_tasmin",
         },
-        threshold2={
+        "threshold2": {
             "description": "Threshold for tasmax",
             "default": "33 °C",
             "name": "thresh_tasmax",
         },
-    ),
+    },
 )
 
 heat_spell_max_length = Temp(
@@ -357,23 +357,23 @@ heat_spell_max_length = Temp(
     "and maximum temperatures exceed given thresholds for a number of days.",
     compute=indices.generic.bivariate_spell_length_statistics,
     input={"data1": "tasmin", "data2": "tasmax"},
-    parameters=dict(
-        spell_reducer="max",
-        op=">=",
-        window={"default": 3},
-        win_reducer={"default": "mean"},
-        freq={"default": "YS"},
-        threshold1={
+    parameters={
+        "spell_reducer": "max",
+        "op": ">=",
+        "window": {"default": 3},
+        "win_reducer": {"default": "mean"},
+        "freq": {"default": "YS"},
+        "threshold1": {
             "description": "Threshold for tasmin",
             "default": "20 °C",
             "name": "thresh_tasmin",
         },
-        threshold2={
+        "threshold2": {
             "description": "Threshold for tasmax",
             "default": "33 °C",
             "name": "thresh_tasmax",
         },
-    ),
+    },
 )
 
 heat_spell_total_length = Temp(
@@ -390,23 +390,23 @@ heat_spell_total_length = Temp(
     "maximum temperatures exceed given thresholds for a number of days.",
     compute=indices.generic.bivariate_spell_length_statistics,
     input={"data1": "tasmin", "data2": "tasmax"},
-    parameters=dict(
-        spell_reducer="sum",
-        op=">=",
-        window={"default": 3},
-        win_reducer={"default": "mean"},
-        freq={"default": "YS"},
-        threshold1={
+    parameters={
+        "spell_reducer": "sum",
+        "op": ">=",
+        "window": {"default": 3},
+        "win_reducer": {"default": "mean"},
+        "freq": {"default": "YS"},
+        "threshold1": {
             "description": "Threshold for tasmin",
             "default": "20 °C",
             "name": "thresh_tasmin",
         },
-        threshold2={
+        "threshold2": {
             "description": "Threshold for tasmax",
             "default": "33 °C",
             "name": "thresh_tasmax",
         },
-    ),
+    },
 )
 
 hot_spell_frequency = Temp(

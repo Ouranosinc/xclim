@@ -6,7 +6,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable, Sequence
-from typing import Any
+from typing import Any, Literal
 
 import numpy as np
 import pandas as pd
@@ -22,7 +22,9 @@ def spatial_analogs(
     target: xr.Dataset,
     candidates: xr.Dataset,
     dist_dim: str | Sequence[str] = "time",
-    method: str = "kldiv",
+    method: Literal[
+        "seuclidean", "nearest_neighbor", "zech_aslan", "kolmogorov_smirnov", "friedman_rafsky", "kldiv"
+    ] = "kldiv",
     **kwargs,
 ):
     r"""
@@ -43,7 +45,7 @@ def spatial_analogs(
         the dataset's `data_vars`.
     dist_dim : str
         The dimension over which the *distributions* are constructed. This can be a multi-index dimension.
-    method : {'seuclidean', 'nearest_neighbor', 'zech_aslan', 'kolmogorov_smirnov', 'friedman_rafsky', 'kldiv'}
+    method : {"seuclidean", "nearest_neighbor", "zech_aslan", "kolmogorov_smirnov", "friedman_rafsky", "kldiv"}
         Which method to use when computing the dissimilarity statistic.
     **kwargs : dict
         Any other parameter passed directly to the dissimilarity method.
@@ -331,7 +333,7 @@ def szekely_rizzo(x: np.ndarray, y: np.ndarray, *, standardize: bool = True) -> 
     y : ndarray (m,d)
         Candidate sample.
     standardize : bool
-        If True (default), the standardized euclidean norm is used, instead of the conventional one.
+        If True (default), the standardized Euclidean norm is used, instead of the conventional one.
 
     Returns
     -------
@@ -587,7 +589,7 @@ def kldiv(x: np.ndarray, y: np.ndarray, *, k: int | Sequence[int] = 1) -> float 
 
 
 @metric
-def mahalanobis(x: np.ndarray, y: np.ndarray, *, VI: np.ndarray | None = None) -> float:
+def mahalanobis(x: np.ndarray, y: np.ndarray, *, VI: np.ndarray | None = None) -> np.float64:
     """
     Compute the Mahalanobis distance.
 
@@ -604,7 +606,7 @@ def mahalanobis(x: np.ndarray, y: np.ndarray, *, VI: np.ndarray | None = None) -
 
     Returns
     -------
-    float
+    numpy.float64
         Mahalanobis Distance between the mean of the samples.
 
     Notes

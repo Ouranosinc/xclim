@@ -62,7 +62,7 @@ def cfcheck_from_name(varname: str, vardata: xr.DataArray, attrs: list[str] | No
     vardata : xr.DataArray
         The variable to check.
     attrs : list of str, optional
-        The attributes to check. Default is ["cell_methods", "standard_name"].
+        Attributes to check. Default is ["cell_methods", "standard_name"].
 
     Raises
     ------

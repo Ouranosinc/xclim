@@ -10,6 +10,7 @@ from __future__ import annotations
 from collections.abc import Callable, Sequence
 from functools import reduce
 from inspect import signature
+from typing import Literal
 
 import numpy as np
 import xarray
@@ -24,6 +25,8 @@ from xclim.indices.generic import binary_ops
 from xclim.indices.run_length import suspicious_run
 
 _REGISTRY = {}
+
+ALL_OPERATORS = Literal[">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"]
 
 
 class DataQualityException(Exception):
@@ -80,7 +83,7 @@ __all__ = [
 ]
 
 
-def register_methods(variable_name: str = None) -> Callable:
+def register_methods(variable_name: str | None = None) -> Callable:
     """
     Register a data flag as functional.
 
@@ -230,7 +233,7 @@ def tas_below_tasmin(tas: xarray.DataArray, tasmin: xarray.DataArray) -> xarray.
 @declare_units(da="[temperature]", thresh="[temperature]")
 def temperature_extremely_low(da: xarray.DataArray, *, thresh: Quantified = "-90 degC") -> xarray.DataArray:
     """
-    Check if temperatures values are below -90 degrees Celsius for any given day.
+    Check if temperature values are below -90 degrees Celsius for any given day.
 
     Parameters
     ----------
@@ -267,7 +270,7 @@ def temperature_extremely_low(da: xarray.DataArray, *, thresh: Quantified = "-90
 @declare_units(da="[temperature]", thresh="[temperature]")
 def temperature_extremely_high(da: xarray.DataArray, *, thresh: Quantified = "60 degC") -> xarray.DataArray:
     """
-    Check if temperatures values exceed 60 degrees Celsius for any given day.
+    Check if temperature values exceed 60 degrees Celsius for any given day.
 
     Parameters
     ----------
@@ -344,7 +347,7 @@ def very_large_precipitation_events(da: xarray.DataArray, *, thresh: Quantified 
     da : xarray.DataArray
         Precipitation.
     thresh : str
-        Threshold to search array for that will trigger flag if any day exceeds value.
+        Threshold to search an array for that will trigger flag if any day exceeds value.
 
     Returns
     -------
@@ -371,7 +374,7 @@ def very_large_precipitation_events(da: xarray.DataArray, *, thresh: Quantified 
 @register_methods("values_{op}_{thresh}_repeating_for_{n}_or_more_days")
 @update_xclim_history
 def values_op_thresh_repeating_for_n_or_more_days(
-    da: xarray.DataArray, *, n: int, thresh: Quantified, op: str = "=="
+    da: xarray.DataArray, *, n: int, thresh: Quantified, op: ALL_OPERATORS = "=="
 ) -> xarray.DataArray:
     """
     Check if array values repeat at a given threshold for `N` or more days.
@@ -381,9 +384,9 @@ def values_op_thresh_repeating_for_n_or_more_days(
     da : xarray.DataArray
         Variable array.
     n : int
-        Number of repeating days needed to trigger flag.
+        Number of repeating days needed to trigger data flag.
     thresh : str
-        Repeating values to search for that will trigger flag.
+        Repeating values to search for that will trigger data flag.
     op : {">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"}
         Operator used for comparison with thresh.
 
@@ -751,7 +754,7 @@ def ecad_compliant(
     """
     Run ECAD compliance tests.
 
-    Assert file adheres to ECAD-based quality assurance checks.
+    Assert that file adheres to ECAD-based quality assurance checks.
 
     Parameters
     ----------
@@ -762,8 +765,8 @@ def ecad_compliant(
     raise_flags : bool
         Raise exception if any of the quality assessment flags are raised, otherwise returns None. Default: ``False``.
     append : bool
-        If `True`, returns the Dataset with the `ecad_qc_flag` array appended to data_vars.
-        If `False`, returns the DataArray of the `ecad_qc_flag` variable.
+        If `True`, return the Dataset with the `ecad_qc_flag` array appended to data_vars.
+        If `False`, return the DataArray of the `ecad_qc_flag` variable.
 
     Returns
     -------
