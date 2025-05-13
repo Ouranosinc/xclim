@@ -198,15 +198,14 @@ def _cumsum_reset(
     if not _is_chunked(da, dim) and reset_on_zero:
         # only int can be used in this case
         typ = _smallest_uint(da, dim)
-        da = da.astype(typ)
         out = xr.apply_ufunc(
             _cumsum_reset_np,
-            da,
+            da.astype(typ),
             input_core_dims=[[dim]],
             output_core_dims=[[dim]],
             dask="parallelized",
             kwargs={"index": index, "one": typ(1)},
-        )
+        ).astype(float)
     else:
         out = _cumsum_reset_xr(da, dim, index, reset_on_zero)
     return out
