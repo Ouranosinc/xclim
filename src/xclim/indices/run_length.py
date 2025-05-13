@@ -137,9 +137,6 @@ def _smallest_uint(da, dim):
     return np.uint64
 
 
-# TODO: Compare this with _rle_1d, but I think this has the edge. A single operation
-# a*b + b effectively replaces a cumsum and diff operations
-# TODO: Check if having index in the np function slows things up, it doesn't seem so
 # The `one` argument was weirdly necessary to avoid some type problems with jit
 @njit
 def _cumsum_reset_np(arr, index, one):
@@ -242,20 +239,26 @@ def rle(
     xr.DataArray
         The run length array.
     """
+    if da.dtype == bool:
+        da = da.astype(int)
+
+    # "first" case: Algorithm is applied on inverted array and output is inverted back
+    if index == "first":
+        da = da[{dim: slice(None, None, -1)}]
+
     # Get cumulative sum for each series of 1, e.g. da == 100110111 -> cs_s == 100120123
-    cs_s = _cumsum_reset(da, dim, index=index)
+    cs_s = _cumsum_reset(da, dim)
 
     # Keep total length of each series (and also keep 0's), e.g. 100120123 -> 100N20NN3
-    # 1) Keep numbers with a 0 to the right(left) and always keep the last(first) number
-    sl, slc = {dim: slice(None, -1)}, {dim: slice(1, None)}
+    # Keep numbers with a 0 to the right and also the last number
+    cs_s = cs_s.where(da.shift({dim: -1}, fill_value=0) == 0)
+    out = cs_s.where(da > 0, 0)  # Reinsert 0's at their original place
+
+    # Inverting back if needed e.g. 100N20NN3 -> 3NN02N001. This is the output of
+    # `rle` for 111011001 with index == "first"
     if index == "first":
-        sl, slc = slc, sl
-    mask_near_zero = (1 - da)[slc]
-    mask_near_zero[dim] = cs_s[sl][dim]
-    cs_s[sl] = cs_s[sl] * mask_near_zero
-    # 2) And only keep numbers part of a run. This also reinserts 0's
-    out = cs_s * da
-    # Result: 1) & 2) -> Only keep the largest number in any given run, the run length
+        out = out[{dim: slice(None, None, -1)}]
+
     return out
 
 
