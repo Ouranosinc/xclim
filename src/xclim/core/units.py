@@ -468,20 +468,27 @@ def cf_conversion(standard_name: str, conversion: str, direction: Literal["to", 
 
 
 FREQ_UNITS = {
-    "D": "d",
+    "Y": "year",
+    "M": "month",
     "W": "week",
+    "D": "d",
+    "h": "h",
+    "min": "min",
+    "s": "s",
+    "ms": "ms",
+    "us": "us",
+    "ns": "ns",
 }
 """
 Resampling frequency units for :py:func:`xclim.core.units.infer_sampling_units`.
 
-Mapping from offset base to CF-compliant unit. Only constant-length frequencies that are
-not also pint units are included.
+Mapping from offset base to CF-compliant unit.
 """
 
 
 def infer_sampling_units(
     da: xr.DataArray,
-    deffreq: str | None = "D",
+    deffreq: str | None = None,
     dim: str = "time",
 ) -> tuple[int, str]:
     """
@@ -506,22 +513,28 @@ def infer_sampling_units(
     Raises
     ------
     ValueError
-        If the frequency has no exact corresponding units.
+        If the frequency has no corresponding units.
     """
-    dimmed = getattr(da, dim)
-    freq = xr.infer_freq(dimmed)
+    da = da[dim]
+    freq = xr.infer_freq(da)
     if freq is None:
+        if deffreq is None:
+            raise ValueError("Unable to find the sampling frequency of the data.")
         freq = deffreq
 
     multi, base, _, _ = parse_offset(freq)
-    try:
-        out = multi, FREQ_UNITS.get(base, base)
-    except KeyError as err:
-        raise ValueError(f"Sampling frequency {freq} has no corresponding units.") from err
-    if out == (7, "d"):
+    if base == "Q":
+        multi = multi * 3
+        base = "M"
+    if base in FREQ_UNITS:
+        u = FREQ_UNITS[base]
+    else:
+        raise ValueError(f"Sampling frequency {freq} has no corresponding pint or CF units.")
+    if u == "d" and multi == 7:
         # Special case for weekly frequency. xarray's CFTimeOffsets do not have "W".
-        return 1, "week"
-    return out
+        u = "week"
+        multi = 1
+    return multi, u
 
 
 DELTA_ABSOLUTE_TEMP = {
@@ -589,7 +602,12 @@ def ensure_delta(unit: xr.DataArray | str | units.Quantity) -> str:
     return delta_unit
 
 
-def to_agg_units(out: xr.DataArray, orig: xr.DataArray, op: str, dim: str = "time") -> xr.DataArray:
+def to_agg_units(
+    out: xr.DataArray,
+    orig: xr.DataArray,
+    op: Literal["min", "max", "mean", "std", "var", "doymin", "doymax", "count", "integral", "sum"],
+    dim: str = "time",
+) -> xr.DataArray:
     """
     Set and convert units of an array after an aggregation operation along the sampling dimension (time).
 
@@ -600,7 +618,7 @@ def to_agg_units(out: xr.DataArray, orig: xr.DataArray, op: str, dim: str = "tim
     orig : xr.DataArray
         The original array before the aggregation operation,
         used to infer the sampling units and get the variable units.
-    op : {'min', 'max', 'mean', 'std', 'var', 'doymin', 'doymax',  'count', 'integral', 'sum'}
+    op : {'min', 'max', 'mean', 'std', 'var', 'doymin', 'doymax', 'count', 'integral', 'sum'}
         The type of aggregation operation performed. "integral" is mathematically equivalent to "sum",
         but the units are multiplied by the timestep of the data (requires an inferrable frequency).
     dim : str

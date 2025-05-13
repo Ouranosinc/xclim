@@ -8,6 +8,8 @@ This module implements methods and tools meant to partition climate projection u
 
 from __future__ import annotations
 
+from typing import cast
+
 import numpy as np
 import pandas as pd
 import xarray as xr
@@ -344,7 +346,7 @@ def general_partition(
         fit = da.polyfit(dim="time", deg=4, skipna=True)
         sm = xr.polyval(coord=da.time, coeffs=fit.polyfit_coefficients).where(da.notnull())
     elif isinstance(sm, xr.DataArray):
-        sm = sm
+        pass
     else:
         raise ValueError("sm should be 'poly' or a DataArray.")
 
@@ -414,7 +416,7 @@ def fractional_uncertainty(u: xr.DataArray) -> xr.DataArray:
         Fractional, or relative uncertainty with respect to the total uncertainty.
     """
     with xr.set_options(keep_attrs=True):
-        uncertainty = u / u.sel(uncertainty="total") * 100
+        uncertainty = cast(xr.DataArray, u / u.sel(uncertainty="total") * 100)
         uncertainty.attrs.update(u.attrs)
         uncertainty.attrs["long_name"] = "Fraction of total variance"
         uncertainty.attrs["units"] = "%"

@@ -26,6 +26,13 @@ except ImportError:
 else:
     XR2409 = False
 
+try:
+    from flox.xarray import rechunk_for_blockwise
+
+    flox_err = None
+except ImportError:
+    rechunk_for_blockwise = None
+
 from xclim.core import Quantified
 from xclim.core.calendar import ensure_cftime_array, get_calendar
 from xclim.core.options import MAP_BLOCKS, OPTIONS
@@ -168,7 +175,9 @@ def time_correction_for_solar_angle(time: xr.DataArray) -> xr.DataArray:
     return _wrap_radians(convert_units_to(tc, "rad"))
 
 
-def eccentricity_correction_factor(time: xr.DataArray, method: str = "spencer") -> xr.DataArray:
+def eccentricity_correction_factor(
+    time: xr.DataArray, method: Literal["spencer", "simple"] = "spencer"
+) -> xr.DataArray:
     """
     Eccentricity correction factor of the Earth's orbit.
 
@@ -218,7 +227,7 @@ def cosine_of_solar_zenith_angle(
     lat: Quantified,
     lon: Quantified = "0 °",
     time_correction: xr.DataArray | None = None,
-    stat: str = "average",
+    stat: Literal["average", "integral", "instant"] = "average",
     sunlit: bool = False,
     chunks: dict[str, int] | None = None,
 ) -> xr.DataArray:
@@ -375,7 +384,7 @@ def extraterrestrial_solar_radiation(
     times: xr.DataArray,
     lat: xr.DataArray,
     solar_constant: Quantified = "1361 W m-2",
-    method: str = "spencer",
+    method: Literal["spencer", "simple"] = "spencer",
     chunks: Mapping[Any, tuple] | None = None,
 ) -> xr.DataArray:
     """
@@ -424,7 +433,7 @@ def extraterrestrial_solar_radiation(
 def day_lengths(
     dates: xr.DataArray,
     lat: xr.DataArray,
-    method: str = "spencer",
+    method: Literal["spencer", "simple"] = "spencer",
 ) -> xr.DataArray:
     r"""
     Calculate day-length according to latitude and day of year.
@@ -466,7 +475,7 @@ def wind_speed_height_conversion(
     ua: xr.DataArray,
     h_source: str,
     h_target: str,
-    method: str = "log",
+    method: Literal["log"] = "log",
 ) -> xr.DataArray:
     r"""
     Wind speed at two meters.
@@ -598,11 +607,9 @@ def resample_map(
     if not uses_dask(obj) or not map_blocks:
         return obj.resample({dim: freq}, **resample_kwargs).map(func, **map_kwargs)
 
-    try:
-        from flox.xarray import rechunk_for_blockwise
-    except ImportError as err:
+    if rechunk_for_blockwise is None:
         msg = f"Using {MAP_BLOCKS}=True requires flox."
-        raise ValueError(msg) from err
+        raise ValueError(msg) from flox_err
 
     # Make labels, a unique integer for each resample group
     labels = xr.full_like(obj[dim], -1, dtype=np.int32)
@@ -617,7 +624,7 @@ def resample_map(
     # Template. We are hoping that this takes a negligeable time as it is never loaded.
     template = obj_rechunked.resample(**{dim: freq}, **resample_kwargs).first()
 
-    # New chunks along time : infer the number of elements resulting from the resampling of each chunk
+    # New chunks along the time dim : infer the number of elements resulting from the resampling of each chunk
     if isinstance(obj_rechunked, xr.Dataset):
         chunksizes = obj_rechunked.chunks[dim]
     else:

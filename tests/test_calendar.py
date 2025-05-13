@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import os
-
 import cftime
 import numpy as np
 import pandas as pd
@@ -58,8 +56,8 @@ def test_time_bnds(freq, datetime_index, cftime_index):
     cftime_bounds = time_bnds(da_cftime, freq=freq)
     cftime_starts = cftime_bounds.isel(bnds=0)
     cftime_ends = cftime_bounds.isel(bnds=1)
-    cftime_starts = CFTimeIndex(cftime_starts.values).to_datetimeindex()
-    cftime_ends = CFTimeIndex(cftime_ends.values).to_datetimeindex()
+    cftime_starts = CFTimeIndex(cftime_starts.values).to_datetimeindex(time_unit="ns")
+    cftime_ends = CFTimeIndex(cftime_ends.values).to_datetimeindex(time_unit="ns")
 
     # cftime resolution goes down to microsecond only, code below corrects
     # that to allow for comparison with pandas datetime
@@ -206,26 +204,20 @@ def test_adjust_doy_366_to_360():
     "file,cal,maxdoy",
     [
         (
-            (
-                "CanESM2_365day",
-                "pr_day_CanESM2_rcp85_r1i1p1_na10kgrid_qm-moving-50bins-detrend_2095.nc",
-            ),
+            "CanESM2_365day/pr_day_CanESM2_rcp85_r1i1p1_na10kgrid_qm-moving-50bins-detrend_2095.nc",
             "noleap",
             365,
         ),
         (
-            (
-                "HadGEM2-CC_360day",
-                "pr_day_HadGEM2-CC_rcp85_r1i1p1_na10kgrid_qm-moving-50bins-detrend_2095.nc",
-            ),
+            "HadGEM2-CC_360day/pr_day_HadGEM2-CC_rcp85_r1i1p1_na10kgrid_qm-moving-50bins-detrend_2095.nc",
             "360_day",
             360,
         ),
-        (("NRCANdaily", "nrcan_canada_daily_pr_1990.nc"), "proleptic_gregorian", 366),
+        ("NRCANdaily/nrcan_canada_daily_pr_1990.nc", "proleptic_gregorian", 366),
     ],
 )
-def test_get_calendar(file, cal, maxdoy, open_dataset):
-    with open_dataset(os.path.join(*file)) as ds:
+def test_get_calendar(file, cal, maxdoy, nimbus):
+    with xr.open_dataset(nimbus.fetch(file)) as ds:
         out_cal = get_calendar(ds)
         assert cal == out_cal
         assert max_doy[cal] == maxdoy
@@ -454,21 +446,32 @@ def test_convert_doy():
     np.testing.assert_allclose(out.isel(lat=0), [31.0, 200.48, 190.0, 59.83607, 299.71885])
 
 
-@pytest.mark.parametrize("calendar", ["standard", None])
+@pytest.mark.parametrize("use_cftime", [True, False])
 @pytest.mark.parametrize(
-    "w,s,m,f,ss",
-    [(30, 10, None, "YS", 0), (3, 1, None, "QS-DEC", 60), (6, None, None, "MS", 0)],
+    "sf,w,s,m,f,ss",
+    [
+        ("D", 30, 10, None, "YS", 0),
+        ("D", 3, 1, None, "QS-DEC", 60),
+        ("D", 6, None, None, "MS", 0),
+        ("MS", 3, None, None, "YS", 0),
+        ("YS", 30, 10, None, "YS", 0),
+    ],
 )
-def test_stack_periods(tas_series, calendar, w, s, m, f, ss):
-    da = tas_series(np.arange(365 * 50), start="2000-01-01", calendar=calendar)
+def test_stack_periods(tas_series, use_cftime, sf, w, s, m, f, ss):
+    da = tas_series(np.arange((365 * 50) if sf == "D" else 50), start="2000-01-01", cftime=use_cftime, freq=sf)
 
     da_stck = stack_periods(da, window=w, stride=s, min_length=m, freq=f, align_days=False)
 
     assert "period_length" in da_stck.coords
+    assert da_stck.period.dtype == da.time.dtype
 
-    da2 = unstack_periods(da_stck)
-
-    xr.testing.assert_identical(da2, da.isel(time=slice(ss, da2.time.size + ss)))
+    if compare_offsets(sf, "<=", "W"):
+        da2 = unstack_periods(da_stck)
+        xr.testing.assert_identical(da2, da.isel(time=slice(ss, da2.time.size + ss)))
+    else:
+        with pytest.warns(UserWarning, match="xclim is not able to unstack"):
+            unstack_periods(da_stck)
+            # not checking, as it is not identical
 
 
 def test_stack_periods_special(tas_series):

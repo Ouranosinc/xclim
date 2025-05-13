@@ -8,13 +8,11 @@
 #  - that various calendar formats and supported
 #  - that non-valid input frequencies or holes in the time series are detected
 #
-#
 # For correctness, I think it would be useful to use a small dataset and run the original ICCLIM indicators on it,
 # saving the results in a reference netcdf dataset. We could then compare the hailstorm output to this reference as
 # a first line of defense.
 from __future__ import annotations
 
-import os
 import sys
 from pathlib import Path
 
@@ -36,10 +34,10 @@ def random_state():
 
 
 class TestEnsembleStats:
-    def test_create_ensemble(self, open_dataset, ensemble_dataset_objects, nimbus):
+    def test_create_ensemble(self, ensemble_dataset_objects, nimbus):
         ds_all = []
         for n in ensemble_dataset_objects["nc_files_simple"]:
-            ds = open_dataset(n, decode_times=False)
+            ds = xr.open_dataset(nimbus.fetch(n), decode_times=False)
             ds["time"] = xr.decode_cf(ds).time
             ds_all.append(ds)
         ens = ensembles.create_ensemble(ds_all)
@@ -57,13 +55,13 @@ class TestEnsembleStats:
         ens2 = ensembles.create_ensemble(dict(zip(reals, files, strict=False)))
         xr.testing.assert_identical(ens1, ens2)
 
-    def test_no_time(self, tmp_path, ensemble_dataset_objects, open_dataset):
+    def test_no_time(self, tmp_path, ensemble_dataset_objects, nimbus):
         # create again using xr.Dataset objects
         f1 = Path(tmp_path / "notime")
         f1.mkdir()
         ds_all = []
         for n in ensemble_dataset_objects["nc_files"]:
-            ds = open_dataset(n, decode_times=False)
+            ds = xr.open_dataset(nimbus.fetch(n), decode_times=False)
             ds["time"] = xr.decode_cf(ds).time
             ds_all.append(ds.groupby(ds.time.dt.month).mean("time", keep_attrs=True))
             ds.groupby(ds.time.dt.month).mean("time", keep_attrs=True).to_netcdf(
@@ -77,10 +75,10 @@ class TestEnsembleStats:
         ens = ensembles.create_ensemble(in_ncs)
         assert len(ens.realization) == len(ensemble_dataset_objects["nc_files"])
 
-    def test_create_unequal_times(self, ensemble_dataset_objects, open_dataset):
+    def test_create_unequal_times(self, ensemble_dataset_objects, nimbus):
         ds_all = []
         for n in ensemble_dataset_objects["nc_files"]:
-            ds = open_dataset(n)
+            ds = xr.open_dataset(nimbus.fetch(n))
             ds_all.append(ds)
         ens = ensembles.create_ensemble(ds_all)
 
@@ -119,10 +117,10 @@ class TestEnsembleStats:
         np.testing.assert_equal(ens.isel(time=0), [0, 0])
 
     @pytest.mark.parametrize("transpose", [False, True])
-    def test_calc_perc(self, transpose, ensemble_dataset_objects, open_dataset):
+    def test_calc_perc(self, transpose, ensemble_dataset_objects, nimbus):
         ds_all = []
         for n in ensemble_dataset_objects["nc_files_simple"]:
-            ds = open_dataset(n)
+            ds = xr.open_dataset(nimbus.fetch(n))
             ds_all.append(ds)
         ens = ensembles.create_ensemble(ds_all)
 
@@ -181,10 +179,10 @@ class TestEnsembleStats:
         assert np.all(out4["tg_mean_p90"] > out4["tg_mean_p10"])
 
     @pytest.mark.parametrize("keep_chunk_size", [False, True, None])
-    def test_calc_perc_dask(self, keep_chunk_size, ensemble_dataset_objects, open_dataset):
+    def test_calc_perc_dask(self, keep_chunk_size, ensemble_dataset_objects, nimbus):
         ds_all = []
         for n in ensemble_dataset_objects["nc_files_simple"]:
-            ds = open_dataset(n)
+            ds = xr.open_dataset(nimbus.fetch(n))
             ds_all.append(ds)
         ens = ensembles.create_ensemble(ds_all)
 
@@ -192,10 +190,10 @@ class TestEnsembleStats:
         out1 = ensembles.ensemble_percentiles(ens.load(), split=False)
         np.testing.assert_array_equal(out1["tg_mean"], out2["tg_mean"])
 
-    def test_calc_perc_nans(self, ensemble_dataset_objects, open_dataset):
+    def test_calc_perc_nans(self, ensemble_dataset_objects, nimbus):
         ds_all = []
         for n in ensemble_dataset_objects["nc_files_simple"]:
-            ds = open_dataset(n)
+            ds = xr.open_dataset(nimbus.fetch(n))
             ds_all.append(ds)
         ens = ensembles.create_ensemble(ds_all).load()
 
@@ -215,10 +213,10 @@ class TestEnsembleStats:
         assert np.all(out1["tg_mean_p90"] > out1["tg_mean_p50"])
         assert np.all(out1["tg_mean_p50"] > out1["tg_mean_p10"])
 
-    def test_calc_mean_std_min_max(self, ensemble_dataset_objects, open_dataset):
+    def test_calc_mean_std_min_max(self, ensemble_dataset_objects, nimbus):
         ds_all = []
         for n in ensemble_dataset_objects["nc_files_simple"]:
-            ds = open_dataset(n)
+            ds = xr.open_dataset(nimbus.fetch(n))
             ds_all.append(ds)
         ens = ensembles.create_ensemble(ds_all, multifile=False)
 
@@ -257,8 +255,8 @@ class TestEnsembleStats:
         np.testing.assert_array_equal(out1.tg_mean_min[0, 5, 5], out2.tg_mean_min[0, 5, 5])
 
     @pytest.mark.parametrize("aggfunc", [ensembles.ensemble_percentiles, ensembles.ensemble_mean_std_max_min])
-    def test_stats_min_members(self, ensemble_dataset_objects, open_dataset, aggfunc):
-        ds_all = [open_dataset(n) for n in ensemble_dataset_objects["nc_files_simple"]]
+    def test_stats_min_members(self, ensemble_dataset_objects, aggfunc, nimbus):
+        ds_all = [xr.open_dataset(nimbus.fetch(n)) for n in ensemble_dataset_objects["nc_files_simple"]]
         ens = ensembles.create_ensemble(ds_all).isel(lat=0, lon=0)
         ens = ens.where(ens.realization > 0)
         ens = xr.where((ens.realization == 1) & (ens.time.dt.year == 1950), np.nan, ens)
@@ -283,7 +281,7 @@ class TestEnsembleStats:
 
 @pytest.mark.slow
 class TestEnsembleReduction:
-    nc_file = os.path.join("EnsembleReduce", "TestEnsReduceCriteria.nc")
+    nc_file = "EnsembleReduce/TestEnsReduceCriteria.nc"
 
     def test_kmeans_rsqcutoff(self, open_dataset, random_state):
         pytest.importorskip("sklearn", minversion="0.24.1")

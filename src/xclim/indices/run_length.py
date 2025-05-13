@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from collections.abc import Callable, Sequence
 from datetime import datetime
+from typing import Literal
 from warnings import warn
 
 import numpy as np
@@ -122,7 +123,7 @@ def resample_and_rl(
             dim,
             freq,
             compute,
-            map_kwargs=dict(args=args, freq=None, dim=dim, **kwargs),
+            map_kwargs={"args": args, "freq": None, "dim": dim, **kwargs},
         )
     else:
         out = compute(da, *args, dim=dim, freq=freq, **kwargs)
@@ -591,7 +592,7 @@ def _boundary_run(
     da = da.fillna(0)  # We expect a boolean array, but there could be NaNs nonetheless
     if window == 1:
         if freq is not None:
-            out = resample_map(da, dim, freq, find_boundary_run, map_kwargs=dict(position=position))
+            out = resample_map(da, dim, freq, find_boundary_run, map_kwargs={"position": position})
         else:
             out = find_boundary_run(da, position)
 
@@ -610,7 +611,7 @@ def _boundary_run(
         d = xr.where(d >= window, 1, 0)
         # for "first" run, return "first" element in the run (and conversely for "last" run)
         if freq is not None:
-            out = resample_map(d, dim, freq, find_boundary_run, map_kwargs=dict(position=position))
+            out = resample_map(d, dim, freq, find_boundary_run, map_kwargs={"position": position})
         else:
             out = find_boundary_run(d, position)
 
@@ -1764,7 +1765,7 @@ def index_of_date(
 def suspicious_run_1d(
     arr: np.ndarray,
     window: int = 10,
-    op: str = ">",
+    op: Literal[">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"] = ">",
     thresh: float | None = None,
 ) -> np.ndarray:
     """
@@ -1776,7 +1777,7 @@ def suspicious_run_1d(
         Array of values to be parsed.
     window : int
         Minimum run length.
-    op : {">", ">=", "==", "<", "<=", "eq", "gt", "lt", "gteq", "lteq", "ge", "le"}
+    op : {">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"}
         Operator for threshold comparison. Defaults to ">".
     thresh : float, optional
         Threshold compared against which values are checked for identical values.
@@ -1814,7 +1815,7 @@ def suspicious_run(
     arr: xr.DataArray,
     dim: str = "time",
     window: int = 10,
-    op: str = ">",
+    op: Literal[">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"] = ">",
     thresh: float | None = None,
 ) -> xr.DataArray:
     """
@@ -1830,7 +1831,7 @@ def suspicious_run(
         Dimension along which to check for runs (default: "time").
     window : int
         Minimum run length.
-    op : {">", ">=", "==", "<", "<=", "eq", "gt", "lt", "gteq", "lteq"}
+    op : {">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"}
         Operator for threshold comparison, defaults to ">".
     thresh : float, optional
         Threshold above which values are checked for identical values.
@@ -1899,8 +1900,8 @@ def _find_events(da_start, da_stop, data, window_start, window_stop):
         ds.event_length,
         input_core_dims=[["time"], ["time"]],
         output_core_dims=[["event"]],
-        kwargs=dict(max_event_number=max_event_number),
-        dask_gufunc_kwargs=dict(output_sizes={"event": max_event_number}),
+        kwargs={"max_event_number": max_event_number},
+        dask_gufunc_kwargs={"output_sizes": {"event": max_event_number}},
         dask="parallelized",
         vectorize=True,
     )
@@ -1960,7 +1961,7 @@ def find_events(
         The number of consecutive True values for an event to start.
     condition_stop : DataArray of bool, optional
         The stopping boolean mask, true where the end condition of the event is fulfilled.
-        Defaults to the opposite of ``condition``.
+        Defaults to the opposite of `condition`.
     window_stop : int
         The number of consecutive True values in ``condition_stop`` for an event to end.
         Defaults to 1.

@@ -49,9 +49,3 @@
   - changed-files:
     - any-glob-to-any-file:
       - 'CONTRIBUTING.rst'
-
-'sdba':
-  - changed-files:
-    - any-glob-to-any-file:
-      - 'src/xclim/sdba/**/*'
-      - 'tests/test_sdba/*.py'

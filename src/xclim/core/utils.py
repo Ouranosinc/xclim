@@ -622,7 +622,11 @@ def infer_kind_from_parameter(param) -> InputKind:
     if annot.issubset({"int", "float", "Sequence[int]", "Sequence[float]"}):
         return InputKind.NUMBER_SEQUENCE
 
-    if annot.issuperset({"str"}):
+    if (
+        annot.issuperset({"str"})
+        or any(a.startswith("Literal['") for a in annot)
+        or annot.issuperset({"REDUCTION_OPERATORS"})
+    ):
         return InputKind.STRING
 
     if annot == {"DateStr"}:
@@ -640,7 +644,6 @@ def infer_kind_from_parameter(param) -> InputKind:
     return InputKind.OTHER_PARAMETER
 
 
-# FIXME: Should we be using logging instead of print?
 def adapt_clix_meta_yaml(  # noqa: C901
     raw: os.PathLike | StringIO | str, adapted: os.PathLike
 ) -> None:
@@ -696,12 +699,12 @@ def adapt_clix_meta_yaml(  # noqa: C901
         data["compute"] = index_function["name"]
         if getattr(generic, data["compute"], None) is None:
             remove_ids.append(cmid)
-            print(f"Indicator {cmid} uses non-implemented function {data['compute']}, removing.")
+            warnings.warn(f"Indicator {cmid} uses non-implemented function {data['compute']}, removing.")
             continue
 
         if (data["output"].get("standard_name") or "").startswith("number_of_days") or cmid == "nzero":
             remove_ids.append(cmid)
-            print(
+            warnings.warn(
                 f"Indicator {cmid} has a 'number_of_days' standard name"
                 " and xclim disagrees with the CF conventions on the correct output units, removing."
             )
@@ -709,7 +712,7 @@ def adapt_clix_meta_yaml(  # noqa: C901
 
         if (data["output"].get("standard_name") or "").endswith("precipitation_amount"):
             remove_ids.append(cmid)
-            print(
+            warnings.warn(
                 f"Indicator {cmid} has a 'precipitation_amount' standard name"
                 " and clix-meta has incoherent output units, removing."
             )
@@ -865,10 +868,11 @@ def split_auxiliary_coordinates(
     The auxiliary coordinates can be merged back with the dataset with
     :py:meth:`xarray.Dataset.assign_coords` or :py:meth:`xarray.DataArray.assign_coords`.
 
-    >>> # xdoctest: +SKIP
-    >>> clean, aux = split_auxiliary_coordinates(ds)
-    >>> merged = clean.assign_coords(da.coords)
-    >>> merged.identical(ds)  # True
+    .. code-block:: python
+
+        clean, aux = split_auxiliary_coordinates(ds)
+        merged = clean.assign_coords(da.coords)
+        merged.identical(ds)  # -> True
     """
     aux_crd_names = [nm for nm, crd in obj.coords.items() if len(crd.dims) != 1 or crd.dims[0] != nm]
     aux_crd_ds = obj.coords.to_dataset()[aux_crd_names]

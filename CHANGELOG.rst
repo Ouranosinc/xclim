@@ -4,16 +4,34 @@ Changelog
 
 v0.57.0 (unreleased)
 --------------------
-Contributors to this version: Éric Dupuis (:user:`coxipi`), Trevor James Smith (:user:`Zeitsperre`).
+Contributors to this version: Éric Dupuis (:user:`coxipi`), Trevor James Smith (:user:`Zeitsperre`), Juliette Lavoie (:user:`juliettelavoie`), Pascal Bourgault (:user:`aulemahal`), Armin Hofmann (:user:`HofmannGeo`), Baptiste Hamon (:user:`baptistehamon`).
+
+Announcements
+^^^^^^^^^^^^^
+* The ``xclim.sdba`` module has been split from `xclim` into the new package `xsdba <https://github.com/Ouranosinc/xsdba>`_. Users must install `xsdba` from `PyPI` or `conda-forge` in order to maintain the `xclim.sdba` functionality. Refer to the `xsdba Migration Guide <https://xsdba.readthedocs.io/en/latest/xclim_migration_guide.html>`_ for more information. (:issue:`2074`, :pull:`2099`).
 
 New indicators
 ^^^^^^^^^^^^^^
 * New indicator ``xclim.atmos.clearness_index`` computes the `clearness_index` (ratio of downwards solar radiation to extraterrestrial solar radiation). (:pull:`2140`).
 * Added ``cooling_degree_days_approximation`` and ``heating_degree_days_approximation`` indices to compute the number of cooling and heating degree days with consideration for daily temperature cycles. (:issue:`1941`, :pull:`2135`).
+* Added dtr in variables.yml. (:issue:`2146`, :pull:`2147`).
+* Added Mahalanobis distance. (:issue:`2151`, :pull:`2157`).
 
 Bug fixes
 ^^^^^^^^^
 * Adjustments were made to the `docs` install recipe to ensure that the `xclim` documentation builds correctly. The minimum required Python for rendering the documentation is now 3.11. (:pull:`2141`).
+* ``xclim.core.calendar.stack_periods`` was fixed to work with larger-than-daily source timesteps. Users are still encouraged to use `da.resample(time=FREQ).construct('period')` when possible. (:issue:`2148`, :pull:`2150`).
+* Update ``create_ensemble`` docstring to avoid confusion about how the function aligns realizations with different calendars. (:issue:`2108`, :pull:`2164`).
+
+Breaking changes
+^^^^^^^^^^^^^^^^
+* ``xclim.sdba`` is now a convenience mapping that imports `xsdba` members instead of being its own submodule. This implies a number of breaking changes (:issue:`2074`, :pull:`2099`):
+    * The sub-module ``xclim.sdba`` is no longer installed by default. Users must install `xsdba` separately using ``pip install xclim[extras]`` or ``{pip|conda} install xsdba``.
+    * Units handling: The "infer" context is no longer used in unit conversion in `sdba` functions.
+    * The `SDBA_EXTRA_OUTPUT` global option can no longer be activated with ``xclim.set_options``, instead use ``xsdba.set_options`` where the option is now called `EXTRA_OUTPUT`.
+    * The other global variable `SDBA_ENCODE_CF` was removed as it has been rendered obsolete.
+* The previously deprecated functions ``sfcwind_2_uas_vas`` and ``uas_vas_2_sfcwind`` have been removed. (:pull:`2139`).
+* ``xclim.testing.open_dataset`` has been deprecated and will be removed in a future version. Contributors are encouraged to consult the documentation pertaining to ``xclim.testing.nimbus`` for the new approach to fetching testing data. (:pull:`2139`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
@@ -21,6 +39,8 @@ Internal changes
 * Added a `pre-commit` hook for formatting BibTeX files and reformatted existing BibTeX files. (:pull:`2135`).
 * `pre-commit` hooks have been updated to their latest versions. (:pull:`2141`).
 * Updated a deprecated `pathlib` usage in the `xclim` documentation that was causing failures under Python 3.13. (:pull:`2141`).
+* Call signatures for most `op` arguments in `xclim` have been updated to use `Literal` types instead of `str`. This change is intended to improve type checking and code clarity. (:issue:`1810`, :pull:`2168`).
+* Changes to `pylint` configuration and to address low-hanging `pylint` issues. (:pull:`2170`).
 
 v0.56.0 (2025-03-27)
 --------------------

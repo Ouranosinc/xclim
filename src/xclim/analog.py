@@ -1,13 +1,12 @@
 """Spatial Analogues module."""
 
 # TODO: Hellinger distance
-# TODO: Mahalanobis distance
 # TODO: Comment on "significance" of results.
 # Code adapted from flyingpigeon.dissimilarity, Nov 2020.
 from __future__ import annotations
 
 from collections.abc import Callable, Sequence
-from typing import Any
+from typing import Any, Literal
 
 import numpy as np
 import pandas as pd
@@ -23,7 +22,9 @@ def spatial_analogs(
     target: xr.Dataset,
     candidates: xr.Dataset,
     dist_dim: str | Sequence[str] = "time",
-    method: str = "kldiv",
+    method: Literal[
+        "seuclidean", "nearest_neighbor", "zech_aslan", "kolmogorov_smirnov", "friedman_rafsky", "kldiv"
+    ] = "kldiv",
     **kwargs,
 ):
     r"""
@@ -44,7 +45,7 @@ def spatial_analogs(
         the dataset's `data_vars`.
     dist_dim : str
         The dimension over which the *distributions* are constructed. This can be a multi-index dimension.
-    method : {'seuclidean', 'nearest_neighbor', 'zech_aslan', 'kolmogorov_smirnov', 'friedman_rafsky', 'kldiv'}
+    method : {"seuclidean", "nearest_neighbor", "zech_aslan", "kolmogorov_smirnov", "friedman_rafsky", "kldiv"}
         Which method to use when computing the dissimilarity statistic.
     **kwargs : dict
         Any other parameter passed directly to the dissimilarity method.
@@ -332,7 +333,7 @@ def szekely_rizzo(x: np.ndarray, y: np.ndarray, *, standardize: bool = True) -> 
     y : ndarray (m,d)
         Candidate sample.
     standardize : bool
-        If True (default), the standardized euclidean norm is used, instead of the conventional one.
+        If True (default), the standardized Euclidean norm is used, instead of the conventional one.
 
     Returns
     -------
@@ -585,3 +586,44 @@ def kldiv(x: np.ndarray, y: np.ndarray, *, k: int | Sequence[int] = 1) -> float 
     if mk:
         return out
     return out[0]
+
+
+@metric
+def mahalanobis(x: np.ndarray, y: np.ndarray, *, VI: np.ndarray | None = None) -> np.float64:
+    """
+    Compute the Mahalanobis distance.
+
+    This method is scale-invariant.
+
+    Parameters
+    ----------
+    x : np.ndarray
+        Reference sample (n,d).
+    y : np.ndarray
+        Candidate sample (m,d).
+    VI : np.ndarray, optional
+        Inverse of the covariance matrix used in the Mahalanobis Distance (d,d). Optional.
+
+    Returns
+    -------
+    numpy.float64
+        Mahalanobis Distance between the mean of the samples.
+
+    Notes
+    -----
+    With no Inverse of the covariance matrix provided, the covariance matrix of the set of observation vectors of the reference sample is used.
+    The pseudoinverse is used if the covariance matrix is singular.
+
+    References
+    ----------
+    :cite:cts:`Deza2016`
+    """
+    if not isinstance(VI, np.ndarray):
+        if VI is not None:
+            raise AttributeError("VI not a matrix")
+        v = np.cov(x, rowvar=False)
+        try:
+            VI = np.linalg.inv(v)
+        except np.linalg.LinAlgError:
+            VI = np.linalg.pinv(v)
+    return spatial.distance.mahalanobis(x.mean(axis=0), y.mean(axis=0), VI)

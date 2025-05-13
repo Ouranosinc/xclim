@@ -13,6 +13,7 @@ import sys
 import textwrap
 from collections.abc import Callable
 from inspect import Parameter, signature
+from typing import cast
 
 import numpy as np
 import scipy.stats as spstats  # noqa
@@ -454,15 +455,18 @@ def robustness_coefficient(fut: xr.DataArray | xr.Dataset, ref: xr.DataArray | x
 
         return 1 - A1 / A2
 
-    R = xr.apply_ufunc(  # noqa
-        _knutti_sedlacek,
-        ref,
-        fut,
-        input_core_dims=[["time"], ["realization", "time"]],
-        exclude_dims={"time"},
-        vectorize=True,
-        dask="parallelized",
-        output_dtypes=[float],
+    R = cast(
+        xr.DataArray,
+        xr.apply_ufunc(  # noqa
+            _knutti_sedlacek,
+            ref,
+            fut,
+            input_core_dims=[["time"], ["realization", "time"]],
+            exclude_dims={"time"},
+            vectorize=True,
+            dask="parallelized",
+            output_dtypes=[float],
+        ),
     )
     R.attrs.update(
         name="R",

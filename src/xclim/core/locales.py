@@ -256,11 +256,11 @@ def read_locale_file(filename, module: str | None = None, encoding: str = "UTF8"
     filename : PathLike
         The file to read.
     module : str, optional
-        If module is a string, this module name is added to all identifiers translated in this file.
+        If the module is a string, this module name is added to all identifiers translated in this file.
         Defaults to None, and no module name is added (as if the indicator was an official xclim indicator).
     encoding : str
         The encoding to use when reading the file.
-        Defaults to `UTF-8`, overriding Python's default mechanism which is machine dependent.
+        Defaults to `UTF-8`, overriding Python's default mechanism which is machine-dependent.
 
     Returns
     -------
