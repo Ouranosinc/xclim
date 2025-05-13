@@ -41,6 +41,7 @@ Internal changes
 * Updated a deprecated `pathlib` usage in the `xclim` documentation that was causing failures under Python 3.13. (:pull:`2141`).
 * Call signatures for most `op` arguments in `xclim` have been updated to use `Literal` types instead of `str`. This change is intended to improve type checking and code clarity. (:issue:`1810`, :pull:`2168`).
 * Changes to `pylint` configuration and to address low-hanging `pylint` issues. (:pull:`2170`).
+* Faster backend for run length computations where the time is unchunked. (:pull:`2136`).
 
 v0.56.0 (2025-03-27)
 --------------------
