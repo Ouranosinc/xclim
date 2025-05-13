@@ -194,7 +194,7 @@ def _cumsum_reset(
     """
     typ = _smallest_uint(da, dim)
     da = da.astype(typ)
-    if _is_chunked(da, dim) and reset_on_zero:
+    if not _is_chunked(da, dim) and reset_on_zero:
         out = xr.apply_ufunc(
             _cumsum_reset_np,
             da,
