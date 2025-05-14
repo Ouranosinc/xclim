@@ -83,8 +83,12 @@ class TestSuspiciousRun:
     def test_empty(self):
         da = xr.DataArray(np.array([[1, 0], [0, 1]]), dims={"time": 2, "loc": 2})
         da = da.isel(time=slice(None, 0))
-        rlength = rl.rle(da).size
+        rlength = rl.rle(da)
         assert da.size == rlength.size == 0
+
+    def test_all_nan(self):
+        da = xr.DataArray(np.full(365, np.nan), dims=["time"])
+        assert rl.rle(da).isnull().all()
 
 
 @pytest.fixture(scope="module", params=[True, False], autouse=True)
