@@ -77,6 +77,12 @@ def use_ufunc(
     return (index == "first") and ufunc_1dim and (freq is None)
 
 
+def _is_chunked(da, dim):
+    """Check if `da` has non-trivial chunks"""
+    chunksize = (da.chunksizes.get(dim, (-1,)))[0]
+    return chunksize not in (-1, da[dim].size)
+
+
 def resample_and_rl(
     da: xr.DataArray,
     resample_before_rl: bool,
@@ -125,6 +131,43 @@ def resample_and_rl(
     return out
 
 
+def _smallest_uint(da, dim):
+    for dtype in [np.uint8, np.uint16, np.uint32, np.uint64]:
+        if np.iinfo(dtype).max > da[dim].size:
+            return dtype
+    return np.uint64
+
+
+# Specifying `one` allows in-place multiplication *=
+@njit
+def _cumsum_reset_np(arr, index, one):
+    """100110111 -> 100120123"""
+    # run the cumsum and prod backwards or forward
+    it = range(1, arr.shape[-1]) if index == "last" else range(arr.shape[-1] - 2, -1, -1)
+    for i in it:
+        # this works because we assume to have 1's and 0's
+        arr[..., i] *= arr[..., i - it.step] + one
+    return arr
+
+
+def _cumsum_reset_xr(da, dim, index, reset_on_zero):
+    """100110111 -> 100120123"""
+    # `index="first"` case: Algorithm is applied on inverted array and output is inverted back
+    if index == "first":
+        da = da[{dim: slice(None, None, -1)}]
+
+    # Example: da == 100110111 -> cs_s == 100120123
+    cs = da.cumsum(dim=dim)  # cumulative sum  e.g. 111233456
+    cond = da == 0 if reset_on_zero else da.isnull()  # reset condition
+    cs2 = cs.where(cond)  # keep only numbers at positions of zeroes e.g. N11NN3NNN (default)
+    cs2[{dim: 0}] = 0  # put a zero in front e.g. 011NN3NNN
+    cs2 = cs2.ffill(dim=dim)  # e.g. 011113333
+    out = cs - cs2
+    if index == "first":
+        out = out[{dim: slice(None, None, -1)}]
+    return out
+
+
 def _cumsum_reset(
     da: xr.DataArray,
     dim: str = "time",
@@ -152,20 +195,19 @@ def _cumsum_reset(
     xr.DataArray
         An array with cumulative sums.
     """
-    if index == "first":
-        da = da[{dim: slice(None, None, -1)}]
-
-    # Example: da == 100110111 -> cs_s == 100120123
-    cs = da.cumsum(dim=dim)  # cumulative sum  e.g. 111233456
-    cond = da == 0 if reset_on_zero else da.isnull()  # reset condition
-    cs2 = cs.where(cond)  # keep only numbers at positions of zeroes e.g. N11NN3NNN (default)
-    cs2[{dim: 0}] = 0  # put a zero in front e.g. 011NN3NNN
-    cs2 = cs2.ffill(dim=dim)  # e.g. 011113333
-    out = cs - cs2
-
-    if index == "first":
-        out = out[{dim: slice(None, None, -1)}]
-
+    if not _is_chunked(da, dim) and reset_on_zero:
+        # only int can be used in this case
+        typ = _smallest_uint(da, dim)
+        out = xr.apply_ufunc(
+            _cumsum_reset_np,
+            da.astype(typ),
+            input_core_dims=[[dim]],
+            output_core_dims=[[dim]],
+            dask="parallelized",
+            kwargs={"index": index, "one": typ(1)},
+        ).astype(float)
+    else:
+        out = _cumsum_reset_xr(da, dim, index, reset_on_zero)
     return out
 
 
@@ -201,9 +243,6 @@ def rle(
     xr.DataArray
         The run length array.
     """
-    if da.dtype == bool:
-        da = da.astype(int)
-
     # "first" case: Algorithm is applied on inverted array and output is inverted back
     if index == "first":
         da = da[{dim: slice(None, None, -1)}]
@@ -213,6 +252,7 @@ def rle(
 
     # Keep total length of each series (and also keep 0's), e.g. 100120123 -> 100N20NN3
     # Keep numbers with a 0 to the right and also the last number
+    # We could keep a -1 instead of nan to save space? Like this we could keep int types.
     cs_s = cs_s.where(da.shift({dim: -1}, fill_value=0) == 0)
     out = cs_s.where(da > 0, 0)  # Reinsert 0's at their original place
 
@@ -221,7 +261,7 @@ def rle(
     if index == "first":
         out = out[{dim: slice(None, None, -1)}]
 
-    return out
+    return out.where(da.notnull())
 
 
 def rle_statistics(
@@ -447,7 +487,7 @@ def windowed_max_run_sum(
     Parameters
     ----------
     da : xr.DataArray
-        Input N-dimensional DataArray (boolean).
+        Input N-dimensional DataArray.
     window : int
         Minimum run length.
         When equal to 1, an optimized version of the algorithm is used.
@@ -461,15 +501,22 @@ def windowed_max_run_sum(
 
     Returns
     -------
-    xr.DataArray, [int]
-        Total number of `True` values part of a consecutive runs of at least `window` long.
+    xr.DataArray, [float]
+        Cumulative sum of input values part of a consecutive runs of at least `window` long.
+
+    Notes
+    -----
+    The input `da` is expected to be non-negative, e.g. temperature exceedances
+    `(tasmax - thresh).clip(0,None)`
     """
     if window == 1 and freq is None:
-        out = rle(da, dim=dim, index=index).max(dim=dim)
+        # using _cumsum_reset_xr instead of rle to be able to handle a float
+        out = _cumsum_reset_xr(da, dim=dim, index=index, reset_on_zero=True).max(dim=dim)
 
     else:
-        d_rse = rle(da, dim=dim, index=index)
-        d_rle = rle((da > 0).astype(bool), dim=dim, index=index)
+        # using _cumsum_reset_xr instead of rle to be able to handle a float
+        d_rse = _cumsum_reset_xr(da, dim=dim, index=index, reset_on_zero=True)
+        d_rle = rle(da > 0, dim=dim, index=index)
 
         d = d_rse.where(d_rle >= window, 0)
         if freq is not None:
@@ -567,7 +614,7 @@ def _boundary_run(
         out = coord_transform(out, da)
 
     else:
-        # _cusum_reset_on_zero() is an intermediate step in rle, which is sufficient here
+        # _cusum_reset is an intermediate step in rle, which is sufficient here
         d = _cumsum_reset(da, dim=dim, index=position)
         d = xr.where(d >= window, 1, 0)
         # for "first" run, return "first" element in the run (and conversely for "last" run)
