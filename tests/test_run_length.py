@@ -80,6 +80,12 @@ class TestSuspiciousRun:
         sus = rl.suspicious_run(da)
         assert sus.all()
 
+    def test_empty(self):
+        da = xr.DataArray(np.array([[1, 0], [0, 1]]), dims={"time": 2, "loc": 2})
+        da = da.isel(time=slice(None, 0))
+        rlength = rl.rle(da).size
+        assert da.size == rlength.size == 0
+
 
 @pytest.fixture(scope="module", params=[True, False], autouse=True)
 def ufunc(request):
