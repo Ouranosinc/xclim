@@ -489,7 +489,7 @@ def windowed_max_run_sum(
     Parameters
     ----------
     da : xr.DataArray
-        Input N-dimensional DataArray (boolean).
+        Input N-dimensional DataArray.
     window : int
         Minimum run length.
         When equal to 1, an optimized version of the algorithm is used.
@@ -503,8 +503,13 @@ def windowed_max_run_sum(
 
     Returns
     -------
-    xr.DataArray, [int]
-        Total number of `True` values part of a consecutive runs of at least `window` long.
+    xr.DataArray, [float]
+        Cumulative sum of input values part of a consecutive runs of at least `window` long.
+
+    Notes
+    -----
+    The input `da` is expected to be non-negative, e.g. temperature exceedances
+    `(tasmax - thresh).clip(0,None)`
     """
     if window == 1 and freq is None:
         # using _cumsum_reset_xr instead of rle to be able to handle a float
