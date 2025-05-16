@@ -33,6 +33,7 @@ Breaking changes
     * The other global variable `SDBA_ENCODE_CF` was removed as it has been rendered obsolete.
 * The previously deprecated functions ``sfcwind_2_uas_vas`` and ``uas_vas_2_sfcwind`` have been removed. (:pull:`2139`).
 * ``xclim.testing.open_dataset`` has been deprecated and will be removed in a future version. Contributors are encouraged to consult the documentation pertaining to ``xclim.testing.nimbus`` for the new approach to fetching testing data. (:pull:`2139`).
+* The `dev` installation recipe now requires `pytest-timeout` for ending stalled tests. (:pull:`2176`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
@@ -42,6 +43,7 @@ Internal changes
 * Updated a deprecated `pathlib` usage in the `xclim` documentation that was causing failures under Python 3.13. (:pull:`2141`).
 * Call signatures for most `op` arguments in `xclim` have been updated to use `Literal` types instead of `str`. This change is intended to improve type checking and code clarity. (:issue:`1810`, :pull:`2168`).
 * Changes to `pylint` configuration and to address low-hanging `pylint` issues. (:pull:`2170`).
+* The ``pyproject.toml`` file has been adjusted to leverage `pytest-timeout` with a maximum session time of 15 minutes and a maximum test duration of 5 mins. (:pull:`2176`).
 
 v0.56.0 (2025-03-27)
 --------------------
