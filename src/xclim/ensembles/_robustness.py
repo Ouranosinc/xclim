@@ -310,6 +310,7 @@ def robustness_fractions(  # noqa: C901
 def robustness_categories(
     changed_or_fractions: xr.Dataset | xr.DataArray,
     agree: xr.DataArray | None = None,
+    valid: xr.DataArray | None = None,
     *,
     categories: list[str] | None = None,
     ops: list[tuple[str, str]] | None = None,
@@ -330,8 +331,11 @@ def robustness_categories(
         Either the fraction of members showing significant change as an array or
         directly the output of :py:func:`robustness_fractions`.
     agree : xr.DataArray, optional
-        The fraction of members agreeing on the sign of change. Only needed if the first argument is
-        the `changed` array.
+        The fraction of members agreeing on the sign of change.
+        Can also be passed as a variable of the first argument.
+    valid : xr.DataArray, optional
+        The fraction of members that were valid for the robustness calculation.
+        Can also be passed as a variable of the first argument.
     categories : list of str, optional
         The label of each robustness categories. They are stored in the semicolon separated flag_descriptions
         attribute as well as in a compressed form in the flag_meanings attribute.
@@ -366,6 +370,7 @@ def robustness_categories(
         # Output of robustness fractions
         changed = src.changed
         agree = src.agree
+        valid = src.valid
     else:
         changed = src
 
@@ -382,6 +387,9 @@ def robustness_categories(
         else:
             cond = compare(changed, chg_op, chg_thresh) & compare(agree, agr_op, agr_thresh)
         robustness = xr.where(~cond, robustness, i, keep_attrs=True)
+
+    if valid is not None:
+        robustness = robustness.where(valid > 0, 99)
 
     robustness = robustness.assign_attrs(
         flag_values=list(range(1, len(categories) + 1)),
