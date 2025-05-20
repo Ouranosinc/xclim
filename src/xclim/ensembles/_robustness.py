@@ -103,7 +103,8 @@ def robustness_fractions(  # noqa: C901
     Returns
     -------
     xr.Dataset
-        Same coordinates as `fut` and  `ref`, but no `time` and no `realization`. Variables returned are:
+        Same coordinates as `fut` and  `ref`, but no `time` and no `realization`.
+        Values are zero if all members were invalid. Variables returned are:
 
         - changed
             - The weighted fraction of valid members showing significant change.
@@ -129,7 +130,7 @@ def robustness_fractions(  # noqa: C901
 
         - valid
             - The weighted fraction of valid members.
-              A member is valid is there are no NaNs along the time axes of `fut` and `ref`.
+              A member is valid if there are no NaNs along the time axes of `fut` and `ref`.
 
         - pvals
             - The p-values estimated by the significance tests.
@@ -253,7 +254,7 @@ def robustness_fractions(  # noqa: C901
     out = xr.Dataset(
         {
             "changed": change_frac.assign_attrs(
-                description="Fraction of members showing significant change. " + test_str,
+                description="Fraction of valid members showing significant change. " + test_str,
                 units="",
                 test=str(test),
             ),
@@ -289,6 +290,7 @@ def robustness_fractions(  # noqa: C901
         },
         attrs={"description": "Significant change and sign of change fractions."},
     )
+    out = out.fillna(0)
 
     if pvals is not None:
         pvals.attrs.update(
