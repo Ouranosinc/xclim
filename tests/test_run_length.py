@@ -88,7 +88,7 @@ class TestSuspiciousRun:
 
     def test_all_nan(self):
         da = xr.DataArray(np.full(365, np.nan), dims=["time"])
-        assert rl.rle(da).isnull().all()
+        assert (rl.rle(da) == 0).all()
 
 
 @pytest.fixture(scope="module", params=[True, False], autouse=True)

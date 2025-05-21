@@ -195,6 +195,7 @@ def _cumsum_reset(
     xr.DataArray
         An array with cumulative sums.
     """
+    # fast track
     if not _is_chunked(da, dim) and reset_on_zero:
         # only int can be used in this case
         typ = _smallest_uint(da, dim)
@@ -205,7 +206,7 @@ def _cumsum_reset(
             output_core_dims=[[dim]],
             dask="parallelized",
             kwargs={"index": index, "one": typ(1)},
-        ).astype(float)
+        )
     else:
         out = _cumsum_reset_xr(da, dim, index, reset_on_zero)
     return out
@@ -243,6 +244,11 @@ def rle(
     xr.DataArray
         The run length array.
     """
+    # Most of our indicators implicitly transform nans into False, e.g. rle(da0 > thresh)
+    # da0 might contain NaNs, these will be converted to False. If the input `da` received
+    # here contains NaNs, we adopt the same behaviour.
+    da = da.fillna(0)
+
     # "first" case: Algorithm is applied on inverted array and output is inverted back
     if index == "first":
         da = da[{dim: slice(None, None, -1)}]
@@ -261,10 +267,10 @@ def rle(
     if index == "first":
         out = out[{dim: slice(None, None, -1)}]
 
-    return out.where(da.notnull())
+    return out
 
 
-def rle_statistics(
+def rle_statistics(  #
     da: xr.DataArray,
     reducer: str,
     window: int,
