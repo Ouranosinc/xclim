@@ -44,6 +44,7 @@ Internal changes
 * Call signatures for most `op` arguments in `xclim` have been updated to use `Literal` types instead of `str`. This change is intended to improve type checking and code clarity. (:issue:`1810`, :pull:`2168`).
 * Changes to `pylint` configuration and to address low-hanging `pylint` issues. (:pull:`2170`).
 * The ``pyproject.toml`` file has been adjusted to leverage `pytest-timeout` with a maximum session time of 15 minutes and a maximum test duration of 5 mins. (:pull:`2176`).
+* Fixed a bug present in tests found in ``test_wind.py`` that was causing failures when run in parallel. (:issue:`2179`, :pull:`2176`).
 
 v0.56.0 (2025-03-27)
 --------------------
