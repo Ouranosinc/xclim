@@ -92,7 +92,7 @@ In theory, short wave radiation should be capped when precipitation is not zero,
 
 Usage examples
 ==============
-The usage of this module is documented in two :doc:`xsdba notebooks <xsdba:notebooks>`_.
+The usage of this module is documented in two `xsdba notebooks <xsdba:notebooks>`_.
 
 Discussion topics
 =================
