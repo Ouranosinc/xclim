@@ -172,7 +172,6 @@ def _cumsum_reset(
     da: xr.DataArray,
     dim: str = "time",
     index: str = "last",
-    reset_on_zero: bool = True,
 ) -> xr.DataArray:
     """
     Compute the cumulative sum for each series of numbers separated by zero.
@@ -186,29 +185,36 @@ def _cumsum_reset(
     index : {'first', 'last'}
         If 'first', the largest value of the cumulative sum is indexed with the first element in the run.
         If 'last'(default), with the last element in the run.
-    reset_on_zero : bool
-        If True, the cumulative sum is reset on each zero value of `da`. Otherwise, the cumulative sum resets
-        on NaNs. Default is True.
 
     Returns
     -------
     xr.DataArray
         An array with cumulative sums.
+
+    Notes
+    -----
+    This function converts `nan` to 0, and uses integers. The fast track will only work correctly
+    with binary entries. To avoid these limitations, use directly `_cumsum_reset_xr`.
     """
+    # Most of our indicators implicitly transform nans into False, e.g. rle(da0 > thresh)
+    # da0 might contain NaNs, these will be converted to False. If the input `da` received
+    # here contains NaNs, we adopt the same behaviour.
+    typ = _smallest_uint(da, dim)
+
     # fast track
-    if not _is_chunked(da, dim) and reset_on_zero:
+    if not _is_chunked(da, dim):
         # only int can be used in this case
-        typ = _smallest_uint(da, dim)
+        da = da.fillna(typ(0))
         out = xr.apply_ufunc(
             _cumsum_reset_np,
-            da.astype(typ),
+            da,
             input_core_dims=[[dim]],
             output_core_dims=[[dim]],
             dask="parallelized",
             kwargs={"index": index, "one": typ(1)},
         )
     else:
-        out = _cumsum_reset_xr(da, dim, index, reset_on_zero)
+        out = _cumsum_reset_xr(da, dim, index, reset_on_zero=True)
     return out
 
 
@@ -244,11 +250,6 @@ def rle(
     xr.DataArray
         The run length array.
     """
-    # Most of our indicators implicitly transform nans into False, e.g. rle(da0 > thresh)
-    # da0 might contain NaNs, these will be converted to False. If the input `da` received
-    # here contains NaNs, we adopt the same behaviour.
-    da = da.fillna(0)
-
     # "first" case: Algorithm is applied on inverted array and output is inverted back
     if index == "first":
         da = da[{dim: slice(None, None, -1)}]
@@ -1832,16 +1833,16 @@ def _find_events(da_start, da_stop, data, window_start, window_stop):
 
     # Compute the length of freezing rain events
     # I think int16 is safe enough, fillna first to suppress warning
-    ds = rle(runs).fillna(0).astype(np.int16).to_dataset(name="event_length")
+    ds = rle(runs).fillna(np.int16(0)).to_dataset(name="event_length")
     # Time duration where the precipitation threshold is exceeded during an event
     # (duration of complete run - duration of holes in the run )
-    ds["event_effective_length"] = _cumsum_reset(da_start.where(runs == 1), index="first", reset_on_zero=False).astype(
-        np.int16
-    )
+    ds["event_effective_length"] = _cumsum_reset_xr(
+        da_start.where(runs == 1), dim="time", index="first", reset_on_zero=False
+    ).astype(np.int16)
 
     if data is not None:
         # Ex: Cumulated precipitation in a given freezing rain event
-        ds["event_sum"] = _cumsum_reset(data.where(runs == 1), index="first", reset_on_zero=False)
+        ds["event_sum"] = _cumsum_reset_xr(data.where(runs == 1), dim="time", index="first", reset_on_zero=False)
 
     # Keep time as a variable, it will be used to keep start of events
     ds["event_start"] = ds["time"].broadcast_like(ds)  # .astype(int)
