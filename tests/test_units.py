@@ -118,6 +118,35 @@ class TestConvertUnitsTo:
         assert out == 2
         assert out.attrs["units"] == "degC"
 
+    def test_dataset(self, nimbus):
+        ds = xr.open_dataset(nimbus.fetch("ERA5/daily_surface_cancities_1990-1993.nc"))
+
+        out = convert_units_to(ds, {"tas": "degC", "pr": "mm/d"})
+        assert out.tas.attrs["units"] == "°C"
+        assert out.pr.attrs["units"] == "mm d-1"
+        assert out.snd.attrs["units"] == "m"
+
+    def test_dataset_missing(self, nimbus):
+        ds = xr.open_dataset(nimbus.fetch("ERA5/daily_surface_cancities_1990-1993.nc"))
+
+        with pytest.raises(KeyError, match="No variable named"):
+            convert_units_to(ds, {"nonexistingvariable": "Å / °R"})
+
+    def test_datatree(self, nimbus):
+        ds = xr.open_dataset(nimbus.fetch("ERA5/daily_surface_cancities_1990-1993.nc"))
+
+        dt = xr.DataTree.from_dict(
+            {
+                "": ds.sel(location="Victoria", drop=True),
+                "MTL": ds.sel(location="Montréal", drop=True),
+                "HAL": ds.sel(location="Halifax", drop=True),
+            }
+        )
+        out = convert_units_to(dt, {"snd": "km", "uas": "pc / yr"})
+        assert out.tas.attrs["units"] == "K"
+        assert out.uas.attrs["units"] == "pc yr-1"
+        assert out.snd.attrs["units"] == "km"
+
 
 class TestUnitConversion:
     def test_pint2cfunits(self):
