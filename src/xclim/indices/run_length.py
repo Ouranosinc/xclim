@@ -271,7 +271,7 @@ def rle(
     return out
 
 
-def rle_statistics(  #
+def rle_statistics(
     da: xr.DataArray,
     reducer: str,
     window: int,
