@@ -254,7 +254,7 @@ def robustness_fractions(  # noqa: C901
     out = xr.Dataset(
         {
             "changed": change_frac.assign_attrs(
-                description="Fraction of valid members showing significant change. " + test_str,
+                description=f"Fraction of valid members showing significant change. {test_str}",
                 units="",
                 test=str(test),
             ),
@@ -263,7 +263,7 @@ def robustness_fractions(  # noqa: C901
                 units="",
             ),
             "changed_positive": change_pos_frac.assign_attrs(
-                description="Fraction of valid members showing significant and positive change. " + test_str,
+                description=f"Fraction of valid members showing significant and positive change. {test_str}",
                 units="",
                 test=str(test),
             ),
@@ -272,7 +272,7 @@ def robustness_fractions(  # noqa: C901
                 units="",
             ),
             "changed_negative": change_neg_frac.assign_attrs(
-                description="Fraction of valid members showing significant and negative change. " + test_str,
+                description=f"Fraction of valid members showing significant and negative change. {test_str}",
                 units="",
                 test=str(test),
             ),
@@ -294,7 +294,7 @@ def robustness_fractions(  # noqa: C901
 
     if pvals is not None:
         pvals.attrs.update(
-            description="P-values from change significance test. " + test_str,
+            description=f"P-values from change significance test. {test_str}",
             units="",
         )
         out = out.assign(pvals=pvals)
