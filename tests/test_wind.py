@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import numpy as np
+import pytest
 import xarray as xr
 
 from xclim import atmos
@@ -21,48 +22,32 @@ class TestWindSpeedIndicators:
 class TestSfcWind:
     test_data = "ERA5/daily_surface_cancities_1990-1993.nc"
 
-    def test_sfcWind_max(self, nimbus):
+    @pytest.mark.parametrize(
+        "metric",
+        ["mean", "max", "min"],
+    )
+    def test_sfcWind(self, nimbus, metric):
         with xr.open_dataset(nimbus.fetch(self.test_data), engine="h5netcdf") as ds:
             sfcWind, _ = atmos.wind_speed_from_vector(ds.uas, ds.vas)
-            sfcWind_max = atmos.sfcWind_max(sfcWind)
-            c = sfcWind.resample(time="YS").max()
-            np.testing.assert_array_equal(sfcWind_max, c)
+            sfcWind_calculated = getattr(atmos, f"sfcWind_{metric}")(sfcWind)
 
-    def test_sfcWind_mean(self, nimbus):
-        with xr.open_dataset(nimbus.fetch(self.test_data), engine="h5netcdf") as ds:
-            sfcWind, _ = atmos.wind_speed_from_vector(ds.uas, ds.vas)
-            sfcWind_mean = atmos.sfcWind_mean(sfcWind)
-            c = sfcWind.resample(time="YS").mean()
-            np.testing.assert_array_equal(sfcWind_mean, c)
-
-    def test_sfcWind_min(self, nimbus):
-        with xr.open_dataset(nimbus.fetch(self.test_data), engine="h5netcdf") as ds:
-            sfcWind, _ = atmos.wind_speed_from_vector(ds.uas, ds.vas)
-            sfcWind_min = atmos.sfcWind_min(sfcWind)
-            c = sfcWind.resample(time="YS").min()
-            np.testing.assert_array_equal(sfcWind_min, c)
+            resample = sfcWind.resample(time="YS")
+            c = getattr(resample, metric)()
+            np.testing.assert_array_equal(sfcWind_calculated, c)
 
 
 class TestSfcWindMax:
     test_data = "ERA5/daily_surface_cancities_1990-1993.nc"
 
-    def test_sfcWindmax_max(self, nimbus):
+    @pytest.mark.parametrize(
+        "metric",
+        ["mean", "max", "min"],
+    )
+    def test_sfcWindmax(self, nimbus, metric):
         with xr.open_dataset(nimbus.fetch(self.test_data), engine="h5netcdf") as ds:
-            sfcWindmax, _ = atmos.wind_speed_from_vector(ds.uas, ds.vas)
-            sfcWindmax_max = atmos.sfcWindmax_max(sfcWindmax)
-            c = sfcWindmax.resample(time="YS").max()
-            np.testing.assert_array_equal(sfcWindmax_max, c)
+            sfcWind, _ = atmos.wind_speed_from_vector(ds.uas, ds.vas)
+            sfcWindmax_calculated = getattr(atmos, f"sfcWindmax_{metric}")(sfcWind)
 
-    def test_sfcWindmax_mean(self, nimbus):
-        with xr.open_dataset(nimbus.fetch(self.test_data), engine="h5netcdf") as ds:
-            sfcWindmax, _ = atmos.wind_speed_from_vector(ds.uas, ds.vas)
-            sfcWindmax_mean = atmos.sfcWindmax_mean(sfcWindmax)
-            c = sfcWindmax.resample(time="YS").mean()
-            np.testing.assert_array_equal(sfcWindmax_mean, c)
-
-    def test_sfcWindmax_min(self, nimbus):
-        with xr.open_dataset(nimbus.fetch(self.test_data), engine="h5netcdf") as ds:
-            sfcWindmax, _ = atmos.wind_speed_from_vector(ds.uas, ds.vas)
-            sfcWindmax_min = atmos.sfcWindmax_min(sfcWindmax)
-            c = sfcWindmax.resample(time="YS").min()
-            np.testing.assert_array_equal(sfcWindmax_min, c)
+            resample = sfcWind.resample(time="YS")
+            c = getattr(resample, metric)()
+            np.testing.assert_array_equal(sfcWindmax_calculated, c)
