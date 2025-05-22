@@ -80,6 +80,16 @@ class TestSuspiciousRun:
         sus = rl.suspicious_run(da)
         assert sus.all()
 
+    def test_empty(self):
+        da = xr.DataArray(np.array([[1, 0], [0, 1]]), dims={"time": 2, "loc": 2})
+        da = da.isel(time=slice(None, 0))
+        rlength = rl.rle(da)
+        assert da.size == rlength.size == 0
+
+    def test_all_nan(self):
+        da = xr.DataArray(np.full(365, np.nan), dims=["time"])
+        assert (rl.rle(da) == 0).all()
+
 
 @pytest.fixture(scope="module", params=[True, False], autouse=True)
 def ufunc(request):
@@ -134,7 +144,7 @@ def test_runs_with_holes_identity(use_dask, index):
 
     events = rl.runs_with_holes(da != 0, 1, da == 0, 1)
     expected = da
-    np.testing.assert_array_equal(events, expected)
+    xr.testing.assert_equal(events, expected, check_dim_order=False)
 
 
 def test_runs_with_holes():
