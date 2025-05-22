@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import numpy as np
 import pytest
-import xarray as xr
 
 from xclim import land
 from xclim.core import ValidationError
@@ -122,8 +121,8 @@ class TestSnwMaxDoy:
 
 
 class TestHolidaySnowIndicators:
-    def test_xmas_days_simple(self, nimbus):
-        ds = xr.open_dataset(nimbus.fetch("cmip6/snw_day_CanESM5_historical_r1i1p1f1_gn_19910101-20101231.nc"))
+    def test_xmas_days_simple(self, open_dataset):
+        ds = open_dataset("cmip6/snw_day_CanESM5_historical_r1i1p1f1_gn_19910101-20101231.nc")
         snd = land.snw_to_snd(ds.snw)
 
         out = land.holiday_snow_days(snd)
@@ -142,9 +141,9 @@ class TestHolidaySnowIndicators:
             ],
         )
 
-    def test_perfect_xmas_days_simple(self, nimbus):
-        ds_snw = xr.open_dataset(nimbus.fetch("cmip6/snw_day_CanESM5_historical_r1i1p1f1_gn_19910101-20101231.nc"))
-        ds_prsn = xr.open_dataset(nimbus.fetch("cmip6/prsn_day_CanESM5_historical_r1i1p1f1_gn_19910101-20101231.nc"))
+    def test_perfect_xmas_days_simple(self, open_dataset):
+        ds_snw = open_dataset("cmip6/snw_day_CanESM5_historical_r1i1p1f1_gn_19910101-20101231.nc")
+        ds_prsn = open_dataset("cmip6/prsn_day_CanESM5_historical_r1i1p1f1_gn_19910101-20101231.nc")
 
         snd = land.snw_to_snd(ds_snw.snw)
         prsn = ds_prsn.prsn

@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import numpy as np
 import pytest
-import xarray as xr
 
 from xclim import indices as xci
 from xclim import land
@@ -29,9 +28,9 @@ class TestRBIndex:
 
 class TestStandardizedStreamflow:
     @pytest.mark.slow
-    def test_3d_data_with_nans(self, nimbus):
+    def test_3d_data_with_nans(self, open_dataset):
         # test with data
-        ds = xr.open_dataset(nimbus.fetch("Raven/q_sim.nc"))
+        ds = open_dataset("Raven/q_sim.nc")
         q = ds.q_obs.sel(time=slice("2008")).rename("q")
         qMM = convert_units_to(q, "mm**3/s", context="hydro")  # noqa
         # put a nan somewhere
@@ -57,9 +56,9 @@ class TestStandardizedStreamflow:
         np.testing.assert_array_almost_equal(out1, out2, 3)
 
     @pytest.mark.slow
-    def test_3d_data_with_nans_value(self, nimbus):
+    def test_3d_data_with_nans_value(self, open_dataset):
         # test with data
-        ds = xr.open_dataset(nimbus.fetch("Raven/q_sim.nc"))
+        ds = open_dataset("Raven/q_sim.nc")
         q = ds.q_obs.sel(time=slice("2008", "2018")).rename("q")
         q[{"time": 10}] = np.nan
 

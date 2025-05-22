@@ -121,8 +121,8 @@ class TestDataFlags:
         ):
             df.data_flags(bad_ds.tasmax, bad_ds, raise_flags=True)
 
-    def test_era5_ecad_qc_flag(self, nimbus):
-        bad_ds = xr.open_dataset(nimbus.fetch("ERA5/daily_surface_cancities_1990-1993.nc"))
+    def test_era5_ecad_qc_flag(self, open_dataset):
+        bad_ds = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc")
 
         # Add some suspicious run values
         bad_ds["tas"].values[0][100:300] = 17 + K2C

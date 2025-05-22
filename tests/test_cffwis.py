@@ -53,8 +53,8 @@ class TestCFFWIS:
             return to_xr(cls.cffdrs_fire_season[key])
         return {key: to_xr(arr) for key, arr in cls.cffdrs_fire_season.items()}
 
-    def test_fine_fuel_moisture_code(self, nimbus):
-        fwi_data = xr.open_dataset(nimbus.fetch(self.fwi_test_dataset))
+    def test_fine_fuel_moisture_code(self, open_dataset):
+        fwi_data = open_dataset(self.fwi_test_dataset)
         ffmc = np.full(fwi_data.time.size + 1, np.nan)
         ffmc[0] = 85
         for i, t in enumerate(fwi_data.time):
@@ -68,8 +68,8 @@ class TestCFFWIS:
 
         np.testing.assert_allclose(ffmc[1:], fwi_data.ffmc.isel(test=0), rtol=1e-6)
 
-    def test_duff_moisture_code(self, nimbus):
-        fwi_data = xr.open_dataset(nimbus.fetch(self.fwi_test_dataset))
+    def test_duff_moisture_code(self, open_dataset):
+        fwi_data = open_dataset(self.fwi_test_dataset)
         dmc = np.full(fwi_data.time.size + 1, np.nan)
         dmc[0] = 6
         for i, t in enumerate(fwi_data.time):
@@ -84,8 +84,8 @@ class TestCFFWIS:
 
         np.testing.assert_allclose(dmc[1:], fwi_data.dmc.isel(test=0), rtol=1e-6)
 
-    def test_drought_code(self, nimbus):
-        fwi_data = xr.open_dataset(nimbus.fetch(self.fwi_test_dataset))
+    def test_drought_code(self, open_dataset):
+        fwi_data = open_dataset(self.fwi_test_dataset)
         dc = np.full(fwi_data.time.size + 1, np.nan)
         dc[0] = 15
         for i, t in enumerate(fwi_data.time):
@@ -99,8 +99,8 @@ class TestCFFWIS:
 
         np.testing.assert_allclose(dc[1:], fwi_data.dc.isel(test=0), rtol=1e-6)
 
-    def test_initial_spread_index(self, nimbus):
-        fwi_data = xr.open_dataset(nimbus.fetch(self.fwi_test_dataset))
+    def test_initial_spread_index(self, open_dataset):
+        fwi_data = open_dataset(self.fwi_test_dataset)
         isi = np.full(fwi_data.time.size, np.nan)
         for i, t in enumerate(fwi_data.time):
             isi[i] = initial_spread_index(
@@ -109,8 +109,8 @@ class TestCFFWIS:
             )
         np.testing.assert_allclose(isi, fwi_data.isi.isel(test=0), rtol=1e-6)
 
-    def test_build_up_index(self, nimbus):
-        fwi_data = xr.open_dataset(nimbus.fetch(self.fwi_test_dataset))
+    def test_build_up_index(self, open_dataset):
+        fwi_data = open_dataset(self.fwi_test_dataset)
         bui = np.full(fwi_data.time.size, np.nan)
         for i, t in enumerate(fwi_data.time):
             bui[i] = build_up_index(
@@ -149,8 +149,8 @@ class TestCFFWIS:
 
         np.testing.assert_allclose(out, exp, rtol=1e-6)
 
-    def test_fire_weather_index(self, nimbus):
-        fwi_data = xr.open_dataset(nimbus.fetch(self.fwi_test_dataset))
+    def test_fire_weather_index(self, open_dataset):
+        fwi_data = open_dataset(self.fwi_test_dataset)
         fwi = np.full(fwi_data.time.size, np.nan)
         for i, t in enumerate(fwi_data.time):
             fwi[i] = fire_weather_index(
@@ -165,8 +165,8 @@ class TestCFFWIS:
     def test_day_length_factor(self):
         assert _day_length_factor(44, 1) == -1.6
 
-    def test_cffwis_indicator(self, nimbus):
-        fwi_data = xr.open_dataset(nimbus.fetch(self.fwi_test_dataset))
+    def test_cffwis_indicator(self, open_dataset):
+        fwi_data = open_dataset(self.fwi_test_dataset)
         fwi_data.lat.attrs["units"] = "degrees_north"
         dc, dmc, ffmc, isi, bui, fwi = atmos.cffwis_indices(
             tas=fwi_data.tas,
@@ -378,18 +378,18 @@ class TestCFFWIS:
             ),
         ],
     )
-    def test_fire_season_R(self, nimbus, key, kwargs):
+    def test_fire_season_R(self, open_dataset, key, kwargs):
         expected = self._get_cffdrs_fire_season(key)
-        in_ds = xr.open_dataset(nimbus.fetch("FWI/cffdrs_test_wDC.nc"))
+        in_ds = open_dataset("FWI/cffdrs_test_wDC.nc")
         nid = int(key[2])
 
         mask = fire_season(tas=in_ds.where(in_ds.id == nid, drop=True).tasmax, **kwargs)
         bounds = run_bounds(mask, dim="time", coord=True)
         np.testing.assert_array_equal(bounds, expected)
 
-    def test_gfwed_and_indicators(self, nimbus):
+    def test_gfwed_and_indicators(self, open_dataset):
         # Also tests passing parameters as quantity strings
-        ds = xr.open_dataset(nimbus.fetch("FWI/GFWED_sample_2017.nc"))
+        ds = open_dataset("FWI/GFWED_sample_2017.nc")
 
         outs = atmos.cffwis_indices(
             tas=ds.tas,
@@ -444,9 +444,9 @@ class TestCFFWIS:
         for exp, out in zip([ds2.DC, ds2.DMC, ds2.FFMC, ds2.ISI, ds2.BUI, ds2.FWI], outs, strict=False):
             np.testing.assert_allclose(out, exp, rtol=0.03)
 
-    def test_gfwed_drought_code(self, nimbus):
+    def test_gfwed_drought_code(self, open_dataset):
         # Also tests passing parameters as quantity strings
-        ds = xr.open_dataset(nimbus.fetch("FWI/GFWED_sample_2017.nc"))
+        ds = open_dataset("FWI/GFWED_sample_2017.nc")
 
         out = atmos.drought_code(
             tas=ds.tas,
@@ -464,9 +464,9 @@ class TestCFFWIS:
 
         np.testing.assert_allclose(out.isel(loc=[0, 1]), ds.DC.isel(loc=[0, 1]), rtol=0.03)
 
-    def test_gfwed_duff_moisture_code(self, nimbus):
+    def test_gfwed_duff_moisture_code(self, open_dataset):
         # Also tests passing parameters as quantity strings
-        ds = xr.open_dataset(nimbus.fetch("FWI/GFWED_sample_2017.nc"))
+        ds = open_dataset("FWI/GFWED_sample_2017.nc")
 
         out = atmos.duff_moisture_code(
             tas=ds.tas,
