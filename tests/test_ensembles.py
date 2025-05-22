@@ -698,7 +698,7 @@ def test_robustness_fractions_delta(robust_data):
 
 
 def test_robustness_fractions_empty():
-    """Test that NaN is returned if input arrays are full of NaNs."""
+    """Test that arrays full of NaNs return appropriate values"""
     r = np.full((20, 10), np.nan)
     f = np.full((20, 10), np.nan)
 
@@ -706,7 +706,8 @@ def test_robustness_fractions_empty():
     fut = xr.DataArray(f, dims=("realization", "time"), name="tas")
 
     f = ensembles.robustness_fractions(fut, ref, test="ttest")
-    assert np.all(np.isnan(f.changed))
+    np.testing.assert_array_equal(f.changed, 0)
+    np.testing.assert_array_equal(f.valid, 0)
 
 
 def test_robustness_categories():

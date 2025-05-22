@@ -103,7 +103,8 @@ def robustness_fractions(  # noqa: C901
     Returns
     -------
     xr.Dataset
-        Same coordinates as `fut` and  `ref`, but no `time` and no `realization`. Variables returned are:
+        Same coordinates as `fut` and  `ref`, but no `time` and no `realization`.
+        Values are zero if all members were invalid. Variables returned are:
 
         - changed
             - The weighted fraction of valid members showing significant change.
@@ -129,7 +130,7 @@ def robustness_fractions(  # noqa: C901
 
         - valid
             - The weighted fraction of valid members.
-              A member is valid is there are no NaNs along the time axes of `fut` and `ref`.
+              A member is valid if there are no NaNs along the time axes of `fut` and `ref`.
 
         - pvals
             - The p-values estimated by the significance tests.
@@ -253,7 +254,7 @@ def robustness_fractions(  # noqa: C901
     out = xr.Dataset(
         {
             "changed": change_frac.assign_attrs(
-                description="Fraction of members showing significant change. " + test_str,
+                description=f"Fraction of valid members showing significant change. {test_str}",
                 units="",
                 test=str(test),
             ),
@@ -262,7 +263,7 @@ def robustness_fractions(  # noqa: C901
                 units="",
             ),
             "changed_positive": change_pos_frac.assign_attrs(
-                description="Fraction of valid members showing significant and positive change. " + test_str,
+                description=f"Fraction of valid members showing significant and positive change. {test_str}",
                 units="",
                 test=str(test),
             ),
@@ -271,7 +272,7 @@ def robustness_fractions(  # noqa: C901
                 units="",
             ),
             "changed_negative": change_neg_frac.assign_attrs(
-                description="Fraction of valid members showing significant and negative change. " + test_str,
+                description=f"Fraction of valid members showing significant and negative change. {test_str}",
                 units="",
                 test=str(test),
             ),
@@ -289,10 +290,11 @@ def robustness_fractions(  # noqa: C901
         },
         attrs={"description": "Significant change and sign of change fractions."},
     )
+    out = out.fillna(0)
 
     if pvals is not None:
         pvals.attrs.update(
-            description="P-values from change significance test. " + test_str,
+            description=f"P-values from change significance test. {test_str}",
             units="",
         )
         out = out.assign(pvals=pvals)
@@ -308,6 +310,7 @@ def robustness_fractions(  # noqa: C901
 def robustness_categories(
     changed_or_fractions: xr.Dataset | xr.DataArray,
     agree: xr.DataArray | None = None,
+    valid: xr.DataArray | None = None,
     *,
     categories: list[str] | None = None,
     ops: list[tuple[str, str]] | None = None,
@@ -328,8 +331,11 @@ def robustness_categories(
         Either the fraction of members showing significant change as an array or
         directly the output of :py:func:`robustness_fractions`.
     agree : xr.DataArray, optional
-        The fraction of members agreeing on the sign of change. Only needed if the first argument is
-        the `changed` array.
+        The fraction of members agreeing on the sign of change.
+        Can also be passed as a variable of the first argument.
+    valid : xr.DataArray, optional
+        The fraction of members that were valid for the robustness calculation.
+        Can also be passed as a variable of the first argument.
     categories : list of str, optional
         The label of each robustness categories. They are stored in the semicolon separated flag_descriptions
         attribute as well as in a compressed form in the flag_meanings attribute.
@@ -364,6 +370,7 @@ def robustness_categories(
         # Output of robustness fractions
         changed = src.changed
         agree = src.agree
+        valid = src.valid
     else:
         changed = src
 
@@ -380,6 +387,9 @@ def robustness_categories(
         else:
             cond = compare(changed, chg_op, chg_thresh) & compare(agree, agr_op, agr_thresh)
         robustness = xr.where(~cond, robustness, i, keep_attrs=True)
+
+    if valid is not None:
+        robustness = robustness.where(valid > 0, 99)
 
     robustness = robustness.assign_attrs(
         flag_values=list(range(1, len(categories) + 1)),

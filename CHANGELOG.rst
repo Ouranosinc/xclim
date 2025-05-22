@@ -10,12 +10,14 @@ Announcements
 ^^^^^^^^^^^^^
 * The ``xclim.sdba`` module has been split from `xclim` into the new package `xsdba <https://github.com/Ouranosinc/xsdba>`_. Users must install `xsdba` from `PyPI` or `conda-forge` in order to maintain the `xclim.sdba` functionality. Refer to the `xsdba Migration Guide <https://xsdba.readthedocs.io/en/latest/xclim_migration_guide.html>`_ for more information. (:issue:`2074`, :pull:`2099`).
 
-New indicators
-^^^^^^^^^^^^^^
+New indicators and features
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
 * New indicator ``xclim.atmos.clearness_index`` computes the `clearness_index` (ratio of downwards solar radiation to extraterrestrial solar radiation). (:pull:`2140`).
 * Added ``cooling_degree_days_approximation`` and ``heating_degree_days_approximation`` indices to compute the number of cooling and heating degree days with consideration for daily temperature cycles. (:issue:`1941`, :pull:`2135`).
 * Added dtr in variables.yml. (:issue:`2146`, :pull:`2147`).
 * Added Mahalanobis distance. (:issue:`2151`, :pull:`2157`).
+* Support for ``DataTree`` objects in indicators. All non-empty nodes of the tree must contain all required variables, non-variable parameters are the same for all nodes. (:issue:`2127`, :pull:`2144`).
+* Support for ``Dataset`` and ``DataTree`` objects in ``xc.core.units.convert_units_to``. Target units are passed as a mapping from variable name to units. Unmentionned variables are left untouched. (:issue:`2127`, :pull:`2144`).
 
 Bug fixes
 ^^^^^^^^^
@@ -23,6 +25,7 @@ Bug fixes
 * ``xclim.core.calendar.stack_periods`` was fixed to work with larger-than-daily source timesteps. Users are still encouraged to use `da.resample(time=FREQ).construct('period')` when possible. (:issue:`2148`, :pull:`2150`).
 * Update ``create_ensemble`` docstring to avoid confusion about how the function aligns realizations with different calendars. (:issue:`2108`, :pull:`2164`).
 * Fix ``xc.indices.run_length.find_events`` for multidimensional input using a cftime calendar. (:pull:`2172`).
+* ``xc.ensembles.robustness_fractions`` will now return 0 when all members were invalid (had missing values), this avoids faulty flags in ``robustness_categories``. The latter was also modified to read the ``valid`` fraction and mask its output accordingly. (:issue:`2167`, :pull:`2178`).
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
