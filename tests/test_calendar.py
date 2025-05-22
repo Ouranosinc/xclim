@@ -216,8 +216,8 @@ def test_adjust_doy_366_to_360():
         ("NRCANdaily/nrcan_canada_daily_pr_1990.nc", "proleptic_gregorian", 366),
     ],
 )
-def test_get_calendar(file, cal, maxdoy, nimbus):
-    with xr.open_dataset(nimbus.fetch(file)) as ds:
+def test_get_calendar(file, cal, maxdoy, open_dataset):
+    with open_dataset(file) as ds:
         out_cal = get_calendar(ds)
         assert cal == out_cal
         assert max_doy[cal] == maxdoy

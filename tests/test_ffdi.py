@@ -129,7 +129,7 @@ class TestFFDI:
     @pytest.mark.slow
     @pytest.mark.parametrize("init_kbdi", [True, False])
     @pytest.mark.parametrize("limiting_func", ["xlim", "discrete"])
-    def test_ffdi_indicators(self, nimbus, init_kbdi, limiting_func):
+    def test_ffdi_indicators(self, init_kbdi, limiting_func, open_dataset):
         """Test the FFDI indicators using real data"""
         # I couldn't find any high quality data or code to test against. I considered
         # the CEMS GEFF dataset, and the R packages ClimInd and ecbtools but all use
@@ -137,7 +137,7 @@ class TestFFDI:
         # think reflect the modern literature.
         # For now, we just test that the indicators run using real data and that the
         # outputs look sensible
-        test_data = xr.open_dataset(nimbus.fetch("ERA5/daily_surface_cancities_1990-1993.nc"))
+        test_data = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc")
 
         pr_annual = test_data["pr"].resample(time="YS").mean().mean("time")
         pr_annual.attrs["units"] = test_data["pr"].attrs["units"]
