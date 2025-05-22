@@ -18,14 +18,14 @@ New indicators and features
 * Added dtr in variables.yml. (:issue:`2146`, :pull:`2147`).
 * Added Mahalanobis distance. (:issue:`2151`, :pull:`2157`).
 * Support for ``DataTree`` objects in indicators. All non-empty nodes of the tree must contain all required variables, non-variable parameters are the same for all nodes. (:issue:`2127`, :pull:`2144`).
-* Support for ``Dataset`` and ``DataTree`` objects in ``xc.core.units.convert_units_to``. Target units are passed as a mapping from variable name to units. Unmentioned variables are left untouched. (:issue:`2127`, :pull:`2144`).
+* Support for ``Dataset`` and ``DataTree`` objects in ``xclim.core.units.convert_units_to``. Target units are passed as a mapping from variable name to units. Unmentioned variables are left untouched. (:issue:`2127`, :pull:`2144`).
 
 Bug fixes
 ^^^^^^^^^
 * Adjustments were made to the `xclim[docs]` installation recipe to ensure that the documentation builds correctly. The minimum required Python for rendering the documentation is now 3.11. (:pull:`2141`).
 * ``xclim.core.calendar.stack_periods`` was fixed to work with larger-than-daily source timesteps. Users are still encouraged to use ``da.resample(time=FREQ).construct('period')`` when possible. (:issue:`2148`, :pull:`2150`).
 * Updated the ``create_ensemble`` docstring to avoid confusion about how the function aligns realizations with different calendars. (:issue:`2108`, :pull:`2164`).
-* Fixed ``xc.indices.run_length.find_events`` for multidimensional input using a `cftime` calendar. (:pull:`2172`).
+* Fixed ``xclim.indices.run_length.find_events`` for multidimensional input using a `cftime` calendar. (:pull:`2172`).
 * ``xclim.ensembles.robustness_fractions`` will now return '0' when all members are invalid (have missing values), avoiding faulty flags in ``robustness_categories``. The latter was also modified to read the ``valid`` fraction and mask its output accordingly. (:issue:`2167`, :pull:`2178`).
 
 Breaking changes
