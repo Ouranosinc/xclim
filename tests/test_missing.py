@@ -142,8 +142,8 @@ class TestMissingAnyFills:
         miss = missing.missing_any(ts2, freq=None, month=[7], src_timestep="h")
         np.testing.assert_array_equal(miss, True)
 
-    def test_hydro(self, nimbus):
-        ds = xr.open_dataset(nimbus.fetch("Raven/q_sim.nc"))
+    def test_hydro(self, open_dataset):
+        ds = open_dataset("Raven/q_sim.nc")
         miss = missing.missing_any(ds.q_sim, freq="YS")
         np.testing.assert_array_equal(miss[:-1], False)
         np.testing.assert_array_equal(miss[-1], True)

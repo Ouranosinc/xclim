@@ -58,13 +58,13 @@ class TestDTR:
     nc_tasmax = "NRCANdaily/nrcan_canada_daily_tasmax_1990.nc"
     nc_tasmin = "NRCANdaily/nrcan_canada_daily_tasmin_1990.nc"
 
-    def test_DTR_3d_data_with_nans(self, nimbus):
-        tasmax = xr.open_dataset(nimbus.fetch(self.nc_tasmax)).tasmax
-        tasmax_C = xr.open_dataset(nimbus.fetch(self.nc_tasmax)).tasmax
+    def test_DTR_3d_data_with_nans(self, open_dataset):
+        tasmax = open_dataset(self.nc_tasmax).tasmax
+        tasmax_C = open_dataset(self.nc_tasmax).tasmax
         tasmax_C -= K2C
         tasmax_C.attrs["units"] = "C"
-        tasmin = xr.open_dataset(nimbus.fetch(self.nc_tasmin)).tasmin
-        tasmin_C = xr.open_dataset(nimbus.fetch(self.nc_tasmin)).tasmin
+        tasmin = open_dataset(self.nc_tasmin).tasmin
+        tasmin_C = open_dataset(self.nc_tasmin).tasmin
         tasmin_C -= K2C
         tasmin_C.attrs["units"] = "C"
         # put a nan somewhere
@@ -98,13 +98,13 @@ class TestDTRVar:
     nc_tasmax = "NRCANdaily/nrcan_canada_daily_tasmax_1990.nc"
     nc_tasmin = "NRCANdaily/nrcan_canada_daily_tasmin_1990.nc"
 
-    def test_dtr_var_3d_data_with_nans(self, nimbus):
-        tasmax = xr.open_dataset(nimbus.fetch(self.nc_tasmax)).tasmax
-        tasmax_C = xr.open_dataset(nimbus.fetch(self.nc_tasmax)).tasmax
+    def test_dtr_var_3d_data_with_nans(self, open_dataset):
+        tasmax = open_dataset(self.nc_tasmax).tasmax
+        tasmax_C = open_dataset(self.nc_tasmax).tasmax
         tasmax_C -= K2C
         tasmax_C.attrs["units"] = "C"
-        tasmin = xr.open_dataset(nimbus.fetch(self.nc_tasmin)).tasmin
-        tasmin_C = xr.open_dataset(nimbus.fetch(self.nc_tasmin)).tasmin
+        tasmin = open_dataset(self.nc_tasmin).tasmin
+        tasmin_C = open_dataset(self.nc_tasmin).tasmin
         tasmin_C -= K2C
         tasmin_C.attrs["units"] = "C"
         # put a nan somewhere
@@ -131,13 +131,13 @@ class TestETR:
     nc_tasmax = "NRCANdaily/nrcan_canada_daily_tasmax_1990.nc"
     nc_tasmin = "NRCANdaily/nrcan_canada_daily_tasmin_1990.nc"
 
-    def test_dtr_var_3d_data_with_nans(self, nimbus):
-        tasmax = xr.open_dataset(nimbus.fetch(self.nc_tasmax)).tasmax
-        tasmax_C = xr.open_dataset(nimbus.fetch(self.nc_tasmax)).tasmax
+    def test_dtr_var_3d_data_with_nans(self, open_dataset):
+        tasmax = open_dataset(self.nc_tasmax).tasmax
+        tasmax_C = open_dataset(self.nc_tasmax).tasmax
         tasmax_C -= K2C
         tasmax_C.attrs["units"] = "C"
-        tasmin = xr.open_dataset(nimbus.fetch(self.nc_tasmin)).tasmin
-        tasmin_C = xr.open_dataset(nimbus.fetch(self.nc_tasmin)).tasmin
+        tasmin = open_dataset(self.nc_tasmin).tasmin
+        tasmin_C = open_dataset(self.nc_tasmin).tasmin
         tasmin_C -= K2C
         tasmin_C.attrs["units"] = "C"
         # put a nan somewhere
@@ -165,9 +165,9 @@ class TestTmean:
         "NRCANdaily/nrcan_canada_daily_tasmin_1990.nc",
     )
 
-    def test_Tmean_3d_data(self, nimbus):
-        ds_tmax = xr.open_dataset(nimbus.fetch(self.nc_files[0]))
-        ds_tmin = xr.open_dataset(nimbus.fetch(self.nc_files[1]))
+    def test_Tmean_3d_data(self, open_dataset):
+        ds_tmax = open_dataset(self.nc_files[0])
+        ds_tmin = open_dataset(self.nc_files[1])
         tas = atmos.tg(ds_tmin.tasmin, ds_tmax.tasmax)
         tas_C = atmos.tg(ds_tmin.tasmin, ds_tmax.tasmax)
         tas_C.values -= K2C
@@ -194,9 +194,9 @@ class TestTmean:
 class TestTx:
     nc_file = "NRCANdaily/nrcan_canada_daily_tasmax_1990.nc"
 
-    def test_TX_3d_data(self, nimbus):
-        tasmax = xr.open_dataset(nimbus.fetch(self.nc_file)).tasmax
-        tasmax_C = xr.open_dataset(nimbus.fetch(self.nc_file)).tasmax
+    def test_TX_3d_data(self, open_dataset):
+        tasmax = open_dataset(self.nc_file).tasmax
+        tasmax_C = open_dataset(self.nc_file).tasmax
         tasmax_C.values -= K2C
         tasmax_C.attrs["units"] = "C"
         # put a nan somewhere
@@ -242,9 +242,9 @@ class TestTx:
 class TestTn:
     nc_file = "NRCANdaily/nrcan_canada_daily_tasmin_1990.nc"
 
-    def test_TN_3d_data(self, nimbus):
-        tasmin = xr.open_dataset(nimbus.fetch(self.nc_file)).tasmin
-        tasmin_C = xr.open_dataset(nimbus.fetch(self.nc_file)).tasmin
+    def test_TN_3d_data(self, open_dataset):
+        tasmin = open_dataset(self.nc_file).tasmin
+        tasmin_C = open_dataset(self.nc_file).tasmin
         tasmin_C.values -= K2C
         tasmin_C.attrs["units"] = "C"
         # put a nan somewhere
@@ -408,10 +408,10 @@ class TestColdSpellDays:
 class TestFrostDays:
     nc_file = "NRCANdaily/nrcan_canada_daily_tasmin_1990.nc"
 
-    def test_3d_data_with_nans(self, nimbus):
+    def test_3d_data_with_nans(self, open_dataset):
         # test with 3d data
-        tasmin = xr.open_dataset(nimbus.fetch(self.nc_file)).tasmin
-        tasminC = xr.open_dataset(nimbus.fetch(self.nc_file)).tasmin
+        tasmin = open_dataset(self.nc_file).tasmin
+        tasminC = open_dataset(self.nc_file).tasmin
         tasminC -= K2C
         tasminC.attrs["units"] = "C"
         # put a nan somewhere
@@ -440,10 +440,10 @@ class TestFrostDays:
 class TestIceDays:
     nc_file = "NRCANdaily/nrcan_canada_daily_tasmax_1990.nc"
 
-    def test_3d_data_with_nans(self, nimbus):
+    def test_3d_data_with_nans(self, open_dataset):
         # test with 3d data
-        tas = xr.open_dataset(nimbus.fetch(self.nc_file)).tasmax
-        tasC = xr.open_dataset(nimbus.fetch(self.nc_file)).tasmax
+        tas = open_dataset(self.nc_file).tasmax
+        tasC = open_dataset(self.nc_file).tasmax
         tasC -= K2C
         tasC.attrs["units"] = "C"
         # put a nan somewhere
@@ -461,18 +461,16 @@ class TestIceDays:
         np.testing.assert_array_equal(fd, fdC)
 
         assert np.allclose(fd1, fd.values[0, 0, 0])
-
         assert np.isnan(fd.values[0, 1, 0])
-
         assert np.isnan(fd.values[0, -1, -1])
 
 
 class TestCoolingDegreeDays:
     nc_file = "NRCANdaily/nrcan_canada_daily_tasmax_1990.nc"
 
-    def test_3d_data_with_nans(self, nimbus):
+    def test_3d_data_with_nans(self, open_dataset):
         # test with 3d data
-        tas = xr.open_dataset(nimbus.fetch(self.nc_file)).tasmax
+        tas = open_dataset(self.nc_file).tasmax
         tas.attrs["cell_methods"] = "time: mean within days"
         # put a nan somewhere
         tas.values[180, 1, 0] = np.nan
@@ -486,14 +484,12 @@ class TestCoolingDegreeDays:
         cdd1 = (x1[x1 > thresh] - thresh).sum()
 
         assert np.allclose(cdd1, cdd.values[0, 0, 0])
-
         assert np.isnan(cdd.values[0, 1, 0])
-
         assert np.isnan(cdd.values[0, -1, -1])
 
-    def test_convert_units(self, nimbus):
+    def test_convert_units(self, open_dataset):
         # test with 3d data
-        tas = xr.open_dataset(nimbus.fetch(self.nc_file)).tasmax
+        tas = open_dataset(self.nc_file).tasmax
         tas.values -= K2C
         tas.attrs["units"] = "C"
         tas.attrs["cell_methods"] = "time: mean within days"
@@ -521,9 +517,9 @@ class TestCoolingDegreeDays:
 class TestHeatingDegreeDays:
     nc_file = "NRCANdaily/nrcan_canada_daily_tasmax_1990.nc"
 
-    def test_3d_data_with_nans(self, nimbus):
+    def test_3d_data_with_nans(self, open_dataset):
         # test with 3d data
-        tas = xr.open_dataset(nimbus.fetch(self.nc_file)).tasmax
+        tas = open_dataset(self.nc_file).tasmax
         # put a nan somewhere
         tas.values[180, 1, 0] = np.nan
         tas.attrs["cell_methods"] = "time: mean within days"
@@ -536,14 +532,12 @@ class TestHeatingDegreeDays:
         hdd1 = (thresh - x1).clip(min=0).sum()
 
         assert np.allclose(hdd1, hdd.values[0, 0, 0])
-
         assert np.isnan(hdd.values[0, 1, 0])
-
         assert np.isnan(hdd.values[0, -1, -1])
 
-    def test_convert_units(self, nimbus):
+    def test_convert_units(self, open_dataset):
         # test with 3d data
-        tas = xr.open_dataset(nimbus.fetch(self.nc_file)).tasmax
+        tas = open_dataset(self.nc_file).tasmax
         # put a nan somewhere
         tas.values[180, 1, 0] = np.nan
         tas.values -= K2C
@@ -558,18 +552,17 @@ class TestHeatingDegreeDays:
         hdd1 = (thresh - x1).clip(min=0).sum()
 
         assert np.allclose(hdd1, hdd.values[0, 0, 0])
-
         assert np.isnan(hdd.values[0, 1, 0])
-
         assert np.isnan(hdd.values[0, -1, -1])
 
 
 class TestGrowingDegreeDays:
-    nc_file = "NRCANdaily/nrcan_canada_daily_tasmax_1990.nc"
+    tasmax_file = "NRCANdaily/nrcan_canada_daily_tasmax_1990.nc"
+    cancities_file = "ERA5/daily_surface_cancities_1990-1993.nc"
 
-    def test_3d_data_with_nans(self, nimbus):
+    def test_3d_data_with_nans(self, open_dataset):
         # test with 3d data
-        tas = xr.open_dataset(nimbus.fetch(self.nc_file)).tasmax
+        tas = open_dataset(self.tasmax_file).tasmax
         tas.attrs["cell_methods"] = "time: mean within days"
         # put a nan somewhere
         tas.values[180, 1, 0] = np.nan
@@ -591,8 +584,8 @@ class TestGrowingDegreeDays:
 
         assert np.isnan(gdd.values[0, -1, -1])
 
-    def test_conversion(self, nimbus):
-        ds = xr.open_dataset(nimbus.fetch("ERA5/daily_surface_cancities_1990-1993.nc"))
+    def test_conversion(self, open_dataset):
+        ds = open_dataset(self.cancities_file)
 
         ds["tas_F"] = convert_units_to(ds.tas, "degF")
         ds_pt = ds.isel(location=1)
@@ -849,9 +842,9 @@ class TestDailyFreezeThaw:
     nc_tasmax = "NRCANdaily/nrcan_canada_daily_tasmax_1990.nc"
     nc_tasmin = "NRCANdaily/nrcan_canada_daily_tasmin_1990.nc"
 
-    def test_3d_data_with_nans(self, nimbus):
-        tasmax = xr.open_dataset(nimbus.fetch(self.nc_tasmax)).tasmax
-        tasmin = xr.open_dataset(nimbus.fetch(self.nc_tasmin)).tasmin
+    def test_3d_data_with_nans(self, open_dataset):
+        tasmax = open_dataset(self.nc_tasmax).tasmax
+        tasmin = open_dataset(self.nc_tasmin).tasmin
 
         # put a nan somewhere
         tasmin.values[180, 1, 0] = np.nan
@@ -869,9 +862,9 @@ class TestDailyFreezeThaw:
 
         assert np.isnan(frzthw.values[0, -1, -1])
 
-    def test_convert_units(self, nimbus):
-        tasmax = xr.open_dataset(nimbus.fetch(self.nc_tasmax)).tasmax
-        tasmin = xr.open_dataset(nimbus.fetch(self.nc_tasmin)).tasmin
+    def test_convert_units(self, open_dataset):
+        tasmax = open_dataset(self.nc_tasmax).tasmax
+        tasmin = open_dataset(self.nc_tasmin).tasmin
         tasmax.values -= K2C
         tasmax.attrs["units"] = "C"
         tasmin.values -= K2C
@@ -962,10 +955,10 @@ class TestGrowingSeasonLength:
 class TestTnDaysBelow:
     nc_file = "NRCANdaily/nrcan_canada_daily_tasmin_1990.nc"
 
-    def test_3d_data_with_nans(self, nimbus):
+    def test_3d_data_with_nans(self, open_dataset):
         # test with 3d data
-        tas = xr.open_dataset(nimbus.fetch(self.nc_file)).tasmin
-        tasC = xr.open_dataset(nimbus.fetch(self.nc_file)).tasmin
+        tas = open_dataset(self.nc_file).tasmin
+        tasC = open_dataset(self.nc_file).tasmin
         tasC -= K2C
         tasC.attrs["units"] = "C"
         # put a nan somewhere
@@ -992,10 +985,10 @@ class TestTnDaysBelow:
 class TestTxDaysAbove:
     nc_file = "NRCANdaily/nrcan_canada_daily_tasmax_1990.nc"
 
-    def test_3d_data_with_nans(self, nimbus):
+    def test_3d_data_with_nans(self, open_dataset):
         # test with 3d data
-        tas = xr.open_dataset(nimbus.fetch(self.nc_file)).tasmax
-        tasC = xr.open_dataset(nimbus.fetch(self.nc_file)).tasmax
+        tas = open_dataset(self.nc_file).tasmax
+        tasC = open_dataset(self.nc_file).tasmax
         tasC -= K2C
         tasC.attrs["units"] = "C"
         # put a nan somewhere
@@ -1026,10 +1019,10 @@ class TestTnDaysAbove:
         "tn_indice, kwargs",
         [("tn_days_above", dict(thresh="20 degC")), ("tropical_nights", dict())],
     )
-    def test_3d_data_with_nans(self, nimbus, tn_indice, kwargs):
+    def test_3d_data_with_nans(self, open_dataset, tn_indice, kwargs):
         # test with 3d data
-        tas = xr.open_dataset(nimbus.fetch(self.nc_file)).tasmin
-        tasC = xr.open_dataset(nimbus.fetch(self.nc_file)).tasmin
+        tas = open_dataset(self.nc_file).tasmin
+        tasC = open_dataset(self.nc_file).tasmin
         tasC -= K2C
         tasC.attrs["units"] = "C"
         # put a nan somewhere
@@ -1057,12 +1050,12 @@ class TestTxTnDaysAbove:
     nc_tasmax = "NRCANdaily/nrcan_canada_daily_tasmax_1990.nc"
     nc_tasmin = "NRCANdaily/nrcan_canada_daily_tasmin_1990.nc"
 
-    def test_3d_data_with_nans(self, nimbus):
-        tasmax = xr.open_dataset(nimbus.fetch(self.nc_tasmax)).tasmax
-        tasmin = xr.open_dataset(nimbus.fetch(self.nc_tasmin)).tasmin
+    def test_3d_data_with_nans(self, open_dataset):
+        tasmax = open_dataset(self.nc_tasmax).tasmax
+        tasmin = open_dataset(self.nc_tasmin).tasmin
 
-        tasmaxC = xr.open_dataset(nimbus.fetch(self.nc_tasmax)).tasmax
-        tasminC = xr.open_dataset(nimbus.fetch(self.nc_tasmin)).tasmin
+        tasmaxC = open_dataset(self.nc_tasmax).tasmax
+        tasminC = open_dataset(self.nc_tasmin).tasmin
         tasmaxC -= K2C
         tasmaxC.attrs["units"] = "C"
         tasminC -= K2C
@@ -1293,8 +1286,8 @@ def test_freshet_start(tas_series):
     assert out[0] == 51
 
 
-def test_degree_days_exceedance_date(nimbus):
-    tas = xr.open_dataset(nimbus.fetch("FWI/GFWED_sample_2017.nc")).tas
+def test_degree_days_exceedance_date(open_dataset):
+    tas = open_dataset("FWI/GFWED_sample_2017.nc").tas
     tas.attrs.update(cell_methods="time: mean within days", standard_name="air_temperature")
 
     out = atmos.degree_days_exceedance_date(
@@ -1331,8 +1324,8 @@ def test_degree_days_exceedance_date(nimbus):
 
 
 @pytest.mark.parametrize("never_reached,exp", [(None, np.nan), (300, 300), ("12-01", 335)])
-def test_degree_days_exceedance_date_never_reached(nimbus, never_reached, exp):
-    tas = xr.open_dataset(nimbus.fetch("FWI/GFWED_sample_2017.nc")).tas
+def test_degree_days_exceedance_date_never_reached(open_dataset, never_reached, exp):
+    tas = open_dataset("FWI/GFWED_sample_2017.nc").tas
     tas.attrs.update(cell_methods="time: mean within days", standard_name="air_temperature")
     # Default -> NaN
     out = atmos.degree_days_exceedance_date(
@@ -1348,17 +1341,17 @@ def test_degree_days_exceedance_date_never_reached(nimbus, never_reached, exp):
 
 
 class TestWarmSpellDurationIndex:
-    def test_warm_spell_duration_index(self, nimbus):
-        tasmax = xr.open_dataset(nimbus.fetch("ERA5/daily_surface_cancities_1990-1993.nc")).tasmax
+    def test_warm_spell_duration_index(self, open_dataset):
+        tasmax = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc").tasmax
         tx90 = percentile_doy(tasmax, window=5, per=90)
 
         out = atmos.warm_spell_duration_index(tasmax=tasmax, tasmax_per=tx90, window=3, freq="YS-JUL")
         np.testing.assert_array_equal(out.isel(location=0, percentiles=0), np.array([np.nan, 4, 0, 0, np.nan]))
         assert "Annual number of days with at least 3 consecutive days" in out.description
 
-    def test_wsdi_custom_percentiles_parameters(self, nimbus):
+    def test_wsdi_custom_percentiles_parameters(self, open_dataset):
         # GIVEN
-        tasmax = xr.open_dataset(nimbus.fetch("ERA5/daily_surface_cancities_1990-1993.nc")).tasmax
+        tasmax = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc").tasmax
         tasmax_per = tasmax.sel(time=slice("01-01-1990", "31-12-1991"))
         # WHEN
         tx90 = percentile_doy(tasmax_per, per=[42, 24], window=2)
@@ -1368,9 +1361,9 @@ class TestWarmSpellDurationIndex:
         assert "2 day(s) window" in out.attrs["description"]
         assert "['1990-01-01', '1991-12-31']" in out.attrs["description"]
 
-    def test_wsdi_default_percentiles_parameters(self, nimbus):
+    def test_wsdi_default_percentiles_parameters(self, open_dataset):
         # GIVEN
-        tasmax = xr.open_dataset(nimbus.fetch("ERA5/daily_surface_cancities_1990-1993.nc")).tasmax
+        tasmax = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc").tasmax
         tasmax_per = tasmax.sel(time=slice("01-01-1990", "31-12-1991"))
         # WHEN
         tx90 = percentile_doy(tasmax_per, per=[42, 24], window=2)
@@ -1382,16 +1375,16 @@ class TestWarmSpellDurationIndex:
         assert "{unknown}th percentile(s)" in res.attrs["description"]
 
 
-def test_maximum_consecutive_warm_days(nimbus):
-    tasmax = xr.open_dataset(nimbus.fetch("ERA5/daily_surface_cancities_1990-1993.nc")).tasmax
+def test_maximum_consecutive_warm_days(open_dataset):
+    tasmax = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc").tasmax
     out = atmos.maximum_consecutive_warm_days(tasmax)
     np.testing.assert_array_equal(out[1, :], np.array([13, 21, 6, 10]))
     assert "Annual longest spell of consecutive days with maximum daily temperature above 25 degc." in out.description
 
 
-def test_corn_heat_units(nimbus):
-    tn = xr.open_dataset(nimbus.fetch("ERA5/daily_surface_cancities_1990-1993.nc")).tasmin
-    tx = xr.open_dataset(nimbus.fetch("ERA5/daily_surface_cancities_1990-1993.nc")).tasmax
+def test_corn_heat_units(open_dataset):
+    tn = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc").tasmin
+    tx = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc").tasmax
 
     with xr.set_options(keep_attrs=True):
         tnC = tn - K2C
@@ -1408,8 +1401,8 @@ def test_corn_heat_units(nimbus):
 
 
 class TestFreezeThawSpell:
-    def test_freezethaw_spell_frequency(self, nimbus):
-        ds = xr.open_dataset(nimbus.fetch("ERA5/daily_surface_cancities_1990-1993.nc"))
+    def test_freezethaw_spell_frequency(self, open_dataset):
+        ds = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc")
 
         out = atmos.freezethaw_spell_frequency(tasmin=ds.tasmin, tasmax=ds.tasmax, freq="YS")
         np.testing.assert_array_equal(out.isel(location=0), [34.0, 37.0, 36.0, 30.0])
@@ -1432,8 +1425,8 @@ class TestFreezeThawSpell:
             "and minimum daily temperatures are at or below 0 degc for at least 2 consecutive day(s)."
         ]
 
-    def test_freezethaw_spell_mean_length(self, nimbus):
-        ds = xr.open_dataset(nimbus.fetch("ERA5/daily_surface_cancities_1990-1993.nc"))
+    def test_freezethaw_spell_mean_length(self, open_dataset):
+        ds = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc")
 
         out = atmos.freezethaw_spell_mean_length(tasmin=ds.tasmin, tasmax=ds.tasmax, freq="YS")
         np.testing.assert_allclose(out.isel(location=0), [1.911765, 2.027027, 1.888889, 1.733333], rtol=1e-06)
@@ -1456,8 +1449,8 @@ class TestFreezeThawSpell:
             "and minimum daily temperatures are at or below 0 degc for at least 2 consecutive day(s)."
         ]
 
-    def test_freezethaw_spell_max_length(self, nimbus):
-        ds = xr.open_dataset(nimbus.fetch("ERA5/daily_surface_cancities_1990-1993.nc"))
+    def test_freezethaw_spell_max_length(self, open_dataset):
+        ds = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc")
 
         out = atmos.freezethaw_spell_max_length(tasmin=ds.tasmin, tasmax=ds.tasmax, freq="YS")
         np.testing.assert_array_equal(out.isel(location=0), [12, 7, 7, 4])

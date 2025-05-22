@@ -60,11 +60,11 @@ def test_virtual_modules(virtual_indicator, atmosds):
 
 
 @pytest.mark.requires_docs
-def test_custom_indices(nimbus):
+def test_custom_indices(open_dataset):
     # Use the example data used in the Extending Xclim notebook for testing.
     example_path = Path(__file__).parent.parent / "docs" / "notebooks" / "example"
 
-    pr = xr.open_dataset(nimbus.fetch("ERA5/daily_surface_cancities_1990-1993.nc")).pr
+    pr = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc").pr
 
     # This tests load_module with a python file that is _not_ on the PATH
     example = load_module(example_path / "example.py")
