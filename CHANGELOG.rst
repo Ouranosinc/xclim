@@ -10,12 +10,14 @@ Announcements
 ^^^^^^^^^^^^^
 * The ``xclim.sdba`` module has been split from `xclim` into the new package `xsdba <https://github.com/Ouranosinc/xsdba>`_. Users must install `xsdba` from `PyPI` or `conda-forge` in order to maintain the `xclim.sdba` functionality. Refer to the `xsdba Migration Guide <https://xsdba.readthedocs.io/en/latest/xclim_migration_guide.html>`_ for more information. (:issue:`2074`, :pull:`2099`).
 
-New indicators
-^^^^^^^^^^^^^^
+New indicators and features
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
 * New indicator ``xclim.atmos.clearness_index`` computes the `clearness_index` (ratio of downwards solar radiation to extraterrestrial solar radiation). (:pull:`2140`).
 * Added ``cooling_degree_days_approximation`` and ``heating_degree_days_approximation`` indices to compute the number of cooling and heating degree days with consideration for daily temperature cycles. (:issue:`1941`, :pull:`2135`).
 * Added dtr in variables.yml. (:issue:`2146`, :pull:`2147`).
 * Added Mahalanobis distance. (:issue:`2151`, :pull:`2157`).
+* Support for ``DataTree`` objects in indicators. All non-empty nodes of the tree must contain all required variables, non-variable parameters are the same for all nodes. (:issue:`2127`, :pull:`2144`).
+* Support for ``Dataset`` and ``DataTree`` objects in ``xc.core.units.convert_units_to``. Target units are passed as a mapping from variable name to units. Unmentionned variables are left untouched. (:issue:`2127`, :pull:`2144`).
 
 Bug fixes
 ^^^^^^^^^
@@ -23,6 +25,7 @@ Bug fixes
 * ``xclim.core.calendar.stack_periods`` was fixed to work with larger-than-daily source timesteps. Users are still encouraged to use `da.resample(time=FREQ).construct('period')` when possible. (:issue:`2148`, :pull:`2150`).
 * Update ``create_ensemble`` docstring to avoid confusion about how the function aligns realizations with different calendars. (:issue:`2108`, :pull:`2164`).
 * Fix ``xc.indices.run_length.find_events`` for multidimensional input using a cftime calendar. (:pull:`2172`).
+* ``xc.ensembles.robustness_fractions`` will now return 0 when all members were invalid (had missing values), this avoids faulty flags in ``robustness_categories``. The latter was also modified to read the ``valid`` fraction and mask its output accordingly. (:issue:`2167`, :pull:`2178`).
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
@@ -33,6 +36,7 @@ Breaking changes
     * The other global variable `SDBA_ENCODE_CF` was removed as it has been rendered obsolete.
 * The previously deprecated functions ``sfcwind_2_uas_vas`` and ``uas_vas_2_sfcwind`` have been removed. (:pull:`2139`).
 * ``xclim.testing.open_dataset`` has been deprecated and will be removed in a future version. Contributors are encouraged to consult the documentation pertaining to ``xclim.testing.nimbus`` for the new approach to fetching testing data. (:pull:`2139`).
+* The `dev` installation recipe now requires `pytest-timeout` for ending stalled tests. (:pull:`2176`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
@@ -42,6 +46,9 @@ Internal changes
 * Updated a deprecated `pathlib` usage in the `xclim` documentation that was causing failures under Python 3.13. (:pull:`2141`).
 * Call signatures for most `op` arguments in `xclim` have been updated to use `Literal` types instead of `str`. This change is intended to improve type checking and code clarity. (:issue:`1810`, :pull:`2168`).
 * Changes to `pylint` configuration and to address low-hanging `pylint` issues. (:pull:`2170`).
+* The ``pyproject.toml`` file has been adjusted to leverage `pytest-timeout` with a maximum session time of 15 minutes and a maximum test duration of 5 mins. (:pull:`2176`).
+* Fixed a bug present in tests due to `netcdf4` engine found in ``test_wind.py`` that was causing failures when run in parallel. (:issue:`2179`, :pull:`2176`).
+* Faster backend for run length computations where the time is unchunked. `_cumsum_reset` was re-written to include the fast track which is called with `_cumsum_reset_np`.  The slow track uses `_cumsum_reset_xr` which preserves all functionalities of the old `_cumsum_reset`. (:pull:`2136`).
 
 v0.56.0 (2025-03-27)
 --------------------

@@ -666,8 +666,8 @@ def test_update_history():
     assert merged.startswith("a: Text1")
 
 
-def test_input_dataset(nimbus):
-    ds = xr.open_dataset(nimbus.fetch("ERA5/daily_surface_cancities_1990-1993.nc"))
+def test_input_dataset(open_dataset):
+    ds = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc")
 
     # Use defaults
     _ = xclim.atmos.daily_temperature_range(freq="YS", ds=ds)
@@ -684,7 +684,7 @@ def test_input_dataset(nimbus):
     with pytest.raises(MissingVariableError):
         out = xclim.atmos.daily_temperature_range(freq="YS", ds=dsx)  # noqa
 
-    # dataset not given
+    # dataset is not given
     with pytest.raises(ValueError):
         xclim.atmos.daily_temperature_range(tasmax="tmax")
 
