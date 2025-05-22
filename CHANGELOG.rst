@@ -48,7 +48,7 @@ Internal changes
 * Changes to `pylint` configuration and to address low-hanging `pylint` issues. (:pull:`2170`).
 * The ``pyproject.toml`` file has been adjusted to leverage `pytest-timeout` with a maximum session time of 15 minutes and a maximum test duration of five (5) minutes. (:pull:`2176`).
 * Fixed a bug present in tests due to the `netcdf4` engine found in ``test_wind.py`` that was causing failures when run in parallel. (:issue:`2179`, :pull:`2176`).
-* Faster backend for run length computations where the time is unchunked. ``_cumsum_reset`` was rewritten to include the fast track which is called with ``_cumsum_reset_np``. The slow track uses ``_cumsum_reset_xr`` which preserves all functionalities of the old ``_cumsum_reset``. (:pull:`2136`).
+* Faster backend for run length computations where the time is unchunked. ``xclim.indices.run_length._cumsum_reset`` was rewritten to include the fast track which is called with ``xclim.indices.run_length._cumsum_reset_np``. The slow track uses ``xclim.indices.run_length._cumsum_reset_xr`` which preserves all functionalities of the old ``xclim.indices.run_length._cumsum_reset``. (:pull:`2136`).
 
 v0.56.0 (2025-03-27)
 --------------------
