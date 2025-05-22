@@ -131,10 +131,10 @@ def test_multi_input(tas_series, pr_series, tmp_path):
 
 
 def test_multi_output(tmp_path, open_dataset):
-    ds = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc")
     input_file = tmp_path / "ws_in.nc"
     output_file = tmp_path / "out.nc"
-    ds.to_netcdf(input_file, engine="h5netcdf")
+    with open_dataset("ERA5/daily_surface_cancities_1990-1993.nc") as ds:
+        ds.to_netcdf(input_file, engine="h5netcdf")
 
     runner = CliRunner()
     results = runner.invoke(

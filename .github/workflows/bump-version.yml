@@ -24,6 +24,7 @@ on:
       - pylintrc
       - pyproject.toml
       - src/xclim/__init__.py
+      - tests/*.py
       - tox.ini
 
 permissions:
