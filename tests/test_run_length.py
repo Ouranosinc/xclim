@@ -283,10 +283,10 @@ class TestFirstRun:
         i = rl.first_run(a, 5, dim="x")
         assert 10 == i
 
-    def test_real_data(self, nimbus):
+    def test_real_data(self, open_dataset):
         # FIXME: No test here?!
         # n-dim version versus ufunc
-        da3d = xr.open_dataset(nimbus.fetch(self.nc_pr), engine="h5netcdf").pr[:, 40:50, 50:68] != 0
+        da3d = open_dataset(self.nc_pr, engine="h5netcdf").pr[:, 40:50, 50:68] != 0
         da3d.resample(time="ME").map(rl.first_run, window=5)
 
     @pytest.mark.parametrize(
@@ -411,8 +411,8 @@ def test_run_bounds_synthetic():
     np.testing.assert_array_equal(bounds, [[1, 6], [4, 9]])
 
 
-def test_run_bounds_data(nimbus):
-    era5 = xr.open_dataset(nimbus.fetch("ERA5/daily_surface_cancities_1990-1993.nc"), engine="h5netcdf")
+def test_run_bounds_data(open_dataset):
+    era5 = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc")
     cond = era5.tas.rolling(time=7).mean() > 285
 
     bounds = rl.run_bounds(cond, "time")  # def coord = True
@@ -432,8 +432,8 @@ def test_keep_longest_run_synthetic():
     np.testing.assert_array_equal(lrun, np.array([0, 1, 1, 1, 0, 0, 0, 0, 0, 0], dtype=bool))
 
 
-def test_keep_longest_run_data(nimbus):
-    era5 = xr.open_dataset(nimbus.fetch("ERA5/daily_surface_cancities_1990-1993.nc"), engine="h5netcdf")
+def test_keep_longest_run_data(open_dataset):
+    era5 = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc")
     cond = era5.swe > 0.002
     lrun = rl.keep_longest_run(cond, "time")
     np.testing.assert_array_equal(

@@ -66,6 +66,8 @@ class TestUnits:
 
 
 class TestConvertUnitsTo:
+    test_data = "ERA5/daily_surface_cancities_1990-1993.nc"
+
     def test_deprecation(self, tas_series):
         with pytest.raises(TypeError):
             convert_units_to(0, units.K)
@@ -118,22 +120,22 @@ class TestConvertUnitsTo:
         assert out == 2
         assert out.attrs["units"] == "degC"
 
-    def test_dataset(self, nimbus):
-        ds = xr.open_dataset(nimbus.fetch("ERA5/daily_surface_cancities_1990-1993.nc"))
+    def test_dataset(self, open_dataset):
+        ds = open_dataset(self.test_data)
 
         out = convert_units_to(ds, {"tas": "degC", "pr": "mm/d"})
         assert out.tas.attrs["units"] == "°C"
         assert out.pr.attrs["units"] == "mm d-1"
         assert out.snd.attrs["units"] == "m"
 
-    def test_dataset_missing(self, nimbus):
-        ds = xr.open_dataset(nimbus.fetch("ERA5/daily_surface_cancities_1990-1993.nc"))
+    def test_dataset_missing(self, open_dataset):
+        ds = open_dataset(self.test_data)
 
         with pytest.raises(KeyError, match="No variable named"):
             convert_units_to(ds, {"nonexistingvariable": "Å / °R"})
 
-    def test_datatree(self, nimbus):
-        ds = xr.open_dataset(nimbus.fetch("ERA5/daily_surface_cancities_1990-1993.nc"))
+    def test_datatree(self, open_dataset):
+        ds = open_dataset(self.test_data)
 
         dt = xr.DataTree.from_dict(
             {

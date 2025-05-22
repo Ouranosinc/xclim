@@ -12,14 +12,10 @@ from xclim.ensembles import (
 from xclim.ensembles._filters import _concat_hist, _model_in_all_scens, _single_member
 
 
-def test_hawkins_sutton_smoke(nimbus):
+def test_hawkins_sutton_smoke(open_dataset):
     """Just a smoke test."""
     dims = {"run": "member", "scen": "scenario"}
-    da = (
-        xr.open_dataset(nimbus.fetch("uncertainty_partitioning/cmip5_pr_global_mon.nc"))
-        .pr.sel(time=slice("1950", None))
-        .rename(dims)
-    )
+    da = open_dataset("uncertainty_partitioning/cmip5_pr_global_mon.nc").pr.sel(time=slice("1950", None)).rename(dims)
     da1 = _model_in_all_scens(da)
     dac = _concat_hist(da1, scenario="historical")
     das = _single_member(dac)

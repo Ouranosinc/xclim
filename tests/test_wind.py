@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import numpy as np
 import pytest
-import xarray as xr
 
 from xclim import atmos
 
@@ -10,8 +9,8 @@ from xclim import atmos
 class TestWindSpeedIndicators:
     test_data = "ERA5/daily_surface_cancities_1990-1993.nc"
 
-    def test_calm_windy_days(self, nimbus):
-        with xr.open_dataset(nimbus.fetch(self.test_data), engine="h5netcdf") as ds:
+    def test_calm_windy_days(self, open_dataset):
+        with open_dataset(self.test_data) as ds:
             sfcwind, _ = atmos.wind_speed_from_vector(ds.uas, ds.vas, calm_wind_thresh="0 m/s")
             calm = atmos.calm_days(sfcwind, thresh="5 m/s")
             windy = atmos.windy_days(sfcwind, thresh="5 m/s")
@@ -26,8 +25,8 @@ class TestSfcWind:
         "metric",
         ["mean", "max", "min"],
     )
-    def test_sfcWind(self, nimbus, metric):
-        with xr.open_dataset(nimbus.fetch(self.test_data), engine="h5netcdf") as ds:
+    def test_sfcWind(self, open_dataset, metric):
+        with open_dataset(self.test_data) as ds:
             sfcWind, _ = atmos.wind_speed_from_vector(ds.uas, ds.vas)
             sfcWind_calculated = getattr(atmos, f"sfcWind_{metric}")(sfcWind)
 
@@ -43,8 +42,8 @@ class TestSfcWindMax:
         "metric",
         ["mean", "max", "min"],
     )
-    def test_sfcWindmax(self, nimbus, metric):
-        with xr.open_dataset(nimbus.fetch(self.test_data), engine="h5netcdf") as ds:
+    def test_sfcWindmax(self, open_dataset, metric):
+        with open_dataset(self.test_data) as ds:
             sfcWind, _ = atmos.wind_speed_from_vector(ds.uas, ds.vas)
             sfcWindmax_calculated = getattr(atmos, f"sfcWindmax_{metric}")(sfcWind)
 

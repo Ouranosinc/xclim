@@ -15,8 +15,8 @@ K2C = 273.15
 
 class TestRainOnFrozenGround:
     @pytest.mark.parametrize("chunks", [{"time": 366}, None])
-    def test_3d_data_with_nans(self, nimbus, chunks):
-        ds = xr.open_dataset(nimbus.fetch("ERA5/daily_surface_cancities_1990-1993.nc"))
+    def test_3d_data_with_nans(self, open_dataset, chunks):
+        ds = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc")
 
         pr = ds.pr.copy()
         pr.values[1, 10] = np.nan
@@ -30,8 +30,8 @@ class TestRainOnFrozenGround:
 
 class TestRainSeason:
     # @pytest.mark.parametrize("chunks", [{"time": 366}, None])
-    def test_3d_data_with_nans(self, nimbus):
-        ds = xr.open_dataset(nimbus.fetch("ERA5/daily_surface_cancities_1990-1993.nc"))
+    def test_3d_data_with_nans(self, open_dataset):
+        ds = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc")
 
         pr = ds.pr.isel(location=0).copy()
         pr[{"time": [0, 10, 100]}] = np.nan
@@ -58,10 +58,10 @@ class TestPrecipAccumulation:
     nc_pr = "NRCANdaily/nrcan_canada_daily_pr_1990.nc"
     nc_tasmin = "NRCANdaily/nrcan_canada_daily_tasmin_1990.nc"
 
-    def test_3d_data_with_nans(self, nimbus):
+    def test_3d_data_with_nans(self, open_dataset):
         # test with 3d data
-        pr = xr.open_dataset(nimbus.fetch(self.nc_pr)).pr  # mm/s
-        prMM = xr.open_dataset(nimbus.fetch(self.nc_pr)).pr
+        pr = open_dataset(self.nc_pr).pr  # mm/s
+        prMM = open_dataset(self.nc_pr).pr
         prMM *= 86400
         prMM.attrs["units"] = "mm/day"
         # put a nan somewhere
@@ -88,10 +88,10 @@ class TestPrecipAccumulation:
         assert np.isnan(out1.values[0, 1, 0])
         assert np.isnan(out1.values[0, -1, -1])
 
-    def test_with_different_phases(self, nimbus):
+    def test_with_different_phases(self, open_dataset):
         # test with different phases
-        pr = xr.open_dataset(nimbus.fetch(self.nc_pr)).pr  # mm/s
-        tasmin = xr.open_dataset(nimbus.fetch(self.nc_tasmin)).tasmin  # K
+        pr = open_dataset(self.nc_pr).pr  # mm/s
+        tasmin = open_dataset(self.nc_tasmin).tasmin  # K
 
         out_tot = atmos.precip_accumulation(pr, freq="MS")
         out_sol = atmos.solid_precip_accumulation(pr, tas=tasmin, freq="MS")
@@ -114,10 +114,10 @@ class TestPrecipAverage:
     nc_pr = "NRCANdaily/nrcan_canada_daily_pr_1990.nc"
     nc_tasmin = "NRCANdaily/nrcan_canada_daily_tasmin_1990.nc"
 
-    def test_3d_data_with_nans(self, nimbus):
+    def test_3d_data_with_nans(self, open_dataset):
         # test with 3d data
-        pr = xr.open_dataset(nimbus.fetch(self.nc_pr)).pr  # mm/s
-        prMM = xr.open_dataset(nimbus.fetch(self.nc_pr)).pr
+        pr = open_dataset(self.nc_pr).pr  # mm/s
+        prMM = open_dataset(self.nc_pr).pr
         prMM *= 86400
         prMM.attrs["units"] = "mm/day"
         # put a nan somewhere
@@ -145,10 +145,10 @@ class TestPrecipAverage:
 
         assert np.isnan(out1.values[0, -1, -1])
 
-    def test_with_different_phases(self, nimbus):
+    def test_with_different_phases(self, open_dataset):
         # test with different phases
-        pr = xr.open_dataset(nimbus.fetch(self.nc_pr)).pr  # mm/s
-        tasmin = xr.open_dataset(nimbus.fetch(self.nc_tasmin)).tasmin  # K
+        pr = open_dataset(self.nc_pr).pr  # mm/s
+        tasmin = open_dataset(self.nc_tasmin).tasmin  # K
 
         out_tot = atmos.precip_average(pr, freq="MS")
         out_sol = atmos.solid_precip_average(pr, tas=tasmin, freq="MS")
@@ -171,9 +171,9 @@ class TestStandardizedPrecip:
     nc_ds = "sdba/CanESM2_1950-2100.nc"
 
     @pytest.mark.slow
-    def test_3d_data_with_nans(self, nimbus):
+    def test_3d_data_with_nans(self, open_dataset):
         # test with data
-        ds = xr.open_dataset(nimbus.fetch(self.nc_ds))
+        ds = open_dataset(self.nc_ds)
         pr = ds.pr.sel(time=slice("2000"))  # kg m-2 s-1
         prMM = convert_units_to(pr, "mm/day", context="hydro")  # noqa
         # put a nan somewhere
@@ -219,10 +219,10 @@ class TestStandardizedPrecip:
 class TestWetDays:
     nc_file = "NRCANdaily/nrcan_canada_daily_pr_1990.nc"
 
-    def test_3d_data_with_nans(self, nimbus):
+    def test_3d_data_with_nans(self, open_dataset):
         # test with 3d data
-        pr = xr.open_dataset(nimbus.fetch(self.nc_file)).pr
-        prMM = xr.open_dataset(nimbus.fetch(self.nc_file)).pr
+        pr = open_dataset(self.nc_file).pr
+        prMM = open_dataset(self.nc_file).pr
         prMM.values *= 86400.0
         prMM.attrs["units"] = "mm/day"
         # put a nan somewhere
@@ -272,10 +272,10 @@ class TestDailyIntensity:
     # testing of wet_day and daily_pr_intensity, both are related
     nc_file = "NRCANdaily/nrcan_canada_daily_pr_1990.nc"
 
-    def test_3d_data_with_nans(self, nimbus):
+    def test_3d_data_with_nans(self, open_dataset):
         # test with 3d data
-        pr = xr.open_dataset(nimbus.fetch(self.nc_file)).pr
-        prMM = xr.open_dataset(nimbus.fetch(self.nc_file)).pr
+        pr = open_dataset(self.nc_file).pr
+        prMM = open_dataset(self.nc_file).pr
         prMM.values *= 86400.0
         prMM.attrs["units"] = "mm/day"
         # put a nan somewhere
@@ -326,10 +326,10 @@ class TestMax1Day:
 
     nc_file = "NRCANdaily/nrcan_canada_daily_pr_1990.nc"
 
-    def test_3d_data_with_nans(self, nimbus):
+    def test_3d_data_with_nans(self, open_dataset):
         # test with 3d data
-        pr = xr.open_dataset(nimbus.fetch(self.nc_file)).pr
-        prMM = xr.open_dataset(nimbus.fetch(self.nc_file)).pr
+        pr = open_dataset(self.nc_file).pr
+        prMM = open_dataset(self.nc_file).pr
         prMM.values *= 86400.0
         prMM.attrs["units"] = "mm/day"
         # put a nan somewhere
@@ -367,10 +367,10 @@ class TestMaxNDay:
             ("mm/s", 1, {"time": 73.0}),
         ],
     )
-    def test_3d_data_with_nans(self, nimbus, units, factor, chunks):
+    def test_3d_data_with_nans(self, open_dataset, units, factor, chunks):
         # test with 3d data
-        pr1 = xr.open_dataset(nimbus.fetch(self.nc_file)).pr
-        pr2 = xr.open_dataset(nimbus.fetch(self.nc_file), chunks=chunks).pr
+        pr1 = open_dataset(self.nc_file).pr
+        pr2 = open_dataset(self.nc_file, chunks=chunks).pr
         pr2.values *= factor
         pr2.attrs["units"] = units
         # put a nan somewhere
@@ -394,10 +394,10 @@ class TestMaxNDay:
 class TestMaxConsecWetDays:
     nc_file = "NRCANdaily/nrcan_canada_daily_pr_1990.nc"
 
-    def test_3d_data_with_nans(self, nimbus):
+    def test_3d_data_with_nans(self, open_dataset):
         # test with 3d data
-        pr = xr.open_dataset(nimbus.fetch(self.nc_file)).pr
-        prMM = xr.open_dataset(nimbus.fetch(self.nc_file)).pr
+        pr = open_dataset(self.nc_file).pr
+        prMM = open_dataset(self.nc_file).pr
         prMM.values *= 86400.0
         prMM.attrs["units"] = "mm/day"
         # put a nan somewhere
@@ -431,10 +431,10 @@ class TestMaxConsecWetDays:
 class TestMaxConsecDryDays:
     nc_file = "NRCANdaily/nrcan_canada_daily_pr_1990.nc"
 
-    def test_3d_data_with_nans(self, nimbus):
+    def test_3d_data_with_nans(self, open_dataset):
         # test with 3d data
-        pr = xr.open_dataset(nimbus.fetch(self.nc_file)).pr
-        prMM = xr.open_dataset(nimbus.fetch(self.nc_file)).pr
+        pr = open_dataset(self.nc_file).pr
+        prMM = open_dataset(self.nc_file).pr
         prMM.values *= 86400.0
         prMM.attrs["units"] = "mm/day"
         # put a nan somewhere
@@ -471,7 +471,12 @@ class TestSnowfallDate:
 
     @classmethod
     def get_snowfall(cls, nimbus):
-        dnr = xr.merge((xr.open_dataset(nimbus.fetch(cls.pr_file)), xr.open_dataset(nimbus.fetch(cls.tasmin_file))))
+        dnr = xr.merge(
+            (
+                xr.open_dataset(nimbus.fetch(cls.pr_file), engine="h5netcdf"),
+                xr.open_dataset(nimbus.fetch(cls.tasmin_file), engine="h5netcdf"),
+            )
+        )
         return atmos.snowfall_approximation(dnr.pr, tas=dnr.tasmin, thresh="-0.5 degC", method="binary")
 
     def test_first_snowfall(self, nimbus):
@@ -504,14 +509,14 @@ class TestSnowfallDate:
 
 
 class TestDaysWithSnow:
-    def test_simple(self, nimbus, prsn_series):
-        prsn = xr.open_dataset(nimbus.fetch("ERA5/daily_surface_cancities_1990-1993.nc")).prsn
+    def test_simple(self, open_dataset, prsn_series):
+        prsn = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc").prsn
         out = atmos.days_with_snow(prsn, low="0 kg m-2 s-1", high="1e6 kg m-2 s-1")
         np.testing.assert_array_equal(out[1], [np.nan, 162, 159, 126, np.nan])
 
 
-def test_days_over_precip_doy_thresh(nimbus):
-    pr = xr.open_dataset(nimbus.fetch("ERA5/daily_surface_cancities_1990-1993.nc")).pr
+def test_days_over_precip_doy_thresh(open_dataset):
+    pr = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc").pr
     per = percentile_doy(pr, window=5, per=80)
 
     out1 = atmos.days_over_precip_doy_thresh(pr, per)
@@ -526,8 +531,8 @@ def test_days_over_precip_doy_thresh(nimbus):
     assert "5 day(s)" in out2.attrs["description"]
 
 
-def test_days_over_precip_thresh(nimbus):
-    pr = xr.open_dataset(nimbus.fetch("ERA5/daily_surface_cancities_1990-1993.nc")).pr
+def test_days_over_precip_thresh(open_dataset):
+    pr = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc").pr
     per = pr.quantile(0.8, "time", keep_attrs=True)
     per.attrs["climatology_bounds"] = build_climatology_bounds(pr)
 
@@ -538,9 +543,9 @@ def test_days_over_precip_thresh(nimbus):
     assert "['1990-01-01', '1993-12-31'] period" in out.attrs["description"]
 
 
-def test_days_over_precip_thresh__seasonal_indexer(nimbus):
+def test_days_over_precip_thresh__seasonal_indexer(open_dataset):
     # GIVEN
-    pr = xr.open_dataset(nimbus.fetch("ERA5/daily_surface_cancities_1990-1993.nc")).pr
+    pr = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc").pr
     per = pr.quantile(0.8, "time", keep_attrs=True)
     # WHEN
     out = atmos.days_over_precip_thresh(pr, per, freq="YS", date_bounds=("01-10", "12-31"))
@@ -548,8 +553,8 @@ def test_days_over_precip_thresh__seasonal_indexer(nimbus):
     np.testing.assert_almost_equal(out[0], np.array([81.0, 66.0, 66.0, 75.0]))
 
 
-def test_fraction_over_precip_doy_thresh(nimbus):
-    pr = xr.open_dataset(nimbus.fetch("ERA5/daily_surface_cancities_1990-1993.nc")).pr
+def test_fraction_over_precip_doy_thresh(open_dataset):
+    pr = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc").pr
     per = percentile_doy(pr, window=5, per=80)
 
     out = atmos.fraction_over_precip_doy_thresh(pr, per)
@@ -564,8 +569,8 @@ def test_fraction_over_precip_doy_thresh(nimbus):
     assert "5 day(s)" in out.attrs["description"]
 
 
-def test_fraction_over_precip_thresh(nimbus):
-    pr = xr.open_dataset(nimbus.fetch("ERA5/daily_surface_cancities_1990-1993.nc")).pr
+def test_fraction_over_precip_thresh(open_dataset):
+    pr = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc").pr
     per = pr.quantile(0.8, "time", keep_attrs=True)
     per.attrs["climatology_bounds"] = build_climatology_bounds(pr)
 
@@ -577,8 +582,8 @@ def test_fraction_over_precip_thresh(nimbus):
     assert "['1990-01-01', '1993-12-31'] period" in out.attrs["description"]
 
 
-def test_liquid_precip_ratio(nimbus):
-    ds = xr.open_dataset(nimbus.fetch("ERA5/daily_surface_cancities_1990-1993.nc"))
+def test_liquid_precip_ratio(open_dataset):
+    ds = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc")
 
     out = atmos.liquid_precip_ratio(pr=ds.pr, tas=ds.tas, thresh="0 degC", freq="YS")
     np.testing.assert_allclose(out[:, 0], np.array([0.919, 0.805, 0.525, 0.740, 0.993]), atol=1e3)
@@ -649,8 +654,8 @@ def test_dry_spell_max_length_indexer(pr_series):
     np.testing.assert_allclose(out, [9] + [0] * 11)
 
 
-def test_dry_spell_frequency_op(nimbus):
-    pr = xr.open_dataset(nimbus.fetch("ERA5/daily_surface_cancities_1990-1993.nc")).pr
+def test_dry_spell_frequency_op(open_dataset):
+    pr = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc").pr
     test_sum = atmos.dry_spell_frequency(pr, thresh="3 mm", window=7, freq="MS", op="sum")
     test_max = atmos.dry_spell_frequency(pr, thresh="3 mm", window=7, freq="MS", op="max")
 
@@ -672,7 +677,12 @@ class TestSnowfallMeteoSwiss:
 
     @classmethod
     def get_snowfall(cls, nimbus):
-        dnr = xr.merge((xr.open_dataset(nimbus.fetch(cls.pr_file)), xr.open_dataset(nimbus.fetch(cls.tasmin_file))))
+        dnr = xr.merge(
+            (
+                xr.open_dataset(nimbus.fetch(cls.pr_file), engine="h5netcdf"),
+                xr.open_dataset(nimbus.fetch(cls.tasmin_file), engine="h5netcdf"),
+            )
+        )
         return atmos.snowfall_approximation(dnr.pr, tas=dnr.tasmin, thresh="-0.5 degC", method="binary")
 
     def test_snowfall_frequency(self, nimbus):
