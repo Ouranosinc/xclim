@@ -4,10 +4,11 @@ Changelog
 
 v0.57.0 (unreleased)
 --------------------
-Contributors to this version: Éric Dupuis (:user:`coxipi`), Trevor James Smith (:user:`Zeitsperre`), Juliette Lavoie (:user:`juliettelavoie`), Pascal Bourgault (:user:`aulemahal`), Armin Hofmann (:user:`HofmannGeo`), Baptiste Hamon (:user:`baptistehamon`).
+Contributors to this version: Éric Dupuis (:user:`coxipi`), Trevor James Smith (:user:`Zeitsperre`), Juliette Lavoie (:user:`juliettelavoie`), Pascal Bourgault (:user:`aulemahal`), Armin Hofmann (:user:`HofmannGeo`), Baptiste Hamon (:user:`baptistehamon`), Sebastian Lehner (:user:`seblehner`).
 
 New indicators
 ^^^^^^^^^^^^^^
+* New indicator ``xclim.atmos.antecedent_precipitation_index`` computes the `antecedent_precipitation_index` (weighted summation of daily precipitation amounts for a given window). (:issue:`2166`, :pull:`2184`).
 * New indicator ``xclim.atmos.clearness_index`` computes the `clearness_index` (ratio of downwards solar radiation to extraterrestrial solar radiation). (:pull:`2140`).
 * Added ``cooling_degree_days_approximation`` and ``heating_degree_days_approximation`` indices to compute the number of cooling and heating degree days with consideration for daily temperature cycles. (:issue:`1941`, :pull:`2135`).
 * Added dtr in variables.yml. (:issue:`2146`, :pull:`2147`).
