@@ -818,13 +818,11 @@ water_cycle_intensity = PrecipWithIndexing(
 )
 
 antecedent_precipitation_index = Daily(
-    title="Antecedent Precipitation Index",
-    identifier="antecedent_precipitation_index",
+    identifier="api",
     realm="atmos",
     units="mm",
     long_name="Antecedent Precipitation Index",
-    description="The Antecedent Precipitation Index, defined as running weighted sum of daily precipitation totals.",
-    abstract="The running sum of weighted, daily precipitation.",
-    cell_methods="time: running weighted sum over days",
+    description="Weighted moving sum of daily precipitation totals with a {window}-day window. Weights are an exponential decay of base {weights}.",
+    cell_methods="time: sum over days",
     compute=indices.antecedent_precipitation_index,
 )
