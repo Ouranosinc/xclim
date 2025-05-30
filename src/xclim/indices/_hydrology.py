@@ -9,7 +9,7 @@ from scipy.stats import rv_continuous
 from xclim.core._types import DateStr, Quantified
 from xclim.core.calendar import get_calendar
 from xclim.core.missing import at_least_n_valid
-from xclim.core.units import declare_units, rate2amount, to_agg_units, convert_units_to
+from xclim.core.units import convert_units_to, declare_units, rate2amount, to_agg_units
 from xclim.indices.generic import threshold_count
 from xclim.indices.stats import standardized_index
 
