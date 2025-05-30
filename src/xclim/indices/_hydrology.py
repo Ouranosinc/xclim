@@ -676,7 +676,8 @@ def antecedent_precipitation_index(pr: xarray.DataArray, window: int = 7, p_exp:
     ----------
     :cite:cts:`schroter2015,li2021`
     """
-    # TODO: ensure precip is mm
+    pr = xc.core.units.rate2amount(pr)
+    pr = xc.core.units.convert_units_to(pr, 'mm', context='hydro')
     # construct a xr.DataArray containing the weights
     weights = xarray.DataArray(
         list(reversed([p_exp ** (idx - 1) for idx in range(1, window + 1)])),
