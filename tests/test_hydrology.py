@@ -151,3 +151,40 @@ class TestLowflowfrequency:
         out = xci.low_flow_frequency(q, 0.2, freq="YS")
 
         np.testing.assert_array_equal(out, [20, 0])
+
+
+class TestAntecedentPrecipitationIndex:
+    def test_simple(self, pr_series):
+        a = np.ones(50) * 10
+        a[15:20] = 20
+        a[35:40] = 0
+        pr = pr_series(a)
+        window = 7
+        out = xci.antecedent_precipitation_index(pr, window=window, p_exp=0.935)
+        np.testing.assert_array_equal(
+            out.max().round(2),
+            [
+                101.65,
+            ],
+        )
+        np.testing.assert_array_equal(
+            out.min().round(2),
+            [
+                13.83,
+            ],
+        )
+
+    def test_nan_present(self, pr_series):
+        a = np.ones(50) * 10
+        a[25] = np.nan
+        pr = pr_series(a)
+        window = 7
+        out = xci.antecedent_precipitation_index(pr, window=window, p_exp=0.935)
+        np.testing.assert_array_equal(out[25], [np.nan])
+
+    def test_nan_start_window(self, pr_series):
+        a = np.ones(50) * 10
+        pr = pr_series(a)
+        window = 7
+        out = xci.antecedent_precipitation_index(pr, window=window, p_exp=0.935)
+        np.testing.assert_array_equal(out[: window - 1], [np.nan for _ in range(window - 1)])
