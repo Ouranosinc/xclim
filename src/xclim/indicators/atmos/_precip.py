@@ -817,7 +817,7 @@ water_cycle_intensity = PrecipWithIndexing(
     compute=indices.water_cycle_intensity,
 )
 
-antecedent_precipitation_index = Indicator(
+antecedent_precipitation_index = Daily(
     title="Antecedent Precipitation Index",
     identifier="antecedent_precipitation_index",
     realm="atmos",
