@@ -158,8 +158,7 @@ class TestAntecedentPrecipitationIndex:
         a[15:20] = 20
         a[35:40] = 0
         pr = pr_series(a)
-        window = 7
-        out = xci.antecedent_precipitation_index(pr, window=window, p_exp=0.935)
+        out = xci.antecedent_precipitation_index(pr)
         np.testing.assert_array_equal(
             out.max().round(2),
             [
