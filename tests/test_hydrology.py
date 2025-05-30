@@ -159,18 +159,8 @@ class TestAntecedentPrecipitationIndex:
         a[35:40] = 0
         pr = pr_series(a)
         out = xci.antecedent_precipitation_index(pr)
-        np.testing.assert_array_equal(
-            out.max().round(2),
-            [
-                101.65,
-            ],
-        )
-        np.testing.assert_array_equal(
-            out.min().round(2),
-            [
-                13.83,
-            ],
-        )
+        np.testing.assert_allclose(out.max(), [101.65], atol=1e-2)
+        np.testing.assert_allclose(out.min(), [13.83], atol=1e-2)
 
     def test_nan_present(self, pr_series):
         a = np.ones(50) * 10
@@ -185,7 +175,7 @@ class TestAntecedentPrecipitationIndex:
         pr = pr_series(a)
         window = 7
         out = xci.antecedent_precipitation_index(pr, window=window, p_exp=0.935)
-        np.testing.assert_array_equal(out[: window - 1], [np.nan for _ in range(window - 1)])
+        np.testing.assert_array_equal(out[: window - 1], np.nan)
 
     def test_manual_calc(self, pr_series):
         a = np.ones(10) * 10
@@ -200,4 +190,4 @@ class TestAntecedentPrecipitationIndex:
             weights = list(reversed([p_exp ** (ii + 1 - 1) for ii in range(window)]))
             weighted_sum = (pr[idx:idxend] * weights).sum()
             out_manual[idxend - 1] = weighted_sum
-        np.testing.assert_array_equal([round(x, 7) for x in out.values], [round(x, 7) for x in out_manual])
+        np.testing.assert_allclose(out, out_manual, atol=1e-7)
