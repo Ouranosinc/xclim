@@ -17,7 +17,7 @@
     SDBA References
     ---------------
 
-    See: :ref:`sdba-footnotes`
+    See: `sdba bibliography <xsdba:references>`_.
 
     General References
     ------------------

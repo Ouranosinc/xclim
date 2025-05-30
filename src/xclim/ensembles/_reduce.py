@@ -396,7 +396,7 @@ def kmeans_reduce_ensemble(
     return out, clusters, fig_data
 
 
-def _calc_rsq(z, method: dict, make_graph: bool, n_sim: np.ndarray, random_state, sample_weights):
+def _calc_rsq(z, method: dict, make_graph: bool, n_sim: np.ndarray | int, random_state, sample_weights):
     """
     Sub-function to kmeans_reduce_ensemble.
 

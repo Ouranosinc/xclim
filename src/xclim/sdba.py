@@ -7,7 +7,7 @@ This module is a placeholder for the `xclim.sdba` submodule, which has been spli
 import warnings
 
 try:
-    from xsdba import *
+    from xsdba import *  # pylint: disable=wildcard-import,unused-wildcard-import
 
     warnings.warn(
         "The `xclim.sdba` module has been split into its own package `xsdba`. "
@@ -16,7 +16,7 @@ try:
         "This behaviour may change in the future. "
         "For more information, see: https://xsdba.readthedocs.io/en/stable/xclim_migration_guide.html"
     )
-except ImportError:
+except ImportError as err:
     error_msg = (
         "The `xclim.sdba` module has been split into its own package: `xsdba`. "
         "Run `pip install xclim[extras]` or install `xsdba` via `pip` or `conda`. "
@@ -25,4 +25,4 @@ except ImportError:
         "This behaviour may change in the future. "
         "For more information, see: https://xsdba.readthedocs.io/en/stable/xclim_migration_guide.html"
     )
-    raise ImportError(error_msg)
+    raise ImportError(error_msg) from err

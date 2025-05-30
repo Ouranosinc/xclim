@@ -28,6 +28,11 @@ from xclim.core.utils import InputKind
 from xclim.indices import tg_mean
 from xclim.testing import list_input_variables
 
+try:
+    from xarray import DataTree
+except ImportError:
+    DataTree = False
+
 
 @declare_units(da="[temperature]", thresh="[temperature]")
 def uniindtemp_compute(
@@ -212,6 +217,38 @@ def test_as_dataset_multi(tas_series):
     assert isinstance(dsout, xr.Dataset)
     assert "tmin" in dsout.data_vars
     assert "tmax" in dsout.data_vars
+
+
+@pytest.mark.skipif(DataTree is False, reason="Old xarray doesn't have DataTree")
+def test_datatree(tasmin_series, tasmax_series):
+    ds1 = xr.Dataset({"tasmax": tasmax_series(np.arange(360)), "tasmin": tasmin_series(np.arange(360))})
+    ds2 = ds1.expand_dims(lat=[45, 46])
+    ds3 = xr.Dataset(
+        {
+            "tasmax": tasmax_series(np.arange(720), start="1950-01-01", calendar="noleap"),
+            "tasmin": tasmin_series(np.arange(720), start="1950-01-01", calendar="noleap"),
+        }
+    )
+
+    dt = DataTree.from_dict({"/base": ds1, "/base/withlats": ds2, "/noleap": ds3})
+
+    dtout = multiOptVar(ds=dt)
+    with xclim.set_options(as_dataset=True):
+        ds1out = multiOptVar(ds=ds1)
+
+    xr.testing.assert_equal(dtout["base"].dataset.multiopt, ds1out.multiopt)
+
+
+@pytest.mark.skipif(DataTree is False, reason="Old xarray doesn't have DataTree")
+def test_datatree_error(tas_series, tasmax_series):
+    ds1 = xr.Dataset({"tasmax": tasmax_series(np.arange(360)), "tas": tas_series(np.arange(360))})
+    ds2 = ds1.expand_dims(lat=[45, 46])
+    ds3 = xr.Dataset({"tasmax": tasmax_series(np.arange(720), start="1950-01-01", calendar="noleap")})
+
+    dt = DataTree.from_dict({"/base": ds1, "/base/withlats": ds2, "/noleap": ds3})
+
+    with pytest.raises(MissingVariableError):
+        multiTemp(ds=dt, freq="MS")
 
 
 def test_opt_vars(tasmin_series, tasmax_series):
@@ -479,13 +516,10 @@ def test_all_parameters_understood(official_indicators):
         for name, param in indinst.parameters.items():
             if param.kind == InputKind.OTHER_PARAMETER:
                 problems.add((identifier, name))
-    # this one we are ok with.
+    # We can deal with 'lat' for the moment.
     if problems - {
         ("COOL_NIGHT_INDEX", "lat"),
         ("DRYNESS_INDEX", "lat"),
-        # TODO: How should we handle the case of Literal[str]?
-        ("GROWING_SEASON_END", "op"),
-        ("GROWING_SEASON_START", "op"),
     }:
         raise ValueError(f"The following indicator/parameter couple {problems} use types not listed in InputKind.")
 
@@ -632,8 +666,8 @@ def test_update_history():
     assert merged.startswith("a: Text1")
 
 
-def test_input_dataset(nimbus):
-    ds = xr.open_dataset(nimbus.fetch("ERA5/daily_surface_cancities_1990-1993.nc"))
+def test_input_dataset(open_dataset):
+    ds = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc")
 
     # Use defaults
     _ = xclim.atmos.daily_temperature_range(freq="YS", ds=ds)
@@ -650,7 +684,7 @@ def test_input_dataset(nimbus):
     with pytest.raises(MissingVariableError):
         out = xclim.atmos.daily_temperature_range(freq="YS", ds=dsx)  # noqa
 
-    # dataset not given
+    # dataset is not given
     with pytest.raises(ValueError):
         xclim.atmos.daily_temperature_range(tasmax="tmax")
 

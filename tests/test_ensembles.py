@@ -34,10 +34,10 @@ def random_state():
 
 
 class TestEnsembleStats:
-    def test_create_ensemble(self, ensemble_dataset_objects, nimbus):
+    def test_create_ensemble(self, ensemble_dataset_objects, open_dataset, nimbus):
         ds_all = []
         for n in ensemble_dataset_objects["nc_files_simple"]:
-            ds = xr.open_dataset(nimbus.fetch(n), decode_times=False)
+            ds = open_dataset(n, decode_times=False)
             ds["time"] = xr.decode_cf(ds).time
             ds_all.append(ds)
         ens = ensembles.create_ensemble(ds_all)
@@ -55,13 +55,13 @@ class TestEnsembleStats:
         ens2 = ensembles.create_ensemble(dict(zip(reals, files, strict=False)))
         xr.testing.assert_identical(ens1, ens2)
 
-    def test_no_time(self, tmp_path, ensemble_dataset_objects, nimbus):
+    def test_no_time(self, tmp_path, ensemble_dataset_objects, open_dataset):
         # create again using xr.Dataset objects
         f1 = Path(tmp_path / "notime")
         f1.mkdir()
         ds_all = []
         for n in ensemble_dataset_objects["nc_files"]:
-            ds = xr.open_dataset(nimbus.fetch(n), decode_times=False)
+            ds = open_dataset(n, decode_times=False)
             ds["time"] = xr.decode_cf(ds).time
             ds_all.append(ds.groupby(ds.time.dt.month).mean("time", keep_attrs=True))
             ds.groupby(ds.time.dt.month).mean("time", keep_attrs=True).to_netcdf(
@@ -75,10 +75,10 @@ class TestEnsembleStats:
         ens = ensembles.create_ensemble(in_ncs)
         assert len(ens.realization) == len(ensemble_dataset_objects["nc_files"])
 
-    def test_create_unequal_times(self, ensemble_dataset_objects, nimbus):
+    def test_create_unequal_times(self, ensemble_dataset_objects, open_dataset):
         ds_all = []
         for n in ensemble_dataset_objects["nc_files"]:
-            ds = xr.open_dataset(nimbus.fetch(n))
+            ds = open_dataset(n)
             ds_all.append(ds)
         ens = ensembles.create_ensemble(ds_all)
 
@@ -117,10 +117,10 @@ class TestEnsembleStats:
         np.testing.assert_equal(ens.isel(time=0), [0, 0])
 
     @pytest.mark.parametrize("transpose", [False, True])
-    def test_calc_perc(self, transpose, ensemble_dataset_objects, nimbus):
+    def test_calc_perc(self, transpose, ensemble_dataset_objects, open_dataset):
         ds_all = []
         for n in ensemble_dataset_objects["nc_files_simple"]:
-            ds = xr.open_dataset(nimbus.fetch(n))
+            ds = open_dataset(n)
             ds_all.append(ds)
         ens = ensembles.create_ensemble(ds_all)
 
@@ -179,10 +179,10 @@ class TestEnsembleStats:
         assert np.all(out4["tg_mean_p90"] > out4["tg_mean_p10"])
 
     @pytest.mark.parametrize("keep_chunk_size", [False, True, None])
-    def test_calc_perc_dask(self, keep_chunk_size, ensemble_dataset_objects, nimbus):
+    def test_calc_perc_dask(self, keep_chunk_size, ensemble_dataset_objects, open_dataset):
         ds_all = []
         for n in ensemble_dataset_objects["nc_files_simple"]:
-            ds = xr.open_dataset(nimbus.fetch(n))
+            ds = open_dataset(n)
             ds_all.append(ds)
         ens = ensembles.create_ensemble(ds_all)
 
@@ -190,10 +190,10 @@ class TestEnsembleStats:
         out1 = ensembles.ensemble_percentiles(ens.load(), split=False)
         np.testing.assert_array_equal(out1["tg_mean"], out2["tg_mean"])
 
-    def test_calc_perc_nans(self, ensemble_dataset_objects, nimbus):
+    def test_calc_perc_nans(self, ensemble_dataset_objects, open_dataset):
         ds_all = []
         for n in ensemble_dataset_objects["nc_files_simple"]:
-            ds = xr.open_dataset(nimbus.fetch(n))
+            ds = open_dataset(n)
             ds_all.append(ds)
         ens = ensembles.create_ensemble(ds_all).load()
 
@@ -213,10 +213,10 @@ class TestEnsembleStats:
         assert np.all(out1["tg_mean_p90"] > out1["tg_mean_p50"])
         assert np.all(out1["tg_mean_p50"] > out1["tg_mean_p10"])
 
-    def test_calc_mean_std_min_max(self, ensemble_dataset_objects, nimbus):
+    def test_calc_mean_std_min_max(self, ensemble_dataset_objects, open_dataset):
         ds_all = []
         for n in ensemble_dataset_objects["nc_files_simple"]:
-            ds = xr.open_dataset(nimbus.fetch(n))
+            ds = open_dataset(n)
             ds_all.append(ds)
         ens = ensembles.create_ensemble(ds_all, multifile=False)
 
@@ -255,8 +255,8 @@ class TestEnsembleStats:
         np.testing.assert_array_equal(out1.tg_mean_min[0, 5, 5], out2.tg_mean_min[0, 5, 5])
 
     @pytest.mark.parametrize("aggfunc", [ensembles.ensemble_percentiles, ensembles.ensemble_mean_std_max_min])
-    def test_stats_min_members(self, ensemble_dataset_objects, aggfunc, nimbus):
-        ds_all = [xr.open_dataset(nimbus.fetch(n)) for n in ensemble_dataset_objects["nc_files_simple"]]
+    def test_stats_min_members(self, ensemble_dataset_objects, aggfunc, open_dataset):
+        ds_all = [open_dataset(n) for n in ensemble_dataset_objects["nc_files_simple"]]
         ens = ensembles.create_ensemble(ds_all).isel(lat=0, lon=0)
         ens = ens.where(ens.realization > 0)
         ens = xr.where((ens.realization == 1) & (ens.time.dt.year == 1950), np.nan, ens)
@@ -698,7 +698,7 @@ def test_robustness_fractions_delta(robust_data):
 
 
 def test_robustness_fractions_empty():
-    """Test that NaN is returned if input arrays are full of NaNs."""
+    """Test that arrays full of NaNs return appropriate values"""
     r = np.full((20, 10), np.nan)
     f = np.full((20, 10), np.nan)
 
@@ -706,7 +706,8 @@ def test_robustness_fractions_empty():
     fut = xr.DataArray(f, dims=("realization", "time"), name="tas")
 
     f = ensembles.robustness_fractions(fut, ref, test="ttest")
-    assert np.all(np.isnan(f.changed))
+    np.testing.assert_array_equal(f.changed, 0)
+    np.testing.assert_array_equal(f.valid, 0)
 
 
 def test_robustness_categories():

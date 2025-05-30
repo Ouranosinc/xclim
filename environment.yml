@@ -59,6 +59,7 @@ dependencies:
   - pytest >=8.0.0
   - pytest-cov >=5.0.0
   - pytest-socket >=0.6.0
+  - pytest-timeout >=2.4.0
   - pytest-xdist >=3.2
   - ruff >=0.9.6
   - sphinx >=8.2.0
@@ -75,3 +76,5 @@ dependencies:
   - vulture =2.14
   - xdoctest >=1.1.5
   - yamllint >=1.35.1
+  # Temporary Fixes
+  - importlib-metadata <8.7.0  # Issues with dask >=2025.5.1 on Python3.11

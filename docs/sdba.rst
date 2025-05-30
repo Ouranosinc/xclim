@@ -92,7 +92,7 @@ In theory, short wave radiation should be capped when precipitation is not zero,
 
 Usage examples
 ==============
-The usage of this module is documented in two example notebooks: `SDBA <notebooks/sdba.ipynb>`_ and `SDBA advanced <notebooks/sdba-advanced.ipynb>`_.
+The usage of this module is documented in two `xsdba notebooks <xsdba:notebooks>`_.
 
 Discussion topics
 =================
@@ -120,22 +120,3 @@ Notes for Developers
 .. note::
 
     For more information, the contributor documentation is available at the following link: :doc:`xsdba contributor guidelines <xsdba:contributing>`
-
-Developer API
-=============
-
-.. note::
-
-    For more information, the documentation is available at the following link: :doc:`xsdba modules API <xsdba:apidoc/modules>`
-
-.. only:: html or text
-
-    .. _sdba-footnotes:
-
-    SDBA Footnotes
-    ==============
-
-    .. bibliography::
-       :style: xcstyle
-       :labelprefix: SDBA-
-       :keyprefix: sdba-

@@ -10,6 +10,7 @@ from __future__ import annotations
 import operator
 import warnings
 from collections.abc import Callable, Sequence
+from typing import Literal
 
 import cftime
 import numpy as np
@@ -67,10 +68,14 @@ __all__ = [
 ]
 
 binary_ops = {">": "gt", "<": "lt", ">=": "ge", "<=": "le", "==": "eq", "!=": "ne"}
+DIFFERENCE_OPERATORS = Literal[">", "gt", "<", "lt", ">=", "ge", "<=", "le"]
+ALL_OPERATORS = Literal[">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"]
+
+REDUCTION_OPERATORS = Literal["min", "max", "mean", "std", "var", "count", "sum", "integral", "argmax", "argmin"]
 
 
 def select_resample_op(
-    da: xr.DataArray, op: str | Callable, freq: str = "YS", out_units=None, **indexer
+    da: xr.DataArray, op: REDUCTION_OPERATORS | Callable, freq: str = "YS", out_units=None, **indexer
 ) -> xr.DataArray:
     r"""
     Apply operation over each period that is part of the index selection.
@@ -79,8 +84,8 @@ def select_resample_op(
     ----------
     da : xr.DataArray
         Input data.
-    op : str {'min', 'max', 'mean', 'std', 'var', 'count', 'sum', 'integral', 'argmax', 'argmin'} or func
-        Reduce operation. Can either be a DataArray method or a function that can be applied to a DataArray.
+    op : {"min", "max", "mean", "std", "var", 'count', 'sum', 'integral', 'argmax', 'argmin'} or Callable
+        Reduce operation. It can either be a DataArray method or a function that can be applied to a DataArray.
     freq : str
         Resampling frequency defining the periods as defined in :ref:`timeseries.resampling`.
     out_units : str, optional
@@ -116,10 +121,10 @@ def select_resample_op(
 
 def select_rolling_resample_op(
     da: xr.DataArray,
-    op: str,
+    op: REDUCTION_OPERATORS | Callable,
     window: int,
     window_center: bool = True,
-    window_op: str = "mean",
+    window_op: Literal["min", "max", "mean", "std", "var", "count", "sum", "integral"] = "mean",
     freq: str = "YS",
     out_units=None,
     **indexer,
@@ -131,20 +136,20 @@ def select_rolling_resample_op(
     ----------
     da : xr.DataArray
         Input data.
-    op : str {'min', 'max', 'mean', 'std', 'var', 'count', 'sum', 'integral', 'argmax', 'argmin'} or func
+    op : {"min", "max", "mean", "std", "var", "count", "sum", "integral", "argmax", "argmin"} or Callable
         Reduce operation. Can either be a DataArray method or a function that can be applied to a DataArray.
     window : int
         Size of the rolling window (centered).
     window_center : bool
         If True, the window is centered on the date. If False, the window is right-aligned.
-    window_op : str {'min', 'max', 'mean', 'std', 'var', 'count', 'sum', 'integral'}
+    window_op : {"min", "max", "mean", "std", "var", "count", "sum", "integral"}
         Operation to apply to the rolling window. Default: 'mean'.
     freq : str
         Resampling frequency defining the periods as defined in :ref:`timeseries.resampling`.
         Applied after the rolling window.
     out_units : str, optional
         Output units to assign.
-        Only necessary if `op` is function not supported by :py:func:`xclim.core.units.to_agg_units`.
+        Only necessary if `op` is a function not supported by :py:func:`xclim.core.units.to_agg_units`.
     **indexer : {dim: indexer, }, optional
         Time attribute and values over which to subset the array. For example, use season='DJF' to select winter values,
         month=1 to select January, or month=[6,7,8] to select summer months. If not indexer is given, all values are
@@ -235,7 +240,7 @@ def default_freq(**indexer) -> str:
     return freq
 
 
-def get_op(op: str, constrain: Sequence[str] | None = None) -> Callable:
+def get_op(op: ALL_OPERATORS, constrain: Sequence[ALL_OPERATORS] | None = None) -> Callable:
     """
     Get python's comparing function according to its name of representation and validate allowed usage.
 
@@ -243,9 +248,9 @@ def get_op(op: str, constrain: Sequence[str] | None = None) -> Callable:
 
     Parameters
     ----------
-    op : str
+    op : Sequence of {">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"}
         Operator.
-    constrain : sequence of str, optional
+    constrain : sequence of {">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"}, optional
         A tuple of allowed operators.
 
     Returns
@@ -283,7 +288,7 @@ def get_op(op: str, constrain: Sequence[str] | None = None) -> Callable:
 
 def compare(
     left: xr.DataArray,
-    op: str,
+    op: ALL_OPERATORS,
     right: float | int | np.ndarray | xr.DataArray,
     constrain: Sequence[str] | None = None,
 ) -> xr.DataArray:
@@ -311,13 +316,13 @@ def compare(
 
 def threshold_count(
     da: xr.DataArray,
-    op: str,
+    op: DIFFERENCE_OPERATORS,
     threshold: float | int | xr.DataArray,
     freq: str,
     constrain: Sequence[str] | None = None,
 ) -> xr.DataArray:
     """
-    Count number of days where value is above or below threshold.
+    Count number of days where value is above or below a given threshold.
 
     Parameters
     ----------
@@ -378,7 +383,7 @@ def domain_count(
 def get_daily_events(
     da: xr.DataArray,
     threshold: float | int | xr.DataArray,
-    op: str,
+    op: ALL_OPERATORS,
     constrain: Sequence[str] | None = None,
 ) -> xr.DataArray:
     """
@@ -418,7 +423,7 @@ def spell_mask(
     data: xr.DataArray | Sequence[xr.DataArray],
     window: int,
     win_reducer: str,
-    op: str,
+    op: ALL_OPERATORS,
     thresh: float | Sequence[float],
     min_gap: int = 1,
     weights: Sequence[float] = None,
@@ -473,7 +478,7 @@ def spell_mask(
     if weights is not None:
         if win_reducer != "mean":
             raise ValueError(f"Argument 'weights' is only supported if 'win_reducer' is 'mean'. Got :  {win_reducer}")
-        elif len(weights) != window:
+        if len(weights) != window:
             raise ValueError(f"Weights have a different length ({len(weights)}) than the window ({window}).")
         weights = xr.DataArray(weights, dims=("window",))
 
@@ -500,7 +505,7 @@ def spell_mask(
     else:
         data_pad = data.pad(time=(0, window))
         # The spell-wise value to test
-        # For example "window_reducer='sum'",
+        # For example, "window_reducer='sum'",
         # we want the sum over the minimum spell length (window) to be above the thresh
         if weights is not None:
             spell_value = data_pad.rolling(time=window).construct("window").dot(weights)
@@ -526,7 +531,7 @@ def _spell_length_statistics(
     thresh: float | xr.DataArray | Sequence[xr.DataArray] | Sequence[float],
     window: int,
     win_reducer: str,
-    op: str,
+    op: ALL_OPERATORS,
     spell_reducer: str | Sequence[str],
     freq: str,
     min_gap: int = 1,
@@ -571,9 +576,9 @@ def spell_length_statistics(
     data: xr.DataArray,
     threshold: Quantified,
     window: int,
-    win_reducer: str,
-    op: str,
-    spell_reducer: str,
+    win_reducer: Literal["min", "max", "sum", "mean"],
+    op: ALL_OPERATORS,
+    spell_reducer: Literal["max", "sum", "count"] | Sequence[str],
     freq: str,
     min_gap: int = 1,
     resample_before_rl: bool = True,
@@ -598,7 +603,7 @@ def spell_length_statistics(
         Note that this does not matter when `window` is 1.
     op : {">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"}
         Logical operator. Ex: spell_value > thresh.
-    spell_reducer : {'max', 'sum', 'count'} or sequence thereof
+    spell_reducer : {'max', 'sum', 'count'} or sequence of str
         Statistic on the spell lengths. If a list, multiple statistics are computed.
     freq : str
         Resampling frequency.
@@ -674,9 +679,9 @@ def bivariate_spell_length_statistics(
     data2: xr.DataArray,
     threshold2: Quantified,
     window: int,
-    win_reducer: str,
-    op: str,
-    spell_reducer: str,
+    win_reducer: Literal["min", "max", "sum", "mean"],
+    op: ALL_OPERATORS,
+    spell_reducer: Literal["max", "sum", "count"] | Sequence[str],
     freq: str,
     min_gap: int = 1,
     resample_before_rl: bool = True,
@@ -706,7 +711,7 @@ def bivariate_spell_length_statistics(
         Note that this does not matter when `window` is 1.
     op : {">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"}
         Logical operator. Ex: spell_value > thresh.
-    spell_reducer : {'max', 'sum', 'count'} or sequence thereof
+    spell_reducer : {'max', 'sum', 'count'} or sequence of str
         Statistic on the spell lengths. If a list, multiple statistics are computed.
     freq : str
         Resampling frequency.
@@ -752,8 +757,8 @@ def season(
     data: xr.DataArray,
     thresh: Quantified,
     window: int,
-    op: str,
-    stat: str,
+    op: ALL_OPERATORS,
+    stat: Literal["start", "end", "length"],
     freq: str,
     mid_date: DayOfYearStr | None = None,
     constrain: Sequence[str] | None = None,
@@ -773,7 +778,7 @@ def season(
         Threshold on which to base evaluation.
     window : int
         Minimum number of days that the condition must be met / not met for the start / end of the season.
-    op : str
+    op : {">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"}
         Comparison operation.
     stat : {'start', 'end', 'length'}
         Which season facet to return.
@@ -844,8 +849,8 @@ def count_level_crossings(
     threshold: Quantified,
     freq: str,
     *,
-    op_low: str = "<",
-    op_high: str = ">=",
+    op_low: Literal["<", "<=", "lt", "le"] = "<",
+    op_high: Literal[">", ">=", "gt", "ge"] = ">=",
 ) -> xr.DataArray:
     """
     Calculate the number of times low_data is below threshold while high_data is above threshold.
@@ -889,7 +894,7 @@ def count_occurrences(
     data: xr.DataArray,
     threshold: Quantified,
     freq: str,
-    op: str,
+    op: ALL_OPERATORS,
     constrain: Sequence[str] | None = None,
 ) -> xr.DataArray:
     """
@@ -934,9 +939,9 @@ def bivariate_count_occurrences(
     threshold_var1: Quantified,
     threshold_var2: Quantified,
     freq: str,
-    op_var1: str,
-    op_var2: str,
-    var_reducer: str,
+    op_var1: ALL_OPERATORS,
+    op_var2: ALL_OPERATORS,
+    var_reducer: Literal["all", "any"],
     constrain_var1: Sequence[str] | None = None,
     constrain_var2: Sequence[str] | None = None,
 ) -> xr.DataArray:
@@ -1000,7 +1005,9 @@ def bivariate_count_occurrences(
     return to_agg_units(out, data_var1, "count", dim="time")
 
 
-def diurnal_temperature_range(low_data: xr.DataArray, high_data: xr.DataArray, reducer: str, freq: str) -> xr.DataArray:
+def diurnal_temperature_range(
+    low_data: xr.DataArray, high_data: xr.DataArray, reducer: Literal["max", "min", "mean", "sum"], freq: str
+) -> xr.DataArray:
     """
     Calculate the diurnal temperature range and reduce according to a statistic.
 
@@ -1035,7 +1042,7 @@ def first_occurrence(
     data: xr.DataArray,
     threshold: Quantified,
     freq: str,
-    op: str,
+    op: ALL_OPERATORS,
     constrain: Sequence[str] | None = None,
 ) -> xr.DataArray:
     """
@@ -1072,7 +1079,7 @@ def first_occurrence(
         "time",
         freq,
         rl.first_run,
-        map_kwargs=dict(window=1, dim="time", coord="dayofyear"),
+        map_kwargs={"window": 1, "dim": "time", "coord": "dayofyear"},
     )
     out.attrs["units"] = ""
     return out
@@ -1083,7 +1090,7 @@ def last_occurrence(
     data: xr.DataArray,
     threshold: Quantified,
     freq: str,
-    op: str,
+    op: ALL_OPERATORS,
     constrain: Sequence[str] | None = None,
 ) -> xr.DataArray:
     """
@@ -1120,14 +1127,20 @@ def last_occurrence(
         "time",
         freq,
         rl.last_run,
-        map_kwargs=dict(window=1, dim="time", coord="dayofyear"),
+        map_kwargs={"window": 1, "dim": "time", "coord": "dayofyear"},
     )
     out.attrs["units"] = ""
     return out
 
 
 @declare_relative_units(threshold="<data>")
-def spell_length(data: xr.DataArray, threshold: Quantified, reducer: str, freq: str, op: str) -> xr.DataArray:
+def spell_length(
+    data: xr.DataArray,
+    threshold: Quantified,
+    reducer: Literal["max", "min", "mean", "sum"],
+    freq: str,
+    op: ALL_OPERATORS,
+) -> xr.DataArray:
     """
     Calculate statistics on lengths of spells.
 
@@ -1166,12 +1179,12 @@ def spell_length(data: xr.DataArray, threshold: Quantified, reducer: str, freq: 
         "time",
         freq,
         rl.rle_statistics,
-        map_kwargs=dict(reducer=reducer, window=1, dim="time"),
+        map_kwargs={"reducer": reducer, "window": 1, "dim": "time"},
     )
     return to_agg_units(out, data, "count")
 
 
-def statistics(data: xr.DataArray, reducer: str, freq: str) -> xr.DataArray:
+def statistics(data: xr.DataArray, reducer: Literal["max", "min", "mean", "sum"], freq: str) -> xr.DataArray:
     """
     Calculate a simple statistic of the data.
 
@@ -1197,9 +1210,9 @@ def statistics(data: xr.DataArray, reducer: str, freq: str) -> xr.DataArray:
 @declare_relative_units(threshold="<data>")
 def thresholded_statistics(
     data: xr.DataArray,
-    op: str,
+    op: ALL_OPERATORS,
     threshold: Quantified,
-    reducer: str,
+    reducer: Literal["max", "min", "mean", "sum"],
     freq: str,
     constrain: Sequence[str] | None = None,
 ) -> xr.DataArray:
@@ -1240,7 +1253,7 @@ def thresholded_statistics(
 
 
 @declare_relative_units(threshold="<data>")
-def temperature_sum(data: xr.DataArray, op: str, threshold: Quantified, freq: str) -> xr.DataArray:
+def temperature_sum(data: xr.DataArray, op: DIFFERENCE_OPERATORS, threshold: Quantified, freq: str) -> xr.DataArray:
     """
     Calculate the temperature sum above/below a threshold.
 
@@ -1337,7 +1350,7 @@ def aggregate_between_dates(
     data: xr.DataArray,
     start: xr.DataArray | DayOfYearStr,
     end: xr.DataArray | DayOfYearStr,
-    op: str = "sum",
+    op: Literal["min", "max", "sum", "mean", "std"] = "sum",
     freq: str | None = None,
 ) -> xr.DataArray:
     """
@@ -1431,7 +1444,9 @@ def aggregate_between_dates(
 
 
 @declare_relative_units(threshold="<data>")
-def cumulative_difference(data: xr.DataArray, threshold: Quantified, op: str, freq: str | None = None) -> xr.DataArray:
+def cumulative_difference(
+    data: xr.DataArray, threshold: Quantified, op: DIFFERENCE_OPERATORS, freq: str | None = None
+) -> xr.DataArray:
     """
     Calculate the cumulative difference below/above a given value threshold.
 
@@ -1474,7 +1489,7 @@ def first_day_threshold_reached(
     data: xr.DataArray,
     *,
     threshold: Quantified,
-    op: str,
+    op: ALL_OPERATORS,
     after_date: DayOfYearStr,
     window: int = 1,
     freq: str = "YS",
@@ -1519,7 +1534,7 @@ def first_day_threshold_reached(
         "time",
         freq,
         rl.first_run_after_date,
-        map_kwargs=dict(window=window, date=after_date, dim="time", coord="dayofyear"),
+        map_kwargs={"window": window, "date": after_date, "dim": "time", "coord": "dayofyear"},
     )
     out.attrs.update(units="", is_dayofyear=np.int32(1), calendar=get_calendar(data))
     return out
@@ -1657,10 +1672,10 @@ def detrend(ds: xr.DataArray | xr.Dataset, dim="time", deg=1) -> xr.DataArray | 
 def thresholded_events(
     data: xr.DataArray,
     thresh: Quantified,
-    op: str,
+    op: ALL_OPERATORS,
     window: int,
     thresh_stop: Quantified | None = None,
-    op_stop: str | None = None,
+    op_stop: ALL_OPERATORS | None = None,
     window_stop: int = 1,
     freq: str | None = None,
 ) -> xr.Dataset:

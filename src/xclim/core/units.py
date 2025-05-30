@@ -30,6 +30,11 @@ from xclim.core.calendar import get_calendar, parse_offset
 from xclim.core.options import datacheck
 from xclim.core.utils import InputKind, infer_kind_from_parameter
 
+try:
+    from xarray import DataTree
+except ImportError:
+    DataTree = False
+
 logging.getLogger("pint").setLevel(logging.ERROR)
 
 __all__ = [
@@ -326,10 +331,10 @@ def str2pint(val: str) -> pint.Quantity:
 
 # FIXME: The typing here is difficult to determine, as Generics cannot be used to track the type of the output.
 def convert_units_to(  # noqa: C901
-    source: Quantified,
+    source: Quantified | xr.Dataset | DataTree,
     target: Quantified | units.Unit | dict,
     context: Literal["infer", "hydro", "none"] | None = None,
-) -> xr.DataArray | float:
+) -> xr.DataArray | float | xr.Dataset:
     """
     Convert a mathematical expression into a value with the same units as a DataArray.
 
@@ -338,10 +343,13 @@ def convert_units_to(  # noqa: C901
 
     Parameters
     ----------
-    source : str or xr.DataArray or units.Quantity
+    source : str or xr.DataArray or units.Quantity or xr.Dataset or xr.DataTree
         The value to be converted, e.g. '4C' or '1 mm/d'.
+        If a Dataset, `target` must also be a mapping from variable name to target units.
+        If a DataTree, this function will be applied over nodes with :py:func:`xarray.DataTree.map_over_datasets`.
     target : str or xr.DataArray or units.Quantity or units.Unit or dict
         Target array of values to which units must conform.
+        If `source` is a Dataset, it must be mapping from variable name to target units.
     context : {"infer", "hydro", "none"}, optional
         The unit definition context. Default: None.
         If "infer", it will be inferred with :py:func:`xclim.core.units.infer_context` using
@@ -350,7 +358,7 @@ def convert_units_to(  # noqa: C901
 
     Returns
     -------
-    xr.DataArray or float
+    xr.DataArray or float or xr.Dataset
         The source value converted to target's units.
         The outputted type is always similar to `source` initial type.
         Attributes are preserved unless an automatic CF conversion is performed,
@@ -364,6 +372,11 @@ def convert_units_to(  # noqa: C901
     amount2lwethickness : Convert an amount to a liquid water equivalent thickness.
     lwethickness2amount : Convert a liquid water equivalent thickness to an amount.
     """
+    if DataTree and isinstance(source, DataTree):
+        return source.map_over_datasets(convert_units_to, target, kwargs={"context": context})
+    if isinstance(source, xr.Dataset):
+        return source.assign({var: convert_units_to(source[var], tgt, context=context) for var, tgt in target.items()})
+
     context = context or "none"
 
     # Target units
@@ -602,7 +615,12 @@ def ensure_delta(unit: xr.DataArray | str | units.Quantity) -> str:
     return delta_unit
 
 
-def to_agg_units(out: xr.DataArray, orig: xr.DataArray, op: str, dim: str = "time") -> xr.DataArray:
+def to_agg_units(
+    out: xr.DataArray,
+    orig: xr.DataArray,
+    op: Literal["min", "max", "mean", "std", "var", "doymin", "doymax", "count", "integral", "sum"],
+    dim: str = "time",
+) -> xr.DataArray:
     """
     Set and convert units of an array after an aggregation operation along the sampling dimension (time).
 
@@ -613,7 +631,7 @@ def to_agg_units(out: xr.DataArray, orig: xr.DataArray, op: str, dim: str = "tim
     orig : xr.DataArray
         The original array before the aggregation operation,
         used to infer the sampling units and get the variable units.
-    op : {'min', 'max', 'mean', 'std', 'var', 'doymin', 'doymax',  'count', 'integral', 'sum'}
+    op : {'min', 'max', 'mean', 'std', 'var', 'doymin', 'doymax', 'count', 'integral', 'sum'}
         The type of aggregation operation performed. "integral" is mathematically equivalent to "sum",
         but the units are multiplied by the timestep of the data (requires an inferrable frequency).
     dim : str

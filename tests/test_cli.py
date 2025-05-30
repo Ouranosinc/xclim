@@ -97,9 +97,9 @@ def test_normal_computation(tasmin_series, tasmax_series, pr_series, tmp_path, i
     assert "Processing :" in results.output
     assert "100% Completed" in results.output
 
-    out = xr.open_dataset(output_file)
-    outvar = list(out.data_vars.values())[0]
-    np.testing.assert_allclose(outvar[0], expected)
+    with xr.open_dataset(output_file) as out:
+        outvar = list(out.data_vars.values())[0]
+        np.testing.assert_allclose(outvar[0], expected)
 
 
 def test_multi_input(tas_series, pr_series, tmp_path):
@@ -126,15 +126,15 @@ def test_multi_input(tas_series, pr_series, tmp_path):
     )
     assert "Processing : solidprcptot" in results.output
 
-    out = xr.open_dataset(output_file)
-    assert out.solidprcptot.sum() == 0
+    with xr.open_dataset(output_file) as out:
+        assert out.solidprcptot.sum() == 0
 
 
-def test_multi_output(tmp_path, nimbus):
-    ds = xr.open_dataset(nimbus.fetch("ERA5/daily_surface_cancities_1990-1993.nc"))
+def test_multi_output(tmp_path, open_dataset):
     input_file = tmp_path / "ws_in.nc"
     output_file = tmp_path / "out.nc"
-    ds.to_netcdf(input_file, engine="h5netcdf")
+    with open_dataset("ERA5/daily_surface_cancities_1990-1993.nc") as ds:
+        ds.to_netcdf(input_file, engine="h5netcdf")
 
     runner = CliRunner()
     results = runner.invoke(
@@ -175,8 +175,8 @@ def test_renaming_variable(tas_series, tmp_path):
         assert "Processing : tn_mean" in results.output
         assert "100% Completed" in results.output
 
-    out = xr.open_dataset(output_file)
-    assert out.tn_mean[0] == 1.0
+    with xr.open_dataset(output_file) as out:
+        assert out.tn_mean[0] == 1.0
 
 
 def test_indicator_chain(tas_series, tmp_path):
@@ -204,9 +204,9 @@ def test_indicator_chain(tas_series, tmp_path):
     assert "Processing : growing_degree_days" in results.output
     assert "100% Completed" in results.output
 
-    out = xr.open_dataset(output_file)
-    assert out.tg_mean[0] == 1.0
-    assert out.growing_degree_days[0] == 0
+    with xr.open_dataset(output_file) as out:
+        assert out.tg_mean[0] == 1.0
+        assert out.growing_degree_days[0] == 0
 
 
 def test_missing_variable(tas_series, tmp_path):

@@ -202,7 +202,7 @@ def ensemble_mean_std_max_min(
             if "description" in ds_out[vv].attrs.keys():
                 vv.split()
                 ds_out[vv].attrs["description"] = (
-                    ds_out[vv].attrs["description"] + " : " + vv.split("_")[-1] + " of ensemble"
+                    ds_out[vv].attrs["description"] + " : " + vv.split("_", maxsplit=1)[-1] + " of ensemble"
                 )
 
     ds_out.attrs["history"] = update_history(
@@ -402,6 +402,8 @@ def _ens_align_datasets(
         the align_on='date' option is used.
         See :py:func:`xclim.core.calendar.convert_calendar`.
         'default' is the standard calendar using np.datetime64 objects.
+    cal_kwargs : dict, optional
+        Any keyword to be given to used when setting calendar options.
     **xr_kwargs : dict
         Any keyword arguments to be given to xarray when opening the files.
 

@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import numpy as np
 import pytest
-import xarray as xr
 
 from xclim.core.calendar import percentile_doy
 from xclim.indices import (
@@ -114,16 +113,16 @@ class Test_bootstrap:
             tg10p(tas_out_base, per, freq="MS", bootstrap=True)
 
     @pytest.mark.slow
-    def test_multi_per(self, nimbus):
-        tas = xr.open_dataset(nimbus.fetch("ERA5/daily_surface_cancities_1990-1993.nc")).tas
+    def test_multi_per(self, open_dataset):
+        tas = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc").tas
         t90 = percentile_doy(tas.sel(time=slice("1990-01-01", "1991-12-31")), window=5, per=[90, 91])
         res = tg90p(tas=tas, tas_per=t90, freq="YS", bootstrap=True)
         np.testing.assert_array_equal([90, 91], res.percentiles)
 
     @pytest.mark.slow
-    def test_doctest_ndims(self, nimbus):
+    def test_doctest_ndims(self, open_dataset):
         """Replicates doctest to facilitate debugging."""
-        tas = xr.open_dataset(nimbus.fetch("ERA5/daily_surface_cancities_1990-1993.nc")).tas
+        tas = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc").tas
         t90 = percentile_doy(tas.sel(time=slice("1990-01-01", "1991-12-31")), window=5, per=90)
         tg90p(tas=tas, tas_per=t90.isel(percentiles=0), freq="YS", bootstrap=True)
         tg90p(tas=tas, tas_per=t90, freq="YS", bootstrap=True)

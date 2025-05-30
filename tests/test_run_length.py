@@ -80,6 +80,16 @@ class TestSuspiciousRun:
         sus = rl.suspicious_run(da)
         assert sus.all()
 
+    def test_empty(self):
+        da = xr.DataArray(np.array([[1, 0], [0, 1]]), dims={"time": 2, "loc": 2})
+        da = da.isel(time=slice(None, 0))
+        rlength = rl.rle(da)
+        assert da.size == rlength.size == 0
+
+    def test_all_nan(self):
+        da = xr.DataArray(np.full(365, np.nan), dims=["time"])
+        assert (rl.rle(da) == 0).all()
+
 
 @pytest.fixture(scope="module", params=[True, False], autouse=True)
 def ufunc(request):
@@ -134,7 +144,7 @@ def test_runs_with_holes_identity(use_dask, index):
 
     events = rl.runs_with_holes(da != 0, 1, da == 0, 1)
     expected = da
-    np.testing.assert_array_equal(events, expected)
+    xr.testing.assert_equal(events, expected, check_dim_order=False)
 
 
 def test_runs_with_holes():
@@ -283,10 +293,10 @@ class TestFirstRun:
         i = rl.first_run(a, 5, dim="x")
         assert 10 == i
 
-    def test_real_data(self, nimbus):
+    def test_real_data(self, open_dataset):
         # FIXME: No test here?!
         # n-dim version versus ufunc
-        da3d = xr.open_dataset(nimbus.fetch(self.nc_pr), engine="h5netcdf").pr[:, 40:50, 50:68] != 0
+        da3d = open_dataset(self.nc_pr, engine="h5netcdf").pr[:, 40:50, 50:68] != 0
         da3d.resample(time="ME").map(rl.first_run, window=5)
 
     @pytest.mark.parametrize(
@@ -411,8 +421,8 @@ def test_run_bounds_synthetic():
     np.testing.assert_array_equal(bounds, [[1, 6], [4, 9]])
 
 
-def test_run_bounds_data(nimbus):
-    era5 = xr.open_dataset(nimbus.fetch("ERA5/daily_surface_cancities_1990-1993.nc"), engine="h5netcdf")
+def test_run_bounds_data(open_dataset):
+    era5 = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc")
     cond = era5.tas.rolling(time=7).mean() > 285
 
     bounds = rl.run_bounds(cond, "time")  # def coord = True
@@ -432,8 +442,8 @@ def test_keep_longest_run_synthetic():
     np.testing.assert_array_equal(lrun, np.array([0, 1, 1, 1, 0, 0, 0, 0, 0, 0], dtype=bool))
 
 
-def test_keep_longest_run_data(nimbus):
-    era5 = xr.open_dataset(nimbus.fetch("ERA5/daily_surface_cancities_1990-1993.nc"), engine="h5netcdf")
+def test_keep_longest_run_data(open_dataset):
+    era5 = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc")
     cond = era5.swe > 0.002
     lrun = rl.keep_longest_run(cond, "time")
     np.testing.assert_array_equal(
@@ -666,3 +676,34 @@ def test_season(use_dask, tas_series, ufunc):
     np.testing.assert_array_equal(out.start.load(), [140, 140])
     np.testing.assert_array_equal(out.end.load(), [150, 150])
     np.testing.assert_array_equal(out.length.load(), [10, 10])
+
+
+# This test doesn't depend on any "ufunc" method.
+# We cheat and use the module-wide fixture as a parametrization of use_cftime
+@pytest.mark.parametrize("use_dask", [True, False])
+def test_find_events(use_dask, ufunc):
+    cond = np.array(
+        [
+            [0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0],  # Normal
+            [0, 0, 1, 1, 0, 0, 1, 1, 1, 1, 0],  # Two events, one short, one long
+            [0, 1, 1, 1, 1, 0, 0, 1, 0, 0, 0],  # Two, one long one short
+        ]
+    )
+    cond = xr.DataArray(
+        cond == 1,
+        dims=("lat", "time"),
+        coords={"time": xr.date_range("1960", periods=cond.shape[1], freq="MS", use_cftime=ufunc), "lat": [0, 1, 2]},
+    )
+    if use_dask:
+        cond = cond.chunk(lat=1)
+
+    # Test 1 : window 1, stop == start, no freq
+    events = rl.find_events(cond, 1)
+    exp = [[4, np.nan], [2, 4], [4, 1]]
+    np.testing.assert_equal(events.event_length, np.pad(exp, [(0, 0), (0, 4)], constant_values=np.nan))
+    np.testing.assert_equal(events.event_start.isel(event=0), cond.time.values[[3, 2, 1]])
+
+    # Test 2 : win start 2, win stop 3, no freq
+    events = rl.find_events(cond, window=2, window_stop=3)
+    exp = [[4.0], [9.0], [7.0]]
+    np.testing.assert_equal(events.event_length, np.pad(exp, [(0, 0), (0, 2)], constant_values=np.nan))
