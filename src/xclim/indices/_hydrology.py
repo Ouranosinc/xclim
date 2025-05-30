@@ -655,7 +655,7 @@ def antecedent_precipitation_index(pr: xarray.DataArray, window: int = 7, p_exp:
     """
     Antecedent Precipitation Index.
 
-    Calculate the weighted sum of daily precipitation values given a window and weighting exponent.
+    Calculate the running weighted sum of daily precipitation values given a window and weighting exponent.
     This index serves as an indicator for soil moisture.
 
     Parameters
