@@ -662,9 +662,9 @@ def antecedent_precipitation_index(pr: xarray.DataArray, window: int = 7, p_exp:
     ----------
     pr : xarray.DataArray
         Daily precipitation data.
-    window : int, optional
+    window : int
         Window for the days of precipitation data to be weighted and summed, default is 7.
-    p_exp : float, optional
+    p_exp : float
         Weighting exponent, default is 0.935.
 
     Returns
