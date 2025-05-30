@@ -684,7 +684,5 @@ def antecedent_precipitation_index(pr: xarray.DataArray, window: int = 7, p_exp:
     )
     # apply the weights to input data
     out = pr.rolling(time=window).construct("window_dim").dot(weights)
-    out.attrs["window"] = window
-    out.attrs["p_exp"] = p_exp
-    out.attrs["units"] = "mm day-1"
+    out.attrs["units"] = "mm"
     return out
