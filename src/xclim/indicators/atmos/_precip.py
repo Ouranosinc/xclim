@@ -822,7 +822,8 @@ antecedent_precipitation_index = Daily(
     realm="atmos",
     units="mm",
     long_name="Antecedent Precipitation Index",
-    description="Weighted moving sum of daily precipitation totals with a {window}-day window. Weights are an exponential decay of base {weights}.",
+    description="Weighted moving sum of daily precipitation totals with a {window}-day window. Weights are an "
+    "exponential decay of base {weights}.",
     cell_methods="time: sum over days",
     compute=indices.antecedent_precipitation_index,
 )
