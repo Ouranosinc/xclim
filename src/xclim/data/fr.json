@@ -1477,9 +1477,9 @@
     "abstract": "la somme de la précipitation et de l'évapotranspiration."
   },
   "ANTECEDENT_PRECIPITATION_INDEX": {
-    "title": "Antecedent Precipitation Index. # TODO:",
-    "long_name": "# TODO:",
-    "description": "# TODO:",
-    "abstract": "# TODO:"
+    "title": "Indice de précipitations antécédentes",
+    "long_name": "Indice de précipitations antécédentes",
+    "description": "Calculer la somme pondérée des valeurs de précipitations quotidiennes pour une fenêtre ({window}) et un exposant de pondération ({p_exp}).",
+    "abstract": "Calcul de la somme pondérée des précipitations quotiediennes sur la base d'une fenêtre et d'un exposant de pondération."
   }
 }
