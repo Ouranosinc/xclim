@@ -831,7 +831,7 @@ antecedent_precipitation_index = DailyPrecipNoResample(
     units="mm",
     long_name="Antecedent Precipitation Index",
     description="Weighted moving sum of daily precipitation totals with a {window}-day window. Weights are an "
-    "exponential decay of base {weights}.",
+    "exponential decay of base {p_exp}}.",
     cell_methods="time: sum over days",
     compute=indices.antecedent_precipitation_index,
 )
