@@ -188,3 +188,18 @@ class TestAntecedentPrecipitationIndex:
         window = 7
         out = xci.antecedent_precipitation_index(pr, window=window, p_exp=0.935)
         np.testing.assert_array_equal(out[: window - 1], [np.nan for _ in range(window - 1)])
+
+    def test_manual_calc(self, pr_series):
+        a = np.ones(10) * 10
+        pr = pr_series(a)
+        window = 7
+        p_exp = 0.935
+        out = xci.antecedent_precipitation_index(pr, window=window, p_exp=p_exp)
+
+        out_manual = np.zeros(out.shape) * np.nan
+        for idx in range(pr.shape[0] - window + 1):
+            idxend = window + idx
+            weights = list(reversed([p_exp ** (ii + 1 - 1) for ii in range(window)]))
+            weighted_sum = (pr[idx:idxend] * weights).sum()
+            out_manual[idxend - 1] = weighted_sum
+        np.testing.assert_array_equal([round(x, 7) for x in out.values], [round(x, 7) for x in out_manual])
