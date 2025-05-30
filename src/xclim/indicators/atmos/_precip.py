@@ -123,6 +123,14 @@ class HrPrecip(Hourly):
     keywords = "precipitation"
 
 
+class DailyPrecipNoResample(Indicator):
+    """Non-resampling indicators acting on daily precipitation data."""
+
+    src_freq = "D"
+    context = "hydro"
+    keywords = "precipitation"
+
+
 rain_on_frozen_ground_days = PrTasxWithIndexing(
     title="Number of rain on frozen ground days",
     identifier="rain_frzgr",
@@ -817,7 +825,7 @@ water_cycle_intensity = PrecipWithIndexing(
     compute=indices.water_cycle_intensity,
 )
 
-antecedent_precipitation_index = Daily(
+antecedent_precipitation_index = DailyPrecipNoResample(
     identifier="api",
     realm="atmos",
     units="mm",
