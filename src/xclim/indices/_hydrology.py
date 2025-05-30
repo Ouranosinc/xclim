@@ -9,7 +9,7 @@ from scipy.stats import rv_continuous
 from xclim.core._types import DateStr, Quantified
 from xclim.core.calendar import get_calendar
 from xclim.core.missing import at_least_n_valid
-from xclim.core.units import declare_units, rate2amount, to_agg_units
+from xclim.core.units import declare_units, rate2amount, to_agg_units, convert_units_to
 from xclim.indices.generic import threshold_count
 from xclim.indices.stats import standardized_index
 
@@ -676,8 +676,8 @@ def antecedent_precipitation_index(pr: xarray.DataArray, window: int = 7, p_exp:
     ----------
     :cite:cts:`schroter2015,li2021`
     """
-    pr = xc.core.units.rate2amount(pr)
-    pr = xc.core.units.convert_units_to(pr, "mm", context="hydro")
+    pr = rate2amount(pr)
+    pr = convert_units_to(pr, "mm", context="hydro")
     weights = xarray.DataArray(
         list(reversed([p_exp ** (idx - 1) for idx in range(1, window + 1)])),
         dims="window_dim",
