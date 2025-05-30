@@ -16,6 +16,7 @@ from xclim.core.indicator import (
 from xclim.core.utils import InputKind
 
 __all__ = [
+    "antecedent_precipitation_index",
     "cffwis_indices",
     "cold_and_dry_days",
     "cold_and_wet_days",
@@ -814,4 +815,16 @@ water_cycle_intensity = PrecipWithIndexing(
     abstract="The sum of precipitation and actual evapotranspiration.",
     cell_methods="time: sum over days",
     compute=indices.water_cycle_intensity,
+)
+
+antecedent_precipitation_index = Indicator(
+    title="Antecedent Precipitation Index",
+    identifier="antecedent_precipitation_index",
+    realm="atmos",
+    units="mm",
+    long_name="Antecedent Precipitation Index",
+    description="The Antecedent Precipitation Index, defined as running weighted sum of daily precipitation totals.",
+    abstract="The running sum of weighted, daily precipitation.",
+    cell_methods="time: running weighted sum over days",
+    compute=indices.antecedent_precipitation_index,
 )

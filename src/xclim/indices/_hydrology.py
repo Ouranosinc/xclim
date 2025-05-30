@@ -16,6 +16,7 @@ from xclim.indices.stats import standardized_index
 from . import generic
 
 __all__ = [
+    "antecedent_precipitation_index",
     "base_flow_index",
     "flow_index",
     "high_flow_frequency",
@@ -647,3 +648,43 @@ def low_flow_frequency(q: xarray.DataArray, threshold_factor: float = 0.2, freq:
     threshold = threshold_factor * mean_flow
     out = threshold_count(q, "<", threshold, freq=freq)
     return to_agg_units(out, q, "count")
+
+
+@declare_units(pr="[precipitation]")
+def antecedent_precipitation_index(pr: xarray.DataArray, window: int = 7, p_exp: float = 0.935) -> xarray.DataArray:
+    """
+    Antecedent Precipitation Index.
+
+    Calculate the weighted sum of daily precipitation values given a window and weighting exponent.
+    This index serves as an indicator for soil moisture.
+
+    Parameters
+    ----------
+    pr : xarray.DataArray
+        Daily precipitation data.
+    window : int, optional
+        Window for the days of precipitation data to be weighted and summed, default is 7.
+    p_exp : float, optional
+        Weighting exponent, default is 0.935.
+
+    Returns
+    -------
+    xarray.DataArray
+        Antecedent Precipitation Index.
+
+    References
+    ----------
+    :cite:cts:`schroter2015,li2021`
+    """
+    # TODO: ensure precip is mm
+    # construct a xr.DataArray containing the weights
+    weights = xarray.DataArray(
+        list(reversed([p_exp ** (idx - 1) for idx in range(1, window + 1)])),
+        dims="window_dim",
+    )
+    # apply the weights to input data
+    out = pr.rolling(time=window).construct("window_dim").dot(weights)
+    out.attrs["window"] = window
+    out.attrs["p_exp"] = p_exp
+    out.attrs["units"] = "mm day-1"
+    return out
