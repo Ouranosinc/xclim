@@ -16,6 +16,7 @@ from xclim.core.indicator import (
 from xclim.core.utils import InputKind
 
 __all__ = [
+    "antecedent_precipitation_index",
     "cffwis_indices",
     "cold_and_dry_days",
     "cold_and_wet_days",
@@ -118,6 +119,14 @@ class PrTasxWithIndexing(ResamplingIndicatorWithIndexing):
 class HrPrecip(Hourly):
     """Indicator involving hourly pr series."""
 
+    context = "hydro"
+    keywords = "precipitation"
+
+
+class DailyPrecipNoResample(Indicator):
+    """Non-resampling indicators acting on daily precipitation data."""
+
+    src_freq = "D"
     context = "hydro"
     keywords = "precipitation"
 
@@ -814,4 +823,15 @@ water_cycle_intensity = PrecipWithIndexing(
     abstract="The sum of precipitation and actual evapotranspiration.",
     cell_methods="time: sum over days",
     compute=indices.water_cycle_intensity,
+)
+
+antecedent_precipitation_index = DailyPrecipNoResample(
+    identifier="api",
+    realm="atmos",
+    units="mm",
+    long_name="Antecedent Precipitation Index",
+    description="Weighted moving sum of daily precipitation totals with a {window}-day window. Weights are an "
+    "exponential decay of base {p_exp}.",
+    cell_methods="time: sum over days",
+    compute=indices.antecedent_precipitation_index,
 )

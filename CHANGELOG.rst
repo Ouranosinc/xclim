@@ -2,6 +2,14 @@
 Changelog
 =========
 
+v0.58.0 (unreleased)
+--------------------
+Contributors to this version: Sebastian Lehner (:user:`seblehner`).
+
+New indicators
+^^^^^^^^^^^^^^
+* New indicator ``xclim.atmos.antecedent_precipitation_index`` computes the `antecedent_precipitation_index` (weighted summation of daily precipitation amounts for a given window). (:issue:`2166`, :pull:`2184`).
+
 v0.57.0 (2025-05-22)
 --------------------
 Contributors to this version: Éric Dupuis (:user:`coxipi`), Trevor James Smith (:user:`Zeitsperre`), Juliette Lavoie (:user:`juliettelavoie`), Pascal Bourgault (:user:`aulemahal`), Armin Hofmann (:user:`HofmannGeo`), Baptiste Hamon (:user:`baptistehamon`).
