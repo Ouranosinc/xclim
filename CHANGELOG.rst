@@ -12,7 +12,7 @@ New indicators
 
 Internal changes
 ^^^^^^^^^^^^^^^^
-* Modified internal logic for ``xclim.testing.utils.default_testdata_cache`` to support mocking of `pooch`.
+* Modified internal logic for ``xclim.testing.utils.default_testdata_cache`` to support mocking of `pooch`. (:pull:`2188`).
 
 v0.57.0 (2025-05-22)
 --------------------
