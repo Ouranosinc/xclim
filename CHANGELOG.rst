@@ -4,11 +4,15 @@ Changelog
 
 v0.58.0 (unreleased)
 --------------------
-Contributors to this version: Sebastian Lehner (:user:`seblehner`).
+Contributors to this version: Sebastian Lehner (:user:`seblehner`), Trevor James Smith (:user:`Zeitsperre`).
 
 New indicators
 ^^^^^^^^^^^^^^
 * New indicator ``xclim.atmos.antecedent_precipitation_index`` computes the `antecedent_precipitation_index` (weighted summation of daily precipitation amounts for a given window). (:issue:`2166`, :pull:`2184`).
+
+Internal changes
+^^^^^^^^^^^^^^^^
+* Modified internal logic for ``xclim.testing.utils.default_testdata_cache`` to support mocking of `pooch`.
 
 v0.57.0 (2025-05-22)
 --------------------

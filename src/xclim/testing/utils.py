@@ -78,7 +78,7 @@ default_testdata_repo_url = "https://raw.githubusercontent.com/Ouranosinc/xclim-
 try:
     default_testdata_cache = Path(pooch.os_cache("xclim-testdata"))
     """Default location for the testing data cache."""
-except AttributeError:
+except (AttributeError, TypeError):
     default_testdata_cache = None
 
 TESTDATA_REPO_URL = str(os.getenv("XCLIM_TESTDATA_REPO_URL", default_testdata_repo_url))
