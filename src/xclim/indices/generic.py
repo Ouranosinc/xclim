@@ -870,8 +870,7 @@ def season_length_from_boundaries(season_start: xr.DataArray, season_end: xr.Dat
     should be in the same year as `season_start` or one year later.
     """
     if (
-        season_start.time.dt.year == season_end.time.dt.year
-        or season_start.time.dt.year == season_end.time.dt.year - 1
+        season_start.time.size == season_end.time.size
         or 0 <= (season_end.time[0] - season_start.time[0]).astype("timedelta64[s]") < 365 * 24 * 60 * 60
     ) is False:
         raise ValueError(
