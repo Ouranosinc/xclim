@@ -885,7 +885,6 @@ def season_length_from_boundaries(season_start: xr.DataArray, season_end: xr.Dat
     # but now we will express the season_length using the times of season_start
     doy_end["time"] = doy_start.time
     out = (days_since_end + doy_end - doy_start) - days_since_start
-    out.attrs = season_start.attrs
     out.attrs.update(units="days")
     return out
 
