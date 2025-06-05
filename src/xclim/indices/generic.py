@@ -870,12 +870,14 @@ def season_length_from_boundaries(season_start: xr.DataArray, season_end: xr.Dat
     should be in the same year as `season_start` or one year later.
     """
     if (
-        season_start.time.dt.year != season_end.time.dt.year
-        and season_start.time.dt.year != season_end.time.dt.year - 1
-    ):
+        season_start.time.dt.year == season_end.time.dt.year
+        or season_start.time.dt.year == season_end.time.dt.year - 1
+        or 0 <= (season_end.time[0] - season_start.time[0]).astype("timedelta64[s]") < 365 * 24 * 60 * 60
+    ) is False:
         raise ValueError(
-            "`season_start` and `season_end` should have the same length, and `season_end` should be "
-            "in the same year as `season_start` or one year later."
+            "`season_start` and `season_end` should have the same length, and `season_end`'s"
+            "times coordinates should start with the time coordinates of `season_start`, "
+            "or after, within a year."
         )
 
     freq_start = xr.infer_freq(season_start.time)
