@@ -4,11 +4,13 @@ Changelog
 
 v0.58.0 (unreleased)
 --------------------
-Contributors to this version: Sebastian Lehner (:user:`seblehner`), Trevor James Smith (:user:`Zeitsperre`).
+Contributors to this version: Sebastian Lehner (:user:`seblehner`), Trevor James Smith (:user:`Zeitsperre`) and Pascal Bourgault (:user:`aulemahal`).
 
-New indicators
-^^^^^^^^^^^^^^
+New indicators and features
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
 * New indicator ``xclim.atmos.antecedent_precipitation_index`` computes the `antecedent_precipitation_index` (weighted summation of daily precipitation amounts for a given window). (:issue:`2166`, :pull:`2184`).
+* Argument ``indexer`` added to indicators ``max_n_day_precipitation_amount``, ``max_pr_intensity``, and ``blowing_snow``. (:issue:`2187`, :pull:`2190`).
+* Argument ``window`` added to indicator ``rain_on_frozen_ground_days``. (:pull:`2190`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^

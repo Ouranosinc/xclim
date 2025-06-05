@@ -436,6 +436,14 @@ class TestFrostDays:
         assert np.isnan(fd.values[0, -1, -1])
         # assert (np.isnan(fds.values[0, -1, -1]))
 
+    def test_indexing(self, open_dataset):
+        tasmin = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc").tasmin
+        fd1 = atmos.frost_days(tasmin, freq="YS")
+        fd2 = atmos.frost_days(tasmin, freq="YS", date_bounds=["09-01", "12-31"])
+
+        assert np.testing.assert_array_equal(fd1.isel(location=0), [90, 99, 114, 100])
+        assert np.testing.assert_array_equal(fd2.isel(location=0), [18, 23, 24, 17])
+
 
 class TestIceDays:
     nc_file = "NRCANdaily/nrcan_canada_daily_tasmax_1990.nc"

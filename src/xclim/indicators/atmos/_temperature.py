@@ -907,7 +907,7 @@ freshet_start = Temp(
     parameters={"thresh": {"default": "0 degC"}, "window": {"default": 5}},
 )
 
-frost_days = Temp(
+frost_days = TempWithIndexing(
     title="Frost days",
     identifier="frost_days",
     units="days",
