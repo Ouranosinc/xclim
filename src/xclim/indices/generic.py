@@ -864,10 +864,10 @@ def season_length_from_boundaries(season_start: xr.DataArray, season_end: xr.Dat
     Notes
     -----
     If `season_start` and `season_end` are computed with different resampling frequencies, the time
-    of `season_start` are selected to write the output.  This is useful when season start and end were computed
-    with different resampling frequencies. Otherwise, functions in ``xclim.indices.run_length`` will be appropriate.
-    `season_start` and `season_end` should be annual indicators with the same length. `season_end` should
-    be in the same year as `season_start` or one year later.
+    of `season_start` are selected to write the output.  This is only useful when season start and end were computed
+    at an annual frequency but with different anchor months. Otherwise, functions in ``xclim.indices.run_length``
+    will be appropriate. `season_start` and `season_end` should be annual indicators with the same length. `season_end`
+    should be in the same year as `season_start` or one year later.
     """
     if (
         season_start.time.dt.year != season_end.time.dt.year
