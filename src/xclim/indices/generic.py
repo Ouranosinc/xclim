@@ -20,7 +20,6 @@ from pint import Quantity
 from xclim.core import DayOfYearStr, Quantified
 from xclim.core.calendar import (
     _MONTH_ABBREVIATIONS,
-    dayofyearstr_from_freq,
     doy_to_days_since,
     get_calendar,
     select_time,
@@ -875,9 +874,8 @@ def season_length_from_boundaries(season_start: xr.DataArray, season_end: xr.Dat
             "`season_start` and `season_end` should both be annual indicators, but the following frequencies"
             "were inferred: {freq_start} and {freq_end}."
         )
-
-    days_since_start = doy_to_days_since(season_start, start=dayofyearstr_from_freq(freq_start))
-    days_since_end = doy_to_days_since(season_end, start=dayofyearstr_from_freq(freq_end))
+    days_since_start = doy_to_days_since(season_start)
+    days_since_end = doy_to_days_since(season_end)
     days_since_end["time"] = days_since_start.time
     doy_start = season_start.time.dt.dayofyear
     doy_end = season_end.time.dt.dayofyear
