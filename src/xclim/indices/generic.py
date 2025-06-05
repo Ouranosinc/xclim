@@ -868,8 +868,16 @@ def season_length_from_boundaries(season_start: xr.DataArray, season_end: xr.Dat
     of `season_start` are selected to write the output. This is useful when season start and end were computed
     with different resampling frequencies. Otherwise, functions in ``xclim.indices.run_length`` will be appropriate.
     """
-    days_since_start = doy_to_days_since(season_start, start=dayofyearstr_from_freq(xr.infer_freq(season_start.time)))
-    days_since_end = doy_to_days_since(season_end, start=dayofyearstr_from_freq(xr.infer_freq(season_end.time)))
+    freq_start = xr.infer_freq(season_start.time)
+    freq_end = xr.infer_freq(season_end.time)
+    if (freq_start.startswith("Y") and freq_end.startswith("Y")) is False:
+        raise ValueError(
+            "`season_start` and `season_end` should both be annual indicators, but the following frequencies"
+            "were inferred: {freq_start} and {freq_end}."
+        )
+
+    days_since_start = doy_to_days_since(season_start, start=dayofyearstr_from_freq(freq_start))
+    days_since_end = doy_to_days_since(season_end, start=dayofyearstr_from_freq(freq_end))
     days_since_end["time"] = days_since_start.time
     doy_start = season_start.time.dt.dayofyear
     doy_end = season_end.time.dt.dayofyear
