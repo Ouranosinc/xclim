@@ -18,7 +18,13 @@ import xarray as xr
 from pint import Quantity
 
 from xclim.core import DayOfYearStr, Quantified
-from xclim.core.calendar import _MONTH_ABBREVIATIONS, doy_to_days_since, get_calendar, select_time
+from xclim.core.calendar import (
+    _MONTH_ABBREVIATIONS,
+    dayofyearstr_from_freq,
+    doy_to_days_since,
+    get_calendar,
+    select_time,
+)
 from xclim.core.units import (
     convert_units_to,
     declare_relative_units,
@@ -56,6 +62,7 @@ __all__ = [
     "interday_diurnal_temperature_range",
     "last_occurrence",
     "season",
+    "season_length_from_boundaries",
     "select_resample_op",
     "select_rolling_resample_op",
     "spell_length",
@@ -836,6 +843,42 @@ def season(
         return to_agg_units(out, data, "count")
     # else, a date
     out.attrs.update(units="", is_dayofyear=np.int32(1), calendar=get_calendar(data))
+    return out
+
+
+def season_length_from_boundaries(season_start: xr.DataArray, season_end: xr.DataArray) -> xr.DataArray:
+    """
+    Season length using pre-computed boundaries.
+
+    Parameters
+    ----------
+    season_start : xr.DataArray
+        Day of year where the season starts.
+    season_end : xr.DataArray
+        Day of year where the season ends.
+
+    Returns
+    -------
+    xr.DataArray, [dimensionless]
+        Length of the season.
+
+    Notes
+    -----
+    If `season_start` and `season_end` are computed with different resampling frequencies, the time
+    of `season_start` are selected to write the output. This is useful when season start and end were computed
+    with different resampling frequencies. Otherwise, functions in ``xclim.indices.run_length`` will be appropriate.
+    """
+    days_since_start = doy_to_days_since(season_start, start=dayofyearstr_from_freq(xr.infer_freq(season_start.time)))
+    days_since_end = doy_to_days_since(season_end, start=dayofyearstr_from_freq(xr.infer_freq(season_end.time)))
+    days_since_end["time"] = days_since_start.time
+    doy_start = season_start.time.dt.dayofyear
+    doy_end = season_end.time.dt.dayofyear
+    # days_since we computed with the respective time arrays of season_start and season_end,
+    # but now we will express the season_length using the times of season_start
+    doy_end["time"] = doy_start.time
+    out = (days_since_end + doy_end - doy_start) - days_since_start
+    out.attrs = season_start.attrs
+    out.attrs.update(units="days")
     return out
 
 

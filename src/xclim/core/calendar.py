@@ -35,6 +35,7 @@ __all__ = [
     "compare_offsets",
     "construct_offset",
     "convert_doy",
+    "dayofyearstr_from_freq",
     "days_since_to_doy",
     "doy_from_string",
     "doy_to_days_since",
@@ -1710,3 +1711,21 @@ def unstack_periods(da: xr.DataArray | xr.Dataset, dim: str = "period") -> xr.Da
         periods.append(da.isel(**{dim: i}, drop=True).isel(time=slc).assign_coords(time=real_time.isel(time=slc)))
 
     return xr.concat(periods, "time")
+
+
+def dayofyearstr_from_freq(freq: str) -> DayOfYearStr:
+    """
+    Convert a frequency to a DayOfYearStr.
+
+    Parameters
+    ----------
+    freq : str
+        Resampling frequency.
+
+    Returns
+    -------
+    str
+        Day of year string.
+    """
+    start_of_year = pd.date_range(end=pd.Timestamp("1950-01-01"), periods=1, freq=freq)[0]
+    return start_of_year.strftime("%m-%d")
