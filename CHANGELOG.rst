@@ -9,7 +9,7 @@ Contributors to this version: Sebastian Lehner (:user:`seblehner`), Trevor James
 New indicators and features
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 * New indicator ``xclim.atmos.antecedent_precipitation_index`` computes the `antecedent_precipitation_index` (weighted summation of daily precipitation amounts for a given window). (:issue:`2166`, :pull:`2184`).
-* New helper ``xclim.indices.generic.season_length_from_boundaries`` takes `season_start` and `season_end` as input and gives `season_length`. This is used when starts and ends are computed different resampling frequencies: `days_since` are used to compute temporal lengths in this case. (:pull:`2189`).
+* New helper ``xclim.indices.generic.season_length_from_boundaries`` takes `season_start` and `season_end` as input and gives `season_length`. This is used when starts and ends are computed with different resampling frequencies: `days_since` are used to compute temporal lengths in this case. (:pull:`2189`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
