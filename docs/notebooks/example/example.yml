@@ -54,6 +54,7 @@ indicators:
         default: YS
     references: ETCCDI
   spring_fd:
+    base: ResamplingIndicatorWithIndexing
     compute: frost_days
     parameters:
       freq: YS-DEC

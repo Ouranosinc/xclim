@@ -1477,7 +1477,7 @@ latitude_temperature_index = Temp(
 )
 
 
-late_frost_days = Temp(
+late_frost_days = TempWithIndexing(
     title="Late frost days",
     identifier="late_frost_days",
     units="days",
