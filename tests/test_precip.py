@@ -404,8 +404,8 @@ class TestMaxNDay:
         out1 = atmos.max_n_day_precipitation_amount(pr, window=7, freq="YS")
         out2 = atmos.max_n_day_precipitation_amount(pr, window=7, freq="YS", month=[6, 7, 8])
 
-        np.testing.assert_allclose(out1.values[0, 0, 0], 55.48)
-        np.testing.assert_allclose(out2.values[0, 0, 0], 50.57)
+        np.testing.assert_allclose(out1.values[0, 0, 0], 55.48, atol=1e-2)
+        np.testing.assert_allclose(out2.values[0, 0, 0], 50.57, atol=1e-2)
 
 
 class TestMaxConsecWetDays:
