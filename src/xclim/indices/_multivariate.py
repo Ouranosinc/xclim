@@ -10,7 +10,7 @@ import xarray
 
 from xclim.core import Quantified
 from xclim.core.bootstrapping import percentile_bootstrap
-from xclim.core.calendar import resample_doy
+from xclim.core.calendar import resample_doy, select_time
 from xclim.core.units import (
     convert_units_to,
     declare_units,
@@ -1060,12 +1060,13 @@ def rain_on_frozen_ground_days(
     pr: xarray.DataArray,
     tas: xarray.DataArray,
     thresh: Quantified = "1 mm/d",
+    window: int = 7,
     freq: str = "YS",
 ) -> xarray.DataArray:
     """
     Number of rain on frozen ground events.
 
-    Number of days with rain above a threshold after a series of seven days below freezing temperature.
+    Number of days with rain above a threshold after a series of consecutive days below freezing temperature.
     Precipitation is assumed to be rain when the temperature is above 0℃.
 
     Parameters
@@ -1076,6 +1077,8 @@ def rain_on_frozen_ground_days(
         Mean daily temperature.
     thresh : Quantified
         Precipitation threshold to consider a day as a rain event.
+    window : int
+        Minimum number of days below freezing temperature needed to consider the ground frozen.
     freq : str
         Resampling frequency.
 
@@ -1099,14 +1102,14 @@ def rain_on_frozen_ground_days(
 
        TG_{i} ≤ 0℃
 
-    is true for continuous periods where :math:`i ≥ 7`
+    is true for continuous periods where :math:`i ≥ window`
     """
     t = convert_units_to(thresh, pr, context="hydro")
     frz = convert_units_to("0 C", tas)
 
     def _func(x, axis):
         """Check that temperature conditions are below 0 for seven days and above after."""
-        frozen = x == np.array([0, 0, 0, 0, 0, 0, 0, 1], bool)
+        frozen = x == np.array([0] * window + [1], bool)
         return frozen.all(axis=axis)
 
     tcond = (tas > frz).rolling(time=8).reduce(_func)
@@ -1834,6 +1837,7 @@ def blowing_snow(
     sfcWind_thresh: Quantified = "15 km/h",  # noqa
     window: int = 3,
     freq: str = "YS-JUL",
+    **indexer,
 ) -> xarray.DataArray:
     """
     Blowing snow days.
@@ -1854,6 +1858,10 @@ def blowing_snow(
         Period over which snow is accumulated before comparing against threshold.
     freq : str
         Resampling frequency.
+    **indexer : {dim: indexer}, optional
+        Indexing parameters to compute the indicator on a temporal subset of the data.
+        The subset is taken after summing the snowfall over the window.
+        It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
 
     Returns
     -------
@@ -1865,6 +1873,8 @@ def blowing_snow(
 
     # Net snow accumulation over the last `window` days
     snow = snd.diff(dim="time").rolling(time=window, center=False).sum()
+    snow = select_time(snow, **indexer)
+    sfcWind = select_time(sfcWind, **indexer)
 
     # Blowing snow conditions
     cond = (snow >= snd_thresh) * (sfcWind >= sfcWind_thresh) * 1

@@ -1,8 +1,13 @@
 {
-  "FD": {
-    "title": "Nombre de jours de gel",
-    "long_name": "Nombre de jours de gel (Tmin < 0°C)",
-    "description": "Nombre de jours où la température minimale passe sous 0°C."
+  "FIRST_FROST_DAY": {
+    "title": "Premier gel",
+    "long_name": "Premier gel (Tmin < 0°C)",
+    "description": "Jour de l'année du premier jour où la température minimale passe sous 0°C."
+  },
+  "WINTER_FD": {
+    "title": "Nombre de jours de gel en hiver",
+    "long_name": "Nombre de jours de gel en hiver (Tmin < 0°C)",
+    "description": "Nombre de jours où la température minimale passe sous 0°C en décembre, janvier ou février."
   },
   "R95P": {
     "title": "Précpitations accumulées lors des jours de fortes pluies (> {perc}e percentile)"

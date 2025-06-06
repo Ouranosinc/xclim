@@ -331,7 +331,9 @@ def tx_min(tasmax: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
 
 @declare_units(tasmin="[temperature]", thresh="[temperature]")
 def frost_days(
-    tasmin: xarray.DataArray, thresh: Quantified = "0 degC", freq: str = "YS", **indexer
+    tasmin: xarray.DataArray,
+    thresh: Quantified = "0 degC",
+    freq: str = "YS",
 ) -> xarray.DataArray:
     r"""
     Frost days index.
@@ -346,9 +348,6 @@ def frost_days(
         Freezing temperature.
     freq : str
         Resampling frequency.
-    **indexer : {dim: indexer}, optional
-        Indexing parameters to compute the frost days on a temporal subset of the data.
-        It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
 
     Returns
     -------
@@ -365,8 +364,7 @@ def frost_days(
        TN_{ij} < TT
     """
     frz = convert_units_to(thresh, tasmin)
-    sel = select_time(tasmin, **indexer)
-    out = threshold_count(sel, "<", frz, freq)
+    out = threshold_count(tasmin, "<", frz, freq)
     return to_agg_units(out, tasmin, "count")
 
 
@@ -444,7 +442,9 @@ def max_1day_precipitation_amount(pr: xarray.DataArray, freq: str = "YS") -> xar
 
 
 @declare_units(pr="[precipitation]")
-def max_n_day_precipitation_amount(pr: xarray.DataArray, window: int = 1, freq: str = "YS") -> xarray.DataArray:
+def max_n_day_precipitation_amount(
+    pr: xarray.DataArray, window: int = 1, freq: str = "YS", **indexer
+) -> xarray.DataArray:
     r"""
     Highest precipitation amount cumulated over a n-day moving window.
 
@@ -459,6 +459,11 @@ def max_n_day_precipitation_amount(pr: xarray.DataArray, window: int = 1, freq: 
         Window size in days.
     freq : str
         Resampling frequency.
+    **indexer : {dim: indexer}, optional
+        Indexing parameters to compute the indicator on a temporal subset of the data.
+        The subset is taken after the N-day sum, thus including data from up to ``window -1``
+        days before the selected period (and none after).
+        It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
 
     Returns
     -------
@@ -476,11 +481,12 @@ def max_n_day_precipitation_amount(pr: xarray.DataArray, window: int = 1, freq: 
     # Rolling sum of the values
     pram = rate2amount(pr)
     arr = pram.rolling(time=window).sum(skipna=False)
+    arr = select_time(arr, **indexer)
     return arr.resample(time=freq).max(dim="time").assign_attrs(units=pram.units)
 
 
 @declare_units(pr="[precipitation]")
-def max_pr_intensity(pr: xarray.DataArray, window: int = 1, freq: str = "YS") -> xarray.DataArray:
+def max_pr_intensity(pr: xarray.DataArray, window: int = 1, freq: str = "YS", **indexer) -> xarray.DataArray:
     r"""
     Highest precipitation intensity over a n-hour moving window.
 
@@ -495,6 +501,11 @@ def max_pr_intensity(pr: xarray.DataArray, window: int = 1, freq: str = "YS") ->
         Window size in hours.
     freq : str
         Resampling frequency.
+    **indexer : {dim: indexer}, optional
+        Indexing parameters to compute the indicator on a temporal subset of the data.
+        The subset is taken after the N-hour average, thus including data from up to ``window - 1``
+        hours before the selected period, and none after.
+        It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
 
     Returns
     -------
@@ -511,6 +522,7 @@ def max_pr_intensity(pr: xarray.DataArray, window: int = 1, freq: str = "YS") ->
     """
     # Rolling sum of the values
     arr = pr.rolling(time=window).mean(skipna=False)
+    arr = select_time(arr, **indexer)
     out = arr.resample(time=freq).max(dim="time")
 
     out.attrs["units"] = pr.units
