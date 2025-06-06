@@ -907,7 +907,7 @@ freshet_start = Temp(
     parameters={"thresh": {"default": "0 degC"}, "window": {"default": 5}},
 )
 
-frost_days = Temp(
+frost_days = TempWithIndexing(
     title="Frost days",
     identifier="frost_days",
     units="days",
@@ -1477,7 +1477,7 @@ latitude_temperature_index = Temp(
 )
 
 
-late_frost_days = Temp(
+late_frost_days = TempWithIndexing(
     title="Late frost days",
     identifier="late_frost_days",
     units="days",
