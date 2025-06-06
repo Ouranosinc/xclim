@@ -461,8 +461,8 @@ def max_n_day_precipitation_amount(
         Resampling frequency.
     **indexer : {dim: indexer}, optional
         Indexing parameters to compute the indicator on a temporal subset of the data.
-        The subset is taken after the N-day sum, thus including data from up to ``window // 2``
-        days before and after the selected period.
+        The subset is taken after the N-day sum, thus including data from up to ``window -1``
+        days before the selected period (and none after).
         It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
 
     Returns

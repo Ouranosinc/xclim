@@ -37,23 +37,21 @@ indicators:
         description: Daily 75th percentile of wet day precipitation flux.
       thresh: 1 mm/day
     context: hydro
-  fd:
-    compute: count_occurrences
+  first_frost_day:
+    compute: first_occurrence
     input:
       data: tasmin
     cf_attrs:
-      cell_methods: 'time: minimum within days time: sum over days'
-      long_name: Number of Frost Days (Tmin < 0°C)
-      standard_name: number_of_days_with_air_temperature_below_threshold
-      units: days
-      var_name: fd
+      long_name: First Frost Day (Tmin < 0°C)
+      description: First day of the period where the minimum daily temperature goes under 0°C.
+      units: ""
+      var_name: ffd
     parameters:
       op: <
       threshold: 0 degC
       freq:
-        default: YS
-    references: ETCCDI
-  spring_fd:
+        default: YS-JUL
+  winter_fd:
     base: ResamplingIndicatorWithIndexing
     compute: frost_days
     parameters:
