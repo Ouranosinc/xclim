@@ -18,7 +18,12 @@ import xarray as xr
 from pint import Quantity
 
 from xclim.core import DayOfYearStr, Quantified
-from xclim.core.calendar import _MONTH_ABBREVIATIONS, doy_to_days_since, get_calendar, select_time
+from xclim.core.calendar import (
+    _MONTH_ABBREVIATIONS,
+    doy_to_days_since,
+    get_calendar,
+    select_time,
+)
 from xclim.core.units import (
     convert_units_to,
     declare_relative_units,
@@ -56,6 +61,7 @@ __all__ = [
     "interday_diurnal_temperature_range",
     "last_occurrence",
     "season",
+    "season_length_from_boundaries",
     "select_resample_op",
     "select_rolling_resample_op",
     "spell_length",
@@ -836,6 +842,60 @@ def season(
         return to_agg_units(out, data, "count")
     # else, a date
     out.attrs.update(units="", is_dayofyear=np.int32(1), calendar=get_calendar(data))
+    return out
+
+
+def season_length_from_boundaries(season_start: xr.DataArray, season_end: xr.DataArray) -> xr.DataArray:
+    """
+    Season length using pre-computed boundaries.
+
+    Parameters
+    ----------
+    season_start : xr.DataArray
+        Day of year where the season starts.
+    season_end : xr.DataArray
+        Day of year where the season ends.
+
+    Returns
+    -------
+    xr.DataArray, [dimensionless]
+        Length of the season.
+
+    Notes
+    -----
+    If `season_start` and `season_end` are computed with different resampling frequencies, the time
+    of `season_start` are selected to write the output.  This is only useful when season start and end were computed
+    at an annual frequency but with different anchor months. Otherwise, functions in ``xclim.indices.run_length``
+    will be appropriate. `season_start` and `season_end` should be annual indicators with the same length. `season_end`
+    should be in the same year as `season_start` or one year later.
+    """
+    if (
+        season_start.time.size == season_end.time.size
+        or 0 <= (season_end.time[0] - season_start.time[0]).astype("timedelta64[s]") < 365 * 24 * 60 * 60
+    ) is False:
+        raise ValueError(
+            "`season_start` and `season_end` should have the same length, and `season_end`'s"
+            "times coordinates should start with the time coordinates of `season_start`, "
+            "or after, within a year."
+        )
+
+    freq_start = xr.infer_freq(season_start.time)
+    freq_end = xr.infer_freq(season_end.time)
+    if (freq_start.startswith("Y") and freq_end.startswith("Y")) is False:
+        raise ValueError(
+            "`season_start` and `season_end` should both be annual indicators, but the following frequencies"
+            "were inferred: {freq_start} and {freq_end}."
+        )
+    days_since_start = doy_to_days_since(season_start)
+    days_since_end = doy_to_days_since(season_end)
+    days_since_end["time"] = days_since_start.time
+    doy_start = season_start.time.dt.dayofyear
+    doy_end = season_end.time.dt.dayofyear
+    # days_since we computed with the respective time arrays of season_start and season_end,
+    # but now we will express the season_length using the times of season_start
+    doy_end["time"] = doy_start.time
+    out = (days_since_end + doy_end - doy_start) - days_since_start
+    out.attrs.update(units="days")
     return out
 
 
