@@ -503,8 +503,8 @@ def max_pr_intensity(pr: xarray.DataArray, window: int = 1, freq: str = "YS", **
         Resampling frequency.
     **indexer : {dim: indexer}, optional
         Indexing parameters to compute the indicator on a temporal subset of the data.
-        The subset is taken after the N-hour average, thus including data from up to ``window // 2``
-        hours before and after the selected period.
+        The subset is taken after the N-hour average, thus including data from up to ``window - 1``
+        hours before the selected period, and none after.
         It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
 
     Returns
