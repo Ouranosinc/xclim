@@ -17,6 +17,10 @@ Internal changes
 ^^^^^^^^^^^^^^^^
 * Modified internal logic for ``xclim.testing.utils.default_testdata_cache`` to support mocking of `pooch`. (:pull:`2188`).
 
+Bug fixes
+^^^^^^^^^
+* Increase the tolerance in the tests of ``xclim.indices.standardized_groundwater_index`` (the standardized indices are sensitive to package versions because of the parameter optimization in `scipy`).  (:issue:`2183`, :pull:`2193`).
+
 v0.57.0 (2025-05-22)
 --------------------
 Contributors to this version: Éric Dupuis (:user:`coxipi`), Trevor James Smith (:user:`Zeitsperre`), Juliette Lavoie (:user:`juliettelavoie`), Pascal Bourgault (:user:`aulemahal`), Armin Hofmann (:user:`HofmannGeo`), Baptiste Hamon (:user:`baptistehamon`).
