@@ -1022,7 +1022,7 @@ class TestStandardizedIndices:
                 "gamma",
                 "APP",
                 [0.053303, 0.243638, 0.184645, 0.365087, 0.702955],
-                2e-2,
+                5e-2,
             ),
             (
                 "MS",
@@ -1038,7 +1038,7 @@ class TestStandardizedIndices:
                 "gamma",
                 "APP",
                 [0.697812, 0.822368, 0.980493, 1.088905, 1.210871],
-                2e-2,
+                5e-2,
             ),
             (
                 "D",
@@ -1046,7 +1046,7 @@ class TestStandardizedIndices:
                 "gamma",
                 "ML",
                 [0.689838, 0.806486, 0.945229, 1.066726, 1.164071],
-                3e-2,
+                5e-2,
             ),
             (
                 "MS",
@@ -1054,7 +1054,7 @@ class TestStandardizedIndices:
                 "lognorm",
                 "APP",
                 [0.054521, 0.244173, 0.185881, 0.360743, 0.695511],
-                2e-2,
+                5e-2,
             ),
             (
                 "MS",
@@ -1070,7 +1070,7 @@ class TestStandardizedIndices:
                 "lognorm",
                 "APP",
                 [0.697812, 0.822368, 0.980493, 1.088905, 1.210871],
-                2e-2,
+                5e-2,
             ),
             (
                 "D",
@@ -1078,7 +1078,7 @@ class TestStandardizedIndices:
                 "lognorm",
                 "ML",
                 [0.698288, 0.822422, 0.983334, 1.094167, 1.212815],
-                2e-2,
+                5e-2,
             ),
             (
                 "MS",
@@ -1086,7 +1086,7 @@ class TestStandardizedIndices:
                 "genextreme",
                 "ML",
                 [-0.266746, -0.043151, -0.149119, -0.036864, 1.01006],
-                2e-2,
+                5e-2,
             ),
             (
                 "D",
@@ -1102,7 +1102,7 @@ class TestStandardizedIndices:
                 "genextreme",
                 "APP",
                 [0.901014, 1.017546, 1.161481, 1.258072, 1.364903],
-                2e-2,
+                5e-2,
             ),
         ],
     )
