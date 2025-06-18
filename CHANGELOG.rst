@@ -2,6 +2,8 @@
 Changelog
 =========
 
+dummy
+
 v0.58.0 (unreleased)
 --------------------
 Contributors to this version: Sebastian Lehner (:user:`seblehner`), Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), Éric Dupuis (:user:`coxipi`).
