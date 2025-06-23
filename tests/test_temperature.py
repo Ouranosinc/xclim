@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import os
 import warnings
 
 import numpy as np
@@ -56,8 +55,8 @@ class TestCSDI:
 
 
 class TestDTR:
-    nc_tasmax = os.path.join("NRCANdaily", "nrcan_canada_daily_tasmax_1990.nc")
-    nc_tasmin = os.path.join("NRCANdaily", "nrcan_canada_daily_tasmin_1990.nc")
+    nc_tasmax = "NRCANdaily/nrcan_canada_daily_tasmax_1990.nc"
+    nc_tasmin = "NRCANdaily/nrcan_canada_daily_tasmin_1990.nc"
 
     def test_DTR_3d_data_with_nans(self, open_dataset):
         tasmax = open_dataset(self.nc_tasmax).tasmax
@@ -96,8 +95,8 @@ class TestDTR:
 
 
 class TestDTRVar:
-    nc_tasmax = os.path.join("NRCANdaily", "nrcan_canada_daily_tasmax_1990.nc")
-    nc_tasmin = os.path.join("NRCANdaily", "nrcan_canada_daily_tasmin_1990.nc")
+    nc_tasmax = "NRCANdaily/nrcan_canada_daily_tasmax_1990.nc"
+    nc_tasmin = "NRCANdaily/nrcan_canada_daily_tasmin_1990.nc"
 
     def test_dtr_var_3d_data_with_nans(self, open_dataset):
         tasmax = open_dataset(self.nc_tasmax).tasmax
@@ -129,8 +128,8 @@ class TestDTRVar:
 
 
 class TestETR:
-    nc_tasmax = os.path.join("NRCANdaily", "nrcan_canada_daily_tasmax_1990.nc")
-    nc_tasmin = os.path.join("NRCANdaily", "nrcan_canada_daily_tasmin_1990.nc")
+    nc_tasmax = "NRCANdaily/nrcan_canada_daily_tasmax_1990.nc"
+    nc_tasmin = "NRCANdaily/nrcan_canada_daily_tasmin_1990.nc"
 
     def test_dtr_var_3d_data_with_nans(self, open_dataset):
         tasmax = open_dataset(self.nc_tasmax).tasmax
@@ -162,8 +161,8 @@ class TestETR:
 
 class TestTmean:
     nc_files = (
-        os.path.join("NRCANdaily", "nrcan_canada_daily_tasmax_1990.nc"),
-        os.path.join("NRCANdaily", "nrcan_canada_daily_tasmin_1990.nc"),
+        "NRCANdaily/nrcan_canada_daily_tasmax_1990.nc",
+        "NRCANdaily/nrcan_canada_daily_tasmin_1990.nc",
     )
 
     def test_Tmean_3d_data(self, open_dataset):
@@ -193,7 +192,7 @@ class TestTmean:
 
 
 class TestTx:
-    nc_file = os.path.join("NRCANdaily", "nrcan_canada_daily_tasmax_1990.nc")
+    nc_file = "NRCANdaily/nrcan_canada_daily_tasmax_1990.nc"
 
     def test_TX_3d_data(self, open_dataset):
         tasmax = open_dataset(self.nc_file).tasmax
@@ -241,7 +240,7 @@ class TestTx:
 
 
 class TestTn:
-    nc_file = os.path.join("NRCANdaily", "nrcan_canada_daily_tasmin_1990.nc")
+    nc_file = "NRCANdaily/nrcan_canada_daily_tasmin_1990.nc"
 
     def test_TN_3d_data(self, open_dataset):
         tasmin = open_dataset(self.nc_file).tasmin
@@ -407,7 +406,7 @@ class TestColdSpellDays:
 
 
 class TestFrostDays:
-    nc_file = os.path.join("NRCANdaily", "nrcan_canada_daily_tasmin_1990.nc")
+    nc_file = "NRCANdaily/nrcan_canada_daily_tasmin_1990.nc"
 
     def test_3d_data_with_nans(self, open_dataset):
         # test with 3d data
@@ -437,9 +436,17 @@ class TestFrostDays:
         assert np.isnan(fd.values[0, -1, -1])
         # assert (np.isnan(fds.values[0, -1, -1]))
 
+    def test_indexing(self, open_dataset):
+        tasmin = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc").tasmin
+        fd1 = atmos.frost_days(tasmin, freq="YS")
+        fd2 = atmos.frost_days(tasmin, freq="YS", date_bounds=["09-01", "12-31"])
+
+        np.testing.assert_array_equal(fd1.isel(location=0), [90, 99, 114, 100])
+        np.testing.assert_array_equal(fd2.isel(location=0), [18, 23, 24, 17])
+
 
 class TestIceDays:
-    nc_file = os.path.join("NRCANdaily", "nrcan_canada_daily_tasmax_1990.nc")
+    nc_file = "NRCANdaily/nrcan_canada_daily_tasmax_1990.nc"
 
     def test_3d_data_with_nans(self, open_dataset):
         # test with 3d data
@@ -462,14 +469,12 @@ class TestIceDays:
         np.testing.assert_array_equal(fd, fdC)
 
         assert np.allclose(fd1, fd.values[0, 0, 0])
-
         assert np.isnan(fd.values[0, 1, 0])
-
         assert np.isnan(fd.values[0, -1, -1])
 
 
 class TestCoolingDegreeDays:
-    nc_file = os.path.join("NRCANdaily", "nrcan_canada_daily_tasmax_1990.nc")
+    nc_file = "NRCANdaily/nrcan_canada_daily_tasmax_1990.nc"
 
     def test_3d_data_with_nans(self, open_dataset):
         # test with 3d data
@@ -487,9 +492,7 @@ class TestCoolingDegreeDays:
         cdd1 = (x1[x1 > thresh] - thresh).sum()
 
         assert np.allclose(cdd1, cdd.values[0, 0, 0])
-
         assert np.isnan(cdd.values[0, 1, 0])
-
         assert np.isnan(cdd.values[0, -1, -1])
 
     def test_convert_units(self, open_dataset):
@@ -520,7 +523,7 @@ class TestCoolingDegreeDays:
 
 
 class TestHeatingDegreeDays:
-    nc_file = os.path.join("NRCANdaily", "nrcan_canada_daily_tasmax_1990.nc")
+    nc_file = "NRCANdaily/nrcan_canada_daily_tasmax_1990.nc"
 
     def test_3d_data_with_nans(self, open_dataset):
         # test with 3d data
@@ -537,9 +540,7 @@ class TestHeatingDegreeDays:
         hdd1 = (thresh - x1).clip(min=0).sum()
 
         assert np.allclose(hdd1, hdd.values[0, 0, 0])
-
         assert np.isnan(hdd.values[0, 1, 0])
-
         assert np.isnan(hdd.values[0, -1, -1])
 
     def test_convert_units(self, open_dataset):
@@ -559,18 +560,17 @@ class TestHeatingDegreeDays:
         hdd1 = (thresh - x1).clip(min=0).sum()
 
         assert np.allclose(hdd1, hdd.values[0, 0, 0])
-
         assert np.isnan(hdd.values[0, 1, 0])
-
         assert np.isnan(hdd.values[0, -1, -1])
 
 
 class TestGrowingDegreeDays:
-    nc_file = os.path.join("NRCANdaily", "nrcan_canada_daily_tasmax_1990.nc")
+    tasmax_file = "NRCANdaily/nrcan_canada_daily_tasmax_1990.nc"
+    cancities_file = "ERA5/daily_surface_cancities_1990-1993.nc"
 
     def test_3d_data_with_nans(self, open_dataset):
         # test with 3d data
-        tas = open_dataset(self.nc_file).tasmax
+        tas = open_dataset(self.tasmax_file).tasmax
         tas.attrs["cell_methods"] = "time: mean within days"
         # put a nan somewhere
         tas.values[180, 1, 0] = np.nan
@@ -593,7 +593,7 @@ class TestGrowingDegreeDays:
         assert np.isnan(gdd.values[0, -1, -1])
 
     def test_conversion(self, open_dataset):
-        ds = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc")
+        ds = open_dataset(self.cancities_file)
 
         ds["tas_F"] = convert_units_to(ds.tas, "degF")
         ds_pt = ds.isel(location=1)
@@ -847,8 +847,8 @@ class TestHeatWaveIndex:
 
 
 class TestDailyFreezeThaw:
-    nc_tasmax = os.path.join("NRCANdaily", "nrcan_canada_daily_tasmax_1990.nc")
-    nc_tasmin = os.path.join("NRCANdaily", "nrcan_canada_daily_tasmin_1990.nc")
+    nc_tasmax = "NRCANdaily/nrcan_canada_daily_tasmax_1990.nc"
+    nc_tasmin = "NRCANdaily/nrcan_canada_daily_tasmin_1990.nc"
 
     def test_3d_data_with_nans(self, open_dataset):
         tasmax = open_dataset(self.nc_tasmax).tasmax
@@ -961,7 +961,7 @@ class TestGrowingSeasonLength:
 
 
 class TestTnDaysBelow:
-    nc_file = os.path.join("NRCANdaily", "nrcan_canada_daily_tasmin_1990.nc")
+    nc_file = "NRCANdaily/nrcan_canada_daily_tasmin_1990.nc"
 
     def test_3d_data_with_nans(self, open_dataset):
         # test with 3d data
@@ -991,7 +991,7 @@ class TestTnDaysBelow:
 
 
 class TestTxDaysAbove:
-    nc_file = os.path.join("NRCANdaily", "nrcan_canada_daily_tasmax_1990.nc")
+    nc_file = "NRCANdaily/nrcan_canada_daily_tasmax_1990.nc"
 
     def test_3d_data_with_nans(self, open_dataset):
         # test with 3d data
@@ -1021,7 +1021,7 @@ class TestTxDaysAbove:
 
 
 class TestTnDaysAbove:
-    nc_file = os.path.join("NRCANdaily", "nrcan_canada_daily_tasmin_1990.nc")
+    nc_file = "NRCANdaily/nrcan_canada_daily_tasmin_1990.nc"
 
     @pytest.mark.parametrize(
         "tn_indice, kwargs",
@@ -1055,8 +1055,8 @@ class TestTnDaysAbove:
 
 
 class TestTxTnDaysAbove:
-    nc_tasmax = os.path.join("NRCANdaily", "nrcan_canada_daily_tasmax_1990.nc")
-    nc_tasmin = os.path.join("NRCANdaily", "nrcan_canada_daily_tasmin_1990.nc")
+    nc_tasmax = "NRCANdaily/nrcan_canada_daily_tasmax_1990.nc"
+    nc_tasmin = "NRCANdaily/nrcan_canada_daily_tasmin_1990.nc"
 
     def test_3d_data_with_nans(self, open_dataset):
         tasmax = open_dataset(self.nc_tasmax).tasmax

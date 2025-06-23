@@ -247,7 +247,7 @@ valid-metaclass-classmethod-first-arg = ["mcs"]
 # ignored-parents =
 
 # Maximum number of arguments for function / method.
-max-args = 15
+max-args = 20
 
 # Maximum number of attributes for a class (see R0902).
 max-attributes = 7
@@ -263,6 +263,9 @@ max-locals = 75
 
 # Maximum number of parents for a class (see R0901).
 max-parents = 7
+
+# Maximum number of arguments for function / method (see R0917).
+max-positional-arguments = 15
 
 # Maximum number of public methods for a class (see R0904).
 max-public-methods = 20
@@ -521,9 +524,6 @@ missing-member-max-choices = 1
 
 # Regex pattern to define which classes are considered mixins.
 mixin-class-rgx = ".*[Mm]ixin"
-
-# List of decorators that change the signature of a decorated function.
-signature-mutators = ["xclim.sdba.base.map_groups"]
 
 [tool.pylint.variables]
 # List of additional names supposed to be defined in builtins. Remember that you

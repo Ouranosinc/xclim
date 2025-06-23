@@ -1475,5 +1475,11 @@
     "long_name": "Intensité du cycle de l'eau",
     "description": "Indice {freq} de l'intensité du cycle de l'eau, défini comme la somme de la précipitation et de l'évapotranspiration.",
     "abstract": "la somme de la précipitation et de l'évapotranspiration."
+  },
+  "API": {
+    "title": "Indice de précipitation antérieure",
+    "long_name": "Indice de précipitation antérieure",
+    "description": "Somme pondérée des précipitations quotidiennes, sur une fenêtre de {window} jours et le base exponentielle {p_exp}.",
+    "abstract": "Calcul de la somme pondérée des précipitations quotidiennes sur la base d'une fenêtre et d'une base exponentielle."
   }
 }

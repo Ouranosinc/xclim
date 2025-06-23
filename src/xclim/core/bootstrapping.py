@@ -154,7 +154,7 @@ def bootstrap_func(compute_index_func: Callable, **kwargs) -> xarray.DataArray:
         chunking = {d: "auto" for d in da.dims}
         chunking["time"] = -1  # no chunking on time to use map_block
         da = da.chunk(chunking)
-    # overlap of studied `da` and reference period used to compute percentile
+    # overlap of studied `da` and the reference period used to compute percentile
     overlap_da = da.sel(time=slice(*clim))
     if len(overlap_da.time) == len(da.time):
         raise KeyError(
@@ -234,18 +234,18 @@ def _get_year_label(year_dt) -> str:
 # TODO: Return a generator instead and assess performance
 def build_bootstrap_year_da(da: DataArray, groups: dict[Any, slice], label: Any, dim: str = "time") -> DataArray:
     """
-    Return an array where a group in the original is replaced by every other groups along a new dimension.
+    Return an array where every other group replaces a group in the original along a new dimension.
 
     Parameters
     ----------
     da : DataArray
-      Original input array over reference period.
+      Original input array over the reference period.
     groups : dict
       Output of grouping functions, such as `DataArrayResample.groups`.
     label : Any
       Key identifying the group item to replace.
     dim : str
-      Dimension recognized as time. Default: `time`.
+      Dimension recognised as time. Default: `time`.
 
     Returns
     -------

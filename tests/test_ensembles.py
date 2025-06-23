@@ -8,13 +8,11 @@
 #  - that various calendar formats and supported
 #  - that non-valid input frequencies or holes in the time series are detected
 #
-#
 # For correctness, I think it would be useful to use a small dataset and run the original ICCLIM indicators on it,
 # saving the results in a reference netcdf dataset. We could then compare the hailstorm output to this reference as
 # a first line of defense.
 from __future__ import annotations
 
-import os
 import sys
 from pathlib import Path
 
@@ -36,7 +34,7 @@ def random_state():
 
 
 class TestEnsembleStats:
-    def test_create_ensemble(self, open_dataset, ensemble_dataset_objects, nimbus):
+    def test_create_ensemble(self, ensemble_dataset_objects, open_dataset, nimbus):
         ds_all = []
         for n in ensemble_dataset_objects["nc_files_simple"]:
             ds = open_dataset(n, decode_times=False)
@@ -257,7 +255,7 @@ class TestEnsembleStats:
         np.testing.assert_array_equal(out1.tg_mean_min[0, 5, 5], out2.tg_mean_min[0, 5, 5])
 
     @pytest.mark.parametrize("aggfunc", [ensembles.ensemble_percentiles, ensembles.ensemble_mean_std_max_min])
-    def test_stats_min_members(self, ensemble_dataset_objects, open_dataset, aggfunc):
+    def test_stats_min_members(self, ensemble_dataset_objects, aggfunc, open_dataset):
         ds_all = [open_dataset(n) for n in ensemble_dataset_objects["nc_files_simple"]]
         ens = ensembles.create_ensemble(ds_all).isel(lat=0, lon=0)
         ens = ens.where(ens.realization > 0)
@@ -283,7 +281,7 @@ class TestEnsembleStats:
 
 @pytest.mark.slow
 class TestEnsembleReduction:
-    nc_file = os.path.join("EnsembleReduce", "TestEnsReduceCriteria.nc")
+    nc_file = "EnsembleReduce/TestEnsReduceCriteria.nc"
 
     def test_kmeans_rsqcutoff(self, open_dataset, random_state):
         pytest.importorskip("sklearn", minversion="0.24.1")
@@ -700,7 +698,7 @@ def test_robustness_fractions_delta(robust_data):
 
 
 def test_robustness_fractions_empty():
-    """Test that NaN is returned if input arrays are full of NaNs."""
+    """Test that arrays full of NaNs return appropriate values"""
     r = np.full((20, 10), np.nan)
     f = np.full((20, 10), np.nan)
 
@@ -708,7 +706,8 @@ def test_robustness_fractions_empty():
     fut = xr.DataArray(f, dims=("realization", "time"), name="tas")
 
     f = ensembles.robustness_fractions(fut, ref, test="ttest")
-    assert np.all(np.isnan(f.changed))
+    np.testing.assert_array_equal(f.changed, 0)
+    np.testing.assert_array_equal(f.valid, 0)
 
 
 def test_robustness_categories():

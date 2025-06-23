@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from pathlib import Path
-
 import numpy as np
 import pytest
 
@@ -31,9 +29,8 @@ class TestRBIndex:
 class TestStandardizedStreamflow:
     @pytest.mark.slow
     def test_3d_data_with_nans(self, open_dataset):
-        nc_ds = Path("Raven", "q_sim.nc")
         # test with data
-        ds = open_dataset(nc_ds)
+        ds = open_dataset("Raven/q_sim.nc")
         q = ds.q_obs.sel(time=slice("2008")).rename("q")
         qMM = convert_units_to(q, "mm**3/s", context="hydro")  # noqa
         # put a nan somewhere
@@ -60,9 +57,8 @@ class TestStandardizedStreamflow:
 
     @pytest.mark.slow
     def test_3d_data_with_nans_value(self, open_dataset):
-        nc_ds = Path("Raven", "q_sim.nc")
         # test with data
-        ds = open_dataset(nc_ds)
+        ds = open_dataset("Raven/q_sim.nc")
         q = ds.q_obs.sel(time=slice("2008", "2018")).rename("q")
         q[{"time": 10}] = np.nan
 
@@ -154,3 +150,44 @@ class TestLowflowfrequency:
         out = xci.low_flow_frequency(q, 0.2, freq="YS")
 
         np.testing.assert_array_equal(out, [20, 0])
+
+
+class TestAntecedentPrecipitationIndex:
+    def test_simple(self, pr_series):
+        a = np.ones(50) * 10
+        a[15:20] = 20
+        a[35:40] = 0
+        pr = pr_series(a, units="mm d-1")
+        out = xci.antecedent_precipitation_index(pr)
+        np.testing.assert_allclose(out.max(), [101.65], atol=1e-2)
+        np.testing.assert_allclose(out.min(), [13.83], atol=1e-2)
+
+    def test_nan_present(self, pr_series):
+        a = np.ones(50) * 10
+        a[25] = np.nan
+        pr = pr_series(a, units="mm d-1")
+        window = 7
+        out = xci.antecedent_precipitation_index(pr, window=window, p_exp=0.935)
+        np.testing.assert_array_equal(out[25], [np.nan])
+
+    def test_nan_start_window(self, pr_series):
+        a = np.ones(50) * 10
+        pr = pr_series(a, units="mm d-1")
+        window = 7
+        out = xci.antecedent_precipitation_index(pr, window=window, p_exp=0.935)
+        np.testing.assert_array_equal(out[: window - 1], np.nan)
+
+    def test_manual_calc(self, pr_series):
+        a = np.ones(10) * 10
+        pr = pr_series(a, units="mm d-1")
+        window = 7
+        p_exp = 0.935
+        out = xci.antecedent_precipitation_index(pr, window=window, p_exp=p_exp)
+
+        out_manual = np.zeros(out.shape) * np.nan
+        for idx in range(pr.shape[0] - window + 1):
+            idxend = window + idx
+            weights = list(reversed([p_exp ** (ii + 1 - 1) for ii in range(window)]))
+            weighted_sum = (pr[idx:idxend] * weights).sum()
+            out_manual[idxend - 1] = weighted_sum
+        np.testing.assert_allclose(out, out_manual, atol=1e-7)

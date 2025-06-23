@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from pathlib import Path
-
 import numpy as np
 import pandas as pd
 import pytest
@@ -57,8 +55,8 @@ class TestRainSeason:
 
 
 class TestPrecipAccumulation:
-    nc_pr = Path("NRCANdaily", "nrcan_canada_daily_pr_1990.nc")
-    nc_tasmin = Path("NRCANdaily", "nrcan_canada_daily_tasmin_1990.nc")
+    nc_pr = "NRCANdaily/nrcan_canada_daily_pr_1990.nc"
+    nc_tasmin = "NRCANdaily/nrcan_canada_daily_tasmin_1990.nc"
 
     def test_3d_data_with_nans(self, open_dataset):
         # test with 3d data
@@ -113,8 +111,8 @@ class TestPrecipAccumulation:
 
 
 class TestPrecipAverage:
-    nc_pr = Path("NRCANdaily", "nrcan_canada_daily_pr_1990.nc")
-    nc_tasmin = Path("NRCANdaily", "nrcan_canada_daily_tasmin_1990.nc")
+    nc_pr = "NRCANdaily/nrcan_canada_daily_pr_1990.nc"
+    nc_tasmin = "NRCANdaily/nrcan_canada_daily_tasmin_1990.nc"
 
     def test_3d_data_with_nans(self, open_dataset):
         # test with 3d data
@@ -170,7 +168,7 @@ class TestPrecipAverage:
 
 
 class TestStandardizedPrecip:
-    nc_ds = Path("sdba", "CanESM2_1950-2100.nc")
+    nc_ds = "sdba/CanESM2_1950-2100.nc"
 
     @pytest.mark.slow
     def test_3d_data_with_nans(self, open_dataset):
@@ -219,7 +217,7 @@ class TestStandardizedPrecip:
 
 
 class TestWetDays:
-    nc_file = Path("NRCANdaily", "nrcan_canada_daily_pr_1990.nc")
+    nc_file = "NRCANdaily/nrcan_canada_daily_pr_1990.nc"
 
     def test_3d_data_with_nans(self, open_dataset):
         # test with 3d data
@@ -272,8 +270,7 @@ class TestWetPrcptot:
 
 class TestDailyIntensity:
     # testing of wet_day and daily_pr_intensity, both are related
-
-    nc_file = Path("NRCANdaily", "nrcan_canada_daily_pr_1990.nc")
+    nc_file = "NRCANdaily/nrcan_canada_daily_pr_1990.nc"
 
     def test_3d_data_with_nans(self, open_dataset):
         # test with 3d data
@@ -323,11 +320,20 @@ class TestMaxPrIntensity:
         out = atmos.max_pr_intensity(pr, window=2, freq="YS")
         np.testing.assert_array_almost_equal(out.isel(time=0), [8.5 * 3600, 3600])
 
+    def test_indexing(self, pr_hr_series):
+        pr = pr_hr_series(np.zeros(366 * 24))
+        pr[20:30] += np.arange(10)
+
+        out1 = atmos.max_pr_intensity(pr, window=2, freq="YS")
+        out2 = atmos.max_pr_intensity(pr, window=2, freq="YS", doy_bounds=[200, 1])
+        np.testing.assert_array_almost_equal(out1.isel(time=0), [8.5 * 3600])
+        np.testing.assert_array_almost_equal(out2.isel(time=0), [2.5 * 3600])
+
 
 class TestMax1Day:
     # testing of wet_day and daily_pr_intensity, both are related
 
-    nc_file = Path("NRCANdaily", "nrcan_canada_daily_pr_1990.nc")
+    nc_file = "NRCANdaily/nrcan_canada_daily_pr_1990.nc"
 
     def test_3d_data_with_nans(self, open_dataset):
         # test with 3d data
@@ -360,7 +366,7 @@ class TestMax1Day:
 class TestMaxNDay:
     # testing of wet_day and daily_pr_intensity, both are related
 
-    nc_file = Path("NRCANdaily", "nrcan_canada_daily_pr_1990.nc")
+    nc_file = "NRCANdaily/nrcan_canada_daily_pr_1990.nc"
 
     @pytest.mark.parametrize(
         "units,factor,chunks",
@@ -393,9 +399,17 @@ class TestMaxNDay:
         assert np.isnan(out1.values[0, 1, 0])
         assert np.isnan(out1.values[0, -1, -1])
 
+    def test_indexing(self, open_dataset):
+        pr = open_dataset(self.nc_file).pr
+        out1 = atmos.max_n_day_precipitation_amount(pr, window=7, freq="YS")
+        out2 = atmos.max_n_day_precipitation_amount(pr, window=7, freq="YS", month=[6, 7, 8])
+
+        np.testing.assert_allclose(out1.values[0, 0, 0], 55.48, atol=1e-2)
+        np.testing.assert_allclose(out2.values[0, 0, 0], 50.57, atol=1e-2)
+
 
 class TestMaxConsecWetDays:
-    nc_file = Path("NRCANdaily", "nrcan_canada_daily_pr_1990.nc")
+    nc_file = "NRCANdaily/nrcan_canada_daily_pr_1990.nc"
 
     def test_3d_data_with_nans(self, open_dataset):
         # test with 3d data
@@ -432,7 +446,7 @@ class TestMaxConsecWetDays:
 
 
 class TestMaxConsecDryDays:
-    nc_file = Path("NRCANdaily", "nrcan_canada_daily_pr_1990.nc")
+    nc_file = "NRCANdaily/nrcan_canada_daily_pr_1990.nc"
 
     def test_3d_data_with_nans(self, open_dataset):
         # test with 3d data
@@ -473,13 +487,18 @@ class TestSnowfallDate:
     pr_file = "NRCANdaily/nrcan_canada_daily_pr_1990.nc"
 
     @classmethod
-    def get_snowfall(cls, open_dataset):
-        dnr = xr.merge((open_dataset(cls.pr_file), open_dataset(cls.tasmin_file)))
+    def get_snowfall(cls, nimbus):
+        dnr = xr.merge(
+            (
+                xr.open_dataset(nimbus.fetch(cls.pr_file), engine="h5netcdf"),
+                xr.open_dataset(nimbus.fetch(cls.tasmin_file), engine="h5netcdf"),
+            )
+        )
         return atmos.snowfall_approximation(dnr.pr, tas=dnr.tasmin, thresh="-0.5 degC", method="binary")
 
-    def test_first_snowfall(self, open_dataset):
+    def test_first_snowfall(self, nimbus):
         with set_options(check_missing="skip"):
-            fs = atmos.first_snowfall(prsn=self.get_snowfall(open_dataset), thresh="0.5 mm/day")
+            fs = atmos.first_snowfall(prsn=self.get_snowfall(nimbus), thresh="0.5 mm/day")
 
         np.testing.assert_array_equal(
             fs[:, [0, 45, 82], [10, 105, 155]],
@@ -491,9 +510,9 @@ class TestSnowfallDate:
             ),
         )
 
-    def test_last_snowfall(self, open_dataset):
+    def test_last_snowfall(self, nimbus):
         with set_options(check_missing="skip"):
-            ls = atmos.last_snowfall(prsn=self.get_snowfall(open_dataset), thresh="0.5 mm/day")
+            ls = atmos.last_snowfall(prsn=self.get_snowfall(nimbus), thresh="0.5 mm/day")
 
         np.testing.assert_array_equal(
             ls[:, [0, 45, 82], [10, 105, 155]],
@@ -674,12 +693,17 @@ class TestSnowfallMeteoSwiss:
     pr_file = "NRCANdaily/nrcan_canada_daily_pr_1990.nc"
 
     @classmethod
-    def get_snowfall(cls, open_dataset):
-        dnr = xr.merge((open_dataset(cls.pr_file), open_dataset(cls.tasmin_file)))
+    def get_snowfall(cls, nimbus):
+        dnr = xr.merge(
+            (
+                xr.open_dataset(nimbus.fetch(cls.pr_file), engine="h5netcdf"),
+                xr.open_dataset(nimbus.fetch(cls.tasmin_file), engine="h5netcdf"),
+            )
+        )
         return atmos.snowfall_approximation(dnr.pr, tas=dnr.tasmin, thresh="-0.5 degC", method="binary")
 
-    def test_snowfall_frequency(self, open_dataset):
-        prsn = self.get_snowfall(open_dataset)
+    def test_snowfall_frequency(self, nimbus):
+        prsn = self.get_snowfall(nimbus)
         with set_options(check_missing="skip"):
             sf = atmos.snowfall_frequency(prsn=prsn, thresh="1 mm/day")
         expected = np.array(
@@ -702,8 +726,8 @@ class TestSnowfallMeteoSwiss:
             rtol=1e-3,
         )
 
-    def test_snowfall_intensity(self, open_dataset):
-        prsn = self.get_snowfall(open_dataset)
+    def test_snowfall_intensity(self, nimbus):
+        prsn = self.get_snowfall(nimbus)
         with set_options(check_missing="skip"):
             si = atmos.snowfall_intensity(prsn=prsn, thresh="1 mm/day")
         expected = np.array(
