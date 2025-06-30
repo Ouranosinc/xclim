@@ -45,7 +45,7 @@ __all__ = [
     "dryness_index",
     "effective_growing_degree_days",
     "hardiness_zones",
-    "huglin_index",
+    "heliothermal_index",
     "latitude_temperature_index",
     "qian_weighted_mean_average",
     "rain_season",
@@ -143,7 +143,7 @@ def corn_heat_units(
     lat="[]",
     thresh="[temperature]",
 )
-def huglin_index(
+def heliothermal_index(
     tas: xarray.DataArray,
     tasmax: xarray.DataArray,
     lat: xarray.DataArray | None = None,
@@ -154,7 +154,7 @@ def huglin_index(
     freq: str = "YS",
 ) -> xarray.DataArray:
     r"""
-    Huglin Heliothermal Index.
+    The Heliothermal Index of Huglin.
 
     Growing-degree days with a base of 10°C and adjusted for latitudes between 40°N and 50°N for April-September
     (Northern Hemisphere; October-March in Southern Hemisphere). Originally proposed in :cite:t:`huglin_nouveau_1978`.
@@ -227,7 +227,7 @@ def huglin_index(
 
     References
     ----------
-    :cite:cts:`huglin_nouveau_1978, hall_spatial_2010`
+    :cite:cts:`huglin_nouveau_1978,hall_spatial_2010`
     """
     tas = convert_units_to(tas, "degC")
     tasmax = convert_units_to(tasmax, "degC")
