@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from typing import cast
+import warnings
+from typing import Literal, cast
 
 import numpy as np
 import xarray
@@ -26,7 +27,7 @@ from xclim.indices._threshold import (
     first_day_temperature_below,
 )
 from xclim.indices.generic import aggregate_between_dates, get_zones
-from xclim.indices.helpers import _gather_lat, day_lengths, resample_map
+from xclim.indices.helpers import _gather_lat, day_length_latitude_coefficient, day_lengths, resample_map
 from xclim.indices.stats import standardized_index
 
 # Frequencies : YS: year start, QS-DEC: seasons starting in december, MS: month start
@@ -154,7 +155,7 @@ def huglin_index(
     freq: str = "YS",
 ) -> xarray.DataArray:
     r"""
-    Huglin Heliothermal Index.
+    Heliothermal Index of Huglin.
 
     Growing-degree days with a base of 10°C and adjusted for latitudes between 40°N and 50°N for April-September
     (Northern Hemisphere; October-March in Southern Hemisphere). Originally proposed in :cite:t:`huglin_nouveau_1978`.
@@ -183,7 +184,7 @@ def huglin_index(
     Returns
     -------
     xarray.DataArray, [unitless]
-        Huglin heliothermal index (HI).
+        Heliothermal index of Huglin (HI).
 
     Notes
     -----
@@ -222,12 +223,12 @@ def huglin_index(
                      \end{cases}
 
     A more robust day-length calculation based on latitude, calendar, day-of-year, and obliquity is available with
-    `method="jones"`. See: :py:func:`xclim.indices.generic.day_lengths` or :cite:t:`hall_spatial_2010` for more
-    information.
+    `method="jones"`. The current implementation requires an annual frequency for consistent results.
+    See: :py:func:`xclim.indices.generic.day_lengths` or :cite:t:`hall_spatial_2010` for more information.
 
     References
     ----------
-    :cite:cts:`huglin_nouveau_1978, hall_spatial_2010`
+    :cite:cts:`huglin_nouveau_1978,hall_spatial_2010`
     """
     tas = convert_units_to(tas, "degC")
     tasmax = convert_units_to(tasmax, "degC")
@@ -236,37 +237,17 @@ def huglin_index(
     if lat is None:
         lat = _gather_lat(tas)
 
-    if method.lower() == "smoothed":
-        lat_mask = abs(lat) <= 50
-        lat_coefficient = ((abs(lat) - 40) / 10).clip(min=0) * 0.06
-        k = 1 + xarray.where(lat_mask, lat_coefficient, np.nan)
-        k_aggregated = 1
-    elif method.lower() == "icclim":
-        k_f = [0, 0.02, 0.03, 0.04, 0.05, 0.06]
-
-        k = 1 + xarray.where(
-            abs(lat) <= 40,
-            k_f[0],
-            xarray.where(
-                (40 < abs(lat)) & (abs(lat) <= 42),
-                k_f[1],
-                xarray.where(
-                    (42 < abs(lat)) & (abs(lat) <= 44),
-                    k_f[2],
-                    xarray.where(
-                        (44 < abs(lat)) & (abs(lat) <= 46),
-                        k_f[3],
-                        xarray.where(
-                            (46 < abs(lat)) & (abs(lat) <= 48),
-                            k_f[4],
-                            xarray.where((48 < abs(lat)) & (abs(lat) <= 50), k_f[5], np.nan),
-                        ),
-                    ),
-                ),
-            ),
-        )
+    if method.lower() in ["icclim", "smoothed"]:
+        k = day_length_latitude_coefficient(lat, method="icclim")
         k_aggregated = 1
     elif method.lower() == "jones":
+        if not freq.startswith("YS"):
+            msg = (
+                f"Freq {freq} not supported. Must be `YS` or `YS-*` for method 'jones'. "
+                "An annual frequency is required for the current implementation."
+            )
+            raise NotImplementedError(msg)
+
         day_length = (
             select_time(
                 day_lengths(dates=tas.time, lat=lat, method="simple"),
@@ -279,7 +260,7 @@ def huglin_index(
         k = 1
         k_aggregated = 2.8311e-4 * day_length + 0.30834
     else:
-        raise NotImplementedError(f"'{method}' method is not implemented.")
+        raise NotImplementedError("Method is not implemented. Only 'icclim', 'jones', and 'smoothed' are supported.")
 
     hi: xarray.DataArray = (((tas + tasmax) / 2) - thresh).clip(min=0) * k
     hi = (
@@ -304,7 +285,7 @@ def biologically_effective_degree_days(
     tasmax: xarray.DataArray,
     lat: xarray.DataArray | None = None,
     thresh_tasmin: Quantified = "10 degC",
-    method: str = "gladstones",
+    method: Literal["gladstones", "gladstones_simple", "huglin", "icclim"] = "gladstones",
     low_dtr: Quantified = "10 degC",
     high_dtr: Quantified = "13 degC",
     max_daily_degree_days: Quantified = "9 degC",
@@ -328,15 +309,15 @@ def biologically_effective_degree_days(
         Maximum daily temperature.
     lat : xarray.DataArray, optional
         Latitude coordinate.
-        If None and method in ["gladstones", "icclim"],
-        a CF-conformant "latitude" field must be available within the passed DataArray.
+        If None and method is no "icclim", a CF-conformant "latitude" field must be available within the passed DataArray.
     thresh_tasmin : Quantified
         The minimum temperature threshold.
-    method : {"gladstones", "icclim", "jones"}
+    method : {"gladstones", "gladstones_simple", "huglin", "icclim", "jones"}
         The formula to use for the calculation.
-        The "gladstones" integrates a daily temperature range and latitude coefficient. End_date should be "11-01".
+        The "gladstones" method uses a temperature range adjustment and a latitude coefficient based on :cite:t:`huglin_biologie_1998`. End_date should be "11-01".
+        The "gladstones_simple" method integrates a daily temperature range and latitude coefficient. End_date should be "11-01".
         The "icclim" method ignores daily temperature range and latitude coefficient. End date should be "10-01".
-        The "jones" method integrates axial tilt, latitude, and day-of-year on coefficient. End_date should be "11-01".
+        The "jones" method integrates axial tilt, latitude, and day-of-year on coefficient based on :cite:t:`hall_spatial_2010`. End_date should be "11-01".
     low_dtr : Quantified
         The lower bound for daily temperature range adjustment (default: 10°C).
     high_dtr : Quantified
@@ -357,7 +338,7 @@ def biologically_effective_degree_days(
 
     Warnings
     --------
-    Lat coordinate must be provided if method is "gladstones" or "jones".
+    Lat coordinate must be provided if method is "gladstones", "gladstones_simple", or "huglin".
 
     Notes
     -----
@@ -385,7 +366,7 @@ def biologically_effective_degree_days(
 
        k = f(lat) = 1 + \left(\frac{\left| lat  \right|}{50} * 0.06,  \text{if }40 < ``|lat|`` <50, \text{else } 0\right)
 
-    A second version of the BEDD (`method="icclim"`) does not consider :math:`TR_{adj}` and :math:`k` and employs a
+    An alternative version of the BEDD (`method="icclim"`) does not consider :math:`TR_{adj}` and :math:`k` and employs a
     different end date (30 September) :cite:p:`project_team_eca&d_algorithm_2013`.
     The simplified formula is as follows:
 
@@ -395,33 +376,37 @@ def biologically_effective_degree_days(
 
     References
     ----------
-    :cite:cts:`gladstones_viticulture_1992,project_team_eca&d_algorithm_2013`
+    :cite:cts:`gladstones_viticulture_1992,huglin_biologie_1998,project_team_eca&d_algorithm_2013`
     """
     tasmin = convert_units_to(tasmin, "degC")
     tasmax = convert_units_to(tasmax, "degC")
     thresh_tasmin = convert_units_to(thresh_tasmin, "degC")
     max_daily_degree_days = convert_units_to(max_daily_degree_days, "degC")
 
-    if method.lower() in ["gladstones", "jones"]:
-        low_dtr = convert_units_to(low_dtr, "degC")
-        high_dtr = convert_units_to(high_dtr, "degC")
-        dtr = tasmax - tasmin
-        tr_adj = 0.25 * xarray.where(
-            dtr > high_dtr,
-            dtr - high_dtr,
-            xarray.where(dtr < low_dtr, dtr - low_dtr, 0),
-        )
+    if method.lower() == "icclim":
+        if lat is not None:
+            warnings.warn(
+                "Lat coordinate is not used for method 'icclim' in 'biologically_effective_degree_days' calculation.",
+                UserWarning,
+            )
+        k = 1
+        tr_adj = 0
+        k_aggregated = 1
 
+    elif method.lower() in ["gladstones", "gladstones_simple", "huglin"]:
         if lat is None:
             lat = _gather_lat(tasmin)
-
-        if method.lower() == "gladstones":
-            if isinstance(lat, int | float):
-                lat = xarray.DataArray(lat)
-            lat_mask = abs(lat) <= 50
-            k = 1 + xarray.where(lat_mask, ((abs(lat) - 40) * 0.06 / 10).clip(0, None), 0)
+        if method.lower() == "gladstones_simple":
+            k = day_length_latitude_coefficient(lat, method="gladstones_simple")
             k_aggregated = 1
         else:
+            if not freq.startswith("YS"):
+                msg = (
+                    f"Freq {freq} not supported. Must be `YS` or `YS-*` for methods 'gladstones' and 'jones'. "
+                    "An annual frequency is required for the current implementation."
+                )
+                raise NotImplementedError(msg)
+
             day_length = (
                 select_time(
                     day_lengths(dates=tasmin.time, lat=lat, method="simple"),
@@ -432,14 +417,26 @@ def biologically_effective_degree_days(
                 .sum()
             )
             k = 1
-            k_huglin = 2.8311e-4 * day_length + 0.30834
-            k_aggregated = 1.1135 * k_huglin - 0.1352
-    elif method.lower() == "icclim":
-        k = 1
-        tr_adj = 0
-        k_aggregated = 1
+            k_jones = 2.8311e-4 * day_length + 0.30834
+            if method.lower() == "jones":
+                k_aggregated = k_jones
+            else:
+                k_aggregated = 1.1135 * k_jones - 0.1352
+
+        # Temperature range adjustment
+        low_dtr = convert_units_to(low_dtr, "degC")
+        high_dtr = convert_units_to(high_dtr, "degC")
+        dtr = tasmax - tasmin
+        tr_adj = 0.25 * xarray.where(
+            dtr > high_dtr,
+            dtr - high_dtr,
+            xarray.where(dtr < low_dtr, dtr - low_dtr, 0),
+        )
+
     else:
-        raise NotImplementedError()
+        raise NotImplementedError(
+            "Method is not implemented. Only 'gladstones, 'gladstones_simple', 'huglin', and 'icclim' are supported."
+        )
 
     bedd: xarray.DataArray = ((((tasmin + tasmax) / 2) - thresh_tasmin).clip(min=0) * k + tr_adj).clip(
         max=max_daily_degree_days

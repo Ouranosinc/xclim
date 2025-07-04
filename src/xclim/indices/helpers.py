@@ -18,6 +18,7 @@ import cftime
 import numba as nb
 import numpy as np
 import xarray as xr
+from xarray import CFTimeIndex
 
 try:
     from xarray.coding.calendar_ops import _datetime_to_decimal_year
@@ -294,7 +295,7 @@ def cosine_of_solar_zenith_angle(
         h_e = np.pi - 1e-9  # just below pi
     else:
         if time.dtype == "O":  # cftime
-            time_as_s = time.copy(data=xr.CFTimeIndex(cast(np.ndarray, time.values)).asi8 / 1e6)
+            time_as_s = time.copy(data=xr.CFTimeIndex(cast(CFTimeIndex, time.values)).asi8 / 1e6)
         else:  # numpy
             time_as_s = time.copy(data=time.astype(float) / 1e9)
         h_s_utc = (((time_as_s % S_IN_D) / S_IN_D) * 2 * np.pi + np.pi).assign_attrs(units="rad")
@@ -469,6 +470,71 @@ def day_lengths(
         day_length_hours = ((24 / np.pi) * np.arccos(-np.tan(lat) * np.tan(declination))).assign_attrs(units="h")
 
     return day_length_hours
+
+
+def day_length_latitude_coefficient(
+    lat: xr.DataArray | int | float,
+    method: Literal["gladstones_simple", "icclim", "smoothed"],
+):
+    """
+    Coefficient for the day length and latitude.
+
+    This is the ratio of the day length to the latitude in radians.
+    It is used to convert the day length in hours to a dimensionless coefficient.
+
+    Parameters
+    ----------
+    lat : xarray.DataArray, int or float
+        Latitude coordinate. If a single value is given, it is converted to an xarray.DataArray.
+    method : {'gladstones_simple', 'icclim', 'smoothed'}
+        The method to use for the coefficient calculation.
+
+    Returns
+    -------
+    xarray.DataArray, [dimensionless]
+        Coefficient for the day length based on latitude.
+    """
+    if isinstance(lat, int | float):
+        lat = xr.DataArray(lat)
+
+    if method.lower() == "gladstones_simple":
+        lat_mask = abs(lat) <= 50
+        k = 1 + xr.where(lat_mask, ((abs(lat) - 40) * 0.06 / 10).clip(0, None), 0)
+    elif method.lower() == "icclim":
+        k_f = [0, 0.02, 0.03, 0.04, 0.05, 0.06]
+        k = 1 + xr.where(
+            abs(lat) <= 40,
+            k_f[0],
+            xr.where(
+                (40 < abs(lat)) & (abs(lat) <= 42),
+                k_f[1],
+                xr.where(
+                    (42 < abs(lat)) & (abs(lat) <= 44),
+                    k_f[2],
+                    xr.where(
+                        (44 < abs(lat)) & (abs(lat) <= 46),
+                        k_f[3],
+                        xr.where(
+                            (46 < abs(lat)) & (abs(lat) <= 48),
+                            k_f[4],
+                            xr.where((48 < abs(lat)) & (abs(lat) <= 50), k_f[5], np.nan),
+                        ),
+                    ),
+                ),
+            ),
+        )
+
+    elif method.lower() == "smoothed":
+        lat_mask = abs(lat) <= 50
+        lat_coefficient = ((abs(lat) - 40) / 10).clip(min=0) * 0.06
+        k = 1 + xr.where(lat_mask, lat_coefficient, np.nan)
+
+    else:
+        raise NotImplementedError(
+            "Method is not implemented. Only 'gladstones_simple', 'icclim' and 'smoothed' are available."
+        )
+
+    return k
 
 
 def wind_speed_height_conversion(
