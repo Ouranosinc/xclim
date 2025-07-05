@@ -68,6 +68,18 @@ def test_relative_humidity_dewpoint(timeseries):
         atol=1,
     )
 
+def test_relative_humidity_dewpoint_clip(timeseries):
+    np.testing.assert_allclose(
+        atmos.relative_humidity_from_dewpoint(
+            tas=timeseries(np.array([-20, -10, -1, 10, 20, 25, 30, 40, 60]) + K2C, "tas"),
+            tdps=timeseries(np.array([-15, -10, -2, 5, 10, 20, 29, 20, 30]) + K2C, "tdps"),
+            invalid_values='clip',
+        ),
+        timeseries([100, 100, 93, 71, 52, 73, 94, 31, 20], "hurs"),
+        rtol=0.02,
+        atol=1,
+    )
+
 
 def test_humidex(tas_series):
     tas = tas_series([15, 25, 35, 40])
