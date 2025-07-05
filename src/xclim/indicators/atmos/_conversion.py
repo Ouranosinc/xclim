@@ -202,7 +202,7 @@ relative_humidity_from_dewpoint = Converter(
         "tdps": {"kind": InputKind.VARIABLE},
         "huss": None,
         "ps": None,
-        'invalid_values':  {'default': 'mask'},
+        "invalid_values": {"default": "mask"},
     },
 )
 
