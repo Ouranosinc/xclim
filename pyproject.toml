@@ -49,7 +49,7 @@ dependencies = [
   "pyarrow >=15.0", # Strongly encouraged for pandas v2.2.0+
   "pyyaml >=6.0.1",
   "scikit-learn >=1.2.0",
-  "scipy >=1.11.0",
+  "scipy >=1.11.0, <1.16.0",
   "xarray >=2023.11.0,!=2024.10.0",
   "yamale >=5.0.0"
 ]
