@@ -34,8 +34,8 @@ try:
 except ImportError:
     rechunk_for_blockwise = None
 
-from xclim.core import Quantified
-from xclim.core.calendar import ensure_cftime_array, get_calendar
+from xclim.core import DayOfYearStr, Quantified
+from xclim.core.calendar import ensure_cftime_array, get_calendar, select_time
 from xclim.core.options import MAP_BLOCKS, OPTIONS
 from xclim.core.units import convert_units_to
 from xclim.core.utils import _chunk_like, uses_dask
@@ -143,7 +143,7 @@ def solar_declination(time: xr.DataArray, method="spencer") -> xr.DataArray:
             + 0.001480 * np.sin(3 * da)
         )
     else:
-        raise NotImplementedError(f"Method {method} must be one of 'simple' or 'spencer'")
+        raise NotImplementedError("Method must be one of 'simple' or 'spencer'.")
     return _wrap_radians(sd).assign_attrs(units="rad").rename("declination")
 
 
@@ -474,67 +474,177 @@ def day_lengths(
 
 def day_length_latitude_coefficient(
     lat: xr.DataArray | int | float,
-    method: Literal["gladstones_simple", "icclim", "smoothed"],
+    method: Literal["stepwise", "smoothed"],
+    cap_value: bool | float | int,
 ):
-    """
-    Coefficient for the day length and latitude.
+    r"""
+    Simple coefficient for the day length and latitude.
 
-    This is the ratio of the day length to the latitude in radians.
-    It is used to convert the day length in hours to a dimensionless coefficient.
+    This latitude coefficient is used for determining the latitude effect on the day length specific to climate indices
+    that concern viticulture, such as :py:func:`xclim.indices.huglin_index` (cite:p:`huglin_nouveau_1978`).
 
     Parameters
     ----------
     lat : xarray.DataArray, int or float
         Latitude coordinate. If a single value is given, it is converted to an xarray.DataArray.
-    method : {'gladstones_simple', 'icclim', 'smoothed'}
+    method : {"smoothed", "stepwise"}
         The method to use for the coefficient calculation.
+    cap_value : bool or float
+        If true, for latitudes above 50° N and below 50° S, the coefficient is set to NaN.
+        If false, the coefficient is set to 1.0.
+        If a float or int is given, it is used as the cap value for the coefficient.
 
     Returns
     -------
     xarray.DataArray, [dimensionless]
         Coefficient for the day length based on latitude.
+
+    Notes
+    -----
+    For the `"smoothed"` method, the day-length multiplication factor, :math:`k`, is calculated as follows:
+
+    .. math::
+
+       k = f(lat) = \begin{cases}
+                     1, & \text{if } | lat | <= 40 \\
+                     1 + ((abs(lat) - 40) / 10) * 0.06, & \text{if } 40 < | lat | <= 50 \\
+                     m, & \text{if } | lat | > 50 \\
+                     \end{cases}
+
+    For the `"stepwise"` method, the day-length multiplication factor, :math:`k`, is then calculated as follows:
+
+    .. math::
+
+       k = f(lat) = \begin{cases}
+                     1.0, & \text{if } | lat | <= 40 \\
+                     1.02, & \text{if } 40 < | lat | <= 42 \\
+                     1.03, & \text{if } 42 < | lat | <= 44 \\
+                     1.04, & \text{if } 44 < | lat | <= 46 \\
+                     1.05, & \text{if } 46 < | lat | <= 48 \\
+                     1.06, & \text{if } 48 < | lat | <= 50 \\
+                     m, & \text{if } | lat | > 50 \\
+                     \end{cases}
+
+    Where :math:`m` is the cap value, which is set to NaN if `cap` is True, 1.0 if `cap` is False,
+    or a float/int value if provided.
+
+    References
+    ----------
+    :cite:cts:`gladstones_viticulture_1992,huglin_nouveau_1978,project_team_eca&d_algorithm_2013`
     """
     if isinstance(lat, int | float):
         lat = xr.DataArray(lat)
 
-    if method.lower() == "gladstones_simple":
-        lat_mask = abs(lat) <= 50
-        k = 1 + xr.where(lat_mask, ((abs(lat) - 40) * 0.06 / 10).clip(0, None), 0)
-    elif method.lower() == "icclim":
+    if cap_value:
+        if isinstance(cap_value, bool):
+            cap_value = np.nan
+        elif isinstance(cap_value, int | float):
+            pass
+        else:
+            raise TypeError("Argument 'cap_value' must be a bool, int or float.")
+    else:
+        cap_value = 1.0
+
+    lat_abs = abs(lat)
+    if method == "smoothed":
+        lat_mask = lat_abs <= 50
+        lat_coefficient = 1 + ((lat_abs - 40) / 10).clip(min=0) * 0.06
+        k = xr.where(lat_mask, lat_coefficient, cap_value)
+    elif method == "stepwise":
         k_f = [0, 0.02, 0.03, 0.04, 0.05, 0.06]
         k = 1 + xr.where(
-            abs(lat) <= 40,
+            lat_abs <= 40,
             k_f[0],
             xr.where(
-                (40 < abs(lat)) & (abs(lat) <= 42),
+                (40 < lat_abs) & (lat_abs <= 42),
                 k_f[1],
                 xr.where(
-                    (42 < abs(lat)) & (abs(lat) <= 44),
+                    (42 < lat_abs) & (lat_abs <= 44),
                     k_f[2],
                     xr.where(
-                        (44 < abs(lat)) & (abs(lat) <= 46),
+                        (44 < lat_abs) & (lat_abs <= 46),
                         k_f[3],
                         xr.where(
-                            (46 < abs(lat)) & (abs(lat) <= 48),
+                            (46 < lat_abs) & (lat_abs <= 48),
                             k_f[4],
-                            xr.where((48 < abs(lat)) & (abs(lat) <= 50), k_f[5], np.nan),
+                            xr.where((48 < lat_abs) & (lat_abs <= 50), k_f[5], cap_value),
                         ),
                     ),
                 ),
             ),
         )
 
-    elif method.lower() == "smoothed":
-        lat_mask = abs(lat) <= 50
-        lat_coefficient = ((abs(lat) - 40) / 10).clip(min=0) * 0.06
-        k = 1 + xr.where(lat_mask, lat_coefficient, np.nan)
-
     else:
-        raise NotImplementedError(
-            "Method is not implemented. Only 'gladstones_simple', 'icclim' and 'smoothed' are available."
-        )
+        raise NotImplementedError("Method is not implemented. Only 'smoothed' and 'stepwise' are permitted.")
 
     return k
+
+
+def aggregated_day_length_latitude_coefficient(
+    dates: xr.DataArray,
+    lat: xr.DataArray | int | float,
+    method: Literal["gladstones", "jones"],
+    start_date: DayOfYearStr = "04-01",
+    end_date: DayOfYearStr = "11-01",
+    freq: str = "YS",
+) -> xr.DataArray:
+    """
+    Complex day length latitude coefficient.
+
+    This function computes a day length latitude coefficient as it influences the entire growing season.
+
+    Parameters
+    ----------
+    dates : xarray.DataArray
+        The dates for which the day length latitude coefficient is computed.
+    lat : xarray.DataArray or int or float
+        Latitude coordinate. If a single value is given, it is converted to an xarray.DataArray.
+    method : {"gladstones", "jones"}
+        The method to use for the coefficient calculation.
+    start_date : DayOfYearStr
+        The start date of the growing season.
+    end_date : DayOfYearStr
+        The end date of the growing season. Date is not included in the aggregation.
+    freq : str
+        The frequency at which to aggregate the day lengths.
+        Must be an annual frequency, such as "YS" or "YS-*" for methods "gladstones" and "jones".
+
+    Returns
+    -------
+    xarray.DataArray, [dimensionless]
+        Coefficient for the day length based on latitude, aggregated over the growing season.
+
+    Notes
+    -----
+    TODO: Complete the docstring with the mathematical formulas for the coefficients.
+    """
+    if not freq.startswith("YS"):
+        msg = (
+            f"Freq {freq} not supported. Must be `YS` or `YS-*` for methods 'gladstones' and 'jones'. "
+            "An annual frequency is required for the current implementation."
+        )
+        raise NotImplementedError(msg)
+
+    if method in ["gladstones", "jones"]:
+        day_length = (
+            select_time(
+                day_lengths(dates=dates, lat=lat, method="simple"),
+                date_bounds=(start_date, end_date),
+                include_bounds=(True, False),
+            )
+            .resample(time=freq)
+            .sum()
+        )
+
+        k_jones = 2.8311e-4 * day_length + 0.30834
+        if method == "jones":
+            k_aggregated = k_jones
+        else:
+            k_aggregated = 1.1135 * k_jones - 0.1352
+    else:
+        raise NotImplementedError("Method not implemented. Only 'gladstones' or 'jones' are supported.")
+
+    return k_aggregated
 
 
 def wind_speed_height_conversion(

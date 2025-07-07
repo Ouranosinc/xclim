@@ -270,9 +270,10 @@ class TestAgroclimaticIndices:
     @pytest.mark.parametrize(
         "method, end_date, deg_days, max_deg_days",
         [
-            ("gladstones", "11-01", 1102.1, 1926.0),
-            ("jones", "11-01", 1203.4, 2179.1),
+            ("gladstones", "11-01", 1203.9, 2167.15),
+            ("huglin", "11-01", 1203.9, 2167.15),
             ("icclim", "10-01", 915.0, 1647.0),
+            ("jones", "11-01", 1211.1, 2180.14),
         ],
     )
     def test_bedd(self, method, end_date, deg_days, max_deg_days):
@@ -281,21 +282,21 @@ class TestAgroclimaticIndices:
             np.zeros(time_data.size) + 10 + K2C,
             dims="time",
             coords={"time": time_data},
-            attrs=dict(units="K"),
+            attrs={"units": "K"},
         )
 
         tx = xr.DataArray(
             np.zeros(time_data.size) + 20 + K2C,
             dims="time",
             coords={"time": time_data},
-            attrs=dict(units="K"),
+            attrs={"units": "K"},
         )
 
         tx_hot = xr.DataArray(
             np.zeros(time_data.size) + 50 + K2C,
             dims="time",
             coords={"time": time_data},
-            attrs=dict(units="K"),
+            attrs={"units": "K"},
         )
 
         lat = xr.DataArray([35, 45], dims=("lat",), name="lat", attrs={"units": "degrees_north"})
@@ -329,18 +330,16 @@ class TestAgroclimaticIndices:
             freq="YS",
         )
 
-        if method == "jones":
-            np.testing.assert_array_less(bedd[1], bedd[0])  # Leap-year has slightly higher values
-            np.testing.assert_allclose(bedd[:3], np.array([deg_days, deg_days, deg_days]), rtol=6e-4)
-            np.testing.assert_allclose(bedd_hot[:3], [max_deg_days, max_deg_days, max_deg_days], rtol=0.15)
-
+        np.testing.assert_allclose(bedd[:3], np.array([deg_days, deg_days, deg_days]), atol=0.125)
+        np.testing.assert_allclose(bedd_hot[:3], [max_deg_days, max_deg_days, max_deg_days], atol=0.1)
+        if method == "icclim":
+            # Lat has no influence on 'icclim' method
+            np.testing.assert_array_equal(bedd[1], bedd[0])
+            np.testing.assert_array_equal(bedd, bedd_high_lat)
         else:
-            np.testing.assert_allclose(bedd[:3], np.array([deg_days, deg_days, deg_days]))
-            np.testing.assert_array_equal(bedd_hot[:3], [max_deg_days, max_deg_days, max_deg_days])
-            if method == "gladstones":
-                np.testing.assert_array_less(bedd, bedd_high_lat)
-            if method == "icclim":
-                np.testing.assert_array_equal(bedd, bedd_high_lat)
+            # Leap-year has slightly higher values for higher latitudes
+            np.testing.assert_array_less(bedd[1], bedd[0])
+            np.testing.assert_array_less(bedd, bedd_high_lat)
 
     def test_chill_portions(self, tas_series):
         tas = tas_series(np.linspace(0, 15, 120 * 24) + K2C, freq="h")
@@ -370,7 +369,7 @@ class TestAgroclimaticIndices:
 
     def test_cool_night_index(self, open_dataset):
         ds = open_dataset("cmip5/tas_Amon_CanESM2_rcp85_r1i1p1_200701-200712.nc")
-        ds = ds.rename(dict(tas="tasmin"))
+        ds = ds.rename({"tas": "tasmin"})
 
         cni = xci.cool_night_index(tasmin=ds.tasmin)  # find latitude implicitly
         tasmin = convert_units_to(ds.tasmin, "degC")
@@ -1259,8 +1258,8 @@ class TestDailyFreezeThawCycles:
     @pytest.mark.parametrize(
         "thresholds",
         [
-            dict(),
-            dict(thresh_tasmax="0 degC", thresh_tasmin="0 degC"),
+            {},
+            {"thresh_tasmax": "0 degC", "thresh_tasmin": "0 degC"},
         ],
     )
     def test_simple(self, tasmin_series, tasmax_series, thresholds):
