@@ -506,8 +506,10 @@ def saturation_vapor_pressure(
 
     Where $$T_{ice}$$ is ``ice_thresh``, $$T_{w}$$ is ``water_thresh`` and $$\beta$$ is ``interp_power``.
 
-    As a note, a computation resembling what ERA5 does would use ``method = 'ERA5'``, ``ice_thresh = 250.16 K``,
-    ``water_thresh = 273.16 K`` (default) and ``interp_power = 2`` (:cite:t:`ecwmf_physical_2016`).
+    As a note, a computation resembling what ECMWF's IFS does to compute relative humidity would use:
+    ``method = 'ERA5'``, ``ice_thresh = 250.16 K``, ``water_thresh = 273.16 K`` (default) and ``interp_power = 2``
+    (:cite:t:`ecwmf_physical_2016`). Take note, however, that the 2m dew point temperature given by the IFS
+    (ERA5, ERA5-Land) is computed with reference to water only.
 
     References
     ----------
