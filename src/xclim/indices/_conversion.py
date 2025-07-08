@@ -436,7 +436,7 @@ def _saturation_vapor_pressure_over_ice(tas: xr.DataArray, method: str):
     return e_sat
 
 
-@declare_units(tas="[temperature]", ice_thresh="[temperature]")
+@declare_units(tas="[temperature]", ice_thresh="[temperature]", water_thresh="[temperature]")
 def saturation_vapor_pressure(
     tas: xr.DataArray,
     ice_thresh: Quantified | None = None,
@@ -540,7 +540,7 @@ def saturation_vapor_pressure(
     return e_sat
 
 
-@declare_units(tas="[temperature]", hurs="[]", ice_thresh="[temperature]")
+@declare_units(tas="[temperature]", hurs="[]", ice_thresh="[temperature]", water_thresh="[temperature]")
 def vapor_pressure_deficit(
     tas: xr.DataArray,
     hurs: xr.DataArray,
@@ -598,6 +598,7 @@ def vapor_pressure_deficit(
     huss="[]",
     ps="[pressure]",
     ice_thresh="[temperature]",
+    water_thresh="[temperature]",
 )
 def relative_humidity(
     tas: xr.DataArray,
@@ -741,10 +742,7 @@ def relative_humidity(
 
 
 @declare_units(
-    tas="[temperature]",
-    hurs="[]",
-    ps="[pressure]",
-    ice_thresh="[temperature]",
+    tas="[temperature]", hurs="[]", ps="[pressure]", ice_thresh="[temperature]", water_thresh="[temperature]"
 )
 def specific_humidity(
     tas: xr.DataArray,
@@ -850,10 +848,7 @@ def specific_humidity(
     return q
 
 
-@declare_units(
-    tdps="[temperature]",
-    ps="[pressure]",
-)
+@declare_units(tdps="[temperature]", ps="[pressure]", ice_thresh="[temperature]", water_thresh="[temperature]")
 def specific_humidity_from_dewpoint(
     tdps: xr.DataArray,
     ps: xr.DataArray,
