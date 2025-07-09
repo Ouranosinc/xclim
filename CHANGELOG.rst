@@ -13,6 +13,7 @@ New indicators and features
 * Argument ``window`` added to indicator ``rain_on_frozen_ground_days``. (:pull:`2190`).
 * New helper ``xclim.indices.generic.season_length_from_boundaries`` takes `season_start` and `season_end` as input and gives `season_length`. This is used when starts and ends are computed with different resampling frequencies: `days_since` are used to compute temporal lengths in this case. (:pull:`2189`).
 * Allow `invalid_values` as argument for `relative_humidity_from_dewpoint`. (:pull:`2203`, :issue:`2202`)
+* New methods ``dai_annual`` and ``dai_seasonal`` for ``xclim.atmos.snowfall_approximation`` and ``xclim.atmos.rain_approximation``, taken from :cite:t:`dai_snowfall_2008`. Indicator also take new argument ``landmask`` to switch between the land and ocean formulations. (:pull:`2208`, :issue:`1752`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
