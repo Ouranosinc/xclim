@@ -529,7 +529,7 @@ def vapor_pressure_deficit(
     saturation_vapor_pressure : Vapour pressure at saturation.
     """
     svp = saturation_vapor_pressure(tas, ice_thresh=ice_thresh, method=method)
-
+    hurs = convert_units_to(hurs, "%")
     vpd = cast(xr.DataArray, (1 - (hurs / 100)) * svp)
 
     vpd = vpd.assign_attrs(units=svp.attrs["units"])
