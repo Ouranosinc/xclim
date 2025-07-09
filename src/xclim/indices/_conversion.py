@@ -141,6 +141,7 @@ def humidex(
     elif hurs is not None:
         # Convert dry bulb temperature to Celsius
         tasC = convert_units_to(tas, "celsius")
+        hurs = convert_units_to(hurs, "%")
         e = hurs / 100 * 6.112 * 10 ** (7.5 * tasC / (tasC + 237.7))
 
     else:
