@@ -153,7 +153,7 @@ def huglin_index(
     cap_latitude: bool | int | float = True,
     start_date: DayOfYearStr = "04-01",
     end_date: DayOfYearStr = "10-01",
-    freq: str = "YS",
+    freq: Literal["YS", "YS-JAN", "YS-JUL"] = "YS",
 ) -> xarray.DataArray:
     r"""
     Heliothermal Index of Huglin.
@@ -186,7 +186,7 @@ def huglin_index(
         The hemisphere-based start date to consider (north = April, south = October).
     end_date : DayOfYearStr
         The hemisphere-based start date to consider (north = October, south = April). This date is non-inclusive.
-    freq : str
+    freq : {"YS", "YS-JAN", "YS-JUL"}
         Resampling frequency (default: "YS"; For Southern Hemisphere, should be "YS-JUL").
 
     Returns
@@ -222,6 +222,11 @@ def huglin_index(
     ----------
     :cite:cts:`huglin_nouveau_1978,hall_spatial_2010`
     """
+    if not isinstance(freq, str):
+        raise TypeError("Freq must be a string.")
+    if parse_offset(freq) != (1, "Y", True, "JAN"):
+        raise ValueError(f"Freq not allowed: {freq}. Must be `YS` or `YS-JAN`")
+
     tas = convert_units_to(tas, "degC")
     tasmax = convert_units_to(tasmax, "degC")
     thresh = convert_units_to(thresh, "degC")
@@ -285,7 +290,7 @@ def biologically_effective_degree_days(
     cap_latitude: bool | int | float = True,
     start_date: DayOfYearStr = "04-01",
     end_date: DayOfYearStr = "11-01",
-    freq: str = "YS",
+    freq: Literal["YS", "YS-JAN", "YS-JUL"] = "YS",
 ) -> xarray.DataArray:
     r"""
     Biologically effective growing degree days.
@@ -303,15 +308,16 @@ def biologically_effective_degree_days(
         Maximum daily temperature.
     lat : xarray.DataArray, optional
         Latitude coordinate.
-        If None and method is no "icclim", a CF-conformant "latitude" field must be available within the passed DataArray.
+        If None and method is not "icclim", a CF-conformant "latitude" field must be available within the passed DataArray.
     thresh_tasmin : Quantified
         The minimum temperature threshold.
     method : {"gladstones", "huglin", "icclim", "jones", "smoothed", "stepwise"}
         The formula to use for the calculation.
-        The "gladstones" method uses a temperature range adjustment and a latitude coefficient based on :cite:t:`huglin_biologie_1998`. End_date should be "11-01".
-        The "gladstones_simple" method integrates a daily temperature range and latitude coefficient. End_date should be "11-01".
-        The "icclim" method ignores daily temperature range and latitude coefficient. End date should be "10-01".
-        The "jones" method integrates axial tilt, latitude, and day-of-year on coefficient based on :cite:t:`hall_spatial_2010`. End_date should be "11-01".
+        The "gladstones" method uses a temperature range adjustment and a latitude coefficient based on :cite:t:`huglin_biologie_1998`.
+        End_date should be "11-01" for Northern hemisphere.
+        The "gladstones_simple" method integrates a daily temperature range and latitude coefficient. End_date should be "11-01" for Northern hemisphere.
+        The "icclim" method ignores daily temperature range and latitude coefficient. End date should be "10-01" for Northern hemisphere.
+        The "jones" method integrates axial tilt, latitude, and day-of-year on coefficient based on :cite:t:`hall_spatial_2010`. End_date should be "11-01" for Northern hemisphere.
     low_dtr : Quantified
         The lower bound for daily temperature range adjustment (default: 10°C).
     high_dtr : Quantified
@@ -329,7 +335,7 @@ def biologically_effective_degree_days(
     end_date : DayOfYearStr
         The hemisphere-based start date to consider (north = October, south = April).
         This date is non-inclusive.
-    freq : str
+    freq : {"YS", "YS-JAN", "YS-JUL"}
         Resampling frequency (default: "YS"; For Southern Hemisphere, should be "YS-JUL").
 
     Returns
@@ -382,6 +388,11 @@ def biologically_effective_degree_days(
     ----------
     :cite:cts:`gladstones_viticulture_1992,huglin_biologie_1998,project_team_eca&d_algorithm_2013`
     """
+    if not isinstance(freq, str):
+        raise TypeError("Freq must be a string.")
+    if parse_offset(freq) != (1, "Y", True, "JAN"):
+        raise ValueError(f"Freq not allowed: {freq}. Must be `YS` or `YS-JAN`")
+
     tasmin = convert_units_to(tasmin, "degC")
     tasmax = convert_units_to(tasmax, "degC")
     thresh_tasmin = convert_units_to(thresh_tasmin, "degC")
@@ -458,7 +469,7 @@ def biologically_effective_degree_days(
 def cool_night_index(
     tasmin: xarray.DataArray,
     lat: xarray.DataArray | str | None = None,
-    freq: str = "YS",
+    freq: Literal["YS", "YS-JAN"] = "YS",
 ) -> xarray.DataArray:
     """
     Cool Night Index.
@@ -473,7 +484,7 @@ def cool_night_index(
     lat : xarray.DataArray or {"north", "south"}, optional
         Latitude coordinate as an array, float or string.
         If None, a CF-conformant "latitude" field must be available within the passed DataArray.
-    freq : str
+    freq : {"YS", "YS-JAN"}
         Resampling frequency.
 
     Returns
@@ -508,6 +519,11 @@ def cool_night_index(
     >>> tasmin = xr.open_dataset(path_to_tasmin_file).tasmin
     >>> cni = cool_night_index(tasmin)
     """
+    if not isinstance(freq, str):
+        raise TypeError("Freq must be a string.")
+    if parse_offset(freq) != (1, "Y", True, "JAN"):
+        raise ValueError(f"Freq not allowed: {freq}. Must be `YS` or `YS-JAN`")
+
     tasmin = convert_units_to(tasmin, "degC")
 
     # Use September in northern hemisphere, March in southern hemisphere.
@@ -523,9 +539,9 @@ def cool_night_index(
         elif lat.lower() == "south":
             month = 3
         else:
-            raise ValueError(f"Latitude value unsupported: {lat}.")
+            raise ValueError(f"Latitude value not implemented: {lat}.")
     else:
-        raise ValueError(f"Latitude not understood {lat}.")
+        raise ValueError("Latitude must be a DataArray or str ('north' or 'south').")
 
     tasmin = tasmin.where(months == month, drop=True)
 
@@ -540,7 +556,7 @@ def dryness_index(  # numpydoc ignore=SS05
     evspsblpot: xarray.DataArray,
     lat: xarray.DataArray | str | None = None,
     wo: Quantified = "200 mm",
-    freq: str = "YS",
+    freq: Literal["YS", "YS-JAN"] = "YS",
 ) -> xarray.DataArray:
     r"""
     Dryness Index.
@@ -561,7 +577,7 @@ def dryness_index(  # numpydoc ignore=SS05
         If None, a CF-conformant "latitude" field must be available within the passed DataArray.
     wo : Quantified
         The initial soil water reserve accessible to root systems [length]. Default: 200 mm.
-    freq : str
+    freq : {"YS", "YS-JAN"}
         Resampling frequency.
 
     Returns
@@ -640,6 +656,8 @@ def dryness_index(  # numpydoc ignore=SS05
     >>> from xclim.indices import dryness_index
     >>> dryi = dryness_index(pr_dataset, evspsblpot_dataset, wo="200 mm")
     """
+    if not isinstance(freq, str):
+        raise TypeError("Freq must be a string.")
     if parse_offset(freq) != (1, "Y", True, "JAN"):
         raise ValueError(f"Freq not allowed: {freq}. Must be `YS` or `YS-JAN`")
 
@@ -683,9 +701,9 @@ def dryness_index(  # numpydoc ignore=SS05
             adjustment = adjustment_array_south
             has_south = True
         else:
-            raise ValueError(f"Latitude value unsupported: {lat}.")
+            raise ValueError(f"Latitude value not implemented: {lat}.")
     else:
-        raise ValueError(f"Latitude not understood: {lat}.")
+        raise ValueError("Latitude must be a DataArray or str ('north' or 'south').")
 
     # Monthly weights array
     k = adjustment.sel(month=evspsblpot.time.dt.month)
@@ -761,8 +779,8 @@ def latitude_temperature_index(
     Notes
     -----
     The latitude factor of `75` is provided for examining the poleward expansion of wine-growing climates under
-    scenarios of climate change (modified from :cite:t:`kenny_assessment_1992`). For comparing 20th century/observed
-    historical records, the original scale factor of `60` is more appropriate.
+    scenarios of climate change :cite:p:`kenny_assessment_1992`. For comparing 20th century/observed historical
+    records, the original scale factor of `60` is more appropriate :cite:p:`jackson_prediction_1988`.
 
     Let :math:`Tn_{j}` be the average temperature for a given month :math:`j`, :math:`lat_{f}` be the latitude factor,
     and :math:`lat` be the latitude of the area of interest. Then the Latitude-Temperature Index (:math:`LTI`) is:

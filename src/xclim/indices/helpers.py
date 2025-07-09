@@ -586,7 +586,7 @@ def aggregated_day_length_latitude_coefficient(
     method: Literal["gladstones", "jones"],
     start_date: DayOfYearStr = "04-01",
     end_date: DayOfYearStr = "11-01",
-    freq: str = "YS",
+    freq: Literal["YS", "YS-JAN", "YS-JUL"] = "YS",
 ) -> xr.DataArray:
     """
     Complex day length latitude coefficient.
@@ -605,9 +605,8 @@ def aggregated_day_length_latitude_coefficient(
         The start date of the growing season.
     end_date : DayOfYearStr
         The end date of the growing season. Date is not included in the aggregation.
-    freq : str
+    freq : {"YS", "YS-JAN", "YS-JUL"}
         The frequency at which to aggregate the day lengths.
-        Must be an annual frequency, such as "YS" or "YS-*" for methods "gladstones" and "jones".
 
     Returns
     -------
