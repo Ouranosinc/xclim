@@ -143,6 +143,7 @@ def corn_heat_units(
     tasmax="[temperature]",
     lat="[]",
     thresh="[temperature]",
+    cap_latitude="[]",
 )
 def huglin_index(
     tas: xarray.DataArray,
@@ -150,7 +151,7 @@ def huglin_index(
     lat: xarray.DataArray | None = None,
     thresh: Quantified = "10 degC",
     method: str = "smoothed",
-    cap_latitude: bool | int | float = True,
+    cap_latitude: bool | str = True,
     start_date: DayOfYearStr = "04-01",
     end_date: DayOfYearStr = "10-01",
     freq: Literal["YS", "YS-JAN", "YS-JUL"] = "YS",
@@ -176,10 +177,10 @@ def huglin_index(
     method : {"icclim", "jones", "smoothed", "stepwise"}
         The formula to use for the latitude coefficient calculation.
         The "icclim" method is identical to the "stepwise" method.
-    cap_latitude : bool or int or float
+    cap_latitude : bool or str
         Whether to cap the latitude at 50°N or 50°S.
         If true, values above 50°N or below 50°S will be set to NaN.
-        If an int or float, it will be used as the cap value.
+        If str (e.g. "45 degree_north"), it will be used as the cap value.
         if False, values above 50°N or below 50°S will be set to 1.0.
         Default: True.
     start_date : DayOfYearStr
@@ -277,6 +278,7 @@ def huglin_index(
     low_dtr="[temperature]",
     high_dtr="[temperature]",
     max_daily_degree_days="[temperature]",
+    cap_latitude="[]",
 )
 def biologically_effective_degree_days(
     tasmin: xarray.DataArray,
@@ -287,7 +289,7 @@ def biologically_effective_degree_days(
     low_dtr: Quantified = "10 degC",
     high_dtr: Quantified = "13 degC",
     max_daily_degree_days: Quantified = "9 degC",
-    cap_latitude: bool | int | float = True,
+    cap_latitude: bool | str = True,
     start_date: DayOfYearStr = "04-01",
     end_date: DayOfYearStr = "11-01",
     freq: Literal["YS", "YS-JAN", "YS-JUL"] = "YS",

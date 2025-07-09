@@ -473,7 +473,7 @@ def day_lengths(
 
 
 def day_length_latitude_coefficient(
-    lat: xr.DataArray | int | float,
+    lat: xr.DataArray | str,
     method: Literal["stepwise", "smoothed"],
     cap_value: bool | float | int,
 ):
@@ -485,8 +485,8 @@ def day_length_latitude_coefficient(
 
     Parameters
     ----------
-    lat : xarray.DataArray, int or float
-        Latitude coordinate. If a single value is given, it is converted to an xarray.DataArray.
+    lat : xarray.DataArray, str
+        Latitude coordinate. If provided a string (e.g. "45 degree_north"), it is converted to an xarray.DataArray.
     method : {"smoothed", "stepwise"}
         The method to use for the coefficient calculation.
     cap_value : bool or float
@@ -532,8 +532,9 @@ def day_length_latitude_coefficient(
     ----------
     :cite:cts:`huglin_nouveau_1978,project_team_eca&d_algorithm_2013`
     """
-    if isinstance(lat, int | float):
-        lat = xr.DataArray(lat)
+    if isinstance(lat, str):
+        _lat_value = convert_units_to(lat, "deg")
+        lat = xr.DataArray(lat, attrs={"units": "degree_north"})
 
     if cap_value:
         if isinstance(cap_value, bool):
