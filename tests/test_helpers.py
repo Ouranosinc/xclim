@@ -81,6 +81,44 @@ def test_day_lengths(method):
                 np.testing.assert_allclose(dl.sel(time=e[0]).transpose(), np.array(e[1]), rtol=2e-1)
 
 
+@pytest.mark.parametrize("constrain", [False, True, "20 degree_north"])
+def test_gladstones_day_length(constrain):
+    time_data = xr.date_range("1992-12-01", "1994-01-01", freq="D", calendar="standard")
+    data = xr.DataArray(
+        np.ones((time_data.size, 13)),
+        dims=("time", "lat"),
+        coords={"time": time_data, "lat": np.linspace(-65, 65, 13, endpoint=True)},
+    )
+    data.lat.attrs["units"] = "degree_north"
+    k = helpers.gladstones_day_length_latitude_coefficient(dates=data.time, lat=data.lat, constrain=constrain)
+
+    events = dict(
+        solstice=[
+            ["1992-12-21", [1.42, 1.14, 1.03, 0.95, 0.9, 0.85, 1.31, 1.24, 1.17, 1.08, 0.96, 0.77, 0.32]],
+            ["1993-06-21", [0.31, 0.77, 0.96, 1.08, 1.17, 1.24, 0.81, 0.85, 0.9, 0.95, 1.03, 1.14, 1.42]],
+            ["1993-12-21", [1.42, 1.14, 1.03, 0.95, 0.9, 0.85, 1.31, 1.24, 1.17, 1.08, 0.96, 0.77, 0.32]],
+        ],
+        equinox=[
+            ["1993-03-20", [1.0] * 13]
+        ],  # True equinox on 1993-03-20 at 14:41 GMT. Some relative tolerance is needed.
+    )
+
+    if constrain:
+        if constrain == "20 degree_north":
+            for entry in events["solstice"]:
+                entry[1][5:8] = [1.0] * 3
+        else:
+            for entry in events["solstice"]:
+                entry[1][4:9] = [1.0] * 5
+
+    for event, evaluations in events.items():
+        for e in evaluations:
+            if event == "solstice":
+                np.testing.assert_array_almost_equal(k.sel(time=e[0]).transpose(), np.array(e[1]), 2)
+            elif event == "equinox":
+                np.testing.assert_allclose(k.sel(time=e[0]).transpose(), np.array(e[1]), rtol=2e-1)
+
+
 @pytest.mark.parametrize("calendar", ["standard", "noleap"])
 def test_cosine_of_solar_zenith_angle(calendar):
     time = xr.date_range("1900-01-01T00:30", "1900-01-03", freq="h", calendar=calendar)

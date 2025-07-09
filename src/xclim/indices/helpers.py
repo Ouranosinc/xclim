@@ -433,7 +433,7 @@ def extraterrestrial_solar_radiation(
 
 def day_lengths(
     dates: xr.DataArray,
-    lat: xr.DataArray,
+    lat: Quantified | xr.Dataset | xr.DataTree,
     method: Literal["spencer", "simple"] = "spencer",
 ) -> xr.DataArray:
     r"""
@@ -463,11 +463,11 @@ def day_lengths(
     :cite:cts:`kalogirou_chapter_2014`
     """
     declination = solar_declination(dates.time, method=method)
-    lat = convert_units_to(lat, "rad")
+    radians = convert_units_to(lat, "rad")
     # arccos gives the hour-angle at sunset, multiply by 24 / 2π to get hours.
     # The day length is twice that.
     with np.errstate(invalid="ignore"):
-        day_length_hours = ((24 / np.pi) * np.arccos(-np.tan(lat) * np.tan(declination))).assign_attrs(units="h")
+        day_length_hours = ((24 / np.pi) * np.arccos(-np.tan(radians) * np.tan(declination))).assign_attrs(units="h")
 
     return day_length_hours
 
@@ -478,7 +478,7 @@ def day_length_latitude_coefficient(
     cap_value: bool | float | int,
 ):
     r"""
-    Simple coefficient for the day length and latitude.
+    Simple coefficient for the day-length and high latitudes.
 
     This latitude coefficient is used for determining the latitude effect on the day length specific to climate indices
     that concern viticulture, such as :py:func:`xclim.indices.huglin_index` (cite:p:`huglin_nouveau_1978`).
@@ -530,7 +530,7 @@ def day_length_latitude_coefficient(
 
     References
     ----------
-    :cite:cts:`gladstones_viticulture_1992,huglin_nouveau_1978,project_team_eca&d_algorithm_2013`
+    :cite:cts:`huglin_nouveau_1978,project_team_eca&d_algorithm_2013`
     """
     if isinstance(lat, int | float):
         lat = xr.DataArray(lat)
@@ -580,6 +580,79 @@ def day_length_latitude_coefficient(
     return k
 
 
+def gladstones_day_length_latitude_coefficient(
+    dates: xr.DataArray,
+    lat: xr.DataArray | int | float,
+    neutral_latitude: str = "40.0 deg",
+    constrain: bool | str = False,
+    day_length_method: Literal["simple", "spencer"] = "spencer",
+) -> xr.DataArray:
+    """
+    Day-length latitude coefficient based on the Gladstones methodology.
+
+    This function computes a day-length latitude coefficient as it influences the monthly temperatures
+    of the growing season as compared to the day-length of a neutral reference latitude.
+    Based on :cite:t:`gladstones_viticulture_1992` and cite:t:`gladstones_wine_2011`.
+
+    Parameters
+    ----------
+    dates : xarray.DataArray
+        The dates for which the day length latitude coefficient is computed.
+    lat : xarray.DataArray or int or float
+        Latitude coordinate. If a single value is given, it is converted to an xarray.DataArray.
+    neutral_latitude : str
+        The latitude at which the day length coefficient is 1.0.
+        Latitudes between this value and 0 degrees North will have a coefficient below 1.0 during the growing season,
+        while latitudes above this value will have a coefficient greater than 1.0.
+        This negative absolute value of this latitude is used for the Southern Hemisphere.
+    constrain : bool or str
+        The lower latitude limit for the coefficient.
+        If True, latitudes below 25 degrees North and above 25 degrees South will have a coefficient of 1.0.
+        If False, the coefficient is calculated for all near-equatorial latitudes.
+        If a str is given, it is used as the lower latitude limit for the coefficient.
+    day_length_method : {'simple', 'spencer'}
+        The method to use for the day length calculation.
+        The "simple" method uses a simple approximation of the day length based on latitude and time of year.
+        The "spencer" method uses a more complex approximation based on the Fourier series of the solar declination.
+
+    Returns
+    -------
+    xarray.DataArray, [dimensionless]
+        Coefficient for the day length based on latitude.
+    """
+    if not isinstance(lat, xr.DataArray):
+        lat = xr.DataArray(lat, attrs={"units": "degree_north"})
+    if day_length_method not in ["simple", "spencer"]:
+        raise NotImplementedError("day_length_method must be one of 'simple' or 'spencer'.")
+
+    if not constrain:
+        constrain_value = False
+    elif isinstance(constrain, bool):
+        constrain_value = 25.0
+    elif isinstance(constrain, str):
+        constrain_value = convert_units_to(constrain, "deg")
+    else:
+        raise ValueError("Argument 'constrain' must be a bool or str (e.g. '25 degree_north').")
+
+    _neutral_latitude = convert_units_to(neutral_latitude, "deg")
+
+    pivotal_day_length_north = day_lengths(dates=dates, lat=f"{abs(_neutral_latitude)} deg", method=day_length_method)
+    pivotal_day_length_south = day_lengths(dates=dates, lat=f"{-abs(_neutral_latitude)} deg", method=day_length_method)
+    day_length = day_lengths(dates=dates, lat=lat, method=day_length_method)
+
+    if not constrain_value:
+        k = xr.where(lat >= 0.0, day_length / pivotal_day_length_north, day_length / pivotal_day_length_south)
+    else:
+        k = xr.where(
+            lat >= constrain_value,
+            day_length / pivotal_day_length_north,
+            xr.where(lat <= -constrain_value, day_length / pivotal_day_length_south, 1.0),
+        )
+    k = k.assign_attrs(units="dimensionless")
+
+    return k
+
+
 def aggregated_day_length_latitude_coefficient(
     dates: xr.DataArray,
     lat: xr.DataArray | int | float,
@@ -592,6 +665,7 @@ def aggregated_day_length_latitude_coefficient(
     Complex day length latitude coefficient.
 
     This function computes a day length latitude coefficient as it influences the entire growing season.
+    Based on cite:t:`hall_spatial_2010`.
 
     Parameters
     ----------
