@@ -379,7 +379,7 @@ def _saturation_vapor_pressure_over_water(tas: xr.DataArray, method: str):
         )
     elif method in ["wmo08", "WMO08"]:
         e_sat = 611.2 * np.exp(17.62 * (tas - 273.16) / (tas - 30.04))
-    elif method in ["era5", "ERA5"]:
+    elif method in ["ecmwf", "ECMWF"]:
         e_sat = 611.21 * np.exp(17.502 * (tas - 273.16) / (tas - 32.19))
     elif method in ["its90", "ITS90"]:
         e_sat = np.exp(
@@ -393,7 +393,9 @@ def _saturation_vapor_pressure_over_water(tas: xr.DataArray, method: str):
             + 2.7150305 * np.log(tas)
         )
     else:
-        raise ValueError(f"Method {method} is not in ['sonntag90', 'tetens30', 'goffgratch46', 'wmo08', 'its90']")
+        raise ValueError(
+            f"Method {method} is not in ['sonntag90', 'tetens30', 'goffgratch46', 'wmo08', 'its90', 'ecmwf']"
+        )
     return e_sat
 
 
@@ -420,7 +422,7 @@ def _saturation_vapor_pressure_over_ice(tas: xr.DataArray, method: str):
         )
     elif method in ["wmo08", "WMO08"]:
         e_sat = 611.2 * np.exp(22.46 * (tas - 273.16) / (tas - 0.54))
-    elif method in ["era5", "ERA5"]:
+    elif method in ["ecmwf", "ECMWF"]:
         e_sat = 611.21 * np.exp(22.587 * (tas - 273.16) / (tas - -0.7))
     elif method in ["its90", "ITS90"]:
         e_sat = np.exp(
@@ -432,7 +434,9 @@ def _saturation_vapor_pressure_over_ice(tas: xr.DataArray, method: str):
             + 6.7063522e-1 * np.log(tas)
         )
     else:
-        raise ValueError(f"Method {method} is not in ['sonntag90', 'tetens30', 'goffgratch46', 'wmo08', 'its90']")
+        raise ValueError(
+            f"Method {method} is not in ['sonntag90', 'tetens30', 'goffgratch46', 'wmo08', 'its90', 'ecmwf']"
+        )
     return e_sat
 
 
@@ -455,7 +459,7 @@ def saturation_vapor_pressure(
         Threshold temperature under which to switch to equations in reference to ice instead of water.
         If None (default) everything is computed with reference to water.
         If given, see `interp_power` for more options.
-    method : {"goffgratch46", "sonntag90", "tetens30", "wmo08", "its90", "era5"}
+    method : {"goffgratch46", "sonntag90", "tetens30", "wmo08", "its90", "ecmwf"}
         Which saturation vapour pressure formula to use, see notes.
     interp_power : int or None
         Interpolation options for mixing saturation over water and over ice. See notes.
@@ -480,7 +484,7 @@ def saturation_vapor_pressure(
       values and equation taken from :cite:t:`vomel_saturation_2016`.
     - "wmo08" or "WMO08", taken from :cite:t:`world_meteorological_organization_guide_2008`.
     - "its90" or "ITS90", taken from :cite:t:`hardy_its-90_1998`.
-    - "era5" or "ERA5", taken from :cite:t:`ecwmf_physical_2016`. This is a mix of :cite:t:`buck_new_1981` for
+    - "ecmwf" or "ECMWF", taken from :cite:t:`ecwmf_physical_2016`. This is a mix of :cite:t:`buck_new_1981` for
        saturation over water and :cite:t:`alduchov_improved_1996` for saturation over ice.
 
     Water vs ice
@@ -507,7 +511,7 @@ def saturation_vapor_pressure(
     Where $$T_{ice}$$ is ``ice_thresh``, $$T_{w}$$ is ``water_thresh`` and $$\beta$$ is ``interp_power``.
 
     As a note, a computation resembling what ECMWF's IFS does to compute relative humidity would use:
-    ``method = 'ERA5'``, ``ice_thresh = 250.16 K``, ``water_thresh = 273.16 K`` (default) and ``interp_power = 2``
+    ``method = 'ECMWF'``, ``ice_thresh = 250.16 K``, ``water_thresh = 273.16 K`` (default) and ``interp_power = 2``
     (:cite:t:`ecwmf_physical_2016`). Take note, however, that the 2m dew point temperature given by the IFS
     (ERA5, ERA5-Land) is computed with reference to water only.
 
@@ -565,7 +569,7 @@ def vapor_pressure_deficit(
     ice_thresh : Quantified, optional
         Threshold temperature under which to switch to equations in reference to ice instead of water.
         If None (default) everything is computed with reference to water.
-    method : {"goffgratch46", "sonntag90", "tetens30", "wmo08", "its90", "era5"}
+    method : {"goffgratch46", "sonntag90", "tetens30", "wmo08", "its90", "ecmwf"}
         Method used to calculate saturation vapour pressure, see notes of :py:func:`saturation_vapor_pressure`.
         Default is "sonntag90".
     interp_power : int or None
@@ -633,7 +637,7 @@ def relative_humidity(
     ice_thresh : Quantified, optional
         Threshold temperature under which to switch to equations in reference to ice instead of water.
         If None (default) everything is computed with reference to water. Does nothing if 'method' is "bohren98".
-    method : {"bohren98", "goffgratch46", "sonntag90", "tetens30", "wmo08", "era5"}
+    method : {"bohren98", "goffgratch46", "sonntag90", "tetens30", "wmo08", "ecmwf"}
         Which method to use, see notes of this function and of :py:func:`saturation_vapor_pressure`.
     interp_power : int or None
         Optional interpolation for mixing saturation vapour pressures computed over water and ice.
@@ -773,7 +777,7 @@ def specific_humidity(
     ice_thresh : Quantified, optional
         Threshold temperature under which to switch to equations in reference to ice instead of water.
         If None (default) everything is computed with reference to water.
-    method : {"goffgratch46", "sonntag90", "tetens30", "wmo08", "era5"}
+    method : {"goffgratch46", "sonntag90", "tetens30", "wmo08", "ecmwf"}
         Which method to use, see notes of this function and of :py:func:`saturation_vapor_pressure`.
     interp_power : int or None
         Optional interpolation for mixing saturation vapour pressures computed over water and ice.
@@ -874,7 +878,7 @@ def specific_humidity_from_dewpoint(
     ice_thresh : Quantified, optional
         Threshold temperature under which to switch to saturated vapour pressure equations
         in reference to ice instead of water. See :py:func:`saturation_vapor_pressure`.
-    method : {"goffgratch46", "sonntag90", "tetens30", "wmo08", "era5"}
+    method : {"goffgratch46", "sonntag90", "tetens30", "wmo08", "ecmwf"}
         Method to compute the saturation vapour pressure.
     interp_power : int or None
         Optional interpolation for mixing saturation vapour pressures computed over water and ice.
