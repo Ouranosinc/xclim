@@ -493,7 +493,7 @@ def day_lengths(
 def huglin_day_length_latitude_coefficient(
     lat: xr.DataArray | str,
     method: Literal["huglin", "interpolated"],
-    cap_value: float = 1.0,
+    cap_value: float = np.nan,
 ):
     r"""
     Simple coefficient for the day-length and high latitudes.
@@ -510,7 +510,7 @@ def huglin_day_length_latitude_coefficient(
         The method to use for the coefficient calculation.
     cap_value : float
         For latitudes north of 50° N and south of 50° S, the value for the coefficient.
-        Default: 1.0.
+        Default: np.nan.
 
     Returns
     -------
@@ -546,7 +546,7 @@ def huglin_day_length_latitude_coefficient(
                      m, & \text{if } | lat | > 50 \\
                      \end{cases}
 
-    Where :math:`m` is the cap value, which is set to a float value of 1.0, or other if provided.
+    Where :math:`m` is the cap value, which is set to np.nan, or other if provided.
 
     References
     ----------
@@ -554,12 +554,14 @@ def huglin_day_length_latitude_coefficient(
     """
     if isinstance(lat, str):
         _lat_value = convert_units_to(lat, "deg")
-        lat = xr.DataArray(lat, attrs={"units": "degree_north"})
+        _lat = xr.DataArray(lat, attrs={"units": "degree_north"})
+    else:
+        _lat = lat
 
     if isinstance(cap_value, float):
         _cap_value = cap_value
     else:
-        raise TypeError("Argument 'cap_value' must be a bool, int or float.")
+        raise TypeError("Argument 'cap_value' must be a float (or numpy.nan).")
 
     lat_abs = abs(lat)
     if method == "interpolated":

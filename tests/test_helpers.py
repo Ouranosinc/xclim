@@ -50,69 +50,81 @@ def test_extraterrestrial_radiation(method):
     )
 
 
-@pytest.mark.parametrize("method, infill", [("spencer", False), ("spencer", True), ("simple", False)])
-def test_day_lengths(method, infill):
-    time_data = xr.date_range("1992-12-01", "1994-01-01", freq="D", calendar="standard")
-    data = xr.DataArray(
-        np.ones((time_data.size, 8)),
-        dims=("time", "lat"),
-        coords={"time": time_data, "lat": [-60, -45, -30, 0, 30, 45, 60, 80]},
-    )
-    data.lat.attrs["units"] = "degree_north"
+class TestDayLength:
+    @staticmethod
+    def data_setup(lats: np.ndarray):
+        time_data = xr.date_range("1992-12-01", "1994-01-01", freq="D", calendar="standard")
+        data = xr.DataArray(
+            np.ones((time_data.size, len(lats))),
+            dims=("time", "lat"),
+            coords={"time": time_data, "lat": lats},
+        )
+        data.lat.attrs["units"] = "degree_north"
+        return data
 
-    dl = helpers.day_lengths(dates=data.time, lat=data.lat, method=method, infill_polar_days=infill)
+    @pytest.mark.parametrize("method, infill", [("spencer", False), ("spencer", True), ("simple", False)])
+    def test_day_lengths(self, method, infill):
+        data = self.data_setup(lats=np.array([-60, -45, -30, 0, 30, 45, 60, 80]))
+        dl = helpers.day_lengths(dates=data.time, lat=data.lat, method=method, infill_polar_days=infill)
 
-    events = dict(
-        solstice=[
-            ["1992-12-21", [18.49, 15.43, 13.93, 12.0, 10.07, 8.57, 5.51, 0.0 if infill else np.nan]],
-            ["1993-06-21", [5.51, 8.57, 10.07, 12.0, 13.93, 15.43, 18.49, 24.0 if infill else np.nan]],
-            ["1993-12-21", [18.49, 15.43, 13.93, 12.0, 10.07, 8.57, 5.51, 0.0 if infill else np.nan]],
+        events = dict(
+            solstice=[
+                ["1992-12-21", [18.49, 15.43, 13.93, 12.0, 10.07, 8.57, 5.51, 0.0 if infill else np.nan]],
+                ["1993-06-21", [5.51, 8.57, 10.07, 12.0, 13.93, 15.43, 18.49, 24.0 if infill else np.nan]],
+                ["1993-12-21", [18.49, 15.43, 13.93, 12.0, 10.07, 8.57, 5.51, 0.0 if infill else np.nan]],
+            ],
+            equinox=[
+                ["1993-03-20", [12] * 8]
+            ],  # True equinox on 1993-03-20 at 14:41 GMT. Some relative tolerance is needed.
+        )
+
+        for event, evaluations in events.items():
+            for e in evaluations:
+                if event == "solstice":
+                    np.testing.assert_array_almost_equal(dl.sel(time=e[0]).transpose(), np.array(e[1]), 2)
+                elif event == "equinox":
+                    np.testing.assert_allclose(dl.sel(time=e[0]).transpose(), np.array(e[1]), rtol=2e-1)
+
+    @pytest.mark.parametrize(
+        "method, cap_value, results",
+        [
+            ("huglin", np.nan, [np.nan, 1.04, 1.03, 1.0, 1.03, 1.04, np.nan, np.nan]),
+            ("interpolated", np.nan, [np.nan, 1.03, 1.02, 1.0, 1.02, 1.03, np.nan, np.nan]),
+            ("interpolated", 1.06, [1.06, 1.03, 1.02, 1.0, 1.02, 1.03, 1.06, 1.06]),
         ],
-        equinox=[
-            ["1993-03-20", [12] * 8]
-        ],  # True equinox on 1993-03-20 at 14:41 GMT. Some relative tolerance is needed.
     )
+    def test_huglin_day_length_latitude_coefficient(self, method, cap_value, results):
+        data = self.data_setup(lats=np.array([-60, -45, -43.5, 0, 43.5, 45, 60, 80]))
+        k = helpers.huglin_day_length_latitude_coefficient(lat=data.lat, method=method, cap_value=cap_value)
 
-    for event, evaluations in events.items():
-        for e in evaluations:
-            if event == "solstice":
-                np.testing.assert_array_almost_equal(dl.sel(time=e[0]).transpose(), np.array(e[1]), 2)
-            elif event == "equinox":
-                np.testing.assert_allclose(dl.sel(time=e[0]).transpose(), np.array(e[1]), rtol=2e-1)
+        np.testing.assert_array_almost_equal(k, np.array(results), decimal=2)
 
+    @pytest.mark.parametrize("constrain", [None, "20 degree_north"])
+    def test_gladstones_day_length(self, constrain):
+        data = self.data_setup(lats=np.linspace(-65, 65, 13, endpoint=True))
+        k = helpers.gladstones_day_length_latitude_coefficient(dates=data.time, lat=data.lat, constrain=constrain)
 
-@pytest.mark.parametrize("constrain", [None, "20 degree_north"])
-def test_gladstones_day_length(constrain):
-    time_data = xr.date_range("1992-12-01", "1994-01-01", freq="D", calendar="standard")
-    data = xr.DataArray(
-        np.ones((time_data.size, 13)),
-        dims=("time", "lat"),
-        coords={"time": time_data, "lat": np.linspace(-65, 65, 13, endpoint=True)},
-    )
-    data.lat.attrs["units"] = "degree_north"
-    k = helpers.gladstones_day_length_latitude_coefficient(dates=data.time, lat=data.lat, constrain=constrain)
+        events = dict(
+            solstice=[
+                ["1992-12-21", [1.42, 1.14, 1.03, 0.95, 0.9, 0.85, 1.31, 1.24, 1.17, 1.08, 0.96, 0.77, 0.32]],
+                ["1993-06-21", [0.31, 0.77, 0.96, 1.08, 1.17, 1.24, 0.81, 0.85, 0.9, 0.95, 1.03, 1.14, 1.42]],
+                ["1993-12-21", [1.42, 1.14, 1.03, 0.95, 0.9, 0.85, 1.31, 1.24, 1.17, 1.08, 0.96, 0.77, 0.32]],
+            ],
+            equinox=[
+                ["1993-03-20", [1.0] * 13]
+            ],  # True equinox on 1993-03-20 at 14:41 GMT. Some relative tolerance is needed.
+        )
 
-    events = dict(
-        solstice=[
-            ["1992-12-21", [1.42, 1.14, 1.03, 0.95, 0.9, 0.85, 1.31, 1.24, 1.17, 1.08, 0.96, 0.77, 0.32]],
-            ["1993-06-21", [0.31, 0.77, 0.96, 1.08, 1.17, 1.24, 0.81, 0.85, 0.9, 0.95, 1.03, 1.14, 1.42]],
-            ["1993-12-21", [1.42, 1.14, 1.03, 0.95, 0.9, 0.85, 1.31, 1.24, 1.17, 1.08, 0.96, 0.77, 0.32]],
-        ],
-        equinox=[
-            ["1993-03-20", [1.0] * 13]
-        ],  # True equinox on 1993-03-20 at 14:41 GMT. Some relative tolerance is needed.
-    )
+        if constrain == "20 degree_north":
+            for entry in events["solstice"]:
+                entry[1][5:8] = [1.0] * 3
 
-    if constrain == "20 degree_north":
-        for entry in events["solstice"]:
-            entry[1][5:8] = [1.0] * 3
-
-    for event, evaluations in events.items():
-        for e in evaluations:
-            if event == "solstice":
-                np.testing.assert_array_almost_equal(k.sel(time=e[0]).transpose(), np.array(e[1]), 2)
-            elif event == "equinox":
-                np.testing.assert_allclose(k.sel(time=e[0]).transpose(), np.array(e[1]), rtol=2e-1)
+        for event, evaluations in events.items():
+            for e in evaluations:
+                if event == "solstice":
+                    np.testing.assert_array_almost_equal(k.sel(time=e[0]).transpose(), np.array(e[1]), 2)
+                elif event == "equinox":
+                    np.testing.assert_allclose(k.sel(time=e[0]).transpose(), np.array(e[1]), rtol=2e-1)
 
 
 @pytest.mark.parametrize("calendar", ["standard", "noleap"])
