@@ -27,7 +27,13 @@ from xclim.indices._threshold import (
     first_day_temperature_below,
 )
 from xclim.indices.generic import aggregate_between_dates, get_zones
-from xclim.indices.helpers import _gather_lat, day_length_latitude_coefficient, day_lengths, resample_map
+from xclim.indices.helpers import (
+    _gather_lat,
+    day_lengths,
+    gladstones_day_length_latitude_coefficient,
+    resample_map,
+    simple_day_length_latitude_coefficient,
+)
 from xclim.indices.stats import standardized_index
 
 # Frequencies : YS: year start, QS-DEC: seasons starting in december, MS: month start
@@ -239,7 +245,7 @@ def huglin_index(
     if method.lower() in ["icclim", "smoothed", "stepwise"]:
         if method == "icclim":
             method = "stepwise"
-        k = day_length_latitude_coefficient(lat, method=method, cap_value=cap_latitude)
+        k = simple_day_length_latitude_coefficient(lat, method=method, cap_value=cap_latitude)
     elif method.lower() == "jones":
         if not freq.startswith("YS"):
             msg = (
@@ -285,11 +291,10 @@ def biologically_effective_degree_days(
     tasmax: xarray.DataArray,
     lat: xarray.DataArray | None = None,
     thresh_tasmin: Quantified = "10 degC",
-    method: Literal["gladstones", "huglin", "icclim", "jones", "smoothed", "stepwise"] = "gladstones",
+    method: Literal["gladstones", "icclim", "jones", "smoothed", "stepwise"] = "gladstones",
     low_dtr: Quantified = "10 degC",
     high_dtr: Quantified = "13 degC",
     max_daily_degree_days: Quantified = "9 degC",
-    cap_latitude: bool | str = True,
     start_date: DayOfYearStr = "04-01",
     end_date: DayOfYearStr = "11-01",
     freq: Literal["YS", "YS-JAN", "YS-JUL"] = "YS",
@@ -326,12 +331,6 @@ def biologically_effective_degree_days(
         The higher bound for daily temperature range adjustment (default: 13°C).
     max_daily_degree_days : Quantified
         The maximum amount of biologically effective degrees days that can be summed daily.
-    cap_latitude : bool or int or float
-        Whether to cap the latitude at 50°N or 50°S.
-        If true, values above 50°N or below 50°S will be set to NaN.
-        If an int or float, it will be used as the cap value.
-        if False, values above 50°N or below 50°S will be set to 1.0.
-        Default: True.
     start_date : DayOfYearStr
         The hemisphere-based start date to consider (north = April, south = October).
     end_date : DayOfYearStr
@@ -408,7 +407,7 @@ def biologically_effective_degree_days(
                 UserWarning,
             )
         tr_adj = 0
-    elif method in ["gladstones", "huglin", "icclim", "jones", "smoothed", "stepwise"]:
+    elif method in ["gladstones", "jones", "smoothed", "stepwise"]:
         # Temperature range adjustment
         low_dtr = convert_units_to(low_dtr, "degC")
         high_dtr = convert_units_to(high_dtr, "degC")
@@ -418,14 +417,17 @@ def biologically_effective_degree_days(
             dtr - high_dtr,
             xarray.where(dtr < low_dtr, dtr - low_dtr, 0),
         )
+
         if lat is None:
             lat = _gather_lat(tasmin)
-        if method in ["icclim", "smoothed", "stepwise"]:
-            if method == "icclim":
-                method = "stepwise"
-            k = day_length_latitude_coefficient(lat, method=method, cap_value=cap_latitude)
+
+        if method in ["smoothed", "stepwise"]:
+            k = simple_day_length_latitude_coefficient(lat, method=method, cap_value=np.nan)
             k_aggregated = 1
-        else:
+        elif method == "gladstones":
+            k = gladstones_day_length_latitude_coefficient(dates=tasmin.time, lat=lat)
+            k_aggregated = 1
+        elif method == "jones":
             if not freq.startswith("YS"):
                 msg = (
                     "Freq not supported. Must be `YS` or `YS-*` for methods 'gladstones' and 'jones'. "
@@ -443,15 +445,11 @@ def biologically_effective_degree_days(
                 .sum()
             )
             k = 1
-            k_jones = 2.8311e-4 * day_length + 0.30834
-            if method.lower() == "jones":
-                k_aggregated = k_jones
-            else:
-                k_aggregated = 1.1135 * k_jones - 0.1352
+            k_aggregated = 2.8311e-4 * day_length + 0.30834
 
     else:
         raise NotImplementedError(
-            "Method is not implemented. Only 'gladstones', 'huglin', 'icclim', 'jones', 'smoothed', and 'stepwise' are supported."
+            "Method is not implemented. Only 'gladstones', 'icclim', 'jones', 'smoothed', and 'stepwise' are supported."
         )
 
     bedd: xarray.DataArray = ((((tasmin + tasmax) / 2) - thresh_tasmin).clip(min=0) * k + tr_adj).clip(

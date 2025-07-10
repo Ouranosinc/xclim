@@ -472,16 +472,17 @@ def day_lengths(
     return day_length_hours
 
 
-def day_length_latitude_coefficient(
+def simple_day_length_latitude_coefficient(
     lat: xr.DataArray | str,
     method: Literal["stepwise", "smoothed"],
-    cap_value: bool | float | int,
+    cap_value: float = 1.0,
 ):
     r"""
     Simple coefficient for the day-length and high latitudes.
 
     This latitude coefficient is used for determining the latitude effect on the day length specific to climate indices
     that concern viticulture, such as :py:func:`xclim.indices.huglin_index` (cite:p:`huglin_nouveau_1978`).
+    This function is an empirical approximation of the day-length multiplication factor, :math:`k`, based on latitude.
 
     Parameters
     ----------
@@ -489,10 +490,9 @@ def day_length_latitude_coefficient(
         Latitude coordinate. If provided a string (e.g. "45 degree_north"), it is converted to an xarray.DataArray.
     method : {"smoothed", "stepwise"}
         The method to use for the coefficient calculation.
-    cap_value : bool or float
-        If true, for latitudes above 50° N and below 50° S, the coefficient is set to NaN.
-        If false, the coefficient is set to 1.0.
-        If a float or int is given, it is used as the cap value for the coefficient.
+    cap_value : float
+        For latitudes above 50° N and below 50° S, the value for the coefficient.
+        Default: 1.0.
 
     Returns
     -------
@@ -525,8 +525,7 @@ def day_length_latitude_coefficient(
                      m, & \text{if } | lat | > 50 \\
                      \end{cases}
 
-    Where :math:`m` is the cap value, which is set to NaN if `cap` is True, 1.0 if `cap` is False,
-    or a float/int value if provided.
+    Where :math:`m` is the cap value, which is set to a float value of 1.0, or other if provided.
 
     References
     ----------
@@ -538,19 +537,19 @@ def day_length_latitude_coefficient(
 
     if cap_value:
         if isinstance(cap_value, bool):
-            cap_value = np.nan
-        elif isinstance(cap_value, int | float):
-            pass
+            _cap_value = np.nan
+        elif isinstance(cap_value, float):
+            _cap_value = cap_value
         else:
             raise TypeError("Argument 'cap_value' must be a bool, int or float.")
     else:
-        cap_value = 1.0
+        _cap_value = 1.0
 
     lat_abs = abs(lat)
     if method == "smoothed":
         lat_mask = lat_abs <= 50
         lat_coefficient = 1 + ((lat_abs - 40) / 10).clip(min=0) * 0.06
-        k = xr.where(lat_mask, lat_coefficient, cap_value)
+        k = xr.where(lat_mask, lat_coefficient, _cap_value)
     elif method == "stepwise":
         k_f = [0, 0.02, 0.03, 0.04, 0.05, 0.06]
         k = 1 + xr.where(
@@ -568,7 +567,7 @@ def day_length_latitude_coefficient(
                         xr.where(
                             (46 < lat_abs) & (lat_abs <= 48),
                             k_f[4],
-                            xr.where((48 < lat_abs) & (lat_abs <= 50), k_f[5], cap_value),
+                            xr.where((48 < lat_abs) & (lat_abs <= 50), k_f[5], _cap_value),
                         ),
                     ),
                 ),

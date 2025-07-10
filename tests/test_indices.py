@@ -270,37 +270,40 @@ class TestAgroclimaticIndices:
     @pytest.mark.parametrize(
         "method, end_date, deg_days, max_deg_days",
         [
-            ("gladstones", "11-01", 1203.9, 2167.15),
-            ("huglin", "11-01", 1203.9, 2167.15),
+            ("gladstones", "11-01", 1090.1, 1926.0),
+            ("stepwise", "11-01", 1112.8, 1926.0),
+            ("smoothed", "11-01", 1102.1, 1926.0),
             ("icclim", "10-01", 915.0, 1647.0),
-            ("jones", "11-01", 1211.1, 2180.14),
+            ("jones", "11-01", 1211.1, 2122.72),
         ],
     )
     def test_bedd(self, method, end_date, deg_days, max_deg_days):
         time_data = xr.date_range("1992-01-01", "1995-06-01", freq="D", calendar="standard")
+
+        lat = xr.DataArray([35, 45], dims=("lat",), name="lat", attrs={"units": "degrees_north"})
+        high_lat = xr.DataArray(48, name="lat", attrs={"units": "degrees_north"})
+
         tn = xr.DataArray(
             np.zeros(time_data.size) + 10 + K2C,
             dims="time",
             coords={"time": time_data},
             attrs={"units": "K"},
         )
-
+        tn = tn.expand_dims(lat=lat)
         tx = xr.DataArray(
             np.zeros(time_data.size) + 20 + K2C,
             dims="time",
             coords={"time": time_data},
             attrs={"units": "K"},
         )
-
+        tx = tx.expand_dims(lat=lat)
         tx_hot = xr.DataArray(
             np.zeros(time_data.size) + 50 + K2C,
             dims="time",
             coords={"time": time_data},
             attrs={"units": "K"},
         )
-
-        lat = xr.DataArray([35, 45], dims=("lat",), name="lat", attrs={"units": "degrees_north"})
-        high_lat = xr.DataArray(48, name="lat", attrs={"units": "degrees_north"})
+        tx_hot = tx_hot.expand_dims(lat=lat)
 
         bedd = xci.biologically_effective_degree_days(
             tasmin=tn,
@@ -318,28 +321,27 @@ class TestAgroclimaticIndices:
             end_date=end_date,  # noqa
             freq="YS",
         )
-        if method != "icclim":
-            bedd = bedd.isel(lat=1)
-            bedd_hot = bedd_hot.isel(lat=1)
         bedd_high_lat = xci.biologically_effective_degree_days(
-            tasmin=tn,
-            tasmax=tx,
-            lat=high_lat,
+            tasmin=tn.isel(lat=0),
+            tasmax=tx.isel(lat=0),
+            lat=high_lat,  # Replace with a higher latitude
             method=method,
             end_date=end_date,  # noqa
             freq="YS",
         )
 
-        np.testing.assert_allclose(bedd[:3], np.array([deg_days, deg_days, deg_days]), atol=0.125)
-        np.testing.assert_allclose(bedd_hot[:3], [max_deg_days, max_deg_days, max_deg_days], atol=0.1)
+        np.testing.assert_allclose(np.array([deg_days, deg_days, deg_days]), bedd.isel(lat=1)[:3], atol=0.125)
+        np.testing.assert_allclose([max_deg_days, max_deg_days, max_deg_days], bedd_hot.isel(lat=0)[:3], atol=0.1)
         if method == "icclim":
-            # Lat has no influence on 'icclim' method
-            np.testing.assert_array_equal(bedd[1], bedd[0])
-            np.testing.assert_array_equal(bedd, bedd_high_lat)
+            # Latitude has no influence on 'icclim' method
+            np.testing.assert_array_equal(bedd.isel(lat=0), bedd_high_lat)
+        elif method in ["stepwise", "smoothed"]:
+            # Leap year has no influence on 'stepwise' or 'smoothed' method
+            np.testing.assert_array_equal(bedd.isel(lat=0)[0], bedd.isel(lat=0)[1])
         else:
             # Leap-year has slightly higher values for higher latitudes
-            np.testing.assert_array_less(bedd[1], bedd[0])
-            np.testing.assert_array_less(bedd, bedd_high_lat)
+            np.testing.assert_array_less(bedd[0], bedd[1])
+            np.testing.assert_array_less(bedd[1], bedd_high_lat[0])
 
     def test_chill_portions(self, tas_series):
         tas = tas_series(np.linspace(0, 15, 120 * 24) + K2C, freq="h")
