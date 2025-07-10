@@ -411,35 +411,53 @@ class TestAgroclimaticIndices:
         np.testing.assert_array_almost_equal(lti[0].squeeze(), np.array(values), 2)
 
     @pytest.mark.parametrize(
-        "method, end_date, values",
+        "method, end_date, freq, values, cap_value",
         [
-            ("smoothed", "10-01", 1702.87),
-            ("icclim", "11-01", 1983.53),
-            ("jones", "10-01", 1729.12),
-            ("jones", "11-01", 2219.51),
+            ("interpolated", "10-01", "MS", 308.53, 1.0),
+            ("interpolated", "10-01", "YS", 1707.15, np.nan),
+            ("interpolated", "10-01", "YS", 1835.51, 1.0),
+            ("huglin", "11-01", "MS", 283.88, np.nan),
+            ("huglin", "11-01", "MS", 334.02, 1.0),
+            ("icclim", "11-01", "YS", 2247.25, 1.0),
+            ("jones", "10-01", "YS", 1739.81, np.nan),
+            ("jones", "11-01", "YS", 2219.51, np.nan),
+            ("jones", "10-01", "MS", None, np.nan),  # not implemented
         ],
     )
-    def test_huglin_index(self, method, end_date, values, open_dataset):
+    def test_huglin_index(self, method, end_date, freq, values, cap_value, open_dataset):
         ds = open_dataset("cmip5/tas_Amon_CanESM2_rcp85_r1i1p1_200701-200712.nc")
         ds = ds.drop_isel(time=0)  # drop time=2006/12 for one year of data
 
         tasmax, tas = ds.tas + 15, ds.tas - 5
-        # It would be much better if the index would interpolate to daily from monthly data intelligently.
+        # It would be much better if the index interpolated to daily from monthly data intelligently.
         tasmax, tas = (
             tasmax.resample(time="1D").interpolate("cubic"),
             tas.resample(time="1D").interpolate("cubic"),
         )
         tasmax.attrs["units"], tas.attrs["units"] = "K", "K"
 
-        # find lat implicitly
-        hi = xci.huglin_index(
-            tasmax=tasmax,
-            tas=tas,
-            method=method,
-            end_date=end_date,  # noqa
-        )
+        if method == "jones" and freq == "MS":
+            with pytest.raises(NotImplementedError):
+                xci.huglin_index(
+                    tasmax=tasmax, tas=tas, method=method, end_date=end_date, freq=freq, cap_value=cap_value
+                )
+        else:
+            # find lat implicitly
+            hi = xci.huglin_index(
+                tasmax=tasmax,
+                tas=tas,
+                method=method,
+                end_date=end_date,
+                freq=freq,
+                cap_value=cap_value,
+            )
 
-        np.testing.assert_allclose(np.mean(hi), values, rtol=1e-2, atol=0)
+            if freq == "MS":
+                np.testing.assert_allclose(hi.isel(time=5).mean(), values, rtol=1e-2, atol=0)
+            elif freq == "YS":
+                if method == "jones":
+                    pass
+                np.testing.assert_allclose(np.mean(hi), values, rtol=1e-2, atol=0)
 
     def test_qian_weighted_mean_average(self, tas_series):
         mg = np.zeros(365)

@@ -435,9 +435,10 @@ def day_lengths(
     dates: xr.DataArray,
     lat: Quantified | xr.Dataset | xr.DataTree,
     method: Literal["spencer", "simple"] = "spencer",
+    infill_polar_days: bool = False,
 ) -> xr.DataArray:
     r"""
-    Calculate day-length according to latitude and day of year.
+    Calculate day-length according to latitude and day of the year.
 
     See :py:func:`solar_declination` for the approximation used to compute the solar declination angle.
     Based on :cite:t:`kalogirou_chapter_2014`.
@@ -452,6 +453,8 @@ def day_lengths(
     method : {'spencer', 'simple'}
         Which approximation to use when computing the solar declination angle.
         See :py:func:`solar_declination`.
+    infill_polar_days : bool
+        Whether to use a mask of 24 hours for polar days and 0 hours for polar nights.
 
     Returns
     -------
@@ -464,17 +467,32 @@ def day_lengths(
     """
     declination = solar_declination(dates.time, method=method)
     radians = convert_units_to(lat, "rad")
+    lat_deg = convert_units_to(lat, "deg")
     # arccos gives the hour-angle at sunset, multiply by 24 / 2π to get hours.
     # The day length is twice that.
     with np.errstate(invalid="ignore"):
         day_length_hours = ((24 / np.pi) * np.arccos(-np.tan(radians) * np.tan(declination))).assign_attrs(units="h")
 
+    if infill_polar_days:
+        lat_broadcast, decl_broadcast = xr.broadcast(lat_deg, declination)
+        # Polar day: sun never sets; Polar night: sun never rises.
+        polar_day = ((lat_broadcast > 66.5) & (decl_broadcast > 0)) | ((lat_broadcast < -66.5) & (decl_broadcast < 0))
+        polar_night = ((lat_broadcast > 66.5) & (decl_broadcast < 0)) | ((lat_broadcast < -66.5) & (decl_broadcast > 0))
+        # Infill polar days with 24 hours and polar nights with 0 hours.
+        valid = ~xr.ufuncs.isnan(day_length_hours)
+        day_length_hours = xr.where(polar_day & ~valid, 24.0, xr.where(polar_night & ~valid, 0.0, day_length_hours))
+
+    # Drop nonessential coordinates
+    for coord in day_length_hours.coords:
+        if coord not in ["lat", "time"]:
+            day_length_hours = day_length_hours.drop_vars(coord)
+
     return day_length_hours
 
 
-def simple_day_length_latitude_coefficient(
+def huglin_day_length_latitude_coefficient(
     lat: xr.DataArray | str,
-    method: Literal["stepwise", "smoothed"],
+    method: Literal["huglin", "interpolated"],
     cap_value: float = 1.0,
 ):
     r"""
@@ -488,10 +506,10 @@ def simple_day_length_latitude_coefficient(
     ----------
     lat : xarray.DataArray, str
         Latitude coordinate. If provided a string (e.g. "45 degree_north"), it is converted to an xarray.DataArray.
-    method : {"smoothed", "stepwise"}
+    method : {"huglin", "interpolated"}
         The method to use for the coefficient calculation.
     cap_value : float
-        For latitudes above 50° N and below 50° S, the value for the coefficient.
+        For latitudes north of 50° N and south of 50° S, the value for the coefficient.
         Default: 1.0.
 
     Returns
@@ -501,17 +519,8 @@ def simple_day_length_latitude_coefficient(
 
     Notes
     -----
-    For the `"smoothed"` method, the day-length multiplication factor, :math:`k`, is calculated as follows:
-
-    .. math::
-
-       k = f(lat) = \begin{cases}
-                     1, & \text{if } | lat | <= 40 \\
-                     1 + ((abs(lat) - 40) / 10) * 0.06, & \text{if } 40 < | lat | <= 50 \\
-                     m, & \text{if } | lat | > 50 \\
-                     \end{cases}
-
-    For the `"stepwise"` method, the day-length multiplication factor, :math:`k`, is then calculated as follows:
+    For the original `"huglin"` implementation :cite:p:`huglin_nouveau_1978`, the day-length multiplication factor,
+    :math:`k`, is then calculated as follows:
 
     .. math::
 
@@ -525,6 +534,18 @@ def simple_day_length_latitude_coefficient(
                      m, & \text{if } | lat | > 50 \\
                      \end{cases}
 
+    An alternative implementation (`"interpolated"`) uses smoothing to reduce the stepwise behaviour of the
+    "huglin"` method. The day-length multiplication factor (:math:`k`) for the `"interpolated"` method is
+    calculated as follows:
+
+    .. math::
+
+       k = f(lat) = \begin{cases}
+                     1, & \text{if } | lat | <= 40 \\
+                     1 + ((abs(lat) - 40) / 10) * 0.06, & \text{if } 40 < | lat | <= 50 \\
+                     m, & \text{if } | lat | > 50 \\
+                     \end{cases}
+
     Where :math:`m` is the cap value, which is set to a float value of 1.0, or other if provided.
 
     References
@@ -535,22 +556,17 @@ def simple_day_length_latitude_coefficient(
         _lat_value = convert_units_to(lat, "deg")
         lat = xr.DataArray(lat, attrs={"units": "degree_north"})
 
-    if cap_value:
-        if isinstance(cap_value, bool):
-            _cap_value = np.nan
-        elif isinstance(cap_value, float):
-            _cap_value = cap_value
-        else:
-            raise TypeError("Argument 'cap_value' must be a bool, int or float.")
+    if isinstance(cap_value, float):
+        _cap_value = cap_value
     else:
-        _cap_value = 1.0
+        raise TypeError("Argument 'cap_value' must be a bool, int or float.")
 
     lat_abs = abs(lat)
-    if method == "smoothed":
+    if method == "interpolated":
         lat_mask = lat_abs <= 50
         lat_coefficient = 1 + ((lat_abs - 40) / 10).clip(min=0) * 0.06
         k = xr.where(lat_mask, lat_coefficient, _cap_value)
-    elif method == "stepwise":
+    elif method == "huglin":
         k_f = [0, 0.02, 0.03, 0.04, 0.05, 0.06]
         k = 1 + xr.where(
             lat_abs <= 40,
@@ -573,9 +589,8 @@ def simple_day_length_latitude_coefficient(
                 ),
             ),
         )
-
     else:
-        raise NotImplementedError("Method is not implemented. Only 'smoothed' and 'stepwise' are permitted.")
+        raise NotImplementedError("Method is not implemented. Only 'huglin' and 'interpolated' are permitted.")
 
     return k
 
