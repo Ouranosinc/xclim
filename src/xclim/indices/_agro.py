@@ -319,10 +319,11 @@ def biologically_effective_degree_days(
     method : {"gladstones", "huglin", "icclim", "interpolated", "jones"}
         The formula to use for the calculation.
         The "gladstones" method uses a temperature range adjustment and a latitude coefficient based on :cite:t:`huglin_biologie_1998`.
+        End_date should be "11-01" for the Northern Hemisphere.
+        The "gladstones_simple" method integrates a daily temperature range and latitude coefficient. End_date should be "11-01" for the Northern Hemisphere.
+        The "icclim" method ignores daily temperature range and latitude coefficient. End date should be "10-01" for the Northern Hemisphere.
+        The "jones" method integrates axial tilt, latitude, and day-of-year on coefficient based on :cite:t:`hall_spatial_2010`.
         End_date should be "11-01" for Northern Hemisphere.
-        The "gladstones_simple" method integrates a daily temperature range and latitude coefficient. End_date should be "11-01" for Northern Hemisphere.
-        The "icclim" method ignores daily temperature range and latitude coefficient. End date should be "10-01" for Northern Hemisphere.
-        The "jones" method integrates axial tilt, latitude, and day-of-year on coefficient based on :cite:t:`hall_spatial_2010`. End_date should be "11-01" for Northern Hemisphere.
     cap_value : float
         The value to use for the latitude coefficient when latitude is above 50°N or below 50°S.
         Only applicable for methods "smoothed" and "stepwise" (default: 1.0).
@@ -376,7 +377,7 @@ def biologically_effective_degree_days(
 
     .. math::
 
-       k = f(lat) = 1 + \left(\frac{\left| lat  \right|}{50} * 0.06,  \text{if }40 < ``|lat|`` <50, \text{else } 0\right)
+       k = f(lat) = 1 + \left( \frac{\left| lat \right|}{50} * 0.06, \text{if }40 < ``|lat|`` <50, \text{else } 0\right)
 
     An alternative version of the BEDD (`method="icclim"`) does not consider :math:`TR_{adj}` and :math:`k` and employs a
     different end date (30 September) :cite:p:`project_team_eca&d_algorithm_2013`.
@@ -384,7 +385,7 @@ def biologically_effective_degree_days(
 
     .. math::
 
-       BEDD_i = \sum_{i=\text{April 1}}^{\text{September 30}} min\left( max\left(\frac{TX_i  + TN_i)}{2} - 10, 0\right), degdays_{max}\right)
+       BEDD_i = \sum_{i=\text{April 1}}^{\text{September 30}} min\left( max\left( \frac{TX_i + TN_i)}{2} - 10, 0\right), degdays_{max}\right)
 
     References
     ----------
@@ -429,9 +430,9 @@ def biologically_effective_degree_days(
             k = gladstones_day_length_latitude_coefficient(dates=tasmin.time, lat=lat)
             k_aggregated = 1
         elif method == "jones":
-            if not freq.startswith("YS"):
+            if parse_offset(freq) not in [(1, "Y", True, "JAN"), (1, "Y", True, "JUL")]:
                 msg = (
-                    "Freq not supported. Must be `YS` or `YS-*` for methods 'gladstones' and 'jones'. "
+                    f"Freq {freq} not supported. Must be 'YS'/'YS-JAN', or 'YS-JUL' for method 'jones'. "
                     "An annual frequency is required for the current implementation."
                 )
                 raise NotImplementedError(msg)
@@ -452,7 +453,7 @@ def biologically_effective_degree_days(
 
     else:
         raise NotImplementedError(
-            "Method is not implemented. Only 'gladstones', 'icclim', 'jones', 'smoothed', and 'stepwise' are supported."
+            "Method is not implemented. Only 'gladstones', 'huglin', 'icclim', 'interpolated', and 'jones' are supported."
         )
 
     bedd: xarray.DataArray = ((((tasmin + tasmax) / 2) - thresh_tasmin).clip(min=0) * k + tr_adj).clip(

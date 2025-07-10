@@ -271,9 +271,9 @@ class TestAgroclimaticIndices:
         "method, end_date, deg_days, max_deg_days",
         [
             ("gladstones", "11-01", 1090.1, 1926.0),
-            ("stepwise", "11-01", 1112.8, 1926.0),
-            ("smoothed", "11-01", 1102.1, 1926.0),
+            ("huglin", "11-01", 1112.8, 1926.0),
             ("icclim", "10-01", 915.0, 1647.0),
+            ("interpolated", "11-01", 1102.1, 1926.0),
             ("jones", "11-01", 1211.1, 2122.72),
         ],
     )
@@ -385,7 +385,7 @@ class TestAgroclimaticIndices:
         np.testing.assert_array_equal(cni_nh, tn_nh)
         np.testing.assert_array_equal(cni_sh, tn_sh)
 
-        # Treat all areas as northern hemisphere
+        # Treat all areas as Northern Hemisphere
         cni_all_nh = xci.cool_night_index(tasmin=ds.tasmin, lat="north")
         tn_all_nh = tasmin.where(tasmin.time.dt.month == 9, drop=True)
 
