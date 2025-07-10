@@ -21,6 +21,7 @@ Internal changes
 Bug fixes
 ^^^^^^^^^
 * Increase the tolerance in the tests of ``xclim.indices.standardized_groundwater_index`` (the standardized indices are sensitive to package versions because of the parameter optimization in `scipy`).  (:issue:`2183`, :pull:`2193`).
+* In ``xclim.indices._conversion.humidex`` and ``xclim.indices._conversion.vapor_pressure_deficit``, add a converter to ensure `hurs` has '%' units. (:pull:`2209`).
 
 v0.57.0 (2025-05-22)
 --------------------
