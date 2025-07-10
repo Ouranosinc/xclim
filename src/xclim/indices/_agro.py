@@ -250,7 +250,7 @@ def huglin_index(
 
         day_length = (
             select_time(
-                day_lengths(dates=tas.time, lat=lat, method="simple"),
+                day_lengths(dates=tas.time, lat=lat, method="spencer", infill_polar_days=False),
                 date_bounds=(start_date, end_date),
                 include_bounds=(True, False),
             )
@@ -316,7 +316,7 @@ def biologically_effective_degree_days(
         If None and method is not "icclim", a CF-conformant "latitude" field must be available within the passed DataArray.
     thresh_tasmin : Quantified
         The minimum temperature threshold.
-    method : {"gladstones", "huglin", "icclim", "jones", "smoothed", "stepwise"}
+    method : {"gladstones", "huglin", "icclim", "interpolated", "jones"}
         The formula to use for the calculation.
         The "gladstones" method uses a temperature range adjustment and a latitude coefficient based on :cite:t:`huglin_biologie_1998`.
         End_date should be "11-01" for Northern Hemisphere.
@@ -408,7 +408,7 @@ def biologically_effective_degree_days(
                 UserWarning,
             )
         tr_adj = 0
-    elif method in ["gladstones", "jones", "smoothed", "stepwise"]:
+    elif method in ["gladstones", "huglin", "interpolated", "jones"]:
         # Temperature range adjustment
         low_dtr = convert_units_to(low_dtr, "degC")
         high_dtr = convert_units_to(high_dtr, "degC")
@@ -422,7 +422,7 @@ def biologically_effective_degree_days(
         if lat is None:
             lat = _gather_lat(tasmin)
 
-        if method in ["smoothed", "stepwise"]:
+        if method in ["huglin", "interpolated"]:
             k = huglin_day_length_latitude_coefficient(lat, method=method, cap_value=cap_value)
             k_aggregated = 1
         elif method == "gladstones":
@@ -438,10 +438,12 @@ def biologically_effective_degree_days(
 
             day_length = (
                 select_time(
-                    day_lengths(dates=tasmin.time, lat=lat, method="simple"),
+                    day_lengths(dates=tasmin.time, lat=lat, method="spencer", infill_polar_days=False),
                     date_bounds=(start_date, end_date),
                     include_bounds=(True, False),
                 )
+                .dropna(dim="time", how="all")
+                .dropna(dim="lat", how="any")
                 .resample(time=freq)
                 .sum()
             )
