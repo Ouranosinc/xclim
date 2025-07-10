@@ -599,7 +599,7 @@ def gladstones_day_length_latitude_coefficient(
     dates: xr.DataArray,
     lat: xr.DataArray | int | float,
     neutral_latitude: str = "40.0 deg",
-    constrain: bool | str = False,
+    constrain: str | None = None,
     day_length_method: Literal["simple", "spencer"] = "spencer",
 ) -> xr.DataArray:
     """
@@ -620,11 +620,9 @@ def gladstones_day_length_latitude_coefficient(
         Latitudes between this value and 0 degrees North will have a coefficient below 1.0 during the growing season,
         while latitudes above this value will have a coefficient greater than 1.0.
         This negative absolute value of this latitude is used for the Southern Hemisphere.
-    constrain : bool or str
-        The lower latitude limit for the coefficient.
-        If True, latitudes below 25 degrees North and above 25 degrees South will have a coefficient of 1.0.
-        If False, the coefficient is calculated for all near-equatorial latitudes.
-        If a str is given, it is used as the lower latitude limit for the coefficient.
+    constrain : str, optional
+        The lower latitude limit for applying the latitude coefficient.
+        If a str is given (e.g. '25 degree_north`), values below this threshold will be set to '1.0'.
     day_length_method : {'simple', 'spencer'}
         The method to use for the day length calculation.
         The "simple" method uses a simple approximation of the day length based on latitude and time of year.
@@ -640,14 +638,12 @@ def gladstones_day_length_latitude_coefficient(
     if day_length_method not in ["simple", "spencer"]:
         raise NotImplementedError("day_length_method must be one of 'simple' or 'spencer'.")
 
-    if not constrain:
-        constrain_value = False
-    elif isinstance(constrain, bool):
-        constrain_value = 25.0
-    elif isinstance(constrain, str):
+    if isinstance(constrain, str):
         constrain_value = convert_units_to(constrain, "deg")
+    elif constrain is None:
+        constrain_value = False
     else:
-        raise ValueError("Argument 'constrain' must be a bool or str (e.g. '25 degree_north').")
+        raise ValueError("Argument 'constrain' must be a str (e.g. '25 degree_north') or 'None'.")
 
     _neutral_latitude = convert_units_to(neutral_latitude, "deg")
 
