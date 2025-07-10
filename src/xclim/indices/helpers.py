@@ -448,7 +448,7 @@ def day_lengths(
     dates : xr.DataArray
         Daily datetime data.
         This function makes no sense with data of other frequency.
-    lat : xarray.DataArray
+    lat : Quantified or xarray.Dataset or xarray.DataTree
         Latitude coordinate.
     method : {'spencer', 'simple'}
         Which approximation to use when computing the solar declination angle.
