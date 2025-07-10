@@ -419,8 +419,8 @@ class TestAgroclimaticIndices:
             ("huglin", "11-01", "MS", 283.88, np.nan),
             ("huglin", "11-01", "MS", 334.02, 1.0),
             ("icclim", "11-01", "YS", 2247.25, 1.0),
-            ("jones", "10-01", "YS", 1739.81, np.nan),
-            ("jones", "11-01", "YS", 2219.51, np.nan),
+            ("jones", "10-01", "YS", 2299.30, np.nan),
+            ("jones", "11-01", "YS", 2931.21, np.nan),
             ("jones", "10-01", "MS", None, np.nan),  # not implemented
         ],
     )

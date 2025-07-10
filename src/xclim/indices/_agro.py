@@ -254,6 +254,8 @@ def huglin_index(
                 date_bounds=(start_date, end_date),
                 include_bounds=(True, False),
             )
+            .dropna(dim="time", how="all")
+            .dropna(dim="lat", how="any")
             .resample(time=freq)
             .sum()
         )
