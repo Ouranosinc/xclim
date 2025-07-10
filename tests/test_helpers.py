@@ -50,26 +50,26 @@ def test_extraterrestrial_radiation(method):
     )
 
 
-@pytest.mark.parametrize("method", ["spencer", "simple"])
-def test_day_lengths(method):
+@pytest.mark.parametrize("method, infill", [("spencer", False), ("spencer", True), ("simple", False)])
+def test_day_lengths(method, infill):
     time_data = xr.date_range("1992-12-01", "1994-01-01", freq="D", calendar="standard")
     data = xr.DataArray(
-        np.ones((time_data.size, 7)),
+        np.ones((time_data.size, 8)),
         dims=("time", "lat"),
-        coords={"time": time_data, "lat": [-60, -45, -30, 0, 30, 45, 60]},
+        coords={"time": time_data, "lat": [-60, -45, -30, 0, 30, 45, 60, 80]},
     )
     data.lat.attrs["units"] = "degree_north"
 
-    dl = helpers.day_lengths(dates=data.time, lat=data.lat, method=method)
+    dl = helpers.day_lengths(dates=data.time, lat=data.lat, method=method, infill_polar_days=infill)
 
     events = dict(
         solstice=[
-            ["1992-12-21", [18.49, 15.43, 13.93, 12.0, 10.07, 8.57, 5.51]],
-            ["1993-06-21", [5.51, 8.57, 10.07, 12.0, 13.93, 15.43, 18.49]],
-            ["1993-12-21", [18.49, 15.43, 13.93, 12.0, 10.07, 8.57, 5.51]],
+            ["1992-12-21", [18.49, 15.43, 13.93, 12.0, 10.07, 8.57, 5.51, 0.0 if infill else np.nan]],
+            ["1993-06-21", [5.51, 8.57, 10.07, 12.0, 13.93, 15.43, 18.49, 24.0 if infill else np.nan]],
+            ["1993-12-21", [18.49, 15.43, 13.93, 12.0, 10.07, 8.57, 5.51, 0.0 if infill else np.nan]],
         ],
         equinox=[
-            ["1993-03-20", [12] * 7]
+            ["1993-03-20", [12] * 8]
         ],  # True equinox on 1993-03-20 at 14:41 GMT. Some relative tolerance is needed.
     )
 
@@ -81,7 +81,7 @@ def test_day_lengths(method):
                 np.testing.assert_allclose(dl.sel(time=e[0]).transpose(), np.array(e[1]), rtol=2e-1)
 
 
-@pytest.mark.parametrize("constrain", [False, True, "20 degree_north"])
+@pytest.mark.parametrize("constrain", [None, "20 degree_north"])
 def test_gladstones_day_length(constrain):
     time_data = xr.date_range("1992-12-01", "1994-01-01", freq="D", calendar="standard")
     data = xr.DataArray(
@@ -103,13 +103,9 @@ def test_gladstones_day_length(constrain):
         ],  # True equinox on 1993-03-20 at 14:41 GMT. Some relative tolerance is needed.
     )
 
-    if constrain:
-        if constrain == "20 degree_north":
-            for entry in events["solstice"]:
-                entry[1][5:8] = [1.0] * 3
-        else:
-            for entry in events["solstice"]:
-                entry[1][4:9] = [1.0] * 5
+    if constrain == "20 degree_north":
+        for entry in events["solstice"]:
+            entry[1][5:8] = [1.0] * 3
 
     for event, evaluations in events.items():
         for e in evaluations:
@@ -162,10 +158,6 @@ def test_cosine_of_solar_zenith_angle(calendar):
         ]
     )
     np.testing.assert_allclose(cza[:4, :], exp_cza, rtol=1e-3)
-
-
-def _test_function(da, op, dim):
-    return getattr(da, op)(dim)
 
 
 @pytest.mark.parametrize(["in_chunks", "exp_chunks"], [(60, 6 * (2,)), (30, 12 * (1,)), (-1, (12,))])
