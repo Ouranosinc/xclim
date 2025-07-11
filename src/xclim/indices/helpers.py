@@ -705,6 +705,7 @@ def jones_day_length_latitude_coefficient(
     dates: xr.DataArray,
     lat: xr.DataArray | xr.Dataset | xr.DataTree,
     method: Literal["gladstones", "jones"],
+    floor: bool = False,
     start_date: str | DayOfYearStr = "04-01",
     end_date: str | DayOfYearStr = "11-01",
     freq: Literal["YS", "YS-JAN", "YS-JUL"] = "YS",
@@ -725,6 +726,8 @@ def jones_day_length_latitude_coefficient(
         The method to use for the coefficient calculation.
         The "jones" method .
         The "gladstones" method uses an approximation of the Gladstones methodology for day length latitude coefficient.
+    floor : bool, optional
+        For latitudes below 50° N and above 50° S, the value for the coefficient is floored to '1.0'.
     start_date : str or DayOfYearStr
         The start date of the growing season.
     end_date : str or DayOfYearStr
@@ -785,7 +788,7 @@ def jones_day_length_latitude_coefficient(
             .resample(time=freq)
             .sum()
         )
-        k_jones = 2.8311e-4 * day_length + 0.30834
+        k_jones: xr.DataArray = (2.8311e-4 * day_length) + 0.30834
 
         if method == "jones":
             k_aggregated = k_jones
@@ -793,6 +796,9 @@ def jones_day_length_latitude_coefficient(
             k_aggregated = 1.1135 * k_jones - 0.1352
     else:
         raise NotImplementedError("Method not implemented. Only 'gladstones' or 'jones' are supported.")
+
+    if floor:
+        k_aggregated = k_aggregated.where(k_aggregated >= 1.0, 1.0)
 
     return k_aggregated
 
