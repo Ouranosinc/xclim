@@ -242,7 +242,7 @@ def eccentricity_correction_factor(
 def cosine_of_solar_zenith_angle(
     time: xr.DataArray,
     declination: xr.DataArray,
-    lat: Quantified,
+    lat: Quantified | xr.DataArray | xr.DataTree,
     lon: Quantified = "0 °",
     time_correction: xr.DataArray | None = None,
     stat: Literal["average", "integral", "instant"] = "average",
@@ -484,7 +484,7 @@ def day_lengths(
     Raises
     ------
     NotImplementedError
-        If dates provided are not inferrable at a daily time frequency.
+        If a series of dates provided are not inferrable at a daily time frequency.
 
     Notes
     -----
@@ -540,7 +540,8 @@ def huglin_day_length_latitude_coefficient(
     Parameters
     ----------
     lat : xarray.DataArray, str
-        Latitude coordinate. If provided a string (e.g. "45 degree_north"), it is converted to an xarray.DataArray.
+        Latitude coordinate.
+        If provided a string (e.g. "45 degree_north"), it is converted to an xarray.DataArray.
     method : {"huglin", "interpolated"}
         The method to use for the coefficient calculation.
     cap_value : float
@@ -708,7 +709,7 @@ def jones_day_length_latitude_coefficient(
     end_date: str | DayOfYearStr = "11-01",
     freq: Literal["YS", "YS-JAN", "YS-JUL"] = "YS",
 ) -> xr.DataArray:
-    """
+    r"""
     Complex day length latitude coefficient.
 
     This function computes a day length latitude coefficient as it influences the entire growing season.
@@ -740,7 +741,30 @@ def jones_day_length_latitude_coefficient(
 
     Notes
     -----
-    TODO: Complete the docstring with the mathematical formulas for the coefficients.
+    For the `"jones"` method, A more robust day-length calculation based on latitude, calendar, day-of-year, and
+    obliquity is used. This algorithm requires a calculation of the sum of the day lengths over the growing season
+    at each latitude, :math:`totalSeasonDayLength_{Lat}`, which is then used to calculate the day length latitude
+    coefficient :math:`k`:
+
+    .. math::
+
+        totalSeasonDayLength_{Lat} = \\sum_{Jday=\text{103}}^{\text{284}}{dayLength_{Lat_{JDay}}}
+
+    The day length latitude coefficient (:math:`k`) using the "jones" method is calculated as follows:
+
+    .. math::
+
+         k_{Lat} = 2.8311e-4 * totalSeasonDayLength_{Lat} + 0.30834
+
+    The "gladstones" method provided here is a transformation of the "jones" method, based on the relationship
+    detailed in :cite:t:`hall_spatial_2010`:
+
+    .. math::
+
+        k_{Lat}^{Gladstones} = 1.1135 * k_{Lat}^{Jones} - 0.1352
+
+    For both of these methods, the :math:`k` coefficient must be calculated at the growing season frequency (yearly),
+    starting from either January or July, depending on the hemisphere of interest.
     """
     if parse_offset(freq) not in [(1, "Y", True, "JAN"), (1, "Y", True, "JUL")]:
         msg = (
