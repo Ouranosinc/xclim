@@ -748,7 +748,7 @@ def jones_day_length_latitude_coefficient(
 
     .. math::
 
-        totalSeasonDayLength_{Lat} = \\sum_{Jday=\text{103}}^{\text{284}}{dayLength_{Lat_{JDay}}}
+        totalSeasonDayLength_{Lat} = \sum_{Jday=\text{103}}^{\text{284}}{dayLength_{Lat_{JDay}}}
 
     The day length latitude coefficient (:math:`k`) using the "jones" method is calculated as follows:
 
