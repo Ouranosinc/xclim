@@ -464,12 +464,12 @@ def day_lengths(
     ----------
     dates : xr.DataArray
         Daily datetime data.
-        This function makes no sense with data of other frequency.
+        This function makes no sense with data of other time frequencies.
     lat : Quantified or xarray.Dataset or xarray.DataTree
         Latitude coordinate.
     method : {'spencer', 'simple'}
         Which approximation to use when computing the solar declination angle.
-        See :py:func:`solar_declination`.
+        See :py:func:`xclim.indices.helpers.solar_declination`.
     infill_polar_days : bool
         Whether to use a mask of 24 hours for polar days and 0 hours for polar nights.
         If False, polar days and nights will be NaN.
@@ -480,6 +480,11 @@ def day_lengths(
     -------
     xarray.DataArray, [hours]
         Day-lengths in hours per individual day.
+
+    Raises
+    ------
+    NotImplementedError
+        If dates provided are not inferrable at a daily time frequency.
 
     Notes
     -----
@@ -492,6 +497,9 @@ def day_lengths(
     ----------
     :cite:cts:`kalogirou_chapter_2014`
     """
+    if xr.infer_freq(dates) != "D":
+        raise NotImplementedError("day_lengths only supports daily data.")
+
     declination = solar_declination(dates.time, method=method)
     radians = convert_units_to(lat, "rad")
     lat_deg = convert_units_to(lat, "deg")
@@ -537,7 +545,6 @@ def huglin_day_length_latitude_coefficient(
         The method to use for the coefficient calculation.
     cap_value : float
         For latitudes north of 50° N and south of 50° S, the value for the coefficient.
-        Default: np.nan.
 
     Returns
     -------
@@ -697,8 +704,8 @@ def jones_day_length_latitude_coefficient(
     dates: xr.DataArray,
     lat: xr.DataArray | xr.Dataset | xr.DataTree,
     method: Literal["gladstones", "jones"],
-    start_date: DayOfYearStr = "04-01",
-    end_date: DayOfYearStr = "11-01",
+    start_date: str | DayOfYearStr = "04-01",
+    end_date: str | DayOfYearStr = "11-01",
     freq: Literal["YS", "YS-JAN", "YS-JUL"] = "YS",
 ) -> xr.DataArray:
     """
@@ -717,13 +724,14 @@ def jones_day_length_latitude_coefficient(
         The method to use for the coefficient calculation.
         The "jones" method .
         The "gladstones" method uses an approximation of the Gladstones methodology for day length latitude coefficient.
-    start_date : DayOfYearStr
+    start_date : str or DayOfYearStr
         The start date of the growing season.
-    end_date : DayOfYearStr
+    end_date : str or DayOfYearStr
         The end date of the growing season. Date is not included in the aggregation.
     freq : {"YS", "YS-JAN", "YS-JUL"}
         The frequency at which to aggregate the day lengths.
-        Must be an annual frequency, such as "YS" or "YS-JAN" (yearly start), "YS-JUL" (yearly start in July),
+        Must be an annual frequency, such as "YS" or "YS-JAN" (yearly start in January)
+        or "YS-JUL" (yearly start in July).
 
     Returns
     -------
