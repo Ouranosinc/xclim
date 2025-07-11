@@ -52,8 +52,8 @@ def test_extraterrestrial_radiation(method):
 
 class TestDayLength:
     @staticmethod
-    def data_setup(lats: np.ndarray):
-        time_data = xr.date_range("1992-12-01", "1994-01-01", freq="D", calendar="standard")
+    def data_setup(lats: np.ndarray, start_date: str = "1992-12-01", end_date: str = "1994-01-01"):
+        time_data = xr.date_range(start_date, end_date, freq="D", calendar="standard")
         data = xr.DataArray(
             np.ones((time_data.size, len(lats))),
             dims=("time", "lat"),
@@ -98,6 +98,78 @@ class TestDayLength:
         k = helpers.huglin_day_length_latitude_coefficient(lat=data.lat, method=method, cap_value=cap_value)
 
         np.testing.assert_array_almost_equal(k, np.array(results), decimal=2)
+
+    @pytest.mark.parametrize(
+        "method, start_date, end_date, freq, floor, results",
+        [
+            (
+                "gladstones",
+                "04-01",
+                "11-01",
+                "YS",
+                False,
+                [0.75, 0.86, 0.91, 0.95, 0.97, 1.0, 1.02, 1.04, 1.06, 1.09, 1.12, 1.18, 1.29],
+            ),
+            (
+                "gladstones",
+                "04-01",
+                "11-01",
+                "YS-JAN",
+                True,
+                [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.02, 1.04, 1.06, 1.09, 1.12, 1.18, 1.29],
+            ),
+            (
+                "gladstones",
+                "10-01",
+                "04-01",
+                "YS-JUL",
+                True,
+                [1.18, 1.06, 1.01, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0],
+            ),
+            (
+                "jones",
+                "04-01",
+                "11-01",
+                "YS-JAN",
+                False,
+                [0.79, 0.89, 0.94, 0.97, 1.0, 1.02, 1.04, 1.05, 1.07, 1.1, 1.13, 1.18, 1.28],
+            ),
+            (
+                "jones",
+                "04-01",
+                "11-01",
+                "YS",
+                True,
+                [1.0, 1.0, 1.0, 1.0, 1.0, 1.02, 1.04, 1.05, 1.07, 1.1, 1.13, 1.18, 1.28],
+            ),
+            (
+                "jones",
+                "10-01",
+                "04-01",
+                "YS-JUL",
+                False,
+                [1.18, 1.07, 1.02, 0.99, 0.97, 0.95, 0.93, 0.91, 0.89, 0.86, 0.83, 0.78, 0.67],
+            ),
+        ],
+    )
+    def test_jones_day_length_latitude_coefficient(self, method, start_date, end_date, freq, floor, results):
+        if freq == "YS-JUL":
+            setup_dates = {"start_date": "1992-08-01", "end_date": "1993-06-01"}
+        else:
+            setup_dates = {}
+
+        data = self.data_setup(lats=np.linspace(-65, 65, 13, endpoint=True), **setup_dates)
+        k = helpers.jones_day_length_latitude_coefficient(
+            dates=data.time,
+            lat=data.lat,
+            start_date=start_date,
+            end_date=end_date,
+            freq=freq,
+            method=method,
+            floor=floor,
+        )
+
+        np.testing.assert_array_almost_equal(k.transpose()[0], results, 2)
 
     @pytest.mark.parametrize("constrain", [None, "20 degree_north"])
     def test_gladstones_day_length(self, constrain):
