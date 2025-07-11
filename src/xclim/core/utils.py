@@ -498,7 +498,7 @@ class InputKind(IntEnum):
     VARIABLE = 0
     """A data variable (DataArray or variable name).
 
-       Annotation : ``xr.DataArray``.
+       Annotation : ``xr.DataArray``. May not include anything else, may not be optional.
     """
     OPTIONAL_VARIABLE = 1
     """An optional data variable (DataArray or variable name).
@@ -556,6 +556,12 @@ class InputKind(IntEnum):
 
        Annotation : ``dict`` or ``dict | None``, may be optional.
     """
+    MASK = 11
+    """A mask or flag or scalar. Any value without units that might be passed as a non-temporal DataArray.
+       Can be a DataArray, a single bool or a single float.
+
+        Annotation : ``xr.DataArray | bool`` or ``xr.DataArray | float``, may be optional.
+    """
     KWARGS = 50
     """A mapping from argument name to value.
 
@@ -596,11 +602,15 @@ def infer_kind_from_parameter(param) -> InputKind:
     else:
         annot = {"no_annotation"}
 
-    if "DataArray" in annot and "None" not in annot and param.default is not None:
+    if annot == {"DataArray"} and param.default is not None:
         return InputKind.VARIABLE
 
     annot = annot - {"None"}
 
+    if annot == {"DataArray", "bool"} or annot == {"DataArray", "float"} or annot == {"DataArray", "int"}:
+        return InputKind.MASK
+
+    # Not a mask and not a required variable
     if "DataArray" in annot:
         return InputKind.OPTIONAL_VARIABLE
 
