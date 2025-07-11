@@ -497,7 +497,7 @@ def day_lengths(
     ----------
     :cite:cts:`kalogirou_chapter_2014`
     """
-    if xr.infer_freq(dates) != "D":
+    if len(dates) >= 3 and xr.infer_freq(dates) != "D":
         raise NotImplementedError("day_lengths only supports daily data.")
 
     declination = solar_declination(dates.time, method=method)
