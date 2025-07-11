@@ -601,6 +601,7 @@ KIND_ANNOTATION = {
     InputKind.VARIABLE: "str or DataArray",
     InputKind.OPTIONAL_VARIABLE: "str or DataArray, optional",
     InputKind.QUANTIFIED: "quantity (string or DataArray, with units)",
+    InputKind.MASK: "DataArray or scalar",
     InputKind.FREQ_STR: "offset alias (string)",
     InputKind.NUMBER: "number",
     InputKind.NUMBER_SEQUENCE: "number or sequence of numbers",
