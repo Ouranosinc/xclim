@@ -516,12 +516,9 @@ def test_all_parameters_understood(official_indicators):
         for name, param in indinst.parameters.items():
             if param.kind == InputKind.OTHER_PARAMETER:
                 problems.add((identifier, name))
-    # We can deal with 'lat' for the moment.
-    if problems - {
-        ("COOL_NIGHT_INDEX", "lat"),
-        ("DRYNESS_INDEX", "lat"),
-    }:
-        raise ValueError(f"The following indicator/parameter couple {problems} use types not listed in InputKind.")
+    # lat is present in many indicators, but is exceptionally allowed.
+    if problems - {("INDICE", "test_param")}:
+        raise ValueError(f"The following indicator/parameter couple(s) {problems} use types not listed in InputKind.")
 
 
 def test_signature():
