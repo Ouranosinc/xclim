@@ -35,10 +35,27 @@ except ImportError:
     rechunk_for_blockwise = None
 
 from xclim.core import DayOfYearStr, Quantified
-from xclim.core.calendar import ensure_cftime_array, get_calendar, select_time
+from xclim.core.calendar import ensure_cftime_array, get_calendar, parse_offset, select_time
 from xclim.core.options import MAP_BLOCKS, OPTIONS
 from xclim.core.units import convert_units_to
 from xclim.core.utils import _chunk_like, uses_dask
+
+__all__ = [
+    "cosine_of_solar_zenith_angle",
+    "day_angle",
+    "day_lengths",
+    "distance_from_sun",
+    "eccentricity_correction_factor",
+    "extraterrestrial_solar_radiation",
+    "gladstones_day_length_latitude_coefficient",
+    "huglin_day_length_latitude_coefficient",
+    "jones_day_length_latitude_coefficient",
+    "make_hourly_temperature",
+    "resample_map",
+    "solar_declination",
+    "time_correction_for_solar_angle",
+    "wind_speed_height_conversion",
+]
 
 
 def _wrap_radians(da):
@@ -455,11 +472,21 @@ def day_lengths(
         See :py:func:`solar_declination`.
     infill_polar_days : bool
         Whether to use a mask of 24 hours for polar days and 0 hours for polar nights.
+        If False, polar days and nights will be NaN.
+        If True, they will be filled with 24 and 0 hours, respectively,
+        dependent on latitude and solar declination at the given date.
 
     Returns
     -------
     xarray.DataArray, [hours]
         Day-lengths in hours per individual day.
+
+    Notes
+    -----
+    The day length is computed as the time between sunrise and sunset.
+    The infill_polar_days option provides an arbitrary method fill polar days and nights with
+    24 and 0 hours, respectively. Care should be taken when using this option, as it may not be
+    appropriate for all applications.
 
     References
     ----------
@@ -494,7 +521,7 @@ def huglin_day_length_latitude_coefficient(
     lat: xr.DataArray | str,
     method: Literal["huglin", "interpolated"],
     cap_value: float = np.nan,
-):
+) -> xr.DataArray:
     r"""
     Simple coefficient for the day-length and high latitudes.
 
@@ -520,7 +547,7 @@ def huglin_day_length_latitude_coefficient(
     Notes
     -----
     For the original `"huglin"` implementation :cite:p:`huglin_nouveau_1978`, the day-length multiplication factor,
-    :math:`k`, is then calculated as follows:
+    :math:`k`, is calculated as follows:
 
     .. math::
 
@@ -535,7 +562,7 @@ def huglin_day_length_latitude_coefficient(
                      \end{cases}
 
     An alternative implementation (`"interpolated"`) uses smoothing to reduce the stepwise behaviour of the
-    "huglin"` method. The day-length multiplication factor (:math:`k`) for the `"interpolated"` method is
+    "huglin"` method. The day-length multiplication factor (:math:`k`) for the `"interpolated"` method then is
     calculated as follows:
 
     .. math::
@@ -564,11 +591,7 @@ def huglin_day_length_latitude_coefficient(
         raise TypeError("Argument 'cap_value' must be a float (or numpy.nan).")
 
     lat_abs = abs(lat)
-    if method == "interpolated":
-        lat_mask = lat_abs <= 50
-        lat_coefficient = 1 + ((lat_abs - 40) / 10).clip(min=0) * 0.06
-        k = xr.where(lat_mask, lat_coefficient, _cap_value)
-    elif method == "huglin":
+    if method == "huglin":
         k_f = [0, 0.02, 0.03, 0.04, 0.05, 0.06]
         k = 1 + xr.where(
             lat_abs <= 40,
@@ -591,6 +614,10 @@ def huglin_day_length_latitude_coefficient(
                 ),
             ),
         )
+    elif method == "interpolated":
+        lat_mask = lat_abs <= 50
+        lat_coefficient = 1 + ((lat_abs - 40) / 10).clip(min=0) * 0.06
+        k = xr.where(lat_mask, lat_coefficient, _cap_value)
     else:
         raise NotImplementedError("Method is not implemented. Only 'huglin' and 'interpolated' are permitted.")
 
@@ -621,7 +648,7 @@ def gladstones_day_length_latitude_coefficient(
         The latitude at which the day length coefficient is 1.0.
         Latitudes between this value and 0 degrees North will have a coefficient below 1.0 during the growing season,
         while latitudes above this value will have a coefficient greater than 1.0.
-        This negative absolute value of this latitude is used for the Southern Hemisphere.
+        This negative absolute value of this latitude is used for calculating coefficients in the Southern Hemisphere.
     constrain : str, optional
         The lower latitude limit for applying the latitude coefficient.
         If a str is given (e.g. '25 degree_north`), values below this threshold will be set to '1.0'.
@@ -666,9 +693,9 @@ def gladstones_day_length_latitude_coefficient(
     return k
 
 
-def aggregated_day_length_latitude_coefficient(
+def jones_day_length_latitude_coefficient(
     dates: xr.DataArray,
-    lat: xr.DataArray | int | float,
+    lat: xr.DataArray | xr.Dataset | xr.DataTree,
     method: Literal["gladstones", "jones"],
     start_date: DayOfYearStr = "04-01",
     end_date: DayOfYearStr = "11-01",
@@ -684,16 +711,19 @@ def aggregated_day_length_latitude_coefficient(
     ----------
     dates : xarray.DataArray
         The dates for which the day length latitude coefficient is computed.
-    lat : xarray.DataArray or int or float
+    lat : xr.DataArray or xr.Dataset or xr.DataTree
         Latitude coordinate. If a single value is given, it is converted to an xarray.DataArray.
     method : {"gladstones", "jones"}
         The method to use for the coefficient calculation.
+        The "jones" method .
+        The "gladstones" method uses an approximation of the Gladstones methodology for day length latitude coefficient.
     start_date : DayOfYearStr
         The start date of the growing season.
     end_date : DayOfYearStr
         The end date of the growing season. Date is not included in the aggregation.
     freq : {"YS", "YS-JAN", "YS-JUL"}
         The frequency at which to aggregate the day lengths.
+        Must be an annual frequency, such as "YS" or "YS-JAN" (yearly start), "YS-JUL" (yearly start in July),
 
     Returns
     -------
@@ -704,9 +734,9 @@ def aggregated_day_length_latitude_coefficient(
     -----
     TODO: Complete the docstring with the mathematical formulas for the coefficients.
     """
-    if not freq.startswith("YS"):
+    if parse_offset(freq) not in [(1, "Y", True, "JAN"), (1, "Y", True, "JUL")]:
         msg = (
-            f"Freq {freq} not supported. Must be `YS` or `YS-*` for methods 'gladstones' and 'jones'. "
+            f"Freq {freq} not supported. Must be 'YS'/'YS-JAN', or 'YS-JUL' for method 'jones'. "
             "An annual frequency is required for the current implementation."
         )
         raise NotImplementedError(msg)
@@ -714,15 +744,17 @@ def aggregated_day_length_latitude_coefficient(
     if method in ["gladstones", "jones"]:
         day_length = (
             select_time(
-                day_lengths(dates=dates, lat=lat, method="simple"),
+                day_lengths(dates=dates, lat=lat, method="spencer", infill_polar_days=False),
                 date_bounds=(start_date, end_date),
                 include_bounds=(True, False),
             )
+            .dropna(dim="time", how="all")
+            .dropna(dim="lat", how="any")
             .resample(time=freq)
             .sum()
         )
-
         k_jones = 2.8311e-4 * day_length + 0.30834
+
         if method == "jones":
             k_aggregated = k_jones
         else:

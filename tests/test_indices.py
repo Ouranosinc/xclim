@@ -268,16 +268,21 @@ class TestAgroclimaticIndices:
         np.testing.assert_allclose(out, [0, 0.504, 0, 8.478, 17.454])
 
     @pytest.mark.parametrize(
-        "method, end_date, deg_days, max_deg_days",
+        "method, end_date, freq, deg_days, max_deg_days",
         [
-            ("gladstones", "11-01", 1090.1, 1926.0),
-            ("huglin", "11-01", 1112.8, 1926.0),
-            ("icclim", "10-01", 915.0, 1647.0),
-            ("interpolated", "11-01", 1102.1, 1926.0),
-            ("jones", "11-01", 1214.65, 2127.05),
+            ("gladstones", "11-01", "YS", 1090.1, 1926.0),
+            ("gladstones", "11-01", "MS", 152.6, 274.5),
+            ("huglin", "11-01", "YS", 1112.8, 1926.0),
+            ("huglin", "11-01", "MS", 152.5, 274.5),
+            ("icclim", "10-01", "YS", 915.0, 1647.0),
+            ("icclim", "10-01", "MS", 152.5, 274.5),
+            ("interpolated", "11-01", "YS", 1102.1, 1926.0),
+            ("interpolated", "11-01", "MS", 152.5, 274.5),
+            ("jones", "11-01", "YS", 1214.65, 2127.05),
+            ("jones", "11-01", "MS", None, None),  # Not implemented
         ],
     )
-    def test_bedd(self, method, end_date, deg_days, max_deg_days):
+    def test_bedd(self, method, end_date, freq, deg_days, max_deg_days):
         time_data = xr.date_range(start="1992-01-01", end="1995-06-01", freq="D", calendar="standard")
         lat = xr.DataArray([35, 45, 48], dims=("lat",), name="lat", attrs={"units": "degrees_north"})
 
@@ -300,35 +305,71 @@ class TestAgroclimaticIndices:
             attrs={"units": "K"},
         )
 
-        bedd = xci.biologically_effective_degree_days(
-            tasmin=tn,
-            tasmax=tx,
-            lat=lat,
-            method=method,
-            end_date=end_date,  # noqa
-            freq="YS",
-        )
-        bedd_hot = xci.biologically_effective_degree_days(
-            tasmin=tn,
-            tasmax=tx_hot,
-            lat=lat,
-            method=method,
-            end_date=end_date,  # noqa
-            freq="YS",
-        )
-
-        np.testing.assert_allclose(np.array([deg_days, deg_days, deg_days]), bedd.isel(lat=1)[:3], atol=0.125)
-        np.testing.assert_allclose([max_deg_days, max_deg_days, max_deg_days], bedd_hot.isel(lat=0)[:3], atol=0.1)
-        if method == "icclim":
-            # Latitude has no influence on 'icclim' method
-            np.testing.assert_array_equal(bedd.isel(lat=0), bedd.isel(lat=-1))
-        elif method in ["huglin", "interpolated"]:
-            # Leap year has no influence on 'huglin' or 'interpolated' method
-            np.testing.assert_array_equal(bedd.isel(lat=0)[0], bedd.isel(lat=0)[1])
+        if method == "jones" and freq == "MS":
+            with pytest.raises(NotImplementedError):
+                xci.biologically_effective_degree_days(
+                    tasmin=tn,
+                    tasmax=tx,
+                    lat=lat,
+                    method=method,
+                    end_date=end_date,
+                    freq=freq,
+                )
         else:
-            # Leap-year has slightly higher values for higher latitudes
-            np.testing.assert_array_less(bedd[0], bedd[1])
-            np.testing.assert_array_less(bedd[1], bedd[-1])
+            bedd = xci.biologically_effective_degree_days(
+                tasmin=tn,
+                tasmax=tx,
+                lat=lat,
+                method=method,
+                end_date=end_date,
+                freq=freq,
+            )
+            bedd_hot = xci.biologically_effective_degree_days(
+                tasmin=tn,
+                tasmax=tx_hot,
+                lat=lat,
+                method=method,
+                end_date=end_date,
+                freq=freq,
+            )
+
+            if freq == "YS":
+                np.testing.assert_allclose(np.array([deg_days] * 3), bedd.isel(lat=1)[:3], atol=0.125)
+                np.testing.assert_allclose(np.array([max_deg_days] * 3), bedd_hot.isel(lat=0)[:3], atol=0.1)
+                if method == "icclim":
+                    # Latitude has no influence on 'icclim' method
+                    np.testing.assert_array_equal(bedd.isel(lat=0), bedd.isel(lat=-1))
+                elif method in ["huglin", "interpolated"]:
+                    # Leap year has no influence on 'huglin' or 'interpolated' method
+                    np.testing.assert_array_equal(bedd.isel(lat=0)[0], bedd.isel(lat=0)[1])
+                else:
+                    # Leap-year has slightly higher values for higher latitudes
+                    np.testing.assert_array_less(bedd[0], bedd[1])
+                    np.testing.assert_array_less(bedd[1], bedd[2])
+
+            elif freq == "MS":
+                np.testing.assert_allclose(
+                    np.array([deg_days] * 6 + ([deg_days] if method != "icclim" else [0])),
+                    bedd.isel(lat=0)[3:10],
+                    rtol=0.125,
+                )
+                np.testing.assert_allclose(
+                    np.array([max_deg_days] * 6 + ([max_deg_days] if method != "icclim" else [0])),
+                    bedd_hot.isel(lat=0)[3:10],
+                    rtol=0.1,
+                )
+                if method == "icclim":
+                    # Latitude has no influence on 'icclim' method
+                    np.testing.assert_array_equal(bedd.isel(lat=0)[3:10], bedd.isel(lat=-1)[3:10])
+                elif method in ["huglin", "interpolated"]:
+                    # Leap year has no influence on 'huglin' or 'interpolated' method
+                    np.testing.assert_array_equal(bedd.isel(lat=0)[3:10], bedd.isel(lat=0)[15:22])
+                else:
+                    # September has slightly higher values for lower latitudes
+                    np.testing.assert_array_less(bedd[0][3:9], bedd[1][3:9])
+                    np.testing.assert_array_less(bedd[1][9], bedd[0][9])
+                    np.testing.assert_array_less(bedd[1][3:9], bedd[2][3:9])
+                    np.testing.assert_array_less(bedd[2][9], bedd[1][9])
 
     def test_chill_portions(self, tas_series):
         tas = tas_series(np.linspace(0, 15, 120 * 24) + K2C, freq="h")
@@ -429,15 +470,28 @@ class TestAgroclimaticIndices:
                     tasmax=tasmax, tas=tas, method=method, end_date=end_date, freq=freq, cap_value=cap_value
                 )
         else:
-            # find lat implicitly
-            hi = xci.huglin_index(
-                tasmax=tasmax,
-                tas=tas,
-                method=method,
-                end_date=end_date,
-                freq=freq,
-                cap_value=cap_value,
-            )
+            if method == "icclim":
+                # The 'icclim' method is an alias for 'huglin'
+                with pytest.warns(DeprecationWarning):
+                    # find lat implicitly
+                    hi = xci.huglin_index(
+                        tasmax=tasmax,
+                        tas=tas,
+                        method=method,
+                        end_date=end_date,
+                        freq=freq,
+                        cap_value=cap_value,
+                    )
+            else:
+                # find lat implicitly
+                hi = xci.huglin_index(
+                    tasmax=tasmax,
+                    tas=tas,
+                    method=method,
+                    end_date=end_date,
+                    freq=freq,
+                    cap_value=cap_value,
+                )
 
             if freq == "MS":
                 np.testing.assert_allclose(hi.isel(time=5).mean(), values, rtol=1e-2, atol=0)
