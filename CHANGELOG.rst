@@ -12,6 +12,7 @@ New indicators and features
 * Argument ``indexer`` added to indicators ``max_n_day_precipitation_amount``, ``max_pr_intensity``, and ``blowing_snow``. (:issue:`2187`, :pull:`2190`).
 * Argument ``window`` added to indicator ``rain_on_frozen_ground_days``. (:pull:`2190`).
 * New helper ``xclim.indices.generic.season_length_from_boundaries`` takes `season_start` and `season_end` as input and gives `season_length`. This is used when starts and ends are computed with different resampling frequencies: `days_since` are used to compute temporal lengths in this case. (:pull:`2189`).
+* Allow `invalid_values` as argument for `relative_humidity_from_dewpoint`. (:pull:`2203`, :issue:`2202`)
 
 Internal changes
 ^^^^^^^^^^^^^^^^
@@ -20,6 +21,7 @@ Internal changes
 Bug fixes
 ^^^^^^^^^
 * Increase the tolerance in the tests of ``xclim.indices.standardized_groundwater_index`` (the standardized indices are sensitive to package versions because of the parameter optimization in `scipy`).  (:issue:`2183`, :pull:`2193`).
+* In ``xclim.indices._conversion.humidex`` and ``xclim.indices._conversion.vapor_pressure_deficit``, add a converter to ensure `hurs` has '%' units. (:pull:`2209`).
 
 v0.57.0 (2025-05-22)
 --------------------
