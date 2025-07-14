@@ -150,6 +150,15 @@ class TestDayLength:
                 False,
                 [1.18, 1.07, 1.02, 0.99, 0.97, 0.95, 0.93, 0.91, 0.89, 0.86, 0.83, 0.78, 0.67],
             ),
+            # Incomplete growing season; Raise a ValueError
+            (
+                "jones",
+                "04-01",
+                "11-01",
+                "YS-JUL",
+                False,
+                None,
+            ),
         ],
     )
     def test_jones_day_length_latitude_coefficient(self, method, start_date, end_date, freq, floor, results):
@@ -159,17 +168,28 @@ class TestDayLength:
             setup_dates = {}
 
         data = self.data_setup(lats=np.linspace(-65, 65, 13, endpoint=True), **setup_dates)
-        k = helpers.jones_day_length_latitude_coefficient(
-            dates=data.time,
-            lat=data.lat,
-            start_date=start_date,
-            end_date=end_date,
-            freq=freq,
-            method=method,
-            floor=floor,
-        )
-
-        np.testing.assert_array_almost_equal(k.transpose()[0], results, 2)
+        if results is None:
+            with pytest.raises(ValueError):
+                helpers.jones_day_length_latitude_coefficient(
+                    dates=data.time,
+                    lat=data.lat,
+                    start_date=start_date,
+                    end_date=end_date,
+                    freq=freq,
+                    method=method,
+                    floor=floor,
+                )
+        else:
+            k = helpers.jones_day_length_latitude_coefficient(
+                dates=data.time,
+                lat=data.lat,
+                start_date=start_date,
+                end_date=end_date,
+                freq=freq,
+                method=method,
+                floor=floor,
+            )
+            np.testing.assert_array_almost_equal(k.transpose()[0], results, 2)
 
     @pytest.mark.parametrize("constrain", [None, "20 degree_north"])
     def test_gladstones_day_length(self, constrain):

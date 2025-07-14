@@ -743,6 +743,11 @@ def jones_day_length_latitude_coefficient(
     xarray.DataArray, [dimensionless]
         Coefficient for the day length based on latitude, aggregated over the growing season.
 
+    Raises
+    ------
+    ValueError
+        If all latitudes for every computed growing season have a day length latitude coefficient below 1.0.
+
     Notes
     -----
     For the `"jones"` method, A more robust day-length calculation based on latitude, calendar, day-of-year, and
@@ -778,6 +783,8 @@ def jones_day_length_latitude_coefficient(
         raise NotImplementedError(msg)
 
     if method in ["gladstones", "jones"]:
+        if freq == "YS-JUL":
+            pass
         day_length = (
             select_time(
                 day_lengths(dates=dates, lat=lat, method="spencer", infill_polar_days=False),
@@ -790,6 +797,17 @@ def jones_day_length_latitude_coefficient(
             .sum()
         )
         k_jones: xr.DataArray = (2.8311e-4 * day_length) + 0.30834
+
+        all_below_1 = (k_jones < 1.0).all(dim="lat")
+        k_jones = k_jones.where(~all_below_1, np.nan)
+        if k_jones.isnull().all():
+            msg = (
+                "All latitudes for every growing season have a day length latitude coefficient below 1.0. "
+                "This is likely due to the start and end dates of the growing season being too restrictive "
+                "or an incomplete time series."
+            )
+            raise ValueError(msg)
+
         if method == "jones":
             k_aggregated = k_jones
         else:
