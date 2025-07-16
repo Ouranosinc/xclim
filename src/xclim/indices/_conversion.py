@@ -141,6 +141,7 @@ def humidex(
     elif hurs is not None:
         # Convert dry bulb temperature to Celsius
         tasC = convert_units_to(tas, "celsius")
+        hurs = convert_units_to(hurs, "%")
         e = hurs / 100 * 6.112 * 10 ** (7.5 * tasC / (tasC + 237.7))
 
     else:
@@ -592,6 +593,7 @@ def vapor_pressure_deficit(
         tas, ice_thresh=ice_thresh, method=method, interp_power=interp_power, water_thresh=water_thresh
     )
 
+    hurs = convert_units_to(hurs, "%")
     vpd = cast(xr.DataArray, (1 - (hurs / 100)) * svp)
 
     vpd = vpd.assign_attrs(units=svp.attrs["units"])
