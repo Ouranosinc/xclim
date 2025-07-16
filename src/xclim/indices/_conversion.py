@@ -380,8 +380,10 @@ def _saturation_vapor_pressure_over_water(tas: xr.DataArray, method: str):
         )
     elif method in ["wmo08", "WMO08"]:
         e_sat = 611.2 * np.exp(17.62 * (tas - 273.16) / (tas - 30.04))
-    elif method in ["ecmwf", "ECMWF"]:
+    elif method in ["buck81", "BUCK81", "ecmwf", "ECMWF"]:
         e_sat = 611.21 * np.exp(17.502 * (tas - 273.16) / (tas - 32.19))
+    elif method in ["aerk96", "AERK96"]:
+        e_sat = 610.94 * np.exp(17.625 * (tas - 273.16) / (tas - 29.76))
     elif method in ["its90", "ITS90"]:
         e_sat = np.exp(
             -2836.5744 / tas**2
@@ -423,8 +425,10 @@ def _saturation_vapor_pressure_over_ice(tas: xr.DataArray, method: str):
         )
     elif method in ["wmo08", "WMO08"]:
         e_sat = 611.2 * np.exp(22.46 * (tas - 273.16) / (tas - 0.54))
-    elif method in ["ecmwf", "ECMWF"]:
-        e_sat = 611.21 * np.exp(22.587 * (tas - 273.16) / (tas - -0.7))
+    elif method in ["buck81", "BUCK81"]:
+        e_sat = 611.15 * np.exp(22.542 * (tas - 273.16) / (tas + 0.32))
+    elif method in ["aerk96", "AERK96", "ecmwf", "ECMWF"]:
+        e_sat = 611.21 * np.exp(22.587 * (tas - 273.16) / (tas + 0.7))
     elif method in ["its90", "ITS90"]:
         e_sat = np.exp(
             -5866.6426 / tas
@@ -460,7 +464,7 @@ def saturation_vapor_pressure(
         Threshold temperature under which to switch to equations in reference to ice instead of water.
         If None (default) everything is computed with reference to water.
         If given, see `interp_power` for more options.
-    method : {"goffgratch46", "sonntag90", "tetens30", "wmo08", "its90", "ecmwf"}
+    method : {"goffgratch46", "sonntag90", "tetens30", "wmo08", "its90", "buck81", "aerk96", "ecmwf"}
         Which saturation vapour pressure formula to use, see notes.
     interp_power : int or None
         Interpolation options for mixing saturation over water and over ice. See notes.
@@ -483,42 +487,44 @@ def saturation_vapor_pressure(
     - "sonntag90" or "SO90", taken from :cite:t:`sonntag_important_1990`.
     - "tetens30" or "TE30", based on :cite:t:`tetens_uber_1930`,
       values and equation taken from :cite:t:`vomel_saturation_2016`.
-    - "wmo08" or "WMO08", taken from :cite:t:`world_meteorological_organization_guide_2008`.
-    - "its90" or "ITS90", taken from :cite:t:`hardy_its-90_1998`.
-    - "ecmwf" or "ECMWF", taken from :cite:t:`ecwmf_physical_2016`. This is a mix of :cite:t:`buck_new_1981` for
-       saturation over water and :cite:t:`alduchov_improved_1996` for saturation over ice.
+    - "wmo08", taken from :cite:t:`world_meteorological_organization_guide_2008`.
+    - "its90", taken from :cite:t:`hardy_its-90_1998`.
+    - "buck81", taken from :cite:t:`buck_new_1981`.
+    - "aerk96", corresponds to formulas AERK and AERKi of :cite:t:`alduchov_improved_1996`
+    - "ecmwf" or "ECMWF", taken from :cite:t:`ecwmf_physical_2016`. This uses "buck91" for saturation over water
+       and "aerk96" for saturation over ice.
 
-    Water vs ice
-    ^^^^^^^^^^^^
+    **Water vs ice**
+
     This function implements 3 cases:
 
     - **All water**. When ``interp_power`` is None (default) and ``ice_thresh`` is None (default).
       Formulas use water as a reference. This might lead to relative humidities above 100 % for cold temperatures.
-      This is usually what observational products use (:cite:t:`world_meteorological_organization_guide_2008`).
+      This is usually what observational products use (:cite:t:`world_meteorological_organization_guide_2008`), and also
+      how the dew point of ERA5 is computed.
     - **Binary water-ice transition**. When ``interp_power is None (default) and ``ice_thresh`` is given.
       The formulas with reference to water are used for temperatures above ``ice_thresh`` and the ones with reference
-      to ice are used for temperatures equal to or under ``ice_thresh``.
-      This often used in models, this is what MetPy does.
+      to ice are used for temperatures equal to or under ``ice_thresh``. Often used in models, this is what MetPy does.
     - **Interpolation between water and ice**. When ``interp_power``, ``ice_thresh`` and ``water_thresh`` are all given,
       formulas with reference to water are used for temperatures above ``water_thresh``, the formulas with reference
       to ice are used for temperatures below ``ice_thresh`` and an interpolation is used in between.
 
     .. math::
 
-        e_{sat} = \alpha e_{sat(water)}(T) + (1 - \alpha) e_{sat(ice)}(T)
+       e_{sat} = \alpha e_{sat(water)}(T) + (1 - \alpha) e_{sat(ice)}(T)
 
-        \alpha = \left(\frac{T - T_i}{T_w - T_i}}\right)^{\beta}
+       \alpha = \left(\frac{T - T_i}{T_w - T_i}}\right)^{\beta}
 
-    Where $$T_{ice}$$ is ``ice_thresh``, $$T_{w}$$ is ``water_thresh`` and $$\beta$$ is ``interp_power``.
+    Where :math:`T_{ice}` is ``ice_thresh``, :math:`T_{w}` is ``water_thresh`` and :math:`\beta` is ``interp_power``.
 
     As a note, a computation resembling what ECMWF's IFS does to compute relative humidity would use:
-    ``method = 'ECMWF'``, ``ice_thresh = 250.16 K``, ``water_thresh = 273.16 K`` (default) and ``interp_power = 2``
+    ``method = 'ecmwf'``, ``ice_thresh = 250.16 K``, ``water_thresh = 273.16 K`` (default) and ``interp_power = 2``
     (:cite:t:`ecwmf_physical_2016`). Take note, however, that the 2m dew point temperature given by the IFS
     (ERA5, ERA5-Land) is computed with reference to water only.
 
     References
     ----------
-    :cite:cts:`ecwmf_physical_2016,goff_low-pressure_1946,hardy_its-90_1998,sonntag_important_1990,tetens_uber_1930,vomel_saturation_2016,world_meteorological_organization_guide_2008`
+    :cite:cts:`ecwmf_physical_2016,goff_low-pressure_1946,hardy_its-90_1998,sonntag_important_1990,tetens_uber_1930,vomel_saturation_2016,world_meteorological_organization_guide_2008,buck_new_1981,alduchov_improved_1996`
 
     Examples
     --------
