@@ -958,7 +958,7 @@ def snowfall_approximation(
                     coords={"season": ["DJF", "MAM", "JJA", "SON"]},
                 )
                 a, b, c, d = coeffs.sel(season=tas.time.dt.season)
-            elif method == "dai_annual" and not landmask:
+            elif method == "dai_seasonal" and not landmask:
                 coeffs = xr.DataArray(
                     [
                         [-47.1823, -47.0035, -47.1472, -46.8494],
@@ -1073,7 +1073,7 @@ def rain_approximation(
                     coords={"season": ["DJF", "MAM", "JJA", "SON"]},
                 )
                 a, b, c, d = coeffs.sel(season=tas.time.dt.season)
-            elif method == "dai_annual" and not landmask:
+            elif method == "dai_seasonal" and not landmask:
                 coeffs = xr.DataArray(
                     [
                         [-47.0262, -47.2828, -47.3041, -47.2107],
