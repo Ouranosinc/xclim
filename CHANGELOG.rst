@@ -14,7 +14,7 @@ New indicators and features
 * New helper ``xclim.indices.generic.season_length_from_boundaries`` takes `season_start` and `season_end` as input and gives `season_length`. This is used when starts and ends are computed with different resampling frequencies: `days_since` are used to compute temporal lengths in this case. (:pull:`2189`).
 * Allow `invalid_values` as argument for `relative_humidity_from_dewpoint`. (:pull:`2203`, :issue:`2202`)
 * All functions using saturation vapour pressure can now compute it with a smooth transition between saturation over ice and saturation over water. The transition is controlled by the ``interp_power`` , ``ice_thresh`` and ``water_thresh`` parameters. (:issue:`2165`, :pull:`2206`).
-    + New method "ECMWF" that implements the saturation vapour pressure formulas given in the IFS documentation of the ECMWF.
+    + New methods "buck81" and "aerk96" and new method "ECMWF" which is "buck81" on water and "aerk96" on ice.
 
 Internal changes
 ^^^^^^^^^^^^^^^^
