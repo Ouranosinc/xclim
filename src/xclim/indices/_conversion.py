@@ -530,7 +530,7 @@ def saturation_vapor_pressure(
 
        e_{sat} = \alpha e_{sat(water)}(T) + (1 - \alpha) e_{sat(ice)}(T)
 
-       \alpha = \left(\frac{T - T_i}{T_w - T_i}}\right)^{\beta}
+       \alpha = \left(\frac{T - T_i}{T_w - T_i}\right)^{\beta}
 
     Where :math:`T_{ice}` is ``ice_thresh``, :math:`T_{w}` is ``water_thresh`` and :math:`\beta` is ``interp_power``.
 
@@ -602,7 +602,7 @@ def vapor_pressure(huss: xr.DataArray, ps: xr.DataArray):
         e = \frac{pq}{\epsilon\left(1 + q\left(\frac{1}{\epsilon} - 1\right)\right)}
 
     Where :math:`p` is the pressure, :math:`q` is the specific humidity and :math:`\epsilon` us the ratio of the dry air
-    gas constant to the water vapor gas constant : :math:`\frac{R_{dry}{R_vapor} = 0.621981`.
+    gas constant to the water vapor gas constant : :math:`\frac{R_{dry}}{R_{vapor}} = 0.621981`.
     """
     eps = 0.621981
     e = ps * huss / (eps * (1 + huss * (1 / eps - 1)))
