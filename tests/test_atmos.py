@@ -198,7 +198,7 @@ def test_specific_humidity_from_dewpoint(tas_series, ps_series, huss_series):
         method="sonntag90",
     )
     np.testing.assert_allclose(huss, huss_exp, atol=1e-4, rtol=0.05)
-    assert huss.name == "huss_fromdewpoint"
+    assert huss.name == "huss"
 
 
 @pytest.mark.parametrize("method", ["tetens30", "wmo08", "aerk96", "buck81"])
