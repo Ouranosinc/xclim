@@ -263,8 +263,9 @@ specific_humidity_from_dewpoint = Converter(
     title="Specific humidity from dew point temperature and pressure",
     identifier="huss_fromdewpoint",
     units="",
-    long_name='Specific humidity ("{method}" method)',
+    long_name="Specific humidity",
     standard_name="specific_humidity",
+    var_name="huss",
     description=(
         "Computed from dewpoint temperature and pressure through the saturation "
         "vapor pressure, which was calculated according to the {method} method."
@@ -277,6 +278,7 @@ specific_humidity_from_dewpoint = Converter(
 dewpoint_from_specific_humidity = Converter(
     identifier="tdps_from_huss",
     units="K",
+    var_name="tdps",
     description=(
         "Temperature at which the current water vapour reaches saturation. "
         "Equation from {method} is used for saturation vapour pressure."
