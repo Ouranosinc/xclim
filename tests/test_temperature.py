@@ -1616,7 +1616,7 @@ class TestHotDays:
         assert np.isnan(fd.values[0, 1, 0])
 
         assert np.isnan(fd.values[0, -1, -1])
-    
+
     def test_indexing(self, open_dataset):
         tasmax = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc").tasmax
         fd1 = atmos.hot_days(tasmax, freq="YS")
