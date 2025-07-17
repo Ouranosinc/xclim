@@ -18,6 +18,7 @@ from xclim.indices.generic import select_resample_op, threshold_count
 
 __all__ = [
     "frost_days",
+    "hot_days",
     "ice_days",
     "max_1day_precipitation_amount",
     "max_n_day_precipitation_amount",
@@ -327,6 +328,45 @@ def tx_min(tasmax: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
        TXn_j = min(TX_{ij})
     """
     return select_resample_op(tasmax, op="min", freq=freq)
+
+
+@declare_units(tasmax="[temperature]", thresh="[temperature]")
+def hot_days(
+    tasmax: xarray.DataArray,
+    thresh: Quantified = "25 degC",
+    freq: str = "YS",
+) -> xarray.DataArray:
+    r"""
+    Hot days index.
+
+    Number of days where daily maximum temperatures are above a threshold temperature (default: 25 degC).
+
+    Parameters
+    ----------
+    tasmax : xarray.DataArray
+        Maximum daily temperature.
+    thresh : Quantified
+        Threshold temperature.
+    freq : str
+        Resampling frequency.
+
+    Returns
+    -------
+    xarray.DataArray, [time]
+        Hot days index.
+
+    Notes
+    -----
+    Let :math:`TX_{ij}` be the daily maximum temperature at day :math:`i` of period :math:`j`
+    and :math`TT` the threshold. Then counted is the number of days where:
+
+    .. math::
+
+       TX_{ij} > TT
+    """
+    thresh = convert_units_to(thresh, tasmax)
+    out = threshold_count(tasmax, ">", thresh, freq)
+    return to_agg_units(out, tasmax, "count")
 
 
 @declare_units(tasmin="[temperature]", thresh="[temperature]")
