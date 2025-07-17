@@ -32,6 +32,7 @@ from xclim.indices.helpers import (
 __all__ = [
     "clausius_clapeyron_scaled_precipitation",
     "clearness_index",
+    "dewpoint_from_specific_humidity",
     "fao_allen98",
     "heat_index",
     "humidex",
@@ -54,6 +55,7 @@ __all__ = [
     "tas",
     "uas_vas_to_sfcwind",
     "universal_thermal_climate_index",
+    "vapor_pressure",
     "vapor_pressure_deficit",
     "wind_chill_index",
     "wind_power_potential",
@@ -356,10 +358,32 @@ def sfcwind_to_uas_vas(
     return uas, vas
 
 
+ESAT_FORMULAS_COEFFICIENTS = {
+    "tetens30": {"water": [610.78, 17.269388, -35.86], "ice": [610.78, 21.8745584, -7.66]},
+    "wmo08": {"water": [611.2, 17.62, -30.04], "ice": [611.2, 22.46, -0.54]},
+    "buck81": {"water": [611.21, 17.502, -32.19], "ice": [611.15, 22.542, 0.32]},
+    "aerk96": {"water": [610.94, 17.625, -30.12], "ice": [611.21, 22.587, 0.7]},
+}
+r"""Coefficients for the saturation vapor pressure formulas of the Auguste-Roche-Magnus form.
+
+Keys are method names, values are dictionaries with entries for the "water" and "ice" variants of the
+coefficients which are given as list of 3 elements :math:`A`, :math:`B` and :math:`C` for the following
+saturation vapor pressure equation:
+
+.. math::
+
+   e_{sat} = A e^{B\frac{T - T_0}{T + C}}
+
+Where :math:`T` is the air temperature in K and :math:`T_0` is the freezing temperature, 273.16 K.
+"""
+
+
 def _saturation_vapor_pressure_over_water(tas: xr.DataArray, method: str):
     """Saturation vapor pressure with reference to water."""
     e_sat: xr.DataArray
-    if method in ["sonntag90", "SO90"]:
+    if method == "ecmwf":
+        method = "buck81"
+    if method == "sonntag90":
         e_sat = 100 * np.exp(
             -6096.9385 / tas  # type: ignore
             + 16.635794
@@ -367,9 +391,7 @@ def _saturation_vapor_pressure_over_water(tas: xr.DataArray, method: str):
             + 1.673952e-5 * tas**2
             + 2.433502 * np.log(tas)  # numpy's log is ln
         )
-    elif method in ["tetens30", "TE30"]:
-        e_sat = 610.78 * np.exp(17.269388 * (tas - 273.16) / (tas - 35.86))
-    elif method in ["goffgratch46", "GG46"]:
+    elif method == "goffgratch46":
         Tb = 373.16  # Water boiling temp [K]
         eb = 101325  # e_sat at Tb [Pa]
         e_sat = eb * 10 ** (
@@ -378,13 +400,7 @@ def _saturation_vapor_pressure_over_water(tas: xr.DataArray, method: str):
             + -1.3817e-7 * (10 ** (11.344 * (1 - tas / Tb)) - 1)
             + 8.1328e-3 * (10 ** (-3.49149 * ((Tb / tas) - 1)) - 1)  # type: ignore
         )
-    elif method in ["wmo08", "WMO08"]:
-        e_sat = 611.2 * np.exp(17.62 * (tas - 273.16) / (tas - 30.04))
-    elif method in ["buck81", "BUCK81", "ecmwf", "ECMWF"]:
-        e_sat = 611.21 * np.exp(17.502 * (tas - 273.16) / (tas - 32.19))
-    elif method in ["aerk96", "AERK96"]:
-        e_sat = 610.94 * np.exp(17.625 * (tas - 273.16) / (tas - 29.76))
-    elif method in ["its90", "ITS90"]:
+    elif method == "its90":
         e_sat = np.exp(
             -2836.5744 / tas**2
             + -6028.076559 / tas
@@ -395,17 +411,21 @@ def _saturation_vapor_pressure_over_water(tas: xr.DataArray, method: str):
             + -1.8680009e-13 * tas**4
             + 2.7150305 * np.log(tas)
         )
+    elif method in ESAT_FORMULAS_COEFFICIENTS:
+        A, B, C = ESAT_FORMULAS_COEFFICIENTS[method]["water"]
+        e_sat = A * np.exp(B * (tas - 273.16) / (tas + C))
     else:
-        raise ValueError(
-            f"Method {method} is not in ['sonntag90', 'tetens30', 'goffgratch46', 'wmo08', 'its90', 'ecmwf']"
-        )
+        valid = ["sonntag90", "goffgratch46", "its90", "ecmwf"] + list(ESAT_FORMULAS_COEFFICIENTS.keys())
+        raise ValueError(f"Method {method} is not in {valid}")
     return e_sat
 
 
 def _saturation_vapor_pressure_over_ice(tas: xr.DataArray, method: str):
     """Saturation vapor pressure with reference to ice."""
     e_sat: xr.DataArray
-    if method in ["sonntag90", "SO90"]:
+    if method == "ecmwf":
+        method = "aerk96"
+    if method in "sonntag90":
         e_sat = 100 * np.exp(
             -6024.5282 / tas  # type: ignore
             + 24.7219
@@ -413,9 +433,7 @@ def _saturation_vapor_pressure_over_ice(tas: xr.DataArray, method: str):
             + -1.3198825e-5 * tas**2
             + -0.49382577 * np.log(tas)
         )
-    elif method in ["tetens30", "TE30"]:
-        e_sat = 610.78 * np.exp(21.8745584 * (tas - 273.16) / (tas - 7.66))
-    elif method in ["goffgratch46", "GG46"]:
+    elif method in "goffgratch46":
         Tp = 273.16  # Triple-point temperature [K]
         ep = 611.73  # e_sat at Tp [Pa]
         e_sat = ep * 10 ** (
@@ -423,13 +441,7 @@ def _saturation_vapor_pressure_over_ice(tas: xr.DataArray, method: str):
             + -3.56654 * np.log10(Tp / tas)  # type: ignore
             + 0.876793 * (1 - tas / Tp)
         )
-    elif method in ["wmo08", "WMO08"]:
-        e_sat = 611.2 * np.exp(22.46 * (tas - 273.16) / (tas - 0.54))
-    elif method in ["buck81", "BUCK81"]:
-        e_sat = 611.15 * np.exp(22.542 * (tas - 273.16) / (tas + 0.32))
-    elif method in ["aerk96", "AERK96", "ecmwf", "ECMWF"]:
-        e_sat = 611.21 * np.exp(22.587 * (tas - 273.16) / (tas + 0.7))
-    elif method in ["its90", "ITS90"]:
+    elif method in "its90":
         e_sat = np.exp(
             -5866.6426 / tas
             + 22.32870244
@@ -438,10 +450,12 @@ def _saturation_vapor_pressure_over_ice(tas: xr.DataArray, method: str):
             + 2.7040955e-8 * tas**3
             + 6.7063522e-1 * np.log(tas)
         )
+    elif method in ESAT_FORMULAS_COEFFICIENTS:
+        A, B, C = ESAT_FORMULAS_COEFFICIENTS[method]["ice"]
+        e_sat = A * np.exp(B * (tas - 273.16) / (tas + C))
     else:
-        raise ValueError(
-            f"Method {method} is not in ['sonntag90', 'tetens30', 'goffgratch46', 'wmo08', 'its90', 'ecmwf']"
-        )
+        valid = ["sonntag90", "goffgratch46", "its90", "ecmwf"] + list(ESAT_FORMULAS_COEFFICIENTS.keys())
+        raise ValueError(f"Method {method} is not in {valid}")
     return e_sat
 
 
@@ -477,22 +491,25 @@ def saturation_vapor_pressure(
     xarray.DataArray, [Pa]
         Saturation Vapour Pressure.
 
+    See Also
+    --------
+    ESAT_FORMULAS_COEFFICIENTS : Coefficients for methods "tetens30", "wmo08", "aerk96" and "buck81".
+
     Notes
     -----
     In all cases implemented here :math:`log(e_{sat})` is an empirically fitted function (usually a polynomial)
     where coefficients can be different when ice is taken as reference instead of water. Available methods are:
 
-    - "goffgratch46" or "GG46", based on :cite:t:`goff_low-pressure_1946`,
+    - "goffgratch46", based on :cite:t:`goff_low-pressure_1946`,
       values and equation taken from :cite:t:`vomel_saturation_2016`.
-    - "sonntag90" or "SO90", taken from :cite:t:`sonntag_important_1990`.
-    - "tetens30" or "TE30", based on :cite:t:`tetens_uber_1930`,
-      values and equation taken from :cite:t:`vomel_saturation_2016`.
+    - "sonntag90"", taken from :cite:t:`sonntag_important_1990`.
+    - "tetens30", based on :cite:t:`tetens_uber_1930`, values and equation taken from :cite:t:`vomel_saturation_2016`.
     - "wmo08", taken from :cite:t:`world_meteorological_organization_guide_2008`.
     - "its90", taken from :cite:t:`hardy_its-90_1998`.
     - "buck81", taken from :cite:t:`buck_new_1981`.
     - "aerk96", corresponds to formulas AERK and AERKi of :cite:t:`alduchov_improved_1996`
-    - "ecmwf" or "ECMWF", taken from :cite:t:`ecwmf_physical_2016`. This uses "buck91" for saturation over water
-       and "aerk96" for saturation over ice.
+    - "ecmwf", taken from :cite:t:`ecwmf_physical_2016`. This uses "buck91" for saturation over water
+      and "aerk96" for saturation over ice.
 
     **Water vs ice**
 
@@ -531,6 +548,10 @@ def saturation_vapor_pressure(
     >>> from xclim.indices import saturation_vapor_pressure
     >>> rh = saturation_vapor_pressure(tas=tas_dataset, ice_thresh="0 degC", method="wmo08")
     """
+    # Dropped explicit support of 4 letter codes, but don't want a breaking change
+    method = {"TE30": "tetens30", "GG46": "goffgratch46", "SO90": "sonntag90"}.get(method, method)
+    method = method.casefold()
+
     tas = convert_units_to(tas, "K")
     if ice_thresh is None and interp_power is None:
         # all water
@@ -553,6 +574,41 @@ def saturation_vapor_pressure(
     return e_sat
 
 
+@declare_units(huss="[]", ps="[pressure]")
+def vapor_pressure(huss: xr.DataArray, ps: xr.DataArray):
+    r"""
+    Vapour pressure.
+
+    Computes the water vapour partial pressure in Pa from the specific humidity and the total pressure.
+
+    Parameters
+    ----------
+    huss : xr.DataArray
+        Specific humidity [kg/kg].
+    ps : xr.DataArray
+        Pressure.
+
+    Returns
+    -------
+    xr.DataArray, [pressure]
+      Water vapour partial pressure.
+
+    Notes
+    -----
+    The vapour pressure :math:`\epsilon` is computed with:
+
+    .. math::
+
+        e = \frac{pq}{\epsilon\left(1 + q\left(\frac{1}{\epsilon} - 1\right)\right)}
+
+    Where :math:`p` is the pressure, :math:`q` is the specific humidity and :math:`\epsilon` us the ratio of the dry air
+    gas constant to the water vapor gas constant : :math:`\frac{R_{dry}{R_vapor} = 0.621981`.
+    """
+    eps = 0.621981
+    e = ps * huss / (eps * (1 + huss * (1 / eps - 1)))
+    return e.assign_attrs(units=ps.attrs["units"])
+
+
 @declare_units(tas="[temperature]", hurs="[]", ice_thresh="[temperature]", water_thresh="[temperature]")
 def vapor_pressure_deficit(
     tas: xr.DataArray,
@@ -565,7 +621,7 @@ def vapor_pressure_deficit(
     """
     Vapour pressure deficit.
 
-    The measure of the moisture deficit of the air.
+    The measure of the moisture deficit of the air, computed from temperature and relative
 
     Parameters
     ----------
@@ -848,7 +904,7 @@ def specific_humidity(
         tas=tas, ice_thresh=ice_thresh, method=method, interp_power=interp_power, water_thresh=water_thresh
     )
 
-    w_sat = 0.62198 * e_sat / (ps - e_sat)  # type: ignore
+    w_sat = 0.621981 * e_sat / (ps - e_sat)  # type: ignore
     w = w_sat * hurs
     q: xr.DataArray = w / (1 + w)
 
@@ -886,7 +942,7 @@ def specific_humidity_from_dewpoint(
     ice_thresh : Quantified, optional
         Threshold temperature under which to switch to saturated vapour pressure equations
         in reference to ice instead of water. See :py:func:`saturation_vapor_pressure`.
-    method : {"goffgratch46", "sonntag90", "tetens30", "wmo08", "ecmwf"}
+    method : {"goffgratch46", "sonntag90", "tetens30", "wmo08", "buck81", "aerk96", "ecmwf"}
         Method to compute the saturation vapour pressure.
     interp_power : int or None
         Optional interpolation for mixing saturation vapour pressures computed over water and ice.
@@ -924,7 +980,7 @@ def specific_humidity_from_dewpoint(
     ...     method="wmo08",
     ... )
     """
-    EPSILON = 0.6219569  # weight of water vs dry air []
+    EPSILON = 0.621981  # molar weight of water vs dry air []
     e = saturation_vapor_pressure(
         tas=tdps, method=method, ice_thresh=ice_thresh, interp_power=interp_power, water_thresh=water_thresh
     )  # vapour pressure [Pa]
@@ -933,6 +989,69 @@ def specific_humidity_from_dewpoint(
     q: xr.DataArray = EPSILON * e / (ps - e * (1 - EPSILON))
     q = q.assign_attrs(units="")
     return q
+
+
+@declare_units(huss="[]", ps="[pressure]")
+def dewpoint_from_specific_humidity(
+    huss: xr.DataArray, ps: xr.DataArray, method: str = "buck81", variant: str = "water"
+):
+    r"""
+    Dewpoint temperature computed from specific humidity and pressure.
+
+    The temperature at which the current vapour pressure would be the saturation vapour pressure.
+    Only a subset of the :py:func:`saturation_vapor_pressure` methods are supported.
+
+    Parameters
+    ----------
+    huss : xr.DataArray
+        Specific humidity [kg/kg].
+    ps : xr.DataArray
+        Pressure.
+    method : {'tetens30', 'wmo08', 'aerk96', 'buck81'}
+        The formula to use for saturation vapour pressure.
+        Only the formulas using the easily invertible August-Roche-Magnus form are available.
+    variant : {'water', 'ice'}
+        Which variant of the saturation vapour pressure formula to take.
+
+    Returns
+    -------
+    xr.DataArray, [temperature]
+        Dewpoint temperature.
+
+    See Also
+    --------
+    saturation_vapor_pressure: Computations of the saturation vapour pressure with more notes.
+    ESAT_FORMULAS_COEFFICIENTS: Coefficients of the August-Roche-Magnus form equation for saturation vapour pressure.
+
+    Notes
+    -----
+    The calculation is based on the following, using the August-Roche-Magnus form
+    for the saturation vapour pressure formula :
+
+    .. math::
+
+       e(q, p) = e_{sat}(T_d) = A \mathrm{e}^{B * \frac{T_d - T_0}{T_d + C}}}
+
+       T_d = \frac{-T_0 - C\frac{1}{B}\mathrm{ln}\frac{e}{A}}{\frac{1}{B}\mathrm{ln}\frac{e}{A} - 1}
+
+    Where :math:`e` is the :py:func:`vapor_pressure`, :math:`q` is the specific humidiy, :math:`p` is the pressure,
+    :math:`e_{sat}` is the :py:func:`saturation_vapor_pressure`, :math:`T_0` is the freezing temperature 273.16 K and
+    :math:`T_d` is the dewpoint temperature. :math:`A`, :math:`B` and :math:`C` are method-specific and
+    variant-specific coefficients.
+
+    To imitate the calculations of ECMWF's IFS (ERA5, ERA5-Land), use ``method='buck81'``
+    and ``reference='water'`` (the defaults).
+    """
+    # To avoid 0 in log below, we mask points with no water vapour at all
+    huss = huss.where(huss > 0)
+    e = vapor_pressure(huss, ps)
+
+    method = method.casefold()
+    A, B, C = ESAT_FORMULAS_COEFFICIENTS[method][variant]
+
+    f = np.log(e / A) / B
+    tdps = (-273.16 - C * f) / (f - 1)
+    return tdps.assign_attrs(units="K", units_metadata="temperature: on_scale")
 
 
 @declare_units(pr="[precipitation]", tas="[temperature]", thresh="[temperature]")
