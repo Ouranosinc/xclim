@@ -242,7 +242,7 @@ def eccentricity_correction_factor(
 def cosine_of_solar_zenith_angle(
     time: xr.DataArray,
     declination: xr.DataArray,
-    lat: Quantified | xr.DataArray | xr.DataTree,
+    lat: Quantified | xr.DataTree,
     lon: Quantified = "0 °",
     time_correction: xr.DataArray | None = None,
     stat: Literal["average", "integral", "instant"] = "average",
@@ -515,7 +515,8 @@ def day_lengths(
         polar_night = ((lat_broadcast > 66.5) & (decl_broadcast < 0)) | ((lat_broadcast < -66.5) & (decl_broadcast > 0))
         # Infill polar days with 24 hours and polar nights with 0 hours.
         valid = ~xr.ufuncs.isnan(day_length_hours)
-        day_length_hours = xr.where(polar_day & ~valid, 24.0, xr.where(polar_night & ~valid, 0.0, day_length_hours))
+        day_length_hours = day_length_hours.where(~(polar_day & ~valid), 24.0)
+        day_length_hours = day_length_hours.where(~(polar_night & ~valid), 0)
 
     # Drop nonessential coordinates
     for coord in day_length_hours.coords:

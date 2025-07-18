@@ -242,7 +242,7 @@ def huglin_index(
 
     k: int | xarray.DataArray = 1
     k_aggregated: xarray.DataArray | None = None
-    if method.lower() in ["huglin", "icclim", "interpolated"]:
+    if (method:=method.lower()) in ["huglin", "icclim", "interpolated"]:
         if method == "icclim":
             warnings.warn("Method 'icclim' is deprecated. Use 'stepwise' instead.", DeprecationWarning)
             method = "huglin"
