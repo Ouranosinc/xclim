@@ -340,22 +340,7 @@ jobs:
         uses: step-security/harden-runner@6c439dc8bdf85cadbbce9ed30d1c7b959517bc49 # v2.12.2
         with:
           disable-sudo: true
-          egress-policy: block
-          allowed-endpoints: >
-            api.electricitymap.org:443
-            api.github.com:443
-            api.green-coding.io:443
-            conda.anaconda.org:443
-            coveralls.io:443
-            files.pythonhosted.org:443
-            github.com:443
-            ip-api.com:80
-            ipapi.co:443
-            objects.githubusercontent.com:443
-            proxy.golang.org:443
-            pypi.org:443
-            raw.githubusercontent.com:443
-            sum.golang.org:443
+          egress-policy: audit
       - name: Start Energy Measurement
         uses: green-coding-solutions/eco-ci-energy-estimation@862050e4f01f65b1436e5eca18ba4bd85562f0de # v5.0.0
         with:
