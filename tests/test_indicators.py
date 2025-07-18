@@ -589,10 +589,10 @@ def test_parse_doc():
     assert doc["long_name"] == "The mean daily temperature at the given time frequency."
 
     doc = parse_doc(xclim.indices.saturation_vapor_pressure.__doc__)
-    assert (
-        doc["parameters"]["ice_thresh"]["description"]
-        == "Threshold temperature under which to switch to equations in reference to ice instead of water. "
-        "If None (default) everything is computed with reference to water."
+    assert doc["parameters"]["ice_thresh"]["description"] == (
+        "Threshold temperature under which to switch to equations in reference to ice instead of water. "
+        "If None (default) everything is computed with reference to water. "
+        "If given, see `interp_power` for more options."
     )
     assert "goff_low-pressure_1946" in doc["references"]
 

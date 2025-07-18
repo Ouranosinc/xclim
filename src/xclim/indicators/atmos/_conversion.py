@@ -10,6 +10,7 @@ from xclim.core.utils import InputKind
 __all__ = [
     "clearness_index",
     "corn_heat_units",
+    "dewpoint_from_specific_humidity",
     "heat_index",
     "humidex",
     "longwave_upwelling_radiation_from_net_downwelling",
@@ -25,6 +26,7 @@ __all__ = [
     "specific_humidity_from_dewpoint",
     "tg",
     "universal_thermal_climate_index",
+    "vapor_pressure",
     "vapor_pressure_deficit",
     "water_budget",
     "water_budget_from_tas",
@@ -261,8 +263,9 @@ specific_humidity_from_dewpoint = Converter(
     title="Specific humidity from dew point temperature and pressure",
     identifier="huss_fromdewpoint",
     units="",
-    long_name='Specific humidity ("{method}" method)',
+    long_name="Specific humidity",
     standard_name="specific_humidity",
+    var_name="huss",
     description=(
         "Computed from dewpoint temperature and pressure through the saturation "
         "vapor pressure, which was calculated according to the {method} method."
@@ -272,6 +275,24 @@ specific_humidity_from_dewpoint = Converter(
     compute=indices.specific_humidity_from_dewpoint,
 )
 
+dewpoint_from_specific_humidity = Converter(
+    identifier="tdps_from_huss",
+    units="K",
+    var_name="tdps",
+    description=(
+        "Temperature at which the current water vapour reaches saturation. "
+        "Equation from {method} is used for saturation vapour pressure."
+    ),
+    compute=indices.dewpoint_from_specific_humidity,
+)
+
+vapor_pressure = Converter(
+    identifier="vapor_pressure",
+    units="Pa",
+    standard_name="water_vapor_partial_pressure_in_air",
+    description="Water vapour partial pressure computed from specific humidity and total pressure.",
+    compute=indices.vapor_pressure,
+)
 
 vapor_pressure_deficit = Converter(
     title="Water vapour pressure deficit",
