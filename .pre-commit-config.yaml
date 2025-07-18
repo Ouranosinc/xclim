@@ -43,7 +43,7 @@ repos:
     hooks:
       - id: ruff-format
         exclude: '(src/xclim/indices/__init__.py|docs/installation.rst)'
-      - id: ruff
+      - id: ruff-check
         args: [ '--fix', '--show-fixes' ]
   - repo: https://github.com/pylint-dev/pylint
     rev: v3.3.7
