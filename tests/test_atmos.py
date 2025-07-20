@@ -198,7 +198,14 @@ def test_specific_humidity_from_dewpoint(tas_series, ps_series, huss_series):
         method="sonntag90",
     )
     np.testing.assert_allclose(huss, huss_exp, atol=1e-4, rtol=0.05)
-    assert huss.name == "huss_fromdewpoint"
+    assert huss.name == "huss"
+
+
+@pytest.mark.parametrize("method", ["tetens30", "wmo08", "aerk96", "buck81"])
+def test_dewpoint_from_specific_humidity(atmosds, method):
+    tdps = atmos.dewpoint_from_specific_humidity(huss=atmosds.huss, ps=atmosds.ps)
+    # atmosds.huss was computed with Sonntag90, so we can't expect a perfect match
+    xr.testing.assert_allclose(tdps, atmosds.tdps, atol=0.2, rtol=0.001)
 
 
 def test_snowfall_approximation(pr_series, tasmax_series):
