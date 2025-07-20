@@ -339,7 +339,7 @@ def hot_days(
     r"""
     Hot days index.
 
-    Number of days where daily maximum temperatures are above a threshold temperature (default: 25 degC).
+    Number of days where daily maximum temperatures are above a threshold temperature.
 
     Parameters
     ----------
