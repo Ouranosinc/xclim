@@ -777,7 +777,7 @@
     "abstract": "L'indice de sécheresse est une caractérisation de la composante hydrique des régions viticoles qui prend en compte les facteurs de précipitation et d'évapotranspiration sans déduction pour le ruissellement ou le drainage de surface. Métrique initialement publiée dans Riou et al. (1994)."
   },
   "HOT_DAYS": {
-    "long_name": "Nombre de jours où la température maximale quotidienne est au-dessus de {thresh}.",
+    "long_name": "Nombre de jours où la température maximale quotidienne est au-dessus de {thresh}",
     "description": "Nombre {freq:m} de jours où la température maximale quotidienne est au-dessus de {thresh}.",
     "title": "Nombre de jours chauds",
     "abstract": "Nombre de jours où la température maximale quotidienne est au-dessus d'un seuil donné."
