@@ -1869,6 +1869,17 @@ class TestHolidayIndices:
         np.testing.assert_array_equal(out3, [1, 2, 1, 0, 1])
 
 
+class TestHotDays:
+    def test_simple(self, tasmax_series):
+        a = np.zeros(365)
+        a[:6] += [27, 28, 29, 30, 31, 32]  # 2 above 30
+        mx = tasmax_series(a + K2C)
+
+        out = xci.hot_days(mx, thresh="30 C")
+        np.testing.assert_array_equal(out[:1], [2])
+        np.testing.assert_array_equal(out[1:], [0])
+
+
 class TestHotSpellFrequency:
     @pytest.mark.parametrize(
         "thresh,window,op,expected",

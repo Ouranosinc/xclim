@@ -4,7 +4,7 @@ Changelog
 
 v0.58.0 (unreleased)
 --------------------
-Contributors to this version: Sebastian Lehner (:user:`seblehner`), Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), Éric Dupuis (:user:`coxipi`).
+Contributors to this version: Sebastian Lehner (:user:`seblehner`), Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), Éric Dupuis (:user:`coxipi`), Baptiste Hamon (:user:`baptistehamon`).
 
 New indicators and features
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -19,6 +19,7 @@ New indicators and features
 * All functions using saturation vapour pressure can now compute it with a smooth transition between saturation over ice and saturation over water. The transition is controlled by the ``interp_power`` , ``ice_thresh`` and ``water_thresh`` parameters. (:issue:`2165`, :pull:`2206`).
     + New methods "buck81" and "aerk96" and new method "ECMWF" which is "buck81" on water and "aerk96" on ice.
     + Saturation vapor pressure calculations were reorganized. ``xclim.indices._conversion.ESAT_FORMULAS_COEFFICIENTS`` now stores the August-Roche-Magnus formula's coefficients.
+* New indicator ``xclim.atmos.hot_days`` as counterpart to ``xclim.atmos.frost_days``. (:issue:`2194`, :pull:`2213`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
