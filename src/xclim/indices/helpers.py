@@ -602,12 +602,12 @@ def huglin_day_length_latitude_coefficient(
     lat_abs = abs(lat)
     if method == "huglin":
         k_f = [0, 0.02, 0.03, 0.04, 0.05, 0.06]
-        k_f_bounds = [(0,0,40), (0.02,40,42), (0.03,42,44), (0.04,44,46), (0.05,46,48), (0.06,48,50)]
-        k = xr.fill_like(lat_abs, _cap_value+1)
-        
-        for k_f_b in  k_f_bounds:
-            cond = (k_f_b[1] < lat_abs)&(lat_abs <= k_f_b[2])
-            k = k.where(~cond, 1+k_f_b[0])
+        k_f_bounds = [(0, 0, 40), (0.02, 40, 42), (0.03, 42, 44), (0.04, 44, 46), (0.05, 46, 48), (0.06, 48, 50)]
+        k = xr.fill_like(lat_abs, _cap_value + 1)
+
+        for k_f_b in k_f_bounds:
+            cond = (k_f_b[1] < lat_abs) & (lat_abs <= k_f_b[2])
+            k = k.where(~cond, 1 + k_f_b[0])
     elif method == "interpolated":
         lat_mask = lat_abs <= 50
         lat_coefficient = 1 + ((lat_abs - 40) / 10).clip(min=0) * 0.06
