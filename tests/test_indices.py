@@ -343,9 +343,9 @@ class TestAgroclimaticIndices:
                     # Leap year has no influence on 'huglin' or 'interpolated' method
                     np.testing.assert_array_equal(bedd.isel(lat=0)[0], bedd.isel(lat=0)[1])
                 else:
-                    # Leap-year has slightly higher values for higher latitudes
-                    np.testing.assert_array_less(bedd[0], bedd[1])
-                    np.testing.assert_array_less(bedd[1], bedd[2])
+                    # Higher latitudes have higher values
+                    np.testing.assert_array_less(bedd.isel(lat=0), bedd.isel(lat=1))
+                    np.testing.assert_array_less(bedd.isel(lat=1), bedd.isel(lat=2))
 
             elif freq == "MS":
                 np.testing.assert_allclose(

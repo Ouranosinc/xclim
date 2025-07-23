@@ -267,7 +267,7 @@ def cosine_of_solar_zenith_angle(
     declination : xr.DataArray
         Solar declination. See :py:func:`solar_declination`.
     lat : Quantified
-        Latitude.
+        Latitude coordinate. Expects units of "degree_north".
     lon : Quantified
         Longitude. Needed if the input timeseries is subdaily.
     time_correction : xr.DataArray, optional
@@ -417,7 +417,7 @@ def extraterrestrial_solar_radiation(
     times : xr.DataArray
         Daily datetime data. This function makes no sense with data of other frequency.
     lat : xr.DataArray
-        Latitude.
+        Latitude coordinate. Expects units of "degree_north".
     solar_constant : str
         The solar constant, the energy received on earth from the sun per surface per time.
     method : {'spencer', 'simple'}
@@ -443,7 +443,7 @@ def extraterrestrial_solar_radiation(
     return (
         gsc
         * rad_to_day
-        * cosine_of_solar_zenith_angle(times, ds, lat, stat="integral", sunlit=True, chunks=chunks)
+        * cosine_of_solar_zenith_angle(times, ds, lat=lat, stat="integral", sunlit=True, chunks=chunks)
         * dr
     ).assign_attrs(units="J m-2 d-1")
 
@@ -466,7 +466,7 @@ def day_lengths(
         Daily datetime data.
         This function makes no sense with data of other time frequencies.
     lat : Quantified or xarray.Dataset or xarray.DataTree
-        Latitude coordinate.
+        Latitude coordinate. Expects units of "degree_north".
     method : {'spencer', 'simple'}
         Which approximation to use when computing the solar declination angle.
         See :py:func:`xclim.indices.helpers.solar_declination`.
@@ -541,7 +541,7 @@ def huglin_day_length_latitude_coefficient(
     Parameters
     ----------
     lat : xarray.DataArray, str
-        Latitude coordinate.
+        Latitude coordinate. Expects units of "degree_north".
         If provided a string (e.g. "45 degree_north"), it is converted to an xarray.DataArray.
     method : {"huglin", "interpolated"}
         The method to use for the coefficient calculation.
@@ -652,7 +652,8 @@ def gladstones_day_length_latitude_coefficient(
     dates : xarray.DataArray
         The dates for which the day length latitude coefficient is computed.
     lat : xarray.DataArray or int or float
-        Latitude coordinate. If a single value is given, it is converted to an xarray.DataArray.
+        Latitude coordinate. Expects units of "degree_north".
+        If a single value is given, it is converted to an xarray.DataArray.
     neutral_latitude : str
         The latitude at which the day length coefficient is 1.0.
         Latitudes between this value and 0 degrees North will have a coefficient below 1.0 during the growing season,
@@ -722,7 +723,8 @@ def jones_day_length_latitude_coefficient(
     dates : xarray.DataArray
         The dates for which the day length latitude coefficient is computed.
     lat : xr.DataArray or xr.Dataset or xr.DataTree
-        Latitude coordinate. If a single value is given, it is converted to an xarray.DataArray.
+        Latitude coordinate. Expects units of "degree_north".
+        If a single value is given, it is converted to an xarray.DataArray.
     method : {"gladstones", "jones"}
         The method to use for the coefficient calculation.
         The "jones" method .

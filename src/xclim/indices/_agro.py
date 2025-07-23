@@ -519,7 +519,7 @@ def cool_night_index(
         elif lat.lower() == "south":
             month = 3
         else:
-            raise ValueError(f"Latitude value not implemented: {lat}.")
+            raise NotImplementedError(f"Latitude value not implemented: {lat}.")
     else:
         raise ValueError("Latitude must be a DataArray or str ('north' or 'south').")
 
