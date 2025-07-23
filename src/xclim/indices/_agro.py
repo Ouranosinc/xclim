@@ -218,13 +218,13 @@ def huglin_index(
     - For the `"huglin"/"icclim"` and `"interpolated"` methods, values for k increase from `1.0` at 40°N or 40°S to `1.06` at 50°N or 50°S,
       where the `interpolated` method uses a smoothed curve and the `huglin/icclim` method uses a stepwise function.
       Values above 50°N or below 50°S are set via the `cap_value` variable, with `1.0` set as default.
-      See: :py:func:`xclim.indices.helpers.day_length_latitude_coefficient` for more information.
+      See: :py:func:`xclim.indices.helpers.huglin_day_length_latitude_coefficient` for more information.
     - For the `"jones"` method, A more robust day-length calculation based on latitude, calendar, day-of-year,
       and obliquity is used. The current implementation requires an annual frequency for consistent results.
       See: :py:func:`xclim.indices.generic.jones_day_length_coefficient` or :cite:t:`hall_spatial_2010` for more information.
 
     For compatibility with the original ICCLIM implementation :cite:p:`project_team_eca&d_algorithm_2013`,
-    `end_date` should be set to `11-01` with `method="huglin"` or `method="icclim"` (deprecated).
+    `end_date` should be set to `11-01` with `method="huglin"`.
 
     References
     ----------
