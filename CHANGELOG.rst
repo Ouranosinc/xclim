@@ -4,7 +4,7 @@ Changelog
 
 v0.58.0 (unreleased)
 --------------------
-Contributors to this version: Sebastian Lehner (:user:`seblehner`), Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), Éric Dupuis (:user:`coxipi`).
+Contributors to this version: Sebastian Lehner (:user:`seblehner`), Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), Éric Dupuis (:user:`coxipi`), Baptiste Hamon (:user:`baptistehamon`).
 
 New indicators and features
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -13,6 +13,13 @@ New indicators and features
 * Argument ``window`` added to indicator ``rain_on_frozen_ground_days``. (:pull:`2190`).
 * New helper ``xclim.indices.generic.season_length_from_boundaries`` takes `season_start` and `season_end` as input and gives `season_length`. This is used when starts and ends are computed with different resampling frequencies: `days_since` are used to compute temporal lengths in this case. (:pull:`2189`).
 * Allow `invalid_values` as argument for `relative_humidity_from_dewpoint`. (:pull:`2203`, :issue:`2202`)
+* New thermodynamic conversion indicators:
+    + ``xclim.atmos.vapor_pressure`` to compute the partial pressure of water vapor from specific humidity and total pressure.
+    + ``xclim.atmos.dewpoint_from_specific_humidity`` to compute the dewpoint temperature from specific humidity and total pressure.
+* All functions using saturation vapour pressure can now compute it with a smooth transition between saturation over ice and saturation over water. The transition is controlled by the ``interp_power`` , ``ice_thresh`` and ``water_thresh`` parameters. (:issue:`2165`, :pull:`2206`).
+    + New methods "buck81" and "aerk96" and new method "ECMWF" which is "buck81" on water and "aerk96" on ice.
+    + Saturation vapor pressure calculations were reorganized. ``xclim.indices._conversion.ESAT_FORMULAS_COEFFICIENTS`` now stores the August-Roche-Magnus formula's coefficients.
+* New indicator ``xclim.atmos.hot_days`` as counterpart to ``xclim.atmos.frost_days``. (:issue:`2194`, :pull:`2213`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^

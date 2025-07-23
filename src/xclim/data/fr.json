@@ -776,6 +776,12 @@
     "title": "Indice de sécheresse",
     "abstract": "L'indice de sécheresse est une caractérisation de la composante hydrique des régions viticoles qui prend en compte les facteurs de précipitation et d'évapotranspiration sans déduction pour le ruissellement ou le drainage de surface. Métrique initialement publiée dans Riou et al. (1994)."
   },
+  "HOT_DAYS": {
+    "long_name": "Nombre de jours où la température maximale quotidienne est au-dessus de {thresh}",
+    "description": "Nombre {freq:m} de jours où la température maximale quotidienne est au-dessus de {thresh}.",
+    "title": "Nombre de jours chauds",
+    "abstract": "Nombre de jours où la température maximale quotidienne est au-dessus d'un seuil donné."
+  },
   "HOT_SPELL_FREQUENCY": {
     "long_name": "Nombre total de séries d'au moins {window} jours consécutifs ayant une température maximale quotidienne au-dessus de {thresh_tasmax}",
     "description": "Nombre {freq:m} de périodes chaudes durant une période donnée. Une période chaude se produit lorsque la température maximale quotidienne est au-dessus de {thresh_tasmax} durant au moins {window} jours.",
@@ -954,6 +960,18 @@
     "description": "Humidité spécifique calculée à partir de la température du point de rosée et de la pression à l'aide de la pression de vapeur saturante, laquelle fut calculée en suivant la méthode {method}.",
     "title": "Humidité spécifique calculée à partir de la température du point de rosée et de la pression",
     "abstract": "Humidité spécifique calculée à partir de la température du point de rosée et de la pression à l'aide de la pression de vapeur saturante."
+  },
+  "TDPS_FROM_HUSS": {
+    "long_name": "Température du point de rosée.",
+    "description": "Température à laquelle la pression partielle de la vapeur d'eau atteint la saturation. La pression de vapeur saturante est déterminée selon la méthode {method}.",
+    "title": "Température du point de rosée selon l'humidité spécifique",
+    "abstract": "Température à laquelle la pression partielle de la vapeur d'eau atteint la saturation."
+  },
+  "VAPOR_PRESSURE": {
+    "long_name": "Pression partielle de la vapeur d'eau",
+    "description": "Pression partielle de la vapeur d'eau calculée à partir de l'humidité spécifique et de la pression.",
+    "title": "Pression partielle de la vapeur d'eau",
+    "abstract": "Pression partielle de la vapeur d'eau calculée à partir de l'humidité spécifique et de la pression."
   },
   "VAPOR_PRESSURE_DEFICIT": {
     "long_name": "Déficit de pression de vapeur (méthode \"{method}\")",
