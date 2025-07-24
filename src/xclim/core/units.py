@@ -533,10 +533,8 @@ def infer_sampling_units(
     if freq is None:
         if deffreq is None:
             raise ValueError(f"Unable to find the sampling frequency of the data along dimension {dim}.")
-        warnings.warn(
-            f"Unable to find the sampling frequency of the data along dimension {dim}. Assuming '{deffreq}' instead.",
-            stacklevel=2,
-        )
+        msg = f"Unable to find the sampling frequency of the data along dimension {dim}. Assuming '{deffreq}' instead."
+        warnings.warn(msg, stacklevel=2)
         freq = deffreq
 
     multi, base, _, _ = parse_offset(freq)
@@ -642,7 +640,7 @@ def to_agg_units(
     dim : str
         The time dimension along which the aggregation was performed.
     deffreq : str, optional
-        For ``op`` `count` and `integral`, this gives the default source frequency to assume,
+        For operations `count` and `integral`, this gives the default source frequency to assume,
         if it can't be inferred from ``out[dim]``.
 
     Returns
