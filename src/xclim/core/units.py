@@ -532,7 +532,11 @@ def infer_sampling_units(
     freq = xr.infer_freq(da)
     if freq is None:
         if deffreq is None:
-            raise ValueError("Unable to find the sampling frequency of the data.")
+            raise ValueError(f"Unable to find the sampling frequency of the data along dimension {dim}.")
+        warnings.warn(
+            f"Unable to find the sampling frequency of the data along dimension {dim}. Assuming '{deffreq}' instead.",
+            stacklevel=2,
+        )
         freq = deffreq
 
     multi, base, _, _ = parse_offset(freq)
@@ -620,6 +624,7 @@ def to_agg_units(
     orig: xr.DataArray,
     op: Literal["min", "max", "mean", "std", "var", "doymin", "doymax", "count", "integral", "sum"],
     dim: str = "time",
+    deffreq: str = None,
 ) -> xr.DataArray:
     """
     Set and convert units of an array after an aggregation operation along the sampling dimension (time).
@@ -636,6 +641,9 @@ def to_agg_units(
         but the units are multiplied by the timestep of the data (requires an inferrable frequency).
     dim : str
         The time dimension along which the aggregation was performed.
+    deffreq : str, optional
+        For ``op`` `count` and `integral`, this gives the default source frequency to assume,
+        if it can't be inferred from ``out[dim]``.
 
     Returns
     -------
@@ -695,7 +703,7 @@ def to_agg_units(
         out.attrs.update(units="1", is_dayofyear=np.int32(1), calendar=get_calendar(orig))
 
     elif op in ["count", "integral"]:
-        m, freq_u_raw = infer_sampling_units(orig[dim])
+        m, freq_u_raw = infer_sampling_units(orig, deffreq=deffreq, dim=dim)
         orig_u = units2pint(orig)
         freq_u = str2pint(freq_u_raw)
 

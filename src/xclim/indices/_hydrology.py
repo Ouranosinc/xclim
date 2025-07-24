@@ -614,7 +614,7 @@ def high_flow_frequency(q: xarray.DataArray, threshold_factor: int = 9, freq: st
     median_flow = q.median(dim="time")
     threshold = threshold_factor * median_flow
     out = threshold_count(q, ">", threshold, freq=freq)
-    return to_agg_units(out, q, "count")
+    return to_agg_units(out, q, "count", deffreq="D")
 
 
 @declare_units(q="[discharge]")
@@ -647,7 +647,7 @@ def low_flow_frequency(q: xarray.DataArray, threshold_factor: float = 0.2, freq:
     mean_flow = q.mean(dim="time")
     threshold = threshold_factor * mean_flow
     out = threshold_count(q, "<", threshold, freq=freq)
-    return to_agg_units(out, q, "count")
+    return to_agg_units(out, q, "count", deffreq="D")
 
 
 @declare_units(pr="[precipitation]")
