@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from typing import cast
+import warnings
+from typing import Literal, cast
 
 import numpy as np
 import xarray
@@ -26,10 +27,16 @@ from xclim.indices._threshold import (
     first_day_temperature_below,
 )
 from xclim.indices.generic import aggregate_between_dates, get_zones
-from xclim.indices.helpers import _gather_lat, day_lengths, resample_map
+from xclim.indices.helpers import (
+    _gather_lat,
+    gladstones_day_length_latitude_coefficient,
+    huglin_day_length_latitude_coefficient,
+    jones_day_length_latitude_coefficient,
+    resample_map,
+)
 from xclim.indices.stats import standardized_index
 
-# Frequencies : YS: year start, QS-DEC: seasons starting in december, MS: month start
+# Frequencies: YS: year start, QS-DEC: seasons starting in december, MS: month start
 # See https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html
 
 # -------------------------------------------------- #
@@ -149,12 +156,13 @@ def huglin_index(
     lat: xarray.DataArray | None = None,
     thresh: Quantified = "10 degC",
     method: str = "smoothed",
-    start_date: DayOfYearStr = "04-01",
-    end_date: DayOfYearStr = "10-01",
-    freq: str = "YS",
+    cap_value: float = 1.0,
+    start_date: str | DayOfYearStr = "04-01",
+    end_date: str | DayOfYearStr = "10-01",
+    freq: Literal["YS", "YS-JAN", "YS-JUL"] = "YS",
 ) -> xarray.DataArray:
     r"""
-    Huglin Heliothermal Index.
+    Heliothermal Index of Huglin.
 
     Growing-degree days with a base of 10°C and adjusted for latitudes between 40°N and 50°N for April-September
     (Northern Hemisphere; October-March in Southern Hemisphere). Originally proposed in :cite:t:`huglin_nouveau_1978`.
@@ -171,11 +179,20 @@ def huglin_index(
         If None, a CF-conformant "latitude" field must be available within the passed DataArray.
     thresh : Quantified
         The temperature threshold.
-    method : {"smoothed", "icclim", "jones"}
+    method : {"huglin", "icclim", "interpolated", "jones"}
         The formula to use for the latitude coefficient calculation.
-    start_date : DayOfYearStr
+        The "huglin" method uses a stepwise latitude coefficient for values
+        between 40° and 50° based on :cite:t:`huglin_nouveau_1978`.
+        The "interpolated" method uses a smoothed curve latitude coefficient for values
+        based on the intervals set in :cite:t:`huglin_nouveau_1978`.
+        The "jones" method integrates axial tilt, latitude, and day-of-year based on :cite:t:`hall_spatial_2010`.
+        The "icclim" method is deprecated but is identical to method "huglin".
+    cap_value : float
+        The value to use for the latitude coefficient when latitude is above 50°N or below 50°S.
+        Only applicable for methods "huglin", "icclim", and "interpolated" (default: 1.0).
+    start_date : str or DayOfYearStr
         The hemisphere-based start date to consider (north = April, south = October).
-    end_date : DayOfYearStr
+    end_date : str or DayOfYearStr
         The hemisphere-based start date to consider (north = October, south = April). This date is non-inclusive.
     freq : str
         Resampling frequency (default: "YS"; For Southern Hemisphere, should be "YS-JUL").
@@ -183,110 +200,68 @@ def huglin_index(
     Returns
     -------
     xarray.DataArray, [unitless]
-        Huglin heliothermal index (HI).
+        Heliothermal index of Huglin (HI).
 
     Notes
     -----
     Let :math:`TX_{i}` and :math:`TG_{i}` be the daily maximum and mean temperature at day :math:`i` and
     :math:`T_{thresh}` the base threshold needed for heat summation (typically, 10 degC). A day-length multiplication,
-    :math:`k`, based on latitude, :math:`lat`, is also considered. Then the Huglin heliothermal index for dates between
+    :math:`k`, based on latitude, :math:`lat`, is also considered. Then the heliothermal index for dates between
     1 April and 30 September is:
 
     .. math::
 
-       HI = \sum_{i=\text{April 1}}^{\text{September 30}} \left( \frac{TX_i  + TG_i)}{2} - T_{thresh} \right) * k
+       HI = \sum_{i=\text{April 1}}^{\text{September 30}} \left(\frac{TX_i + TG_i)}{2} - T_{thresh} \right) * k
 
-    For the `smoothed` method, the day-length multiplication factor, :math:`k`, is calculated as follows:
+    There are a few methods provided for calculating the day-length multiplication factor (:math:`k`) based on latitude:
 
-    .. math::
+    - For the `"huglin"/"icclim"` and `"interpolated"` methods, values for k increase from `1.0` at 40°N or 40°S to `1.06` at 50°N or 50°S,
+      where the `interpolated` method uses a smoothed curve and the `huglin/icclim` method uses a stepwise function.
+      Values above 50°N or below 50°S are set via the `cap_value` variable, with `1.0` set as default.
+      See: :py:func:`xclim.indices.helpers.huglin_day_length_latitude_coefficient` for more information.
+    - For the `"jones"` method, A more robust day-length calculation based on latitude, calendar, day-of-year,
+      and obliquity is used. The current implementation requires an annual frequency for consistent results.
+      See: :py:func:`xclim.indices.generic.jones_day_length_coefficient` or :cite:t:`hall_spatial_2010` for more information.
 
-       k = f(lat) = \begin{cases}
-                     1, & \text{if } | lat | <= 40 \\
-                     1 + ((abs(lat) - 40) / 10) * 0.06, & \text{if } 40 < | lat | <= 50 \\
-                     NaN, & \text{if } | lat | > 50 \\
-                     \end{cases}
-
-    For compatibility with ICCLIM, `end_date` should be set to `11-01`, `method` should be set to `icclim`.
-    The day-length multiplication factor, :math:`k`, is calculated as follows:
-
-    .. math::
-
-       k = f(lat) = \begin{cases}
-                     1.0, & \text{if } | lat | <= 40 \\
-                     1.02, & \text{if } 40 < | lat | <= 42 \\
-                     1.03, & \text{if } 42 < | lat | <= 44 \\
-                     1.04, & \text{if } 44 < | lat | <= 46 \\
-                     1.05, & \text{if } 46 < | lat | <= 48 \\
-                     1.06, & \text{if } 48 < | lat | <= 50 \\
-                     NaN, & \text{if } | lat | > 50 \\
-                     \end{cases}
-
-    A more robust day-length calculation based on latitude, calendar, day-of-year, and obliquity is available with
-    `method="jones"`. See: :py:func:`xclim.indices.generic.day_lengths` or :cite:t:`hall_spatial_2010` for more
-    information.
+    For compatibility with the original ICCLIM implementation :cite:p:`project_team_eca&d_algorithm_2013`,
+    `end_date` should be set to `11-01` with `method="huglin"`.
 
     References
     ----------
-    :cite:cts:`huglin_nouveau_1978, hall_spatial_2010`
+    :cite:cts:`huglin_nouveau_1978,hall_spatial_2010`
     """
-    tas = convert_units_to(tas, "degC")
-    tasmax = convert_units_to(tasmax, "degC")
-    thresh = convert_units_to(thresh, "degC")
+    if not isinstance(freq, str):
+        raise TypeError("Freq must be a string.")
+
+    _tas = convert_units_to(tas, "degC")
+    _tasmax = convert_units_to(tasmax, "degC")
+    _thresh = convert_units_to(thresh, "degC")
 
     if lat is None:
         lat = _gather_lat(tas)
 
-    if method.lower() == "smoothed":
-        lat_mask = abs(lat) <= 50
-        lat_coefficient = ((abs(lat) - 40) / 10).clip(min=0) * 0.06
-        k = 1 + xarray.where(lat_mask, lat_coefficient, np.nan)
-        k_aggregated = 1
-    elif method.lower() == "icclim":
-        k_f = [0, 0.02, 0.03, 0.04, 0.05, 0.06]
-
-        k = 1 + xarray.where(
-            abs(lat) <= 40,
-            k_f[0],
-            xarray.where(
-                (40 < abs(lat)) & (abs(lat) <= 42),
-                k_f[1],
-                xarray.where(
-                    (42 < abs(lat)) & (abs(lat) <= 44),
-                    k_f[2],
-                    xarray.where(
-                        (44 < abs(lat)) & (abs(lat) <= 46),
-                        k_f[3],
-                        xarray.where(
-                            (46 < abs(lat)) & (abs(lat) <= 48),
-                            k_f[4],
-                            xarray.where((48 < abs(lat)) & (abs(lat) <= 50), k_f[5], np.nan),
-                        ),
-                    ),
-                ),
-            ),
-        )
-        k_aggregated = 1
+    k: int | xarray.DataArray = 1
+    k_aggregated: xarray.DataArray | None = None
+    if (method := method.lower()) in ["huglin", "icclim", "interpolated"]:
+        if method == "icclim":
+            warnings.warn("Method 'icclim' is deprecated. Use 'stepwise' instead.", DeprecationWarning)
+            method = "huglin"
+        k = huglin_day_length_latitude_coefficient(lat, method=method, cap_value=cap_value)
     elif method.lower() == "jones":
-        day_length = (
-            select_time(
-                day_lengths(dates=tas.time, lat=lat, method="simple"),
-                date_bounds=(start_date, end_date),
-                include_bounds=(True, False),
-            )
-            .resample(time=freq)
-            .sum()
+        k_aggregated = jones_day_length_latitude_coefficient(
+            dates=tas.time, lat=lat, method=method, start_date=start_date, end_date=end_date, freq=freq
         )
-        k = 1
-        k_aggregated = 2.8311e-4 * day_length + 0.30834
     else:
-        raise NotImplementedError(f"'{method}' method is not implemented.")
+        raise NotImplementedError(
+            "Method is not implemented. Only 'huglin', 'icclim', 'interpolated', and 'jones' are supported."
+        )
 
-    hi: xarray.DataArray = (((tas + tasmax) / 2) - thresh).clip(min=0) * k
-    hi = (
-        select_time(hi, date_bounds=(start_date, end_date), include_bounds=(True, False)).resample(time=freq).sum()
-        * k_aggregated
-    )
+    hi: xarray.DataArray = (((_tas + _tasmax) / 2) - _thresh).clip(min=0) * k
+    hi = select_time(hi, date_bounds=(start_date, end_date), include_bounds=(True, False)).resample(time=freq).sum()
+    if k_aggregated is not None:
+        hi = hi * k_aggregated
     hi = hi.assign_attrs(units="")
+
     return hi
 
 
@@ -304,12 +279,13 @@ def biologically_effective_degree_days(
     tasmax: xarray.DataArray,
     lat: xarray.DataArray | None = None,
     thresh_tasmin: Quantified = "10 degC",
-    method: str = "gladstones",
+    method: Literal["gladstones", "icclim", "jones", "smoothed", "stepwise"] = "gladstones",
+    cap_value: float = 1.0,
     low_dtr: Quantified = "10 degC",
     high_dtr: Quantified = "13 degC",
     max_daily_degree_days: Quantified = "9 degC",
-    start_date: DayOfYearStr = "04-01",
-    end_date: DayOfYearStr = "11-01",
+    start_date: str | DayOfYearStr = "04-01",
+    end_date: str | DayOfYearStr = "11-01",
     freq: str = "YS",
 ) -> xarray.DataArray:
     r"""
@@ -328,27 +304,41 @@ def biologically_effective_degree_days(
         Maximum daily temperature.
     lat : xarray.DataArray, optional
         Latitude coordinate.
-        If None and method in ["gladstones", "icclim"],
-        a CF-conformant "latitude" field must be available within the passed DataArray.
+        If None and method is not "icclim", a CF-conformant "latitude" field must be available within the passed DataArray.
     thresh_tasmin : Quantified
         The minimum temperature threshold.
-    method : {"gladstones", "icclim", "jones"}
-        The formula to use for the calculation.
-        The "gladstones" integrates a daily temperature range and latitude coefficient. End_date should be "11-01".
-        The "icclim" method ignores daily temperature range and latitude coefficient. End date should be "10-01".
-        The "jones" method integrates axial tilt, latitude, and day-of-year on coefficient. End_date should be "11-01".
+    method : {"gladstones", "huglin", "icclim", "interpolated", "jones"}
+        The formula to use for the daily temperature range and latitude coefficient.
+        The "gladstones" method uses a temperature range adjustment and a latitude coefficient
+        based on :cite:t:`gladstones_wine_2011`.
+        End_date should be "11-01" for the Northern Hemisphere.
+        The "huglin" method uses a temperature range adjustment and a stepwise latitude coefficient for values
+        between 40° and 50° based on :cite:t:`huglin_nouveau_1978`.
+        End_date should be "11-01" for the Northern Hemisphere.
+        The "icclim" method does not implement daily temperature range and nor a latitude coefficient
+        based on :cite:t:`project_team_eca&d_algorithm_2013`.
+        End date should be "10-01" for the Northern Hemisphere.
+        The "interpolated" method uses a temperature range adjustment and a smoothed curve latitude
+        coefficient for values between 40° and 50° based on :cite:t:`huglin_nouveau_1978`.
+        The "jones" method uses a temperature range adjustment and integrates axial tilt, latitude,
+        and day-of-year based on :cite:t:`hall_spatial_2010`.
+        End_date should be "11-01" for the Northern Hemisphere.
+    cap_value : float
+        The value to use for the latitude coefficient for latitudes north of 50°N or south of 50°S.
+        Only applicable for methods "huglin" and "interpolated".
     low_dtr : Quantified
-        The lower bound for daily temperature range adjustment (default: 10°C).
+        The lower bound for daily temperature range adjustment.
     high_dtr : Quantified
-        The higher bound for daily temperature range adjustment (default: 13°C).
+        The higher bound for daily temperature range adjustment.
     max_daily_degree_days : Quantified
-        The maximum amount of biologically effective degrees days that can be summed daily.
-    start_date : DayOfYearStr
+        The maximum number of biologically effective degrees days that can be summed daily.
+    start_date : str or DayOfYearStr
         The hemisphere-based start date to consider (north = April, south = October).
-    end_date : DayOfYearStr
-        The hemisphere-based start date to consider (north = October, south = April). This date is non-inclusive.
+    end_date : str or DayOfYearStr
+        The hemisphere-based start date to consider (north = October, south = April).
+        This date is non-inclusive.
     freq : str
-        Resampling frequency (default: "YS"; For Southern Hemisphere, should be "YS-JUL").
+        Resampling frequency (For Southern Hemisphere, should be "YS-JUL").
 
     Returns
     -------
@@ -357,21 +347,24 @@ def biologically_effective_degree_days(
 
     Warnings
     --------
-    Lat coordinate must be provided if method is "gladstones" or "jones".
+    UserWarning
+        Emitted if latitude is supplied for the "icclim" method, as it is not used in the calculation.
 
     Notes
     -----
-    The tasmax ceiling of 19°C is assumed to be the max temperature beyond which no further gains from daily temperature
-    occur. Indice originally published in :cite:t:`gladstones_viticulture_1992`.
+    Lat coordinate must be provided if method is "gladstones", "gladstones_simple", or "huglin"; The "icclim" method for BEDD
+    here differs from the approach detailed in the Heliothermal Index of Huglin (HI) by not considering the latitude coefficient.
 
-    Let :math:`TX_{i}` and :math:`TN_{i}` be the daily maximum and minimum temperature at day :math:`i`, :math:`lat`
-    the latitude of the point of interest, :math:`degdays_{max}` the maximum amount of degrees that can be summed per
-    day (typically, 9). Then the sum of daily biologically effective growing degree day (BEDD) units between 1 April and
-    31 October is:
+    The tasmax ceiling of 19°C is assumed to be the maximum temperature beyond which no further gains from warmer daily
+    temperatures occur. Indice originally published in :cite:t:`gladstones_viticulture_1992`.
+
+    Let :math:`TX_{i}` and :math:`TN_{i}` be the daily maximum and minimum temperature at day :math:`i`, :math:`lat` the latitude
+    of the point of interest, :math:`degdays_{max}` the maximum amount of degrees that can be summed per day (typically, 9).
+    Then the sum of daily biologically effective growing degree day (BEDD) units between 1 April and 31 October is:
 
     .. math::
 
-       BEDD_i = \sum_{i=\text{April 1}}^{\text{October 31}} min\left( \left( max\left( \frac{TX_i  + TN_i)}{2} - 10, 0 \right) * k \right) + TR_{adj}, degdays_{max}\right)
+       BEDD_i = \sum_{i=\text{April 1}}^{\text{October 31}} min\left( \left( max\left( \frac{TX_i + TN_i)}{2} - 10, 0 \right) * k \right) + TR_{adj}, degdays_{max} \right)
 
     .. math::
 
@@ -383,29 +376,41 @@ def biologically_effective_degree_days(
 
     .. math::
 
-       k = f(lat) = 1 + \left(\frac{\left| lat  \right|}{50} * 0.06,  \text{if }40 < ``|lat|`` <50, \text{else } 0\right)
+       k = f(lat) = 1 + \left( \frac{\left| lat \right|}{50} * 0.06, \text{if }40 < |lat| <50, \text{else } 0\right)
 
-    A second version of the BEDD (`method="icclim"`) does not consider :math:`TR_{adj}` and :math:`k` and employs a
-    different end date (30 September) :cite:p:`project_team_eca&d_algorithm_2013`.
-    The simplified formula is as follows:
+    An alternative version of the BEDD (`method="icclim"`) does not consider :math:`TR_{adj}` and :math:`k` and employs a
+    different end date (30 September) :cite:p:`project_team_eca&d_algorithm_2013`. The simplified formula is as follows:
 
     .. math::
 
-       BEDD_i = \sum_{i=\text{April 1}}^{\text{September 30}} min\left( max\left(\frac{TX_i  + TN_i)}{2} - 10, 0\right), degdays_{max}\right)
+       BEDD_i = \sum_{i=\text{April 1}}^{ \text{September 30} } min\left( max\left( \frac{TX_i + TN_i)}{2} - 10, 0 \right), degdays_{max} \right)
 
     References
     ----------
-    :cite:cts:`gladstones_viticulture_1992,project_team_eca&d_algorithm_2013`
+    :cite:cts:`gladstones_viticulture_1992,huglin_biologie_1998,project_team_eca&d_algorithm_2013,hall_spatial_2010`
     """
-    tasmin = convert_units_to(tasmin, "degC")
-    tasmax = convert_units_to(tasmax, "degC")
-    thresh_tasmin = convert_units_to(thresh_tasmin, "degC")
+    if not isinstance(freq, str):
+        raise TypeError("Freq must be a string.")
+
+    _tasmin = convert_units_to(tasmin, "degC")
+    _tasmax = convert_units_to(tasmax, "degC")
+    thresh_tasmin_deg = convert_units_to(thresh_tasmin, "degC")
     max_daily_degree_days = convert_units_to(max_daily_degree_days, "degC")
 
-    if method.lower() in ["gladstones", "jones"]:
+    k: int | xarray.DataArray = 1
+    k_aggregated: xarray.DataArray | None = None
+    if method.lower() == "icclim":
+        if lat is not None:
+            warnings.warn(
+                "Lat coordinate is not used for method 'icclim' in 'biologically_effective_degree_days' calculation.",
+                UserWarning,
+            )
+        tr_adj = 0
+    elif method in ["gladstones", "huglin", "interpolated", "jones"]:
+        # Temperature range adjustment
         low_dtr = convert_units_to(low_dtr, "degC")
         high_dtr = convert_units_to(high_dtr, "degC")
-        dtr = tasmax - tasmin
+        dtr = _tasmax - _tasmin
         tr_adj = 0.25 * xarray.where(
             dtr > high_dtr,
             dtr - high_dtr,
@@ -415,42 +420,28 @@ def biologically_effective_degree_days(
         if lat is None:
             lat = _gather_lat(tasmin)
 
-        if method.lower() == "gladstones":
-            if isinstance(lat, int | float):
-                lat = xarray.DataArray(lat)
-            lat_mask = abs(lat) <= 50
-            k = 1 + xarray.where(lat_mask, ((abs(lat) - 40) * 0.06 / 10).clip(0, None), 0)
-            k_aggregated = 1
-        else:
-            day_length = (
-                select_time(
-                    day_lengths(dates=tasmin.time, lat=lat, method="simple"),
-                    date_bounds=(start_date, end_date),
-                    include_bounds=(True, False),
-                )
-                .resample(time=freq)
-                .sum()
+        if method in ["huglin", "interpolated"]:
+            k = huglin_day_length_latitude_coefficient(lat, method=method, cap_value=cap_value)
+        elif method == "gladstones":
+            k = gladstones_day_length_latitude_coefficient(dates=tasmin.time, lat=lat)
+        elif method == "jones":
+            k_aggregated = jones_day_length_latitude_coefficient(
+                dates=tasmin.time, lat=lat, method=method, start_date=start_date, end_date=end_date, freq=freq
             )
-            k = 1
-            k_huglin = 2.8311e-4 * day_length + 0.30834
-            k_aggregated = 1.1135 * k_huglin - 0.1352
-    elif method.lower() == "icclim":
-        k = 1
-        tr_adj = 0
-        k_aggregated = 1
-    else:
-        raise NotImplementedError()
 
-    bedd: xarray.DataArray = ((((tasmin + tasmax) / 2) - thresh_tasmin).clip(min=0) * k + tr_adj).clip(
+    else:
+        raise NotImplementedError(
+            "Method is not implemented. Only 'gladstones', 'huglin', 'icclim', 'interpolated', and 'jones' are supported."
+        )
+
+    bedd: xarray.DataArray = ((((_tasmin + _tasmax) / 2) - thresh_tasmin_deg).clip(min=0) * k + tr_adj).clip(
         max=max_daily_degree_days
     )
-
-    bedd = (
-        select_time(bedd, date_bounds=(start_date, end_date), include_bounds=(True, False)).resample(time=freq).sum()
-        * k_aggregated
-    )
-
+    bedd = select_time(bedd, date_bounds=(start_date, end_date), include_bounds=(True, False)).resample(time=freq).sum()
+    if k_aggregated is not None:
+        bedd = bedd * k_aggregated
     bedd = bedd.assign_attrs(units="K days")
+
     return bedd
 
 
@@ -458,7 +449,7 @@ def biologically_effective_degree_days(
 def cool_night_index(
     tasmin: xarray.DataArray,
     lat: xarray.DataArray | str | None = None,
-    freq: str = "YS",
+    freq: Literal["YS", "YS-JAN"] = "YS",
 ) -> xarray.DataArray:
     """
     Cool Night Index.
@@ -473,7 +464,7 @@ def cool_night_index(
     lat : xarray.DataArray or {"north", "south"}, optional
         Latitude coordinate as an array, float or string.
         If None, a CF-conformant "latitude" field must be available within the passed DataArray.
-    freq : str
+    freq : {"YS", "YS-JAN"}
         Resampling frequency.
 
     Returns
@@ -508,6 +499,11 @@ def cool_night_index(
     >>> tasmin = xr.open_dataset(path_to_tasmin_file).tasmin
     >>> cni = cool_night_index(tasmin)
     """
+    if not isinstance(freq, str):
+        raise TypeError("Freq must be a string.")
+    if parse_offset(freq) != (1, "Y", True, "JAN"):
+        raise ValueError(f"Freq not allowed: {freq}. Must be `YS` or `YS-JAN`")
+
     tasmin = convert_units_to(tasmin, "degC")
 
     # Use September in northern hemisphere, March in southern hemisphere.
@@ -523,9 +519,9 @@ def cool_night_index(
         elif lat.lower() == "south":
             month = 3
         else:
-            raise ValueError(f"Latitude value unsupported: {lat}.")
+            raise NotImplementedError(f"Latitude value not implemented: {lat}.")
     else:
-        raise ValueError(f"Latitude not understood {lat}.")
+        raise ValueError("Latitude must be a DataArray or str ('north' or 'south').")
 
     tasmin = tasmin.where(months == month, drop=True)
 
@@ -540,7 +536,7 @@ def dryness_index(  # numpydoc ignore=SS05
     evspsblpot: xarray.DataArray,
     lat: xarray.DataArray | str | None = None,
     wo: Quantified = "200 mm",
-    freq: str = "YS",
+    freq: Literal["YS", "YS-JAN"] = "YS",
 ) -> xarray.DataArray:
     r"""
     Dryness Index.
@@ -561,7 +557,7 @@ def dryness_index(  # numpydoc ignore=SS05
         If None, a CF-conformant "latitude" field must be available within the passed DataArray.
     wo : Quantified
         The initial soil water reserve accessible to root systems [length]. Default: 200 mm.
-    freq : str
+    freq : {"YS", "YS-JAN"}
         Resampling frequency.
 
     Returns
@@ -640,6 +636,8 @@ def dryness_index(  # numpydoc ignore=SS05
     >>> from xclim.indices import dryness_index
     >>> dryi = dryness_index(pr_dataset, evspsblpot_dataset, wo="200 mm")
     """
+    if not isinstance(freq, str):
+        raise TypeError("Freq must be a string.")
     if parse_offset(freq) != (1, "Y", True, "JAN"):
         raise ValueError(f"Freq not allowed: {freq}. Must be `YS` or `YS-JAN`")
 
@@ -683,9 +681,9 @@ def dryness_index(  # numpydoc ignore=SS05
             adjustment = adjustment_array_south
             has_south = True
         else:
-            raise ValueError(f"Latitude value unsupported: {lat}.")
+            raise ValueError(f"Latitude value not implemented: {lat}.")
     else:
-        raise ValueError(f"Latitude not understood: {lat}.")
+        raise ValueError("Latitude must be a DataArray or str ('north' or 'south').")
 
     # Monthly weights array
     k = adjustment.sel(month=evspsblpot.time.dt.month)
@@ -761,8 +759,8 @@ def latitude_temperature_index(
     Notes
     -----
     The latitude factor of `75` is provided for examining the poleward expansion of wine-growing climates under
-    scenarios of climate change (modified from :cite:t:`kenny_assessment_1992`). For comparing 20th century/observed
-    historical records, the original scale factor of `60` is more appropriate.
+    scenarios of climate change :cite:p:`kenny_assessment_1992`. For comparing 20th century/observed historical
+    records, the original scale factor of `60` is more appropriate :cite:p:`jackson_prediction_1988`.
 
     Let :math:`Tn_{j}` be the average temperature for a given month :math:`j`, :math:`lat_{f}` be the latitude factor,
     and :math:`lat` be the latitude of the area of interest. Then the Latitude-Temperature Index (:math:`LTI`) is:
