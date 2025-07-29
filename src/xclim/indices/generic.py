@@ -430,7 +430,7 @@ def spell_mask(
     window: int,
     win_reducer: str,
     op: ALL_OPERATORS,
-    thresh: float | Sequence[float],
+    thresh: float | Sequence[float] | xr.DataArray | Sequence[xr.DataArray],
     min_gap: int = 1,
     weights: Sequence[float] = None,
     var_reducer: str = "all",
@@ -451,7 +451,7 @@ def spell_mask(
         The statistics to compute on the rolling window.
     op : {">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"}
         The comparison operator to use when finding spells.
-    thresh : float or sequence of floats
+    thresh : float or sequence of floats or DataArray or sequence of DataArray
         The threshold to compare the rolling statistics against, as ``{window_stats} {op} {threshold}``.
         If data is a list, this must be a list of the same length with a threshold for each variable.
         This function does not handle units and can't accept Quantified objects.
@@ -471,16 +471,18 @@ def spell_mask(
         Same shape as ``data``, but boolean.
         If ``data`` was a list, this is a DataArray of the same shape as the alignment of all variables.
     """
+    _singlevar = True
     # Checks
     if not isinstance(data, xr.DataArray):
         # thus a sequence
-        if np.isscalar(thresh) or len(data) != len(thresh):
+        if np.isscalar(thresh) or isinstance(thresh, xr.DataArray) or len(data) != len(thresh):
             raise ValueError("When ``data`` is given as a list, ``threshold`` must be a sequence of the same length.")
         data = xr.concat(data, "variable")
         if isinstance(thresh[0], xr.DataArray):
             thresh = xr.concat(thresh, "variable")
         else:
             thresh = xr.DataArray(thresh, dims=("variable",))
+        _singlevar = False
     if weights is not None:
         if win_reducer != "mean":
             raise ValueError(f"Argument 'weights' is only supported if 'win_reducer' is 'mean'. Got :  {win_reducer}")
@@ -490,7 +492,7 @@ def spell_mask(
 
     if window == 1:  # Fast path
         is_in_spell = compare(data, op, thresh)
-        if not np.isscalar(thresh):
+        if not _singlevar:
             is_in_spell = getattr(is_in_spell, var_reducer)("variable")
     elif (win_reducer == "min" and op in [">", ">=", "ge", "gt"]) or (
         win_reducer == "max" and op in ["`<", "<=", "le", "lt"]
@@ -498,7 +500,7 @@ def spell_mask(
         # Fast path for specific cases, this yields a smaller dask graph (rolling twice is expensive!)
         # For these two cases, a day can't be part of a spell if it doesn't respect the condition itself
         mask = compare(data, op, thresh)
-        if not np.isscalar(thresh):
+        if not _singlevar:
             mask = getattr(mask, var_reducer)("variable")
         # We need to filter out the spells shorter than "window"
         # find sequences of consecutive respected constraints
@@ -519,7 +521,7 @@ def spell_mask(
             spell_value = getattr(data_pad.rolling(time=window), win_reducer)()
         # True at the end of a spell respecting the condition
         mask = compare(spell_value, op, thresh)
-        if not np.isscalar(thresh):
+        if not _singlevar:
             mask = getattr(mask, var_reducer)("variable")
         # True for all days part of a spell that respected the condition (shift because of the two rollings)
         is_in_spell = (mask.rolling(time=window).sum() >= 1).shift(time=-(window - 1), fill_value=False)
