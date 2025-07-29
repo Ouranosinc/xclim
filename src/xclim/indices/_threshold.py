@@ -149,7 +149,7 @@ def calm_days(sfcWind: xarray.DataArray, thresh: Quantified = "2 m s-1", freq: s
     """
     thresh = convert_units_to(thresh, sfcWind)
     out = threshold_count(sfcWind, "<", thresh, freq)
-    out = to_agg_units(out, sfcWind, "count")
+    out = to_agg_units(out, sfcWind, "count", deffreq="D")
     return out
 
 
@@ -210,7 +210,7 @@ def cold_spell_days(
         window=window,
         freq=freq,
     )
-    return to_agg_units(out, tas, "count")
+    return to_agg_units(out, tas, "count", deffreq="D")
 
 
 @declare_units(tas="[temperature]", thresh="[temperature]")
@@ -308,7 +308,7 @@ def cold_spell_max_length(
         freq=freq,
     )
     max_window = max_l.where(max_l >= window, 0)
-    out = to_agg_units(max_window, tas, "count")
+    out = to_agg_units(max_window, tas, "count", deffreq="D")
     return out
 
 
@@ -358,7 +358,7 @@ def cold_spell_total_length(
         window=window,
         freq=freq,
     )
-    return to_agg_units(out, tas, "count")
+    return to_agg_units(out, tas, "count", deffreq="D")
 
 
 @declare_units(snd="[length]", thresh="[length]")
@@ -631,7 +631,7 @@ def snd_storm_days(snd: xarray.DataArray, thresh: Quantified = "25 cm", freq: st
 
     # Winter storm condition
     snd_sd = threshold_count(acc, ">=", thresh, freq)
-    snd_sd = snd_sd.assign_attrs(units=to_agg_units(snd_sd, snd, "count"))
+    snd_sd = snd_sd.assign_attrs(units=to_agg_units(snd_sd, snd, "count", deffreq="D"))
     return snd_sd
 
 
@@ -671,7 +671,7 @@ def snw_storm_days(snw: xarray.DataArray, thresh: Quantified = "10 kg m-2", freq
 
     # Winter storm condition
     snw_sd = threshold_count(acc, ">=", thresh, freq)
-    snw_sd = snw_sd.assign_attrs(units=to_agg_units(snw_sd, snw, "count"))
+    snw_sd = snw_sd.assign_attrs(units=to_agg_units(snw_sd, snw, "count", deffreq="D"))
     return snw_sd
 
 
@@ -790,7 +790,7 @@ def dry_days(
     """
     thresh = convert_units_to(thresh, pr, context="hydro")
     count = threshold_count(pr, op, thresh, freq, constrain=("<", "<="))
-    dd = to_agg_units(count, pr, "count")
+    dd = to_agg_units(count, pr, "count", deffreq="D")
     return dd
 
 
@@ -845,7 +845,7 @@ def maximum_consecutive_wet_days(
         rl.longest_run,
         freq=freq,
     )
-    mcwd = to_agg_units(mcwd, pr, "count")
+    mcwd = to_agg_units(mcwd, pr, "count", deffreq="D")
     return mcwd
 
 
@@ -906,7 +906,7 @@ def cooling_degree_days_approximation(
         ),
     )
     cdd = cdd.resample(time=freq).sum(dim="time")
-    cdd = to_agg_units(cdd, tas, "integral")
+    cdd = to_agg_units(cdd, tas, "integral", deffreq="D")
     return cdd
 
 
@@ -1527,7 +1527,7 @@ def frost_free_spell_max_length(
         freq=freq,
     )
     out = max_l.where(max_l >= window, 0)
-    return to_agg_units(out, tasmin, "count")
+    return to_agg_units(out, tasmin, "count", deffreq="D")
 
 
 # FIXME: `tas` should instead be `tasmin` if we want to follow expected definitions.
@@ -1868,7 +1868,7 @@ def days_with_snow(
     low = convert_units_to(low, prsn, context="hydro")
     high = convert_units_to(high, prsn, context="hydro")
     out = domain_count(prsn, low, high, freq)
-    return to_agg_units(out, prsn, "count")
+    return to_agg_units(out, prsn, "count", deffreq="D")
 
 
 @declare_units(prsn="[precipitation]", thresh="[precipitation]")
@@ -2023,7 +2023,7 @@ def heat_wave_index(
         window=window,
         freq=freq,
     )
-    return to_agg_units(out, tasmax, "count")
+    return to_agg_units(out, tasmax, "count", deffreq="D")
 
 
 @declare_units(tasmax="[temperature]", thresh="[temperature]")
@@ -2074,7 +2074,7 @@ def hot_spell_max_magnitude(
         window=window,
         freq=freq,
     )
-    return to_agg_units(out, tasmax, op="integral")
+    return to_agg_units(out, tasmax, op="integral", deffreq="D")
 
 
 @declare_units(tasmax="[temperature]", tasmin="[temperature]", tas="[temperature]", thresh="[temperature]")
@@ -2130,7 +2130,7 @@ def heating_degree_days_approximation(
         ),
     )
     hdd = hdd.resample(time=freq).sum(dim="time")
-    hdd = to_agg_units(hdd, tas, "integral")
+    hdd = to_agg_units(hdd, tas, "integral", deffreq="D")
     return hdd
 
 
@@ -2236,7 +2236,7 @@ def hot_spell_max_length(
         freq=freq,
     )
     out = max_l.where(max_l >= window, 0)
-    return to_agg_units(out, tasmax, "count")
+    return to_agg_units(out, tasmax, "count", deffreq="D")
 
 
 @declare_units(tasmax="[temperature]", thresh="[temperature]")
@@ -2295,7 +2295,7 @@ def hot_spell_total_length(
         window=window,
         freq=freq,
     )
-    return to_agg_units(out, tasmax, "count")
+    return to_agg_units(out, tasmax, "count", deffreq="D")
 
 
 @declare_units(tasmax="[temperature]", thresh="[temperature]")
@@ -2392,7 +2392,7 @@ def snd_days_above(
     valid = at_least_n_valid(snd, n=1, freq=freq)
     thresh = convert_units_to(thresh, snd)
     out = threshold_count(snd, op, thresh, freq)
-    return to_agg_units(out, snd, "count").where(~valid)
+    return to_agg_units(out, snd, "count", deffreq="D").where(~valid)
 
 
 @declare_units(snw="[mass]/[area]", thresh="[mass]/[area]")
@@ -2426,7 +2426,7 @@ def snw_days_above(
     valid = at_least_n_valid(snw, n=1, freq=freq)
     thresh = convert_units_to(thresh, snw)
     out = threshold_count(snw, op, thresh, freq)
-    return to_agg_units(out, snw, "count").where(~valid)
+    return to_agg_units(out, snw, "count", deffreq="D").where(~valid)
 
 
 @declare_units(tasmin="[temperature]", thresh="[temperature]")
@@ -2468,7 +2468,7 @@ def tn_days_above(
     """
     thresh = convert_units_to(thresh, tasmin)
     f = threshold_count(tasmin, op, thresh, freq, constrain=(">", ">="))
-    return to_agg_units(f, tasmin, "count")
+    return to_agg_units(f, tasmin, "count", deffreq="D")
 
 
 @declare_units(tasmin="[temperature]", thresh="[temperature]")
@@ -2510,7 +2510,7 @@ def tn_days_below(
     """
     thresh = convert_units_to(thresh, tasmin)
     f1 = threshold_count(tasmin, op, thresh, freq, constrain=("<", "<="))
-    return to_agg_units(f1, tasmin, "count")
+    return to_agg_units(f1, tasmin, "count", deffreq="D")
 
 
 @declare_units(tas="[temperature]", thresh="[temperature]")
@@ -2552,7 +2552,7 @@ def tg_days_above(
     """
     thresh = convert_units_to(thresh, tas)
     f = threshold_count(tas, op, thresh, freq, constrain=(">", ">="))
-    return to_agg_units(f, tas, "count")
+    return to_agg_units(f, tas, "count", deffreq="D")
 
 
 @declare_units(tas="[temperature]", thresh="[temperature]")
@@ -2594,7 +2594,7 @@ def tg_days_below(
     """
     thresh = convert_units_to(thresh, tas)
     f1 = threshold_count(tas, op, thresh, freq, constrain=("<", "<="))
-    return to_agg_units(f1, tas, "count")
+    return to_agg_units(f1, tas, "count", deffreq="D")
 
 
 @declare_units(tasmax="[temperature]", thresh="[temperature]")
@@ -2636,7 +2636,7 @@ def tx_days_above(
     """
     thresh = convert_units_to(thresh, tasmax)
     f = threshold_count(tasmax, op, thresh, freq, constrain=(">", ">="))
-    return to_agg_units(f, tasmax, "count")
+    return to_agg_units(f, tasmax, "count", deffreq="D")
 
 
 @declare_units(tasmax="[temperature]", thresh="[temperature]")
@@ -2678,7 +2678,7 @@ def tx_days_below(
     """
     thresh = convert_units_to(thresh, tasmax)
     f1 = threshold_count(tasmax, op, thresh, freq, constrain=("<", "<="))
-    return to_agg_units(f1, tasmax, "count")
+    return to_agg_units(f1, tasmax, "count", deffreq="D")
 
 
 @declare_units(tasmax="[temperature]", thresh="[temperature]")
@@ -2720,7 +2720,7 @@ def warm_day_frequency(
     """
     thresh = convert_units_to(thresh, tasmax)
     events = threshold_count(tasmax, op, thresh, freq, constrain=(">", ">="))
-    return to_agg_units(events, tasmax, "count")
+    return to_agg_units(events, tasmax, "count", deffreq="D")
 
 
 @declare_units(tasmin="[temperature]", thresh="[temperature]")
@@ -2753,7 +2753,7 @@ def warm_night_frequency(
     """
     thresh = convert_units_to(thresh, tasmin)
     events = threshold_count(tasmin, op, thresh, freq, constrain=(">", ">="))
-    return to_agg_units(events, tasmin, "count")
+    return to_agg_units(events, tasmin, "count", deffreq="D")
 
 
 @declare_units(pr="[precipitation]", thresh="[precipitation]")
@@ -2796,7 +2796,7 @@ def wetdays(
     thresh = convert_units_to(thresh, pr, context="hydro")
 
     wd = threshold_count(pr, op, thresh, freq, constrain=(">", ">="))
-    return to_agg_units(wd, pr, "count")
+    return to_agg_units(wd, pr, "count", deffreq="D")
 
 
 @declare_units(pr="[precipitation]", thresh="[precipitation]")
@@ -2954,7 +2954,7 @@ def maximum_consecutive_dry_days(
         rl.longest_run,
         freq=freq,
     )
-    mcdd = to_agg_units(resampled, pr, "count")
+    mcdd = to_agg_units(resampled, pr, "count", deffreq="D")
     return mcdd
 
 
@@ -3181,7 +3181,7 @@ def windy_days(sfcWind: xarray.DataArray, thresh: Quantified = "10.8 m s-1", fre
     """
     thresh = convert_units_to(thresh, sfcWind)
     out = threshold_count(sfcWind, ">=", thresh, freq)
-    out = to_agg_units(out, sfcWind, "count")
+    out = to_agg_units(out, sfcWind, "count", deffreq="D")
     return out
 
 
@@ -3805,7 +3805,7 @@ def holiday_snow_days(
 
     xmas_days = count_occurrences(snd_constrained, snd_thresh, freq, op, constrain=[">=", ">"])
 
-    xmas_days = to_agg_units(xmas_days, snd, "count")
+    xmas_days = to_agg_units(xmas_days, snd, "count", deffreq="D")
     return xmas_days
 
 
@@ -3887,5 +3887,5 @@ def holiday_snow_and_snowfall_days(
         constrain_var2=[">=", ">"],
     )
 
-    perfect_xmas_days = to_agg_units(perfect_xmas_days, snd, "count")
+    perfect_xmas_days = to_agg_units(perfect_xmas_days, snd, "count", deffreq="D")
     return perfect_xmas_days

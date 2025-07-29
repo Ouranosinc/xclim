@@ -1869,6 +1869,17 @@ class TestHolidayIndices:
         np.testing.assert_array_equal(out3, [1, 2, 1, 0, 1])
 
 
+class TestHotDays:
+    def test_simple(self, tasmax_series):
+        a = np.zeros(365)
+        a[:6] += [27, 28, 29, 30, 31, 32]  # 2 above 30
+        mx = tasmax_series(a + K2C)
+
+        out = xci.hot_days(mx, thresh="30 C")
+        np.testing.assert_array_equal(out[:1], [2])
+        np.testing.assert_array_equal(out[1:], [0])
+
+
 class TestHotSpellFrequency:
     @pytest.mark.parametrize(
         "thresh,window,op,expected",
@@ -3112,11 +3123,16 @@ def test_specific_humidity_from_dewpoint(tas_series, ps_series):
     np.testing.assert_allclose(q, 0.012, 3)
 
 
-@pytest.mark.parametrize("method", ["tetens30", "sonntag90", "goffgratch46", "wmo08", "its90"])
-@pytest.mark.parametrize("ice_thresh,exp0", [(None, [125, 286, 568]), ("0 degC", [103, 260, 563])])
+@pytest.mark.parametrize(
+    "method", ["tetens30", "sonntag90", "goffgratch46", "wmo08", "its90", "buck81", "aerk96", "ecmwf"]
+)
+@pytest.mark.parametrize(
+    "ice_thresh,power,exp0",
+    [(None, None, [51, 125, 286, 568]), ("0 degC", None, [38, 103, 260, 563]), ("-23 degC", 2, [38, 103, 268, 568])],
+)
 @pytest.mark.parametrize("temp_units", ["degC", "degK"])
-def test_saturation_vapor_pressure(tas_series, method, ice_thresh, exp0, temp_units):
-    tas = tas_series(np.array([-20, -10, -1, 10, 20, 25, 30, 40, 60]) + K2C)
+def test_saturation_vapor_pressure(tas_series, method, ice_thresh, power, exp0, temp_units):
+    tas = tas_series(np.array([-30, -20, -10, -1, 10, 20, 25, 30, 40, 60]) + K2C)
     tas = convert_units_to(tas, temp_units)
 
     # Expected values obtained with the Sonntag90 method
@@ -3126,8 +3142,26 @@ def test_saturation_vapor_pressure(tas_series, method, ice_thresh, exp0, temp_un
         tas=tas,
         method=method,
         ice_thresh=ice_thresh,
+        interp_power=power,
     )
+    # tetens is bad at very low temps
+    if method == "tetens30":
+        e_sat = e_sat[1:]
+        e_sat_exp = e_sat_exp[1:]
+
     np.testing.assert_allclose(e_sat, e_sat_exp, atol=0.5, rtol=0.005)
+
+
+def test_vapor_pressure(tas_series, ps_series):
+    tas = tas_series(np.array([-1, 10, 20, 25, 30, 40, 60]) + K2C)
+    ps = ps_series(np.array([101325] * 7))
+
+    huss = xci.specific_humidity_from_dewpoint(tdps=tas, ps=ps, method="buck81")
+
+    vp = xci.vapor_pressure(huss=huss, ps=ps)
+    esat = xci.saturation_vapor_pressure(tas=tas, method="buck81")
+
+    np.testing.assert_allclose(vp, esat, rtol=1e-6)
 
 
 @pytest.mark.parametrize("method", ["tetens30", "sonntag90", "goffgratch46", "wmo08", "its90"])
@@ -3185,6 +3219,22 @@ def test_specific_humidity(tas_series, hurs_series, huss_series, ps_series, meth
         ice_thresh="0 degC",
     )
     np.testing.assert_allclose(huss, huss_exp, atol=1e-4, rtol=0.05)
+
+
+@pytest.mark.parametrize("method", ["tetens30", "wmo08", "aerk96", "buck81"])
+def test_dewpoint_from_specific_humidity(huss_series, ps_series, method, tas_series):
+    huss = huss_series(np.linspace(0, 0.01, 8))
+    ps = ps_series(1000 * np.array([100] * 4 + [101] * 4))
+
+    # Expected values obtained with the WMO08 method
+    tdps_exp = tas_series(np.array([np.nan, 260.3, 269.3, 274.8, 279.0, 282.3, 285.0, 287.3]))
+
+    tdps = xci.dewpoint_from_specific_humidity(
+        huss=huss,
+        ps=ps,
+        method=method,
+    )
+    np.testing.assert_allclose(tdps, tdps_exp, atol=0.1, rtol=0.05)
 
 
 def test_degree_days_exceedance_date(tas_series):

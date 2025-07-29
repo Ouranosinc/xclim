@@ -64,6 +64,7 @@ __all__ = [
     "heat_wave_total_length",
     "heating_degree_days",
     "heating_degree_days_approximation",
+    "hot_days",
     "hot_spell_frequency",
     "hot_spell_max_length",
     "hot_spell_max_magnitude",
@@ -222,6 +223,19 @@ tx_tn_days_above = TempWithIndexing(
     abstract="Number of days with daily maximum and minimum temperatures above given thresholds.",
     cell_methods="",
     compute=indices.tx_tn_days_above,
+)
+
+
+hot_days = TempWithIndexing(
+    title="Hot days",
+    identifier="hot_days",
+    units="days",
+    standard_name="days_with_air_temperature_above_threshold",
+    long_name="Number of days where the daily maximum temperature is above {thresh}",
+    description="{freq} number of days where the daily maximum temperature is above {thresh}.",
+    abstract="Number of days where the daily maximum temperature is above a given threshold.",
+    cell_methods="time: sum over days",
+    compute=indices.hot_days,
 )
 
 
