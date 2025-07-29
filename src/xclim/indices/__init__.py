@@ -6,6 +6,7 @@ from xclim.indices._agro import *
 from xclim.indices._anuclim import *
 from xclim.indices._conversion import *
 from xclim.indices._hydrology import *
+from xclim.indices._multicriteria import *
 from xclim.indices._multivariate import *
 from xclim.indices._simple import *
 from xclim.indices._synoptic import *
