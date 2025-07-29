@@ -150,7 +150,7 @@ def cold_spell_duration_index(
         freq=freq,
     )
 
-    return to_agg_units(out, tasmin, "count")
+    return to_agg_units(out, tasmin, "count", deffreq="D")
 
 
 @declare_units(
@@ -215,7 +215,7 @@ def cold_and_dry_days(
 
     cold_and_dry = cast(xarray.DataArray, np.logical_and(tg25, pr25))
     resampled = cold_and_dry.resample(time=freq).sum(dim="time")
-    out = to_agg_units(resampled, tas, "count")
+    out = to_agg_units(resampled, tas, "count", deffreq="D")
     return out
 
 
@@ -281,7 +281,7 @@ def warm_and_dry_days(
 
     warm_and_dry = cast(xarray.DataArray, np.logical_and(tg75, pr25))
     resampled = warm_and_dry.resample(time=freq).sum(dim="time")
-    out = to_agg_units(resampled, tas, "count")
+    out = to_agg_units(resampled, tas, "count", deffreq="D")
     return out
 
 
@@ -347,7 +347,7 @@ def warm_and_wet_days(
 
     warm_and_wet = cast(xarray.DataArray, np.logical_and(tg75, pr75))
     resampled = warm_and_wet.resample(time=freq).sum(dim="time")
-    out = to_agg_units(resampled, tas, "count")
+    out = to_agg_units(resampled, tas, "count", deffreq="D")
     return out
 
 
@@ -413,7 +413,7 @@ def cold_and_wet_days(
 
     cold_and_wet = cast(xarray.DataArray, np.logical_and(tg25, pr75))
     resampled = cold_and_wet.resample(time=freq).sum(dim="time")
-    out = to_agg_units(resampled, tas, "count")
+    out = to_agg_units(resampled, tas, "count", deffreq="D")
     return out
 
 
@@ -507,7 +507,7 @@ def multiday_temperature_swing(
             freq=freq,
         )
 
-    return to_agg_units(out, tasmin, "count")
+    return to_agg_units(out, tasmin, "count", deffreq="D")
 
 
 @declare_units(tasmax="[temperature]", tasmin="[temperature]")
@@ -791,7 +791,7 @@ def heat_wave_max_length(
         window=window,
         freq=freq,
     )
-    return to_agg_units(out, tasmax, "count")
+    return to_agg_units(out, tasmax, "count", deffreq="D")
 
 
 @declare_units(
@@ -859,7 +859,7 @@ def heat_wave_total_length(
         freq=freq,
     )
 
-    return to_agg_units(out, tasmin, "count")
+    return to_agg_units(out, tasmin, "count", deffreq="D")
 
 
 @declare_units(
@@ -1116,7 +1116,7 @@ def rain_on_frozen_ground_days(
     pcond = pr > t
 
     out = (tcond * pcond * 1).resample(time=freq).sum(dim="time")
-    return to_agg_units(out, tas, "count")
+    return to_agg_units(out, tas, "count", deffreq="D")
 
 
 @declare_units(
@@ -1168,7 +1168,7 @@ def high_precip_low_temp(
 
     cond = (pr >= pr_thresh) * (tas < tas_thresh) * 1
     out = cond.resample(time=freq).sum(dim="time")
-    return to_agg_units(out, pr, "count")
+    return to_agg_units(out, pr, "count", deffreq="D")
 
 
 @declare_units(pr="[precipitation]", pr_per="[precipitation]", thresh="[precipitation]")
@@ -1230,7 +1230,7 @@ def days_over_precip_thresh(
 
     # Compute the days when precip is both over the wet day threshold and the percentile threshold.
     out = threshold_count(pr, op, tp, freq, constrain=(">", ">="))
-    return to_agg_units(out, pr, "count")
+    return to_agg_units(out, pr, "count", deffreq="D")
 
 
 @declare_units(pr="[precipitation]", pr_per="[precipitation]", thresh="[precipitation]")
@@ -1351,7 +1351,7 @@ def tg90p(
 
     # Identify the days over the 90th percentile
     out = threshold_count(tas, op, thresh, freq, constrain=(">", ">="))
-    return to_agg_units(out, tas, "count")
+    return to_agg_units(out, tas, "count", deffreq="D")
 
 
 @declare_units(tas="[temperature]", tas_per="[temperature]")
@@ -1410,7 +1410,7 @@ def tg10p(
 
     # Identify the days below the 10th percentile
     out = threshold_count(tas, op, thresh, freq, constrain=("<", "<="))
-    return to_agg_units(out, tas, "count")
+    return to_agg_units(out, tas, "count", deffreq="D")
 
 
 @declare_units(tasmin="[temperature]", tasmin_per="[temperature]")
@@ -1469,7 +1469,7 @@ def tn90p(
 
     # Identify the days with min temp above 90th percentile.
     out = threshold_count(tasmin, op, thresh, freq, constrain=(">", ">="))
-    return to_agg_units(out, tasmin, "count")
+    return to_agg_units(out, tasmin, "count", deffreq="D")
 
 
 @declare_units(tasmin="[temperature]", tasmin_per="[temperature]")
@@ -1528,7 +1528,7 @@ def tn10p(
 
     # Identify the days below the 10th percentile
     out = threshold_count(tasmin, op, thresh, freq, constrain=("<", "<="))
-    return to_agg_units(out, tasmin, "count")
+    return to_agg_units(out, tasmin, "count", deffreq="D")
 
 
 @declare_units(tasmax="[temperature]", tasmax_per="[temperature]")
@@ -1587,7 +1587,7 @@ def tx90p(
 
     # Identify the days with max temp above 90th percentile.
     out = threshold_count(tasmax, op, thresh, freq, constrain=(">", ">="))
-    return to_agg_units(out, tasmax, "count")
+    return to_agg_units(out, tasmax, "count", deffreq="D")
 
 
 @declare_units(tasmax="[temperature]", tasmax_per="[temperature]")
@@ -1646,7 +1646,7 @@ def tx10p(
 
     # Identify the days below the 10th percentile
     out = threshold_count(tasmax, op, thresh, freq, constrain=("<", "<="))
-    return to_agg_units(out, tasmax, "count")
+    return to_agg_units(out, tasmax, "count", deffreq="D")
 
 
 @declare_units(
@@ -1711,7 +1711,7 @@ def tx_tn_days_above(
     constrain = (">", ">=")
     events = (compare(tasmin, op, thresh_tasmin, constrain) & compare(tasmax, op, thresh_tasmax, constrain)) * 1
     out = events.resample(time=freq).sum(dim="time")
-    return to_agg_units(out, tasmin, "count")
+    return to_agg_units(out, tasmin, "count", deffreq="D")
 
 
 @declare_units(tasmax="[temperature]", tasmax_per="[temperature]")
@@ -1790,7 +1790,7 @@ def warm_spell_duration_index(
         freq=freq,
     )
 
-    return to_agg_units(out, tasmax, "count")
+    return to_agg_units(out, tasmax, "count", deffreq="D")
 
 
 @declare_units(pr="[precipitation]", prsn="[precipitation]", tas="[temperature]")
@@ -1880,7 +1880,7 @@ def blowing_snow(
     cond = (snow >= snd_thresh) * (sfcWind >= sfcWind_thresh) * 1
 
     out = cond.resample(time=freq).sum(dim="time")
-    out = out.assign_attrs(units=to_agg_units(out, snd, "count"))
+    out = out.assign_attrs(units=to_agg_units(out, snd, "count", deffreq="D"))
     return out
 
 

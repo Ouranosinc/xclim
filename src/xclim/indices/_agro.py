@@ -1457,7 +1457,7 @@ def effective_growing_degree_days(
 
     deg_days = (tas - thresh).clip(min=0)
     egdd: xarray.DataArray = aggregate_between_dates(deg_days, start=start, end=end, freq=freq)
-    egdd = to_agg_units(egdd, tas, op="integral")
+    egdd = to_agg_units(egdd, tas, op="integral", deffreq="D")
     return egdd
 
 
