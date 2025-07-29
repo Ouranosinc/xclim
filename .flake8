@@ -12,6 +12,7 @@ ignore =
 	F,
 	RST210,
 	RST213,
+	RST299,
 	W503
 per-file-ignores =
 	src/xclim/core/locales.py:RST399
