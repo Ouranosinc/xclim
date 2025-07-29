@@ -366,7 +366,7 @@ def hot_days(
     """
     thresh = convert_units_to(thresh, tasmax)
     out = threshold_count(tasmax, ">", thresh, freq)
-    return to_agg_units(out, tasmax, "count")
+    return to_agg_units(out, tasmax, "count", deffreq="D")
 
 
 @declare_units(tasmin="[temperature]", thresh="[temperature]")
@@ -405,7 +405,7 @@ def frost_days(
     """
     frz = convert_units_to(thresh, tasmin)
     out = threshold_count(tasmin, "<", frz, freq)
-    return to_agg_units(out, tasmin, "count")
+    return to_agg_units(out, tasmin, "count", deffreq="D")
 
 
 @declare_units(tasmax="[temperature]", thresh="[temperature]")
@@ -440,7 +440,7 @@ def ice_days(tasmax: xarray.DataArray, thresh: Quantified = "0 degC", freq: str 
     """
     frz = convert_units_to(thresh, tasmax)
     out = threshold_count(tasmax, "<", frz, freq)
-    return to_agg_units(out, tasmax, "count")
+    return to_agg_units(out, tasmax, "count", deffreq="D")
 
 
 @declare_units(pr="[precipitation]")
