@@ -20,6 +20,7 @@ New indicators and features
     + New methods "buck81" and "aerk96" and new method "ECMWF" which is "buck81" on water and "aerk96" on ice.
     + Saturation vapor pressure calculations were reorganized. ``xclim.indices._conversion.ESAT_FORMULAS_COEFFICIENTS`` now stores the August-Roche-Magnus formula's coefficients.
 * New indicator ``xclim.atmos.hot_days`` as counterpart to ``xclim.atmos.frost_days``. (:issue:`2194`, :pull:`2213`).
+* New methods ``dai_annual`` and ``dai_seasonal`` for ``xclim.atmos.snowfall_approximation`` and ``xclim.atmos.rain_approximation``, taken from :cite:t:`dai_snowfall_2008`. Indicator also take new argument ``landmask`` to switch between the land and ocean formulations. (:pull:`2208`, :issue:`1752`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
