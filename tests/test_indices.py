@@ -268,79 +268,108 @@ class TestAgroclimaticIndices:
         np.testing.assert_allclose(out, [0, 0.504, 0, 8.478, 17.454])
 
     @pytest.mark.parametrize(
-        "method, end_date, deg_days, max_deg_days",
+        "method, end_date, freq, deg_days, max_deg_days",
         [
-            ("gladstones", "11-01", 1102.1, 1926.0),
-            ("jones", "11-01", 1203.4, 2179.1),
-            ("icclim", "10-01", 915.0, 1647.0),
+            ("gladstones", "11-01", "YS", 1090.1, 1926.0),
+            ("gladstones", "11-01", "MS", 152.6, 274.5),
+            ("huglin", "11-01", "YS", 1112.8, 1926.0),
+            ("huglin", "11-01", "MS", 152.5, 274.5),
+            ("icclim", "10-01", "YS", 915.0, 1647.0),
+            ("icclim", "10-01", "MS", 152.5, 274.5),
+            ("interpolated", "11-01", "YS", 1102.1, 1926.0),
+            ("interpolated", "11-01", "MS", 152.5, 274.5),
+            ("jones", "11-01", "YS", 1214.65, 2127.05),
+            ("jones", "11-01", "MS", None, None),  # Not implemented
         ],
     )
-    def test_bedd(self, method, end_date, deg_days, max_deg_days):
-        time_data = xr.date_range("1992-01-01", "1995-06-01", freq="D", calendar="standard")
+    def test_bedd(self, method, end_date, freq, deg_days, max_deg_days):
+        time_data = xr.date_range(start="1992-01-01", end="1995-06-01", freq="D", calendar="standard")
+        lat = xr.DataArray([35, 45, 48], dims=("lat",), name="lat", attrs={"units": "degrees_north"})
+
         tn = xr.DataArray(
-            np.zeros(time_data.size) + 10 + K2C,
-            dims="time",
-            coords={"time": time_data},
-            attrs=dict(units="K"),
+            np.zeros((lat.size, time_data.size)) + 10 + K2C,
+            dims=("lat", "time"),
+            coords={"time": time_data, "lat": lat},
+            attrs={"units": "K"},
         )
-
         tx = xr.DataArray(
-            np.zeros(time_data.size) + 20 + K2C,
-            dims="time",
-            coords={"time": time_data},
-            attrs=dict(units="K"),
+            np.zeros((lat.size, time_data.size)) + 20 + K2C,
+            dims=("lat", "time"),
+            coords={"time": time_data, "lat": lat},
+            attrs={"units": "K"},
         )
-
         tx_hot = xr.DataArray(
-            np.zeros(time_data.size) + 50 + K2C,
-            dims="time",
-            coords={"time": time_data},
-            attrs=dict(units="K"),
+            np.zeros((lat.size, time_data.size)) + 50 + K2C,
+            dims=("lat", "time"),
+            coords={"time": time_data, "lat": lat},
+            attrs={"units": "K"},
         )
 
-        lat = xr.DataArray([35, 45], dims=("lat",), name="lat", attrs={"units": "degrees_north"})
-        high_lat = xr.DataArray(48, name="lat", attrs={"units": "degrees_north"})
-
-        bedd = xci.biologically_effective_degree_days(
-            tasmin=tn,
-            tasmax=tx,
-            lat=lat,
-            method=method,
-            end_date=end_date,  # noqa
-            freq="YS",
-        )
-        bedd_hot = xci.biologically_effective_degree_days(
-            tasmin=tn,
-            tasmax=tx_hot,
-            lat=lat,
-            method=method,
-            end_date=end_date,  # noqa
-            freq="YS",
-        )
-        if method != "icclim":
-            bedd = bedd.isel(lat=1)
-            bedd_hot = bedd_hot.isel(lat=1)
-        bedd_high_lat = xci.biologically_effective_degree_days(
-            tasmin=tn,
-            tasmax=tx,
-            lat=high_lat,
-            method=method,
-            end_date=end_date,  # noqa
-            freq="YS",
-        )
-
-        if method == "jones":
-            np.testing.assert_array_less(bedd[1], bedd[0])  # Leap-year has slightly higher values
-            np.testing.assert_allclose(bedd[:3], np.array([deg_days, deg_days, deg_days]), rtol=6e-4)
-            np.testing.assert_allclose(bedd_hot[:3], [max_deg_days, max_deg_days, max_deg_days], rtol=0.15)
-
+        if method == "jones" and freq == "MS":
+            with pytest.raises(NotImplementedError):
+                xci.biologically_effective_degree_days(
+                    tasmin=tn,
+                    tasmax=tx,
+                    lat=lat,
+                    method=method,
+                    end_date=end_date,
+                    freq=freq,
+                )
         else:
-            np.testing.assert_allclose(bedd[:3], np.array([deg_days, deg_days, deg_days]))
-            np.testing.assert_array_equal(bedd_hot[:3], [max_deg_days, max_deg_days, max_deg_days])
-            if method == "gladstones":
-                np.testing.assert_array_less(bedd, bedd_high_lat)
-            if method == "icclim":
-                np.testing.assert_array_equal(bedd, bedd_high_lat)
+            bedd = xci.biologically_effective_degree_days(
+                tasmin=tn,
+                tasmax=tx,
+                lat=lat,
+                method=method,
+                end_date=end_date,
+                freq=freq,
+            )
+            bedd_hot = xci.biologically_effective_degree_days(
+                tasmin=tn,
+                tasmax=tx_hot,
+                lat=lat,
+                method=method,
+                end_date=end_date,
+                freq=freq,
+            )
+
+            if freq == "YS":
+                np.testing.assert_allclose(np.array([deg_days] * 3), bedd.isel(lat=1)[:3], atol=0.125)
+                np.testing.assert_allclose(np.array([max_deg_days] * 3), bedd_hot.isel(lat=0)[:3], atol=0.1)
+                if method == "icclim":
+                    # Latitude has no influence on 'icclim' method
+                    np.testing.assert_array_equal(bedd.isel(lat=0), bedd.isel(lat=-1))
+                elif method in ["huglin", "interpolated"]:
+                    # Leap year has no influence on 'huglin' or 'interpolated' method
+                    np.testing.assert_array_equal(bedd.isel(lat=0)[0], bedd.isel(lat=0)[1])
+                else:
+                    # Higher latitudes have higher values
+                    np.testing.assert_array_less(bedd.isel(lat=0), bedd.isel(lat=1))
+                    np.testing.assert_array_less(bedd.isel(lat=1), bedd.isel(lat=2))
+
+            elif freq == "MS":
+                np.testing.assert_allclose(
+                    np.array([deg_days] * 6 + ([deg_days] if method != "icclim" else [0])),
+                    bedd.isel(lat=0)[3:10],
+                    rtol=0.125,
+                )
+                np.testing.assert_allclose(
+                    np.array([max_deg_days] * 6 + ([max_deg_days] if method != "icclim" else [0])),
+                    bedd_hot.isel(lat=0)[3:10],
+                    rtol=0.1,
+                )
+                if method == "icclim":
+                    # Latitude has no influence on 'icclim' method
+                    np.testing.assert_array_equal(bedd.isel(lat=0)[3:10], bedd.isel(lat=-1)[3:10])
+                elif method in ["huglin", "interpolated"]:
+                    # Leap year has no influence on 'huglin' or 'interpolated' method
+                    np.testing.assert_array_equal(bedd.isel(lat=0)[3:10], bedd.isel(lat=0)[15:22])
+                else:
+                    # September has slightly higher values for lower latitudes
+                    np.testing.assert_array_less(bedd[0][3:9], bedd[1][3:9])
+                    np.testing.assert_array_less(bedd[1][9], bedd[0][9])
+                    np.testing.assert_array_less(bedd[1][3:9], bedd[2][3:9])
+                    np.testing.assert_array_less(bedd[2][9], bedd[1][9])
 
     def test_chill_portions(self, tas_series):
         tas = tas_series(np.linspace(0, 15, 120 * 24) + K2C, freq="h")
@@ -370,7 +399,7 @@ class TestAgroclimaticIndices:
 
     def test_cool_night_index(self, open_dataset):
         ds = open_dataset("cmip5/tas_Amon_CanESM2_rcp85_r1i1p1_200701-200712.nc")
-        ds = ds.rename(dict(tas="tasmin"))
+        ds = ds.rename({"tas": "tasmin"})
 
         cni = xci.cool_night_index(tasmin=ds.tasmin)  # find latitude implicitly
         tasmin = convert_units_to(ds.tasmin, "degC")
@@ -384,7 +413,7 @@ class TestAgroclimaticIndices:
         np.testing.assert_array_equal(cni_nh, tn_nh)
         np.testing.assert_array_equal(cni_sh, tn_sh)
 
-        # Treat all areas as northern hemisphere
+        # Treat all areas as Northern Hemisphere
         cni_all_nh = xci.cool_night_index(tasmin=ds.tasmin, lat="north")
         tn_all_nh = tasmin.where(tasmin.time.dt.month == 9, drop=True)
 
@@ -410,35 +439,66 @@ class TestAgroclimaticIndices:
         np.testing.assert_array_almost_equal(lti[0].squeeze(), np.array(values), 2)
 
     @pytest.mark.parametrize(
-        "method, end_date, values",
+        "method, end_date, freq, values, cap_value",
         [
-            ("smoothed", "10-01", 1702.87),
-            ("icclim", "11-01", 1983.53),
-            ("jones", "10-01", 1729.12),
-            ("jones", "11-01", 2219.51),
+            ("interpolated", "10-01", "MS", 308.53, 1.0),
+            ("interpolated", "10-01", "YS", 1707.15, np.nan),
+            ("interpolated", "10-01", "YS", 1835.51, 1.0),
+            ("huglin", "11-01", "MS", 283.88, np.nan),
+            ("huglin", "11-01", "MS", 334.02, 1.0),
+            ("icclim", "11-01", "YS", 2247.25, 1.0),
+            ("jones", "10-01", "YS", 2299.30, np.nan),
+            ("jones", "11-01", "YS", 2931.21, np.nan),
+            ("jones", "10-01", "MS", None, np.nan),  # not implemented
         ],
     )
-    def test_huglin_index(self, method, end_date, values, open_dataset):
+    def test_huglin_index(self, method, end_date, freq, values, cap_value, open_dataset):
         ds = open_dataset("cmip5/tas_Amon_CanESM2_rcp85_r1i1p1_200701-200712.nc")
         ds = ds.drop_isel(time=0)  # drop time=2006/12 for one year of data
 
         tasmax, tas = ds.tas + 15, ds.tas - 5
-        # It would be much better if the index would interpolate to daily from monthly data intelligently.
+        # It would be much better if the index interpolated to daily from monthly data intelligently.
         tasmax, tas = (
             tasmax.resample(time="1D").interpolate("cubic"),
             tas.resample(time="1D").interpolate("cubic"),
         )
         tasmax.attrs["units"], tas.attrs["units"] = "K", "K"
 
-        # find lat implicitly
-        hi = xci.huglin_index(
-            tasmax=tasmax,
-            tas=tas,
-            method=method,
-            end_date=end_date,  # noqa
-        )
+        if method == "jones" and freq == "MS":
+            with pytest.raises(NotImplementedError):
+                xci.huglin_index(
+                    tasmax=tasmax, tas=tas, method=method, end_date=end_date, freq=freq, cap_value=cap_value
+                )
+        else:
+            if method == "icclim":
+                # The 'icclim' method is an alias for 'huglin'
+                with pytest.warns(DeprecationWarning):
+                    # find lat implicitly
+                    hi = xci.huglin_index(
+                        tasmax=tasmax,
+                        tas=tas,
+                        method=method,
+                        end_date=end_date,
+                        freq=freq,
+                        cap_value=cap_value,
+                    )
+            else:
+                # find lat implicitly
+                hi = xci.huglin_index(
+                    tasmax=tasmax,
+                    tas=tas,
+                    method=method,
+                    end_date=end_date,
+                    freq=freq,
+                    cap_value=cap_value,
+                )
 
-        np.testing.assert_allclose(np.mean(hi), values, rtol=1e-2, atol=0)
+            if freq == "MS":
+                np.testing.assert_allclose(hi.isel(time=5).mean(), values, rtol=1e-2, atol=0)
+            elif freq == "YS":
+                if method == "jones":
+                    pass
+                np.testing.assert_allclose(np.mean(hi), values, rtol=1e-2, atol=0)
 
     def test_qian_weighted_mean_average(self, tas_series):
         mg = np.zeros(365)
@@ -1259,8 +1319,8 @@ class TestDailyFreezeThawCycles:
     @pytest.mark.parametrize(
         "thresholds",
         [
-            dict(),
-            dict(thresh_tasmax="0 degC", thresh_tasmin="0 degC"),
+            {},
+            {"thresh_tasmax": "0 degC", "thresh_tasmin": "0 degC"},
         ],
     )
     def test_simple(self, tasmin_series, tasmax_series, thresholds):
