@@ -23,6 +23,7 @@ __all__ = [
     "low_flow_frequency",
     "melt_and_precip_max",
     "rb_flashiness_index",
+    "season_an_rr",
     "snd_max",
     "snd_max_doy",
     "snow_melt_we_max",
@@ -672,7 +673,7 @@ def antecedent_precipitation_index(pr: xarray.DataArray, window: int = 7, p_exp:
     xarray.DataArray
         Antecedent Precipitation Index.
 
-    References
+
     ----------
     :cite:cts:`schroter2015,li2021`
     """
@@ -685,3 +686,111 @@ def antecedent_precipitation_index(pr: xarray.DataArray, window: int = 7, p_exp:
     out = pr.rolling(time=window).construct("window_dim").dot(weights)
     out.attrs["units"] = "mm"
     return out
+
+
+
+@declare_units(q="[discharge]", a="[area]", pr="[precipitation]")
+def _tot_rr(q: xarray.DataArray,
+            a: xarray.DataArray,
+            pr: xarray.DataArray) -> xarray.DataArray:
+    """Total Runoff ratio
+
+    Parameters
+    ----------
+    q : xarray.DataArray
+        Streamflow in [discharge] units, will be converted to [m3/s].
+    a : xarray.DataArray
+        Watershed area [area] units, will be converted to in [km²].
+    pr : xarray.DataArray
+        mean daily Precipitation [precipitation] units, will be converted to [mm/hr].
+
+    Returns
+    -------
+    xarray.DataArray
+        Single value rainfall-runoff ratio (RRR) as long-term benchmark.
+
+    References
+    -----
+    HydroBM https://hydrobm.readthedocs.io/en/latest/usage.html#benchmarks
+    """
+    q = units.convert_units_to(q, "m3/s")
+    a = units.convert_units_to(a, "km2")
+    pr = units.convert_units_to(pr, "mm/hr")
+
+    runoff = q * 3.6 / a  # unit conversion for runoff in mm/h : 3.6 [s/h * km2/m2]
+    total_rr = (runoff.sum() / pr.sum())
+    total_rr.attrs["units"] = "dimensionless"
+    total_rr.attrs["long_name"] = "Total Rainfall-Runoff Ratio"
+
+    return total_rr
+
+
+@declare_units(q="[discharge]", a="[area]", pr="[precipitation]")
+def _season_an_rr(
+    q: xarray.DataArray,
+    a: xarray.DataArray,
+    pr: xarray.DataArray,
+    freq: str = "YS"
+) -> xarray.DataArray:
+    """Seasonal and annual rainfall-runoff ratio (RRR)
+
+    Parameters
+    ----------
+    q : xarray.DataArray
+        Streamflow in [discharge] units, will be converted to [m3/s].
+    a : xarray.DataArray
+        Watershed area [area] units, will be converted to in [km²].
+    pr : xarray.DataArray
+        mean daily Precipitation [precipitation] units, will be converted to [mm/hr].
+
+    freq : str
+        Resampling frequency (e.g., 'YS' for yearly starting Jan )
+
+    Returns
+    -------
+    xarray.DataArray
+        Seasonal and yearly rainfall-runoff ratio (dimensionless)
+
+    References
+    -----
+    HydroBM https://hydrobm.readthedocs.io/en/latest/usage.html#benchmarks
+
+    """
+
+    q = units.convert_units_to(q, "m3/s")
+    a = units.convert_units_to(a, "km2")
+    pr = units.convert_units_to(pr, "mm/hr")
+
+    runoff = q * 3.6 / a  # unit conversion for runoff in mm/h : 3.6[s/h *km2/m2]
+
+    season_year = q["time"].dt.season.str.cat(q["time"].dt.year.astype(str), sep="-")
+
+    runoff.coords["season_year"] = ("time", season_year.data)
+    pr.coords["season_year"] = ("time", season_year.data)
+
+    # separate season and year coordinates from season_year strings:
+    seasons = [s.split('-')[0] for s in season_year.values]
+    years = [int(s.split('-')[1]) for s in season_year.values]
+
+    # Assign as new coordinates on the original time dimension:
+    runoff.coords["season"] = ("time", seasons)
+    runoff.coords["year"] = ("time", years)
+
+    pr.coords["season"] = ("time", seasons)
+    pr.coords["year"] = ("time", years)
+
+    # Group by season-year and sum
+
+    runoff_seasonal = runoff.groupby(["season", "year"]).sum(dim="time", skipna=True)
+    pr_seasonal = pr.groupby(["season", "year"]).sum(dim="time", skipna=True)
+
+    rrr_season = runoff_seasonal / pr_seasonal
+
+    # Group by year and sum
+
+    runoff_year = runoff.groupby(["year"]).sum(dim="time", skipna=True)
+    pr_year = pr.groupby(["year"]).sum(dim="time", skipna=True)
+
+    rrr_yearly = runoff_year / pr_year
+
+    return rrr_season, rrr_yearly
