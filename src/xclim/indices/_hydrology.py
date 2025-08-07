@@ -730,7 +730,6 @@ def _season_an_rr(
     q: xarray.DataArray,
     a: xarray.DataArray,
     pr: xarray.DataArray,
-    freq: str = "YS"
 ) -> xarray.DataArray:
     """Seasonal and annual rainfall-runoff ratio (RRR)
 
@@ -743,8 +742,6 @@ def _season_an_rr(
     pr : xarray.DataArray
         mean daily Precipitation [precipitation] units, will be converted to [mm/hr].
 
-    freq : str
-        Resampling frequency (e.g., 'YS' for yearly starting Jan )
 
     Returns
     -------
@@ -794,3 +791,66 @@ def _season_an_rr(
     rrr_yearly = runoff_year / pr_year
 
     return rrr_season, rrr_yearly
+
+
+def streamflow_elasticity(
+    q: xarray.DataArray,
+    pr: xarray.DataArray,
+    freq: str = "YS"
+) -> xarray.DataArray:
+    """
+    Calculate the median of yearly streamflow elasticity index for given catchments.
+
+    Parameters
+    ----------
+    q : xarray.DataArray
+        Daily discharge data
+    pr : xarray.DataArray
+        Daily precipitation data
+    freq: Resampling frequency (e.g., 'YS' for yearl starting in Jan)
+
+    Returns
+    -------
+    xarray.DataArray
+        nonparametric estimator for streamflow elasticity index (dimensionless)
+
+
+    Note
+    -------
+
+    A value of εp greater than 1 indicates that streamflow is highly sensitive to precipitation changes,
+    meaning a 1% change in precipitation will lead to a greater than 1% change in streamflow.
+    A value less than 1 suggests a less sensitive relationship.
+
+    References
+    -----
+    Sankarasubramanian, A., Vogel, R. M., & Limbrunner, J. F. (2001). Climate elasticity of streamflow in the United States. Water Resources Research, 37(6), 1771–1781. https://doi.org/10.1029/2000WR900330
+
+    """
+
+    # Calculate single value streamflow elasticity index per catchment
+
+    p_annual = pr.resample(time=freq).mean()
+    q_annual = q.resample(time=freq).mean()
+
+    p_mean = p_annual.mean(dim="time")
+    q_mean = q_annual.mean(dim="time")
+
+    # Year-to-year changes
+    delta_p = p_annual.diff(dim="time")
+    delta_q = q_annual.diff(dim="time")
+
+    # Avoid division by zero
+    epsilon = 1e-6
+
+    # Relative changes
+    rel_delta_p = delta_p / (p_mean + epsilon)
+    rel_delta_q = delta_q / (q_mean + epsilon)
+
+    # Cumpute yearly streamflow elasticity (not mathematically robust values)
+    yearly_elasticity = (rel_delta_q / (rel_delta_p + epsilon))
+
+    # Cumpute single value using median (more robust value)
+    elasticity_index = yearly_elasticity.median(dim="time")
+
+    return elasticity_index
