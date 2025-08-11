@@ -38,6 +38,10 @@ jobs:
         with:
           task: start-measurement
           branch: ${{ github.head_ref || github.ref_name }}
+          project: 'xclim'
+          tags: "CI/CD, Main"
+          gmt-api-token: ${{ secrets.GMT_API_TOKEN }}
+          electricitymaps-api-token: ${{ secrets.ELECTRICITYMAPS_API_TOKEN }}
 
       - name: Checkout Repository
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
