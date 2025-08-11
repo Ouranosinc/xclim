@@ -17,7 +17,9 @@ from . import generic
 
 __all__ = [
     "antecedent_precipitation_index",
+    "annual_aridity_index",
     "base_flow_index",
+    "days_with_snowpack",
     "flow_index",
     "high_flow_frequency",
     "low_flow_frequency",
@@ -920,3 +922,38 @@ def _days_with_snowpack(
     out = out.set_index(time='year')
 
     return out
+
+
+def annual_aridity_index(pr: xarray.DataArray, pet: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
+    """Aridity index.
+
+    Parameters
+    ----------
+    pr : array_like
+        Precipitation
+    pet : array_like
+        Potentiel Evapotranspiration
+    freq : str, optional
+        Resampling frequency. A monthly or yearly frequency is expected. Option `None` assumes
+        that the desired resampling has already been applied input dataset and will skip the resampling step.
+
+    Returns
+    -------
+    float
+        Aridity index. (Unitless)
+
+    Notes
+    -----
+    Ranges from 0 to 1, 0 being the most aride and 1 the most humid
+
+    References
+    ----------
+    Zomer, R. J., Xu, J., & Trabucco, A. (2022). Version 3 of the Global Aridity Index and Potential Evapotranspiration Database. Scientific Data, 9(1), 409. https://doi.org/10.1038/s41597-022-01493-1
+    """
+    pr = pr.resample(time=freq).sum()
+    pet = pet.resample(time=freq).sum()
+    ai = (pr / pet)
+    ai.attrs["units"] = ""
+    ai.name = "aridity_index"
+
+    return ai
