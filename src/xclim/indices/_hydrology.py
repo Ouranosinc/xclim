@@ -723,7 +723,7 @@ def _tot_rr(q: xarray.DataArray,
 
     runoff = q * 3.6 / a  # unit conversion for runoff in mm/h : 3.6 [s/h * km2/m2]
     total_rr = (runoff.sum() / pr.sum())
-    total_rr.attrs["units"] = "dimensionless"
+    total_rr.attrs["units"] = ""
     total_rr.attrs["long_name"] = "Total Rainfall-Runoff Ratio"
 
     return total_rr
@@ -735,6 +735,7 @@ def _season_an_rr(
     a: xarray.DataArray,
     pr: xarray.DataArray,
 ) -> xarray.DataArray:
+
     """Seasonal and annual rainfall-runoff ratio (RRR)
 
     Parameters
@@ -742,9 +743,9 @@ def _season_an_rr(
     q : xarray.DataArray
         Streamflow in [discharge] units, will be converted to [m3/s].
     a : xarray.DataArray
-        Watershed area [area] units, will be converted to in [km²].
+        Watershed area in [area] units, will be converted to in [km²].
     pr : xarray.DataArray
-        mean daily Precipitation [precipitation] units, will be converted to [mm/hr].
+        Mean daily Precipitation in [precipitation] units, will be converted to [mm/hr].
 
 
     Returns
@@ -758,11 +759,11 @@ def _season_an_rr(
 
     """
 
-    q = units.convert_units_to(q, "m3/s")
+    q=units.convert_units_to(q, "m3/s")
     a = units.convert_units_to(a, "km2")
     pr = units.convert_units_to(pr, "mm/hr")
 
-    runoff = q * 3.6 / a  # unit conversion for runoff in mm/h : 3.6[s/h *km2/m2]
+    runoff = q * 3.6 / a  # unit conversion for runoff in mm/hr : 3.6[s/hr *km2/m2]
 
     season_year = q["time"].dt.season.str.cat(q["time"].dt.year.astype(str), sep="-")
 
@@ -781,18 +782,18 @@ def _season_an_rr(
     pr.coords["year"] = ("time", years)
 
     # Group by season-year and sum
-
     runoff_seasonal = runoff.groupby(["season", "year"]).sum(dim="time", skipna=True)
     pr_seasonal = pr.groupby(["season", "year"]).sum(dim="time", skipna=True)
 
     rrr_season = runoff_seasonal / pr_seasonal
 
     # Group by year and sum
-
     runoff_year = runoff.groupby(["year"]).sum(dim="time", skipna=True)
     pr_year = pr.groupby(["year"]).sum(dim="time", skipna=True)
 
     rrr_yearly = runoff_year / pr_year
+    rrr_season.attrs["units"] = ""
+    rrr_yearly.attrs["units"] = ""
 
     return rrr_season, rrr_yearly
 
