@@ -7,6 +7,7 @@ Converter functions to transform variables into required formats, approximation,
 
 from __future__ import annotations
 
+import warnings
 from typing import cast
 
 import numpy as np
@@ -58,6 +59,7 @@ __all__ = [
     "specific_humidity",
     "specific_humidity_from_dewpoint",
     "tas",
+    "tas_from_tasmin_tasmax",
     "uas_vas_to_sfcwind",
     "universal_thermal_climate_index",
     "vapor_pressure",
@@ -219,8 +221,24 @@ def heat_index(tas: xr.DataArray, hurs: xr.DataArray) -> xr.DataArray:
     return convert_units_to(out, tas.units)
 
 
+def tas(*args, **kwargs):  # numpydoc ignore=SS05,PR01,RT01
+    """
+    Alias for `tas_from_tasmin_tasmax`.
+
+    This function is deprecated and will be removed in a future release.
+    Use `tas_from_tasmin_tasmax` instead.
+    """
+    warnings.warn(
+        "The `tas` function is deprecated and will be removed in a future release. "
+        "Use `tas_from_tasmin_tasmax` instead.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+    return tas_from_tasmin_tasmax(*args, **kwargs)
+
+
 @declare_units(tasmin="[temperature]", tasmax="[temperature]")
-def tas(tasmin: xr.DataArray, tasmax: xr.DataArray) -> xr.DataArray:
+def tas_from_tasmin_tasmax(tasmin: xr.DataArray, tasmax: xr.DataArray) -> xr.DataArray:
     """
     Average temperature from minimum and maximum temperatures.
 

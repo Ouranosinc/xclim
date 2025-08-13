@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import warnings
+
 from xclim.core.cfchecks import cfcheck_from_name
 from xclim.core.indicator import Indicator
 from xclim.core.utils import InputKind
@@ -15,6 +17,7 @@ __all__ = [
     "humidex",
     "longwave_upwelling_radiation_from_net_downwelling",
     "mean_radiant_temperature",
+    "mean_temperature_from_max_and_min",
     "potential_evapotranspiration",
     "rain_approximation",
     "relative_humidity",
@@ -90,16 +93,26 @@ heat_index = Converter(
 )
 
 
-tg = Converter(
+def tg():  # numpydoc ignore=GL08
+    warnings.warn(
+        "The `tg` function is deprecated and will be removed in a future release. "
+        "Use `mean_temperature_from_max_and_min` instead.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+    return mean_temperature_from_max_and_min
+
+
+mean_temperature_from_max_and_min = Converter(
     title="Mean temperature",
-    identifier="tg",
+    identifier="mean_temperature_from_max_and_min",
     units="K",
     standard_name="air_temperature",
     long_name="Daily mean temperature",
     description="Estimated mean temperature from maximum and minimum temperatures.",
     cell_methods="time: mean within days",
     abstract="The average daily temperature assuming a symmetrical temperature distribution (Tg = (Tx + Tn) / 2).",
-    compute=converters.tas,
+    compute=converters.tas_from_tasmin_tasmax,
 )
 
 

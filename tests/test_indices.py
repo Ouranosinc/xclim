@@ -2536,7 +2536,8 @@ class TestTas:
         tasmax = tasmax_series(np.ones(10) * 2 + (K2C if tasmax_units == "K" else 0))
         tasmax.attrs["units"] = tasmax_units
 
-        tas_xc = xci.tas(tasmin, tasmax)
+        with pytest.warns(DeprecationWarning):
+            tas_xc = xci.tas(tasmin, tasmax)
         assert tas_xc.attrs["units"] == tasmin_units
         xr.testing.assert_equal(tas, tas_xc)
 

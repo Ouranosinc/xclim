@@ -20,23 +20,23 @@ def test_wind_speed_from_vectors():
     vas = xr.DataArray(np.array([4.0, -4.0]), dims=["x"])
     vas.attrs["units"] = "m s-1"
 
-    wind, winddir = convert.wind_speed_from_vector(uas=uas, vas=vas)
+    wind, wind_dir = convert.wind_speed_from_vector(uas=uas, vas=vas)
     np.testing.assert_allclose(wind, [5.0, 5.0])
-    np.testing.assert_allclose(winddir, [216.86989764584402, 36.86989764584402])
+    np.testing.assert_allclose(wind_dir, [216.86989764584402, 36.86989764584402])
 
     # missing values
     uas[0] = np.nan
-    wind, winddir = convert.wind_speed_from_vector(uas=uas, vas=vas)
+    wind, wind_dir = convert.wind_speed_from_vector(uas=uas, vas=vas)
     np.testing.assert_array_equal(wind.isnull(), [True, False])
-    np.testing.assert_array_equal(winddir.isnull(), [True, False])
+    np.testing.assert_array_equal(wind_dir.isnull(), [True, False])
 
     # Calm thresh and northerly
     uas[:] = 0
     vas[0] = 0.9
     vas[1] = -1.1
-    wind, winddir = convert.wind_speed_from_vector(uas=uas, vas=vas, calm_wind_thresh="1 m/s")
+    wind, wind_dir = convert.wind_speed_from_vector(uas=uas, vas=vas, calm_wind_thresh="1 m/s")
     np.testing.assert_array_equal(wind, [0.9, 1.1])
-    np.testing.assert_allclose(winddir, [0.0, 360.0])
+    np.testing.assert_allclose(wind_dir, [0.0, 360.0])
 
 
 def test_wind_vector_from_speed():

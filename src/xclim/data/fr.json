@@ -395,9 +395,9 @@
     "title": "Magnitude de la vague de chaleur {freq:m} la plus intense. Une vague de chaleur est définie comme une série d'au moins {window} jours consécutifs où la température maximale quotidien est au-dessus de {thresh}.",
     "abstract": "Magnitude de la vague de chaleur {freq:m} la plus intense. Une vague de chaleur est définie comme une série d'au moins {window} jours consécutifs où la température maximale quotidien est au-dessus de {thresh}."
   },
-  "TG": {
-    "long_name": "Moyenne des températures maximale et minimale quotidennes",
-    "description": "Température moyenne quotidienne moyenne estimée par la moyenne des températures maximale et minimale quotidiennnes.",
+  "MEAN_TEMPERATURE_FROM_MAX_AND_MIN": {
+    "long_name": "Moyenne des températures maximale et minimale quotidiennes",
+    "description": "Température moyenne quotidienne moyenne estimée par la moyenne des températures maximale et minimale quotidiennes.",
     "title": "Température moyenne",
     "abstract": "La température moyenne quotidienne en supposant une distribution symétrique des températures maximale et minimale quotidiennes (Tg = (Tx + Tn) / 2)."
   },
