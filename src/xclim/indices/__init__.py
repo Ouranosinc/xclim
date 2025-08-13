@@ -2,14 +2,15 @@
 
 from __future__ import annotations
 
+from xclim.indices import converters
 from xclim.indices._agro import *
 from xclim.indices._anuclim import *
-from xclim.indices._conversion import *
 from xclim.indices._hydrology import *
 from xclim.indices._multivariate import *
 from xclim.indices._simple import *
 from xclim.indices._synoptic import *
 from xclim.indices._threshold import *
+from xclim.indices.converters import *
 from xclim.indices.fire import (
     cffwis_indices,
     drought_code,

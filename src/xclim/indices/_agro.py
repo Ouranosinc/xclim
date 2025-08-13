@@ -20,12 +20,12 @@ from xclim.core.units import (
     to_agg_units,
 )
 from xclim.core.utils import uses_dask
-from xclim.indices._conversion import potential_evapotranspiration
 from xclim.indices._simple import tn_min
 from xclim.indices._threshold import (
     first_day_temperature_above,
     first_day_temperature_below,
 )
+from xclim.indices.converters import potential_evapotranspiration
 from xclim.indices.generic import aggregate_between_dates, get_zones
 from xclim.indices.helpers import (
     _gather_lat,

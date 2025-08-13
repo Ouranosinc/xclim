@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from xclim import indices as xci
 from xclim.core.indicator import Daily, ResamplingIndicatorWithIndexing
-from xclim.indicators.atmos._conversion import Converter  # noqa
 
 __all__ = [
     "blowing_snow",
@@ -16,7 +15,6 @@ __all__ = [
     "snd_season_length",
     "snd_season_start",
     "snd_storm_days",
-    "snd_to_snw",
     "snow_depth",
     "snow_melt_we_max",
     "snw_days_above",
@@ -26,7 +24,6 @@ __all__ = [
     "snw_season_length",
     "snw_season_start",
     "snw_storm_days",
-    "snw_to_snd",
 ]
 
 
@@ -212,28 +209,6 @@ snow_depth = SnowWithIndexing(
     abstract="Mean of daily snow depth.",
     cell_methods="time: mean over days",
     compute=xci.snow_depth,
-)
-
-snd_to_snw = Converter(
-    title="Surface snow amount",
-    identifier="snd_to_snw",
-    units="kg m-2",
-    standard_name="surface_snow_amount",
-    long_name="Approximation of daily snow amount from snow depth and density",
-    description="The approximation of daily snow amount from snow depth and density.",
-    var_name="snw",
-    compute=xci.snd_to_snw,
-)
-
-snw_to_snd = Converter(
-    title="Surface snow depth",
-    identifier="snw_to_snd",
-    units="m",
-    standard_name="surface_snow_thickness",
-    long_name="Approximation of daily snow depth from snow amount and density",
-    description="The approximation of daily snow depth from snow amount and density.",
-    var_name="snd",
-    compute=xci.snw_to_snd,
 )
 
 

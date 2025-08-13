@@ -377,6 +377,7 @@ max-complexity = 20
 "src/xclim/core/locales.py" = ["E501", "W505"]
 "src/xclim/core/missing" = ["D103"]
 "src/xclim/indices/_agro.py" = ["E501"]
+"src/xclim/indices/_conversion.py" = ["F405"]
 "src/xclim/indices/fire/_cffwis.py" = ["D103"]
 "tests/**/*test*.py" = ["D100", "D101", "D102", "D103", "E501", "N802", "S101"]
 

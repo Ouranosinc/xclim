@@ -12,7 +12,6 @@ for each indicator.
 
 from __future__ import annotations
 
-from ._conversion import *
 from ._precip import *
 from ._synoptic import *
 from ._temperature import *

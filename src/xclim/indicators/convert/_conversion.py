@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
-from xclim import indices
 from xclim.core.cfchecks import cfcheck_from_name
 from xclim.core.indicator import Indicator
 from xclim.core.utils import InputKind
+from xclim.indices import converters, corn_heat_units, water_budget
 
 __all__ = [
     "clearness_index",
@@ -21,7 +21,9 @@ __all__ = [
     "relative_humidity_from_dewpoint",
     "saturation_vapor_pressure",
     "shortwave_upwelling_radiation_from_net_downwelling",
+    "snd_to_snw",
     "snowfall_approximation",
+    "snw_to_snd",
     "specific_humidity",
     "specific_humidity_from_dewpoint",
     "tg",
@@ -70,7 +72,7 @@ humidex = Converter(
     keywords="heatwave",
     abstract="The humidex describes the temperature felt by a person when relative humidity is taken into account. "
     "It can be interpreted as the equivalent temperature felt when the air is dry.",
-    compute=indices.humidex,
+    compute=converters.humidex,
 )
 
 
@@ -84,7 +86,7 @@ heat_index = Converter(
     cell_methods="",
     abstract="The heat index is an estimate of the temperature felt by a person in the shade "
     "when relative humidity is taken into account.",
-    compute=indices.heat_index,
+    compute=converters.heat_index,
 )
 
 
@@ -97,7 +99,7 @@ tg = Converter(
     description="Estimated mean temperature from maximum and minimum temperatures.",
     cell_methods="time: mean within days",
     abstract="The average daily temperature assuming a symmetrical temperature distribution (Tg = (Tx + Tn) / 2).",
-    compute=indices.tas,
+    compute=converters.tas,
 )
 
 
@@ -116,7 +118,7 @@ wind_speed_from_vector = Converter(
     cell_methods="",
     abstract="Calculation of the magnitude and direction of the wind speed "
     "from the two components west-east and south-north.",
-    compute=indices.uas_vas_to_sfcwind,
+    compute=converters.uas_vas_to_sfcwind,
 )
 
 
@@ -134,7 +136,7 @@ wind_vector_from_speed = Converter(
     cell_methods="",
     abstract="Calculation of the two components (west-east and north-south) of the wind "
     "from the magnitude of its speed and direction of origin.",
-    compute=indices.sfcwind_to_uas_vas,
+    compute=converters.sfcwind_to_uas_vas,
 )
 
 wind_power_potential = Converter(
@@ -146,7 +148,7 @@ wind_power_potential = Converter(
     "a rated speed of {rated}, and a cut_out speed of {cut_out}.",
     cell_methods="",
     abstract="Calculation of the wind power potential using a semi-idealized turbine power curve.",
-    compute=indices.wind_power_potential,
+    compute=converters.wind_power_potential,
 )
 
 wind_profile = Converter(
@@ -159,7 +161,7 @@ wind_profile = Converter(
     description="Wind speed at a height of {h} computed from the wind speed at {h_r} using a power law profile.",
     cell_methods="",
     abstract="Calculation of the wind speed at a given height from the wind speed at a reference height.",
-    compute=indices.wind_profile,
+    compute=converters.wind_profile,
 )
 
 saturation_vapor_pressure = Converter(
@@ -177,7 +179,7 @@ saturation_vapor_pressure = Converter(
     ),
     abstract="Calculation of the saturation vapour pressure from the temperature, according to a given method. "
     "If ice_thresh is given, the calculation is done with reference to ice for temperatures below this threshold.",
-    compute=indices.saturation_vapor_pressure,
+    compute=converters.saturation_vapor_pressure,
 )
 
 
@@ -199,7 +201,7 @@ relative_humidity_from_dewpoint = Converter(
         else ""
     ),
     abstract="Calculation of relative humidity from temperature and dew point using the saturation vapour pressure.",
-    compute=indices.relative_humidity,
+    compute=converters.relative_humidity,
     parameters={
         "tdps": {"kind": InputKind.VARIABLE},
         "huss": None,
@@ -227,7 +229,7 @@ relative_humidity = Converter(
     ),
     abstract="Calculation of relative humidity from temperature, "
     "specific humidity, and pressure using the saturation vapour pressure.",
-    compute=indices.relative_humidity,
+    compute=converters.relative_humidity,
     parameters={
         "tdps": None,
         "huss": {"kind": InputKind.VARIABLE},
@@ -255,7 +257,7 @@ specific_humidity = Converter(
     ),
     abstract="Calculation of specific humidity from temperature, "
     "relative humidity, and pressure using the saturation vapour pressure.",
-    compute=indices.specific_humidity,
+    compute=converters.specific_humidity,
     parameters={"invalid_values": "mask"},
 )
 
@@ -272,7 +274,7 @@ specific_humidity_from_dewpoint = Converter(
     ),
     abstract="Calculation of the specific humidity from dew point temperature "
     "and pressure using the saturation vapour pressure.",
-    compute=indices.specific_humidity_from_dewpoint,
+    compute=converters.specific_humidity_from_dewpoint,
 )
 
 dewpoint_from_specific_humidity = Converter(
@@ -283,7 +285,7 @@ dewpoint_from_specific_humidity = Converter(
         "Temperature at which the current water vapour reaches saturation. "
         "Equation from {method} is used for saturation vapour pressure."
     ),
-    compute=indices.dewpoint_from_specific_humidity,
+    compute=converters.dewpoint_from_specific_humidity,
 )
 
 vapor_pressure = Converter(
@@ -291,7 +293,7 @@ vapor_pressure = Converter(
     units="Pa",
     standard_name="water_vapor_partial_pressure_in_air",
     description="Water vapour partial pressure computed from specific humidity and total pressure.",
-    compute=indices.vapor_pressure,
+    compute=converters.vapor_pressure,
 )
 
 vapor_pressure_deficit = Converter(
@@ -310,7 +312,7 @@ vapor_pressure_deficit = Converter(
         else ""
     ),
     abstract="Difference between the saturation vapour pressure and the actual vapour pressure.",
-    compute=indices.vapor_pressure_deficit,
+    compute=converters.vapor_pressure_deficit,
 )
 
 snowfall_approximation = Converter(
@@ -325,8 +327,31 @@ snowfall_approximation = Converter(
     ),
     abstract="Solid precipitation estimated from total precipitation and temperature "
     "with a given method and temperature threshold.",
-    compute=indices.snowfall_approximation,
+    compute=converters.snowfall_approximation,
     context="hydro",
+)
+
+snd_to_snw = Converter(
+    title="Surface snow amount",
+    identifier="snd_to_snw",
+    units="kg m-2",
+    standard_name="surface_snow_amount",
+    long_name="Approximation of daily snow amount from snow depth and density",
+    description="The approximation of daily snow amount from snow depth and density.",
+    var_name="snw",
+    compute=converters.snd_to_snw,
+)
+
+
+snw_to_snd = Converter(
+    title="Surface snow depth",
+    identifier="snw_to_snd",
+    units="m",
+    standard_name="surface_snow_thickness",
+    long_name="Approximation of daily snow depth from snow amount and density",
+    description="The approximation of daily snow depth from snow amount and density.",
+    var_name="snd",
+    compute=converters.snw_to_snd,
 )
 
 
@@ -342,7 +367,7 @@ rain_approximation = Converter(
     ),
     abstract="Liquid precipitation estimated from total precipitation and temperature "
     "with a given method and temperature threshold.",
-    compute=indices.rain_approximation,
+    compute=converters.rain_approximation,
     context="hydro",
 )
 
@@ -365,7 +390,7 @@ wind_chill_index = Converter(
     "It is calculated from the temperature and the wind speed at 10 m. "
     "As defined by Environment and Climate Change Canada, a second formula is used for light winds. "
     "The standard formula is otherwise the same as used in the United States.",
-    compute=indices.wind_chill_index,
+    compute=converters.wind_chill_index,
     parameters={"mask_invalid": True},
 )
 
@@ -385,7 +410,7 @@ potential_evapotranspiration = Converter(
         "The potential for water evaporation from soil and transpiration by plants if the water "
         "supply is sufficient, calculated with a given method."
     ),
-    compute=indices.potential_evapotranspiration,
+    compute=converters.potential_evapotranspiration,
 )
 
 water_budget_from_tas = Converter(
@@ -401,7 +426,7 @@ water_budget_from_tas = Converter(
         "Precipitation minus potential evapotranspiration as a measure of an approximated surface water budget, "
         "where the potential evapotranspiration is calculated with a given method."
     ),
-    compute=indices.water_budget,
+    compute=water_budget,
 )
 
 water_budget = Converter(
@@ -413,7 +438,7 @@ water_budget = Converter(
         "Precipitation minus potential evapotranspiration as a measure of an approximated surface water budget."
     ),
     abstract=("Precipitation minus potential evapotranspiration as a measure of an approximated surface water budget."),
-    compute=indices.water_budget,
+    compute=water_budget,
     parameters={"method": "dummy"},
 )
 
@@ -431,7 +456,7 @@ corn_heat_units = Converter(
     var_name="chu",
     cell_methods="",
     missing="skip",
-    compute=indices.corn_heat_units,
+    compute=corn_heat_units,
 )
 
 universal_thermal_climate_index = Converter(
@@ -445,7 +470,7 @@ universal_thermal_climate_index = Converter(
     "and is used to evaluate heat stress in outdoor spaces.",
     cell_methods="",
     var_name="utci",
-    compute=indices.universal_thermal_climate_index,
+    compute=converters.universal_thermal_climate_index,
 )
 
 mean_radiant_temperature = Converter(
@@ -457,7 +482,7 @@ mean_radiant_temperature = Converter(
     abstract="The average temperature of solar and thermal radiation incident on the body's exterior.",
     cell_methods="",
     var_name="mrt",
-    compute=indices.mean_radiant_temperature,
+    compute=converters.mean_radiant_temperature,
 )
 
 
@@ -470,7 +495,7 @@ shortwave_upwelling_radiation_from_net_downwelling = Converter(
     description="The calculation of upwelling shortwave radiative flux from net surface shortwave "
     "and downwelling surface shortwave fluxes.",
     var_name="rsus",
-    compute=indices.shortwave_upwelling_radiation_from_net_downwelling,
+    compute=converters.shortwave_upwelling_radiation_from_net_downwelling,
 )
 
 longwave_upwelling_radiation_from_net_downwelling = Converter(
@@ -482,7 +507,7 @@ longwave_upwelling_radiation_from_net_downwelling = Converter(
     description="The calculation of upwelling longwave radiative flux from net surface longwave "
     "and downwelling surface longwave fluxes.",
     var_name="rlus",
-    compute=indices.longwave_upwelling_radiation_from_net_downwelling,
+    compute=converters.longwave_upwelling_radiation_from_net_downwelling,
 )
 
 clearness_index = Converter(
@@ -492,5 +517,5 @@ clearness_index = Converter(
     long_name="Clear index",
     description="The ratio of shortwave downwelling radiation to extraterrestrial radiation.",
     var_name="ci",
-    compute=indices.clearness_index,
+    compute=converters.clearness_index,
 )
