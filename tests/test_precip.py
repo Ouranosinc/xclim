@@ -6,7 +6,7 @@ import pytest
 import xarray as xr
 
 import xclim.indices as xci
-from xclim import atmos, core, set_options
+from xclim import atmos, convert, core, set_options
 from xclim.core.calendar import build_climatology_bounds, percentile_doy
 from xclim.core.units import convert_units_to
 
@@ -494,7 +494,7 @@ class TestSnowfallDate:
                 xr.open_dataset(nimbus.fetch(cls.tasmin_file), engine="h5netcdf"),
             )
         )
-        return atmos.snowfall_approximation(dnr.pr, tas=dnr.tasmin, thresh="-0.5 degC", method="binary")
+        return convert.snowfall_approximation(dnr.pr, tas=dnr.tasmin, thresh="-0.5 degC", method="binary")
 
     def test_first_snowfall(self, nimbus):
         with set_options(check_missing="skip"):
@@ -700,7 +700,7 @@ class TestSnowfallMeteoSwiss:
                 xr.open_dataset(nimbus.fetch(cls.tasmin_file), engine="h5netcdf"),
             )
         )
-        return atmos.snowfall_approximation(dnr.pr, tas=dnr.tasmin, thresh="-0.5 degC", method="binary")
+        return convert.snowfall_approximation(dnr.pr, tas=dnr.tasmin, thresh="-0.5 degC", method="binary")
 
     def test_snowfall_frequency(self, nimbus):
         prsn = self.get_snowfall(nimbus)

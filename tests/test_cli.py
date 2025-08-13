@@ -80,7 +80,7 @@ def test_normal_computation(tasmin_series, tasmax_series, pr_series, tmp_path, i
         data_vars={
             "tasmin": tasmin,
             "tasmax": tasmax,
-            "tas": xclim.atmos.tg(tasmin, tasmax),
+            "tas": xclim.convert.tg(tasmin, tasmax),
             "pr": pr,
         }
     )
