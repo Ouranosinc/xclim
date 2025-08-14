@@ -797,7 +797,7 @@ def _season_an_rr(
 
     return rrr_season, rrr_yearly
 
-
+@declare_units(q="[discharge]", pr="[precipitation]")
 def streamflow_elasticity(
     q: xarray.DataArray,
     pr: xarray.DataArray,
@@ -857,75 +857,51 @@ def streamflow_elasticity(
 
     # Cumpute single value using median (more robust value)
     elasticity_index = yearly_elasticity.median(dim="time")
-
+    elasticity_index.attrs["units"] = ""
     return elasticity_index
 
+@declare_units(swe="[length]" )
 def _days_with_snowpack(
     swe: xr.DataArray,
     swe_threshold_mm: float = None,
-    min_ratio_missing_days: float = None,
     freq: str = "YS-OCT",
     )-> xr.DataArray:
-    """
-    Count days per year with snowpack on the ground above a given threshold.
+        """
+        Count days per year with snowpack on the ground above a given threshold.
 
-    Parameters
-    ----------
-    swe : xarray.DataArray
-        Daily Snow Water Equivalent (SWE), in millimeters [mm].
-    swe_threshold_mm : float, optional
-        Minimum SWE value to consider a snow-covered day. Default is 10 mm.
-    min_ratio_missing_days : float, optional
-        Minimum required fraction of available (non-missing) data per water year.
-        If the fraction of available days falls below this threshold, the corresponding year is excluded.
-        Default is 0.7 (i.e., allow up to 30% missing data).
-    Returns
-    -------
-    xarray.DataArray, [days]
-        number of days with snow on the ground.
+        Parameters
+        ----------
+        swe : xarray.DataArray
+            Daily Snow Water Equivalent (SWE), in millimeters [mm].
+        swe_threshold_mm : float, optional
+            Minimum SWE value to consider a snow-covered day. Default is 10 mm.
 
-    Warnings
-    --------
-    The default `freq` is the water year used in the northern hemisphere, from October to September
+        Returns
+        -------
+        xarray.DataArray, [days]
+            number of days with snow on the ground.
 
-    """
-    # Set defaults if values are None
-    if swe_threshold_mm is None:
-        swe_threshold_mm = 10.0  # default in mm
+        Warnings
+        --------
+        The default `freq` is the water year used in the northern hemisphere, from October to September.
+        It is recommended to 70% or more valid data per water year in order to compute significant values.
 
-    if min_ratio_missing_days is None:
-        min_ratio_missing_days = 0.7  # default missing threshold
+        """
+        # Set defaults if values are None
+        if swe_threshold_mm is None:
+            swe_threshold_mm = 10.0  # default in mm
 
-    # Group by year
-    swe_yearly = swe.resample(time=freq)
+        # compute signature:
+        days_with_snowpack = swe >= swe_threshold_mm
+        result = days_with_snowpack.resample(time=freq).sum()  # convert results to water years
+        result = result.rename("days_with_snowpack")
+        result['year'] = result['time.year']
+        result = result.set_index(time='year')
+        result.attrs["units"] = "days"
+        return result
 
-    # Count number of valid (non-NaN) days per year
-    valid_counts = swe_yearly.count()
-
-    # Calculate the percentage of missing values
-    valid_ratio = valid_counts / 365  # simple ratio of days per year
-
-    threshold_ratio = min_ratio_missing_days
-    valid_years = valid_ratio.time[valid_ratio >= threshold_ratio]
-    valid_years = pd.to_datetime(valid_years)
-
-    start_date = valid_years.min()
-    end_date = valid_years.max() + pd.DateOffset(years=1) - pd.Timedelta(days=1)  # in order to maintain all days within the last valid water year
-
-    # Slice original SWE data from start to end of valid water years
-    filtered_swe = swe.sel(time=slice(start_date, end_date))
-
-    # compute signature:
-    days_with_snowpack = filtered_swe >= swe_threshold_mm
-    out = days_with_snowpack.resample(time=freq).sum()  # convert results to water years
-    out = out.rename("days_with_snowpack")
-    out['year'] = out['time.year']
-    out = out.set_index(time='year')
-
-    return out
-
-
-def annual_aridity_index(pr: xarray.DataArray, pet: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
+@declare_units(pr="[precipitation]", pet = "[length]/[time]")
+def _annual_aridity_index(pr: xarray.DataArray, pet: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
     """Aridity index.
 
     Parameters
