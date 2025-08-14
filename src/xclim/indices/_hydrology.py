@@ -922,7 +922,7 @@ def _annual_aridity_index(pr: xarray.DataArray, pet: xarray.DataArray, freq: str
 
     Notes
     -----
-    Ranges from 0 to 1, 0 being the most aride and 1 the most humid
+    Aridity index under 0.65 descibes an arid environment and over is the more humid.
 
     References
     ----------
@@ -958,6 +958,7 @@ def _lag_snowpack_flow_peaks(
             Resampling frequency, here water year stating on the 1st of October
     percentile: int, optional
         frequency percentile for high flows, default is 90% of non-exceedance frequency.
+
     Returns
     -------
     xarray.DataArray, [days]
@@ -973,8 +974,7 @@ def _lag_snowpack_flow_peaks(
     doy_swe_max = t_swe_max.dt.dayofyear
 
     # Compute threshold per water year using resample
-    threshold = q.resample(time="YS-OCT").reduce(np.nanpercentile, q=percentile,
-                                                 dim="time")  # second q, equal to percentile, is a keyword in np.nanpercentile, not the flow variable.
+    threshold = q.resample(time="YS-OCT").reduce(np.nanpercentile, q=percentile, dim="time")  # second q, equal to percentile, is a keyword in np.nanpercentile, not the flow variable.
     threshold_for_each_time = threshold.reindex_like(q, method='ffill')
     q_high = q.where(q >= threshold_for_each_time).dropna(dim="time", how="all")
 
@@ -988,3 +988,102 @@ def _lag_snowpack_flow_peaks(
     lag.attrs["units"] = "days"
     lag.name = "lag_snowpack_flow_peaks"
     return lag
+
+def SS_an_season(q: xarray.DataArray,
+    qsim: xarray.DataArray = None
+    ) -> xarray.DataArray:
+        """ Annual and Seasonal Theil-Sen Slope (SS) estimators and Mann Kendall test for tendency evaluations
+
+        Parameters
+        ----------
+        q : array_like
+            Observed streamflow vector.
+        qsim : array_like
+            Simulated streamflow vector.
+
+        Returns
+        -------
+        xr.Dataset
+            'Sen_slope': Sen's slope estimates for season averages, and yearly averages
+            'p_value': Mann Kendall metric to verify overall slope tendency. If p-value <= 0.05, the trend is statistically significant at the 5% level.
+            If simulated flows are provided :
+            Sen_slope_sim, p_value_sim and ratio of Obsered Sen_slope over simulated Sen_slope are ruterned as well.
+
+        Notes
+        -----
+        Ratio of Obsered Sen_slope over simulated Sen_slope is considered acceptable within the range 0.5 to 2 and is optimal at 1. (Sauquet et al., 2025)
+
+        References
+        ----------
+
+        Hussain et al., (2019). pyMannKendall: a python package for non parametric Mann Kendall family of trend tests. Journal of Open Source Software, 4(39), 1556, https://doi.org/10.21105/joss.01556
+        https://pypi.org/project/pymannkendall/
+
+        Sauquet, E., Evin, G., Siauve, S., Aissat, R., Arnaud, P., Bérel, M., Bonneau, J., Branger, F., Caballero, Y., Colléoni, F., Ducharne, A., Gailhard, J., Habets, F., Hendrickx, F., Héraut, L., Hingray, B., Huang, P., Jaouen, T., Jeantet, A., … Vidal, J.-P. (2025).
+        A large transient multi-scenario multi-model ensemble of future streamflow and groundwater projections in France. https://doi.org/10.5194/egusphere-2025-1788.
+        Article in preprint stage.
+
+
+        """
+        seasons = ['DJF', 'MAM', 'JJA', 'SON', 'Year']
+
+        def compute_seasonal_stats(x):
+            # Convert to pandas Series with DatetimeIndex
+            x_year = x.resample(time="YS-DEC").mean()
+            x_season = x.resample(time="QS-DEC").mean()
+
+            x_series = x_season.to_series()
+
+            # Create a MultiIndex: year + season (0–3)
+            season_index = (
+                (x_series.index.month % 12 // 3)  # 0 for DJF, 1 for MAM, etc.
+            )
+            x_df = pd.DataFrame({'value': x_series.values, 'season': season_index, 'year': x_series.index.year})
+            #  Pivot to shape (n_years, 4 seasons)
+            df_seasons = x_df.pivot(index='season', columns="year", values='value')
+
+            # rename columns
+            df_seasons.index = ['DJF', 'MAM', 'JJA', 'SON']
+
+            ss_DJF = mk.original_test(df_seasons.iloc[0])
+            ss_MAM = mk.original_test(df_seasons.iloc[1])
+            ss_JJA = mk.original_test(df_seasons.iloc[2])
+            ss_SON = mk.original_test(df_seasons.iloc[3])
+            ss_an = mk.original_test(x_year)
+
+            slopes = [ss_DJF.slope, ss_MAM.slope, ss_JJA.slope, ss_SON.slope, ss_an.slope]
+            pvals = [ss_DJF.p, ss_MAM.p, ss_JJA.p, ss_SON.p, ss_an.p]
+
+            return slopes, pvals,
+
+        if qsim is not None:
+            slopes, pvals = compute_seasonal_stats(q)
+            slopes_sim, pvals_sim = compute_seasonal_stats(qsim)
+            slopes_np = np.array(slopes)
+            slopes_sim_np = np.array(slopes_sim)
+            ratio = slopes_np / slopes_sim_np
+            ds = xarray.Dataset(
+                data_vars={
+                    "Sen_slope_obs": ('season', slopes),
+                    'p_value_obs': ('season', pvals),
+                    "Sen_slope_sim": ('season', slopes_sim),
+                    'p_value_sim': ('season', pvals_sim),
+                    'ratio': ('season', ratio)
+
+                },
+                coords={'season': seasons}
+            )
+
+
+        else:
+            slopes, pvals = compute_seasonal_stats(q)
+            # Create labeled xarray
+            ds = xarray.Dataset(
+                data_vars={
+                    "Sen_slope": ('season', slopes),
+                    'p_value': ('season', pvals)
+                },
+                coords={'season': seasons}
+            )
+
+        return ds
