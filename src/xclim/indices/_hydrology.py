@@ -875,16 +875,17 @@ def _days_with_snowpack(
             Daily Snow Water Equivalent (SWE), in millimeters [mm].
         swe_threshold_mm : float, optional
             Minimum SWE value to consider a snow-covered day. Default is 10 mm.
-
+        freq: str, optional
+            Resampling frequency, here water year stating on the 1st of October
         Returns
         -------
         xarray.DataArray, [days]
-            number of days with snow on the ground.
+            Number of days with snowpack over threshold
 
         Warnings
         --------
         The default `freq` is the water year used in the northern hemisphere, from October to September.
-        It is recommended to 70% or more valid data per water year in order to compute significant values.
+        It is recommended to have at least 70% of valid data per water year in order to compute significant values.
 
         """
         # Set defaults if values are None
@@ -934,3 +935,56 @@ def _annual_aridity_index(pr: xarray.DataArray, pet: xarray.DataArray, freq: str
     ai.name = "aridity_index"
 
     return ai
+
+
+@declare_units(swe="[length]", q="[discharge]")
+def _lag_snowpack_flow_peaks(
+    swe: xarray.DataArray,
+    q: xarray.DataArray,
+    freq: str = "YS-OCT",
+    percentile: int = 90,
+    min_ratio_missing_days: float = None,
+) -> xarray.DataArray:
+    """
+    Compute lag in days between max SWE and circular mean high flows of each year
+
+    Parameters
+    ----------
+    swe : xarray.DataArray
+        Daily Snow Water Equivalent (SWE) [mm]
+    q : xarray.DataArray
+        Daily streamflow [e.g., m³/s]
+    freq: str, optional
+            Resampling frequency, here water year stating on the 1st of October
+    percentile: int, optional
+        frequency percentile for high flows, default is 90% of non-exceedance frequency.
+    Returns
+    -------
+    xarray.DataArray, [days]
+        Number of lag days between SWE max and high flows of each year
+
+    Warnings
+    --------
+    The default `freq` is the water year used in the northern hemisphere, from October to September
+    It is recommended to have at least 70% of valid data per water year in order to compute significant values.
+    """
+    # Find time of max SWE per year
+    t_swe_max = swe.resample(time=freq).apply(lambda x: x.idxmax())
+    doy_swe_max = t_swe_max.dt.dayofyear
+
+    # Compute threshold per water year using resample
+    threshold = q.resample(time="YS-OCT").reduce(np.nanpercentile, q=percentile,
+                                                 dim="time")  # second q, equal to percentile, is a keyword in np.nanpercentile, not the flow variable.
+    threshold_for_each_time = threshold.reindex_like(q, method='ffill')
+    q_high = q.where(q >= threshold_for_each_time).dropna(dim="time", how="all")
+
+    # Day of year for high flow peaks
+    doy = q_high.time.dt.dayofyear
+
+    t_q_max = doy.resample(time=freq).reduce(partial(circmean, high=366, low=1), dim="time")
+
+    # Compute lag
+    lag = t_q_max - doy_swe_max
+    lag.attrs["units"] = "days"
+    lag.name = "lag_snowpack_flow_peaks"
+    return lag
