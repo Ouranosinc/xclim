@@ -3,7 +3,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from xclim import land
+from xclim import convert, land
 from xclim.core import ValidationError
 
 
@@ -123,7 +123,7 @@ class TestSnwMaxDoy:
 class TestHolidaySnowIndicators:
     def test_xmas_days_simple(self, open_dataset):
         ds = open_dataset("cmip6/snw_day_CanESM5_historical_r1i1p1f1_gn_19910101-20101231.nc")
-        snd = land.snw_to_snd(ds.snw)
+        snd = convert.snw_to_snd(ds.snw)
 
         out = land.holiday_snow_days(snd)
 
@@ -145,7 +145,7 @@ class TestHolidaySnowIndicators:
         ds_snw = open_dataset("cmip6/snw_day_CanESM5_historical_r1i1p1f1_gn_19910101-20101231.nc")
         ds_prsn = open_dataset("cmip6/prsn_day_CanESM5_historical_r1i1p1f1_gn_19910101-20101231.nc")
 
-        snd = land.snw_to_snd(ds_snw.snw)
+        snd = convert.snw_to_snd(ds_snw.snw)
         prsn = ds_prsn.prsn
 
         out = land.holiday_snow_and_snowfall_days(snd, prsn)

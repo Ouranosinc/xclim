@@ -288,7 +288,7 @@ class IndicatorRegistrar:
         # If the module is not one of xclim's default, prepend the submodule name.
         if module.startswith("xclim.indicators"):
             submodule = module.split(".")[2]
-            if submodule not in ["atmos", "generic", "land", "ocean", "seaIce"]:
+            if submodule not in ["atmos", "convert", "generic", "land", "ocean", "seaIce"]:
                 name = f"{submodule}.{name}"
         else:
             name = f"{module}.{name}"
@@ -357,7 +357,7 @@ class Indicator(IndicatorRegistrar):
     ----------
     identifier : str
         Unique ID for class registry. Should be a valid slug.
-    realm : {'atmos', 'seaIce', 'land', 'ocean'}
+    realm : {'atmos', 'convert', 'seaIce', 'land', 'ocean'}
         General domain of validity of the indicator.
         Indicators created outside ``xclim.indicators`` must set this attribute.
     compute : func
@@ -525,9 +525,9 @@ class Indicator(IndicatorRegistrar):
 
         # Priority given to passed realm -> parent's realm -> location of the class declaration (official inds only)
         kwds.setdefault("realm", cls.realm or xclim_realm)
-        if kwds["realm"] not in ["atmos", "seaIce", "land", "ocean", "generic"]:
+        if kwds["realm"] not in ["atmos", "seaIce", "land", "ocean", "generic", "convert"]:
             raise AttributeError(
-                "Indicator's realm must be given as one of 'atmos', 'seaIce', 'land', 'ocean' or 'generic'"
+                "Indicator's realm must be given as one of 'atmos', 'seaIce', 'land', 'ocean', 'generic' or 'convert'."
             )
 
         # Create new class object

@@ -28,6 +28,7 @@ __all__ = [
     "cool_night_index",
     "cooling_degree_days",
     "cooling_degree_days_approximation",
+    "corn_heat_units",
     "daily_freezethaw_cycles",
     "daily_temperature_range",
     "daily_temperature_range_variability",
@@ -107,6 +108,12 @@ __all__ = [
 
 
 # We need to declare the class here so that the `atmos` realm is automatically detected.
+class TempDailyNoResampling(Indicator):
+    """Indicators involving daily temperature without resampling."""
+
+    src_freq = "D"
+
+
 class Temp(Daily):
     """Indicators involving daily temperature."""
 
@@ -1439,6 +1446,23 @@ biologically_effective_degree_days = Temp(
         "start_date": {"default": "04-01"},
         "end_date": {"default": "11-01"},
     },
+)
+
+
+corn_heat_units = TempDailyNoResampling(
+    title="Corn heat units",
+    identifier="corn_heat_units",
+    units="",
+    long_name="Corn heat units (Tmin > {thresh_tasmin} and Tmax > {thresh_tasmax})",
+    description="Temperature-based index used to estimate the development of corn crops. "
+    "Corn growth occurs when the minimum and maximum daily temperatures both exceed "
+    "{thresh_tasmin} and {thresh_tasmax}, respectively.",
+    abstract="A temperature-based index used to estimate the development of corn crops. "
+    "Corn growth occurs when the daily minimum and maximum temperatures exceed given thresholds.",
+    var_name="chu",
+    cell_methods="",
+    missing="skip",
+    compute=indices.corn_heat_units,
 )
 
 
