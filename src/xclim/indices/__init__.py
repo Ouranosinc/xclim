@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from xclim.indices import converters
 from xclim.indices._agro import *
 from xclim.indices._anuclim import *
 from xclim.indices._hydrology import *

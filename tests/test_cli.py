@@ -64,7 +64,7 @@ def test_indicator_help(indicator, indname):
 
 
 @pytest.mark.parametrize(
-    "indicator,expected,varnames",
+    "indicator,expected,var_names",
     [
         ("tg_mean", 272.15, ["tas"]),
         ("dtrvar", 0.0, ["tasmin", "tasmax"]),
@@ -72,18 +72,19 @@ def test_indicator_help(indicator, indname):
         ("solidprcptot", 31622400.0, ["tas", "pr"]),
     ],
 )
-def test_normal_computation(tasmin_series, tasmax_series, pr_series, tmp_path, indicator, expected, varnames):
+def test_normal_computation(tasmin_series, tasmax_series, pr_series, tmp_path, indicator, expected, var_names):
     tasmin = tasmin_series(np.ones(366) + 270.15, start="1/1/2000")
     tasmax = tasmax_series(np.ones(366) + 272.15, start="1/1/2000")
     pr = pr_series(np.ones(366), start="1/1/2000")
-    ds = xr.Dataset(
-        data_vars={
-            "tasmin": tasmin,
-            "tasmax": tasmax,
-            "tas": xclim.convert.tg(tasmin, tasmax),
-            "pr": pr,
-        }
-    )
+    with pytest.warns(DeprecationWarning):
+        ds = xr.Dataset(
+            data_vars={
+                "tasmin": tasmin,
+                "tasmax": tasmax,
+                "tas": xclim.convert.tg(tasmin, tasmax),
+                "pr": pr,
+            }
+        )
     input_file = tmp_path / "in.nc"
     output_file = tmp_path / "out.nc"
 
@@ -92,14 +93,14 @@ def test_normal_computation(tasmin_series, tasmax_series, pr_series, tmp_path, i
     args = ["-i", str(input_file), "-o", str(output_file), "-v", indicator]
     runner = CliRunner()
     results = runner.invoke(cli, args)
-    for varname in varnames:
-        assert f"Parsed {varname} = {varname}" in results.output
+    for var_name in var_names:
+        assert f"Parsed {var_name} = {var_name}" in results.output
     assert "Processing :" in results.output
     assert "100% Completed" in results.output
 
     with xr.open_dataset(output_file) as out:
-        outvar = list(out.data_vars.values())[0]
-        np.testing.assert_allclose(outvar[0], expected)
+        out_var = list(out.data_vars.values())[0]
+        np.testing.assert_allclose(out_var[0], expected)
 
 
 def test_multi_input(tas_series, pr_series, tmp_path):

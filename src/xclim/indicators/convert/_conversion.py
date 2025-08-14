@@ -7,11 +7,10 @@ import warnings
 from xclim.core.cfchecks import cfcheck_from_name
 from xclim.core.indicator import Indicator
 from xclim.core.utils import InputKind
-from xclim.indices import converters, corn_heat_units, water_budget
+from xclim.indices import converters
 
 __all__ = [
     "clearness_index",
-    "corn_heat_units",
     "dewpoint_from_specific_humidity",
     "heat_index",
     "humidex",
@@ -93,14 +92,14 @@ heat_index = Converter(
 )
 
 
-def tg():  # numpydoc ignore=GL08
+def tg(*args, **kwargs):  # numpydoc ignore=GL08
     warnings.warn(
         "The `tg` function is deprecated and will be removed in a future release. "
         "Use `mean_temperature_from_max_and_min` instead.",
         DeprecationWarning,
         stacklevel=2,
     )
-    return mean_temperature_from_max_and_min
+    return mean_temperature_from_max_and_min(*args, **kwargs)
 
 
 mean_temperature_from_max_and_min = Converter(
@@ -439,7 +438,7 @@ water_budget_from_tas = Converter(
         "Precipitation minus potential evapotranspiration as a measure of an approximated surface water budget, "
         "where the potential evapotranspiration is calculated with a given method."
     ),
-    compute=water_budget,
+    compute=converters.water_budget,
 )
 
 water_budget = Converter(
@@ -450,27 +449,11 @@ water_budget = Converter(
     description=(
         "Precipitation minus potential evapotranspiration as a measure of an approximated surface water budget."
     ),
-    abstract=("Precipitation minus potential evapotranspiration as a measure of an approximated surface water budget."),
-    compute=water_budget,
+    abstract="Precipitation minus potential evapotranspiration as a measure of an approximated surface water budget.",
+    compute=converters.water_budget,
     parameters={"method": "dummy"},
 )
 
-
-corn_heat_units = Converter(
-    title="Corn heat units",
-    identifier="corn_heat_units",
-    units="",
-    long_name="Corn heat units (Tmin > {thresh_tasmin} and Tmax > {thresh_tasmax})",
-    description="Temperature-based index used to estimate the development of corn crops. "
-    "Corn growth occurs when the minimum and maximum daily temperatures both exceed "
-    "{thresh_tasmin} and {thresh_tasmax}, respectively.",
-    abstract="A temperature-based index used to estimate the development of corn crops. "
-    "Corn growth occurs when the daily minimum and maximum temperatures exceed given thresholds.",
-    var_name="chu",
-    cell_methods="",
-    missing="skip",
-    compute=corn_heat_units,
-)
 
 universal_thermal_climate_index = Converter(
     title="Universal Thermal Climate Index (UTCI)",

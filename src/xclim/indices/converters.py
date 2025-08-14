@@ -64,6 +64,7 @@ __all__ = [
     "universal_thermal_climate_index",
     "vapor_pressure",
     "vapor_pressure_deficit",
+    "water_budget",
     "wind_chill_index",
     "wind_power_potential",
     "wind_profile",
@@ -2478,6 +2479,110 @@ def mean_radiant_temperature(
     )
     mrt = mrt.assign_attrs({"units": "K"})
     return mrt
+
+
+@declare_units(
+    pr="[precipitation]",
+    evspsblpot="[precipitation]",
+    tasmin="[temperature]",
+    tasmax="[temperature]",
+    tas="[temperature]",
+    lat="[]",
+    hurs="[]",
+    rsds="[radiation]",
+    rsus="[radiation]",
+    rlds="[radiation]",
+    rlus="[radiation]",
+    sfcWind="[speed]",
+)
+def water_budget(
+    pr: xr.DataArray,
+    evspsblpot: xr.DataArray | None = None,
+    tasmin: xr.DataArray | None = None,
+    tasmax: xr.DataArray | None = None,
+    tas: xr.DataArray | None = None,
+    lat: xr.DataArray | None = None,
+    hurs: xr.DatArray | None = None,
+    rsds: xr.DataArray | None = None,
+    rsus: xr.DataArray | None = None,
+    rlds: xr.DataArray | None = None,
+    rlus: xr.DataArray | None = None,
+    sfcWind: xr.DataArray | None = None,
+    method: str = "BR65",
+) -> xr.DataArray:
+    r"""
+    Precipitation minus potential evapotranspiration.
+
+    Precipitation minus potential evapotranspiration as a measure of an approximated surface water budget,
+    where the potential evapotranspiration can be calculated with a given method.
+
+    Parameters
+    ----------
+    pr : xarray.DataArray
+        Daily precipitation.
+    evspsblpot : xarray.DataArray, optional
+        Potential evapotranspiration.
+    tasmin : xarray.DataArray, optional
+        Minimum daily temperature.
+    tasmax : xarray.DataArray, optional
+        Maximum daily temperature.
+    tas : xarray.DataArray, optional
+        Mean daily temperature.
+    lat : xarray.DataArray, optional
+        Latitude coordinate, needed if evspsblpot is not given.
+        If None, a CF-conformant "latitude" field must be available within the `pr` DataArray.
+    hurs : xarray.DataArray, optional
+        Relative humidity.
+    rsds : xarray.DataArray, optional
+        Surface Downwelling Shortwave Radiation.
+    rsus : xarray.DataArray, optional
+        Surface Upwelling Shortwave Radiation.
+    rlds : xarray.DataArray, optional
+        Surface Downwelling Longwave Radiation.
+    rlus : xarray.DataArray, optional
+        Surface Upwelling Longwave Radiation.
+    sfcWind : xarray.DataArray, optional
+        Surface wind velocity (at 10 m).
+    method : str
+        Method to use to calculate the potential evapotranspiration.
+
+    Returns
+    -------
+    xarray.DataArray
+        Precipitation minus potential evapotranspiration.
+
+    See Also
+    --------
+    xclim.indicators.atmos.potential_evapotranspiration : Potential evapotranspiration calculation.
+    """
+    pr = convert_units_to(pr, "kg m-2 s-1", context="hydro")
+
+    if lat is None and evspsblpot is None:
+        lat = _gather_lat(pr)
+
+    if evspsblpot is None:
+        pet = potential_evapotranspiration(
+            tasmin=tasmin,
+            tasmax=tasmax,
+            tas=tas,
+            lat=lat,
+            hurs=hurs,
+            rsds=rsds,
+            rsus=rsus,
+            rlds=rlds,
+            rlus=rlus,
+            sfcWind=sfcWind,
+            method=method,
+        )
+    else:
+        pet = convert_units_to(evspsblpot, "kg m-2 s-1", context="hydro")
+
+    if xr.infer_freq(pet.time) == "MS":
+        pr = pr.resample(time="MS").mean(dim="time", keep_attrs=True)
+
+    out: xr.DataArray = pr - pet
+    out = out.assign_attrs(units=pr.attrs["units"])
+    return out
 
 
 @declare_units(wind_speed="[speed]", h="[length]", h_r="[length]")

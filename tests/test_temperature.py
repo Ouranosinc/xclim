@@ -1398,8 +1398,8 @@ def test_corn_heat_units(open_dataset):
         tnC = tn - K2C
         tnC.attrs["units"] = "C"
 
-    chu = convert.corn_heat_units(tasmin=tn, tasmax=tx, thresh_tasmin="4.44 degC", thresh_tasmax="10 degC")
-    chuC = convert.corn_heat_units(tasmin=tnC, tasmax=tx, thresh_tasmin="4.44 degC", thresh_tasmax="10 degC")
+    chu = atmos.corn_heat_units(tasmin=tn, tasmax=tx, thresh_tasmin="4.44 degC", thresh_tasmax="10 degC")
+    chuC = atmos.corn_heat_units(tasmin=tnC, tasmax=tx, thresh_tasmin="4.44 degC", thresh_tasmax="10 degC")
 
     np.testing.assert_allclose(chu, chuC, rtol=1e-3)
 
