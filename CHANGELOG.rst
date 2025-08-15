@@ -47,6 +47,7 @@ Bug fixes
 * In ``xclim.indices._conversion.humidex`` and ``xclim.indices._conversion.vapor_pressure_deficit``, add a converter to ensure `hurs` has '%' units. (:pull:`2209`).
 * Indices relying on ``units.to_agg_units(src, out, 'count')`` will not raise on a non-inferrable frequency and instead use the common default of "D", as their docstring implies. (:issue:`2215`, :pull:`2217`).
 * Fix ``spell_length_statistics`` and related functions for cases where ``thresh`` is a DataArray. (:issue:`2216`, :pull:`2218`).
+* In the Canadian Forest Fire Weather Index System, values of 0 for both the Duff-Moisture code (DMC) and the Drought code (DC) will yield a 0 Build-Up index (BUI) instead of failing with division by zero error (:issue:`2145`, :pull:`2225`).
 
 v0.57.0 (2025-05-22)
 --------------------

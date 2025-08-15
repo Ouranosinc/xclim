@@ -470,11 +470,17 @@ def build_up_index(dmc, dc):
     array
         Build up index.
     """
+    # Ensure we don't have a division by 0
+    denom = np.where((dmc == 0) & (dc == 0), np.nan, dmc + 0.4 * dc)
     bui = np.where(
-        dmc <= 0.4 * dc,
-        (0.8 * dc * dmc) / (dmc + 0.4 * dc),  # *Eq.27a*#
-        dmc - (1.0 - 0.8 * dc / (dmc + 0.4 * dc)) * (0.92 + (0.0114 * dmc) ** 1.7),
-    )  # *Eq.27b*#
+        (dmc == 0) & (dc == 0),
+        0,
+        np.where(
+            dmc <= 0.4 * dc,
+            (0.8 * dc * dmc) / denom,  # *Eq.27a*#
+            dmc - (1.0 - 0.8 * dc / denom) * (0.92 + (0.0114 * dmc) ** 1.7),
+        ),  # *Eq.27b*#
+    )
     return np.clip(bui, 0, None)
 
 
