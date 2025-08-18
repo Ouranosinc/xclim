@@ -994,7 +994,7 @@ def _lag_snowpack_flow_peaks(
 def SS_an_season(q: xarray.DataArray,
     qsim: xarray.DataArray = None
     ) -> xarray.DataArray:
-        """ Annual and Seasonal Theil-Sen Slope (SS) estimators and Mann Kendall test for tendency evaluations
+        """ Annual and Seasonal Theil-Sen Slope (SS) estimators and Mann-Kendall test for trend evaluations
 
         Parameters
         ----------
@@ -1006,19 +1006,19 @@ def SS_an_season(q: xarray.DataArray,
         Returns
         -------
         xr.Dataset
-            'Sen_slope': Sen's slope estimates for season averages, and yearly averages
-            'p_value': Mann Kendall metric to verify overall slope tendency. If p-value <= 0.05, the trend is statistically significant at the 5% level.
+            'Sen_slope': Sen's slope estimates for season averages and yearly average
+            'p_value': Mann-Kendall metric to verify overall slope tendency. If p-value <= 0.05, the trend is statistically significant at the 5% level.
             If simulated flows are provided :
-            Sen_slope_sim, p_value_sim and ratio of Obsered Sen_slope over simulated Sen_slope are ruterned as well.
+            Sen_slope_sim, p_value_sim and ratio of observed Sen_slope over simulated Sen_slope are returned as well.
 
         Notes
         -----
-        Ratio of Obsered Sen_slope over simulated Sen_slope is considered acceptable within the range 0.5 to 2 and is optimal at 1. (Sauquet et al., 2025)
+        Ratio of observed Sen_slope over simulated Sen_slope is considered acceptable within the range 0.5 to 2 and is optimal when equal to 1. (Sauquet et al., 2025)
 
         References
         ----------
 
-        Hussain et al., (2019). pyMannKendall: a python package for non parametric Mann Kendall family of trend tests. Journal of Open Source Software, 4(39), 1556, https://doi.org/10.21105/joss.01556
+        Hussain et al., (2019). pyMannKendall: a Python package for non parametric Mann-Kendall family of trend tests. Journal of Open Source Software, 4(39), 1556, https://doi.org/10.21105/joss.01556
         https://pypi.org/project/pymannkendall/
 
         Sauquet, E., Evin, G., Siauve, S., Aissat, R., Arnaud, P., Bérel, M., Bonneau, J., Branger, F., Caballero, Y., Colléoni, F., Ducharne, A., Gailhard, J., Habets, F., Hendrickx, F., Héraut, L., Hingray, B., Huang, P., Jaouen, T., Jeantet, A., … Vidal, J.-P. (2025).
