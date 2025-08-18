@@ -7,6 +7,7 @@ Computation of statistics on runs of True values in boolean arrays.
 
 from __future__ import annotations
 
+from collections import namedtuple
 from collections.abc import Callable, Sequence
 from datetime import datetime
 from typing import Literal
@@ -1325,7 +1326,7 @@ def first_run_before_date(
 
 
 @njit
-def _rle_1d(ia):
+def _rle_1d(ia) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     y = ia[1:] != ia[:-1]  # pairwise unequal (string safe)
     i = np.append(np.nonzero(y)[0], ia.size - 1)  # must include last element position
     rl = np.diff(np.append(-1, i))  # run lengths
@@ -1334,8 +1335,8 @@ def _rle_1d(ia):
 
 
 def rle_1d(
-    arr: int | float | bool | Sequence[int | float | bool],
-) -> tuple[np.array, np.array, np.array]:
+    arr: int | float | bool | Sequence[int | float | bool] | xr.DataArray,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """
     Return the length, starting position and value of consecutive identical values.
 
@@ -1343,16 +1344,16 @@ def rle_1d(
 
     Parameters
     ----------
-    arr : Sequence[Union[int, float, bool]]
-      Array of values to be parsed.
+    arr : int or float or bool or Sequence[Union[int, float, bool]] or xr.DataArray
+        Array of values to be parsed.
 
     Returns
     -------
-    values : np.array
+    values : np.ndarray
         The values taken by arr over each run.
-    run lengths : np.array
+    run_lengths : np.ndarray
         The length of each run.
-    start position : np.array
+    start_positions : np.ndarray
         The starting index of each run.
 
     Examples
@@ -1364,12 +1365,13 @@ def rle_1d(
     """
     ia = np.asarray(arr)
     n = len(ia)
+    RLE_1D = namedtuple("RLE_1D", ["values", "run_lengths", "start_positions"])
 
     if n == 0:
         warn("run length array empty")
         # Returning None makes some other 1d func below fail.
-        return np.array(np.nan), 0, np.array(np.nan)
-    return _rle_1d(ia)
+        return RLE_1D(np.array(np.nan), np.array([0]), np.array(np.nan))
+    return RLE_1D(*_rle_1d(ia))
 
 
 def first_run_1d(arr: Sequence[int | float], window: int) -> int | np.nan:
