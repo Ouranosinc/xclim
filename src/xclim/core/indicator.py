@@ -953,7 +953,7 @@ class Indicator(IndicatorRegistrar):
             return outs[0]
 
         # Return a NamedTuple for multiple outputs
-        NamedOuts = namedtuple(self.identifier, f"{', '.join([o.name for o in outs])}")
+        NamedOuts = namedtuple(self.identifier, [o.name for o in outs])
         return NamedOuts(*outs)
 
     def _parse_variables_from_call(self, args, kwds) -> tuple[OrderedDict, OrderedDict, OrderedDict | dict]:
