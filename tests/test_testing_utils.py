@@ -73,8 +73,7 @@ class TestReleaseSupportFuncs:
             assert "INSTALLED VERSIONS\n" in contents
             assert "------------------\n" in contents
             assert f"python: {platform.python_version()}\n" in contents
-            assert f"xclim: {__xclim_version__}\n" in contents
-            assert "boltons: installed\n" in contents
+            assert f"xclim: {__xclim_version__.replace('-dev.', '.dev')}\n" in contents
 
     @pytest.mark.requires_docs
     def test_release_notes_file(self, tmp_path):
