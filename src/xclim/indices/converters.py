@@ -8,6 +8,7 @@ Converter functions to transform variables into required formats, approximation,
 from __future__ import annotations
 
 import warnings
+from collections import namedtuple
 from typing import cast
 
 import numpy as np
@@ -327,7 +328,9 @@ def uas_vas_to_sfcwind(
     wind_from_dir = xr.where(wind_from_dir.round() == 0, 360, wind_from_dir)
     wind_from_dir = xr.where(wind < wind_thresh, 0, wind_from_dir)
     wind_from_dir.attrs["units"] = "degree"
-    return wind, wind_from_dir
+
+    SFCWIND = namedtuple("SFCWIND", ["sfcWind", "sfcWindfromdir"])
+    return SFCWIND(wind, wind_from_dir)
 
 
 @declare_units(sfcWind="[speed]", sfcWindfromdir="[]")
@@ -379,7 +382,9 @@ def sfcwind_to_uas_vas(
     vas = sfcWind * np.sin(np.radians(wind_from_dir_math))
     uas.attrs["units"] = "m s-1"
     vas.attrs["units"] = "m s-1"
-    return uas, vas
+
+    UASVAS = namedtuple("UAS_VAS", ["uas", "vas"])
+    return UASVAS(uas, vas)
 
 
 ESAT_FORMULAS_COEFFICIENTS = {
@@ -1937,7 +1942,7 @@ def potential_evapotranspiration(
 
         # Thornthwaite measures half-days
         time_d = _get_D_from_M(_tas.time)
-        dl = day_lengths(time_d, _lat) / 12
+        dl = cast(xr.DataArray, day_lengths(time_d, _lat) / 12)
         dl_m = dl.resample(time="MS").mean(dim="time")
 
         # annual heat index

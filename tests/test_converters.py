@@ -52,9 +52,10 @@ def test_wind_vector_from_speed():
     # missing values
     sfcWind[0] = np.nan
     sfcWindfromdir[1] = np.nan
-    uas, vas = convert.wind_vector_from_speed(sfcWind=sfcWind, sfcWindfromdir=sfcWindfromdir)
-    np.testing.assert_array_equal(uas.isnull(), [True, True, False])
-    np.testing.assert_array_equal(vas.isnull(), [True, True, False])
+    wind_vectors = convert.wind_vector_from_speed(sfcWind=sfcWind, sfcWindfromdir=sfcWindfromdir)
+    # try using namedtuple accessor
+    np.testing.assert_array_equal(wind_vectors.uas.isnull(), [True, True, False])
+    np.testing.assert_array_equal(wind_vectors.vas.isnull(), [True, True, False])
 
 
 def test_relative_humidity_dewpoint(timeseries):
@@ -509,7 +510,7 @@ class TestUTCI:
 
         tas = dataset.tas
         hurs = dataset.hurs
-        sfcWind, _sfcWindfromdir = convert.wind_speed_from_vector(uas=dataset.uas, vas=dataset.vas)
+        sfcWind, _ = convert.wind_speed_from_vector(uas=dataset.uas, vas=dataset.vas)
         rsds = dataset.rsds
         rsus = dataset.rsus
         rlds = dataset.rlds

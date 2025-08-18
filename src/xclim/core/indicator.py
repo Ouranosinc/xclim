@@ -105,7 +105,7 @@ from __future__ import annotations
 import re
 import warnings
 import weakref
-from collections import OrderedDict, defaultdict
+from collections import OrderedDict, defaultdict, namedtuple
 from collections.abc import Callable, Sequence
 from copy import deepcopy
 from dataclasses import asdict, dataclass
@@ -948,10 +948,13 @@ class Indicator(IndicatorRegistrar):
             )
             return out
 
-        # Return a single DataArray in case of single output, otherwise a tuple
+        # Return a single DataArray in case of single output
         if self.n_outs == 1:
             return outs[0]
-        return tuple(outs)
+
+        # Return a NamedTuple for multiple outputs
+        NamedOuts = namedtuple(self.identifier, f"{', '.join([o.name for o in outs])}")
+        return NamedOuts(*outs)
 
     def _parse_variables_from_call(self, args, kwds) -> tuple[OrderedDict, OrderedDict, OrderedDict | dict]:
         """Extract variable and optional variables from call arguments."""
