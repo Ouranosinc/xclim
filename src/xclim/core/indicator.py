@@ -309,7 +309,7 @@ class IndicatorRegistrar:
         Returns
         -------
         Indicator
-            First instance found of this class in the indicators registry.
+            First instance found of this class in the 'indicators' registry.
 
         Raises
         ------
@@ -523,7 +523,7 @@ class Indicator(IndicatorRegistrar):
         else:
             xclim_realm = None
 
-        # Priority given to passed realm -> parent's realm -> location of the class declaration (official inds only)
+        # Priority given to passed realm -> parent's realm -> location of class declaration (official indicators only)
         kwds.setdefault("realm", cls.realm or xclim_realm)
         if kwds["realm"] not in ["atmos", "seaIce", "land", "ocean", "generic", "convert"]:
             raise AttributeError(

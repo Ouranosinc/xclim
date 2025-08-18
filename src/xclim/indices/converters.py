@@ -2502,7 +2502,7 @@ def water_budget(
     tasmax: xr.DataArray | None = None,
     tas: xr.DataArray | None = None,
     lat: xr.DataArray | None = None,
-    hurs: xr.DatArray | None = None,
+    hurs: xr.DataArray | None = None,
     rsds: xr.DataArray | None = None,
     rsus: xr.DataArray | None = None,
     rlds: xr.DataArray | None = None,
