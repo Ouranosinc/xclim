@@ -18,6 +18,7 @@ import xarray as xr
 from pint import Quantity
 
 from xclim.core import DateStr, DayOfYearStr, Quantified
+from xclim.core.bootstrapping import percentile_bootstrap
 from xclim.core.calendar import (
     _MONTH_ABBREVIATIONS,
     doy_to_days_since,
@@ -45,23 +46,19 @@ __all__ = [
     "bivariate_count_occurrences",
     "bivariate_spell_length_statistics",
     "compare",
-    "count_level_crossings",
     "count_occurrences",
     "cumulative_difference",
+    "day_threshold_reached",
     "default_freq",
     "detrend",
-    "diurnal_temperature_range",
+    "diurnal_range",
     "domain_count",
     "doymax",
     "doymin",
-    "extreme_temperature_range",
-    "first_day_threshold_reached",
-    "first_occurrence",
-    "get_daily_events",
+    "extreme_range",
     "get_op",
     "get_zones",
-    "interday_diurnal_temperature_range",
-    "last_occurrence",
+    "interday_diurnal_range",
     "season",
     "season_length_from_boundaries",
     "select_resample_op",
@@ -74,6 +71,10 @@ __all__ = [
     "threshold_count",
     "thresholded_statistics",
 ]
+# "count_level_crossings",
+# "first_occurrence",
+# "get_daily_events",
+# "last_occurrence",
 
 binary_ops = {">": "gt", "<": "lt", ">=": "ge", "<=": "le", "==": "eq", "!=": "ne"}
 DIFFERENCE_OPERATORS = Literal[">", "gt", "<", "lt", ">=", "ge", "<=", "le"]
@@ -388,43 +389,43 @@ def domain_count(
     return c.resample(time=freq).sum(dim="time")
 
 
-def get_daily_events(
-    da: xr.DataArray,
-    threshold: float | int | xr.DataArray,
-    op: ALL_OPERATORS,
-    constrain: Sequence[str] | None = None,
-) -> xr.DataArray:
-    """
-    Return a 0/1 mask when a condition is True or False.
+# def get_daily_events(
+#     da: xr.DataArray,
+#     threshold: float | int | xr.DataArray,
+#     op: ALL_OPERATORS,
+#     constrain: Sequence[str] | None = None,
+# ) -> xr.DataArray:
+#     """
+#     Return a 0/1 mask when a condition is True or False.
 
-    Parameters
-    ----------
-    da : xr.DataArray
-        Input data.
-    threshold : float
-        Threshold value.
-    op : {">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"}
-        Logical operator. e.g. arr > thresh.
-    constrain : sequence of str, optional
-        Optionally allowed conditions.
+#     Parameters
+#     ----------
+#     da : xr.DataArray
+#         Input data.
+#     threshold : float
+#         Threshold value.
+#     op : {">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"}
+#         Logical operator. e.g. arr > thresh.
+#     constrain : sequence of str, optional
+#         Optionally allowed conditions.
 
-    Returns
-    -------
-    xr.DataArray
-        The mask array of daily events.
+#     Returns
+#     -------
+#     xr.DataArray
+#         The mask array of daily events.
 
-    Notes
-    -----
-    The function returns:
+#     Notes
+#     -----
+#     The function returns:
 
-    - ``1`` where operator(da, da_value) is ``True``
-    - ``0`` where operator(da, da_value) is ``False``
-    - ``nan`` where da is ``nan``
-    """
-    events = compare(da, op, threshold, constrain) * 1
-    events = events.where(~(np.isnan(da)))
-    events = events.rename("events")
-    return events
+#     - ``1`` where operator(da, da_value) is ``True``
+#     - ``0`` where operator(da, da_value) is ``False``
+#     - ``nan`` where da is ``nan``
+#     """
+#     events = compare(da, op, threshold, constrain) * 1
+#     events = events.where(~(np.isnan(da)))
+#     events = events.rename("events")
+#     return events
 
 
 def spell_mask(
@@ -981,51 +982,51 @@ def bivariate_count_occurrences(
 # v0.6.1
 
 
-@declare_relative_units(threshold="<low_data>")
-def count_level_crossings(
-    low_data: xr.DataArray,
-    high_data: xr.DataArray,
-    threshold: Quantified,
-    freq: str,
-    *,
-    op_low: Literal["<", "<=", "lt", "le"] = "<",
-    op_high: Literal[">", ">=", "gt", "ge"] = ">",
-) -> xr.DataArray:
-    """
-    Calculate the number of times low_data is below threshold while high_data is above threshold.
+# @declare_relative_units(threshold="<low_data>")
+# def count_level_crossings(
+#     low_data: xr.DataArray,
+#     high_data: xr.DataArray,
+#     threshold: Quantified,
+#     freq: str,
+#     *,
+#     op_low: Literal["<", "<=", "lt", "le"] = "<",
+#     op_high: Literal[">", ">=", "gt", "ge"] = ">",
+# ) -> xr.DataArray:
+#     """
+#     Calculate the number of times low_data is below threshold while high_data is above threshold.
 
-    First, the threshold is transformed to the same standard_name and units as the input data,
-    then the thresholding is performed, and finally, the number of occurrences is counted.
+#     First, the threshold is transformed to the same standard_name and units as the input data,
+#     then the thresholding is performed, and finally, the number of occurrences is counted.
 
-    Parameters
-    ----------
-    low_data : xr.DataArray
-        Variable that must be under the threshold.
-    high_data : xr.DataArray
-        Variable that must be above the threshold.
-    threshold : Quantified
-        Threshold.
-    freq : str
-        Resampling frequency defining the periods as defined in :ref:`timeseries.resampling`.
-    op_low : {"<", "<=", "lt", "le"}
-        Comparison operator for low_data. Default: "<".
-    op_high : {">", ">=", "gt", "ge"}
-        Comparison operator for high_data. Default: ">".
+#     Parameters
+#     ----------
+#     low_data : xr.DataArray
+#         Variable that must be under the threshold.
+#     high_data : xr.DataArray
+#         Variable that must be above the threshold.
+#     threshold : Quantified
+#         Threshold.
+#     freq : str
+#         Resampling frequency defining the periods as defined in :ref:`timeseries.resampling`.
+#     op_low : {"<", "<=", "lt", "le"}
+#         Comparison operator for low_data. Default: "<".
+#     op_high : {">", ">=", "gt", "ge"}
+#         Comparison operator for high_data. Default: ">".
 
-    Returns
-    -------
-    xr.DataArray
-        The DataArray of level crossing events.
-    """
-    # Convert units to low_data
-    high_data = convert_units_to(high_data, low_data)
-    threshold = convert_units_to(threshold, low_data)
+#     Returns
+#     -------
+#     xr.DataArray
+#         The DataArray of level crossing events.
+#     """
+#     # Convert units to low_data
+#     high_data = convert_units_to(high_data, low_data)
+#     threshold = convert_units_to(threshold, low_data)
 
-    lower = compare(low_data, op_low, threshold, constrain=("<", "<="))
-    higher = compare(high_data, op_high, threshold, constrain=(">", ">="))
+#     lower = compare(low_data, op_low, threshold, constrain=("<", "<="))
+#     higher = compare(high_data, op_high, threshold, constrain=(">", ">="))
 
-    out = (lower & higher).resample(time=freq).sum()
-    return to_agg_units(out, low_data, "count", dim="time")
+#     out = (lower & higher).resample(time=freq).sum()
+#     return to_agg_units(out, low_data, "count", dim="time")
 
 
 @declare_relative_units(threshold="<data>")
@@ -1039,10 +1040,9 @@ def count_occurrences(
     """
     Calculate the number of times some condition is met.
 
-    First, the threshold is transformed to the same standard_name and units as the input data;
-    Then the thresholding is performed as condition(data, threshold),
-    i.e. if condition is `<`, then this counts the number of times `data < threshold`;
-    Finally, count the number of occurrences when condition is met.
+    First, the threshold is transformed to the same units as the input data;
+    Then the condition is applied, i.e. if ``op`` is `<`, then this counts
+    the number of times `data < threshold`;
 
     Parameters
     ----------
@@ -1059,8 +1059,8 @@ def count_occurrences(
 
     Returns
     -------
-    xr.DataArray
-        The DataArray of counted occurrences.
+    xr.DataArray, [time]
+        Number of times where data is {op} {threshold}.
     """
     threshold = convert_units_to(threshold, data)
 
@@ -1077,6 +1077,7 @@ def count_percentile_occurences(
     reference_period: tuple[DateStr, DateStr],
     freq: str,
     *,
+    bootstrap: bool = False,
     constrain: Sequence[str] | None = None,
 ) -> xr.DataArray:
     """
@@ -1100,6 +1101,12 @@ def count_percentile_occurences(
     freq : str
         Resampling frequency defining the periods as defined in :ref:`timeseries.resampling`.
         This function only makes sense with annual frequencies.
+    bootstrap : bool
+        Flag to run bootstrapping of percentiles. Used by percentile_bootstrap decorator.
+        Bootstrapping is only useful when the percentiles are computed on a part of the studied sample.
+        This period, common to percentiles and the sample must be bootstrapped to avoid inhomogeneities with
+        the rest of the time series.
+        Note that bootstrapping is computationally expensive.
     constrain : sequence of str, optional
         Optionally, allowed conditions.
 
@@ -1109,11 +1116,15 @@ def count_percentile_occurences(
         Count of occurrences of the percentile-based threshold exceedance.
     """
     clim = percentile_doy(data.sel(time=slice(*reference_period)), window=5, per=percentile)
-    threshold = resample_doy(clim, data)
-    cond = compare(data, op, threshold, constrain)
 
-    out = cond.resample(time=freq).sum()
-    return to_agg_units(out, data, "count", dim="time")
+    @percentile_bootstrap
+    def _count_percentile_occurrences(data, per, freq, bootstrap, op):
+        threshold = resample_doy(clim, data)
+        cond = compare(data, op, threshold, constrain)
+        out = cond.resample(time=freq).sum()
+        return to_agg_units(out, data, "count", dim="time")
+
+    return _count_percentile_occurrences(data, clim, freq, bootstrap, op)
 
 
 @declare_relative_units(threshold="<data>")
@@ -1126,6 +1137,7 @@ def count_thresholded_percentile_occurences(
     reference_period: tuple[DateStr, DateStr],
     freq: str,
     *,
+    bootstrap: bool = False,
     constrain: Sequence[str] | None = None,
 ) -> xr.DataArray:
     """
@@ -1156,6 +1168,12 @@ def count_thresholded_percentile_occurences(
     freq : str
         Resampling frequency defining the periods as defined in :ref:`timeseries.resampling`.
         This function only makes sense with annual frequencies.
+    bootstrap : bool
+        Flag to run bootstrapping of percentiles. Used by percentile_bootstrap decorator.
+        Bootstrapping is only useful when the percentiles are computed on a part of the studied sample.
+        This period, common to percentiles and the sample must be bootstrapped to avoid inhomogeneities with
+        the rest of the time series.
+        Note that bootstrapping is computationally expensive.
     constrain : sequence of str, optional
         Optionally, allowed conditions.
 
@@ -1167,11 +1185,18 @@ def count_thresholded_percentile_occurences(
     threshold = convert_units_to(threshold, data)
     data = data.where(compare(data, op_thresh, threshold, constrain))
     return count_percentile_occurences(
-        data, percentile, op=op_perc, freq=freq, reference_period=reference_period, constrain=constrain
+        data,
+        percentile,
+        op=op_perc,
+        freq=freq,
+        reference_period=reference_period,
+        constrain=constrain,
+        bootstrap=bootstrap,
     )
 
 
-def diurnal_temperature_range(
+@declare_relative_units(high_data="<low_data>")
+def diurnal_range(
     low_data: xr.DataArray, high_data: xr.DataArray, reducer: Literal["max", "min", "mean", "sum"], freq: str
 ) -> xr.DataArray:
     """
@@ -1203,18 +1228,19 @@ def diurnal_temperature_range(
     return out
 
 
-def extreme_temperature_range(low_data: xr.DataArray, high_data: xr.DataArray, freq: str) -> xr.DataArray:
+@declare_relative_units(high_data="<low_data>")
+def extreme_range(low_data: xr.DataArray, high_data: xr.DataArray, freq: str) -> xr.DataArray:
     """
-    Calculate the extreme daily temperature range.
+    Calculate the extreme daily range.
 
-    The maximum of daily maximum temperature minus the minimum of daily minimum temperature.
+    The maximum of high_data minus the minimum of low_data, for each period.
 
     Parameters
     ----------
     low_data : xr.DataArray
-        The lowest daily temperature (tasmin).
+        The lowest data.
     high_data : xr.DataArray
-        The highest daily temperature (tasmax).
+        The highest data.
     freq : str
         Resampling frequency defining the periods as defined in :ref:`timeseries.resampling`.
 
@@ -1227,138 +1253,137 @@ def extreme_temperature_range(low_data: xr.DataArray, high_data: xr.DataArray, f
 
     out = high_data.resample(time=freq).max() - low_data.resample(time=freq).min()
 
-    out.attrs["units"] = low_data.attrs["units"]
-    out.attrs["units_metadata"] = "temperature: difference"
+    u = str2pint(low_data.units)
+    out.attrs.update(pint2cfattrs(u, is_difference=True))
     return out
 
 
-@declare_relative_units(threshold="<data>")
-def first_occurrence(
-    data: xr.DataArray,
-    threshold: Quantified,
-    freq: str,
-    op: ALL_OPERATORS,
-    constrain: Sequence[str] | None = None,
+# @declare_relative_units(threshold="<data>")
+# def first_occurrence(
+#     data: xr.DataArray,
+#     threshold: Quantified,
+#     freq: str,
+#     op: ALL_OPERATORS,
+#     constrain: Sequence[str] | None = None,
+# ) -> xr.DataArray:
+#     """
+#     Calculate the first time some condition is met.
+
+#     First, the threshold is transformed to the same standard_name and units as the input data.
+#     Then the thresholding is performed as condition(data, threshold), i.e. if condition is <, data < threshold.
+#     Finally, locate the first occurrence when condition is met.
+
+#     Parameters
+#     ----------
+#     data : xr.DataArray
+#         Input data.
+#     threshold : Quantified
+#         Threshold.
+#     freq : str
+#         Resampling frequency defining the periods as defined in :ref:`timeseries.resampling`.
+#     op : {">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"}
+#         Logical operator. e.g. arr > thresh.
+#     constrain : sequence of str, optional
+#         Optionally allowed conditions.
+
+#     Returns
+#     -------
+#     xr.DataArray
+#         The DataArray of times of first occurrences.
+#     """
+#     threshold = convert_units_to(threshold, data)
+
+#     cond = compare(data, op, threshold, constrain)
+
+#     out = resample_map(
+#         cond,
+#         "time",
+#         freq,
+#         rl.first_run,
+#         map_kwargs={"window": 1, "dim": "time", "coord": "dayofyear"},
+#     )
+#     out.attrs["units"] = ""
+#     return out
+
+
+def interday_diurnal_range(
+    low_data: xr.DataArray, high_data: xr.DataArray, reducer: Literal["max", "min", "mean", "sum"], freq: str
 ) -> xr.DataArray:
     """
-    Calculate the first time some condition is met.
-
-    First, the threshold is transformed to the same standard_name and units as the input data.
-    Then the thresholding is performed as condition(data, threshold), i.e. if condition is <, data < threshold.
-    Finally, locate the first occurrence when condition is met.
-
-    Parameters
-    ----------
-    data : xr.DataArray
-        Input data.
-    threshold : Quantified
-        Threshold.
-    freq : str
-        Resampling frequency defining the periods as defined in :ref:`timeseries.resampling`.
-    op : {">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"}
-        Logical operator. e.g. arr > thresh.
-    constrain : sequence of str, optional
-        Optionally allowed conditions.
-
-    Returns
-    -------
-    xr.DataArray
-        The DataArray of times of first occurrences.
-    """
-    threshold = convert_units_to(threshold, data)
-
-    cond = compare(data, op, threshold, constrain)
-
-    out = resample_map(
-        cond,
-        "time",
-        freq,
-        rl.first_run,
-        map_kwargs={"window": 1, "dim": "time", "coord": "dayofyear"},
-    )
-    out.attrs["units"] = ""
-    return out
-
-
-# TODO: first_spell. Marked as ready in clix-meta 0.6.1, but no index definitions are using it.
-#       Very similar to first_run_after_date, but the "date" is given as a "dead_period" in number of timesteps (days).
-#       Would be easy to implement if freq is fixed to annual, but the description doesn't mention this.
-
-
-def interday_diurnal_temperature_range(low_data: xr.DataArray, high_data: xr.DataArray, freq: str) -> xr.DataArray:
-    """
-    Calculate the average absolute day-to-day difference in diurnal temperature range.
+    Calculate a statistic of the absolute day-to-day difference in diurnal range.
 
     Parameters
     ----------
     low_data : xr.DataArray
-        The lowest daily temperature (tasmin).
+        The lowest data.
     high_data : xr.DataArray
-        The highest daily temperature (tasmax).
+        The highest data.
+    reducer : {'max', 'min', 'mean', 'sum'}
+        Resampling reducer.
     freq : str
         Resampling frequency defining the periods as defined in :ref:`timeseries.resampling`.
 
     Returns
     -------
-    xr.DataArray
-        The DataArray for the average absolute day-to-day difference in diurnal temperature range.
+    xr.DataArray, [difference of low_data]
+        {reducer} day-to-day difference of the diurnal range between low_data and high_data.
     """
     high_data = convert_units_to(high_data, low_data)
 
     vdtr = abs((high_data - low_data).diff(dim="time"))
-    out = vdtr.resample(time=freq).mean(dim="time")
+    out = getattr(vdtr.resample(time=freq), reducer)
 
-    out.attrs["units"] = low_data.attrs["units"]
-    out.attrs["units_metadata"] = "temperature: difference"
+    u = str2pint(low_data.units)
+    out.attrs.update(pint2cfattrs(u, is_difference=True))
     return out
 
 
-@declare_relative_units(threshold="<data>")
-def last_occurrence(
-    data: xr.DataArray,
-    threshold: Quantified,
-    freq: str,
-    op: ALL_OPERATORS,
-    constrain: Sequence[str] | None = None,
-) -> xr.DataArray:
-    """
-    Calculate the last time some condition is met.
+# @declare_relative_units(threshold="<data>")
+# def last_occurrence(
+#     data: xr.DataArray,
+#     threshold: Quantified,
+#     freq: str,
+#     op: ALL_OPERATORS,
+#     constrain: Sequence[str] | None = None,
+# ) -> xr.DataArray:
+#     """
+#     Calculate the last time some condition is met.
 
-    First, the threshold is transformed to the same standard_name and units as the input data.
-    Then the thresholding is performed as condition(data, threshold), i.e. if condition is <, data < threshold.
-    Finally, locate the last occurrence when condition is met.
+#     First, the threshold is transformed to the same standard_name and units as the input data.
+#     Then the thresholding is performed as condition(data, threshold), i.e. if condition is <, data < threshold.
+#     Finally, locate the last occurrence when condition is met.
 
-    Parameters
-    ----------
-    data : xr.DataArray
-        Input data.
-    threshold : Quantified
-        Threshold.
-    freq : str
-        Resampling frequency defining the periods as defined in :ref:`timeseries.resampling`.
-    op : {">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"}
-        Logical operator. e.g. arr > thresh.
-    constrain : sequence of str, optional
-        Optionally allowed conditions.
+#     Parameters
+#     ----------
+#     data : xr.DataArray
+#         Input data.
+#     threshold : Quantified
+#         Threshold.
+#     freq : str
+#         Resampling frequency defining the periods as defined in :ref:`timeseries.resampling`.
+#     op : {">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"}
+#         Logical operator. e.g. arr > thresh.
+#     constrain : sequence of str, optional
+#         Optionally allowed conditions.
 
-    Returns
-    -------
-    xr.DataArray
-        The DataArray of times of last occurrences.
-    """
-    threshold = convert_units_to(threshold, data)
+#     Returns
+#     -------
+#     xr.DataArray, [day of year]
+#         Day of year of the {which} time where data {condition} {threshold}.
+#     """
+#     threshold = convert_units_to(threshold, data)
 
-    cond = compare(data, op, threshold, constrain)
+#     cond = compare(data, op, threshold, constrain)
 
-    out = resample_map(
-        cond,
-        "time",
-        freq,
-        rl.last_run,
-        map_kwargs={"window": 1, "dim": "time", "coord": "dayofyear"},
-    )
-    out.attrs["units"] = ""
-    return out
+#     out = resample_map(
+#         cond,
+#         "time",
+#         freq,
+#         rl.last_run,
+#         map_kwargs={"window": 1, "dim": "time", "coord": "dayofyear"},
+#     )
+#     out.attrs["units"] = ""
+#     return out
 
 
 def percentile(data: xr.DataArray, percentile: float, freq: str):
@@ -1809,21 +1834,22 @@ def cumulative_difference(
 
 
 @declare_relative_units(threshold="<data>")
-def first_day_threshold_reached(
+def day_threshold_reached(
     data: xr.DataArray,
     *,
     threshold: Quantified,
     op: ALL_OPERATORS,
-    after_date: DayOfYearStr,
+    date: DayOfYearStr,
+    which: Literal["first", "last"] = "first",
     window: int = 1,
     freq: str = "YS",
     constrain: Sequence[str] | None = None,
 ) -> xr.DataArray:
     r"""
-    First day of values exceeding threshold.
+    First or last day of values exceeding threshold.
 
-    Returns first day of period where values reach or exceed a threshold over a given number of days,
-    limited to a starting calendar date.
+    Returns first or last day of period where values reach or exceed a threshold over a given number of days,
+    limited to a starting or ending calendar date.
 
     Parameters
     ----------
@@ -1833,8 +1859,11 @@ def first_day_threshold_reached(
         Threshold on which to base evaluation.
     op : {">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"}
         Logical operator. e.g. arr > thresh.
-    after_date : str
-        Date of the year after which to look for the first event. Should have the format '%m-%d'.
+    date : str or None
+        Date of the year after which to look for the first event, or before which to look for the last event.
+        Should have the format '%m-%d'. None means there is no limit.
+    which : {'first', 'last'}
+        Whether to look for the first or the last event.
     window : int
         Minimum number of days with values above threshold needed for evaluation. Default: 1.
     freq : str
@@ -1846,19 +1875,25 @@ def first_day_threshold_reached(
     Returns
     -------
     xr.DataArray, [dimensionless]
-        Day of the year when value reaches or exceeds a threshold over a given number of days for the first time.
-        If there is no such day, returns np.nan.
+        Day-of-year of the {which} time where data {condition} {threshold}.
     """
     threshold = convert_units_to(threshold, data)
 
     cond = compare(data, op, threshold, constrain=constrain)
 
+    if which == "first":
+        func = rl.first_run_after_date
+    elif which == "last":
+        func = rl.last_run_before_date
+    else:
+        raise ValueError(f"'which' must be 'first' or 'last'. Got {which}.")
+
     out: xr.DataArray = resample_map(
         cond,
         "time",
         freq,
-        rl.first_run_after_date,
-        map_kwargs={"window": window, "date": after_date, "dim": "time", "coord": "dayofyear"},
+        func,
+        map_kwargs={"window": window, "date": date, "dim": "time", "coord": "dayofyear"},
     )
     out.attrs.update(units="", is_dayofyear=np.int32(1), calendar=get_calendar(data))
     return out
