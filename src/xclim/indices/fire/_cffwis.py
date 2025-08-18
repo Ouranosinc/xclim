@@ -64,10 +64,10 @@ start" for the duff-moisture code. The following example uses reasonable paramet
 
 >>> ds = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc")
 >>> ds = ds.assign(
-...     hurs=xclim.atmos.relative_humidity_from_dewpoint(ds=ds),
+...     hurs=xclim.convert.relative_humidity_from_dewpoint(ds=ds),
 ...     tas=xclim.core.units.convert_units_to(ds.tas, "degC"),
 ...     pr=xclim.core.units.convert_units_to(ds.pr, "mm/d"),
-...     sfcWind=xclim.atmos.wind_speed_from_vector(ds=ds)[0],
+...     sfcWind=xclim.convert.wind_speed_from_vector(ds=ds)[0],
 ... )
 >>> season_mask = fire_season(
 ...     tas=ds.tas,
