@@ -439,6 +439,7 @@ water_budget_from_tas = Converter(
         "where the potential evapotranspiration is calculated with a given method."
     ),
     compute=converters.water_budget,
+    parameters={"evspsblpot": None},
 )
 
 water_budget = Converter(
@@ -451,7 +452,20 @@ water_budget = Converter(
     ),
     abstract="Precipitation minus potential evapotranspiration as a measure of an approximated surface water budget.",
     compute=converters.water_budget,
-    parameters={"method": "dummy"},
+    parameters={
+        "method": None,
+        "evspsblpot": {"kind": InputKind.VARIABLE},
+        "tasmin": None,
+        "tasmax": None,
+        "tas": None,
+        "lat": None,
+        "hurs": None,
+        "rsds": None,
+        "rsus": None,
+        "rlds": None,
+        "rlus": None,
+        "sfcWind": None,
+    },
 )
 
 
