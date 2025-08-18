@@ -145,14 +145,14 @@ def humidex(
     # Vapour pressure in hPa
     if tdps is not None:
         # Convert dewpoint temperature to Kelvins
-        tdps = convert_units_to(tdps, "kelvin")
-        e = 6.112 * np.exp(5417.7530 * (1 / 273.16 - 1.0 / tdps))
+        tdps_K = convert_units_to(tdps, "kelvin")
+        e = 6.112 * np.exp(5417.7530 * (1 / 273.16 - 1.0 / tdps_K))
 
     elif hurs is not None:
         # Convert dry bulb temperature to Celsius
-        tasC = convert_units_to(tas, "celsius")
-        hurs = convert_units_to(hurs, "%")
-        e = hurs / 100 * 6.112 * 10 ** (7.5 * tasC / (tasC + 237.7))
+        tas_C = convert_units_to(tas, "celsius")
+        hurs_pct = convert_units_to(hurs, "%")
+        e = hurs_pct / 100 * 6.112 * 10 ** (7.5 * tas_C / (tas_C + 237.7))
 
     else:
         raise ValueError("Either `tdps` or `hurs` must be provided.")
@@ -162,7 +162,7 @@ def humidex(
     h = h.assign_attrs(units="delta_degree_Celsius")
 
     # Get delta_units for output
-    du = (1 * units2pint(tas) - 0 * units2pint(tas)).units
+    du = cast(xr.DataArray, (1 * units2pint(tas) - 0 * units2pint(tas))).units
     h = convert_units_to(h, du)
 
     # Add the delta to the input temperature
@@ -402,7 +402,7 @@ Where :math:`T` is the air temperature in K and :math:`T_0` is the freezing temp
 """
 
 
-def _saturation_vapor_pressure_over_water(tas: xr.DataArray, method: str):
+def _saturation_vapor_pressure_over_water(tas: xr.DataArray, method: str) -> xr.DataArray:
     """Saturation vapor pressure with reference to water."""
     e_sat: xr.DataArray
     if method == "ecmwf":
@@ -418,12 +418,12 @@ def _saturation_vapor_pressure_over_water(tas: xr.DataArray, method: str):
     elif method == "goffgratch46":
         Tb = 373.16  # Water boiling temp [K]
         eb = 101325  # e_sat at Tb [Pa]
-        e_sat = eb * 10 ** (
+        e_sat = eb * 10 ** (  # type: ignore
             -7.90298 * ((Tb / tas) - 1)  # type: ignore
             + 5.02808 * np.log10(Tb / tas)  # type: ignore
             + -1.3817e-7 * (10 ** (11.344 * (1 - tas / Tb)) - 1)
             + 8.1328e-3 * (10 ** (-3.49149 * ((Tb / tas) - 1)) - 1)  # type: ignore
-        )
+        )  # type: ignore
     elif method == "its90":
         e_sat = np.exp(
             -2836.5744 / tas**2
@@ -444,7 +444,7 @@ def _saturation_vapor_pressure_over_water(tas: xr.DataArray, method: str):
     return e_sat
 
 
-def _saturation_vapor_pressure_over_ice(tas: xr.DataArray, method: str):
+def _saturation_vapor_pressure_over_ice(tas: xr.DataArray, method: str) -> xr.DataArray:
     """Saturation vapor pressure with reference to ice."""
     e_sat: xr.DataArray
     if method == "ecmwf":
@@ -460,11 +460,11 @@ def _saturation_vapor_pressure_over_ice(tas: xr.DataArray, method: str):
     elif method in "goffgratch46":
         Tp = 273.16  # Triple-point temperature [K]
         ep = 611.73  # e_sat at Tp [Pa]
-        e_sat = ep * 10 ** (
+        e_sat = ep * 10 ** (  # type: ignore
             -9.09718 * ((Tp / tas) - 1)  # type: ignore
             + -3.56654 * np.log10(Tp / tas)  # type: ignore
-            + 0.876793 * (1 - tas / Tp)
-        )
+            + 0.876793 * (1 - tas / Tp)  # type: ignore
+        )  # type: ignore
     elif method in "its90":
         e_sat = np.exp(
             -5866.6426 / tas
@@ -629,7 +629,7 @@ def vapor_pressure(huss: xr.DataArray, ps: xr.DataArray):
     gas constant to the water vapor gas constant : :math:`\frac{R_{dry}}{R_{vapor}} = 0.621981`.
     """
     eps = 0.621981
-    e = ps * huss / (eps * (1 + huss * (1 / eps - 1)))
+    e = cast(xr.DataArray, ps * huss / (eps * (1 + huss * (1 / eps - 1))))
     return e.assign_attrs(units=ps.attrs["units"])
 
 
@@ -1691,7 +1691,7 @@ def fao_allen98(net_radiation, tas, wind, es, ea, delta_svp, gamma, G="0 MJ m-2 
         Actual vapour pressure [kPa].
     delta_svp : xarray.DataArray
         Slope of saturation vapour pressure curve [kPa degC-1].
-    gamma : xarray.DataArray
+    gamma : xarray.DataArray or str
         Psychrometric constant [kPa deg C].
     G : float, optional
         Soil heat flux (G) [MJ m-2 day-1] (For daily default to 0).

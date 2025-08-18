@@ -537,8 +537,9 @@ def test_signature():
     assert sig.parameters["thresh"].kind == sig.parameters["thresh"].KEYWORD_ONLY
     assert sig.return_annotation == xr.DataArray
 
-    sig = signature(xclim.convert.wind_speed_from_vector)
-    assert sig.return_annotation == tuple[xr.DataArray, xr.DataArray]
+    for indicator in ["wind_speed_from_vector", "wind_vector_from_speed"]:
+        sig = signature(getattr(xclim.convert, indicator))
+        assert sig.return_annotation == tuple[xr.DataArray, xr.DataArray]
 
 
 def test_doc():

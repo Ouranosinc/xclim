@@ -170,6 +170,7 @@ from xclim.core.utils import (
     load_module,
     split_auxiliary_coordinates,
 )
+from xclim.indices import generic
 
 try:
     from xarray import DataTree
@@ -640,7 +641,7 @@ class Indicator(IndicatorRegistrar):
         for old_name, new_name in variable_mapping.items():
             meta = parameters[new_name] = parameters.pop(old_name)
             try:
-                varmeta = VARIABLES[new_name]
+                var_meta = VARIABLES[new_name]
             except KeyError as err:
                 raise ValueError(
                     f"Compute argument {old_name} was mapped to variable "
@@ -649,16 +650,16 @@ class Indicator(IndicatorRegistrar):
                 ) from err
             if meta.units is not _empty:
                 try:
-                    check_units(varmeta["canonical_units"], meta.units)
+                    check_units(var_meta["canonical_units"], meta.units)
                 except ValidationError as err:
                     raise ValueError(
                         "When changing the name of a variable by passing `input`, "
                         "the units dimensionality must stay the same. Got: old = "
-                        f"{meta.units}, new = {varmeta['canonical_units']}"
+                        f"{meta.units}, new = {var_meta['canonical_units']}"
                     ) from err
-            meta.units = varmeta.get("dimensions", varmeta["canonical_units"])
+            meta.units = var_meta.get("dimensions", var_meta["canonical_units"])
             new_units[meta.compute_name] = meta.units
-            meta.description = varmeta["description"]
+            meta.description = var_meta["description"]
         return new_units
 
     @classmethod
@@ -791,7 +792,7 @@ class Indicator(IndicatorRegistrar):
         # data.compute refers to a function in xclim.indices.generic or xclim.indices (in this order of priority).
         # It can also directly be a function (like if a module was passed to build_indicator_module_from_yaml)
         if isinstance(compute, str):
-            compute_func = getattr(indices.generic, compute, getattr(indices, compute, None))
+            compute_func = getattr(generic, compute, getattr(indices, compute, None))
             if compute_func is None:
                 raise ImportError(f"Indice function {compute} not found in xclim.indices or xclim.indices.generic.")
             data["compute"] = compute_func
@@ -1836,12 +1837,12 @@ def build_indicator_module_from_yaml(  # noqa: C901
 
     if not filepath.suffix:
         # A stem was passed, try to load files
-        ymlpath = filepath.with_suffix(".yml")
+        yml_path = filepath.with_suffix(".yml")
     else:
-        ymlpath = filepath
+        yml_path = filepath
 
     # Read YAML file
-    with ymlpath.open(encoding=encoding) as f:
+    with yml_path.open(encoding=encoding) as f:
         yml = safe_load(f)
 
     if validate is not False:
@@ -1852,7 +1853,7 @@ def build_indicator_module_from_yaml(  # noqa: C901
             schema = yamale.make_schema(Path(__file__).parent.parent / "data" / "schema.yml")
 
         # Validate - a YamaleError will be raised if the module does not comply with the schema.
-        yamale.validate(schema, yamale.make_data(content=ymlpath.read_text(encoding=encoding)))
+        yamale.validate(schema, yamale.make_data(content=yml_path.read_text(encoding=encoding)))
 
     # Load values from top-level in yml.
     # Priority of arguments differ.
@@ -1860,9 +1861,9 @@ def build_indicator_module_from_yaml(  # noqa: C901
     default_base = registry.get(yml.get("base"), base_registry.get(yml.get("base"), Daily))
     doc = yml.get("doc")
 
-    if not filepath.suffix and indices is None and (indfile := filepath.with_suffix(".py")).is_file():
+    if not filepath.suffix and indices is None and (ind_file := filepath.with_suffix(".py")).is_file():
         # No suffix means we try to automatically detect the python file
-        indices = indfile
+        indices = ind_file
 
     if isinstance(indices, str | Path):
         indices = load_module(indices, name=module_name)
@@ -1870,9 +1871,9 @@ def build_indicator_module_from_yaml(  # noqa: C901
     _translations: dict[str, dict] = {}
     if not filepath.suffix and translations is None:
         # No suffix mean we try to automatically detect the json files.
-        for locfile in filepath.parent.glob(f"{filepath.stem}.*.json"):
-            locale = locfile.suffixes[0][1:]
-            _translations[locale] = read_locale_file(locfile, module=module_name, encoding=encoding)
+        for loc_file in filepath.parent.glob(f"{filepath.stem}.*.json"):
+            locale = loc_file.suffixes[0][1:]
+            _translations[locale] = read_locale_file(loc_file, module=module_name, encoding=encoding)
     elif translations is not None:
         # A mapping was passed, we read paths is any.
         _translations = {
