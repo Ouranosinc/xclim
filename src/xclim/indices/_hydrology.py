@@ -862,12 +862,12 @@ def streamflow_elasticity(
     elasticity_index.attrs["units"] = ""
     return elasticity_index
 
-@declare_units(swe="[length]" )
+@declare_units(swe="[length]", threshold="[length]" )
 def days_with_snowpack(
-    swe: xr.DataArray,
-    swe_threshold_mm: float = None,
+    swe: xarray.DataArray,
+    swe_threshold: str = "10 mm",
     freq: str = "YS-OCT",
-    )-> xr.DataArray:
+    )-> xarray.DataArray:
         """
         Count days per year with snowpack on the ground above a given threshold.
 
@@ -875,7 +875,7 @@ def days_with_snowpack(
         ----------
         swe : xarray.DataArray
             Daily Snow Water Equivalent (SWE), in millimeters [mm].
-        swe_threshold_mm : float, optional
+        swe_threshold : float, optional
             Minimum SWE value to consider a snow-covered day. Default is 10 mm.
         freq: str, optional
             Resampling frequency, here water year stating on the 1st of October
@@ -890,12 +890,10 @@ def days_with_snowpack(
         It is recommended to have at least 70% of valid data per water year in order to compute significant values.
 
         """
-        # Set defaults if values are None
-        if swe_threshold_mm is None:
-            swe_threshold_mm = 10.0  # default in mm
+        swe_threshold = convert_units_to(swe_threshold, swe)
 
         # compute signature:
-        days_with_snowpack = swe >= swe_threshold_mm
+        days_with_snowpack = swe >= swe_threshold
         result = days_with_snowpack.resample(time=freq).sum()  # convert results to water years
         result = result.rename("days_with_snowpack")
         result['year'] = result['time.year']
