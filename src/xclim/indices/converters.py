@@ -329,7 +329,7 @@ def uas_vas_to_sfcwind(
     wind_from_dir = xr.where(wind < wind_thresh, 0, wind_from_dir)
     wind_from_dir.attrs["units"] = "degree"
 
-    SFCWIND = namedtuple("SFCWIND", ["sfcWind", "sfcWindfromdir"])
+    SFCWIND = namedtuple("SFCWIND", ["wind", "wind_from_dir"])
     return SFCWIND(wind, wind_from_dir)
 
 

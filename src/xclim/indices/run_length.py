@@ -996,7 +996,7 @@ def season(
     dim: str = "time",
     stat: str | None = None,
     coord: str | bool | None = False,
-) -> xr.Dataset | xr.DataArray:
+) -> xr.Dataset:
     """
     Calculate the bounds of a season along a dimension.
 
@@ -1374,7 +1374,7 @@ def rle_1d(
     return RLE_1D(*_rle_1d(ia))
 
 
-def first_run_1d(arr: Sequence[int | float], window: int) -> int | np.nan:
+def first_run_1d(arr: Sequence[int | float], window: int) -> int | float:
     """
     Return the index of the first item of a run of at least a given length.
 
@@ -1405,7 +1405,7 @@ def statistics_run_1d(arr: Sequence[bool], reducer: str, window: int) -> int:
 
     Parameters
     ----------
-    arr : sequence of bool
+    arr : Sequence of bool
         Input array (bool).
     reducer : {"mean", "sum", "min", "max", "std", "count"}
         Reducing function name.
@@ -1432,7 +1432,7 @@ def windowed_run_count_1d(arr: Sequence[bool], window: int) -> int:
 
     Parameters
     ----------
-    arr : Sequence[bool]
+    arr : Sequence of bool
         Input array (bool).
     window : int
         Minimum duration of consecutive run to accumulate values.
@@ -1452,7 +1452,7 @@ def windowed_run_events_1d(arr: Sequence[bool], window: int) -> xr.DataArray:
 
     Parameters
     ----------
-    arr : Sequence[bool]
+    arr : Sequence of bool
         Input array (bool).
     window : int
         Minimum run length.
@@ -1474,7 +1474,7 @@ def windowed_run_count_ufunc(x: xr.DataArray | Sequence[bool], window: int, dim:
 
     Parameters
     ----------
-    x : Sequence[bool]
+    x : xr.DataArray or sequence of bool
         Input array (bool).
     window : int
         Minimum duration of consecutive run to accumulate values.
@@ -1506,7 +1506,7 @@ def windowed_run_events_ufunc(x: xr.DataArray | Sequence[bool], window: int, dim
 
     Parameters
     ----------
-    x : Sequence[bool]
+    x : xr.DataArray or sequence of bool
         Input array (bool).
     window : int
         Minimum run length.
@@ -1543,7 +1543,7 @@ def statistics_run_ufunc(
 
     Parameters
     ----------
-    x : sequence of bool
+    x : Sequence of bool
         Input array (bool).
     reducer : {'min', 'max', 'mean', 'sum', 'std'}
         Reducing function name.
@@ -1581,7 +1581,7 @@ def first_run_ufunc(
 
     Parameters
     ----------
-    x : Union[xr.DataArray, Sequence[bool]]
+    x : xr.DataArray or sequence of bool
         Input array (bool).
     window : int
         Minimum run length.
@@ -1916,7 +1916,7 @@ def find_events(
     window_stop: int = 1,
     data: xr.DataArray | None = None,
     freq: str | None = None,
-):
+) -> xr.Dataset:
     """
     Find events (runs).
 

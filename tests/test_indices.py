@@ -3141,17 +3141,21 @@ class TestWindConversion:
     da_windfromdir.attrs["units"] = "degree"
 
     def test_uas_vas_to_sfcwind(self):
-        wind, windfromdir = xci.uas_vas_to_sfcwind(self.da_uas, self.da_vas)
+        sfcwind = xci.uas_vas_to_sfcwind(self.da_uas, self.da_vas)
 
-        assert np.all(np.around(wind.values, decimals=10) == np.around(self.da_wind.values / 3.6, decimals=10))
-        assert np.all(np.around(windfromdir.values, decimals=10) == np.around(self.da_windfromdir.values, decimals=10))
+        assert (sfcwind.wind.values == sfcwind[0].values).all()
+        assert np.all(np.around(sfcwind.wind.values, decimals=10) == np.around(self.da_wind.values / 3.6, decimals=10))
+        assert np.all(
+            np.around(sfcwind.wind_from_dir.values, decimals=10) == np.around(self.da_windfromdir.values, decimals=10)
+        )
 
     def test_sfcwind_to_uas_vas(self):
-        uas, vas = xci.sfcwind_to_uas_vas(self.da_wind, self.da_windfromdir)
+        wind_components = xci.sfcwind_to_uas_vas(self.da_wind, self.da_windfromdir)
 
-        assert np.all(np.around(uas.values, decimals=10) == np.array([[1, -1], [0, 0]]))
+        assert (wind_components.uas.values == wind_components[0].values).all()
+        assert np.all(np.around(wind_components.uas.values, decimals=10) == np.array([[1, -1], [0, 0]]))
         assert np.all(
-            np.around(vas.values, decimals=10)
+            np.around(wind_components.vas.values, decimals=10)
             == np.around(np.array([[1, 1], [-(np.hypot(1, 1)) / 3.6, -5]]), decimals=10)
         )
 
