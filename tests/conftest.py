@@ -404,6 +404,7 @@ def gather_session_data(request, nimbus, worker_id):
 
     request.addfinalizer(remove_data_written_flag)
 
+
 @pytest.fixture
 def swe_series():
     def _swe_series(values, start="1/1/2000", units="mm"):
@@ -420,4 +421,3 @@ def swe_series():
         )
 
     return _swe_series
-

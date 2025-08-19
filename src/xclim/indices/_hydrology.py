@@ -16,8 +16,9 @@ from xclim.indices.stats import standardized_index
 from . import generic
 
 __all__ = [
-    "antecedent_precipitation_index",
+    "SS_an_season",
     "annual_aridity_index",
+    "antecedent_precipitation_index",
     "base_flow_index",
     "days_with_snowpack",
     "flow_index",
@@ -32,11 +33,10 @@ __all__ = [
     "snow_melt_we_max",
     "snw_max",
     "snw_max_doy",
-    "SS_an_season",
     "standardized_groundwater_index",
     "standardized_streamflow_index",
     "streamflow_elasticity",
-    "tot_rr"
+    "tot_rr",
 ]
 
 
@@ -694,12 +694,10 @@ def antecedent_precipitation_index(pr: xarray.DataArray, window: int = 7, p_exp:
     return out
 
 
-
 @declare_units(q="[discharge]", a="[area]", pr="[precipitation]")
-def tot_rr(q: xarray.DataArray,
-            a: xarray.DataArray,
-            pr: xarray.DataArray) -> xarray.DataArray:
-    """Total Runoff ratio
+def tot_rr(q: xarray.DataArray, a: xarray.DataArray, pr: xarray.DataArray) -> xarray.DataArray:
+    """
+    Total Runoff ratio
 
     Parameters
     ----------
@@ -716,7 +714,7 @@ def tot_rr(q: xarray.DataArray,
         Single value rainfall-runoff ratio (RRR) as long-term benchmark.
 
     References
-    -----
+    ----------
     HydroBM https://hydrobm.readthedocs.io/en/latest/usage.html#benchmarks
     """
     q = units.convert_units_to(q, "m3/s")
@@ -724,7 +722,7 @@ def tot_rr(q: xarray.DataArray,
     pr = units.convert_units_to(pr, "mm/hr")
 
     runoff = q * 3.6 / a  # unit conversion for runoff in mm/h : 3.6 [s/h * km2/m2]
-    total_rr = (runoff.sum() / pr.sum())
+    total_rr = runoff.sum() / pr.sum()
     total_rr.attrs["units"] = ""
     total_rr.attrs["long_name"] = "Total Rainfall-Runoff Ratio"
 
@@ -737,8 +735,8 @@ def season_an_rr(
     a: xarray.DataArray,
     pr: xarray.DataArray,
 ) -> xarray.DataArray:
-
-    """Seasonal and annual rainfall-runoff ratio (RRR)
+    """
+    Seasonal and annual rainfall-runoff ratio (RRR)
 
     Parameters
     ----------
@@ -756,12 +754,11 @@ def season_an_rr(
         Seasonal and yearly rainfall-runoff ratio (dimensionless)
 
     References
-    -----
+    ----------
     HydroBM https://hydrobm.readthedocs.io/en/latest/usage.html#benchmarks
 
     """
-
-    q=units.convert_units_to(q, "m3/s")
+    q = units.convert_units_to(q, "m3/s")
     a = units.convert_units_to(a, "km2")
     pr = units.convert_units_to(pr, "mm/hr")
 
@@ -773,8 +770,8 @@ def season_an_rr(
     pr.coords["season_year"] = ("time", season_year.data)
 
     # separate season and year coordinates from season_year strings:
-    seasons = [s.split('-')[0] for s in season_year.values]
-    years = [int(s.split('-')[1]) for s in season_year.values]
+    seasons = [s.split("-")[0] for s in season_year.values]
+    years = [int(s.split("-")[1]) for s in season_year.values]
 
     # Assign as new coordinates on the original time dimension:
     runoff.coords["season"] = ("time", seasons)
@@ -799,12 +796,9 @@ def season_an_rr(
 
     return rrr_season, rrr_yearly
 
+
 @declare_units(q="[discharge]", pr="[precipitation]")
-def streamflow_elasticity(
-    q: xarray.DataArray,
-    pr: xarray.DataArray,
-    freq: str = "YS"
-) -> xarray.DataArray:
+def streamflow_elasticity(q: xarray.DataArray, pr: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
     """
     Calculate the median of yearly streamflow elasticity index for given catchments.
 
@@ -830,11 +824,10 @@ def streamflow_elasticity(
     A value less than 1 suggests a less sensitive relationship.
 
     References
-    -----
+    ----------
     Sankarasubramanian, A., Vogel, R. M., & Limbrunner, J. F. (2001). Climate elasticity of streamflow in the United States. Water Resources Research, 37(6), 1771–1781. https://doi.org/10.1029/2000WR900330
 
     """
-
     # Calculate single value streamflow elasticity index per catchment
 
     p_annual = pr.resample(time=freq).mean()
@@ -855,55 +848,59 @@ def streamflow_elasticity(
     rel_delta_q = delta_q / (q_mean + epsilon)
 
     # Cumpute yearly streamflow elasticity (not mathematically robust values)
-    yearly_elasticity = (rel_delta_q / (rel_delta_p + epsilon))
+    yearly_elasticity = rel_delta_q / (rel_delta_p + epsilon)
 
     # Cumpute single value using median (more robust value)
     elasticity_index = yearly_elasticity.median(dim="time")
     elasticity_index.attrs["units"] = ""
     return elasticity_index
 
-@declare_units(swe="[length]", threshold="[length]" )
+
+@declare_units(swe="[length]", threshold="[length]")
 def days_with_snowpack(
     swe: xarray.DataArray,
     swe_threshold: str = "10 mm",
     freq: str = "YS-OCT",
-    )-> xarray.DataArray:
-        """
-        Count days per year with snowpack on the ground above a given threshold.
+) -> xarray.DataArray:
+    """
+    Count days per year with snowpack on the ground above a given threshold.
 
-        Parameters
-        ----------
-        swe : xarray.DataArray
-            Daily Snow Water Equivalent (SWE), in millimeters [mm].
-        swe_threshold : float, optional
-            Minimum SWE value to consider a snow-covered day. Default is 10 mm.
-        freq: str, optional
-            Resampling frequency, here water year stating on the 1st of October
-        Returns
-        -------
-        xarray.DataArray, [days]
-            Number of days with snowpack over threshold
+    Parameters
+    ----------
+    swe : xarray.DataArray
+        Daily Snow Water Equivalent (SWE), in millimeters [mm].
+    swe_threshold : float, optional
+        Minimum SWE value to consider a snow-covered day. Default is 10 mm.
+    freq: str, optional
+        Resampling frequency, here water year stating on the 1st of October
 
-        Warnings
-        --------
-        The default `freq` is the water year used in the northern hemisphere, from October to September.
-        It is recommended to have at least 70% of valid data per water year in order to compute significant values.
+    Returns
+    -------
+    xarray.DataArray, [days]
+        Number of days with snowpack over threshold
 
-        """
-        swe_threshold = convert_units_to(swe_threshold, swe)
+    Warnings
+    --------
+    The default `freq` is the water year used in the northern hemisphere, from October to September.
+    It is recommended to have at least 70% of valid data per water year in order to compute significant values.
 
-        # compute signature:
-        days_with_snowpack = swe >= swe_threshold
-        result = days_with_snowpack.resample(time=freq).sum()  # convert results to water years
-        result = result.rename("days_with_snowpack")
-        result['year'] = result['time.year']
-        result = result.set_index(time='year')
-        result.attrs["units"] = "days"
-        return result
+    """
+    swe_threshold = convert_units_to(swe_threshold, swe)
 
-@declare_units(pr="[precipitation]", pet = "[length]/[time]")
+    # compute signature:
+    days_with_snowpack = swe >= swe_threshold
+    result = days_with_snowpack.resample(time=freq).sum()  # convert results to water years
+    result = result.rename("days_with_snowpack")
+    result["year"] = result["time.year"]
+    result = result.set_index(time="year")
+    result.attrs["units"] = "days"
+    return result
+
+
+@declare_units(pr="[precipitation]", pet="[length]/[time]")
 def annual_aridity_index(pr: xarray.DataArray, pet: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
-    """Aridity index.
+    """
+    Aridity index.
 
     Parameters
     ----------
@@ -930,7 +927,7 @@ def annual_aridity_index(pr: xarray.DataArray, pet: xarray.DataArray, freq: str 
     """
     pr = pr.resample(time=freq).sum()
     pet = pet.resample(time=freq).sum()
-    ai = (pr / pet)
+    ai = pr / pet
     ai.attrs["units"] = ""
     ai.name = "aridity_index"
 
@@ -974,8 +971,10 @@ def lag_snowpack_flow_peaks(
     doy_swe_max = t_swe_max.dt.dayofyear
 
     # Compute threshold per water year using resample
-    threshold = q.resample(time="YS-OCT").reduce(np.nanpercentile, q=percentile, dim="time")  # second q, equal to percentile, is a keyword in np.nanpercentile, not the flow variable.
-    threshold_for_each_time = threshold.reindex_like(q, method='ffill')
+    threshold = q.resample(time="YS-OCT").reduce(
+        np.nanpercentile, q=percentile, dim="time"
+    )  # second q, equal to percentile, is a keyword in np.nanpercentile, not the flow variable.
+    threshold_for_each_time = threshold.reindex_like(q, method="ffill")
     q_high = q.where(q >= threshold_for_each_time).dropna(dim="time", how="all")
 
     # Day of year for high flow peaks
@@ -989,102 +988,98 @@ def lag_snowpack_flow_peaks(
     lag.name = "lag_snowpack_flow_peaks"
     return lag
 
+
 @declare_units(q="[discharge]")
-def SS_an_season(q: xarray.DataArray,
-    qsim: xarray.DataArray = None
-    ) -> xarray.DataArray:
-        """ Annual and Seasonal Theil-Sen Slope (SS) estimators and Mann-Kendall test for trend evaluations
+def SS_an_season(q: xarray.DataArray, qsim: xarray.DataArray = None) -> xarray.DataArray:
+    """
+    Annual and Seasonal Theil-Sen Slope (SS) estimators and Mann-Kendall test for trend evaluations
 
-        Parameters
-        ----------
-        q : array_like
-            Observed streamflow vector.
-        qsim : array_like
-            Simulated streamflow vector.
+    Parameters
+    ----------
+    q : array_like
+        Observed streamflow vector.
+    qsim : array_like
+        Simulated streamflow vector.
 
-        Returns
-        -------
-        xr.Dataset
-            'Sen_slope': Sen's slope estimates for season averages and yearly average
-            'p_value': Mann-Kendall metric to verify overall slope tendency. If p-value <= 0.05, the trend is statistically significant at the 5% level.
-            If simulated flows are provided :
-            Sen_slope_sim, p_value_sim and ratio of observed Sen_slope over simulated Sen_slope are returned as well.
+    Returns
+    -------
+    xr.Dataset
+        'Sen_slope': Sen's slope estimates for season averages and yearly average
+        'p_value': Mann-Kendall metric to verify overall slope tendency. If p-value <= 0.05, the trend is statistically significant at the 5% level.
+        If simulated flows are provided :
+        Sen_slope_sim, p_value_sim and ratio of observed Sen_slope over simulated Sen_slope are returned as well.
 
-        Notes
-        -----
-        Ratio of observed Sen_slope over simulated Sen_slope is considered acceptable within the range 0.5 to 2 and is optimal when equal to 1. (Sauquet et al., 2025)
+    Notes
+    -----
+    Ratio of observed Sen_slope over simulated Sen_slope is considered acceptable within the range 0.5 to 2 and is optimal when equal to 1. (Sauquet et al., 2025)
 
-        References
-        ----------
+    References
+    ----------
+    Hussain et al., (2019). pyMannKendall: a Python package for non parametric Mann-Kendall family of trend tests. Journal of Open Source Software, 4(39), 1556, https://doi.org/10.21105/joss.01556
+    https://pypi.org/project/pymannkendall/
 
-        Hussain et al., (2019). pyMannKendall: a Python package for non parametric Mann-Kendall family of trend tests. Journal of Open Source Software, 4(39), 1556, https://doi.org/10.21105/joss.01556
-        https://pypi.org/project/pymannkendall/
-
-        Sauquet, E., Evin, G., Siauve, S., Aissat, R., Arnaud, P., Bérel, M., Bonneau, J., Branger, F., Caballero, Y., Colléoni, F., Ducharne, A., Gailhard, J., Habets, F., Hendrickx, F., Héraut, L., Hingray, B., Huang, P., Jaouen, T., Jeantet, A., … Vidal, J.-P. (2025).
-        A large transient multi-scenario multi-model ensemble of future streamflow and groundwater projections in France. https://doi.org/10.5194/egusphere-2025-1788.
-        Article in preprint stage.
+    Sauquet, E., Evin, G., Siauve, S., Aissat, R., Arnaud, P., Bérel, M., Bonneau, J., Branger, F., Caballero, Y., Colléoni, F., Ducharne, A., Gailhard, J., Habets, F., Hendrickx, F., Héraut, L., Hingray, B., Huang, P., Jaouen, T., Jeantet, A., … Vidal, J.-P. (2025).
+    A large transient multi-scenario multi-model ensemble of future streamflow and groundwater projections in France. https://doi.org/10.5194/egusphere-2025-1788.
+    Article in preprint stage.
 
 
-        """
-        seasons = ['DJF', 'MAM', 'JJA', 'SON', 'Year']
+    """
+    seasons = ["DJF", "MAM", "JJA", "SON", "Year"]
 
-        def compute_seasonal_stats(x):
-            # Convert to pandas Series with DatetimeIndex
-            x_year = x.resample(time="YS-DEC").mean()
-            x_season = x.resample(time="QS-DEC").mean()
+    def compute_seasonal_stats(x):
+        # Convert to pandas Series with DatetimeIndex
+        x_year = x.resample(time="YS-DEC").mean()
+        x_season = x.resample(time="QS-DEC").mean()
 
-            x_series = x_season.to_series()
+        x_series = x_season.to_series()
 
-            # Create a MultiIndex: year + season (0–3)
-            season_index = (
-                (x_series.index.month % 12 // 3)  # 0 for DJF, 1 for MAM, etc.
-            )
-            x_df = pd.DataFrame({'value': x_series.values, 'season': season_index, 'year': x_series.index.year})
-            #  Pivot to shape (n_years, 4 seasons)
-            df_seasons = x_df.pivot(index='season', columns="year", values='value')
+        # Create a MultiIndex: year + season (0–3)
+        season_index = (
+            x_series.index.month % 12 // 3  # 0 for DJF, 1 for MAM, etc.
+        )
+        x_df = pd.DataFrame({"value": x_series.values, "season": season_index, "year": x_series.index.year})
+        #  Pivot to shape (n_years, 4 seasons)
+        df_seasons = x_df.pivot(index="season", columns="year", values="value")
 
-            # rename columns
-            df_seasons.index = ['DJF', 'MAM', 'JJA', 'SON']
+        # rename columns
+        df_seasons.index = ["DJF", "MAM", "JJA", "SON"]
 
-            ss_DJF = mk.original_test(df_seasons.iloc[0])
-            ss_MAM = mk.original_test(df_seasons.iloc[1])
-            ss_JJA = mk.original_test(df_seasons.iloc[2])
-            ss_SON = mk.original_test(df_seasons.iloc[3])
-            ss_an = mk.original_test(x_year)
+        ss_DJF = mk.original_test(df_seasons.iloc[0])
+        ss_MAM = mk.original_test(df_seasons.iloc[1])
+        ss_JJA = mk.original_test(df_seasons.iloc[2])
+        ss_SON = mk.original_test(df_seasons.iloc[3])
+        ss_an = mk.original_test(x_year)
 
-            slopes = [ss_DJF.slope, ss_MAM.slope, ss_JJA.slope, ss_SON.slope, ss_an.slope]
-            pvals = [ss_DJF.p, ss_MAM.p, ss_JJA.p, ss_SON.p, ss_an.p]
+        slopes = [ss_DJF.slope, ss_MAM.slope, ss_JJA.slope, ss_SON.slope, ss_an.slope]
+        pvals = [ss_DJF.p, ss_MAM.p, ss_JJA.p, ss_SON.p, ss_an.p]
 
-            return slopes, pvals,
+        return (
+            slopes,
+            pvals,
+        )
 
-        if qsim is not None:
-            slopes, pvals = compute_seasonal_stats(q)
-            slopes_sim, pvals_sim = compute_seasonal_stats(qsim)
-            slopes_np = np.array(slopes)
-            slopes_sim_np = np.array(slopes_sim)
-            ratio = slopes_np / slopes_sim_np
-            ds = xarray.Dataset(
-                data_vars={
-                    "Sen_slope_obs": ('season', slopes),
-                    'p_value_obs': ('season', pvals),
-                    "Sen_slope_sim": ('season', slopes_sim),
-                    'p_value_sim': ('season', pvals_sim),
-                    'ratio': ('season', ratio)
+    if qsim is not None:
+        slopes, pvals = compute_seasonal_stats(q)
+        slopes_sim, pvals_sim = compute_seasonal_stats(qsim)
+        slopes_np = np.array(slopes)
+        slopes_sim_np = np.array(slopes_sim)
+        ratio = slopes_np / slopes_sim_np
+        ds = xarray.Dataset(
+            data_vars={
+                "Sen_slope_obs": ("season", slopes),
+                "p_value_obs": ("season", pvals),
+                "Sen_slope_sim": ("season", slopes_sim),
+                "p_value_sim": ("season", pvals_sim),
+                "ratio": ("season", ratio),
+            },
+            coords={"season": seasons},
+        )
 
-                },
-                coords={'season': seasons}
-            )
-
-
-        else:
-            slopes, pvals = compute_seasonal_stats(q)
-            # Create labeled xarray
-            ds = xarray.Dataset(
-                data_vars={
-                    "Sen_slope": ('season', slopes),
-                    'p_value': ('season', pvals)
-                },
-                coords={'season': seasons}
-            )
-        ds.attrs["units"] = ""
-        return ds
+    else:
+        slopes, pvals = compute_seasonal_stats(q)
+        # Create labeled xarray
+        ds = xarray.Dataset(
+            data_vars={"Sen_slope": ("season", slopes), "p_value": ("season", pvals)}, coords={"season": seasons}
+        )
+    ds.attrs["units"] = ""
+    return ds

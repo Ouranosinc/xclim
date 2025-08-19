@@ -192,6 +192,7 @@ class TestAntecedentPrecipitationIndex:
             out_manual[idxend - 1] = weighted_sum
         np.testing.assert_allclose(out, out_manual, atol=1e-7)
 
+
 class TestDaysWithSnowpack:
     def test_simple(self, swe_series):
         # 2 years of daily data
