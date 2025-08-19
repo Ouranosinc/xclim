@@ -696,7 +696,7 @@ def antecedent_precipitation_index(pr: xarray.DataArray, window: int = 7, p_exp:
 
 
 @declare_units(q="[discharge]", a="[area]", pr="[precipitation]")
-def _tot_rr(q: xarray.DataArray,
+def tot_rr(q: xarray.DataArray,
             a: xarray.DataArray,
             pr: xarray.DataArray) -> xarray.DataArray:
     """Total Runoff ratio
@@ -732,7 +732,7 @@ def _tot_rr(q: xarray.DataArray,
 
 
 @declare_units(q="[discharge]", a="[area]", pr="[precipitation]")
-def _season_an_rr(
+def season_an_rr(
     q: xarray.DataArray,
     a: xarray.DataArray,
     pr: xarray.DataArray,
@@ -863,7 +863,7 @@ def streamflow_elasticity(
     return elasticity_index
 
 @declare_units(swe="[length]" )
-def _days_with_snowpack(
+def days_with_snowpack(
     swe: xr.DataArray,
     swe_threshold_mm: float = None,
     freq: str = "YS-OCT",
@@ -904,7 +904,7 @@ def _days_with_snowpack(
         return result
 
 @declare_units(pr="[precipitation]", pet = "[length]/[time]")
-def _annual_aridity_index(pr: xarray.DataArray, pet: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
+def annual_aridity_index(pr: xarray.DataArray, pet: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
     """Aridity index.
 
     Parameters
@@ -940,7 +940,7 @@ def _annual_aridity_index(pr: xarray.DataArray, pet: xarray.DataArray, freq: str
 
 
 @declare_units(swe="[length]", q="[discharge]")
-def _lag_snowpack_flow_peaks(
+def lag_snowpack_flow_peaks(
     swe: xarray.DataArray,
     q: xarray.DataArray,
     freq: str = "YS-OCT",
@@ -968,7 +968,7 @@ def _lag_snowpack_flow_peaks(
 
     Warnings
     --------
-    The default `freq` is the water year used in the northern hemisphere, from October to September
+    The default `freq` is the water year used in the nothern hemisphere, from October to September
     It is recommended to have at least 70% of valid data per water year in order to compute significant values.
     """
     # Find time of max SWE per year
@@ -991,6 +991,7 @@ def _lag_snowpack_flow_peaks(
     lag.name = "lag_snowpack_flow_peaks"
     return lag
 
+@declare_units(q="[discharge]")
 def SS_an_season(q: xarray.DataArray,
     qsim: xarray.DataArray = None
     ) -> xarray.DataArray:
@@ -1087,5 +1088,5 @@ def SS_an_season(q: xarray.DataArray,
                 },
                 coords={'season': seasons}
             )
-
+        ds.attrs["units"] = ""
         return ds
