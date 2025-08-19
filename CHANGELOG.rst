@@ -46,6 +46,7 @@ Internal changes
 * The ``xclim.indices.helpers`` module now uses an ``__all__`` variable to explicitly define the public API of the module. (:pull:`2207`).
 * Viticulture indices are more heavily tested and employ type guarding to ensure that parameters passed are those of the expected types. (:pull:`2207`).
 * Conversion indicators have been split from ``tests/test_atmos.py`` into new ``tests/test_converters.py``. This is to ensure that conversion indicators are tested separately from other atmospheric indicators. (:issue:`1289`, :pull:`2224`).
+* ``xclim.testing.utils.show_versions`` now uses the `importlib.metadata` library to more accurately gather dependency information. (:pull:`2229`).
 
 Bug fixes
 ^^^^^^^^^
