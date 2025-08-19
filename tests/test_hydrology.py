@@ -191,3 +191,21 @@ class TestAntecedentPrecipitationIndex:
             weighted_sum = (pr[idx:idxend] * weights).sum()
             out_manual[idxend - 1] = weighted_sum
         np.testing.assert_allclose(out, out_manual, atol=1e-7)
+
+class TestDaysWithSnowpack:
+    def test_simple(self, swe_series):
+        # 2 years of daily data
+        a = np.zeros(365 * 2)
+
+        # Year 1: 15 days of SWE = 20 mm
+        a[50:65] = 20
+        # Year 2: 5 days of SWE = 5 mm
+        a[400:405] = 5
+
+        # Create a daily time index
+        swe = swe_series(a)
+
+        out = xci.days_with_snowpack(swe, swe_threshold=".01 m", freq="YS")
+
+        # Year 1: 15 days >= 10 → expect 15, Year 2: only 5 days but all < 10 → expect 0
+        np.testing.assert_array_equal(out.values, [15, 0])
