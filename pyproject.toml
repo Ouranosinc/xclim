@@ -68,7 +68,6 @@ dev = [
   "ipython >=8.10.0",
   "mypy >=1.14.1",
   "nbconvert >=7.16.4",
-  "nbqa >=1.8.2",
   "nbval >=0.11.0",
   "numpydoc >=1.8.0",
   "pandas-stubs >=2.2",
@@ -127,7 +126,7 @@ xclim = "xclim.cli:cli"
 [tool]
 
 [tool.bumpversion]
-current_version = "0.57.1-dev.8"
+current_version = "0.57.1-dev.10"
 commit = true
 commit_args = "--no-verify --signoff"
 tag = false
@@ -154,7 +153,7 @@ values = [
 ]
 
 [tool.codespell]
-skip = '*xclim/data/*.json,*docs/_build,*docs/notebooks/xclim_training/*.ipynb,*docs/references.bib,*.gz,*.nc,*.png,*.svg,*.whl'
+skip = '*xclim/data/*.json,*docs/_build,*docs/notebooks/xclim_training/*.ipynb,*docs/*.bib,*.gz,*.nc,*.png,*.svg,*.whl'
 ignore-words-list = "absolue,astroid,bloc,bui,callendar,degreee,environnement,hanel,indx,inferrable,lond,nam,nd,ot,ressources,socio-economic,sie,vas"
 
 [tool.coverage.run]

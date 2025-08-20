@@ -1081,7 +1081,7 @@ def snowfall_approximation(
         Which method to use when approximating snowfall from total precipitation. See notes.
     clip_temp : Quantified
         For methods "dai_annual" and "dai_seasonal", this is an optional temperature delta
-        above and below which the snowfall fraction is clipped to 0 or 1. See notes.
+        at which the snowfall fraction is rescaled to 0 or 1. See notes.
     landmask : DataArray or bool
         For methods "dai_annual" and "dai_seasonal", this is the land mask, a DataArray without
         a time dimension that is True on land grid points and False on ocean grid points.
@@ -1101,7 +1101,8 @@ def snowfall_approximation(
     -----
     The following methods are available to approximate snowfall. ``'brown'`` and ``'auer'`` are drawn from the
     Canadian Land Surface Scheme :cite:p:`verseghy_class_2009,melton_atmosphericvarscalcf90_2019`.
-    The two ``'dai_*'`` methods are implemented from :cite:p:`dai_snowfall_2008`.
+    The two ``'dai_*'`` methods are implemented from :cite:p:`dai_snowfall_2008`
+    (``clip_temp`` is an addition from the xclim team).
 
     - ``'binary'`` : When the temperature is under the freezing threshold, precipitation
       is assumed to be solid. The method is agnostic to the type of temperature used
@@ -1112,8 +1113,9 @@ def snowfall_approximation(
       polynomial over a range of 6°C over the freezing point.
     - ``'dai_annual'`` : The snow fraction evolves according to an hyperbolic tangent function that has
       different parameters for precipitation over land or ocean. The snow and rain fractions do not add
-      to 1, rather the remainder is denoted as a "sleet" fraction. If ``clip_temp`` is given its value $$T_c$$ (in
-      °C) is used to clip the snowfall fraction to 0 when $$T > T_c$$ and to 1 when $$T < T_c$$.
+      to 1, rather the remainder is denoted as a "sleet" fraction. If ``clip_temp`` is given, its value $$T_c$$ (in
+      °C) is used to rescale the snowfall fraction function $$f(T)$$ as $$(f(T) - f(T_c))/(f(-T_c) - f(T_c))$$,
+      so that it is 0 when $$T > T_c$$ and 1 when $$T < -T_c$$.
     - ``'dai_seasonal'`` : Same as ``'dai_annual'``, but parameters are different for each season.
       The "annual" coefficients are taken over ocean in summer (JJA).
 
@@ -1195,10 +1197,16 @@ def snowfall_approximation(
                 a, b, c, d = coeffs.sel(season=tas.time.dt.season)
             else:
                 raise ValueError(f"Unknown method {method} for snowfall approximation.")
-            frac = a * (np.tanh(b * (tas - c)) - d) / 100
+
+            def fracfunc(tt):
+                return a * (np.tanh(b * (tt - c)) - d) / 100
+
+            frac = fracfunc(tas)
             if clip_temp is not None:
                 clip = convert_units_to(clip_temp, "°C")
-                frac = xr.where(tas < -clip, 1, xr.where(tas > clip, 0, frac))
+                fmin = fracfunc(clip)
+                fmax = fracfunc(-clip)
+                frac = (frac - fmin) / (fmax - fmin)
             prsn = pr * frac
         else:
             prsn = xr.where(
@@ -1241,7 +1249,7 @@ def rain_approximation(
         Which method to use when approximating snowfall from total precipitation. See notes.
     clip_temp : Quantified
         For methods "dai_annual" and "dai_seasonal", this is an optional temperature delta
-        above and below which the snowfall fraction is clipped to 0 or 1. See notes.
+        at which the snowfall fraction function rescaled to 0 or 1. See notes.
     landmask : DataArray or bool
         For methods "dai_annual" and "dai_seasonal", this is the land mask, a DataArray without
         a time dimension that is True on land grid points and False on ocean grid points.
@@ -1265,13 +1273,15 @@ def rain_approximation(
 
     For the "dai_*", methods, the rain fraction evolves according to an hyperbolic tangent
     function that has different parameters for precipitation over land or ocean. The snow
-    and rain fraction do not add to 1, rather the remainder is denoted as a "sleet" fraction.
+    and rain fraction do not add to 1. Rather, the remainder can be associated to a "sleet" fraction.
 
-    If ``clip_temp`` is given its value $$T_c$$ (in °C) is used to clip the rain fraction to 0 when $$T < T_c$$ and
-    zto 1 when $$T > T_c$$.
+    If ``clip_temp`` is given, its value $$T_c$$ (in °C) is used to rescale the rain fraction
+    function $$f(T)$$ as $$(f(T) - f(-T_c))/(f(T_c) - f(-T_c))$$, so that it is 0 when $$T < -T_c$$
+    and 1 when $$T > T_c$$.
 
     The "dai_seasonal" method has different parameters for each season. The "annual" coefficients are taken over ocean
-    in summer. These methods are implemented from :cite:p:`dai_snowfall_2008`.
+    in summer. These methods are implemented from :cite:p:`dai_snowfall_2008`
+    (``clip_temp`` is an addition from the xclim team).
 
     References
     ----------
@@ -1310,10 +1320,16 @@ def rain_approximation(
                 a, b, c, d = coeffs.sel(season=tas.time.dt.season)
             else:
                 raise ValueError(f"Unknown method {method} for rain approximation.")
-            frac = a * (np.tanh(b * (tas - c)) - d) / 100
+
+            def fracfunc(tt):
+                return a * (np.tanh(b * (tt - c)) - d) / 100
+
+            frac = fracfunc(tas)
             if clip_temp is not None:
                 clip = convert_units_to(clip_temp, "°C")
-                frac = xr.where(tas < -clip, 0, xr.where(tas > clip, 1, frac))
+                fmax = fracfunc(clip)
+                fmin = fracfunc(-clip)
+                frac = (frac - fmin) / (fmax - fmin)
             prra = pr * frac
         else:
             prra = xr.where(

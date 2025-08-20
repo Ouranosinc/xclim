@@ -728,6 +728,21 @@ class TestSpellMask:
             generic.spell_mask(data, 3, "mean", "<=", 2, weights=[1, 2])
 
 
+def test_spell_length_statistics_quantified(tasmin_series):
+    tn = tasmin_series(np.arange(365) + K2C, start="2001-01-01").expand_dims(site=[0, 1])
+    thresh = xr.DataArray([330, 360], dims=("site",), coords={"site": tn.site}, attrs={"units": "°C"})
+    out = generic.spell_length_statistics(
+        tn,
+        thresh,
+        window=1,
+        win_reducer="min",
+        op=">",
+        spell_reducer="sum",
+        freq="YS",
+    )
+    np.testing.assert_allclose(out, [[34], [4]])
+
+
 def test_spell_length_statistics_multi(tasmin_series, tasmax_series):
     tn = tasmin_series(
         np.zeros(
