@@ -3317,28 +3317,38 @@ def test_degree_days_exceedance_date(tas_series):
 
 
 @pytest.mark.parametrize(
-    "method,exp",
+    "method,exp,kws",
     [
-        ("binary", [1, 1, 1, 0, 0, 0, 0, 0, 0, 0]),
-        ("brown", [1, 1, 1, 0.5, 0, 0, 0, 0, 0, 0]),
-        ("auer", [1, 1, 1, 0.89805, 0.593292, 0.289366, 0.116624, 0.055821, 0, 0]),
+        ("binary", [1, 1, 1, 0, 0, 0, 0, 0, 0, 0], {"thresh": "2 °C"}),
+        ("brown", [1, 1, 1, 0.5, 0, 0, 0, 0, 0, 0], {"thresh": "2 °C"}),
+        ("auer", [1, 1, 1, 0.89805, 0.593292, 0.289366, 0.116624, 0.055821, 0, 0], {"thresh": "2 °C"}),
+        ("dai_annual", [0.82387, 0.55053, 0.23377, 0.07485, 0.02674, 0.01459, 0.01166, 0.01097, 0.01081, 0.01077], {}),
+        ("dai_annual", [0.84246, 0.55791, 0.22817, 0.06274, 0.01265, 0.0, 0.0, 0.0, 0.0, 0.0], {"clip_temp": "5 °C"}),
+        ("dai_seasonal", [0.71875, 0.421, 0.16181, 0.05264, 0.02091, 0.01276, 0.01073, 0.01023, 0.01011, 0.01008], {}),
     ],
 )
-def test_snowfall_approximation(pr_series, tasmax_series, method, exp):
+def test_snowfall_approximation(pr_series, tasmax_series, method, exp, kws):
     pr = pr_series(np.ones(10))
-    tasmax = tasmax_series(np.arange(10) + K2C)
+    tasmax = tasmax_series(np.arange(10), units="°C")
 
-    prsn = xci.snowfall_approximation(pr, tas=tasmax, thresh="2 degC", method=method)
+    prsn = xci.snowfall_approximation(pr, tas=tasmax, method=method, **kws)
 
     np.testing.assert_allclose(prsn, exp, atol=1e-5, rtol=1e-3)
 
 
-@pytest.mark.parametrize("method,exp", [("binary", [0, 0, 0, 0, 0, 0, 1, 1, 1, 1])])
-def test_rain_approximation(pr_series, tas_series, method, exp):
+@pytest.mark.parametrize(
+    "method,exp,kws",
+    [
+        ("binary", [0, 0, 0, 0, 0, 0, 1, 1, 1, 1], {"thresh": "5 °C"}),
+        ("dai_annual", [0.12941, 0.34293, 0.65902, 0.86974, 0.94718, 0.96909, 0.97481, 0.97627, 0.97664, 0.976732], {}),
+        ("dai_annual", [0.11507, 0.34009, 0.67322, 0.89529, 0.97691, 1.0, 1.0, 1.0, 1.0, 1.0], {"clip_temp": "5 °C"}),
+    ],
+)
+def test_rain_approximation(pr_series, tas_series, method, exp, kws):
     pr = pr_series(np.ones(10))
-    tas = tas_series(np.arange(10) + K2C)
+    tas = tas_series(np.arange(10), units="°C")
 
-    prlp = xci.rain_approximation(pr, tas=tas, thresh="5 degC", method=method)
+    prlp = xci.rain_approximation(pr, tas=tas, method=method, **kws)
 
     np.testing.assert_allclose(prlp, exp, atol=1e-5, rtol=1e-3)
 

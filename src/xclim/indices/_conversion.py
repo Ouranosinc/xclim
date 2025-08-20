@@ -1114,8 +1114,8 @@ def snowfall_approximation(
     - ``'dai_annual'`` : The snow fraction evolves according to an hyperbolic tangent function that has
       different parameters for precipitation over land or ocean. The snow and rain fractions do not add
       to 1, rather the remainder is denoted as a "sleet" fraction. If ``clip_temp`` is given, its value $$T_c$$ (in
-      °C) is used to rescale the snowfall fraction function $$f(T)$$ as $$(f(T) - f(T_c))/(f(-T_c) - f(T_c))$$,
-      so that it is 0 when $$T > T_c$$ and 1 when $$T < -T_c$$.
+      °C) is used to rescale (and then clip) the snowfall fraction function $$f(T)$$ as
+      $$(f(T) - f(T_c))/(f(-T_c) - f(T_c))$$, so that it is 0 when $$T > T_c$$ and 1 when $$T < -T_c$$.
     - ``'dai_seasonal'`` : Same as ``'dai_annual'``, but parameters are different for each season.
       The "annual" coefficients are taken over ocean in summer (JJA).
 
@@ -1207,7 +1207,7 @@ def snowfall_approximation(
                 fmin = fracfunc(clip)
                 fmax = fracfunc(-clip)
                 frac = (frac - fmin) / (fmax - fmin)
-            prsn = pr * frac
+            prsn = pr * frac.clip(0, 1)
         else:
             prsn = xr.where(
                 landmask,
@@ -1275,7 +1275,7 @@ def rain_approximation(
     function that has different parameters for precipitation over land or ocean. The snow
     and rain fraction do not add to 1. Rather, the remainder can be associated to a "sleet" fraction.
 
-    If ``clip_temp`` is given, its value $$T_c$$ (in °C) is used to rescale the rain fraction
+    If ``clip_temp`` is given, its value $$T_c$$ (in °C) is used to rescale (and then clip) the rain fraction
     function $$f(T)$$ as $$(f(T) - f(-T_c))/(f(T_c) - f(-T_c))$$, so that it is 0 when $$T < -T_c$$
     and 1 when $$T > T_c$$.
 
@@ -1330,7 +1330,7 @@ def rain_approximation(
                 fmax = fracfunc(clip)
                 fmin = fracfunc(-clip)
                 frac = (frac - fmin) / (fmax - fmin)
-            prra = pr * frac
+            prra = pr * frac.clip(0, 1)
         else:
             prra = xr.where(
                 landmask,

@@ -208,13 +208,83 @@ def test_dewpoint_from_specific_humidity(atmosds, method):
     xr.testing.assert_allclose(tdps, atmosds.tdps, atol=0.2, rtol=0.001)
 
 
-def test_snowfall_approximation(pr_series, tasmax_series):
-    pr = pr_series(np.ones(10))
-    tasmax = tasmax_series(np.arange(10) + K2C)
-
-    prsn = atmos.snowfall_approximation(pr, tas=tasmax, thresh="5 degC", method="binary")
-
-    np.testing.assert_allclose(prsn, [1, 1, 1, 1, 1, 0, 0, 0, 0, 0], atol=1e-5, rtol=1e-3)
+def test_snowfall_approximation(pr_series, tas_series, prsn_series):
+    # Data from CanDCS-M6 : lon=-73, lat=45.5, time=('2001-01-01', '2001-01-20')
+    pr = pr_series(
+        [
+            4.83717,
+            1.89218,
+            3.21972,
+            10.75767,
+            2.25840,
+            10.29990,
+            13.13808,
+            17.63949,
+            16.11359,
+            0.00006,
+            27.93933,
+            8.95711,
+            9.33858,
+            2.25840,
+            1.19027,
+            0.00006,
+            0.00006,
+            0.00006,
+            9.32332,
+            22.98015,
+        ],
+    )
+    tas = tas_series(
+        [
+            -5.08431,
+            -6.09445,
+            -6.73533,
+            -3.04570,
+            -7.70428,
+            -7.64477,
+            3.10979,
+            3.02281,
+            -5.82589,
+            -11.81048,
+            -7.29076,
+            0.62867,
+            -7.70428,
+            -18.71214,
+            -7.58678,
+            -1.72427,
+            -0.09003,
+            0.24414,
+            -0.40894,
+            3.72473,
+        ],
+        units="°C",
+    )
+    exp = prsn_series(
+        [
+            4.83717,
+            1.89218,
+            3.21972,
+            10.72715,
+            2.25840,
+            10.29990,
+            0.74775,
+            1.12923,
+            16.11359,
+            0.00006,
+            27.93933,
+            6.13419,
+            9.33858,
+            2.25840,
+            1.19027,
+            0.00006,
+            0.00006,
+            0.00006,
+            8.45356,
+            0.56465,
+        ]
+    )
+    prsn = atmos.snowfall_approximation(pr, tas=tas, method="dai_annual", clip_temp="20 °C")
+    np.testing.assert_allclose(prsn, exp, atol=1e-4, rtol=1e-2)
 
 
 def test_rain_approximation(pr_series, tas_series):
