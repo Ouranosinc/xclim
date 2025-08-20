@@ -421,3 +421,17 @@ def swe_series():
 
     return _swe_series
 
+
+def area_series() :
+    def _area_series(values, units="km2"):
+
+        return xr.DataArray(
+            values,
+            name="area",
+            attrs={
+                "standard_name": "cell_area",
+                "units": units,
+            },
+        )
+
+    return _area_series
