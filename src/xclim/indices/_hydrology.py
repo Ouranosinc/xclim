@@ -1088,3 +1088,42 @@ def SS_an_season(q: xarray.DataArray,
             )
         ds.attrs["units"] = ""
         return ds
+
+
+import xarray
+
+
+def annual_maxima(
+    q: xarray.DataArray,
+    freq: str = "YS-OCT",
+) -> xarray.DataArray:
+    """
+    Compute annual_maxima per year
+
+    Parameters
+    ----------
+
+    q : array_like
+        Daily streamflow vector.
+    Returns
+    -------
+    xarray.DataArray, [days]
+        Peak streamflow per year and corresponding DOY
+
+    Warnings
+    --------
+    The default `freq` is the water year used in the northern hemisphere, from October to September
+
+    """
+    # Find time of streamflow peak per year
+    t_q_max = q.resample(time=freq).apply(lambda x: x.idxmax()).dt.dayofyear
+    peak_vals = q.resample(time=freq).max()
+
+    peak_summary = xarray.Dataset({
+
+        "peak_flow": peak_vals,
+        "peak_doy": t_q_max,
+
+    })
+
+    return peak_summary
