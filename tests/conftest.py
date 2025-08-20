@@ -418,7 +418,6 @@ def swe_series():
                 "units": units,
             },
         )
-
     return _swe_series
 
 
