@@ -51,8 +51,10 @@ def _fitfunc_1d(arr, *, dist, nparams, method, **fitkwargs):
 
     # Estimate parameters
     if method in ["ML", "MLE"]:
-        args, kwargs = _fit_start(x, dist.name, **fitkwargs)
-        params = dist.fit(x, *args, method="mle", **kwargs, **fitkwargs)
+        with np.errstate(invalid="ignore"):
+            with np.errstate(divide="ignore"):
+                args, kwargs = _fit_start(x, dist.name, **fitkwargs)
+            params = dist.fit(x, *args, method="mle", **kwargs, **fitkwargs)
     elif method == "MM":
         params = dist.fit(x, method="mm", **fitkwargs)
     elif method in ["MSE", "MPS"]:
