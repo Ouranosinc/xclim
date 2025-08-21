@@ -40,6 +40,7 @@ Internal changes
 * Modified internal logic for ``xclim.testing.utils.default_testdata_cache`` to support mocking of `pooch`. (:pull:`2188`).
 * The `xclim.indices.helpers` module now uses an `__all__` variable to explicitly define the public API of the module. (:pull:`2207`).
 * Viticulture indices are more heavily tested and employ type guarding to ensure that parameters passed are those of the expected types. (:pull:`2207`).
+* Fixed some tests relying on floating-point imprecision. Avoid numbagg on sensitive fitting tests. (:pull:`2228`).
 
 Bug fixes
 ^^^^^^^^^

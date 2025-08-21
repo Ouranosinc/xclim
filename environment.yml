@@ -24,6 +24,7 @@ dependencies:
   # Extras
   - flox >=0.9
   - xsdba >=0.4.0
+  - numbagg >= 0.8
   # lmoments3 - Not an official dependency but required for some Jupyter notebooks
   - lmoments3 >=1.0.7
   # Testing and development dependencies
