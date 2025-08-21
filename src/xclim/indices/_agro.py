@@ -20,7 +20,6 @@ from xclim.core.units import (
     to_agg_units,
 )
 from xclim.core.utils import uses_dask
-from xclim.indices._conversion import potential_evapotranspiration
 from xclim.indices._simple import tn_min
 from xclim.indices._threshold import (
     first_day_temperature_above,
@@ -58,7 +57,6 @@ __all__ = [
     "rain_season",
     "standardized_precipitation_evapotranspiration_index",
     "standardized_precipitation_index",
-    "water_budget",
 ]
 
 
@@ -787,110 +785,6 @@ def latitude_temperature_index(
     lti: xarray.DataArray = mtwm * lat_coeff
     lti = lti.assign_attrs(units="")
     return lti
-
-
-@declare_units(
-    pr="[precipitation]",
-    evspsblpot="[precipitation]",
-    tasmin="[temperature]",
-    tasmax="[temperature]",
-    tas="[temperature]",
-    lat="[]",
-    hurs="[]",
-    rsds="[radiation]",
-    rsus="[radiation]",
-    rlds="[radiation]",
-    rlus="[radiation]",
-    sfcWind="[speed]",
-)
-def water_budget(
-    pr: xarray.DataArray,
-    evspsblpot: xarray.DataArray | None = None,
-    tasmin: xarray.DataArray | None = None,
-    tasmax: xarray.DataArray | None = None,
-    tas: xarray.DataArray | None = None,
-    lat: xarray.DataArray | None = None,
-    hurs: xarray.DataArray | None = None,
-    rsds: xarray.DataArray | None = None,
-    rsus: xarray.DataArray | None = None,
-    rlds: xarray.DataArray | None = None,
-    rlus: xarray.DataArray | None = None,
-    sfcWind: xarray.DataArray | None = None,
-    method: str = "BR65",
-) -> xarray.DataArray:
-    r"""
-    Precipitation minus potential evapotranspiration.
-
-    Precipitation minus potential evapotranspiration as a measure of an approximated surface water budget,
-    where the potential evapotranspiration can be calculated with a given method.
-
-    Parameters
-    ----------
-    pr : xarray.DataArray
-        Daily precipitation.
-    evspsblpot : xarray.DataArray, optional
-        Potential evapotranspiration.
-    tasmin : xarray.DataArray, optional
-        Minimum daily temperature.
-    tasmax : xarray.DataArray, optional
-        Maximum daily temperature.
-    tas : xarray.DataArray, optional
-        Mean daily temperature.
-    lat : xarray.DataArray, optional
-        Latitude coordinate, needed if evspsblpot is not given.
-        If None, a CF-conformant "latitude" field must be available within the `pr` DataArray.
-    hurs : xarray.DataArray, optional
-        Relative humidity.
-    rsds : xarray.DataArray, optional
-        Surface Downwelling Shortwave Radiation.
-    rsus : xarray.DataArray, optional
-        Surface Upwelling Shortwave Radiation.
-    rlds : xarray.DataArray, optional
-        Surface Downwelling Longwave Radiation.
-    rlus : xarray.DataArray, optional
-        Surface Upwelling Longwave Radiation.
-    sfcWind : xarray.DataArray, optional
-        Surface wind velocity (at 10 m).
-    method : str
-        Method to use to calculate the potential evapotranspiration.
-
-    Returns
-    -------
-    xarray.DataArray
-        Precipitation minus potential evapotranspiration.
-
-    See Also
-    --------
-    xclim.indicators.atmos.potential_evapotranspiration : Potential evapotranspiration calculation.
-    """
-    pr = convert_units_to(pr, "kg m-2 s-1", context="hydro")
-
-    if lat is None and evspsblpot is None:
-        lat = _gather_lat(pr)
-
-    if evspsblpot is None:
-        pet = potential_evapotranspiration(
-            tasmin=tasmin,
-            tasmax=tasmax,
-            tas=tas,
-            lat=lat,
-            hurs=hurs,
-            rsds=rsds,
-            rsus=rsus,
-            rlds=rlds,
-            rlus=rlus,
-            sfcWind=sfcWind,
-            method=method,
-        )
-    else:
-        pet = convert_units_to(evspsblpot, "kg m-2 s-1", context="hydro")
-
-    if xarray.infer_freq(pet.time) == "MS":
-        pr = pr.resample(time="MS").mean(dim="time", keep_attrs=True)
-
-    out: xarray.DataArray = pr - pet
-    out = out.assign_attrs(units=pr.attrs["units"])
-    return out
 
 
 @declare_units(

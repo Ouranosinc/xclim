@@ -14,22 +14,24 @@
 from __future__ import annotations
 
 import calendar
+import warnings
 
 import numpy as np
 import pandas as pd
 import pytest
+import scipy.stats
 import xarray as xr
 from numpy import __version__ as __numpy_version__
 from packaging.version import Version
 from pint import __version__ as __pint_version__
-from scipy import stats
 
 from xclim import indices as xci
 from xclim.core import ValidationError
 from xclim.core.calendar import percentile_doy
 from xclim.core.options import set_options
 from xclim.core.units import convert_units_to, units
-from xclim.indices import prsnd_to_prsn
+from xclim.indices.converters import prsnd_to_prsn
+from xclim.indices.stats import standardized_index, standardized_index_fit_params
 
 K2C = 273.15
 
@@ -204,7 +206,7 @@ class TestMaximumConsecutiveFrostFreeDays:
     def test_one_freeze_day(self, tasmin_series):
         a = tasmin_series(np.array([3, 4, 5, -1, 3]) + K2C)
         ffd = xci.maximum_consecutive_frost_free_days(a)
-        assert ffd == 3
+        assert ffd.values == 3
         assert ffd.time.dt.year == 2000
 
     def test_two_freeze_days_with_threshold(self, tasmin_series):
@@ -762,7 +764,7 @@ class TestStandardizedIndices:
         fitkwargs = {}
         if method == "APP":
             fitkwargs["floc"] = 0
-        params = xci.stats.standardized_index_fit_params(
+        params = standardized_index_fit_params(
             pr_cal,
             freq=freq,
             window=window,
@@ -779,7 +781,7 @@ class TestStandardizedIndices:
         # bounds of ± 3.09 correspond to 0.999 and 0.001 probabilities. SPI indices outside
         # [-3.09, 3.09] might be non-statistically relevant. In `climate_indices` the SPI
         # index is clipped outside this region of value. In the values chosen above,
-        # this doesn't play role, but let's clip it anyways to avoid future problems.
+        # this doesn't play role, but let's clip it anyway to avoid future problems.
         # The last few values in time are tested
         spi = spi.clip(-3.09, 3.09)
 
@@ -798,8 +800,8 @@ class TestStandardizedIndices:
         fitkwargs = {}
 
         out = []
-        for dist0 in [dist, getattr(stats, dist)]:
-            params = xci.stats.standardized_index_fit_params(
+        for dist0 in [dist, getattr(scipy.stats, dist)]:
+            params = standardized_index_fit_params(
                 pr_cal,
                 freq=freq,
                 window=window,
@@ -811,7 +813,7 @@ class TestStandardizedIndices:
             spi = xci.standardized_precipitation_index(pr, params=params)
             # Only a few moments before year 2000 are tested
             out.append(spi.isel(time=slice(-11, -1, 2)))
-        assert all(out[0] == out[1])
+        assert (out[0] == out[1]).all
 
     # See SPI version
     @pytest.mark.slow
@@ -895,7 +897,7 @@ class TestStandardizedIndices:
             fitkwargs = {"floc": -offset}
         else:
             fitkwargs = {}
-        params = xci.stats.standardized_index_fit_params(
+        params = standardized_index_fit_params(
             wb.sel(time=slice("1950", "1980")),
             freq=freq,
             window=window,
@@ -1054,7 +1056,7 @@ class TestStandardizedIndices:
         else:
             q = q.sel(time=slice("2008-01-01", "2009-12-31")).fillna(ds.q_obs.mean())
         fitkwargs = {"floc": 0} if method == "APP" else {}
-        params = xci.stats.standardized_index_fit_params(
+        params = standardized_index_fit_params(
             q_cal,
             freq=freq,
             window=window,
@@ -1176,15 +1178,17 @@ class TestStandardizedIndices:
         fitkwargs = {}
         if method == "APP":
             fitkwargs["floc"] = 0
-        params = xci.stats.standardized_index_fit_params(
-            gwl_cal,
-            freq=freq,
-            window=window,
-            dist=dist,
-            method=method,
-            fitkwargs=fitkwargs,
-            zero_inflated=True,
-        )
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", message="Degrees of freedom <= 0 for slice")
+            params = standardized_index_fit_params(
+                gwl_cal,
+                freq=freq,
+                window=window,
+                dist=dist,
+                method=method,
+                fitkwargs=fitkwargs,
+                zero_inflated=True,
+            )
         sgi = xci.standardized_groundwater_index(gwl, params=params)
         # Only a few moments before year 2000 are tested
         sgi = sgi.isel(time=slice(-11, -1, 2))
@@ -1216,7 +1220,7 @@ class TestStandardizedIndices:
         offset = convert_units_to("1 mm/d", wb, context="hydro")
         fitkwargs = {"floc": -offset}
 
-        params = xci.stats.standardized_index_fit_params(
+        params = standardized_index_fit_params(
             wb.sel(time=slice("1950", "1980")),
             freq=freq,
             window=window,
@@ -1276,10 +1280,8 @@ class TestStandardizedIndices:
         )
         for zero_inflated in [False, True]:
             input_params["zero_inflated"] = zero_inflated
-            params = xci.stats.standardized_index_fit_params(pr, **input_params)
-            spid[zero_inflated] = xci.stats.standardized_index(
-                pr, params=params, cal_start=None, cal_end=None, **input_params
-            )
+            params = standardized_index_fit_params(pr, **input_params)
+            spid[zero_inflated] = standardized_index(pr, params=params, cal_start=None, cal_end=None, **input_params)
             # drop doys other than 180 that will be NaNs
             spid[zero_inflated] = spid[zero_inflated].where(spid[zero_inflated].notnull(), drop=True)
         np.testing.assert_equal(np.all(np.not_equal(spid[False].values, spid[True].values)), True)
@@ -1301,7 +1303,7 @@ class TestStandardizedIndices:
             fitkwargs=fitkwargs,
         )
         # this should not cause a problem
-        params_d0 = xci.stats.standardized_index_fit_params(pr, **input_params).isel(dayofyear=0)
+        params_d0 = standardized_index_fit_params(pr, **input_params).isel(dayofyear=0)
         np.testing.assert_allclose(params_d0, np.array([5.63e-01, 0, 3.37e-05]), rtol=0, atol=2e-2)
         # this should cause a problem
         fitkwargs["fscale"] = 1
@@ -1310,7 +1312,7 @@ class TestStandardizedIndices:
             ValueError,
             match="Lmoments3 does not use `fitkwargs` arguments, except for `floc` with the Gamma distribution.",
         ):
-            xci.stats.standardized_index_fit_params(pr, **input_params)
+            standardized_index_fit_params(pr, **input_params)
 
 
 class TestDailyFreezeThawCycles:
@@ -1379,7 +1381,7 @@ class TestLastSpringFrost:
         tas = tas_series(a, start="2000/1/1")
 
         lsf = xci.last_spring_frost(tas)
-        assert lsf == 180
+        assert lsf.values == 180
         for attr in ["units", "is_dayofyear", "calendar"]:
             assert attr in lsf.attrs.keys()
         assert lsf.attrs["units"] == "1"
@@ -2330,13 +2332,13 @@ class TestPrecipAccumulation:
         tas[10:15] = 268
         tas = tas_series(tas)
 
-        outsn = xci.precip_accumulation(pr, tas=tas, phase="solid", freq="ME")
-        outsn2 = xci.precip_accumulation(pr, tas=tas, phase="solid", thresh="269 K", freq="ME")
-        outrn = xci.precip_accumulation(pr, tas=tas, phase="liquid", freq="ME")
+        out_snow = xci.precip_accumulation(pr, tas=tas, phase="solid", freq="ME")
+        out_snow_thresh = xci.precip_accumulation(pr, tas=tas, phase="solid", thresh="269 K", freq="ME")
+        out_rain = xci.precip_accumulation(pr, tas=tas, phase="liquid", freq="ME")
 
-        np.testing.assert_array_equal(outsn[0], 10 * 3600 * 24)
-        np.testing.assert_array_equal(outsn2[0], 5 * 3600 * 24)
-        np.testing.assert_array_equal(outrn[0], 5 * 3600 * 24)
+        np.testing.assert_array_equal(out_snow[0], 10 * 3600 * 24)
+        np.testing.assert_array_equal(out_snow_thresh[0], 5 * 3600 * 24)
+        np.testing.assert_array_equal(out_rain[0], 5 * 3600 * 24)
 
 
 class TestPrecipAverage:
@@ -2532,7 +2534,8 @@ class TestTas:
         tasmax = tasmax_series(np.ones(10) * 2 + (K2C if tasmax_units == "K" else 0))
         tasmax.attrs["units"] = tasmax_units
 
-        tas_xc = xci.tas(tasmin, tasmax)
+        with pytest.warns(DeprecationWarning):
+            tas_xc = xci.tas(tasmin, tasmax)
         assert tas_xc.attrs["units"] == tasmin_units
         xr.testing.assert_equal(tas, tas_xc)
 
@@ -3136,17 +3139,21 @@ class TestWindConversion:
     da_windfromdir.attrs["units"] = "degree"
 
     def test_uas_vas_to_sfcwind(self):
-        wind, windfromdir = xci.uas_vas_to_sfcwind(self.da_uas, self.da_vas)
+        sfcwind = xci.uas_vas_to_sfcwind(self.da_uas, self.da_vas)
 
-        assert np.all(np.around(wind.values, decimals=10) == np.around(self.da_wind.values / 3.6, decimals=10))
-        assert np.all(np.around(windfromdir.values, decimals=10) == np.around(self.da_windfromdir.values, decimals=10))
+        assert (sfcwind.wind.values == sfcwind[0].values).all()
+        assert np.all(np.around(sfcwind.wind.values, decimals=10) == np.around(self.da_wind.values / 3.6, decimals=10))
+        assert np.all(
+            np.around(sfcwind.wind_from_dir.values, decimals=10) == np.around(self.da_windfromdir.values, decimals=10)
+        )
 
     def test_sfcwind_to_uas_vas(self):
-        uas, vas = xci.sfcwind_to_uas_vas(self.da_wind, self.da_windfromdir)
+        wind_components = xci.sfcwind_to_uas_vas(self.da_wind, self.da_windfromdir)
 
-        assert np.all(np.around(uas.values, decimals=10) == np.array([[1, -1], [0, 0]]))
+        assert (wind_components.uas.values == wind_components[0].values).all()
+        assert np.all(np.around(wind_components.uas.values, decimals=10) == np.array([[1, -1], [0, 0]]))
         assert np.all(
-            np.around(vas.values, decimals=10)
+            np.around(wind_components.vas.values, decimals=10)
             == np.around(np.array([[1, 1], [-(np.hypot(1, 1)) / 3.6, -5]]), decimals=10)
         )
 
@@ -4204,7 +4211,7 @@ def test_hardiness_zones(tasmin_series, tmin, meth, zone):
 
 
 @pytest.mark.parametrize(
-    "pr,threshmin,threshsum,window,outs",
+    "pr,thresh_min,thresh_sum,window,outs",
     [
         (
             [1.01] * 6 + [0.01] * 3 + [0.51] * 2 + [0.75] * 2 + [0.51] + [0.01] * 3 + [1.01] * 3,
@@ -4229,28 +4236,28 @@ def test_hardiness_zones(tasmin_series, tmin, meth, zone):
         ),
     ],
 )
-def test_wet_spell(pr_series, pr, threshmin, threshsum, window, outs):
+def test_wet_spell(pr_series, pr, thresh_min, thresh_sum, window, outs):
     pr = pr_series(np.array(pr), start="1981-01-01", units="mm/day")
 
     out_events, out_total_d_sum, out_total_d_min, out_max_d_sum, out_max_d_min = outs
 
-    events = xci.wet_spell_frequency(pr, thresh=f"{threshsum} mm", window=window, freq="YS", op="sum")
+    events = xci.wet_spell_frequency(pr, thresh=f"{thresh_sum} mm", window=window, freq="YS", op="sum")
     total_d_sum = xci.wet_spell_total_length(
         pr,
-        thresh=f"{threshsum} mm",
+        thresh=f"{thresh_sum} mm",
         window=window,
         op="sum",
         freq="YS",
     )
-    total_d_min = xci.wet_spell_total_length(pr, thresh=f"{threshmin} mm", window=window, op="min", freq="YS")
+    total_d_min = xci.wet_spell_total_length(pr, thresh=f"{thresh_min} mm", window=window, op="min", freq="YS")
     max_d_sum = xci.wet_spell_max_length(
         pr,
-        thresh=f"{threshsum} mm",
+        thresh=f"{thresh_sum} mm",
         window=window,
         op="sum",
         freq="YS",
     )
-    max_d_min = xci.wet_spell_max_length(pr, thresh=f"{threshmin} mm", window=window, op="min", freq="YS")
+    max_d_min = xci.wet_spell_max_length(pr, thresh=f"{thresh_min} mm", window=window, op="min", freq="YS")
     np.testing.assert_allclose(events[0], [out_events], rtol=1e-1)
     np.testing.assert_allclose(total_d_sum[0], [out_total_d_sum], rtol=1e-1)
     np.testing.assert_allclose(total_d_min[0], [out_total_d_min], rtol=1e-1)
@@ -4356,7 +4363,7 @@ class TestSnowfallFrequency:
         # test prsn [kg m-2 s-1]
         prsn = prsn_series(np.array([0, 2, 0.3, 0.2, 4]), units="mm day-1")
         prsn = convert_units_to(prsn, "kg m-2 s-1", context="hydro")
-        out = xci.snowfall_frequency(prsnd)
+        out = xci.snowfall_frequency(prsn)
         np.testing.assert_allclose(out, [40])
 
 
@@ -4365,12 +4372,12 @@ class TestSnowfallIntensity:
         # test prsnd [mm day-1]
         prsnd = prsnd_series(np.array([0, 2, 0.3, 0.2, 4]), units="mm day-1")
         prsn = convert_units_to(prsnd, "kg m-2 s-1", context="hydro")
-        out = xci.snowfall_intensity(prsnd)
+        out = xci.snowfall_intensity(prsn)
         np.testing.assert_allclose(out, [3])
 
         # test prsnd [m s-1]
         prsn = convert_units_to(prsnd, "m s-1")
-        out = xci.snowfall_intensity(prsnd)
+        out = xci.snowfall_intensity(prsn)
         np.testing.assert_allclose(out, [3])
 
         # test prsn [kg m-2 s-1]
