@@ -3324,6 +3324,11 @@ def test_degree_days_exceedance_date(tas_series):
         ("auer", [1, 1, 1, 0.89805, 0.593292, 0.289366, 0.116624, 0.055821, 0, 0], {"thresh": "2 °C"}),
         ("dai_annual", [0.82387, 0.55053, 0.23377, 0.07485, 0.02674, 0.01459, 0.01166, 0.01097, 0.01081, 0.01077], {}),
         ("dai_annual", [0.84246, 0.55791, 0.22817, 0.06274, 0.01265, 0.0, 0.0, 0.0, 0.0, 0.0], {"clip_temp": "5 °C"}),
+        (
+            "dai_annual",
+            [0.78895, 0.65031, 0.46730, 0.28835, 0.15796, 0.08192, 0.04319, 0.02483, 0.01642, 0.01263],
+            {"landmask": False},
+        ),
         ("dai_seasonal", [0.71875, 0.421, 0.16181, 0.05264, 0.02091, 0.01276, 0.01073, 0.01023, 0.01011, 0.01008], {}),
     ],
 )
@@ -3334,6 +3339,25 @@ def test_snowfall_approximation(pr_series, tasmax_series, method, exp, kws):
     prsn = xci.snowfall_approximation(pr, tas=tasmax, method=method, **kws)
 
     np.testing.assert_allclose(prsn, exp, atol=1e-5, rtol=1e-3)
+
+
+def test_snowfall_approximation_dai_landmask(pr_series, tas_series):
+    pr = pr_series(np.ones(10)).expand_dims(surface=["land", "ocean"])
+    tas = tas_series(np.arange(10), units="°C").expand_dims(surface=["land", "ocean"])
+    landmask = xr.DataArray([True, False], dims=("surface",), coords={"surface": tas.surface})
+
+    prsn = xci.snowfall_approximation(pr, tas=tas, method="dai_annual", landmask=landmask)
+    np.testing.assert_allclose(
+        prsn,
+        np.array(
+            [
+                [0.82387, 0.55053, 0.23377, 0.07485, 0.02674, 0.01459, 0.01166, 0.01097, 0.01081, 0.01077],
+                [0.78895, 0.65031, 0.46730, 0.28835, 0.15796, 0.08192, 0.04319, 0.02483, 0.01642, 0.01263],
+            ]
+        ),
+        atol=1e-5,
+        rtol=1e-3,
+    )
 
 
 @pytest.mark.parametrize(
