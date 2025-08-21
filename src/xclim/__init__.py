@@ -13,7 +13,7 @@ from xclim.indicators import atmos, convert, generic, land, seaIce  # noqa
 
 __author__ = """Travis Logan"""
 __email__ = "logan.travis@ouranos.ca"
-__version__ = "0.57.1-dev.11"
+__version__ = "0.57.1-dev.12"
 
 
 with _resources.as_file(_resources.files("xclim.data")) as _module_data:
