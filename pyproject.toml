@@ -108,7 +108,7 @@ docs = [
   "sphinxcontrib-bibtex",
   "sphinxcontrib-svg2pdfconverter[Cairosvg]"
 ]
-extras = ["flox >=0.9", "xsdba >=0.4.0"]
+extras = ["flox >=0.9", "xsdba >=0.4.0", "numbagg >= 0.8"]
 all = ["xclim[dev]", "xclim[docs]", "xclim[extras]"]
 
 [project.scripts]
@@ -126,7 +126,7 @@ xclim = "xclim.cli:cli"
 [tool]
 
 [tool.bumpversion]
-current_version = "0.57.1-dev.10"
+current_version = "0.57.1-dev.11"
 commit = true
 commit_args = "--no-verify --signoff"
 tag = false
@@ -170,7 +170,7 @@ pep621_dev_dependency_groups = ["all", "dev", "docs"]
 "pyyaml" = "yaml"
 
 [tool.deptry.per_rule_ignores]
-DEP002 = ["bottleneck", "h5netcdf", "pyarrow"]
+DEP002 = ["bottleneck", "h5netcdf", "numbagg", "pyarrow"]
 DEP004 = ["matplotlib", "pooch", "pytest", "pytest_socket"]
 
 [tool.flit.sdist]
@@ -390,7 +390,8 @@ convention = "numpy"
 [tool.vulture]
 exclude = []
 ignore_decorators = ["@pytest.fixture"]
-ignore_names = []
+# no_numbagg is a simple fixture that activates a xr option, it has no value
+ignore_names = ['no_numbagg']
 min_confidence = 90
 paths = ["src/xclim", "tests"]
 sort_by_size = true

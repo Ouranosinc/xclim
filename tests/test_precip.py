@@ -647,12 +647,14 @@ def test_dry_spell_total_length_indexer(pr_series):
         pr,
         window=7,
         op="sum",
-        thresh="3 mm",
+        thresh="3.1 mm",
         freq="MS",
     )
     np.testing.assert_allclose(out, [np.nan] + [0] * 11)
 
-    out = atmos.dry_spell_total_length(pr, window=7, op="sum", thresh="3 mm", freq="MS", date_bounds=("01-10", "12-31"))
+    out = atmos.dry_spell_total_length(
+        pr, window=7, op="sum", thresh="3.1 mm", freq="MS", date_bounds=("01-10", "12-31")
+    )
     np.testing.assert_allclose(out, [9] + [0] * 11)
 
 
@@ -662,12 +664,14 @@ def test_dry_spell_max_length_indexer(pr_series):
         pr,
         window=7,
         op="sum",
-        thresh="3 mm",
+        thresh="3.1 mm",
         freq="MS",
     )
     np.testing.assert_allclose(out, [np.nan] + [0] * 11)
 
-    out = atmos.dry_spell_total_length(pr, window=7, op="sum", thresh="3 mm", freq="MS", date_bounds=("01-10", "12-31"))
+    out = atmos.dry_spell_total_length(
+        pr, window=7, op="sum", thresh="3.1 mm", freq="MS", date_bounds=("01-10", "12-31")
+    )
     np.testing.assert_allclose(out, [9] + [0] * 11)
 
 

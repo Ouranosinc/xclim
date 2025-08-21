@@ -740,7 +740,9 @@ class TestStandardizedIndices:
             ),
         ],
     )
-    def test_standardized_precipitation_index(self, freq, window, dist, method, values, diff_tol, open_dataset):
+    def test_standardized_precipitation_index(
+        self, freq, window, dist, method, values, diff_tol, open_dataset, no_numbagg
+    ):
         if method == "ML" and freq == "D" and Version(__numpy_version__) < Version("2.0.0"):
             pytest.skip("Skipping SPI/ML/D on older numpy")
 
@@ -774,7 +776,6 @@ class TestStandardizedIndices:
         spi = xci.standardized_precipitation_index(pr, params=params)
         # Only a few moments before year 2000 are tested
         spi = spi.isel(time=slice(-11, -1, 2))
-
         # [Guttman, 1999]: The number of precipitation events (over a month/season or
         # other time period) is generally less than 100 in the US. This suggests that
         # bounds of ± 3.09 correspond to 0.999 and 0.001 probabilities. SPI indices outside
@@ -1010,18 +1011,13 @@ class TestStandardizedIndices:
                 ],
             ),
             ("MS", 1, "fisk", "APP", [0.4663, -1.9076, -0.5362, 0.8070, -0.8035], 2e-2),
-            pytest.param(
+            (
                 "MS",
                 12,
                 "genextreme",
                 "ML",
                 [-0.9795, -1.0398, -1.9019, -1.6970, -1.4761],
                 2e-2,
-                marks=[
-                    pytest.mark.xfail(
-                        reason="These values fail for unknown reason after an update, skipping.", strict=False
-                    )
-                ],
             ),
             (
                 "MS",
@@ -1049,7 +1045,9 @@ class TestStandardizedIndices:
             ),
         ],
     )
-    def test_standardized_streamflow_index(self, freq, window, dist, method, values, diff_tol, open_dataset):
+    def test_standardized_streamflow_index(
+        self, freq, window, dist, method, values, diff_tol, open_dataset, no_numbagg
+    ):
         ds = open_dataset("Raven/q_sim.nc")
         q = ds.q_obs.rename("q")
         q_cal = ds.q_sim.rename("q").fillna(ds.q_sim.mean())
@@ -1907,7 +1905,7 @@ class TestHolidayIndices:
         prsnd.loc["2000-12-25"] = 5
         prsnd.loc["2001-12-25"] = 2
         prsnd.loc["2001-12-26"] = 30  # too bad it's Boxing Day
-        prsnd.loc["2002-12-25"] = 1  # not quite enough
+        prsnd.loc["2002-12-25"] = 0.995  # not quite enough
         prsnd.loc["2003-12-25"] = 0  # no snow
         prsnd.loc["2004-12-25"] = 10
 
@@ -3983,13 +3981,13 @@ def test_dry_spell(pr_series, pr, thresh1, thresh2, window, outs):
 
 def test_dry_spell_total_length_indexer(pr_series):
     pr = pr_series([1] * 5 + [0] * 10 + [1] * 350, start="1900-01-01", units="mm/d")
-    out = xci.dry_spell_total_length(pr, window=7, op="sum", thresh="3 mm", freq="MS", date_bounds=("01-10", "12-31"))
+    out = xci.dry_spell_total_length(pr, window=7, op="sum", thresh="3.1 mm", freq="MS", date_bounds=("01-10", "12-31"))
     np.testing.assert_allclose(out, [9] + [0] * 11)
 
 
 def test_dry_spell_max_length_indexer(pr_series):
     pr = pr_series([1] * 5 + [0] * 10 + [1] * 350, start="1900-01-01", units="mm/d")
-    out = xci.dry_spell_max_length(pr, window=7, op="sum", thresh="3 mm", freq="MS", date_bounds=("01-10", "12-31"))
+    out = xci.dry_spell_max_length(pr, window=7, op="sum", thresh="3.1 mm", freq="MS", date_bounds=("01-10", "12-31"))
     np.testing.assert_allclose(out, [9] + [0] * 11)
 
 

@@ -1013,7 +1013,8 @@ def standardized_precipitation_index(
         Name of the univariate distribution, or a callable `rv_continuous` (see :py:mod:`scipy.stats`).
     method : {"APP", "ML", "PWM"}
         Name of the fitting method, such as `ML` (maximum likelihood), `APP` (approximate). The approximate method
-        uses a deterministic function that does not involve any optimization. `PWM` should be used with a `lmoments3` distribution.
+        uses a deterministic function that does not involve any optimization, which can be sensitive to noise.
+        `PWM` should be used with a `lmoments3` distribution.
     fitkwargs : dict, optional
         Kwargs passed to ``xclim.indices.stats.fit`` used to impose values of certains parameters (`floc`, `fscale`).
         If method is `PWM`, `fitkwargs` should be empty, except for `floc` with `dist`=`gamma` which is allowed.
@@ -1154,7 +1155,8 @@ def standardized_precipitation_evapotranspiration_index(
         Name of the univariate distribution, or a callable `rv_continuous` (see :py:mod:`scipy.stats`).
     method : {"APP", "ML", "PWM"}
         Name of the fitting method, such as `ML` (maximum likelihood), `APP` (approximate). The approximate method
-        uses a deterministic function that does not involve any optimization. `PWM` should be used with a `lmoments3` distribution.
+        uses a deterministic function that does not involve any optimization, which can be sensitive to noise.
+        `PWM` should be used with a `lmoments3` distribution.
     fitkwargs : dict, optional
         Kwargs passed to ``xclim.indices.stats.fit`` used to impose values of certains parameters (`floc`, `fscale`).
         If method is `PWM`, `fitkwargs` should be empty, except for `floc` with `dist`=`gamma` which is allowed.
