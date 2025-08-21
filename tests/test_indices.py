@@ -1903,7 +1903,7 @@ class TestHolidayIndices:
         prsnd.loc["2000-12-25"] = 5
         prsnd.loc["2001-12-25"] = 2
         prsnd.loc["2001-12-26"] = 30  # too bad it's Boxing Day
-        prsnd.loc["2002-12-25"] = 0.9  # not quite enough
+        prsnd.loc["2002-12-25"] = 0.995  # not quite enough
         prsnd.loc["2003-12-25"] = 0  # no snow
         prsnd.loc["2004-12-25"] = 10
 
