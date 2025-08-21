@@ -778,7 +778,6 @@ def season_an_rr(
     Annual runoff ratios are typically of higher values than summer runoff ratios due to higher levels of evapotranspiration in summer months.
     For snow-driven watersheds, spring runoff ratios are typically higher than Annual runoff ratios, as snowmelt generates concentrated runoff events.
 
-
     Reference
     -----
     HydroBM https://hydrobm.readthedocs.io/en/latest/usage.html#benchmarks
@@ -824,13 +823,14 @@ def season_an_rr(
     return rrr_season, rrr_yearly
 
 @declare_units(q="[discharge]", pr="[precipitation]")
-def streamflow_elasticity(
+def elasticity_index(
     q: xarray.DataArray,
     pr: xarray.DataArray,
     freq: str = "YS"
 ) -> xarray.DataArray:
     """
-    Calculate the median of yearly streamflow elasticity index for given catchments.
+    Calculate the median of yearly streamflow elasticity index for given catchments,
+    where elasticity (εₚ) is defined as the relative change in streamflow (ΔQ/Q) divided by the relative change in precipitation (ΔP/P)
 
     Parameters
     ----------
@@ -838,7 +838,7 @@ def streamflow_elasticity(
         Daily discharge data
     pr : xarray.DataArray
         Daily precipitation data
-    freq: Resampling frequency (e.g., 'YS' for yearl starting in Jan)
+    freq: Resampling frequency (e.g., 'YS' for year starting in Jan)
 
     Returns
     -------
@@ -848,7 +848,6 @@ def streamflow_elasticity(
 
     Note
     -------
-
     A value of εp greater than 1 indicates that streamflow is highly sensitive to precipitation changes,
     meaning a 1% change in precipitation will lead to a greater than 1% change in streamflow.
     A value less than 1 suggests a less sensitive relationship.
