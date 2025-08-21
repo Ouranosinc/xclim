@@ -37,6 +37,8 @@ class TestDataFlags:
             np.testing.assert_equal(getattr(flagged_ds, flag).values, val)
 
     def test_pr_precipitation_flags(self, pr_series):
+        # Pint <=0.24.4 has precision errors : (1 / 3600 / 24 kg m-2 s-1  = 0.999999998 mm/d )
+        pytest.importorskip("pint", minversion="0.25")
         pr = pr_series(np.zeros(365), start="1971-01-01")
         pr += 1 / 3600 / 24
         pr[0:7] += 10 / 3600 / 24
@@ -51,17 +53,19 @@ class TestDataFlags:
         )
         np.testing.assert_equal(
             flagged.values_eq_1_repeating_for_10_or_more_days.values,
-            False,
+            True,
         )
 
     def test_suspicious_pr_data(self, pr_series):
+        # Pint <=0.24.4 has precision errors : (1 / 3600 / 24 kg m-2 s-1  = 0.999999998 mm/d )
+        pytest.importorskip("pint", minversion="0.25")
         bad_pr = pr_series(np.zeros(365), start="1971-01-01")
 
         # Add some strangeness
         bad_pr[8] = -1e-6  # negative values
         bad_pr[120] = 301 / 3600 / 24  # 301mm/day
-        bad_pr[121:141] = 1.1574074074074072e-05  # 1mm/day
-        bad_pr[200:300] = 5.787037037037036e-05  # 5mm/day
+        bad_pr[121:141] = 1 / 3600 / 24  # 1mm/day
+        bad_pr[200:300] = 5 / 3600 / 24  # 5mm/day
 
         flagged = df.data_flags(bad_pr)
         np.testing.assert_equal(flagged.negative_accumulation_values.values, True)
