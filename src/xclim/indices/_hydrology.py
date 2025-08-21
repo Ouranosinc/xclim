@@ -701,6 +701,9 @@ def tot_rr(q: xarray.DataArray,
             pr: xarray.DataArray) -> xarray.DataArray:
     """Total Runoff ratio
 
+    Runoff ratio : ratio of runoff volume measured at the stream to the total precipitation volume over the watershed.
+    Aggregated analysis : Single value as a long-term benchmark
+
     Parameters
     ----------
     q : xarray.DataArray
@@ -715,13 +718,20 @@ def tot_rr(q: xarray.DataArray,
     xarray.DataArray
         Single value rainfall-runoff ratio (RRR) as long-term benchmark.
 
-    References
+    Notes
+    -------
+    Total Runoff ratio values are comparable to Runoff coefficients,
+    Values near 0 mean most precipitation infiltrates watershed soil or is lost to evapotranspiration.
+    Values near 1 mean most precipitation leaves the watershed as runoff; possible causes are impervious surfaces from urban sprawl, thin soils, steep slopes, etc.
+    Long-term averages are typically ≤ 1
+
+    Reference
     -----
     HydroBM https://hydrobm.readthedocs.io/en/latest/usage.html#benchmarks
     """
-    q = units.convert_units_to(q, "m3/s")
-    a = units.convert_units_to(a, "km2")
-    pr = units.convert_units_to(pr, "mm/hr")
+    q = convert_units_to(q, "m3/s")
+    a = convert_units_to(a, "km2")
+    pr = convert_units_to(pr, "mm/hr")
 
     runoff = q * 3.6 / a  # unit conversion for runoff in mm/h : 3.6 [s/h * km2/m2]
     total_rr = (runoff.sum() / pr.sum())
@@ -738,7 +748,10 @@ def season_an_rr(
     pr: xarray.DataArray,
 ) -> xarray.DataArray:
 
-    """Seasonal and annual rainfall-runoff ratio (RRR)
+    """Seasonal and annual runoff ratio
+
+    Runoff ratio : Ratio of runoff volume measured at the stream to the total precipitation volume over the watershed,
+    Temporal analysis : Yearly values computed from Seasonal daily data and yearly data.
 
     Parameters
     ----------
@@ -753,15 +766,26 @@ def season_an_rr(
     Returns
     -------
     xarray.DataArray
-        Seasonal and yearly rainfall-runoff ratio (dimensionless)
+        Seasonal and yearly runoff ratio (dimensionless)
+        Where 'DJF' = Winter months, 'JJA' = Summer months, 'MAM' = Spring months, 'SON' = Fall months
 
-    References
+    Notes
+    -------
+    Runoff ratio values are comparable to Runoff coefficients,
+    Values near 0 mean most precipitation infiltrates watershed soil or is lost to evapotranspiration.
+    Values near 1 mean most precipitation leaves the watershed as runoff; possible causes are impervious surfaces from urban sprawl, thin soils, steep slopes, etc.
+    Annual runoff ratios are typically ≤ 1.
+    Annual runoff ratios are typically of higher values than summer runoff ratios due to higher levels of evapotranspiration in summer months.
+    For snow-driven watersheds, spring runoff ratios are typically higher than Annual runoff ratios, as snowmelt generates concentrated runoff events.
+
+
+    Reference
     -----
     HydroBM https://hydrobm.readthedocs.io/en/latest/usage.html#benchmarks
 
     """
 
-    q=units.convert_units_to(q, "m3/s")
+    q = units.convert_units_to(q, "m3/s")
     a = units.convert_units_to(a, "km2")
     pr = units.convert_units_to(pr, "mm/hr")
 
@@ -1092,7 +1116,7 @@ def SS_an_season(q: xarray.DataArray,
 
 import xarray
 
-
+@declare_units(q="[discharge]")
 def annual_maxima(
     q: xarray.DataArray,
     freq: str = "YS-OCT",
