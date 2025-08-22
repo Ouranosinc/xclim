@@ -888,7 +888,7 @@ def elasticity_index(
 @declare_units(swe="[length]", threshold="[length]" )
 def days_with_snowpack(
     swe: xarray.DataArray,
-    swe_threshold: str = "10 mm",
+    thresh: str = "10 mm",
     freq: str = "YS-OCT",
     )-> xarray.DataArray:
         """
@@ -897,9 +897,9 @@ def days_with_snowpack(
         Parameters
         ----------
         swe : xarray.DataArray
-            Daily Snow Water Equivalent (SWE), in millimeters [mm].
-        swe_threshold : float, optional
-            Minimum SWE value to consider a snow-covered day. Default is 10 mm.
+            Daily surface snow amount (or SWE: snow water equivalent), [kg/m-2] or in millimeters of water [mm]
+        thresh : float, optional
+            Minimum swe value to consider a snow-covered day. Default is 10 mm.
         freq: str, optional
             Resampling frequency, here water year stating on the 1st of October
         Returns
@@ -913,11 +913,11 @@ def days_with_snowpack(
         It is recommended to have at least 70% of valid data per water year in order to compute significant values.
 
         """
-        swe_threshold = convert_units_to(swe_threshold, swe)
+        thresh = convert_units_to(thresh, swe)
 
         # compute signature:
-        days_with_snowpack = swe >= swe_threshold
-        result = days_with_snowpack.resample(time=freq).sum()  # convert results to water years
+        days_with_sp = swe >= thresh
+        result = days_with_sp.resample(time=freq).sum()  # convert results to water years
         result = result.rename("days_with_snowpack")
         result['year'] = result['time.year']
         result = result.set_index(time='year')
@@ -933,7 +933,7 @@ def annual_aridity_index(pr: xarray.DataArray, pet: xarray.DataArray, freq: str 
     pr : array_like
         Precipitation
     pet : array_like
-        Potentiel Evapotranspiration
+        Potential Evapotranspiration
     freq : str, optional
         Resampling frequency. A monthly or yearly frequency is expected. Option `None` assumes
         that the desired resampling has already been applied input dataset and will skip the resampling step.
@@ -945,7 +945,7 @@ def annual_aridity_index(pr: xarray.DataArray, pet: xarray.DataArray, freq: str 
 
     Notes
     -----
-    Aridity index under 0.65 descibes an arid environment and over is the more humid.
+    Aridity index under 0.65 describes an arid environment and over is the more humid.
 
     References
     ----------
@@ -989,7 +989,7 @@ def lag_snowpack_flow_peaks(
 
     Warnings
     --------
-    The default `freq` is the water year used in the nothern hemisphere, from October to September
+    The default `freq` is the water year used in the northern hemisphere, from October to September
     It is recommended to have at least 70% of valid data per water year in order to compute significant values.
     """
     # Find time of max SWE per year
@@ -997,8 +997,8 @@ def lag_snowpack_flow_peaks(
     doy_swe_max = t_swe_max.dt.dayofyear
 
     # Compute threshold per water year using resample
-    threshold = q.resample(time="YS-OCT").reduce(np.nanpercentile, q=percentile, dim="time")  # second q, equal to percentile, is a keyword in np.nanpercentile, not the flow variable.
-    threshold_for_each_time = threshold.reindex_like(q, method='ffill')
+    thresh = q.resample(time="YS-OCT").reduce(np.nanpercentile, q=percentile, dim="time")  # second q, equal to percentile, is a keyword in np.nanpercentile, not the flow variable.
+    threshold_for_each_time = thresh.reindex_like(q, method='ffill')
     q_high = q.where(q >= threshold_for_each_time).dropna(dim="time", how="all")
 
     # Day of year for high flow peaks
@@ -1128,6 +1128,9 @@ def annual_maxima(
 
     q : array_like
         Daily streamflow vector.
+    freq: str, optional
+        Resampling frequency, here water year stating on the 1st of October
+
     Returns
     -------
     xarray.DataArray, [days]
