@@ -26,17 +26,17 @@ __all__ = [
     "low_flow_frequency",
     "melt_and_precip_max",
     "rb_flashiness_index",
-    "season_an_rr",
+    "season_annual_runoff_ratio_rr",
     "snd_max",
     "snd_max_doy",
     "snow_melt_we_max",
     "snw_max",
     "snw_max_doy",
-    "SS_an_season",
+    "sen_slope",
     "standardized_groundwater_index",
     "standardized_streamflow_index",
     "streamflow_elasticity",
-    "tot_rr"
+    "total_runoff_ratio"
 ]
 
 
@@ -696,7 +696,7 @@ def antecedent_precipitation_index(pr: xarray.DataArray, window: int = 7, p_exp:
 
 
 @declare_units(q="[discharge]", a="[area]", pr="[precipitation]")
-def tot_rr(q: xarray.DataArray,
+def total_runoff_ratio(q: xarray.DataArray,
             a: xarray.DataArray,
             pr: xarray.DataArray) -> xarray.DataArray:
     """Total Runoff ratio
@@ -742,7 +742,7 @@ def tot_rr(q: xarray.DataArray,
 
 
 @declare_units(q="[discharge]", a="[area]", pr="[precipitation]")
-def season_an_rr(
+def season_annual_runoff_ratio(
     q: xarray.DataArray,
     a: xarray.DataArray,
     pr: xarray.DataArray,
@@ -1013,7 +1013,7 @@ def lag_snowpack_flow_peaks(
     return lag
 
 @declare_units(q="[discharge]")
-def SS_an_season(q: xarray.DataArray,
+def sen_slope(q: xarray.DataArray,
     qsim: xarray.DataArray = None
     ) -> xarray.DataArray:
         """ Annual and Seasonal Theil-Sen Slope (SS) estimators and Mann-Kendall test for trend evaluations
