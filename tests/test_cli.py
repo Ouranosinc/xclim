@@ -2,12 +2,16 @@
 # Tests for `xclim` package, command line interface
 from __future__ import annotations
 
+import platform
+
 import numpy as np
 import pytest
 import xarray as xr
 from click.testing import CliRunner
+from packaging import version
 
 import xclim
+from xclim import __version__ as __xclim_version__
 from xclim.cli import cli
 
 try:
@@ -377,6 +381,7 @@ def test_release_notes_failure(method, error):
 def test_show_version_info():
     runner = CliRunner()
     results = runner.invoke(cli, ["show_version_info"])
-    assert "INSTALLED VERSIONS" in results.output
-    assert "python" in results.output
-    assert "boltons: installed" in results.output
+    assert "INSTALLED VERSIONS\n" in results.output
+    assert "------------------\n" in results.output
+    assert f"python: {platform.python_version()}\n" in results.output
+    assert f"xclim: {version.Version(__xclim_version__)}\n" in results.output
