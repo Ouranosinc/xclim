@@ -56,6 +56,7 @@ Bug fixes
 * Indices relying on ``units.to_agg_units(src, out, 'count')`` will not raise on a non-inferrable frequency and instead use the common default of "D", as their docstring implies. (:issue:`2215`, :pull:`2217`).
 * Fix ``spell_length_statistics`` and related functions for cases where ``thresh`` is a DataArray. (:issue:`2216`, :pull:`2218`).
 * Addressed a noisy warning emitted by `numpy` in the ``xclim.indices.stats`` when performing a fit over data with missing values. (:pull:`2224`).
+* New implementation of ``xclim.indices.generic.{doymax,doymin}`` allow a chunked input DataArray. (:issue:`2107`, :pull:`2231`).
 
 v0.57.0 (2025-05-22)
 --------------------
