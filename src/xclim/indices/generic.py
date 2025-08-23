@@ -18,8 +18,6 @@ import xarray as xr
 from pint import Quantity
 
 from xclim.core import DayOfYearStr, Quantified
-from xclim.core.utils import uses_dask
-
 from xclim.core.calendar import (
     _MONTH_ABBREVIATIONS,
     doy_to_days_since,
@@ -36,6 +34,7 @@ from xclim.core.units import (
     to_agg_units,
     units2pint,
 )
+from xclim.core.utils import uses_dask
 from xclim.indices import run_length as rl
 from xclim.indices.helpers import resample_map
 
@@ -176,25 +175,26 @@ def select_rolling_resample_op(
     return select_resample_op(rolled, op=op, freq=freq, out_units=out_units, **indexer)
 
 
-def _dask_reducer(da1, da2, reducer): 
-    ''' `da1` is used to find a condition, `da2` (if specified) is the reduced dataset '''
-    func = {'argmax':np.nanargmax, 'argmin':np.nanargmin}[reducer]
-    i = func(da1,axis=-1)
+def _dask_reducer(da1, da2, reducer):
+    """`da1` is used to find a condition, `da2` (if specified) is the reduced dataset"""
+    func = {"argmax": np.nanargmax, "argmin": np.nanargmin}[reducer]
+    i = func(da1, axis=-1)
     return np.take_along_axis(da2, i[..., np.newaxis], axis=-1).squeeze(-1)
 
 
-def dask_reducer(da1, da2, dim, reducer): 
-    ''' `da1` is used to find a condition, `da2` (if specified) is the reduced dataset '''
+def dask_reducer(da1, da2, dim, reducer):
+    """`da1` is used to find a condition, `da2` (if specified) is the reduced dataset"""
     return xr.apply_ufunc(
         _dask_reducer,
         da1,
-        da2, 
-        input_core_dims = [[dim], [dim]],
-        output_core_dims = [[]],
-        dask='parallelized',
-        kwargs = {'reducer':reducer},
-        output_dtypes = [da2.dtype]
+        da2,
+        input_core_dims=[[dim], [dim]],
+        output_core_dims=[[]],
+        dask="parallelized",
+        kwargs={"reducer": reducer},
+        output_dtypes=[da2.dtype],
     )
+
 
 def doymax(da: xr.DataArray) -> xr.DataArray:
     """
@@ -212,8 +212,8 @@ def doymax(da: xr.DataArray) -> xr.DataArray:
     """
     if uses_dask(da):
         doy = da.time.dt.dayofyear.broadcast_like(da)
-        out = dask_reducer(da, doy, 'time', 'argmax')
-    else: 
+        out = dask_reducer(da, doy, "time", "argmax")
+    else:
         i = da.argmax(dim="time")
         out = da.time.dt.dayofyear.isel(time=i, drop=True)
 
@@ -236,12 +236,13 @@ def doymin(da: xr.DataArray) -> xr.DataArray:
     """
     if uses_dask(da):
         doy = da.time.dt.dayofyear.broadcast_like(da)
-        out = dask_reducer(da, doy, 'time', 'argmin')
-    else: 
+        out = dask_reducer(da, doy, "time", "argmin")
+    else:
         i = da.argmin(dim="time")
         out = da.time.dt.dayofyear.isel(time=i, drop=True)
 
     return to_agg_units(out, da, "doymin")
+
 
 _xclim_ops = {"doymin": doymin, "doymax": doymax}
 

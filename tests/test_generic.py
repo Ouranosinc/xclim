@@ -90,13 +90,13 @@ class TestFlowGeneric:
         a[39] = 4
         a[49] = -4
         q = q_series(a)
-        if use_dask: 
+        if use_dask:
             # add a dummy dimension, just to chunk it
-            q = xr.concat([q.expand_dims(dummy=[0]),q.expand_dims(dummy=[1])], dim='dummy')
-            q = q.chunk({'dummy':1})
+            q = xr.concat([q.expand_dims(dummy=[0]), q.expand_dims(dummy=[1])], dim="dummy")
+            q = q.chunk({"dummy": 1})
         dmx = generic.doymax(q)
         dmn = generic.doymin(q)
-        if use_dask: 
+        if use_dask:
             dmx = dmx.isel(dummy=0)
             dmn = dmn.isel(dummy=0)
         assert dmx.values == [40]
@@ -107,7 +107,7 @@ class TestFlowGeneric:
 
             assert da.attrs["units"] == "1"
             assert da.attrs["is_dayofyear"] == 1
-    
+
 
 class TestAggregateBetweenDates:
     def test_calendars(self):
