@@ -885,7 +885,7 @@ def elasticity_index(
     elasticity_index.attrs["units"] = ""
     return elasticity_index
 
-@declare_units(swe="[length]", threshold="[length]" )
+@declare_units(swe="[length]", thresh="[length]" )
 def days_with_snowpack(
     swe: xarray.DataArray,
     thresh: str = "10 mm",
@@ -954,7 +954,8 @@ def annual_aridity_index(pr: xarray.DataArray, pet: xarray.DataArray, freq: str 
     Notes
     -----
     An aridity index below 0.65 indicates an arid environment, while values above this threshold correspond to more humid environments.
-    Northern regions tend to have lower evapotranspiration due to colder temperatures; therefore, higher aridity index values are generally associated with colder climates characterized by snow precipitation
+    Northern regions tend to have lower evapotranspiration due to colder temperatures.
+    Therefore, higher aridity index values are generally associated with colder climates characterized by snow precipitation
 
     References
     ----------
@@ -1017,7 +1018,7 @@ def lag_snowpack_flow_peaks(
     t_swe_max = swe.resample(time=freq).apply(lambda x: x.idxmax())
     doy_swe_max = t_swe_max.dt.dayofyear
 
-    # Compute threshold per water year using resample
+    # Compute percentile threshold per water year using resample
     thresh = q.resample(time="YS-OCT").reduce(np.nanpercentile, q=percentile, dim="time")  # second q, equal to percentile, is a keyword in np.nanpercentile, not the flow variable.
     threshold_for_each_time = thresh.reindex_like(q, method='ffill')
     q_high = q.where(q >= threshold_for_each_time).dropna(dim="time", how="all")
