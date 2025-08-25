@@ -276,7 +276,6 @@ def lazy_indexing(da: xr.DataArray, index: xr.DataArray, dim: str | None = None)
     )
 
 
-
 def calc_perc(
     arr: np.ndarray,
     percentiles: Sequence[float] | None = None,

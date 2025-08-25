@@ -34,7 +34,7 @@ from xclim.core.units import (
     to_agg_units,
     units2pint,
 )
-from xclim.core.utils import uses_dask, lazy_indexing
+from xclim.core.utils import lazy_indexing, uses_dask
 from xclim.indices import run_length as rl
 from xclim.indices.helpers import resample_map
 
@@ -174,6 +174,7 @@ def select_rolling_resample_op(
     rolled = to_agg_units(rolled, da, window_op)
     return select_resample_op(rolled, op=op, freq=freq, out_units=out_units, **indexer)
 
+
 def doymax(da: xr.DataArray) -> xr.DataArray:
     """
     Return the day of year of the maximum value.
@@ -214,13 +215,14 @@ def doymin(da: xr.DataArray) -> xr.DataArray:
     """
     i = da.argmin(dim="time")
     doy = da.time.dt.dayofyear
-    
+
     if uses_dask(da): 
         out = lazy_indexing(doy, i, 'time').astype(doy.dtype)
     else: 
         out = doy.isel(time=i)
-        
+
     return to_agg_units(out, da, "doymin")
+
 
 _xclim_ops = {"doymin": doymin, "doymax": doymax}
 

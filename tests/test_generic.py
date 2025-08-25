@@ -103,6 +103,7 @@ class TestFlowGeneric:
             assert da.attrs["units"] == "1"
             assert da.attrs["is_dayofyear"] == 1
 
+
 class TestAggregateBetweenDates:
     def test_calendars(self):
         # generate test DataArray

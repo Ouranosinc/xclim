@@ -20,7 +20,7 @@ from numba import njit
 
 from xclim.core import DateStr, DayOfYearStr
 from xclim.core.options import OPTIONS, RUN_LENGTH_UFUNC
-from xclim.core.utils import uses_dask, lazy_indexing
+from xclim.core.utils import lazy_indexing, uses_dask
 from xclim.indices.helpers import resample_map
 
 npts_opt = 9000
@@ -1605,6 +1605,7 @@ def first_run_ufunc(
     )
 
     return ind
+
 
 def index_of_date(
     time: xr.DataArray,
