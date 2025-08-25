@@ -46,7 +46,7 @@ sys.path.insert(0, os.path.abspath("."))
 # Get all indicators and some information about them
 indicators = {}
 # FIXME: Include cf module when its indicators documentation is improved.
-for module in ("atmos", "generic", "land", "seaIce", "icclim", "anuclim"):
+for module in ("atmos", "convert", "generic", "land", "seaIce", "icclim", "anuclim"):
     for key, ind in getattr(_indicators, module).__dict__.items():
         if hasattr(ind, "_registry_id") and ind._registry_id in registry:  # noqa
             indicators[ind._registry_id] = {  # noqa
