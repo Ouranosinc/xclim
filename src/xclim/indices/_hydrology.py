@@ -949,7 +949,7 @@ def annual_aridity_index(pr: xarray.DataArray, pet: xarray.DataArray, freq: str 
     Returns
     -------
     float
-        Aridity index. (Unitless)
+        Aridity index per year. (Unitless)
 
     Notes
     -----
@@ -983,24 +983,36 @@ def lag_snowpack_flow_peaks(
     Parameters
     ----------
     swe : xarray.DataArray
-        Daily Snow Water Equivalent (SWE) [mm]
+        Daily surface snow amount (or SWE: snow water equivalent), [kg/m-2] or in millimeters of water [mm]
     q : xarray.DataArray
         Daily streamflow [e.g., m³/s]
     freq: str, optional
-            Resampling frequency, here water year stating on the 1st of October
+        Resampling frequency, here water year stating on the 1st of October
     percentile: int, optional
         frequency percentile for high flows, default is 90% of non-exceedance frequency.
 
     Returns
     -------
     xarray.DataArray, [days]
-        Number of lag days between SWE max and high flows of each year
+    Calculation of the number of days between maximum snowpack (SWE) and the circular average of high flows (flows with non-exceedance frequency established by percentile variable).
 
     Warnings
     --------
     The default `freq` is the water year used in the northern hemisphere, from October to September
     It is recommended to have at least 70% of valid data per water year in order to compute significant values.
+
+    Note
+     -------
+    A lag of 50 days or less indicates that the watershed is possibly in a nival regime.
+    Nival regime is characterized by a hydrological response dominated by snowmelt, where maximum flows occur shortly after peak snow cover (Burn et al., 2010).
+    This 50-day interval is approximate, as it depends on the specific responsiveness of each watershed.
+    Responsiveness can be analysed with the rb_flashiness_index and elasticity_index functions.
+
+    References
+    -----
+    Burn, D. H., Sharif, M., & Zhang, K. (2010). Detection of trends in hydrological extremes for Canadian watersheds. Hydrological Processes, 24(13), 1781–1790. https://doi.org/10.1002/hyp.7625
     """
+
     # Find time of max SWE per year
     t_swe_max = swe.resample(time=freq).apply(lambda x: x.idxmax())
     doy_swe_max = t_swe_max.dt.dayofyear
