@@ -12,12 +12,12 @@ New indicators and features
 * Argument ``indexer`` added to indicators ``max_n_day_precipitation_amount``, ``max_pr_intensity``, and ``blowing_snow``. (:issue:`2187`, :pull:`2190`).
 * Argument ``window`` added to indicator ``rain_on_frozen_ground_days``. (:pull:`2190`).
 * New helper ``xclim.indices.generic.season_length_from_boundaries`` takes ``season_start`` and ``season_end`` as input and gives ``season_length``. This is used when starts and ends are computed with different resampling frequencies: ``days_since`` are used to compute temporal lengths in this case. (:pull:`2189`).
-* Allow `invalid_values` as argument for ``relative_humidity_from_dewpoint``. (:pull:`2203`, :issue:`2202`)
+* Allow ``invalid_values`` as argument for ``relative_humidity_from_dewpoint``. (:pull:`2203`, :issue:`2202`)
 * New thermodynamic conversion indicators:
     + ``xclim.convert.vapor_pressure`` to compute the partial pressure of water vapor from specific humidity and total pressure.
     + ``xclim.convert.dewpoint_from_specific_humidity`` to compute the dewpoint temperature from specific humidity and total pressure.
-* All functions using saturation vapour pressure can now compute it with a smooth transition between saturation over ice and saturation over water. The transition is controlled by the `interp_power` , `ice_thresh` and `water_thresh` parameters. (:issue:`2165`, :pull:`2206`).
-    + New methods `"buck81"` and `"aerk96"` and new method `"ECMWF"` which is `"buck81"` on water and `"aerk96"` on ice.
+* All functions using saturation vapour pressure can now compute it with a smooth transition between saturation over ice and saturation over water. The transition is controlled by the ``interp_power`` , ``ice_thresh`` and ``water_thresh`` parameters. (:issue:`2165`, :pull:`2206`).
+    + New methods ``"buck81"`` and `"aerk96"` and new method ``"ECMWF"`` which is ``"buck81"`` on water and ``"aerk96"`` on ice.
     + Saturation vapor pressure calculations were reorganized. ``xclim.indices.converters.ESAT_FORMULAS_COEFFICIENTS`` now stores the August-Roche-Magnus formula's coefficients.
 * New indicator ``xclim.atmos.hot_days`` as counterpart to ``xclim.atmos.frost_days``. (:issue:`2194`, :pull:`2213`).
 * New helper indices for computing the day-length coefficient for viticulture growing seasons based on several approaches:
@@ -31,9 +31,9 @@ New indicators and features
 Breaking changes
 ^^^^^^^^^^^^^^^^
 * The ``"jones"`` method for calculating `'k'` in ``xclim.indices.huglin_index`` and ``xclim.indices.biologically_effective_degree_days`` now require daily data computed at annual frequencies (`freq="YS"|"YS-JAN"|"YS-JUL"`). The previous behaviour for non-annual frequencies was undefined. (:issue:`2201`, :pull:`2207`).
-    * The ``"jones"`` method now sets a floor value for `'k'` where it is not allowed to be less than `'1.0'`. This is to avoid values below `'1.0'` for `'k'` which were previously allowed in `xclim` but not supported by the source literature.
-    * Incomplete growing seasons (where the values of `'k'` for all latitudes during the growing season are all below `'1.0'`) will now raise `ValueError`. This is to ensure that the expected output is consistent with the literature.
-* The ``"gladstones"`` method for calculating `'k'` in ``xclim.indices.biologically_effective_degree_days`` now uses a dedicated function based on a dynamic day_length compared to a reference latitude (40 degrees). The previous implementation of the `'gladstones'` method was based off an approximation found in Hall and Jones (2010). (:issue:`2201`, :pull:`2207`).
+    * The ``"jones"`` method now sets a floor value for ``"k"`` where it is not allowed to be less than ``1.0``. This is to avoid values below ``1.0`` for ``"k"`` which were previously allowed in `xclim` but not supported by the source literature.
+    * Incomplete growing seasons (where the values of ``"k"`` for all latitudes during the growing season are all below ``1.0``) will now raise `ValueError`. This is to ensure that the expected output is consistent with the literature.
+* The ``"gladstones"`` method for calculating `'k'` in ``xclim.indices.biologically_effective_degree_days`` now uses a dedicated function based on a dynamic day_length compared to a reference latitude (40 degrees). The previous implementation of the ``"gladstones"`` method was based off an approximation found in Hall and Jones (2010). (:issue:`2201`, :pull:`2207`).
     * The ``"gladstones"`` approximation is now available as a separate helper function: ``xclim.indices.helpers.jones_day_length_coefficient`` with ``method="gladstones"``.
 * The ``"icclim"`` method for calculating `'k'` in ``xclim.indices.huglin_index`` has been renamed the ``"huglin"`` method. The ``"icclim"`` method was identical to the implementation proposed in Huglin (1978). (:issue:`2201`, :pull:`2207`).
 * The ``xclim.indices._conversion`` submodule has been refactored into the new ``xclim.indices.converters`` module. Directly importing functions from the older location will still work but will emit a ``DeprecationWarning``. This workaround will be removed in a future release. (:issue:`1289`, :pull:`2224`).
@@ -48,11 +48,12 @@ Internal changes
 * Fixed some tests relying on floating-point imprecision. Avoid numbagg on sensitive fitting tests. (:pull:`2228`).
 * Conversion indicators have been split from ``tests/test_atmos.py`` into new ``tests/test_converters.py``. This is to ensure that conversion indicators are tested separately from other atmospheric indicators. (:issue:`1289`, :pull:`2224`).
 * ``xclim.testing.utils.show_versions`` now uses the `importlib.metadata` library to more accurately gather dependency information. (:pull:`2229`).
+* Replaced the deprecated ``"time.week"`` grouping strings with ``da.time.dt.isocalendar().week`` in ``xclim.indices.stats.standardized_index`` functions. (:pull:`2230`).
 
 Bug fixes
 ^^^^^^^^^
 * Increase the tolerance in the tests of ``xclim.indices.standardized_groundwater_index`` (the standardized indices are sensitive to package versions because of the parameter optimization in `scipy`).  (:issue:`2183`, :pull:`2193`).
-* In ``xclim.indices._conversion.humidex`` and ``xclim.indices._conversion.vapor_pressure_deficit``, add a converter to ensure ``hurs`` has `'%'` units. (:pull:`2209`).
+* In ``xclim.indices._conversion.humidex`` and ``xclim.indices._conversion.vapor_pressure_deficit``, add a converter to ensure ``hurs`` has ``'%'`` units. (:pull:`2209`).
 * Indices relying on ``units.to_agg_units(src, out, 'count')`` will not raise on a non-inferrable frequency and instead use the common default of "D", as their docstring implies. (:issue:`2215`, :pull:`2217`).
 * Fix ``spell_length_statistics`` and related functions for cases where ``thresh`` is a DataArray. (:issue:`2216`, :pull:`2218`).
 * Addressed a noisy warning emitted by `numpy` in the ``xclim.indices.stats`` when performing a fit over data with missing values. (:pull:`2224`).
