@@ -18,15 +18,17 @@ from . import generic
 __all__ = [
     "antecedent_precipitation_index",
     "annual_aridity_index",
+    "annual_maxima",
     "base_flow_index",
     "days_with_snowpack",
+    "elasticity_index",
     "flow_index",
     "high_flow_frequency",
     "lag_snowpack_flow_peaks",
     "low_flow_frequency",
     "melt_and_precip_max",
     "rb_flashiness_index",
-    "season_annual_runoff_ratio_rr",
+    "season_annual_runoff_ratio",
     "snd_max",
     "snd_max_doy",
     "snow_melt_we_max",
@@ -35,7 +37,6 @@ __all__ = [
     "sen_slope",
     "standardized_groundwater_index",
     "standardized_streamflow_index",
-    "streamflow_elasticity",
     "total_runoff_ratio"
 ]
 
@@ -1008,6 +1009,7 @@ def lag_snowpack_flow_peaks(
     Nival regime is characterized by a hydrological response dominated by snowmelt, where maximum flows occur shortly after peak snow cover (Burn et al., 2010).
     This 50-day interval is approximate, as it depends on the specific responsiveness of each watershed.
     Responsiveness can be analysed with the rb_flashiness_index and elasticity_index functions.
+    A negative value means the high flows occur before the peak snow cover.
 
     References
     -----
@@ -1165,8 +1167,11 @@ def annual_maxima(
     """
     # Find time of streamflow peak per year
     t_q_max = q.resample(time=freq).apply(lambda x: x.idxmax()).dt.dayofyear
-    peak_vals = q.resample(time=freq).max()
+    t_q_max.attrs["units"] = "days since YYYY-01-01"
 
+    #Find magnitude of streamflow peak per year
+    peak_vals = q.resample(time=freq).max()
+    peak_vals.attrs["units"] = q.units
     peak_summary = xarray.Dataset({
 
         "peak_flow": peak_vals,
