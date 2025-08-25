@@ -934,7 +934,7 @@ def days_with_snowpack(
 
 @declare_units(pr="[precipitation]", pet = "[length]/[time]")
 def annual_aridity_index(pr: xarray.DataArray, pet: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
-    """Aridity index.
+    """Aridity index: Ratio of total precipitation (PR) over potential evapotranspiration (PET)
 
     Parameters
     ----------
@@ -953,7 +953,8 @@ def annual_aridity_index(pr: xarray.DataArray, pet: xarray.DataArray, freq: str 
 
     Notes
     -----
-    Aridity index under 0.65 describes an arid environment and over is the more humid.
+    An aridity index below 0.65 indicates an arid environment, while values above this threshold correspond to more humid environments.
+    Northern regions tend to have lower evapotranspiration due to colder temperatures; therefore, higher aridity index values are generally associated with colder climates characterized by snow precipitation
 
     References
     ----------
