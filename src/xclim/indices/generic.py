@@ -192,7 +192,7 @@ def doymax(da: xr.DataArray) -> xr.DataArray:
     doy = da.time.dt.dayofyear
 
     if uses_dask(da): 
-        out = lazy_indexing(doy, i, 'time')
+        out = lazy_indexing(doy, i, 'time').astype(doy.dtype)
     else: 
         out = doy.isel(time=i)
     return to_agg_units(out, da, "doymax")
@@ -216,7 +216,7 @@ def doymin(da: xr.DataArray) -> xr.DataArray:
     doy = da.time.dt.dayofyear
     
     if uses_dask(da): 
-        out = lazy_indexing(doy, i, 'time')
+        out = lazy_indexing(doy, i, 'time').astype(doy.dtype)
     else: 
         out = doy.isel(time=i)
         

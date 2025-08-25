@@ -245,7 +245,7 @@ def lazy_indexing(da: xr.DataArray, index: xr.DataArray, dim: str | None = None)
         # Chunked aux coord would have the same name on both sides and xarray will want to check if they are equal,
         # which means loading them making lazy_indexing not lazy. same issue as above
         out = out.where(~invalid.drop_vars([crd for crd in invalid.coords if crd not in invalid.dims]))
-        out = out.assign_coords(auxcrd.coords).astype(da.dtype)
+        out = out.assign_coords(auxcrd.coords)
         if idx_ndim == 0:
             # 0-D case, drop useless coords and dummy dim
             out = out.drop_vars(da.dims[0], errors="ignore").squeeze()
