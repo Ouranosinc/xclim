@@ -110,10 +110,10 @@ def test_rle(ufunc, use_dask, index):
 
     if ufunc:
         da = da[0, :, 0, 0]
-        v, l, p = rl.rle_1d(da != 0)  # noqa: E741
-        np.testing.assert_array_equal(v, [False, True, False])
-        np.testing.assert_array_equal(l, [1, 10, 354])
-        np.testing.assert_array_equal(p, [0, 1, 11])
+        rle_1d = rl.rle_1d(da != 0)
+        np.testing.assert_array_equal(rle_1d.values, [False, True, False])
+        np.testing.assert_array_equal(rle_1d.run_lengths, [1, 10, 354])
+        np.testing.assert_array_equal(rle_1d.start_positions, [0, 1, 11])
     else:
         if use_dask:
             da = da.chunk({"a": 1, "b": 2})

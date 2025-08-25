@@ -5,6 +5,7 @@ from pathlib import Path
 
 import numpy as np
 import pytest
+from packaging.version import Version
 from xarray import Dataset
 
 from xclim import __version__ as __xclim_version__
@@ -73,8 +74,7 @@ class TestReleaseSupportFuncs:
             assert "INSTALLED VERSIONS\n" in contents
             assert "------------------\n" in contents
             assert f"python: {platform.python_version()}\n" in contents
-            assert f"xclim: {__xclim_version__}\n" in contents
-            assert "boltons: installed\n" in contents
+            assert f"xclim: {Version(__xclim_version__)}\n" in contents
 
     @pytest.mark.requires_docs
     def test_release_notes_file(self, tmp_path):

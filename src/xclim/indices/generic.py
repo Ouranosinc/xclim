@@ -10,7 +10,7 @@ from __future__ import annotations
 import operator
 import warnings
 from collections.abc import Callable, Sequence
-from typing import Literal
+from typing import Literal, cast
 
 import cftime
 import numpy as np
@@ -304,7 +304,7 @@ def compare(
     Parameters
     ----------
     left : xr.DataArray
-        A DatArray being evaluated against `right`.
+        A DataArray being evaluated against `right`.
     op : {">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"}
         Logical operator. e.g. arr > thresh.
     right : float, int, np.ndarray, or xr.DataArray
@@ -351,7 +351,7 @@ def threshold_count(
     if constrain is None:
         constrain = (">", "<", ">=", "<=")
 
-    c = compare(da, op, threshold, constrain) * 1
+    c = cast(xr.DataArray, compare(da, op, threshold, constrain) * 1)
     return c.resample(time=freq).sum(dim="time")
 
 
