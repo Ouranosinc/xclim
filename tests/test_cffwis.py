@@ -119,6 +119,9 @@ class TestCFFWIS:
             )
         np.testing.assert_allclose(bui, fwi_data.bui.isel(test=0), rtol=1e-6)
 
+    def test_build_up_index_zero(self):
+        assert build_up_index(0, 0) == 0
+
     @pytest.mark.parametrize(
         "inputs,exp",
         [
