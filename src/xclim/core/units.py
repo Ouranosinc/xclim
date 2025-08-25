@@ -891,6 +891,13 @@ def rate2amount(
     --------
     amount2rate : Convert an amount to a rate.
 
+    Notes
+    -----
+    Floating-point precision can have surprising results. For example, a daily series of 1 mm/d precipitation
+    rates might not convert to exactly 1 mm daily amounts. This is because a float multiplication is still
+    happening in the background and the time step duration might have been stored in [nano]seconds at one
+    point.
+
     Examples
     --------
     The following converts a daily array of precipitation in mm/h to the daily amounts in mm:

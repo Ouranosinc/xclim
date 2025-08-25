@@ -6,7 +6,7 @@ import pytest
 import xarray as xr
 
 import xclim.indices as xci
-from xclim import atmos, core, set_options
+from xclim import atmos, convert, core, set_options
 from xclim.core.calendar import build_climatology_bounds, percentile_doy
 from xclim.core.units import convert_units_to
 
@@ -494,7 +494,7 @@ class TestSnowfallDate:
                 xr.open_dataset(nimbus.fetch(cls.tasmin_file), engine="h5netcdf"),
             )
         )
-        return atmos.snowfall_approximation(dnr.pr, tas=dnr.tasmin, thresh="-0.5 degC", method="binary")
+        return convert.snowfall_approximation(dnr.pr, tas=dnr.tasmin, thresh="-0.5 degC", method="binary")
 
     def test_first_snowfall(self, nimbus):
         with set_options(check_missing="skip"):
@@ -647,12 +647,14 @@ def test_dry_spell_total_length_indexer(pr_series):
         pr,
         window=7,
         op="sum",
-        thresh="3 mm",
+        thresh="3.1 mm",
         freq="MS",
     )
     np.testing.assert_allclose(out, [np.nan] + [0] * 11)
 
-    out = atmos.dry_spell_total_length(pr, window=7, op="sum", thresh="3 mm", freq="MS", date_bounds=("01-10", "12-31"))
+    out = atmos.dry_spell_total_length(
+        pr, window=7, op="sum", thresh="3.1 mm", freq="MS", date_bounds=("01-10", "12-31")
+    )
     np.testing.assert_allclose(out, [9] + [0] * 11)
 
 
@@ -662,12 +664,14 @@ def test_dry_spell_max_length_indexer(pr_series):
         pr,
         window=7,
         op="sum",
-        thresh="3 mm",
+        thresh="3.1 mm",
         freq="MS",
     )
     np.testing.assert_allclose(out, [np.nan] + [0] * 11)
 
-    out = atmos.dry_spell_total_length(pr, window=7, op="sum", thresh="3 mm", freq="MS", date_bounds=("01-10", "12-31"))
+    out = atmos.dry_spell_total_length(
+        pr, window=7, op="sum", thresh="3.1 mm", freq="MS", date_bounds=("01-10", "12-31")
+    )
     np.testing.assert_allclose(out, [9] + [0] * 11)
 
 
@@ -700,7 +704,7 @@ class TestSnowfallMeteoSwiss:
                 xr.open_dataset(nimbus.fetch(cls.tasmin_file), engine="h5netcdf"),
             )
         )
-        return atmos.snowfall_approximation(dnr.pr, tas=dnr.tasmin, thresh="-0.5 degC", method="binary")
+        return convert.snowfall_approximation(dnr.pr, tas=dnr.tasmin, thresh="-0.5 degC", method="binary")
 
     def test_snowfall_frequency(self, nimbus):
         prsn = self.get_snowfall(nimbus)

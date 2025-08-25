@@ -64,10 +64,10 @@ start" for the duff-moisture code. The following example uses reasonable paramet
 
 >>> ds = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc")
 >>> ds = ds.assign(
-...     hurs=xclim.atmos.relative_humidity_from_dewpoint(ds=ds),
+...     hurs=xclim.convert.relative_humidity_from_dewpoint(ds=ds),
 ...     tas=xclim.core.units.convert_units_to(ds.tas, "degC"),
 ...     pr=xclim.core.units.convert_units_to(ds.pr, "mm/d"),
-...     sfcWind=xclim.atmos.wind_speed_from_vector(ds=ds)[0],
+...     sfcWind=xclim.convert.wind_speed_from_vector(ds=ds)[0],
 ... )
 >>> season_mask = fire_season(
 ...     tas=ds.tas,
@@ -132,7 +132,7 @@ as _all_ seasons are used, even the very short shoulder seasons.
 # Methods starting with a "_" are not usable with xarray objects, whereas the others are.
 from __future__ import annotations
 
-from collections import OrderedDict
+from collections import OrderedDict, namedtuple
 from collections.abc import Sequence
 
 import numpy as np
@@ -1380,7 +1380,17 @@ def cffwis_indices(
     )
     for outd in out.values():
         outd.attrs["units"] = ""
-    return out["DC"], out["DMC"], out["FFMC"], out["ISI"], out["BUI"], out["FWI"]
+
+    CFFWISIndices = namedtuple("CFFWISIndices", ["DC", "DMC", "FFMC", "ISI", "BUI", "FWI"])
+    ci = CFFWISIndices(
+        DC=out["DC"],
+        DMC=out["DMC"],
+        FFMC=out["FFMC"],
+        ISI=out["ISI"],
+        BUI=out["BUI"],
+        FWI=out["FWI"],
+    )
+    return ci
 
 
 @declare_units(

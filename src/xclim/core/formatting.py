@@ -80,7 +80,7 @@ class AttrFormatter(string.Formatter):
         self.modifiers = modifiers
         self.mapping = mapping
 
-    def format(self, format_string: str, /, *args, **kwargs: dict) -> str:
+    def format(self, format_string: str, /, *args: Any, **kwargs: Any) -> str:
         r"""
         Format a string.
 
@@ -90,7 +90,7 @@ class AttrFormatter(string.Formatter):
             The string to format.
         *args : Any
             Arguments to format.
-        **kwargs : dict
+        **kwargs : Any
             Keyword arguments to format.
 
         Returns
@@ -304,7 +304,7 @@ def _parse_parameters(section):
             name, annot = line.split(":", maxsplit=1)
             curr_key = name.strip()
             params[curr_key] = {"description": ""}
-            match = re.search(r".*(\{.*\}).*", annot)
+            match = re.search(r".*(\{.*}).*", annot)
             if match:
                 try:
                     choices = literal_eval(match.groups()[0])
@@ -491,7 +491,7 @@ def update_xclim_history(func: Callable) -> Callable:
     return _call_and_add_history
 
 
-def gen_call_string(funcname: str, *args, **kwargs) -> str:
+def gen_call_string(funcname: str, *args: Any, **kwargs: Any) -> str:
     r"""
     Generate a signature string for use in the history attribute.
 
@@ -507,7 +507,7 @@ def gen_call_string(funcname: str, *args, **kwargs) -> str:
         Name of the function.
     *args : Any
         Arguments given to the function.
-    **kwargs : dict
+    **kwargs : Any
         Keyword arguments given to the function.
 
     Returns
