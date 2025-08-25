@@ -48,6 +48,8 @@ Internal changes
 * Fixed some tests relying on floating-point imprecision. Avoid numbagg on sensitive fitting tests. (:pull:`2228`).
 * Conversion indicators have been split from ``tests/test_atmos.py`` into new ``tests/test_converters.py``. This is to ensure that conversion indicators are tested separately from other atmospheric indicators. (:issue:`1289`, :pull:`2224`).
 * ``xclim.testing.utils.show_versions`` now uses the `importlib.metadata` library to more accurately gather dependency information. (:pull:`2229`).
+* ``xclim.indices.run_length.lazy_indexing`` moved to utils. (:issue:`2107`, :pull:`2231`).
+
 
 Bug fixes
 ^^^^^^^^^
@@ -56,7 +58,7 @@ Bug fixes
 * Indices relying on ``units.to_agg_units(src, out, 'count')`` will not raise on a non-inferrable frequency and instead use the common default of "D", as their docstring implies. (:issue:`2215`, :pull:`2217`).
 * Fix ``spell_length_statistics`` and related functions for cases where ``thresh`` is a DataArray. (:issue:`2216`, :pull:`2218`).
 * Addressed a noisy warning emitted by `numpy` in the ``xclim.indices.stats`` when performing a fit over data with missing values. (:pull:`2224`).
-* New implementation of ``xclim.indices.generic.{doymax,doymin}`` allow a chunked input DataArray. (:issue:`2107`, :pull:`2231`).
+* ``xclim.indices.generic.{doymax,doymin}`` now work with dask arrays (:issue:`2107`, :pull:`2231`).
 
 v0.57.0 (2025-05-22)
 --------------------

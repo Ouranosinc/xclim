@@ -34,7 +34,7 @@ from xclim.core.units import (
     to_agg_units,
     units2pint,
 )
-from xclim.core.utils import uses_dask
+from xclim.core.utils import uses_dask, lazy_indexing
 from xclim.indices import run_length as rl
 from xclim.indices.helpers import resample_map
 
@@ -174,28 +174,6 @@ def select_rolling_resample_op(
     rolled = to_agg_units(rolled, da, window_op)
     return select_resample_op(rolled, op=op, freq=freq, out_units=out_units, **indexer)
 
-def dask_selecter(da, indices, dim):
-    """ Select dask array over a set of indices.
-
-    Parameters
-    ----------
-    da : xr.DataArray
-        Input data.
-    indices: xr.DataArray
-        Array indexer.
-    dim: str
-        Dimension to be reduced
-    """
-    return xr.apply_ufunc(
-        lambda da, indices: np.take_along_axis(da, indices[..., np.newaxis], axis=-1).squeeze(-1),
-        da,
-        indices, 
-        input_core_dims = [[dim], []],
-        output_core_dims = [[]],
-        dask='parallelized',
-        output_dtypes = [da.dtype]
-    )
-
 def doymax(da: xr.DataArray) -> xr.DataArray:
     """
     Return the day of year of the maximum value.
@@ -212,11 +190,11 @@ def doymax(da: xr.DataArray) -> xr.DataArray:
     """
     i = da.argmax(dim="time")
     doy = da.time.dt.dayofyear
-    if uses_dask(da):
-        out = dask_selecter(doy.broadcast_like(da), i , "time")
-    else:
-        out = doy.isel(time=i, drop=True)
 
+    if uses_dask(da): 
+        out = lazy_indexing(doy, i, 'time')
+    else: 
+        out = doy.isel(time=i)
     return to_agg_units(out, da, "doymax")
 
 
@@ -236,11 +214,12 @@ def doymin(da: xr.DataArray) -> xr.DataArray:
     """
     i = da.argmin(dim="time")
     doy = da.time.dt.dayofyear
-    if uses_dask(da):
-        out = dask_selecter(doy.broadcast_like(da), i , "time")
-    else:
-        out = doy.isel(time=i, drop=True)
-
+    
+    if uses_dask(da): 
+        out = lazy_indexing(doy, i, 'time')
+    else: 
+        out = doy.isel(time=i)
+        
     return to_agg_units(out, da, "doymin")
 
 _xclim_ops = {"doymin": doymin, "doymax": doymax}
