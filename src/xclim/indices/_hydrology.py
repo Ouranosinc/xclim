@@ -912,6 +912,14 @@ def days_with_snowpack(
         The default `freq` is the water year used in the northern hemisphere, from October to September.
         It is recommended to have at least 70% of valid data per water year in order to compute significant values.
 
+        Note
+        -------
+        Years with larger snowpacks tend to produce bigger spring floods.
+        Additional Spring flood analysis can be carried out using the annual_maxima and lag_snowpack_flow_peaks functions.
+
+        References
+        -----
+        Alonso-González, E., Revuelto, J., Fassnacht, S. R., & López-Moreno, J. I. (2022). Combined influence of maximum accumulation and melt rates on the duration of the seasonal snowpack over temperate mountains. Journal of Hydrology, 608, 127574.
         """
         thresh = convert_units_to(thresh, swe)
 
