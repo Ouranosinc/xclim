@@ -94,7 +94,7 @@ def test_normal_computation(tasmin_series, tasmax_series, pr_series, tmp_path, i
 
     ds.to_netcdf(input_file, engine="h5netcdf")
 
-    args = ["-i", str(input_file), "-o", str(output_file), "-v", indicator]
+    args = ["-i", str(input_file), "-o", str(output_file), "-v", "--engine", "h5netcdf", indicator]
     runner = CliRunner()
     results = runner.invoke(cli, args)
     for var_name in var_names:
@@ -126,6 +126,8 @@ def test_multi_input(tas_series, pr_series, tmp_path):
             "-o",
             str(output_file),
             "-v",
+            "--engine",
+            "h5netcdf",
             "solidprcptot",
         ],
     )
@@ -150,6 +152,8 @@ def test_multi_output(tmp_path, open_dataset):
             "-o",
             str(output_file),
             "-v",
+            "--engine",
+            "h5netcdf",
             "wind_speed_from_vector",
         ],
     )
@@ -172,6 +176,8 @@ def test_renaming_variable(tas_series, tmp_path):
                 "-o",
                 str(output_file),
                 "-v",
+                "--engine",
+                "h5netcdf",
                 "tn_mean",
                 "--tasmin",
                 "tas",
@@ -200,6 +206,8 @@ def test_indicator_chain(tas_series, tmp_path):
             "-o",
             str(output_file),
             "-v",
+            "--engine",
+            "h5netcdf",
             "tg_mean",
             "growing_degree_days",
         ],
@@ -268,7 +276,7 @@ def test_suspicious_precipitation_flags(pr_series, tmp_path):
     bad_pr.to_netcdf(input_file)
 
     runner = CliRunner()
-    runner.invoke(cli, ["-i", str(input_file), "-o", str(output_file), "dataflags", "pr"])
+    runner.invoke(cli, ["-i", str(input_file), "-o", str(output_file), "--engine", "h5netcdf", "dataflags", "pr"])
     with xr.open_dataset(output_file) as ds:
         for var in ds.data_vars:
             assert var
