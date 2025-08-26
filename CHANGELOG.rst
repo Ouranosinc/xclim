@@ -58,7 +58,8 @@ Bug fixes
 * Indices relying on ``units.to_agg_units(src, out, 'count')`` will not raise on a non-inferrable frequency and instead use the common default of "D", as their docstring implies. (:issue:`2215`, :pull:`2217`).
 * Fix ``spell_length_statistics`` and related functions for cases where ``thresh`` is a DataArray. (:issue:`2216`, :pull:`2218`).
 * Addressed a noisy warning emitted by `numpy` in the ``xclim.indices.stats`` when performing a fit over data with missing values. (:pull:`2224`).
-* ``xclim.indices.generic.{doymax,doymin}`` now work with dask arrays (:issue:`2107`, :pull:`2231`).
+* In the Canadian Forest Fire Weather Index System, values of 0 for both the Duff-Moisture code (DMC) and the Drought code (DC) will yield a 0 Build-Up index (BUI) instead of failing with division by zero error (:issue:`2145`, :pull:`2225`).
+* ``xclim.indices.generic.{doymax|doymin}`` now work with dask arrays. (:issue:`2107`, :pull:`2231`).
 
 v0.57.0 (2025-05-22)
 --------------------
