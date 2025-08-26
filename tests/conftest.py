@@ -297,6 +297,12 @@ def rlus_series():
     return _rlus_series
 
 
+@pytest.fixture
+def no_numbagg():
+    with xr.set_options(use_numbagg=False):
+        yield
+
+
 @pytest.fixture(scope="session")
 def threadsafe_data_dir(tmp_path_factory):
     return Path(tmp_path_factory.getbasetemp().joinpath("data"))

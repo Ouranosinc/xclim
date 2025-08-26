@@ -155,7 +155,7 @@ def standardized_streamflow_index(
         Name of the univariate distribution, or a callable `rv_continuous` (see :py:mod:`scipy.stats`).
     method : {"APP", "ML", "PWM"}
         Name of the fitting method, such as `ML` (maximum likelihood), `APP` (approximate). The approximate method
-        uses a deterministic function that does not involve any optimization.
+        uses a deterministic function that does not involve any optimization, which can be sensitive to noise.
         `PWM` should be used with a `lmoments3` distribution.
     fitkwargs : dict, optional
         Kwargs passed to ``xclim.indices.stats.fit`` used to impose values of certain parameters (`floc`, `fscale`).
@@ -462,8 +462,8 @@ def standardized_groundwater_index(
         Name of the univariate distribution, or a callable `rv_continuous` (see :py:mod:`scipy.stats`).
     method : {"APP", "ML", "PWM"}
         Name of the fitting method, such as `ML` (maximum likelihood), `APP` (approximate).
-        The approximate method uses a deterministic function that does not involve any optimization.
-        `PWM` should be used with a `lmoments3` distribution.
+        The approximate method uses a deterministic function that does not involve any optimization,
+        which can be sensitive to noise. `PWM` should be used with a `lmoments3` distribution.
     fitkwargs : dict, optional
         Kwargs passed to ``xclim.indices.stats.fit`` used to impose values of certain parameters (`floc`, `fscale`).
     cal_start : DateStr, optional
