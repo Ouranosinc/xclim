@@ -2,7 +2,7 @@
 Changelog
 =========
 
-v0.58.0 (unreleased)
+v0.58.0 (2025-08-27)
 --------------------
 Contributors to this version: Sebastian Lehner (:user:`seblehner`), Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), Éric Dupuis (:user:`coxipi`), Baptiste Hamon (:user:`baptistehamon`).
 
