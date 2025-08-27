@@ -2,7 +2,7 @@
 Changelog
 =========
 
-v0.58.0 (unreleased)
+v0.58.0 (2025-08-27)
 --------------------
 Contributors to this version: Sebastian Lehner (:user:`seblehner`), Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), Éric Dupuis (:user:`coxipi`), Baptiste Hamon (:user:`baptistehamon`).
 
@@ -12,12 +12,12 @@ New indicators and features
 * Argument ``indexer`` added to indicators ``max_n_day_precipitation_amount``, ``max_pr_intensity``, and ``blowing_snow``. (:issue:`2187`, :pull:`2190`).
 * Argument ``window`` added to indicator ``rain_on_frozen_ground_days``. (:pull:`2190`).
 * New helper ``xclim.indices.generic.season_length_from_boundaries`` takes ``season_start`` and ``season_end`` as input and gives ``season_length``. This is used when starts and ends are computed with different resampling frequencies: ``days_since`` are used to compute temporal lengths in this case. (:pull:`2189`).
-* Allow ``invalid_values`` as argument for ``relative_humidity_from_dewpoint``. (:pull:`2203`, :issue:`2202`)
-* New thermodynamic conversion indicators:
+* Allow ``invalid_values`` as argument for ``relative_humidity_from_dewpoint``. (:issue:`2202`, :pull:`2203`).
+* New thermodynamic conversion indicators (:issue:`2165`, :pull:`2206`):
     + ``xclim.convert.vapor_pressure`` to compute the partial pressure of water vapor from specific humidity and total pressure.
     + ``xclim.convert.dewpoint_from_specific_humidity`` to compute the dewpoint temperature from specific humidity and total pressure.
 * All functions using saturation vapour pressure can now compute it with a smooth transition between saturation over ice and saturation over water. The transition is controlled by the ``interp_power`` , ``ice_thresh`` and ``water_thresh`` parameters. (:issue:`2165`, :pull:`2206`).
-    + New methods ``"buck81"`` and `"aerk96"` and new method ``"ECMWF"`` which is ``"buck81"`` on water and ``"aerk96"`` on ice.
+    + New methods ``"buck81"`` and ``"aerk96"`` and new method ``"ECMWF"`` which is ``"buck81"`` on water and ``"aerk96"`` on ice.
     + Saturation vapor pressure calculations were reorganized. ``xclim.indices.converters.ESAT_FORMULAS_COEFFICIENTS`` now stores the August-Roche-Magnus formula's coefficients.
 * New indicator ``xclim.atmos.hot_days`` as counterpart to ``xclim.atmos.frost_days``. (:issue:`2194`, :pull:`2213`).
 * New helper indices for computing the day-length coefficient for viticulture growing seasons based on several approaches:
@@ -31,7 +31,7 @@ New indicators and features
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
-* The ``"jones"`` method for calculating `'k'` in ``xclim.indices.huglin_index`` and ``xclim.indices.biologically_effective_degree_days`` now require daily data computed at annual frequencies (`freq="YS"|"YS-JAN"|"YS-JUL"`). The previous behaviour for non-annual frequencies was undefined. (:issue:`2201`, :pull:`2207`).
+* The ``"jones"`` method for calculating `'k'` in ``xclim.indices.huglin_index`` and ``xclim.indices.biologically_effective_degree_days`` now require daily data computed at annual frequencies (``freq="YS"|"YS-JAN"|"YS-JUL"``). The previous behaviour for non-annual frequencies was undefined. (:issue:`2201`, :pull:`2207`).
     * The ``"jones"`` method now sets a floor value for ``"k"`` where it is not allowed to be less than ``1.0``. This is to avoid values below ``1.0`` for ``"k"`` which were previously allowed in `xclim` but not supported by the source literature.
     * Incomplete growing seasons (where the values of ``"k"`` for all latitudes during the growing season are all below ``1.0``) will now raise `ValueError`. This is to ensure that the expected output is consistent with the literature.
 * The ``"gladstones"`` method for calculating `'k'` in ``xclim.indices.biologically_effective_degree_days`` now uses a dedicated function based on a dynamic day_length compared to a reference latitude (40 degrees). The previous implementation of the ``"gladstones"`` method was based off an approximation found in Hall and Jones (2010). (:issue:`2201`, :pull:`2207`).
@@ -51,6 +51,7 @@ Internal changes
 * ``xclim.testing.utils.show_versions`` now uses the `importlib.metadata` library to more accurately gather dependency information. (:pull:`2229`).
 * Replaced the deprecated ``"time.week"`` grouping strings with ``da.time.dt.isocalendar().week`` in ``xclim.indices.stats.standardized_index`` functions. (:pull:`2230`).
 * ``xclim.indices.run_length.lazy_indexing`` moved to utils. (:issue:`2107`, :pull:`2231`).
+* Updated the command-line configuration to address ``DeprecationWarning`` messages introduced in `click` v8.2.0 (changes remain compatible with `click` v8.1.0). (:issue:`2212`, :pull:`2233`).
 
 Bug fixes
 ^^^^^^^^^
@@ -59,7 +60,7 @@ Bug fixes
 * Indices relying on ``units.to_agg_units(src, out, 'count')`` will not raise on a non-inferrable frequency and instead use the common default of "D", as their docstring implies. (:issue:`2215`, :pull:`2217`).
 * Fix ``spell_length_statistics`` and related functions for cases where ``thresh`` is a DataArray. (:issue:`2216`, :pull:`2218`).
 * Addressed a noisy warning emitted by `numpy` in the ``xclim.indices.stats`` when performing a fit over data with missing values. (:pull:`2224`).
-* In the Canadian Forest Fire Weather Index System, values of 0 for both the Duff-Moisture code (DMC) and the Drought code (DC) will yield a 0 Build-Up index (BUI) instead of failing with division by zero error (:issue:`2145`, :pull:`2225`).
+* In the Canadian Forest Fire Weather Index System, values of 0 for both the Duff-Moisture code (DMC) and the Drought code (DC) will yield a 0 Build-Up index (BUI) instead of failing with division by zero error. (:issue:`2145`, :pull:`2225`).
 * ``xclim.indices.generic.{doymax|doymin}`` now work with dask arrays. (:issue:`2107`, :pull:`2231`).
 
 v0.57.0 (2025-05-22)
