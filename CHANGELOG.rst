@@ -49,6 +49,7 @@ Internal changes
 * Conversion indicators have been split from ``tests/test_atmos.py`` into new ``tests/test_converters.py``. This is to ensure that conversion indicators are tested separately from other atmospheric indicators. (:issue:`1289`, :pull:`2224`).
 * ``xclim.testing.utils.show_versions`` now uses the `importlib.metadata` library to more accurately gather dependency information. (:pull:`2229`).
 * Replaced the deprecated ``"time.week"`` grouping strings with ``da.time.dt.isocalendar().week`` in ``xclim.indices.stats.standardized_index`` functions. (:pull:`2230`).
+* ``xclim.indices.run_length.lazy_indexing`` moved to utils. (:issue:`2107`, :pull:`2231`).
 
 Bug fixes
 ^^^^^^^^^
@@ -58,6 +59,7 @@ Bug fixes
 * Fix ``spell_length_statistics`` and related functions for cases where ``thresh`` is a DataArray. (:issue:`2216`, :pull:`2218`).
 * Addressed a noisy warning emitted by `numpy` in the ``xclim.indices.stats`` when performing a fit over data with missing values. (:pull:`2224`).
 * In the Canadian Forest Fire Weather Index System, values of 0 for both the Duff-Moisture code (DMC) and the Drought code (DC) will yield a 0 Build-Up index (BUI) instead of failing with division by zero error (:issue:`2145`, :pull:`2225`).
+* ``xclim.indices.generic.{doymax|doymin}`` now work with dask arrays. (:issue:`2107`, :pull:`2231`).
 
 v0.57.0 (2025-05-22)
 --------------------
