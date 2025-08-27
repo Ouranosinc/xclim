@@ -27,6 +27,7 @@ New indicators and features
 * The ``xclim.indices.helpers.day_length`` function now accepts an ``infill_polar_days`` argument to control whether polar days or polar nights are filled with NaNs (``infill_polar_days=False``; default behaviour) or with a day length of 0 or 24 hours, depending on the date (``infill_polar_days=True``). (:issue:`2201`, :pull:`2207`).
 * The indices for ``uas_vas_to_sfcwind``, ``sfcwind_to_uas_vas``, ``rle_1d``, and ``cffwis_indices`` now provide their outputs via the ``NamedTuple`` format. This provides a method for accessing indice outputs using variable names in addition to positional indexing. (:pull:`2224`).
 * The new ``xclim.indicators.convert`` module is now available to provide a distinct API for conversion-focused indicators. This module is intended to regroup all conversion-based indicators that were previously scattered across different indicato realms. This module is also accessible via ``xclim.convert``. (:issue:`1289`, :pull:`2224`).
+* New methods ``dai_annual`` and ``dai_seasonal`` for ``xclim.convert.snowfall_approximation`` and ``xclim.convert.rain_approximation``, taken from :cite:t:`dai_snowfall_2008`. Indicator also take new argument ``landmask`` to switch between the land and ocean formulations. (:pull:`2208`, :issue:`1752`).
 
 Breaking changes
 ^^^^^^^^^^^^^^^^

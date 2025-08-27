@@ -1083,12 +1083,14 @@ def dewpoint_from_specific_humidity(
     return tdps.assign_attrs(units="K", units_metadata="temperature: on_scale")
 
 
-@declare_units(pr="[precipitation]", tas="[temperature]", thresh="[temperature]")
+@declare_units(pr="[precipitation]", tas="[temperature]", thresh="[temperature]", clip_temp="[temperature]")
 def snowfall_approximation(
     pr: xr.DataArray,
     tas: xr.DataArray,
     thresh: Quantified = "0 degC",
     method: str = "binary",
+    clip_temp: Quantified | None = None,
+    landmask: xr.DataArray | bool = True,
 ) -> xr.DataArray:
     """
     Snowfall approximation from total precipitation and temperature.
@@ -1103,8 +1105,17 @@ def snowfall_approximation(
         Mean, Maximum, or Minimum daily Temperature.
     thresh : Quantified
         Freezing point temperature. Non-scalar values are not allowed with method "brown".
-    method : {"binary", "brown", "auer"}
+        Ignored for the ``'dai_*'`` methods.
+    method : {"binary", "brown", "auer", "dai_annual", "dai_seasonal"}
         Which method to use when approximating snowfall from total precipitation. See notes.
+    clip_temp : Quantified
+        For methods "dai_annual" and "dai_seasonal", this is an optional temperature delta
+        at which the snowfall fraction is rescaled to 0 or 1. See notes.
+    landmask : DataArray or bool
+        For methods "dai_annual" and "dai_seasonal", this is the land mask, a DataArray without
+        a time dimension that is True on land grid points and False on ocean grid points.
+        Can also be True or False to use one or the other coefficients set for all points.
+        Default is to consider all points as land.
 
     Returns
     -------
@@ -1117,8 +1128,10 @@ def snowfall_approximation(
 
     Notes
     -----
-    The following methods are available to approximate snowfall and are drawn from the
+    The following methods are available to approximate snowfall. ``'brown'`` and ``'auer'`` are drawn from the
     Canadian Land Surface Scheme :cite:p:`verseghy_class_2009,melton_atmosphericvarscalcf90_2019`.
+    The two ``'dai_*'`` methods are implemented from :cite:p:`dai_snowfall_2008`
+    (``clip_temp`` is an addition from the xclim team).
 
     - ``'binary'`` : When the temperature is under the freezing threshold, precipitation
       is assumed to be solid. The method is agnostic to the type of temperature used
@@ -1127,10 +1140,17 @@ def snowfall_approximation(
       over a range of 2°C over the freezing point.
     - ``'auer'`` : The phase between the freezing threshold goes from solid to liquid as a degree six
       polynomial over a range of 6°C over the freezing point.
+    - ``'dai_annual'`` : The snow fraction evolves according to an hyperbolic tangent function that has
+      different parameters for precipitation over land or ocean. The snow and rain fractions do not add
+      to 1, rather the remainder is denoted as a "sleet" fraction. If ``clip_temp`` is given, its value $$T_c$$ (in
+      °C) is used to rescale (and then clip) the snowfall fraction function $$f(T)$$ as
+      $$(f(T) - f(T_c))/(f(-T_c) - f(T_c))$$, so that it is 0 when $$T > T_c$$ and 1 when $$T < -T_c$$.
+    - ``'dai_seasonal'`` : Same as ``'dai_annual'``, but parameters are different for each season.
+      The "annual" coefficients are taken over ocean in summer (JJA).
 
     References
     ----------
-    :cite:cts:`verseghy_class_2009,melton_atmosphericvarscalcf90_2019`
+    :cite:cts:`verseghy_class_2009,melton_atmosphericvarscalcf90_2019,dai_snowfall_2008`
     """
     prsn: xr.DataArray
     if method == "binary":
@@ -1173,20 +1193,71 @@ def snowfall_approximation(
 
         # Convert snowfall fraction coordinates to native tas units
         prsn = pr * fraction.interp(tas=dtas, method="linear")
+    elif method.startswith("dai"):
+        tas = convert_units_to(tas, "°C")
+        if isinstance(landmask, bool):
+            if method == "dai_annual" and landmask:
+                a, b, c, d = -48.2292, 0.7205, 1.1662, 1.0223
+            elif method == "dai_annual" and not landmask:
+                a, b, c, d = -47.1472, 0.4049, 1.9280, 1.0203
+            elif method == "dai_seasonal" and landmask:
+                coeffs = xr.DataArray(
+                    [
+                        [-48.2372, -48.2493, -46.4000, -48.3251],
+                        [0.7449, 0.6634, 0.7013, 0.7798],
+                        [1.0919, 1.3388, 0.8362, 1.1502],
+                        [1.0209, 1.0270, 1.0217, 1.0180],
+                    ],
+                    dims=("coeff", "season"),
+                    coords={"season": ["DJF", "MAM", "JJA", "SON"]},
+                )
+                a, b, c, d = coeffs.sel(season=tas.time.dt.season)
+            elif method == "dai_seasonal" and not landmask:
+                coeffs = xr.DataArray(
+                    [
+                        [-47.1823, -47.0035, -47.1472, -46.8494],
+                        [0.4003, 0.4090, 0.4049, 0.4162],
+                        [2.1735, 1.7372, 1.9280, 2.0474],
+                        [1.0255, 1.0226, 1.0203, 1.0155],
+                    ],
+                    dims=("coeff", "season"),
+                    coords={"season": ["DJF", "MAM", "JJA", "SON"]},
+                )
+                a, b, c, d = coeffs.sel(season=tas.time.dt.season)
+            else:
+                raise ValueError(f"Unknown method {method} for snowfall approximation.")
 
+            def fracfunc(tt):
+                return a * (np.tanh(b * (tt - c)) - d) / 100
+
+            frac = fracfunc(tas)
+            if clip_temp is not None:
+                clip = convert_units_to(clip_temp, "°C")
+                fmin = fracfunc(clip)
+                fmax = fracfunc(-clip)
+                frac = (frac - fmin) / (fmax - fmin)
+            prsn = pr * frac.clip(0, 1)
+        else:
+            prsn = xr.where(
+                landmask,
+                snowfall_approximation(pr, tas, method=method, landmask=True),
+                snowfall_approximation(pr, tas, method=method, landmask=False),
+            )
     else:
-        raise ValueError(f"Method {method} not one of 'binary', 'brown' or 'auer'.")
+        raise ValueError(f"Method {method} not one of 'binary', 'brown', 'auer', 'dai_annual' or 'dai_seasonal'.")
 
     prsn = prsn.assign_attrs(units=pr.attrs["units"])
     return prsn
 
 
-@declare_units(pr="[precipitation]", tas="[temperature]", thresh="[temperature]")
+@declare_units(pr="[precipitation]", tas="[temperature]", thresh="[temperature]", clip_temp="[temperature]")
 def rain_approximation(
     pr: xr.DataArray,
     tas: xr.DataArray,
     thresh: Quantified = "0 degC",
     method: str = "binary",
+    clip_temp: Quantified | None = None,
+    landmask: xr.DataArray | bool = True,
 ) -> xr.DataArray:
     """
     Rainfall approximation from total precipitation and temperature.
@@ -1202,8 +1273,17 @@ def rain_approximation(
         Mean, Maximum, or Minimum daily Temperature.
     thresh : Quantified
         Freezing point temperature. Non-scalar values are not allowed with method 'brown'.
-    method : {"binary", "brown", "auer"}
+        Ignored for the ``'dai_*'`` methods.
+    method : {"binary", "brown", "auer", "dai_annual", "dai_seasonal"}
         Which method to use when approximating snowfall from total precipitation. See notes.
+    clip_temp : Quantified
+        For methods "dai_annual" and "dai_seasonal", this is an optional temperature delta
+        at which the snowfall fraction function rescaled to 0 or 1. See notes.
+    landmask : DataArray or bool
+        For methods "dai_annual" and "dai_seasonal", this is the land mask, a DataArray without
+        a time dimension that is True on land grid points and False on ocean grid points.
+        Can also be True or False to use one or the other coefficients set for all points.
+        Default is to consider all points as land.
 
     Returns
     -------
@@ -1216,10 +1296,78 @@ def rain_approximation(
 
     Notes
     -----
-    This method computes the snowfall approximation and subtracts it from the total
-    precipitation to estimate the liquid rain precipitation.
+    For methods "binary", "brown" and "auer", this method computes the snowfall approximation
+    and subtracts it from the total precipitation to estimate the liquid rain precipitation.
+    See :py:func:`snowfall_approximation``.
+
+    For the "dai_*", methods, the rain fraction evolves according to an hyperbolic tangent
+    function that has different parameters for precipitation over land or ocean. The snow
+    and rain fraction do not add to 1. Rather, the remainder can be associated to a "sleet" fraction.
+
+    If ``clip_temp`` is given, its value $$T_c$$ (in °C) is used to rescale (and then clip) the rain fraction
+    function $$f(T)$$ as $$(f(T) - f(-T_c))/(f(T_c) - f(-T_c))$$, so that it is 0 when $$T < -T_c$$
+    and 1 when $$T > T_c$$.
+
+    The "dai_seasonal" method has different parameters for each season. The "annual" coefficients are taken over ocean
+    in summer. These methods are implemented from :cite:p:`dai_snowfall_2008`
+    (``clip_temp`` is an addition from the xclim team).
+
+    References
+    ----------
+    :cite:cts:`verseghy_class_2009,melton_atmosphericvarscalcf90_2019,dai_snowfall_2008`
     """
-    prra: xr.DataArray = pr - snowfall_approximation(pr, tas, thresh=thresh, method=method)
+    if method.startswith("dai"):
+        tas = convert_units_to(tas, "°C")
+        if isinstance(landmask, bool):
+            if method == "dai_annual" and landmask:
+                a, b, c, d = -47.8337, -0.6866, 1.4913, 1.0420
+            elif method == "dai_annual" and not landmask:
+                a, b, c, d = -47.3041, -0.4263, 2.5687, 1.0784
+            elif method == "dai_seasonal" and landmask:
+                coeffs = xr.DataArray(
+                    [
+                        [-47.5770, -47.9077, -46.8303, -48.0315],
+                        [-0.6856, -0.6603, -0.6595, -0.7663],
+                        [1.3942, 1.6927, 1.1582, 1.4640],
+                        [1.0438, 1.0358, 1.1056, 1.0412],
+                    ],
+                    dims=("coeff", "season"),
+                    coords={"season": ["DJF", "MAM", "JJA", "SON"]},
+                )
+                a, b, c, d = coeffs.sel(season=tas.time.dt.season)
+            elif method == "dai_seasonal" and not landmask:
+                coeffs = xr.DataArray(
+                    [
+                        [-47.0262, -47.2828, -47.3041, -47.2107],
+                        [-0.4360, -0.4299, -0.4263, -0.4280],
+                        [2.8572, 2.3397, 2.5687, 2.7118],
+                        [1.0731, 1.0800, 1.0784, 1.0911],
+                    ],
+                    dims=("coeff", "season"),
+                    coords={"season": ["DJF", "MAM", "JJA", "SON"]},
+                )
+                a, b, c, d = coeffs.sel(season=tas.time.dt.season)
+            else:
+                raise ValueError(f"Unknown method {method} for rain approximation.")
+
+            def fracfunc(tt):
+                return a * (np.tanh(b * (tt - c)) - d) / 100
+
+            frac = fracfunc(tas)
+            if clip_temp is not None:
+                clip = convert_units_to(clip_temp, "°C")
+                fmax = fracfunc(clip)
+                fmin = fracfunc(-clip)
+                frac = (frac - fmin) / (fmax - fmin)
+            prra = pr * frac.clip(0, 1)
+        else:
+            prra = xr.where(
+                landmask,
+                rain_approximation(pr, tas, method=method, landmask=True),
+                rain_approximation(pr, tas, method=method, landmask=False),
+            )
+    else:
+        prra: xr.DataArray = pr - snowfall_approximation(pr, tas, thresh=thresh, method=method)
     prra = prra.assign_attrs(units=pr.attrs["units"])
     return prra
 

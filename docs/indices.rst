@@ -28,8 +28,7 @@ types.
 
     Indices functions do not perform missing value checks, and usually do not set CF-Convention attributes
     (long_name, standard_name, description, cell_methods, etc.). These functionalities are provided by
-    :py:class:`xclim.core.indicator.Indicator` instances found in the :py:mod:`xclim.indicators.atmos`,
-    :py:mod:`xclim.indicators.land` and :mod:`xclim.indicators.seaIce` modules.
+    :py:class:`xclim.core.indicator.Indicator` instances found in the submodules of :py:mod:`xclim.indicators`.
 
 .. automodule:: xclim.indices
    :members:
