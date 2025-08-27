@@ -51,7 +51,7 @@ Internal changes
 * ``xclim.testing.utils.show_versions`` now uses the `importlib.metadata` library to more accurately gather dependency information. (:pull:`2229`).
 * Replaced the deprecated ``"time.week"`` grouping strings with ``da.time.dt.isocalendar().week`` in ``xclim.indices.stats.standardized_index`` functions. (:pull:`2230`).
 * ``xclim.indices.run_length.lazy_indexing`` moved to utils. (:issue:`2107`, :pull:`2231`).
-* Updated the commanda-line configuration to address ``DeprecationWarning`` messages introduced in `click` v8.2.0 (changes remain compatible with `click` v8.1.0). (:issue:`2212`, :pull:`2233`).
+* Updated the command-line configuration to address ``DeprecationWarning`` messages introduced in `click` v8.2.0 (changes remain compatible with `click` v8.1.0). (:issue:`2212`, :pull:`2233`).
 
 Bug fixes
 ^^^^^^^^^
