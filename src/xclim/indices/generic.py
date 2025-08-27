@@ -34,6 +34,7 @@ from xclim.core.units import (
     to_agg_units,
     units2pint,
 )
+from xclim.core.utils import lazy_indexing, uses_dask
 from xclim.indices import run_length as rl
 from xclim.indices.helpers import resample_map
 
@@ -189,7 +190,12 @@ def doymax(da: xr.DataArray) -> xr.DataArray:
         The day of year of the maximum value.
     """
     i = da.argmax(dim="time")
-    out = da.time.dt.dayofyear.isel(time=i, drop=True)
+    doy = da.time.dt.dayofyear
+
+    if uses_dask(da):
+        out = lazy_indexing(doy, i, "time").astype(doy.dtype)
+    else:
+        out = doy.isel(time=i)
     return to_agg_units(out, da, "doymax")
 
 
@@ -208,7 +214,13 @@ def doymin(da: xr.DataArray) -> xr.DataArray:
         The day of year of the minimum value.
     """
     i = da.argmin(dim="time")
-    out = da.time.dt.dayofyear.isel(time=i, drop=True)
+    doy = da.time.dt.dayofyear
+
+    if uses_dask(da):
+        out = lazy_indexing(doy, i, "time").astype(doy.dtype)
+    else:
+        out = doy.isel(time=i)
+
     return to_agg_units(out, da, "doymin")
 
 

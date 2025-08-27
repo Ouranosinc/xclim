@@ -355,10 +355,10 @@ def _format_dict(data, formatter, key_fg="blue", spaces=2):
             formatter.write_text(click.style(" " * spaces + attr + " :", fg=key_fg) + " " + str(val))
 
 
-class XclimCli(click.MultiCommand):
+class XclimCli(click.Group):
     """Main cli class."""
 
-    def list_commands(self, ctx) -> tuple[str, str, str, str, str, str]:  # numpydoc ignore=PR01,RT01
+    def list_commands(self, ctx) -> list[str, str, str, str, str, str]:  # numpydoc ignore=PR01,RT01
         """Return the available commands (other than the indicators)."""
         return (
             "indices",
