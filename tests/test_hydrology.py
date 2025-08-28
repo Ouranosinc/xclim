@@ -209,3 +209,27 @@ class TestDaysWithSnowpack:
 
         # Year 1: 15 days >= 10 → expect 15, Year 2: only 5 days but all < 10 → expect 0
         np.testing.assert_array_equal(out.values, [15, 0])
+
+class TestAnnualMaxima:
+    def test_simple(self, q_series):
+        # 2 years of daily data
+        a = np.zeros(365 * 2)
+
+        # Year 1: 1 day peak
+        a[50:51] = 20
+
+        # Year 2: 2 days with peaks
+        a[400:401] = 5
+        a[401:402] = 6
+
+        # Create a daily time index
+        q = q_series(a)
+
+        out = xci.annual_maxima(q)
+
+        out
+        # Year 1: expect maxima 20, DOY = 51
+        # Year 2: expect maxima 6, DOY = 36
+        # Year 3 (due to water year resampling) : expect maxima 0, DOY = c aka october 1st the start of water year
+        np.testing.assert_array_equal(out['peak_flow'].values, [20., 6., 0.])
+        np.testing.assert_array_equal(out['peak_doy'].values, [51, 36, 274])
