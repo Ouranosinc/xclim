@@ -2,6 +2,13 @@
 Changelog
 =========
 
+v0.58.1 (2025-08-28)
+--------------------
+Contributors to this version: Pascal Bourgault (:user:`aulemahal`)
+
+* Unpin scipy to allow version 1.16 and higher (:pull:`2236`).
+
+
 v0.58.0 (2025-08-27)
 --------------------
 Contributors to this version: Sebastian Lehner (:user:`seblehner`), Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), Éric Dupuis (:user:`coxipi`), Baptiste Hamon (:user:`baptistehamon`).
