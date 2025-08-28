@@ -117,7 +117,7 @@ xclim = "xclim.cli:cli"
 [project.urls]
 "Homepage" = "https://xclim.readthedocs.io/"
 "Source" = "https://github.com/Ouranosinc/xclim/"
-"Changelog" = "https://xclim.readthedocs.io/en/stable/history.html"
+"Changelog" = "https://xclim.readthedocs.io/en/stable/changelog.html"
 "Issue tracker" = "https://github.com/Ouranosinc/xclim/issues"
 "Mastodon" = "https://fosstodon.org/@xclim"
 "Zenodo" = "https://doi.org/10.5281/zenodo.2795043"
@@ -126,7 +126,7 @@ xclim = "xclim.cli:cli"
 [tool]
 
 [tool.bumpversion]
-current_version = "0.58.0"
+current_version = "0.58.1"
 commit = true
 commit_args = "--no-verify --signoff"
 tag = false

@@ -4,11 +4,11 @@ Changelog
 
 v0.58.1 (2025-08-28)
 --------------------
-Contributors to this version: Pascal Bourgault (:user:`aulemahal`)
+Contributors to this version: Pascal Bourgault (:user:`aulemahal`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
-* Unpin `scipy` to allow version 1.16 and higher (:pull:`2236`).
+* Unpin `scipy` to allow version 1.16 and higher. (:pull:`2236`).
 
 v0.58.0 (2025-08-27)
 --------------------
