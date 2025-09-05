@@ -63,9 +63,7 @@ def _fitfunc_1d(arr, *, dist, nparams, method, **fitkwargs):
         for i, arg in enumerate(args):
             guess[param_info[i]] = arg
 
-        fitresult = scipy.stats.fit(
-            dist=dist, data=x, method="mse", guess=guess, **fitkwargs
-        )
+        fitresult = scipy.stats.fit(dist=dist, data=x, method="mse", guess=guess, **fitkwargs)
         params = fitresult.params
     elif method == "PWM":
         # lmoments3 will raise an error if only dist.numargs + 2 values are provided
@@ -74,13 +72,11 @@ def _fitfunc_1d(arr, *, dist, nparams, method, **fitkwargs):
         n_unique = len(np.unique(x))
         if n_unique <= dist.numargs:
             warnings.warn(
-                f"{type(dist).__name__} requieres {dist.numargs} unique values. "
-                f"{n_unique} provided, returning NaNs."
+                f"{type(dist).__name__} requieres {dist.numargs} unique values. {n_unique} provided, returning NaNs."
             )
             return np.asarray([np.nan] * nparams)
         if (type(dist).__name__ != "GammaGen" and len(fitkwargs.keys()) != 0) or (
-            type(dist).__name__ == "GammaGen"
-            and set(fitkwargs.keys()) - {"floc"} != set()
+            type(dist).__name__ == "GammaGen" and set(fitkwargs.keys()) - {"floc"} != set()
         ):
             raise ValueError(
                 "Lmoments3 does not use `fitkwargs` arguments, except for `floc` with the Gamma distribution."
@@ -197,9 +193,7 @@ def fit(
     dims = [d if d != dim else "dparams" for d in da.dims]
     out = data.assign_coords(dparams=dist_params).transpose(*dims)
 
-    out.attrs = prefix_attrs(
-        da.attrs, ["standard_name", "long_name", "units", "description"], "original_"
-    )
+    out.attrs = prefix_attrs(da.attrs, ["standard_name", "long_name", "units", "description"], "original_")
     attrs = {
         "long_name": f"{dist.name} parameters",
         "description": f"Parameters of the {dist.name} distribution",
@@ -405,11 +399,7 @@ def fa(
         raise ValueError(f"Mode `{mode}` should be either 'max' or 'min'.")
 
     # Compute the quantiles
-    out = (
-        parametric_quantile(p, q, dist)
-        .rename({"quantile": "return_period"})
-        .assign_coords(return_period=t)
-    )
+    out = parametric_quantile(p, q, dist).rename({"quantile": "return_period"}).assign_coords(return_period=t)
     out.attrs["mode"] = mode
     return out
 
@@ -623,9 +613,7 @@ def _fit_start(x, dist: str, **fitkwargs: Any) -> tuple[tuple, dict]:
         # ignore invalid values occurring in the log calculations
         with np.errstate(invalid="ignore"), warnings.catch_warnings():
             shape0 = log_x_pos.std()
-            warnings.filterwarnings(
-                "ignore", message="Mean of empty slice.", category=RuntimeWarning
-            )
+            warnings.filterwarnings("ignore", message="Mean of empty slice.", category=RuntimeWarning)
             scale0 = np.exp(log_x_pos.mean())
         kwargs = {"scale": scale0, "loc": loc0}
         return (shape0,), kwargs
@@ -700,9 +688,7 @@ def dist_method(
     # Typically the data to be transformed
     arg = [arg] if arg is not None else []
     if function == "nnlf":
-        raise ValueError(
-            "This method is not supported because it reduces the dimensionality of the data."
-        )
+        raise ValueError("This method is not supported because it reduces the dimensionality of the data.")
 
     # We don't need to set `input_core_dims` because we're explicitly splitting the parameters here.
     args = arg + [fit_params.sel(dparams=dp) for dp in fit_params.dparams.values]
@@ -720,9 +706,7 @@ def dist_method(
     )
 
 
-def preprocess_standardized_index(
-    da: xr.DataArray, freq: str | None, window: int, **indexer
-):
+def preprocess_standardized_index(da: xr.DataArray, freq: str | None, window: int, **indexer):
     r"""
     Perform resample and roll operations involved in computing a standardized index.
 
@@ -873,13 +857,9 @@ def standardized_index_fit_params(
     dist = get_dist(dist)
     if method != "PWM":
         if dist.name not in dist_and_methods:
-            raise NotImplementedError(
-                f"The distribution `{dist.name}` is not supported."
-            )
+            raise NotImplementedError(f"The distribution `{dist.name}` is not supported.")
         if method not in dist_and_methods[dist.name]:
-            raise NotImplementedError(
-                f"The method `{method}` is not supported for distribution `{dist.name}`."
-            )
+            raise NotImplementedError(f"The method `{method}` is not supported for distribution `{dist.name}`.")
     da, group = preprocess_standardized_index(da, freq, window, **indexer)
     if group == "time.week":
         group_handler = da.time.dt.isocalendar().week
@@ -887,19 +867,11 @@ def standardized_index_fit_params(
         group_handler = group
 
     if zero_inflated:
-        prob_of_zero = da.groupby(group_handler).map(
-            lambda x: (x == 0).sum("time") / x.notnull().sum("time")
-        )
-        params = (
-            da.where(da != 0)
-            .groupby(group_handler)
-            .map(fit, dist=dist, method=method, **fitkwargs)
-        )
+        prob_of_zero = da.groupby(group_handler).map(lambda x: (x == 0).sum("time") / x.notnull().sum("time"))
+        params = da.where(da != 0).groupby(group_handler).map(fit, dist=dist, method=method, **fitkwargs)
         params["prob_of_zero"] = prob_of_zero
     else:
-        params = da.groupby(group_handler).map(
-            fit, dist=dist, method=method, **fitkwargs
-        )
+        params = da.groupby(group_handler).map(fit, dist=dist, method=method, **fitkwargs)
     cal_range = (
         da.time.min().dt.strftime("%Y-%m-%d").item(),
         da.time.max().dt.strftime("%Y-%m-%d").item(),
@@ -1002,9 +974,7 @@ def standardized_index(
     """
     # use input arguments from ``params`` if it is given
     if params is not None:
-        freq, window, dist, indexer = (
-            params.attrs[s] for s in ["freq", "window", "scipy_dist", "time_indexer"]
-        )
+        freq, window, dist, indexer = (params.attrs[s] for s in ["freq", "window", "scipy_dist", "time_indexer"])
         # Unpack attrs to None and {} if needed
         freq = None if freq == "" else freq
         indexer = json.loads(indexer)
@@ -1017,9 +987,7 @@ def standardized_index(
     else:
         for p in [window, dist, method, zero_inflated]:
             if p is None:
-                raise ValueError(
-                    "If `params` is `None`, `window`, `dist`, `method` and `zero_inflated` must be given."
-                )
+                raise ValueError("If `params` is `None`, `window`, `dist`, `method` and `zero_inflated` must be given.")
     # apply resampling and rolling operations
     da, _ = preprocess_standardized_index(da, freq=freq, window=window, **indexer)
     if params is None:
@@ -1046,18 +1014,14 @@ def standardized_index(
     if paramsd != template.sizes:
         params = params.broadcast_like(template)
 
-    def reindex_time(
-        _da: xr.DataArray, _da_ref: xr.DataArray, _group: str
-    ):  # numpydoc ignore=GL08
+    def reindex_time(_da: xr.DataArray, _da_ref: xr.DataArray, _group: str):  # numpydoc ignore=GL08
         if group == "time.dayofyear":
             _da = resample_doy(_da, _da_ref)
         elif group == "time.month":
             _da = _da.rename(month="time").reindex(time=_da_ref.time.dt.month)
             _da["time"] = _da_ref.time
         elif group == "time.week":
-            _da = _da.rename(week="time").reindex(
-                time=_da_ref.time.dt.isocalendar().week
-            )
+            _da = _da.rename(week="time").reindex(time=_da_ref.time.dt.isocalendar().week)
             _da["time"] = _da_ref.time
         # I don't think rechunking is necessary here, need to check
         return _da if not uses_dask(_da) else _da.chunk({"time": -1})
