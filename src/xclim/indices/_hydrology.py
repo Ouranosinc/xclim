@@ -835,7 +835,7 @@ def elasticity_index(
     """
     Calculate the median of yearly streamflow elasticity index for given catchments,
     where elasticity (εₚ) is defined as the relative change in streamflow (ΔQ/Q) divided by the relative change in precipitation (ΔP/P)
-
+    Aggregated reactivity analysis : single value as a long-term benchmark
     Parameters
     ----------
     q : xarray.DataArray
@@ -983,7 +983,7 @@ def lag_snowpack_flow_peaks(
     min_ratio_missing_days: float = None,
 ) -> xarray.DataArray:
     """
-    Compute lag in days between max SWE and circular mean high flows of each year
+    High flow temporal analysis: Calculate lag in days between max SWE and circular mean high flows of each year
 
     Parameters
     ----------
@@ -1007,7 +1007,7 @@ def lag_snowpack_flow_peaks(
     It is recommended to have at least 70% of valid data per water year in order to compute significant values.
 
     Note
-     -------
+    -------
     A lag of 50 days or less indicates that the watershed is possibly in a nival regime.
     Nival regime is characterized by a hydrological response dominated by snowmelt, where maximum flows occur shortly after peak snow cover (Burn et al., 2010).
     This 50-day interval is approximate, as it depends on the specific responsiveness of each watershed.
@@ -1043,7 +1043,8 @@ def lag_snowpack_flow_peaks(
 def sen_slope(q: xarray.DataArray,
     qsim: xarray.DataArray = None
     ) -> Dataset:
-        """ Annual and Seasonal Theil-Sen Slope (SS) estimators and Mann-Kendall test for trend evaluations
+        """
+        Temporal robustness analysis: Annual and Seasonal Theil-Sen Slope (SS) estimators and Mann-Kendall test for trend evaluations
 
         Parameters
         ----------
@@ -1139,16 +1140,13 @@ def sen_slope(q: xarray.DataArray,
         ds.attrs["units"] = ""
         return ds
 
-
-import xarray
-
 @declare_units(q="[discharge]")
 def annual_maxima(
     q: xarray.DataArray,
     freq: str = "YS-OCT",
 ) -> Dataset:
     """
-    Compute annual_maxima per year
+    High flow temporal analysis: Finds annual maxima and corresponding Day Of Year (DOY) within a series of flows
 
     Parameters
     ----------
@@ -1184,10 +1182,11 @@ def annual_maxima(
 
     return peak_summary
 
-import xarray as xr
+# @declare_units(q="[discharge]")
 def fdc_slope(q: xr.DataArray) -> xr.DataArray:
     """
-    Calculate the slope of the flow duration curve mid section between the 33% and 66% exceedance probabilities.
+    Calculate the slope of the flow duration curve mid-section between the 33% and 66% exceedance probabilities.
+    Aggregated analysis : Single value as a long-term benchmark
 
     Parameters
     ----------
@@ -1198,8 +1197,24 @@ def fdc_slope(q: xr.DataArray) -> xr.DataArray:
     -------
     xarray.DataArray
         Slope of the FDC between the 33% and 66% exceedance probabilities, unitless.
-        Ref: Vogel and Fennesy, 1994
-        DOI:10.1061/(ASCE)0733-9496(1994)120:4(485)
+
+    Notes
+    -----
+    Single Returned numeric values are positive.
+
+    High slope value : steep slopes of the midsegment FDC are typically a characteristic behavior for watersheds having ‘‘flashy’’ responses
+    (for exemple due to small soil storage capacity and hence larger percentage of overland flow).
+
+    Lower slope value : Flatter slopes of the midsegment FDC are associated with watersheds having slower and more sustained groundwater low response.
+
+    References
+    ----------
+    Vogel, R. M., & Fennessey, N. M. (1994). Flow-duration curves. I: New interpretation and confidence intervals. Journal of Water Resources Planning and Management, 120(4), 485-504.
+    DOI:10.1061/(ASCE)0733-9496(1994)120:4(485)
+
+    Yilmaz, K. K., Gupta, H. V., & Wagener, T. (2008). A process‐based diagnostic approach to model evaluation: Application to the NWS distributed hydrologic model. Water resources research, 44(9).
+    DOI:10.1029/2007WR006716
+
     """
     # Calculate the 33rd and 66th percentiles directly across the 'time' dimension
     q33 = q.quantile(0.33, dim='time', skipna=True)
@@ -1214,4 +1229,3 @@ def fdc_slope(q: xr.DataArray) -> xr.DataArray:
     slope.attrs['units'] = " "
     slope.attrs['long_name'] = 'Slope of FDC between 33% and 66% exceedance probabilities'
     return slope.rename("fdc_slope")
-# @declare_units(q="[discharge]")
