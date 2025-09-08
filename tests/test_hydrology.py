@@ -192,48 +192,6 @@ class TestAntecedentPrecipitationIndex:
             out_manual[idxend - 1] = weighted_sum
         np.testing.assert_allclose(out, out_manual, atol=1e-7)
 
-class TestDaysWithSnowpack:
-    def test_simple(self, swe_series):
-        # 2 years of daily data
-        a = np.zeros(365 * 2)
-
-        # Year 1: 15 days of SWE = 20 mm
-        a[50:65] = 20
-        # Year 2: 5 days of SWE = 5 mm
-        a[400:405] = 5
-
-        # Create a daily time index
-        swe = swe_series(a)
-
-        out = xci.days_with_snowpack(swe, swe_threshold=".01 m", freq="YS")
-
-        # Year 1: 15 days >= 10 → expect 15, Year 2: only 5 days but all < 10 → expect 0
-        np.testing.assert_array_equal(out.values, [15, 0])
-
-class TestAnnualMaxima:
-    def test_simple(self, q_series):
-        # 2 years of daily data
-        a = np.zeros(365 * 2)
-
-        # Year 1: 1 day peak
-        a[50:51] = 20
-
-        # Year 2: 2 days with peaks
-        a[400:401] = 5
-        a[401:402] = 6
-
-        # Create a daily time index
-        q = q_series(a)
-
-        out = xci.annual_maxima(q)
-
-        out
-        # Year 1: expect maxima 20, DOY = 51
-        # Year 2: expect maxima 6, DOY = 36
-        # Year 3 (due to water year resampling) : expect maxima 0, DOY = c aka october 1st the start of water year
-        np.testing.assert_array_equal(out['peak_flow'].values, [20., 6., 0.])
-        np.testing.assert_array_equal(out['peak_doy'].values, [51, 36, 274])
-
 class TestTotRR:
     def test_simple(self, q_series, area_series, pr_series):
         # 1 years of daily data
@@ -254,6 +212,34 @@ class TestTotRR:
         out = xci.total_runoff_ratio(q, a, pr)
         np.testing.assert_allclose(out, 0.0018, atol=1e-15)
 
+
+class TestAnnualSeasonalRR:
+    def test_simple(self, q_series, area_series, pr_series):
+        # 1 years of daily data
+        q = np.ones(365) * 10
+        pr = np.ones(365) * 20
+
+        # 30 days with low flows, ratio should stay the same
+        q[300:330] = 5
+        pr[270:300] = 10
+        a = 1000
+        a = area_series(a)
+
+
+        # Create a daily time index
+        q = q_series(q)
+        pr = pr_series(pr, units = "mm/hr")
+
+        out = xci.season_annual_runoff_ratio(q, a, pr)
+
+        print("DEBUG out:", out)
+        #verify seasonal RR
+        seasonal = out[0]
+        np.testing.assert_allclose(seasonal.values, 0.0018, atol=1e-15)
+        # verify annual RR
+        annual = out[1]  # second element of tuple
+        np.testing.assert_allclose(annual.values, 0.0018, atol=1e-15)
+
 class TestElastIndex:
     def test_simple(self, q_series, pr_series):
         q = np.arange(1, 1826) #5 years of increasing data with slope of 1
@@ -262,6 +248,41 @@ class TestElastIndex:
         pr = pr_series(pr, units="mm/hr")
         out = xci.elasticity_index(q, pr)
         np.testing.assert_allclose(out, 1.000672, rtol=1e-6, atol=0) #not exactly 1 due to epsilon
+
+class TestDaysWithSnowpack:
+    def test_simple(self, swe_series):
+        # 2 years of daily data
+        a = np.zeros(365 * 2)
+
+        # Year 1: 15 days of SWE = 20 mm
+        a[50:65] = 20
+        # Year 2: 5 days of SWE = 5 mm
+        a[400:405] = 5
+
+        # Create a daily time index
+        swe = swe_series(a)
+
+        out = xci.days_with_snowpack(swe, thresh=".01 m", freq="YS")
+
+        # Year 1: 15 days >= 10 → expect 15, Year 2: only 5 days but all < 10 → expect 0
+        np.testing.assert_array_equal(out.values, [15, 0])
+
+class TestAnnualAridityIndex:
+    def test_simple(self, pr_hr_series, evspsblpot_hr_series):
+        # 2 years of hourly data
+        pr = np.ones(8760 * 2)
+        pet = np.ones(8760 * 2) * 0.8
+
+        #Year 1 different
+        pr[1:8761] = 3
+        pet[1:8761] = 1.5
+
+        # Create a daily time index
+        pr = pr_hr_series(pr)
+        pet = evspsblpot_hr_series(pet)
+
+        out = xci.aridity_index(pr, pet)
+        np.testing.assert_allclose(out, [2.,1.25], rtol=1e-3, atol=0)
 
 class TestLagSnowpackFlowPeaks:
     def test_simple(self, swe_series, q_series):
@@ -288,19 +309,26 @@ class TestLagSnowpackFlowPeaks:
         out = xci.lag_snowpack_flow_peaks(swe, q)
         np.testing.assert_allclose(out, [17., 27.], atol=1e-14)
 
-class TestAnnualAridityIndex:
-    def test_simple(self, pr_hr_series, evspsblpot_hr_series):
-        # 2 years of hourly data
-        pr = np.ones(8760 * 2)
-        pet = np.ones(8760 * 2) * 0.8
+class TestAnnualMaxima:
+    def test_simple(self, q_series):
+        # 2 years of daily data
+        a = np.zeros(365 * 2)
 
-        #Year 1 different
-        pr[1:8761] = 3
-        pet[1:8761] = 1.5
+        # Year 1: 1 day peak
+        a[50:51] = 20
+
+        # Year 2: 2 days with peaks
+        a[400:401] = 5
+        a[401:402] = 6
 
         # Create a daily time index
-        pr = pr_hr_series(pr)
-        pet = evspsblpot_hr_series(pet)
+        q = q_series(a)
 
-        out = xci.aridity_index(pr, pet)
-        np.testing.assert_allclose(out, [2.,1.25], rtol=1e-3, atol=0)
+        out = xci.annual_maxima(q)
+
+        out
+        # Year 1: expect maxima 20, DOY = 51
+        # Year 2: expect maxima 6, DOY = 36
+        # Year 3 (due to water year resampling) : expect maxima 0, DOY = c aka october 1st the start of water year
+        np.testing.assert_array_equal(out['peak_flow'].values, [20., 6., 0.])
+        np.testing.assert_array_equal(out['peak_doy'].values, [51, 36, 274])
