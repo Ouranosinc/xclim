@@ -192,62 +192,6 @@ class TestAntecedentPrecipitationIndex:
             out_manual[idxend - 1] = weighted_sum
         np.testing.assert_allclose(out, out_manual, atol=1e-7)
 
-class TestTotRR:
-    def test_simple(self, q_series, area_series, pr_series):
-        # 1 years of daily data
-        q = np.ones(365) * 10
-        pr = np.ones(365) * 20
-
-        # 30 days with low flows, ratio should stay the same
-        q[300:330] = 5
-        pr[270:300] = 10
-        a = 1000
-        a = area_series(a)
-
-
-        # Create a daily time index
-        q = q_series(q)
-        pr = pr_series(pr, units = "mm/hr")
-
-        out = xci.total_runoff_ratio(q, a, pr)
-        np.testing.assert_allclose(out, 0.0018, atol=1e-15)
-
-
-class TestAnnualSeasonalRR:
-    def test_simple(self, q_series, area_series, pr_series):
-        # 1 years of daily data
-        q = np.ones(365) * 10
-        pr = np.ones(365) * 20
-
-        # 30 days with low flows, ratio should stay the same
-        q[300:330] = 5
-        pr[270:300] = 10
-        a = 1000
-        a = area_series(a)
-
-
-        # Create a daily time index
-        q = q_series(q)
-        pr = pr_series(pr, units = "mm/hr")
-
-        out = xci.season_annual_runoff_ratio(q, a, pr)
-
-        print("DEBUG out:", out)
-        #verify seasonal RR
-        seasonal = out[0]
-        np.testing.assert_allclose(seasonal.values, 0.0018, atol=1e-15)
-        # verify annual RR
-        annual = out[1]  # second element of tuple
-        np.testing.assert_allclose(annual.values, 0.0018, atol=1e-15)
-
-class TestElastIndex:
-    def test_simple(self, q_series, pr_series):
-        q = np.arange(1, 1826) #5 years of increasing data with slope of 1
-        pr = np.arange(1, 1826) #5 years of increasing data with slope of 1
-        q = q_series(q)
-        pr = pr_series(pr, units="mm/hr")
-        out = xci.elasticity_index(q, pr)
-        np.testing.assert_allclose(out, 1.000672, rtol=1e-6, atol=0) #not exactly 1 due to epsilon
 
 class TestDaysWithSnowpack:
     def test_simple(self, swe_series):

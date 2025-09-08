@@ -20,7 +20,7 @@ from xclim.core.units import (
     to_agg_units,
 )
 from xclim.indices import run_length as rl
-from xclim.indices._conversion import rain_approximation, snowfall_approximation
+from xclim.indices.converters import rain_approximation, snowfall_approximation
 from xclim.indices.generic import compare, select_resample_op, threshold_count
 
 # Frequencies : YS: year start, QS-DEC: seasons starting in december, MS: month start

@@ -854,12 +854,13 @@ def elasticity_index(
 
     Note
     -------
+
     A value of εp greater than 1 indicates that streamflow is highly sensitive to precipitation changes,
     meaning a 1% change in precipitation will lead to a greater than 1% change in streamflow.
     A value less than 1 suggests a less sensitive relationship.
 
     References
-    -----
+    ----------
     Sankarasubramanian, A., Vogel, R. M., & Limbrunner, J. F. (2001). Climate elasticity of streamflow in the United States. Water Resources Research, 37(6), 1771–1781. https://doi.org/10.1029/2000WR900330
 
     """
