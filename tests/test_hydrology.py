@@ -211,13 +211,14 @@ class TestDaysWithSnowpack:
         # Year 1: 15 days >= 10 → expect 15, Year 2: only 5 days but all < 10 → expect 0
         np.testing.assert_array_equal(out.values, [15, 0])
 
+
 class TestAnnualAridityIndex:
     def test_simple(self, pr_hr_series, evspsblpot_hr_series):
         # 2 years of hourly data
         pr = np.ones(8760 * 2)
         pet = np.ones(8760 * 2) * 0.8
 
-        #Year 1 different
+        # Year 1 different
         pr[1:8761] = 3
         pet[1:8761] = 1.5
 
@@ -226,7 +227,8 @@ class TestAnnualAridityIndex:
         pet = evspsblpot_hr_series(pet)
 
         out = xci.aridity_index(pr, pet)
-        np.testing.assert_allclose(out, [2.,1.25], rtol=1e-3, atol=0)
+        np.testing.assert_allclose(out, [2.0, 1.25], rtol=1e-3, atol=0)
+
 
 class TestLagSnowpackFlowPeaks:
     def test_simple(self, swe_series, q_series):
@@ -251,7 +253,8 @@ class TestLagSnowpackFlowPeaks:
         q = q_series(b)
 
         out = xci.lag_snowpack_flow_peaks(swe, q)
-        np.testing.assert_allclose(out, [17., 27.], atol=1e-14)
+        np.testing.assert_allclose(out, [17.0, 27.0], atol=1e-14)
+
 
 class TestSenSlope:
     def test_simple(self, q_series):
@@ -259,7 +262,7 @@ class TestSenSlope:
         q = np.arange(1, 1826)
 
         # 5 years of increasing data with slope of 2
-        qsim = np.arange(1, 1826)*2
+        qsim = np.arange(1, 1826) * 2
 
         # Create a daily time index
         q = q_series(q)
@@ -267,22 +270,26 @@ class TestSenSlope:
 
         out = xci.sen_slope(q, qsim)
 
-        #verify Sen_slopes
-        Sen_slope_obs = out['Sen_slope_obs']
+        # verify Sen_slopes
+        Sen_slope_obs = out["Sen_slope_obs"]
         np.testing.assert_allclose(Sen_slope_obs.values, [360.0, 365.0, 365.0, 365.0, 360.0], atol=1e-15)
 
-        Sen_slope_sim = out['Sen_slope_sim']
+        Sen_slope_sim = out["Sen_slope_sim"]
         np.testing.assert_allclose(Sen_slope_sim.values, [720.0, 730.0, 730.0, 730.0, 720.0], atol=1e-15)
 
-        #verify p-values
-        p_value_obs = out['p_value_obs']
-        np.testing.assert_allclose(p_value_obs.values, [0.008535, 0.027486, 0.027486, 0.027486, 0.008535], rtol=1e-06, atol=1e-06)
+        # verify p-values
+        p_value_obs = out["p_value_obs"]
+        np.testing.assert_allclose(
+            p_value_obs.values, [0.008535, 0.027486, 0.027486, 0.027486, 0.008535], rtol=1e-06, atol=1e-06
+        )
 
-        p_value_sim = out['p_value_sim']
-        np.testing.assert_allclose(p_value_obs.values, [0.008535, 0.027486, 0.027486, 0.027486, 0.008535], rtol=1e-06, atol=1e-06)
+        p_value_sim = out["p_value_sim"]
+        np.testing.assert_allclose(
+            p_value_obs.values, [0.008535, 0.027486, 0.027486, 0.027486, 0.008535], rtol=1e-06, atol=1e-06
+        )
 
         # verify ratio
-        ratio = out['ratio']
+        ratio = out["ratio"]
         np.testing.assert_allclose(ratio.values, [0.5, 0.5, 0.5, 0.5, 0.5], atol=1e-15)
 
 
@@ -307,8 +314,9 @@ class TestAnnualMaxima:
         # Year 1: expect maxima 20, DOY = 51
         # Year 2: expect maxima 6, DOY = 36
         # Year 3 (due to water year resampling) : expect maxima 0, DOY = c aka october 1st the start of water year
-        np.testing.assert_array_equal(out['peak_flow'].values, [20., 6., 0.])
-        np.testing.assert_array_equal(out['peak_doy'].values, [51, 36, 274])
+        np.testing.assert_array_equal(out["peak_flow"].values, [20.0, 6.0, 0.0])
+        np.testing.assert_array_equal(out["peak_doy"].values, [51, 36, 274])
+
 
 class TestFDCSlope:
     def test_simple(self, q_series):

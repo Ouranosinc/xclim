@@ -185,11 +185,13 @@ def evspsblpot_series():
     _evspsblpot_series = partial(test_timeseries, variable="evspsblpot")
     return _evspsblpot_series
 
+
 @pytest.fixture
 def evspsblpot_hr_series():
     """Return evapotranspiration hourly time series."""
     _evspsblpot_hr_series = partial(test_timeseries, start="1/1/2000", variable="pet", units="kg m-2 s-1", freq="h")
     return _evspsblpot_hr_series
+
 
 @pytest.fixture
 def per_doy():
@@ -409,6 +411,7 @@ def gather_session_data(request, nimbus, worker_id):
 
     request.addfinalizer(remove_data_written_flag)
 
+
 @pytest.fixture
 def swe_series():
     def _swe_series(values, start="1/1/2000", units="mm"):
@@ -426,10 +429,10 @@ def swe_series():
 
     return _swe_series
 
-@pytest.fixture
-def area_series() :
-    def _area_series(values, units="km2"):
 
+@pytest.fixture
+def area_series():
+    def _area_series(values, units="km2"):
         return xr.DataArray(
             values,
             name="area",
