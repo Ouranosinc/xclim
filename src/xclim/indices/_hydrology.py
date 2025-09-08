@@ -2,10 +2,13 @@
 
 from __future__ import annotations
 
-import numpy as np
-import xarray
-from scipy.stats import rv_continuous
+from functools import partial
 
+import numpy as np
+import pandas as pd
+import xarray
+from scipy.stats import rv_continuous, circmean
+from xarray import Dataset
 from xclim.core._types import DateStr, Quantified
 from xclim.core.calendar import get_calendar
 from xclim.core.missing import at_least_n_valid
@@ -17,8 +20,8 @@ from . import generic
 
 __all__ = [
     "antecedent_precipitation_index",
-    "annual_aridity_index",
     "annual_maxima",
+    "aridity_index",
     "base_flow_index",
     "days_with_snowpack",
     "elasticity_index",
@@ -785,9 +788,9 @@ def season_annual_runoff_ratio(
 
     """
 
-    q = units.convert_units_to(q, "m3/s")
-    a = units.convert_units_to(a, "km2")
-    pr = units.convert_units_to(pr, "mm/hr")
+    q = convert_units_to(q, "m3/s")
+    a = convert_units_to(a, "km2")
+    pr = convert_units_to(pr, "mm/hr")
 
     runoff = q * 3.6 / a  # unit conversion for runoff in mm/hr : 3.6[s/hr *km2/m2]
 
@@ -933,8 +936,8 @@ def days_with_snowpack(
         result.attrs["units"] = "days"
         return result
 
-@declare_units(pr="[precipitation]", pet = "[length]/[time]")
-def annual_aridity_index(pr: xarray.DataArray, pet: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
+@declare_units(pr="[precipitation]", pet = "[precipitation]")
+def aridity_index(pr: xarray.DataArray, pet: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
     """Aridity index: Ratio of total precipitation (PR) over potential evapotranspiration (PET)
 
     Parameters
@@ -950,7 +953,7 @@ def annual_aridity_index(pr: xarray.DataArray, pet: xarray.DataArray, freq: str 
     Returns
     -------
     float
-        Aridity index per year. (Unitless)
+        Aridity index per time step. (Unitless)
 
     Notes
     -----
@@ -1017,7 +1020,7 @@ def lag_snowpack_flow_peaks(
     """
 
     # Find time of max SWE per year
-    t_swe_max = swe.resample(time=freq).apply(lambda x: x.idxmax())
+    t_swe_max = swe.resample(time=freq).map(lambda x: x.idxmax())
     doy_swe_max = t_swe_max.dt.dayofyear
 
     # Compute percentile threshold per water year using resample
@@ -1039,7 +1042,7 @@ def lag_snowpack_flow_peaks(
 @declare_units(q="[discharge]")
 def sen_slope(q: xarray.DataArray,
     qsim: xarray.DataArray = None
-    ) -> xarray.DataArray:
+    ) -> Dataset:
         """ Annual and Seasonal Theil-Sen Slope (SS) estimators and Mann-Kendall test for trend evaluations
 
         Parameters
@@ -1143,7 +1146,7 @@ import xarray
 def annual_maxima(
     q: xarray.DataArray,
     freq: str = "YS-OCT",
-) -> xarray.DataArray:
+) -> Dataset:
     """
     Compute annual_maxima per year
 
@@ -1166,12 +1169,12 @@ def annual_maxima(
 
     """
     # Find time of streamflow peak per year
-    t_q_max = q.resample(time=freq).apply(lambda x: x.idxmax()).dt.dayofyear
-    t_q_max.attrs["units"] = "days since YYYY-01-01"
+    t_q_max = q.resample(time=freq).map(lambda x: x.idxmax()).dt.dayofyear
+    t_q_max.attrs["units"] = "days"
+    t_q_max.attrs["long_name"] = "day of year"
 
     #Find magnitude of streamflow peak per year
     peak_vals = q.resample(time=freq).max()
-    peak_vals.attrs["units"] = q.units
     peak_summary = xarray.Dataset({
 
         "peak_flow": peak_vals,
@@ -1180,3 +1183,35 @@ def annual_maxima(
     })
 
     return peak_summary
+
+import xarray as xr
+def fdc_slope(q: xr.DataArray) -> xr.DataArray:
+    """
+    Calculate the slope of the flow duration curve mid section between the 33% and 66% exceedance probabilities.
+
+    Parameters
+    ----------
+    q : xarray.DataArray
+        Daily streamflow data, expected to have a discharge unit.
+
+    Returns
+    -------
+    xarray.DataArray
+        Slope of the FDC between the 33% and 66% exceedance probabilities, unitless.
+        Ref: Vogel and Fennesy, 1994
+        DOI:10.1061/(ASCE)0733-9496(1994)120:4(485)
+    """
+    # Calculate the 33rd and 66th percentiles directly across the 'time' dimension
+    q33 = q.quantile(0.33, dim='time', skipna=True)
+    q66 = q.quantile(0.66, dim='time', skipna=True)
+
+    # Calculate the natural logarithm of the quantiles
+    ln_q33 = np.log(q33)
+    ln_q66 = np.log(q66)
+
+    # Calculate the slope (unitless)
+    slope = (ln_q33 - ln_q66) / (0.33 - 0.66)
+    slope.attrs['units'] = " "
+    slope.attrs['long_name'] = 'Slope of FDC between 33% and 66% exceedance probabilities'
+    return slope.rename("fdc_slope")
+# @declare_units(q="[discharge]")
