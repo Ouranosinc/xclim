@@ -65,7 +65,7 @@ jobs:
           CONTRIBUTORS: ${{ env.contributors }}
 
       - name: Send toot to Mastodon
-        uses: cbrgm/mastodon-github-action@84146b67a4872397c619a47c72151952a35ed4be # v2.1.18
+        uses: cbrgm/mastodon-github-action@5b300a142d5b381ec8645e770b21b8dbb0e9622b # v2.1.19
         with:
           url: ${{ secrets.MASTODON_URL }}
           access-token: ${{ secrets.MASTODON_ACCESS_TOKEN }}
