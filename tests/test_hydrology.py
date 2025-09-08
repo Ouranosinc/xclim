@@ -309,6 +309,39 @@ class TestLagSnowpackFlowPeaks:
         out = xci.lag_snowpack_flow_peaks(swe, q)
         np.testing.assert_allclose(out, [17., 27.], atol=1e-14)
 
+class TestSenSlope:
+    def test_simple(self, q_series):
+        # 5 years of increasing data with slope of 1
+        q = np.arange(1, 1826)
+
+        # 5 years of increasing data with slope of 2
+        qsim = np.arange(1, 1826)*2
+
+        # Create a daily time index
+        q = q_series(q)
+        qsim = q_series(qsim)
+
+        out = xci.sen_slope(q, qsim)
+
+        #verify Sen_slopes
+        Sen_slope_obs = out['Sen_slope_obs']
+        np.testing.assert_allclose(Sen_slope_obs.values, [360.0, 365.0, 365.0, 365.0, 360.0], atol=1e-15)
+
+        Sen_slope_sim = out['Sen_slope_sim']
+        np.testing.assert_allclose(Sen_slope_sim.values, [720.0, 730.0, 730.0, 730.0, 720.0], atol=1e-15)
+
+        #verify p-values
+        p_value_obs = out['p_value_obs']
+        np.testing.assert_allclose(p_value_obs.values, [0.008535, 0.027486, 0.027486, 0.027486, 0.008535], rtol=1e-06, atol=1e-06)
+
+        p_value_sim = out['p_value_sim']
+        np.testing.assert_allclose(p_value_obs.values, [0.008535, 0.027486, 0.027486, 0.027486, 0.008535], rtol=1e-06, atol=1e-06)
+
+        # verify ratio
+        ratio = out['ratio']
+        np.testing.assert_allclose(ratio.values, [0.5, 0.5, 0.5, 0.5, 0.5], atol=1e-15)
+
+
 class TestAnnualMaxima:
     def test_simple(self, q_series):
         # 2 years of daily data
@@ -332,3 +365,4 @@ class TestAnnualMaxima:
         # Year 3 (due to water year resampling) : expect maxima 0, DOY = c aka october 1st the start of water year
         np.testing.assert_array_equal(out['peak_flow'].values, [20., 6., 0.])
         np.testing.assert_array_equal(out['peak_doy'].values, [51, 36, 274])
+
