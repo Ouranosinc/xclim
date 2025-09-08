@@ -366,3 +366,14 @@ class TestAnnualMaxima:
         np.testing.assert_array_equal(out['peak_flow'].values, [20., 6., 0.])
         np.testing.assert_array_equal(out['peak_doy'].values, [51, 36, 274])
 
+class TestFDCSlope:
+    def test_simple(self, q_series):
+        # 5 years of increasing data with slope of 1
+        q = np.arange(1, 1826)
+
+        # Create a daily time index
+        q = q_series(q)
+
+        out = xci.fdc_slope(q)
+
+        np.testing.assert_allclose(out.values, 2.097932, atol=1e-15)
