@@ -17,6 +17,7 @@ from xclim.indices.generic import threshold_count
 from xclim.indices.stats import standardized_index
 
 from . import generic
+import pymannkendall as mk
 
 __all__ = [
     "antecedent_precipitation_index",
@@ -25,6 +26,7 @@ __all__ = [
     "base_flow_index",
     "days_with_snowpack",
     "elasticity_index",
+    "fdc_slope",
     "flow_index",
     "high_flow_frequency",
     "lag_snowpack_flow_peaks",
@@ -1057,25 +1059,24 @@ def sen_slope(q: xarray.DataArray,
         -------
         xr.Dataset
             'Sen_slope': Sen's slope estimates for season averages and yearly average
-            'p_value': Mann-Kendall metric to verify overall slope tendency. If p-value <= 0.05, the trend is statistically significant at the 5% level.
+            'p_value': Mann-Kendall metric to verify overall slope tendency.
+
             If simulated flows are provided :
             Sen_slope_sim, p_value_sim and ratio of observed Sen_slope over simulated Sen_slope are returned as well.
 
         Notes
         -----
+        If p-value <= 0.05, the trend is statistically significant at the 5% level.
         Ratio of observed Sen_slope over simulated Sen_slope is considered acceptable within the range 0.5 to 2 and is optimal when equal to 1. (Sauquet et al., 2025)
 
         References
         ----------
-
         Hussain et al., (2019). pyMannKendall: a Python package for non parametric Mann-Kendall family of trend tests. Journal of Open Source Software, 4(39), 1556, https://doi.org/10.21105/joss.01556
         https://pypi.org/project/pymannkendall/
 
         Sauquet, E., Evin, G., Siauve, S., Aissat, R., Arnaud, P., Bérel, M., Bonneau, J., Branger, F., Caballero, Y., Colléoni, F., Ducharne, A., Gailhard, J., Habets, F., Hendrickx, F., Héraut, L., Hingray, B., Huang, P., Jaouen, T., Jeantet, A., … Vidal, J.-P. (2025).
         A large transient multi-scenario multi-model ensemble of future streamflow and groundwater projections in France. https://doi.org/10.5194/egusphere-2025-1788.
         Article in preprint stage.
-
-
         """
         seasons = ['DJF', 'MAM', 'JJA', 'SON', 'Year']
 
@@ -1137,7 +1138,11 @@ def sen_slope(q: xarray.DataArray,
                 },
                 coords={'season': seasons}
             )
-        ds.attrs["units"] = ""
+
+        # Assign empty units to all variables
+        for var in ds.data_vars:
+            ds[var].attrs["units"] = ""
+
         return ds
 
 @declare_units(q="[discharge]")
