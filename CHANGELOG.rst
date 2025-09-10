@@ -10,8 +10,6 @@ New indicators and features
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 * ``xclim.indices.stats.fit`` now returns NaNs when running with method ``PWD`` and a lmoments distribution. Before it failed with an ``L-Moments invalid`` error. (:issue:`2235`, :pull:`2239`).
 
-
-
 v0.58.1 (2025-08-28)
 --------------------
 Contributors to this version: Pascal Bourgault (:user:`aulemahal`).
