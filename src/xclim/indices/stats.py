@@ -71,7 +71,6 @@ def _fitfunc_1d(arr, *, dist, nparams, method, **fitkwargs):
         # lmoments3 will raise an error if only dist.numargs + 2 values are provided
         if len(x) <= dist.numargs + 2:
             return np.asarray([np.nan] * nparams)
-
         if (type(dist).__name__ != "GammaGen" and len(fitkwargs.keys()) != 0) or (
             type(dist).__name__ == "GammaGen"
             and set(fitkwargs.keys()) - {"floc"} != set()
