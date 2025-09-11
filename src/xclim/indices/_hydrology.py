@@ -943,14 +943,15 @@ def days_with_snowpack(
         """
         thresh = convert_units_to(thresh, swe)
 
-    # compute signature:
-    days_with_sp = swe >= thresh
-    result = days_with_sp.resample(time=freq).sum()  # convert results to water years
-    result = result.rename("days_with_snowpack")
-    result["year"] = result["time.year"]
-    result = result.set_index(time="year")
-    result.attrs["units"] = "days"
-    return result
+        # compute signature:
+        days_with_sp = swe >= thresh
+        result = days_with_sp.resample(time=freq).sum()  # convert results to water years
+        result = result.rename("days_with_snowpack")
+        result["year"] = result["time.year"]
+        result = result.set_index(time="year")
+        result.attrs["units"] = "days"
+        return result
+
 
 @declare_units(pr="[precipitation]", pet = "[precipitation]")
 def aridity_index(pr: xarray.DataArray, pet: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
@@ -1065,45 +1066,45 @@ def lag_snowpack_flow_peaks(
 def sen_slope(q: xarray.DataArray,
     qsim: xarray.DataArray = None
     ) -> Dataset:
-        """
-        Temporal robustness analysis: Annual and Seasonal Theil-Sen Slope (SS) estimators and
-        Mann-Kendall test for trend evaluations
+    """
+    Temporal robustness analysis: Annual and Seasonal Theil-Sen Slope (SS) estimators and
+    Mann-Kendall test for trend evaluations
 
-        Parameters
-        ----------
-        q : array_like
-            Observed streamflow vector.
-        qsim : array_like
-            Simulated streamflow vector.
+    Parameters
+    ----------
+    q : array_like
+        Observed streamflow vector.
+    qsim : array_like
+        Simulated streamflow vector.
 
-        Returns
-        -------
-        xr.Dataset
-            'Sen_slope': Sen's slope estimates for season averages and yearly average
-            'p_value': Mann-Kendall metric to verify overall slope tendency.
+    Returns
+    -------
+    xr.Dataset
+        'Sen_slope': Sen's slope estimates for season averages and yearly average
+        'p_value': Mann-Kendall metric to verify overall slope tendency.
 
-            If simulated flows are provided :
-            Sen_slope_sim, p_value_sim and ratio of observed Sen_slope over simulated Sen_slope are returned as well.
+        If simulated flows are provided :
+        Sen_slope_sim, p_value_sim and ratio of observed Sen_slope over simulated Sen_slope are returned as well.
 
-        Notes
-        -----
-        If p-value <= 0.05, the trend is statistically significant at the 5% level.
-        Ratio of observed Sen_slope over simulated Sen_slope is considered acceptable within the range 0.5 to 2 and
-        is optimal when equal to 1. (Sauquet et al., 2025)
+    Notes
+    -----
+    If p-value <= 0.05, the trend is statistically significant at the 5% level.
+    Ratio of observed Sen_slope over simulated Sen_slope is considered acceptable within the range 0.5 to 2 and
+    is optimal when equal to 1. (Sauquet et al., 2025)
 
-        References
-        ----------
-        Hussain et al., (2019). pyMannKendall: a Python package for non parametric Mann-Kendall family of trend tests.
-        Journal of Open Source Software, 4(39), 1556, https://doi.org/10.21105/joss.01556
-        https://pypi.org/project/pymannkendall/
+    References
+    ----------
+    Hussain et al., (2019). pyMannKendall: a Python package for non parametric Mann-Kendall family of trend tests.
+    Journal of Open Source Software, 4(39), 1556, https://doi.org/10.21105/joss.01556
+    https://pypi.org/project/pymannkendall/
 
-        Sauquet, E., Evin, G., Siauve, S., Aissat, R., Arnaud, P., Bérel, M., Bonneau, J., Branger, F., Caballero, Y.
-        , Colléoni, F., Ducharne, A., Gailhard, J., Habets, F., Hendrickx, F., Héraut, L., Hingray, B., Huang, P.,
-        Jaouen, T., Jeantet, A., … Vidal, J.-P. (2025). A large transient multi-scenario multi-model ensemble
-        of future streamflow and groundwater projections in France. https://doi.org/10.5194/egusphere-2025-1788.
-        Article in preprint stage.
-        """
-        seasons = ['DJF', 'MAM', 'JJA', 'SON', 'Year']
+    Sauquet, E., Evin, G., Siauve, S., Aissat, R., Arnaud, P., Bérel, M., Bonneau, J., Branger, F., Caballero, Y.
+    , Colléoni, F., Ducharne, A., Gailhard, J., Habets, F., Hendrickx, F., Héraut, L., Hingray, B., Huang, P.,
+    Jaouen, T., Jeantet, A., … Vidal, J.-P. (2025). A large transient multi-scenario multi-model ensemble
+    of future streamflow and groundwater projections in France. https://doi.org/10.5194/egusphere-2025-1788.
+    Article in preprint stage.
+    """
+    seasons = ['DJF', 'MAM', 'JJA', 'SON', 'Year']
 
     def compute_seasonal_stats(x):
         # Convert to pandas Series with DatetimeIndex
@@ -1132,10 +1133,7 @@ def sen_slope(q: xarray.DataArray,
         slopes = [ss_DJF.slope, ss_MAM.slope, ss_JJA.slope, ss_SON.slope, ss_an.slope]
         pvals = [ss_DJF.p, ss_MAM.p, ss_JJA.p, ss_SON.p, ss_an.p]
 
-        return (
-            slopes,
-            pvals,
-        )
+        return slopes, pvals
 
     if qsim is not None:
         slopes, pvals = compute_seasonal_stats(q)
@@ -1172,7 +1170,7 @@ def sen_slope(q: xarray.DataArray,
 def annual_maxima(
     q: xarray.DataArray,
     freq: str = "YS-OCT",
-) -> Dataset:
+    ) -> Dataset:
     """
     High flow temporal analysis: Finds annual maxima and corresponding Day Of Year (DOY) within a series of flows
 
