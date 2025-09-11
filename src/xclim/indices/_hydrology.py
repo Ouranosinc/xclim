@@ -8,9 +8,8 @@ import numpy as np
 import pandas as pd
 import pymannkendall as mk
 import xarray
-from scipy.stats import circmean, rv_continuous
+from scipy.stats import rv_continuous, circmean
 from xarray import Dataset
-
 from xclim.core._types import DateStr, Quantified
 from xclim.core.calendar import get_calendar
 from xclim.core.missing import at_least_n_valid
@@ -19,10 +18,12 @@ from xclim.indices.generic import threshold_count
 from xclim.indices.stats import standardized_index
 
 from . import generic
+import pymannkendall as mk
 
 __all__ = [
     "annual_maxima",
     "antecedent_precipitation_index",
+    "annual_maxima",
     "aridity_index",
     "base_flow_index",
     "days_with_snowpack",
@@ -41,9 +42,10 @@ __all__ = [
     "snow_melt_we_max",
     "snw_max",
     "snw_max_doy",
+    "sen_slope",
     "standardized_groundwater_index",
     "standardized_streamflow_index",
-    "total_runoff_ratio",
+    "total_runoff_ratio"
 ]
 
 
@@ -701,10 +703,12 @@ def antecedent_precipitation_index(pr: xarray.DataArray, window: int = 7, p_exp:
     return out
 
 
+
 @declare_units(q="[discharge]", a="[area]", pr="[precipitation]")
-def total_runoff_ratio(q: xarray.DataArray, a: xarray.DataArray, pr: xarray.DataArray) -> xarray.DataArray:
-    """
-    Total Runoff ratio
+def total_runoff_ratio(q: xarray.DataArray,
+            a: xarray.DataArray,
+            pr: xarray.DataArray) -> xarray.DataArray:
+    """Total Runoff ratio
 
     Runoff ratio : ratio of runoff volume measured at the stream to the total precipitation volume over the watershed.
     Aggregated analysis : Single value as a long-term benchmark
@@ -724,11 +728,12 @@ def total_runoff_ratio(q: xarray.DataArray, a: xarray.DataArray, pr: xarray.Data
         Single value rainfall-runoff ratio (RRR) as long-term benchmark.
 
     Notes
-    -----
-    Total Runoff ratio values are comparable to Runoff coefficients,
-    Values near 0 mean most precipitation infiltrates watershed soil or is lost to evapotranspiration.
-    Values near 1 mean most precipitation leaves the watershed as runoff; possible causes are impervious surfaces from urban sprawl, thin soils, steep slopes, etc.
-    Long-term averages are typically ≤ 1
+    -------
+    - Total Runoff ratio values are comparable to Runoff coefficients,
+    - Values near 0 mean most precipitation infiltrates watershed soil or is lost to evapotranspiration.
+    - Values near 1 mean most precipitation leaves the watershed as runoff;
+      possible causes are impervious surfaces from urban sprawl, thin soils, steep slopes, etc.
+    - Long-term averages are typically ≤ 1
 
     Reference
     -----
@@ -739,7 +744,7 @@ def total_runoff_ratio(q: xarray.DataArray, a: xarray.DataArray, pr: xarray.Data
     pr = convert_units_to(pr, "mm/hr")
 
     runoff = q * 3.6 / a  # unit conversion for runoff in mm/h : 3.6 [s/h * km2/m2]
-    total_rr = runoff.sum() / pr.sum()
+    total_rr = (runoff.sum() / pr.sum())
     total_rr.attrs["units"] = ""
     total_rr.attrs["long_name"] = "Total Rainfall-Runoff Ratio"
 
@@ -752,8 +757,8 @@ def season_annual_runoff_ratio(
     a: xarray.DataArray,
     pr: xarray.DataArray,
 ) -> xarray.DataArray:
-    """
-    Seasonal and annual runoff ratio
+
+    """Seasonal and annual runoff ratio
 
     Runoff ratio : Ratio of runoff volume measured at the stream to the total precipitation volume over the watershed,
     Temporal analysis : Yearly values computed from Seasonal daily data and yearly data.
@@ -775,19 +780,23 @@ def season_annual_runoff_ratio(
         Where 'DJF' = Winter months, 'JJA' = Summer months, 'MAM' = Spring months, 'SON' = Fall months
 
     Notes
-    -----
-    Runoff ratio values are comparable to Runoff coefficients,
-    Values near 0 mean most precipitation infiltrates watershed soil or is lost to evapotranspiration.
-    Values near 1 mean most precipitation leaves the watershed as runoff; possible causes are impervious surfaces from urban sprawl, thin soils, steep slopes, etc.
-    Annual runoff ratios are typically ≤ 1.
-    Annual runoff ratios are typically of higher values than summer runoff ratios due to higher levels of evapotranspiration in summer months.
-    For snow-driven watersheds, spring runoff ratios are typically higher than Annual runoff ratios, as snowmelt generates concentrated runoff events.
+    -------
+    - Runoff ratio values are comparable to Runoff coefficients,
+    - Values near 0 mean most precipitation infiltrates watershed soil or is lost to evapotranspiration.
+    - Values near 1 mean most precipitation leaves the watershed as runoff;
+      possible causes are impervious surfaces from urban sprawl, thin soils, steep slopes, etc.
+    - Annual runoff ratios are typically ≤ 1.
+    - Annual runoff ratios are typically of higher values than summer runoff ratios due to
+      higher levels of evapotranspiration in summer months.
+    - For snow-driven watersheds, spring runoff ratios are typically higher than Annual runoff ratios,
+      as snowmelt generates concentrated runoff events.
 
     Reference
     -----
     HydroBM https://hydrobm.readthedocs.io/en/latest/usage.html#benchmarks
 
     """
+
     q = convert_units_to(q, "m3/s")
     a = convert_units_to(a, "km2")
     pr = convert_units_to(pr, "mm/hr")
@@ -800,8 +809,8 @@ def season_annual_runoff_ratio(
     pr.coords["season_year"] = ("time", season_year.data)
 
     # separate season and year coordinates from season_year strings:
-    seasons = [s.split("-")[0] for s in season_year.values]
-    years = [int(s.split("-")[1]) for s in season_year.values]
+    seasons = [s.split('-')[0] for s in season_year.values]
+    years = [int(s.split('-')[1]) for s in season_year.values]
 
     # Assign as new coordinates on the original time dimension:
     runoff.coords["season"] = ("time", seasons)
@@ -826,12 +835,17 @@ def season_annual_runoff_ratio(
 
     return rrr_season, rrr_yearly
 
-
 @declare_units(q="[discharge]", pr="[precipitation]")
-def elasticity_index(q: xarray.DataArray, pr: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
+def elasticity_index(
+    q: xarray.DataArray,
+    pr: xarray.DataArray,
+    freq: str = "YS"
+) -> xarray.DataArray:
     """
     Calculate the median of yearly streamflow elasticity index for given catchments,
-    where elasticity (εₚ) is defined as the relative change in streamflow (ΔQ/Q) divided by the relative change in precipitation (ΔP/P)
+    where elasticity (εₚ) is defined as the relative change in streamflow (ΔQ/Q)
+    divided by the relative change in precipitation (ΔP/P)
+
     Aggregated reactivity analysis : single value as a long-term benchmark
 
     Parameters
@@ -857,9 +871,11 @@ def elasticity_index(q: xarray.DataArray, pr: xarray.DataArray, freq: str = "YS"
 
     References
     ----------
-    Sankarasubramanian, A., Vogel, R. M., & Limbrunner, J. F. (2001). Climate elasticity of streamflow in the United States. Water Resources Research, 37(6), 1771–1781. https://doi.org/10.1029/2000WR900330
+    Sankarasubramanian, A., Vogel, R. M., & Limbrunner, J. F. (2001). Climate elasticity of streamflow
+    in the United States. Water Resources Research, 37(6), 1771–1781. https://doi.org/10.1029/2000WR900330
 
     """
+
     # Calculate single value streamflow elasticity index per catchment
 
     p_annual = pr.resample(time=freq).mean()
@@ -880,52 +896,52 @@ def elasticity_index(q: xarray.DataArray, pr: xarray.DataArray, freq: str = "YS"
     rel_delta_q = delta_q / (q_mean + epsilon)
 
     # Cumpute yearly streamflow elasticity (not mathematically robust values)
-    yearly_elasticity = rel_delta_q / (rel_delta_p + epsilon)
+    yearly_elasticity = (rel_delta_q / (rel_delta_p + epsilon))
 
     # Cumpute single value using median (more robust value)
     elasticity_index = yearly_elasticity.median(dim="time")
     elasticity_index.attrs["units"] = ""
     return elasticity_index
 
-
-@declare_units(swe="[length]", thresh="[length]")
+@declare_units(swe="[length]", thresh="[length]" )
 def days_with_snowpack(
     swe: xarray.DataArray,
     thresh: str = "10 mm",
     freq: str = "YS-OCT",
-) -> xarray.DataArray:
-    """
-    Count days per year with snowpack on the ground above a given threshold.
+    )-> xarray.DataArray:
+        """
+        Count days per year with snowpack on the ground above a given threshold.
 
-    Parameters
-    ----------
-    swe : xarray.DataArray
-        Daily surface snow amount (or SWE: snow water equivalent), [kg/m-2] or in millimeters of water [mm]
-    thresh : float, optional
-        Minimum swe value to consider a snow-covered day. Default is 10 mm.
-    freq: str, optional
-        Resampling frequency, here water year stating on the 1st of October
+        Parameters
+        ----------
+        swe : xarray.DataArray
+            Daily surface snow amount (or SWE: snow water equivalent), [kg/m2] or in millimeters of water [mm]
+        thresh : float, optional
+            Minimum swe value to consider a snow-covered day. Default is 10 mm.
+        freq: str, optional
+            Resampling frequency, here water year stating on the 1st of October
+        Returns
+        -------
+        xarray.DataArray, [days]
+            Number of days with snowpack over threshold
 
-    Returns
-    -------
-    xarray.DataArray, [days]
-        Number of days with snowpack over threshold
+        Warnings
+        --------
+        The default `freq` is the water year used in the northern hemisphere, from October to September.
+        It is recommended to have at least 70% of valid data per water year in order to compute significant values.
 
-    Warnings
-    --------
-    The default `freq` is the water year used in the northern hemisphere, from October to September.
-    It is recommended to have at least 70% of valid data per water year in order to compute significant values.
+        Note
+        -------
+        Years with larger snowpacks tend to produce bigger spring floods.
+        Additional Spring flood analysis can be carried out using the annual_maxima and lag_snowpack_flow_peaks functions.
 
-    Note
-    -------
-    Years with larger snowpacks tend to produce bigger spring floods.
-    Additional Spring flood analysis can be carried out using the annual_maxima and lag_snowpack_flow_peaks functions.
-
-    References
-    ----------
-    Alonso-González, E., Revuelto, J., Fassnacht, S. R., & López-Moreno, J. I. (2022). Combined influence of maximum accumulation and melt rates on the duration of the seasonal snowpack over temperate mountains. Journal of Hydrology, 608, 127574.
-    """
-    thresh = convert_units_to(thresh, swe)
+        References
+        -----
+        Alonso-González, E., Revuelto, J., Fassnacht, S. R., & López-Moreno, J. I. (2022).
+        Combined influence of maximum accumulation and melt rates on the duration of
+        the seasonal snowpack over temperate mountains. Journal of Hydrology, 608, 127574.
+        """
+        thresh = convert_units_to(thresh, swe)
 
     # compute signature:
     days_with_sp = swe >= thresh
@@ -936,11 +952,9 @@ def days_with_snowpack(
     result.attrs["units"] = "days"
     return result
 
-
-@declare_units(pr="[precipitation]", pet="[precipitation]")
+@declare_units(pr="[precipitation]", pet = "[precipitation]")
 def aridity_index(pr: xarray.DataArray, pet: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
-    """
-    Aridity index: Ratio of total precipitation (PR) over potential evapotranspiration (PET)
+    """Aridity index: Ratio of total precipitation (PR) over potential evapotranspiration (PET)
 
     Parameters
     ----------
@@ -959,17 +973,20 @@ def aridity_index(pr: xarray.DataArray, pet: xarray.DataArray, freq: str = "YS")
 
     Notes
     -----
-    An aridity index below 0.65 indicates an arid environment, while values above this threshold correspond to more humid environments.
-    Northern regions tend to have lower evapotranspiration due to colder temperatures.
-    Therefore, higher aridity index values are generally associated with colder climates characterized by snow precipitation
+    - An aridity index below 0.65 indicates an arid environment,
+      while values above this threshold correspond to more humid environments.
+    - Northern regions tend to have lower evapotranspiration due to colder temperatures.
+      Therefore, higher aridity index values are generally associated with colder climates
+      characterized by snow precipitation.
 
     References
     ----------
-    Zomer, R. J., Xu, J., & Trabucco, A. (2022). Version 3 of the Global Aridity Index and Potential Evapotranspiration Database. Scientific Data, 9(1), 409. https://doi.org/10.1038/s41597-022-01493-1
+    Zomer, R. J., Xu, J., & Trabucco, A. (2022). Version 3 of the Global Aridity Index and
+    Potential Evapotranspiration Database. Scientific Data, 9(1), 409. https://doi.org/10.1038/s41597-022-01493-1
     """
     pr = pr.resample(time=freq).sum()
     pet = pet.resample(time=freq).sum()
-    ai = pr / pet
+    ai = (pr / pet)
     ai.attrs["units"] = ""
     ai.name = "aridity_index"
 
@@ -1001,7 +1018,8 @@ def lag_snowpack_flow_peaks(
     Returns
     -------
     xarray.DataArray, [days]
-    Calculation of the number of days between maximum snowpack (SWE) and the circular average of high flows (flows with non-exceedance frequency established by percentile variable).
+    Calculation of the number of days between maximum snowpack (SWE) and
+    the circular average of high flows (flows with non-exceedance frequency established by percentile variable).
 
     Warnings
     --------
@@ -1010,25 +1028,26 @@ def lag_snowpack_flow_peaks(
 
     Note
     -------
-    A lag of 50 days or less indicates that the watershed is possibly in a nival regime.
-    Nival regime is characterized by a hydrological response dominated by snowmelt, where maximum flows occur shortly after peak snow cover (Burn et al., 2010).
-    This 50-day interval is approximate, as it depends on the specific responsiveness of each watershed.
-    Responsiveness can be analysed with the rb_flashiness_index and elasticity_index functions.
-    A negative value means the high flows occur before the peak snow cover.
+    - Nival regime is characterized by a hydrological response dominated by snowmelt,
+      where maximum flows occur shortly after peak snow cover (Burn et al., 2010).
+    - A lag of 50 days or less indicates that the watershed is possibly in a nival regime.
+    - This 50-day interval is approximate, as it depends on the specific responsiveness of each watershed.
+    - Responsiveness can be analysed with the rb_flashiness_index and elasticity_index functions.
+    - A negative value means the high flows occur before the peak snow cover.
 
     References
-    ----------
-    Burn, D. H., Sharif, M., & Zhang, K. (2010). Detection of trends in hydrological extremes for Canadian watersheds. Hydrological Processes, 24(13), 1781–1790. https://doi.org/10.1002/hyp.7625
+    -----
+    Burn, D. H., Sharif, M., & Zhang, K. (2010). Detection of trends in hydrological extremes for Canadian watersheds.
+    Hydrological Processes, 24(13), 1781–1790. https://doi.org/10.1002/hyp.7625
     """
+
     # Find time of max SWE per year
     t_swe_max = swe.resample(time=freq).map(lambda x: x.idxmax())
     doy_swe_max = t_swe_max.dt.dayofyear
 
     # Compute percentile threshold per water year using resample
-    thresh = q.resample(time="YS-OCT").reduce(
-        np.nanpercentile, q=percentile, dim="time"
-    )  # second q, equal to percentile, is a keyword in np.nanpercentile, not the flow variable.
-    threshold_for_each_time = thresh.reindex_like(q, method="ffill")
+    thresh = q.resample(time="YS-OCT").reduce(np.nanpercentile, q=percentile, dim="time")  # the second q, equal to percentile, is a keyword in np.nanpercentile, not the flow variable.
+    threshold_for_each_time = thresh.reindex_like(q, method='ffill')
     q_high = q.where(q >= threshold_for_each_time).dropna(dim="time", how="all")
 
     # Day of year for high flow peaks
@@ -1042,43 +1061,49 @@ def lag_snowpack_flow_peaks(
     lag.name = "lag_snowpack_flow_peaks"
     return lag
 
-
 @declare_units(q="[discharge]")
-def sen_slope(q: xarray.DataArray, qsim: xarray.DataArray = None) -> Dataset:
-    """
-    Temporal robustness analysis: Annual and Seasonal Theil-Sen Slope (SS) estimators and Mann-Kendall test for trend evaluations
+def sen_slope(q: xarray.DataArray,
+    qsim: xarray.DataArray = None
+    ) -> Dataset:
+        """
+        Temporal robustness analysis: Annual and Seasonal Theil-Sen Slope (SS) estimators and
+        Mann-Kendall test for trend evaluations
 
-    Parameters
-    ----------
-    q : array_like
-        Observed streamflow vector.
-    qsim : array_like
-        Simulated streamflow vector.
+        Parameters
+        ----------
+        q : array_like
+            Observed streamflow vector.
+        qsim : array_like
+            Simulated streamflow vector.
 
-    Returns
-    -------
-    xr.Dataset
-        'Sen_slope': Sen's slope estimates for season averages and yearly average
-        'p_value': Mann-Kendall metric to verify overall slope tendency.
+        Returns
+        -------
+        xr.Dataset
+            'Sen_slope': Sen's slope estimates for season averages and yearly average
+            'p_value': Mann-Kendall metric to verify overall slope tendency.
 
-        If simulated flows are provided :
-        Sen_slope_sim, p_value_sim and ratio of observed Sen_slope over simulated Sen_slope are returned as well.
+            If simulated flows are provided :
+            Sen_slope_sim, p_value_sim and ratio of observed Sen_slope over simulated Sen_slope are returned as well.
 
-    Notes
-    -----
-    If p-value <= 0.05, the trend is statistically significant at the 5% level.
-    Ratio of observed Sen_slope over simulated Sen_slope is considered acceptable within the range 0.5 to 2 and is optimal when equal to 1. (Sauquet et al., 2025)
+        Notes
+        -----
+        If p-value <= 0.05, the trend is statistically significant at the 5% level.
+        Ratio of observed Sen_slope over simulated Sen_slope is considered acceptable within the range 0.5 to 2 and
+        is optimal when equal to 1. (Sauquet et al., 2025)
 
-    References
-    ----------
-    Hussain et al., (2019). pyMannKendall: a Python package for non parametric Mann-Kendall family of trend tests. Journal of Open Source Software, 4(39), 1556, https://doi.org/10.21105/joss.01556
-    https://pypi.org/project/pymannkendall/
+        References
+        ----------
+        Hussain et al., (2019). pyMannKendall: a Python package for non parametric Mann-Kendall family of trend tests.
+        Journal of Open Source Software, 4(39), 1556, https://doi.org/10.21105/joss.01556
+        https://pypi.org/project/pymannkendall/
 
-    Sauquet, E., Evin, G., Siauve, S., Aissat, R., Arnaud, P., Bérel, M., Bonneau, J., Branger, F., Caballero, Y., Colléoni, F., Ducharne, A., Gailhard, J., Habets, F., Hendrickx, F., Héraut, L., Hingray, B., Huang, P., Jaouen, T., Jeantet, A., … Vidal, J.-P. (2025).
-    A large transient multi-scenario multi-model ensemble of future streamflow and groundwater projections in France. https://doi.org/10.5194/egusphere-2025-1788.
-    Article in preprint stage.
-    """
-    seasons = ["DJF", "MAM", "JJA", "SON", "Year"]
+        Sauquet, E., Evin, G., Siauve, S., Aissat, R., Arnaud, P., Bérel, M., Bonneau, J., Branger, F., Caballero, Y.
+        , Colléoni, F., Ducharne, A., Gailhard, J., Habets, F., Hendrickx, F., Héraut, L., Hingray, B., Huang, P.,
+        Jaouen, T., Jeantet, A., … Vidal, J.-P. (2025). A large transient multi-scenario multi-model ensemble
+        of future streamflow and groundwater projections in France. https://doi.org/10.5194/egusphere-2025-1788.
+        Article in preprint stage.
+        """
+        seasons = ['DJF', 'MAM', 'JJA', 'SON', 'Year']
 
     def compute_seasonal_stats(x):
         # Convert to pandas Series with DatetimeIndex
@@ -1153,6 +1178,7 @@ def annual_maxima(
 
     Parameters
     ----------
+
     q : array_like
         Daily streamflow vector.
     freq: str, optional
@@ -1205,17 +1231,22 @@ def fdc_slope(q: xr.DataArray) -> xr.DataArray:
     -----
     Single Returned numeric values are positive.
 
-    High slope value : steep slopes of the midsegment FDC are typically a characteristic behavior for watersheds having ‘‘flashy’’ responses
+    High slope value :
+    Steep slopes of the midsegment FDC are typically a characteristic behavior for watersheds having ‘‘flashy’’ responses
     (for exemple due to small soil storage capacity and hence larger percentage of overland flow).
 
-    Lower slope value : Flatter slopes of the midsegment FDC are associated with watersheds having slower and more sustained groundwater low response.
+    Lower slope value :
+    Flatter slopes of the midsegment FDC are associated with watersheds having slower and
+    more sustained groundwater low response.
 
     References
     ----------
-    Vogel, R. M., & Fennessey, N. M. (1994). Flow-duration curves. I: New interpretation and confidence intervals. Journal of Water Resources Planning and Management, 120(4), 485-504.
+    Vogel, R. M., & Fennessey, N. M. (1994). Flow-duration curves. I: New interpretation and confidence intervals.
+    Journal of Water Resources Planning and Management, 120(4), 485-504.
     DOI:10.1061/(ASCE)0733-9496(1994)120:4(485)
 
-    Yilmaz, K. K., Gupta, H. V., & Wagener, T. (2008). A process‐based diagnostic approach to model evaluation: Application to the NWS distributed hydrologic model. Water resources research, 44(9).
+    Yilmaz, K. K., Gupta, H. V., & Wagener, T. (2008). A process‐based diagnostic approach to model evaluation:
+    Application to the NWS distributed hydrologic model. Water resources research, 44(9).
     DOI:10.1029/2007WR006716
 
     """
