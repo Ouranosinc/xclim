@@ -49,7 +49,7 @@ dependencies = [
   "pyarrow >=15.0", # Strongly encouraged for pandas v2.2.0+
   "pyyaml >=6.0.1",
   "scikit-learn >=1.2.0",
-  "scipy >=1.11.0, <1.16.0", # FIXME: v1.16.0 was failing test_standardized_groundwater_index
+  "scipy >=1.11.0",
   "xarray >=2023.11.0,!=2024.10.0",
   "yamale >=5.0.0"
 ]
@@ -117,7 +117,7 @@ xclim = "xclim.cli:cli"
 [project.urls]
 "Homepage" = "https://xclim.readthedocs.io/"
 "Source" = "https://github.com/Ouranosinc/xclim/"
-"Changelog" = "https://xclim.readthedocs.io/en/stable/history.html"
+"Changelog" = "https://xclim.readthedocs.io/en/stable/changelog.html"
 "Issue tracker" = "https://github.com/Ouranosinc/xclim/issues"
 "Mastodon" = "https://fosstodon.org/@xclim"
 "Zenodo" = "https://doi.org/10.5281/zenodo.2795043"
@@ -126,7 +126,7 @@ xclim = "xclim.cli:cli"
 [tool]
 
 [tool.bumpversion]
-current_version = "0.57.1-dev.15"
+current_version = "0.58.1"
 commit = true
 commit_args = "--no-verify --signoff"
 tag = false
