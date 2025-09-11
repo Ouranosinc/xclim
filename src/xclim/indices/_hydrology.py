@@ -8,8 +8,9 @@ import numpy as np
 import pandas as pd
 import pymannkendall as mk
 import xarray
-from scipy.stats import rv_continuous, circmean
+from scipy.stats import circmean, rv_continuous
 from xarray import Dataset
+
 from xclim.core._types import DateStr, Quantified
 from xclim.core.calendar import get_calendar
 from xclim.core.missing import at_least_n_valid
@@ -18,12 +19,11 @@ from xclim.indices.generic import threshold_count
 from xclim.indices.stats import standardized_index
 
 from . import generic
-import pymannkendall as mk
 
 __all__ = [
     "annual_maxima",
-    "antecedent_precipitation_index",
     "annual_maxima",
+    "antecedent_precipitation_index",
     "aridity_index",
     "base_flow_index",
     "days_with_snowpack",
@@ -37,15 +37,15 @@ __all__ = [
     "rb_flashiness_index",
     "season_annual_runoff_ratio",
     "sen_slope",
+    "sen_slope",
     "snd_max",
     "snd_max_doy",
     "snow_melt_we_max",
     "snw_max",
     "snw_max_doy",
-    "sen_slope",
     "standardized_groundwater_index",
     "standardized_streamflow_index",
-    "total_runoff_ratio"
+    "total_runoff_ratio",
 ]
 
 
@@ -703,12 +703,10 @@ def antecedent_precipitation_index(pr: xarray.DataArray, window: int = 7, p_exp:
     return out
 
 
-
 @declare_units(q="[discharge]", a="[area]", pr="[precipitation]")
-def total_runoff_ratio(q: xarray.DataArray,
-            a: xarray.DataArray,
-            pr: xarray.DataArray) -> xarray.DataArray:
-    """Total Runoff ratio
+def total_runoff_ratio(q: xarray.DataArray, a: xarray.DataArray, pr: xarray.DataArray) -> xarray.DataArray:
+    """
+    Total Runoff ratio
 
     Runoff ratio : ratio of runoff volume measured at the stream to the total precipitation volume over the watershed.
     Aggregated analysis : Single value as a long-term benchmark
@@ -728,7 +726,7 @@ def total_runoff_ratio(q: xarray.DataArray,
         Single value rainfall-runoff ratio (RRR) as long-term benchmark.
 
     Notes
-    -------
+    -----
     - Total Runoff ratio values are comparable to Runoff coefficients,
     - Values near 0 mean most precipitation infiltrates watershed soil or is lost to evapotranspiration.
     - Values near 1 mean most precipitation leaves the watershed as runoff;
@@ -744,7 +742,7 @@ def total_runoff_ratio(q: xarray.DataArray,
     pr = convert_units_to(pr, "mm/hr")
 
     runoff = q * 3.6 / a  # unit conversion for runoff in mm/h : 3.6 [s/h * km2/m2]
-    total_rr = (runoff.sum() / pr.sum())
+    total_rr = runoff.sum() / pr.sum()
     total_rr.attrs["units"] = ""
     total_rr.attrs["long_name"] = "Total Rainfall-Runoff Ratio"
 
@@ -757,8 +755,8 @@ def season_annual_runoff_ratio(
     a: xarray.DataArray,
     pr: xarray.DataArray,
 ) -> xarray.DataArray:
-
-    """Seasonal and annual runoff ratio
+    """
+    Seasonal and annual runoff ratio
 
     Runoff ratio : Ratio of runoff volume measured at the stream to the total precipitation volume over the watershed,
     Temporal analysis : Yearly values computed from Seasonal daily data and yearly data.
@@ -780,7 +778,7 @@ def season_annual_runoff_ratio(
         Where 'DJF' = Winter months, 'JJA' = Summer months, 'MAM' = Spring months, 'SON' = Fall months
 
     Notes
-    -------
+    -----
     - Runoff ratio values are comparable to Runoff coefficients,
     - Values near 0 mean most precipitation infiltrates watershed soil or is lost to evapotranspiration.
     - Values near 1 mean most precipitation leaves the watershed as runoff;
@@ -796,7 +794,6 @@ def season_annual_runoff_ratio(
     HydroBM https://hydrobm.readthedocs.io/en/latest/usage.html#benchmarks
 
     """
-
     q = convert_units_to(q, "m3/s")
     a = convert_units_to(a, "km2")
     pr = convert_units_to(pr, "mm/hr")
@@ -809,8 +806,8 @@ def season_annual_runoff_ratio(
     pr.coords["season_year"] = ("time", season_year.data)
 
     # separate season and year coordinates from season_year strings:
-    seasons = [s.split('-')[0] for s in season_year.values]
-    years = [int(s.split('-')[1]) for s in season_year.values]
+    seasons = [s.split("-")[0] for s in season_year.values]
+    years = [int(s.split("-")[1]) for s in season_year.values]
 
     # Assign as new coordinates on the original time dimension:
     runoff.coords["season"] = ("time", seasons)
@@ -835,12 +832,9 @@ def season_annual_runoff_ratio(
 
     return rrr_season, rrr_yearly
 
+
 @declare_units(q="[discharge]", pr="[precipitation]")
-def elasticity_index(
-    q: xarray.DataArray,
-    pr: xarray.DataArray,
-    freq: str = "YS"
-) -> xarray.DataArray:
+def elasticity_index(q: xarray.DataArray, pr: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
     """
     Calculate the median of yearly streamflow elasticity index for given catchments,
     where elasticity (εₚ) is defined as the relative change in streamflow (ΔQ/Q)
@@ -875,7 +869,6 @@ def elasticity_index(
     in the United States. Water Resources Research, 37(6), 1771–1781. https://doi.org/10.1029/2000WR900330
 
     """
-
     # Calculate single value streamflow elasticity index per catchment
 
     p_annual = pr.resample(time=freq).mean()
@@ -896,66 +889,69 @@ def elasticity_index(
     rel_delta_q = delta_q / (q_mean + epsilon)
 
     # Cumpute yearly streamflow elasticity (not mathematically robust values)
-    yearly_elasticity = (rel_delta_q / (rel_delta_p + epsilon))
+    yearly_elasticity = rel_delta_q / (rel_delta_p + epsilon)
 
     # Cumpute single value using median (more robust value)
     elasticity_index = yearly_elasticity.median(dim="time")
     elasticity_index.attrs["units"] = ""
     return elasticity_index
 
-@declare_units(swe="[length]", thresh="[length]" )
+
+@declare_units(swe="[length]", thresh="[length]")
 def days_with_snowpack(
     swe: xarray.DataArray,
     thresh: str = "10 mm",
     freq: str = "YS-OCT",
-    )-> xarray.DataArray:
-        """
-        Count days per year with snowpack on the ground above a given threshold.
+) -> xarray.DataArray:
+    """
+    Count days per year with snowpack on the ground above a given threshold.
 
-        Parameters
-        ----------
-        swe : xarray.DataArray
-            Daily surface snow amount (or SWE: snow water equivalent), [kg/m2] or in millimeters of water [mm]
-        thresh : float, optional
-            Minimum swe value to consider a snow-covered day. Default is 10 mm.
-        freq: str, optional
-            Resampling frequency, here water year stating on the 1st of October
-        Returns
-        -------
-        xarray.DataArray, [days]
-            Number of days with snowpack over threshold
+    Parameters
+    ----------
+    swe : xarray.DataArray
+        Daily surface snow amount (or SWE: snow water equivalent), [kg/m2] or in millimeters of water [mm]
+    thresh : float, optional
+        Minimum swe value to consider a snow-covered day. Default is 10 mm.
+    freq: str, optional
+        Resampling frequency, here water year stating on the 1st of October
 
-        Warnings
-        --------
-        The default `freq` is the water year used in the northern hemisphere, from October to September.
-        It is recommended to have at least 70% of valid data per water year in order to compute significant values.
+    Returns
+    -------
+    xarray.DataArray, [days]
+        Number of days with snowpack over threshold
 
-        Note
-        -------
-        Years with larger snowpacks tend to produce bigger spring floods.
-        Additional Spring flood analysis can be carried out using the annual_maxima and lag_snowpack_flow_peaks functions.
+    Warnings
+    --------
+    The default `freq` is the water year used in the northern hemisphere, from October to September.
+    It is recommended to have at least 70% of valid data per water year in order to compute significant values.
 
-        References
-        -----
-        Alonso-González, E., Revuelto, J., Fassnacht, S. R., & López-Moreno, J. I. (2022).
-        Combined influence of maximum accumulation and melt rates on the duration of
-        the seasonal snowpack over temperate mountains. Journal of Hydrology, 608, 127574.
-        """
-        thresh = convert_units_to(thresh, swe)
+    Note
+    -------
+    Years with larger snowpacks tend to produce bigger spring floods.
+    Additional Spring flood analysis can be carried out using the annual_maxima and lag_snowpack_flow_peaks functions.
 
-        # compute signature:
-        days_with_sp = swe >= thresh
-        result = days_with_sp.resample(time=freq).sum()  # convert results to water years
-        result = result.rename("days_with_snowpack")
-        result["year"] = result["time.year"]
-        result = result.set_index(time="year")
-        result.attrs["units"] = "days"
-        return result
+    References
+    ----------
+    Alonso-González, E., Revuelto, J., Fassnacht, S. R., & López-Moreno, J. I. (2022).
+    Combined influence of maximum accumulation and melt rates on the duration of
+    the seasonal snowpack over temperate mountains. Journal of Hydrology, 608, 127574.
+    """
+    thresh = convert_units_to(thresh, swe)
+
+    # compute signature:
+    days_with_sp = swe >= thresh
+    result = days_with_sp.resample(time=freq).sum()  # convert results to water years
+    result = result.rename("days_with_snowpack")
+    result["year"] = result["time.year"]
+    result = result.set_index(time="year")
+    result.attrs["units"] = "days"
+    return result
 
 
-@declare_units(pr="[precipitation]", pet = "[precipitation]")
+@declare_units(pr="[precipitation]", pet="[precipitation]")
 def aridity_index(pr: xarray.DataArray, pet: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
-    """Aridity index: Ratio of total precipitation (PR) over potential evapotranspiration (PET)
+    """
+    Aridity index: Ratio of total precipitation (PR) over potential evapotranspiration (PET)
 
     Parameters
     ----------
@@ -987,7 +983,7 @@ def aridity_index(pr: xarray.DataArray, pet: xarray.DataArray, freq: str = "YS")
     """
     pr = pr.resample(time=freq).sum()
     pet = pet.resample(time=freq).sum()
-    ai = (pr / pet)
+    ai = pr / pet
     ai.attrs["units"] = ""
     ai.name = "aridity_index"
 
@@ -1037,18 +1033,19 @@ def lag_snowpack_flow_peaks(
     - A negative value means the high flows occur before the peak snow cover.
 
     References
-    -----
+    ----------
     Burn, D. H., Sharif, M., & Zhang, K. (2010). Detection of trends in hydrological extremes for Canadian watersheds.
     Hydrological Processes, 24(13), 1781–1790. https://doi.org/10.1002/hyp.7625
     """
-
     # Find time of max SWE per year
     t_swe_max = swe.resample(time=freq).map(lambda x: x.idxmax())
     doy_swe_max = t_swe_max.dt.dayofyear
 
     # Compute percentile threshold per water year using resample
-    thresh = q.resample(time="YS-OCT").reduce(np.nanpercentile, q=percentile, dim="time")  # the second q, equal to percentile, is a keyword in np.nanpercentile, not the flow variable.
-    threshold_for_each_time = thresh.reindex_like(q, method='ffill')
+    thresh = q.resample(time="YS-OCT").reduce(
+        np.nanpercentile, q=percentile, dim="time"
+    )  # the second q, equal to percentile, is a keyword in np.nanpercentile, not the flow variable.
+    threshold_for_each_time = thresh.reindex_like(q, method="ffill")
     q_high = q.where(q >= threshold_for_each_time).dropna(dim="time", how="all")
 
     # Day of year for high flow peaks
@@ -1062,10 +1059,9 @@ def lag_snowpack_flow_peaks(
     lag.name = "lag_snowpack_flow_peaks"
     return lag
 
+
 @declare_units(q="[discharge]")
-def sen_slope(q: xarray.DataArray,
-    qsim: xarray.DataArray = None
-    ) -> Dataset:
+def sen_slope(q: xarray.DataArray, qsim: xarray.DataArray = None) -> Dataset:
     """
     Temporal robustness analysis: Annual and Seasonal Theil-Sen Slope (SS) estimators and
     Mann-Kendall test for trend evaluations
@@ -1104,7 +1100,7 @@ def sen_slope(q: xarray.DataArray,
     of future streamflow and groundwater projections in France. https://doi.org/10.5194/egusphere-2025-1788.
     Article in preprint stage.
     """
-    seasons = ['DJF', 'MAM', 'JJA', 'SON', 'Year']
+    seasons = ["DJF", "MAM", "JJA", "SON", "Year"]
 
     def compute_seasonal_stats(x):
         # Convert to pandas Series with DatetimeIndex
@@ -1170,13 +1166,12 @@ def sen_slope(q: xarray.DataArray,
 def annual_maxima(
     q: xarray.DataArray,
     freq: str = "YS-OCT",
-    ) -> Dataset:
+) -> Dataset:
     """
     High flow temporal analysis: Finds annual maxima and corresponding Day Of Year (DOY) within a series of flows
 
     Parameters
     ----------
-
     q : array_like
         Daily streamflow vector.
     freq: str, optional
