@@ -2,6 +2,11 @@
 Changelog
 =========
 
+v0.59 (unreleased)
+------------------
+* New indices added to _hydrology file. (:issue:`1624`, :pull:`2227`).
+Contributors to this version: David Huard (:user:`huard`), Ève Larose (:user:`e-larose`), Faisal Mahmood (:user: `faimahsho`).
+
 v0.58.1 (2025-08-28)
 --------------------
 Contributors to this version: Pascal Bourgault (:user:`aulemahal`).
