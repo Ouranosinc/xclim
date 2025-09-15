@@ -278,6 +278,20 @@ class TestPWMFit:
         for key, val in expected.items():
             np.testing.assert_array_equal(out.sel(dparams=key), val, 1)
 
+    @pytest.mark.parametrize("dist", lm3_dist_map.keys())
+    def test_not_enough_unique_values(
+        self,
+        dist,
+    ):
+        lmom = pytest.importorskip("lmoments3.distr")
+        lm3dc = getattr(lmom, lm3_dist_map[dist])
+        time = xr.date_range("2000-01-01", "2000-12-31", freq="M")
+        unique_values = np.arange(lm3dc.numargs | 1) + 1
+
+        da = xr.DataArray(np.random.choice(unique_values, time.size), coords=dict(time=("time", time)))
+        out = stats.fit(da, dist=lm3dc, method="PWM").compute()
+        assert out.isnull().all()
+
 
 @pytest.mark.parametrize("use_dask", [True, False])
 @pytest.mark.filterwarnings("ignore::RuntimeWarning")
