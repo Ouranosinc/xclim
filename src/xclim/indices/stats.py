@@ -82,7 +82,8 @@ def _fitfunc_1d(arr, *, dist, nparams, method, **fitkwargs):
             if "floc" in fitkwargs and type(dist).__name__ == "GammaGen":
                 # lmoments3 assumes `loc` is 0, so `x` may need to be shifted
                 # note that `floc` must already be in appropriate units for `x`
-                params = dist.lmom_fit(x - fitkwargs["floc"])
+                x = x - fitkwargs["floc"]
+                params = dist.lmom_fit(x)
                 params["loc"] = fitkwargs["floc"]
                 params = list(params.values())
             else:
