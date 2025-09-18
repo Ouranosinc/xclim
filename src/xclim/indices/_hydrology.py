@@ -836,6 +836,8 @@ def season_annual_runoff_ratio(
 @declare_units(q="[discharge]", pr="[precipitation]")
 def elasticity_index(q: xarray.DataArray, pr: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
     """
+    Elasticity index
+    
     Calculate the median of yearly streamflow elasticity index for given catchments,
     where elasticity (εₚ) is defined as the relative change in streamflow (ΔQ/Q)
     divided by the relative change in precipitation (ΔP/P)
