@@ -858,9 +858,8 @@ def elasticity_index(q: xarray.DataArray, pr: xarray.DataArray, freq: str = "YS"
         Nonparametric estimator for streamflow elasticity index (dimensionless)
 
 
-    Note
-    -------
-
+    Notes
+    -----
     A value of εp greater than 1 indicates that streamflow is highly sensitive to precipitation changes,
     meaning a 1% change in precipitation will lead to a greater than 1% change in streamflow.
     A value less than 1 suggests a less sensitive relationship.
