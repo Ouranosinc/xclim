@@ -1054,7 +1054,6 @@ def lag_snowpack_flow_peaks(
     # Compute lag
     lag = t_q_max - doy_swe_max
     lag.attrs["units"] = "days"
-    lag.name = "lag_snowpack_flow_peaks"
     return lag
 
 
