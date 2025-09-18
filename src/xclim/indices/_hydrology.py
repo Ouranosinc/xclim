@@ -906,7 +906,7 @@ def days_with_snowpack(
 ) -> xarray.DataArray:
     """
     Days with snowpack.
-    
+
     Number of days with snow quantity above a given threshold.
 
     Parameters
