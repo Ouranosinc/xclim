@@ -905,7 +905,9 @@ def days_with_snowpack(
     freq: str = "YS-OCT",
 ) -> xarray.DataArray:
     """
-    Count days per year with snowpack on the ground above a given threshold.
+    Days with snowpack.
+    
+    Number of days with snow quantity above a given threshold.
 
     Parameters
     ----------
