@@ -669,28 +669,28 @@ def low_flow_frequency(q: xarray.DataArray, threshold_factor: float = 0.2, freq:
 @declare_units(pr="[precipitation]")
 def antecedent_precipitation_index(pr: xarray.DataArray, window: int = 7, p_exp: float = 0.935) -> xarray.DataArray:
     """
-    Antecedent Precipitation Index.
+        Antecedent Precipitation Index.
 
-    Calculate the running weighted sum of daily precipitation values given a window and weighting exponent.
-    This index serves as an indicator for soil moisture.
+        Calculate the running weighted sum of daily precipitation values given a window and weighting exponent.
+        This index serves as an indicator for soil moisture.
 
     Parameters
     ----------
-    pr : xarray.DataArray
-        Daily precipitation data.
-    window : int
-        Window for the days of precipitation data to be weighted and summed, default is 7.
-    p_exp : float
-        Weighting exponent, default is 0.935.
+        pr : xarray.DataArray
+            Daily precipitation data.
+        window : int
+            Window for the days of precipitation data to be weighted and summed, default is 7.
+        p_exp : float
+            Weighting exponent, default is 0.935.
 
     Returns
     -------
-    xarray.DataArray
-        Antecedent Precipitation Index.
+        xarray.DataArray
+            Antecedent Precipitation Index.
 
-
+    References
     ----------
-    :cite:cts:`schroter2015,li2021`
+        :cite:cts:`schroter2015,li2021`
     """
     pr = rate2amount(pr)
     pr = convert_units_to(pr, "mm", context="hydro")
@@ -706,7 +706,7 @@ def antecedent_precipitation_index(pr: xarray.DataArray, window: int = 7, p_exp:
 @declare_units(q="[discharge]", a="[area]", pr="[precipitation]")
 def total_runoff_ratio(q: xarray.DataArray, a: xarray.DataArray, pr: xarray.DataArray) -> xarray.DataArray:
     """
-    Total Runoff ratio
+    Total runoff ratio
 
     Runoff ratio : ratio of runoff volume measured at the stream to the total precipitation volume over the watershed.
     Aggregated analysis : Single value as a long-term benchmark
@@ -836,6 +836,8 @@ def season_annual_runoff_ratio(
 @declare_units(q="[discharge]", pr="[precipitation]")
 def elasticity_index(q: xarray.DataArray, pr: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
     """
+    Elasticity index
+
     Calculate the median of yearly streamflow elasticity index for given catchments,
     where elasticity (εₚ) is defined as the relative change in streamflow (ΔQ/Q)
     divided by the relative change in precipitation (ΔP/P)
@@ -853,12 +855,11 @@ def elasticity_index(q: xarray.DataArray, pr: xarray.DataArray, freq: str = "YS"
     Returns
     -------
     xarray.DataArray
-        nonparametric estimator for streamflow elasticity index (dimensionless)
+        Nonparametric estimator for streamflow elasticity index (dimensionless)
 
 
-    Note
-    -------
-
+    Notes
+    -----
     A value of εp greater than 1 indicates that streamflow is highly sensitive to precipitation changes,
     meaning a 1% change in precipitation will lead to a greater than 1% change in streamflow.
     A value less than 1 suggests a less sensitive relationship.
@@ -904,7 +905,9 @@ def days_with_snowpack(
     freq: str = "YS-OCT",
 ) -> xarray.DataArray:
     """
-    Count days per year with snowpack on the ground above a given threshold.
+    Days with snowpack.
+
+    Number of days with snow quantity above a given threshold.
 
     Parameters
     ----------
@@ -918,12 +921,8 @@ def days_with_snowpack(
     Returns
     -------
     xarray.DataArray, [days]
-        Number of days with snowpack over threshold
+        Number of days with snowpack over threshold.
 
-    Warnings
-    --------
-    The default `freq` is the water year used in the northern hemisphere, from October to September.
-    It is recommended to have at least 70% of valid data per water year in order to compute significant values.
 
     Note
     -------
@@ -985,7 +984,6 @@ def aridity_index(pr: xarray.DataArray, pet: xarray.DataArray, freq: str = "YS")
     pet = pet.resample(time=freq).sum()
     ai = pr / pet
     ai.attrs["units"] = ""
-    ai.name = "aridity_index"
 
     return ai
 
@@ -1055,7 +1053,6 @@ def lag_snowpack_flow_peaks(
     # Compute lag
     lag = t_q_max - doy_swe_max
     lag.attrs["units"] = "days"
-    lag.name = "lag_snowpack_flow_peaks"
     return lag
 
 
