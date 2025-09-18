@@ -669,28 +669,28 @@ def low_flow_frequency(q: xarray.DataArray, threshold_factor: float = 0.2, freq:
 @declare_units(pr="[precipitation]")
 def antecedent_precipitation_index(pr: xarray.DataArray, window: int = 7, p_exp: float = 0.935) -> xarray.DataArray:
     """
-    Antecedent Precipitation Index.
+        Antecedent Precipitation Index.
 
-    Calculate the running weighted sum of daily precipitation values given a window and weighting exponent.
-    This index serves as an indicator for soil moisture.
+        Calculate the running weighted sum of daily precipitation values given a window and weighting exponent.
+        This index serves as an indicator for soil moisture.
 
     Parameters
     ----------
-    pr : xarray.DataArray
-        Daily precipitation data.
-    window : int
-        Window for the days of precipitation data to be weighted and summed, default is 7.
-    p_exp : float
-        Weighting exponent, default is 0.935.
+        pr : xarray.DataArray
+            Daily precipitation data.
+        window : int
+            Window for the days of precipitation data to be weighted and summed, default is 7.
+        p_exp : float
+            Weighting exponent, default is 0.935.
 
     Returns
     -------
-    xarray.DataArray
-        Antecedent Precipitation Index.
+        xarray.DataArray
+            Antecedent Precipitation Index.
 
-References
+    References
     ----------
-    :cite:cts:`schroter2015,li2021`
+        :cite:cts:`schroter2015,li2021`
     """
     pr = rate2amount(pr)
     pr = convert_units_to(pr, "mm", context="hydro")
