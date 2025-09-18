@@ -855,7 +855,7 @@ def elasticity_index(q: xarray.DataArray, pr: xarray.DataArray, freq: str = "YS"
     Returns
     -------
     xarray.DataArray
-        nonparametric estimator for streamflow elasticity index (dimensionless)
+        Nonparametric estimator for streamflow elasticity index (dimensionless)
 
 
     Note
