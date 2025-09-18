@@ -688,7 +688,7 @@ def antecedent_precipitation_index(pr: xarray.DataArray, window: int = 7, p_exp:
     xarray.DataArray
         Antecedent Precipitation Index.
 
-
+References
     ----------
     :cite:cts:`schroter2015,li2021`
     """
