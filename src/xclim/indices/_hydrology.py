@@ -923,10 +923,6 @@ def days_with_snowpack(
     xarray.DataArray, [days]
         Number of days with snowpack over threshold
 
-    Warnings
-    --------
-    The default `freq` is the water year used in the northern hemisphere, from October to September.
-    It is recommended to have at least 70% of valid data per water year in order to compute significant values.
 
     Note
     -------
