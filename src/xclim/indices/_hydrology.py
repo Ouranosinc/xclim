@@ -921,7 +921,7 @@ def days_with_snowpack(
     Returns
     -------
     xarray.DataArray, [days]
-        Number of days with snowpack over threshold
+        Number of days with snowpack over threshold.
 
 
     Note
