@@ -706,7 +706,7 @@ References
 @declare_units(q="[discharge]", a="[area]", pr="[precipitation]")
 def total_runoff_ratio(q: xarray.DataArray, a: xarray.DataArray, pr: xarray.DataArray) -> xarray.DataArray:
     """
-    Total Runoff ratio
+    Total runoff ratio
 
     Runoff ratio : ratio of runoff volume measured at the stream to the total precipitation volume over the watershed.
     Aggregated analysis : Single value as a long-term benchmark
