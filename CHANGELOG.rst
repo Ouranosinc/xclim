@@ -2,6 +2,14 @@
 Changelog
 =========
 
+v0.59 (unreleased)
+------------------
+Contributors to this version: Pascal Bourgault (:user:`aulemahal`).
+
+Bug fixes
+^^^^^^^^^
+* Fix dimensions of "prsn" in the variable dictionary. (:pull:`2242`).
+
 v0.58.1 (2025-08-28)
 --------------------
 Contributors to this version: Pascal Bourgault (:user:`aulemahal`).
