@@ -843,6 +843,15 @@ def aridity_index(pr: xarray.DataArray, pet: xarray.DataArray, freq: str = "YS")
     Aridity index.
 
     The ratio of total precipitation over potential evapotranspiration.
+    Classification based on the Aridity Index (AI).
+    +----------------+----------------+-----------------+
+    | Classification | Aridity Index  | Global land area|
+    +----------------+----------------+-----------------+
+    | Hyperarid      | AI < 0.05      | 7.5%            |
+    | Arid           | 0.05 ≤ AI < 0.20 | 12.1%         |
+    | Semi-arid      | 0.20 ≤ AI < 0.50 | 17.7%         |
+    | Dry subhumid   | 0.50 ≤ AI < 0.65 | 9.9%          |
+    +----------------+----------------+-----------------+
 
     Parameters
     ----------
@@ -851,8 +860,7 @@ def aridity_index(pr: xarray.DataArray, pet: xarray.DataArray, freq: str = "YS")
     pet : array_like
         Potential evapotranspiration.
     freq : str, optional
-        Resampling frequency. A monthly or yearly frequency is expected. Option `None` assumes
-        that the desired resampling has already been applied input dataset and will skip the resampling step.
+        Resampling frequency. A monthly or yearly frequency is expected.
 
     Returns
     -------
@@ -863,9 +871,8 @@ def aridity_index(pr: xarray.DataArray, pet: xarray.DataArray, freq: str = "YS")
     -----
     - An aridity index below 0.65 indicates an arid environment,
       while values above this threshold correspond to more humid environments.
-    - Northern regions tend to have lower evapotranspiration due to colder temperatures.
-      Therefore, higher aridity index values are generally associated with colder climates
-      characterized by snow precipitation.
+    - In North America, higher aridity index values can be associated with colder climates
+      due to lower evapotranspiration, even when precipitation is limited or occurring as snow.
 
     References
     ----------
@@ -893,6 +900,8 @@ def lag_snowpack_flow_peaks(
     Number of days between the annual maximum snowpack, measured by the snow water
     equivalent, and the mean date when river flow exceeds a percentile threshold
     during a given year.
+    If the time lag between maximum snowpack and river high flows is ≤ 50 days,
+    the watershed is likely in a nival regime.
 
     Parameters
     ----------
@@ -921,8 +930,8 @@ def lag_snowpack_flow_peaks(
     - It is recommended to have at least 70% of valid data per water year in order to compute significant values.
     - Nival regime is characterized by a hydrological response dominated by snowmelt,
       where maximum flows occur shortly after peak snow cover (Burn et al., 2010).
-    - A lag of 50 days or less indicates that the watershed is possibly in a nival regime.
-    - This 50-day interval is approximate, as it depends on the specific responsiveness of each watershed.
+    - The 50-day threshold is approximate and depends on the specific responsiveness of each watershed.
+    - For more detailed analysis, consider the functions listed in the See Also section.
     - A negative value means the high flows occur before the peak snow cover.
 
     References
