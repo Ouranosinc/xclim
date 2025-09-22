@@ -327,5 +327,5 @@ class TestFDCSlope:
         q = q_series(q)
 
         out = xci.fdc_slope(q)
-# Expected: ( np.log(1825 / 3) - np.log(1825 * 2 / 3) ) / .33
+        # Expected: ( np.log(1825 / 3) - np.log(1825 * 2 / 3) ) / .33
         np.testing.assert_allclose(out.values, 2.097932, atol=1e-15)
