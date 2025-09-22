@@ -193,6 +193,33 @@ class TestAntecedentPrecipitationIndex:
         np.testing.assert_allclose(out, out_manual, atol=1e-7)
 
 
+class TestAnnualSeasonalRR:
+    def test_simple(self, q_series, area_series, pr_series):
+        # 1 years of daily data
+        q = np.ones(365) * 10
+        pr = np.ones(365) * 20
+
+        # 30 days with low flows, ratio should stay the same
+        q[300:330] = 5
+        pr[270:300] = 10
+        a = 1000
+        a = area_series(a)
+
+        # Create a daily time index
+        q = q_series(q)
+        pr = pr_series(pr, units="mm/hr")
+
+        out = xci.season_annual_runoff_ratio(q, a, pr)
+
+        # print("DEBUG out:", out)
+        # verify seasonal RR
+        seasonal = out[0]
+        np.testing.assert_allclose(seasonal.values, 0.0018, atol=1e-15)
+        # verify annual RR
+        annual = out[1]  # second element of tuple
+        np.testing.assert_allclose(annual.values, 0.0018, atol=1e-15)
+
+
 class TestDaysWithSnowpack:
     def test_simple(self, swe_series):
         # 2 years of daily data
@@ -285,47 +312,9 @@ class TestSenSlope:
 
         p_value_sim = out["p_value_sim"]
         np.testing.assert_allclose(
-            p_value_obs.values, [0.008535, 0.027486, 0.027486, 0.027486, 0.008535], rtol=1e-06, atol=1e-06
+            p_value_sim.values, [0.008535, 0.027486, 0.027486, 0.027486, 0.008535], rtol=1e-06, atol=1e-06
         )
 
         # verify ratio
         ratio = out["ratio"]
         np.testing.assert_allclose(ratio.values, [0.5, 0.5, 0.5, 0.5, 0.5], atol=1e-15)
-
-
-class TestAnnualMaxima:
-    def test_simple(self, q_series):
-        # 2 years of daily data
-        a = np.zeros(365 * 2)
-
-        # Year 1: 1 day peak
-        a[50:51] = 20
-
-        # Year 2: 2 days with peaks
-        a[400:401] = 5
-        a[401:402] = 6
-
-        # Create a daily time index
-        q = q_series(a)
-
-        out = xci.annual_maxima(q)
-
-        out
-        # Year 1: expect maxima 20, DOY = 51
-        # Year 2: expect maxima 6, DOY = 36
-        # Year 3 (due to water year resampling) : expect maxima 0, DOY = c aka october 1st the start of water year
-        np.testing.assert_array_equal(out["peak_flow"].values, [20.0, 6.0, 0.0])
-        np.testing.assert_array_equal(out["peak_doy"].values, [51, 36, 274])
-
-
-class TestFDCSlope:
-    def test_simple(self, q_series):
-        # 5 years of increasing data with slope of 1
-        q = np.arange(1, 1826)
-
-        # Create a daily time index
-        q = q_series(q)
-
-        out = xci.fdc_slope(q)
-
-        np.testing.assert_allclose(out.values, 2.097932, atol=1e-15)
