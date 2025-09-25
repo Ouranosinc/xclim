@@ -193,11 +193,11 @@ class TestAntecedentPrecipitationIndex:
         np.testing.assert_allclose(out, out_manual, atol=1e-7)
 
 
-class TestAnnualSeasonalRR:
+class TestRR:
     def test_simple(self, q_series, area_series, pr_series):
         # 1 years of daily data
-        q = np.ones(365) * 10
-        pr = np.ones(365) * 20
+        q = np.ones(365, dtype=float) * 10
+        pr = np.ones(365, dtype=float) * 20
 
         # 30 days with low flows, ratio should stay the same
         q[300:330] = 5
@@ -209,15 +209,11 @@ class TestAnnualSeasonalRR:
         q = q_series(q)
         pr = pr_series(pr, units="mm/hr")
 
-        out = xci.season_annual_runoff_ratio(q, a, pr)
+        out = xci.runoff_ratio(q, a, pr, freq="YS")
 
         # print("DEBUG out:", out)
-        # verify seasonal RR
-        seasonal = out[0]
-        np.testing.assert_allclose(seasonal.values, 0.0018, atol=1e-15)
-        # verify annual RR
-        annual = out[1]  # second element of tuple
-        np.testing.assert_allclose(annual.values, 0.0018, atol=1e-15)
+        # verify RR
+        np.testing.assert_allclose(out.values, 0.0018, atol=1e-15)
 
 
 class TestDaysWithSnowpack:

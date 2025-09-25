@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from functools import partial
-from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -32,7 +31,7 @@ __all__ = [
     "low_flow_frequency",
     "melt_and_precip_max",
     "rb_flashiness_index",
-    "season_annual_runoff_ratio",
+    "runoff_ratio",
     "sen_slope",
     "sen_slope",
     "snd_max",
@@ -700,17 +699,20 @@ def antecedent_precipitation_index(pr: xarray.DataArray, window: int = 7, p_exp:
 
 
 @declare_units(q="[discharge]", a="[area]", pr="[precipitation]")
-def season_annual_runoff_ratio(
+def runoff_ratio(
     q: xarray.DataArray,
     a: xarray.DataArray,
     pr: xarray.DataArray,
-) -> tuple[Any, Any]:
+    freq: str = "YS",
+) -> xarray.DataArray:
     """
-    Seasonal and annual runoff ratio.
+    Runoff ratio.
 
     Runoff ratio: Ratio of runoff volume measured at the stream to the total
-    precipitation volume over the watershed. Temporal analysis: Yearly values
-    computed from seasonal daily data and yearly data.
+    precipitation volume over the watershed.
+    Temporal analysis: Yearly values computed from seasonal daily data and yearly data, depending on chosen frequency.
+    (e.g., 'YS' for yearly starting Jan, or 'QS-DEC' for seasons,
+    '30YS' to compute the value over slices of 30 years from the start of the time series).
 
     Parameters
     ----------
@@ -720,15 +722,14 @@ def season_annual_runoff_ratio(
         Watershed area in area units. Will be converted to [km²].
     pr : xarray.DataArray
         Mean daily precipitation in precipitation units. Will be converted to [mm/hr].
+    freq : str
+        Resampling frequency.
 
     Returns
     -------
     xarray.DataArray
-        Rrr_season : xarray.DataArray
-            Seasonal runoff ratio (dimensionless), where 'DJF' = winter months,
-            'JJA' = summer months, 'MAM' = spring months, and 'SON' = fall months.
-        Rrr_yearly : xarray.DataArray
-            Annual runoff ratio (dimensionless).
+        Out: xarray.DataArray
+            Runoff ratio (dimensionless).
 
     Notes
     -----
@@ -753,38 +754,12 @@ def season_annual_runoff_ratio(
     pr = convert_units_to(pr, "mm/hr")
 
     runoff = q * 3.6 / a  # unit conversion for runoff in mm/hr : 3.6[s/hr *km2/m2]
+    runoff_freq = runoff.resample(time=freq).sum()
+    pr_freq = pr.resample(time=freq).sum()
 
-    season_year = q["time"].dt.season.str.cat(q["time"].dt.year.astype(str), sep="-")
-
-    runoff.coords["season_year"] = ("time", season_year.data)
-    pr.coords["season_year"] = ("time", season_year.data)
-
-    # separate season and year coordinates from season_year strings:
-    seasons = [s.split("-")[0] for s in season_year.values]
-    years = [int(s.split("-")[1]) for s in season_year.values]
-
-    # Assign as new coordinates on the original time dimension:
-    runoff.coords["season"] = ("time", seasons)
-    runoff.coords["year"] = ("time", years)
-
-    pr.coords["season"] = ("time", seasons)
-    pr.coords["year"] = ("time", years)
-
-    # Group by season-year and sum
-    runoff_seasonal = runoff.groupby(["season", "year"]).sum(dim="time", skipna=True)
-    pr_seasonal = pr.groupby(["season", "year"]).sum(dim="time", skipna=True)
-
-    rrr_season = runoff_seasonal / pr_seasonal
-
-    # Group by year and sum
-    runoff_year = runoff.groupby(["year"]).sum(dim="time", skipna=True)
-    pr_year = pr.groupby(["year"]).sum(dim="time", skipna=True)
-
-    rrr_yearly = runoff_year / pr_year
-    rrr_season.attrs["units"] = ""
-    rrr_yearly.attrs["units"] = ""
-
-    return rrr_season, rrr_yearly
+    out = runoff_freq / pr_freq
+    out.attrs["units"] = ""
+    return out
 
 
 @declare_units(swe="[length]", thresh="[length]")
