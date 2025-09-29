@@ -94,7 +94,7 @@ variables:
     canonical_units: kg m-2 s-1
     cell_methods: "time: mean"
     description: Surface snowfall flux.
-    dimensions: "[mass]/([area][time])"  # Not precipitation because it's not referring to liquid water
+    dimensions: "[mass]/([area]*[time])"  # Not precipitation because it's not referring to liquid water
     standard_name: snowfall_flux
     data_flags:
       - negative_accumulation_values:

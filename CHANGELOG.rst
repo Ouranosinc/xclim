@@ -2,10 +2,17 @@
 Changelog
 =========
 
-v0.59 (unreleased)
-------------------
+v0.59.0 (unreleased)
+--------------------
+Contributors to this version: Pascal Bourgault (:user:`aulemahal`), David Huard (:user:`huard`), Ève Larose (:user:`e-larose`), Faisal Mahmood (:user:`faimahsho`).
+
+New indicators and features
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
 * New indices added to _hydrology file. (:issue:`1624`, :pull:`2227`).
-Contributors to this version: David Huard (:user:`huard`), Ève Larose (:user:`e-larose`), Faisal Mahmood (:user: `faimahsho`).
+
+Bug fixes
+^^^^^^^^^
+* Fix dimensions of "prsn" in the variable dictionary. (:pull:`2242`).
 
 v0.58.1 (2025-08-28)
 --------------------
