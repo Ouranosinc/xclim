@@ -22,6 +22,7 @@ import xarray as xr
 from scipy.stats.mstats import mquantiles
 
 from xclim import ensembles
+from xclim.core.missing import AtLeastNValid
 from xclim.indices.stats import get_dist
 
 
@@ -708,6 +709,13 @@ def test_robustness_fractions_empty():
     f = ensembles.robustness_fractions(fut, ref, test="ttest")
     np.testing.assert_array_equal(f.changed, 0)
     np.testing.assert_array_equal(f.valid, 0)
+
+
+def test_robustness_fractions_missing(robust_data):
+    ref, fut = robust_data
+    fut = fut.where(fut.time < fut.time[20], fut.ffill('lon'))
+    fracs = ensembles.robustness_fractions(fut, ref, test='ttest', invalid=AtLeastNValid(n=20))
+    np.testing.assert_array_almost_equal(fracs.valid, [1, 1, 1, 1])
 
 
 def test_robustness_categories():
