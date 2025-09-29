@@ -795,20 +795,11 @@ def days_with_snowpack(
 
     References
     ----------
-    Alonso-González, E., Revuelto, J., Fassnacht, S. R., & López-Moreno, J. I. (2022).
-    Combined influence of maximum accumulation and melt rates on the duration of
-    the seasonal snowpack over temperate mountains. *Journal of Hydrology, 608,* 127574.
+    :cite:cts:`alonso_gonzalez_2022`
     """
-    thresh = convert_units_to(thresh, swe)
-
-    # compute signature:
-    days_with_sp = swe >= thresh
-    result = days_with_sp.resample(time=freq).sum()  # convert results to water years
-    result = result.rename("days_with_snowpack")
-    result["year"] = result["time.year"]
-    result = result.set_index(time="year")
-    result.attrs["units"] = "days"
-    return result
+    frz = convert_units_to(thresh, swe)
+    out = threshold_count(swe, ">", frz, freq)
+    return to_agg_units(out, swe, "count", deffreq="D")
 
 
 @declare_units(pr="[precipitation]", pet="[precipitation]")
