@@ -6,10 +6,9 @@ from functools import partial
 
 import numpy as np
 import pandas as pd
-import pymannkendall as mk
+import pymannkendall as mk  # FIXME: This is a new dependency. Is this needed at the scope of the package?
 import xarray
 from scipy.stats import circmean, rv_continuous
-from xarray import Dataset
 
 from xclim.core._types import DateStr, Quantified
 from xclim.core.calendar import get_calendar
@@ -937,7 +936,7 @@ def lag_snowpack_flow_peaks(
 
 
 @declare_units(q="[discharge]")
-def sen_slope(q: xarray.DataArray, qsim: xarray.DataArray = None) -> Dataset:
+def sen_slope(q: xarray.DataArray, qsim: xarray.DataArray = None) -> xarray.Dataset:
     """
     Temporal robustness analysis of streamflow.
 
@@ -946,9 +945,9 @@ def sen_slope(q: xarray.DataArray, qsim: xarray.DataArray = None) -> Dataset:
 
     Parameters
     ----------
-    q : array_like
+    q : xarray.DataArray
         Observed streamflow vector.
-    qsim : array_like
+    qsim : xarray.DataArray
         Simulated streamflow vector.
 
     Returns
@@ -985,7 +984,7 @@ def sen_slope(q: xarray.DataArray, qsim: xarray.DataArray = None) -> Dataset:
     """
     seasons = ["DJF", "MAM", "JJA", "SON", "Year"]
 
-    def compute_seasonal_stats(x):
+    def compute_seasonal_stats(x: xarray.DataArray) -> tuple[list, list]:
         """
         Seasonal statistics.
 
@@ -996,8 +995,8 @@ def sen_slope(q: xarray.DataArray, qsim: xarray.DataArray = None) -> Dataset:
 
         Returns
         -------
-        xarray.Dataset
-            Dataset containing the following variables:
+        tuple of list
+            Lists containing the following variables:
 
             - ``Sen_slope`` : Sen's slope estimates for seasonal and yearly averages.
             - ``p_value`` : Mann–Kendall metric indicating slope tendency.
@@ -1025,33 +1024,33 @@ def sen_slope(q: xarray.DataArray, qsim: xarray.DataArray = None) -> Dataset:
         ss_SON = mk.original_test(df_seasons.iloc[3])
         ss_an = mk.original_test(x_year)
 
-        slopes = [ss_DJF.slope, ss_MAM.slope, ss_JJA.slope, ss_SON.slope, ss_an.slope]
-        pvals = [ss_DJF.p, ss_MAM.p, ss_JJA.p, ss_SON.p, ss_an.p]
+        _slopes = [ss_DJF.slope, ss_MAM.slope, ss_JJA.slope, ss_SON.slope, ss_an.slope]
+        _p_vals = [ss_DJF.p, ss_MAM.p, ss_JJA.p, ss_SON.p, ss_an.p]
 
-        return slopes, pvals
+        return _slopes, _p_vals
 
     if qsim is not None:
-        slopes, pvals = compute_seasonal_stats(q)
-        slopes_sim, pvals_sim = compute_seasonal_stats(qsim)
+        slopes, p_vals = compute_seasonal_stats(q)
+        slopes_sim, p_vals_sim = compute_seasonal_stats(qsim)
         slopes_np = np.array(slopes)
         slopes_sim_np = np.array(slopes_sim)
         ratio = slopes_np / slopes_sim_np
         ds = xarray.Dataset(
             data_vars={
                 "Sen_slope_obs": ("season", slopes),
-                "p_value_obs": ("season", pvals),
+                "p_value_obs": ("season", p_vals),
                 "Sen_slope_sim": ("season", slopes_sim),
-                "p_value_sim": ("season", pvals_sim),
+                "p_value_sim": ("season", p_vals_sim),
                 "ratio": ("season", ratio),
             },
             coords={"season": seasons},
         )
 
     else:
-        slopes, pvals = compute_seasonal_stats(q)
+        slopes, p_vals = compute_seasonal_stats(q)
         # Create labeled xarray
         ds = xarray.Dataset(
-            data_vars={"Sen_slope": ("season", slopes), "p_value": ("season", pvals)}, coords={"season": seasons}
+            data_vars={"Sen_slope": ("season", slopes), "p_value": ("season", p_vals)}, coords={"season": seasons}
         )
 
     # Assign empty units to all variables
