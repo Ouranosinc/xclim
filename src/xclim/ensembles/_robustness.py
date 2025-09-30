@@ -76,7 +76,7 @@ def robustness_fractions(  # noqa: C901
     ref: xr.DataArray | None = None,
     test: str | None = None,
     weights: xr.DataArray | None = None,
-    invalid: MissingBase = MissingAny(),
+    invalid: MissingBase | None = None,
     **kwargs,
 ) -> xr.Dataset:
     r"""
@@ -214,6 +214,8 @@ def robustness_fractions(  # noqa: C901
         if test not in [None, "threshold"]:
             raise ValueError("When deltas are given (ref=None), 'test' must be None or 'threshold'.")
     else:
+        if invalid is None:
+            invalid = MissingAny()
         delta = fut.mean("time") - ref.mean("time")
         valid = ~invalid(fut) & ~invalid(ref)
 
