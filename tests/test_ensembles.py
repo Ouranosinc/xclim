@@ -702,9 +702,10 @@ def test_robustness_fractions_empty():
     """Test that arrays full of NaNs return appropriate values"""
     r = np.full((20, 10), np.nan)
     f = np.full((20, 10), np.nan)
+    t = xr.date_range('1900-01-01', periods=10, freq='D')
 
-    ref = xr.DataArray(r, dims=("realization", "time"), name="tas")
-    fut = xr.DataArray(f, dims=("realization", "time"), name="tas")
+    ref = xr.DataArray(r, dims=("realization", "time"), name="tas", coords={'time': t})
+    fut = xr.DataArray(f, dims=("realization", "time"), name="tas", coords={'time': t})
 
     f = ensembles.robustness_fractions(fut, ref, test="ttest")
     np.testing.assert_array_equal(f.changed, 0)
