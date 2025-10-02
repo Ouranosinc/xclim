@@ -6,7 +6,6 @@ from functools import partial
 
 import numpy as np
 import pandas as pd
-import pymannkendall as mk  # FIXME: This is a new dependency. Is this needed at the scope of the package?
 import xarray
 from scipy.stats import circmean, rv_continuous
 
@@ -18,6 +17,12 @@ from xclim.indices.generic import threshold_count
 from xclim.indices.stats import standardized_index
 
 from . import generic
+
+try:
+    import pymannkendall as mk
+except ModuleNotFoundError:
+    mk = None
+
 
 __all__ = [
     "antecedent_precipitation_index",
@@ -31,7 +36,6 @@ __all__ = [
     "melt_and_precip_max",
     "rb_flashiness_index",
     "runoff_ratio",
-    "sen_slope",
     "sen_slope",
     "snd_max",
     "snd_max_doy",
@@ -992,6 +996,9 @@ def sen_slope(q: xarray.DataArray, qsim: xarray.DataArray = None) -> xarray.Data
             - ``Sen_slope`` : Sen's slope estimates for seasonal and yearly averages.
             - ``p_value`` : Mann–Kendall metric indicating slope tendency.
         """
+        if mk is None:
+            raise ModuleNotFoundError("Warning: Install and import pymannkendall as mk.")
+
         # Convert to pandas Series with DatetimeIndex
         x_year = x.resample(time="YS-DEC").mean()
         x_season = x.resample(time="QS-DEC").mean()
