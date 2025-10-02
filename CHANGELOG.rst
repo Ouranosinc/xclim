@@ -10,6 +10,10 @@ New indicators and features
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 * ``xclim.indices.stats.fit`` now returns NaNs when running with method ``PWD`` and a lmoments distribution. Before it failed with an ``L-Moments invalid`` error. (:issue:`2235`, :pull:`2239`).
 
+New indicators and features
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+* ``xclim.ensembles.robustness_fractions`` now accepts instances of ``xclim.core.missing`` classes as a new ``invalid`` argument to control how data points are flagged as invalid. (:pull:`2245`).
+
 Bug fixes
 ^^^^^^^^^
 * Fix dimensions of "prsn" in the variable dictionary. (:pull:`2242`).
