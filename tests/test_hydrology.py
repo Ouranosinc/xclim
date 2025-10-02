@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import numpy as np
+import pandas as pd
 import pytest
 
 from xclim import indices as xci
@@ -205,13 +206,13 @@ class TestRR:
         a = 1000
         a = area_series(a)
 
-        # Create a daily time index
         q = q_series(q)
+        new_start = "2000-07-01"
+        q_shifted = q.assign_coords(time=pd.date_range(new_start, periods=q.sizes["time"], freq="D"))
+
         pr = pr_series(pr, units="mm/hr")
 
-        out = xci.runoff_ratio(q, a, pr, freq="YS")
-
-        # print("DEBUG out:", out)
+        out = xci.runoff_ratio(q_shifted, a, pr, freq="YS")
         # verify RR
         np.testing.assert_allclose(out.values, 0.0018, atol=1e-15)
 
