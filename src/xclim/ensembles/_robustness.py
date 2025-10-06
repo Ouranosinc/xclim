@@ -20,6 +20,7 @@ import scipy.stats as spstats  # noqa
 import xarray as xr
 
 from xclim.core.formatting import gen_call_string, update_xclim_history
+from xclim.core.missing import MissingAny, MissingBase
 from xclim.indices.generic import compare, detrend
 
 __all__ = [
@@ -75,6 +76,7 @@ def robustness_fractions(  # noqa: C901
     ref: xr.DataArray | None = None,
     test: str | None = None,
     weights: xr.DataArray | None = None,
+    invalid: MissingBase | None = None,
     **kwargs,
 ) -> xr.Dataset:
     r"""
@@ -97,6 +99,11 @@ def robustness_fractions(  # noqa: C901
         Name of the statistical test used to determine if there was significant change. See notes.
     weights : xr.DataArray
         Weights to apply along the 'realization' dimension. This array cannot contain missing values.
+    invalid : xc.core.missing.MissingBase instance
+        A Missing class from :py:mod:`xclim.core.missing` to use to flag points what are invalid.
+        Invalid points are not included in the fractions. Default is MissingAny, which means any
+        nan along the "time" dimension means the timeseries is invalid.
+        Not used if only deltas are passed as `fut`.
     **kwargs : dict
         Other arguments specific to the statistical test. See notes.
 
@@ -130,7 +137,7 @@ def robustness_fractions(  # noqa: C901
 
         - valid
             - The weighted fraction of valid members.
-              A member is valid if there are no NaNs along the time axes of `fut` and `ref`.
+              By default, a member is valid if there are no NaNs along the time axes of `fut` and `ref`.
 
         - pvals
             - The p-values estimated by the significance tests.
@@ -207,8 +214,10 @@ def robustness_fractions(  # noqa: C901
         if test not in [None, "threshold"]:
             raise ValueError("When deltas are given (ref=None), 'test' must be None or 'threshold'.")
     else:
+        if invalid is None:
+            invalid = MissingAny()
         delta = fut.mean("time") - ref.mean("time")
-        valid = fut.notnull().all("time") & ref.notnull().all("time")
+        valid = ~invalid(fut) & ~invalid(ref)
 
     if test is None:
         test_params = {}
