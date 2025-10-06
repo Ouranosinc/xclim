@@ -749,7 +749,7 @@ def runoff_ratio(
 
     References
     ----------
-    HydroBM. https://hydrobm.readthedocs.io/en/latest/usage.html#benchmarks
+    :cite:cts:'knoben_2024'
     """
     q = convert_units_to(q, "m3/s")
     a = convert_units_to(a, "km2")
@@ -844,8 +844,7 @@ def aridity_index(pr: xarray.DataArray, pet: xarray.DataArray, freq: str = "YS")
 
     References
     ----------
-    Zomer, R. J., Xu, J., & Trabucco, A. (2022). Version 3 of the Global Aridity Index and
-    Potential Evapotranspiration Database. Scientific Data, 9(1), 409. https://doi.org/10.1038/s41597-022-01493-1
+    :cite:cts:'zomer_2022'
     """
     pr = pr.resample(time=freq).sum()
     pet = pet.resample(time=freq).sum()
@@ -904,7 +903,7 @@ def lag_snowpack_flow_peaks(
 
     References
     ----------
-    :cite:cts:burn_2010
+    :cite:cts:`burn_2010`
     """
     # Find time of max SWE per year
     t_swe_max = swe.resample(time=freq).map(lambda x: x.idxmax())
@@ -965,7 +964,7 @@ def sen_slope(
 
     References
     ----------
-    :cite:cts:sauquet_2025
+    :cite:cts:`sauquet_2025`
     """
     seasons = ["DJF", "MAM", "JJA", "SON", "Year"]
 
