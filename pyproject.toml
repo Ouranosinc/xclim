@@ -58,7 +58,7 @@ dependencies = [
 dev = [
   # Dev tools and testing
   "black <25.9.0",
-  "blackdoc >=0.4.2",
+  "blackdoc <0.4.2",
   "bump-my-version >=1.1.1",
   "codespell >=2.4.1",
   "coverage[toml] >=7.5.0",
@@ -70,7 +70,7 @@ dev = [
   "mypy >=1.14.1",
   "nbconvert >=7.16.4",
   "nbval >=0.11.0",
-  "numpydoc >=1.8.0",
+  "numpydoc >=1.9.0",
   "pandas-stubs >=2.2",
   "pip >=25.0",
   "pooch >=1.8.0",
@@ -81,7 +81,7 @@ dev = [
   "pytest-socket >=0.6.0",
   "pytest-timeout >=2.4.0",
   "pytest-xdist[psutil] >=3.2",
-  "ruff >=0.9.6",
+  "ruff >=0.13.3",
   "tokenize-rt >=5.2.0",
   "tox >=4.25.0",
   "tox-gh >=1.5.0",
