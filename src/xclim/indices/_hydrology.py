@@ -20,9 +20,8 @@ from . import generic
 
 try:
     import pymannkendall as mk
-except ModuleNotFoundError:
+except ImportError:
     mk = None
-
 
 __all__ = [
     "antecedent_precipitation_index",
