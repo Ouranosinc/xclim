@@ -905,8 +905,7 @@ def lag_snowpack_flow_peaks(
 
     References
     ----------
-    Burn, D. H., Sharif, M., & Zhang, K. (2010). Detection of trends in hydrological extremes for Canadian watersheds.
-    *Hydrological Processes, 24*(13), 1781–1790. https://doi.org/10.1002/hyp.7625
+    :cite:cts:burn_2010
     """
     # Find time of max SWE per year
     t_swe_max = swe.resample(time=freq).map(lambda x: x.idxmax())
