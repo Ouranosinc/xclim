@@ -931,7 +931,10 @@ def lag_snowpack_flow_peaks(
 
 
 @declare_units(q="[discharge]")
-def sen_slope(q: xarray.DataArray, qsim: xarray.DataArray = None) -> xarray.Dataset:
+def sen_slope(
+    q: xarray.DataArray,
+    qsim: xarray.DataArray = None,
+) -> xarray.Dataset:
     """
     Temporal robustness analysis of streamflow.
 
@@ -964,18 +967,7 @@ def sen_slope(q: xarray.DataArray, qsim: xarray.DataArray = None) -> xarray.Data
 
     References
     ----------
-    Hussain, M., Mahmud, I., & Tong, M. (2019). pyMannKendall: A Python package
-    for non-parametric Mann–Kendall family of trend tests.
-    *Journal of Open Source Software, 4*(39), 1556.
-    https://doi.org/10.21105/joss.01556
-    https://pypi.org/project/pymannkendall/
-
-    Sauquet, E., Evin, G., Siauve, S., Aissat, R., Arnaud, P., Bérel, M., Bonneau, J.,
-    Branger, F., Caballero, Y., Colléoni, F., Ducharne, A., Gailhard, J., Habets, F.,
-    Hendrickx, F., Héraut, L., Hingray, B., Huang, P., Jaouen, T., Jeantet, A., … Vidal, J.-P. (2025).
-    A large transient multi-scenario multi-model ensemble of future streamflow and groundwater
-    projections in France. *EGUsphere*, preprint.
-    https://doi.org/10.5194/egusphere-2025-1788
+    :cite:cts:sauquet_2025
     """
     seasons = ["DJF", "MAM", "JJA", "SON", "Year"]
 
