@@ -12,7 +12,7 @@ New indicators and features
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
-* `black` and `blackdoc` are no longer required for development. `ruff` is now exclusively used for code and code-block formatting.
+* `black` and `blackdoc` are no longer required for development. `ruff` is now exclusively used for code and code-block formatting. (:pull:`2249`).
 
 Bug fixes
 ^^^^^^^^^
