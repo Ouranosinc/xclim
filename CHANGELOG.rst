@@ -10,6 +10,10 @@ New indicators and features
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 * ``xclim.ensembles.robustness_fractions`` now accepts instances of ``xclim.core.missing`` classes as a new ``invalid`` argument to control how data points are flagged as invalid. (:pull:`2245`).
 
+Breaking changes
+^^^^^^^^^^^^^^^^
+* `black` and `blackdoc` are no longer required for development. `ruff` is now exclusively used for code and code-block formatting. (:pull:`2249`).
+
 Bug fixes
 ^^^^^^^^^
 * Fix dimensions of "prsn" in the variable dictionary. (:pull:`2242`).

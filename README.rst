@@ -74,7 +74,7 @@ However, `xclim` will *always* assume the temporal coordinate is named "time". I
 
     ds = ds.rename(T="time")
 
-`xclim` employs `black`_-like code formatting style, a modified `ruff`_ linting configuration, and (mostly) adheres to the `NumPy docstring`_ style. For more information on coding and development conventions, see the `Contributing Guidelines`_.
+`xclim` employs a `black`_-compatible code formatting style (via a modified `ruff`_ configuration) and (mostly) adheres to the `NumPy docstring`_ style. For more information on coding and development conventions, see the `Contributing Guidelines`_.
 
 .. _black: https://black.readthedocs.io/en/stable/
 .. _ruff: https://docs.astral.sh/ruff/

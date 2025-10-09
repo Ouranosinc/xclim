@@ -28,9 +28,7 @@ dependencies:
   # lmoments3 - Not an official dependency but required for some Jupyter notebooks
   - lmoments3 >=1.0.7
   # Testing and development dependencies
-  - black <25.9.0
-  - blackdoc <0.4.2
-  - bump-my-version >=1.1.1
+  - bump-my-version >=1.2.3
   - cairosvg >=2.6.0
   - codespell >=2.4.1
   - coverage >=7.5.0
