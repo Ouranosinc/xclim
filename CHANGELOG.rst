@@ -2,9 +2,13 @@
 Changelog
 =========
 
-v0.59 (unreleased)
-------------------
-Contributors to this version: Pascal Bourgault (:user:`aulemahal`).
+v0.59.0 (unreleased)
+--------------------
+Contributors to this version: Pascal Bourgault (:user:`aulemahal`), David Huard (:user:`huard`), Ève Larose (:user:`e-larose`), Faisal Mahmood (:user:`faimahsho`).
+
+New indicators and features
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+* New indices added to _hydrology file. (:issue:`1624`, :pull:`2227`).
 
 New indicators and features
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^

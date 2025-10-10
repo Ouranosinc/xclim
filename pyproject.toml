@@ -47,6 +47,7 @@ dependencies = [
   "pandas >=2.2.0",
   "pint >=0.24.4",
   "pyarrow >=15.0", # Strongly encouraged for pandas v2.2.0+
+  "pymannkendall >=1.4.0",
   "pyyaml >=6.0.1",
   "scikit-learn >=1.2.0",
   "scipy >=1.11.0",
@@ -169,6 +170,7 @@ pep621_dev_dependency_groups = ["all", "dev", "docs"]
 "pyyaml" = "yaml"
 
 [tool.deptry.per_rule_ignores]
+DEP001 = ["pymannkendall"]
 DEP002 = ["bottleneck", "h5netcdf", "numbagg", "pyarrow"]
 DEP004 = ["matplotlib", "pooch", "pytest", "pytest_socket"]
 
