@@ -433,11 +433,9 @@ def update_history(
         missing_str="",
         **inputs_kws,
     )
-    if len(merged_history) > 0 and not merged_history.endswith("\n"):
-        merged_history += "\n"
-    merged_history += (
-        f"[{dt.datetime.now():%Y-%m-%d %H:%M:%S}] {new_name or ''}: {hist_str} - xclim version: {__version__}"
-    )
+    merged_history = (
+        f"[{dt.datetime.now():%Y-%m-%d %H:%M:%S}] {new_name or ''}: {hist_str} - xclim version: {__version__}\n"
+    ) + merged_history
     return merged_history
 
 
