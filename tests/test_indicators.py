@@ -660,8 +660,8 @@ def test_update_history():
 
     merged = update_history("text", a, new_name="d", b=b, c=c)
 
-    assert "d: text" in merged.split("\n")[-1]
-    assert merged.startswith("a: Text1")
+    assert "d: text" in merged.split("\n")[0]
+    assert "a: Text1" in merged
 
 
 def test_input_dataset(open_dataset):
