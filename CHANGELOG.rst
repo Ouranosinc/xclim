@@ -4,7 +4,7 @@ Changelog
 
 v0.59 (unreleased)
 ------------------
-Contributors to this version: Pascal Bourgault (:user:`aulemahal`).
+Contributors to this version: Pascal Bourgault (:user:`aulemahal`), Trevor James Smith (:user:`Zeitsperre`).
 
 New indicators and features
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
