@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import numpy as np
 import pandas as pd
-import pint
 import pint.errors
 import pytest
 import xarray as xr
