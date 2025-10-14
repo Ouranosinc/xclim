@@ -20,6 +20,10 @@ Bug fixes
 * History is not written the DataArray is the ``as_dataset`` option is activated. (:issue:`2240`, :pull:`2251`).
 * ``xclim.core.formatting.update_history`` now places the updated history at the top of the new attribute, not at the bottom. (:pull:`2251`).
 
+Internal changes
+^^^^^^^^^^^^^^^^
+* Fixed a small issue with a test that can fail when running with older versions of `numpy`. (:pull:`2253`).
+
 v0.58.1 (2025-08-28)
 --------------------
 Contributors to this version: Pascal Bourgault (:user:`aulemahal`).
