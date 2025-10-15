@@ -13,6 +13,7 @@ New indicators and features
 Breaking changes
 ^^^^^^^^^^^^^^^^
 * `black` and `blackdoc` are no longer required for development. `ruff` is now exclusively used for code and code-block formatting. (:pull:`2249`).
+* Python HDF5 libraries have been pinned (`h5netcdf >=1.5.0,<1.7` and `h5py >=3.12.1,<3.15`) as a workaround for instabilities introduced in recent releases. (:pull:`2253`).
 
 Bug fixes
 ^^^^^^^^^
