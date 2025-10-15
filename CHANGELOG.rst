@@ -22,7 +22,7 @@ Bug fixes
 
 Internal changes
 ^^^^^^^^^^^^^^^^
-* Fixed a small issue with a test that can fail when running with older versions of `numpy`. (:pull:`2253`).
+* Fixed an issue with a test that can fail when running with older versions of `numpy`. (:pull:`2253`).
 
 v0.58.1 (2025-08-28)
 --------------------
