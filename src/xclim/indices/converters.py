@@ -628,7 +628,7 @@ def vapor_pressure(huss: xr.DataArray, ps: xr.DataArray):
 
     .. math::
 
-        e = \frac{pq}{\epsilon\left(1 + q\left(\frac{1}{\epsilon} - 1\right)\right)}
+        e = \frac{pq}{\epsilon + (1 - \epsilon)q}
 
     Where :math:`p` is the pressure, :math:`q` is the specific humidity and :math:`\epsilon` us the ratio of the dry air
     gas constant to the water vapor gas constant : :math:`\frac{R_{dry}}{R_{vapor}} = 0.62198`.
