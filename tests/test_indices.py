@@ -3250,8 +3250,8 @@ def test_vapor_pressure_deficit(tas_series, hurs_series, method):
 def test_relative_humidity(tas_series, hurs_series, huss_series, ps_series, method, invalid_values, exp0):
     tas = tas_series(np.array([-10, -10, 10, 20, 35, 50, 75, 95]) + K2C)
 
-    # Expected values obtained with the Sonntag90 method
-    hurs_exp = hurs_series([exp0, 63.0, 66.0, 34.0, 14.0, 6.0, 1.0, 0.0])
+    # Expected values obtained with the Sonntag90 method, rounded to the nearest half unit
+    hurs_exp = hurs_series([exp0, 62.5, 66.0, 35.0, 14.5, 6.5, 2.0, 1.0])
     ps = ps_series([101325] * 8)
     huss = huss_series([0.003, 0.001] + [0.005] * 7)
 

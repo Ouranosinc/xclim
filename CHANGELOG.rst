@@ -12,6 +12,7 @@ New indicators and features
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
+* The relative humidity computation from specific humidity, pressure and temperature was modified to use the fraction of vapor pressure to saturation vapor pressure instead of an incomplete equation with the mixing ratios. Changes are small, but sometimes not negligible (:pull:`2254`).
 * `black` and `blackdoc` are no longer required for development. `ruff` is now exclusively used for code and code-block formatting. (:pull:`2249`).
 
 Bug fixes

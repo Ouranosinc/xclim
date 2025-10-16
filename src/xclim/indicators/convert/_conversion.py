@@ -246,7 +246,7 @@ relative_humidity = Converter(
         "tdps": None,
         "huss": {"kind": InputKind.VARIABLE},
         "ps": {"kind": InputKind.VARIABLE},
-        "invalid_values": "mask",
+        "invalid_values": {"default": "mask"},
     },
 )
 
