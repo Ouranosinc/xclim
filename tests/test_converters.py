@@ -151,7 +151,7 @@ def test_saturation_vapor_pressure(tas_series):
 
 def test_relative_humidity(tas_series, hurs_series, huss_series, ps_series):
     tas = tas_series(np.array([-10, -10, 10, 20, 35, 50, 75, 95]) + K2C)
-    hurs_exp = hurs_series([np.nan, 63.0, 66.0, 34.0, 14.0, 6.0, 1.0, 0.0])
+    hurs_exp = hurs_series([np.nan, 62.5, 66.0, 35.0, 14.5, 6.5, 2.0, 1.0])
     ps = ps_series([101325] * 8)
     huss = huss_series([0.003, 0.001] + [0.005] * 7)
 
