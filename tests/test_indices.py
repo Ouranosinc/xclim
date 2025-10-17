@@ -376,7 +376,7 @@ class TestAgroclimaticIndices:
     def test_chill_portions(self, tas_series):
         tas = tas_series(np.linspace(0, 15, 120 * 24) + K2C, freq="h")
         out = xci.chill_portions(tas)
-        assert out[0] == 72.24417644977083
+        np.testing.assert_array_almost_equal(out, np.array([72.2441765]), decimal=7)
 
     def test_chill_units(self, tas_series):
         num_cu_0 = 10
