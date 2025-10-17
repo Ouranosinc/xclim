@@ -117,21 +117,24 @@ jobs:
       - name: Harden Runner
         uses: step-security/harden-runner@f4a75cfd619ee5ce8d5b864b0d183aff3c69b55a # v2.13.1
         with:
-          disable-sudo: true
+          disable-sudo: false
           egress-policy: block
           allowed-endpoints: >
+            140.82.113.24:443
             api.electricitymap.org:443
             api.github.com:443
             api.green-coding.io:443
+            archive.ubuntu.com:443
+            azure.archive.ubuntu.com:80
             coveralls.io:443
+            esm.ubuntu.com:443
             files.pythonhosted.org:443
             github.com:443
-            ip-api.com:80
             ipapi.co:443
-            proxy.golang.org:443
+            packages.microsoft.com:443
             pypi.org:443
             raw.githubusercontent.com:443
-            sum.golang.org:443
+            security.ubuntu.com:443
       - name: Start Energy Measurement
         uses: green-coding-solutions/eco-ci-energy-estimation@862050e4f01f65b1436e5eca18ba4bd85562f0de # v5.0.0
         with:
@@ -147,6 +150,11 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           cache: 'pip'
+      - name: Install HDF5 (Linux)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libhdf5-dev
       - name: Install CI libraries
         run: |
           python -m pip install --require-hashes -r CI/requirements_ci.txt
@@ -205,7 +213,7 @@ jobs:
             testdata-cache: 'C:\Users\runneradmin\AppData\Local\xclim-testdata\xclim-testdata\Cache'
             markers: -m 'not slow'
             python-version: "3.12"
-            tox-env: py312-coverage-prefetch  # Test data prefetch is needed for Windows
+            tox-env: py312-coverage-prefetch-noh5py  # Test data prefetch is needed for Windows
           # macOS builds
           - os: 'macos-latest'
             testdata-cache: '~/Library/Caches/xclim-testdata'
@@ -232,6 +240,7 @@ jobs:
       - name: Harden Runner
         uses: step-security/harden-runner@f4a75cfd619ee5ce8d5b864b0d183aff3c69b55a # v2.13.1
         with:
+          disable-sudo: false
           egress-policy: block
           allowed-endpoints: >
             api.electricitymap.org:443
@@ -239,12 +248,14 @@ jobs:
             api.green-coding.io:443
             azure.archive.ubuntu.com:80
             coveralls.io:443
+            esm.ubuntu.com:443
             files.pythonhosted.org:443
             github.com:443
+            hosted-compute-watchdog-prod-iad-02.githubapp.com:443
             ip-api.com:80
             ipapi.co:443
             motd.ubuntu.com:443
-            objects.githubusercontent.com:443
+            packages.microsoft.com:443
             proxy.golang.org:443
             pypi.org:443
             raw.githubusercontent.com:443
@@ -260,11 +271,25 @@ jobs:
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
           persist-credentials: false
+
+      - name: Install HDF5 (Linux)
+        if: ${{ matrix.os == 'ubuntu-latest' }}
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libhdf5-dev
+      - name: Install HDF5 (macOS)
+        if: ${{ matrix.os == 'macos-latest' }}
+        uses: tecolicom/actions-use-homebrew-tools@b9c066b79607fa3d71e0be05d7003bb75fd9ff34 # v1.3
+        with:
+          tools: hdf5
+          cache: "yes"
+
       - name: Install Eigen3 (SBCK)
         if: ${{ matrix.python-version == '3.11' && matrix.os == 'ubuntu-latest' }}
         run: |
           sudo apt-get update
           sudo apt-get install libeigen3-dev
+
       - name: Set up Python${{ matrix.python-version }}
         uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v6.0.0
         with:
@@ -340,7 +365,20 @@ jobs:
         uses: step-security/harden-runner@f4a75cfd619ee5ce8d5b864b0d183aff3c69b55a # v2.13.1
         with:
           disable-sudo: true
-          egress-policy: audit
+          egress-policy: block
+          allowed-endpoints: >
+            api.electricitymap.org:443
+            api.github.com:443
+            api.green-coding.io:443
+            conda.anaconda.org:443
+            coveralls.io:443
+            files.pythonhosted.org:443
+            github.com:443
+            ipapi.co:443
+            objects.githubusercontent.com:443
+            pypi.org:443
+            raw.githubusercontent.com:443
+            release-assets.githubusercontent.com:443
       - name: Start Energy Measurement
         uses: green-coding-solutions/eco-ci-energy-estimation@862050e4f01f65b1436e5eca18ba4bd85562f0de # v5.0.0
         with:
@@ -412,8 +450,21 @@ jobs:
       - name: Harden Runner
         uses: step-security/harden-runner@f4a75cfd619ee5ce8d5b864b0d183aff3c69b55a # v2.13.1
         with:
-          disable-sudo: true
-          egress-policy: audit
+          egress-policy: block
+          allowed-endpoints: >
+            api.electricitymap.org:443
+            api.github.com:443
+            api.green-coding.io:443
+            coveralls.io:443
+            files.pythonhosted.org:443
+            github.com:443
+            ip-api.com:80
+            ipapi.co:443
+            objects.githubusercontent.com:443
+            proxy.golang.org:443
+            pypi.org:443
+            release-assets.githubusercontent.com:443
+            sum.golang.org:443
       - name: Start Energy Measurement
         uses: green-coding-solutions/eco-ci-energy-estimation@862050e4f01f65b1436e5eca18ba4bd85562f0de # v5.0.0
         with:
