@@ -117,7 +117,7 @@ jobs:
       - name: Harden Runner
         uses: step-security/harden-runner@f4a75cfd619ee5ce8d5b864b0d183aff3c69b55a # v2.13.1
         with:
-          disable-sudo: true
+          disable-sudo: false
           egress-policy: block
           allowed-endpoints: >
             api.electricitymap.org:443
@@ -147,6 +147,10 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           cache: 'pip'
+      - name: Install HDF5 (h5py)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libhdf5-dev
       - name: Install CI libraries
         run: |
           python -m pip install --require-hashes -r CI/requirements_ci.txt
@@ -260,6 +264,10 @@ jobs:
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
           persist-credentials: false
+      - name: Install HDF5 (h5py)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libhdf5-dev
       - name: Install Eigen3 (SBCK)
         if: ${{ matrix.python-version == '3.11' && matrix.os == 'ubuntu-latest' }}
         run: |
