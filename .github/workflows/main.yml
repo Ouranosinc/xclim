@@ -118,7 +118,23 @@ jobs:
         uses: step-security/harden-runner@f4a75cfd619ee5ce8d5b864b0d183aff3c69b55a # v2.13.1
         with:
           disable-sudo: false
-          egress-policy: audit
+          egress-policy: block
+          allowed-endpoints: >
+            140.82.113.24:443
+            api.electricitymap.org:443
+            api.github.com:443
+            api.green-coding.io:443
+            archive.ubuntu.com:443
+            azure.archive.ubuntu.com:80
+            coveralls.io:443
+            esm.ubuntu.com:443
+            files.pythonhosted.org:443
+            github.com:443
+            ipapi.co:443
+            packages.microsoft.com:443
+            pypi.org:443
+            raw.githubusercontent.com:443
+            security.ubuntu.com:443
       - name: Start Energy Measurement
         uses: green-coding-solutions/eco-ci-energy-estimation@862050e4f01f65b1436e5eca18ba4bd85562f0de # v5.0.0
         with:
@@ -224,7 +240,26 @@ jobs:
       - name: Harden Runner
         uses: step-security/harden-runner@f4a75cfd619ee5ce8d5b864b0d183aff3c69b55a # v2.13.1
         with:
-          egress-policy: audit
+          disable-sudo: false
+          egress-policy: block
+          allowed-endpoints: >
+            api.electricitymap.org:443
+            api.github.com:443
+            api.green-coding.io:443
+            azure.archive.ubuntu.com:80
+            coveralls.io:443
+            esm.ubuntu.com:443
+            files.pythonhosted.org:443
+            github.com:443
+            hosted-compute-watchdog-prod-iad-02.githubapp.com:443
+            ip-api.com:80
+            ipapi.co:443
+            motd.ubuntu.com:443
+            packages.microsoft.com:443
+            proxy.golang.org:443
+            pypi.org:443
+            raw.githubusercontent.com:443
+            sum.golang.org:443
       - name: Start Energy Measurement
         if : ${{ matrix.os == 'ubuntu-latest' }}
         uses: green-coding-solutions/eco-ci-energy-estimation@862050e4f01f65b1436e5eca18ba4bd85562f0de # v5.0.0
@@ -330,7 +365,20 @@ jobs:
         uses: step-security/harden-runner@f4a75cfd619ee5ce8d5b864b0d183aff3c69b55a # v2.13.1
         with:
           disable-sudo: true
-          egress-policy: audit
+          egress-policy: block
+          allowed-endpoints: >
+            api.electricitymap.org:443
+            api.github.com:443
+            api.green-coding.io:443
+            conda.anaconda.org:443
+            coveralls.io:443
+            files.pythonhosted.org:443
+            github.com:443
+            ipapi.co:443
+            objects.githubusercontent.com:443
+            pypi.org:443
+            raw.githubusercontent.com:443
+            release-assets.githubusercontent.com:443
       - name: Start Energy Measurement
         uses: green-coding-solutions/eco-ci-energy-estimation@862050e4f01f65b1436e5eca18ba4bd85562f0de # v5.0.0
         with:
@@ -402,8 +450,21 @@ jobs:
       - name: Harden Runner
         uses: step-security/harden-runner@f4a75cfd619ee5ce8d5b864b0d183aff3c69b55a # v2.13.1
         with:
-          disable-sudo: true
-          egress-policy: audit
+          egress-policy: block
+          allowed-endpoints: >
+            api.electricitymap.org:443
+            api.github.com:443
+            api.green-coding.io:443
+            coveralls.io:443
+            files.pythonhosted.org:443
+            github.com:443
+            ip-api.com:80
+            ipapi.co:443
+            objects.githubusercontent.com:443
+            proxy.golang.org:443
+            pypi.org:443
+            release-assets.githubusercontent.com:443
+            sum.golang.org:443
       - name: Start Energy Measurement
         uses: green-coding-solutions/eco-ci-energy-estimation@862050e4f01f65b1436e5eca18ba4bd85562f0de # v5.0.0
         with:
