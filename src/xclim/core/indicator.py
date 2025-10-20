@@ -1149,11 +1149,12 @@ class Indicator(IndicatorRegistrar):
             if "cell_methods" in out:
                 attrs["cell_methods"] += " " + out.pop("cell_methods")
 
-        attrs["history"] = update_history(
-            self._history_string(das, args),
-            new_name=out.get("var_name"),
-            **das,
-        )
+        if not OPTIONS[AS_DATASET]:
+            attrs["history"] = update_history(
+                self._history_string(das, args),
+                new_name=out.get("var_name"),
+                **das,
+            )
 
         attrs.update(out)
         return attrs
