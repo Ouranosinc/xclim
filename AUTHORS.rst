@@ -52,4 +52,4 @@ Contributors
 * Jack Kit-tai Wong <kit.tai.wong@gmail.com> `@jack-ktw <https://github.com/jack-ktw>`_
 * Jens de Bruijn <j.a.debruijn@outlook.com> `@jensdebruijn <https://github.com/jensdebruijn>`_
 * Armin Hofmann `@HofmannGeo <https://github.com/HofmannGeo>`_
-* Eve Larose `eve.larose.r@gmail.com @e-larose <https://github.com/e-larose>`_
+* Eve Larose <eve.larose.r@gmail.com> `@e-larose <https://github.com/e-larose>`_

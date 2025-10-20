@@ -3,7 +3,7 @@ Changelog
 =========
 
 v0.59.0 (unreleased)
--------==-----------
+--------------------
 Contributors to this version: Pascal Bourgault (:user:`aulemahal`), Trevor James Smith (:user:`Zeitsperre`), David Huard (:user:`huard`), Ève Larose (:user:`e-larose`), Faisal Mahmood (:user:`faimahsho`).
 
 New indicators and features
