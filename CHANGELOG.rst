@@ -12,6 +12,7 @@ New indicators and features
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
+* The relative humidity computations from specific humidity, pressure and temperature (``vapor_pressure`` and ``relative_humidity``) were modified to use the fraction of vapour pressure to saturation vapour pressure instead of an incomplete equation with the mixing ratios. Changes are small, but sometimes not negligible. (:pull:`2254`).
 * `black` and `blackdoc` are no longer required for development. `ruff` is now exclusively used for code and code-block formatting. (:pull:`2249`).
 * Python HDF5 libraries now have lower pins to ensure modern versions are preferably installed (`h5netcdf >=1.5.0` and `h5py >=3.12.1`) (:pull:`2253`).
 
