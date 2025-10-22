@@ -4,7 +4,7 @@ Changelog
 
 v0.59 (unreleased)
 ------------------
-Contributors to this version: Pascal Bourgault (:user:`aulemahal`).
+Contributors to this version: Pascal Bourgault (:user:`aulemahal`), Trevor James Smith (:user:`Zeitsperre`).
 
 New indicators and features
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -14,12 +14,17 @@ Breaking changes
 ^^^^^^^^^^^^^^^^
 * The relative humidity computation from specific humidity, pressure and temperature was modified to use the fraction of vapor pressure to saturation vapor pressure instead of an incomplete equation with the mixing ratios. Changes are small, but sometimes not negligible (:pull:`2254`).
 * `black` and `blackdoc` are no longer required for development. `ruff` is now exclusively used for code and code-block formatting. (:pull:`2249`).
+* Python HDF5 libraries now have lower pins to ensure modern versions are preferably installed (`h5netcdf >=1.5.0` and `h5py >=3.12.1`) (:pull:`2253`).
 
 Bug fixes
 ^^^^^^^^^
 * Fix dimensions of "prsn" in the variable dictionary. (:pull:`2242`).
 * History is not written the DataArray is the ``as_dataset`` option is activated. (:issue:`2240`, :pull:`2251`).
 * ``xclim.core.formatting.update_history`` now places the updated history at the top of the new attribute, not at the bottom. (:pull:`2251`).
+
+Internal changes
+^^^^^^^^^^^^^^^^
+* Fixed an issue with a test that can fail when running with older versions of `numpy`. (:pull:`2253`).
 
 v0.58.1 (2025-08-28)
 --------------------
