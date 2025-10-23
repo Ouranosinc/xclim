@@ -1109,10 +1109,10 @@ def base_flow_index_seasonal_ratio(
     # Shift timestamp forward by one year since winter starts in dec the year prior
     winter_1 = winter_bfi.assign_coords(year=winter_bfi["year"] + 1)
     winter_1_aligned = winter_1.reindex(year=summer_bfi.year)
-
     epsilon = 1e-3  # To avoid division by zero
 
     w_s_ratio = (winter_1_aligned / (summer_bfi + epsilon)).sel(year=summer_bfi.year)
+    w_s_ratio = w_s_ratio.isel(year=slice(1, None))
     w_s_ratio.attrs["units"] = ""
 
     return winter_bfi, spring_bfi, summer_bfi, fall_bfi, w_s_ratio
