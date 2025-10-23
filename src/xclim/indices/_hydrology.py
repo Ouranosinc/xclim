@@ -8,6 +8,7 @@ import numpy as np
 import pandas as pd
 import xarray
 from scipy.stats import circmean, rv_continuous
+from xarray import DataArray
 
 from xclim.core._types import DateStr, Quantified
 from xclim.core.calendar import get_calendar
@@ -27,6 +28,7 @@ __all__ = [
     "antecedent_precipitation_index",
     "aridity_index",
     "base_flow_index",
+    "base_flow_index_seasonal_ratio",
     "days_with_snowpack",
     "flow_index",
     "high_flow_frequency",
@@ -1045,3 +1047,72 @@ def sen_slope(
         ds[var].attrs["units"] = ""
 
     return ds
+
+
+@declare_units(q="[discharge]")
+def base_flow_index_seasonal_ratio(
+    q: xarray.DataArray, freq: str = "QS-DEC"
+) -> tuple[DataArray, DataArray, DataArray, DataArray, DataArray]:
+    """
+    Seasonal Base flow index (bfi) and ratio of winter to summer base flow index.
+
+    Return yearly base flow index per season, defined as the minimum 7-day average flow divided by the mean flow
+    as well as yearly winter to summer bfi ratio.
+
+    Parameters
+    ----------
+    q : xarray.DataArray
+        Rate of river discharge.
+    freq : str
+        Resampling frequency.
+
+    Returns
+    -------
+    xarray.DataArray, [dimensionless]
+        Winter_bfi.
+    xarray.DataArray, [dimensionless]
+        Spring_bfi.
+    xarray.DataArray, [dimensionless]
+        Summer_bfi.
+    xarray.DataArray, [dimensionless]
+        Fall_bfi.
+    xarray.DataArray, [dimensionless]
+         Winter_to summer_ratio.
+
+    Notes
+    -----
+    It is recommended to have at least 70% of valid data per month in order to compute significant values.
+
+    References
+    ----------
+    :cite:cts:`singh_2019`
+    :cite:cts:`jaffres_2021`
+    """
+    # 7-day minimum of raw daily flow
+    q7min = q.rolling(time=7, center=True).min(skipna=False).resample(time=freq).min()
+
+    qmean = q.resample(time=freq).mean()
+    bfi = q7min / qmean
+
+    winter_bfi = bfi.where(bfi["time"].dt.month == 12).groupby("time.year").mean(dim="time")
+    winter_bfi.attrs["units"] = ""
+
+    spring_bfi = bfi.where(bfi["time"].dt.month == 3).groupby("time.year").mean(dim="time")
+    spring_bfi.attrs["units"] = ""
+
+    summer_bfi = bfi.where(bfi["time"].dt.month == 6).groupby("time.year").mean(dim="time")
+    summer_bfi.attrs["units"] = ""
+
+    fall_bfi = bfi.where(bfi["time"].dt.month == 9).groupby("time.year").mean(dim="time")
+    fall_bfi.attrs["units"] = ""
+
+    # Shift timestamp forward by one year since winter starts in dec the year prior
+    winter_1 = winter_bfi.assign_coords(year=winter_bfi["year"] + 1)
+
+    epsilon = 1e-3  # To avoid division by zero
+    ratio_data = winter_1.data / (summer_bfi.data + epsilon)
+    ratio_values = ratio_data.flatten()
+    w_s_ratio = xarray.DataArray(data=ratio_values, dims=["year"], coords={"year": summer_bfi.year})
+    w_s_ratio.attrs["units"] = ""
+
+    return winter_bfi, spring_bfi, summer_bfi, fall_bfi, w_s_ratio
