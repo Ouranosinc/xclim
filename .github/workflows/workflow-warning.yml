@@ -33,7 +33,7 @@ jobs:
           allowed-endpoints: >
             api.github.com:443
       - name: Find Warning Comment
-        uses: peter-evans/find-comment@3eae4d37986fb5a8592848f6a574fdf654e61f9e # v3.1.0
+        uses: peter-evans/find-comment@b30e6a3c0ed37e7c023ccd3f1db5c6c0b0c23aad # v4.0.0
         id: fc_warning
         with:
           issue-number: ${{ github.event.pull_request.number }}
@@ -45,7 +45,7 @@ jobs:
           (steps.fc_warning.outputs.comment-id == '') &&
           (!contains(github.event.pull_request.labels.*.name, 'approved')) &&
           (github.event.pull_request.head.repo.full_name != github.event.pull_request.base.repo.full_name)
-        uses: peter-evans/create-or-update-comment@71345be0265236311c031f5c7866368bd1eff043 # v4.0.0
+        uses: peter-evans/create-or-update-comment@e8674b075228eee787fea43ef493e45ece1004c9 # v5.0.0
         with:
           comment-id: ${{ steps.fc_warning.outputs.comment-id }}
           issue-number: ${{ github.event.pull_request.number }}
@@ -55,7 +55,7 @@ jobs:
             **It is very important for the reviewer to ensure that the workflow changes are appropriate.**
           edit-mode: replace
       - name: Find Note Comment
-        uses: peter-evans/find-comment@3eae4d37986fb5a8592848f6a574fdf654e61f9e # v3.1.0
+        uses: peter-evans/find-comment@b30e6a3c0ed37e7c023ccd3f1db5c6c0b0c23aad # v4.0.0
         id: fc_note
         with:
           issue-number: ${{ github.event.pull_request.number }}
@@ -64,7 +64,7 @@ jobs:
       - name: Update Comment
         if: |
           contains(github.event.pull_request.labels.*.name, 'approved')
-        uses: peter-evans/create-or-update-comment@71345be0265236311c031f5c7866368bd1eff043 # v4.0.0
+        uses: peter-evans/create-or-update-comment@e8674b075228eee787fea43ef493e45ece1004c9 # v5.0.0
         with:
           comment-id: ${{ steps.fc_note.outputs.comment-id }}
           issue-number: ${{ github.event.pull_request.number }}

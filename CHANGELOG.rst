@@ -4,19 +4,27 @@ Changelog
 
 v0.59.0 (unreleased)
 --------------------
-Contributors to this version: Pascal Bourgault (:user:`aulemahal`), David Huard (:user:`huard`), Ève Larose (:user:`e-larose`), Faisal Mahmood (:user:`faimahsho`).
-
-New indicators and features
-^^^^^^^^^^^^^^^^^^^^^^^^^^^
-* New indices added to _hydrology file. (:issue:`1624`, :pull:`2227`).
+Contributors to this version: Pascal Bourgault (:user:`aulemahal`), Trevor James Smith (:user:`Zeitsperre`), David Huard (:user:`huard`), Ève Larose (:user:`e-larose`), Faisal Mahmood (:user:`faimahsho`).
 
 New indicators and features
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 * ``xclim.ensembles.robustness_fractions`` now accepts instances of ``xclim.core.missing`` classes as a new ``invalid`` argument to control how data points are flagged as invalid. (:pull:`2245`).
+* New hydrological indices added to ``xclim.indices._hydrology.py``. (:issue:`1624`, :pull:`2227`).
+
+Breaking changes
+^^^^^^^^^^^^^^^^
+* `black` and `blackdoc` are no longer required for development. `ruff` is now exclusively used for code and code-block formatting. (:pull:`2249`).
+* Python HDF5 libraries now have lower pins to ensure modern versions are preferably installed (`h5netcdf >=1.5.0` and `h5py >=3.12.1`) (:pull:`2253`).
 
 Bug fixes
 ^^^^^^^^^
 * Fix dimensions of "prsn" in the variable dictionary. (:pull:`2242`).
+* History is not written the DataArray is the ``as_dataset`` option is activated. (:issue:`2240`, :pull:`2251`).
+* ``xclim.core.formatting.update_history`` now places the updated history at the top of the new attribute, not at the bottom. (:pull:`2251`).
+
+Internal changes
+^^^^^^^^^^^^^^^^
+* Fixed an issue with a test that can fail when running with older versions of `numpy`. (:pull:`2253`).
 
 v0.58.1 (2025-08-28)
 --------------------

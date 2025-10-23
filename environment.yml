@@ -11,7 +11,7 @@ dependencies:
   - dask >=2024.8.1
   - filelock >=3.14.0
   - numba >=0.57.0
-  - numpy >=1.24.0
+  - numpy >=1.25.0
   - packaging >=24.0
   - pandas >=2.2.0
   - pint >=0.24.4
@@ -28,8 +28,7 @@ dependencies:
   # lmoments3 - Not an official dependency but required for some Jupyter notebooks
   - lmoments3 >=1.0.7
   # Testing and development dependencies
-  - blackdoc >=0.4.2
-  - bump-my-version >=1.1.1
+  - bump-my-version >=1.2.3
   - cairosvg >=2.6.0
   - codespell >=2.4.1
   - coverage >=7.5.0
@@ -39,7 +38,8 @@ dependencies:
   - flake8-rst-docstrings >=0.3.1
   - flit >=3.10.1,<4.0
   - furo >=2023.9.10
-  - h5netcdf >=1.3.0
+  - h5netcdf >=1.5.0
+  - h5py >=3.12.1
   - ipykernel
   - ipython >=8.10.0
   - matplotlib >=3.7.0
@@ -48,9 +48,9 @@ dependencies:
   - nbsphinx >=0.9.5
   - nbval >=0.11.0
   - nc-time-axis >=1.4.1
-  - netcdf4  # Required for some Jupyter notebooks
+  - netcdf4 <1.7.3   # Required for some Jupyter notebooks
   - notebook
-  - numpydoc >=1.8.0
+  - numpydoc >=1.9.0
   - pandas-stubs >=2.2
   - pip >=25.0
   - pooch >=1.8.0
@@ -62,7 +62,7 @@ dependencies:
   - pytest-socket >=0.6.0
   - pytest-timeout >=2.4.0
   - pytest-xdist >=3.2
-  - ruff >=0.9.6
+  - ruff >=0.13.3
   - sphinx >=8.2.0
   - sphinx-autobuild >=2024.4.16
   - sphinx-autodoc-typehints >=3.1.0
