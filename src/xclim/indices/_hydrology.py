@@ -1110,9 +1110,15 @@ def base_flow_index_seasonal_ratio(
     winter_1 = winter_bfi.assign_coords(year=winter_bfi["year"] + 1)
 
     epsilon = 1e-3  # To avoid division by zero
-    ratio_data = winter_1.data / (summer_bfi.data + epsilon)
-    ratio_values = ratio_data.flatten()
-    w_s_ratio = xarray.DataArray(data=ratio_values, dims=["year"], coords={"year": summer_bfi.year})
+    # ratio_data = winter_1.data / (summer_bfi.data + epsilon)
+    # ratio_values = ratio_data.flatten()
+    # w_s_ratio = xarray.DataArray(data=ratio_values, dims=["year"], coords={"year": summer_bfi.year})
+    # w_s_ratio.attrs["units"] = ""
+
+    w_s_ratio = winter_1 / (summer_bfi + epsilon)
+
+    # Flatten and keep year as dimension
+    w_s_ratio = w_s_ratio.rename({"year": "year"})
     w_s_ratio.attrs["units"] = ""
 
     return winter_bfi, spring_bfi, summer_bfi, fall_bfi, w_s_ratio

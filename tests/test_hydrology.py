@@ -315,3 +315,11 @@ class TestSenSlope:
         # verify ratio
         ratio = out["ratio"]
         np.testing.assert_allclose(ratio.values, [0.5, 0.5, 0.5, 0.5, 0.5], atol=1e-15)
+
+
+class TestBFI_seasonal_and_winter_to_summer_ratio:
+    def test_simple(self, q_series):
+        # 5 years of increasing data with slope of 1
+        q = np.arange(1, 1826)
+        out = xci.base_flow_index_seasonal_ratio(q)
+        np.testing.assert_allclose(out, [17.0, 27.0], atol=1e-14)
