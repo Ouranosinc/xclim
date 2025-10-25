@@ -21,6 +21,7 @@ Bug fixes
 * Fix dimensions of "prsn" in the variable dictionary. (:pull:`2242`).
 * History is not written the DataArray is the ``as_dataset`` option is activated. (:issue:`2240`, :pull:`2251`).
 * ``xclim.core.formatting.update_history`` now places the updated history at the top of the new attribute, not at the bottom. (:pull:`2251`).
+* A few functions have been adapted to xarray's new default (`True`) for option `keep_attrs`. (:ìssue:`2250`, :pull:`2252`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^

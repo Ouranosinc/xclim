@@ -2131,7 +2131,8 @@ def potential_evapotranspiration(
             es = (1 / 2) * (saturation_vapor_pressure(_tasmax) + saturation_vapor_pressure(_tasmin))
             es = convert_units_to(es, "kPa")
             # mean actual vapour pressure [kPa]
-            ea = es * _hurs
+            # assign units as xarray removes conflicting units (_hurs is 1)
+            ea = (es * _hurs).assign_attrs(units="kPa")
 
             # slope of saturation vapour pressure curve  [kPa degC-1]
             delta = (4098 * es / (tas_m + 237.3) ** 2).assign_attrs(units="kPa degC-1")
@@ -2140,7 +2141,6 @@ def potential_evapotranspiration(
 
             P = 101.325  # Atmospheric pressure [kPa]
             gamma = 0.665e-03 * P  # psychrometric const = C_p*P/(eps*lam) [kPa degC-1]
-
             pet = fao_allen98(Rn, tas_m, wa2, es, ea, delta, f"{gamma} kPa degC")
 
     else:
