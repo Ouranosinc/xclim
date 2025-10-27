@@ -3,18 +3,29 @@ Clix-meta index functions submodule
 ===================================
 
 Generic indices implementing index functions from the `clix-meta <https://github.com/clix-meta/clix-meta/>`
-framework for climate index definitions. Functions here are simple redefinitions of functions in
+framework for climate index definitions. Functions here are redefinitions of functions in
 :py:mod:`xclim.indices.generic` but with signatures that match the clix-meta vocabulary.
+
+This module tries to follow the clix-meta definitions as closely as possible,
+which means it can have meaningful differences with the rest of xclim.
+
+For example, indicators where a number of occurrences (usually days) is counted will use units "1", instead of
+having temporal dimensions (i.e. "days") like xclim does elsewhere.
+
+However, indicators calculating a date will have no units in this module. "clix-meta" suggests "day", but that
+already means something else.
 
 This version of xclim implements clix-meta v0.6.1 .
 """
+
+from __future__ import annotations
 
 from typing import Literal
 
 import xarray as xr
 
 import xclim.indices.generic as generic
-from xclim.core import DateStr, Quantified
+from xclim.core import DateStr, DayOfYearStr, Quantified
 from xclim.core.units import declare_relative_units
 
 OPERATORS = Literal[">", "gt", "<", "lt", ">=", "ge", "<=", "le"]
@@ -54,7 +65,7 @@ def count_level_crossings(
 
     Returns
     -------
-    xr.DataArray, [time]
+    xr.DataArray, [dimensionless]
         Number of times when low_data is under {threshold} and high_data is above {threshold}.
     """
     return generic.bivariate_count_occurrences(
@@ -66,7 +77,7 @@ def count_level_crossings(
         op_var1="<",
         op_var2=">",
         var_reducer="all",
-    )
+    ).assign_attrs(units="1")
 
 
 @declare_relative_units(threshold="<data>")
@@ -96,15 +107,15 @@ def count_occurrences(
 
     Returns
     -------
-    xr.DataArray, [time]
+    xr.DataArray, [dimensionless]
         Number of times where data is {condition} {threshold}.
     """
     return generic.count_occurrences(
         data=data, threshold=threshold, op=condition, freq=freq, constrain=OPERATORS.__args__
-    )
+    ).assign_attrs(units="1")
 
 
-def count_percentile_occurences(
+def count_percentile_occurrences(
     data: xr.DataArray,
     percentile: float,
     condition: OPERATORS,
@@ -136,7 +147,7 @@ def count_percentile_occurences(
 
     Returns
     -------
-    xr.DataArray, [time]
+    xr.DataArray, [dimensionless]
         Number of times data {condition} the {percentile}th percentile for the same day of year
         (computed using a 5-day window).
     """
@@ -148,14 +159,14 @@ def count_percentile_occurences(
         freq=freq,
         bootstrap=False,
         constrain=OPERATORS.__args__,
-    )
+    ).assign_attrs(units="1")
 
 
 # TODO: count_spell_duraction. Not ready in clix-meta v0.6.1
 
 
-@declare_relative_units(threshold="<data>")
-def count_thresholded_percentile_occurences(
+@declare_relative_units(data_threshold="<data>")
+def count_thresholded_percentile_occurrences(
     data: xr.DataArray,
     data_threshold: Quantified,
     data_condition: OPERATORS,
@@ -193,7 +204,7 @@ def count_thresholded_percentile_occurences(
 
     Returns
     -------
-    xr.DataArray, [time]
+    xr.DataArray, [dimensionless]
         Number of times data is {percentile_condition} the {percentile}th percentile of
         {data} {data_condition} {data_threshold}.
     """
@@ -207,7 +218,7 @@ def count_thresholded_percentile_occurences(
         freq=freq,
         constrain=OPERATORS.__args__,
         bootstrap=False,
-    )
+    ).assign_attrs(units="1")
 
 
 @declare_relative_units(high_data="<low_data>")
@@ -240,7 +251,7 @@ def diurnal_temperature_range(
 
 
 @declare_relative_units(high_data="<low_data>")
-def extreme_range(low_data: xr.DataArray, high_data: xr.DataArray, freq: str) -> xr.DataArray:
+def extreme_temperature_range(low_data: xr.DataArray, high_data: xr.DataArray, freq: str) -> xr.DataArray:
     """
     Calculate the maximum temperature difference during the specified time period.
 
@@ -271,6 +282,7 @@ def first_occurrence(
     threshold: Quantified,
     condition: OPERATORS,
     freq: str,
+    after_date: DayOfYearStr = None,
 ) -> xr.DataArray:
     """
     Calculate the first time during the specified time period when a threshold is exceeded.
@@ -289,6 +301,9 @@ def first_occurrence(
         Logical comparison operator.
     freq : str
         Resampling frequency defining the periods as defined in :ref:`timeseries.resampling`.
+    after_date : Day of year str (MM-DD)
+        Earliest day the occurrence can be found. Added to definition
+        to support "faf" without indexing.
 
     Returns
     -------
@@ -299,7 +314,7 @@ def first_occurrence(
         data=data,
         threshold=threshold,
         op=condition,
-        date=None,
+        date=after_date,
         which="first",
         window=1,
         freq=freq,
@@ -343,6 +358,7 @@ def last_occurrence(
     threshold: Quantified,
     condition: OPERATORS,
     freq: str,
+    before_date: DayOfYearStr = None,
 ) -> xr.DataArray:
     """
     Calculate the last time during the specified time period when a threshold exceeded.
@@ -361,6 +377,9 @@ def last_occurrence(
         Logical comparison operator.
     freq : str
         Resampling frequency defining the periods as defined in :ref:`timeseries.resampling`.
+    before_date : Day of year str (MM-DD)
+        Latest day the occurrence can be found. Added to definition
+        to support "lsf" without indexing.
 
     Returns
     -------
@@ -371,7 +390,7 @@ def last_occurrence(
         data=data,
         threshold=threshold,
         op=condition,
-        date=None,
+        date=before_date,
         which="last",
         window=1,
         freq=freq,

@@ -172,7 +172,7 @@ indicators:
   P7_TempAnnualRange:
     allowed_periods: ["Y"]
     src_freq: ['D', '7D', 'MS']
-    compute: extreme_temperature_range
+    compute: extreme_range
     input:
       low_data: tasmin
       high_data: tasmax

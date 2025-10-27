@@ -27,8 +27,8 @@ from xclim.indices.generic import (
     compare,
     count_occurrences,
     cumulative_difference,
+    day_threshold_reached,
     domain_count,
-    first_day_threshold_reached,
     season,
     spell_length_statistics,
     threshold_count,
@@ -1632,11 +1632,12 @@ def first_day_temperature_below(
     """
     # noqa
 
-    fdtb = first_day_threshold_reached(
+    fdtb = day_threshold_reached(
         tas,
         threshold=thresh,
         op=op,
-        after_date=after_date,
+        date=after_date,
+        which="first",
         window=window,
         freq=freq,
         constrain=("<", "<="),
@@ -1696,11 +1697,12 @@ def first_day_temperature_above(
     where :math:`w` is the number of days the temperature threshold should be exceeded, and :math:`[P]` is
     1 if :math:`P` is true, and 0 if false.
     """
-    fdtr = first_day_threshold_reached(
+    fdtr = day_threshold_reached(
         tas,
         threshold=thresh,
         op=op,
-        after_date=after_date,
+        date=after_date,
+        which="first",
         window=window,
         freq=freq,
         constrain=(">", ">="),
