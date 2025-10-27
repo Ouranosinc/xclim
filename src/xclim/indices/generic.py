@@ -30,7 +30,6 @@ from xclim.core.calendar import (
 from xclim.core.units import (
     convert_units_to,
     declare_relative_units,
-    infer_context,
     pint2cfattrs,
     pint2cfunits,
     str2pint,
@@ -64,18 +63,12 @@ __all__ = [
     "season_length_from_boundaries",
     "select_resample_op",
     "select_rolling_resample_op",
-    "spell_length",
     "spell_length_statistics",
     "spell_mask",
-    "statistics",
-    "temperature_sum",
     "threshold_count",
-    "thresholded_statistics",
+    "thresholded_resample_op",
+    "thresholded_rolling_resample_op",
 ]
-# "count_level_crossings",
-# "first_occurrence",
-# "get_daily_events",
-# "last_occurrence",
 
 binary_ops = {">": "gt", "<": "lt", ">=": "ge", "<=": "le", "==": "eq", "!=": "ne"}
 DIFFERENCE_OPERATORS = Literal[">", "gt", "<", "lt", ">=", "ge", "<=", "le"]
@@ -176,6 +169,121 @@ def select_rolling_resample_op(
     )()
     rolled = to_agg_units(rolled, da, window_op)
     return select_resample_op(rolled, op=op, freq=freq, out_units=out_units, **indexer)
+
+
+@declare_relative_units(threshold="<data>")
+def thresholded_resample_op(
+    data: xr.DataArray,
+    op: ALL_OPERATORS,
+    threshold: Quantified,
+    reducer: REDUCTION_OPERATORS | Callable,
+    freq: str,
+    constrain: Sequence[str] | None = None,
+    out_units=None,
+    **indexer,
+) -> xr.DataArray:
+    """
+    Apply operation over each period that is part of the index selection and where a threshold condition is fulfilled.
+
+    This is a thresolded extension of :py:func:`select_resample_op`.
+
+    Parameters
+    ----------
+    data : xr.DataArray
+        Input data.
+    op : {">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"}
+        Logical operator. e.g. arr > thresh.
+    threshold : Quantified
+        Threshold.
+    reducer :  {"min", "max", "mean", "std", "var", "count", "sum", "integral", "argmax", "argmin"} or Callable
+        Reduce operation. Can either be a DataArray method or a function that can be applied to a DataArray.
+    freq : str
+        Resampling frequency defining the periods as defined in :ref:`timeseries.resampling`.
+    constrain : sequence of str, optional
+        Optionally allowed conditions. Default: None.
+    out_units : str, optional
+        Output units to assign.
+        Only necessary if `op` is a function not supported by :py:func:`xclim.core.units.to_agg_units`.
+    **indexer : {dim: indexer, }, optional
+        Time attribute and values over which to subset the array. For example, use season='DJF' to select winter values,
+        month=1 to select January, or month=[6,7,8] to select summer months. If not indexer is given, all values are
+        considered.
+
+    Returns
+    -------
+    xr.DataArray
+        The DataArray for the given thresholded statistic.
+    """
+    threshold = convert_units_to(threshold, data)
+
+    cond = compare(data, op, threshold, constrain)
+    return select_resample_op(data.where(cond), reducer, freq, out_units=out_units, **indexer)
+
+
+@declare_relative_units(threshold="<data>")
+def thresholded_rolling_resample_op(
+    data: xr.DataArray,
+    threshold: Quantified,
+    op: ALL_OPERATORS,
+    reducer: REDUCTION_OPERATORS | Callable,
+    window: int,
+    window_center: bool = True,
+    window_op: REDUCTION_OPERATORS = "mean",
+    freq: str = "YS",
+    out_units=None,
+    constrain=None,
+    **indexer,
+) -> xr.DataArray:
+    """
+    Calculate a running statistic of the data for which some condition is met.
+
+    This is an extension of :py:func:`select_rolling_resmaple_op` with a threshold.
+
+    Parameters
+    ----------
+    data : xr.DataArray
+        Input data.
+    threshold : Quantified
+        Threshold.
+    op : {">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"}
+        Logical operator. e.g. data > thresh.
+    reducer : {"min", "max", "mean", "std", "var", "count", "sum", "integral", "argmax", "argmin"} or Callable
+        Reduce operation. Can either be a DataArray method or a function that can be applied to a DataArray.
+    window : int
+        Size of the rolling window (centered).
+    window_center : bool
+        If True, the window is centered on the date. If False, the window is right-aligned.
+    window_op : {"min", "max", "mean", "std", "var", "count", "sum", "integral"}
+        Operation to apply to the rolling window. Default: 'mean'.
+    freq : str
+        Resampling frequency defining the periods as defined in :ref:`timeseries.resampling`.
+        Applied after the rolling window.
+    out_units : str, optional
+        Output units to assign.
+        Only necessary if `op` is a function not supported by :py:func:`xclim.core.units.to_agg_units`.
+    constrain : sequence of {">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"}, optional
+        A tuple of allowed operators.
+    **indexer : {dim: indexer, }, optional
+        Time attribute and values over which to subset the array. For example, use season='DJF' to select winter values,
+        month=1 to select January, or month=[6,7,8] to select summer months. If not indexer is given, all values are
+        considered.
+
+    Returns
+    -------
+    xr.DataArray
+        The DataArray for the given thresholded running statistic.
+    """
+    threshold = convert_units_to(threshold, data)
+    cond = compare(data, op, threshold, constrain)
+    return select_rolling_resample_op(
+        data.where(cond),
+        window=window,
+        window_center=window_center,
+        window_op=window_op,
+        op=reducer,
+        freq=freq,
+        out_units=out_units,
+    )
 
 
 def doymax(da: xr.DataArray) -> xr.DataArray:
@@ -990,57 +1098,6 @@ def bivariate_count_occurrences(
     return to_agg_units(out, data_var1, "count", dim="time")
 
 
-# CLIX-META Indices
-# v0.6.1
-
-
-# @declare_relative_units(threshold="<low_data>")
-# def count_level_crossings(
-#     low_data: xr.DataArray,
-#     high_data: xr.DataArray,
-#     threshold: Quantified,
-#     freq: str,
-#     *,
-#     op_low: Literal["<", "<=", "lt", "le"] = "<",
-#     op_high: Literal[">", ">=", "gt", "ge"] = ">",
-# ) -> xr.DataArray:
-#     """
-#     Calculate the number of times low_data is below threshold while high_data is above threshold.
-
-#     First, the threshold is transformed to the same standard_name and units as the input data,
-#     then the thresholding is performed, and finally, the number of occurrences is counted.
-
-#     Parameters
-#     ----------
-#     low_data : xr.DataArray
-#         Variable that must be under the threshold.
-#     high_data : xr.DataArray
-#         Variable that must be above the threshold.
-#     threshold : Quantified
-#         Threshold.
-#     freq : str
-#         Resampling frequency defining the periods as defined in :ref:`timeseries.resampling`.
-#     op_low : {"<", "<=", "lt", "le"}
-#         Comparison operator for low_data. Default: "<".
-#     op_high : {">", ">=", "gt", "ge"}
-#         Comparison operator for high_data. Default: ">".
-
-#     Returns
-#     -------
-#     xr.DataArray
-#         The DataArray of level crossing events.
-#     """
-#     # Convert units to low_data
-#     high_data = convert_units_to(high_data, low_data)
-#     threshold = convert_units_to(threshold, low_data)
-
-#     lower = compare(low_data, op_low, threshold, constrain=("<", "<="))
-#     higher = compare(high_data, op_high, threshold, constrain=(">", ">="))
-
-#     out = (lower & higher).resample(time=freq).sum()
-#     return to_agg_units(out, low_data, "count", dim="time")
-
-
 @declare_relative_units(threshold="<data>")
 def count_occurrences(
     data: xr.DataArray,
@@ -1270,54 +1327,6 @@ def extreme_range(low_data: xr.DataArray, high_data: xr.DataArray, freq: str) ->
     return out
 
 
-# @declare_relative_units(threshold="<data>")
-# def first_occurrence(
-#     data: xr.DataArray,
-#     threshold: Quantified,
-#     freq: str,
-#     op: ALL_OPERATORS,
-#     constrain: Sequence[str] | None = None,
-# ) -> xr.DataArray:
-#     """
-#     Calculate the first time some condition is met.
-
-#     First, the threshold is transformed to the same standard_name and units as the input data.
-#     Then the thresholding is performed as condition(data, threshold), i.e. if condition is <, data < threshold.
-#     Finally, locate the first occurrence when condition is met.
-
-#     Parameters
-#     ----------
-#     data : xr.DataArray
-#         Input data.
-#     threshold : Quantified
-#         Threshold.
-#     freq : str
-#         Resampling frequency defining the periods as defined in :ref:`timeseries.resampling`.
-#     op : {">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"}
-#         Logical operator. e.g. arr > thresh.
-#     constrain : sequence of str, optional
-#         Optionally allowed conditions.
-
-#     Returns
-#     -------
-#     xr.DataArray
-#         The DataArray of times of first occurrences.
-#     """
-#     threshold = convert_units_to(threshold, data)
-
-#     cond = compare(data, op, threshold, constrain)
-
-#     out = resample_map(
-#         cond,
-#         "time",
-#         freq,
-#         rl.first_run,
-#         map_kwargs={"window": 1, "dim": "time", "coord": "dayofyear"},
-#     )
-#     out.attrs["units"] = ""
-#     return out
-
-
 def interday_diurnal_range(
     low_data: xr.DataArray, high_data: xr.DataArray, reducer: Literal["max", "min", "mean", "sum"], freq: str
 ) -> xr.DataArray:
@@ -1350,54 +1359,6 @@ def interday_diurnal_range(
     return out
 
 
-# @declare_relative_units(threshold="<data>")
-# def last_occurrence(
-#     data: xr.DataArray,
-#     threshold: Quantified,
-#     freq: str,
-#     op: ALL_OPERATORS,
-#     constrain: Sequence[str] | None = None,
-# ) -> xr.DataArray:
-#     """
-#     Calculate the last time some condition is met.
-
-#     First, the threshold is transformed to the same standard_name and units as the input data.
-#     Then the thresholding is performed as condition(data, threshold), i.e. if condition is <, data < threshold.
-#     Finally, locate the last occurrence when condition is met.
-
-#     Parameters
-#     ----------
-#     data : xr.DataArray
-#         Input data.
-#     threshold : Quantified
-#         Threshold.
-#     freq : str
-#         Resampling frequency defining the periods as defined in :ref:`timeseries.resampling`.
-#     op : {">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"}
-#         Logical operator. e.g. arr > thresh.
-#     constrain : sequence of str, optional
-#         Optionally allowed conditions.
-
-#     Returns
-#     -------
-#     xr.DataArray, [day of year]
-#         Day of year of the {which} time where data {condition} {threshold}.
-#     """
-#     threshold = convert_units_to(threshold, data)
-
-#     cond = compare(data, op, threshold, constrain)
-
-#     out = resample_map(
-#         cond,
-#         "time",
-#         freq,
-#         rl.last_run,
-#         map_kwargs={"window": 1, "dim": "time", "coord": "dayofyear"},
-#     )
-#     out.attrs["units"] = ""
-#     return out
-
-
 def percentile(data: xr.DataArray, percentile: float, freq: str):
     """
     Calculate the percentile statistic.
@@ -1422,152 +1383,6 @@ def percentile(data: xr.DataArray, percentile: float, freq: str):
     out = data.resample(time=freq).quantile(q).drop_vars("quantile")
     out.attrs["units"] = data.attrs["units"]
     return out
-
-
-def running_statistics(
-    data: xr.DataArray, window: int, win_reducer: REDUCTION_OPERATORS, reducer: REDUCTION_OPERATORS, freq: str
-):
-    """
-    Statistics of a running statistic.
-
-    This index function calculates the "reducer" statistic given based on result of applying the "win_reducer"
-    statistic in a rolling manner, using the specified window size, to the input data.
-
-    Parameters
-    ----------
-    data : xr.DataArray
-        An array.
-    window : int
-        The running window size.
-    win_reducer : {"min", "max", "mean", "std", "var", "sum"}
-        The running statistic. The result is assigned to the window's center.
-    reducer : {"min", "max", "mean", "std", "var", "sum"}
-        The resampling statistic.
-    freq : str
-        Resampling frequency defining the periods as defined in :ref:`timeseries.resampling`.
-        Resampling is done after computing the running statistics.
-
-    Returns
-    -------
-    xr.DataArray
-        {reducer} of the {window}-day {win_reducer}.
-    """
-    # Double "to_agg_units" so unit-changing reducers are treated correctly (ex: var, var)
-    stats = getattr(data.rolling(time=window, center=True), win_reducer)()
-    stats = to_agg_units(stats, data, win_reducer)
-    out = getattr(stats.resample(time=freq), reducer)()
-    return to_agg_units(out, stats, reducer)
-
-
-@declare_relative_units(threshold="<data>")
-def spell_length(
-    data: xr.DataArray,
-    threshold: Quantified,
-    reducer: Literal["max", "min", "mean", "sum"],
-    freq: str,
-    op: ALL_OPERATORS,
-) -> xr.DataArray:
-    """
-    Calculate statistics on lengths of spells.
-
-    First, the threshold is transformed to the same standard_name and units as the input data.
-    Then the thresholding is performed as condition(data, threshold), i.e. if condition is <, data < threshold.
-    Then the spells are determined, and finally the statistics according to the specified reducer are calculated.
-
-    Parameters
-    ----------
-    data : xr.DataArray
-        Input data.
-    threshold : Quantified
-        Threshold.
-    reducer : {'max', 'min', 'mean', 'sum'}
-        Reducer.
-    freq : str
-        Resampling frequency defining the periods as defined in :ref:`timeseries.resampling`.
-    op : {">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"}
-        Logical operator. e.g. arr > thresh.
-
-    Returns
-    -------
-    xr.DataArray
-        The DataArray of spell lengths.
-    """
-    threshold = convert_units_to(
-        threshold,
-        data,
-        context=infer_context(standard_name=data.attrs.get("standard_name")),
-    )
-
-    cond = compare(data, op, threshold)
-
-    out = resample_map(
-        cond,
-        "time",
-        freq,
-        rl.rle_statistics,
-        map_kwargs={"reducer": reducer, "window": 1, "dim": "time"},
-    )
-    return to_agg_units(out, data, "count")
-
-
-def statistics(data: xr.DataArray, reducer: Literal["max", "min", "mean", "sum"], freq: str) -> xr.DataArray:
-    """
-    Calculate a simple statistic of the data.
-
-    Parameters
-    ----------
-    data : xr.DataArray
-        Input data.
-    reducer : {'max', 'min', 'mean', 'sum'}
-        Reducer.
-    freq : str
-        Resampling frequency defining the periods as defined in :ref:`timeseries.resampling`.
-
-    Returns
-    -------
-    xr.DataArray
-        The DataArray for the given statistic.
-    """
-    out = getattr(data.resample(time=freq), reducer)()
-    out.attrs["units"] = data.attrs["units"]
-    return out
-
-
-@declare_relative_units(threshold="<data>")
-def temperature_sum(data: xr.DataArray, op: DIFFERENCE_OPERATORS, threshold: Quantified, freq: str) -> xr.DataArray:
-    """
-    Calculate the temperature sum above/below a threshold.
-
-    First, the threshold is transformed to the same standard_name and units as the input data.
-    Then the thresholding is performed as condition(data, threshold), i.e. if condition is <, data < threshold.
-    Finally, the sum is calculated for those data values that fulfill the condition after subtraction of the threshold
-    value. If the sum is for values below the threshold the result is multiplied by -1.
-
-    Parameters
-    ----------
-    data : xr.DataArray
-        Input data.
-    op : {">", "gt", "<", "lt", ">=", "ge", "<=", "le"}
-        Logical operator. e.g. arr > thresh.
-    threshold : Quantified
-        Threshold.
-    freq : str
-        Resampling frequency defining the periods as defined in :ref:`timeseries.resampling`.
-
-    Returns
-    -------
-    xr.DataArray
-        The DataArray for the sum of temperatures above or below a threshold.
-    """
-    threshold = convert_units_to(threshold, data)
-
-    cond = compare(data, op, threshold, constrain=("<", "<=", ">", ">="))
-    direction = -1 if op in ["<", "<=", "lt", "le"] else 1
-
-    out = (data - threshold).where(cond).resample(time=freq).sum()
-    out = direction * out
-    out.attrs["units_metadata"] = "temperature: difference"
-    return to_agg_units(out, data, "integral")
 
 
 @declare_relative_units(threshold="<data>")
@@ -1610,101 +1425,6 @@ def thresholded_percentile(
     threshold = convert_units_to(threshold, data)
     cond = compare(data, op, threshold, constrain)
     return percentile(data.where(cond), percentile, freq)
-
-
-@declare_relative_units(threshold="<data>")
-def thresholded_running_statistics(
-    data: xr.DataArray,
-    threshold: Quantified,
-    op: ALL_OPERATORS,
-    window: int,
-    win_reducer: Literal["max", "min", "mean", "sum"],
-    reducer: Literal["max", "min", "mean", "sum"],
-    freq: str,
-    constrain: Sequence[str] | None = None,
-) -> xr.DataArray:
-    """
-    Calculate a running statistic of the data for which some condition is met.
-
-    This index function calculates the `reducer` statistic based on result of applying the `win_reducer`,
-    using the specified window size, on the data that meets a threshold condition. First, the threshold
-    is transformed to the same units as the input data. Then the condition is applied, i.e. if `op`
-    is <, the comparison ``data < threshold`` has to be fulfilled. Then the `win_reducer`` is calculated
-    on the data that fulfil the condition, and finally the `reducer` is calculated over the resulting data,
-    for each resampling period.
-
-    Parameters
-    ----------
-    data : xr.DataArray
-        Input data.
-    threshold : Quantified
-        Threshold.
-    op : {">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"}
-        Logical operator. e.g. arr > thresh.
-    window : int
-        The running window size.
-    win_reducer : {"min", "max", "mean", "std", "var", "sum"}
-        The running statistic. The result is assigned to the window's center.
-    reducer : {'max', 'min', 'mean', 'sum'}
-        Reducer.
-    freq : str
-        Resampling frequency defining the periods as defined in :ref:`timeseries.resampling`.
-    constrain : sequence of str, optional
-        Optionally allowed conditions. Default: None.
-
-    Returns
-    -------
-    xr.DataArray
-        The DataArray for the given thresholded running statistic.
-    """
-    threshold = convert_units_to(threshold, data)
-    cond = compare(data, op, threshold, constrain)
-    return running_statistics(data.where(cond), window, win_reducer, reducer, freq)
-
-
-@declare_relative_units(threshold="<data>")
-def thresholded_statistics(
-    data: xr.DataArray,
-    op: ALL_OPERATORS,
-    threshold: Quantified,
-    reducer: Literal["max", "min", "mean", "sum"],
-    freq: str,
-    constrain: Sequence[str] | None = None,
-) -> xr.DataArray:
-    """
-    Calculate a simple statistic of the data for which some condition is met.
-
-    First, the threshold is transformed to the same standard_name and units as the input data.
-    Then the thresholding is performed as condition(data, threshold), i.e. if condition is <, data < threshold.
-    Finally, the statistic is calculated for those data values that fulfill the condition.
-
-    Parameters
-    ----------
-    data : xr.DataArray
-        Input data.
-    op : {">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"}
-        Logical operator. e.g. arr > thresh.
-    threshold : Quantified
-        Threshold.
-    reducer : {'max', 'min', 'mean', 'sum'}
-        Reducer.
-    freq : str
-        Resampling frequency defining the periods as defined in :ref:`timeseries.resampling`.
-    constrain : sequence of str, optional
-        Optionally allowed conditions. Default: None.
-
-    Returns
-    -------
-    xr.DataArray
-        The DataArray for the given thresholded statistic.
-    """
-    threshold = convert_units_to(threshold, data)
-
-    cond = compare(data, op, threshold, constrain)
-
-    out = getattr(data.where(cond).resample(time=freq), reducer)()
-    out.attrs["units"] = data.attrs["units"]
-    return out
 
 
 def aggregate_between_dates(

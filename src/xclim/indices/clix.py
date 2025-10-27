@@ -33,10 +33,9 @@ def count_level_crossings(
     freq: str,
 ) -> xr.DataArray:
     """
-    Calculate the number of times low_data is below threshold while high_data is above threshold.
+    Calculate the number of times the given threshold level is crossed during the specified time period.
 
-    This index function calculates the number of times the given threshold level is crossed during the specified time
-    period, i.e. how many times the maximum data is above the threshold and the minimum data is below the threshold.
+    I.e. how many times the maximum data is above the threshold and the minimum data is below the threshold.
     The function takes two inputs, ``low_data`` and ``high_data``, together with one parameter, the ``threshold``.
     First, the threshold is transformed to the same standard_name and units as the input data. Then the comparison is
     done as ``low_data < threshold < high_data``, and finally the number of times when the comparison is fulfilled is
@@ -78,9 +77,8 @@ def count_occurrences(
     freq: str,
 ) -> xr.DataArray:
     """
-    Calculate the number of times data meets a condition.
+    Calculate the number of times the given threshold is exceeded during the specified time period.
 
-    This index function calculates the number of times the given threshold is exceeded during the specified time period.
     First, the threshold is transformed to the same standard_name and units as the input data. Then the condition is
     applied, i.e. if ``condition`` is <, the comparison ``data < threshold`` has to be fulfilled. Finally, the number of
     times when the comparison is fulfilled is counted.
@@ -91,8 +89,8 @@ def count_occurrences(
         An array.
     threshold : Quantified
         Threshold.
-    condition : {">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"}
-        Logical operator. e.g. arr > thresh.
+    condition : {">", "gt", "<", "lt", ">=", "ge", "<=", "le"}
+        Logical comparison operator.
     freq : str
         Resampling frequency defining the periods as defined in :ref:`timeseries.resampling`.
 
@@ -114,10 +112,9 @@ def count_percentile_occurences(
     freq: str,
 ) -> xr.DataArray:
     """
-    Count how many times a seasonally varying percentile-based threshold is exceeded.
+    Calculate how many times a seasonally varying percentile-based threshold is exceeded during the specified period.
 
-    This index function calculates how many times a seasonally varying percentile-based threshold is exceeded during the
-    specified time period. First, the given ``percentile`` value is used to calculate the climatology for the specified
+    First, the given ``percentile`` value is used to calculate the climatology for the specified
     reference period of daily percentile levels over a 5-day window centred on each specific day. These seasonally
     varying percentile levels are used when applying the condition, i.e. if the ``condition`` is <, the comparison is
     done for each day (i) as ``data(i) < percentile_level(i)``. Finally, the number of times when the comparison is
@@ -129,8 +126,8 @@ def count_percentile_occurences(
         An array.
     percentile : float
         The percentile to compute on the reference period, between 0 and 100.
-    condition :  {">", "gt", "<", "lt", ">=", "ge", "<=", "le"}
-        Logical operator. e.g. arr[i] > climatology[doy(i)]
+    condition : {">", "gt", "<", "lt", ">=", "ge", "<=", "le"}
+        Logical comparison operator.
     reference_period : tuple of two dates
         Start and end of the period used to compute the percentiles. Dates are given as YYYY-MM-DD.
     freq : str
@@ -168,10 +165,9 @@ def count_thresholded_percentile_occurences(
     freq: str,
 ) -> xr.DataArray:
     """
-    Count how many times a seasonally varying percentile-based threshold is exceeded within filtered data.
+    Calculate how many time a percentile-based threshold (fixed over the year) is exceeded during the specified period.
 
-    This index function calculates how many time a percentile-based threshold (fixed over the year) is exceeded during
-    the specified time period. First the ``data_threshold`` is transformed to the same standard name and units as the
+    First the ``data_threshold`` is transformed to the same standard name and units as the
     input data. Then the given ``percentile`` value is used to calculate the climatological percentile-based threshold
     for the specified reference period.  This constant percentile level is then used when applying the
     ``percentile_condition``, i.e. if the percentile condition is <, the comparison is done as
@@ -184,11 +180,11 @@ def count_thresholded_percentile_occurences(
     data_threshold : Quantified
         Threshold.
     data_condition : {">", "gt", "<", "lt", ">=", "ge", "<=", "le"}
-        Operator for the data condition, for filtering the data prior to computing the climatology.
+        Logical comparison operator to filter the data.
     percentile : float
         The percentile to compute on the reference period, between 0 and 100.
-    percentile_condition :  {">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"}
-        Operator for the percentile_condition e.g. arr[i] > climatology[doy(i)].
+    percentile_condition : {">", "gt", "<", "lt", ">=", "ge", "<=", "le"}
+        Logical comparison operator to find percentile occurrences on filtered data.
     reference_period : tuple of two dates
         Start and end of the period used to compute the percentiles. Dates are given as YYYY-MM-DD.
     freq : str
@@ -219,10 +215,9 @@ def diurnal_temperature_range(
     low_data: xr.DataArray, high_data: xr.DataArray, statistic: REDUCERS, freq: str
 ) -> xr.DataArray:
     """
-    Calculate the diurnal temperature range and reduce according to a statistic.
+    Calculate a statistical measure on the diurnal temperature range during the specified time period.
 
-    This index function calculates a statistical measure on the diurnal temperature range during the specified time
-    period. It takes two inputs, ``low_data`` and ``high_data``, i.e. daily minimum and maximum temperature.
+    It takes two inputs, ``low_data`` and ``high_data``, i.e. daily minimum and maximum temperature.
     The diurnal temperature range is first calculated, and then the statistic is calculated.
 
     Parameters
@@ -231,8 +226,8 @@ def diurnal_temperature_range(
         The lowest daily temperature (tasmin).
     high_data : xr.DataArray
         The highest daily temperature (tasmax).
-    statistic : {'max', 'min', 'mean', 'sum', 'std', 'var'}
-        Reducer.
+    statistic : {"min", "max", "mean", "std", "var", "sum"}
+        Reducer over the resampling period.
     freq : str
         Resampling frequency defining the periods as defined in :ref:`timeseries.resampling`.
 
@@ -247,11 +242,10 @@ def diurnal_temperature_range(
 @declare_relative_units(high_data="<low_data>")
 def extreme_range(low_data: xr.DataArray, high_data: xr.DataArray, freq: str) -> xr.DataArray:
     """
-    Calculate the extreme daily temperature range.
+    Calculate the maximum temperature difference during the specified time period.
 
-    This index function calculates the maximum temperature difference during the specified time period. It takes two
-    inputs, ``low_data`` and ``high_data``, i.e. daily minimum and maximum temperature. From this it calculates the
-    extreme temperature range as the maximum of daily maximum temperature minus
+    It takes two inputs, ``low_data`` and ``high_data``, i.e. daily minimum and maximum temperature.
+    From this it calculates the extreme temperature range as the maximum of daily maximum temperature minus
     the minimum of daily minimum temperature.
 
     Parameters
@@ -279,9 +273,8 @@ def first_occurrence(
     freq: str,
 ) -> xr.DataArray:
     """
-    Calculate the first time some condition is met.
+    Calculate the first time during the specified time period when a threshold is exceeded.
 
-    This index function calculates the first time during the specified time period when a threshold is exceeded.
     First, the threshold is transformed to the same standard_name and units as the input data. Then the condition is
     applied, i.e. if ``condition`` is <, the comparison ``data < threshold`` has to be fulfilled. Finally, the first
     occurrence when this comparison is met is located.
@@ -293,7 +286,7 @@ def first_occurrence(
     threshold : Quantified
         Threshold.
     condition : {">", "gt", "<", "lt", ">=", "ge", "<=", "le"}
-        Logical operator. e.g. arr > thresh.
+        Logical comparison operator.
     freq : str
         Resampling frequency defining the periods as defined in :ref:`timeseries.resampling`.
 
@@ -321,10 +314,9 @@ def first_occurrence(
 
 def interday_diurnal_temperature_range(low_data: xr.DataArray, high_data: xr.DataArray, freq: str) -> xr.DataArray:
     """
-    Calculate the average absolute day-to-day difference in diurnal range.
+    Calculate the mean over the specified period of the absolute day-to-day difference in diurnal temperature range.
 
-    This index function calculates the mean over the specified time period of the absolute day-to-day difference in
-    diurnal temperature range. It takes two inputs, ``low_data`` and ``high_data``, i.e. daily minimum and maximum
+    It takes two inputs, ``low_data`` and ``high_data``, i.e. daily minimum and maximum
     temperature and calculates the diurnal temperature range. Then the day-to-day absolute difference is calculated and
     the average is formed.
 
@@ -353,9 +345,8 @@ def last_occurrence(
     freq: str,
 ) -> xr.DataArray:
     """
-    Calculate the last time some condition is met.
+    Calculate the last time during the specified time period when a threshold exceeded.
 
-    This index function calculates the last time during the specified time period when a threshold exceeded.
     First, the threshold is transformed to the same standard_name and units as the input data, then the condition is
     applied, i.e. if ``condition`` is <, the comparison ``data < threshold`` has to be fulfilled. Finally, the last
     occurrence when this comparison is met is located.
@@ -367,7 +358,7 @@ def last_occurrence(
     threshold : Quantified
         Threshold.
     condition : {">", "gt", "<", "lt", ">=", "ge", "<=", "le"}
-        Logical operator. e.g. arr > thresh.
+        Logical comparison operator.
     freq : str
         Resampling frequency defining the periods as defined in :ref:`timeseries.resampling`.
 
@@ -386,3 +377,275 @@ def last_occurrence(
         freq=freq,
         constrain=OPERATORS.__args__,
     )
+
+
+def percentile(data: xr.DataArray, percentiles: float, freq: str):
+    """
+    Calculate a percentile statistic over the data in the specified time period.
+
+    Parameters
+    ----------
+    data : xr.DataArray
+        An array.
+    percentiles : float
+        A percentile (0, 100).
+    freq : str
+        Resampling frequency defining the periods as defined in :ref:`timeseries.resampling`.
+
+    Returns
+    -------
+    xr.DataArray, [same as data]
+        {percentiles}th percentile of the data.
+    """
+    return generic.percentile(data, percentiles, freq)
+
+
+def running_statistics(
+    data: xr.DataArray, window: int, rolling_aggregator: REDUCERS, overall_statistic: REDUCERS, freq: str
+):
+    """
+    Calculate, for the specified period, a statistic on a rolling aggregation, using the specified window size.
+
+    Parameters
+    ----------
+    data : xr.DataArray
+        An array.
+    window : int
+        The running window size.
+    rolling_aggregator : {"min", "max", "mean", "std", "var", "sum"}
+        The running statistic. The result is assigned to the window's center.
+    overall_statistic : {"min", "max", "mean", "std", "var", "sum"}
+        Reducer over the resampling period.
+    freq : str
+        Resampling frequency defining the periods as defined in :ref:`timeseries.resampling`.
+        Resampling is done after computing the running statistics.
+
+    Returns
+    -------
+    xr.DataArray
+        {overall_statistic} of the {window}-day {rolling_aggregator}.
+    """
+    return generic.select_rolling_resample_op(
+        da=data, op=overall_statistic, window=window, window_center=True, window_op=rolling_aggregator, freq=freq
+    )
+
+
+@declare_relative_units(threshold="<data>")
+def spell_length(
+    data: xr.DataArray,
+    threshold: Quantified,
+    condition: OPERATORS,
+    statistic: REDUCERS,
+    freq: str,
+) -> xr.DataArray:
+    """
+    Calculate the statistic over the lengths of spells during the specified time period.
+
+    First, the ``threshold`` is transformed to the same standard_name and units as the input data.
+    Then the``condition`` is applied, i.e. if ``condition`` is "<"", the comparison ``data < threshold``
+    has to be fulfilled, and spell lengths are calculated from the resulting data.
+    Finally the ``statistic`` over spell lengths is calculated.
+
+    Parameters
+    ----------
+    data : xr.DataArray
+        Input data.
+    threshold : Quantified
+        Threshold.
+    condition : {">", "gt", "<", "lt", ">=", "ge", "<=", "le"}
+        Logical comparison operator.
+    statistic : {"min", "max", "mean", "std", "var", "sum"}
+        Spell lengths reducer over the resampling period.
+    freq : str
+        Resampling frequency defining the periods as defined in :ref:`timeseries.resampling`.
+
+    Returns
+    -------
+    xr.DataArray
+        {statistic} of spells where data {condition} {threshold}.
+    """
+    return generic.spell_length_statistics(
+        data=data,
+        threshold=threshold,
+        window=1,
+        win_reducer=None,
+        op=condition,
+        spell_reducer=statistic,
+        resample_before_rl=False,
+        freq=freq,
+    )
+
+
+def statistics(data: xr.DataArray, statistic: REDUCERS, freq: str):
+    """
+    Calculate the statistic over the data in the specified time period.
+
+    Parameters
+    ----------
+    data : xr.DataArray
+        Input data.
+    statistic : {"min", "max", "mean", "std", "var", "sum"}
+        Reducer over the resampling period.
+    freq : str
+        Resampling frequency defining the periods as defined in :ref:`timeseries.resampling`.
+
+    Returns
+    -------
+    xr.DataArray
+        {statistic} of data.
+    """
+    return generic.select_resample_op(data, op=statistic, freq=freq)
+
+
+@declare_relative_units(threshold="<data>")
+def temperature_sum(data: xr.DataArray, threshold: Quantified, condition: OPERATORS, freq: str) -> xr.DataArray:
+    """
+    Calculate the temperature sum above or below a threshold during the specified time period.
+
+    First, the ``threshold`` is transformed to the same standard_name and units as the input data. Then the
+    condition is applied, i.e. if ``condition`` is "<", the comparison ``data < threshold`` has to be fulfilled.
+    Finally, for those data values that fulfil the condition the sum is calculated after
+    subtraction of the threshold value. If the sum is for values below the threshold the result is multiplied by -1.
+
+    Parameters
+    ----------
+    data : xr.DataArray
+        Input data.
+    threshold : Quantified
+        Threshold.
+    condition : {">", "gt", "<", "lt", ">=", "ge", "<=", "le"}
+        Logical comparison operator.
+    freq : str
+        Resampling frequency defining the periods as defined in :ref:`timeseries.resampling`.
+
+    Returns
+    -------
+    xr.DataArray
+        Sum of temperature {condition} {threshold}.
+    """
+    return generic.cumulative_difference(data, threshold=threshold, op=condition, freq=freq)
+
+
+@declare_relative_units(threshold="<data>")
+def thresholded_percentile(
+    data: xr.DataArray,
+    threshold: Quantified,
+    condition: OPERATORS,
+    percentile: float,
+    freq: str,
+) -> xr.DataArray:
+    """
+    Calculate, for the specified time period, a percentile statistic on the data that meets the specified condition.
+
+    First, the threshold is transformed to the same standard_name and units as the input data.
+    Then the condition is applied, i.e. if ``condition`` is "<", the comparison ``data < threshold``
+    has to be fulfilled. Finally, the percentile is calculated over the data that fulfil the condition.
+
+    Parameters
+    ----------
+    data : xr.DataArray
+        Input data.
+    threshold : Quantified
+        Threshold.
+    condition : {">", "gt", "<", "lt", ">=", "ge", "<=", "le"}
+        Logical comparison operator.
+    percentile : float
+        A percentile (0, 100).
+    freq : str
+        Resampling frequency defining the periods as defined in :ref:`timeseries.resampling`.
+
+    Returns
+    -------
+    xr.DataArray
+        {percentile}th percentile of data where it is {condition} {threshold}.
+    """
+    return generic.thresholded_percentile(data, threshold=threshold, op=condition, percentile=percentile, freq=freq)
+
+
+@declare_relative_units(threshold="<data>")
+def thresholded_running_statistics(
+    data: xr.DataArray,
+    threshold: Quantified,
+    condition: OPERATORS,
+    rolling_aggregator: REDUCERS,
+    window_size: int,
+    overall_statistic: REDUCERS,
+    freq: str,
+) -> xr.DataArray:
+    """
+    Calculate, for the specified period, a statistic on a rolling aggregation on filtered data.
+
+    First, the threshold is transformed to the same standard_name and units as the input data. Then the condition
+    is applied, i.e. if `condition` is "<", the comparison ``data < threshold`` has to be fulfilled. Then the
+    ``rolling_aggregator`` is calculated on the data that fulfil the condition, and finally the ``overall_statistic``
+    is calculated over the resulting data.
+
+    Parameters
+    ----------
+    data : xr.DataArray
+        Input data.
+    threshold : Quantified
+        Threshold.
+    condition : {">", "gt", "<", "lt", ">=", "ge", "<=", "le"}
+        Logical comparison operator.
+    rolling_aggregator : {"min", "max", "mean", "std", "var", "sum"}
+        Running reducer over the window.
+    window_size : int
+        Size of the rolling window (centered).
+    overall_statistic : {"min", "max", "mean", "std", "var", "sum"}
+        Reducer over the resampling period.
+    freq : str
+        Resampling frequency defining the periods as defined in :ref:`timeseries.resampling`.
+        Applied after the rolling window.
+
+    Returns
+    -------
+    xr.DataArray
+        {overall_statistic} of {window_size}-day {rolling_aggregtor} of data where it is {condition} {threshold}.
+    """
+    return generic.threshold_rolling_resample_op(
+        data,
+        threshold=threshold,
+        op=condition,
+        reducer=overall_statistic,
+        window=window_size,
+        window_center=True,
+        window_op=rolling_aggregator,
+        freq=freq,
+    )
+
+
+@declare_relative_units(threshold="<data>")
+def thresholded_statistics(
+    data: xr.DataArray,
+    threshold: Quantified,
+    condition: OPERATORS,
+    statistic: REDUCERS,
+    freq: str,
+) -> xr.DataArray:
+    """
+    Calculate, for the specified time period, the statistic over the data for which some condition is met.
+
+    First, the threshold is transformed to the same standard_name and units as the input data.
+    Then the condition is applied, i.e. if ``condition`` is "<", the comparison ``data < threshold``
+    has to be fulfilled. Finally, the statistic is calculated for those data values that fulfil the condition.
+
+    Parameters
+    ----------
+    data : xr.DataArray
+        Input data.
+    threshold : Quantified
+        Threshold.
+    condition : {">", "gt", "<", "lt", ">=", "ge", "<=", "le"}
+        Logical comparison operator.
+    statistic : {"min", "max", "mean", "std", "var", "sum"}
+        Reducer over the resampling period.
+    freq : str
+        Resampling frequency defining the periods as defined in :ref:`timeseries.resampling`.
+
+    Returns
+    -------
+    xr.DataArray
+        {statistic} of data where it is {condition} {threshold}.
+    """
+    return generic.threshold_resample_op(data, threshold=threshold, op=condition, reducer=statistic, freq=freq)
