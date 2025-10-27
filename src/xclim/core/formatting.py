@@ -80,7 +80,7 @@ class AttrFormatter(string.Formatter):
         self.modifiers = modifiers
         self.mapping = mapping
 
-    def format(self, format_string: str, /, *args, **kwargs: dict) -> str:
+    def format(self, format_string: str, /, *args: Any, **kwargs: Any) -> str:
         r"""
         Format a string.
 
@@ -90,7 +90,7 @@ class AttrFormatter(string.Formatter):
             The string to format.
         *args : Any
             Arguments to format.
-        **kwargs : dict
+        **kwargs : Any
             Keyword arguments to format.
 
         Returns
@@ -304,7 +304,7 @@ def _parse_parameters(section):
             name, annot = line.split(":", maxsplit=1)
             curr_key = name.strip()
             params[curr_key] = {"description": ""}
-            match = re.search(r".*(\{.*\}).*", annot)
+            match = re.search(r".*(\{.*}).*", annot)
             if match:
                 try:
                     choices = literal_eval(match.groups()[0])
@@ -433,11 +433,9 @@ def update_history(
         missing_str="",
         **inputs_kws,
     )
-    if len(merged_history) > 0 and not merged_history.endswith("\n"):
-        merged_history += "\n"
-    merged_history += (
-        f"[{dt.datetime.now():%Y-%m-%d %H:%M:%S}] {new_name or ''}: {hist_str} - xclim version: {__version__}"
-    )
+    merged_history = (
+        f"[{dt.datetime.now():%Y-%m-%d %H:%M:%S}] {new_name or ''}: {hist_str} - xclim version: {__version__}\n"
+    ) + merged_history
     return merged_history
 
 
@@ -491,7 +489,7 @@ def update_xclim_history(func: Callable) -> Callable:
     return _call_and_add_history
 
 
-def gen_call_string(funcname: str, *args, **kwargs) -> str:
+def gen_call_string(funcname: str, *args: Any, **kwargs: Any) -> str:
     r"""
     Generate a signature string for use in the history attribute.
 
@@ -507,7 +505,7 @@ def gen_call_string(funcname: str, *args, **kwargs) -> str:
         Name of the function.
     *args : Any
         Arguments given to the function.
-    **kwargs : dict
+    **kwargs : Any
         Keyword arguments given to the function.
 
     Returns
@@ -601,6 +599,7 @@ KIND_ANNOTATION = {
     InputKind.VARIABLE: "str or DataArray",
     InputKind.OPTIONAL_VARIABLE: "str or DataArray, optional",
     InputKind.QUANTIFIED: "quantity (string or DataArray, with units)",
+    InputKind.MASK: "DataArray or scalar",
     InputKind.FREQ_STR: "offset alias (string)",
     InputKind.NUMBER: "number",
     InputKind.NUMBER_SEQUENCE: "number or sequence of numbers",

@@ -82,13 +82,16 @@ class TestDomainCount:
 
 
 class TestFlowGeneric:
-    def test_doyminmax(self, q_series):
+    @pytest.mark.parametrize("use_dask", [True, False])
+    def test_doyminmax(self, q_series, use_dask):
         a = np.ones(365)
         a[9] = 2
         a[19] = -2
         a[39] = 4
         a[49] = -4
         q = q_series(a)
+        if use_dask:
+            q = q.chunk({"time": 200})
         dmx = generic.doymax(q)
         dmn = generic.doymin(q)
         assert dmx.values == [40]

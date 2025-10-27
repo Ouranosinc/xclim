@@ -403,3 +403,9 @@ def gather_session_data(request, nimbus, worker_id):
                 pass
 
     request.addfinalizer(remove_data_written_flag)
+
+
+@pytest.fixture
+def no_numbagg():
+    with xr.set_options(use_numbagg=False):
+        yield

@@ -7,6 +7,7 @@ Computation of statistics on runs of True values in boolean arrays.
 
 from __future__ import annotations
 
+from collections import namedtuple
 from collections.abc import Callable, Sequence
 from datetime import datetime
 from typing import Literal
@@ -19,7 +20,7 @@ from numba import njit
 
 from xclim.core import DateStr, DayOfYearStr
 from xclim.core.options import OPTIONS, RUN_LENGTH_UFUNC
-from xclim.core.utils import get_temp_dimname, split_auxiliary_coordinates, uses_dask
+from xclim.core.utils import lazy_indexing, uses_dask
 from xclim.indices.helpers import resample_map
 
 npts_opt = 9000
@@ -995,7 +996,7 @@ def season(
     dim: str = "time",
     stat: str | None = None,
     coord: str | bool | None = False,
-) -> xr.Dataset | xr.DataArray:
+) -> xr.Dataset:
     """
     Calculate the bounds of a season along a dimension.
 
@@ -1325,7 +1326,7 @@ def first_run_before_date(
 
 
 @njit
-def _rle_1d(ia):
+def _rle_1d(ia) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     y = ia[1:] != ia[:-1]  # pairwise unequal (string safe)
     i = np.append(np.nonzero(y)[0], ia.size - 1)  # must include last element position
     rl = np.diff(np.append(-1, i))  # run lengths
@@ -1334,8 +1335,8 @@ def _rle_1d(ia):
 
 
 def rle_1d(
-    arr: int | float | bool | Sequence[int | float | bool],
-) -> tuple[np.array, np.array, np.array]:
+    arr: int | float | bool | Sequence[int | float | bool] | xr.DataArray,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """
     Return the length, starting position and value of consecutive identical values.
 
@@ -1343,16 +1344,16 @@ def rle_1d(
 
     Parameters
     ----------
-    arr : Sequence[Union[int, float, bool]]
-      Array of values to be parsed.
+    arr : int or float or bool or Sequence[Union[int, float, bool]] or xr.DataArray
+        Array of values to be parsed.
 
     Returns
     -------
-    values : np.array
+    values : np.ndarray
         The values taken by arr over each run.
-    run lengths : np.array
+    run_lengths : np.ndarray
         The length of each run.
-    start position : np.array
+    start_positions : np.ndarray
         The starting index of each run.
 
     Examples
@@ -1360,19 +1361,20 @@ def rle_1d(
     >>> from xclim.indices.run_length import rle_1d
     >>> a = [1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3]
     >>> rle_1d(a)
-    (array([1, 2, 3]), array([2, 4, 6]), array([0, 2, 6]))
+    RLE_1D(values=array([1, 2, 3]), run_lengths=array([2, 4, 6]), start_positions=array([0, 2, 6]))
     """
     ia = np.asarray(arr)
     n = len(ia)
+    RLE_1D = namedtuple("RLE_1D", ["values", "run_lengths", "start_positions"])
 
     if n == 0:
         warn("run length array empty")
         # Returning None makes some other 1d func below fail.
-        return np.array(np.nan), 0, np.array(np.nan)
-    return _rle_1d(ia)
+        return RLE_1D(np.array(np.nan), np.array([0]), np.array(np.nan))
+    return RLE_1D(*_rle_1d(ia))
 
 
-def first_run_1d(arr: Sequence[int | float], window: int) -> int | np.nan:
+def first_run_1d(arr: Sequence[int | float], window: int) -> int | float:
     """
     Return the index of the first item of a run of at least a given length.
 
@@ -1403,7 +1405,7 @@ def statistics_run_1d(arr: Sequence[bool], reducer: str, window: int) -> int:
 
     Parameters
     ----------
-    arr : sequence of bool
+    arr : Sequence of bool
         Input array (bool).
     reducer : {"mean", "sum", "min", "max", "std", "count"}
         Reducing function name.
@@ -1430,7 +1432,7 @@ def windowed_run_count_1d(arr: Sequence[bool], window: int) -> int:
 
     Parameters
     ----------
-    arr : Sequence[bool]
+    arr : Sequence of bool
         Input array (bool).
     window : int
         Minimum duration of consecutive run to accumulate values.
@@ -1450,7 +1452,7 @@ def windowed_run_events_1d(arr: Sequence[bool], window: int) -> xr.DataArray:
 
     Parameters
     ----------
-    arr : Sequence[bool]
+    arr : Sequence of bool
         Input array (bool).
     window : int
         Minimum run length.
@@ -1472,7 +1474,7 @@ def windowed_run_count_ufunc(x: xr.DataArray | Sequence[bool], window: int, dim:
 
     Parameters
     ----------
-    x : Sequence[bool]
+    x : xr.DataArray or sequence of bool
         Input array (bool).
     window : int
         Minimum duration of consecutive run to accumulate values.
@@ -1504,7 +1506,7 @@ def windowed_run_events_ufunc(x: xr.DataArray | Sequence[bool], window: int, dim
 
     Parameters
     ----------
-    x : Sequence[bool]
+    x : xr.DataArray or sequence of bool
         Input array (bool).
     window : int
         Minimum run length.
@@ -1541,7 +1543,7 @@ def statistics_run_ufunc(
 
     Parameters
     ----------
-    x : sequence of bool
+    x : Sequence of bool
         Input array (bool).
     reducer : {'min', 'max', 'mean', 'sum', 'std'}
         Reducing function name.
@@ -1579,7 +1581,7 @@ def first_run_ufunc(
 
     Parameters
     ----------
-    x : Union[xr.DataArray, Sequence[bool]]
+    x : xr.DataArray or sequence of bool
         Input array (bool).
     window : int
         Minimum run length.
@@ -1603,83 +1605,6 @@ def first_run_ufunc(
     )
 
     return ind
-
-
-def lazy_indexing(da: xr.DataArray, index: xr.DataArray, dim: str | None = None) -> xr.DataArray:
-    """
-    Get values of `da` at indices `index` in a NaN-aware and lazy manner.
-
-    Parameters
-    ----------
-    da : xr.DataArray
-        Input array. If not 1D, `dim` must be given and must not appear in index.
-    index : xr.DataArray
-        N-d integer indices, if DataArray is not 1D, all dimensions of index must be in DataArray.
-    dim : str, optional
-        Dimension along which to index, unused if `da` is 1D, should not be present in `index`.
-
-    Returns
-    -------
-    xr.DataArray
-        Values of `da` at indices `index`.
-    """
-    if da.ndim == 1:
-        # Case where da is 1D and index is N-D
-        # Slightly better performance using map_blocks, over an apply_ufunc
-        def _index_from_1d_array(indices, array):
-            return array[indices]
-
-        idx_ndim = index.ndim
-        if idx_ndim == 0:
-            # The 0-D index case, we add a dummy dimension to help dask
-            dim = get_temp_dimname(da.dims, "x")
-            index = index.expand_dims(dim)
-        # Which indexes to mask.
-        invalid = index.isnull()
-        # NaN-indexing doesn't work, so fill with 0 and cast to int
-        index = index.fillna(0).astype(int)
-
-        # No need for coords, we extract by integer index.
-        # Renaming with no name to fix bug in xr 2024.01.0
-        tmpname = get_temp_dimname(da.dims, "temp")
-        da2 = xr.DataArray(da.data, dims=(tmpname,), name=None)
-        # Map blocks chunks aux coords. Remove them to avoid the alignment check load in `where`
-        index, auxcrd = split_auxiliary_coordinates(index)
-        # for each chunk of index, take corresponding values from da
-        out = index.map_blocks(_index_from_1d_array, args=(da2,)).rename(da.name)
-        # mask where index was NaN. Drop any auxiliary coord, they are already on `out`.
-        # Chunked aux coord would have the same name on both sides and xarray will want to check if they are equal,
-        # which means loading them making lazy_indexing not lazy. same issue as above
-        out = out.where(~invalid.drop_vars([crd for crd in invalid.coords if crd not in invalid.dims]))
-        out = out.assign_coords(auxcrd.coords)
-        if idx_ndim == 0:
-            # 0-D case, drop useless coords and dummy dim
-            out = out.drop_vars(da.dims[0], errors="ignore").squeeze()
-        return out.drop_vars(dim or da.dims[0], errors="ignore")
-
-    # Case where index.dims is a subset of da.dims.
-    if dim is None:
-        diff_dims = set(da.dims) - set(index.dims)
-        if len(diff_dims) == 0:
-            raise ValueError("da must have at least one dimension more than index for lazy_indexing.")
-        if len(diff_dims) > 1:
-            raise ValueError(
-                "If da has more than one dimension more than index, the indexing dim must be given through `dim`"
-            )
-        dim = diff_dims.pop()
-
-    def _index_from_nd_array(array, indices):
-        return np.take_along_axis(array, indices[..., np.newaxis], axis=-1)[..., 0]
-
-    return xr.apply_ufunc(
-        _index_from_nd_array,
-        da,
-        index.astype(int),
-        input_core_dims=[[dim], []],
-        output_core_dims=[[]],
-        dask="parallelized",
-        output_dtypes=[da.dtype],
-    )
 
 
 def index_of_date(
@@ -1914,7 +1839,7 @@ def find_events(
     window_stop: int = 1,
     data: xr.DataArray | None = None,
     freq: str | None = None,
-):
+) -> xr.Dataset:
     """
     Find events (runs).
 

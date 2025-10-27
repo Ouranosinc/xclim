@@ -10,7 +10,7 @@ from __future__ import annotations
 import operator
 import warnings
 from collections.abc import Callable, Sequence
-from typing import Literal
+from typing import Literal, cast
 
 import cftime
 import numpy as np
@@ -37,6 +37,7 @@ from xclim.core.units import (
     to_agg_units,
     units2pint,
 )
+from xclim.core.utils import lazy_indexing, uses_dask
 from xclim.indices import run_length as rl
 from xclim.indices.helpers import resample_map
 
@@ -192,7 +193,12 @@ def doymax(da: xr.DataArray) -> xr.DataArray:
         The day of year of the maximum value.
     """
     i = da.argmax(dim="time")
-    out = da.time.dt.dayofyear.isel(time=i, drop=True)
+    doy = da.time.dt.dayofyear
+
+    if uses_dask(da):
+        out = lazy_indexing(doy, i, "time").astype(doy.dtype)
+    else:
+        out = doy.isel(time=i)
     return to_agg_units(out, da, "doymax")
 
 
@@ -211,7 +217,13 @@ def doymin(da: xr.DataArray) -> xr.DataArray:
         The day of year of the minimum value.
     """
     i = da.argmin(dim="time")
-    out = da.time.dt.dayofyear.isel(time=i, drop=True)
+    doy = da.time.dt.dayofyear
+
+    if uses_dask(da):
+        out = lazy_indexing(doy, i, "time").astype(doy.dtype)
+    else:
+        out = doy.isel(time=i)
+
     return to_agg_units(out, da, "doymin")
 
 
@@ -307,7 +319,7 @@ def compare(
     Parameters
     ----------
     left : xr.DataArray
-        A DatArray being evaluated against `right`.
+        A DataArray being evaluated against `right`.
     op : {">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"}
         Logical operator. e.g. arr > thresh.
     right : float, int, np.ndarray, or xr.DataArray
@@ -354,7 +366,7 @@ def threshold_count(
     if constrain is None:
         constrain = (">", "<", ">=", "<=")
 
-    c = compare(da, op, threshold, constrain) * 1
+    c = cast(xr.DataArray, compare(da, op, threshold, constrain) * 1)
     return c.resample(time=freq).sum(dim="time")
 
 

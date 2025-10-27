@@ -5,6 +5,7 @@ Testing and Tutorial Utilities' Module
 
 from __future__ import annotations
 
+import importlib.metadata as ilm
 import importlib.resources as ilr
 import logging
 import os
@@ -13,10 +14,10 @@ import re
 import sys
 import time
 import warnings
-from collections.abc import Callable, Sequence
+from collections.abc import Callable, Iterable, Sequence
 from datetime import datetime as dt
 from functools import wraps
-from importlib import import_module
+from importlib.metadata import PackageNotFoundError
 from io import StringIO
 from pathlib import Path
 from shutil import copytree
@@ -286,7 +287,7 @@ _xclim_deps = [
     "xclim",
     "xarray",
     "statsmodels",
-    "sklearn",
+    "scikit-learn",
     "scipy",
     "pint",
     "pandas",
@@ -307,7 +308,7 @@ _xclim_deps = [
 
 def show_versions(
     file: os.PathLike | StringIO | TextIO | None = None,
-    deps: list[str] | None = None,
+    deps: Iterable[str] | None = None,
 ) -> str | None:
     """
     Print the versions of xclim and its dependencies.
@@ -316,8 +317,8 @@ def show_versions(
     ----------
     file : {os.PathLike, StringIO, TextIO}, optional
         If provided, prints to the given file-like object. Otherwise, returns a string.
-    deps : list of str, optional
-        A list of dependencies to gather and print version information from.
+    deps : iterable of str, optional
+        An iterable of dependencies to gather and print version information from.
         Otherwise, prints `xclim` dependencies.
 
     Returns
@@ -331,25 +332,15 @@ def show_versions(
     else:
         dependencies = deps
 
-    dependency_versions = [(d, lambda mod: mod.__version__) for d in dependencies]
-
-    deps_blob: list[tuple[str, str | None]] = []
-    for modname, ver_f in dependency_versions:
+    dependency_versions = {}
+    for d in dependencies:
         try:
-            if modname in sys.modules:
-                mod = sys.modules[modname]
-            else:
-                mod = import_module(modname)
-        except (KeyError, ModuleNotFoundError):
-            deps_blob.append((modname, None))
-        else:
-            try:
-                ver = ver_f(mod)
-                deps_blob.append((modname, ver))
-            except AttributeError:
-                deps_blob.append((modname, "installed"))
+            _version = ilm.version(d)
+        except PackageNotFoundError:
+            _version = None
+        dependency_versions[d] = _version
 
-    modules_versions = "\n".join([f"{k}: {stat}" for k, stat in sorted(deps_blob)])
+    modules_versions = "\n".join([f"{k}: {stat}" for k, stat in sorted(dependency_versions.items())])
 
     installed_versions = [
         "INSTALLED VERSIONS",

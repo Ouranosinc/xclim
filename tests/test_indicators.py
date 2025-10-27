@@ -537,8 +537,9 @@ def test_signature():
     assert sig.parameters["thresh"].kind == sig.parameters["thresh"].KEYWORD_ONLY
     assert sig.return_annotation == xr.DataArray
 
-    sig = signature(xclim.atmos.wind_speed_from_vector)
-    assert sig.return_annotation == tuple[xr.DataArray, xr.DataArray]
+    for indicator in ["wind_speed_from_vector", "wind_vector_from_speed"]:
+        sig = signature(getattr(xclim.convert, indicator))
+        assert sig.return_annotation == tuple[xr.DataArray, xr.DataArray]
 
 
 def test_doc():
@@ -585,7 +586,7 @@ def test_parse_doc():
     assert "references" not in doc
     assert doc["long_name"] == "The mean daily temperature at the given time frequency."
 
-    doc = parse_doc(xclim.indices.saturation_vapor_pressure.__doc__)
+    doc = parse_doc(xclim.indices.converters.saturation_vapor_pressure.__doc__)
     assert doc["parameters"]["ice_thresh"]["description"] == (
         "Threshold temperature under which to switch to equations in reference to ice instead of water. "
         "If None (default) everything is computed with reference to water. "
@@ -659,8 +660,8 @@ def test_update_history():
 
     merged = update_history("text", a, new_name="d", b=b, c=c)
 
-    assert "d: text" in merged.split("\n")[-1]
-    assert merged.startswith("a: Text1")
+    assert "d: text" in merged.split("\n")[0]
+    assert "a: Text1" in merged
 
 
 def test_input_dataset(open_dataset):

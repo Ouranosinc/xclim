@@ -1,6 +1,6 @@
 /* Array of indicator objects */
 let indicators = [];
-let defModules = ["atmos", "generic", "land", "seaIce"];
+let defModules = ["atmos", "convert", "generic", "land", "seaIce"];
 /* MiniSearch object defining search mechanism */
 let miniSearch = new MiniSearch({
   fields: ['title', 'abstract', 'variables', 'keywords', 'id'], // fields to index for full-text search

@@ -2,12 +2,16 @@
 # Tests for `xclim` package, command line interface
 from __future__ import annotations
 
+import platform
+
 import numpy as np
 import pytest
 import xarray as xr
 from click.testing import CliRunner
+from packaging import version
 
 import xclim
+from xclim import __version__ as __xclim_version__
 from xclim.cli import cli
 
 try:
@@ -64,7 +68,7 @@ def test_indicator_help(indicator, indname):
 
 
 @pytest.mark.parametrize(
-    "indicator,expected,varnames",
+    "indicator,expected,var_names",
     [
         ("tg_mean", 272.15, ["tas"]),
         ("dtrvar", 0.0, ["tasmin", "tasmax"]),
@@ -72,34 +76,35 @@ def test_indicator_help(indicator, indname):
         ("solidprcptot", 31622400.0, ["tas", "pr"]),
     ],
 )
-def test_normal_computation(tasmin_series, tasmax_series, pr_series, tmp_path, indicator, expected, varnames):
+def test_normal_computation(tasmin_series, tasmax_series, pr_series, tmp_path, indicator, expected, var_names):
     tasmin = tasmin_series(np.ones(366) + 270.15, start="1/1/2000")
     tasmax = tasmax_series(np.ones(366) + 272.15, start="1/1/2000")
     pr = pr_series(np.ones(366), start="1/1/2000")
-    ds = xr.Dataset(
-        data_vars={
-            "tasmin": tasmin,
-            "tasmax": tasmax,
-            "tas": xclim.atmos.tg(tasmin, tasmax),
-            "pr": pr,
-        }
-    )
+    with pytest.warns(DeprecationWarning):
+        ds = xr.Dataset(
+            data_vars={
+                "tasmin": tasmin,
+                "tasmax": tasmax,
+                "tas": xclim.convert.tg(tasmin, tasmax),
+                "pr": pr,
+            }
+        )
     input_file = tmp_path / "in.nc"
     output_file = tmp_path / "out.nc"
 
     ds.to_netcdf(input_file, engine="h5netcdf")
 
-    args = ["-i", str(input_file), "-o", str(output_file), "-v", indicator]
+    args = ["-i", str(input_file), "-o", str(output_file), "-v", "--engine", "h5netcdf", indicator]
     runner = CliRunner()
     results = runner.invoke(cli, args)
-    for varname in varnames:
-        assert f"Parsed {varname} = {varname}" in results.output
+    for var_name in var_names:
+        assert f"Parsed {var_name} = {var_name}" in results.output
     assert "Processing :" in results.output
     assert "100% Completed" in results.output
 
     with xr.open_dataset(output_file) as out:
-        outvar = list(out.data_vars.values())[0]
-        np.testing.assert_allclose(outvar[0], expected)
+        out_var = list(out.data_vars.values())[0]
+        np.testing.assert_allclose(out_var[0], expected)
 
 
 def test_multi_input(tas_series, pr_series, tmp_path):
@@ -121,6 +126,8 @@ def test_multi_input(tas_series, pr_series, tmp_path):
             "-o",
             str(output_file),
             "-v",
+            "--engine",
+            "h5netcdf",
             "solidprcptot",
         ],
     )
@@ -145,6 +152,8 @@ def test_multi_output(tmp_path, open_dataset):
             "-o",
             str(output_file),
             "-v",
+            "--engine",
+            "h5netcdf",
             "wind_speed_from_vector",
         ],
     )
@@ -167,6 +176,8 @@ def test_renaming_variable(tas_series, tmp_path):
                 "-o",
                 str(output_file),
                 "-v",
+                "--engine",
+                "h5netcdf",
                 "tn_mean",
                 "--tasmin",
                 "tas",
@@ -195,6 +206,8 @@ def test_indicator_chain(tas_series, tmp_path):
             "-o",
             str(output_file),
             "-v",
+            "--engine",
+            "h5netcdf",
             "tg_mean",
             "growing_degree_days",
         ],
@@ -263,7 +276,7 @@ def test_suspicious_precipitation_flags(pr_series, tmp_path):
     bad_pr.to_netcdf(input_file)
 
     runner = CliRunner()
-    runner.invoke(cli, ["-i", str(input_file), "-o", str(output_file), "dataflags", "pr"])
+    runner.invoke(cli, ["-i", str(input_file), "-o", str(output_file), "--engine", "h5netcdf", "dataflags", "pr"])
     with xr.open_dataset(output_file) as ds:
         for var in ds.data_vars:
             assert var
@@ -376,6 +389,7 @@ def test_release_notes_failure(method, error):
 def test_show_version_info():
     runner = CliRunner()
     results = runner.invoke(cli, ["show_version_info"])
-    assert "INSTALLED VERSIONS" in results.output
-    assert "python" in results.output
-    assert "boltons: installed" in results.output
+    assert "INSTALLED VERSIONS\n" in results.output
+    assert "------------------\n" in results.output
+    assert f"python: {platform.python_version()}\n" in results.output
+    assert f"xclim: {version.Version(__xclim_version__)}\n" in results.output

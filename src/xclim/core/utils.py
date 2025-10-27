@@ -199,6 +199,83 @@ def uses_dask(*das) -> bool:
     return any(_is_dask_array(da) for da in das)
 
 
+def lazy_indexing(da: xr.DataArray, index: xr.DataArray, dim: str | None = None) -> xr.DataArray:
+    """
+    Get values of `da` at indices `index` in a NaN-aware and lazy manner.
+
+    Parameters
+    ----------
+    da : xr.DataArray
+        Input array. If not 1D, `dim` must be given and must not appear in index.
+    index : xr.DataArray
+        N-d integer indices, if DataArray is not 1D, all dimensions of index must be in DataArray.
+    dim : str, optional
+        Dimension along which to index, unused if `da` is 1D, should not be present in `index`.
+
+    Returns
+    -------
+    xr.DataArray
+        Values of `da` at indices `index`.
+    """
+    if da.ndim == 1:
+        # Case where da is 1D and index is N-D
+        # Slightly better performance using map_blocks, over an apply_ufunc
+        def _index_from_1d_array(indices, array):
+            return array[indices]
+
+        idx_ndim = index.ndim
+        if idx_ndim == 0:
+            # The 0-D index case, we add a dummy dimension to help dask
+            dim = get_temp_dimname(da.dims, "x")
+            index = index.expand_dims(dim)
+        # Which indexes to mask.
+        invalid = index.isnull()
+        # NaN-indexing doesn't work, so fill with 0 and cast to int
+        index = index.fillna(0).astype(int)
+
+        # No need for coords, we extract by integer index.
+        # Renaming with no name to fix bug in xr 2024.01.0
+        tmpname = get_temp_dimname(da.dims, "temp")
+        da2 = xr.DataArray(da.data, dims=(tmpname,), name=None)
+        # Map blocks chunks aux coords. Remove them to avoid the alignment check load in `where`
+        index, auxcrd = split_auxiliary_coordinates(index)
+        # for each chunk of index, take corresponding values from da
+        out = index.map_blocks(_index_from_1d_array, args=(da2,)).rename(da.name)
+        # mask where index was NaN. Drop any auxiliary coord, they are already on `out`.
+        # Chunked aux coord would have the same name on both sides and xarray will want to check if they are equal,
+        # which means loading them making lazy_indexing not lazy. same issue as above
+        out = out.where(~invalid.drop_vars([crd for crd in invalid.coords if crd not in invalid.dims]))
+        out = out.assign_coords(auxcrd.coords)
+        if idx_ndim == 0:
+            # 0-D case, drop useless coords and dummy dim
+            out = out.drop_vars(da.dims[0], errors="ignore").squeeze()
+        return out.drop_vars(dim or da.dims[0], errors="ignore")
+
+    # Case where index.dims is a subset of da.dims.
+    if dim is None:
+        diff_dims = set(da.dims) - set(index.dims)
+        if len(diff_dims) == 0:
+            raise ValueError("da must have at least one dimension more than index for lazy_indexing.")
+        if len(diff_dims) > 1:
+            raise ValueError(
+                "If da has more than one dimension more than index, the indexing dim must be given through `dim`"
+            )
+        dim = diff_dims.pop()
+
+    def _index_from_nd_array(array, indices):
+        return np.take_along_axis(array, indices[..., np.newaxis], axis=-1)[..., 0]
+
+    return xr.apply_ufunc(
+        _index_from_nd_array,
+        da,
+        index.astype(int),
+        input_core_dims=[[dim], []],
+        output_core_dims=[[]],
+        dask="parallelized",
+        output_dtypes=[da.dtype],
+    )
+
+
 def calc_perc(
     arr: np.ndarray,
     percentiles: Sequence[float] | None = None,
@@ -498,7 +575,7 @@ class InputKind(IntEnum):
     VARIABLE = 0
     """A data variable (DataArray or variable name).
 
-       Annotation : ``xr.DataArray``.
+       Annotation : ``xr.DataArray``. May not include anything else, may not be optional.
     """
     OPTIONAL_VARIABLE = 1
     """An optional data variable (DataArray or variable name).
@@ -556,6 +633,12 @@ class InputKind(IntEnum):
 
        Annotation : ``dict`` or ``dict | None``, may be optional.
     """
+    MASK = 11
+    """A mask or flag or scalar. Any value without units that might be passed as a non-temporal DataArray.
+       Can be a DataArray, a single bool or a single float.
+
+        Annotation : ``xr.DataArray | bool`` or ``xr.DataArray | float``, may be optional.
+    """
     KWARGS = 50
     """A mapping from argument name to value.
 
@@ -596,11 +679,15 @@ def infer_kind_from_parameter(param) -> InputKind:
     else:
         annot = {"no_annotation"}
 
-    if "DataArray" in annot and "None" not in annot and param.default is not None:
+    if annot == {"DataArray"} and param.default is not None:
         return InputKind.VARIABLE
 
     annot = annot - {"None"}
 
+    if annot == {"DataArray", "bool"} or annot == {"DataArray", "float"} or annot == {"DataArray", "int"}:
+        return InputKind.MASK
+
+    # Not a mask and not a required variable
     if "DataArray" in annot:
         return InputKind.OPTIONAL_VARIABLE
 

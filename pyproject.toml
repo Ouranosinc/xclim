@@ -42,14 +42,14 @@ dependencies = [
   "dask[array] >=2024.8.1",
   "filelock >=3.14.0",
   "numba >=0.57.0",
-  "numpy >=1.24.0",
+  "numpy >=1.25.0",
   "packaging >=24.0",
   "pandas >=2.2.0",
   "pint >=0.24.4",
   "pyarrow >=15.0", # Strongly encouraged for pandas v2.2.0+
   "pyyaml >=6.0.1",
   "scikit-learn >=1.2.0",
-  "scipy >=1.11.0, <1.16.0", # FIXME: v1.16.0 was failing test_standardized_groundwater_index
+  "scipy >=1.11.0",
   "xarray >=2023.11.0,!=2024.10.0",
   "yamale >=5.0.0"
 ]
@@ -57,19 +57,19 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
   # Dev tools and testing
-  "blackdoc ==0.3.9",
-  "bump-my-version >=1.1.1",
+  "bump-my-version >=1.2.3",
   "codespell >=2.4.1",
   "coverage[toml] >=7.5.0",
   "deptry >=0.23.0",
   "flake8 >=7.2.0",
-  "flake8-rst-docstrings ==0.3.1",
-  "h5netcdf>=1.3.0",
+  "flake8-rst-docstrings >=0.3.1",
+  "h5netcdf >=1.5.0",
+  "h5py >=3.12.1",
   "ipython >=8.10.0",
   "mypy >=1.14.1",
   "nbconvert >=7.16.4",
   "nbval >=0.11.0",
-  "numpydoc >=1.8.0",
+  "numpydoc >=1.9.0",
   "pandas-stubs >=2.2",
   "pip >=25.0",
   "pooch >=1.8.0",
@@ -80,7 +80,7 @@ dev = [
   "pytest-socket >=0.6.0",
   "pytest-timeout >=2.4.0",
   "pytest-xdist[psutil] >=3.2",
-  "ruff >=0.9.6",
+  "ruff >=0.13.3",
   "tokenize-rt >=5.2.0",
   "tox >=4.25.0",
   "tox-gh >=1.5.0",
@@ -108,7 +108,7 @@ docs = [
   "sphinxcontrib-bibtex",
   "sphinxcontrib-svg2pdfconverter[Cairosvg]"
 ]
-extras = ["flox >=0.9", "xsdba >=0.4.0"]
+extras = ["flox >=0.9", "xsdba >=0.4.0", "numbagg >= 0.8"]
 all = ["xclim[dev]", "xclim[docs]", "xclim[extras]"]
 
 [project.scripts]
@@ -117,7 +117,7 @@ xclim = "xclim.cli:cli"
 [project.urls]
 "Homepage" = "https://xclim.readthedocs.io/"
 "Source" = "https://github.com/Ouranosinc/xclim/"
-"Changelog" = "https://xclim.readthedocs.io/en/stable/history.html"
+"Changelog" = "https://xclim.readthedocs.io/en/stable/changelog.html"
 "Issue tracker" = "https://github.com/Ouranosinc/xclim/issues"
 "Mastodon" = "https://fosstodon.org/@xclim"
 "Zenodo" = "https://doi.org/10.5281/zenodo.2795043"
@@ -126,7 +126,7 @@ xclim = "xclim.cli:cli"
 [tool]
 
 [tool.bumpversion]
-current_version = "0.57.1-dev.10"
+current_version = "0.58.2-dev.4"
 commit = true
 commit_args = "--no-verify --signoff"
 tag = false
@@ -170,7 +170,7 @@ pep621_dev_dependency_groups = ["all", "dev", "docs"]
 "pyyaml" = "yaml"
 
 [tool.deptry.per_rule_ignores]
-DEP002 = ["bottleneck", "h5netcdf", "pyarrow"]
+DEP002 = ["bottleneck", "h5netcdf", "numbagg", "pyarrow"]
 DEP004 = ["matplotlib", "pooch", "pytest", "pytest_socket"]
 
 [tool.flit.sdist]
@@ -377,6 +377,7 @@ max-complexity = 20
 "src/xclim/core/locales.py" = ["E501", "W505"]
 "src/xclim/core/missing" = ["D103"]
 "src/xclim/indices/_agro.py" = ["E501"]
+"src/xclim/indices/_conversion.py" = ["F405"]
 "src/xclim/indices/fire/_cffwis.py" = ["D103"]
 "tests/**/*test*.py" = ["D100", "D101", "D102", "D103", "E501", "N802", "S101"]
 
@@ -389,7 +390,8 @@ convention = "numpy"
 [tool.vulture]
 exclude = []
 ignore_decorators = ["@pytest.fixture"]
-ignore_names = []
+# no_numbagg is a simple fixture that activates a xr option, it has no value
+ignore_names = ['no_numbagg']
 min_confidence = 90
 paths = ["src/xclim", "tests"]
 sort_by_size = true
