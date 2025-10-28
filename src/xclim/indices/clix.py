@@ -111,7 +111,10 @@ def count_occurrences(
         Number of times where data is {condition} {threshold}.
     """
     return generic.count_occurrences(
-        data=data, threshold=threshold, op=condition, freq=freq, constrain=OPERATORS.__args__
+        data=data,
+        threshold=threshold,
+        op=condition,
+        freq=freq,
     ).assign_attrs(units="1")
 
 
@@ -158,7 +161,6 @@ def count_percentile_occurrences(
         reference_period=reference_period,
         freq=freq,
         bootstrap=False,
-        constrain=OPERATORS.__args__,
     ).assign_attrs(units="1")
 
 
@@ -216,7 +218,6 @@ def count_thresholded_percentile_occurrences(
         op_perc=percentile_condition,
         reference_period=reference_period,
         freq=freq,
-        constrain=OPERATORS.__args__,
         bootstrap=False,
     ).assign_attrs(units="1")
 
@@ -318,7 +319,6 @@ def first_occurrence(
         which="first",
         window=1,
         freq=freq,
-        constrain=OPERATORS.__args__,
     )
 
 
@@ -394,7 +394,6 @@ def last_occurrence(
         which="last",
         window=1,
         freq=freq,
-        constrain=OPERATORS.__args__,
     )
 
 
@@ -667,4 +666,4 @@ def thresholded_statistics(
     xr.DataArray
         {statistic} of data where it is {condition} {threshold}.
     """
-    return generic.threshold_resample_op(data, threshold=threshold, op=condition, reducer=statistic, freq=freq)
+    return generic.thresholded_resample_op(data, threshold=threshold, op=condition, reducer=statistic, freq=freq)

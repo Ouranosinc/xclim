@@ -509,43 +509,43 @@ def domain_count(
     return c.resample(time=freq).sum(dim="time")
 
 
-# def get_daily_events(
-#     da: xr.DataArray,
-#     threshold: float | int | xr.DataArray,
-#     op: ALL_OPERATORS,
-#     constrain: Sequence[str] | None = None,
-# ) -> xr.DataArray:
-#     """
-#     Return a 0/1 mask when a condition is True or False.
+def get_daily_events(
+    da: xr.DataArray,
+    threshold: float | int | xr.DataArray,
+    op: ALL_OPERATORS,
+    constrain: Sequence[str] | None = None,
+) -> xr.DataArray:
+    """
+    Return a 0/1 mask when a condition is True or False.
 
-#     Parameters
-#     ----------
-#     da : xr.DataArray
-#         Input data.
-#     threshold : float
-#         Threshold value.
-#     op : {">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"}
-#         Logical operator. e.g. arr > thresh.
-#     constrain : sequence of str, optional
-#         Optionally allowed conditions.
+    Parameters
+    ----------
+    da : xr.DataArray
+        Input data.
+    threshold : float
+        Threshold value.
+    op : {">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"}
+        Logical operator. e.g. arr > thresh.
+    constrain : sequence of str, optional
+        Optionally allowed conditions.
 
-#     Returns
-#     -------
-#     xr.DataArray
-#         The mask array of daily events.
+    Returns
+    -------
+    xr.DataArray, float
+        The mask array of daily events, same dimensions as the input data.
 
-#     Notes
-#     -----
-#     The function returns:
+    Notes
+    -----
+    The function returns:
 
-#     - ``1`` where operator(da, da_value) is ``True``
-#     - ``0`` where operator(da, da_value) is ``False``
-#     - ``nan`` where da is ``nan``
-#     """
-#     events = compare(da, op, threshold, constrain) * 1
-#     events = events.where(~(np.isnan(da)))
-#     events = events.rename("events")
-#     return events
+    - ``1`` where operator(da, da_value) is ``True``
+    - ``0`` where operator(da, da_value) is ``False``
+    - ``nan`` where da is ``nan``
+    """
+    events = compare(da, op, threshold, constrain) * 1
+    events = events.where(~(np.isnan(da)))
+    events = events.rename("events")
+    return events
 
 
 def spell_mask(
@@ -1034,7 +1034,7 @@ def bivariate_count_occurrences(
     freq: str,
     op_var1: ALL_OPERATORS,
     op_var2: ALL_OPERATORS,
-    var_reducer: Literal["all", "any"],
+    var_reducer: Literal["all", "any"] = "all",
     constrain_var1: Sequence[str] | None = None,
     constrain_var2: Sequence[str] | None = None,
 ) -> xr.DataArray:

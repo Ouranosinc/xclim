@@ -697,11 +697,11 @@ def test_indicator_from_dict():
             standard_name="{freq} mean temperature",
             cell_methods=[{"time": "mean within days"}],
         ),
-        compute="thresholded_statistics",
+        compute="clix.thresholded_statistics",
         parameters=dict(
             threshold={"description": "A threshold temp"},
-            op="<",
-            reducer="mean",
+            condition="<",
+            statistic="mean",
         ),
         input={"data": "tas"},
     )

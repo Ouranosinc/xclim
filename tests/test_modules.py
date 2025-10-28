@@ -15,7 +15,7 @@ from xclim.core import VARIABLES
 from xclim.core.indicator import build_indicator_module_from_yaml
 from xclim.core.locales import read_locale_file
 from xclim.core.options import set_options
-from xclim.core.utils import InputKind, adapt_clix_meta_yaml, load_module
+from xclim.core.utils import InputKind, load_module, make_clix_meta_yaml
 
 
 def all_virtual_indicators():
@@ -183,9 +183,12 @@ indices:
 """
 
     def test_simple_clix_meta_adaptor(self, tmp_path):
+        src_yaml = tmp_path.joinpath("test.yaml")
         test_yaml = tmp_path.joinpath("test.yaml")
+        with open(src_yaml, "w") as f:
+            f.write(src_yaml)
 
-        adapt_clix_meta_yaml(self.cdd, test_yaml)
+        make_clix_meta_yaml(self.cdd, test_yaml)
 
         converted = safe_load(Path(test_yaml).open())
         assert "cdd" in converted["indicators"]

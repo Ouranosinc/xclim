@@ -330,11 +330,12 @@ class TestFirstDayThreshold:
         a[:8] = np.arange(8) / 1000
         pr = pr_series(a, start="1/1/2000")
 
-        fda = generic.first_day_threshold_reached(
+        fda = generic.day_threshold_reached(
             pr,
             threshold="0.004 kg m-2 s-1",
             op=op,
-            after_date="01-01",
+            which="first",
+            date="01-01",
             window=1,
             freq="YS",
         )
@@ -350,11 +351,12 @@ class TestFirstDayThreshold:
         a[:8] = np.flip(precip)
         pr = pr_series(a, start="1/1/2000")
 
-        fdb = generic.first_day_threshold_reached(
+        fdb = generic.day_threshold_reached(
             pr,
             threshold="0.004 kg m-2 s-1",
             op=op,
-            after_date="01-01",
+            which="first",
+            date="01-01",
             window=1,
             freq="YS",
         )
@@ -367,11 +369,12 @@ class TestFirstDayThreshold:
         pr = pr_series(a, start="1/1/2000")
 
         with pytest.raises(ValueError):
-            generic.first_day_threshold_reached(
+            generic.day_threshold_reached(
                 pr,
                 threshold="0.004 kg m-2 s-1",
                 op=">",
-                after_date="01-01",
+                which="first",
+                date="01-01",
                 window=1,
                 freq="YS",
                 constrain=("<", "<="),
@@ -394,34 +397,20 @@ class TestGenericCountingIndices:
         "op_high, op_low, expected",
         [(">", "<", 1), (">", "<=", 2), (">=", "<", 3), (">=", "<=", 4)],
     )
-    def test_simple_count_level_crossings(self, tasmin_series, tasmax_series, op_high, op_low, expected):
+    def test_bivariate_occurrences(self, tasmin_series, tasmax_series, op_high, op_low, expected):
         tasmin = tasmin_series(np.array([-1, -3, 0, 5, 9, 1, 3]) + K2C)
         tasmax = tasmax_series(np.array([5, 7, 3, 6, 13, 5, 4]) + K2C)
 
-        crossings = generic.count_level_crossings(
-            tasmin,
-            tasmax,
-            threshold="5 degC",
+        crossings = generic.bivariate_count_occurrences(
+            data_var1=tasmin,
+            data_var2=tasmax,
+            threshold_var1="5 degC",
+            threshold_var2="5 degC",
             freq="YS",
-            op_high=op_high,
-            op_low=op_low,
+            op_var1=op_low,
+            op_var2=op_high,
         )
         np.testing.assert_array_equal(crossings, [expected])
-
-    @pytest.mark.parametrize("op_high, op_low", [("<=", "<="), (">=", ">="), ("<", ">"), ("==", "!=")])
-    def test_forbidden_op(self, tasmin_series, tasmax_series, op_high, op_low):
-        tasmin = tasmin_series(np.zeros(7) + K2C)
-        tasmax = tasmax_series(np.ones(7) + K2C)
-
-        with pytest.raises(ValueError):
-            generic.count_level_crossings(
-                tasmin,
-                tasmax,
-                threshold="0.5 degC",
-                freq="YS",
-                op_high=op_high,
-                op_low=op_low,
-            )
 
     @pytest.mark.parametrize(
         "op, constrain, expected, should_fail",
@@ -461,9 +450,13 @@ class TestGenericCountingIndices:
 
         if should_fail:
             with pytest.raises(ValueError):
-                generic.first_occurrence(tas, threshold="11 degC", freq="YS", op=op, constrain=constrain)
+                generic.day_threshold_reached(
+                    tas, threshold="11 degC", freq="YS", which="first", op=op, constrain=constrain
+                )
         else:
-            first = generic.first_occurrence(tas, threshold="11 degC", freq="YS", op=op, constrain=constrain)
+            first = generic.day_threshold_reached(
+                tas, threshold="11 degC", freq="YS", which="first", op=op, constrain=constrain
+            )
 
             np.testing.assert_array_equal(first, [expected])
 
@@ -482,9 +475,13 @@ class TestGenericCountingIndices:
 
         if should_fail:
             with pytest.raises(ValueError):
-                generic.last_occurrence(tas, threshold="11 degC", freq="YS", op=op, constrain=constrain)
+                generic.day_threshold_reached(
+                    tas, threshold="11 degC", freq="YS", which="last", op=op, constrain=constrain
+                )
         else:
-            first = generic.last_occurrence(tas, threshold="11 degC", freq="YS", op=op, constrain=constrain)
+            first = generic.day_threshold_reached(
+                tas, threshold="11 degC", freq="YS", which="last", op=op, constrain=constrain
+            )
 
             np.testing.assert_array_equal(first, [expected])
 

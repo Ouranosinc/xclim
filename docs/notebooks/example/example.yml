@@ -38,7 +38,7 @@ indicators:
       thresh: 1 mm/day
     context: hydro
   first_frost_day:
-    compute: first_occurrence
+    compute: clix.first_occurrence
     input:
       data: tasmin
     cf_attrs:
