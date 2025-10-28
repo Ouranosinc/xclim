@@ -1112,6 +1112,7 @@ def days_since_to_doy(
     out = dac + start_doy
     out = xr.where(out > doy_max, out - doy_max, out)
 
+    out.attrs.pop("units", "")
     out.attrs.update({k: v for k, v in da.attrs.items() if k not in ["units", "calendar"]})
     out.attrs.update(calendar=calendar, is_dayofyear=1)
     return out.convert_calendar(base_calendar).rename(da.name)
@@ -1668,7 +1669,7 @@ def unstack_periods(da: xr.DataArray | xr.Dataset, dim: str = "period") -> xr.Da
 
     def _reconstruct_time(_time_as_delta, _start):
         times = _time_as_delta + _start
-        return xr.DataArray(times, dims=("time",), coords={"time": times}, name="time")
+        return xr.DataArray(times, dims=("time",), coords={"time": times}, name="time", attrs={})
 
     # Easy case:
     if window == stride:
