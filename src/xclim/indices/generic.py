@@ -30,6 +30,7 @@ from xclim.core.calendar import (
 from xclim.core.units import (
     convert_units_to,
     declare_relative_units,
+    is_temporal_rate,
     pint2cfattrs,
     pint2cfunits,
     str2pint,
@@ -107,6 +108,8 @@ def select_resample_op(
     da = select_time(da, **indexer)
     if isinstance(op, str):
         op = _xclim_ops.get(op, op)
+    if op == "sum" and is_temporal_rate(da):
+        op = "integral"
     if isinstance(op, str):
         out = getattr(da.resample(time=freq), op.replace("integral", "sum"))(dim="time", keep_attrs=True)
     else:
@@ -163,6 +166,8 @@ def select_rolling_resample_op(
     xr.DataArray
         The array for which the operation has been applied over each period.
     """
+    if window_op == "sum" and is_temporal_rate(da):
+        window_op = "integral"
     rolled = getattr(
         da.rolling(time=window, center=window_center),
         window_op.replace("integral", "sum"),
@@ -214,7 +219,7 @@ def thresholded_resample_op(
     xr.DataArray
         The DataArray for the given thresholded statistic.
     """
-    threshold = convert_units_to(threshold, data)
+    threshold = convert_units_to(threshold, data, context="infer")
 
     cond = compare(data, op, threshold, constrain)
     return select_resample_op(data.where(cond), reducer, freq, out_units=out_units, **indexer)
@@ -273,7 +278,7 @@ def thresholded_rolling_resample_op(
     xr.DataArray
         The DataArray for the given thresholded running statistic.
     """
-    threshold = convert_units_to(threshold, data)
+    threshold = convert_units_to(threshold, data, context="infer")
     cond = compare(data, op, threshold, constrain)
     return select_rolling_resample_op(
         data.where(cond),
@@ -1080,8 +1085,8 @@ def bivariate_count_occurrences(
     -----
     Sampling and variable units are derived from `data_var1`.
     """
-    threshold_var1 = convert_units_to(threshold_var1, data_var1)
-    threshold_var2 = convert_units_to(threshold_var2, data_var2)
+    threshold_var1 = convert_units_to(threshold_var1, data_var1, context="infer")
+    threshold_var2 = convert_units_to(threshold_var2, data_var2, context="infer")
 
     cond_var1 = compare(data_var1, op_var1, threshold_var1, constrain_var1)
     cond_var2 = compare(data_var2, op_var2, threshold_var2, constrain_var2)
@@ -1131,7 +1136,7 @@ def count_occurrences(
     xr.DataArray, [time]
         Number of times where data is {op} {threshold}.
     """
-    threshold = convert_units_to(threshold, data)
+    threshold = convert_units_to(threshold, data, context="infer")
 
     cond = compare(data, op, threshold, constrain)
 
@@ -1139,7 +1144,7 @@ def count_occurrences(
     return to_agg_units(out, data, "count", dim="time")
 
 
-def count_percentile_occurences(
+def count_percentile_occurrences(
     data: xr.DataArray,
     percentile: float,
     op: ALL_OPERATORS,
@@ -1197,7 +1202,7 @@ def count_percentile_occurences(
 
 
 @declare_relative_units(threshold="<data>")
-def count_thresholded_percentile_occurences(
+def count_thresholded_percentile_occurrences(
     data: xr.DataArray,
     threshold: Quantified,
     op_thresh: ALL_OPERATORS,
@@ -1251,9 +1256,9 @@ def count_thresholded_percentile_occurences(
     xr.DataArray
         Count of occurrences of the percentile-based threshold exceedance on threshold-filtered data.
     """
-    threshold = convert_units_to(threshold, data)
+    threshold = convert_units_to(threshold, data, context="infer")
     data = data.where(compare(data, op_thresh, threshold, constrain))
-    return count_percentile_occurences(
+    return count_percentile_occurrences(
         data,
         percentile,
         op=op_perc,
@@ -1269,14 +1274,14 @@ def diurnal_range(
     low_data: xr.DataArray, high_data: xr.DataArray, reducer: Literal["max", "min", "mean", "sum"], freq: str
 ) -> xr.DataArray:
     """
-    Calculate the diurnal temperature range and reduce according to a statistic.
+    Calculate the diurnal range between two variable and reduce according to a statistic.
 
     Parameters
     ----------
     low_data : xr.DataArray
-        The lowest daily temperature (tasmin).
+        The lowest variable (ex: tasmin)).
     high_data : xr.DataArray
-        The highest daily temperature (tasmax).
+        The highest variable (ex: tasmax).
     reducer : {'max', 'min', 'mean', 'sum'}
         Reducer.
     freq : str
@@ -1285,9 +1290,9 @@ def diurnal_range(
     Returns
     -------
     xr.DataArray
-        The DataArray of the diurnal temperature range.
+        {reducer} of the diurnal range.
     """
-    high_data = convert_units_to(high_data, low_data)
+    high_data = convert_units_to(high_data, low_data, context="infer")
 
     dtr = high_data - low_data
     out = getattr(dtr.resample(time=freq), reducer)()
@@ -1318,7 +1323,7 @@ def extreme_range(low_data: xr.DataArray, high_data: xr.DataArray, freq: str) ->
     xr.DataArray
         The DataArray for the extreme temperature range.
     """
-    high_data = convert_units_to(high_data, low_data)
+    high_data = convert_units_to(high_data, low_data, context="infer")
 
     out = high_data.resample(time=freq).max() - low_data.resample(time=freq).min()
 
@@ -1349,10 +1354,10 @@ def interday_diurnal_range(
     xr.DataArray, [difference of low_data]
         {reducer} day-to-day difference of the diurnal range between low_data and high_data.
     """
-    high_data = convert_units_to(high_data, low_data)
+    high_data = convert_units_to(high_data, low_data, context="infer")
 
     vdtr = abs((high_data - low_data).diff(dim="time"))
-    out = getattr(vdtr.resample(time=freq), reducer)
+    out = getattr(vdtr.resample(time=freq), reducer)()
 
     u = str2pint(low_data.units)
     out.attrs.update(pint2cfattrs(u, is_difference=True))
@@ -1422,7 +1427,7 @@ def thresholded_percentile(
     xr.DataArray
         The DataArray for the given thresholded percentile.
     """
-    threshold = convert_units_to(threshold, data)
+    threshold = convert_units_to(threshold, data, context="infer")
     cond = compare(data, op, threshold, constrain)
     return percentile(data.where(cond), percentile, freq)
 
@@ -1548,7 +1553,7 @@ def cumulative_difference(
     xr.DataArray
         The DataArray for the cumulative difference between values and a given threshold.
     """
-    threshold = convert_units_to(threshold, data)
+    threshold = convert_units_to(threshold, data, context="infer")
 
     if op in ["<", "<=", "lt", "le"]:
         diff = (threshold - data).clip(0)
@@ -1571,7 +1576,7 @@ def day_threshold_reached(
     *,
     threshold: Quantified,
     op: ALL_OPERATORS,
-    date: DayOfYearStr,
+    date: DayOfYearStr | None = None,
     which: Literal["first", "last"] = "first",
     window: int = 1,
     freq: str = "YS",
@@ -1609,7 +1614,7 @@ def day_threshold_reached(
     xr.DataArray, [dimensionless]
         Day-of-year of the {which} time where data {condition} {threshold}.
     """
-    threshold = convert_units_to(threshold, data)
+    threshold = convert_units_to(threshold, data, context="infer")
 
     cond = compare(data, op, threshold, constrain=constrain)
 

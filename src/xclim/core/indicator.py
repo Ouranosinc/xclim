@@ -60,6 +60,7 @@ mirroring attributes of the :py:class:`Indicator`, please refer to its documenta
         missing_options:
             # missing options mapping
         allowed_periods: [<list>, <of>, <allowed>, <periods>]
+        context: <context> # A unit context enabled during the conversion of the compute's output to the requested units
 
         # Compute function
         compute: <function name>  # Referring to a function in `Indices` module
@@ -384,7 +385,8 @@ class Indicator(IndicatorRegistrar):
     src_freq : str, sequence of strings, optional
         The expected frequency of the input data. Can be a list for multiple frequencies, or None if irrelevant.
     context : str
-        The `pint` unit context, for example use 'hydro' to allow conversion from 'kg m-2 s-1' to 'mm/day'.
+        A `pint` unit context enabled during the computation of this indicator.
+        For example use 'hydro' to allow conversion from 'kg m-2 s-1' to 'mm/day'.
 
     Notes
     -----

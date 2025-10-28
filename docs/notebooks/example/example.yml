@@ -47,7 +47,7 @@ indicators:
       units: ""
       var_name: ffd
     parameters:
-      op: <
+      condition: <
       threshold: 0 degC
       freq:
         default: YS-JUL

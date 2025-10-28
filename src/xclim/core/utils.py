@@ -808,7 +808,7 @@ def make_clix_meta_yaml(  # noqa: C901
                         if isinstance(param["data"], str) and param["data"].startswith("{"):
                             name_replacements[param["data"][1:-1]] = name
                         else:
-                            if name in ["window_size", "percentiles"]:
+                            if name in ["window_size", "percentile"]:
                                 data["parameters"][name] = param["data"]
                             else:
                                 data["parameters"][name] = f"{param['data']} {param['units']}"
@@ -844,6 +844,8 @@ def make_clix_meta_yaml(  # noqa: C901
             elif attr in ["var_name", "long_name"]:
                 for old, new in name_replacements.items():
                     val = val.replace(old, new)
+                if attr == "long_name":
+                    data["title"] = val
             elif attr == "units" and val == "day":
                 # clix-meta assigns "day" for day of year. Not CF.
                 continue

@@ -9,9 +9,11 @@ Contributors to this version: Pascal Bourgault (:user:`aulemahal`), Trevor James
 New indicators and features
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 * ``xclim.ensembles.robustness_fractions`` now accepts instances of ``xclim.core.missing`` classes as a new ``invalid`` argument to control how data points are flagged as invalid. (:pull:`2245`).
+* Update of the `cf` virtual module of indicators to clix-meta 0.6.1.
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
+* Generic functions from ``clix-meta`` are now in their own submodule ``xclim.indices.clix``. Many ``xclim.indices.generic`` functions have been refactored to reduce duplication and harmonize signatures.
 * The relative humidity computations from specific humidity, pressure and temperature (``vapor_pressure`` and ``relative_humidity``) were modified to use the fraction of vapour pressure to saturation vapour pressure instead of an incomplete equation with the mixing ratios. Changes are small, but sometimes not negligible. (:pull:`2254`).
 * `black` and `blackdoc` are no longer required for development. `ruff` is now exclusively used for code and code-block formatting. (:pull:`2249`).
 * Python HDF5 libraries now have lower pins to ensure modern versions are preferably installed (`h5netcdf >=1.5.0` and `h5py >=3.12.1`) (:pull:`2253`).

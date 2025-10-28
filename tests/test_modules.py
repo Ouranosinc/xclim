@@ -186,9 +186,9 @@ indices:
         src_yaml = tmp_path.joinpath("test.yaml")
         test_yaml = tmp_path.joinpath("test.yaml")
         with open(src_yaml, "w") as f:
-            f.write(src_yaml)
+            f.write(self.cdd)
 
-        make_clix_meta_yaml(self.cdd, test_yaml)
+        make_clix_meta_yaml(src_yaml, test_yaml)
 
         converted = safe_load(Path(test_yaml).open())
         assert "cdd" in converted["indicators"]

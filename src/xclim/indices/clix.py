@@ -621,7 +621,7 @@ def thresholded_running_statistics(
     xr.DataArray
         {overall_statistic} of {window_size}-day {rolling_aggregtor} of data where it is {condition} {threshold}.
     """
-    return generic.threshold_rolling_resample_op(
+    return generic.thresholded_rolling_resample_op(
         data,
         threshold=threshold,
         op=condition,

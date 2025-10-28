@@ -112,6 +112,7 @@ pint.set_application_registry(units)
 
 with (files("xclim.data") / "variables.yml").open() as variables:
     CF_CONVERSIONS = safe_load(variables)["conversions"]
+CF_AMOUNTS, CF_RATES = list(zip(*CF_CONVERSIONS["amount2rate"]["valid_names"], strict=True))
 _CONVERSIONS = {}
 
 
@@ -738,6 +739,38 @@ def to_agg_units(
     return out
 
 
+def is_temporal_rate(da: xr.DataArray):
+    """
+    Return if the given data has a standard name denoting a temporal rate.
+
+    A "temporal rate" (or "flux") variable is one where the quantity is given as a derivative along time.
+    The temporal integral of a "temporal rate" gives an amount. This function simply
+    checks if the variable has a standard name in a list of rate standard names.
+
+    Parameters
+    ----------
+    da : xarray.DataArray
+        A variable that might contain a CF standard name.
+
+    Returns
+    -------
+    bool or None
+        True if the standard name is a rate, False if it is an amount
+        and None if there is not standard name or if it is not known.
+
+    See Also
+    --------
+    amount2rate : Explicitly convert an amount to a rate (differentiate along time).
+    rate2amount : Explicitly convert a rate to an amount (integrate along time).
+    """
+    stdname = da.attrs.get("standard_name")
+    if stdname in CF_RATES:
+        return True
+    if stdname in CF_AMOUNTS:
+        return False
+    return None
+
+
 def _rate_and_amount_converter(
     da: Quantified,
     dim: str | xr.DataArray = "time",
@@ -890,6 +923,7 @@ def rate2amount(
     See Also
     --------
     amount2rate : Convert an amount to a rate.
+    is_temporal_rate : Determine if a variable is a rate based on its CF attributes.
 
     Notes
     -----
@@ -978,6 +1012,7 @@ def amount2rate(
     See Also
     --------
     rate2amount : Convert a rate to an amount.
+    is_temporal_rate : Determine if a variable is a rate based on its CF attributes.
     """
     return _rate_and_amount_converter(
         amount,
