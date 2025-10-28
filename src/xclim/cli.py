@@ -40,8 +40,13 @@ except ImportError:  # noqa: S110
 
 
 def _get_indicator(indicator_name):
+    if "." in indicator_name:
+        mod, name = indicator_name.split(".")
+        indid = f"{mod}.{name.upper()}"
+    else:
+        indid = indicator_name.upper()
     try:
-        return xc.core.indicator.registry[indicator_name.upper()].get_instance()  # noqa
+        return xc.core.indicator.registry[indid].get_instance()  # noqa
     except KeyError as e:
         raise click.BadArgumentUsage(f"Indicator '{indicator_name}' not found in xclim.") from e
 
