@@ -108,7 +108,7 @@ docs = [
   "sphinxcontrib-bibtex",
   "sphinxcontrib-svg2pdfconverter[Cairosvg]"
 ]
-extras = ["flox >=0.9", "xsdba >=0.4.0", "numbagg >= 0.8"]
+extras = ["flox >=0.9", "xsdba >=0.4.0", "numbagg >= 0.8", "pymannkendall >=1.4.0"]
 all = ["xclim[dev]", "xclim[docs]", "xclim[extras]"]
 
 [project.scripts]
@@ -170,6 +170,7 @@ pep621_dev_dependency_groups = ["all", "dev", "docs"]
 "pyyaml" = "yaml"
 
 [tool.deptry.per_rule_ignores]
+DEP001 = ["pymannkendall"]
 DEP002 = ["bottleneck", "h5netcdf", "numbagg", "pyarrow"]
 DEP004 = ["matplotlib", "pooch", "pytest", "pytest_socket"]
 

@@ -2,13 +2,14 @@
 Changelog
 =========
 
-v0.59 (unreleased)
-------------------
-Contributors to this version: Pascal Bourgault (:user:`aulemahal`), Trevor James Smith (:user:`Zeitsperre`).
+v0.59.0 (unreleased)
+--------------------
+Contributors to this version: Pascal Bourgault (:user:`aulemahal`), Trevor James Smith (:user:`Zeitsperre`), David Huard (:user:`huard`), Ève Larose (:user:`e-larose`), Faisal Mahmood (:user:`faimahsho`).
 
 New indicators and features
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 * ``xclim.ensembles.robustness_fractions`` now accepts instances of ``xclim.core.missing`` classes as a new ``invalid`` argument to control how data points are flagged as invalid. (:pull:`2245`).
+* New hydrological indices added to ``xclim.indices._hydrology.py``. (:issue:`1624`, :pull:`2227`).
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
