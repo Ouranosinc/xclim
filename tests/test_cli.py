@@ -32,6 +32,7 @@ K2C = 273.15
             [xclim.atmos.tn_mean, xclim.atmos.ice_days],
             ["tn_mean", "ice_days"],
         ),
+        ([xclim.indicators.cf.cdd], ["cf.cdd"]),
     ],
 )
 def test_info(indicators, indnames):
