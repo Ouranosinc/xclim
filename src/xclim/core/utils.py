@@ -759,8 +759,6 @@ def make_clix_meta_yaml(  # noqa: C901
 
   Indicators found here are defined by the `clix-meta project`_. Adapted documentation from that repository follows:
 
-  .. cite::
-
       This repository aims to provide a platform for thinking about, and developing, a unified view of metadata
       elements required to describe climate indices (aka climate indicators).
 

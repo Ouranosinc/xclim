@@ -1,8 +1,8 @@
 doc: "\n  ===================\n  CF Standard indices\n  ===================\n\n  Indicators\
   \ found here are defined by the `clix-meta project`_. Adapted documentation from\
-  \ that repository follows:\n\n  .. cite::\n\n      This repository aims to provide\
-  \ a platform for thinking about, and developing, a unified view of metadata\n  \
-  \    elements required to describe climate indices (aka climate indicators).\n\n\
+  \ that repository follows:\n\n    This repository aims to provide\
+  \ a platform for thinking about, and developing, a unified view of metadata\
+  \ elements required to describe climate indices (aka climate indicators).\n\n\
   \  All indicators defined here use generic functions defined in :py:mod:`xclim.indices.clix`.\
   \ This module tries to\n  follow the clix-meta definitions as closely, which means\
   \ it can have meaningful differences with the rest of xclim.\n\n  For example, indicators\
