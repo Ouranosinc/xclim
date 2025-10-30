@@ -286,7 +286,9 @@ class TestPWMFit:
         lmom = pytest.importorskip("lmoments3.distr")
         lm3dc = getattr(lmom, lm3_dist_map[dist])
         time = xr.date_range("2000-01-01", "2000-12-31", freq="M")
-        unique_values = np.arange(lm3dc.numargs | 1) + 1
+        # Some distributions have no parameter but we want to ensure we have at least one
+        # unique value
+        unique_values = np.arange(lm3dc.numargs or 1)
 
         da = xr.DataArray(np.random.choice(unique_values, time.size), coords=dict(time=("time", time)))
         out = stats.fit(da, dist=lm3dc, method="PWM").compute()
