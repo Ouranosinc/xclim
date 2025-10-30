@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from xclim.core.indicator import ReducingIndicator, ResamplingIndicator
-from xclim.indices.generic import select_resample_op
+from xclim.indices.generic import statistics as _statistics
 from xclim.indices.stats import fit as _fit
 from xclim.indices.stats import frequency_analysis
 
@@ -49,12 +49,24 @@ return_level = Generic(
 )
 
 
+statistics = GenericResampling(
+    title="Simple resampled statistic of the values.",
+    identifier="statistics",
+    var_name="stat_{indexer}{op:r}",
+    long_name="{statistic:noun} of variable",
+    description="{freq} {statistic:noun} of variable ({indexer}).",
+    compute=_statistics,
+    parameters={"out_units": None},
+)
+
+
 stats = GenericResampling(
     title="Simple resampled statistic of the values.",
+    _version_deprecated="0.60",
     identifier="stats",
     var_name="stat_{indexer}{op:r}",
     long_name="{op:noun} of variable",
     description="{freq} {op:noun} of variable ({indexer}).",
-    compute=select_resample_op,
-    parameters={"out_units": None},
+    compute=_statistics,
+    parameters={"statistic": {"name": "op"}, "out_units": None},
 )

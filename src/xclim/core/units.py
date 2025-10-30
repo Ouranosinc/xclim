@@ -25,7 +25,7 @@ from boltons.funcutils import wraps
 from yaml import safe_load
 
 from xclim.core._exceptions import ValidationError
-from xclim.core._types import Quantified
+from xclim.core._types import Freq, Quantified, Reducer
 from xclim.core.calendar import get_calendar, parse_offset
 from xclim.core.options import datacheck
 from xclim.core.utils import InputKind, infer_kind_from_parameter
@@ -621,9 +621,9 @@ def ensure_delta(unit: xr.DataArray | str | units.Quantity) -> str:
 def to_agg_units(
     out: xr.DataArray,
     orig: xr.DataArray,
-    op: Literal["min", "max", "mean", "std", "var", "doymin", "doymax", "count", "integral", "sum"],
+    reducer: Reducer,
     dim: str = "time",
-    deffreq: str = None,
+    deffreq: Freq | None = "D",
 ) -> xr.DataArray:
     """
     Set and convert units of an array after an aggregation operation along the sampling dimension (time).
@@ -635,7 +635,7 @@ def to_agg_units(
     orig : xr.DataArray
         The original array before the aggregation operation,
         used to infer the sampling units and get the variable units.
-    op : {'min', 'max', 'mean', 'std', 'var', 'doymin', 'doymax', 'count', 'integral', 'sum'}
+    reducer : {'min', 'max', 'mean', 'std', 'var', 'doymin', 'doymax', 'count', 'integral', 'sum'} | Callable
         The type of aggregation operation performed. "integral" is mathematically equivalent to "sum",
         but the units are multiplied by the timestep of the data (requires an inferrable frequency).
     dim : str
@@ -647,7 +647,7 @@ def to_agg_units(
     Returns
     -------
     xr.DataArray
-        The DataArray with aggregated values.
+        The DataArray with aggregated values, maybe converted to simplified units.
 
     Examples
     --------
@@ -666,7 +666,7 @@ def to_agg_units(
     >>> Ndays = cond.sum("time")  # Number of boiling days
     >>> Ndays.attrs.get("units")
     None
-    >>> Ndays = to_agg_units(Ndays, tas, op="count")
+    >>> Ndays = to_agg_units(Ndays, tas, reducer="count")
     >>> Ndays.units
     'd'
 
@@ -680,7 +680,7 @@ def to_agg_units(
     ... )
     >>> dt = (tas - 16).assign_attrs(units="degC", units_metadata="temperature: difference")
     >>> degdays = dt.clip(0).sum("time")  # Integral of temperature above a threshold
-    >>> degdays = to_agg_units(degdays, dt, op="integral")
+    >>> degdays = to_agg_units(degdays, dt, reducer="integral")
     >>> degdays.units
     'degC week'
 
@@ -690,18 +690,21 @@ def to_agg_units(
     >>> degdays.units
     'd K'
     """
-    is_difference = True if op in ["std", "var"] else None
+    if not isinstance(reducer, str):
+        reducer = reducer.__name__
 
-    if op in ["amin", "min", "amax", "max", "mean", "sum", "std"]:
+    is_difference = True if reducer in ["std", "var"] else None
+
+    if reducer in ["min", "max", "mean", "sum", "std"]:
         out.attrs["units"] = orig.attrs["units"]
 
-    elif op in ["var"]:
+    elif reducer in ["var"]:
         out.attrs["units"] = pint2cfunits(str2pint(orig.units) ** 2)
 
-    elif op in ["doymin", "doymax"]:
+    elif reducer in ["doymin", "doymax"]:
         out.attrs.update(units="1", is_dayofyear=np.int32(1), calendar=get_calendar(orig))
 
-    elif op in ["count", "integral"]:
+    elif reducer in ["count", "integral"]:
         m, freq_u_raw = infer_sampling_units(orig, deffreq=deffreq, dim=dim)
         orig_u = units2pint(orig)
         freq_u = str2pint(freq_u_raw)
@@ -709,10 +712,10 @@ def to_agg_units(
         with xr.set_options(keep_attrs=True):
             out = out * m
 
-        if op == "count":
+        if reducer == "count":
             out.attrs["units"] = freq_u_raw
 
-        elif op == "integral":
+        elif reducer == "integral":
             if "[temperature]" in orig_u.dimensionality:
                 # ensure delta_temperature
                 orig_u = 1 * orig_u - 1 * orig_u
@@ -728,12 +731,12 @@ def to_agg_units(
                 out.attrs.update(pint2cfattrs(orig_u * freq_u, is_difference))
     else:
         raise ValueError(
-            f"Unknown aggregation op {op}. "
-            "Known ops are [min, max, mean, std, var, doymin, doymax, count, integral, sum]."
+            f"Unknown aggregation reducer {reducer}. "
+            "Known reducers are [min, max, mean, std, var, doymin, doymax, count, integral, sum]."
         )
 
     # Remove units_metadata where it doesn't make sense
-    if op in ["doymin", "doymax", "count"]:
+    if reducer in ["doymin", "doymax", "count"]:
         out.attrs.pop("units_metadata", None)
 
     return out

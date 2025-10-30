@@ -6,8 +6,8 @@ import xarray
 
 from xclim.core import Quantified
 from xclim.core.calendar import select_time
-from xclim.core.units import convert_units_to, declare_units, rate2amount, to_agg_units
-from xclim.indices.generic import select_resample_op, threshold_count
+from xclim.core.units import declare_units, rate2amount
+from xclim.indices.generic import count_occurrences, statistics
 
 # Frequencies : YS: year start, QS-DEC: seasons starting in december, MS: month start
 # See http://pandas.pydata.org/pandas-docs/stable/timeseries.html#offset-aliases
@@ -110,7 +110,7 @@ def tg_mean(tas: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
     >>> t = xr.open_dataset(path_to_tas_file).tas
     >>> tg = tg_mean(t, freq="QS-DEC")
     """
-    return select_resample_op(tas, op="mean", freq=freq)
+    return statistics(tas, statistic="mean", freq=freq)
 
 
 @declare_units(tas="[temperature]")
@@ -141,7 +141,7 @@ def tg_min(tas: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
 
        TGn_j = min(TG_{ij})
     """
-    return select_resample_op(tas, op="min", freq=freq)
+    return statistics(tas, statistic="min", freq=freq)
 
 
 @declare_units(tasmin="[temperature]")
@@ -172,7 +172,7 @@ def tn_max(tasmin: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
 
        TNx_j = max(TN_{ij})
     """
-    return select_resample_op(tasmin, op="max", freq=freq)
+    return statistics(tasmin, statistic="max", freq=freq)
 
 
 @declare_units(tasmin="[temperature]")
@@ -203,7 +203,7 @@ def tn_mean(tasmin: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
 
        TN_{ij} = \frac{ \sum_{i=1}^{I} TN_{ij} }{I}
     """
-    return select_resample_op(tasmin, op="mean", freq=freq)
+    return statistics(tasmin, statistic="mean", freq=freq)
 
 
 @declare_units(tasmin="[temperature]")
@@ -234,7 +234,7 @@ def tn_min(tasmin: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
 
        TNn_j = min(TN_{ij})
     """
-    return select_resample_op(tasmin, op="min", freq=freq)
+    return statistics(tasmin, statistic="min", freq=freq)
 
 
 @declare_units(tasmax="[temperature]")
@@ -265,7 +265,7 @@ def tx_max(tasmax: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
 
        TXx_j = max(TX_{ij})
     """
-    return select_resample_op(tasmax, op="max", freq=freq)
+    return statistics(tasmax, statistic="max", freq=freq)
 
 
 @declare_units(tasmax="[temperature]")
@@ -296,7 +296,7 @@ def tx_mean(tasmax: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
 
        TX_{ij} = \frac{ \sum_{i=1}^{I} TX_{ij} }{I}
     """
-    return select_resample_op(tasmax, op="mean", freq=freq)
+    return statistics(tasmax, statistic="mean", freq=freq)
 
 
 @declare_units(tasmax="[temperature]")
@@ -327,7 +327,7 @@ def tx_min(tasmax: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
 
        TXn_j = min(TX_{ij})
     """
-    return select_resample_op(tasmax, op="min", freq=freq)
+    return statistics(tasmax, statistic="min", freq=freq)
 
 
 @declare_units(tasmax="[temperature]", thresh="[temperature]")
@@ -364,9 +364,7 @@ def hot_days(
 
        TX_{ij} > TT
     """
-    thresh = convert_units_to(thresh, tasmax)
-    out = threshold_count(tasmax, ">", thresh, freq)
-    return to_agg_units(out, tasmax, "count", deffreq="D")
+    return count_occurrences(tasmax, condition=">", threshold=thresh, freq=freq)
 
 
 @declare_units(tasmin="[temperature]", thresh="[temperature]")
@@ -403,9 +401,7 @@ def frost_days(
 
        TN_{ij} < TT
     """
-    frz = convert_units_to(thresh, tasmin)
-    out = threshold_count(tasmin, "<", frz, freq)
-    return to_agg_units(out, tasmin, "count", deffreq="D")
+    return count_occurrences(tasmin, condition="<", threshold=thresh, freq=freq)
 
 
 @declare_units(tasmax="[temperature]", thresh="[temperature]")
@@ -438,9 +434,7 @@ def ice_days(tasmax: xarray.DataArray, thresh: Quantified = "0 degC", freq: str 
 
        TX_{ij} < TT
     """
-    frz = convert_units_to(thresh, tasmax)
-    out = threshold_count(tasmax, "<", frz, freq)
-    return to_agg_units(out, tasmax, "count", deffreq="D")
+    return count_occurrences(tasmax, condition="<", threshold=thresh, freq=freq)
 
 
 @declare_units(pr="[precipitation]")
@@ -478,7 +472,7 @@ def max_1day_precipitation_amount(pr: xarray.DataArray, freq: str = "YS") -> xar
     >>> pr = xr.open_dataset(path_to_pr_file).pr
     >>> rx1day = max_1day_precipitation_amount(pr, freq="YS")
     """
-    return select_resample_op(pr, op="max", freq=freq)
+    return statistics(pr, statistic="max", freq=freq)
 
 
 @declare_units(pr="[precipitation]")

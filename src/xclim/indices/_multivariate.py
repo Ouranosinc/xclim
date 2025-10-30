@@ -21,7 +21,8 @@ from xclim.core.units import (
 )
 from xclim.indices import run_length as rl
 from xclim.indices.converters import rain_approximation, snowfall_approximation
-from xclim.indices.generic import compare, select_resample_op, threshold_count
+from xclim.indices.generic import count_occurrences, statistics
+from xclim.indices.helpers import compare
 
 # Frequencies : YS: year start, QS-DEC: seasons starting in december, MS: month start
 # See https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html
@@ -553,8 +554,7 @@ def daily_temperature_range(
     dtr = tasmax - tasmin
     u = str2pint(tasmax.units)
     dtr.attrs.update(pint2cfattrs(u, is_difference=True))
-    out = select_resample_op(dtr, op=op, freq=freq)
-    return out
+    return statistics(dtr, statistic=op, freq=freq)
 
 
 @declare_units(tasmax="[temperature]", tasmin="[temperature]")
@@ -593,8 +593,7 @@ def daily_temperature_range_variability(
     vdtr = abs((tasmax - tasmin).diff(dim="time"))
     u = str2pint(tasmax.units)
     vdtr.attrs.update(pint2cfattrs(u, is_difference=True))
-    out = select_resample_op(vdtr, op="mean", freq=freq)
-    return out
+    return statistics(vdtr, statistic="mean", freq=freq)
 
 
 @declare_units(tasmax="[temperature]", tasmin="[temperature]")
@@ -1229,8 +1228,7 @@ def days_over_precip_thresh(
         tp = resample_doy(tp, pr)
 
     # Compute the days when precip is both over the wet day threshold and the percentile threshold.
-    out = threshold_count(pr, op, tp, freq, constrain=(">", ">="))
-    return to_agg_units(out, pr, "count", deffreq="D")
+    return count_occurrences(pr, condition=op, threshold=tp, freq=freq, constrain=(">", ">="))
 
 
 @declare_units(pr="[precipitation]", pr_per="[precipitation]", thresh="[precipitation]")
@@ -1350,8 +1348,7 @@ def tg90p(
     thresh = resample_doy(tas_per, tas)
 
     # Identify the days over the 90th percentile
-    out = threshold_count(tas, op, thresh, freq, constrain=(">", ">="))
-    return to_agg_units(out, tas, "count", deffreq="D")
+    return count_occurrences(tas, condition=op, threshold=thresh, freq=freq, constrain=(">", ">="))
 
 
 @declare_units(tas="[temperature]", tas_per="[temperature]")
@@ -1409,8 +1406,7 @@ def tg10p(
     thresh = resample_doy(tas_per, tas)
 
     # Identify the days below the 10th percentile
-    out = threshold_count(tas, op, thresh, freq, constrain=("<", "<="))
-    return to_agg_units(out, tas, "count", deffreq="D")
+    return count_occurrences(tas, condition=op, threshold=thresh, freq=freq, constrain=("<", "<="))
 
 
 @declare_units(tasmin="[temperature]", tasmin_per="[temperature]")
@@ -1468,8 +1464,7 @@ def tn90p(
     thresh = resample_doy(tasmin_per, tasmin)
 
     # Identify the days with min temp above 90th percentile.
-    out = threshold_count(tasmin, op, thresh, freq, constrain=(">", ">="))
-    return to_agg_units(out, tasmin, "count", deffreq="D")
+    return count_occurrences(tasmin, condition=op, threshold=thresh, freq=freq, constrain=(">", ">="))
 
 
 @declare_units(tasmin="[temperature]", tasmin_per="[temperature]")
@@ -1527,8 +1522,7 @@ def tn10p(
     thresh = resample_doy(tasmin_per, tasmin)
 
     # Identify the days below the 10th percentile
-    out = threshold_count(tasmin, op, thresh, freq, constrain=("<", "<="))
-    return to_agg_units(out, tasmin, "count", deffreq="D")
+    return count_occurrences(tasmin, condition=op, threshold=thresh, freq=freq, constrain=("<", "<="))
 
 
 @declare_units(tasmax="[temperature]", tasmax_per="[temperature]")
@@ -1586,8 +1580,7 @@ def tx90p(
     thresh = resample_doy(tasmax_per, tasmax)
 
     # Identify the days with max temp above 90th percentile.
-    out = threshold_count(tasmax, op, thresh, freq, constrain=(">", ">="))
-    return to_agg_units(out, tasmax, "count", deffreq="D")
+    return count_occurrences(tasmax, condition=op, threshold=thresh, freq=freq, constrain=(">", ">="))
 
 
 @declare_units(tasmax="[temperature]", tasmax_per="[temperature]")
@@ -1645,8 +1638,7 @@ def tx10p(
     thresh = resample_doy(tasmax_per, tasmax)
 
     # Identify the days below the 10th percentile
-    out = threshold_count(tasmax, op, thresh, freq, constrain=("<", "<="))
-    return to_agg_units(out, tasmax, "count", deffreq="D")
+    return count_occurrences(tasmax, condition=op, threshold=thresh, freq=freq, constrain=("<", "<="))
 
 
 @declare_units(

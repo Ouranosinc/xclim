@@ -20,18 +20,11 @@ This version of xclim implements clix-meta v0.6.1 .
 
 from __future__ import annotations
 
-from typing import Literal
-
 import xarray as xr
 
 import xclim.indices.generic as generic
-from xclim.core import DateStr, DayOfYearStr, Quantified
+from xclim.core import Condition, DayOfYearStr, Freq, Quantified, Reducer, TimeRange
 from xclim.core.units import declare_relative_units
-
-OPERATORS = Literal[">", "gt", "<", "lt", ">=", "ge", "<=", "le"]
-REDUCERS = Literal["min", "max", "mean", "std", "var", "sum"]
-TIME_RANGE = tuple[DateStr, DateStr]
-
 
 # TODO: count_bivariate_percentile_occurrences, not ready in clix-meta 0.6.1
 
@@ -41,7 +34,7 @@ def count_level_crossings(
     low_data: xr.DataArray,
     high_data: xr.DataArray,
     threshold: Quantified,
-    freq: str,
+    freq: Freq,
 ) -> xr.DataArray:
     """
     Calculate the number of times the given threshold level is crossed during the specified time period.
@@ -69,13 +62,13 @@ def count_level_crossings(
         Number of times when low_data is under {threshold} and high_data is above {threshold}.
     """
     return generic.bivariate_count_occurrences(
-        data_var1=low_data,
-        data_var2=high_data,
-        threshold_var1=threshold,
-        threshold_var2=threshold,
+        data1=low_data,
+        data2=high_data,
+        threshold1=threshold,
+        threshold2=threshold,
         freq=freq,
-        op_var1="<",
-        op_var2=">",
+        condition1="<",
+        condition2=">",
         var_reducer="all",
     ).assign_attrs(units="1")
 
@@ -84,8 +77,8 @@ def count_level_crossings(
 def count_occurrences(
     data: xr.DataArray,
     threshold: Quantified,
-    condition: OPERATORS,
-    freq: str,
+    condition: Condition,
+    freq: Freq,
 ) -> xr.DataArray:
     """
     Calculate the number of times the given threshold is exceeded during the specified time period.
@@ -113,7 +106,7 @@ def count_occurrences(
     return generic.count_occurrences(
         data=data,
         threshold=threshold,
-        op=condition,
+        condition=condition,
         freq=freq,
     ).assign_attrs(units="1")
 
@@ -121,9 +114,9 @@ def count_occurrences(
 def count_percentile_occurrences(
     data: xr.DataArray,
     percentile: float,
-    condition: OPERATORS,
-    reference_period: TIME_RANGE,
-    freq: str,
+    condition: Condition,
+    reference_period: TimeRange,
+    freq: Freq,
 ) -> xr.DataArray:
     """
     Calculate how many times a seasonally varying percentile-based threshold is exceeded during the specified period.
@@ -157,10 +150,11 @@ def count_percentile_occurrences(
     return generic.count_percentile_occurrences(
         data=data,
         percentile=percentile,
-        op=condition,
+        condition=condition,
         reference_period=reference_period,
         freq=freq,
         bootstrap=False,
+        window=5,
     ).assign_attrs(units="1")
 
 
@@ -171,11 +165,11 @@ def count_percentile_occurrences(
 def count_thresholded_percentile_occurrences(
     data: xr.DataArray,
     data_threshold: Quantified,
-    data_condition: OPERATORS,
+    data_condition: Condition,
     percentile: float,
-    percentile_condition: OPERATORS,
-    reference_period: TIME_RANGE,
-    freq: str,
+    percentile_condition: Condition,
+    reference_period: TimeRange,
+    freq: Freq,
 ) -> xr.DataArray:
     """
     Calculate how many time a percentile-based threshold (fixed over the year) is exceeded during the specified period.
@@ -213,18 +207,19 @@ def count_thresholded_percentile_occurrences(
     return generic.count_thresholded_percentile_occurrences(
         data=data,
         threshold=data_threshold,
-        op_thresh=data_condition,
+        data_condition=data_condition,
         percentile=percentile,
-        op_perc=percentile_condition,
+        condition=percentile_condition,
         reference_period=reference_period,
         freq=freq,
         bootstrap=False,
+        window=5,
     ).assign_attrs(units="1")
 
 
 @declare_relative_units(high_data="<low_data>")
 def diurnal_temperature_range(
-    low_data: xr.DataArray, high_data: xr.DataArray, statistic: REDUCERS, freq: str
+    low_data: xr.DataArray, high_data: xr.DataArray, statistic: Reducer, freq: Freq
 ) -> xr.DataArray:
     """
     Calculate a statistical measure on the diurnal temperature range during the specified time period.
@@ -248,11 +243,11 @@ def diurnal_temperature_range(
     xr.DataArray
         {statistic} of the diurnal range between low_data and high_data.
     """
-    return generic.diurnal_range(low_data=low_data, high_data=high_data, reducer=statistic, freq=freq)
+    return generic.difference_statistics(data1=low_data, data2=high_data, statistic=statistic, freq=freq)
 
 
 @declare_relative_units(high_data="<low_data>")
-def extreme_temperature_range(low_data: xr.DataArray, high_data: xr.DataArray, freq: str) -> xr.DataArray:
+def extreme_temperature_range(low_data: xr.DataArray, high_data: xr.DataArray, freq: Freq) -> xr.DataArray:
     """
     Calculate the maximum temperature difference during the specified time period.
 
@@ -274,15 +269,15 @@ def extreme_temperature_range(low_data: xr.DataArray, high_data: xr.DataArray, f
     xr.DataArray, [difference of low_data]
         The range between the maximum of high_data and the minimum of low_data.
     """
-    return generic.extreme_range(low_data=low_data, high_data=high_data, freq=freq)
+    return generic.extreme_range(data1=low_data, data2=high_data, freq=freq)
 
 
 @declare_relative_units(threshold="<data>")
 def first_occurrence(
     data: xr.DataArray,
     threshold: Quantified,
-    condition: OPERATORS,
-    freq: str,
+    condition: Condition,
+    freq: Freq,
     after_date: DayOfYearStr = None,
 ) -> xr.DataArray:
     """
@@ -313,8 +308,8 @@ def first_occurrence(
     """
     return generic.day_threshold_reached(
         data=data,
+        condition=condition,
         threshold=threshold,
-        op=condition,
         date=after_date,
         which="first",
         window=1,
@@ -327,7 +322,7 @@ def first_occurrence(
 #       Would be easy to implement if freq is fixed to annual, but the description doesn't mention this.
 
 
-def interday_diurnal_temperature_range(low_data: xr.DataArray, high_data: xr.DataArray, freq: str) -> xr.DataArray:
+def interday_diurnal_temperature_range(low_data: xr.DataArray, high_data: xr.DataArray, freq: Freq) -> xr.DataArray:
     """
     Calculate the mean over the specified period of the absolute day-to-day difference in diurnal temperature range.
 
@@ -349,15 +344,15 @@ def interday_diurnal_temperature_range(low_data: xr.DataArray, high_data: xr.Dat
     xr.DataArray, [difference of low_data]
         Average day-to-day difference of the diurnal range between low_data and high_data.
     """
-    return generic.interday_diurnal_range(low_data=low_data, high_data=high_data, reducer="mean", freq=freq)
+    return generic.interday_difference_statistics(data1=low_data, data2=high_data, statistic="mean", freq=freq)
 
 
 @declare_relative_units(threshold="<data>")
 def last_occurrence(
     data: xr.DataArray,
     threshold: Quantified,
-    condition: OPERATORS,
-    freq: str,
+    condition: Condition,
+    freq: Freq,
     before_date: DayOfYearStr = None,
 ) -> xr.DataArray:
     """
@@ -389,7 +384,7 @@ def last_occurrence(
     return generic.day_threshold_reached(
         data=data,
         threshold=threshold,
-        op=condition,
+        condition=condition,
         date=before_date,
         which="last",
         window=1,
@@ -397,7 +392,7 @@ def last_occurrence(
     )
 
 
-def percentile(data: xr.DataArray, percentiles: float, freq: str):
+def percentile(data: xr.DataArray, percentiles: float, freq: Freq):
     """
     Calculate a percentile statistic over the data in the specified time period.
 
@@ -415,11 +410,11 @@ def percentile(data: xr.DataArray, percentiles: float, freq: str):
     xr.DataArray, [same as data]
         {percentiles}th percentile of the data.
     """
-    return generic.percentile(data, percentiles, freq)
+    return generic.percentile(data, percentile=percentiles, freq=freq)
 
 
 def running_statistics(
-    data: xr.DataArray, window: int, rolling_aggregator: REDUCERS, overall_statistic: REDUCERS, freq: str
+    data: xr.DataArray, window: int, rolling_aggregator: Reducer, overall_statistic: Reducer, freq: Freq
 ):
     """
     Calculate, for the specified period, a statistic on a rolling aggregation, using the specified window size.
@@ -443,8 +438,13 @@ def running_statistics(
     xr.DataArray
         {overall_statistic} of the {window}-day {rolling_aggregator}.
     """
-    return generic.select_rolling_resample_op(
-        da=data, op=overall_statistic, window=window, window_center=True, window_op=rolling_aggregator, freq=freq
+    return generic.running_statistics(
+        data=data,
+        statistic=overall_statistic,
+        window=window,
+        window_center=True,
+        window_statistic=rolling_aggregator,
+        freq=freq,
     )
 
 
@@ -452,9 +452,9 @@ def running_statistics(
 def spell_length(
     data: xr.DataArray,
     threshold: Quantified,
-    condition: OPERATORS,
-    statistic: REDUCERS,
-    freq: str,
+    condition: Condition,
+    statistic: Reducer,
+    freq: Freq,
 ) -> xr.DataArray:
     """
     Calculate the statistic over the lengths of spells during the specified time period.
@@ -484,17 +484,17 @@ def spell_length(
     """
     return generic.spell_length_statistics(
         data=data,
-        threshold=threshold,
         window=1,
-        win_reducer=None,
-        op=condition,
-        spell_reducer=statistic,
-        resample_before_rl=False,
+        window_statistic=None,
+        condition=condition,
+        threshold=threshold,
+        statistic=statistic,
         freq=freq,
+        resample_before_rl=False,
     )
 
 
-def statistics(data: xr.DataArray, statistic: REDUCERS, freq: str):
+def statistics(data: xr.DataArray, statistic: Reducer, freq: Freq):
     """
     Calculate the statistic over the data in the specified time period.
 
@@ -512,11 +512,11 @@ def statistics(data: xr.DataArray, statistic: REDUCERS, freq: str):
     xr.DataArray
         {statistic} of data.
     """
-    return generic.select_resample_op(data, op=statistic, freq=freq)
+    return generic.statistics(data, statistic=statistic, freq=freq)
 
 
 @declare_relative_units(threshold="<data>")
-def temperature_sum(data: xr.DataArray, threshold: Quantified, condition: OPERATORS, freq: str) -> xr.DataArray:
+def temperature_sum(data: xr.DataArray, threshold: Quantified, condition: Condition, freq: Freq) -> xr.DataArray:
     """
     Calculate the temperature sum above or below a threshold during the specified time period.
 
@@ -541,16 +541,16 @@ def temperature_sum(data: xr.DataArray, threshold: Quantified, condition: OPERAT
     xr.DataArray
         Sum of temperature {condition} {threshold}.
     """
-    return generic.cumulative_difference(data, threshold=threshold, op=condition, freq=freq)
+    return generic.integrated_difference(data, threshold=threshold, condition=condition, freq=freq)
 
 
 @declare_relative_units(threshold="<data>")
 def thresholded_percentile(
     data: xr.DataArray,
     threshold: Quantified,
-    condition: OPERATORS,
+    condition: Condition,
     percentile: float,
-    freq: str,
+    freq: Freq,
 ) -> xr.DataArray:
     """
     Calculate, for the specified time period, a percentile statistic on the data that meets the specified condition.
@@ -577,18 +577,20 @@ def thresholded_percentile(
     xr.DataArray
         {percentile}th percentile of data where it is {condition} {threshold}.
     """
-    return generic.thresholded_percentile(data, threshold=threshold, op=condition, percentile=percentile, freq=freq)
+    return generic.thresholded_percentile(
+        data, threshold=threshold, condition=condition, percentile=percentile, freq=freq
+    )
 
 
 @declare_relative_units(threshold="<data>")
 def thresholded_running_statistics(
     data: xr.DataArray,
     threshold: Quantified,
-    condition: OPERATORS,
-    rolling_aggregator: REDUCERS,
+    condition: Condition,
+    rolling_aggregator: Reducer,
     window_size: int,
-    overall_statistic: REDUCERS,
-    freq: str,
+    overall_statistic: Reducer,
+    freq: Freq,
 ) -> xr.DataArray:
     """
     Calculate, for the specified period, a statistic on a rolling aggregation on filtered data.
@@ -621,15 +623,15 @@ def thresholded_running_statistics(
     xr.DataArray
         {overall_statistic} of {window_size}-day {rolling_aggregtor} of data where it is {condition} {threshold}.
     """
-    return generic.thresholded_rolling_resample_op(
+    return generic.thresholded_running_statistics(
         data,
         threshold=threshold,
-        op=condition,
-        reducer=overall_statistic,
+        condition=condition,
         window=window_size,
-        window_center=True,
-        window_op=rolling_aggregator,
+        window_statistic=rolling_aggregator,
+        statistic=overall_statistic,
         freq=freq,
+        window_center=True,
     )
 
 
@@ -637,9 +639,9 @@ def thresholded_running_statistics(
 def thresholded_statistics(
     data: xr.DataArray,
     threshold: Quantified,
-    condition: OPERATORS,
-    statistic: REDUCERS,
-    freq: str,
+    condition: Condition,
+    statistic: Reducer,
+    freq: Freq,
 ) -> xr.DataArray:
     """
     Calculate, for the specified time period, the statistic over the data for which some condition is met.
@@ -666,4 +668,6 @@ def thresholded_statistics(
     xr.DataArray
         {statistic} of data where it is {condition} {threshold}.
     """
-    return generic.thresholded_resample_op(data, threshold=threshold, op=condition, reducer=statistic, freq=freq)
+    return generic.thresholded_statistics(
+        data, threshold=threshold, condition=condition, statistic=statistic, freq=freq
+    )

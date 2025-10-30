@@ -9,8 +9,8 @@ from scipy.stats import rv_continuous
 from xclim.core._types import DateStr, Quantified
 from xclim.core.calendar import get_calendar
 from xclim.core.missing import at_least_n_valid
-from xclim.core.units import convert_units_to, declare_units, rate2amount, to_agg_units
-from xclim.indices.generic import threshold_count
+from xclim.core.units import convert_units_to, declare_units, rate2amount
+from xclim.indices.generic import count_occurrences
 from xclim.indices.stats import standardized_index
 
 from . import generic
@@ -613,8 +613,7 @@ def high_flow_frequency(q: xarray.DataArray, threshold_factor: int = 9, freq: st
     """
     median_flow = q.median(dim="time")
     threshold = threshold_factor * median_flow
-    out = threshold_count(q, ">", threshold, freq=freq)
-    return to_agg_units(out, q, "count", deffreq="D")
+    return count_occurrences(q, condition=">", threshold=threshold, freq=freq)
 
 
 @declare_units(q="[discharge]")
@@ -646,8 +645,7 @@ def low_flow_frequency(q: xarray.DataArray, threshold_factor: float = 0.2, freq:
     """
     mean_flow = q.mean(dim="time")
     threshold = threshold_factor * mean_flow
-    out = threshold_count(q, "<", threshold, freq=freq)
-    return to_agg_units(out, q, "count", deffreq="D")
+    return count_occurrences(q, condition="<", threshold=threshold, freq=freq)
 
 
 @declare_units(pr="[precipitation]")

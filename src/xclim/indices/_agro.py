@@ -17,7 +17,6 @@ from xclim.core.units import (
     convert_units_to,
     declare_units,
     rate2amount,
-    to_agg_units,
 )
 from xclim.core.utils import uses_dask
 from xclim.indices._simple import tn_min
@@ -25,7 +24,8 @@ from xclim.indices._threshold import (
     first_day_temperature_above,
     first_day_temperature_below,
 )
-from xclim.indices.generic import aggregate_between_dates, get_zones
+from xclim.indices.classify import get_zones
+from xclim.indices.generic import statistics_between_dates
 from xclim.indices.helpers import (
     _gather_lat,
     gladstones_day_length_latitude_coefficient,
@@ -1352,9 +1352,7 @@ def effective_growing_degree_days(
     )
 
     deg_days = (tas - thresh).clip(min=0)
-    egdd: xarray.DataArray = aggregate_between_dates(deg_days, start=start, end=end, freq=freq)
-    egdd = to_agg_units(egdd, tas, op="integral", deffreq="D")
-    return egdd
+    return statistics_between_dates(deg_days, start=start, end=end, statistic="integral", freq=freq)
 
 
 @declare_units(tasmin="[temperature]")
