@@ -2,17 +2,14 @@
 Changelog
 =========
 
-v0.59.0 (unreleased)
+v0.59.0 (2025-10-30)
 --------------------
 Contributors to this version: Pascal Bourgault (:user:`aulemahal`), Trevor James Smith (:user:`Zeitsperre`), Sascha Hofmann (:user:`saschahofmann`).
 
 New indicators and features
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
-* ``xclim.indices.stats.fit`` now returns NaNs when running with method ``PWD`` and a lmoments distribution. Before it failed with an ``L-Moments invalid`` error. (:issue:`2235`, :pull:`2239`).
-
-New indicators and features
-^^^^^^^^^^^^^^^^^^^^^^^^^^^
 * ``xclim.ensembles.robustness_fractions`` now accepts instances of ``xclim.core.missing`` classes as a new ``invalid`` argument to control how data points are flagged as invalid. (:pull:`2245`).
+* ``xclim.indices.stats.fit`` now returns NaNs when running with method ``PWD`` and a lmoments distribution. Before it failed with an ``L-Moments invalid`` error. (:issue:`2235`, :pull:`2239`).
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
@@ -22,15 +19,16 @@ Breaking changes
 
 Bug fixes
 ^^^^^^^^^
-* Fix dimensions of "prsn" in the variable dictionary. (:pull:`2242`).
-* History is not written the DataArray is the ``as_dataset`` option is activated. (:issue:`2240`, :pull:`2251`).
+* Fix dimensions of `"prsn"` in the variable dictionary. (:pull:`2242`).
+* History is not written to the DataArray if the ``as_dataset`` option is activated. (:issue:`2240`, :pull:`2251`).
 * ``xclim.core.formatting.update_history`` now places the updated history at the top of the new attribute, not at the bottom. (:pull:`2251`).
 * ``$ xclim info`` CLI utility now provides information for module-loaded indicators (`cf`, `anuclim`, `icclim`). (:issue:`2219`, :pull:`2255`).
-* A few functions have been adapted to xarray's new default (`True`) for option `keep_attrs`. (:issue:`2250`, :pull:`2257`).
+* A few functions have been adapted to the new `xarray` default (`True`) for option ``keep_attrs``. (:issue:`2250`, :pull:`2257`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
 * Fixed an issue with a test that can fail when running with older versions of `numpy`. (:pull:`2253`).
+* Updated `flit` to v3.11.0 and adopted `PEP 639 <https://peps.python.org/pep-0639/>`_ for specifying licensing metadata. (:pull:`2260`).
 
 v0.58.1 (2025-08-28)
 --------------------
