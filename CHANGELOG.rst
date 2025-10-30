@@ -28,7 +28,7 @@ Bug fixes
 Internal changes
 ^^^^^^^^^^^^^^^^
 * Fixed an issue with a test that can fail when running with older versions of `numpy`. (:pull:`2253`).
-* Updated `flit` to v3.11.0 and adopted `PEP 639 <https://peps.python.org/pep-0639/>`_ for specifying licensing metadata.
+* Updated `flit` to v3.11.0 and adopted `PEP 639 <https://peps.python.org/pep-0639/>`_ for specifying licensing metadata. (:pull:`2260`).
 
 v0.58.1 (2025-08-28)
 --------------------
