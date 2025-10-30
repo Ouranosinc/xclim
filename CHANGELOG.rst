@@ -2,9 +2,13 @@
 Changelog
 =========
 
-v0.59 (unreleased)
-------------------
-Contributors to this version: Pascal Bourgault (:user:`aulemahal`), Trevor James Smith (:user:`Zeitsperre`).
+v0.59.0 (unreleased)
+--------------------
+Contributors to this version: Pascal Bourgault (:user:`aulemahal`), Trevor James Smith (:user:`Zeitsperre`), Sascha Hofmann (:user:`saschahofmann`).
+
+New indicators and features
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+* ``xclim.indices.stats.fit`` now returns NaNs when running with method ``PWD`` and a lmoments distribution. Before it failed with an ``L-Moments invalid`` error. (:issue:`2235`, :pull:`2239`).
 
 New indicators and features
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^

@@ -75,14 +75,28 @@ def _fitfunc_1d(arr, *, dist, nparams, method, **fitkwargs):
             raise ValueError(
                 "Lmoments3 does not use `fitkwargs` arguments, except for `floc` with the Gamma distribution."
             )
-        if "floc" in fitkwargs and type(dist).__name__ == "GammaGen":
-            # lmoments3 assumes `loc` is 0, so `x` may need to be shifted
-            # note that `floc` must already be in appropriate units for `x`
-            params = dist.lmom_fit(x - fitkwargs["floc"])
-            params["loc"] = fitkwargs["floc"]
-            params = list(params.values())
-        else:
-            params = list(dist.lmom_fit(x).values())
+        try:
+            if "floc" in fitkwargs and type(dist).__name__ == "GammaGen":
+                # lmoments3 assumes `loc` is 0, so `x` may need to be shifted
+                # note that `floc` must already be in appropriate units for `x`
+                x = x - fitkwargs["floc"]
+                params = dist.lmom_fit(x)
+                params["loc"] = fitkwargs["floc"]
+                params = list(params.values())
+            else:
+                params = list(dist.lmom_fit(x).values())
+        # We only return all NaNs if the fitting also fails. In the future this can probably
+        # be changed to a check before running lmom_fit.
+        except ValueError as e:
+            n_unique = len(np.unique(x))
+            # Error message is hardcoded with different capitalization in lmoments3
+            if str(e).lower() == "l-moments invalid" and n_unique <= dist.numargs | 1:
+                warnings.warn(
+                    f"{type(dist).__name__} requires {dist.numargs | 1} unique values. "
+                    f"{n_unique} provided, returning NaNs."
+                )
+                return np.asarray([np.nan] * nparams)
+            raise e
     elif method == "APP":
         args, kwargs = _fit_start(x, dist.name, **fitkwargs)
         kwargs.setdefault("loc", 0)
