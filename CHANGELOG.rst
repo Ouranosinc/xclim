@@ -6,7 +6,7 @@ v2026.1 (unreleased)
 --------------------
 Contributors to this version: Pascal Bourgault (:user:`aulemahal`).
 
-This new xclim bring a major overhaul of the "generic" index functions which had a trickle down (breaking) effect on most of xclim modules.
+This new xclim bring a major overhaul of the "generic" index functions which had a trickle down (breaking) effect on most of xclim modules. A summary of the changes can be found `in this comment <https://github.com/Ouranosinc/xclim/pull/2258#issuecomment-3473430173>`_.
 
 v0.59.0 (2025-10-30)
 --------------------

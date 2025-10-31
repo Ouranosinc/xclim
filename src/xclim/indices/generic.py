@@ -321,7 +321,10 @@ def count_domain_occurrences(
     """
     low = convert_units_to(low_bound, data)
     high = convert_units_to(high_bound, data)
-    cond = (compare(data, low_condition, low) & compare(data, high_condition, high)) * 1
+    cond = (
+        compare(data, low_condition, low, constrain=(">", ">="))
+        & compare(data, high_condition, high, constrain=("<", "<="))
+    ) * 1
     out = cond.resample(time=freq).sum(dim="time")
     return to_agg_units(out, data, "count")
 
@@ -1183,7 +1186,7 @@ def statistics_between_dates(
 
 
 @declare_relative_units(threshold="<data>")
-def integrated_difference(data: xr.DataArray, threshold: Quantified, condition: Condition, freq: Freq) -> xr.DataArray:
+def integrated_difference(data: xr.DataArray, condition: Condition, threshold: Quantified, freq: Freq) -> xr.DataArray:
     """
     Integrate difference of data below/above a given value threshold.
 
@@ -1195,10 +1198,10 @@ def integrated_difference(data: xr.DataArray, threshold: Quantified, condition: 
     ----------
     data : xr.DataArray
         Data.
-    threshold : Quantified
-        The value threshold.
     condition : {">", "gt", "<", "lt", ">=", "ge", "<=", "le"}
         Logical comparison operator.
+    threshold : Quantified
+        The value threshold.
     freq : str, optional
         Resampling frequency defining the periods as defined in :ref:`timeseries.resampling`.
 
