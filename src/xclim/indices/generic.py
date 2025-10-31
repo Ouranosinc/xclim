@@ -269,6 +269,7 @@ def count_occurrences(
     threshold: Quantified,
     freq: Freq,
     constrain: Sequence[str] | None = None,
+    **indexer,
 ) -> xr.DataArray:
     """
     Count number of timesteps where the data fulfills a thresholded condition.
@@ -288,6 +289,8 @@ def count_occurrences(
         Resampling frequency defining the periods as defined in :ref:`timeseries.resampling`.
     constrain : sequence of str, optional
         Allowed conditions, to be used when creating a more specific indicator from this function.
+    **indexer : {dim: indexer, }, optional
+        Time attribute and values over which to subset the array. See :py:func:`xclim.core.calendar.select_time`.
 
     Returns
     -------
@@ -308,6 +311,7 @@ def count_domain_occurrences(
     freq: Freq,
     low_condition: Literal[">", ">=", "gt", "ge"] = ">",
     high_condition: Literal["<", "<=", "lt", "le"] = "<=",
+    **indexer,
 ) -> xr.DataArray:
     """
     Count number of timesteps where the data is within two bounds.
@@ -331,6 +335,8 @@ def count_domain_occurrences(
     high_condition : {'<', '<=', 'lt', 'le'}
         The comparison operator to use on the higher bound. Default is "<=" which means
         equality does fulfill the condition.
+    **indexer : {dim: indexer, }, optional
+        Time attribute and values over which to subset the array. See :py:func:`xclim.core.calendar.select_time`.
 
     Returns
     -------
@@ -343,6 +349,7 @@ def count_domain_occurrences(
         compare(data, low_condition, low, constrain=(">", ">="))
         & compare(data, high_condition, high, constrain=("<", "<="))
     ) * 1
+    cond = select_time(cond, **indexer)
     out = cond.resample(time=freq).sum(dim="time")
     return to_agg_units(out, data, "count")
 
@@ -359,6 +366,7 @@ def bivariate_count_occurrences(
     var_reducer: Literal["all", "any"] = "all",
     constrain1: Sequence[str] | None = None,
     constrain2: Sequence[str] | None = None,
+    **indexer,
 ) -> xr.DataArray:
     """
     Count number of timesteps where two variables fulfill thresholded conditions.
@@ -389,6 +397,8 @@ def bivariate_count_occurrences(
         Allowed comparison operators for variable 1, None to allow all.
     constrain2 : sequence of str, optional
         Allowed comparison operators for variable 2, None to allow all.
+    **indexer : {dim: indexer, }, optional
+        Time attribute and values over which to subset the array. See :py:func:`xclim.core.calendar.select_time`.
 
     Returns
     -------
@@ -412,6 +422,7 @@ def bivariate_count_occurrences(
     else:
         raise ValueError(f"Unsupported value for var_reducer: {var_reducer}")
 
+    cond = select_time(cond, **indexer)
     out = cond.resample(time=freq).sum()
     return to_agg_units(out, data1, "count", dim="time")
 
@@ -425,6 +436,7 @@ def count_percentile_occurrences(
     window: int = 5,
     bootstrap: bool = False,
     constrain: Sequence[str] | None = None,
+    **indexer,
 ) -> xr.DataArray:
     """
     Count how many times an annually varying percentile-based thresholded condition is fulfilled.
@@ -457,6 +469,10 @@ def count_percentile_occurrences(
         Note that bootstrapping is computationally expensive.
     constrain : sequence of str, optional
         Allowed conditions. None to allow them all.
+    **indexer : {dim: indexer, }, optional
+        Time attribute and values over which to subset the array. See :py:func:`xclim.core.calendar.select_time`.
+        Subsetting is not done one the data used to compute the climatology, only on the data against
+        which the condition is checked.
 
     Returns
     -------
@@ -464,6 +480,7 @@ def count_percentile_occurrences(
         Number of timesteps where data is {condition} the {percentile}th percentile computed over {reference_period}.
     """
     clim = percentile_doy(data.sel(time=slice(*reference_period)), window=window, per=percentile)
+    data = select_time(data, **indexer)
 
     @percentile_bootstrap
     def _count_percentile_occurrences(data, per, freq, bootstrap, op):
@@ -487,6 +504,7 @@ def count_thresholded_percentile_occurrences(
     window: int = 5,
     bootstrap: bool = False,
     constrain: Sequence[str] | None = None,
+    **indexer,
 ) -> xr.DataArray:
     """
     Count how many times an annually-varying percentile condition is fulfilled over data fulfilling another condition.
@@ -524,6 +542,10 @@ def count_thresholded_percentile_occurrences(
         Note that bootstrapping is computationally expensive.
     constrain : sequence of str, optional
         Allowed conditions. None to allow them all.
+    **indexer : {dim: indexer, }, optional
+        Time attribute and values over which to subset the array. See :py:func:`xclim.core.calendar.select_time`.
+        Subsetting is not done one the data used to compute the climatology, only on the data against
+        which the condition is checked.
 
     Returns
     -------
@@ -542,6 +564,7 @@ def count_thresholded_percentile_occurrences(
         window=window,
         constrain=constrain,
         bootstrap=bootstrap,
+        **indexer,
     )
 
 
@@ -635,8 +658,7 @@ def spell_length_statistics(
         Determines if the resampling should take place before or after the run
         length encoding (or a similar algorithm) is applied to runs.
     **indexer : {dim: indexer, }, optional
-        Indexing parameters to compute the indicator on a temporal subset of the data.
-        It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
+        Time attribute and values over which to subset the array. See :py:func:`xclim.core.calendar.select_time`.
         Indexing is done after finding the days part of a spell, but before taking the spell statistics.
 
     Returns
@@ -747,8 +769,7 @@ def bivariate_spell_length_statistics(
         Determines if the resampling should take place before or after the run
         length encoding (or a similar algorithm) is applied to runs.
     **indexer : {dim: indexer, }, optional
-        Indexing parameters to compute the indicator on a temporal subset of the data.
-        It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
+        Time attribute and values over which to subset the array. See :py:func:`xclim.core.calendar.select_time`.
         Indexing is done after finding the days part of a spell, but before taking the spell statistics.
 
     Returns
@@ -788,6 +809,7 @@ def season(
     freq: Freq,
     mid_date: DayOfYearStr | None = None,
     constrain: Sequence[str] | None = None,
+    **indexer,
 ) -> xr.DataArray:
     r"""
     Season.
@@ -815,6 +837,8 @@ def season(
         An optional middle date. The start must happen before and the end after for the season to be valid.
     constrain : Sequence of strings, optional
         A list of acceptable comparison operators. Optional, but indicators wrapping this function should inject it.
+    **indexer : {dim: indexer, }, optional
+        Time attribute and values over which to subset the array. See :py:func:`xclim.core.calendar.select_time`.
 
     Returns
     -------
@@ -853,6 +877,7 @@ def season(
     """
     thresh = convert_units_to(threshold, data, context="infer")
     cond = compare(data, condition, thresh, constrain=constrain)
+    cond = select_time(cond, **indexer)
     func = {"start": rl.season_start, "end": rl.season_end, "length": rl.season_length}
     map_kwargs = {"window": window, "mid_date": mid_date}
 
@@ -922,11 +947,7 @@ def season_length_from_boundaries(season_start: xr.DataArray, season_end: xr.Dat
 
 @declare_relative_units(data2="<data1>")
 def difference_statistics(
-    data1: xr.DataArray,
-    data2: xr.DataArray,
-    statistic: Reducer,
-    freq: Freq,
-    absolute: bool = False,
+    data1: xr.DataArray, data2: xr.DataArray, statistic: Reducer, freq: Freq, absolute: bool = False, **indexer
 ) -> xr.DataArray:
     """
     Calculate a statistic over the difference between two variables.
@@ -945,6 +966,8 @@ def difference_statistics(
         Resampling frequency defining the periods as defined in :ref:`timeseries.resampling`.
     absolute : bool
         If True, the statistic is computed over the absolute difference.
+    **indexer : {dim: indexer, }, optional
+        Time attribute and values over which to subset the array. See :py:func:`xclim.core.calendar.select_time`.
 
     Returns
     -------
@@ -959,11 +982,11 @@ def difference_statistics(
     u = str2pint(data1.units)
     dtr.attrs.update(pint2cfattrs(u, is_difference=True))
 
-    return statistics(dtr, statistic=statistic, freq=freq)
+    return statistics(dtr, statistic=statistic, freq=freq, **indexer)
 
 
 @declare_relative_units(data2="<data1>")
-def extreme_range(data1: xr.DataArray, data2: xr.DataArray, freq: Freq) -> xr.DataArray:
+def extreme_range(data1: xr.DataArray, data2: xr.DataArray, freq: Freq, **indexer) -> xr.DataArray:
     """
     Calculate the extreme's range.
 
@@ -977,6 +1000,8 @@ def extreme_range(data1: xr.DataArray, data2: xr.DataArray, freq: Freq) -> xr.Da
         The highest data.
     freq : str
         Resampling frequency defining the periods as defined in :ref:`timeseries.resampling`.
+    **indexer : {dim: indexer, }, optional
+        Time attribute and values over which to subset the array. See :py:func:`xclim.core.calendar.select_time`.
 
     Returns
     -------
@@ -984,6 +1009,8 @@ def extreme_range(data1: xr.DataArray, data2: xr.DataArray, freq: Freq) -> xr.Da
         The DataArray for the extreme temperature range.
     """
     data2 = convert_units_to(data2, data1, context="infer")
+    data2 = select_time(data2, **indexer)
+    data1 = select_time(data1, **indexer)
 
     out = data2.resample(time=freq).max() - data1.resample(time=freq).min()
 
@@ -993,7 +1020,7 @@ def extreme_range(data1: xr.DataArray, data2: xr.DataArray, freq: Freq) -> xr.Da
 
 
 def interday_difference_statistics(
-    data1: xr.DataArray, data2: xr.DataArray, statistic: Reducer, freq: Freq, absolute: bool = True
+    data1: xr.DataArray, data2: xr.DataArray, statistic: Reducer, freq: Freq, absolute: bool = True, **indexer
 ) -> xr.DataArray:
     """
     Calculate a statistic of the day-to-day difference of the difference between two variables.
@@ -1013,6 +1040,9 @@ def interday_difference_statistics(
         Resampling frequency defining the periods as defined in :ref:`timeseries.resampling`.
     absolute : bool
         If True, the statistic is computed over the absolute value of the differentiated difference.
+    **indexer : {dim: indexer, }, optional
+        Time attribute and values over which to subset the array. See :py:func:`xclim.core.calendar.select_time`.
+        Subsetting is done after differentiating along time.
 
     Returns
     -------
@@ -1023,10 +1053,10 @@ def interday_difference_statistics(
     vdtr = abs((data2 - data1).diff(dim="time"))
     u = str2pint(data1.units)
     vdtr.attrs.update(pint2cfattrs(u, is_difference=True))
-    return statistics(vdtr, statistic=statistic, freq=freq)
+    return statistics(vdtr, statistic=statistic, freq=freq, **indexer)
 
 
-def percentile(data: xr.DataArray, percentile: float, freq: Freq):
+def percentile(data: xr.DataArray, percentile: float, freq: Freq, **indexer):
     """
     Calculate the percentile statistic for each requested period.
 
@@ -1038,6 +1068,8 @@ def percentile(data: xr.DataArray, percentile: float, freq: Freq):
         A percentile (0, 100).
     freq : str
         Resampling frequency defining the periods as defined in :ref:`timeseries.resampling`.
+    **indexer : {dim: indexer, }, optional
+        Time attribute and values over which to subset the array. See :py:func:`xclim.core.calendar.select_time`.
 
     Returns
     -------
@@ -1045,6 +1077,7 @@ def percentile(data: xr.DataArray, percentile: float, freq: Freq):
         {percentile}th percentile of the data.
     """
     q = percentile / 100
+    data = select_time(data, **indexer)
     out = data.resample(time=freq).quantile(q).drop_vars("quantile")
     out.attrs["units"] = data.attrs["units"]
     return out
@@ -1058,6 +1091,7 @@ def thresholded_percentile(
     percentile: float,
     freq: Freq,
     constrain: Sequence[str] | None = None,
+    **indexer,
 ) -> xr.DataArray:
     """
     Calculate a percentile of the data for which some condition is met, for each requested period.
@@ -1076,6 +1110,8 @@ def thresholded_percentile(
         Resampling frequency defining the periods as defined in :ref:`timeseries.resampling`.
     constrain : sequence of str, optional
         Optionally allowed conditions. Default: None.
+    **indexer : {dim: indexer, }, optional
+        Time attribute and values over which to subset the array. See :py:func:`xclim.core.calendar.select_time`.
 
     Returns
     -------
@@ -1084,7 +1120,7 @@ def thresholded_percentile(
     """
     threshold = convert_units_to(threshold, data, context="infer")
     cond = compare(data, condition, threshold, constrain)
-    return percentile(data.where(cond), percentile, freq)
+    return percentile(data.where(cond), percentile, freq, **indexer)
 
 
 def statistics_between_dates(
@@ -1204,7 +1240,9 @@ def statistics_between_dates(
 
 
 @declare_relative_units(threshold="<data>")
-def integrated_difference(data: xr.DataArray, condition: Condition, threshold: Quantified, freq: Freq) -> xr.DataArray:
+def integrated_difference(
+    data: xr.DataArray, condition: Condition, threshold: Quantified, freq: Freq, **indexer
+) -> xr.DataArray:
     """
     Integrate difference of data below/above a given value threshold.
 
@@ -1222,6 +1260,8 @@ def integrated_difference(data: xr.DataArray, condition: Condition, threshold: Q
         The value threshold.
     freq : str, optional
         Resampling frequency defining the periods as defined in :ref:`timeseries.resampling`.
+    **indexer : {dim: indexer, }, optional
+        Time attribute and values over which to subset the array. See :py:func:`xclim.core.calendar.select_time`.
 
     Returns
     -------
@@ -1238,7 +1278,7 @@ def integrated_difference(data: xr.DataArray, condition: Condition, threshold: Q
         raise NotImplementedError(f"Condition not supported: '{condition}'.")
 
     diff.attrs.update(pint2cfattrs(units2pint(data.attrs["units"]), is_difference=True))
-    return statistics(diff, statistic="integral", freq=freq)
+    return statistics(diff, statistic="integral", freq=freq, **indexer)
 
 
 @declare_relative_units(threshold="<data>")
@@ -1251,6 +1291,7 @@ def day_threshold_reached(
     which: Literal["first", "last"] = "first",
     window: int = 1,
     constrain: Sequence[str] | None = None,
+    **indexer,
 ) -> xr.DataArray:
     r"""
     First or last day of values fulfilling a condition.
@@ -1277,6 +1318,8 @@ def day_threshold_reached(
         Minimum number of days with values above threshold needed for evaluation. Default: 1.
     constrain : sequence of str, optional
         Optionally allowed conditions.
+    **indexer : {dim: indexer, }, optional
+        Time attribute and values over which to subset the array. See :py:func:`xclim.core.calendar.select_time`.
 
     Returns
     -------
@@ -1294,6 +1337,7 @@ def day_threshold_reached(
     else:
         raise ValueError(f"'which' must be 'first' or 'last'. Got {which}.")
 
+    cond = select_time(cond, **indexer)
     out: xr.DataArray = resample_map(
         cond,
         "time",
