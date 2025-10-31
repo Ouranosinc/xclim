@@ -50,6 +50,7 @@ jobs:
             api.green-coding.io:443
             files.pythonhosted.org:443
             github.com:443
+            index.crates.io:443
             ip-api.com:80
             ipapi.co:443
             proxy.golang.org:443
