@@ -192,7 +192,7 @@ def spell_mask(
     if not isinstance(data, xr.DataArray):
         # thus a sequence
         if np.isscalar(thresh) or isinstance(thresh, xr.DataArray) or len(data) != len(thresh):
-            raise ValueError("When ``data`` is given as a list, ``threshold`` must be a sequence of the same length.")
+            raise ValueError("When ``data`` is given as a list, ``thresh`` must be a sequence of the same length.")
         data = xr.concat(data, "variable")
         if isinstance(thresh[0], xr.DataArray):
             thresh = xr.concat(thresh, "variable")

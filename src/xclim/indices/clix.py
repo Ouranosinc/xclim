@@ -64,8 +64,8 @@ def count_level_crossings(
     return generic.bivariate_count_occurrences(
         data1=low_data,
         data2=high_data,
-        threshold1=threshold,
-        threshold2=threshold,
+        thresh1=threshold,
+        thresh2=threshold,
         freq=freq,
         condition1="<",
         condition2=">",
@@ -105,7 +105,7 @@ def count_occurrences(
     """
     return generic.count_occurrences(
         data=data,
-        threshold=threshold,
+        thresh=threshold,
         condition=condition,
         freq=freq,
     ).assign_attrs(units="1")
@@ -206,7 +206,7 @@ def count_thresholded_percentile_occurrences(
     """
     return generic.count_thresholded_percentile_occurrences(
         data=data,
-        threshold=data_threshold,
+        thresh=data_threshold,
         data_condition=data_condition,
         percentile=percentile,
         condition=percentile_condition,
@@ -309,7 +309,7 @@ def first_occurrence(
     return generic.day_threshold_reached(
         data=data,
         condition=condition,
-        threshold=threshold,
+        thresh=threshold,
         date=after_date,
         which="first",
         window=1,
@@ -383,7 +383,7 @@ def last_occurrence(
     """
     return generic.day_threshold_reached(
         data=data,
-        threshold=threshold,
+        thresh=threshold,
         condition=condition,
         date=before_date,
         which="last",
@@ -487,7 +487,7 @@ def spell_length(
         window=1,
         window_statistic=None,
         condition=condition,
-        threshold=threshold,
+        thresh=threshold,
         statistic=statistic,
         freq=freq,
         resample_before_rl=False,
@@ -541,7 +541,7 @@ def temperature_sum(data: xr.DataArray, threshold: Quantified, condition: Condit
     xr.DataArray
         Sum of temperature {condition} {threshold}.
     """
-    return generic.integrated_difference(data, threshold=threshold, condition=condition, freq=freq)
+    return generic.integrated_difference(data, thresh=threshold, condition=condition, freq=freq)
 
 
 @declare_relative_units(threshold="<data>")
@@ -577,9 +577,7 @@ def thresholded_percentile(
     xr.DataArray
         {percentile}th percentile of data where it is {condition} {threshold}.
     """
-    return generic.thresholded_percentile(
-        data, threshold=threshold, condition=condition, percentile=percentile, freq=freq
-    )
+    return generic.thresholded_percentile(data, thresh=threshold, condition=condition, percentile=percentile, freq=freq)
 
 
 @declare_relative_units(threshold="<data>")
@@ -625,7 +623,7 @@ def thresholded_running_statistics(
     """
     return generic.thresholded_running_statistics(
         data,
-        threshold=threshold,
+        thresh=threshold,
         condition=condition,
         window=window_size,
         window_statistic=rolling_aggregator,
@@ -668,6 +666,4 @@ def thresholded_statistics(
     xr.DataArray
         {statistic} of data where it is {condition} {threshold}.
     """
-    return generic.thresholded_statistics(
-        data, threshold=threshold, condition=condition, statistic=statistic, freq=freq
-    )
+    return generic.thresholded_statistics(data, thresh=threshold, condition=condition, statistic=statistic, freq=freq)

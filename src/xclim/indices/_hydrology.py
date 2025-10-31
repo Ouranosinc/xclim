@@ -611,8 +611,8 @@ def high_flow_frequency(q: xarray.DataArray, threshold_factor: int = 9, freq: st
     :cite:cts:`addor2018,Clausen2000`
     """
     median_flow = q.median(dim="time")
-    threshold = (threshold_factor * median_flow).assign_attrs(units=q.attrs["units"])
-    return count_occurrences(q, condition=">", threshold=threshold, freq=freq)
+    thresh = (threshold_factor * median_flow).assign_attrs(units=q.attrs["units"])
+    return count_occurrences(q, condition=">", thresh=thresh, freq=freq)
 
 
 @declare_units(q="[discharge]")
@@ -643,8 +643,8 @@ def low_flow_frequency(q: xarray.DataArray, threshold_factor: float = 0.2, freq:
     :cite:cts:`Olden2003`
     """
     mean_flow = q.mean(dim="time")
-    threshold = (threshold_factor * mean_flow).assign_attrs(units=q.attrs["units"])
-    return count_occurrences(q, condition="<", threshold=threshold, freq=freq)
+    thresh = (threshold_factor * mean_flow).assign_attrs(units=q.attrs["units"])
+    return count_occurrences(q, condition="<", thresh=thresh, freq=freq)
 
 
 @declare_units(pr="[precipitation]")

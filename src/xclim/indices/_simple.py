@@ -364,7 +364,7 @@ def hot_days(
 
        TX_{ij} > TT
     """
-    return count_occurrences(tasmax, condition=">", threshold=thresh, freq=freq)
+    return count_occurrences(tasmax, condition=">", thresh=thresh, freq=freq)
 
 
 @declare_units(tasmin="[temperature]", thresh="[temperature]")
@@ -401,7 +401,7 @@ def frost_days(
 
        TN_{ij} < TT
     """
-    return count_occurrences(tasmin, condition="<", threshold=thresh, freq=freq)
+    return count_occurrences(tasmin, condition="<", thresh=thresh, freq=freq)
 
 
 @declare_units(tasmax="[temperature]", thresh="[temperature]")
@@ -434,7 +434,7 @@ def ice_days(tasmax: xarray.DataArray, thresh: Quantified = "0 degC", freq: str 
 
        TX_{ij} < TT
     """
-    return count_occurrences(tasmax, condition="<", threshold=thresh, freq=freq)
+    return count_occurrences(tasmax, condition="<", thresh=thresh, freq=freq)
 
 
 @declare_units(pr="[precipitation]")

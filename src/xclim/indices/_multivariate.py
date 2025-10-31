@@ -1216,7 +1216,7 @@ def days_over_precip_thresh(
         tp = resample_doy(tp, pr)
 
     # Compute the days when precip is both over the wet day threshold and the percentile threshold.
-    return count_occurrences(pr, condition=op, threshold=tp, freq=freq, constrain=(">", ">="))
+    return count_occurrences(pr, condition=op, thresh=tp, freq=freq, constrain=(">", ">="))
 
 
 @declare_units(pr="[precipitation]", pr_per="[precipitation]", thresh="[precipitation]")
@@ -1336,7 +1336,7 @@ def tg90p(
     thresh = resample_doy(tas_per, tas)
 
     # Identify the days over the 90th percentile
-    return count_occurrences(tas, condition=op, threshold=thresh, freq=freq, constrain=(">", ">="))
+    return count_occurrences(tas, condition=op, thresh=thresh, freq=freq, constrain=(">", ">="))
 
 
 @declare_units(tas="[temperature]", tas_per="[temperature]")
@@ -1394,7 +1394,7 @@ def tg10p(
     thresh = resample_doy(tas_per, tas)
 
     # Identify the days below the 10th percentile
-    return count_occurrences(tas, condition=op, threshold=thresh, freq=freq, constrain=("<", "<="))
+    return count_occurrences(tas, condition=op, thresh=thresh, freq=freq, constrain=("<", "<="))
 
 
 @declare_units(tasmin="[temperature]", tasmin_per="[temperature]")
@@ -1452,7 +1452,7 @@ def tn90p(
     thresh = resample_doy(tasmin_per, tasmin)
 
     # Identify the days with min temp above 90th percentile.
-    return count_occurrences(tasmin, condition=op, threshold=thresh, freq=freq, constrain=(">", ">="))
+    return count_occurrences(tasmin, condition=op, thresh=thresh, freq=freq, constrain=(">", ">="))
 
 
 @declare_units(tasmin="[temperature]", tasmin_per="[temperature]")
@@ -1510,7 +1510,7 @@ def tn10p(
     thresh = resample_doy(tasmin_per, tasmin)
 
     # Identify the days below the 10th percentile
-    return count_occurrences(tasmin, condition=op, threshold=thresh, freq=freq, constrain=("<", "<="))
+    return count_occurrences(tasmin, condition=op, thresh=thresh, freq=freq, constrain=("<", "<="))
 
 
 @declare_units(tasmax="[temperature]", tasmax_per="[temperature]")
@@ -1568,7 +1568,7 @@ def tx90p(
     thresh = resample_doy(tasmax_per, tasmax)
 
     # Identify the days with max temp above 90th percentile.
-    return count_occurrences(tasmax, condition=op, threshold=thresh, freq=freq, constrain=(">", ">="))
+    return count_occurrences(tasmax, condition=op, thresh=thresh, freq=freq, constrain=(">", ">="))
 
 
 @declare_units(tasmax="[temperature]", tasmax_per="[temperature]")
@@ -1626,7 +1626,7 @@ def tx10p(
     thresh = resample_doy(tasmax_per, tasmax)
 
     # Identify the days below the 10th percentile
-    return count_occurrences(tasmax, condition=op, threshold=thresh, freq=freq, constrain=("<", "<="))
+    return count_occurrences(tasmax, condition=op, thresh=thresh, freq=freq, constrain=("<", "<="))
 
 
 @declare_units(

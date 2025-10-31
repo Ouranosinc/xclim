@@ -279,8 +279,8 @@ class TestIntegratedDifference:
     def test_simple(self, tas_series, op, expected):
         tas = tas_series(np.array([-10, 15, 20, 3, 10]) + K2C)
 
-        out = generic.integrated_difference(tas, threshold="10 degC", condition=op, freq="YS")
-        out_kelvin = generic.integrated_difference(tas, threshold="283.15 degK", condition=op, freq="YS")
+        out = generic.integrated_difference(tas, thresh="10 degC", condition=op, freq="YS")
+        out_kelvin = generic.integrated_difference(tas, thresh="283.15 degK", condition=op, freq="YS")
 
         np.testing.assert_allclose(out, expected)
         np.testing.assert_allclose(out, out_kelvin)
@@ -289,12 +289,12 @@ class TestIntegratedDifference:
         tas = tas_series(np.array([-10, 15, 20, 3, 10]) + K2C)
 
         with pytest.raises(NotImplementedError):
-            generic.integrated_difference(tas, threshold="10 degC", condition="!=", freq="YS")
+            generic.integrated_difference(tas, thresh="10 degC", condition="!=", freq="YS")
 
     def test_delta_units(self, tas_series):
         tas = tas_series(np.array([-10, 15, 20, 3, 10]) + K2C)
 
-        out = generic.integrated_difference(tas, threshold="10 degC", condition=">=", freq="YS")
+        out = generic.integrated_difference(tas, thresh="10 degC", condition=">=", freq="YS")
         assert "units_metadata" in out.attrs
 
 
@@ -310,7 +310,7 @@ class TestDayThresholdReached:
 
         fda = generic.day_threshold_reached(
             pr,
-            threshold="0.004 kg m-2 s-1",
+            thresh="0.004 kg m-2 s-1",
             condition=op,
             which="first",
             date="01-01",
@@ -331,7 +331,7 @@ class TestDayThresholdReached:
 
         fdb = generic.day_threshold_reached(
             pr,
-            threshold="0.004 kg m-2 s-1",
+            thresh="0.004 kg m-2 s-1",
             condition=op,
             which="first",
             date="01-01",
@@ -349,7 +349,7 @@ class TestDayThresholdReached:
         with pytest.raises(ValueError):
             generic.day_threshold_reached(
                 pr,
-                threshold="0.004 kg m-2 s-1",
+                thresh="0.004 kg m-2 s-1",
                 condition=">",
                 which="first",
                 date="01-01",
@@ -381,8 +381,8 @@ class TestGenericCountingIndices:
         crossings = generic.bivariate_count_occurrences(
             data1=tasmin,
             data2=tasmax,
-            threshold1="5 degC",
-            threshold2="5 degC",
+            thresh1="5 degC",
+            thresh2="5 degC",
             freq="YS",
             condition1=op_low,
             condition2=op_high,
@@ -407,11 +407,9 @@ class TestGenericCountingIndices:
 
         if should_fail:
             with pytest.raises(ValueError):
-                generic.count_occurrences(tas, threshold="4 degC", freq="YS", condition=op, constrain=constrain)
+                generic.count_occurrences(tas, thresh="4 degC", freq="YS", condition=op, constrain=constrain)
         else:
-            occurrences = generic.count_occurrences(
-                tas, threshold="4 degC", freq="YS", condition=op, constrain=constrain
-            )
+            occurrences = generic.count_occurrences(tas, thresh="4 degC", freq="YS", condition=op, constrain=constrain)
             np.testing.assert_array_equal(occurrences, [expected])
 
     @pytest.mark.parametrize(
@@ -430,11 +428,11 @@ class TestGenericCountingIndices:
         if should_fail:
             with pytest.raises(ValueError):
                 generic.day_threshold_reached(
-                    tas, threshold="11 degC", freq="YS", which="first", condition=op, constrain=constrain
+                    tas, thresh="11 degC", freq="YS", which="first", condition=op, constrain=constrain
                 )
         else:
             first = generic.day_threshold_reached(
-                tas, threshold="11 degC", freq="YS", which="first", condition=op, constrain=constrain
+                tas, thresh="11 degC", freq="YS", which="first", condition=op, constrain=constrain
             )
 
             np.testing.assert_array_equal(first, [expected])
@@ -455,11 +453,11 @@ class TestGenericCountingIndices:
         if should_fail:
             with pytest.raises(ValueError):
                 generic.day_threshold_reached(
-                    tas, threshold="11 degC", freq="YS", which="last", condition=op, constrain=constrain
+                    tas, thresh="11 degC", freq="YS", which="last", condition=op, constrain=constrain
                 )
         else:
             first = generic.day_threshold_reached(
-                tas, threshold="11 degC", freq="YS", which="last", condition=op, constrain=constrain
+                tas, thresh="11 degC", freq="YS", which="last", condition=op, constrain=constrain
             )
 
             np.testing.assert_array_equal(first, [expected])
@@ -715,7 +713,7 @@ def test_spell_length_statistics_quantified(tasmin_series):
         window=1,
         window_statistic="min",
         condition=">",
-        threshold=thresh,
+        thresh=thresh,
         statistic="sum",
         freq="YS",
     )
@@ -743,8 +741,8 @@ def test_spell_length_statistics_multi(tasmin_series, tasmax_series):
         tx,
         window=5,
         window_statistic="min",
-        threshold1="0 °C",
-        threshold2="1 °C",
+        thresh1="0 °C",
+        thresh2="1 °C",
         condition="<",
         statistic=["count", "sum", "max"],
         freq="YS",
@@ -764,7 +762,7 @@ class TestThresholdedEvents:
         with assert_lazy:
             out = generic.thresholded_events(
                 pr,
-                threshold="1 mm",
+                thresh="1 mm",
                 condition=">=",
                 window=3,
                 window_stop=1,
@@ -793,7 +791,7 @@ class TestThresholdedEvents:
 
         # different window stop
         out = (
-            generic.thresholded_events(pr, threshold="2 mm", condition=">=", window=3, window_stop=4)
+            generic.thresholded_events(pr, thresh="2 mm", condition=">=", window=3, window_stop=4)
             .load()
             .dropna("event", how="all")
         )
@@ -817,7 +815,7 @@ class TestThresholdedEvents:
         with assert_lazy:
             out = generic.thresholded_events(
                 pr,
-                threshold="1 mm",
+                thresh="1 mm",
                 condition=">=",
                 window=3,
                 window_stop=3,
@@ -843,7 +841,7 @@ class TestThresholdedEvents:
             pr = pr.chunk(-1)
 
         with assert_lazy:
-            out = generic.thresholded_events(pr, threshold="1 mm", condition=">=", window=3, freq="MS", window_stop=3)
+            out = generic.thresholded_events(pr, thresh="1 mm", condition=">=", window=3, freq="MS", window_stop=3)
         assert out.event_length.shape == (2, 6)
         out = out.load().dropna("event", how="all")
 

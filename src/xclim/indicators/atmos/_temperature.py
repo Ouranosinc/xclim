@@ -352,12 +352,12 @@ heat_spell_frequency = Temp(
         "window_statistic": {"default": "mean", "name": "win_reducer"},
         "freq": {"default": "YS"},
         "constrain": None,
-        "threshold1": {
+        "thresh1": {
             "description": "Threshold for tasmin",
             "default": "20 °C",
             "name": "thresh_tasmin",
         },
-        "threshold2": {
+        "thresh2": {
             "description": "Threshold for tasmax",
             "default": "33 °C",
             "name": "thresh_tasmax",
@@ -386,12 +386,12 @@ heat_spell_max_length = Temp(
         "window_statistic": {"default": "mean", "name": "win_reducer"},
         "freq": {"default": "YS"},
         "constrain": None,
-        "threshold1": {
+        "thresh1": {
             "description": "Threshold for tasmin",
             "default": "20 °C",
             "name": "thresh_tasmin",
         },
-        "threshold2": {
+        "thresh2": {
             "description": "Threshold for tasmax",
             "default": "33 °C",
             "name": "thresh_tasmax",
@@ -420,12 +420,12 @@ heat_spell_total_length = Temp(
         "window_statistic": {"default": "mean", "name": "win_reducer"},
         "freq": {"default": "YS"},
         "constrain": None,
-        "threshold1": {
+        "thresh1": {
             "description": "Threshold for tasmin",
             "default": "20 °C",
             "name": "thresh_tasmin",
         },
-        "threshold2": {
+        "thresh2": {
             "description": "Threshold for tasmax",
             "default": "33 °C",
             "name": "thresh_tasmax",

@@ -16,6 +16,8 @@ The vocabulary is strongly inspired from `clix-meta <https://github.com/clix-met
     :py:data:`~xclim.indices.reducers.XCLIM_OPS`.
 - ``condition: Condition`` : The string or symbol of a binary comparison operator. Should usually be a key or valid of
     :py:data:`~xclim.indices.helpers.BINARY_OPS`.
+- ``thresh: Quantified`` : A threshold for thresholded index. Usually a string with a value and units (``" 0 °C"``),
+    index functions should also accept non-temporal DataArrays and pint Quantity objects.
 - ``freq: Freq`` : A frequency string referring to a pandas
     `date offset object <https://pandas.pydata.org/docs/user_guide/timeseries.html#dateoffset-objects>`_.
     Xclim only officially supports the frequency strings that xarray's implementation of CFtime supports,
@@ -149,11 +151,11 @@ def running_statistics(
     return statistics(rolled, statistic=statistic, freq=freq, out_units=out_units, **indexer)
 
 
-@declare_relative_units(threshold="<data>")
+@declare_relative_units(thresh="<data>")
 def thresholded_statistics(
     data: xr.DataArray,
     condition: Condition,
-    threshold: Quantified,
+    thresh: Quantified,
     statistic: Reducer,
     freq: Freq,
     constrain: Sequence[str] | None = None,
@@ -171,7 +173,7 @@ def thresholded_statistics(
         Input data.
     condition : {">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"}
         Logical comparison operator. Comparison is done as ``data {condition} thresh``.
-    threshold : Quantified
+    thresh : Quantified
         Threshold, should have the same dimensionality as ``data``.
     statistic :  {"min", "max", "mean", "std", "var", "count", "sum", "integral", "doymin", "doymax"} or Callable
         Reducing operation. Can either be a DataArray method or a function that can be applied to a DataArray.
@@ -188,19 +190,19 @@ def thresholded_statistics(
     Returns
     -------
     xr.DataArray
-        {statistic} of data where it is {condition} {threshold}.
+        {statistic} of data where it is {condition} {thresh}.
     """
-    threshold = convert_units_to(threshold, data, context="infer")
+    thresh = convert_units_to(thresh, data, context="infer")
 
-    cond = compare(data, condition, threshold, constrain)
+    cond = compare(data, condition, thresh, constrain)
     return statistics(data.where(cond), statistic, freq, out_units=out_units, **indexer)
 
 
-@declare_relative_units(threshold="<data>")
+@declare_relative_units(thresh="<data>")
 def thresholded_running_statistics(
     data: xr.DataArray,
     condition: Condition,
-    threshold: Quantified,
+    thresh: Quantified,
     window: int,
     window_statistic: Reducer,
     statistic: Reducer,
@@ -221,7 +223,7 @@ def thresholded_running_statistics(
         Input data.
     condition : {">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"}
         Logical comparison operator. Comparison is done as ``data {condition} thresh``.
-    threshold : Quantified
+    thresh : Quantified
         Threshold, should have the same dimensionality as ``data``.
     window : int
         Size of the rolling window.
@@ -246,10 +248,10 @@ def thresholded_running_statistics(
     Returns
     -------
     xr.DataArray
-        {statistic} of the {window}-day {window_statistic} of the data, where it is {condition} {threshold}.
+        {statistic} of the {window}-day {window_statistic} of the data, where it is {condition} {thresh}.
     """
-    threshold = convert_units_to(threshold, data, context="infer")
-    cond = compare(data, condition, threshold, constrain)
+    thresh = convert_units_to(thresh, data, context="infer")
+    cond = compare(data, condition, thresh, constrain)
     return running_statistics(
         data.where(cond),
         window=window,
@@ -262,11 +264,11 @@ def thresholded_running_statistics(
     )
 
 
-@declare_relative_units(threshold="<data>")
+@declare_relative_units(thresh="<data>")
 def count_occurrences(
     data: xr.DataArray,
     condition: Condition,
-    threshold: Quantified,
+    thresh: Quantified,
     freq: Freq,
     constrain: Sequence[str] | None = None,
     **indexer,
@@ -282,8 +284,8 @@ def count_occurrences(
     data : xr.DataArray
         Input data.
     condition : {">", "<", ">=", "<=", "gt", "lt", "ge", "le"}
-        Logical comparison operator. Comparison is done as ``data {condition} threshold``.
-    threshold : Quantified
+        Logical comparison operator. Comparison is done as ``data {condition} thresh``.
+    thresh : Quantified
         Threshold value. Should have the same dimensionality as data.
     freq : str
         Resampling frequency defining the periods as defined in :ref:`timeseries.resampling`.
@@ -295,10 +297,10 @@ def count_occurrences(
     Returns
     -------
     xr.DataArray
-        Number of timesteps where data {condition} {threshold}.
+        Number of timesteps where data {condition} {thresh}.
     """
-    threshold = convert_units_to(threshold, data, context="infer")
-    cond = compare(data, condition, threshold, constrain) * 1
+    thresh = convert_units_to(thresh, data, context="infer")
+    cond = compare(data, condition, thresh, constrain) * 1
     out = cond.resample(time=freq).sum(dim="time")
     return to_agg_units(out, data, "count")
 
@@ -354,14 +356,14 @@ def count_domain_occurrences(
     return to_agg_units(out, data, "count")
 
 
-@declare_relative_units(threshold1="<data1>", threshold2="<data2>")
+@declare_relative_units(thresh1="<data1>", thresh2="<data2>")
 def bivariate_count_occurrences(
     data1: xr.DataArray,
     data2: xr.DataArray,
     condition1: Condition,
     condition2: Condition,
-    threshold1: Quantified,
-    threshold2: Quantified,
+    thresh1: Quantified,
+    thresh2: Quantified,
     freq: Freq,
     var_reducer: Literal["all", "any"] = "all",
     constrain1: Sequence[str] | None = None,
@@ -384,9 +386,9 @@ def bivariate_count_occurrences(
         Logical comparison operator for data variable 1.
     condition2 : {">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"}
         Logical comparison operator for data variable 2.
-    threshold1 : Quantified
+    thresh1 : Quantified
         Threshold for data variable 1.
-    threshold2 : Quantified
+    thresh2 : Quantified
         Threshold for data variable 2.
     freq : str
         Resampling frequency defining the periods as defined in :ref:`timeseries.resampling`.
@@ -403,14 +405,14 @@ def bivariate_count_occurrences(
     Returns
     -------
     xr.DataArray,  [time]
-        Number of timesteps where data1 is {condition1} {threshold1} and data2 is {condition2} {threshold2}.
+        Number of timesteps where data1 is {condition1} {thresh1} and data2 is {condition2} {thresh2}.
 
     Notes
     -----
     Sampling length is derived from `data1`.
     """
-    thresh1 = convert_units_to(threshold1, data1, context="infer")
-    thresh2 = convert_units_to(threshold2, data2, context="infer")
+    thresh1 = convert_units_to(thresh1, data1, context="infer")
+    thresh2 = convert_units_to(thresh2, data2, context="infer")
 
     cond1 = compare(data1, condition1, thresh1, constrain1)
     cond2 = compare(data2, condition2, thresh2, constrain2)
@@ -484,19 +486,19 @@ def count_percentile_occurrences(
 
     @percentile_bootstrap
     def _count_percentile_occurrences(data, per, freq, bootstrap, op):
-        threshold = resample_doy(clim, data)
-        cond = compare(data, op, threshold, constrain)
+        thresh = resample_doy(clim, data)
+        cond = compare(data, op, thresh, constrain)
         out = cond.resample(time=freq).sum()
         return to_agg_units(out, data, "count", dim="time")
 
     return _count_percentile_occurrences(data, clim, freq, bootstrap, condition)
 
 
-@declare_relative_units(threshold="<data>")
+@declare_relative_units(thresh="<data>")
 def count_thresholded_percentile_occurrences(
     data: xr.DataArray,
     data_condition: Condition,
-    threshold: Quantified,
+    thresh: Quantified,
     percentile: float,
     condition: Condition,
     reference_period: TimeRange,
@@ -521,7 +523,7 @@ def count_thresholded_percentile_occurrences(
         An array. Should have a daily step.
     data_condition : {">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"}
         Logical comparison operator to filter data with threshold.
-    threshold : Quantified
+    thresh : Quantified
         Threshold for the ``data_condition``.
     percentile : float
         The percentile to compute on the reference period, between 0 and 100.
@@ -551,10 +553,10 @@ def count_thresholded_percentile_occurrences(
     -------
     xr.DataArray
         Number of timesteps where data is {condition} the {percentile}th percentile computed over {reference_period}.
-        Only data {data_condition} {threshold} is considered.
+        Only data {data_condition} {thresh} is considered.
     """
-    threshold = convert_units_to(threshold, data, context="infer")
-    data = data.where(compare(data, data_condition, threshold, constrain))
+    thresh = convert_units_to(thresh, data, context="infer")
+    data = data.where(compare(data, data_condition, thresh, constrain))
     return count_percentile_occurrences(
         data,
         percentile,
@@ -610,13 +612,13 @@ def _spell_length_statistics(
     return tuple(outs)
 
 
-@declare_relative_units(threshold="<data>")
+@declare_relative_units(thresh="<data>")
 def spell_length_statistics(
     data: xr.DataArray,
     window: int,
     window_statistic: Literal["min", "max", "sum", "mean"],
     condition: Condition,
-    threshold: Quantified,
+    thresh: Quantified,
     statistic: Literal["max", "sum", "count"] | Sequence[Literal["max", "sum", "count"]],
     freq: Freq,
     min_gap: int = 1,
@@ -628,7 +630,7 @@ def spell_length_statistics(
     Statistics of spells lengths.
 
     A spell is when a running statistic (`window_statistic`) over a (minimum) number (`window`) of consecutive timesteps
-    respects a condition (`condition` `threshold`). This returns a statistic over the spell lengths.
+    respects a condition (`condition` `thresh`). This returns a statistic over the spell lengths.
     Two consecutive spells are merged into a single one.
 
     Parameters
@@ -640,10 +642,10 @@ def spell_length_statistics(
     window_statistic : {'min', 'max', 'sum', 'mean', 'integral'}
         Reduction along the window length to compute running statistic.
         Note that this does not matter when `window` is 1, in which case any occurrence
-        of ``data {condition} threshold`` is considered a valid "spell".
+        of ``data {condition} thresh`` is considered a valid "spell".
     condition : {">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"}
         Logical comparison operator. Computed as ``rolling_stat {condition} thresh``.
-    threshold : Quantified
+    thresh : Quantified
         Threshold to test against.
     statistic : {'max', 'sum', 'count'} or sequence of str
         Statistic on the spell lengths. If a list, multiple statistics are computed.
@@ -664,7 +666,7 @@ def spell_length_statistics(
     Returns
     -------
     xr.DataArray or sequence of xr.DataArray
-        {statistic} of spell lengths. A spell is when the {window}-day {window_statistic} is {condition} {threshold}.
+        {statistic} of spell lengths. A spell is when the {window}-day {window_statistic} is {condition} {thresh}.
 
     See Also
     --------
@@ -678,7 +680,7 @@ def spell_length_statistics(
     ...     window=7,
     ...     window_statistic="min",
     ...     condition=">",
-    ...     threshold="35 °C",
+    ...     thresh="35 °C",
     ...     statistic="sum",
     ...     freq="YS",
     ... )
@@ -689,7 +691,7 @@ def spell_length_statistics(
     >>> pram = rate2amount(pr, out_units="mm")
     >>> spell_length_statistics(
     ...     pram,
-    ...     threshold="20 mm",
+    ...     thresh="20 mm",
     ...     window=5,
     ...     op=">=",
     ...     win_reducer="sum",
@@ -700,7 +702,7 @@ def spell_length_statistics(
     Here, a day is part of a spell if it is in any five (5) day period where the total accumulated precipitation
     reaches or exceeds 20 mm. We then return the length of the longest of such spells.
     """
-    thresh = convert_units_to(threshold, data, context="infer")
+    thresh = convert_units_to(thresh, data, context="infer")
     return _spell_length_statistics(
         data,
         window,
@@ -715,15 +717,15 @@ def spell_length_statistics(
     )
 
 
-@declare_relative_units(threshold1="<data1>", threshold2="<data2>")
+@declare_relative_units(thresh1="<data1>", thresh2="<data2>")
 def bivariate_spell_length_statistics(
     data1: xr.DataArray,
     data2: xr.DataArray,
     window: int,
     window_statistic: Literal["min", "max", "sum", "mean"],
     condition: Condition,
-    threshold1: Quantified,
-    threshold2: Quantified,
+    thresh1: Quantified,
+    thresh2: Quantified,
     statistic: Literal["max", "sum", "count"] | Sequence[Literal["max", "sum", "count"]],
     freq: Freq,
     min_gap: int = 1,
@@ -735,7 +737,7 @@ def bivariate_spell_length_statistics(
     Statistics of bivariate spells lengths.
 
     A spell is when a running statistic (`window_statistic`) over a (minimum) number (`window`) of consecutive timesteps
-    respects a condition (data ``condition`` ``threshold``). Then this returns a statistic over the spell lengths.
+    respects a condition (data ``condition`` ``thresh``). Then this returns a statistic over the spell lengths.
     Two consecutive spells are merged into a single one.
 
     Parameters
@@ -749,12 +751,12 @@ def bivariate_spell_length_statistics(
     window_statistic : {'min', 'max', 'sum', 'mean', 'integral'}
         Reduction along the window length to compute running statistic.
         Note that this does not matter when `window` is 1, in which case any occurrence
-        of ``data {condition} threshold`` is considered a valid "spell".
+        of ``data {condition} thresh`` is considered a valid "spell".
     condition : {">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"}
         Logical comparison operator. Computed as ``rolling_stat {condition} thresh``.
-    threshold1 : Quantified
+    thresh1 : Quantified
         Threshold to test against for data1.
-    threshold2 : Quantified
+    thresh2 : Quantified
         Threshold to test against for data2.
     statistic : {'max', 'sum', 'count'} or sequence of str
         Statistic on the spell lengths. If a list, multiple statistics are computed.
@@ -776,15 +778,15 @@ def bivariate_spell_length_statistics(
     -------
     xr.DataArray or sequence of xr.DataArray
         {statistic} of spell lengths. A spell is when the {window}-day {window_statistic}
-        of data1 is {condition} {threshold1} and the one of data2 is {condition} {threshold2}.
+        of data1 is {condition} {thresh1} and the one of data2 is {condition} {thresh2}.
 
     See Also
     --------
     spell_length_statistics : The univariate version.
     xclim.indices.helpers.spell_mask : The lower level functions that finds spells.
     """
-    thresh1 = convert_units_to(threshold1, data1, context="infer")
-    thresh2 = convert_units_to(threshold2, data2, context="infer")
+    thresh1 = convert_units_to(thresh1, data1, context="infer")
+    thresh2 = convert_units_to(thresh2, data2, context="infer")
     return _spell_length_statistics(
         [data1, data2],
         window,
@@ -799,11 +801,11 @@ def bivariate_spell_length_statistics(
     )
 
 
-@declare_relative_units(threshold="<data>")
+@declare_relative_units(thresh="<data>")
 def season(
     data: xr.DataArray,
     condition: Condition,
-    threshold: Quantified,
+    thresh: Quantified,
     window: int,
     aspect: Literal["start", "end", "length"] | Sequence[Literal["start", "end", "length"]],
     freq: Freq,
@@ -824,8 +826,8 @@ def season(
     data : xr.DataArray
         Variable.
     condition : {">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"}
-        Comparison operation. Computed as ``data {condition} threshold``.
-    threshold : Quantified
+        Comparison operation. Computed as ``data {condition} thresh``.
+    thresh : Quantified
         Threshold for the condition.
     window : int
         Minimum number of days that the condition must be met / not met for the start / end of the season.
@@ -843,7 +845,7 @@ def season(
     Returns
     -------
     xr.DataArray, [dimensionless] or [time]
-        {aspect} of the season. The season starts with {window} consecutibe days {condition} {threshold} and ends
+        {aspect} of the season. The season starts with {window} consecutibe days {condition} {thresh} and ends
         when the inverse condition is fulfilled for as much consecutive days.
 
     See Also
@@ -875,7 +877,7 @@ def season(
     the season is invalid. If a start is found but no end, the end is set to the last day of the period
     (December 31st if the dataset is complete).
     """
-    thresh = convert_units_to(threshold, data, context="infer")
+    thresh = convert_units_to(thresh, data, context="infer")
     cond = compare(data, condition, thresh, constrain=constrain)
     cond = select_time(cond, **indexer)
     func = {"start": rl.season_start, "end": rl.season_end, "length": rl.season_length}
@@ -1083,11 +1085,11 @@ def percentile(data: xr.DataArray, percentile: float, freq: Freq, **indexer):
     return out
 
 
-@declare_relative_units(threshold="<data>")
+@declare_relative_units(thresh="<data>")
 def thresholded_percentile(
     data: xr.DataArray,
     condition: Condition,
-    threshold: Quantified,
+    thresh: Quantified,
     percentile: float,
     freq: Freq,
     constrain: Sequence[str] | None = None,
@@ -1101,8 +1103,8 @@ def thresholded_percentile(
     data : xr.DataArray
         Input data.
     condition : {">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"}
-        Logical comparison operator. Calculated as ``data {condition} threshold``.
-    threshold : Quantified
+        Logical comparison operator. Calculated as ``data {condition} thresh``.
+    thresh : Quantified
         Threshold.
     percentile : float
         A percentile (0, 100).
@@ -1116,10 +1118,10 @@ def thresholded_percentile(
     Returns
     -------
     xr.DataArray
-        {percentile}th percentile of the data where it is {condition} {threshold}.
+        {percentile}th percentile of the data where it is {condition} {thresh}.
     """
-    threshold = convert_units_to(threshold, data, context="infer")
-    cond = compare(data, condition, threshold, constrain)
+    thresh = convert_units_to(thresh, data, context="infer")
+    cond = compare(data, condition, thresh, constrain)
     return percentile(data.where(cond), percentile, freq, **indexer)
 
 
@@ -1239,14 +1241,14 @@ def statistics_between_dates(
     return to_agg_units(out, data, statistic)
 
 
-@declare_relative_units(threshold="<data>")
+@declare_relative_units(thresh="<data>")
 def integrated_difference(
-    data: xr.DataArray, condition: Condition, threshold: Quantified, freq: Freq, **indexer
+    data: xr.DataArray, condition: Condition, thresh: Quantified, freq: Freq, **indexer
 ) -> xr.DataArray:
     """
     Integrate difference of data below/above a given value threshold.
 
-    If ``condition`` is ">", then the difference is taken as ``data - threshold``. The inverse
+    If ``condition`` is ">", then the difference is taken as ``data - thresh``. The inverse
     is done for "<". Values below zero are removed from the integral. "Integral" means summed
     difference are multiplied by the timestep length.
 
@@ -1256,7 +1258,7 @@ def integrated_difference(
         Data.
     condition : {">", "gt", "<", "lt", ">=", "ge", "<=", "le"}
         Logical comparison operator.
-    threshold : Quantified
+    thresh : Quantified
         The value threshold.
     freq : str, optional
         Resampling frequency defining the periods as defined in :ref:`timeseries.resampling`.
@@ -1266,14 +1268,14 @@ def integrated_difference(
     Returns
     -------
     xr.DataArray, [data][time]
-        Integral of the differences when {data} {condition} {threshold}.
+        Integral of the differences when {data} {condition} {thresh}.
     """
-    threshold = convert_units_to(threshold, data, context="infer")
+    thresh = convert_units_to(thresh, data, context="infer")
 
     if condition in ["<", "<=", "lt", "le"]:
-        diff = (threshold - data).clip(0)
+        diff = (thresh - data).clip(0)
     elif condition in [">", ">=", "gt", "ge"]:
-        diff = (data - threshold).clip(0)
+        diff = (data - thresh).clip(0)
     else:
         raise NotImplementedError(f"Condition not supported: '{condition}'.")
 
@@ -1281,11 +1283,11 @@ def integrated_difference(
     return statistics(diff, statistic="integral", freq=freq, **indexer)
 
 
-@declare_relative_units(threshold="<data>")
+@declare_relative_units(thresh="<data>")
 def day_threshold_reached(
     data: xr.DataArray,
     condition: Condition,
-    threshold: Quantified,
+    thresh: Quantified,
     freq: Freq,
     date: DayOfYearStr | None = None,
     which: Literal["first", "last"] = "first",
@@ -1305,7 +1307,7 @@ def day_threshold_reached(
         Data.
     condition : {">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"}
         Logical comparison operator.
-    threshold : str
+    thresh : str
         Threshold.
     freq : str
         Resampling frequency defining the periods as defined in :ref:`timeseries.resampling`.
@@ -1315,7 +1317,7 @@ def day_threshold_reached(
     which : {'first', 'last'}
         Whether to look for the first or the last event.
     window : int
-        Minimum number of days with values above threshold needed for evaluation. Default: 1.
+        Minimum number of days with values above thresh needed for evaluation. Default: 1.
     constrain : sequence of str, optional
         Optionally allowed conditions.
     **indexer : {dim: indexer, }, optional
@@ -1324,11 +1326,11 @@ def day_threshold_reached(
     Returns
     -------
     xr.DataArray, [dimensionless]
-        Day-of-year of the {which} time where data {condition} {threshold}.
+        Day-of-year of the {which} time where data {condition} {thresh}.
     """
-    threshold = convert_units_to(threshold, data, context="infer")
+    thresh = convert_units_to(thresh, data, context="infer")
 
-    cond = compare(data, condition, threshold, constrain=constrain)
+    cond = compare(data, condition, thresh, constrain=constrain)
 
     if which == "first":
         func = rl.first_run_after_date
@@ -1353,10 +1355,10 @@ def day_threshold_reached(
 def thresholded_events(
     data: xr.DataArray,
     condition: Condition,
-    threshold: Quantified,
+    thresh: Quantified,
     window: int,
     condition_stop: Condition | None = None,
-    threshold_stop: Quantified | None = None,
+    thresh_stop: Quantified | None = None,
     window_stop: int | None = None,
     freq: str | None = None,
 ) -> xr.Dataset:
@@ -1367,7 +1369,7 @@ def thresholded_events(
     An event starts if the start condition is fulfilled for a given number of consecutive time steps.
     It ends when the end condition is fulfilled for a given number of consecutive time steps.
 
-    Conditions are simple comparison of the data with a threshold: ``cond = data {condition} threshold``.
+    Conditions are simple comparison of the data with a threshold: ``cond = data {condition} thresh``.
     The end conditions defaults to the negation of the start condition.
 
     The resulting ``event`` dimension always has its maximal possible size : ``data.size / (window + window_stop)``.
@@ -1378,14 +1380,14 @@ def thresholded_events(
         Variable.
     condition : {">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"}
         Logical comparison operator for the start condition.
-    threshold : Quantified
+    thresh : Quantified
         Threshold defining the event.
     window : int
         Number of time steps where the event condition must be true to start an event.
     condition_stop : {">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"}, optional
         Logical comparison operator for the end condition. Defaults to the opposite of `condition`.
-    threshold_stop : Quantified, optional
-        Threshold defining the end of an event. Defaults to `threshold`.
+    thresh_stop : Quantified, optional
+        Threshold defining the end of an event. Defaults to `thresh`.
     window_stop : int, optional
         Number of time steps where the end condition must be true to end an event. Defaults to ``window``.
     freq : str, optional
@@ -1404,14 +1406,14 @@ def thresholded_events(
             event_sum: The sum within each event, only considering the steps where start condition is true.
             event_start: The datetime of the start of the run.
     """
-    thresh = convert_units_to(threshold, data)
+    thresh = convert_units_to(thresh, data)
 
     # Start and end conditions
     da_start = compare(data, condition, thresh)
-    if threshold_stop is None and condition_stop is None:
+    if thresh_stop is None and condition_stop is None:
         da_stop = ~da_start
     else:
-        thresh_stop = convert_units_to(threshold_stop or threshold, data)
+        thresh_stop = convert_units_to(thresh_stop or thresh, data)
         if condition_stop is not None:
             da_stop = compare(data, condition_stop, thresh_stop)
         else:
