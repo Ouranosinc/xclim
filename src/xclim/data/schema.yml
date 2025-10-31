@@ -20,7 +20,7 @@ indicator:
   missing_options: map(key=str(), required=False)
   notes: str(required=False)
   cf_attrs: any(list(include('cf_attrs')), include('cf_attrs'), required=False)
-  parameters: map(str(), num(), bool(), null(), include('parameter'), include('indexer'), key=str(), required=False)
+  parameters: map(str(), num(), bool(), null(), include('parameter'), include('indexer'), include('time_range'), key=str(), required=False)
   realm: str(required=False)
   references: str(required=False)
   title: str(required=False)
@@ -42,6 +42,8 @@ indexer:
   doy_bounds: list(int(), required=False, maxItems=2)
   date_bounds: list(str(), required=False, maxItems=2)
   include_bounds: any(bool(), list(bool(), bool()), required=False, maxItems=2)
+
+time_range: list(str(), maxItems=2)
 
 variable:
   canonical_units: str(required=True)
