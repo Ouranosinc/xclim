@@ -351,6 +351,7 @@ heat_spell_frequency = Temp(
         "window": {"default": 3},
         "window_statistic": {"default": "mean", "name": "win_reducer"},
         "freq": {"default": "YS"},
+        "constrain": None,
         "threshold1": {
             "description": "Threshold for tasmin",
             "default": "20 °C",
@@ -384,6 +385,7 @@ heat_spell_max_length = Temp(
         "window": {"default": 3},
         "window_statistic": {"default": "mean", "name": "win_reducer"},
         "freq": {"default": "YS"},
+        "constrain": None,
         "threshold1": {
             "description": "Threshold for tasmin",
             "default": "20 °C",
@@ -417,6 +419,7 @@ heat_spell_total_length = Temp(
         "window": {"default": 3},
         "window_statistic": {"default": "mean", "name": "win_reducer"},
         "freq": {"default": "YS"},
+        "constrain": None,
         "threshold1": {
             "description": "Threshold for tasmin",
             "default": "20 °C",

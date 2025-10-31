@@ -710,8 +710,9 @@ def infer_kind_from_parameter(param) -> InputKind:
 
     if (
         annot.issuperset({"str"})
+        or annot.issuperset({"Reducer"})
+        or annot.issuperset({"Condition"})
         or any(a.startswith("Literal['") for a in annot)
-        or annot.issuperset({"REDUCTION_OPERATORS"})
     ):
         return InputKind.STRING
 

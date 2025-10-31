@@ -18,6 +18,7 @@ from xclim.core.units import (
     rate2amount,
     str2pint,
     to_agg_units,
+    units,
     units2pint,
 )
 from xclim.core.utils import deprecated
@@ -619,8 +620,6 @@ def snd_storm_days(snd: xarray.DataArray, thresh: Quantified = "25 cm", freq: st
     -----
     Snowfall accumulation is estimated by the change in snow depth.
     """
-    thresh = convert_units_to(thresh, snd)
-
     # Compute daily accumulation
     acc = snd.diff(dim="time").assign_attrs(units=snd.units)
 
@@ -657,10 +656,8 @@ def snw_storm_days(snw: xarray.DataArray, thresh: Quantified = "10 kg m-2", freq
     -----
     Snowfall accumulation is estimated by the change in snow amount.
     """
-    thresh = convert_units_to(thresh, snw)
-
     # Compute daily accumulation
-    acc = snw.diff(dim="time")
+    acc = snw.diff(dim="time").assign_attrs(units=snw.attrs["units"])
 
     # Winter storm condition
     return count_occurrences(acc, condition=">=", threshold=thresh, freq=freq)
@@ -779,8 +776,8 @@ def dry_days(
 
        \sum PR_{ij} < Threshold [mm/day]
     """
-    thresh = convert_units_to(thresh, pr, context="hydro")
-    return count_occurrences(pr, condition=op, threshold=thresh, freq=freq, constrain=("<", "<="))
+    with units.context("hydro"):
+        return count_occurrences(pr, condition=op, threshold=thresh, freq=freq, constrain=("<", "<="))
 
 
 @declare_units(pr="[precipitation]", thresh="[precipitation]")
@@ -1854,9 +1851,8 @@ def days_with_snow(
     ----------
     :cite:cts:`matthews_planning_2017`.
     """
-    low = convert_units_to(low, prsn, context="hydro")
-    high = convert_units_to(high, prsn, context="hydro")
-    return count_domain_occurrences(prsn, low_bound=low, high_bound=high, freq=freq)
+    with units.context("hydro"):
+        return count_domain_occurrences(prsn, low_bound=low, high_bound=high, freq=freq)
 
 
 @declare_units(prsn="[precipitation]", thresh="[precipitation]")
@@ -1904,7 +1900,7 @@ def snowfall_frequency(
     # so that a warning message won't be triggered just because of this value
     thresh_units = pint2cfunits(units2pint(thresh))
     high_thresh = convert_units_to("1E6 kg m-2 s-1", thresh_units, context="hydro")
-    high = f"{high_thresh} {thresh_units}"
+    high = units.Quantity(high_thresh, thresh_units)
 
     snow_days = days_with_snow(prsn, low=thresh, high=high, freq=freq)
     total_days = prsn.resample(time=freq).count(dim="time")
@@ -2449,7 +2445,6 @@ def tn_days_above(
 
        TN_{ij} > Threshold [℃]
     """
-    thresh = convert_units_to(thresh, tasmin)
     return count_occurrences(tasmin, condition=op, threshold=thresh, freq=freq, constrain=(">", ">="))
 
 
@@ -2761,8 +2756,8 @@ def wetdays(
     >>> pr = xr.open_dataset(path_to_pr_file).pr
     >>> wd = wetdays(pr, thresh="5 mm/day", freq="QS-DEC")
     """
-    thresh = convert_units_to(thresh, pr, context="hydro")
-    return count_occurrences(pr, condition=op, threshold=thresh, freq=freq, constrain=(">", ">="))
+    with units.context("hydro"):
+        return count_occurrences(pr, condition=op, threshold=thresh, freq=freq, constrain=(">", ">="))
 
 
 @declare_units(pr="[precipitation]", thresh="[precipitation]")

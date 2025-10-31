@@ -14,14 +14,17 @@ from xclim.core.calendar import resample_doy, select_time
 from xclim.core.units import (
     convert_units_to,
     declare_units,
-    pint2cfattrs,
     rate2amount,
-    str2pint,
     to_agg_units,
 )
 from xclim.indices import run_length as rl
 from xclim.indices.converters import rain_approximation, snowfall_approximation
-from xclim.indices.generic import count_occurrences, statistics
+from xclim.indices.generic import (
+    count_occurrences,
+    difference_statistics,
+    extreme_range,
+    interday_difference_statistics,
+)
 from xclim.indices.helpers import compare
 
 # Frequencies : YS: year start, QS-DEC: seasons starting in december, MS: month start
@@ -550,11 +553,7 @@ def daily_temperature_range(
 
        DTR_j = \frac{ \sum_{i=1}^I (TX_{ij} - TN_{ij}) }{I}
     """
-    tasmax = convert_units_to(tasmax, tasmin)
-    dtr = tasmax - tasmin
-    u = str2pint(tasmax.units)
-    dtr.attrs.update(pint2cfattrs(u, is_difference=True))
-    return statistics(dtr, statistic=op, freq=freq)
+    return difference_statistics(tasmin, tasmax, statistic=op, freq=freq, absolute=False)
 
 
 @declare_units(tasmax="[temperature]", tasmin="[temperature]")
@@ -589,11 +588,7 @@ def daily_temperature_range_variability(
 
        vDTR_j = \frac{ \sum_{i=2}^{I} |(TX_{ij}-TN_{ij})-(TX_{i-1,j}-TN_{i-1,j})| }{I}
     """
-    tasmax = convert_units_to(tasmax, tasmin)
-    vdtr = abs((tasmax - tasmin).diff(dim="time"))
-    u = str2pint(tasmax.units)
-    vdtr.attrs.update(pint2cfattrs(u, is_difference=True))
-    return statistics(vdtr, statistic="mean", freq=freq)
+    return interday_difference_statistics(tasmin, tasmax, statistic="mean", freq=freq, absolute=True)
 
 
 @declare_units(tasmax="[temperature]", tasmin="[temperature]")
@@ -626,14 +621,7 @@ def extreme_temperature_range(tasmin: xarray.DataArray, tasmax: xarray.DataArray
 
        ETR_j = max(TX_{ij}) - min(TN_{ij})
     """
-    tasmax = convert_units_to(tasmax, tasmin)
-    tx_max = tasmax.resample(time=freq).max(dim="time")
-    tn_min = tasmin.resample(time=freq).min(dim="time")
-
-    out = tx_max - tn_min
-    u = str2pint(tasmax.units)
-    out.attrs.update(pint2cfattrs(u, is_difference=True))
-    return out
+    return extreme_range(tasmin, tasmax, freq=freq)
 
 
 @declare_units(

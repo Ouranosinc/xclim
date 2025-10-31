@@ -1,8 +1,26 @@
 """
-Generic Indices Submodule
-=========================
+Generic Index Submodule
+=======================
 
-Helper functions for common generic actions done in the computation of indices.
+A generic index function is a function that computes a resampling indicator without a specific application or input
+variable. The functions defined here are the building blocks for most xclim indicators.
+
+A generic index function should take in one or multiple variable in the form of :py:class:`xarray.DataArray`,
+as its first arguments. Almost all functions here should also take a `freq` argument, defining the resampling period.
+A specific vocabulary and annotations are used in this submodule to define arguments as clearly as possible.
+The vocabulary is strongly inspired from `clix-meta <https://github.com/clix-meta/clix-meta/>`_.
+
+- ``data: xr.DataArray`` : The first(s) arguments of all index function. When multiple variables are required,
+    an integer suffix is added.
+- ``statistic: Reducer`` : The name of a time-reducing operation, usually a built-in numpy/xarray method or a member of
+    :py:data:`~xclim.indices.reducers.XCLIM_OPS`.
+- ``condition: Condition`` : The string or symbol of a binary comparison operator. Should usually be a key or valid of
+    :py:data:`~xclim.indices.helpers.BINARY_OPS`.
+- ``freq: Freq`` : A frequency string referring to a pandas
+    `date offset object <https://pandas.pydata.org/docs/user_guide/timeseries.html#dateoffset-objects>`_.
+    Xclim only officially supports the frequency strings that xarray's implementation of CFtime supports,
+    so the ones completely independent of a specific calendar.
+- ``**indexer`` : Time selection arguments as implemented by :py:func:`~xclim.core.calendar.select_time`.
 """
 
 from __future__ import annotations
@@ -276,7 +294,7 @@ def count_occurrences(
     xr.DataArray
         Number of timesteps where data {condition} {threshold}.
     """
-    threshold = convert_units_to(threshold, data)
+    threshold = convert_units_to(threshold, data, context="infer")
     cond = compare(data, condition, threshold, constrain) * 1
     out = cond.resample(time=freq).sum(dim="time")
     return to_agg_units(out, data, "count")
@@ -319,8 +337,8 @@ def count_domain_occurrences(
     xr.DataArray
         {The number of days where value is within [low, high] for each period.
     """
-    low = convert_units_to(low_bound, data)
-    high = convert_units_to(high_bound, data)
+    low = convert_units_to(low_bound, data, context="infer")
+    high = convert_units_to(high_bound, data, context="infer")
     cond = (
         compare(data, low_condition, low, constrain=(">", ">="))
         & compare(data, high_condition, high, constrain=("<", "<="))

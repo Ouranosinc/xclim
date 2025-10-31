@@ -21,7 +21,7 @@ from xclim.core.calendar import climatological_mean_doy, within_bnds_doy
 from xclim.core.formatting import update_xclim_history
 from xclim.core.units import convert_units_to, declare_units, infer_context, str2pint
 from xclim.core.utils import InputKind, infer_kind_from_parameter
-from xclim.indices.generic import BINARY_OPS
+from xclim.indices.helpers import BINARY_OPS
 from xclim.indices.run_length import suspicious_run
 
 _REGISTRY = {}

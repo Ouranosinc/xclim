@@ -77,7 +77,7 @@ class TestReturnLevel:
         assert np.isnan(out.values[:, 0, 0]).all()
 
 
-class TestStats:
+class TestStatistics:
     """See other tests in test_land::TestStats"""
 
     @pytest.mark.parametrize(
@@ -86,23 +86,23 @@ class TestStats:
     )
     def test_simple(self, pr_series, random, op, word):
         pr = pr_series(random.random(400))
-        out = generic.stats(pr, freq="YS", op=op)
+        out = generic.statistics(pr, freq="YS", statistic=op)
         assert out.long_name == f"{word} of variable"
 
     def test_ndq(self, ndq_series):
-        out = generic.stats(ndq_series, freq="YS", op="min", season="MAM")
+        out = generic.statistics(ndq_series, freq="YS", statistic="min", season="MAM")
         assert out.attrs["units"] == "m3 s-1"
 
     def test_missing(self, ndq_series):
         a = ndq_series.where(~((ndq_series.time.dt.dayofyear == 5) & (ndq_series.time.dt.year == 1902)))
         assert a.shape == (5000, 2, 3)
-        out = generic.stats(a, op="max", month=1)
+        out = generic.statistics(a, statistic="max", month=1, freq="YS")
 
         np.testing.assert_array_equal(out.sel(time="1900").isnull(), False)
         np.testing.assert_array_equal(out.sel(time="1902").isnull(), True)
 
     def test_3hourly(self, pr_hr_series, random):
         pr = pr_hr_series(random.random(366 * 24)).resample(time="3h").mean()
-        out = generic.stats(pr, freq="MS", op="var")
+        out = generic.statistics(pr, freq="MS", statistic="var")
         assert out.units == "kg2 m-4 s-2"
         assert out.long_name == "Variance of variable"

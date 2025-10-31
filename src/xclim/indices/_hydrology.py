@@ -264,7 +264,7 @@ def snd_max(snd: xarray.DataArray, freq: str = "YS-JUL") -> xarray.DataArray:
     xarray.DataArray
         The maximum snow depth over a given number of days for each period. [length].
     """
-    return generic.select_resample_op(snd, op="max", freq=freq)
+    return generic.statistics(snd, statistic="max", freq=freq)
 
 
 @declare_units(snd="[length]")
@@ -290,7 +290,7 @@ def snd_max_doy(snd: xarray.DataArray, freq: str = "YS-JUL") -> xarray.DataArray
     valid = at_least_n_valid(snd.where(snd > 0), n=1, freq=freq)
 
     # Compute doymax. Will return first time step if all snow depths are 0.
-    out = generic.select_resample_op(snd.where(snd > 0, 0), op=generic.doymax, freq=freq)
+    out = generic.statistics(snd.where(snd > 0, 0), statistic="doymax", freq=freq)
     out.attrs.update(units="", is_dayofyear=np.int32(1), calendar=get_calendar(snd))
 
     # Mask arrays that miss at least one non-null snd.
@@ -316,7 +316,7 @@ def snw_max(snw: xarray.DataArray, freq: str = "YS-JUL") -> xarray.DataArray:
     xarray.DataArray
         The maximum snow amount over a given number of days for each period. [mass/area].
     """
-    return generic.select_resample_op(snw, op="max", freq=freq)
+    return generic.statistics(snw, statistic="max", freq=freq)
 
 
 @declare_units(snw="[mass]/[area]")
@@ -342,8 +342,7 @@ def snw_max_doy(snw: xarray.DataArray, freq: str = "YS-JUL") -> xarray.DataArray
     valid = at_least_n_valid(snw.where(snw > 0), n=1, freq=freq)
 
     # Compute doymax. Will return first time step if all snow depths are 0.
-    out = generic.select_resample_op(snw.where(snw > 0, 0), op=generic.doymax, freq=freq)
-    out.attrs.update(units="", is_dayofyear=np.int32(1), calendar=get_calendar(snw))
+    out = generic.statistics(snw.where(snw > 0, 0), statistic="doymax", freq=freq)
 
     # Mask arrays that miss at least one non-null snd.
     return out.where(~valid)
@@ -612,7 +611,7 @@ def high_flow_frequency(q: xarray.DataArray, threshold_factor: int = 9, freq: st
     :cite:cts:`addor2018,Clausen2000`
     """
     median_flow = q.median(dim="time")
-    threshold = threshold_factor * median_flow
+    threshold = (threshold_factor * median_flow).assign_attrs(units=q.attrs["units"])
     return count_occurrences(q, condition=">", threshold=threshold, freq=freq)
 
 
@@ -644,7 +643,7 @@ def low_flow_frequency(q: xarray.DataArray, threshold_factor: float = 0.2, freq:
     :cite:cts:`Olden2003`
     """
     mean_flow = q.mean(dim="time")
-    threshold = threshold_factor * mean_flow
+    threshold = (threshold_factor * mean_flow).assign_attrs(units=q.attrs["units"])
     return count_occurrences(q, condition="<", threshold=threshold, freq=freq)
 
 

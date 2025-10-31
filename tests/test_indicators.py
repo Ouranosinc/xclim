@@ -499,7 +499,6 @@ def test_all_jsonable(official_indicators):
     err = None
     for identifier, ind in official_indicators.items():
         indinst = ind.get_instance()
-        json.dumps(indinst.json())
         try:
             json.dumps(indinst.json())
         except (KeyError, TypeError) as e:
