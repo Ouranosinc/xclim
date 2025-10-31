@@ -2,6 +2,14 @@
 Changelog
 =========
 
+v0.59.1 (2025-10-31)
+--------------------
+Contributors to this version: Trevor James Smith (:user:`Zeitsperre`).
+
+Internal changes
+^^^^^^^^^^^^^^^^
+* Updated the ``example.ipynb`` notebook to use a newer dataset based on CMIP6 for the workflow showcase; The previous dataset based on CMIP5 has since been retired, and the broken URL was causing documentation build failures. (:pull:`2261`).
+
 v0.59.0 (2025-10-30)
 --------------------
 Contributors to this version: Pascal Bourgault (:user:`aulemahal`), Trevor James Smith (:user:`Zeitsperre`), Sascha Hofmann (:user:`saschahofmann`).
