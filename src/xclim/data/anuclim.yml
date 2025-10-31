@@ -174,8 +174,8 @@ indicators:
     src_freq: ['D', '7D', 'MS']
     compute: extreme_range
     input:
-      low_data: tasmin
-      high_data: tasmax
+      data1: tasmin
+      data2: tasmax
     cf_attrs:
       long_name: Temperature Annual Range
       cell_methods: "time: range"
