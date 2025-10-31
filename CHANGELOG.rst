@@ -8,6 +8,14 @@ Contributors to this version: Pascal Bourgault (:user:`aulemahal`).
 
 This new xclim bring a major overhaul of the "generic" index functions which had a trickle down (breaking) effect on most of xclim modules. A summary of the changes can be found `in this comment <https://github.com/Ouranosinc/xclim/pull/2258#issuecomment-3473430173>`_.
 
+v0.59.1 (2025-10-31)
+--------------------
+Contributors to this version: Trevor James Smith (:user:`Zeitsperre`).
+
+Internal changes
+^^^^^^^^^^^^^^^^
+* Updated the ``example.ipynb`` notebook to use a newer dataset based on CMIP6 for the workflow showcase; The previous dataset based on CMIP5 has since been retired, and the broken URL was causing documentation build failures. (:pull:`2261`).
+
 v0.59.0 (2025-10-30)
 --------------------
 Contributors to this version: Pascal Bourgault (:user:`aulemahal`), Trevor James Smith (:user:`Zeitsperre`), Sascha Hofmann (:user:`saschahofmann`).
