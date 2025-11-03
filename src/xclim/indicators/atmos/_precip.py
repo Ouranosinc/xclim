@@ -843,18 +843,15 @@ aridity_index = PrecipWithIndexing(
     units="",
     long_name="Aridity Index",
     description="The ratio of total precipitation over potential evapotranspiration."
-        "Classification based on the Aridity Index(AI)."
-        "+ ----------------+----------------+-----------------+"
-        "| Classification | Aridity Index     | Global land area |"
-        "+----------------+----------------+---------------------+"
-        "| Hyperarid       | AI < 0.05        | 7.5 %            |"
-        "| Arid            | 0.05 ≤ AI < 0.20 | 12.1 %           |"
-        "| Semi - arid     | 0.20 ≤ AI < 0.50 | 17.7 %           |"
-        "| Dry subhumid    | 0.50 ≤ AI < 0.65 | 9.9 %            |"
-        "+----------------+----------------+---------------------+"
-,
+    "Classification based on the Aridity Index(AI)."
+    "+ ----------------+----------------+-----------------+"
+    "| Classification | Aridity Index     | Global land area |"
+    "+----------------+----------------+---------------------+"
+    "| Hyperarid       | AI < 0.05        | 7.5 %            |"
+    "| Arid            | 0.05 ≤ AI < 0.20 | 12.1 %           |"
+    "| Semi - arid     | 0.20 ≤ AI < 0.50 | 17.7 %           |"
+    "| Dry subhumid    | 0.50 ≤ AI < 0.65 | 9.9 %            |"
+    "+----------------+----------------+---------------------+",
     cell_methods="",
     compute=indices.aridity_index,
 )
-
-

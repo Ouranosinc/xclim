@@ -281,11 +281,12 @@ holiday_snow_and_snowfall_days = Snow(
     "and a measurable snowfall occurring on December 25th.",
     compute=xci.holiday_snow_and_snowfall_days,
 )
-days_with_snowpack = PrecipWithIndexing(
+
+days_with_snowpack = Snow(
     title="Days with snowpack",
     identifier="days_with_snowpack",
     units="days",
     long_name="Days with snowpack",
     description="The total number of days with snow water equivalent (SWE) above a given threshold.",
-    compute=indices.days_with_snowpack,
+    compute=xci.days_with_snowpack,
 )

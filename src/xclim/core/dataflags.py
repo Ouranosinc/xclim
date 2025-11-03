@@ -818,6 +818,7 @@ def ecad_compliant(
         return xarray.merge([ds, ecad_flag])
     return ecad_flag
 
+
 @declare_units(q="[discharge]", a="[area]", thresh="[speed]")
 def specific_discharge_extremely_high(
     q: xarray.DataArray, a: xarray.DataArray, *, thresh: Quantified = "100 m/s"

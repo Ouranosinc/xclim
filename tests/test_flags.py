@@ -154,6 +154,7 @@ class TestDataFlags:
         )
         assert list(flgs.data_vars.keys())[0] == "values_eq_minus5point1_repeating_for_5_or_more_days"
 
+
 class Testspe_q:
     def test_simple(self, q_series, area_series):
         # 1 years of daily data

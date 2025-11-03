@@ -13,11 +13,15 @@ from xclim.core.indicator import (
 from xclim.core.units import declare_units
 from xclim.indices import (
     base_flow_index,
+    base_flow_index_seasonal_ratio,
     flow_index,
     generic,
     high_flow_frequency,
+    lag_snowpack_flow_peaks,
     low_flow_frequency,
     rb_flashiness_index,
+    runoff_ratio,
+    sen_slope,
     standardized_groundwater_index,
     standardized_streamflow_index,
 )
@@ -36,7 +40,6 @@ __all__ = [
     "sen_slope",
     "standardized_groundwater_index",
     "standardized_streamflow_index",
-
 ]
 
 
@@ -184,7 +187,7 @@ base_flow_index_seasonal_ratio = Streamflow(
     abstract="Yearly base flow index per season, defined as the minimum 7-day average flow divided by the mean flow"
     "as well as yearly winter to summer bfi ratio.",
     cell_methods="",
-    keywords="streamflow" "seasonnal",
+    keywords="streamflow, seasonal",
     compute=base_flow_index_seasonal_ratio,
 )
 
@@ -199,7 +202,7 @@ lag_snowpack_flow_peaks = Streamflow(
     "during a given year. If the time lag between maximum snowpack and river high flows is ≤ 50 days,"
     "the watershed is likely in a nival regime.",
     cell_methods="",
-    keywords="streamflow" "SWE",
+    keywords="streamflow, SWE",
     compute=lag_snowpack_flow_peaks,
 )
 
@@ -228,6 +231,3 @@ sen_slope = Streamflow(
     keywords="streamflow",
     compute=sen_slope,
 )
-
-
-
