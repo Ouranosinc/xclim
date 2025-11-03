@@ -1075,7 +1075,7 @@ def base_flow_index_seasonal_ratio(
     xarray.DataArray, [dimensionless]
         Fall_bfi.
     xarray.DataArray, [dimensionless]
-         Winter_to summer_ratio.
+        Winter_to summer_ratio.
 
     Notes
     -----
