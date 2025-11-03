@@ -71,6 +71,7 @@ __all__ = [
     "outside_n_standard_deviations_of_climatology",
     "percentage_values_outside_of_bounds",
     "register_methods",
+    "specific_discharge_extremely_high",
     "tas_below_tasmin",
     "tas_exceeds_tasmax",
     "tasmax_below_tasmin",
@@ -816,3 +817,49 @@ def ecad_compliant(
     if append:
         return xarray.merge([ds, ecad_flag])
     return ecad_flag
+
+@declare_units(q="[discharge]", a="[area]", thresh="[speed]")
+def specific_discharge_extremely_high(
+    q: xarray.DataArray, a: xarray.DataArray, *, thresh: Quantified = "100 m/s"
+) -> xarray.DataArray:
+    """
+    Check if specific discharge values exceed 100 m/s for any given day.
+
+    Parameters
+    ----------
+    q : xarray.DataArray
+        Flow.
+    a : xarray.DataArray
+        Watershed area.
+    thresh : str
+        Threshold above which specific discharges are considered problematic and a flag is raised.
+        Default is 100 m/s.
+
+    Returns
+    -------
+    xarray.DataArray, [bool]
+        Boolean array of True where specific discharges are above the threshold.
+
+    Examples
+    --------
+    To gain access to the flag_array:
+
+    >>> from xclim.core.dataflags import specific_discharge_extremely_high
+    >>> ds = xr.open_dataset(path_to_file)
+    >>> q = ds["flow"]
+    >>> a = ds["Area"]
+    >>> extrem_specific_discharge = 100 * units("m/s")  #'a voir...
+    >>> flagged = specific_discharge_extremely_high(ds.q, thresh=extrem_specific_discharge)
+    """
+    q = convert_units_to(q, "m3/s")
+    a = convert_units_to(a, "km2")
+
+    spe_q = q / (a * 1000000)  # unit conversion to m/s
+    spe_q.attrs["units"] = "m s-1"
+
+    thresh_converted = convert_units_to(thresh, spe_q)
+    extreme_high = _sanitize_attrs(spe_q > thresh_converted)
+    description = f"Specific discharge found in excess of {thresh} in {spe_q.name}."
+    extreme_high.attrs["description"] = description
+    extreme_high.attrs["units"] = ""
+    return extreme_high
