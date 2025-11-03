@@ -256,7 +256,7 @@ class TestAnnualAridityIndex:
 
 class TestLagSnowpackFlowPeaks:
     def test_simple(self, swe_series, q_series):
-        # 1 years of daily data (2 values due to freq resampling)
+        # 1 years of daily data (2 values due to freq resampling to water year "YS-OCT")
         a = np.zeros(365)
 
         # Year 1: 1 day of SWE = 20 mm
@@ -278,6 +278,27 @@ class TestLagSnowpackFlowPeaks:
 
         out = xci.lag_snowpack_flow_peaks(swe, q)
         np.testing.assert_allclose(out, [17.0, 27.0], atol=1e-14)
+
+    def test_no_snow(self, swe_series, q_series):
+        # 1 years of daily data (2 values due to freq resampling to water year "YS-OCT")
+        a = np.zeros(365)
+
+        # Create a daily time index
+        swe = swe_series(a)
+
+        b = np.zeros(365)
+        # Year 1: 35 days of high flows
+        b[50:85] = 20
+        # Year 2: 35 days of smaller high flows
+        b[310:345] = 5
+
+        # Create a daily time index
+        q = q_series(b)
+
+        out = xci.lag_snowpack_flow_peaks(swe, q)
+        np.testing.assert_allclose(
+            out, [67.0, 53.0], atol=1e-14
+        )  # results are the days between the start of the water year and the mean og high flows
 
 
 class TestSenSlope:
