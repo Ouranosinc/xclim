@@ -899,7 +899,6 @@ def lag_snowpack_flow_peaks(
     - Nival regime is characterized by a hydrological response dominated by snowmelt,
       where maximum flows occur shortly after peak snow cover (Burn et al., 2010).
     - The 50-day threshold is approximate and depends on the specific responsiveness of each watershed.
-    - For more detailed analysis, consider the functions listed in the See Also section.
     - A negative value means the high flows occur before the peak snow cover.
 
     References
