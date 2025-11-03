@@ -891,7 +891,6 @@ def lag_snowpack_flow_peaks(
     See Also
     --------
     xclim.indices.rb_flashiness_index: Richards-Baker flashiness index.
-    xhydro.src.xhydro.modelling.hydro_signatures.py.elasticity_index : Streamflow elasticity index.
 
     Notes
     -----
