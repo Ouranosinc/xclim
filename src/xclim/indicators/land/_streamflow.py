@@ -24,14 +24,19 @@ from xclim.indices import (
 
 __all__ = [
     "base_flow_index",
+    "base_flow_index_seasonal_ratio",
     "doy_qmax",
     "doy_qmin",
     "flow_index",
     "high_flow_frequency",
+    "lag_snowpack_flow_peaks",
     "low_flow_frequency",
     "rb_flashiness_index",
+    "runoff_ratio",
+    "sen_slope",
     "standardized_groundwater_index",
     "standardized_streamflow_index",
+
 ]
 
 
@@ -153,7 +158,6 @@ standardized_streamflow_index = StandardizedIndexes(
     compute=standardized_streamflow_index,
 )
 
-
 standardized_groundwater_index = StandardizedIndexes(
     realm="land",
     title="Standardized Groundwater Index (SGI)",
@@ -169,3 +173,61 @@ standardized_groundwater_index = StandardizedIndexes(
     keywords="groundwater",
     compute=standardized_groundwater_index,
 )
+
+base_flow_index_seasonal_ratio = Streamflow(
+    title="Seasonal Base flow index (bfi) and ratio of winter to summer base flow index",
+    identifier="base_flow_index_seasonal_ratio",
+    units="",
+    long_name="Seasonal Base flow index and ratio of winter to summer base flow index",
+    description="Yearly base flow index per season, defined as the minimum 7-day average flow divided by the mean flow"
+    "as well as yearly winter to summer bfi ratio.",
+    abstract="Yearly base flow index per season, defined as the minimum 7-day average flow divided by the mean flow"
+    "as well as yearly winter to summer bfi ratio.",
+    cell_methods="",
+    keywords="streamflow" "seasonnal",
+    compute=base_flow_index_seasonal_ratio,
+)
+
+
+lag_snowpack_flow_peaks = Streamflow(
+    title="Time lag between maximum snowpack and river high flows",
+    identifier="lag_snowpack_flow_peaks",
+    units="days",
+    long_name="Time lag between maximum snowpack and river high flows",
+    description="Number of days between the annual maximum snowpack, measured by the snow water"
+    "equivalent, and the mean date when river flow exceeds a percentile threshold"
+    "during a given year. If the time lag between maximum snowpack and river high flows is ≤ 50 days,"
+    "the watershed is likely in a nival regime.",
+    cell_methods="",
+    keywords="streamflow" "SWE",
+    compute=lag_snowpack_flow_peaks,
+)
+
+runoff_ratio = Streamflow(
+    title="Runoff ratio",
+    identifier="runoff_ratio",
+    units="",
+    long_name="Runoff ratio",
+    description="Ratio of runoff volume measured at the stream to the total precipitation volume over the watershed."
+    "Temporal analysis: Yearly values computed from seasonal daily data and yearly data, depending on chosen frequency."
+    "(e.g., 'YS' for yearly starting Jan, or 'QS-DEC' for seasons,"
+    "'30YS' to compute the value over slices of 30 years from the start of the time series).",
+    cell_methods="",
+    keywords="streamflow",
+    compute=runoff_ratio,
+)
+
+sen_slope = Streamflow(
+    title="Sen Slope : Temporal robustness analysis of streamflow.",
+    identifier="sen_slope",
+    units="",
+    long_name="Sen Slope",
+    description=" Computes annual and seasonal Theil–Sen slope estimators and performs the"
+    "Mann–Kendall test for trend evaluation.",
+    cell_methods="",
+    keywords="streamflow",
+    compute=sen_slope,
+)
+
+
+
