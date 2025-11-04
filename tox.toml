@@ -54,6 +54,10 @@ deps = [
   "vulture >=2.14",
   "yamllint >=1.35.1"
 ]
+commands_pre = [
+  ["python", "-m", "pip", "list"],
+  ["python", "-m", "pip", "check"]
+]
 commands = [
   ["make", "lint"]
 ]
