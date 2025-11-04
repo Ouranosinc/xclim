@@ -177,11 +177,7 @@ jobs:
           key: ${{ runner.os }}-xclim-testdata-${{ env.XCLIM_TESTDATA_BRANCH }}-${{ hashFiles('pyproject.toml', 'tox.ini') }}-Python${{ matrix.python-version }}
       - name: Test with tox
         run: |
-          python -m tox -e py${{ matrix.python-version }} -- -m 'not slow'
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          COVERALLS_FLAG_NAME: run-${{ matrix.python-version }}-ubuntu-latest-preliminary
-          COVERALLS_PARALLEL: true
+          python -m tox -e py${{ matrix.python-version }} -- -m "not slow"
       - name: Tests measurement
         uses: green-coding-solutions/eco-ci-energy-estimation@862050e4f01f65b1436e5eca18ba4bd85562f0de # v5.0.0
         with:
@@ -215,19 +211,19 @@ jobs:
           # Windows builds
           - os: 'windows-latest'
             testdata-cache: 'C:\Users\runneradmin\AppData\Local\xclim-testdata\xclim-testdata\Cache'
-            markers: -m 'not slow'
+            markers: -m "not slow"
             python-version: "3.12"
             tox-env: 'prefetch'
           # macOS builds
           - os: 'macos-latest'
             testdata-cache: '~/Library/Caches/xclim-testdata'
-            markers: ''  # Slow tests
+            markers: ""  # Slow tests
             python-version: "3.11"
             tox-env: 'standard'
           # Specialized tests
           - os: 'ubuntu-latest'
             testdata-cache: '~/.cache/xclim-testdata'
-            markers: -m 'not requires_internet and not slow'
+            markers: -m "not requires_internet and not slow"
             python-version: "3.11"
             tox-env: 'offline'
           - os: 'ubuntu-latest'
