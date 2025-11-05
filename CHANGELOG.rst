@@ -2,6 +2,19 @@
 Changelog
 =========
 
+v0.60.0 (unreleased)
+--------------------
+Contributors to this version: Trevor James Smith (:user:`Zeitsperre`).
+
+Breaking changes
+^^^^^^^^^^^^^^^^
+* `lmoments3` is now listed as a dependency to the extras recipe. This dependency is not installed by default with `xclim` and must be explicitly requested with ``$ pip install "xclim[extras]"``, if desired. (:pull:`2269`).
+
+Internal changes
+^^^^^^^^^^^^^^^^
+* Replaced the ``tox.ini`` file with a ``tox.toml`` file and simplified the conditionals for environment selection. (:pull:`2269`).
+* Removed `python-coveralls` from the `tox`-only dependencies (abandoned software / not supported for Python 3.13 or 3.14) and added the `coverallsapp/github-action` step to PyPI/tox builds on CI. (:pull:`2269`).
+
 v0.59.1 (2025-10-31)
 --------------------
 Contributors to this version: Trevor James Smith (:user:`Zeitsperre`).
