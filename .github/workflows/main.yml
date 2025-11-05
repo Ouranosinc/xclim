@@ -319,6 +319,8 @@ jobs:
         if: ${{ matrix.tox-env == 'standard' }}
         run: |
           python -m tox -- ${{ matrix.markers }};
+        with:
+          TOX_GH_MAJOR_MINOR: ${{ matrix.python-version }}
       - name: Test with tox (specialized tests)
         if: ${{ matrix.tox-env != 'standard' }}
         run: |
