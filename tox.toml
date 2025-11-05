@@ -1,7 +1,6 @@
 env_list = [
   "docs",
   "doctests",
-  "extras",
   "lint",
   "notebooks",
   "numpy",
@@ -87,7 +86,8 @@ commands = [
 
 [env.prefetch]
 commands = [
-  ["xclim", "prefetch_testing_data"]
+  ["xclim", "prefetch_testing_data"],
+  ["pytest", "{posargs}"]
 ]
 
 [env.sbck]
@@ -129,7 +129,7 @@ commands_post = [
 allowlist_externals = ["git", "xclim"]
 
 [gh.python]
-"3.10" = ["extras"]
+"3.10" = ["py3.10"]
 "3.11" = ["sbck"]
 "3.12" = ["numpy"]
-"3.13" = ["extras"]
+"3.13" = ["py3.13"]
