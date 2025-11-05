@@ -117,6 +117,7 @@ jobs:
         os: [ 'ubuntu-latest' ]
         python-version: [ "3.11" ]
         testdata-cache: [ '~/.cache/xclim-testdata' ]
+        markers: [ "-m not slow" ]
     steps:
       - name: Harden Runner
         uses: step-security/harden-runner@f4a75cfd619ee5ce8d5b864b0d183aff3c69b55a # v2.13.1
@@ -177,7 +178,7 @@ jobs:
           key: ${{ runner.os }}-xclim-testdata-${{ env.XCLIM_TESTDATA_BRANCH }}-${{ hashFiles('pyproject.toml', 'tox.ini') }}-Python${{ matrix.python-version }}
       - name: Test with tox
         run: |
-          python -m tox -e py${{ matrix.python-version }} -- -m "not slow"
+          python -m tox -e py${{ matrix.python-version }} -- ${{ matrix.markers }}
       - name: Tests measurement
         uses: green-coding-solutions/eco-ci-energy-estimation@862050e4f01f65b1436e5eca18ba4bd85562f0de # v5.0.0
         with:
@@ -205,8 +206,8 @@ jobs:
         os: [ 'ubuntu-latest', ]
         testdata-cache: [ '~/.cache/xclim-testdata' ]
         python-version: [ "3.10", "3.11", "3.12", "3.13" ]
-        markers: [ '-m "not slow"' ]
-        tox-env: [ 'standard' ]
+        markers: [ "-m not slow" ]
+        tox-env: [ "standard" ]
         include:
           # Windows builds
           - os: 'windows-latest'
@@ -321,7 +322,7 @@ jobs:
       - name: Test with tox (specialized tests)
         if: ${{ matrix.tox-env != 'standard' }}
         run: |
-          python -m tox -e ${{ matrix.tox-env }} -- ${{ matrix.markers }};
+          python -m tox -e ${{ matrix.tox-env }} -- ${{ matrix.markers }}
       - name: Report Coverage
         uses: coverallsapp/github-action@648a8eb78e6d50909eff900e4ec85cab4524a45b # v2.3.6
         with:
