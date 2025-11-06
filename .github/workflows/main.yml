@@ -323,6 +323,7 @@ jobs:
         run: |
           python -m tox -e ${{ matrix.tox-env }} -- ${{ matrix.markers }}
       - name: Report Coverage
+        if: ${{ matrix.tox-env == '' || matrix.tox-env == null }}
         uses: coverallsapp/github-action@648a8eb78e6d50909eff900e4ec85cab4524a45b # v2.3.6
         with:
           flag-name: run-${{ matrix.python-version }}-${{ matrix.os }}-${{ matrix.tox-env }}

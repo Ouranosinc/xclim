@@ -7,11 +7,6 @@ env_list = [
   "sbck",
   "upstream"
 ]
-requires = [
-  "pip >=25.2",
-  "flit >=3.11.0,<4.0",
-  "tox >=4.30.3"
-]
 skip_missing_interpreters = true
 
 [env.docs]
