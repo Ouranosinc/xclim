@@ -129,7 +129,7 @@ commands_post = [
 allowlist_externals = ["git", "xclim"]
 
 [gh.python]
-"3.10" = ["py3.10"]
+"3.10" = ["prefetch"]
 "3.11" = ["sbck"]
 "3.12" = ["numpy"]
-"3.13" = ["py3.13"]
+"3.13" = ["prefetch"]
