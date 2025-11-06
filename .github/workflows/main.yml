@@ -208,26 +208,31 @@ jobs:
         python-version: [ "3.10", "3.11", "3.12", "3.13" ]
         markers: [ "-m not slow" ]
         include:
-          # Windows builds
-          - os: 'windows-latest'
-            testdata-cache: 'C:\Users\runneradmin\AppData\Local\xclim-testdata\xclim-testdata\Cache'
-            python-version: "3.13"
-          # macOS builds
+          # macOS build
           - os: 'macos-latest'
             testdata-cache: '~/Library/Caches/xclim-testdata'
             markers: '' # Slow tests
             python-version: "3.13"
           # Specialized tests
+          ## Windows with Prefetch
+          - os: 'windows-latest'
+            testdata-cache: 'C:\Users\runneradmin\AppData\Local\xclim-testdata\xclim-testdata\Cache'
+            markers: '' # Markers handled by tox
+            python-version: "3.13"
+            tox-env: 'prefetch'
+          ## Linux offline
           - os: 'ubuntu-latest'
             testdata-cache: '~/.cache/xclim-testdata'
             markers: '' # Markers handled by tox + Slow tests
             python-version: "3.11"
             tox-env: 'offline'
+          ## Linux notebooks
           - os: 'ubuntu-latest'
             testdata-cache: '~/.cache/xclim-testdata'
             markers: '' # No markers for notebooks
             python-version: "3.11"
             tox-env: 'notebooks'
+          ## Linux doctests
           - os: 'ubuntu-latest'
             testdata-cache: '~/.cache/xclim-testdata'
             markers: '' # No markers for doctests
