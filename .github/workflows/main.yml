@@ -207,12 +207,11 @@ jobs:
         testdata-cache: [ '~/.cache/xclim-testdata' ]
         python-version: [ "3.10", "3.11", "3.12", "3.13" ]
         markers: [ "-m not slow" ]
-        tox-env: [ "standard" ]
         include:
           # Windows builds
           - os: 'windows-latest'
             testdata-cache: 'C:\Users\runneradmin\AppData\Local\xclim-testdata\xclim-testdata\Cache'
-            markers: -m not slow
+            markers: "-m not slow"
             python-version: "3.12"
           # macOS builds
           - os: 'macos-latest'
@@ -314,9 +313,9 @@ jobs:
             .tox
           key: ${{ runner.os }}-xclim-testdata-${{ env.XCLIM_TESTDATA_BRANCH }}-${{ hashFiles('pyproject.toml', 'tox.ini') }}-Python${{ matrix.python-version }}
       - name: Test with tox
-        if: ${{ !contains('offline,notebooks,doctests', matrix.tox-env }}
+        if: ${{ matrix.tox-env == '' || matrix.tox-env == null }}
         run: |
-          python -m tox
+          python -m tox -- ${{ matrix.markers }}
         env:
           TOX_GH_MAJOR_MINOR: ${{ matrix.python-version }}
       - name: Test with tox (specialized tests)
