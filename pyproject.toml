@@ -1,5 +1,5 @@
 [build-system]
-requires = ["flit_core >=3.10.1,<4"]
+requires = ["flit_core >=3.11.0,<4"]
 build-backend = "flit_core.buildapi"
 
 [project]
@@ -14,12 +14,12 @@ maintainers = [
 readme = {file = "README.rst", content-type = "text/x-rst"}
 requires-python = ">=3.10.0"
 keywords = ["xclim", "xarray", "climate", "climatology", "bias correction", "ensemble", "indicators", "analysis"]
-license = {file = "LICENSE"}
+license = "Apache-2.0"
+license-files = ["LICENSE"]
 classifiers = [
   "Development Status :: 4 - Beta",
   "Intended Audience :: Developers",
   "Intended Audience :: Science/Research",
-  "License :: OSI Approved :: Apache Software License",
   "Natural Language :: English",
   "Operating System :: OS Independent",
   "Programming Language :: Python :: 3",
@@ -126,7 +126,7 @@ xclim = "xclim.cli:cli"
 [tool]
 
 [tool.bumpversion]
-current_version = "0.58.2-dev.3"
+current_version = "0.59.1"
 commit = true
 commit_args = "--no-verify --signoff"
 tag = false

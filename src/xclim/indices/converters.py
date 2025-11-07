@@ -628,13 +628,13 @@ def vapor_pressure(huss: xr.DataArray, ps: xr.DataArray):
 
     .. math::
 
-        e = \frac{pq}{\epsilon\left(1 + q\left(\frac{1}{\epsilon} - 1\right)\right)}
+        e = \frac{pq}{\epsilon + (1 - \epsilon)q}
 
     Where :math:`p` is the pressure, :math:`q` is the specific humidity and :math:`\epsilon` us the ratio of the dry air
-    gas constant to the water vapor gas constant : :math:`\frac{R_{dry}}{R_{vapor}} = 0.621981`.
+    gas constant to the water vapor gas constant : :math:`\frac{R_{dry}}{R_{vapor}} = 0.62198`.
     """
-    eps = 0.621981
-    e = cast(xr.DataArray, ps * huss / (eps * (1 + huss * (1 / eps - 1))))
+    eps = 0.62198
+    e = cast(xr.DataArray, ps * huss / (eps + (1 - eps) * huss))
     return e.assign_attrs(units=ps.attrs["units"])
 
 
@@ -772,16 +772,19 @@ def relative_humidity(
 
        RH = 100\frac{e_{sat}(T_d)}{e_{sat}(T)}
 
-    Otherwise, the specific humidity and the air pressure must be given so relative humidity can be computed as:
+    Otherwise, the specific humidity and the air pressure must be given so relative humidity
+    can be computed as the ratio of actual vapor pressure to saturation vapor pressure:
 
     .. math::
 
-       RH = 100\frac{w}{w_{sat}}
-       w = \frac{q}{1-q}
-       w_{sat} = 0.622\frac{e_{sat}}{P - e_{sat}}
+       RH = 100\frac{P_w}{P_{wsat}}
+       P_w = \frac{pq}{\epsilon\left(1 + q\left(\frac{1}{\epsilon} - 1\right)\right)}
+       \epsilon = 0.62198
 
-    The methods differ by how :math:`e_{sat}` is computed.
-    See the doc of :py:func:`xclim.core.utils.saturation_vapor_pressure`.
+    The methods differ by how :math:`P_{wsat}` is computed.
+    See the doc of :py:func:`saturation_vapor_pressure` and :py:func:`vapor_pressure`.
+    This equation for RH is the same as eq. 4.A.15 of :cite:p:`world_meteorological_organization_guide_2008`
+    and differs very slightly from MetPy which uses 4.A.16 by computing the mixing ratios first.
 
     References
     ----------
@@ -820,15 +823,13 @@ def relative_humidity(
     elif huss is not None and ps is not None:
         ps = convert_units_to(ps, "Pa")
         huss = convert_units_to(huss, "")
-        tas = convert_units_to(tas, "K")
 
-        e_sat = saturation_vapor_pressure(
+        P_w = vapor_pressure(huss=huss, ps=ps)
+        P_wsat = saturation_vapor_pressure(
             tas=tas, ice_thresh=ice_thresh, method=method, interp_power=interp_power, water_thresh=water_thresh
         )
 
-        w = huss / (1 - huss)
-        w_sat = 0.62198 * e_sat / (ps - e_sat)  # type: ignore
-        hurs = 100 * w / w_sat
+        hurs = 100 * P_w / P_wsat
     else:
         raise ValueError("`huss` and `ps` must be provided if `tdps` is not given.")
 
@@ -933,7 +934,7 @@ def specific_humidity(
         tas=tas, ice_thresh=ice_thresh, method=method, interp_power=interp_power, water_thresh=water_thresh
     )
 
-    w_sat = 0.621981 * e_sat / (ps - e_sat)  # type: ignore
+    w_sat = 0.62198 * e_sat / (ps - e_sat)  # type: ignore
     w = w_sat * hurs
     q: xr.DataArray = w / (1 + w)
 
@@ -1009,7 +1010,7 @@ def specific_humidity_from_dewpoint(
     ...     method="wmo08",
     ... )
     """
-    EPSILON = 0.621981  # molar weight of water vs dry air []
+    EPSILON = 0.62198  # molar weight of water vs dry air []
     e = saturation_vapor_pressure(
         tas=tdps, method=method, ice_thresh=ice_thresh, interp_power=interp_power, water_thresh=water_thresh
     )  # vapour pressure [Pa]
@@ -2130,7 +2131,8 @@ def potential_evapotranspiration(
             es = (1 / 2) * (saturation_vapor_pressure(_tasmax) + saturation_vapor_pressure(_tasmin))
             es = convert_units_to(es, "kPa")
             # mean actual vapour pressure [kPa]
-            ea = es * _hurs
+            # assign units as xarray removes conflicting units (_hurs is 1)
+            ea = (es * _hurs).assign_attrs(units="kPa")
 
             # slope of saturation vapour pressure curve  [kPa degC-1]
             delta = (4098 * es / (tas_m + 237.3) ** 2).assign_attrs(units="kPa degC-1")
@@ -2139,7 +2141,6 @@ def potential_evapotranspiration(
 
             P = 101.325  # Atmospheric pressure [kPa]
             gamma = 0.665e-03 * P  # psychrometric const = C_p*P/(eps*lam) [kPa degC-1]
-
             pet = fao_allen98(Rn, tas_m, wa2, es, ea, delta, f"{gamma} kPa degC")
 
     else:

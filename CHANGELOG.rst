@@ -2,29 +2,49 @@
 Changelog
 =========
 
-v0.59.0 (unreleased)
+v0.60.0 (unreleased)
 --------------------
-Contributors to this version: Pascal Bourgault (:user:`aulemahal`), Trevor James Smith (:user:`Zeitsperre`), David Huard (:user:`huard`), Ève Larose (:user:`e-larose`), Faisal Mahmood (:user:`faimahsho`).
+Contributors to this version: David Huard (:user:`huard`), Ève Larose (:user:`e-larose`), Faisal Mahmood (:user:`faimahsho`).
+
+New indicators and features
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+* New hydrological indices added to ``xclim.indices._hydrology.py``. (:issue:`1624`, :pull:`2227`).
+
+v0.59.1 (2025-10-31)
+--------------------
+Contributors to this version: Trevor James Smith (:user:`Zeitsperre`).
+
+Internal changes
+^^^^^^^^^^^^^^^^
+* Updated the ``example.ipynb`` notebook to use a newer dataset based on CMIP6 for the workflow showcase; The previous dataset based on CMIP5 has since been retired, and the broken URL was causing documentation build failures. (:pull:`2261`).
+
+v0.59.0 (2025-10-30)
+--------------------
+Contributors to this version: Pascal Bourgault (:user:`aulemahal`), Trevor James Smith (:user:`Zeitsperre`), Sascha Hofmann (:user:`saschahofmann`).
 
 New indicators and features
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 * ``xclim.ensembles.robustness_fractions`` now accepts instances of ``xclim.core.missing`` classes as a new ``invalid`` argument to control how data points are flagged as invalid. (:pull:`2245`).
-* New hydrological indices added to ``xclim.indices._hydrology.py``. (:issue:`1624`, :pull:`2227`).
+* ``xclim.indices.stats.fit`` now returns NaNs when running with method ``PWD`` and a lmoments distribution. Before it failed with an ``L-Moments invalid`` error. (:issue:`2235`, :pull:`2239`).
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
+* The relative humidity computations from specific humidity, pressure and temperature (``vapor_pressure`` and ``relative_humidity``) were modified to use the fraction of vapour pressure to saturation vapour pressure instead of an incomplete equation with the mixing ratios. Changes are small, but sometimes not negligible. (:pull:`2254`).
 * `black` and `blackdoc` are no longer required for development. `ruff` is now exclusively used for code and code-block formatting. (:pull:`2249`).
 * Python HDF5 libraries now have lower pins to ensure modern versions are preferably installed (`h5netcdf >=1.5.0` and `h5py >=3.12.1`) (:pull:`2253`).
 
 Bug fixes
 ^^^^^^^^^
-* Fix dimensions of "prsn" in the variable dictionary. (:pull:`2242`).
-* History is not written the DataArray is the ``as_dataset`` option is activated. (:issue:`2240`, :pull:`2251`).
+* Fix dimensions of `"prsn"` in the variable dictionary. (:pull:`2242`).
+* History is not written to the DataArray if the ``as_dataset`` option is activated. (:issue:`2240`, :pull:`2251`).
 * ``xclim.core.formatting.update_history`` now places the updated history at the top of the new attribute, not at the bottom. (:pull:`2251`).
+* ``$ xclim info`` CLI utility now provides information for module-loaded indicators (`cf`, `anuclim`, `icclim`). (:issue:`2219`, :pull:`2255`).
+* A few functions have been adapted to the new `xarray` default (`True`) for option ``keep_attrs``. (:issue:`2250`, :pull:`2257`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
 * Fixed an issue with a test that can fail when running with older versions of `numpy`. (:pull:`2253`).
+* Updated `flit` to v3.11.0 and adopted `PEP 639 <https://peps.python.org/pep-0639/>`_ for specifying licensing metadata. (:pull:`2260`).
 
 v0.58.1 (2025-08-28)
 --------------------
