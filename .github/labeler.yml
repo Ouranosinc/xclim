@@ -49,3 +49,7 @@
   - changed-files:
     - any-glob-to-any-file:
       - 'CONTRIBUTING.rst'
+
+'xclim-v1':
+  - base-branches:
+    - 'dev-v099'
