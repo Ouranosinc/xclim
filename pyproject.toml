@@ -126,7 +126,7 @@ xclim = "xclim.cli:cli"
 [tool]
 
 [tool.bumpversion]
-current_version = "0.59.1"
+current_version = "0.99.0-dev.0"
 commit = true
 commit_args = "--no-verify --signoff"
 tag = false
