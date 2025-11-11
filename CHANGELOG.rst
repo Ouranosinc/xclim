@@ -2,11 +2,25 @@
 Changelog
 =========
 
-v2026.1 (unreleased)
---------------------
-Contributors to this version: Pascal Bourgault (:user:`aulemahal`).
+v1.0.0 (unreleased)
+-------------------
+Contributors to this version: Pascal Bourgault (:user:`aulemahal`), Trevor James Smith (:user:`Zeitsperre`).
 
-This new xclim bring a major overhaul of the "generic" index functions which had a trickle down (breaking) effect on most of xclim modules. A summary of the changes can be found `in this comment <https://github.com/Ouranosinc/xclim/pull/2258#issuecomment-3473430173>`_.
+Announcements
+^^^^^^^^^^^^^
+This release constitutes a major breaking change from the previous stable release (v0.60.x) and introduces several new features, enhancements, and API changes. Users are strongly encouraged to review the breaking changes section below to ensure compatibility with their existing codebases. Documentation has been updated to reflect these changes as well as to help existing users migrate to the new version.
+
+New indicators and features
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+* This new xclim brings a major overhaul of the "generic" index functions which had a trickle down (breaking) effect on most of xclim modules. A summary of the changes can be found `in this comment <https://github.com/Ouranosinc/xclim/pull/2258#issuecomment-3473430173>`_.
+
+Breaking changes
+^^^^^^^^^^^^^^^^
+* TBD
+
+Internal changes
+^^^^^^^^^^^^^^^^
+* TBD
 
 v0.59.1 (2025-10-31)
 --------------------
