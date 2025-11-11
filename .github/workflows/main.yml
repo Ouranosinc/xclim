@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - dev-v099
     paths-ignore:
       - CHANGELOG.rst
       - README.rst
