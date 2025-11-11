@@ -2,6 +2,26 @@
 Changelog
 =========
 
+v1.0.0 (unreleased)
+-------------------
+Contributors to this version: Trevor James Smith (:user:`Zeitsperre`).
+
+Announcements
+^^^^^^^^^^^^^
+This release constitutes a major breaking change from the previous stable release (v0.60.x) and introduces several new features, enhancements, and API changes. Users are strongly encouraged to review the breaking changes section below to ensure compatibility with their existing codebases. Documentation has been updated to reflect these changes as well as to help existing users migrate to the new version.
+
+New indicators and features
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+* TBD
+
+Breaking changes
+^^^^^^^^^^^^^^^^
+* TBD
+
+Internal changes
+^^^^^^^^^^^^^^^^
+* TBD
+
 v0.59.1 (2025-10-31)
 --------------------
 Contributors to this version: Trevor James Smith (:user:`Zeitsperre`).
