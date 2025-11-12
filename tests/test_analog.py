@@ -1,6 +1,8 @@
 # Tests taken from flyingpigeon on Nov 2020
 from __future__ import annotations
 
+import sys
+
 import numpy as np
 import pandas as pd
 import pytest
@@ -58,6 +60,10 @@ def test_exact_randn(exact_randn):
 @pytest.mark.slow
 @pytest.mark.parametrize("method", xca.metrics.keys())
 def test_spatial_analogs(method, open_dataset):
+    if method == "friedman_rafsky" and sys.platform == "darwin":
+        # FIXME: Remove when Friedman Rafsky method is stable on macOS.
+        pytest.xfail("FR test is unstable on macOS CI runners.")
+
     diss = open_dataset("SpatialAnalogs/dissimilarity.nc")
     data = open_dataset("SpatialAnalogs/indicators.nc")
 
