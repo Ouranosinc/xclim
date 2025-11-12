@@ -32,7 +32,7 @@ Contributors
 * Sarah Gammon `@SarahG-579462 <https://github.com/SarahG-579462>`_
 * Tom Keel <thomas.keel.18@ucl.ac.uk> `@Thomasjkeel <https://github.com/Thomasjkeel>`_
 * Marie-Pier Labonté <labonte.marie-pier@ouranos.ca> `@marielabonte <https://github.com/marielabonte>`_
-* Ludwig Lierhammer <ludwig.lierhammer@hereon.de> `@ludwiglierhammer <https://github.com/ludwiglierhammer>`_
+* Ludwig Lierhammer <ludwig.lierhammer@dwd.de> `@ludwiglierhammer <https://github.com/ludwiglierhammer>`_
 * Jwen Fai Low `@jwenfai <https://github.com/jwenfai>`_
 * Jamie Quinn <jamiejquinn@jamiejquinn.com> `@JamieJQuinn <https://github.com/JamieJQuinn>`_
 * Yannick Rousseau
