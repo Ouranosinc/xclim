@@ -14,14 +14,18 @@ from xclim.core.calendar import resample_doy, select_time
 from xclim.core.units import (
     convert_units_to,
     declare_units,
-    pint2cfattrs,
     rate2amount,
-    str2pint,
     to_agg_units,
 )
 from xclim.indices import run_length as rl
 from xclim.indices.converters import rain_approximation, snowfall_approximation
-from xclim.indices.generic import compare, select_resample_op, threshold_count
+from xclim.indices.generic import (
+    count_occurrences,
+    difference_statistics,
+    extreme_range,
+    interday_difference_statistics,
+)
+from xclim.indices.helpers import compare
 
 # Frequencies : YS: year start, QS-DEC: seasons starting in december, MS: month start
 # See https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html
@@ -549,12 +553,7 @@ def daily_temperature_range(
 
        DTR_j = \frac{ \sum_{i=1}^I (TX_{ij} - TN_{ij}) }{I}
     """
-    tasmax = convert_units_to(tasmax, tasmin)
-    dtr = tasmax - tasmin
-    u = str2pint(tasmax.units)
-    dtr.attrs.update(pint2cfattrs(u, is_difference=True))
-    out = select_resample_op(dtr, op=op, freq=freq)
-    return out
+    return difference_statistics(tasmin, tasmax, statistic=op, freq=freq, absolute=False)
 
 
 @declare_units(tasmax="[temperature]", tasmin="[temperature]")
@@ -589,12 +588,7 @@ def daily_temperature_range_variability(
 
        vDTR_j = \frac{ \sum_{i=2}^{I} |(TX_{ij}-TN_{ij})-(TX_{i-1,j}-TN_{i-1,j})| }{I}
     """
-    tasmax = convert_units_to(tasmax, tasmin)
-    vdtr = abs((tasmax - tasmin).diff(dim="time"))
-    u = str2pint(tasmax.units)
-    vdtr.attrs.update(pint2cfattrs(u, is_difference=True))
-    out = select_resample_op(vdtr, op="mean", freq=freq)
-    return out
+    return interday_difference_statistics(tasmin, tasmax, statistic="mean", freq=freq, absolute=True)
 
 
 @declare_units(tasmax="[temperature]", tasmin="[temperature]")
@@ -627,14 +621,7 @@ def extreme_temperature_range(tasmin: xarray.DataArray, tasmax: xarray.DataArray
 
        ETR_j = max(TX_{ij}) - min(TN_{ij})
     """
-    tasmax = convert_units_to(tasmax, tasmin)
-    tx_max = tasmax.resample(time=freq).max(dim="time")
-    tn_min = tasmin.resample(time=freq).min(dim="time")
-
-    out = tx_max - tn_min
-    u = str2pint(tasmax.units)
-    out.attrs.update(pint2cfattrs(u, is_difference=True))
-    return out
+    return extreme_range(tasmin, tasmax, freq=freq)
 
 
 @declare_units(
@@ -1229,8 +1216,7 @@ def days_over_precip_thresh(
         tp = resample_doy(tp, pr)
 
     # Compute the days when precip is both over the wet day threshold and the percentile threshold.
-    out = threshold_count(pr, op, tp, freq, constrain=(">", ">="))
-    return to_agg_units(out, pr, "count", deffreq="D")
+    return count_occurrences(pr, condition=op, thresh=tp, freq=freq, constrain=(">", ">="))
 
 
 @declare_units(pr="[precipitation]", pr_per="[precipitation]", thresh="[precipitation]")
@@ -1350,8 +1336,7 @@ def tg90p(
     thresh = resample_doy(tas_per, tas)
 
     # Identify the days over the 90th percentile
-    out = threshold_count(tas, op, thresh, freq, constrain=(">", ">="))
-    return to_agg_units(out, tas, "count", deffreq="D")
+    return count_occurrences(tas, condition=op, thresh=thresh, freq=freq, constrain=(">", ">="))
 
 
 @declare_units(tas="[temperature]", tas_per="[temperature]")
@@ -1409,8 +1394,7 @@ def tg10p(
     thresh = resample_doy(tas_per, tas)
 
     # Identify the days below the 10th percentile
-    out = threshold_count(tas, op, thresh, freq, constrain=("<", "<="))
-    return to_agg_units(out, tas, "count", deffreq="D")
+    return count_occurrences(tas, condition=op, thresh=thresh, freq=freq, constrain=("<", "<="))
 
 
 @declare_units(tasmin="[temperature]", tasmin_per="[temperature]")
@@ -1468,8 +1452,7 @@ def tn90p(
     thresh = resample_doy(tasmin_per, tasmin)
 
     # Identify the days with min temp above 90th percentile.
-    out = threshold_count(tasmin, op, thresh, freq, constrain=(">", ">="))
-    return to_agg_units(out, tasmin, "count", deffreq="D")
+    return count_occurrences(tasmin, condition=op, thresh=thresh, freq=freq, constrain=(">", ">="))
 
 
 @declare_units(tasmin="[temperature]", tasmin_per="[temperature]")
@@ -1527,8 +1510,7 @@ def tn10p(
     thresh = resample_doy(tasmin_per, tasmin)
 
     # Identify the days below the 10th percentile
-    out = threshold_count(tasmin, op, thresh, freq, constrain=("<", "<="))
-    return to_agg_units(out, tasmin, "count", deffreq="D")
+    return count_occurrences(tasmin, condition=op, thresh=thresh, freq=freq, constrain=("<", "<="))
 
 
 @declare_units(tasmax="[temperature]", tasmax_per="[temperature]")
@@ -1586,8 +1568,7 @@ def tx90p(
     thresh = resample_doy(tasmax_per, tasmax)
 
     # Identify the days with max temp above 90th percentile.
-    out = threshold_count(tasmax, op, thresh, freq, constrain=(">", ">="))
-    return to_agg_units(out, tasmax, "count", deffreq="D")
+    return count_occurrences(tasmax, condition=op, thresh=thresh, freq=freq, constrain=(">", ">="))
 
 
 @declare_units(tasmax="[temperature]", tasmax_per="[temperature]")
@@ -1645,8 +1626,7 @@ def tx10p(
     thresh = resample_doy(tasmax_per, tasmax)
 
     # Identify the days below the 10th percentile
-    out = threshold_count(tasmax, op, thresh, freq, constrain=("<", "<="))
-    return to_agg_units(out, tasmax, "count", deffreq="D")
+    return count_occurrences(tasmax, condition=op, thresh=thresh, freq=freq, constrain=("<", "<="))
 
 
 @declare_units(

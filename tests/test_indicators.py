@@ -499,7 +499,6 @@ def test_all_jsonable(official_indicators):
     err = None
     for identifier, ind in official_indicators.items():
         indinst = ind.get_instance()
-        json.dumps(indinst.json())
         try:
             json.dumps(indinst.json())
         except (KeyError, TypeError) as e:
@@ -697,11 +696,11 @@ def test_indicator_from_dict():
             standard_name="{freq} mean temperature",
             cell_methods=[{"time": "mean within days"}],
         ),
-        compute="thresholded_statistics",
+        compute="clix.thresholded_statistics",
         parameters=dict(
             threshold={"description": "A threshold temp"},
-            op="<",
-            reducer="mean",
+            condition="<",
+            statistic="mean",
         ),
         input={"data": "tas"},
     )
@@ -712,7 +711,7 @@ def test_indicator_from_dict():
     # Parameters metadata modification
     assert ind.parameters["threshold"].description == "A threshold temp"
     # Injection of parameters
-    assert ind.injected_parameters["op"] == "<"
+    assert ind.injected_parameters["condition"] == "<"
     assert ind.parameters["tas"].compute_name == "data"
     assert signature(ind).parameters["tas"].default == "tas"
     assert ind.parameters["tas"].units == "[temperature]"
