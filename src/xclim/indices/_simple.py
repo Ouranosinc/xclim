@@ -5,8 +5,7 @@ from __future__ import annotations
 import xarray
 
 from xclim.core import Quantified
-from xclim.core.calendar import select_time
-from xclim.core.units import declare_units, rate2amount
+from xclim.core.units import declare_units
 from xclim.indices.generic import count_occurrences, statistics
 
 # Frequencies : YS: year start, QS-DEC: seasons starting in december, MS: month start
@@ -20,9 +19,6 @@ __all__ = [
     "frost_days",
     "hot_days",
     "ice_days",
-    "max_1day_precipitation_amount",
-    "max_n_day_precipitation_amount",
-    "max_pr_intensity",
     "sfcWind_max",
     "sfcWind_mean",
     "sfcWind_min",
@@ -435,132 +431,6 @@ def ice_days(tasmax: xarray.DataArray, thresh: Quantified = "0 degC", freq: str 
        TX_{ij} < TT
     """
     return count_occurrences(tasmax, condition="<", thresh=thresh, freq=freq)
-
-
-@declare_units(pr="[precipitation]")
-def max_1day_precipitation_amount(pr: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
-    r"""
-    Highest 1-day precipitation amount for a period (frequency).
-
-    Resample the original daily total precipitation temperature series by taking the max over each period.
-
-    Parameters
-    ----------
-    pr : xarray.DataArray
-        Daily precipitation values.
-    freq : str
-        Resampling frequency.
-
-    Returns
-    -------
-    xarray.DataArray, [same units as pr]
-        The highest 1-period precipitation flux value at the given time frequency.
-
-    Notes
-    -----
-    Let :math:`PR_i` be the mean daily precipitation of day `i`, then for a period `j`:
-
-    .. math::
-
-       PRx_{ij} = max(PR_{ij})
-
-    Examples
-    --------
-    The following would compute for each grid cell the highest 1-day total at an annual frequency:
-
-    >>> from xclim.indices import max_1day_precipitation_amount
-    >>> pr = xr.open_dataset(path_to_pr_file).pr
-    >>> rx1day = max_1day_precipitation_amount(pr, freq="YS")
-    """
-    return statistics(pr, statistic="max", freq=freq)
-
-
-@declare_units(pr="[precipitation]")
-def max_n_day_precipitation_amount(
-    pr: xarray.DataArray, window: int = 1, freq: str = "YS", **indexer
-) -> xarray.DataArray:
-    r"""
-    Highest precipitation amount cumulated over a n-day moving window.
-
-    Calculate the n-day rolling sum of the original daily total precipitation series
-    and determine the maximum value over each period.
-
-    Parameters
-    ----------
-    pr : xarray.DataArray
-        Daily precipitation values.
-    window : int
-        Window size in days.
-    freq : str
-        Resampling frequency.
-    **indexer : {dim: indexer}, optional
-        Indexing parameters to compute the indicator on a temporal subset of the data.
-        The subset is taken after the N-day sum, thus including data from up to ``window -1``
-        days before the selected period (and none after).
-        It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
-
-    Returns
-    -------
-    xarray.DataArray, [length]
-        The highest cumulated n-period precipitation value at the given time frequency.
-
-    Examples
-    --------
-    The following would compute for each grid cell the highest 5-day total precipitation at an annual frequency:
-
-    >>> from xclim.indices import max_n_day_precipitation_amount
-    >>> pr = xr.open_dataset(path_to_pr_file).pr
-    >>> out = max_n_day_precipitation_amount(pr, window=5, freq="YS")
-    """
-    # Rolling sum of the values
-    pram = rate2amount(pr)
-    arr = pram.rolling(time=window).sum(skipna=False)
-    arr = select_time(arr, **indexer)
-    return arr.resample(time=freq).max(dim="time").assign_attrs(units=pram.units)
-
-
-@declare_units(pr="[precipitation]")
-def max_pr_intensity(pr: xarray.DataArray, window: int = 1, freq: str = "YS", **indexer) -> xarray.DataArray:
-    r"""
-    Highest precipitation intensity over a n-hour moving window.
-
-    Calculate the n-hour rolling average of the original hourly total precipitation series
-    and determine the maximum value over each period.
-
-    Parameters
-    ----------
-    pr : xarray.DataArray
-        Hourly precipitation values.
-    window : int
-        Window size in hours.
-    freq : str
-        Resampling frequency.
-    **indexer : {dim: indexer}, optional
-        Indexing parameters to compute the indicator on a temporal subset of the data.
-        The subset is taken after the N-hour average, thus including data from up to ``window - 1``
-        hours before the selected period, and none after.
-        It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
-
-    Returns
-    -------
-    xarray.DataArray, [same units as pr]
-        The highest cumulated n-hour precipitation intensity at the given time frequency.
-
-    Examples
-    --------
-    The following would compute the maximum 6-hour precipitation intensity at an annual frequency:
-
-    >>> from xclim.indices import max_pr_intensity
-    >>> pr = xr.open_dataset(path_to_pr_file).pr
-    >>> out = max_pr_intensity(pr, window=5, freq="YS")
-    """
-    # Rolling sum of the values
-    arr = pr.rolling(time=window).mean(skipna=False)
-    arr = select_time(arr, **indexer)
-    out = arr.resample(time=freq).max(dim="time")
-
-    out.attrs["units"] = pr.units
-    return out
 
 
 @declare_units(snd="[length]")

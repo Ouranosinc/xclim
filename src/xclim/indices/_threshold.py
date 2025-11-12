@@ -21,7 +21,6 @@ from xclim.core.units import (
     units,
     units2pint,
 )
-from xclim.core.utils import deprecated
 from xclim.indices import run_length as rl
 from xclim.indices.generic import (
     bivariate_count_occurrences,
@@ -50,15 +49,12 @@ __all__ = [
     "cooling_degree_days",
     "cooling_degree_days_approximation",
     "daily_pr_intensity",
-    "days_with_snow",
     "degree_days_exceedance_date",
-    "dry_days",
     "dry_spell_frequency",
     "dry_spell_max_length",
     "dry_spell_total_length",
     "first_day_temperature_above",
     "first_day_temperature_below",
-    "first_snowfall",
     "frost_free_season_end",
     "frost_free_season_length",
     "frost_free_season_start",
@@ -68,7 +64,6 @@ __all__ = [
     "growing_season_end",
     "growing_season_length",
     "growing_season_start",
-    "heat_wave_index",
     "heating_degree_days",
     "heating_degree_days_approximation",
     "holiday_snow_and_snowfall_days",
@@ -77,7 +72,6 @@ __all__ = [
     "hot_spell_max_length",
     "hot_spell_max_magnitude",
     "hot_spell_total_length",
-    "last_snowfall",
     "last_spring_frost",
     "maximum_consecutive_dry_days",
     "maximum_consecutive_frost_days",
@@ -93,7 +87,6 @@ __all__ = [
     "snd_season_start",
     "snd_storm_days",
     "snowfall_frequency",
-    "snowfall_intensity",
     "snw_days_above",
     "snw_season_end",
     "snw_season_length",
@@ -110,7 +103,6 @@ __all__ = [
     "wet_spell_frequency",
     "wet_spell_max_length",
     "wet_spell_total_length",
-    "wetdays",
     "wetdays_prop",
     "windy_days",
 ]
@@ -727,7 +719,7 @@ def daily_pr_intensity(
     s = pram_wd.resample(time=freq).sum(dim="time")
 
     # get number of wetdays over period
-    wd = wetdays(pr, thresh=thresh, freq=freq)
+    wd = count_occurrences(pr, condition=">=", thresh=thresh, freq=freq)
     dpr_int = s / wd
 
     # Issue originally introduced in https://github.com/hgrecco/pint/issues/1486
@@ -737,47 +729,6 @@ def daily_pr_intensity(
         dpr_int = dpr_int.assign_attrs(units=f"{str2pint(pram.units) / str2pint(wd.units):~}")
 
     return dpr_int
-
-
-@declare_units(pr="[precipitation]", thresh="[precipitation]")
-def dry_days(
-    pr: xarray.DataArray,
-    thresh: Quantified = "0.2 mm/d",
-    freq: str = "YS",
-    op: Literal["<", "lt", "<=", "le"] = "<",
-) -> xarray.DataArray:
-    r"""
-    Dry days.
-
-    The number of days with daily precipitation below threshold.
-
-    Parameters
-    ----------
-    pr : xarray.DataArray
-        Daily precipitation.
-    thresh : Quantified
-        Threshold precipitation on which to base evaluation.
-    freq : str
-        Resampling frequency.
-    op : {"<", "lt", "<=", "le"}
-        Comparison operation. Default: "<".
-
-    Returns
-    -------
-    xarray.DataArray, [time]
-         Number of days with daily precipitation {op} threshold.
-
-    Notes
-    -----
-    Let :math:`PR_{ij}` be the daily precipitation at day :math:`i` of period :math:`j`. Then counted is the number
-    of days where:
-
-    .. math::
-
-       \sum PR_{ij} < Threshold [mm/day]
-    """
-    with units.context("hydro"):
-        return count_occurrences(pr, condition=op, thresh=thresh, freq=freq, constrain=("<", "<="))
 
 
 @declare_units(pr="[precipitation]", thresh="[precipitation]")
@@ -1695,167 +1646,6 @@ def first_day_temperature_above(
 
 
 @declare_units(prsn="[precipitation]", thresh="[precipitation]")
-def first_snowfall(
-    prsn: xarray.DataArray,
-    thresh: Quantified = "1 mm/day",
-    freq: str = "YS-JUL",
-) -> xarray.DataArray:
-    r"""
-    First day with snowfall rate above a given threshold.
-
-    Returns the first day of a period where snowfall exceeds a threshold (default: 1 mm/day).
-
-    Parameters
-    ----------
-    prsn : xarray.DataArray
-        Snowfall flux.
-    thresh : Quantified
-        Threshold snowfall flux or liquid water equivalent snowfall rate. (default: 1 mm/day).
-    freq : str
-        Resampling frequency.
-
-    Returns
-    -------
-    xarray.DataArray
-        Last day of the year where snowfall is superior to a threshold.
-        If there is no such day, returns np.nan.
-
-    Warnings
-    --------
-    The default `freq` is valid for the northern hemisphere.
-
-    Notes
-    -----
-    The 1 mm/day liquid water equivalent snowfall rate threshold in :cite:cts:`frei_snowfall_2018` corresponds
-    to the 1 cm/day snowfall rate threshold  in :cite:cts:`cbcl_climate_2020` using a snow density of 100 kg/m**3.
-
-    If the threshold and prsn differ by a density (i.e. [length/time] vs. [mass/area/time]), a liquid water equivalent
-    snowfall rate is assumed, and the threshold is converted using a 1000 kg m-3 density.
-
-    References
-    ----------
-    :cite:cts:`cbcl_climate_2020`.
-    """
-    thresh = convert_units_to(thresh, prsn, context="hydro")
-    cond = prsn >= thresh
-
-    out = resample_map(
-        cond,
-        "time",
-        freq,
-        rl.first_run,
-        map_kwargs={"window": 1, "dim": "time", "coord": "dayofyear"},
-    )
-    out.attrs.update(units="", is_dayofyear=np.int32(1), calendar=get_calendar(prsn))
-    return out
-
-
-@declare_units(prsn="[precipitation]", thresh="[precipitation]")
-def last_snowfall(
-    prsn: xarray.DataArray,
-    thresh: Quantified = "1 mm/day",
-    freq: str = "YS-JUL",
-) -> xarray.DataArray:
-    r"""
-    Last day with snowfall above a given threshold.
-
-    Returns the last day of a period where snowfall exceeds a threshold (default: 1 mm/day)
-
-    Parameters
-    ----------
-    prsn : xarray.DataArray
-        Snowfall flux.
-    thresh : Quantified
-        Threshold snowfall flux or liquid water equivalent snowfall rate (default: 1 mm/day).
-    freq : str
-        Resampling frequency.
-
-    Returns
-    -------
-    xarray.DataArray
-        Last day of the year where snowfall is superior to a threshold.
-        If there is no such day, returns np.nan.
-
-    Warnings
-    --------
-    The default `freq` is valid for the Northern Hemisphere.
-
-    Notes
-    -----
-    The 1 mm/day liquid water equivalent snowfall rate threshold in :cite:cts:`frei_snowfall_2018` corresponds
-    to the 1 cm/day snowfall rate threshold in :cite:cts:`cbcl_climate_2020` using a snow density of 100 kg/m**3.
-
-    If the threshold and prsn differ by a density (i.e. [length/time] vs. [mass/area/time]), a liquid water equivalent
-    snowfall rate is assumed, and the threshold is converted using a 1000 kg m-3 density.
-
-    References
-    ----------
-    :cite:cts:`cbcl_climate_2020`.
-    """
-    thresh = convert_units_to(thresh, prsn, context="hydro")
-    cond = prsn >= thresh
-
-    out = resample_map(
-        cond,
-        "time",
-        freq,
-        rl.last_run,
-        map_kwargs={"window": 1, "dim": "time", "coord": "dayofyear"},
-    )
-    out.attrs.update(units="", is_dayofyear=np.int32(1), calendar=get_calendar(prsn))
-    return out
-
-
-@declare_units(
-    prsn="[precipitation]",
-    low="[precipitation]",
-    high="[precipitation]",
-)
-def days_with_snow(
-    prsn: xarray.DataArray,
-    low: Quantified = "0 kg m-2 s-1",
-    high: Quantified = "1E6 kg m-2 s-1",
-    freq: str = "YS-JUL",
-) -> xarray.DataArray:
-    r"""
-    Days with snow.
-
-    Return the number of days where snowfall is within low and high thresholds.
-
-    Parameters
-    ----------
-    prsn : xarray.DataArray
-        Snowfall flux.
-    low : Quantified
-        Minimum threshold snowfall flux or liquid water equivalent snowfall rate.
-    high : Quantified
-        Maximum threshold snowfall flux or liquid water equivalent snowfall rate.
-    freq : str
-        Resampling frequency.
-
-    Returns
-    -------
-    xarray.DataArray, [days]
-        Number of days where snowfall is between low and high thresholds.
-
-    Warnings
-    --------
-    The default `freq` is valid for the northern hemisphere.
-
-    Notes
-    -----
-    If threshold and prsn differ by a density (i.e. [length/time] vs. [mass/area/time]), a liquid water equivalent
-    snowfall rate is assumed and the threshold is converted using a 1000 kg m-3 density.
-
-    References
-    ----------
-    :cite:cts:`matthews_planning_2017`.
-    """
-    with units.context("hydro"):
-        return count_domain_occurrences(prsn, low_bound=low, high_bound=high, freq=freq)
-
-
-@declare_units(prsn="[precipitation]", thresh="[precipitation]")
 def snowfall_frequency(
     prsn: xarray.DataArray,
     thresh: Quantified = "1 mm/day",
@@ -1902,112 +1692,13 @@ def snowfall_frequency(
     high_thresh = convert_units_to("1E6 kg m-2 s-1", thresh_units, context="hydro")
     high = units.Quantity(high_thresh, thresh_units)
 
-    snow_days = days_with_snow(prsn, low=thresh, high=high, freq=freq)
+    snow_days = count_domain_occurrences(prsn, low_bound=thresh, high_bound=high, freq=freq)
     total_days = prsn.resample(time=freq).count(dim="time")
     snow_freq = snow_days / total_days * 100
     snow_freq = snow_freq.assign_attrs(**snow_days.attrs)
     # overwrite snow_days units
     snow_freq = snow_freq.assign_attrs(units="%")
     return snow_freq
-
-
-@declare_units(prsn="[precipitation]", thresh="[precipitation]")
-def snowfall_intensity(
-    prsn: xarray.DataArray,
-    thresh: Quantified = "1 mm/day",
-    freq: str = "YS-JUL",
-) -> xarray.DataArray:
-    r"""
-    Mean daily snowfall rate during snow days.
-
-    Return the mean daily snowfall rate during days where snowfall exceeds a threshold (default: 1 mm/day).
-
-    Parameters
-    ----------
-    prsn : xarray.DataArray
-        Snowfall flux.
-    thresh : Quantified
-        Threshold snowfall flux or liquid water equivalent snowfall rate (default: 1 mm/day).
-    freq : str
-        Resampling frequency.
-
-    Returns
-    -------
-    xarray.DataArray,
-        Mean daily liquid water equivalent snowfall rate during days where snowfall exceeds a threshold.
-
-    Warnings
-    --------
-    The default `freq` is valid for the Northern Hemisphere.
-
-    Notes
-    -----
-    The 1 mm/day liquid water equivalent snowfall rate threshold in :cite:cts:`frei_snowfall_2018` corresponds
-    to the 1 cm/day snowfall rate threshold  in :cite:cts:`cbcl_climate_2020` using a snow density of 100 kg/m**3.
-
-    If threshold and prsn differ by a density (i.e. [length/time] vs. [mass/area/time]), a liquid water equivalent
-    snowfall rate is assumed and the threshold is converted using a 1000 kg m-3 density.
-
-    References
-    ----------
-    :cite:cts:`frei_snowfall_2018`.
-    """
-    thresh = convert_units_to(thresh, "mm/day", context="hydro")
-    lwe_prsn = convert_units_to(prsn, "mm/day", context="hydro")
-
-    cond = lwe_prsn >= thresh
-    mean = lwe_prsn.where(cond).resample(time=freq).mean(dim="time")
-    snow_int = mean.fillna(0)
-    snow_int = snow_int.assign_attrs(units=lwe_prsn.units)
-    return snow_int
-
-
-@deprecated(from_version="0.57.0", suggested="hot_spell_total_length")
-@declare_units(tasmax="[temperature]", thresh="[temperature]")
-def heat_wave_index(
-    tasmax: xarray.DataArray,
-    thresh: Quantified = "25.0 degC",
-    window: int = 5,
-    freq: str = "YS",
-    op: Literal[">", "gt", ">=", "ge"] = ">",
-    resample_before_rl: bool = True,
-) -> xarray.DataArray:
-    """
-    Heat wave index.
-
-    Number of days that are part of a heatwave, defined as five or more consecutive days over a threshold of 25℃.
-
-    Parameters
-    ----------
-    tasmax : xarray.DataArray
-        Maximum daily temperature.
-    thresh : Quantified
-        Threshold temperature on which to designate a heatwave.
-    window : int
-        Minimum number of days with temperature above the threshold to qualify as a heatwave.
-    freq : str
-        Resampling frequency.
-    op : {">", "gt", ">=", "ge"}
-        Comparison operation. Default: ">".
-    resample_before_rl : bool
-        Determines if the resampling should take place before or after the run
-        length encoding (or a similar algorithm) is applied to runs.
-
-    Returns
-    -------
-    DataArray, [time]
-        Heat wave index.
-    """
-    thresh = convert_units_to(thresh, tasmax)
-    over = compare(tasmax, op, thresh, constrain=(">", ">="))
-    out = rl.resample_and_rl(
-        over,
-        resample_before_rl,
-        rl.windowed_run_count,
-        window=window,
-        freq=freq,
-    )
-    return to_agg_units(out, tasmax, "count", deffreq="D")
 
 
 @declare_units(tasmax="[temperature]", thresh="[temperature]")
@@ -2717,47 +2408,6 @@ def warm_night_frequency(
         Number of days with tasmin {op} threshold per period.
     """
     return count_occurrences(tasmin, condition=op, thresh=thresh, freq=freq, constrain=(">", ">="))
-
-
-@declare_units(pr="[precipitation]", thresh="[precipitation]")
-def wetdays(
-    pr: xarray.DataArray,
-    thresh: Quantified = "1.0 mm/day",
-    freq: str = "YS",
-    op: Literal[">", "gt", ">=", "ge"] = ">=",
-) -> xarray.DataArray:
-    """
-    Wet days.
-
-    Return the total number of days during period with precipitations over a given threshold (default: 1.0 mm/day).
-
-    Parameters
-    ----------
-    pr : xarray.DataArray
-        Daily precipitation.
-    thresh : Quantified
-        Precipitation value over which a day is considered wet.
-    freq : str
-        Resampling frequency.
-    op : {">", "gt", ">=", "ge"}
-        Comparison operation. Default: ">=".
-
-    Returns
-    -------
-    xarray.DataArray, [time]
-        The number of wet days for each period [day].
-
-    Examples
-    --------
-    The following would compute for each grid cell of file `pr.day.nc` the number days with precipitation over 5 mm
-    at the seasonal frequency, i.e. DJF, MAM, JJA, SON, DJF, etc.:
-
-    >>> from xclim.indices import wetdays
-    >>> pr = xr.open_dataset(path_to_pr_file).pr
-    >>> wd = wetdays(pr, thresh="5 mm/day", freq="QS-DEC")
-    """
-    with units.context("hydro"):
-        return count_occurrences(pr, condition=op, thresh=thresh, freq=freq, constrain=(">", ">="))
 
 
 @declare_units(pr="[precipitation]", thresh="[precipitation]")
