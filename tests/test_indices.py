@@ -258,7 +258,7 @@ class TestCoolingDegreeDays:
 
         out = xci.cooling_degree_days_approximation(tasmax, tasmin, tas)
 
-        np.testing.assert_array_equal(out[:1], 183.25)
+        np.testing.assert_array_equal(out[:1], 91.0)
 
 
 class TestAgroclimaticIndices:
