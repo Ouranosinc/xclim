@@ -2,6 +2,14 @@
 Changelog
 =========
 
+unreleased
+----------
+Contributors to this version: Éric Dupuis (:user:`coxipi`).
+
+Bug fixes
+^^^^^^^^^
+* One of the conditions in `atmos.cooling_degree_days_approximation` had the wrong computation and has been fixed: `(tasmax - tasmin)/4` is replaced by `(tasmax - thresh)/4` (:issue:`2272`, :pull:`2273`).
+
 v0.59.1 (2025-10-31)
 --------------------
 Contributors to this version: Trevor James Smith (:user:`Zeitsperre`).
