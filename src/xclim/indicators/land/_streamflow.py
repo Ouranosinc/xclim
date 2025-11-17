@@ -211,7 +211,8 @@ runoff_ratio = Streamflow(
     units="",
     long_name="Runoff ratio",
     description="Ratio of runoff volume measured at the stream to the total precipitation volume over the watershed."
-    "Temporal analysis: Yearly values computed from seasonal daily data and yearly data, depending on chosen frequency.",
+    "Temporal analysis: Yearly values computed from seasonal daily data and yearly data, "
+    "depending on chosen frequency.",
     cell_methods="",
     keywords="streamflow",
     compute=runoff_ratio,
