@@ -199,8 +199,7 @@ lag_snowpack_flow_peaks = Streamflow(
     long_name="Time lag between maximum snowpack and river high flows",
     description="Number of days between the annual maximum snowpack, measured by the snow water"
     "equivalent, and the mean date when river flow exceeds a percentile threshold"
-    "during a given year. If the time lag between maximum snowpack and river high flows is ≤ 50 days,"
-    "the watershed is likely in a nival regime.",
+    "during a given year.",
     cell_methods="",
     keywords="streamflow, SWE",
     compute=lag_snowpack_flow_peaks,
