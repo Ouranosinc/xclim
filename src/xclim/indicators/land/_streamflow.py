@@ -225,7 +225,7 @@ sen_slope = Streamflow(
     identifier="sen_slope",
     units="",
     long_name="Sen Slope",
-    description=" Computes annual and seasonal Theil–Sen slope estimators and performs the"
+    description="Compute annual and seasonal Theil–Sen slope estimators and perform the"
     "Mann–Kendall test for trend evaluation.",
     cell_methods="",
     keywords="streamflow",
