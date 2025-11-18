@@ -4,11 +4,15 @@ Changelog
 
 v0.60.0 (unreleased)
 --------------------
-Contributors to this version: Trevor James Smith (:user:`Zeitsperre`).
+Contributors to this version: Éric Dupuis (:user:`coxipi`), Trevor James Smith (:user:`Zeitsperre`).
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
 * `lmoments3` is now listed as a dependency to the extras recipe. This dependency is not installed by default with `xclim` and must be explicitly requested with ``$ pip install "xclim[extras]"``, if desired. (:pull:`2269`).
+
+Bug fixes
+^^^^^^^^^
+* One of the conditions in ``atmos.cooling_degree_days_approximation`` had the wrong computation and has been fixed: ``(tasmax - tasmin)/4`` is replaced by ``(tasmax - thresh)/4`` (:issue:`2272`, :pull:`2273`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
