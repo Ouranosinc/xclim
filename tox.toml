@@ -28,6 +28,9 @@ commands = [
 
 [env.doctests]
 labels = ["doctests"]
+deps = [
+  "pytest >=9.0"
+]
 description = "Run doctests with pytest under {basepython}"
 commands = [
   ["python", "-c", "from xclim.testing.utils import run_doctests; run_doctests()"]
