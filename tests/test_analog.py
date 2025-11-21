@@ -70,7 +70,13 @@ def test_spatial_analogs(method, open_dataset):
     target = data.sel(lat=46.1875, lon=-72.1875, time=slice("1970", "1990"))
     candidates = data.sel(time=slice("1970", "1990"))
 
-    out = xca.spatial_analogs(target, candidates, method=method)
+    # Ensure division by 0 operation is announced for kldiv
+    if method == "kldiv":
+        with pytest.warns(RuntimeWarning):
+            out = xca.spatial_analogs(target, candidates, method=method)
+    else:
+        out = xca.spatial_analogs(target, candidates, method=method)
+
     # Special case since scikit-learn updated to 1.2.0 (and again at 1.3)
     if method == "friedman_rafsky":
         diss[method][42, 105] = np.nan

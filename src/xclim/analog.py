@@ -579,8 +579,7 @@ def kldiv(x: np.ndarray, y: np.ndarray, *, k: int | Sequence[int] = 1) -> float 
         # The 0th nearest neighbour of x[i] in x is x[i] itself.
         # Hence, we take the k'th + 1, which in 0-based indexing is given by
         # index k.
-        with np.errstate(divide="ignore"):
-            ki_calc = -np.log(r[:, ki] / s[:, ki - 1]).sum() * d / nx + np.log(ny / (nx - 1.0))
+        ki_calc = -np.log(r[:, ki] / s[:, ki - 1]).sum() * d / nx + np.log(ny / (nx - 1.0))
         out.append(ki_calc)
 
     if mk:

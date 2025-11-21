@@ -436,6 +436,7 @@ def cli(ctx, **kwargs):  # numpydoc ignore=PR01
     if not kwargs["verbose"]:
         warnings.simplefilter("ignore", FutureWarning)
         warnings.simplefilter("ignore", DeprecationWarning)
+        warnings.simplefilter("ignore", RuntimeWarning)
 
     if kwargs["version"]:
         click.echo(f"xclim {xc.__version__}")

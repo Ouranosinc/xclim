@@ -63,8 +63,8 @@ def _fitfunc_1d(arr, *, dist, nparams, method, **fitkwargs):
         for i, arg in enumerate(args):
             guess[param_info[i]] = arg
 
-        fitresult = scipy.stats.fit(dist=dist, data=x, method="mse", guess=guess, **fitkwargs)
-        params = fitresult.params
+        fit_result = scipy.stats.fit(dist=dist, data=x, method="mse", guess=guess, **fitkwargs)
+        params = fit_result.params
     elif method == "PWM":
         # lmoments3 will raise an error if only dist.numargs + 2 values are provided
         if len(x) <= dist.numargs + 2:
