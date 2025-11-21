@@ -117,6 +117,7 @@ jobs:
         os: [ 'ubuntu-latest' ]
         python-version: [ "3.11" ]
         testdata-cache: [ '~/.cache/xclim-testdata' ]
+        markers: [ "-m not slow" ]
     steps:
       - name: Harden Runner
         uses: step-security/harden-runner@95d9a5deda9de15063e7595e9719c11c38c90ae2 # v2.13.2
@@ -177,11 +178,7 @@ jobs:
           key: ${{ runner.os }}-xclim-testdata-${{ env.XCLIM_TESTDATA_BRANCH }}-${{ hashFiles('pyproject.toml', 'tox.ini') }}-Python${{ matrix.python-version }}
       - name: Test with tox
         run: |
-          python -m tox -e py${{ matrix.python-version }}-coverage -- -m 'not slow'
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          COVERALLS_FLAG_NAME: run-${{ matrix.python-version }}-ubuntu-latest-preliminary
-          COVERALLS_PARALLEL: true
+          python -m tox -e py${{ matrix.python-version }} -- ${{ matrix.markers }}
       - name: Tests measurement
         uses: green-coding-solutions/eco-ci-energy-estimation@862050e4f01f65b1436e5eca18ba4bd85562f0de # v5.0.0
         with:
@@ -208,62 +205,63 @@ jobs:
         # Linux builds
         os: [ 'ubuntu-latest', ]
         testdata-cache: [ '~/.cache/xclim-testdata' ]
-        python-version: [ "3.10", "3.11", "3.12", "3.13" ]
-        markers: [ '-m "not slow"' ]
-        tox-env: [ 'standard' ]
+        python-version: [ "3.10", "3.12", "3.13" ]
+        markers: [ "-m not slow" ]
         include:
-          # Windows builds
-          - os: 'windows-latest'
-            testdata-cache: 'C:\Users\runneradmin\AppData\Local\xclim-testdata\xclim-testdata\Cache'
-            markers: -m 'not slow'
-            python-version: "3.12"
-            tox-env: py312-coverage-prefetch-noh5py  # Test data prefetch is needed for Windows
-          # macOS builds
+          # macOS build
           - os: 'macos-latest'
             testdata-cache: '~/Library/Caches/xclim-testdata'
-            markers: ''  # Slow tests
-            python-version: "3.11"
-            tox-env: py311-coverage-extras-lmoments
+            markers: '' # Slow tests
+            python-version: "3.13"
           # Specialized tests
+          ## Windows with Prefetch
+          - os: 'windows-latest'
+            testdata-cache: 'C:\Users\runneradmin\AppData\Local\xclim-testdata\xclim-testdata\Cache'
+            markers: '' # Markers handled by tox
+            python-version: "3.13"
+            tox-env: 'prefetch'
+          ## Linux offline
           - os: 'ubuntu-latest'
             testdata-cache: '~/.cache/xclim-testdata'
-            markers: -m 'not requires_internet and not slow'
+            markers: '' # Markers handled by tox + Slow tests
             python-version: "3.11"
-            tox-env: py311-coverage-extras-sbck-offline-prefetch
+            tox-env: 'offline'
+          ## Linux notebooks
           - os: 'ubuntu-latest'
             testdata-cache: '~/.cache/xclim-testdata'
             markers: '' # No markers for notebooks
             python-version: "3.11"
-            tox-env: notebooks
+            tox-env: 'notebooks'
+          ## Linux doctests
           - os: 'ubuntu-latest'
             testdata-cache: '~/.cache/xclim-testdata'
             markers: '' # No markers for doctests
             python-version: "3.12"
-            tox-env: doctests
+            tox-env: 'doctests'
     steps:
       - name: Harden Runner
         uses: step-security/harden-runner@95d9a5deda9de15063e7595e9719c11c38c90ae2 # v2.13.2
         with:
           disable-sudo: false
-          egress-policy: block
-          allowed-endpoints: >
-            api.electricitymap.org:443
-            api.github.com:443
-            api.green-coding.io:443
-            azure.archive.ubuntu.com:80
-            coveralls.io:443
-            esm.ubuntu.com:443
-            files.pythonhosted.org:443
-            github.com:443
-            hosted-compute-watchdog-prod-iad-02.githubapp.com:443
-            ip-api.com:80
-            ipapi.co:443
-            motd.ubuntu.com:443
-            packages.microsoft.com:443
-            proxy.golang.org:443
-            pypi.org:443
-            raw.githubusercontent.com:443
-            sum.golang.org:443
+          egress-policy: audit
+#          allowed-endpoints: >
+#            api.electricitymap.org:443
+#            api.github.com:443
+#            api.green-coding.io:443
+#            azure.archive.ubuntu.com:80
+#            coveralls.io:443
+#            esm.ubuntu.com:443
+#            files.pythonhosted.org:443
+#            github.com:443
+#            hosted-compute-watchdog-prod-iad-02.githubapp.com:443
+#            ip-api.com:80
+#            ipapi.co:443
+#            motd.ubuntu.com:443
+#            packages.microsoft.com:443
+#            proxy.golang.org:443
+#            pypi.org:443
+#            raw.githubusercontent.com:443
+#            sum.golang.org:443
       - name: Start Energy Measurement
         if : ${{ matrix.os == 'ubuntu-latest' }}
         uses: green-coding-solutions/eco-ci-energy-estimation@862050e4f01f65b1436e5eca18ba4bd85562f0de # v5.0.0
@@ -319,21 +317,21 @@ jobs:
             .tox
           key: ${{ runner.os }}-xclim-testdata-${{ env.XCLIM_TESTDATA_BRANCH }}-${{ hashFiles('pyproject.toml', 'tox.ini') }}-Python${{ matrix.python-version }}
       - name: Test with tox
-        if: ${{ matrix.tox-env == 'standard' }}
+        if: ${{ matrix.tox-env == '' || matrix.tox-env == null }}
         run: |
-          python -m tox -- ${{ matrix.markers }};
+          python -m tox -- ${{ matrix.markers }}
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          COVERALLS_FLAG_NAME: run-${{ matrix.python-version }}-${{ matrix.os }}-${{ matrix.tox-env }}
-          COVERALLS_PARALLEL: true
+          TOX_GH_MAJOR_MINOR: ${{ matrix.python-version }}
       - name: Test with tox (specialized tests)
-        if: ${{ matrix.tox-env != 'standard' }}
+        if: ${{ matrix.tox-env != '' && matrix.tox-env != null }}
         run: |
-          python -m tox -e ${{ matrix.tox-env }} -- ${{ matrix.markers }};
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          COVERALLS_FLAG_NAME: run-${{ matrix.python-version }}-${{ matrix.os }}-${{ matrix.tox-env }}
-          COVERALLS_PARALLEL: true
+          python -m tox -e ${{ matrix.tox-env }} -- ${{ matrix.markers }}
+      - name: Report Coverage
+        if: ${{ matrix.tox-env == '' || matrix.tox-env == null }}
+        uses: coverallsapp/github-action@648a8eb78e6d50909eff900e4ec85cab4524a45b # v2.3.6
+        with:
+          flag-name: run-${{ matrix.python-version }}-${{ matrix.os }}-${{ matrix.tox-env }}
+          parallel: true
       - name: Tests measurement
         if : ${{ matrix.os == 'ubuntu-latest' }}
         uses: green-coding-solutions/eco-ci-energy-estimation@862050e4f01f65b1436e5eca18ba4bd85562f0de # v5.0.0
