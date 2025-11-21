@@ -75,7 +75,7 @@ dependencies:
   - tox >=4.31.0
   - tox-gh >=1.5.0
   - vulture =2.14
-  - xdoctest >=1.3.0
+  - xdoctest >=1.2.0 # v1.3.0 not yet available on conda-forge
   - yamllint >=1.35.1
   # Temporary Fixes
   - importlib-metadata <8.7.0  # Issues with dask >=2025.5.1 on Python3.11
