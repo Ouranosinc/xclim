@@ -263,8 +263,8 @@ override_SS05 = [
   '^Statistics '
 ]
 
-[tool.pytest.ini_options]
-minversion = "7.0"
+[tool.pytest]
+minversion = "9.0"
 addopts = [
   "-ra",
   "--color=yes",
@@ -273,23 +273,23 @@ addopts = [
   "--dist=worksteal",
   "--strict"
 ]
-log_cli_level = "INFO"
-norecursedirs = ["docs/notebooks/*"]
-filterwarnings = ["ignore::UserWarning"]
-testpaths = [
-  "tests"
-]
-pythonpath = [
-  "src"
-]
 doctest_optionflags = ["NORMALIZE_WHITESPACE", "IGNORE_EXCEPTION_DETAIL", "NUMBER", "ELLIPSIS"]
+filterwarnings = ["ignore::UserWarning"]
+log_cli_level = "INFO"
 markers = [
   "slow: marks tests as slow (deselect with '-m \"not slow\"')",
   "requires_docs: mark tests that can only be run with documentation present (deselect with '-m \"not requires_docs\"')",
   "requires_internet: mark tests that require internet access (deselect with '-m \"not requires_internet\"')"
 ]
-session_timeout = 900
-timeout = 300
+norecursedirs = ["docs/notebooks/*"]
+pythonpath = [
+  "src"
+]
+session_timeout = "900" # must be string representing seconds (this may soon change)
+testpaths = [
+  "tests"
+]
+timeout = "300" # must be string representing seconds (this may soon change)
 timeout_method = "thread"
 xfail_strict = true
 
