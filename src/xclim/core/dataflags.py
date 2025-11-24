@@ -821,7 +821,7 @@ def ecad_compliant(
 
 @declare_units(q="[discharge]", a="[area]", thresh="[speed]")
 def specific_discharge_extremely_high(
-    q: xarray.DataArray, a: xarray.DataArray, *, thresh: Quantified = "100 m/s"
+    q: xarray.DataArray, a: xarray.DataArray, *, thresh: Quantified = "100 m s-1"
 ) -> xarray.DataArray:
     """
     Check if specific discharge values exceed 100 m/s for any given day.
@@ -849,8 +849,8 @@ def specific_discharge_extremely_high(
     >>> ds = xr.open_dataset(path_to_file)
     >>> q = ds["flow"]
     >>> a = ds["Area"]
-    >>> extrem_specific_discharge = 100 * units("m/s")
-    >>> flagged = specific_discharge_extremely_high(ds.q, thresh=extrem_specific_discharge)
+    >>> extrem_specific_discharge = 100 * units("m s-1")
+    >>> flagged = specific_discharge_extremely_high(q, a, thresh=extrem_specific_discharge)
     """
     q = convert_units_to(q, "m3/s")
     a = convert_units_to(a, "m2")
