@@ -108,7 +108,7 @@ docs = [
   "sphinxcontrib-bibtex",
   "sphinxcontrib-svg2pdfconverter[Cairosvg]"
 ]
-extras = ["flox >=0.9", "xsdba >=0.4.0", "numbagg >= 0.8", "pymannkendall >=1.4.0"]
+extras = ["flox >=0.9", "lmoments3 >=1.0.7", "numbagg >=0.8", "xsdba >=0.4.0", "pymannkendall >=1.4.0"]
 all = ["xclim[dev]", "xclim[docs]", "xclim[extras]"]
 
 [project.scripts]
@@ -126,7 +126,7 @@ xclim = "xclim.cli:cli"
 [tool]
 
 [tool.bumpversion]
-current_version = "0.59.1"
+current_version = "0.59.2-dev.2"
 commit = true
 commit_args = "--no-verify --signoff"
 tag = false
@@ -171,7 +171,7 @@ pep621_dev_dependency_groups = ["all", "dev", "docs"]
 
 [tool.deptry.per_rule_ignores]
 DEP001 = ["pymannkendall"]
-DEP002 = ["bottleneck", "h5netcdf", "numbagg", "pyarrow"]
+DEP002 = ["bottleneck", "h5netcdf", "lmoments3", "numbagg", "pyarrow"]
 DEP004 = ["matplotlib", "pooch", "pytest", "pytest_socket"]
 
 [tool.flit.sdist]
