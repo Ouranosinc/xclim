@@ -289,16 +289,15 @@ class TestLagSnowpackFlowPeaks:
         b = np.zeros(365)
         # Year 1: 35 days of high flows
         b[50:85] = 20
-        # Year 2: 35 days of smaller high flows
+        # Year 2: starting oct 1 (DOY 274) 35 days of smaller high flows
         b[310:345] = 5
 
         # Create a daily time index
         q = q_series(b)
 
         out = xci.lag_snowpack_flow_peaks(swe, q)
-        np.testing.assert_allclose(
-            out, [67.0, 53.0], atol=1e-14
-        )  # results are the days between the start of the water year and the mean og high flows
+        np.testing.assert_allclose(out, [np.nan, np.nan], atol=1e-14)
+        # no longer the days between the start of the water year and the mean of high flows
 
 
 class TestSenSlope:

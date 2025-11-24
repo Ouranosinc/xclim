@@ -7,7 +7,7 @@ v0.60.0 (unreleased)
 Contributors to this version: David Huard (:user:`huard`), Ève Larose (:user:`e-larose`), Faisal Mahmood (:user:`faimahsho`).
 
 New indicators and features
-^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 * New hydrological indices added to ``xclim.indices._hydrology.py``. (:issue:`1624`, :pull:`2227`).
 
 v0.59.1 (2025-10-31)
@@ -23,7 +23,7 @@ v0.59.0 (2025-10-30)
 Contributors to this version: Pascal Bourgault (:user:`aulemahal`), Trevor James Smith (:user:`Zeitsperre`), Sascha Hofmann (:user:`saschahofmann`).
 
 New indicators and features
-^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 * ``xclim.ensembles.robustness_fractions`` now accepts instances of ``xclim.core.missing`` classes as a new ``invalid`` argument to control how data points are flagged as invalid. (:pull:`2245`).
 * ``xclim.indices.stats.fit`` now returns NaNs when running with method ``PWD`` and a lmoments distribution. Before it failed with an ``L-Moments invalid`` error. (:issue:`2235`, :pull:`2239`).
 

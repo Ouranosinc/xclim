@@ -702,7 +702,6 @@ def antecedent_precipitation_index(pr: xarray.DataArray, window: int = 7, p_exp:
     return out
 
 
-@declare_units(q="[discharge]", a="[area]", pr="[precipitation]")
 def runoff_ratio(
     q: xarray.DataArray,
     a: xarray.DataArray,
@@ -906,7 +905,8 @@ def lag_snowpack_flow_peaks(
     :cite:cts:`burn_2010`
     """
     # Find time of max SWE per year
-    t_swe_max = swe.resample(time=freq).map(lambda x: x.idxmax())
+    t_swe_max = swe.resample(time=freq).map(lambda x: x.idxmax())  # if x.max() > 0 else np.nan)
+    t_swe_max = t_swe_max.where(swe.resample(time=freq).max() > 0)
     doy_swe_max = t_swe_max.dt.dayofyear
 
     # Compute percentile threshold per water year using resample
@@ -933,7 +933,7 @@ def sen_slope(
     qsim: xarray.DataArray = None,
 ) -> xarray.Dataset:
     """
-    Temporal robustness analysis of streamflow.
+    Sen Slope : Temporal robustness analysis of streamflow.
 
     Computes annual and seasonal Theil–Sen slope estimators and performs the
     Mann–Kendall test for trend evaluation.
