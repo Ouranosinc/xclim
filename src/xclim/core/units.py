@@ -663,8 +663,8 @@ def to_agg_units(
     ... )
     >>> cond = tas > 100  # Which days are boiling
     >>> Ndays = cond.sum("time")  # Number of boiling days
-    >>> Ndays.attrs.get("units")
-    None
+    >>> Ndays.attrs.get("units")  # modern xarray preserves the units of tas, but these are incorrect here
+    'degC'
     >>> Ndays = to_agg_units(Ndays, tas, op="count")
     >>> Ndays.units
     'd'

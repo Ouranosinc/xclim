@@ -4,11 +4,24 @@ Changelog
 
 v0.60.0 (unreleased)
 --------------------
-Contributors to this version: David Huard (:user:`huard`), Ève Larose (:user:`e-larose`), Faisal Mahmood (:user:`faimahsho`).
+Contributors to this version: Ève Larose (:user:`e-larose`), Faisal Mahmood (:user:`faimahsho`),  Éric Dupuis (:user:`coxipi`), Trevor James Smith (:user:`Zeitsperre`), David Huard (:user:`huard`).
 
 New indicators and features
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 * New hydrological indices added to ``xclim.indices._hydrology.py``. (:issue:`1624`, :pull:`2227`).
+
+Breaking changes
+^^^^^^^^^^^^^^^^
+* `lmoments3` is now listed as a dependency to the extras recipe. This dependency is not installed by default with `xclim` and must be explicitly requested with ``$ pip install "xclim[extras]"``, if desired. (:pull:`2269`).
+
+Bug fixes
+^^^^^^^^^
+* One of the conditions in ``atmos.cooling_degree_days_approximation`` had the wrong computation and has been fixed: ``(tasmax - tasmin)/4`` is replaced by ``(tasmax - thresh)/4`` (:issue:`2272`, :pull:`2273`).
+
+Internal changes
+^^^^^^^^^^^^^^^^
+* Replaced the ``tox.ini`` file with a ``tox.toml`` file and simplified the conditionals for environment selection. (:pull:`2269`).
+* Removed `python-coveralls` from the `tox`-only dependencies (abandoned software / not supported for Python 3.13 or 3.14) and added the `coverallsapp/github-action` step to PyPI/tox builds on CI. (:pull:`2269`).
 
 v0.59.1 (2025-10-31)
 --------------------
