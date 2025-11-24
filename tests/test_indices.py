@@ -1286,6 +1286,64 @@ class TestStandardizedIndices:
             spid[zero_inflated] = spid[zero_inflated].where(spid[zero_inflated].notnull(), drop=True)
         np.testing.assert_equal(np.all(np.not_equal(spid[False].values, spid[True].values)), True)
 
+    @pytest.mark.parametrize(
+        "method",
+        [
+            "center",
+            "upper",
+            lambda p: p * 0.8,
+        ],
+    )
+    def test_prob_zero_method(self, open_dataset, method):
+        # This tests the theoretical values of the zero_inflated probability method options
+        ds = open_dataset("sdba/CanESM2_1950-2100.nc").isel(location=1).sel(time=slice("1950", "1960"))
+        pr = ds.pr
+
+        # july 1st (doy=180) with 10 years with zero precipitation
+        # 11 years, 10 zeros -> prob_of_zero = 10/11
+        pr[{"time": slice(179, 365 * 11, 365)}] = 0
+        pr[{"time": 179}] = 1.0  # One non-zero value
+
+        input_params = dict(
+            freq=None,
+            window=1,
+            dist="gamma",
+            method="ML",
+            fitkwargs={},
+            doy_bounds=(180, 180),
+            zero_inflated=True,
+        )
+
+        # Get parameters
+        params = standardized_index_fit_params(pr, **input_params)
+        prob_of_zero = params.prob_of_zero.sel(dayofyear=180).values
+
+        spi = standardized_index(
+            pr,
+            params=params,
+            cal_start=None,
+            cal_end=None,
+            prob_zero_method=method,
+            **input_params,
+        )
+        # Select a zero value
+        spi_val = spi.isel(time=365 + 179).values
+
+        expected_prob = None
+        if method == "center":
+            expected_prob = prob_of_zero / 2
+        elif method == "upper":
+            expected_prob = prob_of_zero
+        elif callable(method):
+            expected_prob = method(prob_of_zero)
+        else:
+            raise ValueError(f"Unknown method: {method}")
+
+        expected_val = scipy.stats.norm.ppf(expected_prob)
+        # Account for clipping in standardized_index
+        expected_val = np.clip(expected_val, -8.21, 8.21)
+        np.testing.assert_allclose(spi_val, expected_val, atol=1e-4)
+
     def test_PWM_and_fitkwargs(self, open_dataset):
         ds = open_dataset("sdba/CanESM2_1950-2100.nc").isel(location=1).sel(time=slice("1950", "1980"))
         pr = ds.pr

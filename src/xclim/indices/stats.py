@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import json
 import warnings
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from typing import Any
 
 import numpy as np
@@ -908,6 +908,7 @@ def standardized_index(
     cal_start: DateStr | None,
     cal_end: DateStr | None,
     params: Quantified | None = None,
+    prob_zero_method: str | Callable[[xr.DataArray], xr.DataArray] = "center",
     **indexer,
 ) -> xr.DataArray:
     r"""
@@ -948,6 +949,11 @@ def standardized_index(
         Fit parameters.
         The `params` can be computed using ``xclim.indices.stats.standardized_index_fit_params`` in advance.
         The output can be given here as input, and it overrides other options.
+    prob_zero_method : str or Callable
+        Method to calculate the probability of zero values (only used if `zero_inflated` is True).
+        If "center", the probability is centered (prob_of_zero / 2).
+        If "upper", the probability is the probability of zero (prob_of_zero).
+        If a callable, it receives the probability of zero and should return the probability to assign to zero values.
     **indexer : {dim: indexer, }, optional
         Indexing parameters to compute the indicator on a temporal subset of the data.
         It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
@@ -1052,6 +1058,18 @@ def standardized_index(
     # a generalized implementation. For now, this option shall be used with
     # standardized_precipitation_index where values are not negative.
     probs = prob_of_zero + ((1 - prob_of_zero) * dist_probs)
+
+    # User-defined probability of zero values
+    if zero_inflated:
+        if callable(prob_zero_method):
+            zeros_prob = prob_zero_method(prob_of_zero)
+        elif prob_zero_method == "center":
+            zeros_prob = prob_of_zero / 2
+        elif prob_zero_method == "upper":
+            zeros_prob = prob_of_zero
+        else:
+            raise ValueError(f"Unknown prob_zero_method: {prob_zero_method}")
+        probs = probs.where(mask, zeros_prob)
 
     params_norm = xr.DataArray(
         [0, 1],
