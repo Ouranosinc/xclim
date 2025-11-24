@@ -163,3 +163,4 @@ class TestHolidaySnowIndicators:
                 [9.0, 11.0, 10.0, 7.0, 9.0],
             ],
         )
+

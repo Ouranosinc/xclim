@@ -849,13 +849,13 @@ def specific_discharge_extremely_high(
     >>> ds = xr.open_dataset(path_to_file)
     >>> q = ds["flow"]
     >>> a = ds["Area"]
-    >>> extrem_specific_discharge = 100 * units("m/s")  #'a voir...
-    >>> flagged = specific_discharge_extremely_high(ds.q, thresh=extrem_specific_discharge)
+    >>> extrem_specific_discharge = thresh = "100 m s-1"
+    >>> flagged = specific_discharge_extremely_high(q, a, thresh=extrem_specific_discharge)
     """
     q = convert_units_to(q, "m3/s")
-    a = convert_units_to(a, "km2")
+    a = convert_units_to(a, "m2")
 
-    spe_q = q / (a * 1000000)  # unit conversion to m/s
+    spe_q = q / (a)  # unit conversion to m/s
     spe_q.attrs["units"] = "m s-1"
 
     thresh_converted = convert_units_to(thresh, spe_q)

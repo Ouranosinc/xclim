@@ -97,3 +97,4 @@ def test_low_flow_frequency(q_series):
     q = q_series(a)
     out = land.low_flow_frequency(q, threshold_factor=0.2, freq="YS")
     np.testing.assert_array_equal(out, [20, 0, np.nan])
+
