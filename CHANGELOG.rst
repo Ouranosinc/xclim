@@ -4,7 +4,11 @@ Changelog
 
 v0.60.0 (unreleased)
 --------------------
-Contributors to this version: Éric Dupuis (:user:`coxipi`), Trevor James Smith (:user:`Zeitsperre`).
+Contributors to this version: Éric Dupuis (:user:`coxipi`), Trevor James Smith (:user:`Zeitsperre`), Hui-Min Wang (:user:`Hem-W`).
+
+New indicators and features
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+* Added a `prob_zero_method` argument to `standardized_index` and `standardized_precipitation_index` to control how zero-precipitation probabilities are handled. (:issue:`2279`, :pull:`2280`).
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
