@@ -1063,7 +1063,7 @@ def standardized_precipitation_index(
 
     References
     ----------
-    :cite:cts:`mckee_relationship_1993`
+    :cite:cts:`mckee_relationship_1993,stagge_candidate_2015`
 
     Examples
     --------
