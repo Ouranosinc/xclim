@@ -614,7 +614,7 @@ def high_flow_frequency(q: xarray.DataArray, threshold_factor: int = 9, freq: st
         Daily streamflow data.
     threshold_factor : int
         Factor by which the median flow is multiplied to set the high flow threshold, default is 9.
-    freq : str, optional
+    freq : str
         Resampling frequency, default is 'YS-OCT' for water year starting in October and ending in September.
 
     Returns
@@ -647,7 +647,7 @@ def low_flow_frequency(q: xarray.DataArray, threshold_factor: float = 0.2, freq:
         Daily streamflow data.
     threshold_factor : float
         Factor by which the mean flow is multiplied to set the low flow threshold, default is 0.2.
-    freq : str, optional
+    freq : str
         Resampling frequency, default is 'YS-OCT' for water year starting in October and ending in September.
 
     Returns
@@ -780,9 +780,9 @@ def days_with_snowpack(
     ----------
     swe : xarray.DataArray
         Daily surface snow amount as snow water equivalent.
-    thresh : float, optional
+    thresh : float
         Minimum snow quantity to consider a given day snow-covered. Default is 10 mm.
-    freq : str, optional
+    freq : str
         Resampling frequency. Typically the water year starting on the 1st of October
         in the Northern Hemisphere.
 
@@ -828,7 +828,7 @@ def aridity_index(pr: xarray.DataArray, pet: xarray.DataArray, freq: str = "YS")
         Precipitation.
     pet : array_like
         Potential evapotranspiration.
-    freq : str, optional
+    freq : str
         Resampling frequency. A monthly or yearly frequency is expected.
 
     Returns
@@ -877,9 +877,9 @@ def lag_snowpack_flow_peaks(
         Surface snow amount as snow water equivalent.
     q : xarray.DataArray
         Streamflow.
-    freq : str, optional
+    freq : str
         Resampling frequency. Defaults to the water year starting on the 1st of October.
-    percentile : float, optional
+    percentile : float
         Percentile threshold identifying high flows. Defaults to the 90th percentile.
 
     Returns
