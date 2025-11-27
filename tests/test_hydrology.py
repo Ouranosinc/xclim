@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import numpy as np
+import pandas as pd
 import pytest
 
 from xclim import indices as xci
@@ -191,3 +192,142 @@ class TestAntecedentPrecipitationIndex:
             weighted_sum = (pr[idx:idxend] * weights).sum()
             out_manual[idxend - 1] = weighted_sum
         np.testing.assert_allclose(out, out_manual, atol=1e-7)
+
+
+class TestRR:
+    def test_simple(self, q_series, area_series, pr_series):
+        # 1 years of daily data
+        q = np.ones(365, dtype=float) * 10
+        pr = np.ones(365, dtype=float) * 20
+
+        # 30 days with low flows, ratio should stay the same
+        q[300:330] = 5
+        pr[270:300] = 10
+        a = 1000
+        a = area_series(a)
+
+        q = q_series(q)
+        new_start = "2000-07-01"
+        q_shifted = q.assign_coords(time=pd.date_range(new_start, periods=q.sizes["time"], freq="D"))
+
+        pr = pr_series(pr, units="mm/hr")
+
+        out = xci.runoff_ratio(q_shifted, a, pr, freq="YS")
+        # verify RR
+        np.testing.assert_allclose(out.values, 0.0018, atol=1e-15)
+
+
+class TestDaysWithSnowpack:
+    def test_simple(self, swe_series):
+        # 2 years of daily data
+        a = np.zeros(365 * 2)
+
+        # Year 1: 15 days of SWE = 20 mm
+        a[50:65] = 20
+        # Year 2: 5 days of SWE = 5 mm
+        a[400:405] = 5
+
+        # Create a daily time index
+        swe = swe_series(a)
+
+        out = xci.days_with_snowpack(swe, thresh=".01 m", freq="YS")
+
+        # Year 1: 15 days >= 10 → expect 15, Year 2: only 5 days but all < 10 → expect 0
+        np.testing.assert_array_equal(out.values, [15, 0])
+
+def test_simple(pr_hr_series, evspsblpot_hr_series):
+        # 2 years of hourly data
+        pr = np.ones(8760 * 2)
+        pet = np.ones(8760 * 2) * 0.8
+
+        # Year 1 different
+        pr[1:8761] = 3
+        pet[1:8761] = 1.5
+
+        # Create a daily time index
+        pr = pr_hr_series(pr)
+        pet = evspsblpot_hr_series(pet)
+
+        out = xci.aridity_index(pr, pet)
+        np.testing.assert_allclose(out, [2.0, 1.25], rtol=1e-3, atol=0)
+
+
+class TestLagSnowpackFlowPeaks:
+    def test_simple(self, swe_series, q_series):
+        # 1 years of daily data (2 values due to freq resampling)
+        a = np.zeros(365)
+
+        # Year 1: 1 day of SWE = 20 mm
+        a[50:51] = 20
+        # Year 2: 1 day of SWE = 5 mm
+        a[300:301] = 5
+
+        # Create a daily time index
+        swe = swe_series(a)
+
+        b = np.zeros(365)
+        # Year 1: 35 days of high flows directly after max swe
+        b[50:85] = 20
+        # Year 2: 35 days of high flows 10 days after max swe
+        b[310:345] = 5
+
+        # Create a daily time index
+        q = q_series(b)
+
+        out = xci.lag_snowpack_flow_peaks(swe, q)
+        np.testing.assert_allclose(out, [17.0, 27.0], atol=1e-14)
+
+
+class TestSenSlope:
+    def test_simple(self, q_series):
+        # 5 years of increasing data with slope of 1
+        q = np.arange(1, 1826)
+
+        # 5 years of increasing data with slope of 2
+        qsim = np.arange(1, 1826) * 2
+
+        # Create a daily time index
+        q = q_series(q)
+        qsim = q_series(qsim)
+
+        out = xci.sen_slope(q, qsim)
+
+        # verify Sen_slopes
+        Sen_slope_obs = out["Sen_slope_obs"]
+        np.testing.assert_allclose(Sen_slope_obs.values, [360.0, 365.0, 365.0, 365.0, 360.0], atol=1e-15)
+
+        Sen_slope_sim = out["Sen_slope_sim"]
+        np.testing.assert_allclose(Sen_slope_sim.values, [720.0, 730.0, 730.0, 730.0, 720.0], atol=1e-15)
+
+        # verify p-values
+        p_value_obs = out["p_value_obs"]
+        np.testing.assert_allclose(
+            p_value_obs.values, [0.008535, 0.027486, 0.027486, 0.027486, 0.008535], rtol=1e-06, atol=1e-06
+        )
+
+        p_value_sim = out["p_value_sim"]
+        np.testing.assert_allclose(
+            p_value_sim.values, [0.008535, 0.027486, 0.027486, 0.027486, 0.008535], rtol=1e-06, atol=1e-06
+        )
+
+        # verify ratio
+        ratio = out["ratio"]
+        np.testing.assert_allclose(ratio.values, [0.5, 0.5, 0.5, 0.5, 0.5], atol=1e-15)
+
+
+class TestBFI_seasonal_and_winter_to_summer_ratio:
+    def test_simple(self, q_series):
+        # 5 years of increasing data with slope of 1
+        a = np.ones(364)
+
+        # Year 1: 1 winter months with flow
+        a[0:59] = 20
+        a[335:364] = 20
+        # Year 2: 1 summer months with flow
+        a[152:212] = 5
+
+        q = q_series(a)
+
+        winter_bfi, spring_bfi, summer_bfi, fall_bfi, w_s_ratio = xci.base_flow_index_seasonal_ratio(q)
+
+        np.testing.assert_allclose(w_s_ratio, 0.182678, atol=1e-6)

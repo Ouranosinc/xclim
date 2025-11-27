@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import numpy as np
 import pytest
-
+import xarray as xr
 from xclim import convert, land
 from xclim.core import ValidationError
 
@@ -164,3 +164,18 @@ class TestHolidaySnowIndicators:
             ],
         )
 
+def test_days_with_snowpack(swe_series):
+    # 2 years of daily data
+    a = np.zeros(365 * 2)
+
+    # Year 1: 15 days of SWE = 20 mm
+    a[50:65] = 20
+    # Year 2: 5 days of SWE = 5 mm
+    a[400:405] = 5
+
+    # Create a daily time index
+    swe = swe_series(a)
+    out = land.days_with_snowpack(swe, freq="YS")
+
+    assert out.attrs["units"] == "days"
+    assert isinstance(out, xr.DataArray)

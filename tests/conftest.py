@@ -187,6 +187,13 @@ def evspsblpot_series():
 
 
 @pytest.fixture
+def evspsblpot_hr_series():
+    """Return evapotranspiration hourly time series."""
+    _evspsblpot_hr_series = partial(test_timeseries, start="1/1/2000", variable="pet", units="kg m-2 s-1", freq="h")
+    return _evspsblpot_hr_series
+
+
+@pytest.fixture
 def per_doy():
     def _per_doy(values, calendar="standard", units="kg m-2 s-1"):
         n = max_doy[calendar]
@@ -406,6 +413,33 @@ def gather_session_data(request, nimbus, worker_id):
 
 
 @pytest.fixture
-def no_numbagg():
-    with xr.set_options(use_numbagg=False):
-        yield
+def swe_series():
+    def _swe_series(values, start="1/1/2000", units="mm"):
+        coords = pd.date_range(start, periods=len(values), freq="D")
+        return xr.DataArray(
+            values,
+            coords=[coords],
+            dims="time",
+            name="swe",
+            attrs={
+                "standard_name": "snow_water_equivalent_in_snow_layer",
+                "units": units,
+            },
+        )
+
+    return _swe_series
+
+
+@pytest.fixture
+def area_series():
+    def _area_series(values, units="km2"):
+        return xr.DataArray(
+            values,
+            name="area",
+            attrs={
+                "standard_name": "cell_area",
+                "units": units,
+            },
+        )
+
+    return _area_series

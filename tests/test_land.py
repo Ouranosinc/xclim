@@ -98,3 +98,14 @@ def test_low_flow_frequency(q_series):
     out = land.low_flow_frequency(q, threshold_factor=0.2, freq="YS")
     np.testing.assert_array_equal(out, [20, 0, np.nan])
 
+def test_runoff_ratio(q_series, area_series, pr_series):
+    out = land.runoff_ratio(q_series, area_series, pr_series, freq="YS")
+
+    assert out.attrs["units"] == "1"
+    assert isinstance(out, xr.DataArray)
+
+def test_base_flow_index_seasonal_ratio(ndq_series):
+    out = land.base_flow_index_seasonal_ratio(ndq_series, freq="YS")
+
+    assert out.attrs["units"] == "1"
+    assert isinstance(out, xr.DataArray)
