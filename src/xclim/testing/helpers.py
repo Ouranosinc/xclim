@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any
 
 import numpy as np
+import pandas as pd
 import pooch
 import xarray as xr
 from dask.callbacks import Callback
@@ -151,6 +152,31 @@ def add_example_file_paths() -> dict[str, str | list[xr.DataArray]]:
             },
         ),
     ]
+
+    # 1 year of daily data
+    q = np.ones(365, dtype=float) * 10
+    # 1 day with extremely high flow to rise flag
+    q[0:1] = 200000000000
+    flow_dataset = xr.DataArray(
+        q,
+        coords=[pd.date_range(start="1/1/2000", periods=len(q), freq="D")],
+        dims="time",
+        name="q",
+        attrs={
+            "standard_name": "water_volume_transport_in_river_channel",
+            "units": "m3 s-1",
+        },
+    )
+    land_dataset = xr.DataArray(
+        np.ndarray([1000]),
+        name="area",
+        attrs={
+            "standard_name": "cell_area",
+            "units": "km2",
+        },
+    )
+    namespace["q_a_ds"] = xr.merge((land_dataset, flow_dataset))
+
     return namespace
 
 

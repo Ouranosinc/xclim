@@ -846,11 +846,10 @@ def specific_discharge_extremely_high(
     To gain access to the flag_array:
 
     >>> from xclim.core.dataflags import specific_discharge_extremely_high
-    >>> ds = xr.open_dataset(path_to_q_file)
-    >>> q = ds["flow"]
-    >>> a = ds["Area"]
-    >>> extrem_specific_discharge = 100 * units("mm d-1")
-    >>> flagged = specific_discharge_extremely_high(q, a, thresh=extrem_specific_discharge)
+    >>> ds = q_a_ds
+    >>> q = ds["q"]
+    >>> a = ds["area"]
+    >>> flagged = specific_discharge_extremely_high(q, a)
     """
     q = convert_units_to(q, "m3/s")
     a = convert_units_to(a, "m2")
