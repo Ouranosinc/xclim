@@ -157,12 +157,12 @@ class TestDataFlags:
 
 class Testspe_q:
     def test_simple(self, q_series, area_series):
-        # 1 years of daily data
+        # 10 years of daily data
         q = np.ones(365, dtype=float) * 10
 
-        # 1 day with extremely high flow to rise flag
+        # 1 day with extremely high flow to trigger flag
         q[0:1] = 200000000000
-        a = 1000
+        a = np.ndarray([1000])
         a = area_series(a)
 
         q = q_series(q)
