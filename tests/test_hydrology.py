@@ -235,7 +235,8 @@ class TestDaysWithSnowpack:
         # Year 1: 15 days >= 10 → expect 15, Year 2: only 5 days but all < 10 → expect 0
         np.testing.assert_array_equal(out.values, [15, 0])
 
-def test_simple(pr_hr_series, evspsblpot_hr_series):
+class TestAnnualAridityIndex:
+    def test_simple(self, pr_hr_series, evspsblpot_hr_series):
         # 2 years of hourly data
         pr = np.ones(8760 * 2)
         pet = np.ones(8760 * 2) * 0.8

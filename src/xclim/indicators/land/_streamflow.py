@@ -49,18 +49,18 @@ class Streamflow(ResamplingIndicator):
     context = "hydro"
     src_freq = "D"
     keywords = "streamflow hydrology"
-
-    @staticmethod
-    def cfcheck(q: DataArray):
-        r"""
-        Verify the CF-compliance of the input data.
-
-        Parameters
-        ----------
-        q : xarray.DataArray
-            The input data array.
-        """
-        check_valid(q, "standard_name", "water_volume_transport_in_river_channel")
+#
+#     @staticmethod
+#     def cfcheck(q: DataArray):
+#         r"""
+#         Verify the CF-compliance of the input data.
+#
+#         Parameters
+#         ----------
+#         q : xarray.DataArray
+#             The input data array.
+#         """
+#         check_valid(q, "standard_name", "water_volume_transport_in_river_channel")
 
 
 base_flow_index = Streamflow(
@@ -181,9 +181,32 @@ base_flow_index_seasonal_ratio = Streamflow(
     title="Seasonal Base flow index (bfi) and ratio of winter to summer base flow index",
     identifier="base_flow_index_seasonal_ratio",
     units="",
-    long_name="Seasonal Base flow index and ratio of winter to summer base flow index",
-    description="Yearly base flow index per season, defined as the minimum 7-day average flow divided by the mean flow"
+    var_name=["winter_bfi", "spring_bfi", "summer_bfi", "fall_bfi", "w_s_ratio"],
+    standard_name=[
+        "winter_bfi",
+        "spring_bfi",
+        "summer_bfi",
+        "fall_bfi",
+        "w_s_ratio",
+    ],
+    long_name=[
+        "Winter baseflow index",
+        "spring baseflow index",
+        "Summer baseflow index",
+        "Fall baseflow index",
+        "Winter to summer baseflow index ratio",
+    ],
+    description=["Yearly base flow index per season, defined as the minimum 7-day average flow divided by the mean flow"
     "as well as yearly winter to summer bfi ratio.",
+    "Yearly base flow index per season, defined as the minimum 7-day average flow divided by the mean flow"
+    "as well as yearly winter to summer bfi ratio.",
+    "Yearly base flow index per season, defined as the minimum 7-day average flow divided by the mean flow"
+    "as well as yearly winter to summer bfi ratio.",
+    "Yearly base flow index per season, defined as the minimum 7-day average flow divided by the mean flow"
+    "as well as yearly winter to summer bfi ratio.",
+    "Yearly winter to summer baseflow index ratio, defined as the minimum 7-day average flow divided by the mean flow"
+    "as well as yearly winter to summer bfi ratio.",
+    ],
     abstract="Yearly base flow index per season, defined as the minimum 7-day average flow divided by the mean flow"
     "as well as yearly winter to summer bfi ratio.",
     cell_methods="",
