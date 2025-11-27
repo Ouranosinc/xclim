@@ -986,7 +986,8 @@ def sen_slope(
             - ``p_value`` : Mann–Kendall metric indicating slope tendency.
         """
         if mk is None:
-            raise ModuleNotFoundError("Warning: Install and import pymannkendall as mk.")
+            msg = f"{sen_slope.__name__} requires access to the `pymannkendall` library."
+            raise ModuleNotFoundError(msg)
 
         # Convert to pandas Series with DatetimeIndex
         x_year = x.resample(time="YS-DEC").mean()
