@@ -302,6 +302,8 @@ class TestLagSnowpackFlowPeaks:
 
 class TestSenSlope:
     def test_simple(self, q_series):
+        # Skip this test if pymannkendall is not installed
+        pytest.importorskip("pymannkendall")
         # 5 years of increasing data with slope of 1
         q = np.arange(1, 1826)
 
