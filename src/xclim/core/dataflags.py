@@ -819,7 +819,7 @@ def ecad_compliant(
     return ecad_flag
 
 
-@declare_units(q="[discharge]", a="[area]", thresh="[speed]")
+@declare_units(da="[speed]", thresh="[speed]")
 def specific_discharge_extremely_high(da: xarray.DataArray, *, thresh: Quantified = "100 mm d-1") -> xarray.DataArray:
     """
     Check if specific discharge values exceed 100 mm per day for any given day.
