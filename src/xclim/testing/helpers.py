@@ -8,7 +8,6 @@ from pathlib import Path
 from typing import Any
 
 import numpy as np
-import pandas as pd
 import pooch
 import xarray as xr
 from dask.callbacks import Callback
@@ -129,53 +128,18 @@ def add_example_file_paths() -> dict[str, str | list[xr.DataArray]]:
     # For core.utils.load_module example
     sixty_years = xr.date_range("1990-01-01", "2049-12-31", freq="D")
     namespace["temperature_datasets"] = [
-        xr.DataArray(
-            12 * np.random.random_sample(sixty_years.size) + 273,
-            coords={"time": sixty_years},
-            name="tas",
-            dims=("time",),
-            attrs={
-                "units": "K",
-                "cell_methods": "time: mean within days",
-                "standard_name": "air_temperature",
-            },
-        ),
-        xr.DataArray(
-            12 * np.random.random_sample(sixty_years.size) + 273,
-            coords={"time": sixty_years},
-            name="tas",
-            dims=("time",),
-            attrs={
-                "units": "K",
-                "cell_methods": "time: mean within days",
-                "standard_name": "air_temperature",
-            },
-        ),
+        test_timeseries(12 * np.random.random_sample(sixty_years.size) + 273, variable="tas"),
+        test_timeseries(12 * np.random.random_sample(sixty_years.size) + 273, variable="tas"),
     ]
 
-    # 1 year of daily data
-    q = np.ones(365, dtype=float) * 10
-    # 1 day with extremely high flow to rise flag
-    q[0:1] = 200000000000
-    flow_dataset = xr.DataArray(
-        q,
-        coords=[pd.date_range(start="1/1/2000", periods=len(q), freq="D")],
-        dims="time",
-        name="q",
-        attrs={
-            "standard_name": "water_volume_transport_in_river_channel",
-            "units": "m3 s-1",
-        },
-    )
-    land_dataset = xr.DataArray(
-        np.ndarray([1000]),
-        name="area",
-        attrs={
-            "standard_name": "cell_area",
-            "units": "km2",
-        },
-    )
-    namespace["q_a_ds"] = xr.merge((land_dataset, flow_dataset))
+    # dataset with one cell of grid area
+    area_dataset = test_timeseries(np.ndarray([1000]), variable="areacella")
+    # dataset with one year of daily flow data
+    flow_dataset = test_timeseries(np.ones(365, dtype=float), variable="q")
+    # single day with extremely high flow to rise flag
+    flow_dataset[0:1] = 200000000000
+    # merge into a single dataset
+    namespace["flow_area_ds"] = xr.merge((area_dataset, flow_dataset), join="outer")
 
     return namespace
 

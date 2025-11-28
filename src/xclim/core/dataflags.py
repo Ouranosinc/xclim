@@ -821,20 +821,19 @@ def ecad_compliant(
 
 @declare_units(q="[discharge]", a="[area]", thresh="[speed]")
 def specific_discharge_extremely_high(
-    q: xarray.DataArray, a: xarray.DataArray, *, thresh: Quantified = "100 mm d-1"
+    q: xarray.DataArray, A: str = "A", *, thresh: Quantified = "100 mm d-1"
 ) -> xarray.DataArray:
     """
-    Check if specific discharge values exceed 100 m/s for any given day.
+    Check if specific discharge values exceed 100 mm per day for any given day.
 
     Parameters
     ----------
     q : xarray.DataArray
         Flow.
-    a : xarray.DataArray
+    A : xarray.DataArray
         Watershed area.
     thresh : str
         Threshold above which specific discharges are considered problematic and a flag is raised.
-        Default is 100 m/s.
 
     Returns
     -------
@@ -846,20 +845,20 @@ def specific_discharge_extremely_high(
     To gain access to the flag_array:
 
     >>> from xclim.core.dataflags import specific_discharge_extremely_high
-    >>> ds = q_a_ds
-    >>> q = ds["q"]
-    >>> a = ds["area"]
-    >>> flagged = specific_discharge_extremely_high(q, a)
+    >>> q = flow_area_ds["q"]
+    >>> areacella = flow_area_ds["areacella"]
+    >>> flagged = specific_discharge_extremely_high(flow, areacella)
     """
-    q = convert_units_to(q, "m3/s")
-    a = convert_units_to(a, "m2")
+    flow = convert_units_to(q, "m**3 s-1")
+    area = convert_units_to(A, "m**2")
 
-    spe_q = q / a
-    spe_q.attrs["units"] = "mm d-1"
+    specific_flow = flow / area
+    specific_flow.attrs["units"] = "mm d-1"
 
-    thresh_converted = convert_units_to(thresh, spe_q)
-    extreme_high = _sanitize_attrs(spe_q > thresh_converted)
-    description = f"One or multiple specific discharge found in excess of {thresh}, max : {spe_q.max()}mm d-1."
-    extreme_high.attrs["description"] = description
-    extreme_high.attrs["units"] = ""
-    return extreme_high
+    thresh_converted = convert_units_to(thresh, specific_flow)
+    extreme_high_discharge = _sanitize_attrs(specific_flow > thresh_converted)
+    extreme_high_discharge.attrs["description"] = (
+        f"One or multiple specific discharge found in excess of {thresh}, max : {specific_flow.max()}mm d-1."
+    )
+    extreme_high_discharge.attrs["units"] = ""
+    return extreme_high_discharge
