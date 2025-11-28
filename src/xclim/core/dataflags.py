@@ -820,18 +820,14 @@ def ecad_compliant(
 
 
 @declare_units(q="[discharge]", a="[area]", thresh="[speed]")
-def specific_discharge_extremely_high(
-    q: xarray.DataArray, A: str = "A", *, thresh: Quantified = "100 mm d-1"
-) -> xarray.DataArray:
+def specific_discharge_extremely_high(da: xarray.DataArray, *, thresh: Quantified = "100 mm d-1") -> xarray.DataArray:
     """
     Check if specific discharge values exceed 100 mm per day for any given day.
 
     Parameters
     ----------
-    q : xarray.DataArray
-        Flow.
-    A : xarray.DataArray
-        Watershed area.
+    da : xarray.DataArray
+        Specific discharge.
     thresh : str
         Threshold above which specific discharges are considered problematic and a flag is raised.
 
@@ -845,20 +841,11 @@ def specific_discharge_extremely_high(
     To gain access to the flag_array:
 
     >>> from xclim.core.dataflags import specific_discharge_extremely_high
-    >>> q = flow_area_ds["q"]
-    >>> areacella = flow_area_ds["areacella"]
-    >>> flagged = specific_discharge_extremely_high(flow, areacella)
+    >>> qspec = specific_discharge_dataset.qspec
+    >>> flagged = specific_discharge_extremely_high(qspec)
     """
-    flow = convert_units_to(q, "m**3 s-1")
-    area = convert_units_to(A, "m**2")
-
-    specific_flow = flow / area
-    specific_flow.attrs["units"] = "mm d-1"
-
-    thresh_converted = convert_units_to(thresh, specific_flow)
-    extreme_high_discharge = _sanitize_attrs(specific_flow > thresh_converted)
-    extreme_high_discharge.attrs["description"] = (
-        f"One or multiple specific discharge found in excess of {thresh}, max : {specific_flow.max()}mm d-1."
-    )
+    thresh_converted = convert_units_to(thresh, da, context="hydro")
+    extreme_high_discharge = _sanitize_attrs(da > thresh_converted)
+    extreme_high_discharge.attrs["description"] = f"One or multiple specific {da.name} found in excess of {thresh}."
     extreme_high_discharge.attrs["units"] = ""
     return extreme_high_discharge
