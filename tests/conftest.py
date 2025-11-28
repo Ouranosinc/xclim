@@ -157,6 +157,13 @@ def q_series():
 
 
 @pytest.fixture
+def qspec_series():
+    """Return specific discharge time series."""
+    _qspec_series = partial(test_timeseries, variable="qspec")
+    return _qspec_series
+
+
+@pytest.fixture
 def ndq_series(random):
     nx, ny, nt = 2, 3, 5000
     x = np.arange(0, nx)

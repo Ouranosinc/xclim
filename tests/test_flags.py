@@ -155,18 +155,14 @@ class TestDataFlags:
         assert list(flgs.data_vars.keys())[0] == "values_eq_minus5point1_repeating_for_5_or_more_days"
 
 
-class Testspe_q:
-    def test_simple(self, q_series, area_series):
+class TestSpecificDischarge:
+    def test_simple(self, qspec_series):
         # 10 years of daily data
-        q = np.ones(365, dtype=float) * 10
+        qspec = qspec_series(np.ones(365, dtype=float) * 10)
+        # A single day with extremely high flow to trigger flag
+        qspec[300] = 20000000
 
-        # 1 day with extremely high flow to trigger flag
-        q[0:1] = 200000000000
-        a = np.ndarray([1000])
-        a = area_series(a)
-
-        q = q_series(q)
-
-        flagged = df.specific_discharge_extremely_high(q, a, thresh="100 m/s")
+        flagged = df.specific_discharge_extremely_high(qspec, thresh="100 m/s")
 
         assert flagged.values.any()  # At least one True exists
+        assert "One or multiple specific qspec found in excess of 100 m/s." in flagged.attrs["description"]
