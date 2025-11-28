@@ -5,6 +5,12 @@ variables:
     description: Air density.
     dimensions: "[density]"
     standard_name: air_density
+  areacella:
+    canonical_units: m2
+    cell_methods: "area: sum"
+    description: Atmospheric grid cell area.
+    dimensions: "[area]"
+    standard_name: cell_area
   areacello:
     canonical_units: m2
     cell_methods: "area: sum"
