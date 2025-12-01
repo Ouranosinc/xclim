@@ -4,7 +4,11 @@ Changelog
 
 v0.60.0 (unreleased)
 --------------------
-Contributors to this version: Éric Dupuis (:user:`coxipi`), Trevor James Smith (:user:`Zeitsperre`).
+Contributors to this version: Ève Larose (:user:`e-larose`), Faisal Mahmood (:user:`faimahsho`),  Éric Dupuis (:user:`coxipi`), Trevor James Smith (:user:`Zeitsperre`), David Huard (:user:`huard`).
+
+New indicators and features
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+* New hydrological indices added to ``xclim.indices._hydrology.py``. (:issue:`1624`, :pull:`2227`).
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
