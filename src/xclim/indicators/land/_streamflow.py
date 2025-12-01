@@ -241,14 +241,14 @@ runoff_ratio = Streamflow(
     compute=runoff_ratio,
 )
 
-# sen_slope = Streamflow( NEEDS FREQ VARIABLE!
-#     title="Sen Slope : Temporal robustness analysis of streamflow.",
-#     identifier="sen_slope",
-#     units="",
-#     long_name="Sen Slope",
-#     description="Compute annual and seasonal Theil–Sen slope estimators and perform the"
-#     "Mann–Kendall test for trend evaluation.",
-#     cell_methods="",
-#     keywords="streamflow",
-#     compute=sen_slope,
-# )
+sen_slope = Streamflow(
+    title="Sen Slope : Temporal robustness analysis of streamflow.",
+    identifier="sen_slope",
+    units="",
+    long_name="Sen Slope",
+    description="Compute annual and seasonal Theil–Sen slope estimators and perform the"
+    "Mann–Kendall test for trend evaluation.",
+    cell_methods="",
+    keywords="streamflow",
+    compute=sen_slope,
+)
