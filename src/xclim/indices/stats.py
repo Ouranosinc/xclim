@@ -1068,7 +1068,9 @@ def standardized_index(
         elif prob_zero_method == "upper":
             zeros_prob = prob_of_zero
         else:
-            raise ValueError(f"Unknown prob_zero_method: {prob_zero_method}")
+            raise NotImplementedError(
+                "Unsupported `prob_zero_method`. It should either be a string ('upper', 'center') or a `Callable`."
+            )
         probs = probs.where(mask, zeros_prob)
 
     params_norm = xr.DataArray(
