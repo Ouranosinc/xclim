@@ -878,9 +878,9 @@ def lag_snowpack_flow_peaks(
         Surface snow amount as snow water equivalent.
     q : xarray.DataArray
         Streamflow.
-    freq : str, optional
+    freq : str
         Resampling frequency. Defaults to the water year starting on the 1st of October.
-    percentile : float, optional
+    percentile : float
         Percentile threshold identifying high flows. Defaults to the 90th percentile.
 
     Returns
@@ -931,6 +931,8 @@ def lag_snowpack_flow_peaks(
 def sen_slope(
     q: xarray.DataArray,
     qsim: xarray.DataArray = None,
+    freq: str ="YS",
+    month: str ="DEC",
 ) -> xarray.Dataset:
     """
     Temporal robustness analysis of streamflow.
@@ -944,7 +946,10 @@ def sen_slope(
         Observed streamflow vector.
     qsim : xarray.DataArray
         Simulated streamflow vector.
-
+    freq : str
+        Resampling frequency. Default yearly
+    month : str
+        Anchor month in order to spit year into quarterly seasons
     Returns
     -------
     xarray.Dataset
@@ -987,7 +992,8 @@ def sen_slope(
         """
         if mk is None:
             raise ModuleNotFoundError("Warning: Install and import pymannkendall as mk.")
-
+        freq_year = f"{freq}-{month}"
+        freq_season = f"{freq.replace('Y', 'Q')}-{month}"
         # Convert to pandas Series with DatetimeIndex
         x_year = x.resample(time="YS-DEC").mean()
         x_season = x.resample(time="QS-DEC").mean()
@@ -1032,7 +1038,15 @@ def sen_slope(
             },
             coords={"season": seasons},
         )
-
+        for var in ds.data_vars:
+            ds[var].attrs["units"] = ""
+        return (
+            ds["Sen_slope_obs"],
+            ds["p_value_obs"],
+            ds["Sen_slope_sim"],
+            ds["p_value_sim"],
+            ds["ratio"],
+        )
     else:
         slopes, p_vals = compute_seasonal_stats(q)
         # Create labeled xarray
@@ -1040,11 +1054,13 @@ def sen_slope(
             data_vars={"Sen_slope": ("season", slopes), "p_value": ("season", p_vals)}, coords={"season": seasons}
         )
 
-    # Assign empty units to all variables
-    for var in ds.data_vars:
-        ds[var].attrs["units"] = ""
+        # Assign empty units to all variables
 
-    return ds
+        return (
+            ds["Sen_slope"],
+            ds["p_value"],
+        )
+
 
 
 @declare_units(q="[discharge]")
@@ -1113,5 +1129,5 @@ def base_flow_index_seasonal_ratio(
     w_s_ratio = w_s_ratio.isel(year=slice(1, None))
     w_s_ratio.attrs["units"] = ""
 
-
     return winter_bfi, spring_bfi, summer_bfi, fall_bfi, w_s_ratio
+

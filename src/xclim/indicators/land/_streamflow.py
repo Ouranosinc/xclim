@@ -244,10 +244,22 @@ runoff_ratio = Streamflow(
 sen_slope = Streamflow(
     title="Sen Slope : Temporal robustness analysis of streamflow.",
     identifier="sen_slope",
+    var_name=["slopes", "p_vals", "slopes_sim", "p_vals_sim", "ratio"],
     units="",
-    long_name="Sen Slope",
-    description="Compute annual and seasonal Theil–Sen slope estimators and perform the"
+    long_name=["Sen Slope from observed data",
+    "p_value from observed data",
+    "Sen Slope from simulated data",
+    "p_value from simulated data",
+    "ratio of observed to simulated Sen Slope",
+],
+    description=["Compute annual and seasonal Theil–Sen slope estimators and perform the"
     "Mann–Kendall test for trend evaluation.",
+    "Statistical analysis value.",
+    "Compute annual and seasonal Theil–Sen slope estimators and perform the"
+    "Mann–Kendall test for trend evaluation.",
+    "Statistical analysis value.",
+    "Ratio of observed to simulated Sen Slope",
+    ],
     cell_methods="",
     keywords="streamflow",
     compute=sen_slope,

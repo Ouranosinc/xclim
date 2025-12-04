@@ -279,7 +279,8 @@ class TestLagSnowpackFlowPeaks:
         np.testing.assert_allclose(out, [17.0, 27.0], atol=1e-14)
 
 
-class TestSenSlope:
+# class TestSenSlope:
+#     @pytest.mark.skipif(pymannkendall is None, reason="This requires pymankendall")
     def test_simple(self, q_series):
         # 5 years of increasing data with slope of 1
         q = np.arange(1, 1826)

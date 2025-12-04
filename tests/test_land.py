@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import numpy as np
 import xarray as xr
-
+import pandas as pd
 from xclim import land
 
 
@@ -98,15 +98,35 @@ def test_low_flow_frequency(q_series):
     out = land.low_flow_frequency(q, threshold_factor=0.2, freq="YS")
     np.testing.assert_array_equal(out, [20, 0, np.nan])
 
-def test_runoff_ratio(q_series, area_series, pr_series):
-    out = land.runoff_ratio(q_series, area_series, pr_series, freq="YS")
+def test_runoff_ratio(q_series, area_series, pr_series, freq="YS"):
+    # 1 years of daily data
+    q = np.ones(365, dtype=float) * 10
+    pr = np.ones(365, dtype=float) * 20
+
+    # 30 days with low flows, ratio should stay the same
+    q[300:330] = 5
+    pr[270:300] = 10
+    a = 1000
+    a = area_series(a)
+
+    q = q_series(q)
+    new_start = "2000-07-01"
+    q_shifted = q.assign_coords(time=pd.date_range(new_start, periods=q.sizes["time"], freq="D"))
+
+    pr = pr_series(pr, units="mm/hr")
+    out = land.runoff_ratio(q_shifted, a, pr, freq="YS")
 
     assert out.attrs["units"] == "1"
     assert isinstance(out, xr.DataArray)
 
 def test_base_flow_index_seasonal_ratio(q_series):
+# FIXME Results in AttributeError: 'DataArray' object has no attribute 'time'
     a = np.ones(364)
     q = q_series(a)
+    print(q)
+    print(q.dims)
+    print(q.coords)
+
     out = land.base_flow_index_seasonal_ratio(q)
 
     assert out.attrs["units"] == "1"
@@ -134,4 +154,25 @@ def test_lag_snowpack_flow_peaks(swe_series, q_series):
 
     out = land.lag_snowpack_flow_peaks(swe, q)
     assert out.attrs["units"] == "days"
+    assert isinstance(out, xr.DataArray)
+
+def test_ss(q_series):
+#FIXME Results in AttributeError: 'DataArray' object has no attribute 'time'
+
+    # 5 years of increasing data with slope of 1
+    q = np.arange(1, 1826)
+
+    # 5 years of increasing data with slope of 2
+    qsim = np.arange(1, 1826) * 2
+
+    # Create a daily time index
+    q = q_series(q)
+    qsim = q_series(qsim)
+    print(q)
+    print(q.dims)
+    print(q.coords)
+
+    out = land.sen_slope(q, qsim)
+
+    assert out.attrs["units"] == "1"
     assert isinstance(out, xr.DataArray)
