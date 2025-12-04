@@ -121,6 +121,7 @@ def test_runoff_ratio(q_series, area_series, pr_series, freq="YS"):
 
 def test_base_flow_index_seasonal_ratio(q_series):
 # FIXME Results in AttributeError: 'DataArray' object has no attribute 'time'
+#  multiple timestamps to present : seasonal and yearly regarding the ratio
     a = np.ones(364)
     q = q_series(a)
     print(q)
@@ -157,7 +158,8 @@ def test_lag_snowpack_flow_peaks(swe_series, q_series):
     assert isinstance(out, xr.DataArray)
 
 def test_ss(q_series):
-#FIXME Results in AttributeError: 'DataArray' object has no attribute 'time'
+#FIXME Results in AttributeError: 'DataArray' object has no attribute 'time'.
+# multiple timestamps : seasonal and yearly.
 
     # 5 years of increasing data with slope of 1
     q = np.arange(1, 1826)
