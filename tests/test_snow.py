@@ -3,6 +3,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 import xarray as xr
+
 from xclim import convert, land
 from xclim.core import ValidationError
 
@@ -163,6 +164,7 @@ class TestHolidaySnowIndicators:
                 [9.0, 11.0, 10.0, 7.0, 9.0],
             ],
         )
+
 
 def test_days_with_snowpack(swe_series):
     # 2 years of daily data

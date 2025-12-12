@@ -756,6 +756,7 @@ class TestSnowfallMeteoSwiss:
             rtol=1e-3,
         )
 
+
 def test_aridity_index(pr_hr_series, evspsblpot_hr_series):
     out = atmos.aridity_index(pr_hr_series, evspsblpot_hr_series, freq="YS")
 

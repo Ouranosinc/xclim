@@ -112,18 +112,18 @@ def test_water_cycle_intensity(pr_series, evspsbl_series):
 
 
 def test_simple(pr_hr_series, evspsblpot_hr_series):
-        # 2 years of hourly data
+    # 2 years of hourly data
     pr = np.ones(8760 * 2)
     pet = np.ones(8760 * 2) * 0.8
 
-        # Year 1 different
+    # Year 1 different
     pr[1:8761] = 3
     pet[1:8761] = 1.5
 
-        # Create a daily time index
+    # Create a daily time index
     pr = pr_hr_series(pr)
     pet = evspsblpot_hr_series(pet)
-    out = atmos.aridity_index(pr,pet)
+    out = atmos.aridity_index(pr, pet)
 
     assert out.attrs["units"] == "1"
     assert isinstance(out, xr.DataArray)

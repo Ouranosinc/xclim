@@ -3,8 +3,9 @@
 from __future__ import annotations
 
 import numpy as np
-import xarray as xr
 import pandas as pd
+import xarray as xr
+
 from xclim import land
 
 
@@ -98,6 +99,7 @@ def test_low_flow_frequency(q_series):
     out = land.low_flow_frequency(q, threshold_factor=0.2, freq="YS")
     np.testing.assert_array_equal(out, [20, 0, np.nan])
 
+
 def test_runoff_ratio(q_series, area_series, pr_series, freq="YS"):
     # 1 years of daily data
     q = np.ones(365, dtype=float) * 10
@@ -119,9 +121,10 @@ def test_runoff_ratio(q_series, area_series, pr_series, freq="YS"):
     assert out.attrs["units"] == "1"
     assert isinstance(out, xr.DataArray)
 
+
 def test_base_flow_index_seasonal_ratio(q_series):
-# FIXME Results in AttributeError: 'DataArray' object has no attribute 'time'
-#  multiple timestamps to present : seasonal and yearly regarding the ratio
+    # FIXME Results in AttributeError: 'DataArray' object has no attribute 'time'
+    #  multiple timestamps to present : seasonal and yearly regarding the ratio
     a = np.ones(364)
     q = q_series(a)
     print(q)
@@ -132,6 +135,7 @@ def test_base_flow_index_seasonal_ratio(q_series):
 
     assert out.attrs["units"] == "1"
     assert isinstance(out, xr.DataArray)
+
 
 def test_lag_snowpack_flow_peaks(swe_series, q_series):
     a = np.zeros(365)
@@ -157,9 +161,10 @@ def test_lag_snowpack_flow_peaks(swe_series, q_series):
     assert out.attrs["units"] == "days"
     assert isinstance(out, xr.DataArray)
 
+
 def test_ss(q_series):
-#FIXME Results in AttributeError: 'DataArray' object has no attribute 'time'.
-# multiple timestamps : seasonal and yearly.
+    # FIXME Results in AttributeError: 'DataArray' object has no attribute 'time'.
+    # multiple timestamps : seasonal and yearly.
 
     # 5 years of increasing data with slope of 1
     q = np.arange(1, 1826)

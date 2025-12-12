@@ -235,6 +235,7 @@ class TestDaysWithSnowpack:
         # Year 1: 15 days >= 10 → expect 15, Year 2: only 5 days but all < 10 → expect 0
         np.testing.assert_array_equal(out.values, [15, 0])
 
+
 class TestAnnualAridityIndex:
     def test_simple(self, pr_hr_series, evspsblpot_hr_series):
         # 2 years of hourly data
@@ -278,9 +279,8 @@ class TestLagSnowpackFlowPeaks:
         out = xci.lag_snowpack_flow_peaks(swe, q)
         np.testing.assert_allclose(out, [17.0, 27.0], atol=1e-14)
 
-
-# class TestSenSlope:
-#     @pytest.mark.skipif(pymannkendall is None, reason="This requires pymankendall")
+    # class TestSenSlope:
+    #     @pytest.mark.skipif(pymannkendall is None, reason="This requires pymankendall")
     def test_simple(self, q_series):
         # 5 years of increasing data with slope of 1
         q = np.arange(1, 1826)

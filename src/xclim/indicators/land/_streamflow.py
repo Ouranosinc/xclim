@@ -2,9 +2,6 @@
 
 from __future__ import annotations
 
-from xarray import DataArray
-
-from xclim.core.cfchecks import check_valid
 from xclim.core.indicator import (
     ReducingIndicator,
     ResamplingIndicator,
@@ -49,6 +46,8 @@ class Streamflow(ResamplingIndicator):
     context = "hydro"
     src_freq = "D"
     keywords = "streamflow hydrology"
+
+
 #
 #     @staticmethod
 #     def cfcheck(q: DataArray):
@@ -196,16 +195,17 @@ base_flow_index_seasonal_ratio = Streamflow(
         "Fall baseflow index",
         "Winter to summer baseflow index ratio",
     ],
-    description=["Yearly base flow index per season, defined as the minimum 7-day average flow divided by the mean flow"
-    "as well as yearly winter to summer bfi ratio.",
-    "Yearly base flow index per season, defined as the minimum 7-day average flow divided by the mean flow"
-    "as well as yearly winter to summer bfi ratio.",
-    "Yearly base flow index per season, defined as the minimum 7-day average flow divided by the mean flow"
-    "as well as yearly winter to summer bfi ratio.",
-    "Yearly base flow index per season, defined as the minimum 7-day average flow divided by the mean flow"
-    "as well as yearly winter to summer bfi ratio.",
-    "Yearly winter to summer baseflow index ratio, defined as the minimum 7-day average flow divided by the mean flow"
-    "as well as yearly winter to summer bfi ratio.",
+    description=[
+        "Yearly base flow index per season, defined as the minimum 7-day average flow divided by the mean flow"
+        "as well as yearly winter to summer bfi ratio.",
+        "Yearly base flow index per season, defined as the minimum 7-day average flow divided by the mean flow"
+        "as well as yearly winter to summer bfi ratio.",
+        "Yearly base flow index per season, defined as the minimum 7-day average flow divided by the mean flow"
+        "as well as yearly winter to summer bfi ratio.",
+        "Yearly base flow index per season, defined as the minimum 7-day average flow divided by the mean flow"
+        "as well as yearly winter to summer bfi ratio.",
+        "Yearly winter to summer baseflow index ratio, defined as the minimum 7-day average flow divided by the mean flow"
+        "as well as yearly winter to summer bfi ratio.",
     ],
     abstract="Yearly base flow index per season, defined as the minimum 7-day average flow divided by the mean flow"
     "as well as yearly winter to summer bfi ratio.",
@@ -246,19 +246,19 @@ sen_slope = Streamflow(
     identifier="sen_slope",
     var_name=["slopes", "p_vals", "slopes_sim", "p_vals_sim", "ratio"],
     units="",
-    long_name=["Sen Slope from observed data",
-    "p_value from observed data",
-    "Sen Slope from simulated data",
-    "p_value from simulated data",
-    "ratio of observed to simulated Sen Slope",
-],
-    description=["Compute annual and seasonal Theil–Sen slope estimators and perform the"
-    "Mann–Kendall test for trend evaluation.",
-    "Statistical analysis value.",
-    "Compute annual and seasonal Theil–Sen slope estimators and perform the"
-    "Mann–Kendall test for trend evaluation.",
-    "Statistical analysis value.",
-    "Ratio of observed to simulated Sen Slope",
+    long_name=[
+        "Sen Slope from observed data",
+        "p_value from observed data",
+        "Sen Slope from simulated data",
+        "p_value from simulated data",
+        "ratio of observed to simulated Sen Slope",
+    ],
+    description=[
+        "Compute annual and seasonal Theil–Sen slope estimators and perform theMann–Kendall test for trend evaluation.",
+        "Statistical analysis value.",
+        "Compute annual and seasonal Theil–Sen slope estimators and perform theMann–Kendall test for trend evaluation.",
+        "Statistical analysis value.",
+        "Ratio of observed to simulated Sen Slope",
     ],
     cell_methods="",
     keywords="streamflow",

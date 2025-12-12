@@ -931,8 +931,8 @@ def lag_snowpack_flow_peaks(
 def sen_slope(
     q: xarray.DataArray,
     qsim: xarray.DataArray = None,
-    freq: str ="YS",
-    month: str ="DEC",
+    freq: str = "YS",
+    month: str = "DEC",
 ) -> xarray.Dataset:
     """
     Temporal robustness analysis of streamflow.
@@ -950,6 +950,7 @@ def sen_slope(
         Resampling frequency. Default yearly
     month : str
         Anchor month in order to spit year into quarterly seasons
+
     Returns
     -------
     xarray.Dataset
@@ -1062,7 +1063,6 @@ def sen_slope(
         )
 
 
-
 @declare_units(q="[discharge]")
 def base_flow_index_seasonal_ratio(
     q: xarray.DataArray, freq: str = "QS-DEC"
@@ -1130,4 +1130,3 @@ def base_flow_index_seasonal_ratio(
     w_s_ratio.attrs["units"] = ""
 
     return winter_bfi, spring_bfi, summer_bfi, fall_bfi, w_s_ratio
-
