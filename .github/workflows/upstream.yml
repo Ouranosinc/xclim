@@ -39,7 +39,7 @@ jobs:
         shell: bash -l {0}
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@95d9a5deda9de15063e7595e9719c11c38c90ae2 # v2.13.2
+        uses: step-security/harden-runner@df199fb7be9f65074067a9eb93f12bb4c5547cf2 # v2.13.3
         with:
           disable-sudo: true
           egress-policy: block
@@ -61,12 +61,12 @@ jobs:
             repo.anaconda.com:443
             sum.golang.org:443
       - name: Start Measurement
-        uses: green-coding-solutions/eco-ci-energy-estimation@862050e4f01f65b1436e5eca18ba4bd85562f0de # v5.0.0
+        uses: green-coding-solutions/eco-ci-energy-estimation@dc61bc5da7c801d857f8ddc0e837187d04e42f18 # v5.1
         with:
           task: start-measurement
           branch: ${{ github.head_ref || github.ref_name }}
       - name: Checkout Repository
-        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
         with:
           fetch-depth: 0 # Fetch all history for all branches and tags.
           persist-credentials: false
@@ -98,7 +98,7 @@ jobs:
           xclim show_version_info
           python -m pip check || true
       - name: Setup Python Measurement
-        uses: green-coding-solutions/eco-ci-energy-estimation@862050e4f01f65b1436e5eca18ba4bd85562f0de # v5.0.0
+        uses: green-coding-solutions/eco-ci-energy-estimation@dc61bc5da7c801d857f8ddc0e837187d04e42f18 # v5.1
         with:
           task: get-measurement
           label: 'Environment Setup (Upstream, Python${{ matrix.python-version }})'
@@ -125,13 +125,13 @@ jobs:
           issue-title: "⚠️ Nightly upstream-dev CI failed for Python${{ matrix.python-version }} ⚠️"
           log-path: output-${{ matrix.python-version }}-log.jsonl
       - name: Tests measurement
-        uses: green-coding-solutions/eco-ci-energy-estimation@862050e4f01f65b1436e5eca18ba4bd85562f0de # v5.0.0
+        uses: green-coding-solutions/eco-ci-energy-estimation@dc61bc5da7c801d857f8ddc0e837187d04e42f18 # v5.1
         with:
           task: get-measurement
           label: 'Testing and Reporting (Upstream, Python${{ matrix.python-version }})'
         continue-on-error: true
       - name: Show Energy Results
-        uses: green-coding-solutions/eco-ci-energy-estimation@862050e4f01f65b1436e5eca18ba4bd85562f0de # v5.0.0
+        uses: green-coding-solutions/eco-ci-energy-estimation@dc61bc5da7c801d857f8ddc0e837187d04e42f18 # v5.1
         with:
           task: display-results
         continue-on-error: true
