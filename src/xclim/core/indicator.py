@@ -894,7 +894,7 @@ class Indicator(IndicatorRegistrar):
 
         # get mappings where keys are the actual compute function's argument names
         args = self._get_compute_args(das, params)
-        with xarray.set_options(keep_attrs=False):
+        with xarray.set_options(keep_attrs=False), np.errstate(divide="ignore", invalid="ignore"):
             outs = self.compute(**args)
 
         if isinstance(outs, DataArray):

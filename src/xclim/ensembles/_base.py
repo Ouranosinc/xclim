@@ -130,7 +130,7 @@ def create_ensemble(
 
     dim = xr.IndexVariable("realization", list(realizations), attrs={"axis": "E"})
 
-    ens = xr.concat(ds, dim)
+    ens = xr.concat(ds, dim, compat="no_conflicts", join="outer")
     for var_name, var in ds[0].variables.items():
         ens[var_name].attrs.update(**var.attrs)
     ens.attrs.update(**ds[0].attrs)

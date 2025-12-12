@@ -492,7 +492,8 @@ class TestSnowfallDate:
             (
                 xr.open_dataset(nimbus.fetch(cls.pr_file), engine="h5netcdf"),
                 xr.open_dataset(nimbus.fetch(cls.tasmin_file), engine="h5netcdf"),
-            )
+            ),
+            compat="no_conflicts",
         )
         return convert.snowfall_approximation(dnr.pr, tas=dnr.tasmin, thresh="-0.5 degC", method="binary")
 
@@ -702,7 +703,8 @@ class TestSnowfallMeteoSwiss:
             (
                 xr.open_dataset(nimbus.fetch(cls.pr_file), engine="h5netcdf"),
                 xr.open_dataset(nimbus.fetch(cls.tasmin_file), engine="h5netcdf"),
-            )
+            ),
+            compat="no_conflicts",
         )
         return convert.snowfall_approximation(dnr.pr, tas=dnr.tasmin, thresh="-0.5 degC", method="binary")
 
