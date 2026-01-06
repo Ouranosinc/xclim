@@ -326,9 +326,6 @@ class MissingAny(MissingBase):
 class MissingSomeButNotAll(MissingBase):
     """Mask periods as missing if some but not all of its elements is missing or invalid."""
 
-    def __init__(self):
-        """Create a MissingAny object."""
-        super().__init__()
 
     def is_missing(self, valid: xr.DataArray, count: xr.DataArray, freq: str | None) -> xr.DataArray:
         if freq is not None:
