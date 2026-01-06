@@ -17,6 +17,7 @@ of indicators. Once registered, algorithms can be used by setting the global opt
  * `at_least_n`: A result is missing if less than a given number of valid values are present.
  * `pct`: A result is missing if more than a given fraction of its values are missing.
  * `wmo`: A result is missing if 11 days are missing, or 5 consecutive values are missing in a month.
+ * `some_but_not_all`: A result is missing if some but not all input values are missing.
 
 To define another missing value algorithm, subclass :py:class:`MissingBase` and decorate it with
 :py:func:`xclim.core.options.register_missing_method`. See subclassing guidelines in ``MissingBase``'s doc.
@@ -49,6 +50,7 @@ __all__ = [
     "missing_any",
     "missing_from_context",
     "missing_pct",
+    "missing_some_but_not_all",
     "missing_wmo",
     "register_missing_method",
 ]
@@ -320,6 +322,22 @@ class MissingAny(MissingBase):
         return valid.sum(dim="time") != count
 
 
+@register_missing_method("some_but_not_all")
+class MissingSomeButNotAll(MissingBase):
+    """Mask periods as missing if some but not all of its elements is missing or invalid."""
+
+    def __init__(self):
+        """Create a MissingAny object."""
+        super().__init__()
+
+    def is_missing(self, valid: xr.DataArray, count: xr.DataArray, freq: str | None) -> xr.DataArray:
+        if freq is not None:
+            valid = valid.resample(time=freq)
+        # The number of valid values should fit the expected count or be zero.
+        sum = valid.sum(dim="time")
+        return ~((sum == count) | (sum == 0))
+
+
 # TODO: Make coarser method controllable.
 class MissingTwoSteps(MissingBase):
     r"""
@@ -513,6 +531,13 @@ def missing_any(  # noqa: D103 # numpydoc ignore=GL08
 ) -> xr.DataArray:
     """Return whether there are missing days in the array."""
     return MissingAny()(da, freq, src_timestep, **indexer)
+
+
+def missing_some_but_not_all(  # noqa: D103 # numpydoc ignore=GL08
+    da: xr.DataArray, freq: str, src_timestep: str | None = None, **indexer
+) -> xr.DataArray:
+    """Return whether there are some missing days in the array, but not all are missing."""
+    return MissingSomeButNotAll()(da, freq, src_timestep, **indexer)
 
 
 def missing_wmo(  # noqa: D103 # numpydoc ignore=GL08
