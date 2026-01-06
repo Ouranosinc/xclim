@@ -14,10 +14,10 @@ of indicators. Once registered, algorithms can be used by setting the global opt
 `Indicator` subclass. By default, `xclim` registers the following algorithms:
 
  * `any`: A result is missing if any input value is missing.
+ * `some_but_not_all`: A result is missing if some but not all input values are missing.
  * `at_least_n`: A result is missing if less than a given number of valid values are present.
  * `pct`: A result is missing if more than a given fraction of its values are missing.
  * `wmo`: A result is missing if 11 days are missing, or 5 consecutive values are missing in a month.
- * `some_but_not_all`: A result is missing if some but not all input values are missing.
 
 To define another missing value algorithm, subclass :py:class:`MissingBase` and decorate it with
 :py:func:`xclim.core.options.register_missing_method`. See subclassing guidelines in ``MissingBase``'s doc.
