@@ -11,7 +11,7 @@ permissions:
 jobs:
   toot:
     name: Generate Mastodon Toot
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     environment: production
     steps:
       - name: Harden Runner

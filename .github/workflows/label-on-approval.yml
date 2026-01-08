@@ -15,7 +15,7 @@ permissions:
 jobs:
   label_approved:
     name: Label on Approval
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     if: |
       (!contains(github.event.pull_request.labels.*.name, 'approved')) &&
       (github.event.review.state == 'approved') &&
@@ -43,7 +43,7 @@ jobs:
 
   comment_approved:
     name: Comment Concerning Approved Tag
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     if: |
       (github.event_name == 'pull_request_target') &&
       (github.event.pull_request.head.repo.full_name != github.event.pull_request.base.repo.full_name)
