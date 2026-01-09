@@ -1,0 +1,58 @@
+name: Accept Dependabot CI Updates
+
+on:
+  pull_request_target:
+    branches:
+      - main
+    types:
+      - opened
+      - synchronize
+
+permissions:
+  pull-requests: write
+
+jobs:
+  dependabot-auto-approve:
+    name: Auto-approve safe Dependabot updates
+    runs-on: ubuntu-latest
+    if: >
+      github.event.pull_request.user.login == 'dependabot[bot]' &&
+      contains(github.event.pull_request.labels.*.name, 'dependencies')
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@20cf305ff2072d973412fa9b1e3a4f227bda3c76 # v2.14.0
+        with:
+          disable-sudo: true
+          egress-policy: audit
+
+      - name: Fetch Dependabot metadata
+        id: dependabot-metadata
+        uses: dependabot/fetch-metadata@21025c705c08248db411dc16f3619e6b5f9ea21a # v2.5.0
+
+      - name: Stop if update is not minor or patch
+        if: >
+          steps.dependabot-metadata.outputs.update-type != 'version-update:semver-minor' &&
+          steps.dependabot-metadata.outputs.update-type != 'version-update:semver-patch'
+        run: |
+          echo "Not a minor or patch update; skipping auto-approval."
+          exit 0
+
+      - name: Generate GitHub App token
+        id: token_generator
+        uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf # v2.2.1
+        with:
+          app-id: ${{ secrets.OURANOS_HELPER_BOT_ID }}
+          private-key: ${{ secrets.OURANOS_HELPER_BOT_KEY }}
+
+      - name: Approve PR if not already approved
+        run: |
+          current_decision="$(gh pr view "$PR_URL" --json reviewDecision -q .reviewDecision)"
+
+          if [ "$current_decision" != "APPROVED" ]; then
+            gh pr review --approve "$PR_URL"
+          else
+            echo "PR already approved; skipping."
+          fi
+        env:
+          GH_TOKEN: ${{ steps.token_generator.outputs.token }}
+          PR_URL: ${{ github.event.pull_request.html_url }}

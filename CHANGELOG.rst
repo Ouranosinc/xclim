@@ -26,6 +26,7 @@ Internal changes
 * The testing suite has been updated to support `pytest >=9.0` (:pull:`2276`):
     * The configuration in `tox.toml` now uses the new TOML conventions.
     * `--strict-config` and `--strict-markers` have been replaced with the new `--strict` mode. For more information, refer to the `pytest documentation <https://docs.pytest.org/en/stable/reference/reference.html#confval-strict>`_.
+* Added a GitHub Workflow for automatically approving Dependabot Pull Requests that are either `patch` or `minor` updates. Dependabot is now configured to run on a monthly basis (previously weekly). (:pull:`2292`).
 
 v0.59.1 (2025-10-31)
 --------------------

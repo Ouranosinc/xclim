@@ -11,7 +11,7 @@ permissions:
 jobs:
   add-to-project:
     name: Add Issue to xclim Project
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     permissions:
       repository-projects: write
     steps:
