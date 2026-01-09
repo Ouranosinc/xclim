@@ -22,7 +22,7 @@ permissions:
 jobs:
   label:
     name: Label
-    runs-on: ubuntu-slim
+    runs-on: ubuntu-latest
     permissions:
       pull-requests: write
     steps:
