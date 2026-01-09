@@ -1,7 +1,7 @@
 name: Accept Dependabot CI Updates
 
 on:
-  pull_request_target:
+  pull_request:
     branches:
       - main
     types:
@@ -17,7 +17,8 @@ jobs:
     runs-on: ubuntu-latest
     if: >
       github.event.pull_request.user.login == 'dependabot[bot]' &&
-      contains(github.event.pull_request.labels.*.name, 'dependencies')
+      contains(github.event.pull_request.labels.*.name, 'dependencies') &&
+      github.repository == 'Ouranosinc/xclim'
     permissions:
       contents: write
       pull-requests: write
