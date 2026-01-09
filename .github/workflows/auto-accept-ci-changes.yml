@@ -1,4 +1,4 @@
-name: Accept Dependabot CI Updates
+name: Dependabot CI Updates
 
 on:
   pull_request:
@@ -13,12 +13,11 @@ permissions:
 
 jobs:
   dependabot-auto-approve:
-    name: Auto-approve safe Dependabot updates
+    name: Auto-approve and auto-merge safe Dependabot updates
     runs-on: ubuntu-latest
     if: >
       github.event.pull_request.user.login == 'dependabot[bot]' &&
-      contains(github.event.pull_request.labels.*.name, 'dependencies') &&
-      github.repository == 'Ouranosinc/xclim'
+      contains(github.event.pull_request.labels.*.name, 'dependencies')
     permissions:
       contents: write
       pull-requests: write
@@ -29,18 +28,6 @@ jobs:
           disable-sudo: true
           egress-policy: audit
 
-      - name: Fetch Dependabot metadata
-        id: dependabot-metadata
-        uses: dependabot/fetch-metadata@21025c705c08248db411dc16f3619e6b5f9ea21a # v2.5.0
-
-      - name: Stop if update is not minor or patch
-        if: >
-          steps.dependabot-metadata.outputs.update-type != 'version-update:semver-minor' &&
-          steps.dependabot-metadata.outputs.update-type != 'version-update:semver-patch'
-        run: |
-          echo "Not a minor or patch update; skipping auto-approval."
-          exit 0
-
       - name: Generate GitHub App token
         id: token_generator
         uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf # v2.2.1
@@ -48,15 +35,39 @@ jobs:
           app-id: ${{ secrets.OURANOS_HELPER_BOT_ID }}
           private-key: ${{ secrets.OURANOS_HELPER_BOT_KEY }}
 
-      - name: Approve PR if not already approved
-        run: |
-          current_decision="$(gh pr view "$PR_URL" --json reviewDecision -q .reviewDecision)"
+      - name: Fetch Dependabot metadata
+        id: dependabot-metadata
+        uses: dependabot/fetch-metadata@21025c705c08248db411dc16f3619e6b5f9ea21a # v2.5.0
+        with:
+          github-token: ${{ steps.token_generator.outputs.token }}
 
-          if [ "$current_decision" != "APPROVED" ]; then
-            gh pr review --approve "$PR_URL"
-          else
-            echo "PR already approved; skipping."
+      - name: Stop workflow if not minor update or patch update
+        if: >
+          steps.dependabot-metadata.outputs.update-type != 'version-update:semver-minor' &&
+          steps.dependabot-metadata.outputs.update-type != 'version-update:semver-patch'
+        run: |
+          echo "Not a minor or patch update; skipping auto-approval."
+          exit 0
+
+      - name: Checkout Repository
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+        with:
+          token: ${{ steps.token_generator.outputs.token }}
+          persist-credentials: false
+
+      - name: Approve Pull Request if not already approved
+        run: |
+          if [ "$(gh pr status --json reviewDecision -q .currentBranch.reviewDecision)" != "APPROVED" ];
+          then gh pr review --approve "$PR_URL"
+          else echo "PR already approved, skipping additional approvals to minimize emails/notification noise.";
           fi
         env:
-          GH_TOKEN: ${{ steps.token_generator.outputs.token }}
+          GITHUB_TOKEN: ${{ steps.token_generator.outputs.token }}
+          PR_URL: ${{github.event.pull_request.html_url}}
+
+      - name: Enable auto-merge
+        run: |
+          gh pr merge --auto --merge "$PR_URL"
+        env:
+          GITHUB_TOKEN: ${{ steps.token_generator.outputs.token }}
           PR_URL: ${{ github.event.pull_request.html_url }}

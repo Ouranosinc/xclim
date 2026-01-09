@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   cleanup:
-    runs-on: ubuntu-slim
+    runs-on: ubuntu-latest
     permissions:
       actions: write
     steps:
