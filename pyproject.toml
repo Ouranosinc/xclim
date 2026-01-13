@@ -294,6 +294,30 @@ timeout = "300" # must be string representing seconds (this may soon change)
 timeout_method = "thread"
 xfail_strict = true
 
+[tool.rstcheck]
+report_level = "WARNING"
+ignore_directives = [
+  "autoclass",
+  "autofunction",
+  "autolink-skip",
+  "automodule",
+  "bibliography",
+  "mdinclude"
+]
+ignore_roles = [
+  "cite:cts",
+  "cite:p",
+  "cite:t",
+  "issue",
+  "pull",
+  "user"
+]
+ignore_substitutions = []
+ignore_languages = [
+  "cpp",
+  "python"
+]
+
 [tool.ruff]
 src = ["xclim"]
 line-length = 120

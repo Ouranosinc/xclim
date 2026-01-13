@@ -29,7 +29,9 @@ Internal changes
     * `--strict-config` and `--strict-markers` have been replaced with the new `--strict` mode. For more information, refer to the `pytest documentation <https://docs.pytest.org/en/stable/reference/reference.html#confval-strict>`_.
 * Added a GitHub Workflow for automatically approving Dependabot Pull Requests that are either `patch` or `minor` updates. Dependabot is now configured to run on a monthly basis (previously weekly). (:pull:`2292`).
 * Dependabot `auto-approved` pull requests are now also set to `auto-merge`. (:pull:`2300`).
-* Build-cancelling based on concurrency rules for the `main.yml` GitHub Workflow is now divided according to the `github.event_name` (`pull_request`, `pull_request_review`). (:pull:`2301`).
+* Build-cancelling based on concurrency rules for the ``main.yml`` GitHub Workflow is now divided according to the `github.event_name` (`pull_request`, `pull_request_review`). (:pull:`2301`).
+* Added the `rst-check` `pre-commit` hook for ensuringt that ReStructuredText roles, directives, and spacing are consistent with repository configurations. (:issue:`2133`, :pull:`2306`).
+* Replaced the `formattext-pre-commit` hook with `mirrors-bibtex-tidy` in order to enforce style and consistency on `BibTeX` files. (:pull:`2306`).
 
 v0.59.1 (2025-10-31)
 --------------------
