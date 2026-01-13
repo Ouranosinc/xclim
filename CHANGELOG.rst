@@ -13,7 +13,8 @@ Breaking changes
 
 New indicators and features
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
-* New missing algorithm ``some_but_not_all``. (:pull:`2290`)
+* `xclim` now officially supports Python 3.14. (:issue:`2259`, :pull:`2305`).
+* New missing algorithm ``some_but_not_all``. (:pull:`2290`).
 
 Bug fixes
 ^^^^^^^^^
