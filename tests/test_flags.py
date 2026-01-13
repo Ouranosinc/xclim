@@ -39,7 +39,7 @@ class TestDataFlags:
 
     def test_pr_precipitation_flags(self, pr_series):
         # Pint <=0.24.4 has precision errors : (1 / 3600 / 24 kg m-2 s-1  = 0.999999998 mm/d )
-        pytest.importorskip("pint", minversion="0.25")
+        pytest.importorskip("pint", minversion="0.25", reason="Precipitation flag calculations require newer `pint`")
         pr = pr_series(np.zeros(365), start="1971-01-01")
         pr += 1 / 3600 / 24
         pr[0:7] += 10 / 3600 / 24
@@ -59,7 +59,7 @@ class TestDataFlags:
 
     def test_suspicious_pr_data(self, pr_series):
         # Pint <=0.24.4 has precision errors : (1 / 3600 / 24 kg m-2 s-1  = 0.999999998 mm/d )
-        pytest.importorskip("pint", minversion="0.25")
+        pytest.importorskip("pint", minversion="0.25", reason="Precipitation flag calculations require newer `pint`")
         bad_pr = pr_series(np.zeros(365), start="1971-01-01")
 
         # Add some strangeness
