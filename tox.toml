@@ -19,7 +19,7 @@ deps = [
   "lmoments3 >=1.0.7",
   "h5netcdf >=1.5.0",
   "netcdf4",
-  "pytest >=8.0.0",
+  "pytest >=9.0.0",
   "xsdba >=0.4.0"
 ]
 commands = [
@@ -28,9 +28,6 @@ commands = [
 
 [env.doctests]
 labels = ["doctests"]
-deps = [
-  "pytest >=9.0"
-]
 description = "Run doctests with pytest under {basepython}"
 commands = [
   ["python", "-c", "from xclim.testing.utils import run_doctests; run_doctests()"]
