@@ -1082,9 +1082,9 @@ def standardized_index(  # noqa: C901  # pylint: disable=E0606 # this is a weird
                 alpha, beta = 0, 0
         else:
             alpha, beta = rank_method
-        rank = (1 - zero_factor) + zero_factor * number_of_zeros
-        prob_of_zero = (rank - alpha) / (number_of_notnull + 1 - alpha - beta)
-
+        prob_of_zero_rank_1 = (1 - alpha) / (number_of_notnull + 1 - alpha - beta)
+        prob_of_zero_rank_n = (number_of_zeros - alpha) / (number_of_notnull + 1 - alpha - beta)
+        prob_of_zero = (1 - zero_factor) * prob_of_zero_rank_1 + zero_factor * prob_of_zero_rank_n
         mask = da != 0
         da = da.where(mask)
     params = reindex_time(params, da, group)
