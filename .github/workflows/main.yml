@@ -58,6 +58,7 @@ jobs:
             ipapi.co:443
             proxy.golang.org:443
             pypi.org:443
+            static.crates.io:443
             sum.golang.org:443
       - name: Start Measurement
         uses: green-coding-solutions/eco-ci-energy-estimation@0fd2200a8f02d7939066c535e3642c2ebee9db16 # v5.1
