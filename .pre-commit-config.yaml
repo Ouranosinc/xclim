@@ -101,6 +101,7 @@ repos:
         additional_dependencies: ['rstcheck[sphinx,toml]']
   - repo: https://github.com/FlamingTempura/bibtex-tidy
     rev: v1.14.0
+    language: node
     hooks:
       - id: bibtex-tidy
         args: [ '--v2', '--modify', '--wrap' ]
