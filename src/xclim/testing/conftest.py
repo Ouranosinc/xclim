@@ -6,7 +6,7 @@
 
 from __future__ import annotations
 
-import importlib.util
+import importlib.util as _util
 import os
 from pathlib import Path
 
@@ -91,8 +91,8 @@ def is_matplotlib_installed(xdoctest_namespace) -> None:  # numpydoc ignore=PR01
     """Skip tests that require matplotlib if it is not installed."""
 
     def _is_matplotlib_installed():
-        matplotlib = importlib.util.find_spec("matplotlib")
-        if not hasattr(matplotlib, "origin"):
+        matplotlib_installed = _util.find_spec("matplotlib")
+        if not matplotlib_installed:
             pytest.skip("This doctest requires matplotlib to be installed.")
 
     xdoctest_namespace["is_matplotlib_installed"] = _is_matplotlib_installed
