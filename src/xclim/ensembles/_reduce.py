@@ -20,10 +20,7 @@ from scipy.spatial.distance import cdist
 from sklearn.cluster import KMeans
 
 # Avoid having to include matplotlib in xclim requirements
-MPL_INSTALLED = False
-matplotlib_installed = _util.find_spec("matplotlib")
-if not matplotlib_installed:
-    MPL_INSTALLED = True
+MPL_INSTALLED = bool(_util.find_spec("matplotlib"))
 
 
 def make_criteria(ds: xarray.Dataset | xarray.DataArray):
