@@ -336,7 +336,7 @@ def uas_vas_to_sfcwind(
 @declare_units(sfcWind="[speed]", sfcWindfromdir="[]")
 def sfcwind_to_uas_vas(
     sfcWind: xr.DataArray,
-    sfcWindfromdir: xr.DataArray,  # noqa
+    sfcWindfromdir: xr.DataArray,
 ) -> tuple[xr.DataArray, xr.DataArray]:
     """
     Eastward and northward wind components from the wind speed and direction.
@@ -363,7 +363,7 @@ def sfcwind_to_uas_vas(
     >>> uas, vas = sfcwind_to_uas_vas(sfcWind=sfcWind_dataset, sfcWindfromdir=sfcWindfromdir_dataset)
     """
     # Converts the wind speed to m s-1
-    sfcWind = convert_units_to(sfcWind, "m/s")  # noqa
+    sfcWind = convert_units_to(sfcWind, "m/s")
 
     # Converts the wind direction from the meteorological standard to the mathematical standard
     wind_from_dir_math = (-sfcWindfromdir + 270) % 360.0
@@ -495,7 +495,7 @@ def saturation_vapor_pressure(
     method: str = "sonntag90",
     interp_power: float | None = None,
     water_thresh: Quantified = "0 °C",
-) -> xr.DataArray:  # noqa: E501
+) -> xr.DataArray:
     r"""
     Saturation vapour pressure from temperature.
 

@@ -49,7 +49,7 @@ repos:
     rev: v4.0.4
     hooks:
       - id: pylint
-        args: [ '--rcfile=.pylintrc.toml', '--errors-only', '--jobs=0', '--disable=import-error' ]
+        args: [ '--rcfile=.pylintrc.toml', '--errors-only', '--jobs=0', '--disable=E0015,E0401' ]
   - repo: https://github.com/pycqa/flake8
     rev: 7.3.0
     hooks:
@@ -95,7 +95,7 @@ repos:
         # Exclude the missing submodule from the xclim.core, see:
         exclude: ^docs/|^tests/|^src/xclim/core/missing.py
   - repo: https://github.com/rstcheck/rstcheck
-    rev: v6.2.4
+    rev: v6.2.5
     hooks:
       - id: rstcheck
         additional_dependencies: [ 'rstcheck[sphinx,toml]' ]

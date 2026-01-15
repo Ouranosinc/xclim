@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import datetime as dt
 import itertools
+import logging
 import re
 import string
 import textwrap
@@ -14,7 +15,7 @@ import warnings
 from ast import literal_eval
 from collections.abc import Callable, Sequence
 from fnmatch import fnmatch
-from inspect import _empty, signature  # noqa
+from inspect import _empty, signature
 from typing import Any
 
 import pandas as pd
@@ -309,7 +310,9 @@ def _parse_parameters(section):
                 try:
                     choices = literal_eval(match.groups()[0])
                     params[curr_key]["choices"] = choices
-                except ValueError:  # noqa: S110
+                except ValueError as err:
+                    msg = f"Choice not found. Ignoring: {err}"
+                    logging.info(msg)
                     # If the literal_eval fails, we just ignore the choices.
                     pass
     return params

@@ -98,7 +98,7 @@ def spatial_analogs(
     diss.name = "dissimilarity"
     diss.attrs.update(
         long_name=f"Dissimilarity between target and candidates, using metric {method}.",
-        indices=",".join(target_array._indices.values),  # noqa
+        indices=",".join(target_array._indices.values),
         metric=method,
     )
 
@@ -431,7 +431,7 @@ def friedman_rafsky(x: np.ndarray, y: np.ndarray) -> float:
 
 
 @metric
-def kolmogorov_smirnov(x: np.ndarray, y: np.ndarray) -> float:  # noqa: E501
+def kolmogorov_smirnov(x: np.ndarray, y: np.ndarray) -> float:
     """
     Compute the Kolmogorov-Smirnov statistic applied to two multivariate samples as described by Fasano and Franceschini.
 
