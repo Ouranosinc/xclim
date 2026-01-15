@@ -32,6 +32,8 @@ Internal changes
 * Build-cancelling based on concurrency rules for the ``main.yml`` GitHub Workflow is now divided according to the `github.event_name` (`pull_request`, `pull_request_review`). (:pull:`2301`).
 * Added the `rst-check` `pre-commit` hook for ensuringt that ReStructuredText roles, directives, and spacing are consistent with repository configurations. (:issue:`2133`, :pull:`2306`).
 * Replaced the `formattext-pre-commit` hook with `mirrors-bibtex-tidy` in order to enforce style and consistency on `BibTeX` files. (:pull:`2306`).
+* Removed many obsolete `noqa` comments throughout the code base. (:pull:`2307`).
+* `matplotlib` is no longer loaded during the import process of `xclim` nor during the pytest setup if present in the environment. (:pull:`2307`).
 
 v0.59.1 (2025-10-31)
 --------------------
