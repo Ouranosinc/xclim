@@ -4,15 +4,17 @@ Changelog
 
 v0.60.0 (unreleased)
 --------------------
-Contributors to this version: Éric Dupuis (:user:`coxipi`), Trevor James Smith (:user:`Zeitsperre`), Hui-Min Wang (:user:`Hem-W`).
-
-New indicators and features
-^^^^^^^^^^^^^^^^^^^^^^^^^^^
-* Added a `prob_zero_method` argument to `standardized_index` and `standardized_precipitation_index` to control how zero-precipitation probabilities are handled. (:issue:`2279`, :pull:`2280`).
+Contributors to this version: Éric Dupuis (:user:`coxipi`), Trevor James Smith (:user:`Zeitsperre`), Juliette Lavoie (:user: `juliettelavoie`), Hui-Min Wang (:user:`Hem-W`).
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
 * `lmoments3` is now listed as a dependency to the extras recipe. This dependency is not installed by default with `xclim` and must be explicitly requested with ``$ pip install "xclim[extras]"``, if desired. (:pull:`2269`).
+* `numpy`-related `RuntimeWarnings` for invalid operations are noisier when running calculations via the ``xclim.indices`` and muted by default for ``xclim.indicators``. This change is made to ensure that users who perform indice calculations can be made more aware of potential inconsistencies in their source datasets (:issue:`2277`, :pull:`2276`).
+
+New indicators and features
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+* New missing algorithm ``some_but_not_all``. (:pull:`2290`)
+* Added a ``prob_zero_method`` argument to ``standardized_index`` and ``standardized_precipitation_index`` to control how zero-precipitation probabilities are handled. (:issue:`2279`, :pull:`2280`).
 
 Bug fixes
 ^^^^^^^^^
@@ -22,6 +24,12 @@ Internal changes
 ^^^^^^^^^^^^^^^^
 * Replaced the ``tox.ini`` file with a ``tox.toml`` file and simplified the conditionals for environment selection. (:pull:`2269`).
 * Removed `python-coveralls` from the `tox`-only dependencies (abandoned software / not supported for Python 3.13 or 3.14) and added the `coverallsapp/github-action` step to PyPI/tox builds on CI. (:pull:`2269`).
+* The testing suite has been updated to support `pytest >=9.0` (:pull:`2276`):
+    * The configuration in `tox.toml` now uses the new TOML conventions.
+    * `--strict-config` and `--strict-markers` have been replaced with the new `--strict` mode. For more information, refer to the `pytest documentation <https://docs.pytest.org/en/stable/reference/reference.html#confval-strict>`_.
+* Added a GitHub Workflow for automatically approving Dependabot Pull Requests that are either `patch` or `minor` updates. Dependabot is now configured to run on a monthly basis (previously weekly). (:pull:`2292`).
+* Dependabot `auto-approved` pull requests are now also set to `auto-merge`. (:pull:`2300`).
+* Build-cancelling based on concurrency rules for the `main.yml` GitHub Workflow is now divided according to the `github.event_name` (`pull_request`, `pull_request_review`). (:pull:`2301`).
 
 v0.59.1 (2025-10-31)
 --------------------

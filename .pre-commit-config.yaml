@@ -3,7 +3,7 @@ default_language_version:
 
 repos:
   - repo: https://github.com/asottile/pyupgrade
-    rev: v3.20.0
+    rev: v3.21.2
     hooks:
       - id: pyupgrade
         args: ['--py310-plus']
@@ -39,14 +39,14 @@ repos:
       - id: yamllint
         args: [ '--config-file=.yamllint.yaml' ]
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.13.3
+    rev: v0.14.10
     hooks:
       - id: ruff-format
         exclude: '(src/xclim/indices/__init__.py|docs/installation.rst)'
       - id: ruff-check
         args: [ '--fix', '--show-fixes' ]
   - repo: https://github.com/pylint-dev/pylint
-    rev: v3.3.9
+    rev: v4.0.4
     hooks:
       - id: pylint
         args: [ '--rcfile=.pylintrc.toml', '--errors-only', '--jobs=0', '--disable=import-error' ]
@@ -61,7 +61,7 @@ repos:
     hooks:
       - id: vulture
   - repo: https://github.com/kynan/nbstripout
-    rev: 0.8.1
+    rev: 0.8.2
     hooks:
       - id: nbstripout
         files: '.ipynb'
@@ -78,7 +78,7 @@ repos:
       - id: rst-inline-touching-normal
       - id: text-unicode-replacement-char
   - repo: https://github.com/executablebooks/mdformat
-    rev: 0.7.22
+    rev: 1.0.0
     hooks:
       - id: mdformat
         exclude: '.github/\w+.md|.github/publish-mastodon-template.md|docs/paper/paper.md'
@@ -89,7 +89,7 @@ repos:
         additional_dependencies: [ 'tomli' ]
         args: [ '--toml=pyproject.toml' ]
   - repo: https://github.com/numpy/numpydoc
-    rev: v1.9.0
+    rev: v1.10.0
     hooks:
       - id: numpydoc-validation
         # Exclude the missing submodule from the xclim.core, see:
@@ -99,11 +99,11 @@ repos:
     hooks:
       - id: formatbibtex
   - repo: https://github.com/gitleaks/gitleaks
-    rev: v8.28.0
+    rev: v8.30.0
     hooks:
       - id: gitleaks
   - repo: https://github.com/python-jsonschema/check-jsonschema
-    rev: 0.34.0
+    rev: 0.36.0
     hooks:
       - id: check-github-workflows
       - id: check-readthedocs

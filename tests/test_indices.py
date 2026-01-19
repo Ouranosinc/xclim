@@ -14,7 +14,6 @@
 from __future__ import annotations
 
 import calendar
-import warnings
 
 import numpy as np
 import pandas as pd
@@ -474,7 +473,7 @@ class TestAgroclimaticIndices:
         else:
             if method == "icclim":
                 # The 'icclim' method is an alias for 'huglin'
-                with pytest.warns(DeprecationWarning):
+                with pytest.warns(DeprecationWarning) as record:
                     # find lat implicitly
                     hi = xci.huglin_index(
                         tasmax=tasmax,
@@ -484,6 +483,7 @@ class TestAgroclimaticIndices:
                         freq=freq,
                         cap_value=cap_value,
                     )
+                    assert "Method 'icclim' is deprecated. Use 'stepwise' instead" in record[0].message.args[0]
             else:
                 # find lat implicitly
                 hi = xci.huglin_index(
@@ -744,7 +744,7 @@ class TestStandardizedIndices:
         self, freq, window, dist, method, values, diff_tol, open_dataset, no_numbagg
     ):
         if method == "ML" and freq == "D" and Version(__numpy_version__) < Version("2.0.0"):
-            pytest.skip("Skipping SPI/ML/D on older numpy")
+            pytest.skip("Skipping SPI/ML/D for numpy below v2.0")
 
         # change `dist` to a lmoments3 object if needed
         if method == "PWM":
@@ -882,7 +882,7 @@ class TestStandardizedIndices:
         self, freq, window, dist, method, values, diff_tol, open_dataset
     ):
         if method == "ML" and freq == "D" and Version(__numpy_version__) < Version("2.0.0"):
-            pytest.skip("Skipping SPI/ML/D on older numpy")
+            pytest.skip("Skipping SPI/ML/D for numpy below v2.0")
 
         ds = open_dataset("sdba/CanESM2_1950-2100.nc").isel(location=1).sel(time=slice("1950", "2000"))
         pr = ds.pr
@@ -1168,7 +1168,7 @@ class TestStandardizedIndices:
     )
     def test_standardized_groundwater_index(self, freq, window, dist, method, values, diff_tol, open_dataset):
         if method == "ML" and freq == "D" and Version(__numpy_version__) < Version("2.0.0"):
-            pytest.skip("Skipping SPI/ML/D on older numpy")
+            pytest.skip("Skipping SPI/ML/D for numpy below v2.0")
         ds = open_dataset("Raven/gwl_obs.nc")
         gwl0 = ds.gwl
 
@@ -1178,8 +1178,20 @@ class TestStandardizedIndices:
         fitkwargs = {}
         if method == "APP":
             fitkwargs["floc"] = 0
-        with warnings.catch_warnings():
-            warnings.filterwarnings("ignore", message="Degrees of freedom <= 0 for slice")
+
+        if freq == "MS" and dist == "lognorm" and method == "ML":
+            with pytest.warns(RuntimeWarning) as record:
+                params = standardized_index_fit_params(
+                    gwl_cal,
+                    freq=freq,
+                    window=window,
+                    dist=dist,
+                    method=method,
+                    fitkwargs=fitkwargs,
+                    zero_inflated=True,
+                )
+                assert "Degrees of freedom <= 0 for slice" in record[0].message.args[0]
+        else:
             params = standardized_index_fit_params(
                 gwl_cal,
                 freq=freq,
