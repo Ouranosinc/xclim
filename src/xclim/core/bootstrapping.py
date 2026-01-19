@@ -212,7 +212,7 @@ def bootstrap_func(compute_index_func: Callable, **kwargs) -> xarray.DataArray:
 
 
 def _get_bootstrap_freq(freq):
-    _, base, start_anchor, anchor = parse_offset(freq)  # noqa
+    _, base, start_anchor, anchor = parse_offset(freq)
     bfreq = "Y"
     if start_anchor:
         bfreq += "S"

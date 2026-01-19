@@ -497,7 +497,7 @@ def build_climatology_bounds(da: xr.DataArray) -> list[str]:
 
 def compare_offsets(
     freqA: str, op: Literal[">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"], freqB: str
-) -> bool:  # noqa
+) -> bool:
     """
     Compare offsets string based on their approximate length, according to a given operator.
 
@@ -772,7 +772,7 @@ def resample_doy(doy: xr.DataArray, arr: xr.DataArray | xr.Dataset) -> xr.DataAr
     return out
 
 
-def time_bnds(  # noqa: C901
+def time_bnds(
     time: (xr.DataArray | xr.Dataset | CFTimeIndex | pd.DatetimeIndex),
     freq: str | None = None,
     precision: str | None = None,
