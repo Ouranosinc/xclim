@@ -1062,8 +1062,6 @@ def standardized_index(  # noqa: C901  # pylint: disable=E0606 # this is a weird
 
     # this should be restricted to some distributions / in some context
     zero_inflated = "prob_of_zero" in params.coords
-    prob_of_zero = 0
-    mask = None
     if zero_inflated:
         number_of_zeros = params["number_of_zeros"]
         number_of_notnull = params["number_of_notnull"]
@@ -1084,19 +1082,21 @@ def standardized_index(  # noqa: C901  # pylint: disable=E0606 # this is a weird
             alpha, beta = rank_method
         prob_of_zero_rank_1 = (1 - alpha) / (number_of_notnull + 1 - alpha - beta)
         prob_of_zero_rank_n = (number_of_zeros - alpha) / (number_of_notnull + 1 - alpha - beta)
-        prob_of_zero = (1 - zero_factor) * prob_of_zero_rank_1 + zero_factor * prob_of_zero_rank_n
+        prob_of_zero_rank_f = (1 - zero_factor) * prob_of_zero_rank_1 + zero_factor * prob_of_zero_rank_n
         mask = da != 0
         da = da.where(mask)
     params = reindex_time(params, da, group)
     dist_probs = dist_method("cdf", params, da, dist=dist)
     if zero_inflated:
         dist_probs = dist_probs.where(mask, 0)
-    # This assumes that values are greater or equal to 0.
-    # It might be useful to define inflated distribution where
-    # the inflated value is not the lower bound, which would warrant
-    # a generalized implementation. For now, this option shall be used with
-    # standardized_precipitation_index where values are not negative.
-    probs = prob_of_zero + ((1 - prob_of_zero) * dist_probs)
+        # This assumes that values are greater or equal to 0.
+        # It might be useful to define inflated distribution where
+        # the inflated value is not the lower bound, which would warrant
+        # a generalized implementation. For now, this option shall be used with
+        # standardized_precipitation_index where values are not negative.
+        probs = xr.where(mask, prob_of_zero_rank_n + ((1 - prob_of_zero_rank_n) * dist_probs), prob_of_zero_rank_f)
+    else:
+        probs = dist_probs
 
     params_norm = xr.DataArray(
         [0, 1],
