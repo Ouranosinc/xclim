@@ -65,6 +65,10 @@ jobs:
         with:
           task: start-measurement
           branch: ${{ github.head_ref || github.ref_name }}
+          project: 'xclim'
+          tags: "CI/CD, Main, ${{ matrix.python-version }}"
+          gmt-api-token: ${{ secrets.GMT_API_TOKEN }}
+          electricitymaps-api-token: ${{ secrets.ELECTRICITYMAPS_API_TOKEN }}
         continue-on-error: true
       - name: Checkout Repository
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
@@ -146,6 +150,10 @@ jobs:
         with:
           task: start-measurement
           branch: ${{ github.head_ref || github.ref_name }}
+          project: 'xclim'
+          tags: "CI/CD, Main, ${{ matrix.python-version }}"
+          gmt-api-token: ${{ secrets.GMT_API_TOKEN }}
+          electricitymaps-api-token: ${{ secrets.ELECTRICITYMAPS_API_TOKEN }}
         continue-on-error: true
       - name: Checkout Repository
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
@@ -269,6 +277,10 @@ jobs:
         with:
           task: start-measurement
           branch: ${{ github.head_ref || github.ref_name }}
+          project: 'xclim'
+          tags: "CI/CD, Main, ${{ matrix.python-version }}"
+          gmt-api-token: ${{ secrets.GMT_API_TOKEN }}
+          electricitymaps-api-token: ${{ secrets.ELECTRICITYMAPS_API_TOKEN }}
         continue-on-error: true
       - name: Checkout Repository
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
@@ -387,6 +399,10 @@ jobs:
         with:
           task: start-measurement
           branch: ${{ github.head_ref || github.ref_name }}
+          project: 'xclim'
+          tags: "CI/CD, Main, ${{ matrix.python-version }}"
+          gmt-api-token: ${{ secrets.GMT_API_TOKEN }}
+          electricitymaps-api-token: ${{ secrets.ELECTRICITYMAPS_API_TOKEN }}
         continue-on-error: true
       - name: Checkout Repository
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
@@ -473,6 +489,10 @@ jobs:
         with:
           task: start-measurement
           branch: ${{ github.head_ref || github.ref_name }}
+          project: 'xclim'
+          tags: "CI/CD, Main"
+          gmt-api-token: ${{ secrets.GMT_API_TOKEN }}
+          electricitymaps-api-token: ${{ secrets.ELECTRICITYMAPS_API_TOKEN }}
         continue-on-error: true
       - name: Coveralls Finished
         uses: coverallsapp/github-action@5cbfd81b66ca5d10c19b062c04de0199c215fb6e # v2.3.7
