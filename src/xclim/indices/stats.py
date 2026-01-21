@@ -723,7 +723,7 @@ def preprocess_standardized_index(da: xr.DataArray, freq: str | None, window: in
         and will skip the resampling step.
     window : int
         Averaging window length relative to the resampling frequency. For example, if `freq="MS"`,
-        i.e. a monthly resampling, the window is an integer number of months.
+        i.e. a monthly resampling, the window is an integer _ of months.
     **indexer : {dim: indexer, }, optional
         Indexing parameters to compute the indicator on a temporal subset of the data.
         It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
@@ -870,12 +870,12 @@ def standardized_index_fit_params(
         group_handler = group
 
     if zero_inflated:
-        number_of_zero = (da == 0).groupby(group_handler).sum("time")
+        number_of_zeros = (da == 0).groupby(group_handler).sum("time")
         number_of_notnull = da.notnull().groupby(group_handler).sum("time")
-        prob_of_zero = number_of_zero / number_of_notnull
+        prob_of_zero = number_of_zeros / number_of_notnull
         params = da.where(da != 0).groupby(group_handler).map(fit, dist=dist, method=method, **fitkwargs)
         params["prob_of_zero"] = prob_of_zero
-        params["number_of_zero"] = number_of_zero
+        params["number_of_zeros"] = number_of_zeros
         params["number_of_notnull"] = number_of_notnull
     else:
         params = da.groupby(group_handler).map(fit, dist=dist, method=method, **fitkwargs)
