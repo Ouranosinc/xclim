@@ -10,7 +10,7 @@ Breaking changes
 ^^^^^^^^^^^^^^^^
 * `lmoments3` is now listed as a dependency to the extras recipe. This dependency is not installed by default with `xclim` and must be explicitly requested with ``$ pip install "xclim[extras]"``, if desired. (:pull:`2269`).
 * `numpy`-related `RuntimeWarnings` for invalid operations are noisier when running calculations via the ``xclim.indices`` and muted by default for ``xclim.indicators``. This change is made to ensure that users who perform indice calculations can be made more aware of potential inconsistencies in their source datasets (:issue:`2277`, :pull:`2276`).
-* ``xclim.core.calendar.time_bnds`` now follows the CF conventions in that the "end" time is the same as the "start" of the next period (and not the timestep just before).
+* ``xclim.core.calendar.time_bnds`` now follows the CF conventions in that the "end" time is the same as the "start" of the next period (and not the timestep just before) (:pull:`2310`).
 
 New indicators and features
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -21,7 +21,7 @@ New indicators and features
 Bug fixes
 ^^^^^^^^^
 * One of the conditions in ``atmos.cooling_degree_days_approximation`` had the wrong computation and has been fixed: ``(tasmax - tasmin)/4`` is replaced by ``(tasmax - thresh)/4`` (:issue:`2272`, :pull:`2273`).
-* Fix some issues with Pandas 3 in partitioning functions of ``xclim.ensembles`` and in ``xclim.indices.generic.aggregate_between_dates``.
+* Fix some issues with Pandas 3 in partitioning functions of ``xclim.ensembles`` and in ``xclim.indices.generic.aggregate_between_dates`` (:pull:`2310`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
