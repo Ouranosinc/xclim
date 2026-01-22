@@ -184,6 +184,7 @@ def test_attrs(tas_series):
     ],
 )
 def test_keep_attrs(tasmin_series, tasmax_series, xropt, exp):
+    pytest.importorskip("xarray", minversion="2025.11")
     tx = tasmax_series(np.arange(360.0))
     tn = tasmin_series(np.arange(360.0))
     tx.attrs.update(something="blabla", bing="bang", foo="bar")
@@ -198,7 +199,6 @@ def test_keep_attrs(tasmin_series, tasmax_series, xropt, exp):
 
 @pytest.mark.parametrize("xrkeep", [True, False])
 def test_as_dataset(tasmax_series, tasmin_series, xrkeep):
-    pytest.importorskip("xarray", minversion="2025.11")
     tx = tasmax_series(np.arange(360.0))
     tn = tasmin_series(np.arange(360.0))
     tx.attrs.update(something="blabla", bing="bang", foo="bar")
