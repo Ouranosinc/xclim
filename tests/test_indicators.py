@@ -190,6 +190,7 @@ def test_keep_attrs(tasmin_series, tasmax_series, xropt, exp):
     tn.attrs.update(something="blabla", bing="bong")
     with xr.set_options(keep_attrs=xropt):
         tg = multiOptVar(tasmin=tn, tasmax=tx)
+
     assert (tg.attrs.get("something") == "blabla") is exp
     assert (tg.attrs.get("foo") == "bar") is exp
     assert "bing" not in tg.attrs
@@ -197,6 +198,7 @@ def test_keep_attrs(tasmin_series, tasmax_series, xropt, exp):
 
 @pytest.mark.parametrize("xrkeep", [True, False])
 def test_as_dataset(tasmax_series, tasmin_series, xrkeep):
+    pytest.importorskip("xarray", minversion="2025.11")
     tx = tasmax_series(np.arange(360.0))
     tn = tasmin_series(np.arange(360.0))
     tx.attrs.update(something="blabla", bing="bang", foo="bar")
