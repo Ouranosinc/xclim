@@ -34,6 +34,7 @@ Internal changes
 * Replaced the `formattext-pre-commit` hook with `mirrors-bibtex-tidy` in order to enforce style and consistency on `BibTeX` files. (:pull:`2306`).
 * Removed many obsolete `noqa` comments throughout the code base. (:pull:`2307`).
 * `matplotlib` is no longer loaded during the import process of `xclim` nor during the pytest setup if present in the environment. (:pull:`2307`).
+* Temporarily pin `pandas` below v3.0 to prevent failures from changes in the API. (:pull:`2309`).
 
 v0.59.1 (2025-10-31)
 --------------------
