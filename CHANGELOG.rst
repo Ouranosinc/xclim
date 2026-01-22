@@ -11,7 +11,7 @@ Breaking changes
 * `lmoments3` is now listed as a dependency to the extras recipe. This dependency is not installed by default with `xclim` and must be explicitly requested with ``$ pip install "xclim[extras]"``, if desired. (:pull:`2269`).
 * `numpy`-related `RuntimeWarnings` for invalid operations are noisier when running calculations via the ``xclim.indices`` and muted by default for ``xclim.indicators``. This change is made to ensure that users who perform indice calculations can be made more aware of potential inconsistencies in their source datasets (:issue:`2277`, :pull:`2276`).
 * ``xclim.core.calendar.time_bnds`` now follows the CF conventions in that the "end" time is the same as the "start" of the next period (and not the timestep just before) (:pull:`2310`).
-* The ``keep_attrs`` option was removed from ``xclim.set_options``. The recent change of philosophy in xarray as made xclim's attribute preserving logic irrelevant. Xarray's ``keep_attrs`` option now controls all attribute management (:pull:`2311`).
+* The ``keep_attrs`` option was removed from ``xclim.set_options``. The recent change of philosophy in xarray as made xclim's attribute preserving logic irrelevant. Xarray's ``keep_attrs`` option now controls all attribute management (:issue:`2308`, :pull:`2311`).
 
 New indicators and features
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
