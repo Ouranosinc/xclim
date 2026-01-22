@@ -102,6 +102,7 @@ to one of those official variables.
 
 from __future__ import annotations
 
+import logging
 import re
 import warnings
 import weakref
@@ -112,7 +113,7 @@ from dataclasses import asdict, dataclass
 from functools import reduce
 from inspect import Parameter as _Parameter
 from inspect import Signature, signature
-from inspect import _empty as _empty_default  # noqa
+from inspect import _empty as _empty_default
 from os import PathLike
 from pathlib import Path
 from types import ModuleType
@@ -463,7 +464,7 @@ class Indicator(IndicatorRegistrar):
       Miscellaneous information about the data or methods used to produce it.
     """
 
-    def __new__(cls, **kwds):  # noqa: C901
+    def __new__(cls, **kwds):
         """Create subclass from arguments."""
         identifier = kwds.get("identifier", cls.identifier)
         if identifier is None:
@@ -689,9 +690,7 @@ class Indicator(IndicatorRegistrar):
         return dict(sorted(parameters.items(), key=sortkey))
 
     @classmethod
-    def _parse_output_attrs(  # noqa: C901
-        cls, kwds: dict[str, Any], identifier: str
-    ) -> list[dict[str, str | Callable]]:
+    def _parse_output_attrs(cls, kwds: dict[str, Any], identifier: str) -> list[dict[str, str | Callable]]:
         """CF-compliant metadata attributes for all output variables."""
         parent_cf_attrs = cls.cf_attrs
         cf_attrs = kwds.get("cf_attrs")
@@ -872,7 +871,7 @@ class Indicator(IndicatorRegistrar):
         #     params : OrderedDict of parameters (var_kwargs as a single argument, if any)
 
         if self._version_deprecated:
-            self._show_deprecation_warning()  # noqa
+            self._show_deprecation_warning()
 
         if "ds" in self._all_parameters and DataTree and isinstance(kwds.get("ds"), DataTree):
             dt = kwds.pop("ds")
@@ -1354,7 +1353,8 @@ class Indicator(IndicatorRegistrar):
         """  # numpydoc ignore=PR01
         raise NotImplementedError()
 
-    def cfcheck(self, **das) -> None:
+    @staticmethod
+    def cfcheck(**das) -> None:
         r"""
         Compare metadata attributes to CF-Convention standards.
 
@@ -1372,7 +1372,8 @@ class Indicator(IndicatorRegistrar):
         for varname, vardata in das.items():
             try:
                 cfcheck_from_name(varname, vardata)
-            except KeyError:  # noqa: S110
+            except KeyError:
+                logging.info("Variable unknown. Ignoring.")
                 # Silently ignore unknown variables.
                 pass
 
@@ -1753,7 +1754,7 @@ def build_indicator_module(
             for n, ind in list(out.iter_indicators()):
                 if n not in objs:
                     # Remove the indicator from the registries and the module
-                    del registry[ind._registry_id]  # noqa
+                    del registry[ind._registry_id]
                     del _indicators_registry[ind.__class__]
                     del out.__dict__[n]
     else:
@@ -1939,8 +1940,10 @@ def build_indicator_module_from_yaml(  # noqa: C901
                 if indice_func is None and hasattr(indices, "__getitem__"):
                     try:
                         indice_func = indices[indice_name]
-                    except KeyError:  # noqa: S110
+                    except KeyError as err:
                         # The indice is not found in the mapping.
+                        msg = f"Indice not found in the mapping. Ignoring: {err}"
+                        logging.info(msg)
                         pass
 
                 if indice_func is not None:

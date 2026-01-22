@@ -172,10 +172,10 @@ Ready to contribute? Here's how to set up `xclim` for local development.
 
     .. code-block:: shell
 
-        tox -e py310-coverage  # run tests on Python 3.10, reporting code coverage
-        tox -e py313-upstream  # run tests on Python 3.13, with upstream dependencies
-        tox -e py311-prefetch-offline -- -m "not slow"  # run tests on Python 3.11, force download of testing, ensure tests are all offline, exclude "slow" marked tests
-        tox -e py312-lmoments -- -m "not slow"  # run tests on Python 3.12, installing lmoments3, excluding "slow" marked tests
+        tox -e py3.10 # run tests on Python 3.10
+        tox -e upstream  # run tests with upstream dependencies
+        tox -e prefetch -- -m "not slow"  # run tests and force download of testing data, ensure tests are all offline, exclude "slow" marked tests
+        tox -e py3.12 -- -m "not slow"  # run tests on Python 3.12 excluding "slow" marked tests
         tox -e notebooks,doctests  # run the notebook-based tests, then run the doctests
 
         tox -m test  # run the standard tests used in GitHub Workflows
@@ -186,7 +186,7 @@ Ready to contribute? Here's how to set up `xclim` for local development.
 
     .. code-block:: shell
 
-        $ tox -e py310 -- -m "not slow"
+        $ tox -e py3.10 -- -m "not slow"
 
     The exceptions to this rule are:
       `notebooks` and `doctests`: these configurations do not pass test markers to its `pytest` call.

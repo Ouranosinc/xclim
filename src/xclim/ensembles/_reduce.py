@@ -8,6 +8,7 @@ computation needed while still covering a good portion of the simulated climate 
 
 from __future__ import annotations
 
+import importlib.util as _util
 from typing import Any
 from warnings import warn
 
@@ -19,13 +20,7 @@ from scipy.spatial.distance import cdist
 from sklearn.cluster import KMeans
 
 # Avoid having to include matplotlib in xclim requirements
-try:
-    from matplotlib import pyplot as plt  # noqa
-
-    MPL_INSTALLED = True
-except ImportError:
-    plt = None
-    MPL_INSTALLED = False
+MPL_INSTALLED = bool(_util.find_spec("matplotlib"))
 
 
 def make_criteria(ds: xarray.Dataset | xarray.DataArray):
@@ -438,7 +433,6 @@ def _get_nclust(method: dict, n_sim: int, rsq: float, max_clusters: int):
 
         n_clusters = np.argmax(rsq - onetoone) + 1
 
-        # plt.show()
     elif list(method.keys())[0] == "n_clusters":
         n_clusters = method["n_clusters"]
     else:
@@ -476,6 +470,11 @@ def plot_rsqprofile(fig_data: dict) -> None:
     ... )
     >>> plot_rsqprofile(fig_data)
     """
+    if not MPL_INSTALLED:
+        raise ModuleNotFoundError("Matplotlib is not installed. No plotting functions are supported.")
+    else:
+        import matplotlib.pyplot as plt
+
     rsq = fig_data["rsq"]
     n_sim = fig_data["realizations"]
     n_clusters = fig_data["n_clusters"]

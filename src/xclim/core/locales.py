@@ -331,9 +331,7 @@ def generate_local_dict(locale: str, init_english: bool = False) -> dict:
     eng_attr = ""
     for ind_name, indicator in registry.items():
         ind_attrs = attrs.setdefault(ind_name, {})
-        for translatable_attr in set(TRANSLATABLE_ATTRS).difference(
-            set(indicator._cf_names)  # noqa
-        ):
+        for translatable_attr in set(TRANSLATABLE_ATTRS).difference(set(indicator._cf_names)):
             if init_english:
                 eng_attr = getattr(indicator, translatable_attr)
                 if not isinstance(eng_attr, str):
@@ -345,9 +343,7 @@ def generate_local_dict(locale: str, init_english: bool = False) -> dict:
             if len(indicator.cf_attrs) > 1:
                 ind_attrs = attrs.setdefault(f"{ind_name}.{cf_attrs['var_name']}", {})
 
-            for translatable_attr in set(TRANSLATABLE_ATTRS).intersection(
-                set(indicator._cf_names)  # noqa
-            ):
+            for translatable_attr in set(TRANSLATABLE_ATTRS).intersection(set(indicator._cf_names)):
                 if init_english:
                     eng_attr = cf_attrs.get(translatable_attr)
                     if not isinstance(eng_attr, str):

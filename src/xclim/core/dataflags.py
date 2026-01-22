@@ -805,7 +805,7 @@ def ecad_compliant(
         # TODO: Test for this change concerning data of type None in dataflag variables
         ~reduce(
             np.logical_or,
-            filter(lambda x: x.dtype == bool, flags.data_vars.values()),  # noqa
+            filter(lambda x: x.dtype == bool, flags.data_vars.values()),
         ),
         name="ecad_qc_flag",
         attrs={

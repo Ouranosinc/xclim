@@ -51,25 +51,24 @@ jobs:
           echo "skip=true" >> $GITHUB_OUTPUT
 
       - name: Checkout Repository
-        if: ${{ steps.skip-condition.outputs.skip != 'true' }}
+        if: steps.skip-condition.outputs.skip != 'true'
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
         with:
           token: ${{ steps.token_generator.outputs.token }}
           persist-credentials: false
 
-      - name: Approve Pull Request if not already approved
-        if: ${{ steps.skip-condition.outputs.skip != 'true' }}
+      - name: Approve Changes
+        if: >
+          steps.skip-condition.outputs.skip != 'true' &&
+          !contains(github.event.pull_request.labels.*.name, 'approved')
         run: |
-          if [ "$(gh pr status --json reviewDecision -q .currentBranch.reviewDecision)" != "APPROVED" ];
-          then gh pr review --approve "$PR_URL"
-          else echo "PR already approved, skipping additional approvals to minimize emails/notification noise.";
-          fi
+          gh pr review --approve "$PR_URL"
         env:
           GITHUB_TOKEN: ${{ steps.token_generator.outputs.token }}
           PR_URL: ${{github.event.pull_request.html_url}}
 
-      - name: Enable auto-merge
-        if: ${{ steps.skip-condition.outputs.skip != 'true' }}
+      - name: Enable auto-merge on Pull Request
+        if: steps.skip-condition.outputs.skip != 'true'
         run: |
           gh pr merge --auto --merge "$PR_URL"
         env:
