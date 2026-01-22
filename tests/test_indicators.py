@@ -176,38 +176,41 @@ def test_attrs(tas_series):
 
 
 @pytest.mark.parametrize(
-    "xcopt,xropt,exp",
+    "xropt,exp",
     [
-        ("xarray", "default", False),
-        (True, False, True),
-        (False, True, False),
-        ("xarray", True, True),
+        ("default", True),
+        (False, False),
+        (True, True),
     ],
 )
-def test_keep_attrs(tasmin_series, tasmax_series, xcopt, xropt, exp):
+def test_keep_attrs(tasmin_series, tasmax_series, xropt, exp):
     tx = tasmax_series(np.arange(360.0))
     tn = tasmin_series(np.arange(360.0))
     tx.attrs.update(something="blabla", bing="bang", foo="bar")
     tn.attrs.update(something="blabla", bing="bong")
-    with xclim.set_options(keep_attrs=xcopt):
-        with xr.set_options(keep_attrs=xropt):
-            tg = multiOptVar(tasmin=tn, tasmax=tx)
+    with xr.set_options(keep_attrs=xropt):
+        tg = multiOptVar(tasmin=tn, tasmax=tx)
     assert (tg.attrs.get("something") == "blabla") is exp
     assert (tg.attrs.get("foo") == "bar") is exp
     assert "bing" not in tg.attrs
 
 
-def test_as_dataset(tasmax_series, tasmin_series):
+@pytest.mark.parametrize("xrkeep", [True, False])
+def test_as_dataset(tasmax_series, tasmin_series, xrkeep):
     tx = tasmax_series(np.arange(360.0))
     tn = tasmin_series(np.arange(360.0))
     tx.attrs.update(something="blabla", bing="bang", foo="bar")
     tn.attrs.update(something="blabla", bing="bong")
     dsin = xr.Dataset({"tasmax": tx, "tasmin": tn}, attrs={"fou": "barre"})
-    with xclim.set_options(keep_attrs=True, as_dataset=True):
+    with xr.set_options(keep_attrs=xrkeep), xclim.set_options(as_dataset=True):
         dsout = multiOptVar(ds=dsin)
     assert isinstance(dsout, xr.Dataset)
-    assert dsout.attrs["fou"] == "barre"
-    assert dsout.multiopt.attrs.get("something") == "blabla"
+    if xrkeep:
+        assert dsout.attrs["fou"] == "barre"
+        assert dsout.multiopt.attrs.get("something") == "blabla"
+    else:
+        assert "fou" not in dsout.attrs
+        # not testing for "something" because xclim doesn't define the behaviour of dataarray attributes when xarray's option is not True.
 
 
 def test_as_dataset_multi(tas_series):
