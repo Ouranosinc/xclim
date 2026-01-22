@@ -4,7 +4,7 @@ Changelog
 
 v0.60.0 (unreleased)
 --------------------
-Contributors to this version: Éric Dupuis (:user:`coxipi`), Trevor James Smith (:user:`Zeitsperre`), Juliette Lavoie (:user: `juliettelavoie`), Hui-Min Wang (:user:`Hem-W`).
+Contributors to this version: Éric Dupuis (:user:`coxipi`), Trevor James Smith (:user:`Zeitsperre`), Juliette Lavoie (:user: `juliettelavoie`), Ève Larose (:user:`e-larose`), Faisal Mahmood (:user:`faimahsho`), David Huard (:user:`huard`), Hui-Min Wang (:user:`Hem-W`).
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
@@ -15,6 +15,7 @@ New indicators and features
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 * `xclim` now officially supports Python 3.14. (:issue:`2259`, :pull:`2305`).
 * New missing algorithm ``some_but_not_all``. (:pull:`2290`).
+* New hydrological indices added to ``xclim.indices._hydrology.py``. (:issue:`1624`, :pull:`2227`).
 * Added a ``prob_zero_method`` argument to ``standardized_index`` and ``standardized_precipitation_index`` to control how zero-precipitation probabilities are handled. (:issue:`2279`, :pull:`2280`).
 
 Bug fixes
@@ -35,6 +36,7 @@ Internal changes
 * Replaced the `formattext-pre-commit` hook with `mirrors-bibtex-tidy` in order to enforce style and consistency on `BibTeX` files. (:pull:`2306`).
 * Removed many obsolete `noqa` comments throughout the code base. (:pull:`2307`).
 * `matplotlib` is no longer loaded during the import process of `xclim` nor during the pytest setup if present in the environment. (:pull:`2307`).
+* Temporarily pin `pandas` below v3.0 to prevent failures from changes in the API. (:pull:`2309`).
 
 v0.59.1 (2025-10-31)
 --------------------

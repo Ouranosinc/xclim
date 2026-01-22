@@ -45,7 +45,7 @@ dependencies = [
   "numba >=0.57.0",
   "numpy >=1.25.0",
   "packaging >=24.0",
-  "pandas >=2.2.0",
+  "pandas >=2.2.0,<3.0",
   "pint >=0.24.4",
   "pyarrow >=15.0", # Strongly encouraged for pandas v2.2.0+
   "pyyaml >=6.0.1",
@@ -109,7 +109,7 @@ docs = [
   "sphinxcontrib-bibtex",
   "sphinxcontrib-svg2pdfconverter[Cairosvg]"
 ]
-extras = ["flox >=0.9", "lmoments3 >=1.0.7", "numbagg >=0.8", "xsdba >=0.4.0"]
+extras = ["flox >=0.9", "lmoments3 >=1.0.7", "numbagg >=0.8", "xsdba >=0.4.0", "pymannkendall >=1.4.0"]
 all = ["xclim[dev]", "xclim[docs]", "xclim[extras]"]
 
 [project.scripts]
@@ -127,7 +127,7 @@ xclim = "xclim.cli:cli"
 [tool]
 
 [tool.bumpversion]
-current_version = "0.59.2-dev.7"
+current_version = "0.59.2-dev.8"
 commit = true
 commit_args = "--no-verify --signoff"
 tag = false
@@ -171,6 +171,7 @@ pep621_dev_dependency_groups = ["all", "dev", "docs"]
 "pyyaml" = "yaml"
 
 [tool.deptry.per_rule_ignores]
+DEP001 = ["pymannkendall"]
 DEP002 = ["bottleneck", "h5netcdf", "lmoments3", "numbagg", "pyarrow"]
 DEP004 = ["matplotlib", "pooch", "pytest", "pytest_socket"]
 

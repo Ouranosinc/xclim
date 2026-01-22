@@ -4,6 +4,7 @@ import numpy as np
 import pytest
 import xarray as xr
 
+from xclim.core import ValidationError
 from xclim.core import dataflags as df
 
 K2C = 273.15
@@ -153,3 +154,29 @@ class TestDataFlags:
             },
         )
         assert list(flgs.data_vars.keys())[0] == "values_eq_minus5point1_repeating_for_5_or_more_days"
+
+
+class TestSpecificDischarge:
+    @pytest.mark.parametrize(
+        "value, thresh, flag_expected",
+        [(100.0000001, "100 m/s", True), (99.9999999, "100 m/s", False), (100.0000001, "100000 m**3/day", None)],
+    )
+    def test_variable_specific_discharge(self, qspec_series, value, thresh, flag_expected):
+        # 10 years of daily data
+        qspec = qspec_series(np.ones(365, dtype=float) * 10)
+        # A single day with extremely high flow to trigger flag
+        qspec[300] = value
+
+        if flag_expected is None:
+            with pytest.raises(ValidationError) as record:
+                df.specific_discharge_extremely_high(qspec, thresh=thresh)
+                assert "Data units m3 d-1 are not compatible with requested [speed]." in record[0].message
+
+        else:
+            flagged = df.specific_discharge_extremely_high(qspec, thresh=thresh)
+
+            if flag_expected:
+                assert flagged.values.any()  # At least one True exists
+                assert f"One or multiple specific qspec found in excess of {thresh}." in flagged.attrs["description"]
+            else:
+                assert not flagged.values.any()
