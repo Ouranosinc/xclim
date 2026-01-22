@@ -4,7 +4,7 @@ Changelog
 
 v0.60.0 (unreleased)
 --------------------
-Contributors to this version: Éric Dupuis (:user:`coxipi`), Trevor James Smith (:user:`Zeitsperre`), Juliette Lavoie (:user: `juliettelavoie`), Ève Larose (:user:`e-larose`), Faisal Mahmood (:user:`faimahsho`), David Huard (:user:`huard`) and Pascal Bourgault (:user:`aulemahal`).
+Contributors to this version: Éric Dupuis (:user:`coxipi`), Trevor James Smith (:user:`Zeitsperre`), Juliette Lavoie (:user: `juliettelavoie`), Ève Larose (:user:`e-larose`), Faisal Mahmood (:user:`faimahsho`), David Huard (:user:`huard`), Pascal Bourgault (:user:`aulemahal`).
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
