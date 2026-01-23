@@ -98,7 +98,7 @@ def spatial_analogs(
     diss.name = "dissimilarity"
     diss.attrs.update(
         long_name=f"Dissimilarity between target and candidates, using metric {method}.",
-        indices=",".join(target_array._indices.values),  # noqa
+        indices=",".join(target_array._indices.values),
         metric=method,
     )
 
@@ -431,7 +431,7 @@ def friedman_rafsky(x: np.ndarray, y: np.ndarray) -> float:
 
 
 @metric
-def kolmogorov_smirnov(x: np.ndarray, y: np.ndarray) -> float:  # noqa: E501
+def kolmogorov_smirnov(x: np.ndarray, y: np.ndarray) -> float:
     """
     Compute the Kolmogorov-Smirnov statistic applied to two multivariate samples as described by Fasano and Franceschini.
 
@@ -579,8 +579,7 @@ def kldiv(x: np.ndarray, y: np.ndarray, *, k: int | Sequence[int] = 1) -> float 
         # The 0th nearest neighbour of x[i] in x is x[i] itself.
         # Hence, we take the k'th + 1, which in 0-based indexing is given by
         # index k.
-        with np.errstate(divide="ignore"):
-            ki_calc = -np.log(r[:, ki] / s[:, ki - 1]).sum() * d / nx + np.log(ny / (nx - 1.0))
+        ki_calc = -np.log(r[:, ki] / s[:, ki - 1]).sum() * d / nx + np.log(ny / (nx - 1.0))
         out.append(ki_calc)
 
     if mk:

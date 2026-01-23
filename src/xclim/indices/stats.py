@@ -51,10 +51,8 @@ def _fitfunc_1d(arr, *, dist, nparams, method, **fitkwargs):
 
     # Estimate parameters
     if method in ["ML", "MLE"]:
-        with np.errstate(invalid="ignore"):
-            with np.errstate(divide="ignore"):
-                args, kwargs = _fit_start(x, dist.name, **fitkwargs)
-            params = dist.fit(x, *args, method="mle", **kwargs, **fitkwargs)
+        args, kwargs = _fit_start(x, dist.name, **fitkwargs)
+        params = dist.fit(x, *args, method="mle", **kwargs, **fitkwargs)
     elif method == "MM":
         params = dist.fit(x, method="mm", **fitkwargs)
     elif method in ["MSE", "MPS"]:
@@ -63,8 +61,8 @@ def _fitfunc_1d(arr, *, dist, nparams, method, **fitkwargs):
         for i, arg in enumerate(args):
             guess[param_info[i]] = arg
 
-        fitresult = scipy.stats.fit(dist=dist, data=x, method="mse", guess=guess, **fitkwargs)
-        params = fitresult.params
+        fit_result = scipy.stats.fit(dist=dist, data=x, method="mse", guess=guess, **fitkwargs)
+        params = fit_result.params
     elif method == "PWM":
         # lmoments3 will raise an error if only dist.numargs + 2 values are provided
         if len(x) <= dist.numargs + 2:
@@ -618,20 +616,15 @@ def _fit_start(x, dist: str, **fitkwargs: Any) -> tuple[tuple, dict]:
         x_pos = x_pos[x_pos > 0]
         # MLE estimation
         log_x_pos = np.log(x_pos)
-        # ignore invalid values occurring in the log calculations
-        with np.errstate(invalid="ignore"), warnings.catch_warnings():
-            shape0 = log_x_pos.std()
-            warnings.filterwarnings("ignore", message="Mean of empty slice.", category=RuntimeWarning)
-            scale0 = np.exp(log_x_pos.mean())
+        shape0 = log_x_pos.std()
+        scale0 = np.exp(log_x_pos.mean())
         kwargs = {"scale": scale0, "loc": loc0}
         return (shape0,), kwargs
 
     return (), {}
 
 
-def _dist_method_1D(  # noqa: N802
-    *args, dist: str | rv_continuous, function: str, **kwargs: Any
-) -> xr.DataArray:
+def _dist_method_1D(*args, dist: str | rv_continuous, function: str, **kwargs: Any) -> xr.DataArray:  # noqa: N802
     r"""
     Statistical function for given argument on given distribution initialized with params.
 

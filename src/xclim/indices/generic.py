@@ -1453,7 +1453,7 @@ def aggregate_between_dates(
     def _get_days(_bound, _group, _base_time):
         """Get bound in number of days since base_time. Bound can be a days_since array or a DayOfYearStr."""
         if isinstance(_bound, str):
-            b_i = rl.index_of_date(_group.time, _bound, max_idxs=1)  # noqa
+            b_i = rl.index_of_date(_group.time, _bound, max_idxs=1)
             if not b_i.size > 0:
                 return None
             return (_group.time.isel(time=b_i[0]) - _group.time.isel(time=0)).dt.days
@@ -1500,7 +1500,7 @@ def aggregate_between_dates(
         # convert bounds for this group
         if start_d is not None and end_d is not None:
             days = (group.time - base_time).dt.days
-            days[days < 0] = np.nan
+            days = days.where(days >= 0)
 
             masked = group.where((days >= start_d) & (days <= end_d - 1))
             res = getattr(masked, op)(dim="time", skipna=True)

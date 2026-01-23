@@ -59,22 +59,16 @@ def test_time_bnds(freq, datetime_index, cftime_index):
     cftime_starts = CFTimeIndex(cftime_starts.values).to_datetimeindex(time_unit="ns")
     cftime_ends = CFTimeIndex(cftime_ends.values).to_datetimeindex(time_unit="ns")
 
-    # cftime resolution goes down to microsecond only, code below corrects
-    # that to allow for comparison with pandas datetime
-    cftime_ends += np.timedelta64(999, "ns")
     out_periods = out_time.indexes["time"].to_period(freq)
     assert_array_equal(cftime_starts, out_periods.start_time)
-    assert_array_equal(cftime_ends, out_periods.end_time)
+    assert_array_equal(cftime_ends, out_periods.end_time.ceil("s"))
 
 
 @pytest.mark.parametrize("use_cftime", [True, False])
 def test_time_bnds_irregular(use_cftime):
     """Test time_bnds for irregular `middle of the month` time series."""
     start = xr.date_range("1990-01-01", periods=24, freq="MS", use_cftime=use_cftime)
-    # Well. xarray string parsers do not support sub-second resolution, but cftime does.
-    end = xr.date_range("1990-01-01T23:59:59", periods=24, freq="ME", use_cftime=use_cftime) + pd.Timedelta(
-        0.999999999, "s"
-    )
+    end = xr.date_range("1990-02-01", periods=24, freq="MS", use_cftime=use_cftime)
 
     time = start + (end - start) / 2
 

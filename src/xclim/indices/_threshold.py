@@ -899,7 +899,7 @@ def cooling_degree_days_approximation(
             tasmin < thresh,
             xarray.where(
                 tas <= thresh,
-                (tasmax - tasmin) / 4,
+                (tasmax - thresh) / 4,
                 (tasmax - thresh) / 2 - (thresh - tasmin) / 4,
             ),
             tas - thresh,
@@ -1630,8 +1630,6 @@ def first_day_temperature_below(
     --------
     The default `freq` and `after_date` parameters are valid for the Northern Hemisphere.
     """
-    # noqa
-
     fdtb = first_day_threshold_reached(
         tas,
         threshold=thresh,

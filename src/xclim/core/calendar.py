@@ -497,7 +497,7 @@ def build_climatology_bounds(da: xr.DataArray) -> list[str]:
 
 def compare_offsets(
     freqA: str, op: Literal[">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"], freqB: str
-) -> bool:  # noqa
+) -> bool:
     """
     Compare offsets string based on their approximate length, according to a given operator.
 
@@ -772,16 +772,15 @@ def resample_doy(doy: xr.DataArray, arr: xr.DataArray | xr.Dataset) -> xr.DataAr
     return out
 
 
-def time_bnds(  # noqa: C901
+def time_bnds(
     time: (xr.DataArray | xr.Dataset | CFTimeIndex | pd.DatetimeIndex),
     freq: str | None = None,
-    precision: str | None = None,
 ):
     """
-    Find the time bounds for a datetime index.
+    Find the time bounds for a datetime index by assuming an uniform sampling frequency.
 
     As we are using datetime indices to stand in for period indices, assumptions regarding the period
-    are made based on the given freq.
+    are made based on the given freq. This function does not implement finding bounds for an irregular time index.
 
     Parameters
     ----------
@@ -791,10 +790,6 @@ def time_bnds(  # noqa: C901
         String specifying the frequency/offset such as 'MS', '2D', or '3min'
         If not given, it is inferred from the time index, which means that index must
         have at least three elements.
-    precision : str, optional
-        A timedelta representation that :py:class:`pandas.Timedelta` understands.
-        The time bounds will be correct up to that precision. If not given,
-        1 ms ("1U") is used for CFtime indexes and 1 ns ("1N") for numpy datetime64 indexes.
 
     Returns
     -------
@@ -802,16 +797,19 @@ def time_bnds(  # noqa: C901
         The time bounds: start and end times of the periods inferred from the time index and a frequency.
         It has the original time index along it's `time` coordinate and a new `bnds` coordinate.
         The dtype and calendar of the array are the same as the index.
+        If a period follows another, its start is the same as the other's end.
 
     Notes
     -----
     xclim assumes that indexes for greater-than-day frequencies are "floored" down to a daily resolution.
     For example, the coordinate "2000-01-31 00:00:00" with a "ME" frequency is assumed to mean a period
-    going from "2000-01-01 00:00:00" to "2000-01-31 23:59:59.999999".
+    going from "2000-01-01 00:00:00" to "2000-02-01 00:00:00".
 
     Similarly, it assumes that daily and finer frequencies yield indexes pointing to the period's start.
     So "2000-01-31 00:00:00" with a "3h" frequency, means a period going from "2000-01-31 00:00:00" to
-    "2000-01-31 02:59:59.999999".
+    "2000-01-31 03:00:00".
+
+    See the `relevant CF convention <https://cfconventions.org/Data/cf-conventions/cf-conventions-1.13/cf-conventions.html#bounds-one-d>`.
     """
     if isinstance(time, xr.DataArray | xr.Dataset):
         time = time.indexes[time.name]
@@ -834,6 +832,10 @@ def time_bnds(  # noqa: C901
         freq = time.freq
     if freq is None:
         freq = xr.infer_freq(time)
+        if freq is None:
+            raise NotImplementedError(
+                "Irregular time coordinates are not supported. Please pass a frequency explicitly."
+            )
     elif hasattr(freq, "freqstr"):
         # When freq is an Offset
         freq = freq.freqstr
@@ -856,13 +858,11 @@ def time_bnds(  # noqa: C901
     if isinstance(time, xr.CFTimeIndex):
         period = xr.coding.cftime_offsets.to_offset(freq)
         is_on_offset = period.onOffset
-        eps = pd.Timedelta(precision or "1us").to_pytimedelta()
         day = pd.Timedelta("1D").to_pytimedelta()
         floor.pop("nanosecond")  # unsupported by cftime
     else:
         period = pd.tseries.frequencies.to_offset(freq)
         is_on_offset = period.is_on_offset
-        eps = pd.Timedelta(precision or "1ns")
         day = pd.Timedelta("1D")
 
     def shift_time(t):  # numpydoc ignore=GL08
@@ -877,11 +877,11 @@ def time_bnds(  # noqa: C901
 
     cls = time.__class__
     if freq_is_start:
-        tbnds = [cls(time_real), cls([t + period - eps for t in time_real])]
+        tbnds = [cls(time_real), cls([t + period for t in time_real])]
     else:
         tbnds = [
             cls([t - period + day for t in time_real]),
-            cls([t + day - eps for t in time_real]),
+            cls([t + day for t in time_real]),
         ]
     return xr.DataArray(tbnds, dims=("bnds", "time"), coords={"time": time}, name="time_bnds").transpose()
 
