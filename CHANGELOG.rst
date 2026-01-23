@@ -22,6 +22,43 @@ Internal changes
 ^^^^^^^^^^^^^^^^
 * TBD
 
+v0.60.0 (2026-01-23)
+--------------------
+Contributors to this version: Éric Dupuis (:user:`coxipi`), Trevor James Smith (:user:`Zeitsperre`), Juliette Lavoie (:user:`juliettelavoie`), Ève Larose (:user:`e-larose`), Faisal Mahmood (:user:`faimahsho`), David Huard (:user:`huard`), Pascal Bourgault (:user:`aulemahal`).
+
+Breaking changes
+^^^^^^^^^^^^^^^^
+* `lmoments3` is now listed as a dependency to the `extras` installation recipe. This dependency is not installed by default with `xclim` and must be explicitly requested with ``$ pip install "xclim[extras]"``, if desired. (:pull:`2269`).
+* `numpy`-related `RuntimeWarnings` for invalid operations are noisier when running calculations via the ``xclim.indices`` and muted by default for ``xclim.indicators``. This change is made to ensure that users who perform indice calculations can be made more aware of potential inconsistencies in their source datasets. (:issue:`2277`, :pull:`2276`).
+* ``xclim.core.calendar.time_bnds`` now follows the CF conventions in that the "end" time is the same as the "start" of the next period (and not the timestep just before). (:pull:`2310`).
+* The ``keep_attrs`` option was removed from ``xclim.set_options``. The recent change in philosophy from `xarray`` has rendered `xclim` attribute preservation logic irrelevant. The `xarray` option now controls all attribute management. (:issue:`2308`, :pull:`2311`).
+
+New indicators and features
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+* `xclim` now officially supports Python 3.14. (:issue:`2259`, :pull:`2305`).
+* New missing algorithm: ``xclim.core.missing.some_but_not_all``. (:pull:`2290`).
+* New hydrological indices added to ``xclim.indices._hydrology.py``. (:issue:`1624`, :pull:`2227`).
+
+Bug fixes
+^^^^^^^^^
+* One of the conditions in ``xclim.atmos.cooling_degree_days_approximation`` had an erroneous computation and has been fixed: ``(tasmax - tasmin)/4`` is replaced by ``(tasmax - thresh)/4``. (:issue:`2272`, :pull:`2273`).
+* Fix some issues with `pandas` v3.0 in partitioning functions of ``xclim.ensembles`` and in ``xclim.indices.generic.aggregate_between_dates``. (:pull:`2310`).
+
+Internal changes
+^^^^^^^^^^^^^^^^
+* Replaced the ``tox.ini`` file with a ``tox.toml`` file and simplified the conditionals for environment selection. (:pull:`2269`).
+* Removed `python-coveralls` from the `tox`-only dependencies (abandoned software / not supported in Python 3.13+) and added the `coverallsapp/github-action` step to PyPI/tox-based builds on CI. (:pull:`2269`).
+* The testing suite has been updated to support `pytest >=9.0` (:pull:`2276`):
+    * The configuration in `tox.toml` now uses the new TOML conventions.
+    * `--strict-config` and `--strict-markers` have been replaced with the new `--strict` mode. For more information, refer to the `pytest documentation <https://docs.pytest.org/en/stable/reference/reference.html#confval-strict>`_.
+* Added a GitHub Workflow for automatically approving Dependabot Pull Requests that are either `patch` or `minor` updates. Dependabot is now configured to run on a monthly basis (previously weekly). (:pull:`2292`).
+* Dependabot `auto-approved` pull requests are now also set to `auto-merge`. (:pull:`2300`).
+* Build-cancelling based on concurrency rules for the ``main.yml`` GitHub Workflow are now also divided according to the `github.event_name` (`pull_request`, `pull_request_review`). (:pull:`2301`).
+* Added the `rst-check` hook to ``.pre-commit-config.yaml`` for ensuring that ReStructuredText roles, directives, and spacing are consistent with repository configurations. (:issue:`2133`, :pull:`2306`).
+* Replaced the `formattext-pre-commit` hook with `mirrors-bibtex-tidy` in order to enforce style and consistency on `BibTeX` files. (:pull:`2306`).
+* Removed many obsolete `noqa` comments from throughout the code base. (:pull:`2307`).
+* `matplotlib` is no longer loaded during the import process of `xclim` nor during the `pytest`` setup phase if it is installed in the active environment. (:pull:`2307`).
+
 v0.59.1 (2025-10-31)
 --------------------
 Contributors to this version: Trevor James Smith (:user:`Zeitsperre`).

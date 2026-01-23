@@ -714,9 +714,9 @@ def dryness_index(  # numpydoc ignore=SS05
     if has_north and has_south:
         di = di_north.where(lat >= 0, di_south)
     elif has_north:
-        di = di_north  # noqa
+        di = di_north
     elif has_south:
-        di = di_south  # noqa
+        di = di_south
     else:
         raise ValueError("No hemisphere data found.")
 

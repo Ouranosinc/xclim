@@ -15,7 +15,6 @@ from datetime import timedelta
 from inspect import stack
 from typing import Any, Literal, cast
 
-import cf_xarray  # noqa: F401, pylint: disable=unused-import
 import cftime
 import numba as nb
 import numpy as np

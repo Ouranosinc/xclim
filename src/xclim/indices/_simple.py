@@ -589,9 +589,7 @@ def snow_depth(
 
 
 @declare_units(sfcWind="[speed]")
-def sfcWind_max(  # noqa: N802
-    sfcWind: xarray.DataArray, freq: str = "YS"
-) -> xarray.DataArray:
+def sfcWind_max(sfcWind: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:  # noqa: N802
     r"""
     Highest daily mean wind speed.
 
@@ -631,9 +629,7 @@ def sfcWind_max(  # noqa: N802
 
 
 @declare_units(sfcWind="[speed]")
-def sfcWind_mean(  # noqa: N802
-    sfcWind: xarray.DataArray, freq: str = "YS"
-) -> xarray.DataArray:
+def sfcWind_mean(sfcWind: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:  # noqa: N802
     r"""
     Mean of daily mean wind speed.
 
@@ -673,9 +669,7 @@ def sfcWind_mean(  # noqa: N802
 
 
 @declare_units(sfcWind="[speed]")
-def sfcWind_min(  # noqa: N802
-    sfcWind: xarray.DataArray, freq: str = "YS"
-) -> xarray.DataArray:
+def sfcWind_min(sfcWind: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:  # noqa: N802
     r"""
     Lowest daily mean wind speed.
 
@@ -715,9 +709,7 @@ def sfcWind_min(  # noqa: N802
 
 
 @declare_units(sfcWindmax="[speed]")
-def sfcWindmax_max(  # noqa: N802
-    sfcWindmax: xarray.DataArray, freq: str = "YS"
-) -> xarray.DataArray:
+def sfcWindmax_max(sfcWindmax: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:  # noqa: N802
     r"""
     Highest maximum wind speed.
 
@@ -756,9 +748,7 @@ def sfcWindmax_max(  # noqa: N802
 
 
 @declare_units(sfcWindmax="[speed]")
-def sfcWindmax_mean(  # noqa: N802
-    sfcWindmax: xarray.DataArray, freq: str = "YS"
-) -> xarray.DataArray:
+def sfcWindmax_mean(sfcWindmax: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:  # noqa: N802
     r"""
     Mean of daily maximum wind speed.
 
@@ -797,9 +787,7 @@ def sfcWindmax_mean(  # noqa: N802
 
 
 @declare_units(sfcWindmax="[speed]")
-def sfcWindmax_min(  # noqa: N802
-    sfcWindmax: xarray.DataArray, freq: str = "YS"
-) -> xarray.DataArray:
+def sfcWindmax_min(sfcWindmax: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:  # noqa: N802
     r"""
     Lowest daily maximum wind speed.
 

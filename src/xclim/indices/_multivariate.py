@@ -76,7 +76,7 @@ def cold_spell_duration_index(
     window: int = 6,
     freq: str = "YS",
     resample_before_rl: bool = True,
-    bootstrap: bool = False,  # noqa  # noqa
+    bootstrap: bool = False,
     op: Literal["<", "<=", "lt", "le"] = "<",
 ) -> xarray.DataArray:
     r"""
@@ -1165,7 +1165,7 @@ def days_over_precip_thresh(
     pr_per: xarray.DataArray,
     thresh: Quantified = "1 mm/day",
     freq: str = "YS",
-    bootstrap: bool = False,  # noqa
+    bootstrap: bool = False,
     op: Literal[">", ">=", "gt", "ge"] = ">",
 ) -> xarray.DataArray:
     r"""
@@ -1226,7 +1226,7 @@ def fraction_over_precip_thresh(
     pr_per: xarray.DataArray,
     thresh: Quantified = "1 mm/day",
     freq: str = "YS",
-    bootstrap: bool = False,  # noqa
+    bootstrap: bool = False,
     op: Literal[">", ">=", "gt", "ge"] = ">",
 ) -> xarray.DataArray:
     r"""
@@ -1287,7 +1287,7 @@ def tg90p(
     tas: xarray.DataArray,
     tas_per: xarray.DataArray,
     freq: str = "YS",
-    bootstrap: bool = False,  # noqa
+    bootstrap: bool = False,
     op: Literal[">", ">=", "gt", "ge"] = ">",
 ) -> xarray.DataArray:
     r"""
@@ -1345,7 +1345,7 @@ def tg10p(
     tas: xarray.DataArray,
     tas_per: xarray.DataArray,
     freq: str = "YS",
-    bootstrap: bool = False,  # noqa
+    bootstrap: bool = False,
     op: Literal[">", ">=", "gt", "ge"] = "<",
 ) -> xarray.DataArray:
     r"""
@@ -1403,7 +1403,7 @@ def tn90p(
     tasmin: xarray.DataArray,
     tasmin_per: xarray.DataArray,
     freq: str = "YS",
-    bootstrap: bool = False,  # noqa
+    bootstrap: bool = False,
     op: Literal[">", ">=", "gt", "ge"] = ">",
 ) -> xarray.DataArray:
     r"""
@@ -1461,7 +1461,7 @@ def tn10p(
     tasmin: xarray.DataArray,
     tasmin_per: xarray.DataArray,
     freq: str = "YS",
-    bootstrap: bool = False,  # noqa
+    bootstrap: bool = False,
     op: Literal["<", "<=", "lt", "le"] = "<",
 ) -> xarray.DataArray:
     r"""
@@ -1519,7 +1519,7 @@ def tx90p(
     tasmax: xarray.DataArray,
     tasmax_per: xarray.DataArray,
     freq: str = "YS",
-    bootstrap: bool = False,  # noqa
+    bootstrap: bool = False,
     op: Literal["<", "<=", "lt", "le"] = ">",
 ) -> xarray.DataArray:
     r"""
@@ -1577,7 +1577,7 @@ def tx10p(
     tasmax: xarray.DataArray,
     tasmax_per: xarray.DataArray,
     freq: str = "YS",
-    bootstrap: bool = False,  # noqa
+    bootstrap: bool = False,
     op: Literal["<", "<=", "lt", "le"] = "<",
 ) -> xarray.DataArray:
     r"""
@@ -1702,7 +1702,7 @@ def warm_spell_duration_index(
     window: int = 6,
     freq: str = "YS",
     resample_before_rl: bool = True,
-    bootstrap: bool = False,  # noqa
+    bootstrap: bool = False,
     op: Literal[">", ">=", "gt", "ge"] = ">",
 ) -> xarray.DataArray:
     r"""
@@ -1812,9 +1812,9 @@ def winter_rain_ratio(
 @declare_units(snd="[length]", sfcWind="[speed]", snd_thresh="[length]", sfcWind_thresh="[speed]")
 def blowing_snow(
     snd: xarray.DataArray,
-    sfcWind: xarray.DataArray,  # noqa
+    sfcWind: xarray.DataArray,
     snd_thresh: Quantified = "5 cm",
-    sfcWind_thresh: Quantified = "15 km/h",  # noqa
+    sfcWind_thresh: Quantified = "15 km/h",
     window: int = 3,
     freq: str = "YS-JUL",
     **indexer,
@@ -1849,7 +1849,7 @@ def blowing_snow(
         Number of days when snowfall and wind speeds are above respective thresholds.
     """
     snd_thresh = convert_units_to(snd_thresh, snd)
-    sfcWind_thresh = convert_units_to(sfcWind_thresh, sfcWind)  # noqa
+    sfcWind_thresh = convert_units_to(sfcWind_thresh, sfcWind)
 
     # Net snow accumulation over the last `window` days
     snow = snd.diff(dim="time").rolling(time=window, center=False).sum()
