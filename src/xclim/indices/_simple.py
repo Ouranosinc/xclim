@@ -43,6 +43,7 @@ __all__ = [
 ]
 
 
+@deprecated("1.0", "atmos.tg_max")
 @declare_units(tas="[temperature]")
 def tg_max(tas: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
     r"""
@@ -71,9 +72,10 @@ def tg_max(tas: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
 
        TNx_j = max(TN_{ij})
     """
-    return tas.resample(time=freq).max(dim="time").assign_attrs(units=tas.units)
+    return statistics(tas, statistic="max", freq=freq)
 
 
+@deprecated("1.0", "atmos.tg_mean")
 @declare_units(tas="[temperature]")
 def tg_mean(tas: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
     r"""
@@ -114,6 +116,7 @@ def tg_mean(tas: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
     return statistics(tas, statistic="mean", freq=freq)
 
 
+@deprecated("1.0", "atmos.tg_min")
 @declare_units(tas="[temperature]")
 def tg_min(tas: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
     r"""
@@ -145,6 +148,7 @@ def tg_min(tas: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
     return statistics(tas, statistic="min", freq=freq)
 
 
+@deprecated("1.0", "atmos.tn_max")
 @declare_units(tasmin="[temperature]")
 def tn_max(tasmin: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
     r"""
@@ -176,6 +180,7 @@ def tn_max(tasmin: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
     return statistics(tasmin, statistic="max", freq=freq)
 
 
+@deprecated("1.0", "atmos.tn_mean")
 @declare_units(tasmin="[temperature]")
 def tn_mean(tasmin: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
     r"""
@@ -207,6 +212,7 @@ def tn_mean(tasmin: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
     return statistics(tasmin, statistic="mean", freq=freq)
 
 
+@deprecated("1.0", "atmos.tn_min")
 @declare_units(tasmin="[temperature]")
 def tn_min(tasmin: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
     r"""
@@ -238,6 +244,7 @@ def tn_min(tasmin: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
     return statistics(tasmin, statistic="min", freq=freq)
 
 
+@deprecated("1.0", "atmos.tx_max")
 @declare_units(tasmax="[temperature]")
 def tx_max(tasmax: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
     r"""
@@ -269,6 +276,7 @@ def tx_max(tasmax: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
     return statistics(tasmax, statistic="max", freq=freq)
 
 
+@deprecated("1.0", "atmos.tx_mean")
 @declare_units(tasmax="[temperature]")
 def tx_mean(tasmax: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
     r"""
@@ -300,6 +308,7 @@ def tx_mean(tasmax: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
     return statistics(tasmax, statistic="mean", freq=freq)
 
 
+@deprecated("1.0", "atmos.tx_min")
 @declare_units(tasmax="[temperature]")
 def tx_min(tasmax: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
     r"""
@@ -331,6 +340,7 @@ def tx_min(tasmax: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
     return statistics(tasmax, statistic="min", freq=freq)
 
 
+@deprecated("1.0", "atmos.hot_days")
 @declare_units(tasmax="[temperature]", thresh="[temperature]")
 def hot_days(
     tasmax: xarray.DataArray,
@@ -368,6 +378,7 @@ def hot_days(
     return count_occurrences(tasmax, condition=">", thresh=thresh, freq=freq)
 
 
+@deprecated("1.0", "atmos.frost_days")
 @declare_units(tasmin="[temperature]", thresh="[temperature]")
 def frost_days(
     tasmin: xarray.DataArray,
@@ -405,6 +416,7 @@ def frost_days(
     return count_occurrences(tasmin, condition="<", thresh=thresh, freq=freq)
 
 
+@deprecated("1.0", "atmos.ice_days")
 @declare_units(tasmax="[temperature]", thresh="[temperature]")
 def ice_days(tasmax: xarray.DataArray, thresh: Quantified = "0 degC", freq: str = "YS") -> xarray.DataArray:
     r"""
@@ -592,6 +604,7 @@ def snow_depth(
     return snd.resample(time=freq).mean(dim="time").assign_attrs(units=snd.units)
 
 
+@deprecated("1.0", "atmos.sfcWind_max")
 @declare_units(sfcWind="[speed]")
 def sfcWind_max(sfcWind: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:  # noqa: N802
     r"""
@@ -632,6 +645,7 @@ def sfcWind_max(sfcWind: xarray.DataArray, freq: str = "YS") -> xarray.DataArray
     return sfcWind.resample(time=freq).max(dim="time").assign_attrs(units=sfcWind.units)
 
 
+@deprecated("1.0", "atmos.sfcWind_mean")
 @declare_units(sfcWind="[speed]")
 def sfcWind_mean(sfcWind: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:  # noqa: N802
     r"""
@@ -672,6 +686,7 @@ def sfcWind_mean(sfcWind: xarray.DataArray, freq: str = "YS") -> xarray.DataArra
     return sfcWind.resample(time=freq).mean(dim="time").assign_attrs(units=sfcWind.units)
 
 
+@deprecated("1.0", "atmos.sfcWind_min")
 @declare_units(sfcWind="[speed]")
 def sfcWind_min(sfcWind: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:  # noqa: N802
     r"""
@@ -712,6 +727,7 @@ def sfcWind_min(sfcWind: xarray.DataArray, freq: str = "YS") -> xarray.DataArray
     return sfcWind.resample(time=freq).min(dim="time").assign_attrs(units=sfcWind.units)
 
 
+@deprecated("1.0", "atmos.sfcWindmax_max")
 @declare_units(sfcWindmax="[speed]")
 def sfcWindmax_max(sfcWindmax: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:  # noqa: N802
     r"""
@@ -751,6 +767,7 @@ def sfcWindmax_max(sfcWindmax: xarray.DataArray, freq: str = "YS") -> xarray.Dat
     return sfcWindmax.resample(time=freq).max(dim="time").assign_attrs(units=sfcWindmax.units)
 
 
+@deprecated("1.0", "atmos.sfcWindmax_mean")
 @declare_units(sfcWindmax="[speed]")
 def sfcWindmax_mean(sfcWindmax: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:  # noqa: N802
     r"""
@@ -790,6 +807,7 @@ def sfcWindmax_mean(sfcWindmax: xarray.DataArray, freq: str = "YS") -> xarray.Da
     return sfcWindmax.resample(time=freq).mean(dim="time").assign_attrs(units=sfcWindmax.units)
 
 
+@deprecated("1.0", "atmos.sfcWindmax_min")
 @declare_units(sfcWindmax="[speed]")
 def sfcWindmax_min(sfcWindmax: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:  # noqa: N802
     r"""

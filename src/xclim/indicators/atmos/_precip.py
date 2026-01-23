@@ -349,7 +349,7 @@ precip_average = Precip(
     parameters={"statistic": "mean"},
 )
 
-wet_precip_accumulation = PrecipWithIndexing(
+wet_precip_accumulation = Precip(
     title="Total accumulated precipitation (solid and liquid) during wet days",
     identifier="wet_prcptot",
     units="mm",

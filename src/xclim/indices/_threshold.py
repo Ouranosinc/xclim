@@ -115,6 +115,7 @@ __all__ = [
 ]
 
 
+@deprecated("1.0", "atmos.calm_days")
 @declare_units(sfcWind="[speed]", thresh="[speed]")
 def calm_days(sfcWind: xarray.DataArray, thresh: Quantified = "2 m s-1", freq: str = "MS") -> xarray.DataArray:
     r"""
@@ -896,6 +897,7 @@ def cooling_degree_days_approximation(
     return cdd
 
 
+@deprecated("1.0", "atmos.cooling_degree_days")
 @declare_units(tas="[temperature]", thresh="[temperature]")
 def cooling_degree_days(tas: xarray.DataArray, thresh: Quantified = "18 degC", freq: str = "YS") -> xarray.DataArray:
     r"""
@@ -931,6 +933,7 @@ def cooling_degree_days(tas: xarray.DataArray, thresh: Quantified = "18 degC", f
     return integrated_difference(tas, thresh=thresh, condition=">", freq=freq)
 
 
+@deprecated("1.0", "atmos.growing_degree_days")
 @declare_units(tas="[temperature]", thresh="[temperature]")
 def growing_degree_days(tas: xarray.DataArray, thresh: Quantified = "4.0 degC", freq: str = "YS") -> xarray.DataArray:
     r"""
@@ -964,6 +967,7 @@ def growing_degree_days(tas: xarray.DataArray, thresh: Quantified = "4.0 degC", 
     return integrated_difference(tas, thresh=thresh, condition=">", freq=freq)
 
 
+@deprecated("1.0", "atmos.growing_season_start")
 @declare_units(tas="[temperature]", thresh="[temperature]")
 def growing_season_start(
     tas: xarray.DataArray,
@@ -1018,6 +1022,7 @@ def growing_season_start(
     )
 
 
+@deprecated("1.0", "atmos.growing_season_end")
 @declare_units(tas="[temperature]", thresh="[temperature]")
 def growing_season_end(
     tas: xarray.DataArray,
@@ -1085,6 +1090,7 @@ def growing_season_end(
     )
 
 
+@deprecated("1.0", "atmos.growing_season_length")
 @declare_units(tas="[temperature]", thresh="[temperature]")
 def growing_season_length(
     tas: xarray.DataArray,
@@ -1173,6 +1179,7 @@ def growing_season_length(
     )
 
 
+@deprecated("1.0", "atmos,.frost_season_length")
 @declare_units(tasmin="[temperature]", thresh="[temperature]")
 def frost_season_length(
     tasmin: xarray.DataArray,
@@ -1255,6 +1262,7 @@ def frost_season_length(
     )
 
 
+@deprecated("1.0", "atmos.frost_free_season_start")
 @declare_units(tasmin="[temperature]", thresh="[temperature]")
 def frost_free_season_start(
     tasmin: xarray.DataArray,
@@ -1316,6 +1324,7 @@ def frost_free_season_start(
     )
 
 
+@deprecated("1.0", "atmos.frost_free_season_end")
 @declare_units(tasmin="[temperature]", thresh="[temperature]")
 def frost_free_season_end(
     tasmin: xarray.DataArray,
@@ -1384,6 +1393,7 @@ def frost_free_season_end(
     )
 
 
+@deprecated("1.0", "atmos.frost_free_season_length")
 @declare_units(tasmin="[temperature]", thresh="[temperature]")
 def frost_free_season_length(
     tasmin: xarray.DataArray,
@@ -1574,6 +1584,7 @@ def last_spring_frost(
     return out
 
 
+@deprecated("1.0", "indices.generic.day_threshold_reached")
 @declare_units(tas="[temperature]", thresh="[temperature]")
 def first_day_temperature_below(
     tas: xarray.DataArray,
@@ -1627,6 +1638,7 @@ def first_day_temperature_below(
     return fdtb
 
 
+@deprecated("1.0", "indices.generic.day_threshold_reached")
 @declare_units(tas="[temperature]", thresh="[temperature]")
 def first_day_temperature_above(
     tas: xarray.DataArray,
@@ -2072,6 +2084,7 @@ def heating_degree_days_approximation(
     return hdd
 
 
+@deprecated("1.0", "atmos.heating_degree_days")
 @declare_units(tas="[temperature]", thresh="[temperature]")
 def heating_degree_days(
     tas: xarray.DataArray,
@@ -2362,6 +2375,7 @@ def snw_days_above(
     return count_occurrences(snw, condition=op, thresh=thresh, freq=freq).where(~valid)
 
 
+@deprecated("1.0", "atmos.tn_days_above")
 @declare_units(tasmin="[temperature]", thresh="[temperature]")
 def tn_days_above(
     tasmin: xarray.DataArray,
@@ -2402,6 +2416,7 @@ def tn_days_above(
     return count_occurrences(tasmin, condition=op, thresh=thresh, freq=freq, constrain=(">", ">="))
 
 
+@deprecated("1.0", "atmos.tn_days_below")
 @declare_units(tasmin="[temperature]", thresh="[temperature]")
 def tn_days_below(
     tasmin: xarray.DataArray,
@@ -2442,6 +2457,7 @@ def tn_days_below(
     return count_occurrences(tasmin, condition=op, thresh=thresh, freq=freq, constrain=("<", "<="))
 
 
+@deprecated("1.0", "atmos.tg_days_above")
 @declare_units(tas="[temperature]", thresh="[temperature]")
 def tg_days_above(
     tas: xarray.DataArray,
@@ -2482,6 +2498,7 @@ def tg_days_above(
     return count_occurrences(tas, condition=op, thresh=thresh, freq=freq, constrain=(">", ">="))
 
 
+@deprecated("1.0", "atmos.tg_days_below")
 @declare_units(tas="[temperature]", thresh="[temperature]")
 def tg_days_below(
     tas: xarray.DataArray,
@@ -2522,6 +2539,7 @@ def tg_days_below(
     return count_occurrences(tas, condition=op, thresh=thresh, freq=freq, constrain=("<", "<="))
 
 
+@deprecated("1.0", "atmos.tx_days_above")
 @declare_units(tasmax="[temperature]", thresh="[temperature]")
 def tx_days_above(
     tasmax: xarray.DataArray,
@@ -2562,6 +2580,7 @@ def tx_days_above(
     return count_occurrences(tasmax, condition=op, thresh=thresh, freq=freq, constrain=(">", ">="))
 
 
+@deprecated("1.0", "atmos.tx_days_below")
 @declare_units(tasmax="[temperature]", thresh="[temperature]")
 def tx_days_below(
     tasmax: xarray.DataArray,
@@ -3065,6 +3084,7 @@ def sea_ice_extent(
     return sie
 
 
+@deprecated("1.0", "atmos.windy_das")
 @declare_units(sfcWind="[speed]", thresh="[speed]")
 def windy_days(sfcWind: xarray.DataArray, thresh: Quantified = "10.8 m s-1", freq: str = "MS") -> xarray.DataArray:
     r"""
