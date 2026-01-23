@@ -17,6 +17,7 @@ from xclim.core.units import (
     rate2amount,
     to_agg_units,
 )
+from xclim.core.utils import deprecated
 from xclim.indices import run_length as rl
 from xclim.indices.converters import rain_approximation, snowfall_approximation
 from xclim.indices.generic import (
@@ -1106,6 +1107,7 @@ def rain_on_frozen_ground_days(
     return to_agg_units(out, tas, "count", deffreq="D")
 
 
+@deprecated("1.0", "atmos.high_precip_low_temp")
 @declare_units(
     pr="[precipitation]",
     tas="[temperature]",
