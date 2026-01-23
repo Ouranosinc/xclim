@@ -14,7 +14,7 @@ import os
 import warnings
 from collections.abc import Callable, Sequence
 from enum import IntEnum
-from inspect import _empty  # noqa
+from inspect import _empty
 from pathlib import Path
 from types import ModuleType
 

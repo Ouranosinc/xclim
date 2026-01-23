@@ -1392,7 +1392,7 @@ def first_run_1d(arr: Sequence[int | float], window: int) -> int | float:
         Returns np.nan if there are no valid runs.
     """
     v, rl, pos = rle_1d(arr)
-    ind = np.where(v * rl >= window, pos, np.inf).min()  # noqa
+    ind = np.where(v * rl >= window, pos, np.inf).min()
 
     if np.isinf(ind):
         return np.nan
@@ -1698,8 +1698,8 @@ def suspicious_run_1d(
             raise NotImplementedError(f"{op}")
 
     out = np.zeros_like(arr, dtype=bool)
-    for st, l in zip(pos[sus_runs], rl[sus_runs], strict=False):  # noqa: E741
-        out[st : st + l] = True  # noqa: E741
+    for st, length in zip(pos[sus_runs], rl[sus_runs], strict=False):
+        out[st : st + length] = True
     return out
 
 

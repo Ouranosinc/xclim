@@ -1,4 +1,3 @@
-# noqa: D205,D400
 """
 Uncertainty Partitioning
 ========================
@@ -11,7 +10,6 @@ from __future__ import annotations
 from typing import cast
 
 import numpy as np
-import pandas as pd
 import xarray as xr
 
 # pylint: disable=pointless-string-statement
@@ -151,7 +149,7 @@ def hawkins_sutton(
     total = nv_u + scenario_u + model_u
 
     # Create output array with the uncertainty components
-    u = pd.Index(["variability", "model", "scenario", "total"], name="uncertainty")
+    u = xr.DataArray(["variability", "model", "scenario", "total"], dims=("uncertainty",), name="uncertainty")
     uncertainty = xr.concat([nv_u, model_u, scenario_u, total], dim=u)
 
     # Keep a trace of the elements for each uncertainty component
@@ -267,8 +265,10 @@ def lafferty_sriver(
     total = nv_u + scenario_u + model_u + downscaling_u
 
     # Create output array with the uncertainty components
-    u = pd.Index(["model", "scenario", "downscaling", "variability", "total"], name="uncertainty")
-    uncertainty = xr.concat([model_u, scenario_u, downscaling_u, nv_u, total], dim=u)
+    u = xr.DataArray(
+        ["model", "scenario", "downscaling", "variability", "total"], dims=("uncertainty",), name="uncertainty"
+    )
+    uncertainty = xr.concat([model_u, scenario_u, downscaling_u, nv_u, total], u)
 
     # Keep a trace of the elements for each uncertainty component
     for d in ["model", "scenario", "downscaling"]:
@@ -380,7 +380,7 @@ def general_partition(
         total += t_u
 
     # Create output array with the uncertainty components
-    u = pd.Index([*all_types, "variability", "total"], name="uncertainty")
+    u = xr.DataArray([*all_types, "variability", "total"], dims=("uncertainty",), name="uncertainty")
     uncertainty = xr.concat([*all_u, nv_u, total], dim=u)
 
     uncertainty.attrs["indicator_long_name"] = da.attrs.get("long_name", "unknown")

@@ -848,14 +848,13 @@ def _fire_weather_calc(  # noqa: C901  # pylint: disable=R0912, R0915
                 ind_prevs["DMC"],
             )
         if "FFMC" in outputs:
-            with np.errstate(divide="ignore", invalid="ignore"):
-                out["FFMC"][..., it] = _fine_fuel_moisture_code(
-                    tas[..., it],
-                    pr[..., it],
-                    ws[..., it],
-                    rh[..., it],
-                    ind_prevs["FFMC"],
-                )
+            out["FFMC"][..., it] = _fine_fuel_moisture_code(
+                tas[..., it],
+                pr[..., it],
+                ws[..., it],
+                rh[..., it],
+                ind_prevs["FFMC"],
+            )
         if "ISI" in outputs:
             out["ISI"][..., it] = initial_spread_index(ws[..., it], out["FFMC"][..., it])
         if "BUI" in outputs:

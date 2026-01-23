@@ -632,7 +632,7 @@ def populate_testing_data(
             msg = f"File `{file}` not accessible in remote repository."
             logging.error(msg)
             errored_files.append(file)
-        except SocketBlockedError as err:  # noqa
+        except SocketBlockedError as err:
             msg = (
                 "Unable to access registry file online. Testing suite is being run with `--disable-socket`. "
                 "If you intend to run tests with this option enabled, please download the file beforehand with the "

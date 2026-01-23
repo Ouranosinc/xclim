@@ -269,3 +269,17 @@ class TestHourly:
             out,
             9 * [False] + [True],
         )
+
+
+class TestMissingSome:
+    def test_missing_days(self, tas_series):
+        a = np.arange(360.0)
+        a[:40] = np.nan
+        ts = tas_series(a)
+        out = missing.missing_some_but_not_all(ts, freq="MS")
+        # all missing in first month, ok
+        assert not out[0]
+        # some missing in second month, raise
+        assert out[1]
+        # none missing in third month, ok
+        assert not out[2]

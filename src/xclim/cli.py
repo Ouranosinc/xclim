@@ -35,7 +35,7 @@ try:
     from dask.distributed import Client, progress  # pylint: disable=ungrouped-imports
 
     distributed = True
-except ImportError:  # noqa: S110
+except ImportError:
     Client, progress = None, None
 
 
@@ -46,7 +46,7 @@ def _get_indicator(indicator_name):
     else:
         indid = indicator_name.upper()
     try:
-        return xc.core.indicator.registry[indid].get_instance()  # noqa
+        return xc.core.indicator.registry[indid].get_instance()
     except KeyError as e:
         raise click.BadArgumentUsage(f"Indicator '{indicator_name}' not found in xclim.") from e
 
@@ -315,7 +315,7 @@ def indices(info):  # numpydoc ignore=PR01
     formatter = click.HelpFormatter()
     formatter.write_heading("Listing all available indicators for computation.")
     rows = []
-    for name, indcls in xc.core.indicator.registry.items():  # noqa
+    for name, indcls in xc.core.indicator.registry.items():
         left = click.style(name.lower(), fg="yellow")
         right = ", ".join([var.get("long_name", var["var_name"]) for var in indcls.cf_attrs])
         if indcls.cf_attrs[0]["var_name"] != name.lower():
@@ -436,6 +436,7 @@ def cli(ctx, **kwargs):  # numpydoc ignore=PR01
     if not kwargs["verbose"]:
         warnings.simplefilter("ignore", FutureWarning)
         warnings.simplefilter("ignore", DeprecationWarning)
+        warnings.simplefilter("ignore", RuntimeWarning)
 
     if kwargs["version"]:
         click.echo(f"xclim {xc.__version__}")

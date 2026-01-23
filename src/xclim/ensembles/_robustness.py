@@ -16,7 +16,7 @@ from inspect import Parameter, signature
 from typing import cast
 
 import numpy as np
-import scipy.stats as spstats  # noqa
+import scipy.stats as spstats
 import xarray as xr
 
 from xclim.core.formatting import gen_call_string, update_xclim_history
@@ -71,7 +71,7 @@ def significance_test(func: Callable) -> Callable:
 # This function's docstring is modified to include the registered test names and docs.
 # See end of this file.
 @update_xclim_history
-def robustness_fractions(  # noqa: C901
+def robustness_fractions(
     fut: xr.DataArray,
     ref: xr.DataArray | None = None,
     test: str | None = None,
@@ -469,14 +469,14 @@ def robustness_coefficient(fut: xr.DataArray | xr.Dataset, ref: xr.DataArray | x
         v_favg = np.sort(future.mean(axis=-1))  # Multimodel mean
         v_ref = np.sort(reference)  # Historical values
 
-        A1 = diff_cdf_sq_area_int(v_fut, v_favg)  # noqa
-        A2 = diff_cdf_sq_area_int(v_ref, v_favg)  # noqa
+        A1 = diff_cdf_sq_area_int(v_fut, v_favg)
+        A2 = diff_cdf_sq_area_int(v_ref, v_favg)
 
         return 1 - A1 / A2
 
     R = cast(
         xr.DataArray,
-        xr.apply_ufunc(  # noqa
+        xr.apply_ufunc(
             _knutti_sedlacek,
             ref,
             fut,
