@@ -9,7 +9,8 @@ from __future__ import annotations
 
 from collections import namedtuple
 from collections.abc import Callable, Sequence
-from datetime import datetime
+from datetime import datetime, timedelta
+from itertools import pairwise
 from typing import Literal
 from warnings import warn
 
@@ -1746,6 +1747,66 @@ def suspicious_run(
     )
 
 
+def group_events_by_period(events: xr.Dataset, freq: str):
+    """
+    Group events by period according to their start time.
+
+    Parameters
+    ----------
+    events : xr.Dataset
+        Output of :py:func:`find_events`. Must have a ``event_start`` variable and a ``event`` dimension.
+        This function is currently not implemented for dask-backed data.
+    freq : str
+         A frequency to divide the events into periods. Periods going from the first to the last event are
+         in the output, which might be a subset of the periods returned if resampling was done before
+         finding the events.
+
+    Returns
+    -------
+    xr.Dataset
+        Same as ``events`` but with the ``event`` dimension reshaped for each periods.
+        The new event dimension's length is number of events in the period with the most events.
+
+    Raises
+    ------
+    NotImplementedError
+        If ``events`` is dask-backed.
+    """
+    if uses_dask(events):
+        raise NotImplementedError(
+            "`group_events_by_period` doesn't support dask arrays. Consider loading your data into memory before."
+        )
+
+    starts = events.event_start
+    if starts.dtype == "O":
+        mintime = starts.min().item()
+        maxtime = starts.max().item()
+        lastbin = maxtime + timedelta(1)
+    else:
+        # nanmin doesn't skip NaT
+        rawtimes = starts.values.flatten()
+        rawtimes = rawtimes[~np.isnan(rawtimes)]
+        mintime = rawtimes.min()
+        maxtime = rawtimes.max()
+        lastbin = maxtime + np.timedelta64(1, "s")
+
+    time = xr.DataArray(
+        xr.date_range(mintime, maxtime, calendar=starts.dt.calendar, freq=freq, use_cftime=(starts.dtype == "O")),
+        dims=("time",),
+        name="time",
+    )
+
+    bins = list(time.values) + [lastbin]
+    groups = []
+    for left, right in pairwise(bins):
+        grp = events.where((starts >= left) & (starts < right)).dropna("event", how="all")
+        # reset dummy event index
+        grp = grp.assign_coords(event=np.arange(grp.event.size) + 1)
+        groups.append(grp)
+
+    return xr.concat(groups, time, join="outer")
+
+
 def _find_events(da_start, da_stop, data, window_start, window_stop):
     """
     Actual finding of events for each period.
@@ -1839,6 +1900,7 @@ def find_events(
     window_stop: int = 1,
     data: xr.DataArray | None = None,
     freq: str | None = None,
+    resample_before_rl: bool = True,
 ) -> xr.Dataset:
     """
     Find events (runs).
@@ -1865,7 +1927,12 @@ def find_events(
         The actual data. If present, its sum within each event is added to the output.
     freq : str, optional
         A frequency to divide the data into periods. If absent, the output has not time dimension.
-        If given, the events are searched within in each resample period independently.
+    resample_before_rl : bool
+        If True (default) and ``freq`` is passed, the data is resampled before finding the events.
+        This means that events overlapping two periods are effectively cut in half before being searched.
+        If False and ``freq`` is passed, the events dataset is grouped by period after finding the events.
+        This is done using :py:func:`group_events_by_periods`.
+        This is currently unsupported for dask-backed arrays and will raise a NotImplementedError.
 
     Returns
     -------
@@ -1879,12 +1946,15 @@ def find_events(
     if condition_stop is None:
         condition_stop = ~condition
 
-    if freq is None:
-        return _find_events(condition, condition_stop, data, window, window_stop)
+    if freq is not None and resample_before_rl:
+        ds = xr.Dataset({"da_start": condition, "da_stop": condition_stop})
+        if data is not None:
+            ds = ds.assign(data=data)
+        return ds.resample(time=freq).map(
+            lambda grp: _find_events(grp.da_start, grp.da_stop, grp.get("data", None), window, window_stop)
+        )
 
-    ds = xr.Dataset({"da_start": condition, "da_stop": condition_stop})
-    if data is not None:
-        ds = ds.assign(data=data)
-    return ds.resample(time=freq).map(
-        lambda grp: _find_events(grp.da_start, grp.da_stop, grp.get("data", None), window, window_stop)
-    )
+    out = _find_events(condition, condition_stop, data, window, window_stop)
+    if freq is None:
+        return out
+    return group_events_by_period(out, freq=freq)
