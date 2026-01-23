@@ -45,7 +45,7 @@ dependencies = [
   "numba >=0.57.0",
   "numpy >=1.25.0",
   "packaging >=24.0",
-  "pandas >=2.2.0,<3.0",
+  "pandas >=2.2.0",
   "pint >=0.24.4",
   "pyarrow >=15.0", # Strongly encouraged for pandas v2.2.0+
   "pyyaml >=6.0.1",
@@ -127,7 +127,7 @@ xclim = "xclim.cli:cli"
 [tool]
 
 [tool.bumpversion]
-current_version = "0.59.2-dev.8"
+current_version = "0.59.2-dev.10"
 commit = true
 commit_args = "--no-verify --signoff"
 tag = false

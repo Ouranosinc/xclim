@@ -137,7 +137,6 @@ from xclim.core.calendar import parse_offset, select_time
 from xclim.core.cfchecks import cfcheck_from_name
 from xclim.core.formatting import (
     AttrFormatter,
-    _merge_attrs_drop_conflicts,
     default_formatter,
     gen_call_string,
     generate_indicator_docstring,
@@ -156,7 +155,6 @@ from xclim.core.locales import (
 from xclim.core.options import (
     AS_DATASET,
     CHECK_MISSING,
-    KEEP_ATTRS,
     METADATA_LOCALES,
     MISSING_METHODS,
     MISSING_OPTIONS,
@@ -880,20 +878,11 @@ class Indicator(IndicatorRegistrar):
 
         das, params, dsattrs = self._parse_variables_from_call(args, kwds)
 
-        if OPTIONS[KEEP_ATTRS] is True or (
-            OPTIONS[KEEP_ATTRS] == "xarray" and xarray.get_options()["keep_attrs"] is True
-        ):
-            out_attrs = _merge_attrs_drop_conflicts(*das.values())
-            out_attrs.pop("units", None)
-        else:
-            out_attrs = {}
-        out_attrs = [out_attrs.copy() for _ in range(self.n_outs)]
-
         das, params = self._preprocess_and_checks(das, params)
 
         # get mappings where keys are the actual compute function's argument names
         args = self._get_compute_args(das, params)
-        with xarray.set_options(keep_attrs=False), np.errstate(divide="ignore", invalid="ignore"):
+        with np.errstate(divide="ignore", invalid="ignore"):
             outs = self.compute(**args)
 
         if isinstance(outs, DataArray):
@@ -906,6 +895,7 @@ class Indicator(IndicatorRegistrar):
 
         # Metadata attributes from templates
         var_id = None
+        out_attrs = [dict() for _ in range(self.n_outs)]
         for out, attrs, base_attrs in zip(outs, out_attrs, self.cf_attrs, strict=False):
             if self.n_outs > 1:
                 var_id = base_attrs["var_name"]
@@ -936,9 +926,7 @@ class Indicator(IndicatorRegistrar):
 
         if OPTIONS[AS_DATASET]:
             out = Dataset({o.name: o for o in outs})
-            if OPTIONS[KEEP_ATTRS] is True or (
-                OPTIONS[KEEP_ATTRS] == "xarray" and xarray.get_options()["keep_attrs"] is True
-            ):
+            if xarray.get_options()["keep_attrs"] is not False:
                 out.attrs.update(dsattrs)
             out.attrs["history"] = update_history(
                 self._history_string(das, params),

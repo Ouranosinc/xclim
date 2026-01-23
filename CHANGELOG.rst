@@ -4,12 +4,14 @@ Changelog
 
 v0.60.0 (unreleased)
 --------------------
-Contributors to this version: Éric Dupuis (:user:`coxipi`), Trevor James Smith (:user:`Zeitsperre`), Juliette Lavoie (:user: `juliettelavoie`), Ève Larose (:user:`e-larose`), Faisal Mahmood (:user:`faimahsho`), David Huard (:user:`huard`), Hui-Min Wang (:user:`Hem-W`).
+Contributors to this version: Éric Dupuis (:user:`coxipi`), Trevor James Smith (:user:`Zeitsperre`), Juliette Lavoie (:user: `juliettelavoie`), Ève Larose (:user:`e-larose`), Faisal Mahmood (:user:`faimahsho`), David Huard (:user:`huard`), Pascal Bourgault (:user:`aulemahal`), Hui-Min Wang (:user:`Hem-W`).
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
 * `lmoments3` is now listed as a dependency to the extras recipe. This dependency is not installed by default with `xclim` and must be explicitly requested with ``$ pip install "xclim[extras]"``, if desired. (:pull:`2269`).
 * `numpy`-related `RuntimeWarnings` for invalid operations are noisier when running calculations via the ``xclim.indices`` and muted by default for ``xclim.indicators``. This change is made to ensure that users who perform indice calculations can be made more aware of potential inconsistencies in their source datasets (:issue:`2277`, :pull:`2276`).
+* ``xclim.core.calendar.time_bnds`` now follows the CF conventions in that the "end" time is the same as the "start" of the next period (and not the timestep just before) (:pull:`2310`).
+* The ``keep_attrs`` option was removed from ``xclim.set_options``. The recent change of philosophy in xarray as made xclim's attribute preserving logic irrelevant. Xarray's ``keep_attrs`` option now controls all attribute management (:issue:`2308`, :pull:`2311`).
 
 New indicators and features
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -21,6 +23,7 @@ New indicators and features
 Bug fixes
 ^^^^^^^^^
 * One of the conditions in ``atmos.cooling_degree_days_approximation`` had the wrong computation and has been fixed: ``(tasmax - tasmin)/4`` is replaced by ``(tasmax - thresh)/4`` (:issue:`2272`, :pull:`2273`).
+* Fix some issues with Pandas 3 in partitioning functions of ``xclim.ensembles`` and in ``xclim.indices.generic.aggregate_between_dates`` (:pull:`2310`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
@@ -36,7 +39,6 @@ Internal changes
 * Replaced the `formattext-pre-commit` hook with `mirrors-bibtex-tidy` in order to enforce style and consistency on `BibTeX` files. (:pull:`2306`).
 * Removed many obsolete `noqa` comments throughout the code base. (:pull:`2307`).
 * `matplotlib` is no longer loaded during the import process of `xclim` nor during the pytest setup if present in the environment. (:pull:`2307`).
-* Temporarily pin `pandas` below v3.0 to prevent failures from changes in the API. (:pull:`2309`).
 
 v0.59.1 (2025-10-31)
 --------------------
