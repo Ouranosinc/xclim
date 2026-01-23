@@ -8,7 +8,9 @@ but are not particularly index-like themselves (those should go in the :py:mod:`
 
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping
+import operator
+import warnings
+from collections.abc import Callable, Mapping, Sequence
 from datetime import timedelta
 from inspect import stack
 from typing import Any, Literal, cast
@@ -33,11 +35,12 @@ try:
 except ImportError:
     rechunk_for_blockwise = None
 
-from xclim.core import DayOfYearStr, Quantified
+from xclim.core import Condition, DayOfYearStr, Quantified, Reducer
 from xclim.core.calendar import ensure_cftime_array, get_calendar, parse_offset, select_time
 from xclim.core.options import MAP_BLOCKS, OPTIONS
 from xclim.core.units import convert_units_to
 from xclim.core.utils import _chunk_like, uses_dask
+from xclim.indices import run_length as rl
 
 __all__ = [
     "cosine_of_solar_zenith_angle",
@@ -55,6 +58,226 @@ __all__ = [
     "time_correction_for_solar_angle",
     "wind_speed_height_conversion",
 ]
+
+
+BINARY_OPS = {">": "gt", "<": "lt", ">=": "ge", "<=": "le", "==": "eq", "!=": "ne"}
+"""Known binary operators and their translation between symbolic and letter forms."""
+
+
+def get_binary_op(condition: Condition, constrain: Sequence[Condition] | None = None) -> Callable:
+    """
+    Get python's comparing function according to its name of representation and validate allowed usage.
+
+    Accepted condition strings are keys and values of :py:data:`BINARY_OPS`.
+
+    Parameters
+    ----------
+    condition : {">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"}
+        Comparison binary operator name of symbol.
+    constrain : sequence of {">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"}, optional
+        A tuple of allowed operators. Or None to allow all known operators.
+
+    Returns
+    -------
+    Callable
+        A binary function to perform the comparison.
+    """
+    if condition == "gteq":
+        warnings.warn(f"`{condition}` is being renamed `ge` for compatibility.")
+        condition = "ge"
+    if condition == "lteq":
+        warnings.warn(f"`{condition}` is being renamed `le` for compatibility.")
+        condition = "le"
+
+    if condition in BINARY_OPS:
+        binary_op = BINARY_OPS[condition]
+    elif condition in BINARY_OPS.values():
+        binary_op = condition
+    else:
+        raise ValueError(f"Operation `{condition}` not recognized.")
+
+    constraints = []
+    if isinstance(constrain, list | tuple | set):
+        constraints.extend([BINARY_OPS[c] for c in constrain])
+        constraints.extend(constrain)
+    elif isinstance(constrain, str):
+        constraints.extend([BINARY_OPS[constrain], constrain])
+
+    if constrain:
+        if condition not in constraints:
+            raise ValueError(f"Operation `{condition}` not permitted for this indicator.")
+
+    return getattr(operator, f"__{binary_op}__")
+
+
+def compare(
+    left: xr.DataArray,
+    condition: Condition,
+    right: float | int | np.ndarray | xr.DataArray,
+    constrain: Sequence[str] | None = None,
+) -> xr.DataArray:
+    """
+    Compare a DataArray to a threshold using given operator.
+
+    Comparison is done as ``left condition right``.
+
+    Parameters
+    ----------
+    left : xr.DataArray
+        A DataArray being evaluated against `right`.
+    condition : {">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"}
+        Logical comparison operator.
+    right : float, int, np.ndarray, or xr.DataArray
+        A value or array-like being evaluated against left`.
+    constrain : sequence of str, optional
+        Optionally allowed conditions.
+
+    Returns
+    -------
+    xr.DataArray
+        Boolean mask of the comparison.
+    """
+    return get_binary_op(condition, constrain)(left, right)
+
+
+def spell_mask(
+    data: xr.DataArray | Sequence[xr.DataArray],
+    window: int,
+    window_statistic: Reducer,
+    condition: Condition,
+    thresh: float | Sequence[float] | xr.DataArray | Sequence[xr.DataArray],
+    min_gap: int = 1,
+    weights: Sequence[float] = None,
+    var_reducer: Literal["any", "all"] = "all",
+) -> xr.DataArray:
+    """
+    Compute the boolean mask of data points that are part of a spell as defined by a rolling statistic.
+
+    A timestep is part of a spell (True in the mask) if it is contained in any period that fulfills the condition.
+
+    Parameters
+    ----------
+    data : DataArray or sequence of DataArray
+        The input data. Can be a list, in which case the condition is checked on all variables.
+        See var_reducer for the latter case.
+    window : int
+        The length of the rolling window in which to compute statistics.
+    window_statistic : {'min', 'max', 'sum', 'mean', 'std', 'var'}
+        The statistics to compute on the rolling window.
+    condition : {">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"}
+        The comparison operator to use when finding spells. Comparison is done as ``rolled_data {condition} thresh``.
+    thresh : float or sequence of floats or DataArray or sequence of DataArray
+        The threshold(s) to compare the rolling statistics against.
+        If data is a list, this must be a list of the same length as ``data``,
+        with a threshold for each variable. This function does not handle units and can't accept Quantified objects.
+    min_gap : int
+        The shortest possible gap between two spells.
+        Spells closer than this are merged by assigning the gap steps to the merged spell.
+    weights : sequence of floats
+        A list of weights of the same length as the window.
+        Only supported if ``window_statistic`` is ``"mean"``.
+    var_reducer : {'all', 'any'}
+        If the data is a list, the condition must either be fulfilled on *all*
+        or *any* variables for the period to be considered a spell.
+
+    Returns
+    -------
+    xr.DataArray
+        Same shape as ``data``, but boolean.
+        If ``data`` was a list, this is a DataArray of the same shape as the alignment of all variables.
+    """
+    _singlevar = True
+    # Checks
+    if not isinstance(data, xr.DataArray):
+        # thus a sequence
+        if np.isscalar(thresh) or isinstance(thresh, xr.DataArray) or len(data) != len(thresh):
+            raise ValueError("When ``data`` is given as a list, ``thresh`` must be a sequence of the same length.")
+        data = xr.concat(data, "variable")
+        if isinstance(thresh[0], xr.DataArray):
+            thresh = xr.concat(thresh, "variable")
+        else:
+            thresh = xr.DataArray(thresh, dims=("variable",))
+        _singlevar = False
+
+    if weights is not None:
+        if window_statistic != "mean":
+            raise ValueError(
+                f"Argument 'weights' is only supported if 'window_statistic' is 'mean'. Got :  {window_statistic}"
+            )
+        if len(weights) != window:
+            raise ValueError(f"Weights have a different length ({len(weights)}) than the window ({window}).")
+        weights = xr.DataArray(weights, dims=("window",))
+
+    if window == 1:  # Fast path
+        is_in_spell = compare(data, condition, thresh)
+        if not _singlevar:
+            is_in_spell = getattr(is_in_spell, var_reducer)("variable")
+    elif (window_statistic == "min" and condition in [">", ">=", "ge", "gt"]) or (
+        window_statistic == "max" and condition in ["`<", "<=", "le", "lt"]
+    ):
+        # Fast path for specific cases, this yields a smaller dask graph (rolling twice is expensive!)
+        # For these two cases, a day can't be part of a spell if it doesn't respect the condition itself
+        mask = compare(data, condition, thresh)
+        if not _singlevar:
+            mask = getattr(mask, var_reducer)("variable")
+        # We need to filter out the spells shorter than "window"
+        # find sequences of consecutive respected constraints
+        cs_s = rl._cumsum_reset(mask)
+        # end of these sequences
+        cs_s = cs_s.where(mask.shift({"time": -1}, fill_value=0) == 0)
+        # propagate these end of sequences
+        # the `.where(mask>0, 0)` acts a stopper
+        is_in_spell = cs_s.where(cs_s >= window).where(mask > 0, 0).bfill("time") > 0
+    else:
+        data_pad = data.pad(time=(0, window))
+        # The spell-wise value to test
+        # For example, "window_reducer='sum'",
+        # we want the sum over the minimum spell length (window) to be above the thresh
+        if weights is not None:
+            spell_value = data_pad.rolling(time=window).construct("window").dot(weights)
+        else:
+            spell_value = getattr(data_pad.rolling(time=window), window_statistic)()
+        # True at the end of a spell respecting the condition
+        mask = compare(spell_value, condition, thresh)
+        if not _singlevar:
+            mask = getattr(mask, var_reducer)("variable")
+        # True for all days part of a spell that respected the condition (shift because of the two rollings)
+        is_in_spell = (mask.rolling(time=window).sum() >= 1).shift(time=-(window - 1), fill_value=False)
+        # Cut back to the original size
+        is_in_spell = is_in_spell.isel(time=slice(0, data.time.size))
+
+    if min_gap > 1:
+        is_in_spell = rl.runs_with_holes(is_in_spell, 1, ~is_in_spell, min_gap).astype(bool)
+
+    return is_in_spell
+
+
+def detrend(ds: xr.DataArray | xr.Dataset, dim="time", deg=1) -> xr.DataArray | xr.Dataset:
+    """
+    Detrend data along a given dimension computing a polynomial trend of a given order.
+
+    Parameters
+    ----------
+    ds : xr.Dataset or xr.DataArray
+      The data to detrend. If a Dataset, detrending is done on all data variables.
+    dim : str
+      Dimension along which to compute the trend.
+    deg : int
+      Degree of the polynomial to fit.
+
+    Returns
+    -------
+    xr.Dataset or xr.DataArray
+      Same as `ds`, but with its trend removed (subtracted).
+    """
+    if isinstance(ds, xr.Dataset):
+        return ds.map(detrend, keep_attrs=False, dim=dim, deg=deg)
+    # is a DataArray
+    # detrend along a single dimension
+    coeff = ds.polyfit(dim=dim, deg=deg)
+    trend = xr.polyval(ds[dim], coeff.polyfit_coefficients)
+    with xr.set_options(keep_attrs=True):
+        return ds - trend
 
 
 def _wrap_radians(da):
