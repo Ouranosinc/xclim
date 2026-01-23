@@ -10,7 +10,6 @@ import xarray
 
 from xclim.core import DayOfYearStr, Quantified
 from xclim.core.calendar import doy_from_string, get_calendar, select_time
-from xclim.core.missing import at_least_n_valid
 from xclim.core.units import (
     convert_units_to,
     declare_units,
@@ -357,6 +356,7 @@ def cold_spell_total_length(
     return to_agg_units(out, tas, "count", deffreq="D")
 
 
+@deprecated("1.0", "land.snd_season_end")
 @declare_units(snd="[length]", thresh="[length]")
 def snd_season_end(
     snd: xarray.DataArray,
@@ -391,12 +391,10 @@ def snd_season_end(
     ----------
     :cite:cts:`chaumont_elaboration_2017`
     """
-    valid = at_least_n_valid(snd.where(snd > 0), n=1, freq=freq)
-    out = season(snd, condition=">=", thresh=thresh, window=window, aspect="end", freq=freq)
-    snd_se = out.where(~valid)
-    return snd_se
+    return season(snd, condition=">=", thresh=thresh, window=window, aspect="end", freq=freq)
 
 
+@deprecated("1.0", "land.snw_season_end")
 @declare_units(snw="[mass]/[area]", thresh="[mass]/[area]")
 def snw_season_end(
     snw: xarray.DataArray,
@@ -430,12 +428,10 @@ def snw_season_end(
     ----------
     :cite:cts:`chaumont_elaboration_2017`
     """
-    valid = at_least_n_valid(snw.where(snw > 0), n=1, freq=freq)
-    out = season(snw, thresh=thresh, window=window, condition=">=", aspect="end", freq=freq)
-    snw_se = out.where(~valid)
-    return snw_se
+    return season(snw, thresh=thresh, window=window, condition=">=", aspect="end", freq=freq)
 
 
+@deprecated("1.0", "land.snd_season_start")
 @declare_units(snd="[length]", thresh="[length]")
 def snd_season_start(
     snd: xarray.DataArray,
@@ -469,12 +465,10 @@ def snd_season_start(
     ----------
     :cite:cts:`chaumont_elaboration_2017`
     """
-    valid = at_least_n_valid(snd.where(snd > 0), n=1, freq=freq)
-    out = season(snd, thresh=thresh, window=window, condition=">=", aspect="start", freq=freq)
-    snd_ss = out.where(~valid)
-    return snd_ss
+    return season(snd, thresh=thresh, window=window, condition=">=", aspect="start", freq=freq)
 
 
+@deprecated("1.0", "land.snw_season_start")
 @declare_units(snw="[mass]/[area]", thresh="[mass]/[area]")
 def snw_season_start(
     snw: xarray.DataArray,
@@ -507,12 +501,10 @@ def snw_season_start(
     ----------
     :cite:cts:`chaumont_elaboration_2017`
     """
-    valid = at_least_n_valid(snw.where(snw > 0), n=1, freq=freq)
-    out = season(snw, thresh=thresh, window=window, condition=">=", aspect="start", freq=freq)
-    snw_ss = out.where(~valid)
-    return snw_ss
+    return season(snw, thresh=thresh, window=window, condition=">=", aspect="start", freq=freq)
 
 
+@deprecated("1.0", "land.snd_season_length")
 @declare_units(snd="[length]", thresh="[length]")
 def snd_season_length(
     snd: xarray.DataArray,
@@ -546,12 +538,10 @@ def snd_season_length(
     ----------
     :cite:cts:`chaumont_elaboration_2017`
     """
-    valid = at_least_n_valid(snd.where(snd > 0), n=1, freq=freq)
-    out = season(snd, thresh=thresh, window=window, condition=">=", aspect="length", freq=freq)
-    snd_sl = out.where(~valid)
-    return snd_sl
+    return season(snd, thresh=thresh, window=window, condition=">=", aspect="length", freq=freq)
 
 
+@deprecated("1.0", "land.snw_season_length")
 @declare_units(snw="[mass]/[area]", thresh="[mass]/[area]")
 def snw_season_length(
     snw: xarray.DataArray,
@@ -585,10 +575,7 @@ def snw_season_length(
     ----------
     :cite:cts:`chaumont_elaboration_2017`
     """
-    valid = at_least_n_valid(snw.where(snw > 0), n=1, freq=freq)
-    out = season(snw, thresh=thresh, window=window, condition=">=", aspect="length", freq=freq)
-    snw_sl = out.where(~valid)
-    return snw_sl
+    return season(snw, thresh=thresh, window=window, condition=">=", aspect="length", freq=freq)
 
 
 @declare_units(snd="[length]", thresh="[length]")
@@ -2339,8 +2326,7 @@ def snd_days_above(
     xarray.DataArray, [time]
         Number of days where snow depth is greater than or equal to {thresh}.
     """
-    valid = at_least_n_valid(snd, n=1, freq=freq)
-    return count_occurrences(snd, condition=op, thresh=thresh, freq=freq).where(~valid)
+    return count_occurrences(snd, condition=op, thresh=thresh, freq=freq)
 
 
 @declare_units(snw="[mass]/[area]", thresh="[mass]/[area]")
@@ -2371,8 +2357,7 @@ def snw_days_above(
     xarray.DataArray, [time]
         Number of days where snow amount is greater than or equal to {thresh}.
     """
-    valid = at_least_n_valid(snw, n=1, freq=freq)
-    return count_occurrences(snw, condition=op, thresh=thresh, freq=freq).where(~valid)
+    return count_occurrences(snw, condition=op, thresh=thresh, freq=freq)
 
 
 @deprecated("1.0", "atmos.tn_days_above")

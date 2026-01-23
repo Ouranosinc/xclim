@@ -8,6 +8,7 @@ from xclim import indices as xci
 from xclim.core.indicator import Daily, ResamplingIndicatorWithIndexing
 from xclim.indicators.convert import snd_to_snw as _snd_to_snw
 from xclim.indicators.convert import snw_to_snd as _snw_to_snd
+from xclim.indices import generic
 
 __all__ = [
     "blowing_snow",
@@ -75,7 +76,21 @@ snd_season_length = SnowWithIndexing(
         "The duration of the snow season, starting with at least {window} days with snow depth above {thresh} "
         "and ending with at least {window} days with snow depth under {thresh}."
     ),
-    compute=xci.snd_season_length,
+    title="Snow cover duration (depth).",
+    abstract=(
+        "The season starts when snow depth is above a threshold for at least `N` consecutive days"
+        "and stops when it drops below the same threshold for the same number of days."
+    ),
+    compute=generic.season,
+    inputs={"data": "snd"},
+    parameters={
+        "thresh": {"default": "2 cm"},
+        "window": {"default": 14},
+        "condition": ">=",
+        "aspect": "length",
+        "constrain": None,
+        "mid_date": None,
+    },
 )
 
 snw_season_length = SnowWithIndexing(
@@ -86,7 +101,21 @@ snw_season_length = SnowWithIndexing(
         "The duration of the snow season, starting with at least {window} days with snow amount above {thresh} "
         "and ending with at least {window} days with snow amount under {thresh}."
     ),
-    compute=xci.snw_season_length,
+    title="Snow cover duration (amount).",
+    abstract=(
+        "The season starts when the snow amount is above a threshold for at least `N` consecutive days"
+        "and stops when it drops below the same threshold for the same number of days."
+    ),
+    compute=generic.season,
+    inputs={"data": "snw"},
+    parameters={
+        "thresh": {"default": "4 kg m-2"},
+        "window": {"default": 14},
+        "condition": ">=",
+        "aspect": "length",
+        "constrain": None,
+        "mid_date": None,
+    },
 )
 
 snd_season_start = Snow(
@@ -97,7 +126,17 @@ snd_season_start = Snow(
     abstract="The first date on which snow depth is greater than or equal to a given threshold "
     "for a given number of consecutive days.",
     units="",
-    compute=xci.snd_season_start,
+    title="Snow cover start date (depth).",
+    compute=generic.season,
+    inputs={"data": "snd"},
+    parameters={
+        "thresh": {"default": "2 cm"},
+        "window": {"default": 14},
+        "condition": ">=",
+        "aspect": "start",
+        "constrain": None,
+        "mid_date": None,
+    },
 )
 
 snw_season_start = Snow(
@@ -108,7 +147,17 @@ snw_season_start = Snow(
     abstract="The first date on which snow amount is greater than or equal to a given threshold "
     "for a given number of consecutive days.",
     units="",
-    compute=xci.snw_season_start,
+    title="Snow cover start date (amount).",
+    compute=generic.season,
+    inputs={"data": "snw"},
+    parameters={
+        "thresh": {"default": "4 kg m-2"},
+        "window": {"default": 14},
+        "condition": ">=",
+        "aspect": "start",
+        "constrain": None,
+        "mid_date": None,
+    },
 )
 
 snd_season_end = Snow(
@@ -118,7 +167,17 @@ snd_season_end = Snow(
     description="Day of year when snow depth is below {thresh} for {window} consecutive days.",
     abstract="The first date on which snow depth is below a given threshold for a given number of consecutive days.",
     units="",
-    compute=xci.snd_season_end,
+    title="Snow cover end date (depth).",
+    compute=generic.season,
+    inputs={"data": "snd"},
+    parameters={
+        "thresh": {"default": "2 cm"},
+        "window": {"default": 14},
+        "condition": ">=",
+        "aspect": "end",
+        "constrain": None,
+        "mid_date": None,
+    },
 )
 
 snw_season_end = Snow(
@@ -128,7 +187,17 @@ snw_season_end = Snow(
     description="Day of year when snow amount is below {thresh} for {window} consecutive days.",
     abstract="The first date on which snow amount is below a given threshold for a given number of consecutive days.",
     units="",
-    compute=xci.snw_season_end,
+    title="Snow cover end date (amount).",
+    compute=generic.season,
+    inputs={"data": "snw"},
+    parameters={
+        "thresh": {"default": "4 kg m-2"},
+        "window": {"default": 14},
+        "condition": ">=",
+        "aspect": "end",
+        "constrain": None,
+        "mid_date": None,
+    },
 )
 
 snd_max_doy = SnowWithIndexing(
