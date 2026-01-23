@@ -7,7 +7,7 @@ from xclim.indices.generic import statistics as _statistics
 from xclim.indices.stats import fit as _fit
 from xclim.indices.stats import frequency_analysis
 
-__all__ = ["fit", "return_level", "statistics", "stats"]
+__all__ = ["fit", "return_level", "statistics"]
 
 
 class Generic(ReducingIndicator):
@@ -57,16 +57,4 @@ statistics = GenericResampling(
     description="{freq} {statistic:noun} of variable ({indexer}).",
     compute=_statistics,
     parameters={"out_units": None},
-)
-
-
-stats = GenericResampling(
-    title="Simple resampled statistic of the values.",
-    _version_deprecated="0.60",
-    identifier="stats",
-    var_name="stat_{indexer}{op:r}",
-    long_name="{op:noun} of variable",
-    description="{freq} {op:noun} of variable ({indexer}).",
-    compute=_statistics,
-    parameters={"statistic": {"name": "op"}, "out_units": None},
 )
