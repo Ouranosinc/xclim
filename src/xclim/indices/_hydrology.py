@@ -798,9 +798,7 @@ def days_with_snowpack(
     ----------
     :cite:cts:`alonso_gonzalez_2022`
     """
-    frz = convert_units_to(thresh, swe)
-    out = threshold_count(swe, ">", frz, freq)
-    return to_agg_units(out, swe, "count", deffreq="D")
+    return count_occurrences(swe, condition=">", thresh=thresh, freq=freq)
 
 
 @declare_units(pr="[precipitation]", pet="[precipitation]")
