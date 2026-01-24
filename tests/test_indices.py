@@ -1308,10 +1308,10 @@ class TestStandardizedIndices:
         pr = ds.pr
 
         # july 1st (doy=180) with 10 years with zero precipitation
-        # 11 years, 9 zeros -> prob_of_zero = 9/11
+        # 11 years, 10 zeros -> prob_of_zero = 9/11
         pr[{"time": slice(179, 365 * 11, 365)}] = 0
         pr[{"time": 179}] = 1.0  # One non-zero value
-        # pr[{"time": 179+365}] = 2.0  # One non-zero value
+        # pr[{"time": 179+365}] = 2.0  # Two non-zero values
 
         input_params = dict(
             freq=None,
@@ -1341,7 +1341,7 @@ class TestStandardizedIndices:
         number_of_zeros = spi.number_of_zeros.isel(time=365 + 179).values
         number_of_notnull = spi.number_of_notnull.isel(time=365 + 179).values
         if prob_zero_method == "center":
-            expected_prob = (number_of_zeros + 1) / (number_of_notnull) / 2
+            expected_prob = (1 + number_of_zeros) / (number_of_notnull) / 2
         elif prob_zero_method == "upper":
             expected_prob = (number_of_zeros) / (number_of_notnull)
         else:

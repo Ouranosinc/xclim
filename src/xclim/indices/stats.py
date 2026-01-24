@@ -894,7 +894,7 @@ def standardized_index_fit_params(
     return params
 
 
-def standardized_index(  # noqa: C901  # pylint: disable=E0606 # this is a weird bug with zero_factor, alpha, beta
+def standardized_index(
     da: xr.DataArray,
     freq: str | None,
     window: int | None,
@@ -954,7 +954,7 @@ def standardized_index(  # noqa: C901  # pylint: disable=E0606 # this is a weird
         number of observations and should return the rank to assign to zero values.
     rank_method : {'ecdf', 'weibull'} or tuple[float, float], optional
         Method used to estimate the probability of zeros. 'ecdf' (default option) is the empirical cumulative
-        distribution and divides the number or zeros by the total number of observations.  'weibull' implements the
+        distribution and divides the number or zeros by the total number of observations. 'weibull' implements the
         unbiased version, dividing by the total number of observation plus one.
     **indexer : {dim: indexer, }, optional
         Indexing parameters to compute the indicator on a temporal subset of the data.
@@ -1053,7 +1053,6 @@ def standardized_index(  # noqa: C901  # pylint: disable=E0606 # this is a weird
         # I don't think rechunking is necessary here, need to check
         return _da if not uses_dask(_da) else _da.chunk({"time": -1})
 
-    # this should be restricted to some distributions / in some context
     params = reindex_time(params, da, group)
     dist_probs = dist_method("cdf", params, da, dist=dist)
 
@@ -1062,30 +1061,28 @@ def standardized_index(  # noqa: C901  # pylint: disable=E0606 # this is a weird
         number_of_zeros = params["number_of_zeros"]
         number_of_notnull = params["number_of_notnull"]
         if isinstance(prob_zero_method, str):
-            if prob_zero_method == "center":
-                zero_factor = 1 / 2
-            elif prob_zero_method == "upper":
-                zero_factor = 1
+            zero_factor = {"center": 1 / 2, "upper": 1}.get(prob_zero_method, np.nan)
         else:
             zero_factor = prob_zero_method
 
         if isinstance(rank_method, str):
-            if rank_method == "ecdf":
-                alpha, beta = 0, 1
-            elif rank_method == "weibull":
-                alpha, beta = 0, 0
+            alpha, beta = {"ecdf": (0, 1), "weibull": (0, 0)}.get(rank_method, (np.nan, np.nan))
         else:
             alpha, beta = rank_method
+        # prob_of_zero_rank_1: plotting position of first zero
+        # prob_of_zero_rank_n: plotting position of last zero
+        # prob_of_zero_rank_f: final probability assigned to zeros, interpolated between
+        # rank_1 and rank_n using zero_factor
         prob_of_zero_rank_1 = (1 - alpha) / (number_of_notnull + 1 - alpha - beta)
         prob_of_zero_rank_n = (number_of_zeros - alpha) / (number_of_notnull + 1 - alpha - beta)
         prob_of_zero_rank_f = (1 - zero_factor) * prob_of_zero_rank_1 + zero_factor * prob_of_zero_rank_n
+        mask = da != 0
         # This assumes that values are greater or equal to 0.
         # It might be useful to define inflated distribution where
         # the inflated value is not the lower bound, which would warrant
-        # a generalized implementation. For now, this option shall be used with
-        # standardized_precipitation_index where values are not negative.
-        mask = da != 0
+        # a generalized implementation.
         da = da.where(mask)
+        # For non-zero values, probability is prob_of_zero_rank_n + (1 - prob_of_zero_rank_n) * CDF(x)
         probs = xr.where(mask, prob_of_zero_rank_n + ((1 - prob_of_zero_rank_n) * dist_probs), prob_of_zero_rank_f)
     else:
         probs = dist_probs
