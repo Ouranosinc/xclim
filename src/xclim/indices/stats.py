@@ -870,9 +870,7 @@ def standardized_index_fit_params(
     if zero_inflated:
         number_of_zeros = (da == 0).groupby(group_handler).sum("time")
         number_of_notnull = da.notnull().groupby(group_handler).sum("time")
-        prob_of_zero = number_of_zeros / number_of_notnull
         params = da.where(da != 0).groupby(group_handler).map(fit, dist=dist, method=method, **fitkwargs)
-        params["prob_of_zero"] = prob_of_zero
         params["number_of_zeros"] = number_of_zeros
         params["number_of_notnull"] = number_of_notnull
     else:
@@ -1056,7 +1054,7 @@ def standardized_index(
     params = reindex_time(params, da, group)
     dist_probs = dist_method("cdf", params, da, dist=dist)
 
-    zero_inflated = "prob_of_zero" in params.coords
+    zero_inflated = "number_of_zeros" in params.coords
     if zero_inflated:
         number_of_zeros = params["number_of_zeros"]
         number_of_notnull = params["number_of_notnull"]
