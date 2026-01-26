@@ -8,7 +8,7 @@ Contributors to this version: Pascal Bourgault (:user:`aulemahal`).
 
 New indicators and features
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
-* ``xclim.indices.generic.doymin`` and ``xclim.indices.generic.doymax`` will now return `nan` if all values along the time axis are the same. They now also support all-nan arrays.
+* ``xclim.indices.generic.doymin`` and ``xclim.indices.generic.doymax`` will now return `nan` if all values along the time axis are the same. They now also support all-nan arrays (:pull:`2314`).
 
 
 v0.60.0 (2026-01-23)
