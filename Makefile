@@ -52,8 +52,11 @@ clean-test: ## remove test and coverage artifacts
 	rm -fr htmlcov/
 	rm -fr .pytest_cache
 
-lint: ## check style with flake8 and black
-	python -m ruff check .
+install-lint: ## install dependencies needed for linting
+	python -m pip install --quiet --group lint
+
+lint: install-lint ## check style with flake8 and black
+	python -m ruff check --quiet .
 	python -m flake8 --config=.flake8 src/xclim tests
 	python -m vulture src/xclim tests
 	codespell src/xclim tests docs
