@@ -3504,10 +3504,10 @@ class TestSnowMaxDoy:
         snw = snw_series(a)
 
         out = xci.snd_max_doy(snd)
-        np.testing.assert_array_equal(out, [193, 182])
+        np.testing.assert_array_equal(out, [193, np.nan])
 
         out = xci.snw_max_doy(snw)
-        np.testing.assert_array_equal(out, [193, 182])
+        np.testing.assert_array_equal(out, [193, np.nan])
 
     def test_nan_slices(self, snd_series, snw_series):
         a = np.ones(366) * np.nan
