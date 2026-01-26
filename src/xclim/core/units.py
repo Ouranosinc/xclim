@@ -622,7 +622,7 @@ def to_agg_units(
     orig: xr.DataArray,
     op: Literal["min", "max", "mean", "std", "var", "doymin", "doymax", "count", "integral", "sum"],
     dim: str = "time",
-    deffreq: str = None,
+    deffreq: str | None = None,
 ) -> xr.DataArray:
     """
     Set and convert units of an array after an aggregation operation along the sampling dimension (time).
@@ -663,8 +663,10 @@ def to_agg_units(
     ... )
     >>> cond = tas > 100  # Which days are boiling
     >>> Ndays = cond.sum("time")  # Number of boiling days
+
+    # Note: older xarray drops units while modern xarray preserves them
     >>> Ndays.attrs.get("units")  # doctest: +SKIP
-    'degC'  # Note: older xarray drops units while modern xarray preserves them
+    'degC'
     >>> Ndays = to_agg_units(Ndays, tas, op="count")
     >>> Ndays.units
     'd'
