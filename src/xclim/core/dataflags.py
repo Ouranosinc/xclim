@@ -596,13 +596,13 @@ def data_flags(  # noqa: C901
     ----------
     da : xarray.DataArray
         The variable to check.
-        Must have a name that is a valid CMIP6 variable name and appears in :py:obj:`xclim.core.utils.VARIABLES`.
+        Must have a name that is a valid CMIP6 variable name and appears in :py:obj:`xclim.core.VARIABLES`.
     ds : xarray.Dataset, optional
         An optional dataset with extra variables needed by some checks.
     flags : dict, optional
         A dictionary where the keys are the name of the flags to check and the values are parameter dictionaries.
         The value can be None if there are no parameters to pass (i.e. default will be used).
-        The default, None, means that the data flags list will be taken from :py:obj:`xclim.core.utils.VARIABLES`.
+        The default, None, means that the data flags list will be taken from :py:obj:`xclim.core.VARIABLES`.
     dims : {"all", None} or str or a sequence of strings
         Dimensions upon which the aggregation should be performed. Default: "all".
     freq : str, optional
