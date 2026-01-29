@@ -1299,10 +1299,15 @@ class TestStandardizedIndices:
         np.testing.assert_equal(np.all(np.not_equal(spid[False].values, spid[True].values)), True)
 
     @pytest.mark.parametrize(
-        "prob_zero_method",
-        ["center", "upper"],
+        "prob_zero_method,rank_method",
+        [
+            ("center", "ecdf"),
+            ("upper", "ecdf"),
+            ("center", "weibull"),
+            ("upper", "weibull"),
+        ],
     )
-    def test_prob_zero_method(self, open_dataset, prob_zero_method):
+    def test_prob_zero_method(self, open_dataset, prob_zero_method, rank_method):
         # This tests the theoretical values of the zero_inflated probability method options
         ds = open_dataset("sdba/CanESM2_1950-2100.nc").isel(location=1).sel(time=slice("1950", "1960"))
         pr = ds.pr
@@ -1332,20 +1337,25 @@ class TestStandardizedIndices:
             cal_start=None,
             cal_end=None,
             prob_zero_method=prob_zero_method,
+            rank_method=rank_method,
             **input_params,
         )
         # Select a zero value
         spi_val = spi.isel(time=365 + 179).values
 
-        expected_prob = None
-        number_of_zeros = spi.number_of_zeros.isel(time=365 + 179).values
-        number_of_notnull = spi.number_of_notnull.isel(time=365 + 179).values
-        if prob_zero_method == "center":
-            expected_prob = (1 + number_of_zeros) / (number_of_notnull) / 2
-        elif prob_zero_method == "upper":
-            expected_prob = (number_of_zeros) / (number_of_notnull)
-        else:
-            raise ValueError(f"Unknown method: {prob_zero_method}")
+        # Calculate number_of_zeros and number_of_notnull directly for doy=180
+        number_of_zeros = (pr.sel(time=pr.time.dt.dayofyear == 180).values == 0.0).sum()
+        number_of_notnull = (~np.isnan(pr.sel(time=pr.time.dt.dayofyear == 180).values)).sum()
+
+        # Compute expected probability based on prob_zero_method and rank_method
+        # rank_method determines alpha, beta: ecdf=(0,1), weibull=(0,0)
+        # prob_zero_method determines zero_factor: center=0.5, upper=1
+        alpha, beta = {"ecdf": (0, 1), "weibull": (0, 0)}[rank_method]
+        zero_factor = {"center": 0.5, "upper": 1}[prob_zero_method]
+        # Formula uses interpolation between rank_1 and rank_n
+        prob_of_zero_rank_1 = (1 - alpha) / (number_of_notnull + 1 - alpha - beta)
+        prob_of_zero_rank_n = (number_of_zeros - alpha) / (number_of_notnull + 1 - alpha - beta)
+        expected_prob = (1 - zero_factor) * prob_of_zero_rank_1 + zero_factor * prob_of_zero_rank_n
 
         expected_val = scipy.stats.norm.ppf(expected_prob)
         # Account for clipping in standardized_index
