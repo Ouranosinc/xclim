@@ -721,7 +721,7 @@ def preprocess_standardized_index(da: xr.DataArray, freq: str | None, window: in
         and will skip the resampling step.
     window : int
         Averaging window length relative to the resampling frequency. For example, if `freq="MS"`,
-        i.e. a monthly resampling, the window is an integer number of months.
+        i.e. a monthly resampling, the window is an integer _ of months.
     **indexer : {dim: indexer, }, optional
         Indexing parameters to compute the indicator on a temporal subset of the data.
         It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
@@ -868,9 +868,11 @@ def standardized_index_fit_params(
         group_handler = group
 
     if zero_inflated:
-        prob_of_zero = da.groupby(group_handler).map(lambda x: (x == 0).sum("time") / x.notnull().sum("time"))
+        number_of_zeros = (da == 0).groupby(group_handler).sum("time")
+        number_of_notnull = da.notnull().groupby(group_handler).sum("time")
         params = da.where(da != 0).groupby(group_handler).map(fit, dist=dist, method=method, **fitkwargs)
-        params["prob_of_zero"] = prob_of_zero
+        params["number_of_zeros"] = number_of_zeros
+        params["number_of_notnull"] = number_of_notnull
     else:
         params = da.groupby(group_handler).map(fit, dist=dist, method=method, **fitkwargs)
     cal_range = (
@@ -901,6 +903,8 @@ def standardized_index(
     cal_start: DateStr | None,
     cal_end: DateStr | None,
     params: Quantified | None = None,
+    prob_zero_method: str | float = "center",
+    rank_method: str | tuple[float, float] = "ecdf",
     **indexer,
 ) -> xr.DataArray:
     r"""
@@ -941,6 +945,15 @@ def standardized_index(
         Fit parameters.
         The `params` can be computed using ``xclim.indices.stats.standardized_index_fit_params`` in advance.
         The output can be given here as input, and it overrides other options.
+    prob_zero_method : {'center', 'upper'} or float, optional
+        Method to calculate the plotting position (quantile) attributed to zero values (only used if `zero_inflated`
+        is True). If "center", the rank is centered (1+`number_of_zeros`) / 2. If "upper", the rank is simply the number
+        of zeros `number_of_zeros`. If a float is given (between 0 and 1), it receives the number of zeros and total
+        number of observations and should return the rank to assign to zero values.
+    rank_method : {'ecdf', 'weibull'} or tuple[float, float], optional
+        Method used to estimate the probability of zeros. 'ecdf' (default option) is the empirical cumulative
+        distribution and divides the number or zeros by the total number of observations. 'weibull' implements the
+        unbiased version, dividing by the total number of observation plus one.
     **indexer : {dim: indexer, }, optional
         Indexing parameters to compute the indicator on a temporal subset of the data.
         It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
@@ -973,6 +986,17 @@ def standardized_index(
     ----------
     :cite:cts:`mckee_relationship_1993`.
     """
+    if zero_inflated is None:
+        if prob_zero_method is not None or rank_method is not None:
+            raise ValueError("If `zero_inflated` is `None`, `prob_zero_method` and `rank_method` must be `None`.")
+    # zero_inflated is not None
+    prob_zero_method = prob_zero_method or "upper"
+    rank_method = rank_method or "ecdf"
+    if isinstance(prob_zero_method, str) and prob_zero_method not in {"center", "upper"}:
+        raise ValueError("Accepted strings for `prob_zero_method` are: ['center', 'upper']")
+    if isinstance(rank_method, str) and rank_method not in {"ecdf", "weibull"}:
+        raise ValueError("Accepted strings for `rank_method` are: ['ecdf', 'weibull']")
+
     # use input arguments from ``params`` if it is given
     if params is not None:
         freq, window, dist, indexer = (params.attrs[s] for s in ["freq", "window", "scipy_dist", "time_indexer"])
@@ -1027,24 +1051,39 @@ def standardized_index(
         # I don't think rechunking is necessary here, need to check
         return _da if not uses_dask(_da) else _da.chunk({"time": -1})
 
-    # this should be restricted to some distributions / in some context
-    zero_inflated = "prob_of_zero" in params.coords
-    prob_of_zero = 0
-    mask = None
-    if zero_inflated:
-        prob_of_zero = reindex_time(params["prob_of_zero"], da, group)
-        mask = da != 0
-        da = da.where(mask)
     params = reindex_time(params, da, group)
     dist_probs = dist_method("cdf", params, da, dist=dist)
+
+    zero_inflated = "number_of_zeros" in params.coords
     if zero_inflated:
-        dist_probs = dist_probs.where(mask, 0)
-    # This assumes that values are greater or equal to 0.
-    # It might be useful to define inflated distribution where
-    # the inflated value is not the lower bound, which would warrant
-    # a generalized implementation. For now, this option shall be used with
-    # standardized_precipitation_index where values are not negative.
-    probs = prob_of_zero + ((1 - prob_of_zero) * dist_probs)
+        number_of_zeros = params["number_of_zeros"]
+        number_of_notnull = params["number_of_notnull"]
+        if isinstance(prob_zero_method, str):
+            zero_factor = {"center": 1 / 2, "upper": 1}.get(prob_zero_method, np.nan)
+        else:
+            zero_factor = prob_zero_method
+
+        if isinstance(rank_method, str):
+            alpha, beta = {"ecdf": (0, 1), "weibull": (0, 0)}.get(rank_method, (np.nan, np.nan))
+        else:
+            alpha, beta = rank_method
+        # prob_of_zero_rank_1: plotting position of first zero
+        # prob_of_zero_rank_n: plotting position of last zero
+        # prob_of_zero_rank_f: final probability assigned to zeros, interpolated between
+        # rank_1 and rank_n using zero_factor
+        prob_of_zero_rank_1 = (1 - alpha) / (number_of_notnull + 1 - alpha - beta)
+        prob_of_zero_rank_n = (number_of_zeros - alpha) / (number_of_notnull + 1 - alpha - beta)
+        prob_of_zero_rank_f = (1 - zero_factor) * prob_of_zero_rank_1 + zero_factor * prob_of_zero_rank_n
+        mask = da != 0
+        # This assumes that values are greater or equal to 0.
+        # It might be useful to define inflated distribution where
+        # the inflated value is not the lower bound, which would warrant
+        # a generalized implementation.
+        da = da.where(mask)
+        # For non-zero values, probability is prob_of_zero_rank_n + (1 - prob_of_zero_rank_n) * CDF(x)
+        probs = xr.where(mask, prob_of_zero_rank_n + ((1 - prob_of_zero_rank_n) * dist_probs), prob_of_zero_rank_f)
+    else:
+        probs = dist_probs
 
     params_norm = xr.DataArray(
         [0, 1],
