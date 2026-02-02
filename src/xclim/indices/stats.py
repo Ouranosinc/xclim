@@ -998,15 +998,15 @@ def standardized_index(
     # assign values to interp_factor and alpha,beta, if needed
     if zero_inflated is not None:
         interp_factor = {"center": 1 / 2, "upper": 1}.get(prob_zero_interpolation, None)
-        if interp_factor is None and isinstance(prob_zero_interpolation, str):
-            raise ValueError("Accepted strings for `prob_zero_interpolation` are: ['center', 'upper']")
-        else:
+        if interp_factor is None:
+            if isinstance(prob_zero_interpolation, str):
+                raise ValueError("Accepted strings for `prob_zero_interpolation` are: ['center', 'upper']")
             interp_factor = prob_zero_interpolation
 
         alpha_beta = {"ecdf": (0, 1), "weibull": (0, 0)}.get(plotting_position_zero, None)
-        if alpha_beta is None and isinstance(plotting_position_zero, str):
-            raise ValueError("Accepted strings for `plotting_position` are: ['ecdf', 'weibull']")
-        else:
+        if alpha_beta is None:
+            if isinstance(plotting_position_zero, str):
+                raise ValueError("Accepted strings for `plotting_position` are: ['ecdf', 'weibull']")
             alpha_beta = plotting_position_zero
 
     # use input arguments from ``params`` if it is given
