@@ -1299,7 +1299,7 @@ class TestStandardizedIndices:
         np.testing.assert_equal(np.all(np.not_equal(spid[False].values, spid[True].values)), True)
 
     @pytest.mark.parametrize(
-        "prob_zero_method,rank_method",
+        "prob_zero_interpolation, plotting_position_zero",
         [
             ("center", "ecdf"),
             ("upper", "ecdf"),
@@ -1307,7 +1307,7 @@ class TestStandardizedIndices:
             ("upper", "weibull"),
         ],
     )
-    def test_prob_zero_method(self, open_dataset, prob_zero_method, rank_method):
+    def test_prob_zero_interpolation(self, open_dataset, prob_zero_interpolation, plotting_position_zero):
         # This tests the theoretical values of the zero_inflated probability method options
         ds = open_dataset("sdba/CanESM2_1950-2100.nc").isel(location=1).sel(time=slice("1950", "1960"))
         pr = ds.pr
@@ -1336,8 +1336,8 @@ class TestStandardizedIndices:
             params=params,
             cal_start=None,
             cal_end=None,
-            prob_zero_method=prob_zero_method,
-            rank_method=rank_method,
+            prob_zero_interpolation=prob_zero_interpolation,
+            plotting_position_zero=plotting_position_zero,
             **input_params,
         )
         # Select a zero value
@@ -1347,11 +1347,11 @@ class TestStandardizedIndices:
         number_of_zeros = (pr.sel(time=pr.time.dt.dayofyear == 180).values == 0.0).sum()
         number_of_notnull = (~np.isnan(pr.sel(time=pr.time.dt.dayofyear == 180).values)).sum()
 
-        # Compute expected probability based on prob_zero_method and rank_method
-        # rank_method determines alpha, beta: ecdf=(0,1), weibull=(0,0)
-        # prob_zero_method determines zero_factor: center=0.5, upper=1
-        alpha, beta = {"ecdf": (0, 1), "weibull": (0, 0)}[rank_method]
-        zero_factor = {"center": 0.5, "upper": 1}[prob_zero_method]
+        # Compute expected probability based on prob_zero_interpolation and plotting_position_zero
+        # plotting_position_zero determines alpha, beta: ecdf=(0,1), weibull=(0,0)
+        # prob_zero_interpolation determines zero_factor: center=0.5, upper=1
+        alpha, beta = {"ecdf": (0, 1), "weibull": (0, 0)}[plotting_position_zero]
+        zero_factor = {"center": 0.5, "upper": 1}[prob_zero_interpolation]
         # Formula uses interpolation between rank_1 and rank_n
         prob_of_zero_rank_1 = (1 - alpha) / (number_of_notnull + 1 - alpha - beta)
         prob_of_zero_rank_n = (number_of_zeros - alpha) / (number_of_notnull + 1 - alpha - beta)
