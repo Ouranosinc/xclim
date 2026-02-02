@@ -1119,7 +1119,7 @@ def standardized_precipitation_index(
         cal_start=cal_start,
         cal_end=cal_end,
         params=params,
-        prob_zero_method=prob_zero_method,
+        zero_rank_interpolation=prob_zero_method,
         **indexer,
     )
 
