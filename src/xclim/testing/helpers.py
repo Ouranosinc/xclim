@@ -135,7 +135,7 @@ def add_example_file_paths() -> dict[str, str | list[xr.DataArray]]:
     # dataset with one year of daily flow data
     flow_dataset = test_timeseries(np.ones(365, dtype=float) / 1000, variable="qspec", as_dataset=True)
     # single day with extremely high flow to raise dataflag
-    flow_dataset[0:1] = 200000000
+    flow_dataset[0] = 200000000
     # merge into a single dataset
     namespace["specific_discharge_dataset"] = flow_dataset
 
