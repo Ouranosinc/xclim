@@ -31,7 +31,7 @@ mirroring attributes of the :py:class:`Indicator`, please refer to its documenta
     base: <base indicator class>  # Defaults to "Daily" and applies to all indicators that do not give it.
     doc: <module docstring>  # Defaults to a minimal header, only valid if the module doesn't already exist.
     variables:  # Optional section if indicators declared below rely on variables unknown to xclim
-                # (not in `xclim.core.utils.VARIABLES`)
+                # (not in `xclim.core.VARIABLES`)
                 # The variables are not module-dependent and will overwrite any already existing with the same name.
       <varname>:
         canonical_units: <units> # required
@@ -95,7 +95,7 @@ using the YAMALE library (:cite:p:`lopker_yamale_2022`). See the "Extending xcli
 
 Inputs
 ~~~~~~
-As xclim has strict definitions of possible input variables (see :py:data:`xclim.core.utils.variables`),
+As xclim has strict definitions of possible input variables (see :py:data:`xclim.core.VARIABLES`),
 the mapping of `data.input` simply links an argument name from the function given in "compute"
 to one of those official variables.
 """  # numpydoc ignore=GL07
@@ -645,7 +645,7 @@ class Indicator(IndicatorRegistrar):
                 raise ValueError(
                     f"Compute argument {old_name} was mapped to variable "
                     f"{new_name} which is not understood by xclim or CMIP6. Please"
-                    " use names listed in `xclim.core.utils.VARIABLES`."
+                    " use names listed in `xclim.core.VARIABLES`."
                 ) from err
             if meta.units is not _empty:
                 try:
@@ -1346,7 +1346,7 @@ class Indicator(IndicatorRegistrar):
         r"""
         Compare metadata attributes to CF-Convention standards.
 
-        Default cfchecks use the specifications in `xclim.core.utils.VARIABLES`,
+        Default cfchecks use the specifications in `xclim.core.VARIABLES`,
         assuming the indicator's inputs are using the CMIP6/xclim variable names correctly.
         Variables absent from these default specs are silently ignored.
 
@@ -1904,7 +1904,7 @@ def build_indicator_module_from_yaml(  # noqa: C901
         if varname in VARIABLES and VARIABLES[varname] != vardata:
             warnings.warn(
                 f"Variable {varname} from module {module_name} "
-                "will overwrite the one already defined in `xclim.core.utils.VARIABLES`"
+                "will overwrite the one already defined in `xclim.core.VARIABLES`"
             )
         VARIABLES[varname] = vardata.copy()
 
