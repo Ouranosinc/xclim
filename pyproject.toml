@@ -217,7 +217,7 @@ pep621_dev_dependency_groups = ["types"]
 [tool.deptry.per_rule_ignores]
 DEP001 = ["pymannkendall"]
 DEP002 = ["bottleneck", "lmoments3", "numbagg", "pyarrow"]
-DEP004 = ["pooch", "pytest", "pytest_socket"]
+DEP004 = ["pip", "pooch", "pytest", "pytest_socket"]
 
 [tool.flit.sdist]
 include = [
