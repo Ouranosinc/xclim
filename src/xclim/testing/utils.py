@@ -314,7 +314,7 @@ def show_versions(
         return dep_names
 
     _xclim_deps = _find_dependencies("xclim")
-    _xclim_deps.extend(["flox", "lmoments3", "matplotlib", "numbagg", "pymannkendall", "xsdba"])
+    _xclim_deps.extend(["flox", "lmoments3", "matplotlib", "numbagg", "pymannkendall", "xclim", "xsdba"])
 
     if deps is None:
         dependencies = _xclim_deps
