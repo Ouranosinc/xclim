@@ -820,7 +820,12 @@ def standardized_index_fit_params(
     Returns
     -------
     xarray.DataArray
-        Standardized Index fitting parameters. The time dimension of the initial array is reduced to.
+        Standardized Index fitting parameters.
+
+    Warnings
+    --------
+    The coord `prob_of_zero` in the output will be removed in future versions. It can still be computed from new coords
+    as out['number_of_zeros']/out['number_of_notnull']
 
     Notes
     -----
@@ -873,8 +878,7 @@ def standardized_index_fit_params(
         params = da.where(da != 0).groupby(group_handler).map(fit, dist=dist, method=method, **fitkwargs)
         params["number_of_zeros"] = number_of_zeros
         params["number_of_notnull"] = number_of_notnull
-        # TODO: Consider dropping this. This is not used internally anymore, leaving
-        # it in to avoid breaking changes on the user's end.
+        # FIXME: xclim-v1 – Drop this variable
         params["prob_of_zero"] = number_of_zeros / number_of_notnull
     else:
         params = da.groupby(group_handler).map(fit, dist=dist, method=method, **fitkwargs)
@@ -1035,6 +1039,21 @@ def standardized_index(
             zero_inflated=zero_inflated,
             fitkwargs=fitkwargs,
         )
+    # FIXME: xclim-v1 – Remove this check
+    elif "prob_of_zero" in params.coords and "number_of_zeros" not in params.coords:
+        warnings.warn(
+            "Received `params` computed with an old version of `xclim`. The computation will default to "
+            "`prob_zero_interpolation`=='upper' and `plotting_position_zero` == 'ecdf'. To have access to the new modes"
+            " allowed by the new options `prob_zero_interpolation` and `plotting_position_zero`,"
+            " please recompute `params` with the newest version of `xclim`. Also, be aware that "
+            "the coord `prob_of_zero` will be dropped in a future version. It can be re-computed with "
+            "`params['number_of_zeros']/params['number_of_zeros']`"
+        )
+        params["number_of_zeros"] = params["prob_of_zero"]
+        params["number_of_not_null"] = 0 * params["prob_of_zero"] + 1
+        alpha_beta = (0, 1)
+        interp_factor = 1
+
     # If params only contains a subset of main dataset time grouping
     # (e.g. 8/12 months, etc.), it needs to be broadcasted
     group = params.attrs["group"]
@@ -1061,11 +1080,13 @@ def standardized_index(
         return _da if not uses_dask(_da) else _da.chunk({"time": -1})
 
     params = reindex_time(params, da, group)
-    dist_probs = dist_method("cdf", params, da, dist=dist)
 
     # treat zeros differently when considering zero inflated distributions
-    zero_inflated = "number_of_zeros" in params.coords
-    if zero_inflated:
+    if "number_of_zeros" in params.coords:
+        mask = da != 0
+        da = da.where(mask)
+        prob_nonzero = dist_method("cdf", params, da, dist=dist)
+
         number_of_zeros = params["number_of_zeros"]
         number_of_notnull = params["number_of_notnull"]
         # prob_zero_rank_1: plotting position of first zero
@@ -1076,16 +1097,11 @@ def standardized_index(
         prob_zero_rank_1 = (1 - alpha) / (number_of_notnull + 1 - alpha - beta)
         prob_zero_rank_n = (number_of_zeros - alpha) / (number_of_notnull + 1 - alpha - beta)
         prob_zero_rank_f = (1 - interp_factor) * prob_zero_rank_1 + interp_factor * prob_zero_rank_n
-        mask = da != 0
-        # This assumes that values are greater or equal to 0.
-        # It might be useful to define inflated distribution where
-        # the inflated value is not the lower bound, which would warrant
-        # a generalized implementation.
-        da = da.where(mask)
+
         # For non-zero values, probability is prob_zero_rank_n + (1 - prob_zero_rank_n) * CDF(x)
-        probs = xr.where(mask, prob_zero_rank_n + ((1 - prob_zero_rank_n) * dist_probs), prob_zero_rank_f)
+        probs = xr.where(mask, prob_zero_rank_n + ((1 - prob_zero_rank_n) * prob_nonzero), prob_zero_rank_f)
     else:
-        probs = dist_probs
+        probs = dist_method("cdf", params, da, dist=dist)
 
     params_norm = xr.DataArray(
         [0, 1],
