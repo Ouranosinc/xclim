@@ -1010,7 +1010,7 @@ def standardized_index(
         alpha_beta = {"ecdf": (0, 1), "weibull": (0, 0)}.get(plotting_position_zero, None)
         if alpha_beta is None:
             if isinstance(plotting_position_zero, str):
-                raise ValueError("Accepted strings for `plotting_position` are: ['ecdf', 'weibull']")
+                raise ValueError("Accepted strings for `plotting_position_zero` are: ['ecdf', 'weibull']")
             alpha_beta = plotting_position_zero
 
     # use input arguments from ``params`` if it is given

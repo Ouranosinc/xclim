@@ -8,7 +8,7 @@ Contributors to this version: Éric Dupuis (:user:`coxipi`), Hui-Min Wang (:user
 
 New indicators and features
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
-* Added a `zero_inflated` argument to `standardized_index` and `standardized_precipitation_index` to control how zero-precipitation probabilities are handled. (:issue:`2279`, :pull:`2280`).
+* Added two `zero_inflated` arguments to `standardized_index` and `standardized_precipitation_index` to control how zero-precipitation probabilities are handled. (:issue:`2279`, :pull:`2280`).
 
 v0.60.0 (2026-01-23)
 --------------------
@@ -26,7 +26,6 @@ New indicators and features
 * `xclim` now officially supports Python 3.14. (:issue:`2259`, :pull:`2305`).
 * New missing algorithm: ``xclim.core.missing.some_but_not_all``. (:pull:`2290`).
 * New hydrological indices added to ``xclim.indices._hydrology.py``. (:issue:`1624`, :pull:`2227`).
-* Added a ``prob_zero_method`` argument to ``standardized_index`` and ``standardized_precipitation_index`` to control how zero-precipitation probabilities are handled. (:issue:`2279`, :pull:`2280`).
 
 Bug fixes
 ^^^^^^^^^
