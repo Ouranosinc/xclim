@@ -2,6 +2,81 @@
 requires = ["flit_core >=3.11.0,<4"]
 build-backend = "flit_core.buildapi"
 
+[dependency-groups]
+lint = [
+  # Linting tools
+  "codespell >=2.4.1",
+  "deptry >=0.23.0",
+  "flake8 >=7.3.0",
+  "flake8-rst-docstrings >=0.4.0",
+  "mypy >=1.14.1",
+  "numpydoc >=1.9.0",
+  "pylint >=3.3.1",
+  "ruff >=0.13.3",
+  "vulture >=2.14",
+  "yamllint >=1.35.1"
+]
+notebooks = [
+  # Notebook support
+  "lmoments3 >=1.0.7",
+  "matplotlib >=3.8.0",
+  "nc-time-axis >=1.4.1",
+  "netcdf4"
+]
+test = [
+  # Base testing support
+  "coverage[toml] >=7.5.0",
+  "h5netcdf >=1.5.0",
+  "h5py >=3.12.1",
+  "nbval >=0.11.0",
+  "pooch >=1.8.0",
+  "pytest >=9.0.0",
+  "pytest-cov >=5.0.0",
+  "pytest-socket >=0.6.0",
+  "pytest-timeout >=2.4.0",
+  "pytest-xdist[psutil] >=3.2",
+  "xdoctest >=1.3.0"
+]
+docs = [
+  # Documentation and example support
+  "cairosvg >=2.6.0",
+  "distributed >=2.0",
+  "flox >=0.9",
+  "furo >=2023.9.10",
+  "ipykernel",
+  "ipython >=8.10.0",
+  "nbconvert >=7.16.4",
+  "nbsphinx >=0.9.5",
+  "numbagg >=0.8",
+  "pooch >=1.8.0",
+  "pybtex >=0.24.0",
+  "scitools-iris >=3.14.1",
+  "sphinx >=8.2.0",
+  "sphinx-autobuild >=2024.4.16",
+  "sphinx-autodoc-typehints >=3.1.0",
+  "sphinx-codeautolink >=0.16.2",
+  "sphinx-copybutton",
+  "sphinx-mdinclude",
+  "sphinxcontrib-bibtex",
+  "sphinxcontrib-svg2pdfconverter",
+  "xsdba >=0.4.0",
+  {include-group = "notebooks"}
+]
+test-notebooks = [
+  {include-group = "notebooks"},
+  {include-group = "test"}
+]
+dev = [
+  # Development and testing tools
+  "bump-my-version >=1.2.3",
+  "pip >=25.1",
+  "pre-commit >=4.2",
+  "tox >=4.34.0",
+  {include-group = "docs"},
+  {include-group = "lint"},
+  {include-group = "test-notebooks"}
+]
+
 [project]
 name = "xclim"
 authors = [
@@ -56,61 +131,30 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = [
-  # Dev tools and testing
-  "bump-my-version >=1.2.3",
-  "codespell >=2.4.1",
-  "coverage[toml] >=7.5.0",
-  "deptry >=0.23.0",
-  "flake8 >=7.3.0",
-  "flake8-rst-docstrings >=0.4.0",
-  "h5netcdf >=1.5.0",
-  "h5py >=3.12.1",
-  "ipython >=8.10.0",
-  "mypy >=1.14.1",
-  "nbconvert >=7.16.4",
-  "nbval >=0.11.0",
-  "numpydoc >=1.9.0",
-  "pandas-stubs >=2.2",
-  "pip >=25.0",
-  "pooch >=1.8.0",
-  "pre-commit >=3.7",
-  "pylint >=3.3.1",
-  "pytest >=9.0.0",
-  "pytest-cov >=5.0.0",
-  "pytest-socket >=0.6.0",
-  "pytest-timeout >=2.4.0",
-  "pytest-xdist[psutil] >=3.2",
-  "ruff >=0.13.3",
-  "tokenize-rt >=5.2.0",
-  "tox >=4.31.0",
-  "tox-gh >=1.5.0",
-  "vulture >=2.14",
-  "xdoctest >=1.3.0",
-  "yamllint >=1.35.1"
+bias-adjustment = [
+  "xsdba >=0.4.0"
 ]
-docs = [
-  # Documentation and examples
-  "cairosvg >=2.6.0",
-  "distributed >=2.0",
-  "furo >=2023.9.10",
-  "ipykernel",
-  "matplotlib >=3.7.0",
-  "nbsphinx >=0.9.5",
-  "nc-time-axis >=1.4.1",
-  "pooch >=1.8.0",
-  "pybtex >=0.24.0",
-  "sphinx >=8.2.0",
-  "sphinx-autobuild >=2024.4.16",
-  "sphinx-autodoc-typehints >=3.1.0",
-  "sphinx-codeautolink >=0.16.2",
-  "sphinx-copybutton",
-  "sphinx-mdinclude",
-  "sphinxcontrib-bibtex",
-  "sphinxcontrib-svg2pdfconverter[Cairosvg]"
+performance = [
+  "flox >=0.9",
+  "numbagg >=0.8"
 ]
-extras = ["flox >=0.9", "lmoments3 >=1.0.7", "numbagg >=0.8", "xsdba >=0.4.0", "pymannkendall >=1.4.0"]
-all = ["xclim[dev]", "xclim[docs]", "xclim[extras]"]
+plot = [
+  "matplotlib >=3.8.0"
+]
+stats = [
+  "lmoments3 >=1.0.7",
+  "pymannkendall >=1.4.0"
+]
+types = [
+  "pandas-stubs >=2.2"
+]
+complete = [
+  "xclim[bias-adjustment]",
+  "xclim[performance]",
+  "xclim[plot]",
+  "xclim[stats]",
+  "xclim[types]"
+]
 
 [project.scripts]
 xclim = "xclim.cli:cli"
@@ -127,7 +171,7 @@ xclim = "xclim.cli:cli"
 [tool]
 
 [tool.bumpversion]
-current_version = "0.60.1-dev.1"
+current_version = "0.99.0-dev.4"
 commit = true
 commit_args = "--no-verify --signoff"
 tag = false
@@ -164,7 +208,7 @@ omit = ["tests/*.py", "src/xclim/testing/conftest.py"]
 [tool.deptry]
 extend_exclude = ["docs"]
 ignore_notebooks = true
-pep621_dev_dependency_groups = ["all", "dev", "docs"]
+pep621_dev_dependency_groups = ["types"]
 
 [tool.deptry.package_module_name_map]
 "scikit-learn" = "sklearn"
@@ -172,8 +216,8 @@ pep621_dev_dependency_groups = ["all", "dev", "docs"]
 
 [tool.deptry.per_rule_ignores]
 DEP001 = ["pymannkendall"]
-DEP002 = ["bottleneck", "h5netcdf", "lmoments3", "numbagg", "pyarrow"]
-DEP004 = ["matplotlib", "pooch", "pytest", "pytest_socket"]
+DEP002 = ["bottleneck", "lmoments3", "numbagg", "pyarrow"]
+DEP004 = ["pip", "pooch", "pytest", "pytest_socket"]
 
 [tool.flit.sdist]
 include = [

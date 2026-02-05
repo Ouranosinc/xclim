@@ -1,16 +1,16 @@
 """Specialized setup for running xclim doctests."""
 
 # This file is the setup for the doctest suite.
-# This must be run using the following commands:
+# This must be run using the following statements from Python:
 # python -c "from xclim.testing.utils import run_doctests; run_doctests()"
+# Alternatively, doctests can be run from the command line via the following command:
+# python -m pytest --rootdir=tests/ --xdoctest src/xclim
 
 from __future__ import annotations
 
 import importlib.util as _util
 import os
 from pathlib import Path
-
-import pytest
 
 from xclim.testing.helpers import (
     add_doctest_filepaths,
@@ -27,93 +27,93 @@ from xclim.testing.utils import (
 from xclim.testing.utils import nimbus as _nimbus
 from xclim.testing.utils import open_dataset as _open_dataset
 
+PYTEST_INSTALLED = bool(_util.find_spec("pytest"))
 
-@pytest.fixture(autouse=True, scope="session")
-def threadsafe_data_dir(tmp_path_factory):  # numpydoc ignore=PR01
-    """
-    Return a threadsafe temporary directory for storing testing data.
+if PYTEST_INSTALLED:
+    import pytest
 
-    Yields
-    ------
-    Path
-        The path to the temporary directory.
-    """
-    yield Path(tmp_path_factory.getbasetemp().joinpath("data"))
+    @pytest.fixture(autouse=True, scope="session")
+    def threadsafe_data_dir(tmp_path_factory):  # numpydoc ignore=PR01
+        """
+        Return a threadsafe temporary directory for storing testing data.
 
+        Yields
+        ------
+        Path
+            The path to the temporary directory.
+        """
+        yield Path(tmp_path_factory.getbasetemp().joinpath("data"))
 
-@pytest.fixture(scope="session")
-def nimbus(threadsafe_data_dir, worker_id):  # numpydoc ignore=PR01
-    """
-    Return a nimbus object for the test data.
+    @pytest.fixture(scope="session")
+    def nimbus(threadsafe_data_dir, worker_id):  # numpydoc ignore=PR01
+        """
+        Return a nimbus object for the test data.
 
-    Returns
-    -------
-    nimbus
-        An preconfigured pooch object.
-    """
-    return _nimbus(
-        repo=TESTDATA_REPO_URL,
-        branch=TESTDATA_BRANCH,
-        cache_dir=(TESTDATA_CACHE_DIR if worker_id == "master" else threadsafe_data_dir),
-    )
-
-
-@pytest.fixture(scope="session")
-def open_dataset(threadsafe_data_dir, worker_id):  # numpydoc ignore=PR01
-    """
-    Return a function that opens a dataset from the test data.
-
-    Returns
-    -------
-    function
-        A function that opens a dataset from the test data.
-    """
-
-    def _open_session_scoped_file(file: str | os.PathLike, **xr_kwargs):
-        nimbus_kwargs = {
-            "branch": TESTDATA_BRANCH,
-            "repo": TESTDATA_REPO_URL,
-            "cache_dir": (TESTDATA_CACHE_DIR if worker_id == "master" else threadsafe_data_dir),
-        }
-        xr_kwargs.setdefault("cache", True)
-        xr_kwargs.setdefault("engine", "h5netcdf")
-        return _open_dataset(
-            file,
-            nimbus_kwargs=nimbus_kwargs,
-            **xr_kwargs,
+        Returns
+        -------
+        nimbus
+            An preconfigured pooch object.
+        """
+        return _nimbus(
+            repo=TESTDATA_REPO_URL,
+            branch=TESTDATA_BRANCH,
+            cache_dir=(TESTDATA_CACHE_DIR if worker_id == "master" else threadsafe_data_dir),
         )
 
-    return _open_session_scoped_file
+    @pytest.fixture(scope="session")
+    def open_dataset(threadsafe_data_dir, worker_id):  # numpydoc ignore=PR01
+        """
+        Return a function that opens a dataset from the test data.
 
+        Returns
+        -------
+        function
+            A function that opens a dataset from the test data.
+        """
 
-@pytest.fixture(scope="session", autouse=True)
-def is_matplotlib_installed(xdoctest_namespace) -> None:  # numpydoc ignore=PR01
-    """Skip tests that require matplotlib if it is not installed."""
+        def _open_session_scoped_file(file: str | os.PathLike, **xr_kwargs):
+            nimbus_kwargs = {
+                "branch": TESTDATA_BRANCH,
+                "repo": TESTDATA_REPO_URL,
+                "cache_dir": (TESTDATA_CACHE_DIR if worker_id == "master" else threadsafe_data_dir),
+            }
+            xr_kwargs.setdefault("cache", True)
+            xr_kwargs.setdefault("engine", "h5netcdf")
+            return _open_dataset(
+                file,
+                nimbus_kwargs=nimbus_kwargs,
+                **xr_kwargs,
+            )
 
-    def _is_matplotlib_installed():
-        matplotlib_installed = _util.find_spec("matplotlib")
-        if not matplotlib_installed:
-            pytest.skip("This doctest requires matplotlib to be installed.")
+        return _open_session_scoped_file
 
-    xdoctest_namespace["is_matplotlib_installed"] = _is_matplotlib_installed
+    @pytest.fixture(scope="session", autouse=True)
+    def is_matplotlib_installed(xdoctest_namespace) -> None:  # numpydoc ignore=PR01
+        """Skip tests that require matplotlib if it is not installed."""
 
+        def _is_matplotlib_installed():
+            matplotlib_installed = _util.find_spec("matplotlib")
+            if not matplotlib_installed:
+                pytest.skip("This doctest requires matplotlib to be installed.")
 
-@pytest.fixture(scope="session", autouse=True)
-def doctest_setup(xdoctest_namespace, nimbus, worker_id, open_dataset) -> None:  # numpydoc ignore=PR01
-    """Gather testing data on doctest run."""
-    testing_setup_warnings()
-    gather_testing_data(worker_cache_dir=nimbus.path, worker_id=worker_id)
-    xdoctest_namespace.update(generate_atmos(nimbus=nimbus))
+        xdoctest_namespace["is_matplotlib_installed"] = _is_matplotlib_installed
 
-    class AttrDict(dict):  # numpydoc ignore=PR01
-        """A dictionary that allows access to its keys as attributes."""
+    @pytest.fixture(scope="session", autouse=True)
+    def doctest_setup(xdoctest_namespace, nimbus, worker_id, open_dataset) -> None:  # numpydoc ignore=PR01
+        """Gather testing data on doctest run."""
+        testing_setup_warnings()
+        gather_testing_data(worker_cache_dir=nimbus.path, worker_id=worker_id)
+        xdoctest_namespace.update(generate_atmos(nimbus=nimbus))
 
-        def __init__(self, *args, **kwargs):
-            super().__init__(*args, **kwargs)
-            self.__dict__ = self
+        class AttrDict(dict):  # numpydoc ignore=PR01
+            """A dictionary that allows access to its keys as attributes."""
 
-    xdoctest_namespace["open_dataset"] = open_dataset
-    xdoctest_namespace["xr"] = AttrDict()
-    xdoctest_namespace["xr"].update({"open_dataset": open_dataset})
-    xdoctest_namespace.update(add_doctest_filepaths())
-    xdoctest_namespace.update(add_example_file_paths())
+            def __init__(self, *args, **kwargs):
+                super().__init__(*args, **kwargs)
+                self.__dict__ = self
+
+        xdoctest_namespace["open_dataset"] = open_dataset
+        xdoctest_namespace["xr"] = AttrDict()
+        xdoctest_namespace["xr"].update({"open_dataset": open_dataset})
+        xdoctest_namespace.update(add_doctest_filepaths())
+        xdoctest_namespace.update(add_example_file_paths())
