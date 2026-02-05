@@ -8,19 +8,25 @@ Contributors to this version: Trevor James Smith (:user:`Zeitsperre`).
 
 Announcements
 ^^^^^^^^^^^^^
-This release constitutes a major breaking change from the previous stable release (v0.60.x) and introduces several new features, enhancements, and API changes. Users are strongly encouraged to review the breaking changes section below to ensure compatibility with their existing codebases. Documentation has been updated to reflect these changes as well as to help existing users migrate to the new version.
+This release constitutes a major breaking change from the previous stable release (v0.60.x) and introduces several new features, enhancements, and API changes. Users are strongly encouraged to review the breaking changes section below to ensure compatibility with their existing codebases.
+Documentation has been updated to reflect these changes as well as to help existing users migrate to the new version.
 
 New indicators and features
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
-* TBD
+* The `xclim` command-line tool now accepts both ``-h`` and ``--help`` to show the help summary. (:pull:`2316`).
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
-* TBD
+* Installation recipes have been significantly modified to mimic conventions employed by `xarray` (:pull:`2316`). Most development-related recipes are now installed via ``dependency-groups`` (`PEP-735 <https://peps.python.org/pep-0735/>`_) and ``optional-dependencies`` are as follows:
+    * ``dependency-groups``: ``lint`` (linting tools), ``notebooks`` (minimum for interactive notebooks), ``test`` (minimum for running tests), ``docs`` (minimum for building docs), ``test-notebooks`` (minimum for running notebook tests), ``dev`` (full suite for local development).
+    * ``optional-dependencies``: ``bias-adjustment`` (`xsdba` and others), ``performance`` (speedups), ``plot`` (plotting), ``types`` (static typing support), ``complete`` (all extras).
+* For PEP-735 support, `xclim` now requires modern `pip` (>=25.2). (:pull:`2316`) and `tox` (>=4.34). (:pull:`2316`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
-* TBD
+* The `Makefile` has been adjusted to install libraries in advance (via ``python -m pip install --silent --group ...``) when attempting to run commands reliant on specific Python tools. (:pull:`2316`).
+* `tox.toml` has been updated to use ``dependency-groups`` to determine necessary libraries needed for environments, and relies entirely on the `Makefile` for running checks. (:pull:`2316`).
+* Documentation has been adjusted to reflect changes to environment setup required by developers/contributors. (:pull:`2316`).
 
 v0.60.0 (2026-01-23)
 --------------------

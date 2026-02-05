@@ -29,6 +29,8 @@ from xclim.testing.utils import (
     show_versions,
 )
 
+CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
+
 # Distributed is not a dependency of xclim
 distributed = False
 try:
@@ -392,6 +394,7 @@ class XclimCli(click.Group):
 @click.command(
     cls=XclimCli,
     chain=True,
+    context_settings=CONTEXT_SETTINGS,
     help="Command line tool to compute indices on netCDF datasets. Indicators are referred to by their "
     "(case-insensitive) identifier, as in xclim.core.indicator.registry.",
     invoke_without_command=True,

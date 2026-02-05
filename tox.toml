@@ -9,28 +9,27 @@ env_list = [
 ]
 skip_missing_interpreters = true
 
+[env.complete]
+extras = ["complete"]
+
 [env.docs]
 labels = ["docs"]
 description = "Build the documentation with makefile under {basepython}"
 setenv = {PYTHONPATH = "{toxinidir}", READTHEDOCS = "1"}
-extras = ["docs"]
 allowlist_externals = ["env", "make"]
-deps = [
-  "lmoments3 >=1.0.7",
-  "h5netcdf >=1.5.0",
-  "netcdf4",
-  "pytest >=9.0.0",
-  "xsdba >=0.4.0"
-]
+dependency_groups = ["docs"]
 commands = [
-  ["make", "docs"]
+  ["make", "build-docs"]
 ]
+commands_post = []
 
 [env.doctests]
 labels = ["doctests"]
 description = "Run doctests with pytest under {basepython}"
+allowlist_externals = ["make"]
+dependency_groups = ["test"]
 commands = [
-  ["python", "-c", "from xclim.testing.utils import run_doctests; run_doctests()"]
+  ["make", "test-doctests"]
 ]
 
 [env.lint]
@@ -38,16 +37,7 @@ labels = ["lint"]
 description = "Run code quality compliance tests under {basepython}"
 skip_install = true
 allowlist_externals = ["make"]
-deps = [
-  "codespell >=2.4.1",
-  "deptry >=0.23.1",
-  "flake8 >=7.3.0",
-  "flake8-rst-docstrings >=0.4.0",
-  "numpydoc >=1.9.0",
-  "ruff >=0.14.3",
-  "vulture >=2.14",
-  "yamllint >=1.35.1"
-]
+dependency_groups = ["lint"]
 commands_pre = [
   ["python", "-m", "pip", "list"],
   ["python", "-m", "pip", "check"]
@@ -60,15 +50,14 @@ commands_post = []
 [env.notebooks]
 labels = ["notebooks"]
 description = "Run notebooks with pytest under {basepython}"
-extras = ["all"]
-deps = ["lmoments3"]
+allowlist_externals = ["make"]
+dependency_groups = ["test-notebooks"]
 commands = [
-  ["pytest", "--no-cov", "--nbval", "--dist=loadscope", "--rootdir=tests/", "--ignore=docs/notebooks/example.ipynb", "docs/notebooks"]
+  ["make", "test-notebooks"]
 ]
 commands_post = []
 
 [env.numpy]
-extras = ["dev", "extras"]
 deps = ["numpy >=1.25,<2.0"]
 
 [env.offline]
@@ -86,7 +75,6 @@ commands = [
 ]
 
 [env.sbck]
-extras = ["dev", "extras"]
 commands_pre = [
   ["python", "-c", "print('The sbck dependency requires the \"libeigen3-dev\" package to be installed on the system.')"],
   ["python", "-m", "pip", "install", "sbck>=1.4.2"]
@@ -106,9 +94,9 @@ passenv = [
   "SKIP_NOTEBOOKS",
   "XCLIM_*"
 ]
-extras = ["dev"]
 install_command = "python -m pip install --no-user {opts} {packages}"
 download = true
+dependency_groups = ["test"]
 commands_pre = [
   ["python", "-m", "pip", "list"],
   ["xclim", "show_version_info"],
@@ -127,5 +115,5 @@ allowlist_externals = ["git", "xclim"]
 "3.10" = ["py3.10"]
 "3.11" = ["sbck"]
 "3.12" = ["numpy"]
-"3.13" = ["py3.13"]
+"3.13" = ["complete"]
 "3.14" = ["py3.14"]
