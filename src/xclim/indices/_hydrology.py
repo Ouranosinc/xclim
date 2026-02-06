@@ -702,6 +702,7 @@ def antecedent_precipitation_index(pr: xarray.DataArray, window: int = 7, p_exp:
     return out
 
 
+@declare_units(q="[discharge]", a="[area]", pr="[precipitation]")
 def runoff_ratio(
     q: xarray.DataArray,
     a: xarray.DataArray,
@@ -930,19 +931,19 @@ def lag_snowpack_flow_peaks(
 @declare_units(q="[discharge]")
 def sen_slope(
     q: xarray.DataArray,
-    qsim: xarray.DataArray = None,
+    qsim: xarray.DataArray | None = None,
 ) -> xarray.Dataset:
     """
-    Sen Slope : Temporal robustness analysis of streamflow.
+    Temporal robustness analysis of streamflow.
 
-    Computes annual and seasonal Theil–Sen slope estimators and performs the
-    Mann–Kendall test for trend evaluation.
+    Computes annual and seasonal Theil-Sen slope estimators and performs the
+    Mann-Kendall test for trend evaluation.
 
     Parameters
     ----------
     q : xarray.DataArray
         Observed streamflow vector.
-    qsim : xarray.DataArray
+    qsim : xarray.DataArray, optional
         Simulated streamflow vector.
 
     Returns
@@ -951,7 +952,7 @@ def sen_slope(
         Dataset containing the following variables:
 
         - ``Sen_slope`` : Sen's slope estimates for seasonal and yearly averages.
-        - ``p_value`` : Mann–Kendall metric indicating slope tendency.
+        - ``p_value`` : Mann-Kendall metric indicating slope tendency.
         - If simulated flows are provided: ``Sen_slope_sim``, ``p_value_sim``,
           and the ratio of observed ``Sen_slope`` over simulated ``Sen_slope``.
 
@@ -959,7 +960,7 @@ def sen_slope(
     -----
     - If p-value <= 0.05, the trend is statistically significant at the 5% level.
     - The ratio of observed Sen_slope over simulated Sen_slope is considered
-      acceptable within the range 0.5–2 and is optimal when equal to 1
+      acceptable within the range 0.5-2 and is optimal when equal to 1
       (Sauquet et al., 2025).
 
     References

@@ -1499,5 +1499,41 @@
     "long_name": "Indice de précipitation antérieure",
     "description": "Somme pondérée des précipitations quotidiennes, sur une fenêtre de {window} jours et le base exponentielle {p_exp}.",
     "abstract": "Calcul de la somme pondérée des précipitations quotidiennes sur la base d'une fenêtre et d'une base exponentielle."
+  },
+  "ARIDITY_INDEX": {
+    "title": "Indice d'aridité",
+    "long_name": "Indice d'aridité",
+    "description": "Rapport entre les précipitations totales et l'évapotranspiration potentielle.",
+    "abstract": "Rapport entre les précipitations totales et l'évapotranspiration potentielle. Classification basée sur l'indice d'aridité (AI).\n + ----------------+----------------+-----------------+ \n| Classification | Indice d'aridité     | Superficie terrestre mondiale | \n +----------------+----------------+---------------------+ \n | Hyperaride       | IA < 0,05        | 7,5 %            | \n | Aride            | 0,05 ≤ IA < 0,20 | 12,1 %           | \n | Semi-aride     | 0,20 ≤ IA < 0,50 | 17,7 %           |\n | Subhumide sec    | 0,50 ≤ AI < 0,65 | 9,9 %            | \n +----------------+----------------+---------------------+ "
+  },
+  "BASE_FLOW_INDEX_SEASONAL_RATIO": {
+    "title": "Indice de débit de base saisonnier",
+    "long_name": "Indice de débit de base saisonnier",
+    "description": "Indice de débit de base saisonnier et rapport entre les indices de débit de base hivernal et estival.",
+    "abstract": "Indice annuel du débit de base par saison, défini comme le débit moyen minimal sur 7 jours divisé par le débit moyen. Le rapport annuel est la division de l'indice de débit de base hivernal par celui estival."
+  },
+  "LAG_SNOWPACK_FLOW_PEAKS": {
+    "title": "Décalage temporel entre le maximum d'enneigement et les crues",
+    "long_name": "Décalage temporel entre le maximum d'enneigement et les crues",
+    "description": "Nombre de jours entre l'enneigement maximal annuel, mesuré par l'équivalent en eau de la neige, et la date moyenne à laquelle le débit dépasse un certain seuil au cours d'une année donnée.",
+    "abstract": "Nombre de jours entre l'enneigement maximal annuel, mesuré par l'équivalent en eau de la neige, et la date moyenne à laquelle le débit dépasse un certain seuil au cours d'une année donnée."
+  },
+  "RUNOFF_RATIO": {
+    "title": "Taux de ruissellement",
+    "long_name": "Taux de ruissellement",
+    "description": "Rapport entre le volume d'écoulement mesuré au niveau du cours d'eau et le volume total des précipitations sur le bassin versant.",
+    "abstract": "Analyse temporelle : valeurs annuelles calculées à partir des données quotidiennes saisonnières et des données annuelles, en fonction de la fréquence choisie."
+  },
+  "SEN_SLOPE": {
+    "title": "Pente de Theil-Sen",
+    "long_name": "Pente de Theil-Sen",
+    "description": "Analyse de la robustesse temporelle du débit.",
+    "abstract": "Calculer les estimateurs annuels et saisonniers de la pente de Theil-Sen et effectuer le test de Mann-Kendall pour l'évaluation des tendances."
+  },
+  "DAYS_WITH_SNOWPACK": {
+    "title": "Jours avec accumulation de neige",
+    "long_name": "Jours avec accumulation de neige",
+    "description": "Nombre total de jours avec un niveau d'eau équivalente en neige supérieur à un seuil donné.",
+    "abstract": "Nombre total de jours avec un niveau d'eau équivalente en neige supérieur à un seuil donné."
   }
 }

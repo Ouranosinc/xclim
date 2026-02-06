@@ -11,6 +11,7 @@ from xclim.indicators.convert import snw_to_snd as _snw_to_snd
 
 __all__ = [
     "blowing_snow",
+    "days_with_snowpack",
     "holiday_snow_and_snowfall_days",
     "holiday_snow_days",
     "snd_days_above",
@@ -279,4 +280,13 @@ holiday_snow_and_snowfall_days = Snow(
     abstract="The total number of days where there is a significant amount of snow on the ground "
     "and a measurable snowfall occurring on December 25th.",
     compute=xci.holiday_snow_and_snowfall_days,
+)
+
+days_with_snowpack = Snow(
+    title="Days with snowpack",
+    identifier="days_with_snowpack",
+    units="days",
+    long_name="Days with snowpack",
+    description="The total number of days with snow water equivalent (SWE) above a given threshold.",
+    compute=xci.days_with_snowpack,
 )

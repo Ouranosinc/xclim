@@ -17,6 +17,7 @@ from xclim.core.utils import InputKind
 
 __all__ = [
     "antecedent_precipitation_index",
+    "aridity_index",
     "cffwis_indices",
     "cold_and_dry_days",
     "cold_and_wet_days",
@@ -834,4 +835,23 @@ antecedent_precipitation_index = DailyPrecipNoResample(
     "exponential decay of base {p_exp}.",
     cell_methods="time: sum over days",
     compute=indices.antecedent_precipitation_index,
+)
+
+aridity_index = PrecipWithIndexing(
+    identifier="aridity_index",
+    realm="atmos",
+    units="",
+    long_name="Aridity Index",
+    description="The ratio of total precipitation over potential evapotranspiration."
+    "Classification based on the Aridity Index(AI)."
+    "+ ----------------+----------------+-----------------+"
+    "| Classification | Aridity Index     | Global land area |"
+    "+----------------+----------------+---------------------+"
+    "| Hyperarid       | AI < 0.05        | 7.5 %            |"
+    "| Arid            | 0.05 ≤ AI < 0.20 | 12.1 %           |"
+    "| Semi - arid     | 0.20 ≤ AI < 0.50 | 17.7 %           |"
+    "| Dry subhumid    | 0.50 ≤ AI < 0.65 | 9.9 %            |"
+    "+----------------+----------------+---------------------+",
+    cell_methods="",
+    compute=indices.aridity_index,
 )
