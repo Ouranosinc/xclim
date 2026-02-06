@@ -1,5 +1,6 @@
 import numpy as np
 import pytest
+from xarray import DataArray
 
 from xclim import atmos, set_options
 from xclim.indices.helpers import make_hourly_temperature
@@ -126,4 +127,4 @@ def test_simple(pr_hr_series, evspsblpot_hr_series):
     out = atmos.aridity_index(pr, pet)
 
     assert out.attrs["units"] == "1"
-    assert isinstance(out, xr.DataArray)
+    assert isinstance(out, DataArray)

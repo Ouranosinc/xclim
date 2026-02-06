@@ -196,16 +196,16 @@ base_flow_index_seasonal_ratio = Streamflow(
         "Winter to summer baseflow index ratio",
     ],
     description=[
-        "Yearly base flow index per season, defined as the minimum 7-day average flow divided by the mean flow"
+        "Yearly base flow index per season, defined as the minimum 7-day average flow divided by the mean flow "
         "as well as yearly winter to summer bfi ratio.",
-        "Yearly base flow index per season, defined as the minimum 7-day average flow divided by the mean flow"
+        "Yearly base flow index per season, defined as the minimum 7-day average flow divided by the mean flow "
         "as well as yearly winter to summer bfi ratio.",
-        "Yearly base flow index per season, defined as the minimum 7-day average flow divided by the mean flow"
+        "Yearly base flow index per season, defined as the minimum 7-day average flow divided by the mean flow "
         "as well as yearly winter to summer bfi ratio.",
-        "Yearly base flow index per season, defined as the minimum 7-day average flow divided by the mean flow"
+        "Yearly base flow index per season, defined as the minimum 7-day average flow divided by the mean flow "
         "as well as yearly winter to summer bfi ratio.",
-        "Yearly winter to summer baseflow index ratio, defined as the minimum 7-day average flow divided by the mean flow"
-        "as well as yearly winter to summer bfi ratio.",
+        "Yearly winter to summer baseflow index ratio, defined as the minimum 7-day average flow divided by the "
+        "mean flow as well as yearly winter to summer bfi ratio.",
     ],
     abstract="Yearly base flow index per season, defined as the minimum 7-day average flow divided by the mean flow"
     "as well as yearly winter to summer bfi ratio.",
@@ -241,6 +241,8 @@ runoff_ratio = Streamflow(
     compute=runoff_ratio,
 )
 
+
+# FIXME: This indicator is non-resampling
 sen_slope = Streamflow(
     title="Sen Slope : Temporal robustness analysis of streamflow.",
     identifier="sen_slope",
@@ -254,9 +256,11 @@ sen_slope = Streamflow(
         "ratio of observed to simulated Sen Slope",
     ],
     description=[
-        "Compute annual and seasonal Theil–Sen slope estimators and perform theMann–Kendall test for trend evaluation.",
+        "Compute annual and seasonal Theil-Sen slope estimators "
+        "and perform the Mann-Kendall test for trend evaluation.",
         "Statistical analysis value.",
-        "Compute annual and seasonal Theil–Sen slope estimators and perform theMann–Kendall test for trend evaluation.",
+        "Compute annual and seasonal Theil-Sen slope estimators "
+        "and perform the Mann-Kendall test for trend evaluation.",
         "Statistical analysis value.",
         "Ratio of observed to simulated Sen Slope",
     ],

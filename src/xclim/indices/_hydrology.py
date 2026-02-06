@@ -931,26 +931,20 @@ def lag_snowpack_flow_peaks(
 @declare_units(q="[discharge]")
 def sen_slope(
     q: xarray.DataArray,
-    qsim: xarray.DataArray = None,
-    freq: str = "YS",
-    month: str = "DEC",
+    qsim: xarray.DataArray | None = None,
 ) -> xarray.Dataset:
     """
     Temporal robustness analysis of streamflow.
 
-    Computes annual and seasonal Theil–Sen slope estimators and performs the
-    Mann–Kendall test for trend evaluation.
+    Computes annual and seasonal Theil-Sen slope estimators and performs the
+    Mann-Kendall test for trend evaluation.
 
     Parameters
     ----------
     q : xarray.DataArray
         Observed streamflow vector.
-    qsim : xarray.DataArray
+    qsim : xarray.DataArray, optional
         Simulated streamflow vector.
-    freq : str
-        Resampling frequency. Default yearly
-    month : str
-        Anchor month in order to spit year into quarterly seasons
 
     Returns
     -------
@@ -958,7 +952,7 @@ def sen_slope(
         Dataset containing the following variables:
 
         - ``Sen_slope`` : Sen's slope estimates for seasonal and yearly averages.
-        - ``p_value`` : Mann–Kendall metric indicating slope tendency.
+        - ``p_value`` : Mann-Kendall metric indicating slope tendency.
         - If simulated flows are provided: ``Sen_slope_sim``, ``p_value_sim``,
           and the ratio of observed ``Sen_slope`` over simulated ``Sen_slope``.
 
@@ -966,7 +960,7 @@ def sen_slope(
     -----
     - If p-value <= 0.05, the trend is statistically significant at the 5% level.
     - The ratio of observed Sen_slope over simulated Sen_slope is considered
-      acceptable within the range 0.5–2 and is optimal when equal to 1
+      acceptable within the range 0.5-2 and is optimal when equal to 1
       (Sauquet et al., 2025).
 
     References
@@ -1040,15 +1034,7 @@ def sen_slope(
             },
             coords={"season": seasons},
         )
-        for var in ds.data_vars:
-            ds[var].attrs["units"] = ""
-        return (
-            ds["Sen_slope_obs"],
-            ds["p_value_obs"],
-            ds["Sen_slope_sim"],
-            ds["p_value_sim"],
-            ds["ratio"],
-        )
+
     else:
         slopes, p_vals = compute_seasonal_stats(q)
         # Create labeled xarray
@@ -1056,11 +1042,11 @@ def sen_slope(
             data_vars={"Sen_slope": ("season", slopes), "p_value": ("season", p_vals)}, coords={"season": seasons}
         )
 
-        # Assign empty units to all variables
-        return (
-            ds["Sen_slope"],
-            ds["p_value"],
-        )
+    # Assign empty units to all variables
+    for var in ds.data_vars:
+        ds[var].attrs["units"] = ""
+
+    return ds
 
 
 @declare_units(q="[discharge]")
