@@ -14,7 +14,7 @@ import os
 import warnings
 from collections.abc import Callable, Sequence
 from enum import IntEnum
-from inspect import _empty  # noqa
+from inspect import _empty
 from io import StringIO
 from pathlib import Path
 from types import ModuleType
@@ -731,9 +731,7 @@ def infer_kind_from_parameter(param) -> InputKind:
     return InputKind.OTHER_PARAMETER
 
 
-def adapt_clix_meta_yaml(  # noqa: C901
-    raw: os.PathLike | StringIO | str, adapted: os.PathLike
-) -> None:
+def adapt_clix_meta_yaml(raw: os.PathLike | StringIO | str, adapted: os.PathLike) -> None:  # noqa: C901
     """
     Read in a clix-meta yaml representation and refactor it to fit xclim YAML specifications.
 

@@ -294,7 +294,7 @@ def pint_multiply(da: xr.DataArray, q: Any, out_units: str | None = None) -> xr.
     xr.DataArray
         The product DataArray.
     """
-    a = 1 * units2pint(da)  # noqa
+    a = 1 * units2pint(da)
     f = a * q.to_base_units()
     if out_units:
         f = f.to(out_units)
@@ -330,7 +330,7 @@ def str2pint(val: str) -> pint.Quantity:
 
 
 # FIXME: The typing here is difficult to determine, as Generics cannot be used to track the type of the output.
-def convert_units_to(  # noqa: C901
+def convert_units_to(
     source: Quantified | xr.Dataset | DataTree,
     target: Quantified | units.Unit | dict,
     context: Literal["infer", "hydro", "none"] | None = None,
@@ -622,7 +622,7 @@ def to_agg_units(
     orig: xr.DataArray,
     op: Literal["min", "max", "mean", "std", "var", "doymin", "doymax", "count", "integral", "sum"],
     dim: str = "time",
-    deffreq: str = None,
+    deffreq: str | None = None,
 ) -> xr.DataArray:
     """
     Set and convert units of an array after an aggregation operation along the sampling dimension (time).
@@ -663,7 +663,9 @@ def to_agg_units(
     ... )
     >>> cond = tas > 100  # Which days are boiling
     >>> Ndays = cond.sum("time")  # Number of boiling days
-    >>> Ndays.attrs.get("units")  # modern xarray preserves the units of tas, but these are incorrect here
+
+    # Note: older xarray drops units while modern xarray preserves them
+    >>> Ndays.attrs.get("units")  # doctest: +SKIP
     'degC'
     >>> Ndays = to_agg_units(Ndays, tas, op="count")
     >>> Ndays.units
@@ -1275,7 +1277,7 @@ def check_units(val: str | xr.DataArray | None, dim: str | xr.DataArray | None =
     with units.context(context):
         start = pint.util.to_units_container(val_dim)
         end = pint.util.to_units_container(expected)
-        graph = units._active_ctx.graph  # noqa
+        graph = units._active_ctx.graph
         if pint.util.find_shortest_path(graph, start, end):
             return
 

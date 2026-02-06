@@ -8,6 +8,11 @@ from xclim import indices as xci
 from xclim import land
 from xclim.core.units import convert_units_to
 
+try:
+    import pymannkendall
+except ModuleNotFoundError:
+    pymannkendall = None
+
 
 class TestBaseFlowIndex:
     def test_simple(self, q_series):
@@ -256,7 +261,7 @@ class TestAnnualAridityIndex:
 
 class TestLagSnowpackFlowPeaks:
     def test_simple(self, swe_series, q_series):
-        # 1 years of daily data (2 values due to freq resampling)
+        # 1 years of daily data (2 values due to freq resampling to water year "YS-OCT")
         a = np.zeros(365)
 
         # Year 1: 1 day of SWE = 20 mm
@@ -279,8 +284,29 @@ class TestLagSnowpackFlowPeaks:
         out = xci.lag_snowpack_flow_peaks(swe, q)
         np.testing.assert_allclose(out, [17.0, 27.0], atol=1e-14)
 
-    # class TestSenSlope:
-    #     @pytest.mark.skipif(pymannkendall is None, reason="This requires pymankendall")
+    def test_no_snow(self, swe_series, q_series):
+        # 1 years of daily data (2 values due to freq resampling to water year "YS-OCT")
+        a = np.zeros(365)
+
+        # Create a daily time index
+        swe = swe_series(a)
+
+        b = np.zeros(365)
+        # Year 1: 35 days of high flows
+        b[50:85] = 20
+        # Year 2: starting oct 1 (DOY 274) 35 days of smaller high flows
+        b[310:345] = 5
+
+        # Create a daily time index
+        q = q_series(b)
+
+        out = xci.lag_snowpack_flow_peaks(swe, q)
+        np.testing.assert_allclose(out, [np.nan, np.nan], atol=1e-14)
+        # no longer the days between the start of the water year and the mean of high flows
+
+
+class TestSenSlope:
+    @pytest.mark.skipif(pymannkendall is None, reason="This requires pymankendall")
     def test_simple(self, q_series):
         # 5 years of increasing data with slope of 1
         q = np.arange(1, 1826)

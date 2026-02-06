@@ -27,6 +27,7 @@ classifiers = [
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
   "Programming Language :: Python :: 3 :: Only",
   "Topic :: Scientific/Engineering :: Atmospheric Science",
   "Topic :: Scientific/Engineering :: Hydrology",
@@ -126,7 +127,7 @@ xclim = "xclim.cli:cli"
 [tool]
 
 [tool.bumpversion]
-current_version = "0.59.2-dev.3"
+current_version = "0.60.1-dev.1"
 commit = true
 commit_args = "--no-verify --signoff"
 tag = false
@@ -293,6 +294,30 @@ testpaths = [
 timeout = "300" # must be string representing seconds (this may soon change)
 timeout_method = "thread"
 xfail_strict = true
+
+[tool.rstcheck]
+report_level = "WARNING"
+ignore_directives = [
+  "autoclass",
+  "autofunction",
+  "autolink-skip",
+  "automodule",
+  "bibliography",
+  "mdinclude"
+]
+ignore_roles = [
+  "cite:cts",
+  "cite:p",
+  "cite:t",
+  "issue",
+  "pull",
+  "user"
+]
+ignore_substitutions = []
+ignore_languages = [
+  "cpp",
+  "python"
+]
 
 [tool.ruff]
 src = ["xclim"]

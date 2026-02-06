@@ -1,21 +1,34 @@
+# Please see the documentation for all configuration options:
+# https://docs.github.com/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
+
 version: 2
 updates:
   - package-ecosystem: github-actions
-    directory: /
+    directory: /.github/workflows
     schedule:
-      interval: weekly
-      time: '12:00'
+      interval: "quarterly"
     groups:
       actions:
         patterns:
           - "*"
+        update-types:
+          - patch
+          - minor
+          - major
+    cooldown:
+      default-days: 7
 
   - package-ecosystem: pip
-    directory: /
+    directory: /CI
     schedule:
-      interval: weekly
-      time: '12:00'
+      interval: "quarterly"
     groups:
       python:
         patterns:
-          - "*"
+          - "requirements_ci.*"
+        update-types:
+          - patch
+          - minor
+          - major
+    cooldown:
+      default-days: 7

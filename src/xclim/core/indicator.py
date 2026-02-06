@@ -31,7 +31,7 @@ mirroring attributes of the :py:class:`Indicator`, please refer to its documenta
     base: <base indicator class>  # Defaults to "Daily" and applies to all indicators that do not give it.
     doc: <module docstring>  # Defaults to a minimal header, only valid if the module doesn't already exist.
     variables:  # Optional section if indicators declared below rely on variables unknown to xclim
-                # (not in `xclim.core.utils.VARIABLES`)
+                # (not in `xclim.core.VARIABLES`)
                 # The variables are not module-dependent and will overwrite any already existing with the same name.
       <varname>:
         canonical_units: <units> # required
@@ -95,13 +95,14 @@ using the YAMALE library (:cite:p:`lopker_yamale_2022`). See the "Extending xcli
 
 Inputs
 ~~~~~~
-As xclim has strict definitions of possible input variables (see :py:data:`xclim.core.utils.variables`),
+As xclim has strict definitions of possible input variables (see :py:data:`xclim.core.VARIABLES`),
 the mapping of `data.input` simply links an argument name from the function given in "compute"
 to one of those official variables.
 """  # numpydoc ignore=GL07
 
 from __future__ import annotations
 
+import logging
 import re
 import warnings
 import weakref
@@ -112,7 +113,7 @@ from dataclasses import asdict, dataclass
 from functools import reduce
 from inspect import Parameter as _Parameter
 from inspect import Signature, signature
-from inspect import _empty as _empty_default  # noqa
+from inspect import _empty as _empty_default
 from os import PathLike
 from pathlib import Path
 from types import ModuleType
@@ -136,7 +137,6 @@ from xclim.core.calendar import parse_offset, select_time
 from xclim.core.cfchecks import cfcheck_from_name
 from xclim.core.formatting import (
     AttrFormatter,
-    _merge_attrs_drop_conflicts,
     default_formatter,
     gen_call_string,
     generate_indicator_docstring,
@@ -155,7 +155,6 @@ from xclim.core.locales import (
 from xclim.core.options import (
     AS_DATASET,
     CHECK_MISSING,
-    KEEP_ATTRS,
     METADATA_LOCALES,
     MISSING_METHODS,
     MISSING_OPTIONS,
@@ -463,7 +462,7 @@ class Indicator(IndicatorRegistrar):
       Miscellaneous information about the data or methods used to produce it.
     """
 
-    def __new__(cls, **kwds):  # noqa: C901
+    def __new__(cls, **kwds):
         """Create subclass from arguments."""
         identifier = kwds.get("identifier", cls.identifier)
         if identifier is None:
@@ -646,7 +645,7 @@ class Indicator(IndicatorRegistrar):
                 raise ValueError(
                     f"Compute argument {old_name} was mapped to variable "
                     f"{new_name} which is not understood by xclim or CMIP6. Please"
-                    " use names listed in `xclim.core.utils.VARIABLES`."
+                    " use names listed in `xclim.core.VARIABLES`."
                 ) from err
             if meta.units is not _empty:
                 try:
@@ -689,9 +688,7 @@ class Indicator(IndicatorRegistrar):
         return dict(sorted(parameters.items(), key=sortkey))
 
     @classmethod
-    def _parse_output_attrs(  # noqa: C901
-        cls, kwds: dict[str, Any], identifier: str
-    ) -> list[dict[str, str | Callable]]:
+    def _parse_output_attrs(cls, kwds: dict[str, Any], identifier: str) -> list[dict[str, str | Callable]]:
         """CF-compliant metadata attributes for all output variables."""
         parent_cf_attrs = cls.cf_attrs
         cf_attrs = kwds.get("cf_attrs")
@@ -872,7 +869,7 @@ class Indicator(IndicatorRegistrar):
         #     params : OrderedDict of parameters (var_kwargs as a single argument, if any)
 
         if self._version_deprecated:
-            self._show_deprecation_warning()  # noqa
+            self._show_deprecation_warning()
 
         if "ds" in self._all_parameters and DataTree and isinstance(kwds.get("ds"), DataTree):
             dt = kwds.pop("ds")
@@ -881,20 +878,11 @@ class Indicator(IndicatorRegistrar):
 
         das, params, dsattrs = self._parse_variables_from_call(args, kwds)
 
-        if OPTIONS[KEEP_ATTRS] is True or (
-            OPTIONS[KEEP_ATTRS] == "xarray" and xarray.get_options()["keep_attrs"] is True
-        ):
-            out_attrs = _merge_attrs_drop_conflicts(*das.values())
-            out_attrs.pop("units", None)
-        else:
-            out_attrs = {}
-        out_attrs = [out_attrs.copy() for _ in range(self.n_outs)]
-
         das, params = self._preprocess_and_checks(das, params)
 
         # get mappings where keys are the actual compute function's argument names
         args = self._get_compute_args(das, params)
-        with xarray.set_options(keep_attrs=False), np.errstate(divide="ignore", invalid="ignore"):
+        with np.errstate(divide="ignore", invalid="ignore"):
             outs = self.compute(**args)
 
         if isinstance(outs, DataArray):
@@ -907,6 +895,7 @@ class Indicator(IndicatorRegistrar):
 
         # Metadata attributes from templates
         var_id = None
+        out_attrs = [dict() for _ in range(self.n_outs)]
         for out, attrs, base_attrs in zip(outs, out_attrs, self.cf_attrs, strict=False):
             if self.n_outs > 1:
                 var_id = base_attrs["var_name"]
@@ -937,9 +926,7 @@ class Indicator(IndicatorRegistrar):
 
         if OPTIONS[AS_DATASET]:
             out = Dataset({o.name: o for o in outs})
-            if OPTIONS[KEEP_ATTRS] is True or (
-                OPTIONS[KEEP_ATTRS] == "xarray" and xarray.get_options()["keep_attrs"] is True
-            ):
+            if xarray.get_options()["keep_attrs"] is not False:
                 out.attrs.update(dsattrs)
             out.attrs["history"] = update_history(
                 self._history_string(das, params),
@@ -1354,11 +1341,12 @@ class Indicator(IndicatorRegistrar):
         """  # numpydoc ignore=PR01
         raise NotImplementedError()
 
-    def cfcheck(self, **das) -> None:
+    @staticmethod
+    def cfcheck(**das) -> None:
         r"""
         Compare metadata attributes to CF-Convention standards.
 
-        Default cfchecks use the specifications in `xclim.core.utils.VARIABLES`,
+        Default cfchecks use the specifications in `xclim.core.VARIABLES`,
         assuming the indicator's inputs are using the CMIP6/xclim variable names correctly.
         Variables absent from these default specs are silently ignored.
 
@@ -1372,7 +1360,8 @@ class Indicator(IndicatorRegistrar):
         for varname, vardata in das.items():
             try:
                 cfcheck_from_name(varname, vardata)
-            except KeyError:  # noqa: S110
+            except KeyError:
+                logging.info("Variable unknown. Ignoring.")
                 # Silently ignore unknown variables.
                 pass
 
@@ -1753,7 +1742,7 @@ def build_indicator_module(
             for n, ind in list(out.iter_indicators()):
                 if n not in objs:
                     # Remove the indicator from the registries and the module
-                    del registry[ind._registry_id]  # noqa
+                    del registry[ind._registry_id]
                     del _indicators_registry[ind.__class__]
                     del out.__dict__[n]
     else:
@@ -1915,7 +1904,7 @@ def build_indicator_module_from_yaml(  # noqa: C901
         if varname in VARIABLES and VARIABLES[varname] != vardata:
             warnings.warn(
                 f"Variable {varname} from module {module_name} "
-                "will overwrite the one already defined in `xclim.core.utils.VARIABLES`"
+                "will overwrite the one already defined in `xclim.core.VARIABLES`"
             )
         VARIABLES[varname] = vardata.copy()
 
@@ -1939,8 +1928,10 @@ def build_indicator_module_from_yaml(  # noqa: C901
                 if indice_func is None and hasattr(indices, "__getitem__"):
                     try:
                         indice_func = indices[indice_name]
-                    except KeyError:  # noqa: S110
+                    except KeyError as err:
                         # The indice is not found in the mapping.
+                        msg = f"Indice not found in the mapping. Ignoring: {err}"
+                        logging.info(msg)
                         pass
 
                 if indice_func is not None:

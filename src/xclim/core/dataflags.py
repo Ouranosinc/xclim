@@ -596,13 +596,13 @@ def data_flags(  # noqa: C901
     ----------
     da : xarray.DataArray
         The variable to check.
-        Must have a name that is a valid CMIP6 variable name and appears in :py:obj:`xclim.core.utils.VARIABLES`.
+        Must have a name that is a valid CMIP6 variable name and appears in :py:obj:`xclim.core.VARIABLES`.
     ds : xarray.Dataset, optional
         An optional dataset with extra variables needed by some checks.
     flags : dict, optional
         A dictionary where the keys are the name of the flags to check and the values are parameter dictionaries.
         The value can be None if there are no parameters to pass (i.e. default will be used).
-        The default, None, means that the data flags list will be taken from :py:obj:`xclim.core.utils.VARIABLES`.
+        The default, None, means that the data flags list will be taken from :py:obj:`xclim.core.VARIABLES`.
     dims : {"all", None} or str or a sequence of strings
         Dimensions upon which the aggregation should be performed. Default: "all".
     freq : str, optional
@@ -805,7 +805,7 @@ def ecad_compliant(
         # TODO: Test for this change concerning data of type None in dataflag variables
         ~reduce(
             np.logical_or,
-            filter(lambda x: x.dtype == bool, flags.data_vars.values()),  # noqa
+            filter(lambda x: x.dtype == bool, flags.data_vars.values()),
         ),
         name="ecad_qc_flag",
         attrs={
@@ -819,22 +819,17 @@ def ecad_compliant(
     return ecad_flag
 
 
-@declare_units(q="[discharge]", a="[area]", thresh="[speed]")
-def specific_discharge_extremely_high(
-    q: xarray.DataArray, a: xarray.DataArray, *, thresh: Quantified = "100 m/s"
-) -> xarray.DataArray:
+@declare_units(da="[speed]", thresh="[speed]")
+def specific_discharge_extremely_high(da: xarray.DataArray, *, thresh: Quantified = "100 mm d-1") -> xarray.DataArray:
     """
-    Check if specific discharge values exceed 100 m/s for any given day.
+    Check if specific discharge values exceed 100 mm per day for any given day.
 
     Parameters
     ----------
-    q : xarray.DataArray
-        Flow.
-    a : xarray.DataArray
-        Watershed area.
+    da : xarray.DataArray
+        Specific discharge.
     thresh : str
         Threshold above which specific discharges are considered problematic and a flag is raised.
-        Default is 100 m/s.
 
     Returns
     -------
@@ -846,21 +841,11 @@ def specific_discharge_extremely_high(
     To gain access to the flag_array:
 
     >>> from xclim.core.dataflags import specific_discharge_extremely_high
-    >>> ds = xr.open_dataset(path_to_file)
-    >>> q = ds["flow"]
-    >>> a = ds["Area"]
-    >>> extrem_specific_discharge = thresh = "100 m s-1"
-    >>> flagged = specific_discharge_extremely_high(q, a, thresh=extrem_specific_discharge)
+    >>> qspec = specific_discharge_dataset.qspec
+    >>> flagged = specific_discharge_extremely_high(qspec)
     """
-    q = convert_units_to(q, "m3/s")
-    a = convert_units_to(a, "m2")
-
-    spe_q = q / (a)  # unit conversion to m/s
-    spe_q.attrs["units"] = "m s-1"
-
-    thresh_converted = convert_units_to(thresh, spe_q)
-    extreme_high = _sanitize_attrs(spe_q > thresh_converted)
-    description = f"Specific discharge found in excess of {thresh} in {spe_q.name}."
-    extreme_high.attrs["description"] = description
-    extreme_high.attrs["units"] = ""
-    return extreme_high
+    thresh_converted = convert_units_to(thresh, da, context="hydro")
+    extreme_high_discharge = _sanitize_attrs(da > thresh_converted)
+    extreme_high_discharge.attrs["description"] = f"One or multiple specific {da.name} found in excess of {thresh}."
+    extreme_high_discharge.attrs["units"] = ""
+    return extreme_high_discharge

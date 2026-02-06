@@ -36,6 +36,21 @@ def random() -> np.random.Generator:
 
 
 @pytest.fixture
+def area_series():
+    def _area_series(values, units="km2"):
+        return xr.DataArray(
+            values,
+            name="area",
+            attrs={
+                "standard_name": "cell_area",
+                "units": units,
+            },
+        )
+
+    return _area_series
+
+
+@pytest.fixture
 def lat_series():
     def _lat_series(values):
         return xr.DataArray(
@@ -154,6 +169,13 @@ def q_series():
         )
 
     return _q_series
+
+
+@pytest.fixture
+def qspec_series():
+    """Return specific discharge time series."""
+    _qspec_series = partial(test_timeseries, variable="qspec")
+    return _qspec_series
 
 
 @pytest.fixture
@@ -302,6 +324,24 @@ def rlus_series():
     """Return surface upwelling longwave radiation time series."""
     _rlus_series = partial(test_timeseries, variable="rlus")
     return _rlus_series
+
+
+@pytest.fixture
+def swe_series():
+    def _swe_series(values, start="1/1/2000", units="mm"):
+        coords = pd.date_range(start, periods=len(values), freq="D")
+        return xr.DataArray(
+            values,
+            coords=[coords],
+            dims="time",
+            name="swe",
+            attrs={
+                "standard_name": "snow_water_equivalent_in_snow_layer",
+                "units": units,
+            },
+        )
+
+    return _swe_series
 
 
 @pytest.fixture(scope="session")

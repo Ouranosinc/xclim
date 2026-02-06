@@ -614,7 +614,7 @@ def high_flow_frequency(q: xarray.DataArray, threshold_factor: int = 9, freq: st
         Daily streamflow data.
     threshold_factor : int
         Factor by which the median flow is multiplied to set the high flow threshold, default is 9.
-    freq : str, optional
+    freq : str
         Resampling frequency, default is 'YS-OCT' for water year starting in October and ending in September.
 
     Returns
@@ -647,7 +647,7 @@ def low_flow_frequency(q: xarray.DataArray, threshold_factor: float = 0.2, freq:
         Daily streamflow data.
     threshold_factor : float
         Factor by which the mean flow is multiplied to set the low flow threshold, default is 0.2.
-    freq : str, optional
+    freq : str
         Resampling frequency, default is 'YS-OCT' for water year starting in October and ending in September.
 
     Returns
@@ -781,9 +781,9 @@ def days_with_snowpack(
     ----------
     swe : xarray.DataArray
         Daily surface snow amount as snow water equivalent.
-    thresh : float, optional
+    thresh : float
         Minimum snow quantity to consider a given day snow-covered. Default is 10 mm.
-    freq : str, optional
+    freq : str
         Resampling frequency. Typically the water year starting on the 1st of October
         in the Northern Hemisphere.
 
@@ -906,7 +906,8 @@ def lag_snowpack_flow_peaks(
     :cite:cts:`burn_2010`
     """
     # Find time of max SWE per year
-    t_swe_max = swe.resample(time=freq).map(lambda x: x.idxmax())
+    t_swe_max = swe.resample(time=freq).map(lambda x: x.idxmax())  # if x.max() > 0 else np.nan)
+    t_swe_max = t_swe_max.where(swe.resample(time=freq).max() > 0)
     doy_swe_max = t_swe_max.dt.dayofyear
 
     # Compute percentile threshold per water year using resample
@@ -992,9 +993,9 @@ def sen_slope(
             - ``p_value`` : Mann–Kendall metric indicating slope tendency.
         """
         if mk is None:
-            raise ModuleNotFoundError("Warning: Install and import pymannkendall as mk.")
-        freq_year = f"{freq}-{month}"
-        freq_season = f"{freq.replace('Y', 'Q')}-{month}"
+            msg = f"{sen_slope.__name__} requires access to the `pymannkendall` library."
+            raise ModuleNotFoundError(msg)
+
         # Convert to pandas Series with DatetimeIndex
         x_year = x.resample(time="YS-DEC").mean()
         x_season = x.resample(time="QS-DEC").mean()
@@ -1056,7 +1057,6 @@ def sen_slope(
         )
 
         # Assign empty units to all variables
-
         return (
             ds["Sen_slope"],
             ds["p_value"],

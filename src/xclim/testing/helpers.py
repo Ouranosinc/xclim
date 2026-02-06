@@ -128,29 +128,17 @@ def add_example_file_paths() -> dict[str, str | list[xr.DataArray]]:
     # For core.utils.load_module example
     sixty_years = xr.date_range("1990-01-01", "2049-12-31", freq="D")
     namespace["temperature_datasets"] = [
-        xr.DataArray(
-            12 * np.random.random_sample(sixty_years.size) + 273,
-            coords={"time": sixty_years},
-            name="tas",
-            dims=("time",),
-            attrs={
-                "units": "K",
-                "cell_methods": "time: mean within days",
-                "standard_name": "air_temperature",
-            },
-        ),
-        xr.DataArray(
-            12 * np.random.random_sample(sixty_years.size) + 273,
-            coords={"time": sixty_years},
-            name="tas",
-            dims=("time",),
-            attrs={
-                "units": "K",
-                "cell_methods": "time: mean within days",
-                "standard_name": "air_temperature",
-            },
-        ),
+        test_timeseries(12 * np.random.random_sample(sixty_years.size) + 273, variable="tas"),
+        test_timeseries(12 * np.random.random_sample(sixty_years.size) + 273, variable="tas"),
     ]
+
+    # dataset with one year of daily flow data
+    flow_dataset = test_timeseries(np.ones(365, dtype=float) / 1000, variable="qspec", as_dataset=True)
+    # single day with extremely high flow to raise dataflag
+    flow_dataset[0] = 200000000
+    # merge into a single dataset
+    namespace["specific_discharge_dataset"] = flow_dataset
+
     return namespace
 
 
