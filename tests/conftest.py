@@ -36,6 +36,21 @@ def random() -> np.random.Generator:
 
 
 @pytest.fixture
+def area_series():
+    def _area_series(values, units="km2"):
+        return xr.DataArray(
+            values,
+            name="area",
+            attrs={
+                "standard_name": "cell_area",
+                "units": units,
+            },
+        )
+
+    return _area_series
+
+
+@pytest.fixture
 def lat_series():
     def _lat_series(values):
         return xr.DataArray(
@@ -157,6 +172,13 @@ def q_series():
 
 
 @pytest.fixture
+def qspec_series():
+    """Return specific discharge time series."""
+    _qspec_series = partial(test_timeseries, variable="qspec")
+    return _qspec_series
+
+
+@pytest.fixture
 def ndq_series(random):
     nx, ny, nt = 2, 3, 5000
     x = np.arange(0, nx)
@@ -184,6 +206,13 @@ def evspsblpot_series():
     """Return evapotranspiration time series."""
     _evspsblpot_series = partial(test_timeseries, variable="evspsblpot")
     return _evspsblpot_series
+
+
+@pytest.fixture
+def evspsblpot_hr_series():
+    """Return evapotranspiration hourly time series."""
+    _evspsblpot_hr_series = partial(test_timeseries, start="1/1/2000", variable="pet", units="kg m-2 s-1", freq="h")
+    return _evspsblpot_hr_series
 
 
 @pytest.fixture
@@ -297,6 +326,24 @@ def rlus_series():
     return _rlus_series
 
 
+@pytest.fixture
+def swe_series():
+    def _swe_series(values, start="1/1/2000", units="mm"):
+        coords = pd.date_range(start, periods=len(values), freq="D")
+        return xr.DataArray(
+            values,
+            coords=[coords],
+            dims="time",
+            name="swe",
+            attrs={
+                "standard_name": "snow_water_equivalent_in_snow_layer",
+                "units": units,
+            },
+        )
+
+    return _swe_series
+
+
 @pytest.fixture(scope="session")
 def threadsafe_data_dir(tmp_path_factory):
     return Path(tmp_path_factory.getbasetemp().joinpath("data"))
@@ -403,3 +450,9 @@ def gather_session_data(request, nimbus, worker_id):
                 pass
 
     request.addfinalizer(remove_data_written_flag)
+
+
+@pytest.fixture
+def no_numbagg():
+    with xr.set_options(use_numbagg=False):
+        yield

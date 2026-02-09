@@ -10,7 +10,7 @@ from __future__ import annotations
 import operator
 import warnings
 from collections.abc import Callable, Sequence
-from typing import Literal
+from typing import Literal, cast
 
 import cftime
 import numpy as np
@@ -187,10 +187,13 @@ def doymax(da: xr.DataArray) -> xr.DataArray:
     -------
     xr.DataArray
         The day of year of the maximum value.
+        If all values are the same, NaN is returned.
     """
-    i = da.argmax(dim="time")
-    out = da.time.dt.dayofyear.isel(time=i, drop=True)
-    return to_agg_units(out, da, "doymax")
+    tmax = da.idxmax("time")
+    std = da.std("time")
+    tmax = tmax.where(std != 0)
+    doy = tmax.dt.dayofyear
+    return to_agg_units(doy, da, "doymax")
 
 
 def doymin(da: xr.DataArray) -> xr.DataArray:
@@ -206,10 +209,13 @@ def doymin(da: xr.DataArray) -> xr.DataArray:
     -------
     xr.DataArray
         The day of year of the minimum value.
+        If all values are the same, NaN is returned.
     """
-    i = da.argmin(dim="time")
-    out = da.time.dt.dayofyear.isel(time=i, drop=True)
-    return to_agg_units(out, da, "doymin")
+    tmax = da.idxmin("time")
+    std = da.std("time")
+    tmax = tmax.where(std != 0)
+    doy = tmax.dt.dayofyear
+    return to_agg_units(doy, da, "doymin")
 
 
 _xclim_ops = {"doymin": doymin, "doymax": doymax}
@@ -304,7 +310,7 @@ def compare(
     Parameters
     ----------
     left : xr.DataArray
-        A DatArray being evaluated against `right`.
+        A DataArray being evaluated against `right`.
     op : {">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"}
         Logical operator. e.g. arr > thresh.
     right : float, int, np.ndarray, or xr.DataArray
@@ -351,7 +357,7 @@ def threshold_count(
     if constrain is None:
         constrain = (">", "<", ">=", "<=")
 
-    c = compare(da, op, threshold, constrain) * 1
+    c = cast(xr.DataArray, compare(da, op, threshold, constrain) * 1)
     return c.resample(time=freq).sum(dim="time")
 
 
@@ -430,7 +436,7 @@ def spell_mask(
     window: int,
     win_reducer: str,
     op: ALL_OPERATORS,
-    thresh: float | Sequence[float],
+    thresh: float | Sequence[float] | xr.DataArray | Sequence[xr.DataArray],
     min_gap: int = 1,
     weights: Sequence[float] = None,
     var_reducer: str = "all",
@@ -451,7 +457,7 @@ def spell_mask(
         The statistics to compute on the rolling window.
     op : {">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"}
         The comparison operator to use when finding spells.
-    thresh : float or sequence of floats
+    thresh : float or sequence of floats or DataArray or sequence of DataArray
         The threshold to compare the rolling statistics against, as ``{window_stats} {op} {threshold}``.
         If data is a list, this must be a list of the same length with a threshold for each variable.
         This function does not handle units and can't accept Quantified objects.
@@ -471,16 +477,18 @@ def spell_mask(
         Same shape as ``data``, but boolean.
         If ``data`` was a list, this is a DataArray of the same shape as the alignment of all variables.
     """
+    _singlevar = True
     # Checks
     if not isinstance(data, xr.DataArray):
         # thus a sequence
-        if np.isscalar(thresh) or len(data) != len(thresh):
+        if np.isscalar(thresh) or isinstance(thresh, xr.DataArray) or len(data) != len(thresh):
             raise ValueError("When ``data`` is given as a list, ``threshold`` must be a sequence of the same length.")
         data = xr.concat(data, "variable")
         if isinstance(thresh[0], xr.DataArray):
             thresh = xr.concat(thresh, "variable")
         else:
             thresh = xr.DataArray(thresh, dims=("variable",))
+        _singlevar = False
     if weights is not None:
         if win_reducer != "mean":
             raise ValueError(f"Argument 'weights' is only supported if 'win_reducer' is 'mean'. Got :  {win_reducer}")
@@ -490,7 +498,7 @@ def spell_mask(
 
     if window == 1:  # Fast path
         is_in_spell = compare(data, op, thresh)
-        if not np.isscalar(thresh):
+        if not _singlevar:
             is_in_spell = getattr(is_in_spell, var_reducer)("variable")
     elif (win_reducer == "min" and op in [">", ">=", "ge", "gt"]) or (
         win_reducer == "max" and op in ["`<", "<=", "le", "lt"]
@@ -498,7 +506,7 @@ def spell_mask(
         # Fast path for specific cases, this yields a smaller dask graph (rolling twice is expensive!)
         # For these two cases, a day can't be part of a spell if it doesn't respect the condition itself
         mask = compare(data, op, thresh)
-        if not np.isscalar(thresh):
+        if not _singlevar:
             mask = getattr(mask, var_reducer)("variable")
         # We need to filter out the spells shorter than "window"
         # find sequences of consecutive respected constraints
@@ -519,7 +527,7 @@ def spell_mask(
             spell_value = getattr(data_pad.rolling(time=window), win_reducer)()
         # True at the end of a spell respecting the condition
         mask = compare(spell_value, op, thresh)
-        if not np.isscalar(thresh):
+        if not _singlevar:
             mask = getattr(mask, var_reducer)("variable")
         # True for all days part of a spell that respected the condition (shift because of the two rollings)
         is_in_spell = (mask.rolling(time=window).sum() >= 1).shift(time=-(window - 1), fill_value=False)
@@ -1439,7 +1447,7 @@ def aggregate_between_dates(
     def _get_days(_bound, _group, _base_time):
         """Get bound in number of days since base_time. Bound can be a days_since array or a DayOfYearStr."""
         if isinstance(_bound, str):
-            b_i = rl.index_of_date(_group.time, _bound, max_idxs=1)  # noqa
+            b_i = rl.index_of_date(_group.time, _bound, max_idxs=1)
             if not b_i.size > 0:
                 return None
             return (_group.time.isel(time=b_i[0]) - _group.time.isel(time=0)).dt.days
@@ -1486,7 +1494,7 @@ def aggregate_between_dates(
         # convert bounds for this group
         if start_d is not None and end_d is not None:
             days = (group.time - base_time).dt.days
-            days[days < 0] = np.nan
+            days = days.where(days >= 0)
 
             masked = group.where((days >= start_d) & (days <= end_d - 1))
             res = getattr(masked, op)(dim="time", skipna=True)

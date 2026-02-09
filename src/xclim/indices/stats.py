@@ -61,8 +61,8 @@ def _fitfunc_1d(arr, *, dist, nparams, method, **fitkwargs):
         for i, arg in enumerate(args):
             guess[param_info[i]] = arg
 
-        fitresult = scipy.stats.fit(dist=dist, data=x, method="mse", guess=guess, **fitkwargs)
-        params = fitresult.params
+        fit_result = scipy.stats.fit(dist=dist, data=x, method="mse", guess=guess, **fitkwargs)
+        params = fit_result.params
     elif method == "PWM":
         # lmoments3 will raise an error if only dist.numargs + 2 values are provided
         if len(x) <= dist.numargs + 2:
@@ -73,14 +73,28 @@ def _fitfunc_1d(arr, *, dist, nparams, method, **fitkwargs):
             raise ValueError(
                 "Lmoments3 does not use `fitkwargs` arguments, except for `floc` with the Gamma distribution."
             )
-        if "floc" in fitkwargs and type(dist).__name__ == "GammaGen":
-            # lmoments3 assumes `loc` is 0, so `x` may need to be shifted
-            # note that `floc` must already be in appropriate units for `x`
-            params = dist.lmom_fit(x - fitkwargs["floc"])
-            params["loc"] = fitkwargs["floc"]
-            params = list(params.values())
-        else:
-            params = list(dist.lmom_fit(x).values())
+        try:
+            if "floc" in fitkwargs and type(dist).__name__ == "GammaGen":
+                # lmoments3 assumes `loc` is 0, so `x` may need to be shifted
+                # note that `floc` must already be in appropriate units for `x`
+                x = x - fitkwargs["floc"]
+                params = dist.lmom_fit(x)
+                params["loc"] = fitkwargs["floc"]
+                params = list(params.values())
+            else:
+                params = list(dist.lmom_fit(x).values())
+        # We only return all NaNs if the fitting also fails. In the future this can probably
+        # be changed to a check before running lmom_fit.
+        except ValueError as e:
+            n_unique = len(np.unique(x))
+            # Error message is hardcoded with different capitalization in lmoments3
+            if str(e).lower() == "l-moments invalid" and n_unique <= dist.numargs | 1:
+                warnings.warn(
+                    f"{type(dist).__name__} requires {dist.numargs | 1} unique values. "
+                    f"{n_unique} provided, returning NaNs."
+                )
+                return np.asarray([np.nan] * nparams)
+            raise e
     elif method == "APP":
         args, kwargs = _fit_start(x, dist.name, **fitkwargs)
         kwargs.setdefault("loc", 0)
@@ -603,18 +617,14 @@ def _fit_start(x, dist: str, **fitkwargs: Any) -> tuple[tuple, dict]:
         # MLE estimation
         log_x_pos = np.log(x_pos)
         shape0 = log_x_pos.std()
-        with warnings.catch_warnings():
-            warnings.filterwarnings("ignore", message="Mean of empty slice.", category=RuntimeWarning)
-            scale0 = np.exp(log_x_pos.mean())
+        scale0 = np.exp(log_x_pos.mean())
         kwargs = {"scale": scale0, "loc": loc0}
         return (shape0,), kwargs
 
     return (), {}
 
 
-def _dist_method_1D(  # noqa: N802
-    *args, dist: str | rv_continuous, function: str, **kwargs: Any
-) -> xr.DataArray:
+def _dist_method_1D(*args, dist: str | rv_continuous, function: str, **kwargs: Any) -> xr.DataArray:  # noqa: N802
     r"""
     Statistical function for given argument on given distribution initialized with params.
 
@@ -718,9 +728,10 @@ def preprocess_standardized_index(da: xr.DataArray, freq: str | None, window: in
 
     Returns
     -------
-    xarray.DataArray, str
-        Processed array and time grouping corresponding to the final time frequency
-        (following resampling if applicable).
+    xarray.DataArray
+        Processed array, following resampling if applicable.
+    str
+        Time grouping corresponding to the final time frequency.
     """
     # We could allow a more general frequency in this function and move
     # the constraint {"D", "MS"} in specific indices such as SPI / SPEI.
@@ -851,12 +862,17 @@ def standardized_index_fit_params(
         if method not in dist_and_methods[dist.name]:
             raise NotImplementedError(f"The method `{method}` is not supported for distribution `{dist.name}`.")
     da, group = preprocess_standardized_index(da, freq, window, **indexer)
+    if group == "time.week":
+        group_handler = da.time.dt.isocalendar().week
+    else:
+        group_handler = group
+
     if zero_inflated:
-        prob_of_zero = da.groupby(group).map(lambda x: (x == 0).sum("time") / x.notnull().sum("time"))
-        params = da.where(da != 0).groupby(group).map(fit, dist=dist, method=method, **fitkwargs)
+        prob_of_zero = da.groupby(group_handler).map(lambda x: (x == 0).sum("time") / x.notnull().sum("time"))
+        params = da.where(da != 0).groupby(group_handler).map(fit, dist=dist, method=method, **fitkwargs)
         params["prob_of_zero"] = prob_of_zero
     else:
-        params = da.groupby(group).map(fit, dist=dist, method=method, **fitkwargs)
+        params = da.groupby(group_handler).map(fit, dist=dist, method=method, **fitkwargs)
     cal_range = (
         da.time.min().dt.strftime("%Y-%m-%d").item(),
         da.time.max().dt.strftime("%Y-%m-%d").item(),
@@ -989,7 +1005,12 @@ def standardized_index(
     # If params only contains a subset of main dataset time grouping
     # (e.g. 8/12 months, etc.), it needs to be broadcasted
     group = params.attrs["group"]
-    template = da.groupby(group).first()
+    if group == "time.week":
+        group_handler = da.time.dt.isocalendar().week
+    else:
+        group_handler = group
+
+    template = da.groupby(group_handler).first()
     paramsd = {k: v for k, v in params.sizes.items() if k != "dparams"}
     if paramsd != template.sizes:
         params = params.broadcast_like(template)
@@ -1008,12 +1029,12 @@ def standardized_index(
 
     # this should be restricted to some distributions / in some context
     zero_inflated = "prob_of_zero" in params.coords
+    prob_of_zero = 0
+    mask = None
     if zero_inflated:
         prob_of_zero = reindex_time(params["prob_of_zero"], da, group)
         mask = da != 0
         da = da.where(mask)
-    else:
-        prob_of_zero = 0
     params = reindex_time(params, da, group)
     dist_probs = dist_method("cdf", params, da, dist=dist)
     if zero_inflated:

@@ -294,7 +294,7 @@ def pint_multiply(da: xr.DataArray, q: Any, out_units: str | None = None) -> xr.
     xr.DataArray
         The product DataArray.
     """
-    a = 1 * units2pint(da)  # noqa
+    a = 1 * units2pint(da)
     f = a * q.to_base_units()
     if out_units:
         f = f.to(out_units)
@@ -330,7 +330,7 @@ def str2pint(val: str) -> pint.Quantity:
 
 
 # FIXME: The typing here is difficult to determine, as Generics cannot be used to track the type of the output.
-def convert_units_to(  # noqa: C901
+def convert_units_to(
     source: Quantified | xr.Dataset | DataTree,
     target: Quantified | units.Unit | dict,
     context: Literal["infer", "hydro", "none"] | None = None,
@@ -532,7 +532,9 @@ def infer_sampling_units(
     freq = xr.infer_freq(da)
     if freq is None:
         if deffreq is None:
-            raise ValueError("Unable to find the sampling frequency of the data.")
+            raise ValueError(f"Unable to find the sampling frequency of the data along dimension {dim}.")
+        msg = f"Unable to find the sampling frequency of the data along dimension {dim}. Assuming '{deffreq}' instead."
+        warnings.warn(msg, stacklevel=2)
         freq = deffreq
 
     multi, base, _, _ = parse_offset(freq)
@@ -620,6 +622,7 @@ def to_agg_units(
     orig: xr.DataArray,
     op: Literal["min", "max", "mean", "std", "var", "doymin", "doymax", "count", "integral", "sum"],
     dim: str = "time",
+    deffreq: str | None = None,
 ) -> xr.DataArray:
     """
     Set and convert units of an array after an aggregation operation along the sampling dimension (time).
@@ -636,6 +639,9 @@ def to_agg_units(
         but the units are multiplied by the timestep of the data (requires an inferrable frequency).
     dim : str
         The time dimension along which the aggregation was performed.
+    deffreq : str, optional
+        For operations `count` and `integral`, this gives the default source frequency to assume,
+        if it can't be inferred from ``out[dim]``.
 
     Returns
     -------
@@ -657,8 +663,10 @@ def to_agg_units(
     ... )
     >>> cond = tas > 100  # Which days are boiling
     >>> Ndays = cond.sum("time")  # Number of boiling days
-    >>> Ndays.attrs.get("units")
-    None
+
+    # Note: older xarray drops units while modern xarray preserves them
+    >>> Ndays.attrs.get("units")  # doctest: +SKIP
+    'degC'
     >>> Ndays = to_agg_units(Ndays, tas, op="count")
     >>> Ndays.units
     'd'
@@ -695,7 +703,7 @@ def to_agg_units(
         out.attrs.update(units="1", is_dayofyear=np.int32(1), calendar=get_calendar(orig))
 
     elif op in ["count", "integral"]:
-        m, freq_u_raw = infer_sampling_units(orig[dim])
+        m, freq_u_raw = infer_sampling_units(orig, deffreq=deffreq, dim=dim)
         orig_u = units2pint(orig)
         freq_u = str2pint(freq_u_raw)
 
@@ -884,6 +892,13 @@ def rate2amount(
     See Also
     --------
     amount2rate : Convert an amount to a rate.
+
+    Notes
+    -----
+    Floating-point precision can have surprising results. For example, a daily series of 1 mm/d precipitation
+    rates might not convert to exactly 1 mm daily amounts. This is because a float multiplication is still
+    happening in the background and the time step duration might have been stored in [nano]seconds at one
+    point.
 
     Examples
     --------
@@ -1262,7 +1277,7 @@ def check_units(val: str | xr.DataArray | None, dim: str | xr.DataArray | None =
     with units.context(context):
         start = pint.util.to_units_container(val_dim)
         end = pint.util.to_units_container(expected)
-        graph = units._active_ctx.graph  # noqa
+        graph = units._active_ctx.graph
         if pint.util.find_shortest_path(graph, start, end):
             return
 

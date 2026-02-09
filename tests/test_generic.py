@@ -82,13 +82,16 @@ class TestDomainCount:
 
 
 class TestFlowGeneric:
-    def test_doyminmax(self, q_series):
+    @pytest.mark.parametrize("use_dask", [True, False])
+    def test_doyminmax(self, q_series, use_dask):
         a = np.ones(365)
         a[9] = 2
         a[19] = -2
         a[39] = 4
         a[49] = -4
         q = q_series(a)
+        if use_dask:
+            q = q.chunk({"time": 200})
         dmx = generic.doymax(q)
         dmn = generic.doymin(q)
         assert dmx.values == [40]
@@ -99,6 +102,26 @@ class TestFlowGeneric:
 
             assert da.attrs["units"] == "1"
             assert da.attrs["is_dayofyear"] == 1
+
+    @pytest.mark.parametrize("use_dask", [True, False])
+    def test_doyminmax_novariance(self, q_series, use_dask):
+        q = q_series(np.ones(365))
+        if use_dask:
+            q = q.chunk({"time": 200})
+        dmx = generic.doymax(q).load()
+        dmn = generic.doymin(q).load()
+        assert dmx.isnull().all()
+        assert dmn.isnull().all()
+
+    @pytest.mark.parametrize("use_dask", [True, False])
+    def test_doyminmax_allna(self, q_series, use_dask):
+        q = q_series(np.ones(365)) * np.nan
+        if use_dask:
+            q = q.chunk({"time": 200})
+        dmx = generic.doymax(q).load()
+        dmn = generic.doymin(q).load()
+        assert dmx.isnull().all()
+        assert dmn.isnull().all()
 
 
 class TestAggregateBetweenDates:
@@ -726,6 +749,21 @@ class TestSpellMask:
         # Weights must have same length as window
         with pytest.raises(ValueError, match="Weights have a different length"):
             generic.spell_mask(data, 3, "mean", "<=", 2, weights=[1, 2])
+
+
+def test_spell_length_statistics_quantified(tasmin_series):
+    tn = tasmin_series(np.arange(365) + K2C, start="2001-01-01").expand_dims(site=[0, 1])
+    thresh = xr.DataArray([330, 360], dims=("site",), coords={"site": tn.site}, attrs={"units": "°C"})
+    out = generic.spell_length_statistics(
+        tn,
+        thresh,
+        window=1,
+        win_reducer="min",
+        op=">",
+        spell_reducer="sum",
+        freq="YS",
+    )
+    np.testing.assert_allclose(out, [[34], [4]])
 
 
 def test_spell_length_statistics_multi(tasmin_series, tasmax_series):

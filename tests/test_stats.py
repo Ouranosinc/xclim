@@ -278,6 +278,29 @@ class TestPWMFit:
         for key, val in expected.items():
             np.testing.assert_array_equal(out.sel(dparams=key), val, 1)
 
+    @pytest.mark.parametrize("dist", lm3_dist_map.keys())
+    def test_not_enough_unique_values(
+        self,
+        dist,
+    ):
+        lmom = pytest.importorskip("lmoments3.distr")
+        lm3dc = getattr(lmom, lm3_dist_map[dist])
+        time = xr.date_range("2000-01-01", "2000-12-31", freq="ME")
+        # Some distributions have no parameter, but we want to ensure we have at least one
+        # unique value
+        unique_values = np.arange(lm3dc.numargs or 1)
+
+        da = xr.DataArray(np.random.choice(unique_values, time.size), coords=dict(time=("time", time)))
+        with pytest.warns() as record:
+            out = stats.fit(da, dist=lm3dc, method="PWM").compute()
+
+            if dist in ["expon", "gumbel_r", "norm"]:
+                assert record[0].category is UserWarning
+            elif dist in ["gamma", "genextreme", "genpareto", "pearson3", "weibull_min"]:
+                assert record[0].category is RuntimeWarning
+
+        assert out.isnull().all()
+
 
 @pytest.mark.parametrize("use_dask", [True, False])
 @pytest.mark.filterwarnings("ignore::RuntimeWarning")

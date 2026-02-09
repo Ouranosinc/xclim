@@ -22,7 +22,6 @@ CF_COMPLIANCE = "cf_compliance"
 CHECK_MISSING = "check_missing"
 MISSING_OPTIONS = "missing_options"
 RUN_LENGTH_UFUNC = "run_length_ufunc"
-KEEP_ATTRS = "keep_attrs"
 AS_DATASET = "as_dataset"
 MAP_BLOCKS = "resample_map_blocks"
 
@@ -35,14 +34,12 @@ OPTIONS = {
     CHECK_MISSING: "any",
     MISSING_OPTIONS: {},
     RUN_LENGTH_UFUNC: "auto",
-    KEEP_ATTRS: "xarray",
     AS_DATASET: False,
     MAP_BLOCKS: False,
 }
 
 _LOUDNESS_OPTIONS = frozenset(["log", "warn", "raise"])
 _RUN_LENGTH_UFUNC_OPTIONS = frozenset(["auto", True, False])
-_KEEP_ATTRS_OPTIONS = frozenset(["xarray", True, False])
 
 
 def _valid_missing_options(mopts):
@@ -65,7 +62,6 @@ _VALIDATORS = {
     CHECK_MISSING: lambda meth: meth in MISSING_METHODS or meth == "skip",
     MISSING_OPTIONS: _valid_missing_options,
     RUN_LENGTH_UFUNC: _RUN_LENGTH_UFUNC_OPTIONS.__contains__,
-    KEEP_ATTRS: _KEEP_ATTRS_OPTIONS.__contains__,
     AS_DATASET: lambda opt: isinstance(opt, bool),
     MAP_BLOCKS: lambda opt: isinstance(opt, bool),
 }
@@ -218,16 +214,10 @@ class set_options:  # numpydoc ignore=PR01,PR02
     run_length_ufunc : str
         Whether to use the 1D ufunc version of run length algorithms or the dask-ready broadcasting version.
         Default is ``"auto"``, which means the latter is used for dask-backed and large arrays.
-    keep_attrs : bool or str
-        Controls attributes handling in indicators. If True, attributes from all inputs are merged
-        using the `drop_conflicts` strategy and then updated with xclim-provided attributes.
-        If ``as_dataset`` is also True and a dataset was passed to the ``ds`` argument of the Indicator,
-        the dataset's attributes are copied to the indicator's output.
-        If False, attributes from the inputs are ignored.
-        If "xarray", xclim will use xarray's `keep_attrs` option.
-        Note that xarray's "default" is equivalent to False. Default: ``"xarray"``.
     as_dataset : bool
-        If True, indicators output datasets. If False, they output DataArrays. Default :``False``.
+        If True, indicators output datasets. If False, they output DataArrays.
+        The output dataset inherits attributes from the input dataset (if any) according to xarray's
+        ``keep_attrs`` option, which defaults to preserving attributes. Default :``False``.
     resample_map_blocks : bool
         If True, some indicators will wrap their resampling operations with `xr.map_blocks`,
         using :py:func:`xclim.indices.helpers.resample_map`.

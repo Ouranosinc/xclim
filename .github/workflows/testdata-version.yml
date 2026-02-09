@@ -22,7 +22,7 @@ jobs:
       pull-requests: write
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@002fdce3c6a235733a90a27c80493a3241e56863 # v2.12.1
+        uses: step-security/harden-runner@20cf305ff2072d973412fa9b1e3a4f227bda3c76 # v2.14.0
         with:
           disable-sudo: true
           egress-policy: block
@@ -30,7 +30,7 @@ jobs:
             api.github.com:443
             github.com:443
       - name: Checkout Repository
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
         with:
           persist-credentials: false
       - name: Find xclim-testdata Tag and CI Testing Branch
@@ -51,7 +51,7 @@ jobs:
           XCLIM_TESTDATA_TAG: ${{ env.XCLIM_TESTDATA_TAG }}
           XCLIM_TESTDATA_BRANCH: ${{ env.XCLIM_TESTDATA_BRANCH }}
       - name: Find Comment
-        uses: peter-evans/find-comment@3eae4d37986fb5a8592848f6a574fdf654e61f9e # v3.1.0
+        uses: peter-evans/find-comment@b30e6a3c0ed37e7c023ccd3f1db5c6c0b0c23aad # v4.0.0
         id: fc
         with:
           issue-number: ${{ github.event.pull_request.number }}
@@ -59,13 +59,13 @@ jobs:
           body-includes: It appears that this Pull Request modifies the `main.yml` workflow.
       - name: Compare Versions
         if: ${{( env.XCLIM_TESTDATA_TAG != env.XCLIM_TESTDATA_BRANCH )}}
-        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
         with:
           script: |
             core.setFailed('Configured `xclim-testdata` tag is not `latest`.')
       - name: Update Failure Comment
         if: ${{ failure() }}
-        uses: peter-evans/create-or-update-comment@71345be0265236311c031f5c7866368bd1eff043 # v4.0.0
+        uses: peter-evans/create-or-update-comment@e8674b075228eee787fea43ef493e45ece1004c9 # v5.0.0
         with:
           comment-id: ${{ steps.fc.outputs.comment-id }}
           issue-number: ${{ github.event.pull_request.number }}
@@ -81,7 +81,7 @@ jobs:
           edit-mode: replace
       - name: Update Success Comment
         if: ${{ success() }}
-        uses: peter-evans/create-or-update-comment@71345be0265236311c031f5c7866368bd1eff043 # v4.0.0
+        uses: peter-evans/create-or-update-comment@e8674b075228eee787fea43ef493e45ece1004c9 # v5.0.0
         with:
           comment-id: ${{ steps.fc.outputs.comment-id }}
           issue-number: ${{ github.event.pull_request.number }}

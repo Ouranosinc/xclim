@@ -13,11 +13,11 @@ from datetime import timedelta
 from inspect import stack
 from typing import Any, Literal, cast
 
-import cf_xarray  # noqa: F401, pylint: disable=unused-import
 import cftime
 import numba as nb
 import numpy as np
 import xarray as xr
+from xarray import CFTimeIndex
 
 try:
     from xarray.coding.calendar_ops import _datetime_to_decimal_year
@@ -33,11 +33,28 @@ try:
 except ImportError:
     rechunk_for_blockwise = None
 
-from xclim.core import Quantified
-from xclim.core.calendar import ensure_cftime_array, get_calendar
+from xclim.core import DayOfYearStr, Quantified
+from xclim.core.calendar import ensure_cftime_array, get_calendar, parse_offset, select_time
 from xclim.core.options import MAP_BLOCKS, OPTIONS
 from xclim.core.units import convert_units_to
 from xclim.core.utils import _chunk_like, uses_dask
+
+__all__ = [
+    "cosine_of_solar_zenith_angle",
+    "day_angle",
+    "day_lengths",
+    "distance_from_sun",
+    "eccentricity_correction_factor",
+    "extraterrestrial_solar_radiation",
+    "gladstones_day_length_latitude_coefficient",
+    "huglin_day_length_latitude_coefficient",
+    "jones_day_length_latitude_coefficient",
+    "make_hourly_temperature",
+    "resample_map",
+    "solar_declination",
+    "time_correction_for_solar_angle",
+    "wind_speed_height_conversion",
+]
 
 
 def _wrap_radians(da):
@@ -142,7 +159,7 @@ def solar_declination(time: xr.DataArray, method="spencer") -> xr.DataArray:
             + 0.001480 * np.sin(3 * da)
         )
     else:
-        raise NotImplementedError(f"Method {method} must be one of 'simple' or 'spencer'")
+        raise NotImplementedError("Method must be one of 'simple' or 'spencer'.")
     return _wrap_radians(sd).assign_attrs(units="rad").rename("declination")
 
 
@@ -224,7 +241,7 @@ def eccentricity_correction_factor(
 def cosine_of_solar_zenith_angle(
     time: xr.DataArray,
     declination: xr.DataArray,
-    lat: Quantified,
+    lat: Quantified | xr.DataTree,
     lon: Quantified = "0 °",
     time_correction: xr.DataArray | None = None,
     stat: Literal["average", "integral", "instant"] = "average",
@@ -249,7 +266,7 @@ def cosine_of_solar_zenith_angle(
     declination : xr.DataArray
         Solar declination. See :py:func:`solar_declination`.
     lat : Quantified
-        Latitude.
+        Latitude coordinate. Expects units of "degree_north".
     lon : Quantified
         Longitude. Needed if the input timeseries is subdaily.
     time_correction : xr.DataArray, optional
@@ -294,7 +311,7 @@ def cosine_of_solar_zenith_angle(
         h_e = np.pi - 1e-9  # just below pi
     else:
         if time.dtype == "O":  # cftime
-            time_as_s = time.copy(data=xr.CFTimeIndex(cast(np.ndarray, time.values)).asi8 / 1e6)
+            time_as_s = time.copy(data=xr.CFTimeIndex(cast(CFTimeIndex, time.values)).asi8 / 1e6)
         else:  # numpy
             time_as_s = time.copy(data=time.astype(float) / 1e9)
         h_s_utc = (((time_as_s % S_IN_D) / S_IN_D) * 2 * np.pi + np.pi).assign_attrs(units="rad")
@@ -399,7 +416,7 @@ def extraterrestrial_solar_radiation(
     times : xr.DataArray
         Daily datetime data. This function makes no sense with data of other frequency.
     lat : xr.DataArray
-        Latitude.
+        Latitude coordinate. Expects units of "degree_north".
     solar_constant : str
         The solar constant, the energy received on earth from the sun per surface per time.
     method : {'spencer', 'simple'}
@@ -425,18 +442,19 @@ def extraterrestrial_solar_radiation(
     return (
         gsc
         * rad_to_day
-        * cosine_of_solar_zenith_angle(times, ds, lat, stat="integral", sunlit=True, chunks=chunks)
+        * cosine_of_solar_zenith_angle(times, ds, lat=lat, stat="integral", sunlit=True, chunks=chunks)
         * dr
     ).assign_attrs(units="J m-2 d-1")
 
 
 def day_lengths(
     dates: xr.DataArray,
-    lat: xr.DataArray,
+    lat: Quantified | xr.Dataset | xr.DataTree,
     method: Literal["spencer", "simple"] = "spencer",
+    infill_polar_days: bool = False,
 ) -> xr.DataArray:
     r"""
-    Calculate day-length according to latitude and day of year.
+    Calculate day-length according to latitude and day of the year.
 
     See :py:func:`solar_declination` for the approximation used to compute the solar declination angle.
     Based on :cite:t:`kalogirou_chapter_2014`.
@@ -445,30 +463,347 @@ def day_lengths(
     ----------
     dates : xr.DataArray
         Daily datetime data.
-        This function makes no sense with data of other frequency.
-    lat : xarray.DataArray
-        Latitude coordinate.
+        This function makes no sense with data of other time frequencies.
+    lat : Quantified or xarray.Dataset or xarray.DataTree
+        Latitude coordinate. Expects units of "degree_north".
     method : {'spencer', 'simple'}
         Which approximation to use when computing the solar declination angle.
-        See :py:func:`solar_declination`.
+        See :py:func:`xclim.indices.helpers.solar_declination`.
+    infill_polar_days : bool
+        Whether to use a mask of 24 hours for polar days and 0 hours for polar nights.
+        If False, polar days and nights will be NaN.
+        If True, they will be filled with 24 and 0 hours, respectively,
+        dependent on latitude and solar declination at the given date.
 
     Returns
     -------
     xarray.DataArray, [hours]
         Day-lengths in hours per individual day.
 
+    Raises
+    ------
+    NotImplementedError
+        If a series of dates provided are not inferrable at a daily time frequency.
+
+    Notes
+    -----
+    The day length is computed as the time between sunrise and sunset.
+    The infill_polar_days option provides an arbitrary method fill polar days and nights with
+    24 and 0 hours, respectively. Care should be taken when using this option, as it may not be
+    appropriate for all applications.
+
     References
     ----------
     :cite:cts:`kalogirou_chapter_2014`
     """
+    if len(dates) >= 3 and xr.infer_freq(dates) != "D":
+        raise NotImplementedError("day_lengths only supports daily data.")
+
     declination = solar_declination(dates.time, method=method)
-    lat = convert_units_to(lat, "rad")
+    radians = convert_units_to(lat, "rad")
+    lat_deg = convert_units_to(lat, "deg")
     # arccos gives the hour-angle at sunset, multiply by 24 / 2π to get hours.
     # The day length is twice that.
     with np.errstate(invalid="ignore"):
-        day_length_hours = ((24 / np.pi) * np.arccos(-np.tan(lat) * np.tan(declination))).assign_attrs(units="h")
+        day_length_hours = ((24 / np.pi) * np.arccos(-np.tan(radians) * np.tan(declination))).assign_attrs(units="h")
+
+    if infill_polar_days:
+        lat_broadcast, decl_broadcast = xr.broadcast(lat_deg, declination)
+        # Polar day: sun never sets; Polar night: sun never rises.
+        polar_day = ((lat_broadcast > 66.5) & (decl_broadcast > 0)) | ((lat_broadcast < -66.5) & (decl_broadcast < 0))
+        polar_night = ((lat_broadcast > 66.5) & (decl_broadcast < 0)) | ((lat_broadcast < -66.5) & (decl_broadcast > 0))
+        # Infill polar days with 24 hours and polar nights with 0 hours.
+        valid = ~xr.ufuncs.isnan(day_length_hours)
+        day_length_hours = day_length_hours.where(~(polar_day & ~valid), 24.0)
+        day_length_hours = day_length_hours.where(~(polar_night & ~valid), 0)
+
+    # Drop nonessential coordinates
+    for coord in day_length_hours.coords:
+        if coord not in ["lat", "time"]:
+            day_length_hours = day_length_hours.drop_vars(coord)
 
     return day_length_hours
+
+
+def huglin_day_length_latitude_coefficient(
+    lat: xr.DataArray | str,
+    method: Literal["huglin", "interpolated"],
+    cap_value: float = np.nan,
+) -> xr.DataArray:
+    r"""
+    Simple coefficient for the day-length and high latitudes.
+
+    This latitude coefficient is used for determining the latitude effect on the day length specific to climate indices
+    that concern viticulture, such as :py:func:`xclim.indices.huglin_index` (cite:p:`huglin_nouveau_1978`).
+    This function is an empirical approximation of the day-length multiplication factor, :math:`k`, based on latitude.
+
+    Parameters
+    ----------
+    lat : xarray.DataArray, str
+        Latitude coordinate. Expects units of "degree_north".
+        If provided a string (e.g. "45 degree_north"), it is converted to an xarray.DataArray.
+    method : {"huglin", "interpolated"}
+        The method to use for the coefficient calculation.
+    cap_value : float
+        For latitudes north of 50° N and south of 50° S, the value for the coefficient.
+
+    Returns
+    -------
+    xarray.DataArray, [dimensionless]
+        Coefficient for the day length based on latitude.
+
+    Notes
+    -----
+    For the original `"huglin"` implementation :cite:p:`huglin_nouveau_1978`, the day-length multiplication factor,
+    :math:`k`, is calculated as follows:
+
+    .. math::
+
+       k = f(lat) = \begin{cases}
+                     1.0, & \text{if } | lat | <= 40 \\
+                     1.02, & \text{if } 40 < | lat | <= 42 \\
+                     1.03, & \text{if } 42 < | lat | <= 44 \\
+                     1.04, & \text{if } 44 < | lat | <= 46 \\
+                     1.05, & \text{if } 46 < | lat | <= 48 \\
+                     1.06, & \text{if } 48 < | lat | <= 50 \\
+                     m, & \text{if } | lat | > 50 \\
+                     \end{cases}
+
+    An alternative implementation (`"interpolated"`) uses smoothing to reduce the stepwise behaviour of the
+    "huglin"` method. The day-length multiplication factor (:math:`k`) for the `"interpolated"` method then is
+    calculated as follows:
+
+    .. math::
+
+       k = f(lat) = \begin{cases}
+                     1, & \text{if } | lat | <= 40 \\
+                     1 + ((abs(lat) - 40) / 10) * 0.06, & \text{if } 40 < | lat | <= 50 \\
+                     m, & \text{if } | lat | > 50 \\
+                     \end{cases}
+
+    Where :math:`m` is the cap value, which is set to np.nan, or other if provided.
+
+    References
+    ----------
+    :cite:cts:`huglin_nouveau_1978,project_team_eca&d_algorithm_2013`
+    """
+    if isinstance(lat, str):
+        _lat_value = convert_units_to(lat, "deg")
+        _lat = xr.DataArray(lat, attrs={"units": "degree_north"})
+    else:
+        _lat = lat
+
+    if isinstance(cap_value, float):
+        _cap_value = cap_value
+    else:
+        raise TypeError("Argument 'cap_value' must be a float (or numpy.nan).")
+
+    lat_abs = abs(lat)
+    if method == "huglin":
+        k_f_bounds = [(0, -np.inf, 40), (0.02, 40, 42), (0.03, 42, 44), (0.04, 44, 46), (0.05, 46, 48), (0.06, 48, 50)]
+        k = xr.full_like(lat_abs, _cap_value + 1)
+        for k_f_b in k_f_bounds:
+            cond = (k_f_b[1] < lat_abs) & (lat_abs <= k_f_b[2])
+            k = k.where(~cond, 1 + k_f_b[0])
+    elif method == "interpolated":
+        lat_mask = lat_abs <= 50
+        lat_coefficient = 1 + ((lat_abs - 40) / 10).clip(min=0) * 0.06
+        k = xr.where(lat_mask, lat_coefficient, _cap_value)
+    else:
+        raise NotImplementedError("Method is not implemented. Only 'huglin' and 'interpolated' are permitted.")
+
+    return k
+
+
+def gladstones_day_length_latitude_coefficient(
+    dates: xr.DataArray,
+    lat: xr.DataArray | int | float,
+    neutral_latitude: str = "40.0 deg",
+    constrain: str | None = None,
+    day_length_method: Literal["simple", "spencer"] = "spencer",
+) -> xr.DataArray:
+    """
+    Day-length latitude coefficient based on the Gladstones methodology.
+
+    This function computes a day-length latitude coefficient as it influences the monthly temperatures
+    of the growing season as compared to the day-length of a neutral reference latitude.
+    Based on :cite:t:`gladstones_viticulture_1992` and cite:t:`gladstones_wine_2011`.
+
+    Parameters
+    ----------
+    dates : xarray.DataArray
+        The dates for which the day length latitude coefficient is computed.
+    lat : xarray.DataArray or int or float
+        Latitude coordinate. Expects units of "degree_north".
+        If a single value is given, it is converted to an xarray.DataArray.
+    neutral_latitude : str
+        The latitude at which the day length coefficient is 1.0.
+        Latitudes between this value and 0 degrees North will have a coefficient below 1.0 during the growing season,
+        while latitudes above this value will have a coefficient greater than 1.0.
+        This negative absolute value of this latitude is used for calculating coefficients in the Southern Hemisphere.
+    constrain : str, optional
+        The lower latitude limit for applying the latitude coefficient.
+        If a str is given (e.g. '25 degree_north`), values below this threshold will be set to '1.0'.
+    day_length_method : {'simple', 'spencer'}
+        The method to use for the day length calculation.
+        The "simple" method uses a simple approximation of the day length based on latitude and time of year.
+        The "spencer" method uses a more complex approximation based on the Fourier series of the solar declination.
+
+    Returns
+    -------
+    xarray.DataArray, [dimensionless]
+        Coefficient for the day length based on latitude.
+    """
+    if not isinstance(lat, xr.DataArray):
+        lat = xr.DataArray(lat, attrs={"units": "degree_north"})
+    if day_length_method not in ["simple", "spencer"]:
+        raise NotImplementedError("day_length_method must be one of 'simple' or 'spencer'.")
+
+    if isinstance(constrain, str):
+        constrain_value = convert_units_to(constrain, "deg")
+    elif constrain is None:
+        constrain_value = False
+    else:
+        raise ValueError("Argument 'constrain' must be a str (e.g. '25 degree_north') or 'None'.")
+
+    _neutral_latitude = convert_units_to(neutral_latitude, "deg")
+
+    pivotal_day_length_north = day_lengths(dates=dates, lat=f"{abs(_neutral_latitude)} deg", method=day_length_method)
+    pivotal_day_length_south = day_lengths(dates=dates, lat=f"{-abs(_neutral_latitude)} deg", method=day_length_method)
+    day_length = day_lengths(dates=dates, lat=lat, method=day_length_method)
+
+    if not constrain_value:
+        k = xr.where(lat >= 0.0, day_length / pivotal_day_length_north, day_length / pivotal_day_length_south)
+    else:
+        k = xr.where(
+            lat >= constrain_value,
+            day_length / pivotal_day_length_north,
+            xr.where(lat <= -constrain_value, day_length / pivotal_day_length_south, 1.0),
+        )
+    k = k.assign_attrs(units="dimensionless")
+
+    return k
+
+
+def jones_day_length_latitude_coefficient(
+    dates: xr.DataArray,
+    lat: xr.DataArray | xr.Dataset | xr.DataTree,
+    method: Literal["gladstones", "jones"],
+    floor: bool = False,
+    start_date: str | DayOfYearStr = "04-01",
+    end_date: str | DayOfYearStr = "11-01",
+    freq: Literal["YS", "YS-JAN", "YS-JUL"] = "YS",
+) -> xr.DataArray:
+    r"""
+    Complex day length latitude coefficient.
+
+    This function computes a day length latitude coefficient as it influences the entire growing season.
+    Based on cite:t:`hall_spatial_2010`.
+
+    Parameters
+    ----------
+    dates : xarray.DataArray
+        The dates for which the day length latitude coefficient is computed.
+    lat : xr.DataArray or xr.Dataset or xr.DataTree
+        Latitude coordinate. Expects units of "degree_north".
+        If a single value is given, it is converted to an xarray.DataArray.
+    method : {"gladstones", "jones"}
+        The method to use for the coefficient calculation.
+        The "jones" method .
+        The "gladstones" method uses an approximation of the Gladstones methodology for day length latitude coefficient.
+    floor : bool, optional
+        If True, latitudes where the day length latitude coefficient would be below '1.0', the value is set to '1.0'.
+        if False, coefficient can be below '1.0' for latitudes where the day length is less than the reference latitude.
+    start_date : str or DayOfYearStr
+        The start date of the growing season.
+    end_date : str or DayOfYearStr
+        The end date of the growing season. Date is not included in the aggregation.
+    freq : {"YS", "YS-JAN", "YS-JUL"}
+        The frequency at which to aggregate the day lengths.
+        Must be an annual frequency, such as "YS" or "YS-JAN" (yearly start in January)
+        or "YS-JUL" (yearly start in July).
+
+    Returns
+    -------
+    xarray.DataArray, [dimensionless]
+        Coefficient for the day length based on latitude, aggregated over the growing season.
+
+    Raises
+    ------
+    ValueError
+        If all latitudes for every computed growing season have a day length latitude coefficient below 1.0.
+
+    Notes
+    -----
+    For the `"jones"` method, A more robust day-length calculation based on latitude, calendar, day-of-year, and
+    obliquity is used. This algorithm requires a calculation of the sum of the day lengths over the growing season
+    at each latitude, :math:`totalSeasonDayLength_{Lat}`, which is then used to calculate the day length latitude
+    coefficient :math:`k`:
+
+    .. math::
+
+        totalSeasonDayLength_{Lat} = \sum_{Jday=\text{103}}^{\text{284}}{dayLength_{Lat_{JDay}}}
+
+    The day length latitude coefficient (:math:`k`) using the "jones" method is calculated as follows:
+
+    .. math::
+
+         k_{Lat} = 2.8311e-4 * totalSeasonDayLength_{Lat} + 0.30834
+
+    The "gladstones" method provided here is a transformation of the "jones" method, based on the relationship
+    detailed in :cite:t:`hall_spatial_2010`:
+
+    .. math::
+
+        k_{Lat}^{Gladstones} = 1.1135 * k_{Lat}^{Jones} - 0.1352
+
+    For both of these methods, the :math:`k` coefficient must be calculated at the growing season frequency (yearly),
+    starting from either January or July, depending on the hemisphere of interest.
+    """
+    if parse_offset(freq) not in [(1, "Y", True, "JAN"), (1, "Y", True, "JUL")]:
+        msg = (
+            f"Freq {freq} not supported. Must be 'YS'/'YS-JAN', or 'YS-JUL' for method 'jones'. "
+            "An annual frequency is required for the current implementation."
+        )
+        raise NotImplementedError(msg)
+
+    if method in ["gladstones", "jones"]:
+        if freq == "YS-JUL":
+            pass
+        day_length = (
+            select_time(
+                day_lengths(dates=dates, lat=lat, method="spencer", infill_polar_days=False),
+                date_bounds=(start_date, end_date),
+                include_bounds=(True, False),
+            )
+            .dropna(dim="time", how="all")
+            .dropna(dim="lat", how="any")
+            .resample(time=freq)
+            .sum()
+        )
+        k_jones: xr.DataArray = (2.8311e-4 * day_length) + 0.30834
+
+        all_below_1 = (k_jones < 1.0).all(dim="lat")
+        k_jones = k_jones.where(~all_below_1, np.nan)
+        if k_jones.isnull().all():
+            msg = (
+                "All latitudes for every growing season have a day length latitude coefficient below 1.0. "
+                "This is likely due to the start and end dates of the growing season being too restrictive "
+                "or an incomplete time series."
+            )
+            raise ValueError(msg)
+
+        if method == "jones":
+            k_aggregated = k_jones
+        else:
+            k_aggregated = 1.1135 * k_jones - 0.1352
+    else:
+        raise NotImplementedError("Method not implemented. Only 'gladstones' or 'jones' are supported.")
+
+    if floor:
+        k_aggregated = k_aggregated.where(k_aggregated >= 1.0, 1.0)
+
+    return k_aggregated
 
 
 def wind_speed_height_conversion(

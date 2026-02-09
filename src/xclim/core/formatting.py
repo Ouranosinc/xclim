@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import datetime as dt
 import itertools
+import logging
 import re
 import string
 import textwrap
@@ -14,10 +15,9 @@ import warnings
 from ast import literal_eval
 from collections.abc import Callable, Sequence
 from fnmatch import fnmatch
-from inspect import _empty, signature  # noqa
+from inspect import _empty, signature
 from typing import Any
 
-import pandas as pd
 import xarray as xr
 from boltons.funcutils import wraps
 
@@ -80,7 +80,7 @@ class AttrFormatter(string.Formatter):
         self.modifiers = modifiers
         self.mapping = mapping
 
-    def format(self, format_string: str, /, *args, **kwargs: dict) -> str:
+    def format(self, format_string: str, /, *args: Any, **kwargs: Any) -> str:
         r"""
         Format a string.
 
@@ -90,7 +90,7 @@ class AttrFormatter(string.Formatter):
             The string to format.
         *args : Any
             Arguments to format.
-        **kwargs : dict
+        **kwargs : Any
             Keyword arguments to format.
 
         Returns
@@ -304,12 +304,14 @@ def _parse_parameters(section):
             name, annot = line.split(":", maxsplit=1)
             curr_key = name.strip()
             params[curr_key] = {"description": ""}
-            match = re.search(r".*(\{.*\}).*", annot)
+            match = re.search(r".*(\{.*}).*", annot)
             if match:
                 try:
                     choices = literal_eval(match.groups()[0])
                     params[curr_key]["choices"] = choices
-                except ValueError:  # noqa: S110
+                except ValueError as err:
+                    msg = f"Choice not found. Ignoring: {err}"
+                    logging.info(msg)
                     # If the literal_eval fails, we just ignore the choices.
                     pass
     return params
@@ -433,11 +435,9 @@ def update_history(
         missing_str="",
         **inputs_kws,
     )
-    if len(merged_history) > 0 and not merged_history.endswith("\n"):
-        merged_history += "\n"
-    merged_history += (
-        f"[{dt.datetime.now():%Y-%m-%d %H:%M:%S}] {new_name or ''}: {hist_str} - xclim version: {__version__}"
-    )
+    merged_history = (
+        f"[{dt.datetime.now():%Y-%m-%d %H:%M:%S}] {new_name or ''}: {hist_str} - xclim version: {__version__}\n"
+    ) + merged_history
     return merged_history
 
 
@@ -491,7 +491,7 @@ def update_xclim_history(func: Callable) -> Callable:
     return _call_and_add_history
 
 
-def gen_call_string(funcname: str, *args, **kwargs) -> str:
+def gen_call_string(funcname: str, *args: Any, **kwargs: Any) -> str:
     r"""
     Generate a signature string for use in the history attribute.
 
@@ -507,7 +507,7 @@ def gen_call_string(funcname: str, *args, **kwargs) -> str:
         Name of the function.
     *args : Any
         Arguments given to the function.
-    **kwargs : dict
+    **kwargs : Any
         Keyword arguments given to the function.
 
     Returns
@@ -601,6 +601,7 @@ KIND_ANNOTATION = {
     InputKind.VARIABLE: "str or DataArray",
     InputKind.OPTIONAL_VARIABLE: "str or DataArray, optional",
     InputKind.QUANTIFIED: "quantity (string or DataArray, with units)",
+    InputKind.MASK: "DataArray or scalar",
     InputKind.FREQ_STR: "offset alias (string)",
     InputKind.NUMBER: "number",
     InputKind.NUMBER_SEQUENCE: "number or sequence of numbers",
@@ -771,28 +772,3 @@ def get_percentile_metadata(data: xr.DataArray, prefix: str) -> dict[str, str]:
         f"{prefix}_window": data.attrs.get("window", "<unknown window>"),
         f"{prefix}_period": clim_bounds,
     }
-
-
-# Adapted from xarray.structure.merge_attrs
-def _merge_attrs_drop_conflicts(*objs):
-    """Merge attributes from different xarray objects, dropping any attributes that conflict."""
-    out = {}
-    dropped = set()
-    for obj in objs:
-        attrs = obj.attrs
-        out.update({key: value for key, value in attrs.items() if key not in out and key not in dropped})
-        out = {key: value for key, value in out.items() if key not in attrs or _equivalent_attrs(attrs[key], value)}
-        dropped |= {key for key in attrs if key not in out}
-    return out
-
-
-# Adapted from xarray.core.utils.equivalent
-def _equivalent_attrs(first, second) -> bool:
-    """Return whether two attributes are identical or not."""
-    if first is second:
-        return True
-    if isinstance(first, list) or isinstance(second, list):
-        if len(first) != len(second):
-            return False
-        return all(_equivalent_attrs(f, s) for f, s in zip(first, second, strict=False))
-    return (first == second) or (pd.isnull(first) and pd.isnull(second))

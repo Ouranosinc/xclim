@@ -31,7 +31,7 @@ mirroring attributes of the :py:class:`Indicator`, please refer to its documenta
     base: <base indicator class>  # Defaults to "Daily" and applies to all indicators that do not give it.
     doc: <module docstring>  # Defaults to a minimal header, only valid if the module doesn't already exist.
     variables:  # Optional section if indicators declared below rely on variables unknown to xclim
-                # (not in `xclim.core.utils.VARIABLES`)
+                # (not in `xclim.core.VARIABLES`)
                 # The variables are not module-dependent and will overwrite any already existing with the same name.
       <varname>:
         canonical_units: <units> # required
@@ -95,24 +95,25 @@ using the YAMALE library (:cite:p:`lopker_yamale_2022`). See the "Extending xcli
 
 Inputs
 ~~~~~~
-As xclim has strict definitions of possible input variables (see :py:data:`xclim.core.utils.variables`),
+As xclim has strict definitions of possible input variables (see :py:data:`xclim.core.VARIABLES`),
 the mapping of `data.input` simply links an argument name from the function given in "compute"
 to one of those official variables.
 """  # numpydoc ignore=GL07
 
 from __future__ import annotations
 
+import logging
 import re
 import warnings
 import weakref
-from collections import OrderedDict, defaultdict
+from collections import OrderedDict, defaultdict, namedtuple
 from collections.abc import Callable, Sequence
 from copy import deepcopy
 from dataclasses import asdict, dataclass
 from functools import reduce
 from inspect import Parameter as _Parameter
 from inspect import Signature, signature
-from inspect import _empty as _empty_default  # noqa
+from inspect import _empty as _empty_default
 from os import PathLike
 from pathlib import Path
 from types import ModuleType
@@ -136,7 +137,6 @@ from xclim.core.calendar import parse_offset, select_time
 from xclim.core.cfchecks import cfcheck_from_name
 from xclim.core.formatting import (
     AttrFormatter,
-    _merge_attrs_drop_conflicts,
     default_formatter,
     gen_call_string,
     generate_indicator_docstring,
@@ -155,7 +155,6 @@ from xclim.core.locales import (
 from xclim.core.options import (
     AS_DATASET,
     CHECK_MISSING,
-    KEEP_ATTRS,
     METADATA_LOCALES,
     MISSING_METHODS,
     MISSING_OPTIONS,
@@ -170,6 +169,7 @@ from xclim.core.utils import (
     load_module,
     split_auxiliary_coordinates,
 )
+from xclim.indices import generic
 
 try:
     from xarray import DataTree
@@ -288,7 +288,7 @@ class IndicatorRegistrar:
         # If the module is not one of xclim's default, prepend the submodule name.
         if module.startswith("xclim.indicators"):
             submodule = module.split(".")[2]
-            if submodule not in ["atmos", "generic", "land", "ocean", "seaIce"]:
+            if submodule not in ["atmos", "convert", "generic", "land", "ocean", "seaIce"]:
                 name = f"{submodule}.{name}"
         else:
             name = f"{module}.{name}"
@@ -309,7 +309,7 @@ class IndicatorRegistrar:
         Returns
         -------
         Indicator
-            First instance found of this class in the indicators registry.
+            First instance found of this class in the 'indicators' registry.
 
         Raises
         ------
@@ -357,7 +357,7 @@ class Indicator(IndicatorRegistrar):
     ----------
     identifier : str
         Unique ID for class registry. Should be a valid slug.
-    realm : {'atmos', 'seaIce', 'land', 'ocean'}
+    realm : {'atmos', 'convert', 'seaIce', 'land', 'ocean'}
         General domain of validity of the indicator.
         Indicators created outside ``xclim.indicators`` must set this attribute.
     compute : func
@@ -462,7 +462,7 @@ class Indicator(IndicatorRegistrar):
       Miscellaneous information about the data or methods used to produce it.
     """
 
-    def __new__(cls, **kwds):  # noqa: C901
+    def __new__(cls, **kwds):
         """Create subclass from arguments."""
         identifier = kwds.get("identifier", cls.identifier)
         if identifier is None:
@@ -523,11 +523,11 @@ class Indicator(IndicatorRegistrar):
         else:
             xclim_realm = None
 
-        # Priority given to passed realm -> parent's realm -> location of the class declaration (official inds only)
+        # Priority given to passed realm -> parent's realm -> location of class declaration (official indicators only)
         kwds.setdefault("realm", cls.realm or xclim_realm)
-        if kwds["realm"] not in ["atmos", "seaIce", "land", "ocean", "generic"]:
+        if kwds["realm"] not in ["atmos", "seaIce", "land", "ocean", "generic", "convert"]:
             raise AttributeError(
-                "Indicator's realm must be given as one of 'atmos', 'seaIce', 'land', 'ocean' or 'generic'"
+                "Indicator's realm must be given as one of 'atmos', 'seaIce', 'land', 'ocean', 'generic' or 'convert'."
             )
 
         # Create new class object
@@ -640,25 +640,25 @@ class Indicator(IndicatorRegistrar):
         for old_name, new_name in variable_mapping.items():
             meta = parameters[new_name] = parameters.pop(old_name)
             try:
-                varmeta = VARIABLES[new_name]
+                var_meta = VARIABLES[new_name]
             except KeyError as err:
                 raise ValueError(
                     f"Compute argument {old_name} was mapped to variable "
                     f"{new_name} which is not understood by xclim or CMIP6. Please"
-                    " use names listed in `xclim.core.utils.VARIABLES`."
+                    " use names listed in `xclim.core.VARIABLES`."
                 ) from err
             if meta.units is not _empty:
                 try:
-                    check_units(varmeta["canonical_units"], meta.units)
+                    check_units(var_meta["canonical_units"], meta.units)
                 except ValidationError as err:
                     raise ValueError(
                         "When changing the name of a variable by passing `input`, "
                         "the units dimensionality must stay the same. Got: old = "
-                        f"{meta.units}, new = {varmeta['canonical_units']}"
+                        f"{meta.units}, new = {var_meta['canonical_units']}"
                     ) from err
-            meta.units = varmeta.get("dimensions", varmeta["canonical_units"])
+            meta.units = var_meta.get("dimensions", var_meta["canonical_units"])
             new_units[meta.compute_name] = meta.units
-            meta.description = varmeta["description"]
+            meta.description = var_meta["description"]
         return new_units
 
     @classmethod
@@ -688,9 +688,7 @@ class Indicator(IndicatorRegistrar):
         return dict(sorted(parameters.items(), key=sortkey))
 
     @classmethod
-    def _parse_output_attrs(  # noqa: C901
-        cls, kwds: dict[str, Any], identifier: str
-    ) -> list[dict[str, str | Callable]]:
+    def _parse_output_attrs(cls, kwds: dict[str, Any], identifier: str) -> list[dict[str, str | Callable]]:
         """CF-compliant metadata attributes for all output variables."""
         parent_cf_attrs = cls.cf_attrs
         cf_attrs = kwds.get("cf_attrs")
@@ -791,7 +789,7 @@ class Indicator(IndicatorRegistrar):
         # data.compute refers to a function in xclim.indices.generic or xclim.indices (in this order of priority).
         # It can also directly be a function (like if a module was passed to build_indicator_module_from_yaml)
         if isinstance(compute, str):
-            compute_func = getattr(indices.generic, compute, getattr(indices, compute, None))
+            compute_func = getattr(generic, compute, getattr(indices, compute, None))
             if compute_func is None:
                 raise ImportError(f"Indice function {compute} not found in xclim.indices or xclim.indices.generic.")
             data["compute"] = compute_func
@@ -871,7 +869,7 @@ class Indicator(IndicatorRegistrar):
         #     params : OrderedDict of parameters (var_kwargs as a single argument, if any)
 
         if self._version_deprecated:
-            self._show_deprecation_warning()  # noqa
+            self._show_deprecation_warning()
 
         if "ds" in self._all_parameters and DataTree and isinstance(kwds.get("ds"), DataTree):
             dt = kwds.pop("ds")
@@ -880,20 +878,11 @@ class Indicator(IndicatorRegistrar):
 
         das, params, dsattrs = self._parse_variables_from_call(args, kwds)
 
-        if OPTIONS[KEEP_ATTRS] is True or (
-            OPTIONS[KEEP_ATTRS] == "xarray" and xarray.get_options()["keep_attrs"] is True
-        ):
-            out_attrs = _merge_attrs_drop_conflicts(*das.values())
-            out_attrs.pop("units", None)
-        else:
-            out_attrs = {}
-        out_attrs = [out_attrs.copy() for _ in range(self.n_outs)]
-
         das, params = self._preprocess_and_checks(das, params)
 
         # get mappings where keys are the actual compute function's argument names
         args = self._get_compute_args(das, params)
-        with xarray.set_options(keep_attrs=False):
+        with np.errstate(divide="ignore", invalid="ignore"):
             outs = self.compute(**args)
 
         if isinstance(outs, DataArray):
@@ -906,6 +895,7 @@ class Indicator(IndicatorRegistrar):
 
         # Metadata attributes from templates
         var_id = None
+        out_attrs = [dict() for _ in range(self.n_outs)]
         for out, attrs, base_attrs in zip(outs, out_attrs, self.cf_attrs, strict=False):
             if self.n_outs > 1:
                 var_id = base_attrs["var_name"]
@@ -936,9 +926,7 @@ class Indicator(IndicatorRegistrar):
 
         if OPTIONS[AS_DATASET]:
             out = Dataset({o.name: o for o in outs})
-            if OPTIONS[KEEP_ATTRS] is True or (
-                OPTIONS[KEEP_ATTRS] == "xarray" and xarray.get_options()["keep_attrs"] is True
-            ):
+            if xarray.get_options()["keep_attrs"] is not False:
                 out.attrs.update(dsattrs)
             out.attrs["history"] = update_history(
                 self._history_string(das, params),
@@ -947,10 +935,13 @@ class Indicator(IndicatorRegistrar):
             )
             return out
 
-        # Return a single DataArray in case of single output, otherwise a tuple
+        # Return a single DataArray in case of single output
         if self.n_outs == 1:
             return outs[0]
-        return tuple(outs)
+
+        # Return a NamedTuple for multiple outputs
+        NamedOuts = namedtuple(self.identifier, [o.name for o in outs])
+        return NamedOuts(*outs)
 
     def _parse_variables_from_call(self, args, kwds) -> tuple[OrderedDict, OrderedDict, OrderedDict | dict]:
         """Extract variable and optional variables from call arguments."""
@@ -1145,11 +1136,12 @@ class Indicator(IndicatorRegistrar):
             if "cell_methods" in out:
                 attrs["cell_methods"] += " " + out.pop("cell_methods")
 
-        attrs["history"] = update_history(
-            self._history_string(das, args),
-            new_name=out.get("var_name"),
-            **das,
-        )
+        if not OPTIONS[AS_DATASET]:
+            attrs["history"] = update_history(
+                self._history_string(das, args),
+                new_name=out.get("var_name"),
+                **das,
+            )
 
         attrs.update(out)
         return attrs
@@ -1349,11 +1341,12 @@ class Indicator(IndicatorRegistrar):
         """  # numpydoc ignore=PR01
         raise NotImplementedError()
 
-    def cfcheck(self, **das) -> None:
+    @staticmethod
+    def cfcheck(**das) -> None:
         r"""
         Compare metadata attributes to CF-Convention standards.
 
-        Default cfchecks use the specifications in `xclim.core.utils.VARIABLES`,
+        Default cfchecks use the specifications in `xclim.core.VARIABLES`,
         assuming the indicator's inputs are using the CMIP6/xclim variable names correctly.
         Variables absent from these default specs are silently ignored.
 
@@ -1367,7 +1360,8 @@ class Indicator(IndicatorRegistrar):
         for varname, vardata in das.items():
             try:
                 cfcheck_from_name(varname, vardata)
-            except KeyError:  # noqa: S110
+            except KeyError:
+                logging.info("Variable unknown. Ignoring.")
                 # Silently ignore unknown variables.
                 pass
 
@@ -1748,7 +1742,7 @@ def build_indicator_module(
             for n, ind in list(out.iter_indicators()):
                 if n not in objs:
                     # Remove the indicator from the registries and the module
-                    del registry[ind._registry_id]  # noqa
+                    del registry[ind._registry_id]
                     del _indicators_registry[ind.__class__]
                     del out.__dict__[n]
     else:
@@ -1836,12 +1830,12 @@ def build_indicator_module_from_yaml(  # noqa: C901
 
     if not filepath.suffix:
         # A stem was passed, try to load files
-        ymlpath = filepath.with_suffix(".yml")
+        yml_path = filepath.with_suffix(".yml")
     else:
-        ymlpath = filepath
+        yml_path = filepath
 
     # Read YAML file
-    with ymlpath.open(encoding=encoding) as f:
+    with yml_path.open(encoding=encoding) as f:
         yml = safe_load(f)
 
     if validate is not False:
@@ -1852,7 +1846,7 @@ def build_indicator_module_from_yaml(  # noqa: C901
             schema = yamale.make_schema(Path(__file__).parent.parent / "data" / "schema.yml")
 
         # Validate - a YamaleError will be raised if the module does not comply with the schema.
-        yamale.validate(schema, yamale.make_data(content=ymlpath.read_text(encoding=encoding)))
+        yamale.validate(schema, yamale.make_data(content=yml_path.read_text(encoding=encoding)))
 
     # Load values from top-level in yml.
     # Priority of arguments differ.
@@ -1860,9 +1854,9 @@ def build_indicator_module_from_yaml(  # noqa: C901
     default_base = registry.get(yml.get("base"), base_registry.get(yml.get("base"), Daily))
     doc = yml.get("doc")
 
-    if not filepath.suffix and indices is None and (indfile := filepath.with_suffix(".py")).is_file():
+    if not filepath.suffix and indices is None and (ind_file := filepath.with_suffix(".py")).is_file():
         # No suffix means we try to automatically detect the python file
-        indices = indfile
+        indices = ind_file
 
     if isinstance(indices, str | Path):
         indices = load_module(indices, name=module_name)
@@ -1870,9 +1864,9 @@ def build_indicator_module_from_yaml(  # noqa: C901
     _translations: dict[str, dict] = {}
     if not filepath.suffix and translations is None:
         # No suffix mean we try to automatically detect the json files.
-        for locfile in filepath.parent.glob(f"{filepath.stem}.*.json"):
-            locale = locfile.suffixes[0][1:]
-            _translations[locale] = read_locale_file(locfile, module=module_name, encoding=encoding)
+        for loc_file in filepath.parent.glob(f"{filepath.stem}.*.json"):
+            locale = loc_file.suffixes[0][1:]
+            _translations[locale] = read_locale_file(loc_file, module=module_name, encoding=encoding)
     elif translations is not None:
         # A mapping was passed, we read paths is any.
         _translations = {
@@ -1910,7 +1904,7 @@ def build_indicator_module_from_yaml(  # noqa: C901
         if varname in VARIABLES and VARIABLES[varname] != vardata:
             warnings.warn(
                 f"Variable {varname} from module {module_name} "
-                "will overwrite the one already defined in `xclim.core.utils.VARIABLES`"
+                "will overwrite the one already defined in `xclim.core.VARIABLES`"
             )
         VARIABLES[varname] = vardata.copy()
 
@@ -1934,8 +1928,10 @@ def build_indicator_module_from_yaml(  # noqa: C901
                 if indice_func is None and hasattr(indices, "__getitem__"):
                     try:
                         indice_func = indices[indice_name]
-                    except KeyError:  # noqa: S110
+                    except KeyError as err:
                         # The indice is not found in the mapping.
+                        msg = f"Indice not found in the mapping. Ignoring: {err}"
+                        logging.info(msg)
                         pass
 
                 if indice_func is not None:

@@ -8,7 +8,7 @@ import xarray as xr
 from packaging.version import Version
 from pint import __version__ as __pint_version__
 
-from xclim import atmos
+from xclim import atmos, convert
 from xclim.core.calendar import percentile_doy
 from xclim.core.options import set_options
 from xclim.core.units import convert_units_to
@@ -168,8 +168,8 @@ class TestTmean:
     def test_Tmean_3d_data(self, open_dataset):
         ds_tmax = open_dataset(self.nc_files[0])
         ds_tmin = open_dataset(self.nc_files[1])
-        tas = atmos.tg(ds_tmin.tasmin, ds_tmax.tasmax)
-        tas_C = atmos.tg(ds_tmin.tasmin, ds_tmax.tasmax)
+        tas = convert.mean_temperature_from_max_and_min(ds_tmin.tasmin, ds_tmax.tasmax)
+        tas_C = convert.mean_temperature_from_max_and_min(ds_tmin.tasmin, ds_tmax.tasmax)
         tas_C.values -= K2C
         tas_C.attrs["units"] = "C"
         # put a nan somewhere
@@ -1586,3 +1586,41 @@ class TestColdSpellTotalLength:
 
         out = atmos.cold_spell_total_length(tg, freq="YS")
         np.testing.assert_array_equal(out, 8)
+
+
+class TestHotDays:
+    nc_file = "NRCANdaily/nrcan_canada_daily_tasmax_1990.nc"
+
+    def test_3d_data_with_nans(self, open_dataset):
+        # test with 3d data
+        tas = open_dataset(self.nc_file).tasmax
+        tasC = open_dataset(self.nc_file).tasmax
+        tasC -= K2C
+        tasC.attrs["units"] = "C"
+        # put a nan somewhere
+        tas.values[180, 1, 0] = np.nan
+        tasC.values[180, 1, 0] = np.nan
+        # compute with both skipna options
+        thresh = 273.16 + 25
+        fd = atmos.hot_days(tas, freq="YS")
+        fdC = atmos.hot_days(tasC, freq="YS")
+
+        x1 = tas.values[:, 0, 0]
+
+        fd1 = (x1[x1 > thresh]).size
+
+        np.testing.assert_array_equal(fd, fdC)
+
+        assert np.allclose(fd1, fd.values[0, 0, 0])
+
+        assert np.isnan(fd.values[0, 1, 0])
+
+        assert np.isnan(fd.values[0, -1, -1])
+
+    def test_indexing(self, open_dataset):
+        tasmax = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc").tasmax
+        fd1 = atmos.hot_days(tasmax, freq="YS")
+        fd2 = atmos.hot_days(tasmax, freq="YS", date_bounds=["06-01", "09-30"])
+
+        np.testing.assert_array_equal(fd1.isel(location=1), [58, 75, 42, 54])
+        np.testing.assert_array_equal(fd2.isel(location=1), [53, 63, 34, 52])

@@ -176,38 +176,43 @@ def test_attrs(tas_series):
 
 
 @pytest.mark.parametrize(
-    "xcopt,xropt,exp",
+    "xropt,exp",
     [
-        ("xarray", "default", False),
-        (True, False, True),
-        (False, True, False),
-        ("xarray", True, True),
+        ("default", True),
+        (False, False),
+        (True, True),
     ],
 )
-def test_keep_attrs(tasmin_series, tasmax_series, xcopt, xropt, exp):
+def test_keep_attrs(tasmin_series, tasmax_series, xropt, exp):
+    pytest.importorskip("xarray", minversion="2025.11")
     tx = tasmax_series(np.arange(360.0))
     tn = tasmin_series(np.arange(360.0))
     tx.attrs.update(something="blabla", bing="bang", foo="bar")
     tn.attrs.update(something="blabla", bing="bong")
-    with xclim.set_options(keep_attrs=xcopt):
-        with xr.set_options(keep_attrs=xropt):
-            tg = multiOptVar(tasmin=tn, tasmax=tx)
+    with xr.set_options(keep_attrs=xropt):
+        tg = multiOptVar(tasmin=tn, tasmax=tx)
+
     assert (tg.attrs.get("something") == "blabla") is exp
     assert (tg.attrs.get("foo") == "bar") is exp
     assert "bing" not in tg.attrs
 
 
-def test_as_dataset(tasmax_series, tasmin_series):
+@pytest.mark.parametrize("xrkeep", [True, False])
+def test_as_dataset(tasmax_series, tasmin_series, xrkeep):
     tx = tasmax_series(np.arange(360.0))
     tn = tasmin_series(np.arange(360.0))
     tx.attrs.update(something="blabla", bing="bang", foo="bar")
     tn.attrs.update(something="blabla", bing="bong")
     dsin = xr.Dataset({"tasmax": tx, "tasmin": tn}, attrs={"fou": "barre"})
-    with xclim.set_options(keep_attrs=True, as_dataset=True):
+    with xr.set_options(keep_attrs=xrkeep), xclim.set_options(as_dataset=True):
         dsout = multiOptVar(ds=dsin)
     assert isinstance(dsout, xr.Dataset)
-    assert dsout.attrs["fou"] == "barre"
-    assert dsout.multiopt.attrs.get("something") == "blabla"
+    if xrkeep:
+        assert dsout.attrs["fou"] == "barre"
+        assert dsout.multiopt.attrs.get("something") == "blabla"
+    else:
+        assert "fou" not in dsout.attrs
+        # not testing for "something" because xclim doesn't define the behaviour of dataarray attributes when xarray's option is not True.
 
 
 def test_as_dataset_multi(tas_series):
@@ -516,12 +521,9 @@ def test_all_parameters_understood(official_indicators):
         for name, param in indinst.parameters.items():
             if param.kind == InputKind.OTHER_PARAMETER:
                 problems.add((identifier, name))
-    # We can deal with 'lat' for the moment.
-    if problems - {
-        ("COOL_NIGHT_INDEX", "lat"),
-        ("DRYNESS_INDEX", "lat"),
-    }:
-        raise ValueError(f"The following indicator/parameter couple {problems} use types not listed in InputKind.")
+    # lat is present in many indicators, but is exceptionally allowed.
+    if problems - {("INDICE", "test_param")}:
+        raise ValueError(f"The following indicator/parameter couple(s) {problems} use types not listed in InputKind.")
 
 
 def test_signature():
@@ -540,8 +542,9 @@ def test_signature():
     assert sig.parameters["thresh"].kind == sig.parameters["thresh"].KEYWORD_ONLY
     assert sig.return_annotation == xr.DataArray
 
-    sig = signature(xclim.atmos.wind_speed_from_vector)
-    assert sig.return_annotation == tuple[xr.DataArray, xr.DataArray]
+    for indicator in ["wind_speed_from_vector", "wind_vector_from_speed"]:
+        sig = signature(getattr(xclim.convert, indicator))
+        assert sig.return_annotation == tuple[xr.DataArray, xr.DataArray]
 
 
 def test_doc():
@@ -588,11 +591,11 @@ def test_parse_doc():
     assert "references" not in doc
     assert doc["long_name"] == "The mean daily temperature at the given time frequency."
 
-    doc = parse_doc(xclim.indices.saturation_vapor_pressure.__doc__)
-    assert (
-        doc["parameters"]["ice_thresh"]["description"]
-        == "Threshold temperature under which to switch to equations in reference to ice instead of water. "
-        "If None (default) everything is computed with reference to water."
+    doc = parse_doc(xclim.indices.converters.saturation_vapor_pressure.__doc__)
+    assert doc["parameters"]["ice_thresh"]["description"] == (
+        "Threshold temperature under which to switch to equations in reference to ice instead of water. "
+        "If None (default) everything is computed with reference to water. "
+        "If given, see `interp_power` for more options."
     )
     assert "goff_low-pressure_1946" in doc["references"]
 
@@ -662,8 +665,8 @@ def test_update_history():
 
     merged = update_history("text", a, new_name="d", b=b, c=c)
 
-    assert "d: text" in merged.split("\n")[-1]
-    assert merged.startswith("a: Text1")
+    assert "d: text" in merged.split("\n")[0]
+    assert "a: Text1" in merged
 
 
 def test_input_dataset(open_dataset):

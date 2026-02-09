@@ -9,11 +9,11 @@ from xclim.core import units  # noqa
 from xclim.core.indicator import build_indicator_module_from_yaml
 from xclim.core.locales import load_locale
 from xclim.core.options import set_options  # noqa
-from xclim.indicators import atmos, generic, land, seaIce  # noqa
+from xclim.indicators import atmos, convert, generic, land, seaIce  # noqa
 
 __author__ = """Travis Logan"""
 __email__ = "logan.travis@ouranos.ca"
-__version__ = "0.57.1-dev.3"
+__version__ = "0.60.1-dev.2"
 
 
 with _resources.as_file(_resources.files("xclim.data")) as _module_data:

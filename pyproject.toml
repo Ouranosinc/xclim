@@ -1,5 +1,5 @@
 [build-system]
-requires = ["flit_core >=3.10.1,<4"]
+requires = ["flit_core >=3.11.0,<4"]
 build-backend = "flit_core.buildapi"
 
 [project]
@@ -14,12 +14,12 @@ maintainers = [
 readme = {file = "README.rst", content-type = "text/x-rst"}
 requires-python = ">=3.10.0"
 keywords = ["xclim", "xarray", "climate", "climatology", "bias correction", "ensemble", "indicators", "analysis"]
-license = {file = "LICENSE"}
+license = "Apache-2.0"
+license-files = ["LICENSE"]
 classifiers = [
   "Development Status :: 4 - Beta",
   "Intended Audience :: Developers",
   "Intended Audience :: Science/Research",
-  "License :: OSI Approved :: Apache Software License",
   "Natural Language :: English",
   "Operating System :: OS Independent",
   "Programming Language :: Python :: 3",
@@ -27,6 +27,7 @@ classifiers = [
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
   "Programming Language :: Python :: 3 :: Only",
   "Topic :: Scientific/Engineering :: Atmospheric Science",
   "Topic :: Scientific/Engineering :: Hydrology",
@@ -42,7 +43,7 @@ dependencies = [
   "dask[array] >=2024.8.1",
   "filelock >=3.14.0",
   "numba >=0.57.0",
-  "numpy >=1.24.0",
+  "numpy >=1.25.0",
   "packaging >=24.0",
   "pandas >=2.2.0",
   "pint >=0.24.4",
@@ -57,36 +58,35 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
   # Dev tools and testing
-  "blackdoc ==0.3.9",
-  "bump-my-version >=1.1.1",
+  "bump-my-version >=1.2.3",
   "codespell >=2.4.1",
   "coverage[toml] >=7.5.0",
   "deptry >=0.23.0",
-  "flake8 >=7.2.0",
-  "flake8-rst-docstrings ==0.3.1",
-  "h5netcdf>=1.3.0",
+  "flake8 >=7.3.0",
+  "flake8-rst-docstrings >=0.4.0",
+  "h5netcdf >=1.5.0",
+  "h5py >=3.12.1",
   "ipython >=8.10.0",
   "mypy >=1.14.1",
   "nbconvert >=7.16.4",
-  "nbqa >=1.8.2",
   "nbval >=0.11.0",
-  "numpydoc >=1.8.0",
+  "numpydoc >=1.9.0",
   "pandas-stubs >=2.2",
   "pip >=25.0",
   "pooch >=1.8.0",
   "pre-commit >=3.7",
   "pylint >=3.3.1",
-  "pytest >=8.0.0",
+  "pytest >=9.0.0",
   "pytest-cov >=5.0.0",
   "pytest-socket >=0.6.0",
   "pytest-timeout >=2.4.0",
   "pytest-xdist[psutil] >=3.2",
-  "ruff >=0.9.6",
+  "ruff >=0.13.3",
   "tokenize-rt >=5.2.0",
-  "tox >=4.25.0",
+  "tox >=4.31.0",
   "tox-gh >=1.5.0",
   "vulture >=2.14",
-  "xdoctest >=1.1.5",
+  "xdoctest >=1.3.0",
   "yamllint >=1.35.1"
 ]
 docs = [
@@ -109,7 +109,7 @@ docs = [
   "sphinxcontrib-bibtex",
   "sphinxcontrib-svg2pdfconverter[Cairosvg]"
 ]
-extras = ["flox >=0.9", "xsdba >=0.4.0"]
+extras = ["flox >=0.9", "lmoments3 >=1.0.7", "numbagg >=0.8", "xsdba >=0.4.0", "pymannkendall >=1.4.0"]
 all = ["xclim[dev]", "xclim[docs]", "xclim[extras]"]
 
 [project.scripts]
@@ -118,7 +118,7 @@ xclim = "xclim.cli:cli"
 [project.urls]
 "Homepage" = "https://xclim.readthedocs.io/"
 "Source" = "https://github.com/Ouranosinc/xclim/"
-"Changelog" = "https://xclim.readthedocs.io/en/stable/history.html"
+"Changelog" = "https://xclim.readthedocs.io/en/stable/changelog.html"
 "Issue tracker" = "https://github.com/Ouranosinc/xclim/issues"
 "Mastodon" = "https://fosstodon.org/@xclim"
 "Zenodo" = "https://doi.org/10.5281/zenodo.2795043"
@@ -127,7 +127,7 @@ xclim = "xclim.cli:cli"
 [tool]
 
 [tool.bumpversion]
-current_version = "0.57.1-dev.3"
+current_version = "0.60.1-dev.2"
 commit = true
 commit_args = "--no-verify --signoff"
 tag = false
@@ -154,7 +154,7 @@ values = [
 ]
 
 [tool.codespell]
-skip = '*xclim/data/*.json,*docs/_build,*docs/notebooks/xclim_training/*.ipynb,*docs/references.bib,*.gz,*.nc,*.png,*.svg,*.whl'
+skip = '*xclim/data/*.json,*docs/_build,*docs/notebooks/xclim_training/*.ipynb,*docs/*.bib,*.gz,*.nc,*.png,*.svg,*.whl'
 ignore-words-list = "absolue,astroid,bloc,bui,callendar,degreee,environnement,hanel,indx,inferrable,lond,nam,nd,ot,ressources,socio-economic,sie,vas"
 
 [tool.coverage.run]
@@ -171,7 +171,8 @@ pep621_dev_dependency_groups = ["all", "dev", "docs"]
 "pyyaml" = "yaml"
 
 [tool.deptry.per_rule_ignores]
-DEP002 = ["bottleneck", "h5netcdf", "pyarrow"]
+DEP001 = ["pymannkendall"]
+DEP002 = ["bottleneck", "h5netcdf", "lmoments3", "numbagg", "pyarrow"]
 DEP004 = ["matplotlib", "pooch", "pytest", "pytest_socket"]
 
 [tool.flit.sdist]
@@ -264,36 +265,59 @@ override_SS05 = [
   '^Statistics '
 ]
 
-[tool.pytest.ini_options]
-minversion = "7.0"
+[tool.pytest]
+minversion = "9.0"
 addopts = [
   "-ra",
   "--color=yes",
   "--numprocesses=0",
   "--maxprocesses=8",
   "--dist=worksteal",
-  "--strict-config",
-  "--strict-markers"
-]
-log_cli_level = "INFO"
-norecursedirs = ["docs/notebooks/*"]
-filterwarnings = ["ignore::UserWarning"]
-testpaths = [
-  "tests"
-]
-pythonpath = [
-  "src"
+  "--strict"
 ]
 doctest_optionflags = ["NORMALIZE_WHITESPACE", "IGNORE_EXCEPTION_DETAIL", "NUMBER", "ELLIPSIS"]
+filterwarnings = ["ignore::UserWarning"]
+log_cli_level = "INFO"
 markers = [
   "slow: marks tests as slow (deselect with '-m \"not slow\"')",
   "requires_docs: mark tests that can only be run with documentation present (deselect with '-m \"not requires_docs\"')",
   "requires_internet: mark tests that require internet access (deselect with '-m \"not requires_internet\"')"
 ]
-session_timeout = 900
-timeout = 300
+norecursedirs = ["docs/notebooks/*"]
+pythonpath = [
+  "src"
+]
+session_timeout = "900" # must be string representing seconds (this may soon change)
+testpaths = [
+  "tests"
+]
+timeout = "300" # must be string representing seconds (this may soon change)
 timeout_method = "thread"
 xfail_strict = true
+
+[tool.rstcheck]
+report_level = "WARNING"
+ignore_directives = [
+  "autoclass",
+  "autofunction",
+  "autolink-skip",
+  "automodule",
+  "bibliography",
+  "mdinclude"
+]
+ignore_roles = [
+  "cite:cts",
+  "cite:p",
+  "cite:t",
+  "issue",
+  "pull",
+  "user"
+]
+ignore_substitutions = []
+ignore_languages = [
+  "cpp",
+  "python"
+]
 
 [tool.ruff]
 src = ["xclim"]
@@ -378,6 +402,7 @@ max-complexity = 20
 "src/xclim/core/locales.py" = ["E501", "W505"]
 "src/xclim/core/missing" = ["D103"]
 "src/xclim/indices/_agro.py" = ["E501"]
+"src/xclim/indices/_conversion.py" = ["F405"]
 "src/xclim/indices/fire/_cffwis.py" = ["D103"]
 "tests/**/*test*.py" = ["D100", "D101", "D102", "D103", "E501", "N802", "S101"]
 
@@ -390,7 +415,8 @@ convention = "numpy"
 [tool.vulture]
 exclude = []
 ignore_decorators = ["@pytest.fixture"]
-ignore_names = []
+# no_numbagg is a simple fixture that activates a xr option, it has no value
+ignore_names = ['no_numbagg']
 min_confidence = 90
 paths = ["src/xclim", "tests"]
 sort_by_size = true
