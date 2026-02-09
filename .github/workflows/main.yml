@@ -33,13 +33,14 @@ permissions:
 jobs:
   lint:
     name: Lint
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     if: |
       (github.event.action != 'labeled') ||
       (github.event.review.state == 'approved') ||
       (github.event_name == 'push')
     strategy:
       matrix:
+        os: [ "ubuntu-latest" ]
         python-version: [ "3.14" ]
     steps:
       - name: Harden Runner
@@ -61,10 +62,15 @@ jobs:
             static.crates.io:443
             sum.golang.org:443
       - name: Start Measurement
-        uses: green-coding-solutions/eco-ci-energy-estimation@0fd2200a8f02d7939066c535e3642c2ebee9db16 # v5.1
+        uses: green-coding-solutions/eco-ci-energy-estimation@0fd2200a8f02d7939066c535e3642c2ebee9db16 # v5.2
         with:
           task: start-measurement
           branch: ${{ github.head_ref || github.ref_name }}
+          project: "xclim"
+          machine: ${{ matrix.os }}
+          tags: "CI/CD, Main, ${{ matrix.python-version }}"
+          co2-grid-intensity-api-token: ${{ secrets.ELECTRICITYMAPS_API_TOKEN }}
+          gmt-api-token: ${{ secrets.GMT_API_TOKEN }}
         continue-on-error: true
       - name: Checkout Repository
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
@@ -79,7 +85,7 @@ jobs:
         run: |
           python -m pip install --require-hashes -r CI/requirements_ci.txt
       - name: Setup Python Measurement
-        uses: green-coding-solutions/eco-ci-energy-estimation@0fd2200a8f02d7939066c535e3642c2ebee9db16 # v5.1
+        uses: green-coding-solutions/eco-ci-energy-estimation@0fd2200a8f02d7939066c535e3642c2ebee9db16 # v5.2
         with:
           task: get-measurement
           label: 'Environment setup (Python${{ matrix.python-version }}, lint)'
@@ -98,13 +104,13 @@ jobs:
         run: |
           python -m tox -e lint
       - name: Tests measurement
-        uses: green-coding-solutions/eco-ci-energy-estimation@0fd2200a8f02d7939066c535e3642c2ebee9db16 # v5.1
+        uses: green-coding-solutions/eco-ci-energy-estimation@0fd2200a8f02d7939066c535e3642c2ebee9db16 # v5.2
         with:
           task: get-measurement
           label: 'Lint (Python${{ matrix.python-version }})'
         continue-on-error: true
       - name: Show Energy Results
-        uses: green-coding-solutions/eco-ci-energy-estimation@0fd2200a8f02d7939066c535e3642c2ebee9db16 # v5.1
+        uses: green-coding-solutions/eco-ci-energy-estimation@0fd2200a8f02d7939066c535e3642c2ebee9db16 # v5.2
         with:
           task: display-results
         continue-on-error: true
@@ -112,10 +118,10 @@ jobs:
   test-preliminary:
     name: Python${{ matrix.python-version }} (${{ matrix.os }})
     needs: lint
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ 'ubuntu-latest' ]
+        os: [ "ubuntu-latest" ]
         python-version: [ "3.11" ]
         testdata-cache: [ '~/.cache/xclim-testdata' ]
         markers: [ "-m not slow" ]
@@ -146,6 +152,11 @@ jobs:
         with:
           task: start-measurement
           branch: ${{ github.head_ref || github.ref_name }}
+          project: "xclim"
+          machine: ${{ matrix.os }}
+          tags: "CI/CD, Main, ${{ matrix.python-version }}"
+          co2-grid-intensity-api-token: ${{ secrets.ELECTRICITYMAPS_API_TOKEN }}
+          gmt-api-token: ${{ secrets.GMT_API_TOKEN }}
         continue-on-error: true
       - name: Checkout Repository
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
@@ -269,6 +280,11 @@ jobs:
         with:
           task: start-measurement
           branch: ${{ github.head_ref || github.ref_name }}
+          project: "xclim"
+          machine: $${{ matrix.os }}
+          tags: "CI/CD, Main, ${{ matrix.python-version }}"
+          co2-grid-intensity-api-token: ${{ secrets.ELECTRICITYMAPS_API_TOKEN }}
+          gmt-api-token: ${{ secrets.GMT_API_TOKEN }}
         continue-on-error: true
       - name: Checkout Repository
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
@@ -357,7 +373,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        os: [ 'ubuntu-latest' ]
+        os: [ "ubuntu-latest" ]
         python-version: [ "3.11", "3.14" ]
         testdata-cache: [ '~/.cache/xclim-testdata' ]
     defaults:
@@ -387,6 +403,11 @@ jobs:
         with:
           task: start-measurement
           branch: ${{ github.head_ref || github.ref_name }}
+          project: "xclim"
+          machine: ${{ matrix.os }}
+          tags: "CI/CD, Main, ${{ matrix.python-version }}"
+          co2-grid-intensity-api-token: ${{ secrets.ELECTRICITYMAPS_API_TOKEN }}
+          gmt-api-token: ${{ secrets.GMT_API_TOKEN }}
         continue-on-error: true
       - name: Checkout Repository
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
@@ -473,6 +494,11 @@ jobs:
         with:
           task: start-measurement
           branch: ${{ github.head_ref || github.ref_name }}
+          project: "xclim"
+          machine: ${{ matrix.os }}
+          tags: "CI/CD, Main"
+          co2-grid-intensity-api-token: ${{ secrets.ELECTRICITYMAPS_API_TOKEN }}
+          gmt-api-token: ${{ secrets.GMT_API_TOKEN }}
         continue-on-error: true
       - name: Coveralls Finished
         uses: coverallsapp/github-action@5cbfd81b66ca5d10c19b062c04de0199c215fb6e # v2.3.7
