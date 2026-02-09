@@ -41,8 +41,8 @@ jobs:
           branch: ${{ github.head_ref || github.ref_name }}
           project: "xclim"
           machine: "ubuntu-latest"
-          # tags: "CI/CD,Main"
-          gmt-api-token: ${{ secrets.GMT_API_TOKEN }}
+          tags: "CI/CD, Main"
+          gmt-api-token: WRONGVALUES1234567890
 
       - name: Checkout Repository
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
