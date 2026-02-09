@@ -41,7 +41,7 @@ jobs:
           project: 'xclim'
           tags: "CI/CD, Main"
           gmt-api-token: ${{ secrets.GMT_API_TOKEN }}
-          electricitymaps-api-token: ${{ secrets.ELECTRICITYMAPS_API_TOKEN }}
+          # electricitymaps-api-token: ${{ secrets.ELECTRICITYMAPS_API_TOKEN }}
 
       - name: Checkout Repository
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
