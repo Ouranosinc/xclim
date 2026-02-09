@@ -21,8 +21,8 @@ permissions:
 
 jobs:
   upstream-dev:
-    name: test-upstream-dev (Python${{ matrix.python-version }})
-    runs-on: ubuntu-latest
+    name: test-upstream-dev (Python${{ matrix.python-version }}, ${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
     permissions:
       issues: write
     if: |
@@ -32,6 +32,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        os: [ "ubuntu-latest" ]
         python-version: [ "3.12" ]
         testdata-cache: [ '~/.cache/xclim-testdata' ]
     defaults:
@@ -65,7 +66,8 @@ jobs:
         with:
           task: start-measurement
           branch: ${{ github.head_ref || github.ref_name }}
-          project: 'xclim'
+          project: "xclim"
+          machine: ${{ matrix.os }}
           tags: "CI/CD, Upstream, ${{ matrix.python-version }}"
           gmt-api-token: ${{ secrets.GMT_API_TOKEN }}
       - name: Checkout Repository

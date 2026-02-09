@@ -33,13 +33,14 @@ permissions:
 jobs:
   lint:
     name: Lint
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     if: |
       (github.event.action != 'labeled') ||
       (github.event.review.state == 'approved') ||
       (github.event_name == 'push')
     strategy:
       matrix:
+        os: [ "ubuntu-latest" ]
         python-version: [ "3.14" ]
     steps:
       - name: Harden Runner
@@ -65,7 +66,8 @@ jobs:
         with:
           task: start-measurement
           branch: ${{ github.head_ref || github.ref_name }}
-          project: 'xclim'
+          project: "xclim"
+          machine: ${{ matrix.os }}
           tags: "CI/CD, Main, ${{ matrix.python-version }}"
           gmt-api-token: ${{ secrets.GMT_API_TOKEN }}
         continue-on-error: true
@@ -115,10 +117,10 @@ jobs:
   test-preliminary:
     name: Python${{ matrix.python-version }} (${{ matrix.os }})
     needs: lint
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ 'ubuntu-latest' ]
+        os: [ "ubuntu-latest" ]
         python-version: [ "3.11" ]
         testdata-cache: [ '~/.cache/xclim-testdata' ]
         markers: [ "-m not slow" ]
@@ -149,7 +151,8 @@ jobs:
         with:
           task: start-measurement
           branch: ${{ github.head_ref || github.ref_name }}
-          project: 'xclim'
+          project: "xclim"
+          machine: ${{ matrix.os }}
           tags: "CI/CD, Main, ${{ matrix.python-version }}"
           gmt-api-token: ${{ secrets.GMT_API_TOKEN }}
           electricitymaps-api-token: ${{ secrets.ELECTRICITYMAPS_API_TOKEN }}
@@ -276,7 +279,8 @@ jobs:
         with:
           task: start-measurement
           branch: ${{ github.head_ref || github.ref_name }}
-          project: 'xclim'
+          project: "xclim"
+          machine: $${{ matrix.os }}
           tags: "CI/CD, Main, ${{ matrix.python-version }}"
           gmt-api-token: ${{ secrets.GMT_API_TOKEN }}
           electricitymaps-api-token: ${{ secrets.ELECTRICITYMAPS_API_TOKEN }}
@@ -368,7 +372,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        os: [ 'ubuntu-latest' ]
+        os: [ "ubuntu-latest" ]
         python-version: [ "3.11", "3.14" ]
         testdata-cache: [ '~/.cache/xclim-testdata' ]
     defaults:
@@ -398,7 +402,8 @@ jobs:
         with:
           task: start-measurement
           branch: ${{ github.head_ref || github.ref_name }}
-          project: 'xclim'
+          project: "xclim"
+          machine: ${{ matrix.os }}
           tags: "CI/CD, Main, ${{ matrix.python-version }}"
           gmt-api-token: ${{ secrets.GMT_API_TOKEN }}
           electricitymaps-api-token: ${{ secrets.ELECTRICITYMAPS_API_TOKEN }}
@@ -488,7 +493,8 @@ jobs:
         with:
           task: start-measurement
           branch: ${{ github.head_ref || github.ref_name }}
-          project: 'xclim'
+          project: "xclim"
+          machine: ${{ matrix.os }}
           tags: "CI/CD, Main"
           gmt-api-token: ${{ secrets.GMT_API_TOKEN }}
           electricitymaps-api-token: ${{ secrets.ELECTRICITYMAPS_API_TOKEN }}
