@@ -42,6 +42,7 @@ jobs:
           project: "xclim"
           machine: "ubuntu-latest"
           tags: "CI/CD, Main"
+          co2-grid-intensity-api-token: ${{ secrets.ELECTRICITYMAPS_API_TOKEN }}
           gmt-api-token: WRONGVALUES1234567890
 
       - name: Checkout Repository
