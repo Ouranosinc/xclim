@@ -42,7 +42,6 @@ jobs:
           machine: "ubuntu-latest"
           tags: "CI/CD, Main"
           gmt-api-token: ${{ secrets.GMT_API_TOKEN }}
-          api-endpoint-add: https://api.green-coding.io/v2/ci/measurement/add  # older endpoint testing
 
       - name: Checkout Repository
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
