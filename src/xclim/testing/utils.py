@@ -14,7 +14,7 @@ import re
 import sys
 import time
 import warnings
-from collections.abc import Callable, Iterable, Sequence
+from collections.abc import Callable, Sequence
 from datetime import datetime as dt
 from functools import wraps
 from importlib.metadata import PackageNotFoundError
@@ -27,7 +27,9 @@ from urllib.parse import urljoin, urlparse
 from urllib.request import urlretrieve
 
 from filelock import FileLock
+from packaging.requirements import Requirement
 from packaging.version import Version
+from pip._vendor import pkg_resources
 from xarray import Dataset
 from xarray import open_dataset as _open_dataset
 
@@ -283,32 +285,9 @@ def publish_release_notes(
     return None
 
 
-_xclim_deps = [
-    "xclim",
-    "xarray",
-    "statsmodels",
-    "scikit-learn",
-    "scipy",
-    "pint",
-    "pandas",
-    "numpy",
-    "numba",
-    "lmoments3",
-    "jsonpickle",
-    "flox",
-    "dask",
-    "cf_xarray",
-    "cftime",
-    "clisops",
-    "click",
-    "bottleneck",
-    "boltons",
-]
-
-
 def show_versions(
     file: os.PathLike | StringIO | TextIO | None = None,
-    deps: Iterable[str] | None = None,
+    deps: list[str] | None = None,
 ) -> str | None:
     """
     Print the versions of xclim and its dependencies.
@@ -317,8 +296,8 @@ def show_versions(
     ----------
     file : {os.PathLike, StringIO, TextIO}, optional
         If provided, prints to the given file-like object. Otherwise, returns a string.
-    deps : iterable of str, optional
-        An iterable of dependencies to gather and print version information from.
+    deps : list of str, optional
+        A list of dependencies to gather and print version information from.
         Otherwise, prints `xclim` dependencies.
 
     Returns
@@ -327,6 +306,16 @@ def show_versions(
         If `file` not provided, the versions of xclim and its dependencies.
     """
     dependencies: list[str]
+
+    def _find_dependencies(package_name):
+        package = pkg_resources.working_set.by_key[package_name]
+        full_deps = [str(dependency) for dependency in package.requires()]
+        dep_names = [Requirement(dep).name for dep in full_deps]
+        return dep_names
+
+    _xclim_deps = _find_dependencies("xclim")
+    _xclim_deps.extend(["flox", "lmoments3", "matplotlib", "numbagg", "pymannkendall", "xclim", "xsdba"])
+
     if deps is None:
         dependencies = _xclim_deps
     else:
