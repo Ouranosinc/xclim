@@ -721,7 +721,7 @@ def preprocess_standardized_index(da: xr.DataArray, freq: str | None, window: in
         and will skip the resampling step.
     window : int
         Averaging window length relative to the resampling frequency. For example, if `freq="MS"`,
-        i.e. a monthly resampling, the window is an integer _ of months.
+        i.e. a monthly resampling, the window is an integer number of months.
     **indexer : {dim: indexer, }, optional
         Indexing parameters to compute the indicator on a temporal subset of the data.
         It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
@@ -957,7 +957,7 @@ def standardized_index(
         Interpolation method used to assign a probability to zero values (only used if `zero_inflated` is True).
         When the data contain multiple zeros, the admissible plotting position interval spans from the first zero rank
         to the last zero rank. This parameter selects a representative probability within that interval. The default
-        method is "upper", which assigns the upper bound of the zero-rank interval. The "center" method assigns the
+        method "upper" assigns the upper bound of the zero-rank interval. The "center" method assigns the
         midpoint of the zero-rank interval. If a float in [0, 1] is provided, it is used as a linear interpolation
         factor between the lower (0) and upper (1) zero-rank plotting positions.
     plotting_position_zero : {"ecdf", "weibull"} or tuple[float, float]
@@ -999,6 +999,22 @@ def standardized_index(
     ----------
     :cite:cts:`mckee_relationship_1993`.
     """
+    # use input arguments from ``params`` if it is given
+    if params is None and None in [window, dist, method, zero_inflated]:
+        raise ValueError("If `params` is `None`, `window`, `dist`, `method` and `zero_inflated` must be given.")
+    if params is not None:
+        freq, window, dist, indexer = (params.attrs[s] for s in ["freq", "window", "scipy_dist", "time_indexer"])
+        # Unpack attrs to None and {} if needed
+        freq = None if freq == "" else freq
+        indexer = json.loads(indexer)
+        if cal_start or cal_end:
+            warnings.warn(
+                "Expected either `cal_{start|end}` or `params`, got both. The `params` input overrides other inputs."
+                "If `cal_start`, `cal_end`, `freq`, `window`, and/or `dist` were given as input, they will be ignored."
+            )
+        # FIMXE: xclim-v1 – remove 'prob_of_zero' below
+        zero_inflated = any(k in params.attrs for k in ["number_of_zeros", "prob_of_zero"])
+
     # assign values to interp_factor and alpha,beta, if needed
     if zero_inflated is not None:
         interp_factor = {"center": 1 / 2, "upper": 1}.get(prob_zero_interpolation, None)
@@ -1012,20 +1028,6 @@ def standardized_index(
             if isinstance(plotting_position_zero, str):
                 raise ValueError("Accepted strings for `plotting_position_zero` are: ['ecdf', 'weibull']")
             alpha_beta = plotting_position_zero
-
-    # use input arguments from ``params`` if it is given
-    if params is not None:
-        freq, window, dist, indexer = (params.attrs[s] for s in ["freq", "window", "scipy_dist", "time_indexer"])
-        # Unpack attrs to None and {} if needed
-        freq = None if freq == "" else freq
-        indexer = json.loads(indexer)
-        if cal_start or cal_end:
-            warnings.warn(
-                "Expected either `cal_{start|end}` or `params`, got both. The `params` input overrides other inputs."
-                "If `cal_start`, `cal_end`, `freq`, `window`, and/or `dist` were given as input, they will be ignored."
-            )
-    elif None in [window, dist, method, zero_inflated]:
-        raise ValueError("If `params` is `None`, `window`, `dist`, `method` and `zero_inflated` must be given.")
 
     # apply resampling and rolling operations
     da, _ = preprocess_standardized_index(da, freq=freq, window=window, **indexer)

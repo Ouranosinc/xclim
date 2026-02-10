@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import warnings
-from collections.abc import Callable
 from typing import Literal, cast
 
 import numpy as np
@@ -995,7 +994,7 @@ def standardized_precipitation_index(
     cal_start: DateStr | None = None,
     cal_end: DateStr | None = None,
     params: Quantified | None = None,
-    prob_zero_method: str | Callable[[xarray.DataArray], xarray.DataArray] = "center",
+    prob_zero_interpolation: str | float = "upper",
     **indexer,
 ) -> xarray.DataArray:
     r"""
@@ -1030,11 +1029,13 @@ def standardized_precipitation_index(
         Fit parameters.
         The `params` can be computed using ``xclim.indices.stats.standardized_index_fit_params`` in advance.
         The output can be given here as input, and it overrides other options.
-    prob_zero_method : str or Callable
-        Method to calculate the probability of zero values (only used if `zero_inflated` is True).
-        If "center", the probability is centered (prob_of_zero / 2).
-        If "upper", the probability is the probability of zero (prob_of_zero).
-        If a callable, it receives the probability of zero and should return the probability to assign to zero values.
+    prob_zero_interpolation : {"center", "upper"} or float
+        Interpolation method used to assign a probability to zero values (only used if `zero_inflated` is True).
+        When the data contain multiple zeros, the admissible plotting position interval spans from the first zero rank
+        to the last zero rank. This parameter selects a representative probability within that interval. The default
+        method "upper" assigns the upper bound of the zero-rank interval. The "center" method assigns the
+        midpoint of the zero-rank interval. If a float in [0, 1] is provided, it is used as a linear interpolation
+        factor between the lower (0) and upper (1) zero-rank plotting positions.
     **indexer : {dim: indexer}, optional
         Indexing parameters to compute the indicator on a temporal subset of the data.
         It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
@@ -1119,7 +1120,7 @@ def standardized_precipitation_index(
         cal_start=cal_start,
         cal_end=cal_end,
         params=params,
-        zero_rank_interpolation=prob_zero_method,
+        prob_zero_interpolation=prob_zero_interpolation,
         **indexer,
     )
 
