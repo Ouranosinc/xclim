@@ -23,7 +23,7 @@ from xclim.core import DateStr, Quantified
 from xclim.core.calendar import compare_offsets, resample_doy, select_time
 from xclim.core.formatting import prefix_attrs, unprefix_attrs, update_history
 from xclim.core.utils import uses_dask
-from xclim.indices import generic
+from xclim.indices.generic import statistics
 
 __all__ = [
     "_fit_start",
@@ -465,10 +465,10 @@ def frequency_analysis(
         da.attrs.update(attrs)
 
     # Assign default resampling frequency if not provided
-    freq = freq or generic.default_freq(**indexer)
+    freq = freq or ("YS-DEC" if indexer.get("season") == "DJF" else "YS")
 
     # Extract the time series of min or max over the period
-    sel = generic.select_resample_op(da, op=mode, freq=freq, **indexer)
+    sel = statistics(da, statistic=mode, freq=freq, **indexer)
 
     if uses_dask(sel):
         sel = sel.chunk({"time": -1})
@@ -724,7 +724,7 @@ def preprocess_standardized_index(da: xr.DataArray, freq: str | None, window: in
         i.e. a monthly resampling, the window is an integer number of months.
     **indexer : {dim: indexer, }, optional
         Indexing parameters to compute the indicator on a temporal subset of the data.
-        It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
+        It accepts the same arguments as :py:func:`xclim.core.calendar.select_time`.
 
     Returns
     -------
@@ -815,7 +815,7 @@ def standardized_index_fit_params(
         Kwargs passed to ``xclim.indices.stats.fit`` used to impose values of certains parameters (`floc`, `fscale`).
     **indexer : {dim: indexer, }, optional
         Indexing parameters to compute the indicator on a temporal subset of the data.
-        It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
+        It accepts the same arguments as :py:func:`xclim.core.calendar.select_time`.
 
     Returns
     -------
@@ -943,7 +943,7 @@ def standardized_index(
         The output can be given here as input, and it overrides other options.
     **indexer : {dim: indexer, }, optional
         Indexing parameters to compute the indicator on a temporal subset of the data.
-        It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
+        It accepts the same arguments as :py:func:`xclim.core.calendar.select_time`.
 
     Returns
     -------

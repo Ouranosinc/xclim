@@ -23,7 +23,7 @@ from xclim.indices._multivariate import (
     precip_accumulation,
 )
 from xclim.indices._simple import tg_mean
-from xclim.indices.generic import select_resample_op
+from xclim.indices.generic import statistics
 from xclim.indices.run_length import lazy_indexing
 
 # Frequencies : YS: year start, QS-DEC: seasons starting in december, MS: month start
@@ -266,9 +266,7 @@ def tg_mean_warmcold_quarter(
         raise NotImplementedError(f'op parameter ({op}) may only be one of "warmest", "coldest"')
     oper = _np_ops[op]
 
-    out = select_resample_op(out, oper, freq)
-    out.attrs["units"] = tas.units
-    return out
+    return statistics(out, statistic=oper, freq=freq)
 
 
 @declare_units(tas="[temperature]", pr="[precipitation]")
@@ -380,9 +378,7 @@ def prcptot_wetdry_quarter(
         raise NotImplementedError(f'op parameter ({op}) may only be one of "wettest" or "driest"')
     op = _np_ops[op]
 
-    out = select_resample_op(pr_qrt, op, freq)
-    out.attrs["units"] = pr_qrt.units
-    return out
+    return statistics(pr_qrt, statistic=op, freq=freq)
 
 
 @declare_units(pr="[precipitation]", tas="[temperature]")

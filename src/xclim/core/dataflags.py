@@ -21,7 +21,7 @@ from xclim.core.calendar import climatological_mean_doy, within_bnds_doy
 from xclim.core.formatting import update_xclim_history
 from xclim.core.units import convert_units_to, declare_units, infer_context, str2pint
 from xclim.core.utils import InputKind, infer_kind_from_parameter
-from xclim.indices.generic import binary_ops
+from xclim.indices.helpers import BINARY_OPS
 from xclim.indices.run_length import suspicious_run
 
 _REGISTRY = {}
@@ -642,7 +642,7 @@ def data_flags(  # noqa: C901
             val = _kwargs.get(arg, param.default)
             kind = infer_kind_from_parameter(param)
             if arg == "op":
-                format_args[arg] = val if val not in binary_ops else binary_ops[val]
+                format_args[arg] = val if val not in BINARY_OPS else BINARY_OPS[val]
             elif kind in [
                 InputKind.FREQ_STR,
                 InputKind.NUMBER,

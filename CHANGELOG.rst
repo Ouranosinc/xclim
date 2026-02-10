@@ -4,7 +4,7 @@ Changelog
 
 v1.0.0 (unreleased)
 -------------------
-Contributors to this version: Trevor James Smith (:user:`Zeitsperre`).
+Contributors to this version: Pascal Bourgault (:user:`aulemahal`), Trevor James Smith (:user:`Zeitsperre`).
 
 Announcements
 ^^^^^^^^^^^^^
@@ -13,6 +13,7 @@ Documentation has been updated to reflect these changes as well as to help exist
 
 New indicators and features
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+* This new xclim brings a major overhaul of the "generic" index functions which had a trickle down (breaking) effect on most of xclim modules. A summary of the changes can be found `in this comment <https://github.com/Ouranosinc/xclim/pull/2258#issuecomment-3473430173>`_.
 * The `xclim` command-line tool now accepts both ``-h`` and ``--help`` to show the help summary. (:pull:`2316`).
 
 Breaking changes
@@ -84,6 +85,7 @@ New indicators and features
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
+* Generic functions from ``clix-meta`` are now in their own submodule ``xclim.indices.clix``. Many ``xclim.indices.generic`` functions have been refactored to reduce duplication and harmonize signatures.
 * The relative humidity computations from specific humidity, pressure and temperature (``vapor_pressure`` and ``relative_humidity``) were modified to use the fraction of vapour pressure to saturation vapour pressure instead of an incomplete equation with the mixing ratios. Changes are small, but sometimes not negligible. (:pull:`2254`).
 * `black` and `blackdoc` are no longer required for development. `ruff` is now exclusively used for code and code-block formatting. (:pull:`2249`).
 * Python HDF5 libraries now have lower pins to ensure modern versions are preferably installed (`h5netcdf >=1.5.0` and `h5py >=3.12.1`) (:pull:`2253`).

@@ -15,7 +15,6 @@ import warnings
 from collections.abc import Callable, Sequence
 from enum import IntEnum
 from inspect import _empty
-from io import StringIO
 from pathlib import Path
 from types import ModuleType
 
@@ -711,8 +710,9 @@ def infer_kind_from_parameter(param) -> InputKind:
 
     if (
         annot.issuperset({"str"})
+        or annot.issuperset({"Reducer"})
+        or annot.issuperset({"Condition"})
         or any(a.startswith("Literal['") for a in annot)
-        or annot.issuperset({"REDUCTION_OPERATORS"})
     ):
         return InputKind.STRING
 
@@ -731,114 +731,98 @@ def infer_kind_from_parameter(param) -> InputKind:
     return InputKind.OTHER_PARAMETER
 
 
-def adapt_clix_meta_yaml(raw: os.PathLike | StringIO | str, adapted: os.PathLike) -> None:  # noqa: C901
+def make_clix_meta_yaml(  # noqa: C901
+    raw: os.PathLike, adapted: os.PathLike
+) -> None:
     """
-    Read in a clix-meta yaml representation and refactor it to fit xclim YAML specifications.
+    Read in the clix-meta "index_definitions.yml" file and adapt it to a xclim virtual module yaml.
 
     Parameters
     ----------
     raw : os.PathLike or StringIO or str
-        The path to the clix-meta yaml file or the string representation of the yaml.
+        The path to the clix-meta "index_definitions.yml" file or the string representation of the yaml.
     adapted : os.PathLike
-        The path to the adapted yaml file.
+        The path where to write the adapted yaml.
     """
-    from ..indices import generic  # pylint: disable=import-outside-toplevel
+    from ..indices import clix
 
     freq_defs = {"annual": "YS", "seasonal": "QS-DEC", "monthly": "MS", "weekly": "W"}
 
-    if isinstance(raw, os.PathLike):
-        with open(raw, encoding="utf-8") as f:
-            yml = safe_load(f)
-    else:
-        yml = safe_load(raw)
+    with open(raw, encoding="utf-8") as f:
+        src = safe_load(f)
 
+    yml = {}
     yml["realm"] = "atmos"
-    yml["doc"] = """  ===================
+    yml["doc"] = """
+  ===================
   CF Standard indices
   ===================
 
   Indicators found here are defined by the `clix-meta project`_. Adapted documentation from that repository follows:
 
-  The repository aims to provide a platform for thinking about, and developing,
-  a unified view of metadata elements required to describe climate indices (aka climate indicators).
+      This repository aims to provide a platform for thinking about, and developing, a unified view of metadata
+      elements required to describe climate indices (aka climate indicators).
 
-  To facilitate data exchange and dissemination the metadata should, as far as possible,
-  follow the Climate and Forecasting (CF) Conventions. Considering the very rich and diverse flora of
-  climate indices this is however not always possible. By collecting a wide range of different indices
-  it is easier to discover any common patterns and features that are currently not well covered by the
-  CF Conventions. Currently identified issues frequently relate to standard_name or/and cell_methods
-  which both are controlled vocabularies of the CF Conventions.
+  All indicators defined here use generic functions defined in :py:mod:`xclim.indices.clix`. This module tries to
+  follow the clix-meta definitions as closely, which means it can have meaningful differences with the rest of xclim.
+
+  For example, indicators where a number of occurrences (usually days) is counted will use units "1", instead of
+  having temporal dimensions (i.e. "days") like xclim does elsewhere.
+
+  However, indicators calculating a date will have no units in this module. "clix-meta" suggests "day", but that
+  already means something else.
 
   .. _clix-meta project: https://github.com/clix-meta/clix-meta
 """
     yml["references"] = "clix-meta https://github.com/clix-meta/clix-meta"
 
-    remove_ids = []
-    rename_ids = {}
-    for cmid, data in yml["indices"].items():
-        if "reference" in data:
-            data["references"] = data.pop("reference")
+    indicators = {}
+    for cmid, info in src["indices"].items():
+        data = {}
+        if "reference" in info:
+            data["references"] = info["reference"]
 
-        index_function = data.pop("index_function")
-
-        data["compute"] = index_function["name"]
-        if getattr(generic, data["compute"], None) is None:
-            remove_ids.append(cmid)
-            warnings.warn(f"Indicator {cmid} uses non-implemented function {data['compute']}, removing.")
+        index_function = info["index_function"]
+        if not hasattr(clix, index_function["name"]):
+            warnings.warn(f"Indicator {cmid} uses non-implemented function {index_function['name']}, skipping.")
             continue
 
-        if (data["output"].get("standard_name") or "").startswith("number_of_days") or cmid == "nzero":
-            remove_ids.append(cmid)
-            warnings.warn(
-                f"Indicator {cmid} has a 'number_of_days' standard name"
-                " and xclim disagrees with the CF conventions on the correct output units, removing."
-            )
-            continue
+        data["compute"] = f"clix.{index_function['name']}"
+        data["input"] = info["input"]
+        if "pr" in info["input"].values():
+            data["context"] = "hydro"
 
-        if (data["output"].get("standard_name") or "").endswith("precipitation_amount"):
-            remove_ids.append(cmid)
-            warnings.warn(
-                f"Indicator {cmid} has a 'precipitation_amount' standard name"
-                " and clix-meta has incoherent output units, removing."
-            )
-            continue
-
-        rename_params = {}
+        name_replacements = {}
+        data["parameters"] = {}
         if index_function["parameters"]:
-            data["parameters"] = index_function["parameters"]
-            for name, param in data["parameters"].copy().items():
-                if param["kind"] in ["operator", "reducer"]:
-                    # Compatibility with xclim `op` notation for comparison symbols
-                    if name == "condition":
-                        data["parameters"]["op"] = param[param["kind"]]
-                        del data["parameters"][name]
-                    else:
-                        data["parameters"][name] = param[param["kind"]]
-                else:  # kind = quantified
-                    if param.get("proposed_standard_name") == "temporal_window_size":
-                        # Window, nothing to do.
-                        del data["parameters"][name]
-                    elif isinstance(param["data"], dict):
-                        # No value
-                        data["parameters"][name] = {
-                            "description": param.get(
-                                "long_name",
-                                param.get("proposed_standard_name", param.get("standard_name")).replace("_", " "),
-                            ),
-                            "units": param["units"],
-                        }
-                        rename_params[f"{{{name}}}"] = f"{{{list(param['data'].keys())[0]}}}"
-                    else:
-                        # Value
-                        data["parameters"][name] = f"{param['data']} {param['units']}"
+            for name, param in index_function["parameters"].items():
+                match param["kind"]:
+                    case "operator":
+                        data["parameters"][name] = param["operator"]
+                    case "reducer":
+                        data["parameters"][name] = param["reducer"]
+                    case "time_range":
+                        data["parameters"][name] = list(param["data"].split("/"))
+                    case "quantity":
+                        if isinstance(param["data"], str) and param["data"].startswith("{"):
+                            name_replacements[param["data"][1:-1]] = name
+                        else:
+                            if name in ["window_size", "percentile"]:
+                                data["parameters"][name] = param["data"]
+                            else:
+                                data["parameters"][name] = f"{param['data']} {param['units']}"
 
-        period = data.pop("default_period")
-        # data["allowed_periods"] = [freq_names[per] for per in period["allowed"].keys()]
-        data.setdefault("parameters", {})["freq"] = {"default": freq_defs[period]}
+        period = info["default_period"]
+        if cmid == "lsf":
+            period = "annual"
+            data["parameters"]["before_date"] = "07-01"
+        elif cmid == "faf":
+            period = "annual"
+            data["parameters"]["after_date"] = "07-01"
+        data["parameters"]["freq"] = {"default": freq_defs[period]}
 
         attrs = {}
-        output = data.pop("output")
-        for attr, val in output.items():
+        for attr, val in info["output"].items():
             if val is None:
                 continue
             if attr == "cell_methods":
@@ -849,7 +833,7 @@ def adapt_clix_meta_yaml(raw: os.PathLike | StringIO | str, adapted: os.PathLike
 
                     # If cell_method seems to be describing input data, and not the operation, skip.
                     if i == 0:
-                        if cm in [ICM.get(v) for v in data["input"].values()]:
+                        if cm in [ICM.get(v) for v in info["input"].values()]:
                             continue
 
                     methods.append(cm)
@@ -857,23 +841,19 @@ def adapt_clix_meta_yaml(raw: os.PathLike | StringIO | str, adapted: os.PathLike
                 val = " ".join(methods)
 
             elif attr in ["var_name", "long_name"]:
-                for new, old in rename_params.items():
+                for old, new in name_replacements.items():
                     val = val.replace(old, new)
+                if attr == "long_name":
+                    data["title"] = val
+            elif attr == "units" and val == "day":
+                # clix-meta assigns "day" for day of year. Not CF.
+                continue
             attrs[attr] = val
         data["cf_attrs"] = [attrs]
 
-        del data["ET"]
+        indicators[cmid.replace("{", "").replace("}", "")] = data
 
-        if "{" in cmid:
-            rename_ids[cmid] = cmid.replace("{", "").replace("}", "")
-
-    for old, new in rename_ids.items():
-        yml["indices"][new] = yml["indices"].pop(old)
-
-    for cmid in remove_ids:
-        del yml["indices"][cmid]
-
-    yml["indicators"] = yml.pop("indices")
+    yml["indicators"] = indicators
 
     with open(adapted, "w", encoding="utf-8") as f:
         safe_dump(yml, f)

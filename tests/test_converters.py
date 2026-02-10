@@ -323,7 +323,7 @@ def test_wind_power_potential(atmosds):
 def test_wind_power_potential_from_3h_series():
     """Test a typical computation workflow from 3-hourly time series to daily power production in MWh."""
     from xclim.core.units import convert_units_to
-    from xclim.indices.generic import select_resample_op
+    from xclim.indices.generic import statistics
     from xclim.testing.helpers import test_timeseries
 
     w = test_timeseries(np.ones(96) * 15, variable="sfcWind", start="7/1/2000", units="m s-1", freq="3h")
@@ -332,7 +332,7 @@ def test_wind_power_potential_from_3h_series():
     # Multiply with nominal capacity
     power = out * 100
     power.attrs["units"] = "MW"
-    annual_power: xr.DataArray = convert_units_to(select_resample_op(power, op="integral", freq="D"), "MWh")
+    annual_power: xr.DataArray = convert_units_to(statistics(power, statistic="integral", freq="D"), "MWh")
     assert (annual_power == 100 * 24).all()
 
 
