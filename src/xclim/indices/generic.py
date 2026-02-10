@@ -386,10 +386,12 @@ def bivariate_count_occurrences(
         Logical comparison operator for data variable 1.
     condition2 : {">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"}
         Logical comparison operator for data variable 2.
+        If None, ``condition1`` is used.
     thresh1 : Quantified
         Threshold for data variable 1.
     thresh2 : Quantified
         Threshold for data variable 2.
+        If None, ``thresh1`` is used.
     freq : str
         Resampling frequency defining the periods as defined in :ref:`timeseries.resampling`.
     var_reducer : {"all", "any"}
@@ -399,6 +401,7 @@ def bivariate_count_occurrences(
         Allowed comparison operators for variable 1, None to allow all.
     constrain2 : sequence of str, optional
         Allowed comparison operators for variable 2, None to allow all.
+        If ``condition2`` is None, ``constrain1`` is used and ``constrain2`` is ignored.
     **indexer : {dim: indexer, }, optional
         Time attribute and values over which to subset the array. See :py:func:`xclim.core.calendar.select_time`.
 
@@ -411,9 +414,14 @@ def bivariate_count_occurrences(
     -----
     Sampling length is derived from `data1`.
     """
+    if thresh2 is None:
+        thresh1 = thresh1
     thresh1 = convert_units_to(thresh1, data1, context="infer")
     thresh2 = convert_units_to(thresh2, data2, context="infer")
 
+    if condition2 is None:
+        condition2 = condition1
+        constrain2 = constrain1
     cond1 = compare(data1, condition1, thresh1, constrain1)
     cond2 = compare(data2, condition2, thresh2, constrain2)
 

@@ -513,6 +513,29 @@ def test_all_jsonable(official_indicators):
         raise ValueError(f"Indicators {problems} provide problematic json serialization.: {err}")
 
 
+def test_constrain_only_with_condition(official_indicators):
+    # constrain is meant to constrain the condition, it makes no sense without it.
+    problems = set()
+    for identifier, ind in official_indicators.items():
+        indinst = ind.get_instance()
+        for name in indinst.parameters:
+            if name.startswith("constrain") and name.replace("constrain", "condition") not in indinst.parameters:
+                problems.add(identifier)
+    if problems:
+        raise ValueError("The following indicators have a 'constrain' argument but no 'condition' argument.")
+
+
+def test_no_out_units(official_indicators):
+    # indicators set the units, it makes no sense to have this argument
+    problems = set()
+    for identifier, ind in official_indicators.items():
+        indinst = ind.get_instance()
+        if "out_units" in indinst.parameters:
+            problems.add(identifier)
+    if problems:
+        raise ValueError("The following indicators have a 'out_units' argument.")
+
+
 def test_all_parameters_understood(official_indicators):
     problems = set()
     for identifier, ind in official_indicators.items():

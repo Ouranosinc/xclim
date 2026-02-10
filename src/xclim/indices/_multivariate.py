@@ -17,9 +17,11 @@ from xclim.core.units import (
     rate2amount,
     to_agg_units,
 )
+from xclim.core.utils import deprecated
 from xclim.indices import run_length as rl
 from xclim.indices.converters import rain_approximation, snowfall_approximation
 from xclim.indices.generic import (
+    bivariate_count_occurrences,
     count_occurrences,
     difference_statistics,
     extreme_range,
@@ -514,6 +516,7 @@ def multiday_temperature_swing(
     return to_agg_units(out, tasmin, "count", deffreq="D")
 
 
+@deprecated("1.0", "atmos.daily_temperature_range")
 @declare_units(tasmax="[temperature]", tasmin="[temperature]")
 def daily_temperature_range(
     tasmin: xarray.DataArray,
@@ -556,6 +559,7 @@ def daily_temperature_range(
     return difference_statistics(tasmin, tasmax, statistic=op, freq=freq, absolute=False)
 
 
+@deprecated("1.0", "atmos.daily_temperature_range_variability")
 @declare_units(tasmax="[temperature]", tasmin="[temperature]")
 def daily_temperature_range_variability(
     tasmin: xarray.DataArray, tasmax: xarray.DataArray, freq: str = "YS"
@@ -591,6 +595,7 @@ def daily_temperature_range_variability(
     return interday_difference_statistics(tasmin, tasmax, statistic="mean", freq=freq, absolute=True)
 
 
+@deprecated("1.0", "atmos.extreme_temperature_range")
 @declare_units(tasmax="[temperature]", tasmin="[temperature]")
 def extreme_temperature_range(tasmin: xarray.DataArray, tasmax: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
     r"""
@@ -1106,6 +1111,7 @@ def rain_on_frozen_ground_days(
     return to_agg_units(out, tas, "count", deffreq="D")
 
 
+@deprecated("1.0", "atmos.high_precip_low_temp")
 @declare_units(
     pr="[precipitation]",
     tas="[temperature]",
@@ -1629,6 +1635,7 @@ def tx10p(
     return count_occurrences(tasmax, condition=op, thresh=thresh, freq=freq, constrain=("<", "<="))
 
 
+@deprecated("1.0", "atmos.tx_tn_days_above")
 @declare_units(
     tasmin="[temperature]",
     tasmax="[temperature]",
@@ -1685,13 +1692,18 @@ def tx_tn_days_above(
 
        TN_{ij} > TN_{thresh} [℃]
     """
-    thresh_tasmax = convert_units_to(thresh_tasmax, tasmax)
-    thresh_tasmin = convert_units_to(thresh_tasmin, tasmin)
-
-    constrain = (">", ">=")
-    events = (compare(tasmin, op, thresh_tasmin, constrain) & compare(tasmax, op, thresh_tasmax, constrain)) * 1
-    out = events.resample(time=freq).sum(dim="time")
-    return to_agg_units(out, tasmin, "count", deffreq="D")
+    return bivariate_count_occurrences(
+        data1=tasmin,
+        data2=tasmax,
+        condition1=op,
+        condition2=op,
+        thresh1=thresh_tasmin,
+        thresh2=thresh_tasmax,
+        freq=freq,
+        var_reducer="all",
+        constrain1=(">", ">="),
+        constrain2=(">", ">="),
+    )
 
 
 @declare_units(tasmax="[temperature]", tasmax_per="[temperature]")
