@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import importlib.util as _util
 from functools import partial
 
 import numpy as np
@@ -19,10 +20,8 @@ from xclim.indices.stats import standardized_index
 
 from . import generic
 
-try:
-    import pymannkendall as mk
-except ImportError:
-    mk = None
+HAS_PYMANNKENDALL = _util.find_spec("pymannkendall")
+
 
 __all__ = [
     "antecedent_precipitation_index",
@@ -925,7 +924,7 @@ def lag_snowpack_flow_peaks(
 @declare_units(q="[discharge]")
 def sen_slope(
     q: xarray.DataArray,
-    qsim: xarray.DataArray = None,
+    qsim: xarray.DataArray | None = None,
 ) -> xarray.Dataset:
     """
     Sen Slope : Temporal robustness analysis of streamflow.
@@ -937,7 +936,7 @@ def sen_slope(
     ----------
     q : xarray.DataArray
         Observed streamflow vector.
-    qsim : xarray.DataArray
+    qsim : xarray.DataArray, optional
         Simulated streamflow vector.
 
     Returns
@@ -963,7 +962,13 @@ def sen_slope(
     """
     seasons = ["DJF", "MAM", "JJA", "SON", "Year"]
 
-    def compute_seasonal_stats(x: xarray.DataArray) -> tuple[list, list]:
+    if not HAS_PYMANNKENDALL:
+        msg = f"{sen_slope.__name__} requires access to the `pymannkendall` library."
+        raise ModuleNotFoundError(msg)
+    else:
+        import pymannkendall as mk
+
+    def _compute_seasonal_stats(x: xarray.DataArray) -> tuple[list, list]:
         """
         Seasonal statistics.
 
@@ -980,10 +985,6 @@ def sen_slope(
             - ``Sen_slope`` : Sen's slope estimates for seasonal and yearly averages.
             - ``p_value`` : Mann–Kendall metric indicating slope tendency.
         """
-        if mk is None:
-            msg = f"{sen_slope.__name__} requires access to the `pymannkendall` library."
-            raise ModuleNotFoundError(msg)
-
         # Convert to pandas Series with DatetimeIndex
         x_year = x.resample(time="YS-DEC").mean()
         x_season = x.resample(time="QS-DEC").mean()
@@ -1013,8 +1014,8 @@ def sen_slope(
         return _slopes, _p_vals
 
     if qsim is not None:
-        slopes, p_vals = compute_seasonal_stats(q)
-        slopes_sim, p_vals_sim = compute_seasonal_stats(qsim)
+        slopes, p_vals = _compute_seasonal_stats(q)
+        slopes_sim, p_vals_sim = _compute_seasonal_stats(qsim)
         slopes_np = np.array(slopes)
         slopes_sim_np = np.array(slopes_sim)
         ratio = slopes_np / slopes_sim_np
@@ -1030,7 +1031,7 @@ def sen_slope(
         )
 
     else:
-        slopes, p_vals = compute_seasonal_stats(q)
+        slopes, p_vals = _compute_seasonal_stats(q)
         # Create labeled xarray
         ds = xarray.Dataset(
             data_vars={"Sen_slope": ("season", slopes), "p_value": ("season", p_vals)}, coords={"season": seasons}
