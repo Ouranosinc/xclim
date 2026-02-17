@@ -388,6 +388,33 @@ def test_parametric_cdf(use_dask, random):
     assert out.attrs["cell_methods"] == "dparams: cdf"
 
 
+@pytest.mark.parametrize("use_dask,use_dataarray", [[True, False], [True, False]])
+def test_parametric_pdf(use_dask, use_dataarray, random):
+    mu = 23
+    sigma = 2
+    n = 10000
+    x = 1.5
+    d = norm(loc=mu, scale=sigma)
+    r = xr.DataArray(
+        d.rvs(n, random_state=random),
+        dims=("time",),
+        coords={"time": xr.date_range(start="1980-01-01", periods=n)},
+        attrs={"history": "Mosquito bytes per minute"},
+    )
+    if use_dask:
+        r = r.chunk()
+    expected = d.pdf(x)
+
+    p = stats.fit(r, dist="norm")
+    if use_dataarray:
+        x = xr.DataArray([x], dims={"x": [x]})
+    out = stats.parametric_pdf(p=p, x=x)
+
+    np.testing.assert_array_almost_equal(out, expected, 1)
+    assert "x" in out.coords
+    assert out.attrs["cell_methods"] == "dparams: pdf"
+
+
 def test_dist_method(fitda):
     params = stats.fit(fitda, "lognorm")
     cdf = stats.dist_method("cdf", fit_params=params, arg=xr.DataArray([0.2, 0.8], dims="val"))
