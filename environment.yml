@@ -42,6 +42,7 @@ dependencies:
   - h5py >=3.12.1
   - ipykernel
   - ipython >=8.10.0
+  - iris
   - matplotlib >=3.7.0
   - mypy >=1.14.1
   - nbconvert >=7.16.4
