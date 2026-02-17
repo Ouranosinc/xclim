@@ -4,7 +4,6 @@ Changelog
 
 v0.61.0 (unreleased)
 --------------------
-
 Contributors to this version: Pascal Bourgault (:user:`aulemahal`), Hui-Min Wang (:user:`Hem-W`), Éric Dupuis (:user:`coxipi`).
 
 New indicators and features
