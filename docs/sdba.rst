@@ -108,7 +108,7 @@ User API
 
 .. note::
 
-    For more information, the documentation is available at the following link: :doc:`xsdba API <xsdba:api>`
+    For more information about `xsdba`, the documentation is available at the following link: :doc:`xsdba API <xsdba:apidoc/xsdba>`
 
 Notes for Developers
 ====================
