@@ -357,7 +357,7 @@ def parametric_cdf(
 
 def parametric_pdf(
     p: xr.DataArray,
-    x: float | Sequence[float],
+    x: xr.DataArray | float | Sequence[float],
     dist: str | rv_continuous | None = None,
 ) -> xr.DataArray:
     """
@@ -369,7 +369,7 @@ def parametric_pdf(
         Distribution parameters returned by the `fit` function.
         The array should have dimension `dparams` storing the distribution parameters,
         and attribute `scipy_dist`, storing the name of the distribution.
-    x : float or Sequence of float or xr.DataArray
+    x : xr.DataArray or float or Sequence of float
         Value to compute the PDF.
     dist : str or rv_continuous distribution object, optional
         The distribution name or instance is the `scipy_dist` attribute is not available on `p`.
@@ -410,7 +410,7 @@ def parametric_pdf(
     attrs = {
         "long_name": f"{dist.name} PDF",
         "description": f"PDF estimated by the {dist.name} distribution",
-        "cell_methods": "dparams: x",
+        "cell_methods": "dparams: pdf",
         "history": update_history(
             "Compute parametric pdf from distribution parameters",
             new_name="parametric_pdf",
