@@ -88,7 +88,7 @@ SDBA Module
 
 .. note::
 
-    For more information, the documentation is available at the following link: :doc:`xsdba API <xsdba:api>`
+    For more information about `xsdba`, the documentation is available at the following link: :doc:`xsdba API <xsdba:apidoc/xsdba>`
 
 .. _spatial-analogues-api:
 
@@ -193,7 +193,7 @@ SDBA Utilities
 
 .. note::
 
-    For more information about `xsdba`, please refer to the documentation at the following link: :doc:`xsdba API <xsdba:api>`
+    For more information about the `xsdba` developer utilities, please refer to the documentation at the following link: :mod:`xsdba.utils <xsdba:xsdba.utils>`.
 
 .. _`spatial-analogues-developer-api`:
 
