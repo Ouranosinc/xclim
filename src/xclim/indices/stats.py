@@ -33,6 +33,7 @@ __all__ = [
     "frequency_analysis",
     "get_dist",
     "parametric_cdf",
+    "parametric_pdf",
     "parametric_quantile",
     "standardized_index",
     "standardized_index_fit_params",
@@ -347,6 +348,72 @@ def parametric_cdf(
         "history": update_history(
             "Compute parametric cdf from distribution parameters",
             new_name="parametric_cdf",
+            parameters=p,
+        ),
+    }
+    out.attrs.update(attrs)
+    return out
+
+
+def parametric_pdf(
+    p: xr.DataArray,
+    x: float | Sequence[float],
+    dist: str | rv_continuous | None = None,
+) -> xr.DataArray:
+    """
+    Return the probability density function corresponding to the given distribution parameters and value.
+
+    Parameters
+    ----------
+    p : xr.DataArray
+        Distribution parameters returned by the `fit` function.
+        The array should have dimension `dparams` storing the distribution parameters,
+        and attribute `scipy_dist`, storing the name of the distribution.
+    x : float or Sequence of float or xr.DataArray
+        Value to compute the PDF.
+    dist : str or rv_continuous distribution object, optional
+        The distribution name or instance is the `scipy_dist` attribute is not available on `p`.
+
+    Returns
+    -------
+    xarray.DataArray
+        An array of probabilities estimated from the distribution parameters.
+    """
+    if not isinstance(x, xr.DataArray):
+        x = np.atleast_1d(x)
+        da_x = xr.DataArray(x, dims=["x"]).assign_coords(x=x)
+    else:
+        if len(x.dims) > 1:
+            raise ValueError("`x` must be one-dimensional.")
+        da_x = x
+
+    dist = get_dist(dist or p.attrs["scipy_dist"])
+
+    data = xr.apply_ufunc(
+        lambda x, p: dist.pdf(x, *p),
+        da_x,
+        p,
+        input_core_dims=[["x"], ["dparams"]],
+        output_core_dims=[["x"]],
+        vectorize=True,
+        dask="parallelized",
+        output_dtypes=[float],
+        keep_attrs=True,
+        dask_gufunc_kwargs={"output_sizes": {"x": da_x.x.size}},
+    ).assign_coords(x=da_x.x.values)
+    data["x"].attrs = da_x.attrs
+
+    # Assign value coordinates and transpose to preserve original dimension order
+    out = data.transpose(*(d if d != "dparams" else "x" for d in p.dims))
+    out.attrs = unprefix_attrs(p.attrs, ["units", "standard_name"], "original_")
+
+    attrs = {
+        "long_name": f"{dist.name} PDF",
+        "description": f"PDF estimated by the {dist.name} distribution",
+        "cell_methods": "dparams: x",
+        "history": update_history(
+            "Compute parametric pdf from distribution parameters",
+            new_name="parametric_pdf",
             parameters=p,
         ),
     }
