@@ -116,6 +116,8 @@ autodoc_typehints_description_target = "documented_params"
 autosectionlabel_prefix_document = True
 autosectionlabel_maxdepth = 2
 
+suppress_warnings = ["sphinx_autodoc_typehints.guarded_import"]
+
 linkcheck_ignore = [
     # too labourious to fully check
     r"https://github.com/Ouranosinc/xclim/(pull|issue).*",
