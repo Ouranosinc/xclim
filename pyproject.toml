@@ -95,7 +95,6 @@ docs = [
   "distributed >=2.0",
   "furo >=2023.9.10",
   "ipykernel",
-  "iris",
   "matplotlib >=3.7.0",
   "nbsphinx >=0.9.5",
   "nc-time-axis >=1.4.1",
