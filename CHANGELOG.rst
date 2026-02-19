@@ -4,7 +4,7 @@ Changelog
 
 v0.61.0 (unreleased)
 --------------------
-Contributors to this version: Pascal Bourgault (:user:`aulemahal`), Hui-Min Wang (:user:`Hem-W`), Éric Dupuis (:user:`coxipi`).
+Contributors to this version: Pascal Bourgault (:user:`aulemahal`), Trevor James Smith (:user:`Zeitsperre`), Hui-Min Wang (:user:`Hem-W`), Éric Dupuis (:user:`coxipi`).
 
 New indicators and features
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -12,6 +12,14 @@ New indicators and features
     + This changes the behaviour for indicators ``land.snw_max_doy``, ``land.snd_max_doy``, ``land.doy_qmin`` and ``land.doy_qmax``.
 * Added two `zero_inflated` arguments to `standardized_index` and `standardized_precipitation_index` to control how zero-precipitation probabilities are handled. (:issue:`2279`, :pull:`2280`).
 
+Internal changes
+^^^^^^^^^^^^^^^^
+* Documentation adjustments. (:pull:`2325`):
+    * Updated the `intersphinx` directives to point at new `xsdba` sphinx documentation targets.
+    * Updated the ReadTheDocs configuration to build docs with an older Python version and a newer conda version.
+    * Updated the `pre-commit` hooks (`check-jsonschema`) in order to accept the latest supported conda version in ReadTheDocs config.
+    * Set ``docs/conf.py`` to ignore `sphinx_autodoc_typehints.guarded_import` errors raised by `xarray` type guarding.
+* Set `SocketBlockedError` to be a subset of the `Exception` class when `pytest-socket` is not installed. (:pull:`2324`).
 
 v0.60.0 (2026-01-23)
 --------------------

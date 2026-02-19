@@ -1328,9 +1328,11 @@ degree_days_exceedance_date = Temp(
     units="",
     standard_name="day_of_year",
     long_name="Day of year when the integral of mean daily temperature {op} {thresh} exceeds {sum_thresh}",
-    description=lambda **kws: "Day of year when the integral of degree days (mean daily temperature {op} {thresh}) "
-    "exceeds {sum_thresh}"
-    + (", with the cumulative sum starting from {after_date}." if kws["after_date"] is not None else "."),
+    description=lambda **kws: (
+        "Day of year when the integral of degree days (mean daily temperature {op} {thresh}) "
+        "exceeds {sum_thresh}"
+        + (", with the cumulative sum starting from {after_date}." if kws["after_date"] is not None else ".")
+    ),
     abstract="The day of the year when the sum of degree days exceeds a threshold, occurring after a given date. "
     "Degree days are calculated above or below a given temperature threshold.",
     cell_methods="",
