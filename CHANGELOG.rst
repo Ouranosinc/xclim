@@ -4,12 +4,13 @@ Changelog
 
 v0.61.0 (unreleased)
 --------------------
-Contributors to this version: Pascal Bourgault (:user:`aulemahal`), Trevor James Smith (:user:`Zeitsperre`), Éric Dupuis (:user:`coxipi`).
+Contributors to this version: Pascal Bourgault (:user:`aulemahal`), Trevor James Smith (:user:`Zeitsperre`), Hui-Min Wang (:user:`Hem-W`), Éric Dupuis (:user:`coxipi`).
 
 New indicators and features
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 * ``xclim.indices.generic.doymin`` and ``xclim.indices.generic.doymax`` will now return `nan` if all values along the time axis are the same. They now also support all-nan arrays (:pull:`2314`).
     + This changes the behaviour for indicators ``land.snw_max_doy``, ``land.snd_max_doy``, ``land.doy_qmin`` and ``land.doy_qmax``.
+* Added two `zero_inflated` arguments to `standardized_index` and `standardized_precipitation_index` to control how zero-precipitation probabilities are handled. (:issue:`2279`, :pull:`2280`).
 * ``xclim.indices.standardized_precipitation_index`` and ``xclim.indices.standardized_precipitation_evapotranspiration_index`` now can accept `genextreme` and `lognorm` as inputs for `dist`. (:issue:`2326`, :pull:`2327`).
 
 Internal changes
