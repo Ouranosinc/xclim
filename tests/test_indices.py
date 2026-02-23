@@ -1298,6 +1298,70 @@ class TestStandardizedIndices:
             spid[zero_inflated] = spid[zero_inflated].where(spid[zero_inflated].notnull(), drop=True)
         np.testing.assert_equal(np.all(np.not_equal(spid[False].values, spid[True].values)), True)
 
+    @pytest.mark.parametrize(
+        "prob_zero_interpolation, plotting_position_zero",
+        [
+            ("center", "ecdf"),
+            ("upper", "ecdf"),
+            ("center", "weibull"),
+            ("upper", "weibull"),
+        ],
+    )
+    def test_prob_zero_interpolation(self, open_dataset, prob_zero_interpolation, plotting_position_zero):
+        # This tests the theoretical values of the zero_inflated probability method options
+        ds = open_dataset("sdba/CanESM2_1950-2100.nc").isel(location=1).sel(time=slice("1950", "1960"))
+        pr = ds.pr
+
+        # july 1st (doy=180) with 10 years with zero precipitation
+        # 11 years, 10 zeros -> prob_of_zero = 9/11
+        pr[{"time": slice(179, 365 * 11, 365)}] = 0
+        pr[{"time": 179}] = 1.0  # One non-zero value
+        # pr[{"time": 179+365}] = 2.0  # Two non-zero values
+
+        input_params = dict(
+            freq=None,
+            window=1,
+            dist="gamma",
+            method="ML",
+            fitkwargs={},
+            doy_bounds=(180, 180),
+            zero_inflated=True,
+        )
+
+        # Get parameters
+        params = standardized_index_fit_params(pr, **input_params)
+
+        spi = standardized_index(
+            pr,
+            params=params,
+            cal_start=None,
+            cal_end=None,
+            prob_zero_interpolation=prob_zero_interpolation,
+            plotting_position_zero=plotting_position_zero,
+            **input_params,
+        )
+        # Select a zero value
+        spi_val = spi.isel(time=365 + 179).values
+
+        # Calculate number_of_zeros and number_of_notnull directly for doy=180
+        number_of_zeros = (pr.sel(time=pr.time.dt.dayofyear == 180).values == 0.0).sum()
+        number_of_notnull = (~np.isnan(pr.sel(time=pr.time.dt.dayofyear == 180).values)).sum()
+
+        # Compute expected probability based on prob_zero_interpolation and plotting_position_zero
+        # plotting_position_zero determines alpha, beta: ecdf=(0,1), weibull=(0,0)
+        # prob_zero_interpolation determines zero_factor: center=0.5, upper=1
+        alpha, beta = {"ecdf": (0, 1), "weibull": (0, 0)}[plotting_position_zero]
+        zero_factor = {"center": 0.5, "upper": 1}[prob_zero_interpolation]
+        # Formula uses interpolation between rank_1 and rank_n
+        prob_of_zero_rank_1 = (1 - alpha) / (number_of_notnull + 1 - alpha - beta)
+        prob_of_zero_rank_n = (number_of_zeros - alpha) / (number_of_notnull + 1 - alpha - beta)
+        expected_prob = (1 - zero_factor) * prob_of_zero_rank_1 + zero_factor * prob_of_zero_rank_n
+
+        expected_val = scipy.stats.norm.ppf(expected_prob)
+        # Account for clipping in standardized_index
+        expected_val = np.clip(expected_val, -8.21, 8.21)
+        np.testing.assert_allclose(spi_val, expected_val, atol=1e-4)
+
     def test_PWM_and_fitkwargs(self, open_dataset):
         ds = open_dataset("sdba/CanESM2_1950-2100.nc").isel(location=1).sel(time=slice("1950", "1980"))
         pr = ds.pr

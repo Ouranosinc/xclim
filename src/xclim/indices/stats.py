@@ -889,7 +889,12 @@ def standardized_index_fit_params(
     Returns
     -------
     xarray.DataArray
-        Standardized Index fitting parameters. The time dimension of the initial array is reduced to.
+        Standardized Index fitting parameters.
+
+    Warnings
+    --------
+    The coord `prob_of_zero` in the output will be removed in future versions. It can still be computed from new coords
+    as out['number_of_zeros']/out['number_of_notnull']
 
     Notes
     -----
@@ -937,9 +942,13 @@ def standardized_index_fit_params(
         group_handler = group
 
     if zero_inflated:
-        prob_of_zero = da.groupby(group_handler).map(lambda x: (x == 0).sum("time") / x.notnull().sum("time"))
+        number_of_zeros = (da == 0).groupby(group_handler).sum("time")
+        number_of_notnull = da.notnull().groupby(group_handler).sum("time")
         params = da.where(da != 0).groupby(group_handler).map(fit, dist=dist, method=method, **fitkwargs)
-        params["prob_of_zero"] = prob_of_zero
+        params["number_of_zeros"] = number_of_zeros
+        params["number_of_notnull"] = number_of_notnull
+        # FIXME: xclim-v1 – Drop this variable
+        params["prob_of_zero"] = number_of_zeros / number_of_notnull
     else:
         params = da.groupby(group_handler).map(fit, dist=dist, method=method, **fitkwargs)
     cal_range = (
@@ -970,6 +979,8 @@ def standardized_index(
     cal_start: DateStr | None,
     cal_end: DateStr | None,
     params: Quantified | None = None,
+    prob_zero_interpolation: str | float = "upper",
+    plotting_position_zero: str | tuple[float, float] = "ecdf",
     **indexer,
 ) -> xr.DataArray:
     r"""
@@ -978,7 +989,7 @@ def standardized_index(
     This computes standardized indices which measure the deviation of  variables in the dataset compared
     to a reference distribution. The reference is a statistical distribution computed with fitting parameters `params`
     over a given calibration period of the dataset. Those fitting parameters are obtained with
-    ``xclim.standardized_index_fit_params``.
+    :py:func:`xclim.standardized_index_fit_params`.
 
     Parameters
     ----------
@@ -998,8 +1009,9 @@ def standardized_index(
     zero_inflated : bool
         If True, the zeroes of `da` are treated separately.
     fitkwargs : dict, optional
-        Kwargs passed to ``xclim.indices.stats.fit`` used to impose values of certains parameters (`floc`, `fscale`).
-        If method is `PWM`, `fitkwargs` should be empty, except for `floc` with `dist`=`gamma` which is allowed.
+        Kwargs passed to :py:func:`xclim.indices.stats.fit` used to impose values of certains parameters
+        (`floc`, `fscale`). If method is `PWM`, `fitkwargs` should be empty, except for `floc` with `dist`=`gamma`
+        which is allowed.
     cal_start : DateStr, optional
         Start date of the calibration period. A `DateStr` is expected, that is a `str` in format `"YYYY-MM-DD"`.
         Default option `None` means that the calibration period begins at the start of the input dataset.
@@ -1008,8 +1020,22 @@ def standardized_index(
         Default option `None` means that the calibration period finishes at the end of the input dataset.
     params : xarray.DataArray
         Fit parameters.
-        The `params` can be computed using ``xclim.indices.stats.standardized_index_fit_params`` in advance.
+        The `params` can be computed using :py:func:`xclim.indices.stats.standardized_index_fit_params` in advance.
         The output can be given here as input, and it overrides other options.
+    prob_zero_interpolation : {"center", "upper"} or float
+        Interpolation method used to assign a probability to zero values (only used if `zero_inflated` is True).
+        When the data contain multiple zeros, the admissible plotting position interval spans from the first zero rank
+        to the last zero rank. This parameter selects a representative probability within that interval. The default
+        method "upper" assigns the upper bound of the zero-rank interval. The "center" method assigns the
+        midpoint of the zero-rank interval. If a float in [0, 1] is provided, it is used as a linear interpolation
+        factor between the lower (0) and upper (1) zero-rank plotting positions.
+    plotting_position_zero : {"ecdf", "weibull"} or tuple[float, float]
+        Method used to assign a probability to a rank for the zeros (only used if `zero_inflated` is True).
+        "ecdf" (default option) is the empirical cumulative distribution and divides the number or zeros
+        by the total number of observations. "weibull" implements the unbiased version, dividing by the
+        total number of observation plus one. A tuple consisting of two coefficients in [0,1] to relate the
+        number of zeros and the total number of observations. "ecdf" corresponds to (0,1)  and "weibull" to (0,0).
+        See :py:func:`scipy.stats.mstats.plotting_positions`
     **indexer : {dim: indexer, }, optional
         Indexing parameters to compute the indicator on a temporal subset of the data.
         It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
@@ -1043,6 +1069,8 @@ def standardized_index(
     :cite:cts:`mckee_relationship_1993`.
     """
     # use input arguments from ``params`` if it is given
+    if params is None and None in [window, dist, method, zero_inflated]:
+        raise ValueError("If `params` is `None`, `window`, `dist`, `method` and `zero_inflated` must be given.")
     if params is not None:
         freq, window, dist, indexer = (params.attrs[s] for s in ["freq", "window", "scipy_dist", "time_indexer"])
         # Unpack attrs to None and {} if needed
@@ -1053,11 +1081,23 @@ def standardized_index(
                 "Expected either `cal_{start|end}` or `params`, got both. The `params` input overrides other inputs."
                 "If `cal_start`, `cal_end`, `freq`, `window`, and/or `dist` were given as input, they will be ignored."
             )
+        # FIMXE: xclim-v1 – remove 'prob_of_zero' below
+        zero_inflated = any(k in params.attrs for k in ["number_of_zeros", "prob_of_zero"])
 
-    else:
-        for p in [window, dist, method, zero_inflated]:
-            if p is None:
-                raise ValueError("If `params` is `None`, `window`, `dist`, `method` and `zero_inflated` must be given.")
+    # assign values to interp_factor and alpha,beta, if needed
+    if zero_inflated is not None:
+        interp_factor = {"center": 1 / 2, "upper": 1}.get(prob_zero_interpolation, None)
+        if interp_factor is None:
+            if isinstance(prob_zero_interpolation, str):
+                raise ValueError("Accepted strings for `prob_zero_interpolation` are: ['center', 'upper']")
+            interp_factor = prob_zero_interpolation
+
+        alpha_beta = {"ecdf": (0, 1), "weibull": (0, 0)}.get(plotting_position_zero, None)
+        if alpha_beta is None:
+            if isinstance(plotting_position_zero, str):
+                raise ValueError("Accepted strings for `plotting_position_zero` are: ['ecdf', 'weibull']")
+            alpha_beta = plotting_position_zero
+
     # apply resampling and rolling operations
     da, _ = preprocess_standardized_index(da, freq=freq, window=window, **indexer)
     if params is None:
@@ -1070,6 +1110,20 @@ def standardized_index(
             zero_inflated=zero_inflated,
             fitkwargs=fitkwargs,
         )
+    # FIXME: xclim-v1 – Remove this check
+    elif "prob_of_zero" in params.coords and "number_of_zeros" not in params.coords:
+        warnings.warn(
+            "Received `params` computed with an old version of `xclim`. The computation will default to "
+            "`prob_zero_interpolation`=='upper' and `plotting_position_zero` == 'ecdf'. To have access to the new modes"
+            " allowed by the new options `prob_zero_interpolation` and `plotting_position_zero`,"
+            " please recompute `params` with the newest version of `xclim`. Also, be aware that "
+            "the coord `prob_of_zero` will be dropped in a future version. It can be re-computed with "
+            "`params['number_of_zeros']/params['number_of_zeros']`"
+        )
+        params["number_of_zeros"] = params["prob_of_zero"]
+        params["number_of_not_null"] = 0 * params["prob_of_zero"] + 1
+        alpha_beta = (0, 1)
+        interp_factor = 1
 
     # If params only contains a subset of main dataset time grouping
     # (e.g. 8/12 months, etc.), it needs to be broadcasted
@@ -1096,24 +1150,29 @@ def standardized_index(
         # I don't think rechunking is necessary here, need to check
         return _da if not uses_dask(_da) else _da.chunk({"time": -1})
 
-    # this should be restricted to some distributions / in some context
-    zero_inflated = "prob_of_zero" in params.coords
-    prob_of_zero = 0
-    mask = None
-    if zero_inflated:
-        prob_of_zero = reindex_time(params["prob_of_zero"], da, group)
+    params = reindex_time(params, da, group)
+
+    # treat zeros differently when considering zero inflated distributions
+    if "number_of_zeros" in params.coords:
         mask = da != 0
         da = da.where(mask)
-    params = reindex_time(params, da, group)
-    dist_probs = dist_method("cdf", params, da, dist=dist)
-    if zero_inflated:
-        dist_probs = dist_probs.where(mask, 0)
-    # This assumes that values are greater or equal to 0.
-    # It might be useful to define inflated distribution where
-    # the inflated value is not the lower bound, which would warrant
-    # a generalized implementation. For now, this option shall be used with
-    # standardized_precipitation_index where values are not negative.
-    probs = prob_of_zero + ((1 - prob_of_zero) * dist_probs)
+        prob_nonzero = dist_method("cdf", params, da, dist=dist)
+
+        number_of_zeros = params["number_of_zeros"]
+        number_of_notnull = params["number_of_notnull"]
+        # prob_zero_rank_1: plotting position of first zero
+        # prob_zero_rank_n: plotting position of last zero
+        # prob_zero_rank_f: final probability assigned to zeros, interpolated between
+        # rank_1 and rank_n using zero_factor
+        alpha, beta = alpha_beta
+        prob_zero_rank_1 = (1 - alpha) / (number_of_notnull + 1 - alpha - beta)
+        prob_zero_rank_n = (number_of_zeros - alpha) / (number_of_notnull + 1 - alpha - beta)
+        prob_zero_rank_f = (1 - interp_factor) * prob_zero_rank_1 + interp_factor * prob_zero_rank_n
+
+        # For non-zero values, probability is prob_zero_rank_n + (1 - prob_zero_rank_n) * CDF(x)
+        probs = xr.where(mask, prob_zero_rank_n + ((1 - prob_zero_rank_n) * prob_nonzero), prob_zero_rank_f)
+    else:
+        probs = dist_method("cdf", params, da, dist=dist)
 
     params_norm = xr.DataArray(
         [0, 1],
