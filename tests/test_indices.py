@@ -738,6 +738,22 @@ class TestStandardizedIndices:
                 [0.577214, 1.522867, 1.634222, 0.967847, 0.689001],
                 2e-2,
             ),
+            (
+                "MS",
+                1,
+                "genextreme",
+                "ML",
+                [1.916206, 1.756844, 2.412742, -3.042299, 0.813289],
+                0.04,
+            ),
+            (
+                "MS",
+                1,
+                "lognorm",
+                "ML",
+                [1.505534, 1.753165, 2.298732, -3.09, 0.883501],
+                0.04,
+            ),
         ],
     )
     def test_standardized_precipitation_index(
@@ -764,6 +780,7 @@ class TestStandardizedIndices:
         fitkwargs = {}
         if method == "APP":
             fitkwargs["floc"] = 0
+
         params = standardized_index_fit_params(
             pr_cal,
             freq=freq,
@@ -773,6 +790,7 @@ class TestStandardizedIndices:
             fitkwargs=fitkwargs,
             zero_inflated=True,
         )
+
         spi = xci.standardized_precipitation_index(pr, params=params)
         # Only a few moments before year 2000 are tested
         spi = spi.isel(time=slice(-11, -1, 2))
@@ -788,7 +806,7 @@ class TestStandardizedIndices:
         np.testing.assert_allclose(spi.values, values, rtol=0, atol=diff_tol)
 
     @pytest.mark.slow
-    @pytest.mark.parametrize("dist", ["gamma", "fisk"])
+    @pytest.mark.parametrize("dist", ["gamma", "fisk", "lognorm", "genextreme"])
     def test_str_vs_rv_continuous(self, dist, open_dataset):
         ds = open_dataset("sdba/CanESM2_1950-2100.nc").isel(location=1)
         window = 1
@@ -871,6 +889,22 @@ class TestStandardizedIndices:
                 "ML",
                 [0.7041, 1.562985, 1.7041, 1.0388, 0.71645],
                 2e-2,
+            ),
+            (
+                "MS",
+                1,
+                "genextreme",
+                "ML",
+                [1.916205, 1.756845, 3.09, -3.09, 0.813289],
+                0.04,
+            ),
+            (
+                "MS",
+                1,
+                "lognorm",
+                "ML",
+                [1.505439, 1.627014, 2.253865, -3.09, 0.879394],
+                0.04,
             ),
         ],
     )

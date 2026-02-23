@@ -11,6 +11,7 @@ New indicators and features
 * ``xclim.indices.generic.doymin`` and ``xclim.indices.generic.doymax`` will now return `nan` if all values along the time axis are the same. They now also support all-nan arrays (:pull:`2314`).
     + This changes the behaviour for indicators ``land.snw_max_doy``, ``land.snd_max_doy``, ``land.doy_qmin`` and ``land.doy_qmax``.
 * Added two `zero_inflated` arguments to `standardized_index` and `standardized_precipitation_index` to control how zero-precipitation probabilities are handled. (:issue:`2279`, :pull:`2280`).
+* ``xclim.indices.standardized_precipitation_index`` and ``xclim.indices.standardized_precipitation_evapotranspiration_index`` now can accept `genextreme` and `lognorm` as inputs for `dist`. (:issue:`2326`, :pull:`2327`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
@@ -20,6 +21,14 @@ Internal changes
     * Updated the `pre-commit` hooks (`check-jsonschema`) in order to accept the latest supported conda version in ReadTheDocs config.
     * Set ``docs/conf.py`` to ignore `sphinx_autodoc_typehints.guarded_import` errors raised by `xarray` type guarding.
 * Set `SocketBlockedError` to be a subset of the `Exception` class when `pytest-socket` is not installed. (:pull:`2324`).
+
+Breaking changes
+^^^^^^^^^^^^^^^^
+* The choice of `method` "APP" was removed when using a `genextreme` distribution in standardized indices (``xclim.indices.standardized_index`` and related functions). (:issue:`2326`, :pull:`2327`).
+
+Bug fixes
+^^^^^^^^^
+* `dist` in ``xclim.indices.standardized_index`` can now be a `scipy.stats.rv_continuous` as it was planned.  (:issue:`2326`, :pull:`2327`).
 
 v0.60.0 (2026-01-23)
 --------------------

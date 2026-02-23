@@ -1011,7 +1011,7 @@ def standardized_precipitation_index(
     window : int
         Averaging window length relative to the resampling frequency. For example, if `freq="MS"`,
         i.e. a monthly resampling, the window is an integer number of months.
-    dist : {'gamma', 'fisk'} or `rv_continuous` function
+    dist : {'gamma', 'fisk', 'genextreme', 'lognorm'} or `rv_continuous` function
         Name of the univariate distribution, or a callable `rv_continuous` (see :py:mod:`scipy.stats`).
     method : {"APP", "ML", "PWM"}
         Name of the fitting method, such as `ML` (maximum likelihood), `APP` (approximate). The approximate method
@@ -1107,7 +1107,12 @@ def standardized_precipitation_index(
     """
     fitkwargs = fitkwargs or {}
 
-    dist_methods = {"gamma": ["ML", "APP"], "fisk": ["ML", "APP"]}
+    dist_methods = {
+        "fisk": ["ML", "APP"],
+        "gamma": ["ML", "APP"],
+        "genextreme": ["ML"],
+        "lognorm": ["ML", "APP"],
+    }
     if isinstance(dist, str):
         if dist in dist_methods:
             if method not in dist_methods[dist]:
@@ -1169,7 +1174,7 @@ def standardized_precipitation_evapotranspiration_index(
     window : int
         Averaging window length relative to the resampling frequency. For example, if `freq="MS"`, i.e. a monthly
         resampling, the window is an integer number of months.
-    dist : {'gamma', 'fisk'} or `rv_continuous` function
+    dist : {'gamma', 'fisk', 'genextreme', 'lognorm'} or `rv_continuous` function
         Name of the univariate distribution, or a callable `rv_continuous` (see :py:mod:`scipy.stats`).
     method : {"APP", "ML", "PWM"}
         Name of the fitting method, such as `ML` (maximum likelihood), `APP` (approximate). The approximate method
@@ -1204,8 +1209,12 @@ def standardized_precipitation_evapotranspiration_index(
     xclim.indices.stats.standardized_index_fit_params : Standardized Index Fit Params.
     """
     fitkwargs = fitkwargs or {}
-
-    dist_methods = {"gamma": ["ML", "APP"], "fisk": ["ML", "APP"]}
+    dist_methods = {
+        "fisk": ["ML", "APP"],
+        "gamma": ["ML", "APP"],
+        "genextreme": ["ML"],
+        "lognorm": ["ML", "APP"],
+    }
     if isinstance(dist, str):
         if dist in dist_methods:
             if method not in dist_methods[dist]:
