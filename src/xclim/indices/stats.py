@@ -530,6 +530,19 @@ def _fit_start(x, dist: str, **fitkwargs: Any) -> tuple[tuple, dict]:
     m = x.mean()
     v = x.var()
 
+    def _loc_estimation(x):
+        # muralidhar_1992 would suggest the following, but it seems more unstable
+        # using cooke_1979 for now
+        # n = len(x)
+        # cv = x.std() / x.mean()
+        # p = (0.48265 + 0.32967 * cv) * n ** (-0.2984 * cv)
+        # xp = xs[int(p/100*n)]
+        xs = sorted(x)
+        x1, x2, xn = xs[0], xs[1], xs[-1]
+        xp = x2
+        loc0 = (x1 * xn - xp**2) / (x1 + xn - 2 * xp)
+        return loc0 if loc0 < x1 else x1 - 0.0001 * np.abs(x1)
+
     if dist == "genextreme":
         s = np.sqrt(6 * v) / np.pi
         return (0.1,), {"loc": m - 0.57722 * s, "scale": s}
@@ -553,20 +566,7 @@ def _fit_start(x, dist: str, **fitkwargs: Any) -> tuple[tuple, dict]:
         return (chat,), {"loc": loc, "scale": scale}
 
     if dist in ["gamma"]:
-        if "floc" in fitkwargs:
-            loc0 = fitkwargs["floc"]
-        else:
-            xs = sorted(x)
-            x1, x2, xn = xs[0], xs[1], xs[-1]
-            # muralidhar_1992 would suggest the following, but it seems more unstable
-            # using cooke_1979 for now
-            # n = len(x)
-            # cv = x.std() / x.mean()
-            # p = (0.48265 + 0.32967 * cv) * n ** (-0.2984 * cv)
-            # xp = xs[int(p/100*n)]
-            xp = x2
-            loc0 = (x1 * xn - xp**2) / (x1 + xn - 2 * xp)
-            loc0 = loc0 if loc0 < x1 else (0.9999 * x1 if x1 > 0 else 1.0001 * x1)
+        loc0 = fitkwargs.get("floc", _loc_estimation(x))
         x_pos = x - loc0
         x_pos = x_pos[x_pos > 0]
         m = x_pos.mean()
@@ -579,13 +579,7 @@ def _fit_start(x, dist: str, **fitkwargs: Any) -> tuple[tuple, dict]:
         return (a0,), kwargs
 
     if dist in ["fisk"]:
-        if "floc" in fitkwargs:
-            loc0 = fitkwargs["floc"]
-        else:
-            xs = sorted(x)
-            x1, x2, xn = xs[0], xs[1], xs[-1]
-            loc0 = (x1 * xn - x2**2) / (x1 + xn - 2 * x2)
-            loc0 = loc0 if loc0 < x1 else (0.9999 * x1 if x1 > 0 else 1.0001 * x1)
+        loc0 = fitkwargs.get("floc", _loc_estimation(x))
         x_pos = x - loc0
         # TODO: change this?
         # not necessary for log-logistic, according to SPEI package
@@ -605,13 +599,7 @@ def _fit_start(x, dist: str, **fitkwargs: Any) -> tuple[tuple, dict]:
         return (c0,), kwargs
 
     if dist in ["lognorm"]:
-        if "floc" in fitkwargs:
-            loc0 = fitkwargs["floc"]
-        else:
-            # muralidhar_1992
-            xs = sorted(x)
-            x1, xn, xp = xs[0], xs[-1], xs[int(len(x) / 2)]
-            loc0 = (x1 * xn - xp**2) / (x1 + xn - 2 * xp)
+        loc0 = fitkwargs.get("floc", _loc_estimation(x))
         x_pos = x - loc0
         x_pos = x_pos[x_pos > 0]
         # MLE estimation
@@ -852,7 +840,7 @@ def standardized_index_fit_params(
     dist_and_methods = {
         "gamma": ["ML", "APP"],
         "fisk": ["ML", "APP"],
-        "genextreme": ["ML", "APP"],
+        "genextreme": ["ML"],
         "lognorm": ["ML", "APP"],
     }
     dist = get_dist(dist)

@@ -541,7 +541,7 @@ def standardized_groundwater_index(
 
     dist_methods = {
         "gamma": ["ML", "APP"],
-        "genextreme": ["ML", "APP"],
+        "genextreme": ["ML"],
         "lognorm": ["ML", "APP"],
     }
     if isinstance(dist, str):
