@@ -843,12 +843,12 @@ def standardized_index_fit_params(
         "genextreme": ["ML"],
         "lognorm": ["ML", "APP"],
     }
+    if isinstance(dist, str):
+        if dist not in dist_and_methods:
+            raise NotImplementedError(f"The distribution `{dist}` is not supported.")
+        if method not in dist_and_methods[dist]:
+            raise NotImplementedError(f"The method `{method}` is not supported for distribution `{dist}`.")
     dist = get_dist(dist)
-    if method != "PWM":
-        if dist.name not in dist_and_methods:
-            raise NotImplementedError(f"The distribution `{dist.name}` is not supported.")
-        if method not in dist_and_methods[dist.name]:
-            raise NotImplementedError(f"The method `{method}` is not supported for distribution `{dist.name}`.")
     da, group = preprocess_standardized_index(da, freq, window, **indexer)
     if group == "time.week":
         group_handler = da.time.dt.isocalendar().week
