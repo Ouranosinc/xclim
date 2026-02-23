@@ -39,7 +39,10 @@ try:
     from pytest_socket import SocketBlockedError
 except ImportError:
     pytest = None
-    SocketBlockedError = None
+
+    class SocketBlockedError(Exception):
+        pass
+
 
 try:
     import pooch
