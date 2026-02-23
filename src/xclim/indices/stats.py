@@ -792,7 +792,7 @@ def standardized_index_fit_params(
     window : int
         Averaging window length relative to the resampling frequency. For example, if `freq="MS"`,
         i.e. a monthly resampling, the window is an integer number of months.
-    dist : {'gamma', 'fisk'} or rv_continuous distribution object
+    dist : {'gamma', 'fisk', 'genextreme', 'lognorm'} or rv_continuous distribution object
         Name of the univariate distribution. (see :py:mod:`scipy.stats`).
     method : {'ML', 'APP', 'PWM'}
         Name of the fitting method, such as `ML` (maximum likelihood), `APP` (approximate). The approximate method
@@ -820,8 +820,10 @@ def standardized_index_fit_params(
     Supported combinations of `dist` and `method` are:
     * Gamma ("gamma") : "ML", "APP"
     * Log-logistic ("fisk") : "ML", "APP"
-    * "APP" method only supports two-parameter distributions. Parameter `loc` will be set to 0
-    (setting `floc=0` in `fitkwargs`).
+    * Generalized extreme value ("genextreme") : "ML"
+    * Log-normal ("lognorm") : "ML", "APP"
+    * "APP" method only supports two-parameter distributions. Parameter `loc` must be set to 0
+    through `floc=0` in `fitkwargs`.
     * Otherwise, generic `rv_continuous` methods can be used. This includes distributions from `lmoments3`
     which should be used with `method="PWM"`.
 
@@ -845,12 +847,19 @@ def standardized_index_fit_params(
     dist_and_methods = {
         "gamma": ["ML", "APP"],
         "fisk": ["ML", "APP"],
-        "genextreme": ["ML"],
+        # FIXME: xclim-v1 — remove "APP"
+        "genextreme": ["ML", "APP"],
         "lognorm": ["ML", "APP"],
     }
     if isinstance(dist, str):
         if dist not in dist_and_methods:
             raise NotImplementedError(f"The distribution `{dist}` is not supported.")
+        # FIXME: xclim-v1 — remove this warning
+        if dist == "genextreme" and method == "APP":
+            warnings.warn(
+                "The method 'APP' will not be available for distribution 'genextreme' in the future."
+                " The shape parameter is fixed in this approximation and should not be used as a final answer."
+            )
         if method not in dist_and_methods[dist]:
             raise NotImplementedError(f"The method `{method}` is not supported for distribution `{dist}`.")
     dist = get_dist(dist)

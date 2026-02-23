@@ -234,7 +234,11 @@ def standardized_streamflow_index(
     >>> ssi_3 = standardized_streamflow_index(q, params=params)
     """
     fitkwargs = fitkwargs or {}
-    dist_methods = {"genextreme": ["ML", "APP"], "fisk": ["ML", "APP"]}
+    dist_methods = {
+        # FIXME: xclim-v1 — remove "APP"
+        "genextreme": ["ML", "APP"],
+        "fisk": ["ML", "APP"],
+    }
     if isinstance(dist, str):
         if dist in dist_methods:
             if method not in dist_methods[dist]:
@@ -541,7 +545,8 @@ def standardized_groundwater_index(
 
     dist_methods = {
         "gamma": ["ML", "APP"],
-        "genextreme": ["ML"],
+        # FIXME: xclim-v1 — remove "APP"
+        "genextreme": ["ML", "APP"],
         "lognorm": ["ML", "APP"],
     }
     if isinstance(dist, str):
