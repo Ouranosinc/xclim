@@ -58,16 +58,6 @@ def sample_func_kwargs(a: int, **kwargs):
     return {"a": a, **kwargs}
 
 
-@pytest.fixture
-def series_ind():
-    return pd.Series([1, 2, 3, 4], name="value")
-
-
-@pytest.fixture
-def df_ind():
-    return pd.DataFrame({"value1": [1, 2, 3, 4], "value2": [1, 1, 2, 2]})
-
-
 @validate_parameters
 def add(x: int, y: int) -> int:
     return x + y
