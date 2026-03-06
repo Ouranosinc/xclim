@@ -669,7 +669,7 @@ def to_agg_units(
     # Note: older xarray drops units while modern xarray preserves them
     >>> Ndays.attrs.get("units")  # doctest: +SKIP
     'degC'
-    >>> Ndays = to_agg_units(Ndays, tas, op="count")
+    >>> Ndays = to_agg_units(Ndays, tas, "count")
     >>> Ndays.units
     'd'
 
