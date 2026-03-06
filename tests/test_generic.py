@@ -82,6 +82,26 @@ class TestFlowGeneric:
         assert dmx.values == [40]
         assert dmn.values == [50]
 
+    @pytest.mark.parametrize("use_dask", [True, False])
+    def test_doyminmax_novariance(self, q_series, use_dask):
+        q = q_series(np.ones(365))
+        if use_dask:
+            q = q.chunk({"time": 200})
+        dmx = generic.doymax(q).load()
+        dmn = generic.doymin(q).load()
+        assert dmx.isnull().all()
+        assert dmn.isnull().all()
+
+    @pytest.mark.parametrize("use_dask", [True, False])
+    def test_doyminmax_allna(self, q_series, use_dask):
+        q = q_series(np.ones(365)) * np.nan
+        if use_dask:
+            q = q.chunk({"time": 200})
+        dmx = generic.doymax(q).load()
+        dmn = generic.doymin(q).load()
+        assert dmx.isnull().all()
+        assert dmn.isnull().all()
+
 
 class TestStatisticsBetweenDates:
     def test_calendars(self):
