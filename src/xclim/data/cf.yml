@@ -1,16 +1,25 @@
-doc: "\n  ===================\n  CF Standard indices\n  ===================\n\n  Indicators\
-  \ found here are defined by the `clix-meta project`_. Adapted documentation from\
-  \ that repository follows:\n\n    This repository aims to provide\
-  \ a platform for thinking about, and developing, a unified view of metadata\
-  \ elements required to describe climate indices (aka climate indicators).\n\n\
-  \  All indicators defined here use generic functions defined in :py:mod:`xclim.indices.clix`.\
-  \ This module tries to\n  follow the clix-meta definitions as closely, which means\
-  \ it can have meaningful differences with the rest of xclim.\n\n  For example, indicators\
-  \ where a number of occurrences (usually days) is counted will use units \"1\",\
-  \ instead of\n  having temporal dimensions (i.e. \"days\") like xclim does elsewhere.\n\
-  \n  However, indicators calculating a date will have no units in this module. \"\
-  clix-meta\" suggests \"day\", but that\n  already means something else.\n\n  ..\
-  \ _clix-meta project: https://github.com/clix-meta/clix-meta\n"
+doc: |
+  ===================
+  CF Standard indices
+  ===================
+
+  Indicators found here are defined by the `clix-meta project`_. Adapted documentation from
+  that repository follows:
+
+  This repository aims to provide a platform for thinking about, and developing, a unified view of metadata
+  elements required to describe climate indices (aka climate indicators).
+
+  All indicators defined here use generic functions defined in :py:mod:`xclim.indices.clix`.
+  This module tries to follow the clix-meta definitions as closely, which meansit can have meaningful differences
+  with the rest of xclim.
+
+  For example, indicators where a number of occurrences (usually days) is counted will use units "1",
+  instead of having temporal dimensions (i.e. "days") like xclim does elsewhere.
+
+  However, indicators calculating a date will have no units in this module. "clix-meta" suggests "day", but that
+  already means something else.
+
+  .._clix-meta project: https://github.com/clix-meta/clix-meta
 indicators:
   cdd:
     cf_attrs:

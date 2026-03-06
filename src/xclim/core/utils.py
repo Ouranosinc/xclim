@@ -748,7 +748,7 @@ def make_clix_meta_yaml(  # noqa: C901
 
     freq_defs = {"annual": "YS", "seasonal": "QS-DEC", "monthly": "MS", "weekly": "W"}
 
-    with open(raw, encoding="utf-8") as f:
+    with Path(raw).open(encoding="utf-8") as f:
         src = safe_load(f)
 
     yml = {}
@@ -764,7 +764,7 @@ def make_clix_meta_yaml(  # noqa: C901
       elements required to describe climate indices (aka climate indicators).
 
   All indicators defined here use generic functions defined in :py:mod:`xclim.indices.clix`. This module tries to
-  follow the clix-meta definitions as closely, which means it can have meaningful differences with the rest of xclim.
+  follow the clix-meta definitions closely, which means it can have meaningful differences with the rest of xclim.
 
   For example, indicators where a number of occurrences (usually days) is counted will use units "1", instead of
   having temporal dimensions (i.e. "days") like xclim does elsewhere.
@@ -855,7 +855,7 @@ def make_clix_meta_yaml(  # noqa: C901
 
     yml["indicators"] = indicators
 
-    with open(adapted, "w", encoding="utf-8") as f:
+    with Path(adapted).open("w", encoding="utf-8") as f:
         safe_dump(yml, f)
 
 

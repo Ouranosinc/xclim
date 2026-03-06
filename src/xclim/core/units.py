@@ -635,7 +635,7 @@ def to_agg_units(
     orig : xr.DataArray
         The original array before the aggregation operation,
         used to infer the sampling units and get the variable units.
-    reducer : {'min', 'max', 'mean', 'std', 'var', 'doymin', 'doymax', 'count', 'integral', 'sum'} | Callable
+    reducer : {'min', 'max', 'mean', 'std', 'var', 'doymin', 'doymax', 'count', 'integral', 'sum'} or Callable
         The type of aggregation operation performed. "integral" is mathematically equivalent to "sum",
         but the units are multiplied by the timestep of the data (requires an inferrable frequency).
     dim : str
@@ -647,7 +647,8 @@ def to_agg_units(
     Returns
     -------
     xr.DataArray
-        The DataArray with aggregated values, maybe converted to simplified units.
+        The DataArray with aggregated values.
+        Depending on configurations, units may also be converted or simplified.
 
     Examples
     --------
@@ -668,7 +669,7 @@ def to_agg_units(
     # Note: older xarray drops units while modern xarray preserves them
     >>> Ndays.attrs.get("units")  # doctest: +SKIP
     'degC'
-    >>> Ndays = to_agg_units(Ndays, tas, op="count")
+    >>> Ndays = to_agg_units(Ndays, tas, "count")
     >>> Ndays.units
     'd'
 
@@ -760,8 +761,8 @@ def is_temporal_rate(da: xr.DataArray):
     Returns
     -------
     bool or None
-        True if the standard name is a rate, False if it is an amount
-        and None if there is not standard name or if it is not known.
+        True if the standard name is a rate, False if it is an amount, and
+        None if there is no standard name or if the standard name is not known.
 
     See Also
     --------

@@ -18,6 +18,8 @@ New indicators and features
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
+* Major refactor of ``xclim.indices.generic`` to reduce duplication and harmonize signatures (:pull:`2258`).
+    * Generic functions from ``clix-meta`` are now in their own submodule ``xclim.indices.clix``, some indicators in ``xclim.cf`` have changed.
 * Installation recipes have been significantly modified to mimic conventions employed by `xarray` (:pull:`2316`). Most development-related recipes are now installed via ``dependency-groups`` (`PEP-735 <https://peps.python.org/pep-0735/>`_) and ``optional-dependencies`` are as follows:
     * ``dependency-groups``: ``lint`` (linting tools), ``notebooks`` (minimum for interactive notebooks), ``test`` (minimum for running tests), ``docs`` (minimum for building docs), ``test-notebooks`` (minimum for running notebook tests), ``dev`` (full suite for local development).
     * ``optional-dependencies``: ``bias-adjustment`` (`xsdba` and others), ``performance`` (speedups), ``plot`` (plotting), ``types`` (static typing support), ``complete`` (all extras).
@@ -28,6 +30,25 @@ Internal changes
 * The `Makefile` has been adjusted to install libraries in advance (via ``python -m pip install --silent --group ...``) when attempting to run commands reliant on specific Python tools. (:pull:`2316`).
 * `tox.toml` has been updated to use ``dependency-groups`` to determine necessary libraries needed for environments, and relies entirely on the `Makefile` for running checks. (:pull:`2316`).
 * Documentation has been adjusted to reflect changes to environment setup required by developers/contributors. (:pull:`2316`).
+
+v0.61.0 (unreleased)
+--------------------
+Contributors to this version: Pascal Bourgault (:user:`aulemahal`), Trevor James Smith (:user:`Zeitsperre`), Hui-Min Wang (:user:`Hem-W`), Éric Dupuis (:user:`coxipi`).
+
+New indicators and features
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+* ``xclim.indices.generic.doymin`` and ``xclim.indices.generic.doymax`` will now return `nan` if all values along the time axis are the same. They now also support all-nan arrays (:pull:`2314`).
+    + This changes the behaviour for indicators ``land.snw_max_doy``, ``land.snd_max_doy``, ``land.doy_qmin`` and ``land.doy_qmax``.
+* Added two `zero_inflated` arguments to `standardized_index` and `standardized_precipitation_index` to control how zero-precipitation probabilities are handled. (:issue:`2279`, :pull:`2280`).
+
+Internal changes
+^^^^^^^^^^^^^^^^
+* Documentation adjustments. (:pull:`2325`):
+    * Updated the `intersphinx` directives to point at new `xsdba` sphinx documentation targets.
+    * Updated the ReadTheDocs configuration to build docs with an older Python version and a newer conda version.
+    * Updated the `pre-commit` hooks (`check-jsonschema`) in order to accept the latest supported conda version in ReadTheDocs config.
+    * Set ``docs/conf.py`` to ignore `sphinx_autodoc_typehints.guarded_import` errors raised by `xarray` type guarding.
+* Set `SocketBlockedError` to be a subset of the `Exception` class when `pytest-socket` is not installed. (:pull:`2324`).
 
 v0.60.0 (2026-01-23)
 --------------------
@@ -85,7 +106,6 @@ New indicators and features
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
-* Generic functions from ``clix-meta`` are now in their own submodule ``xclim.indices.clix``. Many ``xclim.indices.generic`` functions have been refactored to reduce duplication and harmonize signatures.
 * The relative humidity computations from specific humidity, pressure and temperature (``vapor_pressure`` and ``relative_humidity``) were modified to use the fraction of vapour pressure to saturation vapour pressure instead of an incomplete equation with the mixing ratios. Changes are small, but sometimes not negligible. (:pull:`2254`).
 * `black` and `blackdoc` are no longer required for development. `ruff` is now exclusively used for code and code-block formatting. (:pull:`2249`).
 * Python HDF5 libraries now have lower pins to ensure modern versions are preferably installed (`h5netcdf >=1.5.0` and `h5py >=3.12.1`) (:pull:`2253`).

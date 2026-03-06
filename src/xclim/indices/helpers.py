@@ -66,7 +66,7 @@ BINARY_OPS = {">": "gt", "<": "lt", ">=": "ge", "<=": "le", "==": "eq", "!=": "n
 
 def get_binary_op(condition: Condition, constrain: Sequence[Condition] | None = None) -> Callable:
     """
-    Get python's comparing function according to its name of representation and validate allowed usage.
+    Get the Python comparison function according to its name or representation and validate allowed usage.
 
     Accepted condition strings are keys and values of :py:data:`BINARY_OPS`.
 
@@ -1179,7 +1179,7 @@ def resample_map(
     def _resample_map(obj_chnk, dm, frq, rs_kws, fun, mp_kws):
         return obj_chnk.resample({dm: frq}, **rs_kws).map(fun, **mp_kws)
 
-    # Template. We are hoping that this takes a negligeable time as it is never loaded.
+    # Template. We are hoping that this takes a negligible time as it is never loaded.
     template = obj_rechunked.resample(**{dim: freq}, **resample_kwargs).first()
 
     # New chunks along the time dim : infer the number of elements resulting from the resampling of each chunk

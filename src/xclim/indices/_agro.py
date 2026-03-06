@@ -994,6 +994,8 @@ def standardized_precipitation_index(
     cal_start: DateStr | None = None,
     cal_end: DateStr | None = None,
     params: Quantified | None = None,
+    prob_zero_interpolation: str | float = "upper",
+    plotting_position_zero: str | tuple[float, float] = "ecdf",
     **indexer,
 ) -> xarray.DataArray:
     r"""
@@ -1028,6 +1030,20 @@ def standardized_precipitation_index(
         Fit parameters.
         The `params` can be computed using ``xclim.indices.stats.standardized_index_fit_params`` in advance.
         The output can be given here as input, and it overrides other options.
+    prob_zero_interpolation : {"center", "upper"} or float
+        Interpolation method used to assign a probability to zero values (only used if `zero_inflated` is True).
+        When the data contain multiple zeros, the admissible plotting position interval spans from the first zero rank
+        to the last zero rank. This parameter selects a representative probability within that interval. The default
+        method "upper" assigns the upper bound of the zero-rank interval. The "center" method assigns the
+        midpoint of the zero-rank interval. If a float in [0, 1] is provided, it is used as a linear interpolation
+        factor between the lower (0) and upper (1) zero-rank plotting positions.
+    plotting_position_zero : {"ecdf", "weibull"} or tuple[float, float]
+        Method used to assign a probability to a rank for the zeros (only used if `zero_inflated` is True).
+        "ecdf" (default option) is the empirical cumulative distribution and divides the number or zeros
+        by the total number of observations. "weibull" implements the unbiased version, dividing by the
+        total number of observation plus one. A tuple consisting of two coefficients in [0,1] to relate the
+        number of zeros and the total number of observations. "ecdf" corresponds to (0,1)  and "weibull" to (0,0).
+        See :py:func:`scipy.stats.mstats.plotting_positions`
     **indexer : {dim: indexer}, optional
         Indexing parameters to compute the indicator on a temporal subset of the data.
         It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
@@ -1056,7 +1072,7 @@ def standardized_precipitation_index(
 
     References
     ----------
-    :cite:cts:`mckee_relationship_1993`
+    :cite:cts:`mckee_relationship_1993,stagge_candidate_2015`
 
     Examples
     --------
@@ -1112,6 +1128,8 @@ def standardized_precipitation_index(
         cal_start=cal_start,
         cal_end=cal_end,
         params=params,
+        prob_zero_interpolation=prob_zero_interpolation,
+        plotting_position_zero=plotting_position_zero,
         **indexer,
     )
 

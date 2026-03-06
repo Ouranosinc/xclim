@@ -185,7 +185,7 @@ indices:
     def test_simple_clix_meta_adaptor(self, tmp_path):
         src_yaml = tmp_path.joinpath("test.yaml")
         test_yaml = tmp_path.joinpath("test.yaml")
-        with open(src_yaml, "w") as f:
+        with Path(src_yaml).open("w") as f:
             f.write(self.cdd)
 
         make_clix_meta_yaml(src_yaml, test_yaml)

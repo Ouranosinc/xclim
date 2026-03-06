@@ -17,10 +17,10 @@ from collections.abc import Callable
 
 import xarray as xr
 
-from xclim.core.utils import lazy_indexing, uses_dask
+__all__ = ["XCLIM_OPS", "doymax", "doymin"]
 
 
-def doymax(da: xr.DataArray, dim: str = "time") -> xr.DataArray:
+def doymax(da: xr.DataArray) -> xr.DataArray:
     """
     Return the day of year of the maximum value.
 
@@ -28,25 +28,20 @@ def doymax(da: xr.DataArray, dim: str = "time") -> xr.DataArray:
     ----------
     da : xr.DataArray
         The DataArray to process.
-    dim : str
-        Name of the dimension to reduce.
 
     Returns
     -------
     xr.DataArray
         The day of year of the maximum value.
+        If all values are the same, NaN is returned.
     """
-    i = da.argmax(dim=dim)
-    doy = da.time.dt.dayofyear
-
-    if uses_dask(da):
-        out = lazy_indexing(doy, i, dim).astype(doy.dtype)
-    else:
-        out = doy.isel(time=i)
-    return out
+    tmax = da.idxmax("time")
+    std = da.std("time")
+    tmax = tmax.where(std != 0)
+    return tmax.dt.dayofyear
 
 
-def doymin(da: xr.DataArray, dim: str = "time") -> xr.DataArray:
+def doymin(da: xr.DataArray) -> xr.DataArray:
     """
     Return the day of year of the minimum value.
 
@@ -54,23 +49,17 @@ def doymin(da: xr.DataArray, dim: str = "time") -> xr.DataArray:
     ----------
     da : xr.DataArray
         The DataArray to process.
-    dim : str
-        Name of the dimension to reduce.
 
     Returns
     -------
     xr.DataArray
         The day of year of the minimum value.
+        If all values are the same, NaN is returned.
     """
-    i = da.argmin(dim=dim)
-    doy = da.time.dt.dayofyear
-
-    if uses_dask(da):
-        out = lazy_indexing(doy, i, dim).astype(doy.dtype)
-    else:
-        out = doy.isel(time=i)
-
-    return out
+    tmax = da.idxmin("time")
+    std = da.std("time")
+    tmax = tmax.where(std != 0)
+    return tmax.dt.dayofyear
 
 
 XCLIM_OPS: dict[str, Callable] = {"doymin": doymin, "doymax": doymax}

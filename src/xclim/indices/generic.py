@@ -699,11 +699,11 @@ def spell_length_statistics(
     >>> pram = rate2amount(pr, out_units="mm")
     >>> spell_length_statistics(
     ...     pram,
-    ...     thresh="20 mm",
     ...     window=5,
-    ...     op=">=",
-    ...     win_reducer="sum",
-    ...     spell_reducer="max",
+    ...     window_statistic="sum",
+    ...     condition=">=",
+    ...     thresh="20 mm",
+    ...     statistic="max",
     ...     freq="YS",
     ... )
 
@@ -864,7 +864,7 @@ def season(
 
     Examples
     --------
-    >>> season(tas, thresh="0 °C", window=5, op=">", stat="start", freq="YS")
+    >>> season(tas, thresh="0 °C", window=5, condition=">", aspect="start", freq="YS")
 
     Returns the start of the "frost-free" season. The season starts with 5 consecutive days with mean temperature
     above 0°C and ends with as many days under or equal to 0°C, and end does not need to be found for a
@@ -872,11 +872,11 @@ def season(
 
     >>> season(
     ...     pr,
+    ...     condition="<=",
     ...     thresh="2 mm/d",
     ...     window=7,
-    ...     op="<=",
     ...     mid_date="08-01",
-    ...     stat="length",
+    ...     aspect="length",
     ...     freq="YS",
     ... )
 
