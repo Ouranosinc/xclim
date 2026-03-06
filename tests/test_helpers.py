@@ -5,10 +5,10 @@ import pandas as pd
 import pytest
 import xarray as xr
 
+from xclim.compute import helpers
 from xclim.core.options import set_options
 from xclim.core.units import convert_units_to
 from xclim.core.utils import uses_dask
-from xclim.indices import helpers
 from xclim.testing.helpers import assert_lazy
 
 

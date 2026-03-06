@@ -24,13 +24,13 @@ from numpy import __version__ as __numpy_version__
 from packaging.version import Version
 from pint import __version__ as __pint_version__
 
-from xclim import indices as xci
+from xclim import compute as xci
+from xclim.compute.converters import prsnd_to_prsn
+from xclim.compute.stats import standardized_index, standardized_index_fit_params
 from xclim.core import ValidationError
 from xclim.core.calendar import percentile_doy
 from xclim.core.options import set_options
 from xclim.core.units import convert_units_to, units
-from xclim.indices.converters import prsnd_to_prsn
-from xclim.indices.stats import standardized_index, standardized_index_fit_params
 
 K2C = 273.15
 

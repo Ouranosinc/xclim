@@ -312,7 +312,7 @@ def dataflags(ctx, variables, raise_flags, append, dims, freq):  # numpydoc igno
 
 @click.command(short_help="List indicators.")
 @click.option("-i", "--info", is_flag=True, help="Prints more details for each indicator.")
-def indices(info):  # numpydoc ignore=PR01
+def indicators(info):  # numpydoc ignore=PR01
     """List all indicators."""
     formatter = click.HelpFormatter()
     formatter.write_heading("Listing all available indicators for computation.")
@@ -368,7 +368,7 @@ class XclimCli(click.Group):
     def list_commands(self, ctx) -> list[str, str, str, str, str, str]:  # numpydoc ignore=PR01,RT01
         """Return the available commands (other than the indicators)."""
         return (
-            "indices",
+            "list",
             "info",
             "dataflags",
             "prefetch_testing_data",
@@ -380,7 +380,7 @@ class XclimCli(click.Group):
         """Return the requested command."""
         command = {
             "dataflags": dataflags,
-            "indices": indices,
+            "list": indicators,
             "info": info,
             "prefetch_testing_data": prefetch_testing_data,
             "release_notes": release_notes,
@@ -395,7 +395,7 @@ class XclimCli(click.Group):
     cls=XclimCli,
     chain=True,
     context_settings=CONTEXT_SETTINGS,
-    help="Command line tool to compute indices on netCDF datasets. Indicators are referred to by their "
+    help="Command line tool to compute indicators on netCDF datasets. Indicators are referred to by their "
     "(case-insensitive) identifier, as in xclim.core.indicator.registry.",
     invoke_without_command=True,
     subcommand_metavar="INDICATOR1 [OPTIONS] ... [INDICATOR2 [OPTIONS] ... ] ...",

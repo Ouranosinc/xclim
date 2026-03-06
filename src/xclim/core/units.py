@@ -1294,7 +1294,7 @@ def _check_output_has_units(
     """
     Perform very basic sanity check on the output.
 
-    Indices are responsible for unit management. If this fails, it's a developer's error.
+    Compute functions are responsible for unit management. If this fails, it's a developer's error.
     """
     if isinstance(out, xr.Dataset):
         out = out.data_vars.values()
@@ -1303,7 +1303,7 @@ def _check_output_has_units(
 
     for outd in out:
         if "units" not in outd.attrs:
-            raise ValueError("No units were assigned in one of the indice's outputs.")
+            raise ValueError("No units were assigned in one of the compute function's outputs.")
         outd.attrs["units"] = ensure_cf_units(outd.attrs["units"])
 
 

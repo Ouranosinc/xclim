@@ -4,10 +4,10 @@ from __future__ import annotations
 
 import warnings
 
+from xclim.compute import converters
 from xclim.core.cfchecks import cfcheck_from_name
 from xclim.core.indicator import Indicator
 from xclim.core.utils import InputKind
-from xclim.indices import converters
 
 __all__ = [
     "clearness_index",

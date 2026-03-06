@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
+from xclim.compute.generic import select_resample_op
+from xclim.compute.stats import fit as _fit
+from xclim.compute.stats import frequency_analysis
 from xclim.core.indicator import ReducingIndicator, ResamplingIndicator
-from xclim.indices.generic import select_resample_op
-from xclim.indices.stats import fit as _fit
-from xclim.indices.stats import frequency_analysis
 
 __all__ = ["fit", "return_level", "stats"]
 

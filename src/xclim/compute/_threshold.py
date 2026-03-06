@@ -8,6 +8,19 @@ from typing import Literal
 import numpy as np
 import xarray
 
+from xclim.compute import run_length as rl
+from xclim.compute.generic import (
+    bivariate_count_occurrences,
+    compare,
+    count_occurrences,
+    cumulative_difference,
+    domain_count,
+    first_day_threshold_reached,
+    season,
+    spell_length_statistics,
+    threshold_count,
+)
+from xclim.compute.helpers import resample_map
 from xclim.core import DayOfYearStr, Quantified
 from xclim.core.calendar import doy_from_string, get_calendar, select_time
 from xclim.core.missing import at_least_n_valid
@@ -21,19 +34,6 @@ from xclim.core.units import (
     units2pint,
 )
 from xclim.core.utils import deprecated
-from xclim.indices import run_length as rl
-from xclim.indices.generic import (
-    bivariate_count_occurrences,
-    compare,
-    count_occurrences,
-    cumulative_difference,
-    domain_count,
-    first_day_threshold_reached,
-    season,
-    spell_length_statistics,
-    threshold_count,
-)
-from xclim.indices.helpers import resample_map
 
 # Frequencies : YS: year start, QS-DEC: seasons starting in december, MS: month start
 # See http://pandas.pydata.org/pandas-docs/stable/timeseries.html#offset-aliases
@@ -720,7 +720,7 @@ def daily_pr_intensity(
     The following would compute for each grid cell of file `pr.day.nc` the average precipitation fallen over days with
     precipitation >= 5 mm at seasonal frequency, i.e. DJF, MAM, JJA, SON, DJF, etc.:
 
-    >>> from xclim.indices import daily_pr_intensity
+    >>> from xclim.compute import daily_pr_intensity
     >>> pr = xr.open_dataset(path_to_pr_file).pr
     >>> daily_int = daily_pr_intensity(pr, thresh="5 mm/day", freq="QS-DEC")
     """
@@ -1166,7 +1166,7 @@ def growing_season_length(
 
     Examples
     --------
-    >>> from xclim.indices import growing_season_length
+    >>> from xclim.compute import growing_season_length
     >>> tas = xr.open_dataset(path_to_tas_file).tas
 
     For the Northern Hemisphere:
@@ -1248,7 +1248,7 @@ def frost_season_length(
 
     Examples
     --------
-    >>> from xclim.indices import frost_season_length
+    >>> from xclim.compute import frost_season_length
     >>> tasmin = xr.open_dataset(path_to_tasmin_file).tasmin
 
     For the Northern Hemisphere:
@@ -1458,7 +1458,7 @@ def frost_free_season_length(
 
     Examples
     --------
-    >>> from xclim.indices import frost_season_length
+    >>> from xclim.compute import frost_season_length
     >>> tasmin = xr.open_dataset(path_to_tasmin_file).tasmin
 
     For the Northern Hemisphere:
@@ -2787,7 +2787,7 @@ def wetdays(
     The following would compute for each grid cell of file `pr.day.nc` the number days with precipitation over 5 mm
     at the seasonal frequency, i.e. DJF, MAM, JJA, SON, DJF, etc.:
 
-    >>> from xclim.indices import wetdays
+    >>> from xclim.compute import wetdays
     >>> pr = xr.open_dataset(path_to_pr_file).pr
     >>> wd = wetdays(pr, thresh="5 mm/day", freq="QS-DEC")
     """
@@ -2830,7 +2830,7 @@ def wetdays_prop(
     The following would compute for each grid cell of file `pr.day.nc` the proportion of days with precipitation over
     5 mm at the seasonal frequency, i.e. DJF, MAM, JJA, SON, DJF, etc.:
 
-    >>> from xclim.indices import wetdays_prop
+    >>> from xclim.compute import wetdays_prop
     >>> pr = xr.open_dataset(path_to_pr_file).pr
     >>> wd = wetdays_prop(pr, thresh="5 mm/day", freq="QS-DEC")
     """
@@ -3365,7 +3365,7 @@ def dry_spell_frequency(
         This is the same as verifying that each individual day is below the threshold.
     **indexer : {dim: indexer}, optional
         Indexing parameters to compute the indicator on a temporal subset of the data.
-        It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
+        It accepts the same arguments as :py:func:`xclim.compute.generic.select_time`.
         Indexing is done after finding the dry days, but before finding the spells.
 
     Returns
@@ -3375,11 +3375,11 @@ def dry_spell_frequency(
 
     See Also
     --------
-    xclim.indices.generic.spell_length_statistics : The parent function that computes the spell length statistics.
+    xclim.compute.generic.spell_length_statistics : The parent function that computes the spell length statistics.
 
     Examples
     --------
-    >>> from xclim.indices import dry_spell_frequency
+    >>> from xclim.compute import dry_spell_frequency
     >>> pr = xr.open_dataset(path_to_pr_file).pr
     >>> dsf_sum = dry_spell_frequency(pr=pr, op="sum")
     >>> dsf_max = dry_spell_frequency(pr=pr, op="max")
@@ -3435,7 +3435,7 @@ def dry_spell_total_length(
         (or a similar algorithm) is applied to runs.
     **indexer : {dim: indexer}, optional
         Indexing parameters to compute the indicator on a temporal subset of the data.
-        It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
+        It accepts the same arguments as :py:func:`xclim.compute.generic.select_time`.
         Indexing is done after finding the dry days, but before finding the spells.
 
     Returns
@@ -3445,7 +3445,7 @@ def dry_spell_total_length(
 
     See Also
     --------
-    xclim.indices.generic.spell_length_statistics : The parent function that computes the spell length statistics.
+    xclim.compute.generic.spell_length_statistics : The parent function that computes the spell length statistics.
 
     Notes
     -----
@@ -3503,7 +3503,7 @@ def dry_spell_max_length(
         length encoding (or a similar algorithm) is applied to runs.
     **indexer : {dim: indexer}, optional
         Indexing parameters to compute the indicator on a temporal subset of the data.
-        It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
+        It accepts the same arguments as :py:func:`xclim.compute.generic.select_time`.
         Indexing is done after finding the dry days, but before finding the spells.
 
     Returns
@@ -3513,7 +3513,7 @@ def dry_spell_max_length(
 
     See Also
     --------
-    xclim.indices.generic.spell_length_statistics : The parent function that computes the spell length statistics.
+    xclim.compute.generic.spell_length_statistics : The parent function that computes the spell length statistics.
 
     Notes
     -----
@@ -3576,7 +3576,7 @@ def wet_spell_frequency(
         This is the same as verifying that each individual day is above the threshold.
     **indexer : {dim: indexer}, optional
         Indexing parameters to compute the indicator on a temporal subset of the data.
-        It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
+        It accepts the same arguments as :py:func:`xclim.compute.generic.select_time`.
         Indexing is done after finding the wet days, but before finding the spells.
 
     Returns
@@ -3586,11 +3586,11 @@ def wet_spell_frequency(
 
     See Also
     --------
-    xclim.indices.generic.spell_length_statistics : The parent function that computes the spell length statistics.
+    xclim.compute.generic.spell_length_statistics : The parent function that computes the spell length statistics.
 
     Examples
     --------
-    >>> from xclim.indices import wet_spell_frequency
+    >>> from xclim.compute import wet_spell_frequency
     >>> pr = xr.open_dataset(path_to_pr_file).pr
     >>> dsf_sum = wet_spell_frequency(pr=pr, op="sum")
     >>> dsf_min = wet_spell_frequency(pr=pr, op="min")
@@ -3645,7 +3645,7 @@ def wet_spell_total_length(
         (or a similar algorithm) is applied to runs.
     **indexer : {dim: indexer}, optional
         Indexing parameters to compute the indicator on a temporal subset of the data.
-        It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
+        It accepts the same arguments as :py:func:`xclim.compute.generic.select_time`.
         Indexing is done after finding the wet days, but before finding the spells.
 
     Returns
@@ -3655,7 +3655,7 @@ def wet_spell_total_length(
 
     See Also
     --------
-    xclim.indices.generic.spell_length_statistics : The parent function that computes the spell length statistics.
+    xclim.compute.generic.spell_length_statistics : The parent function that computes the spell length statistics.
 
     Notes
     -----
@@ -3716,7 +3716,7 @@ def wet_spell_max_length(
         (or a similar algorithm) is applied to runs.
     **indexer : {dim: indexer}, optional
         Indexing parameters to compute the indicator on a temporal subset of the data.
-        It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
+        It accepts the same arguments as :py:func:`xclim.compute.generic.select_time`.
         Indexing is done after finding the wet days, but before finding the spells.
 
     Returns
@@ -3726,7 +3726,7 @@ def wet_spell_max_length(
 
     See Also
     --------
-    xclim.indices.generic.spell_length_statistics : The parent function that computes the spell length statistics.
+    xclim.compute.generic.spell_length_statistics : The parent function that computes the spell length statistics.
 
     Notes
     -----
