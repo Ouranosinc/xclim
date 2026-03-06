@@ -18,6 +18,8 @@ New indicators and features
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
+* Major refactor of ``xclim.indices.generic`` to reduce duplication and harmonize signatures (:pull:`2258`).
+    * Generic functions from ``clix-meta`` are now in their own submodule ``xclim.indices.clix``, some indicators in ``xclim.cf`` have changed.
 * Installation recipes have been significantly modified to mimic conventions employed by `xarray` (:pull:`2316`). Most development-related recipes are now installed via ``dependency-groups`` (`PEP-735 <https://peps.python.org/pep-0735/>`_) and ``optional-dependencies`` are as follows:
     * ``dependency-groups``: ``lint`` (linting tools), ``notebooks`` (minimum for interactive notebooks), ``test`` (minimum for running tests), ``docs`` (minimum for building docs), ``test-notebooks`` (minimum for running notebook tests), ``dev`` (full suite for local development).
     * ``optional-dependencies``: ``bias-adjustment`` (`xsdba` and others), ``performance`` (speedups), ``plot`` (plotting), ``types`` (static typing support), ``complete`` (all extras).
@@ -104,7 +106,6 @@ New indicators and features
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
-* Generic functions from ``clix-meta`` are now in their own submodule ``xclim.indices.clix``. Many ``xclim.indices.generic`` functions have been refactored to reduce duplication and harmonize signatures.
 * The relative humidity computations from specific humidity, pressure and temperature (``vapor_pressure`` and ``relative_humidity``) were modified to use the fraction of vapour pressure to saturation vapour pressure instead of an incomplete equation with the mixing ratios. Changes are small, but sometimes not negligible. (:pull:`2254`).
 * `black` and `blackdoc` are no longer required for development. `ruff` is now exclusively used for code and code-block formatting. (:pull:`2249`).
 * Python HDF5 libraries now have lower pins to ensure modern versions are preferably installed (`h5netcdf >=1.5.0` and `h5py >=3.12.1`) (:pull:`2253`).

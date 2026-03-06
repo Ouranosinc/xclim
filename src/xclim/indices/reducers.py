@@ -17,6 +17,8 @@ from collections.abc import Callable
 
 import xarray as xr
 
+__all__ = ["XCLIM_OPS", "doymax", "doymin"]
+
 
 def doymax(da: xr.DataArray) -> xr.DataArray:
     """

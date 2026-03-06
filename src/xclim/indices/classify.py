@@ -18,6 +18,8 @@ from pint import Quantity
 
 from xclim.core.units import convert_units_to, pint2cfunits, str2pint
 
+__all__ = ["get_zones"]
+
 
 def _get_zone_bins(
     zone_min: Quantity,

@@ -28,6 +28,26 @@ from xclim.core.units import declare_relative_units
 
 # TODO: count_bivariate_percentile_occurrences, not ready in clix-meta 0.6.1
 
+__all__ = [
+    "count_level_crossings",
+    "count_occurrences",
+    "count_percentile_occurrences",
+    "count_thresholded_percentile_occurrences",
+    "diurnal_temperature_range",
+    "extreme_temperature_range",
+    "first_occurrence",
+    "interday_diurnal_temperature_range",
+    "last_occurrence",
+    "percentile",
+    "running_statistics",
+    "spell_length",
+    "statistics",
+    "temperature_sum",
+    "thresholded_percentile",
+    "thresholded_running_statistics",
+    "thresholded_statistics",
+]
+
 
 @declare_relative_units(threshold="<low_data>", high_data="<low_data>")
 def count_level_crossings(
