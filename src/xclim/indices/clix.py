@@ -39,7 +39,7 @@ def count_level_crossings(
     """
     Calculate the number of times the given threshold level is crossed during the specified time period.
 
-    I.e. how many times the maximum data is above the threshold and the minimum data is below the threshold.
+    The number of times the maximum data is above the threshold and the minimum data is below the threshold.
     The function takes two inputs, ``low_data`` and ``high_data``, together with one parameter, the ``threshold``.
     First, the threshold is transformed to the same standard_name and units as the input data. Then the comparison is
     done as ``low_data < threshold < high_data``, and finally the number of times when the comparison is fulfilled is

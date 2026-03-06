@@ -66,7 +66,7 @@ BINARY_OPS = {">": "gt", "<": "lt", ">=": "ge", "<=": "le", "==": "eq", "!=": "n
 
 def get_binary_op(condition: Condition, constrain: Sequence[Condition] | None = None) -> Callable:
     """
-    Get python's comparing function according to its name of representation and validate allowed usage.
+    Get the Python comparison function according to its name or representation and validate allowed usage.
 
     Accepted condition strings are keys and values of :py:data:`BINARY_OPS`.
 

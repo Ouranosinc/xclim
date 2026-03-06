@@ -7,8 +7,8 @@ doc: "\n  ===================\n  CF Standard indices\n  ===================\n\n 
   \ This module tries to\n  follow the clix-meta definitions as closely, which means\
   \ it can have meaningful differences with the rest of xclim.\n\n  For example, indicators\
   \ where a number of occurrences (usually days) is counted will use units \"1\",\
-  \ instead of\n  having temporal dimensions (i.e. \"days\") like xclim does elsewhere.\n\
-  \n  However, indicators calculating a date will have no units in this module. \"\
+  \ instead of\n  having temporal dimensions (i.e. \"days\") like xclim does elsewhere.\n\n\
+  \  However, indicators calculating a date will have no units in this module. \"\
   clix-meta\" suggests \"day\", but that\n  already means something else.\n\n  ..\
   \ _clix-meta project: https://github.com/clix-meta/clix-meta\n"
 indicators:
