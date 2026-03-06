@@ -1,4 +1,4 @@
-"""Hydrological indice definitions."""
+"""Hydrological index function definitions."""
 
 from __future__ import annotations
 
@@ -11,12 +11,12 @@ import xarray
 from scipy.stats import circmean, rv_continuous
 from xarray import DataArray
 
+from xclim.compute.generic import threshold_count
+from xclim.compute.stats import standardized_index
 from xclim.core._types import DateStr, Quantified
 from xclim.core.calendar import get_calendar
 from xclim.core.missing import at_least_n_valid
 from xclim.core.units import convert_units_to, declare_units, rate2amount, to_agg_units
-from xclim.indices.generic import threshold_count
-from xclim.indices.stats import standardized_index
 
 from . import generic
 
@@ -165,7 +165,7 @@ def standardized_streamflow_index(
         uses a deterministic function that does not involve any optimization.
         `PWM` should be used with a `lmoments3` distribution.
     fitkwargs : dict, optional
-        Kwargs passed to ``xclim.indices.stats.fit`` used to impose values of certain parameters (`floc`, `fscale`).
+        Kwargs passed to ``xclim.compute.stats.fit`` used to impose values of certain parameters (`floc`, `fscale`).
     cal_start : DateStr, optional
         Start date of the calibration period. A `DateStr` is expected, that is a `str` in format `"YYYY-MM-DD"`.
         Default option `None` means that the calibration period begins at the start of the input dataset.
@@ -174,11 +174,11 @@ def standardized_streamflow_index(
         Default option `None` means that the calibration period finishes at the end of the input dataset.
     params : xarray.DataArray, optional
         Fit parameters.
-        The `params` can be computed using ``xclim.indices.stats.standardized_index_fit_params`` in advance.
+        The `params` can be computed using ``xclim.compute.stats.standardized_index_fit_params`` in advance.
         The output can be given here as input, and it overrides other options.
     **indexer : Indexer
         Indexing parameters to compute the indicator on a temporal subset of the data.
-        It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
+        It accepts the same arguments as :py:func:`xclim.compute.generic.select_time`.
 
     Returns
     -------
@@ -187,9 +187,9 @@ def standardized_streamflow_index(
 
     See Also
     --------
-    xclim.indices._agro.standardized_precipitation_index : Standardized Precipitation Index.
-    xclim.indices.stats.standardized_index : Standardized Index.
-    xclim.indices.stats.standardized_index_fit_params : Standardized Index Fit Params.
+    xclim.compute._agro.standardized_precipitation_index : Standardized Precipitation Index.
+    xclim.compute.stats.standardized_index : Standardized Index.
+    xclim.compute.stats.standardized_index_fit_params : Standardized Index Fit Params.
 
     Notes
     -----
@@ -208,7 +208,7 @@ def standardized_streamflow_index(
     Examples
     --------
     >>> from datetime import datetime
-    >>> from xclim.indices import standardized_streamflow_index
+    >>> from xclim.compute import standardized_streamflow_index
     >>> ds = xr.open_dataset(path_to_q_file)
     >>> q = ds.q_sim
     >>> cal_start, cal_end = "2006-05-01", "2008-06-01"
@@ -222,7 +222,7 @@ def standardized_streamflow_index(
     ...     cal_end=cal_end,
     ... )  # Computing SSI-3 months using a GEV distribution for the fit
     >>> # Fitting parameters can also be obtained first, then reused as input.
-    >>> from xclim.indices.stats import standardized_index_fit_params
+    >>> from xclim.compute.stats import standardized_index_fit_params
     >>> params = standardized_index_fit_params(
     ...     q.sel(time=slice(cal_start, cal_end)),
     ...     freq="MS",
@@ -472,7 +472,7 @@ def standardized_groundwater_index(
         The approximate method uses a deterministic function that does not involve any optimization.
         `PWM` should be used with a `lmoments3` distribution.
     fitkwargs : dict, optional
-        Kwargs passed to ``xclim.indices.stats.fit`` used to impose values of certain parameters (`floc`, `fscale`).
+        Kwargs passed to ``xclim.compute.stats.fit`` used to impose values of certain parameters (`floc`, `fscale`).
     cal_start : DateStr, optional
         Start date of the calibration period. A `DateStr` is expected, that is a `str` in format `"YYYY-MM-DD"`.
         Default option `None` means that the calibration period begins at the start of the input dataset.
@@ -481,11 +481,11 @@ def standardized_groundwater_index(
         Default option `None` means that the calibration period finishes at the end of the input dataset.
     params : xarray.DataArray, optional
         Fit parameters.
-        The `params` can be computed using ``xclim.indices.stats.standardized_index_fit_params`` in advance.
+        The `params` can be computed using ``xclim.compute.stats.standardized_index_fit_params`` in advance.
         The output can be given here as input, and it overrides other options.
     **indexer : Indexer
         Indexing parameters to compute the indicator on a temporal subset of the data.
-        It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
+        It accepts the same arguments as :py:func:`xclim.compute.generic.select_time`.
 
     Returns
     -------
@@ -494,9 +494,9 @@ def standardized_groundwater_index(
 
     See Also
     --------
-    xclim.indices._agro.standardized_precipitation_index : Standardized Precipitation Index.
-    xclim.indices.stats.standardized_index : Standardized Index.
-    xclim.indices.stats.standardized_index_fit_params : Standardized Index Fit Params.
+    xclim.compute._agro.standardized_precipitation_index : Standardized Precipitation Index.
+    xclim.compute.stats.standardized_index : Standardized Index.
+    xclim.compute.stats.standardized_index_fit_params : Standardized Index Fit Params.
 
     Notes
     -----
@@ -512,7 +512,7 @@ def standardized_groundwater_index(
     Examples
     --------
     >>> from datetime import datetime
-    >>> from xclim.indices import standardized_groundwater_index
+    >>> from xclim.compute import standardized_groundwater_index
     >>> ds = xr.open_dataset(path_to_gwl_file)
     >>> gwl = ds.gwl
     >>> cal_start, cal_end = "1980-05-01", "1982-06-01"
@@ -526,7 +526,7 @@ def standardized_groundwater_index(
     ...     cal_end=cal_end,
     ... )  # Computing SGI-3 months using a Gamma distribution for the fit
     >>> # Fitting parameters can also be obtained first, then reused as input.
-    >>> from xclim.indices.stats import standardized_index_fit_params
+    >>> from xclim.compute.stats import standardized_index_fit_params
     >>> params = standardized_index_fit_params(
     ...     gwl.sel(time=slice(cal_start, cal_end)),
     ...     freq="MS",
@@ -888,7 +888,7 @@ def lag_snowpack_flow_peaks(
 
     See Also
     --------
-    xclim.indices.rb_flashiness_index: Richards-Baker flashiness index.
+    xclim.compute.rb_flashiness_index: Richards-Baker flashiness index.
 
     Notes
     -----

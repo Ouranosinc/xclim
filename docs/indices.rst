@@ -19,8 +19,8 @@ frequencies as well. All functions perform units checks to make sure that inputs
 (e.g. handling for units of temperature, whether they are Celsius, kelvin or Fahrenheit), and set the `units`
 attribute of the output `DataArray`.
 
-The :py:mod:`xclim.indices.generic`, :py:mod:`xclim.indices.helpers`, :py:mod:`xclim.indices.run_length`, and
-:py:mod:`xclim.indices.stats` submodules provide helper functions to simplify the implementation of indices
+The :py:mod:`xclim.compute.generic`, :py:mod:`xclim.compute.helpers`, :py:mod:`xclim.compute.run_length`, and
+:py:mod:`xclim.compute.stats` submodules provide helper functions to simplify the implementation of indices
 while functions under :py:mod:`xclim.core.calendar` can aid with challenges arising from variable calendar
 types.
 
@@ -30,7 +30,7 @@ types.
     (long_name, standard_name, description, cell_methods, etc.). These functionalities are provided by
     :py:class:`xclim.core.indicator.Indicator` instances found in the submodules of :py:mod:`xclim.indicators`.
 
-.. automodule:: xclim.indices
+.. automodule:: xclim.compute
    :members:
    :imported-members:
    :undoc-members:
@@ -39,36 +39,36 @@ types.
 Indices submodules
 ------------------
 
-.. automodule:: xclim.indices.generic
+.. automodule:: xclim.compute.generic
    :members:
    :undoc-members:
    :show-inheritance:
 
-.. automodule:: xclim.indices.helpers
+.. automodule:: xclim.compute.helpers
    :members:
    :undoc-members:
    :show-inheritance:
 
-.. automodule:: xclim.indices.run_length
+.. automodule:: xclim.compute.run_length
    :members:
    :undoc-members:
    :show-inheritance:
 
-.. automodule:: xclim.indices.stats
+.. automodule:: xclim.compute.stats
    :members:
    :undoc-members:
    :show-inheritance:
 
 Fire indices submodule
 ^^^^^^^^^^^^^^^^^^^^^^
-Indices related to fire and fire weather. Currently, submodules exist for calculating indices from the Canadian Forest Fire Weather Index System and the McArthur Forest Fire Danger (Mark 5) System. All fire indices can be accessed from the :py:mod:`xclim.indices` module.
+Indices related to fire and fire weather. Currently, submodules exist for calculating indices from the Canadian Forest Fire Weather Index System and the McArthur Forest Fire Danger (Mark 5) System. All fire indices can be accessed from the :py:mod:`xclim.compute` module.
 
-.. automodule:: xclim.indices.fire._cffwis
+.. automodule:: xclim.compute.fire._cffwis
    :members: fire_weather_ufunc, fire_season, overwintering_drought_code, drought_code, cffwis_indices
    :undoc-members:
    :show-inheritance:
 
-.. automodule:: xclim.indices.fire._ffdi
+.. automodule:: xclim.compute.fire._ffdi
    :members:
    :undoc-members:
    :show-inheritance:
