@@ -761,7 +761,7 @@ def is_temporal_rate(da: xr.DataArray):
     Returns
     -------
     bool or None
-        True if the standard name is a rate, False if it is an amount, and 
+        True if the standard name is a rate, False if it is an amount, and
         None if there is no standard name or if the standard name is not known.
 
     See Also
