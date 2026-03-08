@@ -1,8 +1,8 @@
 """
-Generic Indices Submodule
-=========================
+Generic Index Functions Submodule
+=================================
 
-Helper functions for common generic actions done in the computation of indices.
+Helper functions for common generic actions done in the computation of indicators.
 """
 
 from __future__ import annotations
@@ -17,6 +17,8 @@ import numpy as np
 import xarray as xr
 from pint import Quantity
 
+from xclim.compute import run_length as rl
+from xclim.compute.helpers import resample_map
 from xclim.core import DayOfYearStr, Quantified
 from xclim.core.calendar import (
     _MONTH_ABBREVIATIONS,
@@ -35,8 +37,6 @@ from xclim.core.units import (
     units2pint,
 )
 from xclim.core.utils import lazy_indexing, uses_dask
-from xclim.indices import run_length as rl
-from xclim.indices.helpers import resample_map
 
 __all__ = [
     "aggregate_between_dates",
@@ -262,7 +262,7 @@ def get_op(op: ALL_OPERATORS, constrain: Sequence[ALL_OPERATORS] | None = None) 
     """
     Get python's comparing function according to its name of representation and validate allowed usage.
 
-    Accepted op string are keys and values of xclim.indices.generic.binary_ops.
+    Accepted op string are keys and values of xclim.compute.generic.binary_ops.
 
     Parameters
     ----------
@@ -635,7 +635,7 @@ def spell_length_statistics(
         length encoding (or a similar algorithm) is applied to runs.
     **indexer : {dim: indexer, }, optional
         Indexing parameters to compute the indicator on a temporal subset of the data.
-        It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
+        It accepts the same arguments as :py:func:`xclim.compute.generic.select_time`.
         Indexing is done after finding the days part of a spell, but before taking the spell statistics.
 
     Returns
@@ -743,7 +743,7 @@ def bivariate_spell_length_statistics(
         length encoding (or a similar algorithm) is applied to runs.
     **indexer : {dim: indexer, }, optional
         Indexing parameters to compute the indicator on a temporal subset of the data.
-        It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
+        It accepts the same arguments as :py:func:`xclim.compute.generic.select_time`.
         Indexing is done after finding the days part of a spell, but before taking the spell statistics.
 
     Returns
@@ -817,9 +817,9 @@ def season(
 
     See Also
     --------
-    xclim.indices.run_length.season_start : The function that finds the start of the season.
-    xclim.indices.run_length.season_length : The function that finds the length of the season.
-    xclim.indices.run_length.season_end : The function that finds the end of the season.
+    xclim.compute.run_length.season_start : The function that finds the start of the season.
+    xclim.compute.run_length.season_length : The function that finds the length of the season.
+    xclim.compute.run_length.season_end : The function that finds the end of the season.
 
     Examples
     --------
@@ -879,7 +879,7 @@ def season_length_from_boundaries(season_start: xr.DataArray, season_end: xr.Dat
     -----
     If `season_start` and `season_end` are computed with different resampling frequencies, the time
     of `season_start` are selected to write the output.  This is only useful when season start and end were computed
-    at an annual frequency but with different anchor months. Otherwise, functions in ``xclim.indices.run_length``
+    at an annual frequency but with different anchor months. Otherwise, functions in ``xclim.compute.run_length``
     will be appropriate. `season_start` and `season_end` should be annual indicators with the same length. `season_end`
     should be in the same year as `season_start` or one year later.
     """

@@ -1,8 +1,8 @@
 """
-Statistical indices module
-==========================
+Statistical functions module
+============================
 
-Functions to aid in computing various statistical indices.
+Functions to aid in computing various statistical indicators
 
 See the `frequency_analysis` notebook for working examples.
 """
@@ -19,11 +19,11 @@ import scipy.stats
 import xarray as xr
 from scipy.stats import rv_continuous
 
+from xclim.compute import generic
 from xclim.core import DateStr, Quantified
 from xclim.core.calendar import compare_offsets, resample_doy, select_time
 from xclim.core.formatting import prefix_attrs, unprefix_attrs, update_history
 from xclim.core.utils import uses_dask
-from xclim.indices import generic
 
 __all__ = [
     "_fit_start",
@@ -724,7 +724,7 @@ def preprocess_standardized_index(da: xr.DataArray, freq: str | None, window: in
         i.e. a monthly resampling, the window is an integer number of months.
     **indexer : {dim: indexer, }, optional
         Indexing parameters to compute the indicator on a temporal subset of the data.
-        It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
+        It accepts the same arguments as :py:func:`xclim.compute.generic.select_time`.
 
     Returns
     -------
@@ -812,10 +812,10 @@ def standardized_index_fit_params(
     zero_inflated : bool
         If True, the zeroes of `da` are treated separately when fitting a probability density function.
     fitkwargs : dict, optional
-        Kwargs passed to ``xclim.indices.stats.fit`` used to impose values of certains parameters (`floc`, `fscale`).
+        Kwargs passed to ``xclim.compute.stats.fit`` used to impose values of certains parameters (`floc`, `fscale`).
     **indexer : {dim: indexer, }, optional
         Indexing parameters to compute the indicator on a temporal subset of the data.
-        It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
+        It accepts the same arguments as :py:func:`xclim.compute.generic.select_time`.
 
     Returns
     -------
@@ -929,7 +929,7 @@ def standardized_index(
     zero_inflated : bool
         If True, the zeroes of `da` are treated separately.
     fitkwargs : dict, optional
-        Kwargs passed to ``xclim.indices.stats.fit`` used to impose values of certains parameters (`floc`, `fscale`).
+        Kwargs passed to ``xclim.compute.stats.fit`` used to impose values of certains parameters (`floc`, `fscale`).
         If method is `PWM`, `fitkwargs` should be empty, except for `floc` with `dist`=`gamma` which is allowed.
     cal_start : DateStr, optional
         Start date of the calibration period. A `DateStr` is expected, that is a `str` in format `"YYYY-MM-DD"`.
@@ -939,11 +939,11 @@ def standardized_index(
         Default option `None` means that the calibration period finishes at the end of the input dataset.
     params : xarray.DataArray
         Fit parameters.
-        The `params` can be computed using ``xclim.indices.stats.standardized_index_fit_params`` in advance.
+        The `params` can be computed using ``xclim.compute.stats.standardized_index_fit_params`` in advance.
         The output can be given here as input, and it overrides other options.
     **indexer : {dim: indexer, }, optional
         Indexing parameters to compute the indicator on a temporal subset of the data.
-        It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
+        It accepts the same arguments as :py:func:`xclim.compute.generic.select_time`.
 
     Returns
     -------

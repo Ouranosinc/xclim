@@ -15,16 +15,7 @@ import numpy as np
 import xarray as xr
 from numba import vectorize
 
-from xclim.core import Quantified
-from xclim.core.units import (
-    amount2rate,
-    convert_units_to,
-    declare_units,
-    flux2rate,
-    rate2flux,
-    units2pint,
-)
-from xclim.indices.helpers import (
+from xclim.compute.helpers import (
     _gather_lat,
     _gather_lon,
     cosine_of_solar_zenith_angle,
@@ -34,6 +25,15 @@ from xclim.indices.helpers import (
     solar_declination,
     time_correction_for_solar_angle,
     wind_speed_height_conversion,
+)
+from xclim.core import Quantified
+from xclim.core.units import (
+    amount2rate,
+    convert_units_to,
+    declare_units,
+    flux2rate,
+    rate2flux,
+    units2pint,
 )
 
 __all__ = [
@@ -260,7 +260,7 @@ def tas_from_tasmin_tasmax(tasmin: xr.DataArray, tasmax: xr.DataArray) -> xr.Dat
 
     Examples
     --------
-    >>> from xclim.indices import tas
+    >>> from xclim.compute import tas
     >>> tas = tas(tasmin_dataset, tasmax_dataset)
     """
     tasmax = convert_units_to(tasmax, tasmin)
@@ -304,7 +304,7 @@ def uas_vas_to_sfcwind(
 
     Examples
     --------
-    >>> from xclim.indices import uas_vas_to_sfcwind
+    >>> from xclim.compute import uas_vas_to_sfcwind
     >>> sfcWind = uas_vas_to_sfcwind(uas=uas_dataset, vas=vas_dataset, calm_wind_thresh="0.5 m/s")
     """
     # Converts the wind speed to m s-1
@@ -359,7 +359,7 @@ def sfcwind_to_uas_vas(
 
     Examples
     --------
-    >>> from xclim.indices import sfcwind_to_uas_vas
+    >>> from xclim.compute import sfcwind_to_uas_vas
     >>> uas, vas = sfcwind_to_uas_vas(sfcWind=sfcWind_dataset, sfcWindfromdir=sfcWindfromdir_dataset)
     """
     # Converts the wind speed to m s-1
@@ -574,7 +574,7 @@ def saturation_vapor_pressure(
 
     Examples
     --------
-    >>> from xclim.indices import saturation_vapor_pressure
+    >>> from xclim.compute import saturation_vapor_pressure
     >>> rh = saturation_vapor_pressure(tas=tas_dataset, ice_thresh="0 degC", method="wmo08")
     """
     # Dropped explicit support of 4 letter codes, but don't want a breaking change
@@ -792,7 +792,7 @@ def relative_humidity(
 
     Examples
     --------
-    >>> from xclim.indices import relative_humidity
+    >>> from xclim.compute import relative_humidity
     >>> rh = relative_humidity(
     ...     tas=tas_dataset,
     ...     tdps=tdps_dataset,
@@ -916,7 +916,7 @@ def specific_humidity(
 
     Examples
     --------
-    >>> from xclim.indices import specific_humidity
+    >>> from xclim.compute import specific_humidity
     >>> rh = specific_humidity(
     ...     tas=tas_dataset,
     ...     hurs=hurs_dataset,
@@ -1003,7 +1003,7 @@ def specific_humidity_from_dewpoint(
 
     Examples
     --------
-    >>> from xclim.indices import specific_humidity_from_dewpoint
+    >>> from xclim.compute import specific_humidity_from_dewpoint
     >>> rh = specific_humidity_from_dewpoint(
     ...     tdps=tas_dataset,
     ...     ps=ps_dataset,
@@ -1984,7 +1984,7 @@ def potential_evapotranspiration(
     using the method described in :cite:t:`tanguy_historical_2018`.
 
     Methods "BR65", "HG85", "MB05" and "DA02" use an approximation of the extraterrestrial radiation.
-    See :py:func:`~xclim.indices._helpers.extraterrestrial_solar_radiation`.
+    See :py:func:`~xclim.compute._helpers.extraterrestrial_solar_radiation`.
 
     References
     ----------
@@ -2864,7 +2864,7 @@ def wind_power_potential(
 
     To compute the power production, multiply the power production factor by the nominal
     turbine capacity (e.g. 100), set the units attribute (e.g. "MW"), resample and sum with
-    `xclim.indices.generic.select_resample_op(power, op="sum", freq="D")`, then convert to
+    `xclim.compute.generic.select_resample_op(power, op="sum", freq="D")`, then convert to
     the desired units (e.g. "MWh") using `xclim.core.units.convert_units_to`.
 
     References

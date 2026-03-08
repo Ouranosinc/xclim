@@ -1,16 +1,16 @@
-"""Indices module."""
+"""Compute functions and helpers module."""
 
 from __future__ import annotations
 
-from xclim.indices._agro import *
-from xclim.indices._anuclim import *
-from xclim.indices._hydrology import *
-from xclim.indices._multivariate import *
-from xclim.indices._simple import *
-from xclim.indices._synoptic import *
-from xclim.indices._threshold import *
-from xclim.indices.converters import *
-from xclim.indices.fire import (
+from xclim.compute._agro import *
+from xclim.compute._anuclim import *
+from xclim.compute._hydrology import *
+from xclim.compute._multivariate import *
+from xclim.compute._simple import *
+from xclim.compute._synoptic import *
+from xclim.compute._threshold import *
+from xclim.compute.converters import *
+from xclim.compute.fire import (
     cffwis_indices,
     drought_code,
     duff_moisture_code,
@@ -38,12 +38,12 @@ about the data or methods used to produce it).
 The third and fourth sections are the **Parameters** and **Returns** sections describing the input and output values
 respectively.
 
-The following example shows the structure of an indice definition:
+The following example shows the structure of a compute function definition:
 
 .. code-block:: python
 
    @declare_units(var1="[units dimension]", thresh="[units dimension]")
-   def indice_name(var1: xr.DataArray, thresh: str = "0 degC", freq: str = "YS"):
+   def function_name(var1: xr.DataArray, thresh: str = "0 degC", freq: str = "YS"):
        \"\"\"
        The first line is the title
 
@@ -90,8 +90,8 @@ The next sections would be **Notes** and **References**:
         of ontological python documentation." Climate Aesthetics,
         vol. 1, pp. 121-155.
 
-Indice Descriptions
-===================
+Compute functions descriptions
+==============================
 .. _`NumPy`: https://numpydoc.readthedocs.io/en/latest/format.html#docstring-standard
 """
 # pylint: enable=pointless-string-statement
