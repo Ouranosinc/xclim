@@ -393,7 +393,7 @@ def test_parametric_pdf(use_dask, use_dataarray, random):
     mu = 23
     sigma = 2
     n = 10000
-    x = 1.5
+    v = 1.5
     d = norm(loc=mu, scale=sigma)
     r = xr.DataArray(
         d.rvs(n, random_state=random),
@@ -403,16 +403,16 @@ def test_parametric_pdf(use_dask, use_dataarray, random):
     )
     if use_dask:
         r = r.chunk()
-    expected = d.pdf(x)
+    expected = d.pdf(v)
 
     p = stats.fit(r, dist="norm")
     if use_dataarray:
-        x = xr.DataArray([x], dims={"x": [x]})
-    out = stats.parametric_pdf(p=p, x=x)
+        v = xr.DataArray([v], dims={"v": [v]})
+    out = stats.parametric_pdf(p=p, v=v)
 
     np.testing.assert_array_almost_equal(out, expected, 1)
-    assert "x" in out.coords
-    assert out.attrs["cell_methods"] == "dparams: pdf"
+    assert "v" in out.coords
+    assert out.attrs["cell_methods"] == "dparams: v"
 
 
 def test_dist_method(fitda):
