@@ -713,8 +713,8 @@ Breaking changes
 Bug fixes
 ^^^^^^^^^
 * Fixed passing ``missing=0`` to ``xclim.core.calendar.convert_calendar``. (:issue:`1562`, :pull:`1563`).
-* Fixed wrong `window` attributes in ``xclim.indices.standardized_precipitation_index``, ``xclim.indices.standardized_precipitation_evapotranspiration_index``. (:issue:`1552`  :pull:`1554`).
-* Fixed the daily case ``freq='D'`` for ``xclim.stats.preprocess_standardized_index`` (:issue:`1602`  :pull:`1607`).
+* Fixed wrong `window` attributes in ``xclim.indices.standardized_precipitation_index``, ``xclim.indices.standardized_precipitation_evapotranspiration_index``. (:issue:`1552`, :pull:`1554`).
+* Fixed the daily case ``freq='D'`` for ``xclim.stats.preprocess_standardized_index`` (:issue:`1602`, :pull:`1607`).
 * Several spelling mistakes have been corrected within the documentation and codebase. (:pull:`1576`).
 * Added missing ``xclim.ensembles.robustness_fractions`` and ``xclim.ensembles.robustness_categories`` in API doc section. (:pull:`1630`).
 * Fixed an issue that can occur when fetching the testing data and running tests on Windows systems. Adapted a few existing tests for Windows support. (:pull:`1648`).
