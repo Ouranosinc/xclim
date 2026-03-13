@@ -49,7 +49,6 @@ jobs:
       #     disable-sudo: true
       #     egress-policy: block
       #     allowed-endpoints: >
-      #       api.electricitymap.org:443
       #       api.github.com:443
       #       api.green-coding.io:443
       #       files.pythonhosted.org:443
@@ -69,7 +68,6 @@ jobs:
           project: "xclim"
           machine: ${{ matrix.os }}
           tags: "CI/CD, Main, ${{ matrix.python-version }}"
-          co2-grid-intensity-api-token: ${{ secrets.ELECTRICITYMAPS_API_TOKEN }}
           gmt-api-token: ${{ secrets.GMT_API_TOKEN }}
         continue-on-error: true
       - name: Checkout Repository
@@ -133,7 +131,6 @@ jobs:
           egress-policy: block
           allowed-endpoints: >
             140.82.113.24:443
-            api.electricitymap.org:443
             api.github.com:443
             api.green-coding.io:443
             archive.ubuntu.com:443
@@ -155,7 +152,6 @@ jobs:
           project: "xclim"
           machine: ${{ matrix.os }}
           tags: "CI/CD, Main, ${{ matrix.python-version }}"
-          co2-grid-intensity-api-token: ${{ secrets.ELECTRICITYMAPS_API_TOKEN }}
           gmt-api-token: ${{ secrets.GMT_API_TOKEN }}
         continue-on-error: true
       - name: Checkout Repository
@@ -257,7 +253,6 @@ jobs:
           disable-sudo: false
           egress-policy: audit
 #          allowed-endpoints: >
-#            api.electricitymap.org:443
 #            api.github.com:443
 #            api.green-coding.io:443
 #            azure.archive.ubuntu.com:80
@@ -283,7 +278,6 @@ jobs:
           project: "xclim"
           machine: $${{ matrix.os }}
           tags: "CI/CD, Main, ${{ matrix.python-version }}"
-          co2-grid-intensity-api-token: ${{ secrets.ELECTRICITYMAPS_API_TOKEN }}
           gmt-api-token: ${{ secrets.GMT_API_TOKEN }}
         continue-on-error: true
       - name: Checkout Repository
@@ -386,7 +380,6 @@ jobs:
           disable-sudo: true
           egress-policy: block
           allowed-endpoints: >
-            api.electricitymap.org:443
             api.github.com:443
             api.green-coding.io:443
             conda.anaconda.org:443
@@ -406,7 +399,6 @@ jobs:
           project: "xclim"
           machine: ${{ matrix.os }}
           tags: "CI/CD, Main, ${{ matrix.python-version }}"
-          co2-grid-intensity-api-token: ${{ secrets.ELECTRICITYMAPS_API_TOKEN }}
           gmt-api-token: ${{ secrets.GMT_API_TOKEN }}
         continue-on-error: true
       - name: Checkout Repository
@@ -476,7 +468,6 @@ jobs:
         with:
           egress-policy: block
           allowed-endpoints: >
-            api.electricitymap.org:443
             api.github.com:443
             api.green-coding.io:443
             coveralls.io:443
@@ -497,7 +488,6 @@ jobs:
           project: "xclim"
           machine: ${{ matrix.os }}
           tags: "CI/CD, Main"
-          co2-grid-intensity-api-token: ${{ secrets.ELECTRICITYMAPS_API_TOKEN }}
           gmt-api-token: ${{ secrets.GMT_API_TOKEN }}
         continue-on-error: true
       - name: Coveralls Finished
