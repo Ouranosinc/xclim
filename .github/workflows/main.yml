@@ -117,22 +117,7 @@ jobs:
         uses: step-security/harden-runner@20cf305ff2072d973412fa9b1e3a4f227bda3c76 # v2.14.0
         with:
           disable-sudo: false
-          egress-policy: block
-          allowed-endpoints: >
-            140.82.113.24:443
-            api.github.com:443
-            api.green-coding.io:443
-            archive.ubuntu.com:443
-            azure.archive.ubuntu.com:80
-            coveralls.io:443
-            esm.ubuntu.com:443
-            files.pythonhosted.org:443
-            github.com:443
-            ipapi.co:443
-            packages.microsoft.com:443
-            pypi.org:443
-            raw.githubusercontent.com:443
-            security.ubuntu.com:443
+          egress-policy: audit
       - name: Start Energy Measurement
         uses: green-coding-solutions/eco-ci-energy-estimation@0fd2200a8f02d7939066c535e3642c2ebee9db16 # v5.1
         with:
@@ -142,6 +127,7 @@ jobs:
           machine: ${{ matrix.os }}
           tags: "CI/CD, Main, ${{ matrix.python-version }}"
           gmt-api-token: ${{ secrets.GMT_API_TOKEN }}
+          co2-grid-intensity-api-token: ${{ secrets.ELECTRICITYMAPS_API_KEY }}
         continue-on-error: true
       - name: Checkout Repository
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
@@ -241,23 +227,6 @@ jobs:
         with:
           disable-sudo: false
           egress-policy: audit
-#          allowed-endpoints: >
-#            api.github.com:443
-#            api.green-coding.io:443
-#            azure.archive.ubuntu.com:80
-#            coveralls.io:443
-#            esm.ubuntu.com:443
-#            files.pythonhosted.org:443
-#            github.com:443
-#            hosted-compute-watchdog-prod-iad-02.githubapp.com:443
-#            ip-api.com:80
-#            ipapi.co:443
-#            motd.ubuntu.com:443
-#            packages.microsoft.com:443
-#            proxy.golang.org:443
-#            pypi.org:443
-#            raw.githubusercontent.com:443
-#            sum.golang.org:443
       - name: Start Energy Measurement
         if : ${{ matrix.os == 'ubuntu-latest' }}
         uses: green-coding-solutions/eco-ci-energy-estimation@0fd2200a8f02d7939066c535e3642c2ebee9db16 # v5.1
@@ -268,6 +237,7 @@ jobs:
           machine: $${{ matrix.os }}
           tags: "CI/CD, Main, ${{ matrix.python-version }}"
           gmt-api-token: ${{ secrets.GMT_API_TOKEN }}
+          co2-grid-intensity-api-token: ${{ secrets.ELECTRICITYMAPS_API_KEY }}
         continue-on-error: true
       - name: Checkout Repository
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
@@ -367,19 +337,7 @@ jobs:
         uses: step-security/harden-runner@20cf305ff2072d973412fa9b1e3a4f227bda3c76 # v2.14.0
         with:
           disable-sudo: true
-          egress-policy: block
-          allowed-endpoints: >
-            api.github.com:443
-            api.green-coding.io:443
-            conda.anaconda.org:443
-            coveralls.io:443
-            files.pythonhosted.org:443
-            github.com:443
-            ipapi.co:443
-            objects.githubusercontent.com:443
-            pypi.org:443
-            raw.githubusercontent.com:443
-            release-assets.githubusercontent.com:443
+          egress-policy: audit
       - name: Start Energy Measurement
         uses: green-coding-solutions/eco-ci-energy-estimation@0fd2200a8f02d7939066c535e3642c2ebee9db16 # v5.1
         with:
@@ -389,6 +347,7 @@ jobs:
           machine: ${{ matrix.os }}
           tags: "CI/CD, Main, ${{ matrix.python-version }}"
           gmt-api-token: ${{ secrets.GMT_API_TOKEN }}
+          co2-grid-intensity-api-token: ${{ secrets.ELECTRICITYMAPS_API_KEY }}
         continue-on-error: true
       - name: Checkout Repository
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
@@ -455,20 +414,8 @@ jobs:
       - name: Harden Runner
         uses: step-security/harden-runner@20cf305ff2072d973412fa9b1e3a4f227bda3c76 # v2.14.0
         with:
-          egress-policy: block
-          allowed-endpoints: >
-            api.github.com:443
-            api.green-coding.io:443
-            coveralls.io:443
-            files.pythonhosted.org:443
-            github.com:443
-            ip-api.com:80
-            ipapi.co:443
-            objects.githubusercontent.com:443
-            proxy.golang.org:443
-            pypi.org:443
-            release-assets.githubusercontent.com:443
-            sum.golang.org:443
+          disable-sudo: false
+          egress-policy: audit
       - name: Start Energy Measurement
         uses: green-coding-solutions/eco-ci-energy-estimation@0fd2200a8f02d7939066c535e3642c2ebee9db16 # v5.1
         with:
@@ -478,6 +425,7 @@ jobs:
           machine: ${{ matrix.os }}
           tags: "CI/CD, Main"
           gmt-api-token: ${{ secrets.GMT_API_TOKEN }}
+          co2-grid-intensity-api-token: ${{ secrets.ELECTRICITYMAPS_API_KEY }}
         continue-on-error: true
       - name: Coveralls Finished
         uses: coverallsapp/github-action@5cbfd81b66ca5d10c19b062c04de0199c215fb6e # v2.3.7
