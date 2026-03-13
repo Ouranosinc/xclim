@@ -28,6 +28,7 @@ jobs:
           egress-policy: block
           allowed-endpoints: >
             api.github.com:443
+            cdn.fwupd.org:443
             github.com:443
       - name: Checkout Repository
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
