@@ -21,9 +21,6 @@ jobs:
           disable-sudo: true
           egress-policy: block
           allowed-endpoints: >
-            20.60.6.228:443
-            20.60.6.68:443
-            52.239.171.36:443
             api.deps.dev:443
             api.electricitymap.org:443
             api.github.com:443
@@ -44,8 +41,7 @@ jobs:
           branch: ${{ github.head_ref || github.ref_name }}
           project: "xclim"
           machine: "ubuntu-latest"
-          tags: "CI/CD, Main"
-          co2-grid-intensity-api-token: ${{ secrets.ELECTRICITYMAPS_API_TOKEN }}
+          tags: "CI/CD, Dependency-Review"
           gmt-api-token: ${{ secrets.GMT_API_TOKEN }}
 
       - name: Checkout Repository

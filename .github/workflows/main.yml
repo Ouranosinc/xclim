@@ -61,7 +61,7 @@ jobs:
           branch: ${{ github.head_ref || github.ref_name }}
           project: "xclim"
           machine: ${{ matrix.os }}
-          tags: "CI/CD, Main, ${{ matrix.python-version }}"
+          tags: "CI/CD, Main, Lint-${{ matrix.python-version }}"
           gmt-api-token: ${{ secrets.GMT_API_TOKEN }}
         continue-on-error: true
       - name: Checkout Repository
@@ -126,7 +126,6 @@ jobs:
           allowed-endpoints: >
             *.archive.ubuntu.com:80
             *.microsoft.com:443
-            140.82.113.24:443
             api.electricitymap.org:443
             api.github.com:443
             api.green-coding.io:443
@@ -146,7 +145,7 @@ jobs:
           branch: ${{ github.head_ref || github.ref_name }}
           project: "xclim"
           machine: ${{ matrix.os }}
-          tags: "CI/CD, Main, ${{ matrix.python-version }}"
+          tags: "CI/CD, Main, Test-${{ matrix.python-version }}"
           gmt-api-token: ${{ secrets.GMT_API_TOKEN }}
         continue-on-error: true
       - name: Checkout Repository
@@ -250,9 +249,6 @@ jobs:
           allowed-endpoints: >
             *.archive.ubuntu.com:80
             *.microsoft.com:443
-            20.75.202.224:443
-            54.148.89.20:443
-            54.191.133.218:443
             api.electricitymap.org:443
             api.github.com:443
             api.green-coding.io:443
@@ -274,8 +270,8 @@ jobs:
           task: start-measurement
           branch: ${{ github.head_ref || github.ref_name }}
           project: "xclim"
-          machine: $${{ matrix.os }}
-          tags: "CI/CD, Main, ${{ matrix.python-version }}"
+          machine: ${{ matrix.os }}
+          tags: "CI/CD, Main, Test-${{ matrix.python-version }}"
           gmt-api-token: ${{ secrets.GMT_API_TOKEN }}
         continue-on-error: true
       - name: Checkout Repository
@@ -397,7 +393,7 @@ jobs:
           branch: ${{ github.head_ref || github.ref_name }}
           project: "xclim"
           machine: ${{ matrix.os }}
-          tags: "CI/CD, Main, ${{ matrix.python-version }}"
+          tags: "CI/CD, Main, Test-${{ matrix.python-version }}, conda"
           gmt-api-token: ${{ secrets.GMT_API_TOKEN }}
         continue-on-error: true
       - name: Checkout Repository
@@ -488,7 +484,7 @@ jobs:
           branch: ${{ github.head_ref || github.ref_name }}
           project: "xclim"
           machine: ${{ matrix.os }}
-          tags: "CI/CD, Main"
+          tags: "CI/CD, Main, Finish"
           gmt-api-token: ${{ secrets.GMT_API_TOKEN }}
         continue-on-error: true
       - name: Coveralls Finished
