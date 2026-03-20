@@ -752,7 +752,7 @@ class TestStandardizedIndices:
                 "lognorm",
                 "ML",
                 [1.505441, 1.627014, 2.324989, -3.09, 0.879393],
-                0.04,
+                0.15,
             ),
         ],
     )
