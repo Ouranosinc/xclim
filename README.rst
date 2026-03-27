@@ -193,17 +193,17 @@ This package was created with Cookiecutter_ and the `audreyfeldroy/cookiecutter-
 
 .. |logo| image:: https://raw.githubusercontent.com/Ouranosinc/xclim/main/docs/logos/xclim-logo-small-light.png
         :target: https://github.com/Ouranosinc/xclim
-        :alt: Xclim
+        :alt: xclim
         :class: xclim-logo-small no-theme
 
 .. |logo-light| image:: https://raw.githubusercontent.com/Ouranosinc/xclim/main/docs/logos/empty.png
         :target: https://github.com/Ouranosinc/xclim
-        :alt:
+        :alt: xclim
         :class: xclim-logo-small only-light-inline
 
 .. |logo-dark| image:: https://raw.githubusercontent.com/Ouranosinc/xclim/main/docs/logos/empty.png
         :target: https://github.com/Ouranosinc/xclim
-        :alt:
+        :alt: xclim
         :class: xclim-logo-small only-dark-inline
 
 .. |pre-commit| image:: https://results.pre-commit.ci/badge/github/Ouranosinc/xclim/main.svg
@@ -216,7 +216,7 @@ This package was created with Cookiecutter_ and the `audreyfeldroy/cookiecutter-
 
 .. |status| image:: https://www.repostatus.org/badges/latest/active.svg
         :target: https://www.repostatus.org/#active
-        :alt: Project Status: Active – The project has reached a stable, usable state and is being actively developed.
+        :alt: Project Status: Active - The project has reached a stable, usable state and is being actively developed.
 
 .. |versions| image:: https://img.shields.io/pypi/pyversions/xclim.svg
         :target: https://pypi.python.org/pypi/xclim
@@ -238,7 +238,7 @@ This package was created with Cookiecutter_ and the `audreyfeldroy/cookiecutter-
         :alt: Energy Consumption (Last 90 days moving average)
 
 .. |carbon-total| image:: https://api.green-coding.io/v1/ci/badge/get?repo=Ouranosinc/xclim&branch=main&workflow=5828641&mode=totals&metric=carbon
-        :target: https://metrics.green-coding.io/ci.html?repo=Ouranosinc/xclim&branch=festive-indices&workflow=5828641
+        :target: https://metrics.green-coding.io/ci.html?repo=Ouranosinc/xclim&branch=main&workflow=5828641
         :alt: Carbon Emissions (Total)
 
 .. |carbon-last| image:: https://api.green-coding.io/v1/ci/badge/get?repo=Ouranosinc/xclim&branch=main&workflow=5828641&metric=carbon
