@@ -329,9 +329,10 @@ def parametric_cdf(
     dist = get_dist(dist or p.attrs["scipy_dist"])
 
     data = xr.apply_ufunc(
-        lambda v, p: dist.pdf(v, *p),
+        lambda v, p: dist.cdf(v, *p),
+        da_v,
         p,
-        input_core_dims=[["dparams"]],
+        input_core_dims=[["v"], ["dparams"]],
         output_core_dims=[["cdf"]],
         vectorize=True,
         dask="parallelized",
@@ -342,7 +343,7 @@ def parametric_cdf(
     data["cdf"].attrs = da_v.attrs
 
     # Assign value coordinates and transpose to preserve original dimension order
-    out = data.transpose(*(d if d != "dparams" else "v" for d in p.dims))
+    out = data.transpose(*(d if d != "dparams" else "cdf" for d in p.dims))
     out.attrs = unprefix_attrs(p.attrs, ["units", "standard_name"], "original_")
 
     attrs = {
