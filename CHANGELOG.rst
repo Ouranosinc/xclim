@@ -12,6 +12,7 @@ New indicators and features
     + This changes the behaviour for indicators ``land.snw_max_doy``, ``land.snd_max_doy``, ``land.doy_qmin`` and ``land.doy_qmax``.
 * Added two `zero_inflated` arguments to `standardized_index` and `standardized_precipitation_index` to control how zero-precipitation probabilities are handled. (:issue:`2279`, :pull:`2280`).
 * ``xclim.indices.stats.parametric_pdf`` allows to compute PDF distributions with given input parameters and values  (:pull:`2323`).
+* ``xclim.indices.standardized_precipitation_index`` and ``xclim.indices.standardized_precipitation_evapotranspiration_index`` now can accept `genextreme` and `lognorm` as inputs for `dist`. (:issue:`2326`, :pull:`2327`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
@@ -21,6 +22,14 @@ Internal changes
     * Updated the `pre-commit` hooks (`check-jsonschema`) in order to accept the latest supported conda version in ReadTheDocs config.
     * Set ``docs/conf.py`` to ignore `sphinx_autodoc_typehints.guarded_import` errors raised by `xarray` type guarding.
 * Set `SocketBlockedError` to be a subset of the `Exception` class when `pytest-socket` is not installed. (:pull:`2324`).
+
+Breaking changes
+^^^^^^^^^^^^^^^^
+* The choice of `method` "APP" was removed when using a `genextreme` distribution in standardized indices (``xclim.indices.standardized_index`` and related functions). (:issue:`2326`, :pull:`2327`).
+
+Bug fixes
+^^^^^^^^^
+* `dist` in ``xclim.indices.standardized_index`` can now be a `scipy.stats.rv_continuous` as it was planned.  (:issue:`2326`, :pull:`2327`).
 
 v0.60.0 (2026-01-23)
 --------------------
@@ -705,8 +714,8 @@ Breaking changes
 Bug fixes
 ^^^^^^^^^
 * Fixed passing ``missing=0`` to ``xclim.core.calendar.convert_calendar``. (:issue:`1562`, :pull:`1563`).
-* Fixed wrong `window` attributes in ``xclim.indices.standardized_precipitation_index``, ``xclim.indices.standardized_precipitation_evapotranspiration_index``. (:issue:`1552`  :pull:`1554`).
-* Fixed the daily case ``freq='D'`` for ``xclim.stats.preprocess_standardized_index`` (:issue:`1602`  :pull:`1607`).
+* Fixed wrong `window` attributes in ``xclim.indices.standardized_precipitation_index``, ``xclim.indices.standardized_precipitation_evapotranspiration_index``. (:issue:`1552`, :pull:`1554`).
+* Fixed the daily case ``freq='D'`` for ``xclim.stats.preprocess_standardized_index`` (:issue:`1602`, :pull:`1607`).
 * Several spelling mistakes have been corrected within the documentation and codebase. (:pull:`1576`).
 * Added missing ``xclim.ensembles.robustness_fractions`` and ``xclim.ensembles.robustness_categories`` in API doc section. (:pull:`1630`).
 * Fixed an issue that can occur when fetching the testing data and running tests on Windows systems. Adapted a few existing tests for Windows support. (:pull:`1648`).
