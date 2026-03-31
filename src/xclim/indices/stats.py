@@ -347,7 +347,7 @@ def parametric_cdf(
     out.attrs = unprefix_attrs(p.attrs, ["units", "standard_name"], "original_")
 
     attrs = {
-        "long_name": f"{dist.name} CDF",
+        "long_name": f"{dist.name} cdf",
         "description": f"CDF estimated by the {dist.name} distribution",
         "cell_methods": "dparams: cdf",
         "history": update_history(
