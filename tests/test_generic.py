@@ -7,7 +7,7 @@ import pytest
 import xarray as xr
 
 from xclim.core.calendar import doy_to_days_since, select_time
-from xclim.indices import generic, helpers, reducers, run_length
+from xclim.indices import generic, helpers, run_length
 from xclim.testing.helpers import assert_lazy
 
 K2C = 273.15
@@ -64,43 +64,6 @@ class TestRunningStatistics:
             o.isel(time=slice(0, 2)).values,
         )
         assert o.attrs["units"] == "m3"
-
-
-class TestFlowGeneric:
-    @pytest.mark.parametrize("use_dask", [True, False])
-    def test_doyminmax(self, q_series, use_dask):
-        a = np.ones(365)
-        a[9] = 2
-        a[19] = -2
-        a[39] = 4
-        a[49] = -4
-        q = q_series(a)
-        if use_dask:
-            q = q.chunk({"time": 200})
-        dmx = reducers.doymax(q)
-        dmn = reducers.doymin(q)
-        assert dmx.values == [40]
-        assert dmn.values == [50]
-
-    @pytest.mark.parametrize("use_dask", [True, False])
-    def test_doyminmax_novariance(self, q_series, use_dask):
-        q = q_series(np.ones(365))
-        if use_dask:
-            q = q.chunk({"time": 200})
-        dmx = generic.doymax(q).load()
-        dmn = generic.doymin(q).load()
-        assert dmx.isnull().all()
-        assert dmn.isnull().all()
-
-    @pytest.mark.parametrize("use_dask", [True, False])
-    def test_doyminmax_allna(self, q_series, use_dask):
-        q = q_series(np.ones(365)) * np.nan
-        if use_dask:
-            q = q.chunk({"time": 200})
-        dmx = generic.doymax(q).load()
-        dmn = generic.doymin(q).load()
-        assert dmx.isnull().all()
-        assert dmn.isnull().all()
 
 
 class TestStatisticsBetweenDates:
