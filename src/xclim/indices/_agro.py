@@ -1369,7 +1369,7 @@ def effective_growing_degree_days(
         - 1
     )
 
-    deg_days = (tas - thresh).clip(min=0)
+    deg_days = (tas - thresh).clip(min=0).assign_attrs(**tas.attrs)
     return statistics_between_dates(deg_days, start=start, end=end, statistic="integral", freq=freq)
 
 
