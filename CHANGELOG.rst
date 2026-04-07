@@ -13,13 +13,13 @@ Documentation has been updated to reflect these changes as well as to help exist
 
 New indicators and features
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
-* This new xclim brings a major overhaul of the "generic" index functions which had a trickle down (breaking) effect on most of xclim modules. A summary of the changes can be found `in this comment <https://github.com/Ouranosinc/xclim/pull/2258#issuecomment-3473430173>`_.
+* This new `xclim` includes a major overhaul of the "generic" index functions which has a significant and breaking effect on most of `xclim` modules. A summary of the changes can be found `in this comment <https://github.com/Ouranosinc/xclim/pull/2258#issuecomment-3473430173>`_.
 * The `xclim` command-line tool now accepts both ``-h`` and ``--help`` to show the help summary. (:pull:`2316`).
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
-* Major refactor of ``xclim.indices.generic`` to reduce duplication and harmonize signatures (:pull:`2258`).
-    * Generic functions from ``clix-meta`` are now in their own submodule ``xclim.indices.clix``, some indicators in ``xclim.cf`` have changed.
+* Major refactor of ``xclim.indices.generic`` to reduce duplication and harmonize signatures. (:pull:`2258`).
+    * Generic functions from ``clix-meta`` are now in their own submodule ``xclim.indices.clix`` and some indicators in ``xclim.cf`` have changed to reflect changes in standards.
 * Installation recipes have been significantly modified to mimic conventions employed by `xarray` (:pull:`2316`). Most development-related recipes are now installed via ``dependency-groups`` (`PEP-735 <https://peps.python.org/pep-0735/>`_) and ``optional-dependencies`` are as follows:
     * ``dependency-groups``: ``lint`` (linting tools), ``notebooks`` (minimum for interactive notebooks), ``test`` (minimum for running tests), ``docs`` (minimum for building docs), ``test-notebooks`` (minimum for running notebook tests), ``dev`` (full suite for local development).
     * ``optional-dependencies``: ``bias-adjustment`` (`xsdba` and others), ``performance`` (speedups), ``plot`` (plotting), ``types`` (static typing support), ``complete`` (all extras).
