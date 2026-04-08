@@ -15,7 +15,6 @@ __author__ = """Travis Logan"""
 __email__ = "logan.travis@ouranos.ca"
 __version__ = "0.99.0-dev.4"
 
-
 with _resources.as_file(_resources.files("xclim.data")) as _module_data:
     # Load official locales
     for filename in _module_data.glob("??.json"):

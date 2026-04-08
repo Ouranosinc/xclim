@@ -34,7 +34,6 @@ from xclim.core.units import (
     to_agg_units,
     units2pint,
 )
-from xclim.core.utils import lazy_indexing, uses_dask
 from xclim.indices import run_length as rl
 from xclim.indices.helpers import resample_map
 
@@ -188,15 +187,13 @@ def doymax(da: xr.DataArray) -> xr.DataArray:
     -------
     xr.DataArray
         The day of year of the maximum value.
+        If all values are the same, NaN is returned.
     """
-    i = da.argmax(dim="time")
-    doy = da.time.dt.dayofyear
-
-    if uses_dask(da):
-        out = lazy_indexing(doy, i, "time").astype(doy.dtype)
-    else:
-        out = doy.isel(time=i)
-    return to_agg_units(out, da, "doymax")
+    tmax = da.idxmax("time")
+    std = da.std("time")
+    tmax = tmax.where(std != 0)
+    doy = tmax.dt.dayofyear
+    return to_agg_units(doy, da, "doymax")
 
 
 def doymin(da: xr.DataArray) -> xr.DataArray:
@@ -212,16 +209,13 @@ def doymin(da: xr.DataArray) -> xr.DataArray:
     -------
     xr.DataArray
         The day of year of the minimum value.
+        If all values are the same, NaN is returned.
     """
-    i = da.argmin(dim="time")
-    doy = da.time.dt.dayofyear
-
-    if uses_dask(da):
-        out = lazy_indexing(doy, i, "time").astype(doy.dtype)
-    else:
-        out = doy.isel(time=i)
-
-    return to_agg_units(out, da, "doymin")
+    tmax = da.idxmin("time")
+    std = da.std("time")
+    tmax = tmax.where(std != 0)
+    doy = tmax.dt.dayofyear
+    return to_agg_units(doy, da, "doymin")
 
 
 _xclim_ops = {"doymin": doymin, "doymax": doymax}
