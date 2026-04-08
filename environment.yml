@@ -25,7 +25,6 @@ dependencies:
   - flox >=0.9
   - numbagg >=0.8
   - pymannkendall >=1.4.0
-  - xsdba >=0.4.0
   # lmoments3 - Not an official dependency but required for some Jupyter notebooks
   - lmoments3 >=1.0.7
   # Linting dependencies
