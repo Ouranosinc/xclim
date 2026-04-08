@@ -33,6 +33,7 @@ __all__ = [
     "frequency_analysis",
     "get_dist",
     "parametric_cdf",
+    "parametric_pdf",
     "parametric_quantile",
     "standardized_index",
     "standardized_index_fit_params",
@@ -291,9 +292,11 @@ def parametric_quantile(
     return out
 
 
+# FIXME: xclim-v1 — `parametric_cdf` should be like `parametric_pdf`
+# * The new coordinate should be labeled as `v`
 def parametric_cdf(
     p: xr.DataArray,
-    v: float | Sequence[float],
+    v: xr.DataArray | float | Sequence[float],
     dist: str | rv_continuous | None = None,
 ) -> xr.DataArray:
     """
@@ -305,7 +308,7 @@ def parametric_cdf(
         Distribution parameters returned by the `fit` function.
         The array should have dimension `dparams` storing the distribution parameters,
         and attribute `scipy_dist`, storing the name of the distribution.
-    v : float or Sequence of float
+    v : xr.DataArray or float or Sequence of float
         Value to compute the CDF.
     dist : str or rv_continuous distribution object, optional
         The distribution name or instance is the `scipy_dist` attribute is not available on `p`.
@@ -315,29 +318,32 @@ def parametric_cdf(
     xarray.DataArray
         An array of parametric CDF values estimated from the distribution parameters.
     """
-    v = np.atleast_1d(v)
+    if not isinstance(v, xr.DataArray):
+        v = np.atleast_1d(v)
+        da_v = xr.DataArray(v, dims=["v"]).assign_coords(v=v)
+    else:
+        if len(v.dims) > 1:
+            raise ValueError("`v` must be one-dimensional.")
+        da_v = v
 
     dist = get_dist(dist or p.attrs["scipy_dist"])
 
-    # Create a lambda function to facilitate passing arguments to dask. There is probably a better way to do this.
-    def func(x):  # numpydoc ignore=GL08
-        return dist.cdf(v, *x)
-
     data = xr.apply_ufunc(
-        func,
+        lambda v, p: dist.cdf(v, *p),
+        da_v,
         p,
-        input_core_dims=[["dparams"]],
+        input_core_dims=[["v"], ["dparams"]],
         output_core_dims=[["cdf"]],
         vectorize=True,
         dask="parallelized",
         output_dtypes=[float],
         keep_attrs=True,
         dask_gufunc_kwargs={"output_sizes": {"cdf": len(v)}},
-    )
+    ).assign_coords(cdf=da_v.v.values)
+    data["cdf"].attrs = da_v.attrs
 
-    # Assign quantile coordinates and transpose to preserve original dimension order
-    dims = [d if d != "dparams" else "cdf" for d in p.dims]
-    out = data.assign_coords(cdf=v).transpose(*dims)
+    # Assign value coordinates and transpose to preserve original dimension order
+    out = data.transpose(*(d if d != "dparams" else "cdf" for d in p.dims))
     out.attrs = unprefix_attrs(p.attrs, ["units", "standard_name"], "original_")
 
     attrs = {
@@ -347,6 +353,72 @@ def parametric_cdf(
         "history": update_history(
             "Compute parametric cdf from distribution parameters",
             new_name="parametric_cdf",
+            parameters=p,
+        ),
+    }
+    out.attrs.update(attrs)
+    return out
+
+
+def parametric_pdf(
+    p: xr.DataArray,
+    v: xr.DataArray | float | Sequence[float],
+    dist: str | rv_continuous | None = None,
+) -> xr.DataArray:
+    """
+    Return the probability density function corresponding to the given distribution parameters and value.
+
+    Parameters
+    ----------
+    p : xr.DataArray
+        Distribution parameters returned by the `fit` function.
+        The array should have dimension `dparams` storing the distribution parameters,
+        and attribute `scipy_dist`, storing the name of the distribution.
+    v : xr.DataArray or float or Sequence of float
+        Value to compute the PDF.
+    dist : str or rv_continuous distribution object, optional
+        The distribution name or instance is the `scipy_dist` attribute is not available on `p`.
+
+    Returns
+    -------
+    xarray.DataArray
+        An array of probabilities estimated from the distribution parameters.
+    """
+    if not isinstance(v, xr.DataArray):
+        v = np.atleast_1d(v)
+        da_v = xr.DataArray(v, dims=["v"]).assign_coords(v=v)
+    else:
+        if len(v.dims) > 1:
+            raise ValueError("`v` must be one-dimensional.")
+        da_v = v
+
+    dist = get_dist(dist or p.attrs["scipy_dist"])
+
+    data = xr.apply_ufunc(
+        lambda v, p: dist.pdf(v, *p),
+        da_v,
+        p,
+        input_core_dims=[["v"], ["dparams"]],
+        output_core_dims=[["v"]],
+        vectorize=True,
+        dask="parallelized",
+        output_dtypes=[float],
+        keep_attrs=True,
+        dask_gufunc_kwargs={"output_sizes": {"v": da_v.v.size}},
+    ).assign_coords(v=da_v.v.values)
+    data["v"].attrs = da_v.attrs
+
+    # Assign value coordinates and transpose to preserve original dimension order
+    out = data.transpose(*(d if d != "dparams" else "v" for d in p.dims))
+    out.attrs = unprefix_attrs(p.attrs, ["units", "standard_name"], "original_")
+
+    attrs = {
+        "long_name": f"{dist.name} PDF",
+        "description": f"PDF estimated by the {dist.name} distribution",
+        "cell_methods": "dparams: v",
+        "history": update_history(
+            "Compute parametric pdf from distribution parameters",
+            new_name="parametric_pdf",
             parameters=p,
         ),
     }
@@ -530,6 +602,19 @@ def _fit_start(x, dist: str, **fitkwargs: Any) -> tuple[tuple, dict]:
     m = x.mean()
     v = x.var()
 
+    def _loc_estimation(x):
+        # muralidhar_1992 would suggest the following, but it seems more unstable
+        # using cooke_1979 for now
+        # n = len(x)
+        # cv = x.std() / x.mean()
+        # p = (0.48265 + 0.32967 * cv) * n ** (-0.2984 * cv)
+        # xp = xs[int(p/100*n)]
+        xs = sorted(x)
+        x1, x2, xn = xs[0], xs[1], xs[-1]
+        xp = x2
+        loc0 = (x1 * xn - xp**2) / (x1 + xn - 2 * xp)
+        return loc0 if loc0 < x1 else x1 - 0.0001 * np.abs(x1)
+
     if dist == "genextreme":
         s = np.sqrt(6 * v) / np.pi
         return (0.1,), {"loc": m - 0.57722 * s, "scale": s}
@@ -553,20 +638,7 @@ def _fit_start(x, dist: str, **fitkwargs: Any) -> tuple[tuple, dict]:
         return (chat,), {"loc": loc, "scale": scale}
 
     if dist in ["gamma"]:
-        if "floc" in fitkwargs:
-            loc0 = fitkwargs["floc"]
-        else:
-            xs = sorted(x)
-            x1, x2, xn = xs[0], xs[1], xs[-1]
-            # muralidhar_1992 would suggest the following, but it seems more unstable
-            # using cooke_1979 for now
-            # n = len(x)
-            # cv = x.std() / x.mean()
-            # p = (0.48265 + 0.32967 * cv) * n ** (-0.2984 * cv)
-            # xp = xs[int(p/100*n)]
-            xp = x2
-            loc0 = (x1 * xn - xp**2) / (x1 + xn - 2 * xp)
-            loc0 = loc0 if loc0 < x1 else (0.9999 * x1 if x1 > 0 else 1.0001 * x1)
+        loc0 = fitkwargs.get("floc", _loc_estimation(x))
         x_pos = x - loc0
         x_pos = x_pos[x_pos > 0]
         m = x_pos.mean()
@@ -579,13 +651,7 @@ def _fit_start(x, dist: str, **fitkwargs: Any) -> tuple[tuple, dict]:
         return (a0,), kwargs
 
     if dist in ["fisk"]:
-        if "floc" in fitkwargs:
-            loc0 = fitkwargs["floc"]
-        else:
-            xs = sorted(x)
-            x1, x2, xn = xs[0], xs[1], xs[-1]
-            loc0 = (x1 * xn - x2**2) / (x1 + xn - 2 * x2)
-            loc0 = loc0 if loc0 < x1 else (0.9999 * x1 if x1 > 0 else 1.0001 * x1)
+        loc0 = fitkwargs.get("floc", _loc_estimation(x))
         x_pos = x - loc0
         # TODO: change this?
         # not necessary for log-logistic, according to SPEI package
@@ -605,13 +671,7 @@ def _fit_start(x, dist: str, **fitkwargs: Any) -> tuple[tuple, dict]:
         return (c0,), kwargs
 
     if dist in ["lognorm"]:
-        if "floc" in fitkwargs:
-            loc0 = fitkwargs["floc"]
-        else:
-            # muralidhar_1992
-            xs = sorted(x)
-            x1, xn, xp = xs[0], xs[-1], xs[int(len(x) / 2)]
-            loc0 = (x1 * xn - xp**2) / (x1 + xn - 2 * xp)
+        loc0 = fitkwargs.get("floc", _loc_estimation(x))
         x_pos = x - loc0
         x_pos = x_pos[x_pos > 0]
         # MLE estimation
@@ -804,7 +864,7 @@ def standardized_index_fit_params(
     window : int
         Averaging window length relative to the resampling frequency. For example, if `freq="MS"`,
         i.e. a monthly resampling, the window is an integer number of months.
-    dist : {'gamma', 'fisk'} or rv_continuous distribution object
+    dist : {'gamma', 'fisk', 'genextreme', 'lognorm'} or rv_continuous distribution object
         Name of the univariate distribution. (see :py:mod:`scipy.stats`).
     method : {'ML', 'APP', 'PWM'}
         Name of the fitting method, such as `ML` (maximum likelihood), `APP` (approximate). The approximate method
@@ -832,8 +892,10 @@ def standardized_index_fit_params(
     Supported combinations of `dist` and `method` are:
     * Gamma ("gamma") : "ML", "APP"
     * Log-logistic ("fisk") : "ML", "APP"
-    * "APP" method only supports two-parameter distributions. Parameter `loc` will be set to 0
-    (setting `floc=0` in `fitkwargs`).
+    * Generalized extreme value ("genextreme") : "ML"
+    * Log-normal ("lognorm") : "ML", "APP"
+    * "APP" method only supports two-parameter distributions. Parameter `loc` must be set to 0
+    through `floc=0` in `fitkwargs`.
     * Otherwise, generic `rv_continuous` methods can be used. This includes distributions from `lmoments3`
     which should be used with `method="PWM"`.
 
@@ -857,15 +919,22 @@ def standardized_index_fit_params(
     dist_and_methods = {
         "gamma": ["ML", "APP"],
         "fisk": ["ML", "APP"],
+        # FIXME: xclim-v1 — remove "APP"
         "genextreme": ["ML", "APP"],
         "lognorm": ["ML", "APP"],
     }
+    if isinstance(dist, str):
+        if dist not in dist_and_methods:
+            raise NotImplementedError(f"The distribution `{dist}` is not supported.")
+        # FIXME: xclim-v1 — remove this warning
+        if dist == "genextreme" and method == "APP":
+            warnings.warn(
+                "The method 'APP' will not be available for distribution 'genextreme' in the future."
+                " The shape parameter is fixed in this approximation and should not be used as a final answer."
+            )
+        if method not in dist_and_methods[dist]:
+            raise NotImplementedError(f"The method `{method}` is not supported for distribution `{dist}`.")
     dist = get_dist(dist)
-    if method != "PWM":
-        if dist.name not in dist_and_methods:
-            raise NotImplementedError(f"The distribution `{dist.name}` is not supported.")
-        if method not in dist_and_methods[dist.name]:
-            raise NotImplementedError(f"The method `{method}` is not supported for distribution `{dist.name}`.")
     da, group = preprocess_standardized_index(da, freq, window, **indexer)
     if group == "time.week":
         group_handler = da.time.dt.isocalendar().week
