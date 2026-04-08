@@ -153,7 +153,6 @@ Bootstrapping Algorithms for Indicators Submodule
    :show-inheritance:
    :noindex:
 
-
 .. _`spatial-analogues-developer-api`:
 
 Spatial Analogues Helpers
