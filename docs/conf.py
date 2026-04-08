@@ -181,7 +181,6 @@ intersphinx_mapping = {
     "scipy": ("https://docs.scipy.org/doc/scipy/", None),
     "sklearn": ("https://scikit-learn.org/stable/", None),
     "statsmodels": ("https://www.statsmodels.org/stable/", None),
-    "xsdba": ("https://xsdba.readthedocs.io/en/stable/", None),
 }
 extlinks = {
     "issue": ("https://github.com/Ouranosinc/xclim/issues/%s", "GH/%s"),

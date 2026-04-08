@@ -14,11 +14,6 @@
 
     See: :ref:`fwi-footnotes`
 
-    SDBA References
-    ---------------
-
-    See: `sdba bibliography <xsdba:references>`_.
-
     General References
     ------------------
 
