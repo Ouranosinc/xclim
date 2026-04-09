@@ -3,7 +3,7 @@ doc: |
   CF Standard indices
   ===================
 
-  Indicators found here are defined by the `clix-meta project`_. Adapted documentation from
+  Indicators found here are defined by the `clix-meta project <https://github.com/clix-meta/clix-meta>`_. Adapted documentation from
   that repository follows:
 
   This repository aims to provide a platform for thinking about, and developing, a unified view of metadata
@@ -18,8 +18,6 @@ doc: |
 
   However, indicators calculating a date will have no units in this module. "clix-meta" suggests "day", but that
   already means something else.
-
-  .._clix-meta project: https://github.com/clix-meta/clix-meta
 indicators:
   cdd:
     cf_attrs:

@@ -59,7 +59,6 @@ docs = [
   "sphinx-mdinclude",
   "sphinxcontrib-bibtex",
   "sphinxcontrib-svg2pdfconverter",
-  "xsdba >=0.4.0",
   {include-group = "notebooks"}
 ]
 test-notebooks = [
@@ -131,9 +130,6 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-bias-adjustment = [
-  "xsdba >=0.4.0"
-]
 performance = [
   "flox >=0.9",
   "numbagg >=0.8"
@@ -149,7 +145,6 @@ types = [
   "pandas-stubs >=2.2"
 ]
 complete = [
-  "xclim[bias-adjustment]",
   "xclim[performance]",
   "xclim[plot]",
   "xclim[stats]",
@@ -171,7 +166,7 @@ xclim = "xclim.cli:cli"
 [tool]
 
 [tool.bumpversion]
-current_version = "0.99.0-dev.4"
+current_version = "0.99.0-dev.7"
 commit = true
 commit_args = "--no-verify --signoff"
 tag = false

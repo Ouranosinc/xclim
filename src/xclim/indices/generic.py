@@ -55,6 +55,31 @@ from xclim.indices import run_length as rl
 from xclim.indices.helpers import compare, resample_map, spell_mask
 from xclim.indices.reducers import XCLIM_OPS
 
+__all__ = [
+    "bivariate_count_occurrences",
+    "bivariate_spell_length_statistics",
+    "count_domain_occurrences",
+    "count_occurrences",
+    "count_percentile_occurrences",
+    "count_thresholded_percentile_occurrences",
+    "day_threshold_reached",
+    "difference_statistics",
+    "extreme_range",
+    "integrated_difference",
+    "interday_difference_statistics",
+    "percentile",
+    "running_statistics",
+    "season",
+    "season_length_from_boundaries",
+    "spell_length_statistics",
+    "statistics",
+    "statistics_between_dates",
+    "thresholded_events",
+    "thresholded_percentile",
+    "thresholded_running_statistics",
+    "thresholded_statistics",
+]
+
 
 def statistics(
     data: xr.DataArray, statistic: Reducer, freq: Freq, out_units: str | None = None, **indexer
@@ -71,7 +96,7 @@ def statistics(
     freq : str
         Resampling frequency defining the periods as defined in :ref:`timeseries.resampling`.
     out_units : str, optional
-        Output units to assign (no conversion tried).
+        Output units to assign (no unit conversion is performed).
         Only necessary if `statistic` is function not supported by :py:func:`xclim.core.units.to_agg_units`.
     **indexer : {dim: indexer, }, optional
         Time attribute and values over which to subset the array. See :py:func:`xclim.core.calendar.select_time`.
@@ -163,7 +188,7 @@ def thresholded_statistics(
     **indexer,
 ) -> xr.DataArray:
     """
-    Calculate a statistic over data that fulfills a threshold condition for each requested periods.
+    Calculate a statistic over data that fulfills a threshold condition for each requested period.
 
     This is a thresolded extension of :py:func:`statistics`.
 
@@ -208,8 +233,8 @@ def thresholded_running_statistics(
     statistic: Reducer,
     freq: Freq,
     window_center: bool = True,
-    constrain=None,
-    out_units=None,
+    constrain: Sequence[str] | None = None,
+    out_units: str | None = None,
     **indexer,
 ) -> xr.DataArray:
     """
@@ -940,7 +965,7 @@ def season_length_from_boundaries(season_start: xr.DataArray, season_end: xr.Dat
     if (freq_start.startswith("Y") and freq_end.startswith("Y")) is False:
         raise ValueError(
             "`season_start` and `season_end` should both be annual indicators, but the following frequencies"
-            "were inferred: {freq_start} and {freq_end}."
+            f"were inferred: {freq_start} and {freq_end}."
         )
     days_since_start = doy_to_days_since(season_start)
     days_since_end = doy_to_days_since(season_end)
@@ -998,7 +1023,7 @@ def difference_statistics(
 @declare_relative_units(data2="<data1>")
 def extreme_range(data1: xr.DataArray, data2: xr.DataArray, freq: Freq, **indexer) -> xr.DataArray:
     """
-    Calculate the extreme's range.
+    Calculate the range between extreme values.
 
     The maximum of data2 minus the minimum of data1, for each period.
 
