@@ -238,14 +238,14 @@ default_formatter = AttrFormatter(
 
 def parse_doc(doc: str) -> dict:
     """
-    Crude regex parsing reading an indice docstring and extracting information needed in indicator construction.
+    Crude regex parsing reading a function docstring and extracting information needed in indicator construction.
 
-    The appropriate docstring syntax is detailed in :ref:`notebooks/extendxclim:Defining new indices`.
+    The appropriate docstring syntax is detailed in :ref:`notebooks/extendxclim:Defining new compute function's`.
 
     Parameters
     ----------
     doc : str
-        The docstring of an indice function.
+        The docstring of an index-like compute function.
 
     Returns
     -------
@@ -719,7 +719,7 @@ def generate_indicator_docstring(ind) -> str:
     if hasattr(ind, "missing"):  # Only ResamplingIndicators
         special += f'This indicator will check for missing values according to the method "{ind.missing}".\n'
     if hasattr(ind.compute, "__module__"):
-        special += f"Based on indice :py:func:`~{ind.compute.__module__}.{ind.compute.__name__}`.\n"
+        special += f"Based on function :py:func:`~{ind.compute.__module__}.{ind.compute.__name__}`.\n"
         if ind.injected_parameters:
             special += "With injected parameters: "
             special += ", ".join([f"{k}={v}" for k, v in ind.injected_parameters.items()])

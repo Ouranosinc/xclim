@@ -1,9 +1,9 @@
 """
-Indices Helper Functions Submodule
-==================================
+Helper Functions Submodule
+==========================
 
-Functions that encapsulate logic and can be shared by many indices,
-but are not particularly index-like themselves (those should go in the :py:mod:`xclim.indices.generic` module).
+Functions that encapsulate logic and can be shared by many compute functions,
+but are not particularly index-like themselves (those should go in the :py:mod:`xclim.compute.generic` module).
 """
 
 from __future__ import annotations
@@ -35,12 +35,12 @@ try:
 except ImportError:
     rechunk_for_blockwise = None
 
+from xclim.compute import run_length as rl
 from xclim.core import Condition, DayOfYearStr, Quantified, Reducer
 from xclim.core.calendar import ensure_cftime_array, get_calendar, parse_offset, select_time
 from xclim.core.options import MAP_BLOCKS, OPTIONS
 from xclim.core.units import convert_units_to
 from xclim.core.utils import _chunk_like, uses_dask
-from xclim.indices import run_length as rl
 
 __all__ = [
     "cosine_of_solar_zenith_angle",
@@ -691,7 +691,7 @@ def day_lengths(
         Latitude coordinate. Expects units of "degree_north".
     method : {'spencer', 'simple'}
         Which approximation to use when computing the solar declination angle.
-        See :py:func:`xclim.indices.helpers.solar_declination`.
+        See :py:func:`xclim.compute.helpers.solar_declination`.
     infill_polar_days : bool
         Whether to use a mask of 24 hours for polar days and 0 hours for polar nights.
         If False, polar days and nights will be NaN.
@@ -756,8 +756,8 @@ def huglin_day_length_latitude_coefficient(
     r"""
     Simple coefficient for the day-length and high latitudes.
 
-    This latitude coefficient is used for determining the latitude effect on the day length specific to climate indices
-    that concern viticulture, such as :py:func:`xclim.indices.huglin_index` (cite:p:`huglin_nouveau_1978`).
+    This latitude coefficient is used for determining the latitude effect on the day length specific to climate
+    indicators that concern viticulture, such as :py:func:`xclim.compute.huglin_index` (cite:p:`huglin_nouveau_1978`).
     This function is an empirical approximation of the day-length multiplication factor, :math:`k`, based on latitude.
 
     Parameters

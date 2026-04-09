@@ -1,4 +1,4 @@
-"""Multivariate indice definitions."""
+"""Multivariate index definitions."""
 
 from __future__ import annotations
 
@@ -8,6 +8,15 @@ from typing import Literal, cast
 import numpy as np
 import xarray
 
+from xclim.compute import run_length as rl
+from xclim.compute.converters import rain_approximation, snowfall_approximation
+from xclim.compute.generic import (
+    count_occurrences,
+    difference_statistics,
+    extreme_range,
+    interday_difference_statistics,
+)
+from xclim.compute.helpers import compare
 from xclim.core import Quantified
 from xclim.core.bootstrapping import percentile_bootstrap
 from xclim.core.calendar import resample_doy, select_time
@@ -17,15 +26,6 @@ from xclim.core.units import (
     rate2amount,
     to_agg_units,
 )
-from xclim.indices import run_length as rl
-from xclim.indices.converters import rain_approximation, snowfall_approximation
-from xclim.indices.generic import (
-    count_occurrences,
-    difference_statistics,
-    extreme_range,
-    interday_difference_statistics,
-)
-from xclim.indices.helpers import compare
 
 # Frequencies : YS: year start, QS-DEC: seasons starting in december, MS: month start
 # See https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html
@@ -133,7 +133,7 @@ def cold_spell_duration_index(
     Examples
     --------
     >>> from xclim.core.calendar import percentile_doy
-    >>> from xclim.indices import cold_spell_duration_index
+    >>> from xclim.compute import cold_spell_duration_index
     >>> tasmin = xr.open_dataset(path_to_tasmin_file).tasmin.isel(lat=0, lon=0)
     >>> tn10 = percentile_doy(tasmin, per=10).sel(percentiles=10)
     >>> cold_spell_duration_index(tasmin, tn10)
@@ -442,7 +442,7 @@ def multiday_temperature_swing(
     r"""
     Statistics of consecutive diurnal temperature swing events.
 
-    A diurnal swing of max and min temperature event is when Tmax > thresh_tasmax and Tmin <= thresh_tasmin. This indice
+    A diurnal swing of max and min temperature event is when Tmax > thresh_tasmax and Tmin <= thresh_tasmin. This index
     finds all days that constitute these events and computes statistics over the length and frequency of these events.
 
     Parameters
@@ -483,7 +483,7 @@ def multiday_temperature_swing(
 
        TX_{i} > 0℃ \land TN_{i} <  0℃
 
-    This indice returns a given statistic of the found lengths, optionally dropping those shorter than the `window`
+    This index returns a given statistic of the found lengths, optionally dropping those shorter than the `window`
     argument. For example, `window=1` and `op='sum'` returns the same value as :py:func:`daily_freezethaw_cycles`.
     """
     thaw_threshold = convert_units_to(thresh_tasmax, tasmax)
@@ -927,7 +927,7 @@ def precip_accumulation(
     Resample the original daily mean precipitation flux and accumulate over each period.
     If a daily temperature is provided, the `phase` keyword can be used to sum precipitation of a given phase only.
     When the temperature is under the given threshold, precipitation is assumed to be snow, and liquid rain otherwise.
-    This indice is agnostic to the type of daily temperature (tas, tasmax or tasmin) given.
+    This index is agnostic to the type of daily temperature (tas, tasmax or tasmin) given.
 
     Parameters
     ----------
@@ -964,7 +964,7 @@ def precip_accumulation(
     The following would compute, for each grid cell of a dataset, the total
     precipitation at the seasonal frequency, i.e. DJF, MAM, JJA, SON, DJF, etc.:
 
-    >>> from xclim.indices import precip_accumulation
+    >>> from xclim.compute import precip_accumulation
     >>> pr_day = xr.open_dataset(path_to_pr_file).pr
     >>> prcp_tot_seasonal = precip_accumulation(pr_day, freq="QS-DEC")
     """
@@ -991,7 +991,7 @@ def precip_average(
     Resample the original daily mean precipitation flux and average over each period.
     If a daily temperature is provided, the `phase` keyword can be used to average precipitation of a given phase only.
     When the temperature is under the given threshold, precipitation is assumed to be snow, and liquid rain otherwise.
-    This indice is agnostic to the type of daily temperature (tas, tasmax or tasmin) given.
+    This index is agnostic to the type of daily temperature (tas, tasmax or tasmin) given.
 
     Parameters
     ----------
@@ -1028,7 +1028,7 @@ def precip_average(
     The following would compute, for each grid cell of a dataset, the total
     precipitation at the seasonal frequency, i.e. DJF, MAM, JJA, SON, DJF, etc.:
 
-    >>> from xclim.indices import precip_average
+    >>> from xclim.compute import precip_average
     >>> pr_day = xr.open_dataset(path_to_pr_file).pr
     >>> prcp_tot_seasonal = precip_average(pr_day, freq="QS-DEC")
     """
@@ -1202,7 +1202,7 @@ def days_over_precip_thresh(
 
     Examples
     --------
-    >>> from xclim.indices import days_over_precip_thresh
+    >>> from xclim.compute import days_over_precip_thresh
     >>> pr = xr.open_dataset(path_to_pr_file).pr
     >>> p75 = pr.quantile(0.75, dim="time", keep_attrs=True)
     >>> r75p = days_over_precip_thresh(pr, p75)
@@ -1325,7 +1325,7 @@ def tg90p(
     Examples
     --------
     >>> from xclim.core.calendar import percentile_doy
-    >>> from xclim.indices import tg90p
+    >>> from xclim.compute import tg90p
     >>> tas = xr.open_dataset(path_to_tas_file).tas
     >>> tas_per = percentile_doy(tas, per=90).sel(percentiles=90)
     >>> hot_days = tg90p(tas, tas_per)
@@ -1383,7 +1383,7 @@ def tg10p(
     Examples
     --------
     >>> from xclim.core.calendar import percentile_doy
-    >>> from xclim.indices import tg10p
+    >>> from xclim.compute import tg10p
     >>> tas = xr.open_dataset(path_to_tas_file).tas
     >>> tas_per = percentile_doy(tas, per=10).sel(percentiles=10)
     >>> cold_days = tg10p(tas, tas_per)
@@ -1441,7 +1441,7 @@ def tn90p(
     Examples
     --------
     >>> from xclim.core.calendar import percentile_doy
-    >>> from xclim.indices import tn90p
+    >>> from xclim.compute import tn90p
     >>> tas = xr.open_dataset(path_to_tas_file).tas
     >>> tas_per = percentile_doy(tas, per=90).sel(percentiles=90)
     >>> hot_days = tn90p(tas, tas_per)
@@ -1499,7 +1499,7 @@ def tn10p(
     Examples
     --------
     >>> from xclim.core.calendar import percentile_doy
-    >>> from xclim.indices import tn10p
+    >>> from xclim.compute import tn10p
     >>> tas = xr.open_dataset(path_to_tas_file).tas
     >>> tas_per = percentile_doy(tas, per=10).sel(percentiles=10)
     >>> cold_days = tn10p(tas, tas_per)
@@ -1557,7 +1557,7 @@ def tx90p(
     Examples
     --------
     >>> from xclim.core.calendar import percentile_doy
-    >>> from xclim.indices import tx90p
+    >>> from xclim.compute import tx90p
     >>> tas = xr.open_dataset(path_to_tas_file).tas
     >>> tasmax_per = percentile_doy(tas, per=90).sel(percentiles=90)
     >>> hot_days = tx90p(tas, tasmax_per)
@@ -1615,7 +1615,7 @@ def tx10p(
     Examples
     --------
     >>> from xclim.core.calendar import percentile_doy
-    >>> from xclim.indices import tx10p
+    >>> from xclim.compute import tx10p
     >>> tas = xr.open_dataset(path_to_tas_file).tas
     >>> tasmax_per = percentile_doy(tas, per=10).sel(percentiles=10)
     >>> cold_days = tx10p(tas, tasmax_per)
@@ -1750,7 +1750,7 @@ def warm_spell_duration_index(
     Note that this example does not use a proper 1961-1990 reference period.
 
     >>> from xclim.core.calendar import percentile_doy
-    >>> from xclim.indices import warm_spell_duration_index
+    >>> from xclim.compute import warm_spell_duration_index
 
     >>> tasmax = xr.open_dataset(path_to_tasmax_file).tasmax.isel(lat=0, lon=0)
     >>> tasmax_per = percentile_doy(tasmax, per=90).sel(percentiles=90)
@@ -1841,7 +1841,7 @@ def blowing_snow(
     **indexer : {dim: indexer}, optional
         Indexing parameters to compute the indicator on a temporal subset of the data.
         The subset is taken after summing the snowfall over the window.
-        It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
+        It accepts the same arguments as :py:func:`xclim.compute.generic.select_time`.
 
     Returns
     -------

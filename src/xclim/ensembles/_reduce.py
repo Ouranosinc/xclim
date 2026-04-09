@@ -270,7 +270,7 @@ def kmeans_reduce_ensemble(
 
         import xclim
         from xclim.ensembles import create_ensemble, kmeans_reduce_ensemble
-        from xclim.indices import hot_spell_frequency
+        from xclim.compute import hot_spell_frequency
 
         # Start with ensemble datasets for temperature:
 

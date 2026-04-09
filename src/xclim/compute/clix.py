@@ -22,7 +22,7 @@ from __future__ import annotations
 
 import xarray as xr
 
-import xclim.indices.generic as generic
+import xclim.compute.generic as generic
 from xclim.core import Condition, DayOfYearStr, Freq, Quantified, Reducer, TimeRange
 from xclim.core.units import declare_relative_units
 

@@ -5,7 +5,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from xclim.indices import reducers
+from xclim.compute import reducers
 
 
 class TestDoyMinMax:

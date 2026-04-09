@@ -2,8 +2,8 @@ r"""
 Canadian Forest Fire Weather Index System
 =========================================
 
-This submodule defines the :py:func:`xclim.indices.fire.fire_season`, :py:func:`xclim.indices.fire.drought_code` and
-:py:func:`xclim.indices.fire.cffwis_indices` indices, which are used by the eponym indicators.
+This submodule defines the :py:func:`xclim.compute.fire.fire_season`, :py:func:`xclim.compute.fire.drought_code` and
+:py:func:`xclim.compute.fire.cffwis_indices` compute functions, which are used by the eponym indicators.
 Users should read this module's documentation and the one of :py:func:`fire_weather_ufunc`. They should also consult the
 information available at :cite:t:`code-natural_resources_canada_data_nodate`.
 
@@ -46,9 +46,9 @@ Finally, a mechanism for dry spring starts is implemented. For now, it is slight
 but seems to agree with the state of the science of the CFS. When activated, the drought code and Duff-moisture codes
 are started in spring with a value that is function of the number of days since the last significant precipitation
 event. The conventional start value increased by that number of days times a "dry start" factor. Parameters are
-controlled in the call of the indices and :py:func:`fire_weather_ufunc`. Overwintering of the drought code overrides
-this mechanism if both are activated. GFWED use a more complex approach with an added check on the previous day's
-snow cover for determining "dry" points. Moreover, there, the start values are only the multiplication of a factor
+controlled in the call of the compute functions and :py:func:`fire_weather_ufunc`. Overwintering of the drought code
+overrides this mechanism if both are activated. GFWED use a more complex approach with an added check on the previous
+day's snow cover for determining "dry" points. Moreover, there, the start values are only the multiplication of a factor
 to the number of dry days.
 
 Examples
@@ -59,7 +59,7 @@ start" for the duff-moisture code. The following example uses reasonable paramet
 
 .. note::
 
-    Here the example snippets use the _indices_ defined in this very module, but we always recommend using the
+    Here the example snippets use the functions defined in this very module, but we always recommend using the
     _indicators_ defined in the :py:mod:`xclim.atmos` module.
 
 >>> ds = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc")
@@ -127,7 +127,7 @@ as _all_ seasons are used, even the very short shoulder seasons.
 # This file is structured in the following way:
 # Section 1: individual codes, numba-accelerated and vectorized functions.
 # Section 2: Larger computing functions (the FWI iterator and the fire_season iterator)
-# Section 3: Exposed methods and indices.
+# Section 3: Exposed methods and compute
 #
 # Methods starting with a "_" are not usable with xarray objects, whereas the others are.
 from __future__ import annotations
@@ -139,10 +139,10 @@ import numpy as np
 import xarray as xr
 from numba import njit, vectorize
 
+from xclim.compute import run_length as rl
 from xclim.core import Quantified
 from xclim.core.units import convert_units_to, declare_units
 from xclim.core.utils import get_temp_dimname
-from xclim.indices import run_length as rl
 
 __all__ = [
     "DAY_LENGTHS",
@@ -875,7 +875,7 @@ def _fire_weather_calc(  # noqa: C901  # pylint: disable=R0912, R0915
     return tuple(out.values())
 
 
-# SECTION 3 - Public methods and indices
+# SECTION 3 - Public methods and compute functions
 
 
 # TODO: Does this need to be renamed?
@@ -904,7 +904,7 @@ def fire_weather_ufunc(  # noqa: C901 # numpydoc ignore=PR01,PR02
     Fire Weather Indexes computation using xarray's apply_ufunc.
 
     No unit handling. Meant to be used by power users only. Please prefer using the :py:indicator:`DC` and
-    :py:indicator:`CFFWIS` indicators or the :py:func:`drought_code` and :py:func:`cffwis_indices` indices defined
+    :py:indicator:`CFFWIS` indicators or the :py:func:`drought_code` and :py:func:`cffwis_indices` functions defined
     in the same submodule.
 
     Dask arrays must have only one chunk along the "time" dimension.
@@ -1249,7 +1249,7 @@ def _convert_parameters(
         if param not in default_params:
             raise ValueError(
                 f"{param} is not a valid parameter for {funcname}. "
-                "See the docstring of the function and the list in xc.indices.fire.default_params."
+                "See the docstring of the function and the list in xclim.compute.fire.default_params."
             )
         if isinstance(default_params[param], tuple):
             params[param] = convert_units_to(value, default_params[param][1])
@@ -1350,7 +1350,7 @@ def cffwis_indices(
 
     Notes
     -----
-    See :cite:t:`code-natural_resources_canada_data_nodate`, the :py:mod:`xclim.indices.fire` module documentation,
+    See :cite:t:`code-natural_resources_canada_data_nodate`, the :py:mod:`xclim.compute.fire` module documentation,
     and the docstring of :py:func:`fire_weather_ufunc` for more information. This algorithm follows the
     official R code released by the CFS, which contains revisions from the original 1982 Fortran code.
 
@@ -1453,7 +1453,7 @@ def drought_code(
         a start_up phase for that time step. Otherwise, previous codes must be given as a continuing fire
         season is assumed for those points.
     **params : dict
-        Any other keyword parameters as defined in `xclim.indices.fire.fire_weather_ufunc`
+        Any other keyword parameters as defined in `xclim.compute.fire.fire_weather_ufunc`
         and in :py:data:`default_params`.
 
     Returns
@@ -1463,7 +1463,7 @@ def drought_code(
 
     Notes
     -----
-    See :cite:cts:`code-natural_resources_canada_data_nodate`, the :py:mod:`xclim.indices.fire` module documentation,
+    See :cite:cts:`code-natural_resources_canada_data_nodate`, the :py:mod:`xclim.compute.fire` module documentation,
     and the docstring of :py:func:`fire_weather_ufunc` for more information. This algorithm follows the official R code
     released by the CFS, which contains revisions from the original 1982 Fortran code.
 
@@ -1550,7 +1550,7 @@ def duff_moisture_code(
         phase for that time step. Otherwise, previous codes must be given as a continuing fire season is assumed
         for those points.
     **params : dict
-        Any other keyword parameters as defined in `xclim.indices.fire.fire_weather_ufunc`
+        Any other keyword parameters as defined in `xclim.compute.fire.fire_weather_ufunc`
         and in :py:data:`default_params`.
 
     Returns
@@ -1560,7 +1560,7 @@ def duff_moisture_code(
 
     Notes
     -----
-    See :cite:cts:`code-natural_resources_canada_data_nodate`, the :py:mod:`xclim.indices.fire` module documentation,
+    See :cite:cts:`code-natural_resources_canada_data_nodate`, the :py:mod:`xclim.compute.fire` module documentation,
     and the docstring of :py:func:`fire_weather_ufunc` for more information. This algorithm follows the official R code
     released by the Canadian Forestry Service, which contains revisions from the original 1982 Fortran code.
 

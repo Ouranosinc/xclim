@@ -1,13 +1,13 @@
-"""Simple indice definitions."""
+"""Simple index functions definitions."""
 
 from __future__ import annotations
 
 import xarray
 
+from xclim.compute.generic import count_occurrences, statistics
 from xclim.core import Quantified
 from xclim.core.calendar import select_time
 from xclim.core.units import declare_units, rate2amount
-from xclim.indices.generic import count_occurrences, statistics
 
 # Frequencies : YS: year start, QS-DEC: seasons starting in december, MS: month start
 # See http://pandas.pydata.org/pandas-docs/stable/timeseries.html#offset-aliases
@@ -106,7 +106,7 @@ def tg_mean(tas: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
     The following would compute for each grid cell of file `tas.day.nc` the mean temperature
     at the seasonal frequency, i.e. DJF, MAM, JJA, SON, DJF, etc.:
 
-    >>> from xclim.indices import tg_mean
+    >>> from xclim.compute import tg_mean
     >>> t = xr.open_dataset(path_to_tas_file).tas
     >>> tg = tg_mean(t, freq="QS-DEC")
     """
@@ -468,7 +468,7 @@ def max_1day_precipitation_amount(pr: xarray.DataArray, freq: str = "YS") -> xar
     --------
     The following would compute for each grid cell the highest 1-day total at an annual frequency:
 
-    >>> from xclim.indices import max_1day_precipitation_amount
+    >>> from xclim.compute import max_1day_precipitation_amount
     >>> pr = xr.open_dataset(path_to_pr_file).pr
     >>> rx1day = max_1day_precipitation_amount(pr, freq="YS")
     """
@@ -497,7 +497,7 @@ def max_n_day_precipitation_amount(
         Indexing parameters to compute the indicator on a temporal subset of the data.
         The subset is taken after the N-day sum, thus including data from up to ``window -1``
         days before the selected period (and none after).
-        It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
+        It accepts the same arguments as :py:func:`xclim.compute.generic.select_time`.
 
     Returns
     -------
@@ -508,7 +508,7 @@ def max_n_day_precipitation_amount(
     --------
     The following would compute for each grid cell the highest 5-day total precipitation at an annual frequency:
 
-    >>> from xclim.indices import max_n_day_precipitation_amount
+    >>> from xclim.compute import max_n_day_precipitation_amount
     >>> pr = xr.open_dataset(path_to_pr_file).pr
     >>> out = max_n_day_precipitation_amount(pr, window=5, freq="YS")
     """
@@ -539,7 +539,7 @@ def max_pr_intensity(pr: xarray.DataArray, window: int = 1, freq: str = "YS", **
         Indexing parameters to compute the indicator on a temporal subset of the data.
         The subset is taken after the N-hour average, thus including data from up to ``window - 1``
         hours before the selected period, and none after.
-        It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
+        It accepts the same arguments as :py:func:`xclim.compute.generic.select_time`.
 
     Returns
     -------
@@ -550,7 +550,7 @@ def max_pr_intensity(pr: xarray.DataArray, window: int = 1, freq: str = "YS", **
     --------
     The following would compute the maximum 6-hour precipitation intensity at an annual frequency:
 
-    >>> from xclim.indices import max_pr_intensity
+    >>> from xclim.compute import max_pr_intensity
     >>> pr = xr.open_dataset(path_to_pr_file).pr
     >>> out = max_pr_intensity(pr, window=5, freq="YS")
     """
@@ -621,7 +621,7 @@ def sfcWind_max(sfcWind: xarray.DataArray, freq: str = "YS") -> xarray.DataArray
     The following would compute for each grid cell the maximum wind speed
     at the seasonal frequency, i.e. DJF, MAM, JJA, SON, DJF, etc.:
 
-    >>> from xclim.indices import sfcWind_max
+    >>> from xclim.compute import sfcWind_max
     >>> fg = xr.open_dataset(path_to_sfcWind_file).sfcWind
     >>> fg_max = sfcWind_max(fg, freq="QS-DEC")
     """
@@ -661,7 +661,7 @@ def sfcWind_mean(sfcWind: xarray.DataArray, freq: str = "YS") -> xarray.DataArra
     The following would compute for each grid cell the mean wind speed
     at the seasonal frequency, i.e. DJF, MAM, JJA, SON, DJF, etc.:
 
-    >>> from xclim.indices import sfcWind_mean
+    >>> from xclim.compute import sfcWind_mean
     >>> fg = xr.open_dataset(path_to_sfcWind_file).sfcWind
     >>> fg_mean = sfcWind_mean(fg, freq="QS-DEC")
     """
@@ -701,7 +701,7 @@ def sfcWind_min(sfcWind: xarray.DataArray, freq: str = "YS") -> xarray.DataArray
     The following would compute for each grid cell the minimum wind speed
     at the seasonal frequency, i.e. DJF, MAM, JJA, SON, DJF, etc.:
 
-    >>> from xclim.indices import sfcWind_min
+    >>> from xclim.compute import sfcWind_min
     >>> fg = xr.open_dataset(path_to_sfcWind_file).sfcWind
     >>> fg_min = sfcWind_min(fg, freq="QS-DEC")
     """
@@ -741,7 +741,7 @@ def sfcWindmax_max(sfcWindmax: xarray.DataArray, freq: str = "YS") -> xarray.Dat
     The following would compute for each grid cell of the dataset the extreme maximum wind speed
     at the seasonal frequency, i.e. DJF, MAM, JJA, SON, DJF, etc.:
 
-    >>> from xclim.indices import sfcWindmax_max
+    >>> from xclim.compute import sfcWindmax_max
     >>> max_sfcWindmax = sfcWindmax_max(sfcWindmax_dataset, freq="QS-DEC")
     """
     return sfcWindmax.resample(time=freq).max(dim="time").assign_attrs(units=sfcWindmax.units)
@@ -780,7 +780,7 @@ def sfcWindmax_mean(sfcWindmax: xarray.DataArray, freq: str = "YS") -> xarray.Da
     The following would compute for each grid cell of the dataset the mean of maximum wind speed
     at the seasonal frequency, i.e. DJF, MAM, JJA, SON, DJF, etc.:
 
-    >>> from xclim.indices import sfcWindmax_mean
+    >>> from xclim.compute import sfcWindmax_mean
     >>> mean_sfcWindmax = sfcWindmax_mean(sfcWindmax_dataset, freq="QS-DEC")
     """
     return sfcWindmax.resample(time=freq).mean(dim="time").assign_attrs(units=sfcWindmax.units)
@@ -819,7 +819,7 @@ def sfcWindmax_min(sfcWindmax: xarray.DataArray, freq: str = "YS") -> xarray.Dat
     The following would compute for each grid cell of the dataset the minimum of maximum wind speed
     at the seasonal frequency, i.e. DJF, MAM, JJA, SON, DJF, etc.:
 
-    >>> from xclim.indices import sfcWindmax_min
+    >>> from xclim.compute import sfcWindmax_min
     >>> min_sfcWindmax = sfcWindmax_min(sfcWindmax_dataset, freq="QS-DEC")
     """
     return sfcWindmax.resample(time=freq).min(dim="time").assign_attrs(units=sfcWindmax.units)

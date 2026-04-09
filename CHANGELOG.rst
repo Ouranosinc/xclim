@@ -18,8 +18,9 @@ New indicators and features
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
-* Major refactor of ``xclim.indices.generic`` to reduce duplication and harmonize signatures. (:pull:`2258`).
-    * Generic functions from ``clix-meta`` are now in their own submodule ``xclim.indices.clix`` and some indicators in ``xclim.cf`` have changed to reflect changes in standards.
+* Module ``xclim.indices``  has been renamed to ``xclim.compute``. The functions made to build indicators are now called "[index-like] compute functions" and the word "indices" is now used avoided when possible.
+* Major refactor of ``xclim.compute.generic`` to reduce duplication and harmonize signatures. (:pull:`2258`).
+    * Generic functions from ``clix-meta`` are now in their own submodule ``xclim.compute.clix`` and some indicators in ``xclim.cf`` have changed to reflect changes in standards.
 * Legacy imports, links, and documentation for `xsdba` have been removed. (:pull:`2342`).
 * Installation recipes have been significantly modified to mimic conventions employed by `xarray` (:pull:`2316`). Most development-related recipes are now installed via ``dependency-groups`` (`PEP-735 <https://peps.python.org/pep-0735/>`_) and ``optional-dependencies`` are as follows:
     * ``dependency-groups``: ``lint`` (linting tools), ``notebooks`` (minimum for interactive notebooks), ``test`` (minimum for running tests), ``docs`` (minimum for building docs), ``test-notebooks`` (minimum for running notebook tests), ``dev`` (full suite for local development).

@@ -33,6 +33,9 @@ from typing import Literal
 import numpy as np
 import xarray as xr
 
+from xclim.compute import run_length as rl
+from xclim.compute.helpers import compare, resample_map, spell_mask
+from xclim.compute.reducers import XCLIM_OPS
 from xclim.core import Condition, DayOfYearStr, Freq, Quantified, Reducer, TimeRange
 from xclim.core.bootstrapping import percentile_bootstrap
 from xclim.core.calendar import (
@@ -51,9 +54,6 @@ from xclim.core.units import (
     to_agg_units,
     units2pint,
 )
-from xclim.indices import run_length as rl
-from xclim.indices.helpers import compare, resample_map, spell_mask
-from xclim.indices.reducers import XCLIM_OPS
 
 __all__ = [
     "bivariate_count_occurrences",
@@ -875,9 +875,9 @@ def season(
 
     See Also
     --------
-    xclim.indices.run_length.season_start : The function that finds the start of the season.
-    xclim.indices.run_length.season_length : The function that finds the length of the season.
-    xclim.indices.run_length.season_end : The function that finds the end of the season.
+    xclim.compute.run_length.season_start : The function that finds the start of the season.
+    xclim.compute.run_length.season_length : The function that finds the length of the season.
+    xclim.compute.run_length.season_end : The function that finds the end of the season.
 
     Examples
     --------
@@ -938,7 +938,7 @@ def season_length_from_boundaries(season_start: xr.DataArray, season_end: xr.Dat
     -----
     If `season_start` and `season_end` are computed with different resampling frequencies, the time
     of `season_start` are selected to write the output.  This is only useful when season start and end were computed
-    at an annual frequency but with different anchor months. Otherwise, functions in ``xclim.indices.run_length``
+    at an annual frequency but with different anchor months. Otherwise, functions in ``xclim.compute.run_length``
     will be appropriate. `season_start` and `season_end` should be annual indicators with the same length. `season_end`
     should be in the same year as `season_start` or one year later.
     """

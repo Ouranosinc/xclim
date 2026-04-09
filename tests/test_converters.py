@@ -7,9 +7,9 @@ import pytest
 import xarray as xr
 
 from xclim import convert, set_options
+from xclim.compute.converters import shortwave_downwelling_radiation_from_clearness_index
+from xclim.compute.helpers import extraterrestrial_solar_radiation
 from xclim.core.units import convert_units_to
-from xclim.indices.converters import shortwave_downwelling_radiation_from_clearness_index
-from xclim.indices.helpers import extraterrestrial_solar_radiation
 
 K2C = 273.16
 
@@ -322,8 +322,8 @@ def test_wind_power_potential(atmosds):
 
 def test_wind_power_potential_from_3h_series():
     """Test a typical computation workflow from 3-hourly time series to daily power production in MWh."""
+    from xclim.compute.generic import statistics
     from xclim.core.units import convert_units_to
-    from xclim.indices.generic import statistics
     from xclim.testing.helpers import test_timeseries
 
     w = test_timeseries(np.ones(96) * 15, variable="sfcWind", start="7/1/2000", units="m s-1", freq="3h")
