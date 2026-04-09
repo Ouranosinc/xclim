@@ -30,7 +30,7 @@ jobs:
 
       - name: Generate GitHub App token
         id: token_generator
-        uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf # v2.2.1
+        uses: actions/create-github-app-token@f8d387b68d61c58ab83c6c016672934102569859 # v3.0.0
         with:
           app-id: ${{ secrets.OURANOS_HELPER_BOT_ID }}
           private-key: ${{ secrets.OURANOS_HELPER_BOT_KEY }}
@@ -52,7 +52,7 @@ jobs:
 
       - name: Checkout Repository
         if: steps.skip-condition.outputs.skip != 'true'
-        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           token: ${{ steps.token_generator.outputs.token }}
           persist-credentials: false

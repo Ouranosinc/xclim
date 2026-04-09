@@ -15,7 +15,7 @@ from typing import Literal
 import numpy as np
 import xarray
 
-from xclim.compute.generic import binary_ops
+from xclim.compute.helpers import BINARY_OPS
 from xclim.compute.run_length import suspicious_run
 from xclim.core._exceptions import MissingVariableError, raise_warn_or_log
 from xclim.core._types import VARIABLES, Quantified
@@ -642,7 +642,7 @@ def data_flags(  # noqa: C901
             val = _kwargs.get(arg, param.default)
             kind = infer_kind_from_parameter(param)
             if arg == "op":
-                format_args[arg] = val if val not in binary_ops else binary_ops[val]
+                format_args[arg] = val if val not in BINARY_OPS else BINARY_OPS[val]
             elif kind in [
                 InputKind.FREQ_STR,
                 InputKind.NUMBER,

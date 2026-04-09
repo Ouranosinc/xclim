@@ -346,17 +346,18 @@ heat_spell_frequency = Temp(
     compute=compute.generic.bivariate_spell_length_statistics,
     input={"data1": "tasmin", "data2": "tasmax"},
     parameters={
-        "spell_reducer": "count",
-        "op": ">=",
+        "statistic": "count",
+        "condition": ">=",
         "window": {"default": 3},
-        "win_reducer": {"default": "mean"},
+        "window_statistic": {"default": "mean", "name": "win_reducer"},
         "freq": {"default": "YS"},
-        "threshold1": {
+        "constrain": None,
+        "thresh1": {
             "description": "Threshold for tasmin",
             "default": "20 °C",
             "name": "thresh_tasmin",
         },
-        "threshold2": {
+        "thresh2": {
             "description": "Threshold for tasmax",
             "default": "33 °C",
             "name": "thresh_tasmax",
@@ -379,17 +380,18 @@ heat_spell_max_length = Temp(
     compute=compute.generic.bivariate_spell_length_statistics,
     input={"data1": "tasmin", "data2": "tasmax"},
     parameters={
-        "spell_reducer": "max",
-        "op": ">=",
+        "statistic": "max",
+        "condition": ">=",
         "window": {"default": 3},
-        "win_reducer": {"default": "mean"},
+        "window_statistic": {"default": "mean", "name": "win_reducer"},
         "freq": {"default": "YS"},
-        "threshold1": {
+        "constrain": None,
+        "thresh1": {
             "description": "Threshold for tasmin",
             "default": "20 °C",
             "name": "thresh_tasmin",
         },
-        "threshold2": {
+        "thresh2": {
             "description": "Threshold for tasmax",
             "default": "33 °C",
             "name": "thresh_tasmax",
@@ -412,17 +414,18 @@ heat_spell_total_length = Temp(
     compute=compute.generic.bivariate_spell_length_statistics,
     input={"data1": "tasmin", "data2": "tasmax"},
     parameters={
-        "spell_reducer": "sum",
-        "op": ">=",
+        "statistic": "sum",
+        "condition": ">=",
         "window": {"default": 3},
-        "win_reducer": {"default": "mean"},
+        "window_statistic": {"default": "mean", "name": "win_reducer"},
         "freq": {"default": "YS"},
-        "threshold1": {
+        "constrain": None,
+        "thresh1": {
             "description": "Threshold for tasmin",
             "default": "20 °C",
             "name": "thresh_tasmin",
         },
-        "threshold2": {
+        "thresh2": {
             "description": "Threshold for tasmax",
             "default": "33 °C",
             "name": "thresh_tasmax",
@@ -1328,9 +1331,11 @@ degree_days_exceedance_date = Temp(
     units="",
     standard_name="day_of_year",
     long_name="Day of year when the integral of mean daily temperature {op} {thresh} exceeds {sum_thresh}",
-    description=lambda **kws: "Day of year when the integral of degree days (mean daily temperature {op} {thresh}) "
-    "exceeds {sum_thresh}"
-    + (", with the cumulative sum starting from {after_date}." if kws["after_date"] is not None else "."),
+    description=lambda **kws: (
+        "Day of year when the integral of degree days (mean daily temperature {op} {thresh}) "
+        "exceeds {sum_thresh}"
+        + (", with the cumulative sum starting from {after_date}." if kws["after_date"] is not None else ".")
+    ),
     abstract="The day of the year when the sum of degree days exceeds a threshold, occurring after a given date. "
     "Degree days are calculated above or below a given temperature threshold.",
     cell_methods="",

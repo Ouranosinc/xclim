@@ -4,7 +4,7 @@ Changelog
 
 v1.0.0 (unreleased)
 -------------------
-Contributors to this version: Trevor James Smith (:user:`Zeitsperre`).
+Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`).
 
 Announcements
 ^^^^^^^^^^^^^
@@ -13,11 +13,15 @@ Documentation has been updated to reflect these changes as well as to help exist
 
 New indicators and features
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+* This new `xclim` includes a major overhaul of the "generic" index functions which has a significant and breaking effect on most of `xclim` modules. A summary of the changes can be found `in this comment <https://github.com/Ouranosinc/xclim/pull/2258#issuecomment-3473430173>`_.
 * The `xclim` command-line tool now accepts both ``-h`` and ``--help`` to show the help summary. (:pull:`2316`).
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
 * Module ``xclim.indices``  has been renamed to ``xclim.compute``. The functions made to build indicators are now called "[index-like] compute functions" and the word "indices" is now used avoided when possible.
+* Major refactor of ``xclim.compute.generic`` to reduce duplication and harmonize signatures. (:pull:`2258`).
+    * Generic functions from ``clix-meta`` are now in their own submodule ``xclim.compute.clix`` and some indicators in ``xclim.cf`` have changed to reflect changes in standards.
+* Legacy imports, links, and documentation for `xsdba` have been removed. (:pull:`2342`).
 * Installation recipes have been significantly modified to mimic conventions employed by `xarray` (:pull:`2316`). Most development-related recipes are now installed via ``dependency-groups`` (`PEP-735 <https://peps.python.org/pep-0735/>`_) and ``optional-dependencies`` are as follows:
     * ``dependency-groups``: ``lint`` (linting tools), ``notebooks`` (minimum for interactive notebooks), ``test`` (minimum for running tests), ``docs`` (minimum for building docs), ``test-notebooks`` (minimum for running notebook tests), ``dev`` (full suite for local development).
     * ``optional-dependencies``: ``bias-adjustment`` (`xsdba` and others), ``performance`` (speedups), ``plot`` (plotting), ``types`` (static typing support), ``complete`` (all extras).
@@ -28,6 +32,35 @@ Internal changes
 * The `Makefile` has been adjusted to install libraries in advance (via ``python -m pip install --silent --group ...``) when attempting to run commands reliant on specific Python tools. (:pull:`2316`).
 * `tox.toml` has been updated to use ``dependency-groups`` to determine necessary libraries needed for environments, and relies entirely on the `Makefile` for running checks. (:pull:`2316`).
 * Documentation has been adjusted to reflect changes to environment setup required by developers/contributors. (:pull:`2316`).
+
+v0.61.0 (unreleased)
+--------------------
+Contributors to this version: Pascal Bourgault (:user:`aulemahal`), Trevor James Smith (:user:`Zeitsperre`), Hui-Min Wang (:user:`Hem-W`), Éric Dupuis (:user:`coxipi`).
+
+New indicators and features
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+* ``xclim.indices.generic.doymin`` and ``xclim.indices.generic.doymax`` will now return `nan` if all values along the time axis are the same. They now also support all-nan arrays (:pull:`2314`).
+    + This changes the behaviour for indicators ``land.snw_max_doy``, ``land.snd_max_doy``, ``land.doy_qmin`` and ``land.doy_qmax``.
+* Added two `zero_inflated` arguments to `standardized_index` and `standardized_precipitation_index` to control how zero-precipitation probabilities are handled. (:issue:`2279`, :pull:`2280`).
+* ``xclim.indices.stats.parametric_pdf`` allows to compute PDF distributions with given input parameters and values  (:pull:`2323`).
+* ``xclim.indices.standardized_precipitation_index`` and ``xclim.indices.standardized_precipitation_evapotranspiration_index`` now can accept `genextreme` and `lognorm` as inputs for `dist`. (:issue:`2326`, :pull:`2327`).
+
+Internal changes
+^^^^^^^^^^^^^^^^
+* Documentation adjustments. (:pull:`2325`):
+    * Updated the `intersphinx` directives to point at new `xsdba` sphinx documentation targets.
+    * Updated the ReadTheDocs configuration to build docs with an older Python version and a newer conda version.
+    * Updated the `pre-commit` hooks (`check-jsonschema`) in order to accept the latest supported conda version in ReadTheDocs config.
+    * Set ``docs/conf.py`` to ignore `sphinx_autodoc_typehints.guarded_import` errors raised by `xarray` type guarding.
+* Set `SocketBlockedError` to be a subset of the `Exception` class when `pytest-socket` is not installed. (:pull:`2324`).
+
+Breaking changes
+^^^^^^^^^^^^^^^^
+* The choice of `method` "APP" was removed when using a `genextreme` distribution in standardized indices (``xclim.indices.standardized_index`` and related functions). (:issue:`2326`, :pull:`2327`).
+
+Bug fixes
+^^^^^^^^^
+* `dist` in ``xclim.indices.standardized_index`` can now be a `scipy.stats.rv_continuous` as it was planned.  (:issue:`2326`, :pull:`2327`).
 
 v0.60.0 (2026-01-23)
 --------------------
@@ -712,8 +745,8 @@ Breaking changes
 Bug fixes
 ^^^^^^^^^
 * Fixed passing ``missing=0`` to ``xclim.core.calendar.convert_calendar``. (:issue:`1562`, :pull:`1563`).
-* Fixed wrong `window` attributes in ``xclim.indices.standardized_precipitation_index``, ``xclim.indices.standardized_precipitation_evapotranspiration_index``. (:issue:`1552`  :pull:`1554`).
-* Fixed the daily case ``freq='D'`` for ``xclim.stats.preprocess_standardized_index`` (:issue:`1602`  :pull:`1607`).
+* Fixed wrong `window` attributes in ``xclim.indices.standardized_precipitation_index``, ``xclim.indices.standardized_precipitation_evapotranspiration_index``. (:issue:`1552`, :pull:`1554`).
+* Fixed the daily case ``freq='D'`` for ``xclim.stats.preprocess_standardized_index`` (:issue:`1602`, :pull:`1607`).
 * Several spelling mistakes have been corrected within the documentation and codebase. (:pull:`1576`).
 * Added missing ``xclim.ensembles.robustness_fractions`` and ``xclim.ensembles.robustness_categories`` in API doc section. (:pull:`1630`).
 * Fixed an issue that can occur when fetching the testing data and running tests on Windows systems. Adapted a few existing tests for Windows support. (:pull:`1648`).

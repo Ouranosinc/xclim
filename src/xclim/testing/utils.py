@@ -41,7 +41,10 @@ try:
     from pytest_socket import SocketBlockedError
 except ImportError:
     pytest = None
-    SocketBlockedError = None
+
+    class SocketBlockedError(Exception):
+        pass
+
 
 try:
     import pooch
@@ -314,7 +317,7 @@ def show_versions(
         return dep_names
 
     _xclim_deps = _find_dependencies("xclim")
-    _xclim_deps.extend(["flox", "lmoments3", "matplotlib", "numbagg", "pymannkendall", "xclim", "xsdba"])
+    _xclim_deps.extend(["flox", "lmoments3", "matplotlib", "numbagg", "pymannkendall", "xclim"])
 
     if deps is None:
         dependencies = _xclim_deps

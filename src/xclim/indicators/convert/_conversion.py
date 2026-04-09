@@ -182,12 +182,12 @@ saturation_vapor_pressure = Converter(
     units="Pa",
     long_name='Saturation vapour pressure ("{method}" method)',
     description=lambda **kws: (
-        "The saturation vapour pressure was calculated from a temperature according to the {method} method."
-    )
-    + (
-        " The computation was done in reference to ice for temperatures below {ice_thresh}."
-        if kws["ice_thresh"] is not None
-        else ""
+        ("The saturation vapour pressure was calculated from a temperature according to the {method} method.")
+        + (
+            " The computation was done in reference to ice for temperatures below {ice_thresh}."
+            if kws["ice_thresh"] is not None
+            else ""
+        )
     ),
     abstract="Calculation of the saturation vapour pressure from the temperature, according to a given method. "
     "If ice_thresh is given, the calculation is done with reference to ice for temperatures below this threshold.",
@@ -203,14 +203,16 @@ relative_humidity_from_dewpoint = Converter(
     long_name='Relative humidity ("{method}" method)',
     standard_name="relative_humidity",
     description=lambda **kws: (
-        "Computed from temperature, and dew point temperature through the "
-        "saturation vapour pressures, which were calculated "
-        "according to the {method} method."
-    )
-    + (
-        " The computation was done in reference to ice for temperatures below {ice_thresh}."
-        if kws["ice_thresh"] is not None
-        else ""
+        (
+            "Computed from temperature, and dew point temperature through the "
+            "saturation vapour pressures, which were calculated "
+            "according to the {method} method."
+        )
+        + (
+            " The computation was done in reference to ice for temperatures below {ice_thresh}."
+            if kws["ice_thresh"] is not None
+            else ""
+        )
     ),
     abstract="Calculation of relative humidity from temperature and dew point using the saturation vapour pressure.",
     compute=converters.relative_humidity,
@@ -231,13 +233,15 @@ relative_humidity = Converter(
     long_name='Relative Humidity ("{method}" method)',
     standard_name="relative_humidity",
     description=lambda **kws: (
-        "Computed from temperature, specific humidity and pressure through the saturation vapour pressure, "
-        "which was calculated from temperature according to the {method} method."
-    )
-    + (
-        " The computation was done in reference to ice for temperatures below {ice_thresh}."
-        if kws["ice_thresh"] is not None
-        else ""
+        (
+            "Computed from temperature, specific humidity and pressure through the saturation vapour pressure, "
+            "which was calculated from temperature according to the {method} method."
+        )
+        + (
+            " The computation was done in reference to ice for temperatures below {ice_thresh}."
+            if kws["ice_thresh"] is not None
+            else ""
+        )
     ),
     abstract="Calculation of relative humidity from temperature, "
     "specific humidity, and pressure using the saturation vapour pressure.",
@@ -259,13 +263,15 @@ specific_humidity = Converter(
     long_name='Specific Humidity ("{method}" method)',
     standard_name="specific_humidity",
     description=lambda **kws: (
-        "Computed from temperature, relative humidity and pressure through the saturation vapour pressure, "
-        "which was calculated from temperature according to the {method} method."
-    )
-    + (
-        " The computation was done in reference to ice for temperatures below {ice_thresh}."
-        if kws["ice_thresh"] is not None
-        else ""
+        (
+            "Computed from temperature, relative humidity and pressure through the saturation vapour pressure, "
+            "which was calculated from temperature according to the {method} method."
+        )
+        + (
+            " The computation was done in reference to ice for temperatures below {ice_thresh}."
+            if kws["ice_thresh"] is not None
+            else ""
+        )
     ),
     abstract="Calculation of specific humidity from temperature, "
     "relative humidity, and pressure using the saturation vapour pressure.",
@@ -315,13 +321,15 @@ vapor_pressure_deficit = Converter(
     long_name='Vapour pressure deficit ("{method}" method)',
     standard_name="water_vapor_saturation_deficit_in_air",
     description=lambda **kws: (
-        "The difference between the saturation vapour pressure and the actual vapour pressure,"
-        "calculated from temperature and relative humidity according to the {method} method."
-    )
-    + (
-        " The computation was done in reference to ice for temperatures below {ice_thresh}."
-        if kws["ice_thresh"] is not None
-        else ""
+        (
+            "The difference between the saturation vapour pressure and the actual vapour pressure,"
+            "calculated from temperature and relative humidity according to the {method} method."
+        )
+        + (
+            " The computation was done in reference to ice for temperatures below {ice_thresh}."
+            if kws["ice_thresh"] is not None
+            else ""
+        )
     ),
     abstract="Difference between the saturation vapour pressure and the actual vapour pressure.",
     compute=converters.vapor_pressure_deficit,
@@ -390,13 +398,13 @@ wind_chill_index = Converter(
     units="degC",
     long_name="Wind chill factor",
     description=lambda **kws: (
-        "Wind chill index describing the temperature felt by the average person in response to cold wind."
-    )
-    + (
-        "A slow-wind version of the wind chill index was used for wind speeds under 5 km/h and invalid "
-        "temperatures were masked (T > 0°C)."
-        if kws["method"] == "CAN"
-        else "Invalid temperatures (T > 50°F) and winds (V < 3 mph) where masked."
+        ("Wind chill index describing the temperature felt by the average person in response to cold wind.")
+        + (
+            "A slow-wind version of the wind chill index was used for wind speeds under 5 km/h and invalid "
+            "temperatures were masked (T > 0°C)."
+            if kws["method"] == "CAN"
+            else "Invalid temperatures (T > 50°F) and winds (V < 3 mph) where masked."
+        )
     ),
     abstract="Wind chill factor is an index that equates to how cold an average person feels. "
     "It is calculated from the temperature and the wind speed at 10 m. "

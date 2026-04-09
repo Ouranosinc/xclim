@@ -140,7 +140,7 @@ import xarray as xr
 from numba import njit, vectorize
 
 from xclim.compute import run_length as rl
-from xclim.core._types import Quantified
+from xclim.core import Quantified
 from xclim.core.units import convert_units_to, declare_units
 from xclim.core.utils import get_temp_dimname
 

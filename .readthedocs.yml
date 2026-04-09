@@ -8,12 +8,12 @@ sphinx:
 #  - pdf
 
 build:
-  os: ubuntu-24.04
+  os: "ubuntu-24.04"
   tools:
-    python: "mambaforge-23.11"
+    python: "miniforge3-25.11"
   jobs:
     pre_create_environment:
-      - sed -i "s/python >=3.11,<3.14/python >=3.11,<3.13/" environment.yml
+      - sed -i "s/python >=3.11,<3.15/python >=3.11,<3.13/" environment.yml
     pre_build:
       - sphinx-apidoc -o docs/apidoc/ --private --module-first src/xclim src/xclim/testing/tests src/xclim/indicators src/xclim/indices
       - rm docs/apidoc/xclim.rst

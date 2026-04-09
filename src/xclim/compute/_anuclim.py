@@ -14,7 +14,7 @@ from xclim.compute._multivariate import (
     precip_accumulation,
 )
 from xclim.compute._simple import tg_mean
-from xclim.compute.generic import select_resample_op
+from xclim.compute.generic import statistics
 from xclim.compute.run_length import lazy_indexing
 from xclim.core import Quantified
 from xclim.core.units import (
@@ -266,9 +266,7 @@ def tg_mean_warmcold_quarter(
         raise NotImplementedError(f'op parameter ({op}) may only be one of "warmest", "coldest"')
     oper = _np_ops[op]
 
-    out = select_resample_op(out, oper, freq)
-    out.attrs["units"] = tas.units
-    return out
+    return statistics(out, statistic=oper, freq=freq)
 
 
 @declare_units(tas="[temperature]", pr="[precipitation]")
@@ -380,9 +378,7 @@ def prcptot_wetdry_quarter(
         raise NotImplementedError(f'op parameter ({op}) may only be one of "wettest" or "driest"')
     op = _np_ops[op]
 
-    out = select_resample_op(pr_qrt, op, freq)
-    out.attrs["units"] = pr_qrt.units
-    return out
+    return statistics(pr_qrt, statistic=op, freq=freq)
 
 
 @declare_units(pr="[precipitation]", tas="[temperature]")

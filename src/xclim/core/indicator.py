@@ -60,6 +60,7 @@ mirroring attributes of the :py:class:`Indicator`, please refer to its documenta
         missing_options:
             # missing options mapping
         allowed_periods: [<list>, <of>, <allowed>, <periods>]
+        context: <context> # A unit context enabled during the conversion of the compute's output to the requested units
 
         # Compute function
         compute: <function name>  # Referring to a function in `compute` module
@@ -383,7 +384,8 @@ class Indicator(IndicatorRegistrar):
     src_freq : str, sequence of strings, optional
         The expected frequency of the input data. Can be a list for multiple frequencies, or None if irrelevant.
     context : str
-        The `pint` unit context, for example use 'hydro' to allow conversion from 'kg m-2 s-1' to 'mm/day'.
+        A `pint` unit context enabled during the computation of this indicator.
+        For example use 'hydro' to allow conversion from 'kg m-2 s-1' to 'mm/day'.
 
     Notes
     -----
@@ -789,12 +791,19 @@ class Indicator(IndicatorRegistrar):
         # data.compute refers to a function in xclim.compute.generic or xclim.compute (in this order of priority).
         # It can also directly be a function (like if a module was passed to build_indicator_module_from_yaml)
         if isinstance(func_or_name, str):
-            func = getattr(generic, func_or_name, getattr(compute, func_or_name, None))
-            if func is None:
-                raise ImportError(
-                    f"Compute function {func_or_name} not found in xclim.compute or xclim.compute.generic."
-                )
-            data["compute"] = func
+            if "." in compute:
+                modname, funcname = func_or_name.split(".")
+                submod = getattr(compute, modname, None)
+                compute_func = getattr(submod, funcname, None)
+                if compute_func is None:
+                    raise ImportError(f"Compute function {funcname} not found in xclim.compute.{modname}.")
+            else:
+                compute_func = getattr(generic, func_or_name, getattr(compute, func_or_name, None))
+                if compute_func is None:
+                    raise ImportError(
+                        f"Indice function {func_or_name} not found in xclim.compute or xclim.compute.generic."
+                    )
+            data["compute"] = compute_func
 
         return cls(identifier=identifier, module=module, **data)
 

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import xclim.compute.clix
 from xclim.compute._agro import *
 from xclim.compute._anuclim import *
 from xclim.compute._hydrology import *

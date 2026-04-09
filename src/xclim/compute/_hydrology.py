@@ -11,12 +11,12 @@ import xarray
 from scipy.stats import circmean, rv_continuous
 from xarray import DataArray
 
-from xclim.compute.generic import threshold_count
+from xclim.compute.generic import count_occurrences
 from xclim.compute.stats import standardized_index
 from xclim.core._types import DateStr, Quantified
 from xclim.core.calendar import get_calendar
 from xclim.core.missing import at_least_n_valid
-from xclim.core.units import convert_units_to, declare_units, rate2amount, to_agg_units
+from xclim.core.units import convert_units_to, declare_units, rate2amount
 
 from . import generic
 
@@ -233,7 +233,11 @@ def standardized_streamflow_index(
     >>> ssi_3 = standardized_streamflow_index(q, params=params)
     """
     fitkwargs = fitkwargs or {}
-    dist_methods = {"genextreme": ["ML", "APP"], "fisk": ["ML", "APP"]}
+    dist_methods = {
+        # FIXME: xclim-v1 — remove "APP"
+        "genextreme": ["ML", "APP"],
+        "fisk": ["ML", "APP"],
+    }
     if isinstance(dist, str):
         if dist in dist_methods:
             if method not in dist_methods[dist]:
@@ -278,7 +282,7 @@ def snd_max(snd: xarray.DataArray, freq: str = "YS-JUL") -> xarray.DataArray:
     xarray.DataArray
         The maximum snow depth over a given number of days for each period. [length].
     """
-    return generic.select_resample_op(snd, op="max", freq=freq)
+    return generic.statistics(snd, statistic="max", freq=freq)
 
 
 @declare_units(snd="[length]")
@@ -304,7 +308,7 @@ def snd_max_doy(snd: xarray.DataArray, freq: str = "YS-JUL") -> xarray.DataArray
     valid = at_least_n_valid(snd.where(snd > 0), n=1, freq=freq)
 
     # Compute doymax. Will return first time step if all snow depths are 0.
-    out = generic.select_resample_op(snd.where(snd > 0, 0), op=generic.doymax, freq=freq)
+    out = generic.statistics(snd.where(snd > 0, 0), statistic="doymax", freq=freq)
     out.attrs.update(units="", is_dayofyear=np.int32(1), calendar=get_calendar(snd))
 
     # Mask arrays that miss at least one non-null snd.
@@ -330,7 +334,7 @@ def snw_max(snw: xarray.DataArray, freq: str = "YS-JUL") -> xarray.DataArray:
     xarray.DataArray
         The maximum snow amount over a given number of days for each period. [mass/area].
     """
-    return generic.select_resample_op(snw, op="max", freq=freq)
+    return generic.statistics(snw, statistic="max", freq=freq)
 
 
 @declare_units(snw="[mass]/[area]")
@@ -356,8 +360,7 @@ def snw_max_doy(snw: xarray.DataArray, freq: str = "YS-JUL") -> xarray.DataArray
     valid = at_least_n_valid(snw.where(snw > 0), n=1, freq=freq)
 
     # Compute doymax. Will return first time step if all snow depths are 0.
-    out = generic.select_resample_op(snw.where(snw > 0, 0), op=generic.doymax, freq=freq)
-    out.attrs.update(units="", is_dayofyear=np.int32(1), calendar=get_calendar(snw))
+    out = generic.statistics(snw.where(snw > 0, 0), statistic="doymax", freq=freq)
 
     # Mask arrays that miss at least one non-null snd.
     return out.where(~valid)
@@ -540,6 +543,7 @@ def standardized_groundwater_index(
 
     dist_methods = {
         "gamma": ["ML", "APP"],
+        # FIXME: xclim-v1 — remove "APP"
         "genextreme": ["ML", "APP"],
         "lognorm": ["ML", "APP"],
     }
@@ -626,9 +630,8 @@ def high_flow_frequency(q: xarray.DataArray, threshold_factor: int = 9, freq: st
     :cite:cts:`addor2018,Clausen2000`
     """
     median_flow = q.median(dim="time")
-    threshold = threshold_factor * median_flow
-    out = threshold_count(q, ">", threshold, freq=freq)
-    return to_agg_units(out, q, "count", deffreq="D")
+    thresh = (threshold_factor * median_flow).assign_attrs(units=q.attrs["units"])
+    return count_occurrences(q, condition=">", thresh=thresh, freq=freq)
 
 
 @declare_units(q="[discharge]")
@@ -659,9 +662,8 @@ def low_flow_frequency(q: xarray.DataArray, threshold_factor: float = 0.2, freq:
     :cite:cts:`Olden2003`
     """
     mean_flow = q.mean(dim="time")
-    threshold = threshold_factor * mean_flow
-    out = threshold_count(q, "<", threshold, freq=freq)
-    return to_agg_units(out, q, "count", deffreq="D")
+    thresh = (threshold_factor * mean_flow).assign_attrs(units=q.attrs["units"])
+    return count_occurrences(q, condition="<", thresh=thresh, freq=freq)
 
 
 @declare_units(pr="[precipitation]")
@@ -800,9 +802,7 @@ def days_with_snowpack(
     ----------
     :cite:cts:`alonso_gonzalez_2022`
     """
-    frz = convert_units_to(thresh, swe)
-    out = threshold_count(swe, ">", frz, freq)
-    return to_agg_units(out, swe, "count", deffreq="D")
+    return count_occurrences(swe, condition=">", thresh=thresh, freq=freq)
 
 
 @declare_units(pr="[precipitation]", pet="[precipitation]")

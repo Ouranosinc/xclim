@@ -15,7 +15,8 @@ from xclim.compute._threshold import (
     first_day_temperature_above,
     first_day_temperature_below,
 )
-from xclim.compute.generic import aggregate_between_dates, get_zones
+from xclim.compute.classify import get_zones
+from xclim.compute.generic import statistics_between_dates
 from xclim.compute.helpers import (
     _gather_lat,
     gladstones_day_length_latitude_coefficient,
@@ -31,7 +32,6 @@ from xclim.core.units import (
     convert_units_to,
     declare_units,
     rate2amount,
-    to_agg_units,
 )
 from xclim.core.utils import uses_dask
 
@@ -994,6 +994,8 @@ def standardized_precipitation_index(
     cal_start: DateStr | None = None,
     cal_end: DateStr | None = None,
     params: Quantified | None = None,
+    prob_zero_interpolation: str | float = "upper",
+    plotting_position_zero: str | tuple[float, float] = "ecdf",
     **indexer,
 ) -> xarray.DataArray:
     r"""
@@ -1009,7 +1011,7 @@ def standardized_precipitation_index(
     window : int
         Averaging window length relative to the resampling frequency. For example, if `freq="MS"`,
         i.e. a monthly resampling, the window is an integer number of months.
-    dist : {'gamma', 'fisk'} or `rv_continuous` function
+    dist : {'gamma', 'fisk', 'genextreme', 'lognorm'} or `rv_continuous` function
         Name of the univariate distribution, or a callable `rv_continuous` (see :py:mod:`scipy.stats`).
     method : {"APP", "ML", "PWM"}
         Name of the fitting method, such as `ML` (maximum likelihood), `APP` (approximate). The approximate method
@@ -1028,6 +1030,20 @@ def standardized_precipitation_index(
         Fit parameters.
         The `params` can be computed using ``xclim.compute.stats.standardized_index_fit_params`` in advance.
         The output can be given here as input, and it overrides other options.
+    prob_zero_interpolation : {"center", "upper"} or float
+        Interpolation method used to assign a probability to zero values (only used if `zero_inflated` is True).
+        When the data contain multiple zeros, the admissible plotting position interval spans from the first zero rank
+        to the last zero rank. This parameter selects a representative probability within that interval. The default
+        method "upper" assigns the upper bound of the zero-rank interval. The "center" method assigns the
+        midpoint of the zero-rank interval. If a float in [0, 1] is provided, it is used as a linear interpolation
+        factor between the lower (0) and upper (1) zero-rank plotting positions.
+    plotting_position_zero : {"ecdf", "weibull"} or tuple[float, float]
+        Method used to assign a probability to a rank for the zeros (only used if `zero_inflated` is True).
+        "ecdf" (default option) is the empirical cumulative distribution and divides the number or zeros
+        by the total number of observations. "weibull" implements the unbiased version, dividing by the
+        total number of observation plus one. A tuple consisting of two coefficients in [0,1] to relate the
+        number of zeros and the total number of observations. "ecdf" corresponds to (0,1)  and "weibull" to (0,0).
+        See :py:func:`scipy.stats.mstats.plotting_positions`
     **indexer : {dim: indexer}, optional
         Indexing parameters to compute the indicator on a temporal subset of the data.
         It accepts the same arguments as :py:func:`xclim.compute.generic.select_time`.
@@ -1056,7 +1072,7 @@ def standardized_precipitation_index(
 
     References
     ----------
-    :cite:cts:`mckee_relationship_1993`
+    :cite:cts:`mckee_relationship_1993,stagge_candidate_2015`
 
     Examples
     --------
@@ -1091,7 +1107,12 @@ def standardized_precipitation_index(
     """
     fitkwargs = fitkwargs or {}
 
-    dist_methods = {"gamma": ["ML", "APP"], "fisk": ["ML", "APP"]}
+    dist_methods = {
+        "fisk": ["ML", "APP"],
+        "gamma": ["ML", "APP"],
+        "genextreme": ["ML"],
+        "lognorm": ["ML", "APP"],
+    }
     if isinstance(dist, str):
         if dist in dist_methods:
             if method not in dist_methods[dist]:
@@ -1112,6 +1133,8 @@ def standardized_precipitation_index(
         cal_start=cal_start,
         cal_end=cal_end,
         params=params,
+        prob_zero_interpolation=prob_zero_interpolation,
+        plotting_position_zero=plotting_position_zero,
         **indexer,
     )
 
@@ -1151,7 +1174,7 @@ def standardized_precipitation_evapotranspiration_index(
     window : int
         Averaging window length relative to the resampling frequency. For example, if `freq="MS"`, i.e. a monthly
         resampling, the window is an integer number of months.
-    dist : {'gamma', 'fisk'} or `rv_continuous` function
+    dist : {'gamma', 'fisk', 'genextreme', 'lognorm'} or `rv_continuous` function
         Name of the univariate distribution, or a callable `rv_continuous` (see :py:mod:`scipy.stats`).
     method : {"APP", "ML", "PWM"}
         Name of the fitting method, such as `ML` (maximum likelihood), `APP` (approximate). The approximate method
@@ -1186,8 +1209,12 @@ def standardized_precipitation_evapotranspiration_index(
     xclim.compute.stats.standardized_index_fit_params : Standardized Index Fit Params.
     """
     fitkwargs = fitkwargs or {}
-
-    dist_methods = {"gamma": ["ML", "APP"], "fisk": ["ML", "APP"]}
+    dist_methods = {
+        "fisk": ["ML", "APP"],
+        "gamma": ["ML", "APP"],
+        "genextreme": ["ML"],
+        "lognorm": ["ML", "APP"],
+    }
     if isinstance(dist, str):
         if dist in dist_methods:
             if method not in dist_methods[dist]:
@@ -1351,10 +1378,8 @@ def effective_growing_degree_days(
         - 1
     )
 
-    deg_days = (tas - thresh).clip(min=0)
-    egdd: xarray.DataArray = aggregate_between_dates(deg_days, start=start, end=end, freq=freq)
-    egdd = to_agg_units(egdd, tas, op="integral", deffreq="D")
-    return egdd
+    deg_days = (tas - thresh).clip(min=0).assign_attrs(**tas.attrs)
+    return statistics_between_dates(deg_days, start=start, end=end, statistic="integral", freq=freq)
 
 
 @declare_units(tasmin="[temperature]")

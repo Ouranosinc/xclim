@@ -116,6 +116,8 @@ autodoc_typehints_description_target = "documented_params"
 autosectionlabel_prefix_document = True
 autosectionlabel_maxdepth = 2
 
+suppress_warnings = ["sphinx_autodoc_typehints.guarded_import"]
+
 linkcheck_ignore = [
     # too labourious to fully check
     r"https://github.com/Ouranosinc/xclim/(pull|issue).*",
@@ -181,7 +183,6 @@ intersphinx_mapping = {
     "scipy": ("https://docs.scipy.org/doc/scipy/", None),
     "sklearn": ("https://scikit-learn.org/stable/", None),
     "statsmodels": ("https://www.statsmodels.org/stable/", None),
-    "xsdba": ("https://xsdba.readthedocs.io/en/stable/", None),
 }
 extlinks = {
     "issue": ("https://github.com/Ouranosinc/xclim/issues/%s", "GH/%s"),

@@ -16,7 +16,7 @@ import numpy as np
 import pandas as pd
 import scipy.stats
 import xarray
-from scipy.spatial.distance import cdist
+from scipy.spatial import distance
 from sklearn.cluster import KMeans
 
 # Avoid having to include matplotlib in xclim requirements
@@ -153,7 +153,7 @@ def kkz_reduce_ensemble(
     unselected = list(data.realization.values)
     selected = []
 
-    dist0 = cdist(
+    dist0 = distance.cdist(
         data.mean("realization").expand_dims("realization"),
         data,
         metric=dist_method,
@@ -162,7 +162,7 @@ def kkz_reduce_ensemble(
     selected.append(unselected.pop(dist0.argmin()))
 
     for _ in range(1, num_select):
-        dist = cdist(
+        dist = distance.cdist(
             data.isel(realization=selected),
             data.isel(realization=unselected),
             metric=dist_method,
