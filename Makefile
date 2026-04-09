@@ -69,7 +69,7 @@ lint: install-lint ## check style with flake8 and black
 	python -m flake8 --config=.flake8 src/xclim tests
 	python -m vulture src/xclim tests
 	codespell src/xclim tests docs
-	python -m numpydoc lint src/xclim/*.py src/xclim/ensembles/*.py src/xclim/indices/*.py src/xclim/indicators/*.py src/xclim/testing/*.py
+	python -m numpydoc lint src/xclim/*.py src/xclim/ensembles/*.py src/xclim/compute/*.py src/xclim/indicators/*.py src/xclim/testing/*.py
 	python -m deptry src
 	python -m yamllint --config-file=.yamllint.yaml src/xclim
 
