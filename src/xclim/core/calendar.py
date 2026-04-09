@@ -520,7 +520,7 @@ def compare_offsets(
     bool
         The result of `freqA` `op` `freqB`.
     """
-    from ..indices.helpers import get_binary_op  # pylint: disable=import-outside-toplevel
+    from ..compute.helpers import get_binary_op  # pylint: disable=import-outside-toplevel
 
     # Get multiplier and base frequency
     t_a, b_a, _, _ = parse_offset(freqA)
