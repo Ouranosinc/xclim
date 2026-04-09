@@ -116,6 +116,25 @@ class PrTasxWithIndexing(ResamplingIndicatorWithIndexing):
         cfchecks.check_valid(tas, "standard_name", "air_temperature")
 
 
+class PrTasx(Precip):
+    """Indicator involving pr and one of tas, tasmin or tasmax, allowing indexing."""
+
+    @staticmethod
+    def cfcheck(pr: DataArray, tas: DataArray):
+        r"""
+        Verify the CF-compliance of the input data.
+
+        Parameters
+        ----------
+        pr : xarray.DataArray
+            Precipitation data.
+        tas : xarray.DataArray
+            Temperature data.
+        """
+        cfchecks.cfcheck_from_name("pr", pr)
+        cfchecks.check_valid(tas, "standard_name", "air_temperature")
+
+
 class HrPrecip(Hourly):
     """Indicator involving hourly pr series."""
 
@@ -145,7 +164,7 @@ rain_on_frozen_ground_days = PrTasxWithIndexing(
     compute=indices.rain_on_frozen_ground_days,
 )
 
-max_1day_precipitation_amount = PrecipWithIndexing(
+max_1day_precipitation_amount = Precip(
     title="Maximum 1-day total precipitation",
     identifier="rx1day",
     units="mm/day",
@@ -154,7 +173,9 @@ max_1day_precipitation_amount = PrecipWithIndexing(
     description="{freq} maximum 1-day total precipitation",
     abstract="Maximum total daily precipitation for a given period.",
     cell_methods="time: maximum over days",
-    compute=indices.max_1day_precipitation_amount,
+    compute=indices.generic.statistics,
+    input={"data": "pr"},
+    parameters={"out_units": None, "statistic": "max"},
 )
 
 max_n_day_precipitation_amount = Precip(
@@ -167,10 +188,17 @@ max_n_day_precipitation_amount = Precip(
     description="{freq} maximum {window}-day total precipitation amount.",
     abstract="Maximum of the moving sum of daily precipitation for a given period.",
     cell_methods="time: maximum over days",
-    compute=indices.max_n_day_precipitation_amount,
+    compute=indices.generic.running_statistics,
+    input={"data": "pr"},
+    parameters={
+        "window_statistic": "integral",
+        "statistic": "max",
+        "window_center": True,
+        "out_units": None,
+    },
 )
 
-wetdays = PrecipWithIndexing(
+wetdays = Precip(
     title="Number of wet days",
     identifier="wetdays",
     units="days",
@@ -179,7 +207,13 @@ wetdays = PrecipWithIndexing(
     description="{freq} number of days with daily precipitation at or above {thresh}.",
     abstract="The number of days with daily precipitation at or above a given threshold.",
     cell_methods="time: sum over days",
-    compute=indices.wetdays,
+    compute=indices.generic.count_occurrences,
+    input={"data": "pr"},
+    parameters={
+        "thresh": {"default": "1 mm/d"},
+        "condition": {"default": ">="},
+        "constrain": (">=", ">"),
+    },
 )
 
 wetdays_prop = PrecipWithIndexing(
@@ -193,7 +227,7 @@ wetdays_prop = PrecipWithIndexing(
     compute=indices.wetdays_prop,
 )
 
-dry_days = PrecipWithIndexing(
+dry_days = Precip(
     title="Number of dry days",
     identifier="dry_days",
     units="days",
@@ -202,7 +236,13 @@ dry_days = PrecipWithIndexing(
     description="{freq} number of days with daily precipitation under {thresh}.",
     abstract="The number of days with daily precipitation under a given threshold.",
     cell_methods="time: sum over days",
-    compute=indices.dry_days,
+    compute=indices.generic.count_occurrences,
+    input={"data": "pr"},
+    parameters={
+        "thresh": {"default": "0.2 mm/d"},
+        "condition": {"default": "<"},
+        "constrain": ("<", "<="),
+    },
 )
 
 dryness_index = Precip(
@@ -268,42 +308,48 @@ max_pr_intensity = HrPrecip(
     description="{freq} maximum precipitation intensity over rolling {window}h time window.",
     abstract="Maximum precipitation intensity over a given rolling time window.",
     cell_methods="time: max",
-    compute=indices.max_pr_intensity,
+    compute=indices.generic.running_statistics,
+    input={"data": "pr"},
+    parameters={
+        "window": {"default": 1},
+        "window_statistic": "mean",
+        "statistic": "max",
+        "window_center": False,
+        "out_units": None,
+    },
     duration="{window}",
     keywords="IDF curves",
 )
 
-precip_accumulation = PrecipWithIndexing(
+precip_accumulation = Precip(
     title="Total accumulated precipitation (solid and liquid)",
     identifier="prcptot",
     units="mm",
     standard_name="lwe_thickness_of_precipitation_amount",
     long_name="Total accumulated precipitation",
     description="{freq} total precipitation.",
-    abstract="Total accumulated precipitation. If the average daily temperature is given, the phase parameter can be "
-    "used to restrict the calculation to precipitation of only one phase (liquid or solid). Precipitation is "
-    "considered solid if the average daily temperature is below 0°C (and vice versa).",
+    abstract="Total accumulated precipitation.",
     cell_methods="time: sum over days",
-    compute=indices.precip_accumulation,
-    parameters={"tas": None, "phase": None, "thresh": None},
+    compute=indices.generic.statistics,
+    input={"data": "pr"},
+    parameters={"statistic": "integral"},
 )
 
-precip_average = PrecipWithIndexing(
+precip_average = Precip(
     title="Averaged precipitation (solid and liquid)",
     identifier="prcpavg",
     units="mm",
     standard_name="lwe_average_of_precipitation_amount",
     long_name="Averaged precipitation",
     description="{freq} mean precipitation.",
-    abstract="Averaged precipitation. If the average daily temperature is given, the phase parameter can be "
-    "used to restrict the calculation to precipitation of only one phase (liquid or solid). Precipitation is "
-    "considered solid if the average daily temperature is below 0°C threshold (and vice versa).",
+    abstract="Averaged precipitation.",
     cell_methods="time: mean over days",
-    compute=indices.precip_average,
-    parameters={"tas": None, "phase": None},
+    compute=indices.generic.statistics,
+    input={"data": "pr"},
+    parameters={"statistic": "mean"},
 )
 
-wet_precip_accumulation = PrecipWithIndexing(
+wet_precip_accumulation = Precip(
     title="Total accumulated precipitation (solid and liquid) during wet days",
     identifier="wet_prcptot",
     units="mm",
@@ -313,8 +359,9 @@ wet_precip_accumulation = PrecipWithIndexing(
     abstract="Total accumulated precipitation on days with precipitation. "
     "A day is considered to have precipitation if the precipitation is greater than or equal to a given threshold.",
     cell_methods="time: sum over days",
-    compute=indices.prcptot,
-    parameters={"thresh": {"default": "1 mm/day"}},
+    compute=indices.generic.thresholded_statistics,
+    input={"data": "pr"},
+    parameters={"thresh": {"default": "1 mm/day"}, "condition": ">=", "statistic": "integral"},
 )
 
 liquid_precip_accumulation = PrTasxWithIndexing(
@@ -495,7 +542,7 @@ mcarthur_forest_fire_danger_index = FireWeather(
 )
 
 
-last_snowfall = PrecipWithIndexing(
+last_snowfall = Precip(
     title="Last day where snowfall exceeded a given threshold",
     identifier="last_snowfall",
     standard_name="day_of_year",
@@ -504,10 +551,20 @@ last_snowfall = PrecipWithIndexing(
     abstract="The last day where snowfall exceeded a given threshold during a time period (the threshold can be "
     "given as a snowfall flux or a liquid water equivalent snowfall rate).",
     units="",
-    compute=indices.last_snowfall,
+    compute=indices.generic.day_threshold_reached,
+    input={"data": "prsn"},
+    parameters={
+        "thresh": {"default": "1 mm/d"},
+        "freq": {"default": "YS-JUL"},
+        "condition": ">=",
+        "date": None,
+        "which": "last",
+        "window": 1,
+        "constrain": None,
+    },
 )
 
-first_snowfall = PrecipWithIndexing(
+first_snowfall = Precip(
     title="First day where snowfall exceeded a given threshold",
     identifier="first_snowfall",
     standard_name="day_of_year",
@@ -516,17 +573,35 @@ first_snowfall = PrecipWithIndexing(
     abstract="The first day where snowfall exceeded a given threshold during a time period (the threshold can be "
     "given as a snowfall flux or a liquid water equivalent snowfall rate).",
     units="",
-    compute=indices.first_snowfall,
+    compute=indices.generic.day_threshold_reached,
+    input={"data": "prsn"},
+    parameters={
+        "thresh": {"default": "1 mm/d"},
+        "freq": {"default": "YS-JUL"},
+        "condition": ">=",
+        "date": None,
+        "which": "first",
+        "window": 1,
+        "constrain": None,
+    },
 )
 
-days_with_snow = PrecipWithIndexing(
+days_with_snow = Precip(
     title="Days with snowfall",
     identifier="days_with_snow",
     long_name="Number of days with snowfall between {low} and {high} thresholds",
     description="{freq} number of days with snowfall larger than {low} and smaller or equal to {high}.",
     abstract="Number of days with snow between a lower and upper limit.",
     units="days",
-    compute=indices.days_with_snow,
+    compute=indices.generic.count_domain_occurrences,
+    input={"data": "prsn"},
+    parameters={
+        "low_bound": {"default": "0 kg m-2 s-1", "name": "low"},
+        "high_bound": {"default": "1E6 kg m-2 s-1", "name": "high"},
+        "freq": {"default": "YS-JUL"},
+        "low_condition": ">",
+        "high_condition": "<=",
+    },
 )
 
 snowfall_frequency = PrecipWithIndexing(
@@ -540,7 +615,7 @@ snowfall_frequency = PrecipWithIndexing(
     compute=indices.snowfall_frequency,
 )
 
-snowfall_intensity = PrecipWithIndexing(
+snowfall_intensity = Precip(
     title="Snowfall intensity",
     identifier="snowfall_intensity",
     long_name="Mean daily snowfall above {thresh} threshold",
@@ -548,7 +623,16 @@ snowfall_intensity = PrecipWithIndexing(
     abstract="Mean daily liquid water equivalent snowfall rate above threshold (either a "
     "snowfall flux or a liquid water equivalent snowfall rate)",
     units="mm/day",
-    compute=indices.snowfall_intensity,
+    compute=indices.generic.thresholded_statistics,
+    input={"data": "prsn"},
+    parameters={
+        "thresh": {"default": "1 mm/d"},
+        "freq": {"default": "YS-JUL"},
+        "statistic": "mean",
+        "condition": ">=",
+        "constrain": None,
+        "out_units": None,
+    },
 )
 
 # FIXME: Are days_over_precip_thresh and days_over_precip_doy_thresh the same thing?
@@ -581,7 +665,7 @@ days_over_precip_doy_thresh = PrecipWithIndexing(
     compute=indices.days_over_precip_thresh,
 )
 
-high_precip_low_temp = PrTasxWithIndexing(
+high_precip_low_temp = PrTasx(
     title="Days with precipitation and cold temperature",
     identifier="high_precip_low_temp",
     long_name="Days with precipitation at or above {pr_thresh} and temperature below {tas_thresh}",
@@ -589,7 +673,17 @@ high_precip_low_temp = PrTasxWithIndexing(
     abstract="Number of days with precipitation above a given threshold and temperature below a given threshold.",
     units="days",
     cell_methods="time: sum over days",
-    compute=indices.high_precip_low_temp,
+    compute=indices.generic.bivariate_count_occurrences,
+    input={"data1": "pr", "data2": "tas"},
+    parameters={
+        "thresh1": {"default": "0.4 mm/d", "name": "pr_thresh"},
+        "thresh2": {"default": "-0.2 degC", "name": "tas_thresh"},
+        "condition1": ">=",
+        "condition2": "<",
+        "var_reducer": "all",
+        "constrain1": None,
+        "constrain2": None,
+    },
 )
 
 # FIXME: Are fraction_over_precip_thresh and fraction_over_precip_doy_thresh the same thing?
