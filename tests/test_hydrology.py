@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from xclim import indices as xci
+from xclim import compute as xci
 from xclim import land
 from xclim.core.units import convert_units_to
 
