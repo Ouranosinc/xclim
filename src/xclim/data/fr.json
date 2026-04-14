@@ -1504,7 +1504,7 @@
     "title": "Indice d'aridité",
     "long_name": "Indice d'aridité",
     "description": "Rapport entre les précipitations totales et l'évapotranspiration potentielle.",
-    "abstract": "Rapport entre les précipitations totales et l'évapotranspiration potentielle. Classification basée sur l'indice d'aridité (AI).\n + ----------------+----------------+-----------------+ \n| Classification | Indice d'aridité     | Superficie terrestre mondiale | \n +----------------+----------------+---------------------+ \n | Hyperaride       | IA < 0,05        | 7,5 %            | \n | Aride            | 0,05 ≤ IA < 0,20 | 12,1 %           | \n | Semi-aride     | 0,20 ≤ IA < 0,50 | 17,7 %           |\n | Subhumide sec    | 0,50 ≤ AI < 0,65 | 9,9 %            | \n +----------------+----------------+---------------------+ "
+    "abstract": "Rapport entre les précipitations totales et l'évapotranspiration potentielle. Classification basée sur l'indice d'aridité (AI)."
   },
   "BASE_FLOW_INDEX_SEASONAL_RATIO": {
     "title": "Indice de débit de base saisonnier",
