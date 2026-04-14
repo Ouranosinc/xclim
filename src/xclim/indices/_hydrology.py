@@ -814,14 +814,6 @@ def aridity_index(pr: xarray.DataArray, pet: xarray.DataArray, freq: str = "YS")
 
     The ratio of total precipitation over potential evapotranspiration.
     Classification based on the Aridity Index (AI).
-    +----------------+----------------+-----------------+
-    | Classification | Aridity Index  | Global land area|
-    +----------------+----------------+-----------------+
-    | Hyperarid      | AI < 0.05      | 7.5%            |
-    | Arid           | 0.05 ≤ AI < 0.20 | 12.1%         |
-    | Semi-arid      | 0.20 ≤ AI < 0.50 | 17.7%         |
-    | Dry subhumid   | 0.50 ≤ AI < 0.65 | 9.9%          |
-    +----------------+----------------+-----------------+
 
     Parameters
     ----------
