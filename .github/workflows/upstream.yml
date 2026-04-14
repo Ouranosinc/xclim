@@ -71,7 +71,7 @@ jobs:
           tags: "CI/CD, Upstream, Test-${{ matrix.python-version }}"
           gmt-api-token: ${{ secrets.GMT_API_TOKEN }}
       - name: Checkout Repository
-        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           fetch-depth: 0 # Fetch all history for all branches and tags.
           persist-credentials: false
@@ -109,7 +109,7 @@ jobs:
           label: 'Environment Setup (Upstream, Python${{ matrix.python-version }})'
         continue-on-error: true
       - name: Test Data Caching
-        uses: actions/cache@9255dc7a253b0ccc959486e2bca901246202afeb # v5.0.1
+        uses: actions/cache@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
         with:
           path: |
             ${{ matrix.testdata-cache }}
@@ -125,7 +125,7 @@ jobs:
           && steps.status.outcome == 'failure'
           && github.event_name == 'schedule'
           && github.repository_owner == 'Ouranosinc'
-        uses: xarray-contrib/issue-from-pytest-log@558a3dfdd251069b328d3fded994824ddbefc47b # v1.4.0
+        uses: xarray-contrib/issue-from-pytest-log@8e905db353437cda1d6a773de245343fbfc940dd # v1.5.0
         with:
           issue-title: "⚠️ Nightly upstream-dev CI failed for Python${{ matrix.python-version }} ⚠️"
           log-path: output-${{ matrix.python-version }}-log.jsonl
