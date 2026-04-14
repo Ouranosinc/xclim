@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+from xarray import DataArray
+
+from xclim.core.cfchecks import check_valid
 from xclim.core.indicator import (
     ReducingIndicator,
     ResamplingIndicator,
@@ -47,19 +50,17 @@ class Streamflow(ResamplingIndicator):
     src_freq = "D"
     keywords = "streamflow hydrology"
 
+    @staticmethod
+    def cfcheck(q: DataArray):
+        r"""
+        Verify the CF-compliance of the input data.
 
-#
-#     @staticmethod
-#     def cfcheck(q: DataArray):
-#         r"""
-#         Verify the CF-compliance of the input data.
-#
-#         Parameters
-#         ----------
-#         q : xarray.DataArray
-#             The input data array.
-#         """
-#         check_valid(q, "standard_name", "water_volume_transport_in_river_channel")
+        Parameters
+        ----------
+        q : xarray.DataArray
+            The input data array.
+        """
+        check_valid(q, "standard_name", "water_volume_transport_in_river_channel")
 
 
 base_flow_index = Streamflow(
@@ -190,7 +191,7 @@ base_flow_index_seasonal_ratio = Streamflow(
     ],
     long_name=[
         "Winter baseflow index",
-        "spring baseflow index",
+        "Spring baseflow index",
         "Summer baseflow index",
         "Fall baseflow index",
         "Winter to summer baseflow index ratio",
