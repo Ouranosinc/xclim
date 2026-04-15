@@ -738,6 +738,22 @@ class TestStandardizedIndices:
                 [0.577214, 1.522867, 1.634222, 0.967847, 0.689001],
                 2e-2,
             ),
+            (
+                "MS",
+                1,
+                "genextreme",
+                "ML",
+                [1.916206, 1.756844, 2.412742, -3.042299, 0.813289],
+                0.04,
+            ),
+            (
+                "MS",
+                1,
+                "lognorm",
+                "ML",
+                [1.505441, 1.627014, 2.324989, -3.09, 0.879393],
+                0.15,
+            ),
         ],
     )
     def test_standardized_precipitation_index(
@@ -764,6 +780,7 @@ class TestStandardizedIndices:
         fitkwargs = {}
         if method == "APP":
             fitkwargs["floc"] = 0
+
         params = standardized_index_fit_params(
             pr_cal,
             freq=freq,
@@ -773,6 +790,7 @@ class TestStandardizedIndices:
             fitkwargs=fitkwargs,
             zero_inflated=True,
         )
+
         spi = xci.standardized_precipitation_index(pr, params=params)
         # Only a few moments before year 2000 are tested
         spi = spi.isel(time=slice(-11, -1, 2))
@@ -788,7 +806,7 @@ class TestStandardizedIndices:
         np.testing.assert_allclose(spi.values, values, rtol=0, atol=diff_tol)
 
     @pytest.mark.slow
-    @pytest.mark.parametrize("dist", ["gamma", "fisk"])
+    @pytest.mark.parametrize("dist", ["gamma", "fisk", "lognorm", "genextreme"])
     def test_str_vs_rv_continuous(self, dist, open_dataset):
         ds = open_dataset("sdba/CanESM2_1950-2100.nc").isel(location=1)
         window = 1
@@ -871,6 +889,22 @@ class TestStandardizedIndices:
                 "ML",
                 [0.7041, 1.562985, 1.7041, 1.0388, 0.71645],
                 2e-2,
+            ),
+            (
+                "MS",
+                1,
+                "genextreme",
+                "ML",
+                [1.916205, 1.756845, 3.09, -3.09, 0.813289],
+                0.04,
+            ),
+            (
+                "MS",
+                1,
+                "lognorm",
+                "ML",
+                [1.505439, 1.627014, 2.253865, -3.09, 0.879394],
+                0.04,
             ),
         ],
     )
@@ -1179,28 +1213,15 @@ class TestStandardizedIndices:
         if method == "APP":
             fitkwargs["floc"] = 0
 
-        if freq == "MS" and dist == "lognorm" and method == "ML":
-            with pytest.warns(RuntimeWarning) as record:
-                params = standardized_index_fit_params(
-                    gwl_cal,
-                    freq=freq,
-                    window=window,
-                    dist=dist,
-                    method=method,
-                    fitkwargs=fitkwargs,
-                    zero_inflated=True,
-                )
-                assert "Degrees of freedom <= 0 for slice" in record[0].message.args[0]
-        else:
-            params = standardized_index_fit_params(
-                gwl_cal,
-                freq=freq,
-                window=window,
-                dist=dist,
-                method=method,
-                fitkwargs=fitkwargs,
-                zero_inflated=True,
-            )
+        params = standardized_index_fit_params(
+            gwl_cal,
+            freq=freq,
+            window=window,
+            dist=dist,
+            method=method,
+            fitkwargs=fitkwargs,
+            zero_inflated=True,
+        )
         sgi = xci.standardized_groundwater_index(gwl, params=params)
         # Only a few moments before year 2000 are tested
         sgi = sgi.isel(time=slice(-11, -1, 2))
@@ -1297,6 +1318,70 @@ class TestStandardizedIndices:
             # drop doys other than 180 that will be NaNs
             spid[zero_inflated] = spid[zero_inflated].where(spid[zero_inflated].notnull(), drop=True)
         np.testing.assert_equal(np.all(np.not_equal(spid[False].values, spid[True].values)), True)
+
+    @pytest.mark.parametrize(
+        "prob_zero_interpolation, plotting_position_zero",
+        [
+            ("center", "ecdf"),
+            ("upper", "ecdf"),
+            ("center", "weibull"),
+            ("upper", "weibull"),
+        ],
+    )
+    def test_prob_zero_interpolation(self, open_dataset, prob_zero_interpolation, plotting_position_zero):
+        # This tests the theoretical values of the zero_inflated probability method options
+        ds = open_dataset("sdba/CanESM2_1950-2100.nc").isel(location=1).sel(time=slice("1950", "1960"))
+        pr = ds.pr
+
+        # july 1st (doy=180) with 10 years with zero precipitation
+        # 11 years, 10 zeros -> prob_of_zero = 9/11
+        pr[{"time": slice(179, 365 * 11, 365)}] = 0
+        pr[{"time": 179}] = 1.0  # One non-zero value
+        # pr[{"time": 179+365}] = 2.0  # Two non-zero values
+
+        input_params = dict(
+            freq=None,
+            window=1,
+            dist="gamma",
+            method="ML",
+            fitkwargs={},
+            doy_bounds=(180, 180),
+            zero_inflated=True,
+        )
+
+        # Get parameters
+        params = standardized_index_fit_params(pr, **input_params)
+
+        spi = standardized_index(
+            pr,
+            params=params,
+            cal_start=None,
+            cal_end=None,
+            prob_zero_interpolation=prob_zero_interpolation,
+            plotting_position_zero=plotting_position_zero,
+            **input_params,
+        )
+        # Select a zero value
+        spi_val = spi.isel(time=365 + 179).values
+
+        # Calculate number_of_zeros and number_of_notnull directly for doy=180
+        number_of_zeros = (pr.sel(time=pr.time.dt.dayofyear == 180).values == 0.0).sum()
+        number_of_notnull = (~np.isnan(pr.sel(time=pr.time.dt.dayofyear == 180).values)).sum()
+
+        # Compute expected probability based on prob_zero_interpolation and plotting_position_zero
+        # plotting_position_zero determines alpha, beta: ecdf=(0,1), weibull=(0,0)
+        # prob_zero_interpolation determines zero_factor: center=0.5, upper=1
+        alpha, beta = {"ecdf": (0, 1), "weibull": (0, 0)}[plotting_position_zero]
+        zero_factor = {"center": 0.5, "upper": 1}[prob_zero_interpolation]
+        # Formula uses interpolation between rank_1 and rank_n
+        prob_of_zero_rank_1 = (1 - alpha) / (number_of_notnull + 1 - alpha - beta)
+        prob_of_zero_rank_n = (number_of_zeros - alpha) / (number_of_notnull + 1 - alpha - beta)
+        expected_prob = (1 - zero_factor) * prob_of_zero_rank_1 + zero_factor * prob_of_zero_rank_n
+
+        expected_val = scipy.stats.norm.ppf(expected_prob)
+        # Account for clipping in standardized_index
+        expected_val = np.clip(expected_val, -8.21, 8.21)
+        np.testing.assert_allclose(spi_val, expected_val, atol=1e-4)
 
     def test_PWM_and_fitkwargs(self, open_dataset):
         ds = open_dataset("sdba/CanESM2_1950-2100.nc").isel(location=1).sel(time=slice("1950", "1980"))
