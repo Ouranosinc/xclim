@@ -9,7 +9,7 @@ xclim: Climate services library |logo| |logo-dark| |logo-light|
 +----------------------------+-----------------------------------------------------+
 | Open Source                | |license| |ossf-score| |zenodo| |pyOpenSci| |joss|  |
 +----------------------------+-----------------------------------------------------+
-| Coding Standards           | |ruff| |pre-commit| |ossf-bp| |fossa|               |
+| Coding Standards           | |ruff| |pre-commit-ci| |ossf-bp| |fossa|            |
 +----------------------------+-----------------------------------------------------+
 | Development Status         | |status| |build| |coveralls|                        |
 +----------------------------+-----------------------------------------------------+
@@ -206,7 +206,7 @@ This package was created with Cookiecutter_ and the `audreyfeldroy/cookiecutter-
         :alt:
         :class: xclim-logo-small only-dark-inline
 
-.. |pre-commit| image:: https://results.pre-commit.ci/badge/github/Ouranosinc/xclim/main.svg
+.. |pre-commit-ci| image:: https://results.pre-commit.ci/badge/github/Ouranosinc/xclim/main.svg
         :target: https://results.pre-commit.ci/latest/github/Ouranosinc/xclim/main
         :alt: pre-commit.ci status
 
@@ -222,8 +222,7 @@ This package was created with Cookiecutter_ and the `audreyfeldroy/cookiecutter-
         :target: https://pypi.python.org/pypi/xclim
         :alt: Supported Python Versions
 
-..
-    Energy Metrics by https://github.com/green-coding-solutions/eco-ci-energy-estimation
+.. Energy Metrics by https://github.com/green-coding-solutions/eco-ci-energy-estimation
 
 .. |energy-total| image:: https://api.green-coding.io/v1/ci/badge/get?repo=Ouranosinc/xclim&branch=main&workflow=5828641&mode=totals
         :target: https://metrics.green-coding.io/ci.html?repo=Ouranosinc/xclim&branch=main&workflow=5828641
