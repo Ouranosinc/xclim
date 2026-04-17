@@ -326,6 +326,7 @@ def rlus_series():
     return _rlus_series
 
 
+# FIXME: xclim-v1 — Remove this, we use `snw`
 @pytest.fixture
 def swe_series():
     def _swe_series(values, start="1/1/2000", units="mm"):

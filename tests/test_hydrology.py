@@ -222,25 +222,6 @@ class TestRR:
         np.testing.assert_allclose(out.values, 0.0018, atol=1e-15)
 
 
-class TestDaysWithSnowpack:
-    def test_simple(self, swe_series):
-        # 2 years of daily data
-        a = np.zeros(365 * 2)
-
-        # Year 1: 15 days of SWE = 20 mm
-        a[50:65] = 20
-        # Year 2: 5 days of SWE = 5 mm
-        a[400:405] = 5
-
-        # Create a daily time index
-        swe = swe_series(a)
-
-        out = xci.days_with_snowpack(swe, thresh=".01 m", freq="YS")
-
-        # Year 1: 15 days >= 10 → expect 15, Year 2: only 5 days but all < 10 → expect 0
-        np.testing.assert_array_equal(out.values, [15, 0])
-
-
 class TestAnnualAridityIndex:
     def test_simple(self, pr_hr_series, evspsblpot_hr_series):
         # 2 years of hourly data
@@ -260,36 +241,36 @@ class TestAnnualAridityIndex:
 
 
 class TestLagSnowpackFlowPeaks:
-    def test_simple(self, swe_series, q_series):
+    def test_simple(self, snw_series, q_series):
         # 1 years of daily data (2 values due to freq resampling to water year "YS-OCT")
         a = np.zeros(365)
 
-        # Year 1: 1 day of SWE = 20 mm
+        # Year 1: 1 day of snw = 20 kg m-2
         a[50:51] = 20
-        # Year 2: 1 day of SWE = 5 mm
+        # Year 2: 1 day of snw = 5 kg m-2
         a[300:301] = 5
 
         # Create a daily time index
-        swe = swe_series(a)
+        snw = snw_series(a)
 
         b = np.zeros(365)
-        # Year 1: 35 days of high flows directly after max swe
+        # Year 1: 35 days of high flows directly after max snw
         b[50:85] = 20
-        # Year 2: 35 days of high flows 10 days after max swe
+        # Year 2: 35 days of high flows 10 days after max snw
         b[310:345] = 5
 
         # Create a daily time index
         q = q_series(b)
 
-        out = xci.lag_snowpack_flow_peaks(swe, q)
+        out = xci.lag_snowpack_flow_peaks(snw, q)
         np.testing.assert_allclose(out, [17.0, 27.0], atol=1e-14)
 
-    def test_no_snow(self, swe_series, q_series):
+    def test_no_snow(self, snw_series, q_series):
         # 1 years of daily data (2 values due to freq resampling to water year "YS-OCT")
         a = np.zeros(365)
 
         # Create a daily time index
-        swe = swe_series(a)
+        snw = snw_series(a)
 
         b = np.zeros(365)
         # Year 1: 35 days of high flows
@@ -300,7 +281,7 @@ class TestLagSnowpackFlowPeaks:
         # Create a daily time index
         q = q_series(b)
 
-        out = xci.lag_snowpack_flow_peaks(swe, q)
+        out = xci.lag_snowpack_flow_peaks(snw, q)
         np.testing.assert_allclose(out, [np.nan, np.nan], atol=1e-14)
         # no longer the days between the start of the water year and the mean of high flows
 

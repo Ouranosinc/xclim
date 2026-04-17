@@ -811,9 +811,10 @@ def aridity_index(pr: xarray.DataArray, pet: xarray.DataArray, freq: str = "YS")
     return ai
 
 
-@declare_units(swe="[length]", q="[discharge]")
+# FIXME: Different name??
+@declare_units(snw="[mass]/[area]", q="[discharge]")
 def lag_snowpack_flow_peaks(
-    swe: xarray.DataArray,
+    snw: xarray.DataArray,
     q: xarray.DataArray,
     freq: str = "YS-OCT",
     percentile: int = 90,
@@ -821,16 +822,16 @@ def lag_snowpack_flow_peaks(
     """
     Time lag between maximum snowpack and river high flows.
 
-    Number of days between the annual maximum snowpack, measured by the snow water
-    equivalent, and the mean date when river flow exceeds a percentile threshold
+    Number of days between the annual maximum snowpack, measured by the surface snow
+    amount, and the mean date when river flow exceeds a percentile threshold
     during a given year.
     If the time lag between maximum snowpack and river high flows is ≤ 50 days,
     the watershed is likely in a nival regime.
 
     Parameters
     ----------
-    swe : xarray.DataArray
-        Surface snow amount as snow water equivalent.
+    snw : xarray.DataArray
+        Surface snow amount.
     q : xarray.DataArray
         Streamflow.
     freq : str
@@ -861,9 +862,9 @@ def lag_snowpack_flow_peaks(
     :cite:cts:`burn_2010`
     """
     # Find time of max SWE per year
-    t_swe_max = swe.resample(time=freq).map(lambda x: x.idxmax())  # if x.max() > 0 else np.nan)
-    t_swe_max = t_swe_max.where(swe.resample(time=freq).max() > 0)
-    doy_swe_max = t_swe_max.dt.dayofyear
+    t_snw_max = snw.resample(time=freq).map(lambda x: x.idxmax())  # if x.max() > 0 else np.nan)
+    t_snw_max = t_snw_max.where(snw.resample(time=freq).max() > 0)
+    doy_snw_max = t_snw_max.dt.dayofyear
 
     # Compute percentile threshold per water year using resample
     thresh = q.resample(time="YS-OCT").reduce(
@@ -878,12 +879,12 @@ def lag_snowpack_flow_peaks(
     t_q_max = doy.resample(time=freq).reduce(partial(circmean, high=366, low=1), dim="time")
 
     # Compute lag
-    lag = t_q_max - doy_swe_max
+    lag = t_q_max - doy_snw_max
     lag.attrs["units"] = "days"
     return lag
 
 
-@declare_units(q="[discharge]")
+@declare_units(q="[discharge]", qsim="[discharge]")
 def sen_slope(
     q: xarray.DataArray,
     qsim: xarray.DataArray | None = None,

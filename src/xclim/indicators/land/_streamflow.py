@@ -2,10 +2,8 @@
 
 from __future__ import annotations
 
-from xarray import DataArray
-
-from xclim.core.cfchecks import check_valid
 from xclim.core.indicator import (
+    Indicator,
     ReducingIndicator,
     ResamplingIndicator,
     StandardizedIndexes,
@@ -43,6 +41,13 @@ __all__ = [
 ]
 
 
+class StreamflowNoResampling(Indicator):
+    """Indicators involving daily temperature without resampling."""
+
+    context = "hydro"
+    keywords = "streamflow hydrology"
+
+
 class Streamflow(ResamplingIndicator):
     """Streamflow class."""
 
@@ -50,17 +55,14 @@ class Streamflow(ResamplingIndicator):
     src_freq = "D"
     keywords = "streamflow hydrology"
 
-    @staticmethod
-    def cfcheck(q: DataArray):
-        r"""
-        Verify the CF-compliance of the input data.
 
-        Parameters
-        ----------
-        q : xarray.DataArray
-            The input data array.
-        """
-        check_valid(q, "standard_name", "water_volume_transport_in_river_channel")
+class StreamflowSnw(ResamplingIndicator):
+    """Streamflow class."""
+
+    context = "hydro"
+    src_freq = "D"
+    # FIXME: better keywords
+    keywords = "streamflow snow hydrology"
 
 
 base_flow_index = Streamflow(
@@ -216,7 +218,7 @@ base_flow_index_seasonal_ratio = Streamflow(
 )
 
 
-lag_snowpack_flow_peaks = Streamflow(
+lag_snowpack_flow_peaks = StreamflowSnw(
     title="Time lag between maximum snowpack and river high flows",
     identifier="lag_snowpack_flow_peaks",
     units="days",
@@ -225,7 +227,7 @@ lag_snowpack_flow_peaks = Streamflow(
     "equivalent, and the mean date when river flow exceeds a percentile threshold"
     "during a given year.",
     cell_methods="",
-    keywords="streamflow, SWE",
+    keywords="streamflow, snw",
     compute=lag_snowpack_flow_peaks,
 )
 
@@ -244,7 +246,7 @@ runoff_ratio = Streamflow(
 
 
 # FIXME: This indicator is non-resampling
-sen_slope = Streamflow(
+sen_slope = StreamflowNoResampling(
     title="Sen Slope : Temporal robustness analysis of streamflow.",
     identifier="sen_slope",
     var_name=["slopes", "p_vals", "slopes_sim", "p_vals_sim", "ratio"],
