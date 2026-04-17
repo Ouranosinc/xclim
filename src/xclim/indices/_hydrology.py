@@ -29,7 +29,6 @@ __all__ = [
     "aridity_index",
     "base_flow_index",
     "base_flow_index_seasonal_ratio",
-    "days_with_snowpack",
     "flow_index",
     "high_flow_frequency",
     "lag_snowpack_flow_peaks",
@@ -707,6 +706,7 @@ def antecedent_precipitation_index(pr: xarray.DataArray, window: int = 7, p_exp:
     return out
 
 
+@declare_units(q="[discharge]", a="[area]", pr="[precipitation]")
 def runoff_ratio(
     q: xarray.DataArray,
     a: xarray.DataArray,
@@ -770,47 +770,6 @@ def runoff_ratio(
     return out
 
 
-@declare_units(swe="[length]", thresh="[length]")
-def days_with_snowpack(
-    swe: xarray.DataArray,
-    thresh: str = "10 mm",
-    freq: str = "YS-OCT",
-) -> xarray.DataArray:
-    """
-    Days with snowpack.
-
-    Number of days with snow water equivalent (SWE) above a given threshold.
-
-    Parameters
-    ----------
-    swe : xarray.DataArray
-        Daily surface snow amount as snow water equivalent.
-    thresh : float
-        Minimum snow quantity to consider a given day snow-covered. Default is 10 mm.
-    freq : str
-        Resampling frequency. Typically the water year starting on the 1st of October
-        in the Northern Hemisphere.
-
-    Returns
-    -------
-    xarray.DataArray
-        Number of days with snowpack above the threshold.
-
-    Notes
-    -----
-    Years with larger snowpacks tend to produce bigger spring floods.
-    Additional spring flood analysis can be carried out using the
-    ``annual_maxima`` and ``lag_snowpack_flow_peaks`` functions.
-
-    References
-    ----------
-    :cite:cts:`alonso_gonzalez_2022`
-    """
-    frz = convert_units_to(thresh, swe)
-    out = threshold_count(swe, ">", frz, freq)
-    return to_agg_units(out, swe, "count", deffreq="D")
-
-
 @declare_units(pr="[precipitation]", pet="[precipitation]")
 def aridity_index(pr: xarray.DataArray, pet: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
     """
@@ -818,14 +777,6 @@ def aridity_index(pr: xarray.DataArray, pet: xarray.DataArray, freq: str = "YS")
 
     The ratio of total precipitation over potential evapotranspiration.
     Classification based on the Aridity Index (AI).
-    +----------------+----------------+-----------------+
-    | Classification | Aridity Index  | Global land area|
-    +----------------+----------------+-----------------+
-    | Hyperarid      | AI < 0.05      | 7.5%            |
-    | Arid           | 0.05 ≤ AI < 0.20 | 12.1%         |
-    | Semi-arid      | 0.20 ≤ AI < 0.50 | 17.7%         |
-    | Dry subhumid   | 0.50 ≤ AI < 0.65 | 9.9%          |
-    +----------------+----------------+-----------------+
 
     Parameters
     ----------
@@ -860,9 +811,10 @@ def aridity_index(pr: xarray.DataArray, pet: xarray.DataArray, freq: str = "YS")
     return ai
 
 
-@declare_units(swe="[length]", q="[discharge]")
+# FIXME: Different name??
+@declare_units(snw="[mass]/[area]", q="[discharge]")
 def lag_snowpack_flow_peaks(
-    swe: xarray.DataArray,
+    snw: xarray.DataArray,
     q: xarray.DataArray,
     freq: str = "YS-OCT",
     percentile: int = 90,
@@ -870,16 +822,16 @@ def lag_snowpack_flow_peaks(
     """
     Time lag between maximum snowpack and river high flows.
 
-    Number of days between the annual maximum snowpack, measured by the snow water
-    equivalent, and the mean date when river flow exceeds a percentile threshold
+    Number of days between the annual maximum snowpack, measured by the surface snow
+    amount, and the mean date when river flow exceeds a percentile threshold
     during a given year.
     If the time lag between maximum snowpack and river high flows is ≤ 50 days,
     the watershed is likely in a nival regime.
 
     Parameters
     ----------
-    swe : xarray.DataArray
-        Surface snow amount as snow water equivalent.
+    snw : xarray.DataArray
+        Surface snow amount.
     q : xarray.DataArray
         Streamflow.
     freq : str
@@ -910,9 +862,9 @@ def lag_snowpack_flow_peaks(
     :cite:cts:`burn_2010`
     """
     # Find time of max SWE per year
-    t_swe_max = swe.resample(time=freq).map(lambda x: x.idxmax())  # if x.max() > 0 else np.nan)
-    t_swe_max = t_swe_max.where(swe.resample(time=freq).max() > 0)
-    doy_swe_max = t_swe_max.dt.dayofyear
+    t_snw_max = snw.resample(time=freq).map(lambda x: x.idxmax())  # if x.max() > 0 else np.nan)
+    t_snw_max = t_snw_max.where(snw.resample(time=freq).max() > 0)
+    doy_snw_max = t_snw_max.dt.dayofyear
 
     # Compute percentile threshold per water year using resample
     thresh = q.resample(time="YS-OCT").reduce(
@@ -927,27 +879,27 @@ def lag_snowpack_flow_peaks(
     t_q_max = doy.resample(time=freq).reduce(partial(circmean, high=366, low=1), dim="time")
 
     # Compute lag
-    lag = t_q_max - doy_swe_max
+    lag = t_q_max - doy_snw_max
     lag.attrs["units"] = "days"
     return lag
 
 
-@declare_units(q="[discharge]")
+@declare_units(q="[discharge]", qsim="[discharge]")
 def sen_slope(
     q: xarray.DataArray,
-    qsim: xarray.DataArray = None,
+    qsim: xarray.DataArray | None = None,
 ) -> xarray.Dataset:
     """
-    Sen Slope : Temporal robustness analysis of streamflow.
+    Temporal robustness analysis of streamflow.
 
-    Computes annual and seasonal Theil–Sen slope estimators and performs the
-    Mann–Kendall test for trend evaluation.
+    Computes annual and seasonal Theil-Sen slope estimators and performs the
+    Mann-Kendall test for trend evaluation.
 
     Parameters
     ----------
     q : xarray.DataArray
         Observed streamflow vector.
-    qsim : xarray.DataArray
+    qsim : xarray.DataArray, optional
         Simulated streamflow vector.
 
     Returns
@@ -956,7 +908,7 @@ def sen_slope(
         Dataset containing the following variables:
 
         - ``Sen_slope`` : Sen's slope estimates for seasonal and yearly averages.
-        - ``p_value`` : Mann–Kendall metric indicating slope tendency.
+        - ``p_value`` : Mann-Kendall metric indicating slope tendency.
         - If simulated flows are provided: ``Sen_slope_sim``, ``p_value_sim``,
           and the ratio of observed ``Sen_slope`` over simulated ``Sen_slope``.
 
@@ -964,7 +916,7 @@ def sen_slope(
     -----
     - If p-value <= 0.05, the trend is statistically significant at the 5% level.
     - The ratio of observed Sen_slope over simulated Sen_slope is considered
-      acceptable within the range 0.5–2 and is optimal when equal to 1
+      acceptable within the range 0.5-2 and is optimal when equal to 1
       (Sauquet et al., 2025).
 
     References

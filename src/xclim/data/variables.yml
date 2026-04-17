@@ -251,6 +251,7 @@ variables:
     description: Duration of sunshine.
     dimensions: "[time]"
     standard_name: duration_of_sunshine
+# FIXME: xclim-v1 — Remove SWE
   swe:
     canonical_units: m
     cell_methods: "time: mean"

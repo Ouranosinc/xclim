@@ -326,6 +326,7 @@ def rlus_series():
     return _rlus_series
 
 
+# FIXME: xclim-v1 — Remove this, we use `snw`
 @pytest.fixture
 def swe_series():
     def _swe_series(values, start="1/1/2000", units="mm"):
@@ -416,7 +417,7 @@ def atmosds(nimbus) -> xr.Dataset:
 
 
 @pytest.fixture(scope="session")
-def ensemble_dataset_objects() -> dict[str, str]:
+def ensemble_dataset_objects() -> dict[str, list[str]]:
     return add_ensemble_dataset_objects()
 
 
@@ -450,9 +451,3 @@ def gather_session_data(request, nimbus, worker_id):
                 pass
 
     request.addfinalizer(remove_data_written_flag)
-
-
-@pytest.fixture
-def no_numbagg():
-    with xr.set_options(use_numbagg=False):
-        yield
