@@ -120,6 +120,7 @@ def test_runoff_ratio(q_series, area_series, pr_series, freq="YS"):
 
     assert out.attrs["units"] == "1"
     assert isinstance(out, xr.DataArray)
+    np.testing.assert_allclose(out.values, 0.5, rtol=1e-6)
 
 
 def test_base_flow_index_seasonal_ratio(q_series):

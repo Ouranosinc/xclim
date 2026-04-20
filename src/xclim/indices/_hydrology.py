@@ -755,11 +755,11 @@ def runoff_ratio(
     ----------
     :cite:cts:'knoben_2024'
     """
-    q = convert_units_to(q, "m3/s")
-    a = convert_units_to(a, "km2")
+    q = convert_units_to(q, "mm3/hr")
+    a = convert_units_to(a, "mm2")
     pr = convert_units_to(pr, "mm/hr")
 
-    runoff = q * 3.6 / a  # unit conversion for runoff in mm/hr : 3.6[s/hr *km2/m2]
+    runoff = q / a
     runoff_freq = runoff.resample(time=freq).sum()
     pr_freq = pr.resample(time=freq).sum()
 
