@@ -282,6 +282,7 @@ holiday_snow_and_snowfall_days = Snow(
     compute=xci.holiday_snow_and_snowfall_days,
 )
 
+# FIXME: xclim-v1 — Remove
 days_with_snowpack = Snow(
     title="Days with snowpack",
     identifier="days_with_snowpack",
