@@ -845,6 +845,7 @@ def aridity_index(pr: xarray.DataArray, pet: xarray.DataArray, freq: str = "YS")
     """
     pr = pr.resample(time=freq).sum()
     pet = pet.resample(time=freq).sum()
+    pet = convert_units_to(pet, pr)
     ai = pr / pet
     ai.attrs["units"] = ""
 
