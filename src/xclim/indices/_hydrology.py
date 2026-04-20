@@ -5,13 +5,12 @@ from __future__ import annotations
 from functools import partial
 
 import numpy as np
-import pandas as pd
 import xarray
 from scipy.stats import circmean, rv_continuous
 from xarray import DataArray
 
 from xclim.core._types import DateStr, Quantified
-from xclim.core.calendar import get_calendar
+from xclim.core.calendar import get_calendar, unstack_dates
 from xclim.core.missing import at_least_n_valid
 from xclim.core.units import convert_units_to, declare_units, rate2amount, to_agg_units
 from xclim.indices.generic import threshold_count
@@ -946,12 +945,11 @@ def sen_slope(
     Returns
     -------
     xarray.Dataset
-        Dataset containing the following variables:
-
-        - ``Sen_slope`` : Sen's slope estimates for seasonal and yearly averages.
-        - ``p_value`` : Mann-Kendall metric indicating slope tendency.
-        - If simulated flows are provided: ``Sen_slope_sim``, ``p_value_sim``,
-          and the ratio of observed ``Sen_slope`` over simulated ``Sen_slope``.
+        Dataset variables:
+        ``sen_slope`` : Sen's slope estimates for seasonal and yearly averages.
+        ``p_value`` : Mann-Kendall metric indicating slope tendency.
+        ``sen_slope_sim``, ``p_value_sim``, ``sen_slope_ratio`` (optional): Sen's slope estimates and Mann-Kendall
+        metric for the simulation, and the ratio of sen slope in observations to sen slope in simulation.
 
     Notes
     -----
@@ -964,88 +962,41 @@ def sen_slope(
     ----------
     :cite:cts:`sauquet_2025`
     """
-    seasons = ["DJF", "MAM", "JJA", "SON", "Year"]
 
-    def compute_seasonal_stats(x: xarray.DataArray) -> tuple[list, list]:
-        """
-        Seasonal statistics.
+    def _mk_year_season(q):
+        qresS = unstack_dates(q.resample(time="QS-DEC").mean(), winter_starts_year=True).isel(time=slice(None, -1))
+        qresY = unstack_dates(q.resample(time="YS").mean(), winter_starts_year=True)
+        qres = xarray.concat([qresS, qresY], dim="season")
 
-        Parameters
-        ----------
-        x : xarray.DataArray
-            Time series of streamflow.
-
-        Returns
-        -------
-        tuple of list
-            Lists containing the following variables:
-
-            - ``Sen_slope`` : Sen's slope estimates for seasonal and yearly averages.
-            - ``p_value`` : Mann–Kendall metric indicating slope tendency.
-        """
-        if mk is None:
-            msg = f"{sen_slope.__name__} requires access to the `pymannkendall` library."
-            raise ModuleNotFoundError(msg)
-
-        # Convert to pandas Series with DatetimeIndex
-        x_year = x.resample(time="YS-DEC").mean()
-        x_season = x.resample(time="QS-DEC").mean()
-
-        x_series = x_season.to_series()
-
-        # Create a MultiIndex: year + season (0–3)
-        season_index = (
-            x_series.index.month % 12 // 3  # 0 for DJF, 1 for MAM, etc.
+        out = xarray.apply_ufunc(
+            lambda q: (lambda mk_output: [mk_output.slope, mk_output.p])(mk.original_test(q)),
+            qres,
+            input_core_dims=[["time"]],
+            output_core_dims=[["var"]],
+            vectorize=True,
+            dask="parallelized",
         )
-        x_df = pd.DataFrame({"value": x_series.values, "season": season_index, "year": x_series.index.year})
-        #  Pivot to shape (n_years, 4 seasons)
-        df_seasons = x_df.pivot(index="season", columns="year", values="value")
+        sen_slope = out.isel(var=0).to_dataset("sen_slope")
+        p_vals = out.isel(var=1).to_dataset("p_vals")
+        return sen_slope, p_vals
 
-        # rename columns
-        df_seasons.index = ["DJF", "MAM", "JJA", "SON"]
-
-        ss_DJF = mk.original_test(df_seasons.iloc[0])
-        ss_MAM = mk.original_test(df_seasons.iloc[1])
-        ss_JJA = mk.original_test(df_seasons.iloc[2])
-        ss_SON = mk.original_test(df_seasons.iloc[3])
-        ss_an = mk.original_test(x_year)
-
-        _slopes = [ss_DJF.slope, ss_MAM.slope, ss_JJA.slope, ss_SON.slope, ss_an.slope]
-        _p_vals = [ss_DJF.p, ss_MAM.p, ss_JJA.p, ss_SON.p, ss_an.p]
-
-        return _slopes, _p_vals
+    slopes, p_vals = _mk_year_season(q)
+    out = xarray.merge([slopes, p_vals])
 
     if qsim is not None:
-        slopes, p_vals = compute_seasonal_stats(q)
-        slopes_sim, p_vals_sim = compute_seasonal_stats(qsim)
-        slopes_np = np.array(slopes)
-        slopes_sim_np = np.array(slopes_sim)
-        ratio = slopes_np / slopes_sim_np
-        ds = xarray.Dataset(
-            data_vars={
-                "Sen_slope_obs": ("season", slopes),
-                "p_value_obs": ("season", p_vals),
-                "Sen_slope_sim": ("season", slopes_sim),
-                "p_value_sim": ("season", p_vals_sim),
-                "ratio": ("season", ratio),
-            },
-            coords={"season": seasons},
-        )
-
-    else:
-        slopes, p_vals = compute_seasonal_stats(q)
-        # Create labeled xarray
-        ds = xarray.Dataset(
-            data_vars={"Sen_slope": ("season", slopes), "p_value": ("season", p_vals)}, coords={"season": seasons}
-        )
-
+        slopes_sim, p_vals_sim = _mk_year_season(qsim)
+        ratio = (slopes / slopes_sim).rename("ratio")
+        slopes_sim = slopes_sim.rename("sen_slope_sim")
+        p_vals_sim = p_vals_sim.rename("p_vals_sim")
+        out = xarray.merge([out, slopes_sim, p_vals_sim, ratio])
     # Assign empty units to all variables
-    for var in ds.data_vars:
-        ds[var].attrs["units"] = ""
+    for var in out.data_vars:
+        out[var].attrs["units"] = ""
 
-    return ds
+    return out
 
 
+# FIXME: Do we really need to compute the ratio too here?
 @declare_units(q="[discharge]")
 def base_flow_index_seasonal_ratio(
     q: xarray.DataArray, freq: str = "QS-DEC"
@@ -1066,15 +1017,9 @@ def base_flow_index_seasonal_ratio(
     Returns
     -------
     xarray.DataArray, [dimensionless]
-        Winter_bfi.
+        Base flow index.
     xarray.DataArray, [dimensionless]
-        Spring_bfi.
-    xarray.DataArray, [dimensionless]
-        Summer_bfi.
-    xarray.DataArray, [dimensionless]
-        Fall_bfi.
-    xarray.DataArray, [dimensionless]
-        Winter_to summer_ratio.
+        Base flow index winter to summer ratio.
 
     Notes
     -----
@@ -1087,19 +1032,12 @@ def base_flow_index_seasonal_ratio(
     """
     # 7-day minimum of raw daily flow
     q7min = q.rolling(time=7, center=True).min(skipna=False).resample(time=freq).min()
-
     qmean = q.resample(time=freq).mean()
-    bfi = q7min / qmean
-    seabfi = bfi.groupby(["time.season", "time.year"]).mean()
-    seabfi = seabfi.assign_attrs({"units": ""})
-    winter_bfi, spring_bfi, summer_bfi, fall_bfi = (seabfi.sel(season=s) for s in ["DJF", "MAM", "JJA", "SON"])
-    # Shift timestamp forward by one year since winter starts in dec the year prior
-    winter_1 = winter_bfi.assign_coords(year=winter_bfi["year"] + 1)
-    winter_1_aligned = winter_1.reindex(year=summer_bfi.year)
+
+    bfi = unstack_dates(q7min / qmean, winter_starts_year=True)
+    bfi = bfi.assign_attrs({"units": ""})
+
     epsilon = 1e-3  # To avoid division by zero
-
-    w_s_ratio = (winter_1_aligned / (summer_bfi + epsilon)).sel(year=summer_bfi.year)
-    w_s_ratio = w_s_ratio.isel(year=slice(1, None))
+    w_s_ratio = bfi.sel(season="DJF") / (bfi.sel(season="JJA") + epsilon)
     w_s_ratio.attrs["units"] = ""
-
-    return winter_bfi, spring_bfi, summer_bfi, fall_bfi, w_s_ratio
+    return bfi, w_s_ratio
