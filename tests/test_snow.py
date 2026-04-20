@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import numpy as np
 import pytest
-import xarray as xr
+from xarray import DataArray
 
 from xclim import convert, land
 from xclim.core import ValidationError
@@ -180,4 +180,4 @@ def test_days_with_snowpack(swe_series):
     out = land.days_with_snowpack(swe, freq="YS")
 
     assert out.attrs["units"] == "days"
-    assert isinstance(out, xr.DataArray)
+    assert isinstance(out, DataArray)
