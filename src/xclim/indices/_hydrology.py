@@ -926,10 +926,7 @@ def lag_snowpack_flow_peaks(
 
 
 @declare_units(q="[discharge]", qsim="[discharge]")
-def sen_slope(
-    q: xarray.DataArray,
-    qsim: xarray.DataArray | None = None,
-) -> xarray.Dataset:
+def sen_slope(q: xarray.DataArray, qsim: xarray.DataArray | None = None, freq: str = "YS") -> xarray.Dataset:
     """
     Temporal robustness analysis of streamflow.
 
@@ -942,6 +939,8 @@ def sen_slope(
         Observed streamflow vector.
     qsim : xarray.DataArray, optional
         Simulated streamflow vector.
+    freq : str
+        Resampling frequency.
 
     Returns
     -------
@@ -964,31 +963,26 @@ def sen_slope(
     :cite:cts:`sauquet_2025`
     """
 
-    def _mk_year_season(q):
-        # Should we cut the final year (only contains the last december), .isel(time=slice(None,-1))
-        qresS = unstack_dates(q.resample(time="QS-DEC").mean(), winter_starts_year=True)
-        qresY = unstack_dates(q.resample(time="YS").mean(), winter_starts_year=True)
-        # add extra year at the end (not present in the yearly resampling)
-        qresY = qresY.broadcast_like(qresS.isel(season=0))
-        qres = xarray.concat([qresS, qresY], dim="season")
-
+    def _mk(q):
+        # FIXME: this needs a better treatment of start_month
+        qres = unstack_dates(q.resample(time=freq).mean(), year_start_month=12)
         out = xarray.apply_ufunc(
-            lambda q: (lambda mk_output: [mk_output.slope, mk_output.p])(mk.original_test(q)),
+            lambda q: (lambda mk_output: np.array([mk_output.slope, mk_output.p]))(mk.original_test(q)),
             qres,
             input_core_dims=[["time"]],
             output_core_dims=[["var"]],
             vectorize=True,
             dask="parallelized",
         )
-        sen_slope = out.isel(var=0).to_dataset("sen_slope")
-        p_vals = out.isel(var=1).to_dataset("p_vals")
+        sen_slope = out.isel(var=0).to_dataset(name="sen_slope")
+        p_vals = out.isel(var=1).to_dataset(name="p_vals")
         return sen_slope, p_vals
 
-    slopes, p_vals = _mk_year_season(q)
+    slopes, p_vals = _mk(q)
     out = xarray.merge([slopes, p_vals])
 
     if qsim is not None:
-        slopes_sim, p_vals_sim = _mk_year_season(qsim)
+        slopes_sim, p_vals_sim = _mk(qsim)
         ratio = (slopes / slopes_sim).rename("ratio")
         slopes_sim = slopes_sim.rename("sen_slope_sim")
         p_vals_sim = p_vals_sim.rename("p_vals_sim")
@@ -1038,7 +1032,8 @@ def base_flow_index_seasonal_ratio(
     q7min = q.rolling(time=7, center=True).min(skipna=False).resample(time=freq).min()
     qmean = q.resample(time=freq).mean()
 
-    bfi = unstack_dates(q7min / qmean, winter_starts_year=True)
+    # FIXME: this needs a better treatment of start_month
+    bfi = unstack_dates(q7min / qmean, year_start_month=12)
     bfi = bfi.assign_attrs({"units": ""})
 
     epsilon = 1e-3  # To avoid division by zero
