@@ -965,8 +965,11 @@ def sen_slope(
     """
 
     def _mk_year_season(q):
-        qresS = unstack_dates(q.resample(time="QS-DEC").mean(), winter_starts_year=True).isel(time=slice(None, -1))
+        # Should we cut the final year (only contains the last december), .isel(time=slice(None,-1))
+        qresS = unstack_dates(q.resample(time="QS-DEC").mean(), winter_starts_year=True)
         qresY = unstack_dates(q.resample(time="YS").mean(), winter_starts_year=True)
+        # add extra year at the end (not present in the yearly resampling)
+        qresY = qresY.broadcast_like(qresS.isel(season=0))
         qres = xarray.concat([qresS, qresY], dim="season")
 
         out = xarray.apply_ufunc(
