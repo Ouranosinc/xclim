@@ -34,7 +34,7 @@ Bug fixes
 
 v0.60.0 (2026-01-23)
 --------------------
-Contributors to this version: Éric Dupuis (:user:`coxipi`), Trevor James Smith (:user:`Zeitsperre`), Juliette Lavoie (:user:`juliettelavoie`),  Faisal Mahmood (:user:`faimahsho`), David Huard (:user:`huard`), Pascal Bourgault (:user:`aulemahal`).
+Contributors to this version: Éric Dupuis (:user:`coxipi`), Trevor James Smith (:user:`Zeitsperre`), Juliette Lavoie (:user:`juliettelavoie`), Ève Larose (:user:`e-larose`), Faisal Mahmood (:user:`faimahsho`), David Huard (:user:`huard`), Pascal Bourgault (:user:`aulemahal`).
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
