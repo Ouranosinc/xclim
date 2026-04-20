@@ -162,7 +162,7 @@ def test_lag_snowpack_flow_peaks(snw_series, q_series):
     assert isinstance(out, xr.DataArray)
 
 
-def test_ss(q_series):
+def test_sen_slope(q_series):
     # FIXME Results in AttributeError: 'DataArray' object has no attribute 'time'.
     # multiple timestamps : seasonal and yearly.
 

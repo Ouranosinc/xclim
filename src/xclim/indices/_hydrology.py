@@ -29,6 +29,7 @@ __all__ = [
     "aridity_index",
     "base_flow_index",
     "base_flow_index_seasonal_ratio",
+    "days_with_snowpack",
     "flow_index",
     "high_flow_frequency",
     "lag_snowpack_flow_peaks",
@@ -716,11 +717,7 @@ def runoff_ratio(
     """
     Runoff ratio.
 
-    Runoff ratio: Ratio of runoff volume measured at the stream to the total
-    precipitation volume over the watershed.
-    Temporal analysis: Yearly values computed from seasonal daily data and yearly data, depending on chosen frequency.
-    (e.g., 'YS' for yearly starting Jan, or 'QS-DEC' for seasons,
-    '30YS' to compute the value over slices of 30 years from the start of the time series).
+    Ratio of runoff volume measured at the stream to the total precipitation volume over the watershed.
 
     Parameters
     ----------
@@ -736,8 +733,7 @@ def runoff_ratio(
     Returns
     -------
     xarray.DataArray
-        Out: xarray.DataArray
-            Runoff ratio (dimensionless).
+        Runoff ratio (dimensionless).
 
     Notes
     -----
@@ -752,6 +748,9 @@ def runoff_ratio(
       higher levels of evapotranspiration in summer months.
     - For snow-driven watersheds, spring runoff ratios are typically higher than
       annual runoff ratios, as snowmelt generates concentrated runoff events.
+    - Temporal analysis: Yearly values computed from seasonal daily data and yearly data, depending on chosen frequency.
+      (e.g., 'YS' for yearly starting Jan, or 'QS-DEC' for seasons, '30YS' to compute the value over slices of 30 years
+      from the start of the time series).
 
     References
     ----------
@@ -768,6 +767,48 @@ def runoff_ratio(
     out = runoff_freq / pr_freq
     out.attrs["units"] = ""
     return out
+
+
+# FIXME: xclim-v1 — Remove
+@declare_units(swe="[length]", thresh="[length]")
+def days_with_snowpack(
+    swe: xarray.DataArray,
+    thresh: str = "10 mm",
+    freq: str = "YS-OCT",
+) -> xarray.DataArray:
+    """
+    Days with snowpack.
+
+    Number of days with snow water equivalent (SWE) above a given threshold.
+
+    Parameters
+    ----------
+    swe : xarray.DataArray
+        Daily surface snow amount as snow water equivalent.
+    thresh : float
+        Minimum snow quantity to consider a given day snow-covered. Default is 10 mm.
+    freq : str
+        Resampling frequency. Typically the water year starting on the 1st of October
+        in the Northern Hemisphere.
+
+    Returns
+    -------
+    xarray.DataArray
+        Number of days with snowpack above the threshold.
+
+    Notes
+    -----
+    Years with larger snowpacks tend to produce bigger spring floods.
+    Additional spring flood analysis can be carried out using the
+    ``annual_maxima`` and ``lag_snowpack_flow_peaks`` functions.
+
+    References
+    ----------
+    :cite:cts:`alonso_gonzalez_2022`
+    """
+    frz = convert_units_to(thresh, swe)
+    out = threshold_count(swe, ">", frz, freq)
+    return to_agg_units(out, swe, "count", deffreq="D")
 
 
 @declare_units(pr="[precipitation]", pet="[precipitation]")
@@ -1049,19 +1090,9 @@ def base_flow_index_seasonal_ratio(
 
     qmean = q.resample(time=freq).mean()
     bfi = q7min / qmean
-
-    winter_bfi = bfi.where(bfi["time"].dt.month == 12).groupby("time.year").mean(dim="time")
-    winter_bfi.attrs["units"] = ""
-
-    spring_bfi = bfi.where(bfi["time"].dt.month == 3).groupby("time.year").mean(dim="time")
-    spring_bfi.attrs["units"] = ""
-
-    summer_bfi = bfi.where(bfi["time"].dt.month == 6).groupby("time.year").mean(dim="time")
-    summer_bfi.attrs["units"] = ""
-
-    fall_bfi = bfi.where(bfi["time"].dt.month == 9).groupby("time.year").mean(dim="time")
-    fall_bfi.attrs["units"] = ""
-
+    seabfi = bfi.groupby(["time.season", "time.year"]).mean()
+    seabfi = seabfi.assign_attrs({"units": ""})
+    winter_bfi, spring_bfi, summer_bfi, fall_bfi = (seabfi.sel(season=s) for s in ["DJF", "MAM", "JJA", "SON"])
     # Shift timestamp forward by one year since winter starts in dec the year prior
     winter_1 = winter_bfi.assign_coords(year=winter_bfi["year"] + 1)
     winter_1_aligned = winter_1.reindex(year=summer_bfi.year)
