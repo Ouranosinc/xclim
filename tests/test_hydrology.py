@@ -222,6 +222,25 @@ class TestRR:
         np.testing.assert_allclose(out.values, 0.0018, atol=1e-15)
 
 
+class TestDaysWithSnowpack:
+    def test_simple(self, swe_series):
+        # 2 years of daily data
+        a = np.zeros(365 * 2)
+
+        # Year 1: 15 days of SWE = 20 mm
+        a[50:65] = 20
+        # Year 2: 5 days of SWE = 5 mm
+        a[400:405] = 5
+
+        # Create a daily time index
+        swe = swe_series(a)
+
+        out = xci.days_with_snowpack(swe, thresh=".01 m", freq="YS")
+
+        # Year 1: 15 days >= 10 → expect 15, Year 2: only 5 days but all < 10 → expect 0
+        np.testing.assert_array_equal(out.values, [15, 0])
+
+
 class TestAnnualAridityIndex:
     def test_simple(self, pr_hr_series, evspsblpot_hr_series):
         # 2 years of hourly data
