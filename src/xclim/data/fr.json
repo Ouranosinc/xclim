@@ -1529,11 +1529,5 @@
     "long_name": "Pente de Theil-Sen",
     "description": "Analyse de la robustesse temporelle du débit.",
     "abstract": "Calculer les estimateurs annuels et saisonniers de la pente de Theil-Sen et effectuer le test de Mann-Kendall pour l'évaluation des tendances."
-  },
-  "DAYS_WITH_SNOWPACK": {
-    "title": "Jours avec accumulation de neige",
-    "long_name": "Jours avec accumulation de neige",
-    "description": "Nombre total de jours avec un niveau d'eau équivalente en neige supérieur à un seuil donné.",
-    "abstract": "Nombre total de jours avec un niveau d'eau équivalente en neige supérieur à un seuil donné."
   }
 }
