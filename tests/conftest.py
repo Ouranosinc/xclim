@@ -417,7 +417,7 @@ def atmosds(nimbus) -> xr.Dataset:
 
 
 @pytest.fixture(scope="session")
-def ensemble_dataset_objects() -> dict[str, list[str]]:
+def ensemble_dataset_objects() -> dict[str, str]:
     return add_ensemble_dataset_objects()
 
 
