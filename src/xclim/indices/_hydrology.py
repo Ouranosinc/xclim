@@ -8,10 +8,11 @@ from scipy.stats import rv_continuous
 from xarray import DataArray
 
 from xclim.core._types import DateStr, Quantified
-from xclim.core.calendar import days_since_to_doy, doy_to_days_since, get_calendar, unstack_dates
+from xclim.core.calendar import get_calendar, unstack_dates
 from xclim.core.missing import at_least_n_valid
 from xclim.core.units import convert_units_to, declare_units, rate2amount, to_agg_units
 from xclim.indices.generic import threshold_count
+from xclim.indices.helpers import resample_map
 from xclim.indices.stats import standardized_index
 
 from . import generic
@@ -850,6 +851,13 @@ def aridity_index(pr: xarray.DataArray, pet: xarray.DataArray, freq: str = "YS")
     return ai
 
 
+def _timemax(da):
+    tmax = da.idxmax("time")
+    std = da.std("time")
+    tmax = tmax.where(std != 0)
+    return tmax
+
+
 # FIXME: Different name??
 @declare_units(snw="[mass]/[area]", q="[discharge]")
 def lag_snowpack_flow_peaks(
@@ -900,15 +908,17 @@ def lag_snowpack_flow_peaks(
     ----------
     :cite:cts:`burn_2010`
     """
-    doy_snw_max = snw_max_doy(snw, freq)
+    t0 = snw.time[0]
 
+    dt_snw_max = (resample_map(snw, "time", freq, _timemax) - t0).astype("timedelta64[s]").astype(float)
+
+    dt_q = (q.time - t0).astype("timedelta64[s]").astype(float)
     thresh = q.resample(time=freq).quantile(q=p, dim="time")
     threshold_for_each_time = thresh.reindex_like(q, method="ffill")
-    doys_over_thresh = q.time.dt.dayofyear.where(q >= threshold_for_each_time)
-    t_q_max = days_since_to_doy(
-        doy_to_days_since(doys_over_thresh, "10-01").resample(time=freq).mean(dim="time"), "10-01"
-    )
-    lag = t_q_max - doy_snw_max
+    dt_q_over_thresh = dt_q.where(q >= threshold_for_each_time)
+    dt_high_q = dt_q_over_thresh.resample(time=freq).mean(dim="time")
+
+    lag = (dt_high_q - dt_snw_max) / (86400)
     lag.attrs["units"] = "days"
     return lag
 
