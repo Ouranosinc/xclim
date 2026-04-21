@@ -2,15 +2,13 @@
 
 from __future__ import annotations
 
-from functools import partial
-
 import numpy as np
 import xarray
-from scipy.stats import circmean, rv_continuous
+from scipy.stats import rv_continuous
 from xarray import DataArray
 
 from xclim.core._types import DateStr, Quantified
-from xclim.core.calendar import get_calendar, unstack_dates
+from xclim.core.calendar import days_since_to_doy, doy_to_days_since, get_calendar, unstack_dates
 from xclim.core.missing import at_least_n_valid
 from xclim.core.units import convert_units_to, declare_units, rate2amount, to_agg_units
 from xclim.indices.generic import threshold_count
@@ -858,7 +856,7 @@ def lag_snowpack_flow_peaks(
     snw: xarray.DataArray,
     q: xarray.DataArray,
     freq: str = "YS-OCT",
-    percentile: int = 90,
+    p: float = 0.9,
 ) -> xarray.DataArray:
     """
     Time lag between maximum snowpack and river high flows.
@@ -877,8 +875,8 @@ def lag_snowpack_flow_peaks(
         Streamflow.
     freq : str
         Resampling frequency. Defaults to the water year starting on the 1st of October.
-    percentile : float
-        Percentile threshold identifying high flows. Defaults to the 90th percentile.
+    p : float
+        Percentile for calculating the flow index, between 0 and 1. Default of 0.9 is for high flows.
 
     Returns
     -------
@@ -902,24 +900,14 @@ def lag_snowpack_flow_peaks(
     ----------
     :cite:cts:`burn_2010`
     """
-    # Find time of max SWE per year
-    t_snw_max = snw.resample(time=freq).map(lambda x: x.idxmax())  # if x.max() > 0 else np.nan)
-    t_snw_max = t_snw_max.where(snw.resample(time=freq).max() > 0)
-    doy_snw_max = t_snw_max.dt.dayofyear
+    doy_snw_max = snw_max_doy(snw, freq)
 
-    # Compute percentile threshold per water year using resample
-    thresh = q.resample(time="YS-OCT").reduce(
-        np.nanpercentile, q=percentile, dim="time"
-    )  # the second q, equal to percentile, is a keyword in np.nanpercentile, not the flow variable.
+    thresh = q.resample(time=freq).quantile(q=p, dim="time")
     threshold_for_each_time = thresh.reindex_like(q, method="ffill")
-    q_high = q.where(q >= threshold_for_each_time).dropna(dim="time", how="all")
-
-    # Day of year for high flow peaks
-    doy = q_high.time.dt.dayofyear
-
-    t_q_max = doy.resample(time=freq).reduce(partial(circmean, high=366, low=1), dim="time")
-
-    # Compute lag
+    doys_over_thresh = q.time.dt.dayofyear.where(q >= threshold_for_each_time)
+    t_q_max = days_since_to_doy(
+        doy_to_days_since(doys_over_thresh, "10-01").resample(time=freq).mean(dim="time"), "10-01"
+    )
     lag = t_q_max - doy_snw_max
     lag.attrs["units"] = "days"
     return lag
