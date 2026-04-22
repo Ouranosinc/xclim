@@ -40,7 +40,7 @@ jobs:
       (github.event_name == 'push')
     strategy:
       matrix:
-        os: [ "ubuntu-latest" ]
+        os: [ 'ubuntu-latest' ]
         python-version: [ "3.14" ]
     steps:
       - name: Harden Runner
@@ -113,7 +113,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ "ubuntu-latest" ]
+        os: [ 'ubuntu-latest' ]
         python-version: [ "3.11" ]
         testdata-cache: [ '~/.cache/xclim-testdata' ]
         markers: [ "-m not slow" ]
@@ -361,7 +361,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        os: [ "ubuntu-latest" ]
+        os: [ 'ubuntu-latest' ]
         python-version: [ "3.11", "3.14" ]
         testdata-cache: [ '~/.cache/xclim-testdata' ]
     defaults:
