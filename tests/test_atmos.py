@@ -109,3 +109,23 @@ def test_water_cycle_intensity(pr_series, evspsbl_series):
 
     wci = atmos.water_cycle_intensity(pr=pr, evspsbl=evspsbl, freq="MS")
     np.testing.assert_allclose(wci, 2 * 60 * 60 * 24 * 31)
+
+
+# FIXME: Do we need hourly timeseries specifically?
+# given the comment below:
+def test_simple(pr_hr_series, evspsblpot_hr_series):
+    # 2 years of hourly data
+    pr = np.ones(8760 * 2)
+    pet = np.ones(8760 * 2) * 0.8
+
+    # Year 1 different
+    pr[1:8761] = 3
+    pet[1:8761] = 1.5
+    expected = [3 / 1.5, 1 / 0.8]
+    # Create a daily time index
+    pr = pr_hr_series(pr)
+    pet = evspsblpot_hr_series(pet)
+    out = atmos.aridity_index(pr, pet)
+
+    assert out.attrs["units"] == "1"
+    assert all(out.values == expected)

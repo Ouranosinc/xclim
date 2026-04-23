@@ -755,3 +755,10 @@ class TestSnowfallMeteoSwiss:
             expected,
             rtol=1e-3,
         )
+
+
+def test_aridity_index(pr_hr_series, evspsblpot_hr_series):
+    out = atmos.aridity_index(pr_hr_series, evspsblpot_hr_series, freq="YS")
+
+    assert out.attrs["units"] == "1"
+    assert isinstance(out, xr.DataArray)
