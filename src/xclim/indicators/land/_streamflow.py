@@ -179,32 +179,16 @@ standardized_groundwater_index = StandardizedIndexes(
     compute=standardized_groundwater_index,
 )
 
-base_flow_index_seasonal_ratio = Streamflow(
+base_flow_index_seasonal_ratio = StreamflowNoResampling(
     title="Seasonal Base flow index (bfi) and ratio of winter to summer base flow index",
     identifier="base_flow_index_seasonal_ratio",
     units="",
-    var_name=["winter_bfi", "spring_bfi", "summer_bfi", "fall_bfi", "w_s_ratio"],
-    standard_name=[
-        "winter_bfi",
-        "spring_bfi",
-        "summer_bfi",
-        "fall_bfi",
-        "w_s_ratio",
-    ],
+    var_name=["bfi", "w_s_ratio"],
     long_name=[
-        "Winter baseflow index",
-        "Spring baseflow index",
-        "Summer baseflow index",
-        "Fall baseflow index",
+        "Seasonal baseflow index",
         "Winter to summer baseflow index ratio",
     ],
     description=[
-        "Yearly base flow index per season, defined as the minimum 7-day average flow divided by the mean flow "
-        "as well as yearly winter to summer bfi ratio.",
-        "Yearly base flow index per season, defined as the minimum 7-day average flow divided by the mean flow "
-        "as well as yearly winter to summer bfi ratio.",
-        "Yearly base flow index per season, defined as the minimum 7-day average flow divided by the mean flow "
-        "as well as yearly winter to summer bfi ratio.",
         "Yearly base flow index per season, defined as the minimum 7-day average flow divided by the mean flow "
         "as well as yearly winter to summer bfi ratio.",
         "Yearly winter to summer baseflow index ratio, defined as the minimum 7-day average flow divided by the "

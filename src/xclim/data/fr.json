@@ -1507,10 +1507,10 @@
     "abstract": "Rapport entre les précipitations totales et l'évapotranspiration potentielle. Classification basée sur l'indice d'aridité (AI)."
   },
   "BASE_FLOW_INDEX_SEASONAL_RATIO": {
-    "title": "Indice de débit de base saisonnier",
-    "long_name": "Indice de débit de base saisonnier",
-    "description": "Indice de débit de base saisonnier et rapport entre les indices de débit de base hivernal et estival.",
-    "abstract": "Indice annuel du débit de base par saison, défini comme le débit moyen minimal sur 7 jours divisé par le débit moyen. Le rapport annuel est la division de l'indice de débit de base hivernal par celui estival."
+    "title": "Écoulement de base saisonnier",
+    "long_name": "Écoulement de base de base saisonnier",
+    "description": "Écoulement de base saisonnier et rapport entre les indices de débit de base hivernal et estival.",
+    "abstract": "Indice annuel de l'écoulement de base par saison, défini comme le débit moyen minimal sur 7 jours divisé par le débit moyen. Le rapport annuel est la division de l'indice de débit de base hivernal par celui estival."
   },
   "LAG_SNOWPACK_FLOW_PEAKS": {
     "title": "Décalage temporel entre le maximum d'enneigement et les crues",

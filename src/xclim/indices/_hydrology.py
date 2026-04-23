@@ -8,7 +8,7 @@ from scipy.stats import rv_continuous
 from xarray import DataArray
 
 from xclim.core._types import DateStr, Quantified
-from xclim.core.calendar import get_calendar, unstack_dates
+from xclim.core.calendar import construct_offset, get_calendar, parse_offset, unstack_dates
 from xclim.core.missing import at_least_n_valid
 from xclim.core.units import convert_units_to, declare_units, rate2amount, to_agg_units
 from xclim.indices.generic import threshold_count
@@ -80,6 +80,7 @@ def base_flow_index(q: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
 
        \mathrm{CMA}_7(q_i) = \frac{\sum_{j=i-3}^{i+3} q_j}{7}
     """
+    # TODO: Could be refactored with generic.select_rolling_resample_op, but `skipa=False` cannot be passed right now.
     m7 = q.rolling(time=7, center=True).mean(skipna=False).resample(time=freq)
     mq = q.resample(time=freq)
 
@@ -961,9 +962,9 @@ def sen_slope(q: xarray.DataArray, qsim: xarray.DataArray | None = None, freq: s
     :cite:cts:`sauquet_2025`
     """
 
-    def _mk(q):
-        # FIXME: this needs a better treatment of start_month
-        qres = unstack_dates(q.resample(time=freq).mean(), year_start_month=12)
+    def _mk(q, freq):
+        month_string = parse_offset(freq)[-1]
+        qres = unstack_dates(q.resample(time=freq).mean(), year_start_month=month_string)
         out = xarray.apply_ufunc(
             lambda q: (lambda mk_output: np.array([mk_output.slope, mk_output.p]))(mk.original_test(q)),
             qres,
@@ -976,11 +977,11 @@ def sen_slope(q: xarray.DataArray, qsim: xarray.DataArray | None = None, freq: s
         p_vals = out.isel(var=1).to_dataset(name="p_vals")
         return sen_slope, p_vals
 
-    slopes, p_vals = _mk(q)
+    slopes, p_vals = _mk(q, freq)
     out = xarray.merge([slopes, p_vals])
 
     if qsim is not None:
-        slopes_sim, p_vals_sim = _mk(qsim)
+        slopes_sim, p_vals_sim = _mk(qsim, freq)
         ratio = (slopes / slopes_sim).rename("ratio")
         slopes_sim = slopes_sim.rename("sen_slope_sim")
         p_vals_sim = p_vals_sim.rename("p_vals_sim")
@@ -995,7 +996,7 @@ def sen_slope(q: xarray.DataArray, qsim: xarray.DataArray | None = None, freq: s
 # FIXME: Do we really need to compute the ratio too here?
 @declare_units(q="[discharge]")
 def base_flow_index_seasonal_ratio(
-    q: xarray.DataArray, freq: str = "QS-DEC"
+    q: xarray.DataArray, freq: str = "YS-DEC", winter: str = "DJF", summer: str = "JJA"
 ) -> tuple[DataArray, DataArray, DataArray, DataArray, DataArray]:
     """
     Seasonal Base flow index (bfi) and ratio of winter to summer base flow index.
@@ -1008,12 +1009,18 @@ def base_flow_index_seasonal_ratio(
     q : xarray.DataArray
         Rate of river discharge.
     freq : str
-        Resampling frequency.
+        Yearly resampling frequency.  The dataset will be divided in seasons which are defined with
+        respect to `freq`, e.g. "YS-DEC" will define seasons as: ["DJF","MAM","JJA","SON"]. Resampling
+        would then be computed on "QS-DEC".
+    winter : str
+        String indicating the three months assigned as the winter.
+    summer : str
+        String indicating the three months assigned as the summer.
 
     Returns
     -------
     xarray.DataArray, [dimensionless]
-        Base flow index.
+        Base flow index with a season coordinate.
     xarray.DataArray, [dimensionless]
         Base flow index winter to summer ratio.
 
@@ -1026,15 +1033,16 @@ def base_flow_index_seasonal_ratio(
     :cite:cts:`singh_2019`
     :cite:cts:`jaffres_2021`
     """
-    # 7-day minimum of raw daily flow
-    q7min = q.rolling(time=7, center=True).min(skipna=False).resample(time=freq).min()
-    qmean = q.resample(time=freq).mean()
-
-    # FIXME: this needs a better treatment of start_month
-    bfi = unstack_dates(q7min / qmean, year_start_month=12)
-    bfi = bfi.assign_attrs({"units": ""})
-
-    epsilon = 1e-3  # To avoid division by zero
-    w_s_ratio = bfi.sel(season="DJF") / (bfi.sel(season="JJA") + epsilon)
+    mult, base, start, anchor = parse_offset(freq)
+    if base != "Y":
+        raise ValueError("Only yearly resampling frequencies are accepted.")
+    if mult != 1:
+        raise ValueError("Resampling frequency should only be over one year.")
+    sea_freq = construct_offset(1, "Q", start, anchor)
+    bfi = base_flow_index(q, sea_freq)
+    bfi = unstack_dates(bfi, year_start_month=anchor)
+    w_s_ratio = bfi.sel(season=winter) / (bfi.sel(season=summer))
+    # set division to 0 to nan.
+    w_s_ratio = w_s_ratio.where(bfi.sel(season=summer) != 0)
     w_s_ratio.attrs["units"] = ""
     return bfi, w_s_ratio
