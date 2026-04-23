@@ -408,7 +408,7 @@ Some example disclosures:
     * This PR was primarily written using a combination of OpenClaw (Kimi K2.5) and ChatGPT (GPT-o4-mini). After using theses tools, I reviewed the content.
     * This PR was primarily written by me with small code snippets copy-pasted from chats with Claude (Sonnet 4.6).
     * I asked GitHub Copilot to clean up and improve code I had written. I went over the final product.
-    
+
 
 .. admonition:: Commit Message
 
