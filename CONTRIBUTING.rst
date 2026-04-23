@@ -385,8 +385,8 @@ AI Assistance Notice
     The following information has been adapted from AI assistance usage policies developed by `Avocado <https://avocado-framework.readthedocs.io/en/latest/guides/contributor/chapters/ai_policy.html>`_ and `ghostty <https://github.com/ghostty-org/ghostty/blob/main/AI_POLICY.md>`_
     with suggestions from the `xclim` developers and maintainers.
 
-What is AI Assistance
-~~~~~~~~~~~~~~~~~~~~~
+What is AI Assistance ?
+~~~~~~~~~~~~~~~~~~~~~~~
 
 Within the context of `xclim` development, AI assistance constitutess any code, code snippets, configurations, documentation, or other programmatic assets produced, suggested, or significantly modified by an artificial intelligence model, tool, or service.
 
