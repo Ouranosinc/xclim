@@ -383,7 +383,7 @@ AI Assistance Notice
 .. note::
 
     The following information has been adapted from AI assistance usage policies developed by `Avocado <https://avocado-framework.readthedocs.io/en/latest/guides/contributor/chapters/ai_policy.html>`_ and `ghostty <https://github.com/ghostty-org/ghostty/blob/main/AI_POLICY.md>`_
-    as well as from the `xclim` developers and maintainers.
+    with suggestions from the `xclim` developers and maintainers.
 
 What is AI Assistance
 ~~~~~~~~~~~~~~~~~~~~~
@@ -405,7 +405,10 @@ Some example disclosures:
 
     ### Other information:
 
-    This PR was primarily written using a combination of OpenClaw (Kimi K2.5) and ChatGPT (GPT-o4-mini)
+    * This PR was primarily written using a combination of OpenClaw (Kimi K2.5) and ChatGPT (GPT-o4-mini). After using theses tools, I reviewed the content.
+    * This PR was primarily written by me with small code snippets copy-pasted from chats with Claude (Sonnet 4.6).
+    * I asked GitHub Copilot to clean up and improve code I had written. I went over the final product.
+    
 
 .. admonition:: Commit Message
 
@@ -431,7 +434,7 @@ Disclaimer
 ~~~~~~~~~~
 
 The `xclim` maintainers reserve the right to reject Pull Requests and contributions for many different reasons (functionality out-of-scope, code quality issues, non-adherence to code of conduct, etc.)
-and this extends to code that not been adequately disclosed as being assisted by the employment of artificial intelligence models, tools, or services.
+and this extends to code that has not been adequately disclosed as being assisted by artificial intelligence models, tools, or services.
 
 Tips
 ----
