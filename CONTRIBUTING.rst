@@ -386,7 +386,7 @@ AI Assistance Notice
     with suggestions from the `xclim` developers and maintainers.
 
 The `xclim` developers and maintainers will consider Pull Requests that have been aided by artificial intelligence models, tools, or services.
-For detauled information regarding compliance and operating parameters, refer to the `AI_POLICY.md` and `AGENTS.md` found in the top-level of the code repository.
+For detailed information regarding compliance and operating parameters, refer to the `AI_POLICY.md` and `AGENTS.md` found in the top-level of the code repository.
 
 What is AI Assistance ?
 ~~~~~~~~~~~~~~~~~~~~~~~
