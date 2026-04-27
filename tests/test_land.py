@@ -163,6 +163,21 @@ def test_lag_snowpack_flow_peaks(snw_series, q_series):
     assert isinstance(out, xr.DataArray)
 
 
+def test_snowamount_conversion(swe_series, q_series):
+    a = np.ones(365)
+    swe = swe_series(a)
+    q = q_series(a)
+    land.lag_snowpack_flow_peaks(swe, q)
+
+
+# FIXME: This should give an error. We have the same problem with precipitations
+def test_snowamount_with_snd_conversion(snd_series, q_series):
+    a = np.ones(365)
+    snd = snd_series(a)
+    q = q_series(a)
+    land.lag_snowpack_flow_peaks(snd, q)
+
+
 def test_sen_slope(q_series):
     # FIXME Results in AttributeError: 'DataArray' object has no attribute 'time'.
     # multiple timestamps : seasonal and yearly.

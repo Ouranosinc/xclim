@@ -817,7 +817,7 @@ def _timemax(da):
 
 
 # FIXME: Different name??
-@declare_units(snw="[mass]/[area]", q="[discharge]")
+@declare_units(snw="[snowamount]", q="[discharge]")
 def lag_snowpack_flow_peaks(
     snw: xarray.DataArray,
     q: xarray.DataArray,
