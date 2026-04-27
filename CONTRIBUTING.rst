@@ -412,9 +412,13 @@ Some example disclosures:
     ### Other information:
 
     * This PR was primarily written using a combination of OpenClaw (Kimi K2.5) and ChatGPT (GPT-o4-mini). After using these tools, I reviewed the content.
+
     <!-- or -->
+
     * This PR was primarily written by me with small code snippets copy-pasted from chats with Claude (Sonnet 4.6).
+
     <!-- or -->
+
     * I asked GitHub Copilot to clean up and improve code I had written. I then reviewed the final product.
 
 .. admonition:: Commit Message
