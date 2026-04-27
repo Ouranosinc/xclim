@@ -258,6 +258,9 @@ snw_days_above = SnowWithIndexing(
     compute=xci.snw_days_above,
 )
 
+# FIXME: If we insist on having something like `days_with_snowpack`, we should have an indicator:
+# swe_days_above = (.... compute=xci.snd_days_above)
+
 holiday_snow_days = Snow(
     title="Christmas snow days",
     identifier="holiday_snow_days",
