@@ -251,13 +251,12 @@ variables:
     description: Duration of sunshine.
     dimensions: "[time]"
     standard_name: duration_of_sunshine
-# FIXME: xclim-v1 — Remove SWE
   swe:
     canonical_units: m
     cell_methods: "time: mean"
     description: Surface snow water equivalent amount
     dimensions: "[length]"
-    standard_name: lwe_thickness_of_snow_amount
+    standard_name: lwe_thickness_of_surface_snow_amount
     data_flags:
       - negative_accumulation_values:
   qspec:
