@@ -33,7 +33,7 @@ Breaking changes
 * The choice of `method` "APP" was removed when using a `genextreme` distribution in standardized indices (``xclim.indices.standardized_index`` and related functions). (:issue:`2326`, :pull:`2327`).
 * ``xclim.indices._hydrology.lag_snowpack_flow_peaks``:
     * The argument `swe` is renamed to `snw`. (:pull:`2267`);
-    * The argument `percentile` is renamed to `p` should now be a number in `[0,1]` instead of `[0,100]`, similar to other `xclim` function. (:pull:`2267`).
+    * The argument `percentile` is renamed to `p` and should now be a number in `[0,1]` instead of `[0,100]`, similar to other `xclim` function. (:pull:`2267`).
 * ``xclim.indices._hydrology.base_flow_index_seasonal_ratio`` now expects a yearly frequency whose anchor determines the position of the seasons. A single `bfi` output is given with 4 season coordinates. (:pull:`2267`).
 * ``xclim.indices._hydrology.sen_slope`` does not return both seasonal and annual results: Instead, give an appropriate resampling frequency (quarter or annual). (:pull:`2267`).
 * ``xclim.indices._hydrology.days_with_snowpack`` was removed, use ``xclim.land.snd_days_above`` which has the same functionality. (:pull:`2267`).
