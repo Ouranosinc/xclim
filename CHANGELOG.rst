@@ -43,7 +43,7 @@ Bug fixes
 * `dist` in ``xclim.indices.standardized_index`` can now be a `scipy.stats.rv_continuous` as it was planned.  (:issue:`2326`, :pull:`2327`).
 * `sphinx-autodoc-typehints` has been pinned due to recent build failures on ReadTheDocs. (:pull:`2090`).
 * ``xclim.indices._hydrology.aridity_index`` now correctly performs a unit conversion before taking ratios or `pr` and `pet`. (:pull:`2267`).
-* * ``xclim.indices._hydrology.base_flow_index_seasonal_ratio`` now correctly computes an average on the rolling window instead of a minimum (:pull:`2267`).
+* ``xclim.indices._hydrology.base_flow_index_seasonal_ratio`` now correctly computes an average on the rolling window instead of a minimum (:pull:`2267`).
 
 v0.60.0 (2026-01-23)
 --------------------
