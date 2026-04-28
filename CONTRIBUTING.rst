@@ -403,8 +403,6 @@ Using AI to help draft responses is allowed only if the contributor meaningfully
 Submitting AI-generated replies without human verification or understanding is not permitted.
 Misrepresenting AI-generated content as purely human-authored is considered a violation of the contribution guidelines.
 
-As a small exception, trivial tab-completion doesn't need to be disclosed, so long as it is limited to single keywords or short phrases.
-
 Some example disclosures:
 
 .. admonition:: Pull Request Description
@@ -421,13 +419,17 @@ Some example disclosures:
 
     * I asked GitHub Copilot to clean up and improve code I had written. I then reviewed the final product.
 
+As a small exception, trivial tab-completion doesn't need to be disclosed, so long as it is limited to single keywords or short phrases.
+
+For commits originating exclusively from AI, we also ask that their commits are signed with "Assisted-by: <tool name>" disclosure (this demand is repeated in `AGENTS.md`):
+
 .. admonition:: Commit Message
 
     Added new indicator for sub-tropical Easter snowstorm events
 
     Assisted-by: Claude Opus 4.5
 
-Failing to disclose the use of artificial intelligence models, tools, or services is disrespectful to the developers and maintainers of software projects.
+Failing to disclose the use of artificial intelligence models, tools, or services is disrespectful to the developers and maintainers of open source software projects.
 We ask that contributors are forthcoming with this information so that the effort and scrutiny applied to Pull Request reviews can be adjusted accordingly.
 
 Code Review

@@ -4,6 +4,11 @@
 
 You are responsible for every line of code you submit, regardless of how it was produced. If you use AI tools, review and verify all output before committing.
 
+## Pull Requests
+
+Pull Requests descriptions must be drafted by a human and adhere to the template selected on creation.
+Summaries of changes posted by AI are not accepted in Pull Requests.
+
 ## AI Tool Usage
 
 AI tools are permitted. Standard review process applies to all contributions.
@@ -37,6 +42,10 @@ AI tools are prohibited from modifying CI/CD workflows and `tox` configurations.
 ## Training Data
 
 This project requests that its code not be used for AI model training. We ask that AI tool providers honor this preference.
+
+## Low Effort Contributions
+
+AI-generated low-effort contributions are unacceptable; Human contributors must be capable of explaining their changes, responding to review comments, and precisely adapting their contributions as requested.
 
 ## Licensing
 
