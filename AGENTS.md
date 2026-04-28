@@ -19,7 +19,7 @@ Rules for AI coding agents working in this repository.
 
 ## Setup
 
-The package can be installed in developer mode using in Python using the `$ make develop` recipe.
+The package can be installed in developer mode in Python using the `$ make develop` recipe.
 
 ## Testing
 
@@ -56,7 +56,7 @@ Do not modify:
 
 ## Review
 
-Changes touching more than one module or any security-relevant code require human review. Minor fixes follow the standard process.
+All changes to code require human review.
 
 ______________________________________________________________________
 

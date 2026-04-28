@@ -19,13 +19,15 @@ AI-generated code must be reviewed by a human maintainer before merging. Keep ch
 
 ## Disclosure
 
-Mark AI involvement in commit messages with a trailer:
+Mark significant AI involvement in commit messages with a trailer:
 
 ```text
 Assisted-by: <tool name>
 ```
 
 Pull Requests must also state how AI was used under the `### Other information:` section.
+
+Code changes from less sophisticated phrase-completion tools do not require an AI disclosure.
 
 ## Prohibited Uses
 
