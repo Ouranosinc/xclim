@@ -10,11 +10,11 @@ from __future__ import annotations
 import datetime as pydt
 import warnings
 from collections.abc import Sequence
+from importlib.util import find_spec
 from itertools import chain
 from typing import Any, Literal, TypeVar
 
 import cftime
-import flox
 import numpy as np
 import pandas as pd
 import xarray as xr
@@ -27,6 +27,7 @@ from xclim.core.utils import uses_dask
 
 XR2409 = Version(xr.__version__) >= Version("2024.09")
 
+FLOX_INSTALLED = bool(find_spec("flox"))
 
 __all__ = [
     "DayOfYearStr",
@@ -1736,7 +1737,7 @@ def _unstack_doy(ds: xr.Dataset, new_dim: str | None):
 
 
 def unstack_dates(  # noqa: C901
-    ds: xr.Dataset,
+    ds: xr.Dataset | xr.DataArray,
     seasons: dict[int, str] | None = None,
     new_dim: str | None = None,
     winter_starts_year: bool = False,
@@ -1747,7 +1748,7 @@ def unstack_dates(  # noqa: C901
 
     Parameters
     ----------
-    ds : xr.Dataset or DataArray
+    ds : xr.Dataset or xr.DataArray
       The xarray object with a "time" coordinate.
       Only supports daily or coarser frequencies (excluding weekly).
       The time axis must be complete and regular (`xr.infer_freq(ds.time)` doesn't fail).
@@ -1918,9 +1919,14 @@ def unstack_dates(  # noqa: C901
         # Use dask or numpy's algo.
 
         if uses_dask(da):
-            # This is where it happens. Flox will minimally rechunk
-            # so the reshape operation can be performed blockwise
-            da = flox.xarray.rechunk_for_blockwise(da, "time", years)
+            if not FLOX_INSTALLED:
+                warnings.warn("DataArray uses dask but `flox` not present. No blockwise rechunking will be performed.")
+            else:
+                # This is where it happens. Flox will minimally rechunk
+                # so the reshape operation can be performed blockwise
+                import flox
+
+                da = flox.xarray.rechunk_for_blockwise(da, "time", years)
         return xr.DataArray(da.data.reshape(new_shape), dims=new_dims)
 
     new_coords = dict(ds.coords)
