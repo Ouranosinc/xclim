@@ -23,6 +23,7 @@ Internal changes
     * Set ``docs/conf.py`` to ignore `sphinx_autodoc_typehints.guarded_import` errors raised by `xarray` type guarding.
 * Set `SocketBlockedError` to be a subset of the `Exception` class when `pytest-socket` is not installed. (:pull:`2324`).
 * Carbon and energy reporting via `green-coding-solutions/eco-ci-energy-estimation` has been configured to better aggregate results for the xclim `main` branch as well as for all Pull Requests. (:pull:`2090`).
+* The ``README.rst`` file now shows the Ouranos logo. In rendered documentation, the logo style is dynamic to the light/dark theming. (:pull:`2349`).
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
