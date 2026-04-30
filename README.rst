@@ -127,7 +127,13 @@ Credits
 -------
 `xclim` development is funded through Ouranos_, Environment and Climate Change Canada (ECCC_), the `Fonds vert`_ and the Fonds d'électrification et de changements climatiques (FECC_), the Canadian Foundation for Innovation (CFI_), and the Fonds de recherche du Québec (FRQ_).
 
-|ouranos| |ouranos-dark| |ouranos-light|
+|ouranos-dark| |ouranos-light|
+
+.. image:: https://raw.githubusercontent.com/Ouranosinc/.github/refs/heads/main/images/logo-ouranos-vertical-couleur.svg
+        :target: https://www.ouranos.ca/
+        :width: 50%
+        :align: center
+        :class: ouranos-logo no-theme center
 
 This package was created with Cookiecutter_ and the `audreyfeldroy/cookiecutter-pypackage`_ project template.
 
@@ -227,11 +233,7 @@ This package was created with Cookiecutter_ and the `audreyfeldroy/cookiecutter-
 ..
     Ouranos Logos
 
-.. |ouranos| image:: https://raw.githubusercontent.com/Ouranosinc/.github/refs/heads/main/images/logo-ouranos-vertical-couleur.svg
-        :target: https://www.ouranos.ca/
-        :width: 50%
-        :align: middle
-        :class: ouranos-logo no-theme center
+
 
 .. |ouranos-light| image:: https://raw.githubusercontent.com/Ouranosinc/xclim/main/docs/logos/empty.png
         :target: https://www.ouranos.ca/
