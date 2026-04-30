@@ -156,6 +156,40 @@ body .only-light-inline {
   }
 }
 
+.center {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+  width: 50%;
+}
+
+img.ouranos-logo.only-dark {
+    width: 300px;
+    height: 150px;
+    padding: 0;
+    background-color: transparent;
+    background-repeat: no-repeat;
+    border: none;
+    border-image-width: 0px;
+    background-image: url(https://raw.githubusercontent.com/Ouranosinc/.github/refs/heads/main/images/logo-ouranos-vertical-blanc.svg);
+}
+
+img.ouranos-logo.only-light {
+    width: 300px;
+    height: 150px;
+    padding: 0;
+    background-color: transparent;
+    background-repeat: no-repeat;
+    border: none;
+    border-image-width: 0px;
+    background-image: url(https://raw.githubusercontent.com/Ouranosinc/.github/refs/heads/main/images/logo-ouranos-vertical-noir.svg);
+}
+
+img.ouranos-logo.no-theme {
+    display: none;
+    width: 0px;
+}
+
 img.xclim-logo-small.only-dark-inline {
     width: 91px;
     height: 103px;
