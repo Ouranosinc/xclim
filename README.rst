@@ -133,7 +133,6 @@ Credits
         :class: ouranos-logo no-theme center
 
 |ouranos-dark| |ouranos-light|
-
 This package was created with Cookiecutter_ and the `audreyfeldroy/cookiecutter-pypackage`_ project template.
 
 .. _audreyfeldroy/cookiecutter-pypackage: https://github.com/audreyfeldroy/cookiecutter-pypackage/
