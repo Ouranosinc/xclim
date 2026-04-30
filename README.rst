@@ -131,7 +131,6 @@ Credits
 
 .. image:: https://raw.githubusercontent.com/Ouranosinc/.github/refs/heads/main/images/logo-ouranos-vertical-couleur.svg
         :target: https://www.ouranos.ca/
-        :width: 50%
         :align: center
         :class: ouranos-logo no-theme center
 
