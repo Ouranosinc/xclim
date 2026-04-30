@@ -129,7 +129,7 @@ Credits
 
 |ouranos-dark| |ouranos-light|
 
-.. image:: https://raw.githubusercontent.com/Ouranosinc/.github/refs/heads/main/images/logo-ouranos-vertical-couleur.svg
+.. image:: https://raw.githubusercontent.com/Ouranosinc/.github/refs/heads/main/images/logo-ouranos-horizontal-couleur.svg
         :target: https://www.ouranos.ca/
         :align: center
         :class: ouranos-logo no-theme center
