@@ -229,6 +229,8 @@ This package was created with Cookiecutter_ and the `audreyfeldroy/cookiecutter-
 
 .. |ouranos| image:: https://raw.githubusercontent.com/Ouranosinc/.github/refs/heads/main/images/logo-ouranos-vertical-couleur.svg
         :target: https://www.ouranos.ca/
+        :width: 50%
+        :align: middle
         :class: ouranos-logo no-theme center
 
 .. |ouranos-light| image:: https://raw.githubusercontent.com/Ouranosinc/xclim/main/docs/logos/empty.png
