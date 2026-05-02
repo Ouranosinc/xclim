@@ -949,11 +949,14 @@ def sen_slope(q: xarray.DataArray, qsim: xarray.DataArray | None = None, freq: s
     # Assign empty units to all variables
     for var in out.data_vars:
         out[var].attrs["units"] = ""
+    # FIXME: this is temporary. I'm not sure we should allow a different number of output depending on the presence
+    # or not of `qsim`
+    if qsim is not None:
+        return out.sen_slope, out.p_value, out.sen_slope_sim, out.p_value_sim, out.ratio
+    else:
+        return out.sen_slope, out.p_value
 
-    return out
 
-
-# FIXME: Do we really need to compute the ratio too here?
 @declare_units(q="[discharge]")
 def base_flow_index_seasonal_ratio(
     q: xarray.DataArray, freq: str = "YS-DEC", winter: str = "DJF", summer: str = "JJA"

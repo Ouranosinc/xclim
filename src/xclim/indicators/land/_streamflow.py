@@ -233,7 +233,7 @@ runoff_ratio = Streamflow(
 sen_slope = StreamflowNoResampling(
     title="Sen Slope : Temporal robustness analysis of streamflow.",
     identifier="sen_slope",
-    var_name=["slopes", "p_vals", "slopes_sim", "p_vals_sim", "ratio"],
+    var_name=["slope", "p_value", "slope_sim", "p_value_sim", "ratio"],
     units="",
     long_name=[
         "Sen Slope from observed data",

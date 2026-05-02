@@ -108,10 +108,10 @@ def test_runoff_ratio(q_series, area_series, pr_series, freq="YS"):
     q[300:330] = 5
     pr[270:300] = 10
     a = 1000
-    a = area_series(a)
+    a = area_series(a, start="2000-07-01")
 
     q = q_series(q, start="2000-07-01")
-    pr = pr_series(pr, units="mm/hr")
+    pr = pr_series(pr, units="mm/hr", start="2000-07-01")
 
     # FIXME: this gives nans, but the index is OK.
     out = land.runoff_ratio(q, a, pr, freq="YS")
@@ -172,23 +172,18 @@ def test_snowamount_with_snd_conversion(snd_series, q_series):
 
 
 def test_sen_slope(q_series):
-    # FIXME Results in AttributeError: 'DataArray' object has no attribute 'time'.
-    # multiple timestamps : seasonal and yearly.
-
     # 5 years of increasing data with slope of 1
-    q = np.arange(1, 1826)
+    q = np.arange(365 * 5)
 
     # 5 years of increasing data with slope of 2
-    qsim = np.arange(1, 1826) * 2
+    qsim = np.arange(365 * 5) * 2
 
     # Create a daily time index
     q = q_series(q)
     qsim = q_series(qsim)
-    print(q)
-    print(q.dims)
-    print(q.coords)
-
-    out = land.sen_slope(q, qsim)
-
-    assert out.attrs["units"] == "1"
-    assert isinstance(out, xr.DataArray)
+    # FIXME : Not sure we want this kind of indicator
+    # ["slope", "p_value", "slope_sim", "p_value_sim", "ratio"]
+    outl = land.sen_slope(q, qsim)
+    for o in outl:
+        assert o.attrs["units"] == "1"
+        assert isinstance(o, xr.DataArray)
