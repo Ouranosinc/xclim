@@ -934,7 +934,7 @@ def sen_slope(q: xarray.DataArray, qsim: xarray.DataArray | None = None, freq: s
             dask="parallelized",
         )
         sen_slope = out.isel(var=0).to_dataset(name="sen_slope")
-        p_vals = out.isel(var=1).to_dataset(name="p_vals")
+        p_vals = out.isel(var=1).to_dataset(name="p_value")
         return sen_slope, p_vals
 
     slopes, p_vals = _mk(q, freq)
@@ -942,9 +942,9 @@ def sen_slope(q: xarray.DataArray, qsim: xarray.DataArray | None = None, freq: s
 
     if qsim is not None:
         slopes_sim, p_vals_sim = _mk(qsim, freq)
-        ratio = (slopes / slopes_sim).rename("ratio")
-        slopes_sim = slopes_sim.rename("sen_slope_sim")
-        p_vals_sim = p_vals_sim.rename("p_vals_sim")
+        ratio = (slopes / slopes_sim).rename({"sen_slope": "ratio"})
+        slopes_sim = slopes_sim.rename({"sen_slope": "sen_slope_sim"})
+        p_vals_sim = p_vals_sim.rename({"p_value": "p_value_sim"})
         out = xarray.merge([out, slopes_sim, p_vals_sim, ratio])
     # Assign empty units to all variables
     for var in out.data_vars:

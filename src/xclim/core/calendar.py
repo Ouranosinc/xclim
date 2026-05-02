@@ -74,6 +74,21 @@ _MONTH_ABBREVIATIONS = {
     12: "DEC",
 }
 
+_MONTH_NUMBERS = {
+    "JAN": 1,
+    "FEB": 2,
+    "MAR": 3,
+    "APR": 4,
+    "MAY": 5,
+    "JUN": 6,
+    "JUL": 7,
+    "AUG": 8,
+    "SEP": 9,
+    "OCT": 10,
+    "NOV": 11,
+    "DEC": 12,
+}
+
 
 # Maximum day of year in each calendar.
 max_doy = {
@@ -1741,7 +1756,7 @@ def unstack_dates(  # noqa: C901
     seasons: dict[int, str] | None = None,
     new_dim: str | None = None,
     winter_starts_year: bool = False,
-    year_start_month: int = 1,
+    year_start_month: int | str = 1,
 ):
     """
     Unstack a multi-season timeseries into a yearly axis and a season one.
@@ -1762,11 +1777,12 @@ def unstack_dates(  # noqa: C901
       See notes.
     winter_starts_year : bool, optional
       Deprecated. Setting to True is the old way of passing `year_start_month=12`.
-    year_start_month : int, optional
+    year_start_month : int or str, optional
       Change on which month the year starts. If greater than 1, seasons/months between that and 12 (included)
       are associated with the following year. Usually this is used as 12 with seasonal data, so that the DJF season is
       associated with the next year, i.e. DJF made from [Dec 1980, Jan 1981, and Feb 1981] will be associated with
-      the year 1981, not 1980.
+      the year 1981, not 1980. A string correspond to a month abbreviation (e.g. "DEC") is also accepted and will be
+      converted to the corresponding integer.
       Not used with daily data. Replaces `winter_starts_year`.
 
     Returns
@@ -1788,6 +1804,8 @@ def unstack_dates(  # noqa: C901
     - For ?YS, ?QS frequencies or ?MS with mult > 1, the new dimension is "season".
     - For MS, the new dimension is "month".
     """
+    if isinstance(year_start_month, str):
+        year_start_month = _MONTH_NUMBERS[year_start_month]
     if winter_starts_year:
         warnings.warn(
             "Since xscen 0.14, `winter_starts_year=True` has been deprecated in favor of `year_start_month=12`."
