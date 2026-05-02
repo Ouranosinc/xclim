@@ -124,21 +124,17 @@ def test_runoff_ratio(q_series, area_series, pr_series, freq="YS"):
 
 
 def test_base_flow_index_seasonal_ratio(q_series):
-    # FIXME Results in AttributeError: 'DataArray' object has no attribute 'time'
-    #  multiple timestamps to present : seasonal and yearly regarding the ratio
-    a = np.ones(364)
+    a = np.ones(365)
     q = q_series(a)
-    print(q)
-    print(q.dims)
-    print(q.coords)
-
     out = land.base_flow_index_seasonal_ratio(q)
-
-    assert out.attrs["units"] == "1"
-    assert isinstance(out, xr.DataArray)
+    assert out.bfi.attrs["units"] == "1"
+    assert out.w_s_ratio.attrs["units"] == "1"
+    assert isinstance(out.bfi, xr.DataArray)
+    assert isinstance(out.w_s_ratio, xr.DataArray)
 
 
 def test_lag_snowpack_flow_peaks(snw_series, q_series):
+    # 1 years of daily data (2 values due to freq resampling to water year "YS-OCT")
     a = np.zeros(365)
 
     # Year 1: 1 day of snw = 20 kg m-2
@@ -146,13 +142,13 @@ def test_lag_snowpack_flow_peaks(snw_series, q_series):
     # Year 2: 1 day of snw = 5 kg m-2
     a[300:301] = 5
 
-    # Create a daily time index
-    snw = snw_series(a)
+    # Create a daily time index --- important to start the snw series synchronized with the q_series
+    snw = snw_series(a, start="2000-01-01")
 
     b = np.zeros(365)
-    # Year 1: 35 days of high flows directly after max swe
+    # Year 1: 35 days of high flows directly after max snw
     b[50:85] = 20
-    # Year 2: 35 days of high flows 10 days after max swe
+    # Year 2: 35 days of high flows 10 days after max snw
     b[310:345] = 5
 
     # Create a daily time index
