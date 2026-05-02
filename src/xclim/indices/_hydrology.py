@@ -868,7 +868,10 @@ def lag_snowpack_flow_peaks(
     """
     t0 = snw.time[0]
 
-    dt_snw_max = (resample_map(snw, "time", freq, _timemax) - t0).astype("timedelta64[s]").astype(float)
+    # delta time between snw_max and t0
+    dt_snw_max = resample_map(snw, "time", freq, _timemax) - t0
+    # Convert to float, and ensure a NaT gets converted to a nan
+    dt_snw_max = xarray.where(dt_snw_max.isnull(), np.nan, dt_snw_max.astype("timedelta64[s]").astype(float))
 
     dt_q = (q.time - t0).astype("timedelta64[s]").astype(float)
     thresh = q.resample(time=freq).quantile(q=p, dim="time")

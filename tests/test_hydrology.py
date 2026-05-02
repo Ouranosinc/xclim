@@ -250,8 +250,8 @@ class TestLagSnowpackFlowPeaks:
         # Year 2: 1 day of snw = 5 kg m-2
         a[300:301] = 5
 
-        # Create a daily time index
-        snw = snw_series(a)
+        # Create a daily time index --- important to start the snw series synchronized with the q_series
+        snw = snw_series(a, start="2000-01-01")
 
         b = np.zeros(365)
         # Year 1: 35 days of high flows directly after max snw
@@ -270,7 +270,7 @@ class TestLagSnowpackFlowPeaks:
         a = np.zeros(365)
 
         # Create a daily time index
-        snw = snw_series(a)
+        snw = snw_series(a, start="2000-01-01")
 
         b = np.zeros(365)
         # Year 1: 35 days of high flows

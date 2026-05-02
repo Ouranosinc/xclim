@@ -155,6 +155,8 @@ def pr_ndseries():
 
 @pytest.fixture
 def q_series():
+    """Return flow rate series time series."""
+
     def _q_series(values, start="1/1/2000", units="m3 s-1"):
         coords = pd.date_range(start, periods=len(values), freq="D")
         return xr.DataArray(
