@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import numpy as np
-import pandas as pd
 import xarray as xr
 
 from xclim import land
@@ -111,13 +110,11 @@ def test_runoff_ratio(q_series, area_series, pr_series, freq="YS"):
     a = 1000
     a = area_series(a)
 
-    q = q_series(q)
-    new_start = "2000-07-01"
-    q_shifted = q.assign_coords(time=pd.date_range(new_start, periods=q.sizes["time"], freq="D"))
-
+    q = q_series(q, start="2000-07-01")
     pr = pr_series(pr, units="mm/hr")
-    out = land.runoff_ratio(q_shifted, a, pr, freq="YS")
 
+    # FIXME: this gives nans, but the index is OK.
+    out = land.runoff_ratio(q, a, pr, freq="YS")
     assert out.attrs["units"] == "1"
     assert isinstance(out, xr.DataArray)
     np.testing.assert_allclose(out.values, 0.5, rtol=1e-6)
