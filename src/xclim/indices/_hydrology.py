@@ -1000,7 +1000,9 @@ def base_flow_index_seasonal_ratio(
         raise ValueError("Resampling frequency should only be over one year.")
     sea_freq = construct_offset(1, "Q", start, anchor)
     bfi = base_flow_index(q, sea_freq)
+    # FIXME: Should unstack_dates preserve units?
     bfi = unstack_dates(bfi, year_start_month=anchor)
+    bfi.attrs["units"] = ""
     w_s_ratio = bfi.sel(season=winter) / (bfi.sel(season=summer))
     # set division to 0 to nan.
     w_s_ratio = w_s_ratio.where(bfi.sel(season=summer) != 0)

@@ -317,16 +317,10 @@ class TestSenSlope:
 class TestBFI_seasonal_and_winter_to_summer_ratio:
     def test_simple(self, q_series):
         # 5 years of increasing data with slope of 1
-        a = np.ones(364)
+        a = np.ones(365)
+        q = q_series(a, start="2000-12-01")
+        q = q.where(q.time.dt.season != "DJF", 20)
+        q = q.where(q.time.dt.season != "JJA", 5)
 
-        # Year 1: 1 winter months with flow
-        a[0:59] = 20
-        a[335:364] = 20
-        # Year 2: 1 summer months with flow
-        a[152:212] = 5
-
-        q = q_series(a)
-
-        winter_bfi, spring_bfi, summer_bfi, fall_bfi, w_s_ratio = xci.base_flow_index_seasonal_ratio(q)
-
-        np.testing.assert_allclose(w_s_ratio, 0.182678, atol=1e-6)
+        bfi, w_s_ratio = xci.base_flow_index_seasonal_ratio(q)
+        np.testing.assert_allclose(w_s_ratio, 0.902174, atol=1e-6)
