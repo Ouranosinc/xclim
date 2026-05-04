@@ -359,8 +359,7 @@ def szekely_rizzo(x: np.ndarray, y: np.ndarray, *, standardize: bool = True) -> 
 
     and where :math:`\Vert\cdot\Vert` denotes the Euclidean norm, :math:`X_i` denotes the i-th observation of :math:`X`.
     When `standardized=False`, this corresponds to the :math:`T` test of :cite:t:`rizzo_energy_2016` (p. 28) and to the
-    ``eqdist.e`` function of the `energy` R package (with two samples) and gives results twice as big as
-    :py:func:`xclim.sdba.processing.escore`. The standardization was added following the logic of
+    ``eqdist.e`` function of the `energy` R package (with two samples). The standardization was added following the logic of
     :cite:p:`grenier_assessment_2013` to make the metric scale-invariant.
 
     References

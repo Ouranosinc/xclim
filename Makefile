@@ -52,8 +52,20 @@ clean-test: ## remove test and coverage artifacts
 	rm -fr htmlcov/
 	rm -fr .pytest_cache
 
-lint: ## check style with flake8 and black
-	python -m ruff check .
+install-lint: ## install dependencies needed for linting
+	python -m pip install --quiet --group lint
+
+install-docs: ## install dependencies needed for building the docs
+	python -m pip install --quiet --group docs
+
+install-test: ## install dependencies needed for standard testing
+	python -m pip install --quiet --group test
+
+install-test-notebooks: ## install dependencies needed for doctest testing
+	python -m pip install --quiet --group test-notebooks
+
+lint: install-lint ## check style with flake8 and black
+	python -m ruff check --quiet .
 	python -m flake8 --config=.flake8 src/xclim tests
 	python -m vulture src/xclim tests
 	codespell src/xclim tests docs
@@ -61,13 +73,16 @@ lint: ## check style with flake8 and black
 	python -m deptry src
 	python -m yamllint --config-file=.yamllint.yaml src/xclim
 
-test: ## run tests quickly with the default Python
-	pytest
-	pytest --no-cov --nbval --dist=loadscope --rootdir=tests/ docs/notebooks --ignore=docs/notebooks/example.ipynb
-	pytest --rootdir=tests/ --xdoctest src/xclim
+test: install-test ## run tests quickly with the default Python
+	python -m pytest --numprocesses=auto
 
-test-all: ## run tests on every Python version with tox
-	tox
+test-doctests: install-test ## run doctests
+	python -m pytest --rootdir=tests/ --numprocesses=auto --xdoctest src/xclim
+
+test-notebooks: install-test-notebooks
+	python -m pytest --no-cov --nbval --numprocesses=auto --dist=loadscope --rootdir=tests/ docs/notebooks --ignore=docs/notebooks/example.ipynb
+
+test-all: test test-doctests test-notebooks ## run all tests
 
 coverage: ## check code coverage quickly with the default Python
 	python -m coverage run --source xclim -m pytest src/xclim
@@ -75,11 +90,11 @@ coverage: ## check code coverage quickly with the default Python
 	python -m coverage html
 	$(BROWSER) htmlcov/index.html
 
-autodoc-obsolete: clean-docs ## create sphinx-apidoc files (obsolete)
+autodoc-obsolete: install-docs clean-docs ## create sphinx-apidoc files (obsolete)
 	mkdir -p docs/apidoc/
 	sphinx-apidoc -o docs/apidoc/ --private --module-first src/xclim
 
-autodoc-custom-index: clean-docs ## create sphinx-apidoc files but with special index handling for indices and indicators
+autodoc-custom-index: install-docs clean-docs ## create sphinx-apidoc files but with special index handling for indices and indicators
 	mkdir -p docs/apidoc/
 	sphinx-apidoc -o docs/apidoc/ --private --module-first src/xclim src/xclim/indicators src/xclim/indices
 	rm docs/apidoc/xclim.rst
@@ -88,15 +103,15 @@ autodoc-custom-index: clean-docs ## create sphinx-apidoc files but with special 
 linkcheck: autodoc-custom-index ## run checks over all external links found throughout the documentation
 	$(MAKE) -C docs linkcheck
 
-docs: autodoc-custom-index ## generate Sphinx HTML documentation, including API docs, but without indexes for for indices and indicators
+build-docs: autodoc-custom-index ## generate Sphinx HTML documentation, including API docs, but without indexes for for indices and indicators
 	$(MAKE) -C docs html
-ifndef READTHEDOCS
+
+docs: build-docs  ## open the built documentation in a web browser
 	## Start http server and show in browser.
 	## We want to have the cli command run in the foreground, so it's easy to kill.
 	## And we wait 2 sec for the server to start before opening the browser.
-	\{ sleep 2; $(BROWSER) http://localhost:54345 \} &
+	{ sleep 2; $(BROWSER) "http://localhost:54345"; } &
 	python -m http.server 54345 --directory docs/_build/html/
-endif
 
 servedocs: autodoc-custom-index ## generate Sphinx HTML documentation, including API docs, but without indexes for for indices and indicators, and watch for changes
 	$(MAKE) -C docs livehtml
@@ -111,8 +126,9 @@ dist: clean ## builds source and wheel package
 install: clean ## install the package to the active Python's site-packages
 	python -m pip install --no-user .
 
-develop: clean ## install the package and development dependencies in editable mode to the active Python's site-packages
-	python -m pip install --no-user --editable ".[dev,docs]"
+development: clean ## install the package and development dependencies in editable mode to the active Python's site-packages
+	python -m pip install --group dev
+	python -m pip install --no-user --editable ".[complete]"
 
 upstream: clean develop ## install the GitHub-based development branches of dependencies in editable mode to the active Python's site-packages
 	python -m pip install --no-user --requirement requirements_upstream.txt

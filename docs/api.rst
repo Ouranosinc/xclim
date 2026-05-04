@@ -75,21 +75,6 @@ Units Handling Submodule
    :show-inheritance:
    :noindex:
 
-.. _sdba-user-api:
-
-SDBA Module
-===========
-
-.. warning::
-
-    The `xclim.sdba` module was split from the library in `xclim==0.57` in order to facilitate development and effective maintenance of the SDBA utilities. This functionality is now available in the `xsdba` package. While the package aims to maintain compatibility with `xclim`, some algorithms have been slightly modified.
-
-    For convenience, the `xclim.sdba` module will still available exposing the functionality of the `xsdba` package. This may change in the future.
-
-.. note::
-
-    For more information about `xsdba`, the documentation is available at the following link: :doc:`xsdba API <xsdba:apidoc/xsdba>`
-
 .. _spatial-analogues-api:
 
 Spatial Analogues Module
@@ -121,18 +106,6 @@ Spatial Analogues Module
 
 .. autofunction:: xclim.analog.mahalanobis
    :noindex:
-
-Subset Module
-=============
-
-.. warning::
-
-    The `xclim.subset` module was removed in `xclim==0.40`. Subsetting is now offered via `clisops.core.subset`.
-    The subsetting functions offered by `clisops` are available at the following link: :doc:`CLISOPS core subsetting API <clisops:api>`
-
-.. note::
-
-    For more information about `clisops`, please refer to the documentation at the following link: :doc:`CLISOPS documentation <clisops:readme>`
 
 Other Utilities
 ===============
@@ -179,21 +152,6 @@ Bootstrapping Algorithms for Indicators Submodule
    :members:
    :show-inheritance:
    :noindex:
-
-.. _`sdba-developer-api`:
-
-SDBA Utilities
---------------
-
-.. warning::
-
-    The `xclim.sdba` module was split from the library in `xclim==0.57` in order to facilitate development and effective maintenance of the SDBA utilities. This functionality is now available in the `xsdba` package. While the package aims to maintain compatibility with `xclim`, some algorithms have been slightly modified.
-
-    For convenience, the `xclim.sdba` module will still available exposing the functionality of the `xsdba` package. This may change in the future.
-
-.. note::
-
-    For more information about the `xsdba` developer utilities, please refer to the documentation at the following link: :mod:`xsdba.utils <xsdba:xsdba.utils>`.
 
 .. _`spatial-analogues-developer-api`:
 
