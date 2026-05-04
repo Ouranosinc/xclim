@@ -2,10 +2,8 @@
 
 from __future__ import annotations
 
-from xarray import DataArray
-
-from xclim.core.cfchecks import check_valid
 from xclim.core.indicator import (
+    Indicator,
     ReducingIndicator,
     ResamplingIndicator,
     StandardizedIndexes,
@@ -13,26 +11,41 @@ from xclim.core.indicator import (
 from xclim.core.units import declare_units
 from xclim.indices import (
     base_flow_index,
+    base_flow_index_seasonal_ratio,
     flow_index,
     generic,
     high_flow_frequency,
+    lag_snowpack_flow_peaks,
     low_flow_frequency,
     rb_flashiness_index,
+    runoff_ratio,
+    sen_slope,
     standardized_groundwater_index,
     standardized_streamflow_index,
 )
 
 __all__ = [
     "base_flow_index",
+    "base_flow_index_seasonal_ratio",
     "doy_qmax",
     "doy_qmin",
     "flow_index",
     "high_flow_frequency",
+    "lag_snowpack_flow_peaks",
     "low_flow_frequency",
     "rb_flashiness_index",
+    "runoff_ratio",
+    "sen_slope",
     "standardized_groundwater_index",
     "standardized_streamflow_index",
 ]
+
+
+class StreamflowNoResampling(Indicator):
+    """Indicators involving daily temperature without resampling."""
+
+    context = "hydro"
+    keywords = "streamflow hydrology"
 
 
 class Streamflow(ResamplingIndicator):
@@ -42,17 +55,14 @@ class Streamflow(ResamplingIndicator):
     src_freq = "D"
     keywords = "streamflow hydrology"
 
-    @staticmethod
-    def cfcheck(q: DataArray):
-        r"""
-        Verify the CF-compliance of the input data.
 
-        Parameters
-        ----------
-        q : xarray.DataArray
-            The input data array.
-        """
-        check_valid(q, "standard_name", "water_volume_transport_in_river_channel")
+class StreamflowSnw(ResamplingIndicator):
+    """Streamflow class."""
+
+    context = "hydro"
+    src_freq = "D"
+    # FIXME: better keywords
+    keywords = "streamflow snow hydrology"
 
 
 base_flow_index = Streamflow(
@@ -153,7 +163,6 @@ standardized_streamflow_index = StandardizedIndexes(
     compute=standardized_streamflow_index,
 )
 
-
 standardized_groundwater_index = StandardizedIndexes(
     realm="land",
     title="Standardized Groundwater Index (SGI)",
@@ -168,4 +177,81 @@ standardized_groundwater_index = StandardizedIndexes(
     cell_methods="",
     keywords="groundwater",
     compute=standardized_groundwater_index,
+)
+
+base_flow_index_seasonal_ratio = StreamflowNoResampling(
+    title="Seasonal Base flow index (bfi) and ratio of winter to summer base flow index",
+    identifier="base_flow_index_seasonal_ratio",
+    units="",
+    var_name=["bfi", "w_s_ratio"],
+    long_name=[
+        "Seasonal baseflow index",
+        "Winter to summer baseflow index ratio",
+    ],
+    description=[
+        "Yearly base flow index per season, defined as the minimum 7-day average flow divided by the mean flow "
+        "as well as yearly winter to summer bfi ratio.",
+        "Yearly winter to summer baseflow index ratio, defined as the minimum 7-day average flow divided by the "
+        "mean flow as well as yearly winter to summer bfi ratio.",
+    ],
+    abstract="Yearly base flow index per season, defined as the minimum 7-day average flow divided by the mean flow"
+    "as well as yearly winter to summer bfi ratio.",
+    cell_methods="",
+    keywords="streamflow, seasonal",
+    compute=base_flow_index_seasonal_ratio,
+)
+
+
+lag_snowpack_flow_peaks = StreamflowSnw(
+    title="Time lag between maximum snowpack and river high flows",
+    identifier="lag_snowpack_flow_peaks",
+    units="days",
+    long_name="Time lag between maximum snowpack and river high flows",
+    description="Number of days between the annual maximum snowpack, measured by the snow water"
+    "equivalent, and the mean date when river flow exceeds a percentile threshold"
+    "during a given year.",
+    cell_methods="",
+    keywords="streamflow, snw",
+    compute=lag_snowpack_flow_peaks,
+)
+
+runoff_ratio = Streamflow(
+    title="Runoff ratio",
+    identifier="runoff_ratio",
+    units="",
+    long_name="Runoff ratio",
+    description="Ratio of runoff volume measured at the stream to the total precipitation volume over the watershed."
+    "Temporal analysis: Yearly values computed from seasonal daily data and yearly data, "
+    "depending on chosen frequency.",
+    cell_methods="",
+    keywords="streamflow",
+    compute=runoff_ratio,
+)
+
+
+# FIXME: This indicator is non-resampling
+sen_slope = StreamflowNoResampling(
+    title="Sen Slope : Temporal robustness analysis of streamflow.",
+    identifier="sen_slope",
+    var_name=["slope", "p_value", "slope_sim", "p_value_sim", "ratio"],
+    units="",
+    long_name=[
+        "Sen Slope from observed data",
+        "p_value from observed data",
+        "Sen Slope from simulated data",
+        "p_value from simulated data",
+        "ratio of observed to simulated Sen Slope",
+    ],
+    description=[
+        "Compute annual and seasonal Theil-Sen slope estimators "
+        "and perform the Mann-Kendall test for trend evaluation.",
+        "Statistical analysis value.",
+        "Compute annual and seasonal Theil-Sen slope estimators "
+        "and perform the Mann-Kendall test for trend evaluation.",
+        "Statistical analysis value.",
+        "Ratio of observed to simulated Sen Slope",
+    ],
+    cell_methods="",
+    keywords="streamflow",
+    compute=sen_slope,
 )

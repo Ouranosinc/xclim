@@ -4,7 +4,7 @@ Changelog
 
 v0.61.0 (unreleased)
 --------------------
-Contributors to this version: Pascal Bourgault (:user:`aulemahal`), Trevor James Smith (:user:`Zeitsperre`), Hui-Min Wang (:user:`Hem-W`), Éric Dupuis (:user:`coxipi`).
+Contributors to this version: Pascal Bourgault (:user:`aulemahal`), Trevor James Smith (:user:`Zeitsperre`), Hui-Min Wang (:user:`Hem-W`), Éric Dupuis (:user:`coxipi`), Ève Larose (:user:`e-larose`).
 
 New indicators and features
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -13,6 +13,8 @@ New indicators and features
 * Added two `zero_inflated` arguments to `standardized_index` and `standardized_precipitation_index` to control how zero-precipitation probabilities are handled. (:issue:`2279`, :pull:`2280`).
 * ``xclim.indices.stats.parametric_pdf`` allows to compute PDF distributions with given input parameters and values  (:pull:`2323`).
 * ``xclim.indices.standardized_precipitation_index`` and ``xclim.indices.standardized_precipitation_evapotranspiration_index`` now can accept `genextreme` and `lognorm` as inputs for `dist`. (:issue:`2326`, :pull:`2327`).
+* New hydrological indices added to ``xclim.indices._hydrology.py``. (:issue:`1624`, :pull:`2227`).
+* # TODO: mention (un)stack_dates once we settle on how we want to implement it
 
 Internal changes
 ^^^^^^^^^^^^^^^^
@@ -25,15 +27,26 @@ Internal changes
 * Carbon and energy reporting via `green-coding-solutions/eco-ci-energy-estimation` has been configured to better aggregate results for the xclim `main` branch as well as for all Pull Requests. (:pull:`2090`).
 * `xclim` now has a set of guidance documents on the kinds of AI-assisted contributions that are considered acceptable and how they must be disclosed (``AGENTS.md``, ``AI_POLICY.md``, new section in ``CONTRIBUTING.rst``). (:issue:`2321`, :pull:`2346`).
 * The ``README.rst`` file now shows the Ouranos logo. In rendered documentation, the logo style is dynamic to the light/dark theming. (:pull:`2349`).
+* New unit type "[snowamount]" allows to define indicators that can accept "surface_snow_amount" (`snw`) and "lwe_thickness_of_surface_snow_amount" (`swe`). (:pull:`2267`).
+* `standard_name` of `swe` in ``variables.yml`` was changed to the correct value "lwe_thickness_of_surface_snow_amount". (:pull:`2267`).
+* ``xclim.indices._hydrology.sen_slope`` now compatible with dask. (:pull:`2267`).
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
 * The choice of `method` "APP" was removed when using a `genextreme` distribution in standardized indices (``xclim.indices.standardized_index`` and related functions). (:issue:`2326`, :pull:`2327`).
+* ``xclim.indices._hydrology.lag_snowpack_flow_peaks``:
+    * The argument `swe` is renamed to `snw`. (:pull:`2267`);
+    * The argument `percentile` is renamed to `p` and should now be a number in `[0,1]` instead of `[0,100]`, similar to other `xclim` function. (:pull:`2267`).
+* ``xclim.indices._hydrology.base_flow_index_seasonal_ratio`` now expects a yearly frequency whose anchor determines the position of the seasons. A single `bfi` output is given with 4 season coordinates. (:pull:`2267`).
+* ``xclim.indices._hydrology.sen_slope`` does not return both seasonal and annual results: Instead, give an appropriate resampling frequency (quarter or annual). (:pull:`2267`).
+* ``xclim.indices._hydrology.days_with_snowpack`` was removed, use ``xclim.land.snd_days_above`` which has the same functionality. (:pull:`2267`).
 
 Bug fixes
 ^^^^^^^^^
 * `dist` in ``xclim.indices.standardized_index`` can now be a `scipy.stats.rv_continuous` as it was planned.  (:issue:`2326`, :pull:`2327`).
 * `sphinx-autodoc-typehints` has been pinned due to recent build failures on ReadTheDocs. (:pull:`2090`).
+* ``xclim.indices._hydrology.aridity_index`` now correctly performs a unit conversion before taking ratios or `pr` and `pet`. (:pull:`2267`).
+* ``xclim.indices._hydrology.base_flow_index_seasonal_ratio`` now correctly computes an average on the rolling window instead of a minimum (:pull:`2267`).
 
 v0.60.0 (2026-01-23)
 --------------------
