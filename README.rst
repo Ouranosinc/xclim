@@ -127,6 +127,13 @@ Credits
 -------
 `xclim` development is funded through Ouranos_, Environment and Climate Change Canada (ECCC_), the `Fonds vert`_ and the Fonds d'électrification et de changements climatiques (FECC_), the Canadian Foundation for Innovation (CFI_), and the Fonds de recherche du Québec (FRQ_).
 
+.. image:: https://raw.githubusercontent.com/Ouranosinc/.github/refs/heads/main/images/logo-ouranos-horizontal-couleur.svg
+        :target: https://www.ouranos.ca/
+        :align: center
+        :class: ouranos-logo no-theme center
+
+|ouranos-dark| |ouranos-light|
+
 This package was created with Cookiecutter_ and the `audreyfeldroy/cookiecutter-pypackage`_ project template.
 
 .. _audreyfeldroy/cookiecutter-pypackage: https://github.com/audreyfeldroy/cookiecutter-pypackage/
@@ -221,6 +228,18 @@ This package was created with Cookiecutter_ and the `audreyfeldroy/cookiecutter-
 .. |versions| image:: https://img.shields.io/pypi/pyversions/xclim.svg
         :target: https://pypi.python.org/pypi/xclim
         :alt: Supported Python Versions
+
+.. Ouranos Logos
+
+.. |ouranos-light| image:: https://raw.githubusercontent.com/Ouranosinc/xclim/main/docs/logos/empty.png
+        :target: https://www.ouranos.ca/
+        :alt:
+        :class: ouranos-logo only-light center
+
+.. |ouranos-dark| image:: https://raw.githubusercontent.com/Ouranosinc/xclim/main/docs/logos/empty.png
+        :target: https://www.ouranos.ca/
+        :alt:
+        :class: ouranos-logo only-dark center
 
 .. Energy Metrics by https://github.com/green-coding-solutions/eco-ci-energy-estimation
 
