@@ -379,6 +379,77 @@ or, alternatively, using `tox` :
 These options will disable all network calls and skip tests marked with the ``requires_internet`` marker.
 The ``--allow-unix-socket`` option is required to allow the `pytest-xdist`_ plugin to function properly.
 
+AI Assistance Notice
+--------------------
+
+.. note::
+
+    The following information has been adapted from AI assistance usage policies developed by `Avocado <https://avocado-framework.readthedocs.io/en/latest/guides/contributor/chapters/ai_policy.html>`_ and `ghostty <https://github.com/ghostty-org/ghostty/blob/main/AI_POLICY.md>`_
+    with suggestions from the `xclim` developers and maintainers.
+
+The `xclim` developers and maintainers will consider Pull Requests that have been aided by artificial intelligence models, tools, or services.
+For detailed information regarding compliance and operating parameters, refer to the `AI_POLICY.md` and `AGENTS.md` found in the top-level of the code repository.
+
+What is AI Assistance ?
+~~~~~~~~~~~~~~~~~~~~~~~
+
+Within the context of `xclim` development, AI assistance constitutess any code, code snippets, configurations, documentation, or other programmatic assets produced, suggested, or significantly modified by an artificial intelligence model, tool, or service.
+
+AI assistance can also include code that is heavily adapted from or influenced by outputs from prompts made to generative artificial intelligence models, tools, or services.
+
+Usage Disclosure
+~~~~~~~~~~~~~~~~
+
+If you are using any kind of AI assistance while contributing to `xclim`, **this must be disclosed in the pull request**, along with the extent to which AI assistance was used (e.g. documentation, code generation, review comments).
+Using AI to help draft responses is allowed only if the contributor meaningfully reviews, edits, and takes full responsibility for the content.
+Submitting AI-generated replies without human verification or understanding is not permitted.
+Misrepresenting AI-generated content as purely human-authored is considered a violation of the contribution guidelines.
+
+Some example disclosures:
+
+.. admonition:: Pull Request Description
+
+    ### Other information:
+
+    * This PR was primarily written using a combination of OpenClaw (Kimi K2.5) and ChatGPT (GPT-o4-mini). After using these tools, I reviewed the content.
+
+    <!-- or -->
+
+    * This PR was primarily written by me with small code snippets copy-pasted from chats with Claude (Sonnet 4.6).
+
+    <!-- or -->
+
+    * I asked GitHub Copilot to clean up and improve code I had written. I then reviewed the final product.
+
+As a small exception, trivial tab-completion doesn't need to be disclosed, so long as it is limited to single keywords or short phrases.
+
+For commits originating exclusively from AI, we also ask that their commits are signed with "Assisted-by: <tool name>" disclosure (this demand is repeated in `AGENTS.md`):
+
+.. admonition:: Commit Message
+
+    Added new indicator for sub-tropical Easter snowstorm events
+
+    Assisted-by: Claude Opus 4.5
+
+Failing to disclose the use of artificial intelligence models, tools, or services is disrespectful to the developers and maintainers of open source software projects.
+We ask that contributors are forthcoming with this information so that the effort and scrutiny applied to Pull Request reviews can be adjusted accordingly.
+
+Code Review
+~~~~~~~~~~~
+
+All AI-assisted code contributions must be reviewed by both the human contributor prior to opening the Pull Request as well as by a human reviewer prior to approval and merging to the `main` branch.
+
+Low Effort Contributions
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+AI-generated low-effort contributions are unacceptable; Human contributors must be capable of explaining their changes, responding to review comments, and precisely adapting their contributions as requested.
+
+Disclaimer
+~~~~~~~~~~
+
+We reserve the right to reject Pull Requests and contributions for many different reasons (functionality out-of-scope, code quality issues, non-adherence to code of conduct, etc.)
+and this extends to code that has not been adequately disclosed as being assisted by artificial intelligence models, tools, or services.
+
 Tips
 ----
 

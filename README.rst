@@ -9,7 +9,7 @@ xclim: Climate services library |logo| |logo-dark| |logo-light|
 +----------------------------+-----------------------------------------------------+
 | Open Source                | |license| |ossf-score| |zenodo| |pyOpenSci| |joss|  |
 +----------------------------+-----------------------------------------------------+
-| Coding Standards           | |ruff| |pre-commit| |ossf-bp| |fossa|               |
+| Coding Standards           | |ruff| |pre-commit-ci| |ossf-bp| |fossa|            |
 +----------------------------+-----------------------------------------------------+
 | Development Status         | |status| |build| |coveralls|                        |
 +----------------------------+-----------------------------------------------------+
@@ -131,6 +131,13 @@ Credits
 -------
 `xclim` development is funded through Ouranos_, Environment and Climate Change Canada (ECCC_), the `Fonds vert`_ and the Fonds d'électrification et de changements climatiques (FECC_), the Canadian Foundation for Innovation (CFI_), and the Fonds de recherche du Québec (FRQ_).
 
+.. image:: https://raw.githubusercontent.com/Ouranosinc/.github/refs/heads/main/images/logo-ouranos-horizontal-couleur.svg
+        :target: https://www.ouranos.ca/
+        :align: center
+        :class: ouranos-logo no-theme center
+
+|ouranos-dark| |ouranos-light|
+
 This package was created with Cookiecutter_ and the `audreyfeldroy/cookiecutter-pypackage`_ project template.
 
 .. _audreyfeldroy/cookiecutter-pypackage: https://github.com/audreyfeldroy/cookiecutter-pypackage/
@@ -197,7 +204,7 @@ This package was created with Cookiecutter_ and the `audreyfeldroy/cookiecutter-
 
 .. |logo| image:: https://raw.githubusercontent.com/Ouranosinc/xclim/main/docs/logos/xclim-logo-small-light.png
         :target: https://github.com/Ouranosinc/xclim
-        :alt: Xclim
+        :alt: xclim
         :class: xclim-logo-small no-theme
 
 .. |logo-light| image:: https://raw.githubusercontent.com/Ouranosinc/xclim/main/docs/logos/empty.png
@@ -210,7 +217,7 @@ This package was created with Cookiecutter_ and the `audreyfeldroy/cookiecutter-
         :alt:
         :class: xclim-logo-small only-dark-inline
 
-.. |pre-commit| image:: https://results.pre-commit.ci/badge/github/Ouranosinc/xclim/main.svg
+.. |pre-commit-ci| image:: https://results.pre-commit.ci/badge/github/Ouranosinc/xclim/main.svg
         :target: https://results.pre-commit.ci/latest/github/Ouranosinc/xclim/main
         :alt: pre-commit.ci status
 
@@ -220,14 +227,25 @@ This package was created with Cookiecutter_ and the `audreyfeldroy/cookiecutter-
 
 .. |status| image:: https://www.repostatus.org/badges/latest/active.svg
         :target: https://www.repostatus.org/#active
-        :alt: Project Status: Active – The project has reached a stable, usable state and is being actively developed.
+        :alt: Project Status: Active - The project has reached a stable, usable state and is being actively developed.
 
 .. |versions| image:: https://img.shields.io/pypi/pyversions/xclim.svg
         :target: https://pypi.python.org/pypi/xclim
         :alt: Supported Python Versions
 
-..
-    Energy Metrics by https://github.com/green-coding-solutions/eco-ci-energy-estimation
+.. Ouranos Logos
+
+.. |ouranos-light| image:: https://raw.githubusercontent.com/Ouranosinc/xclim/main/docs/logos/empty.png
+        :target: https://www.ouranos.ca/
+        :alt:
+        :class: ouranos-logo only-light center
+
+.. |ouranos-dark| image:: https://raw.githubusercontent.com/Ouranosinc/xclim/main/docs/logos/empty.png
+        :target: https://www.ouranos.ca/
+        :alt:
+        :class: ouranos-logo only-dark center
+
+.. Energy Metrics by https://github.com/green-coding-solutions/eco-ci-energy-estimation
 
 .. |energy-total| image:: https://api.green-coding.io/v1/ci/badge/get?repo=Ouranosinc/xclim&branch=main&workflow=5828641&mode=totals
         :target: https://metrics.green-coding.io/ci.html?repo=Ouranosinc/xclim&branch=main&workflow=5828641
@@ -242,7 +260,7 @@ This package was created with Cookiecutter_ and the `audreyfeldroy/cookiecutter-
         :alt: Energy Consumption (Last 90 days moving average)
 
 .. |carbon-total| image:: https://api.green-coding.io/v1/ci/badge/get?repo=Ouranosinc/xclim&branch=main&workflow=5828641&mode=totals&metric=carbon
-        :target: https://metrics.green-coding.io/ci.html?repo=Ouranosinc/xclim&branch=festive-indices&workflow=5828641
+        :target: https://metrics.green-coding.io/ci.html?repo=Ouranosinc/xclim&branch=main&workflow=5828641
         :alt: Carbon Emissions (Total)
 
 .. |carbon-last| image:: https://api.green-coding.io/v1/ci/badge/get?repo=Ouranosinc/xclim&branch=main&workflow=5828641&metric=carbon

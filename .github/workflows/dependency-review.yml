@@ -26,6 +26,7 @@ jobs:
             api.github.com:443
             api.green-coding.io:443
             api.securityscorecards.dev:443
+            cdn.fwupd.org:443
             github.com:443
             ip-api.com:80
             ipapi.co:443
@@ -34,10 +35,14 @@ jobs:
             sum.golang.org:443
 
       - name: Start Energy Measurement
-        uses: green-coding-solutions/eco-ci-energy-estimation@9fcdc7c7225cc2cbeead14d114a61a461bd37e66 # v5.1
+        uses: green-coding-solutions/eco-ci-energy-estimation@0fd2200a8f02d7939066c535e3642c2ebee9db16 # v5.2
         with:
           task: start-measurement
           branch: ${{ github.head_ref || github.ref_name }}
+          project: "xclim"
+          machine: "ubuntu-latest"
+          tags: "CI/CD, Dependency-Review"
+          gmt-api-token: ${{ secrets.GMT_API_TOKEN }}
 
       - name: Checkout Repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -48,14 +53,14 @@ jobs:
         uses: actions/dependency-review-action@2031cfc080254a8a887f58cffee85186f0e49e48 # v4.9.0
 
       - name: Energy Measurement
-        uses: green-coding-solutions/eco-ci-energy-estimation@9fcdc7c7225cc2cbeead14d114a61a461bd37e66 # v5.1
+        uses: green-coding-solutions/eco-ci-energy-estimation@0fd2200a8f02d7939066c535e3642c2ebee9db16 # v5.2
         with:
           task: get-measurement
           label: 'Dependency Review'
         continue-on-error: true
 
       - name: Show Energy Results
-        uses: green-coding-solutions/eco-ci-energy-estimation@9fcdc7c7225cc2cbeead14d114a61a461bd37e66 # v5.1
+        uses: green-coding-solutions/eco-ci-energy-estimation@0fd2200a8f02d7939066c535e3642c2ebee9db16 # v5.2
         with:
           task: display-results
         continue-on-error: true
