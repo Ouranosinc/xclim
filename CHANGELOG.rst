@@ -25,9 +25,11 @@ Internal changes
     * Set ``docs/conf.py`` to ignore `sphinx_autodoc_typehints.guarded_import` errors raised by `xarray` type guarding.
 * Set `SocketBlockedError` to be a subset of the `Exception` class when `pytest-socket` is not installed. (:pull:`2324`).
 * Carbon and energy reporting via `green-coding-solutions/eco-ci-energy-estimation` has been configured to better aggregate results for the xclim `main` branch as well as for all Pull Requests. (:pull:`2090`).
-* New unit type "[snowamount]" allows to define indicators that can accept "surface_snow_amount" (`snw`) and "lwe_thickness_of_surface_snow_amount" (`swe`).   (:pull:`2267`).
+* `xclim` now has a set of guidance documents on the kinds of AI-assisted contributions that are considered acceptable and how they must be disclosed (``AGENTS.md``, ``AI_POLICY.md``, new section in ``CONTRIBUTING.rst``). (:issue:`2321`, :pull:`2346`).
+* The ``README.rst`` file now shows the Ouranos logo. In rendered documentation, the logo style is dynamic to the light/dark theming. (:pull:`2349`).
+* New unit type "[snowamount]" allows to define indicators that can accept "surface_snow_amount" (`snw`) and "lwe_thickness_of_surface_snow_amount" (`swe`). (:pull:`2267`).
+* ``xclim.indices._hydrology.sen_slope`` now compatible with dask. (:pull:`2267`).
 * `standard_name` of `swe` in ``variables.yml`` was changed to the correct value "lwe_thickness_of_surface_snow_amount". (:pull:`2267`).
-* Not sure if this should be mentioned? ``xclim.indices._hydrology.sen_slope`` now compatible with dask.  (:pull:`2267`).
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
