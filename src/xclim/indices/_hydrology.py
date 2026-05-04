@@ -720,11 +720,11 @@ def runoff_ratio(
     Parameters
     ----------
     q : xarray.DataArray
-        Streamflow in discharge units. Will be converted to [m³/s].
+        Streamflow in discharge units.
     a : xarray.DataArray
-        Watershed area in area units. Will be converted to [km²].
+        Watershed area in area units.
     pr : xarray.DataArray
-        Mean daily precipitation in precipitation units. Will be converted to [mm/hr].
+        Mean daily precipitation in precipitation units.
     freq : str
         Resampling frequency.
 
@@ -754,6 +754,7 @@ def runoff_ratio(
     ----------
     :cite:cts:'knoben_2024'
     """
+    # # TODO: Could be refactored with generic.select_rolling_resample_op, but `skipa=False` cannot be passed right now.
     q = convert_units_to(q, "mm3/hr")
     a = convert_units_to(a, "mm2")
     pr = convert_units_to(pr, "mm/hr")
@@ -761,7 +762,6 @@ def runoff_ratio(
     runoff = q / a
     runoff_freq = runoff.resample(time=freq).sum()
     pr_freq = pr.resample(time=freq).sum()
-
     out = runoff_freq / pr_freq
     out.attrs["units"] = ""
     return out
@@ -816,7 +816,7 @@ def _timemax(da):
     return tmax
 
 
-# FIXME: Different name??
+# TODO: Change the indicator name? That seems a bit off
 @declare_units(snw="[snowamount]", q="[discharge]")
 def lag_snowpack_flow_peaks(
     snw: xarray.DataArray,

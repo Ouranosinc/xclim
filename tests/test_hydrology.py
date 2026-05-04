@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import numpy as np
-import pandas as pd
 import pytest
 import xarray as xr
 
@@ -200,7 +199,7 @@ class TestAntecedentPrecipitationIndex:
         np.testing.assert_allclose(out, out_manual, atol=1e-7)
 
 
-class TestRR:
+class TestRunoffRatio:
     def test_simple(self, q_series, area_series, pr_series):
         # 1 years of daily data
         q = np.ones(365, dtype=float) * 10
@@ -211,15 +210,9 @@ class TestRR:
         pr[270:300] = 10
         a = 1000
         a = area_series(a)
-
-        q = q_series(q)
-        new_start = "2000-07-01"
-        q_shifted = q.assign_coords(time=pd.date_range(new_start, periods=q.sizes["time"], freq="D"))
-
-        pr = pr_series(pr, units="mm/hr")
-
-        out = xci.runoff_ratio(q_shifted, a, pr, freq="YS")
-        # verify RR
+        q = q_series(q, start="2000-01-01")
+        pr = pr_series(pr, units="mm/hr", start="2000-01-01")
+        out = xci.runoff_ratio(q, a, pr, freq="YS")
         np.testing.assert_allclose(out.values, 0.0018, atol=1e-15)
 
 

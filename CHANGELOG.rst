@@ -26,7 +26,8 @@ Internal changes
 * Set `SocketBlockedError` to be a subset of the `Exception` class when `pytest-socket` is not installed. (:pull:`2324`).
 * Carbon and energy reporting via `green-coding-solutions/eco-ci-energy-estimation` has been configured to better aggregate results for the xclim `main` branch as well as for all Pull Requests. (:pull:`2090`).
 * New unit type "[snowamount]" allows to define indicators that can accept "surface_snow_amount" (`snw`) and "lwe_thickness_of_surface_snow_amount" (`swe`).   (:pull:`2267`).
-* # TODO Not sure if this should be mentioned? ``xclim.indices._hydrology.sen_slope`` now compatible with dask.  (:pull:`2267`).
+* `standard_name` of `swe` in ``variables.yml`` was changed to the correct value "lwe_thickness_of_surface_snow_amount". (:pull:`2267`).
+* Not sure if this should be mentioned? ``xclim.indices._hydrology.sen_slope`` now compatible with dask.  (:pull:`2267`).
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
