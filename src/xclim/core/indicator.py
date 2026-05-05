@@ -126,7 +126,7 @@ import yamale
 from xarray import DataArray, Dataset
 from yaml import safe_load
 
-from xclim import compute
+import xclim.compute
 from xclim.compute import generic
 from xclim.core import datachecks
 from xclim.core._exceptions import (
@@ -791,14 +791,14 @@ class Indicator(IndicatorRegistrar):
         # data.compute refers to a function in xclim.compute.generic or xclim.compute (in this order of priority).
         # It can also directly be a function (like if a module was passed to build_indicator_module_from_yaml)
         if isinstance(func_or_name, str):
-            if "." in compute:
+            if "." in func_or_name:
                 modname, funcname = func_or_name.split(".")
-                submod = getattr(compute, modname, None)
+                submod = getattr(xclim.compute, modname, None)
                 compute_func = getattr(submod, funcname, None)
                 if compute_func is None:
                     raise ImportError(f"Compute function {funcname} not found in xclim.compute.{modname}.")
             else:
-                compute_func = getattr(generic, func_or_name, getattr(compute, func_or_name, None))
+                compute_func = getattr(generic, func_or_name, getattr(xclim.compute, func_or_name, None))
                 if compute_func is None:
                     raise ImportError(
                         f"Indice function {func_or_name} not found in xclim.compute or xclim.compute.generic."
@@ -1648,7 +1648,7 @@ class IndexingIndicator(Indicator):
                     description=(
                         "Indexing parameters to compute the indicator on a temporal "
                         "subset of the data. It accepts the same arguments as "
-                        ":py:func:`xclim.compute.generic.select_time`."
+                        ":py:func:`xclim.core.calendar.select_time`."
                     ),
                 ),
             )
