@@ -767,8 +767,8 @@ def runoff_ratio(
     return out
 
 
-@declare_units(pr="[precipitation]", pet="[precipitation]")
-def aridity_index(pr: xarray.DataArray, pet: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
+@declare_units(pr="[precipitation]", evspsblpot="[precipitation]")
+def aridity_index(pr: xarray.DataArray, evspsblpot: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
     """
     Aridity index.
 
@@ -779,7 +779,7 @@ def aridity_index(pr: xarray.DataArray, pet: xarray.DataArray, freq: str = "YS")
     ----------
     pr : array_like
         Precipitation.
-    pet : array_like
+    evspsblpot : array_like
         Potential evapotranspiration.
     freq : str
         Resampling frequency. A monthly or yearly frequency is expected.
@@ -800,10 +800,10 @@ def aridity_index(pr: xarray.DataArray, pet: xarray.DataArray, freq: str = "YS")
     ----------
     :cite:cts:'zomer_2022'
     """
-    pet = convert_units_to(pet, pr)
+    evspsblpot = convert_units_to(evspsblpot, pr)
     pr = pr.resample(time=freq).sum()
-    pet = pet.resample(time=freq).sum()
-    ai = pr / pet
+    evspsblpot = evspsblpot.resample(time=freq).sum()
+    ai = pr / evspsblpot
     ai.attrs["units"] = ""
 
     return ai
@@ -884,8 +884,64 @@ def lag_snowpack_flow_peaks(
     return lag
 
 
+@declare_units(q="[discharge]")
+def sen_slope(q: xarray.DataArray, freq: str = "YS") -> tuple[xarray.DataArray, xarray.DataArray]:
+    """
+    Temporal robustness analysis of streamflow.
+
+    Computes Theil-Sen slope estimators and performs the Mann-Kendall test for trend evaluation.
+
+    Parameters
+    ----------
+    q : xarray.DataArray
+        Observed streamflow vector.
+    freq : str
+        Resampling frequency.
+
+    Returns
+    -------
+    tuple[xarray.DataArray, xarray.DataArray]
+        Returns Sen slope and p-value of in the input
+        ``sen_slope`` : Sen's slope estimates for seasonal and yearly averages.
+        ``p_value`` : Mann-Kendall metric indicating slope tendency.
+
+    Notes
+    -----
+    - If p-value <= 0.05, the trend is statistically significant at the 5% level.
+    - The ratio of observed Sen_slope over simulated Sen_slope is considered
+      acceptable within the range 0.5-2 and is optimal when equal to 1
+      (Sauquet et al., 2025).
+
+    References
+    ----------
+    :cite:cts:`sauquet_2025`
+    """
+
+    def _mann_kendall(q, freq):
+        month_string = parse_offset(freq)[-1]
+        qres = unstack_dates(q.resample(time=freq).mean(), year_start_month=month_string)
+        out = xarray.apply_ufunc(
+            lambda q: (lambda mk_output: np.array([mk_output.slope, mk_output.p]))(mk.original_test(q)),
+            qres,
+            input_core_dims=[["time"]],
+            output_core_dims=[["var"]],
+            vectorize=True,
+            dask="parallelized",
+        )
+        sen_slope = out.isel(var=0).to_dataset(name="sen_slope")
+        p_vals = out.isel(var=1).to_dataset(name="p_value")
+        return sen_slope, p_vals
+
+    sen_slope, p_value = _mann_kendall(q, freq)
+    sen_slope.attrs["units"] = ""
+    p_value.attrs["units"] = ""
+    return sen_slope, p_value
+
+
 @declare_units(q="[discharge]", qsim="[discharge]")
-def sen_slope(q: xarray.DataArray, qsim: xarray.DataArray | None = None, freq: str = "YS") -> xarray.Dataset:
+def sen_slope_ratio(
+    q: xarray.Dataset, qsim: xarray.DataArray, freq: str = "YS"
+) -> tuple[xarray.DataArray, xarray.DataArray, xarray.DataArray, xarray.DataArray, xarray.DataArray]:
     """
     Temporal robustness analysis of streamflow.
 
@@ -921,40 +977,12 @@ def sen_slope(q: xarray.DataArray, qsim: xarray.DataArray | None = None, freq: s
     ----------
     :cite:cts:`sauquet_2025`
     """
-
-    def _mk(q, freq):
-        month_string = parse_offset(freq)[-1]
-        qres = unstack_dates(q.resample(time=freq).mean(), year_start_month=month_string)
-        out = xarray.apply_ufunc(
-            lambda q: (lambda mk_output: np.array([mk_output.slope, mk_output.p]))(mk.original_test(q)),
-            qres,
-            input_core_dims=[["time"]],
-            output_core_dims=[["var"]],
-            vectorize=True,
-            dask="parallelized",
-        )
-        sen_slope = out.isel(var=0).to_dataset(name="sen_slope")
-        p_vals = out.isel(var=1).to_dataset(name="p_value")
-        return sen_slope, p_vals
-
-    slopes, p_vals = _mk(q, freq)
-    out = xarray.merge([slopes, p_vals])
-
-    if qsim is not None:
-        slopes_sim, p_vals_sim = _mk(qsim, freq)
-        ratio = (slopes / slopes_sim).rename({"sen_slope": "ratio"})
-        slopes_sim = slopes_sim.rename({"sen_slope": "sen_slope_sim"})
-        p_vals_sim = p_vals_sim.rename({"p_value": "p_value_sim"})
-        out = xarray.merge([out, slopes_sim, p_vals_sim, ratio])
-    # Assign empty units to all variables
-    for var in out.data_vars:
-        out[var].attrs["units"] = ""
-    # FIXME: this is temporary. I'm not sure we should allow a different number of output depending on the presence
-    # or not of `qsim`
-    if qsim is not None:
-        return out.sen_slope, out.p_value, out.sen_slope_sim, out.p_value_sim, out.ratio
-    else:
-        return out.sen_slope, out.p_value
+    sen_slope_obs, p_value = sen_slope(q, freq)
+    sen_slope_sim, p_value_sim = sen_slope(qsim, freq)
+    sen_slope_sim = sen_slope_sim.rename({"sen_slope": "sen_slope_sim"})
+    p_value_sim = p_value_sim.rename({"p_value": "p_value_sim"})
+    ratio = (sen_slope_obs / sen_slope_sim).rename({"sen_slope": "ratio"}).assign_attrs({"units": ""})
+    return sen_slope_obs, p_value, sen_slope_sim, p_value_sim, ratio
 
 
 @declare_units(q="[discharge]")

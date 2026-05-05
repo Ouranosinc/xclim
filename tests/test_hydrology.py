@@ -285,6 +285,24 @@ class TestSenSlope:
     def test_simple(self, q_series):
         # 5 years of increasing data with slope of 1
         q = np.arange(365 * 5)
+        # Create a daily time index
+        q = q_series(q, start="2000-01-01")
+        out_sea = xr.merge(xci.sen_slope(q, freq="QS-DEC"))
+        out_year = xr.merge(xci.sen_slope(q, freq="YS-DEC"))
+        out = xr.concat([out_sea, out_year], dim="season")
+        # verify Sen_slopes
+        np.testing.assert_allclose(out.sen_slope.values, [360.0, 365.0, 365.0, 365.0, 360.0], atol=1e-15)
+        # verify p-values
+        np.testing.assert_allclose(
+            out.p_value.values, [0.008535, 0.027486, 0.027486, 0.027486, 0.008535], rtol=1e-06, atol=1e-06
+        )
+
+
+class TestSenSlopeRatio:
+    @pytest.mark.skipif(pymannkendall is None, reason="This requires pymankendall")
+    def test_simple(self, q_series):
+        # 5 years of increasing data with slope of 1
+        q = np.arange(365 * 5)
 
         # 5 years of increasing data with slope of 2
         qsim = np.arange(365 * 5) * 2
@@ -293,8 +311,8 @@ class TestSenSlope:
         q = q_series(q, start="2000-01-01")
         qsim = q_series(qsim, start="2000-01-01")
 
-        out_sea = xr.merge(xci.sen_slope(q, qsim, freq="QS-DEC"))
-        out_year = xr.merge(xci.sen_slope(q, qsim, freq="YS-DEC"))
+        out_sea = xr.merge(xci.sen_slope_ratio(q, qsim, freq="QS-DEC"))
+        out_year = xr.merge(xci.sen_slope_ratio(q, qsim, freq="YS-DEC"))
         out = xr.concat([out_sea, out_year], dim="season")
         # verify Sen_slopes
         np.testing.assert_allclose(out.sen_slope.values, [360.0, 365.0, 365.0, 365.0, 360.0], atol=1e-15)

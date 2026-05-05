@@ -172,6 +172,17 @@ def test_snowamount_with_snd_conversion(snd_series, q_series):
 def test_sen_slope(q_series):
     # 5 years of increasing data with slope of 1
     q = np.arange(365 * 5)
+    # Create a daily time index
+    q = q_series(q)
+    outl = land.sen_slope(q)
+    for o in outl:
+        assert o.attrs["units"] == "1"
+        assert isinstance(o, xr.DataArray)
+
+
+def test_sen_slope_ratio(q_series):
+    # 5 years of increasing data with slope of 1
+    q = np.arange(365 * 5)
 
     # 5 years of increasing data with slope of 2
     qsim = np.arange(365 * 5) * 2
@@ -179,9 +190,7 @@ def test_sen_slope(q_series):
     # Create a daily time index
     q = q_series(q)
     qsim = q_series(qsim)
-    # FIXME : Not sure we want this kind of indicator
-    # ["slope", "p_value", "slope_sim", "p_value_sim", "ratio"]
-    outl = land.sen_slope(q, qsim)
+    outl = land.sen_slope_ratio(q, qsim)
     for o in outl:
         assert o.attrs["units"] == "1"
         assert isinstance(o, xr.DataArray)
