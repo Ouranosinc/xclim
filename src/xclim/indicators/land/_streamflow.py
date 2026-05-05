@@ -42,7 +42,7 @@ __all__ = [
 
 
 class StreamflowNoResampling(Indicator):
-    """Indicators involving daily temperature without resampling."""
+    """Indicators involving streamflow without resampling."""
 
     context = "hydro"
     keywords = "streamflow hydrology"
