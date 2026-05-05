@@ -99,7 +99,6 @@ def test_low_flow_frequency(q_series):
     np.testing.assert_array_equal(out, [20, 0, np.nan])
 
 
-# FIXME: this gives nans, but the index is OK.
 def test_runoff_ratio(q_series, area_series, pr_series, freq="YS"):
     # 1 years of daily data
     q = np.ones(365, dtype=float) * 10
@@ -110,8 +109,8 @@ def test_runoff_ratio(q_series, area_series, pr_series, freq="YS"):
     pr[270:300] = 10
     a = 1000
     a = area_series(a)
-    q = q_series(q, start="2000-01-01")
-    pr = pr_series(pr, units="mm/hr", start="2000-01-01")
+    q = q_series(q, start="2001-01-01")
+    pr = pr_series(pr, units="mm/hr", start="2001-01-01")
 
     out = land.runoff_ratio(q, a, pr, freq="YS")
     assert out.attrs["units"] == "1"

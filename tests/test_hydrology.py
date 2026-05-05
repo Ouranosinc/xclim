@@ -290,10 +290,12 @@ class TestSenSlope:
         qsim = np.arange(365 * 5) * 2
 
         # Create a daily time index
-        q = q_series(q)
-        qsim = q_series(qsim)
+        q = q_series(q, start="2000-01-01")
+        qsim = q_series(qsim, start="2000-01-01")
 
-        out = xr.concat([xci.sen_slope(q, qsim, freq="QS-DEC"), xci.sen_slope(q, qsim, freq="YS-DEC")], dim="season")
+        out_sea = xr.merge(xci.sen_slope(q, qsim, freq="QS-DEC"))
+        out_year = xr.merge(xci.sen_slope(q, qsim, freq="YS-DEC"))
+        out = xr.concat([out_sea, out_year], dim="season")
         # verify Sen_slopes
         np.testing.assert_allclose(out.sen_slope.values, [360.0, 365.0, 365.0, 365.0, 360.0], atol=1e-15)
         np.testing.assert_allclose(out.sen_slope_sim.values, [720.0, 730.0, 730.0, 730.0, 720.0], atol=1e-15)
