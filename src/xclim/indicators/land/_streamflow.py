@@ -53,15 +53,6 @@ class Streamflow(ResamplingIndicator):
 
     context = "hydro"
     src_freq = "D"
-    keywords = "streamflow hydrology"
-
-
-class StreamflowSnw(ResamplingIndicator):
-    """Streamflow class."""
-
-    context = "hydro"
-    src_freq = "D"
-    # FIXME: better keywords
     keywords = "streamflow snow hydrology"
 
 
@@ -201,7 +192,7 @@ base_flow_index_seasonal_ratio = Streamflow(
 )
 
 
-lag_snowpack_flow_peaks = StreamflowSnw(
+lag_snowpack_flow_peaks = Streamflow(
     title="Time lag between maximum snowpack and river high flows",
     identifier="lag_snowpack_flow_peaks",
     units="days",
