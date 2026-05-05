@@ -902,7 +902,7 @@ def sen_slope(q: xarray.DataArray, freq: str = "YS") -> tuple[xarray.DataArray, 
     -------
     tuple[xarray.DataArray, xarray.DataArray]
         Returns Sen slope and p-value of in the input
-        ``sen_slope`` : Sen's slope estimates for seasonal and yearly averages.
+        ``sen_slope`` : Sen's slope estimates.
         ``p_value`` : Mann-Kendall metric indicating slope tendency.
 
     Notes
@@ -959,12 +959,13 @@ def sen_slope_ratio(
 
     Returns
     -------
-    xarray.Dataset
-        Dataset variables:
-        ``sen_slope`` : Sen's slope estimates for seasonal and yearly averages.
+    tuple[xarray.DataArray, xarray.DataArray]
+        Returns Sen slope and p-value of both inputs and the ratio of slopes
+        ``sen_slope`` : Sen's slope estimates.
         ``p_value`` : Mann-Kendall metric indicating slope tendency.
-        ``sen_slope_sim``, ``p_value_sim``, ``sen_slope_ratio`` (optional): Sen's slope estimates and Mann-Kendall
-        metric for the simulation, and the ratio of sen slope in observations to sen slope in simulation.
+        ``sen_slope_sim`` : Sen's slope estimates of the simulation dataset.
+        ``p_value_sim`` : Mann-Kendall metric indicating slope tendency of the simulation dataset.
+        ``ratio`` : Ratio of the slopes.
 
     Notes
     -----
