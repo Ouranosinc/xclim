@@ -13,7 +13,6 @@ New indicators and features
 * Added two `zero_inflated` arguments to `standardized_index` and `standardized_precipitation_index` to control how zero-precipitation probabilities are handled. (:issue:`2279`, :pull:`2280`).
 * ``xclim.indices.stats.parametric_pdf`` allows to compute PDF distributions with given input parameters and values  (:pull:`2323`).
 * ``xclim.indices.standardized_precipitation_index`` and ``xclim.indices.standardized_precipitation_evapotranspiration_index`` now can accept `genextreme` and `lognorm` as inputs for `dist`. (:issue:`2326`, :pull:`2327`).
-* New hydrological indices added to ``xclim.indices._hydrology.py``. (:issue:`1624`, :pull:`2227`).
 * # TODO: mention (un)stack_dates once we settle on how we want to implement it
 
 Internal changes
@@ -39,6 +38,7 @@ Breaking changes
     * The argument `percentile` is renamed to `p` and should now be a number in `[0,1]` instead of `[0,100]`, similar to other `xclim` function. (:pull:`2267`).
 * ``xclim.indices._hydrology.base_flow_index_seasonal_ratio`` now expects a yearly frequency whose anchor determines the position of the seasons. A single `bfi` output is given with 4 season coordinates. (:pull:`2267`).
 * ``xclim.indices._hydrology.sen_slope`` does not return both seasonal and annual results: Instead, give an appropriate resampling frequency (quarter or annual). (:pull:`2267`).
+* ``xclim.indices._hydrology.sen_slope`` now only computes the sen slope and p-value of one input. ``xclim.indices._hydrology.sen_slope_ratio`` replaces ``sen_slope`` for the full computation with two input datasets.  (:pull:`2267`).
 * ``xclim.indices._hydrology.days_with_snowpack`` was removed, use ``xclim.land.snd_days_above`` which has the same functionality. (:pull:`2267`).
 
 Bug fixes
