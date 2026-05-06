@@ -1508,9 +1508,19 @@
   },
   "BASE_FLOW_INDEX_SEASONAL_RATIO": {
     "title": "Écoulement de base saisonnier",
-    "long_name": "Écoulement de base de base saisonnier",
-    "description": "Écoulement de base saisonnier et rapport entre les indices de débit de base hivernal et estival.",
+    "long_name": "Écoulement de base de base saisonnier et rapport entre les indices de débit de base hivernal et estival.",
+    "description": "Écoulement de base saisonnier et rapport entre les indices d'écoulement de base hivernal et estival.",
     "abstract": "Indice annuel de l'écoulement de base par saison, défini comme le débit moyen minimal sur 7 jours divisé par le débit moyen. Le rapport annuel est la division de l'indice de débit de base hivernal par celui estival."
+  },
+  "BASE_FLOW_INDEX_SEASONAL_RATIO.bfi": {
+    "long_name": "Écoulement de base de base saisonnier",
+    "description": "Écoulement de base saisonnier.",
+    "abstract": "Indice annuel de l'écoulement de base par saison, défini comme le débit moyen minimal sur 7 jours divisé par le débit moyen."
+  },
+  "BASE_FLOW_INDEX_SEASONAL_RATIO.w_s_ratio": {
+    "long_name": "Rapport entre les écoulements de base hivernal et estival.",
+    "description": "Rapport entre les écoulements de base hivernal et estival.",
+    "abstract": "Rapport entre les écoulements de base hivernal et estival. L'indice annuel de l'écoulement de base par saison, défini comme le débit moyen minimal sur 7 jours divisé par le débit moyen."
   },
   "LAG_SNOWPACK_FLOW_PEAKS": {
     "title": "Décalage temporel entre le maximum d'enneigement et les crues",
@@ -1527,6 +1537,16 @@
   "SEN_SLOPE": {
     "title": "Pente de Theil-Sen",
     "long_name": "Pente de Theil-Sen",
+    "description": "Analyse de la robustesse temporelle du débit.",
+    "abstract": "Calculer les estimateurs de la pente de Theil-Sen et effectuer le test de Mann-Kendall pour l'évaluation des tendances."
+  },
+  "SEN_SLOPE.sen_slope": {
+    "long_name": "Pente de Theil-Sen",
+    "description": "Analyse de la robustesse temporelle du débit.",
+    "abstract": "Calculer les estimateurs de la pente de Theil-Sen et effectuer le test de Mann-Kendall pour l'évaluation des tendances."
+  },
+  "SEN_SLOPE.p_value": {
+    "long_name": "P-value de Theil-Sen",
     "description": "Analyse de la robustesse temporelle du débit.",
     "abstract": "Calculer les estimateurs de la pente de Theil-Sen et effectuer le test de Mann-Kendall pour l'évaluation des tendances."
   }
