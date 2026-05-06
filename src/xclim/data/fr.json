@@ -1529,11 +1529,5 @@
     "long_name": "Pente de Theil-Sen",
     "description": "Analyse de la robustesse temporelle du débit.",
     "abstract": "Calculer les estimateurs de la pente de Theil-Sen et effectuer le test de Mann-Kendall pour l'évaluation des tendances."
-  },
-  "SEN_SLOPE_RATIO": {
-    "title": "Pente de Theil-Sen",
-    "long_name": "Pente de Theil-Sen",
-    "description": "Analyse de la robustesse temporelle du débit.",
-    "abstract": "Calculer les estimateurs de la pente de Theil-Sen et effectuer le test de Mann-Kendall pour l'évaluation des tendances pour deux jeux de données et le ratio de pentes."
   }
 }

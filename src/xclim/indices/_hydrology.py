@@ -35,6 +35,7 @@ __all__ = [
     "rb_flashiness_index",
     "runoff_ratio",
     "sen_slope",
+    "sen_slope_ratio",
     "snd_max",
     "snd_max_doy",
     "snow_melt_we_max",
@@ -938,6 +939,7 @@ def sen_slope(q: xarray.DataArray, freq: str = "YS") -> tuple[xarray.DataArray, 
     return sen_slope, p_value
 
 
+# FIXME: xclim-v1 — Remove this function. Its only utility is to compute a ratio.
 @declare_units(q="[discharge]", qsim="[discharge]")
 def sen_slope_ratio(
     q: xarray.Dataset, qsim: xarray.DataArray, freq: str = "YS"

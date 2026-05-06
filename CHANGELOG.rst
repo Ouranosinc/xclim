@@ -38,7 +38,7 @@ Breaking changes
     * The argument `percentile` is renamed to `p` and should now be a number in `[0,1]` instead of `[0,100]`, similar to other `xclim` function. (:pull:`2267`).
 * ``xclim.indices._hydrology.base_flow_index_seasonal_ratio`` now expects a yearly frequency whose anchor determines the position of the seasons. A single `bfi` output is given with 4 season coordinates. (:pull:`2267`).
 * ``xclim.indices._hydrology.sen_slope`` does not return both seasonal and annual results: Instead, give an appropriate resampling frequency (quarter or annual). (:pull:`2267`).
-* ``xclim.indices._hydrology.sen_slope`` now only computes the sen slope and p-value of one input. ``xclim.indices._hydrology.sen_slope_ratio`` replaces ``sen_slope`` for the full computation with two input datasets.  (:pull:`2267`).
+* ``xclim.indices._hydrology.sen_slope`` now only computes the sen slope and p-value of one input and doesn't accept `qsim` as an argument. ``xclim.indices._hydrology.sen_slope_ratio`` replaces ``sen_slope`` for the full computation with two input datasets, but may be removed in the future.  (:pull:`2267`).
 * ``xclim.indices._hydrology.days_with_snowpack`` was removed, use ``xclim.land.snd_days_above`` which has the same functionality. (:pull:`2267`).
 
 Bug fixes
