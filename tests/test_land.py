@@ -112,7 +112,7 @@ def test_runoff_ratio(q_series, area_series, pr_series, freq="YS"):
     q = q_series(q, start="2001-01-01")
     pr = pr_series(pr, units="mm/hr", start="2001-01-01")
 
-    out = land.runoff_ratio(q, a, pr, freq="YS")
+    out = land.runoff_ratio(q, pr, a=a, freq="YS")
     assert out.attrs["units"] == "1"
     assert isinstance(out, xr.DataArray)
     np.testing.assert_allclose(out.values, 0.0018, rtol=1e-6)
