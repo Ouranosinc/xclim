@@ -217,18 +217,17 @@ class TestRunoffRatio:
 
 
 class TestAnnualAridityIndex:
-    def test_simple(self, pr_hr_series, evspsblpot_hr_series):
-        # 2 years of hourly data
-        pr = np.ones(8760 * 2)
-        pet = np.ones(8760 * 2) * 0.8
+    def test_simple(self, pr_series, evspsblpot_series):
+        pr = np.ones(365 * 2)
+        pet = np.ones(365 * 2) * 0.8
 
         # Year 1 different
-        pr[1:8761] = 3
-        pet[1:8761] = 1.5
+        pr[:365] = 3
+        pet[:365] = 1.5
 
         # Create a daily time index
-        pr = pr_hr_series(pr)
-        pet = evspsblpot_hr_series(pet)
+        pr = pr_series(pr, start="2001-01-01")
+        pet = evspsblpot_series(pet, start="2001-01-01")
 
         out = xci.aridity_index(pr, pet)
         np.testing.assert_allclose(out, [2.0, 1.25], rtol=1e-3, atol=0)
