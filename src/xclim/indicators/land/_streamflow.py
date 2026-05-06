@@ -225,7 +225,7 @@ sen_slope = StreamflowNoResampling(
     title="Sen Slope : Temporal robustness analysis of streamflow.",
     identifier="sen_slope",
     var_name=["sen_slope", "p_value"],
-    units="",
+    units=["", ""],
     long_name=[
         "Sen Slope from observed data",
         "p_value from observed data",

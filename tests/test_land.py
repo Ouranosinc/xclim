@@ -171,9 +171,9 @@ def test_snowamount_with_snd_conversion(snd_series, q_series):
 
 def test_sen_slope(q_series):
     # 5 years of increasing data with slope of 1
-    q = np.arange(365 * 5)
+    q = np.arange(365 * 5 + 1)
     # Create a daily time index
-    q = q_series(q)
+    q = q_series(q, start="2001-01-01")
     outl = land.sen_slope(q)
     for o in outl:
         assert o.attrs["units"] == "1"

@@ -930,8 +930,8 @@ def sen_slope(q: xarray.DataArray, freq: str = "YS") -> tuple[xarray.DataArray, 
             vectorize=True,
             dask="parallelized",
         )
-        sen_slope = out.isel(var=0).to_dataset(name="sen_slope")
-        p_vals = out.isel(var=1).to_dataset(name="p_value")
+        sen_slope = out.isel(var=0)
+        p_vals = out.isel(var=1)
         return sen_slope, p_vals
 
     sen_slope, p_value = _mann_kendall(q, freq)
@@ -983,9 +983,9 @@ def sen_slope_ratio(
     """
     sen_slope_obs, p_value = sen_slope(q, freq)
     sen_slope_sim, p_value_sim = sen_slope(qsim, freq)
-    sen_slope_sim = sen_slope_sim.rename({"sen_slope": "sen_slope_sim"})
-    p_value_sim = p_value_sim.rename({"p_value": "p_value_sim"})
-    ratio = (sen_slope_obs / sen_slope_sim).rename({"sen_slope": "ratio"}).assign_attrs({"units": ""})
+    sen_slope_sim = sen_slope_sim
+    p_value_sim = p_value_sim
+    ratio = (sen_slope_obs / sen_slope_sim).assign_attrs({"units": ""})
     return sen_slope_obs, p_value, sen_slope_sim, p_value_sim, ratio
 
 
