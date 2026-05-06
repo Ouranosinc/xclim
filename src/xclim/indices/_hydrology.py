@@ -706,11 +706,12 @@ def antecedent_precipitation_index(pr: xarray.DataArray, window: int = 7, p_exp:
     return out
 
 
-@declare_units(q="[discharge]", a="[area]", pr="[precipitation]")
+# TODO: change a to `area`?
+@declare_units(q="[discharge]", pr="[precipitation]", a="[area]")
 def runoff_ratio(
     q: xarray.DataArray,
-    a: xarray.DataArray,
     pr: xarray.DataArray,
+    a: Quantified,
     freq: str = "YS",
 ) -> xarray.DataArray:
     """
@@ -722,10 +723,10 @@ def runoff_ratio(
     ----------
     q : xarray.DataArray
         Streamflow in discharge units.
-    a : xarray.DataArray
-        Watershed area in area units.
     pr : xarray.DataArray
         Mean daily precipitation in precipitation units.
+    a : Quantified
+        Watershed area in area units.
     freq : str
         Resampling frequency.
 
