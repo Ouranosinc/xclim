@@ -40,6 +40,7 @@ Breaking changes
 * ``xclim.indices._hydrology.sen_slope`` does not return both seasonal and annual results: Instead, give an appropriate resampling frequency (quarter or annual). (:pull:`2267`).
 * ``xclim.indices._hydrology.sen_slope`` now only computes the sen slope and p-value of one input and doesn't accept `qsim` as an argument. ``xclim.indices._hydrology.sen_slope_ratio`` replaces ``sen_slope`` for the full computation with two input datasets, but may be removed in the future.  (:pull:`2267`).
 * ``xclim.indices._hydrology.days_with_snowpack`` was removed, use ``xclim.land.snd_days_above`` which has the same functionality. (:pull:`2267`).
+* ``xclim.indices._hydrology.runoff_ratio`` order or argmuents has been changed. (:pull:`2267`).
 
 Bug fixes
 ^^^^^^^^^
