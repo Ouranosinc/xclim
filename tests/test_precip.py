@@ -758,10 +758,8 @@ class TestSnowfallMeteoSwiss:
 
 
 def test_aridity_index(pr_series, evspsblpot_series):
-    # FIXME: Using 10 years, atmos.aridity_index leaves the last year to a NaN.
-    # I suspect this simply comes from the indicator class
-    pr = pr_series([2] * 365 * 11, start="1900-01-01", units="mm/d")
-    pet = evspsblpot_series([1] * 365 * 11, start="1900-01-01", units="mm/d")
-    ai = atmos.aridity_index(pr, pet, freq="YS").sel(time=slice("1900", "1910"))
+    pr = pr_series([2] * (365 * 10 + 2), start="1900-01-01", units="mm/d")
+    pet = evspsblpot_series([1] * (365 * 10 + 2), start="1900-01-01", units="mm/d")
+    ai = atmos.aridity_index(pr, pet, freq="YS")
     assert ai.attrs["units"] == "1"
     np.testing.assert_allclose(ai.values, [2.0] * 10)
