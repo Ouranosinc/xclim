@@ -170,6 +170,8 @@ standardized_groundwater_index = StandardizedIndexes(
     compute=standardized_groundwater_index,
 )
 
+
+# TODO : Should we change `w_s_ratio` name?
 base_flow_index_seasonal_ratio = Streamflow(
     title="Seasonal Base flow index (bfi) and ratio of winter to summer base flow index",
     identifier="base_flow_index_seasonal_ratio",
@@ -219,27 +221,19 @@ runoff_ratio = Streamflow(
 )
 
 
-# FIXME: This indicator is non-resampling
 sen_slope = StreamflowNoResampling(
     title="Sen Slope : Temporal robustness analysis of streamflow.",
     identifier="sen_slope",
-    var_name=["slope", "p_value", "slope_sim", "p_value_sim", "ratio"],
+    var_name=["sen_slope", "p_value"],
     units="",
     long_name=[
         "Sen Slope from observed data",
         "p_value from observed data",
-        "Sen Slope from simulated data",
-        "p_value from simulated data",
-        "ratio of observed to simulated Sen Slope",
     ],
     description=[
         "Compute annual and seasonal Theil-Sen slope estimators "
         "and perform the Mann-Kendall test for trend evaluation.",
         "Statistical analysis value.",
-        "Compute annual and seasonal Theil-Sen slope estimators "
-        "and perform the Mann-Kendall test for trend evaluation.",
-        "Statistical analysis value.",
-        "Ratio of observed to simulated Sen Slope",
     ],
     cell_methods="",
     keywords="streamflow",
