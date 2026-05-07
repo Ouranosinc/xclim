@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import numpy as np
+import pytest
 import xarray as xr
 
 from xclim import land
@@ -170,6 +171,7 @@ def test_snowamount_with_snd_conversion(snd_series, q_series):
 
 
 def test_sen_slope(q_series):
+    pytest.importorskip("pymankendall")
     # 5 years of increasing data with slope of 1
     q = np.arange(365 * 5 + 1)
     # Create a daily time index
