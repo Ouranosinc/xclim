@@ -1735,8 +1735,6 @@ def add_season_coord(ds: xr.Dataset | xr.DataArray, freq: str) -> xr.DataArray |
     """
     Add a season coordinates on a resampled dataset.
 
-    Add a season coordinates on a resampled dataset.
-
     Parameters
     ----------
     ds : xr.Dataset or xr.DataArray
