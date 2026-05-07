@@ -8,7 +8,7 @@ from scipy.stats import rv_continuous
 from xarray import DataArray
 
 from xclim.core._types import DateStr, Quantified
-from xclim.core.calendar import construct_offset, get_calendar, parse_offset, unstack_dates
+from xclim.core.calendar import get_calendar, split_time_to_season_year
 from xclim.core.missing import at_least_n_valid
 from xclim.core.units import convert_units_to, declare_units, rate2amount, to_agg_units
 from xclim.indices.generic import threshold_count
@@ -793,8 +793,12 @@ def aridity_index(pr: xarray.DataArray, evspsblpot: xarray.DataArray, freq: str 
 
     Notes
     -----
-    - An aridity index below 0.65 indicates an arid environment,
-      while values above this threshold correspond to more humid environments.
+    - The range in the aridity index define different environment categories (percentage of global land area covered)
+        - Hyperarid (7.5%): AI < 0.05
+        - Arid (12.1%):  0.05 ≤ AI < 0.20
+        - Semi-Arid (17.7%): 0.20 ≤ AI < 0.50
+        - Dry subhumid (9.9%): 0.50 ≤ AI < 0.65
+        - Humid (52.8%): AI ≥ 0.65
     - In North America, higher aridity index values can be associated with colder climates
       due to lower evapotranspiration, even when precipitation is limited or occurring as snow.
 
@@ -920,11 +924,11 @@ def sen_slope(q: xarray.DataArray, freq: str = "YS") -> tuple[xarray.DataArray, 
     """
 
     def _mann_kendall(q, freq):
-        month_string = parse_offset(freq)[-1]
-        qres = unstack_dates(q.resample(time=freq).mean(), year_start_month=month_string)
+        qr = q.resample(time=freq).mean()
+        qr = split_time_to_season_year(qr, freq)
         out = xarray.apply_ufunc(
             lambda q: (lambda mk_output: np.array([mk_output.slope, mk_output.p]))(mk.original_test(q)),
-            qres,
+            qr,
             input_core_dims=[["time"]],
             output_core_dims=[["var"]],
             vectorize=True,
@@ -991,7 +995,7 @@ def sen_slope_ratio(
 
 @declare_units(q="[discharge]")
 def base_flow_index_seasonal_ratio(
-    q: xarray.DataArray, freq: str = "YS-DEC", winter: str = "DJF", summer: str = "JJA"
+    q: xarray.DataArray, freq: str = "QS-DEC", winter: str = "DJF", summer: str = "JJA"
 ) -> tuple[DataArray, DataArray, DataArray, DataArray, DataArray]:
     """
     Seasonal Base flow index (bfi) and ratio of winter to summer base flow index.
@@ -1004,9 +1008,7 @@ def base_flow_index_seasonal_ratio(
     q : xarray.DataArray
         Rate of river discharge.
     freq : str
-        Yearly resampling frequency.  The dataset will be divided in seasons which are defined with
-        respect to `freq`, e.g. "YS-DEC" will define seasons as: ["DJF","MAM","JJA","SON"]. Resampling
-        would then be computed on "QS-DEC".
+        Resampling frequency.
     winter : str
         String indicating the three months assigned as the winter.
     summer : str
@@ -1028,16 +1030,8 @@ def base_flow_index_seasonal_ratio(
     :cite:cts:`singh_2019`
     :cite:cts:`jaffres_2021`
     """
-    mult, base, start, anchor = parse_offset(freq)
-    if base != "Y":
-        raise ValueError("Only yearly resampling frequencies are accepted.")
-    if mult != 1:
-        raise ValueError("Resampling frequency should only be over one year.")
-    sea_freq = construct_offset(1, "Q", start, anchor)
-    bfi = base_flow_index(q, sea_freq)
-    # FIXME: Should unstack_dates preserve units?
-    bfi = unstack_dates(bfi, year_start_month=anchor)
-    bfi.attrs["units"] = ""
+    bfi0 = base_flow_index(q, freq)
+    bfi = split_time_to_season_year(bfi0, freq)
     w_s_ratio = bfi.sel(season=winter) / (bfi.sel(season=summer))
     # set division to 0 to nan.
     w_s_ratio = w_s_ratio.where(bfi.sel(season=summer) != 0)

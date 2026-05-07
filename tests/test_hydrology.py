@@ -286,8 +286,9 @@ class TestSenSlope:
         q = np.arange(365 * 5)
         # Create a daily time index
         q = q_series(q, start="2000-01-01")
-        out_sea = xr.merge(xci.sen_slope(q, freq="QS-DEC"))
-        out_year = xr.merge(xci.sen_slope(q, freq="YS-DEC"))
+        var_name = ["sen_slope", "p_value"]
+        out_sea = xr.Dataset(dict(zip(var_name, xci.sen_slope(q, freq="QS-DEC"), strict=False)))
+        out_year = xr.Dataset(dict(zip(var_name, xci.sen_slope(q, freq="YS-DEC"), strict=False)))
         out = xr.concat([out_sea, out_year], dim="season")
         # verify Sen_slopes
         np.testing.assert_allclose(out.sen_slope.values, [360.0, 365.0, 365.0, 365.0, 360.0], atol=1e-15)
@@ -309,9 +310,9 @@ class TestSenSlopeRatio:
         # Create a daily time index
         q = q_series(q, start="2000-01-01")
         qsim = q_series(qsim, start="2000-01-01")
-
-        out_sea = xr.merge(xci.sen_slope_ratio(q, qsim, freq="QS-DEC"))
-        out_year = xr.merge(xci.sen_slope_ratio(q, qsim, freq="YS-DEC"))
+        var_name = ["sen_slope", "p_value", "sen_slope_sim", "p_value_sim", "ratio"]
+        out_sea = xr.Dataset(dict(zip(var_name, xci.sen_slope_ratio(q, qsim, freq="QS-DEC"), strict=False)))
+        out_year = xr.Dataset(dict(zip(var_name, xci.sen_slope_ratio(q, qsim, freq="YS-DEC"), strict=False)))
         out = xr.concat([out_sea, out_year], dim="season")
         # verify Sen_slopes
         np.testing.assert_allclose(out.sen_slope.values, [360.0, 365.0, 365.0, 365.0, 360.0], atol=1e-15)
