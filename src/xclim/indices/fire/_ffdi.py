@@ -86,7 +86,7 @@ def _keetch_byram_drought_index(p, t, pa, kbdi0, kbdi: float):  # pragma: no cov
         # Limit kbdi to between 0 and 200 mm
         kbdi0 = min(max(kbdi0, 0.0), 203.2)
 
-        kbdi[d] = kbdi0  # type: ignore
+        kbdi[d] = kbdi0
 
 
 @guvectorize(

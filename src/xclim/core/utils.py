@@ -108,7 +108,7 @@ def load_module(path: os.PathLike, name: str | None = None) -> ModuleType:
     .. code-block:: python
 
         os.chdir(path.parent)
-        import example as mod1  # noqa
+        import example as mod1
 
         os.chdir(previous_working_dir)
         mod2 = load_module(path)

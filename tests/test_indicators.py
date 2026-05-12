@@ -212,7 +212,8 @@ def test_as_dataset(tasmax_series, tasmin_series, xrkeep):
         assert dsout.multiopt.attrs.get("something") == "blabla"
     else:
         assert "fou" not in dsout.attrs
-        # not testing for "something" because xclim doesn't define the behaviour of dataarray attributes when xarray's option is not True.
+        # not testing for "something" because xclim doesn't define the
+        # behaviour of dataarray attributes when xarray's option is not True.
 
 
 def test_as_dataset_multi(tas_series):

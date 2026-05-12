@@ -3262,7 +3262,7 @@ def degree_days_exceedance_date(
     def _exceedance_date(grp):
         strt_idx = rl.index_of_date(grp.time, after_date, max_idxs=1, default=0)
         if strt_idx.size == 0:  # The date is not within the group. Happens at boundaries.
-            return xarray.full_like(grp.isel(time=0), np.nan, float).drop_vars("time")  # type: ignore
+            return xarray.full_like(grp.isel(time=0), np.nan, float).drop_vars("time")
         cumsum = grp.where(grp.time >= grp.time[strt_idx][0]).cumsum("time")
 
         out = rl.first_run_after_date(

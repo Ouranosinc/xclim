@@ -414,21 +414,21 @@ def _saturation_vapor_pressure_over_water(tas: xr.DataArray, method: str) -> xr.
         method = "buck81"
     if method == "sonntag90":
         e_sat = 100 * np.exp(
-            -6096.9385 / tas  # type: ignore
+            -6096.9385 / tas
             + 16.635794
-            + -2.711193e-2 * tas  # type: ignore
+            + -2.711193e-2 * tas
             + 1.673952e-5 * tas**2
             + 2.433502 * np.log(tas)  # numpy's log is ln
         )
     elif method == "goffgratch46":
         Tb = 373.16  # Water boiling temp [K]
         eb = 101325  # e_sat at Tb [Pa]
-        e_sat = eb * 10 ** (  # type: ignore
-            -7.90298 * ((Tb / tas) - 1)  # type: ignore
-            + 5.02808 * np.log10(Tb / tas)  # type: ignore
+        e_sat = eb * 10 ** (
+            -7.90298 * ((Tb / tas) - 1)
+            + 5.02808 * np.log10(Tb / tas)
             + -1.3817e-7 * (10 ** (11.344 * (1 - tas / Tb)) - 1)
-            + 8.1328e-3 * (10 ** (-3.49149 * ((Tb / tas) - 1)) - 1)  # type: ignore
-        )  # type: ignore
+            + 8.1328e-3 * (10 ** (-3.49149 * ((Tb / tas) - 1)) - 1)
+        )
     elif method == "its90":
         e_sat = np.exp(
             -2836.5744 / tas**2
@@ -456,20 +456,12 @@ def _saturation_vapor_pressure_over_ice(tas: xr.DataArray, method: str) -> xr.Da
         method = "aerk96"
     if method in "sonntag90":
         e_sat = 100 * np.exp(
-            -6024.5282 / tas  # type: ignore
-            + 24.7219
-            + 1.0613868e-2 * tas  # type: ignore
-            + -1.3198825e-5 * tas**2
-            + -0.49382577 * np.log(tas)
+            -6024.5282 / tas + 24.7219 + 1.0613868e-2 * tas + -1.3198825e-5 * tas**2 + -0.49382577 * np.log(tas)
         )
     elif method in "goffgratch46":
         Tp = 273.16  # Triple-point temperature [K]
         ep = 611.73  # e_sat at Tp [Pa]
-        e_sat = ep * 10 ** (  # type: ignore
-            -9.09718 * ((Tp / tas) - 1)  # type: ignore
-            + -3.56654 * np.log10(Tp / tas)  # type: ignore
-            + 0.876793 * (1 - tas / Tp)  # type: ignore
-        )  # type: ignore
+        e_sat = ep * 10 ** (-9.09718 * ((Tp / tas) - 1) + -3.56654 * np.log10(Tp / tas) + 0.876793 * (1 - tas / Tp))
     elif method in "its90":
         e_sat = np.exp(
             -5866.6426 / tas
@@ -811,7 +803,7 @@ def relative_humidity(
         tas = convert_units_to(tas, "K")
         L = 2.501e6
         Rw = (461.5,)
-        hurs = 100 * np.exp(-L * (tas - tdps) / (Rw * tas * tdps))  # type: ignore
+        hurs = 100 * np.exp(-L * (tas - tdps) / (Rw * tas * tdps))
     elif tdps is not None:
         e_sat_dt = saturation_vapor_pressure(
             tas=tdps, ice_thresh=ice_thresh, method=method, interp_power=interp_power, water_thresh=water_thresh
@@ -819,7 +811,7 @@ def relative_humidity(
         e_sat_t = saturation_vapor_pressure(
             tas=tas, ice_thresh=ice_thresh, method=method, interp_power=interp_power, water_thresh=water_thresh
         )
-        hurs = 100 * e_sat_dt / e_sat_t  # type: ignore
+        hurs = 100 * e_sat_dt / e_sat_t
     elif huss is not None and ps is not None:
         ps = convert_units_to(ps, "Pa")
         huss = convert_units_to(huss, "")
@@ -934,7 +926,7 @@ def specific_humidity(
         tas=tas, ice_thresh=ice_thresh, method=method, interp_power=interp_power, water_thresh=water_thresh
     )
 
-    w_sat = 0.62198 * e_sat / (ps - e_sat)  # type: ignore
+    w_sat = 0.62198 * e_sat / (ps - e_sat)
     w = w_sat * hurs
     q: xr.DataArray = w / (1 + w)
 
