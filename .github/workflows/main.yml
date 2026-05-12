@@ -208,7 +208,7 @@ jobs:
         # Linux builds
         os: [ 'ubuntu-latest', ]
         testdata-cache: [ '~/.cache/xclim-testdata' ]
-        python-version: [ "3.10", "3.12", "3.13", "3.14" ]
+        python-version: [ "3.12", "3.13", "3.14" ]
         markers: [ "-m not slow" ]
         include:
           # macOS build
@@ -227,13 +227,13 @@ jobs:
           - os: 'ubuntu-latest'
             testdata-cache: '~/.cache/xclim-testdata'
             markers: '' # Markers handled by tox + Slow tests
-            python-version: "3.11"
+            python-version: "3.12"
             tox-env: 'offline'
           ## Linux notebooks
           - os: 'ubuntu-latest'
             testdata-cache: '~/.cache/xclim-testdata'
             markers: '' # No markers for notebooks
-            python-version: "3.11"
+            python-version: "3.12"
             tox-env: 'notebooks'
           ## Linux doctests
           - os: 'ubuntu-latest'

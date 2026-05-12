@@ -1,9 +1,9 @@
 env_list = [
+  {product = [{prefix = "py3.", start = 11, stop = 14}]},
   "docs",
   "doctests",
   "lint",
   "notebooks",
-  "numpy",
   "sbck",
   "upstream"
 ]
@@ -57,9 +57,6 @@ commands = [
 ]
 commands_post = []
 
-[env.numpy]
-deps = ["numpy >=1.25,<2.0"]
-
 [env.offline]
 commands = [
   ["xclim", "prefetch_testing_data"],
@@ -94,7 +91,6 @@ passenv = [
   "SKIP_NOTEBOOKS",
   "XCLIM_*"
 ]
-install_command = "python -m pip install --no-user {opts} {packages}"
 download = true
 dependency_groups = ["test"]
 commands_pre = [
@@ -112,8 +108,7 @@ commands_post = [
 allowlist_externals = ["git", "xclim"]
 
 [gh.python]
-"3.10" = ["py3.10"]
 "3.11" = ["sbck"]
-"3.12" = ["numpy"]
+"3.12" = ["py3.12"]
 "3.13" = ["complete"]
 "3.14" = ["py3.14"]
