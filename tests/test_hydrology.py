@@ -335,5 +335,5 @@ class TestBFI_seasonal_and_winter_to_summer_ratio:
         q = q.where(q.time.dt.season != "DJF", 20)
         q = q.where(q.time.dt.season != "JJA", 5)
 
-        bfi, w_s_ratio = xci.base_flow_index_seasonal_ratio(q)
-        np.testing.assert_allclose(w_s_ratio, 0.902174, atol=1e-6)
+        bfi, bfi_ratio = xci.base_flow_index_seasonal_ratio(q)
+        np.testing.assert_allclose(bfi_ratio, 0.902174, atol=1e-6)

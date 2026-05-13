@@ -1517,7 +1517,7 @@
     "description": "Écoulement de base saisonnier.",
     "abstract": "Indice annuel de l'écoulement de base par saison, défini comme le débit moyen minimal sur 7 jours divisé par le débit moyen."
   },
-  "BASE_FLOW_INDEX_SEASONAL_RATIO.w_s_ratio": {
+  "BASE_FLOW_INDEX_SEASONAL_RATIO.bfi_ratio": {
     "long_name": "Rapport entre les écoulements de base hivernal et estival.",
     "description": "Rapport entre les écoulements de base hivernal et estival.",
     "abstract": "Rapport entre les écoulements de base hivernal et estival. L'indice annuel de l'écoulement de base par saison, défini comme le débit moyen minimal sur 7 jours divisé par le débit moyen."

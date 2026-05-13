@@ -171,23 +171,22 @@ standardized_groundwater_index = StandardizedIndexes(
 )
 
 
-# TODO : Should we change `w_s_ratio` name?
 base_flow_index_seasonal_ratio = Streamflow(
-    title="Seasonal Base flow index (bfi) and ratio of winter to summer base flow index",
+    title="Seasonal Base flow index (bfi) and {numerator} to {denominator} bfi ratio",
     identifier="base_flow_index_seasonal_ratio",
     units="",
-    var_name=["bfi", "w_s_ratio"],
+    var_name=["bfi", "bfi_ratio"],
     long_name=[
         "Seasonal baseflow index",
-        "Winter to summer baseflow index ratio",
+        "Baseflow index season ratio",
     ],
     description=[
         "Yearly base flow index per season, defined as the minimum 7-day average flow divided by the mean flow.",
-        "Yearly winter to summer baseflow index ratio, defined as the minimum 7-day average flow divided by the "
-        "mean flow as well.",
+        "Yearly baseflow index {numerator} to {denominator} ratio, defined as the minimum 7-day average flow divided "
+        "by the mean flow as well.",
     ],
     abstract="Yearly base flow index per season, defined as the minimum 7-day average flow divided by the mean flow"
-    "as well as yearly winter to summer bfi ratio.",
+    "as well as yearly  {numerator} to {denominator} bfi ratio.",
     cell_methods="",
     keywords="streamflow, seasonal",
     compute=base_flow_index_seasonal_ratio,

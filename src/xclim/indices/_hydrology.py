@@ -995,7 +995,7 @@ def sen_slope_ratio(
 
 @declare_units(q="[discharge]")
 def base_flow_index_seasonal_ratio(
-    q: xarray.DataArray, freq: str = "QS-DEC", winter: str = "DJF", summer: str = "JJA"
+    q: xarray.DataArray, freq: str = "QS-DEC", numerator: str = "DJF", denominator: str = "JJA"
 ) -> tuple[DataArray, DataArray, DataArray, DataArray, DataArray]:
     """
     Seasonal Base flow index (bfi) and ratio of winter to summer base flow index.
@@ -1009,10 +1009,10 @@ def base_flow_index_seasonal_ratio(
         Rate of river discharge.
     freq : str
         Resampling frequency.
-    winter : str
-        String indicating the three months assigned as the winter.
-    summer : str
-        String indicating the three months assigned as the summer.
+    numerator : str
+        String indicating the season in the numerator of the ratio.
+    denominator : str
+        String indicating the season in the denominator of the ratio.
 
     Returns
     -------
@@ -1023,17 +1023,16 @@ def base_flow_index_seasonal_ratio(
 
     Notes
     -----
-    It is recommended to have at least 70% of valid data per month in order to compute significant values.
+    It is recommended to have at least 70% of valid data per month in order to compute significant values. The default
+    arguments compute the bfi ratio of the winter ("DJF") to summer ("JJA") ratio.
 
     References
     ----------
     :cite:cts:`singh_2019`
     :cite:cts:`jaffres_2021`
     """
-    bfi0 = base_flow_index(q, freq)
-    bfi = split_time_to_season_year(bfi0, freq)
-    w_s_ratio = bfi.sel(season=winter) / (bfi.sel(season=summer))
-    # set division to 0 to nan.
-    w_s_ratio = w_s_ratio.where(bfi.sel(season=summer) != 0)
-    w_s_ratio.attrs["units"] = ""
-    return bfi, w_s_ratio
+    bfi = split_time_to_season_year(base_flow_index(q, freq), freq)
+    den = bfi.sel(season=denominator)
+    ratio = bfi.sel(season=numerator) / den.where(den > 0)
+    ratio = ratio.assign_attrs({"units": "", "denominator": denominator, "numerator": numerator})
+    return bfi, ratio

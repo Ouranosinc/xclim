@@ -124,9 +124,9 @@ def test_base_flow_index_seasonal_ratio(q_series):
     q = q_series(a)
     out = land.base_flow_index_seasonal_ratio(q)
     assert out.bfi.attrs["units"] == "1"
-    assert out.w_s_ratio.attrs["units"] == "1"
+    assert out.bfi_ratio.attrs["units"] == "1"
     assert isinstance(out.bfi, xr.DataArray)
-    assert isinstance(out.w_s_ratio, xr.DataArray)
+    assert isinstance(out.bfi_ratio, xr.DataArray)
 
 
 def test_lag_snowpack_flow_peaks(snw_series, q_series):
