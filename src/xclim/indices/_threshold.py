@@ -2393,7 +2393,7 @@ def snd_days_above(
     return to_agg_units(out, snd, "count", deffreq="D").where(~valid)
 
 
-@declare_units(snw="[mass]/[area]", thresh="[mass]/[area]")
+@declare_units(snw="[snowamount]", thresh="[snowamount]")
 def snw_days_above(
     snw: xarray.DataArray,
     thresh: Quantified = "4 kg m-2",
