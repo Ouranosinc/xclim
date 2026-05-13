@@ -2,15 +2,28 @@
 Changelog
 =========
 
-v0.61.0 (unreleased)
+v0.61.0 (2026-05-07)
 --------------------
 Contributors to this version: Pascal Bourgault (:user:`aulemahal`), Trevor James Smith (:user:`Zeitsperre`), Hui-Min Wang (:user:`Hem-W`), Éric Dupuis (:user:`coxipi`), Ève Larose (:user:`e-larose`).
+
+Announcements
+^^^^^^^^^^^^^
+**The next major release of xclim will be v1.0**. This new version will have some significant breaking changes such as:
+
+* Migration of ``xclim.indices`` module into the new ``xclim.compute`` module for more efficient indicator composition.
+* ``xclim.indicators.generic`` refactoring to remove lots of redundant code in favour of more standardized and easier-to-use primitive functions.
+
+Users should expect that existing scripts may need to be updated in order to continue operating as usual. The `xclim` developers may release some patch versions to address small issues before `v1.0`.
+We suggest temporarily pinning your dependencies (``xclim <1.0``) if your workflows require significant effort to adapt to changes, particularly if they depend on direct calls within ``xclim.indices``.
+A migration guide will be made available within the official documentation.
+
+`For more information on what will comprise the next major release and some future goals of xclim v1.0, consult the meta-issue here:` :issue:`2352`.
 
 New indicators and features
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 * ``xclim.indices.generic.doymin`` and ``xclim.indices.generic.doymax`` will now return `nan` if all values along the time axis are the same. They now also support all-nan arrays (:pull:`2314`).
     + This changes the behaviour for indicators ``land.snw_max_doy``, ``land.snd_max_doy``, ``land.doy_qmin`` and ``land.doy_qmax``.
-* Added two `zero_inflated` arguments to `standardized_index` and `standardized_precipitation_index` to control how zero-precipitation probabilities are handled. (:issue:`2279`, :pull:`2280`).
+* Added two `zero_inflated` arguments to ``xclim.indices.stats.standardized_index`` and ``xclim.indices.standardized_precipitation_index`` to control how zero-precipitation probabilities are handled. (:issue:`2279`, :pull:`2280`).
 * ``xclim.indices.stats.parametric_pdf`` allows to compute PDF distributions with given input parameters and values  (:pull:`2323`).
 * ``xclim.indices.standardized_precipitation_index`` and ``xclim.indices.standardized_precipitation_evapotranspiration_index`` now can accept `genextreme` and `lognorm` as inputs for `dist`. (:issue:`2326`, :pull:`2327`).
 * # TODO: mention (un)stack_dates once we settle on how we want to implement it
@@ -44,7 +57,7 @@ Breaking changes
 
 Bug fixes
 ^^^^^^^^^
-* `dist` in ``xclim.indices.standardized_index`` can now be a `scipy.stats.rv_continuous` as it was planned.  (:issue:`2326`, :pull:`2327`).
+* `dist` in ``xclim.indices.standardized_index`` can now be a `scipy.stats.rv_continuous` as previously announced. (:issue:`2326`, :pull:`2327`).
 * `sphinx-autodoc-typehints` has been pinned due to recent build failures on ReadTheDocs. (:pull:`2090`).
 * ``xclim.indices._hydrology.aridity_index`` now correctly performs a unit conversion before taking ratios or `pr` and `pet`. (:pull:`2267`).
 * ``xclim.indices._hydrology.base_flow_index_seasonal_ratio`` now correctly computes an average on the rolling window instead of a minimum (:pull:`2267`).
