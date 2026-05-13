@@ -73,6 +73,9 @@ lint: install-lint ## check style with flake8 and black
 	python -m deptry src
 	python -m yamllint --config-file=.yamllint.yaml src/xclim
 
+typing: install-lint  ## check typing with ty
+	python -m ty check src/xclim
+
 test: install-test ## run tests quickly with the default Python
 	python -m pytest --numprocesses=auto
 
