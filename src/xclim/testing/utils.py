@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import importlib.metadata as ilm
 import importlib.resources as ilr
+import importlib.util as ilu
 import logging
 import os
 import platform
@@ -36,21 +37,13 @@ from xarray import open_dataset as _open_dataset
 import xclim
 from xclim import __version__ as __xclim_version__
 
-try:
-    import pytest
+HAS_PYTEST_SOCKET = bool(ilu.find_spec("pytest_socket"))
+if HAS_PYTEST_SOCKET:
     from pytest_socket import SocketBlockedError
-except ImportError:
-    pytest = None
+else:
 
     class SocketBlockedError(Exception):
         pass
-
-
-try:
-    import pooch
-except ImportError:
-    warnings.warn("The `pooch` library is not installed. The default cache directory for testing data will not be set.")
-    pooch = None
 
 
 logger = logging.getLogger("xclim")
@@ -81,10 +74,14 @@ default_testdata_version = "v2025.4.29"
 default_testdata_repo_url = "https://raw.githubusercontent.com/Ouranosinc/xclim-testdata/"
 """Default URL of the testing data repository to use when fetching datasets."""
 
-try:
+HAS_POOCH = bool(ilu.find_spec("pooch"))
+if HAS_POOCH:
+    import pooch
+
     default_testdata_cache = Path(pooch.os_cache("xclim-testdata"))
     """Default location for the testing data cache."""
-except (AttributeError, TypeError):
+else:
+    warnings.warn("The `pooch` library is not installed. The default cache directory for testing data will not be set.")
     default_testdata_cache = None
 
 TESTDATA_REPO_URL = str(os.getenv("XCLIM_TESTDATA_REPO_URL", default_testdata_repo_url))
@@ -281,7 +278,7 @@ def publish_release_notes(
     if not file:
         return changes
     if isinstance(file, Path | os.PathLike):
-        with open(file, "w", encoding="utf-8") as f:
+        with Path(file).open("w", encoding="utf-8") as f:
             print(changes, file=f)
     else:
         print(changes, file=file)
@@ -347,7 +344,7 @@ def show_versions(
     if not file:
         return message
     if isinstance(file, Path | os.PathLike):
-        with open(file, "w", encoding="utf-8") as f:
+        with Path(file).open("w", encoding="utf-8") as f:
             print(message, file=f)
     else:
         print(message, file=file)
@@ -359,11 +356,13 @@ def show_versions(
 
 def run_doctests():
     """Run the doctests for the module."""
-    if pytest is None:
+    if not HAS_PYTEST_SOCKET:
         raise ImportError(
-            "The `pytest` package is required to run the doctests. "
-            "You can install it with `pip install pytest` or `pip install xclim[dev]`."
+            "The development dependencies are needed to run the doctests. "
+            "You can install them with `pip install --group test` or `conda env create -f environment-dev.yml`."
         )
+
+    import pytest
 
     cmd = [
         f"--rootdir={Path(__file__).absolute().parent}",
@@ -457,7 +456,7 @@ def load_registry(branch: str = TESTDATA_BRANCH, repo: str = TESTDATA_REPO_URL) 
 def nimbus(
     repo: str = TESTDATA_REPO_URL,
     branch: str = TESTDATA_BRANCH,
-    cache_dir: str | Path = TESTDATA_CACHE_DIR,
+    cache_dir: str | Path | None = TESTDATA_CACHE_DIR,
     allow_updates: bool = True,
 ):
     """
@@ -469,7 +468,7 @@ def nimbus(
         URL of the repository to use when fetching testing datasets.
     branch : str
         Branch of repository to use when fetching testing datasets.
-    cache_dir : str or Path
+    cache_dir : str or Path, optional
         The path to the directory where the data files are stored.
     allow_updates : bool
         If True, allow updates to the data files. Default is True.
@@ -503,11 +502,16 @@ def nimbus(
         example_file = nimbus().fetch("example.nc")
         data = xr.open_dataset(example_file)
     """
-    if pooch is None:
+    if not HAS_POOCH:
         raise ImportError(
             "The `pooch` package is required to fetch the xclim testing data. "
             "You can install it with `pip install pooch` or `pip install xclim[dev]`."
         )
+    import pooch
+
+    if cache_dir is None:
+        cache_dir = Path().cwd()
+        warnings.warn(f"cache_dir is not set. Using `{cache_dir}`.")
     if not repo.endswith("/"):
         repo = f"{repo}/"
     remote = audit_url(urljoin(urljoin(repo, branch if branch.endswith("/") else f"{branch}/"), "data"))
@@ -595,7 +599,7 @@ def populate_testing_data(
     temp_folder: Path | None = None,
     repo: str = TESTDATA_REPO_URL,
     branch: str = TESTDATA_BRANCH,
-    local_cache: Path = TESTDATA_CACHE_DIR,
+    local_cache: Path | str | None = TESTDATA_CACHE_DIR,
 ) -> None:
     """
     Populate the local cache with the testing data.
@@ -608,7 +612,7 @@ def populate_testing_data(
         URL of the repository to use when fetching testing datasets.
     branch : str, optional
         Branch of xclim-testdata to use when fetching testing datasets.
-    local_cache : Path
+    local_cache : Path or str, optional
         The path to the local cache. Defaults to the location set by the platformdirs library.
         The testing data will be downloaded to this local cache.
     """
