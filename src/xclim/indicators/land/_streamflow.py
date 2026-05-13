@@ -190,6 +190,7 @@ base_flow_index_seasonal_ratio = Streamflow(
     cell_methods="",
     keywords="streamflow, seasonal",
     compute=base_flow_index_seasonal_ratio,
+    missing="skip",
 )
 
 
