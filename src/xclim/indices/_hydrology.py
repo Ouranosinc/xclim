@@ -878,12 +878,12 @@ def lag_snowpack_flow_peaks(
     # Convert to float, and ensure a NaT gets converted to a nan
     dt_snw_max = xarray.where(dt_snw_max.isnull(), np.nan, dt_snw_max.astype("timedelta64[s]").astype(float))
 
-    def _mean_timedelta_over_percentile(q, p):
+    def _mean_timedelta_over_perc(q, p, t0):
         dt_q = (q.time - t0).astype("timedelta64[s]").astype(float)
         thresh = q.quantile(q=p, dim="time")
         return dt_q.where(q >= thresh).mean(dim="time")
 
-    dt_high_q = resample_map(q, dim="time", freq=freq, func=_mean_timedelta_over_percentile, map_kwargs={"p": p})
+    dt_high_q = resample_map(q, dim="time", freq=freq, func=_mean_timedelta_over_perc, map_kwargs={"p": p, "t0": t0})
 
     lag = (dt_high_q - dt_snw_max) / (86400)
     lag.attrs["units"] = "days"
