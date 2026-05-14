@@ -1753,7 +1753,7 @@ def add_season_coord(ds: xr.Dataset | xr.DataArray, freq: str) -> xr.DataArray |
     mult, base, isstart, anchor = parse_offset(freq)
     if base not in "YAQM":
         raise ValueError(f"Only daily frequencies or coarser are supported. Got: {freq}.")
-    if (base == "M" and 12 % mult != 0) or (base == "Q" and multi not in [1, 2, 4]) or (base in "YA" and mult > 1):
+    if (base == "M" and 12 % mult != 0) or (base == "Q" and mult not in [1, 2, 4]) or (base in "YA" and mult > 1):
         raise ValueError(f"Only periods  that divide the year evenly are supported. Got {freq}.")
     if base in "YA":
         season_coords = ["annual"] * ds.time.size
@@ -1767,7 +1767,7 @@ def add_season_coord(ds: xr.Dataset | xr.DataArray, freq: str) -> xr.DataArray |
                 seasons[(m - 1 + i) % 12 + 1] = label
         season_coords = [seasons[m] for m in ds.time.dt.month.values]
     else:  # M or MS
-        seasons = dict(zip(_MONTH_NUMBERS.values(), _MONTH_NUMBERS.keys()))
+        seasons = dict(zip(_MONTH_NUMBERS.values(), _MONTH_NUMBERS.keys(), strict=False))
         season_coords = [seasons[m] for m in ds.time.dt.month.values]
     season_length = len(season_coords[0]) if freq not in ["M", "MS"] else 1
     attrs = dict(mult=mult, base=base, isstart=isstart, anchor=anchor or "JAN", season_length=season_length)
