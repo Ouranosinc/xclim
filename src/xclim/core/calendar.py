@@ -1756,7 +1756,7 @@ def add_season_coord(ds: xr.Dataset | xr.DataArray, freq: str) -> xr.DataArray |
     if base == "M" and 12 % mult != 0 or (base in "YA" and mult > 1):
         raise ValueError(f"Only periods  that divide the year evenly are supported. Got {freq}.")
     if base in "YA":
-        season_coords = ["JFMAMJJASOND"] * ds.time.size
+        season_coords = ["annual"] * ds.time.size
     elif base == "Q" or (base == "M" and mult > 1):
         months = np.array(list("JFMAMJJASOND"))
         n = mult * {"M": 1, "Q": 3}[base]
