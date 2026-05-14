@@ -806,8 +806,8 @@ def aridity_index(pr: xarray.DataArray, evspsblpot: xarray.DataArray, freq: str 
     :cite:cts:'zomer_2022'
     """
     evspsblpot = convert_units_to(evspsblpot, pr)
-    pr = pr.resample(time=freq).sum()
-    evspsblpot = evspsblpot.resample(time=freq).sum()
+    pr = pr.resample(time=freq).mean()
+    evspsblpot = evspsblpot.resample(time=freq).mean()
     ai = pr / evspsblpot
     ai.attrs["units"] = ""
 
