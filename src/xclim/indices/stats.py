@@ -581,7 +581,7 @@ def _fit_start(x, dist: str, **fitkwargs: Any) -> tuple[tuple, dict]:
 
     Parameters
     ----------
-    x : array-like
+    x : array_like
         Input data.
     dist : str
         Name of the univariate distribution, e.g. `beta`, `expon`, `genextreme`, `gamma`, `gumbel_r`, `lognorm`, `norm`.

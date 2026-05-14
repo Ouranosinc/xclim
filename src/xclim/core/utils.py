@@ -287,7 +287,7 @@ def calc_perc(
 
     Parameters
     ----------
-    arr : array-like
+    arr : array_like
         The input array.
     percentiles : sequence of float, optional
         The percentiles to compute. If None, only the median is computed.
@@ -335,7 +335,7 @@ def nan_calc_percentiles(
 
     Parameters
     ----------
-    arr : array-like
+    arr : array_like
         The input array.
     percentiles : sequence of float, optional
         The percentiles to compute. If None, only the median is computed.
@@ -374,7 +374,7 @@ def _compute_virtual_index(n: np.ndarray, quantiles: np.ndarray, alpha: float, b
 
     Parameters
     ----------
-    n : array-like
+    n : array_like
         The sample sizes.
     quantiles : array_like
         The quantiles values.
@@ -400,9 +400,9 @@ def _get_gamma(virtual_indexes: np.ndarray, previous_indexes: np.ndarray):
 
     Parameters
     ----------
-    virtual_indexes : array-like
+    virtual_indexes : array_like
         The indexes where the percentile is supposed to be found in the sorted sample.
-    previous_indexes : array-like
+    previous_indexes : array_like
         The floor values of virtual_indexes.
 
     Notes
@@ -421,16 +421,16 @@ def _get_indexes(
 
     Parameters
     ----------
-    arr : array-like
+    arr : array_like
         The input array.
-    virtual_indexes : array-like
+    virtual_indexes : array_like
         The indexes where the percentile is supposed to be found in the sorted sample.
-    valid_values_count : array-like
+    valid_values_count : array_like
         The number of valid values in the sorted array.
 
     Returns
     -------
-    array-like, array-like
+    array_like, array_like
         A tuple of virtual_indexes neighbouring indexes (previous and next).
 
     Notes
@@ -470,16 +470,16 @@ def _linear_interpolation(
 
     Parameters
     ----------
-    left : array-like
+    left : array_like
         Left bound.
-    right : array-like
+    right : array_like
         Right bound.
-    gamma : array-like
+    gamma : array_like
         The interpolation weight.
 
     Returns
     -------
-    array-like
+    array_like
         The linearly interpolated array.
     """
     diff_b_a = np.subtract(right, left)
