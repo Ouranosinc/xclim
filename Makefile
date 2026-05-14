@@ -64,6 +64,9 @@ install-test: ## install dependencies needed for standard testing
 install-test-notebooks: ## install dependencies needed for doctest testing
 	python -m pip install --quiet --group test-notebooks
 
+install-typing: ## install dependencies needed for type-checking
+	python -m pip install --quiet --group typing
+
 lint: install-lint ## check style with flake8 and black
 	python -m ruff check --quiet .
 	python -m flake8 --config=.flake8 src/xclim tests
@@ -73,7 +76,8 @@ lint: install-lint ## check style with flake8 and black
 	python -m deptry src
 	python -m yamllint --config-file=.yamllint.yaml src/xclim
 
-typing: install-lint  ## check typing with ty
+typing: install-typing  ## check typing with pylint and ty
+	python -m pylint -j=0 --rcfile=.pylintrc.toml --disable=import-error --exit-zero src/xclim
 	python -m ty check src/xclim
 
 test: install-test ## run tests quickly with the default Python

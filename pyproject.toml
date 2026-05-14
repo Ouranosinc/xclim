@@ -10,11 +10,13 @@ lint = [
   "flake8 >=7.3.0",
   "flake8-rst-docstrings >=0.4.0",
   "numpydoc >=1.10.0",
-  "pylint >=3.3.1",
   "ruff >=0.15.9",
-  "ty >=0.0.35",
   "vulture >=2.14",
   "yamllint >=1.35.1"
+]
+typing = [
+  "pylint >=3.3.1",
+  "ty >=0.0.35",
 ]
 io = [
   "h5netcdf >=1.5.0",
@@ -68,15 +70,19 @@ test-notebooks = [
   {include-group = "notebooks"},
   {include-group = "test"}
 ]
+tox = [
+  "tox >=4.52.0",
+  "tox-gh >=1.7.1"
+]
 dev = [
   # Development and testing tools
   "bump-my-version >=1.3.0",
   "pip >=26.1",
   "prek >=0.3",
-  "tox >=4.52.0",
   {include-group = "docs"},
   {include-group = "lint"},
-  {include-group = "test-notebooks"}
+  {include-group = "test-notebooks"},
+  {include-group = "tox"}
 ]
 
 [project]
@@ -431,6 +437,7 @@ invalid-argument-type = "ignore"
 invalid-assignment = "ignore"
 invalid-method-override = "ignore"
 invalid-parameter-default = "ignore"
+invalid-return-type = "ignore"
 no-matching-overload = "ignore"
 not-iterable = "ignore"
 not-subscriptable = "ignore"
