@@ -1753,7 +1753,7 @@ def add_season_coord(ds: xr.Dataset | xr.DataArray, freq: str) -> xr.DataArray |
     mult, base, isstart, anchor = parse_offset(freq)
     if base not in "YAQM":
         raise ValueError(f"Only daily frequencies or coarser are supported. Got: {freq}.")
-    if base == "M" and 12 % mult != 0 or (base in "YA" and mult > 1):
+    if (base == "M" and 12 % mult != 0) or (base == "Q" and multi not in [1, 2, 4]) or (base in "YA" and mult > 1):
         raise ValueError(f"Only periods  that divide the year evenly are supported. Got {freq}.")
     if base in "YA":
         season_coords = ["JFMAMJJASOND"] * ds.time.size
