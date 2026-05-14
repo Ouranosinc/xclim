@@ -10,7 +10,7 @@ env_list = [
 skip_missing_interpreters = true
 
 [env.complete]
-extras = ["complete"]
+extras = ["performance", "plot", "stats", "types"]
 
 [env.docs]
 labels = ["docs"]
