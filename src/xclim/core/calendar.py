@@ -1767,7 +1767,7 @@ def add_season_coord(ds: xr.Dataset | xr.DataArray, freq: str) -> xr.DataArray |
                 seasons[(m - 1 + i) % 12 + 1] = label
         season_coords = [seasons[m] for m in ds.time.dt.month.values]
     else:  # M or MS
-        seasons = xr.coding.cftime_offsets._MONTH_ABBREVIATIONS
+        seasons = dict(zip(_MONTH_NUMBERS.values(), _MONTH_NUMBERS.keys()))
         season_coords = [seasons[m] for m in ds.time.dt.month.values]
     season_length = len(season_coords[0]) if freq not in ["M", "MS"] else 1
     attrs = dict(mult=mult, base=base, isstart=isstart, anchor=anchor, season_length=season_length)
