@@ -333,7 +333,7 @@ jobs:
         run: |
           python -m tox -e ${{ matrix.tox-env }} -- ${{ matrix.markers }}
       - name: Report Coverage
-        if: ${{ matrix.tox-env == '' || matrix.tox-env == null }}
+        if: ${{ matrix.tox-env != 'notebooks' }}
         uses: coverallsapp/github-action@5cbfd81b66ca5d10c19b062c04de0199c215fb6e # v2.3.7
         with:
           flag-name: run-${{ matrix.python-version }}-${{ matrix.os }}-${{ matrix.tox-env }}
