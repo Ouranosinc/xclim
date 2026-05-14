@@ -333,7 +333,7 @@ def str2pint(val: str) -> pint.Quantity:
 
 # FIXME: The typing here is difficult to determine, as Generics cannot be used to track the type of the output.
 def convert_units_to(
-    source: Quantified | xr.Dataset | DataTree,
+    source: Quantified | xr.Dataset | DataTree,  # ty: ignore[invalid-type-form]
     target: Quantified | pint.Unit | dict,
     context: Literal["infer", "hydro", "none"] | None = None,
 ) -> xr.DataArray | float | xr.Dataset:
