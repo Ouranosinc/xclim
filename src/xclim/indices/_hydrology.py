@@ -315,7 +315,7 @@ def snd_max_doy(snd: xarray.DataArray, freq: str = "YS-JUL") -> xarray.DataArray
     return out.where(~valid)
 
 
-@declare_units(snw="[mass]/[area]")
+@declare_units(snw="[snowamount]")
 def snw_max(snw: xarray.DataArray, freq: str = "YS-JUL") -> xarray.DataArray:
     """
     Maximum snow amount.
@@ -337,7 +337,7 @@ def snw_max(snw: xarray.DataArray, freq: str = "YS-JUL") -> xarray.DataArray:
     return generic.select_resample_op(snw, op="max", freq=freq)
 
 
-@declare_units(snw="[mass]/[area]")
+@declare_units(snw="[snowamount]")
 def snw_max_doy(snw: xarray.DataArray, freq: str = "YS-JUL") -> xarray.DataArray:
     """
     Day of year of maximum snow amount.
@@ -367,7 +367,7 @@ def snw_max_doy(snw: xarray.DataArray, freq: str = "YS-JUL") -> xarray.DataArray
     return out.where(~valid)
 
 
-@declare_units(snw="[mass]/[area]")
+@declare_units(snw="[snowamount]")
 def snow_melt_we_max(snw: xarray.DataArray, window: int = 3, freq: str = "YS-JUL") -> xarray.DataArray:
     """
     Maximum snow melt.
@@ -400,7 +400,7 @@ def snow_melt_we_max(snw: xarray.DataArray, window: int = 3, freq: str = "YS-JUL
     return out
 
 
-@declare_units(snw="[mass]/[area]", pr="[precipitation]")
+@declare_units(snw="[snowamount]", pr="[precipitation]")
 def melt_and_precip_max(
     snw: xarray.DataArray, pr: xarray.DataArray, window: int = 3, freq: str = "YS-JUL"
 ) -> xarray.DataArray:
@@ -756,14 +756,13 @@ def runoff_ratio(
     ----------
     :cite:cts:'knoben_2024'
     """
-    # # TODO: Could be refactored with generic.select_rolling_resample_op, but `skipa=False` cannot be passed right now.
     q = convert_units_to(q, "mm3/hr")
     a = convert_units_to(a, "mm2")
     pr = convert_units_to(pr, "mm/hr")
 
     runoff = q / a
-    runoff_freq = runoff.resample(time=freq).sum()
-    pr_freq = pr.resample(time=freq).sum()
+    runoff_freq = runoff.resample(time=freq).mean()
+    pr_freq = pr.resample(time=freq).mean()
     out = runoff_freq / pr_freq
     out.attrs["units"] = ""
     return out
