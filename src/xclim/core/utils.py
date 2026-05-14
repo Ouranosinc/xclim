@@ -905,7 +905,7 @@ def _chunk_like(*inputs, chunks: dict[str, int] | None):  # *inputs : xr.DataArr
 
 def split_auxiliary_coordinates(
     obj: xr.DataArray | xr.Dataset,
-) -> tuple[xr.DataArray | xr.Dataset, xr.Dataset]:
+) -> tuple[xr.DataArray | xr.Dataset, xr.DataArray]:
     """
     Split auxiliary coords from the dataset.
 

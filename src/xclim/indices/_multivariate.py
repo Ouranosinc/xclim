@@ -1207,10 +1207,10 @@ def days_over_precip_thresh(
     >>> p75 = pr.quantile(0.75, dim="time", keep_attrs=True)
     >>> r75p = days_over_precip_thresh(pr, p75)
     """
-    pr_per = convert_units_to(pr_per, pr, context="hydro")
-    thresh = convert_units_to(thresh, pr, context="hydro")
+    _pr_per = convert_units_to(pr_per, pr, context="hydro")
+    _thresh = convert_units_to(thresh, pr, context="hydro")
 
-    tp = pr_per.where(pr_per > thresh, thresh)
+    tp = _pr_per.where(_pr_per > _thresh, _thresh)
     if "dayofyear" in pr_per.coords:
         # Create time series out of doy values.
         tp = resample_doy(tp, pr)

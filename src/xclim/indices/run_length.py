@@ -31,11 +31,11 @@ the use of the ufunc version of run lengths algorithms.
 
 
 def use_ufunc(
-    ufunc_1dim: bool | str,
+    ufunc_1dim: bool | Literal["from_context", "auto"],
     da: xr.DataArray,
     dim: str = "time",
     freq: str | None = None,
-    index: str = "first",
+    index: Literal["first", "last"] = "first",
 ) -> bool:
     """
     Return whether the ufunc version of run length algorithms should be used with this DataArray or not.
@@ -69,13 +69,14 @@ def use_ufunc(
 
     if ufunc_1dim == "from_context":
         ufunc_1dim = OPTIONS[RUN_LENGTH_UFUNC]
-
     if ufunc_1dim == "auto":
         ufunc_1dim = not uses_dask(da) and (da.size // da[dim].size) < npts_opt
+    if isinstance(ufunc_1dim, bool):
+        _ufunc_1dim = ufunc_1dim
     # If resampling after run length is set up for the computation, the 1d method is not implemented
     # Unless ufunc_1dim is specifically set to False (in which case we flag an error above),
     # we simply forbid this possibility.
-    return (index == "first") and ufunc_1dim and (freq is None)
+    return bool((index == "first") and ufunc_1dim and (freq is None))
 
 
 def _is_chunked(da, dim):
@@ -120,7 +121,7 @@ def resample_and_rl(
         Output of compute resampled according to frequency {freq}.
     """
     if resample_before_rl:
-        out = resample_map(
+        out: xr.DataArray = resample_map(
             da,
             dim,
             freq,
@@ -317,7 +318,7 @@ def rle_statistics(
     else:
         d = rle(da, dim=dim, index=index)
 
-        def get_rl_stat(d):
+        def get_rl_stat(d: xr.DataArray) -> xr.DataArray:
             rl_stat = getattr(d.where(d >= window), reducer)(dim=dim)
             rl_stat = xr.where((d.isnull() | (d < window)).all(dim=dim), 0, rl_stat)
             return rl_stat
@@ -325,7 +326,7 @@ def rle_statistics(
         if freq is None:
             rl_stat = get_rl_stat(d)
         else:
-            rl_stat = resample_map(d, dim, freq, get_rl_stat)
+            rl_stat: xr.DataArray = resample_map(d, dim, freq, get_rl_stat)
     return rl_stat
 
 
@@ -577,7 +578,7 @@ def _boundary_run(
     """
 
     # FIXME: The logic here should not use outside scope variables, but rather pass them as arguments.
-    def coord_transform(out, da):
+    def coord_transform(out: xr.DataArray, da: xr.DataArray) -> xr.DataArray:
         """Transforms indexes to coordinates if needed, and drops obsolete dim."""
         if coord:
             crd = da[dim]
@@ -591,7 +592,7 @@ def _boundary_run(
 
     # FIXME: The logic here should not use outside scope variables, but rather pass them as arguments.
     # general method to get indices (or coords) of first run
-    def find_boundary_run(runs, position):
+    def find_boundary_run(runs: xr.DataArray, position: Literal["last"] | str) -> xr.DataArray:
         if position == "last":
             runs = runs[{dim: slice(None, None, -1)}]
         dmax_ind = runs.argmax(dim=dim)
@@ -608,7 +609,7 @@ def _boundary_run(
     da = da.fillna(0)  # We expect a boolean array, but there could be NaNs nonetheless
     if window == 1:
         if freq is not None:
-            out = resample_map(da, dim, freq, find_boundary_run, map_kwargs={"position": position})
+            out: xr.DataArray = resample_map(da, dim, freq, find_boundary_run, map_kwargs={"position": position})
         else:
             out = find_boundary_run(da, position)
 
@@ -627,7 +628,7 @@ def _boundary_run(
         d = xr.where(d >= window, 1, 0)
         # for "first" run, return "first" element in the run (and conversely for "last" run)
         if freq is not None:
-            out = resample_map(d, dim, freq, find_boundary_run, map_kwargs={"position": position})
+            out: xr.DataArray = resample_map(d, dim, freq, find_boundary_run, map_kwargs={"position": position})
         else:
             out = find_boundary_run(d, position)
 
@@ -1642,15 +1643,15 @@ def index_of_date(
         return np.array([default])
     if len(date.split("-")) == 2:
         date = f"1840-{date}"
-        date = datetime.strptime(date, "%Y-%m-%d")
+        date_obj = datetime.strptime(date, "%Y-%m-%d")
         year_cond = True
     else:
-        date = datetime.strptime(date, "%Y-%m-%d")
-        year_cond = time.dt.year == date.year
+        date_obj = datetime.strptime(date, "%Y-%m-%d")
+        year_cond = time.dt.year == date_obj.year
 
-    idxs = np.where(year_cond & (time.dt.month == date.month) & (time.dt.day == date.day))[0]
+    idxs = np.where(year_cond & (time.dt.month == date_obj.month) & (time.dt.day == date_obj.day))[0]
     if max_idxs is not None and idxs.size > max_idxs:
-        raise ValueError(f"More than {max_idxs} instance of date {date} found in the coordinate array.")
+        raise ValueError(f"More than {max_idxs} instance of date {date_obj} found in the coordinate array.")
     return idxs
 
 

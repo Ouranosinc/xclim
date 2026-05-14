@@ -208,7 +208,7 @@ def heat_index(tas: xr.DataArray, hurs: xr.DataArray) -> xr.DataArray:
     t = t.where(t > thresh)
     r = convert_units_to(hurs, "%")
 
-    out = (
+    hi = (
         -8.78469475556
         + 1.61139411 * t
         + 2.33854883889 * r
@@ -219,8 +219,9 @@ def heat_index(tas: xr.DataArray, hurs: xr.DataArray) -> xr.DataArray:
         + 0.00072546 * t * r * r
         - 0.000003582 * t * t * r * r
     )
-    out = out.assign_attrs(units="degC")
-    return convert_units_to(out, tas.units)
+    hi = hi.assign_attrs(units="degC")
+    out: xr.DataArray = convert_units_to(hi, tas.units)
+    return out
 
 
 def tas(*args, **kwargs):  # numpydoc ignore=SS05,PR01,RT01
@@ -383,8 +384,8 @@ def sfcwind_to_uas_vas(
     uas.attrs["units"] = "m s-1"
     vas.attrs["units"] = "m s-1"
 
-    UASVAS = namedtuple("UAS_VAS", ["uas", "vas"])
-    return UASVAS(uas, vas)
+    UAS_VAS = namedtuple("UAS_VAS", ["uas", "vas"])
+    return UAS_VAS(uas, vas)
 
 
 ESAT_FORMULAS_COEFFICIENTS = {
@@ -626,7 +627,7 @@ def vapor_pressure(huss: xr.DataArray, ps: xr.DataArray):
     gas constant to the water vapor gas constant : :math:`\frac{R_{dry}}{R_{vapor}} = 0.62198`.
     """
     eps = 0.62198
-    e = cast(xr.DataArray, ps * huss / (eps + (1 - eps) * huss))
+    e = ps * huss / (eps + (1 - eps) * huss)
     return e.assign_attrs(units=ps.attrs["units"])
 
 
@@ -799,11 +800,11 @@ def relative_humidity(
     if method in ("bohren98", "BA90"):
         if tdps is None:
             raise ValueError("To use method 'bohren98' (BA98), dewpoint must be given.")
-        tdps = convert_units_to(tdps, "K")
-        tas = convert_units_to(tas, "K")
+        _tdps = convert_units_to(tdps, "K")
+        _tas = convert_units_to(tas, "K")
         L = 2.501e6
         Rw = (461.5,)
-        hurs = 100 * np.exp(-L * (tas - tdps) / (Rw * tas * tdps))
+        hurs = 100 * np.exp(-L * (_tas - _tdps) / (Rw * _tas * _tdps))
     elif tdps is not None:
         e_sat_dt = saturation_vapor_pressure(
             tas=tdps, ice_thresh=ice_thresh, method=method, interp_power=interp_power, water_thresh=water_thresh
@@ -2083,7 +2084,7 @@ def potential_evapotranspiration(
 
         # Thornthwaite measures half-days
         time_d = _get_D_from_M(_tas.time)
-        dl = cast(xr.DataArray, day_lengths(time_d, _lat) / 12)
+        dl = day_lengths(time_d, _lat) / 12
         dl_m = dl.resample(time="MS").mean(dim="time")
 
         # annual heat index
@@ -2129,7 +2130,11 @@ def potential_evapotranspiration(
             # slope of saturation vapour pressure curve  [kPa degC-1]
             delta = (4098 * es / (tas_m + 237.3) ** 2).assign_attrs(units="kPa degC-1")
             # net radiation
-            Rn = convert_units_to(rsds - rsus - (rlus - rlds), "MJ m-2 d-1")
+            _rsds = convert_units_to(rsds, "MJ m-2 d-1")
+            _rsus = convert_units_to(rsus, "MJ m-2 d-1")
+            _rlds = convert_units_to(rlds, "MJ m-2 d-1")
+            _rlus = convert_units_to(rlus, "MJ m-2 d-1")
+            Rn = _rsds - _rsus - (_rlus - _rlds)
 
             P = 101.325  # Atmospheric pressure [kPa]
             gamma = 0.665e-03 * P  # psychrometric const = C_p*P/(eps*lam) [kPa degC-1]
@@ -2775,12 +2780,12 @@ def wind_profile(
     desired, and :math:`h_r` is the reference height.
     """
     # Convert units to meters
-    h = convert_units_to(h, "m")
-    h_r = convert_units_to(h_r, "m")
+    _h = convert_units_to(h, "m")
+    _h_r = convert_units_to(h_r, "m")
 
     if method == "power_law":
         alpha = kwds.pop("alpha", 1 / 7)
-        out: xr.DataArray = wind_speed * (h / h_r) ** alpha
+        out: xr.DataArray = wind_speed * (_h / _h_r) ** alpha
         out = out.assign_attrs(units=wind_speed.attrs["units"])
         return out
     raise NotImplementedError(f"Method {method} not implemented.")

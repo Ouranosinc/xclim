@@ -121,19 +121,19 @@ def corn_heat_units(
     ----------
     :cite:cts:`audet_atlas_2012,bootsma_risk_1999`
     """
-    tasmin = convert_units_to(tasmin, "degC")
-    tasmax = convert_units_to(tasmax, "degC")
-    thresh_tasmin = convert_units_to(thresh_tasmin, "degC")
-    thresh_tasmax = convert_units_to(thresh_tasmax, "degC")
+    _tasmin = convert_units_to(tasmin, "degC")
+    _tasmax = convert_units_to(tasmax, "degC")
+    _thresh_tasmin = convert_units_to(thresh_tasmin, "degC")
+    _thresh_tasmax = convert_units_to(thresh_tasmax, "degC")
 
-    mask_tasmin = tasmin > thresh_tasmin
-    mask_tasmax = tasmax > thresh_tasmax
+    mask_tasmin = _tasmin > _thresh_tasmin
+    mask_tasmax = _tasmax > _thresh_tasmax
 
     chu: xarray.DataArray = (
-        xarray.where(mask_tasmin, 1.8 * (tasmin - thresh_tasmin), 0)
+        xarray.where(mask_tasmin, 1.8 * (_tasmin - _thresh_tasmin), 0)
         + xarray.where(
             mask_tasmax,
-            (3.33 * (tasmax - thresh_tasmax) - 0.084 * (tasmax - thresh_tasmax) ** 2),
+            (3.33 * (_tasmax - _thresh_tasmax) - 0.084 * (_tasmax - _thresh_tasmax) ** 2),
             0,
         )
     ) / 2
@@ -406,13 +406,13 @@ def biologically_effective_degree_days(
         tr_adj = 0
     elif method in ["gladstones", "huglin", "interpolated", "jones"]:
         # Temperature range adjustment
-        low_dtr = convert_units_to(low_dtr, "degC")
-        high_dtr = convert_units_to(high_dtr, "degC")
+        _low_dtr = convert_units_to(low_dtr, "degC")
+        _high_dtr = convert_units_to(high_dtr, "degC")
         dtr = _tasmax - _tasmin
         tr_adj = 0.25 * xarray.where(
-            dtr > high_dtr,
-            dtr - high_dtr,
-            xarray.where(dtr < low_dtr, dtr - low_dtr, 0),
+            dtr > _high_dtr,
+            dtr - _high_dtr,
+            xarray.where(dtr < _low_dtr, dtr - _low_dtr, 0),
         )
 
         if lat is None:
@@ -532,7 +532,7 @@ def cool_night_index(
 def dryness_index(  # numpydoc ignore=SS05
     pr: xarray.DataArray,
     evspsblpot: xarray.DataArray,
-    lat: xarray.DataArray | str | None = None,
+    lat: xarray.DataArray | Literal["north", "south"] | None = None,
     wo: Quantified = "200 mm",
     freq: Literal["YS", "YS-JAN"] = "YS",
 ) -> xarray.DataArray:
@@ -1349,12 +1349,12 @@ def effective_growing_degree_days(
     ----------
     :cite:cts:`bootsma_impacts_2005`
     """
-    tasmax = convert_units_to(tasmax, "degC")
-    tasmin = convert_units_to(tasmin, "degC")
-    thresh = convert_units_to(thresh, "degC")
-    thresh_with_units = f"{thresh} degC"
+    _tasmax = convert_units_to(tasmax, "degC")
+    _tasmin = convert_units_to(tasmin, "degC")
+    _thresh = convert_units_to(thresh, "degC")
+    thresh_with_units = f"{_thresh} degC"
 
-    tas = (tasmin + tasmax) / 2
+    tas = (_tasmin + _tasmax) / 2
     tas.attrs["units"] = "degC"
 
     if method.lower() == "bootsma":
@@ -1369,7 +1369,7 @@ def effective_growing_degree_days(
     # The day before the first day below 0 degC
     end = (
         first_day_temperature_below(
-            tasmin,
+            _tasmin,
             thresh="0 degC",
             after_date=after_date,
             window=1,
@@ -1378,7 +1378,7 @@ def effective_growing_degree_days(
         - 1
     )
 
-    deg_days = (tas - thresh).clip(min=0).assign_attrs(**tas.attrs)
+    deg_days = (tas - _thresh).clip(min=0).assign_attrs(**tas.attrs)
     return statistics_between_dates(deg_days, start=start, end=end, statistic="integral", freq=freq)
 
 
@@ -1528,8 +1528,9 @@ def chill_portions(tas: xarray.DataArray, freq: str = "YS", **indexer) -> xarray
     >>> tas_hourly = make_hourly_temperature(tasmin, tasmax)
     >>> cp = chill_portions(tasmin)
     """
-    tas_K: xarray.DataArray = select_time(convert_units_to(tas, "K"), drop=True, **indexer)
-    return resample_map(tas_K, "time", freq, _apply_chill_portion_one_season).assign_attrs(units="")
+    tas_K = select_time(convert_units_to(tas, "K"), drop=True, **indexer)
+    cp: xarray.DataArray = resample_map(tas_K, "time", freq, _apply_chill_portion_one_season).assign_attrs(units="")
+    return cp
 
 
 @declare_units(tas="[temperature]")

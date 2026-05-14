@@ -861,7 +861,7 @@ class Indicator(IndicatorRegistrar):
                     )
                 )
 
-        ret_ann = DataArray if self.n_outs == 1 else tuple[(DataArray,) * self.n_outs]
+        ret_ann = DataArray if self.n_outs == 1 else tuple[(DataArray,) * self.n_outs]  # ty: ignore[invalid-type-form]
         return Signature(variables + parameters, return_annotation=ret_ann)
 
     def _apply_on_tree_node(self, node: Dataset, *args, **kwargs):
