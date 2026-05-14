@@ -212,7 +212,7 @@ class TestRunoffRatio:
         a = area_series(a)
         q = q_series(q, start="2000-01-01")
         pr = pr_series(pr, units="mm/hr", start="2000-01-01")
-        out = xci.runoff_ratio(q, pr, a=a, freq="YS")
+        out = xci.runoff_ratio(q, pr, area=a, freq="YS")
         np.testing.assert_allclose(out.values, 0.0018, atol=1e-15)
 
 
