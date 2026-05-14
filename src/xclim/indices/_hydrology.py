@@ -883,7 +883,7 @@ def lag_snowpack_flow_peaks(
         thresh = q.quantile(q=p, dim="time")
         return dt_q.where(q >= thresh).mean(dim="time")
 
-    dt_high_q = q.resample(time=freq).map(lambda q: _mean_timedelta_over_percentile(q, p))
+    dt_high_q = resample_map(q, dim="time", freq=freq, func=_mean_timedelta_over_percentile, map_kwargs={"p": p})
 
     lag = (dt_high_q - dt_snw_max) / (86400)
     lag.attrs["units"] = "days"
