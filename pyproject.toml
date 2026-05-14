@@ -147,12 +147,6 @@ stats = [
 types = [
   "pandas-stubs >=2.2"
 ]
-complete = [
-  "xclim[performance]",
-  "xclim[plot]",
-  "xclim[stats]",
-  "xclim[types]"
-]
 
 [project.scripts]
 xclim = "xclim.cli:cli"
