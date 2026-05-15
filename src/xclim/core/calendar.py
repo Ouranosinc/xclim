@@ -1769,9 +1769,9 @@ def add_season_coord(ds: xr.Dataset | xr.DataArray, freq: str) -> xr.DataArray |
     else:  # M or MS
         seasons = dict(zip(_MONTH_NUMBERS.values(), _MONTH_NUMBERS.keys(), strict=False))
         season_coords = [seasons[m] for m in ds.time.dt.month.values]
-    season_length = len(season_coords[0]) if freq not in ["M", "MS"] else 1
+    season_length = len(season_coords[0]) if base != "M" else 1
     attrs = dict(mult=mult, base=base, isstart=isstart, anchor=anchor or "JAN", season_length=season_length)
-    return ds.assign_coords(season=("time", season_coords)).assign_attrs(attrs)
+    return ds.assign_coords(season=("time", season_coords, attrs))
 
 
 def split_time_to_season_year(ds: xr.Dataset | xr.DataArray, freq: str) -> xr.DataArray | xr.Dataset:
@@ -1793,9 +1793,13 @@ def split_time_to_season_year(ds: xr.Dataset | xr.DataArray, freq: str) -> xr.Da
         Input dataset with season coordinate and yearly time.
     """
     ds = add_season_coord(ds, freq)
-    year_needs_shift = ds.time.dt.month < _MONTH_NUMBERS[ds.attrs["anchor"] or "JAN"]
-    hydro_years = np.where(year_needs_shift, ds.time.dt.year - 1, ds.time.dt.year)
-    _, idx = np.unique(hydro_years, return_index=True)
-    time_per_year = ds.time.values[idx]
-    out = ds.assign_coords(year=("time", hydro_years)).set_index(time=("year", "season")).unstack("time")
-    return out.assign_coords(year=time_per_year).rename(year="time")
+    year_needs_shift = ds.time.dt.month < _MONTH_NUMBERS[ds.season.attrs["anchor"]]
+    base_month = _MONTH_NUMBERS[ds.season.attrs["anchor"]]
+
+    def _get_year(dt):
+        y = dt.year = 1 if dt.month < base_month else dt.year
+        return dt.replace(year=y, month=base_month, day=0, hour=0, minute=0, second=0, microseconds=0)
+
+    new_time = ds.indexes["time"].map(get_year)
+    out = ds.assign_coords(year=("time", new_time)).set_index(time=("year", "season")).unstack("time")
+    return out.rename(year="time")
