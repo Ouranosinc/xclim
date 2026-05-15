@@ -78,7 +78,7 @@ lint: install-lint ## check style with flake8 and black
 
 typing: install-typing  ## check typing with pylint and ty
 	python -m pylint -j=0 --rcfile=.pylintrc.toml --disable=import-error --exit-zero src/xclim
-	python -m ty check src/xclim
+	python -m ty check --ignore=unresolved-import src/xclim
 
 test: install-test ## run tests quickly with the default Python
 	python -m pytest --numprocesses=auto
