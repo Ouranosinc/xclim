@@ -892,14 +892,23 @@ def liquid_precip_ratio(
 
     Notes
     -----
-    Let :math:`PR_i` be the mean daily precipitation of day :math:`i`, then for a period :math:`j` starting at
-    day :math:`a` and finishing on day :math:`b`:
+    Let :math:`PR_i` be the mean daily precipitation on day :math:`i`, and :math:`PRSN_i`
+    the mean daily solid precipitation. For a period :math:`j` starting on day :math:`a`
+    and ending on day :math:`b`:
 
     .. math::
 
-       PR_{ij} = \sum_{i=a}^{b} PR_i
+       PR_{j} = \sum_{i=a}^{b} PR_i
 
-       PRwet_{ij}
+    .. math::
+
+       PR^{\mathrm{liquid}}_{j} = \sum_{i=a}^{b} (PR_i - PRSN_i)
+
+    The liquid precipitation ratio is then:
+
+    .. math::
+
+       R_j = \frac{PR^{\mathrm{liquid}}_{j}}{PR_j}
     """
     if prsn is None and tas is not None:
         prsn = snowfall_approximation(pr, tas=tas, thresh=thresh, method="binary")

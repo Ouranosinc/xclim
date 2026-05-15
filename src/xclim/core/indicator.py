@@ -314,7 +314,8 @@ class IndicatorRegistrar:
 
         Raises
         ------
-        ValueError : if no instance exists.
+        ValueError
+            If no instance exists.
         """
         for inst_ref in _indicators_registry[cls]:
             inst = inst_ref()

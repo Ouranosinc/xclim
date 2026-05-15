@@ -112,8 +112,12 @@ def corn_heat_units(
 
     .. math::
 
-       YX_i & = 3.33(TX_i -10) - 0.084(TX_i -10)^2, &\text{if } TX_i > 10°C
-       YN_i & = 1.8(TN_i -4.44), &\text{if } TN_i > 4.44°C
+       \begin{aligned}
+       YX_i &= 3.33(TX_i - 10) - 0.084(TX_i - 10)^2,
+       &\text{if } TX_i > 10^\circ\mathrm{C} \\
+       YN_i &= 1.8(TN_i - 4.44),
+       &\text{if } TN_i > 4.44^\circ\mathrm{C}
+       \end{aligned}
 
     Where :math:`YX_{i}` and :math:`YN_{i}` is 0 when :math:`TX_i \leq 10°C` and :math:`TN_i \leq 4.44°C`, respectively.
 
@@ -209,7 +213,7 @@ def huglin_index(
 
     .. math::
 
-       HI = \sum_{i=\text{April 1}}^{\text{September 30}} \left(\frac{TX_i + TG_i)}{2} - T_{thresh} \right) * k
+       HI = \sum_{i=\text{April 1}}^{\text{September 30}} \left(\frac{TX_i + TG_i}{2} - T_{thresh} \right) * k
 
     There are a few methods provided for calculating the day-length multiplication factor (:math:`k`) based on latitude:
 
@@ -1336,7 +1340,7 @@ def effective_growing_degree_days(
 
     .. math::
 
-       EGDD_i = \sum_{i=\text{j_{start}}^{\text{j_{end}}} max\left(TG - Thresh, 0 \right)
+       EGDD_i = \sum_{i=j_{start}}^{j_{end}} \max\left(TG - Thresh, 0\right)
 
     Where :math:`TG` is the mean daly temperature, and :math:`j_{start}` and :math:`j_{end}` are the start and end dates
     of the growing season. The growing season start date methodology is determined via the `method` flag.

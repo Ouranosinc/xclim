@@ -1053,7 +1053,7 @@ def dewpoint_from_specific_humidity(
 
     .. math::
 
-       e(q, p) = e_{sat}(T_d) = A \mathrm{e}^{B * \frac{T_d - T_0}{T_d + C}}}
+       e(q, p) = e_{sat}(T_d) = A \mathrm{e}^{B * \frac{T_d - T_0}{T_d + C}}
 
        T_d = \frac{-T_0 - C\frac{1}{B}\mathrm{ln}\frac{e}{A}}{\frac{1}{B}\mathrm{ln}\frac{e}{A} - 1}
 

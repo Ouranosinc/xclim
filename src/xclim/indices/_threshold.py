@@ -3237,10 +3237,8 @@ def degree_days_exceedance_date(
     .. math::
 
        \begin{cases}
-       ST < \sum_{i=i_0}^{k} \max(TG_{ij} - T, 0) & \text{if $op$ is '>'} \\
-       ST < \sum_{i=i_0}^{k} \max(T - TG_{ij}, 0) & \text{if $op$ is '<'}
-       ST < \sum_{i=i_0}^{k} \max(T - TG_{ij}, 0) & \text{if $op$ is '<'}
-       \end{cases}
+       ST < \sum_{i=i_0}^{k} \max(TG_{ij} - T, 0) & \text{if $op$ is '>' | '>='} \\
+       ST < \sum_{i=i_0}^{k} \max(T - TG_{ij}, 0) & \text{if $op$ is '<' | '<='}
        \end{cases}
 
     The resulting :math:`k` is expressed as a day of year.
