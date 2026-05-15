@@ -13,7 +13,7 @@ import pandas as pd
 import xarray as xr
 from boltons.funcutils import wraps
 from scipy import spatial
-from scipy.spatial import cKDTree as KDTree
+from scipy.spatial import KDTree
 
 metrics: dict[str, Any] = {}
 
