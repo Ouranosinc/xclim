@@ -2,6 +2,14 @@
 Changelog
 =========
 
+v0.61.1 (unreleased)
+--------------------
+Contributors to this version: Pascal Bourgault (:user:`aulemahal`).
+
+Bug fixes
+^^^^^^^^^
+* Fix conversion error with ``xc.units.rate2amount`` and ``xc.units.amount2rate`` when ``sampling_rate_from_coord=True`` or sampling frequency is monthly or coarser and time coordinate is cftime-backed. Previous results were 1000x to small. (:pull:`2357`).
+
 v0.61.0 (2026-05-07)
 --------------------
 Contributors to this version: Pascal Bourgault (:user:`aulemahal`), Trevor James Smith (:user:`Zeitsperre`), Hui-Min Wang (:user:`Hem-W`), Éric Dupuis (:user:`coxipi`).
