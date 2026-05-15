@@ -1129,7 +1129,7 @@ class Indicator(IndicatorRegistrar):
             `cell_methods` is not added if `names` is given and those not contain `cell_methods`.
         """
         out = self._format(attrs, args)
-        for locale in OPTIONS[METADATA_LOCALES]:
+        for locale in OPTIONS[METADATA_LOCALES]:  # ty: ignore[not-iterable]
             out.update(
                 self._format(
                     self._get_translated_metadata(locale, var_id=var_id, names=names or list(attrs.keys())),

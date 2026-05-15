@@ -19,11 +19,11 @@ import cftime
 import numba as nb
 import numpy as np
 import xarray as xr
+from packaging.version import Version
 from xarray import CFTimeIndex
+from xarray import __version__ as __xr_version__
 
-try:
-    from xarray.coding.calendar_ops import _datetime_to_decimal_year
-except ImportError:
+if Version(__xr_version__) >= Version("24.9.0"):
     XR2409 = True
 else:
     XR2409 = False
@@ -114,7 +114,7 @@ def compare(
     left: xr.DataArray,
     condition: Condition,
     right: float | int | np.ndarray | xr.DataArray,
-    constrain: Sequence[str] | None = None,
+    constrain: Sequence[Condition] | None = None,
 ) -> xr.DataArray:
     """
     Compare a DataArray to a threshold using given operator.
@@ -147,7 +147,7 @@ def spell_mask(
     condition: Condition,
     thresh: float | Sequence[float] | xr.DataArray | Sequence[xr.DataArray],
     min_gap: int = 1,
-    weights: Sequence[float] = None,
+    weights: Sequence[float] | None = None,
     var_reducer: Literal["any", "all"] = "all",
 ) -> xr.DataArray:
     """
@@ -173,7 +173,7 @@ def spell_mask(
     min_gap : int
         The shortest possible gap between two spells.
         Spells closer than this are merged by assigning the gap steps to the merged spell.
-    weights : sequence of floats
+    weights : sequence of floats, optional
         A list of weights of the same length as the window.
         Only supported if ``window_statistic`` is ``"mean"``.
     var_reducer : {'all', 'any'}
@@ -335,6 +335,8 @@ def day_angle(time: xr.DataArray) -> xr.DataArray:
     if XR2409:
         decimal_year = time.dt.decimal_year
     else:
+        from xarray.coding.calendar_ops import _datetime_to_decimal_year  # ty: ignore[unresolved-import]
+
         decimal_year = _datetime_to_decimal_year(times=time, calendar=time.dt.calendar)
     return ((decimal_year % 1) * 2 * np.pi).assign_attrs(units="rad")
 

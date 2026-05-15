@@ -80,7 +80,7 @@ if PYTEST_INSTALLED:
             xr_kwargs.setdefault("cache", True)
             xr_kwargs.setdefault("engine", "h5netcdf")
             return _open_dataset(
-                file,
+                str(file),
                 nimbus_kwargs=nimbus_kwargs,
                 **xr_kwargs,
             )

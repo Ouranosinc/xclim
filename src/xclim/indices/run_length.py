@@ -173,7 +173,7 @@ def _cumsum_reset_xr(da, dim, index, reset_on_zero):
 def _cumsum_reset(
     da: xr.DataArray,
     dim: str = "time",
-    index: str = "last",
+    index: Literal["first", "last"] = "last",
 ) -> xr.DataArray:
     """
     Compute the cumulative sum for each series of numbers separated by zero.
@@ -224,7 +224,7 @@ def _cumsum_reset(
 def rle(
     da: xr.DataArray,
     dim: str = "time",
-    index: str = "first",
+    index: Literal["first", "last"] = "first",
 ) -> xr.DataArray:
     """
     Run length.
@@ -280,7 +280,7 @@ def rle_statistics(
     dim: str = "time",
     freq: str | None = None,
     ufunc_1dim: str | bool = "from_context",
-    index: str = "first",
+    index: Literal["first", "last"] = "first",
 ) -> xr.DataArray:
     """
     Return the length of consecutive run of True values, according to a reducing operator.
@@ -378,8 +378,8 @@ def windowed_run_events(
     window: int,
     dim: str = "time",
     freq: str | None = None,
-    ufunc_1dim: str | bool = "from_context",
-    index: str = "first",
+    ufunc_1dim: Literal["auto", "from_context"] | bool = "from_context",
+    index: Literal["first", "last"] = "first",
 ) -> xr.DataArray:
     """
     Return the number of runs of a minimum length.
@@ -434,8 +434,8 @@ def windowed_run_count(
     window: int,
     dim: str = "time",
     freq: str | None = None,
-    ufunc_1dim: str | bool = "from_context",
-    index: str = "first",
+    ufunc_1dim: Literal["auto", "from_context"] | bool = "from_context",
+    index: Literal["first", "last"] = "first",
 ) -> xr.DataArray:
     """
     Return the number of consecutive true values in array for runs at least as long as given duration.
@@ -541,7 +541,7 @@ def _boundary_run(
     dim: str,
     freq: str | None,
     coord: str | bool | None,
-    ufunc_1dim: str | bool,
+    ufunc_1dim: Literal["auto", "from_context"] | bool,
     position: str,
 ) -> xr.DataArray:
     """
@@ -641,7 +641,7 @@ def first_run(
     dim: str = "time",
     freq: str | None = None,
     coord: str | bool | None = False,
-    ufunc_1dim: str | bool = "from_context",
+    ufunc_1dim: Literal["auto", "from_context"] | bool = "from_context",
 ) -> xr.DataArray:
     """
     Return the index of the first item of the first run of at least a given length.
@@ -691,7 +691,7 @@ def last_run(
     dim: str = "time",
     freq: str | None = None,
     coord: str | bool | None = False,
-    ufunc_1dim: str | bool = "from_context",
+    ufunc_1dim: Literal["auto", "from_context"] | bool = "from_context",
 ) -> xr.DataArray:
     """
     Return the index of the last item of the last run of at least a given length.
@@ -1212,11 +1212,11 @@ def first_run_after_date(
         Input N-dimensional DataArray (boolean).
     window : int
         Minimum duration of consecutive run to accumulate values.
-    date : DayOfYearStr
+    date : DayOfYearStr, optional
         The date after which to look for the run.
     dim : str
         Dimension along which to calculate consecutive run (default: 'time').
-    coord : Optional[Union[bool, str]]
+    coord : bool or str, optional
         If not False, the function returns values along `dim` instead of indexes.
         If `dim` has a datetime dtype, `coord` can also be a str of the name of the
         DateTimeAccessor object to use (ex: 'dayofyear').
@@ -1259,7 +1259,7 @@ def last_run_before_date(
         The date before which to look for the last event.
     dim : str
         Dimension along which to calculate consecutive run (default: 'time').
-    coord : Optional[Union[bool, str]]
+    coord : bool or str, optional
         If not False, the function returns values along `dim` instead of indexes.
         If `dim` has a datetime dtype, `coord` can also be a str of the name of the
         DateTimeAccessor object to use (ex: 'dayofyear').
@@ -1295,7 +1295,7 @@ def first_run_before_date(
         Input N-dimensional DataArray (boolean).
     window : int
         Minimum duration of consecutive run to accumulate values.
-    date : DayOfYearStr
+    date : DayOfYearStr, optional
         The date before which to look for the run.
     dim : str
         Dimension along which to calculate consecutive run (default: 'time').

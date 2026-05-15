@@ -386,7 +386,7 @@ def robustness_categories(
     # Initial map is all 99, same shape as change_frac
     robustness = (changed.copy() * 0).astype(int) + 99
     # We go in reverse gear so that the first categories have precedence in the case of multiple matches.
-    for i, ((chg_op, agr_op), (chg_thresh, agr_thresh)) in reversed(
+    for i, ((chg_op, agr_op), (chg_thresh, agr_thresh)) in reversed(  # ty: ignore[not-iterable]
         list(enumerate(zip(ops, thresholds, strict=False), 1))
     ):
         if not agr_op:

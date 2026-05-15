@@ -591,7 +591,7 @@ def open_dataset(name: str, nimbus_kwargs: dict[str, Path | str | bool] | None =
     `xarray.open_dataset` directly using the OPeNDAP URL with an appropriate backend installed (netCDF4, pydap, etc.).
     """
     if nimbus_kwargs is None:
-        nimbus_kwargs = {}
+        _open_dataset(nimbus().fetch(name), **xr_kwargs)
     return _open_dataset(nimbus(**nimbus_kwargs).fetch(name), **xr_kwargs)
 
 

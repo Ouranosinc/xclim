@@ -816,7 +816,7 @@ def time_bnds(
         time = time.indexes[time.name]
     # elif isinstance(time, DataArrayResample | DatasetResample):
     elif hasattr(time, "groupers"):
-        for grouper in time.groupers:
+        for grouper in time.groupers:  # ty: ignore[not-iterable]
             if "time" in grouper.codes.dims:
                 datetime = grouper.unique_coord.data
                 freq = freq or grouper.grouper.freq
