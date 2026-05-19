@@ -17,8 +17,6 @@ Virtual modules are also inserted here. A normal installation of xclim comes wit
 Climate Indicator Submodules
 ----------------------------
 
-.. FIXME: These mapping are not understood by sphinx-autodoc, as we are trying to import class instances, not functions/classes
-
 .. automodule:: xclim.indicators.atmos
    :members:
    :undoc-members:
