@@ -11,7 +11,7 @@ Bug fixes
 * Fix conversion error with ``xc.units.rate2amount`` and ``xc.units.amount2rate`` when ``sampling_rate_from_coord=True`` or sampling frequency is monthly or coarser and time coordinate is `cftime`-based. Previous results were 1000x too small. (:pull:`2357`).
 
 Internal changes
-^^^^^^^^^^^^^^^^ 
+^^^^^^^^^^^^^^^^
 * Fixed documentation generation with Sphinx 9 by activating the legacy `autodoc` system. (:pull:`2358`).
 
 v0.61.0 (2026-05-07)
