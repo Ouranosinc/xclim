@@ -112,7 +112,7 @@ extensions = [
 autodoc_typehints = "description"
 autodoc_typehints_format = "fully-qualified"
 autodoc_typehints_description_target = "documented_params"
-autodoc_use_legacy_class_based = True
+autodoc_use_legacy_class_based = True  # required for Indicators API with sphinx v9.0
 
 autosectionlabel_prefix_document = True
 autosectionlabel_maxdepth = 2
