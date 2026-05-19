@@ -852,8 +852,8 @@ def _rate_and_amount_converter(
         # In the case with no freq, last period as the same length as the one before.
         # In the case with freq in M, Q, A, this has been dealt with above in `time`
         # and `label` has been updated accordingly.
-        dt = time.diff(dim, label=label).reindex({dim: time}, method="ffill").astype(float)
-        dt = dt / 1e9  # Convert to seconds
+        dt = time.diff(dim, label=label).reindex({dim: time}, method="ffill")
+        dt = dt.astype("timedelta64[s]").astype(float)  # Convert to seconds
 
         if to == "amount":
             tu = (str2pint(da.units) * str2pint("s")).to_reduced_units()
