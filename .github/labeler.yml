@@ -20,7 +20,7 @@
       - '.github/workflows/*'
       - 'docs/Makefile'
       - 'pylintrc'
-      - 'tox.ini'
+      - 'tox.toml'
       - 'Makefile'
 
 'docs':

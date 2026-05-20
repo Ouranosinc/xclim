@@ -64,6 +64,9 @@ install-test: ## install dependencies needed for standard testing
 install-test-notebooks: ## install dependencies needed for doctest testing
 	python -m pip install --quiet --group test-notebooks
 
+install-typing: ## install dependencies needed for type-checking
+	python -m pip install --quiet --group typing
+
 lint: install-lint ## check style with flake8 and black
 	python -m ruff check --quiet .
 	python -m flake8 --config=.flake8 src/xclim tests
@@ -72,6 +75,10 @@ lint: install-lint ## check style with flake8 and black
 	python -m numpydoc lint src/xclim/*.py src/xclim/ensembles/*.py src/xclim/compute/*.py src/xclim/indicators/*.py src/xclim/testing/*.py
 	python -m deptry src
 	python -m yamllint --config-file=.yamllint.yaml src/xclim
+
+typing: install-typing  ## check typing with pylint and ty
+	python -m pylint -j=0 --rcfile=.pylintrc.toml --disable=import-error --exit-zero src/xclim
+	python -m ty check --ignore=unresolved-import src/xclim
 
 test: install-test ## run tests quickly with the default Python
 	python -m pytest --numprocesses=auto
@@ -129,6 +136,7 @@ install: clean ## install the package to the active Python's site-packages
 development: clean ## install the package and development dependencies in editable mode to the active Python's site-packages
 	python -m pip install --group dev
 	python -m pip install --no-user --editable ".[complete]"
+	prek install
 
 upstream: clean develop ## install the GitHub-based development branches of dependencies in editable mode to the active Python's site-packages
 	python -m pip install --no-user --requirement requirements_upstream.txt

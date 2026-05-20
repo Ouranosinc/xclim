@@ -33,6 +33,7 @@ jobs:
           egress-policy: block
           allowed-endpoints: >
             api.github.com:443
+            cdn.fwupd.org:443
 
       - name: Labeler
         uses: actions/labeler@634933edcd8ababfe52f92936142cc22ac488b1b # v6.0.1

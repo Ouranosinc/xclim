@@ -26,7 +26,7 @@ on:
       - pyproject.toml
       - src/xclim/__init__.py
       - tests/*.py
-      - tox.ini
+      - tox.toml
 
 permissions:
   contents: read
