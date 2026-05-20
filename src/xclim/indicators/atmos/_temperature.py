@@ -13,6 +13,7 @@ from xclim.core.indicator import (
     ResamplingIndicatorWithIndexing,
 )
 from xclim.core.utils import InputKind
+from xclim.indices import generic
 
 __all__ = [
     "australian_hardiness_zones",
@@ -365,7 +366,7 @@ heat_spell_frequency = Temp(
     "temperatures exceed given thresholds for a number of days.",
     cell_methods="",
     keywords="health,",
-    compute=indices.generic.bivariate_spell_length_statistics,
+    compute=generic.bivariate_spell_length_statistics,
     input={"data1": "tasmin", "data2": "tasmax"},
     parameters={
         "statistic": "count",
@@ -399,7 +400,7 @@ heat_spell_max_length = Temp(
     "Gaps of fewer than {min_gap} day(s) are allowed within a spell.",
     abstract="The longest heat spell of a period. A heat spell occurs when rolling averages of daily minimum "
     "and maximum temperatures exceed given thresholds for a number of days.",
-    compute=indices.generic.bivariate_spell_length_statistics,
+    compute=generic.bivariate_spell_length_statistics,
     input={"data1": "tasmin", "data2": "tasmax"},
     parameters={
         "statistic": "max",
@@ -433,7 +434,7 @@ heat_spell_total_length = Temp(
     "of the spell. Gaps of fewer than {min_gap} day(s) are allowed within a spell.",
     abstract="Total length of heat spells. A heat spell occurs when rolling averages of daily minimum and "
     "maximum temperatures exceed given thresholds for a number of days.",
-    compute=indices.generic.bivariate_spell_length_statistics,
+    compute=generic.bivariate_spell_length_statistics,
     input={"data1": "tasmin", "data2": "tasmax"},
     parameters={
         "statistic": "sum",

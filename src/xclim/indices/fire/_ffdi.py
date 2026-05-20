@@ -86,7 +86,7 @@ def _keetch_byram_drought_index(p, t, pa, kbdi0, kbdi: float):  # pragma: no cov
         # Limit kbdi to between 0 and 200 mm
         kbdi0 = min(max(kbdi0, 0.0), 203.2)
 
-        kbdi[d] = kbdi0  # type: ignore
+        kbdi[d] = kbdi0
 
 
 @guvectorize(
@@ -243,24 +243,24 @@ def keetch_byram_drought_index(
         """
         return _keetch_byram_drought_index(_pr, _tasmax, _pr_annual, _kbdi0)
 
-    pr = convert_units_to(pr, "mm/day", context="hydro")
-    tasmax = convert_units_to(tasmax, "C")
-    pr_annual = convert_units_to(pr_annual, "mm/year", context="hydro")
+    _pr = convert_units_to(pr, "mm/day", context="hydro")
+    _tasmax = convert_units_to(tasmax, "C")
+    _pr_annual = convert_units_to(pr_annual, "mm/year", context="hydro")
     if kbdi0 is not None:
         kbdi0 = convert_units_to(kbdi0, "mm/day", context="hydro")
     else:
-        kbdi0 = xr.full_like(pr.isel(time=0), 0)
+        kbdi0 = xr.full_like(_pr.isel(time=0), 0)
 
     kbdi: xr.DataArray = xr.apply_ufunc(
         _keetch_byram_drought_index_pass,
-        pr,
-        tasmax,
-        pr_annual,
+        _pr,
+        _tasmax,
+        _pr_annual,
         kbdi0,
         input_core_dims=[["time"], ["time"], [], []],
         output_core_dims=[["time"]],
         dask="parallelized",
-        output_dtypes=[pr.dtype],
+        output_dtypes=[_pr.dtype],
     )
     kbdi = kbdi.assign_attrs(units="mm/day")
     return kbdi
@@ -323,8 +323,8 @@ def griffiths_drought_factor(
         """
         return _griffiths_drought_factor(_pr, _smd, _lim)
 
-    pr = convert_units_to(pr, "mm/day", context="hydro")
-    smd = convert_units_to(smd, "mm/day")
+    _pr = convert_units_to(pr, "mm/day", context="hydro")
+    _smd = convert_units_to(smd, "mm/day")
 
     if limiting_func == "xlim":
         lim = 0
@@ -335,13 +335,13 @@ def griffiths_drought_factor(
 
     df: xr.DataArray = xr.apply_ufunc(
         _griffiths_drought_factor_pass,
-        pr,
-        smd,
+        _pr,
+        _smd,
         kwargs={"_lim": lim},
         input_core_dims=[["time"], ["time"]],
         output_core_dims=[["time"]],
         dask="parallelized",
-        output_dtypes=[pr.dtype],
+        output_dtypes=[_pr.dtype],
     )
     df = df.assign_attrs(units="")
 

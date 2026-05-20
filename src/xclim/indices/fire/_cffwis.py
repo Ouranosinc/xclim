@@ -136,6 +136,7 @@ from collections import OrderedDict, namedtuple
 from collections.abc import Sequence
 
 import numpy as np
+import numpy.typing as npt
 import xarray as xr
 from numba import njit, vectorize
 
@@ -394,7 +395,7 @@ def _drought_code(  # pragma: no cover
 
     Parameters
     ----------
-    t : array-like
+    t : array_like
         Noon temperature [C].
     p : array_like
         Rain fall in open over previous 24 hours, at noon [mm].
@@ -410,11 +411,11 @@ def _drought_code(  # pragma: no cover
     array_like
         Drought code at the current timestep
     """
-    fl = _day_length_factor(lat, mth)  # type: ignore
+    fl = _day_length_factor(lat, mth)
 
-    t = max(t, -2.8)  # type: ignore
+    t = max(t, -2.8)
     pe = (0.36 * (t + 2.8) + fl) / 2  # *Eq.22*#
-    pe = max(pe, 0.0)  # type: ignore
+    pe = max(pe, 0.0)
 
     if p > 2.8:
         ra = p
@@ -429,10 +430,10 @@ def _drought_code(  # pragma: no cover
             dc = pe
     else:  # f p <= 2.8:
         dc = dc0 + pe
-    return dc  # type: ignore
+    return dc
 
 
-def initial_spread_index(ws: np.ndarray, ffmc: np.ndarray) -> np.ndarray:
+def initial_spread_index(ws: npt.NDArray, ffmc: npt.NDArray) -> np.ndarray:
     """
     Initialize spread index.
 
@@ -454,15 +455,15 @@ def initial_spread_index(ws: np.ndarray, ffmc: np.ndarray) -> np.ndarray:
     return isi
 
 
-def build_up_index(dmc, dc):
+def build_up_index(dmc: npt.NDArray, dc: npt.NDArray):
     """
     Build-up index.
 
     Parameters
     ----------
-    dmc : array
+    dmc : numpy.ndarray
         Duff moisture code.
-    dc : array
+    dc : numpy.ndarray
         Drought code.
 
     Returns
@@ -485,20 +486,20 @@ def build_up_index(dmc, dc):
 
 
 # TODO: Does this need to be renamed?
-def fire_weather_index(isi: np.ndarray, bui: np.ndarray) -> np.ndarray:
+def fire_weather_index(isi: npt.NDArray, bui: npt.NDArray) -> npt.NDArray:
     """
     Fire Weather Index.
 
     Parameters
     ----------
-    isi : array-like
+    isi : numpy.ndarray
         Initial spread index.
-    bui : array-like
+    bui : numpy.ndarray
         Build Up Index.
 
     Returns
     -------
-    array-like
+    array_like
         The Fire Weather Index.
     """
     fwi = np.where(
@@ -510,18 +511,18 @@ def fire_weather_index(isi: np.ndarray, bui: np.ndarray) -> np.ndarray:
     return fwi
 
 
-def daily_severity_rating(fwi: np.ndarray) -> np.ndarray:
+def daily_severity_rating(fwi: npt.NDArray) -> npt.NDArray:
     """
     Daily Severity Rating.
 
     Parameters
     ----------
-    fwi : array-like
+    fwi : numpy.ndarray
         Fire Weather Index.
 
     Returns
     -------
-    array-like
+    numpy.ndarray
         The Daily Severity Rating.
     """
     return 0.0272 * fwi**1.77
@@ -530,7 +531,7 @@ def daily_severity_rating(fwi: np.ndarray) -> np.ndarray:
 @vectorize(nopython=True)
 def _overwintering_drought_code(
     DCf: np.ndarray, wpr: np.ndarray, a: float, b: float, minDC: int
-) -> np.ndarray | np.nan:  # pragma: no cover
+) -> np.ndarray | float:  # pragma: no cover
     """
     Compute the season-starting drought code.
 
@@ -538,9 +539,9 @@ def _overwintering_drought_code(
 
     Parameters
     ----------
-    DCf : array-like
+    DCf : array_like
         The previous season's last drought code
-    wpr : array-like
+    wpr : array_like
         The accumulated precipitation since the end of the fire season.
     a : float
         The carryover fraction from the previous season.
@@ -551,7 +552,7 @@ def _overwintering_drought_code(
 
     Returns
     -------
-    array-like or np.nan
+    array_like or float (np.nan)
         The Overwintered Drought Code.
     """
     if np.isnan(DCf) or np.isnan(wpr):
@@ -582,9 +583,9 @@ def _fire_season(
 
     Parameters
     ----------
-    tas : array-like
+    tas : array_like
         Temperature [degC], the time axis on the last position.
-    snd : array-like, optional
+    snd : array_like, optional
         Snow depth [m], time axis on the last position, used with method == 'LA08'.
     method : {"WF93", "LA08", "GFWED"}
         Which method to use. Defaults to "WF93".
@@ -1130,7 +1131,7 @@ def fire_weather_ufunc(  # noqa: C901 # numpydoc ignore=PR01,PR02
     )
 
     if tas.ndim == 1:
-        dummy_dim = get_temp_dimname(tas.dims, "dummy")  # noqa
+        dummy_dim = get_temp_dimname(tas.dims, "dummy")
         # When arrays only have the 'time' dimension, non-temporal inputs of the wrapped ufunc
         # become scalars. We add a dummy dimension so that we don't have to deal with that.
         for i, arg in enumerate(args):
@@ -1226,7 +1227,7 @@ def overwintering_drought_code(
     """
     winter_pr = convert_units_to(winter_pr, "mm")
 
-    wDC = xr.apply_ufunc(  # noqa
+    wDC = xr.apply_ufunc(
         _overwintering_drought_code,
         last_dc,
         winter_pr,

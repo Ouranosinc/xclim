@@ -2,12 +2,8 @@
 
 from __future__ import annotations
 
-import warnings
-
 from xclim import indices as xci
 from xclim.core.indicator import Daily, ResamplingIndicatorWithIndexing
-from xclim.indicators.convert import snd_to_snw as _snd_to_snw
-from xclim.indicators.convert import snw_to_snd as _snw_to_snd
 from xclim.indices import generic
 
 __all__ = [
@@ -20,7 +16,6 @@ __all__ = [
     "snd_season_length",
     "snd_season_start",
     "snd_storm_days",
-    "snd_to_snw",
     "snow_depth",
     "snow_melt_we_max",
     "snw_days_above",
@@ -30,28 +25,7 @@ __all__ = [
     "snw_season_length",
     "snw_season_start",
     "snw_storm_days",
-    "snw_to_snd",
 ]
-
-
-def snd_to_snw(*args, **kwargs):  # numpydoc ignore=GL08
-    warnings.warn(
-        "The `snd_to_snw` indicator has been moved to `xclim.indicators.convert`. "
-        "This alias will be removed in a future version.",
-        DeprecationWarning,
-        stacklevel=2,
-    )
-    return _snd_to_snw(*args, **kwargs)
-
-
-def snw_to_snd(*args, **kwargs):  # numpydoc ignore=GL08
-    warnings.warn(
-        "The `snw_to_snd` indicator has been moved to `xclim.indicators.convert`. "
-        "This alias will be removed in a future version.",
-        DeprecationWarning,
-        stacklevel=2,
-    )
-    return _snw_to_snd(*args, **kwargs)
 
 
 # We need to declare the base class here so the `land` module is detected automatically.

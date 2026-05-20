@@ -8,39 +8,76 @@ Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bo
 
 Announcements
 ^^^^^^^^^^^^^
-This release constitutes a major breaking change from the previous stable release (v0.60.x) and introduces several new features, enhancements, and API changes. Users are strongly encouraged to review the breaking changes section below to ensure compatibility with their existing codebases.
-Documentation has been updated to reflect these changes as well as to help existing users migrate to the new version.
+This release constitutes a major breaking change from the previous stable release (v0.x) and introduces several new features, enhancements, and API changes. Users are strongly encouraged to review the breaking changes section below to ensure compatibility with their existing codebases.
+Documentation has been updated to reflect these changes as well as to help existing users migrate to the new version. The `xclim` library is now considered to be production-level stable.
 
 New indicators and features
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 * This new `xclim` includes a major overhaul of the "generic" index functions which has a significant and breaking effect on most of `xclim` modules. A summary of the changes can be found `in this comment <https://github.com/Ouranosinc/xclim/pull/2258#issuecomment-3473430173>`_.
 * The `xclim` command-line tool now accepts both ``-h`` and ``--help`` to show the help summary. (:pull:`2316`).
 
+Bug fixes
+^^^^^^^^^
+* The LaTeX formulas and tables of many indice docstrings were failing to render in ReadTheDocs due to small syntax typos. These have been addressed. (:pull:`2355`).
+
 Breaking changes
 ^^^^^^^^^^^^^^^^
+* `xclim` has fully dropped Python 3.10 and `numpy` below v2.0. Python 3.11+ coding conventions are now accepted. (:pull:`2355`).
 * Major refactor of ``xclim.indices.generic`` to reduce duplication and harmonize signatures. (:pull:`2258`).
     * Generic functions from ``clix-meta`` are now in their own submodule ``xclim.indices.clix`` and some indicators in ``xclim.cf`` have changed to reflect changes in standards.
 * Legacy imports, links, and documentation for `xsdba` have been removed. (:pull:`2342`).
 * Installation recipes have been significantly modified to mimic conventions employed by `xarray` (:pull:`2316`). Most development-related recipes are now installed via ``dependency-groups`` (`PEP-735 <https://peps.python.org/pep-0735/>`_) and ``optional-dependencies`` are as follows:
     * ``dependency-groups``: ``lint`` (linting tools), ``notebooks`` (minimum for interactive notebooks), ``test`` (minimum for running tests), ``docs`` (minimum for building docs), ``test-notebooks`` (minimum for running notebook tests), ``dev`` (full suite for local development).
-    * ``optional-dependencies``: ``bias-adjustment`` (`xsdba` and others), ``performance`` (speedups), ``plot`` (plotting), ``types`` (static typing support), ``complete`` (all extras).
+    * ``optional-dependencies``: ``bias-adjustment`` (`xsdba` and others), ``performance`` (speedups), ``plot`` (plotting), ``types`` (static typing support).
+        * The ``complete`` recipe has been removed due to design issues. (:pull:`2355`).
 * For PEP-735 support, `xclim` now requires modern `pip` (>=25.2). (:pull:`2316`) and `tox` (>=4.34). (:pull:`2316`).
+* `mypy` has been replaced with `ty` as the type checking/inferencing tool and is now run on GitHub Workflows alongside `pylint`. While most checks are currently disabled, these will be progressively enforced in subsequent updates. (:pull:`2355`).
+* Previously deprecated indicators have been removed:
+    * ``xclim.indicators.land.snd_to_snow`` -> ``xclim.indicators.convert.snd_to_snow``
+    * ``xclim.indicators.land.snow_to_snd`` -> ``xclim.indicators.convert.snow_to_snd``
+    * ``xclim.indicators.convert.tg`` -> ``xclim.indicators.convert.mean_temperature_from_max_and_min``
+* The required versions for many core dependencies have been updated: `numba` (>=0.60.0), `numpy` (>=2.0), `pip` (>=26.1), `scikit-learn` (>=1.5.0), `xarray` (>=2024.6.0,!=2024.10.0). (:pull:`2355`).
+* `pre-commit` has been replaced by `prek`. `prek` is a `pre-commit-config.yml` compatible reimplementation built in Rust. (:pull:`2355`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
 * The `Makefile` has been adjusted to install libraries in advance (via ``python -m pip install --silent --group ...``) when attempting to run commands reliant on specific Python tools. (:pull:`2316`).
 * `tox.toml` has been updated to use ``dependency-groups`` to determine necessary libraries needed for environments, and relies entirely on the `Makefile` for running checks. (:pull:`2316`).
 * Documentation has been adjusted to reflect changes to environment setup required by developers/contributors. (:pull:`2316`).
+* The `Makefile` now defines typing-relevant checks (``make typing``; dependent on ``make install-typing``) that are enforced in GitHub Workflows. (:pull:`2355`).
+* Call signature typing for many indices have been better identified. The ``cast`` function (used to force expected variable types of internal objects) is now less prevalent within the code base. (:pull:`2355`).
+* `tox.toml` now uses the build-composition API, requiring `tox` (>=4.52.0). (:pull:`2355`).
 
-v0.61.0 (unreleased)
+v0.61.1 (unreleased)
+--------------------
+Contributors to this version: Pascal Bourgault (:user:`aulemahal`).
+
+Bug fixes
+^^^^^^^^^
+* Fix conversion error with ``xc.units.rate2amount`` and ``xc.units.amount2rate`` when ``sampling_rate_from_coord=True`` or sampling frequency is monthly or coarser and time coordinate is `cftime`-based. Previous results were 1000x too small. (:pull:`2357`).
+
+v0.61.0 (2026-05-07)
 --------------------
 Contributors to this version: Pascal Bourgault (:user:`aulemahal`), Trevor James Smith (:user:`Zeitsperre`), Hui-Min Wang (:user:`Hem-W`), Éric Dupuis (:user:`coxipi`).
+
+Announcements
+^^^^^^^^^^^^^
+**The next major release of xclim will be v1.0**. This new version will have some significant breaking changes such as:
+
+* Migration of ``xclim.indices`` module into the new ``xclim.compute`` module for more efficient indicator composition.
+* ``xclim.indicators.generic`` refactoring to remove lots of redundant code in favour of more standardized and easier-to-use primitive functions.
+
+Users should expect that existing scripts may need to be updated in order to continue operating as usual. The `xclim` developers may release some patch versions to address small issues before `v1.0`.
+We suggest temporarily pinning your dependencies (``xclim <1.0``) if your workflows require significant effort to adapt to changes, particularly if they depend on direct calls within ``xclim.indices``.
+A migration guide will be made available within the official documentation.
+
+`For more information on what will comprise the next major release and some future goals of xclim v1.0, consult the meta-issue here:` :issue:`2352`.
 
 New indicators and features
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 * ``xclim.indices.generic.doymin`` and ``xclim.indices.generic.doymax`` will now return `nan` if all values along the time axis are the same. They now also support all-nan arrays (:pull:`2314`).
     + This changes the behaviour for indicators ``land.snw_max_doy``, ``land.snd_max_doy``, ``land.doy_qmin`` and ``land.doy_qmax``.
-* Added two `zero_inflated` arguments to `standardized_index` and `standardized_precipitation_index` to control how zero-precipitation probabilities are handled. (:issue:`2279`, :pull:`2280`).
+* Added two `zero_inflated` arguments to ``xclim.indices.stats.standardized_index`` and ``xclim.indices.standardized_precipitation_index`` to control how zero-precipitation probabilities are handled. (:issue:`2279`, :pull:`2280`).
 * ``xclim.indices.stats.parametric_pdf`` allows to compute PDF distributions with given input parameters and values  (:pull:`2323`).
 * ``xclim.indices.standardized_precipitation_index`` and ``xclim.indices.standardized_precipitation_evapotranspiration_index`` now can accept `genextreme` and `lognorm` as inputs for `dist`. (:issue:`2326`, :pull:`2327`).
 
@@ -52,6 +89,9 @@ Internal changes
     * Updated the `pre-commit` hooks (`check-jsonschema`) in order to accept the latest supported conda version in ReadTheDocs config.
     * Set ``docs/conf.py`` to ignore `sphinx_autodoc_typehints.guarded_import` errors raised by `xarray` type guarding.
 * Set `SocketBlockedError` to be a subset of the `Exception` class when `pytest-socket` is not installed. (:pull:`2324`).
+* Carbon and energy reporting via `green-coding-solutions/eco-ci-energy-estimation` has been configured to better aggregate results for the xclim `main` branch as well as for all Pull Requests. (:pull:`2090`).
+* `xclim` now has a set of guidance documents on the kinds of AI-assisted contributions that are considered acceptable and how they must be disclosed (``AGENTS.md``, ``AI_POLICY.md``, new section in ``CONTRIBUTING.rst``). (:issue:`2321`, :pull:`2346`).
+* The ``README.rst`` file now shows the Ouranos logo. In rendered documentation, the logo style is dynamic to the light/dark theming. (:pull:`2349`).
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
@@ -59,7 +99,8 @@ Breaking changes
 
 Bug fixes
 ^^^^^^^^^
-* `dist` in ``xclim.indices.standardized_index`` can now be a `scipy.stats.rv_continuous` as it was planned.  (:issue:`2326`, :pull:`2327`).
+* `dist` in ``xclim.indices.standardized_index`` can now be a `scipy.stats.rv_continuous` as previously announced. (:issue:`2326`, :pull:`2327`).
+* `sphinx-autodoc-typehints` has been pinned due to recent build failures on ReadTheDocs. (:pull:`2090`).
 
 v0.60.0 (2026-01-23)
 --------------------
