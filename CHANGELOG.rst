@@ -22,6 +22,7 @@ Bug fixes
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
+* `xclim` has fully dropped Python 3.10 and `numpy` below v2.0. Python 3.11+ coding conventions are now accepted. (:pull:`2355`).
 * Major refactor of ``xclim.indices.generic`` to reduce duplication and harmonize signatures. (:pull:`2258`).
     * Generic functions from ``clix-meta`` are now in their own submodule ``xclim.indices.clix`` and some indicators in ``xclim.cf`` have changed to reflect changes in standards.
 * Legacy imports, links, and documentation for `xsdba` have been removed. (:pull:`2342`).
@@ -36,7 +37,7 @@ Breaking changes
     * ``xclim.indicators.land.snow_to_snd`` -> ``xclim.indicators.convert.snow_to_snd``
     * ``xclim.indicators.convert.tg`` -> ``xclim.indicators.convert.mean_temperature_from_max_and_min``
 * The required versions for many core dependencies have been updated: `numba` (>=0.60.0), `numpy` (>=2.0), `pip` (>=26.1), `scikit-learn` (>=1.5.0), `xarray` (>=2024.6.0,!=2024.10.0). (:pull:`2355`).
-* `pre-commit` has been replaced by `prek`. `prek` is a `pre-commit-config.yml` compatible
+* `pre-commit` has been replaced by `prek`. `prek` is a `pre-commit-config.yml` compatible reimplementation built in Rust. (:pull:`2355`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
