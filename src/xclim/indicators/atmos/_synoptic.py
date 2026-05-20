@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from xclim import indices
+from xclim import compute
 from xclim.core.indicator import Indicator
 
 __all__ = ["jetstream_metric_woollings"]
@@ -27,5 +27,5 @@ jetstream_metric_woollings = JetStream(
         "Daily latitude of maximum Lanczos smoothed zonal wind speed.",
         "Daily maximum strength of Lanczos smoothed zonal wind speed.",
     ],
-    compute=indices.jetstream_metric_woollings,
+    compute=compute.jetstream_metric_woollings,
 )

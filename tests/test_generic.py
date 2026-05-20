@@ -6,8 +6,8 @@ import numpy as np
 import pytest
 import xarray as xr
 
+from xclim.compute import generic, helpers, run_length
 from xclim.core.calendar import doy_to_days_since, select_time
-from xclim.indices import generic, helpers, run_length
 from xclim.testing.helpers import assert_lazy
 
 K2C = 273.15

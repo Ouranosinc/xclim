@@ -13,6 +13,7 @@ import xarray as xr
 
 import xclim
 from xclim import __version__, atmos
+from xclim.compute import tg_mean
 from xclim.core import VARIABLES, MissingVariableError, Quantified
 from xclim.core.calendar import select_time
 from xclim.core.formatting import (
@@ -25,7 +26,6 @@ from xclim.core.formatting import (
 from xclim.core.indicator import Daily, Indicator, ResamplingIndicator, registry
 from xclim.core.units import convert_units_to, declare_units, units
 from xclim.core.utils import InputKind
-from xclim.indices import tg_mean
 from xclim.testing import list_input_variables
 
 try:
@@ -551,11 +551,11 @@ def test_doc():
     doc = xclim.atmos.cffwis_indices.__doc__
     assert doc.startswith("Canadian Fire Weather Index System indices. (realm: atmos)")
     assert "This indicator will check for missing values according to the method" in doc
-    assert "Based on indice :py:func:`~xclim.indices.fire._cffwis.cffwis_indices`." in doc
+    assert "Based on function :py:func:`~xclim.compute.fire._cffwis.cffwis_indices`." in doc
     assert "ffmc0 : str or DataArray, optional" in doc
     assert "Returns\n-------" in doc
     assert "See :cite:t:`code-natural_resources_canada_data_nodate`, " in doc
-    assert "the :py:mod:`xclim.indices.fire` module documentation," in doc
+    assert "the :py:mod:`xclim.compute.fire` module documentation," in doc
     assert "and the docstring of :py:func:`fire_weather_ufunc` for more information." in doc
 
 
@@ -591,7 +591,7 @@ def test_parse_doc():
     assert "references" not in doc
     assert doc["long_name"] == "The mean daily temperature at the given time frequency."
 
-    doc = parse_doc(xclim.indices.converters.saturation_vapor_pressure.__doc__)
+    doc = parse_doc(xclim.compute.converters.saturation_vapor_pressure.__doc__)
     assert doc["parameters"]["ice_thresh"]["description"] == (
         "Threshold temperature under which to switch to equations in reference to ice instead of water. "
         "If None (default) everything is computed with reference to water. "

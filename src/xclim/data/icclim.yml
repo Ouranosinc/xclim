@@ -5,8 +5,7 @@ doc: |
 
   The European Climate Assessment & Dataset project (`ECAD`_) defines a set of 26 core climate indices. Those have been
   made accessible directly in xclim through their ECAD name for compatibility. However, the methods in this module are
-  only wrappers around the corresponding methods of `xclim.indices`. Note that none of the checks performed by the
-  `xclim.utils.Indicator` class (like with `xclim.atmos` indicators)are performed in this module.
+  only wrappers around the corresponding methods of `xclim.compute`.
 
   .. _ECAD: https://www.ecad.eu/
 realm: atmos

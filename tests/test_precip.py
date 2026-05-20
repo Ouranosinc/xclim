@@ -5,7 +5,7 @@ import pandas as pd
 import pytest
 import xarray as xr
 
-import xclim.indices as xci
+import xclim.compute as xci
 from xclim import atmos, convert, core, set_options
 from xclim.core.calendar import build_climatology_bounds, percentile_doy
 from xclim.core.units import convert_units_to

@@ -22,8 +22,8 @@ import xarray as xr
 from scipy.stats.mstats import mquantiles
 
 from xclim import ensembles
+from xclim.compute.stats import get_dist
 from xclim.core.missing import AtLeastNValid
-from xclim.indices.stats import get_dist
 
 
 # sklearn's KMeans doesn't accept the standard numpy Generator, so we create a special fixture for these tests

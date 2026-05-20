@@ -22,6 +22,7 @@ Bug fixes
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
+* Module ``xclim.indices``  has been renamed to ``xclim.compute``. The functions made to build indicators are now called "[index-like] compute functions" and the word "indices" is now used avoided when possible. (:issue:`2320`, :pull:`2330`).
 * `xclim` has fully dropped Python 3.10 and `numpy` below v2.0. Python 3.11+ coding conventions are now accepted. (:pull:`2355`).
 * Major refactor of ``xclim.indices.generic`` to reduce duplication and harmonize signatures. (:pull:`2258`).
     * Generic functions from ``clix-meta`` are now in their own submodule ``xclim.indices.clix`` and some indicators in ``xclim.cf`` have changed to reflect changes in standards.

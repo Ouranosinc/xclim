@@ -4,13 +4,7 @@ from __future__ import annotations
 
 from xarray import DataArray
 
-from xclim.core.cfchecks import check_valid
-from xclim.core.indicator import (
-    ReducingIndicator,
-    ResamplingIndicator,
-    StandardizedIndexes,
-)
-from xclim.indices import (
+from xclim.compute import (
     base_flow_index,
     flow_index,
     generic,
@@ -19,6 +13,12 @@ from xclim.indices import (
     rb_flashiness_index,
     standardized_groundwater_index,
     standardized_streamflow_index,
+)
+from xclim.core.cfchecks import check_valid
+from xclim.core.indicator import (
+    ReducingIndicator,
+    ResamplingIndicator,
+    StandardizedIndexes,
 )
 
 __all__ = [

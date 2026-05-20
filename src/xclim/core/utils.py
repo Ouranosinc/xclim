@@ -1,8 +1,8 @@
 """
-Miscellaneous Indices Utilities
-===============================
+Miscellaneous Utilities
+=======================
 
-Helper functions for the indices computations, indicator construction and other things.
+Helper functions for the computations, indicator construction and other things.
 """
 
 from __future__ import annotations
@@ -565,7 +565,7 @@ class InputKind(IntEnum):
     :py:attr:`xclim.core.indicator.Indicator.parameters`. The integer value is what gets stored in the output
     of :py:meth:`xclim.core.indicator.Indicator.json`.
 
-    For developers : for each constant, the docstring specifies the annotation a parameter of an indice function
+    For developers : for each constant, the docstring specifies the annotation a parameter of a compute function
     should use in order to be picked up by the indicator constructor. Notice that we are using the annotation format
     as described in `PEP 604 <https://peps.python.org/pep-0604/>`_, i.e. with '|' indicating a union and without import
     objects from `typing`.
@@ -604,7 +604,7 @@ class InputKind(IntEnum):
 
        Annotation : ``str`` or ``str | None``. In most cases, this kind of parameter makes sense
        with choices indicated in the docstring's version of the annotation with curly braces.
-       See :ref:`notebooks/extendxclim:Defining new indices`.
+       See :ref:`notebooks/extendxclim:Defining new compute functions`.
     """
     DAY_OF_YEAR = 6
     """A date, but without a year, in the MM-DD format.
@@ -646,7 +646,7 @@ class InputKind(IntEnum):
     DATASET = 70
     """An xarray dataset.
 
-       Developers : as indices only accept DataArrays, this should only be added on the indicator's constructor.
+       Developers : as compute functions only accept DataArrays, this should only be added by the indicator.
     """
     OTHER_PARAMETER = 99
     """An object that fits None of the previous kinds.
@@ -744,7 +744,7 @@ def make_clix_meta_yaml(  # noqa: C901
     adapted : os.PathLike
         The path where to write the adapted yaml.
     """
-    from ..indices import clix
+    from ..compute import clix
 
     freq_defs = {"annual": "YS", "seasonal": "QS-DEC", "monthly": "MS", "weekly": "W"}
 
