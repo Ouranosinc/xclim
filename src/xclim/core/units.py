@@ -22,6 +22,7 @@ import pandas as pd
 import pint
 import xarray as xr
 from boltons.funcutils import wraps
+from xarray.coding import cftime_offsets
 from yaml import safe_load
 
 from xclim.core._exceptions import ValidationError
@@ -138,7 +139,7 @@ def _register_conversion(conversion, direction):
 
 
 def units2pint(
-    value: xr.DataArray | units.Unit | units.Quantity | dict | str,
+    value: xr.DataArray | pint.Unit | pint.Quantity | dict | str,
 ) -> pint.Unit:
     """
     Return the pint Unit for the DataArray units.
@@ -202,7 +203,7 @@ def units2pint(
     return pu
 
 
-def pint2cfunits(value: units.Quantity | units.Unit) -> str:
+def pint2cfunits(value: pint.Quantity | pint.Unit) -> str:
     """
     Return a CF-compliant unit string from a `pint` unit.
 
@@ -223,7 +224,7 @@ def pint2cfunits(value: units.Quantity | units.Unit) -> str:
     return f"{value:~cf}" or "1"
 
 
-def pint2cfattrs(value: units.Quantity | units.Unit, is_difference=None) -> dict:
+def pint2cfattrs(value: pint.Quantity | pint.Unit, is_difference=None) -> dict:
     """
     Return CF-compliant units attributes from a `pint` unit.
 
@@ -332,8 +333,8 @@ def str2pint(val: str) -> pint.Quantity:
 
 # FIXME: The typing here is difficult to determine, as Generics cannot be used to track the type of the output.
 def convert_units_to(
-    source: Quantified | xr.Dataset | DataTree,
-    target: Quantified | units.Unit | dict,
+    source: Quantified | xr.Dataset | DataTree,  # ty: ignore[invalid-type-form]
+    target: Quantified | pint.Unit | dict,
     context: Literal["infer", "hydro", "none"] | None = None,
 ) -> xr.DataArray | float | xr.Dataset:
     """
@@ -587,7 +588,7 @@ def ensure_absolute_temperature(units: str) -> str:
     return units
 
 
-def ensure_delta(unit: xr.DataArray | str | units.Quantity) -> str:
+def ensure_delta(unit: xr.DataArray | str | pint.Quantity) -> str:
     """
     Return delta units for temperature.
 
@@ -826,7 +827,7 @@ def _rate_and_amount_converter(
                 if isinstance(start, pd.Timestamp):
                     start = start - pd.tseries.frequencies.to_offset(freq)
                 else:
-                    start = start - xr.coding.cftime_offsets.to_offset(freq)
+                    start = start - cftime_offsets.to_offset(freq)
                 # In the diff below, assign to upper label!
                 label = "upper"
             # We generate "time" with an extra element, so we do not need to repeat the last element below.

@@ -8,29 +8,45 @@ Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bo
 
 Announcements
 ^^^^^^^^^^^^^
-This release constitutes a major breaking change from the previous stable release (v0.60.x) and introduces several new features, enhancements, and API changes. Users are strongly encouraged to review the breaking changes section below to ensure compatibility with their existing codebases.
-Documentation has been updated to reflect these changes as well as to help existing users migrate to the new version.
+This release constitutes a major breaking change from the previous stable release (v0.x) and introduces several new features, enhancements, and API changes. Users are strongly encouraged to review the breaking changes section below to ensure compatibility with their existing codebases.
+Documentation has been updated to reflect these changes as well as to help existing users migrate to the new version. The `xclim` library is now considered to be production-level stable.
 
 New indicators and features
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 * This new `xclim` includes a major overhaul of the "generic" index functions which has a significant and breaking effect on most of `xclim` modules. A summary of the changes can be found `in this comment <https://github.com/Ouranosinc/xclim/pull/2258#issuecomment-3473430173>`_.
 * The `xclim` command-line tool now accepts both ``-h`` and ``--help`` to show the help summary. (:pull:`2316`).
 
+Bug fixes
+^^^^^^^^^
+* The LaTeX formulas and tables of many indice docstrings were failing to render in ReadTheDocs due to small syntax typos. These have been addressed. (:pull:`2355`).
+
 Breaking changes
 ^^^^^^^^^^^^^^^^
+* `xclim` has fully dropped Python 3.10 and `numpy` below v2.0. Python 3.11+ coding conventions are now accepted. (:pull:`2355`).
 * Major refactor of ``xclim.indices.generic`` to reduce duplication and harmonize signatures. (:pull:`2258`).
     * Generic functions from ``clix-meta`` are now in their own submodule ``xclim.indices.clix`` and some indicators in ``xclim.cf`` have changed to reflect changes in standards.
 * Legacy imports, links, and documentation for `xsdba` have been removed. (:pull:`2342`).
 * Installation recipes have been significantly modified to mimic conventions employed by `xarray` (:pull:`2316`). Most development-related recipes are now installed via ``dependency-groups`` (`PEP-735 <https://peps.python.org/pep-0735/>`_) and ``optional-dependencies`` are as follows:
     * ``dependency-groups``: ``lint`` (linting tools), ``notebooks`` (minimum for interactive notebooks), ``test`` (minimum for running tests), ``docs`` (minimum for building docs), ``test-notebooks`` (minimum for running notebook tests), ``dev`` (full suite for local development).
-    * ``optional-dependencies``: ``bias-adjustment`` (`xsdba` and others), ``performance`` (speedups), ``plot`` (plotting), ``types`` (static typing support), ``complete`` (all extras).
+    * ``optional-dependencies``: ``bias-adjustment`` (`xsdba` and others), ``performance`` (speedups), ``plot`` (plotting), ``types`` (static typing support).
+        * The ``complete`` recipe has been removed due to design issues. (:pull:`2355`).
 * For PEP-735 support, `xclim` now requires modern `pip` (>=25.2). (:pull:`2316`) and `tox` (>=4.34). (:pull:`2316`).
+* `mypy` has been replaced with `ty` as the type checking/inferencing tool and is now run on GitHub Workflows alongside `pylint`. While most checks are currently disabled, these will be progressively enforced in subsequent updates. (:pull:`2355`).
+* Previously deprecated indicators have been removed:
+    * ``xclim.indicators.land.snd_to_snow`` -> ``xclim.indicators.convert.snd_to_snow``
+    * ``xclim.indicators.land.snow_to_snd`` -> ``xclim.indicators.convert.snow_to_snd``
+    * ``xclim.indicators.convert.tg`` -> ``xclim.indicators.convert.mean_temperature_from_max_and_min``
+* The required versions for many core dependencies have been updated: `numba` (>=0.60.0), `numpy` (>=2.0), `pip` (>=26.1), `scikit-learn` (>=1.5.0), `xarray` (>=2024.6.0,!=2024.10.0). (:pull:`2355`).
+* `pre-commit` has been replaced by `prek`. `prek` is a `pre-commit-config.yml` compatible reimplementation built in Rust. (:pull:`2355`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
 * The `Makefile` has been adjusted to install libraries in advance (via ``python -m pip install --silent --group ...``) when attempting to run commands reliant on specific Python tools. (:pull:`2316`).
 * `tox.toml` has been updated to use ``dependency-groups`` to determine necessary libraries needed for environments, and relies entirely on the `Makefile` for running checks. (:pull:`2316`).
 * Documentation has been adjusted to reflect changes to environment setup required by developers/contributors. (:pull:`2316`).
+* The `Makefile` now defines typing-relevant checks (``make typing``; dependent on ``make install-typing``) that are enforced in GitHub Workflows. (:pull:`2355`).
+* Call signature typing for many indices have been better identified. The ``cast`` function (used to force expected variable types of internal objects) is now less prevalent within the code base. (:pull:`2355`).
+* `tox.toml` now uses the build-composition API, requiring `tox` (>=4.52.0). (:pull:`2355`).
 
 v0.61.1 (unreleased)
 --------------------

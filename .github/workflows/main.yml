@@ -69,7 +69,7 @@ jobs:
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
-      - name: Set up Python3
+      - name: Set up Python${{ matrix.python-version }}
         uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
           python-version: ${{ matrix.python-version }}
@@ -90,9 +90,9 @@ jobs:
             ${{ matrix.testdata-cache }}
             .tox
           key: ${{ runner.os }}-xclim-testdata-${{ env.XCLIM_TESTDATA_BRANCH }}-${{ hashFiles('pyproject.toml', 'tox.ini') }}-lint
-      - name: Run pylint
+      - name: Run typing checks
         run: |
-          python -m pylint --rcfile=.pylintrc.toml --disable=import-error --exit-zero src/xclim
+          make typing
       - name: Run linting suite
         run: |
           python -m tox -e lint
@@ -208,7 +208,7 @@ jobs:
         # Linux builds
         os: [ 'ubuntu-latest', ]
         testdata-cache: [ '~/.cache/xclim-testdata' ]
-        python-version: [ "3.10", "3.12", "3.13", "3.14" ]
+        python-version: [ "3.12", "3.13", "3.14" ]
         markers: [ "-m not slow" ]
         include:
           # macOS build
@@ -227,13 +227,13 @@ jobs:
           - os: 'ubuntu-latest'
             testdata-cache: '~/.cache/xclim-testdata'
             markers: '' # Markers handled by tox + Slow tests
-            python-version: "3.11"
+            python-version: "3.12"
             tox-env: 'offline'
           ## Linux notebooks
           - os: 'ubuntu-latest'
             testdata-cache: '~/.cache/xclim-testdata'
             markers: '' # No markers for notebooks
-            python-version: "3.11"
+            python-version: "3.12"
             tox-env: 'notebooks'
           ## Linux doctests
           - os: 'ubuntu-latest'
@@ -333,7 +333,7 @@ jobs:
         run: |
           python -m tox -e ${{ matrix.tox-env }} -- ${{ matrix.markers }}
       - name: Report Coverage
-        if: ${{ matrix.tox-env == '' || matrix.tox-env == null }}
+        if: ${{ matrix.tox-env != 'notebooks' }}
         uses: coverallsapp/github-action@5cbfd81b66ca5d10c19b062c04de0199c215fb6e # v2.3.7
         with:
           flag-name: run-${{ matrix.python-version }}-${{ matrix.os }}-${{ matrix.tox-env }}

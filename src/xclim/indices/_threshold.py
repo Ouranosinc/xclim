@@ -1555,10 +1555,10 @@ def last_spring_frost(
     --------
     The default `freq` and `before_date` parameters are valid for the Northern Hemisphere.
     """
-    thresh = convert_units_to(thresh, tasmin)
-    cond = compare(tasmin, op, thresh, constrain=("<", "<="))
+    _thresh = convert_units_to(thresh, tasmin)
+    cond = compare(tasmin, op, _thresh, constrain=("<", "<="))
 
-    out = resample_map(
+    out: xarray.DataArray = resample_map(
         cond,
         "time",
         freq,
@@ -1734,10 +1734,10 @@ def first_snowfall(
     ----------
     :cite:cts:`cbcl_climate_2020`.
     """
-    thresh = convert_units_to(thresh, prsn, context="hydro")
-    cond = prsn >= thresh
+    _thresh = convert_units_to(thresh, prsn, context="hydro")
+    cond = prsn >= _thresh
 
-    out = resample_map(
+    out: xarray.DataArray = resample_map(
         cond,
         "time",
         freq,
@@ -1790,10 +1790,10 @@ def last_snowfall(
     ----------
     :cite:cts:`cbcl_climate_2020`.
     """
-    thresh = convert_units_to(thresh, prsn, context="hydro")
-    cond = prsn >= thresh
+    _thresh = convert_units_to(thresh, prsn, context="hydro")
+    cond = prsn >= _thresh
 
-    out = resample_map(
+    out: xarray.DataArray = resample_map(
         cond,
         "time",
         freq,
@@ -1931,7 +1931,7 @@ def snowfall_intensity(
 
     Returns
     -------
-    xarray.DataArray,
+    xarray.DataArray
         Mean daily liquid water equivalent snowfall rate during days where snowfall exceeds a threshold.
 
     Warnings
@@ -1950,12 +1950,12 @@ def snowfall_intensity(
     ----------
     :cite:cts:`frei_snowfall_2018`.
     """
-    thresh = convert_units_to(thresh, "mm/day", context="hydro")
+    _thresh = convert_units_to(thresh, "mm/day", context="hydro")
     lwe_prsn = convert_units_to(prsn, "mm/day", context="hydro")
 
-    cond = lwe_prsn >= thresh
+    cond = lwe_prsn >= _thresh
     mean = lwe_prsn.where(cond).resample(time=freq).mean(dim="time")
-    snow_int = mean.fillna(0)
+    snow_int: xarray.DataArray = mean.fillna(0)
     snow_int = snow_int.assign_attrs(units=lwe_prsn.units)
     return snow_int
 
@@ -2098,17 +2098,17 @@ def heating_degree_days_approximation(
     # Where tas <= thresh < tasmax; HDD = (thresh - tasmin)/2 - (tasmax - thresh)/4
     # Where tasmin < thresh < tas; HDD = (thresh - tasmin)/4
     # Where tasmin >= thresh; HDD = 0
-    thresh = convert_units_to(thresh, tasmax)
-    tasmax = convert_units_to(tasmax, tas)
-    tasmin = convert_units_to(tasmin, tas)
+    _thresh = convert_units_to(thresh, tasmax)
+    _tasmax = convert_units_to(tasmax, tas)
+    _tasmin = convert_units_to(tasmin, tas)
 
     hdd = xarray.where(
-        tasmax <= thresh,
-        thresh - tas,
+        _tasmax <= _thresh,
+        _thresh - tas,
         xarray.where(
-            tas <= thresh,
-            (thresh - tasmin) / 2 - (tasmax - thresh) / 4,
-            xarray.where(tasmin <= thresh, (thresh - tasmin) / 4, 0),
+            tas <= _thresh,
+            (_thresh - _tasmin) / 2 - (_tasmax - _thresh) / 4,
+            xarray.where(_tasmin <= _thresh, (_thresh - _tasmin) / 4, 0),
         ),
     )
     hdd = hdd.resample(time=freq).sum(dim="time")
@@ -3237,10 +3237,8 @@ def degree_days_exceedance_date(
     .. math::
 
        \begin{cases}
-       ST < \sum_{i=i_0}^{k} \max(TG_{ij} - T, 0) & \text{if $op$ is '>'} \\
-       ST < \sum_{i=i_0}^{k} \max(T - TG_{ij}, 0) & \text{if $op$ is '<'}
-       ST < \sum_{i=i_0}^{k} \max(T - TG_{ij}, 0) & \text{if $op$ is '<'}
-       \end{cases}
+       ST < \sum_{i=i_0}^{k} \max(TG_{ij} - T, 0) & \text{if $op$ is '>' | '>='} \\
+       ST < \sum_{i=i_0}^{k} \max(T - TG_{ij}, 0) & \text{if $op$ is '<' | '<='}
        \end{cases}
 
     The resulting :math:`k` is expressed as a day of year.
@@ -3248,25 +3246,25 @@ def degree_days_exceedance_date(
     Cumulated degree days have numerous applications including plant and insect phenology.
     See: https://en.wikipedia.org/wiki/Growing_degree-day for examples (:cite:t:`wikipedia_contributors_growing_2021`).
     """
-    thresh = convert_units_to(thresh, "K")
-    tas = convert_units_to(tas, "K")
-    sum_thresh = convert_units_to(sum_thresh, "K days")
+    _thresh = convert_units_to(thresh, "K")
+    _tas = convert_units_to(tas, "K")
+    _sum_thresh = convert_units_to(sum_thresh, "K days")
 
     if op in ["<", "lt", "<=", "le"]:
-        c = thresh - tas
+        c = _thresh - _tas
     elif op in [">", "gt", ">=", "ge"]:
-        c = tas - thresh
+        c = _tas - _thresh
     else:
         raise NotImplementedError(f"op: '{op}'.")
 
     def _exceedance_date(grp):
         strt_idx = rl.index_of_date(grp.time, after_date, max_idxs=1, default=0)
         if strt_idx.size == 0:  # The date is not within the group. Happens at boundaries.
-            return xarray.full_like(grp.isel(time=0), np.nan, float).drop_vars("time")  # type: ignore
+            return xarray.full_like(grp.isel(time=0), np.nan, float).drop_vars("time")
         cumsum = grp.where(grp.time >= grp.time[strt_idx][0]).cumsum("time")
 
         out = rl.first_run_after_date(
-            cumsum > sum_thresh,
+            cumsum > _sum_thresh,
             window=1,
             date=None,
         )
@@ -3277,10 +3275,10 @@ def degree_days_exceedance_date(
             never_reached_val = doy_from_string(DayOfYearStr(never_reached), grp.time.dt.year[0], grp.time.dt.calendar)
         else:
             never_reached_val = never_reached
-        return xarray.where((cumsum <= sum_thresh).all("time"), never_reached_val, out)
+        return xarray.where((cumsum <= _sum_thresh).all("time"), never_reached_val, out)
 
-    dded = resample_map(c.clip(0), "time", freq, _exceedance_date)
-    dded = dded.assign_attrs(units="", is_dayofyear=np.int32(1), calendar=get_calendar(tas))
+    dded: xarray.DataArray = resample_map(c.clip(0), "time", freq, _exceedance_date)
+    dded = dded.assign_attrs(units="", is_dayofyear=np.int32(1), calendar=get_calendar(_tas))
     return dded
 
 

@@ -81,15 +81,15 @@ def test_normal_computation(tasmin_series, tasmax_series, pr_series, tmp_path, i
     tasmin = tasmin_series(np.ones(366) + 270.15, start="1/1/2000")
     tasmax = tasmax_series(np.ones(366) + 272.15, start="1/1/2000")
     pr = pr_series(np.ones(366), start="1/1/2000")
-    with pytest.warns(DeprecationWarning):
-        ds = xr.Dataset(
-            data_vars={
-                "tasmin": tasmin,
-                "tasmax": tasmax,
-                "tas": xclim.convert.tg(tasmin, tasmax),
-                "pr": pr,
-            }
-        )
+    ds = xr.Dataset(
+        data_vars={
+            "tasmin": tasmin,
+            "tasmax": tasmax,
+            "tas": xclim.convert.mean_temperature_from_max_and_min(tasmin=tasmin, tasmax=tasmax),
+            "pr": pr,
+        }
+    )
+
     input_file = tmp_path / "in.nc"
     output_file = tmp_path / "out.nc"
 
