@@ -2,7 +2,7 @@
 Changelog
 =========
 
-v0.61.1 (unreleased)
+v0.61.1 (2026-05-25)
 --------------------
 Contributors to this version: Pascal Bourgault (:user:`aulemahal`).
 
@@ -12,7 +12,7 @@ Bug fixes
 
 Internal changes
 ^^^^^^^^^^^^^^^^
-* Fixed documentation generation with Sphinx 9 by activating the legacy `autodoc` system. (:pull:`2358`).
+* Fixed documentation generation with Sphinx v9.0 by activating the legacy `autodoc` system. (:pull:`2358`).
 
 v0.61.0 (2026-05-07)
 --------------------
