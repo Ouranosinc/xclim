@@ -57,6 +57,7 @@ jobs:
           egress-policy: block
           allowed-endpoints: >
             api.github.com:443
+
       - name: Find Warning Comment
         uses: peter-evans/find-comment@b30e6a3c0ed37e7c023ccd3f1db5c6c0b0c23aad # v4.0.0
         id: fc_warning
@@ -64,6 +65,7 @@ jobs:
           issue-number: ${{ github.event.pull_request.number }}
           comment-author: 'github-actions[bot]'
           body-includes: This Pull Request is coming from a fork and must be manually tagged `approved` in order to perform additional testing.
+
       - name: Update Warning Comment
         if: |
           (steps.fc_warning.outputs.comment-id == '') &&
@@ -77,6 +79,7 @@ jobs:
             > [!WARNING]
             > This Pull Request is coming from a fork and must be manually tagged `approved` in order to perform additional testing.
           edit-mode: replace
+
       - name: Find Note Comment
         uses: peter-evans/find-comment@b30e6a3c0ed37e7c023ccd3f1db5c6c0b0c23aad # v4.0.0
         id: fc_note
@@ -84,6 +87,7 @@ jobs:
           issue-number: ${{ github.event.pull_request.number }}
           comment-author: 'github-actions[bot]'
           body-includes: This Pull Request has been manually approved for additional testing!
+
       - name: Update Note Comment
         if: |
           (steps.fc_note.outputs.comment-id == '') &&
