@@ -2,6 +2,17 @@
 Changelog
 =========
 
+v0.61.2 (unreleased)
+--------------------
+Contributors to this version: Trevor James Smith (:user:`Zeitsperre`).
+
+Internal changes
+^^^^^^^^^^^^^^^^
+* `zizmor` added to `pre-commit` hooks. GitHub workflow permissions have been adapted for better security settings by default. (:pull:`2367`):
+    * Adjusted the token creation permissions to prevent creating tokens with unnecessary access privileges.
+    * ReadTheDocs OS version updated to ``ubuntu-26.04``.
+    * ``workflow-warning.yml`` now simply uses GitHub API calls.
+
 v0.61.1 (2026-05-25)
 --------------------
 Contributors to this version: Pascal Bourgault (:user:`aulemahal`).
