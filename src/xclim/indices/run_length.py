@@ -10,7 +10,6 @@ from __future__ import annotations
 from collections import namedtuple
 from collections.abc import Callable, Sequence
 from datetime import datetime
-from functools import partial
 from typing import Literal
 from warnings import warn
 
@@ -318,19 +317,21 @@ def rle_statistics(
     else:
         d = rle(da, dim=dim, index=index)
 
-        def get_rl_stat(d):
+        def get_rl_stat(d, dim, window, reducer):
+            reducer_kwargs = {"dim": dim}
             if reducer.startswith("q") and reducer[1:].isdigit():
-                q = float(f"0.{reducer[1:]}")
-                rl_stat = d.where(d >= window).quantile(dim=dim, q=q)
-            else:
-                rl_stat = getattr(d.where(d >= window), reducer)(dim=dim)
+                reducer_kwargs["q"] = float(f"0.{reducer[1:]}")
+                reducer = "quantile"
+            rl_stat = getattr(d.where(d >= window), reducer)(**reducer_kwargs)
             rl_stat = xr.where((d.isnull() | (d < window)).all(dim=dim), 0, rl_stat)
             return rl_stat
 
         if freq is None:
-            rl_stat = get_rl_stat(d)
+            rl_stat = get_rl_stat(d, dim, window, reducer)
         else:
-            rl_stat = resample_map(d, dim, freq, get_rl_stat)
+            rl_stat = resample_map(
+                d, dim, freq, get_rl_stat, map_kwargs={"dim": dim, "window": window, "reducer": reducer}
+            )
     return rl_stat
 
 
@@ -1428,12 +1429,12 @@ def statistics_run_1d(arr: Sequence[bool], reducer: str, window: int) -> int:
         return 0
     if reducer == "count":
         return (v * rl >= window).sum()
+    reducer_kwargs = {}
     if reducer.startswith("q") and reducer[1:].isdigit():
-        q = float(f"0.{reducer[1:]}")
-        func = partial(np.nanquantile, q=q)
-    else:
-        func = getattr(np, f"nan{reducer}")
-    return func(np.where(v * rl >= window, rl, np.nan))
+        reducer_kwargs["q"] = float(f"0.{reducer[1:]}")
+        reducer = "quantile"
+    func = getattr(np, f"nan{reducer}")
+    return func(np.where(v * rl >= window, rl, np.nan), **reducer_kwargs)
 
 
 def windowed_run_count_1d(arr: Sequence[bool], window: int) -> int:
