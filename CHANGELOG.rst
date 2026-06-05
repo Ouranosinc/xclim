@@ -8,7 +8,7 @@ Contributors to this version: Pascal Bourgault (:user:`aulemahal`).
 
 New indicators and features
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
-* Run length indices now support a quantile reducer.
+* Run length indices now support a quantile reducer. (:pull:`2369`).
 
 Bug fixes
 ^^^^^^^^^
