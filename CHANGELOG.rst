@@ -2,6 +2,14 @@
 Changelog
 =========
 
+Unreleased
+----------
+Contributors to this version: Pascal Bourgault (:user:`aulemahal`).
+
+Breaking changes
+^^^^^^^^^^^^^^^^
+* Fix ``maximum_consecutive_*`` indicators to harmonize them with their docstring, add ``op`` argument to control comparison and fix some non-existing standard names (:issue:`2368`, :pull:`2370`).
+
 v0.61.1 (2026-05-25)
 --------------------
 Contributors to this version: Pascal Bourgault (:user:`aulemahal`).
