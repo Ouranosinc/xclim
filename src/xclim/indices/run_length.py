@@ -10,6 +10,7 @@ from __future__ import annotations
 from collections import namedtuple
 from collections.abc import Callable, Sequence
 from datetime import datetime
+from functools import partial
 from typing import Literal
 from warnings import warn
 
@@ -318,7 +319,11 @@ def rle_statistics(
         d = rle(da, dim=dim, index=index)
 
         def get_rl_stat(d):
-            rl_stat = getattr(d.where(d >= window), reducer)(dim=dim)
+            if reducer.startswith("q") and reducer[1:].isdigit():
+                q = float(f"0.{reducer[1:]}")
+                rl_stat = d.where(d >= window).quantile(dim=dim, q=q)
+            else:
+                rl_stat = getattr(d.where(d >= window), reducer)(dim=dim)
             rl_stat = xr.where((d.isnull() | (d < window)).all(dim=dim), 0, rl_stat)
             return rl_stat
 
@@ -1407,8 +1412,9 @@ def statistics_run_1d(arr: Sequence[bool], reducer: str, window: int) -> int:
     ----------
     arr : Sequence of bool
         Input array (bool).
-    reducer : {"mean", "sum", "min", "max", "std", "count"}
-        Reducing function name.
+    reducer : {"mean", "sum", "min", "max", "std", "count", "q?"}
+        Reducing function name. The special name 'q?' computes a quantile with the provided value (e.g. 'q90' computes
+         a `q=0.90` quantile).
     window : int
         Minimal length of runs to be included in the statistics.
 
@@ -1422,7 +1428,11 @@ def statistics_run_1d(arr: Sequence[bool], reducer: str, window: int) -> int:
         return 0
     if reducer == "count":
         return (v * rl >= window).sum()
-    func = getattr(np, f"nan{reducer}")
+    if reducer.startswith("q") and reducer[1:].isdigit():
+        q = float(f"0.{reducer[1:]}")
+        func = partial(np.nanquantile, q=q)
+    else:
+        func = getattr(np, f"nan{reducer}")
     return func(np.where(v * rl >= window, rl, np.nan))
 
 
@@ -1545,8 +1555,8 @@ def statistics_run_ufunc(
     ----------
     x : Sequence of bool
         Input array (bool).
-    reducer : {'min', 'max', 'mean', 'sum', 'std'}
-        Reducing function name.
+    reducer : {'min', 'max', 'mean', 'sum', 'std', 'q?'}
+        Reducing function name. The special name 'q?' should be called as e.g. 'q90' to compute a `q=0.90` quantile.
     window : int
         Minimal length of runs.
     dim : str
