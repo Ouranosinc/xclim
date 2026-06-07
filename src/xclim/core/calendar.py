@@ -1266,6 +1266,8 @@ def select_time(
     doy_bounds: tuple[int | xr.DataArray, int | xr.DataArray] | None = None,
     date_bounds: tuple[str, str] | None = None,
     include_bounds: bool | tuple[bool, bool] = True,
+    include_doy_bounds_nans: bool = True,
+    doy_bounds_freq: str | None = None,
 ) -> DataType:
     """
     Select entries according to a time period.
@@ -1295,6 +1297,10 @@ def select_time(
     include_bounds : bool or 2-tuple of bool
         Whether the bounds of `doy_bounds` or `date_bounds` should be inclusive or not.
         Either one value for both or a tuple. Default is True, meaning bounds are inclusive.
+    include_doy_bounds_nans : bool
+        Whether to include values associated with NaN in `doy_bounds`. See `mask_between_doys` for details.
+    doy_bounds_freq : str, optional
+        Needed if `doy_bounds` is used and has no time dimension. See `mask_between_doys` for details.
 
     Returns
     -------
@@ -1347,7 +1353,7 @@ def select_time(
         if not (isinstance(doy_bounds[0], int) and isinstance(doy_bounds[1], int)) and drop:
             # At least one of those is an array, this drop won't work
             raise ValueError("Passing array-like doy bounds is incompatible with drop=True.")
-        mask = mask_between_doys(da, doy_bounds, include_bounds)
+        mask = mask_between_doys(da, doy_bounds, include_bounds, include_doy_bounds_nans, doy_bounds_freq)
 
     elif date_bounds is not None:
         # This one is a bit trickier.
