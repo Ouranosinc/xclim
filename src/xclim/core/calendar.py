@@ -1151,6 +1151,7 @@ def mask_between_doys(
     da: xr.DataArray,
     doy_bounds: tuple[int | xr.DataArray, int | xr.DataArray],
     include_bounds: tuple[bool, bool] = (True, True),
+    include_nans: bool = True,
 ) -> xr.DataArray | xr.Dataset:
     """
     Mask the data outside the day of year bounds.
@@ -1171,6 +1172,8 @@ def mask_between_doys(
         in the temporal case.
     include_bounds : 2-tuple of booleans
         Whether the bounds of `doy_bounds` should be inclusive or not.
+    include_nans : bool
+        Whether to include values associated with NaN in `doy_bounds`.
 
     Returns
     -------
@@ -1178,10 +1181,36 @@ def mask_between_doys(
         Boolean array with the same time coordinate as `da` and any other dimension present on the bounds.
         True value inside the period of interest and False outside.
     """
-    if isinstance(doy_bounds[0], int) and isinstance(doy_bounds[1], int):  # Simple case
+
+    def _fill_nans(start, end):
+        """Fill NaN values in start and end bounds with the min and max possible values."""
+        # If include_nans or start/end full of nans, it means open bounds
+        # Any missing value is replaced with the min/max of possible values.
+        if include_nans or start.isnull().all():
+            start = start.fillna(1)
+        if include_nans or end.isnull().all():
+            end = end.fillna(366)
+        return start, end
+
+    if (
+        isinstance(doy_bounds[0], int)
+        or (doy_bounds[0] is None)
+        and isinstance(doy_bounds[1], int)
+        or (doy_bounds[1] is None)
+    ):  # Simple case
+        if doy_bounds[0] is None:
+            doy_bounds = (1, doy_bounds[1])
+        if doy_bounds[1] is None:
+            doy_bounds = (doy_bounds[0], 366)
         mask = da.time.dt.dayofyear.isin(_get_doys(*doy_bounds, include_bounds))
+
     else:
         start, end = doy_bounds
+        # convert None to DataArray with NaN values
+        if start is None:
+            start = xr.full_like(end, np.nan)
+        if end is None:
+            end = xr.full_like(start, np.nan)
         # convert ints to DataArrays
         if isinstance(start, int):
             start = xr.full_like(end, start)
@@ -1203,8 +1232,11 @@ def mask_between_doys(
             # Also ensures the bounds share the same time calendar as the input.
             # Any missing value is replaced with the min/max of possible values.
             calkws = {"calendar": da.time.dt.calendar, "use_cftime": (da.time.dtype == "O")}
-            start = doy_to_days_since(start.convert_calendar(**calkws)).fillna(0)
-            end = doy_to_days_since(end.convert_calendar(**calkws)).fillna(366)
+            start = doy_to_days_since(start.convert_calendar(**calkws))
+            end = doy_to_days_since(end.convert_calendar(**calkws))
+
+            # Fill missing values in start and end bounds
+            start, end = _fill_nans(start, end)
 
             out = []
             # For each period, mask the days since between start and end
@@ -1228,8 +1260,7 @@ def mask_between_doys(
         else:  # Only "Spatial" dims, we can't constrain as in days since, so there are two cases
             doys = da.time.dt.dayofyear  # for readability
             # Any missing value is replaced with the min/max of possible values
-            start = start.fillna(1)
-            end = end.fillna(366)
+            start, end = _fill_nans(start, end)
             mask = xr.where(
                 start <= end,
                 # case 1 : start <= end, ROI is within a calendar year
