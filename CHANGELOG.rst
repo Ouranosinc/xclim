@@ -9,6 +9,7 @@ Contributors to this version: Pascal Bourgault (:user:`aulemahal`).
 Bug fixes
 ^^^^^^^^^
 * Fix conversion error with ``xc.units.rate2amount`` and ``xc.units.amount2rate`` when ``sampling_rate_from_coord=True`` or sampling frequency is monthly or coarser and time coordinate is `cftime`-based. Previous results were 1000x too small. (:pull:`2357`).
+* For the Canadian Forest Fire Weather Index System, add non-null default starting values for ``dc0`` and ``dmc0`` if the dry start mechanism is activated. (:issue:`2371`, :pull:`2372`).
 
 v0.61.0 (2026-05-07)
 --------------------

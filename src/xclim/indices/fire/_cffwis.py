@@ -710,12 +710,12 @@ def _fire_weather_calc(  # noqa: C901  # pylint: disable=R0912, R0915
 
     if overwintering and "DC" in ind_prevs:
         # In overwintering, dc0 is understood as the previous season's last DC code.
-        ow_DC = dc0.copy()
         ind_prevs["DC"] = np.full_like(dc0, np.nan)
 
     if dry_start:
-        ow_DC = dc0.copy()
-        ow_DMC = dmc0.copy()
+        # For dry starts, we need a starting DC and DMC value so we can accumulate the dry factor.
+        ow_DC = np.nan_to_num(ow_DC, nan=params["dc_start"])
+        ow_DMC = np.nan_to_num(ow_DMC, nan=params["dmc_start"])
         start_up_wet = np.zeros_like(dmc0, dtype=bool)  # Pre allocate to avoid "unboundlocalerror"
 
     # Iterate on all days.
@@ -925,9 +925,9 @@ def fire_weather_ufunc(  # noqa: C901 # numpydoc ignore=PR01,PR02
     lat : xr.DataArray, optional
         Latitude in °N, not needed for FFMC or ISI.
     dc0 : xr.DataArray, optional
-        Previous DC map, see Notes. Defaults to NaN.
+        Previous DC map, see Notes. Defaults to NaN, or `dc_start` is `dry_start` is not none.
     dmc0 : xr.DataArray, optional
-        Previous DMC map, see Notes. Defaults to NaN.
+        Previous DMC map, see Notes. Defaults to NaN, or `dmc_start` is `dry_start` is not none.
     ffmc0 : xr.DataArray, optional
         Previous FFMC map, see Notes. Defaults to NaN.
     winter_pr : xr.DataArray, optional
@@ -945,8 +945,8 @@ def fire_weather_ufunc(  # noqa: C901 # numpydoc ignore=PR01,PR02
         Whether to activate DC overwintering or not. If True, either season_method or season_mask must be given.
     dry_start : {None, 'CFS', 'GFWED'}
         Whether to activate the DC and DMC "dry start" mechanism and which method to use. See Notes.
-        If overwintering is activated, it overrides this parameter;
-        Only DMC is handled through the dry start mechanism.
+        If overwintering is activated, it overrides this parameter and only DMC is handled through
+        the dry start mechanism.
     initial_start_up : bool
         If True (default), grid points where the fire season is active on the first timestep go through a
         start-up phase for that time step.
@@ -1014,8 +1014,8 @@ def fire_weather_ufunc(  # noqa: C901 # numpydoc ignore=PR01,PR02
        DC_0 = DC_{start} +  F_{dry-dc} * N_{dry}
 
     The last significant precipitation event is the last day when precipitation was greater or equal to "prec_thresh".
-    The same happens for the DMC, with corresponding parameters.
-    If overwintering is activated, this mechanism is only used for the DMC.
+    The same happens for the DMC, with corresponding parameters. If overwintering is activated, this mechanism is only
+    used for the DMC. When dry start is activated, `dc0` and `dmc0` default to `dc_start` and `dmc_start` respectively.
 
     Alternatively, `dry_start` can be set to "GFWED". In this mode, the start-up values are computed as:
 
