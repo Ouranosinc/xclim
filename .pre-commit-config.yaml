@@ -113,6 +113,11 @@ repos:
     hooks:
       - id: check-github-workflows
       - id: check-readthedocs
+  - repo: https://github.com/woodruffw/zizmor-pre-commit
+    rev: v1.24.1
+    hooks:
+      - id: zizmor
+        args: [ '--config=.zizmor.yml' ]
   - repo: meta
     hooks:
       - id: check-hooks-apply
