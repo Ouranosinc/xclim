@@ -15,7 +15,11 @@ Internal changes
 
 v0.61.1 (2026-05-25)
 --------------------
-Contributors to this version: Pascal Bourgault (:user:`aulemahal`).
+Contributors to this version: Pascal Bourgault (:user:`aulemahal`), Éric  Dupuis (:user:`coxipi`).
+
+New indicators and features
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+* Run length indices now support a quantile reducer. (:pull:`2369`).
 
 Bug fixes
 ^^^^^^^^^
