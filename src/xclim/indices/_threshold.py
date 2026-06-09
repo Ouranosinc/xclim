@@ -2832,7 +2832,7 @@ def wetdays_prop(
     return fwd
 
 
-@deprecated(from_version="0.62.0", suggested="cold_spell_max_length")
+@deprecated(from_version="0.61.2", suggested="cold_spell_max_length")
 @declare_units(tasmin="[temperature]", thresh="[temperature]")
 def maximum_consecutive_frost_days(
     tasmin: xarray.DataArray,
@@ -2937,7 +2937,7 @@ def maximum_consecutive_dry_days(
         )
 
 
-@deprecated(from_version="0.62.0", suggested="frost_free_spell_max_length")
+@deprecated(from_version="0.61.2", suggested="frost_free_spell_max_length")
 @declare_units(tasmin="[temperature]", thresh="[temperature]")
 def maximum_consecutive_frost_free_days(
     tasmin: xarray.DataArray,
@@ -2998,7 +2998,7 @@ def maximum_consecutive_frost_free_days(
     return mcffd
 
 
-@deprecated(from_version="0.61.0", suggested="hot_spell_max_length")
+@deprecated(from_version="0.61.2", suggested="hot_spell_max_length")
 @declare_units(tasmax="[temperature]", thresh="[temperature]")
 def maximum_consecutive_tx_days(
     tasmax: xarray.DataArray,
