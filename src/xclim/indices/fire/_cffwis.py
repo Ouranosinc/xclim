@@ -714,7 +714,8 @@ def _fire_weather_calc(  # noqa: C901  # pylint: disable=R0912, R0915
 
     if dry_start:
         # For dry starts, we need a starting DC and DMC value so we can accumulate the dry factor.
-        ow_DC = np.where(np.isnan(dc0), params["dc_start"], dc0)
+        if not overwintering:
+            ow_DC = np.where(np.isnan(dc0), params["dc_start"], dc0)
         ow_DMC = np.where(np.isnan(dmc0), params["dmc_start"], dmc0)
         start_up_wet = np.zeros_like(dmc0, dtype=bool)  # Pre allocate to avoid "unboundlocalerror"
 
