@@ -8,7 +8,7 @@ sphinx:
 #  - pdf
 
 build:
-  os: "ubuntu-24.04"
+  os: "ubuntu-26.04"
   tools:
     python: "miniforge3-25.11"
   jobs:
