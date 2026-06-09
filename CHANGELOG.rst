@@ -4,7 +4,7 @@ Changelog
 
 v0.61.1 (2026-05-25)
 --------------------
-Contributors to this version: Pascal Bourgault (:user:`aulemahal`).
+Contributors to this version: Pascal Bourgault (:user:`aulemahal`), Éric  Dupuis (:user:`coxipi`).
 
 New indicators and features
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
