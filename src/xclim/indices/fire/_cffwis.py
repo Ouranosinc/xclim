@@ -925,9 +925,9 @@ def fire_weather_ufunc(  # noqa: C901 # numpydoc ignore=PR01,PR02
     lat : xr.DataArray, optional
         Latitude in °N, not needed for FFMC or ISI.
     dc0 : xr.DataArray, optional
-        Previous DC map, see Notes. Defaults to NaN, or `dc_start` is `dry_start` is not none.
+        Previous DC map, see Notes. Defaults to NaN, or `dc_start` if `dry_start` is not none.
     dmc0 : xr.DataArray, optional
-        Previous DMC map, see Notes. Defaults to NaN, or `dmc_start` is `dry_start` is not none.
+        Previous DMC map, see Notes. Defaults to NaN, or `dmc_start` if `dry_start` is not none.
     ffmc0 : xr.DataArray, optional
         Previous FFMC map, see Notes. Defaults to NaN.
     winter_pr : xr.DataArray, optional
