@@ -1615,15 +1615,6 @@ def precipitation_concentration_index(pr: xarray.DataArray, freq: str = "YS", su
     Computed as the ratio of the sum of squared sub-period totals to the square of the
     sum of sub-period totals, multiplied by 100 :cite:p:`oliver_precipitation_1980`.
 
-    .. math::
-        \mathrm{PCI} = \frac{\sum_{i=1}^{n} p_i^2}{\left(\sum_{i=1}^{n} p_i\right)^2} \times 100
-
-    where :math:`p_i` is the precipitation total for sub-period :math:`i` and :math:`n` is the number
-    of sub-periods per main period.
-
-    A PCI of 8.3 (i.e. :math:`100/n`) indicates perfectly uniform precipitation. Higher values indicate
-    increasing concentration. Values above ~20 indicate a highly irregular or seasonal distribution.
-
     Parameters
     ----------
     pr : xr.DataArray
@@ -1637,6 +1628,20 @@ def precipitation_concentration_index(pr: xarray.DataArray, freq: str = "YS", su
     -------
     xr.DataArray, [%]
         Precipitation Concentration Index for each period defined by `freq`.
+
+    Notes
+    -----
+    The precipitation concentration index (PCI) can be calculated as follows:
+
+    .. math::
+
+       PCI = \frac{\sum_{i=1}^{n} p_i^2}{\left(\sum_{i=1}^{n} p_i\right)^2} \times 100
+
+    where :math:`p_i` is the precipitation total for sub-period :math:`i` and :math:`n` is the number
+    of sub-periods per main period.
+
+    A PCI of 8.3 (i.e. :math:`100/n`) indicates perfectly uniform precipitation. Higher values indicate
+    increasing concentration. Values above ~20 indicate a highly irregular or seasonal distribution.
 
     References
     ----------
