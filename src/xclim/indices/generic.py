@@ -20,6 +20,7 @@ from pint import Quantity
 from xclim.core import DayOfYearStr, Quantified
 from xclim.core.calendar import (
     _MONTH_ABBREVIATIONS,
+    compare_offsets,
     doy_to_days_since,
     get_calendar,
     select_time,
@@ -1846,6 +1847,8 @@ def day_to_day_variability(da: xr.DataArray, subfreq: str = "MS", freq="YS"):
     ----------
     :cite:cts:`kotz_2021`
     """
+    if compare_offsets(freq, "<=", subfreq):
+        raise ValueError("Averaging frequency must be larger than the variability frequency.")
     variability = da.resample(time=subfreq).std(keep_attrs=True)
     out = variability.resample(time=freq).mean(keep_attrs=True)
     return to_agg_units(out, to_agg_units(variability, da, "std"), "mean")

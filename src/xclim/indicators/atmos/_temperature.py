@@ -847,12 +847,11 @@ day_to_day_temperature_variability = TempWithIndexing(
     title="Day-to-day temperature variability",
     identifier="dtdt",
     units="K",
-    standard_name="integral_of_air_temperature_deficit_wrt_time",
     long_name="Mean of the day-to-day temperature variability",
-    description="{freq} mean of the day-to-day variability computed as standard deviation per {subfreq}",
+    description="{freq} mean of the day-to-day variability computed as the {subfreq} standard deviation",
     compute=day_to_day_variability,
     parameters={"subfreq": "MS"},
-    cell_methods="time: mean over days",
+    cell_methods="time: standard_deviation within months time: mean over months",
 )
 
 heating_degree_days = TempWithIndexing(
