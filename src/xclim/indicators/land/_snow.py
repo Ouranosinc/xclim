@@ -305,7 +305,12 @@ snd_days_above = SnowWithIndexing(
     description="The {freq} number of days with snow depth greater than or equal to {thresh}.",
     abstract="Number of days when the snow depth is greater than or equal to a given threshold.",
     compute=generic.count_occurrences,
-    parameters={"condition": {"default": ">="}, "freq": {"default": "YS-JUL"}, "thresh": {"default": "2 cm"}},
+    parameters={
+        "condition": {"default": ">="},
+        "freq": {"default": "YS-JUL"},
+        "thresh": {"default": "2 cm"},
+        "constrain": [">", "gt", ">=", "ge"],
+    },
 )
 
 snw_days_above = SnowWithIndexing(
@@ -316,7 +321,12 @@ snw_days_above = SnowWithIndexing(
     description="The {freq} number of days with snow amount greater than or equal to {thresh}.",
     abstract="Number of days when the snow amount is greater than or equal to a given threshold.",
     compute=generic.count_occurrences,
-    parameters={"condition": {"default": ">="}, "freq": {"default": "YS-JUL"}, "thresh": {"default": "4 kg m-2"}},
+    parameters={
+        "condition": {"default": ">="},
+        "freq": {"default": "YS-JUL"},
+        "thresh": {"default": "4 kg m-2"},
+        "constrain": [">", "gt", ">=", "ge"],
+    },
 )
 
 holiday_snow_days = Snow(
