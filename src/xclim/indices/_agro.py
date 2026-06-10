@@ -1530,7 +1530,7 @@ def chill_portions(tas: xarray.DataArray, freq: str = "YS", **indexer) -> xarray
     >>> tasmin = xr.open_dataset(path_to_tasmin_file).tasmin
     >>> tasmax = xr.open_dataset(path_to_tasmax_file).tasmax
     >>> tas_hourly = make_hourly_temperature(tasmin, tasmax)
-    >>> cp = chill_portions(tasmin)
+    >>> cp = chill_portions(tas_hourly)
     """
     tas_K = select_time(convert_units_to(tas, "K"), drop=True, **indexer)
     cp: xarray.DataArray = resample_map(tas_K, "time", freq, _apply_chill_portion_one_season).assign_attrs(units="")
