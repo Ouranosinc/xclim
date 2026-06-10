@@ -1091,12 +1091,13 @@ consecutive_frost_days = Temp(
     identifier="consecutive_frost_days",
     units="days",
     standard_name="spell_length_of_days_with_air_temperature_below_threshold",
-    long_name="Maximum number of consecutive days where minimum daily temperature is below {thresh}",
-    description="{freq} maximum number of consecutive days where minimum daily temperature is below {thresh}.",
-    abstract="Maximum number of consecutive days where the daily minimum temperature is below 0°C",
+    long_name="Maximum number of consecutive days where minimum daily temperature is {op} {thresh}",
+    description="{freq} maximum number of consecutive days where minimum daily temperature is {op} {thresh}.",
+    abstract="Maximum number of consecutive days where the daily minimum temperature is below a given threshold",
     cell_methods="time: maximum over days",
-    compute=indices.maximum_consecutive_frost_days,
-    parameters={"thresh": {"default": "0 degC"}},
+    compute=indices.cold_spell_max_length,
+    input={"tas": "tasmin"},
+    parameters={"thresh": {"default": "0 degC"}, "window": 1},
 )
 
 frost_free_season_length = Temp(
@@ -1168,13 +1169,13 @@ maximum_consecutive_frost_free_days = Temp(
     identifier="consecutive_frost_free_days",
     units="days",
     standard_name="spell_length_of_days_with_air_temperature_above_threshold",
-    long_name="Maximum number of consecutive days with minimum temperature at or above {thresh}",
-    description="{freq} maximum number of consecutive days with minimum daily temperature at or above {thresh}.",
+    long_name="Maximum number of consecutive days with minimum temperature {op} {thresh}",
+    description="{freq} maximum number of consecutive days with minimum daily temperature {op} {thresh}.",
     abstract="Maximum number of consecutive frost-free days: where the daily minimum temperature is above "
-    "or equal to 0°C",
+    "or equal to given threshold.",
     cell_methods="time: maximum over days",
-    compute=indices.maximum_consecutive_frost_free_days,
-    parameters={"thresh": {"default": "0 degC"}},
+    compute=indices.frost_free_spell_max_length,
+    parameters={"thresh": {"default": "0 degC"}, "window": 1, "freq": {"default": "YS"}},
 )
 
 growing_season_start = Temp(
@@ -1373,11 +1374,12 @@ maximum_consecutive_warm_days = Temp(
     identifier="maximum_consecutive_warm_days",
     units="days",
     standard_name="spell_length_of_days_with_air_temperature_above_threshold",
-    long_name="Maximum number of consecutive days with maximum daily temperature above {thresh}",
-    description="{freq} longest spell of consecutive days with maximum daily temperature above {thresh}.",
+    long_name="Maximum number of consecutive days with maximum daily temperature {op} {thresh}",
+    description="{freq} longest spell of consecutive days with maximum daily temperature {op} {thresh}.",
     abstract="Maximum number of consecutive days where the maximum daily temperature exceeds a certain threshold.",
     cell_methods="time: maximum over days",
-    compute=indices.maximum_consecutive_tx_days,
+    compute=indices.hot_spell_max_length,
+    parameters={"thresh": {"default": "25 °C"}, "window": 1},
 )
 
 
