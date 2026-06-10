@@ -1639,7 +1639,7 @@ def _get_zone_bins(
         Left boundary of the first zone.
     zone_max : Quantity
         Right boundary of the last zone.
-    zone_step: Quantity
+    zone_step : Quantity
         Size of zones.
 
     Returns
@@ -1827,7 +1827,7 @@ def day_to_day_variability(da: xr.DataArray, subfreq: str = "MS", freq="YS"):
 
     Computes the standard deviation of the variable within each sub-period (e.g. month),
     then averages those standard deviations over the main resampling period (e.g. year).
-    This provides a measure of typical day-to-day variability as described in Kotz et al. (2021).
+    This provides a measure of typical day-to-day variability as described in :cite:t:`kotz_2021`.
 
     Parameters
     ----------
