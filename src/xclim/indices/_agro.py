@@ -53,11 +53,11 @@ __all__ = [
     "hardiness_zones",
     "huglin_index",
     "latitude_temperature_index",
+    "precipitation_concentration_index",
     "qian_weighted_mean_average",
     "rain_season",
     "standardized_precipitation_evapotranspiration_index",
     "standardized_precipitation_index",
-    "precipitation_concentration_index",
 ]
 
 
