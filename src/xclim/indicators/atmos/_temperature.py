@@ -709,7 +709,9 @@ cold_spell_days = Temp(
     abstract="The number of days that are part of a cold spell. A cold spell is defined as a minimum number of "
     "consecutive days with mean daily temperature below a given threshold.",
     cell_methods="",
-    compute=indices.cold_spell_days,
+    compute=indices.generic.spell_length_statistics,
+    parameters={"window_statistic": "max", "condition": {"default": "<"}, "statistic": "sum", "constrain": ("<", "<=")},
+    _version_deprecated=("1.0", "cold_spell_total_length"),
 )
 
 cold_spell_frequency = Temp(
@@ -723,7 +725,13 @@ cold_spell_frequency = Temp(
     "over a given time window of days is below a given threshold.",
     units="",
     cell_methods="",
-    compute=indices.cold_spell_frequency,
+    compute=indices.generic.spell_length_statistics,
+    parameters={
+        "window_statistic": "max",
+        "condition": {"default": "<"},
+        "statistic": "count",
+        "constrain": ("<", "<="),
+    },
 )
 
 cold_spell_max_length = Temp(
@@ -737,7 +745,8 @@ cold_spell_max_length = Temp(
     "temperature over a given time window of days is below a given threshold.",
     units="days",
     cell_methods="",
-    compute=indices.cold_spell_max_length,
+    compute=indices.generic.spell_length_statistics,
+    parameters={"window_statistic": "max", "condition": {"default": "<"}, "statistic": "max", "constrain": ("<", "<=")},
 )
 
 cold_spell_total_length = Temp(
@@ -751,7 +760,8 @@ cold_spell_total_length = Temp(
     "temperature over a given time window of days is below a given threshold.",
     units="days",
     cell_methods="",
-    compute=indices.cold_spell_total_length,
+    compute=indices.generic.spell_length_statistics,
+    parameters={"window_statistic": "max", "condition": {"default": "<"}, "statistic": "sum", "constrain": ("<", "<=")},
 )
 
 cool_night_index = Temp(

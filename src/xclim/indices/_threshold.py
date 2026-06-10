@@ -33,9 +33,6 @@ from xclim.indices.generic import (
 )
 from xclim.indices.helpers import compare, resample_map
 
-# Frequencies : YS: year start, QS-DEC: seasons starting in december, MS: month start
-# See http://pandas.pydata.org/pandas-docs/stable/timeseries.html#offset-aliases
-
 # -------------------------------------------------- #
 # ATTENTION: ASSUME ALL INDICES WRONG UNTIL TESTED ! #
 # -------------------------------------------------- #
@@ -148,6 +145,7 @@ def calm_days(sfcWind: xarray.DataArray, thresh: Quantified = "2 m s-1", freq: s
     return count_occurrences(sfcWind, condition="<", thresh=thresh, freq=freq)
 
 
+@deprecated("1.0", "atmos.cold_spell_total_length")
 @declare_units(tas="[temperature]", thresh="[temperature]")
 def cold_spell_days(
     tas: xarray.DataArray,
@@ -208,6 +206,7 @@ def cold_spell_days(
     return to_agg_units(out, tas, "count", deffreq="D")
 
 
+@deprecated("1.0", "atmos.cold_spell_frequency")
 @declare_units(tas="[temperature]", thresh="[temperature]")
 def cold_spell_frequency(
     tas: xarray.DataArray,
@@ -257,6 +256,7 @@ def cold_spell_frequency(
     return out
 
 
+@deprecated("1.0", "atmos.cold_spell_max_length")
 @declare_units(tas="[temperature]", thresh="[temperature]")
 def cold_spell_max_length(
     tas: xarray.DataArray,
@@ -307,6 +307,7 @@ def cold_spell_max_length(
     return out
 
 
+@deprecated("1.0", "atmos.cold_spell_total_length")
 @declare_units(tas="[temperature]", thresh="[temperature]")
 def cold_spell_total_length(
     tas: xarray.DataArray,
@@ -650,6 +651,7 @@ def snw_storm_days(snw: xarray.DataArray, thresh: Quantified = "10 kg m-2", freq
     return count_occurrences(acc, condition=">=", thresh=thresh, freq=freq)
 
 
+@deprecated("1.0", "atmos.daily_pr_intensity")
 @declare_units(pr="[precipitation]", thresh="[precipitation]")
 def daily_pr_intensity(
     pr: xarray.DataArray,

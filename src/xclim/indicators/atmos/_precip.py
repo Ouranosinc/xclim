@@ -285,18 +285,26 @@ maximum_consecutive_dry_days = Precip(
     compute=indices.maximum_consecutive_dry_days,
 )
 
-daily_pr_intensity = PrecipWithIndexing(
+daily_pr_intensity = Precip(
     title="Simple Daily Intensity Index",
     identifier="sdii",
     units="mm d-1",
-    standard_name="lwe_thickness_of_precipitation_amount",
+    standard_name="lwe_precipitation_rate",
     long_name="Average precipitation during days with daily precipitation over {thresh} "
     "(Simple Daily Intensity Index: SDII)",
     description="{freq} Simple Daily Intensity Index (SDII) or "
     "{freq} average precipitation for days with daily precipitation over {thresh}.",
     abstract="Average precipitation for days with daily precipitation above a given threshold.",
     cell_methods="",
-    compute=indices.daily_pr_intensity,
+    compute=indices.generic.thresholded_statistics,
+    input={"data": "pr"},
+    parameters={
+        "condition": {"default": ">="},
+        "thresh": {"default": "1 mm/day"},
+        "statistic": "mean",
+        "constrain": (">", ">="),
+        "out_units": None,
+    },
 )
 
 max_pr_intensity = HrPrecip(

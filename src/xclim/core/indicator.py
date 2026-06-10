@@ -1471,10 +1471,15 @@ class Indicator(IndicatorRegistrar):
         return not hasattr(self.compute, "in_units")
 
     def _show_deprecation_warning(self):
+        alternative = ""
+        if isinstance(self._version_deprecated, tuple):
+            vv, other = self._version_deprecated
+            alternative = f"Please use {other} instead. "
+        else:
+            vv = self._version_deprecated
         warnings.warn(
-            f"`{self.title}` is deprecated as of `xclim` v{self._version_deprecated} and will be removed "
-            "in a future release. See the `xclim` release notes for more information: "
-            f"https://xclim.readthedocs.io/en/stable/history.html",
+            f"`{self.title}` is deprecated as of `xclim` v{vv} and will be removed in a future release. {alternative}"
+            "See the `xclim` release notes for more information: https://xclim.readthedocs.io/en/stable/history.html",
             FutureWarning,
             stacklevel=3,
         )
