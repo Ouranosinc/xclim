@@ -43,7 +43,7 @@ class SnowWithIndexing(ResamplingIndicatorWithIndexing):
     keywords = "snow"
 
 
-snd_season_length = SnowWithIndexing(
+snd_season_length = Snow(
     identifier="snd_season_length",
     units="days",
     long_name="Snow cover duration",
@@ -68,7 +68,7 @@ snd_season_length = SnowWithIndexing(
     },
 )
 
-snw_season_length = SnowWithIndexing(
+snw_season_length = Snow(
     identifier="snw_season_length",
     units="days",
     long_name="Snow cover duration",
@@ -175,7 +175,7 @@ snw_season_end = Snow(
     },
 )
 
-snd_max = SnowWithIndexing(
+snd_max = Snow(
     title="Maximum snow depth",
     identifier="snd_max",
     standard_name="snow_depth",
@@ -188,7 +188,7 @@ snd_max = SnowWithIndexing(
     parameters={"statistic": "max", "freq": {"default": "YS-JUL"}},
 )
 
-snd_max_doy = SnowWithIndexing(
+snd_max_doy = Snow(
     title="Day of year of maximum snow depth",
     identifier="snd_max_doy",
     standard_name="day_of_year",
@@ -213,7 +213,7 @@ snow_melt_we_max = Snow(
     compute=xci.snow_melt_we_max,
 )
 
-snw_max = SnowWithIndexing(
+snw_max = Snow(
     title="Maximum snow amount",
     identifier="snw_max",
     standard_name="surface_snow_amount",
@@ -226,7 +226,7 @@ snw_max = SnowWithIndexing(
     parameters={"statistic": "max", "freq": {"default": "YS-JUL"}},
 )
 
-snw_max_doy = SnowWithIndexing(
+snw_max_doy = Snow(
     title="Day of year of maximum snow amount",
     identifier="snw_max_doy",
     standard_name="day_of_year",
@@ -283,7 +283,7 @@ blowing_snow = Snow(
     compute=xci.blowing_snow,
 )
 
-snow_depth = SnowWithIndexing(
+snow_depth = Snow(
     title="Mean snow depth",
     identifier="snow_depth",
     units="cm",
@@ -297,7 +297,7 @@ snow_depth = SnowWithIndexing(
 )
 
 
-snd_days_above = SnowWithIndexing(
+snd_days_above = Snow(
     title="Days with snow (depth)",
     identifier="snd_days_above",
     units="days",
@@ -313,7 +313,7 @@ snd_days_above = SnowWithIndexing(
     },
 )
 
-snw_days_above = SnowWithIndexing(
+snw_days_above = Snow(
     title="Days with snow (amount)",
     identifier="snw_days_above",
     units="days",
