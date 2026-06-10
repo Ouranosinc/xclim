@@ -2,6 +2,15 @@
 Changelog
 =========
 
+v0.62.0 (Unreleased)
+--------------------
+
+Contributors to this version: Sascha Hofmann (:user:`saschahofmann`)
+
+New indicators and features
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+* Implemented two new indicators: ``xclim.indices.generic.day_to_day_variability`` and ``xclim.indices.precipitation_index`` (:issue:`2356`)
+
 v0.61.0 (2026-05-07)
 --------------------
 Contributors to this version: Pascal Bourgault (:user:`aulemahal`), Trevor James Smith (:user:`Zeitsperre`), Hui-Min Wang (:user:`Hem-W`), Éric Dupuis (:user:`coxipi`).
