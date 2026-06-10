@@ -835,3 +835,15 @@ antecedent_precipitation_index = DailyPrecipNoResample(
     cell_methods="time: sum over days",
     compute=indices.antecedent_precipitation_index,
 )
+
+precipitation_concentration_index = Precip(
+    identifier="pai",
+    realm="atmos",
+    units="",
+    long_name="Precipitation Concentration Index",
+    description="A measure of the unevenness of precipitation distribution for a {freq}. "
+    "Computed as the ratio of the sum of squared {subfreq} totals to the square of the sum of {subfreq} totals, "
+    "multiplied by 100",
+    compute=indices.precipitation_concentration_index,
+    cell_methods="",
+)

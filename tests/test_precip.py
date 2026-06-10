@@ -654,7 +654,12 @@ def test_dry_spell_total_length_indexer(pr_series):
     np.testing.assert_allclose(out, [np.nan] + [0] * 11)
 
     out = atmos.dry_spell_total_length(
-        pr, window=7, op="sum", thresh="3.1 mm", freq="MS", date_bounds=("01-10", "12-31")
+        pr,
+        window=7,
+        op="sum",
+        thresh="3.1 mm",
+        freq="MS",
+        date_bounds=("01-10", "12-31"),
     )
     np.testing.assert_allclose(out, [9] + [0] * 11)
 
@@ -671,7 +676,12 @@ def test_dry_spell_max_length_indexer(pr_series):
     np.testing.assert_allclose(out, [np.nan] + [0] * 11)
 
     out = atmos.dry_spell_total_length(
-        pr, window=7, op="sum", thresh="3.1 mm", freq="MS", date_bounds=("01-10", "12-31")
+        pr,
+        window=7,
+        op="sum",
+        thresh="3.1 mm",
+        freq="MS",
+        date_bounds=("01-10", "12-31"),
     )
     np.testing.assert_allclose(out, [9] + [0] * 11)
 
@@ -755,3 +765,14 @@ class TestSnowfallMeteoSwiss:
             expected,
             rtol=1e-3,
         )
+
+
+def test_precipitation_concentration_index(pr_series):
+    a = np.zeros(360)
+    a[0:30] = 1 / 30
+    a[30:60] = 2 / 30
+    pr = pr_series(a, start="2000-01-01", calendar="360_day")
+    expected = 100 * (1 + 2**2) / ((1 + 2) ** 2)
+    pci = xci.precipitation_concentration_index(pr)
+
+    np.testing.assert_array_equal(pci, expected)
