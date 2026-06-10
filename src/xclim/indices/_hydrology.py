@@ -769,6 +769,7 @@ def runoff_ratio(
     return out
 
 
+# This will be dropped in another PR
 @declare_units(swe="[length]", thresh="[length]")
 def days_with_snowpack(
     swe: xarray.DataArray,
