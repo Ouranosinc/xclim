@@ -1506,7 +1506,7 @@
     "description": "Une mesure de l'irrégularité de la distribution des précipitations pour une {freq}. Calculée en tant que rapport entre la somme des carrés des totaux {subfreq} et le carré de la somme des totaux {subfreq}, multiplié par 100.",
     "abstract": "Une mesure de l'irrégularité de la distribution des précipitations pour une {freq}. Calculée en tant que rapport entre la somme des carrés des totaux {subfreq} et le carré de la somme des totaux {subfreq}, multiplié par 100."
   },
-  "DTDT":{
+  "DTDT": {
     "title": "Variabilité de la température d'un jour à l'autre",
     "long_name": "Variabilité de la température d'un jour à l'autre",
     "description": "Moyenne {freq} de la variabilité d'un jour à l'autre calculée comme l'écart-type {subfreq}.",
