@@ -15,6 +15,7 @@ from xclim.core._types import DateStr, Quantified
 from xclim.core.calendar import get_calendar
 from xclim.core.missing import at_least_n_valid
 from xclim.core.units import convert_units_to, declare_units, rate2amount
+from xclim.core.utils import deprecated
 from xclim.indices.generic import count_occurrences
 from xclim.indices.stats import standardized_index
 
@@ -263,6 +264,7 @@ def standardized_streamflow_index(
     return ssi
 
 
+@deprecated("1.0", "land.snd_max")
 @declare_units(snd="[length]")
 def snd_max(snd: xarray.DataArray, freq: str = "YS-JUL") -> xarray.DataArray:
     """
@@ -315,6 +317,7 @@ def snd_max_doy(snd: xarray.DataArray, freq: str = "YS-JUL") -> xarray.DataArray
     return out.where(~valid)
 
 
+@deprecated("1.0", "land.snw_max")
 @declare_units(snw="[mass]/[area]")
 def snw_max(snw: xarray.DataArray, freq: str = "YS-JUL") -> xarray.DataArray:
     """

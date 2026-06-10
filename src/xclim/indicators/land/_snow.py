@@ -11,6 +11,7 @@ __all__ = [
     "holiday_snow_and_snowfall_days",
     "holiday_snow_days",
     "snd_days_above",
+    "snd_max",
     "snd_max_doy",
     "snd_season_end",
     "snd_season_length",
@@ -174,6 +175,19 @@ snw_season_end = Snow(
     },
 )
 
+snd_max = SnowWithIndexing(
+    title="Maximum snow depth",
+    identifier="snd_max",
+    standard_name="snow_depth",
+    var_name="{freq}_snd_max",
+    long_name="Maximum snow depth",
+    description="The {freq} maximum snow depth on the surface.",
+    abstract="The maximum snow depth on the surface.",
+    units="mm",
+    compute=generic.statistics,
+    parameters={"statistic": "max", "freq": {"default": "YS-JUL"}},
+)
+
 snd_max_doy = SnowWithIndexing(
     title="Day of year of maximum snow depth",
     identifier="snd_max_doy",
@@ -208,7 +222,8 @@ snw_max = SnowWithIndexing(
     description="The {freq} maximum snow amount equivalent on the surface.",
     abstract="The maximum snow amount equivalent on the surface.",
     units="kg m-2",
-    compute=xci.snw_max,
+    compute=generic.statistics,
+    parameters={"statistic": "max", "freq": {"default": "YS-JUL"}},
 )
 
 snw_max_doy = SnowWithIndexing(
@@ -277,7 +292,8 @@ snow_depth = SnowWithIndexing(
     description="The {freq} mean of daily mean snow depth.",
     abstract="Mean of daily snow depth.",
     cell_methods="time: mean over days",
-    compute=xci.snow_depth,
+    compute=generic.statistics,
+    parameters={"statistic": "mean", "freq": {"default": "YS"}},
 )
 
 
@@ -288,7 +304,8 @@ snd_days_above = SnowWithIndexing(
     long_name="Number of days with snow",
     description="The {freq} number of days with snow depth greater than or equal to {thresh}.",
     abstract="Number of days when the snow depth is greater than or equal to a given threshold.",
-    compute=xci.snd_days_above,
+    compute=generic.count_occurrences,
+    parameters={"condition": {"default": ">="}, "freq": {"default": "YS-JUL"}, "thresh": {"default": "2 cm"}},
 )
 
 snw_days_above = SnowWithIndexing(
@@ -298,7 +315,8 @@ snw_days_above = SnowWithIndexing(
     long_name="Number of days with snow",
     description="The {freq} number of days with snow amount greater than or equal to {thresh}.",
     abstract="Number of days when the snow amount is greater than or equal to a given threshold.",
-    compute=xci.snw_days_above,
+    compute=generic.count_occurrences,
+    parameters={"condition": {"default": ">="}, "freq": {"default": "YS-JUL"}, "thresh": {"default": "4 kg m-2"}},
 )
 
 holiday_snow_days = Snow(

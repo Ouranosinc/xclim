@@ -579,6 +579,7 @@ def max_pr_intensity(pr: xarray.DataArray, window: int = 1, freq: str = "YS", **
     return out
 
 
+@deprecated("1.0", "land.snow_depth")
 @declare_units(snd="[length]")
 def snow_depth(
     snd: xarray.DataArray,

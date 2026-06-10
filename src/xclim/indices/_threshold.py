@@ -2298,6 +2298,7 @@ def hot_spell_frequency(
     return out
 
 
+@deprecated("1.0", "land.snd_days_above")
 @declare_units(snd="[length]", thresh="[length]")
 def snd_days_above(
     snd: xarray.DataArray,
@@ -2329,6 +2330,7 @@ def snd_days_above(
     return count_occurrences(snd, condition=op, thresh=thresh, freq=freq)
 
 
+@deprecated("1.0", "land.snw_days_above")
 @declare_units(snw="[mass]/[area]", thresh="[mass]/[area]")
 def snw_days_above(
     snw: xarray.DataArray,
