@@ -529,7 +529,7 @@ def test_no_constrain(official_indicators):
     if problems:
         raise ValueError(
             "The following indicators have a 'constrain' argument, but shouldn't "
-            f"(either not generic or without a condidion argument):  {problems}"
+            f"(either not generic or without a condition argument):  {problems}"
         )
 
 
