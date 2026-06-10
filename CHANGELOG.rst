@@ -48,13 +48,33 @@ Internal changes
 * Call signature typing for many indices have been better identified. The ``cast`` function (used to force expected variable types of internal objects) is now less prevalent within the code base. (:pull:`2355`).
 * `tox.toml` now uses the build-composition API, requiring `tox` (>=4.52.0). (:pull:`2355`).
 
-v0.61.1 (unreleased)
+v0.61.2 (unreleased)
+--------------------
+Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`).
+
+Breaking changes
+^^^^^^^^^^^^^^^^
+* Fix ``maximum_consecutive_*`` indicators to harmonize them with their docstring, add ``op`` argument to control comparison and fix some non-existing standard names. (:issue:`2368`, :pull:`2370`).
+
+Internal changes
+^^^^^^^^^^^^^^^^
+* `zizmor` added to `pre-commit` hooks. GitHub workflow permissions have been adapted for better security settings by default. (:pull:`2367`):
+    * Adjusted the token creation permissions to prevent creating tokens with unnecessary access privileges.
+    * ReadTheDocs OS version updated to ``ubuntu-26.04``.
+    * ``workflow-warning.yml`` now simply uses GitHub API calls.
+
+v0.61.1 (2026-05-25)
 --------------------
 Contributors to this version: Pascal Bourgault (:user:`aulemahal`).
 
 Bug fixes
 ^^^^^^^^^
 * Fix conversion error with ``xc.units.rate2amount`` and ``xc.units.amount2rate`` when ``sampling_rate_from_coord=True`` or sampling frequency is monthly or coarser and time coordinate is `cftime`-based. Previous results were 1000x too small. (:pull:`2357`).
+* For the Canadian Forest Fire Weather Index System, add non-null default starting values for ``dc0`` and ``dmc0`` if the dry start mechanism is activated. (:issue:`2371`, :pull:`2372`).
+
+Internal changes
+^^^^^^^^^^^^^^^^
+* Fixed documentation generation with Sphinx v9.0 by activating the legacy `autodoc` system. (:pull:`2358`).
 
 v0.61.0 (2026-05-07)
 --------------------

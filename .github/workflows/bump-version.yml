@@ -1,4 +1,4 @@
-name: Bump Patch Version
+name: Bump Version
 
 on:
   push:
@@ -33,10 +33,10 @@ permissions:
 
 jobs:
   bump_patch_version:
-    name: Bumpversion Patch
+    name: Conditional Bump
     runs-on: ubuntu-latest
     permissions:
-      actions: read
+      contents: write
     strategy:
       matrix:
         python-version: [ "3.13" ]
@@ -51,21 +51,26 @@ jobs:
             files.pythonhosted.org:443
             github.com:443
             pypi.org:443
+
       - name: Generate App Token
         id: token_generator
         uses: actions/create-github-app-token@f8d387b68d61c58ab83c6c016672934102569859 # v3.0.0
         with:
           app-id: ${{ secrets.OURANOS_HELPER_BOT_ID }}
           private-key: ${{ secrets.OURANOS_HELPER_BOT_KEY }}
+          permission-contents: write
+
       - name: Checkout Repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           token: ${{ steps.token_generator.outputs.token }}
           persist-credentials: false
-      - name: Set up Python3
+
+      - name: Set up Python${{ matrix.python-version }}
         uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
           python-version: ${{ matrix.python-version }}
+
       - name: Import GPG Key
         uses: crazy-max/ghaction-import-gpg@2dc316deee8e90f13e1a351ab510b4d5bc0c82cd # v7.0.0
         with:
@@ -74,9 +79,11 @@ jobs:
           git_user_signingkey: true
           git_commit_gpgsign: true
           trust_level: 5
+
       - name: Install CI libraries
         run: |
           python -m pip install --require-hashes -r CI/requirements_ci.txt
+
       - name: Conditional Bump
         run: |
           CURRENT_VERSION=$(bump-my-version show current_version)
@@ -88,6 +95,7 @@ jobs:
             bump-my-version bump patch
           fi
           echo "new_version=$(bump-my-version show current_version)"
+
       - name: Push Changes
         uses: ad-m/github-push-action@77c5b412c50b723d2a4fbc6d71fb5723bcd439aa # v1.0.0
         with:

@@ -345,9 +345,7 @@ class TestConsecutiveFrostFreeDays:
         tasmin = atmosds.tasmin
         test = atmos.maximum_consecutive_frost_free_days(tasmin)
         np.testing.assert_allclose(test[2, 0], [68], rtol=1e-1)
-        assert (
-            "Annual maximum number of consecutive days with minimum daily temperature at or above 0 degc."
-        ) in test.description
+        assert ("Annual maximum number of consecutive days with minimum daily temperature >= 0") in test.description
 
 
 class TestFrostSeasonLength:
@@ -1387,7 +1385,7 @@ def test_maximum_consecutive_warm_days(open_dataset):
     tasmax = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc").tasmax
     out = atmos.maximum_consecutive_warm_days(tasmax)
     np.testing.assert_array_equal(out[1, :], np.array([13, 21, 6, 10]))
-    assert "Annual longest spell of consecutive days with maximum daily temperature above 25 degc." in out.description
+    assert "Annual longest spell of consecutive days with maximum daily temperature > 25" in out.description
 
 
 def test_corn_heat_units(open_dataset):
