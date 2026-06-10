@@ -728,6 +728,12 @@
     "title": "Valeur de retour",
     "abstract": "Analyse fréquentielle selon un mode et une distribution."
   },
+  "STATISTICS": {
+    "long_name": "{statistic:nom} de la variable.",
+    "description": "{statistic:nom} {freq:f} da la variable ({indexer}).",
+    "title": "Calcul de statistiques sur des sous-périodes.",
+    "abstract": ""
+  },
   "STATS": {
     "long_name": "{op:nom} de la variable.",
     "description": "{op:nom} {freq:f} da la variable ({indexer}).",

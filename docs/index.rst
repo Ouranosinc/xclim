@@ -32,7 +32,6 @@ Leveraging xarray and dask, users can easily bias-adjust climate simulations ove
    notebooks/units
    internationalization
    notebooks/cli
-   sdba
    analogues
    contributing
 

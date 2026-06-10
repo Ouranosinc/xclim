@@ -22,10 +22,11 @@ import pandas as pd
 import pint
 import xarray as xr
 from boltons.funcutils import wraps
+from xarray.coding import cftime_offsets
 from yaml import safe_load
 
 from xclim.core._exceptions import ValidationError
-from xclim.core._types import Quantified
+from xclim.core._types import Freq, Quantified, Reducer
 from xclim.core.calendar import get_calendar, parse_offset
 from xclim.core.options import datacheck
 from xclim.core.utils import InputKind, infer_kind_from_parameter
@@ -112,6 +113,7 @@ pint.set_application_registry(units)
 
 with (files("xclim.data") / "variables.yml").open() as variables:
     CF_CONVERSIONS = safe_load(variables)["conversions"]
+CF_AMOUNTS, CF_RATES = list(zip(*CF_CONVERSIONS["amount2rate"]["valid_names"], strict=True))
 _CONVERSIONS = {}
 
 
@@ -137,7 +139,7 @@ def _register_conversion(conversion, direction):
 
 
 def units2pint(
-    value: xr.DataArray | units.Unit | units.Quantity | dict | str,
+    value: xr.DataArray | pint.Unit | pint.Quantity | dict | str,
 ) -> pint.Unit:
     """
     Return the pint Unit for the DataArray units.
@@ -201,7 +203,7 @@ def units2pint(
     return pu
 
 
-def pint2cfunits(value: units.Quantity | units.Unit) -> str:
+def pint2cfunits(value: pint.Quantity | pint.Unit) -> str:
     """
     Return a CF-compliant unit string from a `pint` unit.
 
@@ -222,7 +224,7 @@ def pint2cfunits(value: units.Quantity | units.Unit) -> str:
     return f"{value:~cf}" or "1"
 
 
-def pint2cfattrs(value: units.Quantity | units.Unit, is_difference=None) -> dict:
+def pint2cfattrs(value: pint.Quantity | pint.Unit, is_difference=None) -> dict:
     """
     Return CF-compliant units attributes from a `pint` unit.
 
@@ -331,8 +333,8 @@ def str2pint(val: str) -> pint.Quantity:
 
 # FIXME: The typing here is difficult to determine, as Generics cannot be used to track the type of the output.
 def convert_units_to(
-    source: Quantified | xr.Dataset | DataTree,
-    target: Quantified | units.Unit | dict,
+    source: Quantified | xr.Dataset | DataTree,  # ty: ignore[invalid-type-form]
+    target: Quantified | pint.Unit | dict,
     context: Literal["infer", "hydro", "none"] | None = None,
 ) -> xr.DataArray | float | xr.Dataset:
     """
@@ -586,7 +588,7 @@ def ensure_absolute_temperature(units: str) -> str:
     return units
 
 
-def ensure_delta(unit: xr.DataArray | str | units.Quantity) -> str:
+def ensure_delta(unit: xr.DataArray | str | pint.Quantity) -> str:
     """
     Return delta units for temperature.
 
@@ -620,9 +622,9 @@ def ensure_delta(unit: xr.DataArray | str | units.Quantity) -> str:
 def to_agg_units(
     out: xr.DataArray,
     orig: xr.DataArray,
-    op: Literal["min", "max", "mean", "std", "var", "doymin", "doymax", "count", "integral", "sum"],
+    reducer: Reducer,
     dim: str = "time",
-    deffreq: str | None = None,
+    deffreq: Freq | None = "D",
 ) -> xr.DataArray:
     """
     Set and convert units of an array after an aggregation operation along the sampling dimension (time).
@@ -634,7 +636,7 @@ def to_agg_units(
     orig : xr.DataArray
         The original array before the aggregation operation,
         used to infer the sampling units and get the variable units.
-    op : {'min', 'max', 'mean', 'std', 'var', 'doymin', 'doymax', 'count', 'integral', 'sum'}
+    reducer : {'min', 'max', 'mean', 'std', 'var', 'doymin', 'doymax', 'count', 'integral', 'sum'} or Callable
         The type of aggregation operation performed. "integral" is mathematically equivalent to "sum",
         but the units are multiplied by the timestep of the data (requires an inferrable frequency).
     dim : str
@@ -647,6 +649,7 @@ def to_agg_units(
     -------
     xr.DataArray
         The DataArray with aggregated values.
+        Depending on configurations, units may also be converted or simplified.
 
     Examples
     --------
@@ -667,7 +670,7 @@ def to_agg_units(
     # Note: older xarray drops units while modern xarray preserves them
     >>> Ndays.attrs.get("units")  # doctest: +SKIP
     'degC'
-    >>> Ndays = to_agg_units(Ndays, tas, op="count")
+    >>> Ndays = to_agg_units(Ndays, tas, "count")
     >>> Ndays.units
     'd'
 
@@ -681,7 +684,7 @@ def to_agg_units(
     ... )
     >>> dt = (tas - 16).assign_attrs(units="degC", units_metadata="temperature: difference")
     >>> degdays = dt.clip(0).sum("time")  # Integral of temperature above a threshold
-    >>> degdays = to_agg_units(degdays, dt, op="integral")
+    >>> degdays = to_agg_units(degdays, dt, reducer="integral")
     >>> degdays.units
     'degC week'
 
@@ -691,18 +694,21 @@ def to_agg_units(
     >>> degdays.units
     'd K'
     """
-    is_difference = True if op in ["std", "var"] else None
+    if not isinstance(reducer, str):
+        reducer = reducer.__name__
 
-    if op in ["amin", "min", "amax", "max", "mean", "sum", "std"]:
+    is_difference = True if reducer in ["std", "var"] else None
+
+    if reducer in ["min", "max", "mean", "sum", "std"]:
         out.attrs["units"] = orig.attrs["units"]
 
-    elif op in ["var"]:
+    elif reducer in ["var"]:
         out.attrs["units"] = pint2cfunits(str2pint(orig.units) ** 2)
 
-    elif op in ["doymin", "doymax"]:
+    elif reducer in ["doymin", "doymax"]:
         out.attrs.update(units="1", is_dayofyear=np.int32(1), calendar=get_calendar(orig))
 
-    elif op in ["count", "integral"]:
+    elif reducer in ["count", "integral"]:
         m, freq_u_raw = infer_sampling_units(orig, deffreq=deffreq, dim=dim)
         orig_u = units2pint(orig)
         freq_u = str2pint(freq_u_raw)
@@ -710,10 +716,10 @@ def to_agg_units(
         with xr.set_options(keep_attrs=True):
             out = out * m
 
-        if op == "count":
+        if reducer == "count":
             out.attrs["units"] = freq_u_raw
 
-        elif op == "integral":
+        elif reducer == "integral":
             if "[temperature]" in orig_u.dimensionality:
                 # ensure delta_temperature
                 orig_u = 1 * orig_u - 1 * orig_u
@@ -729,15 +735,47 @@ def to_agg_units(
                 out.attrs.update(pint2cfattrs(orig_u * freq_u, is_difference))
     else:
         raise ValueError(
-            f"Unknown aggregation op {op}. "
-            "Known ops are [min, max, mean, std, var, doymin, doymax, count, integral, sum]."
+            f"Unknown aggregation reducer {reducer}. "
+            "Known reducers are [min, max, mean, std, var, doymin, doymax, count, integral, sum]."
         )
 
     # Remove units_metadata where it doesn't make sense
-    if op in ["doymin", "doymax", "count"]:
+    if reducer in ["doymin", "doymax", "count"]:
         out.attrs.pop("units_metadata", None)
 
     return out
+
+
+def is_temporal_rate(da: xr.DataArray):
+    """
+    Return if the given data has a standard name denoting a temporal rate.
+
+    A "temporal rate" (or "flux") variable is one where the quantity is given as a derivative along time.
+    The temporal integral of a "temporal rate" gives an amount. This function simply
+    checks if the variable has a standard name in a list of rate standard names.
+
+    Parameters
+    ----------
+    da : xarray.DataArray
+        A variable that might contain a CF standard name.
+
+    Returns
+    -------
+    bool or None
+        True if the standard name is a rate, False if it is an amount, and
+        None if there is no standard name or if the standard name is not known.
+
+    See Also
+    --------
+    amount2rate : Explicitly convert an amount to a rate (differentiate along time).
+    rate2amount : Explicitly convert a rate to an amount (integrate along time).
+    """
+    stdname = da.attrs.get("standard_name")
+    if stdname in CF_RATES:
+        return True
+    if stdname in CF_AMOUNTS:
+        return False
+    return None
 
 
 def _rate_and_amount_converter(
@@ -789,7 +827,7 @@ def _rate_and_amount_converter(
                 if isinstance(start, pd.Timestamp):
                     start = start - pd.tseries.frequencies.to_offset(freq)
                 else:
-                    start = start - xr.coding.cftime_offsets.to_offset(freq)
+                    start = start - cftime_offsets.to_offset(freq)
                 # In the diff below, assign to upper label!
                 label = "upper"
             # We generate "time" with an extra element, so we do not need to repeat the last element below.
@@ -892,6 +930,7 @@ def rate2amount(
     See Also
     --------
     amount2rate : Convert an amount to a rate.
+    is_temporal_rate : Determine if a variable is a rate based on its CF attributes.
 
     Notes
     -----
@@ -980,6 +1019,7 @@ def amount2rate(
     See Also
     --------
     rate2amount : Convert a rate to an amount.
+    is_temporal_rate : Determine if a variable is a rate based on its CF attributes.
     """
     return _rate_and_amount_converter(
         amount,

@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import warnings
-
 from xclim.core.cfchecks import cfcheck_from_name
 from xclim.core.indicator import Indicator
 from xclim.core.utils import InputKind
@@ -28,7 +26,6 @@ __all__ = [
     "snw_to_snd",
     "specific_humidity",
     "specific_humidity_from_dewpoint",
-    "tg",
     "universal_thermal_climate_index",
     "vapor_pressure",
     "vapor_pressure_deficit",
@@ -90,16 +87,6 @@ heat_index = Converter(
     "when relative humidity is taken into account.",
     compute=converters.heat_index,
 )
-
-
-def tg(*args, **kwargs):  # numpydoc ignore=GL08
-    warnings.warn(
-        "The `tg` function is deprecated and will be removed in a future release. "
-        "Use `mean_temperature_from_max_and_min` instead.",
-        DeprecationWarning,
-        stacklevel=2,
-    )
-    return mean_temperature_from_max_and_min(*args, **kwargs)
 
 
 mean_temperature_from_max_and_min = Converter(

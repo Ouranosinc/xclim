@@ -130,7 +130,8 @@ Ready to contribute? Here's how to set up `xclim` for local development.
 
     Now you can make your changes locally!
 
-#. Before committing your changes, we ask that you install ``pre-commit`` in your development environment. Pre-commit runs git hooks that ensure that your code resembles that of the project and catches and corrects any small errors or inconsistencies when you ``git commit``:
+#. Before committing your changes, we ask that you install ``pre-commit`` in your development environment in order to run linting checks when committing code changes.
+   Pre-commit runs git hooks that ensure that your code adheres to the standards of the project and catches and corrects small errors or inconsistencies when you ``git commit``:
 
     .. code-block:: shell
 
@@ -145,19 +146,20 @@ Ready to contribute? Here's how to set up `xclim` for local development.
 
             make lint
 
-    Or, alternatively, you can check individual hooks manually with `black`, `isort`, `ruff`, `flake8`, `flake8-rst-docstrings`, `nbqa`, `blackdoc`, and `yamllint`:
+    Or, alternatively, you can check individual hooks manually with  `ruff`, `flake8`, `flake8-rst-docstrings`, `vulture`, `codespell`, `numpydoc`, `deptry`, and `yamllint`:
 
         .. code-block:: shell
 
-            black --check xclim tests
-            isort --check xclim tests
-            ruff xclim tests
-            flake8 --config=.flake8 xclim tests
-            nbqa black --check docs
-            nbqa isort --check docs
-            blackdoc --check --exclude=src/xclim/indices/__init__.py xclim
-            blackdoc --check docs
-            yamllint --config-file=.yamllint.yaml xclim
+            # To install the necessary dependencies:
+            python -m pip install --group lint
+            # To run individual checks
+            ruff check --quiet .
+            flake8 --config=.flake8 src/xclim tests
+            vulture src/xclim tests
+            codespell src/xclim tests docs
+            numpydoc lint src/xclim/*.py src/xclim/ensembles/*.py src/xclim/indices/*.py src/xclim/indicators/*.py src/xclim/testing/*.py
+            deptry src
+            yamllint --config-file=.yamllint.yaml src/xclim
 
 #. When features or bug fixes have been contributed, unit tests and doctests have been added, or notebooks have been updated, use ``$ pytest`` to test them:
 

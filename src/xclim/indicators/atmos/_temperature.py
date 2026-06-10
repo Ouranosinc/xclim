@@ -13,6 +13,7 @@ from xclim.core.indicator import (
     ResamplingIndicatorWithIndexing,
 )
 from xclim.core.utils import InputKind
+from xclim.indices import generic
 
 __all__ = [
     "australian_hardiness_zones",
@@ -343,20 +344,21 @@ heat_spell_frequency = Temp(
     "temperatures exceed given thresholds for a number of days.",
     cell_methods="",
     keywords="health,",
-    compute=indices.generic.bivariate_spell_length_statistics,
+    compute=generic.bivariate_spell_length_statistics,
     input={"data1": "tasmin", "data2": "tasmax"},
     parameters={
-        "spell_reducer": "count",
-        "op": ">=",
+        "statistic": "count",
+        "condition": ">=",
         "window": {"default": 3},
-        "win_reducer": {"default": "mean"},
+        "window_statistic": {"default": "mean", "name": "win_reducer"},
         "freq": {"default": "YS"},
-        "threshold1": {
+        "constrain": None,
+        "thresh1": {
             "description": "Threshold for tasmin",
             "default": "20 °C",
             "name": "thresh_tasmin",
         },
-        "threshold2": {
+        "thresh2": {
             "description": "Threshold for tasmax",
             "default": "33 °C",
             "name": "thresh_tasmax",
@@ -376,20 +378,21 @@ heat_spell_max_length = Temp(
     "Gaps of fewer than {min_gap} day(s) are allowed within a spell.",
     abstract="The longest heat spell of a period. A heat spell occurs when rolling averages of daily minimum "
     "and maximum temperatures exceed given thresholds for a number of days.",
-    compute=indices.generic.bivariate_spell_length_statistics,
+    compute=generic.bivariate_spell_length_statistics,
     input={"data1": "tasmin", "data2": "tasmax"},
     parameters={
-        "spell_reducer": "max",
-        "op": ">=",
+        "statistic": "max",
+        "condition": ">=",
         "window": {"default": 3},
-        "win_reducer": {"default": "mean"},
+        "window_statistic": {"default": "mean", "name": "win_reducer"},
         "freq": {"default": "YS"},
-        "threshold1": {
+        "constrain": None,
+        "thresh1": {
             "description": "Threshold for tasmin",
             "default": "20 °C",
             "name": "thresh_tasmin",
         },
-        "threshold2": {
+        "thresh2": {
             "description": "Threshold for tasmax",
             "default": "33 °C",
             "name": "thresh_tasmax",
@@ -409,20 +412,21 @@ heat_spell_total_length = Temp(
     "of the spell. Gaps of fewer than {min_gap} day(s) are allowed within a spell.",
     abstract="Total length of heat spells. A heat spell occurs when rolling averages of daily minimum and "
     "maximum temperatures exceed given thresholds for a number of days.",
-    compute=indices.generic.bivariate_spell_length_statistics,
+    compute=generic.bivariate_spell_length_statistics,
     input={"data1": "tasmin", "data2": "tasmax"},
     parameters={
-        "spell_reducer": "sum",
-        "op": ">=",
+        "statistic": "sum",
+        "condition": ">=",
         "window": {"default": 3},
-        "win_reducer": {"default": "mean"},
+        "window_statistic": {"default": "mean", "name": "win_reducer"},
         "freq": {"default": "YS"},
-        "threshold1": {
+        "constrain": None,
+        "thresh1": {
             "description": "Threshold for tasmin",
             "default": "20 °C",
             "name": "thresh_tasmin",
         },
-        "threshold2": {
+        "thresh2": {
             "description": "Threshold for tasmax",
             "default": "33 °C",
             "name": "thresh_tasmax",

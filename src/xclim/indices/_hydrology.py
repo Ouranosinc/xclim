@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import importlib.util as _util
 from functools import partial
 
 import numpy as np
@@ -13,16 +14,14 @@ from xarray import DataArray
 from xclim.core._types import DateStr, Quantified
 from xclim.core.calendar import get_calendar
 from xclim.core.missing import at_least_n_valid
-from xclim.core.units import convert_units_to, declare_units, rate2amount, to_agg_units
-from xclim.indices.generic import threshold_count
+from xclim.core.units import convert_units_to, declare_units, rate2amount
+from xclim.indices.generic import count_occurrences
 from xclim.indices.stats import standardized_index
 
 from . import generic
 
-try:
-    import pymannkendall as mk
-except ImportError:
-    mk = None
+HAS_PYMANNKENDALL = _util.find_spec("pymannkendall")
+
 
 __all__ = [
     "antecedent_precipitation_index",
@@ -283,7 +282,7 @@ def snd_max(snd: xarray.DataArray, freq: str = "YS-JUL") -> xarray.DataArray:
     xarray.DataArray
         The maximum snow depth over a given number of days for each period. [length].
     """
-    return generic.select_resample_op(snd, op="max", freq=freq)
+    return generic.statistics(snd, statistic="max", freq=freq)
 
 
 @declare_units(snd="[length]")
@@ -309,7 +308,7 @@ def snd_max_doy(snd: xarray.DataArray, freq: str = "YS-JUL") -> xarray.DataArray
     valid = at_least_n_valid(snd.where(snd > 0), n=1, freq=freq)
 
     # Compute doymax. Will return first time step if all snow depths are 0.
-    out = generic.select_resample_op(snd.where(snd > 0, 0), op=generic.doymax, freq=freq)
+    out = generic.statistics(snd.where(snd > 0, 0), statistic="doymax", freq=freq)
     out.attrs.update(units="", is_dayofyear=np.int32(1), calendar=get_calendar(snd))
 
     # Mask arrays that miss at least one non-null snd.
@@ -335,7 +334,7 @@ def snw_max(snw: xarray.DataArray, freq: str = "YS-JUL") -> xarray.DataArray:
     xarray.DataArray
         The maximum snow amount over a given number of days for each period. [mass/area].
     """
-    return generic.select_resample_op(snw, op="max", freq=freq)
+    return generic.statistics(snw, statistic="max", freq=freq)
 
 
 @declare_units(snw="[mass]/[area]")
@@ -361,8 +360,7 @@ def snw_max_doy(snw: xarray.DataArray, freq: str = "YS-JUL") -> xarray.DataArray
     valid = at_least_n_valid(snw.where(snw > 0), n=1, freq=freq)
 
     # Compute doymax. Will return first time step if all snow depths are 0.
-    out = generic.select_resample_op(snw.where(snw > 0, 0), op=generic.doymax, freq=freq)
-    out.attrs.update(units="", is_dayofyear=np.int32(1), calendar=get_calendar(snw))
+    out = generic.statistics(snw.where(snw > 0, 0), statistic="doymax", freq=freq)
 
     # Mask arrays that miss at least one non-null snd.
     return out.where(~valid)
@@ -632,9 +630,8 @@ def high_flow_frequency(q: xarray.DataArray, threshold_factor: int = 9, freq: st
     :cite:cts:`addor2018,Clausen2000`
     """
     median_flow = q.median(dim="time")
-    threshold = threshold_factor * median_flow
-    out = threshold_count(q, ">", threshold, freq=freq)
-    return to_agg_units(out, q, "count", deffreq="D")
+    thresh = (threshold_factor * median_flow).assign_attrs(units=q.attrs["units"])
+    return count_occurrences(q, condition=">", thresh=thresh, freq=freq)
 
 
 @declare_units(q="[discharge]")
@@ -665,9 +662,8 @@ def low_flow_frequency(q: xarray.DataArray, threshold_factor: float = 0.2, freq:
     :cite:cts:`Olden2003`
     """
     mean_flow = q.mean(dim="time")
-    threshold = threshold_factor * mean_flow
-    out = threshold_count(q, "<", threshold, freq=freq)
-    return to_agg_units(out, q, "count", deffreq="D")
+    thresh = (threshold_factor * mean_flow).assign_attrs(units=q.attrs["units"])
+    return count_occurrences(q, condition="<", thresh=thresh, freq=freq)
 
 
 @declare_units(pr="[precipitation]")
@@ -806,9 +802,7 @@ def days_with_snowpack(
     ----------
     :cite:cts:`alonso_gonzalez_2022`
     """
-    frz = convert_units_to(thresh, swe)
-    out = threshold_count(swe, ">", frz, freq)
-    return to_agg_units(out, swe, "count", deffreq="D")
+    return count_occurrences(swe, condition=">", thresh=thresh, freq=freq)
 
 
 @declare_units(pr="[precipitation]", pet="[precipitation]")
@@ -818,14 +812,15 @@ def aridity_index(pr: xarray.DataArray, pet: xarray.DataArray, freq: str = "YS")
 
     The ratio of total precipitation over potential evapotranspiration.
     Classification based on the Aridity Index (AI).
-    +----------------+----------------+-----------------+
-    | Classification | Aridity Index  | Global land area|
-    +----------------+----------------+-----------------+
-    | Hyperarid      | AI < 0.05      | 7.5%            |
-    | Arid           | 0.05 ≤ AI < 0.20 | 12.1%         |
-    | Semi-arid      | 0.20 ≤ AI < 0.50 | 17.7%         |
-    | Dry subhumid   | 0.50 ≤ AI < 0.65 | 9.9%          |
-    +----------------+----------------+-----------------+
+
+    +----------------+------------------+-----------------+
+    | Classification | Aridity Index    | Global land area|
+    +----------------+------------------+-----------------+
+    | Hyperarid      | AI < 0.05        | 7.5%            |
+    | Arid           | 0.05 ≤ AI < 0.20 | 12.1%           |
+    | Semi-arid      | 0.20 ≤ AI < 0.50 | 17.7%           |
+    | Dry subhumid   | 0.50 ≤ AI < 0.65 | 9.9%            |
+    +----------------+------------------+-----------------+
 
     Parameters
     ----------
@@ -935,7 +930,7 @@ def lag_snowpack_flow_peaks(
 @declare_units(q="[discharge]")
 def sen_slope(
     q: xarray.DataArray,
-    qsim: xarray.DataArray = None,
+    qsim: xarray.DataArray | None = None,
 ) -> xarray.Dataset:
     """
     Sen Slope : Temporal robustness analysis of streamflow.
@@ -947,7 +942,7 @@ def sen_slope(
     ----------
     q : xarray.DataArray
         Observed streamflow vector.
-    qsim : xarray.DataArray
+    qsim : xarray.DataArray, optional
         Simulated streamflow vector.
 
     Returns
@@ -973,7 +968,13 @@ def sen_slope(
     """
     seasons = ["DJF", "MAM", "JJA", "SON", "Year"]
 
-    def compute_seasonal_stats(x: xarray.DataArray) -> tuple[list, list]:
+    if not HAS_PYMANNKENDALL:
+        msg = f"{sen_slope.__name__} requires access to the `pymannkendall` library."
+        raise ModuleNotFoundError(msg)
+    else:
+        import pymannkendall as mk
+
+    def _compute_seasonal_stats(x: xarray.DataArray) -> tuple[list, list]:
         """
         Seasonal statistics.
 
@@ -990,10 +991,6 @@ def sen_slope(
             - ``Sen_slope`` : Sen's slope estimates for seasonal and yearly averages.
             - ``p_value`` : Mann–Kendall metric indicating slope tendency.
         """
-        if mk is None:
-            msg = f"{sen_slope.__name__} requires access to the `pymannkendall` library."
-            raise ModuleNotFoundError(msg)
-
         # Convert to pandas Series with DatetimeIndex
         x_year = x.resample(time="YS-DEC").mean()
         x_season = x.resample(time="QS-DEC").mean()
@@ -1023,8 +1020,8 @@ def sen_slope(
         return _slopes, _p_vals
 
     if qsim is not None:
-        slopes, p_vals = compute_seasonal_stats(q)
-        slopes_sim, p_vals_sim = compute_seasonal_stats(qsim)
+        slopes, p_vals = _compute_seasonal_stats(q)
+        slopes_sim, p_vals_sim = _compute_seasonal_stats(qsim)
         slopes_np = np.array(slopes)
         slopes_sim_np = np.array(slopes_sim)
         ratio = slopes_np / slopes_sim_np
@@ -1040,7 +1037,7 @@ def sen_slope(
         )
 
     else:
-        slopes, p_vals = compute_seasonal_stats(q)
+        slopes, p_vals = _compute_seasonal_stats(q)
         # Create labeled xarray
         ds = xarray.Dataset(
             data_vars={"Sen_slope": ("season", slopes), "p_value": ("season", p_vals)}, coords={"season": seasons}

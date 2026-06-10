@@ -6,7 +6,7 @@ repos:
     rev: v3.21.2
     hooks:
       - id: pyupgrade
-        args: ['--py310-plus']
+        args: ['--py311-plus']
         exclude: 'src/xclim/core/indicator.py'
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v6.0.0
@@ -69,8 +69,9 @@ repos:
   - repo: https://github.com/pre-commit/pygrep-hooks
     rev: v1.10.0
     hooks:
-#      - id: python-check-blanket-noqa
-#      - id: python-check-blanket-type-ignore
+      - id: python-check-blanket-noqa
+        exclude: "docs|tests"
+      - id: python-check-blanket-type-ignore
       - id: python-no-eval
       - id: python-no-log-warn
       - id: python-use-type-annotations

@@ -1,3 +1,6 @@
+Climate Indicators API
+----------------------
+
 Indicators are the main tool xclim provides to compute climate indices. In contrast
 to the function defined in `xclim.indices`, Indicators add a layer of health checks
 and metadata handling. Indicator objects are split into submodules according to their
@@ -11,8 +14,8 @@ Virtual modules are also inserted here. A normal installation of xclim comes wit
  - :py:mod:`xclim.indicators.icclim`, Indicators defined by ECAD, as found in  python package Icclim.
  - :py:mod:`xclim.indicators.anuclim`, Indicators of the Australian National University's Fenner School of Environment and Society.
 
-Climate Indicators API
-----------------------
+Climate Indicator Submodules
+----------------------------
 
 .. automodule:: xclim.indicators.atmos
    :members:

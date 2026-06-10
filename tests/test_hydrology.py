@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import importlib.util as _util
+
 import numpy as np
 import pandas as pd
 import pytest
@@ -8,10 +10,7 @@ from xclim import indices as xci
 from xclim import land
 from xclim.core.units import convert_units_to
 
-try:
-    import pymannkendall
-except ModuleNotFoundError:
-    pymannkendall = None
+HAS_PYMANNKENDALL = _util.find_spec("pymannkendall")
 
 
 class TestBaseFlowIndex:
@@ -306,7 +305,7 @@ class TestLagSnowpackFlowPeaks:
 
 
 class TestSenSlope:
-    @pytest.mark.skipif(pymannkendall is None, reason="This requires pymankendall")
+    @pytest.mark.skipif(not HAS_PYMANNKENDALL, reason="This requires the 'pymannkendall' library.")
     def test_simple(self, q_series):
         # 5 years of increasing data with slope of 1
         q = np.arange(1, 1826)

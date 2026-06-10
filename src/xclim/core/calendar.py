@@ -10,7 +10,7 @@ from __future__ import annotations
 import datetime as pydt
 import warnings
 from collections.abc import Sequence
-from typing import Any, Literal, TypeVar
+from typing import Any, Literal, TypeVar, cast
 
 import cftime
 import numpy as np
@@ -18,6 +18,7 @@ import pandas as pd
 import xarray as xr
 from packaging.version import Version
 from xarray import CFTimeIndex
+from xarray.coding import cftime_offsets
 
 from xclim.core._types import DayOfYearStr
 from xclim.core.formatting import update_xclim_history
@@ -520,7 +521,7 @@ def compare_offsets(
     bool
         The result of `freqA` `op` `freqB`.
     """
-    from ..indices.generic import get_op  # pylint: disable=import-outside-toplevel
+    from ..indices.helpers import get_binary_op  # pylint: disable=import-outside-toplevel
 
     # Get multiplier and base frequency
     t_a, b_a, _, _ = parse_offset(freqA)
@@ -534,7 +535,7 @@ def compare_offsets(
         t_b = (t[1] - t[0]).total_seconds()
     # else Same base freq, compare multiplier only.
 
-    return get_op(op)(t_a, t_b)
+    return get_binary_op(op)(t_a, t_b)
 
 
 def parse_offset(freq: str) -> tuple[int, str, bool, str | None]:
@@ -815,7 +816,7 @@ def time_bnds(
         time = time.indexes[time.name]
     # elif isinstance(time, DataArrayResample | DatasetResample):
     elif hasattr(time, "groupers"):
-        for grouper in time.groupers:
+        for grouper in time.groupers:  # ty: ignore[not-iterable]
             if "time" in grouper.codes.dims:
                 datetime = grouper.unique_coord.data
                 freq = freq or grouper.grouper.freq
@@ -856,7 +857,7 @@ def time_bnds(
         floor.pop("nanosecond")
 
     if isinstance(time, xr.CFTimeIndex):
-        period = xr.coding.cftime_offsets.to_offset(freq)
+        period = cftime_offsets.to_offset(freq)
         is_on_offset = period.onOffset
         day = pd.Timedelta("1D").to_pytimedelta()
         floor.pop("nanosecond")  # unsupported by cftime
@@ -1310,7 +1311,7 @@ def select_time(
         raise ValueError(f"Only one method of indexing may be given, got {N}.")
 
     if N == 0:
-        return da
+        return cast(DataType, da)
 
     if isinstance(include_bounds, bool):
         include_bounds = (include_bounds, include_bounds)
@@ -1357,14 +1358,14 @@ def select_time(
     else:
         raise ValueError("Must provide either `season`, `month`, `doy_bounds` or `date_bounds`.")
 
-    return da.where(mask, drop=drop)
+    return cast(DataType, da.where(mask, drop=drop))
 
 
 def _month_is_first_period_month(time, freq):
     """Returns True if the given time is from the first month of freq."""
     if isinstance(time, cftime.datetime):
-        frq_monthly = xr.coding.cftime_offsets.to_offset("MS")
-        frq = xr.coding.cftime_offsets.to_offset(freq)
+        frq_monthly = cftime_offsets.to_offset("MS")
+        frq = cftime_offsets.to_offset(freq)
         if frq_monthly.onOffset(time):
             return frq.onOffset(time)
         return frq.onOffset(frq_monthly.rollback(time))
