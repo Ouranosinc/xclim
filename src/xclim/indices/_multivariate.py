@@ -159,6 +159,7 @@ def cold_spell_duration_index(
     return to_agg_units(out, tasmin, "count", deffreq="D")
 
 
+@deprecated("1.0", "atmos.cold_and_dry_days")
 @declare_units(
     tas="[temperature]",
     pr="[precipitation]",
@@ -225,6 +226,7 @@ def cold_and_dry_days(
     return out
 
 
+@deprecated("1.0", "atmos.warm_and_dry_days")
 @declare_units(
     tas="[temperature]",
     pr="[precipitation]",
@@ -291,6 +293,7 @@ def warm_and_dry_days(
     return out
 
 
+@deprecated("1.0", "atmos.warm_and_wet_days")
 @declare_units(
     tas="[temperature]",
     pr="[precipitation]",
@@ -357,6 +360,7 @@ def warm_and_wet_days(
     return out
 
 
+@deprecated("1.0", "atmos.cold_and_wet_days")
 @declare_units(
     tas="[temperature]",
     pr="[precipitation]",

@@ -36,6 +36,7 @@ import xarray as xr
 from xclim.core import Condition, DayOfYearStr, Freq, Quantified, Reducer, TimeRange
 from xclim.core.bootstrapping import percentile_bootstrap
 from xclim.core.calendar import (
+    annual_cycle_to_time,
     doy_to_days_since,
     get_calendar,
     percentile_doy,
@@ -79,6 +80,13 @@ __all__ = [
     "thresholded_running_statistics",
     "thresholded_statistics",
 ]
+
+
+def _maybe_reindex_annual_cycle(da, target):  # noqa: PR01, RT01
+    """If the dataarray has a dayofyear, month or season dimension, reindex it to the target time."""
+    if isinstance(da, xr.DataArray) and {"dayofyear", "month", "season"}.intersection(da.dims):
+        return annual_cycle_to_time(da, target)
+    return da
 
 
 def statistics(
@@ -219,6 +227,7 @@ def thresholded_statistics(
     xr.DataArray
         {statistic} of data where it is {condition} {thresh}.
     """
+    thresh = _maybe_reindex_annual_cycle(thresh, data)
     thresh = convert_units_to(thresh, data, context="infer")
 
     cond = compare(data, condition, thresh, constrain)
@@ -277,6 +286,7 @@ def thresholded_running_statistics(
     xr.DataArray
         {statistic} of the {window}-day {window_statistic} of the data, where it is {condition} {thresh}.
     """
+    thresh = _maybe_reindex_annual_cycle(thresh, data)
     thresh = convert_units_to(thresh, data, context="infer")
     cond = compare(data, condition, thresh, constrain)
     return running_statistics(
@@ -326,6 +336,7 @@ def count_occurrences(
     xr.DataArray
         Number of timesteps where data {condition} {thresh}.
     """
+    thresh = _maybe_reindex_annual_cycle(thresh, data)
     thresh = convert_units_to(thresh, data, context="infer")
     cond = compare(data, condition, thresh, constrain) * 1
     out = cond.resample(time=freq).sum(dim="time")
@@ -372,6 +383,8 @@ def count_domain_occurrences(
     xr.DataArray
         {The number of days where value is within [low, high] for each period.
     """
+    low_bound = _maybe_reindex_annual_cycle(low_bound, data)
+    high_bound = _maybe_reindex_annual_cycle(high_bound, data)
     low = convert_units_to(low_bound, data, context="infer")
     high = convert_units_to(high_bound, data, context="infer")
     cond = (
@@ -442,7 +455,9 @@ def bivariate_count_occurrences(
     Sampling length is derived from `data1`.
     """
     if thresh2 is None:
-        thresh1 = thresh1
+        thresh2 = thresh1
+    thresh1 = _maybe_reindex_annual_cycle(thresh1, data1)
+    thresh2 = _maybe_reindex_annual_cycle(thresh2, data2)
     thresh1 = convert_units_to(thresh1, data1, context="infer")
     thresh2 = convert_units_to(thresh2, data2, context="infer")
 
@@ -590,6 +605,7 @@ def count_thresholded_percentile_occurrences(
         Number of timesteps where data is {condition} the {percentile}th percentile computed over {reference_period}.
         Only data {data_condition} {thresh} is considered.
     """
+    thresh = _maybe_reindex_annual_cycle(thresh, data)
     thresh = convert_units_to(thresh, data, context="infer")
     data = data.where(compare(data, data_condition, thresh, constrain))
     return count_percentile_occurrences(
@@ -737,6 +753,7 @@ def spell_length_statistics(
     Here, a day is part of a spell if it is in any five (5) day period where the total accumulated precipitation
     reaches or exceeds 20 mm. We then return the length of the longest of such spells.
     """
+    thresh = _maybe_reindex_annual_cycle(thresh, data)
     thresh = convert_units_to(thresh, data, context="infer")
     return _spell_length_statistics(
         data,
@@ -820,6 +837,8 @@ def bivariate_spell_length_statistics(
     spell_length_statistics : The univariate version.
     xclim.indices.helpers.spell_mask : The lower level functions that finds spells.
     """
+    thresh1 = _maybe_reindex_annual_cycle(thresh1, data1)
+    thresh2 = _maybe_reindex_annual_cycle(thresh2, data2)
     thresh1 = convert_units_to(thresh1, data1, context="infer")
     thresh2 = convert_units_to(thresh2, data2, context="infer")
     return _spell_length_statistics(
@@ -912,6 +931,7 @@ def season(
     the season is invalid. If a start is found but no end, the end is set to the last day of the period
     (December 31st if the dataset is complete).
     """
+    thresh = _maybe_reindex_annual_cycle(thresh, data)
     _thresh = convert_units_to(thresh, data, context="infer")
     cond = compare(data, condition, _thresh, constrain=constrain)
     cond = select_time(cond, **indexer)
@@ -1155,6 +1175,7 @@ def thresholded_percentile(
     xr.DataArray
         {percentile}th percentile of the data where it is {condition} {thresh}.
     """
+    thresh = _maybe_reindex_annual_cycle(thresh, data)
     thresh = convert_units_to(thresh, data, context="infer")
     cond = compare(data, condition, thresh, constrain)
     # FIXME: Call signature variable shadows existing function name
@@ -1306,6 +1327,7 @@ def integrated_difference(
     xr.DataArray, [data][time]
         Integral of the differences when {data} {condition} {thresh}.
     """
+    thresh = _maybe_reindex_annual_cycle(thresh, data)
     thresh = convert_units_to(thresh, data, context="infer")
 
     if condition in ["<", "<=", "lt", "le"]:
@@ -1364,6 +1386,7 @@ def day_threshold_reached(
     xr.DataArray, [dimensionless]
         Day-of-year of the {which} time where data {condition} {thresh}.
     """
+    thresh = _maybe_reindex_annual_cycle(thresh, data)
     thresh = convert_units_to(thresh, data, context="infer")
 
     cond = compare(data, condition, thresh, constrain=constrain)
@@ -1442,6 +1465,7 @@ def thresholded_events(
             event_sum: The sum within each event, only considering the steps where start condition is true.
             event_start: The datetime of the start of the run.
     """
+    thresh = _maybe_reindex_annual_cycle(thresh, data)
     thresh = convert_units_to(thresh, data)
 
     # Start and end conditions

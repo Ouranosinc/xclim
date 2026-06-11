@@ -22,7 +22,7 @@ from xarray.coding import cftime_offsets
 
 from xclim.core._types import DayOfYearStr
 from xclim.core.formatting import update_xclim_history
-from xclim.core.utils import uses_dask
+from xclim.core.utils import deprecated, uses_dask
 
 XR2409 = Version(xr.__version__) >= Version("2024.09")
 
@@ -93,8 +93,11 @@ uniform_calendars = ("noleap", "all_leap", "365_day", "366_day", "360_day")
 # Type hint for xarray DataArray and Dataset
 DataType = TypeVar("DataType", xr.DataArray, xr.Dataset)
 
+# Type hint for calendar names
+Calendar = Literal[*max_doy.keys()]
 
-def doy_from_string(doy: DayOfYearStr, year: int, calendar: str) -> int:
+
+def doy_from_string(doy: DayOfYearStr, year: int, calendar: Calendar) -> int:
     """
     Return the day-of-year corresponding to an "MM-DD" string for a given year and calendar.
 
@@ -163,7 +166,7 @@ def get_calendar(obj: Any, dim: str = "time") -> str:
     raise ValueError(f"Calendar could not be inferred from object of type {type(obj)}.")
 
 
-def common_calendar(calendars: Sequence[str], join: Literal["inner", "outer"] = "outer") -> str:
+def common_calendar(calendars: Sequence[Calendar], join: Literal["inner", "outer"] = "outer") -> str:
     """
     Return a calendar common to all calendars from a list.
 
@@ -246,8 +249,8 @@ def _days_in_year(years, calendar):
 
 def convert_doy(
     source: xr.DataArray | xr.Dataset,
-    target_cal: str,
-    source_cal: str | None = None,
+    target_cal: Calendar,
+    source_cal: Calendar | None = None,
     align_on: Literal["date", "year"] = "year",
     missing: Any = np.nan,
     dim: str = "time",
@@ -465,7 +468,7 @@ def percentile_doy(
     # The percentile for the 366th day has a sample size of 1/4 of the other days.
     # To have the same sample size, we interpolate the percentile from 1-365 doy range to 1-366
     if p.dayofyear.max() == 366:
-        p = adjust_doy_calendar(p.sel(dayofyear=(p.dayofyear < 366)), arr)
+        p = convert_doy_cycle_calendar(p.sel(dayofyear=(p.dayofyear < 366)), target_cal="standard", source_cal="noleap")
 
     p.attrs.update(arr.attrs.copy())
 
@@ -693,9 +696,6 @@ def _interpolate_doy_calendar(source: xr.DataArray, doy_max: int, doy_min: int =
     xr.DataArray
         Interpolated source array over coordinates spanning the target `dayofyear` range.
     """
-    if "dayofyear" not in source.coords.keys():
-        raise AttributeError("Source should have `dayofyear` coordinates.")
-
     # Interpolate to fill na values
     da = source
     if uses_dask(source):
@@ -709,6 +709,7 @@ def _interpolate_doy_calendar(source: xr.DataArray, doy_max: int, doy_min: int =
     return filled_na.interp(dayofyear=range(doy_min, doy_max + 1))
 
 
+@deprecated("1.0", "core.calendar.convert_doy_cycle_calendar")
 def adjust_doy_calendar(source: xr.DataArray, target: xr.DataArray | xr.Dataset) -> xr.DataArray:
     """
     Interpolate from one set of dayofyear range to another calendar.
@@ -736,13 +737,112 @@ def adjust_doy_calendar(source: xr.DataArray, target: xr.DataArray | xr.Dataset)
 
     def has_similar_doys(_source, _min_target_doy, _max_target_doy):  # numpydoc ignore=GL08
         # case of partial year (e.g. JJA, doys between 152|153 and 243|244)
-        return _source.dayofyear.min == _min_target_doy and _source.dayofyear.max == _max_target_doy
+        return int(_source.dayofyear.min()) == _min_target_doy and int(_source.dayofyear.max()) == _max_target_doy
 
     if has_same_calendar(source, target) or has_similar_doys(source, min_target_doy, max_target_doy):
         return source
     return _interpolate_doy_calendar(source, max_target_doy, min_target_doy)
 
 
+def convert_doy_cycle_calendar(
+    cycle: xr.DataArray | xr.Dataset, target_cal: Calendar, source_cal: Calendar | None = None, interp: str = "linear"
+) -> xr.DataArray | xr.Dataset:
+    """
+    Given a dataset with a `dayofyear` coordinate, convert the calendar of the dimension to a target one.
+
+    The day of year values are scaled to the new maximum value (360, 365 or 366) and then reinterpolated on the
+    integer range of the day of years.
+
+    Parameters
+    ----------
+    cycle : xr.DataArray or xr.Dataset
+        Input annual cycle data with a `dayofyear` coordinate.
+    target_cal : str
+        Target calendar.
+    source_cal : str, optional
+        Calendar of the source day of years. If not given, it is parsed from the `calendar` attribute of the
+        `dayofyear` coordinate. If absent, it is guessed from the maximum value along the coordinate.
+        If the maximum value is not one of 360, 365 or 366, an error is raised.
+    interp : str
+        The interpolation method to pass to :py:data:`xr.DataArray.interp`.
+
+    Returns
+    -------
+    xr.DataArray | xr.Dataset
+        Same as `cycle` but with an integer `dayofyear` coordinate matching the target calendar.
+        A target "360_day" calendar will have a coordinate from 1 to 360, a target "noleap" will have from 1 to 365,
+        all others will have 1 to 366.
+    """
+    if source_cal is None:
+        source_cal = cycle.dayofyear.attrs.get("calendar")
+
+    if source_cal is None:
+        src_max_doy = int(cycle.dayofyear.max())
+        if src_max_doy not in [360, 365, 366]:
+            raise ValueError(
+                "Unable to guess the calendar of the input dayofyear coordinate. Please pass the `source_cal` argument"
+                "or add a `calendar` attribute to the coordinate,"
+            )
+    else:
+        src_max_doy = max_doy[source_cal]
+    tgt_max_doy = max_doy[target_cal]
+
+    if src_max_doy == tgt_max_doy:
+        return cycle
+
+    # 1 = 1, max = max
+    factor = (tgt_max_doy - 1) / (src_max_doy - 1)
+    cycle_new = cycle.assign_coords(dayofyear=(cycle.dayofyear - 1) * factor + 1)
+    cycle_new_int = cycle_new.interp(dayofyear=range(1, tgt_max_doy + 1), method=interp)
+    cycle_new_int.dayofyear.attrs["calendar"] = target_cal
+    return cycle_new_int
+
+
+def annual_cycle_to_time(cycle: xr.DataArray | xr.Dataset, target: xr.DataArray | xr.Dataset) -> xr.DataArray:
+    """
+    Reindex an annual cycle to a timeseries using the target's time coordinate.
+
+    Parameters
+    ----------
+    cycle : xr.DataArray or xr.Dataset
+        An array with no `time` dimension but a sub-annual coordinate like `dayofyear`, `month` or `season`.
+        Similar to the output of `da.groupby("time.{part}")`, where "part" is one of the choices above.
+        The values of the sub-annual coordinate must the same as the output of `da.time.dt.[part]`.
+    target : xr.DataArray or xr.Dataset
+        An xarray object with a 1D time coordinate to use as the target of the reindexation.
+
+    Returns
+    -------
+    xr.DataArray | xr.Dataset
+        Same data as `cycle` with the sub-annual dimension reindex to the target's `time`.
+
+    See Also
+    --------
+    convert_doy_cycle_calendar :  Conversion between different calendars along the dayofyear coordinate.
+
+    Notes
+    -----
+    If the sub-annual coordinate is `dayofyear`, the data is first interpolated to the same calendar
+    using :py:func:`convert_doy_cycle_calendar`.
+    """
+    if "dayofyear" in cycle.dims:
+        cycle = convert_doy_cycle_calendar(cycle, target.time.dt.calendar).rename(dayofyear="time")
+        target_time = target.time.dt.dayofyear
+    elif "month" in cycle.dims:
+        cycle = cycle.rename(month="time")
+        target_time = target.time.dt.month
+    elif "season" in cycle.dims:
+        cycle = cycle.rename(season="time")
+        target_time = target.time.dt.season
+    else:
+        raise ValueError(
+            f"Annual cycle input must have on dimension of 'dayofyear', 'month' or 'season'. Got : {cycle.dims}."
+        )
+
+    return cycle.reindex(time=target_time).assign_coords(time=target.time)
+
+
+@deprecated("1.0", "core.calendar.reindex_annual_cycle")
 def resample_doy(doy: xr.DataArray, arr: xr.DataArray | xr.Dataset) -> xr.DataArray:
     """
     Create a temporal DataArray where each day takes the value defined by the day-of-year.
@@ -987,7 +1087,7 @@ def _doy_days_since_doys(
 def doy_to_days_since(
     da: xr.DataArray,
     start: DayOfYearStr | None = None,
-    calendar: str | None = None,
+    calendar: Calendar | None = None,
 ) -> xr.DataArray:
     """
     Convert day-of-year data to days since a given date.
@@ -1059,7 +1159,7 @@ def doy_to_days_since(
 def days_since_to_doy(
     da: xr.DataArray,
     start: DayOfYearStr | None = None,
-    calendar: str | None = None,
+    calendar: Calendar | None = None,
 ) -> xr.DataArray:
     """
     Reverse the conversion made by :py:func:`doy_to_days_since`.

@@ -930,7 +930,7 @@ rprctot = PrecipWithIndexing(
 )
 
 
-cold_and_dry_days = PrecipWithIndexing(
+cold_and_dry_days = Precip(
     title="Cold and dry days",
     identifier="cold_and_dry_days",
     units="days",
@@ -940,10 +940,21 @@ cold_and_dry_days = PrecipWithIndexing(
     "precipitation is below {pr_per_thresh}th percentile.",
     abstract="Number of days with temperature below a given percentile and precipitation below a given percentile.",
     cell_methods="time: sum over days",
-    compute=indices.cold_and_dry_days,
+    input={"data1": "tas", "data2": "pr"},
+    compute=indices.generic.bivariate_count_occurrences,
+    parameters={
+        "condition1": "<",
+        "condition2": "<",
+        "thresh1": {"name": "tas_per", "description": "First quartile of daily mean temperature computed by month."},
+        "thresh2": {"name": "pr_per", "description": "First quartile of daily total precipitation computed by month."},
+        "freq": {"default": "YS"},
+        "var_reducer": "all",
+        "constrain1": None,
+        "constrain2": None,
+    },
 )
 
-warm_and_dry_days = PrecipWithIndexing(
+warm_and_dry_days = Precip(
     title="Warm and dry days",
     identifier="warm_and_dry_days",
     units="days",
@@ -953,10 +964,21 @@ warm_and_dry_days = PrecipWithIndexing(
     "precipitation is below {pr_per_thresh}th percentile.",
     abstract="Number of days with temperature above a given percentile and precipitation below a given percentile.",
     cell_methods="time: sum over days",
-    compute=indices.warm_and_dry_days,
+    input={"data1": "tas", "data2": "pr"},
+    compute=indices.generic.bivariate_count_occurrences,
+    parameters={
+        "condition1": ">",
+        "condition2": "<",
+        "thresh1": {"name": "tas_per", "description": "Third quartile of daily mean temperature computed by month."},
+        "thresh2": {"name": "pr_per", "description": "First quartile of daily total precipitation computed by month."},
+        "freq": {"default": "YS"},
+        "var_reducer": "all",
+        "constrain1": None,
+        "constrain2": None,
+    },
 )
 
-warm_and_wet_days = PrecipWithIndexing(
+warm_and_wet_days = Precip(
     title="Warm and wet days",
     identifier="warm_and_wet_days",
     units="days",
@@ -966,10 +988,21 @@ warm_and_wet_days = PrecipWithIndexing(
     "precipitation is above {pr_per_thresh}th percentile.",
     abstract="Number of days with temperature above a given percentile and precipitation above a given percentile.",
     cell_methods="time: sum over days",
-    compute=indices.warm_and_wet_days,
+    input={"data1": "tas", "data2": "pr"},
+    compute=indices.generic.bivariate_count_occurrences,
+    parameters={
+        "condition1": ">",
+        "condition2": ">",
+        "thresh1": {"name": "tas_per", "description": "Third quartile of daily mean temperature computed by month."},
+        "thresh2": {"name": "pr_per", "description": "Third quartile of daily total precipitation computed by month."},
+        "freq": {"default": "YS"},
+        "var_reducer": "all",
+        "constrain1": None,
+        "constrain2": None,
+    },
 )
 
-cold_and_wet_days = PrecipWithIndexing(
+cold_and_wet_days = Precip(
     title="Cold and wet days",
     identifier="cold_and_wet_days",
     units="days",
@@ -979,7 +1012,18 @@ cold_and_wet_days = PrecipWithIndexing(
     "precipitation is above {pr_per_thresh}th percentile.",
     abstract="Number of days with temperature below a given percentile and precipitation above a given percentile.",
     cell_methods="time: sum over days",
-    compute=indices.cold_and_wet_days,
+    input={"data1": "tas", "data2": "pr"},
+    compute=indices.generic.bivariate_count_occurrences,
+    parameters={
+        "condition1": "<",
+        "condition2": ">",
+        "thresh1": {"name": "tas_per", "description": "First quartile of daily mean temperature computed by month."},
+        "thresh2": {"name": "pr_per", "description": "Third quartile of daily total precipitation computed by month."},
+        "freq": {"default": "YS"},
+        "var_reducer": "all",
+        "constrain1": None,
+        "constrain2": None,
+    },
 )
 
 rain_season = Precip(
