@@ -308,7 +308,19 @@ heat_wave_frequency = Temp(
     "thresholds for a number of days.",
     cell_methods="",
     keywords="health,",
-    compute=indices.heat_wave_frequency,
+    input={"data1": "tasmin", "data2": "tasmax"},
+    compute=indices.generic.bivariate_spell_length_statistics,
+    parameters={
+        "window": {"default": 3},
+        "window_statistic": "min",
+        "condition": {"default": ">"},
+        "thresh1": {"default": "22 °C", "name": "thresh_tasmin"},
+        "thresh2": {"default": "30 °C", "name": "thresh_tasmax"},
+        "statistic": "count",
+        "freq": {"default": "YS"},
+        "min_gap": 1,
+        "constrain": (">", ">="),
+    },
 )
 
 hot_spell_max_magnitude = Temp(
@@ -341,7 +353,19 @@ heat_wave_max_length = Temp(
     "given thresholds for a number of days.",
     cell_methods="",
     keywords="health,",
-    compute=indices.heat_wave_max_length,
+    input={"data1": "tasmin", "data2": "tasmax"},
+    compute=indices.generic.bivariate_spell_length_statistics,
+    parameters={
+        "window": {"default": 3},
+        "window_statistic": "min",
+        "condition": {"default": ">"},
+        "thresh1": {"default": "22 °C", "name": "thresh_tasmin"},
+        "thresh2": {"default": "30 °C", "name": "thresh_tasmax"},
+        "statistic": "max",
+        "freq": {"default": "YS"},
+        "min_gap": 1,
+        "constrain": (">", ">="),
+    },
 )
 
 heat_wave_total_length = Temp(
@@ -358,7 +382,19 @@ heat_wave_total_length = Temp(
     "given thresholds for a number of days.",
     cell_methods="",
     keywords="health,",
-    compute=indices.heat_wave_total_length,
+    input={"data1": "tasmin", "data2": "tasmax"},
+    compute=indices.generic.bivariate_spell_length_statistics,
+    parameters={
+        "window": {"default": 3},
+        "window_statistic": "min",
+        "condition": {"default": ">"},
+        "thresh1": {"default": "22 °C", "name": "thresh_tasmin"},
+        "thresh2": {"default": "30 °C", "name": "thresh_tasmax"},
+        "statistic": "sum",
+        "freq": {"default": "YS"},
+        "min_gap": 1,
+        "constrain": (">", ">="),
+    },
 )
 
 
@@ -879,12 +915,12 @@ daily_freezethaw_cycles = TempWithIndexing(
     cell_methods="",
     compute=indices.multiday_temperature_swing,
     parameters={
-        "op": "sum",
+        "statistic": "sum",
         "window": 1,
         "thresh_tasmax": {"default": "0 degC"},
         "thresh_tasmin": {"default": "0 degC"},
-        "op_tasmax": {"default": ">"},
-        "op_tasmin": {"default": "<="},
+        "condition_tasmax": {"default": ">"},
+        "condition_tasmin": {"default": "<="},
     },
 )
 
@@ -903,11 +939,11 @@ freezethaw_spell_frequency = Temp(
     cell_methods="",
     compute=indices.multiday_temperature_swing,
     parameters={
-        "op": "count",
+        "statistic": "count",
         "thresh_tasmax": {"default": "0 degC"},
         "thresh_tasmin": {"default": "0 degC"},
-        "op_tasmax": {"default": ">"},
-        "op_tasmin": {"default": "<="},
+        "condition_tasmax": {"default": ">"},
+        "condition_tasmin": {"default": "<="},
     },
 )
 
@@ -927,11 +963,11 @@ freezethaw_spell_mean_length = Temp(
     cell_methods="",
     compute=indices.multiday_temperature_swing,
     parameters={
-        "op": "mean",
+        "statistic": "mean",
         "thresh_tasmax": {"default": "0 degC"},
         "thresh_tasmin": {"default": "0 degC"},
-        "op_tasmax": ">",
-        "op_tasmin": "<=",
+        "condition_tasmax": ">",
+        "condition_tasmin": "<=",
     },
 )
 
@@ -951,11 +987,11 @@ freezethaw_spell_max_length = Temp(
     cell_methods="",
     compute=indices.multiday_temperature_swing,
     parameters={
-        "op": "max",
+        "statistic": "max",
         "thresh_tasmax": {"default": "0 degC"},
         "thresh_tasmin": {"default": "0 degC"},
-        "op_tasmax": {"default": ">"},
-        "op_tasmin": {"default": "<="},
+        "condition_tasmax": {"default": ">"},
+        "condition_tasmin": {"default": "<="},
     },
 )
 
