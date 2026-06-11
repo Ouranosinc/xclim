@@ -65,6 +65,7 @@ snd_season_length = Snow(
         "aspect": "length",
         "constrain": None,
         "mid_date": None,
+        "freq": {"default": "YS-JUL"},
     },
 )
 
@@ -90,6 +91,7 @@ snw_season_length = Snow(
         "aspect": "length",
         "constrain": None,
         "mid_date": None,
+        "freq": {"default": "YS-JUL"},
     },
 )
 
@@ -111,6 +113,7 @@ snd_season_start = Snow(
         "aspect": "start",
         "constrain": None,
         "mid_date": None,
+        "freq": {"default": "YS-JUL"},
     },
 )
 
@@ -132,6 +135,7 @@ snw_season_start = Snow(
         "aspect": "start",
         "constrain": None,
         "mid_date": None,
+        "freq": {"default": "YS-JUL"},
     },
 )
 
@@ -152,6 +156,7 @@ snd_season_end = Snow(
         "aspect": "end",
         "constrain": None,
         "mid_date": None,
+        "freq": {"default": "YS-JUL"},
     },
 )
 
@@ -172,6 +177,7 @@ snw_season_end = Snow(
         "aspect": "end",
         "constrain": None,
         "mid_date": None,
+        "freq": {"default": "YS-JUL"},
     },
 )
 

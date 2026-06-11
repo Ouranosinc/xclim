@@ -33,7 +33,7 @@ calm_days = Wind(
     cell_methods="time: sum over days",
     compute=indices.generic.count_occurrences,
     inputs={"data": "sfcWind"},
-    parameters={"condition": "<", "thresh": {"default": "2 ms-1"}, "constrain": None},
+    parameters={"condition": "<", "thresh": {"default": "2 ms-1"}, "constrain": None, "freq": {"default": "MS"}},
 )
 
 windy_days = Wind(
@@ -47,7 +47,7 @@ windy_days = Wind(
     cell_methods="time: sum over days",
     compute=indices.generic.count_occurrences,
     inputs={"data": "sfcWind"},
-    parameters={"condition": ">=", "thresh": {"default": "10.8 ms-1"}, "constrain": None},
+    parameters={"condition": ">=", "thresh": {"default": "10.8 ms-1"}, "constrain": None, "freq": {"default": "MS"}},
 )
 
 sfcWind_max = Wind(
@@ -61,7 +61,7 @@ sfcWind_max = Wind(
     cell_methods="time: max over days",
     compute=indices.generic.statistics,
     inputs={"data": "sfcWind"},
-    parameters={"statistic": "max", "out_units": None},
+    parameters={"statistic": "max", "out_units": None, "freq": {"default": "YS"}},
 )
 
 
@@ -76,7 +76,7 @@ sfcWind_mean = Wind(
     cell_methods="time: mean over days",
     compute=indices.generic.statistics,
     inputs={"data": "sfcWind"},
-    parameters={"statistic": "mean", "out_units": None},
+    parameters={"statistic": "mean", "out_units": None, "freq": {"default": "YS"}},
 )
 
 sfcWind_min = Wind(
@@ -90,7 +90,7 @@ sfcWind_min = Wind(
     cell_methods="time: min over days",
     compute=indices.generic.statistics,
     inputs={"data": "sfcWind"},
-    parameters={"statistic": "min", "out_units": None},
+    parameters={"statistic": "min", "out_units": None, "freq": {"default": "YS"}},
 )
 
 sfcWindmax_max = Wind(
@@ -104,7 +104,7 @@ sfcWindmax_max = Wind(
     cell_methods="time: max over days",
     compute=indices.generic.statistics,
     inputs={"data": "sfcWindmax"},
-    parameters={"statistic": "max", "out_units": None},
+    parameters={"statistic": "max", "out_units": None, "freq": {"default": "YS"}},
 )
 
 sfcWindmax_mean = Wind(
@@ -118,7 +118,7 @@ sfcWindmax_mean = Wind(
     cell_methods="time: mean over days",
     compute=indices.generic.statistics,
     inputs={"data": "sfcWindmax"},
-    parameters={"statistic": "mean", "out_units": None},
+    parameters={"statistic": "mean", "out_units": None, "freq": {"default": "YS"}},
 )
 
 sfcWindmax_min = Wind(
@@ -132,5 +132,5 @@ sfcWindmax_min = Wind(
     cell_methods="time: min over days",
     compute=indices.generic.statistics,
     inputs={"data": "sfcWindmax"},
-    parameters={"statistic": "min", "out_units": None},
+    parameters={"statistic": "min", "out_units": None, "freq": {"default": "YS"}},
 )

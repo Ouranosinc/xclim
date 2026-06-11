@@ -56,5 +56,5 @@ statistics = GenericResampling(
     long_name="{statistic:noun} of variable",
     description="{freq} {statistic:noun} of variable ({indexer}).",
     compute=_statistics,
-    parameters={"out_units": None},
+    parameters={"out_units": None, "freq": {"default": "YS"}},
 )

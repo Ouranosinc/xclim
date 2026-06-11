@@ -1282,7 +1282,7 @@ def integrated_difference(
     data: xr.DataArray, condition: Condition, thresh: Quantified, freq: Freq, **indexer
 ) -> xr.DataArray:
     """
-    Integrate difference of data below/above a given value threshold.
+    Integrate difference of data below/above a given value threshold, usually used for "degree days" computations.
 
     If ``condition`` is ">", then the difference is taken as ``data - thresh``. The inverse
     is done for "<". Values below zero are removed from the integral. "Integral" means summed

@@ -175,7 +175,7 @@ max_1day_precipitation_amount = Precip(
     cell_methods="time: maximum over days",
     compute=indices.generic.statistics,
     input={"data": "pr"},
-    parameters={"out_units": None, "statistic": "max"},
+    parameters={"out_units": None, "statistic": "max", "freq": {"default": "YS"}},
 )
 
 max_n_day_precipitation_amount = Precip(
@@ -195,6 +195,7 @@ max_n_day_precipitation_amount = Precip(
         "statistic": "max",
         "window_center": True,
         "out_units": None,
+        "freq": {"default": "YS"},
     },
 )
 
@@ -213,6 +214,7 @@ wetdays = Precip(
         "thresh": {"default": "1 mm/d"},
         "condition": {"default": ">="},
         "constrain": (">=", ">"),
+        "freq": {"default": "YS"},
     },
 )
 
@@ -242,6 +244,7 @@ dry_days = Precip(
         "thresh": {"default": "0.2 mm/d"},
         "condition": {"default": "<"},
         "constrain": ("<", "<="),
+        "freq": {"default": "YS"},
     },
 )
 
@@ -266,11 +269,22 @@ maximum_consecutive_wet_days = Precip(
     identifier="cwd",
     units="days",
     standard_name="number_of_days_with_lwe_thickness_of_precipitation_amount_above_threshold",
-    long_name="Maximum consecutive days with daily precipitation {op} {thresh}",
-    description="{freq} maximum number of consecutive days with daily precipitation {op} {thresh}.",
+    long_name="Maximum consecutive days with daily precipitation {condition} {thresh}",
+    description="{freq} maximum number of consecutive days with daily precipitation {condition} {thresh}.",
     abstract="The longest number of consecutive days where daily precipitation is at or above a given threshold.",
     cell_methods="time: sum over days",
-    compute=indices.maximum_consecutive_wet_days,
+    input={"data": "pr"},
+    compute=indices.generic.spell_length_statistics,
+    parameters={
+        "thresh": {"default": "1 mm/day"},
+        "window": 1,
+        "window_statistic": "max",
+        "condition": {"default": ">="},
+        "statistic": "max",
+        "constrain": (">=", ">"),
+        "freq": {"default": "YS"},
+    },
+    _version_deprecated=("1.0", "wet_spell_max_length"),
 )
 
 maximum_consecutive_dry_days = Precip(
@@ -278,11 +292,22 @@ maximum_consecutive_dry_days = Precip(
     identifier="cdd",
     units="days",
     standard_name="number_of_days_with_lwe_thickness_of_precipitation_amount_below_threshold",
-    long_name="Maximum consecutive days with daily precipitation {op} {thresh}",
-    description="{freq} maximum number of consecutive days with daily precipitation {op} {thresh}.",
+    long_name="Maximum consecutive days with daily precipitation {condition} {thresh}",
+    description="{freq} maximum number of consecutive days with daily precipitation {condition} {thresh}.",
     abstract="The longest number of consecutive days where daily precipitation below a given threshold.",
     cell_methods="time: sum over days",
-    compute=indices.maximum_consecutive_dry_days,
+    input={"data": "pr"},
+    compute=indices.generic.spell_length_statistics,
+    parameters={
+        "thresh": {"default": "1 mm/day"},
+        "window": 1,
+        "window_statistic": "max",
+        "condition": {"default": "<"},
+        "statistic": "max",
+        "constrain": ("<", "<="),
+        "freq": {"default": "YS"},
+    },
+    _version_deprecated=("1.0", "dry_spell_max_length"),
 )
 
 daily_pr_intensity = Precip(
@@ -304,6 +329,7 @@ daily_pr_intensity = Precip(
         "statistic": "mean",
         "constrain": (">", ">="),
         "out_units": None,
+        "freq": {"default": "YS"},
     },
 )
 
@@ -324,6 +350,7 @@ max_pr_intensity = HrPrecip(
         "statistic": "max",
         "window_center": False,
         "out_units": None,
+        "freq": {"default": "YS"},
     },
     duration="{window}",
     keywords="IDF curves",
@@ -340,7 +367,7 @@ precip_accumulation = Precip(
     cell_methods="time: sum over days",
     compute=indices.generic.statistics,
     input={"data": "pr"},
-    parameters={"statistic": "integral"},
+    parameters={"statistic": "integral", "freq": {"default": "YS"}},
 )
 
 precip_average = Precip(
@@ -354,7 +381,7 @@ precip_average = Precip(
     cell_methods="time: mean over days",
     compute=indices.generic.statistics,
     input={"data": "pr"},
-    parameters={"statistic": "mean"},
+    parameters={"statistic": "mean", "freq": {"default": "YS"}},
 )
 
 wet_precip_accumulation = Precip(
@@ -369,7 +396,12 @@ wet_precip_accumulation = Precip(
     cell_methods="time: sum over days",
     compute=indices.generic.thresholded_statistics,
     input={"data": "pr"},
-    parameters={"thresh": {"default": "1 mm/day"}, "condition": ">=", "statistic": "integral"},
+    parameters={
+        "thresh": {"default": "1 mm/day"},
+        "condition": ">=",
+        "statistic": "integral",
+        "freq": {"default": "YS"},
+    },
 )
 
 liquid_precip_accumulation = PrTasxWithIndexing(
@@ -691,6 +723,7 @@ high_precip_low_temp = PrTasx(
         "var_reducer": "all",
         "constrain1": None,
         "constrain2": None,
+        "freq": {"default": "YS"},
     },
 )
 
@@ -737,88 +770,150 @@ liquid_precip_ratio = PrTasxWithIndexing(
 dry_spell_frequency = Precip(
     title="Dry spell frequency",
     identifier="dry_spell_frequency",
-    long_name="Number of dry periods of {window} day(s) or more, during which the {op} precipitation on a "
-    "window of {window} day(s) is below {thresh}.",
-    description="The {freq} number of dry periods of {window} day(s) or more, during which the {op} precipitation on a "
-    "window of {window} day(s) is below {thresh}.",
+    long_name="Number of dry periods of at least {window} days",
+    description="The {freq} number of dry periods of at least {window} days. A period is dry if its {window_statistic} "
+    "precipitation on a window of {window} days is below {thresh}.",
     abstract="The frequency of dry periods of `N` days or more, during which the accumulated or maximum precipitation "
     "over a given time window of days is below a given threshold.",
     units="",
     cell_methods="",
-    compute=indices.dry_spell_frequency,
+    input={"data": "pr"},
+    compute=indices.generic.spell_length_statistics,
+    parameters={
+        "window": {"default": 3},
+        "window_statistic": {"default": "sum"},
+        "thresh": {"default": "1 mm"},
+        "statistic": "count",
+        "min_gap": 1,
+        "condition": "<",
+        "constrain": None,
+        "freq": {"default": "YS"},
+    },
 )
 
 
 dry_spell_total_length = Precip(
     title="Dry spell total length",
     identifier="dry_spell_total_length",
-    long_name="Number of days in dry periods of {window} day(s) or more, during which the {op} "
-    "precipitation within windows of {window} day(s) is under {thresh}.",
-    description="The {freq} number of days in dry periods of {window} day(s) or more, during which the {op} "
-    "precipitation within windows of {window} day(s) is under {thresh}.",
+    long_name="Number of days in dry periods of at least {window} days.",
+    description="The {freq} number of days in dry periods of at least {window} days, "
+    "during which the {window_statistic} precipitation within windows of {window} days is under {thresh}.",
     abstract="The total length of dry periods of `N` days or more, during which the accumulated or maximum "
     "precipitation over a given time window of days is below a given threshold.",
     units="days",
     cell_methods="",
-    compute=indices.dry_spell_total_length,
+    input={"data": "pr"},
+    compute=indices.generic.spell_length_statistics,
+    parameters={
+        "window": {"default": 3},
+        "window_statistic": {"default": "sum"},
+        "thresh": {"default": "1 mm"},
+        "statistic": "sum",
+        "min_gap": 1,
+        "condition": "<",
+        "constrain": None,
+        "freq": {"default": "YS"},
+    },
 )
 
 dry_spell_max_length = Precip(
     title="Dry spell maximum length",
     identifier="dry_spell_max_length",
-    long_name="Maximum consecutive number of days in a dry period of {window} day(s) or more, during which the {op} "
-    "precipitation within windows of {window} day(s) is under {thresh}.",
-    description="The maximum {freq} number of consecutive days in a dry period of {window} day(s) or more"
-    ", during which the {op} precipitation within windows of {window} day(s) is under {thresh}.",
+    long_name="Maximum consecutive number of days in a dry period of at least {window} days",
+    description="The maximum {freq} number of consecutive days in a dry period of at least {window} days"
+    ", during which the {window_statistic} precipitation within windows of {window} days is under {thresh}.",
     abstract="The maximum length of a dry period of `N` days or more, during which the accumulated or maximum "
     "precipitation over a given time window of days is below a given threshold.",
     units="days",
     cell_methods="",
-    compute=indices.dry_spell_max_length,
+    input={"data": "pr"},
+    compute=indices.generic.spell_length_statistics,
+    parameters={
+        "window": {"default": 3},
+        "window_statistic": {"default": "sum"},
+        "thresh": {"default": "1 mm"},
+        "statistic": "max",
+        "min_gap": 1,
+        "condition": "<",
+        "constrain": None,
+        "freq": {"default": "YS"},
+    },
 )
 
 wet_spell_frequency = Precip(
     title="Wet spell frequency",
     identifier="wet_spell_frequency",
-    long_name="Number of wet periods of {window} day(s) or more, during which the {op} precipitation on a "
-    "window of {window} day(s) is equal or over {thresh}.",
-    description="The {freq} number of wet periods of {window} day(s) or more, during which the {op} precipitation on a "
-    "window of {window} day(s) is equal or over {thresh}.",
+    long_name="Number of wet periods of at least {window} days.",
+    description="The {freq} number of wet periods of at least {window} days, during which the {window_statistic} "
+    "precipitation on a window of {window} days is equal or over {thresh}.",
     abstract="The frequency of wet periods of `N` days or more, during which the accumulated or maximum precipitation "
     "over a given time window of days is equal or above a given threshold.",
     units="",
     cell_methods="",
-    compute=indices.wet_spell_frequency,
+    input={"data": "pr"},
+    compute=indices.generic.spell_length_statistics,
+    parameters={
+        "window": {"default": 3},
+        "window_statistic": {"default": "sum"},
+        "thresh": {"default": "1 mm"},
+        "statistic": "count",
+        "min_gap": 1,
+        "condition": ">=",
+        "constrain": None,
+        "freq": {"default": "YS"},
+    },
 )
 
 
 wet_spell_total_length = Precip(
     title="Wet spell total length",
     identifier="wet_spell_total_length",
-    long_name="Number of days in wet periods of {window} day(s) or more, during which the {op} "
-    "precipitation within windows of {window} day(s) is equal or over {thresh}.",
-    description="The {freq} number of days in wet periods of {window} day(s) or more, during which the {op} "
-    "precipitation within windows of {window} day(s) is equal or over {thresh}.",
-    abstract="The total length of dry periods of `N` days or more, during which the accumulated or maximum "
+    long_name="Number of days in wet periods of at least {window} days",
+    description="The {freq} number of days in wet periods of at least {window} days, during which the "
+    "{window_statistic} precipitation within windows of {window} days is equal or over {thresh}.",
+    abstract="The total length of wet periods of `N` days or more, during which the accumulated or maximum "
     "precipitation over a given time window of days is equal or above a given threshold.",
     units="days",
     cell_methods="",
-    compute=indices.wet_spell_total_length,
+    input={"data": "pr"},
+    compute=indices.generic.spell_length_statistics,
+    parameters={
+        "window": {"default": 3},
+        "window_statistic": {"default": "sum"},
+        "thresh": {"default": "1 mm"},
+        "statistic": "sum",
+        "min_gap": 1,
+        "condition": ">=",
+        "constrain": None,
+        "freq": {"default": "YS"},
+    },
 )
+
 
 wet_spell_max_length = Precip(
     title="Wet spell maximum length",
     identifier="wet_spell_max_length",
-    long_name="Maximum consecutive number of days in a wet period of {window} day(s) or more, during which the {op} "
-    "precipitation within windows of {window} day(s) is equal or over {thresh}.",
-    description="The maximum {freq} number of consecutive days in a wet period of {window} day(s) or more"
-    ", during which the {op} precipitation within windows of {window} day(s) is equal or over {thresh}.",
+    long_name="Maximum consecutive number of days in a wet period of at least {window} days.",
+    description="The maximum {freq} number of consecutive days in a wet period of at least {window} days"
+    ", during which the {window_statistic} precipitation within windows of {window} days is equal or over {thresh}.",
     abstract="The maximum length of a wet period of `N` days or more, during which the accumulated or maximum "
     "precipitation over a given time window of days is equal or above a given threshold.",
     units="days",
     cell_methods="",
-    compute=indices.wet_spell_max_length,
+    input={"data": "pr"},
+    compute=indices.generic.spell_length_statistics,
+    parameters={
+        "window": {"default": 3},
+        "window_statistic": {"default": "sum"},
+        "thresh": {"default": "1 mm"},
+        "statistic": "max",
+        "min_gap": 1,
+        "condition": ">=",
+        "constrain": None,
+        "freq": {"default": "YS"},
+    },
 )
+
 
 rprctot = PrecipWithIndexing(
     title="Proportion of accumulated precipitation arising from convective processes",
