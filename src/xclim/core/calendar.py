@@ -1147,21 +1147,22 @@ def _get_doys(start: int, end: int, inclusive: tuple[bool, bool]):
     return doys
 
 
-def mask_between_doys(
-    da: xr.DataArray,
+def select_between_doys(
+    da: xr.DataArray | xr.Dataset,
     doy_bounds: tuple[int | xr.DataArray, int | xr.DataArray],
-    include_bounds: tuple[bool, bool] = (True, True),
+    include_bounds: bool | tuple[bool, bool] = True,
     include_nans: bool = True,
     freq: str | None = None,
+    drop: bool = False,
 ) -> xr.DataArray | xr.Dataset:
     """
-    Mask the data outside the day of year bounds.
+    Select data between day of year bounds.
 
     Parameters
     ----------
     da : xr.DataArray or xr.Dataset
         Input data. It must have a time coordinate.
-    doy_bounds : 2-tuple of integers or DataArray
+    doy_bounds : 2-tuple of integers or DataArray or None
         The bounds as (start, end) of the period of interest expressed in day-of-year, integers going from
         1 (January 1st) to 365 or 366 (December 31st).
         If DataArrays are passed, they must have the same coordinates on the dimensions they share.
@@ -1169,21 +1170,30 @@ def mask_between_doys(
         defined by the coordinate, which means the time coordinate must have an inferable frequency
         (see :py:func:`xr.infer_freq`). Timesteps of the input not appearing in the time coordinate of the
         bounds are masked as "outside the bounds".
-    include_bounds : 2-tuple of booleans
-        Whether the bounds of `doy_bounds` should be inclusive or not.
-    include_nans : bool
+        If None is passed as a bound, it is replaced by the start or end of the year (1 or 366) if the other
+        bound is an integer, or by the start or end of the period if case of DataArrays.
+    include_bounds : bool or 2-tuple of booleans, optional
+        Whether the bounds of `doy_bounds` should be inclusive or not. Default is True (inclusive).
+    include_nans : bool, optional
         Whether to include values associated with NaN in `doy_bounds`. If True (default), missing values (NaN) in
-        the start and end bounds are replaced by the start and end of the period respectively.
+        the start and end bounds are replaced by the start and end of the period, respectively.
     freq : str, optional
-        Needed in non-temporal cases. The yearly frequency (e.g. "YS", "YS-JUL") to use to determine the open
-         bounds (start and end of the period).
+        The yearly frequency (e.g. "YS", "YS-JUL") to use to determine the open bounds (start and end of the period)
+        when `doy_bounds` are DataArrays without a `time` dimension. If `doy_bounds` have a `time` dimension, it is
+        inferred from it and this argument is ignored.
+    drop : bool, optional
+        Whether to drop elements outside the period of interest (True) or to simply mask them (False, default).
+        This option is incompatible with passing array-like `doy_bounds`.
 
     Returns
     -------
-    xr.DataArray
-        Boolean array with the same time coordinate as `da` and any other dimension present on the bounds.
-        True value inside the period of interest and False outside.
+    xr.DataArray or xr.Dataset
+        Selected input values. If `drop=False`, this has the same length as `da` (along dimension 'time'),
+        but with masked (NaN) values outside the period of interest.
     """
+    if isinstance(include_bounds, bool):
+        include_bounds = (include_bounds, include_bounds)
+
     if (isinstance(doy_bounds[0], int) or (doy_bounds[0] is None)) and (
         isinstance(doy_bounds[1], int) or (doy_bounds[1] is None)
     ):  # Simple case
@@ -1193,6 +1203,10 @@ def mask_between_doys(
             doy_bounds = (doy_bounds[0], 366)
         mask = da.time.dt.dayofyear.isin(_get_doys(*doy_bounds, include_bounds))
     else:
+        if drop:
+            # At least one of the bounds is an array, drop won't work
+            raise ValueError("Passing array-like `doy_bounds` is incompatible with `drop=True`.")
+
         start, end = doy_bounds
         # Convert None to DataArrays with nans
         if start is None:
@@ -1216,7 +1230,7 @@ def mask_between_doys(
         # add time dimension if not present, with bounds given by freq
         if "time" not in start.dims:
             if freq is None:
-                raise ValueError("If `doy_bounds` have no `time` dimension, `freq` must be provided.")
+                raise ValueError("If `doy_bounds` don't have a `time` dimension, `freq` must be provided.")
             bnds = time_bnds(da.resample(time=freq))
             start = start.expand_dims(time=bnds.time)
             end = end.expand_dims(time=bnds.time)
@@ -1255,7 +1269,7 @@ def mask_between_doys(
             out.append(mask)
         mask = xr.concat(out, dim="time")
 
-    return mask
+    return da.where(mask, drop=drop)
 
 
 def select_time(
@@ -1350,10 +1364,7 @@ def select_time(
         mask = da.time.dt.month.isin(month)
 
     elif doy_bounds is not None:
-        if not (isinstance(doy_bounds[0], int) and isinstance(doy_bounds[1], int)) and drop:
-            # At least one of those is an array, this drop won't work
-            raise ValueError("Passing array-like doy bounds is incompatible with drop=True.")
-        mask = mask_between_doys(da, doy_bounds, include_bounds, include_doy_bounds_nans, doy_bounds_freq)
+        return select_between_doys(da, doy_bounds, include_bounds, include_doy_bounds_nans, doy_bounds_freq, drop=drop)
 
     elif date_bounds is not None:
         # This one is a bit trickier.
