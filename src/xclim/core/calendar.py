@@ -1245,7 +1245,7 @@ def select_between_doys(
 
         # Fill missing values in start and end bounds
         if include_nans or start.isnull().all():
-            start = start.fillna(1)
+            start = start.fillna(0)
         if include_nans or end.isnull().all():
             end = end.fillna(366)
 
