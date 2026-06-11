@@ -901,7 +901,7 @@ cool_night_index = Temp(
     compute=indices.cool_night_index,
 )
 
-daily_freezethaw_cycles = TempWithIndexing(
+daily_freezethaw_cycles = Temp(
     title="Daily freeze-thaw cycles",
     identifier="dlyfrzthw",
     units="days",
