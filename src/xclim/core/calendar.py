@@ -1281,7 +1281,7 @@ def select_time(
     date_bounds: tuple[str, str] | None = None,
     include_bounds: bool | tuple[bool, bool] = True,
     include_doy_bounds_nans: bool = True,
-    doy_bounds_freq: str | None = None,
+    bounds_freq: str | None = None,
 ) -> DataType:
     """
     Select entries according to a time period.
@@ -1312,9 +1312,10 @@ def select_time(
         Whether the bounds of `doy_bounds` or `date_bounds` should be inclusive or not.
         Either one value for both or a tuple. Default is True, meaning bounds are inclusive.
     include_doy_bounds_nans : bool
-        Whether to include values associated with NaN in `doy_bounds`. See `mask_between_doys` for details.
-    doy_bounds_freq : str, optional
-        Needed if `doy_bounds` is used and has no time dimension. See `mask_between_doys` for details.
+        Whether to include values associated with NaN in `doy_bounds`. See `select_between_doys` for details.
+    bounds_freq : str, optional
+        Needed if `date_bounds` or `doy_bounds` are given as DataArrays without a `time` dimension.
+        See `select_between_doys` for details.
 
     Returns
     -------
@@ -1364,30 +1365,21 @@ def select_time(
         mask = da.time.dt.month.isin(month)
 
     elif doy_bounds is not None:
-        return select_between_doys(da, doy_bounds, include_bounds, include_doy_bounds_nans, doy_bounds_freq, drop=drop)
+        return select_between_doys(da, doy_bounds, include_bounds, include_doy_bounds_nans, bounds_freq, drop=drop)
 
     elif date_bounds is not None:
-        # This one is a bit trickier.
-        start, end = date_bounds
-        time = da.time
-        calendar = get_calendar(time)
-        if calendar not in uniform_calendars:
-            # For non-uniform calendars, we can't simply convert dates to doys
-            # conversion to all_leap is safe for all non-uniform calendar as it doesn't remove any date.
-            time = time.convert_calendar("all_leap")
-            # values of time are the _old_ calendar
-            # and the new calendar is in the coordinate
-            calendar = "all_leap"
 
-        # Get doy of date, this is now safe because the calendar is uniform.
-        doys = _get_doys(
-            cftime.datetime.strptime(f"2000-{start}", "%Y-%m-%d", calendar=calendar).dayofyr,
-            cftime.datetime.strptime(f"2000-{end}", "%Y-%m-%d", calendar=calendar).dayofyr,
-            include_bounds,
-        )
-        mask = time.time.dt.dayofyear.isin(doys)
-        # Needed if we converted calendar, this puts back the correct coord
-        mask["time"] = da.time
+        def _doys_from_string(date_str, time, cal):
+            """Convert MM-DD string to day of year, for each year in time."""
+            doys = [doy_from_string(date_str, year, cal) for year in time.dt.year]
+            return xr.DataArray(doys, coords={"time": time}, dims="time", name="dayofyear")
+
+        bnds = time_bnds(da.time.resample(time=bounds_freq))
+        cal = get_calendar(da)
+        start = _doys_from_string(date_bounds[0], bnds.time, cal) if date_bounds[0] is not None else None
+        end = _doys_from_string(date_bounds[1], bnds.time, cal) if date_bounds[1] is not None else None
+
+        return select_between_doys(da, (start, end), include_bounds, freq=bounds_freq, drop=drop)
 
     else:
         raise ValueError("Must provide either `season`, `month`, `doy_bounds` or `date_bounds`.")
