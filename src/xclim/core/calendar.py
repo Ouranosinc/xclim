@@ -1793,13 +1793,12 @@ def split_time_to_season_year(ds: xr.Dataset | xr.DataArray, freq: str) -> xr.Da
         Input dataset with season coordinate and yearly time.
     """
     ds = add_season_coord(ds, freq)
-    year_needs_shift = ds.time.dt.month < _MONTH_NUMBERS[ds.season.attrs["anchor"]]
     base_month = _MONTH_NUMBERS[ds.season.attrs["anchor"]]
 
     def _get_year(dt):
         y = dt.year = 1 if dt.month < base_month else dt.year
         return dt.replace(year=y, month=base_month, day=0, hour=0, minute=0, second=0, microseconds=0)
 
-    new_time = ds.indexes["time"].map(get_year)
+    new_time = ds.indexes["time"].map(_get_year)
     out = ds.assign_coords(year=("time", new_time)).set_index(time=("year", "season")).unstack("time")
     return out.rename(year="time")
