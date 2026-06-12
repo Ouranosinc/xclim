@@ -32,7 +32,7 @@ calm_days = Wind(
     abstract="Number of days with surface wind speed below threshold.",
     cell_methods="time: sum over days",
     compute=indices.generic.count_occurrences,
-    inputs={"data": "sfcWind"},
+    input={"data": "sfcWind"},
     parameters={"condition": "<", "thresh": {"default": "2 ms-1"}, "constrain": None, "freq": {"default": "MS"}},
 )
 
@@ -46,7 +46,7 @@ windy_days = Wind(
     abstract="Number of days with surface wind speed at or above threshold.",
     cell_methods="time: sum over days",
     compute=indices.generic.count_occurrences,
-    inputs={"data": "sfcWind"},
+    input={"data": "sfcWind"},
     parameters={"condition": ">=", "thresh": {"default": "10.8 ms-1"}, "constrain": None, "freq": {"default": "MS"}},
 )
 
@@ -60,7 +60,7 @@ sfcWind_max = Wind(
     abstract="Maximum of daily mean near-surface wind speed.",
     cell_methods="time: max over days",
     compute=indices.generic.statistics,
-    inputs={"data": "sfcWind"},
+    input={"data": "sfcWind"},
     parameters={"statistic": "max", "out_units": None, "freq": {"default": "YS"}},
 )
 
@@ -75,7 +75,7 @@ sfcWind_mean = Wind(
     abstract="Mean of daily near-surface wind speed.",
     cell_methods="time: mean over days",
     compute=indices.generic.statistics,
-    inputs={"data": "sfcWind"},
+    input={"data": "sfcWind"},
     parameters={"statistic": "mean", "out_units": None, "freq": {"default": "YS"}},
 )
 
@@ -89,7 +89,7 @@ sfcWind_min = Wind(
     abstract="Minimum of daily mean near-surface wind speed.",
     cell_methods="time: min over days",
     compute=indices.generic.statistics,
-    inputs={"data": "sfcWind"},
+    input={"data": "sfcWind"},
     parameters={"statistic": "min", "out_units": None, "freq": {"default": "YS"}},
 )
 
@@ -103,7 +103,7 @@ sfcWindmax_max = Wind(
     abstract="Maximum of daily maximum near-surface wind speed.",
     cell_methods="time: max over days",
     compute=indices.generic.statistics,
-    inputs={"data": "sfcWindmax"},
+    input={"data": "sfcWindmax"},
     parameters={"statistic": "max", "out_units": None, "freq": {"default": "YS"}},
 )
 
@@ -117,7 +117,7 @@ sfcWindmax_mean = Wind(
     abstract="Mean of daily maximum near-surface wind speed.",
     cell_methods="time: mean over days",
     compute=indices.generic.statistics,
-    inputs={"data": "sfcWindmax"},
+    input={"data": "sfcWindmax"},
     parameters={"statistic": "mean", "out_units": None, "freq": {"default": "YS"}},
 )
 
@@ -131,6 +131,6 @@ sfcWindmax_min = Wind(
     abstract="Minimum of daily maximum near-surface wind speed.",
     cell_methods="time: min over days",
     compute=indices.generic.statistics,
-    inputs={"data": "sfcWindmax"},
+    input={"data": "sfcWindmax"},
     parameters={"statistic": "min", "out_units": None, "freq": {"default": "YS"}},
 )

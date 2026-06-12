@@ -327,7 +327,7 @@ def count_occurrences(
         Number of timesteps where data {condition} {thresh}.
     """
     thresh = convert_units_to(thresh, data, context="infer")
-    cond = compare(data, condition, thresh, constrain) * 1
+    cond = compare(select_time(data, **indexer), condition, thresh, constrain) * 1
     out = cond.resample(time=freq).sum(dim="time")
     return to_agg_units(out, data, "count")
 

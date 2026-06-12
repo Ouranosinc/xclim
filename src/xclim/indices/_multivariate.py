@@ -27,7 +27,7 @@ from xclim.indices.generic import (
     extreme_range,
     interday_difference_statistics,
 )
-from xclim.indices.helpers import compare, spell_mask
+from xclim.indices.helpers import compare
 
 # Frequencies : YS: year start, QS-DEC: seasons starting in december, MS: month start
 # See https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html
@@ -496,20 +496,8 @@ def multiday_temperature_swing(
     thaw_threshold = convert_units_to(thresh_tasmax, tasmax)
     freeze_threshold = convert_units_to(thresh_tasmin, tasmin)
 
-    freeze = spell_mask(
-        tasmin,
-        window=window,
-        window_statistic="max",
-        condition=condition_tasmin,
-        thresh=freeze_threshold,
-    )
-    thaw = spell_mask(
-        tasmax,
-        window=window,
-        window_statistic="min",
-        condition=condition_tasmax,
-        thresh=thaw_threshold,
-    )
+    freeze = compare(tasmin, condition_tasmin, freeze_threshold) * 1
+    thaw = compare(tasmax, condition_tasmax, thaw_threshold) * 1
     ft = select_time(freeze * thaw, **indexer)
 
     out = rl.resample_and_rl(
@@ -517,7 +505,7 @@ def multiday_temperature_swing(
         resample_before_rl,
         rl.rle_statistics,
         reducer=statistic,
-        window=1,
+        window=window,
         freq=freq,
     )
     if statistic == "count":

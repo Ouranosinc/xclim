@@ -386,7 +386,7 @@ class Indicator(IndicatorRegistrar):
         The expected frequency of the input data. Can be a list for multiple frequencies, or None if irrelevant.
     context : str
         A `pint` unit context enabled during the computation of this indicator.
-        For example use 'hydro' to allow conversion from 'kg m-2 s-1' to 'mm/day'.
+        For example use 'hydro' to allow conversion from 'kg m-2 s-1' to 'mm/day' for all inputs.
 
     Notes
     -----
@@ -892,7 +892,7 @@ class Indicator(IndicatorRegistrar):
 
         # get mappings where keys are the actual compute function's argument names
         args = self._get_compute_args(das, params)
-        with np.errstate(divide="ignore", invalid="ignore"):
+        with np.errstate(divide="ignore", invalid="ignore"), units.context(self.context):
             outs = self.compute(**args)
 
         if isinstance(outs, DataArray):

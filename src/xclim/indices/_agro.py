@@ -152,7 +152,7 @@ def huglin_index(
     tasmax: xarray.DataArray,
     lat: xarray.DataArray | None = None,
     thresh: Quantified = "10 degC",
-    method: Literal["huglin", "icclim", "interpolated", "jones"] = "huglin",
+    method: Literal["huglin", "interpolated", "jones"] = "huglin",
     cap_value: float = 1.0,
     start_date: str | DayOfYearStr = "04-01",
     end_date: str | DayOfYearStr = "10-01",
@@ -211,8 +211,8 @@ def huglin_index(
 
     There are a few methods provided for calculating the day-length multiplication factor (:math:`k`) based on latitude:
 
-    - For the `"huglin"/"icclim"` and `"interpolated"` methods, values for k increase from `1.0` at 40°N or 40°S to `1.06` at 50°N or 50°S,
-      where the `interpolated` method uses a smoothed curve and the `huglin/icclim` method uses a stepwise function.
+    - For the `"huglin"` and `"interpolated"` methods, values for k increase from `1.0` at 40°N or 40°S to `1.06` at 50°N or 50°S,
+      where the `interpolated` method uses a smoothed curve and the `huglin` method uses a stepwise function.
       Values above 50°N or below 50°S are set via the `cap_value` variable, with `1.0` set as default.
       See: :py:func:`xclim.indices.helpers.huglin_day_length_latitude_coefficient` for more information.
     - For the `"jones"` method, A more robust day-length calculation based on latitude, calendar, day-of-year,
@@ -1342,19 +1342,16 @@ def effective_growing_degree_days(
     _tasmax = convert_units_to(tasmax, "degC")
     _tasmin = convert_units_to(tasmin, "degC")
     _thresh = convert_units_to(thresh, "degC")
-    thresh_with_units = f"{_thresh} degC"
 
     tas = (_tasmin + _tasmax) / 2
     tas.attrs["units"] = "degC"
 
     if method.lower() == "bootsma":
-        fda = day_threshold_reached(tas, condition=">=", thresh=thresh_with_units, which="first", window=1, freq=freq)
+        fda = day_threshold_reached(tas, condition=">", thresh=thresh, which="first", window=1, freq=freq)
         start = fda + 10
     elif method.lower() == "qian":
         tas_weighted = qian_weighted_mean_average(tas=tas, dim=dim)
-        start = day_threshold_reached(
-            tas_weighted, condition=">=", thresh=thresh_with_units, which="first", window=5, freq=freq
-        )
+        start = day_threshold_reached(tas_weighted, condition=">", thresh=thresh, which="first", window=5, freq=freq)
     else:
         raise NotImplementedError(f"Method: {method}.")
 
@@ -1362,7 +1359,7 @@ def effective_growing_degree_days(
     end = (
         day_threshold_reached(
             _tasmin,
-            condition=">=",
+            condition=">",
             thresh="0 degC",
             date=after_date,
             which="first",

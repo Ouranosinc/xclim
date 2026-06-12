@@ -1933,7 +1933,7 @@ def snowfall_frequency(
     ----------
     :cite:cts:`frei_snowfall_2018`.
     """
-    snow_days = count_occurrences(prsn, condition=">=", thresh=thresh, freq=freq)
+    snow_days = count_occurrences(prsn, condition=">", thresh=thresh, freq=freq)
     total_days = prsn.resample(time=freq).count(dim="time")
     snow_freq = snow_days / total_days * 100
     snow_freq = snow_freq.assign_attrs(**snow_days.attrs)
@@ -2808,7 +2808,7 @@ def wetdays_prop(
     pr: xarray.DataArray,
     thresh: Quantified = "1.0 mm/day",
     freq: str = "YS",
-    op: Literal[">", "gt", ">=", "ge"] = ">=",
+    condition: Literal[">", "gt", ">=", "ge"] = ">=",
 ) -> xarray.DataArray:
     """
     Proportion of wet days.
@@ -2823,7 +2823,7 @@ def wetdays_prop(
         Precipitation value over which a day is considered wet.
     freq : str
         Resampling frequency.
-    op : {">", "gt", ">=", "ge"}
+    condition : {">", "gt", ">=", "ge"}
         Comparison operation. Default: ">=".
 
     Returns
@@ -2841,7 +2841,7 @@ def wetdays_prop(
     >>> wd = wetdays_prop(pr, thresh="5 mm/day", freq="QS-DEC")
     """
     thresh = convert_units_to(thresh, pr, context="hydro")
-    wd = compare(pr, op, thresh, constrain=(">", ">="))
+    wd = compare(pr, condition, thresh, constrain=(">", ">="))
     fwd = wd.resample(time=freq).mean(dim="time").assign_attrs(units="1")
     return fwd
 
@@ -3052,7 +3052,7 @@ def degree_days_exceedance_date(
     tas: xarray.DataArray,
     thresh: Quantified = "0 degC",
     sum_thresh: Quantified = "25 K days",
-    op: Literal[">", "gt", "<", "lt", ">=", "ge", "<=", "le"] = ">",
+    condition: Literal[">", "gt", "<", "lt", ">=", "ge", "<=", "le"] = ">",
     after_date: DayOfYearStr | None = None,
     never_reached: DayOfYearStr | int | None = None,
     freq: str = "YS",
@@ -3071,7 +3071,7 @@ def degree_days_exceedance_date(
         Threshold temperature on which to base degree-days evaluation.
     sum_thresh : Quantified
         Threshold of the degree days sum.
-    op : {">", "gt", "<", "lt", ">=", "ge", "<=", "le"}
+    condition : {">", "gt", "<", "lt", ">=", "ge", "<=", "le"}
         If equivalent to '>', degree days are computed as `tas - thresh` and if
         equivalent to '<', they are computed as `thresh - tas`.
     after_date : str, optional
@@ -3099,8 +3099,8 @@ def degree_days_exceedance_date(
     .. math::
 
        \begin{cases}
-       ST < \sum_{i=i_0}^{k} \max(TG_{ij} - T, 0) & \text{if $op$ is '>' | '>='} \\
-       ST < \sum_{i=i_0}^{k} \max(T - TG_{ij}, 0) & \text{if $op$ is '<' | '<='}
+       ST < \sum_{i=i_0}^{k} \max(TG_{ij} - T, 0) & \text{if $condition$ is '>' | '>='} \\
+       ST < \sum_{i=i_0}^{k} \max(T - TG_{ij}, 0) & \text{if $condition$ is '<' | '<='}
        \end{cases}
 
     The resulting :math:`k` is expressed as a day of year.
@@ -3112,12 +3112,12 @@ def degree_days_exceedance_date(
     _tas = convert_units_to(tas, "K")
     _sum_thresh = convert_units_to(sum_thresh, "K days")
 
-    if op in ["<", "lt", "<=", "le"]:
+    if condition in ["<", "lt", "<=", "le"]:
         c = _thresh - _tas
-    elif op in [">", "gt", ">=", "ge"]:
+    elif condition in [">", "gt", ">=", "ge"]:
         c = _tas - _thresh
     else:
-        raise NotImplementedError(f"op: '{op}'.")
+        raise NotImplementedError(f"condition: '{condition}'.")
 
     def _exceedance_date(grp):
         strt_idx = rl.index_of_date(grp.time, after_date, max_idxs=1, default=0)

@@ -13,6 +13,7 @@ from xclim.core.indicator import (
     ResamplingIndicatorWithIndexing,
     StandardizedIndexes,
 )
+from xclim.core.units import rate2amount
 from xclim.core.utils import InputKind
 
 __all__ = [
@@ -83,6 +84,26 @@ class Precip(Daily):
 
     context = "hydro"
     keywords = "precipitation"
+
+
+class PrecipAmount(Precip):
+    """
+    Class that converts all flux and rates inputs to amount or thicknesses before computation.
+
+    Only works on the variable named "pr".
+    """
+
+    @classmethod
+    def _parse_var_mapping(cls, variable_mapping, parameters):
+        new_units = super()._parse_var_mapping(variable_mapping, parameters)
+        pr_arg_name = [k for k, v in variable_mapping.items() if v == "pr"][0]
+        print(pr_arg_name, new_units)
+        if pr_arg_name in new_units:
+            new_units[pr_arg_name] = "[mass]/[area]"
+        return new_units
+
+    def _preprocess_and_checks(self, das, params):
+        return (das | {"pr": rate2amount(das["pr"])}, params)
 
 
 class PrecipWithIndexing(ResamplingIndicatorWithIndexing):
@@ -367,7 +388,7 @@ precip_accumulation = Precip(
     cell_methods="time: sum over days",
     compute=indices.generic.statistics,
     input={"data": "pr"},
-    parameters={"statistic": "integral", "freq": {"default": "YS"}},
+    parameters={"statistic": "integral", "freq": {"default": "YS"}, "out_units": None},
 )
 
 precip_average = Precip(
@@ -381,7 +402,7 @@ precip_average = Precip(
     cell_methods="time: mean over days",
     compute=indices.generic.statistics,
     input={"data": "pr"},
-    parameters={"statistic": "mean", "freq": {"default": "YS"}},
+    parameters={"statistic": "mean", "freq": {"default": "YS"}, "out_units": None},
 )
 
 wet_precip_accumulation = Precip(
@@ -401,6 +422,8 @@ wet_precip_accumulation = Precip(
         "condition": ">=",
         "statistic": "integral",
         "freq": {"default": "YS"},
+        "out_units": None,
+        "constrain": None,
     },
 )
 
@@ -767,7 +790,7 @@ liquid_precip_ratio = PrTasxWithIndexing(
 )
 
 
-dry_spell_frequency = Precip(
+dry_spell_frequency = PrecipAmount(
     title="Dry spell frequency",
     identifier="dry_spell_frequency",
     long_name="Number of dry periods of at least {window} days",
@@ -782,7 +805,7 @@ dry_spell_frequency = Precip(
     parameters={
         "window": {"default": 3},
         "window_statistic": {"default": "sum"},
-        "thresh": {"default": "1 mm"},
+        "thresh": {"default": "1 mm", "description": "An amount of precipitation (not a flux or rate)."},
         "statistic": "count",
         "min_gap": 1,
         "condition": "<",
@@ -792,7 +815,7 @@ dry_spell_frequency = Precip(
 )
 
 
-dry_spell_total_length = Precip(
+dry_spell_total_length = PrecipAmount(
     title="Dry spell total length",
     identifier="dry_spell_total_length",
     long_name="Number of days in dry periods of at least {window} days.",
@@ -807,7 +830,7 @@ dry_spell_total_length = Precip(
     parameters={
         "window": {"default": 3},
         "window_statistic": {"default": "sum"},
-        "thresh": {"default": "1 mm"},
+        "thresh": {"default": "1 mm", "description": "An amount of precipitation (not a flux or rate)."},
         "statistic": "sum",
         "min_gap": 1,
         "condition": "<",
@@ -816,7 +839,7 @@ dry_spell_total_length = Precip(
     },
 )
 
-dry_spell_max_length = Precip(
+dry_spell_max_length = PrecipAmount(
     title="Dry spell maximum length",
     identifier="dry_spell_max_length",
     long_name="Maximum consecutive number of days in a dry period of at least {window} days",
@@ -831,7 +854,7 @@ dry_spell_max_length = Precip(
     parameters={
         "window": {"default": 3},
         "window_statistic": {"default": "sum"},
-        "thresh": {"default": "1 mm"},
+        "thresh": {"default": "1 mm", "description": "An amount of precipitation (not a flux or rate)."},
         "statistic": "max",
         "min_gap": 1,
         "condition": "<",
@@ -840,7 +863,7 @@ dry_spell_max_length = Precip(
     },
 )
 
-wet_spell_frequency = Precip(
+wet_spell_frequency = PrecipAmount(
     title="Wet spell frequency",
     identifier="wet_spell_frequency",
     long_name="Number of wet periods of at least {window} days.",
@@ -855,7 +878,7 @@ wet_spell_frequency = Precip(
     parameters={
         "window": {"default": 3},
         "window_statistic": {"default": "sum"},
-        "thresh": {"default": "1 mm"},
+        "thresh": {"default": "1 mm", "description": "An amount of precipitation (not a flux or rate)."},
         "statistic": "count",
         "min_gap": 1,
         "condition": ">=",
@@ -865,7 +888,7 @@ wet_spell_frequency = Precip(
 )
 
 
-wet_spell_total_length = Precip(
+wet_spell_total_length = PrecipAmount(
     title="Wet spell total length",
     identifier="wet_spell_total_length",
     long_name="Number of days in wet periods of at least {window} days",
@@ -880,7 +903,7 @@ wet_spell_total_length = Precip(
     parameters={
         "window": {"default": 3},
         "window_statistic": {"default": "sum"},
-        "thresh": {"default": "1 mm"},
+        "thresh": {"default": "1 mm", "description": "An amount of precipitation (not a flux or rate)."},
         "statistic": "sum",
         "min_gap": 1,
         "condition": ">=",
@@ -890,7 +913,7 @@ wet_spell_total_length = Precip(
 )
 
 
-wet_spell_max_length = Precip(
+wet_spell_max_length = PrecipAmount(
     title="Wet spell maximum length",
     identifier="wet_spell_max_length",
     long_name="Maximum consecutive number of days in a wet period of at least {window} days.",
@@ -905,7 +928,7 @@ wet_spell_max_length = Precip(
     parameters={
         "window": {"default": 3},
         "window_statistic": {"default": "sum"},
-        "thresh": {"default": "1 mm"},
+        "thresh": {"default": "1 mm", "description": "An amount of precipitation (not a flux or rate)."},
         "statistic": "max",
         "min_gap": 1,
         "condition": ">=",

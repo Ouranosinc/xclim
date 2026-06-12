@@ -57,7 +57,7 @@ snd_season_length = Snow(
         "and stops when it drops below the same threshold for the same number of days."
     ),
     compute=generic.season,
-    inputs={"data": "snd"},
+    input={"data": "snd"},
     parameters={
         "thresh": {"default": "2 cm"},
         "window": {"default": 14},
@@ -83,7 +83,7 @@ snw_season_length = Snow(
         "and stops when it drops below the same threshold for the same number of days."
     ),
     compute=generic.season,
-    inputs={"data": "snw"},
+    input={"data": "snw"},
     parameters={
         "thresh": {"default": "4 kg m-2"},
         "window": {"default": 14},
@@ -105,7 +105,7 @@ snd_season_start = Snow(
     units="",
     title="Snow cover start date (depth).",
     compute=generic.season,
-    inputs={"data": "snd"},
+    input={"data": "snd"},
     parameters={
         "thresh": {"default": "2 cm"},
         "window": {"default": 14},
@@ -127,7 +127,7 @@ snw_season_start = Snow(
     units="",
     title="Snow cover start date (amount).",
     compute=generic.season,
-    inputs={"data": "snw"},
+    input={"data": "snw"},
     parameters={
         "thresh": {"default": "4 kg m-2"},
         "window": {"default": 14},
@@ -148,7 +148,7 @@ snd_season_end = Snow(
     units="",
     title="Snow cover end date (depth).",
     compute=generic.season,
-    inputs={"data": "snd"},
+    input={"data": "snd"},
     parameters={
         "thresh": {"default": "2 cm"},
         "window": {"default": 14},
@@ -169,7 +169,7 @@ snw_season_end = Snow(
     units="",
     title="Snow cover end date (amount).",
     compute=generic.season,
-    inputs={"data": "snw"},
+    input={"data": "snw"},
     parameters={
         "thresh": {"default": "4 kg m-2"},
         "window": {"default": 14},
@@ -190,8 +190,9 @@ snd_max = Snow(
     description="The {freq} maximum snow depth on the surface.",
     abstract="The maximum snow depth on the surface.",
     units="mm",
+    input={"data": "snd"},
     compute=generic.statistics,
-    parameters={"statistic": "max", "freq": {"default": "YS-JUL"}},
+    parameters={"statistic": "max", "freq": {"default": "YS-JUL"}, "out_units": None},
 )
 
 snd_max_doy = Snow(
@@ -228,8 +229,9 @@ snw_max = Snow(
     description="The {freq} maximum snow amount equivalent on the surface.",
     abstract="The maximum snow amount equivalent on the surface.",
     units="kg m-2",
+    input={"data": "snw"},
     compute=generic.statistics,
-    parameters={"statistic": "max", "freq": {"default": "YS-JUL"}},
+    parameters={"statistic": "max", "freq": {"default": "YS-JUL"}, "out_units": None},
 )
 
 snw_max_doy = Snow(
@@ -299,7 +301,8 @@ snow_depth = Snow(
     abstract="Mean of daily snow depth.",
     cell_methods="time: mean over days",
     compute=generic.statistics,
-    parameters={"statistic": "mean", "freq": {"default": "YS"}},
+    input={"data": "snd"},
+    parameters={"statistic": "mean", "freq": {"default": "YS"}, "out_units": None},
 )
 
 
@@ -311,11 +314,12 @@ snd_days_above = Snow(
     description="The {freq} number of days with snow depth greater than or equal to {thresh}.",
     abstract="Number of days when the snow depth is greater than or equal to a given threshold.",
     compute=generic.count_occurrences,
+    input={"data": "snd"},
     parameters={
         "condition": {"default": ">="},
         "freq": {"default": "YS-JUL"},
         "thresh": {"default": "2 cm"},
-        "constrain": [">", "gt", ">=", "ge"],
+        "constrain": (">", ">="),
     },
 )
 
@@ -327,11 +331,12 @@ snw_days_above = Snow(
     description="The {freq} number of days with snow amount greater than or equal to {thresh}.",
     abstract="Number of days when the snow amount is greater than or equal to a given threshold.",
     compute=generic.count_occurrences,
+    input={"data": "snw"},
     parameters={
         "condition": {"default": ">="},
         "freq": {"default": "YS-JUL"},
         "thresh": {"default": "4 kg m-2"},
-        "constrain": [">", "gt", ">=", "ge"],
+        "constrain": (">", ">="),
     },
 )
 
