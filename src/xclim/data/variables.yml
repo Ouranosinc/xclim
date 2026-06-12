@@ -97,6 +97,14 @@ variables:
     standard_name: convective_precipitation_flux
     data_flags:
       - negative_accumulation_values:
+  prra:
+    canonical_units: kg m-2 s-1
+    cell_methods: "time: mean"
+    description: Surface rain flux.
+    dimensions: "[precipitation]"
+    standard_name: rainfall_flux
+    data_flags:
+      - negative_accumulation_values:
   prsn:
     canonical_units: kg m-2 s-1
     cell_methods: "time: mean"

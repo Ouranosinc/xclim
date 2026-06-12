@@ -347,6 +347,7 @@ snd_to_snw = Converter(
     description="The approximation of daily snow amount from snow depth and density.",
     var_name="snw",
     compute=converters.snd_to_snw,
+    parameters={"out_units": None},
 )
 
 
@@ -359,6 +360,7 @@ snw_to_snd = Converter(
     description="The approximation of daily snow depth from snow amount and density.",
     var_name="snd",
     compute=converters.snw_to_snd,
+    parameters={"out_units": None},
 )
 
 

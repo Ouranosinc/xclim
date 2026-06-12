@@ -4,12 +4,14 @@ from __future__ import annotations
 
 from xclim import indices as xci
 from xclim.core.indicator import Daily, ResamplingIndicatorWithIndexing
+from xclim.indices import generic
 
 __all__ = [
     "blowing_snow",
     "holiday_snow_and_snowfall_days",
     "holiday_snow_days",
     "snd_days_above",
+    "snd_max",
     "snd_max_doy",
     "snd_season_end",
     "snd_season_length",
@@ -41,7 +43,7 @@ class SnowWithIndexing(ResamplingIndicatorWithIndexing):
     keywords = "snow"
 
 
-snd_season_length = SnowWithIndexing(
+snd_season_length = Snow(
     identifier="snd_season_length",
     units="days",
     long_name="Snow cover duration",
@@ -49,10 +51,25 @@ snd_season_length = SnowWithIndexing(
         "The duration of the snow season, starting with at least {window} days with snow depth above {thresh} "
         "and ending with at least {window} days with snow depth under {thresh}."
     ),
-    compute=xci.snd_season_length,
+    title="Snow cover duration (depth).",
+    abstract=(
+        "The season starts when snow depth is above a threshold for at least `N` consecutive days"
+        "and stops when it drops below the same threshold for the same number of days."
+    ),
+    compute=generic.season,
+    input={"data": "snd"},
+    parameters={
+        "thresh": {"default": "2 cm"},
+        "window": {"default": 14},
+        "condition": ">=",
+        "aspect": "length",
+        "constrain": None,
+        "mid_date": None,
+        "freq": {"default": "YS-JUL"},
+    },
 )
 
-snw_season_length = SnowWithIndexing(
+snw_season_length = Snow(
     identifier="snw_season_length",
     units="days",
     long_name="Snow cover duration",
@@ -60,7 +77,22 @@ snw_season_length = SnowWithIndexing(
         "The duration of the snow season, starting with at least {window} days with snow amount above {thresh} "
         "and ending with at least {window} days with snow amount under {thresh}."
     ),
-    compute=xci.snw_season_length,
+    title="Snow cover duration (amount).",
+    abstract=(
+        "The season starts when the snow amount is above a threshold for at least `N` consecutive days"
+        "and stops when it drops below the same threshold for the same number of days."
+    ),
+    compute=generic.season,
+    input={"data": "snw"},
+    parameters={
+        "thresh": {"default": "4 kg m-2"},
+        "window": {"default": 14},
+        "condition": ">=",
+        "aspect": "length",
+        "constrain": None,
+        "mid_date": None,
+        "freq": {"default": "YS-JUL"},
+    },
 )
 
 snd_season_start = Snow(
@@ -71,7 +103,18 @@ snd_season_start = Snow(
     abstract="The first date on which snow depth is greater than or equal to a given threshold "
     "for a given number of consecutive days.",
     units="",
-    compute=xci.snd_season_start,
+    title="Snow cover start date (depth).",
+    compute=generic.season,
+    input={"data": "snd"},
+    parameters={
+        "thresh": {"default": "2 cm"},
+        "window": {"default": 14},
+        "condition": ">=",
+        "aspect": "start",
+        "constrain": None,
+        "mid_date": None,
+        "freq": {"default": "YS-JUL"},
+    },
 )
 
 snw_season_start = Snow(
@@ -82,7 +125,18 @@ snw_season_start = Snow(
     abstract="The first date on which snow amount is greater than or equal to a given threshold "
     "for a given number of consecutive days.",
     units="",
-    compute=xci.snw_season_start,
+    title="Snow cover start date (amount).",
+    compute=generic.season,
+    input={"data": "snw"},
+    parameters={
+        "thresh": {"default": "4 kg m-2"},
+        "window": {"default": 14},
+        "condition": ">=",
+        "aspect": "start",
+        "constrain": None,
+        "mid_date": None,
+        "freq": {"default": "YS-JUL"},
+    },
 )
 
 snd_season_end = Snow(
@@ -92,7 +146,18 @@ snd_season_end = Snow(
     description="Day of year when snow depth is below {thresh} for {window} consecutive days.",
     abstract="The first date on which snow depth is below a given threshold for a given number of consecutive days.",
     units="",
-    compute=xci.snd_season_end,
+    title="Snow cover end date (depth).",
+    compute=generic.season,
+    input={"data": "snd"},
+    parameters={
+        "thresh": {"default": "2 cm"},
+        "window": {"default": 14},
+        "condition": ">=",
+        "aspect": "end",
+        "constrain": None,
+        "mid_date": None,
+        "freq": {"default": "YS-JUL"},
+    },
 )
 
 snw_season_end = Snow(
@@ -102,10 +167,35 @@ snw_season_end = Snow(
     description="Day of year when snow amount is below {thresh} for {window} consecutive days.",
     abstract="The first date on which snow amount is below a given threshold for a given number of consecutive days.",
     units="",
-    compute=xci.snw_season_end,
+    title="Snow cover end date (amount).",
+    compute=generic.season,
+    input={"data": "snw"},
+    parameters={
+        "thresh": {"default": "4 kg m-2"},
+        "window": {"default": 14},
+        "condition": ">=",
+        "aspect": "end",
+        "constrain": None,
+        "mid_date": None,
+        "freq": {"default": "YS-JUL"},
+    },
 )
 
-snd_max_doy = SnowWithIndexing(
+snd_max = Snow(
+    title="Maximum snow depth",
+    identifier="snd_max",
+    standard_name="snow_depth",
+    var_name="{freq}_snd_max",
+    long_name="Maximum snow depth",
+    description="The {freq} maximum snow depth on the surface.",
+    abstract="The maximum snow depth on the surface.",
+    units="mm",
+    input={"data": "snd"},
+    compute=generic.statistics,
+    parameters={"statistic": "max", "freq": {"default": "YS-JUL"}, "out_units": None},
+)
+
+snd_max_doy = Snow(
     title="Day of year of maximum snow depth",
     identifier="snd_max_doy",
     standard_name="day_of_year",
@@ -130,7 +220,7 @@ snow_melt_we_max = Snow(
     compute=xci.snow_melt_we_max,
 )
 
-snw_max = SnowWithIndexing(
+snw_max = Snow(
     title="Maximum snow amount",
     identifier="snw_max",
     standard_name="surface_snow_amount",
@@ -139,10 +229,12 @@ snw_max = SnowWithIndexing(
     description="The {freq} maximum snow amount equivalent on the surface.",
     abstract="The maximum snow amount equivalent on the surface.",
     units="kg m-2",
-    compute=xci.snw_max,
+    input={"data": "snw"},
+    compute=generic.statistics,
+    parameters={"statistic": "max", "freq": {"default": "YS-JUL"}, "out_units": None},
 )
 
-snw_max_doy = SnowWithIndexing(
+snw_max_doy = Snow(
     title="Day of year of maximum snow amount",
     identifier="snw_max_doy",
     standard_name="day_of_year",
@@ -199,7 +291,7 @@ blowing_snow = Snow(
     compute=xci.blowing_snow,
 )
 
-snow_depth = SnowWithIndexing(
+snow_depth = Snow(
     title="Mean snow depth",
     identifier="snow_depth",
     units="cm",
@@ -208,28 +300,44 @@ snow_depth = SnowWithIndexing(
     description="The {freq} mean of daily mean snow depth.",
     abstract="Mean of daily snow depth.",
     cell_methods="time: mean over days",
-    compute=xci.snow_depth,
+    compute=generic.statistics,
+    input={"data": "snd"},
+    parameters={"statistic": "mean", "freq": {"default": "YS"}, "out_units": None},
 )
 
 
-snd_days_above = SnowWithIndexing(
+snd_days_above = Snow(
     title="Days with snow (depth)",
     identifier="snd_days_above",
     units="days",
     long_name="Number of days with snow",
     description="The {freq} number of days with snow depth greater than or equal to {thresh}.",
     abstract="Number of days when the snow depth is greater than or equal to a given threshold.",
-    compute=xci.snd_days_above,
+    compute=generic.count_occurrences,
+    input={"data": "snd"},
+    parameters={
+        "condition": {"default": ">="},
+        "freq": {"default": "YS-JUL"},
+        "thresh": {"default": "2 cm"},
+        "constrain": (">", ">="),
+    },
 )
 
-snw_days_above = SnowWithIndexing(
+snw_days_above = Snow(
     title="Days with snow (amount)",
     identifier="snw_days_above",
     units="days",
     long_name="Number of days with snow",
     description="The {freq} number of days with snow amount greater than or equal to {thresh}.",
     abstract="Number of days when the snow amount is greater than or equal to a given threshold.",
-    compute=xci.snw_days_above,
+    compute=generic.count_occurrences,
+    input={"data": "snw"},
+    parameters={
+        "condition": {"default": ">="},
+        "freq": {"default": "YS-JUL"},
+        "thresh": {"default": "4 kg m-2"},
+        "constrain": (">", ">="),
+    },
 )
 
 holiday_snow_days = Snow(

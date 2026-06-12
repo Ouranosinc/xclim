@@ -141,7 +141,7 @@ class TempHourlyWithIndexing(ResamplingIndicatorWithIndexing):
     keywords = "temperature"
 
 
-tn_days_above = TempWithIndexing(
+tn_days_above = Temp(
     title="Number of days with minimum temperature above a given threshold",
     identifier="tn_days_above",
     units="days",
@@ -150,11 +150,17 @@ tn_days_above = TempWithIndexing(
     description="{freq} number of days where daily minimum temperature exceeds {thresh}.",
     abstract="The number of days with minimum temperature above a given threshold.",
     cell_methods="time: sum over days",
-    compute=indices.tn_days_above,
-    parameters={"op": {"default": ">"}},
+    compute=indices.generic.count_occurrences,
+    input={"data": "tasmin"},
+    parameters={
+        "condition": {"default": ">"},
+        "thresh": {"default": "20 °C"},
+        "constrain": (">", ">="),
+        "freq": {"default": "YS"},
+    },
 )
 
-tn_days_below = TempWithIndexing(
+tn_days_below = Temp(
     title="Number of days with minimum temperature below a given threshold",
     identifier="tn_days_below",
     units="days",
@@ -163,11 +169,17 @@ tn_days_below = TempWithIndexing(
     description="{freq} number of days where daily minimum temperature is below {thresh}.",
     abstract="The number of days with minimum temperature below a given threshold.",
     cell_methods="time: sum over days",
-    compute=indices.tn_days_below,
-    parameters={"op": {"default": "<"}},
+    compute=indices.generic.count_occurrences,
+    input={"data": "tasmin"},
+    parameters={
+        "condition": {"default": "<"},
+        "thresh": {"default": "-10 °C"},
+        "constrain": ("<", "<="),
+        "freq": {"default": "YS"},
+    },
 )
 
-tg_days_above = TempWithIndexing(
+tg_days_above = Temp(
     title="Number of days with mean temperature above a given threshold",
     identifier="tg_days_above",
     units="days",
@@ -176,11 +188,17 @@ tg_days_above = TempWithIndexing(
     description="{freq} number of days where daily mean temperature exceeds {thresh}.",
     abstract="The number of days with mean temperature above a given threshold.",
     cell_methods="time: sum over days",
-    compute=indices.tg_days_above,
-    parameters={"op": {"default": ">"}},
+    compute=indices.generic.count_occurrences,
+    input={"data": "tas"},
+    parameters={
+        "condition": {"default": ">"},
+        "thresh": {"default": "10 °C"},
+        "constrain": (">", ">="),
+        "freq": {"default": "YS"},
+    },
 )
 
-tg_days_below = TempWithIndexing(
+tg_days_below = Temp(
     title="Number of days with mean temperature below a given threshold",
     identifier="tg_days_below",
     units="days",
@@ -189,11 +207,17 @@ tg_days_below = TempWithIndexing(
     description="{freq} number of days where daily mean temperature is below {thresh}.",
     abstract="The number of days with mean temperature below a given threshold.",
     cell_methods="time: sum over days",
-    compute=indices.tg_days_below,
-    parameters={"op": {"default": "<"}},
+    compute=indices.generic.count_occurrences,
+    input={"data": "tas"},
+    parameters={
+        "condition": {"default": "<"},
+        "thresh": {"default": "10 °C"},
+        "constrain": ("<", "<="),
+        "freq": {"default": "YS"},
+    },
 )
 
-tx_days_above = TempWithIndexing(
+tx_days_above = Temp(
     title="Number of days with maximum temperature above a given threshold",
     identifier="tx_days_above",
     units="days",
@@ -202,11 +226,17 @@ tx_days_above = TempWithIndexing(
     description="{freq} number of days where daily maximum temperature exceeds {thresh}.",
     abstract="The number of days with maximum temperature above a given threshold.",
     cell_methods="time: sum over days",
-    compute=indices.tx_days_above,
-    parameters={"op": {"default": ">"}},
+    compute=indices.generic.count_occurrences,
+    input={"data": "tasmax"},
+    parameters={
+        "condition": {"default": ">"},
+        "thresh": {"default": "25 °C"},
+        "constrain": (">", ">="),
+        "freq": {"default": "YS"},
+    },
 )
 
-tx_days_below = TempWithIndexing(
+tx_days_below = Temp(
     title="Number of days with maximum temperature below a given threshold",
     identifier="tx_days_below",
     units="days",
@@ -215,11 +245,17 @@ tx_days_below = TempWithIndexing(
     description="{freq} number of days where daily max temperature is below {thresh}.",
     abstract="The number of days with maximum temperature below a given threshold.",
     cell_methods="time: sum over days",
-    compute=indices.tx_days_below,
-    parameters={"op": {"default": "<"}},
+    compute=indices.generic.count_occurrences,
+    input={"data": "tasmax"},
+    parameters={
+        "condition": {"default": "<"},
+        "thresh": {"default": "25 °C"},
+        "constrain": ("<", "<="),
+        "freq": {"default": "YS"},
+    },
 )
 
-tx_tn_days_above = TempWithIndexing(
+tx_tn_days_above = Temp(
     title="Number of days with daily minimum and maximum temperatures exceeding thresholds",
     identifier="tx_tn_days_above",
     units="days",
@@ -230,11 +266,22 @@ tx_tn_days_above = TempWithIndexing(
     "temperature exceeds {thresh_tasmin}.",
     abstract="Number of days with daily maximum and minimum temperatures above given thresholds.",
     cell_methods="",
-    compute=indices.tx_tn_days_above,
+    compute=indices.generic.bivariate_count_occurrences,
+    input={"data1": "tasmin", "data2": "tasmax"},
+    parameters={
+        "condition1": {"name": "condition", "default": ">"},
+        "condition2": None,
+        "thresh1": {"name": "thresh_tasmin", "default": "22 °C"},
+        "thresh2": {"name": "thresh_tasmax", "default": "30 °C"},
+        "var_reducer": "all",
+        "constrain1": (">", ">="),
+        "constrain2": None,
+        "freq": {"default": "YS"},
+    },
 )
 
 
-hot_days = TempWithIndexing(
+hot_days = Temp(
     title="Hot days",
     identifier="hot_days",
     units="days",
@@ -243,7 +290,9 @@ hot_days = TempWithIndexing(
     description="{freq} number of days where the daily maximum temperature is above {thresh}.",
     abstract="Number of days where the daily maximum temperature is above a given threshold.",
     cell_methods="time: sum over days",
-    compute=indices.hot_days,
+    compute=indices.generic.count_occurrences,
+    input={"data": "tasmax"},
+    parameters={"condition": ">", "thresh": {"default": "25 °C"}, "constrain": (">"), "freq": {"default": "YS"}},
 )
 
 
@@ -259,7 +308,19 @@ heat_wave_frequency = Temp(
     "thresholds for a number of days.",
     cell_methods="",
     keywords="health,",
-    compute=indices.heat_wave_frequency,
+    input={"data1": "tasmin", "data2": "tasmax"},
+    compute=indices.generic.bivariate_spell_length_statistics,
+    parameters={
+        "window": {"default": 3},
+        "window_statistic": "min",
+        "condition": {"default": ">"},
+        "thresh1": {"default": "22 °C", "name": "thresh_tasmin"},
+        "thresh2": {"default": "30 °C", "name": "thresh_tasmax"},
+        "statistic": "count",
+        "freq": {"default": "YS"},
+        "min_gap": 1,
+        "constrain": (">", ">="),
+    },
 )
 
 hot_spell_max_magnitude = Temp(
@@ -292,7 +353,19 @@ heat_wave_max_length = Temp(
     "given thresholds for a number of days.",
     cell_methods="",
     keywords="health,",
-    compute=indices.heat_wave_max_length,
+    input={"data1": "tasmin", "data2": "tasmax"},
+    compute=indices.generic.bivariate_spell_length_statistics,
+    parameters={
+        "window": {"default": 3},
+        "window_statistic": "min",
+        "condition": {"default": ">"},
+        "thresh1": {"default": "22 °C", "name": "thresh_tasmin"},
+        "thresh2": {"default": "30 °C", "name": "thresh_tasmax"},
+        "statistic": "max",
+        "freq": {"default": "YS"},
+        "min_gap": 1,
+        "constrain": (">", ">="),
+    },
 )
 
 heat_wave_total_length = Temp(
@@ -309,7 +382,19 @@ heat_wave_total_length = Temp(
     "given thresholds for a number of days.",
     cell_methods="",
     keywords="health,",
-    compute=indices.heat_wave_total_length,
+    input={"data1": "tasmin", "data2": "tasmax"},
+    compute=indices.generic.bivariate_spell_length_statistics,
+    parameters={
+        "window": {"default": 3},
+        "window_statistic": "min",
+        "condition": {"default": ">"},
+        "thresh1": {"default": "22 °C", "name": "thresh_tasmin"},
+        "thresh2": {"default": "30 °C", "name": "thresh_tasmax"},
+        "statistic": "sum",
+        "freq": {"default": "YS"},
+        "min_gap": 1,
+        "constrain": (">", ">="),
+    },
 )
 
 
@@ -329,6 +414,7 @@ heat_wave_index = Temp(
         "window": {"default": 5},
         "thresh": {"default": "25 degC"},
     },
+    _version_deprecated=("1.0", "hot_spell_total_length"),
 )
 
 heat_spell_frequency = Temp(
@@ -445,7 +531,18 @@ hot_spell_frequency = Temp(
     "over a given time window of days is above a given threshold.",
     units="",
     cell_methods="",
-    compute=indices.hot_spell_frequency,
+    input={"data": "tasmax"},
+    compute=indices.generic.spell_length_statistics,
+    parameters={
+        "window": {"default": 3},
+        "window_statistic": "min",
+        "condition": {"default": ">"},
+        "thresh": {"default": "30 °C"},
+        "statistic": "count",
+        "min_gap": 1,
+        "constrain": (">", ">="),
+        "freq": {"default": "YS"},
+    },
 )
 
 hot_spell_max_length = Temp(
@@ -459,7 +556,18 @@ hot_spell_max_length = Temp(
     "temperature over a given time window of days is above a given threshold.",
     units="days",
     cell_methods="",
-    compute=indices.hot_spell_max_length,
+    input={"data": "tasmax"},
+    compute=indices.generic.spell_length_statistics,
+    parameters={
+        "window": {"default": 1},
+        "window_statistic": "min",
+        "condition": {"default": ">"},
+        "thresh": {"default": "30 °C"},
+        "statistic": "max",
+        "min_gap": 1,
+        "constrain": (">", ">="),
+        "freq": {"default": "YS"},
+    },
 )
 
 hot_spell_total_length = Temp(
@@ -473,10 +581,21 @@ hot_spell_total_length = Temp(
     "temperature over a given time window of days is above a given threshold.",
     units="days",
     cell_methods="",
-    compute=indices.hot_spell_total_length,
+    input={"data": "tasmax"},
+    compute=indices.generic.spell_length_statistics,
+    parameters={
+        "window": {"default": 3},
+        "window_statistic": "min",
+        "condition": {"default": ">"},
+        "thresh": {"default": "30 °C"},
+        "statistic": "sum",
+        "min_gap": 1,
+        "constrain": (">", ">="),
+        "freq": {"default": "YS"},
+    },
 )
 
-tg_mean = TempWithIndexing(
+tg_mean = Temp(
     title="Mean temperature",
     identifier="tg_mean",
     units="K",
@@ -485,10 +604,12 @@ tg_mean = TempWithIndexing(
     description="{freq} mean of daily mean temperature.",
     abstract="Mean of daily mean temperature.",
     cell_methods="time: mean over days",
-    compute=indices.tg_mean,
+    compute=indices.generic.statistics,
+    input={"data": "tas"},
+    parameters={"statistic": "mean", "out_units": None, "freq": {"default": "YS"}},
 )
 
-tg_max = TempWithIndexing(
+tg_max = Temp(
     title="Maximum of mean temperature",
     identifier="tg_max",
     units="K",
@@ -497,10 +618,12 @@ tg_max = TempWithIndexing(
     description="{freq} maximum of daily mean temperature.",
     abstract="Maximum of daily mean temperature.",
     cell_methods="time: maximum over days",
-    compute=indices.tg_max,
+    compute=indices.generic.statistics,
+    input={"data": "tas"},
+    parameters={"statistic": "max", "out_units": None, "freq": {"default": "YS"}},
 )
 
-tg_min = TempWithIndexing(
+tg_min = Temp(
     title="Minimum of mean temperature",
     identifier="tg_min",
     units="K",
@@ -509,10 +632,12 @@ tg_min = TempWithIndexing(
     description="{freq} minimum of daily mean temperature.",
     abstract="Minimum of daily mean temperature.",
     cell_methods="time: minimum over days",
-    compute=indices.tg_min,
+    compute=indices.generic.statistics,
+    input={"data": "tas"},
+    parameters={"statistic": "min", "out_units": None, "freq": {"default": "YS"}},
 )
 
-tx_mean = TempWithIndexing(
+tx_mean = Temp(
     title="Mean of maximum temperature",
     identifier="tx_mean",
     units="K",
@@ -521,10 +646,12 @@ tx_mean = TempWithIndexing(
     description="{freq} mean of daily maximum temperature.",
     abstract="Mean of daily maximum temperature.",
     cell_methods="time: mean over days",
-    compute=indices.tx_mean,
+    compute=indices.generic.statistics,
+    input={"data": "tasmax"},
+    parameters={"statistic": "mean", "out_units": None, "freq": {"default": "YS"}},
 )
 
-tx_max = TempWithIndexing(
+tx_max = Temp(
     title="Maximum temperature",
     identifier="tx_max",
     units="K",
@@ -533,10 +660,12 @@ tx_max = TempWithIndexing(
     description="{freq} maximum of daily maximum temperature.",
     abstract="Maximum of daily maximum temperature.",
     cell_methods="time: maximum over days",
-    compute=indices.tx_max,
+    compute=indices.generic.statistics,
+    input={"data": "tasmax"},
+    parameters={"statistic": "max", "out_units": None, "freq": {"default": "YS"}},
 )
 
-tx_min = TempWithIndexing(
+tx_min = Temp(
     title="Minimum of maximum temperature",
     identifier="tx_min",
     units="K",
@@ -545,10 +674,12 @@ tx_min = TempWithIndexing(
     description="{freq} minimum of daily maximum temperature.",
     abstract="Minimum of daily maximum temperature.",
     cell_methods="time: minimum over days",
-    compute=indices.tx_min,
+    compute=indices.generic.statistics,
+    input={"data": "tasmax"},
+    parameters={"statistic": "min", "out_units": None, "freq": {"default": "YS"}},
 )
 
-tn_mean = TempWithIndexing(
+tn_mean = Temp(
     title="Mean of minimum temperature",
     identifier="tn_mean",
     units="K",
@@ -557,10 +688,12 @@ tn_mean = TempWithIndexing(
     description="{freq} mean of daily minimum temperature.",
     abstract="Mean of daily minimum temperature.",
     cell_methods="time: mean over days",
-    compute=indices.tn_mean,
+    compute=indices.generic.statistics,
+    input={"data": "tasmin"},
+    parameters={"statistic": "mean", "out_units": None, "freq": {"default": "YS"}},
 )
 
-tn_max = TempWithIndexing(
+tn_max = Temp(
     title="Maximum of minimum temperature",
     identifier="tn_max",
     units="K",
@@ -569,10 +702,12 @@ tn_max = TempWithIndexing(
     description="{freq} maximum of daily minimum temperature.",
     abstract="Maximum of daily minimum temperature.",
     cell_methods="time: maximum over days",
-    compute=indices.tn_max,
+    compute=indices.generic.statistics,
+    input={"data": "tasmin"},
+    parameters={"statistic": "max", "out_units": None, "freq": {"default": "YS"}},
 )
 
-tn_min = TempWithIndexing(
+tn_min = Temp(
     title="Minimum temperature",
     identifier="tn_min",
     units="K",
@@ -581,10 +716,12 @@ tn_min = TempWithIndexing(
     description="{freq} minimum of daily minimum temperature.",
     abstract="Minimum of daily minimum temperature.",
     cell_methods="time: minimum over days",
-    compute=indices.tn_min,
+    compute=indices.generic.statistics,
+    input={"data": "tasmin"},
+    parameters={"statistic": "min", "out_units": None, "freq": {"default": "YS"}},
 )
 
-daily_temperature_range = TempWithIndexing(
+daily_temperature_range = Temp(
     title="Mean of daily temperature range",
     identifier="dtr",
     units="K",
@@ -593,11 +730,12 @@ daily_temperature_range = TempWithIndexing(
     description="{freq} mean diurnal temperature range.",
     cell_methods="time range within days time: mean over days",
     abstract="The average difference between the daily maximum and minimum temperatures.",
-    compute=indices.daily_temperature_range,
-    parameters={"op": "mean"},
+    compute=indices.generic.difference_statistics,
+    input={"data1": "tasmin", "data2": "tasmax"},
+    parameters={"statistic": {"default": "mean"}, "absolute": False, "freq": {"default": "YS"}},
 )
 
-max_daily_temperature_range = TempWithIndexing(
+max_daily_temperature_range = Temp(
     title="Maximum of daily temperature range",
     identifier="dtrmax",
     units="K",
@@ -606,11 +744,12 @@ max_daily_temperature_range = TempWithIndexing(
     description="{freq} maximum diurnal temperature range.",
     cell_methods="time range within days time: max over days",
     abstract="The maximum difference between the daily maximum and minimum temperatures.",
-    compute=indices.daily_temperature_range,
-    parameters={"op": "max"},
+    compute=indices.generic.difference_statistics,
+    input={"data1": "tasmin", "data2": "tasmax"},
+    parameters={"statistic": {"default": "max"}, "absolute": False, "freq": {"default": "YS"}},
 )
 
-daily_temperature_range_variability = TempWithIndexing(
+daily_temperature_range_variability = Temp(
     title="Variability of daily temperature range",
     identifier="dtrvar",
     units="K",
@@ -620,10 +759,12 @@ daily_temperature_range_variability = TempWithIndexing(
     "in daily temperature range for the given time period.",
     abstract="The average day-to-day variation in daily temperature range.",
     cell_methods="time range within days time: difference over days time: mean over days",
-    compute=indices.daily_temperature_range_variability,
+    compute=indices.generic.interday_difference_statistics,
+    input={"data1": "tasmin", "data2": "tasmax"},
+    parameters={"statistic": "mean", "absolute": False, "freq": {"default": "YS"}},
 )
 
-extreme_temperature_range = TempWithIndexing(
+extreme_temperature_range = Temp(
     title="Extreme temperature range",
     identifier="etr",
     units="K",
@@ -632,7 +773,9 @@ extreme_temperature_range = TempWithIndexing(
     description="{freq} range between the maximum of daily maximum temperature and the minimum of daily"
     "minimum temperature.",
     abstract="The maximum of the maximum temperature minus the minimum of the minimum temperature.",
-    compute=indices.extreme_temperature_range,
+    compute=indices.generic.extreme_range,
+    input={"data1": "tasmin", "data2": "tasmax"},
+    parameters={"freq": {"default": "YS"}},
 )
 
 cold_spell_duration_index = Temp(
@@ -664,7 +807,18 @@ cold_spell_days = Temp(
     abstract="The number of days that are part of a cold spell. A cold spell is defined as a minimum number of "
     "consecutive days with mean daily temperature below a given threshold.",
     cell_methods="",
-    compute=indices.cold_spell_days,
+    input={"data": "tas"},
+    compute=indices.generic.spell_length_statistics,
+    parameters={
+        "window": {"default": 5},
+        "window_statistic": "max",
+        "condition": {"default": "<"},
+        "statistic": "sum",
+        "constrain": ("<", "<="),
+        "min_gap": 1,
+        "freq": {"default": "YS-JUL"},
+    },
+    _version_deprecated=("1.0", "cold_spell_total_length"),
 )
 
 cold_spell_frequency = Temp(
@@ -678,7 +832,18 @@ cold_spell_frequency = Temp(
     "over a given time window of days is below a given threshold.",
     units="",
     cell_methods="",
-    compute=indices.cold_spell_frequency,
+    input={"data": "tas"},
+    compute=indices.generic.spell_length_statistics,
+    parameters={
+        "thresh": {"default": "-10 °C"},
+        "window": {"default": 5},
+        "window_statistic": "max",
+        "condition": {"default": "<"},
+        "statistic": "count",
+        "constrain": ("<", "<="),
+        "min_gap": 1,
+        "freq": {"default": "YS-JUL"},
+    },
 )
 
 cold_spell_max_length = Temp(
@@ -692,7 +857,18 @@ cold_spell_max_length = Temp(
     "temperature over a given time window of days is below a given threshold.",
     units="days",
     cell_methods="",
-    compute=indices.cold_spell_max_length,
+    input={"data": "tas"},
+    compute=indices.generic.spell_length_statistics,
+    parameters={
+        "thresh": {"default": "-10 °C"},
+        "window": {"default": 1},
+        "window_statistic": "max",
+        "condition": {"default": "<"},
+        "statistic": "max",
+        "constrain": ("<", "<="),
+        "min_gap": 1,
+        "freq": {"default": "YS-JUL"},
+    },
 )
 
 cold_spell_total_length = Temp(
@@ -706,7 +882,18 @@ cold_spell_total_length = Temp(
     "temperature over a given time window of days is below a given threshold.",
     units="days",
     cell_methods="",
-    compute=indices.cold_spell_total_length,
+    input={"data": "tas"},
+    compute=indices.generic.spell_length_statistics,
+    parameters={
+        "thresh": {"default": "-10 °C"},
+        "window": {"default": 3},
+        "window_statistic": "max",
+        "condition": {"default": "<"},
+        "statistic": "sum",
+        "constrain": ("<", "<="),
+        "min_gap": 1,
+        "freq": {"default": "YS-JUL"},
+    },
 )
 
 cool_night_index = Temp(
@@ -722,7 +909,7 @@ cool_night_index = Temp(
     compute=indices.cool_night_index,
 )
 
-daily_freezethaw_cycles = TempWithIndexing(
+daily_freezethaw_cycles = Temp(
     title="Daily freeze-thaw cycles",
     identifier="dlyfrzthw",
     units="days",
@@ -736,12 +923,12 @@ daily_freezethaw_cycles = TempWithIndexing(
     cell_methods="",
     compute=indices.multiday_temperature_swing,
     parameters={
-        "op": "sum",
+        "statistic": "sum",
         "window": 1,
         "thresh_tasmax": {"default": "0 degC"},
         "thresh_tasmin": {"default": "0 degC"},
-        "op_tasmax": {"default": ">"},
-        "op_tasmin": {"default": "<="},
+        "condition_tasmax": {"default": ">"},
+        "condition_tasmin": {"default": "<="},
     },
 )
 
@@ -749,7 +936,7 @@ daily_freezethaw_cycles = TempWithIndexing(
 freezethaw_spell_frequency = Temp(
     title="Freeze-thaw spell frequency",
     identifier="freezethaw_spell_frequency",
-    units="days",
+    units="",
     long_name="Frequency of events where maximum daily temperatures are above {thresh_tasmax} "
     "and minimum daily temperatures are at or below {thresh_tasmin} for at least {window} consecutive day(s).",
     description="{freq} number of freeze-thaw spells, where maximum daily temperatures are above {thresh_tasmax} "
@@ -760,11 +947,11 @@ freezethaw_spell_frequency = Temp(
     cell_methods="",
     compute=indices.multiday_temperature_swing,
     parameters={
-        "op": "count",
+        "statistic": "count",
         "thresh_tasmax": {"default": "0 degC"},
         "thresh_tasmin": {"default": "0 degC"},
-        "op_tasmax": {"default": ">"},
-        "op_tasmin": {"default": "<="},
+        "condition_tasmax": {"default": ">"},
+        "condition_tasmin": {"default": "<="},
     },
 )
 
@@ -784,11 +971,11 @@ freezethaw_spell_mean_length = Temp(
     cell_methods="",
     compute=indices.multiday_temperature_swing,
     parameters={
-        "op": "mean",
+        "statistic": "mean",
         "thresh_tasmax": {"default": "0 degC"},
         "thresh_tasmin": {"default": "0 degC"},
-        "op_tasmax": ">",
-        "op_tasmin": "<=",
+        "condition_tasmax": ">",
+        "condition_tasmin": "<=",
     },
 )
 
@@ -807,17 +994,11 @@ freezethaw_spell_max_length = Temp(
     "temperatures are at or below a threshold, usually 0°C for both.",
     cell_methods="",
     compute=indices.multiday_temperature_swing,
-    parameters={
-        "op": "max",
-        "thresh_tasmax": {"default": "0 degC"},
-        "thresh_tasmin": {"default": "0 degC"},
-        "op_tasmax": {"default": ">"},
-        "op_tasmin": {"default": "<="},
-    },
+    parameters={"statistic": "max"},
 )
 
 
-cooling_degree_days = TempWithIndexing(
+cooling_degree_days = Temp(
     title="Cooling degree days",
     identifier="cooling_degree_days",
     units="K days",
@@ -827,8 +1008,9 @@ cooling_degree_days = TempWithIndexing(
     abstract="The cumulative degree days for days when the mean daily temperature is above a given threshold and "
     "buildings must be air conditioned.",
     cell_methods="time: sum over days",
-    compute=indices.cooling_degree_days,
-    parameters={"thresh": {"default": "18.0 degC"}},
+    compute=indices.generic.integrated_difference,
+    input={"data": "tas"},
+    parameters={"thresh": {"default": "18.0 degC"}, "condition": ">", "freq": {"default": "YS"}},
 )
 
 cooling_degree_days_approximation = TempWithIndexing(
@@ -843,11 +1025,11 @@ cooling_degree_days_approximation = TempWithIndexing(
     "be air conditioned. This method integrates mean, minimum, and maximum temperatures, accounting for asymmetry "
     "in the distributions of temperatures throughout the diurnal cycle.",
     cell_methods="time: sum over days",
-    compute=indices.cooling_degree_days_approximation,
-    parameters={"thresh": {"default": "18.0 degC"}},
+    compute=indices.degree_days_above_approximation,
+    parameters={"thresh": {"default": "18.0 degC"}, "freq": {"default": "YS"}},
 )
 
-heating_degree_days = TempWithIndexing(
+heating_degree_days = Temp(
     title="Heating degree days",
     identifier="heating_degree_days",
     units="K days",
@@ -857,8 +1039,9 @@ heating_degree_days = TempWithIndexing(
     abstract="The cumulative degree days for days when the mean daily temperature is below a given threshold and "
     "buildings must be heated.",
     cell_methods="time: sum over days",
-    compute=indices.heating_degree_days,
-    parameters={"thresh": {"default": "17.0 degC"}},
+    compute=indices.generic.integrated_difference,
+    input={"data": "tas"},
+    parameters={"thresh": {"default": "17.0 degC"}, "condition": "<", "freq": {"default": "YS"}},
 )
 
 heating_degree_days_approximation = TempWithIndexing(
@@ -873,11 +1056,11 @@ heating_degree_days_approximation = TempWithIndexing(
     "must be heated. This method integrates mean, minimum, and maximum temperatures, accounting for asymmetry "
     "in the distributions of temperatures throughout the diurnal cycle.",
     cell_methods="time: sum over days",
-    compute=indices.heating_degree_days_approximation,
-    parameters={"thresh": {"default": "17.0 degC"}},
+    compute=indices.degree_days_below_approximation,
+    parameters={"thresh": {"default": "17.0 degC"}, "freq": {"default": "YS"}},
 )
 
-growing_degree_days = TempWithIndexing(
+growing_degree_days = Temp(
     title="Growing degree days",
     identifier="growing_degree_days",
     units="K days",
@@ -886,11 +1069,12 @@ growing_degree_days = TempWithIndexing(
     description="{freq} growing degree days (mean temperature above {thresh}).",
     abstract="The cumulative degree days for days when the average temperature is above a given threshold.",
     cell_methods="time: sum over days",
-    compute=indices.growing_degree_days,
-    parameters={"thresh": {"default": "4.0 degC"}},
+    compute=indices.generic.integrated_difference,
+    input={"data": "tas"},
+    parameters={"thresh": {"default": "4.0 degC"}, "condition": ">", "freq": {"default": "YS"}},
 )
 
-freezing_degree_days = TempWithIndexing(
+freezing_degree_days = Temp(
     title="Freezing degree days",
     identifier="freezing_degree_days",
     units="K days",
@@ -900,11 +1084,12 @@ freezing_degree_days = TempWithIndexing(
     abstract="The cumulative degree days for days when the average temperature is below a given threshold, "
     "typically 0°C.",
     cell_methods="time: sum over days",
-    compute=indices.heating_degree_days,
-    parameters={"thresh": {"default": "0 degC"}},
+    compute=indices.generic.integrated_difference,
+    input={"data": "tas"},
+    parameters={"thresh": {"default": "0 degC"}, "condition": "<", "freq": {"default": "YS"}},
 )
 
-thawing_degree_days = TempWithIndexing(
+thawing_degree_days = Temp(
     title="Thawing degree days",
     identifier="thawing_degree_days",
     units="K days",
@@ -914,8 +1099,9 @@ thawing_degree_days = TempWithIndexing(
     abstract="The cumulative degree days for days when the average temperature is above a given threshold, "
     "typically 0°C.",
     cell_methods="time: sum over days",
-    compute=indices.growing_degree_days,
-    parameters={"thresh": {"default": "0 degC"}},
+    compute=indices.generic.integrated_difference,
+    input={"data": "tas"},
+    parameters={"thresh": {"default": "0 degC"}, "condition": ">", "freq": {"default": "YS"}},
 )
 
 freshet_start = Temp(
@@ -928,11 +1114,20 @@ freshet_start = Temp(
     "of {thresh} is exceeded for at least {window} days.",
     abstract="Day of year of the spring freshet start, defined as the first day when the temperature exceeds "
     "a certain threshold for a given number of consecutive days.",
-    compute=indices.first_day_temperature_above,
-    parameters={"thresh": {"default": "0 degC"}, "window": {"default": 5}},
+    compute=indices.generic.day_threshold_reached,
+    input={"data": "tas"},
+    parameters={
+        "thresh": {"default": "0 degC"},
+        "window": {"default": 5},
+        "condition": {"default": ">"},
+        "date": {"default": "01-01", "name": "after_date"},
+        "constrain": (">", ">="),
+        "which": "first",
+        "freq": {"default": "YS"},
+    },
 )
 
-frost_days = TempWithIndexing(
+frost_days = Temp(
     title="Frost days",
     identifier="frost_days",
     units="days",
@@ -941,7 +1136,9 @@ frost_days = TempWithIndexing(
     description="{freq} number of days where the daily minimum temperature is below {thresh}.",
     abstract="Number of days where the daily minimum temperature is below a given threshold.",
     cell_methods="time: sum over days",
-    compute=indices.frost_days,
+    compute=indices.generic.count_occurrences,
+    input={"data": "tasmin"},
+    parameters={"thresh": {"default": "0 °C"}, "condition": "<", "constrain": None, "freq": {"default": "YS"}},
 )
 
 frost_season_length = Temp(
@@ -958,8 +1155,17 @@ frost_season_length = Temp(
     abstract="Duration of the freezing season, defined as the period when the daily minimum temperature is below 0°C "
     "without a thawing window of days, with the thaw occurring after a median calendar date.",
     cell_methods="time: sum over days",
-    compute=indices.frost_season_length,
-    parameters={"thresh": {"default": "0 degC"}},
+    compute=indices.generic.season,
+    input={"data": "tasmin"},
+    parameters={
+        "window": {"default": 5},
+        "mid_date": {"default": "01-01"},
+        "thresh": {"default": "0 degC"},
+        "condition": {"default": "<"},
+        "aspect": "length",
+        "constrain": ("<", "<="),
+        "freq": {"default": "YS-JUL"},
+    },
 )
 
 last_spring_frost = Temp(
@@ -974,8 +1180,16 @@ last_spring_frost = Temp(
     abstract="The last day when minimum temperature is below a given threshold for a certain number of days, "
     "limited by a final calendar date.",
     cell_methods="",
-    compute=indices.last_spring_frost,
-    parameters={"before_date": {"default": "07-01"}},
+    input={"data": "tasmin"},
+    compute=indices.generic.day_threshold_reached,
+    parameters={
+        "condition": {"default": "<"},
+        "thresh": {"default": "0°C"},
+        "date": {"name": "before_date", "default": "07-01"},
+        "which": "last",
+        "constrain": ("<", "<="),
+        "freq": {"default": "YS"},
+    },
 )
 
 first_day_tn_below = Temp(
@@ -984,12 +1198,16 @@ first_day_tn_below = Temp(
     standard_name="day_of_year",
     long_name="First day of year with a period of at least {window} days of minimum temperature below {thresh}",
     description="First day of year with minimum temperature below {thresh} for at least {window} days.",
-    compute=indices.first_day_temperature_below,
-    input={"tas": "tasmin"},
+    compute=indices.generic.day_threshold_reached,
+    input={"data": "tasmin"},
     parameters={
         "thresh": {"default": "0 degC"},
-        "after_date": {"default": "07-01"},
-        "op": {"default": "<"},
+        "condition": {"default": "<"},
+        "date": {"default": "07-01", "name": "after_date"},
+        "which": "first",
+        "window": {"default": 1},
+        "constrain": ("<", "<="),
+        "freq": {"default": "YS"},
     },
 )
 
@@ -999,13 +1217,19 @@ first_day_tg_below = Temp(
     standard_name="day_of_year",
     long_name="First day of year with a period of at least {window} days of mean temperature below {thresh}",
     description="First day of year with mean temperature below {thresh} for at least {window} days.",
-    compute=indices.first_day_temperature_below,
+    compute=indices.generic.day_threshold_reached,
+    input={"data": "tas"},
     parameters={
         "thresh": {"default": "0 degC"},
-        "after_date": {"default": "07-01"},
-        "op": {"default": "<"},
+        "condition": {"default": "<"},
+        "date": {"default": "07-01", "name": "after_date"},
+        "which": "first",
+        "window": {"default": 1},
+        "constrain": ("<", "<="),
+        "freq": {"default": "YS"},
     },
 )
+
 
 first_day_tx_below = Temp(
     identifier="first_day_tx_below",
@@ -1013,14 +1237,19 @@ first_day_tx_below = Temp(
     standard_name="day_of_year",
     long_name="First day of year with a period of at least {window} days of maximum temperature below {thresh}",
     description="First day of year with maximum temperature below {thresh} for at least {window} days.",
-    compute=indices.first_day_temperature_below,
-    input={"tas": "tasmax"},
+    compute=indices.generic.day_threshold_reached,
+    input={"data": "tasmax"},
     parameters={
         "thresh": {"default": "0 degC"},
-        "after_date": {"default": "07-01"},
-        "op": {"default": "<"},
+        "condition": {"default": "<"},
+        "date": {"default": "07-01", "name": "after_date"},
+        "which": "first",
+        "window": {"default": 1},
+        "constrain": ("<", "<="),
+        "freq": {"default": "YS"},
     },
 )
+
 
 first_day_tn_above = Temp(
     identifier="first_day_tn_above",
@@ -1028,15 +1257,18 @@ first_day_tn_above = Temp(
     standard_name="day_of_year",
     long_name="First day of year with a period of at least {window} days of minimum temperature above {thresh}",
     description="First day of year with minimum temperature above {thresh} for at least {window} days.",
-    compute=indices.first_day_temperature_above,
-    input={"tas": "tasmin"},
+    compute=indices.generic.day_threshold_reached,
+    input={"data": "tasmin"},
     parameters={
         "thresh": {"default": "0 degC"},
-        "after_date": {"default": "01-01"},
-        "op": {"default": ">"},
+        "condition": {"default": ">"},
+        "date": {"default": "01-01", "name": "after_date"},
+        "which": "first",
+        "window": {"default": 1},
+        "constrain": (">", ">="),
+        "freq": {"default": "YS"},
     },
 )
-
 
 first_day_tg_above = Temp(
     identifier="first_day_tg_above",
@@ -1044,11 +1276,16 @@ first_day_tg_above = Temp(
     standard_name="day_of_year",
     long_name="First day of year with a period of at least {window} days of mean temperature above {thresh}",
     description="First day of year with mean temperature above {thresh} for at least {window} days.",
-    compute=indices.first_day_temperature_above,
+    compute=indices.generic.day_threshold_reached,
+    input={"data": "tas"},
     parameters={
         "thresh": {"default": "0 degC"},
-        "after_date": {"default": "01-01"},
-        "op": {"default": ">"},
+        "condition": {"default": ">"},
+        "date": {"default": "01-01", "name": "after_date"},
+        "which": "first",
+        "window": {"default": 1},
+        "constrain": (">", ">="),
+        "freq": {"default": "YS"},
     },
 )
 
@@ -1058,16 +1295,20 @@ first_day_tx_above = Temp(
     standard_name="day_of_year",
     long_name="First day of year with a period of at least {window} days of maximum temperature above {thresh}",
     description="First day of year with maximum temperature above {thresh} for at least {window} days.",
-    compute=indices.first_day_temperature_above,
-    input={"tas": "tasmax"},
+    compute=indices.generic.day_threshold_reached,
+    input={"data": "tasmax"},
     parameters={
         "thresh": {"default": "0 degC"},
-        "after_date": {"default": "01-01"},
-        "op": {"default": ">"},
+        "condition": {"default": ">"},
+        "date": {"default": "01-01", "name": "after_date"},
+        "which": "first",
+        "window": {"default": 1},
+        "constrain": (">", ">="),
+        "freq": {"default": "YS"},
     },
 )
 
-ice_days = TempWithIndexing(
+ice_days = Temp(
     title="Ice days",
     identifier="ice_days",
     standard_name="days_with_air_temperature_below_threshold",
@@ -1076,7 +1317,9 @@ ice_days = TempWithIndexing(
     description="{freq} number of days where the maximum daily temperature is below {thresh}.",
     abstract="Number of days where the daily maximum temperature is below 0°C",
     cell_methods="time: sum over days",
-    compute=indices.ice_days,
+    compute=indices.generic.count_occurrences,
+    input={"data": "tasmax"},
+    parameters={"condition": "<", "thresh": {"default": "0 °C"}, "freq": {"default": "YS"}, "constrain": None},
 )
 
 consecutive_frost_days = Temp(
@@ -1084,13 +1327,22 @@ consecutive_frost_days = Temp(
     identifier="consecutive_frost_days",
     units="days",
     standard_name="spell_length_of_days_with_air_temperature_below_threshold",
-    long_name="Maximum number of consecutive days where minimum daily temperature is {op} {thresh}",
-    description="{freq} maximum number of consecutive days where minimum daily temperature is {op} {thresh}.",
+    long_name="Maximum number of consecutive days where minimum daily temperature is {condition} {thresh}",
+    description="{freq} maximum number of consecutive days where minimum daily temperature is {condition} {thresh}.",
     abstract="Maximum number of consecutive days where the daily minimum temperature is below a given threshold",
     cell_methods="time: maximum over days",
-    compute=indices.cold_spell_max_length,
-    input={"tas": "tasmin"},
-    parameters={"thresh": {"default": "0 degC"}, "window": 1},
+    compute=generic.spell_length_statistics,
+    input={"data": "tasmin"},
+    parameters={
+        "thresh": {"default": "0 degC"},
+        "window": 1,
+        "window_statistic": "max",
+        "condition": {"default": "<"},
+        "statistic": "max",
+        "constrain": ("<", "<=-"),
+        "min_gap": 1,
+        "freq": {"default": "YS-JUL"},
+    },
 )
 
 frost_free_season_length = Temp(
@@ -1107,8 +1359,17 @@ frost_free_season_length = Temp(
     abstract="Duration of the frost free season, defined as the period when the minimum daily temperature "
     "is above 0°C without a freezing window of `N` days, with freezing occurring after a median calendar date.",
     cell_methods="time: sum over days",
-    compute=indices.frost_free_season_length,
-    parameters={"thresh": {"default": "0 degC"}},
+    compute=indices.generic.season,
+    input={"data": "tasmin"},
+    parameters={
+        "thresh": {"default": "0 degC"},
+        "window": {"default": 5},
+        "mid_date": {"default": "07-01"},
+        "condition": {"default": ">="},
+        "aspect": "length",
+        "constrain": (">", ">="),
+        "freq": {"default": "YS"},
+    },
 )
 
 frost_free_season_start = Temp(
@@ -1121,8 +1382,17 @@ frost_free_season_start = Temp(
     "day when minimum daily temperature exceeds {thresh}.",
     abstract="First day when minimum daily temperature exceeds a given threshold for a given number of "
     "consecutive days",
-    compute=indices.frost_free_season_start,
-    parameters={"thresh": {"default": "0 degC"}},
+    compute=indices.generic.season,
+    input={"data": "tasmin"},
+    parameters={
+        "thresh": {"default": "0 degC"},
+        "window": {"default": 5},
+        "mid_date": {"default": "07-01"},
+        "condition": {"default": ">="},
+        "aspect": "start",
+        "constrain": (">", ">="),
+        "freq": {"default": "YS"},
+    },
 )
 
 frost_free_season_end = Temp(
@@ -1138,8 +1408,17 @@ frost_free_season_end = Temp(
     abstract="First day when the temperature is below a given threshold for a given number of consecutive days after "
     "a median calendar date.",
     cell_methods="",
-    compute=indices.frost_free_season_end,
-    parameters={"thresh": {"default": "0 degC"}},
+    compute=indices.generic.season,
+    input={"data": "tasmin"},
+    parameters={
+        "thresh": {"default": "0 degC"},
+        "window": {"default": 5},
+        "mid_date": {"default": "07-01"},
+        "condition": {"default": ">="},
+        "aspect": "end",
+        "constrain": (">", ">="),
+        "freq": {"default": "YS"},
+    },
 )
 
 frost_free_spell_max_length = Temp(
@@ -1153,7 +1432,18 @@ frost_free_spell_max_length = Temp(
     "minimum temperature over a given time window of days is above a given threshold.",
     units="days",
     cell_methods="",
-    compute=indices.frost_free_spell_max_length,
+    input={"data": "tasmin"},
+    compute=indices.generic.spell_length_statistics,
+    parameters={
+        "window": {"default": 1},
+        "window_statistic": "max",
+        "condition": {"default": ">="},
+        "thresh": {"default": "0 °C"},
+        "statistic": "max",
+        "min_gap": 1,
+        "constrain": (">", ">="),
+        "freq": {"default": "YS-JUL"},
+    },
 )
 
 maximum_consecutive_frost_free_days = Temp(
@@ -1162,13 +1452,23 @@ maximum_consecutive_frost_free_days = Temp(
     identifier="consecutive_frost_free_days",
     units="days",
     standard_name="spell_length_of_days_with_air_temperature_above_threshold",
-    long_name="Maximum number of consecutive days with minimum temperature {op} {thresh}",
-    description="{freq} maximum number of consecutive days with minimum daily temperature {op} {thresh}.",
+    long_name="Maximum number of consecutive days with minimum temperature {condition} {thresh}",
+    description="{freq} maximum number of consecutive days with minimum daily temperature {condition} {thresh}.",
     abstract="Maximum number of consecutive frost-free days: where the daily minimum temperature is above "
     "or equal to given threshold.",
     cell_methods="time: maximum over days",
-    compute=indices.frost_free_spell_max_length,
-    parameters={"thresh": {"default": "0 degC"}, "window": 1, "freq": {"default": "YS"}},
+    compute=generic.spell_length_statistics,
+    input={"data": "tasmin"},
+    parameters={
+        "thresh": {"default": "0 degC"},
+        "window": 1,
+        "window_statistic": "min",
+        "condition": {"default": ">"},
+        "statistic": "max",
+        "freq": {"default": "YS"},
+        "constrain": (">", ">="),
+        "min_gap": 1,
+    },
 )
 
 growing_season_start = Temp(
@@ -1176,13 +1476,22 @@ growing_season_start = Temp(
     identifier="growing_season_start",
     units="",
     standard_name="day_of_year",
-    long_name="First day of the first series of {window} days with mean daily temperature {op} {thresh}",
+    long_name="First day of the first series of {window} days with mean daily temperature {condition} {thresh}",
     description="Day of the year marking the beginning of the growing season, defined as the first day of the first "
-    "series of {window} days with mean daily temperature {op} {thresh}.",
+    "series of {window} days with mean daily temperature {condition} {thresh}.",
     abstract="The first day when the temperature exceeds a certain threshold for a given number of consecutive days.",
     cell_methods="",
-    compute=indices.growing_season_start,
-    parameters={"thresh": {"default": "5.0 degC"}, "op": {"default": ">="}},
+    compute=indices.generic.season,
+    input={"data": "tas"},
+    parameters={
+        "condition": {"default": ">="},
+        "thresh": {"default": "5.0 degC"},
+        "window": {"default": 5},
+        "aspect": "start",
+        "mid_date": {"default": "07-01"},
+        "constrain": (">", ">="),
+        "freq": {"default": "YS"},
+    },
 )
 
 growing_season_length = Temp(
@@ -1200,11 +1509,16 @@ growing_season_length = Temp(
     "threshold and the first occurrence of a series of days with a daily average temperature below that same "
     "threshold, occurring after a given calendar date.",
     cell_methods="",
-    compute=indices.growing_season_length,
+    compute=indices.generic.season,
+    input={"data": "tas"},
     parameters={
         "thresh": {"default": "5.0 degC"},
-        "op": {"default": ">="},
         "mid_date": {"default": "07-01"},
+        "window": {"default": 5},
+        "condition": {"default": ">="},
+        "constrain": (">", ">="),
+        "aspect": "length",
+        "freq": {"default": "YS"},
     },
 )
 
@@ -1213,7 +1527,7 @@ growing_season_end = Temp(
     identifier="growing_season_end",
     units="",
     standard_name="day_of_year",
-    long_name="First day of the first series of {window} days with mean daily temperature {op} {thresh}, "
+    long_name="First day of the first series of {window} days with mean daily temperature {condition} {thresh}, "
     "occurring after {mid_date}",
     description="Day of year of end of growing season, defined as the first day of consistent inferior threshold "
     "temperature of {thresh} after a run of {window} days superior to threshold temperature, occurring after "
@@ -1221,15 +1535,20 @@ growing_season_end = Temp(
     abstract="The first day when the temperature is below a certain threshold for a certain number of consecutive days "
     "after a given calendar date.",
     cell_methods="",
-    compute=indices.growing_season_end,
+    compute=indices.generic.season,
+    input={"data": "tas"},
     parameters={
         "thresh": {"default": "5.0 degC"},
-        "op": {"default": ">="},
         "mid_date": {"default": "07-01"},
+        "window": {"default": 5},
+        "condition": {"default": ">="},
+        "constrain": (">", ">="),
+        "aspect": "end",
+        "freq": {"default": "YS"},
     },
 )
 
-tropical_nights = TempWithIndexing(
+tropical_nights = Temp(
     title="Tropical nights",
     identifier="tropical_nights",
     units="days",
@@ -1238,8 +1557,14 @@ tropical_nights = TempWithIndexing(
     description="{freq} number of Tropical Nights, defined as days with minimum daily temperature above {thresh}.",
     abstract="Number of days where minimum temperature is above a given threshold.",
     cell_methods="time: sum over days",
-    compute=indices.tn_days_above,
-    parameters={"thresh": {"default": "20.0 degC"}},
+    compute=indices.generic.count_occurrences,
+    input={"data": "tasmin"},
+    parameters={
+        "thresh": {"default": "20.0 degC"},
+        "condition": {"default": ">"},
+        "constrain": (">", ">="),
+        "freq": {"default": "YS"},
+    },
 )
 
 tg90p = TempWithIndexing(
@@ -1332,9 +1657,9 @@ degree_days_exceedance_date = Temp(
     identifier="degree_days_exceedance_date",
     units="",
     standard_name="day_of_year",
-    long_name="Day of year when the integral of mean daily temperature {op} {thresh} exceeds {sum_thresh}",
+    long_name="Day of year when the integral of mean daily temperature {condition} {thresh} exceeds {sum_thresh}",
     description=lambda **kws: (
-        "Day of year when the integral of degree days (mean daily temperature {op} {thresh}) "
+        "Day of year when the integral of degree days (mean daily temperature {condition} {thresh}) "
         "exceeds {sum_thresh}"
         + (", with the cumulative sum starting from {after_date}." if kws["after_date"] is not None else ".")
     ),
@@ -1367,12 +1692,13 @@ maximum_consecutive_warm_days = Temp(
     identifier="maximum_consecutive_warm_days",
     units="days",
     standard_name="spell_length_of_days_with_air_temperature_above_threshold",
-    long_name="Maximum number of consecutive days with maximum daily temperature {op} {thresh}",
+    long_name="Maximum number of consecutive days with #maximum daily temperature {op} {thresh}",
     description="{freq} longest spell of consecutive days with maximum daily temperature {op} {thresh}.",
     abstract="Maximum number of consecutive days where the maximum daily temperature exceeds a certain threshold.",
     cell_methods="time: maximum over days",
     compute=indices.hot_spell_max_length,
     parameters={"thresh": {"default": "25 °C"}, "window": 1},
+    _version_deprecated=("1.0", "hot_spell_max_length"),
 )
 
 
@@ -1523,7 +1849,7 @@ latitude_temperature_index = Temp(
 )
 
 
-late_frost_days = TempWithIndexing(
+late_frost_days = Temp(
     title="Late frost days",
     identifier="late_frost_days",
     units="days",
@@ -1533,7 +1859,9 @@ late_frost_days = TempWithIndexing(
     abstract="Number of days where the daily minimum temperature is below a given threshold between a given"
     "start date and a given end date.",
     cell_methods="time: sum over days",
-    compute=indices.frost_days,
+    compute=indices.generic.count_occurrences,
+    input={"data": "tasmin"},
+    parameters={"condition": "<", "thresh": {"default": "0 °C"}, "constrain": None, "freq": {"default": "YS"}},
 )
 
 
