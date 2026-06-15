@@ -1168,10 +1168,11 @@ def select_between_doys(
         If DataArrays are passed, they must have the same coordinates on the dimensions they share.
         They may have a time dimension, in which case the masking is done independently for each period
         defined by the coordinate, which means the time coordinate must have an inferable frequency
-        (see :py:func:`xr.infer_freq`). Timesteps of the input not appearing in the time coordinate of the
-        bounds are masked as "outside the bounds".
+        (see :py:func:`xr.infer_freq`) or the frequency must be passed explicitly with the `freq` argument.
+        Timesteps of the input not appearing in the time coordinate of the bounds are masked as "outside the
+        bounds".
         If None is passed as a bound, it is replaced by the start or end of the year (1 or 366) if the other
-        bound is an integer, or by the start or end of the period if case of DataArrays.
+        bound is an integer, or by the start or end of the period defined by the `freq` in the case of DataArrays.
     include_bounds : bool or 2-tuple of booleans, optional
         Whether the bounds of `doy_bounds` should be inclusive or not. Default is True (inclusive).
     include_nans : bool, optional
@@ -1179,8 +1180,9 @@ def select_between_doys(
         the start and end bounds are replaced by the start and end of the period, respectively.
     freq : str, optional
         The yearly frequency (e.g. "YS", "YS-JUL") to use to determine the open bounds (start and end of the period)
-        when `doy_bounds` are DataArrays without a `time` dimension. If `doy_bounds` have a `time` dimension, it is
-        inferred from it and this argument is ignored.
+        when `doy_bounds` are DataArrays without a `time` dimension. If `doy_bounds` have a `time` dimension, the
+        frequency is first  tried to be inferred from the time coordinate of the bounds. If it cannot be inferred,
+        the frequency must be passed explicitly.
     drop : bool, optional
         Whether to drop elements outside the period of interest (True) or to simply mask them (False, default).
         This option is incompatible with passing array-like `doy_bounds`.
@@ -1229,13 +1231,19 @@ def select_between_doys(
 
         # add time dimension if not present, with bounds given by freq
         if "time" not in start.dims:
-            if freq is None:
-                raise ValueError("If `doy_bounds` don't have a `time` dimension, `freq` must be provided.")
-            bnds = time_bnds(da.resample(time=freq))
+            bnds = time_bnds(da.resample(time=freq if freq is not None else "YS"))
             start = start.expand_dims(time=bnds.time)
             end = end.expand_dims(time=bnds.time)
+        else:
+            try:
+                freq = xr.infer_freq(start.time)
+            except ValueError:
+                if freq is None:
+                    raise ValueError(
+                        "The frequency of `doy_bounds` could not be inferred. Consider passing it explicitly "
+                        "with the `freq` argument."
+                    )
 
-        freq = xr.infer_freq(start.time)
         # Convert the doy bounds to a duration since the beginning of each period defined
         # in the bound's time coordinate.
         # Also ensures the bounds share the same time calendar as the input.
