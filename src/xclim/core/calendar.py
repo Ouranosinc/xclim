@@ -1180,9 +1180,9 @@ def select_between_doys(
         the start and end bounds are replaced by the start and end of the period, respectively.
     freq : str, optional
         The yearly frequency (e.g. "YS", "YS-JUL") to use to determine the open bounds (start and end of the period)
-        when `doy_bounds` are DataArrays without a `time` dimension. If `doy_bounds` have a `time` dimension, the
-        frequency is first  tried to be inferred from the time coordinate of the bounds. If it cannot be inferred,
-        the frequency must be passed explicitly.
+        when `doy_bounds` are DataArrays without a `time` dimension (Default "YS"). If `doy_bounds` have a `time`
+        dimension, the frequency is first  tried to be inferred from the time coordinate of the bounds. If it cannot
+        be inferred, the frequency must be passed explicitly.
     drop : bool, optional
         Whether to drop elements outside the period of interest (True) or to simply mask them (False, default).
         This option is incompatible with passing array-like `doy_bounds`.
