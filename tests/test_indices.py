@@ -2677,7 +2677,7 @@ class TestWetDaysProp:
         out = xci.wetdays_prop(pr, thresh="5 mm/day", freq="ME")
         np.testing.assert_allclose(out, [5 / 31, 0, 0, 3 / 31, 0, 0, 0, 0, 0, 0, 0, 0])
 
-        out = xci.wetdays_prop(pr, thresh="5 mm/day", freq="ME", statistic=">")
+        out = xci.wetdays_prop(pr, thresh="5 mm/day", freq="ME", condition=">")
         np.testing.assert_allclose(out, [4 / 31, 0, 0, 2 / 31, 0, 0, 0, 0, 0, 0, 0, 0])
 
 

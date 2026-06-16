@@ -27,10 +27,13 @@ def test_indicator_docstring():
     doc = heat_wave_frequency.__doc__.split("\n")
     assert doc[0] == "Heat wave frequency (realm: atmos)"
     assert doc[5] == "Based on indice :py:func:`~xclim.indices.generic.bivariate_spell_length_statistics`."
-    assert doc[6] == "Keywords : temperature health,."
-    assert doc[12] == "    Default : `ds.tasmin`. [Required units : [temperature]]"
     assert (
-        doc[41]
+        doc[6] == "With injected parameters: window_statistic=min, statistic=count, min_gap=1, constrain=('>', '>=')."
+    )
+    assert doc[7] == "Keywords : temperature health,."
+    assert doc[13] == "    Default : `ds.tasmin`. [Required units : [temperature]]"
+    assert (
+        doc[45]
         == "    Total number of series of at least {window} consecutive days with daily minimum temperature above "
         "{thresh_tasmin} and daily maximum temperature above {thresh_tasmax}, "
         "with additional attributes: **description**: {freq} number of heat wave events within a given period. "
