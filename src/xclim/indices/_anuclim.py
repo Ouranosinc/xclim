@@ -8,7 +8,7 @@ from typing import Literal, cast
 import numpy as np
 import xarray
 
-from xclim.core import Quantified
+from xclim.core import Freq, Quantified
 from xclim.core.units import (
     convert_units_to,
     declare_units,
@@ -18,12 +18,9 @@ from xclim.core.units import (
 )
 from xclim.core.utils import ensure_chunk_size
 from xclim.indices._multivariate import (
-    daily_temperature_range,
-    extreme_temperature_range,
     precip_accumulation,
 )
-from xclim.indices._simple import tg_mean
-from xclim.indices.generic import statistics
+from xclim.indices.generic import difference_statistics, extreme_range, statistics
 from xclim.indices.run_length import lazy_indexing
 
 # Frequencies : YS: year start, QS-DEC: seasons starting in december, MS: month start
@@ -63,7 +60,7 @@ _np_ops = {
 
 
 @declare_units(tasmin="[temperature]", tasmax="[temperature]")
-def isothermality(tasmin: xarray.DataArray, tasmax: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
+def isothermality(tasmin: xarray.DataArray, tasmax: xarray.DataArray, freq: Freq = "YS") -> xarray.DataArray:
     r"""
     Isothermality.
 
@@ -94,8 +91,8 @@ def isothermality(tasmin: xarray.DataArray, tasmax: xarray.DataArray, freq: str 
     ----------
     :cite:cts:`xu_anuclim_2010`
     """
-    dtr = daily_temperature_range(tasmin=tasmin, tasmax=tasmax, freq=freq)
-    etr = extreme_temperature_range(tasmin=tasmin, tasmax=tasmax, freq=freq)
+    dtr = difference_statistics(tasmin, tasmax, statistic="mean", freq=freq)
+    etr = extreme_range(tasmin, tasmax, freq=freq)
     iso: xarray.DataArray = dtr / etr * 100
     iso = iso.assign_attrs(units="%")
     return iso
@@ -144,12 +141,12 @@ def temperature_seasonality(tas: xarray.DataArray, freq: str = "YS") -> xarray.D
     >>> import xclim.indices as xci
     >>> t = xr.open_dataset(path_to_tas_file).tas
     >>> tday_seasonality = xci.temperature_seasonality(t)
-    >>> t_weekly = xci.tg_mean(t, freq="7D")
+    >>> t_weekly = xci.statistics(t, statistic="mean", freq="7D")
     >>> tweek_seasonality = xci.temperature_seasonality(t_weekly)
     """
-    tas = convert_units_to(tas, "K")
+    _tas = convert_units_to(tas, "K")
 
-    seas = 100 * _anuclim_coeff_var(tas, freq=freq)
+    seas = 100 * _anuclim_coeff_var(_tas, freq=freq)
     seas.attrs["units"] = "%"
     return seas
 
@@ -215,7 +212,7 @@ def precip_seasonality(pr: xarray.DataArray, freq: str = "YS") -> xarray.DataArr
 def tg_mean_warmcold_quarter(
     tas: xarray.DataArray,
     op: Literal["warmest", "coldest"],
-    freq: str = "YS",
+    freq: Freq = "YS",
 ) -> xarray.DataArray:
     r"""
     Mean temperature of warmest/coldest quarter.
@@ -263,10 +260,10 @@ def tg_mean_warmcold_quarter(
     out = _to_quarter(tas=tas)
 
     if op not in ["warmest", "coldest"]:
-        raise NotImplementedError(f'op parameter ({op}) may only be one of "warmest", "coldest"')
-    oper = _np_ops[op]
+        raise NotImplementedError('op parameter may only be one of "warmest", "coldest"')
+    np_op = _np_ops[op]
 
-    return statistics(out, statistic=oper, freq=freq)
+    return statistics(out, statistic=np_op, freq=freq)
 
 
 @declare_units(tas="[temperature]", pr="[precipitation]")
@@ -274,7 +271,7 @@ def tg_mean_wetdry_quarter(
     tas: xarray.DataArray,
     pr: xarray.DataArray,
     op: Literal["wettest", "driest", "dryest"],
-    freq: str = "YS",
+    freq: Freq = "YS",
 ) -> xarray.DataArray:
     r"""
     Mean temperature of wettest/driest quarter.
@@ -318,7 +315,7 @@ def tg_mean_wetdry_quarter(
     pr_qrt = _to_quarter(pr=pr)
 
     if op not in ["wettest", "driest", "dryest"]:
-        raise NotImplementedError(f'op parameter ({op}) may only be one of "wettest" or "driest"')
+        raise NotImplementedError('op parameter may only be one of "wettest" or "driest"')
     xr_op = _xr_argops[op]
 
     out = _from_other_arg(criteria=pr_qrt, output=tas_qrt, op=xr_op, freq=freq)
@@ -327,7 +324,7 @@ def tg_mean_wetdry_quarter(
 
 @declare_units(pr="[precipitation]")
 def prcptot_wetdry_quarter(
-    pr: xarray.DataArray, op: Literal["wettest", "driest", "dryest"], freq: str = "YS"
+    pr: xarray.DataArray, op: Literal["wettest", "driest", "dryest"], freq: Freq = "YS"
 ) -> xarray.DataArray:
     r"""
     Total precipitation of wettest/driest quarter.
@@ -375,10 +372,10 @@ def prcptot_wetdry_quarter(
     pr_qrt = _to_quarter(pr=pr)
 
     if op not in ["wettest", "driest", "dryest"]:
-        raise NotImplementedError(f'op parameter ({op}) may only be one of "wettest" or "driest"')
-    op = _np_ops[op]
+        raise NotImplementedError('op parameter may only be one of "wettest" or "driest"')
+    np_op = _np_ops[op]
 
-    return statistics(pr_qrt, statistic=op, freq=freq)
+    return statistics(pr_qrt, statistic=np_op, freq=freq)
 
 
 @declare_units(pr="[precipitation]", tas="[temperature]")
@@ -430,7 +427,7 @@ def prcptot_warmcold_quarter(
     pr_qrt = _to_quarter(pr=pr)
 
     if op not in ["warmest", "coldest"]:
-        raise NotImplementedError(f'op parameter ({op}) may only be one of "warmest", "coldest"')
+        raise NotImplementedError('op parameter may only be one of "warmest", "coldest"')
     xr_op = _xr_argops[op]
 
     out = _from_other_arg(criteria=tas_qrt, output=pr_qrt, op=xr_op, freq=freq)
@@ -505,10 +502,10 @@ def prcptot_wetdry_period(
     pram = rate2amount(pr)
 
     if op not in ["wettest", "driest", "dryest"]:
-        raise NotImplementedError(f'op parameter ({op}) may only be one of "wettest" or "driest"')
-    op = _np_ops[op]
+        raise NotImplementedError('op parameter may only be one of "wettest" or "driest"')
+    np_op = _np_ops[op]
 
-    pwp: xarray.DataArray = getattr(pram.resample(time=freq), op)(dim="time")
+    pwp: xarray.DataArray = getattr(pram.resample(time=freq), np_op)(dim="time")
     pwp = pwp.assign_attrs(units=pram.units)
     return pwp
 
@@ -585,12 +582,12 @@ def _to_quarter(
 
     freq = xarray.infer_freq(ts_var.time)
     if freq is None:
-        raise ValueError("Can't infer sampling frequency of the input data.")
+        raise ValueError("Cannot infer sampling frequency of the input data.")
     freq_upper = freq.upper()
 
     if freq_upper.startswith("D"):
         if tas is not None:
-            ts_var = tg_mean(ts_var, freq="7D")
+            ts_var = statistics(ts_var, statistic="mean", freq="7D")
         else:
             # Accumulate on a week
             # Ensure units are back to a "rate" for rate2amount below
@@ -602,7 +599,7 @@ def _to_quarter(
     elif freq_upper.startswith("M"):
         window = 3
     else:
-        raise NotImplementedError(f'Unknown input time frequency "{freq}": must be one of "D", "W" or "M".')
+        raise NotImplementedError('Unknown input time frequency: must be one of "D", "W" or "M".')
 
     ts_var = ensure_chunk_size(ts_var, time=np.ceil(window / 2))
     if tas is not None:
