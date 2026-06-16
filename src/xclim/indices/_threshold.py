@@ -3037,7 +3037,7 @@ def rprctot(
     thresh = convert_units_to(thresh, pr, context="hydro")
     prc = convert_units_to(prc, pr)
 
-    wd = compare(pr, op, thresh)
+    wd = compare(pr, op, thresh, constrain=(">", ">="))
     pr_tot = rate2amount(pr).where(wd).resample(time=freq).sum(dim="time")
     prc_tot = rate2amount(prc).where(wd).resample(time=freq).sum(dim="time")
 

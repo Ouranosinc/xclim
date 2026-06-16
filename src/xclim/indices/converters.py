@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import warnings
 from collections import namedtuple
-from typing import cast
+from typing import Literal, cast
 
 import numpy as np
 import xarray as xr
@@ -1249,7 +1249,7 @@ def rain_approximation(
     pr: xr.DataArray,
     tas: xr.DataArray,
     thresh: Quantified = "0 degC",
-    method: str = "binary",
+    method: Literal["binary", "brown", "auer", "dai_annual", "dai_seasonal"] = "binary",
     clip_temp: Quantified | None = None,
     landmask: xr.DataArray | bool = True,
 ) -> xr.DataArray:
@@ -1852,17 +1852,18 @@ def fao_allen98(net_radiation, tas, wind, es, ea, delta_svp, gamma, G="0 MJ m-2 
     ----------
     :cite:t:`allen_crop_1998`
     """
-    net_radiation = convert_units_to(net_radiation, "MJ m-2 day-1")
-    wind = convert_units_to(wind, "m s-1")
-    tasK = convert_units_to(tas, "K")
-    es = convert_units_to(es, "kPa")
-    ea = convert_units_to(ea, "kPa")
-    delta_svp = convert_units_to(delta_svp, "kPa degC-1")
-    gamma = convert_units_to(gamma, "kPa degC")
-    G = convert_units_to(G, "MJ m-2 day-1")
-    a1 = 0.408 * delta_svp * (net_radiation - G)
-    a2 = gamma * 900 / (tasK) * wind * (es - ea)
-    a3 = delta_svp + (gamma * (1 + 0.34 * wind))
+    _net_radiation: xr.DataArray = convert_units_to(net_radiation, "MJ m-2 day-1")
+    _wind: xr.DataArray = convert_units_to(wind, "m s-1")
+    _tasK: xr.DataArray = convert_units_to(tas, "K")
+    _es: xr.DataArray = convert_units_to(es, "kPa")
+    _ea: xr.DataArray = convert_units_to(ea, "kPa")
+    _delta_svp: xr.DataArray = convert_units_to(delta_svp, "kPa degC-1")
+    _gamma: xr.DataArray = convert_units_to(gamma, "kPa degC")
+    _G: xr.DataArray = convert_units_to(G, "MJ m-2 day-1")
+
+    a1 = 0.408 * _delta_svp * (_net_radiation - _G)
+    a2 = _gamma * 900 / (_tasK) * _wind * (_es - _ea)
+    a3 = _delta_svp + (_gamma * (1 + 0.34 * _wind))
 
     return ((a1 + a2) / a3).assign_attrs(units="mm day-1")
 
@@ -2575,14 +2576,14 @@ def mean_radiant_temperature(
     ----------
     :cite:cts:`di_napoli_mean_2020`
     """
-    rsds = convert_units_to(rsds, "W m-2")
-    rsus = convert_units_to(rsus, "W m-2")
-    rlds = convert_units_to(rlds, "W m-2")
-    rlus = convert_units_to(rlus, "W m-2")
+    _rsds: xr.DataArray = convert_units_to(rsds, "W m-2")
+    _rsus: xr.DataArray = convert_units_to(rsus, "W m-2")
+    _rlds: xr.DataArray = convert_units_to(rlds, "W m-2")
+    _rlus: xr.DataArray = convert_units_to(rlus, "W m-2")
 
-    dates = rsds.time
-    lat = _gather_lat(rsds)
-    lon = _gather_lon(rsds)
+    dates = _rsds.time
+    lat = _gather_lat(_rsds)
+    lon = _gather_lon(_rsds)
     dec = solar_declination(dates)
 
     if stat == "sunlit":
@@ -2593,7 +2594,7 @@ def mean_radiant_temperature(
             lon=lon,
             stat="average",
             sunlit=True,
-            chunks=rsds.chunksizes,
+            chunks=_rsds.chunksizes,
         )
     elif stat == "instant":
         tc = time_correction_for_solar_angle(dates)
@@ -2604,15 +2605,15 @@ def mean_radiant_temperature(
             lon=lon,
             time_correction=tc,
             stat="instant",
-            chunks=rsds.chunksizes,
+            chunks=_rsds.chunksizes,
         )
     else:
         raise NotImplementedError("Argument 'stat' must be one of 'instant' or 'sunlit'.")
 
     fdir_ratio = _fdir_ratio(dates, csza, rsds)
 
-    rsds_direct = fdir_ratio * rsds
-    rsds_diffuse = rsds - rsds_direct
+    rsds_direct = fdir_ratio * _rsds
+    rsds_diffuse = _rsds - rsds_direct
 
     gamma = np.arcsin(csza)
     fp = 0.308 * np.cos(gamma * 0.988 - (gamma**2 / 50000))
@@ -2623,7 +2624,7 @@ def mean_radiant_temperature(
         np.power(
             (
                 (1 / 5.67e-8)  # Stefan-Boltzmann constant
-                * (0.5 * rlds + 0.5 * rlus + (0.7 / 0.97) * (0.5 * rsds_diffuse + 0.5 * rsus + fp * i_star))
+                * (0.5 * _rlds + 0.5 * _rlus + (0.7 / 0.97) * (0.5 * rsds_diffuse + 0.5 * _rsus + fp * i_star))
             ),
             0.25,
         ),

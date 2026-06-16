@@ -8,7 +8,7 @@ from typing import Literal, cast
 import numpy as np
 import xarray
 
-from xclim.core import Quantified, Reducer
+from xclim.core import Freq, Quantified, Reducer
 from xclim.core.bootstrapping import percentile_bootstrap
 from xclim.core.calendar import resample_doy, select_time
 from xclim.core.units import (
@@ -941,7 +941,7 @@ def precip_accumulation(
     tas: xarray.DataArray | None = None,
     phase: str | None = None,
     thresh: Quantified = "0 degC",
-    freq: str = "YS",
+    freq: Freq = "YS",
 ) -> xarray.DataArray:
     r"""
     Accumulated total (liquid and/or solid) precipitation.
