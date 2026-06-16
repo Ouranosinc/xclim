@@ -97,7 +97,6 @@ class PrecipAmount(Precip):
     def _parse_var_mapping(cls, variable_mapping, parameters):
         new_units = super()._parse_var_mapping(variable_mapping, parameters)
         pr_arg_name = [k for k, v in variable_mapping.items() if v == "pr"][0]
-        print(pr_arg_name, new_units)
         if pr_arg_name in new_units:
             new_units[pr_arg_name] = "[mass]/[area]"
         return new_units

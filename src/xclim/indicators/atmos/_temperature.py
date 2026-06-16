@@ -1339,7 +1339,7 @@ consecutive_frost_days = Temp(
         "window_statistic": "max",
         "condition": {"default": "<"},
         "statistic": "max",
-        "constrain": ("<", "<=-"),
+        "constrain": ("<", "<="),
         "min_gap": 1,
         "freq": {"default": "YS-JUL"},
     },

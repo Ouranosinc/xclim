@@ -224,7 +224,7 @@ def pint2cfunits(value: pint.Quantity | pint.Unit) -> str:
     return f"{value:~cf}" or "1"
 
 
-def pint2cfattrs(value: pint.Quantity | pint.Unit, is_difference=None) -> dict:
+def pint2cfattrs(value: pint.Quantity | pint.Unit, is_difference=None) -> dict[str, str]:
     """
     Return CF-compliant units attributes from a `pint` unit.
 
@@ -418,7 +418,7 @@ def convert_units_to(
                 for direction, sign in [("to", 1), ("from", -1)]:
                     # If the dimensionality diff is compatible with this conversion
                     compatible = all(
-                        dimdiff == sign * dim_order_diff.get(f"[{dim}]")
+                        dimdiff == sign * dim_order_diff[f"[{dim}]"]
                         for dim, dimdiff in convconf["dimensionality"].items()
                     )
                     # Does the input cf standard name have an equivalent after conversion

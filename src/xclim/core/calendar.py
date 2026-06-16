@@ -245,13 +245,13 @@ def _days_in_year(years, calendar):
 
 
 def convert_doy(
-    source: xr.DataArray | xr.Dataset,
+    source: DataType,
     target_cal: str,
     source_cal: str | None = None,
     align_on: Literal["date", "year"] = "year",
     missing: Any = np.nan,
     dim: str = "time",
-) -> xr.DataArray | xr.Dataset:
+) -> DataType:
     """
     Convert the calendar of day of year (doy) data.
 
@@ -1242,7 +1242,7 @@ def mask_between_doys(
 
 
 def select_time(
-    da: xr.DataArray | xr.Dataset,
+    da: DataType,
     drop: bool = False,
     season: str | Sequence[str] | None = None,
     month: int | Sequence[int] | None = None,
