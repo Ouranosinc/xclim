@@ -1179,9 +1179,9 @@ def select_between_doys(
         Whether to include values associated with NaN in `doy_bounds`. If True (default), missing values (NaN) in
         the start and end bounds are replaced by the start and end of the period, respectively.
     freq : str, optional
-        The yearly frequency (e.g. "YS", "YS-JUL") to use to determine the open bounds (start and end of the period)
-        when `doy_bounds` are DataArrays without a `time` dimension (Default "YS"). If `doy_bounds` have a `time`
-        dimension, the frequency is first  tried to be inferred from the time coordinate of the bounds. If it cannot
+        The yearly frequency (e.g. "YS", "YS-JUL") used to determine the open bounds (start and end of the period)
+        with array-like `doy_bounds` without a `time` dimension (Default "YS"). If `doy_bounds` have a `time`
+        dimension, the frequency is first tried to be inferred from the time coordinate of the bounds; if it cannot
         be inferred, the frequency must be passed explicitly.
     drop : bool, optional
         Whether to drop elements outside the period of interest (True) or to simply mask them (False, default).
@@ -1304,7 +1304,7 @@ def select_time(
         Input data.
     drop : bool
         Whether to drop elements outside the period of interest (True) or to simply mask them (False, default).
-        This option is incompatible with passing array-like doy_bounds.
+        This option is incompatible with passing `date_bounds` or array-like `doy_bounds`.
     season : str or sequence of str, optional
         One or more of 'DJF', 'MAM', 'JJA' and 'SON'.
     month : int or sequence of int, optional
@@ -1322,8 +1322,8 @@ def select_time(
     include_doy_bounds_nans : bool
         Whether to include values associated with NaN in `doy_bounds`. See `select_between_doys` for details.
     bounds_freq : str, optional
-        Needed if `date_bounds` or `doy_bounds` are given as DataArrays without a `time` dimension.
-        See `select_between_doys` for details.
+        Needed with `date_bounds` or array-like `doy_bounds` without a `time` dimension.
+        It is the frequency used to determine the start and end of the period (default "YS").
 
     Returns
     -------
@@ -1382,7 +1382,7 @@ def select_time(
             doys = [doy_from_string(date_str, year, cal) for year in time.dt.year]
             return xr.DataArray(doys, coords={"time": time}, dims="time", name="dayofyear")
 
-        bnds = time_bnds(da.time.resample(time=bounds_freq))
+        bnds = time_bnds(da.time.resample(time=bounds_freq if bounds_freq is not None else "YS"))
         cal = get_calendar(da)
         start = _doys_from_string(date_bounds[0], bnds.time, cal) if date_bounds[0] is not None else None
         end = _doys_from_string(date_bounds[1], bnds.time, cal) if date_bounds[1] is not None else None
