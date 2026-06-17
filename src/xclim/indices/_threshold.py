@@ -18,6 +18,7 @@ from xclim.core.units import (
     rate2amount,
     str2pint,
     to_agg_units,
+    units,
     units2pint,
 )
 from xclim.core.utils import deprecated
@@ -798,13 +799,14 @@ def dry_days(
 def maximum_consecutive_wet_days(
     pr: xarray.DataArray,
     thresh: Quantified = "1 mm/day",
+    op: Literal[">", "gt", ">=", "ge"] = ">=",
     freq: str = "YS",
     resample_before_rl: bool = True,
 ) -> xarray.DataArray:
     r"""
-    Consecutive wet days.
+    Maximum number of consecutive wet days.
 
-    Returns the maximum number of consecutive days with precipitation above a given threshold (default: 1 mm/day).
+    Returns the longest spell of with precipitation above a given threshold.
 
     Parameters
     ----------
@@ -812,6 +814,8 @@ def maximum_consecutive_wet_days(
         Mean daily precipitation flux.
     thresh : Quantified
         Threshold precipitation on which to base evaluation.
+    op : {">", ">="}
+        Comparison operator to use to find wet days.
     freq : str
         Resampling frequency.
     resample_before_rl : bool
@@ -822,31 +826,18 @@ def maximum_consecutive_wet_days(
     -------
     xarray.DataArray, [time]
         The maximum number of consecutive wet days.
-
-    Notes
-    -----
-    Let :math:`\mathbf{x}=x_0, x_1, \ldots, x_n` be a daily precipitation series and :math:`\mathbf{s}` be the sorted
-    vector of indices :math:`i` where :math:`[p_i > thresh] \neq [p_{i+1} > thresh]`, that is, the days where the
-    precipitation crosses the *wet day* threshold. Then the maximum number of consecutive wet days is given by:
-
-    .. math::
-
-       \max(\mathbf{d}) \quad \mathrm{where} \quad d_j = (s_j - s_{j-1}) [x_{s_j} > 0^\circ C]
-
-    where :math:`[P]` is 1 if :math:`P` is true, and 0 if false. Note that this formula does not handle sequences at
-    the start and end of the series, but the numerical algorithm does.
     """
-    thresh = convert_units_to(thresh, pr, context="hydro")
-
-    cond = pr > thresh
-    mcwd = rl.resample_and_rl(
-        cond,
-        resample_before_rl,
-        rl.longest_run,
-        freq=freq,
-    )
-    mcwd = to_agg_units(mcwd, pr, "count", deffreq="D")
-    return mcwd
+    with units.context("hydro"):
+        return spell_length_statistics(
+            pr,
+            thresh,
+            1,
+            win_reducer=None,
+            op=op,
+            spell_reducer="max",
+            freq=freq,
+            resample_before_rl=resample_before_rl,
+        )
 
 
 @declare_units(tasmax="[temperature]", tasmin="[temperature]", tas="[temperature]", thresh="[temperature]")
@@ -2841,6 +2832,7 @@ def wetdays_prop(
     return fwd
 
 
+@deprecated(from_version="0.61.2", suggested="cold_spell_max_length")
 @declare_units(tasmin="[temperature]", thresh="[temperature]")
 def maximum_consecutive_frost_days(
     tasmin: xarray.DataArray,
@@ -2904,14 +2896,14 @@ def maximum_consecutive_frost_days(
 def maximum_consecutive_dry_days(
     pr: xarray.DataArray,
     thresh: Quantified = "1 mm/day",
+    op: Literal["<", "lt", "<=", "le"] = "<",
     freq: str = "YS",
     resample_before_rl: bool = True,
 ) -> xarray.DataArray:
     r"""
     Maximum number of consecutive dry days.
 
-    Return the maximum number of consecutive days within the period where precipitation
-    is below a certain threshold (default: 1 mm/day).
+    Return the longest spell with precipitation under a given threshold.
 
     Parameters
     ----------
@@ -2919,6 +2911,8 @@ def maximum_consecutive_dry_days(
         Mean daily precipitation flux.
     thresh : Quantified
         Threshold precipitation on which to base evaluation.
+    op : {"<", "<="}
+        Comparison operator to use to find wet days.
     freq : str
         Resampling frequency.
     resample_before_rl : bool
@@ -2928,34 +2922,22 @@ def maximum_consecutive_dry_days(
     Returns
     -------
     xarray.DataArray, [time]
-        The maximum number of consecutive dry days (precipitation < threshold per period).
-
-    Notes
-    -----
-    Let :math:`\mathbf{p}=p_0, p_1, \ldots, p_n` be a daily precipitation series and :math:`thresh` the threshold
-    under which a day is considered dry. Then let :math:`\mathbf{s}` be the sorted vector of indices :math:`i` where
-    :math:`[p_i < thresh] \neq [p_{i+1} < thresh]`, that is, the days where the precipitation crosses the threshold.
-    Then the maximum number of consecutive dry days is given by:
-
-    .. math::
-
-       \max(\mathbf{d}) \quad \mathrm{where} \quad d_j = (s_j - s_{j-1}) [p_{s_j} < thresh]
-
-    where :math:`[P]` is 1 if :math:`P` is true, and 0 if false. Note that this formula does not handle sequences at
-    the start and end of the series, but the numerical algorithm does.
+        The maximum number of consecutive dry days.
     """
-    t = convert_units_to(thresh, pr, context="hydro")
-    group = pr < t
-    resampled = rl.resample_and_rl(
-        group,
-        resample_before_rl,
-        rl.longest_run,
-        freq=freq,
-    )
-    mcdd = to_agg_units(resampled, pr, "count", deffreq="D")
-    return mcdd
+    with units.context("hydro"):
+        return spell_length_statistics(
+            pr,
+            thresh,
+            1,
+            win_reducer=None,
+            op=op,
+            spell_reducer="max",
+            freq=freq,
+            resample_before_rl=resample_before_rl,
+        )
 
 
+@deprecated(from_version="0.61.2", suggested="frost_free_spell_max_length")
 @declare_units(tasmin="[temperature]", thresh="[temperature]")
 def maximum_consecutive_frost_free_days(
     tasmin: xarray.DataArray,
@@ -3016,6 +2998,7 @@ def maximum_consecutive_frost_free_days(
     return mcffd
 
 
+@deprecated(from_version="0.61.2", suggested="hot_spell_max_length")
 @declare_units(tasmax="[temperature]", thresh="[temperature]")
 def maximum_consecutive_tx_days(
     tasmax: xarray.DataArray,
