@@ -1372,22 +1372,21 @@ def select_time(
             month = [month]
         mask = da.time.dt.month.isin(month)
 
-    elif doy_bounds is not None:
+    elif (date_bounds is not None) or (doy_bounds is not None):
+        if date_bounds is not None:
+
+            def _doys_from_string(date_str, time, cal):
+                """Convert MM-DD string to day of year, for each year in time."""
+                doys = [doy_from_string(date_str, year, cal) for year in time.dt.year]
+                return xr.DataArray(doys, coords={"time": time}, dims="time", name="dayofyear")
+
+            bnds = time_bnds(da.time.resample(time=bounds_freq if bounds_freq is not None else "YS"))
+            cal = get_calendar(da)
+            start = _doys_from_string(date_bounds[0], bnds.time, cal)
+            end = _doys_from_string(date_bounds[1], bnds.time, cal)
+            doy_bounds = (start, end)
+
         return select_between_doys(da, doy_bounds, include_bounds, include_doy_bounds_nans, bounds_freq, drop=drop)
-
-    elif date_bounds is not None:
-
-        def _doys_from_string(date_str, time, cal):
-            """Convert MM-DD string to day of year, for each year in time."""
-            doys = [doy_from_string(date_str, year, cal) for year in time.dt.year]
-            return xr.DataArray(doys, coords={"time": time}, dims="time", name="dayofyear")
-
-        bnds = time_bnds(da.time.resample(time=bounds_freq if bounds_freq is not None else "YS"))
-        cal = get_calendar(da)
-        start = _doys_from_string(date_bounds[0], bnds.time, cal) if date_bounds[0] is not None else None
-        end = _doys_from_string(date_bounds[1], bnds.time, cal) if date_bounds[1] is not None else None
-
-        return select_between_doys(da, (start, end), include_bounds, freq=bounds_freq, drop=drop)
 
     else:
         raise ValueError("Must provide either `season`, `month`, `doy_bounds` or `date_bounds`.")
