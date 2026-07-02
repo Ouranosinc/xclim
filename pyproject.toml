@@ -102,7 +102,7 @@ docs = [
   "pybtex >=0.24.0",
   "sphinx >=8.2.0",
   "sphinx-autobuild >=2024.4.16",
-  "sphinx-autodoc-typehints >=3.9.0,!=3.10",
+  "sphinx-autodoc-typehints >=3.5.0,!=3.10",
   "sphinx-codeautolink >=0.16.2",
   "sphinx-copybutton",
   "sphinx-mdinclude",
