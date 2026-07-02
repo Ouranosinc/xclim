@@ -1028,7 +1028,7 @@ def doy_to_days_since(
     >>> da = DataArray([190, 2], dims=("time",), coords={"time": time})
     >>> # Convert to days since Oct. 2nd, of the data's year.
     >>> doy_to_days_since(da, start="10-02").values
-    array([-86, 92])
+    array([-86,  92])
     """
     base_calendar = get_calendar(da)
     calendar = calendar or da.attrs.get("calendar", base_calendar)
@@ -1092,7 +1092,7 @@ def days_since_to_doy(
     ...     attrs={"units": "days since 10-02"},
     ... )
     >>> days_since_to_doy(da).values
-    array([190, 2])
+    array([190,   2])
     """
     if start is None:
         unitstr = da.attrs.get("units", "  time coordinate").split(" ", maxsplit=2)[-1]
