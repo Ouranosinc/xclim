@@ -1098,7 +1098,7 @@ def make_hourly_temperature(
         dim="time",
     )
 
-    daylength = day_lengths(data.time, data.lat, infill_polar_days)
+    daylength = day_lengths(data.time, data.lat, infill_polar_days=infill_polar_days)
     # Create daily chunks to avoid memory issues after the resampling
     data = data.assign(
         daylength=daylength,
