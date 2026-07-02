@@ -107,7 +107,7 @@ passenv = [
   "XCLIM_*"
 ]
 extras = ["dev"]
-install_command = "python -m pip install --no-user {opts} {packages}"
+install_command = ["python", "-m", "pip", "install", "--no-user", "{opts}", "{packages}"]
 download = true
 commands_pre = [
   ["python", "-m", "pip", "list"],
