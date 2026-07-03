@@ -1411,12 +1411,12 @@ class Indicator(IndicatorRegistrar):
     @property
     def n_outs(self) -> int:
         """
-        Return the length of all cf_attrs.
+        The length of all cf-attrs.
 
         Returns
         -------
         int
-            The number of outputs.
+            The number of cf-attrs outputs.
         """
         return len(self.cf_attrs)
 
@@ -1437,7 +1437,7 @@ class Indicator(IndicatorRegistrar):
     @property
     def injected_parameters(self) -> dict:
         """
-        Return a dictionary of all injected parameters.
+        Create a dictionary of all injected parameters.
 
         Inverse of :py:meth:`Indicator.parameters`.
 
@@ -1451,7 +1451,7 @@ class Indicator(IndicatorRegistrar):
     @property
     def is_generic(self) -> bool:
         """
-        Return True if the indicator is "generic", meaning that it can accept variables with any units.
+        If the indicator is "generic" returns True, meaning that it can accept variables with any units.
 
         Returns
         -------
