@@ -378,8 +378,9 @@ def run_doctests():
 
     cmd = [
         f"--rootdir={Path(__file__).absolute().parent}",
+        f"--config-file={Path(__file__).absolute().parent.joinpath('conftest.py')}",
         "--numprocesses=0",
-        "--xdoctest",
+        "--xdoctest-modules",
         f"{Path(__file__).absolute().parents[1]}",
     ]
 
