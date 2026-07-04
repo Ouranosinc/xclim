@@ -102,7 +102,7 @@ docs = [
   "pybtex >=0.24.0",
   "sphinx >=8.2.0",
   "sphinx-autobuild >=2024.4.16",
-  "sphinx-autodoc-typehints >=3.1.0,<3.10.0", # Pinned until build issues resolved. See: https://github.com/tox-dev/sphinx-autodoc-typehints/issues/683
+  "sphinx-autodoc-typehints >=3.5.0,!=3.10",
   "sphinx-codeautolink >=0.16.2",
   "sphinx-copybutton",
   "sphinx-mdinclude",
@@ -127,7 +127,7 @@ xclim = "xclim.cli:cli"
 [tool]
 
 [tool.bumpversion]
-current_version = "0.61.1"
+current_version = "0.61.2-dev.3"
 commit = true
 commit_args = "--no-verify --signoff"
 tag = false

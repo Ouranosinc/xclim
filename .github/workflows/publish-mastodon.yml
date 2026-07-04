@@ -15,7 +15,7 @@ jobs:
     environment: production
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@20cf305ff2072d973412fa9b1e3a4f227bda3c76 # v2.14.0
+        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
         with:
           disable-sudo: true
           egress-policy: block
@@ -25,7 +25,7 @@ jobs:
             github.com:443
 
       - name: Checkout Repository
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           persist-credentials: false
 
@@ -50,7 +50,7 @@ jobs:
 
       - name: Prepare Message
         id: render_template
-        uses: chuhlomin/render-template@807354a04d9300c9c2ac177c0aa41556c92b3f75 # v1.10
+        uses: chuhlomin/render-template@a7c644e341797d050d1cb24332d83791b9a46dae # v1.12
         with:
           template: .github/publish-mastodon-template.md
           vars: |
@@ -65,7 +65,7 @@ jobs:
           CONTRIBUTORS: ${{ env.contributors }}
 
       - name: Send toot to Mastodon
-        uses: cbrgm/mastodon-github-action@3ebdc72dcd894e1be460179eb0d01835f3689b2f # v2.1.23
+        uses: cbrgm/mastodon-github-action@ac2d8e8c9986a17b824dd12dd9df4ce5fcd813c1 # v2.2.2
         with:
           url: ${{ secrets.MASTODON_URL }}
           access-token: ${{ secrets.MASTODON_ACCESS_TOKEN }}
