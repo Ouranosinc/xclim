@@ -4,15 +4,16 @@ Changelog
 
 v0.61.2 (unreleased)
 --------------------
-Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), Sascha Hofmann (:user:`saschahofmann`).
+Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), Éric Dupuis (:user:`coxipi`), Sascha Hofmann (:user:`saschahofmann`).
+
+New indicators and features
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+* ``xclim.indices.helpers.make_hourly_temperature`` now accepts `infill_polar_days`. If set to `True`, this means that polar days and nights are set to 24 and 0 hours duration, respectively. The default behaviour is unchanged (`infill_polar_days=False`) and fills these cases with NaNs. (:issue:`2381`, :pull:`2382`).
+* Implemented two new indicators: ``xclim.indices.generic.day_to_day_variability`` and ``xclim.indices.precipitation_index``. (:issue:`2356`, :pull:`2363`.)
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
 * Fix ``maximum_consecutive_*`` indicators to harmonize them with their docstring, add ``op`` argument to control comparison and fix some non-existing standard names. (:issue:`2368`, :pull:`2370`).
-
-New indicators and features
-^^^^^^^^^^^^^^^^^^^^^^^^^^^
-* Implemented two new indicators: ``xclim.indices.generic.day_to_day_variability`` and ``xclim.indices.precipitation_index`` (:issue:`2356`)
 
 Internal changes
 ^^^^^^^^^^^^^^^^
