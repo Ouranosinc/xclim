@@ -841,7 +841,7 @@ precipitation_concentration_index = Precip(
     realm="atmos",
     units="",
     long_name="Precipitation Concentration Index",
-    description="A measure of the unevenness of precipitation distribution for a {freq}. "
+    description="A measure of the unevenness of the {freq} distribution of precipitations. "
     "Computed as the ratio of the sum of squared {subfreq} totals to the square of the sum of {subfreq} totals, "
     "multiplied by 100",
     compute=indices.precipitation_concentration_index,

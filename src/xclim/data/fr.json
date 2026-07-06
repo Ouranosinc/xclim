@@ -1503,13 +1503,13 @@
   "PAI": {
     "title": "Indice de Concentration de Précipitation",
     "long_name": "Indice de Concentration de Précipitation",
-    "description": "Une mesure de l'irrégularité de la distribution {freq:f} des précipitations. Calculée en tant que rapport entre la somme des carrés des totaux {subfreq:fpl} et le carré de la somme des totaux {subfreq:fpl}, multiplié par 100.",
+    "description": "Une mesure de l'irrégularité de la distribution {freq:f} des précipitations. Calculée en tant que rapport entre la somme des carrés des précipitations {subfreq:fpl} totales et la somme des carrés des précipitations {subfreq:fpl} totales, multiplié par 100.",
     "abstract": "Une mesure de l'irrégularité de la distribution des précipitations pour une fréquence. Calculée en tant que rapport entre la somme d'une sous-fréquence des carrés des totaux et le carré de la somme des totaux d'une sous-fréquence, multiplié par 100."
   },
   "DTDT": {
     "title": "Variabilité de la température d'un jour à l'autre",
     "long_name": "Variabilité de la température d'un jour à l'autre",
     "description": "Moyenne {freq:f} de la variabilité d'un jour à l'autre calculée comme l'écart-type {subfreq:m}.",
-    "abstract": "Moyenne d'une fréquence de la variabilité d'un jour à l'autre calculée comme l'écart-type d'un sous-fréquence."
+    "abstract": "Moyenne d'une fréquence de la variabilité d'un jour à l'autre calculée comme l'écart-type d'une sous-fréquence."
   }
 }
