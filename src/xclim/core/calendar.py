@@ -1022,10 +1022,9 @@ def doy_to_days_since(
 
     Examples
     --------
-    >>> from xarray import DataArray, date_range
-    >>> time = date_range("2020-07-01", "2021-07-01", freq="YS-JUL")
+    >>> time = xr.date_range("2020-07-01", "2021-07-01", freq="YS-JUL")
     >>> # July 8th 2020 and Jan 2nd 2022
-    >>> da = DataArray([190, 2], dims=("time",), coords={"time": time})
+    >>> da = xr.DataArray([190, 2], dims=("time",), coords={"time": time})
     >>> # Convert to days since Oct. 2nd, of the data's year.
     >>> doy_to_days_since(da, start="10-02").values
     array([-86,  92])
@@ -1083,9 +1082,8 @@ def days_since_to_doy(
 
     Examples
     --------
-    >>> from xarray import DataArray, date_range
-    >>> time = date_range("2020-07-01", "2021-07-01", freq="YS-JUL")
-    >>> da = DataArray(
+    >>> time = xr.date_range("2020-07-01", "2021-07-01", freq="YS-JUL")
+    >>> da = xr.DataArray(
     ...     [-86, 92],
     ...     dims=("time",),
     ...     coords={"time": time},
@@ -1288,7 +1286,7 @@ def select_time(
     --------
     Keep only the values of fall and spring.
 
-    >>> ds = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc")
+    >>> ds = xr.open_dataset("ERA5/daily_surface_cancities_1990-1993.nc")
     >>> ds.time.size
     1461
     >>> out = select_time(ds, drop=True, season=["MAM", "SON"])

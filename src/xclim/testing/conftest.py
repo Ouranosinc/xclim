@@ -113,8 +113,6 @@ def doctest_setup(doctest_namespace, nimbus, worker_id, open_dataset) -> None:  
             super().__init__(*args, **kwargs)
             self.__dict__ = self
 
-    doctest_namespace["open_dataset"] = open_dataset
-
     xr = AttrDict()
     xr["DataArray"] = DataArray
     xr["date_range"] = date_range
