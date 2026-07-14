@@ -9,6 +9,8 @@ Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bo
 New indicators and features
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 * ``xclim.indices.helpers.make_hourly_temperature`` now accepts `infill_polar_days`. If set to `True`, this means that polar days and nights are set to 24 and 0 hours duration, respectively. The default behaviour is unchanged (`infill_polar_days=False`) and fills these cases with NaNs. (:issue:`2381`, :pull:`2382`).
+* Run length indices now support a quantile reducer. (:pull:`2369`).
+
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
@@ -23,11 +25,7 @@ Internal changes
 
 v0.61.1 (2026-05-25)
 --------------------
-Contributors to this version: Pascal Bourgault (:user:`aulemahal`), Éric  Dupuis (:user:`coxipi`).
-
-New indicators and features
-^^^^^^^^^^^^^^^^^^^^^^^^^^^
-* Run length indices now support a quantile reducer. (:pull:`2369`).
+Contributors to this version: Pascal Bourgault (:user:`aulemahal`)
 
 Bug fixes
 ^^^^^^^^^
