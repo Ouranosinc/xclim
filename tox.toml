@@ -29,6 +29,7 @@ commands = [
 [env.doctests]
 labels = ["doctests"]
 description = "Run doctests with pytest under {basepython}"
+extras = ["dev", "extras"]
 deps = ["pytest <9.1.0"] # FIXME: Removals in pytest>=9.1 break doctest configurations
 commands = [
   ["python", "-c", "from xclim.testing.utils import run_doctests; run_doctests()"]

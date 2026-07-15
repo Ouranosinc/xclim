@@ -650,7 +650,7 @@ def spell_length_statistics(
 
     Examples
     --------
-    >>> spell_length_statistics(
+    >>> sls = spell_length_statistics(
     ...     tas,
     ...     threshold="35 °C",
     ...     window=7,
@@ -664,7 +664,7 @@ def spell_length_statistics(
     We then return the annual sum of the spell lengths, so the total number of days in such spells.
     >>> from xclim.core.units import rate2amount
     >>> pram = rate2amount(pr, out_units="mm")
-    >>> spell_length_statistics(
+    >>> sls = spell_length_statistics(
     ...     pram,
     ...     threshold="20 mm",
     ...     window=5,
@@ -823,13 +823,13 @@ def season(
 
     Examples
     --------
-    >>> season(tas, thresh="0 °C", window=5, op=">", stat="start", freq="YS")
+    >>> s = season(tas, thresh="0 °C", window=5, op=">", stat="start", freq="YS")
 
     Returns the start of the "frost-free" season. The season starts with 5 consecutive days with mean temperature
     above 0°C and ends with as many days under or equal to 0°C, and end does not need to be found for a
     start to be valid.
 
-    >>> season(
+    >>> s = season(
     ...     pr,
     ...     thresh="2 mm/d",
     ...     window=7,

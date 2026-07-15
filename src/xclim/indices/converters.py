@@ -260,8 +260,8 @@ def tas_from_tasmin_tasmax(tasmin: xr.DataArray, tasmax: xr.DataArray) -> xr.Dat
 
     Examples
     --------
-    >>> from xclim.indices import tas
-    >>> tas = tas(tasmin_dataset, tasmax_dataset)
+    >>> from xclim.indices import tas_from_tasmin_tasmax
+    >>> tas = tas_from_tasmin_tasmax(tasmin_dataset, tasmax_dataset)
     """
     tasmax = convert_units_to(tasmax, tasmin)
     tas = (tasmax + tasmin) / 2

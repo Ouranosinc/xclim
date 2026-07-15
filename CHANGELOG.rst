@@ -9,11 +9,13 @@ Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bo
 New indicators and features
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 * ``xclim.indices.helpers.make_hourly_temperature`` now accepts `infill_polar_days`. If set to `True`, this means that polar days and nights are set to 24 and 0 hours duration, respectively. The default behaviour is unchanged (`infill_polar_days=False`) and fills these cases with NaNs. (:issue:`2381`, :pull:`2382`).
+* Run length indices now support a quantile reducer. (:pull:`2369`).
 * Implemented two new indicators: ``xclim.indices.generic.day_to_day_variability`` and ``xclim.indices.precipitation_index``. (:issue:`2356`, :pull:`2363`.)
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
 * Fix ``maximum_consecutive_*`` indicators to harmonize them with their docstring, add ``op`` argument to control comparison and fix some non-existing standard names. (:issue:`2368`, :pull:`2370`).
+* `xdoctest` is no longer required to run the doctests and has been removed from the development dependencies. (:pull:`2383`)
 
 Internal changes
 ^^^^^^^^^^^^^^^^
@@ -21,6 +23,7 @@ Internal changes
     * Adjusted the token creation permissions to prevent creating tokens with unnecessary access privileges.
     * ReadTheDocs OS version updated to ``ubuntu-26.04``.
     * ``workflow-warning.yml`` now simply uses GitHub API calls.
+* Due to a regression, `pytest` is now pinned below v9.1 when running doctests with `tox`. (:pull:`2380`)
 
 v0.61.1 (2026-05-25)
 --------------------
