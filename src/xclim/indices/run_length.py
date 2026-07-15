@@ -318,15 +318,21 @@ def rle_statistics(
     else:
         d = rle(da, dim=dim, index=index)
 
-        def get_rl_stat(d: xr.DataArray) -> xr.DataArray:
-            rl_stat = getattr(d.where(d >= window), reducer)(dim=dim)
+        def get_rl_stat(d, dim, window, reducer):
+            reducer_kwargs = {"dim": dim}
+            if reducer.startswith("q") and reducer[1:].isdigit():
+                reducer_kwargs["q"] = float(f"0.{reducer[1:]}")
+                reducer = "quantile"
+            rl_stat = getattr(d.where(d >= window), reducer)(**reducer_kwargs)
             rl_stat = xr.where((d.isnull() | (d < window)).all(dim=dim), 0, rl_stat)
             return rl_stat
 
         if freq is None:
-            rl_stat = get_rl_stat(d)
+            rl_stat = get_rl_stat(d, dim, window, reducer)
         else:
-            rl_stat: xr.DataArray = resample_map(d, dim, freq, get_rl_stat)
+            rl_stat = resample_map(
+                d, dim, freq, get_rl_stat, map_kwargs={"dim": dim, "window": window, "reducer": reducer}
+            )
     return rl_stat
 
 
@@ -1408,8 +1414,9 @@ def statistics_run_1d(arr: Sequence[bool], reducer: str, window: int) -> int:
     ----------
     arr : Sequence of bool
         Input array (bool).
-    reducer : {"mean", "sum", "min", "max", "std", "count"}
-        Reducing function name.
+    reducer : {"mean", "sum", "min", "max", "std", "count", "q?"}
+        Reducing function name. The special name 'q?' computes a quantile with the provided value (e.g. 'q90' computes
+         a `q=0.90` quantile).
     window : int
         Minimal length of runs to be included in the statistics.
 
@@ -1423,8 +1430,12 @@ def statistics_run_1d(arr: Sequence[bool], reducer: str, window: int) -> int:
         return 0
     if reducer == "count":
         return (v * rl >= window).sum()
+    reducer_kwargs = {}
+    if reducer.startswith("q") and reducer[1:].isdigit():
+        reducer_kwargs["q"] = float(f"0.{reducer[1:]}")
+        reducer = "quantile"
     func = getattr(np, f"nan{reducer}")
-    return func(np.where(v * rl >= window, rl, np.nan))
+    return func(np.where(v * rl >= window, rl, np.nan), **reducer_kwargs)
 
 
 def windowed_run_count_1d(arr: Sequence[bool], window: int) -> int:
@@ -1546,8 +1557,8 @@ def statistics_run_ufunc(
     ----------
     x : Sequence of bool
         Input array (bool).
-    reducer : {'min', 'max', 'mean', 'sum', 'std'}
-        Reducing function name.
+    reducer : {'min', 'max', 'mean', 'sum', 'std', 'q?'}
+        Reducing function name. The special name 'q?' should be called as e.g. 'q90' to compute a `q=0.90` quantile.
     window : int
         Minimal length of runs.
     dim : str

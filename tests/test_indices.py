@@ -2697,15 +2697,18 @@ class TestTgMaxTgMinIndices:
         "op,expected",
         [
             ("max", 12.5),
-            (np.max, 12.5),
+            ("np.max", 12.5),
             ("min", 4.0),
-            (np.min, 4.0),
+            ("np.min", 4.0),
             ("std", 2.72913233),
-            (np.std, 2.72913233),
+            ("np.std", 2.72913233),
         ],
     )
     def test_static_reduce_daily_temperature_range(self, tasmin_series, tasmax_series, op, expected):
         tasmin, tasmax = self.static_tmin_tmax_setup(tasmin_series, tasmax_series)
+        if op.startswith("np."):
+            op = getattr(np, op.split(".")[1])
+
         dtr = xci.daily_temperature_range(tasmin, tasmax, freq="YS", op=op).squeeze("time")
         assert dtr.units == "K"
 

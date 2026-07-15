@@ -1284,7 +1284,9 @@ def _add_one_day(time: xr.DataArray) -> xr.DataArray:
     return time + np.timedelta64(1, "D")
 
 
-def make_hourly_temperature(tasmin: xr.DataArray, tasmax: xr.DataArray) -> xr.DataArray:
+def make_hourly_temperature(
+    tasmin: xr.DataArray, tasmax: xr.DataArray, infill_polar_days: bool = False
+) -> xr.DataArray:
     """
     Compute hourly temperatures from tasmin and tasmax.
 
@@ -1302,6 +1304,11 @@ def make_hourly_temperature(tasmin: xr.DataArray, tasmax: xr.DataArray) -> xr.Da
         Daily minimum temperature.
     tasmax : xarray.DataArray
         Daily maximum temperature.
+    infill_polar_days : bool
+        Whether to use a mask of 24 hours for polar days and 0 hours for polar nights.
+        If False, polar days and nights will be NaN.
+        If True, they will be filled with 24 and 0 hours, respectively,
+        dependent on latitude and solar declination at the given date.
 
     Returns
     -------
@@ -1319,7 +1326,7 @@ def make_hourly_temperature(tasmin: xr.DataArray, tasmax: xr.DataArray) -> xr.Da
         dim="time",
     )
 
-    daylength = day_lengths(data.time, data.lat)
+    daylength = day_lengths(data.time, data.lat, infill_polar_days=infill_polar_days)
     # Create daily chunks to avoid memory issues after the resampling
     data = data.assign(
         daylength=daylength,
