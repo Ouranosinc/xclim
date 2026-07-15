@@ -86,7 +86,6 @@ dev = [
   "tox >=4.31.0",
   "tox-gh >=1.5.0",
   "vulture >=2.14",
-  "xdoctest >=1.3.0",
   "yamllint >=1.35.1"
 ]
 docs = [
@@ -127,7 +126,7 @@ xclim = "xclim.cli:cli"
 [tool]
 
 [tool.bumpversion]
-current_version = "0.61.2-dev.3"
+current_version = "0.61.2-dev.5"
 commit = true
 commit_args = "--no-verify --signoff"
 tag = false
