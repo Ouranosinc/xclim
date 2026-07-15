@@ -28,7 +28,6 @@ labels = ["doctests"]
 description = "Run doctests with pytest under {basepython}"
 allowlist_externals = ["make"]
 dependency_groups = ["test"]
-extras = ["extras"]
 deps = ["pytest <9.1.0"] # FIXME: Removals in pytest>=9.1 break doctest configurations
 commands = [
   ["make", "test-doctests"]

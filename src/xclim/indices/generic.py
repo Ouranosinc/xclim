@@ -883,7 +883,7 @@ def season(
 
     Examples
     --------
-    >>> s = season(tas, thresh="0 °C", window=5, op=">", stat="start", freq="YS")
+    >>> s = season(tas, thresh="0 °C", window=5, condition=">", aspect="start", freq="YS")
 
     Returns the start of the "frost-free" season. The season starts with 5 consecutive days with mean temperature
     above 0°C and ends with as many days under or equal to 0°C, and end does not need to be found for a
