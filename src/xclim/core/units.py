@@ -1518,7 +1518,7 @@ def infer_context(standard_name: str | None = None, dimension: str | None = None
     Returns
     -------
     str
-        "hydro" if variable is a liquid water flux or snow surface amount, otherwise "none".
+        "hydro" if variable refers to liquid water or to a mass of water in any phase, otherwise "none".
     """
     csn = (
         (
