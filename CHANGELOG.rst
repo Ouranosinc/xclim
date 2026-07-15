@@ -14,6 +14,7 @@ New indicators and features
 Breaking changes
 ^^^^^^^^^^^^^^^^
 * Fix ``maximum_consecutive_*`` indicators to harmonize them with their docstring, add ``op`` argument to control comparison and fix some non-existing standard names. (:issue:`2368`, :pull:`2370`).
+* `xdoctest` is no longer required to run the doctests and has been removed from the development dependencies. (:pull:`2383`)
 
 Internal changes
 ^^^^^^^^^^^^^^^^
@@ -21,10 +22,11 @@ Internal changes
     * Adjusted the token creation permissions to prevent creating tokens with unnecessary access privileges.
     * ReadTheDocs OS version updated to ``ubuntu-26.04``.
     * ``workflow-warning.yml`` now simply uses GitHub API calls.
+* Due to a regression, `pytest` is now pinned below v9.1 when running doctests with `tox`. (:pull:`2380`)
 
 v0.61.1 (2026-05-25)
 --------------------
-Contributors to this version: Pascal Bourgault (:user:`aulemahal`)
+Contributors to this version: Pascal Bourgault (:user:`aulemahal`).
 
 Bug fixes
 ^^^^^^^^^

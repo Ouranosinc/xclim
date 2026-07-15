@@ -24,20 +24,14 @@ bump-my-version==1.4.1 \
     --hash=sha256:b4ad672b4e8b9f560f36a9ae0aff80088727ce2b3e0f1b7ea00d3f75846b09dd \
     --hash=sha256:c434736066cd835adddbfa37dc18dfe522c7cf2d1836bedcb2ca2967d2015fb0
     # via -r requirements_ci.in
-cachetools==6.2.4 \
-    --hash=sha256:69a7a52634fed8b8bf6e24a050fb60bff1c9bd8f6d24572b99c32d4e71e62a51 \
-    --hash=sha256:82c5c05585e70b6ba2d3ae09ea60b79548872185d2f24ae1f2709d37299fd607
+cachetools==7.1.4 \
+    --hash=sha256:323dc4127934744db5b54eb4924482d7edafbf9554e820d1531c2e08c0e4ef54 \
+    --hash=sha256:437f55a4e0c1b01a4f3077cc470e6991d47430970e36fbcb77e2be0df4fc1cd6
     # via tox
 certifi==2024.7.4 \
     --hash=sha256:5a1e7645bc0ec61a09e26c36f6106dd4cf40c6db3a1fb6352b0244e7fb057c7b \
     --hash=sha256:c198e21b1289c2ab85ee4e67bb4b4ef3ead0892059901a8d5b622f24a1101e90
-    # via
-    #   httpx2
-    #   requests
-chardet==5.2.0 \
-    --hash=sha256:1b3b6ff479a8c414bc3fa2c0852995695c4a026dcd6d0633b2dd092ca39c1cf7 \
-    --hash=sha256:e1cf59446890a00105fe7b7912492ea04b6e6f06d4b742b2c788469e34c82970
-    # via tox
+    # via requests
 charset-normalizer==3.3.2 \
     --hash=sha256:06435b539f889b1f6f4ac1758871aae42dc3a8c0e24ac9e60c2384973ad73027 \
     --hash=sha256:06a81e93cd441c56a9b65d8e1d043daeb97a3d0856d177d5c90ba85acb3db087 \
@@ -177,10 +171,11 @@ exceptiongroup==1.3.1 \
     # via
     #   -r requirements_ci.in
     #   anyio
-filelock==3.20.3 \
-    --hash=sha256:18c57ee915c7ec61cff0ecf7f0f869936c7c30191bb0cf406f1341778d0834e1 \
-    --hash=sha256:4b0dda527ee31078689fc205ec4f1c1bf7d56cf88b6dc9426c4f230e46c2dce1
+filelock==3.29.4 \
+    --hash=sha256:10cdb3656fc44541cdf30652a93fb10ec6b05325620eb316bd26893e4201538a \
+    --hash=sha256:dac1648087d5115554850d113e7dd8c83ab2d38e3435dde2d4f163847e57b767
     # via
+    #   python-discovery
     #   tox
     #   virtualenv
 flit==3.12.0 \
@@ -226,19 +221,20 @@ mdurl==0.1.2 \
     --hash=sha256:84008a41e51615a49fc9966191ff91509e3c40b939176e643fd50a5c2196b8f8 \
     --hash=sha256:bb413d29f5eea38f31dd4754dd7377d4465116fb207585f97bf925588687c1ba
     # via markdown-it-py
-packaging==25.0 \
-    --hash=sha256:29572ef2b1f17581046b3a2227d5c611fb25ec70ca1ba8554b24b0e69331a484 \
-    --hash=sha256:d443872c98d677bf60f6a1f2f8c1cb748e8fe762d2bf9d3148b5599295b0fc4f
+packaging==26.2 \
+    --hash=sha256:5fc45236b9446107ff2415ce77c807cee2862cb6fac22b8a73826d0693b0980e \
+    --hash=sha256:ff452ff5a3e828ce110190feff1178bb1f2ea2281fa2075aadb987c2fb221661
     # via
     #   deptry
     #   pyproject-api
     #   requirements-parser
     #   tox
-platformdirs==4.5.1 \
-    --hash=sha256:61d5cdcc6065745cdd94f0f878977f8de9437be93de97c1c12f853c9c0cdcbda \
-    --hash=sha256:d03afa3963c806a9bed9d5125c8f4cb2fdaf74a55ab60e5d59b3fde758104d31
+platformdirs==4.10.0 \
+    --hash=sha256:31e761a6a0ca04faf7353ea759bdba55652be214725111e5aac52dfa29d4bef7 \
+    --hash=sha256:fb516cdb12eb0d857d0cd85a7c57cea4d060bee4578d6cf5a14dfdf8cbf8784a
     # via
     #   pylint
+    #   python-discovery
     #   tox
     #   virtualenv
 pluggy==1.6.0 \
@@ -387,14 +383,20 @@ pygments==2.20.0 \
     --hash=sha256:6757cd03768053ff99f3039c1a36d6c0aa0b263438fcab17520b30a303a82b5f \
     --hash=sha256:81a9e26dd42fd28a23a2d169d86d7ac03b46e2f8b59ed4698fb4785f946d0176
     # via rich
-pylint==4.0.5 \
-    --hash=sha256:00f51c9b14a3b3ae08cff6b2cdd43f28165c78b165b628692e428fb1f8dc2cf2 \
-    --hash=sha256:8cd6a618df75deb013bd7eb98327a95f02a6fb839205a6bbf5456ef96afb317c
+pylint==4.0.6 \
+    --hash=sha256:52f19191bee08bf103f9705ad1a0ece4aa5a0a4ef2bdcbd969375a1e6f6579d5 \
+    --hash=sha256:d11a0e1fdb7b1cd46ec5d6fc78fee8b95f28695b2d6140e5809925f61e32ea54
     # via -r requirements_ci.in
 pyproject-api==1.10.0 \
     --hash=sha256:40c6f2d82eebdc4afee61c773ed208c04c19db4c4a60d97f8d7be3ebc0bbb330 \
     --hash=sha256:8757c41a79c0f4ab71b99abed52b97ecf66bd20b04fa59da43b5840bac105a09
     # via tox
+python-discovery==1.4.2 \
+    --hash=sha256:475803f53b7b2ed6e490e27373f9d8340f7d2eebf9acdaf645d7d714c97bb500 \
+    --hash=sha256:8f3746c4b4968d22afbb97d36e1a0e5b66e6c0f297290f2e95f05b9b8bf18690
+    # via
+    #   tox
+    #   virtualenv
 python-dotenv==1.2.2 \
     --hash=sha256:1d8214789a24de455a8b8bd8ae6fe3c6b69a5e3d64aa8a8e5d68e694bbcb285a \
     --hash=sha256:2c371a91fbd7ba082c2c1dc1f8bf89ca22564a087c2c287cd9b662adde799cf3
@@ -479,19 +481,21 @@ tomli==2.4.1 \
     #   pylint
     #   pyproject-api
     #   tox
-tomli-w==1.0.0 \
-    --hash=sha256:9f2a07e8be30a0729e533ec968016807069991ae2fd921a78d42f429ae5f4463 \
-    --hash=sha256:f463434305e0336248cac9c2dc8076b707d8a12d019dd349f5c1e382dd1ae1b9
-    # via flit
+tomli-w==1.2.0 \
+    --hash=sha256:188306098d013b691fcadc011abd66727d3c414c571bb01b1a174ba8c983cf90 \
+    --hash=sha256:2dd14fac5a47c27be9cd4c976af5a12d87fb1f0b4512f81d69cce3b35ae25021
+    # via
+    #   flit
+    #   tox
 tomlkit==0.13.0 \
     --hash=sha256:08ad192699734149f5b97b45f1f18dad7eb1b6d16bc72ad0c2335772650d7b72 \
     --hash=sha256:7075d3042d03b80f603482d69bf0c8f345c2b30e41699fd8883227f89972b264
     # via
     #   bump-my-version
     #   pylint
-tox==4.33.0 \
-    --hash=sha256:8582ac5c3ca97095ce88ae6bcd310d22614350ea9751b0e4ad39acad7874e270 \
-    --hash=sha256:a29244bce3f514f94043e173366aa191c8cf0106ec8ddd18ba53f985acd73cc4
+tox==4.56.0 \
+    --hash=sha256:538c472ccd7e7c7f5a5bcbb7f1268579941986d0eeaf7e644fc4a1004076bc05 \
+    --hash=sha256:9712ed24bae3b9963fe56140db5e3f1a86eed18ddcc35fff11d314038381fd23
     # via
     #   -r requirements_ci.in
     #   tox-gh
@@ -531,9 +535,9 @@ urllib3==2.7.0 \
     --hash=sha256:231e0ec3b63ceb14667c67be60f2f2c40a518cb38b03af60abc813da26505f4c \
     --hash=sha256:9fb4c81ebbb1ce9531cce37674bbc6f1360472bc18ca9a553ede278ef7276897
     # via requests
-virtualenv==20.36.1 \
-    --hash=sha256:575a8d6b124ef88f6f51d56d656132389f961062a9177016a50e4f507bbcc19f \
-    --hash=sha256:8befb5c81842c641f8ee658481e42641c68b5eab3521d8e092d18320902466ba
+virtualenv==21.5.1 \
+    --hash=sha256:55aa670b67bbfb991b03fda39bd3276d92c419d702376e98c5df1c9989a26783 \
+    --hash=sha256:dca3bf98275a59c652b69d68e73433e597d977c2da9198882479d1a7188009c8
     # via tox
 wcmatch==8.5.2 \
     --hash=sha256:17d3ad3758f9d0b5b4dedc770b65420d4dac62e680229c287bf24c9db856a478 \
