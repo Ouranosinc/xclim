@@ -11,11 +11,13 @@ from __future__ import annotations
 from sphinx.domains.python import PyFunction, PyXRefRole
 from sphinx.ext import autodoc
 
+from xclim import __version__
 from xclim.core.indicator import Indicator
 
 
 class IndicatorDocumenter(autodoc.FunctionDocumenter):
     objtype = "indicator"
+    directivetype = "indicator"
 
     @classmethod
     def can_document_member(cls, member, membername, isattr, parent):
@@ -27,6 +29,8 @@ class IndicatorDirective(PyFunction):
 
 
 def setup(app):
+    app.setup_extension("sphinx.ext.autodoc")
     app.add_autodocumenter(IndicatorDocumenter)
     app.add_directive_to_domain("py", "indicator", IndicatorDirective)
     app.add_role_to_domain("py", "indicator", PyXRefRole())
+    return {"version": __version__, "parallel_read_safe": True}

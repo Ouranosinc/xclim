@@ -293,6 +293,29 @@ class TestCFFWIS:
             out_no["DMC"].sel(location="Montréal", time="1992"),
         )
 
+    def test_fire_weather_ufunc_drystart_overwintering(self, atmosds):
+        # This tests that DMC is not all nan when drystart and overwintering are activate
+        ds = atmosds.assign(
+            tas=convert_units_to(atmosds.tas, "degC"),
+            pr=convert_units_to(atmosds.pr, "mm/d", context="hydro"),
+        )
+        season_mask_yr = fire_season(ds.tas, method="WF93", freq="YS")
+        season_mask_yr = xr.where(ds.location == "Halifax", True, season_mask_yr)
+
+        out = fire_weather_ufunc(
+            tas=ds.tas,
+            pr=ds.pr,
+            hurs=ds.hurs,
+            lat=ds.lat,
+            season_mask=season_mask_yr,
+            overwintering=True,
+            dry_start="CFS",
+            indexes=["DC", "DMC"],
+            dmc_dry_factor=5,
+            dmc0=xr.ones_like(ds.tas.isel(time=0)),
+        )
+        assert not out["DMC"].sel(location="Halifax").isnull().all()
+
     def test_fire_weather_ufunc_errors(self, tas_series, pr_series, hurs_series, sfcWind_series):
         tas = tas_series(np.ones(100), start="2017-01-01")
         pr = pr_series(np.ones(100), start="2017-01-01")

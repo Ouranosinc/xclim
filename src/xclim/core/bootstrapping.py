@@ -62,7 +62,7 @@ def percentile_bootstrap(func: Callable) -> Callable:
     >>> # To start bootstrap reference period must not fully overlap the studied period.
     >>> tas_ref = tas.sel(time=slice("1990-01-01", "1992-12-31"))
     >>> t90 = percentile_doy(tas_ref, window=5, per=90)
-    >>> tg90p(tas=tas, tas_per=t90.sel(percentiles=90), freq="YS", bootstrap=True)
+    >>> tas_90th_percentile = tg90p(tas=tas, tas_per=t90.sel(percentiles=90), freq="YS", bootstrap=True)
     """
 
     @wraps(func)
