@@ -17,6 +17,7 @@ from xclim.core.utils import InputKind
 
 __all__ = [
     "antecedent_precipitation_index",
+    "aridity_index",
     "cffwis_indices",
     "cold_and_dry_days",
     "cold_and_wet_days",
@@ -846,4 +847,15 @@ precipitation_concentration_index = Precip(
     "multiplied by 100",
     compute=indices.precipitation_concentration_index,
     cell_methods="",
+)
+
+aridity_index = PrecipWithIndexing(
+    identifier="aridity_index",
+    realm="atmos",
+    units="",
+    long_name="Aridity Index",
+    description="The ratio of total precipitation over potential evapotranspiration."
+    "Classification based on the Aridity Index (AI).",
+    cell_methods="",
+    compute=indices.aridity_index,
 )
