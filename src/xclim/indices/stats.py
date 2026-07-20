@@ -17,6 +17,7 @@ from typing import Any
 import numpy as np
 import scipy.stats
 import xarray as xr
+from formulaic import parser
 from scipy.stats import rv_continuous
 
 from xclim.core import DateStr, Quantified
@@ -1195,3 +1196,25 @@ def standardized_index(
     si.attrs["window"] = window
     si.attrs["units"] = ""
     return si
+
+
+def _parse_formula(formula: str | Sequence[str]) -> list:
+    """
+    Convert a formula specification into a list of covariate terms.
+
+    Parameters
+    ----------
+    formula : str or sequence of str
+        Formula specification. If a string, it is parsed with Formulaic.
+        If a sequence, it is converted to a list directly.
+
+    Returns
+    -------
+    list of str
+        Covariate terms including the intercept term `"1"`.
+    """
+    if isinstance(formula, str):
+        terms = [str(t) for t in parser.DefaultFormulaParser().get_terms(formula)]
+    else:
+        terms = list(formula)
+    return terms if "1" in terms else ["1", *terms]
