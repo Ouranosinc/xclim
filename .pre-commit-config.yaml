@@ -39,14 +39,14 @@ repos:
       - id: yamllint
         args: [ '--config-file=.yamllint.yaml' ]
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.15.9
+    rev: v0.15.20
     hooks:
       - id: ruff-format
         exclude: '(src/xclim/indices/__init__.py|docs/installation.rst)'
       - id: ruff-check
         args: [ '--fix', '--show-fixes' ]
   - repo: https://github.com/pylint-dev/pylint
-    rev: v4.0.5
+    rev: v4.0.6
     hooks:
       - id: pylint
         args: [ '--rcfile=.pylintrc.toml', '--errors-only', '--jobs=0', '--disable=E0015,E0401' ]
@@ -90,7 +90,7 @@ repos:
         additional_dependencies: [ 'tomli' ]
         args: [ '--toml=pyproject.toml' ]
   - repo: https://github.com/numpy/numpydoc
-    rev: v1.10.0
+    rev: v1.11.0rc0
     hooks:
       - id: numpydoc-validation
         # Exclude the missing submodule from the xclim.core, see:
@@ -110,12 +110,12 @@ repos:
     hooks:
       - id: gitleaks
   - repo: https://github.com/python-jsonschema/check-jsonschema
-    rev: 0.37.1
+    rev: 0.37.4
     hooks:
       - id: check-github-workflows
       - id: check-readthedocs
   - repo: https://github.com/woodruffw/zizmor-pre-commit
-    rev: v1.24.1
+    rev: v1.26.1
     hooks:
       - id: zizmor
         args: [ '--config=.zizmor.yml' ]

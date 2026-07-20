@@ -138,7 +138,7 @@ def cold_spell_duration_index(
     >>> from xclim.indices import cold_spell_duration_index
     >>> tasmin = xr.open_dataset(path_to_tasmin_file).tasmin.isel(lat=0, lon=0)
     >>> tn10 = percentile_doy(tasmin, per=10).sel(percentiles=10)
-    >>> cold_spell_duration_index(tasmin, tn10)
+    >>> csdi = cold_spell_duration_index(tasmin, tn10)
 
     Note that this example does not use a proper 1961-1990 reference period.
     """
@@ -1171,7 +1171,7 @@ def high_precip_low_temp(
     To compute the number of days with intense rainfall while minimum temperatures dip below -0.2C:
     >>> pr = xr.open_dataset(path_to_pr_file).pr
     >>> tasmin = xr.open_dataset(path_to_tasmin_file).tasmin
-    >>> high_precip_low_temp(pr, tas=tasmin, pr_thresh="10 mm/d", tas_thresh="-0.2 degC")
+    >>> hplt = high_precip_low_temp(pr, tas=tasmin, pr_thresh="10 mm/d", tas_thresh="-0.2 degC")
     """
     pr_thresh = convert_units_to(pr_thresh, pr, context="hydro")
     tas_thresh = convert_units_to(tas_thresh, tas)
@@ -1783,7 +1783,7 @@ def warm_spell_duration_index(
 
     >>> tasmax = xr.open_dataset(path_to_tasmax_file).tasmax.isel(lat=0, lon=0)
     >>> tasmax_per = percentile_doy(tasmax, per=90).sel(percentiles=90)
-    >>> warm_spell_duration_index(tasmax, tasmax_per)
+    >>> wsdi = warm_spell_duration_index(tasmax, tasmax_per)
     """
     thresh = convert_units_to(tasmax_per, tasmax)
 
