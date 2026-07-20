@@ -19,6 +19,7 @@ on:
   pull_request:
     branches:
       - main
+      - dev-v099
   schedule:
     - cron: '30 23 * * 5'
 

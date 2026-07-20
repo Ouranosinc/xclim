@@ -14,7 +14,7 @@ import xarray as xr
 from dask.diagnostics.progress import ProgressBar
 
 import xclim as xc
-from xclim.core import MissingVariableError
+from xclim.core import MissingVariableError, indicator
 from xclim.core.dataflags import DataQualityException, data_flags, ecad_compliant
 from xclim.core.utils import InputKind
 from xclim.testing.utils import (
@@ -28,6 +28,8 @@ from xclim.testing.utils import (
     publish_release_notes,
     show_versions,
 )
+
+CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 
 # Distributed is not a dependency of xclim
 distributed = False
@@ -46,7 +48,7 @@ def _get_indicator(indicator_name):
     else:
         indid = indicator_name.upper()
     try:
-        return xc.core.indicator.registry[indid].get_instance()
+        return indicator.registry[indid].get_instance()
     except KeyError as e:
         raise click.BadArgumentUsage(f"Indicator '{indicator_name}' not found in xclim.") from e
 
@@ -315,7 +317,7 @@ def indices(info):  # numpydoc ignore=PR01
     formatter = click.HelpFormatter()
     formatter.write_heading("Listing all available indicators for computation.")
     rows = []
-    for name, indcls in xc.core.indicator.registry.items():
+    for name, indcls in indicator.registry.items():
         left = click.style(name.lower(), fg="yellow")
         right = ", ".join([var.get("long_name", var["var_name"]) for var in indcls.cf_attrs])
         if indcls.cf_attrs[0]["var_name"] != name.lower():
@@ -363,7 +365,7 @@ def _format_dict(data, formatter, key_fg="blue", spaces=2):
 class XclimCli(click.Group):
     """Main cli class."""
 
-    def list_commands(self, ctx) -> list[str, str, str, str, str, str]:  # numpydoc ignore=PR01,RT01
+    def list_commands(self, ctx) -> tuple[str, str, str, str, str, str]:  # numpydoc ignore=PR01,RT01
         """Return the available commands (other than the indicators)."""
         return (
             "indices",
@@ -392,6 +394,7 @@ class XclimCli(click.Group):
 @click.command(
     cls=XclimCli,
     chain=True,
+    context_settings=CONTEXT_SETTINGS,
     help="Command line tool to compute indices on netCDF datasets. Indicators are referred to by their "
     "(case-insensitive) identifier, as in xclim.core.indicator.registry.",
     invoke_without_command=True,

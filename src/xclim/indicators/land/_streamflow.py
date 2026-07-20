@@ -8,7 +8,6 @@ from xclim.core.indicator import (
     ResamplingIndicator,
     StandardizedIndexes,
 )
-from xclim.core.units import declare_units
 from xclim.indices import (
     base_flow_index,
     base_flow_index_seasonal_ratio,
@@ -87,8 +86,9 @@ doy_qmax = Streamflow(
     long_name="Day of the year of the maximum streamflow over {indexer}",
     description="Day of the year of the maximum streamflow over {indexer}.",
     units="",
-    compute=declare_units(da="[discharge]")(generic.select_resample_op),
-    parameters={"op": generic.doymax, "out_units": None},
+    input={"data": "discharge"},
+    compute=generic.statistics,
+    parameters={"statistic": "doymax", "out_units": None},
 )
 
 
@@ -99,8 +99,9 @@ doy_qmin = Streamflow(
     long_name="Day of the year of the minimum streamflow over {indexer}",
     description="Day of the year of the minimum streamflow over {indexer}.",
     units="",
-    compute=declare_units(da="[discharge]")(generic.select_resample_op),
-    parameters={"op": generic.doymin, "out_units": None},
+    input={"data": "discharge"},
+    compute=generic.statistics,
+    parameters={"statistic": "doymin", "out_units": None},
 )
 
 

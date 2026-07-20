@@ -5,16 +5,15 @@ from __future__ import annotations
 import importlib.resources as _resources
 
 from xclim import indices
-from xclim.core import units  # noqa
+from xclim.core import units
 from xclim.core.indicator import build_indicator_module_from_yaml
 from xclim.core.locales import load_locale
-from xclim.core.options import set_options  # noqa
-from xclim.indicators import atmos, convert, generic, land, seaIce  # noqa
+from xclim.core.options import set_options
+from xclim.indicators import atmos, convert, generic, land, seaIce
 
 __author__ = """Travis Logan"""
 __email__ = "logan.travis@ouranos.ca"
-__version__ = "0.61.2-dev.6"
-
+__version__ = "0.99.0-dev.14"
 
 with _resources.as_file(_resources.files("xclim.data")) as _module_data:
     # Load official locales

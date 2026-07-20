@@ -212,7 +212,8 @@ def test_as_dataset(tasmax_series, tasmin_series, xrkeep):
         assert dsout.multiopt.attrs.get("something") == "blabla"
     else:
         assert "fou" not in dsout.attrs
-        # not testing for "something" because xclim doesn't define the behaviour of dataarray attributes when xarray's option is not True.
+        # not testing for "something" because xclim doesn't define the
+        # behaviour of dataarray attributes when xarray's option is not True.
 
 
 def test_as_dataset_multi(tas_series):
@@ -504,7 +505,6 @@ def test_all_jsonable(official_indicators):
     err = None
     for identifier, ind in official_indicators.items():
         indinst = ind.get_instance()
-        json.dumps(indinst.json())
         try:
             json.dumps(indinst.json())
         except (KeyError, TypeError) as e:
@@ -702,11 +702,11 @@ def test_indicator_from_dict():
             standard_name="{freq} mean temperature",
             cell_methods=[{"time": "mean within days"}],
         ),
-        compute="thresholded_statistics",
+        compute="clix.thresholded_statistics",
         parameters=dict(
             threshold={"description": "A threshold temp"},
-            op="<",
-            reducer="mean",
+            condition="<",
+            statistic="mean",
         ),
         input={"data": "tas"},
     )
@@ -717,7 +717,7 @@ def test_indicator_from_dict():
     # Parameters metadata modification
     assert ind.parameters["threshold"].description == "A threshold temp"
     # Injection of parameters
-    assert ind.injected_parameters["op"] == "<"
+    assert ind.injected_parameters["condition"] == "<"
     assert ind.parameters["tas"].compute_name == "data"
     assert signature(ind).parameters["tas"].default == "tas"
     assert ind.parameters["tas"].units == "[temperature]"

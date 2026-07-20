@@ -3,28 +3,96 @@
 from __future__ import annotations
 
 from importlib.resources import as_file, files
-from typing import NewType, TypeVar
+from typing import Literal, NewType, TypeVar
 
 import xarray as xr
 from pint import Quantity
 from yaml import safe_load
 
-__all__ = [
-    "VARIABLES",
-    "DateStr",
-    "DayOfYearStr",
-    "Quantified",
-]
+__all__ = ["VARIABLES", "Condition", "DateStr", "DayOfYearStr", "Freq", "Quantified", "Reducer", "TimeRange"]
 
-#: Type annotation for strings representing full dates (YYYY-MM-DD), may include time.
+#: Type annotation for strings representing full dates (YYYY[-MM[-DD[THH[:MM]]]]), may include time.
 DateStr = NewType("DateStr", str)
+
+#: Type annotation for a range between to full dates (YYYY[-MM[-DD]])
+TimeRange = tuple[DateStr, DateStr]
 
 #: Type annotation for strings representing dates without a year (MM-DD).
 DayOfYearStr = NewType("DayOfYearStr", str)
 
+#: Type annotation for frequency strings
+Freq = Literal[
+    "D",
+    "ME",
+    "MS",
+    "QE",
+    "QE-APR",
+    "QE-AUG",
+    "QE-DEC",
+    "QE-FEB",
+    "QE-JAN",
+    "QE-JUL",
+    "QE-JUN",
+    "QE-MAR",
+    "QE-MAY",
+    "QE-NOV",
+    "QE-OCT",
+    "QE-SEP",
+    "QS",
+    "QS-APR",
+    "QS-AUG",
+    "QS-DEC",
+    "QS-FEB",
+    "QS-JAN",
+    "QS-JUL",
+    "QS-JUN",
+    "QS-MAR",
+    "QS-MAY",
+    "QS-NOV",
+    "QS-OCT",
+    "QS-SEP",
+    "YE",
+    "YE-APR",
+    "YE-AUG",
+    "YE-DEC",
+    "YE-FEB",
+    "YE-JAN",
+    "YE-JUL",
+    "YE-JUN",
+    "YE-MAR",
+    "YE-MAY",
+    "YE-NOV",
+    "YE-OCT",
+    "YE-SEP",
+    "YS",
+    "YS-APR",
+    "YS-AUG",
+    "YS-DEC",
+    "YS-FEB",
+    "YS-JAN",
+    "YS-JUL",
+    "YS-JUN",
+    "YS-MAR",
+    "YS-MAY",
+    "YS-NOV",
+    "YS-OCT",
+    "YS-SEP",
+    "h",
+    "min",
+    "ms",
+    "s",
+    "us",
+]
+
 #: Type annotation for thresholds and other not-exactly-a-variable quantities
 Quantified = TypeVar("Quantified", xr.DataArray, str, Quantity)
 
+#: Type annotation of the condition/comparison operators
+Condition = Literal[">", "gt", "<", "lt", ">=", "ge", "<=", "le"]
+
+#: Type annotation for reducing/resampling function names, or a function that reduces the "time" dimension.
+Reducer = Literal["min", "max", "mean", "std", "var", "count", "sum", "integral", "doymin", "doymax"]
+# FIXME : I want to do Literal[...] | Callable, but pylint won't allow it
 
 with as_file(files("xclim.data")) as data_dir:
     with (data_dir / "variables.yml").open() as f:

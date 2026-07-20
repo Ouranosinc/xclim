@@ -60,6 +60,7 @@ mirroring attributes of the :py:class:`Indicator`, please refer to its documenta
         missing_options:
             # missing options mapping
         allowed_periods: [<list>, <of>, <allowed>, <periods>]
+        context: <context> # A unit context enabled during the conversion of the compute's output to the requested units
 
         # Compute function
         compute: <function name>  # Referring to a function in `Indices` module
@@ -313,7 +314,8 @@ class IndicatorRegistrar:
 
         Raises
         ------
-        ValueError : if no instance exists.
+        ValueError
+            If no instance exists.
         """
         for inst_ref in _indicators_registry[cls]:
             inst = inst_ref()
@@ -383,7 +385,8 @@ class Indicator(IndicatorRegistrar):
     src_freq : str, sequence of strings, optional
         The expected frequency of the input data. Can be a list for multiple frequencies, or None if irrelevant.
     context : str
-        The `pint` unit context, for example use 'hydro' to allow conversion from 'kg m-2 s-1' to 'mm/day'.
+        A `pint` unit context enabled during the computation of this indicator.
+        For example use 'hydro' to allow conversion from 'kg m-2 s-1' to 'mm/day'.
 
     Notes
     -----
@@ -789,9 +792,16 @@ class Indicator(IndicatorRegistrar):
         # data.compute refers to a function in xclim.indices.generic or xclim.indices (in this order of priority).
         # It can also directly be a function (like if a module was passed to build_indicator_module_from_yaml)
         if isinstance(compute, str):
-            compute_func = getattr(generic, compute, getattr(indices, compute, None))
-            if compute_func is None:
-                raise ImportError(f"Indice function {compute} not found in xclim.indices or xclim.indices.generic.")
+            if "." in compute:
+                modname, funcname = compute.split(".")
+                submod = getattr(indices, modname, None)
+                compute_func = getattr(submod, funcname, None)
+                if compute_func is None:
+                    raise ImportError(f"Indice function {funcname} not found in xclim.indices.{modname}.")
+            else:
+                compute_func = getattr(generic, compute, getattr(indices, compute, None))
+                if compute_func is None:
+                    raise ImportError(f"Indice function {compute} not found in xclim.indices or xclim.indices.generic.")
             data["compute"] = compute_func
 
         return cls(identifier=identifier, module=module, **data)
@@ -852,7 +862,7 @@ class Indicator(IndicatorRegistrar):
                     )
                 )
 
-        ret_ann = DataArray if self.n_outs == 1 else tuple[(DataArray,) * self.n_outs]
+        ret_ann = DataArray if self.n_outs == 1 else tuple[(DataArray,) * self.n_outs]  # ty: ignore[invalid-type-form]
         return Signature(variables + parameters, return_annotation=ret_ann)
 
     def _apply_on_tree_node(self, node: Dataset, *args, **kwargs):
@@ -1120,7 +1130,7 @@ class Indicator(IndicatorRegistrar):
             `cell_methods` is not added if `names` is given and those not contain `cell_methods`.
         """
         out = self._format(attrs, args)
-        for locale in OPTIONS[METADATA_LOCALES]:
+        for locale in OPTIONS[METADATA_LOCALES]:  # ty: ignore[not-iterable]
             out.update(
                 self._format(
                     self._get_translated_metadata(locale, var_id=var_id, names=names or list(attrs.keys())),
