@@ -229,9 +229,11 @@ class TestCheckUnits:
             check_units("deg C", "[temperature]")
 
 
-def test_rate2amount(pr_series):
-    pr = pr_series(np.ones(365 + 366 + 365), start="2019-01-01")
+@pytest.mark.parametrize("use_cftime", [True, False])
+def test_rate2amount(pr_series, use_cftime):
+    pr = pr_series(np.ones(365 + 366 + 365), start="2019-01-01", cftime=use_cftime)
 
+    # this uses the inferred freq to get a timedelta
     am_d = rate2amount(pr)
     np.testing.assert_array_equal(am_d, 86400)
 
@@ -239,6 +241,7 @@ def test_rate2amount(pr_series):
         pr_ms = pr.resample(time="MS").mean()
         pr_m = pr.resample(time="ME").mean()
 
+        # MS is not a constant-length period, this uses the sampling coord diff to get timedeltas
         am_ms = rate2amount(pr_ms)
         np.testing.assert_array_equal(am_ms[:4], 86400 * np.array([31, 28, 31, 30]))
         am_m = rate2amount(pr_m)
@@ -365,7 +368,6 @@ def test_declare_relative_units():
         ("m/h", "sum", "integral", 8760, "m"),
         ("m/h", "sum", "sum", 365, "m/h"),
         ("K", "mean", "mean", 1, "K"),
-        ("", "sum", "count", 365, "d"),
         ("", "sum", "count", 365, "d"),
         ("kg m-2", "var", "var", 0, "kg2 m-4"),
         (

@@ -136,7 +136,7 @@ def cold_spell_duration_index(
     >>> from xclim.compute import cold_spell_duration_index
     >>> tasmin = xr.open_dataset(path_to_tasmin_file).tasmin.isel(lat=0, lon=0)
     >>> tn10 = percentile_doy(tasmin, per=10).sel(percentiles=10)
-    >>> cold_spell_duration_index(tasmin, tn10)
+    >>> csdi = cold_spell_duration_index(tasmin, tn10)
 
     Note that this example does not use a proper 1961-1990 reference period.
     """
@@ -892,14 +892,23 @@ def liquid_precip_ratio(
 
     Notes
     -----
-    Let :math:`PR_i` be the mean daily precipitation of day :math:`i`, then for a period :math:`j` starting at
-    day :math:`a` and finishing on day :math:`b`:
+    Let :math:`PR_i` be the mean daily precipitation on day :math:`i`, and :math:`PRSN_i`
+    the mean daily solid precipitation. For a period :math:`j` starting on day :math:`a`
+    and ending on day :math:`b`:
 
     .. math::
 
-       PR_{ij} = \sum_{i=a}^{b} PR_i
+       PR_{j} = \sum_{i=a}^{b} PR_i
 
-       PRwet_{ij}
+    .. math::
+
+       PR^{\mathrm{liquid}}_{j} = \sum_{i=a}^{b} (PR_i - PRSN_i)
+
+    The liquid precipitation ratio is then:
+
+    .. math::
+
+       R_j = \frac{PR^{\mathrm{liquid}}_{j}}{PR_j}
     """
     if prsn is None and tas is not None:
         prsn = snowfall_approximation(pr, tas=tas, thresh=thresh, method="binary")
@@ -1148,7 +1157,7 @@ def high_precip_low_temp(
     To compute the number of days with intense rainfall while minimum temperatures dip below -0.2C:
     >>> pr = xr.open_dataset(path_to_pr_file).pr
     >>> tasmin = xr.open_dataset(path_to_tasmin_file).tasmin
-    >>> high_precip_low_temp(pr, tas=tasmin, pr_thresh="10 mm/d", tas_thresh="-0.2 degC")
+    >>> hplt = high_precip_low_temp(pr, tas=tasmin, pr_thresh="10 mm/d", tas_thresh="-0.2 degC")
     """
     pr_thresh = convert_units_to(pr_thresh, pr, context="hydro")
     tas_thresh = convert_units_to(tas_thresh, tas)
@@ -1207,10 +1216,10 @@ def days_over_precip_thresh(
     >>> p75 = pr.quantile(0.75, dim="time", keep_attrs=True)
     >>> r75p = days_over_precip_thresh(pr, p75)
     """
-    pr_per = convert_units_to(pr_per, pr, context="hydro")
-    thresh = convert_units_to(thresh, pr, context="hydro")
+    _pr_per = convert_units_to(pr_per, pr, context="hydro")
+    _thresh = convert_units_to(thresh, pr, context="hydro")
 
-    tp = pr_per.where(pr_per > thresh, thresh)
+    tp = _pr_per.where(_pr_per > _thresh, _thresh)
     if "dayofyear" in pr_per.coords:
         # Create time series out of doy values.
         tp = resample_doy(tp, pr)
@@ -1754,7 +1763,7 @@ def warm_spell_duration_index(
 
     >>> tasmax = xr.open_dataset(path_to_tasmax_file).tasmax.isel(lat=0, lon=0)
     >>> tasmax_per = percentile_doy(tasmax, per=90).sel(percentiles=90)
-    >>> warm_spell_duration_index(tasmax, tasmax_per)
+    >>> wsdi = warm_spell_duration_index(tasmax, tasmax_per)
     """
     thresh = convert_units_to(tasmax_per, tasmax)
 

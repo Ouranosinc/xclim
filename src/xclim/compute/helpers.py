@@ -19,11 +19,11 @@ import cftime
 import numba as nb
 import numpy as np
 import xarray as xr
+from packaging.version import Version
 from xarray import CFTimeIndex
+from xarray import __version__ as __xr_version__
 
-try:
-    from xarray.coding.calendar_ops import _datetime_to_decimal_year
-except ImportError:
+if Version(__xr_version__) >= Version("24.9.0"):
     XR2409 = True
 else:
     XR2409 = False
@@ -114,7 +114,7 @@ def compare(
     left: xr.DataArray,
     condition: Condition,
     right: float | int | np.ndarray | xr.DataArray,
-    constrain: Sequence[str] | None = None,
+    constrain: Sequence[Condition] | None = None,
 ) -> xr.DataArray:
     """
     Compare a DataArray to a threshold using given operator.
@@ -147,7 +147,7 @@ def spell_mask(
     condition: Condition,
     thresh: float | Sequence[float] | xr.DataArray | Sequence[xr.DataArray],
     min_gap: int = 1,
-    weights: Sequence[float] = None,
+    weights: Sequence[float] | None = None,
     var_reducer: Literal["any", "all"] = "all",
 ) -> xr.DataArray:
     """
@@ -173,7 +173,7 @@ def spell_mask(
     min_gap : int
         The shortest possible gap between two spells.
         Spells closer than this are merged by assigning the gap steps to the merged spell.
-    weights : sequence of floats
+    weights : sequence of floats, optional
         A list of weights of the same length as the window.
         Only supported if ``window_statistic`` is ``"mean"``.
     var_reducer : {'all', 'any'}
@@ -335,6 +335,8 @@ def day_angle(time: xr.DataArray) -> xr.DataArray:
     if XR2409:
         decimal_year = time.dt.decimal_year
     else:
+        from xarray.coding.calendar_ops import _datetime_to_decimal_year  # ty: ignore[unresolved-import]
+
         decimal_year = _datetime_to_decimal_year(times=time, calendar=time.dt.calendar)
     return ((decimal_year % 1) * 2 * np.pi).assign_attrs(units="rad")
 
@@ -530,7 +532,7 @@ def cosine_of_solar_zenith_angle(
     S_IN_D = 24 * 3600
 
     if len(time) < 3 or xr.infer_freq(time) == "D":
-        h_s = -np.pi if stat != "instant" else 0
+        h_s = -np.pi if stat != "instant" else 0.0
         h_e = np.pi - 1e-9  # just below pi
     else:
         if time.dtype == "O":  # cftime
@@ -544,6 +546,8 @@ def cosine_of_solar_zenith_angle(
         h_e = h_s + 2 * np.pi * interval_as_s / S_IN_D
 
     if stat == "instant":
+        if time_correction is None:
+            raise NotImplementedError("Argument time_correction must not be 'None' if stat is 'instant'.")
         h_s = h_s + time_correction
 
         return cast(
@@ -662,12 +666,13 @@ def extraterrestrial_solar_radiation(
     ds = solar_declination(times, method=method)
     gsc = convert_units_to(solar_constant, "J m-2 d-1")
     rad_to_day = 1 / (2 * np.pi)  # convert radians of the "day circle" to day
-    return (
+    esr: xr.DataArray = (
         gsc
         * rad_to_day
         * cosine_of_solar_zenith_angle(times, ds, lat=lat, stat="integral", sunlit=True, chunks=chunks)
         * dr
     ).assign_attrs(units="J m-2 d-1")
+    return esr
 
 
 def day_lengths(
@@ -1058,16 +1063,16 @@ def wind_speed_height_conversion(
     ----------
     :cite:cts:`allen_crop_1998`
     """
-    h_source = convert_units_to(h_source, "m")
-    h_target = convert_units_to(h_target, "m")
+    h_source_m = convert_units_to(h_source, "m")
+    h_target_m = convert_units_to(h_target, "m")
     if method == "log":
-        if min(h_source, h_target) < 1 + 5.42 / 67.8:
+        if min(h_source_m, h_target_m) < 1 + 5.42 / 67.8:
             raise ValueError(
-                f"The height {min(h_source, h_target)}m is too small for method {method}. "
+                f"The height {min(h_source_m, h_target_m)}m is too small for method {method}. "
                 f"Heights must be greater than {1 + 5.42 / 67.8}"
             )
         with xr.set_options(keep_attrs=True):
-            return ua * np.log(67.8 * h_target - 5.42) / np.log(67.8 * h_source - 5.42)
+            return ua * np.log(67.8 * h_target_m - 5.42) / np.log(67.8 * h_source_m - 5.42)
     else:
         raise NotImplementedError(f"'{method}' method is not implemented.")
 
@@ -1279,7 +1284,9 @@ def _add_one_day(time: xr.DataArray) -> xr.DataArray:
     return time + np.timedelta64(1, "D")
 
 
-def make_hourly_temperature(tasmin: xr.DataArray, tasmax: xr.DataArray) -> xr.DataArray:
+def make_hourly_temperature(
+    tasmin: xr.DataArray, tasmax: xr.DataArray, infill_polar_days: bool = False
+) -> xr.DataArray:
     """
     Compute hourly temperatures from tasmin and tasmax.
 
@@ -1297,6 +1304,11 @@ def make_hourly_temperature(tasmin: xr.DataArray, tasmax: xr.DataArray) -> xr.Da
         Daily minimum temperature.
     tasmax : xarray.DataArray
         Daily maximum temperature.
+    infill_polar_days : bool
+        Whether to use a mask of 24 hours for polar days and 0 hours for polar nights.
+        If False, polar days and nights will be NaN.
+        If True, they will be filled with 24 and 0 hours, respectively,
+        dependent on latitude and solar declination at the given date.
 
     Returns
     -------
@@ -1314,7 +1326,7 @@ def make_hourly_temperature(tasmin: xr.DataArray, tasmax: xr.DataArray) -> xr.Da
         dim="time",
     )
 
-    daylength = day_lengths(data.time, data.lat)
+    daylength = day_lengths(data.time, data.lat, infill_polar_days=infill_polar_days)
     # Create daily chunks to avoid memory issues after the resampling
     data = data.assign(
         daylength=daylength,

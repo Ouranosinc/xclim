@@ -1,16 +1,16 @@
 env_list = [
+  {product = [{prefix = "py3.", start = 11, stop = 14}]},
   "docs",
   "doctests",
   "lint",
   "notebooks",
-  "numpy",
   "sbck",
   "upstream"
 ]
 skip_missing_interpreters = true
 
 [env.complete]
-extras = ["complete"]
+extras = ["performance", "plot", "stats", "types"]
 
 [env.docs]
 labels = ["docs"]
@@ -28,6 +28,7 @@ labels = ["doctests"]
 description = "Run doctests with pytest under {basepython}"
 allowlist_externals = ["make"]
 dependency_groups = ["test"]
+deps = ["pytest <9.1.0"] # FIXME: Removals in pytest>=9.1 break doctest configurations
 commands = [
   ["make", "test-doctests"]
 ]
@@ -56,9 +57,6 @@ commands = [
   ["make", "test-notebooks"]
 ]
 commands_post = []
-
-[env.numpy]
-deps = ["numpy >=1.25,<2.0"]
 
 [env.offline]
 commands = [
@@ -94,7 +92,6 @@ passenv = [
   "SKIP_NOTEBOOKS",
   "XCLIM_*"
 ]
-install_command = "python -m pip install --no-user {opts} {packages}"
 download = true
 dependency_groups = ["test"]
 commands_pre = [
@@ -112,8 +109,7 @@ commands_post = [
 allowlist_externals = ["git", "xclim"]
 
 [gh.python]
-"3.10" = ["py3.10"]
 "3.11" = ["sbck"]
-"3.12" = ["numpy"]
+"3.12" = ["py3.12"]
 "3.13" = ["complete"]
 "3.14" = ["py3.14"]

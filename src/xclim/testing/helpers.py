@@ -111,7 +111,7 @@ def add_example_file_paths() -> dict[str, str | list[xr.DataArray]]:
     dict of str or dict of list of xr.DataArray
         A dictionary of doctest-relevant datasets.
     """
-    namespace = {
+    namespace: dict[str, str | list[xr.DataArray]] = {
         "path_to_ensemble_file": "EnsembleReduce/TestEnsReduceCriteria.nc",
         "path_to_gwl_file": "Raven/gwl_obs.nc",
         "path_to_pr_file": "NRCANdaily/nrcan_canada_daily_pr_1990.nc",

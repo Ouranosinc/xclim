@@ -314,7 +314,8 @@ class IndicatorRegistrar:
 
         Raises
         ------
-        ValueError : if no instance exists.
+        ValueError
+            If no instance exists.
         """
         for inst_ref in _indicators_registry[cls]:
             inst = inst_ref()
@@ -863,7 +864,7 @@ class Indicator(IndicatorRegistrar):
                     )
                 )
 
-        ret_ann = DataArray if self.n_outs == 1 else tuple[(DataArray,) * self.n_outs]
+        ret_ann = DataArray if self.n_outs == 1 else tuple[(DataArray,) * self.n_outs]  # ty: ignore[invalid-type-form]
         return Signature(variables + parameters, return_annotation=ret_ann)
 
     def _apply_on_tree_node(self, node: Dataset, *args, **kwargs):
@@ -1131,7 +1132,7 @@ class Indicator(IndicatorRegistrar):
             `cell_methods` is not added if `names` is given and those not contain `cell_methods`.
         """
         out = self._format(attrs, args)
-        for locale in OPTIONS[METADATA_LOCALES]:
+        for locale in OPTIONS[METADATA_LOCALES]:  # ty: ignore[not-iterable]
             out.update(
                 self._format(
                     self._get_translated_metadata(locale, var_id=var_id, names=names or list(attrs.keys())),
@@ -1422,12 +1423,12 @@ class Indicator(IndicatorRegistrar):
     @property
     def n_outs(self) -> int:
         """
-        Return the length of all cf_attrs.
+        The length of all cf-attrs.
 
         Returns
         -------
         int
-            The number of outputs.
+            The number of cf-attrs outputs.
         """
         return len(self.cf_attrs)
 
@@ -1448,7 +1449,7 @@ class Indicator(IndicatorRegistrar):
     @property
     def injected_parameters(self) -> dict:
         """
-        Return a dictionary of all injected parameters.
+        Create a dictionary of all injected parameters.
 
         Inverse of :py:meth:`Indicator.parameters`.
 
@@ -1462,7 +1463,7 @@ class Indicator(IndicatorRegistrar):
     @property
     def is_generic(self) -> bool:
         """
-        Return True if the indicator is "generic", meaning that it can accept variables with any units.
+        If the indicator is "generic" returns True, meaning that it can accept variables with any units.
 
         Returns
         -------

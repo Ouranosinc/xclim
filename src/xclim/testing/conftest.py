@@ -12,6 +12,9 @@ import importlib.util as _util
 import os
 from pathlib import Path
 
+import pytest
+from xarray import DataArray, date_range
+
 from xclim.testing.helpers import (
     add_doctest_filepaths,
     add_example_file_paths,
@@ -80,7 +83,7 @@ if PYTEST_INSTALLED:
             xr_kwargs.setdefault("cache", True)
             xr_kwargs.setdefault("engine", "h5netcdf")
             return _open_dataset(
-                file,
+                str(file),
                 nimbus_kwargs=nimbus_kwargs,
                 **xr_kwargs,
             )
@@ -88,7 +91,7 @@ if PYTEST_INSTALLED:
         return _open_session_scoped_file
 
     @pytest.fixture(scope="session", autouse=True)
-    def is_matplotlib_installed(xdoctest_namespace) -> None:  # numpydoc ignore=PR01
+    def is_matplotlib_installed(doctest_namespace) -> None:  # numpydoc ignore=PR01
         """Skip tests that require matplotlib if it is not installed."""
 
         def _is_matplotlib_installed():
@@ -96,14 +99,14 @@ if PYTEST_INSTALLED:
             if not matplotlib_installed:
                 pytest.skip("This doctest requires matplotlib to be installed.")
 
-        xdoctest_namespace["is_matplotlib_installed"] = _is_matplotlib_installed
+        doctest_namespace["is_matplotlib_installed"] = _is_matplotlib_installed
 
     @pytest.fixture(scope="session", autouse=True)
-    def doctest_setup(xdoctest_namespace, nimbus, worker_id, open_dataset) -> None:  # numpydoc ignore=PR01
+    def doctest_setup(doctest_namespace, nimbus, worker_id, open_dataset) -> None:  # numpydoc ignore=PR01
         """Gather testing data on doctest run."""
         testing_setup_warnings()
         gather_testing_data(worker_cache_dir=nimbus.path, worker_id=worker_id)
-        xdoctest_namespace.update(generate_atmos(nimbus=nimbus))
+        doctest_namespace.update(generate_atmos(nimbus=nimbus))
 
         class AttrDict(dict):  # numpydoc ignore=PR01
             """A dictionary that allows access to its keys as attributes."""
@@ -112,8 +115,11 @@ if PYTEST_INSTALLED:
                 super().__init__(*args, **kwargs)
                 self.__dict__ = self
 
-        xdoctest_namespace["open_dataset"] = open_dataset
-        xdoctest_namespace["xr"] = AttrDict()
-        xdoctest_namespace["xr"].update({"open_dataset": open_dataset})
-        xdoctest_namespace.update(add_doctest_filepaths())
-        xdoctest_namespace.update(add_example_file_paths())
+        xr = AttrDict()
+        xr["DataArray"] = DataArray
+        xr["date_range"] = date_range
+        xr["open_dataset"] = open_dataset
+        doctest_namespace["xr"] = xr
+
+        doctest_namespace.update(add_doctest_filepaths())
+        doctest_namespace.update(add_example_file_paths())

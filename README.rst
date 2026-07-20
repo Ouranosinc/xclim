@@ -9,13 +9,13 @@ xclim: Climate services library |logo| |logo-dark| |logo-light|
 +----------------------------+-----------------------------------------------------+
 | Open Source                | |license| |ossf-score| |zenodo| |pyOpenSci| |joss|  |
 +----------------------------+-----------------------------------------------------+
-| Coding Standards           | |ruff| |pre-commit| |ossf-bp| |fossa|               |
+| Coding Standards           | |ruff| |pre-commit-ci| |ossf-bp| |fossa|            |
 +----------------------------+-----------------------------------------------------+
 | Development Status         | |status| |build| |coveralls|                        |
 +----------------------------+-----------------------------------------------------+
 
 .. warning::
-    This branch of `xclim` is under active development and contains many breaking changes compared to v0.60+.
+    This branch of `xclim` is under active development and contains many breaking changes compared to v0.61+.
     For the latest stable release, please refer to the `main` branch or the PyPI/Conda package.
 
 `xclim` is an operational Python library for climate services, providing numerous climate-related indicator tools
@@ -24,7 +24,7 @@ adjustment of climate model simulations, as well as climate model ensemble analy
 
 `xclim` is built using `xarray`_ and can seamlessly benefit from the parallelization handling provided by `dask`_.
 Its objective is to make it as simple as possible for users to perform typical climate services data treatment workflows.
-Leveraging `xarray` and `dask`, users can easily bias-adjust climate simulations over large spatial domains or compute indices from large climate datasets.
+Leveraging `xarray` and `dask`, users can easily compute many different climate indicators from large climate datasets.
 
 For example, the following would compute monthly mean temperature from daily mean temperature:
 
@@ -38,9 +38,9 @@ For example, the following would compute monthly mean temperature from daily mea
 
 For applications where metadata and missing values are important to get right, `xclim` provides a class for each index
 that validates inputs, checks for missing values, converts units and assigns metadata attributes to the output.
-This also provides a mechanism for users to customize the indices to their own specifications and preferences.
-`xclim` currently provides over 150 indices related to mean, minimum and maximum daily temperature, daily precipitation,
-streamflow and sea ice concentration, numerous bias-adjustment algorithms, as well as a dedicated module for ensemble analysis.
+This also provides a mechanism for users to customize these indicators to their own specifications and preferences.
+`xclim` currently provides over 150 climate indicators related to mean, minimum and maximum daily temperature, daily precipitation,
+streamflow and sea ice concentration, as well as a dedicated module for ensemble analysis and a data validation/health-check module.
 
 .. _xarray: https://docs.xarray.dev/
 .. _dask: https://docs.dask.org/
@@ -70,15 +70,19 @@ How to make the most of xclim: `Basic Usage Examples`_ and `In-Depth Examples`_.
 
 Conventions
 -----------
-In order to provide a coherent interface, `xclim` tries to follow different sets of conventions. In particular, input data should follow the `CF conventions`_ whenever possible for variable attributes. Variable names are usually the ones used in `CMIP6`_, when they exist.
+In order to provide a coherent interface, `xclim` tries to follow different sets of conventions.
+In particular, input data should follow the `CF conventions`_ whenever possible for variable attributes.
+Variable names are usually the ones used in `CMIP6`_, when they exist.
 
-However, `xclim` will *always* assume the temporal coordinate is named "time". If your data uses another name (for example: "T"), you can rename the variable with:
+However, `xclim` will *always* assume the temporal coordinate is named "time".
+If your data uses another name (for example: "T"), you can rename the variable with:
 
 .. code-block:: python
 
     ds = ds.rename(T="time")
 
-`xclim` employs a `black`_-compatible code formatting style (via a modified `ruff`_ configuration) and (mostly) adheres to the `NumPy docstring`_ style. For more information on coding and development conventions, see the `Contributing Guidelines`_.
+`xclim` employs a `black`_-compatible code formatting style (via a modified `ruff`_ configuration) and (mostly) adheres to the `NumPy docstring`_ style.
+For more information on coding and development conventions, see the `Contributing Guidelines`_.
 
 .. _black: https://black.readthedocs.io/en/stable/
 .. _ruff: https://docs.astral.sh/ruff/
@@ -109,7 +113,8 @@ To cite a specific version of `xclim`, the bibliographical reference information
 
 License
 -------
-This is free software: you can redistribute it and/or modify it under the terms of the `Apache License 2.0`_. A copy of this license is provided in the code repository (`LICENSE`_).
+This is free software: you can redistribute it and/or modify it under the terms of the `Apache License 2.0`_.
+A copy of this license is provided in the code repository (`LICENSE`_).
 
 .. _Apache License 2.0: https://opensource.org/license/apache-2-0/
 .. _LICENSE: https://github.com/Ouranosinc/xclim/blob/main/LICENSE
@@ -130,6 +135,13 @@ This repository uses the `ECO-CI`_ tool to estimate and track the energy use and
 Credits
 -------
 `xclim` development is funded through Ouranos_, Environment and Climate Change Canada (ECCC_), the `Fonds vert`_ and the Fonds d'électrification et de changements climatiques (FECC_), the Canadian Foundation for Innovation (CFI_), and the Fonds de recherche du Québec (FRQ_).
+
+.. image:: https://raw.githubusercontent.com/Ouranosinc/.github/refs/heads/main/images/logo-ouranos-horizontal-couleur.svg
+        :target: https://www.ouranos.ca/
+        :align: center
+        :class: ouranos-logo no-theme center
+
+|ouranos-dark| |ouranos-light|
 
 This package was created with Cookiecutter_ and the `audreyfeldroy/cookiecutter-pypackage`_ project template.
 
@@ -197,7 +209,7 @@ This package was created with Cookiecutter_ and the `audreyfeldroy/cookiecutter-
 
 .. |logo| image:: https://raw.githubusercontent.com/Ouranosinc/xclim/main/docs/logos/xclim-logo-small-light.png
         :target: https://github.com/Ouranosinc/xclim
-        :alt: Xclim
+        :alt: xclim
         :class: xclim-logo-small no-theme
 
 .. |logo-light| image:: https://raw.githubusercontent.com/Ouranosinc/xclim/main/docs/logos/empty.png
@@ -210,7 +222,7 @@ This package was created with Cookiecutter_ and the `audreyfeldroy/cookiecutter-
         :alt:
         :class: xclim-logo-small only-dark-inline
 
-.. |pre-commit| image:: https://results.pre-commit.ci/badge/github/Ouranosinc/xclim/main.svg
+.. |pre-commit-ci| image:: https://results.pre-commit.ci/badge/github/Ouranosinc/xclim/main.svg
         :target: https://results.pre-commit.ci/latest/github/Ouranosinc/xclim/main
         :alt: pre-commit.ci status
 
@@ -220,14 +232,25 @@ This package was created with Cookiecutter_ and the `audreyfeldroy/cookiecutter-
 
 .. |status| image:: https://www.repostatus.org/badges/latest/active.svg
         :target: https://www.repostatus.org/#active
-        :alt: Project Status: Active – The project has reached a stable, usable state and is being actively developed.
+        :alt: Project Status: Active - The project has reached a stable, usable state and is being actively developed.
 
 .. |versions| image:: https://img.shields.io/pypi/pyversions/xclim.svg
         :target: https://pypi.python.org/pypi/xclim
         :alt: Supported Python Versions
 
-..
-    Energy Metrics by https://github.com/green-coding-solutions/eco-ci-energy-estimation
+.. Ouranos Logos
+
+.. |ouranos-light| image:: https://raw.githubusercontent.com/Ouranosinc/xclim/main/docs/logos/empty.png
+        :target: https://www.ouranos.ca/
+        :alt:
+        :class: ouranos-logo only-light center
+
+.. |ouranos-dark| image:: https://raw.githubusercontent.com/Ouranosinc/xclim/main/docs/logos/empty.png
+        :target: https://www.ouranos.ca/
+        :alt:
+        :class: ouranos-logo only-dark center
+
+.. Energy Metrics by https://github.com/green-coding-solutions/eco-ci-energy-estimation
 
 .. |energy-total| image:: https://api.green-coding.io/v1/ci/badge/get?repo=Ouranosinc/xclim&branch=main&workflow=5828641&mode=totals
         :target: https://metrics.green-coding.io/ci.html?repo=Ouranosinc/xclim&branch=main&workflow=5828641
@@ -242,7 +265,7 @@ This package was created with Cookiecutter_ and the `audreyfeldroy/cookiecutter-
         :alt: Energy Consumption (Last 90 days moving average)
 
 .. |carbon-total| image:: https://api.green-coding.io/v1/ci/badge/get?repo=Ouranosinc/xclim&branch=main&workflow=5828641&mode=totals&metric=carbon
-        :target: https://metrics.green-coding.io/ci.html?repo=Ouranosinc/xclim&branch=festive-indices&workflow=5828641
+        :target: https://metrics.green-coding.io/ci.html?repo=Ouranosinc/xclim&branch=main&workflow=5828641
         :alt: Carbon Emissions (Total)
 
 .. |carbon-last| image:: https://api.green-coding.io/v1/ci/badge/get?repo=Ouranosinc/xclim&branch=main&workflow=5828641&metric=carbon

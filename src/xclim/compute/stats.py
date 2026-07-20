@@ -12,7 +12,7 @@ from __future__ import annotations
 import json
 import warnings
 from collections.abc import Sequence
-from typing import Any
+from typing import Any, Literal
 
 import numpy as np
 import scipy.stats
@@ -20,7 +20,7 @@ import xarray as xr
 from scipy.stats import rv_continuous
 
 from xclim.compute.generic import statistics
-from xclim.core import DateStr, Quantified
+from xclim.core import DateStr, Freq, Quantified
 from xclim.core.calendar import compare_offsets, resample_doy, select_time
 from xclim.core.formatting import prefix_attrs, unprefix_attrs, update_history
 from xclim.core.utils import uses_dask
@@ -246,20 +246,20 @@ def parametric_quantile(
     -----
     When all quantiles are above 0.5, the `isf` method is used instead of `ppf` because accuracy is sometimes better.
     """
-    q = np.atleast_1d(q)
+    _q = np.atleast_1d(q)
 
     dist = get_dist(dist or p.attrs["scipy_dist"])
 
     # Create a lambda function to facilitate passing arguments to dask. There is probably a better way to do this.
-    if np.all(q > 0.5):
+    if np.all(_q > 0.5):
 
         def func(x):
-            return dist.isf(1 - q, *x)
+            return dist.isf(1 - _q, *x)
 
     else:
 
         def func(x):
-            return dist.ppf(q, *x)
+            return dist.ppf(_q, *x)
 
     data = xr.apply_ufunc(
         func,
@@ -270,7 +270,7 @@ def parametric_quantile(
         dask="parallelized",
         output_dtypes=[float],
         keep_attrs=True,
-        dask_gufunc_kwargs={"output_sizes": {"quantile": len(q)}},
+        dask_gufunc_kwargs={"output_sizes": {"quantile": len(_q)}},
     )
 
     # Assign quantile coordinates and transpose to preserve original dimension order
@@ -484,11 +484,11 @@ def fa(
 
 def frequency_analysis(
     da: xr.DataArray,
-    mode: str,
+    mode: Literal["min", "max"],
     t: int | Sequence[int],
     dist: str | rv_continuous,
     window: int = 1,
-    freq: str | None = None,
+    freq: Freq | None = None,
     method: str = "ML",
     **indexer: int | float | str,
 ) -> xr.DataArray:
@@ -581,7 +581,7 @@ def _fit_start(x, dist: str, **fitkwargs: Any) -> tuple[tuple, dict]:
 
     Parameters
     ----------
-    x : array-like
+    x : array_like
         Input data.
     dist : str
         Name of the univariate distribution, e.g. `beta`, `expon`, `genextreme`, `gamma`, `gumbel_r`, `lognorm`, `norm`.
@@ -979,8 +979,8 @@ def standardized_index(
     cal_start: DateStr | None,
     cal_end: DateStr | None,
     params: Quantified | None = None,
-    prob_zero_interpolation: str | float = "upper",
-    plotting_position_zero: str | tuple[float, float] = "ecdf",
+    prob_zero_interpolation: Literal["center", "upper"] | float = "upper",
+    plotting_position_zero: Literal["ecdf", "weibull"] | tuple[float, float] = "ecdf",
     **indexer,
 ) -> xr.DataArray:
     r"""

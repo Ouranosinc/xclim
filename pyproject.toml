@@ -1,33 +1,37 @@
 [build-system]
-requires = ["flit_core >=3.11.0,<4"]
+requires = ["flit_core >=3.12.0,<4"]
 build-backend = "flit_core.buildapi"
 
 [dependency-groups]
 lint = [
   # Linting tools
   "codespell >=2.4.1",
-  "deptry >=0.23.0",
+  "deptry >=0.25.1",
   "flake8 >=7.3.0",
   "flake8-rst-docstrings >=0.4.0",
-  "mypy >=1.14.1",
-  "numpydoc >=1.9.0",
-  "pylint >=3.3.1",
-  "ruff >=0.13.3",
+  "numpydoc >=1.10.0",
+  "ruff >=0.15.9",
   "vulture >=2.14",
   "yamllint >=1.35.1"
+]
+typing = [
+  "pylint >=3.3.1",
+  "ty >=0.0.35"
+]
+io = [
+  "h5netcdf >=1.5.0",
+  "h5py >=3.12.1"
 ]
 notebooks = [
   # Notebook support
   "lmoments3 >=1.0.7",
-  "matplotlib >=3.8.0",
+  "matplotlib >=3.9.0",
   "nc-time-axis >=1.4.1",
   "netcdf4"
 ]
 test = [
   # Base testing support
   "coverage[toml] >=7.5.0",
-  "h5netcdf >=1.5.0",
-  "h5py >=3.12.1",
   "nbval >=0.11.0",
   "pooch >=1.8.0",
   "pytest >=9.0.0",
@@ -35,7 +39,8 @@ test = [
   "pytest-socket >=0.6.0",
   "pytest-timeout >=2.4.0",
   "pytest-xdist[psutil] >=3.2",
-  "xdoctest >=1.3.0"
+  "xdoctest >=1.3.0",
+  {include-group = "io"}
 ]
 docs = [
   # Documentation and example support
@@ -53,11 +58,11 @@ docs = [
   "scitools-iris >=3.14.1",
   "sphinx >=8.2.0",
   "sphinx-autobuild >=2024.4.16",
-  "sphinx-autodoc-typehints >=3.1.0",
+  "sphinx-autodoc-typehints >=3.6,!=3.10",
   "sphinx-codeautolink >=0.16.2",
-  "sphinx-copybutton",
+  "sphinx-copybutton >=0.5.2",
   "sphinx-mdinclude",
-  "sphinxcontrib-bibtex",
+  "sphinxcontrib-bibtex >=2.7.0",
   "sphinxcontrib-svg2pdfconverter",
   {include-group = "notebooks"}
 ]
@@ -65,15 +70,19 @@ test-notebooks = [
   {include-group = "notebooks"},
   {include-group = "test"}
 ]
+tox = [
+  "tox >=4.52.0",
+  "tox-gh >=1.7.1"
+]
 dev = [
   # Development and testing tools
-  "bump-my-version >=1.2.3",
-  "pip >=25.1",
-  "pre-commit >=4.2",
-  "tox >=4.34.0",
+  "bump-my-version >=1.3.0",
+  "pip >=26.1",
+  "prek >=0.3",
   {include-group = "docs"},
   {include-group = "lint"},
-  {include-group = "test-notebooks"}
+  {include-group = "test-notebooks"},
+  {include-group = "tox"}
 ]
 
 [project]
@@ -86,18 +95,18 @@ maintainers = [
   {name = "Pascal Bourgault", email = "bourgault.pascal@ouranos.ca"}
 ]
 readme = {file = "README.rst", content-type = "text/x-rst"}
-requires-python = ">=3.10.0"
+requires-python = ">=3.11.0"
 keywords = ["xclim", "xarray", "climate", "climatology", "bias correction", "ensemble", "indicators", "analysis"]
 license = "Apache-2.0"
 license-files = ["LICENSE"]
 classifiers = [
-  "Development Status :: 4 - Beta",
+  "Development Status :: 5 - Production/Stable",
   "Intended Audience :: Developers",
   "Intended Audience :: Science/Research",
   "Natural Language :: English",
+  "Natural Language :: French",
   "Operating System :: OS Independent",
   "Programming Language :: Python :: 3",
-  "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: 3.13",
@@ -116,8 +125,8 @@ dependencies = [
   "click >=8.1",
   "dask[array] >=2024.8.1",
   "filelock >=3.14.0",
-  "numba >=0.57.0",
-  "numpy >=1.25.0",
+  "numba >=0.60.0",
+  "numpy >=2.0",
   "packaging >=24.0",
   "pandas >=2.2.0",
   "pint >=0.24.4",
@@ -144,12 +153,6 @@ stats = [
 types = [
   "pandas-stubs >=2.2"
 ]
-complete = [
-  "xclim[performance]",
-  "xclim[plot]",
-  "xclim[stats]",
-  "xclim[types]"
-]
 
 [project.scripts]
 xclim = "xclim.cli:cli"
@@ -166,7 +169,7 @@ xclim = "xclim.cli:cli"
 [tool]
 
 [tool.bumpversion]
-current_version = "0.99.0-dev.7"
+current_version = "0.99.0-dev.13"
 commit = true
 commit_args = "--no-verify --signoff"
 tag = false
@@ -220,10 +223,12 @@ include = [
   "CHANGELOG.rst",
   "CI/requirements_upstream.txt",
   "CITATION.cff",
+  "CODE_OF_CONDUCT.md",
   "CONTRIBUTING.rst",
   "LICENSE",
   "Makefile",
   "README.rst",
+  "SECURITY.md",
   "docs/**/*.gif",
   "docs/**/*.jpg",
   "docs/**/*.png",
@@ -238,12 +243,15 @@ include = [
   "src/xclim/**/*.yml",
   "tests/**/*.py",
   "tests/**/*.txt",
-  "tox.ini"
+  "tox.toml"
 ]
 exclude = [
   "**/*.py[co]",
   "**/__pycache__",
   ".*",
+  "AGENTS.md",
+  "AI_POLICY.md",
+  "CI/requirements_ci.in",
   "CI/requirements_ci.txt",
   "docs/_*",
   "docs/modules.rst",
@@ -251,30 +259,6 @@ exclude = [
   "docs/xclim*.rst",
   "pylintrc"
 ]
-
-[tool.mypy]
-python_version = "3.10"
-show_error_codes = true
-enable_error_code = ["ignore-without-code", "redundant-expr", "truthy-bool"]
-plugins = ["numpy.typing.mypy_plugin"]
-strict = true
-warn_return_any = true
-warn_unreachable = true
-warn_unused_configs = true
-
-[[tool.mypy.overrides]]
-module = [
-  "boltons.*",
-  "cftime.*",
-  "numba.*",
-  "pytest_socket.*",
-  "SBCK.*",
-  "scipy.*",
-  "sklearn.*",
-  "yamale.*",
-  "yaml.*"
-]
-ignore_missing_imports = true
 
 [tool.numpydoc_validation]
 checks = [
@@ -443,13 +427,31 @@ max-complexity = 20
 "src/xclim/compute/_agro.py" = ["E501"]
 "src/xclim/compute/_conversion.py" = ["F405"]
 "src/xclim/compute/fire/_cffwis.py" = ["D103"]
-"tests/**/*test*.py" = ["D100", "D101", "D102", "D103", "E501", "N802", "S101"]
+"tests/**/*test*.py" = ["D100", "D101", "D102", "D103", "N802", "S101"]
+"tests/test_generic.py" = ["E501"]
 
 [tool.ruff.lint.pycodestyle]
 max-doc-length = 180
 
 [tool.ruff.lint.pydocstyle]
 convention = "numpy"
+
+[tool.ty.rules]
+call-non-callable = "ignore"
+invalid-argument-type = "ignore"
+invalid-assignment = "ignore"
+invalid-method-override = "ignore"
+invalid-parameter-default = "ignore"
+invalid-return-type = "ignore"
+no-matching-overload = "ignore"
+not-subscriptable = "ignore"
+possibly-missing-implicit-call = "ignore"
+unresolved-attribute = "ignore"
+unsupported-operator = "ignore"
+unused-ignore-comment = "ignore"
+
+[tool.ty.src]
+exclude = ["docs", "tests"]
 
 [tool.vulture]
 exclude = []

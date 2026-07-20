@@ -113,10 +113,12 @@ def statistics(
     if statistic == "sum" and is_temporal_rate(data):
         statistic = "integral"
     if isinstance(statistic, str):
-        out = getattr(data.resample(time=freq), statistic.replace("integral", "sum"))(dim="time", keep_attrs=True)
+        out: xr.DataArray = getattr(data.resample(time=freq), statistic.replace("integral", "sum"))(
+            dim="time", keep_attrs=True
+        )
     else:
         with xr.set_options(keep_attrs=True):
-            out = resample_map(data, "time", freq, statistic)
+            out: xr.DataArray = resample_map(data, "time", freq, statistic)
 
     if out_units is not None:
         return out.assign_attrs(units=out_units)
@@ -700,7 +702,7 @@ def spell_length_statistics(
 
     Examples
     --------
-    >>> spell_length_statistics(
+    >>> sls = spell_length_statistics(
     ...     tas,
     ...     window=7,
     ...     window_statistic="min",
@@ -714,7 +716,7 @@ def spell_length_statistics(
     We then return the annual sum of the spell lengths, so the total number of days in such spells.
     >>> from xclim.core.units import rate2amount
     >>> pram = rate2amount(pr, out_units="mm")
-    >>> spell_length_statistics(
+    >>> sls = spell_length_statistics(
     ...     pram,
     ...     window=5,
     ...     window_statistic="sum",
@@ -881,13 +883,13 @@ def season(
 
     Examples
     --------
-    >>> season(tas, thresh="0 °C", window=5, condition=">", aspect="start", freq="YS")
+    >>> s = season(tas, thresh="0 °C", window=5, condition=">", aspect="start", freq="YS")
 
     Returns the start of the "frost-free" season. The season starts with 5 consecutive days with mean temperature
     above 0°C and ends with as many days under or equal to 0°C, and end does not need to be found for a
     start to be valid.
 
-    >>> season(
+    >>> s = season(
     ...     pr,
     ...     condition="<=",
     ...     thresh="2 mm/d",
@@ -902,15 +904,15 @@ def season(
     the season is invalid. If a start is found but no end, the end is set to the last day of the period
     (December 31st if the dataset is complete).
     """
-    thresh = convert_units_to(thresh, data, context="infer")
-    cond = compare(data, condition, thresh, constrain=constrain)
+    _thresh = convert_units_to(thresh, data, context="infer")
+    cond = compare(data, condition, _thresh, constrain=constrain)
     cond = select_time(cond, **indexer)
     func = {"start": rl.season_start, "end": rl.season_end, "length": rl.season_length}
     map_kwargs = {"window": window, "mid_date": mid_date}
 
     if aspect in ["start", "end"]:
         map_kwargs["coord"] = "dayofyear"
-    out = resample_map(cond, "time", freq, func[aspect], map_kwargs=map_kwargs)
+    out: xr.DataArray = resample_map(cond, "time", freq, func[aspect], map_kwargs=map_kwargs)
     if aspect == "length":
         return to_agg_units(out, data, "count")
     # else, a date
@@ -1147,7 +1149,8 @@ def thresholded_percentile(
     """
     thresh = convert_units_to(thresh, data, context="infer")
     cond = compare(data, condition, thresh, constrain)
-    return percentile(data.where(cond), percentile, freq, **indexer)
+    # FIXME: Call signature variable shadows existing function name
+    return percentile(data.where(cond), percentile, freq, **indexer)  # ty: ignore[call-non-callable]
 
 
 def statistics_between_dates(

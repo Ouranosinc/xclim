@@ -10,7 +10,7 @@ from __future__ import annotations
 import datetime as pydt
 import warnings
 from collections.abc import Sequence
-from typing import Any, Literal, TypeVar
+from typing import Any, Literal, TypeVar, cast
 
 import cftime
 import numpy as np
@@ -18,6 +18,7 @@ import pandas as pd
 import xarray as xr
 from packaging.version import Version
 from xarray import CFTimeIndex
+from xarray.coding import cftime_offsets
 
 from xclim.core._types import DayOfYearStr
 from xclim.core.formatting import update_xclim_history
@@ -815,7 +816,7 @@ def time_bnds(
         time = time.indexes[time.name]
     # elif isinstance(time, DataArrayResample | DatasetResample):
     elif hasattr(time, "groupers"):
-        for grouper in time.groupers:
+        for grouper in time.groupers:  # ty: ignore[not-iterable]
             if "time" in grouper.codes.dims:
                 datetime = grouper.unique_coord.data
                 freq = freq or grouper.grouper.freq
@@ -856,7 +857,7 @@ def time_bnds(
         floor.pop("nanosecond")
 
     if isinstance(time, xr.CFTimeIndex):
-        period = xr.coding.cftime_offsets.to_offset(freq)
+        period = cftime_offsets.to_offset(freq)
         is_on_offset = period.onOffset
         day = pd.Timedelta("1D").to_pytimedelta()
         floor.pop("nanosecond")  # unsupported by cftime
@@ -1022,13 +1023,12 @@ def doy_to_days_since(
 
     Examples
     --------
-    >>> from xarray import DataArray, date_range
-    >>> time = date_range("2020-07-01", "2021-07-01", freq="YS-JUL")
+    >>> time = xr.date_range("2020-07-01", "2021-07-01", freq="YS-JUL")
     >>> # July 8th 2020 and Jan 2nd 2022
-    >>> da = DataArray([190, 2], dims=("time",), coords={"time": time})
+    >>> da = xr.DataArray([190, 2], dims=("time",), coords={"time": time})
     >>> # Convert to days since Oct. 2nd, of the data's year.
     >>> doy_to_days_since(da, start="10-02").values
-    array([-86, 92])
+    array([-86,  92])
     """
     base_calendar = get_calendar(da)
     calendar = calendar or da.attrs.get("calendar", base_calendar)
@@ -1083,16 +1083,15 @@ def days_since_to_doy(
 
     Examples
     --------
-    >>> from xarray import DataArray, date_range
-    >>> time = date_range("2020-07-01", "2021-07-01", freq="YS-JUL")
-    >>> da = DataArray(
+    >>> time = xr.date_range("2020-07-01", "2021-07-01", freq="YS-JUL")
+    >>> da = xr.DataArray(
     ...     [-86, 92],
     ...     dims=("time",),
     ...     coords={"time": time},
     ...     attrs={"units": "days since 10-02"},
     ... )
     >>> days_since_to_doy(da).values
-    array([190, 2])
+    array([190,   2])
     """
     if start is None:
         unitstr = da.attrs.get("units", "  time coordinate").split(" ", maxsplit=2)[-1]
@@ -1288,7 +1287,7 @@ def select_time(
     --------
     Keep only the values of fall and spring.
 
-    >>> ds = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc")
+    >>> ds = xr.open_dataset("ERA5/daily_surface_cancities_1990-1993.nc")
     >>> ds.time.size
     1461
     >>> out = select_time(ds, drop=True, season=["MAM", "SON"])
@@ -1310,7 +1309,7 @@ def select_time(
         raise ValueError(f"Only one method of indexing may be given, got {N}.")
 
     if N == 0:
-        return da
+        return cast(DataType, da)
 
     if isinstance(include_bounds, bool):
         include_bounds = (include_bounds, include_bounds)
@@ -1357,14 +1356,14 @@ def select_time(
     else:
         raise ValueError("Must provide either `season`, `month`, `doy_bounds` or `date_bounds`.")
 
-    return da.where(mask, drop=drop)
+    return cast(DataType, da.where(mask, drop=drop))
 
 
 def _month_is_first_period_month(time, freq):
     """Returns True if the given time is from the first month of freq."""
     if isinstance(time, cftime.datetime):
-        frq_monthly = xr.coding.cftime_offsets.to_offset("MS")
-        frq = xr.coding.cftime_offsets.to_offset(freq)
+        frq_monthly = cftime_offsets.to_offset("MS")
+        frq = cftime_offsets.to_offset(freq)
         if frq_monthly.onOffset(time):
             return frq.onOffset(time)
         return frq.onOffset(frq_monthly.rollback(time))

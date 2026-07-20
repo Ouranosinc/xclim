@@ -784,13 +784,14 @@ def dry_days(
 def maximum_consecutive_wet_days(
     pr: xarray.DataArray,
     thresh: Quantified = "1 mm/day",
+    op: Literal[">", "gt", ">=", "ge"] = ">=",
     freq: str = "YS",
     resample_before_rl: bool = True,
 ) -> xarray.DataArray:
     r"""
-    Consecutive wet days.
+    Maximum number of consecutive wet days.
 
-    Returns the maximum number of consecutive days with precipitation above a given threshold (default: 1 mm/day).
+    Returns the longest spell of with precipitation above a given threshold.
 
     Parameters
     ----------
@@ -798,6 +799,8 @@ def maximum_consecutive_wet_days(
         Mean daily precipitation flux.
     thresh : Quantified
         Threshold precipitation on which to base evaluation.
+    op : {">", ">="}
+        Comparison operator to use to find wet days.
     freq : str
         Resampling frequency.
     resample_before_rl : bool
@@ -808,31 +811,18 @@ def maximum_consecutive_wet_days(
     -------
     xarray.DataArray, [time]
         The maximum number of consecutive wet days.
-
-    Notes
-    -----
-    Let :math:`\mathbf{x}=x_0, x_1, \ldots, x_n` be a daily precipitation series and :math:`\mathbf{s}` be the sorted
-    vector of indices :math:`i` where :math:`[p_i > thresh] \neq [p_{i+1} > thresh]`, that is, the days where the
-    precipitation crosses the *wet day* threshold. Then the maximum number of consecutive wet days is given by:
-
-    .. math::
-
-       \max(\mathbf{d}) \quad \mathrm{where} \quad d_j = (s_j - s_{j-1}) [x_{s_j} > 0^\circ C]
-
-    where :math:`[P]` is 1 if :math:`P` is true, and 0 if false. Note that this formula does not handle sequences at
-    the start and end of the series, but the numerical algorithm does.
     """
-    thresh = convert_units_to(thresh, pr, context="hydro")
-
-    cond = pr > thresh
-    mcwd = rl.resample_and_rl(
-        cond,
-        resample_before_rl,
-        rl.longest_run,
-        freq=freq,
-    )
-    mcwd = to_agg_units(mcwd, pr, "count", deffreq="D")
-    return mcwd
+    with units.context("hydro"):
+        return spell_length_statistics(
+            pr,
+            thresh=thresh,
+            window=1,
+            window_statistic="max",
+            condition=op,
+            statistic="max",
+            freq=freq,
+            resample_before_rl=resample_before_rl,
+        )
 
 
 @declare_units(tasmax="[temperature]", tasmin="[temperature]", tas="[temperature]", thresh="[temperature]")
@@ -1555,10 +1545,10 @@ def last_spring_frost(
     --------
     The default `freq` and `before_date` parameters are valid for the Northern Hemisphere.
     """
-    thresh = convert_units_to(thresh, tasmin)
-    cond = compare(tasmin, op, thresh, constrain=("<", "<="))
+    _thresh = convert_units_to(thresh, tasmin)
+    cond = compare(tasmin, op, _thresh, constrain=("<", "<="))
 
-    out = resample_map(
+    out: xarray.DataArray = resample_map(
         cond,
         "time",
         freq,
@@ -1734,10 +1724,10 @@ def first_snowfall(
     ----------
     :cite:cts:`cbcl_climate_2020`.
     """
-    thresh = convert_units_to(thresh, prsn, context="hydro")
-    cond = prsn >= thresh
+    _thresh = convert_units_to(thresh, prsn, context="hydro")
+    cond = prsn >= _thresh
 
-    out = resample_map(
+    out: xarray.DataArray = resample_map(
         cond,
         "time",
         freq,
@@ -1790,10 +1780,10 @@ def last_snowfall(
     ----------
     :cite:cts:`cbcl_climate_2020`.
     """
-    thresh = convert_units_to(thresh, prsn, context="hydro")
-    cond = prsn >= thresh
+    _thresh = convert_units_to(thresh, prsn, context="hydro")
+    cond = prsn >= _thresh
 
-    out = resample_map(
+    out: xarray.DataArray = resample_map(
         cond,
         "time",
         freq,
@@ -1931,7 +1921,7 @@ def snowfall_intensity(
 
     Returns
     -------
-    xarray.DataArray,
+    xarray.DataArray
         Mean daily liquid water equivalent snowfall rate during days where snowfall exceeds a threshold.
 
     Warnings
@@ -1950,12 +1940,12 @@ def snowfall_intensity(
     ----------
     :cite:cts:`frei_snowfall_2018`.
     """
-    thresh = convert_units_to(thresh, "mm/day", context="hydro")
+    _thresh = convert_units_to(thresh, "mm/day", context="hydro")
     lwe_prsn = convert_units_to(prsn, "mm/day", context="hydro")
 
-    cond = lwe_prsn >= thresh
+    cond = lwe_prsn >= _thresh
     mean = lwe_prsn.where(cond).resample(time=freq).mean(dim="time")
-    snow_int = mean.fillna(0)
+    snow_int: xarray.DataArray = mean.fillna(0)
     snow_int = snow_int.assign_attrs(units=lwe_prsn.units)
     return snow_int
 
@@ -2098,17 +2088,17 @@ def heating_degree_days_approximation(
     # Where tas <= thresh < tasmax; HDD = (thresh - tasmin)/2 - (tasmax - thresh)/4
     # Where tasmin < thresh < tas; HDD = (thresh - tasmin)/4
     # Where tasmin >= thresh; HDD = 0
-    thresh = convert_units_to(thresh, tasmax)
-    tasmax = convert_units_to(tasmax, tas)
-    tasmin = convert_units_to(tasmin, tas)
+    _thresh = convert_units_to(thresh, tasmax)
+    _tasmax = convert_units_to(tasmax, tas)
+    _tasmin = convert_units_to(tasmin, tas)
 
     hdd = xarray.where(
-        tasmax <= thresh,
-        thresh - tas,
+        _tasmax <= _thresh,
+        _thresh - tas,
         xarray.where(
-            tas <= thresh,
-            (thresh - tasmin) / 2 - (tasmax - thresh) / 4,
-            xarray.where(tasmin <= thresh, (thresh - tasmin) / 4, 0),
+            tas <= _thresh,
+            (_thresh - _tasmin) / 2 - (_tasmax - _thresh) / 4,
+            xarray.where(_tasmin <= _thresh, (_thresh - _tasmin) / 4, 0),
         ),
     )
     hdd = hdd.resample(time=freq).sum(dim="time")
@@ -2801,6 +2791,7 @@ def wetdays_prop(
     return fwd
 
 
+@deprecated(from_version="0.61.2", suggested="cold_spell_max_length")
 @declare_units(tasmin="[temperature]", thresh="[temperature]")
 def maximum_consecutive_frost_days(
     tasmin: xarray.DataArray,
@@ -2864,14 +2855,14 @@ def maximum_consecutive_frost_days(
 def maximum_consecutive_dry_days(
     pr: xarray.DataArray,
     thresh: Quantified = "1 mm/day",
+    op: Literal["<", "lt", "<=", "le"] = "<",
     freq: str = "YS",
     resample_before_rl: bool = True,
 ) -> xarray.DataArray:
     r"""
     Maximum number of consecutive dry days.
 
-    Return the maximum number of consecutive days within the period where precipitation
-    is below a certain threshold (default: 1 mm/day).
+    Return the longest spell with precipitation under a given threshold.
 
     Parameters
     ----------
@@ -2879,6 +2870,8 @@ def maximum_consecutive_dry_days(
         Mean daily precipitation flux.
     thresh : Quantified
         Threshold precipitation on which to base evaluation.
+    op : {"<", "<="}
+        Comparison operator to use to find wet days.
     freq : str
         Resampling frequency.
     resample_before_rl : bool
@@ -2888,34 +2881,22 @@ def maximum_consecutive_dry_days(
     Returns
     -------
     xarray.DataArray, [time]
-        The maximum number of consecutive dry days (precipitation < threshold per period).
-
-    Notes
-    -----
-    Let :math:`\mathbf{p}=p_0, p_1, \ldots, p_n` be a daily precipitation series and :math:`thresh` the threshold
-    under which a day is considered dry. Then let :math:`\mathbf{s}` be the sorted vector of indices :math:`i` where
-    :math:`[p_i < thresh] \neq [p_{i+1} < thresh]`, that is, the days where the precipitation crosses the threshold.
-    Then the maximum number of consecutive dry days is given by:
-
-    .. math::
-
-       \max(\mathbf{d}) \quad \mathrm{where} \quad d_j = (s_j - s_{j-1}) [p_{s_j} < thresh]
-
-    where :math:`[P]` is 1 if :math:`P` is true, and 0 if false. Note that this formula does not handle sequences at
-    the start and end of the series, but the numerical algorithm does.
+        The maximum number of consecutive dry days.
     """
-    t = convert_units_to(thresh, pr, context="hydro")
-    group = pr < t
-    resampled = rl.resample_and_rl(
-        group,
-        resample_before_rl,
-        rl.longest_run,
-        freq=freq,
-    )
-    mcdd = to_agg_units(resampled, pr, "count", deffreq="D")
-    return mcdd
+    with units.context("hydro"):
+        return spell_length_statistics(
+            pr,
+            thresh=thresh,
+            window=1,
+            window_statistic=None,
+            condition=op,
+            statistic="max",
+            freq=freq,
+            resample_before_rl=resample_before_rl,
+        )
 
 
+@deprecated(from_version="0.61.2", suggested="frost_free_spell_max_length")
 @declare_units(tasmin="[temperature]", thresh="[temperature]")
 def maximum_consecutive_frost_free_days(
     tasmin: xarray.DataArray,
@@ -2976,6 +2957,7 @@ def maximum_consecutive_frost_free_days(
     return mcffd
 
 
+@deprecated(from_version="0.61.2", suggested="hot_spell_max_length")
 @declare_units(tasmax="[temperature]", thresh="[temperature]")
 def maximum_consecutive_tx_days(
     tasmax: xarray.DataArray,
@@ -3237,10 +3219,8 @@ def degree_days_exceedance_date(
     .. math::
 
        \begin{cases}
-       ST < \sum_{i=i_0}^{k} \max(TG_{ij} - T, 0) & \text{if $op$ is '>'} \\
-       ST < \sum_{i=i_0}^{k} \max(T - TG_{ij}, 0) & \text{if $op$ is '<'}
-       ST < \sum_{i=i_0}^{k} \max(T - TG_{ij}, 0) & \text{if $op$ is '<'}
-       \end{cases}
+       ST < \sum_{i=i_0}^{k} \max(TG_{ij} - T, 0) & \text{if $op$ is '>' | '>='} \\
+       ST < \sum_{i=i_0}^{k} \max(T - TG_{ij}, 0) & \text{if $op$ is '<' | '<='}
        \end{cases}
 
     The resulting :math:`k` is expressed as a day of year.
@@ -3248,25 +3228,25 @@ def degree_days_exceedance_date(
     Cumulated degree days have numerous applications including plant and insect phenology.
     See: https://en.wikipedia.org/wiki/Growing_degree-day for examples (:cite:t:`wikipedia_contributors_growing_2021`).
     """
-    thresh = convert_units_to(thresh, "K")
-    tas = convert_units_to(tas, "K")
-    sum_thresh = convert_units_to(sum_thresh, "K days")
+    _thresh = convert_units_to(thresh, "K")
+    _tas = convert_units_to(tas, "K")
+    _sum_thresh = convert_units_to(sum_thresh, "K days")
 
     if op in ["<", "lt", "<=", "le"]:
-        c = thresh - tas
+        c = _thresh - _tas
     elif op in [">", "gt", ">=", "ge"]:
-        c = tas - thresh
+        c = _tas - _thresh
     else:
         raise NotImplementedError(f"op: '{op}'.")
 
     def _exceedance_date(grp):
         strt_idx = rl.index_of_date(grp.time, after_date, max_idxs=1, default=0)
         if strt_idx.size == 0:  # The date is not within the group. Happens at boundaries.
-            return xarray.full_like(grp.isel(time=0), np.nan, float).drop_vars("time")  # type: ignore
+            return xarray.full_like(grp.isel(time=0), np.nan, float).drop_vars("time")
         cumsum = grp.where(grp.time >= grp.time[strt_idx][0]).cumsum("time")
 
         out = rl.first_run_after_date(
-            cumsum > sum_thresh,
+            cumsum > _sum_thresh,
             window=1,
             date=None,
         )
@@ -3277,10 +3257,10 @@ def degree_days_exceedance_date(
             never_reached_val = doy_from_string(DayOfYearStr(never_reached), grp.time.dt.year[0], grp.time.dt.calendar)
         else:
             never_reached_val = never_reached
-        return xarray.where((cumsum <= sum_thresh).all("time"), never_reached_val, out)
+        return xarray.where((cumsum <= _sum_thresh).all("time"), never_reached_val, out)
 
-    dded = resample_map(c.clip(0), "time", freq, _exceedance_date)
-    dded = dded.assign_attrs(units="", is_dayofyear=np.int32(1), calendar=get_calendar(tas))
+    dded: xarray.DataArray = resample_map(c.clip(0), "time", freq, _exceedance_date)
+    dded = dded.assign_attrs(units="", is_dayofyear=np.int32(1), calendar=get_calendar(_tas))
     return dded
 
 

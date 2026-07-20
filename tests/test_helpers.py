@@ -196,16 +196,16 @@ class TestDayLength:
         data = self.data_setup(lats=np.linspace(-65, 65, 13, endpoint=True))
         k = helpers.gladstones_day_length_latitude_coefficient(dates=data.time, lat=data.lat, constrain=constrain)
 
-        events = dict(
-            solstice=[
+        events = {
+            "solstice": [
                 ["1992-12-21", [1.42, 1.14, 1.03, 0.95, 0.9, 0.85, 1.31, 1.24, 1.17, 1.08, 0.96, 0.77, 0.32]],
                 ["1993-06-21", [0.31, 0.77, 0.96, 1.08, 1.17, 1.24, 0.81, 0.85, 0.9, 0.95, 1.03, 1.14, 1.42]],
                 ["1993-12-21", [1.42, 1.14, 1.03, 0.95, 0.9, 0.85, 1.31, 1.24, 1.17, 1.08, 0.96, 0.77, 0.32]],
             ],
-            equinox=[
+            "equinox": [
                 ["1993-03-20", [1.0] * 13]
             ],  # True equinox on 1993-03-20 at 14:41 GMT. Some relative tolerance is needed.
-        )
+        }
 
         if constrain == "20 degree_north":
             for entry in events["solstice"]:
@@ -300,6 +300,46 @@ def test_resample_map_passthrough(tas_series):
 
 @pytest.mark.parametrize("calendar", [None, "standard"])
 def test_make_hourly_temperature(tasmax_series, tasmin_series, calendar):
+    tasmax = tasmax_series(np.array([20]), units="degC", calendar=calendar)
+    tasmin = tasmin_series(np.array([0]), units="degC", calendar=calendar).expand_dims(lat=[0])
+
+    tasmin.lat.attrs["units"] = "degree_north"
+    tas_hourly = helpers.make_hourly_temperature(tasmax, tasmin)
+    assert tas_hourly.attrs["units"] == "degC"
+    assert tas_hourly.time.size == 24
+    expected = np.array(
+        [
+            0.0,
+            3.90180644,
+            7.65366865,
+            11.11140466,
+            14.14213562,
+            16.62939225,
+            18.47759065,
+            19.61570561,
+            20.0,
+            19.61570561,
+            18.47759065,
+            16.62939225,
+            14.14213562,
+            10.32039099,
+            8.0848137,
+            6.49864636,
+            5.26831939,
+            4.26306907,
+            3.41314202,
+            2.67690173,
+            2.02749177,
+            1.44657476,
+            0.92107141,
+            0.44132444,
+        ]
+    )
+    np.testing.assert_allclose(tas_hourly.isel(lat=0).values, expected)
+
+
+@pytest.mark.parametrize("calendar", [None, "standard"])
+def test_make_hourly_temperature_polar_fill(tasmax_series, tasmin_series, calendar):
     tasmax = tasmax_series(np.array([20]), units="degC", calendar=calendar)
     tasmin = tasmin_series(np.array([0]), units="degC", calendar=calendar).expand_dims(lat=[0])
 

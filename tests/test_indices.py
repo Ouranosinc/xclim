@@ -547,7 +547,8 @@ class TestStandardizedIndices:
     # Using the method `APP` in XClim matches the method from monocongo, hence the very low tolerance possible.
     # Repeated tests with lower tolerance means we want a more precise comparison, so we compare
     # the current version of XClim with the version where the test was implemented.
-    # Additionally, xarray does not yet access "week" or "weekofyear" with groupby in a pandas-compatible way for cftime objects.
+    # Additionally, xarray does not yet access "week" or "weekofyear"
+    # with groupby in a pandas-compatible way for cftime objects.
     # See: https://github.com/pydata/xarray/discussions/6375
     @pytest.mark.slow
     @pytest.mark.parametrize(
@@ -2696,15 +2697,18 @@ class TestTgMaxTgMinIndices:
         "op,expected",
         [
             ("max", 12.5),
-            (np.max, 12.5),
+            ("np.max", 12.5),
             ("min", 4.0),
-            (np.min, 4.0),
+            ("np.min", 4.0),
             ("std", 2.72913233),
-            (np.std, 2.72913233),
+            ("np.std", 2.72913233),
         ],
     )
     def test_static_reduce_daily_temperature_range(self, tasmin_series, tasmax_series, op, expected):
         tasmin, tasmax = self.static_tmin_tmax_setup(tasmin_series, tasmax_series)
+        if op.startswith("np."):
+            op = getattr(np, op.split(".")[1])
+
         dtr = xci.daily_temperature_range(tasmin, tasmax, freq="YS", op=op).squeeze("time")
         assert dtr.units == "K"
 
@@ -3198,7 +3202,7 @@ class TestTG:
         np.testing.assert_almost_equal(out[0], exp, decimal=4)
 
     def test_indice_against_icclim(self, open_dataset):
-        from xclim.indicators import icclim  # noqa
+        from xclim.indicators import icclim
 
         cmip3_tas = open_dataset("cmip3/tas.sresb1.giss_model_e_r.run1.atm.da.nc").tas
 
