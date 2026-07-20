@@ -426,6 +426,18 @@ def test_dist_method(fitda):
         stats.dist_method("nnlf", fit_params=params, dims="val", x=xr.DataArray([0.2, 0.8]))
 
 
+@pytest.mark.parametrize(
+    "dist, expected",
+    [
+        ("gamma", ["a", "loc", "scale"]),
+        ("genextreme", ["c", "loc", "scale"]),
+        ("gumbel_r", ["loc", "scale"]),
+    ],
+)
+def test_dist_param_names(dist, expected):
+    assert stats._dist_param_names(dist) == expected
+
+
 class TestNonStatStat:
     def test_parse_formula(self):
         assert stats._parse_formula("~1+t+I(t**2)+x") == ["1", "t", "I(t ** 2)", "x"]

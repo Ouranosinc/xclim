@@ -574,6 +574,26 @@ def get_dist(dist: str | rv_continuous) -> rv_continuous:
     return dc
 
 
+def _dist_param_names(dist: str | rv_continuous) -> list:
+    """
+    Return parameter names for a scipy distribution.
+
+    Parameters
+    ----------
+    dist : str or rv_continuous distribution object
+        Name of the univariate distribution, such as beta, expon, genextreme, gamma, gumbel_r, lognorm, norm
+        (see :py:mod:scipy.stats for full list) or the distribution object itself.
+
+    Returns
+    -------
+    list of str
+        Shape parameters followed by ``loc`` and ``scale``.
+    """
+    dist = get_dist(dist)
+    shapes = [] if dist.shapes is None else [s.strip() for s in dist.shapes.split(",")]
+    return [*shapes, "loc", "scale"]
+
+
 def _fit_start(x, dist: str, **fitkwargs: Any) -> tuple[tuple, dict]:
     r"""
     Return initial values for distribution parameters.
