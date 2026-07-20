@@ -1220,7 +1220,7 @@ def standardized_index(
     return si
 
 
-def _parse_formula(formula: str | Sequence[str]) -> list:
+def _parse_formula(formula: dict | str | Sequence[str]) -> list:
     """
     Convert a formula specification into a list of covariate terms.
 
@@ -1235,6 +1235,8 @@ def _parse_formula(formula: str | Sequence[str]) -> list:
     list of str
         Covariate terms including the intercept term `"1"`.
     """
+    if isinstance(formula, dict):
+        return {k: _parse_formula(f) for k, f in formula.items()}
     if isinstance(formula, str):
         terms = [str(t) for t in parser.DefaultFormulaParser().get_terms(formula)]
     else:
@@ -1276,3 +1278,26 @@ def covariates_from_formulas(formulas: str | dict, cov_source: pd.DataFrame | di
     covariates = {col: X[col].to_numpy() for col in X.columns}
     covariates["1"] = covariates.pop("Intercept")
     return covariates
+
+
+def initialize_params(
+    params: dict[str, float],
+    formulas: dict[str, list[str]],
+) -> list:
+    """
+    Build the initial optimization vector.
+
+    Parameters
+    ----------
+    params : dict
+        Initial values for distribution parameters. This is given as the intercept values, covariate-dependent
+        parameters are set to zero initially.
+    formulas : dict
+        Covariate terms for each parameter.
+
+    Returns
+    -------
+    list of float
+        Flattened initialization vector.
+    """
+    return [params.get(name, 0.0) if i == 0 else 0.0 for name, terms in formulas.items() for i in range(len(terms))]

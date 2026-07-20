@@ -446,6 +446,13 @@ def test_covariates_from_formulas():
     assert set(out) == set(expected)
 
 
+def test_initialize_params():
+    formulas = stats._parse_formula({"loc": "~1+t+I(t**2)", "scale": "~1"})
+    params = {"loc": 1, "scale": 0.5}
+    params0 = stats.initialize_params(params, formulas)
+    assert params0 == [1, 0, 0, 0.5]
+
+
 class TestNonStatStat:
     def test_parse_formula(self):
         assert stats._parse_formula("~1+t+I(t**2)+x") == ["1", "t", "I(t ** 2)", "x"]
