@@ -12,12 +12,14 @@ from __future__ import annotations
 import json
 import warnings
 from collections.abc import Sequence
+from itertools import chain
 from typing import Any
 
 import numpy as np
+import pandas as pd
 import scipy.stats
 import xarray as xr
-from formulaic import parser
+from formulaic import model_matrix, parser
 from scipy.stats import rv_continuous
 
 from xclim.core import DateStr, Quantified
@@ -1238,3 +1240,39 @@ def _parse_formula(formula: str | Sequence[str]) -> list:
     else:
         terms = list(formula)
     return terms if "1" in terms else ["1", *terms]
+
+
+def covariates_from_formulas(formulas: str | dict, cov_source: pd.DataFrame | dict):
+    """
+    Build covariate arrays from formula specifications.
+
+    Parameters
+    ----------
+    formulas : str or dict
+        Formula specification. If a string, it is interpreted as a single
+        formula. If a dictionary, values are formula specifications and all
+        covariate terms appearing in the formulas are included in the output.
+    cov_source : pandas.DataFrame or dict
+        Source covariate data used to evaluate the formulas.
+
+    Returns
+    -------
+    dict
+        Mapping from covariate names to one-dimensional NumPy arrays. The
+        intercept term is stored under the key `"1"`.
+
+    Notes
+    -----
+    Formula terms are parsed using :mod:`formulaic`. The resulting design
+    matrix is converted to a dictionary of NumPy arrays.
+    """
+    cov_df = cov_source if isinstance(cov_source, pd.DataFrame) else pd.DataFrame(cov_source)
+
+    formulad = {"dummy": formulas} if isinstance(formulas, str) else formulas
+    rhss = chain.from_iterable([_parse_formula(f) for f in formulad.values()])
+    formula = "~ " + "+".join(list(rhss))
+    X = model_matrix(formula, cov_df)
+
+    covariates = {col: X[col].to_numpy() for col in X.columns}
+    covariates["1"] = covariates.pop("Intercept")
+    return covariates

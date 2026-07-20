@@ -438,6 +438,14 @@ def test_dist_param_names(dist, expected):
     assert stats._dist_param_names(dist) == expected
 
 
+def test_covariates_from_formulas():
+    cov_source = dict(t=np.arange(10))
+    t = cov_source["t"]
+    out = stats.covariates_from_formulas("~1+t+I(t**2)", cov_source)
+    expected = {"1": np.ones_like(t), "t": t, "I(t ** 2)": t**2}
+    assert set(out) == set(expected)
+
+
 class TestNonStatStat:
     def test_parse_formula(self):
         assert stats._parse_formula("~1+t+I(t**2)+x") == ["1", "t", "I(t ** 2)", "x"]
