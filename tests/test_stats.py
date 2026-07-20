@@ -453,6 +453,18 @@ def test_initialize_params():
     assert params0 == [1, 0, 0, 0.5]
 
 
+def test_expand_params():
+    formulas = stats._parse_formula({"loc": "~1+t+I(t**2)", "scale": "~1"})
+    params = {"loc": 1, "scale": 0.5}
+    params_list = stats.initialize_params(params, formulas)
+    cov_source = dict(t=np.arange(10))
+    ones = np.ones_like(cov_source["t"])
+    covariates = stats.covariates_from_formulas(formulas, cov_source)
+    out = stats.expand_params(params_list, formulas, covariates, log_links=("loc",))
+    np.testing.assert_allclose(out["loc"], np.exp(ones))
+    np.testing.assert_allclose(out["scale"], ones / 2)
+
+
 class TestNonStatStat:
     def test_parse_formula(self):
         assert stats._parse_formula("~1+t+I(t**2)+x") == ["1", "t", "I(t ** 2)", "x"]

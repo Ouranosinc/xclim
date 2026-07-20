@@ -1301,3 +1301,44 @@ def initialize_params(
         Flattened initialization vector.
     """
     return [params.get(name, 0.0) if i == 0 else 0.0 for name, terms in formulas.items() for i in range(len(terms))]
+
+
+def expand_params(params_list, formulas, covariates, log_links=None):
+    """
+    Map a flat 1-d parameter vector to a dict of parameters expanded according to covariates.
+
+    Parameters
+    ----------
+    params_list : array-like
+        Flat 1-d vector of coefficients, ordered by parameter and then
+        by term within each parameter, matching the order of `formulas`.
+    formulas : dict[str, list[str]]
+        Mapping from parameter name (e.g. "loc", "scale") to the list of
+        covariate term names.
+    covariates : dict[str, np.ndarray]
+        Mapping from term name to a 1-d array of per-observation values
+        (see `covariates_from_formulas`).
+    log_links : Iterable[str], optional
+        Names of parameters that should be exponentiated after the
+        linear predictor is computed. Default is no parameters transformed.
+
+    Returns
+    -------
+    dict[str, np.ndarray]
+        Mapping from parameter name to its per-observation array of
+        shape (n_obs,).
+    """
+    flat_params = np.asarray(params_list)
+    log_links = {} if log_links is None else set(log_links)
+
+    sizes = {name: len(terms) for name, terms in formulas.items()}
+    edges = np.cumsum([0, *sizes.values()])
+    idx = {name: slice(edges[i], edges[i + 1]) for i, name in enumerate(formulas)}
+
+    params = {}
+    for k, terms in formulas.items():
+        cov_matrix = np.stack([covariates[t] for t in terms])  # (n_terms, n_obs)
+        coefs = flat_params[idx[k]]  # (n_terms,)
+        val = coefs @ cov_matrix  # (n_obs,)
+        params[k] = np.exp(val) if k in log_links else val
+    return params
