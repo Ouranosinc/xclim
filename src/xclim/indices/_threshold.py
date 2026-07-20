@@ -397,7 +397,7 @@ def snd_season_end(
     return snd_se
 
 
-@declare_units(snw="[mass]/[area]", thresh="[mass]/[area]")
+@declare_units(snw="[snowamount]", thresh="[snowamount]")
 def snw_season_end(
     snw: xarray.DataArray,
     thresh: Quantified = "4 kg m-2",
@@ -475,7 +475,7 @@ def snd_season_start(
     return snd_ss
 
 
-@declare_units(snw="[mass]/[area]", thresh="[mass]/[area]")
+@declare_units(snw="[snowamount]", thresh="[snowamount]")
 def snw_season_start(
     snw: xarray.DataArray,
     thresh: Quantified = "4 kg m-2",
@@ -552,7 +552,7 @@ def snd_season_length(
     return snd_sl
 
 
-@declare_units(snw="[mass]/[area]", thresh="[mass]/[area]")
+@declare_units(snw="[snowamount]", thresh="[snowamount]")
 def snw_season_length(
     snw: xarray.DataArray,
     thresh: Quantified = "4 kg m-2",
@@ -627,7 +627,7 @@ def snd_storm_days(snd: xarray.DataArray, thresh: Quantified = "25 cm", freq: st
     return count_occurrences(acc, condition=">=", thresh=thresh, freq=freq)
 
 
-@declare_units(snw="[mass]/[area]", thresh="[mass]/[area]")
+@declare_units(snw="[snowamount]", thresh="[snowamount]")
 def snw_storm_days(snw: xarray.DataArray, thresh: Quantified = "10 kg m-2", freq: str = "YS-JUL") -> xarray.DataArray:
     """
     Days with snowfall over threshold.
@@ -2364,7 +2364,7 @@ def snd_days_above(
     return count_occurrences(snd, condition=op, thresh=thresh, freq=freq).where(~valid)
 
 
-@declare_units(snw="[mass]/[area]", thresh="[mass]/[area]")
+@declare_units(snw="[snowamount]", thresh="[snowamount]")
 def snw_days_above(
     snw: xarray.DataArray,
     thresh: Quantified = "4 kg m-2",
