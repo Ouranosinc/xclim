@@ -1510,7 +1510,7 @@ def fit_covariate(
 
     if covariate_target is None:
         covariate_target = covariate_source
-    elif not isinstance(covariate_source, dict):
+    elif not isinstance(covariate_target, dict):
         covariate_target = {cdim: covariate_target}
 
     target_len = len(next(iter(covariate_target.values())))

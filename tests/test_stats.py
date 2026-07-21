@@ -540,3 +540,14 @@ class TestNonStatStats:
         cov_source = "year"
         formulas = stats._parse_formula({"loc": "~1+year", "scale": "~1"})
         stats.fit_covariate(y, dist, formulas, "time", cov_source)
+
+    def test_return_levels(self):
+        dist = "genextreme"
+        ds = open_dataset("sdba/ahccd_1950-2013.nc")
+        y = ds.pr.resample(time="YS").max()
+        y["year"] = y.time.dt.year
+        y["year"] = y["year"] - y["year"].min()
+        cov_source = "year"
+        cov_target = np.arange(y[cov_source].min().values.item(), y[cov_source].max().values.item() + 1)
+        formulas = stats._parse_formula({"loc": "~1+year", "scale": "~1"})
+        stats.fit_covariate(y, dist, formulas, "time", cov_source, cov_target)
