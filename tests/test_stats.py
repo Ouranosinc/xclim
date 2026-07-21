@@ -13,6 +13,7 @@ from scipy.optimize import differential_evolution
 from scipy.stats import lognorm, norm
 
 from xclim.indices import stats
+from xclim.testing import open_dataset
 
 
 @pytest.fixture(params=[True, False])
@@ -515,6 +516,30 @@ def test_fit_covariate():
     cov_source = {"time": y.time.values}
     formulas = stats._parse_formula({"loc": "~1+time", "scale": "~1"})
     stats.fit_covariate(y, dist, formulas, "time", cov_source, cov_source)
+
+
+def test_fit_covariate2():
+    np.random.seed(42)
+    dist = stats.get_dist("gumbel_r")
+    loc, scale, n = 1, 0.5, 10000
+    obs = dist.rvs(loc, scale, n)
+    y = xr.DataArray(obs, dims={"time"})
+    y["year"] = y.time
+    cov_source = "year"
+    formulas = stats._parse_formula({"loc": "~1+year", "scale": "~1"})
+    stats.fit_covariate(y, dist, formulas, "time", cov_source)
+
+
+def test_fit_covariate_real():
+    np.random.seed(42)
+    dist = "gumbel_r"
+    ds = open_dataset("sdba/ahccd_1950-2013.nc")
+    y = ds.pr.resample(time="YS").max()
+    y["year"] = y.time.dt.year
+    y["year"] = y["year"] - y["year"].min()
+    cov_source = "year"
+    formulas = stats._parse_formula({"loc": "~1+year", "scale": "~1"})
+    stats.fit_covariate(y, dist, formulas, "time", cov_source)
 
 
 class TestNonStatStat:

@@ -1451,10 +1451,10 @@ def fit_covariate(
         e.g. {"loc": "~1+t", "scale": "~1"}.
     dim : str
         Name of the observation dimension in `y` and in `covariate_source`.
-    covariate_source : dict or pd.DataFrame
+    covariate_source : str or dict
         Covariate data used to fit, aligned with `y` along `obs_dim`
         (same length). Assumed shared across all other dimensions of `y`.
-    covariate_target : dict or pd.DataFrame, optional
+    covariate_target : np.ndarray, optional
         Covariate data used to evaluate the fitted parameters (e.g. for
         prediction on a different time axis). Defaults to `covariate_source`.
     params : dict, optional
@@ -1473,34 +1473,46 @@ def fit_covariate(
     -------
     xr.Dataset
         Fitted distribution parameters.
+
+    Notes
+    -----
+    For now, the covariate should just be a one-dimensional variable, defined along `dim`.
     """
     dist = get_dist(dist)
     param_names = _dist_param_names(dist)
     formulas = _parse_formula(formulas)
-    param_names = list(formulas.keys())
+    if unknown := set(formulas) - set(param_names):
+        raise ValueError(
+            f"formulas keys {unknown} are not parameters of {dist.name}. Expected a subset of {param_names}."
+        )
+    formulas = {name: formulas.get(name, ["1"]) for name in param_names}
 
     if isinstance(covariate_source, str):
         covariate_source = {covariate_source: y[covariate_source].values}
+    if len(covariate_source) > 1:
+        raise NotImplementedError(
+            "Only one covariate for the xr wrapper for now. The function `_fit_covariate_1d` is more flexible."
+        )
+    else:
+        key = list(covariate_source.keys())[0]
+
+    cdim = key
+
     if covariate_target is None:
         covariate_target = covariate_source
-    elif isinstance(covariate_target, str):
-        covariate_target = {covariate_target: y[covariate_target].values}
+    elif not isinstance(covariate_source, dict):
+        covariate_target = {cdim: covariate_target}
 
-    target_len = (
-        len(next(iter(covariate_target.values()))) if isinstance(covariate_target, dict) else len(covariate_target)
-    )
+    target_len = len(next(iter(covariate_target.values())))
 
-    tdim = f"{dim}p"
     out = xr.apply_ufunc(
         _fit_covariate_1d,
         y,
         input_core_dims=[[dim]],
-        output_core_dims=[["params", tdim]],
-        # exclude_dims={dim} if dim != target_dim else set(),
+        output_core_dims=[["dparams", cdim]],
         vectorize=True,
         dask="parallelized",
-        # output_dtypes=[float] * len(param_names),
-        dask_gufunc_kwargs={"output_sizes": {tdim: target_len}},
+        dask_gufunc_kwargs={"output_sizes": {cdim: target_len}},
         kwargs=dict(
             dist=dist,
             formulas=formulas,
@@ -1512,7 +1524,7 @@ def fit_covariate(
             method=method,
             **minimize_kwargs,
         ),
-    ).rename({tdim: dim})
-    out = out.assign_coords({"params": param_names, dim: covariate_target[dim]})
+    )
+    out = out.assign_coords({"dparams": param_names, cdim: covariate_target[cdim]})
     out = out.assign_attrs({"scipy_dist": dist.name})
     return out
