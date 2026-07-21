@@ -1401,13 +1401,23 @@ def make_nll(dist: rv_continuous | str, formulas: dict, covariates: dict, log_li
 
 
 def _fit_covariate_1d(
-    y, dist, formulas, covariate_source, covariate_target, params, log_links, fix, method, **minimize_kwargs
+    y,
+    dist,
+    formulas,
+    covariate_source,
+    covariate_target,
+    params,
+    log_links,
+    fix=None,
+    method="L-BFGS-B",
+    **minimize_kwargs,
 ):
     """Core 1-d fit, called once per grid cell/station by apply_ufunc."""
     if fix is not None:
         raise NotImplementedError("fixing params is not available yet")
     # fix = {} if fix is None else fix
     # fformulas = {name: terms for name, terms in formulas.items() if name not in fix}
+
     covariates = covariates_from_formulas(formulas, covariate_source)
     covariates_target = covariates_from_formulas(formulas, covariate_target)
     if params is None:

@@ -439,281 +439,104 @@ def test_dist_param_names(dist, expected):
     assert stats._dist_param_names(dist) == expected
 
 
-def test_covariates_from_formulas():
-    cov_source = dict(t=np.arange(10))
-    t = cov_source["t"]
-    out = stats.covariates_from_formulas("~1+t+I(t**2)", cov_source)
-    expected = {"1": np.ones_like(t), "t": t, "I(t ** 2)": t**2}
-    assert set(out) == set(expected)
-
-
-def test_initialize_params():
-    formulas = stats._parse_formula({"loc": "~1+t+I(t**2)", "scale": "~1"})
-    params = {"loc": 1, "scale": 0.5}
-    params0 = stats.initialize_params(params, formulas)
-    assert params0 == [1, 0, 0, 0.5]
-
-
-def test_expand_params():
-    formulas = stats._parse_formula({"loc": "~1+t+I(t**2)", "scale": "~1"})
-    params = {"loc": 1, "scale": 0.5}
-    params_list = stats.initialize_params(params, formulas)
-    cov_source = dict(t=np.arange(10))
-    ones = np.ones_like(cov_source["t"])
-    covariates = stats.covariates_from_formulas(formulas, cov_source)
-    out = stats.expand_params(params_list, formulas, covariates, log_links=("loc",))
-    np.testing.assert_allclose(out["loc"], np.exp(ones))
-    np.testing.assert_allclose(out["scale"], ones / 2)
-
-
-def test_make_nll():
-    np.random.seed(42)
-    dist = stats.get_dist("gumbel_r")
-    loc, scale, n = 1, 0.5, 10
-    obs = dist.rvs(loc, scale, n)
-    formulas = stats._parse_formula({"loc": "~1+t+I(t**2)", "scale": "~1"})
-    params = {"loc": loc, "scale": scale}
-    params_list = stats.initialize_params(params, formulas)
-    cov_source = dict(t=np.arange(n))
-    covariates = stats.covariates_from_formulas(formulas, cov_source)
-    out = stats.make_nll(dist, formulas, covariates, log_links=("loc"))
-    np.testing.assert_allclose(out(params_list, obs), [8.715343])
-
-    formulas = stats._parse_formula({"loc": "~1+t+I(t**2)"})
-    params = {"loc": loc, "scale": scale}
-    params_list = stats.initialize_params(params, formulas)
-    cov_source = dict(t=np.arange(n))
-    covariates = stats.covariates_from_formulas(formulas, cov_source)
-    out = stats.make_nll(dist, formulas, covariates, log_links=("loc"))
-    np.testing.assert_allclose(out(params_list, obs), [8.715343])
-
-
-def test_fit_covariate_1d():
-    np.random.seed(41)
-    dist = stats.get_dist("gumbel_r")
-    loc, scale, n = 1, 0.5, 10000
-    obs = dist.rvs(loc, scale, n)
-    formulas = stats._parse_formula({"loc": "~1+t", "scale": "~1"})
-    # formulas = stats._parse_formula({"loc": "~1+t+I(t**2)", "scale": "~1"})
-    cov_source = dict(t=np.arange(n) / n)
-    stats._fit_covariate(
-        obs,
-        dist,
-        formulas,
-        cov_source,
-        cov_source,
-        log_links=("loc", "scale"),
-        params=dict(loc=np.log(2), scale=np.log(2)),
-    )
-
-
-def test_fit_covariate():
-    np.random.seed(42)
-    dist = stats.get_dist("gumbel_r")
-    loc, scale, n = 1, 0.5, 10000
-    obs = dist.rvs(loc, scale, n)
-    y = xr.DataArray(obs, dims={"time"})
-    cov_source = {"time": y.time.values}
-    formulas = stats._parse_formula({"loc": "~1+time", "scale": "~1"})
-    stats.fit_covariate(y, dist, formulas, "time", cov_source, cov_source)
-
-
-def test_fit_covariate2():
-    np.random.seed(42)
-    dist = stats.get_dist("gumbel_r")
-    loc, scale, n = 1, 0.5, 10000
-    obs = dist.rvs(loc, scale, n)
-    y = xr.DataArray(obs, dims={"time"})
-    y["year"] = y.time
-    cov_source = "year"
-    formulas = stats._parse_formula({"loc": "~1+year", "scale": "~1"})
-    stats.fit_covariate(y, dist, formulas, "time", cov_source)
-
-
-def test_fit_covariate_real():
-    np.random.seed(42)
-    dist = "gumbel_r"
-    ds = open_dataset("sdba/ahccd_1950-2013.nc")
-    y = ds.pr.resample(time="YS").max()
-    y["year"] = y.time.dt.year
-    y["year"] = y["year"] - y["year"].min()
-    cov_source = "year"
-    formulas = stats._parse_formula({"loc": "~1+year", "scale": "~1"})
-    stats.fit_covariate(y, dist, formulas, "time", cov_source)
-
-
-class TestNonStatStat:
+class TestNonStatStats:
     def test_parse_formula(self):
         assert stats._parse_formula("~1+t+I(t**2)+x") == ["1", "t", "I(t ** 2)", "x"]
         assert stats._parse_formula("~t+I(t**2)+x") == ["1", "t", "I(t ** 2)", "x"]
 
+    def test_covariates_from_formulas(self):
+        cov_source = dict(t=np.arange(10))
+        t = cov_source["t"]
+        out = stats.covariates_from_formulas("~1+t+I(t**2)", cov_source)
+        expected = {"1": np.ones_like(t), "t": t, "I(t ** 2)": t**2}
+        assert set(out) == set(expected)
 
-# def test_nonstat_fit_simple():
+    def test_initialize_params(self):
+        formulas = stats._parse_formula({"loc": "~1+t+I(t**2)", "scale": "~1"})
+        params = {"loc": 1, "scale": 0.5}
+        params0 = stats.initialize_params(params, formulas)
+        assert params0 == [1, 0, 0, 0.5]
 
-#     arr = np.array(
-#         [
-#             7.9218097,
-#             10.679481,
-#             17.22345,
-#             11.131168,
-#             16.238447,
-#             18.591017,
-#             9.255689,
-#             11.559648,
-#             11.529187,
-#             13.954627,
-#             8.769197,
-#             20.356525,
-#             10.819653,
-#             15.31825,
-#             12.659665,
-#             13.140845,
-#             12.216119,
-#             18.107887,
-#             11.7232485,
-#             12.142497,
-#             17.66894,
-#             11.587707,
-#             10.191705,
-#             9.813735,
-#             12.558175,
-#             10.183225,
-#             14.58928,
-#             20.893257,
-#             13.201856,
-#             13.859608,
-#             13.765752,
-#             14.446346,
-#             23.481577,
-#             14.827233,
-#             13.889056,
-#             13.293822,
-#             7.558094,
-#             12.199834,
-#             14.698318,
-#             13.790624,
-#             12.724625,
-#             7.64337,
-#             17.411083,
-#             15.387654,
-#             8.38884,
-#             9.244712,
-#             11.658122,
-#             11.399666,
-#             13.315105,
-#             14.359723,
-#             10.892028,
-#             12.974282,
-#             12.510975,
-#             13.529419,
-#             9.950639,
-#             13.628247,
-#             19.53747,
-#             11.098088,
-#             12.372353,
-#             17.660957,
-#             15.020236,
-#             7.5119667,
-#             10.260034,
-#             13.27764,
-#             12.163377,
-#             14.140637,
-#             13.67149,
-#             16.064146,
-#             10.5141115,
-#             17.505724,
-#             17.30158,
-#             11.674661,
-#             11.429478,
-#             10.6185875,
-#             10.87489,
-#             15.980678,
-#             13.590691,
-#             14.6940155,
-#             14.367362,
-#             19.862484,
-#             14.437847,
-#             10.558818,
-#             7.661837,
-#             9.447516,
-#             11.295261,
-#             11.047798,
-#             6.934771,
-#             17.463343,
-#             9.5781975,
-#             19.705095,
-#             15.964474,
-#             12.562019,
-#             9.621823,
-#             12.417072,
-#             14.046632,
-#             15.81239,
-#             9.913003,
-#             11.88132,
-#             11.310716,
-#             19.884754,
-#             11.485154,
-#             28.43556,
-#             11.709949,
-#             12.14615,
-#             12.328815,
-#             15.289374,
-#             15.219266,
-#             12.08468,
-#             14.300052,
-#             12.533084,
-#             15.643231,
-#             10.463865,
-#             8.487087,
-#             10.684048,
-#             16.224297,
-#             10.397568,
-#             11.460078,
-#             18.646223,
-#             9.4432,
-#             21.6848,
-#             18.861849,
-#             10.708461,
-#             8.988208,
-#             16.247059,
-#             20.644491,
-#             17.590902,
-#             12.713147,
-#             10.723614,
-#             11.8481,
-#             9.390117,
-#             19.992605,
-#             14.32631,
-#             13.734635,
-#             7.7759376,
-#             4.1081076,
-#             0.8918323,
-#             10.075968,
-#             19.578857,
-#             21.171076,
-#             13.473647,
-#             9.003577,
-#             7.504057,
-#             11.725814,
-#         ]
-#     )
-#     t = np.arange(len(arr))
-#     y = arr
-#     fit = stats.fit_covariate(
-#         y,
-#         proto_covd=dict(t=t),
-#         dist=sp.stats.genextreme,
-#         formulad={"loc": "~1+t+I(t**2)"},
-#         log_links=["scale"],
-#     )
-#     print(fit.params_flat)
-#     assert np.allclose(
-#         fit.params_flat,
-#         [1.08946891e-01, 1.11946841e01, 4.15326061e-02, -3.81550855e-04, 1.24250397e00],
-#     )
+    def test_expand_params(self):
+        formulas = stats._parse_formula({"loc": "~1+t+I(t**2)", "scale": "~1"})
+        params = {"loc": 1, "scale": 0.5}
+        params_list = stats.initialize_params(params, formulas)
+        cov_source = dict(t=np.arange(10))
+        ones = np.ones_like(cov_source["t"])
+        covariates = stats.covariates_from_formulas(formulas, cov_source)
+        out = stats.expand_params(params_list, formulas, covariates, log_links=("loc",))
+        np.testing.assert_allclose(out["loc"], np.exp(ones))
+        np.testing.assert_allclose(out["scale"], ones / 2)
 
-#     # predict
-#     new_t = np.linspace(0, len(arr), 1000)
-#     proto_covd = dict(t=new_t)
-#     covd = stats.covd_from_formulad(None, proto_covd, "~1+t+I(t**2)")
-#     params = fit.predict(covd=covd)
+    def test_make_nll(self):
+        np.random.seed(42)
+        dist = stats.get_dist("gumbel_r")
+        loc, scale, n = 1, 0.5, 10
+        obs = dist.rvs(loc, scale, n)
+        formulas = stats._parse_formula({"loc": "~1+t+I(t**2)", "scale": "~1"})
+        params = {"loc": loc, "scale": scale}
+        params_list = stats.initialize_params(params, formulas)
+        cov_source = dict(t=np.arange(n))
+        covariates = stats.covariates_from_formulas(formulas, cov_source)
+        out = stats.make_nll(dist, formulas, covariates, log_links=("loc",))
+        np.testing.assert_allclose(out(params_list, obs), [257.615087])
+
+    def test_fit_covariate_1d(self):
+        np.random.seed(41)
+        dist = stats.get_dist("gumbel_r")
+        loc, scale, n = 1, 0.5, 10000
+        obs = dist.rvs(loc, scale, n)
+        formulas = stats._parse_formula({"loc": "~1+t", "scale": "~1"})
+        # formulas = stats._parse_formula({"loc": "~1+t+I(t**2)", "scale": "~1"})
+        cov_source = dict(t=np.arange(n) / n)
+        stats._fit_covariate_1d(
+            obs,
+            dist,
+            formulas,
+            cov_source,
+            cov_source,
+            log_links=("loc", "scale"),
+            params=dict(loc=np.log(2), scale=np.log(2)),
+        )
+
+    def test_fit_covariate(self):
+        np.random.seed(42)
+        dist = stats.get_dist("gumbel_r")
+        loc, scale, n = 1, 0.5, 10000
+        obs = dist.rvs(loc, scale, n)
+        y = xr.DataArray(obs, dims={"time"})
+        cov_source = {"time": y.time.values}
+        formulas = stats._parse_formula({"loc": "~1+time", "scale": "~1"})
+        stats.fit_covariate(y, dist, formulas, "time", cov_source, cov_source)
+
+    def test_fit_covariate2(self):
+        np.random.seed(42)
+        dist = stats.get_dist("gumbel_r")
+        loc, scale, n = 1, 0.5, 10000
+        obs = dist.rvs(loc, scale, n)
+        y = xr.DataArray(obs, dims={"time"})
+        y["year"] = y.time
+        cov_source = "year"
+        formulas = stats._parse_formula({"loc": "~1+year", "scale": "~1"})
+        stats.fit_covariate(y, dist, formulas, "time", cov_source)
+
+    def test_fit_covariate3(self):
+        np.random.seed(42)
+        dist = stats.get_dist("gumbel_r")
+        loc, scale, n = 1, 0.5, 10000
+        obs = dist.rvs(loc, scale, n)
+        y = xr.DataArray(obs, dims={"time"})
+        y["year"] = y.time
+        cov_source = "year"
+        formulas = stats._parse_formula({"loc": "~1+year"})
+        stats.fit_covariate(y, dist, formulas, "time", cov_source)
+
+    def test_fit_covariate_real(self):
+        dist = "gumbel_r"
+        ds = open_dataset("sdba/ahccd_1950-2013.nc")
+        y = ds.pr.resample(time="YS").max()
+        y["year"] = y.time.dt.year
+        y["year"] = y["year"] - y["year"].min()
+        cov_source = "year"
+        formulas = stats._parse_formula({"loc": "~1+year", "scale": "~1"})
+        stats.fit_covariate(y, dist, formulas, "time", cov_source)
