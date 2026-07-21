@@ -62,7 +62,7 @@ start" for the duff-moisture code. The following example uses reasonable paramet
     Here the example snippets use the _indices_ defined in this very module, but we always recommend using the
     _indicators_ defined in the :py:mod:`xclim.atmos` module.
 
->>> ds = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc")
+>>> ds = xr.open_dataset("ERA5/daily_surface_cancities_1990-1993.nc")
 >>> ds = ds.assign(
 ...     hurs=xclim.convert.relative_humidity_from_dewpoint(ds=ds),
 ...     tas=xclim.core.units.convert_units_to(ds.tas, "degC"),
@@ -101,7 +101,7 @@ Similarly, the next lines calculate the fire weather indexes, but according to t
 used in NASA's GFWED datasets. Here, no need to split the fire season mask from the rest of the computation
 as _all_ seasons are used, even the very short shoulder seasons.
 
->>> ds = open_dataset("FWI/GFWED_sample_2017.nc")
+>>> ds = xr.open_dataset("FWI/GFWED_sample_2017.nc")
 >>> out_fwi = cffwis_indices(
 ...     tas=ds.tas,
 ...     pr=ds.prbc,

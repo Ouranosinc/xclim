@@ -109,3 +109,19 @@ def test_water_cycle_intensity(pr_series, evspsbl_series):
 
     wci = atmos.water_cycle_intensity(pr=pr, evspsbl=evspsbl, freq="MS")
     np.testing.assert_allclose(wci, 2 * 60 * 60 * 24 * 31)
+
+
+class TestAridityIndex:
+    def test_simple(self, pr_series, evspsblpot_series):
+        pr = np.ones(365 * 2)
+        pet = np.ones(365 * 2) * 0.8
+        # Year 1 different
+        pr[:365] = 3
+        pet[:365] = 1.5
+        expected = [3 / 1.5, 1 / 0.8]
+        pr = pr_series(pr, start="2001-01-01")
+        pet = evspsblpot_series(pet, start="2001-01-01")
+        out = atmos.aridity_index(pr, pet)
+
+        assert out.attrs["units"] == "1"
+        np.testing.assert_allclose(out.values, expected)
