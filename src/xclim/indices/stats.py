@@ -20,6 +20,7 @@ import pandas as pd
 import scipy.stats
 import xarray as xr
 from formulaic import model_matrix, parser
+from scipy.optimize import minimize
 from scipy.stats import rv_continuous
 
 from xclim.core import DateStr, Quantified
@@ -1244,7 +1245,7 @@ def _parse_formula(formula: dict | str | Sequence[str]) -> list:
     return terms if "1" in terms else ["1", *terms]
 
 
-def covariates_from_formulas(formulas: str | dict, cov_source: pd.DataFrame | dict):
+def covariates_from_formulas(formulas: str | dict, covariate_source: pd.DataFrame | dict):
     """
     Build covariate arrays from formula specifications.
 
@@ -1254,7 +1255,7 @@ def covariates_from_formulas(formulas: str | dict, cov_source: pd.DataFrame | di
         Formula specification. If a string, it is interpreted as a single
         formula. If a dictionary, values are formula specifications and all
         covariate terms appearing in the formulas are included in the output.
-    cov_source : pandas.DataFrame or dict
+    covariate_source : pandas.DataFrame or dict
         Source covariate data used to evaluate the formulas.
 
     Returns
@@ -1268,10 +1269,10 @@ def covariates_from_formulas(formulas: str | dict, cov_source: pd.DataFrame | di
     Formula terms are parsed using :mod:`formulaic`. The resulting design
     matrix is converted to a dictionary of NumPy arrays.
     """
-    cov_df = cov_source if isinstance(cov_source, pd.DataFrame) else pd.DataFrame(cov_source)
+    cov_df = covariate_source if isinstance(covariate_source, pd.DataFrame) else pd.DataFrame(covariate_source)
 
     formulad = {"dummy": formulas} if isinstance(formulas, str) else formulas
-    rhss = chain.from_iterable([_parse_formula(f) for f in formulad.values()])
+    rhss = chain.from_iterable(_parse_formula(formulad).values())
     formula = "~ " + "+".join(list(rhss))
     X = model_matrix(formula, cov_df)
 
@@ -1397,3 +1398,121 @@ def make_nll(dist: rv_continuous | str, formulas: dict, covariates: dict, log_li
         return -np.sum(logp)
 
     return _nll
+
+
+def _fit_covariate_1d(
+    y, dist, formulas, covariate_source, covariate_target, params, log_links, fix, method, **minimize_kwargs
+):
+    """Core 1-d fit, called once per grid cell/station by apply_ufunc."""
+    if fix is not None:
+        raise NotImplementedError("fixing params is not available yet")
+    # fix = {} if fix is None else fix
+    # fformulas = {name: terms for name, terms in formulas.items() if name not in fix}
+    covariates = covariates_from_formulas(formulas, covariate_source)
+    covariates_target = covariates_from_formulas(formulas, covariate_target)
+    if params is None:
+        mle = dist.fit(y)
+        params = dict(zip(formulas.keys(), mle, strict=True))
+    params_list = initialize_params(params, formulas)
+    nll = make_nll(dist, formulas, covariates, log_links, fix)
+    opt = minimize(nll, params_list, args=(y,), method=method, **minimize_kwargs)
+
+    parameters_target = expand_params(opt.x, formulas, covariates_target, log_links)
+    return np.array([v for v in parameters_target.values()])
+
+
+def fit_covariate(
+    y: xr.DataArray,
+    dist,
+    formulas,
+    dim: str,
+    # should be quantified, DataArrays
+    covariate_source: str | dict,
+    covariate_target: str | dict | None = None,
+    params=None,
+    log_links=(),
+    fix=None,
+    method="L-BFGS-B",
+    **minimize_kwargs,
+) -> xr.Dataset:
+    """
+    Fit a scipy distribution with covariate-varying parameters.
+
+    Parameters
+    ----------
+    y : xr.DataArray
+        Observations, with an `obs_dim` dimension (e.g. "time") and any
+        number of other dimensions (e.g. "lat", "lon", "station") along
+        which the fit is applied independently.
+    dist : rv_continuous or str
+        Scipy distribution.
+    formulas : dict[str, str]
+        Mapping from distribution parameter name to a formula string,
+        e.g. {"loc": "~1+t", "scale": "~1"}.
+    dim : str
+        Name of the observation dimension in `y` and in `covariate_source`.
+    covariate_source : dict or pd.DataFrame
+        Covariate data used to fit, aligned with `y` along `obs_dim`
+        (same length). Assumed shared across all other dimensions of `y`.
+    covariate_target : dict or pd.DataFrame, optional
+        Covariate data used to evaluate the fitted parameters (e.g. for
+        prediction on a different time axis). Defaults to `covariate_source`.
+    params : dict, optional
+        Initial scalar parameter values. If None, uses `dist.fit(y)` per
+        grid cell.
+    log_links : Iterable[str], optional
+        Parameter names modeled on the log scale.
+    fix : dict, optional
+        Not yet supported.
+    method : str
+        Passed to `scipy.optimize.minimize`.
+    **minimize_kwargs
+        Forwarded to `scipy.optimize.minimize`.
+
+    Returns
+    -------
+    xr.Dataset
+        Fitted distribution parameters.
+    """
+    dist = get_dist(dist)
+    param_names = _dist_param_names(dist)
+    formulas = _parse_formula(formulas)
+    param_names = list(formulas.keys())
+
+    if isinstance(covariate_source, str):
+        covariate_source = {covariate_source: y[covariate_source].values}
+    if covariate_target is None:
+        covariate_target = covariate_source
+    elif isinstance(covariate_target, str):
+        covariate_target = {covariate_target: y[covariate_target].values}
+
+    target_len = (
+        len(next(iter(covariate_target.values()))) if isinstance(covariate_target, dict) else len(covariate_target)
+    )
+
+    tdim = f"{dim}p"
+    out = xr.apply_ufunc(
+        _fit_covariate_1d,
+        y,
+        input_core_dims=[[dim]],
+        output_core_dims=[["params", tdim]],
+        # exclude_dims={dim} if dim != target_dim else set(),
+        vectorize=True,
+        dask="parallelized",
+        # output_dtypes=[float] * len(param_names),
+        dask_gufunc_kwargs={"output_sizes": {tdim: target_len}},
+        kwargs=dict(
+            dist=dist,
+            formulas=formulas,
+            covariate_source=covariate_source,
+            covariate_target=covariate_target,
+            params=params,
+            log_links=log_links,
+            fix=fix,
+            method=method,
+            **minimize_kwargs,
+        ),
+    ).rename({tdim: dim})
+    out = out.assign_coords({"params": param_names, dim: covariate_target[dim]})
+    out = out.assign_attrs({"scipy_dist": dist.name})
+    return out

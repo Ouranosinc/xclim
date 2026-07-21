@@ -487,6 +487,36 @@ def test_make_nll():
     np.testing.assert_allclose(out(params_list, obs), [8.715343])
 
 
+def test_fit_covariate_1d():
+    np.random.seed(41)
+    dist = stats.get_dist("gumbel_r")
+    loc, scale, n = 1, 0.5, 10000
+    obs = dist.rvs(loc, scale, n)
+    formulas = stats._parse_formula({"loc": "~1+t", "scale": "~1"})
+    # formulas = stats._parse_formula({"loc": "~1+t+I(t**2)", "scale": "~1"})
+    cov_source = dict(t=np.arange(n) / n)
+    stats._fit_covariate(
+        obs,
+        dist,
+        formulas,
+        cov_source,
+        cov_source,
+        log_links=("loc", "scale"),
+        params=dict(loc=np.log(2), scale=np.log(2)),
+    )
+
+
+def test_fit_covariate():
+    np.random.seed(42)
+    dist = stats.get_dist("gumbel_r")
+    loc, scale, n = 1, 0.5, 10000
+    obs = dist.rvs(loc, scale, n)
+    y = xr.DataArray(obs, dims={"time"})
+    cov_source = {"time": y.time.values}
+    formulas = stats._parse_formula({"loc": "~1+time", "scale": "~1"})
+    stats.fit_covariate(y, dist, formulas, "time", cov_source, cov_source)
+
+
 class TestNonStatStat:
     def test_parse_formula(self):
         assert stats._parse_formula("~1+t+I(t**2)+x") == ["1", "t", "I(t ** 2)", "x"]
