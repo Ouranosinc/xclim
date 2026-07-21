@@ -1281,10 +1281,7 @@ def covariates_from_formulas(formulas: str | dict, covariate_source: pd.DataFram
     return covariates
 
 
-def initialize_params(
-    params: dict[str, float],
-    formulas: dict[str, list[str]],
-) -> list:
+def initialize_params(params: dict[str, float], formulas: dict[str, list[str]], log_links: list | None = None) -> list:
     """
     Build the initial optimization vector.
 
@@ -1295,13 +1292,29 @@ def initialize_params(
         parameters are set to zero initially.
     formulas : dict
         Covariate terms for each parameter.
+    log_links : Iterable[str], optional
+        Names of parameters that should be exponentiated after the
+        linear predictor is computed. Default is no parameters transformed.
 
     Returns
     -------
     list of float
         Flattened initialization vector.
     """
-    return [params.get(name, 0.0) if i == 0 else 0.0 for name, terms in formulas.items() for i in range(len(terms))]
+    log_links = set() if log_links is None else set(log_links)
+    out = []
+    for name, terms in formulas.items():
+        init = params.get(name, 0.0)
+        if name in log_links:
+            if init <= 0:
+                raise ValueError(
+                    f"Cannot initialize log-linked parameter {name!r} with non-positive "
+                    f"value {init}. Provide a positive starting value via `params`."
+                )
+            init = np.log(init)
+        for i in range(len(terms)):
+            out.append(init if i == 0 else 0.0)
+    return out
 
 
 def expand_params(
@@ -1423,7 +1436,7 @@ def _fit_covariate_1d(
     if params is None:
         mle = dist.fit(y)
         params = dict(zip(formulas.keys(), mle, strict=True))
-    params_list = initialize_params(params, formulas)
+    params_list = initialize_params(params, formulas, log_links)
     nll = make_nll(dist, formulas, covariates, log_links, fix)
     opt = minimize(nll, params_list, args=(y,), method=method, **minimize_kwargs)
 
