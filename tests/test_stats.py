@@ -465,6 +465,28 @@ def test_expand_params():
     np.testing.assert_allclose(out["scale"], ones / 2)
 
 
+def test_make_nll():
+    np.random.seed(42)
+    dist = stats.get_dist("gumbel_r")
+    loc, scale, n = 1, 0.5, 10
+    obs = dist.rvs(loc, scale, n)
+    formulas = stats._parse_formula({"loc": "~1+t+I(t**2)", "scale": "~1"})
+    params = {"loc": loc, "scale": scale}
+    params_list = stats.initialize_params(params, formulas)
+    cov_source = dict(t=np.arange(n))
+    covariates = stats.covariates_from_formulas(formulas, cov_source)
+    out = stats.make_nll(dist, formulas, covariates, log_links=("loc"))
+    np.testing.assert_allclose(out(params_list, obs), [8.715343])
+
+    formulas = stats._parse_formula({"loc": "~1+t+I(t**2)"})
+    params = {"loc": loc, "scale": scale}
+    params_list = stats.initialize_params(params, formulas)
+    cov_source = dict(t=np.arange(n))
+    covariates = stats.covariates_from_formulas(formulas, cov_source)
+    out = stats.make_nll(dist, formulas, covariates, log_links=("loc"))
+    np.testing.assert_allclose(out(params_list, obs), [8.715343])
+
+
 class TestNonStatStat:
     def test_parse_formula(self):
         assert stats._parse_formula("~1+t+I(t**2)+x") == ["1", "t", "I(t ** 2)", "x"]

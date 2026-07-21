@@ -1303,7 +1303,9 @@ def initialize_params(
     return [params.get(name, 0.0) if i == 0 else 0.0 for name, terms in formulas.items() for i in range(len(terms))]
 
 
-def expand_params(params_list, formulas, covariates, log_links=None):
+def expand_params(
+    params_list: list[float], formulas: dict[str, list[str]], covariates: dict[str, np.ndarray], log_links=None
+):
     """
     Map a flat 1-d parameter vector to a dict of parameters expanded according to covariates.
 
@@ -1342,3 +1344,56 @@ def expand_params(params_list, formulas, covariates, log_links=None):
         val = coefs @ cov_matrix  # (n_obs,)
         params[k] = np.exp(val) if k in log_links else val
     return params
+
+
+def make_nll(dist: rv_continuous | str, formulas: dict, covariates: dict, log_links=(), fix=None):
+    """
+    Build a negative log-likelihood function compatible with scipy.optimize.minimize.
+
+    Parameters
+    ----------
+    dist : rv_continuous
+        Scipy distribution.
+    formulas : dict[str, list[str]]
+        Mapping from parameter name (e.g. "loc", "scale") to the list of
+        covariate term names.
+    covariates : dict[str, np.ndarray]
+        Mapping from term name to a 1-d array of per-observation values
+        (see `covariates_from_formulas`).
+    log_links : Iterable[str], optional
+        Names of parameters that should be exponentiated after the
+        linear predictor is computed. Default is no parameters transformed.
+    fix : dict, optional
+        Fixed parameter values.
+
+    Returns
+    -------
+    callable
+        Function compatible with `scipy.optimize.minimize`.
+
+    Raises
+    ------
+    ValueError
+        If unknown distribution parameters are supplied.
+    """
+    dist = get_dist(dist)
+    fix = fix or {}
+    param_names = _dist_param_names(dist)
+    if unknown := set(formulas) - set(param_names):
+        raise ValueError(
+            f"formulas keys {unknown} are not parameters of {dist.name}. Expected a subset of {param_names}."
+        )
+    # parameters without formulas are stationary by default
+    formulas = {name: formulas.get(name, ["1"]) for name in param_names}
+
+    def _nll(flat_params, y):
+        params = expand_params(flat_params, formulas, covariates, log_links)
+        params.update(fix)
+        # build positional args in the order scipy expects
+        kwargs = {k: params.get(k, fix.get(k)) for k in param_names}
+        logp = dist.logpdf(y, **kwargs)
+        if not np.all(np.isfinite(logp)):
+            return np.inf
+        return -np.sum(logp)
+
+    return _nll
