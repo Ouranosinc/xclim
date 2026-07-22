@@ -1359,7 +1359,7 @@ def effective_growing_degree_days(
     end = (
         day_threshold_reached(
             _tasmin,
-            condition=">",
+            condition="<",
             thresh="0 degC",
             date=after_date,
             which="first",

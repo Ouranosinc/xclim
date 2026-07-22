@@ -834,7 +834,7 @@ class TestSpellLengthStatistics:
         events = generic.spell_length_statistics(
             pr,
             window=window,
-            window_statistic="max",
+            window_statistic="sum",
             condition="<",
             thresh=f"{thresh1} mm",
             statistic="count",
@@ -871,7 +871,7 @@ class TestSpellLengthStatistics:
         np.testing.assert_allclose(max_d_max[0], [out_max_d_max], rtol=1e-1)
 
     def test_dry_spell_with_indexer(self, pr_series):
-        pr = pr_series([1] * 5 + [0] * 10 + [1] * 350, start="1900-01-01", units="mm/d")
+        pr = rate2amount(pr_series([1] * 5 + [0] * 10 + [1] * 350, start="1900-01-01", units="mm/d"))
         out = generic.spell_length_statistics(
             pr,
             window=7,
