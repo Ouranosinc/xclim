@@ -108,16 +108,11 @@ def _solar_noon_ephem_calc(lat: float, lon: float, day: datetime.date, elev: flo
     ----------
     lat : float
         latitudes to calculate solar noon for.
-
     lon : float
         longitudes to calculate solar noon for.
-
     day : datetime.date
         date for calculation of solar noon
-
-    sun : ephem.Sun() instance
-
-    elev : float, optional
+    elev : float
         elevation of observer
 
     Returns
