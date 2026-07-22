@@ -1434,8 +1434,9 @@ def _fit_covariate_1d(
     covariates = covariates_from_formulas(formulas, covariate_source)
     covariates_target = covariates_from_formulas(formulas, covariate_target)
     if params is None:
-        mle = dist.fit(y)
-        params = dict(zip(formulas.keys(), mle, strict=True))
+        nparams = sum(len(terms) for terms in formulas.values())
+        pp = _fitfunc_1d(y, dist=dist, nparams=nparams, method="MLE")
+        params = dict(zip(formulas.keys(), pp, strict=True))
     params_list = initialize_params(params, formulas, log_links)
     nll = make_nll(dist, formulas, covariates, log_links, fix)
     opt = minimize(nll, params_list, args=(y,), method=method, **minimize_kwargs)
