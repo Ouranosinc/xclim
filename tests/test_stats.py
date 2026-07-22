@@ -495,8 +495,9 @@ class TestNonStatStats:
             formulas,
             cov_source,
             cov_source,
-            log_links=("loc", "scale"),
+            expand_covariate=True,
             params=dict(loc=np.log(2), scale=np.log(2)),
+            log_links=("loc", "scale"),
         )
 
     def test_fit_covariate(self):

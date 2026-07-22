@@ -1419,6 +1419,7 @@ def _fit_covariate_1d(
     formulas,
     covariate_source,
     covariate_target,
+    expand_covariate,
     params,
     log_links,
     fix=None,
@@ -1431,8 +1432,15 @@ def _fit_covariate_1d(
     # fix = {} if fix is None else fix
     # fformulas = {name: terms for name, terms in formulas.items() if name not in fix}
 
-    covariates = covariates_from_formulas(formulas, covariate_source)
-    covariates_target = covariates_from_formulas(formulas, covariate_target)
+    # TODO: I don't think this should be allowed in general
+    # this only works if covariates are one-dimensional.
+
+    if expand_covariate:
+        covariates = covariates_from_formulas(formulas, covariate_source)
+        covariates_target = covariates_from_formulas(formulas, covariate_target)
+    else:
+        covariates = covariate_source
+        covariates_target = covariate_target
     if params is None:
         nparams = sum(len(terms) for terms in formulas.values())
         pp = _fitfunc_1d(y, dist=dist, nparams=nparams, method="MLE")
@@ -1529,6 +1537,9 @@ def fit_covariate(
 
     target_len = len(next(iter(covariate_target.values())))
 
+    covariate_source = covariates_from_formulas(formulas, covariate_source)
+    covariate_target = covariates_from_formulas(formulas, covariate_target)
+
     out = xr.apply_ufunc(
         _fit_covariate_1d,
         y,
@@ -1542,6 +1553,7 @@ def fit_covariate(
             formulas=formulas,
             covariate_source=covariate_source,
             covariate_target=covariate_target,
+            expand_covariate=False,
             params=params,
             log_links=log_links,
             fix=fix,
