@@ -2,6 +2,7 @@
 
 import datetime
 import importlib
+import sys
 import warnings
 from typing import Literal
 
@@ -67,6 +68,10 @@ def _solar_noon_astral(ds):
     xr.DataArray
         Times when solar noon is expected to occur
     """
+    if "astral" not in sys.modules:
+        warnings.warn("Importing astral library.")
+    import astral  # noqa: F401
+
     solar_noon_timedelta = xr.apply_ufunc(
         _solar_noon_astral_calc,
         ds.time,
@@ -138,6 +143,10 @@ def _solar_noon_ephem(ds):
     xr.DataArray
         Times when solar noon is expected to occur
     """
+    if "ephem" not in sys.modules:
+        warnings.warn("Importing PyEphem library.")
+    import ephem  # noqa: F401
+
     return xr.apply_ufunc(
         _solar_noon_ephem_calc,
         ds.lat[0],  # lat is needed for sunset/sunrise only.
@@ -165,7 +174,9 @@ def solar_noon_pvlib(ds):
     xr.DataArray
         Times when solar noon is expected to occur.
     """
-    import pvlib
+    if "pvlib" not in sys.modules:
+        warnings.warn("Importing pvlib library.")
+    import pvlib  # noqa: F401
 
     deltat = xr.DataArray(
         pvlib.spa.calculate_deltat(ds.time.dt.year, ds.time.dt.month), coords={"time": ds.time}, dims=["time"]
@@ -175,7 +186,7 @@ def solar_noon_pvlib(ds):
         _sunrise,
         _sunset,
     ) = xr.apply_ufunc(
-        pvlib.spa.transit_sunrise_sunset,
+        pvlib.spa.transit_sunrise_sunset,  # noqa: E0606
         ds.time.astype("datetime64[s]").astype("int"),  # seconds since epoch
         ds.lat[0],  # lat is needed for sunset/sunrise only.
         ds.lon,
