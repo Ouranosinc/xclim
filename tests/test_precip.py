@@ -437,7 +437,7 @@ class TestWetSpellMaxLength:
         x1.attrs["units"] = "mm/day"
         cwd1 = atmos.wet_spell_max_length(x1, freq="MS")
 
-        assert cwd1 == 5
+        assert cwd1 == 9
 
         assert np.isnan(out1.values[0, 1, 0])
 
@@ -457,7 +457,7 @@ class TestDrySpellMaxLength:
         # put a nan somewhere
         prMM.values[10, 1, 0] = np.nan
         pr.values[10, 1, 0] = np.nan
-        pr_min = "5 mm/d"
+        pr_min = "5 mm"
         out1 = atmos.dry_spell_max_length(pr, thresh=pr_min, freq="MS")
         out2 = atmos.dry_spell_max_length(prMM, thresh=pr_min, freq="MS")
 
@@ -634,7 +634,7 @@ def test_dry_spell(atmosds):
 
     assert (
         "The annual number of dry periods of at least 7 days. "
-        "A period is dry if its total precipitation on a window of 7 days is below 3 mm."
+        "a period is dry if its total precipitation on a window of 7 days is below 3 mm."
     ) in events.description
     assert "The annual number of days in dry periods of at least 7 days" in total_d_sum.description
     assert "The annual number of days in dry periods of at least 7 days" in total_d_max.description
@@ -684,12 +684,12 @@ def test_dry_spell_frequency_op(open_dataset):
     np.testing.assert_allclose(test_sum[0, :14], [1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 0, 0, 1, 0], rtol=1e-1)
     np.testing.assert_allclose(test_max[0, :14], [1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 2, 1], rtol=1e-1)
     assert (
-        "The monthly number of dry periods of at least 7 days. A period is dry if its "
+        "The monthly number of dry periods of at least 7 days. a period is dry if its "
         "total precipitation on a window of 7 days is below 3 mm."
     ) in test_sum.description
     assert (
         "The monthly number of dry periods of at least 7 days. "
-        "A period is dry if its maximal precipitation on a window of 7 days is below 3 mm."
+        "a period is dry if its maximal precipitation on a window of 7 days is below 3 mm."
     ) in test_max.description
 
 

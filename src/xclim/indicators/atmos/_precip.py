@@ -400,10 +400,10 @@ precip_average = Precip(
     description="{freq} mean precipitation.",
     abstract="Averaged precipitation.",
     cell_methods="time: mean over days",
-    compute=indices.generic.statistics,
-    input={"data": "pr"},
-    parameters={"statistic": "mean", "freq": {"default": "YS"}, "out_units": None},
+    compute=indices.precip_average,
+    parameters={"tas": None, "phase": None},
 )
+
 
 wet_precip_accumulation = Precip(
     title="Total accumulated precipitation (solid and liquid) during wet days",
