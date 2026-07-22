@@ -10,10 +10,10 @@ Indicators
 
    api_indicators
 
-Indices
-=======
+Compute functions
+=================
 
-See: :ref:`indices:Climate Indices`
+See: :ref:`compute:Compute functions`
 
 Health Checks
 =============

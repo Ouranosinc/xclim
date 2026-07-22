@@ -13,12 +13,12 @@ import xarray as xr
 from dask.callbacks import Callback
 
 import xclim
-from xclim.core import VARIABLES
-from xclim.core.calendar import percentile_doy
-from xclim.indices.converters import (
+from xclim.compute.converters import (
     longwave_upwelling_radiation_from_net_downwelling,
     shortwave_upwelling_radiation_from_net_downwelling,
 )
+from xclim.core import VARIABLES
+from xclim.core.calendar import percentile_doy
 
 logger = logging.getLogger("xclim")
 

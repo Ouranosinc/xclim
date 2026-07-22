@@ -57,7 +57,7 @@ def percentile_bootstrap(func: Callable) -> Callable:
     Examples
     --------
     >>> from xclim.core.calendar import percentile_doy
-    >>> from xclim.indices import tg90p
+    >>> from xclim.compute import tg90p
     >>> tas = xr.open_dataset(path_to_tas_file).tas
     >>> # To start bootstrap reference period must not fully overlap the studied period.
     >>> tas_ref = tas.sel(time=slice("1990-01-01", "1992-12-31"))
@@ -80,11 +80,12 @@ def percentile_bootstrap(func: Callable) -> Callable:
 
 def bootstrap_func(compute_index_func: Callable, **kwargs) -> xarray.DataArray:
     r"""
-    Bootstrap the computation of percentile-based indices.
+    Bootstrap the computation of percentile-based indicators.
 
-    Indices measuring exceedance over percentile-based thresholds (such as tx90p) may contain artificial discontinuities
-    at the beginning and end of the reference period used to calculate percentiles. The bootstrap procedure can reduce
-    those discontinuities by iteratively computing the percentile estimate and the index on altered reference periods.
+    Indicators measuring exceedance over percentile-based thresholds (such as tx90p) may contain artificial
+    discontinuities at the beginning and end of the reference period used to calculate percentiles. The bootstrap
+    procedure can reduce those discontinuities by iteratively computing the percentile estimate and the index on altered
+    reference periods.
 
     These altered reference periods are themselves built iteratively: When computing the index for year `x`, the
     bootstrapping creates as many altered reference periods as the number of years in the reference period.

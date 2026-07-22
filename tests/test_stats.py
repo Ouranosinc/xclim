@@ -10,7 +10,7 @@ import xarray as xr
 from scipy.optimize import differential_evolution
 from scipy.stats import lognorm, norm
 
-from xclim.indices import stats
+from xclim.compute import stats
 
 
 @pytest.fixture(params=[True, False])

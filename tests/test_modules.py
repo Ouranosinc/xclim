@@ -70,14 +70,14 @@ def test_custom_indices(open_dataset):
     example = load_module(example_path / "example.py")
 
     # From module
-    ex1 = build_indicator_module_from_yaml(example_path / "example.yml", name="ex1", indices=example)
+    ex1 = build_indicator_module_from_yaml(example_path / "example.yml", name="ex1", computes=example)
 
     # Did this register the new variable?
     assert "prveg" in VARIABLES
 
     # From mapping
     extreme_inds = {"extreme_precip_accumulation_and_days": example.extreme_precip_accumulation_and_days}
-    ex2 = build_indicator_module_from_yaml(example_path / "example.yml", name="ex2", indices=extreme_inds)
+    ex2 = build_indicator_module_from_yaml(example_path / "example.yml", name="ex2", computes=extreme_inds)
 
     assert ex1.R95p.__doc__ == ex2.R95p.__doc__  # noqa
 
@@ -129,7 +129,7 @@ def test_build_indicator_module_from_yaml_edge_cases():
     # All from paths but one
     ex5 = build_indicator_module_from_yaml(
         example_path / "example.yml",
-        indices=example_path / "example.py",
+        computes=example_path / "example.py",
         translations={
             "fr": example_path / "example.fr.json",
             "ru": str(example_path / "example.fr.json"),

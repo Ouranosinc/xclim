@@ -1,4 +1,4 @@
-"""ANUCLIM indice definitions."""
+"""ANUCLIM index function definitions."""
 
 from __future__ import annotations
 
@@ -8,6 +8,14 @@ from typing import Literal, cast
 import numpy as np
 import xarray
 
+from xclim.compute._multivariate import (
+    daily_temperature_range,
+    extreme_temperature_range,
+    precip_accumulation,
+)
+from xclim.compute._simple import tg_mean
+from xclim.compute.generic import statistics
+from xclim.compute.run_length import lazy_indexing
 from xclim.core import Quantified
 from xclim.core.units import (
     convert_units_to,
@@ -17,14 +25,6 @@ from xclim.core.units import (
     units2pint,
 )
 from xclim.core.utils import ensure_chunk_size
-from xclim.indices._multivariate import (
-    daily_temperature_range,
-    extreme_temperature_range,
-    precip_accumulation,
-)
-from xclim.indices._simple import tg_mean
-from xclim.indices.generic import statistics
-from xclim.indices.run_length import lazy_indexing
 
 # Frequencies : YS: year start, QS-DEC: seasons starting in december, MS: month start
 # See http://pandas.pydata.org/pandas-docs/stable/timeseries.html#offset-aliases
@@ -86,7 +86,7 @@ def isothermality(tasmin: xarray.DataArray, tasmax: xarray.DataArray, freq: str 
     Notes
     -----
     According to the ANUCLIM user-guide (:cite:t:`xu_anuclim_2010`, ch. 6), input values should be at a weekly
-    (or monthly) frequency.  However, the xclim.indices implementation here will calculate the output with input data
+    (or monthly) frequency.  However, the xclim.compute implementation here will calculate the output with input data
     with daily frequency as well. As such weekly or monthly input values, if desired, should be calculated prior to
     calling the function.
 
@@ -129,7 +129,7 @@ def temperature_seasonality(tas: xarray.DataArray, freq: str = "YS") -> xarray.D
     divide by zero, but it does mean that the values are usually quite small.
 
     According to the ANUCLIM user-guide (:cite:t:`xu_anuclim_2010`, ch. 6), input values should be at a weekly
-    (or monthly) frequency. However, the xclim.indices implementation here will calculate the result with input data
+    (or monthly) frequency. However, the xclim.compute implementation here will calculate the result with input data
     with daily frequency as well. As such weekly or monthly input values, if desired, should be calculated prior to
     calling the function.
 
@@ -141,7 +141,7 @@ def temperature_seasonality(tas: xarray.DataArray, freq: str = "YS") -> xarray.D
     --------
     The following would compute for each grid cell of file `tas.day.nc` the annual temperature seasonality:
 
-    >>> import xclim.indices as xci
+    >>> import xclim.compute as xci
     >>> t = xr.open_dataset(path_to_tas_file).tas
     >>> tday_seasonality = xci.temperature_seasonality(t)
     >>> t_weekly = xci.tg_mean(t, freq="7D")
@@ -178,7 +178,7 @@ def precip_seasonality(pr: xarray.DataArray, freq: str = "YS") -> xarray.DataArr
     Notes
     -----
     According to the ANUCLIM user-guide (:cite:t:`xu_anuclim_2010`, ch. 6), input values should be at a weekly
-    (or monthly) frequency. However, the xclim.indices implementation here will calculate the result with input data
+    (or monthly) frequency. However, the xclim.compute implementation here will calculate the result with input data
     with daily frequency as well. As such weekly or monthly input values, if desired, should be calculated prior to
     calling the function.
 
@@ -193,7 +193,7 @@ def precip_seasonality(pr: xarray.DataArray, freq: str = "YS") -> xarray.DataArr
     --------
     The following would compute for each grid cell of file `pr.day.nc` the annual precipitation seasonality:
 
-    >>> import xclim.indices as xci
+    >>> import xclim.compute as xci
     >>> p = xr.open_dataset(path_to_pr_file).pr
     >>> pday_seasonality = xci.precip_seasonality(p)
     >>> p_weekly = xci.precip_accumulation(p, freq="7D")
@@ -243,7 +243,7 @@ def tg_mean_warmcold_quarter(
     Notes
     -----
     According to the ANUCLIM user-guide (:cite:t:`xu_anuclim_2010`, ch. 6), input values should be at a weekly
-    (or monthly) frequency. However, the xclim.indices implementation here will calculate the result with input data
+    (or monthly) frequency. However, the xclim.compute implementation here will calculate the result with input data
     with daily frequency as well. As such weekly or monthly input values, if desired, should be calculated prior to
     calling the function.
 
@@ -256,7 +256,7 @@ def tg_mean_warmcold_quarter(
     The following would compute for each grid cell of file `tas.day.nc` the annual temperature of the
     warmest quarter mean temperature:
 
-    >>> from xclim.indices import tg_mean_warmcold_quarter
+    >>> from xclim.compute import tg_mean_warmcold_quarter
     >>> t = xr.open_dataset(path_to_tas_file)
     >>> t_warm_qrt = tg_mean_warmcold_quarter(tas=t.tas, op="warmest")
     """
@@ -304,7 +304,7 @@ def tg_mean_wetdry_quarter(
     Notes
     -----
     According to the ANUCLIM user-guide (:cite:t:`xu_anuclim_2010`, ch. 6), input values should be at a weekly
-    (or monthly) frequency. However, the xclim.indices implementation here will calculate the result with input data
+    (or monthly) frequency. However, the xclim.compute implementation here will calculate the result with input data
     with daily frequency as well. As such, weekly or monthly input values, if desired, should be calculated before
     calling the function.
 
@@ -355,7 +355,7 @@ def prcptot_wetdry_quarter(
     Notes
     -----
     According to the ANUCLIM user-guide (:cite:t:`xu_anuclim_2010`, ch. 6), input values should be at a weekly
-    (or monthly) frequency. However, the xclim.indices implementation here will calculate the result with input data
+    (or monthly) frequency. However, the xclim.compute implementation here will calculate the result with input data
     with daily frequency as well. As such, weekly or monthly input values, if desired, should be calculated before
     calling the function.
 
@@ -367,7 +367,7 @@ def prcptot_wetdry_quarter(
     --------
     The following would compute for each grid cell of file `pr.day.nc` the annual wettest quarter total precipitation:
 
-    >>> from xclim.indices import prcptot_wetdry_quarter
+    >>> from xclim.compute import prcptot_wetdry_quarter
     >>> p = xr.open_dataset(path_to_pr_file)
     >>> pr_warm_qrt = prcptot_wetdry_quarter(pr=p.pr, op="wettest")
     """
@@ -416,7 +416,7 @@ def prcptot_warmcold_quarter(
     Notes
     -----
     According to the ANUCLIM user-guide (:cite:t:`xu_anuclim_2010`, ch. 6), input values should be at a weekly
-    (or monthly) frequency. However, the xclim.indices implementation here will calculate the result with input data
+    (or monthly) frequency. However, the xclim.compute implementation here will calculate the result with input data
     with daily frequency as well. As such, weekly or monthly input values, if desired, should be calculated prior to
     calling the function.
 
@@ -494,7 +494,7 @@ def prcptot_wetdry_period(
     Notes
     -----
     According to the ANUCLIM user-guide (:cite:t:`xu_anuclim_2010`, ch. 6), input values should be at a weekly
-    (or monthly) frequency. However, the xclim.indices implementation here will calculate the result with input data
+    (or monthly) frequency. However, the xclim.compute implementation here will calculate the result with input data
     with daily frequency as well. As such, weekly or monthly input values, if desired, should be calculated prior to
     calling the function.
 

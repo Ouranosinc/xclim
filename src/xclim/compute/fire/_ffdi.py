@@ -3,11 +3,12 @@ r"""
 McArthur Forest Fire Danger (Mark 5) System
 ===========================================
 
-This submodule defines indices related to the McArthur Forest Fire Danger Index Mark 5.
-Currently implemented are the :py:func:`xclim.indices.fire.keetch_byram_drought_index`,
-:py:func:`xclim.indices.fire.griffiths_drought_factor` and
-:py:func:`xclim.indices.fire.mcarthur_forest_fire_danger_index` indices, which are used by the eponym indicators.
-The implementation of these indices follows :cite:t:`ffdi-finkele_2006` and :cite:t:`ffdi-noble_1980`,
+This submodule defines functions related to the McArthur Forest Fire Danger Index Mark 5.
+Currently implemented are the :py:func:`xclim.compute.fire.keetch_byram_drought_index`,
+:py:func:`xclim.compute.fire.griffiths_drought_factor` and
+:py:func:`xclim.compute.fire.mcarthur_forest_fire_danger_index` compute functions, which are used by the eponym
+indicators.
+The implementation of these functions follows :cite:t:`ffdi-finkele_2006` and :cite:t:`ffdi-noble_1980`,
 with any differences described in the documentation for each index. Users are encouraged to read the documentation of
 this module and consult :cite:t:`ffdi-finkele_2006` for a full description of the methods used to calculate each
 index.
@@ -15,7 +16,7 @@ index.
 
 # This file is structured in the following way:
 # Section 1: individual codes, numba-accelerated and vectorized functions.
-# Section 2: Exposed methods and indices.
+# Section 2: Exposed methods and compute functions
 #
 # Methods starting with a "_" are not usable with xarray objects, whereas the others are.
 from __future__ import annotations
@@ -176,7 +177,7 @@ def _griffiths_drought_factor(p, smd, lim, df):  # pragma: no cover
         df[d] = dfw
 
 
-# SECTION 2 - Public methods and indices
+# SECTION 2 - Public methods and compute functions
 
 
 @declare_units(

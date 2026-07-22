@@ -7,7 +7,7 @@ import pytest
 import xarray as xr
 from dask import array as dsk
 
-from xclim import indices, set_options
+from xclim import compute, set_options
 from xclim.core import Quantified, ValidationError
 from xclim.core.units import (
     amount2lwethickness,
@@ -76,7 +76,7 @@ class TestConvertUnitsTo:
 
         with pytest.raises(TypeError):
             tas = tas_series(np.arange(365), start="1/1/2001")
-            out = indices.tx_days_above(tas, 30)  # noqa
+            out = compute.tx_days_above(tas, 30)  # noqa
 
     def test_fraction(self):
         out = convert_units_to(xr.DataArray([10], attrs={"units": "%"}), "")
