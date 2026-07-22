@@ -643,7 +643,7 @@ def vapor_pressure_deficit(
     """
     Vapour pressure deficit.
 
-    The measure of the moisture deficit of the air, computed from temperature and relative
+    The measure of the moisture deficit of the air, computed from temperature and relative humidity.
 
     Parameters
     ----------
