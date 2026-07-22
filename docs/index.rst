@@ -7,7 +7,7 @@ adjustment of climate model simulations, as well as climate model ensemble analy
 
 xclim is built using `xarray`_ and can seamlessly benefit from the parallelization handling provided by `dask`_.
 Its objective is to make it as simple as possible for users to perform typical climate services data treatment workflows.
-Leveraging xarray and dask, users can easily bias-adjust climate simulations over large spatial domains or compute indices from large climate datasets.
+Leveraging xarray and dask, users can easily bias-adjust climate simulations over large spatial domains or compute indicators from large climate datasets.
 
 .. _xarray: https://docs.xarray.dev/
 .. _dask: https://docs.dask.org/
@@ -27,7 +27,7 @@ Leveraging xarray and dask, users can easily bias-adjust climate simulations ove
    notebooks/usage
    notebooks/index
    indicators
-   indices
+   compute
    checks
    notebooks/units
    internationalization
@@ -58,8 +58,8 @@ Leveraging xarray and dask, users can easily bias-adjust climate simulations ove
 
 .. only:: html
 
-    Indices and tables
-    ==================
+    Index and tables
+    ================
     * :ref:`genindex`
     * :ref:`modindex`
     * :ref:`search`
