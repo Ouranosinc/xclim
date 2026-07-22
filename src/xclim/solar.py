@@ -1,7 +1,9 @@
 """The solar module offers functions for interpolating and accumulating variables to solar noon."""
 
+import datetime
 import importlib
 import warnings
+from typing import Literal
 
 import numpy as np
 import pandas as pd
@@ -17,7 +19,7 @@ for lib in ["pvlib", "astral", "ephem"]:
         break
 
 
-def _solar_noon_astral_calc(t, lon):
+def _solar_noon_astral_calc(t: np.ndarray, lon: np.ndarray):
     """
     Calculate solar noon with astral library
 
@@ -25,7 +27,6 @@ def _solar_noon_astral_calc(t, lon):
     ----------
     t : np.ndarray[datetime64]
         day datetime to calculate solar noon at.
-
     lon : np.ndarray[float]
         longitudes to calculate solar noon for.
 
@@ -83,7 +84,7 @@ def _solar_noon_astral(ds):
     return ds.time + (solar_noon_timedelta * 3600).astype("timedelta64[s]")
 
 
-def _solar_noon_ephem_calc(lat, lon, day, sun, elev=0):
+def _solar_noon_ephem_calc(lat: float, lon: float, day: datetime.date, elev: float = 0.0):
     """
     Calculate solar noon with ephem library
 
@@ -110,6 +111,7 @@ def _solar_noon_ephem_calc(lat, lon, day, sun, elev=0):
     """
     import ephem
 
+    sun = ephem.Sun()
     o = ephem.Observer()
     # need to project lat/lon to EPSG:6648.
     o.lat = lat * np.pi / 180
@@ -136,15 +138,11 @@ def _solar_noon_ephem(ds):
     xr.DataArray
         Times when solar noon is expected to occur
     """
-    import ephem
-
-    sun = ephem.Sun()
     return xr.apply_ufunc(
         _solar_noon_ephem_calc,
         ds.lat[0],  # lat is needed for sunset/sunrise only.
         ds.lon,
         ds.time.dt.date,
-        kwargs={"sun": sun},
         input_core_dims=[[], [], []],
         output_core_dims=[[]],
         vectorize=True,
@@ -174,8 +172,8 @@ def solar_noon_pvlib(ds):
     )
     (
         transit,
-        sunrise,
-        sunset,
+        _sunrise,
+        _sunset,
     ) = xr.apply_ufunc(
         pvlib.spa.transit_sunrise_sunset,
         ds.time.astype("datetime64[s]").astype("int"),  # seconds since epoch
@@ -191,7 +189,7 @@ def solar_noon_pvlib(ds):
     return transit.astype("datetime64[s]")
 
 
-def solar_noon(ds, method=default_method):
+def solar_noon(ds, method: Literal["pvlib", "astral", "ephem"] = default_method):
     """
     Return the solar noon time for the given dataset, assuming UTC.
 
@@ -203,7 +201,7 @@ def solar_noon(ds, method=default_method):
     ----------
     ds : xr.DataArray or xr.Dataset
         Dataset with variables ds.time, ds.lon, and ds.lat.
-    method : str, optional
+    method : {"pvlib", "astral", "ephem"}
         Method to use to calculate solar noon, by default
         uses first available library from ['pvlib','astral','ephem'].
 
@@ -234,8 +232,6 @@ def sel_with_nans(da, dim, sel, label="tmp_time", fill=np.nan, lazy=True):
     It is similar to xr.reindex, but allows for multi-dimensional reindexing.
     It is also similar to xr.sel, but allows for lazy evaluation and filling for unavailable selections.
 
-    Note: this can be quite memory intensive. Optimizing chunking may help.
-
     Parameters
     ----------
     da : xr.DataArray
@@ -244,17 +240,21 @@ def sel_with_nans(da, dim, sel, label="tmp_time", fill=np.nan, lazy=True):
         Dimension over which to select.
     sel : xr.DataArray
         DataArray with which to select. Requires `dim` dimension.
-    label : str, optional
+    label : str
         Label to rename dim in `da`, by default "tmp_time".
-    fill : float, optional
+    fill : float
         Fill value if sel does not exist in da[dim], by default np.nan.
-    lazy : bool, optional
+    lazy : bool
         Whether to compute immediately, or evaluate lazily with dask, by default True.
 
     Returns
     -------
     xr.DataArray
         DataArray `da` selected on dimension `dim` with selection `sel`.
+
+    Warnings
+    --------
+    This function can be quite memory intensive. Optimizing chunking may help.
     """
     # sel = sel.rename({dim:label})
     dimchunks = {d: s[0] for d, s in da.chunksizes.items() if d != dim}
@@ -287,12 +287,12 @@ def get_dt(freq):
 
     Parameters
     ----------
-        freq : str
-            Pandas time frequency.
+    freq : str
+        Pandas time frequency.
 
     Returns
     -------
-    float:
+    float
         Total seconds between two timestamps with this frequency.
     """
     return pd.date_range(freq=freq, periods=2, start="2000-01-01").diff()[1].total_seconds()
@@ -341,7 +341,7 @@ def accumulate_between_times(ds, var, freq, prev_time, curr_time):
 
 def interpolate_to_time(ds, var, freq, curr_time):
     """
-    Interpolate ds to the given time DataArray (such as Solar noon times).
+    Interpolate Dataset to the given time DataArray (such as Solar noon times).
 
     This is equivalent to ds[var].interp(time=curr_time), but tends to be faster.
 
@@ -380,18 +380,18 @@ def interpolate_to_solar_noon(da, method="interpolate", solar_method=default_met
     """
     Interpolate (or accumulate) da to solar noon.
 
-    If da is precipitation data, and is accumulated, then the output units will be converted to mm/d.
+    If DataArray is precipitation data, and is accumulated, then the output units will be converted to mm/d.
 
     Parameters
     ----------
-        da : xr.Dataset or xr.DataArray
-            Data to interpolate.
-        method : str, optional
-            Either `interpolate` at solar noon, or `accumulate` between solar noons.
-            Defaults to 'interpolate'.
-        solar_method : str, optional
-            Python library to use to perform solar noon calculations.
-            Defaults to first available library from ['pvlib', 'astral', 'ephem'].
+    da : xr.Dataset or xr.DataArray
+        Data to interpolate.
+    method : str, optional
+        Either `interpolate` at solar noon, or `accumulate` between solar noons.
+        Defaults to 'interpolate'.
+    solar_method : str, optional
+        Python library to use to perform solar noon calculations.
+        Defaults to first available library from ['pvlib', 'astral', 'ephem'].
 
     Returns
     -------
