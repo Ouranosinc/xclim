@@ -2,7 +2,6 @@
 
 import datetime
 import importlib
-import sys
 import warnings
 from typing import Literal
 
@@ -12,12 +11,19 @@ import xarray as xr
 
 import xclim as xc
 
+default_method = None
 for lib in ["pvlib", "astral", "ephem"]:
     if importlib.util.find_spec(lib):
         default_method = lib
         if lib != "pvlib":
             warnings.warn(f"pvlib library not found, default solar calculations will be performed with {lib}")
         break
+if not default_method:
+    msg = (
+        "xclim.solar requires one of ['pvlib','ephem','astral'] to be installed. "
+        + "Install using `pip install xclim[solar]`."
+    )
+    warnings.warn(msg)
 
 
 def _solar_noon_astral_calc(t: np.ndarray, lon: np.ndarray):
@@ -68,12 +74,14 @@ def _solar_noon_astral(ds):
     xr.DataArray
         Times when solar noon is expected to occur
     """
-    if "astral" not in sys.modules:
-        warnings.warn("Importing astral library.")
     try:
         import astral  # noqa: F401
-    except ModuleNotFoundError as e:
-        raise e
+    except ModuleNotFoundError as err:
+        msg = (
+            "solar_noon_astral requires the astral library. "
+            + "Install with `pip install astral` or `pip install xclim[solar]`"
+        )
+        raise ModuleNotFoundError(msg) from err
 
     solar_noon_timedelta = xr.apply_ufunc(
         _solar_noon_astral_calc,
@@ -146,12 +154,14 @@ def _solar_noon_ephem(ds):
     xr.DataArray
         Times when solar noon is expected to occur
     """
-    if "ephem" not in sys.modules:
-        warnings.warn("Importing PyEphem library.")
     try:
         import ephem  # noqa: F401
-    except ModuleNotFoundError as e:
-        raise e
+    except ModuleNotFoundError as err:
+        msg = (
+            "solar_noon_ephem requires the ephem library. "
+            + "Install with `pip install ephem` or `pip install xclim[solar]`"
+        )
+        raise ModuleNotFoundError(msg) from err
 
     return xr.apply_ufunc(
         _solar_noon_ephem_calc,
@@ -180,12 +190,14 @@ def solar_noon_pvlib(ds):
     xr.DataArray
         Times when solar noon is expected to occur.
     """
-    if "pvlib" not in sys.modules:
-        warnings.warn("Importing pvlib library.")
     try:
         import pvlib  # noqa: F401
-    except ModuleNotFoundError as e:
-        raise e
+    except ModuleNotFoundError as err:
+        msg = (
+            "solar_noon_pvlib requires the pvlib library. "
+            + "Install with `pip install pvlib` or `pip install xclim[solar]`"
+        )
+        raise ModuleNotFoundError(msg) from err
 
     deltat = xr.DataArray(
         pvlib.spa.calculate_deltat(ds.time.dt.year, ds.time.dt.month), coords={"time": ds.time}, dims=["time"]
