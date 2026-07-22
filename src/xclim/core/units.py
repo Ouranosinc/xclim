@@ -76,6 +76,7 @@ units.force_ndarray_like = False
 
 # Define dimensionalities for convenience with the `declare_units` decorator
 units.define("[precipitation] = [mass] / [length] ** 2 / [time]")
+units.define("[snowamount] = [mass] / [length] ** 2")
 units.define("[discharge] = [length] ** 3 / [time]")
 units.define("[radiation] = [power] / [length]**2")
 
@@ -1557,7 +1558,7 @@ def infer_context(standard_name: str | None = None, dimension: str | None = None
     Returns
     -------
     str
-        "hydro" if variable is a liquid water flux, otherwise "none".
+        "hydro" if variable refers to liquid water or to a mass of water in any phase, otherwise "none".
     """
     csn = (
         (
@@ -1570,10 +1571,12 @@ def infer_context(standard_name: str | None = None, dimension: str | None = None
             or "rainfall" in standard_name
             or "lwe" in standard_name
             or "precipitation" in standard_name
+            or "surface_snow_amount" in standard_name
         )
         if standard_name is not None
         else False
     )
-    c_dim = ("[precipitation]" in dimension) if dimension is not None else False
+    # FIXME: Should be `and` below, but I will keep the current behaviour, and a fix will come in a future PR
+    c_dim = (("[precipitation]" in dimension) or ("[snowamount]" in dimension)) if dimension is not None else False
 
     return "hydro" if csn or c_dim else "none"
