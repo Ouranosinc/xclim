@@ -169,7 +169,7 @@ xclim = "xclim.cli:cli"
 [tool]
 
 [tool.bumpversion]
-current_version = "0.99.0-dev.10"
+current_version = "0.99.0-dev.13"
 commit = true
 commit_args = "--no-verify --signoff"
 tag = false
@@ -223,10 +223,12 @@ include = [
   "CHANGELOG.rst",
   "CI/requirements_upstream.txt",
   "CITATION.cff",
+  "CODE_OF_CONDUCT.md",
   "CONTRIBUTING.rst",
   "LICENSE",
   "Makefile",
   "README.rst",
+  "SECURITY.md",
   "docs/**/*.gif",
   "docs/**/*.jpg",
   "docs/**/*.png",
@@ -241,12 +243,15 @@ include = [
   "src/xclim/**/*.yml",
   "tests/**/*.py",
   "tests/**/*.txt",
-  "tox.ini"
+  "tox.toml"
 ]
 exclude = [
   "**/*.py[co]",
   "**/__pycache__",
   ".*",
+  "AGENTS.md",
+  "AI_POLICY.md",
+  "CI/requirements_ci.in",
   "CI/requirements_ci.txt",
   "docs/_*",
   "docs/modules.rst",
