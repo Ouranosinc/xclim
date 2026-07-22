@@ -108,7 +108,16 @@ docs = [
   "sphinxcontrib-bibtex",
   "sphinxcontrib-svg2pdfconverter[Cairosvg]"
 ]
-extras = ["flox >=0.9", "lmoments3 >=1.0.7", "numbagg >=0.8", "xsdba >=0.4.0", "pymannkendall >=1.4.0"]
+extras = [
+  "flox >=0.9",
+  "lmoments3 >=1.0.7",
+  "numbagg >=0.8",
+  "xsdba >=0.4.0",
+  "pymannkendall >=1.4.0",
+  "astral >=3.2.0",
+  "ephem >=4.2.1",
+  "pvlib >=0.15.2"
+]
 all = ["xclim[dev]", "xclim[docs]", "xclim[extras]"]
 
 [project.scripts]
