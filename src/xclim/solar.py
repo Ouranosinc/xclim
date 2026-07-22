@@ -57,7 +57,7 @@ def _solar_noon_astral_calc(t: np.ndarray, lon: np.ndarray):
     return timeUTC
 
 
-def _solar_noon_astral(ds):
+def _solar_noon_astral(ds: xr.Dataset | xr.DataArray) -> xr.DataArray:
     """
     Approximate solar noon values, using the NOAA algorithm implemented in `astral`. Faster than other methods, but
     accuracy is only correct on the order of ±10s.
@@ -138,7 +138,7 @@ def _solar_noon_ephem_calc(lat: float, lon: float, day: datetime.date, elev: flo
     return pd.Timestamp(noon.datetime())
 
 
-def _solar_noon_ephem(ds):
+def _solar_noon_ephem(ds: xr.Dataset | xr.DataArray) -> xr.DataArray:
     """
     High precision calculation of solar noon using PyEphem. This is not vectorized, so it is quite slow.
 
@@ -174,7 +174,7 @@ def _solar_noon_ephem(ds):
     )
 
 
-def solar_noon_pvlib(ds):
+def solar_noon_pvlib(ds: xr.Dataset | xr.DataArray) -> xr.DataArray:
     """
     High precision calculation of solar noon using pvlib, accurate up to ±1s.
 
@@ -221,7 +221,9 @@ def solar_noon_pvlib(ds):
     return transit.astype("datetime64[s]")
 
 
-def solar_noon(ds, method: Literal["pvlib", "astral", "ephem"] = default_method):
+def solar_noon(
+    ds: xr.Dataset | xr.DataArray, method: Literal["pvlib", "astral", "ephem"] = default_method
+) -> xr.DataArray:
     """
     Return the solar noon time for the given dataset, assuming UTC.
 
@@ -255,65 +257,7 @@ def solar_noon(ds, method: Literal["pvlib", "astral", "ephem"] = default_method)
     return do_calc(ds)
 
 
-def sel_with_nans(da, dim, sel, label="tmp_time", fill=np.nan, lazy=True):
-    """
-    Select from da on dimension dim, with DataArray from the *sorted* da[dim] index.
-
-    This is similar to xc.core.utils.lazy_indexing, but allows for labelled indexing,
-    and fills locations with `fill` if not available.
-    It is similar to xr.reindex, but allows for multi-dimensional reindexing.
-    It is also similar to xr.sel, but allows for lazy evaluation and filling for unavailable selections.
-
-    Parameters
-    ----------
-    da : xr.DataArray
-        DataArray to select from. Requires `dim` dimension.
-    dim : str
-        Dimension over which to select.
-    sel : xr.DataArray
-        DataArray with which to select. Requires `dim` dimension.
-    label : str
-        Label to rename dim in `da`, by default "tmp_time".
-    fill : float
-        Fill value if sel does not exist in da[dim], by default np.nan.
-    lazy : bool
-        Whether to compute immediately, or evaluate lazily with dask, by default True.
-
-    Returns
-    -------
-    xr.DataArray
-        DataArray `da` selected on dimension `dim` with selection `sel`.
-
-    Warnings
-    --------
-    This function can be quite memory intensive. Optimizing chunking may help.
-    """
-    # sel = sel.rename({dim:label})
-    dimchunks = {d: s[0] for d, s in da.chunksizes.items() if d != dim}
-    sel = sel.chunk({dim: -1, **dimchunks})
-
-    da = da.rename({dim: label})
-    dim = label
-    ind_insert = xr.apply_ufunc(
-        lambda n: da.indexes[dim].searchsorted(n, "left"),
-        sel,
-        dask="parallelized",
-    )
-
-    if lazy:
-        lazy_index = xc.core.utils.lazy_indexing(da.chunk({dim: -1}), ind_insert, dim)
-        lazy_time = xc.core.utils.lazy_indexing(da[dim].chunk({dim: -1}), ind_insert, dim)
-    else:
-        ind_insert = ind_insert.compute()
-        lazy_index = da.isel({dim: ind_insert})
-        lazy_time = da[dim].isel({dim: ind_insert})
-    index_correct = lazy_time == sel
-    out = xr.where(index_correct, lazy_index, fill)
-
-    return out
-
-
-def get_dt(freq):
+def get_dt(freq: str):
     """
     Get the time delta, in seconds for a given pandas frequency.
 
@@ -330,7 +274,9 @@ def get_dt(freq):
     return pd.date_range(freq=freq, periods=2, start="2000-01-01").diff()[1].total_seconds()
 
 
-def accumulate_between_times(ds, var, freq, prev_time, curr_time):
+def accumulate_between_times(
+    ds: xr.Dataset, var: str, freq: str, prev_time: xr.DataArray, curr_time: xr.DataArray
+) -> xr.DataArray:
     """
     Accumulate (sum) between the given time DataArray (usually solar noon yesterday and solar noon today).
 
@@ -362,16 +308,16 @@ def accumulate_between_times(ds, var, freq, prev_time, curr_time):
     prev_fl = prev_time.dt.floor(freq)
     prev_ratio = (prev_time - prev_fl).dt.total_seconds() / dt
 
-    d_tilcurr = sel_with_nans(da_cum, "time", curr_fl - pd.Timedelta(dt, "s"))
-    d_curr = sel_with_nans(da, "time", curr_fl)
-    d_tilprev = sel_with_nans(da_cum, "time", prev_fl - pd.Timedelta(dt, "s"))
-    d_prev = sel_with_nans(da, "time", prev_fl)
+    d_tilcurr = xc.core.utils.sel_with_nans(da_cum, "time", curr_fl - pd.Timedelta(dt, "s"))
+    d_curr = xc.core.utils.sel_with_nans(da, "time", curr_fl)
+    d_tilprev = xc.core.utils.sel_with_nans(da_cum, "time", prev_fl - pd.Timedelta(dt, "s"))
+    d_prev = xc.core.utils.sel_with_nans(da, "time", prev_fl)
     da_accum = (d_tilcurr + curr_ratio * d_curr) - (d_tilprev + prev_ratio * d_prev)
 
     return da_accum
 
 
-def interpolate_to_time(ds, var, freq, curr_time):
+def interpolate_to_time(ds: xr.Dataset, var: str, freq: str, curr_time: xr.DataArray) -> xr.DataArray:
     """
     Interpolate Dataset to the given time DataArray (such as Solar noon times).
 
@@ -401,14 +347,16 @@ def interpolate_to_time(ds, var, freq, curr_time):
 
     curr_ratio = (curr_time - curr_time_fl).dt.total_seconds() / dt
 
-    d_curr_fl = sel_with_nans(da, "time", curr_time_fl)
-    d_curr_cl = sel_with_nans(da, "time", curr_time_cl)
+    d_curr_fl = xc.core.utils.sel_with_nans(da, "time", curr_time_fl)
+    d_curr_cl = xc.core.utils.sel_with_nans(da, "time", curr_time_cl)
 
     da_interp = (1 - curr_ratio) * d_curr_fl + curr_ratio * d_curr_cl
     return da_interp
 
 
-def interpolate_to_solar_noon(da, method="interpolate", solar_method=default_method):
+def interpolate_to_solar_noon(
+    da: xr.Dataset | xr.DataArray, method: str = "interpolate", solar_method: str = default_method
+) -> xr.Dataset | xr.DataArray:
     """
     Interpolate (or accumulate) da to solar noon.
 
