@@ -17,9 +17,6 @@ from xclim.core.units import (
     units2pint,
 )
 from xclim.core.utils import ensure_chunk_size
-from xclim.indices._multivariate import (
-    precip_accumulation,
-)
 from xclim.indices.generic import difference_statistics, extreme_range, statistics
 from xclim.indices.run_length import lazy_indexing
 
@@ -138,11 +135,11 @@ def temperature_seasonality(tas: xarray.DataArray, freq: str = "YS") -> xarray.D
     --------
     The following would compute for each grid cell of file `tas.day.nc` the annual temperature seasonality:
 
-    >>> import xclim.indices as xci
+    >>> import xclim as xc
     >>> t = xr.open_dataset(path_to_tas_file).tas
-    >>> tday_seasonality = xci.temperature_seasonality(t)
-    >>> t_weekly = xci.statistics(t, statistic="mean", freq="7D")
-    >>> tweek_seasonality = xci.temperature_seasonality(t_weekly)
+    >>> tday_seasonality = xc.anuclim.temperature_seasonality(t)
+    >>> t_weekly = xc.generic.statistics(t, statistic="mean", freq="7D")
+    >>> tweek_seasonality = xc.anuclim.temperature_seasonality(t_weekly)
     """
     _tas = convert_units_to(tas, "K")
 
@@ -190,14 +187,14 @@ def precip_seasonality(pr: xarray.DataArray, freq: str = "YS") -> xarray.DataArr
     --------
     The following would compute for each grid cell of file `pr.day.nc` the annual precipitation seasonality:
 
-    >>> import xclim.indices as xci
+    >>> import xclim as xc
     >>> p = xr.open_dataset(path_to_pr_file).pr
-    >>> pday_seasonality = xci.precip_seasonality(p)
-    >>> p_weekly = xci.precip_accumulation(p, freq="7D")
+    >>> pday_seasonality = xc.anuclim.precip_seasonality(p)
+    >>> p_weekly = xc.atmos.precip_accumulation(p, freq="7D")
 
     # Input units need to be a rate
     >>> p_weekly.attrs["units"] = "mm/week"
-    >>> pweek_seasonality = xci.precip_seasonality(p_weekly)
+    >>> pweek_seasonality = xc.anuclim.precip_seasonality(p_weekly)
     """
     # If units in mm/sec convert to mm/days to avoid potentially small denominator
     if units2pint(pr) == units("mm / s"):
@@ -591,7 +588,8 @@ def _to_quarter(
         else:
             # Accumulate on a week
             # Ensure units are back to a "rate" for rate2amount below
-            ts_var = precip_accumulation(ts_var, freq="7D")
+            pram = rate2amount(ts_var)
+            ts_var = statistics(pram, statistic="sum", freq="7D")
             ts_var = convert_units_to(ts_var, "mm", context="hydro").assign_attrs(units="mm/week")
         freq_upper = "W"
     if freq_upper.startswith("W"):

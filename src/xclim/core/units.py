@@ -419,7 +419,7 @@ def convert_units_to(
                 for direction, sign in [("to", 1), ("from", -1)]:
                     # If the dimensionality diff is compatible with this conversion
                     compatible = all(
-                        dimdiff == sign * dim_order_diff[f"[{dim}]"]
+                        dimdiff == sign * dim_order_diff.get(f"[{dim}]")
                         for dim, dimdiff in convconf["dimensionality"].items()
                     )
                     # Does the input cf standard name have an equivalent after conversion
