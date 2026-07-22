@@ -70,7 +70,10 @@ def _solar_noon_astral(ds):
     """
     if "astral" not in sys.modules:
         warnings.warn("Importing astral library.")
-    import astral  # noqa: F401
+    try:
+        import astral  # noqa: F401
+    except ModuleNotFoundError as e:
+        raise e
 
     solar_noon_timedelta = xr.apply_ufunc(
         _solar_noon_astral_calc,
@@ -145,7 +148,10 @@ def _solar_noon_ephem(ds):
     """
     if "ephem" not in sys.modules:
         warnings.warn("Importing PyEphem library.")
-    import ephem  # noqa: F401
+    try:
+        import ephem  # noqa: F401
+    except ModuleNotFoundError as e:
+        raise e
 
     return xr.apply_ufunc(
         _solar_noon_ephem_calc,
@@ -176,7 +182,10 @@ def solar_noon_pvlib(ds):
     """
     if "pvlib" not in sys.modules:
         warnings.warn("Importing pvlib library.")
-    import pvlib  # noqa: F401
+    try:
+        import pvlib  # noqa: F401
+    except ModuleNotFoundError as e:
+        raise e
 
     deltat = xr.DataArray(
         pvlib.spa.calculate_deltat(ds.time.dt.year, ds.time.dt.month), coords={"time": ds.time}, dims=["time"]
