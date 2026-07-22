@@ -1537,8 +1537,8 @@ def fit_covariate(
 
     target_len = len(next(iter(covariate_target.values())))
 
-    covariate_source = covariates_from_formulas(formulas, covariate_source)
-    covariate_target = covariates_from_formulas(formulas, covariate_target)
+    covariates = covariates_from_formulas(formulas, covariate_source)
+    covariates_target = covariates_from_formulas(formulas, covariate_target)
 
     out = xr.apply_ufunc(
         _fit_covariate_1d,
@@ -1551,8 +1551,8 @@ def fit_covariate(
         kwargs=dict(
             dist=dist,
             formulas=formulas,
-            covariate_source=covariate_source,
-            covariate_target=covariate_target,
+            covariate_source=covariates,
+            covariate_target=covariates_target,
             expand_covariate=False,
             params=params,
             log_links=log_links,
