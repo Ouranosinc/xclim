@@ -916,3 +916,11 @@ def test_season_length_from_boundaries(tas_series):
     # this gives a single season length
     length2 = run_length.season_length(tas, window=1)
     np.testing.assert_array_equal(length, length2)
+
+
+def test_day_to_day_variability(tas_series):
+    a = np.zeros(360)
+    a[0:15] = 24
+    tas = tas_series(a, calendar="360_day", start="2000-01-01")
+    dtdt = generic.day_to_day_variability(tas)
+    np.testing.assert_array_equal(dtdt, [1.0])

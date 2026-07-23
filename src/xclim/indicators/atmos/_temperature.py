@@ -13,6 +13,7 @@ from xclim.core.indicator import (
     ResamplingIndicatorWithIndexing,
 )
 from xclim.core.utils import InputKind
+from xclim.indices.generic import day_to_day_variability
 
 __all__ = [
     "australian_hardiness_zones",
@@ -32,6 +33,7 @@ __all__ = [
     "daily_freezethaw_cycles",
     "daily_temperature_range",
     "daily_temperature_range_variability",
+    "day_to_day_temperature_variability",
     "degree_days_exceedance_date",
     "extreme_temperature_range",
     "fire_season",
@@ -841,6 +843,16 @@ cooling_degree_days_approximation = TempWithIndexing(
     cell_methods="time: sum over days",
     compute=indices.cooling_degree_days_approximation,
     parameters={"thresh": {"default": "18.0 degC"}},
+)
+day_to_day_temperature_variability = TempWithIndexing(
+    title="Day-to-day temperature variability",
+    identifier="dtdt",
+    units="K",
+    long_name="Mean of the day-to-day temperature variability",
+    description="{freq} mean of the day-to-day variability computed as the {subfreq} standard deviation",
+    compute=day_to_day_variability,
+    parameters={"subfreq": "MS"},
+    cell_methods="time: standard_deviation within months time: mean over months",
 )
 
 heating_degree_days = TempWithIndexing(

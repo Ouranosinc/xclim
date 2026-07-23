@@ -20,6 +20,7 @@ from pint import Quantity
 from xclim.core import DayOfYearStr, Quantified
 from xclim.core.calendar import (
     _MONTH_ABBREVIATIONS,
+    compare_offsets,
     doy_to_days_since,
     get_calendar,
     select_time,
@@ -46,6 +47,7 @@ __all__ = [
     "count_level_crossings",
     "count_occurrences",
     "cumulative_difference",
+    "day_to_day_variability",
     "default_freq",
     "detrend",
     "diurnal_temperature_range",
@@ -81,7 +83,11 @@ REDUCTION_OPERATORS = Literal["min", "max", "mean", "std", "var", "count", "sum"
 
 
 def select_resample_op(
-    da: xr.DataArray, op: REDUCTION_OPERATORS | Callable, freq: str = "YS", out_units=None, **indexer
+    da: xr.DataArray,
+    op: REDUCTION_OPERATORS | Callable,
+    freq: str = "YS",
+    out_units=None,
+    **indexer,
 ) -> xr.DataArray:
     r"""
     Apply operation over each period that is part of the index selection.
@@ -1074,7 +1080,10 @@ def bivariate_count_occurrences(
 
 
 def diurnal_temperature_range(
-    low_data: xr.DataArray, high_data: xr.DataArray, reducer: Literal["max", "min", "mean", "sum"], freq: str
+    low_data: xr.DataArray,
+    high_data: xr.DataArray,
+    reducer: Literal["max", "min", "mean", "sum"],
+    freq: str,
 ) -> xr.DataArray:
     """
     Calculate the diurnal temperature range and reduce according to a statistic.
@@ -1513,7 +1522,10 @@ def aggregate_between_dates(
 
 @declare_relative_units(threshold="<data>")
 def cumulative_difference(
-    data: xr.DataArray, threshold: Quantified, op: DIFFERENCE_OPERATORS, freq: str | None = None
+    data: xr.DataArray,
+    threshold: Quantified,
+    op: DIFFERENCE_OPERATORS,
+    freq: str | None = None,
 ) -> xr.DataArray:
     """
     Calculate the cumulative difference below/above a given value threshold.
@@ -1602,7 +1614,12 @@ def first_day_threshold_reached(
         "time",
         freq,
         rl.first_run_after_date,
-        map_kwargs={"window": window, "date": after_date, "dim": "time", "coord": "dayofyear"},
+        map_kwargs={
+            "window": window,
+            "date": after_date,
+            "dim": "time",
+            "coord": "dayofyear",
+        },
     )
     out.attrs.update(units="", is_dayofyear=np.int32(1), calendar=get_calendar(data))
     return out
@@ -1622,7 +1639,7 @@ def _get_zone_bins(
         Left boundary of the first zone.
     zone_max : Quantity
         Right boundary of the last zone.
-    zone_step: Quantity
+    zone_step : Quantity
         Size of zones.
 
     Returns
@@ -1802,3 +1819,36 @@ def thresholded_events(
             da_stop = ~compare(data, op, thresh_stop)
 
     return rl.find_events(da_start, window, da_stop, window_stop, data, freq)
+
+
+def day_to_day_variability(da: xr.DataArray, subfreq: str = "MS", freq="YS"):
+    """
+    Compute the mean of day-to-day variability.
+
+    Computes the standard deviation of the variable within each sub-period (e.g. month),
+    then averages those standard deviations over the main resampling period (e.g. year).
+    This provides a measure of typical day-to-day variability as described in :cite:t:`kotz_2021`.
+
+    Parameters
+    ----------
+    da : xr.DataArray
+        The input variable.
+    subfreq : str
+        Resampling frequency used to compute the standard deviation. Default is ``"MS"`` (monthly).
+    freq : str
+        Resampling frequency used to average the sub-period standard deviations. Default is ``"YS"`` (yearly).
+
+    Returns
+    -------
+    xr.DataArray
+        Mean of the sub-period standard deviations over each period defined by `freq`.
+
+    References
+    ----------
+    :cite:cts:`kotz_2021`
+    """
+    if compare_offsets(freq, "<=", subfreq):
+        raise ValueError("Averaging frequency must be larger than the variability frequency.")
+    variability = da.resample(time=subfreq).std(keep_attrs=True)
+    out = variability.resample(time=freq).mean(keep_attrs=True)
+    return to_agg_units(out, to_agg_units(variability, da, "std"), "mean")

@@ -50,6 +50,7 @@ __all__ = [
     "mcarthur_forest_fire_danger_index",
     "precip_accumulation",
     "precip_average",
+    "precipitation_concentration_index",
     "rain_on_frozen_ground_days",
     "rain_season",
     "rprctot",
@@ -835,6 +836,18 @@ antecedent_precipitation_index = DailyPrecipNoResample(
     "exponential decay of base {p_exp}.",
     cell_methods="time: sum over days",
     compute=indices.antecedent_precipitation_index,
+)
+
+precipitation_concentration_index = Precip(
+    identifier="pci",
+    realm="atmos",
+    units="%",
+    long_name="Precipitation Concentration Index",
+    description="A measure of the unevenness of the {freq} distribution of precipitations. "
+    "Computed as the ratio of the sum of squared {subfreq} totals to the square of the sum of {subfreq} totals, "
+    "multiplied by 100",
+    compute=indices.precipitation_concentration_index,
+    cell_methods="",
 )
 
 aridity_index = PrecipWithIndexing(
