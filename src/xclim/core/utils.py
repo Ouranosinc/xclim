@@ -301,6 +301,7 @@ def sel_with_nans(
         Fill value if sel does not exist in da[dim], by default np.nan.
     lazy : bool
         Whether to compute immediately, or evaluate lazily with dask, by default True.
+        Skipped when da is not a dask array.
 
     Returns
     -------
@@ -311,19 +312,22 @@ def sel_with_nans(
     --------
     This function can be quite memory intensive. Optimizing chunking may help.
     """
-    # sel = sel.rename({dim:label})
-    dimchunks = {d: s[0] for d, s in da.chunksizes.items() if d != dim}
-    sel = sel.chunk({dim: -1, **dimchunks})
+    non_dim_dims = [d for d in da.dims if d != dim]
+
+    if uses_dask(da):
+        dimchunks = {d: s[0] for d, s in da.chunksizes.items() if d != dim and d in sel.dims}
+        sel = sel.chunk({dim: -1, **dimchunks})
 
     da = da.rename({dim: label})
     dim = label
     ind_insert = xr.apply_ufunc(
-        lambda n: da.indexes[dim].searchsorted(n, "left"),
+        lambda n: np.clip(da.indexes[dim].searchsorted(n, "left"), 0, da[dim].size - 1),
         sel,
         dask="parallelized",
     )
 
-    if lazy:
+    if lazy and uses_dask(da):
+        ind_insert = ind_insert.broadcast_like(da.to_dataset(name="tmp")[non_dim_dims])
         lazy_index = lazy_indexing(da.chunk({dim: -1}), ind_insert, dim)
         lazy_time = lazy_indexing(da[dim].chunk({dim: -1}), ind_insert, dim)
     else:

@@ -4,9 +4,10 @@ import pytest
 import xarray as xr
 
 import xclim.solar as sx
+from xclim.core.utils import sel_with_nans
 
 
-@pytest.mark.parametrize("method,tol", [("astral", 30), ("pvlib", 5), ("internal", 180)])
+@pytest.mark.parametrize("method,tol", [("astral", 5), ("pvlib", 5), ("internal", 180)])
 def test_solar_noon(method, tol):
     # from https://gml.noaa.gov/grad/solcalc/
     approx = np.array(
@@ -36,10 +37,10 @@ def test_solar_noon_all_close():
     time_ds = xr.Dataset(
         {},
         coords={
-            "time": pd.date_range(start=pd.Timestamp.now(), periods=365, freq="D"),
+            "time": pd.date_range(start=pd.Timestamp.now(), periods=30, freq="D"),
             "lat": np.random.uniform(low=-90, high=90, size=1),
             # pvlib sometimes shifts along international date line, avoid those latitudes for comparison's sake
-            "lon": np.random.uniform(low=-175, high=175, size=100),
+            "lon": np.random.uniform(low=-175, high=175, size=30),
         },
     )
     time_ds["time"] = time_ds.time.dt.floor("D")
@@ -52,3 +53,65 @@ def test_solar_noon_all_close():
     # ensure within 5 minutes of each other.
     max_diff_xclim = np.abs((out_internal - out_pvlib).dt.total_seconds()).max()
     assert max_diff_xclim < 300
+
+
+@pytest.mark.parametrize("method,tol", [("astral", 30), ("pvlib", 5), ("internal", 180)])
+@pytest.mark.parametrize("uses_dask", [True, False])
+def test_interp(method, tol, uses_dask):
+    ds = xr.Dataset(
+        {"tas": (("lon", "lat", "time"), np.broadcast_to(np.linspace(0, 1, 25), shape=(12, 1, 25)))},
+        coords=dict(
+            time=pd.date_range(start="2000-01-01", periods=25, freq="h"),
+            lat=[0],
+            lon=np.linspace(-175, 175, 12),
+        ),
+    )
+    if uses_dask:
+        ds = ds.chunk(time=-1, lat=1, lon=2)
+
+    ds_solar = sx.interpolate_to_solar_noon(ds, solar_method=method).compute()
+    # fraction of day in noon:
+    noon_frac = (ds_solar.noon - ds_solar.time).dt.total_seconds() / (24 * 60 * 60)
+    np.testing.assert_allclose(ds_solar.tas.isel(time=0, lat=0), noon_frac.isel(time=0))
+
+
+@pytest.mark.parametrize("method", ["astral", "pvlib", "internal"])
+@pytest.mark.parametrize("uses_dask", [True, False])
+def test_accum(method, tol, uses_dask):
+    arr = np.linspace(0, 1, 11)
+    ds = xr.Dataset(
+        {"tas": (("time", "lat", "lon"), np.broadcast_to(arr, shape=(100, 1, 11)))},
+        coords=dict(
+            time=pd.date_range(start="2000-01-01", periods=100, freq="h"),
+            lat=[0],
+            lon=np.linspace(-175, 175, 11),
+        ),
+    )
+    if uses_dask:
+        ds = ds.chunk(time=-1, lat=1, lon=2)
+
+    ds_solar = sx.interpolate_to_solar_noon(ds, solar_method=method, method="accumulate").compute()
+    # length of day
+    day_frac = (ds_solar.noon.isel(time=2) - ds_solar.noon.isel(time=1)).dt.total_seconds() / (24 * 60 * 60)
+
+    np.assert_allclose(
+        ds_solar.noon.isel(time=2),
+        arr * 24 * day_frac,  # summed approximately 24 times, plus the day fraction.
+    )
+
+
+@pytest.mark.parametrize("uses_dask,lazy", [(True, True), (True, False), (False, False)])
+def test_sel_with_nans(uses_dask, lazy):
+    tas = xr.DataArray(
+        np.linspace(0, 1, 125).reshape((5, 5, 5)),
+        coords={"time": np.arange(5), "lat": np.arange(5), "lon": np.arange(5)},
+    )
+    time = xr.DataArray([-1, 0, 1, 2, 3, 4, 5, 3, 2, 1, 0], dims=("time"))
+    if uses_dask:
+        tas = tas.chunk(time=1, lat=2, lon=3)
+        time = time.chunk(time=2)
+
+    tas_sel = sel_with_nans(tas, "time", time, fill=-1, lazy=lazy).compute()
+    assert (tas_sel.isel(time=[0, 6]) == -1).all()
+
+    assert (tas.isel(time=[0, 1, 2, 3, 4, 3, 2, 1, 0]) == tas_sel.where(time.isin(tas.time), drop=True)).all()
