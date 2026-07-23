@@ -7,30 +7,43 @@ import xclim.solar as sx
 from xclim.core.utils import sel_with_nans
 
 
-@pytest.mark.parametrize("method,tol", [("astral", 5), ("pvlib", 5), ("internal", 180)])
+@pytest.mark.parametrize(["method", "tol"], [("astral", 5), ("pvlib", 5), ("internal", 180)])
 def test_solar_noon(method, tol):
     # from https://gml.noaa.gov/grad/solcalc/
-    approx = np.array(
+    location = ["San Jose", "Montreal"]
+    lat = [37.77, 45.55]
+    lon = [-122.42, -73.633]
+    utcoffset = np.array([pd.Timedelta(-7, "h").to_numpy(), pd.Timedelta(-4, "h").to_numpy()])
+    noaa_noon = np.array(
         [
-            pd.Timestamp("2026-07-23T13:16:12").to_numpy(),
-            pd.Timestamp("2026-07-23T13:01:03").to_numpy(),
+            pd.Timestamp("2026-07-23 13:16:12").to_numpy(),
+            pd.Timestamp("2026-07-23 13:01:03").to_numpy(),
         ]
     )
-    out = sx.solar_noon(
-        ds=xr.Dataset(
-            {},
-            coords={
-                "time": [pd.Timestamp("2026-07-23")],
-                "lat": [37.77, 45.55],  # San Jose, Montréal
-                "lon": [-122.42, -73.633],
-            },
+
+    coords = xr.Dataset(
+        dict(
+            lat=("location", lat),
+            lon=("location", lon),
+            utcoffset=("location", utcoffset),
+            noon=("location", noaa_noon),
         ),
-        method=method,
+        coords=dict(location=location),
+    )
+
+    din = xr.Dataset(
+        {},
+        coords={
+            "time": [pd.Timestamp("2026-07-23")],
+        },
+    ).assign_coords(coords)
+
+    out = sx.solar_noon(
+        ds=din,
+        method="astral",
     )
     # output is in UTC, translate to timezone:
-    tz = np.array([pd.Timedelta(-7, "h").to_numpy(), pd.Timedelta(-4, "h").to_numpy()])
-    out = out + tz
-    assert np.abs((out - approx).dt.total_seconds()).max() < tol
+    assert np.abs((out + coords.utcoffset - coords.noon).dt.total_seconds()).max().item() < tol
 
 
 def test_solar_noon_all_close():
@@ -55,9 +68,9 @@ def test_solar_noon_all_close():
     assert max_diff_xclim < 300
 
 
-@pytest.mark.parametrize("method,tol", [("astral", 30), ("pvlib", 5), ("internal", 180)])
+@pytest.mark.parametrize("method", ["astral", "pvlib", "internal"])
 @pytest.mark.parametrize("uses_dask", [True, False])
-def test_interp(method, tol, uses_dask):
+def test_interp(method, uses_dask):
     ds = xr.Dataset(
         {"tas": (("lon", "lat", "time"), np.broadcast_to(np.linspace(0, 1, 25), shape=(12, 1, 25)))},
         coords=dict(
@@ -77,7 +90,7 @@ def test_interp(method, tol, uses_dask):
 
 @pytest.mark.parametrize("method", ["astral", "pvlib", "internal"])
 @pytest.mark.parametrize("uses_dask", [True, False])
-def test_accum(method, tol, uses_dask):
+def test_accum(method, uses_dask):
     arr = np.linspace(0, 1, 11)
     ds = xr.Dataset(
         {"tas": (("time", "lat", "lon"), np.broadcast_to(arr, shape=(100, 1, 11)))},
@@ -94,13 +107,13 @@ def test_accum(method, tol, uses_dask):
     # length of day
     day_frac = (ds_solar.noon.isel(time=2) - ds_solar.noon.isel(time=1)).dt.total_seconds() / (24 * 60 * 60)
 
-    np.assert_allclose(
-        ds_solar.noon.isel(time=2),
+    np.testing.assert_allclose(
+        ds_solar.tas.isel(time=2, lat=0),
         arr * 24 * day_frac,  # summed approximately 24 times, plus the day fraction.
     )
 
 
-@pytest.mark.parametrize("uses_dask,lazy", [(True, True), (True, False), (False, False)])
+@pytest.mark.parametrize(["uses_dask", "lazy"], [(True, True), (True, False), (False, False)])
 def test_sel_with_nans(uses_dask, lazy):
     tas = xr.DataArray(
         np.linspace(0, 1, 125).reshape((5, 5, 5)),
@@ -112,6 +125,7 @@ def test_sel_with_nans(uses_dask, lazy):
         time = time.chunk(time=2)
 
     tas_sel = sel_with_nans(tas, "time", time, fill=-1, lazy=lazy).compute()
+    time = time.compute()
     assert (tas_sel.isel(time=[0, 6]) == -1).all()
 
     assert (tas.isel(time=[0, 1, 2, 3, 4, 3, 2, 1, 0]) == tas_sel.where(time.isin(tas.time), drop=True)).all()

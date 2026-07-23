@@ -316,10 +316,10 @@ def interpolate_to_solar_noon(
         xr.Dataset or xr.DataArray:
             Data interpolated/accumulated to solar noon.
     """
-    if da.isinstance(xr.DataArray):
+    if isinstance(da, xr.DataArray):
         ds = da.to_dataset()
         var = da.name
-    elif da.isinstance(xr.Dataset):
+    elif isinstance(da, xr.Dataset):
         output = []
         for var in da.data_vars:
             output.append(interpolate_to_solar_noon(da[var], method=method, solar_method=solar_method))
@@ -327,10 +327,10 @@ def interpolate_to_solar_noon(
         ds_out.attrs = da.attrs.copy()
         ds_out.attrs["history"] = xc.core.formatting.update_history(f"Interpolated to solar noon with {solar_method}")
         return ds_out
-    elif ds.isinstance(xr.DataTree):
-        NotImplementedError("interpolate_to_solar_noon is not implemented for DataTrees")
+    elif isinstance(da, xr.DataTree):
+        raise NotImplementedError("interpolate_to_solar_noon is not implemented for DataTrees")
     else:
-        ValueError("da must be an instance of xr.DataArray or xr.Dataset.")
+        raise ValueError("da must be an instance of xr.DataArray or xr.Dataset.")
 
     if method not in ["accumulate", "interpolate"]:
         raise ValueError("Unknown method passed to interpolate_to_solar_noon, need one of [accumulate, interpolate]")
@@ -360,6 +360,7 @@ def interpolate_to_solar_noon(
         do_calc = accumulate_between_times
         kwargs["prev_time"] = ds_days.noon_yst
     da_out = do_calc(ds, **kwargs)
+    da_out = da_out.assign_coords(noon=ds_days.noon)
 
     # set metadata
     # if precip, set proper units.
