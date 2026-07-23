@@ -110,7 +110,6 @@ docs = [
 ]
 solar = [
   "astral >=3.2.0",
-  "ephem >=4.2.1",
   "pvlib >=0.15.2"
 ]
 extras = [

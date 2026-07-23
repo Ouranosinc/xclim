@@ -30,7 +30,6 @@ dependencies:
   - lmoments3 >=1.0.7
   # libraries for solar testing:
   - astral >=3.2
-  - ephem >=4.2.1
   - pvlib >=0.15.2
   # Testing and development dependencies
   - bump-my-version >=1.2.3

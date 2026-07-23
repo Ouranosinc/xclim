@@ -1,6 +1,5 @@
 """The solar module offers functions for interpolating and accumulating variables to solar noon."""
 
-import datetime
 import importlib
 import warnings
 from typing import Literal
@@ -12,7 +11,7 @@ import xarray as xr
 import xclim as xc
 
 default_method = None
-for lib in ["pvlib", "astral", "ephem"]:
+for lib in ["pvlib", "astral"]:
     if importlib.util.find_spec(lib):
         default_method = lib
         if lib != "pvlib":
@@ -20,7 +19,7 @@ for lib in ["pvlib", "astral", "ephem"]:
         break
 if not default_method:
     msg = (
-        "xclim.solar requires one of ['pvlib','ephem','astral'] to be installed. "
+        "xclim.solar requires one of ['pvlib', 'astral'] to be installed. "
         + "Install using `pip install xclim[solar]`."
     )
     warnings.warn(msg)
@@ -100,75 +99,6 @@ def _solar_noon_astral(ds: xr.Dataset | xr.DataArray) -> xr.DataArray:
     return ds.time + (solar_noon_timedelta * 3600).astype("timedelta64[s]")
 
 
-def _solar_noon_ephem_calc(lat: float, lon: float, day: datetime.date, elev: float = 0.0):
-    """
-    Calculate solar noon with ephem library
-
-    Parameters
-    ----------
-    lat : float
-        latitudes to calculate solar noon for.
-    lon : float
-        longitudes to calculate solar noon for.
-    day : datetime.date
-        date for calculation of solar noon
-    elev : float
-        elevation of observer
-
-    Returns
-    -------
-    pd.Timestamp
-        time of solar noon
-    """
-    import ephem
-
-    sun = ephem.Sun()
-    o = ephem.Observer()
-    # need to project lat/lon to EPSG:6648.
-    o.lat = lat * np.pi / 180
-    o.lon = lon * np.pi / 180
-    o.elevation = elev
-    o.date = day
-    noon = o.next_transit(sun)
-    return pd.Timestamp(noon.datetime())
-
-
-def _solar_noon_ephem(ds: xr.Dataset | xr.DataArray) -> xr.DataArray:
-    """
-    High precision calculation of solar noon using PyEphem. This is not vectorized, so it is quite slow.
-
-    Requires the ephem library (`pip install ephem`).
-
-    Parameters
-    ----------
-    ds : xr.Dataset or xr.DataArray
-        Dataset with time, lat and lon variables when to calculate solar noon.
-
-    Returns
-    -------
-    xr.DataArray
-        Times when solar noon is expected to occur
-    """
-    try:
-        import ephem  # noqa: F401
-    except ModuleNotFoundError as err:
-        msg = (
-            "solar_noon_ephem requires the ephem library. "
-            + "Install with `pip install ephem` or `pip install xclim[solar]`"
-        )
-        raise ModuleNotFoundError(msg) from err
-
-    return xr.apply_ufunc(
-        _solar_noon_ephem_calc,
-        ds.lat[0],  # lat is needed for sunset/sunrise only.
-        ds.lon,
-        ds.time.dt.date,
-        input_core_dims=[[], [], []],
-        output_core_dims=[[]],
-        vectorize=True,
-    )
-
-
 def solar_noon_pvlib(ds: xr.Dataset | xr.DataArray) -> xr.DataArray:
     """
     High precision calculation of solar noon using pvlib, accurate up to ±1s.
@@ -216,23 +146,21 @@ def solar_noon_pvlib(ds: xr.Dataset | xr.DataArray) -> xr.DataArray:
     return transit.astype("datetime64[s]")
 
 
-def solar_noon(
-    ds: xr.Dataset | xr.DataArray, method: Literal["pvlib", "astral", "ephem"] = default_method
-) -> xr.DataArray:
+def solar_noon(ds: xr.Dataset | xr.DataArray, method: Literal["pvlib", "astral"] = default_method) -> xr.DataArray:
     """
     Return the solar noon time for the given dataset, assuming UTC.
 
     Requires ds.time, ds.lon, and ds.lat.
 
-    Requires one of 3 libraries: pvlib, PyEphem, or astral.
+    Requires one of 2 libraries: pvlib or astral.
 
     Parameters
     ----------
     ds : xr.DataArray or xr.Dataset
         Dataset with variables ds.time, ds.lon, and ds.lat.
-    method : {"pvlib", "astral", "ephem"}
+    method : {"pvlib", "astral"}
         Method to use to calculate solar noon, by default
-        uses first available library from ['pvlib','astral','ephem'].
+        uses first available library from ['pvlib','astral'].
 
     Returns
     -------
@@ -244,11 +172,9 @@ def solar_noon(
         do_calc = solar_noon_pvlib
     elif method == "astral":
         do_calc = _solar_noon_astral
-    elif method == "ephem":
-        do_calc = _solar_noon_ephem
     else:
         errmsg = f"Method does not exist: {method}"
-        ValueError(errmsg)
+        raise ValueError(errmsg)
     return do_calc(ds)
 
 
@@ -366,7 +292,7 @@ def interpolate_to_solar_noon(
         Defaults to 'interpolate'.
     solar_method : str, optional
         Python library to use to perform solar noon calculations.
-        Defaults to first available library from ['pvlib', 'astral', 'ephem'].
+        Defaults to first available library from ['pvlib', 'astral'].
 
     Returns
     -------
