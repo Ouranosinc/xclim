@@ -1,0 +1,377 @@
+"""The solar module offers functions for interpolating and accumulating variables to solar noon."""
+
+import importlib
+import warnings
+from typing import Literal
+
+import numpy as np
+import pandas as pd
+import xarray as xr
+
+import xclim as xc
+
+default_method = "internal"
+for lib in ["pvlib", "astral"]:
+    if importlib.util.find_spec(lib):
+        default_method = lib
+        if lib != "pvlib":
+            warnings.warn(f"pvlib library not found, default solar calculations will be performed with {lib}")
+        break
+
+
+def _solar_noon_internal(ds: xr.Dataset | xr.DataArray) -> xr.DataArray:
+    """
+    Approximate solar noon values, using the internal methods available in xclim
+    accuracy is only correct on the order of ±180s, and gets worse in the latter half of the century.
+
+    Parameters
+    ----------
+    ds : xr.Dataset or xr.DataArray
+        Dataset with time and lon variables when to calculate solar noon.
+
+    Returns
+    -------
+    xr.DataArray
+        Times when solar noon is expected to occur
+    """
+    sun_angle_correction = xc.indices.helpers.time_correction_for_solar_angle(time=ds.time)
+    sun_minute_correction = sun_angle_correction * (180 * 4 / np.pi)
+
+    return ds.time + ((720.0 - 4 * ds.lon - sun_minute_correction) * 60.0).astype("timedelta64[s]")
+
+
+def _solar_noon_astral_calc(t: np.ndarray, lon: np.ndarray):
+    """
+    Calculate solar noon with astral library
+
+    Parameters
+    ----------
+    t : np.ndarray[datetime64]
+        day datetime to calculate solar noon at.
+    lon : np.ndarray[float]
+        longitudes to calculate solar noon for.
+
+    Returns
+    -------
+    np.ndarray[float]
+        time of solar noon, as a fraction of hour away from the date.
+    """
+    import astral.sun
+
+    vec_eot = np.vectorize(astral.sun.eq_of_time)
+    if t.shape:
+        date = pd.DatetimeIndex(t)
+    else:
+        date = pd.Timestamp(t)
+    jdate = date.to_julian_date()
+    jc = astral.sun.julianday_to_juliancentury(jdate)
+    eot = vec_eot(jc)
+    timeUTC = (720.0 - 4 * lon - eot) / 60.0
+
+    return timeUTC
+
+
+def _solar_noon_astral(ds: xr.Dataset | xr.DataArray) -> xr.DataArray:
+    """
+    Approximate solar noon values, using the NOAA algorithm implemented in `astral`. Faster than other methods, but
+    accuracy is only correct on the order of ±10s.
+
+    Requires the astral library (`pip install astral`).
+
+    Parameters
+    ----------
+    ds : xr.Dataset or xr.DataArray
+        Dataset with time and lon variables when to calculate solar noon.
+
+    Returns
+    -------
+    xr.DataArray
+        Times when solar noon is expected to occur
+    """
+    try:
+        import astral  # noqa: F401
+    except ModuleNotFoundError as err:
+        msg = (
+            "solar_noon_astral requires the astral library. "
+            + "Install with `pip install astral` or `pip install xclim[solar]`"
+        )
+        raise ModuleNotFoundError(msg) from err
+
+    solar_noon_timedelta = xr.apply_ufunc(
+        _solar_noon_astral_calc,
+        ds.time,
+        ds.lon,
+        input_core_dims=[[], [*ds.lon.dims]],
+        output_core_dims=[[*ds.lon.dims]],
+        output_dtypes=["float"],
+        vectorize=True,
+        dask="parallelized",
+        dask_gufunc_kwargs=dict(),
+    )
+
+    # solar_noon_timedelta is in fractions of hour, as a float, for dask compatibility.
+    # We convert to int (timedelta64[s]), to not give better impressions on our accuracy.
+    return ds.time + (solar_noon_timedelta * 3600).astype("timedelta64[s]")
+
+
+def solar_noon_pvlib(ds: xr.Dataset | xr.DataArray) -> xr.DataArray:
+    """
+    High precision calculation of solar noon using pvlib, accurate up to ±1s.
+
+    Requires the pvlib library (`pip install pvlib`).
+
+    Parameters
+    ----------
+    ds : xr.Dataset or xr.DataArray
+        Dataset with time, lat and lon variables when to calculate solar noon.
+
+    Returns
+    -------
+    xr.DataArray
+        Times when solar noon is expected to occur.
+    """
+    try:
+        import pvlib  # noqa: F401
+    except ModuleNotFoundError as err:
+        msg = (
+            "solar_noon_pvlib requires the pvlib library. "
+            + "Install with `pip install pvlib` or `pip install xclim[solar]`"
+        )
+        raise ModuleNotFoundError(msg) from err
+
+    deltat = xr.DataArray(
+        pvlib.spa.calculate_deltat(ds.time.dt.year, ds.time.dt.month), coords={"time": ds.time}, dims=["time"]
+    )
+    (
+        transit,
+        _sunrise,
+        _sunset,
+    ) = xr.apply_ufunc(
+        pvlib.spa.transit_sunrise_sunset,  # noqa: E0606
+        ds.time.astype("datetime64[s]").astype("int"),  # seconds since epoch
+        ds.lat[0],  # lat is needed for sunset/sunrise only.
+        ds.lon,
+        deltat,
+        kwargs={"numthreads": 1},
+        input_core_dims=[["time"], [], [], ["time"]],
+        output_core_dims=[["time"], ["time"], ["time"]],
+        # output_dtypes=['datetime64[s]','datetime64[s]','datetime64[s]'],
+        vectorize=True,
+    )
+    return transit.astype("datetime64[s]")
+
+
+def solar_noon(
+    ds: xr.Dataset | xr.DataArray, method: Literal["pvlib", "astral", "internal"] = default_method
+) -> xr.DataArray:
+    """
+    Return the solar noon time for the given dataset, assuming UTC.
+
+    Requires ds.time, ds.lon, and ds.lat.
+
+    Parameters
+    ----------
+    ds : xr.DataArray or xr.Dataset
+        Dataset with variables ds.time, ds.lon, and ds.lat.
+    method : {"pvlib", "astral", "internal"}
+        Method to use to calculate solar noon, by default
+        uses first available library from ['pvlib','astral','internal'].
+
+    Returns
+    -------
+    xr.DataArray
+        DataArray with solar noon time.
+    """
+    do_calc = None
+    if method == "pvlib":
+        do_calc = solar_noon_pvlib
+    elif method == "astral":
+        do_calc = _solar_noon_astral
+    elif method == "internal":
+        do_calc = _solar_noon_internal
+    else:
+        errmsg = f"Method does not exist: {method}"
+        raise ValueError(errmsg)
+    return do_calc(ds)
+
+
+def get_dt(freq: str):
+    """
+    Get the time delta, in seconds for a given pandas frequency.
+
+    Parameters
+    ----------
+    freq : str
+        Pandas time frequency.
+
+    Returns
+    -------
+    float
+        Total seconds between two timestamps with this frequency.
+    """
+    return pd.date_range(freq=freq, periods=2, start="2000-01-01").diff()[1].total_seconds()
+
+
+def accumulate_between_times(
+    ds: xr.Dataset, var: str, freq: str, prev_time: xr.DataArray, curr_time: xr.DataArray
+) -> xr.DataArray:
+    """
+    Accumulate (sum) between the given time DataArray (usually solar noon yesterday and solar noon today).
+
+    Parameters
+    ----------
+    ds : xr.Dataset
+        Dataset with variable `var` to accumulate.
+    var : str
+        Variable to accumulate.
+    freq : str
+        Pandas frequency for ds.time.
+    prev_time : xr.DataArray
+        Time occurrence of the previous event (indexed at the current time).
+    curr_time : xr.DataArray
+        Time occurrence of the current event (indexed at the current time).
+
+    Returns
+    -------
+    xr.DataArray
+        Variable accumulated between prev_time and curr_time.
+    """
+    da = ds[var]
+    dt = get_dt(freq)
+    da_cum = da.cumsum("time")
+
+    curr_fl = curr_time.dt.floor(freq)
+    curr_ratio = (curr_time - curr_fl).dt.total_seconds() / dt
+
+    prev_fl = prev_time.dt.floor(freq)
+    prev_ratio = (prev_time - prev_fl).dt.total_seconds() / dt
+
+    d_tilcurr = xc.core.utils.sel_with_nans(da_cum, "time", curr_fl - pd.Timedelta(dt, "s"))
+    d_curr = xc.core.utils.sel_with_nans(da, "time", curr_fl)
+    d_tilprev = xc.core.utils.sel_with_nans(da_cum, "time", prev_fl - pd.Timedelta(dt, "s"))
+    d_prev = xc.core.utils.sel_with_nans(da, "time", prev_fl)
+    da_accum = (d_tilcurr + curr_ratio * d_curr) - (d_tilprev + prev_ratio * d_prev)
+
+    return da_accum
+
+
+def interpolate_to_time(ds: xr.Dataset, var: str, freq: str, curr_time: xr.DataArray) -> xr.DataArray:
+    """
+    Interpolate Dataset to the given time DataArray (such as Solar noon times).
+
+    This is equivalent to ds[var].interp(time=curr_time), but tends to be faster.
+
+    Parameters
+    ----------
+    ds : xr.Dataset
+        Dataset to interpolate, with dimension time and variable `var`.
+    var : str
+        Variable of ds to interpolate.
+    freq : str
+        Pandas frequency for ds.time.
+    curr_time : xr.DataArray
+        Time array to interpolate.
+
+    Returns
+    -------
+    xr.DataArray
+        DataArray of interpolated times.
+    """
+    da = ds[var]
+    dt = get_dt(freq)
+
+    curr_time_fl = curr_time.dt.floor(freq)
+    curr_time_cl = curr_time.dt.ceil(freq)
+
+    curr_ratio = (curr_time - curr_time_fl).dt.total_seconds() / dt
+
+    d_curr_fl = xc.core.utils.sel_with_nans(da, "time", curr_time_fl)
+    d_curr_cl = xc.core.utils.sel_with_nans(da, "time", curr_time_cl)
+
+    da_interp = (1 - curr_ratio) * d_curr_fl + curr_ratio * d_curr_cl
+    return da_interp
+
+
+def interpolate_to_solar_noon(
+    da: xr.Dataset | xr.DataArray, method: str = "interpolate", solar_method: str = default_method
+) -> xr.Dataset | xr.DataArray:
+    """
+    Interpolate (or accumulate) da to solar noon.
+
+    If DataArray is precipitation data, and is accumulated, then the output units will be converted to mm/d.
+
+    Parameters
+    ----------
+    da : xr.Dataset or xr.DataArray
+        Data to interpolate.
+    method : str, optional
+        Either `interpolate` at solar noon, or `accumulate` between solar noons.
+        Defaults to 'interpolate'.
+    solar_method : str, optional
+        Python library to use to perform solar noon calculations.
+        Defaults to first available library from ['pvlib', 'astral', 'internal'].
+
+    Returns
+    -------
+        xr.Dataset or xr.DataArray:
+            Data interpolated/accumulated to solar noon.
+    """
+    if isinstance(da, xr.DataArray):
+        ds = da.to_dataset()
+        var = da.name
+    elif isinstance(da, xr.Dataset):
+        output = []
+        for var in da.data_vars:
+            output.append(interpolate_to_solar_noon(da[var], method=method, solar_method=solar_method))
+        ds_out = xr.merge(output)
+        ds_out.attrs = da.attrs.copy()
+        ds_out.attrs["history"] = xc.core.formatting.update_history(f"Interpolated to solar noon with {solar_method}")
+        return ds_out
+    elif isinstance(da, xr.DataTree):
+        raise NotImplementedError("interpolate_to_solar_noon is not implemented for DataTrees")
+    else:
+        raise ValueError("da must be an instance of xr.DataArray or xr.Dataset.")
+
+    if method not in ["accumulate", "interpolate"]:
+        raise ValueError("Unknown method passed to interpolate_to_solar_noon, need one of [accumulate, interpolate]")
+
+    if method == "accumulate" and var == "pr":
+        ds["pr"] = xc.units.convert_units_to(ds["pr"], "mm/hr")
+
+    days = ds.time.resample(time="1D").first().dt.floor("D")
+    c = {d: ds[d] for d in ds[var].coords if d != "time"}
+    ds_days = xr.Dataset({}, coords={"time": days, **c})
+    ds_days["noon"] = solar_noon(ds_days, method=solar_method)
+    freq = xr.infer_freq(ds.time)
+
+    if method == "accumulate":
+        # We need yesterday's noon to accumulate between.
+        ds_days["noon_yst"] = solar_noon(
+            ds_days.assign_coords(time=ds_days.time - pd.Timedelta(1, "day")), method=solar_method
+        ).assign_coords(time=ds_days.time)
+
+    kwargs = dict(
+        var=var,
+        freq=freq,
+        curr_time=ds_days.noon,
+    )
+    do_calc = interpolate_to_time
+    if method == "accumulate":
+        do_calc = accumulate_between_times
+        kwargs["prev_time"] = ds_days.noon_yst
+    da_out = do_calc(ds, **kwargs)
+    da_out = da_out.assign_coords(noon=ds_days.noon)
+
+    # set metadata
+    # if precip, set proper units.
+    da_out.attrs = ds[var].attrs.copy()
+    if method == "interpolate":
+        da_out.attrs["cell_methods"] = "time: point (comment: at solar noon)"
+        da_out.attrs["comments"] = f"Interpolated date to solar noons, calculated with {default_method} library."
+    elif method == "accumulate":
+        if var == "pr":
+            da_out.attrs["units"] = "mm/d"
+        da_out.attrs["cell_methods"] = "time: sum (interval: 24 hr comment: since solar noon)"
+        da_out.attrs["comments"] = f"Accumulated between solar noons, calculated with {default_method} library."
+    da_out.name = var
+    return da_out
