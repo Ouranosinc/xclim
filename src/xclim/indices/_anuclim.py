@@ -135,11 +135,11 @@ def temperature_seasonality(tas: xarray.DataArray, freq: Freq = "YS") -> xarray.
     --------
     The following would compute for each grid cell of file `tas.day.nc` the annual temperature seasonality:
 
-    >>> import xclim as xc
+    >>> import xclim.indicators as xci
     >>> t = xr.open_dataset(path_to_tas_file).tas
-    >>> tday_seasonality = xc.anuclim.temperature_seasonality(t)
-    >>> t_weekly = xc.generic.statistics(t, statistic="mean", freq="7D")
-    >>> tweek_seasonality = xc.anuclim.temperature_seasonality(t_weekly)
+    >>> tday_seasonality = xci.anuclim.temperature_seasonality(t)
+    >>> t_weekly = xci.generic.statistics(t, statistic="mean", freq="7D")
+    >>> tweek_seasonality = xci.anuclim.temperature_seasonality(t_weekly)
     """
     _tas = convert_units_to(tas, "K")
 
@@ -187,14 +187,14 @@ def precip_seasonality(pr: xarray.DataArray, freq: Freq = "YS") -> xarray.DataAr
     --------
     The following would compute for each grid cell of file `pr.day.nc` the annual precipitation seasonality:
 
-    >>> import xclim as xc
+    >>> import xclim.indicators as xci
     >>> p = xr.open_dataset(path_to_pr_file).pr
-    >>> pday_seasonality = xc.anuclim.precip_seasonality(p)
-    >>> p_weekly = xc.atmos.precip_accumulation(p, freq="7D")
+    >>> pday_seasonality = xci.anuclim.precip_seasonality(p)
+    >>> p_weekly = xci.atmos.precip_accumulation(p, freq="7D")
 
     # Input units need to be a rate
     >>> p_weekly.attrs["units"] = "mm/week"
-    >>> pweek_seasonality = xc.anuclim.precip_seasonality(p_weekly)
+    >>> pweek_seasonality = xci.anuclim.precip_seasonality(p_weekly)
     """
     # If units in mm/sec convert to mm/days to avoid potentially small denominator
     if units2pint(pr) == units("mm / s"):
