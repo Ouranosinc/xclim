@@ -35,7 +35,7 @@ try:
 except ImportError:
     rechunk_for_blockwise = None
 
-from xclim.core import Condition, DayOfYearStr, Quantified, Reducer
+from xclim.core import Condition, DayOfYearStr, Freq, Quantified, Reducer
 from xclim.core.calendar import ensure_cftime_array, get_calendar, parse_offset, select_time
 from xclim.core.options import MAP_BLOCKS, OPTIONS
 from xclim.core.units import convert_units_to
@@ -1130,7 +1130,7 @@ def _gather_lon(da: xr.DataArray) -> xr.DataArray:
 def resample_map(
     obj: DataType,
     dim: str,
-    freq: str,
+    freq: Freq,
     func: Callable,
     map_blocks: bool | Literal["from_context"] = "from_context",
     resample_kwargs: dict | None = None,

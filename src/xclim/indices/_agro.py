@@ -10,7 +10,7 @@ import xarray
 from scipy.stats import rv_continuous
 
 import xclim.indices.run_length as rl
-from xclim.core import DateStr, DayOfYearStr, Quantified
+from xclim.core import DateStr, DayOfYearStr, Freq, Quantified
 from xclim.core.calendar import parse_offset, select_time
 from xclim.core.units import (
     amount2lwethickness,
@@ -279,7 +279,7 @@ def biologically_effective_degree_days(
     max_daily_degree_days: Quantified = "9 degC",
     start_date: str | DayOfYearStr = "04-01",
     end_date: str | DayOfYearStr = "11-01",
-    freq: str = "YS",
+    freq: Freq = "YS",
 ) -> xarray.DataArray:
     r"""
     Biologically effective growing degree days.
@@ -720,7 +720,7 @@ def latitude_temperature_index(
     tas: xarray.DataArray,
     lat: xarray.DataArray | None = None,
     lat_factor: float = 75,
-    freq: str = "YS",
+    freq: Freq = "YS",
 ) -> xarray.DataArray:
     """
     Latitude-Temperature Index.
@@ -977,7 +977,7 @@ def rain_season(
 )
 def standardized_precipitation_index(
     pr: xarray.DataArray,
-    freq: str | None = "MS",
+    freq: Freq | None = "MS",
     window: int = 1,
     dist: Literal["gamma", "fisk", "genextreme", "lognorm"] | rv_continuous = "gamma",
     method: Literal["APP", "ML", "PWM"] = "ML",
@@ -1137,7 +1137,7 @@ def standardized_precipitation_index(
 )
 def standardized_precipitation_evapotranspiration_index(
     wb: xarray.DataArray,
-    freq: str | None = "MS",
+    freq: Freq | None = "MS",
     window: int = 1,
     dist: Literal["gamma", "fisk", "genextreme", "lognorm"] | rv_continuous = "gamma",
     method: Literal["APP", "ML", "PWM"] = "ML",
@@ -1287,7 +1287,7 @@ def effective_growing_degree_days(
     method: Literal["bootsma", "qian"] = "bootsma",
     after_date: DayOfYearStr = "07-01",
     dim: str = "time",
-    freq: str = "YS",
+    freq: Freq = "YS",
 ) -> xarray.DataArray:
     r"""
     Effective growing degree days.
@@ -1375,7 +1375,7 @@ def effective_growing_degree_days(
 
 @declare_units(tasmin="[temperature]")
 def hardiness_zones(  # numpydoc ignore=SS05
-    tasmin: xarray.DataArray, window: int = 30, method: Literal["usda", "anbg"] = "usda", freq: str = "YS"
+    tasmin: xarray.DataArray, window: int = 30, method: Literal["usda", "anbg"] = "usda", freq: Freq = "YS"
 ):
     """
     Hardiness zones.
@@ -1469,7 +1469,7 @@ def _apply_chill_portion_one_season(tas_K):
 
 
 @declare_units(tas="[temperature]")
-def chill_portions(tas: xarray.DataArray, freq: str = "YS", **indexer) -> xarray.DataArray:
+def chill_portions(tas: xarray.DataArray, freq: Freq = "YS", **indexer) -> xarray.DataArray:
     r"""
     Chill portion based on the dynamic model.
 
@@ -1525,7 +1525,7 @@ def chill_portions(tas: xarray.DataArray, freq: str = "YS", **indexer) -> xarray
 
 
 @declare_units(tas="[temperature]")
-def chill_units(tas: xarray.DataArray, positive_only: bool = False, freq: str = "YS") -> xarray.DataArray:
+def chill_units(tas: xarray.DataArray, positive_only: bool = False, freq: Freq = "YS") -> xarray.DataArray:
     """
     Chill units using the Utah model.
 

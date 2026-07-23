@@ -13,6 +13,7 @@ from typing import Any, Literal
 import numpy as np
 import xarray as xr
 
+from xclim.core import Freq
 from xclim.core.calendar import common_calendar, get_calendar
 from xclim.core.formatting import update_history
 from xclim.core.utils import calc_perc
@@ -31,7 +32,7 @@ _quantile_params = {
 def create_ensemble(
     datasets: Any,
     multifile: bool = False,
-    resample_freq: str | None = None,
+    resample_freq: Freq | None = None,
     calendar: str | None = None,
     realizations: Sequence[Any] | None = None,
     cal_kwargs: dict | None = None,
@@ -376,7 +377,7 @@ def ensemble_percentiles(
 def _ens_align_datasets(
     datasets: list[xr.Dataset | Path | str | list[Path | str]] | str,
     multifile: bool = False,
-    resample_freq: str | None = None,
+    resample_freq: Freq | None = None,
     calendar: str = "default",
     cal_kwargs: dict | None = None,
     **xr_kwargs,

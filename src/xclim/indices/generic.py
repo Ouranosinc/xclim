@@ -1182,7 +1182,7 @@ def statistics_between_dates(
     start: xr.DataArray | DayOfYearStr,
     end: xr.DataArray | DayOfYearStr,
     statistic: Reducer,
-    freq: str | None = None,
+    freq: Freq | None = None,
 ) -> xr.DataArray:
     """
     Calculate a statistic for each requested period but only considering timesteps with a time-varying range.
@@ -1412,7 +1412,7 @@ def thresholded_events(
     condition_stop: Condition | None = None,
     thresh_stop: Quantified | None = None,
     window_stop: int | None = None,
-    freq: str | None = None,
+    freq: Freq | None = None,
 ) -> xr.Dataset:
     r"""
     Find thresholded events.

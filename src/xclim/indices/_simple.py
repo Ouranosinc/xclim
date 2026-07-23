@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import xarray
 
-from xclim.core import Quantified
+from xclim.core import Freq, Quantified
 from xclim.core.calendar import select_time
 from xclim.core.units import declare_units, rate2amount
 from xclim.core.utils import deprecated
@@ -45,7 +45,7 @@ __all__ = [
 
 @deprecated("1.0", "atmos.tg_max")
 @declare_units(tas="[temperature]")
-def tg_max(tas: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
+def tg_max(tas: xarray.DataArray, freq: Freq = "YS") -> xarray.DataArray:
     r"""
     Highest mean temperature.
 
@@ -77,7 +77,7 @@ def tg_max(tas: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
 
 @deprecated("1.0", "atmos.tg_mean")
 @declare_units(tas="[temperature]")
-def tg_mean(tas: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
+def tg_mean(tas: xarray.DataArray, freq: Freq = "YS") -> xarray.DataArray:
     r"""
     Mean of daily average temperature.
 
@@ -118,7 +118,7 @@ def tg_mean(tas: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
 
 @deprecated("1.0", "atmos.tg_min")
 @declare_units(tas="[temperature]")
-def tg_min(tas: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
+def tg_min(tas: xarray.DataArray, freq: Freq = "YS") -> xarray.DataArray:
     r"""
     Lowest mean temperature.
 
@@ -150,7 +150,7 @@ def tg_min(tas: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
 
 @deprecated("1.0", "atmos.tn_max")
 @declare_units(tasmin="[temperature]")
-def tn_max(tasmin: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
+def tn_max(tasmin: xarray.DataArray, freq: Freq = "YS") -> xarray.DataArray:
     r"""
     Highest minimum temperature.
 
@@ -182,7 +182,7 @@ def tn_max(tasmin: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
 
 @deprecated("1.0", "atmos.tn_mean")
 @declare_units(tasmin="[temperature]")
-def tn_mean(tasmin: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
+def tn_mean(tasmin: xarray.DataArray, freq: Freq = "YS") -> xarray.DataArray:
     r"""
     Mean minimum temperature.
 
@@ -214,7 +214,7 @@ def tn_mean(tasmin: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
 
 @deprecated("1.0", "atmos.tn_min")
 @declare_units(tasmin="[temperature]")
-def tn_min(tasmin: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
+def tn_min(tasmin: xarray.DataArray, freq: Freq = "YS") -> xarray.DataArray:
     r"""
     Lowest minimum temperature.
 
@@ -246,7 +246,7 @@ def tn_min(tasmin: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
 
 @deprecated("1.0", "atmos.tx_max")
 @declare_units(tasmax="[temperature]")
-def tx_max(tasmax: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
+def tx_max(tasmax: xarray.DataArray, freq: Freq = "YS") -> xarray.DataArray:
     r"""
     Highest max temperature.
 
@@ -278,7 +278,7 @@ def tx_max(tasmax: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
 
 @deprecated("1.0", "atmos.tx_mean")
 @declare_units(tasmax="[temperature]")
-def tx_mean(tasmax: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
+def tx_mean(tasmax: xarray.DataArray, freq: Freq = "YS") -> xarray.DataArray:
     r"""
     Mean max temperature.
 
@@ -310,7 +310,7 @@ def tx_mean(tasmax: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
 
 @deprecated("1.0", "atmos.tx_min")
 @declare_units(tasmax="[temperature]")
-def tx_min(tasmax: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
+def tx_min(tasmax: xarray.DataArray, freq: Freq = "YS") -> xarray.DataArray:
     r"""
     Lowest max temperature.
 
@@ -345,7 +345,7 @@ def tx_min(tasmax: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
 def hot_days(
     tasmax: xarray.DataArray,
     thresh: Quantified = "25 degC",
-    freq: str = "YS",
+    freq: Freq = "YS",
 ) -> xarray.DataArray:
     r"""
     Hot days index.
@@ -383,7 +383,7 @@ def hot_days(
 def frost_days(
     tasmin: xarray.DataArray,
     thresh: Quantified = "0 degC",
-    freq: str = "YS",
+    freq: Freq = "YS",
 ) -> xarray.DataArray:
     r"""
     Frost days index.
@@ -418,7 +418,7 @@ def frost_days(
 
 @deprecated("1.0", "atmos.ice_days")
 @declare_units(tasmax="[temperature]", thresh="[temperature]")
-def ice_days(tasmax: xarray.DataArray, thresh: Quantified = "0 degC", freq: str = "YS") -> xarray.DataArray:
+def ice_days(tasmax: xarray.DataArray, thresh: Quantified = "0 degC", freq: Freq = "YS") -> xarray.DataArray:
     r"""
     Number of ice/freezing days.
 
@@ -452,7 +452,7 @@ def ice_days(tasmax: xarray.DataArray, thresh: Quantified = "0 degC", freq: str 
 
 @deprecated("1.0", "atmos.max_1day_precipitation_amount")
 @declare_units(pr="[precipitation]")
-def max_1day_precipitation_amount(pr: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
+def max_1day_precipitation_amount(pr: xarray.DataArray, freq: Freq = "YS") -> xarray.DataArray:
     r"""
     Highest 1-day precipitation amount for a period (frequency).
 
@@ -492,7 +492,7 @@ def max_1day_precipitation_amount(pr: xarray.DataArray, freq: str = "YS") -> xar
 @deprecated("1.0", "atmos.max_n_day_precipitation_amount")
 @declare_units(pr="[precipitation]")
 def max_n_day_precipitation_amount(
-    pr: xarray.DataArray, window: int = 1, freq: str = "YS", **indexer
+    pr: xarray.DataArray, window: int = 1, freq: Freq = "YS", **indexer
 ) -> xarray.DataArray:
     r"""
     Highest precipitation amount cumulated over a n-day moving window.
@@ -536,7 +536,7 @@ def max_n_day_precipitation_amount(
 
 @deprecated("1.0", "atmos.max_pr_intensity")
 @declare_units(pr="[precipitation]")
-def max_pr_intensity(pr: xarray.DataArray, window: int = 1, freq: str = "YS", **indexer) -> xarray.DataArray:
+def max_pr_intensity(pr: xarray.DataArray, window: int = 1, freq: Freq = "YS", **indexer) -> xarray.DataArray:
     r"""
     Highest precipitation intensity over a n-hour moving window.
 
@@ -583,7 +583,7 @@ def max_pr_intensity(pr: xarray.DataArray, window: int = 1, freq: str = "YS", **
 @declare_units(snd="[length]")
 def snow_depth(
     snd: xarray.DataArray,
-    freq: str = "YS",
+    freq: Freq = "YS",
 ) -> xarray.DataArray:
     """
     Mean of daily average snow depth.
@@ -607,7 +607,7 @@ def snow_depth(
 
 @deprecated("1.0", "atmos.sfcWind_max")
 @declare_units(sfcWind="[speed]")
-def sfcWind_max(sfcWind: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:  # noqa: N802
+def sfcWind_max(sfcWind: xarray.DataArray, freq: Freq = "YS") -> xarray.DataArray:  # noqa: N802
     r"""
     Highest daily mean wind speed.
 
@@ -648,7 +648,7 @@ def sfcWind_max(sfcWind: xarray.DataArray, freq: str = "YS") -> xarray.DataArray
 
 @deprecated("1.0", "atmos.sfcWind_mean")
 @declare_units(sfcWind="[speed]")
-def sfcWind_mean(sfcWind: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:  # noqa: N802
+def sfcWind_mean(sfcWind: xarray.DataArray, freq: Freq = "YS") -> xarray.DataArray:  # noqa: N802
     r"""
     Mean of daily mean wind speed.
 
@@ -689,7 +689,7 @@ def sfcWind_mean(sfcWind: xarray.DataArray, freq: str = "YS") -> xarray.DataArra
 
 @deprecated("1.0", "atmos.sfcWind_min")
 @declare_units(sfcWind="[speed]")
-def sfcWind_min(sfcWind: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:  # noqa: N802
+def sfcWind_min(sfcWind: xarray.DataArray, freq: Freq = "YS") -> xarray.DataArray:  # noqa: N802
     r"""
     Lowest daily mean wind speed.
 
@@ -730,7 +730,7 @@ def sfcWind_min(sfcWind: xarray.DataArray, freq: str = "YS") -> xarray.DataArray
 
 @deprecated("1.0", "atmos.sfcWindmax_max")
 @declare_units(sfcWindmax="[speed]")
-def sfcWindmax_max(sfcWindmax: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:  # noqa: N802
+def sfcWindmax_max(sfcWindmax: xarray.DataArray, freq: Freq = "YS") -> xarray.DataArray:  # noqa: N802
     r"""
     Highest maximum wind speed.
 
@@ -770,7 +770,7 @@ def sfcWindmax_max(sfcWindmax: xarray.DataArray, freq: str = "YS") -> xarray.Dat
 
 @deprecated("1.0", "atmos.sfcWindmax_mean")
 @declare_units(sfcWindmax="[speed]")
-def sfcWindmax_mean(sfcWindmax: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:  # noqa: N802
+def sfcWindmax_mean(sfcWindmax: xarray.DataArray, freq: Freq = "YS") -> xarray.DataArray:  # noqa: N802
     r"""
     Mean of daily maximum wind speed.
 
@@ -810,7 +810,7 @@ def sfcWindmax_mean(sfcWindmax: xarray.DataArray, freq: str = "YS") -> xarray.Da
 
 @deprecated("1.0", "atmos.sfcWindmax_min")
 @declare_units(sfcWindmax="[speed]")
-def sfcWindmax_min(sfcWindmax: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:  # noqa: N802
+def sfcWindmax_min(sfcWindmax: xarray.DataArray, freq: Freq = "YS") -> xarray.DataArray:  # noqa: N802
     r"""
     Lowest daily maximum wind speed.
 

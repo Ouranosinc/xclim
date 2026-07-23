@@ -96,7 +96,7 @@ def isothermality(tasmin: xarray.DataArray, tasmax: xarray.DataArray, freq: Freq
 
 
 @declare_units(tas="[temperature]")
-def temperature_seasonality(tas: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
+def temperature_seasonality(tas: xarray.DataArray, freq: Freq = "YS") -> xarray.DataArray:
     r"""
     Temperature seasonality (coefficient of variation).
 
@@ -149,7 +149,7 @@ def temperature_seasonality(tas: xarray.DataArray, freq: str = "YS") -> xarray.D
 
 
 @declare_units(pr="[precipitation]")
-def precip_seasonality(pr: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
+def precip_seasonality(pr: xarray.DataArray, freq: Freq = "YS") -> xarray.DataArray:
     r"""
     Precipitation Seasonality (C of V).
 
@@ -380,7 +380,7 @@ def prcptot_warmcold_quarter(
     pr: xarray.DataArray,
     tas: xarray.DataArray,
     op: Literal["warmest", "coldest"],
-    freq: str = "YS",
+    freq: Freq = "YS",
 ) -> xarray.DataArray:
     r"""
     Total precipitation of warmest/coldest quarter.
@@ -433,7 +433,7 @@ def prcptot_warmcold_quarter(
 
 
 @declare_units(pr="[precipitation]", thresh="[precipitation]")
-def prcptot(pr: xarray.DataArray, thresh: Quantified = "0 mm/d", freq: str = "YS") -> xarray.DataArray:
+def prcptot(pr: xarray.DataArray, thresh: Quantified = "0 mm/d", freq: Freq = "YS") -> xarray.DataArray:
     r"""
     Accumulated total precipitation.
 
@@ -462,7 +462,7 @@ def prcptot(pr: xarray.DataArray, thresh: Quantified = "0 mm/d", freq: str = "YS
 
 @declare_units(pr="[precipitation]")
 def prcptot_wetdry_period(
-    pr: xarray.DataArray, *, op: Literal["wettest", "driest", "dryest"], freq: str = "YS"
+    pr: xarray.DataArray, *, op: Literal["wettest", "driest", "dryest"], freq: Freq = "YS"
 ) -> xarray.DataArray:
     r"""
     Precipitation of the wettest/driest day, week, or month, depending on the time step.
@@ -507,14 +507,14 @@ def prcptot_wetdry_period(
     return pwp
 
 
-def _anuclim_coeff_var(arr: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
+def _anuclim_coeff_var(arr: xarray.DataArray, freq: Freq = "YS") -> xarray.DataArray:
     """Calculate the annual coefficient of variation for ANUCLIM indices."""
     std = arr.resample(time=freq).std(dim="time")
     mu = arr.resample(time=freq).mean(dim="time")
     return std / mu
 
 
-def _from_other_arg(criteria: xarray.DataArray, output: xarray.DataArray, op: Callable, freq: str) -> xarray.DataArray:
+def _from_other_arg(criteria: xarray.DataArray, output: xarray.DataArray, op: Callable, freq: Freq) -> xarray.DataArray:
     """
     Pick values from output based on operation returning an index from criteria.
 

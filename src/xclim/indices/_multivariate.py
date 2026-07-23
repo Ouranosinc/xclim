@@ -76,7 +76,7 @@ def cold_spell_duration_index(
     tasmin: xarray.DataArray,
     tasmin_per: xarray.DataArray,
     window: int = 6,
-    freq: str = "YS",
+    freq: Freq = "YS",
     resample_before_rl: bool = True,
     bootstrap: bool = False,
     condition: Literal["<", "<=", "lt", "le"] = "<",
@@ -170,7 +170,7 @@ def cold_and_dry_days(
     pr: xarray.DataArray,
     tas_per: xarray.DataArray,
     pr_per: xarray.DataArray,
-    freq: str = "YS",
+    freq: Freq = "YS",
 ) -> xarray.DataArray:
     r"""
     Cold and dry days.
@@ -236,7 +236,7 @@ def warm_and_dry_days(
     pr: xarray.DataArray,
     tas_per: xarray.DataArray,
     pr_per: xarray.DataArray,
-    freq: str = "YS",
+    freq: Freq = "YS",
 ) -> xarray.DataArray:
     r"""
     Warm and dry days.
@@ -302,7 +302,7 @@ def warm_and_wet_days(
     pr: xarray.DataArray,
     tas_per: xarray.DataArray,
     pr_per: xarray.DataArray,
-    freq: str = "YS",
+    freq: Freq = "YS",
 ) -> xarray.DataArray:
     r"""
     Warm and wet days.
@@ -368,7 +368,7 @@ def cold_and_wet_days(
     pr: xarray.DataArray,
     tas_per: xarray.DataArray,
     pr_per: xarray.DataArray,
-    freq: str = "YS",
+    freq: Freq = "YS",
 ) -> xarray.DataArray:
     r"""
     Cold and wet days.
@@ -438,7 +438,7 @@ def multiday_temperature_swing(
     statistic: Reducer = "mean",
     condition_tasmin: Literal["<", "<=", "lt", "le"] = "<=",
     condition_tasmax: Literal[">", ">=", "gt", "ge"] = ">",
-    freq: str = "YS",
+    freq: Freq = "YS",
     resample_before_rl: bool = True,
     **indexer,
 ) -> xarray.DataArray:
@@ -518,7 +518,7 @@ def multiday_temperature_swing(
 def daily_temperature_range(
     tasmin: xarray.DataArray,
     tasmax: xarray.DataArray,
-    freq: str = "YS",
+    freq: Freq = "YS",
     op: Literal["min", "max", "mean", "std"] | Callable = "mean",
 ) -> xarray.DataArray:
     r"""
@@ -559,7 +559,7 @@ def daily_temperature_range(
 @deprecated("1.0", "atmos.daily_temperature_range_variability")
 @declare_units(tasmax="[temperature]", tasmin="[temperature]")
 def daily_temperature_range_variability(
-    tasmin: xarray.DataArray, tasmax: xarray.DataArray, freq: str = "YS"
+    tasmin: xarray.DataArray, tasmax: xarray.DataArray, freq: Freq = "YS"
 ) -> xarray.DataArray:
     r"""
     Mean absolute day-to-day variation in daily temperature range.
@@ -594,7 +594,9 @@ def daily_temperature_range_variability(
 
 @deprecated("1.0", "atmos.extreme_temperature_range")
 @declare_units(tasmax="[temperature]", tasmin="[temperature]")
-def extreme_temperature_range(tasmin: xarray.DataArray, tasmax: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
+def extreme_temperature_range(
+    tasmin: xarray.DataArray, tasmax: xarray.DataArray, freq: Freq = "YS"
+) -> xarray.DataArray:
     r"""
     Extreme intra-period temperature range.
 
@@ -639,7 +641,7 @@ def heat_wave_frequency(
     thresh_tasmin: Quantified = "22.0 degC",
     thresh_tasmax: Quantified = "30 degC",
     window: int = 3,
-    freq: str = "YS",
+    freq: Freq = "YS",
     op: Literal[">", ">=", "gt", "ge"] = ">",
     resample_before_rl: bool = True,
 ) -> xarray.DataArray:
@@ -718,7 +720,7 @@ def heat_wave_max_length(
     thresh_tasmin: Quantified = "22.0 degC",
     thresh_tasmax: Quantified = "30 degC",
     window: int = 3,
-    freq: str = "YS",
+    freq: Freq = "YS",
     op: Literal[">", ">=", "gt", "ge"] = ">",
     resample_before_rl: bool = True,
 ) -> xarray.DataArray:
@@ -798,7 +800,7 @@ def heat_wave_total_length(
     thresh_tasmin: Quantified = "22.0 degC",
     thresh_tasmax: Quantified = "30 degC",
     window: int = 3,
-    freq: str = "YS",
+    freq: Freq = "YS",
     op: Literal[">", ">=", "gt", "ge"] = ">",
     resample_before_rl: bool = True,
 ) -> xarray.DataArray:
@@ -866,7 +868,7 @@ def liquid_precip_ratio(
     prsn: xarray.DataArray | None = None,
     tas: xarray.DataArray | None = None,
     thresh: Quantified = "0 degC",
-    freq: str = "QS-DEC",
+    freq: Freq = "QS-DEC",
 ) -> xarray.DataArray:
     r"""
     Ratio of rainfall to total precipitation.
@@ -1005,7 +1007,7 @@ def precip_average(
     tas: xarray.DataArray | None = None,
     phase: str | None = None,
     thresh: Quantified = "0 degC",
-    freq: str = "YS",
+    freq: Freq = "YS",
 ) -> xarray.DataArray:
     r"""
     Averaged (liquid and/or solid) precipitation.
@@ -1070,7 +1072,7 @@ def rain_on_frozen_ground_days(
     tas: xarray.DataArray,
     thresh: Quantified = "1 mm/d",
     window: int = 7,
-    freq: str = "YS",
+    freq: Freq = "YS",
 ) -> xarray.DataArray:
     """
     Number of rain on frozen ground events.
@@ -1140,7 +1142,7 @@ def high_precip_low_temp(
     tas: xarray.DataArray,
     pr_thresh: Quantified = "0.4 mm/d",
     tas_thresh: Quantified = "-0.2 degC",
-    freq: str = "YS",
+    freq: Freq = "YS",
 ) -> xarray.DataArray:
     """
     Number of days with precipitation above threshold and temperature below threshold.
@@ -1187,7 +1189,7 @@ def days_over_precip_thresh(
     pr: xarray.DataArray,
     pr_per: xarray.DataArray,
     thresh: Quantified = "1 mm/day",
-    freq: str = "YS",
+    freq: Freq = "YS",
     bootstrap: bool = False,
     condition: Literal[">", ">=", "gt", "ge"] = ">",
 ) -> xarray.DataArray:
@@ -1248,7 +1250,7 @@ def fraction_over_precip_thresh(
     pr: xarray.DataArray,
     pr_per: xarray.DataArray,
     thresh: Quantified = "1 mm/day",
-    freq: str = "YS",
+    freq: Freq = "YS",
     bootstrap: bool = False,
     condition: Literal[">", ">=", "gt", "ge"] = ">",
 ) -> xarray.DataArray:
@@ -1309,7 +1311,7 @@ def fraction_over_precip_thresh(
 def tg90p(
     tas: xarray.DataArray,
     tas_per: xarray.DataArray,
-    freq: str = "YS",
+    freq: Freq = "YS",
     bootstrap: bool = False,
     condition: Literal[">", ">=", "gt", "ge"] = ">",
 ) -> xarray.DataArray:
@@ -1367,7 +1369,7 @@ def tg90p(
 def tg10p(
     tas: xarray.DataArray,
     tas_per: xarray.DataArray,
-    freq: str = "YS",
+    freq: Freq = "YS",
     bootstrap: bool = False,
     condition: Literal[">", ">=", "gt", "ge"] = "<",
 ) -> xarray.DataArray:
@@ -1425,7 +1427,7 @@ def tg10p(
 def tn90p(
     tasmin: xarray.DataArray,
     tasmin_per: xarray.DataArray,
-    freq: str = "YS",
+    freq: Freq = "YS",
     bootstrap: bool = False,
     condition: Literal[">", ">=", "gt", "ge"] = ">",
 ) -> xarray.DataArray:
@@ -1483,7 +1485,7 @@ def tn90p(
 def tn10p(
     tasmin: xarray.DataArray,
     tasmin_per: xarray.DataArray,
-    freq: str = "YS",
+    freq: Freq = "YS",
     bootstrap: bool = False,
     condition: Literal["<", "<=", "lt", "le"] = "<",
 ) -> xarray.DataArray:
@@ -1541,7 +1543,7 @@ def tn10p(
 def tx90p(
     tasmax: xarray.DataArray,
     tasmax_per: xarray.DataArray,
-    freq: str = "YS",
+    freq: Freq = "YS",
     bootstrap: bool = False,
     condition: Literal["<", "<=", "lt", "le"] = ">",
 ) -> xarray.DataArray:
@@ -1599,7 +1601,7 @@ def tx90p(
 def tx10p(
     tasmax: xarray.DataArray,
     tasmax_per: xarray.DataArray,
-    freq: str = "YS",
+    freq: Freq = "YS",
     bootstrap: bool = False,
     condition: Literal["<", "<=", "lt", "le"] = "<",
 ) -> xarray.DataArray:
@@ -1664,7 +1666,7 @@ def tx_tn_days_above(
     tasmax: xarray.DataArray,
     thresh_tasmin: Quantified = "22 degC",
     thresh_tasmax: Quantified = "30 degC",
-    freq: str = "YS",
+    freq: Freq = "YS",
     condition: Literal[">", ">=", "gt", "ge"] = ">",
 ) -> xarray.DataArray:
     r"""
@@ -1729,7 +1731,7 @@ def warm_spell_duration_index(
     tasmax: xarray.DataArray,
     tasmax_per: xarray.DataArray,
     window: int = 6,
-    freq: str = "YS",
+    freq: Freq = "YS",
     resample_before_rl: bool = True,
     bootstrap: bool = False,
     condition: Literal[">", ">=", "gt", "ge"] = ">",
@@ -1809,7 +1811,7 @@ def winter_rain_ratio(
     pr: xarray.DataArray,
     prsn: xarray.DataArray | None = None,
     tas: xarray.DataArray | None = None,
-    freq: str = "QS-DEC",
+    freq: Freq = "QS-DEC",
 ) -> xarray.DataArray:
     """
     Ratio of rainfall to total precipitation during winter.
@@ -1846,7 +1848,7 @@ def blowing_snow(
     snd_thresh: Quantified = "5 cm",
     sfcWind_thresh: Quantified = "15 km/h",
     window: int = 3,
-    freq: str = "YS-JUL",
+    freq: Freq = "YS-JUL",
     **indexer,
 ) -> xarray.DataArray:
     """

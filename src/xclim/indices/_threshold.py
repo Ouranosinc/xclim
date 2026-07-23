@@ -110,7 +110,7 @@ __all__ = [
 
 @deprecated("1.0", "atmos.calm_days")
 @declare_units(sfcWind="[speed]", thresh="[speed]")
-def calm_days(sfcWind: xarray.DataArray, thresh: Quantified = "2 m s-1", freq: str = "MS") -> xarray.DataArray:
+def calm_days(sfcWind: xarray.DataArray, thresh: Quantified = "2 m s-1", freq: Freq = "MS") -> xarray.DataArray:
     r"""
     Calm days.
 
@@ -148,7 +148,7 @@ def cold_spell_days(
     tas: xarray.DataArray,
     thresh: Quantified = "-10 degC",
     window: int = 5,
-    freq: str = "YS-JUL",
+    freq: Freq = "YS-JUL",
     op: Literal["<", "lt", "<=", "le"] = "<",
     resample_before_rl: bool = True,
 ) -> xarray.DataArray:
@@ -209,7 +209,7 @@ def cold_spell_frequency(
     tas: xarray.DataArray,
     thresh: Quantified = "-10 degC",
     window: int = 5,
-    freq: str = "YS-JUL",
+    freq: Freq = "YS-JUL",
     op: Literal["<", "lt", "<=", "le"] = "<",
     resample_before_rl: bool = True,
 ) -> xarray.DataArray:
@@ -259,7 +259,7 @@ def cold_spell_max_length(
     tas: xarray.DataArray,
     thresh: Quantified = "-10 degC",
     window: int = 1,
-    freq: str = "YS-JUL",
+    freq: Freq = "YS-JUL",
     op: Literal["<", "lt", "<=", "le"] = "<",
     resample_before_rl: bool = True,
 ) -> xarray.DataArray:
@@ -310,7 +310,7 @@ def cold_spell_total_length(
     tas: xarray.DataArray,
     thresh: Quantified = "-10 degC",
     window: int = 3,
-    freq: str = "YS-JUL",
+    freq: Freq = "YS-JUL",
     op: Literal["<", "lt", "<=", "le"] = "<",
     resample_before_rl: bool = True,
 ) -> xarray.DataArray:
@@ -360,7 +360,7 @@ def snd_season_end(
     snd: xarray.DataArray,
     thresh: Quantified = "2 cm",
     window: int = 14,
-    freq: str = "YS-JUL",
+    freq: Freq = "YS-JUL",
 ) -> xarray.DataArray:
     r"""
     Snow cover end date (depth).
@@ -398,7 +398,7 @@ def snw_season_end(
     snw: xarray.DataArray,
     thresh: Quantified = "4 kg m-2",
     window: int = 14,
-    freq: str = "YS-JUL",
+    freq: Freq = "YS-JUL",
 ) -> xarray.DataArray:
     r"""
     Snow cover end date (amount).
@@ -435,7 +435,7 @@ def snd_season_start(
     snd: xarray.DataArray,
     thresh: Quantified = "2 cm",
     window: int = 14,
-    freq: str = "YS-JUL",
+    freq: Freq = "YS-JUL",
 ) -> xarray.DataArray:
     r"""
     Snow cover start date (depth).
@@ -472,7 +472,7 @@ def snw_season_start(
     snw: xarray.DataArray,
     thresh: Quantified = "4 kg m-2",
     window: int = 14,
-    freq: str = "YS-JUL",
+    freq: Freq = "YS-JUL",
 ) -> xarray.DataArray:
     r"""
     Snow cover start date (amount).
@@ -508,7 +508,7 @@ def snd_season_length(
     snd: xarray.DataArray,
     thresh: Quantified = "2 cm",
     window: int = 14,
-    freq: str = "YS-JUL",
+    freq: Freq = "YS-JUL",
 ) -> xarray.DataArray:
     r"""
     Snow cover duration (depth).
@@ -545,7 +545,7 @@ def snw_season_length(
     snw: xarray.DataArray,
     thresh: Quantified = "4 kg m-2",
     window: int = 14,
-    freq: str = "YS-JUL",
+    freq: Freq = "YS-JUL",
 ) -> xarray.DataArray:
     r"""
     Snow cover duration (amount).
@@ -577,7 +577,7 @@ def snw_season_length(
 
 
 @declare_units(snd="[length]", thresh="[length]")
-def snd_storm_days(snd: xarray.DataArray, thresh: Quantified = "25 cm", freq: str = "YS-JUL") -> xarray.DataArray:
+def snd_storm_days(snd: xarray.DataArray, thresh: Quantified = "25 cm", freq: Freq = "YS-JUL") -> xarray.DataArray:
     """
     Days with snowfall over threshold.
 
@@ -613,7 +613,7 @@ def snd_storm_days(snd: xarray.DataArray, thresh: Quantified = "25 cm", freq: st
 
 
 @declare_units(snw="[snowamount]", thresh="[snowamount]")
-def snw_storm_days(snw: xarray.DataArray, thresh: Quantified = "10 kg m-2", freq: str = "YS-JUL") -> xarray.DataArray:
+def snw_storm_days(snw: xarray.DataArray, thresh: Quantified = "10 kg m-2", freq: Freq = "YS-JUL") -> xarray.DataArray:
     """
     Days with snowfall over threshold.
 
@@ -653,7 +653,7 @@ def snw_storm_days(snw: xarray.DataArray, thresh: Quantified = "10 kg m-2", freq
 def daily_pr_intensity(
     pr: xarray.DataArray,
     thresh: Quantified = "1 mm/day",
-    freq: str = "YS",
+    freq: Freq = "YS",
     op: Literal[">", "gt", ">=", "ge"] = ">=",
 ) -> xarray.DataArray:
     r"""
@@ -730,7 +730,7 @@ def daily_pr_intensity(
 def dry_days(
     pr: xarray.DataArray,
     thresh: Quantified = "0.2 mm/d",
-    freq: str = "YS",
+    freq: Freq = "YS",
     op: Literal["<", "lt", "<=", "le"] = "<",
 ) -> xarray.DataArray:
     r"""
@@ -773,7 +773,7 @@ def maximum_consecutive_wet_days(
     pr: xarray.DataArray,
     thresh: Quantified = "1 mm/day",
     op: Literal[">", "gt", ">=", "ge"] = ">=",
-    freq: str = "YS",
+    freq: Freq = "YS",
     resample_before_rl: bool = True,
 ) -> xarray.DataArray:
     r"""
@@ -888,7 +888,7 @@ def cooling_degree_days_approximation(
     tasmin: xarray.DataArray,
     tas: xarray.DataArray,
     thresh: Quantified = "18 degC",
-    freq: str = "YS",
+    freq: Freq = "YS",
 ) -> xarray.DataArray:
     """
     Cooling degree days approximation.
@@ -922,7 +922,7 @@ def cooling_degree_days_approximation(
 
 @deprecated("1.0", "atmos.cooling_degree_days")
 @declare_units(tas="[temperature]", thresh="[temperature]")
-def cooling_degree_days(tas: xarray.DataArray, thresh: Quantified = "18 degC", freq: str = "YS") -> xarray.DataArray:
+def cooling_degree_days(tas: xarray.DataArray, thresh: Quantified = "18 degC", freq: Freq = "YS") -> xarray.DataArray:
     r"""
     Cooling degree days.
 
@@ -958,7 +958,7 @@ def cooling_degree_days(tas: xarray.DataArray, thresh: Quantified = "18 degC", f
 
 @deprecated("1.0", "atmos.growing_degree_days")
 @declare_units(tas="[temperature]", thresh="[temperature]")
-def growing_degree_days(tas: xarray.DataArray, thresh: Quantified = "4.0 degC", freq: str = "YS") -> xarray.DataArray:
+def growing_degree_days(tas: xarray.DataArray, thresh: Quantified = "4.0 degC", freq: Freq = "YS") -> xarray.DataArray:
     r"""
     Growing degree-days over threshold temperature value.
 
@@ -997,7 +997,7 @@ def growing_season_start(
     thresh: Quantified = "5.0 degC",
     mid_date: DayOfYearStr | None = "07-01",
     window: int = 5,
-    freq: str = "YS",
+    freq: Freq = "YS",
     op: Literal[">", "gt", ">=", "ge"] = ">=",
 ) -> xarray.DataArray:
     r"""
@@ -1052,7 +1052,7 @@ def growing_season_end(
     thresh: Quantified = "5.0 degC",
     mid_date: DayOfYearStr | None = "07-01",
     window: int = 5,
-    freq: str = "YS",
+    freq: Freq = "YS",
     op: Literal[">", ">=", "lt", "le"] = ">",
 ) -> xarray.DataArray:
     r"""
@@ -1120,7 +1120,7 @@ def growing_season_length(
     thresh: Quantified = "5.0 degC",
     window: int = 6,
     mid_date: DayOfYearStr | None = "07-01",
-    freq: str = "YS",
+    freq: Freq = "YS",
     op: Literal[">", "gt", ">=", "ge"] = ">=",
 ) -> xarray.DataArray:
     r"""
@@ -1209,7 +1209,7 @@ def frost_season_length(
     window: int = 5,
     mid_date: DayOfYearStr | None = "01-01",
     thresh: Quantified = "0.0 degC",
-    freq: str = "YS-JUL",
+    freq: Freq = "YS-JUL",
     op: Literal["<", "lt", "<=", "le"] = "<",
 ) -> xarray.DataArray:
     r"""
@@ -1293,7 +1293,7 @@ def frost_free_season_start(
     window: int = 5,
     mid_date: DayOfYearStr | None = "07-01",
     op: Literal[">", "gt", ">=", "ge"] = ">=",
-    freq: str = "YS",
+    freq: Freq = "YS",
 ) -> xarray.DataArray:
     r"""
     Start of the frost-free season.
@@ -1355,7 +1355,7 @@ def frost_free_season_end(
     window: int = 5,
     mid_date: DayOfYearStr | None = "07-01",
     op: Literal[">", "gt", ">=", "ge"] = ">=",
-    freq: str = "YS",
+    freq: Freq = "YS",
 ) -> xarray.DataArray:
     r"""
     End of the frost-free season.
@@ -1424,7 +1424,7 @@ def frost_free_season_length(
     window: int = 5,
     mid_date: DayOfYearStr | None = "07-01",
     op: Literal[">", "gt", ">=", "ge"] = ">=",
-    freq: str = "YS",
+    freq: Freq = "YS",
 ) -> xarray.DataArray:
     r"""
     Length of the frost-free season.
@@ -1504,7 +1504,7 @@ def frost_free_spell_max_length(
     tasmin: xarray.DataArray,
     thresh: Quantified = "0.0 degC",
     window: int = 1,
-    freq: str = "YS-JUL",
+    freq: Freq = "YS-JUL",
     op: Literal[">", "gt", ">=", "ge"] = ">=",
     resample_before_rl: bool = True,
 ) -> xarray.DataArray:
@@ -1556,7 +1556,7 @@ def last_spring_frost(
     op: Literal["<", "lt", "<=", "le"] = "<",
     before_date: DayOfYearStr = "07-01",
     window: int = 1,
-    freq: str = "YS",
+    freq: Freq = "YS",
 ) -> xarray.DataArray:
     r"""
     Last day of temperatures inferior to a threshold temperature.
@@ -1616,7 +1616,7 @@ def first_day_temperature_below(
     op: Literal["<", "lt", "<=", "le"] = "<",
     after_date: DayOfYearStr = "07-01",
     window: int = 1,
-    freq: str = "YS",
+    freq: Freq = "YS",
 ) -> xarray.DataArray:
     r"""
     First day of temperatures inferior to a given temperature threshold.
@@ -1670,7 +1670,7 @@ def first_day_temperature_above(
     op: Literal[">", "gt", ">=", "ge"] = ">",
     after_date: DayOfYearStr = "01-01",
     window: int = 1,
-    freq: str = "YS",
+    freq: Freq = "YS",
 ) -> xarray.DataArray:
     r"""
     First day of temperatures superior to a given temperature threshold.
@@ -1733,7 +1733,7 @@ def first_day_temperature_above(
 def first_snowfall(
     prsn: xarray.DataArray,
     thresh: Quantified = "1 mm/day",
-    freq: str = "YS-JUL",
+    freq: Freq = "YS-JUL",
 ) -> xarray.DataArray:
     r"""
     First day with snowfall rate above a given threshold.
@@ -1790,7 +1790,7 @@ def first_snowfall(
 def last_snowfall(
     prsn: xarray.DataArray,
     thresh: Quantified = "1 mm/day",
-    freq: str = "YS-JUL",
+    freq: Freq = "YS-JUL",
 ) -> xarray.DataArray:
     r"""
     Last day with snowfall above a given threshold.
@@ -1852,7 +1852,7 @@ def days_with_snow(
     prsn: xarray.DataArray,
     low: Quantified = "0 kg m-2 s-1",
     high: Quantified = "1E6 kg m-2 s-1",
-    freq: str = "YS-JUL",
+    freq: Freq = "YS-JUL",
 ) -> xarray.DataArray:
     r"""
     Days with snow.
@@ -1896,7 +1896,7 @@ def days_with_snow(
 def snowfall_frequency(
     prsn: xarray.DataArray,
     thresh: Quantified = "1 mm/day",
-    freq: str = "YS-JUL",
+    freq: Freq = "YS-JUL",
 ) -> xarray.DataArray:
     r"""
     Percentage of snow days.
@@ -1947,7 +1947,7 @@ def snowfall_frequency(
 def snowfall_intensity(
     prsn: xarray.DataArray,
     thresh: Quantified = "1 mm/day",
-    freq: str = "YS-JUL",
+    freq: Freq = "YS-JUL",
 ) -> xarray.DataArray:
     r"""
     Mean daily snowfall rate during snow days.
@@ -1999,7 +1999,7 @@ def hot_spell_max_magnitude(
     tasmax: xarray.DataArray,
     thresh: Quantified = "25.0 degC",
     window: int = 3,
-    freq: str = "YS",
+    freq: Freq = "YS",
     resample_before_rl: bool = True,
 ) -> xarray.DataArray:
     """
@@ -2042,7 +2042,7 @@ def hot_spell_max_magnitude(
         window=window,
         freq=freq,
     )
-    return to_agg_units(out, tasmax, reducer="integral", deffreq="D")
+    return to_agg_units(out, tasmax, statistic="integral", deffreq="D")
 
 
 @declare_units(tasmax="[temperature]", tasmin="[temperature]", tas="[temperature]", thresh="[temperature]")
@@ -2116,7 +2116,7 @@ def heating_degree_days_approximation(
     tasmin: xarray.DataArray,
     tas: xarray.DataArray,
     thresh: Quantified = "17.0 degC",
-    freq: str = "YS",
+    freq: Freq = "YS",
 ) -> xarray.DataArray:
     """
     Heating degree days approximation.
@@ -2153,7 +2153,7 @@ def heating_degree_days_approximation(
 def heating_degree_days(
     tas: xarray.DataArray,
     thresh: Quantified = "17.0 degC",
-    freq: str = "YS",
+    freq: Freq = "YS",
 ) -> xarray.DataArray:
     r"""
     Heating degree days.
@@ -2196,7 +2196,7 @@ def hot_spell_max_length(
     tasmax: xarray.DataArray,
     thresh: Quantified = "30 degC",
     window: int = 1,
-    freq: str = "YS",
+    freq: Freq = "YS",
     op: Literal[">", "gt", ">=", "ge"] = ">",
     resample_before_rl: bool = True,
 ) -> xarray.DataArray:
@@ -2260,7 +2260,7 @@ def hot_spell_total_length(
     tasmax: xarray.DataArray,
     thresh: Quantified = "30 degC",
     window: int = 3,
-    freq: str = "YS",
+    freq: Freq = "YS",
     op: Literal[">", "gt", ">=", "ge"] = ">",
     resample_before_rl: bool = True,
 ) -> xarray.DataArray:
@@ -2320,7 +2320,7 @@ def hot_spell_frequency(
     tasmax: xarray.DataArray,
     thresh: Quantified = "30 degC",
     window: int = 3,
-    freq: str = "YS",
+    freq: Freq = "YS",
     op: Literal[">", "gt", ">=", "ge"] = ">",
     resample_before_rl: bool = True,
 ) -> xarray.DataArray:
@@ -2383,7 +2383,7 @@ def hot_spell_frequency(
 def snd_days_above(
     snd: xarray.DataArray,
     thresh: Quantified = "2 cm",
-    freq: str = "YS-JUL",
+    freq: Freq = "YS-JUL",
     op: Literal[">", "gt", ">=", "ge"] = ">=",
 ) -> xarray.DataArray:
     """
@@ -2415,7 +2415,7 @@ def snd_days_above(
 def snw_days_above(
     snw: xarray.DataArray,
     thresh: Quantified = "4 kg m-2",
-    freq: str = "YS-JUL",
+    freq: Freq = "YS-JUL",
     op: Literal[">", "gt", ">=", "ge"] = ">=",
 ) -> xarray.DataArray:
     """
@@ -2447,7 +2447,7 @@ def snw_days_above(
 def tn_days_above(
     tasmin: xarray.DataArray,
     thresh: Quantified = "20.0 degC",
-    freq: str = "YS",
+    freq: Freq = "YS",
     op: Literal[">", "gt", ">=", "ge"] = ">",
 ):
     """
@@ -2488,7 +2488,7 @@ def tn_days_above(
 def tn_days_below(
     tasmin: xarray.DataArray,
     thresh: Quantified = "-10.0 degC",
-    freq: str = "YS",
+    freq: Freq = "YS",
     op: Literal["<", "lt", "<=", "le"] = "<",
 ) -> xarray.DataArray:
     """
@@ -2529,7 +2529,7 @@ def tn_days_below(
 def tg_days_above(
     tas: xarray.DataArray,
     thresh: Quantified = "10.0 degC",
-    freq: str = "YS",
+    freq: Freq = "YS",
     op: Literal["<", "lt", "<=", "le"] = ">",
 ):
     """
@@ -2570,7 +2570,7 @@ def tg_days_above(
 def tg_days_below(
     tas: xarray.DataArray,
     thresh: Quantified = "10.0 degC",
-    freq: str = "YS",
+    freq: Freq = "YS",
     op: Literal["<", "lt", "<=", "le"] = "<",
 ):
     """
@@ -2611,7 +2611,7 @@ def tg_days_below(
 def tx_days_above(
     tasmax: xarray.DataArray,
     thresh: Quantified = "25.0 degC",
-    freq: str = "YS",
+    freq: Freq = "YS",
     op: Literal[">", "gt", ">=", "ge"] = ">",
 ) -> xarray.DataArray:
     """
@@ -2652,7 +2652,7 @@ def tx_days_above(
 def tx_days_below(
     tasmax: xarray.DataArray,
     thresh: Quantified = "25.0 degC",
-    freq: str = "YS",
+    freq: Freq = "YS",
     op: Literal["<", "lt", "<=", "le"] = "<",
 ):
     """
@@ -2693,7 +2693,7 @@ def tx_days_below(
 def warm_day_frequency(
     tasmax: xarray.DataArray,
     thresh: Quantified = "30 degC",
-    freq: str = "YS",
+    freq: Freq = "YS",
     op: Literal[">", "gt", ">=", "ge"] = ">",
 ) -> xarray.DataArray:
     """
@@ -2734,7 +2734,7 @@ def warm_day_frequency(
 def warm_night_frequency(
     tasmin: xarray.DataArray,
     thresh: Quantified = "22 degC",
-    freq: str = "YS",
+    freq: Freq = "YS",
     op: Literal[">", "gt", ">=", "ge"] = ">",
 ) -> xarray.DataArray:
     """
@@ -2766,7 +2766,7 @@ def warm_night_frequency(
 def wetdays(
     pr: xarray.DataArray,
     thresh: Quantified = "1.0 mm/day",
-    freq: str = "YS",
+    freq: Freq = "YS",
     op: Literal[">", "gt", ">=", "ge"] = ">=",
 ) -> xarray.DataArray:
     """
@@ -2807,7 +2807,7 @@ def wetdays(
 def wetdays_prop(
     pr: xarray.DataArray,
     thresh: Quantified = "1.0 mm/day",
-    freq: str = "YS",
+    freq: Freq = "YS",
     condition: Literal[">", "gt", ">=", "ge"] = ">=",
 ) -> xarray.DataArray:
     """
@@ -2852,7 +2852,7 @@ def maximum_consecutive_dry_days(
     pr: xarray.DataArray,
     thresh: Quantified = "1 mm/day",
     op: Literal["<", "lt", "<=", "le"] = "<",
-    freq: str = "YS",
+    freq: Freq = "YS",
     resample_before_rl: bool = True,
 ) -> xarray.DataArray:
     r"""
@@ -2971,7 +2971,7 @@ def sea_ice_extent(
 
 @deprecated("1.0", "atmos.windy_days")
 @declare_units(sfcWind="[speed]", thresh="[speed]")
-def windy_days(sfcWind: xarray.DataArray, thresh: Quantified = "10.8 m s-1", freq: str = "MS") -> xarray.DataArray:
+def windy_days(sfcWind: xarray.DataArray, thresh: Quantified = "10.8 m s-1", freq: Freq = "MS") -> xarray.DataArray:
     r"""
     Windy days.
 
@@ -3007,7 +3007,7 @@ def rprctot(
     pr: xarray.DataArray,
     prc: xarray.DataArray,
     thresh: Quantified = "1.0 mm/day",
-    freq: str = "YS",
+    freq: Freq = "YS",
     op: Literal[">", "gt", ">=", "ge"] = ">=",
 ) -> xarray.DataArray:
     """
@@ -3055,7 +3055,7 @@ def degree_days_exceedance_date(
     condition: Literal[">", "gt", "<", "lt", ">=", "ge", "<=", "le"] = ">",
     after_date: DayOfYearStr | None = None,
     never_reached: DayOfYearStr | int | None = None,
-    freq: str = "YS",
+    freq: Freq = "YS",
 ) -> xarray.DataArray:
     r"""
     Degree-days exceedance date.
@@ -3150,7 +3150,7 @@ def dry_spell_frequency(
     pr: xarray.DataArray,
     thresh: Quantified = "1.0 mm",
     window: int = 3,
-    freq: str = "YS",
+    freq: Freq = "YS",
     resample_before_rl: bool = True,
     op: Literal["sum", "max", "min", "mean"] = "sum",
     **indexer,
@@ -3223,7 +3223,7 @@ def dry_spell_total_length(
     thresh: Quantified = "1.0 mm",
     window: int = 3,
     op: Literal["sum", "max", "min", "mean"] = "sum",
-    freq: str = "YS",
+    freq: Freq = "YS",
     resample_before_rl: bool = True,
     **indexer,
 ) -> xarray.DataArray:
@@ -3296,7 +3296,7 @@ def dry_spell_max_length(
     thresh: Quantified = "1.0 mm",
     window: int = 1,
     op: Literal["max", "sum"] = "sum",
-    freq: str = "YS",
+    freq: Freq = "YS",
     resample_before_rl: bool = True,
     **indexer,
 ) -> xarray.DataArray:
@@ -3364,7 +3364,7 @@ def wet_spell_frequency(
     pr: xarray.DataArray,
     thresh: Quantified = "1.0 mm",
     window: int = 3,
-    freq: str = "YS",
+    freq: Freq = "YS",
     resample_before_rl: bool = True,
     op: Literal["sum", "min", "max", "mean"] = "sum",
     **indexer,
@@ -3437,7 +3437,7 @@ def wet_spell_total_length(
     thresh: Quantified = "1.0 mm",
     window: int = 3,
     op: Literal["min", "sum", "max", "mean"] = "sum",
-    freq: str = "YS",
+    freq: Freq = "YS",
     resample_before_rl: bool = True,
     **indexer,
 ) -> xarray.DataArray:
@@ -3509,7 +3509,7 @@ def wet_spell_max_length(
     thresh: Quantified = "1.0 mm",
     window: int = 1,
     op: Literal["min", "sum", "max", "mean"] = "sum",
-    freq: str = "YS",
+    freq: Freq = "YS",
     resample_before_rl: bool = True,
     **indexer,
 ) -> xarray.DataArray:
@@ -3584,7 +3584,7 @@ def holiday_snow_days(
     condition: Literal[">", "gt", ">=", "ge"] = ">=",
     date_start: str = "12-25",
     date_end: str | None = None,
-    freq: str = "YS",
+    freq: Freq = "YS",
 ) -> xarray.DataArray:  # numpydoc ignore=SS05
     """
     Christmas Days.
@@ -3640,7 +3640,7 @@ def holiday_snow_and_snowfall_days(
     prsn_condition: Literal[">", "gt", ">=", "ge"] = ">=",
     date_start: str = "12-25",
     date_end: str | None = None,
-    freq: str = "YS-JUL",
+    freq: Freq = "YS-JUL",
 ) -> xarray.DataArray:
     r"""
     Perfect Christmas Days.
