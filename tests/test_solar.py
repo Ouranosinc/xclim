@@ -44,7 +44,7 @@ def test_solar_noon(method, tol):
 
     out = sx.solar_noon(
         ds=din,
-        method="astral",
+        method=method,
     )
     # output is in UTC, translate to timezone:
     assert np.abs((out + coords.utcoffset - coords.noon).dt.total_seconds()).max().item() < tol
