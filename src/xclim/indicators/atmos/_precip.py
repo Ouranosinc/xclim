@@ -50,6 +50,7 @@ __all__ = [
     "mcarthur_forest_fire_danger_index",
     "precip_accumulation",
     "precip_average",
+    "precipitation_concentration_index",
     "rain_on_frozen_ground_days",
     "rain_season",
     "rprctot",
@@ -838,9 +839,9 @@ antecedent_precipitation_index = DailyPrecipNoResample(
 )
 
 precipitation_concentration_index = Precip(
-    identifier="pai",
+    identifier="pci",
     realm="atmos",
-    units="",
+    units="%",
     long_name="Precipitation Concentration Index",
     description="A measure of the unevenness of the {freq} distribution of precipitations. "
     "Computed as the ratio of the sum of squared {subfreq} totals to the square of the sum of {subfreq} totals, "

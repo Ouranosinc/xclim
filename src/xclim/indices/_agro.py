@@ -1649,5 +1649,5 @@ def precipitation_concentration_index(pr: xarray.DataArray, freq: str = "YS", su
     """
     monthly = pr.resample(time=subfreq).sum()
     return (((monthly**2).resample(time=freq).sum() / (monthly.resample(time=freq).sum()) ** 2) * 100).assign_attrs(
-        units=""
+        units="%"
     )

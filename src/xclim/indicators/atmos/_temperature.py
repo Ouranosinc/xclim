@@ -33,6 +33,7 @@ __all__ = [
     "daily_freezethaw_cycles",
     "daily_temperature_range",
     "daily_temperature_range_variability",
+    "day_to_day_temperature_variability",
     "degree_days_exceedance_date",
     "extreme_temperature_range",
     "fire_season",
