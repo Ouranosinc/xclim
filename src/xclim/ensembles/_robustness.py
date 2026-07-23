@@ -77,6 +77,7 @@ def robustness_fractions(
     test: str | None = None,
     weights: xr.DataArray | None = None,
     invalid: MissingBase | None = None,
+    strict_sign: bool = True,
     **kwargs,
 ) -> xr.Dataset:
     r"""
@@ -104,6 +105,11 @@ def robustness_fractions(
         Invalid points are not included in the fractions. Default is MissingAny, which means any
         nan along the "time" dimension means the timeseries is invalid.
         Not used if only deltas are passed as `fut`.
+    strict_sign : bool
+        Whether to include zeros When determining the sign of change. True (default) does not include
+        them, the comparison is done with `>` and `<`, while false uses `>=`, `<=`.
+        When True, the "agree" fraction is the largest of three : positive, negative, zero change.
+        When False, it is the largest of two : zero-or-positive, zero-or-negative.
     **kwargs : dict
         Other arguments specific to the statistical test. See notes.
 
@@ -118,22 +124,23 @@ def robustness_fractions(
               Passing `test=None` yields change_frac = 1 everywhere. Same type as `fut`.
 
         - positive
-            - The weighted fraction of valid members showing strictly positive change,
-              no matter if it is significant or not.
+            - The weighted fraction of valid members showing positive change, no matter if it is significant or not.
+              If `strict_sign=True`, only strictly positive change is included.
 
         - changed_positive
             - The weighted fraction of valid members showing significant and positive change.
 
         - negative
-            - The weighted fraction of valid members showing strictly negative change,
-              no matter if it is significant or not.
+            - The weighted fraction of valid members showing negative change, no matter if it is significant or not.
+              If `strict_sign=True`, only strictly negative change is included.
 
         - changed_negative
             - The weighted fraction of valid members showing significant and negative change.
 
         - agree
             - The weighted fraction of valid members agreeing on the sign of change.
-              It is the maximum between positive, negative and the rest.
+              If `strict_sign=True`, it is the maximum between positive, negative and the zero change.
+              Otherwise, it is the maximum between positive and negative (both including zero change).
 
         - valid
             - The weighted fraction of valid members.
@@ -169,7 +176,7 @@ def robustness_fractions(
           Accepts one argument, either "abs_thresh" or "rel_thresh".
 
     - None
-        - Significant change is not tested. Members showing any positive change are included in the `pos_frac` output.
+        - Significant change is not tested. The `changed` fraction is always 1.
 
     References
     ----------
@@ -250,16 +257,24 @@ def robustness_fractions(
     valid_frac = valid.weighted(w).sum(realization) / fut[realization].size
     n_valid = valid.weighted(w).sum(realization)
     change_frac = changed.where(valid).weighted(w).sum(realization) / n_valid
-    pos_frac = (delta > 0).where(valid).weighted(w).sum(realization) / n_valid
-    neg_frac = (delta < 0).where(valid).weighted(w).sum(realization) / n_valid
-    change_pos_frac = ((delta > 0) & changed).where(valid).weighted(w).sum(realization) / n_valid
-    change_neg_frac = ((delta < 0) & changed).where(valid).weighted(w).sum(realization) / n_valid
+    if strict_sign:
+        neg_del = compare(delta, "<", 0)
+        pos_del = compare(delta, ">", 0)
+    else:
+        neg_del = compare(delta, "<=", 0)
+        pos_del = compare(delta, ">=", 0)
+
+    neg_frac = neg_del.where(valid).weighted(w).sum(realization) / n_valid
+    pos_frac = pos_del.where(valid).weighted(w).sum(realization) / n_valid
+    change_pos_frac = (pos_del & changed).where(valid).weighted(w).sum(realization) / n_valid
+    change_neg_frac = (neg_del & changed).where(valid).weighted(w).sum(realization) / n_valid
     agree_frac = xr.concat((pos_frac, neg_frac, 1 - pos_frac - neg_frac), "sign").max("sign")
 
     # Metadata
     kwargs_str = gen_call_string("", **test_params)[1:-1]
     test_str = f"Significant change was tested with test {test} and parameters {kwargs_str}."
 
+    strict = "strictly " if strict_sign else "zero or "
     out = xr.Dataset(
         {
             "changed": change_frac.assign_attrs(
@@ -268,20 +283,20 @@ def robustness_fractions(
                 test=str(test),
             ),
             "positive": pos_frac.assign_attrs(
-                description="Fraction of valid members showing strictly positive change.",
+                description=f"Fraction of valid members showing {strict} positive change.",
                 units="",
             ),
             "changed_positive": change_pos_frac.assign_attrs(
-                description=f"Fraction of valid members showing significant and positive change. {test_str}",
+                description=f"Fraction of valid members showing significant and {strict} positive change. {test_str}",
                 units="",
                 test=str(test),
             ),
             "negative": neg_frac.assign_attrs(
-                description="Fraction of valid members showing strictly negative change.",
+                description=f"Fraction of valid members showing {strict} negative change.",
                 units="",
             ),
             "changed_negative": change_neg_frac.assign_attrs(
-                description=f"Fraction of valid members showing significant and negative change. {test_str}",
+                description=f"Fraction of valid members showing significant and {strict} negative change. {test_str}",
                 units="",
                 test=str(test),
             ),
@@ -290,9 +305,11 @@ def robustness_fractions(
                 units="",
             ),
             "agree": agree_frac.assign_attrs(
-                description=(
-                    "Fraction of valid members agreeing on the sign of change. "
+                description="Fraction of valid members agreeing on the sign of change. "
+                + (
                     "Maximum between the positive, negative and no change fractions."
+                    if strict_sign
+                    else "Maximum between the zero or positive and the zero or negative change fractions."
                 ),
                 units="",
             ),
