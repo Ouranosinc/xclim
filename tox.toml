@@ -20,9 +20,7 @@ deps = [
   "h5netcdf >=1.5.0",
   "netcdf4",
   "pytest >=9.0.0",
-  "xsdba >=0.4.0",
-  "astral >=3.2.0",
-  "pvlib >=0.15.2"
+  "xsdba >=0.4.0"
 ]
 commands = [
   ["make", "docs"]

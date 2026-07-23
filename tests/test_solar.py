@@ -1,3 +1,5 @@
+import importlib
+
 import numpy as np
 import pandas as pd
 import pytest
@@ -9,6 +11,8 @@ from xclim.core.utils import sel_with_nans
 
 @pytest.mark.parametrize(["method", "tol"], [("astral", 5), ("pvlib", 5), ("internal", 180)])
 def test_solar_noon(method, tol):
+    if method != "internal" and not importlib.util.find_spec(method):
+        pytest.skip(f"{method} library is not installed")
     # from https://gml.noaa.gov/grad/solcalc/
     location = ["San Jose", "Montreal"]
     lat = [37.77, 45.55]
@@ -47,6 +51,8 @@ def test_solar_noon(method, tol):
 
 
 def test_solar_noon_all_close():
+    if not importlib.util.find_spec("pvlib") or not importlib.util.find_spec("astral"):
+        pytest.skip("astral and pvlib libraries are not installed")
     time_ds = xr.Dataset(
         {},
         coords={
@@ -71,6 +77,8 @@ def test_solar_noon_all_close():
 @pytest.mark.parametrize("method", ["astral", "pvlib", "internal"])
 @pytest.mark.parametrize("uses_dask", [True, False])
 def test_interp(method, uses_dask):
+    if method != "internal" and not importlib.util.find_spec(method):
+        pytest.skip(f"{method} library is not installed")
     ds = xr.Dataset(
         {"tas": (("lon", "lat", "time"), np.broadcast_to(np.linspace(0, 1, 25), shape=(12, 1, 25)))},
         coords=dict(
@@ -91,6 +99,8 @@ def test_interp(method, uses_dask):
 @pytest.mark.parametrize("method", ["astral", "pvlib", "internal"])
 @pytest.mark.parametrize("uses_dask", [True, False])
 def test_accum(method, uses_dask):
+    if method != "internal" and not importlib.util.find_spec(method):
+        pytest.skip(f"{method} library is not installed")
     arr = np.linspace(0, 1, 11)
     ds = xr.Dataset(
         {"tas": (("time", "lat", "lon"), np.broadcast_to(arr, shape=(100, 1, 11)))},
