@@ -114,7 +114,7 @@ class PrecipWithIndexing(ResamplingIndicatorWithIndexing):
     keywords = "precipitation"
 
 
-class PrTasxWithIndexing(ResamplingIndicatorWithIndexing):
+class PrecipTempWithIndexing(ResamplingIndicatorWithIndexing):
     """Indicator involving pr and one of tas, tasmin or tasmax, allowing indexing."""
 
     src_freq = "D"
@@ -137,7 +137,7 @@ class PrTasxWithIndexing(ResamplingIndicatorWithIndexing):
         cfchecks.check_valid(tas, "standard_name", "air_temperature")
 
 
-class PrTasx(Precip):
+class PrecipTemp(Precip):
     """Indicator involving pr and one of tas, tasmin or tasmax, allowing indexing."""
 
     @staticmethod
@@ -171,7 +171,7 @@ class DailyPrecipNoResample(Indicator):
     keywords = "precipitation"
 
 
-rain_on_frozen_ground_days = PrTasxWithIndexing(
+rain_on_frozen_ground_days = PrecipTempWithIndexing(
     title="Number of rain on frozen ground days",
     identifier="rain_frzgr",
     units="days",
@@ -427,7 +427,7 @@ wet_precip_accumulation = Precip(
     },
 )
 
-liquid_precip_accumulation = PrTasxWithIndexing(
+liquid_precip_accumulation = PrecipTempWithIndexing(
     title="Total accumulated liquid precipitation.",
     identifier="liquidprcptot",
     units="mm",
@@ -441,7 +441,7 @@ liquid_precip_accumulation = PrTasxWithIndexing(
     parameters={"tas": {"kind": InputKind.VARIABLE}, "phase": "liquid"},
 )
 
-liquid_precip_average = PrTasxWithIndexing(
+liquid_precip_average = PrecipTempWithIndexing(
     title="Averaged liquid precipitation.",
     identifier="liquidprcpavg",
     units="mm",
@@ -455,7 +455,7 @@ liquid_precip_average = PrTasxWithIndexing(
     parameters={"tas": {"kind": InputKind.VARIABLE}, "phase": "liquid"},
 )
 
-solid_precip_accumulation = PrTasxWithIndexing(
+solid_precip_accumulation = PrecipTempWithIndexing(
     title="Total accumulated solid precipitation.",
     identifier="solidprcptot",
     units="mm",
@@ -469,7 +469,7 @@ solid_precip_accumulation = PrTasxWithIndexing(
     parameters={"tas": {"kind": InputKind.VARIABLE}, "phase": "solid"},
 )
 
-solid_precip_average = PrTasxWithIndexing(
+solid_precip_average = PrecipTempWithIndexing(
     title="Averaged solid precipitation.",
     identifier="solidprcpavg",
     units="mm",
@@ -728,7 +728,7 @@ days_over_precip_doy_thresh = PrecipWithIndexing(
     compute=indices.days_over_precip_thresh,
 )
 
-high_precip_low_temp = PrTasx(
+high_precip_low_temp = PrecipTemp(
     title="Days with precipitation and cold temperature",
     identifier="high_precip_low_temp",
     long_name="Days with precipitation at or above {pr_thresh} and temperature below {tas_thresh}",
@@ -776,7 +776,7 @@ fraction_over_precip_thresh = PrecipWithIndexing(
     compute=indices.fraction_over_precip_thresh,
 )
 
-liquid_precip_ratio = PrTasxWithIndexing(
+liquid_precip_ratio = PrecipTempWithIndexing(
     title="Fraction of liquid to total precipitation",
     identifier="liquid_precip_ratio",
     long_name="Fraction of liquid to total precipitation (temperature above {thresh})",
@@ -878,7 +878,7 @@ wet_spell_frequency = PrecipAmount(
     parameters={
         "window": {"default": 3},
         "window_statistic": {"default": "sum"},
-        "thresh": {"default": "1 mm", "description": "An amount of precipitation (not a flux or rate)."},
+        "thresh": {"default": "1 mm", "description": "A threshold amount of precipitation (not a flux or rate)."},
         "statistic": "count",
         "min_gap": 1,
         "condition": ">=",
@@ -903,7 +903,7 @@ wet_spell_total_length = PrecipAmount(
     parameters={
         "window": {"default": 3},
         "window_statistic": {"default": "sum"},
-        "thresh": {"default": "1 mm", "description": "An amount of precipitation (not a flux or rate)."},
+        "thresh": {"default": "1 mm", "description": "A threshold amount of precipitation (not a flux or rate)."},
         "statistic": "sum",
         "min_gap": 1,
         "condition": ">=",
@@ -928,7 +928,7 @@ wet_spell_max_length = PrecipAmount(
     parameters={
         "window": {"default": 3},
         "window_statistic": {"default": "sum"},
-        "thresh": {"default": "1 mm", "description": "An amount of precipitation (not a flux or rate)."},
+        "thresh": {"default": "1 mm", "description": "A threshold amount of precipitation (not a flux or rate)."},
         "statistic": "max",
         "min_gap": 1,
         "condition": ">=",

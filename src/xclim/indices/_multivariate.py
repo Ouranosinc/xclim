@@ -504,7 +504,7 @@ def multiday_temperature_swing(
         ft,
         resample_before_rl,
         rl.rle_statistics,
-        reducer=statistic,
+        statistic=statistic,
         window=window,
         freq=freq,
     )
@@ -778,7 +778,7 @@ def heat_wave_max_length(
         cond,
         resample_before_rl,
         rl.rle_statistics,
-        reducer="max",
+        statistic="max",
         window=window,
         freq=freq,
     )
@@ -1802,7 +1802,7 @@ def warm_spell_duration_index(
     return to_agg_units(out, tasmax, "count", deffreq="D")
 
 
-@deprecated("1.0", "atmos.liquid_precip_ratio with indexer")
+@deprecated("1.0", "atmos.liquid_precip_ratio with indexer season='DJF'")
 @declare_units(pr="[precipitation]", prsn="[precipitation]", tas="[temperature]")
 def winter_rain_ratio(
     *,

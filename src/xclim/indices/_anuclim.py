@@ -224,8 +224,8 @@ def tg_mean_warmcold_quarter(
         Mean temperature at daily, weekly, or monthly frequency.
     op : {'warmest', 'coldest'}
         Operation to perform:
-        'wettest' calculates the wettest quarter.
-        'driest' calculates the driest quarter.
+        'warmest' calculates the warmest quarter.
+        'coldest' calculates the coldest quarter.
     freq : str
         Resampling frequency.
 
@@ -257,7 +257,7 @@ def tg_mean_warmcold_quarter(
     out = _to_quarter(tas=tas)
 
     if op not in ["warmest", "coldest"]:
-        raise NotImplementedError('op parameter may only be one of "warmest", "coldest"')
+        raise NotImplementedError('op parameter may only be one of "warmest" or "coldest"')
     np_op = _np_ops[op]
 
     return statistics(out, statistic=np_op, freq=freq)
@@ -424,7 +424,7 @@ def prcptot_warmcold_quarter(
     pr_qrt = _to_quarter(pr=pr)
 
     if op not in ["warmest", "coldest"]:
-        raise NotImplementedError('op parameter may only be one of "warmest", "coldest"')
+        raise NotImplementedError('op parameter may only be one of "warmest" or "coldest"')
     xr_op = _xr_argops[op]
 
     out = _from_other_arg(criteria=tas_qrt, output=pr_qrt, op=xr_op, freq=freq)

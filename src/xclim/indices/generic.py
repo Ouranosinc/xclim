@@ -632,7 +632,7 @@ def _spell_length_statistics(
             is_in_spell,
             resample_before_rl,
             rl.rle_statistics,
-            reducer=sr,
+            statistic=sr,
             # The code above already ensured only spell of the minimum length are selected
             window=1,
             freq=freq,
