@@ -33,7 +33,7 @@ calm_days = Wind(
     cell_methods="time: sum over days",
     compute=indices.generic.count_occurrences,
     input={"data": "sfcWind"},
-    parameters={"condition": "<", "thresh": {"default": "2 ms-1"}, "constrain": None, "freq": {"default": "MS"}},
+    parameters={"condition": "<", "thresh": {"default": "2 m s-1"}, "constrain": None, "freq": {"default": "MS"}},
 )
 
 windy_days = Wind(
@@ -47,7 +47,7 @@ windy_days = Wind(
     cell_methods="time: sum over days",
     compute=indices.generic.count_occurrences,
     input={"data": "sfcWind"},
-    parameters={"condition": ">=", "thresh": {"default": "10.8 ms-1"}, "constrain": None, "freq": {"default": "MS"}},
+    parameters={"condition": ">=", "thresh": {"default": "10.8 m s-1"}, "constrain": None, "freq": {"default": "MS"}},
 )
 
 sfcWind_max = Wind(

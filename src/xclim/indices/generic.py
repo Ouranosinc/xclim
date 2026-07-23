@@ -443,7 +443,7 @@ def bivariate_count_occurrences(
     Sampling length is derived from `data1`.
     """
     if thresh2 is None:
-        thresh1 = thresh1
+        thresh2 = thresh1
     thresh1 = convert_units_to(thresh1, data1, context="infer")
     thresh2 = convert_units_to(thresh2, data2, context="infer")
 
