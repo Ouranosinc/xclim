@@ -685,7 +685,7 @@ def is_offset_divisor(divisor: str, offset: str):
     return all(offAs.is_on_offset(d) for d in tB)
 
 
-def _interpolate_doy_calendar(source: xr.DataArray, doy_max: int, doy_min: int = 1) -> xr.DataArray:
+def _interpolate_doy_calendar(source: DataType, doy_max: int, doy_min: int = 1) -> DataType:
     """
     Interpolate from one set of dayofyear range to another.
 
@@ -694,7 +694,7 @@ def _interpolate_doy_calendar(source: xr.DataArray, doy_max: int, doy_min: int =
 
     Parameters
     ----------
-    source : xr.DataArray
+    source : xr.DataArray or xr.Dataset
         Array with `dayofyear` coordinates.
     doy_max : int
         The largest day of the year allowed by calendar.
@@ -705,7 +705,7 @@ def _interpolate_doy_calendar(source: xr.DataArray, doy_max: int, doy_min: int =
 
     Returns
     -------
-    xr.DataArray
+    xr.DataArray or xr.Dataset
         Interpolated source array over coordinates spanning the target `dayofyear` range.
     """
     if "dayofyear" not in source.coords.keys():
@@ -724,7 +724,7 @@ def _interpolate_doy_calendar(source: xr.DataArray, doy_max: int, doy_min: int =
     return filled_na.interp(dayofyear=range(doy_min, doy_max + 1))
 
 
-def adjust_doy_calendar(source: xr.DataArray, target: DataType) -> DataType:
+def adjust_doy_calendar(source: DataType, target: DataType) -> DataType:
     """
     Interpolate from one set of dayofyear range to another calendar.
 
@@ -732,14 +732,14 @@ def adjust_doy_calendar(source: xr.DataArray, target: DataType) -> DataType:
 
     Parameters
     ----------
-    source : xr.DataArray
+    source : xr.DataArray or xr.Dataset
         Array with `dayofyear` coordinate.
     target : xr.DataArray or xr.Dataset
         Array with `time` coordinate.
 
     Returns
     -------
-    xr.DataArray
+    xr.DataArray or xr.Dataset
         Interpolated source array over coordinates spanning the target `dayofyear` range.
     """
     max_target_doy = int(target.time.dt.dayofyear.max())
@@ -758,20 +758,20 @@ def adjust_doy_calendar(source: xr.DataArray, target: DataType) -> DataType:
     return _interpolate_doy_calendar(source, max_target_doy, min_target_doy)
 
 
-def resample_doy(doy: xr.DataArray, arr: DataType) -> DataType:
+def resample_doy(doy: DataType, arr: DataType) -> DataType:
     """
     Create a temporal DataArray where each day takes the value defined by the day-of-year.
 
     Parameters
     ----------
-    doy : xr.DataArray
+    doy : xr.DataArray or xr.Dataset
         Array with `dayofyear` coordinate.
     arr : xr.DataArray or xr.Dataset
         Array with `time` coordinate.
 
     Returns
     -------
-    xr.DataArray
+    xr.DataArray or xr.Dataset
         An array with the same dimensions as `doy`, except for `dayofyear`, which is
         replaced by the `time` dimension of `arr`. Values are filled according to the
         day of year value in `doy`.
