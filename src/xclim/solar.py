@@ -10,19 +10,34 @@ import xarray as xr
 
 import xclim as xc
 
-default_method = None
+default_method = "internal"
 for lib in ["pvlib", "astral"]:
     if importlib.util.find_spec(lib):
         default_method = lib
         if lib != "pvlib":
             warnings.warn(f"pvlib library not found, default solar calculations will be performed with {lib}")
         break
-if not default_method:
-    msg = (
-        "xclim.solar requires one of ['pvlib', 'astral'] to be installed. "
-        + "Install using `pip install xclim[solar]`."
-    )
-    warnings.warn(msg)
+
+
+def _solar_noon_internal(ds: xr.Dataset | xr.DataArray) -> xr.DataArray:
+    """
+    Approximate solar noon values, using the internal methods available in xclim
+    accuracy is only correct on the order of ±180s, and gets worse in the latter half of the century.
+
+    Parameters
+    ----------
+    ds : xr.Dataset or xr.DataArray
+        Dataset with time and lon variables when to calculate solar noon.
+
+    Returns
+    -------
+    xr.DataArray
+        Times when solar noon is expected to occur
+    """
+    sun_angle_correction = xc.indices.helpers.time_correction_for_solar_angle(time=ds.time)
+    sun_minute_correction = sun_angle_correction * (180 * 4 / np.pi)
+
+    return ds.time + ((720.0 - 4 * ds.lon - sun_minute_correction) * 60.0).astype("timedelta64[s]")
 
 
 def _solar_noon_astral_calc(t: np.ndarray, lon: np.ndarray):
@@ -146,21 +161,21 @@ def solar_noon_pvlib(ds: xr.Dataset | xr.DataArray) -> xr.DataArray:
     return transit.astype("datetime64[s]")
 
 
-def solar_noon(ds: xr.Dataset | xr.DataArray, method: Literal["pvlib", "astral"] = default_method) -> xr.DataArray:
+def solar_noon(
+    ds: xr.Dataset | xr.DataArray, method: Literal["pvlib", "astral", "internal"] = default_method
+) -> xr.DataArray:
     """
     Return the solar noon time for the given dataset, assuming UTC.
 
     Requires ds.time, ds.lon, and ds.lat.
 
-    Requires one of 2 libraries: pvlib or astral.
-
     Parameters
     ----------
     ds : xr.DataArray or xr.Dataset
         Dataset with variables ds.time, ds.lon, and ds.lat.
-    method : {"pvlib", "astral"}
+    method : {"pvlib", "astral", "internal"}
         Method to use to calculate solar noon, by default
-        uses first available library from ['pvlib','astral'].
+        uses first available library from ['pvlib','astral','internal'].
 
     Returns
     -------
@@ -172,6 +187,8 @@ def solar_noon(ds: xr.Dataset | xr.DataArray, method: Literal["pvlib", "astral"]
         do_calc = solar_noon_pvlib
     elif method == "astral":
         do_calc = _solar_noon_astral
+    elif method == "internal":
+        do_calc = _solar_noon_internal
     else:
         errmsg = f"Method does not exist: {method}"
         raise ValueError(errmsg)
@@ -292,7 +309,7 @@ def interpolate_to_solar_noon(
         Defaults to 'interpolate'.
     solar_method : str, optional
         Python library to use to perform solar noon calculations.
-        Defaults to first available library from ['pvlib', 'astral'].
+        Defaults to first available library from ['pvlib', 'astral', 'internal'].
 
     Returns
     -------
