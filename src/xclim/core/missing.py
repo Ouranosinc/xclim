@@ -30,7 +30,7 @@ import textwrap
 import numpy as np
 import xarray as xr
 
-from xclim.core import Freq
+from xclim.core._types import Freq
 from xclim.core.calendar import (
     compare_offsets,
     is_offset_divisor,
