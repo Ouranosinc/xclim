@@ -1423,7 +1423,7 @@ def _fit_covariate_1d(
     params,
     log_links,
     fix=None,
-    method="L-BFGS-B",
+    method="Nelder-Mead",
     **minimize_kwargs,
 ):
     """Core 1-d fit, called once per grid cell/station by apply_ufunc."""
