@@ -12,11 +12,15 @@ from __future__ import annotations
 import json
 import warnings
 from collections.abc import Sequence
+from itertools import chain
 from typing import Any
 
 import numpy as np
+import pandas as pd
 import scipy.stats
 import xarray as xr
+from formulaic import model_matrix, parser
+from scipy.optimize import minimize
 from scipy.stats import rv_continuous
 
 from xclim.core import DateStr, Quantified
@@ -571,6 +575,26 @@ def get_dist(dist: str | rv_continuous) -> rv_continuous:
         e = f"Statistical distribution `{dist}` is not found in scipy.stats."
         raise ValueError(e)
     return dc
+
+
+def _dist_param_names(dist: str | rv_continuous) -> list:
+    """
+    Return parameter names for a scipy distribution.
+
+    Parameters
+    ----------
+    dist : str or rv_continuous distribution object
+        Name of the univariate distribution, such as beta, expon, genextreme, gamma, gumbel_r, lognorm, norm
+        (see :py:mod:scipy.stats for full list) or the distribution object itself.
+
+    Returns
+    -------
+    list of str
+        Shape parameters followed by ``loc`` and ``scale``.
+    """
+    dist = get_dist(dist)
+    shapes = [] if dist.shapes is None else [s.strip() for s in dist.shapes.split(",")]
+    return [*shapes, "loc", "scale"]
 
 
 def _fit_start(x, dist: str, **fitkwargs: Any) -> tuple[tuple, dict]:
@@ -1195,3 +1219,348 @@ def standardized_index(
     si.attrs["window"] = window
     si.attrs["units"] = ""
     return si
+
+
+def _parse_formula(formula: dict | str | Sequence[str]) -> list:
+    """
+    Convert a formula specification into a list of covariate terms.
+
+    Parameters
+    ----------
+    formula : str or sequence of str
+        Formula specification. If a string, it is parsed with Formulaic.
+        If a sequence, it is converted to a list directly.
+
+    Returns
+    -------
+    list of str
+        Covariate terms including the intercept term `"1"`.
+    """
+    if isinstance(formula, dict):
+        return {k: _parse_formula(f) for k, f in formula.items()}
+    if isinstance(formula, str):
+        terms = [str(t) for t in parser.DefaultFormulaParser().get_terms(formula)]
+    else:
+        terms = list(formula)
+    return terms if "1" in terms else ["1", *terms]
+
+
+def covariates_from_formulas(formulas: str | dict, covariate_source: pd.DataFrame | dict):
+    """
+    Build covariate arrays from formula specifications.
+
+    Parameters
+    ----------
+    formulas : str or dict
+        Formula specification. If a string, it is interpreted as a single
+        formula. If a dictionary, values are formula specifications and all
+        covariate terms appearing in the formulas are included in the output.
+    covariate_source : pandas.DataFrame or dict
+        Source covariate data used to evaluate the formulas.
+
+    Returns
+    -------
+    dict
+        Mapping from covariate names to one-dimensional NumPy arrays. The
+        intercept term is stored under the key `"1"`.
+
+    Notes
+    -----
+    Formula terms are parsed using :mod:`formulaic`. The resulting design
+    matrix is converted to a dictionary of NumPy arrays.
+    """
+    cov_df = covariate_source if isinstance(covariate_source, pd.DataFrame) else pd.DataFrame(covariate_source)
+
+    formulad = {"dummy": formulas} if isinstance(formulas, str) else formulas
+    rhss = chain.from_iterable(_parse_formula(formulad).values())
+    formula = "~ " + "+".join(list(rhss))
+    X = model_matrix(formula, cov_df)
+
+    covariates = {col: X[col].to_numpy() for col in X.columns}
+    covariates["1"] = covariates.pop("Intercept")
+    return covariates
+
+
+def initialize_params(params: dict[str, float], formulas: dict[str, list[str]], log_links: list | None = None) -> list:
+    """
+    Build the initial optimization vector.
+
+    Parameters
+    ----------
+    params : dict
+        Initial values for distribution parameters. This is given as the intercept values, covariate-dependent
+        parameters are set to zero initially.
+    formulas : dict
+        Covariate terms for each parameter.
+    log_links : Iterable[str], optional
+        Names of parameters that should be exponentiated after the
+        linear predictor is computed. Default is no parameters transformed.
+
+    Returns
+    -------
+    list of float
+        Flattened initialization vector.
+    """
+    log_links = set() if log_links is None else set(log_links)
+    out = []
+    for name, terms in formulas.items():
+        init = params.get(name, 0.0)
+        if name in log_links:
+            if init <= 0:
+                raise ValueError(
+                    f"Cannot initialize log-linked parameter {name!r} with non-positive "
+                    f"value {init}. Provide a positive starting value via `params`."
+                )
+            init = np.log(init)
+        for i in range(len(terms)):
+            out.append(init if i == 0 else 0.0)
+    return out
+
+
+def expand_params(
+    params_list: list[float], formulas: dict[str, list[str]], covariates: dict[str, np.ndarray], log_links=None
+):
+    """
+    Map a flat 1-d parameter vector to a dict of parameters expanded according to covariates.
+
+    Parameters
+    ----------
+    params_list : array-like
+        Flat 1-d vector of coefficients, ordered by parameter and then
+        by term within each parameter, matching the order of `formulas`.
+    formulas : dict[str, list[str]]
+        Mapping from parameter name (e.g. "loc", "scale") to the list of
+        covariate term names.
+    covariates : dict[str, np.ndarray]
+        Mapping from term name to a 1-d array of per-observation values
+        (see `covariates_from_formulas`).
+    log_links : Iterable[str], optional
+        Names of parameters that should be exponentiated after the
+        linear predictor is computed. Default is no parameters transformed.
+
+    Returns
+    -------
+    dict[str, np.ndarray]
+        Mapping from parameter name to its per-observation array of
+        shape (n_obs,).
+    """
+    flat_params = np.asarray(params_list)
+    log_links = {} if log_links is None else set(log_links)
+
+    sizes = {name: len(terms) for name, terms in formulas.items()}
+    edges = np.cumsum([0, *sizes.values()])
+    idx = {name: slice(edges[i], edges[i + 1]) for i, name in enumerate(formulas)}
+
+    params = {}
+    for k, terms in formulas.items():
+        cov_matrix = np.stack([covariates[t] for t in terms])  # (n_terms, n_obs)
+        coefs = flat_params[idx[k]]  # (n_terms,)
+        val = coefs @ cov_matrix  # (n_obs,)
+        params[k] = np.exp(val) if k in log_links else val
+    return params
+
+
+def make_nll(dist: rv_continuous | str, formulas: dict, covariates: dict, log_links=(), fix=None):
+    """
+    Build a negative log-likelihood function compatible with scipy.optimize.minimize.
+
+    Parameters
+    ----------
+    dist : rv_continuous
+        Scipy distribution.
+    formulas : dict[str, list[str]]
+        Mapping from parameter name (e.g. "loc", "scale") to the list of
+        covariate term names.
+    covariates : dict[str, np.ndarray]
+        Mapping from term name to a 1-d array of per-observation values
+        (see `covariates_from_formulas`).
+    log_links : Iterable[str], optional
+        Names of parameters that should be exponentiated after the
+        linear predictor is computed. Default is no parameters transformed.
+    fix : dict, optional
+        Fixed parameter values.
+
+    Returns
+    -------
+    callable
+        Function compatible with `scipy.optimize.minimize`.
+
+    Raises
+    ------
+    ValueError
+        If unknown distribution parameters are supplied.
+    """
+    dist = get_dist(dist)
+    fix = fix or {}
+    param_names = _dist_param_names(dist)
+    if unknown := set(formulas) - set(param_names):
+        raise ValueError(
+            f"formulas keys {unknown} are not parameters of {dist.name}. Expected a subset of {param_names}."
+        )
+    # parameters without formulas are stationary by default
+    formulas = {name: formulas.get(name, ["1"]) for name in param_names}
+
+    def _nll(flat_params, y):
+        params = expand_params(flat_params, formulas, covariates, log_links)
+        params.update(fix)
+        # build positional args in the order scipy expects
+        kwargs = {k: params.get(k, fix.get(k)) for k in param_names}
+        logp = dist.logpdf(y, **kwargs)
+        if not np.all(np.isfinite(logp)):
+            return np.inf
+        return -np.sum(logp)
+
+    return _nll
+
+
+def _fit_covariate_1d(
+    y,
+    dist,
+    formulas,
+    covariate_source,
+    covariate_target,
+    expand_covariate,
+    params,
+    log_links,
+    fix=None,
+    method="Nelder-Mead",
+    **minimize_kwargs,
+):
+    """Core 1-d fit, called once per grid cell/station by apply_ufunc."""
+    if fix is not None:
+        raise NotImplementedError("fixing params is not available yet")
+    # fix = {} if fix is None else fix
+    # fformulas = {name: terms for name, terms in formulas.items() if name not in fix}
+
+    # TODO: I don't think this should be allowed in general
+    # this only works if covariates are one-dimensional.
+
+    if expand_covariate:
+        covariates = covariates_from_formulas(formulas, covariate_source)
+        covariates_target = covariates_from_formulas(formulas, covariate_target)
+    else:
+        covariates = covariate_source
+        covariates_target = covariate_target
+    if params is None:
+        nparams = sum(len(terms) for terms in formulas.values())
+        pp = _fitfunc_1d(y, dist=dist, nparams=nparams, method="MLE")
+        params = dict(zip(formulas.keys(), pp, strict=True))
+    params_list = initialize_params(params, formulas, log_links)
+    nll = make_nll(dist, formulas, covariates, log_links, fix)
+    opt = minimize(nll, params_list, args=(y,), method=method, **minimize_kwargs)
+
+    parameters_target = expand_params(opt.x, formulas, covariates_target, log_links)
+    return np.array([v for v in parameters_target.values()])
+
+
+def fit_covariate(
+    y: xr.DataArray,
+    dist,
+    formulas,
+    dim: str,
+    # should be quantified, DataArrays
+    covariate_source: str | dict,
+    covariate_target: str | dict | None = None,
+    params=None,
+    log_links=(),
+    fix=None,
+    method="L-BFGS-B",
+    **minimize_kwargs,
+) -> xr.Dataset:
+    """
+    Fit a scipy distribution with covariate-varying parameters.
+
+    Parameters
+    ----------
+    y : xr.DataArray
+        Observations, with an `obs_dim` dimension (e.g. "time") and any
+        number of other dimensions (e.g. "lat", "lon", "station") along
+        which the fit is applied independently.
+    dist : rv_continuous or str
+        Scipy distribution.
+    formulas : dict[str, str]
+        Mapping from distribution parameter name to a formula string,
+        e.g. {"loc": "~1+t", "scale": "~1"}.
+    dim : str
+        Name of the observation dimension in `y` and in `covariate_source`.
+    covariate_source : str or dict
+        Covariate data used to fit, aligned with `y` along `obs_dim`
+        (same length). Assumed shared across all other dimensions of `y`.
+    covariate_target : np.ndarray, optional
+        Covariate data used to evaluate the fitted parameters (e.g. for
+        prediction on a different time axis). Defaults to `covariate_source`.
+    params : dict, optional
+        Initial scalar parameter values. If None, uses `dist.fit(y)` per
+        grid cell.
+    log_links : Iterable[str], optional
+        Parameter names modeled on the log scale.
+    fix : dict, optional
+        Not yet supported.
+    method : str
+        Passed to `scipy.optimize.minimize`.
+    **minimize_kwargs
+        Forwarded to `scipy.optimize.minimize`.
+
+    Returns
+    -------
+    xr.Dataset
+        Fitted distribution parameters.
+
+    Notes
+    -----
+    For now, the covariate should just be a one-dimensional variable, defined along `dim`.
+    """
+    dist = get_dist(dist)
+    param_names = _dist_param_names(dist)
+    formulas = _parse_formula(formulas)
+    if unknown := set(formulas) - set(param_names):
+        raise ValueError(
+            f"formulas keys {unknown} are not parameters of {dist.name}. Expected a subset of {param_names}."
+        )
+    formulas = {name: formulas.get(name, ["1"]) for name in param_names}
+
+    if isinstance(covariate_source, str):
+        covariate_source = {covariate_source: y[covariate_source].values}
+    if len(covariate_source) > 1:
+        raise NotImplementedError(
+            "Only one covariate for the xr wrapper for now. The function `_fit_covariate_1d` is more flexible."
+        )
+    else:
+        key = list(covariate_source.keys())[0]
+
+    cdim = key
+
+    if covariate_target is None:
+        covariate_target = covariate_source
+    elif not isinstance(covariate_target, dict):
+        covariate_target = {cdim: covariate_target}
+
+    target_len = len(next(iter(covariate_target.values())))
+
+    covariates = covariates_from_formulas(formulas, covariate_source)
+    covariates_target = covariates_from_formulas(formulas, covariate_target)
+
+    out = xr.apply_ufunc(
+        _fit_covariate_1d,
+        y,
+        input_core_dims=[[dim]],
+        output_core_dims=[["dparams", cdim]],
+        vectorize=True,
+        dask="parallelized",
+        dask_gufunc_kwargs={"output_sizes": {cdim: target_len}},
+        kwargs=dict(
+            dist=dist,
+            formulas=formulas,
+            covariate_source=covariates,
+            covariate_target=covariates_target,
+            expand_covariate=False,
+            params=params,
+            log_links=log_links,
+            fix=fix,
+            method=method,
+            **minimize_kwargs,
+        ),
+    )
+    out = out.assign_coords({"dparams": param_names, cdim: covariate_target[cdim]})
+    out = out.assign_attrs({"scipy_dist": dist.name})
+    return out

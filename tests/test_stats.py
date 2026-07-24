@@ -8,9 +8,12 @@ import numpy as np
 import pytest
 import xarray as xr
 from scipy.optimize import differential_evolution
+
+# FIXME: import genextreme like this below gives me the wrong type of object. weird.
 from scipy.stats import lognorm, norm
 
 from xclim.indices import stats
+from xclim.testing import open_dataset
 
 
 @pytest.fixture(params=[True, False])
@@ -422,3 +425,130 @@ def test_dist_method(fitda):
 
     with pytest.raises(ValueError):
         stats.dist_method("nnlf", fit_params=params, dims="val", x=xr.DataArray([0.2, 0.8]))
+
+
+@pytest.mark.parametrize(
+    "dist, expected",
+    [
+        ("gamma", ["a", "loc", "scale"]),
+        ("genextreme", ["c", "loc", "scale"]),
+        ("gumbel_r", ["loc", "scale"]),
+    ],
+)
+def test_dist_param_names(dist, expected):
+    assert stats._dist_param_names(dist) == expected
+
+
+class TestNonStatStats:
+    def test_parse_formula(self):
+        assert stats._parse_formula("~1+t+I(t**2)+x") == ["1", "t", "I(t ** 2)", "x"]
+        assert stats._parse_formula("~t+I(t**2)+x") == ["1", "t", "I(t ** 2)", "x"]
+
+    def test_covariates_from_formulas(self):
+        cov_source = dict(t=np.arange(10))
+        t = cov_source["t"]
+        out = stats.covariates_from_formulas("~1+t+I(t**2)", cov_source)
+        expected = {"1": np.ones_like(t), "t": t, "I(t ** 2)": t**2}
+        assert set(out) == set(expected)
+
+    def test_initialize_params(self):
+        formulas = stats._parse_formula({"loc": "~1+t+I(t**2)", "scale": "~1"})
+        params = {"loc": 1, "scale": 0.5}
+        params0 = stats.initialize_params(params, formulas)
+        assert params0 == [1, 0, 0, 0.5]
+
+    def test_expand_params(self):
+        formulas = stats._parse_formula({"loc": "~1+t+I(t**2)", "scale": "~1"})
+        params = {"loc": 1, "scale": 0.5}
+        params_list = stats.initialize_params(params, formulas)
+        cov_source = dict(t=np.arange(10))
+        ones = np.ones_like(cov_source["t"])
+        covariates = stats.covariates_from_formulas(formulas, cov_source)
+        out = stats.expand_params(params_list, formulas, covariates, log_links=("loc",))
+        np.testing.assert_allclose(out["loc"], np.exp(ones))
+        np.testing.assert_allclose(out["scale"], ones / 2)
+
+    def test_make_nll(self):
+        np.random.seed(42)
+        dist = stats.get_dist("gumbel_r")
+        loc, scale, n = 1, 0.5, 10
+        obs = dist.rvs(loc, scale, n)
+        formulas = stats._parse_formula({"loc": "~1+t+I(t**2)", "scale": "~1"})
+        params = {"loc": loc, "scale": scale}
+        params_list = stats.initialize_params(params, formulas)
+        cov_source = dict(t=np.arange(n))
+        covariates = stats.covariates_from_formulas(formulas, cov_source)
+        out = stats.make_nll(dist, formulas, covariates, log_links=("loc",))
+        np.testing.assert_allclose(out(params_list, obs), [257.615087])
+
+    def test_fit_covariate_1d(self):
+        np.random.seed(41)
+        dist = stats.get_dist("gumbel_r")
+        loc, scale, n = 1, 0.5, 10000
+        obs = dist.rvs(loc, scale, n)
+        formulas = stats._parse_formula({"loc": "~1+t", "scale": "~1"})
+        # formulas = stats._parse_formula({"loc": "~1+t+I(t**2)", "scale": "~1"})
+        cov_source = dict(t=np.arange(n) / n)
+        stats._fit_covariate_1d(
+            obs,
+            dist,
+            formulas,
+            cov_source,
+            cov_source,
+            expand_covariate=True,
+            params=dict(loc=np.log(2), scale=np.log(2)),
+            log_links=("loc", "scale"),
+        )
+
+    def test_fit_covariate(self):
+        np.random.seed(42)
+        dist = stats.get_dist("gumbel_r")
+        loc, scale, n = 1, 0.5, 10000
+        obs = dist.rvs(loc, scale, n)
+        y = xr.DataArray(obs, dims={"time"})
+        cov_source = {"time": y.time.values}
+        formulas = stats._parse_formula({"loc": "~1+time", "scale": "~1"})
+        stats.fit_covariate(y, dist, formulas, "time", cov_source, cov_source)
+
+    def test_fit_covariate2(self):
+        np.random.seed(42)
+        dist = stats.get_dist("gumbel_r")
+        loc, scale, n = 1, 0.5, 10000
+        obs = dist.rvs(loc, scale, n)
+        y = xr.DataArray(obs, dims={"time"})
+        y["year"] = y.time
+        cov_source = "year"
+        formulas = stats._parse_formula({"loc": "~1+year", "scale": "~1"})
+        stats.fit_covariate(y, dist, formulas, "time", cov_source)
+
+    def test_fit_covariate3(self):
+        np.random.seed(42)
+        dist = stats.get_dist("gumbel_r")
+        loc, scale, n = 1, 0.5, 10000
+        obs = dist.rvs(loc, scale, n)
+        y = xr.DataArray(obs, dims={"time"})
+        y["year"] = y.time
+        cov_source = "year"
+        formulas = stats._parse_formula({"loc": "~1+year"})
+        stats.fit_covariate(y, dist, formulas, "time", cov_source)
+
+    def test_fit_covariate_real(self):
+        dist = "gumbel_r"
+        ds = open_dataset("sdba/ahccd_1950-2013.nc")
+        y = ds.pr.resample(time="YS").max()
+        y["year"] = y.time.dt.year
+        y["year"] = y["year"] - y["year"].min()
+        cov_source = "year"
+        formulas = stats._parse_formula({"loc": "~1+year", "scale": "~1"})
+        stats.fit_covariate(y, dist, formulas, "time", cov_source)
+
+    def test_return_levels(self):
+        dist = "genextreme"
+        ds = open_dataset("sdba/ahccd_1950-2013.nc")
+        y = ds.pr.resample(time="YS").max()
+        y["year"] = y.time.dt.year
+        y["year"] = y["year"] - y["year"].min()
+        cov_source = "year"
+        cov_target = np.arange(y[cov_source].min().values.item(), y[cov_source].max().values.item() + 1)
+        formulas = stats._parse_formula({"loc": "~1+year", "scale": "~1"})
+        stats.fit_covariate(y, dist, formulas, "time", cov_source, cov_target)
