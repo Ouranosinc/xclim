@@ -767,7 +767,7 @@ def dist_method(
     )
 
 
-def preprocess_standardized_index(da: xr.DataArray, freq: str | None, window: int, **indexer):
+def preprocess_standardized_index(da: xr.DataArray, freq: Freq | None, window: int, **indexer):
     r"""
     Perform resample and roll operations involved in computing a standardized index.
 
@@ -838,7 +838,7 @@ def preprocess_standardized_index(da: xr.DataArray, freq: str | None, window: in
 
 def standardized_index_fit_params(
     da: xr.DataArray,
-    freq: str | None,
+    freq: Freq | None,
     window: int,
     dist: str | rv_continuous,
     method: str,
@@ -970,7 +970,7 @@ def standardized_index_fit_params(
 
 def standardized_index(
     da: xr.DataArray,
-    freq: str | None,
+    freq: Freq | None,
     window: int | None,
     dist: str | rv_continuous | None,
     method: str | None,

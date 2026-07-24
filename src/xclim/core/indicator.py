@@ -386,7 +386,7 @@ class Indicator(IndicatorRegistrar):
         The expected frequency of the input data. Can be a list for multiple frequencies, or None if irrelevant.
     context : str
         A `pint` unit context enabled during the computation of this indicator.
-        For example use 'hydro' to allow conversion from 'kg m-2 s-1' to 'mm/day'.
+        For example use 'hydro' to allow conversion from 'kg m-2 s-1' to 'mm/day' for all inputs.
 
     Notes
     -----
@@ -892,7 +892,7 @@ class Indicator(IndicatorRegistrar):
 
         # get mappings where keys are the actual compute function's argument names
         args = self._get_compute_args(das, params)
-        with np.errstate(divide="ignore", invalid="ignore"):
+        with np.errstate(divide="ignore", invalid="ignore"), units.context(self.context):
             outs = self.compute(**args)
 
         if isinstance(outs, DataArray):
@@ -1471,10 +1471,15 @@ class Indicator(IndicatorRegistrar):
         return not hasattr(self.compute, "in_units")
 
     def _show_deprecation_warning(self):
+        alternative = ""
+        if isinstance(self._version_deprecated, tuple):
+            vv, other = self._version_deprecated
+            alternative = f"Please use {other} instead. "
+        else:
+            vv = self._version_deprecated
         warnings.warn(
-            f"`{self.title}` is deprecated as of `xclim` v{self._version_deprecated} and will be removed "
-            "in a future release. See the `xclim` release notes for more information: "
-            f"https://xclim.readthedocs.io/en/stable/history.html",
+            f"`{self.title}` is deprecated as of `xclim` v{vv} and will be removed in a future release. {alternative}"
+            "See the `xclim` release notes for more information: https://xclim.readthedocs.io/en/stable/history.html",
             FutureWarning,
             stacklevel=3,
         )

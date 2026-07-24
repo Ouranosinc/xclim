@@ -9,10 +9,11 @@ import xarray
 from scipy.stats import rv_continuous
 from xarray import DataArray
 
-from xclim.core._types import DateStr, Quantified
+from xclim.core import DateStr, Freq, Quantified
 from xclim.core.calendar import get_calendar, split_time_to_season_year
 from xclim.core.missing import at_least_n_valid
 from xclim.core.units import convert_units_to, declare_units, rate2amount
+from xclim.core.utils import deprecated
 from xclim.indices.generic import count_occurrences
 from xclim.indices.helpers import resample_map
 from xclim.indices.stats import standardized_index
@@ -47,7 +48,7 @@ __all__ = [
 
 
 @declare_units(q="[discharge]")
-def base_flow_index(q: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
+def base_flow_index(q: xarray.DataArray, freq: Freq = "YS") -> xarray.DataArray:
     r"""
     Base flow index.
 
@@ -91,7 +92,7 @@ def base_flow_index(q: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
 
 
 @declare_units(q="[discharge]")
-def rb_flashiness_index(q: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
+def rb_flashiness_index(q: xarray.DataArray, freq: Freq = "YS") -> xarray.DataArray:
     r"""
     Richards-Baker flashiness index.
 
@@ -135,7 +136,7 @@ def rb_flashiness_index(q: xarray.DataArray, freq: str = "YS") -> xarray.DataArr
 )
 def standardized_streamflow_index(
     q: xarray.DataArray,
-    freq: str | None = "MS",
+    freq: Freq | None = "MS",
     window: int = 1,
     dist: str | rv_continuous = "genextreme",
     method: str = "ML",
@@ -263,8 +264,9 @@ def standardized_streamflow_index(
     return ssi
 
 
+@deprecated("1.0", "land.snd_max")
 @declare_units(snd="[length]")
-def snd_max(snd: xarray.DataArray, freq: str = "YS-JUL") -> xarray.DataArray:
+def snd_max(snd: xarray.DataArray, freq: Freq = "YS-JUL") -> xarray.DataArray:
     """
     Maximum snow depth.
 
@@ -286,7 +288,7 @@ def snd_max(snd: xarray.DataArray, freq: str = "YS-JUL") -> xarray.DataArray:
 
 
 @declare_units(snd="[length]")
-def snd_max_doy(snd: xarray.DataArray, freq: str = "YS-JUL") -> xarray.DataArray:
+def snd_max_doy(snd: xarray.DataArray, freq: Freq = "YS-JUL") -> xarray.DataArray:
     """
     Day of year of maximum snow depth.
 
@@ -315,8 +317,9 @@ def snd_max_doy(snd: xarray.DataArray, freq: str = "YS-JUL") -> xarray.DataArray
     return out.where(~valid)
 
 
+@deprecated("1.0", "land.snw_max")
 @declare_units(snw="[snowamount]")
-def snw_max(snw: xarray.DataArray, freq: str = "YS-JUL") -> xarray.DataArray:
+def snw_max(snw: xarray.DataArray, freq: Freq = "YS-JUL") -> xarray.DataArray:
     """
     Maximum snow amount.
 
@@ -338,7 +341,7 @@ def snw_max(snw: xarray.DataArray, freq: str = "YS-JUL") -> xarray.DataArray:
 
 
 @declare_units(snw="[snowamount]")
-def snw_max_doy(snw: xarray.DataArray, freq: str = "YS-JUL") -> xarray.DataArray:
+def snw_max_doy(snw: xarray.DataArray, freq: Freq = "YS-JUL") -> xarray.DataArray:
     """
     Day of year of maximum snow amount.
 
@@ -367,7 +370,7 @@ def snw_max_doy(snw: xarray.DataArray, freq: str = "YS-JUL") -> xarray.DataArray
 
 
 @declare_units(snw="[snowamount]")
-def snow_melt_we_max(snw: xarray.DataArray, window: int = 3, freq: str = "YS-JUL") -> xarray.DataArray:
+def snow_melt_we_max(snw: xarray.DataArray, window: int = 3, freq: Freq = "YS-JUL") -> xarray.DataArray:
     """
     Maximum snow melt.
 
@@ -401,7 +404,7 @@ def snow_melt_we_max(snw: xarray.DataArray, window: int = 3, freq: str = "YS-JUL
 
 @declare_units(snw="[snowamount]", pr="[precipitation]")
 def melt_and_precip_max(
-    snw: xarray.DataArray, pr: xarray.DataArray, window: int = 3, freq: str = "YS-JUL"
+    snw: xarray.DataArray, pr: xarray.DataArray, window: int = 3, freq: Freq = "YS-JUL"
 ) -> xarray.DataArray:
     """
     Maximum snow melt and precipitation.
@@ -445,7 +448,7 @@ def melt_and_precip_max(
 )
 def standardized_groundwater_index(
     gwl: xarray.DataArray,
-    freq: str | None = "MS",
+    freq: Freq | None = "MS",
     window: int = 1,
     dist: str | rv_continuous = "genextreme",
     method: str = "ML",
@@ -603,7 +606,7 @@ def flow_index(q: xarray.DataArray, p: float = 0.95) -> xarray.DataArray:
 
 
 @declare_units(q="[discharge]")
-def high_flow_frequency(q: xarray.DataArray, threshold_factor: int = 9, freq: str = "YS-OCT") -> xarray.DataArray:
+def high_flow_frequency(q: xarray.DataArray, threshold_factor: int = 9, freq: Freq = "YS-OCT") -> xarray.DataArray:
     """
     High flow frequency.
 
@@ -635,7 +638,7 @@ def high_flow_frequency(q: xarray.DataArray, threshold_factor: int = 9, freq: st
 
 
 @declare_units(q="[discharge]")
-def low_flow_frequency(q: xarray.DataArray, threshold_factor: float = 0.2, freq: str = "YS-OCT") -> xarray.DataArray:
+def low_flow_frequency(q: xarray.DataArray, threshold_factor: float = 0.2, freq: Freq = "YS-OCT") -> xarray.DataArray:
     """
     Low flow frequency.
 
@@ -709,7 +712,7 @@ def runoff_ratio(
     q: xarray.DataArray,
     pr: xarray.DataArray,
     area: Quantified,
-    freq: str = "YS",
+    freq: Freq = "YS",
 ) -> xarray.DataArray:
     """
     Runoff ratio.
@@ -766,7 +769,7 @@ def runoff_ratio(
 
 
 @declare_units(pr="[precipitation]", evspsblpot="[precipitation]")
-def aridity_index(pr: xarray.DataArray, evspsblpot: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
+def aridity_index(pr: xarray.DataArray, evspsblpot: xarray.DataArray, freq: Freq = "YS") -> xarray.DataArray:
     """
     Aridity index.
 
@@ -823,7 +826,7 @@ def _timemax(da):
 def lag_snowpack_flow_peaks(
     snw: xarray.DataArray,
     q: xarray.DataArray,
-    freq: str = "YS-OCT",
+    freq: Freq = "YS-OCT",
     p: float = 0.9,
 ) -> xarray.DataArray:
     """
@@ -888,7 +891,7 @@ def lag_snowpack_flow_peaks(
 
 
 @declare_units(q="[discharge]")
-def sen_slope(q: xarray.DataArray, freq: str = "YS") -> tuple[xarray.DataArray, xarray.DataArray]:
+def sen_slope(q: xarray.DataArray, freq: Freq = "YS") -> tuple[xarray.DataArray, xarray.DataArray]:
     """
     Temporal robustness analysis of streamflow.
 
@@ -949,7 +952,7 @@ def sen_slope(q: xarray.DataArray, freq: str = "YS") -> tuple[xarray.DataArray, 
 # FIXME: xclim-v1 — Remove this function. Its only utility is to compute a ratio.
 @declare_units(q="[discharge]", qsim="[discharge]")
 def sen_slope_ratio(
-    q: xarray.Dataset, qsim: xarray.DataArray, freq: str = "YS"
+    q: xarray.Dataset, qsim: xarray.DataArray, freq: Freq = "YS"
 ) -> tuple[xarray.DataArray, xarray.DataArray, xarray.DataArray, xarray.DataArray, xarray.DataArray]:
     """
     Temporal robustness analysis of streamflow.
@@ -997,7 +1000,7 @@ def sen_slope_ratio(
 
 @declare_units(q="[discharge]")
 def base_flow_index_seasonal_ratio(
-    q: xarray.DataArray, freq: str = "QS-DEC", numerator: str = "DJF", denominator: str = "JJA"
+    q: xarray.DataArray, freq: Freq = "QS-DEC", numerator: str = "DJF", denominator: str = "JJA"
 ) -> tuple[DataArray, DataArray, DataArray, DataArray, DataArray]:
     """
     Seasonal Base flow index (bfi) and ratio of winter to summer base flow index.
