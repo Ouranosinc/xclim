@@ -49,7 +49,7 @@ def percentile_bootstrap(func: Callable) -> Callable:
         def tg90p(
             tas: xarray.DataArray,
             t90: xarray.DataArray,
-            freq: str = "YS",
+            freq: Freq = "YS",
             bootstrap: bool = False,
         ) -> xarray.DataArray:
             pass

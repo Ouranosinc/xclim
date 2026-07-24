@@ -9,7 +9,7 @@ from xclim import generic, set_options
 class TestFit:
     def test_simple(self, pr_ndseries, random):
         pr = pr_ndseries(random.random((1000, 1, 2)))
-        ts = generic.stats(pr, freq="YS", op="max")
+        ts = generic.statistics(pr, freq="YS", statistic="max")
         p = generic.fit(ts, dist="gumbel_r")
         assert p.attrs["estimator"] == "Maximum likelihood"
         assert "time" not in p.dims

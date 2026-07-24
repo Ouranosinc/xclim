@@ -17,7 +17,7 @@ from xclim.compute.converters import (
     longwave_upwelling_radiation_from_net_downwelling,
     shortwave_upwelling_radiation_from_net_downwelling,
 )
-from xclim.core import VARIABLES
+from xclim.core import VARIABLES, Freq
 from xclim.core.calendar import percentile_doy
 
 logger = logging.getLogger("xclim")
@@ -165,7 +165,7 @@ def test_timeseries(
     variable,
     start: str = "2000-07-01",
     units: str | None = None,
-    freq: str = "D",
+    freq: Freq = "D",
     as_dataset: bool = False,
     cftime: bool | None = None,
     calendar: str | None = None,

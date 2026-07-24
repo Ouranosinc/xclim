@@ -169,7 +169,7 @@ xclim = "xclim.cli:cli"
 [tool]
 
 [tool.bumpversion]
-current_version = "0.99.0-dev.14"
+current_version = "0.99.0-dev.15"
 commit = true
 commit_args = "--no-verify --signoff"
 tag = false
@@ -311,6 +311,7 @@ pythonpath = [
   "src"
 ]
 session_timeout = "900" # must be string representing seconds (this may soon change)
+strict_parametrization_ids = false
 testpaths = [
   "tests"
 ]

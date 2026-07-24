@@ -9,7 +9,20 @@ import xarray as xr
 from pint import Quantity
 from yaml import safe_load
 
-__all__ = ["VARIABLES", "Condition", "DateStr", "DayOfYearStr", "Freq", "Quantified", "Reducer", "TimeRange"]
+__all__ = [
+    "VARIABLES",
+    "Condition",
+    "DataType",
+    "DateStr",
+    "DayOfYearStr",
+    "Freq",
+    "Quantified",
+    "Reducer",
+    "TimeRange",
+]
+
+# Type hint for xarray DataArray and Dataset
+DataType = TypeVar("DataType", xr.DataArray, xr.Dataset)
 
 #: Type annotation for strings representing full dates (YYYY[-MM[-DD[THH[:MM]]]]), may include time.
 DateStr = NewType("DateStr", str)
