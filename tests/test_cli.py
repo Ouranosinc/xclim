@@ -44,9 +44,9 @@ def test_info(indicators, indnames):
         assert ind.identifier in results.output
 
 
-def test_indices():
+def test_list():
     runner = CliRunner()
-    results = runner.invoke(cli, ["indices"])
+    results = runner.invoke(cli, ["list"])
 
     for name in xclim.core.indicator.registry:
         assert name.lower() in results.output

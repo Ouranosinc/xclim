@@ -264,8 +264,9 @@ class TestWetPrcptot:
 
         # Reference value
         t = core.units.convert_units_to(thresh, pr, context="hydro")
+        # this transforms with rate2amount, instead of stat=integral, very slight differences are to be expected
         pa = atmos.precip_accumulation(pr.where(pr >= t, 0))
-        np.testing.assert_array_equal(out, pa)
+        np.testing.assert_array_almost_equal(out, pa, 3)
 
 
 class TestDailyIntensity:

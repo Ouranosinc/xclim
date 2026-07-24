@@ -76,6 +76,7 @@ sfcWind_mean = Wind(
     cell_methods="time: mean over days",
     compute=compute.generic.statistics,
     input={"data": "sfcWind"},
+    parameters={"statistic": "mean", "out_units": None, "freq": {"default": "YS"}},
 )
 
 sfcWind_min = Wind(

@@ -55,7 +55,6 @@ docs = [
   "numbagg >=0.8",
   "pooch >=1.8.0",
   "pybtex >=0.24.0",
-  "scitools-iris >=3.14.1",
   "sphinx >=8.2.0",
   "sphinx-autobuild >=2024.4.16",
   "sphinx-autodoc-typehints >=3.6,!=3.10",

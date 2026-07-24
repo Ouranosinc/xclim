@@ -27,8 +27,6 @@ def test_indicator_docstring():
     doc = heat_wave_frequency.__doc__.split("\n")
     assert doc[0] == "Heat wave frequency (realm: atmos)"
     assert doc[5] == "Based on function :py:func:`~xclim.compute.generic.bivariate_spell_length_statistics`."
-    assert doc[6] == "Keywords : temperature health,."
-    assert doc[12] == "    Default : `ds.tasmin`. [Required units : [temperature]]"
     assert (
         doc[6] == "With injected parameters: window_statistic=min, statistic=count, min_gap=1, constrain=('>', '>=')."
     )

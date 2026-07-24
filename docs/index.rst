@@ -27,7 +27,6 @@ Leveraging xarray and dask, users can easily bias-adjust climate simulations ove
    notebooks/usage
    notebooks/index
    indicators
-   compute
    checks
    notebooks/units
    internationalization
