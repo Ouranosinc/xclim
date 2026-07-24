@@ -38,7 +38,7 @@ indicators:
       thresh: 1 mm/day
     context: hydro
   first_frost_day:
-    compute: clix.first_occurrence
+    compute: generic.day_threshold_reached
     input:
       data: tasmin
     cf_attrs:
@@ -48,16 +48,13 @@ indicators:
       var_name: ffd
     parameters:
       condition: <
-      threshold: 0 degC
+      thresh: 0 degC
+      window: 1
+      which: first
+      date: null
+      constrain: null
       freq:
         default: YS-JUL
-  winter_fd:
-    base: ResamplingIndicatorWithIndexing
-    compute: frost_days
-    parameters:
-      freq: YS-DEC
-      indexer:
-        month: [ 12, 1, 2 ]
   R95p:
     compute: extreme_precip_accumulation_and_days
     cf_attrs:
