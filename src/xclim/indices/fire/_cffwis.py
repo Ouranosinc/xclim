@@ -140,7 +140,7 @@ import numpy.typing as npt
 import xarray as xr
 from numba import njit, vectorize
 
-from xclim.core import Quantified
+from xclim.core import Freq, Quantified
 from xclim.core.units import convert_units_to, declare_units
 from xclim.core.utils import get_temp_dimname
 from xclim.indices import run_length as rl
@@ -1610,7 +1610,7 @@ def fire_season(
     tas: xr.DataArray,
     snd: xr.DataArray | None = None,
     method: str = "WF93",
-    freq: str | None = None,
+    freq: Freq | None = None,
     temp_start_thresh: Quantified = "12 degC",
     temp_end_thresh: Quantified = "5 degC",
     temp_condition_days: int = 3,

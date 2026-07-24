@@ -18,7 +18,7 @@ import pandas as pd
 import xarray as xr
 from numba import njit
 
-from xclim.core import DateStr, DayOfYearStr
+from xclim.core import DateStr, DayOfYearStr, Freq, Reducer
 from xclim.core.options import OPTIONS, RUN_LENGTH_UFUNC
 from xclim.core.utils import lazy_indexing, uses_dask
 from xclim.indices.helpers import resample_map
@@ -34,7 +34,7 @@ def use_ufunc(
     ufunc_1dim: bool | Literal["from_context", "auto"],
     da: xr.DataArray,
     dim: str = "time",
-    freq: str | None = None,
+    freq: Freq | None = None,
     index: Literal["first", "last"] = "first",
 ) -> bool:
     """
@@ -90,7 +90,7 @@ def resample_and_rl(
     resample_before_rl: bool,
     compute: Callable,
     *args,
-    freq: str,
+    freq: Freq,
     dim: str = "time",
     **kwargs,
 ) -> xr.DataArray:
@@ -275,10 +275,10 @@ def rle(
 
 def rle_statistics(
     da: xr.DataArray,
-    reducer: str,
+    statistic: Reducer,
     window: int,
     dim: str = "time",
-    freq: str | None = None,
+    freq: Freq | None = None,
     ufunc_1dim: str | bool = "from_context",
     index: Literal["first", "last"] = "first",
 ) -> xr.DataArray:
@@ -289,7 +289,7 @@ def rle_statistics(
     ----------
     da : xr.DataArray
         N-dimensional array (boolean).
-    reducer : str
+    statistic : str
         Name of the reducing function.
     window : int
         Minimal length of consecutive runs to be included in the statistics.
@@ -314,24 +314,24 @@ def rle_statistics(
     """
     ufunc_1dim = use_ufunc(ufunc_1dim, da, dim=dim, index=index, freq=freq)
     if ufunc_1dim:
-        rl_stat = statistics_run_ufunc(da, reducer, window, dim)
+        rl_stat = statistics_run_ufunc(da, statistic, window, dim)
     else:
         d = rle(da, dim=dim, index=index)
 
-        def get_rl_stat(d, dim, window, reducer):
-            reducer_kwargs = {"dim": dim}
-            if reducer.startswith("q") and reducer[1:].isdigit():
-                reducer_kwargs["q"] = float(f"0.{reducer[1:]}")
-                reducer = "quantile"
-            rl_stat = getattr(d.where(d >= window), reducer)(**reducer_kwargs)
+        def get_rl_stat(d, dim, window, statistic):
+            statistic_kwargs = {"dim": dim}
+            if statistic.startswith("q") and statistic[1:].isdigit():
+                statistic_kwargs["q"] = float(f"0.{statistic[1:]}")
+                statistic = "quantile"
+            rl_stat = getattr(d.where(d >= window), statistic)(**statistic_kwargs)
             rl_stat = xr.where((d.isnull() | (d < window)).all(dim=dim), 0, rl_stat)
             return rl_stat
 
         if freq is None:
-            rl_stat = get_rl_stat(d, dim, window, reducer)
+            rl_stat = get_rl_stat(d, dim, window, statistic)
         else:
             rl_stat = resample_map(
-                d, dim, freq, get_rl_stat, map_kwargs={"dim": dim, "window": window, "reducer": reducer}
+                d, dim, freq, get_rl_stat, map_kwargs={"dim": dim, "window": window, "statistic": statistic}
             )
     return rl_stat
 
@@ -339,7 +339,7 @@ def rle_statistics(
 def longest_run(
     da: xr.DataArray,
     dim: str = "time",
-    freq: str | None = None,
+    freq: Freq | None = None,
     ufunc_1dim: str | bool = "from_context",
     index: str = "first",
 ) -> xr.DataArray:
@@ -370,7 +370,7 @@ def longest_run(
     """
     return rle_statistics(
         da,
-        reducer="max",
+        statistic="max",
         window=1,
         dim=dim,
         freq=freq,
@@ -383,7 +383,7 @@ def windowed_run_events(
     da: xr.DataArray,
     window: int,
     dim: str = "time",
-    freq: str | None = None,
+    freq: Freq | None = None,
     ufunc_1dim: Literal["auto", "from_context"] | bool = "from_context",
     index: Literal["first", "last"] = "first",
 ) -> xr.DataArray:
@@ -439,7 +439,7 @@ def windowed_run_count(
     da: xr.DataArray,
     window: int,
     dim: str = "time",
-    freq: str | None = None,
+    freq: Freq | None = None,
     ufunc_1dim: Literal["auto", "from_context"] | bool = "from_context",
     index: Literal["first", "last"] = "first",
 ) -> xr.DataArray:
@@ -493,7 +493,7 @@ def windowed_max_run_sum(
     da: xr.DataArray,
     window: int,
     dim: str = "time",
-    freq: str | None = None,
+    freq: Freq | None = None,
     index: str = "first",
 ) -> xr.DataArray:
     """
@@ -545,7 +545,7 @@ def _boundary_run(
     da: xr.DataArray,
     window: int,
     dim: str,
-    freq: str | None,
+    freq: Freq | None,
     coord: str | bool | None,
     ufunc_1dim: Literal["auto", "from_context"] | bool,
     position: str,
@@ -645,7 +645,7 @@ def first_run(
     da: xr.DataArray,
     window: int,
     dim: str = "time",
-    freq: str | None = None,
+    freq: Freq | None = None,
     coord: str | bool | None = False,
     ufunc_1dim: Literal["auto", "from_context"] | bool = "from_context",
 ) -> xr.DataArray:
@@ -695,7 +695,7 @@ def last_run(
     da: xr.DataArray,
     window: int,
     dim: str = "time",
-    freq: str | None = None,
+    freq: Freq | None = None,
     coord: str | bool | None = False,
     ufunc_1dim: Literal["auto", "from_context"] | bool = "from_context",
 ) -> xr.DataArray:
@@ -803,7 +803,7 @@ def run_bounds(mask: xr.DataArray, dim: str = "time", coord: bool | str = True):
     return xr.concat((starts, ends), "bounds")
 
 
-def keep_longest_run(da: xr.DataArray, dim: str = "time", freq: str | None = None) -> xr.DataArray:
+def keep_longest_run(da: xr.DataArray, dim: str = "time", freq: Freq | None = None) -> xr.DataArray:
     """
     Keep the longest run along a dimension.
 
@@ -1406,7 +1406,7 @@ def first_run_1d(arr: Sequence[int | float], window: int) -> int | float:
     return ind
 
 
-def statistics_run_1d(arr: Sequence[bool], reducer: str, window: int) -> int:
+def statistics_run_1d(arr: Sequence[bool], statistic: str, window: int) -> int:
     """
     Return statistics on lengths of run of identical values.
 
@@ -1414,7 +1414,7 @@ def statistics_run_1d(arr: Sequence[bool], reducer: str, window: int) -> int:
     ----------
     arr : Sequence of bool
         Input array (bool).
-    reducer : {"mean", "sum", "min", "max", "std", "count", "q?"}
+    statistic : {"mean", "sum", "min", "max", "std", "count", "q?"}
         Reducing function name. The special name 'q?' computes a quantile with the provided value (e.g. 'q90' computes
          a `q=0.90` quantile).
     window : int
@@ -1428,14 +1428,14 @@ def statistics_run_1d(arr: Sequence[bool], reducer: str, window: int) -> int:
     v, rl = rle_1d(arr)[:2]
     if not np.any(v) or np.all(v * rl < window):
         return 0
-    if reducer == "count":
+    if statistic == "count":
         return (v * rl >= window).sum()
-    reducer_kwargs = {}
-    if reducer.startswith("q") and reducer[1:].isdigit():
-        reducer_kwargs["q"] = float(f"0.{reducer[1:]}")
-        reducer = "quantile"
-    func = getattr(np, f"nan{reducer}")
-    return func(np.where(v * rl >= window, rl, np.nan), **reducer_kwargs)
+    statistic_kwargs = {}
+    if statistic.startswith("q") and statistic[1:].isdigit():
+        statistic_kwargs["q"] = float(f"0.{statistic[1:]}")
+        statistic = "quantile"
+    func = getattr(np, f"nan{statistic}")
+    return func(np.where(v * rl >= window, rl, np.nan), **statistic_kwargs)
 
 
 def windowed_run_count_1d(arr: Sequence[bool], window: int) -> int:
@@ -1544,20 +1544,20 @@ def windowed_run_events_ufunc(x: xr.DataArray | Sequence[bool], window: int, dim
 
 def statistics_run_ufunc(
     x: xr.DataArray | Sequence[bool],
-    reducer: str,
+    statistic: str,
     window: int,
     dim: str = "time",
 ) -> xr.DataArray:
     """
     Dask-parallel version of statistics_run_1d.
 
-    The {reducer} number of consecutive true values in array.
+    The {statistic} number of consecutive true values in array.
 
     Parameters
     ----------
     x : Sequence of bool
         Input array (bool).
-    reducer : {'min', 'max', 'mean', 'sum', 'std', 'q?'}
+    statistic : {'min', 'max', 'mean', 'sum', 'std', 'q?'}
         Reducing function name. The special name 'q?' should be called as e.g. 'q90' to compute a `q=0.90` quantile.
     window : int
         Minimal length of runs.
@@ -1573,7 +1573,7 @@ def statistics_run_ufunc(
         statistics_run_1d,
         x,
         input_core_dims=[[dim]],
-        kwargs={"reducer": reducer, "window": window},
+        kwargs={"statistic": statistic, "window": window},
         vectorize=True,
         dask="parallelized",
         output_dtypes=[float],
@@ -1850,7 +1850,7 @@ def find_events(
     condition_stop: xr.DataArray | None = None,
     window_stop: int = 1,
     data: xr.DataArray | None = None,
-    freq: str | None = None,
+    freq: Freq | None = None,
 ) -> xr.Dataset:
     """
     Find events (runs).

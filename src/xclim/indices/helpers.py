@@ -13,7 +13,7 @@ import warnings
 from collections.abc import Callable, Mapping, Sequence
 from datetime import timedelta
 from inspect import stack
-from typing import Any, Literal, cast
+from typing import Any, Literal, TypeVar, cast
 
 import cftime
 import numba as nb
@@ -35,7 +35,7 @@ try:
 except ImportError:
     rechunk_for_blockwise = None
 
-from xclim.core import Condition, DayOfYearStr, Quantified, Reducer
+from xclim.core import Condition, DayOfYearStr, Freq, Quantified, Reducer
 from xclim.core.calendar import ensure_cftime_array, get_calendar, parse_offset, select_time
 from xclim.core.options import MAP_BLOCKS, OPTIONS
 from xclim.core.units import convert_units_to
@@ -59,6 +59,7 @@ __all__ = [
     "wind_speed_height_conversion",
 ]
 
+DataType = TypeVar("DataType", xr.DataArray, xr.Dataset)
 
 BINARY_OPS = {">": "gt", "<": "lt", ">=": "ge", "<=": "le", "==": "eq", "!=": "ne"}
 """Known binary operators and their translation between symbolic and letter forms."""
@@ -146,6 +147,7 @@ def spell_mask(
     window_statistic: Reducer,
     condition: Condition,
     thresh: float | Sequence[float] | xr.DataArray | Sequence[xr.DataArray],
+    constrain: Sequence[Condition] | None = None,
     min_gap: int = 1,
     weights: Sequence[float] | None = None,
     var_reducer: Literal["any", "all"] = "all",
@@ -170,6 +172,8 @@ def spell_mask(
         The threshold(s) to compare the rolling statistics against.
         If data is a list, this must be a list of the same length as ``data``,
         with a threshold for each variable. This function does not handle units and can't accept Quantified objects.
+    constrain : sequence of str, optional
+        Optionally allowed conditions.
     min_gap : int
         The shortest possible gap between two spells.
         Spells closer than this are merged by assigning the gap steps to the merged spell.
@@ -209,7 +213,7 @@ def spell_mask(
         weights = xr.DataArray(weights, dims=("window",))
 
     if window == 1:  # Fast path
-        is_in_spell = compare(data, condition, thresh)
+        is_in_spell = compare(data, condition, thresh, constrain=constrain)
         if not _singlevar:
             is_in_spell = getattr(is_in_spell, var_reducer)("variable")
     elif (window_statistic == "min" and condition in [">", ">=", "ge", "gt"]) or (
@@ -217,7 +221,7 @@ def spell_mask(
     ):
         # Fast path for specific cases, this yields a smaller dask graph (rolling twice is expensive!)
         # For these two cases, a day can't be part of a spell if it doesn't respect the condition itself
-        mask = compare(data, condition, thresh)
+        mask = compare(data, condition, thresh, constrain=constrain)
         if not _singlevar:
             mask = getattr(mask, var_reducer)("variable")
         # We need to filter out the spells shorter than "window"
@@ -238,7 +242,7 @@ def spell_mask(
         else:
             spell_value = getattr(data_pad.rolling(time=window), window_statistic)()
         # True at the end of a spell respecting the condition
-        mask = compare(spell_value, condition, thresh)
+        mask = compare(spell_value, condition, thresh, constrain=constrain)
         if not _singlevar:
             mask = getattr(mask, var_reducer)("variable")
         # True for all days part of a spell that respected the condition (shift because of the two rollings)
@@ -252,7 +256,7 @@ def spell_mask(
     return is_in_spell
 
 
-def detrend(ds: xr.DataArray | xr.Dataset, dim="time", deg=1) -> xr.DataArray | xr.Dataset:
+def detrend(ds: DataType, dim="time", deg=1) -> DataType:
     """
     Detrend data along a given dimension computing a polynomial trend of a given order.
 
@@ -505,7 +509,7 @@ def cosine_of_solar_zenith_angle(
     sunlit : bool
         If True, only the sunlit part of the interval is considered in the integral or average.
         Does nothing if stat is "instant".
-    chunks : dictionary
+    chunks : dict
         When `time`,  `lat` and `lon` originate from coordinates of a large chunked dataset, this dataset's chunking
         can be passed here to ensure the computation is also chunked.
 
@@ -817,7 +821,7 @@ def huglin_day_length_latitude_coefficient(
     """
     if isinstance(lat, str):
         _lat_value = convert_units_to(lat, "deg")
-        _lat = xr.DataArray(lat, attrs={"units": "degree_north"})
+        _lat = xr.DataArray(_lat_value, attrs={"units": "degree_north"})
     else:
         _lat = lat
 
@@ -826,7 +830,7 @@ def huglin_day_length_latitude_coefficient(
     else:
         raise TypeError("Argument 'cap_value' must be a float (or numpy.nan).")
 
-    lat_abs = abs(lat)
+    lat_abs = abs(_lat)
     if method == "huglin":
         k_f_bounds = [(0, -np.inf, 40), (0.02, 40, 42), (0.03, 42, 44), (0.04, 44, 46), (0.05, 46, 48), (0.06, 48, 50)]
         k = xr.full_like(lat_abs, _cap_value + 1)
@@ -1124,14 +1128,14 @@ def _gather_lon(da: xr.DataArray) -> xr.DataArray:
 
 
 def resample_map(
-    obj: xr.DataArray | xr.Dataset,
+    obj: DataType,
     dim: str,
-    freq: str,
+    freq: Freq,
     func: Callable,
     map_blocks: bool | Literal["from_context"] = "from_context",
     resample_kwargs: dict | None = None,
     map_kwargs: dict | None = None,
-) -> xr.DataArray | xr.Dataset:
+) -> DataType:
     r"""
     Wrap xarray's resample(...).map() with a :py:func:`xarray.map_blocks`.
 

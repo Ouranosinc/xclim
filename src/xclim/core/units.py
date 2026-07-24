@@ -225,7 +225,7 @@ def pint2cfunits(value: pint.Quantity | pint.Unit) -> str:
     return f"{value:~cf}" or "1"
 
 
-def pint2cfattrs(value: pint.Quantity | pint.Unit, is_difference=None) -> dict:
+def pint2cfattrs(value: pint.Quantity | pint.Unit, is_difference=None) -> dict[str, str]:
     """
     Return CF-compliant units attributes from a `pint` unit.
 
@@ -504,7 +504,7 @@ Mapping from offset base to CF-compliant unit.
 
 def infer_sampling_units(
     da: xr.DataArray,
-    deffreq: str | None = None,
+    deffreq: Freq | None = None,
     dim: str = "time",
 ) -> tuple[int, str]:
     """
@@ -623,7 +623,7 @@ def ensure_delta(unit: xr.DataArray | str | pint.Quantity) -> str:
 def to_agg_units(
     out: xr.DataArray,
     orig: xr.DataArray,
-    reducer: Reducer,
+    statistic: Reducer,
     dim: str = "time",
     deffreq: Freq | None = "D",
 ) -> xr.DataArray:
@@ -637,7 +637,7 @@ def to_agg_units(
     orig : xr.DataArray
         The original array before the aggregation operation,
         used to infer the sampling units and get the variable units.
-    reducer : {'min', 'max', 'mean', 'std', 'var', 'doymin', 'doymax', 'count', 'integral', 'sum'} or Callable
+    statistic : {'min', 'max', 'mean', 'std', 'var', 'doymin', 'doymax', 'count', 'integral', 'sum'} or Callable
         The type of aggregation operation performed. "integral" is mathematically equivalent to "sum",
         but the units are multiplied by the timestep of the data (requires an inferrable frequency).
     dim : str
@@ -685,7 +685,7 @@ def to_agg_units(
     ... )
     >>> dt = (tas - 16).assign_attrs(units="degC", units_metadata="temperature: difference")
     >>> degdays = dt.clip(0).sum("time")  # Integral of temperature above a threshold
-    >>> degdays = to_agg_units(degdays, dt, reducer="integral")
+    >>> degdays = to_agg_units(degdays, dt, statistic="integral")
     >>> degdays.units
     'degC week'
 
@@ -695,21 +695,21 @@ def to_agg_units(
     >>> degdays.units
     'd K'
     """
-    if not isinstance(reducer, str):
-        reducer = reducer.__name__
+    if not isinstance(statistic, str):
+        statistic = statistic.__name__
 
-    is_difference = True if reducer in ["std", "var"] else None
+    is_difference = True if statistic in ["std", "var"] else None
 
-    if reducer in ["min", "max", "mean", "sum", "std"]:
+    if statistic in ["min", "max", "mean", "sum", "std"]:
         out.attrs["units"] = orig.attrs["units"]
 
-    elif reducer in ["var"]:
+    elif statistic in ["var"]:
         out.attrs["units"] = pint2cfunits(str2pint(orig.units) ** 2)
 
-    elif reducer in ["doymin", "doymax"]:
+    elif statistic in ["doymin", "doymax"]:
         out.attrs.update(units="1", is_dayofyear=np.int32(1), calendar=get_calendar(orig))
 
-    elif reducer in ["count", "integral"]:
+    elif statistic in ["count", "integral"]:
         m, freq_u_raw = infer_sampling_units(orig, deffreq=deffreq, dim=dim)
         orig_u = units2pint(orig)
         freq_u = str2pint(freq_u_raw)
@@ -717,10 +717,10 @@ def to_agg_units(
         with xr.set_options(keep_attrs=True):
             out = out * m
 
-        if reducer == "count":
+        if statistic == "count":
             out.attrs["units"] = freq_u_raw
 
-        elif reducer == "integral":
+        elif statistic == "integral":
             if "[temperature]" in orig_u.dimensionality:
                 # ensure delta_temperature
                 orig_u = 1 * orig_u - 1 * orig_u
@@ -736,12 +736,12 @@ def to_agg_units(
                 out.attrs.update(pint2cfattrs(orig_u * freq_u, is_difference))
     else:
         raise ValueError(
-            f"Unknown aggregation reducer {reducer}. "
-            "Known reducers are [min, max, mean, std, var, doymin, doymax, count, integral, sum]."
+            f"Unknown aggregation statistic {statistic}. "
+            "Known statistics are [min, max, mean, std, var, doymin, doymax, count, integral, sum]."
         )
 
     # Remove units_metadata where it doesn't make sense
-    if reducer in ["doymin", "doymax", "count"]:
+    if statistic in ["doymin", "doymax", "count"]:
         out.attrs.pop("units_metadata", None)
 
     return out

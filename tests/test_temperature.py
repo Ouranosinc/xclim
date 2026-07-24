@@ -345,7 +345,7 @@ class TestConsecutiveFrostFreeDays:
         tasmin = atmosds.tasmin
         test = atmos.maximum_consecutive_frost_free_days(tasmin)
         np.testing.assert_allclose(test[2, 0], [68], rtol=1e-1)
-        assert ("Annual maximum number of consecutive days with minimum daily temperature >= 0") in test.description
+        assert ("Annual maximum number of consecutive days with minimum daily temperature > 0") in test.description
 
 
 class TestFrostSeasonLength:
@@ -365,16 +365,16 @@ class TestFrostSeasonLength:
         np.testing.assert_array_equal(out, [0, 181])
 
 
-class TestColdSpellDays:
+class TestColdSpellTotalLength:
     def test_simple(self, tas_series):
         a = np.zeros(365) + K2C
         a[10:20] -= 15  # 10 days
         a[40:43] -= 50  # too short -> 0
         a[80:100] -= 30  # at the end and beginning
         ts = tas_series(a)
-        out = atmos.cold_spell_days(ts, thresh="-10 C", freq="MS")
+        out = atmos.cold_spell_total_length(ts, window=5, thresh="-10 C", freq="MS")
         np.testing.assert_array_equal(out, [10, 0, 12, 8, 0, 0, 0, 0, 0, 0, 0, 0])
-        out = atmos.cold_spell_frequency(ts, thresh="-10 C", freq="MS")
+        out = atmos.cold_spell_frequency(ts, window=5, thresh="-10 C", freq="MS")
         np.testing.assert_array_equal(out, [1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0])
 
     def test_convert_units(self, tas_series):
@@ -384,9 +384,9 @@ class TestColdSpellDays:
         a[80:100] -= 30  # at the end and beginning
         ts = tas_series(a)
         ts.attrs["units"] = "C"
-        out = atmos.cold_spell_days(ts, thresh="-10 C", freq="MS")
+        out = atmos.cold_spell_total_length(ts, window=5, thresh="-10 C", freq="MS")
         np.testing.assert_array_equal(out, [10, 0, 12, 8, 0, 0, 0, 0, 0, 0, 0, 0])
-        out = atmos.cold_spell_frequency(ts, thresh="-10 C", freq="MS")
+        out = atmos.cold_spell_frequency(ts, window=5, thresh="-10 C", freq="MS")
         np.testing.assert_array_equal(out, [1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0])
 
     def test_nan_presence(self, tas_series):
@@ -397,9 +397,9 @@ class TestColdSpellDays:
         a[-1] = np.nan
         ts = tas_series(a)
 
-        out = atmos.cold_spell_days(ts, thresh="-10 C", freq="MS")
+        out = atmos.cold_spell_total_length(ts, window=5, thresh="-10 C", freq="MS")
         np.testing.assert_array_equal(out, [10, 0, 12, 8, 0, 0, 0, 0, 0, 0, 0, np.nan])
-        out = atmos.cold_spell_frequency(ts, thresh="-10 C", freq="MS")
+        out = atmos.cold_spell_frequency(ts, window=5, thresh="-10 C", freq="MS")
         np.testing.assert_array_equal(out, [1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, np.nan])
 
 
@@ -816,32 +816,6 @@ class TestHeatWaveTotalLength:
             coords={"lon": hwtl.lon[:3], "lat": hwtl.lat[:3]},
         )
         np.testing.assert_array_equal(exp, hwtl.isel(time=3, lon=slice(None, 3), lat=slice(None, 3)))
-
-
-class TestHeatWaveIndex:
-    def test_simple(self, tasmax_series):
-        tx = np.zeros(366)
-        tx[:10] = np.array([29, 31, 31, 31, 29, 31, 31, 31, 31, 31])
-        tx = tasmax_series(tx + K2C, start="1/1/2000")
-        hwi = atmos.heat_wave_index(tx, freq="YS")
-        np.testing.assert_array_equal(hwi, [10])
-
-    def test_convert_units(self, tasmax_series):
-        tx = np.zeros(366)
-        tx[:10] = np.array([29, 31, 31, 31, 29, 31, 31, 31, 31, 31])
-        tx = tasmax_series(tx, start="1/1/2000")
-        tx.attrs["units"] = "C"
-        hwi = atmos.heat_wave_index(tx, freq="YS")
-        np.testing.assert_array_equal(hwi, [10])
-
-    def test_nan_presence(self, tasmax_series):
-        tx = np.zeros(366)
-        tx[:10] = np.array([29, 31, 31, 31, 29, 31, 31, 31, 31, 31])
-        tx[-1] = np.nan
-        tx = tasmax_series(tx + K2C, start="1/1/2000")
-
-        hwi = atmos.heat_wave_index(tx, freq="YS")
-        np.testing.assert_array_equal(hwi, [np.nan])
 
 
 class TestDailyFreezeThaw:
@@ -1299,7 +1273,7 @@ def test_degree_days_exceedance_date(open_dataset):
     out = atmos.degree_days_exceedance_date(
         tas=tas,
         thresh="4 degC",
-        op=">",
+        condition=">",
         sum_thresh="200 K days",
     )
     np.testing.assert_array_equal(out, np.array([[153, 136, 9, 6]]).T)
@@ -1309,7 +1283,7 @@ def test_degree_days_exceedance_date(open_dataset):
     )
 
     out = atmos.degree_days_exceedance_date(
-        tas=tas, thresh="4 degC", op=">", sum_thresh="200 K days", after_date="07-01"
+        tas=tas, thresh="4 degC", condition=">", sum_thresh="200 K days", after_date="07-01"
     )
     np.testing.assert_array_equal(out, np.array([[199, 193, 190, 190]]).T)
     assert (
@@ -1321,7 +1295,7 @@ def test_degree_days_exceedance_date(open_dataset):
         out = atmos.degree_days_exceedance_date(
             tas=tas,
             thresh="4 degC",
-            op=">",
+            condition=">",
             sum_thresh="1500 K days",
             after_date="07-02",
             freq="YS",
@@ -1337,7 +1311,7 @@ def test_degree_days_exceedance_date_never_reached(open_dataset, never_reached, 
     out = atmos.degree_days_exceedance_date(
         tas=tas,
         thresh="4 degC",
-        op=">",
+        condition=">",
         sum_thresh="1000 K days",
         after_date="07-01",
         never_reached=never_reached,
@@ -1379,13 +1353,6 @@ class TestWarmSpellDurationIndex:
         assert "{unknown} day(s) window" in res.attrs["description"]
         assert "{unknown} period" in res.attrs["description"]
         assert "{unknown}th percentile(s)" in res.attrs["description"]
-
-
-def test_maximum_consecutive_warm_days(open_dataset):
-    tasmax = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc").tasmax
-    out = atmos.maximum_consecutive_warm_days(tasmax)
-    np.testing.assert_array_equal(out[1, :], np.array([13, 21, 6, 10]))
-    assert "Annual longest spell of consecutive days with maximum daily temperature > 25" in out.description
 
 
 def test_corn_heat_units(open_dataset):
@@ -1573,17 +1540,6 @@ class TestColdSpellMaxLength:
 
         out = atmos.cold_spell_max_length(tg, freq="YS")
         np.testing.assert_array_equal(out, 5)
-
-
-class TestColdSpellTotalLength:
-    def test_simple(self, tas_series):
-        a = np.zeros(366)
-        a[:10] = np.array([-9, -11, -11, -11, -9, -11, -11, -11, -11, -11])
-
-        tg = tas_series(a + K2C, start="1/1/2000")
-
-        out = atmos.cold_spell_total_length(tg, freq="YS")
-        np.testing.assert_array_equal(out, 8)
 
 
 class TestHotDays:

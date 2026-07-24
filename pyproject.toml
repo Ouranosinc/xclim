@@ -311,6 +311,7 @@ pythonpath = [
   "src"
 ]
 session_timeout = "900" # must be string representing seconds (this may soon change)
+strict_parametrization_ids = false
 testpaths = [
   "tests"
 ]

@@ -88,7 +88,7 @@ doy_qmax = Streamflow(
     units="",
     input={"data": "discharge"},
     compute=generic.statistics,
-    parameters={"statistic": "doymax", "out_units": None},
+    parameters={"statistic": "doymax", "out_units": None, "freq": {"default": "YS"}},
 )
 
 
@@ -101,7 +101,7 @@ doy_qmin = Streamflow(
     units="",
     input={"data": "discharge"},
     compute=generic.statistics,
-    parameters={"statistic": "doymin", "out_units": None},
+    parameters={"statistic": "doymin", "out_units": None, "freq": {"default": "YS"}},
 )
 
 
