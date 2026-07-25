@@ -186,7 +186,7 @@ def time_correction_for_solar_angle(time: xr.DataArray) -> xr.DataArray:
     """
     da = convert_units_to(day_angle(time), "rad")
     tc = (
-        0.004297 + 0.107029 * np.cos(da) - 1.837877 * np.sin(da) - 0.837378 * np.cos(2 * da) - 2.340475 * np.sin(2 * da)
+        0.0004297 + 0.107029 * np.cos(da) - 1.837877 * np.sin(da) - 0.837378 * np.cos(2 * da) - 2.340475 * np.sin(2 * da)
     )
     tc = tc.assign_attrs(units="degrees")
     return _wrap_radians(convert_units_to(tc, "rad"))

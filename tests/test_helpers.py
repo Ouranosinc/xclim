@@ -27,6 +27,25 @@ def test_solar_declinaton(method, rtol):
     )
 
 
+def test_time_correction_for_solar_angle():
+    # The coefficients are Spencer (1971)'s equation-of-time series, expressed in
+    # degrees. Compare against the original series in radians.
+    times = xr.DataArray(
+        xr.date_range("2000-01-01", "2000-12-31", freq="D"),
+        dims=("time",),
+        name="time",
+    )
+    da = convert_units_to(helpers.day_angle(times), "rad")
+    exp = (
+        0.0000075
+        + 0.001868 * np.cos(da)
+        - 0.032077 * np.sin(da)
+        - 0.014615 * np.cos(2 * da)
+        - 0.040849 * np.sin(2 * da)
+    )
+    np.testing.assert_allclose(helpers.time_correction_for_solar_angle(times), exp, atol=1e-6)
+
+
 @pytest.mark.parametrize("method", ["spencer", "simple"])
 def test_extraterrestrial_radiation(method):
     # Expected values from https://www.engr.scu.edu/~emaurer/tools/calc_solar_cgi.pl

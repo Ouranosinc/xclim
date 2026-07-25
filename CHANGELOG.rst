@@ -17,6 +17,10 @@ Breaking changes
 * Fix ``maximum_consecutive_*`` indicators to harmonize them with their docstring, add ``op`` argument to control comparison and fix some non-existing standard names. (:issue:`2368`, :pull:`2370`).
 * `xdoctest` is no longer required to run the doctests and has been removed from the development dependencies. (:pull:`2383`)
 
+Bug fixes
+^^^^^^^^^
+* Fixed the constant term of the equation of time in ``xclim.indices.helpers.time_correction_for_solar_angle``: it was ten times too large. (:issue:`2388`, :pull:`2389`).
+
 Internal changes
 ^^^^^^^^^^^^^^^^
 * `zizmor` added to `pre-commit` hooks. GitHub workflow permissions have been adapted for better security settings by default. (:pull:`2367`):
