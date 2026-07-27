@@ -111,7 +111,7 @@ Compute functions related to fire and fire weather. Currently, submodules exist 
 
     .. note::
 
-       Matlab code of the GFWED obtained through personal communication.
+       MATLAB code of the GFWED obtained through personal communication, reimplemented in Python.
 
     Fire season determination methods
     *********************************

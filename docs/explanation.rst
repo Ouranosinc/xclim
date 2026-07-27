@@ -9,7 +9,7 @@ Purpose
 This tool is optimized for working with Big Data in the climate science domain and can function as an independent library for one-off analyses in *Jupyter Notebooks* or as a backend engine for performing climate data analyses via **Web Processing Services** (`WPS <https://www.ogc.org/standard/wps/>`_; e.g. `Finch <https://github.com/bird-house/finch>`_).
 It was primarily developed targeting Earth and Environmental Science audiences and researchers, originally for calculating climate indicators for the Canadian government web service `ClimateData.ca <https://climatedata.ca/>`_.
 
-The purposes that `xclim` is built for are in calculating climate indicators, evaluating the sanity of outputs of climate models, and in performing climate model simulation ensemble statistics.
+`xclim` is built for many purposes: calculating climate indicators, evaluating the sanity of outputs of climate models, and performing climate model simulation ensemble statistics.
 
 Other Python projects similar to xclim
 ======================================

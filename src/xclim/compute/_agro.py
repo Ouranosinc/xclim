@@ -349,7 +349,7 @@ def biologically_effective_degree_days(
     here differs from the approach detailed in the Heliothermal Index of Huglin (HI) by not considering the latitude coefficient.
 
     The tasmax ceiling of 19°C is assumed to be the maximum temperature beyond which no further gains from warmer daily
-    temperatures occur. index originally published in :cite:t:`gladstones_viticulture_1992`.
+    temperatures occur. Index originally published in :cite:t:`gladstones_viticulture_1992`.
 
     Let :math:`TX_{i}` and :math:`TN_{i}` be the daily maximum and minimum temperature at day :math:`i`, :math:`lat` the latitude
     of the point of interest, :math:`degdays_{max}` the maximum amount of degrees that can be summed per day (typically, 9).
