@@ -1821,7 +1821,7 @@ def thresholded_events(
     return rl.find_events(da_start, window, da_stop, window_stop, data, freq)
 
 
-def day_to_day_variability(da: xr.DataArray, freq="YS", subfreq: str = "MS"):
+def day_to_day_variability(da: xr.DataArray, freq: str = "YS", subfreq: str = "MS"):
     """
     Compute the mean of day-to-day variability.
 
@@ -1833,10 +1833,10 @@ def day_to_day_variability(da: xr.DataArray, freq="YS", subfreq: str = "MS"):
     ----------
     da : xr.DataArray
         The input variable.
-    subfreq : str
-        Resampling frequency used to compute the standard deviation. Default is ``"MS"`` (monthly).
     freq : str
         Resampling frequency used to average the sub-period standard deviations. Default is ``"YS"`` (yearly).
+    subfreq : str
+        Resampling frequency used to compute the standard deviation. Default is ``"MS"`` (monthly).
 
     Returns
     -------
