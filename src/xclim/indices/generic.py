@@ -1821,7 +1821,7 @@ def thresholded_events(
     return rl.find_events(da_start, window, da_stop, window_stop, data, freq)
 
 
-def day_to_day_variability(da: xr.DataArray, subfreq: str = "MS", freq="YS"):
+def day_to_day_variability(da: xr.DataArray, freq="YS", subfreq: str = "MS"):
     """
     Compute the mean of day-to-day variability.
 
