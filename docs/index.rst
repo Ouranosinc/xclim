@@ -56,6 +56,11 @@ Leveraging xarray and dask, users can easily bias-adjust climate simulations ove
 
    apidoc/modules
 
+.. toctree::
+    :caption: GitHub Repository
+
+    Ouranosinc/xclim <https://github.com/Ouranosinc/xclim>
+
 .. only:: html
 
     Indices and tables
