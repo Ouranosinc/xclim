@@ -24,6 +24,7 @@
 
 - Project dependencies are declared explicitly in `pyproject.toml` and `environment.yml`.
 - Core library dependency updates are reviewed by maintainers before being merged.
+- GitHub Actions and Python dependencies used by automated workflows are pinned to immutable commit hashes whenever possible.
 - Automated dependency update tools and vulnerability scanning may be used to identify outdated, redundant, or vulnerable dependencies.
   - Automated tools such as Dependabot may perform non-significant ("minor"/"patch") unattended updates of GitHub Actions and other CI configurations while significant ("major") updates
     must be reviewed by maintainers.
