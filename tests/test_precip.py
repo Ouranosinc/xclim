@@ -5,8 +5,8 @@ import pandas as pd
 import pytest
 import xarray as xr
 
-import xclim.compute as xci
 from xclim import atmos, convert, core, set_options
+from xclim.compute import water_budget
 from xclim.core.calendar import build_climatology_bounds, percentile_doy
 from xclim.core.units import convert_units_to
 
@@ -193,7 +193,7 @@ class TestStandardizedPrecip:
             tasmax = ds.tasmax
             tas = tasmax - 2.5
             tasmin = tasmax - 5
-            wb = xci.water_budget(pr, None, tasmin, tasmax, tas, None)
+            wb = water_budget(pr, None, tasmin, tasmax, tas, None)
             wbMM = convert_units_to(wb, "mm/day", context="hydro")  # noqa
 
         out3 = atmos.standardized_precipitation_evapotranspiration_index(

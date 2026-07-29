@@ -398,7 +398,7 @@ check-typed-exception = true
 
 [tool.ruff.lint.flake8-import-conventions.aliases]
 "matplotlib.pyplot" = "plt"
-"xclim.compute" = "xci"
+"xclim.compute" = "xcc"
 numpy = "np"
 pandas = "pd"
 scipy = "sp"

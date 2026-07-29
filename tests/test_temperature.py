@@ -419,7 +419,6 @@ class TestFrostDays:
         thresh = 273.16
         fd = atmos.frost_days(tasmin, freq="YS")
         fdC = atmos.frost_days(tasminC, freq="YS")
-        # fds = xci.frost_days(tasmin, thresh=thresh, freq='YS', skipna=True)
 
         x1 = tasmin.values[:, 0, 0]
 
@@ -428,11 +427,8 @@ class TestFrostDays:
         np.testing.assert_array_equal(fd, fdC)
 
         assert np.allclose(fd1, fd.values[0, 0, 0])
-        # assert (np.allclose(fd1, fds.values[0, 0, 0]))
         assert np.isnan(fd.values[0, 1, 0])
-        # assert (np.allclose(fd2, fds.values[0, 1, 0]))
         assert np.isnan(fd.values[0, -1, -1])
-        # assert (np.isnan(fds.values[0, -1, -1]))
 
     def test_indexing(self, open_dataset):
         tasmin = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc").tasmin
@@ -576,13 +572,10 @@ class TestGrowingDegreeDays:
         # compute with both skipna options
         thresh = K2C + 4
         gdd = atmos.growing_degree_days(tas, freq="YS")
-        # gdds = xci.growing_degree_days(tas, thresh=thresh, freq='YS', skipna=True)
 
         x1 = tas.values[:, 0, 0]
-        # x2 = tas.values[:, 1, 0]
 
         gdd1 = (x1[x1 > thresh] - thresh).sum()
-        # gdd2 = (x2[x2 > thresh] - thresh).sum()
 
         assert np.allclose(gdd1, gdd.values[0, 0, 0])
 
@@ -1013,7 +1006,6 @@ class TestTnDaysAbove:
 
         out = getattr(atmos, tn_indice)(tas, **kwargs, freq="YS")
         outC = getattr(atmos, tn_indice)(tasC, **kwargs, freq="YS")
-        # fds = xci.frost_days(tasmin, thresh=thresh, freq='YS', skipna=True)
 
         x1 = tas.values[:, 0, 0]
 
