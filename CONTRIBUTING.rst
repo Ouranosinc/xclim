@@ -23,7 +23,7 @@ General to-do list for implementing a new Indicator:
 
     * Indices are function wrapped with :py:func:`~xclim.core.units.declare_units`
     * Their input arguments should have type annotations, as documented in :py:class:`~xclim.core.utils.InputKind`
-    * Their docstring should follow the scheme explained in :ref:`notebooks/extendxclim:Defining new indices`.
+    * Their docstring should follow the scheme explained in :ref:`notebooks/extendxclim:Defining new index-like compute functions`.
     * They should set the units on their outputs, but no other metadata fields.
     * Their code should be found in the most relevant ``src/xclim/indices/_*.py``  file. Functions are explicitly added to the ``__all__`` at the top of the file.
 

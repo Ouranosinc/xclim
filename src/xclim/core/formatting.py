@@ -240,7 +240,8 @@ def parse_doc(doc: str) -> dict:
     """
     Crude regex parsing reading a function docstring and extracting information needed in indicator construction.
 
-    The appropriate docstring syntax is detailed in :ref:`notebooks/extendxclim:Defining new compute function's`.
+    The appropriate docstring syntax is detailed in
+    :ref:`notebooks/extendxclim:Defining new index-like compute functions`.
 
     Parameters
     ----------

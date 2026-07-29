@@ -38,22 +38,25 @@ types.
    :members:
    :undoc-members:
    :show-inheritance:
+   :noindex:
 
 .. automodule:: xclim.compute.helpers
    :members:
    :undoc-members:
    :show-inheritance:
+   :noindex:
 
 .. automodule:: xclim.compute.run_length
    :members:
    :undoc-members:
    :show-inheritance:
+   :noindex:
 
 .. automodule:: xclim.compute.stats
    :members:
    :undoc-members:
    :show-inheritance:
-
+   :noindex:
 
 Function Library
 ----------------
@@ -66,7 +69,7 @@ is implemented here.
    :imported-members:
    :undoc-members:
    :show-inheritance:
-
+   :noindex:
 
 Fire indices submodule
 ^^^^^^^^^^^^^^^^^^^^^^
@@ -76,11 +79,13 @@ Compute functions related to fire and fire weather. Currently, submodules exist 
    :members: fire_weather_ufunc, fire_season, overwintering_drought_code, drought_code, cffwis_indices
    :undoc-members:
    :show-inheritance:
+   :noindex:
 
 .. automodule:: xclim.compute.fire._ffdi
    :members:
    :undoc-members:
    :show-inheritance:
+   :noindex:
 
 .. only:: html
 
