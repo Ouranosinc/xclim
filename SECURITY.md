@@ -6,7 +6,7 @@
 
 ## Security Requirements
 
-`xclim` is an Open Source Python library and is designed to be run on both trusted platforms as well as on hosted compute platforms (such as [PAVCIS](https://pavics.ouranos.ca)). As such, the primary security focusese of the `xclim` maintainers are to ensure the integrity of source code and packages as well as to respond to security vulnerabilities as they arise.
+`xclim` is an Open Source Python library and is designed to be run on both trusted platforms as well as on hosted compute platforms (such as [PAVCIS](https://pavics.ouranos.ca)). As such, the primary security focus of the `xclim` maintainers are to ensure the integrity of source code and packages as well as to respond to security vulnerabilities as they arise.
 
 ### Source Code
 

@@ -5,7 +5,7 @@ Governance
 Decision-Making in xclim
 ------------------------
 
-Development priorities and the future direction of `xclim`` are discussed by the maintainers during regular meetings, typically held once per month. Between meetings, maintainers review GitHub issues and discussions as time permits, identifying priorities based on community needs, implementation effort, and the availability of contributors.
+Development priorities and the future direction of ``xclim`` are discussed by the maintainers during regular meetings, typically held once per month. Between meetings, maintainers review GitHub issues and discussions as time permits, identifying priorities based on community needs, implementation effort, and the availability of contributors.
 
 The maintainers are responsible for reviewing and merging pull requests, making release decisions, and resolving disagreements when consensus cannot otherwise be reached. New maintainers are selected by consensus among the existing maintainers based on sustained, high-quality contributions to the project.
 
