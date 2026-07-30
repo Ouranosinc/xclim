@@ -2,16 +2,18 @@
 
 ## Supported Versions
 
-`xclim` is in rapid development and receives regular updates every four to six (4-6) weeks. In the event of a security-related bug discovery soon after the release of an `xclim` version, the last supported version will receive a patch release.
+`xclim` is in rapid development and receives regular updates every four to six (4-6) weeks.
+In the event of a security-related bug discovery soon after the release of an `xclim` version, the last supported version will receive a patch release.
 
 ## Security Requirements
 
-`xclim` is an Open Source Python library and is designed to be run on both trusted platforms as well as on hosted compute platforms (such as [PAVCIS](https://pavics.ouranos.ca)). As such, the primary security focus of the `xclim` maintainers are to ensure the integrity of source code and packages as well as to respond to security vulnerabilities as they arise.
+`xclim` is an Open Source Python library and is designed to be run on both trusted platforms as well as on hosted compute platforms (such as [PAVICS](https://pavics.ouranos.ca)).
+As such, the primary security focus of the `xclim` maintainers are to ensure the integrity of source code and packages as well as to respond to security vulnerabilities as they arise.
 
 ### Source Code
 
 - All changes to the project are made through pull requests and are reviewed by at least one maintainer before being merged.
-- Contributors are encouraged to cryptographically sign commits where practical.
+- While not a requirement for submitting changes to code, contributors are generally encouraged to cryptographically sign commits where practical.
 - Releases are created from tagged revisions in the Git repository to ensure that released source code corresponds to a reviewed state of the project.
 
 ### Releases
