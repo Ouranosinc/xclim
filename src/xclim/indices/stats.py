@@ -12,6 +12,7 @@ from __future__ import annotations
 import json
 import warnings
 from collections.abc import Sequence
+from copy import deepcopy
 from itertools import chain
 from typing import Any
 
@@ -626,14 +627,15 @@ def _fit_start(x, dist: str, **fitkwargs: Any) -> tuple[tuple, dict]:
     m = x.mean()
     v = x.var()
 
-    def _loc_estimation(x):
+    def _loc_estimation(x, sort=True):
         # muralidhar_1992 would suggest the following, but it seems more unstable
         # using cooke_1979 for now
         # n = len(x)
         # cv = x.std() / x.mean()
         # p = (0.48265 + 0.32967 * cv) * n ** (-0.2984 * cv)
         # xp = xs[int(p/100*n)]
-        xs = sorted(x)
+        xs = x if not sort else sorted(x)
+
         x1, x2, xn = xs[0], xs[1], xs[-1]
         xp = x2
         loc0 = (x1 * xn - xp**2) / (x1 + xn - 2 * xp)
@@ -643,16 +645,26 @@ def _fit_start(x, dist: str, **fitkwargs: Any) -> tuple[tuple, dict]:
         s = np.sqrt(6 * v) / np.pi
         return (0.1,), {"loc": m - 0.57722 * s, "scale": s}
 
-    if dist == "genpareto" and "floc" in fitkwargs:
+    if dist == "genpareto":
         # Taken from julia' Extremes. Case for when "mu/loc" is known.
-        t = fitkwargs["floc"]
-        if not np.isclose(t, 0):
-            m = (x - t).mean()
-            v = (x - t).var()
+        x0 = np.sort(x)
+        t = fitkwargs.get("floc", _loc_estimation(x0, sort=False))
+        m = x0.mean()
+        v = x0.var()
 
-        c = 0.5 * (1 - m**2 / v)
-        scale = (1 - c) * m
-        return (c,), {"scale": scale}
+        c = 0.5 * (1 - (m - t) ** 2 / v)
+        scale = (1 - c) * (m - t)
+        kws = {"loc": t, "scale": scale}
+        if "floc" in fitkwargs:
+            kws.pop("loc")
+
+        # support check: for xi < 0, GPD is bounded above by t - scale/c
+        if c < 0:
+            upper_bound = t - scale / c
+            # check if unallowed values are in the set, if so, return nothing
+            if (x0 - t).max() >= (upper_bound - t):
+                return (), {}
+        return (c,), kws
 
     if dist in "weibull_min":
         s = x.std()
@@ -1427,6 +1439,9 @@ def _fit_covariate_1d(
     **minimize_kwargs,
 ):
     """Core 1-d fit, called once per grid cell/station by apply_ufunc."""
+    mask = np.isnan(y)
+    y = y[~mask]
+    covariate_source = deepcopy({k: arr[~mask] for k, arr in covariate_source.items()})
     if fix is not None:
         raise NotImplementedError("fixing params is not available yet")
     # fix = {} if fix is None else fix
@@ -1441,16 +1456,16 @@ def _fit_covariate_1d(
     else:
         covariates = covariate_source
         covariates_target = covariate_target
+    nparams = sum(len(terms) for terms in formulas.values())
     if params is None:
-        nparams = sum(len(terms) for terms in formulas.values())
-        pp = _fitfunc_1d(y, dist=dist, nparams=nparams, method="MLE")
+        pp = _fitfunc_1d(y, dist=dist, nparams=len(formulas), method="MLE")
         params = dict(zip(formulas.keys(), pp, strict=True))
     params_list = initialize_params(params, formulas, log_links)
     nll = make_nll(dist, formulas, covariates, log_links, fix)
     opt = minimize(nll, params_list, args=(y,), method=method, **minimize_kwargs)
-
     parameters_target = expand_params(opt.x, formulas, covariates_target, log_links)
-    return np.array([v for v in parameters_target.values()])
+    aic = np.array(2 * nparams + 2 * nll(opt.x, y))
+    return np.array([v for v in parameters_target.values()]), aic
 
 
 def fit_covariate(
@@ -1464,7 +1479,7 @@ def fit_covariate(
     params=None,
     log_links=(),
     fix=None,
-    method="L-BFGS-B",
+    method="Nelder-Mead",
     **minimize_kwargs,
 ) -> xr.Dataset:
     """
@@ -1504,7 +1519,7 @@ def fit_covariate(
     Returns
     -------
     xr.Dataset
-        Fitted distribution parameters.
+        Fitted distribution parameters and the AIC score.
 
     Notes
     -----
@@ -1540,11 +1555,11 @@ def fit_covariate(
     covariates = covariates_from_formulas(formulas, covariate_source)
     covariates_target = covariates_from_formulas(formulas, covariate_target)
 
-    out = xr.apply_ufunc(
+    out, aic = xr.apply_ufunc(
         _fit_covariate_1d,
         y,
         input_core_dims=[[dim]],
-        output_core_dims=[["dparams", cdim]],
+        output_core_dims=[["dparams", cdim], []],
         vectorize=True,
         dask="parallelized",
         dask_gufunc_kwargs={"output_sizes": {cdim: target_len}},
@@ -1561,6 +1576,8 @@ def fit_covariate(
             **minimize_kwargs,
         ),
     )
+    lab = f"{out.name}_aic"
+    out = out.to_dataset().assign_attrs({"scipy_dist": dist.name})
     out = out.assign_coords({"dparams": param_names, cdim: covariate_target[cdim]})
-    out = out.assign_attrs({"scipy_dist": dist.name})
-    return out
+
+    return xr.merge([out, aic.to_dataset(name=lab)], compat="override")
