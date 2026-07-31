@@ -1543,6 +1543,7 @@ def fit_covariate(
     dist = get_dist(dist)
     log_links = [] if log_links is None else log_links
     formulas = _parse_formula(formulas, dist)
+    covariate_source = deepcopy(covariate_source)
     if isinstance(covariate_source, str):
         covariate_source = {covariate_source: da[covariate_source].values}
     if len(covariate_source) > 1:
@@ -1589,6 +1590,7 @@ def fit_covariate(
 
 
 def _expand_covariate(p, covariate_target, dim=None):
+    covariate_target = deepcopy(covariate_target)
     log_links, formulas = (json.loads(p.attrs[k]) for k in ["log_links", "formulas"])
     dist = get_dist(p.attrs["scipy_dist"])
     param_names = _dist_param_names(dist)
