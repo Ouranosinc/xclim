@@ -469,7 +469,7 @@ class TestNonStatStats:
         np.testing.assert_allclose(out["scale"], ones / 2)
 
     def test_make_nll(self):
-        np.random.seed(42)
+        np.random.default_rng(42)
         dist = stats.get_dist("gumbel_r")
         loc, scale, n = 1, 0.5, 10
         obs = dist.rvs(loc, scale, n)
@@ -482,7 +482,7 @@ class TestNonStatStats:
         np.testing.assert_allclose(out(params_list, obs), [257.615087])
 
     def test_fit_covariate_1d(self):
-        np.random.seed(41)
+        np.random.default_rng(41)
         dist = stats.get_dist("gumbel_r")
         loc, scale, n = 1, 0.5, 10000
         obs = dist.rvs(loc, scale, n)
@@ -501,7 +501,7 @@ class TestNonStatStats:
         )
 
     def test_fit_covariate(self):
-        np.random.seed(42)
+        np.random.default_rng(42)
         dist = stats.get_dist("gumbel_r")
         loc, scale, n = 1, 0.5, 10000
         obs = dist.rvs(loc, scale, n)
@@ -511,7 +511,7 @@ class TestNonStatStats:
         stats.fit_covariate(y, dist, formulas, "time", cov_source, cov_source)
 
     def test_fit_covariate2(self):
-        np.random.seed(42)
+        np.random.default_rng(42)
         dist = stats.get_dist("gumbel_r")
         loc, scale, n = 1, 0.5, 10000
         obs = dist.rvs(loc, scale, n)
@@ -522,7 +522,7 @@ class TestNonStatStats:
         stats.fit_covariate(y, dist, formulas, "time", cov_source)
 
     def test_fit_covariate3(self):
-        np.random.seed(42)
+        np.random.default_rng(42)
         dist = stats.get_dist("gumbel_r")
         loc, scale, n = 1, 0.5, 10000
         obs = dist.rvs(loc, scale, n)
