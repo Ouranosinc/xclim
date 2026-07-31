@@ -654,10 +654,10 @@ def _fit_start(x, dist: str, **fitkwargs: Any) -> tuple[tuple, dict]:
 
         c = 0.5 * (1 - (m - t) ** 2 / v)
         scale = (1 - c) * (m - t)
-        kws = {"loc": t, "scale": scale}
-        if "floc" in fitkwargs:
-            kws.pop("loc")
-
+        if "floc" not in fitkwargs:
+            kws = {"loc": t, "scale": scale}
+        else:
+            kws = {"scale": scale}
         # support check: for xi < 0, GPD is bounded above by t - scale/c
         if c < 0:
             upper_bound = t - scale / c
