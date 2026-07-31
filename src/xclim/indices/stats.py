@@ -1600,7 +1600,7 @@ def _expand_covariate(p, covariate_target, dim=None):
     return out
 
 
-def compute_weights(criteria, dim: str = "scipy_dist"):
+def compute_weights(criteria: xr.Dataset, dim: str = "scipy_dist"):
     r"""
     Compute weights from information criteria (AIC, BIC, AICC).
 
@@ -1643,7 +1643,7 @@ def compute_weights(criteria, dim: str = "scipy_dist"):
 
 
 def weighted_sum(
-    ds: xr.Dataset, weights: xr.Dataset | None, criteria: xr.Dataset | None = None, dim: str | None = None
+    ds: xr.Dataset, weights: xr.Dataset | None, criteria: xr.Dataset | None = None, dim: str = "scipy_dist"
 ):
     """
     Weighted sum.
@@ -1657,7 +1657,7 @@ def weighted_sum(
         is optional if `criteria` and `dim` are provided.
     criteria : xr.Dataset, optional
         Dataset containing the information criteria for the distributions.
-    dim : str, optional
+    dim : str
         Dimension on which we pool distributions for comparison. Defaults to "scipy_dist".
 
     Returns
