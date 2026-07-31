@@ -1233,7 +1233,7 @@ def standardized_index(
     return si
 
 
-def _parse_formula(formula: dict | str | Sequence[str]) -> list:
+def _parse_formula(formula: dict | str | Sequence[str], dist=None) -> list:
     """
     Convert a formula specification into a list of covariate terms.
 
@@ -1249,11 +1249,20 @@ def _parse_formula(formula: dict | str | Sequence[str]) -> list:
         Covariate terms including the intercept term `"1"`.
     """
     if isinstance(formula, dict):
-        return {k: _parse_formula(f) for k, f in formula.items()}
+        formulas = {k: _parse_formula(f) for k, f in formula.items()}
+        param_names = _dist_param_names(dist)
+        if unknown := set(formulas) - set(param_names):
+            raise ValueError(
+                f"formulas keys {unknown} are not parameters of {dist.name}. Expected a subset of {param_names}."
+            )
+        # parameters without formulas are stationary by default
+        formulas = {name: formulas.get(name, ["1"]) for name in param_names}
+        return formulas
     if isinstance(formula, str):
         terms = [str(t) for t in parser.DefaultFormulaParser().get_terms(formula)]
     else:
         terms = list(formula)
+
     return terms if "1" in terms else ["1", *terms]
 
 
@@ -1282,10 +1291,8 @@ def covariates_from_formulas(formulas: str | dict, covariate_source: pd.DataFram
     matrix is converted to a dictionary of NumPy arrays.
     """
     cov_df = covariate_source if isinstance(covariate_source, pd.DataFrame) else pd.DataFrame(covariate_source)
-
-    formulad = {"dummy": formulas} if isinstance(formulas, str) else formulas
-    rhss = chain.from_iterable(_parse_formula(formulad).values())
-    formula = "~ " + "+".join(list(rhss))
+    rhss = chain.from_iterable(formulas.values())
+    formula = "~ " + "+".join(list(set(rhss)))
     X = model_matrix(formula, cov_df)
 
     covariates = {col: X[col].to_numpy() for col in X.columns}
@@ -1356,19 +1363,21 @@ def expand_params(
         Mapping from parameter name to its per-observation array of
         shape (n_obs,).
     """
+
+    def _split_params(theta, formulas):
+        outd, i = {}, 0
+        for name, terms in formulas.items():
+            outd[name] = theta[i : i + len(terms)]
+            i += len(terms)
+        return outd
+
     flat_params = np.asarray(params_list)
-    log_links = {} if log_links is None else set(log_links)
-
-    sizes = {name: len(terms) for name, terms in formulas.items()}
-    edges = np.cumsum([0, *sizes.values()])
-    idx = {name: slice(edges[i], edges[i + 1]) for i, name in enumerate(formulas)}
-
+    log_links = set(log_links)
     params = {}
-    for k, terms in formulas.items():
-        cov_matrix = np.stack([covariates[t] for t in terms])  # (n_terms, n_obs)
-        coefs = flat_params[idx[k]]  # (n_terms,)
-        val = coefs @ cov_matrix  # (n_obs,)
-        params[k] = np.exp(val) if k in log_links else val
+    for name, coef in _split_params(flat_params, formulas).items():
+        X = np.vstack([covariates[t] for t in formulas[name]])
+        value = coef @ X
+        params[name] = np.exp(value) if name in log_links else value
     return params
 
 
@@ -1405,12 +1414,7 @@ def make_nll(dist: rv_continuous | str, formulas: dict, covariates: dict, log_li
     dist = get_dist(dist)
     fix = fix or {}
     param_names = _dist_param_names(dist)
-    if unknown := set(formulas) - set(param_names):
-        raise ValueError(
-            f"formulas keys {unknown} are not parameters of {dist.name}. Expected a subset of {param_names}."
-        )
-    # parameters without formulas are stationary by default
-    formulas = {name: formulas.get(name, ["1"]) for name in param_names}
+    formulas = _parse_formula(formulas, dist)
 
     def _nll(flat_params, y):
         params = expand_params(flat_params, formulas, covariates, log_links)
@@ -1429,9 +1433,7 @@ def _fit_covariate_1d(
     y,
     dist,
     formulas,
-    covariate_source,
-    covariate_target,
-    expand_covariate,
+    covariates,
     params,
     log_links,
     fix=None,
@@ -1441,7 +1443,7 @@ def _fit_covariate_1d(
     """Core 1-d fit, called once per grid cell/station by apply_ufunc."""
     mask = np.isnan(y)
     y = y[~mask]
-    covariate_source = deepcopy({k: arr[~mask] for k, arr in covariate_source.items()})
+    covariates = deepcopy({k: arr[~mask] for k, arr in covariates.items()})
     if fix is not None:
         raise NotImplementedError("fixing params is not available yet")
     # fix = {} if fix is None else fix
@@ -1449,13 +1451,6 @@ def _fit_covariate_1d(
 
     # TODO: I don't think this should be allowed in general
     # this only works if covariates are one-dimensional.
-
-    if expand_covariate:
-        covariates = covariates_from_formulas(formulas, covariate_source)
-        covariates_target = covariates_from_formulas(formulas, covariate_target)
-    else:
-        covariates = covariate_source
-        covariates_target = covariate_target
     nparams = sum(len(terms) for terms in formulas.values())
     if params is None:
         pp = _fitfunc_1d(y, dist=dist, nparams=len(formulas), method="MLE")
@@ -1463,19 +1458,28 @@ def _fit_covariate_1d(
     params_list = initialize_params(params, formulas, log_links)
     nll = make_nll(dist, formulas, covariates, log_links, fix)
     opt = minimize(nll, params_list, args=(y,), method=method, **minimize_kwargs)
-    parameters_target = expand_params(opt.x, formulas, covariates_target, log_links)
     aic = np.array(2 * nparams + 2 * nll(opt.x, y))
-    return np.array([v for v in parameters_target.values()]), aic
+    return np.asarray(opt.x), aic
+
+
+def _expand_covariate_1d(
+    params,
+    formulas,
+    covariates_prediction,
+    log_links,
+):
+    parameters_target = expand_params(params, formulas, covariates_prediction, log_links)
+    return np.array([v for v in parameters_target.values()])
 
 
 def fit_covariate(
-    y: xr.DataArray,
+    da: xr.DataArray,
     dist,
     formulas,
     dim: str,
     # should be quantified, DataArrays
     covariate_source: str | dict,
-    covariate_target: str | dict | None = None,
+    covariate_prediction: str | dict | None = None,
     params=None,
     log_links=(),
     fix=None,
@@ -1487,7 +1491,7 @@ def fit_covariate(
 
     Parameters
     ----------
-    y : xr.DataArray
+    da : xr.DataArray
         Observations, with an `obs_dim` dimension (e.g. "time") and any
         number of other dimensions (e.g. "lat", "lon", "station") along
         which the fit is applied independently.
@@ -1501,7 +1505,7 @@ def fit_covariate(
     covariate_source : str or dict
         Covariate data used to fit, aligned with `y` along `obs_dim`
         (same length). Assumed shared across all other dimensions of `y`.
-    covariate_target : np.ndarray, optional
+    covariate_prediction : np.ndarray, optional
         Covariate data used to evaluate the fitted parameters (e.g. for
         prediction on a different time axis). Defaults to `covariate_source`.
     params : dict, optional
@@ -1526,49 +1530,35 @@ def fit_covariate(
     For now, the covariate should just be a one-dimensional variable, defined along `dim`.
     """
     dist = get_dist(dist)
-    param_names = _dist_param_names(dist)
-    formulas = _parse_formula(formulas)
-    if unknown := set(formulas) - set(param_names):
-        raise ValueError(
-            f"formulas keys {unknown} are not parameters of {dist.name}. Expected a subset of {param_names}."
-        )
-    formulas = {name: formulas.get(name, ["1"]) for name in param_names}
-
+    formulas = _parse_formula(formulas, dist)
     if isinstance(covariate_source, str):
-        covariate_source = {covariate_source: y[covariate_source].values}
+        covariate_source = {covariate_source: da[covariate_source].values}
     if len(covariate_source) > 1:
         raise NotImplementedError(
             "Only one covariate for the xr wrapper for now. The function `_fit_covariate_1d` is more flexible."
         )
-    else:
-        key = list(covariate_source.keys())[0]
-
-    cdim = key
-
-    if covariate_target is None:
-        covariate_target = covariate_source
-    elif not isinstance(covariate_target, dict):
-        covariate_target = {cdim: covariate_target}
-
-    target_len = len(next(iter(covariate_target.values())))
-
+    # if we have multiple covariates, then we would need to decide on a single dimension that is used as the main
+    # coordinates
+    # cdim = list(covariate_source.keys())[0]  # TODO: change this once more covariate are allowed
     covariates = covariates_from_formulas(formulas, covariate_source)
-    covariates_target = covariates_from_formulas(formulas, covariate_target)
-
+    # dal = np.array(list(covariates.values()))
+    # out = xr.DataArray(dal, coords={'covdim':list(covariates.keys()), dim:da[dim].values})
+    # dal = np.array(list(covariates_target.values()))
+    # out2 = xr.DataArray(dal, coords={'covdim':list(covariates_target.keys()), cdim:covariates_target[cdim]})
+    # import pdb; pdb.set_trace()
     out, aic = xr.apply_ufunc(
         _fit_covariate_1d,
-        y,
+        da,
         input_core_dims=[[dim]],
-        output_core_dims=[["dparams", cdim], []],
+        output_core_dims=[["dparams_raw"], []],
+        # output_core_dims=[["dparams", cdim], []],
         vectorize=True,
         dask="parallelized",
-        dask_gufunc_kwargs={"output_sizes": {cdim: target_len}},
+        dask_gufunc_kwargs={"output_sizes": {"dparams_raw": sum([len(terms) for terms in formulas.values()])}},
         kwargs=dict(
             dist=dist,
             formulas=formulas,
-            covariate_source=covariates,
-            covariate_target=covariates_target,
-            expand_covariate=False,
+            covariates=covariates,
             params=params,
             log_links=log_links,
             fix=fix,
@@ -1576,8 +1566,34 @@ def fit_covariate(
             **minimize_kwargs,
         ),
     )
+    out = out.assign_attrs(
+        {"log_links": json.dumps(log_links), "formulas": json.dumps(formulas), "scipy_dist": dist.name}
+    )
+    out = out.assign_coords(dparams_raw=[f"{name}_{t}" for name, terms in formulas.items() for t in terms])
+    if covariate_prediction is not None:
+        out = _expand_covariate(out, covariate_prediction)
     lab = f"{out.name}_aic"
-    out = out.to_dataset().assign_attrs({"scipy_dist": dist.name})
-    out = out.assign_coords({"dparams": param_names, cdim: covariate_target[cdim]})
-
     return xr.merge([out, aic.to_dataset(name=lab)], compat="override")
+
+
+def _expand_covariate(p, covariate_target, dim=None):
+    log_links, formulas = (json.loads(p.attrs[k]) for k in ["log_links", "formulas"])
+    dist = get_dist(p.attrs["scipy_dist"])
+    param_names = _dist_param_names(dist)
+    dim = dim if dim is not None else list(covariate_target.keys())[0]
+    covariates_target = covariates_from_formulas(formulas, covariate_target)
+    out = xr.apply_ufunc(
+        _expand_covariate_1d,
+        p,
+        input_core_dims=[["dparams_raw"]],
+        output_core_dims=[["dparams", dim]],
+        vectorize=True,
+        dask="parallelized",
+        dask_gufunc_kwargs={"output_sizes": {"dparams": len(param_names), dim: len(covariate_target[dim])}},
+        kwargs=dict(
+            formulas=formulas,
+            covariates_prediction=covariates_target,
+            log_links=log_links,
+        ),
+    ).assign_coords({"dparams": param_names, dim: covariate_target[dim]})
+    return out
