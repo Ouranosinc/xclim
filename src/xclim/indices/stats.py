@@ -1481,7 +1481,7 @@ def fit_covariate(
     covariate_source: str | dict,
     covariate_prediction: str | dict | None = None,
     params=None,
-    log_links=(),
+    log_links=None,
     fix=None,
     method="Nelder-Mead",
     **minimize_kwargs,
@@ -1530,6 +1530,7 @@ def fit_covariate(
     For now, the covariate should just be a one-dimensional variable, defined along `dim`.
     """
     dist = get_dist(dist)
+    log_links = [] if log_links is None else log_links
     formulas = _parse_formula(formulas, dist)
     if isinstance(covariate_source, str):
         covariate_source = {covariate_source: da[covariate_source].values}
