@@ -1597,3 +1597,82 @@ def _expand_covariate(p, covariate_target, dim=None):
         ),
     ).assign_coords({"dparams": param_names, dim: covariate_target[dim]})
     return out
+
+
+def compute_weights(criteria, dim: str = "scipy_dist"):
+    r"""
+    Compute weights from information criteria (AIC, BIC, AICC).
+
+    Parameters
+    ----------
+    criteria : xr.Dataset
+        Dataset containing the information criteria for the distributions.
+    dim : str
+        Dimension on which we pool distributions for comparison. Defaults to "scipy_dist".
+
+    Returns
+    -------
+    xr.Dataset
+        Dataset containing the normalized information criteria for the distributions (weights).
+
+    Notes
+    -----
+    The information criteria :math:`\text{IC}_i` is normalized as:
+
+    .. math::
+      w_i = \frac{\\exp\\{-\text{IC}_i/2\\}}{\\sum_j \\exp\\{-\text{IC}_j/2\\} }
+
+    Subtracting :math:`\\min \\{ \text{IC}_i \\}` from :math:`\text{IC}_i` doesn't change the result.
+
+    References
+    ----------
+    cite:t:`wagenmakers_aic_2004`
+    """
+    # Normalized exponential weights
+    delta_criteria = criteria - criteria.min(dim=dim)
+    weights = np.exp(-(delta_criteria) / 2)
+    weights = weights / weights.sum(dim=dim)
+
+    weights.attrs = criteria.attrs
+    weights.attrs["description"] = "Weights from the information criteria of fitted distributions."
+    weights.attrs["long_name"] = "Weights of information criteria"
+    weights.attrs["units"] = ""
+    weights.attrs["dim"] = dim
+    return weights
+
+
+def weighted_sum(
+    ds: xr.Dataset, weights: xr.Dataset | None, criteria: xr.Dataset | None = None, dim: str | None = None
+):
+    """
+    Weighted sum.
+
+    Parameters
+    ----------
+    ds : xr.Dataset
+        Dataset containing quantities to be combined according to given weights.
+    weights : xr.Dataset, optional
+        Dataset containing the weights of each distribution. For instance, this can be the AIC,BIC,AICC criteria. This
+        is optional if `criteria` and `dim` are provided.
+    criteria : xr.Dataset, optional
+        Dataset containing the information criteria for the distributions.
+    dim : str, optional
+        Dimension on which we pool distributions for comparison. Defaults to "scipy_dist".
+
+    Returns
+    -------
+    xr.Dataset
+        Weighted sum of fitted quantities `ds`.
+    """
+    if weights is None:
+        weights = compute_weights(criteria, dim)
+    ds = ds.copy(deep=True)
+    dim = weights.attrs["dim"]
+    for v in ds.data_vars:
+        ds[v] = (ds[v] * weights[v]).sum(dim=dim)
+        description = ds[v].attrs.get("description", None)
+        if description:
+            description = description[0].lower() + description[1:]
+            ds[v].attrs["description"] = f"Weighted sum of {description}"
+    ds.attrs = ds.attrs
+    return ds.drop_vars(dim)
