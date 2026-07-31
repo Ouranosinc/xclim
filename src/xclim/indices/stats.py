@@ -1563,10 +1563,10 @@ def fit_covariate(
         da,
         input_core_dims=[[dim]],
         output_core_dims=[["dparams_raw"], []],
-        # output_core_dims=[["dparams", cdim], []],
         vectorize=True,
         dask="parallelized",
         dask_gufunc_kwargs={"output_sizes": {"dparams_raw": sum([len(terms) for terms in formulas.values()])}},
+        output_dtypes=[da.dtype] * 2,
         kwargs=dict(
             dist=dist,
             formulas=formulas,
@@ -1607,6 +1607,7 @@ def _expand_covariate(p, covariate_target, dim=None):
             covariates_prediction=covariates_target,
             log_links=log_links,
         ),
+        output_dtypes=[p.dtype],
     ).assign_coords({"dparams": param_names, dim: covariate_target[dim]})
     return out
 
