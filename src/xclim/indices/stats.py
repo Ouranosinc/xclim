@@ -1290,14 +1290,12 @@ def covariates_from_formulas(formulas: dict[str, Sequence[str]], covariate_sourc
     Formula terms are parsed using :mod:`formulaic`. The resulting design
     matrix is converted to a dictionary of NumPy arrays.
     """
-    cov_df = covariate_source if isinstance(covariate_source, pd.DataFrame) else pd.DataFrame(covariate_source)
-    rhss = chain.from_iterable(formulas.values())
-    formula = "~ " + "+".join(list(set(rhss)))
-    X = model_matrix(formula, cov_df)
-
-    covariates = {col: X[col].to_numpy() for col in X.columns}
-    covariates["1"] = covariates.pop("Intercept")
-    return covariates
+    cov_df = pd.DataFrame(covariate_source)
+    terms = set(chain.from_iterable(formulas.values()))
+    X = model_matrix("~ " + " + ".join(terms), cov_df)
+    X = X.rename(columns={"Intercept": "1"})
+    covariates = {c: X[c].to_numpy() for c in X.columns}
+    return np.array([covariates[term] for terms in formulas.values() for term in terms])
 
 
 def initialize_params(
@@ -1342,7 +1340,7 @@ def expand_params(
     params_list: list[float],
     formulas: dict[str, list[str]],
     covariates: dict[str, np.ndarray],
-    log_links: Sequence[str] | None = None,
+    log_links: Sequence[str],
 ):
     """
     Map a flat 1-d parameter vector to a dict of parameters expanded according to covariates.
@@ -1360,7 +1358,7 @@ def expand_params(
         (see `covariates_from_formulas`).
     log_links : Iterable[str], optional
         Names of parameters that should be exponentiated after the
-        linear predictor is computed. Default is no parameters transformed.
+        linear predictor is computed. Default is no parameters transformed, an empty sequence.
 
     Returns
     -------
@@ -1368,21 +1366,15 @@ def expand_params(
         Mapping from parameter name to its per-observation array of
         shape (n_obs,).
     """
-
-    def _split_params(theta, formulas):
-        outd, i = {}, 0
-        for name, terms in formulas.items():
-            outd[name] = theta[i : i + len(terms)]
-            i += len(terms)
-        return outd
-
-    flat_params = np.asarray(params_list)
-    log_links = set(log_links)
     params = {}
-    for name, coef in _split_params(flat_params, formulas).items():
-        X = np.vstack([covariates[t] for t in formulas[name]])
+    i = 0
+    for name, terms in formulas.items():
+        lt = len(terms)
+        coef = params_list[i : i + lt]
+        X = covariates[i : i + lt, :]
         value = coef @ X
         params[name] = np.exp(value) if name in log_links else value
+        i += lt
     return params
 
 
@@ -1454,7 +1446,7 @@ def _fit_covariate_1d(
     """Core 1-d fit, called once per grid cell/station by apply_ufunc."""
     mask = np.isnan(y)
     y = y[~mask]
-    covariates = deepcopy({k: arr[~mask] for k, arr in covariates.items()})
+    covariates = covariates[:, ~mask]
     if fix is not None:
         raise NotImplementedError("fixing params is not available yet")
     # fix = {} if fix is None else fix
