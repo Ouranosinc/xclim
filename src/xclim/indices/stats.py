@@ -1266,7 +1266,7 @@ def _parse_formula(formula: dict | str | Sequence[str], dist=None) -> list:
     return terms if "1" in terms else ["1", *terms]
 
 
-def covariates_from_formulas(formulas: str | dict, covariate_source: pd.DataFrame | dict):
+def covariates_from_formulas(formulas: dict[str, Sequence[str]], covariate_source: pd.DataFrame | dict):
     """
     Build covariate arrays from formula specifications.
 
@@ -1300,7 +1300,9 @@ def covariates_from_formulas(formulas: str | dict, covariate_source: pd.DataFram
     return covariates
 
 
-def initialize_params(params: dict[str, float], formulas: dict[str, list[str]], log_links: list | None = None) -> list:
+def initialize_params(
+    params: dict[str, float], formulas: dict[str, Sequence[str]], log_links: Sequence[str] | None = None
+) -> list[float]:
     """
     Build the initial optimization vector.
 
@@ -1337,7 +1339,10 @@ def initialize_params(params: dict[str, float], formulas: dict[str, list[str]], 
 
 
 def expand_params(
-    params_list: list[float], formulas: dict[str, list[str]], covariates: dict[str, np.ndarray], log_links=None
+    params_list: list[float],
+    formulas: dict[str, list[str]],
+    covariates: dict[str, np.ndarray],
+    log_links: Sequence[str] | None = None,
 ):
     """
     Map a flat 1-d parameter vector to a dict of parameters expanded according to covariates.
@@ -1381,7 +1386,13 @@ def expand_params(
     return params
 
 
-def make_nll(dist: rv_continuous | str, formulas: dict, covariates: dict, log_links=(), fix=None):
+def make_nll(
+    dist: rv_continuous | str,
+    formulas: dict,
+    covariates: dict,
+    log_links: Sequence[str] | None = None,
+    fix: dict | None = None,
+):
     """
     Build a negative log-likelihood function compatible with scipy.optimize.minimize.
 
