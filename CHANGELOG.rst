@@ -47,6 +47,8 @@ Internal changes
 * The `Makefile` now defines typing-relevant checks (``make typing``; dependent on ``make install-typing``) that are enforced in GitHub Workflows. (:pull:`2355`).
 * Call signature typing for many indices have been better identified. The ``cast`` function (used to force expected variable types of internal objects) is now less prevalent within the code base. (:pull:`2355`).
 * `tox.toml` now uses the build-composition API, requiring `tox` (>=4.52.0). (:pull:`2355`).
+* A page has been added to the documentation (`governance.rst`) that describes the method through which decisions concerning `xclim` are made as well as the responsibilities of maintainers. (:pull:`2391`).
+* The security policy now details a brief security assurance that discusses the measures taken to ensure source code and package integrity. (:pull:`2391`).
 
 v0.61.2 (unreleased)
 --------------------

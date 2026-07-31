@@ -41,6 +41,7 @@ Leveraging xarray and dask, users can easily bias-adjust climate simulations ove
    authors
    changelog
    support
+   governance
    security
    references
 
@@ -55,6 +56,11 @@ Leveraging xarray and dask, users can easily bias-adjust climate simulations ove
    :caption: All Modules
 
    apidoc/modules
+
+.. toctree::
+    :caption: GitHub Repository
+
+    Ouranosinc/xclim <https://github.com/Ouranosinc/xclim>
 
 .. only:: html
 
