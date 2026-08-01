@@ -19,6 +19,7 @@ from typing import Any
 import numpy as np
 import pandas as pd
 import scipy.stats
+import statsmodels.formula.api as smf
 import xarray as xr
 from formulaic import model_matrix, parser
 from scipy.optimize import minimize
@@ -1266,7 +1267,7 @@ def _parse_formula(formula: dict | str | Sequence[str], dist=None) -> list:
     return terms if "1" in terms else ["1", *terms]
 
 
-def covariates_from_formulas(formulas: dict[str, Sequence[str]], covariate_source: pd.DataFrame | dict):
+def covariates_from_formulas(formulas: dict[str, Sequence[str]], covariate_source: dict):
     """
     Build covariate arrays from formula specifications.
 
@@ -1292,6 +1293,7 @@ def covariates_from_formulas(formulas: dict[str, Sequence[str]], covariate_sourc
     """
     cov_df = pd.DataFrame(covariate_source)
     terms = set(chain.from_iterable(formulas.values()))
+
     X = model_matrix("~ " + " + ".join(terms), cov_df)
     X = X.rename(columns={"Intercept": "1"})
     covariates = {c: X[c].to_numpy() for c in X.columns}
@@ -1371,6 +1373,8 @@ def expand_params(
     for name, terms in formulas.items():
         lt = len(terms)
         coef = params_list[i : i + lt]
+        # this is a bit inefficient, redundancy.
+        # we have unique covariates and specify which indices use for each param
         X = covariates[i : i + lt, :]
         value = coef @ X
         params[name] = np.exp(value) if name in log_links else value
@@ -1527,10 +1531,6 @@ def fit_covariate(
     -------
     xr.Dataset
         Fitted distribution parameters and the AIC score.
-
-    Notes
-    -----
-    For now, the covariate should just be a one-dimensional variable, defined along `dim`.
     """
     dist = get_dist(dist)
     log_links = [] if log_links is None else log_links
@@ -1584,8 +1584,12 @@ def fit_covariate(
 def _expand_covariate(p, covariate_target, dim=None):
     covariate_target = deepcopy(covariate_target)
     log_links, formulas = (json.loads(p.attrs[k]) for k in ["log_links", "formulas"])
-    dist = get_dist(p.attrs["scipy_dist"])
-    param_names = _dist_param_names(dist)
+    dist = p.attrs["scipy_dist"]
+    if dist is None:
+        param_names = ["quantile"]
+    else:
+        dist = get_dist(dist)
+        param_names = _dist_param_names(dist)
     dim = dim if dim is not None else list(covariate_target.keys())[0]
     covariates_target = covariates_from_formulas(formulas, covariate_target)
     out = xr.apply_ufunc(
@@ -1603,6 +1607,76 @@ def _expand_covariate(p, covariate_target, dim=None):
         ),
         output_dtypes=[p.dtype],
     ).assign_coords({"dparams": param_names, dim: covariate_target[dim]})
+    return out
+
+
+def _quantile_regression(vals, covariates, formula, return_periods):
+    q = [1 - 1 / t0 for t0 in return_periods]
+    df2 = pd.DataFrame(np.array([vals, *covariates]).T, columns=["vals"] + list(formula))
+    f = "vals ~ " + " + ".join(formula)
+    mod = smf.quantreg(f, df2)
+
+    def fit_model(q):
+        res = mod.fit(q=q)
+        return list(res.params)
+
+    return np.array([fit_model(q0) for q0 in q])
+
+
+def quantile_regression(
+    da,
+    formula,
+    dim,
+    return_periods,
+    covariate_source,
+    covariate_prediction: str | dict | None = None,
+):
+    """
+    Fit a quantile regression with covariate-varying parameters.
+
+    Parameters
+    ----------
+    da : xr.DataArray
+        Observations, with an `obs_dim` dimension (e.g. "time") and any
+        number of other dimensions (e.g. "lat", "lon", "station") along
+        which the fit is applied independently.
+    formula : str
+        Formula string, e.g. "~1+t".
+    dim : str
+        Name of the observation dimension in `y` and in `covariate_source`.
+    return_periods : list
+        Return periods.
+    covariate_source : str or dict
+        Covariate data used to fit, aligned with `y` along `obs_dim`
+        (same length). Assumed shared across all other dimensions of `y`.
+    covariate_prediction : np.ndarray, optional
+        Covariate data used to evaluate the fitted parameters (e.g. for
+        prediction on a different time axis). Defaults to `covariate_source`.
+
+    Returns
+    -------
+    xr.Dataset
+        Fitted distribution parameters.
+    """
+    formula = _parse_formula(formula)
+    covariates = covariates_from_formulas({"dummy": formula}, covariate_source)
+    out = xr.apply_ufunc(
+        _quantile_regression,
+        da,
+        input_core_dims=[[dim]],
+        output_core_dims=[["return_period", "dparams_raw"]],
+        vectorize=True,
+        dask="parallelized",
+        kwargs={"covariates": covariates, "return_periods": return_periods, "formula": formula},
+        output_dtypes=[np.float32],
+        dask_gufunc_kwargs={"output_sizes": {"return_period": len(return_periods), "dparams_raw": len(formula)}},
+    )
+    out = out.assign_coords(return_period=np.array(return_periods, dtype=np.float32), dparams_raw=formula)
+    out = out.assign_attrs(
+        {"log_links": json.dumps([]), "formulas": json.dumps({"dummy": formula}), "scipy_dist": None}
+    )
+    if covariate_prediction is not None:
+        out = _expand_covariate(out, covariate_prediction)
     return out
 
 
