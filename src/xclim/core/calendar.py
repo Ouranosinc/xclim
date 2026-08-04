@@ -1398,8 +1398,8 @@ def select_time(
 
             bnds = time_bnds(da.time.resample(time=bounds_freq if bounds_freq is not None else "YS"))
             cal = get_calendar(da)
-            start = _doys_from_string(date_bounds[0], bnds.time, cal)
-            end = _doys_from_string(date_bounds[1], bnds.time, cal)
+            start = _doys_from_string(date_bounds[0], bnds.time, cal) if date_bounds[0] is not None else None
+            end = _doys_from_string(date_bounds[1], bnds.time, cal) if date_bounds[1] is not None else None
             doy_bounds = (start, end)
 
         return select_between_doys(da, doy_bounds, include_bounds, include_doy_bounds_nans, bounds_freq, drop=drop)
