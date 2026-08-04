@@ -388,7 +388,7 @@ def test_parametric_cdf(use_dask, random):
     assert out.attrs["cell_methods"] == "dparams: cdf"
 
 
-@pytest.mark.parametrize("use_dask,use_dataarray", [[True, False], [True, False]])
+@pytest.mark.parametrize("use_dask,use_dataarray", [[True, False], [False, True], [True, True], [False, False]])
 def test_parametric_pdf(use_dask, use_dataarray, random):
     mu = 23
     sigma = 2

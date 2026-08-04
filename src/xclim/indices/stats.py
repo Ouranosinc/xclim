@@ -292,8 +292,8 @@ def parametric_quantile(
     return out
 
 
-# FIXME: xclim-v1 — `parametric_cdf` should be like `parametric_pdf`
-# * The new coordinate should be labeled as `v`
+# FIXME: xclim-v1 — `parametric_cdf` should be like `parametric_pdf`, i.e.:
+# The new coordinate should be labeled as `v` and not `cdf`
 def parametric_cdf(
     p: xr.DataArray,
     v: xr.DataArray | float | Sequence[float],

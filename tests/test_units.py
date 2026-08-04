@@ -369,7 +369,6 @@ def test_declare_relative_units():
         ("m/h", "sum", "sum", 365, "m/h"),
         ("K", "mean", "mean", 1, "K"),
         ("", "sum", "count", 365, "d"),
-        ("", "sum", "count", 365, "d"),
         ("kg m-2", "var", "var", 0, "kg2 m-4"),
         (
             "°C",

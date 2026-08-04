@@ -10,6 +10,7 @@ from __future__ import annotations
 import datetime as pydt
 import warnings
 from collections.abc import Sequence
+from importlib.util import find_spec
 from typing import Any, Literal, TypeVar
 
 import cftime
@@ -25,9 +26,11 @@ from xclim.core.utils import uses_dask
 
 XR2409 = Version(xr.__version__) >= Version("2024.09")
 
+FLOX_INSTALLED = bool(find_spec("flox"))
 
 __all__ = [
     "DayOfYearStr",
+    "add_season_coord",
     "adjust_doy_calendar",
     "build_climatology_bounds",
     "climatological_mean_doy",
@@ -46,10 +49,10 @@ __all__ = [
     "percentile_doy",
     "resample_doy",
     "select_time",
+    "split_time_to_season_year",
     "stack_periods",
     "time_bnds",
     "uniform_calendars",
-    "unstack_periods",
     "within_bnds_doy",
 ]
 
@@ -67,6 +70,21 @@ _MONTH_ABBREVIATIONS = {
     10: "OCT",
     11: "NOV",
     12: "DEC",
+}
+
+_MONTH_NUMBERS = {
+    "JAN": 1,
+    "FEB": 2,
+    "MAR": 3,
+    "APR": 4,
+    "MAY": 5,
+    "JUN": 6,
+    "JUL": 7,
+    "AUG": 8,
+    "SEP": 9,
+    "OCT": 10,
+    "NOV": 11,
+    "DEC": 12,
 }
 
 
@@ -1022,13 +1040,12 @@ def doy_to_days_since(
 
     Examples
     --------
-    >>> from xarray import DataArray, date_range
-    >>> time = date_range("2020-07-01", "2021-07-01", freq="YS-JUL")
+    >>> time = xr.date_range("2020-07-01", "2021-07-01", freq="YS-JUL")
     >>> # July 8th 2020 and Jan 2nd 2022
-    >>> da = DataArray([190, 2], dims=("time",), coords={"time": time})
+    >>> da = xr.DataArray([190, 2], dims=("time",), coords={"time": time})
     >>> # Convert to days since Oct. 2nd, of the data's year.
     >>> doy_to_days_since(da, start="10-02").values
-    array([-86, 92])
+    array([-86,  92])
     """
     base_calendar = get_calendar(da)
     calendar = calendar or da.attrs.get("calendar", base_calendar)
@@ -1083,16 +1100,15 @@ def days_since_to_doy(
 
     Examples
     --------
-    >>> from xarray import DataArray, date_range
-    >>> time = date_range("2020-07-01", "2021-07-01", freq="YS-JUL")
-    >>> da = DataArray(
+    >>> time = xr.date_range("2020-07-01", "2021-07-01", freq="YS-JUL")
+    >>> da = xr.DataArray(
     ...     [-86, 92],
     ...     dims=("time",),
     ...     coords={"time": time},
     ...     attrs={"units": "days since 10-02"},
     ... )
     >>> days_since_to_doy(da).values
-    array([190, 2])
+    array([190,   2])
     """
     if start is None:
         unitstr = da.attrs.get("units", "  time coordinate").split(" ", maxsplit=2)[-1]
@@ -1335,7 +1351,7 @@ def select_time(
     --------
     Keep only the values of fall and spring.
 
-    >>> ds = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc")
+    >>> ds = xr.open_dataset("ERA5/daily_surface_cancities_1990-1993.nc")
     >>> ds.time.size
     1461
     >>> out = select_time(ds, drop=True, season=["MAM", "SON"])
@@ -1745,3 +1761,76 @@ def unstack_periods(da: xr.DataArray | xr.Dataset, dim: str = "period") -> xr.Da
         periods.append(da.isel(**{dim: i}, drop=True).isel(time=slc).assign_coords(time=real_time.isel(time=slc)))
 
     return xr.concat(periods, "time")
+
+
+def add_season_coord(ds: xr.Dataset | xr.DataArray, freq: str) -> xr.DataArray | xr.Dataset:
+    """
+    Add a season coordinates on a resampled dataset.
+
+    Parameters
+    ----------
+    ds : xr.Dataset or xr.DataArray
+      The xarray object with a "time" coordinate.
+      Only supports daily or coarser frequencies (excluding weekly).
+      The time axis must be complete and regular (`xr.infer_freq(ds.time)` doesn't fail).
+    freq : str
+      Resampling frequency. Must be between "MS" and "YS" and divide a year evenly.
+
+    Returns
+    -------
+    xr.DataArray or xr.Dataset
+        Input dataset with season coordinate.
+    """
+    dsr = ds[{d: 0 for d in set(ds.dims) - {"time"}}].resample(time=freq).first()
+    mult, base, isstart, anchor = parse_offset(freq)
+    if base not in "YAQM":
+        raise ValueError(f"Only daily frequencies or coarser are supported. Got: {freq}.")
+    if (base == "M" and 12 % mult != 0) or (base == "Q" and mult not in [1, 2, 4]) or (base in "YA" and mult > 1):
+        raise ValueError(f"Only periods  that divide the year evenly are supported. Got {freq}.")
+    if base in "YA":
+        season_coords = ["annual"] * ds.time.size
+    elif base == "Q" or (base == "M" and mult > 1):
+        months = np.array(list("JFMAMJJASOND"))
+        n = mult * {"M": 1, "Q": 3}[base]
+        seasons = {}
+        for m in dsr.time.dt.month.values:
+            label = "".join(months[np.array(range(m - 1, m + n - 1)) % 12])
+            for i in range(n):
+                seasons[(m - 1 + i) % 12 + 1] = label
+        season_coords = [seasons[m] for m in ds.time.dt.month.values]
+    else:  # M or MS
+        seasons = dict(zip(_MONTH_NUMBERS.values(), _MONTH_NUMBERS.keys(), strict=False))
+        season_coords = [seasons[m] for m in ds.time.dt.month.values]
+    season_length = len(season_coords[0]) if base != "M" else 1
+    attrs = dict(mult=mult, base=base, isstart=isstart, anchor=anchor or "JAN", season_length=season_length)
+    return ds.assign_coords(season=("time", season_coords, attrs))
+
+
+def split_time_to_season_year(ds: xr.Dataset | xr.DataArray, freq: str) -> xr.DataArray | xr.Dataset:
+    """
+    Split a resampled dataset into a yearly time and a season coordinate.
+
+    Parameters
+    ----------
+    ds : xr.Dataset or xr.DataArray
+      The xarray object with a "time" coordinate.
+      Only supports daily or coarser frequencies (excluding weekly).
+      The time axis must be complete and regular (`xr.infer_freq(ds.time)` doesn't fail).
+    freq : str
+      Resampling frequency. Must be between "MS" and "YS" and divide a year evenly.
+
+    Returns
+    -------
+    xr.DataArray or xr.Dataset
+        Input dataset with season coordinate and yearly time.
+    """
+    ds = add_season_coord(ds, freq)
+    base_month = _MONTH_NUMBERS[ds.season.attrs["anchor"]]
+
+    def _get_year(dt):
+        y = dt.year - 1 if dt.month < base_month else dt.year
+        return dt.replace(year=y, month=base_month, day=1, hour=0, minute=0, second=0)
+
+    new_time = ds.indexes["time"].map(_get_year)
+    out = ds.assign_coords(year=("time", new_time)).set_index(time=("year", "season")).unstack("time")
+    return out.rename(year="time")

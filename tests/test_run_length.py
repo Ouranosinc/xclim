@@ -265,6 +265,18 @@ class TestStatisticsRun:
         lt = rl.rle_statistics(da, freq="YS", reducer="std", window=1, ufunc_1dim=False)
         assert lt == 147
 
+        lt = rl.rle_statistics(da, freq="YS", reducer="q90", window=1, ufunc_1dim=False)
+        assert lt == 299.6
+
+        lt = rl.rle_statistics(da, freq="YS", reducer="q10", window=1, ufunc_1dim=False)
+        assert lt == 64.4
+
+        lt = rl.rle_statistics(da, freq=None, reducer="q90", window=1, ufunc_1dim=True)
+        assert lt == 299.6
+
+        lt = rl.rle_statistics(da, freq=None, reducer="q10", window=1, ufunc_1dim=True)
+        assert lt == 64.4
+
     @pytest.mark.parametrize("op", ["min", "max"])
     def test_resampling_order(self, op):
         values = np.ones(365)
