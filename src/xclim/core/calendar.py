@@ -1165,7 +1165,7 @@ def _get_doys(start: int, end: int, inclusive: tuple[bool, bool]):
 
 def select_between_doys(
     da: xr.DataArray | xr.Dataset,
-    doy_bounds: tuple[int | xr.DataArray, int | xr.DataArray],
+    doy_bounds: tuple[int | xr.DataArray | None, int | xr.DataArray | None],
     include_bounds: bool | tuple[bool, bool] = True,
     include_nans: bool = True,
     freq: str | None = None,
@@ -1178,17 +1178,18 @@ def select_between_doys(
     ----------
     da : xr.DataArray or xr.Dataset
         Input data. It must have a time coordinate.
-    doy_bounds : 2-tuple of integers or DataArray or None
+    doy_bounds : 2-tuple of optional integers or DataArray
         The bounds as (start, end) of the period of interest expressed in day-of-year, integers going from
         1 (January 1st) to 365 or 366 (December 31st).
         If DataArrays are passed, they must have the same coordinates on the dimensions they share.
-        They may have a time dimension, in which case the masking is done independently for each period
+        They may have a time dimension, in which case the selection is done independently for each period
         defined by the coordinate, which means the time coordinate must have an inferable frequency
         (see :py:func:`xr.infer_freq`) or the frequency must be passed explicitly with the `freq` argument.
-        Timesteps of the input not appearing in the time coordinate of the bounds are masked as "outside the
+        Timesteps of the input not appearing in the time coordinate of the bounds are considered as "outside the
         bounds".
         If None is passed as a bound, it is replaced by the start or end of the year (1 or 366) if the other
-        bound is an integer, or by the start or end of the period defined by the `freq` in the case of DataArrays.
+        bound is an integer, or by the start or end of the period defined by the inferred or passed frequency
+        of DataArrays.
     include_bounds : bool or 2-tuple of booleans, optional
         Whether the bounds of `doy_bounds` should be inclusive or not. Default is True (inclusive).
     include_nans : bool, optional
