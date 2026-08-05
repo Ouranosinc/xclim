@@ -1185,11 +1185,11 @@ def select_between_doys(
         They may have a time dimension, in which case the selection is done independently for each period
         defined by the coordinate, which means the time coordinate must have an inferable frequency
         (see :py:func:`xr.infer_freq`) or the frequency must be passed explicitly with the `freq` argument.
-        Timesteps of the input not appearing in the time coordinate of the bounds are considered as "outside the
-        bounds".
         If None is passed as a bound, it is replaced by the start or end of the year (1 or 366) if the other
         bound is an integer, or by the start or end of the period defined by the inferred or passed frequency
         of DataArrays.
+        Timesteps of the input not appearing in the time coordinate of the bounds are considered as "outside the
+        bounds".
     include_bounds : bool or 2-tuple of booleans, optional
         Whether the bounds of `doy_bounds` should be inclusive or not. Default is True (inclusive).
     include_nans : bool, optional
@@ -1302,8 +1302,8 @@ def select_time(
     drop: bool = False,
     season: str | Sequence[str] | None = None,
     month: int | Sequence[int] | None = None,
-    doy_bounds: tuple[int | xr.DataArray, int | xr.DataArray] | None = None,
-    date_bounds: tuple[str, str] | None = None,
+    doy_bounds: tuple[int | xr.DataArray | None, int | xr.DataArray | None] | None = None,
+    date_bounds: tuple[str | None, str | None] | None = None,
     include_bounds: bool | tuple[bool, bool] = True,
     include_doy_bounds_nans: bool = True,
     bounds_freq: str | None = None,
@@ -1326,21 +1326,33 @@ def select_time(
         One or more of 'DJF', 'MAM', 'JJA' and 'SON'.
     month : int or sequence of int, optional
         Sequence of month numbers (January = 1 ... December = 12).
-    doy_bounds : 2-tuple of int or xr.DataArray, optional
+    doy_bounds : 2-tuple of optional integers or DataArray, optional
         The bounds as (start, end) of the period of interest expressed in day-of-year, integers going from
-        1 (January 1st) to 365 or 366 (December 31st). If a combination of int and xr.DataArray is given,
-        the int day-of-year corresponds to the year of the xr.DataArray.
-        If calendar awareness is needed, consider using ``date_bounds`` instead.
-    date_bounds : 2-tuple of str, optional
+        1 (January 1st) to 365 or 366 (December 31st).
+        If DataArrays are passed, they must have the same coordinates on the dimensions they share.
+        They may have a time dimension, in which case the selection is done independently for each period
+        defined by the coordinate, which means the time coordinate must have an inferable frequency
+        (see :py:func:`xr.infer_freq`) or the frequency must be passed explicitly with the `bounds_freq` argument.
+        If None is passed as a bound, it is replaced by the start or end of the year (1 or 366) if the other
+        bound is an integer, or by the start or end of the period defined by the inferred or passed frequency
+        of DataArrays.
+        Timesteps of the input not appearing in the time coordinate of the bounds are considered as "outside the
+        bounds".
+    date_bounds : 2-tuple of optional strings, optional
         The bounds as (start, end) of the period of interest expressed as dates in the month-day (%m-%d) format.
-    include_bounds : bool or 2-tuple of bool
+        If None is passed as a bounds, it is replaced by the start or end of the period defined by the
+        `bounds_freq` argument, corresponding to 1st January or 31st December for default "YS" bounds frequency.
+    include_bounds : bool or 2-tuple of bool, optional
         Whether the bounds of `doy_bounds` or `date_bounds` should be inclusive or not.
         Either one value for both or a tuple. Default is True, meaning bounds are inclusive.
-    include_doy_bounds_nans : bool
-        Whether to include values associated with NaN in `doy_bounds`. See `select_between_doys` for details.
+    include_doy_bounds_nans : bool, optional
+        Whether to include values associated with NaN in `doy_bounds`. If True (default), missing values (NaN) in
+        the start and end bounds are replaced by the start and end of the period, respectively.
     bounds_freq : str, optional
-        Needed with `date_bounds` or array-like `doy_bounds` without a `time` dimension.
-        It is the frequency used to determine the start and end of the period (default "YS").
+        Needed with array-like `doy_bounds` without a `time` dimension or `date_bounds`, and corresponding to the
+        frequency used to determine the start and end of the period (default "YS"). If `doy_bounds` have a `time`
+        dimension, the frequency is first tried to be inferred from the time coordinate of the bounds; if it cannot
+        be inferred, the frequency must be passed explicitly.
 
     Returns
     -------
