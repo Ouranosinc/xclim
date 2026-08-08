@@ -1328,7 +1328,7 @@ def select_time(
         Sequence of month numbers (January = 1 ... December = 12).
     doy_bounds : 2-tuple of optional integers or DataArray, optional
         The bounds as (start, end) of the period of interest expressed in day-of-year, integers going from
-        1 (January 1st) to 365 or 366 (December 31st).
+        1 (January 1st) to 365 or 366 (December 31st); not supported for 360_day calendars.
         If DataArrays are passed, they must have the same coordinates on the dimensions they share.
         They may have a time dimension, in which case the selection is done independently for each period
         defined by the coordinate, which means the time coordinate must have an inferable frequency
@@ -1340,8 +1340,9 @@ def select_time(
         bounds".
     date_bounds : 2-tuple of optional strings, optional
         The bounds as (start, end) of the period of interest expressed as dates in the month-day (%m-%d) format.
-        If None is passed as a bounds, it is replaced by the start or end of the period defined by the
-        `bounds_freq` argument, corresponding to 1st January or 31st December for default "YS" bounds frequency.
+        If None is passed as a bounds (not supported for 360_day calendars), it is replaced by the start or end
+        of the period defined by the `bounds_freq` argument, corresponding to 1st January or 31st December for
+        default "YS" bounds frequency.
     include_bounds : bool or 2-tuple of bool, optional
         Whether the bounds of `doy_bounds` or `date_bounds` should be inclusive or not.
         Either one value for both or a tuple. Default is True, meaning bounds are inclusive.
@@ -1400,6 +1401,31 @@ def select_time(
         if isinstance(month, int):
             month = [month]
         mask = da.time.dt.month.isin(month)
+
+    elif (date_bounds is not None) and not any(b is None for b in date_bounds):
+        # Keep old behaviour for date_bounds without None values
+        # to ensure backward compatibility for 360_day calendars.
+        # This one is a bit trickier.
+        start, end = date_bounds
+        time = da.time
+        calendar = get_calendar(time)
+        if calendar not in uniform_calendars:
+            # For non-uniform calendars, we can't simply convert dates to doys
+            # conversion to all_leap is safe for all non-uniform calendar as it doesn't remove any date.
+            time = time.convert_calendar("all_leap")
+            # values of time are the _old_ calendar
+            # and the new calendar is in the coordinate
+            calendar = "all_leap"
+
+        # Get doy of date, this is now safe because the calendar is uniform.
+        doys = _get_doys(
+            cftime.datetime.strptime(f"2000-{start}", "%Y-%m-%d", calendar=calendar).dayofyr,
+            cftime.datetime.strptime(f"2000-{end}", "%Y-%m-%d", calendar=calendar).dayofyr,
+            include_bounds,
+        )
+        mask = time.time.dt.dayofyear.isin(doys)
+        # Needed if we converted calendar, this puts back the correct coord
+        mask["time"] = da.time
 
     elif (date_bounds is not None) or (doy_bounds is not None):
         if date_bounds is not None:
