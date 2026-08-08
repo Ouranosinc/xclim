@@ -1174,6 +1174,8 @@ def select_between_doys(
     """
     Select data between day of year bounds.
 
+    This function does not support 360-day calendars.
+
     Parameters
     ----------
     da : xr.DataArray or xr.Dataset
