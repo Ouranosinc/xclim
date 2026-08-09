@@ -1250,7 +1250,8 @@ def select_between_doys(
 
         # add time dimension if not present, with bounds given by freq
         if "time" not in start.dims:
-            bnds = time_bnds(da.resample(time=freq if freq is not None else "YS"))
+            freq = freq if freq is not None else "YS"
+            bnds = time_bnds(da.resample(time=freq))
             start = start.expand_dims(time=bnds.time)
             end = end.expand_dims(time=bnds.time)
         else:
