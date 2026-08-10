@@ -12,11 +12,17 @@ from __future__ import annotations
 import json
 import warnings
 from collections.abc import Sequence
+from copy import deepcopy
+from itertools import chain
 from typing import Any
 
 import numpy as np
+import pandas as pd
 import scipy.stats
+import statsmodels.formula.api as smf
 import xarray as xr
+from formulaic import model_matrix, parser
+from scipy.optimize import minimize
 from scipy.stats import rv_continuous
 
 from xclim.core import DateStr, Quantified
@@ -573,6 +579,26 @@ def get_dist(dist: str | rv_continuous) -> rv_continuous:
     return dc
 
 
+def _dist_param_names(dist: str | rv_continuous) -> list:
+    """
+    Return parameter names for a scipy distribution.
+
+    Parameters
+    ----------
+    dist : str or rv_continuous distribution object
+        Name of the univariate distribution, such as beta, expon, genextreme, gamma, gumbel_r, lognorm, norm
+        (see :py:mod:scipy.stats for full list) or the distribution object itself.
+
+    Returns
+    -------
+    list of str
+        Shape parameters followed by ``loc`` and ``scale``.
+    """
+    dist = get_dist(dist)
+    shapes = [] if dist.shapes is None else [s.strip() for s in dist.shapes.split(",")]
+    return [*shapes, "loc", "scale"]
+
+
 def _fit_start(x, dist: str, **fitkwargs: Any) -> tuple[tuple, dict]:
     r"""
     Return initial values for distribution parameters.
@@ -602,14 +628,15 @@ def _fit_start(x, dist: str, **fitkwargs: Any) -> tuple[tuple, dict]:
     m = x.mean()
     v = x.var()
 
-    def _loc_estimation(x):
+    def _loc_estimation(x, sort=True):
         # muralidhar_1992 would suggest the following, but it seems more unstable
         # using cooke_1979 for now
         # n = len(x)
         # cv = x.std() / x.mean()
         # p = (0.48265 + 0.32967 * cv) * n ** (-0.2984 * cv)
         # xp = xs[int(p/100*n)]
-        xs = sorted(x)
+        xs = x if not sort else sorted(x)
+
         x1, x2, xn = xs[0], xs[1], xs[-1]
         xp = x2
         loc0 = (x1 * xn - xp**2) / (x1 + xn - 2 * xp)
@@ -619,16 +646,26 @@ def _fit_start(x, dist: str, **fitkwargs: Any) -> tuple[tuple, dict]:
         s = np.sqrt(6 * v) / np.pi
         return (0.1,), {"loc": m - 0.57722 * s, "scale": s}
 
-    if dist == "genpareto" and "floc" in fitkwargs:
+    if dist == "genpareto":
         # Taken from julia' Extremes. Case for when "mu/loc" is known.
-        t = fitkwargs["floc"]
-        if not np.isclose(t, 0):
-            m = (x - t).mean()
-            v = (x - t).var()
+        x0 = np.sort(x)
+        t = fitkwargs.get("floc", _loc_estimation(x0, sort=False))
+        m = x0.mean()
+        v = x0.var()
 
-        c = 0.5 * (1 - m**2 / v)
-        scale = (1 - c) * m
-        return (c,), {"scale": scale}
+        c = 0.5 * (1 - (m - t) ** 2 / v)
+        scale = (1 - c) * (m - t)
+        if "floc" not in fitkwargs:
+            kws = {"loc": t, "scale": scale}
+        else:
+            kws = {"scale": scale}
+        # support check: for xi < 0, GPD is bounded above by t - scale/c
+        if c < 0:
+            upper_bound = t - scale / c
+            # check if unallowed values are in the set, if so, return nothing
+            if (x0 - t).max() >= (upper_bound - t):
+                return (), {}
+        return (c,), kws
 
     if dist in "weibull_min":
         s = x.std()
@@ -1195,3 +1232,558 @@ def standardized_index(
     si.attrs["window"] = window
     si.attrs["units"] = ""
     return si
+
+
+def _parse_formula(formula: dict | str | Sequence[str], dist=None) -> list:
+    """
+    Convert a formula specification into a list of covariate terms.
+
+    Parameters
+    ----------
+    formula : str or sequence of str
+        Formula specification. If a string, it is parsed with Formulaic.
+        If a sequence, it is converted to a list directly.
+
+    Returns
+    -------
+    list of str
+        Covariate terms including the intercept term `"1"`.
+    """
+    if isinstance(formula, dict):
+        formulas = {k: _parse_formula(f) for k, f in formula.items()}
+        param_names = _dist_param_names(dist)
+        if unknown := set(formulas) - set(param_names):
+            raise ValueError(
+                f"formulas keys {unknown} are not parameters of {dist.name}. Expected a subset of {param_names}."
+            )
+        # parameters without formulas are stationary by default
+        formulas = {name: formulas.get(name, ["1"]) for name in param_names}
+        return formulas
+    if isinstance(formula, str):
+        terms = [str(t) for t in parser.DefaultFormulaParser().get_terms(formula)]
+    else:
+        terms = list(formula)
+
+    return terms if "1" in terms else ["1", *terms]
+
+
+def covariates_from_formulas(formulas: dict[str, Sequence[str]], covariate_source: dict):
+    """
+    Build covariate arrays from formula specifications.
+
+    Parameters
+    ----------
+    formulas : str or dict
+        Formula specification. If a string, it is interpreted as a single
+        formula. If a dictionary, values are formula specifications and all
+        covariate terms appearing in the formulas are included in the output.
+    covariate_source : pandas.DataFrame or dict
+        Source covariate data used to evaluate the formulas.
+
+    Returns
+    -------
+    dict
+        Mapping from covariate names to one-dimensional NumPy arrays. The
+        intercept term is stored under the key `"1"`.
+
+    Notes
+    -----
+    Formula terms are parsed using :mod:`formulaic`. The resulting design
+    matrix is converted to a dictionary of NumPy arrays.
+    """
+    cov_df = pd.DataFrame(covariate_source)
+    terms = set(chain.from_iterable(formulas.values()))
+
+    X = model_matrix("~ " + " + ".join(terms), cov_df)
+    X = X.rename(columns={"Intercept": "1"})
+    covariates = {c: X[c].to_numpy() for c in X.columns}
+    return np.array([covariates[term] for terms in formulas.values() for term in terms])
+
+
+def initialize_params(
+    params: dict[str, float], formulas: dict[str, Sequence[str]], log_links: Sequence[str] | None = None
+) -> list[float]:
+    """
+    Build the initial optimization vector.
+
+    Parameters
+    ----------
+    params : dict
+        Initial values for distribution parameters. This is given as the intercept values, covariate-dependent
+        parameters are set to zero initially.
+    formulas : dict
+        Covariate terms for each parameter.
+    log_links : Iterable[str], optional
+        Names of parameters that should be exponentiated after the
+        linear predictor is computed. Default is no parameters transformed.
+
+    Returns
+    -------
+    list of float
+        Flattened initialization vector.
+    """
+    log_links = set() if log_links is None else set(log_links)
+    out = []
+    for name, terms in formulas.items():
+        init = params.get(name, 0.0)
+        if name in log_links:
+            if init <= 0:
+                raise ValueError(
+                    f"Cannot initialize log-linked parameter {name!r} with non-positive "
+                    f"value {init}. Provide a positive starting value via `params`."
+                )
+            init = np.log(init)
+        for i in range(len(terms)):
+            out.append(init if i == 0 else 0.0)
+    return out
+
+
+def expand_params(
+    params_list: list[float],
+    formulas: dict[str, list[str]],
+    covariates: dict[str, np.ndarray],
+    log_links: Sequence[str],
+):
+    """
+    Map a flat 1-d parameter vector to a dict of parameters expanded according to covariates.
+
+    Parameters
+    ----------
+    params_list : array-like
+        Flat 1-d vector of coefficients, ordered by parameter and then
+        by term within each parameter, matching the order of `formulas`.
+    formulas : dict[str, list[str]]
+        Mapping from parameter name (e.g. "loc", "scale") to the list of
+        covariate term names.
+    covariates : dict[str, np.ndarray]
+        Mapping from term name to a 1-d array of per-observation values
+        (see `covariates_from_formulas`).
+    log_links : Iterable[str], optional
+        Names of parameters that should be exponentiated after the
+        linear predictor is computed. Default is no parameters transformed, an empty sequence.
+
+    Returns
+    -------
+    dict[str, np.ndarray]
+        Mapping from parameter name to its per-observation array of
+        shape (n_obs,).
+    """
+    params = {}
+    i = 0
+    for name, terms in formulas.items():
+        lt = len(terms)
+        coef = params_list[i : i + lt]
+        # this is a bit inefficient, redundancy.
+        # we have unique covariates and specify which indices use for each param
+        X = covariates[i : i + lt, :]
+        value = coef @ X
+        params[name] = np.exp(value) if name in log_links else value
+        i += lt
+    return params
+
+
+def make_nll(
+    dist: rv_continuous | str,
+    formulas: dict,
+    covariates: dict,
+    log_links: Sequence[str] | None = None,
+    fixed_params: dict | None = None,
+):
+    """
+    Build a negative log-likelihood function compatible with scipy.optimize.minimize.
+
+    Parameters
+    ----------
+    dist : rv_continuous
+        Scipy distribution.
+    formulas : dict[str, list[str]]
+        Mapping from parameter name (e.g. "loc", "scale") to the list of
+        covariate term names.
+    covariates : dict[str, np.ndarray]
+        Mapping from term name to a 1-d array of per-observation values
+        (see `covariates_from_formulas`).
+    log_links : Iterable[str], optional
+        Names of parameters that should be exponentiated after the
+        linear predictor is computed. Default is no parameters transformed.
+    fixed_params : dict, optional
+        Fixed parameter values.
+
+    Returns
+    -------
+    callable
+        Function compatible with `scipy.optimize.minimize`.
+
+    Raises
+    ------
+    ValueError
+        If unknown distribution parameters are supplied.
+    """
+    formulas = _parse_formula(formulas, dist)
+
+    def _nll(flat_params, y):
+        expanded = expand_params(flat_params, formulas, covariates, log_links)
+        # expanded and fixed_params are mutually exclusive
+        logp = dist.logpdf(y, **expanded, **fixed_params)
+        if not np.all(np.isfinite(logp)):
+            return np.inf
+        return -np.sum(logp)
+
+    return _nll
+
+
+def _fit_covariate_1d(
+    y,
+    covariates,
+    dist,
+    formulas,
+    params,
+    log_links=None,
+    fixed_params=None,
+    method="Nelder-Mead",
+    **minimize_kwargs,
+):
+    """Core 1-d fit, called once per grid cell/station by apply_ufunc."""
+    log_links = log_links if log_links is not None else {}
+    fixed_params = fixed_params if fixed_params is not None else {}
+    reduced_formulas = {k: formulas[k] for k in formulas if k not in fixed_params}
+    mask = np.isnan(y)
+    y = y[~mask]
+    covariates = covariates[:, ~mask]
+    nparams = sum(len(terms) for terms in reduced_formulas.values())
+    if params is None:
+        fitkwargs = {f"f{k}": fixed_params[k] for k in fixed_params}
+        pp = _fitfunc_1d(y, dist=dist, nparams=len(reduced_formulas), method="MLE", **fitkwargs)
+        # silent failure if not enough values and fixed arguments
+        ppd = dict(zip(_dist_param_names(dist), pp, strict=True))
+        params = {k: ppd[k] for k in reduced_formulas}
+    params_list = initialize_params(params, reduced_formulas, log_links)
+
+    nll = make_nll(dist, reduced_formulas, covariates, log_links, fixed_params)
+    opt = minimize(nll, params_list, args=(y,), method=method, **minimize_kwargs)
+
+    aic = np.array(2 * nparams + 2 * nll(opt.x, y))
+    opars = iter(opt.x)
+    fpars = iter(fixed_params.values())
+    pars = []
+    # like in scipy, fixed params are also included in the results
+    for name, terms in formulas.items():
+        for _ in terms:
+            pars.append(next(fpars) if name in fixed_params else next(opars))
+    return np.asarray(pars), aic
+
+
+def _expand_covariate_1d(params, covariates_prediction, formulas, log_links, fixed_params=None):
+    fixed_params = fixed_params if fixed_params is not None else {}
+    parameters_target = expand_params(params, formulas, covariates_prediction, log_links)
+    return np.array([v for v in parameters_target.values()])
+
+
+def fit_covariate(
+    da: xr.DataArray,
+    dist,
+    formulas,
+    dim: str,
+    # should be quantified, DataArrays
+    covariate_source: dict[str, np.ndarray] | xr.Dataset,
+    covariate_prediction: dict[str, np.ndarray] | xr.Dataset | None = None,
+    dim_out: str | None = None,
+    params=None,
+    log_links=None,
+    fixed_params=None,
+    method="Nelder-Mead",
+    **minimize_kwargs,
+) -> xr.Dataset:
+    """
+    Fit a scipy distribution with covariate-varying parameters.
+
+    Parameters
+    ----------
+    da : xr.DataArray
+        Observations, with an `obs_dim` dimension (e.g. "time") and any
+        number of other dimensions (e.g. "lat", "lon", "station") along
+        which the fit is applied independently.
+    dist : rv_continuous or str
+        Scipy distribution.
+    formulas : dict[str, str]
+        Mapping from distribution parameter name to a formula string,
+        e.g. {"loc": "~1+t", "scale": "~1"}.
+    dim : str
+        Name of the observation dimension in `da` and in `covariate_source`.
+    covariate_source : str or dict
+        Covariate data used to fit, aligned with `da` along `obs_dim`
+        (same length). Assumed shared across all other dimensions of `da`.
+    covariate_prediction : np.ndarray, optional
+        Covariate data used to evaluate the fitted parameters (e.g. for
+        prediction on a different time axis). Defaults to `covariate_source`.
+    dim_out : str
+        Name of the output dimension (must be in `covariate_source`).
+    params : dict, optional
+        Initial scalar parameter values. If None, uses `dist.fit(y)` per
+        grid cell.
+    log_links : Iterable[str], optional
+        Parameter names modeled on the log scale.
+    fixed_params : dict[float], optional
+        Not yet supported.
+    method : str
+        Passed to `scipy.optimize.minimize`.
+    **minimize_kwargs
+        Forwarded to `scipy.optimize.minimize`.
+
+    Returns
+    -------
+    xr.Dataset
+        Fitted distribution parameters and the AIC score.
+    """
+    dist = get_dist(dist)
+    log_links = {} if log_links is None else log_links
+    fixed_params = {} if fixed_params is None else fixed_params
+    if isinstance(covariate_source, xr.DataArray):
+        covariate_source = covariate_source.to_dataset()
+    if isinstance(covariate_source, xr.Dataset):
+        covariate_source = dict(covariate_source)
+    if not fixed_params.keys().isdisjoint(formulas):
+        raise ValueError(
+            "Some params given in `formulas` are also in `fixed_params`. These must be mutually exclusive."
+        )
+    if not fixed_params.keys().isdisjoint(log_links):
+        raise ValueError("Specifying the log-scale is not allowed for fixed params.")
+    # add all possible parameters of the distribution, transform string to a list of string in canonical order
+    formulas = _parse_formula(formulas, dist)
+    # correct ordering (inherit order in formulas)
+    fixed_params = {name: fixed_params[name] for name in formulas if name in fixed_params}
+
+    # only formulas for params to be optimized
+    reduced_formulas = {k: formulas[k] for k in formulas if k not in fixed_params}
+    covariates = covariates_from_formulas(reduced_formulas, covariate_source)
+    nparams = sum(len(terms) for terms in reduced_formulas.values())
+
+    da_cov = xr.DataArray(covariates, coords={"covdim": range(nparams), dim: da[dim].values})
+    out, aic = xr.apply_ufunc(
+        _fit_covariate_1d,
+        da,
+        da_cov,
+        input_core_dims=[[dim], ["covdim", dim]],
+        output_core_dims=[["dparams_raw"], []],
+        vectorize=True,
+        dask="parallelized",
+        dask_gufunc_kwargs={"output_sizes": {"dparams_raw": sum([len(terms) for terms in formulas.values()])}},
+        output_dtypes=[da.dtype] * 2,
+        kwargs=dict(
+            dist=dist,
+            formulas=formulas,
+            params=params,
+            fixed_params=fixed_params,
+            log_links=log_links,
+            method=method,
+            **minimize_kwargs,
+        ),
+    )
+    out = out.assign_attrs(
+        {
+            "log_links": json.dumps(log_links),
+            "formulas": json.dumps(formulas),
+            "fixed_params": json.dumps(fixed_params),
+            "scipy_dist": dist.name,
+            "nparams": nparams,
+        }
+    )
+    dparams_raw = [f"{name}_{t}" for name, terms in formulas.items() for t in terms]
+    out = out.assign_coords(dparams_raw=dparams_raw)
+    if covariate_prediction is not None:
+        out = _expand_covariate(out, covariate_prediction, dim_out)
+    lab = f"{out.name}_aic"
+    return xr.merge([out, aic.to_dataset(name=lab)], compat="override")
+
+
+def _expand_covariate(p, covariate_target, dim=None):
+    if isinstance(covariate_target, xr.DataArray):
+        covariate_target = covariate_target.to_dataset()
+    if isinstance(covariate_target, xr.Dataset):
+        covariate_target = dict(covariate_target)
+
+    covariate_target = deepcopy(covariate_target)
+    log_links, formulas, fixed_params = (
+        {} if k not in p.attrs else json.loads(p.attrs[k]) for k in ["log_links", "formulas", "fixed_params"]
+    )
+    dist = p.attrs.get("scipy_dist", None)
+    if dist is None:
+        param_names = ["quantile"]
+    else:
+        dist = get_dist(dist)
+        param_names = _dist_param_names(dist)
+
+    if dim is None:
+        if len(covariate_target):
+            raise ValueError("If `covariate_target` has more than one variable, then `dim` must be specified")
+        dim = list(covariate_target.keys())[0]
+
+    covariates_target = covariates_from_formulas(formulas, covariate_target)
+    da_cov = xr.DataArray(
+        covariates_target, coords={"covdim": range(covariates_target.shape[0]), dim: covariate_target[dim]}
+    )
+    out = xr.apply_ufunc(
+        _expand_covariate_1d,
+        p,
+        da_cov,
+        input_core_dims=[["dparams_raw"], ["covdim", dim]],
+        output_core_dims=[["dparams", dim]],
+        vectorize=True,
+        dask="parallelized",
+        dask_gufunc_kwargs={"output_sizes": {"dparams": len(param_names), dim: covariates_target.shape[1]}},
+        kwargs=dict(formulas=formulas, log_links=log_links, fixed_params=fixed_params),
+        output_dtypes=[p.dtype],
+    ).assign_coords({"dparams": param_names})
+    return out
+
+
+def quantile_regression(
+    da,
+    formula,
+    dim,
+    return_periods,
+    covariate_source,
+    covariate_prediction: str | dict | None = None,
+    dim_out: str | None = None,
+):
+    """
+    Fit a quantile regression with covariate-varying parameters.
+
+    Parameters
+    ----------
+    da : xr.DataArray
+        Observations, with an `obs_dim` dimension (e.g. "time") and any
+        number of other dimensions (e.g. "lat", "lon", "station") along
+        which the fit is applied independently.
+    formula : str
+        Formula string, e.g. "~1+t".
+    dim : str
+        Name of the observation dimension in `y` and in `covariate_source`.
+    return_periods : list
+        Return periods.
+    covariate_source : str or dict
+        Covariate data used to fit, aligned with `y` along `obs_dim`
+        (same length). Assumed shared across all other dimensions of `y`.
+    covariate_prediction : np.ndarray, optional
+        Covariate data used to evaluate the fitted parameters (e.g. for
+        prediction on a different time axis). Defaults to `covariate_source`.
+    dim_out : str
+        Name of the output dimension (must be in `covariate_source`).
+
+    Returns
+    -------
+    xr.Dataset
+        Fitted distribution parameters.
+    """
+
+    def _quantile_regression(vals, covariates, formula, return_periods):
+        q = [1 - 1 / t0 for t0 in return_periods]
+        df2 = pd.DataFrame(np.array([vals, *covariates]).T, columns=["vals"] + list(formula))
+        f = "vals ~ " + " + ".join(formula)
+        mod = smf.quantreg(f, df2)
+        return np.array([list((mod.fit(q=q0)).params) for q0 in q])
+
+    formula = _parse_formula(formula)
+    if isinstance(covariate_source, xr.DataArray):
+        covariate_source = covariate_source.to_dataset()
+    if isinstance(covariate_source, xr.Dataset):
+        covariate_source = dict(covariate_source)
+    covariates = covariates_from_formulas({"dummy": formula}, covariate_source)
+
+    da_cov = xr.DataArray(covariates, coords={"covdim": range(covariates.shape[0]), dim: da[dim].values})
+    out = xr.apply_ufunc(
+        _quantile_regression,
+        da,
+        da_cov,
+        input_core_dims=[[dim], ["covdim", dim]],
+        output_core_dims=[["return_period", "dparams_raw"]],
+        vectorize=True,
+        dask="parallelized",
+        kwargs={"return_periods": return_periods, "formula": formula},
+        output_dtypes=[np.float32],
+        dask_gufunc_kwargs={"output_sizes": {"return_period": len(return_periods), "dparams_raw": len(formula)}},
+    )
+    out = out.assign_coords(return_period=np.array(return_periods, dtype=np.float32), dparams_raw=formula)
+    out = out.assign_attrs({"formulas": json.dumps({"dummy": formula})})
+    if covariate_prediction is not None:
+        out = _expand_covariate(out, covariate_prediction, dim_out)
+    return out
+
+
+def compute_weights(criteria: xr.Dataset, dim: str = "scipy_dist"):
+    r"""
+    Compute weights from information criteria (AIC, BIC, AICC).
+
+    Parameters
+    ----------
+    criteria : xr.Dataset
+        Dataset containing the information criteria for the distributions.
+    dim : str
+        Dimension on which we pool distributions for comparison. Defaults to "scipy_dist".
+
+    Returns
+    -------
+    xr.Dataset
+        Dataset containing the normalized information criteria for the distributions (weights).
+
+    Notes
+    -----
+    The information criteria :math:`\text{IC}_i` is normalized as:
+
+    .. math::
+      w_i = \frac{\\exp\\{-\text{IC}_i/2\\}}{\\sum_j \\exp\\{-\text{IC}_j/2\\} }
+
+    Subtracting :math:`\\min \\{ \text{IC}_i \\}` from :math:`\text{IC}_i` doesn't change the result.
+
+    References
+    ----------
+    cite:t:`wagenmakers_aic_2004`
+    """
+    # Normalized exponential weights
+    delta_criteria = criteria - criteria.min(dim=dim)
+    weights = np.exp(-(delta_criteria) / 2)
+    weights = weights / weights.sum(dim=dim)
+    attrs = {
+        **criteria.attrs,
+        "dim": dim,
+        "units": "",
+        "long_name": "Weights of information criteria.",
+        "description": "Weights from the information criteria of fitted distributions.",
+    }
+    return weights.assign_attrs(attrs)
+
+
+def weighted_sum(
+    ds: xr.Dataset, weights: xr.Dataset | None, criteria: xr.Dataset | None = None, dim: str = "scipy_dist"
+):
+    """
+    Weighted sum.
+
+    Parameters
+    ----------
+    ds : xr.Dataset
+        Dataset containing quantities to be combined according to given weights.
+    weights : xr.Dataset, optional
+        Dataset containing the weights of each distribution. For instance, this can be the AIC,BIC,AICC criteria. This
+        is optional if `criteria` and `dim` are provided.
+    criteria : xr.Dataset, optional
+        Dataset containing the information criteria for the distributions.
+    dim : str
+        Dimension on which we pool distributions for comparison. Defaults to "scipy_dist".
+
+    Returns
+    -------
+    xr.Dataset
+        Weighted sum of fitted quantities `ds`.
+    """
+    if weights is None:
+        weights = compute_weights(criteria, dim)
+    ds = ds.copy(deep=True)
+    dim = weights.attrs["dim"]
+    for v in ds.data_vars:
+        ds[v] = (ds[v] * weights[v]).sum(dim=dim)
+        description = ds[v].attrs.get("description", None)
+        if description:
+            description = description[0].lower() + description[1:]
+            ds[v].attrs["description"] = f"Weighted sum of {description}"
+    ds.attrs = ds.attrs
+    return ds.drop_vars(dim)
