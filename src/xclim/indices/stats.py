@@ -1473,7 +1473,6 @@ def _fit_covariate_1d(
 
 
 def _expand_covariate_1d(params, covariates_prediction, formulas, log_links, fixed_params=None):
-
     fixed_params = fixed_params if fixed_params is not None else {}
     parameters_target = expand_params(params, formulas, covariates_prediction, log_links)
     return np.array([v for v in parameters_target.values()])
@@ -1637,19 +1636,6 @@ def _expand_covariate(p, covariate_target, dim=None):
     return out
 
 
-def _quantile_regression(vals, covariates, formula, return_periods):
-    q = [1 - 1 / t0 for t0 in return_periods]
-    df2 = pd.DataFrame(np.array([vals, *covariates]).T, columns=["vals"] + list(formula))
-    f = "vals ~ " + " + ".join(formula)
-    mod = smf.quantreg(f, df2)
-
-    def fit_model(q):
-        res = mod.fit(q=q)
-        return list(res.params)
-
-    return np.array([fit_model(q0) for q0 in q])
-
-
 def quantile_regression(
     da,
     formula,
@@ -1688,6 +1674,14 @@ def quantile_regression(
     xr.Dataset
         Fitted distribution parameters.
     """
+
+    def _quantile_regression(vals, covariates, formula, return_periods):
+        q = [1 - 1 / t0 for t0 in return_periods]
+        df2 = pd.DataFrame(np.array([vals, *covariates]).T, columns=["vals"] + list(formula))
+        f = "vals ~ " + " + ".join(formula)
+        mod = smf.quantreg(f, df2)
+        return np.array([list((mod.fit(q=q0)).params) for q0 in q])
+
     formula = _parse_formula(formula)
     if isinstance(covariate_source, xr.DataArray):
         covariate_source = covariate_source.to_dataset()
@@ -1748,13 +1742,14 @@ def compute_weights(criteria: xr.Dataset, dim: str = "scipy_dist"):
     delta_criteria = criteria - criteria.min(dim=dim)
     weights = np.exp(-(delta_criteria) / 2)
     weights = weights / weights.sum(dim=dim)
-
-    weights.attrs = criteria.attrs
-    weights.attrs["description"] = "Weights from the information criteria of fitted distributions."
-    weights.attrs["long_name"] = "Weights of information criteria"
-    weights.attrs["units"] = ""
-    weights.attrs["dim"] = dim
-    return weights
+    attrs = {
+        **criteria.attrs,
+        "dim": dim,
+        "units": "",
+        "long_name": "Weights of information criteria.",
+        "description": "Weights from the information criteria of fitted distributions.",
+    }
+    return weights.assign_attrs(attrs)
 
 
 def weighted_sum(
