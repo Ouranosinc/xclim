@@ -1174,8 +1174,6 @@ def select_between_doys(
     """
     Select data between day of year bounds.
 
-    This function does not support 360-day calendars.
-
     Parameters
     ----------
     da : xr.DataArray or xr.Dataset
@@ -1183,10 +1181,11 @@ def select_between_doys(
     doy_bounds : 2-tuple of optional integers or DataArray
         The bounds as (start, end) of the period of interest expressed in day-of-year, integers going from
         1 (January 1st) to 365 or 366 (December 31st).
-        If DataArrays are passed, they must have the same coordinates on the dimensions they share.
-        They may have a time dimension, in which case the selection is done independently for each period
-        defined by the coordinate, which means the time coordinate must have an inferable frequency
-        (see :py:func:`xr.infer_freq`) or the frequency must be passed explicitly with the `freq` argument.
+        If DataArrays are passed (not supported with 360-day calendar `da`), they must have the same coordinates
+        on the dimensions they share. They may have a time dimension, in which case the selection is done
+        independently for each period defined by the coordinate, which means the time coordinate must have an
+        inferable frequency (see :py:func:`xr.infer_freq`) or the frequency must be passed explicitly with the
+        `freq` argument.
         If None is passed as a bound, it is replaced by the start or end of the year (1 or 366) if the other
         bound is an integer, or by the start or end of the period defined by the inferred or passed frequency
         of DataArrays.
@@ -1227,6 +1226,8 @@ def select_between_doys(
         if drop:
             # At least one of the bounds is an array, drop won't work
             raise ValueError("Passing array-like `doy_bounds` is incompatible with `drop=True`.")
+        if get_calendar(da) == "360_day":
+            raise NotImplementedError("Passing array-like `doy_bounds` is not supported for 360_day calendars.")
 
         start, end = doy_bounds
         # Convert None to DataArrays with nans
