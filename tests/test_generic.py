@@ -609,7 +609,7 @@ class TestTimeSelection:
         da = self.series("2003-02-13", "2004-12-31", "default").expand_dims(lat=[0, 10, 15, 20, 25])
         # 5 cases
         # normal : start < end
-        # over NYE : end < start
+        # over NYE : end < start -> invalid index, no data selected
         # end is nan (i.e. 366)
         # start is nan (i.e. 1)
         # both are nan (no drop)
@@ -617,10 +617,10 @@ class TestTimeSelection:
         end = xr.DataArray([200, 20, np.nan, 200, np.nan], dims=("lat",), coords={"lat": da.lat})
         out = select_time(da, doy_bounds=(start, end), include_bounds=include_bounds)
 
-        exp = [151 * 2, 26 + 20 + 27, 266 + 267, 200 - 43 + 200, 365 - 43 + 366]
+        exp = [151 * 2, 0, 266 + 267, 200 - 43 + 200, 365 - 43 + 366]
         if not include_bounds:
             exp[0] = exp[0] - 4  # 2 years * 2
-            exp[1] = exp[1] - 3  # 2 on 1st year, 1 on 2nd (end bnd is after end of data)
+            # still invalid index on exp[1]
             exp[2] = exp[2] - 2  # "Open" bound so always included, 1 real bnd on each year
             exp[3] = exp[3] - 2  # Same
             # No real bound on exp[4]

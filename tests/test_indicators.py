@@ -863,9 +863,12 @@ def test_indicator_indexing_doy_bounds_spatial(tasmin_series):
     end = xr.DataArray([200, 20, np.nan, 200, np.nan], dims=("lat",), coords={"lat": da.lat})
     out = atmos.tn_days_above(da, thresh="0 °C", doy_bounds=(start, end))
 
+    # 340, 20 is an invalid indexer for default freq (YS)
+    # such cases return an entirely masked array
+    # No values are missing as there are no values to count
     np.testing.assert_array_equal(
         out,
-        [[151.0, 151.0], [46.0, 46.0], [266.0, 266.0], [200.0, 200.0], [365.0, 365.0]],
+        [[151.0, 151.0], [0, 0], [266.0, 266.0], [200.0, 200.0], [365.0, 365.0]],
     )
 
 
