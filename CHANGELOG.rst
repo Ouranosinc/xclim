@@ -31,7 +31,7 @@ Breaking changes
     * ``dependency-groups``: ``lint`` (linting tools), ``notebooks`` (minimum for interactive notebooks), ``test`` (minimum for running tests), ``docs`` (minimum for building docs), ``test-notebooks`` (minimum for running notebook tests), ``dev`` (full suite for local development).
     * ``optional-dependencies``: ``bias-adjustment`` (`xsdba` and others), ``performance`` (speedups), ``plot`` (plotting), ``types`` (static typing support).
         * The ``complete`` recipe has been removed due to design issues. (:pull:`2355`).
-* For PEP-735 support, `xclim` now requires modern `pip` (>=25.2). (:pull:`2316`) and `tox` (>=4.34). (:pull:`2316`).
+* For PEP-735 support, `xclim` now requires modern `pip` (>=25.2) and `tox` (>=4.34). (:pull:`2316`).
 * `mypy` has been replaced with `ty` as the type checking/inferencing tool and is now run on GitHub Workflows alongside `pylint`. While most checks are currently disabled, these will be progressively enforced in subsequent updates. (:pull:`2355`).
 * Previously deprecated indicators have been removed:
     * ``xclim.indicators.land.snd_to_snow`` -> ``xclim.indicators.convert.snd_to_snow``
@@ -49,6 +49,8 @@ Internal changes
 * Call signature typing for many indices have been better identified. The ``cast`` function (used to force expected variable types of internal objects) is now less prevalent within the code base. (:pull:`2355`).
 * `tox.toml` now uses the build-composition API, requiring `tox` (>=4.52.0). (:pull:`2355`).
 * The LaTeX formulas and tables of many indice docstrings were failing to render in ReadTheDocs due to small syntax typos. These have been addressed. (:pull:`2355`).
+* A page has been added to the documentation (`governance.rst`) that describes the method through which decisions concerning `xclim` are made as well as the responsibilities of maintainers. (:pull:`2391`).
+* The security policy now details a brief security assurance that discusses the measures taken to ensure source code and package integrity. (:pull:`2391`).
 
 v0.61.2 (unreleased)
 --------------------
@@ -58,6 +60,7 @@ New indicators and features
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 * ``xclim.indices.helpers.make_hourly_temperature`` now accepts `infill_polar_days`. If set to `True`, this means that polar days and nights are set to 24 and 0 hours duration, respectively. The default behaviour is unchanged (`infill_polar_days=False`) and fills these cases with NaNs. (:issue:`2381`, :pull:`2382`).
 * Run length indices now support a quantile reducer. (:pull:`2369`).
+* ``xclim.ensembles.robustness_fractions`` now accepts `strict_sign` which can be set to false to include zero-change in both positive and negative fractions. Default behaviour (True) is unchanged. (:pull:`2387`).
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
