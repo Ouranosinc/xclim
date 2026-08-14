@@ -5,8 +5,8 @@ import pandas as pd
 import pytest
 import xarray as xr
 
-import xclim.indices as xci
 from xclim import atmos, convert, core, set_options
+from xclim.compute import water_budget
 from xclim.core.calendar import build_climatology_bounds, percentile_doy
 from xclim.core.units import convert_units_to
 
@@ -193,7 +193,7 @@ class TestStandardizedPrecip:
             tasmax = ds.tasmax
             tas = tasmax - 2.5
             tasmin = tasmax - 5
-            wb = xci.water_budget(pr, None, tasmin, tasmax, tas, None)
+            wb = water_budget(pr, None, tasmin, tasmax, tas, None)
             wbMM = convert_units_to(wb, "mm/day", context="hydro")  # noqa
 
         out3 = atmos.standardized_precipitation_evapotranspiration_index(
@@ -264,8 +264,9 @@ class TestWetPrcptot:
 
         # Reference value
         t = core.units.convert_units_to(thresh, pr, context="hydro")
+        # this transforms with rate2amount, instead of stat=integral, very slight differences are to be expected
         pa = atmos.precip_accumulation(pr.where(pr >= t, 0))
-        np.testing.assert_array_equal(out, pa)
+        np.testing.assert_array_almost_equal(out, pa, 3)
 
 
 class TestDailyIntensity:

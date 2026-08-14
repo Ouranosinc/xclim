@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-from xclim import indices as xci
+import xclim.compute as xcc
+from xclim.compute import generic
 from xclim.core.indicator import Daily, ResamplingIndicatorWithIndexing
-from xclim.indices import generic
 
 __all__ = [
     "blowing_snow",
@@ -205,7 +205,7 @@ snd_max_doy = Snow(
     abstract="Day of the year when snow depth reaches its maximum value.",
     units="",
     _partial=True,
-    compute=xci.snd_max_doy,
+    compute=xcc.snd_max_doy,
 )
 
 snow_melt_we_max = Snow(
@@ -217,7 +217,7 @@ snow_melt_we_max = Snow(
     description="The {freq} maximum negative change in melt amount over {window} days.",
     abstract="The water equivalent of the maximum snow melt.",
     units="kg m-2",
-    compute=xci.snow_melt_we_max,
+    compute=xcc.snow_melt_we_max,
 )
 
 snw_max = Snow(
@@ -243,7 +243,7 @@ snw_max_doy = Snow(
     description="The {freq} day of year when snow amount equivalent on the surface reaches its maximum.",
     abstract="The day of year when snow amount equivalent on the surface reaches its maximum.",
     units="",
-    compute=xci.snw_max_doy,
+    compute=xcc.snw_max_doy,
 )
 
 melt_and_precip_max = Snow(
@@ -254,7 +254,7 @@ melt_and_precip_max = Snow(
     description="The {freq} maximum precipitation flux and negative change in snow amount over {window} days.",
     abstract="Maximum water input from precipitation flux and snow melt over a given window of days.",
     units="kg m-2",
-    compute=xci.melt_and_precip_max,
+    compute=xcc.melt_and_precip_max,
 )
 
 
@@ -265,7 +265,7 @@ snd_storm_days = SnowWithIndexing(
     long_name="Days with snowfall depth at or above a given threshold",
     description="The {freq} number of days with snowfall depth accumulation above {thresh}.",
     units="days",
-    compute=xci.snd_storm_days,
+    compute=xcc.snd_storm_days,
 )
 
 snw_storm_days = SnowWithIndexing(
@@ -275,7 +275,7 @@ snw_storm_days = SnowWithIndexing(
     long_name="Days with snowfall amount at or above a given threshold",
     description="The {freq} number of days with snowfall amount accumulation above {thresh}.",
     units="days",
-    compute=xci.snw_storm_days,
+    compute=xcc.snw_storm_days,
 )
 
 
@@ -288,7 +288,7 @@ blowing_snow = Snow(
     "above {sfcWind_thresh}.",
     abstract="The number of days with snowfall, snow depth, and windspeed over given thresholds for a period of days.",
     units="days",
-    compute=xci.blowing_snow,
+    compute=xcc.blowing_snow,
 )
 
 snow_depth = Snow(
@@ -348,7 +348,7 @@ holiday_snow_days = Snow(
     description="The total number of days where snow on the ground was greater than or equal to {snd_thresh} "
     "occurring on {date_start} and ending on {date_end}.",
     abstract="The total number of days where there is a significant amount of snow on the ground on December 25th.",
-    compute=xci.holiday_snow_days,
+    compute=xcc.holiday_snow_days,
 )
 
 holiday_snow_and_snowfall_days = Snow(
@@ -360,5 +360,5 @@ holiday_snow_and_snowfall_days = Snow(
     "and snowfall was greater than or equal to {prsn_thresh} occurring on {date_start} and ending on {date_end}.",
     abstract="The total number of days where there is a significant amount of snow on the ground "
     "and a measurable snowfall occurring on December 25th.",
-    compute=xci.holiday_snow_and_snowfall_days,
+    compute=xcc.holiday_snow_and_snowfall_days,
 )

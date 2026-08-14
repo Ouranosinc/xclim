@@ -4,33 +4,34 @@ Changelog
 
 v1.0.0 (unreleased)
 -------------------
-Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`).
+Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), Éric Dupuis (:user:`coxipi`), Sarah Gammon (:user:`SarahG-579462`).
 
 Announcements
 ^^^^^^^^^^^^^
 This release constitutes a major breaking change from the previous stable release (v0.x) and introduces several new features, enhancements, and API changes. Users are strongly encouraged to review the breaking changes section below to ensure compatibility with their existing codebases.
 Documentation has been updated to reflect these changes as well as to help existing users migrate to the new version. The `xclim` library is now considered to be production-level stable.
 
+Major changes
+^^^^^^^^^^^^^
+* Module ``xclim.indices``  has been renamed to ``xclim.compute``. The functions made to build indicators are now called "[index-like] compute functions" and the word "indices" is now avoided as much as possible. (:issue:`2320`, :pull:`2330`).
+* Major refactor of ``xclim.indices.generic`` to reduce duplication and harmonize signatures. (:pull:`2258`).
+    * Generic functions from ``clix-meta`` are now in their own submodule ``xclim.indices.clix`` and some indicators in ``xclim.cf`` have changed to reflect changes in standards.
+    * A summary of the changes can be found `in this comment <https://github.com/Ouranosinc/xclim/pull/2258#issuecomment-3473430173>`_.
+
+
 New indicators and features
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
-* This new `xclim` includes a major overhaul of the "generic" index functions which has a significant and breaking effect on most of `xclim` modules. A summary of the changes can be found `in this comment <https://github.com/Ouranosinc/xclim/pull/2258#issuecomment-3473430173>`_.
 * The `xclim` command-line tool now accepts both ``-h`` and ``--help`` to show the help summary. (:pull:`2316`).
-
-Bug fixes
-^^^^^^^^^
-* The LaTeX formulas and tables of many indice docstrings were failing to render in ReadTheDocs due to small syntax typos. These have been addressed. (:pull:`2355`).
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
 * `xclim` has fully dropped Python 3.10 and `numpy` below v2.0. Python 3.11+ coding conventions are now accepted. (:pull:`2355`).
-* Major refactor of ``xclim.indices.generic`` to reduce duplication and harmonize signatures. (:pull:`2258`).
-    * Generic functions from ``clix-meta`` are now in their own submodule ``xclim.indices.clix`` and some indicators in ``xclim.cf`` have changed to reflect changes in standards.
 * Legacy imports, links, and documentation for `xsdba` have been removed. (:pull:`2342`).
 * Installation recipes have been significantly modified to mimic conventions employed by `xarray` (:pull:`2316`). Most development-related recipes are now installed via ``dependency-groups`` (`PEP-735 <https://peps.python.org/pep-0735/>`_) and ``optional-dependencies`` are as follows:
     * ``dependency-groups``: ``lint`` (linting tools), ``notebooks`` (minimum for interactive notebooks), ``test`` (minimum for running tests), ``docs`` (minimum for building docs), ``test-notebooks`` (minimum for running notebook tests), ``dev`` (full suite for local development).
     * ``optional-dependencies``: ``bias-adjustment`` (`xsdba` and others), ``performance`` (speedups), ``plot`` (plotting), ``types`` (static typing support).
         * The ``complete`` recipe has been removed due to design issues. (:pull:`2355`).
-* For PEP-735 support, `xclim` now requires modern `pip` (>=25.2). (:pull:`2316`) and `tox` (>=4.34). (:pull:`2316`).
+* For PEP-735 support, `xclim` now requires modern `pip` (>=25.2) and `tox` (>=4.34). (:pull:`2316`).
 * `mypy` has been replaced with `ty` as the type checking/inferencing tool and is now run on GitHub Workflows alongside `pylint`. While most checks are currently disabled, these will be progressively enforced in subsequent updates. (:pull:`2355`).
 * Previously deprecated indicators have been removed:
     * ``xclim.indicators.land.snd_to_snow`` -> ``xclim.indicators.convert.snd_to_snow``
@@ -47,6 +48,7 @@ Internal changes
 * The `Makefile` now defines typing-relevant checks (``make typing``; dependent on ``make install-typing``) that are enforced in GitHub Workflows. (:pull:`2355`).
 * Call signature typing for many indices have been better identified. The ``cast`` function (used to force expected variable types of internal objects) is now less prevalent within the code base. (:pull:`2355`).
 * `tox.toml` now uses the build-composition API, requiring `tox` (>=4.52.0). (:pull:`2355`).
+* The LaTeX formulas and tables of many indice docstrings were failing to render in ReadTheDocs due to small syntax typos. These have been addressed. (:pull:`2355`).
 * A page has been added to the documentation (`governance.rst`) that describes the method through which decisions concerning `xclim` are made as well as the responsibilities of maintainers. (:pull:`2391`).
 * The security policy now details a brief security assurance that discusses the measures taken to ensure source code and package integrity. (:pull:`2391`).
 

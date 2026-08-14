@@ -19,9 +19,9 @@ import numpy as np
 import scipy.stats as spstats
 import xarray as xr
 
+from xclim.compute.helpers import compare, detrend
 from xclim.core.formatting import gen_call_string, update_xclim_history
 from xclim.core.missing import MissingAny, MissingBase
-from xclim.indices.helpers import compare, detrend
 
 __all__ = [
     "robustness_categories",

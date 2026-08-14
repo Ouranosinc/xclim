@@ -6,8 +6,8 @@ import pytest
 import xarray as xr
 from dask import compute
 
+from xclim.compute import run_length as rl
 from xclim.core.options import set_options
-from xclim.indices import run_length as rl
 from xclim.testing.helpers import assert_lazy
 
 

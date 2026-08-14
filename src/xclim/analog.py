@@ -30,18 +30,18 @@ def spatial_analogs(
     r"""
     Compute dissimilarity statistics between target points and candidate points.
 
-    Spatial analogues based on the comparison of climate indices. The algorithm compares
-    the distribution of the reference indices with the distribution of spatially
-    distributed candidate indices and returns a value measuring the dissimilarity
+    Spatial analogues based on the comparison of climate indicators. The algorithm compares
+    the distribution of the reference indicators with the distribution of spatially
+    distributed candidate indicators and returns a value measuring the dissimilarity
     between both distributions over the candidate grid.
 
     Parameters
     ----------
     target : xr.Dataset
-        Dataset of the target indices. Only indice variables should be included in the
+        Dataset of the target indicators. Only indicator variables should be included in the
         dataset's `data_vars`. They should have only the dimension(s) `dist_dim `in common with `candidates`.
     candidates : xr.Dataset
-        Dataset of the candidate indices. Only indice variables should be included in
+        Dataset of the candidate indicators. Only indicator variables should be included in
         the dataset's `data_vars`.
     dist_dim : str
         The dimension over which the *distributions* are constructed. This can be a multi-index dimension.
@@ -57,12 +57,12 @@ def spatial_analogs(
         The range depends on the method.
     """
     # Create the target DataArray:
-    target_array = target.to_array("_indices", "target")
+    target_array = target.to_array("_indicators", "target")
 
     # Create the target DataArray
     # drop any (sub-)index along "dist_dim" that could conflict with target, and rename it.
     # The drop is the simplest solution that is compatible with both xarray <=2022.3.0 and >2022.3.1
-    candidate_array = candidates.to_array("_indices", "candidates").rename({dist_dim: "_dist_dim"})
+    candidate_array = candidates.to_array("_indicators", "candidates").rename({dist_dim: "_dist_dim"})
     if isinstance(candidate_array.indexes["_dist_dim"], pd.MultiIndex):
         candidate_array = candidate_array.drop_vars(
             ["_dist_dim"] + candidate_array.indexes["_dist_dim"].names,
@@ -79,16 +79,16 @@ def spatial_analogs(
         ) from e
 
     if candidate_array.chunks is not None:
-        candidate_array = candidate_array.chunk({"_indices": -1})
+        candidate_array = candidate_array.chunk({"_indicators": -1})
     if target_array.chunks is not None:
-        target_array = target_array.chunk({"_indices": -1})
+        target_array = target_array.chunk({"_indicators": -1})
 
     # Compute dissimilarity
     diss = xr.apply_ufunc(
         metric_func,
         target_array,
         candidate_array,
-        input_core_dims=[(dist_dim, "_indices"), ("_dist_dim", "_indices")],
+        input_core_dims=[(dist_dim, "_indicators"), ("_dist_dim", "_indicators")],
         output_core_dims=[()],
         vectorize=True,
         dask="parallelized",
@@ -98,7 +98,7 @@ def spatial_analogs(
     diss.name = "dissimilarity"
     diss.attrs.update(
         long_name=f"Dissimilarity between target and candidates, using metric {method}.",
-        indices=",".join(target_array._indices.values),
+        indicators=",".join(target_array._indicators.values),
         metric=method,
     )
 
@@ -292,7 +292,7 @@ def zech_aslan(x: np.ndarray, y: np.ndarray, *, dmin: float = 1e-12) -> float:
        R(r) &= \left\{\begin{array}{r l} -\ln r & \text{for } r > d_{min} \\ -\ln d_{min} & \text{for } r \leq d_{min} \end{array}\right. \\
        SED(X_i, Y_j) &= \sqrt{\sum_{k=1}^d \frac{\left(X_i(k) - Y_i(k)\right)^2}{\sigma_x(k)\sigma_y(k)}}
 
-    where :math:`k` is a counter over dimensions (indices in the case of spatial analogs) and :math:`\sigma_x(k)` is the
+    where :math:`k` is a counter over dimensions (indicators in the case of spatial analogs) and :math:`\sigma_x(k)` is the
     standard deviation of :math:`X` in dimension :math:`k`. Finally, :math:`d_{min}` is a cut-off to avoid poles when
     :math:`r \to 0`, it is controllable through the `dmin` parameter.
 

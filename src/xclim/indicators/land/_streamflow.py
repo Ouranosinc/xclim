@@ -2,13 +2,7 @@
 
 from __future__ import annotations
 
-from xclim.core.indicator import (
-    Indicator,
-    ReducingIndicator,
-    ResamplingIndicator,
-    StandardizedIndexes,
-)
-from xclim.indices import (
+from xclim.compute import (
     base_flow_index,
     base_flow_index_seasonal_ratio,
     flow_index,
@@ -21,6 +15,12 @@ from xclim.indices import (
     sen_slope,
     standardized_groundwater_index,
     standardized_streamflow_index,
+)
+from xclim.core.indicator import (
+    Indicator,
+    ReducingIndicator,
+    ResamplingIndicator,
+    StandardizedIndexes,
 )
 
 __all__ = [
