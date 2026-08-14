@@ -2,9 +2,15 @@
 Changelog
 =========
 
-v0.61.2 (unreleased)
+v0.62.0 (2026-08-17)
 --------------------
 Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), Éric Dupuis (:user:`coxipi`).
+
+Announcements
+^^^^^^^^^^^^^
+**This is the last planned "minor" release for version 0.x of `xclim`**.
+All further development of `xclim` will proceed on the `v1` candidate branch (`dev-v099`) until the release of `v1.0.0`.
+No new features will be accepted for `v0.x` and existing Pull Requests currently targeting `main` will be rebased/merged.
 
 New indicators and features
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
