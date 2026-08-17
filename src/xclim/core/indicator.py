@@ -112,7 +112,7 @@ from collections.abc import Callable, Sequence
 from copy import deepcopy
 from functools import reduce
 from inspect import Parameter as _Parameter
-from inspect import Signature, signature
+from inspect import Signature
 from os import PathLike
 from pathlib import Path
 from types import ModuleType
@@ -305,8 +305,6 @@ class Indicator(IndicatorRegistrar):
 
     # metadata fields that are formatted as free text (first letter capitalized)
     _text_fields = ["long_name", "description", "comment"]
-    # Class attributes that are functions (so we know which to convert to static methods)
-    _funcs = ["compute"]
 
     # Will become the class's name
     identifier = None
@@ -335,7 +333,7 @@ class Indicator(IndicatorRegistrar):
 
     # Note: typing and class types in this call signature will cause errors with sphinx-autodoc-typehints
     # See: https://github.com/tox-dev/sphinx-autodoc-typehints/issues/186#issuecomment-1450739378
-    cf_attrs: list[dict[str, str]] = None
+    cf_attrs: list[dict[str, str]] = []
     """A list of metadata information for each output of the indicator.
 
     It minimally contains a "var_name" entry, and may contain : "standard_name", "long_name",
@@ -393,6 +391,9 @@ class Indicator(IndicatorRegistrar):
                         " argument as it conflicts with an argument it adds."
                     )
                 parameters[name] = param
+
+            # Convert compute to staticmethod
+            kwds["compute"] = staticmethod(kwds["compute"])
         else:  # inherit parameters from base class
             parameters = deepcopy(cls._all_parameters)
             parent_cf_attrs = cls.cf_attrs
@@ -417,11 +418,6 @@ class Indicator(IndicatorRegistrar):
 
         # Parse keywords
         kwds["keywords"] = [*cls.keywords, *kwds.get("keywords", [])]
-
-        # Convert function objects to static methods.
-        for key in cls._funcs:
-            if key in kwds and callable(kwds[key]):
-                kwds[key] = staticmethod(kwds[key])
 
         # Infer realm for built-in xclim instances
         if cls.__module__.startswith(__package__.split(".", maxsplit=1)[0]):
@@ -873,8 +869,8 @@ class Indicator(IndicatorRegistrar):
     def _preprocess_and_checks(self, das, params):
         """Actions to be done after parsing the arguments and before computing."""
         # Pre-computation validation checks on DataArray arguments
-        self._bind_call(self.datacheck, **das)
-        self._bind_call(self.cfcheck, **das)
+        self.datacheck(**das)
+        self.cfcheck(**das)
 
         # Choices
         for name, val in params.items():
@@ -908,37 +904,6 @@ class Indicator(IndicatorRegistrar):
     def _postprocess(self, outs, das, params):
         """Actions to done after computing."""
         return outs
-
-    def _bind_call(self, func, **das):
-        """
-        Call function using `__call__` `DataArray` arguments.
-
-        This will try to bind keyword arguments to `func` arguments. If this fails,
-        `func` is called with positional arguments only.
-
-        Notes
-        -----
-        This method is used to support two main use cases.
-
-        In use case #1, we have two compute functions with arguments in a different order:
-            `func1(tasmin, tasmax)` and `func2(tasmax, tasmin)`
-
-        In use case #2, we have two compute functions with arguments that have different names:
-            `generic_func(da)` and `custom_func(tas)`
-
-        For each case, we want to define a single `cfcheck` and `datacheck` methods that
-        will work with both compute functions.
-
-        Passing a dictionary of arguments will solve #1, but not #2.
-        """
-        # First try to bind arguments to function.
-        try:
-            ba = signature(func).bind(**das)
-        except TypeError:
-            # If this fails, simply call the function using positional arguments
-            return func(*das.values())
-        # Call the func using bound arguments
-        return func(*ba.args, **ba.kwargs)
 
     @classmethod
     def _get_translated_metadata(cls, locale, var_id=None, names=None, append_locale_name=True):
@@ -1094,9 +1059,8 @@ class Indicator(IndicatorRegistrar):
         # Translate variable attrs
         attrs["cf_attrs"] = []
         var_id = None
-        all_cf_attrs = cls.cf_attrs or []
-        for cf_attrs in all_cf_attrs:  # Translate for each variable
-            if len(all_cf_attrs) > 1:
+        for cf_attrs in cls.cf_attrs:  # Translate for each variable
+            if len(cls.cf_attrs) > 1:
                 var_id = cf_attrs["var_name"]
             attrs["cf_attrs"].append(
                 _translate(
@@ -1132,7 +1096,7 @@ class Indicator(IndicatorRegistrar):
         out = cls._format(out, args)
 
         # Format attributes
-        out["outputs"] = [cls._format(attrs, args) for attrs in (cls.cf_attrs or [])]
+        out["outputs"] = [cls._format(attrs, args) for attrs in cls.cf_attrs]
         out["notes"] = cls.notes
 
         # We need to deepcopy, otherwise empty defaults get overwritten!
@@ -1216,9 +1180,7 @@ class Indicator(IndicatorRegistrar):
 
         return out
 
-    # The following static methods are meant to be replaced to define custom indicators.
-    @staticmethod
-    def cfcheck(**das) -> None:
+    def cfcheck(self, **das) -> None:
         r"""
         Compare metadata attributes to CF-Convention standards.
 
@@ -1278,7 +1240,7 @@ class Indicator(IndicatorRegistrar):
     def __getattr__(self, attr):
         """Return the attribute."""
         if attr in self._cf_names:
-            out = [meta.get(attr, "") for meta in (self.cf_attrs or [])]
+            out = [meta.get(attr, "") for meta in self.cf_attrs]
             if len(out) == 1:
                 return out[0]
             return out
