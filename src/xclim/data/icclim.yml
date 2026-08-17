@@ -60,7 +60,7 @@ indicators:
         Huglin heliothermal index (Summation of ((Tmean + Tmax)/2 - 10°C) * Latitude-based
         day-length coefficient (`k`), for days between 1 April and 31 October)
     parameters:
-      method: icclim
+      method: huglin
       thresh: 10 degC
       start_date: 04-01
       end_date: 11-01

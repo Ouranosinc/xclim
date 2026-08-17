@@ -44,7 +44,7 @@ class StreamflowNoResampling(Indicator):
     """Indicators involving streamflow without resampling."""
 
     context = "hydro"
-    keywords = "streamflow hydrology"
+    keywords = ["streamflow", "hydrology"]
 
 
 class Streamflow(ResamplingIndicator):
@@ -52,7 +52,7 @@ class Streamflow(ResamplingIndicator):
 
     context = "hydro"
     src_freq = "D"
-    keywords = "streamflow snow hydrology"
+    keywords = ["streamflow", "snow", "hydrology"]
 
 
 base_flow_index = Streamflow(
@@ -151,7 +151,7 @@ standardized_streamflow_index = StandardizedIndexes(
     abstract="Streamflow over a moving window, normalized such that SSI averages to 0 for the calibration data. "
     "The window unit `X` is the minimal time period defined by the resampling frequency.",
     cell_methods="",
-    keywords="streamflow",
+    keywords=["streamflow"],
     compute=standardized_streamflow_index,
 )
 
@@ -167,7 +167,7 @@ standardized_groundwater_index = StandardizedIndexes(
     abstract="Groundwater over a moving window, normalized such that SGI averages to 0 for the calibration data. "
     "The window unit `X` is the minimal time period defined by the resampling frequency.",
     cell_methods="",
-    keywords="groundwater",
+    keywords=["groundwater"],
     compute=standardized_groundwater_index,
 )
 
@@ -189,7 +189,7 @@ base_flow_index_seasonal_ratio = Streamflow(
     abstract="Yearly base flow index per season, defined as the minimum 7-day average flow divided by the mean flow"
     "as well as yearly  {numerator} to {denominator} bfi ratio.",
     cell_methods="",
-    keywords="streamflow, seasonal",
+    keywords=["seasonal"],
     compute=base_flow_index_seasonal_ratio,
     missing="skip",
 )
@@ -204,7 +204,6 @@ lag_snowpack_flow_peaks = Streamflow(
     "equivalent, and the mean date when river flow exceeds a percentile threshold"
     "during a given year.",
     cell_methods="",
-    keywords="streamflow, snw",
     compute=lag_snowpack_flow_peaks,
 )
 
@@ -217,7 +216,6 @@ runoff_ratio = Streamflow(
     "Temporal analysis: Yearly values computed from seasonal daily data and yearly data, "
     "depending on chosen frequency.",
     cell_methods="",
-    keywords="streamflow",
     compute=runoff_ratio,
 )
 
@@ -237,6 +235,5 @@ sen_slope = StreamflowNoResampling(
         "Statistical analysis value.",
     ],
     cell_methods="",
-    keywords="streamflow",
     compute=sen_slope,
 )

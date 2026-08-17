@@ -20,7 +20,7 @@ __all__ = [
 class Wind(Daily):
     """Indicator involving daily sfcWind series."""
 
-    keywords = "wind"
+    keywords = ["wind"]
 
 
 calm_days = Wind(

@@ -5,7 +5,8 @@ from __future__ import annotations
 import logging
 import re
 from ast import literal_eval
-from dataclasses import asdict, dataclass
+from copy import deepcopy
+from dataclasses import dataclass
 from inspect import _empty as _empty_default
 from inspect import signature
 from typing import Any
@@ -88,17 +89,6 @@ class Parameter:
         """Imitate previous behaviour where "units" and "choices" were missing, instead of being "_empty"."""
         return getattr(self, key, _empty) is not _empty
 
-    def asdict(self) -> dict:
-        """
-        Format indicators as a dictionary.
-
-        Returns
-        -------
-        dict
-            The indicators as a dictionary.
-        """
-        return {k: v for k, v in asdict(self).items() if v is not _empty}
-
     @property
     def injected(self) -> bool:
         """
@@ -110,6 +100,30 @@ class Parameter:
             Whether values are injected.
         """
         return self.value is not _empty
+
+    def json(self) -> dict:
+        """
+        Return a json-serializable dictionary of the Parameter.
+
+        Returns
+        -------
+        dict
+            Dictionary representation of the object, ready for serialization into json.
+        """
+        if self.injected:
+            return deepcopy(self.value)
+        out = {
+            "kind": self.kind.value,  # Get the int.
+            "description": self.description,
+        }
+        if "choices" in self:  # A set is stored, convert to list
+            out["choices"] = list(self.choices)
+        if self.default is not _empty_default:
+            out["default"] = self.default
+        for field in ["annotation", "compute_name", "units"]:
+            if field in self:
+                out[field] = getattr(self, field)
+        return out
 
 
 @dataclass
@@ -152,10 +166,10 @@ class IndexMeta:
     This is meant as a temporary container between the compute function and the indicator class.
     """
 
-    title: str | None  # First line of the docstring
-    abstract: str | None  # Second paragraph of the docstring
+    title: str  # First line of the docstring
+    abstract: str  # Second paragraph of the docstring
 
-    inputs: dict[Parameter]  # Parameter section
+    inputs: dict[str, Parameter]  # Parameter section
     outputs: list[IndexOutput]  # Returns section
 
     # Other sections of the docstring
@@ -182,11 +196,16 @@ class IndexMeta:
         sig = signature(func)
         declared_units = getattr(func, "in_units", {})
 
-        if "\n\n" in doc.description:
+        if doc.description is None:
+            title = ""
+            abstract = ""
+        elif "\n\n" in doc.description:
             title, abstract, *_ = doc.description.split("\n\n")
+            title = title.replace("\n", " ")
+            abstract = abstract.replace("\n", " ")
         else:
-            title = doc.description
-            abstract = None
+            title = doc.description.replace("\n", " ")
+            abstract = ""
 
         doc_params = {p.arg_name.replace("*", ""): p for p in doc.params}
 
@@ -208,27 +227,31 @@ class IndexMeta:
             description = ""
             choices = _empty
             if name in doc_params:
-                description = doc_params[name].description
+                description = doc_params[name].description.replace("\n", " ")
 
                 choices_raw = None
                 docannot = doc_params[name].type_name.strip()
                 # To string to cover both cases where it is a Literal type or a string already
                 sigannot = str(sigparam.annotation)
-                if match := re.match(r"(\{.*\})", docannot):
+                if "dim: indexer" not in docannot and (match := re.match(r"(\{.*\})", docannot)):
                     choices_raw = match.groups()[0]
                 elif match := re.match(r"Literal\[(.*)\]", sigannot):
                     choices_raw = "{" + match.groups()[0] + "}"
                 if choices_raw:
                     try:
                         choices = literal_eval(choices_raw)
+                        if doc_params[name].is_optional or default is None:
+                            choices.add(None)
                     except ValueError:
                         logging.error(
                             f"Choices defined in the description of parameter {name}"
-                            f" of function {func} could not be parsed."
+                            f" of function {func} could not be parsed. "
+                            f"Got: {choices_raw}."
                         )
                         # If the literal_eval fails, we just ignore the choices.
                         pass
 
+            annotation = _empty if sigparam.annotation == _empty_default else sigparam.annotation
             inputs[name] = Parameter(
                 kind=kind,
                 default=default,
@@ -236,7 +259,7 @@ class IndexMeta:
                 units=units,
                 description=description,
                 choices=choices,
-                annotation=sigparam.annotation,
+                annotation=annotation,
             )
 
         # Parse outputs

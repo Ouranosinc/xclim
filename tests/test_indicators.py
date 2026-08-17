@@ -14,18 +14,17 @@ import xarray as xr
 import xclim
 from xclim import __version__, atmos
 from xclim.compute import tg_mean
-from xclim.core import VARIABLES, MissingVariableError, Quantified
+from xclim.core import VARIABLES, InputKind, MissingVariableError, Quantified
 from xclim.core.calendar import select_time
 from xclim.core.formatting import (
     AttrFormatter,
     default_formatter,
     merge_attributes,
-    parse_doc,
     update_history,
 )
+from xclim.core.indexwrapper import IndexMeta
 from xclim.core.indicator import Daily, Indicator, ResamplingIndicator, registry
 from xclim.core.units import convert_units_to, declare_units, units
-from xclim.core.utils import InputKind
 from xclim.testing import list_input_variables
 
 try:
@@ -370,7 +369,7 @@ def test_multiindicator(tas_series):
     assert tmin.attrs["description"] == "Grouped computation of tmax and tmin"
     assert tmax.attrs["description"] == "Grouped computation of tmax and tmin"
 
-    with pytest.raises(ValueError, match="Output #2 is missing a var_name!"):
+    with pytest.raises(ValueError, match="Output #2 of minmaxtemp2 is missing a var_name"):
         ind = Daily(
             realm="atmos",
             identifier="minmaxtemp2",
@@ -405,7 +404,7 @@ def test_multiindicator(tas_series):
     assert ind.units == ["K", "K"]
 
     # All must be the same length
-    with pytest.raises(ValueError, match="Attribute var_name has 2 elements"):
+    with pytest.raises(ValueError, match="Attribute standard_name has 1 elements"):
         ind = Daily(
             realm="atmos",
             identifier="minmaxtemp3",
@@ -610,24 +609,24 @@ def test_formatting(pr_series):
     assert out.attrs["description"] in ["Annual number of days with daily precipitation at or above 1.5 mm d-1."]
 
 
-def test_parse_doc():
-    doc = parse_doc(tg_mean.__doc__)
-    assert doc["title"] == "Mean of daily average temperature."
-    assert doc["abstract"] == "Resample the original daily mean temperature series by taking the mean over each period."
-    assert doc["parameters"]["tas"]["description"] == "Mean daily temperature."
-    assert doc["parameters"]["freq"]["description"] == "Resampling frequency."
-    assert doc["notes"].startswith("Let")
-    assert "math::" in doc["notes"]
-    assert "references" not in doc
-    assert doc["long_name"] == "The mean daily temperature at the given time frequency."
+def test_IndexMeta():
+    doc = IndexMeta.parse(tg_mean)
+    assert doc.title == "Mean of daily average temperature."
+    assert doc.abstract == "Resample the original daily mean temperature series by taking the mean over each period."
+    assert doc.inputs["tas"].description == "Mean daily temperature."
+    assert doc.inputs["freq"].description == "Resampling frequency."
+    assert doc.notes.startswith("Let")
+    assert "math::" in doc.notes
+    assert doc.references == ""
+    assert doc.outputs[0].description == "The mean daily temperature at the given time frequency."
 
-    doc = parse_doc(xclim.compute.converters.saturation_vapor_pressure.__doc__)
-    assert doc["parameters"]["ice_thresh"]["description"] == (
+    doc = IndexMeta.parse(xclim.compute.converters.saturation_vapor_pressure)
+    assert doc.inputs["ice_thresh"].description == (
         "Threshold temperature under which to switch to equations in reference to ice instead of water. "
         "If None (default) everything is computed with reference to water. "
         "If given, see `interp_power` for more options."
     )
-    assert "goff_low-pressure_1946" in doc["references"]
+    assert "goff_low-pressure_1946" in doc.references
 
 
 def test_parsed_doc():
@@ -945,3 +944,11 @@ def test_freq_doc():
     allowed_periods = ["Y"]
     exp = f"Restricted to frequencies equivalent to one of {allowed_periods}"
     assert exp in doc
+
+
+def test_no_rewrapping():
+    with pytest.raises(ValueError, match="Can't override"):
+        uniIndTemp.__class__(
+            compute=uniindtemp_compute,
+            parameters={"thresh": "0 °C"},
+        )

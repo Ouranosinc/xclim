@@ -412,12 +412,12 @@ def bivariate_count_occurrences(
         An array.
     condition1 : {">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"}
         Logical comparison operator for data variable 1.
-    condition2 : {">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"}
+    condition2 : {">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"}, optional
         Logical comparison operator for data variable 2.
         If None, ``condition1`` is used.
     thresh1 : Quantified
         Threshold for data variable 1.
-    thresh2 : Quantified
+    thresh2 : Quantified, optional
         Threshold for data variable 2.
         If None, ``thresh1`` is used.
     freq : str

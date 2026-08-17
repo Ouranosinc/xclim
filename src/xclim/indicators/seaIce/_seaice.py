@@ -12,7 +12,7 @@ class SiconcAreacello(Indicator):
     """Class for indicators having sea ice concentration and grid cell area inputs."""
 
     missing = "skip"
-    keywords = "seaice"
+    keywords = ["seaice"]
 
 
 sea_ice_extent = SiconcAreacello(

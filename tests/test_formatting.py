@@ -30,7 +30,7 @@ def test_indicator_docstring():
     assert (
         doc[6] == "With injected parameters: window_statistic=min, statistic=count, min_gap=1, constrain=('>', '>=')."
     )
-    assert doc[7] == "Keywords : temperature health,."
+    assert doc[7] == "Keywords : temperature, health."
     assert doc[13] == "    Default : `ds.tasmin`. [Required units : [temperature]]"
     assert (
         doc[45]

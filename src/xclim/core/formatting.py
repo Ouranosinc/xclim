@@ -11,7 +11,8 @@ import string
 import warnings
 from collections.abc import Callable, Sequence
 from fnmatch import fnmatch
-from inspect import _empty, signature
+from inspect import _empty as _empty_default
+from inspect import signature
 from typing import Any
 
 import xarray as xr
@@ -539,7 +540,7 @@ def _gen_parameters_section(parameters: dict[str, dict[str, Any]], allowed_perio
             defstr = f"Default : `ds.{param.default}`. "
         elif param.kind == InputKind.OPTIONAL_VARIABLE:
             defstr = ""
-        elif param.default is not _empty:
+        elif param.default is not _empty_default:
             defstr = f"Default : {param.default}. "
         else:
             defstr = "Required. "
@@ -618,7 +619,7 @@ def generate_indicator_docstring(ind) -> str:
             special += ", ".join([f"{k}={v}" for k, v in ind.injected_parameters.items()])
             special += ".\n"
     if ind.keywords:
-        special += f"Keywords : {ind.keywords}.\n"
+        special += f"Keywords : {', '.join(ind.keywords)}.\n"
 
     parameters = _gen_parameters_section(ind.parameters, getattr(ind, "allowed_periods", None))
 
