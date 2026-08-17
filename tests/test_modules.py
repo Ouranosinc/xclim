@@ -11,11 +11,11 @@ import yamale
 from yaml import safe_load
 
 from xclim import indicators
-from xclim.core import VARIABLES
+from xclim.core import VARIABLES, InputKind
 from xclim.core.indicator import build_indicator_module_from_yaml
 from xclim.core.locales import read_locale_file
 from xclim.core.options import set_options
-from xclim.core.utils import InputKind, load_module, make_clix_meta_yaml
+from xclim.core.utils import load_module, make_clix_meta_yaml
 
 
 def all_virtual_indicators():

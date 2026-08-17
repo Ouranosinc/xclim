@@ -13,7 +13,7 @@ from inspect import signature
 
 from boltons.funcutils import wraps
 
-from xclim.core._exceptions import ValidationError, raise_warn_or_log
+from xclim.core import ValidationError, raise_warn_or_log
 from xclim.core.locales import _valid_locales
 
 METADATA_LOCALES = "metadata_locales"

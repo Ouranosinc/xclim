@@ -3,9 +3,9 @@
 from __future__ import annotations
 
 from xclim.compute import converters
+from xclim.core import InputKind
 from xclim.core.cfchecks import cfcheck_from_name
 from xclim.core.indicator import Indicator
-from xclim.core.utils import InputKind
 
 __all__ = [
     "clearness_index",

@@ -59,7 +59,6 @@ indicators:
       long_name: >
         Huglin heliothermal index (Summation of ((Tmean + Tmax)/2 - 10°C) * Latitude-based
         day-length coefficient (`k`), for days between 1 April and 31 October)
-    compute: huglin_index
     parameters:
       method: icclim
       thresh: 10 degC
@@ -71,7 +70,6 @@ indicators:
       long_name: >
         Biologically effective growing degree days (Summation of min(max((Tmin + Tmax)/2 - 10°C, 0), 9°C),
         for days between 1 April and 30 September)
-    compute: biologically_effective_degree_days
     parameters:
       method: icclim
       thresh_tasmin: 10 degC

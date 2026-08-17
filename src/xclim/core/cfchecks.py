@@ -13,8 +13,7 @@ from collections.abc import Sequence
 
 import xarray as xr
 
-from xclim.core._exceptions import ValidationError
-from xclim.core._types import VARIABLES
+from xclim.core import VARIABLES, ValidationError
 from xclim.core.options import cfcheck
 
 

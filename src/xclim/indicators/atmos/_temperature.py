@@ -6,14 +6,13 @@ from xarray import DataArray
 
 from xclim import compute
 from xclim.compute import generic
-from xclim.core import cfchecks
+from xclim.core import InputKind, cfchecks
 from xclim.core.indicator import (
     Daily,
     Hourly,
     Indicator,
     ResamplingIndicatorWithIndexing,
 )
-from xclim.core.utils import InputKind
 
 __all__ = [
     "australian_hardiness_zones",

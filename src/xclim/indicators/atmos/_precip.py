@@ -5,7 +5,7 @@ from __future__ import annotations
 from xarray import DataArray
 
 from xclim import compute
-from xclim.core import cfchecks
+from xclim.core import InputKind, cfchecks
 from xclim.core.indicator import (
     Daily,
     Hourly,
@@ -14,7 +14,6 @@ from xclim.core.indicator import (
     StandardizedIndexes,
 )
 from xclim.core.units import rate2amount
-from xclim.core.utils import InputKind
 
 __all__ = [
     "antecedent_precipitation_index",

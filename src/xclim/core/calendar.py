@@ -21,7 +21,7 @@ from packaging.version import Version
 from xarray import CFTimeIndex
 from xarray.coding import cftime_offsets
 
-from xclim.core._types import DataType, DayOfYearStr, Freq
+from xclim.core import DataType, DayOfYearStr, Freq
 from xclim.core.formatting import update_xclim_history
 from xclim.core.utils import uses_dask
 

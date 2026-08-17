@@ -11,8 +11,7 @@ from collections.abc import Sequence
 
 import xarray as xr
 
-from xclim.core._exceptions import ValidationError
-from xclim.core._types import Freq
+from xclim.core import Freq, ValidationError
 from xclim.core.calendar import compare_offsets, parse_offset
 from xclim.core.options import datacheck
 

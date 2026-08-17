@@ -14,9 +14,8 @@ import xarray as xr
 from dask.diagnostics.progress import ProgressBar
 
 import xclim as xc
-from xclim.core import MissingVariableError, indicator
+from xclim.core import InputKind, MissingVariableError, indicator
 from xclim.core.dataflags import DataQualityException, data_flags, ecad_compliant
-from xclim.core.utils import InputKind
 from xclim.testing.utils import (
     TESTDATA_BRANCH,
     TESTDATA_CACHE_DIR,

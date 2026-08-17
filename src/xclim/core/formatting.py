@@ -7,12 +7,8 @@ from __future__ import annotations
 
 import datetime as dt
 import itertools
-import logging
-import re
 import string
-import textwrap
 import warnings
-from ast import literal_eval
 from collections.abc import Callable, Sequence
 from fnmatch import fnmatch
 from inspect import _empty, signature
@@ -21,7 +17,7 @@ from typing import Any
 import xarray as xr
 from boltons.funcutils import wraps
 
-from xclim.core.utils import InputKind
+from xclim.core import InputKind
 
 DEFAULT_FORMAT_PARAMS = {
     "tasmin_per_thresh": "{unknown}",
@@ -234,110 +230,6 @@ default_formatter = AttrFormatter(
     },
     ["adj", "noun"],
 )
-
-
-def parse_doc(doc: str) -> dict:
-    """
-    Crude regex parsing reading a function docstring and extracting information needed in indicator construction.
-
-    The appropriate docstring syntax is detailed in
-    :ref:`notebooks/extendxclim:Defining new index-like compute functions`.
-
-    Parameters
-    ----------
-    doc : str
-        The docstring of an index-like compute function.
-
-    Returns
-    -------
-    dict
-        A dictionary with all parsed sections.
-    """
-    if doc is None:
-        return {}
-
-    # Retrocompatilbity as python 3.13 does this by default
-    doc = textwrap.dedent(doc)
-    out = {}
-
-    sections = re.split(r"(\w+\s?\w+)\n-{3,50}", doc)  # obj.__doc__.split('\n\n')
-    intro = sections.pop(0)
-    if intro:
-        intro_content = list(map(str.strip, intro.strip().split("\n\n")))
-        if len(intro_content) == 1:
-            out["title"] = intro_content[0]
-        elif len(intro_content) >= 2:
-            out["title"], abstract = intro_content[:2]
-            out["abstract"] = " ".join(map(str.strip, abstract.splitlines()))
-
-    for i in range(0, len(sections), 2):
-        header, content = sections[i : i + 2]
-
-        if header in ["Notes", "References"]:
-            out[header.lower()] = content.replace("\n    ", "\n").strip()
-        elif header == "Parameters":
-            out["parameters"] = _parse_parameters(content)
-        elif header == "Returns":
-            rets = _parse_returns(content)
-            if rets:
-                meta = list(rets.values())[0]
-                if "long_name" in meta:
-                    out["long_name"] = meta["long_name"]
-    return out
-
-
-def _parse_parameters(section):
-    """
-    Parse the 'parameters' section of a docstring into a dictionary.
-
-    Works by mapping the parameter name to its description and, potentially, to its set of choices.
-    The type annotation are not parsed, except for fixed sets of values (listed as "{'a', 'b', 'c'}").
-    The annotation parsing only accepts strings, numbers, `None` and `nan` (to represent `numpy.nan`).
-    """
-    curr_key = None
-    params = {}
-
-    for line in section.split("\n"):
-        if line.startswith(" "):  # description
-            s = " " if params[curr_key]["description"] else ""
-            params[curr_key]["description"] += s + line.strip()
-        elif not line.startswith(" ") and ":" in line:  # param title
-            name, annot = line.split(":", maxsplit=1)
-            curr_key = name.strip()
-            params[curr_key] = {"description": ""}
-            match = re.search(r".*(\{.*}).*", annot)
-            if match:
-                try:
-                    choices = literal_eval(match.groups()[0])
-                    params[curr_key]["choices"] = choices
-                except ValueError as err:
-                    msg = f"Choice not found. Ignoring: {err}"
-                    logging.info(msg)
-                    # If the literal_eval fails, we just ignore the choices.
-                    pass
-    return params
-
-
-def _parse_returns(section):
-    """Parse the returns section of a docstring into a dictionary mapping the parameter name to its description."""
-    curr_key = None
-    params = {}
-    for line in section.split("\n"):
-        if line.strip():
-            if line.startswith(" "):  # long_name
-                s = " " if params[curr_key]["long_name"] else ""
-                params[curr_key]["long_name"] += s + line.strip()
-            elif not line.startswith(" "):  # param title
-                annot, *name = reversed(line.split(":", maxsplit=1))
-                if name:
-                    curr_key = name[0].strip()
-                else:
-                    curr_key = None
-                params[curr_key] = {"long_name": ""}
-                annot, *unit = annot.split(",", maxsplit=1)
-                if unit:
-                    params[curr_key]["units"] = unit[0].strip()
-    return params
 
 
 def merge_attributes(
