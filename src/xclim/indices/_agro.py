@@ -28,10 +28,12 @@ from xclim.indices._threshold import (
 from xclim.indices.generic import aggregate_between_dates, get_zones
 from xclim.indices.helpers import (
     _gather_lat,
+    resample_map,
+)
+from xclim.indices.solar import (
     gladstones_day_length_latitude_coefficient,
     huglin_day_length_latitude_coefficient,
     jones_day_length_latitude_coefficient,
-    resample_map,
 )
 from xclim.indices.stats import standardized_index
 
@@ -1524,7 +1526,7 @@ def chill_portions(tas: xarray.DataArray, freq: str = "YS", **indexer) -> xarray
     Examples
     --------
     >>> from xclim.indices import chill_portions
-    >>> from xclim.indices.helpers import make_hourly_temperature
+    >>> from xclim.indices.solar import make_hourly_temperature
     >>> tasmin = xr.open_dataset(path_to_tasmin_file).tasmin
     >>> tasmax = xr.open_dataset(path_to_tasmax_file).tasmax
     >>> tas_hourly = make_hourly_temperature(tasmin, tasmax)
@@ -1564,7 +1566,7 @@ def chill_units(tas: xarray.DataArray, positive_only: bool = False, freq: str = 
     Examples
     --------
     >>> from xclim.indices import chill_units
-    >>> from xclim.indices.helpers import make_hourly_temperature
+    >>> from xclim.indices.solar import make_hourly_temperature
     >>> tasmin = xr.open_dataset(path_to_tasmin_file).tasmin
     >>> tasmax = xr.open_dataset(path_to_tasmax_file).tasmax
     >>> tas_hourly = make_hourly_temperature(tasmin, tasmax)

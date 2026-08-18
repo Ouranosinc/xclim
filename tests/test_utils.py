@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 import numpy as np
+import pytest
 import xarray as xr
 
-from xclim.core.utils import _chunk_like, ensure_chunk_size, nan_calc_percentiles
+from xclim.core.utils import _chunk_like, ensure_chunk_size, nan_calc_percentiles, sel_with_nans
 from xclim.testing.helpers import test_timeseries as _test_timeseries
 
 
@@ -85,3 +86,21 @@ def test_chunk_like():
     t, la = _chunk_like(da.time, da.lat, chunks={"time": 10, "lat": 1})
     assert t.chunks[0] == tuple([10] * 10)
     assert la.chunks[0] == tuple([1] * 10)
+
+
+@pytest.mark.parametrize(["uses_dask", "lazy"], [(True, True), (True, False), (False, False)])
+def test_sel_with_nans(uses_dask, lazy):
+    tas = xr.DataArray(
+        np.linspace(0, 1, 125).reshape((5, 5, 5)),
+        coords={"time": np.arange(5), "lat": np.arange(5), "lon": np.arange(5)},
+    )
+    time = xr.DataArray([-1, 0, 1, 2, 3, 4, 5, 3, 2, 1, 0], dims=("time"))
+    if uses_dask:
+        tas = tas.chunk(time=1, lat=2, lon=3)
+        time = time.chunk(time=2)
+
+    tas_sel = sel_with_nans(tas, "time", time, fill=-1, lazy=lazy).compute()
+    time = time.compute()
+    assert (tas_sel.isel(time=[0, 6]) == -1).all()
+
+    assert (tas.isel(time=[0, 1, 2, 3, 4, 3, 2, 1, 0]) == tas_sel.where(time.isin(tas.time), drop=True)).all()

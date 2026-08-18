@@ -9,7 +9,7 @@ import xarray as xr
 from xclim import convert, set_options
 from xclim.core.units import convert_units_to
 from xclim.indices.converters import shortwave_downwelling_radiation_from_clearness_index
-from xclim.indices.helpers import extraterrestrial_solar_radiation
+from xclim.indices.solar import extraterrestrial_solar_radiation
 
 K2C = 273.16
 

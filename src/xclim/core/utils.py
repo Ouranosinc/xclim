@@ -276,6 +276,70 @@ def lazy_indexing(da: xr.DataArray, index: xr.DataArray, dim: str | None = None)
     )
 
 
+def sel_with_nans(
+    da: xr.DataArray, dim: str, sel: xr.DataArray, label: str = "tmp_time", fill: float = np.nan, lazy: bool = True
+):
+    """
+    Select from da on dimension dim, with DataArray from the *sorted* da[dim] index.
+
+    This is similar to xc.core.utils.lazy_indexing, but allows for labelled indexing,
+    and fills locations with `fill` if not available.
+    It is similar to xr.reindex, but allows for multi-dimensional reindexing.
+    It is also similar to xr.sel, but allows for lazy evaluation and filling for unavailable selections.
+
+    Parameters
+    ----------
+    da : xr.DataArray
+        DataArray to select from. Requires `dim` dimension.
+    dim : str
+        Dimension over which to select.
+    sel : xr.DataArray
+        DataArray with which to select. Requires `dim` dimension.
+    label : str
+        Label to rename dim in `da`, by default "tmp_time".
+    fill : float
+        Fill value if sel does not exist in da[dim], by default np.nan.
+    lazy : bool
+        Whether to compute immediately, or evaluate lazily with dask, by default True.
+        Skipped when da is not a dask array.
+
+    Returns
+    -------
+    xr.DataArray
+        DataArray `da` selected on dimension `dim` with selection `sel`.
+
+    Warnings
+    --------
+    This function can be quite memory intensive. Optimizing chunking may help.
+    """
+    non_dim_dims = [d for d in da.dims if d != dim]
+
+    if uses_dask(da):
+        dimchunks = {d: s[0] for d, s in da.chunksizes.items() if d != dim and d in sel.dims}
+        sel = sel.chunk({dim: -1, **dimchunks})
+
+    da = da.rename({dim: label})
+    dim = label
+    ind_insert = xr.apply_ufunc(
+        lambda n: np.clip(da.indexes[dim].searchsorted(n, "left"), 0, da[dim].size - 1),
+        sel,
+        dask="parallelized",
+    )
+
+    if lazy and uses_dask(da):
+        ind_insert = ind_insert.broadcast_like(da.to_dataset(name="tmp")[non_dim_dims])
+        lazy_index = lazy_indexing(da.chunk({dim: -1}), ind_insert, dim)
+        lazy_time = lazy_indexing(da[dim].chunk({dim: -1}), ind_insert, dim)
+    else:
+        ind_insert = ind_insert.compute()
+        lazy_index = da.isel({dim: ind_insert})
+        lazy_time = da[dim].isel({dim: ind_insert})
+    index_correct = lazy_time == sel
+    out = xr.where(index_correct, lazy_index, fill)
+
+    return out
+
+
 def calc_perc(
     arr: np.ndarray,
     percentiles: Sequence[float] | None = None,
