@@ -18,7 +18,6 @@ Major changes
     * Generic functions from ``clix-meta`` are now in their own submodule ``xclim.indices.clix`` and some indicators in ``xclim.cf`` have changed to reflect changes in standards.
     * A summary of the changes can be found `in this comment <https://github.com/Ouranosinc/xclim/pull/2258#issuecomment-3473430173>`_.
 
-
 New indicators and features
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 * The `xclim` command-line tool now accepts both ``-h`` and ``--help`` to show the help summary. (:pull:`2316`).
@@ -52,9 +51,15 @@ Internal changes
 * A page has been added to the documentation (`governance.rst`) that describes the method through which decisions concerning `xclim` are made as well as the responsibilities of maintainers. (:pull:`2391`).
 * The security policy now details a brief security assurance that discusses the measures taken to ensure source code and package integrity. (:pull:`2391`).
 
-v0.61.2 (unreleased)
+v0.62.0 (2026-08-17)
 --------------------
 Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), Éric Dupuis (:user:`coxipi`).
+
+Announcements
+^^^^^^^^^^^^^
+**This is the last planned "minor" release for version 0.x of `xclim`**.
+All further development of `xclim` will proceed on the `v1` candidate branch (`dev-v099`) until the release of `v1.0.0`.
+No new features will be accepted for `v0.x` and existing Pull Requests currently targeting `main` will be rebased/merged.
 
 New indicators and features
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -65,7 +70,7 @@ New indicators and features
 Breaking changes
 ^^^^^^^^^^^^^^^^
 * Fix ``maximum_consecutive_*`` indicators to harmonize them with their docstring, add ``op`` argument to control comparison and fix some non-existing standard names. (:issue:`2368`, :pull:`2370`).
-* `xdoctest` is no longer required to run the doctests and has been removed from the development dependencies. (:pull:`2383`)
+* `xdoctest` is no longer required to run the doctests and has been removed from the development dependencies. (:pull:`2383`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
@@ -73,7 +78,7 @@ Internal changes
     * Adjusted the token creation permissions to prevent creating tokens with unnecessary access privileges.
     * ReadTheDocs OS version updated to ``ubuntu-26.04``.
     * ``workflow-warning.yml`` now simply uses GitHub API calls.
-* Due to a regression, `pytest` is now pinned below v9.1 when running doctests with `tox`. (:pull:`2380`)
+* Due to a regression, `pytest` is now pinned below v9.1 when running doctests with `tox`. (:pull:`2380`).
 
 v0.61.1 (2026-05-25)
 --------------------
