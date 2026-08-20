@@ -2,8 +2,8 @@ r"""
 Canadian Forest Fire Weather Index System
 =========================================
 
-This submodule defines the :py:func:`xclim.indices.fire.fire_season`, :py:func:`xclim.indices.fire.drought_code` and
-:py:func:`xclim.indices.fire.cffwis_indices` indices, which are used by the eponym indicators.
+This submodule defines the :py:func:`xclim.compute.fire.fire_season`, :py:func:`xclim.compute.fire.drought_code` and
+:py:func:`xclim.compute.fire.cffwis_indices` compute functions, which are used by the eponym indicators.
 Users should read this module's documentation and the one of :py:func:`fire_weather_ufunc`. They should also consult the
 information available at :cite:t:`code-natural_resources_canada_data_nodate`.
 
@@ -46,9 +46,9 @@ Finally, a mechanism for dry spring starts is implemented. For now, it is slight
 but seems to agree with the state of the science of the CFS. When activated, the drought code and Duff-moisture codes
 are started in spring with a value that is function of the number of days since the last significant precipitation
 event. The conventional start value increased by that number of days times a "dry start" factor. Parameters are
-controlled in the call of the indices and :py:func:`fire_weather_ufunc`. Overwintering of the drought code overrides
-this mechanism if both are activated. GFWED use a more complex approach with an added check on the previous day's
-snow cover for determining "dry" points. Moreover, there, the start values are only the multiplication of a factor
+controlled in the call of the compute functions and :py:func:`fire_weather_ufunc`. Overwintering of the drought code
+overrides this mechanism if both are activated. GFWED use a more complex approach with an added check on the previous
+day's snow cover for determining "dry" points. Moreover, there, the start values are only the multiplication of a factor
 to the number of dry days.
 
 Examples
@@ -59,7 +59,7 @@ start" for the duff-moisture code. The following example uses reasonable paramet
 
 .. note::
 
-    Here the example snippets use the _indices_ defined in this very module, but we always recommend using the
+    Here the example snippets use the functions defined in this very module, but we always recommend using the
     _indicators_ defined in the :py:mod:`xclim.atmos` module.
 
 >>> ds = xr.open_dataset("ERA5/daily_surface_cancities_1990-1993.nc")
@@ -127,22 +127,24 @@ as _all_ seasons are used, even the very short shoulder seasons.
 # This file is structured in the following way:
 # Section 1: individual codes, numba-accelerated and vectorized functions.
 # Section 2: Larger computing functions (the FWI iterator and the fire_season iterator)
-# Section 3: Exposed methods and indices.
+# Section 3: Exposed methods and compute
 #
 # Methods starting with a "_" are not usable with xarray objects, whereas the others are.
 from __future__ import annotations
 
 from collections import OrderedDict, namedtuple
 from collections.abc import Sequence
+from typing import Literal
 
 import numpy as np
+import numpy.typing as npt
 import xarray as xr
 from numba import njit, vectorize
 
-from xclim.core._types import Quantified
+from xclim.compute import run_length as rl
+from xclim.core import Freq, Quantified
 from xclim.core.units import convert_units_to, declare_units
 from xclim.core.utils import get_temp_dimname
-from xclim.indices import run_length as rl
 
 __all__ = [
     "DAY_LENGTHS",
@@ -394,7 +396,7 @@ def _drought_code(  # pragma: no cover
 
     Parameters
     ----------
-    t : array-like
+    t : array_like
         Noon temperature [C].
     p : array_like
         Rain fall in open over previous 24 hours, at noon [mm].
@@ -410,11 +412,11 @@ def _drought_code(  # pragma: no cover
     array_like
         Drought code at the current timestep
     """
-    fl = _day_length_factor(lat, mth)  # type: ignore
+    fl = _day_length_factor(lat, mth)
 
-    t = max(t, -2.8)  # type: ignore
+    t = max(t, -2.8)
     pe = (0.36 * (t + 2.8) + fl) / 2  # *Eq.22*#
-    pe = max(pe, 0.0)  # type: ignore
+    pe = max(pe, 0.0)
 
     if p > 2.8:
         ra = p
@@ -429,10 +431,10 @@ def _drought_code(  # pragma: no cover
             dc = pe
     else:  # f p <= 2.8:
         dc = dc0 + pe
-    return dc  # type: ignore
+    return dc
 
 
-def initial_spread_index(ws: np.ndarray, ffmc: np.ndarray) -> np.ndarray:
+def initial_spread_index(ws: npt.NDArray, ffmc: npt.NDArray) -> np.ndarray:
     """
     Initialize spread index.
 
@@ -454,15 +456,15 @@ def initial_spread_index(ws: np.ndarray, ffmc: np.ndarray) -> np.ndarray:
     return isi
 
 
-def build_up_index(dmc, dc):
+def build_up_index(dmc: npt.NDArray, dc: npt.NDArray):
     """
     Build-up index.
 
     Parameters
     ----------
-    dmc : array
+    dmc : numpy.ndarray
         Duff moisture code.
-    dc : array
+    dc : numpy.ndarray
         Drought code.
 
     Returns
@@ -485,20 +487,20 @@ def build_up_index(dmc, dc):
 
 
 # TODO: Does this need to be renamed?
-def fire_weather_index(isi: np.ndarray, bui: np.ndarray) -> np.ndarray:
+def fire_weather_index(isi: npt.NDArray, bui: npt.NDArray) -> npt.NDArray:
     """
     Fire Weather Index.
 
     Parameters
     ----------
-    isi : array-like
+    isi : numpy.ndarray
         Initial spread index.
-    bui : array-like
+    bui : numpy.ndarray
         Build Up Index.
 
     Returns
     -------
-    array-like
+    array_like
         The Fire Weather Index.
     """
     fwi = np.where(
@@ -510,18 +512,18 @@ def fire_weather_index(isi: np.ndarray, bui: np.ndarray) -> np.ndarray:
     return fwi
 
 
-def daily_severity_rating(fwi: np.ndarray) -> np.ndarray:
+def daily_severity_rating(fwi: npt.NDArray) -> npt.NDArray:
     """
     Daily Severity Rating.
 
     Parameters
     ----------
-    fwi : array-like
+    fwi : numpy.ndarray
         Fire Weather Index.
 
     Returns
     -------
-    array-like
+    numpy.ndarray
         The Daily Severity Rating.
     """
     return 0.0272 * fwi**1.77
@@ -530,7 +532,7 @@ def daily_severity_rating(fwi: np.ndarray) -> np.ndarray:
 @vectorize(nopython=True)
 def _overwintering_drought_code(
     DCf: np.ndarray, wpr: np.ndarray, a: float, b: float, minDC: int
-) -> np.ndarray | np.nan:  # pragma: no cover
+) -> np.ndarray | float:  # pragma: no cover
     """
     Compute the season-starting drought code.
 
@@ -538,9 +540,9 @@ def _overwintering_drought_code(
 
     Parameters
     ----------
-    DCf : array-like
+    DCf : array_like
         The previous season's last drought code
-    wpr : array-like
+    wpr : array_like
         The accumulated precipitation since the end of the fire season.
     a : float
         The carryover fraction from the previous season.
@@ -551,7 +553,7 @@ def _overwintering_drought_code(
 
     Returns
     -------
-    array-like or np.nan
+    array_like or float (np.nan)
         The Overwintered Drought Code.
     """
     if np.isnan(DCf) or np.isnan(wpr):
@@ -570,7 +572,7 @@ def _overwintering_drought_code(
 def _fire_season(
     tas: np.ndarray,
     snd: np.ndarray | None = None,
-    method: str = "WF93",
+    method: Literal["WF93", "LA08", "GFWED"] = "WF93",
     temp_start_thresh: float = default_params["temp_start_thresh"][0],
     temp_end_thresh: float = default_params["temp_end_thresh"][0],
     temp_condition_days: int = default_params["temp_condition_days"],
@@ -582,9 +584,9 @@ def _fire_season(
 
     Parameters
     ----------
-    tas : array-like
+    tas : array_like
         Temperature [degC], the time axis on the last position.
-    snd : array-like, optional
+    snd : array_like, optional
         Snow depth [m], time axis on the last position, used with method == 'LA08'.
     method : {"WF93", "LA08", "GFWED"}
         Which method to use. Defaults to "WF93".
@@ -876,7 +878,7 @@ def _fire_weather_calc(  # noqa: C901  # pylint: disable=R0912, R0915
     return tuple(out.values())
 
 
-# SECTION 3 - Public methods and indices
+# SECTION 3 - Public methods and compute functions
 
 
 # TODO: Does this need to be renamed?
@@ -905,7 +907,7 @@ def fire_weather_ufunc(  # noqa: C901 # numpydoc ignore=PR01,PR02
     Fire Weather Indexes computation using xarray's apply_ufunc.
 
     No unit handling. Meant to be used by power users only. Please prefer using the :py:indicator:`DC` and
-    :py:indicator:`CFFWIS` indicators or the :py:func:`drought_code` and :py:func:`cffwis_indices` indices defined
+    :py:indicator:`CFFWIS` indicators or the :py:func:`drought_code` and :py:func:`cffwis_indices` functions defined
     in the same submodule.
 
     Dask arrays must have only one chunk along the "time" dimension.
@@ -1137,7 +1139,7 @@ def fire_weather_ufunc(  # noqa: C901 # numpydoc ignore=PR01,PR02
     )
 
     if tas.ndim == 1:
-        dummy_dim = get_temp_dimname(tas.dims, "dummy")  # noqa
+        dummy_dim = get_temp_dimname(tas.dims, "dummy")
         # When arrays only have the 'time' dimension, non-temporal inputs of the wrapped ufunc
         # become scalars. We add a dummy dimension so that we don't have to deal with that.
         for i, arg in enumerate(args):
@@ -1233,7 +1235,7 @@ def overwintering_drought_code(
     """
     winter_pr = convert_units_to(winter_pr, "mm")
 
-    wDC = xr.apply_ufunc(  # noqa
+    wDC = xr.apply_ufunc(
         _overwintering_drought_code,
         last_dc,
         winter_pr,
@@ -1256,7 +1258,7 @@ def _convert_parameters(
         if param not in default_params:
             raise ValueError(
                 f"{param} is not a valid parameter for {funcname}. "
-                "See the docstring of the function and the list in xc.indices.fire.default_params."
+                "See the docstring of the function and the list in xclim.compute.fire.default_params."
             )
         if isinstance(default_params[param], tuple):
             params[param] = convert_units_to(value, default_params[param][1])
@@ -1357,7 +1359,7 @@ def cffwis_indices(
 
     Notes
     -----
-    See :cite:t:`code-natural_resources_canada_data_nodate`, the :py:mod:`xclim.indices.fire` module documentation,
+    See :cite:t:`code-natural_resources_canada_data_nodate`, the :py:mod:`xclim.compute.fire` module documentation,
     and the docstring of :py:func:`fire_weather_ufunc` for more information. This algorithm follows the
     official R code released by the CFS, which contains revisions from the original 1982 Fortran code.
 
@@ -1460,7 +1462,7 @@ def drought_code(
         a start_up phase for that time step. Otherwise, previous codes must be given as a continuing fire
         season is assumed for those points.
     **params : dict
-        Any other keyword parameters as defined in `xclim.indices.fire.fire_weather_ufunc`
+        Any other keyword parameters as defined in `xclim.compute.fire.fire_weather_ufunc`
         and in :py:data:`default_params`.
 
     Returns
@@ -1470,7 +1472,7 @@ def drought_code(
 
     Notes
     -----
-    See :cite:cts:`code-natural_resources_canada_data_nodate`, the :py:mod:`xclim.indices.fire` module documentation,
+    See :cite:cts:`code-natural_resources_canada_data_nodate`, the :py:mod:`xclim.compute.fire` module documentation,
     and the docstring of :py:func:`fire_weather_ufunc` for more information. This algorithm follows the official R code
     released by the CFS, which contains revisions from the original 1982 Fortran code.
 
@@ -1557,7 +1559,7 @@ def duff_moisture_code(
         phase for that time step. Otherwise, previous codes must be given as a continuing fire season is assumed
         for those points.
     **params : dict
-        Any other keyword parameters as defined in `xclim.indices.fire.fire_weather_ufunc`
+        Any other keyword parameters as defined in `xclim.compute.fire.fire_weather_ufunc`
         and in :py:data:`default_params`.
 
     Returns
@@ -1567,7 +1569,7 @@ def duff_moisture_code(
 
     Notes
     -----
-    See :cite:cts:`code-natural_resources_canada_data_nodate`, the :py:mod:`xclim.indices.fire` module documentation,
+    See :cite:cts:`code-natural_resources_canada_data_nodate`, the :py:mod:`xclim.compute.fire` module documentation,
     and the docstring of :py:func:`fire_weather_ufunc` for more information. This algorithm follows the official R code
     released by the Canadian Forestry Service, which contains revisions from the original 1982 Fortran code.
 
@@ -1609,7 +1611,7 @@ def fire_season(
     tas: xr.DataArray,
     snd: xr.DataArray | None = None,
     method: str = "WF93",
-    freq: str | None = None,
+    freq: Freq | None = None,
     temp_start_thresh: Quantified = "12 degC",
     temp_end_thresh: Quantified = "5 degC",
     temp_condition_days: int = 3,

@@ -97,6 +97,14 @@ variables:
     standard_name: convective_precipitation_flux
     data_flags:
       - negative_accumulation_values:
+  prra:
+    canonical_units: kg m-2 s-1
+    cell_methods: "time: mean"
+    description: Surface rain flux.
+    dimensions: "[precipitation]"
+    standard_name: rainfall_flux
+    data_flags:
+      - negative_accumulation_values:
   prsn:
     canonical_units: kg m-2 s-1
     cell_methods: "time: mean"
@@ -262,8 +270,9 @@ variables:
   qspec:
     canonical_units: m s-1
     cell_methods: "time: mean"
-    description: |
-      The amount of water, in all phases, flowing in the river channel and flood plain per unit of drainage area.
+    description: >
+      The amount of water, in all phases, flowing in the river channel and flood plain
+      per unit of drainage area.
     dimensions: "[length]/[time]"
     data_flags:
       - specific_discharge_extremely_high:

@@ -1,26 +1,26 @@
-"""Hydrological indice definitions."""
+"""Hydrological index function definitions."""
 
 from __future__ import annotations
+
+import importlib.util as _util
+from typing import Literal
 
 import numpy as np
 import xarray
 from scipy.stats import rv_continuous
 from xarray import DataArray
 
-from xclim.core._types import DateStr, Quantified
+from xclim.compute import generic
+from xclim.compute.helpers import resample_map
+from xclim.compute.stats import standardized_index
+from xclim.core import DateStr, Freq, Quantified
 from xclim.core.calendar import get_calendar, split_time_to_season_year
 from xclim.core.missing import at_least_n_valid
-from xclim.core.units import convert_units_to, declare_units, rate2amount, to_agg_units
-from xclim.indices.generic import threshold_count
-from xclim.indices.helpers import resample_map
-from xclim.indices.stats import standardized_index
+from xclim.core.units import convert_units_to, declare_units, rate2amount
+from xclim.core.utils import deprecated
 
-from . import generic
+HAS_PYMANNKENDALL = _util.find_spec("pymannkendall")
 
-try:
-    import pymannkendall as mk
-except ImportError:
-    mk = None
 
 __all__ = [
     "antecedent_precipitation_index",
@@ -47,7 +47,7 @@ __all__ = [
 
 
 @declare_units(q="[discharge]")
-def base_flow_index(q: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
+def base_flow_index(q: xarray.DataArray, freq: Freq = "YS") -> xarray.DataArray:
     r"""
     Base flow index.
 
@@ -91,7 +91,7 @@ def base_flow_index(q: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
 
 
 @declare_units(q="[discharge]")
-def rb_flashiness_index(q: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
+def rb_flashiness_index(q: xarray.DataArray, freq: Freq = "YS") -> xarray.DataArray:
     r"""
     Richards-Baker flashiness index.
 
@@ -135,10 +135,10 @@ def rb_flashiness_index(q: xarray.DataArray, freq: str = "YS") -> xarray.DataArr
 )
 def standardized_streamflow_index(
     q: xarray.DataArray,
-    freq: str | None = "MS",
+    freq: Freq | None = "MS",
     window: int = 1,
-    dist: str | rv_continuous = "genextreme",
-    method: str = "ML",
+    dist: Literal["genextreme", "fisk"] | rv_continuous = "genextreme",
+    method: Literal["ML", "APP", "PWM"] = "ML",
     fitkwargs: dict | None = None,
     cal_start: DateStr | None = None,
     cal_end: DateStr | None = None,
@@ -165,7 +165,7 @@ def standardized_streamflow_index(
         uses a deterministic function that does not involve any optimization.
         `PWM` should be used with a `lmoments3` distribution.
     fitkwargs : dict, optional
-        Kwargs passed to ``xclim.indices.stats.fit`` used to impose values of certain parameters (`floc`, `fscale`).
+        Kwargs passed to ``xclim.compute.stats.fit`` used to impose values of certain parameters (`floc`, `fscale`).
     cal_start : DateStr, optional
         Start date of the calibration period. A `DateStr` is expected, that is a `str` in format `"YYYY-MM-DD"`.
         Default option `None` means that the calibration period begins at the start of the input dataset.
@@ -174,11 +174,11 @@ def standardized_streamflow_index(
         Default option `None` means that the calibration period finishes at the end of the input dataset.
     params : xarray.DataArray, optional
         Fit parameters.
-        The `params` can be computed using ``xclim.indices.stats.standardized_index_fit_params`` in advance.
+        The `params` can be computed using ``xclim.compute.stats.standardized_index_fit_params`` in advance.
         The output can be given here as input, and it overrides other options.
     **indexer : Indexer
         Indexing parameters to compute the indicator on a temporal subset of the data.
-        It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
+        It accepts the same arguments as :py:func:`xclim.compute.generic.select_time`.
 
     Returns
     -------
@@ -187,9 +187,9 @@ def standardized_streamflow_index(
 
     See Also
     --------
-    xclim.indices._agro.standardized_precipitation_index : Standardized Precipitation Index.
-    xclim.indices.stats.standardized_index : Standardized Index.
-    xclim.indices.stats.standardized_index_fit_params : Standardized Index Fit Params.
+    xclim.compute._agro.standardized_precipitation_index : Standardized Precipitation Index.
+    xclim.compute.stats.standardized_index : Standardized Index.
+    xclim.compute.stats.standardized_index_fit_params : Standardized Index Fit Params.
 
     Notes
     -----
@@ -208,7 +208,7 @@ def standardized_streamflow_index(
     Examples
     --------
     >>> from datetime import datetime
-    >>> from xclim.indices import standardized_streamflow_index
+    >>> from xclim.compute import standardized_streamflow_index
     >>> ds = xr.open_dataset(path_to_q_file)
     >>> q = ds.q_sim
     >>> cal_start, cal_end = "2006-05-01", "2008-06-01"
@@ -222,7 +222,7 @@ def standardized_streamflow_index(
     ...     cal_end=cal_end,
     ... )  # Computing SSI-3 months using a GEV distribution for the fit
     >>> # Fitting parameters can also be obtained first, then reused as input.
-    >>> from xclim.indices.stats import standardized_index_fit_params
+    >>> from xclim.compute.stats import standardized_index_fit_params
     >>> params = standardized_index_fit_params(
     ...     q.sel(time=slice(cal_start, cal_end)),
     ...     freq="MS",
@@ -234,8 +234,7 @@ def standardized_streamflow_index(
     """
     fitkwargs = fitkwargs or {}
     dist_methods = {
-        # FIXME: xclim-v1 — remove "APP"
-        "genextreme": ["ML", "APP"],
+        "genextreme": ["ML"],
         "fisk": ["ML", "APP"],
     }
     if isinstance(dist, str):
@@ -263,8 +262,9 @@ def standardized_streamflow_index(
     return ssi
 
 
+@deprecated("1.0", "land.snd_max")
 @declare_units(snd="[length]")
-def snd_max(snd: xarray.DataArray, freq: str = "YS-JUL") -> xarray.DataArray:
+def snd_max(snd: xarray.DataArray, freq: Freq = "YS-JUL") -> xarray.DataArray:
     """
     Maximum snow depth.
 
@@ -282,11 +282,11 @@ def snd_max(snd: xarray.DataArray, freq: str = "YS-JUL") -> xarray.DataArray:
     xarray.DataArray
         The maximum snow depth over a given number of days for each period. [length].
     """
-    return generic.select_resample_op(snd, op="max", freq=freq)
+    return generic.statistics(snd, statistic="max", freq=freq)
 
 
 @declare_units(snd="[length]")
-def snd_max_doy(snd: xarray.DataArray, freq: str = "YS-JUL") -> xarray.DataArray:
+def snd_max_doy(snd: xarray.DataArray, freq: Freq = "YS-JUL") -> xarray.DataArray:
     """
     Day of year of maximum snow depth.
 
@@ -308,15 +308,16 @@ def snd_max_doy(snd: xarray.DataArray, freq: str = "YS-JUL") -> xarray.DataArray
     valid = at_least_n_valid(snd.where(snd > 0), n=1, freq=freq)
 
     # Compute doymax. Will return first time step if all snow depths are 0.
-    out = generic.select_resample_op(snd.where(snd > 0, 0), op=generic.doymax, freq=freq)
+    out = generic.statistics(snd.where(snd > 0, 0), statistic="doymax", freq=freq)
     out.attrs.update(units="", is_dayofyear=np.int32(1), calendar=get_calendar(snd))
 
     # Mask arrays that miss at least one non-null snd.
     return out.where(~valid)
 
 
+@deprecated("1.0", "land.snw_max")
 @declare_units(snw="[snowamount]")
-def snw_max(snw: xarray.DataArray, freq: str = "YS-JUL") -> xarray.DataArray:
+def snw_max(snw: xarray.DataArray, freq: Freq = "YS-JUL") -> xarray.DataArray:
     """
     Maximum snow amount.
 
@@ -334,11 +335,11 @@ def snw_max(snw: xarray.DataArray, freq: str = "YS-JUL") -> xarray.DataArray:
     xarray.DataArray
         The maximum snow amount over a given number of days for each period. [mass/area].
     """
-    return generic.select_resample_op(snw, op="max", freq=freq)
+    return generic.statistics(snw, statistic="max", freq=freq)
 
 
 @declare_units(snw="[snowamount]")
-def snw_max_doy(snw: xarray.DataArray, freq: str = "YS-JUL") -> xarray.DataArray:
+def snw_max_doy(snw: xarray.DataArray, freq: Freq = "YS-JUL") -> xarray.DataArray:
     """
     Day of year of maximum snow amount.
 
@@ -360,15 +361,14 @@ def snw_max_doy(snw: xarray.DataArray, freq: str = "YS-JUL") -> xarray.DataArray
     valid = at_least_n_valid(snw.where(snw > 0), n=1, freq=freq)
 
     # Compute doymax. Will return first time step if all snow depths are 0.
-    out = generic.select_resample_op(snw.where(snw > 0, 0), op=generic.doymax, freq=freq)
-    out.attrs.update(units="", is_dayofyear=np.int32(1), calendar=get_calendar(snw))
+    out = generic.statistics(snw.where(snw > 0, 0), statistic="doymax", freq=freq)
 
     # Mask arrays that miss at least one non-null snd.
     return out.where(~valid)
 
 
 @declare_units(snw="[snowamount]")
-def snow_melt_we_max(snw: xarray.DataArray, window: int = 3, freq: str = "YS-JUL") -> xarray.DataArray:
+def snow_melt_we_max(snw: xarray.DataArray, window: int = 3, freq: Freq = "YS-JUL") -> xarray.DataArray:
     """
     Maximum snow melt.
 
@@ -402,7 +402,7 @@ def snow_melt_we_max(snw: xarray.DataArray, window: int = 3, freq: str = "YS-JUL
 
 @declare_units(snw="[snowamount]", pr="[precipitation]")
 def melt_and_precip_max(
-    snw: xarray.DataArray, pr: xarray.DataArray, window: int = 3, freq: str = "YS-JUL"
+    snw: xarray.DataArray, pr: xarray.DataArray, window: int = 3, freq: Freq = "YS-JUL"
 ) -> xarray.DataArray:
     """
     Maximum snow melt and precipitation.
@@ -446,10 +446,10 @@ def melt_and_precip_max(
 )
 def standardized_groundwater_index(
     gwl: xarray.DataArray,
-    freq: str | None = "MS",
+    freq: Freq | None = "MS",
     window: int = 1,
-    dist: str | rv_continuous = "genextreme",
-    method: str = "ML",
+    dist: Literal["gamma", "genextreme", "lognorm"] | rv_continuous = "genextreme",
+    method: Literal["ML", "APP", "PWM"] = "ML",
     fitkwargs: dict | None = None,
     cal_start: DateStr | None = None,
     cal_end: DateStr | None = None,
@@ -476,7 +476,7 @@ def standardized_groundwater_index(
         The approximate method uses a deterministic function that does not involve any optimization.
         `PWM` should be used with a `lmoments3` distribution.
     fitkwargs : dict, optional
-        Kwargs passed to ``xclim.indices.stats.fit`` used to impose values of certain parameters (`floc`, `fscale`).
+        Kwargs passed to ``xclim.compute.stats.fit`` used to impose values of certain parameters (`floc`, `fscale`).
     cal_start : DateStr, optional
         Start date of the calibration period. A `DateStr` is expected, that is a `str` in format `"YYYY-MM-DD"`.
         Default option `None` means that the calibration period begins at the start of the input dataset.
@@ -485,11 +485,11 @@ def standardized_groundwater_index(
         Default option `None` means that the calibration period finishes at the end of the input dataset.
     params : xarray.DataArray, optional
         Fit parameters.
-        The `params` can be computed using ``xclim.indices.stats.standardized_index_fit_params`` in advance.
+        The `params` can be computed using ``xclim.compute.stats.standardized_index_fit_params`` in advance.
         The output can be given here as input, and it overrides other options.
     **indexer : Indexer
         Indexing parameters to compute the indicator on a temporal subset of the data.
-        It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
+        It accepts the same arguments as :py:func:`xclim.compute.generic.select_time`.
 
     Returns
     -------
@@ -498,9 +498,9 @@ def standardized_groundwater_index(
 
     See Also
     --------
-    xclim.indices._agro.standardized_precipitation_index : Standardized Precipitation Index.
-    xclim.indices.stats.standardized_index : Standardized Index.
-    xclim.indices.stats.standardized_index_fit_params : Standardized Index Fit Params.
+    xclim.compute._agro.standardized_precipitation_index : Standardized Precipitation Index.
+    xclim.compute.stats.standardized_index : Standardized Index.
+    xclim.compute.stats.standardized_index_fit_params : Standardized Index Fit Params.
 
     Notes
     -----
@@ -516,7 +516,7 @@ def standardized_groundwater_index(
     Examples
     --------
     >>> from datetime import datetime
-    >>> from xclim.indices import standardized_groundwater_index
+    >>> from xclim.compute import standardized_groundwater_index
     >>> ds = xr.open_dataset(path_to_gwl_file)
     >>> gwl = ds.gwl
     >>> cal_start, cal_end = "1980-05-01", "1982-06-01"
@@ -530,7 +530,7 @@ def standardized_groundwater_index(
     ...     cal_end=cal_end,
     ... )  # Computing SGI-3 months using a Gamma distribution for the fit
     >>> # Fitting parameters can also be obtained first, then reused as input.
-    >>> from xclim.indices.stats import standardized_index_fit_params
+    >>> from xclim.compute.stats import standardized_index_fit_params
     >>> params = standardized_index_fit_params(
     ...     gwl.sel(time=slice(cal_start, cal_end)),
     ...     freq="MS",
@@ -544,8 +544,7 @@ def standardized_groundwater_index(
 
     dist_methods = {
         "gamma": ["ML", "APP"],
-        # FIXME: xclim-v1 — remove "APP"
-        "genextreme": ["ML", "APP"],
+        "genextreme": ["ML"],
         "lognorm": ["ML", "APP"],
     }
     if isinstance(dist, str):
@@ -604,7 +603,7 @@ def flow_index(q: xarray.DataArray, p: float = 0.95) -> xarray.DataArray:
 
 
 @declare_units(q="[discharge]")
-def high_flow_frequency(q: xarray.DataArray, threshold_factor: int = 9, freq: str = "YS-OCT") -> xarray.DataArray:
+def high_flow_frequency(q: xarray.DataArray, threshold_factor: int = 9, freq: Freq = "YS-OCT") -> xarray.DataArray:
     """
     High flow frequency.
 
@@ -631,13 +630,12 @@ def high_flow_frequency(q: xarray.DataArray, threshold_factor: int = 9, freq: st
     :cite:cts:`addor2018,Clausen2000`
     """
     median_flow = q.median(dim="time")
-    threshold = threshold_factor * median_flow
-    out = threshold_count(q, ">", threshold, freq=freq)
-    return to_agg_units(out, q, "count", deffreq="D")
+    thresh = (threshold_factor * median_flow).assign_attrs(units=q.attrs["units"])
+    return generic.count_occurrences(q, condition=">", thresh=thresh, freq=freq)
 
 
 @declare_units(q="[discharge]")
-def low_flow_frequency(q: xarray.DataArray, threshold_factor: float = 0.2, freq: str = "YS-OCT") -> xarray.DataArray:
+def low_flow_frequency(q: xarray.DataArray, threshold_factor: float = 0.2, freq: Freq = "YS-OCT") -> xarray.DataArray:
     """
     Low flow frequency.
 
@@ -664,9 +662,8 @@ def low_flow_frequency(q: xarray.DataArray, threshold_factor: float = 0.2, freq:
     :cite:cts:`Olden2003`
     """
     mean_flow = q.mean(dim="time")
-    threshold = threshold_factor * mean_flow
-    out = threshold_count(q, "<", threshold, freq=freq)
-    return to_agg_units(out, q, "count", deffreq="D")
+    thresh = (threshold_factor * mean_flow).assign_attrs(units=q.attrs["units"])
+    return generic.count_occurrences(q, condition="<", thresh=thresh, freq=freq)
 
 
 @declare_units(pr="[precipitation]")
@@ -712,7 +709,7 @@ def runoff_ratio(
     q: xarray.DataArray,
     pr: xarray.DataArray,
     area: Quantified,
-    freq: str = "YS",
+    freq: Freq = "YS",
 ) -> xarray.DataArray:
     """
     Runoff ratio.
@@ -769,7 +766,7 @@ def runoff_ratio(
 
 
 @declare_units(pr="[precipitation]", evspsblpot="[precipitation]")
-def aridity_index(pr: xarray.DataArray, evspsblpot: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
+def aridity_index(pr: xarray.DataArray, evspsblpot: xarray.DataArray, freq: Freq = "YS") -> xarray.DataArray:
     """
     Aridity index.
 
@@ -826,7 +823,7 @@ def _timemax(da):
 def lag_snowpack_flow_peaks(
     snw: xarray.DataArray,
     q: xarray.DataArray,
-    freq: str = "YS-OCT",
+    freq: Freq = "YS-OCT",
     p: float = 0.9,
 ) -> xarray.DataArray:
     """
@@ -856,7 +853,7 @@ def lag_snowpack_flow_peaks(
 
     See Also
     --------
-    xclim.indices.rb_flashiness_index: Richards-Baker flashiness index.
+    xclim.compute.rb_flashiness_index: Richards-Baker flashiness index.
 
     Notes
     -----
@@ -891,7 +888,7 @@ def lag_snowpack_flow_peaks(
 
 
 @declare_units(q="[discharge]")
-def sen_slope(q: xarray.DataArray, freq: str = "YS") -> tuple[xarray.DataArray, xarray.DataArray]:
+def sen_slope(q: xarray.DataArray, freq: Freq = "YS") -> tuple[xarray.DataArray, xarray.DataArray]:
     """
     Temporal robustness analysis of streamflow.
 
@@ -922,6 +919,11 @@ def sen_slope(q: xarray.DataArray, freq: str = "YS") -> tuple[xarray.DataArray, 
     ----------
     :cite:cts:`sauquet_2025`
     """
+    if not HAS_PYMANNKENDALL:
+        msg = "`sen_slope` requires access to the `pymannkendall` library."
+        raise ModuleNotFoundError(msg)
+    else:
+        import pymannkendall as mk
 
     def _mann_kendall(q, freq):
         qr = q.resample(time=freq).mean()
@@ -944,10 +946,9 @@ def sen_slope(q: xarray.DataArray, freq: str = "YS") -> tuple[xarray.DataArray, 
     return sen_slope, p_value
 
 
-# FIXME: xclim-v1 — Remove this function. Its only utility is to compute a ratio.
 @declare_units(q="[discharge]", qsim="[discharge]")
 def sen_slope_ratio(
-    q: xarray.Dataset, qsim: xarray.DataArray, freq: str = "YS"
+    q: xarray.Dataset, qsim: xarray.DataArray, freq: Freq = "YS"
 ) -> tuple[xarray.DataArray, xarray.DataArray, xarray.DataArray, xarray.DataArray, xarray.DataArray]:
     """
     Temporal robustness analysis of streamflow.
@@ -995,7 +996,7 @@ def sen_slope_ratio(
 
 @declare_units(q="[discharge]")
 def base_flow_index_seasonal_ratio(
-    q: xarray.DataArray, freq: str = "QS-DEC", numerator: str = "DJF", denominator: str = "JJA"
+    q: xarray.DataArray, freq: Freq = "QS-DEC", numerator: str = "DJF", denominator: str = "JJA"
 ) -> tuple[DataArray, DataArray, DataArray, DataArray, DataArray]:
     """
     Seasonal Base flow index (bfi) and ratio of winter to summer base flow index.

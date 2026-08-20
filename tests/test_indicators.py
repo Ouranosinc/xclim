@@ -13,6 +13,7 @@ import xarray as xr
 
 import xclim
 from xclim import __version__, atmos
+from xclim.compute import tg_mean
 from xclim.core import VARIABLES, MissingVariableError, Quantified
 from xclim.core.calendar import select_time
 from xclim.core.formatting import (
@@ -25,7 +26,6 @@ from xclim.core.formatting import (
 from xclim.core.indicator import Daily, Indicator, ResamplingIndicator, registry
 from xclim.core.units import convert_units_to, declare_units, units
 from xclim.core.utils import InputKind
-from xclim.indices import tg_mean
 from xclim.testing import list_input_variables
 
 try:
@@ -212,7 +212,8 @@ def test_as_dataset(tasmax_series, tasmin_series, xrkeep):
         assert dsout.multiopt.attrs.get("something") == "blabla"
     else:
         assert "fou" not in dsout.attrs
-        # not testing for "something" because xclim doesn't define the behaviour of dataarray attributes when xarray's option is not True.
+        # not testing for "something" because xclim doesn't define the
+        # behaviour of dataarray attributes when xarray's option is not True.
 
 
 def test_as_dataset_multi(tas_series):
@@ -504,7 +505,6 @@ def test_all_jsonable(official_indicators):
     err = None
     for identifier, ind in official_indicators.items():
         indinst = ind.get_instance()
-        json.dumps(indinst.json())
         try:
             json.dumps(indinst.json())
         except (KeyError, TypeError) as e:
@@ -512,6 +512,36 @@ def test_all_jsonable(official_indicators):
             err = e
     if problems:
         raise ValueError(f"Indicators {problems} provide problematic json serialization.: {err}")
+
+
+def test_no_constrain(official_indicators):
+    # constrain is meant to constrain the condition, it makes no sense without it.
+    problems = set()
+    for identifier, ind in official_indicators.items():
+        indinst = ind.get_instance()
+        for name in indinst.parameters:
+            if "generic" in ind.__module__:
+                if name.startswith("constrain") and name.replace("constrain", "condition") not in indinst.parameters:
+                    problems.add(identifier)
+            else:
+                if name.startswith("constrain"):
+                    problems.add(identifier)
+    if problems:
+        raise ValueError(
+            "The following indicators have a 'constrain' argument, but shouldn't "
+            f"(either not generic or without a condition argument):  {problems}"
+        )
+
+
+def test_no_out_units(official_indicators):
+    # indicators set the units, it makes no sense to have this argument
+    problems = set()
+    for identifier, ind in official_indicators.items():
+        indinst = ind.get_instance()
+        if "out_units" in indinst.parameters:
+            problems.add(identifier)
+    if problems:
+        raise ValueError(f"The following indicators have a 'out_units' argument : {problems}")
 
 
 def test_all_parameters_understood(official_indicators):
@@ -551,11 +581,11 @@ def test_doc():
     doc = xclim.atmos.cffwis_indices.__doc__
     assert doc.startswith("Canadian Fire Weather Index System indices. (realm: atmos)")
     assert "This indicator will check for missing values according to the method" in doc
-    assert "Based on indice :py:func:`~xclim.indices.fire._cffwis.cffwis_indices`." in doc
+    assert "Based on function :py:func:`~xclim.compute.fire._cffwis.cffwis_indices`." in doc
     assert "ffmc0 : str or DataArray, optional" in doc
     assert "Returns\n-------" in doc
     assert "See :cite:t:`code-natural_resources_canada_data_nodate`, " in doc
-    assert "the :py:mod:`xclim.indices.fire` module documentation," in doc
+    assert "the :py:mod:`xclim.compute.fire` module documentation," in doc
     assert "and the docstring of :py:func:`fire_weather_ufunc` for more information." in doc
 
 
@@ -591,7 +621,7 @@ def test_parse_doc():
     assert "references" not in doc
     assert doc["long_name"] == "The mean daily temperature at the given time frequency."
 
-    doc = parse_doc(xclim.indices.converters.saturation_vapor_pressure.__doc__)
+    doc = parse_doc(xclim.compute.converters.saturation_vapor_pressure.__doc__)
     assert doc["parameters"]["ice_thresh"]["description"] == (
         "Threshold temperature under which to switch to equations in reference to ice instead of water. "
         "If None (default) everything is computed with reference to water. "
@@ -702,11 +732,11 @@ def test_indicator_from_dict():
             standard_name="{freq} mean temperature",
             cell_methods=[{"time": "mean within days"}],
         ),
-        compute="thresholded_statistics",
+        compute="clix.thresholded_statistics",
         parameters=dict(
             threshold={"description": "A threshold temp"},
-            op="<",
-            reducer="mean",
+            condition="<",
+            statistic="mean",
         ),
         input={"data": "tas"},
     )
@@ -717,7 +747,7 @@ def test_indicator_from_dict():
     # Parameters metadata modification
     assert ind.parameters["threshold"].description == "A threshold temp"
     # Injection of parameters
-    assert ind.injected_parameters["op"] == "<"
+    assert ind.injected_parameters["condition"] == "<"
     assert ind.parameters["tas"].compute_name == "data"
     assert signature(ind).parameters["tas"].default == "tas"
     assert ind.parameters["tas"].units == "[temperature]"

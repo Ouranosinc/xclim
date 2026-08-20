@@ -15,7 +15,7 @@ from xclim.core import VARIABLES
 from xclim.core.indicator import build_indicator_module_from_yaml
 from xclim.core.locales import read_locale_file
 from xclim.core.options import set_options
-from xclim.core.utils import InputKind, adapt_clix_meta_yaml, load_module
+from xclim.core.utils import InputKind, load_module, make_clix_meta_yaml
 
 
 def all_virtual_indicators():
@@ -70,14 +70,14 @@ def test_custom_indices(open_dataset):
     example = load_module(example_path / "example.py")
 
     # From module
-    ex1 = build_indicator_module_from_yaml(example_path / "example.yml", name="ex1", indices=example)
+    ex1 = build_indicator_module_from_yaml(example_path / "example.yml", name="ex1", computes=example)
 
     # Did this register the new variable?
     assert "prveg" in VARIABLES
 
     # From mapping
     extreme_inds = {"extreme_precip_accumulation_and_days": example.extreme_precip_accumulation_and_days}
-    ex2 = build_indicator_module_from_yaml(example_path / "example.yml", name="ex2", indices=extreme_inds)
+    ex2 = build_indicator_module_from_yaml(example_path / "example.yml", name="ex2", computes=extreme_inds)
 
     assert ex1.R95p.__doc__ == ex2.R95p.__doc__  # noqa
 
@@ -129,7 +129,7 @@ def test_build_indicator_module_from_yaml_edge_cases():
     # All from paths but one
     ex5 = build_indicator_module_from_yaml(
         example_path / "example.yml",
-        indices=example_path / "example.py",
+        computes=example_path / "example.py",
         translations={
             "fr": example_path / "example.fr.json",
             "ru": str(example_path / "example.fr.json"),
@@ -183,9 +183,12 @@ indices:
 """
 
     def test_simple_clix_meta_adaptor(self, tmp_path):
+        src_yaml = tmp_path.joinpath("test.yaml")
         test_yaml = tmp_path.joinpath("test.yaml")
+        with Path(src_yaml).open("w") as f:
+            f.write(self.cdd)
 
-        adapt_clix_meta_yaml(self.cdd, test_yaml)
+        make_clix_meta_yaml(src_yaml, test_yaml)
 
         converted = safe_load(Path(test_yaml).open())
         assert "cdd" in converted["indicators"]

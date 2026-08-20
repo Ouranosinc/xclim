@@ -2,12 +2,10 @@
 
 from __future__ import annotations
 
-import warnings
-
+from xclim.compute import converters
 from xclim.core.cfchecks import cfcheck_from_name
 from xclim.core.indicator import Indicator
 from xclim.core.utils import InputKind
-from xclim.indices import converters
 
 __all__ = [
     "clearness_index",
@@ -28,7 +26,6 @@ __all__ = [
     "snw_to_snd",
     "specific_humidity",
     "specific_humidity_from_dewpoint",
-    "tg",
     "universal_thermal_climate_index",
     "vapor_pressure",
     "vapor_pressure_deficit",
@@ -90,16 +87,6 @@ heat_index = Converter(
     "when relative humidity is taken into account.",
     compute=converters.heat_index,
 )
-
-
-def tg(*args, **kwargs):  # numpydoc ignore=GL08
-    warnings.warn(
-        "The `tg` function is deprecated and will be removed in a future release. "
-        "Use `mean_temperature_from_max_and_min` instead.",
-        DeprecationWarning,
-        stacklevel=2,
-    )
-    return mean_temperature_from_max_and_min(*args, **kwargs)
 
 
 mean_temperature_from_max_and_min = Converter(
@@ -360,6 +347,7 @@ snd_to_snw = Converter(
     description="The approximation of daily snow amount from snow depth and density.",
     var_name="snw",
     compute=converters.snd_to_snw,
+    parameters={"out_units": None},
 )
 
 
@@ -372,6 +360,7 @@ snw_to_snd = Converter(
     description="The approximation of daily snow depth from snow amount and density.",
     var_name="snd",
     compute=converters.snw_to_snd,
+    parameters={"out_units": None},
 )
 
 

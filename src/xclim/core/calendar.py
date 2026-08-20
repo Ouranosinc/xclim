@@ -11,7 +11,7 @@ import datetime as pydt
 import warnings
 from collections.abc import Sequence
 from importlib.util import find_spec
-from typing import Any, Literal, TypeVar
+from typing import Any, Literal, cast
 
 import cftime
 import numpy as np
@@ -19,8 +19,9 @@ import pandas as pd
 import xarray as xr
 from packaging.version import Version
 from xarray import CFTimeIndex
+from xarray.coding import cftime_offsets
 
-from xclim.core._types import DayOfYearStr
+from xclim.core._types import DataType, DayOfYearStr, Freq
 from xclim.core.formatting import update_xclim_history
 from xclim.core.utils import uses_dask
 
@@ -106,9 +107,6 @@ datetime_classes = cftime._cftime.DATE_TYPES
 
 # Names of calendars that have the same number of days for all years
 uniform_calendars = ("noleap", "all_leap", "365_day", "366_day", "360_day")
-
-# Type hint for xarray DataArray and Dataset
-DataType = TypeVar("DataType", xr.DataArray, xr.Dataset)
 
 
 def doy_from_string(doy: DayOfYearStr, year: int, calendar: str) -> int:
@@ -262,13 +260,13 @@ def _days_in_year(years, calendar):
 
 
 def convert_doy(
-    source: xr.DataArray | xr.Dataset,
+    source: DataType,
     target_cal: str,
     source_cal: str | None = None,
     align_on: Literal["date", "year"] = "year",
     missing: Any = np.nan,
     dim: str = "time",
-) -> xr.DataArray | xr.Dataset:
+) -> DataType:
     """
     Convert the calendar of day of year (doy) data.
 
@@ -538,7 +536,7 @@ def compare_offsets(
     bool
         The result of `freqA` `op` `freqB`.
     """
-    from ..indices.generic import get_op  # pylint: disable=import-outside-toplevel
+    from ..compute.helpers import get_binary_op  # pylint: disable=import-outside-toplevel
 
     # Get multiplier and base frequency
     t_a, b_a, _, _ = parse_offset(freqA)
@@ -552,10 +550,10 @@ def compare_offsets(
         t_b = (t[1] - t[0]).total_seconds()
     # else Same base freq, compare multiplier only.
 
-    return get_op(op)(t_a, t_b)
+    return get_binary_op(op)(t_a, t_b)
 
 
-def parse_offset(freq: str) -> tuple[int, str, bool, str | None]:
+def parse_offset(freq: Freq) -> tuple[int, str, bool, str | None]:
     """
     Parse an offset string.
 
@@ -687,7 +685,7 @@ def is_offset_divisor(divisor: str, offset: str):
     return all(offAs.is_on_offset(d) for d in tB)
 
 
-def _interpolate_doy_calendar(source: xr.DataArray, doy_max: int, doy_min: int = 1) -> xr.DataArray:
+def _interpolate_doy_calendar(source: DataType, doy_max: int, doy_min: int = 1) -> DataType:
     """
     Interpolate from one set of dayofyear range to another.
 
@@ -696,7 +694,7 @@ def _interpolate_doy_calendar(source: xr.DataArray, doy_max: int, doy_min: int =
 
     Parameters
     ----------
-    source : xr.DataArray
+    source : xr.DataArray or xr.Dataset
         Array with `dayofyear` coordinates.
     doy_max : int
         The largest day of the year allowed by calendar.
@@ -707,7 +705,7 @@ def _interpolate_doy_calendar(source: xr.DataArray, doy_max: int, doy_min: int =
 
     Returns
     -------
-    xr.DataArray
+    xr.DataArray or xr.Dataset
         Interpolated source array over coordinates spanning the target `dayofyear` range.
     """
     if "dayofyear" not in source.coords.keys():
@@ -726,7 +724,7 @@ def _interpolate_doy_calendar(source: xr.DataArray, doy_max: int, doy_min: int =
     return filled_na.interp(dayofyear=range(doy_min, doy_max + 1))
 
 
-def adjust_doy_calendar(source: xr.DataArray, target: xr.DataArray | xr.Dataset) -> xr.DataArray:
+def adjust_doy_calendar(source: DataType, target: DataType) -> DataType:
     """
     Interpolate from one set of dayofyear range to another calendar.
 
@@ -734,14 +732,14 @@ def adjust_doy_calendar(source: xr.DataArray, target: xr.DataArray | xr.Dataset)
 
     Parameters
     ----------
-    source : xr.DataArray
+    source : xr.DataArray or xr.Dataset
         Array with `dayofyear` coordinate.
     target : xr.DataArray or xr.Dataset
         Array with `time` coordinate.
 
     Returns
     -------
-    xr.DataArray
+    xr.DataArray or xr.Dataset
         Interpolated source array over coordinates spanning the target `dayofyear` range.
     """
     max_target_doy = int(target.time.dt.dayofyear.max())
@@ -760,20 +758,20 @@ def adjust_doy_calendar(source: xr.DataArray, target: xr.DataArray | xr.Dataset)
     return _interpolate_doy_calendar(source, max_target_doy, min_target_doy)
 
 
-def resample_doy(doy: xr.DataArray, arr: xr.DataArray | xr.Dataset) -> xr.DataArray:
+def resample_doy(doy: DataType, arr: DataType) -> DataType:
     """
     Create a temporal DataArray where each day takes the value defined by the day-of-year.
 
     Parameters
     ----------
-    doy : xr.DataArray
+    doy : xr.DataArray or xr.Dataset
         Array with `dayofyear` coordinate.
     arr : xr.DataArray or xr.Dataset
         Array with `time` coordinate.
 
     Returns
     -------
-    xr.DataArray
+    xr.DataArray or xr.Dataset
         An array with the same dimensions as `doy`, except for `dayofyear`, which is
         replaced by the `time` dimension of `arr`. Values are filled according to the
         day of year value in `doy`.
@@ -792,7 +790,7 @@ def resample_doy(doy: xr.DataArray, arr: xr.DataArray | xr.Dataset) -> xr.DataAr
 
 def time_bnds(
     time: (xr.DataArray | xr.Dataset | CFTimeIndex | pd.DatetimeIndex),
-    freq: str | None = None,
+    freq: Freq | None = None,
 ):
     """
     Find the time bounds for a datetime index by assuming an uniform sampling frequency.
@@ -833,7 +831,7 @@ def time_bnds(
         time = time.indexes[time.name]
     # elif isinstance(time, DataArrayResample | DatasetResample):
     elif hasattr(time, "groupers"):
-        for grouper in time.groupers:
+        for grouper in time.groupers:  # ty: ignore[not-iterable]
             if "time" in grouper.codes.dims:
                 datetime = grouper.unique_coord.data
                 freq = freq or grouper.grouper.freq
@@ -874,7 +872,7 @@ def time_bnds(
         floor.pop("nanosecond")
 
     if isinstance(time, xr.CFTimeIndex):
-        period = xr.coding.cftime_offsets.to_offset(freq)
+        period = cftime_offsets.to_offset(freq)
         is_on_offset = period.onOffset
         day = pd.Timedelta("1D").to_pytimedelta()
         floor.pop("nanosecond")  # unsupported by cftime
@@ -1164,13 +1162,13 @@ def _get_doys(start: int, end: int, inclusive: tuple[bool, bool]):
 
 
 def select_between_doys(
-    da: xr.DataArray | xr.Dataset,
+    da: DataType,
     doy_bounds: tuple[int | xr.DataArray | None, int | xr.DataArray | None],
     include_bounds: bool | tuple[bool, bool] = True,
     include_nans: bool = True,
     bounds_freq: str | None = None,
     drop: bool = False,
-) -> xr.DataArray | xr.Dataset:
+) -> DataType:
     """
     Select data between day of year bounds.
 
@@ -1312,7 +1310,7 @@ def select_between_doys(
 
 
 def select_time(
-    da: xr.DataArray | xr.Dataset,
+    da: DataType,
     drop: bool = False,
     season: str | Sequence[str] | None = None,
     month: int | Sequence[int] | None = None,
@@ -1402,7 +1400,7 @@ def select_time(
         raise ValueError(f"Only one method of indexing may be given, got {N}.")
 
     if N == 0:
-        return da
+        return cast(DataType, da)
 
     if isinstance(include_bounds, bool):
         include_bounds = (include_bounds, include_bounds)
@@ -1466,14 +1464,14 @@ def select_time(
     else:
         raise ValueError("Must provide either `season`, `month`, `doy_bounds` or `date_bounds`.")
 
-    return da.where(mask, drop=drop)
+    return cast(DataType, da.where(mask, drop=drop))
 
 
 def _month_is_first_period_month(time, freq):
     """Returns True if the given time is from the first month of freq."""
     if isinstance(time, cftime.datetime):
-        frq_monthly = xr.coding.cftime_offsets.to_offset("MS")
-        frq = xr.coding.cftime_offsets.to_offset(freq)
+        frq_monthly = cftime_offsets.to_offset("MS")
+        frq = cftime_offsets.to_offset(freq)
         if frq_monthly.onOffset(time):
             return frq.onOffset(time)
         return frq.onOffset(frq_monthly.rollback(time))
@@ -1487,16 +1485,16 @@ def _month_is_first_period_month(time, freq):
 
 
 def stack_periods(
-    da: xr.Dataset | xr.DataArray,
+    da: DataType,
     window: int = 30,
     stride: int | None = None,
     min_length: int | None = None,
-    freq: str = "YS",
+    freq: Freq = "YS",
     dim: str = "period",
     start: str = "1970-01-01",
     align_days: bool = True,
     pad_value="<NA>",
-):
+) -> DataType:
     """
     Construct a multi-period array.
 
@@ -1688,7 +1686,7 @@ def stack_periods(
     return out
 
 
-def unstack_periods(da: xr.DataArray | xr.Dataset, dim: str = "period") -> xr.DataArray | xr.Dataset:
+def unstack_periods(da: DataType, dim: str = "period") -> DataType:
     """
     Unstack an array constructed with :py:func:`stack_periods`.
 
@@ -1822,7 +1820,7 @@ def unstack_periods(da: xr.DataArray | xr.Dataset, dim: str = "period") -> xr.Da
     return xr.concat(periods, "time")
 
 
-def add_season_coord(ds: xr.Dataset | xr.DataArray, freq: str) -> xr.DataArray | xr.Dataset:
+def add_season_coord(ds: DataType, freq: Freq) -> DataType:
     """
     Add a season coordinates on a resampled dataset.
 
@@ -1865,7 +1863,7 @@ def add_season_coord(ds: xr.Dataset | xr.DataArray, freq: str) -> xr.DataArray |
     return ds.assign_coords(season=("time", season_coords, attrs))
 
 
-def split_time_to_season_year(ds: xr.Dataset | xr.DataArray, freq: str) -> xr.DataArray | xr.Dataset:
+def split_time_to_season_year(ds: DataType, freq: Freq) -> DataType:
     """
     Split a resampled dataset into a yearly time and a season coordinate.
 

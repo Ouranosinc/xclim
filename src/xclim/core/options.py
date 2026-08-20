@@ -220,7 +220,7 @@ class set_options:  # numpydoc ignore=PR01,PR02
         ``keep_attrs`` option, which defaults to preserving attributes. Default :``False``.
     resample_map_blocks : bool
         If True, some indicators will wrap their resampling operations with `xr.map_blocks`,
-        using :py:func:`xclim.indices.helpers.resample_map`.
+        using :py:func:`xclim.compute.helpers.resample_map`.
         This requires `flox` to be installed in order to ensure the chunking is appropriate.
 
     Examples

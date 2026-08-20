@@ -2,9 +2,9 @@
 Indicator Utilities
 ===================
 
-The `Indicator` class wraps indices computations with pre- and post-processing functionality. Prior to computations,
+The `Indicator` class wraps computations with pre- and post-processing functionality. Prior to computations,
 the class runs data and metadata health checks. After computations, the class masks values that should be considered
-missing and adds metadata attributes to the object.
+missing and adds metadata attributes to the output.
 
 There are many ways to construct indicators. A good place to start is
 `this notebook <notebooks/extendxclim.ipynb#Defining-new-indicators>`_.
@@ -60,10 +60,11 @@ mirroring attributes of the :py:class:`Indicator`, please refer to its documenta
         missing_options:
             # missing options mapping
         allowed_periods: [<list>, <of>, <allowed>, <periods>]
+        context: <context> # A unit context enabled during the conversion of the compute's output to the requested units
 
         # Compute function
-        compute: <function name>  # Referring to a function in `Indices` module
-                                  # (xclim.indices.generic or xclim.indices)
+        compute: <function name>  # Referring to a function in `compute` module
+                                  # (xclim.compute.generic or xclim.compute)
         input:  # When "compute" is a generic function, this is a mapping from argument name to the expected variable.
                 # This will allow the input units and CF metadata checks to run on the inputs.
                 # Can also be used to modify the expected variable, as long as it has the same dimensionality
@@ -125,7 +126,8 @@ import yamale
 from xarray import DataArray, Dataset
 from yaml import safe_load
 
-from xclim import indices
+import xclim.compute
+from xclim.compute import generic
 from xclim.core import datachecks
 from xclim.core._exceptions import (
     MissingVariableError,
@@ -169,7 +171,6 @@ from xclim.core.utils import (
     load_module,
     split_auxiliary_coordinates,
 )
-from xclim.indices import generic
 
 try:
     from xarray import DataTree
@@ -313,7 +314,8 @@ class IndicatorRegistrar:
 
         Raises
         ------
-        ValueError : if no instance exists.
+        ValueError
+            If no instance exists.
         """
         for inst_ref in _indicators_registry[cls]:
             inst = inst_ref()
@@ -383,7 +385,8 @@ class Indicator(IndicatorRegistrar):
     src_freq : str, sequence of strings, optional
         The expected frequency of the input data. Can be a list for multiple frequencies, or None if irrelevant.
     context : str
-        The `pint` unit context, for example use 'hydro' to allow conversion from 'kg m-2 s-1' to 'mm/day'.
+        A `pint` unit context enabled during the computation of this indicator.
+        For example use 'hydro' to allow conversion from 'kg m-2 s-1' to 'mm/day' for all inputs.
 
     Notes
     -----
@@ -470,7 +473,7 @@ class Indicator(IndicatorRegistrar):
 
         if "compute" in kwds:
             # Parsed parameters and metadata override parent's params entirely.
-            parameters, docmeta = cls._parse_indice(kwds["compute"], kwds.get("parameters", {}))
+            parameters, docmeta = cls._parse_compute(kwds["compute"], kwds.get("parameters", {}))
             for name, value in docmeta.items():
                 # title, abstract, references, notes, long_name
                 kwds.setdefault(name, value)
@@ -480,7 +483,7 @@ class Indicator(IndicatorRegistrar):
             for name, param in cls._added_parameters():
                 if name in parameters:
                     raise ValueError(
-                        f"Class {cls.__name__} can't wrap indices that have a `{name}`"
+                        f"Class {cls.__name__} can't wrap compute functions that have a `{name}`"
                         " argument as it conflicts with an argument it adds."
                     )
                 parameters[name] = param
@@ -546,7 +549,7 @@ class Indicator(IndicatorRegistrar):
         return super().__new__(new)
 
     @staticmethod
-    def _parse_indice(compute, passed_parameters):  # noqa: F841
+    def _parse_compute(func, passed_parameters):  # noqa: F841
         """
         Parse the compute function.
 
@@ -557,10 +560,10 @@ class Indicator(IndicatorRegistrar):
         (not decorated by `declare_units`) and it takes a string parameter. In that case
         we need to check if that parameter has units (which have been passed explicitly).
         """
-        docmeta = parse_doc(compute.__doc__)
+        docmeta = parse_doc(func.__doc__)
         params_dict = docmeta.pop("parameters", {})  # override parent's parameters
 
-        compute_sig = signature(compute)
+        func_sig = signature(func)
         # Remove the \\* symbols from the parameter names
         _sanitized_params_dict = {}
         for param in params_dict.keys():
@@ -569,19 +572,19 @@ class Indicator(IndicatorRegistrar):
 
         # Check that the `Parameters` section of the docstring does not include parameters
         # that are not in the `compute` function signature.
-        if not set(params_dict.keys()).issubset(compute_sig.parameters.keys()):
+        if not set(params_dict.keys()).issubset(func_sig.parameters.keys()):
             raise ValueError(
-                f"Malformed docstring on {compute} : the parameters "
-                f"{set(params_dict.keys()) - set(compute_sig.parameters.keys())} "
+                f"Malformed docstring on {func} : the parameters "
+                f"{set(params_dict.keys()) - set(func_sig.parameters.keys())} "
                 "are absent from the signature."
             )
-        for name, param in compute_sig.parameters.items():
+        for name, param in func_sig.parameters.items():
             meta = params_dict.setdefault(name, {})
             meta["compute_name"] = name
             meta["default"] = param.default
             meta["kind"] = infer_kind_from_parameter(param)
-            if hasattr(compute, "in_units") and name in compute.in_units:
-                meta["units"] = compute.in_units[name]
+            if hasattr(func, "in_units") and name in func.in_units:
+                meta["units"] = func.in_units[name]
 
         parameters = {name: Parameter(**param) for name, param in params_dict.items()}
         return parameters, docmeta
@@ -754,7 +757,7 @@ class Indicator(IndicatorRegistrar):
           :py:data:`xclim.core.indicator.base_registry`. When passed, it acts as if
           `from_dict` was called on that class instead.
         - "compute" : A string function name translates to a
-          :py:mod:`xclim.indices.generic` or :py:mod:`xclim.indices` function.
+          :py:mod:`xclim.compute.generic` or :py:mod:`xclim.compute` function.
 
         Parameters
         ----------
@@ -785,13 +788,22 @@ class Indicator(IndicatorRegistrar):
             else:
                 cls = data["base"]
 
-        compute = data.get("compute", None)
-        # data.compute refers to a function in xclim.indices.generic or xclim.indices (in this order of priority).
+        func_or_name = data.get("compute", None)
+        # data.compute refers to a function in xclim.compute.generic or xclim.compute (in this order of priority).
         # It can also directly be a function (like if a module was passed to build_indicator_module_from_yaml)
-        if isinstance(compute, str):
-            compute_func = getattr(generic, compute, getattr(indices, compute, None))
-            if compute_func is None:
-                raise ImportError(f"Indice function {compute} not found in xclim.indices or xclim.indices.generic.")
+        if isinstance(func_or_name, str):
+            if "." in func_or_name:
+                modname, funcname = func_or_name.split(".")
+                submod = getattr(xclim.compute, modname, None)
+                compute_func = getattr(submod, funcname, None)
+                if compute_func is None:
+                    raise ImportError(f"Compute function {funcname} not found in xclim.compute.{modname}.")
+            else:
+                compute_func = getattr(generic, func_or_name, getattr(xclim.compute, func_or_name, None))
+                if compute_func is None:
+                    raise ImportError(
+                        f"Indice function {func_or_name} not found in xclim.compute or xclim.compute.generic."
+                    )
             data["compute"] = compute_func
 
         return cls(identifier=identifier, module=module, **data)
@@ -852,7 +864,7 @@ class Indicator(IndicatorRegistrar):
                     )
                 )
 
-        ret_ann = DataArray if self.n_outs == 1 else tuple[(DataArray,) * self.n_outs]
+        ret_ann = DataArray if self.n_outs == 1 else tuple[(DataArray,) * self.n_outs]  # ty: ignore[invalid-type-form]
         return Signature(variables + parameters, return_annotation=ret_ann)
 
     def _apply_on_tree_node(self, node: Dataset, *args, **kwargs):
@@ -882,7 +894,7 @@ class Indicator(IndicatorRegistrar):
 
         # get mappings where keys are the actual compute function's argument names
         args = self._get_compute_args(das, params)
-        with np.errstate(divide="ignore", invalid="ignore"):
+        with np.errstate(divide="ignore", invalid="ignore"), units.context(self.context):
             outs = self.compute(**args)
 
         if isinstance(outs, DataArray):
@@ -1120,7 +1132,7 @@ class Indicator(IndicatorRegistrar):
             `cell_methods` is not added if `names` is given and those not contain `cell_methods`.
         """
         out = self._format(attrs, args)
-        for locale in OPTIONS[METADATA_LOCALES]:
+        for locale in OPTIONS[METADATA_LOCALES]:  # ty: ignore[not-iterable]
             out.update(
                 self._format(
                     self._get_translated_metadata(locale, var_id=var_id, names=names or list(attrs.keys())),
@@ -1337,7 +1349,7 @@ class Indicator(IndicatorRegistrar):
         """
         Compute the indicator.
 
-        This would typically be a function from `xclim.indices`.
+        This would typically be a function from `xclim.compute`.
         """  # numpydoc ignore=PR01
         raise NotImplementedError()
 
@@ -1461,10 +1473,15 @@ class Indicator(IndicatorRegistrar):
         return not hasattr(self.compute, "in_units")
 
     def _show_deprecation_warning(self):
+        alternative = ""
+        if isinstance(self._version_deprecated, tuple):
+            vv, other = self._version_deprecated
+            alternative = f"Please use {other} instead. "
+        else:
+            vv = self._version_deprecated
         warnings.warn(
-            f"`{self.title}` is deprecated as of `xclim` v{self._version_deprecated} and will be removed "
-            "in a future release. See the `xclim` release notes for more information: "
-            f"https://xclim.readthedocs.io/en/stable/history.html",
+            f"`{self.title}` is deprecated as of `xclim` v{vv} and will be removed in a future release. {alternative}"
+            "See the `xclim` release notes for more information: https://xclim.readthedocs.io/en/stable/history.html",
             FutureWarning,
             stacklevel=3,
         )
@@ -1637,7 +1654,7 @@ class IndexingIndicator(Indicator):
                     description=(
                         "Indexing parameters to compute the indicator on a temporal "
                         "subset of the data. It accepts the same arguments as "
-                        ":py:func:`xclim.indices.generic.select_time`."
+                        ":py:func:`xclim.core.calendar.select_time`."
                     ),
                 ),
             )
@@ -1761,7 +1778,7 @@ def build_indicator_module(
 def build_indicator_module_from_yaml(  # noqa: C901
     filename: PathLike,
     name: str | None = None,
-    indices: dict[str, Callable] | ModuleType | PathLike | None = None,
+    computes: dict[str, Callable] | ModuleType | PathLike | None = None,
     translations: dict[str, dict | PathLike] | None = None,
     mode: str = "raise",
     encoding: str = "UTF8",
@@ -1772,7 +1789,7 @@ def build_indicator_module_from_yaml(  # noqa: C901
     Build or extend an indicator module from a YAML file.
 
     The module is inserted as a submodule of :py:mod:`xclim.indicators`.
-    When given only a base filename (no 'yml' extension), this tries to find custom indices in a module
+    When given only a base filename (no 'yml' extension), this tries to find custom indicators in a module
     of the same name (*.py) and translations in json files (*.<lang>.json), see Notes.
 
     Parameters
@@ -1782,16 +1799,16 @@ def build_indicator_module_from_yaml(  # noqa: C901
         See Notes for behaviour when passing a basename only.
     name : str, optional
         The name of the new or existing module, defaults to the basename of the file (e.g: `atmos.yml` -> `atmos`).
-    indices : Mapping of callables or module or path, optional
-        A mapping or module of indice functions or a python file declaring such a file. When creating the indicator,
-        the name in the `index_function` field is first sought here, then the indicator class will search
-        in :py:mod:`xclim.indices.generic` and finally in :py:mod:`xclim.indices`.
+    computes : Mapping of callables or module or path, optional
+        A mapping or module of compute functions or a python file declaring such a module. When creating the indicator,
+        the name in the `compute` field is first sought here, then the indicator class will search
+        in :py:mod:`xclim.compute.generic` and finally in :py:mod:`xclim.compute`.
     translations : Mapping of dicts or path, optional
         Translated metadata for the new indicators. Keys of the mapping must be two-character language tags.
         Values can be translations dictionaries as defined in :ref:`internationalization:Internationalization`.
         They can also be a path to a JSON file defining the translations.
     mode : {'raise', 'warn', 'ignore'}
-        How to deal with broken indice definitions.
+        How to deal with broken indicator definitions.
     encoding : str
         The encoding used to open the `.yaml` and `.json` files.
         It defaults to UTF-8, overriding python's mechanism which is machine dependent.
@@ -1816,13 +1833,13 @@ def build_indicator_module_from_yaml(  # noqa: C901
     Notes
     -----
     When the given `filename` has no suffix (usually '.yaml' or '.yml'), the function will try to load
-    custom indice definitions from a file with the same name but with a `.py` extension. Similarly,
+    custom compute functions definitions from a file with the same name but with a `.py` extension. Similarly,
     it will try to load translations in `*.<lang>.json` files, where `<lang>` is the IETF language tag.
 
     For example. a set of custom indicators could be fully described by the following files:
 
         - `example.yml` : defining the indicator's metadata.
-        - `example.py` : defining a few indice functions.
+        - `example.py` : defining a few compute functions.
         - `example.fr.json` : French translations
         - `example.tlh.json` : Klingon translations.
     """
@@ -1854,12 +1871,12 @@ def build_indicator_module_from_yaml(  # noqa: C901
     default_base = registry.get(yml.get("base"), base_registry.get(yml.get("base"), Daily))
     doc = yml.get("doc")
 
-    if not filepath.suffix and indices is None and (ind_file := filepath.with_suffix(".py")).is_file():
+    if not filepath.suffix and computes is None and (ind_file := filepath.with_suffix(".py")).is_file():
         # No suffix means we try to automatically detect the python file
-        indices = ind_file
+        computes = ind_file
 
-    if isinstance(indices, str | Path):
-        indices = load_module(indices, name=module_name)
+    if isinstance(computes, str | Path):
+        computes = load_module(computes, name=module_name)
 
     _translations: dict[str, dict] = {}
     if not filepath.suffix and translations is None:
@@ -1922,20 +1939,20 @@ def build_indicator_module_from_yaml(  # noqa: C901
                 data["base"] = default_base
 
             # Get the compute function if it is from the passed mapping
-            if indices is not None and "compute" in data:
-                indice_name = data["compute"]
-                indice_func = getattr(indices, indice_name, None)
-                if indice_func is None and hasattr(indices, "__getitem__"):
+            if computes is not None and "compute" in data:
+                func_name = data["compute"]
+                func = getattr(computes, func_name, None)
+                if func is None and hasattr(computes, "__getitem__"):
                     try:
-                        indice_func = indices[indice_name]
+                        func = computes[func_name]
                     except KeyError as err:
-                        # The indice is not found in the mapping.
-                        msg = f"Indice not found in the mapping. Ignoring: {err}"
+                        # The function is not found in the mapping.
+                        msg = f"Compute function not found in the mapping. Ignoring: {err}"
                         logging.info(msg)
                         pass
 
-                if indice_func is not None:
-                    data["compute"] = indice_func
+                if func is not None:
+                    data["compute"] = func
 
             _merge_attrs(data, defkwargs, "references", "\n")
             _merge_attrs(data, defkwargs, "keywords", " ")
