@@ -292,8 +292,6 @@ def parametric_quantile(
     return out
 
 
-# FIXME: xclim-v1 — `parametric_cdf` should be like `parametric_pdf`, i.e.:
-# The new coordinate should be labeled as `v` and not `cdf`
 def parametric_cdf(
     p: xr.DataArray,
     v: xr.DataArray | float | Sequence[float],
@@ -333,23 +331,23 @@ def parametric_cdf(
         da_v,
         p,
         input_core_dims=[["v"], ["dparams"]],
-        output_core_dims=[["cdf"]],
+        output_core_dims=[["v"]],
         vectorize=True,
         dask="parallelized",
         output_dtypes=[float],
         keep_attrs=True,
-        dask_gufunc_kwargs={"output_sizes": {"cdf": len(v)}},
+        dask_gufunc_kwargs={"output_sizes": {"v": len(v)}},
     ).assign_coords(cdf=da_v.v.values)
     data["cdf"].attrs = da_v.attrs
 
     # Assign value coordinates and transpose to preserve original dimension order
-    out = data.transpose(*(d if d != "dparams" else "cdf" for d in p.dims))
+    out = data.transpose(*(d if d != "dparams" else "v" for d in p.dims))
     out.attrs = unprefix_attrs(p.attrs, ["units", "standard_name"], "original_")
 
     attrs = {
         "long_name": f"{dist.name} cdf",
         "description": f"CDF estimated by the {dist.name} distribution",
-        "cell_methods": "dparams: cdf",
+        "cell_methods": "dparams: v",
         "history": update_history(
             "Compute parametric cdf from distribution parameters",
             new_name="parametric_cdf",
@@ -882,11 +880,6 @@ def standardized_index_fit_params(
     xarray.DataArray
         Standardized Index fitting parameters.
 
-    Warnings
-    --------
-    The coord `prob_of_zero` in the output will be removed in future versions. It can still be computed from new coords
-    as out['number_of_zeros']/out['number_of_notnull']
-
     Notes
     -----
     Supported combinations of `dist` and `method` are:
@@ -919,19 +912,12 @@ def standardized_index_fit_params(
     dist_and_methods = {
         "gamma": ["ML", "APP"],
         "fisk": ["ML", "APP"],
-        # FIXME: xclim-v1 — remove "APP"
-        "genextreme": ["ML", "APP"],
+        "genextreme": ["ML"],
         "lognorm": ["ML", "APP"],
     }
     if isinstance(dist, str):
         if dist not in dist_and_methods:
             raise NotImplementedError(f"The distribution `{dist}` is not supported.")
-        # FIXME: xclim-v1 — remove this warning
-        if dist == "genextreme" and method == "APP":
-            warnings.warn(
-                "The method 'APP' will not be available for distribution 'genextreme' in the future."
-                " The shape parameter is fixed in this approximation and should not be used as a final answer."
-            )
         if method not in dist_and_methods[dist]:
             raise NotImplementedError(f"The method `{method}` is not supported for distribution `{dist}`.")
     dist = get_dist(dist)
@@ -947,8 +933,6 @@ def standardized_index_fit_params(
         params = da.where(da != 0).groupby(group_handler).map(fit, dist=dist, method=method, **fitkwargs)
         params["number_of_zeros"] = number_of_zeros
         params["number_of_notnull"] = number_of_notnull
-        # FIXME: xclim-v1 – Drop this variable
-        params["prob_of_zero"] = number_of_zeros / number_of_notnull
     else:
         params = da.groupby(group_handler).map(fit, dist=dist, method=method, **fitkwargs)
     cal_range = (
@@ -1081,8 +1065,7 @@ def standardized_index(
                 "Expected either `cal_{start|end}` or `params`, got both. The `params` input overrides other inputs."
                 "If `cal_start`, `cal_end`, `freq`, `window`, and/or `dist` were given as input, they will be ignored."
             )
-        # FIMXE: xclim-v1 – remove 'prob_of_zero' below
-        zero_inflated = any(k in params.attrs for k in ["number_of_zeros", "prob_of_zero"])
+        zero_inflated = any(k in params.attrs for k in ["number_of_zeros"])
 
     # assign values to interp_factor and alpha,beta, if needed
     if zero_inflated is not None:
@@ -1110,21 +1093,6 @@ def standardized_index(
             zero_inflated=zero_inflated,
             fitkwargs=fitkwargs,
         )
-    # FIXME: xclim-v1 – Remove this check
-    elif "prob_of_zero" in params.coords and "number_of_zeros" not in params.coords:
-        warnings.warn(
-            "Received `params` computed with an old version of `xclim`. The computation will default to "
-            "`prob_zero_interpolation`=='upper' and `plotting_position_zero` == 'ecdf'. To have access to the new modes"
-            " allowed by the new options `prob_zero_interpolation` and `plotting_position_zero`,"
-            " please recompute `params` with the newest version of `xclim`. Also, be aware that "
-            "the coord `prob_of_zero` will be dropped in a future version. It can be re-computed with "
-            "`params['number_of_zeros']/params['number_of_zeros']`"
-        )
-        params["number_of_zeros"] = params["prob_of_zero"]
-        params["number_of_not_null"] = 0 * params["prob_of_zero"] + 1
-        alpha_beta = (0, 1)
-        interp_factor = 1
-
     # If params only contains a subset of main dataset time grouping
     # (e.g. 8/12 months, etc.), it needs to be broadcasted
     group = params.attrs["group"]

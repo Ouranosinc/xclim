@@ -328,26 +328,6 @@ def rlus_series():
     return _rlus_series
 
 
-# FIXME: xclim-v1 — Remove this? We use `snw`
-# We could also leave this in.
-@pytest.fixture
-def swe_series():
-    def _swe_series(values, start="1/1/2000", units="mm"):
-        coords = pd.date_range(start, periods=len(values), freq="D")
-        return xr.DataArray(
-            values,
-            coords=[coords],
-            dims="time",
-            name="swe",
-            attrs={
-                "standard_name": "snow_water_equivalent_in_snow_layer",
-                "units": units,
-            },
-        )
-
-    return _swe_series
-
-
 @pytest.fixture(scope="session")
 def threadsafe_data_dir(tmp_path_factory):
     return Path(tmp_path_factory.getbasetemp().joinpath("data"))

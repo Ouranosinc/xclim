@@ -41,6 +41,8 @@ Breaking changes
     * ``xclim.indicators.convert.tg`` -> ``xclim.indicators.convert.mean_temperature_from_max_and_min``
 * The required versions for many core dependencies have been updated: `numba` (>=0.60.0), `numpy` (>=2.0), `pip` (>=26.1), `scikit-learn` (>=1.5.0), `xarray` (>=2024.6.0,!=2024.10.0). (:pull:`2355`).
 * `pre-commit` has been replaced by `prek`. `prek` is a `pre-commit-config.yml` compatible reimplementation built in Rust. (:pull:`2355`).
+* Approximate method `APP` not allowed anymore when using the `genextreme` distribution for standardized indices (e.g. ``xclim.indicators.atmos.standardized_precipitation_index`` and similar indicators).
+* The output of ``xclim.compute.stats.parametric_cdf`` has a dimension `v` instead `cdf` (`cdf` more appropriately describes the output variable).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
@@ -53,6 +55,7 @@ Internal changes
 * The LaTeX formulas and tables of many indice docstrings were failing to render in ReadTheDocs due to small syntax typos. These have been addressed. (:pull:`2355`).
 * A page has been added to the documentation (`governance.rst`) that describes the method through which decisions concerning `xclim` are made as well as the responsibilities of maintainers. (:pull:`2391`).
 * The security policy now details a brief security assurance that discusses the measures taken to ensure source code and package integrity. (:pull:`2391`).
+* Removed ``swe_series`` unused fixture.
 
 v0.62.0 (2026-08-17)
 --------------------

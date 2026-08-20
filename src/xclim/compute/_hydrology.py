@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import importlib.util as _util
+from typing import Literal
 
 import numpy as np
 import xarray
@@ -136,8 +137,8 @@ def standardized_streamflow_index(
     q: xarray.DataArray,
     freq: Freq | None = "MS",
     window: int = 1,
-    dist: str | rv_continuous = "genextreme",
-    method: str = "ML",
+    dist: Literal["genextreme", "fisk"] | rv_continuous = "genextreme",
+    method: Literal["ML", "APP", "PWM"] = "ML",
     fitkwargs: dict | None = None,
     cal_start: DateStr | None = None,
     cal_end: DateStr | None = None,
@@ -233,8 +234,7 @@ def standardized_streamflow_index(
     """
     fitkwargs = fitkwargs or {}
     dist_methods = {
-        # FIXME: xclim-v1 — remove "APP"
-        "genextreme": ["ML", "APP"],
+        "genextreme": ["ML"],
         "fisk": ["ML", "APP"],
     }
     if isinstance(dist, str):
@@ -448,8 +448,8 @@ def standardized_groundwater_index(
     gwl: xarray.DataArray,
     freq: Freq | None = "MS",
     window: int = 1,
-    dist: str | rv_continuous = "genextreme",
-    method: str = "ML",
+    dist: Literal["gamma", "genextreme", "lognorm"] | rv_continuous = "genextreme",
+    method: Literal["ML", "APP", "PWM"] = "ML",
     fitkwargs: dict | None = None,
     cal_start: DateStr | None = None,
     cal_end: DateStr | None = None,
@@ -544,8 +544,7 @@ def standardized_groundwater_index(
 
     dist_methods = {
         "gamma": ["ML", "APP"],
-        # FIXME: xclim-v1 — remove "APP"
-        "genextreme": ["ML", "APP"],
+        "genextreme": ["ML"],
         "lognorm": ["ML", "APP"],
     }
     if isinstance(dist, str):
@@ -947,7 +946,6 @@ def sen_slope(q: xarray.DataArray, freq: Freq = "YS") -> tuple[xarray.DataArray,
     return sen_slope, p_value
 
 
-# FIXME: xclim-v1 — Remove this function. Its only utility is to compute a ratio.
 @declare_units(q="[discharge]", qsim="[discharge]")
 def sen_slope_ratio(
     q: xarray.Dataset, qsim: xarray.DataArray, freq: Freq = "YS"
