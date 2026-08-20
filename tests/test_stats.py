@@ -384,8 +384,8 @@ def test_parametric_cdf(use_dask, random):
     out = stats.parametric_cdf(p=p, v=v)
 
     np.testing.assert_array_almost_equal(out, expected, 1)
-    assert "cdf" in out.coords
-    assert out.attrs["cell_methods"] == "dparams: cdf"
+    assert "v" in out.coords
+    assert out.attrs["cell_methods"] == "dparams: v"
 
 
 @pytest.mark.parametrize("use_dask,use_dataarray", [[True, False], [False, True], [True, True], [False, False]])
