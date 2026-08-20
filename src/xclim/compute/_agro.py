@@ -11,7 +11,7 @@ from scipy.stats import rv_continuous
 
 import xclim.compute.run_length as rl
 from xclim.compute.classify import get_zones
-from xclim.compute.generic import day_threshold_reached, statistics, statistics_between_dates
+from xclim.compute.generic import day_threshold_reached, season, statistics, statistics_between_dates
 from xclim.compute.helpers import (
     _gather_lat,
     gladstones_day_length_latitude_coefficient,
@@ -39,6 +39,7 @@ from xclim.core.utils import uses_dask
 
 __all__ = [
     "biologically_effective_degree_days",
+    "canadian_hardiness_zones",
     "chill_portions",
     "chill_units",
     "cool_night_index",
@@ -1580,3 +1581,101 @@ def chill_units(tas: xarray.DataArray, positive_only: bool = False, freq: Freq =
         daily = cu.resample(time="1D").sum()
         cu = daily.where(daily > 0)
     return cu.resample(time=freq).sum().assign_attrs(units="")
+
+
+def canadian_hardiness_zones(
+    tasmin: xarray.DataArray,
+    tasmax: xarray.DataArray,
+    pr: xarray.DataArray,
+    snd: xarray.DataArray,
+    sfcWindmax: xarray.DataArray,
+    freq: str = "YS",
+) -> xarray.DataArray:
+    """
+    Canadian hardiness zones.
+
+    Parameters
+    ----------
+    tasmin : xarray.DataArray
+        Minimum daily temperature.
+    tasmax : xarray.DataArray
+        Maximum daily temperature.
+    pr : xarray.DataArray
+        Precipitation.
+    snd : xarray.DataArray
+        Snow depth.
+    sfcWindmax : xarray.DataArray
+        Maximum surface wind speed.
+    freq : str
+        Resampling frequency for the input data, by default "YS" (yearly start).
+
+    Returns
+    -------
+    xarray.DataArray
+        Canadian hardiness zones.
+
+    Notes
+    -----
+    This index is based on the Canadian hardiness zones, which are used to classify regions based on their climate
+    suitability for growing plants. The index is calculated using a combination of temperature, precipitation,
+    snow depth, and wind speed data. The formula is adapted from the Canadian hardiness zones index as described in
+    :cite:t:`ouellet_hardiness_1967b` and :cite:t:`ouellet_hardiness_1967c`.
+
+    References
+    ----------
+    :cite:cts:`ouellet_hardiness_1967b,ouellet_hardiness_1967c`
+    """
+    _tasmin = convert_units_to(tasmin, "degC")
+    _tasmax = convert_units_to(tasmax, "degC")
+    _pr = convert_units_to(pr, "mm")
+    _snd = convert_units_to(snd, "mm")
+    _sfcWindmax = convert_units_to(sfcWindmax, "km h-1")
+
+    # Monthly mean of minimum temperatures of the coldest month
+    x1 = statistics(_tasmin, statistic="mean", freq="MS").resample(time=freq).min()
+
+    # Length of the frost free period (FFP)
+    x2 = season(
+        _tasmin,
+        thresh="0.0 degC",
+        window=5,
+        condition=">",
+        aspect="length",
+        freq=freq,
+        mid_date=None,
+    )
+
+    # Precipitation in the period from June to November, inclusive
+    _pr_constrained = (
+        select_time(_pr, date_bounds=("06-01", "12-01"), include_bounds=(True, False)).resample(time=freq).sum()
+    )
+    # Empirical adjustment for millimeters of precipitation
+    x3 = _pr_constrained / (_pr_constrained + 25.4)
+
+    # Monthly mean of maximum temperatures of the warmest month
+    x4 = statistics(_tasmax, statistic="mean", freq="MS").resample(time=freq).max()
+
+    # Winter factor
+    x5 = (0 - x1) * _pr.sel(time=_pr["time"].dt.month == 1).resample(time=freq).sum()
+
+    # Mean maximum snow depth
+    snd_above_0 = _snd.where(_snd > 0, np.nan).resample(time=freq).mean()
+    x6 = snd_above_0 / (snd_above_0 + 25.4)
+
+    # Maximum wind gust in experienced in a 30-year period
+    x7 = _sfcWindmax.resample(time=freq).max()
+
+    suitability_index = (
+        -67.62
+        + (1.734 * x1)
+        + (0.1868 * x2)
+        + (69.77 * x3)
+        + (1.256 * x4)
+        + (0.006119 * x5)
+        + (22.37 * x6)
+        - (0.01832 * x7)
+    )
+    suitability_index.attrs["long_name"] = "Canadian hardiness zones."
+    suitability_index.attrs["units"] = ""
+
+    return suitability_index
