@@ -1168,7 +1168,7 @@ def select_between_doys(
     doy_bounds: tuple[int | xr.DataArray | None, int | xr.DataArray | None],
     include_bounds: bool | tuple[bool, bool] = True,
     include_nans: bool = True,
-    freq: str | None = None,
+    bounds_freq: str | None = None,
     drop: bool = False,
 ) -> xr.DataArray | xr.Dataset:
     """
@@ -1185,7 +1185,7 @@ def select_between_doys(
         on the dimensions they share. They may have a time dimension, in which case the selection is done
         independently for each period defined by the coordinate, which means the time coordinate must have an
         inferable frequency (see :py:func:`xr.infer_freq`) or the frequency must be passed explicitly with the
-        `freq` argument.
+        `bounds_freq` argument.
         If None is passed as a bound, it is replaced by the start or end of the year (1 or 366) if the other
         bound is an integer, or by the start or end of the period defined by the inferred or passed frequency
         of DataArrays.
@@ -1196,7 +1196,7 @@ def select_between_doys(
     include_nans : bool, optional
         Whether to include values associated with NaN in `doy_bounds`. If True (default), missing values (NaN) in
         the start and end bounds are replaced by the start and end of the period, respectively.
-    freq : str, optional
+    bounds_freq : str, optional
         The yearly frequency (e.g. "YS", "YS-JUL") used to determine the open bounds (start and end of the period)
         with array-like `doy_bounds` without a `time` dimension (Default "YS"). If `doy_bounds` have a `time`
         dimension, the frequency is first tried to be inferred from the time coordinate of the bounds; if it cannot
@@ -1255,8 +1255,8 @@ def select_between_doys(
 
         # add time dimension if not present, with bounds given by freq
         if "time" not in start.dims:
-            freq = freq or "YS"
-            bnds = time_bnds(da.resample(time=freq))
+            bounds_freq = bounds_freq or "YS"
+            bnds = time_bnds(da.resample(time=bounds_freq))
             start = start.expand_dims(time=bnds.time)
             end = end.expand_dims(time=bnds.time)
         else:
@@ -1267,12 +1267,12 @@ def select_between_doys(
             try:
                 infer_freq = xr.infer_freq(start.time)
                 if infer_freq:
-                    freq = infer_freq
+                    bounds_freq = infer_freq
             except ValueError:
-                if freq is None:
+                if bounds_freq is None:
                     raise ValueError(
                         "The frequency of `doy_bounds` could not be inferred. Consider passing it explicitly "
-                        "with the `freq` argument."
+                        "with the `bounds_freq` argument."
                     )
 
         # Convert the doy bounds to a duration since the beginning of each period defined
@@ -1290,7 +1290,7 @@ def select_between_doys(
 
         out = []
         # For each period, mask the days since between start and end
-        for base_time, indexes in da.resample(time=freq).groups.items():
+        for base_time, indexes in da.resample(time=bounds_freq).groups.items():
             group = da.isel(time=indexes)
 
             if base_time in start.time:
@@ -1347,7 +1347,7 @@ def select_time(
         on the dimensions they share. They may have a time dimension, in which case the selection is done
         independently for each period defined by the coordinate, which means the time coordinate must have an
         inferable frequency (see :py:func:`xr.infer_freq`) or the frequency must be passed explicitly with the
-        `freq` argument.
+        `bounds_freq` argument.
         If None is passed as a bound, it is replaced by the start or end of the year (1 or 366) if the other
         bound is an integer, or by the start or end of the period defined by the inferred or passed frequency
         of DataArrays.
