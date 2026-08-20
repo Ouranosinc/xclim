@@ -2,14 +2,7 @@
 
 from __future__ import annotations
 
-from xclim.core.indicator import (
-    Indicator,
-    ReducingIndicator,
-    ResamplingIndicator,
-    StandardizedIndexes,
-)
-from xclim.core.units import declare_units
-from xclim.indices import (
+from xclim.compute import (
     base_flow_index,
     base_flow_index_seasonal_ratio,
     flow_index,
@@ -22,6 +15,12 @@ from xclim.indices import (
     sen_slope,
     standardized_groundwater_index,
     standardized_streamflow_index,
+)
+from xclim.core.indicator import (
+    Indicator,
+    ReducingIndicator,
+    ResamplingIndicator,
+    StandardizedIndexes,
 )
 
 __all__ = [
@@ -87,8 +86,9 @@ doy_qmax = Streamflow(
     long_name="Day of the year of the maximum streamflow over {indexer}",
     description="Day of the year of the maximum streamflow over {indexer}.",
     units="",
-    compute=declare_units(da="[discharge]")(generic.select_resample_op),
-    parameters={"op": generic.doymax, "out_units": None},
+    input={"data": "discharge"},
+    compute=generic.statistics,
+    parameters={"statistic": "doymax", "out_units": None, "freq": {"default": "YS"}},
 )
 
 
@@ -99,8 +99,9 @@ doy_qmin = Streamflow(
     long_name="Day of the year of the minimum streamflow over {indexer}",
     description="Day of the year of the minimum streamflow over {indexer}.",
     units="",
-    compute=declare_units(da="[discharge]")(generic.select_resample_op),
-    parameters={"op": generic.doymin, "out_units": None},
+    input={"data": "discharge"},
+    compute=generic.statistics,
+    parameters={"statistic": "doymin", "out_units": None, "freq": {"default": "YS"}},
 )
 
 

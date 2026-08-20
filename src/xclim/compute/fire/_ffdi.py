@@ -3,11 +3,12 @@ r"""
 McArthur Forest Fire Danger (Mark 5) System
 ===========================================
 
-This submodule defines indices related to the McArthur Forest Fire Danger Index Mark 5.
-Currently implemented are the :py:func:`xclim.indices.fire.keetch_byram_drought_index`,
-:py:func:`xclim.indices.fire.griffiths_drought_factor` and
-:py:func:`xclim.indices.fire.mcarthur_forest_fire_danger_index` indices, which are used by the eponym indicators.
-The implementation of these indices follows :cite:t:`ffdi-finkele_2006` and :cite:t:`ffdi-noble_1980`,
+This submodule defines functions related to the McArthur Forest Fire Danger Index Mark 5.
+Currently implemented are the :py:func:`xclim.compute.fire.keetch_byram_drought_index`,
+:py:func:`xclim.compute.fire.griffiths_drought_factor` and
+:py:func:`xclim.compute.fire.mcarthur_forest_fire_danger_index` compute functions, which are used by the eponym
+indicators.
+The implementation of these functions follows :cite:t:`ffdi-finkele_2006` and :cite:t:`ffdi-noble_1980`,
 with any differences described in the documentation for each index. Users are encouraged to read the documentation of
 this module and consult :cite:t:`ffdi-finkele_2006` for a full description of the methods used to calculate each
 index.
@@ -15,7 +16,7 @@ index.
 
 # This file is structured in the following way:
 # Section 1: individual codes, numba-accelerated and vectorized functions.
-# Section 2: Exposed methods and indices.
+# Section 2: Exposed methods and compute functions
 #
 # Methods starting with a "_" are not usable with xarray objects, whereas the others are.
 from __future__ import annotations
@@ -86,7 +87,7 @@ def _keetch_byram_drought_index(p, t, pa, kbdi0, kbdi: float):  # pragma: no cov
         # Limit kbdi to between 0 and 200 mm
         kbdi0 = min(max(kbdi0, 0.0), 203.2)
 
-        kbdi[d] = kbdi0  # type: ignore
+        kbdi[d] = kbdi0
 
 
 @guvectorize(
@@ -176,7 +177,7 @@ def _griffiths_drought_factor(p, smd, lim, df):  # pragma: no cover
         df[d] = dfw
 
 
-# SECTION 2 - Public methods and indices
+# SECTION 2 - Public methods and compute functions
 
 
 @declare_units(
@@ -243,24 +244,24 @@ def keetch_byram_drought_index(
         """
         return _keetch_byram_drought_index(_pr, _tasmax, _pr_annual, _kbdi0)
 
-    pr = convert_units_to(pr, "mm/day", context="hydro")
-    tasmax = convert_units_to(tasmax, "C")
-    pr_annual = convert_units_to(pr_annual, "mm/year", context="hydro")
+    _pr = convert_units_to(pr, "mm/day", context="hydro")
+    _tasmax = convert_units_to(tasmax, "C")
+    _pr_annual = convert_units_to(pr_annual, "mm/year", context="hydro")
     if kbdi0 is not None:
         kbdi0 = convert_units_to(kbdi0, "mm/day", context="hydro")
     else:
-        kbdi0 = xr.full_like(pr.isel(time=0), 0)
+        kbdi0 = xr.full_like(_pr.isel(time=0), 0)
 
     kbdi: xr.DataArray = xr.apply_ufunc(
         _keetch_byram_drought_index_pass,
-        pr,
-        tasmax,
-        pr_annual,
+        _pr,
+        _tasmax,
+        _pr_annual,
         kbdi0,
         input_core_dims=[["time"], ["time"], [], []],
         output_core_dims=[["time"]],
         dask="parallelized",
-        output_dtypes=[pr.dtype],
+        output_dtypes=[_pr.dtype],
     )
     kbdi = kbdi.assign_attrs(units="mm/day")
     return kbdi
@@ -323,8 +324,8 @@ def griffiths_drought_factor(
         """
         return _griffiths_drought_factor(_pr, _smd, _lim)
 
-    pr = convert_units_to(pr, "mm/day", context="hydro")
-    smd = convert_units_to(smd, "mm/day")
+    _pr = convert_units_to(pr, "mm/day", context="hydro")
+    _smd = convert_units_to(smd, "mm/day")
 
     if limiting_func == "xlim":
         lim = 0
@@ -335,13 +336,13 @@ def griffiths_drought_factor(
 
     df: xr.DataArray = xr.apply_ufunc(
         _griffiths_drought_factor_pass,
-        pr,
-        smd,
+        _pr,
+        _smd,
         kwargs={"_lim": lim},
         input_core_dims=[["time"], ["time"]],
         output_core_dims=[["time"]],
         dask="parallelized",
-        output_dtypes=[pr.dtype],
+        output_dtypes=[_pr.dtype],
     )
     df = df.assign_attrs(units="")
 

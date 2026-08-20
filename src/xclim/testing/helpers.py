@@ -13,12 +13,12 @@ import xarray as xr
 from dask.callbacks import Callback
 
 import xclim
-from xclim.core import VARIABLES
-from xclim.core.calendar import percentile_doy
-from xclim.indices.converters import (
+from xclim.compute.converters import (
     longwave_upwelling_radiation_from_net_downwelling,
     shortwave_upwelling_radiation_from_net_downwelling,
 )
+from xclim.core import VARIABLES, Freq
+from xclim.core.calendar import percentile_doy
 
 logger = logging.getLogger("xclim")
 
@@ -111,7 +111,7 @@ def add_example_file_paths() -> dict[str, str | list[xr.DataArray]]:
     dict of str or dict of list of xr.DataArray
         A dictionary of doctest-relevant datasets.
     """
-    namespace = {
+    namespace: dict[str, str | list[xr.DataArray]] = {
         "path_to_ensemble_file": "EnsembleReduce/TestEnsReduceCriteria.nc",
         "path_to_gwl_file": "Raven/gwl_obs.nc",
         "path_to_pr_file": "NRCANdaily/nrcan_canada_daily_pr_1990.nc",
@@ -165,7 +165,7 @@ def test_timeseries(
     variable,
     start: str = "2000-07-01",
     units: str | None = None,
-    freq: str = "D",
+    freq: Freq = "D",
     as_dataset: bool = False,
     cftime: bool | None = None,
     calendar: str | None = None,

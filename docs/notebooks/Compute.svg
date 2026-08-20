@@ -270,7 +270,7 @@
       <g class="com.sun.star.drawing.TextShape">
        <g id="id23">
         <rect class="BoundingBox" stroke="none" fill="none" x="9200" y="19700" width="8301" height="1963"/>
-        <text class="TextShape"><tspan class="TextParagraph" font-family="Liberation Sans, sans-serif" font-size="494px" font-weight="400"><tspan class="TextPosition" x="9450" y="20274"><tspan fill="rgb(0,160,252)" stroke="none">Computation using helpers from</tspan></tspan></tspan><tspan class="TextParagraph" font-family="Liberation Mono, monospace" font-size="494px" font-weight="400"><tspan class="TextPosition" x="9450" y="20829"><tspan fill="rgb(170,220,247)" stroke="none">xc.indices.generic</tspan><tspan font-family="Liberation Sans, sans-serif" fill="rgb(0,160,252)" stroke="none"> and </tspan></tspan><tspan class="TextPosition" x="9450" y="21388"><tspan fill="rgb(170,220,247)" stroke="none">xc.indices.run_length</tspan></tspan></tspan></text>
+        <text class="TextShape"><tspan class="TextParagraph" font-family="Liberation Sans, sans-serif" font-size="494px" font-weight="400"><tspan class="TextPosition" x="9450" y="20274"><tspan fill="rgb(0,160,252)" stroke="none">Computation using helpers from</tspan></tspan></tspan><tspan class="TextParagraph" font-family="Liberation Mono, monospace" font-size="494px" font-weight="400"><tspan class="TextPosition" x="9450" y="20829"><tspan fill="rgb(170,220,247)" stroke="none">xc.compute.helpers</tspan><tspan font-family="Liberation Sans, sans-serif" fill="rgb(0,160,252)" stroke="none"> and </tspan></tspan><tspan class="TextPosition" x="9450" y="21388"><tspan fill="rgb(170,220,247)" stroke="none">xc.compute.run_length</tspan></tspan></tspan></text>
        </g>
       </g>
       <g class="com.sun.star.drawing.TextShape">

@@ -18,10 +18,10 @@ import pandas as pd
 import xarray as xr
 from numba import njit
 
-from xclim.core import DateStr, DayOfYearStr
+from xclim.compute.helpers import resample_map
+from xclim.core import DateStr, DayOfYearStr, Freq, Reducer
 from xclim.core.options import OPTIONS, RUN_LENGTH_UFUNC
 from xclim.core.utils import lazy_indexing, uses_dask
-from xclim.indices.helpers import resample_map
 
 npts_opt = 9000
 """
@@ -31,11 +31,11 @@ the use of the ufunc version of run lengths algorithms.
 
 
 def use_ufunc(
-    ufunc_1dim: bool | str,
+    ufunc_1dim: bool | Literal["from_context", "auto"],
     da: xr.DataArray,
     dim: str = "time",
-    freq: str | None = None,
-    index: str = "first",
+    freq: Freq | None = None,
+    index: Literal["first", "last"] = "first",
 ) -> bool:
     """
     Return whether the ufunc version of run length algorithms should be used with this DataArray or not.
@@ -69,13 +69,14 @@ def use_ufunc(
 
     if ufunc_1dim == "from_context":
         ufunc_1dim = OPTIONS[RUN_LENGTH_UFUNC]
-
     if ufunc_1dim == "auto":
         ufunc_1dim = not uses_dask(da) and (da.size // da[dim].size) < npts_opt
+    if isinstance(ufunc_1dim, bool):
+        _ufunc_1dim = ufunc_1dim
     # If resampling after run length is set up for the computation, the 1d method is not implemented
     # Unless ufunc_1dim is specifically set to False (in which case we flag an error above),
     # we simply forbid this possibility.
-    return (index == "first") and ufunc_1dim and (freq is None)
+    return bool((index == "first") and ufunc_1dim and (freq is None))
 
 
 def _is_chunked(da, dim):
@@ -89,7 +90,7 @@ def resample_and_rl(
     resample_before_rl: bool,
     compute: Callable,
     *args,
-    freq: str,
+    freq: Freq,
     dim: str = "time",
     **kwargs,
 ) -> xr.DataArray:
@@ -120,7 +121,7 @@ def resample_and_rl(
         Output of compute resampled according to frequency {freq}.
     """
     if resample_before_rl:
-        out = resample_map(
+        out: xr.DataArray = resample_map(
             da,
             dim,
             freq,
@@ -172,7 +173,7 @@ def _cumsum_reset_xr(da, dim, index, reset_on_zero):
 def _cumsum_reset(
     da: xr.DataArray,
     dim: str = "time",
-    index: str = "last",
+    index: Literal["first", "last"] = "last",
 ) -> xr.DataArray:
     """
     Compute the cumulative sum for each series of numbers separated by zero.
@@ -223,7 +224,7 @@ def _cumsum_reset(
 def rle(
     da: xr.DataArray,
     dim: str = "time",
-    index: str = "first",
+    index: Literal["first", "last"] = "first",
 ) -> xr.DataArray:
     """
     Run length.
@@ -274,12 +275,12 @@ def rle(
 
 def rle_statistics(
     da: xr.DataArray,
-    reducer: str,
+    statistic: Reducer | Literal["q10", "q90"],
     window: int,
     dim: str = "time",
-    freq: str | None = None,
+    freq: Freq | None = None,
     ufunc_1dim: str | bool = "from_context",
-    index: str = "first",
+    index: Literal["first", "last"] = "first",
 ) -> xr.DataArray:
     """
     Return the length of consecutive run of True values, according to a reducing operator.
@@ -288,7 +289,7 @@ def rle_statistics(
     ----------
     da : xr.DataArray
         N-dimensional array (boolean).
-    reducer : str
+    statistic : str
         Name of the reducing function.
     window : int
         Minimal length of consecutive runs to be included in the statistics.
@@ -313,24 +314,24 @@ def rle_statistics(
     """
     ufunc_1dim = use_ufunc(ufunc_1dim, da, dim=dim, index=index, freq=freq)
     if ufunc_1dim:
-        rl_stat = statistics_run_ufunc(da, reducer, window, dim)
+        rl_stat = statistics_run_ufunc(da, statistic, window, dim)
     else:
         d = rle(da, dim=dim, index=index)
 
-        def get_rl_stat(d, dim, window, reducer):
-            reducer_kwargs = {"dim": dim}
-            if reducer.startswith("q") and reducer[1:].isdigit():
-                reducer_kwargs["q"] = float(f"0.{reducer[1:]}")
-                reducer = "quantile"
-            rl_stat = getattr(d.where(d >= window), reducer)(**reducer_kwargs)
+        def get_rl_stat(d, dim, window, statistic):
+            statistic_kwargs = {"dim": dim}
+            if statistic.startswith("q") and statistic[1:].isdigit():
+                statistic_kwargs["q"] = float(f"0.{statistic[1:]}")
+                statistic = "quantile"
+            rl_stat = getattr(d.where(d >= window), statistic)(**statistic_kwargs)
             rl_stat = xr.where((d.isnull() | (d < window)).all(dim=dim), 0, rl_stat)
             return rl_stat
 
         if freq is None:
-            rl_stat = get_rl_stat(d, dim, window, reducer)
+            rl_stat = get_rl_stat(d, dim, window, statistic)
         else:
             rl_stat = resample_map(
-                d, dim, freq, get_rl_stat, map_kwargs={"dim": dim, "window": window, "reducer": reducer}
+                d, dim, freq, get_rl_stat, map_kwargs={"dim": dim, "window": window, "statistic": statistic}
             )
     return rl_stat
 
@@ -338,7 +339,7 @@ def rle_statistics(
 def longest_run(
     da: xr.DataArray,
     dim: str = "time",
-    freq: str | None = None,
+    freq: Freq | None = None,
     ufunc_1dim: str | bool = "from_context",
     index: str = "first",
 ) -> xr.DataArray:
@@ -369,7 +370,7 @@ def longest_run(
     """
     return rle_statistics(
         da,
-        reducer="max",
+        statistic="max",
         window=1,
         dim=dim,
         freq=freq,
@@ -382,9 +383,9 @@ def windowed_run_events(
     da: xr.DataArray,
     window: int,
     dim: str = "time",
-    freq: str | None = None,
-    ufunc_1dim: str | bool = "from_context",
-    index: str = "first",
+    freq: Freq | None = None,
+    ufunc_1dim: Literal["auto", "from_context"] | bool = "from_context",
+    index: Literal["first", "last"] = "first",
 ) -> xr.DataArray:
     """
     Return the number of runs of a minimum length.
@@ -438,9 +439,9 @@ def windowed_run_count(
     da: xr.DataArray,
     window: int,
     dim: str = "time",
-    freq: str | None = None,
-    ufunc_1dim: str | bool = "from_context",
-    index: str = "first",
+    freq: Freq | None = None,
+    ufunc_1dim: Literal["auto", "from_context"] | bool = "from_context",
+    index: Literal["first", "last"] = "first",
 ) -> xr.DataArray:
     """
     Return the number of consecutive true values in array for runs at least as long as given duration.
@@ -492,8 +493,8 @@ def windowed_max_run_sum(
     da: xr.DataArray,
     window: int,
     dim: str = "time",
-    freq: str | None = None,
-    index: str = "first",
+    freq: Freq | None = None,
+    index: Literal["first", "last"] = "first",
 ) -> xr.DataArray:
     """
     Return the maximum sum of consecutive float values for runs at least as long as the given window length.
@@ -544,10 +545,10 @@ def _boundary_run(
     da: xr.DataArray,
     window: int,
     dim: str,
-    freq: str | None,
+    freq: Freq | None,
     coord: str | bool | None,
-    ufunc_1dim: str | bool,
-    position: str,
+    ufunc_1dim: Literal["auto", "from_context"] | bool,
+    position: Literal["first", "last"],
 ) -> xr.DataArray:
     """
     Return the index of the first item of the first or last run of at least a given length.
@@ -563,17 +564,17 @@ def _boundary_run(
         Dimension along which to calculate consecutive run.
     freq : str
         Resampling frequency.
-    coord : Optional[str]
+    coord : str, optional
         If not False, the function returns values along `dim` instead of indexes.
         If `dim` has a datetime dtype, `coord` can also be a str of the name of the
         DateTimeAccessor object to use (ex: 'dayofyear').
-    ufunc_1dim : Union[str, bool]
+    ufunc_1dim : str or bool
         Use the 1d 'ufunc' version of this function : default (auto) will attempt to select optimal
         usage based on number of data points.  Using 1D_ufunc=True is typically more efficient
         for DataArray with a small number of grid points.
         Ignored when `window=1`. It can be modified globally through the "run_length_ufunc" global option.
     position : {"first", "last"}
-        Determines if the algorithm finds the "first" or "last" run
+        Determines if the algorithm finds the "first" or "last" run.
 
     Returns
     -------
@@ -582,22 +583,22 @@ def _boundary_run(
         Returns np.nan if there are no valid runs.
     """
 
-    # FIXME: The logic here should not use outside scope variables, but rather pass them as arguments.
-    def coord_transform(out, da):
+    def _coord_transform(_out: xr.DataArray, _da: xr.DataArray, _coord: str | bool | None, _dim: str) -> xr.DataArray:
         """Transforms indexes to coordinates if needed, and drops obsolete dim."""
-        if coord:
-            crd = da[dim]
-            if isinstance(coord, str):
-                crd = getattr(crd.dt, coord)
-            out = lazy_indexing(crd, out)
+        if _coord:
+            crd = _da[_dim]
+            if isinstance(_coord, str):
+                crd = getattr(crd.dt, _coord)
+            _out = lazy_indexing(crd, _out)
 
-        if dim in out.coords:
-            out = out.drop_vars(dim)
-        return out
+        if _dim in _out.coords:
+            _out = _out.drop_vars(_dim)
+        return _out
 
-    # FIXME: The logic here should not use outside scope variables, but rather pass them as arguments.
     # general method to get indices (or coords) of first run
-    def find_boundary_run(runs, position):
+    def find_boundary_run(
+        runs: xr.DataArray, position: Literal["last"] | str, coord: str | bool | None, dim: str
+    ) -> xr.DataArray:
         if position == "last":
             runs = runs[{dim: slice(None, None, -1)}]
         dmax_ind = runs.argmax(dim=dim)
@@ -606,7 +607,7 @@ def _boundary_run(
         if position == "last":
             out = runs[dim].size - out - 1
             runs = runs[{dim: slice(None, None, -1)}]
-        out = coord_transform(out, runs)
+        out = _coord_transform(out, runs, coord, dim)
         return out
 
     ufunc_1dim = use_ufunc(ufunc_1dim, da, dim=dim, freq=freq)
@@ -614,9 +615,11 @@ def _boundary_run(
     da = da.fillna(0)  # We expect a boolean array, but there could be NaNs nonetheless
     if window == 1:
         if freq is not None:
-            out = resample_map(da, dim, freq, find_boundary_run, map_kwargs={"position": position})
+            out: xr.DataArray = resample_map(
+                da, dim, freq, find_boundary_run, map_kwargs={"position": position, "coord": coord, "dim": dim}
+            )
         else:
-            out = find_boundary_run(da, position)
+            out = find_boundary_run(da, position, coord, dim)
 
     elif ufunc_1dim:
         if position == "last":
@@ -625,7 +628,7 @@ def _boundary_run(
         if position == "last" and not coord:
             out = da[dim].size - out - 1
             da = da[{dim: slice(None, None, -1)}]
-        out = coord_transform(out, da)
+        out = _coord_transform(out, da, coord, dim)
 
     else:
         # _cusum_reset is an intermediate step in rle, which is sufficient here
@@ -633,9 +636,11 @@ def _boundary_run(
         d = xr.where(d >= window, 1, 0)
         # for "first" run, return "first" element in the run (and conversely for "last" run)
         if freq is not None:
-            out = resample_map(d, dim, freq, find_boundary_run, map_kwargs={"position": position})
+            out: xr.DataArray = resample_map(
+                d, dim, freq, find_boundary_run, map_kwargs={"position": position, "coord": coord, "dim": dim}
+            )
         else:
-            out = find_boundary_run(d, position)
+            out = find_boundary_run(d, position, coord, dim)
 
     return out
 
@@ -644,9 +649,9 @@ def first_run(
     da: xr.DataArray,
     window: int,
     dim: str = "time",
-    freq: str | None = None,
+    freq: Freq | None = None,
     coord: str | bool | None = False,
-    ufunc_1dim: str | bool = "from_context",
+    ufunc_1dim: Literal["auto", "from_context"] | bool = "from_context",
 ) -> xr.DataArray:
     """
     Return the index of the first item of the first run of at least a given length.
@@ -662,11 +667,11 @@ def first_run(
         Dimension along which to calculate consecutive run (default: 'time').
     freq : str
         Resampling frequency.
-    coord : Optional[str]
+    coord : str or bool, optional
         If not False, the function returns values along `dim` instead of indexes.
         If `dim` has a datetime dtype, `coord` can also be a str of the name of the
         DateTimeAccessor object to use (ex: 'dayofyear').
-    ufunc_1dim : Union[str, bool]
+    ufunc_1dim : {"auto", "from_context"} or bool
         Use the 1d 'ufunc' version of this function : default (auto) will attempt to select optimal
         usage based on number of data points.  Using 1D_ufunc=True is typically more efficient
         for DataArray with a small number of grid points.
@@ -694,9 +699,9 @@ def last_run(
     da: xr.DataArray,
     window: int,
     dim: str = "time",
-    freq: str | None = None,
+    freq: Freq | None = None,
     coord: str | bool | None = False,
-    ufunc_1dim: str | bool = "from_context",
+    ufunc_1dim: Literal["auto", "from_context"] | bool = "from_context",
 ) -> xr.DataArray:
     """
     Return the index of the last item of the last run of at least a given length.
@@ -753,7 +758,8 @@ def run_bounds(mask: xr.DataArray, dim: str = "time", coord: bool | str = True):
     dim : str
         Dimension along which to look for runs.
     coord : bool or str
-        If `True`, return values of the coordinate, if a string, returns values from `dim.dt.<coord>`.
+        If `True`, return values of the coordinate.
+        If a str, returns values from `dim.dt.<coord>`.
         If `False`, return indexes.
 
     Returns
@@ -802,7 +808,7 @@ def run_bounds(mask: xr.DataArray, dim: str = "time", coord: bool | str = True):
     return xr.concat((starts, ends), "bounds")
 
 
-def keep_longest_run(da: xr.DataArray, dim: str = "time", freq: str | None = None) -> xr.DataArray:
+def keep_longest_run(da: xr.DataArray, dim: str = "time", freq: Freq | None = None) -> xr.DataArray:
     """
     Keep the longest run along a dimension.
 
@@ -1217,11 +1223,11 @@ def first_run_after_date(
         Input N-dimensional DataArray (boolean).
     window : int
         Minimum duration of consecutive run to accumulate values.
-    date : DayOfYearStr
+    date : DayOfYearStr, optional
         The date after which to look for the run.
     dim : str
         Dimension along which to calculate consecutive run (default: 'time').
-    coord : Optional[Union[bool, str]]
+    coord : bool or str, optional
         If not False, the function returns values along `dim` instead of indexes.
         If `dim` has a datetime dtype, `coord` can also be a str of the name of the
         DateTimeAccessor object to use (ex: 'dayofyear').
@@ -1264,7 +1270,7 @@ def last_run_before_date(
         The date before which to look for the last event.
     dim : str
         Dimension along which to calculate consecutive run (default: 'time').
-    coord : Optional[Union[bool, str]]
+    coord : bool or str, optional
         If not False, the function returns values along `dim` instead of indexes.
         If `dim` has a datetime dtype, `coord` can also be a str of the name of the
         DateTimeAccessor object to use (ex: 'dayofyear').
@@ -1300,7 +1306,7 @@ def first_run_before_date(
         Input N-dimensional DataArray (boolean).
     window : int
         Minimum duration of consecutive run to accumulate values.
-    date : DayOfYearStr
+    date : DayOfYearStr, optional
         The date before which to look for the run.
     dim : str
         Dimension along which to calculate consecutive run (default: 'time').
@@ -1364,7 +1370,7 @@ def rle_1d(
 
     Examples
     --------
-    >>> from xclim.indices.run_length import rle_1d
+    >>> from xclim.compute.run_length import rle_1d
     >>> a = [1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3]
     >>> rle_1d(a)
     RLE_1D(values=array([1, 2, 3]), run_lengths=array([2, 4, 6]), start_positions=array([0, 2, 6]))
@@ -1405,7 +1411,7 @@ def first_run_1d(arr: Sequence[int | float], window: int) -> int | float:
     return ind
 
 
-def statistics_run_1d(arr: Sequence[bool], reducer: str, window: int) -> int:
+def statistics_run_1d(arr: Sequence[bool], statistic: str, window: int) -> int:
     """
     Return statistics on lengths of run of identical values.
 
@@ -1413,7 +1419,7 @@ def statistics_run_1d(arr: Sequence[bool], reducer: str, window: int) -> int:
     ----------
     arr : Sequence of bool
         Input array (bool).
-    reducer : {"mean", "sum", "min", "max", "std", "count", "q?"}
+    statistic : {"mean", "sum", "min", "max", "std", "count", "q?"}
         Reducing function name. The special name 'q?' computes a quantile with the provided value (e.g. 'q90' computes
          a `q=0.90` quantile).
     window : int
@@ -1427,14 +1433,14 @@ def statistics_run_1d(arr: Sequence[bool], reducer: str, window: int) -> int:
     v, rl = rle_1d(arr)[:2]
     if not np.any(v) or np.all(v * rl < window):
         return 0
-    if reducer == "count":
+    if statistic == "count":
         return (v * rl >= window).sum()
-    reducer_kwargs = {}
-    if reducer.startswith("q") and reducer[1:].isdigit():
-        reducer_kwargs["q"] = float(f"0.{reducer[1:]}")
-        reducer = "quantile"
-    func = getattr(np, f"nan{reducer}")
-    return func(np.where(v * rl >= window, rl, np.nan), **reducer_kwargs)
+    statistic_kwargs = {}
+    if statistic.startswith("q") and statistic[1:].isdigit():
+        statistic_kwargs["q"] = float(f"0.{statistic[1:]}")
+        statistic = "quantile"
+    func = getattr(np, f"nan{statistic}")
+    return func(np.where(v * rl >= window, rl, np.nan), **statistic_kwargs)
 
 
 def windowed_run_count_1d(arr: Sequence[bool], window: int) -> int:
@@ -1543,20 +1549,20 @@ def windowed_run_events_ufunc(x: xr.DataArray | Sequence[bool], window: int, dim
 
 def statistics_run_ufunc(
     x: xr.DataArray | Sequence[bool],
-    reducer: str,
+    statistic: str,
     window: int,
     dim: str = "time",
 ) -> xr.DataArray:
     """
     Dask-parallel version of statistics_run_1d.
 
-    The {reducer} number of consecutive true values in array.
+    The {statistic} number of consecutive true values in array.
 
     Parameters
     ----------
     x : Sequence of bool
         Input array (bool).
-    reducer : {'min', 'max', 'mean', 'sum', 'std', 'q?'}
+    statistic : {'min', 'max', 'mean', 'sum', 'std', 'q?'}
         Reducing function name. The special name 'q?' should be called as e.g. 'q90' to compute a `q=0.90` quantile.
     window : int
         Minimal length of runs.
@@ -1572,7 +1578,7 @@ def statistics_run_ufunc(
         statistics_run_1d,
         x,
         input_core_dims=[[dim]],
-        kwargs={"reducer": reducer, "window": window},
+        kwargs={"statistic": statistic, "window": window},
         vectorize=True,
         dask="parallelized",
         output_dtypes=[float],
@@ -1653,15 +1659,15 @@ def index_of_date(
         return np.array([default])
     if len(date.split("-")) == 2:
         date = f"1840-{date}"
-        date = datetime.strptime(date, "%Y-%m-%d")
+        date_obj = datetime.strptime(date, "%Y-%m-%d")
         year_cond = True
     else:
-        date = datetime.strptime(date, "%Y-%m-%d")
-        year_cond = time.dt.year == date.year
+        date_obj = datetime.strptime(date, "%Y-%m-%d")
+        year_cond = time.dt.year == date_obj.year
 
-    idxs = np.where(year_cond & (time.dt.month == date.month) & (time.dt.day == date.day))[0]
+    idxs = np.where(year_cond & (time.dt.month == date_obj.month) & (time.dt.day == date_obj.day))[0]
     if max_idxs is not None and idxs.size > max_idxs:
-        raise ValueError(f"More than {max_idxs} instance of date {date} found in the coordinate array.")
+        raise ValueError(f"More than {max_idxs} instance of date {date_obj} found in the coordinate array.")
     return idxs
 
 
@@ -1849,7 +1855,7 @@ def find_events(
     condition_stop: xr.DataArray | None = None,
     window_stop: int = 1,
     data: xr.DataArray | None = None,
-    freq: str | None = None,
+    freq: Freq | None = None,
 ) -> xr.Dataset:
     """
     Find events (runs).
