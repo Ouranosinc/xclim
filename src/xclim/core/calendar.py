@@ -1230,6 +1230,10 @@ def select_between_doys(
             raise NotImplementedError("Passing array-like `doy_bounds` is not supported for 360_day calendars.")
 
         start, end = doy_bounds
+        # store whether the bounds are None for later evaluation
+        _is_start_none = start is None
+        _is_end_none = end is None
+
         # Convert None to DataArrays with nans
         if start is None:
             start = xr.full_like(end, np.nan, dtype="float64")
@@ -1251,7 +1255,7 @@ def select_between_doys(
 
         # add time dimension if not present, with bounds given by freq
         if "time" not in start.dims:
-            freq = freq if freq is not None else "YS"
+            freq = freq or "YS"
             bnds = time_bnds(da.resample(time=freq))
             start = start.expand_dims(time=bnds.time)
             end = end.expand_dims(time=bnds.time)
@@ -1277,9 +1281,9 @@ def select_between_doys(
         end = doy_to_days_since(end.convert_calendar(**calkws))
 
         # Fill missing values in start and end bounds
-        if include_nans or start.isnull().all():
+        if include_nans or _is_start_none:
             start = start.fillna(0)
-        if include_nans or end.isnull().all():
+        if include_nans or _is_end_none:
             end = end.fillna(366)
 
         out = []
