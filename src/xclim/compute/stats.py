@@ -338,7 +338,7 @@ def parametric_cdf(
         keep_attrs=True,
         dask_gufunc_kwargs={"output_sizes": {"v": len(v)}},
     ).assign_coords(v=da_v.v.values)
-    data["cdf"].attrs = da_v.attrs
+    data["v"].attrs = da_v.attrs
 
     # Assign value coordinates and transpose to preserve original dimension order
     out = data.transpose(*(d if d != "dparams" else "v" for d in p.dims))
