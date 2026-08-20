@@ -1449,8 +1449,8 @@ def select_time(
                     "Passing open `date_bounds` (i.e., with None) is not supported for 360_day calendars."
                 )
 
-            bnds = time_bnds(da.time.resample(time=bounds_freq if bounds_freq is not None else "YS"))
-            cal = get_calendar(da)
+            bnds = time_bnds(da.time.resample(time=bounds_freq or "YS"))
+            cal = da.time.dt.calendar
             start = _doys_from_string(date_bounds[0], bnds.time, cal) if date_bounds[0] is not None else None
             end = _doys_from_string(date_bounds[1], bnds.time, cal) if date_bounds[1] is not None else None
             doy_bounds = (start, end)
