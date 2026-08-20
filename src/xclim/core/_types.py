@@ -12,6 +12,7 @@ from pint import Quantity
 from yaml import safe_load
 
 __all__ = [
+    "KIND_ANNOTATION",
     "VARIABLES",
     "Condition",
     "DataType",
@@ -305,6 +306,29 @@ def infer_kind_from_parameter(param) -> InputKind:
         return InputKind.DATASET
 
     return InputKind.OTHER_PARAMETER
+
+
+KIND_ANNOTATION = {
+    InputKind.VARIABLE: "str or DataArray",
+    InputKind.OPTIONAL_VARIABLE: "str or DataArray, optional",
+    InputKind.QUANTIFIED: "quantity (string or DataArray, with units)",
+    InputKind.MASK: "DataArray or scalar",
+    InputKind.FREQ_STR: "offset alias (string)",
+    InputKind.NUMBER: "number",
+    InputKind.NUMBER_SEQUENCE: "number or sequence of numbers",
+    InputKind.STRING: "str",
+    InputKind.DAY_OF_YEAR: "date (string, MM-DD)",
+    InputKind.DATE: "date (string, YYYY-MM-DD)",
+    InputKind.BOOL: "boolean",
+    InputKind.DICT: "dict",
+    InputKind.DATASET: "Dataset, optional",
+    InputKind.KWARGS: "",
+    InputKind.OTHER_PARAMETER: "Any",
+}
+"""
+Mapping from InputKind to human-readable annotations, to use in the Parameters section of a numpydoc style docstring
+(and not for function signatures).
+"""
 
 
 def is_percentile_dataarray(source: xr.DataArray) -> bool:

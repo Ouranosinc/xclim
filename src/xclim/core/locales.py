@@ -61,7 +61,6 @@ TRANSLATABLE_ATTRS = [
     "comment",
     "title",
     "abstract",
-    "keywords",
 ]
 """
 List of attributes to consider translatable when generating locale dictionaries.
@@ -147,22 +146,25 @@ def get_local_dict(locale: str | Sequence[str] | tuple[str, dict]) -> tuple[str,
 
 def get_local_attrs(
     indicator: str | Sequence[str],
-    *locales,  # : str | Sequence[str] | tuple[str, dict],
+    locale: str,
+    var_name: str = None,
     names: Sequence[str] | None = None,
     append_locale_name: bool = True,
 ) -> dict:
     r"""
-    Get all attributes of an indicator in the requested locales.
+    Get all attributes of an indicator in the requested locale.
 
     Parameters
     ----------
     indicator : str or sequence of strings
-        Indicator's class name, usually the same as in `xc.core.indicator.registry`.
+        Indicator's identifier, usually the same as in `xc.core.indicator.registry`.
         If multiple names are passed, the attrs from each indicator are merged,
         with the highest priority set to the first name.
-    *locales : str or tuple of str
+    locale : str
         IETF language tag or a tuple of the language tag and a translation dict, or a tuple of the language tag
         and a path to a json file defining translation of attributes.
+    var_name : str, optional
+        For multi-output indicator, this is the name of the variable for which we request attributes.
     names : sequence of str, optional
         If given, only returns translations of attributes in this list.
     append_locale_name : bool
@@ -171,7 +173,7 @@ def get_local_attrs(
     Returns
     -------
     dict
-        All CF attributes available for given indicator and locales.
+        All attributes available for given indicator and locales.
         Warns and returns an empty dict if none were available.
 
     Raises
@@ -182,25 +184,24 @@ def get_local_attrs(
     if isinstance(indicator, str):
         indicator = [indicator]
 
-    if not append_locale_name and len(locales) > 1:
-        raise ValueError("`append_locale_name` cannot be False if multiple locales are requested.")
+    loc_name, loc_dict = get_local_dict(locale)
+    loc_name = f"_{loc_name}" if append_locale_name else ""
+
+    local_attrs = {}
+    for ind in reversed(indicator):
+        local_attrs = local_attrs | loc_dict.get(ind, {})
+        if var_name:
+            local_attrs = local_attrs | loc_dict.get(f"{ind}.{var_name}", {})
 
     attrs = {}
-    for locale in locales:
-        loc_name, loc_dict = get_local_dict(locale)
-        loc_name = f"_{loc_name}" if append_locale_name else ""
-        local_attrs = loc_dict.get(indicator[-1], {})
-        for other_ind in indicator[-2::-1]:
-            local_attrs.update(loc_dict.get(other_ind, {}))
-        if not local_attrs:
-            warnings.warn(
-                f"Attributes of indicator {', '.join(indicator)} in language {locale} "
-                "were requested, but none were found."
-            )
-        else:
-            for name in TRANSLATABLE_ATTRS:
-                if (names is None or name in names) and name in local_attrs:
-                    attrs[f"{name}{loc_name}"] = local_attrs[name]
+    if not local_attrs:
+        warnings.warn(
+            f"Attributes of indicator {', '.join(indicator)} in language {locale} were requested, but none were found."
+        )
+    else:
+        for name in TRANSLATABLE_ATTRS:
+            if (names is None or name in names) and name in local_attrs:
+                attrs[f"{name}{loc_name}"] = local_attrs[name]
     return attrs
 
 
@@ -221,13 +222,13 @@ def get_local_formatter(
     AttrFormatter
         A locale-based formatter object instance.
     """
-    _, loc_dict = get_local_dict(locale)
+    loc_name, loc_dict = get_local_dict(locale)
     if "attrs_mapping" in loc_dict:
         attrs_mapping = loc_dict["attrs_mapping"].copy()
         mods = attrs_mapping.pop("modifiers")
         return AttrFormatter(attrs_mapping, mods)
 
-    warnings.warn("No `attrs_mapping` entry found for locale {loc_name}, using default (english) formatter.")
+    warnings.warn(f"No `attrs_mapping` entry found for locale {loc_name}, using default (english) formatter.")
     return default_formatter
 
 

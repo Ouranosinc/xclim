@@ -73,31 +73,32 @@ class FireWeather(Indicator):
     """Non resampling - precipitation related indicators."""
 
     src_freq = "D"
-    context = "hydro"
+    units_context = "hydro"
     keywords = ["fire"]
 
 
 class Precip(Daily):
     """Indicator involving daily pr series."""
 
-    context = "hydro"
+    units_context = "hydro"
     keywords = ["precipitation"]
 
 
 class PrecipAmount(Precip):
     """
-    Class that converts all flux and rates inputs to amount or thicknesses before computation.
+    Class that converts 'pr' to an amount before computation.
 
-    Only works on the variable named "pr".
+    Only works on "generic" compute functions that are made specific with the "input" argument,
+    and only works on the variable named "pr".
     """
 
     @classmethod
-    def _parse_var_mapping(cls, variable_mapping, parameters):
-        new_units = super()._parse_var_mapping(variable_mapping, parameters)
-        pr_arg_name = [k for k, v in variable_mapping.items() if v == "pr"][0]
+    def _update_parameters(cls, parameters, new_params, var_mapping):
+        parameters, new_units = super()._update_parameters(parameters, new_params, var_mapping)
+        pr_arg_name = [k for k, v in var_mapping.items() if v == "pr"][0]
         if pr_arg_name in new_units:
             new_units[pr_arg_name] = "[mass]/[area]"
-        return new_units
+        return parameters, new_units
 
     def _preprocess_and_checks(self, das, params):
         return (das | {"pr": rate2amount(das["pr"])}, params)
@@ -107,7 +108,7 @@ class PrecipWithIndexing(ResamplingIndicatorWithIndexing):
     """Indicator involving daily pr series and allowing indexing."""
 
     src_freq = "D"
-    context = "hydro"
+    units_context = "hydro"
     keywords = ["precipitation"]
 
 
@@ -115,7 +116,7 @@ class PrecipTempWithIndexing(ResamplingIndicatorWithIndexing):
     """Indicator involving pr and one of tas, tasmin or tasmax, allowing indexing."""
 
     src_freq = "D"
-    context = "hydro"
+    units_context = "hydro"
     keywords = ["precipitation"]
 
 
@@ -128,7 +129,7 @@ class PrecipTemp(Precip):
 class HrPrecip(Hourly):
     """Indicator involving hourly pr series."""
 
-    context = "hydro"
+    units_context = "hydro"
     keywords = ["precipitation"]
 
 
@@ -136,7 +137,7 @@ class DailyPrecipNoResample(Indicator):
     """Non-resampling indicators acting on daily precipitation data."""
 
     src_freq = "D"
-    context = "hydro"
+    units_context = "hydro"
     keywords = ["precipitation"]
 
 
