@@ -1264,14 +1264,16 @@ def select_between_doys(
             # freq is inferred: use inferred freq
             # freq cannot be inferred and not passed: raise an error
             # freq cannot be inferred but is passed: use passed freq
-            infer_freq = xr.infer_freq(start.time)
-            if infer_freq:
-                freq = infer_freq
-            elif freq is None:
-                raise ValueError(
-                    "The frequency of `doy_bounds` could not be inferred. Consider passing it explicitly "
-                    "with the `freq` argument."
-                )
+            try:
+                infer_freq = xr.infer_freq(start.time)
+                if infer_freq:
+                    freq = infer_freq
+            except ValueError:
+                if freq is None:
+                    raise ValueError(
+                        "The frequency of `doy_bounds` could not be inferred. Consider passing it explicitly "
+                        "with the `freq` argument."
+                    )
 
         # Convert the doy bounds to a duration since the beginning of each period defined
         # in the bound's time coordinate.
