@@ -681,6 +681,19 @@ class TestTimeSelection:
         )
         xr.testing.assert_equal(out, exp)
 
+    def test_select_time_open_dates(self):
+        # Case 1: default (YS) inferable freq (>= 3 years)
+        da = self.series("2003-01-01", "2005-12-31", "default")
+        out = select_time(da, date_bounds=(None, "03-31"))
+        exp = [90, 91, 90]  # 91 for leap year 2004
+        np.testing.assert_array_equal(out.notnull().resample(time="YS").sum(), exp)
+
+        # Case 2: not inferable freq (< 3 years) so explicitly set "YS-JUL" freq
+        da = self.series("2003-01-01", "2004-06-30", "default")
+        out = select_time(da, date_bounds=(None, "06-30"), bounds_freq="YS-JUL")
+        exp = [181, 365]
+        np.testing.assert_array_equal(out.notnull().resample(time="YS-JUL").sum(), exp)
+
     def test_select_time_errors(self):
         da = self.series("2003-01-01", "2004-01-01", "standard")
 
@@ -694,6 +707,10 @@ class TestTimeSelection:
 
         with pytest.raises(ValueError):
             select_time(da, date_bounds=("02-30",))
+
+        # timeseries too short to infer frequency and bounds_freq not provided
+        with pytest.raises(ValueError):
+            select_time(da, date_bounds=(None, "03-03"))
 
         with pytest.raises(TypeError):
             select_time(da, doy_bounds=(300, 203, 202))
