@@ -46,7 +46,7 @@ class TestStandardizedStreamflow:
             q,
             freq="MS",
             window=1,
-            dist="genextreme",
+            dist="fisk",
             method="APP",
             fitkwargs={"floc": 0},
         )
@@ -54,7 +54,7 @@ class TestStandardizedStreamflow:
             qMM,
             freq="MS",
             window=1,
-            dist="genextreme",
+            dist="fisk",
             method="APP",
             fitkwargs={"floc": 0},
         )
@@ -71,7 +71,7 @@ class TestStandardizedStreamflow:
             q,
             freq=None,
             window=1,
-            dist="genextreme",
+            dist="fisk",
             method="APP",
             fitkwargs={"floc": 0},
         )
