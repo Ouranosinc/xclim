@@ -43,14 +43,14 @@ __all__ = [
 class StreamflowNoResampling(Indicator):
     """Indicators involving streamflow without resampling."""
 
-    units_context = "hydro"
+    context = "hydro"
     keywords = ["streamflow", "hydrology"]
 
 
 class Streamflow(ResamplingIndicator):
     """Streamflow class."""
 
-    units_context = "hydro"
+    context = "hydro"
     src_freq = "D"
     keywords = ["streamflow", "snow", "hydrology"]
 
@@ -107,7 +107,7 @@ doy_qmin = Streamflow(
 
 flow_index = ReducingIndicator(
     realm="land",
-    units_context="hydro",
+    context="hydro",
     title="Flow index",
     identifier="flow_index",
     var_name="q_flow_index",

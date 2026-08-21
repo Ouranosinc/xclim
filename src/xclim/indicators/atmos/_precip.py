@@ -73,14 +73,14 @@ class FireWeather(Indicator):
     """Non resampling - precipitation related indicators."""
 
     src_freq = "D"
-    units_context = "hydro"
+    context = "hydro"
     keywords = ["fire"]
 
 
 class Precip(Daily):
     """Indicator involving daily pr series."""
 
-    units_context = "hydro"
+    context = "hydro"
     keywords = ["precipitation"]
 
 
@@ -108,7 +108,7 @@ class PrecipWithIndexing(ResamplingIndicatorWithIndexing):
     """Indicator involving daily pr series and allowing indexing."""
 
     src_freq = "D"
-    units_context = "hydro"
+    context = "hydro"
     keywords = ["precipitation"]
 
 
@@ -116,7 +116,7 @@ class PrecipTempWithIndexing(ResamplingIndicatorWithIndexing):
     """Indicator involving pr and one of tas, tasmin or tasmax, allowing indexing."""
 
     src_freq = "D"
-    units_context = "hydro"
+    context = "hydro"
     keywords = ["precipitation"]
 
 
@@ -129,7 +129,7 @@ class PrecipTemp(Precip):
 class HrPrecip(Hourly):
     """Indicator involving hourly pr series."""
 
-    units_context = "hydro"
+    context = "hydro"
     keywords = ["precipitation"]
 
 
@@ -137,7 +137,7 @@ class DailyPrecipNoResample(Indicator):
     """Non-resampling indicators acting on daily precipitation data."""
 
     src_freq = "D"
-    units_context = "hydro"
+    context = "hydro"
     keywords = ["precipitation"]
 
 

@@ -3,6 +3,87 @@ Indicator collections
 =====================
 
 An indicator collection is a structure holding multiple indicators. It can be created through a yaml configuration file.
+
+YAML file structure
+~~~~~~~~~~~~~~~~~~~
+
+Indicator-defining yaml files are structured in the following way. Most entries of the `indicators` section are
+mirroring attributes of the :py:class:`xclim.core.indicator.Indicator`, please refer to its documentation for more
+details on each.
+
+.. code-block:: yaml
+
+    module: <module name>  # Defaults to the file name
+    realm: <realm>  # If given here, applies to all indicators that do not already provide it.
+    keywords:
+      - <keyword>  # Merged with indicator-specific keywords (appended to the list)
+    references: <references> # Merged with indicator-specific references (joined with a new line)
+    base: <base indicator class>  # Defaults to "Daily" and applies to all indicators that do not give it.
+    doc: <module docstring>  # Defaults to a minimal header, only valid if the module doesn't already exist.
+    variables:  # Optional section if indicators declared below rely on variables unknown to xclim
+                # (not in `xclim.core.VARIABLES`)
+                # The variables are not module-dependent and will overwrite any already existing with the same name.
+      <varname>:
+        canonical_units: <units> # required
+        description: <description> # required
+        standard_name: <expected standard_name> # optional
+        cell_methods: <expected cell_methods> # optional
+    indicators:
+      <identifier>:  # The actual indicator identifier will be prepended by the module name.
+        # From which Indicator to inherit
+        base: <base indicator class>  # Defaults to module-wide base class
+                                      # If the name startswith a '.', the base class is taken from the current module
+                                      # (thus an indicator declared _above_).
+                                      # Available indicators are listed in `xclim.core.indicator.registry` and
+                                      # other base classes in `xclim.core.indicator.base_registry`.
+
+        # General metadata, usually parsed from the `compute`s docstring when possible.
+        realm: <realm>  # defaults to module-wide realm. One of "atmos", "land", "seaIce", "ocean".
+        title: <title>
+        abstract: <abstract>
+        keywords:
+          - <keyword>  # merged to module-wide keywords.
+        references: <references>  # newline-seperated, merged to module-wide references.
+        notes: <notes>
+
+        # Other options (not all indicator classes support them)
+        missing: <missing method name>
+        missing_options: <missing options mapping>
+        allowed_periods: [<list>, <of>, <allowed>, <periods>]
+        context: <context> # A unit context enabled during the conversion of the compute's output to the requested units
+
+        # Compute function
+        compute: <function name>  # Referring to a function in `compute` module
+                                  # (xclim.compute.generic or xclim.compute)
+                                  # Or to a function declared in the mapping passed to the collection constructor.
+        input:  # When "compute" is a generic function, this is a mapping from argument name to the expected variable.
+                # It will change the expected name of the variable as well as its units/dimensionality.
+                # Can refer to a variable declared in the `variables` section above or in `xclim.core.VARIABLES`.
+          <var name in compute> : <variable official name>
+          ...
+
+        # Parameters
+        <param name>: <param data>  # Simplest case, to inject parameters in the compute function.
+                                    # Kwargs-like parameters like ``indexer`` must be injected as a dictionary here.
+        <param name>:  # To change parameters metadata or to declare units when "compute" is a generic function.
+          default : <param default>
+          description: <param description>
+          name : <param name>  # Change the name of the parameter (similar to what `input` does for variables)
+          kind: <param kind> # Override the parameter kind. This is mostly useful for transforming an
+                             # optional variable into a required one by passing ``kind: 0``.
+        ...
+      ...  # and so on.
+
+All fields are optional. Other fields found in the yaml file will trigger errors when validation is activated.
+
+When a module is built from a yaml file, the yaml is first validated against the schema (see xclim/data/schema.yml)
+using the YAMALE library (:cite:p:`lopker_yamale_2022`). See the "Extending xclim" notebook for more info.
+
+Inputs
+~~~~~~
+As xclim has strict definitions of possible input variables (see :py:data:`xclim.core.VARIABLES`),
+the mapping of `indicators.<identifier>.input` simply links an argument name from the function given in "compute"
+to one of those official variables.
 """
 
 from __future__ import annotations

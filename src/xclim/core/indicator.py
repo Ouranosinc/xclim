@@ -8,99 +8,6 @@ missing and adds metadata attributes to the output.
 
 There are many ways to construct indicators. A good place to start is
 `this notebook <notebooks/extendxclim.ipynb#Defining-new-indicators>`_.
-
-Dictionary and YAML parser
---------------------------
-
-To construct indicators dynamically, xclim can also use dictionaries and parse them from YAML files.
-This is especially useful for generating whole indicator "submodules" from files.
-This functionality is inspired by the work of `clix-meta <https://github.com/clix-meta/clix-meta/>`_.
-
-YAML file structure
-~~~~~~~~~~~~~~~~~~~
-
-Indicator-defining yaml files are structured in the following way. Most entries of the `indicators` section are
-mirroring attributes of the :py:class:`Indicator`, please refer to its documentation for more details on each.
-
-.. code-block:: yaml
-
-    module: <module name>  # Defaults to the file name
-    realm: <realm>  # If given here, applies to all indicators that do not already provide it.
-    keywords:
-      - <keyword>  # Merged with indicator-specific keywords
-    references: <references> # Merged with indicator-specific references (joined with a new line)
-    base: <base indicator class>  # Defaults to "Daily" and applies to all indicators that do not give it.
-    doc: <module docstring>  # Defaults to a minimal header, only valid if the module doesn't already exist.
-    variables:  # Optional section if indicators declared below rely on variables unknown to xclim
-                # (not in `xclim.core.VARIABLES`)
-                # The variables are not module-dependent and will overwrite any already existing with the same name.
-      <varname>:
-        canonical_units: <units> # required
-        description: <description> # required
-        standard_name: <expected standard_name> # optional
-        cell_methods: <expected cell_methods> # optional
-    indicators:
-      <identifier>:
-        # From which Indicator to inherit
-        base: <base indicator class>  # Defaults to module-wide base class
-                                      # If the name startswith a '.', the base class is taken from the current module
-                                      # (thus an indicator declared _above_).
-                                      # Available classes are listed in `xclim.core.indicator.registry` and
-                                      # `xclim.core.indicator.base_registry`.
-
-        # General metadata, usually parsed from the `compute`s docstring when possible.
-        realm: <realm>  # defaults to module-wide realm. One of "atmos", "land", "seaIce", "ocean".
-        title: <title>
-        abstract: <abstract>
-        keywords:
-          - <keyword>  # merged to module-wide keywords.
-        references: <references>  # newline-seperated, merged to module-wide references.
-        notes: <notes>
-
-        # Other options
-        missing: <missing method name>
-        missing_options:
-            # missing options mapping
-        allowed_periods: [<list>, <of>, <allowed>, <periods>]
-        context: <context> # A unit context enabled during the conversion of the compute's output to the requested units
-
-        # Compute function
-        compute: <function name>  # Referring to a function in `compute` module
-                                  # (xclim.compute.generic or xclim.compute)
-        input:  # When "compute" is a generic function, this is a mapping from argument name to the expected variable.
-                # This will allow the input units and CF metadata checks to run on the inputs.
-                # Can also be used to modify the expected variable, as long as it has the same dimensionality
-                # e.g. "tas" instead of "tasmin".
-                # Can refer to a variable declared in the `variables` section above.
-          <var name in compute> : <variable official name>
-          ...
-        parameters:
-         <param name>: <param data>  # Simplest case, to inject parameters in the compute function.
-         <param name>:  # To change parameters metadata or to declare units when "compute" is a generic function.
-            units: <param units>  # Only valid if "compute" points to a generic function
-            default : <param default>
-            description: <param description>
-            name : <param name>  # Change the name of the parameter (similar to what `input` does for variables)
-            kind: <param kind> # Override the parameter kind. This is mostly useful for transforming an
-                               # optional variable into a required one by passing ``kind: 0``.
-        ...
-      ...  # and so on.
-
-All fields are optional. Other fields found in the yaml file will trigger errors in xclim.
-In the following, the section under `<identifier>` is referred to as `data`. When creating indicators from
-a dictionary, with :py:meth:`Indicator.from_dict`, the input dict must follow the same structure of `data`.
-
-Note that kwargs-like parameters like ``indexer`` must be injected as a dictionary
-(``param data`` above should be a dictionary).
-
-When a module is built from a yaml file, the yaml is first validated against the schema (see xclim/data/schema.yml)
-using the YAMALE library (:cite:p:`lopker_yamale_2022`). See the "Extending xclim" notebook for more info.
-
-Inputs
-~~~~~~
-As xclim has strict definitions of possible input variables (see :py:data:`xclim.core.VARIABLES`),
-the mapping of `data.input` simply links an argument name from the function given in "compute"
-to one of those official variables.
 """  # numpydoc ignore=GL07
 
 from __future__ import annotations
@@ -675,7 +582,7 @@ class IndicatorBase(IndexWrapper):
     """Extends IndexWrapper by allowing metadata overrides, adding non-parsable fields and orchestrating computation."""
 
     identifier: str = None
-    """Unique ID identifying this indicator, for registry purposes."""
+    """Unique ID identifying this indicator. Mostly for registry purposes."""
 
     realm: str = None
     """General domain of validity of the indicator. Should use the same vocabulary as CMIP."""
@@ -686,7 +593,7 @@ class IndicatorBase(IndexWrapper):
     Child classes append to the list when inheriting.
     """
 
-    units_context: str = "none"
+    context: str = "none"
     """Name of `xclim.units.units` context which will be enabled during computation."""
 
     def __new__(cls, **kwds):
@@ -944,7 +851,7 @@ class IndicatorBase(IndexWrapper):
 
         # get mappings where keys are the actual compute function's argument names
         args = self._get_compute_args(das, params)
-        with np.errstate(divide="ignore", invalid="ignore"), units.context(self.units_context):
+        with np.errstate(divide="ignore", invalid="ignore"), units.context(self.context):
             outs = self.compute(**args)
 
         if isinstance(outs, DataArray):
@@ -959,7 +866,7 @@ class IndicatorBase(IndexWrapper):
             outs[i] = outs[i].rename(atts.var_name)
             if atts.units is not None:
                 outs[i] = convert_units_to(
-                    outs[i], {"units": atts.units, "units_metadata": atts.units_metadata}, self.units_context
+                    outs[i], {"units": atts.units, "units_metadata": atts.units_metadata}, self.context
                 )
 
         outs, meta = self._postprocess(outs, das, params, meta)
@@ -1484,13 +1391,6 @@ class _Compatibility(_InputChecker):
                 "Indicator argument `cf_attrs` has been renamed to `attrs` in xclim v1.", FutureWarning, stacklevel=2
             )
             kwargs["attrs"] = kwargs.pop("cf_attrs")
-        if "context" in kwargs:
-            warnings.warn(
-                "Indicator argument `context` has been renamed to `units_context` in xclim v1.",
-                FutureWarning,
-                stacklevel=2,
-            )
-            kwargs["units_context"] = kwargs.pop("context")
 
         attrs = kwargs.pop("attrs", None) or []
         for att in cls._cf_names:
@@ -1512,7 +1412,17 @@ class _Compatibility(_InputChecker):
         return super().__new__(cls, **kwargs)
 
 
-class Indicator(_Compatibility):  # numpydoc ignore=PR01
+class _Registrer(_Compatibility):
+    """Register the indicator in the xclim registry."""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.identifier in registry:
+            warnings.warn(f"Indicator {self.identifier} already exists and will be overwritten.", stacklevel=1)
+        registry[self.identifier] = self
+
+
+class Indicator(_Registrer):  # numpydoc ignore=PR01
     r"""
     Climate indicator base class.
 
@@ -1551,7 +1461,7 @@ class Indicator(_Compatibility):  # numpydoc ignore=PR01
         input: dict = None,
         parameters: dict = None,
         attrs: dict = None,
-        units_context: str = "none",
+        context: str = "none",
         src_freq: str | list[str] = None,
         **localized_metadata,
     ):
@@ -1595,7 +1505,7 @@ class Indicator(_Compatibility):  # numpydoc ignore=PR01
             Attributes to be formatted and added to the computation's output.
             Any attribute are accepted, but `var_name` is required for multi-output indicators.
             The list must be the same length as the number of outputs of the compute function.
-        units_context : str
+        context : str
             A `pint` unit context enabled during the computation of this indicator.
             For example use 'hydro' to allow conversion from 'kg m-2 s-1' to 'mm/day' for all inputs an outputs.
         src_freq : str, sequence of strings, optional
@@ -1618,11 +1528,10 @@ class Indicator(_Compatibility):  # numpydoc ignore=PR01
             input=input or {},
             parameters=parameters or {},
             attrs=attrs or {},
-            units_context=units_context,
+            context=context,
             src_freq=src_freq,
             **localized_metadata,
         )
-        registry[self.identifier] = self
 
 
 class CheckMissingIndicator(Indicator):  # numpydoc ignore=PR01,PR02
@@ -1804,7 +1713,7 @@ class StandardizedIndexes(ResamplingIndicator):
     """Resampling but flexible inputs indicators."""
 
     src_freq = ["D", "MS"]
-    units_context = "hydro"
+    context = "hydro"
 
 
 base_registry["Indicator"] = Indicator

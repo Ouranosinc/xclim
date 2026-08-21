@@ -319,7 +319,7 @@ snowfall_approximation = Converter(
     abstract="Solid precipitation estimated from total precipitation and temperature "
     "with a given method and temperature threshold.",
     compute=converters.snowfall_approximation,
-    units_context="hydro",
+    context="hydro",
 )
 
 snd_to_snw = Converter(
@@ -361,7 +361,7 @@ rain_approximation = Converter(
     abstract="Liquid precipitation estimated from total precipitation and temperature "
     "with a given method and temperature threshold.",
     compute=converters.rain_approximation,
-    units_context="hydro",
+    context="hydro",
 )
 
 
