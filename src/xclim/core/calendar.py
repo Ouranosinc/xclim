@@ -1264,8 +1264,7 @@ def select_between_doys(
             # freq cannot be inferred but is passed: use passed freq
             try:
                 infer_freq = xr.infer_freq(start.time)
-                if infer_freq:
-                    bounds_freq = infer_freq
+                bounds_freq = bounds_freq or infer_freq
             except ValueError:
                 if bounds_freq is None:
                     raise ValueError(
