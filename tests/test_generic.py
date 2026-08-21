@@ -629,8 +629,8 @@ class TestTimeSelection:
 
         # Case 2: not inferable freq (< 3 years) so explicitly set "YS-JUL" freq
         da = self.series("2003-01-01", "2004-06-30", "default")
-        out = select_time(da, date_bounds=(None, "06-30"), bounds_freq="YS-JUL")
-        exp = [181, 365]
+        out = select_time(da, date_bounds=("07-01", None), bounds_freq="YS-JUL")
+        exp = [181, 366]
         np.testing.assert_array_equal(out.notnull().resample(time="YS-JUL").sum(), exp)
 
     def test_select_time_errors(self):
