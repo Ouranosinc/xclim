@@ -12,16 +12,16 @@ from yaml import safe_load
 
 from xclim import indicators
 from xclim.core import VARIABLES, InputKind
-from xclim.core.indicator import build_indicator_module_from_yaml
+from xclim.core.collection import IndicatorCollection
 from xclim.core.locales import read_locale_file
 from xclim.core.options import set_options
 from xclim.core.utils import load_module, make_clix_meta_yaml
 
 
 def all_virtual_indicators():
-    for mod in ["anuclim", "cf", "icclim"]:
-        for name, ind in getattr(indicators, mod).iter_indicators():
-            yield pytest.param((mod, name, ind), id=f"{mod}.{name}")
+    for coll in [indicators.anuclim, indicators.cf, indicators.icclim]:
+        for name, ind in coll.iter_indicators():
+            yield pytest.param((coll.name, name, ind), id=f"{coll.name}.{name}")
 
 
 @pytest.fixture(params=all_virtual_indicators())
@@ -70,14 +70,14 @@ def test_custom_indices(open_dataset):
     example = load_module(example_path / "example.py")
 
     # From module
-    ex1 = build_indicator_module_from_yaml(example_path / "example.yml", name="ex1", computes=example)
+    ex1 = IndicatorCollection.from_yaml(example_path / "example.yml", name="ex1", computes=example)
 
     # Did this register the new variable?
     assert "prveg" in VARIABLES
 
     # From mapping
     extreme_inds = {"extreme_precip_accumulation_and_days": example.extreme_precip_accumulation_and_days}
-    ex2 = build_indicator_module_from_yaml(example_path / "example.yml", name="ex2", computes=extreme_inds)
+    ex2 = IndicatorCollection.from_yaml(example_path / "example.yml", name="ex2", computes=extreme_inds)
 
     assert ex1.R95p.__doc__ == ex2.R95p.__doc__  # noqa
 
@@ -90,9 +90,9 @@ def test_custom_indices(open_dataset):
     assert ex1.RX5day_canopy.missing == indicators.atmos.max_n_day_precipitation_amount.missing
 
     # Error when missing
-    with pytest.raises(ImportError, match="extreme_precip_accumulation_and_days"):
-        build_indicator_module_from_yaml(example_path / "example.yml", name="ex3")
-    build_indicator_module_from_yaml(example_path / "example.yml", name="ex4", mode="ignore")
+    with pytest.raises(ValueError, match="extreme_precip_accumulation_and_days"):
+        IndicatorCollection.from_yaml(example_path / "example.yml", name="ex3")
+    IndicatorCollection.from_yaml(example_path / "example.yml", name="ex4", mode="ignore")
 
     # Check that indexer was added and injected correctly
     assert "indexer" not in ex1.RX1day_summer.parameters
@@ -104,9 +104,9 @@ def test_indicator_module_translations():
     # Use the example data used in the Extending Xclim notebook for testing.
     example_path = Path(__file__).parent.parent / "docs" / "notebooks" / "example"
 
-    ex = build_indicator_module_from_yaml(example_path / "example", name="ex_trans")
-    assert ex.RX5day_canopy.translate_attrs("fr")["cf_attrs"][0]["long_name"].startswith("Cumul maximal")
-    assert indicators.atmos.max_n_day_precipitation_amount.translate_attrs("fr")["cf_attrs"][0]["long_name"].startswith(
+    ex = IndicatorCollection.from_yaml(example_path / "example", name="ex_trans")
+    assert ex.RX5day_canopy.translate("fr")["attrs"][0]["long_name"].startswith("Cumul maximal")
+    assert indicators.atmos.max_n_day_precipitation_amount.translate("fr")["attrs"][0]["long_name"].startswith(
         "Maximum du cumul"
     )
 
@@ -114,20 +114,20 @@ def test_indicator_module_translations():
 @pytest.mark.requires_docs
 def test_indicator_module_input_mapping(atmosds):
     example_path = Path(__file__).parent.parent / "docs" / "notebooks" / "example"
-    ex = build_indicator_module_from_yaml(example_path / "example", name="ex_input")
+    ex = IndicatorCollection.from_yaml(example_path / "example", name="ex_input")
     prveg = atmosds.pr.rename("prveg").assign_attrs(standard_name="precipitation_flux_onto_canopy")
-
-    out = ex.RX5day_canopy(prveg=prveg)
-    assert "RX5DAY_CANOPY(prveg=prveg)" in out.attrs["history"]
+    with set_options(as_dataset=True):
+        out = ex.RX5day_canopy(prveg=prveg)
+    assert "RX5day_canopy(prveg=prveg)" in out.attrs["history"]
 
 
 @pytest.mark.requires_docs
-def test_build_indicator_module_from_yaml_edge_cases():
+def test_edge_cases():
     # Use the example data used in the Extending Xclim notebook for testing.
     example_path = Path(__file__).parent.parent / "docs" / "notebooks" / "example"
 
     # All from paths but one
-    ex5 = build_indicator_module_from_yaml(
+    ex5 = IndicatorCollection.from_yaml(
         example_path / "example.yml",
         computes=example_path / "example.py",
         translations={
@@ -137,10 +137,9 @@ def test_build_indicator_module_from_yaml_edge_cases():
         },
         name="ex5",
     )
-    assert hasattr(indicators, "ex5")
-    assert ex5.R95p.translate_attrs("fr")["cf_attrs"][0]["description"].startswith("Épaisseur équivalente")
-    assert ex5.R95p.translate_attrs("ru")["cf_attrs"][0]["description"].startswith("Épaisseur équivalente")
-    assert ex5.R95p.translate_attrs("eo")["cf_attrs"][0]["description"].startswith("Épaisseur équivalente")
+    assert ex5.R95p.translate("fr")["attrs"][0]["description"].startswith("Épaisseur équivalente")
+    assert ex5.R95p.translate("ru")["attrs"][0]["description"].startswith("Épaisseur équivalente")
+    assert ex5.R95p.translate("eo")["attrs"][0]["description"].startswith("Épaisseur équivalente")
 
 
 class TestClixMeta:
@@ -207,7 +206,7 @@ def test_realm(tmp_path):
     fh = tmp_path / "test.yml"
 
     fh.write_text(yml)
-    mod = build_indicator_module_from_yaml(fh, name="test")
+    mod = IndicatorCollection.from_yaml(fh, name="test")
     assert mod.ice_extent.realm == "ocean"
 
 
@@ -226,9 +225,9 @@ def test_validate(tmp_path):
     fh.write_text(yml)
 
     with pytest.raises(yamale.YamaleError):
-        build_indicator_module_from_yaml(fh, name="test")
+        IndicatorCollection.from_yaml(fh, name="test")
 
-    build_indicator_module_from_yaml(fh, name="test2", validate=False)
+    IndicatorCollection.from_yaml(fh, name="test2", validate=False)
 
     sch = r"""
 realm: str(required=False)
@@ -241,7 +240,7 @@ indicator:
 """
     fsch = tmp_path / "schema.yml"
     fsch.write_text(sch)
-    build_indicator_module_from_yaml(fh, name="test3", validate=fsch)
+    IndicatorCollection.from_yaml(fh, name="test3", validate=fsch)
 
 
 class TestOfficialYaml(yamale.YamaleTestCase):

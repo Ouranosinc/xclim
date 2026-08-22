@@ -17,6 +17,11 @@ Major changes
 * Major refactor of ``xclim.indices.generic`` to reduce duplication and harmonize signatures. (:pull:`2258`).
     * Generic functions from ``clix-meta`` are now in their own submodule ``xclim.indices.clix`` and some indicators in ``xclim.cf`` have changed to reflect changes in standards.
     * A summary of the changes can be found `in this comment <https://github.com/Ouranosinc/xclim/pull/2258#issuecomment-3473430173>`_.
+* Refactor of the ``xclim.core.indicator.Indicator`` class itself  (:pull:`2397`). Most breaking changes are:
+    * Output attributes are stored in ``Indicator.attrs`` (renamed from ``cf_attrs``), which is a list of ``xclim.core.indicator.Output`` objects (not dictionaries).
+    * Removal of ``Indicator.from_dict``. Renamed ``Indicator.translate_attrs`` to ``Indicator.translate``.
+    * The ``xclim.core.indicator.registry`` now holds ``Indicator`` _instances_ (not classes) and is case-insensitive.
+    * "Virtual submodules" were transformed into ``xclim.core.collection.IndicatorCollection`` instances (and not actual python modules). Indicators created this way automatically have the collection's name prepended to their identifier.
 
 
 New indicators and features
@@ -39,6 +44,7 @@ Breaking changes
     * ``xclim.indicators.convert.tg`` -> ``xclim.indicators.convert.mean_temperature_from_max_and_min``
 * The required versions for many core dependencies have been updated: `numba` (>=0.60.0), `numpy` (>=2.0), `pip` (>=26.1), `scikit-learn` (>=1.5.0), `xarray` (>=2024.6.0,!=2024.10.0). (:pull:`2355`).
 * `pre-commit` has been replaced by `prek`. `prek` is a `pre-commit-config.yml` compatible reimplementation built in Rust. (:pull:`2355`).
+* Translation : ``xclim.core.locales.get_local_attrs`` rewritten, only accepts a single "locale" now. Locale dictionaries are case-insensitive. (:pull:`2397`)
 
 Internal changes
 ^^^^^^^^^^^^^^^^

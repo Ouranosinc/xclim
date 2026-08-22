@@ -168,7 +168,7 @@ def humidex(
 
     # Add the delta to the input temperature
     out = h + tas
-    out = out.assign_attrs(units=tas.units)
+    out = out.assign_attrs(units=tas.units, units_metadata="temperature: on_scale")
     return out
 
 

@@ -19,7 +19,7 @@ indicator:
   missing: str(required=False)
   missing_options: map(key=str(), required=False)
   notes: str(required=False)
-  cf_attrs: any(list(include('cf_attrs')), include('cf_attrs'), required=False)
+  attrs: any(list(include('attrs')), include('attrs'), required=False)
   parameters: |
     map(str(), num(), bool(), null(), include('parameter'), include('indexer'),
     include('time_range'), key=str(), required=False)
@@ -28,13 +28,12 @@ indicator:
   title: str(required=False)
   context: str(required=False)
 
-cf_attrs: map(str(), key=str(), required=False)
+attrs: map(str(), key=str(), required=False)
 
 parameter:
   description: str(required=False)
   default: any(str(), num(), bool(), null(), include('indexer'), required=False)
   choices: list(str(), required=False)
-  units: str(required=False)
   kind: int(required=False)
 
 indexer:

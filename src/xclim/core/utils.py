@@ -12,9 +12,10 @@ import importlib.util
 import logging
 import os
 import warnings
-from collections.abc import Callable, Sequence
+from collections.abc import Callable, Iterator, Mapping, MutableMapping, Sequence
 from pathlib import Path
 from types import ModuleType
+from typing import Any
 
 import numpy as np
 import xarray as xr
@@ -22,6 +23,77 @@ from dask import array as dsk
 from yaml import safe_dump, safe_load
 
 logger = logging.getLogger("xclim")
+
+
+class CaseInsensitiveDict(MutableMapping[str, Any]):  # numpydoc ignore=PR01
+    """A basic dictionary but keys are strings and case-insensitive, stored all lowercase."""
+
+    # ruff: disable[D102, D105]
+
+    def __init__(self, data: Mapping = None):
+        self._data = {}
+        if data:
+            self.update(data)
+
+    @staticmethod
+    def _casefold(key: str) -> str:
+        if isinstance(key, str):
+            return key.lower()
+        if key is None:  # special case for convenience
+            return key
+        raise TypeError(f"Keys of a CaseInsensitiveDict must be strings. Got {type(key)}")
+
+    def __getitem__(self, key: str) -> Any:
+        return self._data[self._casefold(key)]
+
+    def __setitem__(self, key: str, value: Any):
+        self._data[self._casefold(key)] = value
+
+    def get(self, key: str, default: Any = None) -> Any:  # numpydoc ignore=GL08
+        return self._data.get(self._casefold(key), default)
+
+    def setdefault(self, key: str, default: Any = None) -> Any:  # numpydoc ignore=GL08
+        return self._data.setdefault(self._casefold(key), default)
+
+    def __contains__(self, key: str) -> bool:
+        return self._casefold(key) in self._data
+
+    def __delitem__(self, key: str):
+        del self._data[self._casefold(key)]
+
+    def update(self, other: Mapping, **kwargs):  # numpydoc ignore=GL08
+        if hasattr(other, "keys"):
+            for k in other.keys():
+                self[k] = other[k]
+        else:
+            for k, v in other:
+                self[k] = v
+        for k in kwargs:
+            self[k] = kwargs[k]
+
+    def __iter__(self) -> Iterator[str]:
+        return iter(self._data)
+
+    def items(self) -> Iterator[tuple[str, Any]]:  # numpydoc ignore=GL08
+        return self._data.items()
+
+    def keys(self) -> Iterator[str]:  # numpydoc ignore=GL08
+        return self._data.keys()
+
+    def __len__(self) -> int:
+        return len(self._data)
+
+    def __repr__(self) -> str:
+        return repr(self._data)
+
+    def pop(self, key: str) -> Any:  # numpydoc ignore=GL08
+        return self._data.pop(self._casefold(key))
+
+    def popitem(self) -> tuple[str, Any]:  # numpydoc ignore=GL08
+        return self._data.popitem()
+
+    def copy(self) -> CaseInsensitiveDict:  # numpydoc ignore=GL08
+        return CaseInsensitiveDict(self._data.copy())
 
 
 # Input cell methods for clix-meta
@@ -672,7 +744,7 @@ def make_clix_meta_yaml(  # noqa: C901
                 # clix-meta assigns "day" for day of year. Not CF.
                 continue
             attrs[attr] = val
-        data["cf_attrs"] = [attrs]
+        data["attrs"] = [attrs]
 
         indicators[cmid.replace("{", "").replace("}", "")] = data
 

@@ -126,7 +126,7 @@ class IndicatorCollection(dict):  # numpydoc ignore=PR01
 
     def iter_indicators(self):
         """Iterate over the (name, indicator) pairs in this collection."""
-        yield from self._indicators.items()
+        yield from self.items()
 
     @classmethod
     def from_yaml(  # noqa: C90
@@ -300,7 +300,7 @@ class IndicatorCollection(dict):  # numpydoc ignore=PR01
     def _find_base_class(name, mapping):
         if name.startswith("."):
             # A point means the base has been declared above.
-            base = mapping[name].__class__
+            base = mapping[name[1:]].__class__
         elif name in base_registry:
             base = base_registry[name]
         elif name in registry:
@@ -314,14 +314,15 @@ class IndicatorCollection(dict):  # numpydoc ignore=PR01
         func = None
         if computes is not None:
             func = getattr(computes, name, None)
-        if func is None and hasattr(computes, "__getitem__") and name in computes:
-            func = computes[name]
-        elif "." in name:
-            modname, name = name.split(".")
-            submod = getattr(xclim.compute, modname, None)
-            func = getattr(submod, name, None)
-        else:
-            func = getattr(xclim.compute.generic, name, getattr(xclim.compute, name, None))
+        if func is None:
+            if hasattr(computes, "__getitem__") and name in computes:
+                func = computes[name]
+            elif "." in name:
+                modname, name = name.split(".")
+                submod = getattr(xclim.compute, modname, None)
+                func = getattr(submod, name, None)
+            else:
+                func = getattr(xclim.compute.generic, name, getattr(xclim.compute, name, None))
         if func is None:
             raise ValueError(f"Can't find requested compute function {name}.")
         return func
@@ -334,4 +335,4 @@ class IndicatorCollection(dict):  # numpydoc ignore=PR01
         """Access indicators as properties of a module (Obj.name)."""
         if k in self.keys():
             return self[k]
-        super().__getattr__(k)
+        super().__getattribute__(k)

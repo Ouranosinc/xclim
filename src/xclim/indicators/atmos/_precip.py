@@ -100,8 +100,8 @@ class PrecipAmount(Precip):
             new_units[pr_arg_name] = "[mass]/[area]"
         return parameters, new_units
 
-    def _preprocess_and_checks(self, das, params):
-        return (das | {"pr": rate2amount(das["pr"])}, params)
+    def _preprocess_and_checks(self, das, params, meta):
+        return das | {"pr": rate2amount(das["pr"])}, params, meta
 
 
 class PrecipWithIndexing(ResamplingIndicatorWithIndexing):
