@@ -11,7 +11,7 @@ import datetime as pydt
 import warnings
 from collections.abc import Sequence
 from importlib.util import find_spec
-from typing import Any, Literal, cast
+from typing import Any, Literal
 
 import cftime
 import numpy as np
@@ -1324,7 +1324,7 @@ def select_time(
         raise ValueError(f"Only one method of indexing may be given, got {N}.")
 
     if N == 0:
-        return cast(DataType, da)
+        return da
 
     if isinstance(include_bounds, bool):
         include_bounds = (include_bounds, include_bounds)
@@ -1371,7 +1371,7 @@ def select_time(
     else:
         raise ValueError("Must provide either `season`, `month`, `doy_bounds` or `date_bounds`.")
 
-    return cast(DataType, da.where(mask, drop=drop))
+    return da.where(mask, drop=drop)
 
 
 def _month_is_first_period_month(time, freq):

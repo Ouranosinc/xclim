@@ -98,6 +98,7 @@ import yamale
 from yaml import safe_load
 
 import xclim.compute
+import xclim.compute.generic
 from xclim.core import VARIABLES, raise_warn_or_log
 from xclim.core.indicator import Daily, Indicator, base_registry, registry
 from xclim.core.locales import load_locale, read_locale_file

@@ -18,7 +18,7 @@ import re
 import warnings
 from ast import literal_eval
 from collections import namedtuple
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from copy import deepcopy
 from dataclasses import dataclass
 from functools import reduce
@@ -1259,7 +1259,7 @@ class _LocaleMetadataFormatter(_MetadataFormatter):
 
     def _format_attrs(self, attrs, fmtargs, meta=None, formatter=default_formatter):
         out = super()._format_attrs(attrs, fmtargs, meta, formatter)
-        for loc in OPTIONS[METADATA_LOCALES]:
+        for loc in OPTIONS[METADATA_LOCALES]:  # ty: ignore[not-iterable]
             out.update(
                 super()._format_attrs(
                     xloc.get_local_attrs(
@@ -1509,7 +1509,7 @@ class Indicator(_Registrer):  # numpydoc ignore=PR01
     def __init__(
         self,
         identifier: str,
-        compute: callable = None,
+        compute: Callable = None,
         title: str = None,
         abstract: str = None,
         realm: str = None,

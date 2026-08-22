@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from xclim import compute
+from xclim.compute import generic
 from xclim.core import InputKind
 from xclim.core.indicator import (
     Daily,
@@ -164,7 +165,7 @@ max_1day_precipitation_amount = Precip(
     description="{freq} maximum 1-day total precipitation",
     abstract="Maximum total daily precipitation for a given period.",
     cell_methods="time: maximum over days",
-    compute=compute.generic.statistics,
+    compute=generic.statistics,
     input={"data": "pr"},
     parameters={"out_units": None, "statistic": "max", "freq": {"default": "YS"}},
 )
@@ -179,7 +180,7 @@ max_n_day_precipitation_amount = Precip(
     description="{freq} maximum {window}-day total precipitation amount.",
     abstract="Maximum of the moving sum of daily precipitation for a given period.",
     cell_methods="time: maximum over days",
-    compute=compute.generic.running_statistics,
+    compute=generic.running_statistics,
     input={"data": "pr"},
     parameters={
         "window_statistic": "integral",
@@ -199,7 +200,7 @@ wetdays = Precip(
     description="{freq} number of days with daily precipitation at or above {thresh}.",
     abstract="The number of days with daily precipitation at or above a given threshold.",
     cell_methods="time: sum over days",
-    compute=compute.generic.count_occurrences,
+    compute=generic.count_occurrences,
     input={"data": "pr"},
     parameters={
         "thresh": {"default": "1 mm/d"},
@@ -229,7 +230,7 @@ dry_days = Precip(
     description="{freq} number of days with daily precipitation under {thresh}.",
     abstract="The number of days with daily precipitation under a given threshold.",
     cell_methods="time: sum over days",
-    compute=compute.generic.count_occurrences,
+    compute=generic.count_occurrences,
     input={"data": "pr"},
     parameters={
         "thresh": {"default": "0.2 mm/d"},
@@ -265,7 +266,7 @@ maximum_consecutive_wet_days = Precip(
     abstract="The longest number of consecutive days where daily precipitation is at or above a given threshold.",
     cell_methods="time: sum over days",
     input={"data": "pr"},
-    compute=compute.generic.spell_length_statistics,
+    compute=generic.spell_length_statistics,
     parameters={
         "thresh": {"default": "1 mm/day"},
         "window": 1,
@@ -288,7 +289,7 @@ maximum_consecutive_dry_days = Precip(
     abstract="The longest number of consecutive days where daily precipitation below a given threshold.",
     cell_methods="time: sum over days",
     input={"data": "pr"},
-    compute=compute.generic.spell_length_statistics,
+    compute=generic.spell_length_statistics,
     parameters={
         "thresh": {"default": "1 mm/day"},
         "window": 1,
@@ -312,7 +313,7 @@ daily_pr_intensity = Precip(
     "{freq} average precipitation for days with daily precipitation over {thresh}.",
     abstract="Average precipitation for days with daily precipitation above a given threshold.",
     cell_methods="",
-    compute=compute.generic.thresholded_statistics,
+    compute=generic.thresholded_statistics,
     input={"data": "pr"},
     parameters={
         "condition": {"default": ">="},
@@ -333,7 +334,7 @@ max_pr_intensity = HrPrecip(
     description="{freq} maximum precipitation intensity over rolling {window}h time window.",
     abstract="Maximum precipitation intensity over a given rolling time window.",
     cell_methods="time: max",
-    compute=compute.generic.running_statistics,
+    compute=generic.running_statistics,
     input={"data": "pr"},
     parameters={
         "window": {"default": 1},
@@ -384,7 +385,7 @@ wet_precip_accumulation = Precip(
     abstract="Total accumulated precipitation on days with precipitation. "
     "A day is considered to have precipitation if the precipitation is greater than or equal to a given threshold.",
     cell_methods="time: sum over days",
-    compute=compute.generic.thresholded_statistics,
+    compute=generic.thresholded_statistics,
     input={"data": "pr"},
     parameters={
         "thresh": {"default": "1 mm/day"},
@@ -583,7 +584,7 @@ last_snowfall = Precip(
     abstract="The last day where snowfall exceeded a given threshold during a time period (the threshold can be "
     "given as a snowfall flux or a liquid water equivalent snowfall rate).",
     units="",
-    compute=compute.generic.day_threshold_reached,
+    compute=generic.day_threshold_reached,
     input={"data": "prsn"},
     parameters={
         "thresh": {"default": "1 mm/d"},
@@ -605,7 +606,7 @@ first_snowfall = Precip(
     abstract="The first day where snowfall exceeded a given threshold during a time period (the threshold can be "
     "given as a snowfall flux or a liquid water equivalent snowfall rate).",
     units="",
-    compute=compute.generic.day_threshold_reached,
+    compute=generic.day_threshold_reached,
     input={"data": "prsn"},
     parameters={
         "thresh": {"default": "1 mm/d"},
@@ -625,7 +626,7 @@ days_with_snow = Precip(
     description="{freq} number of days with snowfall larger than {low} and smaller or equal to {high}.",
     abstract="Number of days with snow between a lower and upper limit.",
     units="days",
-    compute=compute.generic.count_domain_occurrences,
+    compute=generic.count_domain_occurrences,
     input={"data": "prsn"},
     parameters={
         "low_bound": {"default": "0 kg m-2 s-1", "name": "low"},
@@ -655,7 +656,7 @@ snowfall_intensity = Precip(
     abstract="Mean daily liquid water equivalent snowfall rate above threshold (either a "
     "snowfall flux or a liquid water equivalent snowfall rate)",
     units="mm/day",
-    compute=compute.generic.thresholded_statistics,
+    compute=generic.thresholded_statistics,
     input={"data": "prsn"},
     parameters={
         "thresh": {"default": "1 mm/d"},
@@ -705,7 +706,7 @@ high_precip_low_temp = PrecipTemp(
     abstract="Number of days with precipitation above a given threshold and temperature below a given threshold.",
     units="days",
     cell_methods="time: sum over days",
-    compute=compute.generic.bivariate_count_occurrences,
+    compute=generic.bivariate_count_occurrences,
     input={"data1": "pr", "data2": "tas"},
     parameters={
         "thresh1": {"default": "0.4 mm/d", "name": "pr_thresh"},
@@ -770,7 +771,7 @@ dry_spell_frequency = PrecipAmount(
     units="",
     cell_methods="",
     input={"data": "pr"},
-    compute=compute.generic.spell_length_statistics,
+    compute=generic.spell_length_statistics,
     parameters={
         "window": {"default": 3},
         "window_statistic": {"default": "sum"},
@@ -795,7 +796,7 @@ dry_spell_total_length = PrecipAmount(
     units="days",
     cell_methods="",
     input={"data": "pr"},
-    compute=compute.generic.spell_length_statistics,
+    compute=generic.spell_length_statistics,
     parameters={
         "window": {"default": 3},
         "window_statistic": {"default": "sum"},
@@ -819,7 +820,7 @@ dry_spell_max_length = PrecipAmount(
     units="days",
     cell_methods="",
     input={"data": "pr"},
-    compute=compute.generic.spell_length_statistics,
+    compute=generic.spell_length_statistics,
     parameters={
         "window": {"default": 3},
         "window_statistic": {"default": "sum"},
@@ -843,7 +844,7 @@ wet_spell_frequency = PrecipAmount(
     units="",
     cell_methods="",
     input={"data": "pr"},
-    compute=compute.generic.spell_length_statistics,
+    compute=generic.spell_length_statistics,
     parameters={
         "window": {"default": 3},
         "window_statistic": {"default": "sum"},
@@ -868,7 +869,7 @@ wet_spell_total_length = PrecipAmount(
     units="days",
     cell_methods="",
     input={"data": "pr"},
-    compute=compute.generic.spell_length_statistics,
+    compute=generic.spell_length_statistics,
     parameters={
         "window": {"default": 3},
         "window_statistic": {"default": "sum"},
@@ -893,7 +894,7 @@ wet_spell_max_length = PrecipAmount(
     units="days",
     cell_methods="",
     input={"data": "pr"},
-    compute=compute.generic.spell_length_statistics,
+    compute=generic.spell_length_statistics,
     parameters={
         "window": {"default": 3},
         "window_statistic": {"default": "sum"},
