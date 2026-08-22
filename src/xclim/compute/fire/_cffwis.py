@@ -134,6 +134,7 @@ from __future__ import annotations
 
 from collections import OrderedDict, namedtuple
 from collections.abc import Sequence
+from typing import Literal
 
 import numpy as np
 import numpy.typing as npt
@@ -571,7 +572,7 @@ def _overwintering_drought_code(
 def _fire_season(
     tas: np.ndarray,
     snd: np.ndarray | None = None,
-    method: str = "WF93",
+    method: Literal["WF93", "LA08", "GFWED"] = "WF93",
     temp_start_thresh: float = default_params["temp_start_thresh"][0],
     temp_end_thresh: float = default_params["temp_end_thresh"][0],
     temp_condition_days: int = default_params["temp_condition_days"],

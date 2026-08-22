@@ -275,7 +275,7 @@ def rle(
 
 def rle_statistics(
     da: xr.DataArray,
-    statistic: Reducer,
+    statistic: Reducer | Literal["q10", "q90"],
     window: int,
     dim: str = "time",
     freq: Freq | None = None,
@@ -494,7 +494,7 @@ def windowed_max_run_sum(
     window: int,
     dim: str = "time",
     freq: Freq | None = None,
-    index: str = "first",
+    index: Literal["first", "last"] = "first",
 ) -> xr.DataArray:
     """
     Return the maximum sum of consecutive float values for runs at least as long as the given window length.
@@ -548,7 +548,7 @@ def _boundary_run(
     freq: Freq | None,
     coord: str | bool | None,
     ufunc_1dim: Literal["auto", "from_context"] | bool,
-    position: str,
+    position: Literal["first", "last"],
 ) -> xr.DataArray:
     """
     Return the index of the first item of the first or last run of at least a given length.
@@ -564,17 +564,17 @@ def _boundary_run(
         Dimension along which to calculate consecutive run.
     freq : str
         Resampling frequency.
-    coord : Optional[str]
+    coord : str, optional
         If not False, the function returns values along `dim` instead of indexes.
         If `dim` has a datetime dtype, `coord` can also be a str of the name of the
         DateTimeAccessor object to use (ex: 'dayofyear').
-    ufunc_1dim : Union[str, bool]
+    ufunc_1dim : str or bool
         Use the 1d 'ufunc' version of this function : default (auto) will attempt to select optimal
         usage based on number of data points.  Using 1D_ufunc=True is typically more efficient
         for DataArray with a small number of grid points.
         Ignored when `window=1`. It can be modified globally through the "run_length_ufunc" global option.
     position : {"first", "last"}
-        Determines if the algorithm finds the "first" or "last" run
+        Determines if the algorithm finds the "first" or "last" run.
 
     Returns
     -------
@@ -583,22 +583,22 @@ def _boundary_run(
         Returns np.nan if there are no valid runs.
     """
 
-    # FIXME: The logic here should not use outside scope variables, but rather pass them as arguments.
-    def coord_transform(out: xr.DataArray, da: xr.DataArray) -> xr.DataArray:
+    def _coord_transform(_out: xr.DataArray, _da: xr.DataArray, _coord: str | bool | None, _dim: str) -> xr.DataArray:
         """Transforms indexes to coordinates if needed, and drops obsolete dim."""
-        if coord:
-            crd = da[dim]
-            if isinstance(coord, str):
-                crd = getattr(crd.dt, coord)
-            out = lazy_indexing(crd, out)
+        if _coord:
+            crd = _da[_dim]
+            if isinstance(_coord, str):
+                crd = getattr(crd.dt, _coord)
+            _out = lazy_indexing(crd, _out)
 
-        if dim in out.coords:
-            out = out.drop_vars(dim)
-        return out
+        if _dim in _out.coords:
+            _out = _out.drop_vars(_dim)
+        return _out
 
-    # FIXME: The logic here should not use outside scope variables, but rather pass them as arguments.
     # general method to get indices (or coords) of first run
-    def find_boundary_run(runs: xr.DataArray, position: Literal["last"] | str) -> xr.DataArray:
+    def find_boundary_run(
+        runs: xr.DataArray, position: Literal["last"] | str, coord: str | bool | None, dim: str
+    ) -> xr.DataArray:
         if position == "last":
             runs = runs[{dim: slice(None, None, -1)}]
         dmax_ind = runs.argmax(dim=dim)
@@ -607,7 +607,7 @@ def _boundary_run(
         if position == "last":
             out = runs[dim].size - out - 1
             runs = runs[{dim: slice(None, None, -1)}]
-        out = coord_transform(out, runs)
+        out = _coord_transform(out, runs, coord, dim)
         return out
 
     ufunc_1dim = use_ufunc(ufunc_1dim, da, dim=dim, freq=freq)
@@ -615,9 +615,11 @@ def _boundary_run(
     da = da.fillna(0)  # We expect a boolean array, but there could be NaNs nonetheless
     if window == 1:
         if freq is not None:
-            out: xr.DataArray = resample_map(da, dim, freq, find_boundary_run, map_kwargs={"position": position})
+            out: xr.DataArray = resample_map(
+                da, dim, freq, find_boundary_run, map_kwargs={"position": position, "coord": coord, "dim": dim}
+            )
         else:
-            out = find_boundary_run(da, position)
+            out = find_boundary_run(da, position, coord, dim)
 
     elif ufunc_1dim:
         if position == "last":
@@ -626,7 +628,7 @@ def _boundary_run(
         if position == "last" and not coord:
             out = da[dim].size - out - 1
             da = da[{dim: slice(None, None, -1)}]
-        out = coord_transform(out, da)
+        out = _coord_transform(out, da, coord, dim)
 
     else:
         # _cusum_reset is an intermediate step in rle, which is sufficient here
@@ -634,9 +636,11 @@ def _boundary_run(
         d = xr.where(d >= window, 1, 0)
         # for "first" run, return "first" element in the run (and conversely for "last" run)
         if freq is not None:
-            out: xr.DataArray = resample_map(d, dim, freq, find_boundary_run, map_kwargs={"position": position})
+            out: xr.DataArray = resample_map(
+                d, dim, freq, find_boundary_run, map_kwargs={"position": position, "coord": coord, "dim": dim}
+            )
         else:
-            out = find_boundary_run(d, position)
+            out = find_boundary_run(d, position, coord, dim)
 
     return out
 
@@ -663,11 +667,11 @@ def first_run(
         Dimension along which to calculate consecutive run (default: 'time').
     freq : str
         Resampling frequency.
-    coord : Optional[str]
+    coord : str or bool, optional
         If not False, the function returns values along `dim` instead of indexes.
         If `dim` has a datetime dtype, `coord` can also be a str of the name of the
         DateTimeAccessor object to use (ex: 'dayofyear').
-    ufunc_1dim : Union[str, bool]
+    ufunc_1dim : {"auto", "from_context"} or bool
         Use the 1d 'ufunc' version of this function : default (auto) will attempt to select optimal
         usage based on number of data points.  Using 1D_ufunc=True is typically more efficient
         for DataArray with a small number of grid points.
@@ -754,7 +758,8 @@ def run_bounds(mask: xr.DataArray, dim: str = "time", coord: bool | str = True):
     dim : str
         Dimension along which to look for runs.
     coord : bool or str
-        If `True`, return values of the coordinate, if a string, returns values from `dim.dt.<coord>`.
+        If `True`, return values of the coordinate.
+        If a str, returns values from `dim.dt.<coord>`.
         If `False`, return indexes.
 
     Returns
