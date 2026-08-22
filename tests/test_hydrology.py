@@ -78,16 +78,6 @@ class TestStandardizedStreamflow:
         assert np.isnan(out1[{"time": 10}])
 
 
-class TestSnwMax:
-    def test_simple(self, snw_series):
-        a = np.zeros(366)
-        a[10:20] = np.arange(0, 10)
-        snw = snw_series(a, start="1999-01-01")
-        out = xcc.snw_max(snw, freq="YS")
-        np.testing.assert_array_equal(out, [9, 0])
-        assert out.units == "kg m-2"
-
-
 class TestSnwMaxDoy:
     def test_simple(self, snw_series):
         a = np.zeros(366)

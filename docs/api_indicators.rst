@@ -8,11 +8,11 @@ and metadata handling. Indicator objects are split into submodules according to 
 indicator that don't apply to a specific variable) and convert (for non-resampling
 indicators that transform between variables).
 
-Virtual modules are also inserted here. A normal installation of xclim comes with three virtual modules:
+Three :py:class:`IndicatorCollection` that come with xclim are also added here.
 
- - :py:mod:`xclim.indicators.cf`, Indicators defined in `cf-index-meta`.
- - :py:mod:`xclim.indicators.icclim`, Indicators defined by ECAD, as found in  python package Icclim.
- - :py:mod:`xclim.indicators.anuclim`, Indicators of the Australian National University's Fenner School of Environment and Society.
+ - :py:data:`xclim.indicators.cf`, Indicators defined in `cf-index-meta`.
+ - :py:data:`xclim.indicators.icclim`, Indicators defined by ECAD, as found in  python package Icclim.
+ - :py:data:`xclim.indicators.anuclim`, Indicators of the Australian National University's Fenner School of Environment and Society.
 
 Climate Indicator Submodules
 ----------------------------
@@ -32,26 +32,19 @@ Climate Indicator Submodules
    :undoc-members:
    :imported-members:
 
+.. automodule:: xclim.indicators.generic
+   :members:
+   :undoc-members:
+   :imported-members:
+
 .. automodule:: xclim.indicators.convert
    :members:
    :undoc-members:
    :imported-members:
 
 
-Virtual Indicator Submodules
-----------------------------
+Built-in Indicator Collections
+------------------------------
 
-.. automodule:: xclim.indicators.cf
-   :members:
-   :imported-members:
-   :undoc-members:
-
-.. automodule:: xclim.indicators.icclim
-   :members:
-   :imported-members:
-   :undoc-members:
-
-.. automodule:: xclim.indicators.anuclim
-   :members:
-   :imported-members:
-   :undoc-members:
+.. automodule:: xclim.indicators
+   :members: cf, icclim, anuclim

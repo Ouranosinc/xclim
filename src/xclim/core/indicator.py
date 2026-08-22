@@ -18,6 +18,7 @@ import re
 import warnings
 from ast import literal_eval
 from collections import namedtuple
+from collections.abc import Mapping
 from copy import deepcopy
 from dataclasses import dataclass
 from functools import reduce
@@ -318,7 +319,7 @@ class Output(dict):  # numpydoc ignore=PR01
         sname = "" if self.get("standard_name") is None else f"{self['standard_name']}, "
         add = ""
         if other := (set(self.keys()) - {"standard_name", "long_name"}):
-            add = "\n  With additional attributes:\n" + "\n".join([f"    {k}: {self[k]}" for k in other])
+            add = f". With additional attributes: {', '.join([f'**{k}**: ``{self[k]}``' for k in other])}"
         return f"{name}xarray.DataArray{dim}\n  {sname}{self.get('long_name', '')}{add}"
 
 
@@ -326,7 +327,8 @@ class IndexWrapper:  # numpydoc ignore=PR01
     """
     Template object wrapping an index-like compute function by parsing its signature, docstring and declared units.
 
-    This class is not instantiable, but used as a base for :py:class:`IndicatorBase`.
+    This class is not instantiable, but used as a base for :py:class:`IndicatorBase`,
+    itself the base of :py:class:`Indicator`.
     """
 
     title: str  # First line of the docstring
@@ -343,12 +345,12 @@ class IndexWrapper:  # numpydoc ignore=PR01
     Child classes append their references as a new line when inheriting.
     """
 
-    _all_parameters: dict[str, Parameter]  # Parameter section
+    _all_parameters: Mapping[str, Parameter]  # Parameter section
     """A dictionary mapping metadata about the input parameters to the indicator.
 
     Keys are the arguments of the "compute" function. All parameters are listed, even
     those "injected", absent from the indicator's call signature. All are instances of
-    :py:class:`xclim.core.indicator.Parameter`.
+    :py:class:`~xclim.core.indicator.Parameter`.
     """
 
     attrs: list[Output]  # Returns section
@@ -490,7 +492,7 @@ class IndexWrapper:  # numpydoc ignore=PR01
         return len(self.attrs)
 
     @property
-    def parameters(self) -> dict:
+    def parameters(self) -> Mapping[str, Parameter]:
         """
         Dictionary of controllable (non-injected) parameters.
 
@@ -504,7 +506,7 @@ class IndexWrapper:  # numpydoc ignore=PR01
         return {name: param for name, param in self._all_parameters.items() if not param.injected}
 
     @property
-    def injected_parameters(self) -> dict:
+    def injected_parameters(self) -> Mapping[str, Any]:
         """
         Dictionary of all injected parameters (values).
 
@@ -569,7 +571,7 @@ class IndexWrapper:  # numpydoc ignore=PR01
         Generate a signature for the indicator, skipping injected parameters.
 
         The signature might be invalid if parameters are not properly ordered with
-        [optional] variables first and **kwargs last.
+        [optional] variables first and kwargs last.
         """
         parameters = []
         for name, param in self.parameters.items():
@@ -684,7 +686,7 @@ class IndicatorBase(IndexWrapper):
         Parameters
         ----------
         parameters : dict of Parameters
-            Dict of :py:class:`Parameter` objects.
+            Dict of :py:class:`~xclim.core.indicator.Parameter` objects.
         new_params : dict
             Dict of parameters overrides passed to the indicator constructor (as `parameters`).
         var_mapping : dict
@@ -757,7 +759,7 @@ class IndicatorBase(IndexWrapper):
         Parameters
         ----------
         parameters : dict of Parameters
-            Dict of :py:class:`Parameter` objects.
+            Dict of :py:class:`xclim.core.indicator.Parameter` objects.
 
         Returns
         -------
@@ -1020,7 +1022,10 @@ class _DatasetIO(IndicatorBase):
     def _added_parameters(cls):
         return super()._added_parameters() | {
             "ds": Parameter(
-                kind=InputKind.DATASET, default=None, description="A dataset with the variables given by name."
+                kind=InputKind.DATASET,
+                default=None,
+                description="A dataset with the variables given by name.",
+                annotation=xarray.Dataset,
             )
         }
 
@@ -1487,7 +1492,7 @@ class Indicator(_Registrer):  # numpydoc ignore=PR01
     in :py:data:`xclim.core.indicator.registry`.
 
     Attributes in `Indicator.attrs` will be formatted and added to the output variable(s).
-    This attribute is a list of :py:class:`LocalizedOutput` dictionaries.
+    This attribute is a list of :py:class:`Output` dict-like objects.
 
     A lot of the Indicator's metadata is parsed from the underlying `compute` function's
     docstring and signature. Input variables and parameters are listed in
@@ -1516,7 +1521,7 @@ class Indicator(_Registrer):  # numpydoc ignore=PR01
         attrs: dict = None,
         context: str = "none",
         src_freq: str | list[str] = None,
-        **localized_metadata,
+        **attrs_kwargs,
     ):
         """
         Create a new indicator.
@@ -1553,8 +1558,8 @@ class Indicator(_Registrer):  # numpydoc ignore=PR01
         parameters: dict, optional
             Overrides for the parameters. Either value to "inject", removing that parameter from the call signature,
             or dictionaries of properties to override the ones parsed from the docstring.
-            See :py:class:`Parameter` for valid properties. Additionally, `name` can be passed to change the name of
-            the argument in the call signature.
+            See :py:class:`~xclim.core.indicator.Parameter` for valid properties. Additionally,
+            `name` can be passed to change the name of the argument in the call signature.
         attrs : list of dicts
             Attributes to be formatted and added to the computation's output.
             Any attribute are accepted, but `var_name` is required for multi-output indicators.
@@ -1564,11 +1569,8 @@ class Indicator(_Registrer):  # numpydoc ignore=PR01
             For example use 'hydro' to allow conversion from 'kg m-2 s-1' to 'mm/day' for all inputs an outputs.
         src_freq : str, sequence of strings, optional
             The expected frequency of the input data. Can be a list for multiple frequencies, or None if irrelevant.
-        **localized_metadata:
-            To add localization support to the indicator, translation of the `title` and `abstract` fields can be given
-            here with names similar to "title_{loc}", where "loc" is the ISO 639 two-letter language code for the
-            language. Similarly, localized output attributes can be given with "attrs_{loc}", following
-            the same syntax as `attrs`.
+        **attrs_kwargs
+            For convenience, output attributes can also be passed by name to the constructor.
         """  # numpydoc ignore=PR01,PR02
         super().__init__(
             identifier=identifier,
@@ -1584,7 +1586,7 @@ class Indicator(_Registrer):  # numpydoc ignore=PR01
             attrs=attrs or {},
             context=context,
             src_freq=src_freq,
-            **localized_metadata,
+            **attrs_kwargs,
         )
 
 

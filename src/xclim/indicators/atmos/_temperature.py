@@ -1913,7 +1913,7 @@ chill_portions = TempHourly(
     cell_methods="time: sum",
     description="Chill portions are a measure to estimate the bud breaking potential of different crops. "
     "The constants and functions are taken from Luedeling et al. (2009) which formalises "
-    "the method described in Fishman et al. (1987). ",
+    "the method described in Fishman et al. (1987).",
     abstract="Chill portions are a measure to estimate the bud breaking potential of different crops. "
     "The constants and functions are taken from Luedeling et al. (2009) which formalises "
     "the method described in Fishman et al. (1987). "

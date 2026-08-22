@@ -991,7 +991,7 @@ rain_season = Precip(
         "The start of the season is on the last day of the first sequence i) and must be between {date_min_start} and "
         "{date_max_start}.",
         "Last day in a dry sequence after the start of the season, i.e. a sequence of {window_dry_end} days "
-        "with at least {thresh_dry_end} {method_dry_end}. It must be between {date_min_end} and {date_max_end}. ",
+        "with at least {thresh_dry_end} {method_dry_end}. It must be between {date_min_end} and {date_max_end}.",
         "Number of steps of the original series in the season, between 'start' and 'end'.",
     ],
     units=["", "", "days"],
