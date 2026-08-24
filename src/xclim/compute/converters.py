@@ -2862,7 +2862,7 @@ def wind_power_potential(
 
     To compute the power production, multiply the power production factor by the nominal
     turbine capacity (e.g. 100), set the units attribute (e.g. "MW"), resample and sum with
-    `xclim.compute.generic.select_resample_op(power, op="sum", freq="D")`, then convert to
+    `xclim.compute.generic.statistics(power, statistic="sum", freq="D")`, then convert to
     the desired units (e.g. "MWh") using `xclim.core.units.convert_units_to`.
 
     References
