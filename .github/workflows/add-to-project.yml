@@ -12,8 +12,6 @@ jobs:
   add-to-project:
     name: Add Issue to xclim Project
     runs-on: ubuntu-latest
-    permissions:
-      repository-projects: write
     steps:
       - name: Harden Runner
         uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
@@ -27,9 +25,9 @@ jobs:
         id: token_generator
         uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
         with:
-          app-id: ${{ secrets.OURANOS_HELPER_BOT_ID }}
+          client-id: ${{ secrets.OURANOS_HELPER_BOT_ID }}
           private-key: ${{ secrets.OURANOS_HELPER_BOT_KEY }}
-          permission-repository-projects: write
+          permission-organization-projects: write
 
       - name: Add Issue to xclim Project
         uses: actions/add-to-project@5afcf98fcd03f1c2f92c3c83f58ae24323cc57fd # v2.0.0
