@@ -585,6 +585,22 @@ class TestTimeSelection:
             # No real bound on exp[4]
         np.testing.assert_array_equal(out.notnull().sum("time"), exp)
 
+    def test_select_time_doys_2D_spatial_360(self):
+        # first doy of da is 44, last is 366
+        da = self.series("2003-02-13", "2004-12-30", "360_day").expand_dims(lat=[0, 10, 15, 20, 25])
+        # 5 cases
+        # Same as above, but with 360 days calendar.
+        start = xr.DataArray(
+            [50, 340, 100, np.nan, np.nan], dims=("lat",), coords={"lat": da.lat}, attrs={"calendar": "360_day"}
+        )
+        end = xr.DataArray(
+            [200, 20, np.nan, 200, np.nan], dims=("lat",), coords={"lat": da.lat}, attrs={"calendar": "360_day"}
+        )
+        out = select_time(da, doy_bounds=(start, end))
+
+        exp = [151 * 2, 0, 261 + 261, 200 - 42 + 200, 360 - 42 + 360]
+        np.testing.assert_array_equal(out.notnull().sum("time"), exp)
+
     @pytest.mark.parametrize("include_bounds", [True, False])
     def test_select_time_doys_2D_temporal(self, include_bounds):
         # YS-JUL periods:

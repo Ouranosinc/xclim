@@ -23,7 +23,7 @@ Major changes
 New indicators and features
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 * The `xclim` command-line tool now accepts both ``-h`` and ``--help`` to show the help summary. (:pull:`2316`).
-* The `select_time` function has been improved. (:issue:`2365`, :pull:`2374`):
+* The `select_time` function has been improved. (:issue:`2365`, :issue:`2393`, :pull:`2374`):
     * Open `date_bounds` and `doy_bounds` are now supported (i.e., `None` as start or end).
     * The `include_doy_bounds_nans` argument has been added to control whether NaN values in the bounds should be filled or not. When set to `True`, missing values in the start or end bounds are replaced by the start and end of the period, respectively.
     * The `bounds_freq` argument has been added to allow users to specify the frequency to use when using open `date_bounds`.

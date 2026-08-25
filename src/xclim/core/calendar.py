@@ -255,7 +255,7 @@ def _is_leap_year(years, calendar):
 def _days_in_year(years, calendar):
     """The number of days in the year according to given calendar."""
     if calendar == "360_day":
-        return xr.full_like(years, 360)
+        return np.full_like(years, 360)
     return _is_leap_year(years, calendar).astype(int) + 365
 
 
@@ -325,8 +325,8 @@ def convert_doy(
             max_doy_src = xr.apply_ufunc(
                 _days_in_year,
                 year_of_the_doy,
-                vectorize=True,
                 dask="parallelized",
+                output_dtypes=[int],
                 kwargs={"calendar": source_cal},
             )
         if target_cal in ["noleap", "all_leap", "360_day"]:
@@ -335,8 +335,8 @@ def convert_doy(
             max_doy_tgt = xr.apply_ufunc(
                 _days_in_year,
                 year_of_the_doy,
-                vectorize=True,
                 dask="parallelized",
+                output_dtypes=[int],
                 kwargs={"calendar": target_cal},
             )
         new_doy = source.copy(data=source * max_doy_tgt / max_doy_src)
@@ -980,7 +980,8 @@ def _doy_days_since_doys(
     doy_max = xr.apply_ufunc(
         _days_in_year,
         base.dt.year,
-        vectorize=True,
+        dask="parallelized",
+        output_dtypes=[int],
         kwargs={"calendar": calendar},
     )
 
@@ -1224,8 +1225,6 @@ def select_between_doys(
         if drop:
             # At least one of the bounds is an array, drop won't work
             raise ValueError("Passing array-like `doy_bounds` is incompatible with `drop=True`.")
-        if get_calendar(da) == "360_day":
-            raise NotImplementedError("Passing array-like `doy_bounds` is not supported for 360_day calendars.")
 
         start, end = doy_bounds
         # store whether the bounds are None for later evaluation
@@ -1446,11 +1445,6 @@ def select_time(
                 """Convert MM-DD string to day of year, for each year in time."""
                 doys = [doy_from_string(date_str, year, cal) for year in time.dt.year]
                 return xr.DataArray(doys, coords={"time": time}, dims="time", name="dayofyear")
-
-            if get_calendar(da) == "360_day":
-                raise NotImplementedError(
-                    "Passing open `date_bounds` (i.e., with None) is not supported for 360_day calendars."
-                )
 
             bnds = time_bnds(da.time.resample(time=bounds_freq or "YS"))
             cal = da.time.dt.calendar
